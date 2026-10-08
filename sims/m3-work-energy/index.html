@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#f26b3a">
+  <title>일과 에너지 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏋️</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    /* 이 시뮬레이션 전용 스타일 */
+    .stage-toolbar .btn { min-height: 44px; }
+    .act-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .act-btn.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 12%, white); }
+    .act-btn .ok { color: var(--good); font-weight: 800; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; }
+    .stage-canvas .stage-hint { top: 10px; bottom: auto; }
+    .readout .label .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; }
+    .readout.ep .value { color: #1d4ed8; }
+    .readout.ek .value { color: #c2410c; }
+    .readout.work .value { color: #be123c; }
+    @media (max-width: 480px) {
+      .readouts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .stage-toolbar { gap: 6px; padding: 8px 10px; }
+      .act-btn { padding: 6px 10px; font-size: 14px; }
+      .stage-hint { font-size: 13px; padding: 5px 12px; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="phy">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#g3">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">중3 · Ⅳ. 운동과 에너지</div>
+      <h1>일과 에너지</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar" id="toolbar">
+          <div class="act-row" id="actRow" role="group" aria-label="상자에 하는 동작">
+            <button class="btn btn-sm act-btn" type="button" data-act="lift">⬆ 들어 올리기</button>
+            <button class="btn btn-sm act-btn" type="button" data-act="hold">🧍 들고 서 있기</button>
+            <button class="btn btn-sm act-btn" type="button" data-act="walk">🚶 들고 걸어가기</button>
+          </div>
+          <span class="toolbar-label" id="tbLift" hidden>🏗️ 상자를 끌어 올려 보세요</span>
+          <span class="spacer"></span>
+          <button class="btn btn-primary btn-sm" id="dropBtn" type="button" data-feature="drop">✋ 놓기</button>
+          <button class="btn btn-sm" id="againBtn" type="button" data-feature="drop">↺ 다시 들어 올리기</button>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="상자를 들어 올리고 떨어뜨리며 일과 에너지를 비교하는 실험 화면"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts" id="roAct">
+        <div class="readout"><span class="label">상자에 준 힘</span><span class="value" id="rF">10<small>N</small></span></div>
+        <div class="readout"><span class="label">힘의 방향으로 이동한 거리</span><span class="value" id="rD">0.0<small>m</small></span></div>
+        <div class="readout work"><span class="label">한 일</span><span class="value" id="rW">0<small>J</small></span></div>
+      </div>
+      <div class="readouts" id="roLift" hidden>
+        <div class="readout"><span class="label">높이</span><span class="value" id="rH">0.0<small>m</small></span></div>
+        <div class="readout ep"><span class="label"><i class="dot" style="background:#3b82f6"></i>위치 에너지</span><span class="value" id="rEp">0<small>J</small></span></div>
+        <div class="readout" data-feature="drop"><span class="label">속력</span><span class="value" id="rV">0.0<small>m/s</small></span></div>
+        <div class="readout ek" data-feature="drop"><span class="label"><i class="dot" style="background:#f97316"></i>운동 에너지</span><span class="value" id="rEk">0<small>J</small></span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard" data-feature="lift">
+        <div class="control">
+          <div class="control-head"><label for="sH">📏 들어 올린 높이</label><output id="oH"></output></div>
+          <input type="range" id="sH" min="0" max="10" step="0.1" value="0">
+        </div>
+        <div class="control" data-feature="mass">
+          <div class="control-head"><label for="sM">⚖️ 상자의 질량</label><output id="oM"></output></div>
+          <input type="range" id="sM" min="1" max="5" step="1" value="2">
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>
