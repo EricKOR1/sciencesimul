@@ -2,13 +2,21 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#8b5cf6">
   <title>기체 압력 탐험대 | 중학 과학 시뮬레이션</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎈</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; }
+    .segmented small { font-size: 12px; opacity: .8; }
+    .track-note { font-size: 14px; color: var(--muted); margin: 6px 0 0; }
+  </style>
 </head>
 <body class="sim-page" data-subject="chem">
   <header class="sim-header">
@@ -27,39 +35,56 @@
     <div class="stage-col">
       <section class="card stage-card">
         <div class="stage-toolbar">
-          <div class="segmented" role="tablist" aria-label="실험 모드">
+          <span class="toolbar-label" id="tbLabel">🧪 밀폐된 실린더 속 기체</span>
+          <div class="segmented" role="tablist" aria-label="실험 모드" data-feature="heat">
             <button type="button" data-mode="boyle" class="on">🖐️ 누르기 <small>(온도 일정)</small></button>
             <button type="button" data-mode="charles">🔥 가열하기 <small>(압력 일정)</small></button>
           </div>
           <span class="spacer"></span>
-          <label class="switch"><input type="checkbox" id="showHits" checked> 충돌 표시</label>
+          <label class="switch" data-feature="hits"><input type="checkbox" id="showHits" checked> 충돌 표시</label>
         </div>
-        <canvas id="cv" aria-label="실린더 속 기체 입자 시뮬레이션"></canvas>
-        <div class="stage-hint" id="stageHint">↕ 피스톤 손잡이를 위아래로 끌어 보세요</div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="실린더 속 기체 입자 시뮬레이션"></canvas>
+          <div class="stage-hint" id="stageHint">👆 움직이는 입자 하나를 눌러 보세요</div>
+        </div>
       </section>
       <div class="readouts">
+        <div class="readout"><span class="label">입자 수</span><span class="value" id="rN">50<small>개</small></span></div>
         <div class="readout"><span class="label">부피</span><span class="value" id="rV">100<small>mL</small></span></div>
-        <div class="readout"><span class="label">압력</span><span class="value" id="rP">1.00<small>기압</small></span></div>
-        <div class="readout"><span class="label">온도</span><span class="value" id="rT">27<small>°C</small></span></div>
-        <div class="readout"><span class="label" id="r4Label">피스톤 충돌 횟수</span><span class="value" id="r4">0<small>회/초</small></span></div>
+        <div class="readout" data-feature="gauge"><span class="label">압력</span><span class="value" id="rP">1.00<small>기압</small></span></div>
+        <div class="readout" data-feature="heat"><span class="label">온도</span><span class="value" id="rT">27<small>°C</small></span></div>
+        <div class="readout" data-feature="hits"><span class="label" id="r4Label">피스톤 충돌 횟수</span><span class="value" id="r4">0<small>회/초</small></span></div>
       </div>
     </div>
 
     <aside class="side-col">
       <section class="card card-pad">
-        <div class="control" id="ctrlV">
+        <div class="control" data-feature="track">
+          <div class="control-row">
+            <button class="btn btn-sm" id="trackBtn" type="button">🔍 입자 하나 따라가기</button>
+            <button class="btn btn-sm btn-ghost" id="untrackBtn" type="button" hidden>✖ 그만 보기</button>
+          </div>
+          <p class="track-note">화면 속 입자를 직접 눌러도 돼요.</p>
+        </div>
+        <div class="control" data-feature="pump" id="ctrlN">
+          <div class="control-head"><label for="sN">🫧 입자 수</label><output id="oN"></output></div>
+          <input type="range" id="sN" min="10" max="100" step="5" value="50">
+        </div>
+        <div class="control" data-feature="piston" id="ctrlV">
           <div class="control-head"><label for="sV">🖐️ 피스톤 위치(부피)</label><output id="oV"></output></div>
           <input type="range" id="sV" min="25" max="200" step="1" value="100">
         </div>
-        <div class="control" id="ctrlT" hidden>
-          <div class="control-head"><label for="sT">🔥 온도</label><output id="oT"></output></div>
-          <input type="range" id="sT" min="-73" max="177" step="1" value="27">
+        <div class="control" data-feature="heat" id="ctrlTwrap">
+          <div id="ctrlT" hidden>
+            <div class="control-head"><label for="sT">🔥 온도</label><output id="oT"></output></div>
+            <input type="range" id="sT" min="-73" max="177" step="1" value="27">
+          </div>
         </div>
         <div class="control">
           <div class="control-row">
-            <button class="btn btn-sm btn-primary" id="recBtn" type="button">📍 데이터 기록</button>
-            <button class="btn btn-sm" id="clearBtn" type="button">지우기</button>
-            <span class="spacer" style="flex:1"></span>
+            <button class="btn btn-sm btn-primary" id="recBtn" type="button" data-feature="graph">📍 데이터 기록</button>
+            <button class="btn btn-sm" id="clearBtn" type="button" data-feature="graph">지우기</button>
+            <span style="flex:1"></span>
             <button class="btn btn-sm btn-ghost" id="resetBtn" type="button">↺ 초기화</button>
           </div>
         </div>

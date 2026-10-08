@@ -171,26 +171,39 @@
 
   /* ---------------- 캔버스 도우미 ----------------
      가상 좌표(width x height)로 그림을 그리면 화면 크기에 맞게 자동 확대/축소됩니다.
-     const view = SciSim.stage(canvas, { width: 800, height: 500 });
-     view.ctx 로 그리기 (좌표는 0~800, 0~500) */
+     const view = SciSim.stage(canvas, { width: 800, height: 520, background: '#fff' });
+     view.ctx 로 그리기 (좌표는 0~800, 0~520)
+     캔버스는 부모 .stage-canvas 상자(없으면 자동 생성) 안에 비율을 유지하며 꽉 차게 배치됩니다. */
   function stage(canvas, opts) {
     opts = opts || {};
     const vw = opts.width || 800, vh = opts.height || 500;
     const ctx = canvas.getContext('2d');
     const view = { canvas, ctx, vw, vh, w: vw, h: vh, scale: 1, dpr: 1 };
-    canvas.style.aspectRatio = vw + ' / ' + vh;
-    // 화면 높이에 맞춰 캔버스 크기 제한 (reserve: 캔버스 외 다른 요소들이 차지하는 높이 px)
-    const reserve = opts.reserve != null ? opts.reserve : 250;
-    canvas.style.width = 'min(100%, max(320px, calc((100vh - ' + reserve + 'px) * ' + (vw / vh).toFixed(4) + ')))';
+    let wrap = canvas.parentElement;
+    if (!wrap || !wrap.classList.contains('stage-canvas')) {
+      wrap = el('div', { class: 'stage-canvas' });
+      canvas.parentNode.insertBefore(wrap, canvas);
+      wrap.appendChild(canvas);
+    }
+    view.wrap = wrap;
+    wrap.style.setProperty('--stage-ar', vw + ' / ' + vh);
+    wrap.style.setProperty('--stage-hr', (vh / vw).toFixed(4));
+    if (opts.background) wrap.style.setProperty('--stage-bg', opts.background);
     canvas.style.touchAction = 'none';
     function resize() {
-      const r = canvas.getBoundingClientRect();
-      if (r.width < 2) return;
+      if (!canvas.isConnected) return;
+      let W = wrap.clientWidth, H = wrap.clientHeight;
+      if (W < 2) return;
+      if (H < 2) { H = W * vh / vw; wrap.style.height = H + 'px'; }
+      const s = Math.min(W / vw, H / vh);
+      const cw = Math.max(1, Math.floor(vw * s)), ch = Math.max(1, Math.floor(vh * s));
       const dpr = Math.min(global.devicePixelRatio || 1, 2);
+      canvas.style.width = cw + 'px';
+      canvas.style.height = ch + 'px';
       view.dpr = dpr;
-      view.scale = r.width / vw;
-      canvas.width = Math.round(r.width * dpr);
-      canvas.height = Math.round(r.width * (vh / vw) * dpr);
+      view.scale = cw / vw;
+      canvas.width = Math.round(cw * dpr);
+      canvas.height = Math.round(ch * dpr);
       view.apply();
       opts.onResize && opts.onResize(view);
     }
@@ -205,8 +218,9 @@
       const r = canvas.getBoundingClientRect();
       return { x: (e.clientX - r.left) * vw / r.width, y: (e.clientY - r.top) * vh / r.height };
     };
-    if (global.ResizeObserver) new ResizeObserver(resize).observe(canvas);
-    else global.addEventListener('resize', resize);
+    view.resize = resize;
+    if (global.ResizeObserver) new ResizeObserver(resize).observe(wrap);
+    global.addEventListener('resize', resize);
     resize();
     return view;
   }
@@ -269,7 +283,7 @@
     return Number(n).toLocaleString('ko-KR', { minimumFractionDigits: d || 0, maximumFractionDigits: d || 0 });
   }
 
-  /* ---------------- 헤더 (효과음 버튼, 별) ---------------- */
+  /* ---------------- 헤더 (효과음, 전체 화면, 별) ---------------- */
   function wireHeader(simId) {
     const sb = $('#soundBtn');
     if (sb) {
@@ -277,47 +291,86 @@
       upd();
       sb.addEventListener('click', () => { Sound.setMuted(!Sound.muted); upd(); Sound.click(); });
     }
+    // 전체 화면 버튼 (지원하는 기기에서만)
+    const root = document.documentElement;
+    const canFs = root.requestFullscreen || root.webkitRequestFullscreen;
+    const right = $('.sim-header-right');
+    if (canFs && right && !$('#fsBtn')) {
+      const fb = el('button', { class: 'icon-btn', id: 'fsBtn', type: 'button', title: '전체 화면', 'aria-label': '전체 화면', text: '⛶' });
+      fb.addEventListener('click', () => {
+        Sound.click();
+        const fsEl = document.fullscreenElement || document.webkitFullscreenElement;
+        try {
+          if (fsEl) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+          else (root.requestFullscreen || root.webkitRequestFullscreen).call(root);
+        } catch (e) { /* 무시 */ }
+      });
+      right.insertBefore(fb, sb || null);
+    }
     const sm = $('#starMeter');
     if (sm && simId) sm.innerHTML = starsHTML(Store.sim(simId).stars);
   }
 
   /* =========================================================
-     미션(게임) 엔진
+     미션(게임) 엔진 - 단계별 학습
+     개념의 위계에 따라 '단계(STEP)'를 차례로 진행합니다.
+     각 단계는 앞 단계와 연결되는 소개 → 미션 → 정리 순서로 진행되고,
+     단계마다 새 도구(feature)가 하나씩 열립니다.
+
      SciSim.game({
-       simId: 'm1-gas',
-       mount: '#game',
-       concept: '<h3>...</h3>',      // 📘 핵심 원리 탭 내용
-       badge: '기체 박사',              // 모두 완료 시 칭호
+       simId: 'm1-gas-law', mount: '#game', badge: '기체 박사', homeHref: '../../index.html#g1',
+       featureLabels: { gauge: '🧭 압력계', ... },    // 단계 소개에 보여 줄 새 도구 이름
+       onFeatures(set, added) {},                   // 열린 도구가 바뀔 때 (set: Set)
        levels: [
-         { title: '보일 법칙 관찰', missions: [
-            // 실행형 미션: check()가 hold초 동안 true면 성공
-            { title, goal, hint, check: () => bool, hold: 0.8, status: () => '현재 ...', setup(){}, explain },
-            // 확인 버튼형: manual: true, check()가 true면 성공 / 문자열이면 피드백 표시
-            { title, goal, manual: true, check: () => true | '오답 피드백', explain },
-            // 퀴즈형
-            { type: 'quiz', title, goal: '질문', choices: ['a','b'], answer: 1, feedback: ['보기별 피드백'], explain },
-         ]},
+         {
+           title: '압력: 입자의 충돌', short: '압력', icon: '🧭',
+           intro: '<p>앞 단계와의 연결 + 이번 단계 목표</p>',
+           features: ['gauge', 'hits'],             // 이 단계에서 새로 여는 도구
+           setup() {},                               // 단계 시작 시 실험 상태 준비 (선택)
+           recap: '한 줄 정리',                        // 단계 완료 창에 표시
+           summary: '<p>배운 내용 공책에 쌓이는 정리</p>',
+           missions: [
+             // 실행형: check()가 hold초 동안 true면 성공
+             { title, goal, hint, check: () => bool, hold: 0.8, status: () => '...', setup(){}, explain },
+             // 확인 버튼형: manual: true, check()가 true면 성공 / 문자열이면 피드백
+             { title, goal, manual: true, check: () => true | '피드백', explain },
+             // 퀴즈형
+             { type: 'quiz', title, goal: '질문', choices: [...], answer: 1, feedback: [...], explain },
+           ],
+         },
        ],
-       onMissionStart(m) {}, onComplete() {}
+       onMissionStart(m) {}, onComplete(score) {}
      })
+     반환값: game.has(name), game.isNew(name), game.level, game.free ...
+     HTML 요소에 data-feature="이름"을 달면 그 도구가 열릴 때까지 자동으로 숨겨집니다.
      ========================================================= */
   function game(opts) {
     const mount = typeof opts.mount === 'string' ? $(opts.mount) : opts.mount;
     const simId = opts.simId;
     const levels = opts.levels;
+    const labels = opts.featureLabels || {};
+    const hasNotes = levels.some((lv) => lv.summary);
     const flat = [];
     levels.forEach((lv, li) => lv.missions.forEach((m, mi) => {
       m._level = li; m._index = mi; m._flat = flat.length;
       if (!m.type) m.type = m.choices ? 'quiz' : 'task';
       flat.push(m);
     }));
+    const firstOf = (li) => flat.findIndex((m) => m._level === li);
+    const allFeatures = new Set();
+    levels.forEach((lv) => (lv.features || []).forEach((f) => allFeatures.add(f)));
 
     let rec = Store.sim(simId);
     if (rec.cursor >= flat.length || rec.cursor < 0) { rec.cursor = 0; rec.score = 0; }
+    if (rec.levelsDone == null) rec.levelsDone = rec.cleared ? levels.length : Math.max(0, flat[rec.cursor]._level);
     let idx = rec.cursor;
     let score = rec.score || 0;
-    let state = 'active';       // active | success | complete
+    let phase = 'intro';        // intro | active | success | complete
+    let free = false;           // 자유 탐구 모드(모든 도구 열림)
     let wrong = 0, hintUsed = false, holdStart = 0, lastStatus = null, finalScore = 0;
+    const unlocked = new Set();
+    const newAt = {};
+    let notesFresh = -1;
 
     wireHeader(simId);
     mount.classList.add('game');
@@ -325,21 +378,52 @@
 
     const tabs = el('div', { class: 'game-tabs', role: 'tablist' });
     const tabMission = el('button', { class: 'on', role: 'tab', html: '🎯 미션' });
-    const tabConcept = el('button', { role: 'tab', html: '📘 핵심 원리' });
+    const tabConcept = el('button', { role: 'tab', html: hasNotes ? '📘 배운 내용' : '📘 핵심 원리' });
     tabs.append(tabMission, tabConcept);
     const bodyMission = el('div', { class: 'game-body' });
-    const bodyConcept = el('div', { class: 'game-body concept', hidden: true, html: opts.concept || '' });
+    const bodyConcept = el('div', { class: 'game-body concept', hidden: true });
     mount.append(tabs, bodyMission, bodyConcept);
     function showTab(which) {
       tabMission.classList.toggle('on', which === 'mission');
       tabConcept.classList.toggle('on', which === 'concept');
       bodyMission.hidden = which !== 'mission';
       bodyConcept.hidden = which !== 'concept';
+      if (which === 'concept') { renderNotes(); tabConcept.innerHTML = hasNotes ? '📘 배운 내용' : '📘 핵심 원리'; }
+      const sc = mount.closest('.side-col');
+      if (sc && sc.scrollTop > mount.offsetTop) sc.scrollTop = mount.offsetTop - 8;
     }
     tabMission.addEventListener('click', () => { Sound.click(); showTab('mission'); });
     tabConcept.addEventListener('click', () => { Sound.click(); showTab('concept'); });
 
     let refs = {};
+
+    /* ---- 도구(feature) 열기 ---- */
+    function featuresUpTo(li) {
+      const s = new Set();
+      for (let i = 0; i <= li && i < levels.length; i++) (levels[i].features || []).forEach((f) => s.add(f));
+      return s;
+    }
+    function applyFeatures(set, highlight) {
+      const added = [];
+      set.forEach((f) => { if (!unlocked.has(f)) added.push(f); });
+      unlocked.clear();
+      set.forEach((f) => unlocked.add(f));
+      const now = performance.now();
+      if (highlight) added.forEach((f) => { newAt[f] = now; });
+      $$('[data-feature]').forEach((node) => {
+        const names = node.getAttribute('data-feature').split(/\s+/).filter(Boolean);
+        const on = names.every((n) => unlocked.has(n));
+        const wasHidden = node.hidden;
+        node.hidden = !on;
+        if (on && wasHidden && highlight && names.some((n) => added.indexOf(n) >= 0)) {
+          node.classList.remove('feature-new'); void node.offsetWidth; node.classList.add('feature-new');
+          setTimeout(() => node.classList.remove('feature-new'), 4600);
+        }
+      });
+      if (opts.onFeatures) { try { opts.onFeatures(unlocked, added); } catch (e) { console.error(e); } }
+    }
+    const has = (name) => free || unlocked.has(name);
+    const isNew = (name) => newAt[name] != null && performance.now() - newAt[name] < 6000;
 
     function persist() {
       rec.cursor = idx; rec.score = score;
@@ -356,17 +440,82 @@
         }
       }
     }
-    function levelStars(li) { return Math.round(((li + 1) / levels.length) * 3); }
+    function levelStars(li) { return Math.floor(((li + 1) / levels.length) * 3 + 1e-9); }
+    const stepLabel = (li) => (levels[li].short || levels[li].title);
 
-    function render() {
+    /* ---- 학습 단계 표시줄 ---- */
+    function stepper(cur) {
+      const box = el('div', { class: 'stepper', role: 'list', 'aria-label': '학습 단계' });
+      levels.forEach((lv, i) => {
+        const done = free || i < rec.levelsDone;
+        const open = (free || i <= rec.levelsDone) && i !== cur && phase !== 'complete' || (phase === 'complete');
+        const cls = 'st' + (i === cur && phase !== 'complete' ? ' now' : done ? ' done' : '') + (open ? ' open' : '');
+        const b = el('button', { class: cls, type: 'button', role: 'listitem', title: (i + 1) + '단계 · ' + lv.title + (open ? '' : ' (잠김)') }, [
+          el('span', { class: 'c', text: done && i !== cur ? '✓' : String(i + 1) }),
+          el('span', { class: 'l', text: stepLabel(i) }),
+        ]);
+        if (open) b.addEventListener('click', () => { Sound.click(); free = false; idx = firstOf(i); renderIntro(i, false); });
+        else b.disabled = i !== cur;
+        box.appendChild(b);
+      });
+      return box;
+    }
+
+    function footer() {
+      return el('div', { class: 'game-foot' }, [
+        el('span', { text: 'STEP ' + (flat[idx]._level + 1) + ' / ' + levels.length + ' · 미션 ' + (idx + 1) + ' / ' + flat.length }),
+        el('button', { type: 'button', text: '↺ 처음부터', onclick: restartConfirm }),
+      ]);
+    }
+
+    /* ---- 단계 소개 ---- */
+    function renderIntro(li, highlight) {
+      phase = 'intro';
+      idx = firstOf(li);
+      const lv = levels[li];
+      applyFeatures(featuresUpTo(li), highlight !== false);
+      if (lv.setup) { try { lv.setup(); } catch (e) { console.error(e); } }
+      bodyMission.innerHTML = '';
+      const card = el('div', { class: 'step-intro' });
+      card.appendChild(el('div', { class: 'si-top' }, [
+        el('div', { class: 'si-icon', text: lv.icon || '🔬' }),
+        el('div', {}, [
+          el('div', { class: 'si-kicker', text: 'STEP ' + (li + 1) + ' / ' + levels.length }),
+          el('h3', { html: lv.title }),
+        ]),
+      ]));
+      if (lv.intro) card.appendChild(el('div', { class: 'si-body', html: lv.intro }));
+      if (li === 0 && levels.length > 1) {
+        const rm = el('ol', { class: 'roadmap' });
+        levels.forEach((l, i) => rm.appendChild(el('li', { class: i === 0 ? 'now' : '', text: l.title })));
+        card.appendChild(el('div', { class: 'si-link' }, [el('b', { text: '🗺️ 이렇게 차근차근 배워요' }), rm]));
+      }
+      const tools = (lv.features || []).filter((f) => labels[f]);
+      if (tools.length) {
+        card.appendChild(el('div', { class: 'si-tools' }, [
+          el('div', { class: 't-label', text: li === 0 ? '🧰 사용할 도구' : '🔓 새로 열린 도구' }),
+          el('div', {}, tools.map((f) => el('span', { class: 'tool-chip', html: labels[f] }))),
+        ]));
+      }
+      const go = el('button', { class: 'btn btn-subject btn-block', type: 'button', html: '▶ ' + (li + 1) + '단계 시작하기' });
+      go.addEventListener('click', () => { Sound.click(); renderMission(); });
+      card.appendChild(go);
+      bodyMission.append(stepper(li), card, footer());
+      persist();
+      if (!bodyConcept.hidden) renderNotes();
+    }
+
+    /* ---- 미션 ---- */
+    function renderMission() {
       const m = flat[idx];
       const lv = levels[m._level];
-      wrong = 0; hintUsed = false; holdStart = 0; lastStatus = null; state = 'active';
+      if (!free) applyFeatures(featuresUpTo(m._level), false);
+      wrong = 0; hintUsed = false; holdStart = 0; lastStatus = null; phase = 'active';
       bodyMission.innerHTML = '';
 
       const head = el('div', { class: 'level-head' }, [
-        el('span', { class: 'level-badge', text: 'LEVEL ' + (m._level + 1) }),
-        el('span', { class: 'level-name', text: lv.title }),
+        el('span', { class: 'level-badge', text: 'STEP ' + (m._level + 1) }),
+        el('span', { class: 'level-name', html: lv.title }),
         el('span', { class: 'score-pill', text: '점수 ' + score }),
       ]);
       const dots = el('div', { class: 'mission-dots', 'aria-hidden': 'true' });
@@ -386,7 +535,7 @@
       if (m.type === 'quiz') {
         const ch = el('div', { class: 'choices' });
         refs.choices = m.choices.map((c, i) => {
-          const b = el('button', { class: 'choice' }, [el('span', { class: 'key', text: String(i + 1) }), el('span', { html: c })]);
+          const b = el('button', { class: 'choice', type: 'button' }, [el('span', { class: 'key', text: String(i + 1) }), el('span', { html: c })]);
           b.addEventListener('click', () => answer(i, b));
           ch.appendChild(b);
           return b;
@@ -400,31 +549,28 @@
 
       const actions = el('div', { class: 'mission-actions' });
       if (m.hint) {
-        refs.hintBtn = el('button', { class: 'btn btn-sm', html: '💡 힌트' });
+        refs.hintBtn = el('button', { class: 'btn btn-sm', type: 'button', html: '💡 힌트' });
         refs.hintBtn.addEventListener('click', () => {
           Sound.click();
-          if (!hintUsed) { hintUsed = true; }
+          hintUsed = true;
           refs.feedback.className = 'mission-feedback hint';
           refs.feedback.innerHTML = '💡 ' + m.hint;
+          if (opts.onHint) { try { opts.onHint(m); } catch (e) { console.error(e); } }
         });
         actions.appendChild(refs.hintBtn);
       }
       actions.appendChild(el('span', { class: 'grow' }));
       if (m.type === 'task' && m.manual) {
-        refs.checkBtn = el('button', { class: 'btn btn-primary btn-sm', html: '✔ 확인하기' });
+        refs.checkBtn = el('button', { class: 'btn btn-primary btn-sm', type: 'button', html: '✔ 확인하기' });
         refs.checkBtn.addEventListener('click', manualCheck);
         actions.appendChild(refs.checkBtn);
       }
-      refs.nextBtn = el('button', { class: 'btn btn-good btn-sm', html: '다음 미션 →', hidden: true });
+      refs.nextBtn = el('button', { class: 'btn btn-good btn-sm', type: 'button', html: '다음 미션 →', hidden: true });
       refs.nextBtn.addEventListener('click', next);
       actions.appendChild(refs.nextBtn);
       card.appendChild(actions);
 
-      const foot = el('div', { class: 'game-foot' }, [
-        el('span', { text: '전체 ' + (idx + 1) + ' / ' + flat.length }),
-        el('button', { text: '↺ 처음부터', onclick: restartConfirm }),
-      ]);
-      bodyMission.append(head, dots, card, foot);
+      bodyMission.append(stepper(m._level), head, dots, card, footer());
 
       opts.onMissionStart && opts.onMissionStart(m);
       if (m.setup) { try { m.setup(); } catch (e) { console.error(e); } }
@@ -434,8 +580,8 @@
     function points() { return Math.max(40, 100 - wrong * 25 - (hintUsed ? 20 : 0)); }
 
     function succeed() {
-      if (state !== 'active') return;
-      state = 'success';
+      if (phase !== 'active') return;
+      phase = 'success';
       const m = flat[idx];
       const pts = points();
       score += pts;
@@ -449,14 +595,18 @@
       if (refs.hintBtn) refs.hintBtn.hidden = true;
       const isLast = idx === flat.length - 1;
       const levelEnd = isLast || flat[idx + 1]._level !== m._level;
-      refs.nextBtn.innerHTML = isLast ? '🏆 결과 보기' : levelEnd ? '레벨 완료! →' : '다음 미션 →';
+      refs.nextBtn.innerHTML = isLast ? '🏆 결과 보기' : levelEnd ? '✔ ' + (m._level + 1) + '단계 완료!' : '다음 미션 →';
       refs.nextBtn.hidden = false;
       const sp = bodyMission.querySelector('.score-pill');
       if (sp) sp.textContent = '점수 ' + score;
       const r = refs.card.getBoundingClientRect();
       confetti({ count: 50, x: r.left + r.width / 2, y: r.top + 40 });
       // 진행 상황 즉시 저장 (새로고침해도 다음 미션부터 이어서)
-      if (levelEnd) setStars(levelStars(m._level));
+      if (levelEnd) {
+        setStars(levelStars(m._level));
+        if (m._level + 1 > rec.levelsDone) { rec.levelsDone = m._level + 1; notesFresh = m._level; }
+        if (hasNotes) tabConcept.innerHTML = '📘 배운 내용 <span style="color:var(--good)">●</span>';
+      }
       if (isLast) {
         finalScore = score;
         rec.best = Math.max(rec.best || 0, score);
@@ -466,7 +616,7 @@
         rec.cursor = idx + 1; rec.score = score;
       }
       Store.saveSim(simId, rec);
-      setTimeout(() => refs.nextBtn && refs.nextBtn.focus({ preventScroll: true }), 50);
+      setTimeout(() => { if (refs.nextBtn) { refs.nextBtn.focus({ preventScroll: true }); refs.nextBtn.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } }, 80);
     }
 
     function fail(msg) {
@@ -478,7 +628,7 @@
     }
 
     function answer(i, btn) {
-      if (state !== 'active') return;
+      if (phase !== 'active') return;
       const m = flat[idx];
       if (i === m.answer) {
         btn.classList.add('right');
@@ -492,7 +642,7 @@
     }
 
     function manualCheck() {
-      if (state !== 'active') return;
+      if (phase !== 'active') return;
       Sound.click();
       const m = flat[idx];
       let r;
@@ -503,64 +653,96 @@
     function next() {
       Sound.click();
       const m = flat[idx];
+      const li = m._level;
       const isLast = idx === flat.length - 1;
-      const levelEnd = isLast || flat[idx + 1]._level !== m._level;
-      if (levelEnd) {
-        const stars = levelStars(m._level);
-        if (isLast) { complete(); return; }
-        idx++;
-        persist();
-        Sound.level();
-        confetti({ count: 140 });
-        modal({
-          icon: '🎊',
-          stars: stars,
-          title: 'LEVEL ' + (m._level + 1) + ' 클리어!',
-          html: '<b>' + levels[m._level].title + '</b> 완료!<br>현재 점수 <b>' + score + '점</b><br><br>다음: <b>LEVEL ' + (m._level + 2) + ' · ' + levels[m._level + 1].title + '</b>',
-          buttons: [{ label: '다음 레벨 시작 →', primary: true, onClick: render }],
-          dismissible: false,
-        });
-        return;
-      }
+      const levelEnd = isLast || flat[idx + 1]._level !== li;
+      if (!levelEnd) { idx++; renderMission(); return; }
+      if (isLast) { complete(); return; }
       idx++;
-      render();
+      persist();
+      Sound.level();
+      confetti({ count: 140 });
+      const lv = levels[li], nx = levels[li + 1];
+      const tools = (nx.features || []).filter((f) => labels[f]);
+      modal({
+        icon: lv.icon || '🎊',
+        stars: rec.stars,
+        title: (li + 1) + '단계 완료!',
+        html: '<b>' + lv.title + '</b>을(를) 마쳤어요. 현재 점수 <b>' + score + '점</b>' +
+          (lv.recap ? '<div class="learned"><b class="k">✏️ 이번 단계에서 배운 것</b>' + lv.recap + '</div>' : '') +
+          '<div class="next-step">➡️ <b>다음: ' + (li + 2) + '단계 · ' + nx.title + '</b>' +
+          (tools.length ? '<div style="margin-top:6px">' + tools.map((f) => '<span class="tool-chip">' + labels[f] + '</span>').join('') + '</div>' : '') + '</div>',
+        buttons: [{ label: '다음 단계로 →', primary: true, onClick: () => renderIntro(li + 1, true) }],
+        dismissible: false,
+      });
     }
 
     function complete() {
-      state = 'complete';
+      phase = 'complete';
+      free = true;
+      applyFeatures(allFeatures, false);
       idx = 0; score = 0;
       Sound.level();
       confetti({ count: 200 });
       const max = flat.length * 100;
       bodyMission.innerHTML = '';
+      bodyMission.appendChild(stepper(-1));
       bodyMission.appendChild(el('div', { class: 'game-complete' }, [
         el('div', { class: 'big', text: '🏆' }),
         el('div', { class: 'modal-stars star-meter', style: 'font-size:34px;justify-content:center;display:flex', html: starsHTML(3) }),
-        el('h3', { text: '모든 미션 완료!' }),
-        el('p', { html: '최종 점수 <b>' + finalScore + '</b> / ' + max + '점<br>최고 기록 <b>' + rec.best + '점</b>' + (opts.badge ? '<br>획득한 칭호: <b>🏅 ' + opts.badge + '</b>' : '') }),
+        el('h3', { text: '모든 단계 완료!' }),
+        el('p', { html: '최종 점수 <b>' + finalScore + '</b> / ' + max + '점 · 최고 기록 <b>' + rec.best + '점</b>' + (opts.badge ? '<br>획득한 칭호: <b>🏅 ' + opts.badge + '</b>' : '') + '<br><br>🔓 이제 <b>모든 도구</b>가 열렸어요. 자유롭게 탐구해 보세요!<br>위 단계 번호를 누르면 원하는 단계를 다시 할 수 있어요.' }),
         el('div', { class: 'mission-actions', style: 'justify-content:center' }, [
-          el('button', { class: 'btn', html: '↺ 다시 도전', onclick: () => { Sound.click(); render(); } }),
+          el('button', { class: 'btn', type: 'button', html: '📘 배운 내용', onclick: () => { Sound.click(); showTab('concept'); } }),
+          el('button', { class: 'btn', type: 'button', html: '↺ 처음부터', onclick: () => { Sound.click(); free = false; score = 0; renderIntro(0, false); } }),
           el('a', { class: 'btn btn-primary', href: opts.homeHref || '../../index.html', html: '다른 실험 하러 가기' }),
         ]),
       ]));
       modal({
-        icon: '🏆', stars: 3, title: '모든 미션 완료!',
-        html: '최종 점수 <b>' + finalScore + '점</b>' + (opts.badge ? '<br>칭호 <b>🏅 ' + opts.badge + '</b> 획득!' : '') + '<br><br>📘 <b>핵심 원리</b> 탭에서 배운 내용을 정리해 보세요.',
-        buttons: [{ label: '핵심 원리 보기', onClick: () => showTab('concept') }, { label: '확인', primary: true }],
+        icon: '🏆', stars: 3, title: '모든 단계 완료!',
+        html: '최종 점수 <b>' + finalScore + '점</b>' + (opts.badge ? '<br>칭호 <b>🏅 ' + opts.badge + '</b> 획득!' : '') + '<br><br>📘 <b>배운 내용</b>에 단계별 정리가 모두 모였어요.',
+        buttons: [{ label: '배운 내용 보기', onClick: () => showTab('concept') }, { label: '자유 탐구하기', primary: true }],
       });
       opts.onComplete && opts.onComplete(finalScore);
     }
 
     function restartConfirm() {
       modal({
-        icon: '↺', title: '처음부터 다시 할까요?', html: '현재 진행 중인 점수가 초기화됩니다.<br>(획득한 별은 그대로 남아요)',
-        buttons: [{ label: '취소' }, { label: '처음부터', primary: true, onClick: () => { idx = 0; score = 0; render(); } }],
+        icon: '↺', title: '처음부터 다시 할까요?', html: '현재 진행 중인 점수가 초기화됩니다.<br>(획득한 별과 열린 단계는 그대로 남아요)',
+        buttons: [{ label: '취소' }, { label: '처음부터', primary: true, onClick: () => { free = false; score = 0; renderIntro(0, false); } }],
       });
+    }
+
+    /* ---- 배운 내용(공책) ---- */
+    function renderNotes() {
+      if (!hasNotes) { bodyConcept.innerHTML = opts.concept || ''; return; }
+      bodyConcept.innerHTML = '';
+      const cur = phase === 'complete' ? -1 : flat[idx]._level;
+      levels.forEach((lv, i) => {
+        const done = free || i < rec.levelsDone;
+        if (done) {
+          bodyConcept.appendChild(el('div', { class: 'note-step' + (i === notesFresh ? ' fresh' : '') }, [
+            el('div', { class: 'ns-head' }, [el('span', { class: 'n', text: String(i + 1) }), el('span', { html: lv.title })]),
+            el('div', { html: lv.summary || '' }),
+          ]));
+        } else if (i === cur) {
+          bodyConcept.appendChild(el('div', { class: 'note-step current' }, [
+            el('div', { class: 'ns-head' }, [el('span', { class: 'n', text: String(i + 1) }), el('span', { html: lv.title })]),
+            el('div', { class: 'ns-sub', text: '✏️ 지금 공부 중이에요. 이 단계를 마치면 정리가 여기에 적혀요.' }),
+          ]));
+        } else {
+          bodyConcept.appendChild(el('div', { class: 'note-step locked' }, [
+            el('div', { class: 'ns-head' }, [el('span', { class: 'n', text: String(i + 1) }), el('span', { text: '🔒 ' + lv.title })]),
+          ]));
+        }
+      });
+      if (opts.concept && (free || rec.cleared)) bodyConcept.appendChild(el('div', { html: opts.concept }));
+      notesFresh = -1;
     }
 
     // 실행형 미션 자동 확인 루프
     loop(() => {
-      if (state !== 'active') return;
+      if (phase !== 'active') return;
       const m = flat[idx];
       if (!m) return;
       if (m.status) {
@@ -584,14 +766,22 @@
       }
     });
 
-    render();
-
-    return {
+    const api = {
+      has, isNew,
       current: () => flat[idx],
-      isActive: (m) => state === 'active' && flat[idx] === m,
+      isActive: (m) => phase === 'active' && flat[idx] === m,
       showTab,
       get index() { return idx; },
+      get level() { return flat[idx] ? flat[idx]._level : 0; },
+      get phase() { return phase; },
+      get free() { return free; },
     };
+
+    // 시작: 단계의 첫 미션이면 단계 소개부터, 중간이면 이어서
+    if (flat[idx]._index === 0) renderIntro(flat[idx]._level, false);
+    else { applyFeatures(featuresUpTo(flat[idx]._level), false); renderMission(); }
+
+    return api;
   }
 
   global.SciSim = {

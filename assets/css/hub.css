@@ -36,7 +36,7 @@
   background: var(--surface); box-shadow: var(--shadow); display: flex; align-items: center; gap: 12px;
   border: 2px solid transparent; transition: transform .12s, border-color .15s, box-shadow .15s;
 }
-.grade-tab:hover { transform: translateY(-2px); }
+.grade-tab:active { transform: scale(.98); }
 .grade-tab .gnum {
   font-family: var(--font-display); font-size: 26px; width: 52px; height: 52px; border-radius: 14px; flex: none;
   display: grid; place-items: center; background: var(--surface-2); color: var(--muted);
@@ -53,7 +53,7 @@
   flex: 1; min-width: 240px; display: flex; align-items: center; gap: 8px; background: var(--surface);
   border: 1px solid var(--line); border-radius: 999px; padding: 0 16px; box-shadow: var(--shadow);
 }
-.search input { border: 0; outline: 0; background: transparent; flex: 1; padding: 12px 0; font-size: 15px; min-width: 0; }
+.search input { border: 0; outline: 0; background: transparent; flex: 1; padding: 14px 0; font-size: 16px; min-width: 0; }
 .search:focus-within { border-color: var(--primary); }
 
 .unit-list { display: flex; flex-direction: column; gap: 12px; }
@@ -70,7 +70,7 @@
 .unit-name h3 { font-size: 19px; }
 .unit-name .chip { margin-top: 4px; }
 .unit-count { font-size: 13px; font-weight: 700; color: var(--muted); }
-.unit-sims { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 12px; margin-top: 12px; }
+.unit-sims { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 12px; margin-top: 12px; }
 .unit-empty {
   margin-top: 10px; padding: 10px 14px; border-radius: 12px; background: var(--surface-2); color: var(--muted);
   font-size: 14px; font-weight: 600; border: 1px dashed var(--line);
@@ -82,7 +82,8 @@
   display: flex; gap: 12px; padding: 12px; border-radius: 14px; text-decoration: none; color: var(--ink);
   border: 2px solid var(--line); background: var(--surface); transition: transform .12s, border-color .15s, box-shadow .15s;
 }
-.sim-card:hover { transform: translateY(-3px); border-color: var(--subject); box-shadow: 0 10px 24px rgba(20,40,80,.12); }
+@media (hover: hover) { .sim-card:hover { transform: translateY(-3px); border-color: var(--subject); box-shadow: 0 10px 24px rgba(20,40,80,.12); } }
+.sim-card:active { transform: scale(.985); border-color: var(--subject); }
 .sim-card:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
 .sim-icon {
   flex: none; width: 64px; height: 64px; border-radius: 16px; display: grid; place-items: center; font-size: 34px;
@@ -97,7 +98,7 @@
 .sim-stars { font-size: 17px; letter-spacing: 1px; }
 .sim-stars .s { color: #d5dbe5; }
 .sim-stars .s.on { color: var(--star); }
-.play { font-weight: 800; font-size: 13.5px; color: #fff; background: var(--subject); padding: 4px 12px; border-radius: 999px; }
+.play { font-weight: 800; font-size: 15px; color: #fff; background: var(--subject); padding: 8px 16px; border-radius: 999px; }
 .done-badge { font-size: 12px; font-weight: 800; color: var(--good); background: var(--good-soft); padding: 2px 8px; border-radius: 99px; }
 
 .search-head { font-weight: 800; color: var(--muted); margin: 4px 2px; }
@@ -122,4 +123,27 @@
   .grade-tab .gprog { margin: 0; text-align: center; }
   .hero { padding: 26px 16px 58px; }
   .unit-sims { grid-template-columns: 1fr; }
+}
+
+/* 학습 단계 경로 */
+.path { list-style: none; margin: 6px 0 2px; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 2px; align-items: center; }
+.path li { display: inline-flex; align-items: center; gap: 4px; font-size: 12.5px; font-weight: 700; color: var(--muted); padding: 2px 8px 2px 3px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--line); }
+.path li + li::before { content: "›"; margin: 0 4px 0 -2px; color: #b6c0cf; order: -1; }
+.path li { position: relative; }
+.path .pn { width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; background: #e3e9f2; color: var(--muted); flex: none; }
+.path li.done { color: #0b6b39; background: var(--good-soft); border-color: transparent; }
+.path li.done .pn { background: var(--good); color: #fff; }
+.path li.now { color: var(--ink); border-color: var(--subject); }
+.path li.now .pn { background: var(--subject); color: #fff; }
+.prereq { font-size: 13px; color: #6b4e00; background: var(--warn-soft); border-radius: 10px; padding: 5px 10px; margin-top: 4px; }
+.step-count { font-size: 13px; font-weight: 700; color: var(--muted); margin-left: auto; margin-right: 8px; }
+.sim-icon { width: 72px; height: 72px; font-size: 38px; }
+.sim-info h4 { font-size: 18px; }
+.sim-info p { font-size: 14px; }
+.link-btn { min-height: 40px; }
+.switch { min-height: 44px; }
+@media (max-width: 760px) { .unit-sims { grid-template-columns: 1fr; } }
+@media (max-width: 900px) {
+  .grade-tab .gtext span { display: none; }
+  .grade-tab .gprog { white-space: nowrap; }
 }

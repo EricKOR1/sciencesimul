@@ -52,18 +52,37 @@
     });
   }
 
+  function findSim(id) {
+    for (const g of CAT.grades) for (const u of g.units) for (const s of u.sims) if (s.id === id) return { sim: s, grade: g };
+    return null;
+  }
+
   function simCard(sim, unit, grade) {
     const rec = Store.allSims()[sim.id] || {};
-    const subj = CAT.subjects[unit.subject];
+    const steps = sim.steps || [];
+    const done = rec.cleared ? steps.length : Math.min(steps.length, rec.levelsDone || 0);
+    const started = rec.cursor > 0 || done > 0;
+    const path = steps.length ? el('ol', { class: 'path', 'aria-label': '학습 단계' }, steps.map((t, i) =>
+      el('li', { class: i < done ? 'done' : i === done && started && !rec.cleared ? 'now' : '' }, [
+        el('span', { class: 'pn', text: i < done ? '✓' : String(i + 1) }), el('span', { text: t }),
+      ]))) : null;
+    let prereq = null;
+    if (sim.prereq) {
+      const p = findSim(sim.prereq.id);
+      if (p) prereq = el('div', { class: 'prereq', html: '🔗 먼저 하면 좋아요: <b>' + p.sim.icon + ' ' + p.sim.title + '</b> (' + sim.prereq.why + ')' });
+    }
+    const label = rec.cleared ? '↺ 다시 하기' : started ? '▶ 이어하기' : '▶ 시작';
     return el('a', { class: 'sim-card', href: sim.path, 'data-subject': unit.subject, 'aria-label': sim.title + ' 시작하기' }, [
       el('div', { class: 'sim-icon', text: sim.icon }),
       el('div', { class: 'sim-info' }, [
         el('h4', {}, [el('span', { text: sim.title }), rec.cleared ? el('span', { class: 'done-badge', text: '완료' }) : null]),
         el('p', { text: sim.desc }),
-        el('div', { class: 'sim-tags' }, sim.tags.map((t) => el('span', { class: 'chip', text: t }))),
+        path,
+        prereq,
         el('div', { class: 'sim-meta' }, [
           el('span', { class: 'sim-stars', html: starsHTML(rec.stars || 0), title: '획득한 별 ' + (rec.stars || 0) + '개' }),
-          el('span', { class: 'play', text: rec.cursor > 0 && !rec.cleared ? '▶ 이어하기' : '▶ 시작' }),
+          steps.length ? el('span', { class: 'step-count', text: done + ' / ' + steps.length + '단계' }) : null,
+          el('span', { class: 'play', text: label }),
         ]),
       ]),
     ]);

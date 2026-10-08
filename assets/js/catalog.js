@@ -26,6 +26,7 @@ window.SCI_CATALOG = {
           sims: [
             {
               id: 'm1-gas-law', path: 'sims/m1-gas-law/index.html', icon: '🎈',
+              steps: ['입자 운동', '압력', '보일 법칙', '그래프', '샤를 법칙', '생활 적용'],
               title: '기체 압력 탐험대',
               desc: '피스톤을 누르고 온도를 바꾸며 기체 입자의 운동으로 압력과 부피의 관계를 알아봐요.',
               tags: ['보일 법칙', '샤를 법칙', '입자 운동'],
@@ -37,6 +38,7 @@ window.SCI_CATALOG = {
           sims: [
             {
               id: 'm1-moon-phase', path: 'sims/m1-moon-phase/index.html', icon: '🌙',
+              steps: ['햇빛 반사', '지구에서', '위상 변화', '관측', '일식·월식', '궤도 기울기'],
               title: '달 모양 탐정',
               desc: '달을 공전 궤도 위에서 움직여 보며 달의 위상 변화와 일식·월식이 일어나는 원리를 찾아요.',
               tags: ['달의 위상', '공전', '일식·월식'],
@@ -56,6 +58,7 @@ window.SCI_CATALOG = {
           sims: [
             {
               id: 'm2-build-atom', path: 'sims/m2-build-atom/index.html', icon: '⚛️',
+              steps: ['원자 구조', '중성', '원소', '이온', '이온식'],
               title: '원자·이온 공방',
               desc: '양성자와 전자를 넣고 빼며 원자를 만들고, 전자를 잃거나 얻어 이온이 되는 과정을 체험해요.',
               tags: ['원자 모형', '원소', '이온'],
@@ -69,6 +72,8 @@ window.SCI_CATALOG = {
           sims: [
             {
               id: 'm2-ohms-law', path: 'sims/m2-ohms-law/index.html', icon: '💡',
+              steps: ['회로', '전류', '전압', '그래프', '저항', '전력'],
+              prereq: { id: 'm2-build-atom', why: '전자의 개념' },
               title: '전류 조종사',
               desc: '전압과 저항을 조절해 전구를 원하는 밝기로 켜며 전압·전류·저항의 관계(옴의 법칙)를 찾아요.',
               tags: ['옴의 법칙', '전류', '저항'],
@@ -89,6 +94,7 @@ window.SCI_CATALOG = {
           sims: [
             {
               id: 'm3-energy-coaster', path: 'sims/m3-energy-coaster/index.html', icon: '🎢',
+              steps: ['위치E', '운동E', '보존', '설계', '마찰'],
               title: '에너지 롤러코스터',
               desc: '레일 높이를 바꾸며 수레를 달리게 해, 위치 에너지와 운동 에너지가 서로 전환되는 모습을 관찰해요.',
               tags: ['위치 에너지', '운동 에너지', '역학적 에너지 보존'],
@@ -101,6 +107,7 @@ window.SCI_CATALOG = {
           sims: [
             {
               id: 'm3-mendel', path: 'sims/m3-mendel/index.html', icon: '🫛',
+              steps: ['대립 형질', '우열', '유전자', '분리', '예측', '검정 교배', '독립'],
               title: '완두콩 유전 연구소',
               desc: '멘델처럼 완두를 교배해 자손의 형질을 예측하고, 우열의 원리와 분리의 법칙을 발견해요.',
               tags: ['멘델', '우열의 원리', '분리의 법칙'],
