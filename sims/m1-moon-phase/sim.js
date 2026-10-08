@@ -1,49 +1,62 @@
 /* =========================================================
-   중1 Ⅶ. 태양계 - 달 모양 탐정
-   달의 위상 변화(삭 → 초승달 → 상현달 → 망 → 하현달 → 그믐달)와 일식·월식
+   중1 Ⅶ. 태양계 - 달의 위상 변화  [9과07-04]
+   탐구 흐름(4단계):
+   ① 관찰: 한 달 동안 달의 모양(음력 관측 기록장)
+   ② 모형: 햇빛을 받는 달 — 태양 쪽 절반이 밝고, 지구에서는 지구 쪽 절반만 보임
+   ③ 설명: 공전 위치와 위상 — 삭·상현·망·하현, 초승달 / 지구 그림자 오개념
+   ④ 적용: 음력 날짜와 관측 시각·방향
    θ : 지구→태양 방향을 0°로 하여 시계 반대 방향(공전 방향)으로 잰 달의 위치 각
-       밝게 보이는 부분 = (1 − cos θ) / 2
+       지구에서 밝게 보이는 부분 = (1 − cos θ) / 2
+   (일식·월식은 다음 차시 m1-eclipse에서 다룹니다)
    ========================================================= */
 (function () {
   'use strict';
-  const { $, Sound, toast } = SciSim;
+  const { $, Sound, clamp } = SciSim;
   const DEG = Math.PI / 180;
   const TAU = Math.PI * 2;
   const FONT = '"Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif';
   const DISPLAY = '"Jua", ' + FONT;
 
-  /* ---------- 기하 (두 화면 배치에서 공통, 실제 비율과 다름) ---------- */
-  const GEO = { R: 195, rE: 20, rM: 10, h: 14 }; // 궤도 반지름, 지구·달 반지름, 달 위치에서의 지구 본그림자 반폭
-  GEO.Lu = GEO.rE * GEO.R / (GEO.rE - GEO.h);    // 지구 본그림자 원뿔의 길이
-  // 달의 본그림자(원뿔, 길이 R)가 지구 표면에 닿는 범위 → 일식
-  const ZONE_S = Math.asin((GEO.rE + GEO.rM * GEO.rE / GEO.R) / GEO.R) / DEG;
-  // 달이 지구 본그림자에 조금이라도 들어가는 범위 → 월식
-  const ZONE_L = Math.asin((GEO.h + GEO.rM) / GEO.R) / DEG;
-  const TOTAL_S = 1.0;   // 개기 일식으로 보여 줄 범위(°)
-  const SNAP = 1.2;      // 일식·월식 모드에서 끌 때 정확한 일직선에 살짝 달라붙는 범위(°)
+  const R = 195, RE = 20, RM = 10;          // 궤도 반지름, 지구·달 반지름 (가상 좌표, 실제 비율과 다름)
+  const SPOTS = [45, 135, 225, 315];         // 2단계: 달을 옮겨 볼 자리
+  const SPOT_TOL = 25;
+  const FIVE = ['wxc', 'fq', 'full', 'lq', 'wnc'];
+  const FOUR = ['new', 'fq', 'full', 'lq'];
 
   const S = {
-    theta: 40, playing: false, speed: 2,
-    ghost: false, sight: true, eclipse: false,
+    theta: 0, playing: false, ghost: false,
+    day: 3, obs: new Set([3]), found: new Set(), logFound: false,   // 1단계: 관측 기록장
     dragging: false, target: null, interacted: false,
+    spots: false, visit: new Set(),                                 // 2단계
+    four: false, made: new Set(), holdKey: null, holdT: 0,          // 3단계
   };
+
+  let FEAT = new Set();          // 열린 도구
+  const on = (f) => FEAT.has(f);
+  let game = null;
+  const isNew = (f) => !!game && game.isNew(f);
+  const modelOn = () => on('model');
+  const ghostOn = () => on('marks') && S.ghost;
 
   const norm = (a) => ((a % 360) + 360) % 360;
   const signed = (a) => { a = norm(a); return a > 180 ? a - 360 : a; };
   const litFrac = (th) => (1 - Math.cos(th * DEG)) / 2;
   const lunarDay = (th) => Math.floor(norm(th) / 360 * 29.5) + 1;
+  const dayTheta = (d) => norm((d - 0.5) / 29.5 * 360);      // 음력 d일 무렵 달의 위치 (lunarDay의 역)
   const inArc = (th, lo, hi) => Math.abs(signed(th - (lo + hi) / 2)) <= (hi - lo) / 2;
+  const spotAt = (th) => SPOTS.findIndex((a) => Math.abs(signed(th - a)) <= SPOT_TOL);
+  const curTheta = () => (modelOn() ? S.theta : dayTheta(S.day));
 
-  /* ---------- 위상 이름 (허용 범위) ---------- */
+  /* ---------- 위상 이름 · 모양 · 관측 ---------- */
   const PH = {
-    new:  { name: '삭', short: '삭', sub: '태양 쪽에 있어 보이지 않아요' },
-    wxc:  { name: '초승달', short: '초승달', sub: '초저녁 서쪽 하늘에서 보여요' },
-    fq:   { name: '상현달', short: '상현달', sub: '저녁 남쪽 하늘에서 보여요' },
-    wxg:  { name: '볼록한 달', short: '볼록한 달', sub: '상현달과 보름달 사이' },
-    full: { name: '보름달 (망)', short: '보름달(망)', sub: '저녁에 떠서 밤새 보여요' },
-    wng:  { name: '볼록한 달', short: '볼록한 달', sub: '보름달과 하현달 사이' },
-    lq:   { name: '하현달', short: '하현달', sub: '새벽 남쪽 하늘에서 보여요' },
-    wnc:  { name: '그믐달', short: '그믐달', sub: '새벽 동쪽 하늘에서 보여요' },
+    new:  { name: '삭', short: '삭', look: '달이 보이지 않아요', sky: '태양과 함께 떠서 보이지 않아요' },
+    wxc:  { name: '초승달', short: '초승달', look: '오른쪽이 가늘게 밝아요', sky: '초저녁 서쪽 하늘에서 보여요' },
+    fq:   { name: '상현달', short: '상현달', look: '오른쪽 반이 밝아요', sky: '초저녁 남쪽 하늘에서 보여요' },
+    wxg:  { name: '볼록한 달', short: '볼록한 달', look: '상현달과 보름달 사이', sky: '초저녁 남동쪽 하늘에서 보여요' },
+    full: { name: '보름달 (망)', short: '보름달', look: '둥근 면 전체가 밝아요', sky: '초저녁 동쪽에서 떠서 밤새 보여요' },
+    wng:  { name: '볼록한 달', short: '볼록한 달', look: '보름달과 하현달 사이', sky: '새벽 남서쪽 하늘에서 보여요' },
+    lq:   { name: '하현달', short: '하현달', look: '왼쪽 반이 밝아요', sky: '새벽 남쪽 하늘에서 보여요' },
+    wnc:  { name: '그믐달', short: '그믐달', look: '왼쪽이 가늘게 밝아요', sky: '새벽 동쪽 하늘에서 보여요' },
   };
   function phaseKey(th) {
     th = norm(th);
@@ -57,60 +70,42 @@
     return 'wnc';
   }
 
-  function circleOverlap(r1, r2, d) {
-    if (d >= r1 + r2) return 0;
-    if (d <= Math.abs(r1 - r2)) return Math.PI * Math.min(r1, r2) ** 2;
-    const a = r1 * r1 * Math.acos((d * d + r1 * r1 - r2 * r2) / (2 * d * r1));
-    const b = r2 * r2 * Math.acos((d * d + r2 * r2 - r1 * r1) / (2 * d * r2));
-    const c = 0.5 * Math.sqrt((-d + r1 + r2) * (d + r1 - r2) * (d - r1 + r2) * (d + r1 + r2));
-    return a + b - c;
-  }
-
-  /* 일식·월식 상태 (일식·월식 모드일 때만) */
-  function eclipseState() {
-    if (!S.eclipse) return null;
-    const ts = signed(S.theta);
-    if (Math.abs(ts) <= ZONE_S) {
-      const k = Math.abs(ts) <= TOTAL_S ? 0 : (Math.abs(ts) - TOTAL_S) / (ZONE_S - TOTAL_S);
-      const D = 2 * k; // 태양 반지름 단위의 중심 사이 거리 (달과 태양은 하늘에서 크기가 비슷)
-      // 삭 이전(θ<0)에는 달이 태양의 서쪽(오른쪽), 이후에는 동쪽(왼쪽)
-      return { type: 'solar', ts, D, dir: ts < 0 ? 1 : -1, cover: circleOverlap(1, 1, D) / Math.PI, total: Math.abs(ts) <= TOTAL_S };
-    }
-    const dl = signed(S.theta - 180);
-    const d = Math.abs(GEO.R * Math.sin(dl * DEG));
-    if (Math.abs(dl) < 90 && d < GEO.h + GEO.rM) {
-      const D = d / GEO.rM, Rs = GEO.h / GEO.rM; // 달 반지름 단위
-      // 망 이전에는 달이 그림자의 서쪽(오른쪽) → 그림자는 달의 왼쪽(동쪽 가장자리부터 어두워짐)
-      return { type: 'lunar', dl, d, D, Rs, dir: dl < 0 ? -1 : 1, cover: circleOverlap(1, Rs, D) / Math.PI, total: d <= GEO.h - GEO.rM };
-    }
-    return null;
-  }
-
-  /* ---------- 화면 배치 ---------- */
+  /* ---------- 화면 배치 ----------
+     wide: 태블릿 — 왼쪽 [관측 기록장 / 위에서 본 모형], 오른쪽 '지구에서 본 달' 창
+     tall: 휴대폰 — 위아래로 쌓음 */
   const LAYOUTS = {
-    wide: { vw: 800, vh: 520, reserve: 250, fs: 1, main: { x: 0, y: 0, w: 544, h: 520 }, cx: 266, cy: 258, inset: { x: 552, y: 8, w: 240, h: 504 }, col: true },
-    tall: { vw: 520, vh: 752, reserve: 250, fs: 1.2, main: { x: 0, y: 0, w: 520, h: 530 }, cx: 250, cy: 252, inset: { x: 8, y: 536, w: 504, h: 208 }, col: false },
+    wide: { vw: 800, vh: 600, fs: 1, col: true, main: { x: 0, y: 0, w: 540, h: 600 }, cx: 266, cy: 302, panel: { x: 548, y: 8, w: 244, h: 584 } },
+    tall: { vw: 520, vh: 846, fs: 1.2, col: false, main: { x: 0, y: 0, w: 520, h: 540 }, cx: 250, cy: 270, panel: { x: 8, y: 548, w: 504, h: 290 } },
   };
-  function insetGeo(L) {
-    const I = L.inset;
+  function panelGeo(L) {
+    const P = L.panel;
     if (L.col) {
-      const cx = I.x + I.w / 2;
+      const cx = P.x + P.w / 2;
       return {
-        tx: cx, ty: I.y + 30, sy: I.y + 48, align: 'center',
-        dx: cx, dy: I.y + 154, dr: 70,
-        nx: cx, ny: I.y + 286, n2y: I.y + 310, dateY: I.y + 340,
-        barX: I.x + 22, barY: I.y + 382, barW: I.w - 44, barLabelY: I.y + 372,
-        capY: I.y + 434, stripX: cx - 94.5, stripY: I.y + 462, stripGap: 27, stripR: 11,
+        tx: cx, ty: P.y + 28, sy: P.y + 48, align: 'center',
+        dx: cx, dy: P.y + 148, dr: 64,
+        nx: cx, ny: P.y + 266, n2y: P.y + 292, dateY: P.y + 320,
+        barX: P.x + 20, barW: P.w - 40, barLabelY: P.y + 352, barY: P.y + 360,
+        capY: P.y + 410, strip: [0, 1, 2, 3, 4, 5, 6, 7].map((k) => ({ x: cx - 81 + (k % 4) * 54, y: P.y + (k < 4 ? 448 : 524) })), sr: 15, labDy: 33,
+        qbox: { x: P.x + 12, y: P.y + 392, w: P.w - 24, h: 180 },
+        textX: P.x + 10, textW: P.w - 20,
       };
     }
-    const x0 = I.x + 168;
+    const x0 = P.x + 180;
     return {
-      tx: I.x + 16, ty: I.y + 28, sy: I.y + 48, align: 'left',
-      dx: I.x + 84, dy: I.y + 132, dr: 56,
-      nx: x0, ny: I.y + 92, n2y: I.y + 118, dateY: I.y + 146,
-      barX: x0, barY: I.y + 160, barW: 190, barLabelY: null,
-      capY: null, stripX: x0 + 10, stripY: I.y + 192, stripGap: 30, stripR: 10,
+      tx: P.x + 16, ty: P.y + 30, sy: P.y + 52, align: 'left',
+      dx: P.x + 90, dy: P.y + 142, dr: 60,
+      nx: x0, ny: P.y + 100, n2y: P.y + 126, dateY: P.y + 152,
+      barX: x0, barW: 160, barLabelY: null, barY: P.y + 166,
+      capY: null, strip: [0, 1, 2, 3, 4, 5, 6, 7].map((k) => ({ x: P.x + 38 + k * 61, y: P.y + 236 })), sr: 16, labDy: 38,
+      qbox: { x: x0 - 8, y: P.y + 192, w: P.x + P.w - x0 - 4, h: 88 },
+      textX: x0 - 8, textW: P.x + P.w - x0,
     };
+  }
+  function calGeo(L) {
+    const M = L.main;
+    if (L.col) return { x0: M.x + 14, y0: M.y + 70, cw: (M.w - 28) / 7, ch: (M.h - 70 - 46) / 5, ty: M.y + 27, sy: M.y + 49, fy: M.y + M.h - 16 };
+    return { x0: M.x + 10, y0: M.y + 80, cw: (M.w - 20) / 7, ch: (M.h - 80 - 40) / 5, ty: M.y + 30, sy: M.y + 56, fy: M.y + M.h - 12 };
   }
 
   function rng(seed) {
@@ -134,9 +129,11 @@
     ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
   }
   function circle(ctx, x, y, r) { ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); }
+  const fnt = (L, px, weight) => (weight ? weight + ' ' : '') + Math.round(px * L.fs) + 'px ' + FONT;
+  function pillWidth(ctx, text, o) { ctx.font = o.font; return ctx.measureText(text).width + (o.pad || 9) * 2; }
   function pill(ctx, text, x, y, o) {
     o = o || {};
-    ctx.font = o.font || 'bold 12px ' + FONT;
+    ctx.font = o.font || 'bold 13px ' + FONT;
     const w = ctx.measureText(text).width, h = o.h || 22, pad = o.pad || 9;
     const bx = o.align === 'left' ? x : o.align === 'right' ? x - w - pad * 2 : x - w / 2 - pad;
     ctx.fillStyle = o.bg || 'rgba(6,10,26,.78)';
@@ -147,8 +144,18 @@
     ctx.textBaseline = 'alphabetic';
     return bx + w + pad * 2;
   }
-  // 화면 배치별 글자 크기 (세로 배치는 휴대폰용이라 조금 크게)
-  const F = (L, px, weight) => (weight ? weight + ' ' : '') + Math.round(px * L.fs) + 'px ' + FONT;
+  // 줄바꿈 글자 (한 줄 너비를 넘으면 낱말 단위로 줄을 나눔)
+  function wrapText(ctx, text, x, y, maxW, lh) {
+    const words = text.split(' ');
+    let line = '', yy = y;
+    words.forEach((w) => {
+      const test = line ? line + ' ' + w : w;
+      if (ctx.measureText(test).width > maxW && line) { ctx.fillText(line, x, yy); line = w; yy += lh; }
+      else line = test;
+    });
+    if (line) ctx.fillText(line, x, yy);
+    return yy;
+  }
   function sunIcon(ctx, x, y, r) {
     ctx.save();
     ctx.strokeStyle = '#ffd36b'; ctx.lineWidth = 1.6; ctx.lineCap = 'round';
@@ -159,8 +166,19 @@
     circle(ctx, x, y, r); ctx.fillStyle = '#ffd36b'; ctx.fill();
     ctx.restore();
   }
+  function starShape(ctx, x, y, r) {
+    ctx.beginPath();
+    for (let i = 0; i < 10; i++) {
+      const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? r * 0.45 : r;
+      const px = x + Math.cos(a) * rr, py = y + Math.sin(a) * rr;
+      if (i) ctx.lineTo(px, py); else ctx.moveTo(px, py);
+    }
+    ctx.closePath();
+  }
+  function checkMark(ctx, x, y, s) {
+    ctx.beginPath(); ctx.moveTo(x - s * 0.5, y); ctx.lineTo(x - s * 0.12, y + s * 0.4); ctx.lineTo(x + s * 0.55, y - s * 0.4); ctx.stroke();
+  }
   function drawStars(ctx, stars, t, alpha) {
-    if (alpha <= 0.01) return;
     stars.forEach((s) => {
       ctx.globalAlpha = alpha * (0.45 + 0.4 * Math.sin(t * s.k + s.p));
       ctx.fillStyle = '#dfe8ff';
@@ -168,20 +186,38 @@
     });
     ctx.globalAlpha = 1;
   }
-  function mix(c1, c2, t) {
-    const a = parseInt(c1.slice(1), 16), b = parseInt(c2.slice(1), 16);
-    const ch = (v, s) => (v >> s) & 255;
-    const m = (s) => Math.round(ch(a, s) + (ch(b, s) - ch(a, s)) * t);
-    return 'rgb(' + m(16) + ',' + m(8) + ',' + m(0) + ')';
+  // 새로 열린 도구 강조
+  const pulse = () => 0.5 + 0.5 * Math.sin(performance.now() / 160);
+  function newTag(ctx, L, rx, ty) {
+    ctx.font = fnt(L, 13, 'bold');
+    const tw = ctx.measureText('NEW').width + 16, th = Math.round(22 * L.fs);
+    ctx.fillStyle = '#0ea5e9'; roundRect(ctx, rx - tw, ty, tw, th, th / 2); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('NEW', rx - tw / 2, ty + th / 2 + 0.5); ctx.textBaseline = 'alphabetic';
+  }
+  function newRing(ctx, L, x, y, w, h) {
+    ctx.save();
+    ctx.strokeStyle = 'rgba(56,189,248,' + (0.35 + pulse() * 0.6) + ')'; ctx.lineWidth = 4;
+    roundRect(ctx, x - 4, y - 4, w + 8, h + 8, 14); ctx.stroke();
+    const th = Math.round(22 * L.fs);
+    newTag(ctx, L, x + w - 6, y - th - 6 >= 0 ? y - th - 6 : y + 6);
+    ctx.restore();
+  }
+  function newRingCircle(ctx, L, x, y, r) {
+    ctx.save();
+    ctx.strokeStyle = 'rgba(56,189,248,' + (0.35 + pulse() * 0.6) + ')'; ctx.lineWidth = 4;
+    circle(ctx, x, y, r + 2 * pulse()); ctx.stroke();
+    newTag(ctx, L, x + r * 0.71 + 40 * L.fs, y - r * 0.71 - 12 * L.fs);
+    ctx.restore();
   }
 
   /* 지구에서 본 달의 모양: 원점 기준, 오른쪽이 밝은 경우의 밝은 영역 (t: 0~180°) */
   function litPath(ctx, r, t) {
     const c = Math.cos(t * DEG), a = Math.max(0.001, r * Math.abs(c));
     ctx.beginPath();
-    ctx.arc(0, 0, r, -Math.PI / 2, Math.PI / 2, false);                      // 위 → 오른쪽 → 아래
-    if (c >= 0) ctx.ellipse(0, 0, a, r, 0, Math.PI / 2, -Math.PI / 2, true);  // 명암 경계가 오른쪽으로 볼록 (초승달 꼴)
-    else ctx.ellipse(0, 0, a, r, 0, Math.PI / 2, Math.PI * 1.5, false);        // 왼쪽으로 볼록 (볼록한 달 꼴)
+    ctx.arc(0, 0, r, -Math.PI / 2, Math.PI / 2, false);
+    if (c >= 0) ctx.ellipse(0, 0, a, r, 0, Math.PI / 2, -Math.PI / 2, true);
+    else ctx.ellipse(0, 0, a, r, 0, Math.PI / 2, Math.PI * 1.5, false);
     ctx.closePath();
   }
   const CRATERS = [[-0.36, -0.3, 0.17], [0.28, 0.36, 0.13], [0.42, -0.22, 0.1], [-0.08, 0.52, 0.09], [-0.52, 0.22, 0.12], [0.06, -0.06, 0.08], [0.2, -0.55, 0.07]];
@@ -218,7 +254,7 @@
     circle(ctx, x, y, r); ctx.strokeStyle = 'rgba(255,255,255,.65)'; ctx.lineWidth = 1.2; ctx.stroke();
     ctx.restore();
   }
-  function drawEarth(ctx, x, y, r) {
+  function drawEarth(ctx, L, x, y, r) {
     const ag = ctx.createRadialGradient(x, y, r * 0.9, x, y, r * 1.7);
     ag.addColorStop(0, 'rgba(120,180,255,.4)'); ag.addColorStop(1, 'rgba(120,180,255,0)');
     ctx.fillStyle = ag; circle(ctx, x, y, r * 1.7); ctx.fill();
@@ -233,41 +269,114 @@
     ctx.fillStyle = 'rgba(3,7,22,.72)'; ctx.fillRect(x - r - 1, y - r - 1, r + 1, r * 2 + 2); // 밤 (태양 반대쪽 반)
     ctx.restore();
     circle(ctx, x, y, r); ctx.strokeStyle = 'rgba(200,225,255,.6)'; ctx.lineWidth = 1; ctx.stroke();
-    ctx.font = 'bold 12px ' + FONT; ctx.textAlign = 'center';
-    ctx.fillStyle = '#06325f'; ctx.fillText('낮', x + r * 0.5, y + 4.5);
-    ctx.fillStyle = '#d4defc'; ctx.fillText('밤', x - r * 0.5, y + 4.5);
+    ctx.font = fnt(L, 13, 'bold'); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#06325f'; ctx.fillText('낮', x + r * 0.5, y + 1);
+    ctx.fillStyle = '#d4defc'; ctx.fillText('밤', x - r * 0.5, y + 1);
+    ctx.textBaseline = 'alphabetic';
   }
-
-  /* ---------- 메인 화면 (북극 위에서 내려다본 모습) ---------- */
-  function moonPos(L, th) {
-    th = th == null ? S.theta : th;
-    return { x: L.cx + GEO.R * Math.cos(th * DEG), y: L.cy - GEO.R * Math.sin(th * DEG) };
-  }
-  function drawMain(ctx, L, E, t) {
-    const M = L.main, cx = L.cx, cy = L.cy, R = GEO.R, right = M.x + M.w;
-    const m = moonPos(L);
-    ctx.save();
-    ctx.beginPath(); ctx.rect(M.x, M.y, M.w, M.h); ctx.clip();
-
-    const bg = ctx.createRadialGradient(cx, cy, 20, cx, cy, 300);
+  function spaceBg(ctx, L, M, cx, cy, t) {
+    const bg = ctx.createRadialGradient(cx, cy, 20, cx, cy, 340);
     bg.addColorStop(0, '#17264f'); bg.addColorStop(0.6, '#0e1838'); bg.addColorStop(1, '#070d1f');
     ctx.fillStyle = bg; ctx.fillRect(M.x, M.y, M.w, M.h);
     drawStars(ctx, L.starsMain, t, 1);
+  }
+
+  /* ---------- ① 관측 기록장 (음력 달력) ---------- */
+  function drawCalendar(ctx, L, t) {
+    const M = L.main, G = calGeo(L), fs = L.fs;
+    ctx.save();
+    ctx.beginPath(); ctx.rect(M.x, M.y, M.w, M.h); ctx.clip();
+    spaceBg(ctx, L, M, M.x + M.w / 2, M.y + M.h / 2, t);
+    ctx.textAlign = 'left'; ctx.fillStyle = '#e6eeff'; ctx.font = fnt(L, 16, 'bold');
+    ctx.fillText('📅 달 관측 기록장 (음력)', G.x0 + 2, G.ty);
+    ctx.font = fnt(L, 13); ctx.fillStyle = 'rgba(212,226,255,.75)';
+    ctx.fillText('같은 시각, 같은 장소에서 날마다 관측한 달의 모양', G.x0 + 2, G.sy);
+    const r = Math.min(G.cw, G.ch) * 0.27;
+    for (let d = 1; d <= 30; d++) {
+      const i = d - 1, x = G.x0 + (i % 7) * G.cw, y = G.y0 + Math.floor(i / 7) * G.ch;
+      const sel = d === S.day, seen = S.obs.has(d);
+      roundRect(ctx, x + 3, y + 3, G.cw - 6, G.ch - 6, 10);
+      ctx.fillStyle = sel ? 'rgba(94,234,212,.16)' : 'rgba(255,255,255,.05)'; ctx.fill();
+      ctx.strokeStyle = sel ? '#5eead4' : 'rgba(160,185,235,.22)'; ctx.lineWidth = sel ? 3 : 1; ctx.stroke();
+      ctx.textAlign = 'left'; ctx.font = fnt(L, 13, 'bold'); ctx.fillStyle = sel ? '#5eead4' : '#b9c8ee';
+      ctx.fillText(d + '일', x + 10, y + 21 * fs);
+      const mx = x + G.cw / 2, my = y + G.ch * 0.6;
+      if (seen) drawPhase(ctx, mx, my, r, dayTheta(d), { mini: true, dark: '#283150' });
+      else {
+        ctx.setLineDash([3, 4]); ctx.strokeStyle = 'rgba(160,185,235,.4)'; ctx.lineWidth = 1.2;
+        circle(ctx, mx, my, r); ctx.stroke(); ctx.setLineDash([]);
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = fnt(L, 16, 'bold'); ctx.fillStyle = 'rgba(190,205,240,.55)';
+        ctx.fillText('?', mx, my + 1); ctx.textBaseline = 'alphabetic';
+      }
+    }
+    ctx.textAlign = 'left'; ctx.font = fnt(L, 13, 'bold'); ctx.fillStyle = 'rgba(190,210,255,.85)';
+    ctx.fillText(S.obs.size >= 30 ? '✔ 한 달 동안의 관측 기록이 완성됐어요' : '👆 날짜 칸을 누르면 그날 밤의 달을 관측해요', G.x0 + 2, G.fy);
+    ctx.restore();
+  }
+
+  /* ---------- ②~④ 북극 위에서 내려다본 모형 ---------- */
+  function moonPos(L, th) {
+    th = th == null ? S.theta : th;
+    return { x: L.cx + R * Math.cos(th * DEG), y: L.cy - R * Math.sin(th * DEG) };
+  }
+  function drawSpots(ctx, L, t) {
+    SPOTS.forEach((a, k) => {
+      const p = moonPos(L, a), done = S.visit.has(k);
+      const q = { x: L.cx + (R - 38) * Math.cos(a * DEG), y: L.cy - (R - 38) * Math.sin(a * DEG) };
+      ctx.save();
+      if (done) {
+        ctx.fillStyle = 'rgba(52,211,153,.2)'; circle(ctx, p.x, p.y, 19); ctx.fill();
+        ctx.strokeStyle = '#34d399'; ctx.lineWidth = 2.5; circle(ctx, p.x, p.y, 19); ctx.stroke();
+        ctx.fillStyle = '#10b981'; circle(ctx, q.x, q.y, 11 * L.fs); ctx.fill();
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 2.6; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+        checkMark(ctx, q.x, q.y, 11 * L.fs);
+      } else {
+        ctx.setLineDash([5, 4]); ctx.strokeStyle = 'rgba(255,224,130,' + (0.45 + 0.4 * Math.sin(t * 4 + k)) + ')'; ctx.lineWidth = 2.5;
+        circle(ctx, p.x, p.y, 19); ctx.stroke(); ctx.setLineDash([]);
+        ctx.fillStyle = 'rgba(255,214,90,.9)'; starShape(ctx, q.x, q.y, 9 * L.fs); ctx.fill();
+      }
+      ctx.restore();
+    });
+  }
+  // 정오·해 질 무렵·자정·해 뜰 무렵 (4단계). 아래쪽 이름표의 왼쪽 끝 x를 돌려줌
+  function drawTimes(ctx, L) {
+    const cx = L.cx, cy = L.cy, h = Math.round(20 * L.fs), gap = RE + 6;
+    const o = { h, pad: Math.round(7 * L.fs), font: fnt(L, 13, 'bold'), bg: 'rgba(10,16,40,.86)', color: '#ffe8a3', stroke: 'rgba(255,224,140,.45)' };
+    pill(ctx, '정오', cx + gap, cy, Object.assign({ align: 'left' }, o));
+    pill(ctx, '자정', cx - gap, cy, Object.assign({ align: 'right' }, o));
+    pill(ctx, '해 질 무렵', cx, cy - gap - h / 2, o);
+    pill(ctx, '해 뜰 무렵', cx, cy + gap + h / 2, o);
+    return cx - pillWidth(ctx, '해 뜰 무렵', o) / 2;
+  }
+  function drawMoonLight(ctx, m) {
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255,214,110,.8)'; ctx.fillStyle = 'rgba(255,214,110,.9)'; ctx.lineWidth = 2;
+    [-6.5, 0, 6.5].forEach((dy) => {
+      const y = m.y + dy, x1 = m.x + Math.sqrt(RM * RM - dy * dy) + 3, x0 = m.x + RM + 40;
+      ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1 + 6, y); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x1, y); ctx.lineTo(x1 + 7, y - 3.5); ctx.lineTo(x1 + 7, y + 3.5); ctx.closePath(); ctx.fill();
+    });
+    ctx.restore();
+  }
+
+  function drawModel(ctx, L, t) {
+    const M = L.main, cx = L.cx, cy = L.cy, right = M.x + M.w, fs = L.fs;
+    const m = moonPos(L);
+    ctx.save();
+    ctx.beginPath(); ctx.rect(M.x, M.y, M.w, M.h); ctx.clip();
+    spaceBg(ctx, L, M, cx, cy, t);
 
     // 햇빛 (오른쪽에서 들어옴)
     const sg = ctx.createLinearGradient(right - 90, 0, right, 0);
     sg.addColorStop(0, 'rgba(255,196,80,0)'); sg.addColorStop(1, 'rgba(255,200,90,.45)');
     ctx.fillStyle = sg; ctx.fillRect(right - 90, M.y, 90, M.h);
-    if (S.eclipse) {
-      ctx.strokeStyle = 'rgba(255,214,120,.075)'; ctx.lineWidth = 2;
-      for (let y = M.y + 14; y < M.y + M.h; y += 26) { ctx.beginPath(); ctx.moveTo(right - 40, y); ctx.lineTo(M.x, y); ctx.stroke(); }
-    }
     ctx.strokeStyle = 'rgba(255,214,110,.85)'; ctx.fillStyle = 'rgba(255,214,110,.85)'; ctx.lineWidth = 2.5;
-    [-180, -120, -60, 0, 60, 120, 180].forEach((dy) => {
+    for (let dy = -240; dy <= 240; dy += 60) {
       const y = cy + dy, x0 = right - 5, x1 = right - 34;
+      if (y < M.y + 48 || y > M.y + M.h - 40) continue;
       ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1 + 6, y); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(x1, y); ctx.lineTo(x1 + 9, y - 5); ctx.lineTo(x1 + 9, y + 5); ctx.closePath(); ctx.fill();
-    });
+    }
 
     // 공전 궤도와 방향
     ctx.setLineDash([3, 6]); ctx.strokeStyle = 'rgba(160,190,255,.45)'; ctx.lineWidth = 1.5;
@@ -285,348 +394,291 @@
 
     // 힌트 목표 구간
     if (S.target) {
-      const pulse = 0.5 + 0.5 * Math.sin(t * 5);
-      ctx.strokeStyle = 'rgba(52,211,153,' + (0.3 + 0.25 * pulse) + ')'; ctx.lineWidth = 26;
+      const p = 0.5 + 0.5 * Math.sin(t * 5);
+      ctx.strokeStyle = 'rgba(52,211,153,' + (0.3 + 0.25 * p) + ')'; ctx.lineWidth = 26;
       ctx.beginPath(); ctx.arc(cx, cy, R, -S.target.hi * DEG, -S.target.lo * DEG); ctx.stroke();
     }
+    if (S.spots) drawSpots(ctx, L, t);
 
     // 8개 위치
-    if (S.ghost) {
+    if (ghostOn()) {
       for (let k = 0; k < 8; k++) {
         const p = moonPos(L, k * 45);
         drawMoonTop(ctx, p.x, p.y, 8, 0.5);
-        const a = k * 45 * DEG, lx = cx + (R + 24) * Math.cos(a), ly = cy - (R + 24) * Math.sin(a);
-        circle(ctx, lx, ly, 9.5 * L.fs); ctx.fillStyle = 'rgba(255,255,255,.14)'; ctx.fill();
-        ctx.strokeStyle = 'rgba(255,255,255,.45)'; ctx.lineWidth = 1; ctx.stroke();
-        ctx.fillStyle = '#fff'; ctx.font = F(L, 12, 'bold'); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        const a = k * 45 * DEG, lx = cx + (R + 24 * fs) * Math.cos(a), ly = cy - (R + 24 * fs) * Math.sin(a);
+        circle(ctx, lx, ly, 11 * fs); ctx.fillStyle = 'rgba(255,255,255,.14)'; ctx.fill();
+        ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = 1; ctx.stroke();
+        ctx.fillStyle = '#fff'; ctx.font = fnt(L, 13, 'bold'); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText(String(k + 1), lx, ly + 0.5); ctx.textBaseline = 'alphabetic';
       }
     }
 
-    // 그림자 (일식·월식 모드)
-    const hw = (x) => GEO.rE * (1 - (cx - x) / GEO.Lu);
-    if (S.eclipse) {
-      ctx.fillStyle = 'rgba(2,4,12,.8)';
-      ctx.beginPath(); ctx.moveTo(cx, cy - GEO.rE); ctx.lineTo(M.x, cy - hw(M.x)); ctx.lineTo(M.x, cy + hw(M.x)); ctx.lineTo(cx, cy + GEO.rE); ctx.closePath(); ctx.fill();
-      ctx.setLineDash([5, 5]); ctx.strokeStyle = 'rgba(170,190,255,.35)'; ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(cx, cy - GEO.rE); ctx.lineTo(M.x, cy - hw(M.x)); ctx.moveTo(cx, cy + GEO.rE); ctx.lineTo(M.x, cy + hw(M.x)); ctx.stroke();
-      ctx.setLineDash([]);
-      // 달의 본그림자 (길이 ≈ 지구–달 거리)
-      ctx.fillStyle = 'rgba(2,4,12,.8)';
-      ctx.beginPath(); ctx.moveTo(m.x, m.y - GEO.rM); ctx.lineTo(m.x - R, m.y); ctx.lineTo(m.x, m.y + GEO.rM); ctx.closePath(); ctx.fill();
-    }
-
-    // 지구에서 본 모습 연결선
-    if (S.sight) {
-      const ux = Math.cos(S.theta * DEG), uy = -Math.sin(S.theta * DEG);
+    // 지구에서 바라본 선
+    const ux = Math.cos(S.theta * DEG), uy = -Math.sin(S.theta * DEG);
+    const sight = on('sight');
+    if (sight) {
       ctx.setLineDash([6, 5]); ctx.strokeStyle = 'rgba(94,234,212,.85)'; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(cx + ux * (GEO.rE + 4), cy + uy * (GEO.rE + 4)); ctx.lineTo(m.x - ux * (GEO.rM + 5), m.y - uy * (GEO.rM + 5)); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(cx + ux * (RE + 4), cy + uy * (RE + 4)); ctx.lineTo(m.x - ux * (RM + 5), m.y - uy * (RM + 5)); ctx.stroke();
       ctx.setLineDash([]);
     }
-
-    drawEarth(ctx, cx, cy, GEO.rE);
-    if (S.sight) {
-      const ux = Math.cos(S.theta * DEG), uy = -Math.sin(S.theta * DEG);
-      circle(ctx, cx + ux * GEO.rE, cy + uy * GEO.rE, 3.6); ctx.fillStyle = '#5eead4'; ctx.fill();
-    }
-
-    // 일식: 지구 표면의 달 그림자
-    if (E && E.type === 'solar') {
-      const d = Math.max(-GEO.rE, Math.min(GEO.rE, m.y - cy));
-      const sx = cx + Math.sqrt(Math.max(0, GEO.rE * GEO.rE - d * d)), sy = cy + d;
-      ctx.save(); circle(ctx, cx, cy, GEO.rE); ctx.clip();
-      const g = ctx.createRadialGradient(sx, sy, 0, sx, sy, 9);
-      g.addColorStop(0, 'rgba(0,0,0,.95)'); g.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.fillStyle = g; circle(ctx, sx, sy, 9); ctx.fill();
-      ctx.restore();
-      ctx.strokeStyle = 'rgba(255,110,110,' + (0.55 + 0.4 * Math.sin(t * 6)) + ')'; ctx.lineWidth = 2;
-      circle(ctx, sx, sy, 8 + 2 * Math.sin(t * 6)); ctx.stroke();
-    }
+    drawEarth(ctx, L, cx, cy, RE);
+    const times = on('sky');
+    const timesLeft = times ? drawTimes(ctx, L) : 0;
+    if (sight) { circle(ctx, cx + ux * RE, cy + uy * RE, 3.6); ctx.fillStyle = '#5eead4'; ctx.fill(); }
 
     // 달
     if (S.dragging || !S.interacted) {
-      const rr = GEO.rM + (S.dragging ? 9 : 8 + 2 * Math.sin(t * 4));
+      const rr = RM + (S.dragging ? 9 : 8 + 2 * Math.sin(t * 4));
       ctx.setLineDash(S.dragging ? [] : [4, 4]);
-      ctx.strokeStyle = S.dragging ? 'rgba(255,255,255,.7)' : 'rgba(255,255,255,.55)'; ctx.lineWidth = 2;
+      ctx.strokeStyle = 'rgba(255,255,255,.65)'; ctx.lineWidth = 2;
       circle(ctx, m.x, m.y, rr); ctx.stroke(); ctx.setLineDash([]);
     }
-    drawMoonTop(ctx, m.x, m.y, GEO.rM, 1);
-    if (E && E.type === 'lunar') {
-      ctx.save(); circle(ctx, m.x, m.y, GEO.rM); ctx.clip();
-      ctx.fillStyle = 'rgba(150,40,16,.88)';
-      ctx.beginPath(); ctx.moveTo(cx, cy - GEO.rE); ctx.lineTo(M.x, cy - hw(M.x)); ctx.lineTo(M.x, cy + hw(M.x)); ctx.lineTo(cx, cy + GEO.rE); ctx.closePath(); ctx.fill();
-      ctx.restore();
-    }
-    if (S.sight) {
+    drawMoonTop(ctx, m.x, m.y, RM, 1);
+    if (sight) {
       // 달에서 지구를 향한 반쪽 (지구에서 보이는 쪽)
       const fa = Math.atan2(cy - m.y, cx - m.x);
       ctx.strokeStyle = '#5eead4'; ctx.lineWidth = 3; ctx.lineCap = 'round';
-      ctx.beginPath(); ctx.arc(m.x, m.y, GEO.rM + 3.5, fa - Math.PI / 2, fa + Math.PI / 2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(m.x, m.y, RM + 3.5, fa - Math.PI / 2, fa + Math.PI / 2); ctx.stroke();
       ctx.lineCap = 'butt';
     }
+    const lightAid = !ghostOn();
+    if (lightAid) drawMoonLight(ctx, m);
 
     // ----- 글자 -----
-    const ph = Math.round(20 * L.fs), pp = Math.round(7 * L.fs);
+    const ph = Math.round(20 * fs), pp = Math.round(7 * fs);
     if (S.target) {
       const mid = ((S.target.lo + S.target.hi) / 2) * DEG;
-      pill(ctx, '🎯 이쯤!', cx + (R - 50) * Math.cos(mid), cy - (R - 50) * Math.sin(mid), { bg: 'rgba(16,128,86,.92)', font: F(L, 12, 'bold'), h: Math.round(22 * L.fs) });
+      pill(ctx, '🎯 이쯤!', cx + (R - 50) * Math.cos(mid), cy - (R - 50) * Math.sin(mid), { bg: 'rgba(16,128,86,.92)', font: fnt(L, 13, 'bold'), h: Math.round(22 * fs) });
     }
-    if (!S.ghost) {
-      const a = S.theta * DEG, rr = R + 25 * L.fs;
-      pill(ctx, '달', cx + rr * Math.cos(a), cy - rr * Math.sin(a), { h: ph, pad: pp, font: F(L, 12, 'bold'), bg: 'rgba(255,240,190,.92)', color: '#3b3000' });
+    if (!ghostOn()) {
+      const lo = { h: ph, pad: pp, font: fnt(L, 13, 'bold'), bg: 'rgba(255,240,190,.92)', color: '#3b3000' };
+      if (lightAid && Math.abs(signed(S.theta)) < 35) pill(ctx, '달', m.x, m.y - RM - 10 - ph / 2, lo);   // 햇빛 화살표와 겹치지 않게
+      else { const a = S.theta * DEG, rr = R + 25 * fs; pill(ctx, '달', cx + rr * Math.cos(a), cy - rr * Math.sin(a), lo); }
     }
-    const below = !(S.sight && inArc(S.theta, 245, 295));
-    const ey = GEO.rE + 8 + ph / 2;
-    pill(ctx, '지구', cx, below ? cy + ey : cy - ey, { h: ph, pad: pp, font: F(L, 12, 'bold'), color: '#d6e6ff' });
-    if (S.eclipse) {
-      pill(ctx, '지구의 그림자', cx - 112, cy + ey, { h: ph, pad: pp, font: F(L, 12, 'bold'), color: '#c3cdea', bg: 'rgba(6,10,26,.6)' });
-      if (E && E.type === 'solar') pill(ctx, '달의 그림자', cx + 104, cy - GEO.rM - 6 - ph / 2, { h: ph, pad: pp, font: F(L, 12, 'bold'), color: '#ffd1d1', bg: 'rgba(6,10,26,.75)' });
+    const eo = { h: ph, pad: pp, font: fnt(L, 13, 'bold'), color: '#d6e6ff' };
+    if (times) pill(ctx, '지구', timesLeft - 6, cy + RE + 6 + ph * 1.1, Object.assign({ align: 'right' }, eo));
+    else {
+      const ey = RE + 8 + ph / 2, below = !(sight && inArc(S.theta, 245, 295));
+      pill(ctx, '지구', cx, below ? cy + ey : cy - ey, eo);
     }
-
-    ctx.font = F(L, 13, 'bold'); ctx.textAlign = 'left'; ctx.fillStyle = '#d4e2ff';
-    ctx.fillText('북극 위에서 내려다본 모습', M.x + 12, M.y + 22 * L.fs);
-    ctx.font = F(L, 12); ctx.fillStyle = 'rgba(212,226,255,.62)';
-    ctx.fillText('크기와 거리는 실제와 달라요', M.x + 12, M.y + 40 * L.fs);
-    ctx.font = F(L, 14, 'bold'); ctx.textAlign = 'right'; ctx.fillStyle = '#ffd36b';
+    ctx.font = fnt(L, 14, 'bold'); ctx.textAlign = 'left'; ctx.fillStyle = '#d4e2ff';
+    ctx.fillText('북극 위에서 내려다본 모습', M.x + 12, M.y + 24 * fs);
+    ctx.font = fnt(L, 13); ctx.fillStyle = 'rgba(212,226,255,.66)';
+    ctx.fillText('크기와 거리는 실제와 달라요', M.x + 12, M.y + 43 * fs);
+    ctx.font = fnt(L, 15, 'bold'); ctx.textAlign = 'right'; ctx.fillStyle = '#ffd36b';
     const sw = ctx.measureText('태양 빛').width;
-    ctx.fillText('태양 빛', right - 8, M.y + 24 * L.fs);
-    sunIcon(ctx, right - 8 - sw - 12 * L.fs, M.y + 19 * L.fs, 4.5 * L.fs);
+    ctx.fillText('태양 빛', right - 8, M.y + 25 * fs);
+    sunIcon(ctx, right - 8 - sw - 12 * fs, M.y + 20 * fs, 4.5 * fs);
 
-    // 아래쪽 알림
-    const bh = Math.round(24 * L.fs), by = M.y + M.h - 8 - bh / 2;
-    let pr = M.x;
-    if (E && E.type === 'solar') pr = pill(ctx, '🌑 일식: 달의 그림자가 지구에 생겼어요', M.x + 10, by, { align: 'left', bg: 'rgba(196,44,64,.92)', font: F(L, 13, 'bold'), h: bh });
-    else if (E && E.type === 'lunar') pr = pill(ctx, '🌕 월식: 달이 지구 그림자 속에 들어갔어요', M.x + 10, by, { align: 'left', bg: 'rgba(170,64,28,.92)', font: F(L, 13, 'bold'), h: bh });
-    else if (!S.eclipse && (Math.abs(signed(S.theta)) <= ZONE_S + 2 || Math.abs(signed(S.theta - 180)) <= ZONE_L + 2))
-      pr = pill(ctx, '💡 궤도가 약 5° 기울어 그림자를 비껴가요', M.x + 10, by, { align: 'left', bg: 'rgba(36,70,140,.92)', font: F(L, 12, 'bold'), h: bh });
-    else if (S.eclipse) pr = pill(ctx, '🌑 일식·월식 모드: 그림자가 보여요', M.x + 10, by, { align: 'left', bg: 'rgba(6,10,26,.7)', color: '#c3cdea', font: F(L, 12, 'bold'), h: bh });
-    ctx.font = F(L, 12, 'bold'); ctx.textAlign = 'right'; ctx.fillStyle = 'rgba(190,210,255,.85)';
-    const lg = '공전 방향', lw = ctx.measureText(lg).width, ir = 5.5 * L.fs;
-    if (pr + 12 < right - 16 - lw - ir * 2.5) {
-      ctx.fillText(lg, right - 12, by + 4 * L.fs);
-      // 시계 반대 방향 화살표 아이콘
-      const ix = right - 12 - lw - ir - 7, iy = by;
-      const a1 = 0.4 * Math.PI, a2 = a1 - 1.55 * Math.PI;      // 시계 반대 방향으로 그린 호
-      ctx.strokeStyle = 'rgba(190,210,255,.85)'; ctx.lineWidth = 1.8;
-      ctx.beginPath(); ctx.arc(ix, iy, ir, a1, a2, true); ctx.stroke();
-      const ex = ix + ir * Math.cos(a2), ey = iy + ir * Math.sin(a2);
-      const tx = Math.sin(a2), ty = -Math.cos(a2);              // 진행 방향(접선)
-      const hs = 3.6 * L.fs;
-      ctx.beginPath();
-      ctx.moveTo(ex + tx * hs, ey + ty * hs);
-      ctx.lineTo(ex - tx * hs * 0.6 - ty * hs, ey - ty * hs * 0.6 + tx * hs);
-      ctx.lineTo(ex - tx * hs * 0.6 + ty * hs, ey - ty * hs * 0.6 - tx * hs);
-      ctx.closePath(); ctx.fill();
+    // 공전 방향
+    const by = M.y + M.h - 8 - 13 * fs;
+    ctx.font = fnt(L, 13, 'bold'); ctx.textAlign = 'right'; ctx.fillStyle = 'rgba(190,210,255,.85)';
+    const lg = '공전 방향 (시계 반대 방향)', lw = ctx.measureText(lg).width, ir = 5.5 * fs;
+    ctx.fillText(lg, right - 12, by + 4.5 * fs);
+    const ix = right - 12 - lw - ir - 7, iy = by;
+    const a1 = 0.4 * Math.PI, a2 = a1 - 1.55 * Math.PI;
+    ctx.strokeStyle = 'rgba(190,210,255,.85)'; ctx.lineWidth = 1.8;
+    ctx.beginPath(); ctx.arc(ix, iy, ir, a1, a2, true); ctx.stroke();
+    const ex = ix + ir * Math.cos(a2), ey2 = iy + ir * Math.sin(a2), tx = Math.sin(a2), ty = -Math.cos(a2), hs = 3.6 * fs;
+    ctx.beginPath();
+    ctx.moveTo(ex + tx * hs, ey2 + ty * hs);
+    ctx.lineTo(ex - tx * hs * 0.6 - ty * hs, ey2 - ty * hs * 0.6 + tx * hs);
+    ctx.lineTo(ex - tx * hs * 0.6 + ty * hs, ey2 - ty * hs * 0.6 - tx * hs);
+    ctx.closePath(); ctx.fill();
+
+    if (sight) {
+      // 범례: 청록색 테두리 = 지구에서 보이는 쪽
+      const lx = M.x + 14 + 8 * fs, ly = by;
+      ctx.strokeStyle = '#5eead4'; ctx.lineWidth = 3; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.arc(lx, ly - 2, 7 * fs, Math.PI * 0.5, Math.PI * 1.5); ctx.stroke(); ctx.lineCap = 'butt';
+      ctx.font = fnt(L, 13, 'bold'); ctx.textAlign = 'left'; ctx.fillStyle = '#5eead4';
+      ctx.fillText('지구에서 보이는 쪽', lx + 6 * fs, ly + 4.5 * fs);
     }
 
+    // 새로 열린 도구 강조
+    if (isNew('sight')) newRingCircle(ctx, L, m.x, m.y, RM + 14);
+    if (isNew('sky') && times) newRingCircle(ctx, L, cx, cy, 78 * fs);
+
+    // 처음 안내
+    if (!S.interacted && !S.dragging) {
+      const txt = '👆 달을 끌어서 옮겨 보세요', o = { font: fnt(L, 14, 'bold'), h: Math.round(28 * fs), pad: 11, bg: 'rgba(14,165,233,.94)' };
+      const w = pillWidth(ctx, txt, o);
+      const hx = clamp(m.x, M.x + w / 2 + 8, right - w / 2 - 8);
+      let hy = m.y + 44 * fs;
+      if (hy > M.y + M.h - 50) hy = m.y - 44 * fs;
+      pill(ctx, txt, hx, hy, o);
+    }
     ctx.restore();
   }
 
   /* ---------- 오른쪽 창: 지구(우리나라)에서 본 달 ---------- */
-  function drawInset(ctx, L, E, t) {
-    const I = L.inset, G = insetGeo(L);
-    const solar = E && E.type === 'solar', lunar = E && E.type === 'lunar';
+  function drawPanel(ctx, L, t) {
+    const P = L.panel, G = panelGeo(L), fs = L.fs, th = curTheta(), model = modelOn();
     ctx.save();
-    roundRect(ctx, I.x, I.y, I.w, I.h, 14); ctx.clip();
-    if (solar) {
-      const f = Math.pow(E.cover, 3);
-      const g = ctx.createLinearGradient(0, I.y, 0, I.y + I.h);
-      g.addColorStop(0, mix('#3f8fe8', '#070c1f', f)); g.addColorStop(1, mix('#9fd0ff', '#16224a', f));
-      ctx.fillStyle = g; ctx.fillRect(I.x, I.y, I.w, I.h);
-      drawStars(ctx, L.starsInset, t, E.total ? 0.9 : 0);
-    } else {
-      const g = ctx.createLinearGradient(0, I.y, 0, I.y + I.h);
-      g.addColorStop(0, '#0c1636'); g.addColorStop(1, '#1b2d60');
-      ctx.fillStyle = g; ctx.fillRect(I.x, I.y, I.w, I.h);
-      drawStars(ctx, L.starsInset, t, 0.8);
+    roundRect(ctx, P.x, P.y, P.w, P.h, 14); ctx.clip();
+    const g = ctx.createLinearGradient(0, P.y, 0, P.y + P.h);
+    g.addColorStop(0, '#0c1636'); g.addColorStop(1, '#1b2d60');
+    ctx.fillStyle = g; ctx.fillRect(P.x, P.y, P.w, P.h);
+    drawStars(ctx, L.starsPanel, t, 0.8);
+
+    ctx.textAlign = G.align; ctx.fillStyle = '#fff'; ctx.font = fnt(L, 15, 'bold');
+    ctx.fillText(model ? '지구(우리나라)에서 본 달' : '🔭 관측한 달', G.tx, G.ty);
+    ctx.fillStyle = '#9fb3e0'; ctx.font = fnt(L, 13);
+    ctx.fillText(model ? '북반구에서 바라본 모습' : '음력 ' + S.day + '일 밤', G.tx, G.sy);
+
+    const lf = litFrac(th);
+    if (lf > 0.02) {
+      const gg = ctx.createRadialGradient(G.dx, G.dy, G.dr * 0.9, G.dx, G.dy, G.dr * 1.35);
+      gg.addColorStop(0, 'rgba(255,240,190,' + (0.22 * lf) + ')'); gg.addColorStop(1, 'rgba(255,240,190,0)');
+      ctx.fillStyle = gg; circle(ctx, G.dx, G.dy, G.dr * 1.35); ctx.fill();
+    }
+    drawPhase(ctx, G.dx, G.dy, G.dr, th, { craters: true });
+
+    const key = phaseKey(th), Pk = PH[key];
+    ctx.textAlign = G.align; ctx.fillStyle = '#fff';
+    ctx.font = Math.round(28 * fs) + 'px ' + DISPLAY;
+    ctx.fillText(Pk.name, G.nx, G.ny);
+    ctx.font = fnt(L, 13); ctx.fillStyle = on('sky') ? '#ffe7b0' : '#b9c8ee';
+    ctx.fillText(on('sky') ? '🕖 ' + Pk.sky : Pk.look, G.nx, G.n2y);
+    if (!model || on('date')) {
+      ctx.fillStyle = '#ffe08a'; ctx.font = fnt(L, 15, 'bold');
+      ctx.fillText(model ? '음력 약 ' + lunarDay(th) + '일' : '음력 ' + S.day + '일', G.nx, G.dateY);
     }
 
-    // 제목
-    ctx.textAlign = G.align;
-    ctx.fillStyle = '#fff'; ctx.font = F(L, 15, 'bold');
-    ctx.fillText(solar ? '일식! 태양 쪽을 본 모습' : '지구(우리나라)에서 본 달', G.tx, G.ty);
-    ctx.fillStyle = solar ? 'rgba(255,255,255,.85)' : '#9fb3e0'; ctx.font = F(L, 12);
-    ctx.fillText(solar ? '달의 그림자 속 지역에서 본 하늘' : '북반구에서 바라본 모습', G.tx, G.sy);
-
-    // 달 / 태양
-    if (solar) drawSolar(ctx, G.dx, G.dy, G.dr * 0.74, E);
-    else {
-      if (lunar && E.total) {
-        const gg = ctx.createRadialGradient(G.dx, G.dy, G.dr, G.dx, G.dy, G.dr * 1.4);
-        gg.addColorStop(0, 'rgba(220,80,40,.35)'); gg.addColorStop(1, 'rgba(220,80,40,0)');
-        ctx.fillStyle = gg; circle(ctx, G.dx, G.dy, G.dr * 1.4); ctx.fill();
-      } else if (litFrac(S.theta) > 0.02) {
-        const gg = ctx.createRadialGradient(G.dx, G.dy, G.dr * 0.9, G.dx, G.dy, G.dr * 1.35);
-        gg.addColorStop(0, 'rgba(255,240,190,' + (0.22 * litFrac(S.theta)) + ')'); gg.addColorStop(1, 'rgba(255,240,190,0)');
-        ctx.fillStyle = gg; circle(ctx, G.dx, G.dy, G.dr * 1.35); ctx.fill();
-      }
-      drawPhase(ctx, G.dx, G.dy, G.dr, S.theta, { craters: true });
-      if (lunar) {
-        ctx.save(); circle(ctx, G.dx, G.dy, G.dr); ctx.clip();
-        const sx = G.dx + E.dir * E.D * G.dr, Rs = E.Rs * G.dr;
-        const g = ctx.createRadialGradient(sx, G.dy, Rs * 0.9, sx, G.dy, Rs * 1.1);
-        g.addColorStop(0, 'rgba(130,32,12,.86)'); g.addColorStop(0.6, 'rgba(120,30,12,.78)'); g.addColorStop(1, 'rgba(60,15,6,0)');
-        ctx.fillStyle = g; circle(ctx, sx, G.dy, Rs * 1.1); ctx.fill();
-        ctx.restore();
-      }
-    }
-
-    // 이름 · 설명 · 날짜
-    const key = phaseKey(S.theta);
-    let name = PH[key].name, sub = PH[key].sub;
-    if (solar) { name = E.total ? '개기 일식' : '부분 일식'; sub = E.total ? '달이 태양을 완전히 가렸어요' : '달이 태양의 일부를 가렸어요'; }
-    if (lunar) { name = E.total ? '개기 월식' : '부분 월식'; sub = E.total ? '지구 그림자 속에서 붉게 보여요' : '달이 지구 그림자에 들어가요'; }
-    ctx.textAlign = G.align;
-    ctx.fillStyle = solar || lunar ? '#ffb4a2' : '#fff'; ctx.font = Math.round(28 * L.fs) + 'px ' + DISPLAY;
-    ctx.fillText(name, G.nx, G.ny);
-    ctx.fillStyle = solar ? (E.cover > 0.6 ? '#dbe5ff' : '#0b1a3a') : '#b9c8ee'; ctx.font = F(L, 13);
-    ctx.fillText(sub, G.nx, G.n2y);
-    ctx.fillStyle = solar && E.cover <= 0.6 ? '#0b1a3a' : '#ffe08a'; ctx.font = F(L, 16, 'bold');
-    ctx.fillText('음력 약 ' + lunarDay(S.theta) + '일' + (solar ? ' (삭)' : lunar ? ' (망)' : ''), G.nx, G.dateY);
-
-    // 막대
-    const val = solar || lunar ? E.cover : litFrac(S.theta);
-    const label = solar ? '태양이 가려진 정도' : lunar ? '지구 그림자에 가려진 정도' : '밝게 보이는 부분';
-    const pct = Math.round(val * 100) + '%';
-    const darkText = solar && E.cover <= 0.6;
+    // 막대: 밝게 보이는 부분
+    const pct = Math.round(lf * 100) + '%';
     if (G.barLabelY) {
-      ctx.font = F(L, 12); ctx.textAlign = 'left'; ctx.fillStyle = darkText ? '#0b1a3a' : '#c7d3f2';
-      ctx.fillText(label, G.barX, G.barLabelY);
-      ctx.textAlign = 'right'; ctx.font = F(L, 13, 'bold'); ctx.fillStyle = darkText ? '#0b1a3a' : '#fff';
+      ctx.font = fnt(L, 13); ctx.textAlign = 'left'; ctx.fillStyle = '#c7d3f2';
+      ctx.fillText('밝게 보이는 부분', G.barX, G.barLabelY);
+      ctx.textAlign = 'right'; ctx.font = fnt(L, 13, 'bold'); ctx.fillStyle = '#fff';
       ctx.fillText(pct, G.barX + G.barW, G.barLabelY);
     } else {
-      ctx.font = F(L, 13, 'bold'); ctx.textAlign = 'left'; ctx.fillStyle = darkText ? '#0b1a3a' : '#fff';
-      ctx.fillText((solar ? '가려짐 ' : lunar ? '그림자 ' : '밝은 부분 ') + pct, G.barX + G.barW + 10, G.barY + 11.5);
+      ctx.font = fnt(L, 13, 'bold'); ctx.textAlign = 'left'; ctx.fillStyle = '#fff';
+      ctx.fillText('밝은 부분 ' + pct, G.barX + G.barW + 10, G.barY + 11);
     }
     ctx.fillStyle = 'rgba(255,255,255,.16)'; roundRect(ctx, G.barX, G.barY, G.barW, 12, 6); ctx.fill();
-    if (val > 0.004) {
-      const bw = Math.max(12, G.barW * val);
+    if (lf > 0.004) {
       const bg = ctx.createLinearGradient(G.barX, 0, G.barX + G.barW, 0);
-      if (lunar) { bg.addColorStop(0, '#f97354'); bg.addColorStop(1, '#b91c1c'); }
-      else if (solar) { bg.addColorStop(0, '#fb923c'); bg.addColorStop(1, '#1e293b'); }
-      else { bg.addColorStop(0, '#fde68a'); bg.addColorStop(1, '#facc15'); }
-      ctx.fillStyle = bg; roundRect(ctx, G.barX, G.barY, bw, 12, 6); ctx.fill();
+      bg.addColorStop(0, '#fde68a'); bg.addColorStop(1, '#facc15');
+      ctx.fillStyle = bg; roundRect(ctx, G.barX, G.barY, Math.max(12, G.barW * lf), 12, 6); ctx.fill();
     }
 
-    // 한 달 동안의 변화 띠
-    if (G.capY) {
-      ctx.font = F(L, 12); ctx.textAlign = 'center'; ctx.fillStyle = darkText ? '#0b1a3a' : '#9fb3e0';
-      ctx.fillText('음력 1일부터 한 달 동안의 변화 →', G.dx, G.capY);
-    }
-    const cur = Math.round(norm(S.theta) / 45) % 8;
-    for (let k = 0; k < 8; k++) {
-      const x = G.stripX + k * G.stripGap;
-      drawPhase(ctx, x, G.stripY, G.stripR, k * 45, { mini: true, dark: '#2b3350' });
-      if (k === cur) {
-        ctx.strokeStyle = '#5eead4'; ctx.lineWidth = 2.2;
-        circle(ctx, x, G.stripY, G.stripR + 4); ctx.stroke();
+    if (model) {
+      // 한 달 동안의 변화 (관측 기록 요약)
+      if (G.capY) {
+        ctx.font = fnt(L, 13); ctx.textAlign = 'center'; ctx.fillStyle = '#9fb3e0';
+        ctx.fillText('한 달 동안의 변화 (음력)', G.dx, G.capY);
+      }
+      const cur = Math.round(norm(th) / 45) % 8;
+      G.strip.forEach((p, k) => {
+        drawPhase(ctx, p.x, p.y, G.sr, k * 45, { mini: true, dark: '#2b3350' });
+        if (k === cur) { ctx.strokeStyle = '#5eead4'; ctx.lineWidth = 2.2; circle(ctx, p.x, p.y, G.sr + 4); ctx.stroke(); }
+        ctx.font = fnt(L, 13, k === cur ? 'bold' : ''); ctx.textAlign = 'center'; ctx.fillStyle = k === cur ? '#5eead4' : '#b9c8ee';
+        ctx.fillText(lunarDay(k * 45) + '일', p.x, p.y + G.labDy);
+      });
+    } else {
+      // 탐구 질문
+      const q = G.qbox;
+      roundRect(ctx, q.x, q.y, q.w, q.h, 12);
+      ctx.fillStyle = 'rgba(255,214,110,.1)'; ctx.fill();
+      ctx.strokeStyle = 'rgba(255,214,110,.45)'; ctx.lineWidth = 1.5; ctx.setLineDash([5, 4]); ctx.stroke(); ctx.setLineDash([]);
+      ctx.textAlign = 'left'; ctx.font = fnt(L, 14, 'bold'); ctx.fillStyle = '#ffd36b';
+      ctx.fillText('🔍 탐구 질문', q.x + 12, q.y + 26 * fs);
+      ctx.font = Math.round(19 * fs) + 'px ' + DISPLAY; ctx.fillStyle = '#fff';
+      wrapText(ctx, '달의 모양은 왜 매일 달라질까?', q.x + 12, q.y + 56 * fs, q.w - 24, 26 * fs);
+      if (L.col) {
+        ctx.font = fnt(L, 13); ctx.fillStyle = '#c7d3f2';
+        wrapText(ctx, '먼저 한 달 동안 달의 모양이 어떻게 바뀌는지 관찰해 봐요.', q.x + 12, q.y + 118, q.w - 24, 19);
       }
     }
     ctx.restore();
-    roundRect(ctx, I.x, I.y, I.w, I.h, 14);
+    roundRect(ctx, P.x, P.y, P.w, P.h, 14);
     ctx.strokeStyle = 'rgba(160,190,255,.35)'; ctx.lineWidth = 1.5; ctx.stroke();
+    if (isNew('date') || isNew('sky')) newRing(ctx, L, G.textX, G.n2y - 18 * fs, G.textW, G.dateY - G.n2y + 26 * fs);
   }
 
-  function drawSolar(ctx, cx, y, r, E) {
-    // 태양과 달의 가운데를 창 중앙에 두어 두 원판이 창 밖으로 나가지 않게 함
-    const x = cx - E.dir * E.D * r / 2;
-    if (E.total) {
-      const cg = ctx.createRadialGradient(x, y, r * 0.95, x, y, r * 2);
-      cg.addColorStop(0, 'rgba(255,255,255,.85)'); cg.addColorStop(0.35, 'rgba(220,235,255,.35)'); cg.addColorStop(1, 'rgba(220,235,255,0)');
-      ctx.fillStyle = cg; circle(ctx, x, y, r * 2); ctx.fill();
-    } else {
-      const gg = ctx.createRadialGradient(x, y, r * 0.9, x, y, r * 1.7);
-      gg.addColorStop(0, 'rgba(255,230,140,' + (0.65 * (1 - E.cover) + 0.15) + ')'); gg.addColorStop(1, 'rgba(255,230,140,0)');
-      ctx.fillStyle = gg; circle(ctx, x, y, r * 1.7); ctx.fill();
-    }
-    const g = ctx.createRadialGradient(x - r * 0.2, y - r * 0.2, r * 0.1, x, y, r);
-    g.addColorStop(0, '#fffbe0'); g.addColorStop(0.7, '#ffd54a'); g.addColorStop(1, '#ffa41b');
-    ctx.fillStyle = g; circle(ctx, x, y, r); ctx.fill();
-    const mx = x + E.dir * E.D * r;
-    ctx.fillStyle = '#0a0e1a'; circle(ctx, mx, y, r * 1.01); ctx.fill();
-    ctx.strokeStyle = 'rgba(255,255,255,.14)'; ctx.lineWidth = 1; ctx.stroke();
-  }
-
-  function draw(v, L, E, t) {
+  function draw(v, L, t) {
     v.clear('#070d1f');
-    drawMain(v.ctx, L, E, t);
-    drawInset(v.ctx, L, E, t);
+    if (modelOn()) drawModel(v.ctx, L, t); else drawCalendar(v.ctx, L, t);
+    drawPanel(v.ctx, L, t);
   }
 
   /* ---------- 입력 ---------- */
   const rangeTheta = SciSim.bindRange($('#sTheta'), $('#oTheta'), (v) => v + '°', (v) => { setPlaying(false); setTheta(v); interacted(); });
-  SciSim.bindRange($('#sSpeed'), $('#oSpeed'), (v) => '×' + v, (v) => { S.speed = v; });
+  const rangeDay = SciSim.bindRange($('#sDay'), $('#oDay'), (v) => v + '일', (v) => { selectDay(v); });
   function setTheta(a) {
     S.theta = norm(a);
     rangeTheta.set(Math.round(S.theta) % 360);
   }
+  function selectDay(d) {
+    d = clamp(Math.round(d), 1, 30);
+    if (d !== S.day) Sound.tick();
+    S.day = d; rangeDay.set(d);
+    S.obs.add(d);
+    if (S.logFound) { const k = phaseKey(dayTheta(d)); if (FIVE.indexOf(k) >= 0 && !S.found.has(k)) { S.found.add(k); Sound.tone(880, 0.12, 'triangle', 0.08); } }
+  }
   const playBtn = $('#playBtn');
   function setPlaying(p) {
-    S.playing = p;
-    playBtn.innerHTML = p ? '⏸ 정지' : '▶ 공전 재생';
-    playBtn.classList.toggle('btn-primary', !p);
-    playBtn.setAttribute('aria-pressed', p ? 'true' : 'false');
+    S.playing = !!p && on('orbit');
+    playBtn.innerHTML = S.playing ? '⏸ 정지' : '▶ 공전 재생';
+    playBtn.classList.toggle('btn-primary', !S.playing);
+    playBtn.setAttribute('aria-pressed', S.playing ? 'true' : 'false');
   }
   playBtn.addEventListener('click', () => { Sound.click(); setPlaying(!S.playing); interacted(); });
-  $('#resetBtn').addEventListener('click', () => { Sound.click(); setPlaying(false); setTheta(40); });
-
-  const tGhost = $('#tGhost'), tSight = $('#tSight'), tEcl = $('#tEclipse');
+  const tGhost = $('#tGhost');
   tGhost.addEventListener('change', () => { Sound.click(); S.ghost = tGhost.checked; });
-  tSight.addEventListener('change', () => { Sound.click(); S.sight = tSight.checked; });
-  tEcl.addEventListener('change', () => { Sound.click(); S.eclipse = tEcl.checked; });
-  function setEclipse(on) { S.eclipse = on; tEcl.checked = on; }
-
-  const hintEl = $('#stageHint');
-  function interacted() {
-    if (S.interacted) return;
-    S.interacted = true; hintEl.classList.add('hide');
-  }
-  setTimeout(() => hintEl.classList.add('hide'), 7000);
+  function setGhost(v) { S.ghost = !!v; tGhost.checked = S.ghost; }
+  function interacted() { S.interacted = true; }
 
   function attachPointer(v, L) {
-    const hitMoon = (p) => { const m = moonPos(L); return Math.hypot(p.x - m.x, p.y - m.y) < 32; };
+    const hitMoon = (p) => { const m = moonPos(L); return Math.hypot(p.x - m.x, p.y - m.y) < 36; };
     const onOrbit = (p) => {
       const M = L.main;
       if (p.x < M.x || p.x > M.x + M.w || p.y < M.y || p.y > M.y + M.h) return false;
-      return Math.abs(Math.hypot(p.x - L.cx, p.y - L.cy) - GEO.R) < 28;
+      return Math.abs(Math.hypot(p.x - L.cx, p.y - L.cy) - R) < 32;
     };
-    const dragTo = (p) => {
-      let a = norm(Math.atan2(L.cy - p.y, p.x - L.cx) / DEG);
-      if (S.eclipse) [0, 180].forEach((s) => { if (Math.abs(signed(a - s)) < SNAP) a = s; });
-      setTheta(a);
+    const calDay = (p) => {
+      const G = calGeo(L);
+      const c = Math.floor((p.x - G.x0) / G.cw), r = Math.floor((p.y - G.y0) / G.ch);
+      if (c < 0 || c > 6 || r < 0 || r > 4) return 0;
+      const d = r * 7 + c + 1;
+      return d <= 30 ? d : 0;
     };
+    const dragTo = (p) => setTheta(norm(Math.atan2(L.cy - p.y, p.x - L.cx) / DEG));
     SciSim.pointer(v, {
-      hover: (p) => (hitMoon(p) ? 'grab' : onOrbit(p) ? 'pointer' : null),
+      hover: (p) => (modelOn() ? (hitMoon(p) ? 'grab' : onOrbit(p) ? 'pointer' : null) : (calDay(p) ? 'pointer' : null)),
       down(p) {
+        if (!modelOn()) { const d = calDay(p); if (!d) return false; selectDay(d); return true; }
         if (!hitMoon(p) && !onOrbit(p)) return false;
         S.dragging = true; setPlaying(false); interacted(); dragTo(p);
         v.canvas.style.cursor = 'grabbing';
         return true;
       },
-      move: dragTo,
-      up() { S.dragging = false; v.canvas.style.cursor = 'grab'; },
+      move(p) {
+        if (!modelOn()) { const d = calDay(p); if (d) selectDay(d); return; }
+        dragTo(p);
+      },
+      up() { S.dragging = false; v.canvas.style.cursor = ''; },
     });
+    return (p) => (modelOn() ? hitMoon(p) || onOrbit(p) : !!calDay(p));
   }
 
   const views = ['wide', 'tall'].map((k) => {
     const L = LAYOUTS[k];
-    const v = SciSim.stage($(k === 'wide' ? '#cvWide' : '#cvTall'), { width: L.vw, height: L.vh, reserve: L.reserve });
+    const v = SciSim.stage($(k === 'wide' ? '#cvWide' : '#cvTall'), { width: L.vw, height: L.vh, background: '#070d1f' });
     L.starsMain = makeStars(L.main, 80, k === 'wide' ? 7 : 11);
-    L.starsInset = makeStars(L.inset, 34, k === 'wide' ? 23 : 29);
-    attachPointer(v, L);
+    L.starsPanel = makeStars(L.panel, 34, k === 'wide' ? 23 : 29);
+    const hits = attachPointer(v, L);
+    if (k === 'tall') {
+      // 휴대폰: 달·궤도·날짜 칸을 누른 경우가 아니면 손가락으로 페이지를 넘길 수 있게
+      v.canvas.style.touchAction = 'pan-y';
+      v.canvas.addEventListener('touchstart', (e) => {
+        const tc = e.touches[0];
+        if (tc && hits(v.toLocal(tc))) e.preventDefault();
+      }, { passive: false });
+    }
     return { v, L };
   });
-
-  /* ---------- 측정값 ---------- */
-  const rTheta = $('#rTheta'), rName = $('#rName'), rDay = $('#rDay'), rLit = $('#rLit');
-  const cache = {};
-  function put(el, key, html) { if (cache[key] !== html) { cache[key] = html; el.innerHTML = html; } }
-  function updateReadouts(E) {
-    put(rTheta, 'th', (Math.round(norm(S.theta)) % 360) + '<small>°</small>');
-    put(rName, 'nm', E ? (E.type === 'solar' ? '삭 · 일식' : '망 · 월식') : PH[phaseKey(S.theta)].short);
-    put(rDay, 'dy', '<small>약 </small>' + lunarDay(S.theta) + '<small>일</small>');
-    put(rLit, 'lt', Math.round(litFrac(S.theta) * 100) + '<small>%</small>');
-  }
 
   /* ---------- 퀴즈 그림 (SVG) ---------- */
   function svgLit(cx, cy, r, th) {
@@ -646,36 +698,12 @@
   function svgEarth(x, y, r) {
     return '<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="#3b8fe0"/><path d="M' + x + ',' + (y - r) + ' A' + r + ',' + r + ' 0 0 0 ' + x + ',' + (y + r) + ' Z" fill="#040a1f" opacity=".72"/>';
   }
-  function svgMoonTop(x, y, r) {
-    return '<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="#3a4258"/><path d="M' + x + ',' + (y - r) + ' A' + r + ',' + r + ' 0 0 1 ' + x + ',' + (y + r) + ' Z" fill="#fff6d2"/>';
-  }
   function svgSunArrows(x0, x1, ys) {
     return ys.map((y) => '<line x1="' + x0 + '" y1="' + y + '" x2="' + (x1 + 6) + '" y2="' + y + '" stroke="#ffd36b" stroke-width="2"/><path d="M' + x1 + ',' + y + ' l8,-4.5 v9 z" fill="#ffd36b"/>').join('');
   }
   const SVG_OPEN = (w, h, label) => '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + w + ' ' + h + '" width="' + w + '" role="img" aria-label="' + label + '" font-family=\'' + FONT.replace(/"/g, '') + '\'>';
 
   const FIG = {};
-  FIG.crescent = (function () {
-    let s = SVG_OPEN(340, 172, '관측한 달의 모양과 달의 위치 번호 그림') + '<defs>' + LITGRAD('fgA') + '</defs>';
-    s += '<rect x="0" y="0" width="128" height="172" rx="12" fill="#14224d"/>';
-    s += '<text x="64" y="24" text-anchor="middle" font-size="13" font-weight="700" fill="#d4e2ff">관측한 달</text>';
-    s += svgPhase(64, 92, 42, 45, 'fgA');
-    s += '<text x="64" y="158" text-anchor="middle" font-size="12" fill="#b9c8ee">초저녁 서쪽 하늘</text>';
-    s += '<rect x="136" y="0" width="204" height="172" rx="12" fill="#0e1838"/>';
-    const cx = 230, cy = 90, R = 50;
-    s += '<circle cx="' + cx + '" cy="' + cy + '" r="' + R + '" fill="none" stroke="#a0beff" stroke-opacity=".5" stroke-dasharray="3 5"/>';
-    s += svgSunArrows(336, 318, [40, 90, 140]);
-    s += '<text x="334" y="18" text-anchor="end" font-size="12" font-weight="700" fill="#ffd36b">태양 빛</text>';
-    s += svgEarth(cx, cy, 10);
-    for (let k = 0; k < 8; k++) {
-      const a = k * 45 * DEG;
-      s += svgMoonTop(+(cx + R * Math.cos(a)).toFixed(1), +(cy - R * Math.sin(a)).toFixed(1), 7);
-      const lx = (cx + 67 * Math.cos(a)).toFixed(1), ly = (cy - 67 * Math.sin(a)).toFixed(1);
-      s += '<circle cx="' + lx + '" cy="' + ly + '" r="9" fill="#ffffff" fill-opacity=".14" stroke="#ffffff" stroke-opacity=".5"/>';
-      s += '<text x="' + lx + '" y="' + (+ly + 4.3) + '" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">' + (k + 1) + '</text>';
-    }
-    return s + '</svg>';
-  })();
   FIG.order = (function () {
     const list = [['(가)', 180], ['(나)', 270], ['(다)', 45], ['(라)', 315], ['(마)', 90]];
     let s = SVG_OPEN(330, 106, '뒤섞인 다섯 가지 달의 모양') + '<defs>' + LITGRAD('fgB') + '</defs>';
@@ -683,8 +711,24 @@
     list.forEach((it, i) => {
       const x = 37 + i * 64;
       s += svgPhase(x, 44, 25, it[1], 'fgB');
-      s += '<text x="' + x + '" y="94" text-anchor="middle" font-size="14" font-weight="700" fill="#d4e2ff">' + it[0] + '</text>';
+      s += '<text x="' + x + '" y="94" text-anchor="middle" font-size="15" font-weight="700" fill="#d4e2ff">' + it[0] + '</text>';
     });
+    return s + '</svg>';
+  })();
+  FIG.see = (function () {
+    const cx = 150, cy = 100, R2 = 62;
+    let s = SVG_OPEN(320, 172, '지구 위쪽에 있는 달과 오른쪽에서 오는 햇빛');
+    s += '<rect x="0" y="0" width="320" height="172" rx="12" fill="#0e1838"/>';
+    s += '<circle cx="' + cx + '" cy="' + cy + '" r="' + R2 + '" fill="none" stroke="#a0beff" stroke-opacity=".5" stroke-dasharray="3 5"/>';
+    s += svgSunArrows(314, 280, [44, 84, 124, 160]);
+    s += '<text x="312" y="24" text-anchor="end" font-size="14" font-weight="700" fill="#ffd36b">태양 빛</text>';
+    s += svgEarth(cx, cy, 12);
+    s += '<text x="' + cx + '" y="' + (cy + 31) + '" text-anchor="middle" font-size="14" font-weight="700" fill="#d6e6ff">지구</text>';
+    const my = cy - R2, r = 16;
+    s += '<circle cx="' + cx + '" cy="' + my + '" r="' + r + '" fill="#3a4258"/><path d="M' + cx + ',' + (my - r) + ' A' + r + ',' + r + ' 0 0 1 ' + cx + ',' + (my + r) + ' Z" fill="#fff6d2"/>';
+    s += '<path d="M' + (cx - r - 3) + ',' + my + ' A' + (r + 3) + ',' + (r + 3) + ' 0 0 0 ' + (cx + r + 3) + ',' + my + '" fill="none" stroke="#5eead4" stroke-width="3" stroke-linecap="round"/>';
+    s += '<text x="' + (cx - 26) + '" y="' + (my + 5) + '" text-anchor="end" font-size="14" font-weight="700" fill="#fff">달</text>';
+    s += '<text x="' + (cx + 26) + '" y="' + (my + 22) + '" font-size="13" font-weight="700" fill="#5eead4">지구 쪽 절반</text>';
     return s + '</svg>';
   })();
   FIG.evening = (function () {
@@ -697,158 +741,76 @@
     s += '<path d="M0,130 Q160,122 320,130 L320,172 L0,172 Z" fill="#1d3527"/></g>';
     s += '<circle cx="160" cy="58" r="23" fill="#ffffff" fill-opacity=".1" stroke="#fff" stroke-width="2" stroke-dasharray="5 4"/>';
     s += '<text x="160" y="67" text-anchor="middle" font-size="26" font-weight="800" fill="#fff">?</text>';
-    s += '<text x="12" y="24" font-size="13" font-weight="700" fill="#fff">음력 7~8일 · 해 질 무렵</text>';
+    s += '<text x="12" y="24" font-size="14" font-weight="700" fill="#fff">음력 7~8일 · 해 질 무렵</text>';
     s += '<text x="24" y="157" text-anchor="middle" font-size="15" font-weight="800" fill="#fff">동</text>';
     s += '<text x="160" y="157" text-anchor="middle" font-size="15" font-weight="800" fill="#fff">남</text>';
     s += '<text x="296" y="157" text-anchor="middle" font-size="15" font-weight="800" fill="#fff">서</text>';
-    s += '<text x="244" y="118" text-anchor="middle" font-size="12" font-weight="700" fill="#fff4d6">지는 해</text>';
-    return s + '</svg>';
-  })();
-  FIG.tilt = (function () {
-    let s = SVG_OPEN(340, 162, '옆에서 본 지구와 달의 공전 궤도면');
-    s += '<defs>' + LITGRAD('fgC') + '<radialGradient id="fgSun2" cx="40%" cy="45%" r="60%"><stop offset="0" stop-color="#fff3b0"/><stop offset="1" stop-color="#ffb020"/></radialGradient>';
-    s += '<clipPath id="fgClip2"><rect x="0" y="0" width="340" height="162" rx="12"/></clipPath></defs>';
-    s += '<g clip-path="url(#fgClip2)"><rect x="0" y="0" width="340" height="162" fill="#0e1838"/>';
-    s += '<circle cx="334" cy="80" r="34" fill="url(#fgSun2)"/></g>';
-    s += '<text x="334" y="30" text-anchor="end" font-size="12" font-weight="700" fill="#ffd36b">태양 쪽</text>';
-    s += '<polygon points="170,70 18,73 18,87 170,90" fill="#000" fill-opacity=".55"/>';
-    s += '<line x1="12" y1="80" x2="292" y2="80" stroke="#7dd3fc" stroke-width="1.5" stroke-dasharray="6 5"/>';
-    s += '<text x="16" y="106" font-size="12" font-weight="700" fill="#7dd3fc">지구 공전 궤도면</text>';
-    s += '<line x1="70" y1="47.5" x2="270" y2="112.5" stroke="#fca5a5" stroke-width="1.6"/>';
-    s += '<text x="106" y="131" font-size="12" font-weight="700" fill="#fca5a5">달 공전 궤도면</text>';
-    s += '<path d="M100,80 A70,70 0 0 1 103.4,58.4" fill="none" stroke="#fff" stroke-width="1.2"/>';
-    s += '<text x="97" y="70" text-anchor="end" font-size="12" font-weight="700" fill="#fff">약 5°</text>';
-    s += '<polygon points="270,105.5 196,110 196,115 270,119.5" fill="#000" fill-opacity=".45"/>';
-    s += svgEarth(170, 80, 10);
-    s += svgMoonTop(70, 47.5, 7);
-    s += '<text x="70" y="33" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">망</text>';
-    s += svgMoonTop(270, 112.5, 7);
-    s += '<text x="270" y="137" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">삭</text>';
-    s += '<text x="16" y="153" font-size="12" fill="#94a3b8">(기울기는 과장해서 그렸어요)</text>';
+    s += '<text x="244" y="116" text-anchor="middle" font-size="13" font-weight="700" fill="#fff4d6">지는 해</text>';
     return s + '</svg>';
   })();
 
-  /* ---------- 미션 ---------- */
-  function prep(eclipseOn) { setPlaying(false); setEclipse(eclipseOn); }
+  /* ---------- 미션 도우미 ---------- */
+  function aids() { S.target = null; S.spots = false; S.four = false; S.logFound = false; }
+  function prep() { setPlaying(false); }
   function ensureOutside(lo, hi, fallback) { if (inArc(S.theta, lo, hi)) setTheta(fallback); }
   const thetaTxt = () => Math.round(norm(S.theta)) % 360;
   const playNote = () => (S.playing ? '<br>⏸ 공전을 멈추고 달을 놓아 보세요.' : '');
   const nowStatus = () => '지금 달: <b>' + PH[phaseKey(S.theta)].short + '</b> · θ = <b>' + thetaTxt() + '°</b>' + playNote();
   const isPhase = (k) => !S.playing && phaseKey(S.theta) === k;
+  const chk = (ok, label) => (ok ? '✅ ' : '⬜ ') + label;
 
-  const CONCEPT = `
-    <h3>🌙 달은 스스로 빛나지 않아요</h3>
-    <p>달은 <b>태양 빛을 반사</b>해서 밝게 보여요. 그래서 달은 언제나 태양을 향한 <b>반쪽</b>만 밝아요.</p>
-    <h3>🔄 달의 위상 변화</h3>
-    <p>달이 지구 둘레를 약 한 달에 한 바퀴씩 <b>공전</b>하면, 밝은 반쪽 중 지구에서 보이는 부분이 달라져요. 이렇게 달의 모양이 바뀌는 것을 <b>달의 위상 변화</b>라고 해요.</p>
-    <span class="formula">삭 → 초승달 → 상현달 → 망(보름달) → 하현달 → 그믐달 → 삭</span>
-    <ul>
-      <li><b>삭</b>(음력 1일 무렵): 태양–달–지구 순서. 밝은 면이 지구 반대쪽을 향해 보이지 않아요.</li>
-      <li><b>상현달</b>(음력 7~8일): 오른쪽 반이 밝아요. 저녁에 남쪽 하늘에서 보여요.</li>
-      <li><b>망·보름달</b>(음력 15일 무렵): 태양–지구–달 순서. 저녁에 떠서 밤새 보여요.</li>
-      <li><b>하현달</b>(음력 22~23일): 왼쪽 반이 밝아요. 새벽에 남쪽 하늘에서 보여요.</li>
-      <li>삭에서 다음 삭까지 약 <b>29.5일</b>이 걸려요. 보름달 전에는 <b>오른쪽</b>부터 차오르고, 보름달 뒤에는 <b>왼쪽</b>만 남아요(우리나라 같은 북반구 기준).</li>
-    </ul>
-    <p class="note">⚠️ 달의 모양은 <b>지구의 그림자 때문에 바뀌는 것이 아니에요!</b> 지구의 그림자는 늘 태양의 반대쪽에 생기므로, 달이 망의 위치에 있을 때만 달에 닿을 수 있어요(월식).</p>
-    <h3>🌑 일식과 월식</h3>
-    <ul>
-      <li><b>일식</b>: 태양–<b>달</b>–지구가 일직선(달이 <b>삭</b>의 위치)일 때 달이 태양을 가리는 현상이에요. 달의 그림자가 생긴 좁은 지역에서만 볼 수 있어요. (개기 일식, 부분 일식)</li>
-      <li><b>월식</b>: 태양–<b>지구</b>–달이 일직선(달이 <b>망</b>의 위치)일 때 달이 지구의 그림자 속에 들어가는 현상이에요. 달이 떠 있는 밤인 지역이라면 어디서나 볼 수 있어요. (개기 월식, 부분 월식)</li>
-      <li>개기 월식 때 달은 지구 대기를 지나며 굴절된 붉은빛을 받아 <b>붉게</b> 보여요.</li>
-    </ul>
-    <p class="note">💡 달의 공전 궤도면은 지구의 공전 궤도면에 대해 <b>약 5°</b> 기울어져 있어요. 그래서 삭과 망은 매달 돌아오지만, 대부분은 달이 그림자의 위나 아래로 비껴가 <b>일식과 월식은 매달 일어나지 않아요.</b> (🌑 일식·월식 모드는 달이 지구 공전 궤도면을 지나며 일직선이 되는 경우를 보여 줘요.)</p>
-    <p class="note">📏 이 시뮬레이션의 천체 크기와 거리는 실제 비율과 달라요.</p>
-  `;
-
-  const game = SciSim.game({
+  /* ---------- 단계별 학습 ---------- */
+  game = SciSim.game({
     simId: 'm1-moon-phase',
     mount: '#game',
-    concept: CONCEPT,
-    badge: '달의 탐정',
+    badge: '달의 위상 탐정',
     homeHref: '../../index.html#g1',
-    onMissionStart() { S.target = null; },
+    featureLabels: {
+      calendar: '📅 달 관측 기록장 (음력)',
+      model: '🌍 태양–지구–달 모형',
+      sight: '👀 지구에서 보이는 쪽',
+      orbit: '▶ 공전 재생',
+      marks: '🔢 8개 위치 표시',
+      date: '📅 모형의 음력 날짜',
+      sky: '🕖 관측 시각 · 방향',
+    },
+    onFeatures(set) {
+      FEAT = set;
+      if (!set.has('orbit')) setPlaying(false);
+      if (!set.has('marks')) setGhost(false);
+      $('#ctrlDay').hidden = set.has('model');
+    },
+    onMissionStart() { aids(); },
+    onHint(m) { if (m.target) S.target = m.target; },
     levels: [
+      /* ---------- 1단계 · 관찰 ---------- */
       {
-        title: '달 모양 만들기',
+        title: '한 달 동안 달의 모양', short: '관찰', icon: '📅', phase: '관찰',
+        features: ['calendar'],
+        intro: '<p><b>🔍 탐구 질문: 달의 모양은 왜 매일 달라질까?</b></p>' +
+          '<p>먼저 한 달 동안 밤하늘의 달을 관측한 <b>관측 기록장</b>을 살펴봐요. 날짜는 달의 모양 변화를 기준으로 만든 <b>음력</b>이에요.</p>',
+        setup() { aids(); prep(); S.obs = new Set([S.day]); },
+        recap: '달의 모양은 <b>초승달 → 상현달 → 보름달 → 하현달 → 그믐달</b> 순서로 바뀌고, 약 한 달마다 되풀이돼요.',
+        summary: '<span class="formula">삭 → 초승달 → 상현달 → 보름달(망) → 하현달 → 그믐달 → 삭</span>' +
+          '<ul><li>달의 모양은 날마다 조금씩 바뀌며, 약 <b>29.5일</b>마다 같은 모양이 되풀이된다.</li>' +
+          '<li>보름달 전에는 <b>오른쪽</b>부터 차오르고, 보름달 뒤에는 오른쪽부터 줄어 <b>왼쪽</b>만 남는다 (북반구).</li></ul>',
         missions: [
           {
-            title: '🌕 보름달을 띄워라!',
-            goal: '달을 끌어서 지구에서 <b>보름달(망)</b>이 보이게 만들어 보세요. <b>지구(우리나라)에서 본 달</b> 창에서 모양을 확인해요.',
-            hint: '보름달은 달의 밝은 반쪽이 지구를 <b>정면으로</b> 향할 때 보여요. 달이 지구를 사이에 두고 태양의 <b>반대편</b>에 있어야 해요. (궤도 위에 초록색으로 표시했어요)',
-            target: { lo: 168, hi: 192 },
-            setup() { prep(false); ensureOutside(150, 210, 40); },
-            check: () => isPhase('full'),
-            hold: 0.8,
-            status: nowStatus,
-            explain: '태양–지구–달 순서로 늘어서면(<b>망</b>) 태양 빛을 받는 달의 밝은 반쪽 <b>전체</b>가 지구를 향해요. 그래서 둥근 <b>보름달</b>이 보여요. 음력 15일 무렵이에요.',
-          },
-          {
-            title: '🌓 오른쪽 반달, 상현달',
-            goal: '오른쪽 반이 밝은 반달, <b>상현달</b>을 만들어 보세요.',
-            hint: '삭(태양 쪽, θ = 0°)에서 공전 방향(시계 반대 방향)으로 <b>¼ 바퀴</b> 돌린 곳이에요. 태양–지구–달이 직각을 이뤄요.',
-            target: { lo: 80, hi: 100 },
-            setup() { prep(false); ensureOutside(70, 110, 180); },
-            check: () => isPhase('fq'),
-            hold: 0.8,
-            status: nowStatus,
-            explain: '삭에서 시계 반대 방향으로 90°(¼ 바퀴) 공전하면, 달의 밝은 반쪽 중 <b>절반</b>만 지구를 향해요. 그래서 오른쪽 반이 밝은 <b>상현달</b>(음력 7~8일)이 돼요.',
-          },
-          {
-            title: '🌘 새벽의 그믐달',
-            goal: '새벽 동쪽 하늘에 뜨는, <b>왼쪽</b>이 가늘게 빛나는 <b>그믐달</b>을 만들어 보세요.',
-            hint: '그믐달은 하현달(θ ≈ 270°)을 지나 다시 삭으로 돌아가기 직전의 달이에요.',
-            target: { lo: 295, hi: 340 },
-            setup() { prep(false); ensureOutside(280, 350, 90); },
-            check: () => isPhase('wnc'),
-            hold: 0.8,
-            status: nowStatus,
-            explain: '그믐달은 달이 한 바퀴를 거의 다 돌아 삭에 가까워졌을 때(음력 26~27일 무렵) 보여요. 밝은 반쪽이 거의 지구 반대쪽을 향해서 <b>왼쪽</b>만 가늘게 보이죠. 초승달과 밝은 쪽이 <b>반대</b>예요!',
+            title: '🔭 다섯 가지 모양 찾기',
+            goal: '날짜 칸을 눌러(또는 슬라이더로) 그날 밤의 달을 관측하며, <b>다섯 가지 모양</b>을 모두 찾아보세요.',
+            hint: '<b>📅 음력 날짜</b> 슬라이더를 1일부터 30일까지 천천히 움직여 보세요. <b>관측한 달</b> 창에 모양의 이름이 나와요.',
+            setup() { prep(); S.found = new Set(); S.logFound = true; selectDay(S.day); },
+            check: () => FIVE.every((k) => S.found.has(k)),
+            hold: 0,
+            status: () => FIVE.map((k) => chk(S.found.has(k), PH[k].short)).join(' · '),
+            explain: '음력 날짜가 지나면서 달은 <b>초승달 → 상현달 → 보름달 → 하현달 → 그믐달</b>로 바뀌어요. 음력 1일(삭) 무렵에는 달이 보이지 않고, 약 <b>29.5일</b>이 지나면 다시 같은 모양이 돼요.',
           },
           {
             type: 'quiz',
-            title: '🤔 달은 왜 모양이 바뀔까?',
-            goal: '달의 모양이 날마다 바뀌어 보이는 까닭으로 옳은 것은?',
-            choices: [
-              '지구의 그림자가 달을 가리는 정도가 달라지기 때문',
-              '달이 공전하면서, 태양 빛을 받아 밝은 부분이 지구에서 보이는 정도가 달라지기 때문',
-              '달이 스스로 내는 빛의 양이 날마다 달라지기 때문',
-              '달의 실제 크기가 커졌다 작아졌다 하기 때문',
-            ],
-            answer: 1,
-            feedback: [
-              '많은 사람이 이렇게 착각해요! 지구의 그림자는 언제나 태양의 <b>반대쪽</b>에만 생겨요. 초승달·상현달일 때 달은 그림자와 멀리 떨어져 있어요. (🌑 일식·월식 모드를 켜고 확인해 보세요)',
-              '',
-              '달은 스스로 빛을 내지 못해요. 태양 빛을 <b>반사</b>해서 밝게 보일 뿐이에요.',
-              '달의 크기는 변하지 않아요. ‘지구에서 본 달’ 창에서 어두운 부분까지 합치면 늘 같은 크기의 원이에요.',
-            ],
-            explain: '달은 언제나 태양을 향한 <b>반쪽</b>만 밝아요. 달이 지구 둘레를 공전하면 그 밝은 반쪽 중 지구를 향하는 부분이 달라져 <b>위상</b>(모양)이 바뀌어요. 지구의 그림자가 달을 가리는 것은 <b>월식</b>이라는 다른 현상이에요.',
-          },
-        ],
-      },
-      {
-        title: '위상 탐정',
-        missions: [
-          {
-            type: 'quiz',
-            title: '🔍 사건 ① 초저녁 서쪽 하늘의 달',
-            goal: '해가 진 직후 서쪽 하늘에서 왼쪽 그림 같은 달을 발견했어요. 이 달의 <b>이름</b>과 오른쪽 그림에서의 <b>위치</b>를 바르게 짝지은 것은?',
-            figure: FIG.crescent,
-            setup() { prep(false); },
-            choices: ['그믐달 · 8번 위치', '초승달 · 2번 위치', '초승달 · 8번 위치', '그믐달 · 2번 위치'],
-            answer: 1,
-            feedback: [
-              '그믐달은 <b>왼쪽</b>이 가늘게 밝아요. 그림 속 달은 어느 쪽이 밝나요?',
-              '',
-              '이름은 맞았어요! 하지만 8번 위치의 달은 지구에서 볼 때 <b>왼쪽</b>이 밝아요. 🔢 8개 위치 표시를 켜고 달을 8번에 놓아 보세요.',
-              '2번 위치는 맞아요. 그런데 오른쪽이 가늘게 밝은 달의 이름은 무엇일까요?',
-            ],
-            explain: '2번 위치(삭에서 시계 반대 방향으로 45°)의 달은 밝은 반쪽의 일부만 지구를 향해, <b>오른쪽</b>이 가늘게 빛나는 <b>초승달</b>(음력 3~4일 무렵)로 보여요. 태양을 뒤따라 서쪽으로 지기 때문에 초저녁에 잠깐 보여요.',
-          },
-          {
-            type: 'quiz',
-            title: '🔍 사건 ② 뒤죽박죽 달 사진',
-            goal: '탐정 수첩의 달 사진 순서가 뒤섞였어요. <b>삭(음력 1일)</b> 이후 한 달 동안 보이는 순서대로 바르게 나열한 것은?',
+            title: '🔍 뒤죽박죽 달 사진',
+            goal: '달 사진의 순서가 뒤섞였어요. 음력 1일(삭) 이후 한 달 동안 보이는 순서대로 나열한 것은?',
             figure: FIG.order,
+            setup() { prep(); for (let d = 1; d <= 30; d++) S.obs.add(d); },
             choices: [
               '(라) → (나) → (가) → (마) → (다)',
               '(다) → (나) → (가) → (마) → (라)',
@@ -857,35 +819,181 @@
             ],
             answer: 2,
             feedback: [
-              '순서가 거꾸로예요! 달은 시계 반대 방향으로 공전하며 <b>오른쪽부터</b> 차올라요. ▶ 공전 재생으로 확인해 보세요.',
+              '순서가 거꾸로예요! 관측 기록장을 보면 달은 <b>오른쪽부터</b> 차올라요.',
               '(나)와 (마)의 순서가 바뀌었어요. 보름달 <b>전</b>에는 오른쪽이, <b>뒤</b>에는 왼쪽이 밝아요.',
               '',
               '삭 바로 다음에는 달이 가느다랗게 보이기 시작해요. 보름달은 한 달의 한가운데(음력 15일 무렵)예요.',
             ],
-            explain: '(다) 초승달 → (마) 상현달 → (가) 보름달 → (나) 하현달 → (라) 그믐달 순서예요. 보름달까지는 <b>오른쪽</b>부터 점점 차오르고, 보름달 뒤에는 오른쪽부터 줄어들어 <b>왼쪽</b>만 남아요. 이 변화가 약 29.5일마다 되풀이돼요.',
+            explain: '(다) 초승달 → (마) 상현달 → (가) 보름달 → (나) 하현달 → (라) 그믐달. 그런데 달의 모양은 <b>왜</b> 이렇게 바뀔까요? 다음 단계에서 모형으로 알아봐요!',
+          },
+        ],
+      },
+      /* ---------- 2단계 · 모형 ---------- */
+      {
+        title: '햇빛을 받는 달', short: '모형', icon: '🌞', phase: '모형',
+        features: ['model', 'sight'],
+        intro: '<div class="si-link">🔗 <b>앞 단계에서</b> 달의 모양이 약 한 달마다 차례로 바뀌는 것을 관찰했어요.</div>' +
+          '<p>이제 북극 위에서 내려다본 <b>태양–지구–달 모형</b>으로 그 까닭을 찾아봐요. 햇빛은 화면 <b>오른쪽</b>에서 들어와요.</p>',
+        setup() { aids(); prep(); setTheta(90); S.interacted = false; },
+        recap: '달은 <b>햇빛을 반사</b>해 태양 쪽 절반만 밝고, 지구에서는 달의 <b>지구 쪽 절반</b>만 보여요.',
+        summary: '<ul><li>달은 스스로 빛을 내지 못하고 <b>태양 빛을 반사</b>하여 밝게 보인다.</li>' +
+          '<li>달이 어디에 있든 <b>태양을 향한 쪽 절반</b>은 늘 밝다.</li>' +
+          '<li>지구에서는 달의 <b>지구를 향한 쪽 절반</b>만 보인다. 그중 밝은 부분만큼 달이 밝게 보인다.</li></ul>',
+        missions: [
+          {
+            title: '🌙 달을 여기저기 옮겨 보자',
+            goal: '달을 끌어서 궤도 위 <b>노란 점선 동그라미</b> 4곳 중 <b>3곳</b>으로 옮겨 보세요. 달의 <b>어느 쪽</b>이 밝은지 살펴봐요.',
+            hint: '달(또는 궤도 위 아무 곳)을 손가락으로 누른 채 원을 따라 끌어요. <b>🌙 달의 위치</b> 슬라이더를 써도 돼요.',
+            setup() { prep(); setTheta(90); S.visit = new Set(); S.spots = true; },
+            check: () => S.visit.size >= 3,
+            hold: 0,
+            status: () => '옮겨 본 자리: <b>' + Math.min(3, S.visit.size) + ' / 3</b>' + (S.visit.size ? ' · 밝은 쪽은 어느 쪽이었나요?' : ''),
+            explain: '달이 어디에 있든 <b>태양을 향한 오른쪽 절반</b>만 밝았어요. 햇빛이 태양 쪽에서 오기 때문이에요. 달이 햇빛을 받는 부분은 언제나 <b>절반</b>이에요.',
           },
           {
             type: 'quiz',
-            title: '🔍 사건 ③ 해 질 녘 남쪽 하늘',
-            goal: '음력 <b>7~8일</b>, 해가 질 무렵 <b>남쪽 하늘</b>에 높이 떠 있는 달은 무엇일까요?',
+            title: '🤔 달은 왜 밝게 보일까?',
+            goal: '밤하늘의 달이 밝게 보이는 까닭으로 옳은 것은?',
+            choices: ['달이 스스로 빛을 내기 때문', '달이 태양 빛을 반사하기 때문', '지구의 불빛이 달을 비추기 때문', '달 표면이 뜨거워서 빛나기 때문'],
+            answer: 1,
+            feedback: [
+              '달이 스스로 빛난다면 어느 위치에서나 <b>전체</b>가 밝아야 해요. 모형에서는 늘 <b>태양 쪽 절반</b>만 밝았죠?',
+              '',
+              '지구의 불빛은 너무 약해서 달을 밝게 비출 수 없어요. 밝은 쪽은 지구 쪽이 아니라 <b>태양 쪽</b>이었어요.',
+              '달은 스스로 빛을 낼 만큼 뜨겁지 않아요. 밝은 쪽이 늘 <b>태양 쪽</b>이라는 점이 단서예요.',
+            ],
+            explain: '달은 스스로 빛을 내지 못하고 <b>태양 빛을 반사</b>해서 밝게 보여요. 그래서 햇빛을 받는 쪽만 밝고, 반대쪽은 어두워요.',
+          },
+          {
+            type: 'quiz',
+            title: '👀 지구에서는 어디가 보일까?',
+            goal: '지구에서 볼 수 있는 것은 달의 어느 부분일까요? (그림의 청록색 테두리를 보세요)',
+            figure: FIG.see,
+            choices: ['달 전체', '태양을 향한 쪽 절반', '지구를 향한 쪽 절반', '밝은 부분 전체'],
+            answer: 2,
+            feedback: [
+              '달은 공 모양이라 한쪽에서는 <b>절반</b>만 볼 수 있어요. 달의 뒤쪽은 지구에서 보이지 않아요.',
+              '태양 쪽 절반은 <b>밝은</b> 부분이에요. 그런데 우리가 보는 쪽은 태양 쪽이 아니라 <b>지구</b> 쪽이에요.',
+              '',
+              '밝은 부분이 지구를 등지고 있으면 지구에서는 보이지 않아요.',
+            ],
+            explain: '지구에서는 달의 <b>지구를 향한 쪽 절반</b>만 보여요. 그래서 밝은 절반 중 지구 쪽 절반에 들어 있는 부분만큼만 밝게 보여요. 그림의 달은 <b>오른쪽 반</b>만 밝게 보이겠죠?',
+          },
+        ],
+      },
+      /* ---------- 3단계 · 설명 ---------- */
+      {
+        title: '공전 위치와 위상', short: '원리', icon: '🌓', phase: '설명',
+        features: ['orbit', 'marks'],
+        intro: '<div class="si-link">🔗 <b>앞 단계에서</b> 달의 밝은 절반 중 <b>지구 쪽 절반</b>에 든 부분만 보인다는 것을 알았어요.</div>' +
+          '<p>달은 지구 둘레를 <b>시계 반대 방향</b>으로 <b>공전</b>해요. 달의 위치에 따라 모양(<b>위상</b>)이 어떻게 달라지는지 직접 만들어 봐요.</p>',
+        setup() { aids(); prep(); setGhost(true); setTheta(30); },
+        recap: '달이 공전하면 지구에서 보이는 밝은 부분이 달라져 <b>위상</b>이 바뀌어요.',
+        summary: '<ul><li><b>삭</b>: 태양–달–지구 순서. 밝은 쪽이 지구 반대편을 향해 보이지 않는다.</li>' +
+          '<li><b>상현달</b>: 태양–지구–달이 직각(삭에서 ¼ 바퀴). 오른쪽 반이 밝다.</li>' +
+          '<li><b>망(보름달)</b>: 태양–지구–달 순서. 밝은 쪽 전체가 보인다.</li>' +
+          '<li><b>하현달</b>: 망에서 ¼ 바퀴 더. 왼쪽 반이 밝다.</li></ul>' +
+          '<p class="note">⚠️ 달의 위상 변화는 <b>지구의 그림자 때문이 아니에요.</b> 달이 공전하면서 밝은 부분이 보이는 정도가 달라지기 때문이에요.</p>',
+        missions: [
+          {
+            title: '🌑🌓🌕🌗 네 가지 위상 만들기',
+            goal: '달을 옮겨 <b>삭, 상현달, 망(보름달), 하현달</b>을 하나씩 만들어 보세요. 모양이 될 때마다 잠깐 멈춰요.',
+            hint: '삭은 태양 쪽(1번), 상현달은 3번, 망은 태양 반대편(5번), 하현달은 7번 자리예요. <b>▶ 공전 재생</b>으로 미리 살펴봐도 좋아요.',
+            setup() { prep(); S.made = new Set(); S.holdKey = null; S.four = true; },
+            check: () => FOUR.every((k) => S.made.has(k)),
+            hold: 0,
+            status: () => FOUR.map((k) => chk(S.made.has(k), PH[k].short)).join(' · ') + '<br>지금 달: <b>' + PH[phaseKey(S.theta)].short + '</b>' + playNote(),
+            explain: '<b>삭</b>(태양–달–지구): 밝은 쪽이 보이지 않아요. <b>상현달</b>: 밝은 쪽의 절반만 보여 오른쪽 반이 밝아요. <b>망</b>(태양–지구–달): 밝은 쪽 전체가 보여 보름달! <b>하현달</b>: 다시 절반만 보여 왼쪽 반이 밝아요.',
+          },
+          {
+            title: '🌒 가느다란 초승달',
+            goal: '<b>오른쪽</b>이 가늘게 빛나는 <b>초승달</b>을 만들어 보세요.',
+            hint: '초승달은 삭(1번)과 상현달(3번) 사이, 2번 자리 근처예요.',
+            target: { lo: 25, hi: 65 },
+            setup() { prep(); ensureOutside(15, 75, 180); },
+            check: () => isPhase('wxc'),
+            hold: 0.8,
+            status: nowStatus,
+            explain: '삭에서 조금 공전하면 밝은 쪽의 <b>가장자리</b>만 지구를 향해, 오른쪽이 가늘게 빛나는 <b>초승달</b>이 돼요.',
+          },
+          {
+            type: 'quiz',
+            title: '🤔 달 모양은 왜 바뀔까?',
+            goal: '달의 위상이 바뀌는 까닭으로 옳은 것은?',
+            choices: [
+              '지구의 그림자가 달을 가리는 정도가 달라지기 때문',
+              '달이 공전하면서, 밝은 부분이 지구에서 보이는 정도가 달라지기 때문',
+              '달이 햇빛을 받는 부분이 절반보다 많아지거나 적어지기 때문',
+              '달의 실제 크기가 커졌다 작아졌다 하기 때문',
+            ],
+            answer: 1,
+            feedback: [
+              '많은 사람이 이렇게 착각해요! 지구의 그림자는 언제나 태양의 <b>반대쪽</b>에 생겨요. 상현달일 때 달은 그 그림자에서 멀리 떨어져 있어요.',
+              '',
+              '달은 어디에 있든 늘 <b>절반</b>이 햇빛을 받아요(2단계). 달라지는 것은 <b>지구에서 보이는</b> 부분이에요.',
+              '달의 크기는 변하지 않아요. 어두운 부분까지 합치면 늘 같은 크기의 원이에요.',
+            ],
+            explain: '달은 늘 태양 쪽 절반이 밝아요. 달이 지구 둘레를 <b>공전</b>하면 그 밝은 절반 중 지구에서 보이는 부분이 달라져 <b>위상</b>이 바뀌어요. 지구의 그림자가 달을 가리는 것은 <b>월식</b>이라는 다른 현상이에요(다음 차시).',
+          },
+        ],
+      },
+      /* ---------- 4단계 · 적용 ---------- */
+      {
+        title: '음력 날짜와 달 관측', short: '적용', icon: '🕖', phase: '적용',
+        features: ['date', 'sky'],
+        intro: '<div class="si-link">🔗 <b>앞 단계에서</b> 달의 공전 위치에 따라 위상이 정해진다는 것을 알았어요.</div>' +
+          '<p>음력 날짜를 알면 그날 밤 어떤 달이 <b>언제, 어느 하늘</b>에 보일지 예측할 수 있어요. 지구 둘레의 <b>정오 · 해 질 무렵 · 자정 · 해 뜰 무렵</b> 위치를 단서로 추리해 봐요.</p>',
+        setup() { aids(); prep(); setTheta(90); },
+        recap: '음력 날짜로 달의 위상을 알 수 있고, 위상에 따라 <b>보이는 시각과 방향</b>도 정해져요.',
+        summary: '<ul><li><b>초승달</b>(음력 2~3일 무렵): 초저녁 <b>서쪽</b> 하늘</li>' +
+          '<li><b>상현달</b>(음력 7~8일): 초저녁 <b>남쪽</b> 하늘</li>' +
+          '<li><b>보름달</b>(음력 15일 무렵): 초저녁 <b>동쪽</b>에서 떠서 밤새 보임</li>' +
+          '<li><b>하현달</b>(음력 22~23일): 새벽 <b>남쪽</b> 하늘</li>' +
+          '<li><b>그믐달</b>(음력 27~28일 무렵): 새벽 <b>동쪽</b> 하늘</li></ul>' +
+          '<p class="note">지구가 자전하므로 관측자는 하루 동안 정오 → 해 질 무렵 → 자정 → 해 뜰 무렵 위치를 차례로 지나요.</p>',
+        missions: [
+          {
+            type: 'quiz',
+            title: '🔍 해 질 녘 남쪽 하늘',
+            goal: '음력 <b>7~8일</b>, 해가 질 무렵 <b>남쪽 하늘</b>에 높이 떠 있는 달은?',
             figure: FIG.evening,
             choices: ['초승달', '하현달', '상현달', '보름달'],
             answer: 2,
             feedback: [
-              '초승달은 음력 2~4일 무렵, 초저녁 <b>서쪽</b> 하늘에 낮게 떠 있다가 곧 져요.',
-              '하현달은 음력 22~23일 무렵의 달로, 한밤중에 떠서 <b>새벽</b>에 남쪽 하늘에서 보여요. 상현과 하현을 헷갈리지 마세요!',
+              '초승달은 음력 2~3일 무렵, 초저녁 <b>서쪽</b> 하늘에 낮게 떠 있다가 곧 져요.',
+              '하현달은 음력 22~23일의 달로 <b>새벽</b>에 남쪽 하늘에서 보여요. 상현과 하현을 헷갈리지 마세요!',
               '',
               '보름달은 음력 15일 무렵, 해가 질 때 <b>동쪽</b>에서 떠올라요.',
             ],
-            explain: '음력 7~8일에는 달이 태양에서 시계 반대 방향으로 약 90° 떨어져 있어요(시뮬레이션에서 θ ≈ 90°, 지구 위쪽). 해 질 무렵 이 달은 <b>남쪽 하늘</b>에 있고, 태양이 있는 서쪽(오른쪽)이 밝은 <b>상현달</b>이에요.',
+            explain: '음력 7~8일에 달은 3번 자리에 있어요. 지구 위쪽 <b>해 질 무렵</b> 위치에 선 사람에게 이 달은 머리 위 <b>남쪽 하늘</b>에 보이고, 태양이 있는 서쪽(오른쪽)이 밝은 <b>상현달</b>이에요.',
           },
           {
-            title: '🔍 사건 ④ 음력 22~23일의 범인',
-            goal: '범인은 <b>음력 22~23일</b>에 나타나는 달! 달을 그 위치에 놓은 뒤 <b>✔ 확인하기</b>를 누르세요. 어떤 모양인지도 관찰해요.',
+            type: 'quiz',
+            title: '🌕 음력 15일의 보름달',
+            goal: '음력 15일 무렵의 보름달은 언제, 어디에서 볼 수 있을까요?',
+            setup() { prep(); setTheta(180); },
+            choices: [
+              '해 질 무렵 서쪽 하늘에서 잠깐 보인다',
+              '한밤중에만 잠깐 보였다가 사라진다',
+              '해 질 무렵 동쪽에서 떠서 밤새 보이다가 새벽에 서쪽으로 진다',
+              '새벽에 동쪽 하늘에서만 보인다',
+            ],
+            answer: 2,
+            feedback: [
+              '해 질 무렵 서쪽 하늘의 달은 <b>초승달</b>이에요.',
+              '보름달은 태양의 정반대편에 있어서 밤새 하늘에 떠 있어요. 지구 둘레의 시각 이름표를 보세요.',
+              '',
+              '새벽 동쪽 하늘의 가는 달은 <b>그믐달</b>이에요.',
+            ],
+            explain: '망의 달은 태양의 <b>정반대편</b>에 있어요. 관측자가 <b>해 질 무렵</b> 위치에 오면 동쪽에서 떠오르고, <b>자정</b>에는 남쪽 하늘 높이, <b>해 뜰 무렵</b>에는 서쪽으로 져요.',
+          },
+          {
+            title: '🔍 음력 22~23일의 달',
+            goal: '<b>음력 22~23일</b>의 달을 모형에 놓은 뒤 <b>✔ 확인하기</b>를 누르세요. 모양과 보이는 시각도 확인해요.',
             manual: true,
-            hint: '아래 <b>음력 날짜</b> 측정값을 보면서 달을 돌려 보세요. 보름달(음력 15일)에서 공전 방향으로 ¼ 바퀴 더 가면 돼요.',
+            hint: '<b>지구에서 본 달</b> 창의 <b>음력 날짜</b>를 보면서 달을 돌려 보세요. 보름달(음력 15일)에서 공전 방향으로 ¼ 바퀴 더!',
             target: { lo: 258, hi: 280 },
-            setup() { prep(false); },
+            setup() { prep(); ensureOutside(250, 290, 180); },
             status: () => '지금: 음력 약 <b>' + lunarDay(S.theta) + '일</b> · <b>' + PH[phaseKey(S.theta)].short + '</b>' + playNote(),
             check() {
               if (S.playing) return '⏸ 공전을 멈추고 달을 놓은 뒤 확인해요.';
@@ -894,102 +1002,29 @@
               if (d < 22) return '지금은 음력 약 ' + d + '일이에요. 공전 방향(시계 반대 방향)으로 조금 더 돌려 보세요.';
               return '지금은 음력 약 ' + d + '일이에요. 너무 많이 돌렸어요! 조금 되돌려 보세요.';
             },
-            explain: '음력 22~23일에는 달이 지구의 아래쪽(θ ≈ 270°)에 있어요. 지구에서 보면 <b>왼쪽 반</b>이 밝은 <b>하현달</b>이에요. 한밤중에 떠서 새벽에 남쪽 하늘에서 보여요.',
-          },
-        ],
-      },
-      {
-        title: '일식과 월식',
-        missions: [
-          {
-            title: '🌑 태양을 가려라! 일식',
-            goal: '<b>🌑 일식·월식 모드</b>가 켜졌어요. 달을 움직여 달의 그림자가 지구에 닿는 <b>일식</b>을 일으켜 보세요.',
-            hint: '일식은 달이 태양을 가리는 현상이에요. <b>태양–달–지구</b> 순서로 일직선이 되게 해 보세요.',
-            target: { lo: -ZONE_S, hi: ZONE_S },
-            setup() { prep(true); ensureOutside(-15, 15, 50); toast('🌑 일식·월식 모드가 켜졌어요'); },
-            check: () => { const E = eclipseState(); return !S.playing && !!E && E.type === 'solar'; },
-            hold: 1.0,
-            status() {
-              if (!S.eclipse) return '🌑 <b>일식·월식 모드</b>를 켜 주세요.';
-              const E = eclipseState();
-              if (E && E.type === 'solar') return '☀ 달의 그림자가 지구에 <b>닿았어요!</b>' + (E.total ? ' (개기 일식)' : ' (부분 일식)') + playNote();
-              return '달의 그림자: 지구에 <b>닿지 않음</b> · θ = <b>' + thetaTxt() + '°</b>' + playNote();
-            },
-            explain: '<b>태양–달–지구</b>가 일직선(달이 <b>삭</b>의 위치)이 되면 달이 태양을 가리고, 달의 그림자가 지구에 생겨요. 그림자가 생긴 <b>좁은 지역</b>에서만 일식을 볼 수 있어요. 태양은 달보다 약 400배 크지만 약 400배 멀리 있어 하늘에서 두 천체가 비슷한 크기로 보여요. 그래서 달이 태양을 완전히 가리는 <b>개기 일식</b>도 일어나요.',
-          },
-          {
-            title: '🌕 붉은 달! 월식',
-            goal: '이번엔 달을 <b>지구의 그림자</b> 속으로 넣어 <b>월식</b>을 일으켜 보세요. (도전: 달이 그림자 속에 완전히 들어가는 <b>개기 월식</b>!)',
-            hint: '지구의 그림자는 태양의 반대쪽(왼쪽)으로 생겨요. <b>태양–지구–달</b> 순서로 일직선이 되게 해 보세요.',
-            target: { lo: 180 - ZONE_L, hi: 180 + ZONE_L },
-            setup() { prep(true); ensureOutside(160, 200, 120); },
-            check: () => { const E = eclipseState(); return !S.playing && !!E && E.type === 'lunar'; },
-            hold: 1.0,
-            status() {
-              if (!S.eclipse) return '🌑 <b>일식·월식 모드</b>를 켜 주세요.';
-              const E = eclipseState();
-              if (E && E.type === 'lunar') return '🌕 달이 지구 그림자 속에 들어갔어요!' + (E.total ? ' <b>(개기 월식)</b>' : ' (부분 월식)') + playNote();
-              return '달이 지구 그림자 <b>밖</b>에 있어요 · θ = <b>' + thetaTxt() + '°</b>' + playNote();
-            },
-            explain: '<b>태양–지구–달</b>이 일직선(달이 <b>망</b>의 위치)이 되면 달이 지구의 그림자 속에 들어가 <b>월식</b>이 일어나요. 월식은 달이 떠 있는 밤인 지역이라면 어디서나 볼 수 있어요. 개기 월식 때 달이 사라지지 않고 <b>붉게</b> 보이는 까닭은, 지구 대기를 지나며 꺾인 붉은빛이 달에 닿기 때문이에요.',
-          },
-          {
-            type: 'quiz',
-            title: '🧩 일식과 월식, 달은 어디에?',
-            goal: '일식과 월식이 일어날 때 달의 위치(위상)를 바르게 짝지은 것은?',
-            choices: ['일식 – 망, 월식 – 삭', '일식 – 상현, 월식 – 하현', '일식 – 삭, 월식 – 망', '일식과 월식 모두 – 망'],
-            answer: 2,
-            feedback: [
-              '반대예요! 일식은 <b>달이 태양을 가리는</b> 현상이니, 달이 태양과 같은 방향에 있어야 해요.',
-              '상현·하현일 때는 태양–지구–달이 직각을 이뤄서 일직선이 되지 않아요.',
-              '',
-              '일식 때 달은 태양 쪽에 있어요. 태양 반대편에 있는 보름달이 태양을 가릴 수 있을까요?',
-            ],
-            explain: '<b>일식</b>: 태양–달–지구 (달이 <b>삭</b>) → 달이 태양을 가려요.<br><b>월식</b>: 태양–지구–달 (달이 <b>망</b>) → 지구의 그림자가 달을 가려요.<br>그래서 일식은 음력 1일 무렵, 월식은 음력 15일 무렵에만 일어날 수 있어요.',
-          },
-          {
-            type: 'quiz',
-            title: '🧩 왜 매달 일어나지 않을까?',
-            goal: '삭과 망은 매달 돌아오는데, 일식과 월식은 <b>매달 일어나지 않아요</b>. 그 까닭으로 옳은 것은?',
-            figure: FIG.tilt,
-            choices: [
-              '달이 태양보다 훨씬 작기 때문',
-              '삭과 망이 1년에 한 번씩만 돌아오기 때문',
-              '달이 스스로 빛을 내지 못하기 때문',
-              '달의 공전 궤도면이 지구의 공전 궤도면에 대해 약 5° 기울어져 있기 때문',
-            ],
-            answer: 3,
-            feedback: [
-              '달은 태양보다 작지만 훨씬 가까워서 하늘에서는 크기가 비슷해 보여요. 크기 때문에 드문 것은 아니에요.',
-              '삭과 망은 약 29.5일마다, 즉 <b>매달</b> 돌아와요!',
-              '달이 빛을 내지 못하는 것은 위상 변화의 까닭이지, 일식·월식이 드문 까닭은 아니에요.',
-              '',
-            ],
-            explain: '달의 궤도가 약 5° 기울어져 있어서, 대부분의 삭과 망 때 달은 태양–지구를 잇는 직선보다 조금 <b>위나 아래</b>로 지나가 그림자가 비껴가요. 달이 지구 공전 궤도면 근처를 지나면서 동시에 삭이나 망이 될 때만 일식이나 월식이 일어나요. (🌑 일식·월식 모드를 끄고 삭·망 위치에 달을 놓아 보세요!)',
+            explain: '음력 22~23일에 달은 7번 자리에 있어 <b>왼쪽 반</b>이 밝은 <b>하현달</b>이에요. 자정 무렵 동쪽에서 떠서 <b>해 뜰 무렵 남쪽 하늘</b>에서 보여요.',
           },
         ],
       },
     ],
   });
 
-  // 💡 힌트를 누르면 궤도 위에 목표 구간을 보여 줌 (엔진에 힌트 이벤트가 없어 클릭을 직접 감지)
-  $('#game').addEventListener('click', (e) => {
-    const b = e.target.closest('button');
-    if (!b || b.textContent.indexOf('힌트') < 0) return;
-    const m = game.current();
-    if (m && m.target) S.target = m.target;
-  });
-
   /* ---------- 시작 ---------- */
-  let lastKey = phaseKey(S.theta), lastE = null, lastUI = -1;
+  let lastKey = phaseKey(S.theta);
   SciSim.loop((dt, t) => {
-    if (S.playing) setTheta(S.theta + S.speed * 10 * dt);
-    const E = eclipseState();
-    const key = phaseKey(S.theta);
-    if (key !== lastKey) { if (!S.playing) Sound.tick(); lastKey = key; }
-    const et = E ? E.type : null;
-    if (et !== lastE) { if (et) Sound.tone(et === 'solar' ? 330 : 262, 0.35, 'sine', 0.08); lastE = et; }
-    views.forEach(({ v, L }) => { if (v.canvas.offsetWidth > 0) draw(v, L, E, t); });
-    if (t - lastUI > 0.08) { lastUI = t; updateReadouts(E); }
+    if (S.playing) setTheta(S.theta + 30 * dt);
+    if (modelOn()) {
+      if (S.spots) {
+        const k = spotAt(S.theta);
+        if (k >= 0 && !S.visit.has(k)) { S.visit.add(k); Sound.tone(880, 0.12, 'triangle', 0.08); }
+      }
+      const key = phaseKey(S.theta);
+      if (S.four && !S.playing) {
+        if (key === S.holdKey) S.holdT += dt; else { S.holdKey = key; S.holdT = 0; }
+        if (FOUR.indexOf(key) >= 0 && S.holdT >= 0.4 && !S.made.has(key)) { S.made.add(key); Sound.tone(880, 0.12, 'triangle', 0.08); }
+      }
+      if (key !== lastKey) { if (!S.playing) Sound.tick(); lastKey = key; }
+    }
+    views.forEach(({ v, L }) => { if (v.canvas.offsetWidth > 0) draw(v, L, t); });
   });
 })();

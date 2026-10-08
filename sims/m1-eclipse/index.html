@@ -6,8 +6,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#0ea5e9">
-  <title>달의 위상 변화 | 중학 과학 시뮬레이션</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌙</text></svg>">
+  <title>일식과 월식 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌑</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
@@ -18,8 +18,6 @@
     .sc-tall { display: none; }
     @media (max-width: 599px) { .sc-wide { display: none; } .sc-tall { display: block; } }
     .ctrl-note { margin: 4px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
-    .play-row { display: flex; gap: 10px 16px; align-items: center; flex-wrap: wrap; }
-    .play-row .btn { min-width: 132px; }
     .btn-sm { min-height: 44px; }
     .switch { min-height: 44px; }
     input[type=range] { height: 44px; }
@@ -32,7 +30,7 @@
     <a class="btn btn-sm btn-back" href="../../index.html#g1">←<span> 목록</span></a>
     <div class="sim-title">
       <div class="sim-unit">중1 · Ⅶ. 태양계</div>
-      <h1>달의 위상 변화</h1>
+      <h1>일식과 월식</h1>
     </div>
     <div class="sim-header-right">
       <div class="star-meter" id="starMeter" title="획득한 별"></div>
@@ -43,28 +41,20 @@
   <main class="sim-main">
     <div class="stage-col">
       <section class="card stage-card">
-        <div class="stage-canvas sc-wide"><canvas id="cvWide" aria-label="달 관측 기록장 또는 북극 위에서 내려다본 태양, 지구, 달의 모형과 지구에서 본 달의 모양"></canvas></div>
-        <div class="stage-canvas sc-tall"><canvas id="cvTall" aria-label="달 관측 기록장 또는 북극 위에서 내려다본 태양, 지구, 달의 모형과 지구에서 본 달의 모양"></canvas></div>
+        <div class="stage-canvas sc-wide"><canvas id="cvWide" aria-label="북극 위에서 내려다본 태양, 지구, 달과 그림자, 그리고 지구에서 본 태양과 달"></canvas></div>
+        <div class="stage-canvas sc-tall"><canvas id="cvTall" aria-label="북극 위에서 내려다본 태양, 지구, 달과 그림자, 그리고 지구에서 본 태양과 달"></canvas></div>
       </section>
     </div>
 
     <aside class="side-col">
       <section class="card card-pad">
-        <div class="control" id="ctrlDay">
-          <div class="control-head"><label for="sDay">📅 음력 날짜</label><output id="oDay"></output></div>
-          <input type="range" id="sDay" min="1" max="30" step="1" value="3">
-          <p class="ctrl-note">관측 기록장의 날짜 칸을 직접 눌러도 돼요.</p>
-        </div>
-        <div class="control" data-feature="model">
+        <div class="control">
           <div class="control-head"><label for="sTheta">🌙 달의 위치</label><output id="oTheta"></output></div>
-          <input type="range" id="sTheta" min="0" max="359" step="1" value="0">
+          <input type="range" id="sTheta" min="0" max="359" step="1" value="40">
           <p class="ctrl-note">화면 속 달을 끌어서 지구 둘레로 옮겨도 돼요. (0° = 태양 쪽)</p>
         </div>
-        <div class="control" data-feature="orbit">
-          <div class="play-row">
-            <button class="btn btn-sm btn-primary" id="playBtn" type="button" aria-pressed="false">▶ 공전 재생</button>
-            <label class="switch" data-feature="marks"><input type="checkbox" id="tGhost"> 🔢 8개 위치</label>
-          </div>
+        <div class="control" data-feature="tilt">
+          <label class="switch"><input type="checkbox" id="tTilt" checked> 🌐 궤도 기울기 반영 (실제처럼)</label>
         </div>
       </section>
       <section class="card" id="game"></section>

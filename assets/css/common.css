@@ -88,7 +88,7 @@ h1, h2, h3, h4 { margin: 0; line-height: 1.25; }
 .btn-good:active { box-shadow: 0 1px 0 #0b7a41; transform: translateY(2px); }
 .btn-subject { background: var(--subject); border-color: var(--subject); color: #fff; box-shadow: 0 3px 0 color-mix(in srgb, var(--subject) 70%, black); }
 .btn-ghost { background: transparent; border-color: transparent; }
-.btn-sm { min-height: 40px; padding: 7px 14px; font-size: 15px; }
+.btn-sm { min-height: var(--tap); padding: 8px 14px; font-size: 15px; }
 .btn-block { width: 100%; }
 @media (hover: hover) {
   .btn:hover { border-color: #c4cfdf; background: var(--surface-2); }
@@ -221,7 +221,7 @@ input[type=range]:focus-visible { outline: none; }
 input[type=range]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 6px color-mix(in srgb, var(--subject) 25%, transparent); }
 input[type=range]:disabled { opacity: .45; cursor: not-allowed; }
 
-.switch { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 700; font-size: 15px; min-height: 40px; }
+.switch { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 700; font-size: 15px; min-height: var(--tap); }
 .switch input { width: 22px; height: 22px; accent-color: var(--subject); }
 
 /* 새로 열린 도구 강조 */
