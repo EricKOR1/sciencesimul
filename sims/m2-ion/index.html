@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#8b5cf6">
+  <title>이온의 형성 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    /* ---- 이온의 형성 전용 스타일 ---- */
+    body.scene-move .atom-only { display: none !important; }
+    body:not(.scene-move) .move-only { display: none !important; }
+
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; }
+    .legend { display: inline-flex; flex-wrap: wrap; gap: 4px 14px; align-items: center; font-weight: 700; font-size: 15px; color: var(--muted); padding-left: 4px; }
+    .legend > span { display: inline-flex; align-items: center; gap: 6px; }
+    .ball {
+      width: 30px; height: 30px; border-radius: 50%; display: inline-grid; place-items: center; flex: none; font-style: normal;
+      color: #fff; font-weight: 900; font-size: 19px; line-height: 1; box-shadow: inset 0 -2px 3px rgba(0,0,0,.18);
+    }
+    .ball.p { background: radial-gradient(circle at 34% 32%, #ffb1b1, #e2464b 58%, #b3262b); }
+    .ball.n { background: radial-gradient(circle at 34% 32%, #f1f3f7, #a3acbb 58%, #6f7889); }
+    .ball.e { background: radial-gradient(circle at 34% 32%, #b4cdff, #3867f4 58%, #2142b0); }
+    .legend .ball { width: 24px; height: 24px; font-size: 16px; }
+    .segmented button { min-height: 44px; }
+
+    .card-title { margin: -6px 0 2px; }
+    .card-title .btn { color: var(--muted); font-size: 14.5px; padding: 6px 10px; min-height: 44px; }
+    .pick-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 4px 0 8px; border-bottom: 1px dashed var(--line); }
+    .pick-row .k { font-weight: 800; font-size: 15px; }
+    .pick-row .segmented button { padding: 6px 14px; font-size: 16px; }
+    .part-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; }
+    .part-label { flex: 1; min-width: 0; line-height: 1.3; }
+    .part-label b { display: block; font-size: 16px; }
+    .part-label small { display: block; color: var(--muted); font-size: 13px; font-weight: 600; }
+    .counter { display: flex; align-items: center; gap: 4px; flex: none; }
+    .cnt-btn {
+      width: 46px; height: 46px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface);
+      font-size: 25px; font-weight: 800; cursor: pointer; display: grid; place-items: center; line-height: 1; padding: 0;
+      transition: transform .08s, background .15s, border-color .15s; touch-action: manipulation; color: #2a52d6;
+    }
+    @media (hover: hover) { .cnt-btn:hover:not([disabled]) { background: var(--surface-2); border-color: #c4cfdf; } }
+    .cnt-btn:active:not([disabled]) { transform: scale(.92); background: var(--surface-2); }
+    .cnt-btn[disabled] { opacity: .35; cursor: not-allowed; }
+    .cnt-val { min-width: 40px; text-align: center; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 24px; font-weight: 800; }
+    .side-note { margin-top: 8px; font-size: 14px; color: var(--muted); background: var(--surface-2); border-radius: 10px; padding: 8px 10px; line-height: 1.45; }
+    .side-note b { color: color-mix(in srgb, var(--subject) 85%, black); }
+    .move-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px; }
+    .move-btns .btn { padding: 9px 10px; }
+    #powerBtn.on { background: #14a058; border-color: #14a058; box-shadow: 0 3px 0 #0b7a41; }
+
+    .readout .value.q-pos { color: #d0343a; }
+    .readout .value.q-neg { color: #2a52d6; }
+    .readout .value.q-zero { color: #0f8a4b; }
+    .readout .value sup { font-size: .6em; }
+
+    .stage-hint { white-space: normal; text-align: center; max-width: calc(100% - 32px); }
+    .mission-goal sup, .mission-title sup, .level-name sup, .choice sup, .mission-explain sup, .concept sup, .mission-status sup,
+    .mission-feedback sup, .modal sup, .si-body sup, .side-note sup, .tool-chip sup { font-size: .68em; line-height: 0; }
+    .mission-goal sub, .choice sub, .mission-explain sub, .concept sub, .si-body sub, .modal sub, .mission-status sub { font-size: .68em; line-height: 0; }
+
+    @media (orientation: portrait) and (min-width: 600px) {
+      .cnt-val { min-width: 34px; font-size: 22px; }
+      .pick-row .segmented button { padding: 6px 10px; }
+    }
+    @media (max-width: 599px) {
+      .legend { font-size: 13.5px; gap: 4px 10px; }
+      .stage-hint { font-size: 13px; padding: 5px 12px; bottom: 8px; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="chem">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#g2">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">중2 · Ⅳ. 물질의 구성</div>
+      <h1>이온의 형성</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <div class="segmented" id="sceneSeg" role="tablist" aria-label="실험 장면" data-feature="move">
+            <button type="button" data-scene="atom" class="on">⚛️ 원자와 이온</button>
+            <button type="button" data-scene="move">🧪 이온의 이동</button>
+          </div>
+          <div class="legend atom-only" aria-label="범례">
+            <span><i class="ball p">+</i> 양성자</span>
+            <span><i class="ball n"></i> 중성자</span>
+            <span><i class="ball e">−</i> 전자</span>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="원자가 전자를 잃거나 얻어 이온이 되는 과정과 이온의 이동 실험 시뮬레이션"></canvas>
+          <div class="stage-hint" id="stageHint">👆 전자를 끌어서 넣고 빼 보세요</div>
+        </div>
+      </section>
+      <div class="readouts atom-only">
+        <div class="readout"><span class="label">양성자 수 (원자핵)</span><span class="value" id="rP">11</span></div>
+        <div class="readout"><span class="label">전자 수</span><span class="value" id="rE">11</span></div>
+        <div class="readout" data-feature="meter"><span class="label">전체 전하</span><span class="value" id="rQ">0</span></div>
+        <div class="readout" data-feature="ion"><span class="label">종류</span><span class="value" id="rK">원자</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad atom-only">
+        <div class="card-title">🧪 원자와 전자<span style="flex:1"></span><button class="btn btn-sm btn-ghost" id="resetBtn" type="button">↺ 처음 상태로</button></div>
+        <div class="pick-row" data-feature="picker">
+          <span class="k">원자 고르기</span>
+          <div class="segmented" id="pickSeg" aria-label="원자 고르기">
+            <button type="button" data-z="11">Na</button>
+            <button type="button" data-z="12">Mg</button>
+            <button type="button" data-z="8">O</button>
+            <button type="button" data-z="17">Cl</button>
+          </div>
+        </div>
+        <div class="part-row" data-feature="ebin">
+          <i class="ball e" aria-hidden="true">−</i>
+          <div class="part-label"><b>전자</b><small>잃거나 얻기</small></div>
+          <div class="counter">
+            <button class="cnt-btn" id="eMinus" type="button" aria-label="전자 1개 빼기">−</button>
+            <output class="cnt-val" id="oE" aria-live="polite">11</output>
+            <button class="cnt-btn" id="ePlus" type="button" aria-label="전자 1개 넣기">+</button>
+          </div>
+        </div>
+        <div class="side-note" id="sideNote"></div>
+      </section>
+      <section class="card card-pad move-only" data-feature="move">
+        <div class="card-title">🔌 이온의 이동 실험<span style="flex:1"></span><button class="btn btn-sm btn-ghost" id="paperBtn" type="button">↺ 새 거름종이</button></div>
+        <div class="move-btns">
+          <button class="btn btn-primary" id="powerBtn" type="button">⚡ 전원 켜기</button>
+          <button class="btn" id="swapBtn" type="button">🔄 전극 바꾸기</button>
+        </div>
+        <div class="side-note">질산 칼륨 수용액을 적신 거름종이 가운데에 <b>파란색</b> 황산 구리(Ⅱ) 수용액과 <b>보라색</b> 과망가니즈산 칼륨 수용액을 떨어뜨렸어요.</div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

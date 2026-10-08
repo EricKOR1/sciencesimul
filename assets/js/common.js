@@ -357,7 +357,7 @@
     }
     return null;
   }
-  const PHASE_ICON = { '관찰': '👀', '실험': '🧪', '탐구': '🧪', '설명': '💡', '적용': '🏠', '확인': '✅', '정리': '📝' };
+  const PHASE_ICON = { '관찰': '👀', '실험': '🧪', '탐구': '🔎', '모형': '🧩', '설명': '💡', '확인': '✅', '적용': '🏠', '예측': '🎯', '기록': '📋', '분석': '📊', '복습': '🔁', '정리': '📝' };
 
   function game(opts) {
     const mount = typeof opts.mount === 'string' ? $(opts.mount) : opts.mount;
@@ -390,7 +390,7 @@
         ]))),
       ]);
     }
-    const phaseOf = (lv) => (lv.phase ? (PHASE_ICON[lv.phase] || '') + ' ' + lv.phase : '');
+    const phaseOf = (lv) => (lv.phase ? (PHASE_ICON[lv.phase] ? PHASE_ICON[lv.phase] + ' ' : '') + lv.phase : '');
     const allFeatures = new Set();
     levels.forEach((lv) => (lv.features || []).forEach((f) => allFeatures.add(f)));
 

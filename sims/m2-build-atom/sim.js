@@ -1,7 +1,9 @@
 /* =========================================================
-   중2 Ⅳ. 물질의 구성 - 원자·이온 공방
-   원자의 구조(원자핵의 (+)전하, 전자의 (−)전하, 전기적 중성)
-   원소와 원소 기호(양성자 수로 결정), 이온의 형성과 이온식·이름
+   중2 Ⅳ. 물질의 구성 - 원자의 구조  [9과11-02]
+   원자는 양성자, 중성자, 전자로 구성되며,
+   양성자의 수에 따라 원소의 종류가 달라진다. (질량수·동위 원소는 다루지 않음)
+   ① 관찰: 원자 모형 살펴보기 → ② 탐구: 전기적 중성
+   → ③ 설명: 양성자 수가 원소를 결정 → ④ 적용: 원소 찾기
    ========================================================= */
 (function () {
   'use strict';
@@ -14,89 +16,85 @@
     ['Na', '나트륨'], ['Mg', '마그네슘'], ['Al', '알루미늄'], ['Si', '규소'], ['P', '인'],
     ['S', '황'], ['Cl', '염소'], ['Ar', '아르곤'], ['K', '칼륨'], ['Ca', '칼슘'],
   ];
-  // 이 단원에서 다루는 이온 (이온식 → 이름)
-  const KNOWN_IONS = {
-    'H+1': '수소 이온', 'Li+1': '리튬 이온', 'Na+1': '나트륨 이온', 'K+1': '칼륨 이온',
-    'Mg+2': '마그네슘 이온', 'Ca+2': '칼슘 이온', 'Al+3': '알루미늄 이온',
-    'F-1': '플루오린화 이온', 'Cl-1': '염화 이온', 'O-2': '산화 이온', 'S-2': '황화 이온',
-  };
-  const MAX_P = 20, MAX_E = 22;
+  // 이 모형에서 원소마다 함께 그리는 중성자 수 (자연에 가장 흔한 원자 기준, 학생이 따로 바꾸지 않음)
+  const NEUT = [0, 0, 2, 4, 5, 6, 6, 7, 8, 10, 10, 12, 12, 14, 14, 16, 16, 18, 22, 20, 20];
+  const MAX_P = 20, MAX_E = 20;
   const MINUS = '−';
-
-  function chargeSup(q) {
-    if (!q) return '';
-    const n = Math.abs(q);
-    return (n === 1 ? '' : String(n)) + (q > 0 ? '+' : MINUS);
-  }
   function signed(q) { return q > 0 ? '+' + q : q < 0 ? MINUS + (-q) : '0'; }
-  // 받침에 따라 '이에요/예요'
-  function iyeyo(word) {
-    const c = word.charCodeAt(word.length - 1);
-    const batchim = c >= 0xac00 && c <= 0xd7a3 && (c - 0xac00) % 28 !== 0;
-    return word + (batchim ? '이에요' : '예요');
-  }
-  function formulaHTML(sym, q) { return sym + (q ? '<sup>' + chargeSup(q) + '</sup>' : ''); }
+  function elem(p) { const e = ELEMENTS[clamp(p, 1, MAX_P)]; return { sym: e[0], name: e[1] }; }
 
-  function identify(p, e) {
-    const el = ELEMENTS[clamp(p, 1, MAX_P)];
-    const q = p - e;
-    const kind = q === 0 ? 'atom' : q > 0 ? 'cation' : 'anion';
-    const key = el[0] + (q > 0 ? '+' : '-') + Math.abs(q);
-    const ionName = q === 0 ? null : (KNOWN_IONS[key] || null);
-    return { p, e, q, sym: el[0], name: el[1], kind, ionName, known: q === 0 || !!ionName };
-  }
-  function fullName(id) { return id.q === 0 ? id.name + ' 원자' : (id.ionName || '이 단원에서 다루지 않는 이온'); }
-
-  const KIND = {
-    atom: { c: '#14a058', soft: '#e2f6eb', band: '원자 · 전기적으로 중성', short: '원자(중성)' },
-    cation: { c: '#e2464b', soft: '#fde9e9', band: '양이온 · (+)전하', short: '양이온' },
-    anion: { c: '#3867f4', soft: '#e7eeff', band: '음이온 · (−)전하', short: '음이온' },
+  const PART = {
+    p: { name: '양성자', pos: '원자핵 속', charge: '(+)전하', col: '#c4313a' },
+    n: { name: '중성자', pos: '원자핵 속', charge: '전하 없음', col: '#5d6879' },
+    e: { name: '전자', pos: '원자핵 주위', charge: '(−)전하', col: '#2a52d6' },
   };
 
   /* ---------- 배치(가상 좌표 800 x 520) ---------- */
   const C = { x: 372, y: 262 };              // 원자 중심
-  const SHELL_R = [70, 108, 146, 182];       // 전자 껍질(그림 배치용)
+  const SHELL_R = [80, 116, 152, 186];       // 전자를 그리는 원 (보기 쉽게 배치한 그림일 뿐)
   const SHELL_CAP = [2, 8, 8, 4];
-  const SHELL_SPEED = [0.55, 0.36, 0.26, 0.2];
+  const SHELL_SPEED = [0.5, 0.33, 0.24, 0.18];
   const SHELL_OFF = [-Math.PI / 2, -Math.PI / 2 + 0.2, -Math.PI / 2 + 0.45, -Math.PI / 4];
-  const ATOM_R = 206;                        // 이 안에 놓으면 원자에 들어감
-  const PR = 10, ER = 10;                    // 입자 반지름
-  const PBIN = { x: 16, y: 60, w: 132, h: 168 };
-  const EBIN = { x: 16, y: 284, w: 132, h: 168 };
-  const CARD1 = { x: 598, y: 14, w: 188, h: 246 };
-  const CARD2 = { x: 598, y: 272, w: 188, h: 234 };
+  const ATOM_R = 214;                        // 이 안에 놓으면 원자에 들어감
+  const NR = 9, ER = 10;                     // 원자핵 속 입자 / 전자 반지름
+  const BIN_X = 16, BIN_W = 132, BIN_H = 168;
+  const CARD_X = 598, CARD_W = 188;
+  const INSET = { x: 82, y: 250, r: 64 };    // 원자핵 확대 그림 (1단계)
   const FONT = '"Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif';
-  const COL = { p: '#e2464b', e: '#3867f4', good: '#14a058', ink: '#1b2333', muted: '#5d6879', line: '#dde4ef', warn: '#f26b3a' };
+  const COL = { p: '#e2464b', e: '#3867f4', n: '#8a94a6', good: '#14a058', ink: '#1b2333', muted: '#5d6879', line: '#dde4ef', warn: '#f26b3a', sub: '#8b5cf6' };
+  const MAXQ = 6;
 
   /* ---------- 상태 ---------- */
   const S = {
-    protons: [],      // {hx,hy: 원자핵 안 자리, x,y, sx,sy, t, dur, fresh}
+    nucleons: [],     // {type:'p'|'n', hx,hy, x,y, sx,sy, t, dur, fresh, grow}
     electrons: [],    // {x,y, sx,sy, t, dur, fresh, key}
-    drag: null,       // {kind:'p'|'e', from:'bin'|'atom', x, y}
-    flying: [],       // 상자로 돌아가는 입자
-    pulses: [],       // 자리에 들어갈 때 퍼지는 고리
+    drag: null,       // {kind:'p'|'e', from:'bin'|'atom', x, y, off}
+    flying: [], fading: [], pulses: [],
     phase: [0, 0, 0, 0],
-    orbit: true,
-    target: null,     // {p, e}
-    needle: 0,
-    ringR: 120,
-    lastP: 1, lastE: 1,
-    banner: null,     // {text, color, t0}
-    idFlash: null,    // {kind:'element'|'same', t0}
-    hinted: false,
+    target: null,     // {p, e, text}
+    needle: 0, ringR: 120,
+    lastP: 2, lastE: 2,
+    banner: null, idFlash: null, focus: null, ePt: null,
+    seen: { p: false, n: false, e: false },
+    callout: null,    // {kind, ref, inset, t0}
     time: 0,
   };
 
-  const np = () => S.protons.length + (S.drag && S.drag.from === 'atom' && S.drag.kind === 'p' ? 1 : 0);
+  let F = new Set();
+  const on = (f) => F.has(f);
+  let game = null;
+  const isNew = (f) => !!(game && game.isNew(f));
+
+  const protons = () => S.nucleons.filter((q) => q.type === 'p');
+  const np = () => protons().length + (S.drag && S.drag.from === 'atom' && S.drag.kind === 'p' ? 1 : 0);
+  const nn = () => S.nucleons.length - protons().length;
   const ne = () => S.electrons.length + (S.drag && S.drag.from === 'atom' && S.drag.kind === 'e' ? 1 : 0);
 
   /* ---------- 캔버스 ---------- */
-  const view = SciSim.stage($('#cv'), { width: 800, height: 520 });
+  const view = SciSim.stage($('#cv'), { width: 800, height: 520, background: '#fff' });
   const ctx = view.ctx;
 
-  /* ---------- 원자핵 속 양성자 배치 (서로 밀어내며 뭉치기) ---------- */
+  /* ---------- 화면 배치 (열린 도구에 따라) ---------- */
+  function bins() {
+    const kinds = [];
+    if (on('pbin')) kinds.push('p');
+    if (on('ebin')) kinds.push('e');
+    const gap = 56, H = kinds.length * BIN_H + (kinds.length - 1) * gap;
+    let y = (520 - H) / 2;
+    const out = {};
+    kinds.forEach((k) => { out[k] = { x: BIN_X, y, w: BIN_W, h: BIN_H }; y += BIN_H + gap; });
+    return out;
+  }
+  function cards() {
+    if (on('idcard')) return { id: { x: CARD_X, y: 14, w: CARD_W, h: 246 }, meter: { x: CARD_X, y: 272, w: CARD_W, h: 234 } };
+    if (on('meter')) return { meter: { x: CARD_X, y: 143, w: CARD_W, h: 234 } };
+    return { record: { x: CARD_X, y: 36, w: CARD_W, h: 448 } };
+  }
+  const insetOn = () => !on('ebin') && !on('pbin');
+
+  /* ---------- 원자핵 (양성자 + 중성자, 서로 밀어내며 뭉치기) ---------- */
   function relax(iter) {
-    const ps = S.protons, minD = PR * 2 * 0.93;
+    const ps = S.nucleons, minD = NR * 2 * 0.93;
     for (let k = 0; k < iter; k++) {
       for (let i = 0; i < ps.length; i++) { ps[i].hx *= 0.96; ps[i].hy *= 0.96; }
       for (let i = 0; i < ps.length; i++) {
@@ -114,18 +112,34 @@
   }
   function nucleusR() {
     let r = 0;
-    S.protons.forEach((p) => { r = Math.max(r, Math.hypot(p.hx, p.hy)); });
-    return r + PR;
+    S.nucleons.forEach((q) => { r = Math.max(r, Math.hypot(q.hx, q.hy)); });
+    return r + NR;
   }
-  function newProton(x, y, fresh) {
-    const ang = Math.random() * Math.PI * 2, r = S.protons.length ? nucleusR() : 0;
-    return { hx: Math.cos(ang) * r, hy: Math.sin(ang) * r, x, y, sx: x, sy: y, t: fresh ? 0 : 1, dur: 0.38, fresh: !!fresh };
+  function edgeSpot() {
+    const ang = Math.random() * Math.PI * 2, r = S.nucleons.length ? nucleusR() : 0;
+    return { hx: Math.cos(ang) * r, hy: Math.sin(ang) * r };
   }
-  function newElectron(x, y, fresh) {
-    return { x, y, sx: x, sy: y, t: fresh ? 0 : 1, dur: 0.38, fresh: !!fresh, key: null };
+  function addProton(x, y) {
+    const s = edgeSpot();
+    S.nucleons.push({ type: 'p', hx: s.hx, hy: s.hy, x, y, sx: x, sy: y, t: 0, dur: 0.38, fresh: true, grow: 1 });
   }
+  // 중성자 수를 양성자 수에 맞춤 (자동)
+  function syncNeutrons(p) {
+    const want = NEUT[clamp(p, 0, MAX_P)];
+    while (nn() < want) {
+      const s = edgeSpot();
+      S.nucleons.push({ type: 'n', hx: s.hx, hy: s.hy, x: C.x + s.hx, y: C.y + s.hy, sx: C.x + s.hx, sy: C.y + s.hy, t: 1, dur: 0.3, fresh: false, grow: 0 });
+    }
+    while (nn() > want) {
+      let bi = -1, bd = -1;
+      S.nucleons.forEach((q, i) => { if (q.type === 'n') { const d = Math.hypot(q.hx, q.hy); if (d > bd) { bd = d; bi = i; } } });
+      const q = S.nucleons.splice(bi, 1)[0];
+      S.fading.push({ x: q.x, y: q.y, t: 0 });
+    }
+  }
+  function newElectron(x, y, fresh) { return { x, y, sx: x, sy: y, t: fresh ? 0 : 1, dur: 0.38, fresh: !!fresh, key: null }; }
 
-  /* ---------- 전자 자리 (2, 8, 8 … 그림 배치) ---------- */
+  /* ---------- 전자 자리 (보기 쉽게 원 위에 나누어 그리기) ---------- */
   function shellOf(i) {
     let k = 0, start = 0;
     while (k < SHELL_CAP.length - 1 && i >= start + SHELL_CAP[k]) { start += SHELL_CAP[k]; k++; }
@@ -145,32 +159,36 @@
 
   /* ---------- 상태 바꾸기 ---------- */
   function setState(p, e) {
-    S.drag = null; S.flying = []; S.pulses = [];
-    S.protons = []; S.electrons = [];
-    for (let i = 0; i < p; i++) {
-      const ang = i * 2.39996, r = 9 * Math.sqrt(i);
-      S.protons.push({ hx: Math.cos(ang) * r, hy: Math.sin(ang) * r, x: C.x, y: C.y, sx: C.x, sy: C.y, t: 1, dur: 0.3, fresh: false });
+    S.drag = null; S.flying = []; S.fading = []; S.pulses = []; S.callout = null;
+    S.nucleons = [];
+    const n = NEUT[p];
+    for (let i = 0; i < p + n; i++) {
+      // 양성자와 중성자를 고르게 섞어서 배치
+      const type = Math.floor((i + 1) * p / (p + n)) > Math.floor(i * p / (p + n)) ? 'p' : 'n';
+      const ang = i * 2.39996, r = 8 * Math.sqrt(i);
+      S.nucleons.push({ type, hx: Math.cos(ang) * r, hy: Math.sin(ang) * r, x: C.x, y: C.y, sx: C.x, sy: C.y, t: 1, dur: 0.3, fresh: false, grow: 1 });
     }
-    relax(80);
-    S.protons.forEach((q) => { q.x = C.x + q.hx; q.y = C.y + q.hy; });
+    relax(100);
+    S.nucleons.forEach((q) => { q.x = C.x + q.hx; q.y = C.y + q.hy; });
+    S.electrons = [];
     for (let i = 0; i < e; i++) {
       const s = slot(i, e);
       const el = newElectron(s.x, s.y, false); el.key = s.key;
       S.electrons.push(el);
     }
     S.lastP = p; S.lastE = e;
-    S.banner = null; S.idFlash = null;
+    S.banner = null; S.idFlash = null; S.ePt = null;
     S.needle = p - e;
     S.ringR = outerR() + 18;
     updateUI(true);
   }
 
-  function binCenter(kind) { const b = kind === 'p' ? PBIN : EBIN; return { x: b.x + b.w / 2, y: b.y + 110 }; }
-  function inRect(p, b) { return p.x >= b.x && p.x <= b.x + b.w && p.y >= b.y && p.y <= b.y + b.h; }
-  function inAtom(p) { return Math.hypot(p.x - C.x, p.y - C.y) <= ATOM_R && !inRect(p, PBIN) && !inRect(p, EBIN); }
+  function binCenter(kind) { const b = bins()[kind] || { x: BIN_X, y: 176, w: BIN_W, h: BIN_H }; return { x: b.x + b.w / 2, y: b.y + 110 }; }
+  function inRect(p, b) { return !!b && p.x >= b.x && p.x <= b.x + b.w && p.y >= b.y && p.y <= b.y + b.h; }
+  function inAtom(p) { const B = bins(); return Math.hypot(p.x - C.x, p.y - C.y) <= ATOM_R && !inRect(p, B.p) && !inRect(p, B.e); }
 
   function addParticle(kind, x, y) {
-    if (kind === 'p') S.protons.push(newProton(x, y, true));
+    if (kind === 'p') addProton(x, y);
     else S.electrons.push(newElectron(x, y, true));
     Sound.tone(kind === 'p' ? 520 : 760, 0.06, 'triangle', 0.07);
   }
@@ -178,7 +196,13 @@
     const b = binCenter(kind);
     S.flying.push({ kind, x0: x, y0: y, x1: b.x, y1: b.y - 20, t: 0 });
   }
-  function hideHint() { if (!S.hinted) { S.hinted = true; $('#stageHint').classList.add('hide'); } }
+
+  const hintEl = $('#stageHint');
+  function showHint(text, ms) {
+    hintEl.textContent = text; hintEl.classList.remove('hide');
+    clearTimeout(showHint.t); showHint.t = setTimeout(hideHint, ms || 6000);
+  }
+  function hideHint() { hintEl.classList.add('hide'); }
 
   // 버튼으로 넣기/빼기
   function plus(kind) {
@@ -192,73 +216,106 @@
     hideHint();
     if (kind === 'p') {
       if (np() <= 1) { toast('원자핵에는 양성자가 1개 이상 있어야 해요'); return; }
-      // 가장 바깥쪽 양성자를 뺀다
-      let bi = 0, bd = -1;
-      S.protons.forEach((q, i) => { const d = Math.hypot(q.hx, q.hy); if (d > bd) { bd = d; bi = i; } });
-      const q = S.protons.splice(bi, 1)[0];
+      let bi = -1, bd = -1;
+      S.nucleons.forEach((q, i) => { if (q.type === 'p') { const d = Math.hypot(q.hx, q.hy); if (d > bd) { bd = d; bi = i; } } });
+      const q = S.nucleons.splice(bi, 1)[0];
       flyToBin('p', q.x, q.y);
     } else {
       if (ne() <= 0) { toast('뺄 전자가 없어요'); return; }
-      const el = S.electrons.pop();   // 가장 바깥 전자
+      const el = S.electrons.pop();
       flyToBin('e', el.x, el.y);
     }
     Sound.tone(330, 0.07, 'triangle', 0.06);
   }
 
-  /* ---------- 끌기 ---------- */
+  /* ---------- 관찰: 입자 눌러 보기 ---------- */
+  function inspect(kind, ref, inset) {
+    S.seen[kind] = true;
+    S.callout = { kind, ref, inset: !!inset, t0: S.time };
+    Sound.tick();
+    hideHint();
+  }
+  function insetScale() { return clamp((INSET.r - 26) / Math.max(1, nucleusR() - NR), 1.6, 2.6); }
+  function insetPos(q) { const k = insetScale(); return { x: INSET.x + (q.x - C.x) * k, y: INSET.y + (q.y - C.y) * k }; }
+  function insetHit(p) {
+    if (Math.hypot(p.x - INSET.x, p.y - INSET.y) > INSET.r) return null;
+    const k = insetScale();
+    let best = null, bd = NR * k * 1.5;
+    S.nucleons.forEach((q) => { const s = insetPos(q); const d = Math.hypot(s.x - p.x, s.y - p.y); if (d < bd) { bd = d; best = q; } });
+    return best || 'inset';
+  }
+
+  /* ---------- 끌기 / 누르기 (마우스·터치) ---------- */
   function hitElectron(p) {
-    let best = -1, bd = 22;
+    let best = -1, bd = 26;
     S.electrons.forEach((el, i) => { const d = Math.hypot(el.x - p.x, el.y - p.y); if (d < bd) { bd = d; best = i; } });
     return best;
   }
-  function hitProton(p) {
-    if (Math.hypot(p.x - C.x, p.y - C.y) > nucleusR() + 10) return -1;
-    let best = -1, bd = Infinity;
-    S.protons.forEach((q, i) => { const d = Math.hypot(q.x - p.x, q.y - p.y); if (d < bd) { bd = d; best = i; } });
+  function hitNucleon(p) {
+    if (!S.nucleons.length || Math.hypot(p.x - C.x, p.y - C.y) > nucleusR() + 14) return null;
+    let best = null, bd = Infinity;
+    S.nucleons.forEach((q) => { const d = Math.hypot(q.x - p.x, q.y - p.y); if (d < bd) { bd = d; best = q; } });
     return best;
   }
 
   SciSim.pointer(view, {
     hover(p) {
-      if (inRect(p, PBIN) || inRect(p, EBIN) || hitElectron(p) >= 0 || hitProton(p) >= 0) return 'grab';
+      const B = bins();
+      if (inRect(p, B.p) || inRect(p, B.e)) return 'grab';
+      if (insetOn() && Math.hypot(p.x - INSET.x, p.y - INSET.y) <= INSET.r) return 'pointer';
+      if (hitElectron(p) >= 0) return on('ebin') ? 'grab' : 'pointer';
+      const q = hitNucleon(p);
+      if (q) return q.type === 'p' && on('pbin') ? 'grab' : 'pointer';
       return null;
     },
-    down(p) {
+    down(p, ev) {
       if (S.flying.length > 30) S.flying = [];
-      if (inRect(p, PBIN) || inRect(p, EBIN)) {
-        const kind = inRect(p, PBIN) ? 'p' : 'e';
-        if (kind === 'p' && np() >= MAX_P) { toast('양성자는 ' + MAX_P + '개까지 넣을 수 있어요 (칼슘까지)'); return false; }
-        if (kind === 'e' && ne() >= MAX_E) { toast('전자는 ' + MAX_E + '개까지 넣을 수 있어요'); return false; }
-        S.drag = { kind, from: 'bin', x: p.x, y: p.y };
+      const off = ev && ev.pointerType === 'touch' ? -26 : 0;
+      const B = bins();
+      const binKind = inRect(p, B.p) ? 'p' : inRect(p, B.e) ? 'e' : null;
+      if (binKind) {
+        if (binKind === 'p' && np() >= MAX_P) { toast('양성자는 ' + MAX_P + '개까지 넣을 수 있어요 (칼슘까지)'); return false; }
+        if (binKind === 'e' && ne() >= MAX_E) { toast('전자는 ' + MAX_E + '개까지 넣을 수 있어요'); return false; }
+        S.drag = { kind: binKind, from: 'bin', x: p.x, y: p.y + off, off };
+      } else if (insetOn() && Math.hypot(p.x - INSET.x, p.y - INSET.y) <= INSET.r) {
+        const q = insetHit(p);
+        if (q && q !== 'inset') inspect(q.type, q, true);
+        return false;
       } else {
         const ei = hitElectron(p);
         if (ei >= 0) {
+          if (!on('ebin')) { inspect('e', S.electrons[ei], false); return false; }
           S.electrons.splice(ei, 1);
-          S.drag = { kind: 'e', from: 'atom', x: p.x, y: p.y };
+          S.drag = { kind: 'e', from: 'atom', x: p.x, y: p.y + off, off };
         } else {
-          const pi = hitProton(p);
-          if (pi < 0) return false;
-          if (S.protons.length <= 1) { toast('원자핵에는 양성자가 1개 이상 있어야 해요'); return false; }
-          S.protons.splice(pi, 1);
-          S.drag = { kind: 'p', from: 'atom', x: p.x, y: p.y };
+          const q = hitNucleon(p);
+          if (!q) return false;
+          if (q.type === 'p' && on('pbin')) {
+            if (protons().length <= 1) { toast('원자핵에는 양성자가 1개 이상 있어야 해요'); return false; }
+            S.nucleons.splice(S.nucleons.indexOf(q), 1);
+            S.drag = { kind: 'p', from: 'atom', x: p.x, y: p.y + off, off };
+          } else {
+            inspect(q.type, q, false);
+            if (q.type === 'n' && on('pbin')) toast('중성자는 양성자 수에 맞춰 자동으로 채워져요');
+            return false;
+          }
         }
       }
       hideHint();
-      $('#cv').style.cursor = 'grabbing';
+      view.canvas.style.cursor = 'grabbing';
       Sound.tone(440, 0.04, 'triangle', 0.05);
       return true;
     },
-    move(p) { if (S.drag) { S.drag.x = p.x; S.drag.y = p.y; } },
-    up(p) {
+    move(p) { if (S.drag) { S.drag.x = p.x; S.drag.y = p.y + S.drag.off; } },
+    up() {
       const d = S.drag;
       if (!d) return;
       S.drag = null;
-      $('#cv').style.cursor = 'grab';
-      const pt = { x: clamp(p.x, 0, 800), y: clamp(p.y, 0, 520) };
-      if (inAtom(pt)) {
-        addParticle(d.kind, pt.x, pt.y);         // 원자 안에 놓음 → 들어감 (또는 제자리로)
-      } else {
-        flyToBin(d.kind, pt.x, pt.y);            // 밖에 놓음 → 상자로 (빼기 / 취소)
+      view.canvas.style.cursor = 'grab';
+      const pt = { x: clamp(d.x, 0, 800), y: clamp(d.y, 0, 520) };
+      if (inAtom(pt)) addParticle(d.kind, pt.x, pt.y);
+      else {
+        flyToBin(d.kind, pt.x, pt.y);
         if (d.from === 'atom') Sound.tone(330, 0.07, 'triangle', 0.06);
       }
     },
@@ -269,15 +326,16 @@
 
   function step(dt) {
     S.time += dt;
-    if (S.orbit) for (let k = 0; k < 4; k++) S.phase[k] += SHELL_SPEED[k] * dt;
+    for (let k = 0; k < 4; k++) S.phase[k] += SHELL_SPEED[k] * dt;
 
     relax(3);
-    S.protons.forEach((q, i) => {
-      const wob = 0.6 * Math.sin(S.time * 2.2 + i * 1.7);
-      const tx = C.x + q.hx + wob, ty = C.y + q.hy + 0.6 * Math.cos(S.time * 1.9 + i);
+    S.nucleons.forEach((q, i) => {
+      const wob = 0.5 * Math.sin(S.time * 2.2 + i * 1.7);
+      const tx = C.x + q.hx + wob, ty = C.y + q.hy + 0.5 * Math.cos(S.time * 1.9 + i);
       q.t = Math.min(1, q.t + dt / q.dur);
       const k = ease(q.t);
-      q.x = lerp(q.sx, tx, k); q.y = lerp(q.sy, ty, k);
+      if (q.type === 'n' && q.grow < 1) { q.grow = Math.min(1, q.grow + dt / 0.35); q.x = tx; q.y = ty; }
+      else { q.x = lerp(q.sx, tx, k); q.y = lerp(q.sy, ty, k); }
       if (q.fresh && q.t >= 1) { q.fresh = false; snapFx(q.x, q.y, COL.p); }
     });
 
@@ -294,8 +352,20 @@
       if (el.fresh && el.t >= 1) { el.fresh = false; snapFx(el.x, el.y, COL.e); }
     });
 
+    // 전자 이름표가 가리킬 전자 (이름표에서 가장 가까운 전자를 부드럽게 따라감)
+    if (n) {
+      const d = S.ringR + 20, ax = Math.min(590, C.x + d * 0.74) + 16, ay = Math.min(446, C.y + d * 0.68);
+      let best = null, bd = Infinity;
+      S.electrons.forEach((el) => { const dd = Math.hypot(el.x - ax, el.y - ay); if (dd < bd) { bd = dd; best = el; } });
+      if (!S.ePt) S.ePt = { x: best.x, y: best.y };
+      const k = Math.min(1, dt * 9);
+      S.ePt.x += (best.x - S.ePt.x) * k; S.ePt.y += (best.y - S.ePt.y) * k;
+    } else S.ePt = null;
+
     S.flying.forEach((f) => { f.t += dt / 0.35; });
     S.flying = S.flying.filter((f) => f.t < 1);
+    S.fading.forEach((f) => { f.t += dt / 0.4; });
+    S.fading = S.fading.filter((f) => f.t < 1);
     S.pulses.forEach((pl) => { pl.t += dt / 0.45; });
     S.pulses = S.pulses.filter((pl) => pl.t < 1);
 
@@ -308,21 +378,16 @@
       S.lastP = p; S.lastE = e;
     }
   }
-  function snapFx(x, y, color) {
-    S.pulses.push({ x, y, color, t: 0 });
-    Sound.tick();
-  }
+  function snapFx(x, y, color) { S.pulses.push({ x, y, color, t: 0 }); Sound.tick(); }
 
   function onCountsChanged(p0, e0, p1, e1) {
-    const a = identify(p0, e0), b = identify(p1, e1);
-    const now = S.time;
     if (p0 !== p1) {
-      S.banner = { text: '✨ 양성자 수가 바뀌어 원소가 바뀌었어요: ' + a.name + ' → ' + b.name, color: COL.warn, t0: now };
-      S.idFlash = { kind: 'element', t0: now };
-    } else {
-      S.banner = { text: '🔒 전자 수만 바뀌었어요 → 원소는 그대로 ‘' + b.name + '’', color: COL.good, t0: now };
-      S.idFlash = { kind: 'same', t0: now };
-    }
+      syncNeutrons(p1);
+      if (on('idcard')) {
+        S.banner = { text: '✨ 양성자 수가 바뀌어 원소가 바뀌었어요: ' + elem(p0).name + ' → ' + elem(p1).name, color: COL.warn, t0: S.time };
+        S.idFlash = { kind: 'element', t0: S.time };
+      }
+    } else if (on('idcard')) S.idFlash = { kind: 'same', t0: S.time };
     updateUI();
   }
 
@@ -337,60 +402,77 @@
     const n = parseInt(hex.slice(1), 16);
     return 'rgba(' + (n >> 16) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')';
   }
+  function cardBg(b) {
+    ctx.save(); ctx.shadowColor = 'rgba(20,40,80,.12)'; ctx.shadowBlur = 12; ctx.shadowOffsetY = 3;
+    ctx.fillStyle = '#fff'; roundRect(b.x, b.y, b.w, b.h, 14); ctx.fill(); ctx.restore();
+    ctx.strokeStyle = COL.line; ctx.lineWidth = 1.5; roundRect(b.x, b.y, b.w, b.h, 14); ctx.stroke();
+  }
+  function newRing(b) {
+    const a = 0.5 + 0.5 * Math.sin(performance.now() / 160);
+    ctx.save(); ctx.strokeStyle = rgba(COL.sub, 0.35 + a * 0.5); ctx.lineWidth = 4;
+    roundRect(b.x - 5, b.y - 5, b.w + 10, b.h + 10, 17); ctx.stroke();
+    const bx = Math.min(b.x + b.w - 44, 800 - 54), by = Math.max(b.y - 12, 2);
+    ctx.fillStyle = COL.sub; roundRect(bx, by, 50, 22, 11); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.font = font(13, true); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('NEW', bx + 25, by + 12);
+    ctx.restore();
+  }
+  function focusRing() {
+    const f = S.focus;
+    if (!f) return;
+    const age = S.time - f.t0;
+    if (age > 4) { S.focus = null; return; }
+    const a = (0.5 + 0.5 * Math.sin(age * 9)) * (age > 3.4 ? (4 - age) / 0.6 : 1);
+    ctx.save(); ctx.strokeStyle = rgba(COL.warn, 0.25 + 0.65 * a); ctx.lineWidth = 5;
+    if (f.what === 'atom') { ctx.beginPath(); ctx.arc(C.x, C.y, S.ringR + 10, 0, Math.PI * 2); ctx.stroke(); }
+    else if (f.what === 'inset') { ctx.beginPath(); ctx.arc(INSET.x, INSET.y, INSET.r + 8, 0, Math.PI * 2); ctx.stroke(); }
+    else {
+      const b = Object.assign({}, bins(), cards())[f.what];
+      if (b) { roundRect(b.x - 6, b.y - 6, b.w + 12, b.h + 12, 18); ctx.stroke(); }
+    }
+    ctx.restore();
+  }
 
   function drawBall(x, y, kind, scale, alpha) {
-    const r = (kind === 'p' ? PR : ER) * (scale || 1);
+    const r = (kind === 'e' ? ER : NR) * (scale || 1);
+    if (r <= 0.5) return;
     ctx.save();
     if (alpha != null) ctx.globalAlpha = alpha;
     const g = ctx.createRadialGradient(x - r * 0.35, y - r * 0.4, r * 0.1, x, y, r);
     if (kind === 'p') { g.addColorStop(0, '#ffb6b6'); g.addColorStop(0.55, '#e2464b'); g.addColorStop(1, '#a8222a'); }
+    else if (kind === 'n') { g.addColorStop(0, '#f4f6f9'); g.addColorStop(0.55, '#a6afbd'); g.addColorStop(1, '#6b7486'); }
     else { g.addColorStop(0, '#b8d0ff'); g.addColorStop(0.55, '#3867f4'); g.addColorStop(1, '#1f3fa8'); }
     ctx.fillStyle = g;
     ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#fff';
-    ctx.font = font(Math.round(15 * (scale || 1)), true);
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText(kind === 'p' ? '+' : MINUS, x, y + 1);
-    ctx.restore();
-  }
-
-  // 원소 기호 + 위첨자 전하. x: 가운데, y: 기준선
-  function formulaWidth(sym, q, size) {
-    ctx.font = font(size, true);
-    let w = ctx.measureText(sym).width;
-    if (q) { ctx.font = font(Math.round(size * 0.52), true); w += size * 0.05 + ctx.measureText(chargeSup(q)).width; }
-    return w;
-  }
-  function drawFormula(sym, q, x, y, size, color, supColor, align) {
-    const w = formulaWidth(sym, q, size);
-    let left = align === 'left' ? x : x - w / 2;
-    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
-    ctx.font = font(size, true); ctx.fillStyle = color;
-    ctx.fillText(sym, left, y);
-    if (q) {
-      const sw = ctx.measureText(sym).width;
-      ctx.font = font(Math.round(size * 0.52), true); ctx.fillStyle = supColor || color;
-      ctx.fillText(chargeSup(q), left + sw + size * 0.05, y - size * 0.42);
+    if (kind !== 'n') {
+      ctx.fillStyle = '#fff';
+      ctx.font = font(Math.round(15 * (scale || 1) * (kind === 'p' ? 0.95 : 1)), true);
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(kind === 'p' ? '+' : MINUS, x, y + 1);
     }
-    return w;
+    ctx.restore();
   }
 
   /* ---------- 그리기 ---------- */
   function draw() {
     view.clear('#ffffff');
-    const p = np(), e = ne(), q = p - e;
-    drawAtom(q);
+    const p = np(), n = nn(), e = ne();
+    drawAtom(p - e);
+    if (insetOn()) drawInset();
+    if (on('meter') && !S.drag) drawLabels(p, e);
     drawBins();
-    drawIdCard(identify(p, e));
-    drawMeter(p, e);
+    const K = cards();
+    if (K.record) drawRecord(K.record);
+    if (K.id) { drawIdCard(K.id, p, e); if (isNew('idcard')) newRing(K.id); }
+    if (K.meter) { drawMeter(K.meter, p, n, e); if (isNew('meter')) newRing(K.meter); }
     drawTarget(p, e);
+    drawCallout();
     drawBanner();
-    // 상자로 돌아가는 입자
+    focusRing();
     S.flying.forEach((f) => {
       const k = ease(f.t);
       drawBall(lerp(f.x0, f.x1, k), lerp(f.y0, f.y1, k), f.kind, 1 - 0.3 * k, 1 - f.t * 0.8);
     });
-    // 끌고 있는 입자
     if (S.drag) {
       ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.28)'; ctx.shadowBlur = 10; ctx.shadowOffsetY = 4;
       drawBall(S.drag.x, S.drag.y, S.drag.kind, 1.3);
@@ -399,26 +481,14 @@
   }
 
   function drawAtom(q) {
-    const t = S.time;
     const ringR = S.ringR;
-    // 원자 바탕
     const bg = ctx.createRadialGradient(C.x, C.y, 10, C.x, C.y, ringR + 6);
     bg.addColorStop(0, '#f7f9ff'); bg.addColorStop(1, '#eef3fb');
     ctx.fillStyle = bg;
     ctx.beginPath(); ctx.arc(C.x, C.y, ringR + 6, 0, Math.PI * 2); ctx.fill();
-
-    // 이온 후광: 양이온은 (+) 붉은빛, 음이온은 (−) 푸른빛
-    if (q !== 0) {
-      const col = q > 0 ? COL.p : COL.e;
-      const a = clamp(0.18 + 0.1 * Math.abs(q), 0.18, 0.55);
-      const g = ctx.createRadialGradient(C.x, C.y, ringR - 30, C.x, C.y, ringR + 18);
-      g.addColorStop(0, rgba(col, 0)); g.addColorStop(0.62, rgba(col, a)); g.addColorStop(1, rgba(col, 0));
-      ctx.fillStyle = g;
-      ctx.beginPath(); ctx.arc(C.x, C.y, ringR + 18, 0, Math.PI * 2); ctx.fill();
-    } else {
-      ctx.strokeStyle = 'rgba(20,160,88,.35)'; ctx.lineWidth = 2; ctx.setLineDash([3, 7]);
-      ctx.beginPath(); ctx.arc(C.x, C.y, ringR, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
-    }
+    const neutral = q === 0 && on('meter');
+    ctx.strokeStyle = neutral ? 'rgba(20,160,88,.4)' : 'rgba(93,104,121,.22)'; ctx.lineWidth = 2; ctx.setLineDash([3, 7]);
+    ctx.beginPath(); ctx.arc(C.x, C.y, ringR, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
 
     // 끌기 중: 놓을 곳 표시
     if (S.drag) {
@@ -433,16 +503,15 @@
       ctx.beginPath(); ctx.arc(C.x, C.y, ATOM_R, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
       ctx.restore();
       const label = intoAtom ? '이 원 안에 놓으면 쏙!' : '원 밖(상자)으로 끌어내면 빠져요';
-      ctx.font = font(13, true);
-      const tw = ctx.measureText(label).width + 20;
-      const ly = C.y + ATOM_R - 8;
+      ctx.font = font(14, true);
+      const tw = ctx.measureText(label).width + 22;
+      const ly = C.y + ATOM_R - 10;
       ctx.fillStyle = intoAtom ? col : '#5d6879';
-      roundRect(C.x - tw / 2, ly - 12, tw, 24, 12); ctx.fill();
+      roundRect(C.x - tw / 2, ly - 13, tw, 26, 13); ctx.fill();
       ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillText(label, C.x, ly + 1);
     }
 
-    // 전자 껍질 (그림 배치)
     const used = shellsUsed(S.electrons.length);
     for (let k = 0; k < used; k++) {
       ctx.strokeStyle = 'rgba(56,103,244,.28)'; ctx.lineWidth = 1.5; ctx.setLineDash([4, 6]);
@@ -453,24 +522,150 @@
     // 원자핵
     const nr = nucleusR();
     const ng = ctx.createRadialGradient(C.x, C.y, 2, C.x, C.y, nr + 12);
-    ng.addColorStop(0, 'rgba(255,200,200,.65)'); ng.addColorStop(1, 'rgba(255,200,200,0)');
+    ng.addColorStop(0, 'rgba(255,205,205,.6)'); ng.addColorStop(1, 'rgba(255,205,205,0)');
     ctx.fillStyle = ng;
     ctx.beginPath(); ctx.arc(C.x, C.y, nr + 12, 0, Math.PI * 2); ctx.fill();
-    const sorted = S.protons.slice().sort((a, b) => a.y - b.y);
-    sorted.forEach((pp) => drawBall(pp.x, pp.y, 'p', pp.t < 1 ? 1.15 - 0.15 * pp.t : 1));
-
-    // 전자
+    S.nucleons.slice().sort((a, b) => a.y - b.y).forEach((q2) => {
+      const sc = q2.type === 'n' ? ease(q2.grow) : (q2.t < 1 ? 1.15 - 0.15 * q2.t : 1);
+      drawBall(q2.x, q2.y, q2.type, sc);
+    });
+    S.fading.forEach((f) => drawBall(f.x, f.y, 'n', 1 - f.t * 0.5, 1 - f.t));
     S.electrons.forEach((el) => drawBall(el.x, el.y, 'e', el.t < 1 ? 1.15 - 0.15 * el.t : 1));
-
-    // 쏙 들어가는 효과
     S.pulses.forEach((pl) => {
       ctx.strokeStyle = rgba(pl.color, (1 - pl.t) * 0.8); ctx.lineWidth = 3;
       ctx.beginPath(); ctx.arc(pl.x, pl.y, 10 + pl.t * 18, 0, Math.PI * 2); ctx.stroke();
     });
   }
 
+  // 1단계: 원자핵 확대 그림
+  function drawInset() {
+    const I = INSET, nr = nucleusR(), k = insetScale();
+    ctx.save();
+    ctx.strokeStyle = 'rgba(139,92,246,.35)'; ctx.lineWidth = 1.5; ctx.setLineDash([5, 5]);
+    ctx.beginPath(); ctx.moveTo(I.x + I.r * 0.5, I.y - I.r * 0.87); ctx.lineTo(C.x, C.y - nr - 3); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(I.x + I.r * 0.5, I.y + I.r * 0.87); ctx.lineTo(C.x, C.y + nr + 3); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.strokeStyle = 'rgba(139,92,246,.6)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(C.x, C.y, nr + 3, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = '#fff'; ctx.strokeStyle = COL.sub; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(I.x, I.y, I.r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.arc(I.x, I.y, I.r - 2, 0, Math.PI * 2); ctx.clip();
+    const g = ctx.createRadialGradient(I.x, I.y, 4, I.x, I.y, I.r);
+    g.addColorStop(0, 'rgba(255,205,205,.55)'); g.addColorStop(1, 'rgba(255,205,205,0)');
+    ctx.fillStyle = g; ctx.fillRect(I.x - I.r, I.y - I.r, I.r * 2, I.r * 2);
+    S.nucleons.slice().sort((a, b) => a.y - b.y).forEach((q) => { const s = insetPos(q); drawBall(s.x, s.y, q.type, k * (q.type === 'n' ? ease(q.grow) : 1)); });
+    ctx.restore();
+    ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle = '#5b37c9'; ctx.font = font(15, true);
+    ctx.fillText('🔍 원자핵 확대', I.x, I.y - I.r - 12);
+    ctx.fillStyle = COL.muted; ctx.font = font(13, true);
+    ctx.fillText('실제 원자핵은', I.x, I.y + I.r + 22);
+    ctx.fillText('훨씬 더 작아요', I.x, I.y + I.r + 40);
+  }
+
+  // 1단계: 관찰 기록표
+  function drawRecord(b) {
+    cardBg(b);
+    const cx = b.x + b.w / 2;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle = COL.ink; ctx.font = font(17, true);
+    ctx.fillText('📝 관찰 기록', cx, b.y + 30);
+    ctx.fillStyle = COL.muted; ctx.font = font(13, true);
+    ctx.fillText('입자를 눌러서 채워요', cx, b.y + 50);
+    ['p', 'n', 'e'].forEach((k, i) => {
+      const y0 = b.y + 66 + i * 112, P = PART[k], seen = S.seen[k];
+      ctx.strokeStyle = COL.line; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(b.x + 12, y0); ctx.lineTo(b.x + b.w - 12, y0); ctx.stroke();
+      if (seen) drawBall(b.x + 30, y0 + 30, k, 1.5);
+      else {
+        ctx.fillStyle = '#eef2f7'; ctx.beginPath(); ctx.arc(b.x + 30, y0 + 30, 15, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#9aa5b6'; ctx.font = font(16, true); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('?', b.x + 30, y0 + 31);
+      }
+      ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+      ctx.fillStyle = seen ? P.col : '#9aa5b6'; ctx.font = font(19, true);
+      ctx.fillText(seen ? P.name : '???', b.x + 56, y0 + 37);
+      ctx.font = font(14, true);
+      ctx.fillStyle = seen ? COL.muted : '#b5bfcd';
+      ctx.fillText('위치: ' + (seen ? P.pos : '?'), b.x + 18, y0 + 72);
+      ctx.fillStyle = seen ? P.col : '#b5bfcd';
+      ctx.fillText('전하: ' + (seen ? P.charge : '?'), b.x + 18, y0 + 96);
+    });
+    if (S.seen.p && S.seen.n) {
+      ctx.fillStyle = COL.sub; ctx.font = font(14, true); ctx.textAlign = 'center';
+      ctx.fillText('원자핵 = 양성자 + 중성자', cx, b.y + b.h - 16);
+    }
+  }
+
+  // 관찰 말풍선 (위쪽 가운데)
+  function drawCallout() {
+    const c = S.callout;
+    if (!c) return;
+    const age = S.time - c.t0;
+    if (age > 4) { S.callout = null; return; }
+    let pt;
+    if (c.kind === 'e') {
+      if (S.electrons.indexOf(c.ref) < 0) { S.callout = null; return; }
+      pt = { x: c.ref.x, y: c.ref.y };
+    } else {
+      if (S.nucleons.indexOf(c.ref) < 0) { S.callout = null; return; }
+      pt = c.inset && insetOn() ? insetPos(c.ref) : { x: c.ref.x, y: c.ref.y };
+    }
+    const P = PART[c.kind];
+    const l1 = P.name + ' · ' + P.charge, l2 = P.pos + (c.kind === 'e' ? '를 움직여요' : '에 있어요');
+    ctx.font = font(17, true);
+    const w = Math.max(ctx.measureText(l1).width, (ctx.font = font(14, true), ctx.measureText(l2).width)) + 32;
+    const h = 52, x = C.x - w / 2, y = S.target ? 46 : 8;
+    const a = age > 3.5 ? (4 - age) / 0.5 : 1;
+    ctx.save(); ctx.globalAlpha = clamp(a, 0, 1);
+    ctx.strokeStyle = rgba(P.col, 0.8); ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(C.x, y + h); ctx.lineTo(pt.x, pt.y); ctx.stroke();
+    ctx.beginPath(); ctx.arc(pt.x, pt.y, (c.kind === 'e' ? ER : NR) * (c.inset ? insetScale() : 1) + 4, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = '#fff'; roundRect(x, y, w, h, 14); ctx.fill(); ctx.stroke();
+    ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle = P.col; ctx.font = font(17, true); ctx.fillText(l1, C.x, y + 23);
+    ctx.fillStyle = COL.muted; ctx.font = font(14, true); ctx.fillText(l2, C.x, y + 43);
+    ctx.restore();
+  }
+
+  // 원자핵·전자 이름표 (2단계부터, 전하량 표시)
+  function tag(x, y, text, col) {
+    ctx.font = font(14, true);
+    const w = ctx.measureText(text).width + 22, h = 28;
+    ctx.fillStyle = 'rgba(255,255,255,.95)'; ctx.strokeStyle = col; ctx.lineWidth = 2;
+    roundRect(x, y, w, h, 14); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = col; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(text, x + w / 2, y + h / 2 + 1);
+    ctx.textBaseline = 'alphabetic';
+  }
+  function leader(x0, y0, x1, y1, col, gap) {
+    const d = Math.hypot(x1 - x0, y1 - y0) || 1;
+    const ex = x1 - (x1 - x0) / d * gap, ey = y1 - (y1 - y0) / d * gap;
+    ctx.strokeStyle = rgba(col, 0.75); ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(ex, ey); ctx.stroke();
+    ctx.fillStyle = col; ctx.beginPath(); ctx.arc(ex, ey, 3.5, 0, Math.PI * 2); ctx.fill();
+  }
+  function drawLabels(p, e) {
+    const pc = '#c4313a', ec = '#2a52d6';
+    const nt = '원자핵 ' + signed(p);
+    const et = e > 0 && S.ePt ? '전자 ' + e + '개 · ' + MINUS + e : '';
+    const d = S.ringR + 20;
+    ctx.font = font(14, true);
+    const nw = ctx.measureText(nt).width + 22, ew = et ? ctx.measureText(et).width + 22 : 0;
+    const nb = { x: Math.max(158, C.x - d * 0.74 - nw), y: Math.max(48, C.y - d * 0.68 - 28), w: nw, h: 28 };
+    const eb = { x: Math.min(590 - ew, C.x + d * 0.74), y: Math.min(446, C.y + d * 0.68) };
+    const nr = nucleusR();
+    const sx = nb.x + nb.w - 16, sy = nb.y + nb.h;
+    const ang = Math.atan2(sy - C.y, sx - C.x);
+    leader(sx, sy, C.x + Math.cos(ang) * nr, C.y + Math.sin(ang) * nr, pc, 2);
+    tag(nb.x, nb.y, nt, pc);
+    if (et) { leader(eb.x + 16, eb.y, S.ePt.x, S.ePt.y, ec, ER + 2); tag(eb.x, eb.y, et, ec); }
+  }
+
   function drawBins() {
-    [['p', PBIN], ['e', EBIN]].forEach(([kind, b]) => {
+    const B = bins();
+    Object.keys(B).forEach((kind) => {
+      const b = B[kind];
       const col = kind === 'p' ? COL.p : COL.e;
       const full = kind === 'p' ? np() >= MAX_P : ne() >= MAX_E;
       const dropHere = S.drag && S.drag.kind === kind && S.drag.from === 'atom';
@@ -483,164 +678,113 @@
       ctx.strokeStyle = rgba(col, dropHere ? 0.95 : 0.35); ctx.lineWidth = dropHere ? 3 : 2;
       if (dropHere) ctx.setLineDash([7, 5]);
       roundRect(b.x, b.y, b.w, b.h, 16); ctx.stroke(); ctx.setLineDash([]);
-
       const cx = b.x + b.w / 2;
       ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
       ctx.fillStyle = col; ctx.font = font(17, true);
       ctx.fillText(kind === 'p' ? '양성자 상자' : '전자 상자', cx, b.y + 28);
       ctx.fillStyle = COL.muted; ctx.font = font(14, true);
       ctx.fillText(kind === 'p' ? '(+)전하' : '(−)전하', cx, b.y + 48);
-      // 쌓인 입자 더미
       const rows = [[-30, -10, 10, 30], [-20, 0, 20], [-10, 10]];
-      rows.forEach((row, ri) => row.forEach((dx) => drawBall(cx + dx, b.y + 124 - ri * 17, kind, 1, full ? 0.3 : 1)));
+      rows.forEach((row, ri) => row.forEach((dx) => drawBall(cx + dx, b.y + 124 - ri * 17, kind, kind === 'p' ? 1.1 : 1, full ? 0.3 : 1)));
       ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
       ctx.font = font(14, true);
       ctx.fillStyle = dropHere ? col : COL.muted;
       ctx.fillText(dropHere ? '여기에 놓아 빼기' : full ? '최대 개수예요' : '끌어서 넣기 ▶', cx, b.y + b.h - 14);
+      if (isNew(kind === 'p' ? 'pbin' : 'ebin')) newRing(b);
     });
   }
 
-  function drawIdCard(id) {
-    const c = CARD1, cx = c.x + c.w / 2, K = KIND[id.kind];
-    // 카드
-    ctx.save(); ctx.shadowColor = 'rgba(20,40,80,.12)'; ctx.shadowBlur = 12; ctx.shadowOffsetY = 3;
-    ctx.fillStyle = '#fff'; roundRect(c.x, c.y, c.w, c.h, 14); ctx.fill(); ctx.restore();
-    ctx.strokeStyle = COL.line; ctx.lineWidth = 1.5; roundRect(c.x, c.y, c.w, c.h, 14); ctx.stroke();
-    // 띠: 종류
+  function drawIdCard(c, p, e) {
+    const cx = c.x + c.w / 2, el = elem(p), q = p - e;
+    cardBg(c);
     ctx.save(); roundRect(c.x, c.y, c.w, c.h, 14); ctx.clip();
-    ctx.fillStyle = K.c; ctx.fillRect(c.x, c.y, c.w, 34);
+    ctx.fillStyle = COL.sub; ctx.fillRect(c.x, c.y, c.w, 34);
     ctx.restore();
     ctx.fillStyle = '#fff'; ctx.font = font(15, true); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText(K.band, cx, c.y + 18);
-
-    // 원소 이름 강조 효과 (원소가 바뀜: 주황 / 그대로: 초록)
-    const f = S.idFlash;
-    if (f && S.time - f.t0 < 1.6) {
-      const a = 1 - (S.time - f.t0) / 1.6;
-      const col = f.kind === 'element' ? COL.warn : COL.good;
+    ctx.fillText('🏷️ 원소 카드', cx, c.y + 18);
+    const f = S.idFlash, flashing = f && S.time - f.t0 < 1.6;
+    if (flashing) {
+      const a = 1 - (S.time - f.t0) / 1.6, col = f.kind === 'element' ? COL.warn : COL.good;
       ctx.fillStyle = rgba(col, 0.16 * a + 0.04); ctx.strokeStyle = rgba(col, 0.9 * a); ctx.lineWidth = 2.5;
       roundRect(c.x + 10, c.y + 44, c.w - 20, 132, 12); ctx.fill(); ctx.stroke();
     }
-
-    // 원소 기호 + 전하
-    let size = 58;
-    while (formulaWidth(id.sym, id.q, size) > c.w - 30 && size > 30) size -= 2;
-    drawFormula(id.sym, id.q, cx, c.y + 102, size, COL.ink, K.c);
-    // 원소 이름
     ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
-    ctx.fillStyle = COL.ink; ctx.font = font(21, true);
-    ctx.fillText(id.name, cx, c.y + 136);
-    ctx.fillStyle = COL.muted; ctx.font = font(12.5, true);
-    ctx.fillText((f && f.kind === 'same' && S.time - f.t0 < 1.6 ? '🔒 ' : '') + '양성자 ' + id.p + '개인 원소', cx, c.y + 160);
-
-    // 구분선
+    ctx.fillStyle = COL.ink; ctx.font = font(58, true);
+    ctx.fillText(el.sym, cx, c.y + 102);
+    ctx.font = font(21, true);
+    ctx.fillText(el.name, cx, c.y + 136);
+    ctx.fillStyle = COL.muted; ctx.font = font(14, true);
+    ctx.fillText((flashing && f.kind === 'same' ? '🔒 ' : '') + '양성자 ' + p + '개인 원소', cx, c.y + 160);
     ctx.strokeStyle = COL.line; ctx.lineWidth = 1.5;
     ctx.beginPath(); ctx.moveTo(c.x + 14, c.y + 184); ctx.lineTo(c.x + c.w - 14, c.y + 184); ctx.stroke();
-
-    // 이름
-    if (id.known) {
-      ctx.fillStyle = K.c; ctx.font = font(19, true);
-      ctx.fillText(id.q === 0 ? id.name + ' 원자' : id.ionName, cx, c.y + 212);
-      ctx.fillStyle = COL.muted; ctx.font = font(12.5, true);
-      const sub = id.q === 0 ? '전기적으로 중성' : id.q > 0 ? '원자가 전자 ' + id.q + '개를 잃은 상태' : '원자가 전자 ' + (-id.q) + '개를 얻은 상태';
-      ctx.fillText(sub, cx, c.y + 233);
+    ctx.font = font(19, true);
+    if (q === 0) {
+      ctx.fillStyle = COL.good; ctx.fillText(el.name + ' 원자', cx, c.y + 212);
+      ctx.fillStyle = COL.muted; ctx.font = font(13, true); ctx.fillText('전기적으로 중성', cx, c.y + 234);
     } else {
-      ctx.fillStyle = K.c; ctx.font = font(14, true);
-      ctx.fillText(id.q > 0 ? '양이온이지만' : '음이온이지만', cx, c.y + 207);
-      ctx.fillStyle = COL.muted; ctx.font = font(13, true);
-      ctx.fillText('이 단원에서 다루지', cx, c.y + 226);
-      ctx.fillText('않는 이온이에요', cx, c.y + 243 - 2);
+      ctx.fillStyle = COL.warn; ctx.fillText('전체 전하 ' + signed(q), cx, c.y + 212);
+      ctx.fillStyle = COL.muted; ctx.font = font(13, true); ctx.fillText('중성 원자가 아니에요', cx, c.y + 234);
     }
   }
 
-  function drawMeter(p, e) {
-    const c = CARD2, cx = c.x + c.w / 2, q = p - e;
-    ctx.save(); ctx.shadowColor = 'rgba(20,40,80,.12)'; ctx.shadowBlur = 12; ctx.shadowOffsetY = 3;
-    ctx.fillStyle = '#fff'; roundRect(c.x, c.y, c.w, c.h, 14); ctx.fill(); ctx.restore();
-    ctx.strokeStyle = COL.line; ctx.lineWidth = 1.5; roundRect(c.x, c.y, c.w, c.h, 14); ctx.stroke();
-
-    ctx.textBaseline = 'alphabetic';
-    ctx.textAlign = 'left'; ctx.fillStyle = COL.ink; ctx.font = font(15, true);
-    ctx.fillText('전체 전하', c.x + 14, c.y + 24);
-    ctx.textAlign = 'right'; ctx.fillStyle = COL.muted; ctx.font = font(12, true);
-    ctx.fillText('(+)와 (−)의 합', c.x + c.w - 12, c.y + 24);
-
-    // 반원 계기판: 왼쪽 (−), 오른쪽 (+)
-    const gx = cx, gy = c.y + 122, r = 64, MAXQ = 4;
+  function drawMeter(c, p, n, e) {
+    const cx = c.x + c.w / 2, q = p - e;
+    cardBg(c);
+    ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'center';
+    ctx.fillStyle = COL.ink; ctx.font = font(16, true);
+    ctx.fillText('⚖️ 전체 전하', cx, c.y + 24);
+    const gx = cx, gy = c.y + 110, r = 58;
     const ang = (v) => Math.PI * 1.5 + (clamp(v, -MAXQ - 0.4, MAXQ + 0.4) / MAXQ) * Math.PI * 0.5;
-    ctx.lineCap = 'butt';
-    ctx.lineWidth = 14;
-    ctx.strokeStyle = 'rgba(56,103,244,.75)';
-    ctx.beginPath(); ctx.arc(gx, gy, r, ang(-MAXQ), ang(-0.25)); ctx.stroke();
-    ctx.strokeStyle = 'rgba(226,70,75,.8)';
-    ctx.beginPath(); ctx.arc(gx, gy, r, ang(0.25), ang(MAXQ)); ctx.stroke();
-    ctx.strokeStyle = COL.good;
-    ctx.beginPath(); ctx.arc(gx, gy, r, ang(-0.25), ang(0.25)); ctx.stroke();
-    // 눈금
+    ctx.lineCap = 'butt'; ctx.lineWidth = 14;
+    ctx.strokeStyle = 'rgba(56,103,244,.75)'; ctx.beginPath(); ctx.arc(gx, gy, r, ang(-MAXQ), ang(-0.3)); ctx.stroke();
+    ctx.strokeStyle = 'rgba(226,70,75,.8)'; ctx.beginPath(); ctx.arc(gx, gy, r, ang(0.3), ang(MAXQ)); ctx.stroke();
+    ctx.strokeStyle = COL.good; ctx.beginPath(); ctx.arc(gx, gy, r, ang(-0.3), ang(0.3)); ctx.stroke();
     for (let v = -MAXQ; v <= MAXQ; v++) {
       const a = ang(v);
       ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
       ctx.beginPath(); ctx.moveTo(gx + Math.cos(a) * (r - 7), gy + Math.sin(a) * (r - 7)); ctx.lineTo(gx + Math.cos(a) * (r + 7), gy + Math.sin(a) * (r + 7)); ctx.stroke();
       if (v % 2 === 0) {
         ctx.fillStyle = v > 0 ? '#c4313a' : v < 0 ? '#2a52d6' : '#0f8a4b';
-        ctx.font = font(12.5, true); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText(signed(v), gx + Math.cos(a) * (r + 19), gy + Math.sin(a) * (r + 17));
+        ctx.font = font(13, true); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(signed(v), gx + Math.cos(a) * (r + 18), gy + Math.sin(a) * (r + 16));
       }
     }
-    ctx.textBaseline = 'alphabetic';
-    ctx.fillStyle = COL.muted; ctx.font = font(12, true); ctx.textAlign = 'center';
-    ctx.fillText('음이온', gx - 38, gy + 18);
-    ctx.fillText('양이온', gx + 38, gy + 18);
-    // 바늘
+    ctx.textBaseline = 'alphabetic'; ctx.font = font(13, true); ctx.textAlign = 'center';
+    if (q < -MAXQ) { ctx.fillStyle = '#2a52d6'; ctx.fillText('◀ 범위 넘음', gx - 42, gy + 20); }
+    else { ctx.fillStyle = COL.muted; ctx.fillText('(−)가 많음', gx - 42, gy + 20); }
+    if (q > MAXQ) { ctx.fillStyle = '#c4313a'; ctx.fillText('범위 넘음 ▶', gx + 42, gy + 20); }
+    else { ctx.fillStyle = COL.muted; ctx.fillText('(+)가 많음', gx + 42, gy + 20); }
     const a = ang(S.needle);
     ctx.strokeStyle = COL.ink; ctx.lineWidth = 4; ctx.lineCap = 'round';
     ctx.beginPath(); ctx.moveTo(gx, gy); ctx.lineTo(gx + Math.cos(a) * (r - 14), gy + Math.sin(a) * (r - 14)); ctx.stroke();
     ctx.lineCap = 'butt';
     ctx.fillStyle = COL.ink; ctx.beginPath(); ctx.arc(gx, gy, 7, 0, Math.PI * 2); ctx.fill();
-    if (Math.abs(q) > MAXQ) {
-      ctx.fillStyle = q > 0 ? '#c4313a' : '#2a52d6'; ctx.font = font(12, true);
-      ctx.textAlign = q > 0 ? 'right' : 'left';
-      ctx.fillText('범위 넘음 ' + (q > 0 ? '▶' : '◀'), q > 0 ? c.x + c.w - 10 : c.x + 10, gy + 18);
-    }
-
-    // 값
-    ctx.textAlign = 'center';
     ctx.fillStyle = q > 0 ? '#c4313a' : q < 0 ? '#2a52d6' : '#0f8a4b';
-    ctx.font = font(32, true);
-    ctx.fillText(signed(q), gx, gy + 56);
-    // 식
-    ctx.font = font(13, true);
-    ctx.textAlign = 'right'; ctx.fillStyle = '#c4313a';
-    ctx.fillText('원자핵 +' + p, gx - 8, c.y + c.h - 16);
-    ctx.textAlign = 'left'; ctx.fillStyle = '#2a52d6';
-    ctx.fillText('전자 ' + (e ? MINUS + e : '0'), gx + 8, c.y + c.h - 16);
-    ctx.strokeStyle = COL.line; ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.moveTo(gx, c.y + c.h - 29); ctx.lineTo(gx, c.y + c.h - 13); ctx.stroke();
+    ctx.font = font(30, true);
+    ctx.fillText(signed(q), gx, gy + 54);
+    // (+) + (0) + (−) 의 합
+    const cols = [['양성자', '+' + p, '#c4313a'], ['중성자', '0', '#5d6879'], ['전자', e ? MINUS + e : '0', '#2a52d6']];
+    cols.forEach(([lab, val, col], i) => {
+      const x = c.x + 32 + i * 62;
+      ctx.fillStyle = COL.muted; ctx.font = font(13, true); ctx.fillText(lab, x, c.y + c.h - 30);
+      ctx.fillStyle = col; ctx.font = font(16, true); ctx.fillText(val, x, c.y + c.h - 10);
+    });
+    ctx.fillStyle = COL.muted; ctx.font = font(14, true);
+    ctx.fillText('+', c.x + 63, c.y + c.h - 11); ctx.fillText('+', c.x + 125, c.y + c.h - 11);
   }
 
   function drawTarget(p, e) {
-    if (!S.target) return;
-    const tid = identify(S.target.p, S.target.e);
-    const ok = p === S.target.p && e === S.target.e;
-    const name = tid.q === 0 ? tid.name + ' 원자' : (tid.ionName || '');
-    const pre = ok ? '✔ 목표 달성: ' : '🎯 목표: ';
-    ctx.textBaseline = 'alphabetic';
+    const T = S.target;
+    if (!T) return;
+    const ok = p === T.p && e === T.e;
+    const text = (ok ? '✔ 목표 달성: ' : '🎯 목표: ') + T.text;
     ctx.font = font(15, true);
-    const w1 = ctx.measureText(pre).width;
-    const wf = formulaWidth(tid.sym, tid.q, 18);
-    ctx.font = font(15, true);
-    const w3 = ctx.measureText(name).width;
-    const tw = w1 + wf + 8 + w3 + 28;
-    const x = C.x - tw / 2, y = 8, h = 32;
+    const tw = ctx.measureText(text).width + 28, x = C.x - tw / 2, y = 8, h = 32;
     ctx.fillStyle = ok ? COL.good : '#fff';
-    ctx.strokeStyle = ok ? COL.good : '#8b5cf6'; ctx.lineWidth = 2;
+    ctx.strokeStyle = ok ? COL.good : COL.sub; ctx.lineWidth = 2;
     roundRect(x, y, tw, h, 16); ctx.fill(); ctx.stroke();
-    const tc = ok ? '#fff' : '#5b37c9';
-    ctx.textAlign = 'left'; ctx.font = font(15, true); ctx.fillStyle = tc;
-    ctx.fillText(pre, x + 14, y + 22);
-    drawFormula(tid.sym, tid.q, x + 14 + w1, y + 23, 18, tc, tc, 'left');
-    ctx.textAlign = 'left'; ctx.font = font(15, true); ctx.fillStyle = tc;
-    ctx.fillText(name, x + 14 + w1 + wf + 8, y + 22);
+    ctx.fillStyle = ok ? '#fff' : '#5b37c9'; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+    ctx.fillText(text, C.x, y + 22);
   }
 
   function drawBanner() {
@@ -649,316 +793,333 @@
     const age = S.time - b.t0;
     if (age > 2.8) { S.banner = null; return; }
     const a = age < 0.15 ? age / 0.15 : age > 2.4 ? (2.8 - age) / 0.4 : 1;
-    let size = 14.5;
+    let size = 15;
     ctx.font = font(size, true);
-    while (ctx.measureText(b.text).width > 410 && size > 12) { size -= 0.5; ctx.font = font(size, true); }
+    while (ctx.measureText(b.text).width > 410 && size > 13) { size -= 0.5; ctx.font = font(size, true); }
     const tw = ctx.measureText(b.text).width + 26;
-    const y = 486 + (1 - a) * 8;
+    const y = 484 + (1 - a) * 8;
     ctx.globalAlpha = clamp(a, 0, 1);
     ctx.fillStyle = b.color;
-    roundRect(C.x - tw / 2, y, tw, 28, 14); ctx.fill();
+    roundRect(C.x - tw / 2, y, tw, 30, 15); ctx.fill();
     ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText(b.text, C.x, y + 15);
+    ctx.fillText(b.text, C.x, y + 16);
     ctx.globalAlpha = 1; ctx.textBaseline = 'alphabetic';
   }
 
   /* ---------- DOM 측정값/버튼 ---------- */
-  const rP = $('#rP'), rE = $('#rE'), rQ = $('#rQ'), rK = $('#rK');
-  const oP = $('#oP'), oE = $('#oE');
+  const rP = $('#rP'), rN = $('#rN'), rE = $('#rE'), oP = $('#oP'), oE = $('#oE');
   let uiKey = '';
   function updateUI(force) {
-    const p = np(), e = ne(), key = p + ':' + e;
+    const p = np(), n = nn(), e = ne(), key = p + ':' + n + ':' + e;
     if (!force && key === uiKey) return;
     uiKey = key;
-    const id = identify(p, e);
     rP.innerHTML = p + '<small>개 (+' + p + ')</small>';
+    rN.innerHTML = n + '<small>개 (전하 0)</small>';
     rE.innerHTML = e + '<small>개 (' + (e ? MINUS + e : '0') + ')</small>';
-    rQ.textContent = signed(id.q);
-    rQ.className = 'value ' + (id.q > 0 ? 'q-pos' : id.q < 0 ? 'q-neg' : 'q-zero');
-    rK.innerHTML = KIND[id.kind].short + ' <small>' + formulaHTML(id.sym, id.q) + '</small>';
     oP.textContent = p; oE.textContent = e;
     $('#pMinus').disabled = p <= 1; $('#pPlus').disabled = p >= MAX_P;
     $('#eMinus').disabled = e <= 0; $('#ePlus').disabled = e >= MAX_E;
+  }
+  function sideNote() {
+    if (on('pbin')) return '💡 양성자를 넣으면 <b>중성자</b>는 이 원소에 맞게 자동으로 채워져요.';
+    return '💡 전자를 원 안에 끌어다 놓으면 들어가고, 원 밖으로 끌어내면 빠져요.';
   }
 
   $('#pPlus').addEventListener('click', () => plus('p'));
   $('#pMinus').addEventListener('click', () => minus('p'));
   $('#ePlus').addEventListener('click', () => plus('e'));
   $('#eMinus').addEventListener('click', () => minus('e'));
-  $('#orbitChk').addEventListener('change', (ev) => { S.orbit = ev.target.checked; });
-  $('#resetBtn').addEventListener('click', () => { Sound.click(); setState(1, 1); });
+  $('#resetBtn').addEventListener('click', () => { Sound.click(); resetCurrent(); });
 
-  /* ---------- 미션 ---------- */
-  function statusLine() {
-    const id = identify(np(), ne());
-    return '지금: 양성자 <b>' + id.p + '</b> · 전자 <b>' + id.e + '</b> → <b>' + formulaHTML(id.sym, id.q) + '</b> (' + fullName(id) + ')';
-  }
+  /* ---------- 미션 도우미 ---------- */
   const is = (p, e) => np() === p && ne() === e;
-  function setTarget(p, e) { S.target = { p, e }; }
-
-  // 퀴즈용 모형 그림: 원자핵 +16, 전자 18개
-  function modelSVG() {
-    const cx = 120, cy = 120, shells = [[36, 2, -90], [68, 8, -67.5], [100, 8, -90]];
-    let s = '<svg viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="원자핵 전하 +16, 전자 18개인 모형">';
-    s += '<circle cx="120" cy="120" r="116" fill="#f4f7fd"/>';
-    shells.forEach(([r]) => { s += '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="none" stroke="#9fb3e6" stroke-width="1.5" stroke-dasharray="4 5"/>'; });
-    s += '<circle cx="120" cy="120" r="22" fill="#e2464b"/><text x="120" y="127" text-anchor="middle" font-size="19" font-weight="800" fill="#fff" font-family="sans-serif">+16</text>';
-    shells.forEach(([r, n, off]) => {
-      for (let i = 0; i < n; i++) {
-        const a = (off + (360 / n) * i) * Math.PI / 180;
-        const x = (cx + Math.cos(a) * r).toFixed(1), y = (cy + Math.sin(a) * r).toFixed(1);
-        s += '<circle cx="' + x + '" cy="' + y + '" r="9" fill="#3867f4"/><text x="' + x + '" y="' + (+y + 5) + '" text-anchor="middle" font-size="15" font-weight="800" fill="#fff" font-family="sans-serif">' + MINUS + '</text>';
-      }
-    });
-    s += '</svg>';
+  function setTarget(p, e, text) { S.target = { p, e, text }; }
+  function statusLine() {
+    const p = np(), e = ne(), q = p - e;
+    let s = '양성자 <b>' + p + '</b>개 · 중성자 <b>' + nn() + '</b>개 · 전자 <b>' + e + '</b>개 → 전체 전하 <b>' + signed(q) + '</b>';
+    if (on('idcard')) s += ' · 원소 <b>' + elem(p).name + '(' + elem(p).sym + ')</b>';
     return s;
   }
+  const seenLine = () => '찾은 입자: ' + ['p', 'n', 'e'].map((k) => (S.seen[k] ? '✔ <b>' : '○ ') + PART[k].name + (S.seen[k] ? '</b>' : '')).join(' · ');
 
-  const CONCEPT = `
-    <h3>⚛️ 원자의 구조</h3>
-    <p>원자는 중심에 있는 <b>원자핵</b>과 그 주위를 움직이는 <b>전자</b>로 이루어져 있어요.</p>
-    <ul>
-      <li><b>원자핵</b>: (+)전하를 띠어요. 원자 크기에 비해 아주 작지만 원자 질량의 대부분을 차지해요.</li>
-      <li><b>전자</b>: (−)전하를 띠고, 질량이 매우 작으며 원자핵 주위를 움직여요.</li>
-    </ul>
-    <span class="formula">원자핵의 (+)전하량 = 전자의 총 (−)전하량<br>→ 원자는 전기적으로 중성</span>
-    <h3>🔑 원소의 종류를 정하는 것</h3>
-    <p>원소의 종류는 <b>원자핵의 (+)전하량</b>(이 실험에서는 양성자 수)으로 정해져요. 양성자가 6개면 언제나 탄소(C), 8개면 산소(O)예요.</p>
-    <table>
-      <tr><th>원소</th><th>기호</th><th>양성자 수</th><th>원소</th><th>기호</th><th>양성자 수</th></tr>
-      <tr><td>수소</td><td>H</td><td>1</td><td>나트륨</td><td>Na</td><td>11</td></tr>
-      <tr><td>탄소</td><td>C</td><td>6</td><td>마그네슘</td><td>Mg</td><td>12</td></tr>
-      <tr><td>질소</td><td>N</td><td>7</td><td>황</td><td>S</td><td>16</td></tr>
-      <tr><td>산소</td><td>O</td><td>8</td><td>염소</td><td>Cl</td><td>17</td></tr>
-    </table>
-    <h3>⚡ 이온의 형성</h3>
-    <p>원자가 <b>전자를 잃거나 얻으면</b> 전하를 띠는 <b>이온</b>이 돼요. 이때 원자핵은 변하지 않아요.</p>
-    <ul>
-      <li>전자를 <b>잃으면</b> → (+)전하량 &gt; (−)전하량 → <b>양이온</b> (예: Na → Na<sup>+</sup>)</li>
-      <li>전자를 <b>얻으면</b> → (−)전하량 &gt; (+)전하량 → <b>음이온</b> (예: Cl → Cl<sup>−</sup>)</li>
-    </ul>
-    <span class="formula">이온의 전하 = (원자핵의 전하) + (전자의 총 전하)</span>
-    <h3>✍️ 이온식과 이온의 이름</h3>
-    <ul>
-      <li><b>이온식</b>: 원소 기호의 오른쪽 위에 잃거나 얻은 전자 수와 전하의 종류(+, −)를 써요. 1은 생략해요.<br>Na<sup>+</sup>, Mg<sup>2+</sup>, Al<sup>3+</sup>, Cl<sup>−</sup>, O<sup>2−</sup>, S<sup>2−</sup></li>
-      <li><b>양이온</b>: 원소 이름 뒤에 ‘이온’ → 수소 이온(H<sup>+</sup>), 나트륨 이온(Na<sup>+</sup>), 마그네슘 이온(Mg<sup>2+</sup>)</li>
-      <li><b>음이온</b>: 원소 이름 뒤에 ‘-화 이온’ (이름이 ‘소’로 끝나면 ‘소’를 빼요) → 염화 이온(Cl<sup>−</sup>), 산화 이온(O<sup>2−</sup>), 황화 이온(S<sup>2−</sup>), 플루오린화 이온(F<sup>−</sup>)</li>
-    </ul>
-    <p class="note">⚠️ 이온이 될 때 바뀌는 것은 <b>전자 수뿐</b>이에요. 양성자 수(원자핵의 전하)는 그대로라서 Na<sup>+</sup>도 여전히 나트륨이에요.<br>
-    ※ 이 모형에서 전자를 원 위에 2, 8, 8개씩 그린 것은 보기 쉽게 나타낸 그림이에요. 실제 전자는 원자핵 주위의 공간을 빠르게 움직이고 있어요. 또 실제 원자핵에는 전하를 띠지 않는 입자도 있지만, 전하와 관계없어서 이 모형에서는 생략했어요.</p>
-  `;
+  // 적용 퀴즈용 모형: 양성자 3, 중성자 4, 전자 3 (원자핵을 크게 그려 셀 수 있게)
+  function modelSVG() {
+    const cx = 120, cy = 120;
+    let s = '<svg viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="빨간 입자 3개와 회색 입자 4개로 된 원자핵, 전자 3개인 원자 모형">';
+    s += '<circle cx="120" cy="120" r="117" fill="#f4f7fd"/>';
+    [74, 106].forEach((r) => { s += '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="none" stroke="#9fb3e6" stroke-width="1.5" stroke-dasharray="4 5"/>'; });
+    s += '<circle cx="120" cy="120" r="50" fill="#ffe3e3" opacity=".7"/>';
+    const nuc = [[0, 0, 'n']];
+    ['p', 'n', 'p', 'n', 'p', 'n'].forEach((t, i) => { const a = (i * 60 - 90) * Math.PI / 180; nuc.push([Math.cos(a) * 29, Math.sin(a) * 29, t]); });
+    nuc.forEach(([dx, dy, t]) => {
+      const x = (cx + dx).toFixed(1), y = (cy + dy).toFixed(1);
+      s += '<circle cx="' + x + '" cy="' + y + '" r="14" fill="' + (t === 'p' ? '#e2464b' : '#a3acbb') + '" stroke="#fff" stroke-width="2"/>';
+      if (t === 'p') s += '<text x="' + x + '" y="' + (+y + 6) + '" text-anchor="middle" font-size="19" font-weight="800" fill="#fff" font-family="sans-serif">+</text>';
+    });
+    [[74, 180], [74, 0], [106, -50]].forEach(([r, deg]) => {
+      const a = deg * Math.PI / 180, x = (cx + Math.cos(a) * r).toFixed(1), y = (cy + Math.sin(a) * r).toFixed(1);
+      s += '<circle cx="' + x + '" cy="' + y + '" r="11" fill="#3867f4"/><text x="' + x + '" y="' + (+y + 5) + '" text-anchor="middle" font-size="16" font-weight="800" fill="#fff" font-family="sans-serif">' + MINUS + '</text>';
+    });
+    return s + '</svg>';
+  }
 
-  const game = SciSim.game({
+  /* ---------- 탐구 단계 ---------- */
+  const LEVELS = [
+    {
+      title: '원자 모형 살펴보기', short: '구성 입자', icon: '🔍', phase: '관찰',
+      features: ['inspect'],
+      intro: '<p>❓ <b>탐구 질문: 모든 물질을 이루는 원자 속에는 무엇이 있을까?</b></p>' +
+        '<p>원자는 너무 작아 눈으로 볼 수 없어서 <b>원자 모형</b>으로 나타내요. 헬륨 원자 모형 속 입자를 하나씩 눌러 보며 관찰해 봐요.</p>',
+      setup() { setState(2, 2); showHint('👆 확대 그림의 입자와 파란 전자를 눌러 보세요', 7000); },
+      recap: '원자는 <b>원자핵</b>(양성자 + 중성자)과 그 주위를 움직이는 <b>전자</b>로 이루어져 있어요.',
+      summary: '<p>원자는 중심의 <b>원자핵</b>과 그 주위를 움직이는 <b>전자</b>로 이루어져 있다. 원자핵은 <b>양성자</b>와 <b>중성자</b>로 이루어져 있다.</p>' +
+        '<table><tr><th>입자</th><th>위치</th><th>전하</th></tr><tr><td>양성자</td><td>원자핵 속</td><td>(+)</td></tr>' +
+        '<tr><td>중성자</td><td>원자핵 속</td><td>없음</td></tr><tr><td>전자</td><td>원자핵 주위</td><td>(−)</td></tr></table>' +
+        '<p class="note">※ 원자핵은 원자 크기에 비해 매우 작아요. 모형의 크기와 전자의 원은 보기 쉽게 그린 것이에요.</p>',
+      missions: [
+        {
+          title: '원자 속 입자 찾기',
+          goal: '확대 그림의 <b>빨간 입자</b>, <b>회색 입자</b>와 원자핵 주위의 <b>파란 입자</b>를 하나씩 눌러 보세요.',
+          hint: '왼쪽 <b>🔍 원자핵 확대</b> 그림 속 입자를 손가락으로 톡 눌러요. 오른쪽 관찰 기록이 채워져요.',
+          focus: 'inset',
+          setup() { S.seen = { p: false, n: false, e: false }; if (!is(2, 2)) setState(2, 2); },
+          check: () => S.seen.p && S.seen.n && S.seen.e,
+          status: seenLine,
+          hold: 0.4,
+          explain: '원자핵 속에는 (+)전하를 띤 <b>양성자</b>와 전하를 띠지 않는 <b>중성자</b>가 있고, 원자핵 주위에는 (−)전하를 띤 <b>전자</b>가 움직여요.',
+        },
+        {
+          type: 'quiz',
+          title: '세 입자의 전하',
+          goal: '원자를 이루는 세 입자의 전하를 바르게 짝지은 것은?',
+          choices: [
+            '양성자 (+), 중성자 (−), 전자 (−)',
+            '양성자 (−), 중성자 없음, 전자 (+)',
+            '양성자 (+), 중성자 없음, 전자 (−)',
+            '양성자 없음, 중성자 (+), 전자 (−)',
+          ],
+          answer: 2,
+          feedback: [
+            '중성자는 이름처럼 전하를 띠지 <b>않아요</b>. 관찰 기록을 다시 보세요.',
+            '양성자와 전자의 전하가 반대로 되었어요. 빨간 입자와 파란 입자에 적힌 부호를 보세요.',
+            '',
+            '(+)전하를 띠는 것은 빨간 <b>양성자</b>예요. 회색 중성자에는 부호가 없어요.',
+          ],
+          explain: '양성자는 <b>(+)전하</b>, 중성자는 <b>전하가 없고</b>, 전자는 <b>(−)전하</b>를 띠어요. 그래서 양성자와 중성자로 된 원자핵은 (+)전하를 띠어요.',
+        },
+        {
+          type: 'quiz',
+          title: '원자핵은 어디에?',
+          goal: '원자핵에 대한 설명으로 옳은 것은?',
+          choices: [
+            '원자핵은 원자의 대부분의 공간을 차지한다',
+            '원자핵은 원자의 중심에 있고, 원자 크기에 비해 매우 작다',
+            '원자핵 속에는 전자가 들어 있다',
+            '원자핵은 전하를 띠지 않는다',
+          ],
+          answer: 1,
+          feedback: [
+            '모형에서는 보기 쉽게 크게 그렸지만, 실제 원자핵은 원자에 비해 <b>아주 작아요</b>.',
+            '',
+            '전자는 원자핵 <b>바깥</b>, 그 주위를 움직여요. 원자핵 속에는 양성자와 중성자가 있어요.',
+            '원자핵 속 <b>양성자</b>가 (+)전하를 띠므로 원자핵은 (+)전하를 띠어요.',
+          ],
+          explain: '원자핵은 원자의 <b>중심</b>에 있고 원자 크기에 비해 <b>매우 작아요</b>. 원자를 축구장만큼 키워도 원자핵은 그 한가운데의 모래알 정도예요. 전자는 원자핵 주위를 움직여요.',
+        },
+      ],
+    },
+    {
+      title: '원자는 전기적으로 중성', short: '중성', icon: '⚖️', phase: '탐구',
+      features: ['ebin', 'meter'],
+      intro: '<div class="si-link">🔗 <b>앞 단계에서</b> 원자핵에는 (+)전하를 띤 양성자와 전하가 없는 중성자가, 그 주위에는 (−)전하를 띤 전자가 있음을 알았어요.</div>' +
+        '<p>그렇다면 원자 <b>전체</b>는 어떤 전하를 띨까요? <b>전하 계기판</b>으로 양성자(+1씩)와 전자(−1씩)의 전하를 더해 봐요.</p>',
+      setup() { setState(6, 0); showHint('👆 전자 상자에서 전자를 끌어 원자에 넣어 보세요', 6000); },
+      recap: '원자는 <b>양성자 수 = 전자 수</b>라서 (+)전하량과 (−)전하량이 같아 <b>전기적으로 중성</b>이에요.',
+      summary: '<span class="formula">양성자 수 = 전자 수 → 원자는 전기적으로 중성</span>' +
+        '<ul><li>양성자 1개는 +1, 전자 1개는 −1의 전하를 띤다. 원자에서는 (+)전하량과 (−)전하량이 같다.</li>' +
+        '<li>중성자는 전하가 없어서 전체 전하에 영향을 주지 않는다.</li></ul>',
+      missions: [
+        {
+          title: '중성 원자 만들기',
+          goal: '원자핵에 <b>양성자 6개</b>(+6)가 있어요. 전자를 넣어 <b>전체 전하가 0</b>인 원자를 만들어 보세요.',
+          hint: '파란 <b>전자 상자</b>에서 전자를 끌어 원 안에 놓아요(전자 <b>+</b> 버튼도 돼요). 전자 1개를 넣을 때마다 전체 전하가 1씩 줄어요.',
+          focus: 'e',
+          setup() { setState(6, 0); setTarget(6, 6, '전체 전하 0'); },
+          check: () => is(6, 6),
+          status: () => statusLine() + (ne() > 6 ? '<br>⚠️ 전자가 너무 많아 (−)전하가 더 커졌어요. 전자를 빼 보세요.' : ''),
+          hold: 0.6,
+          explain: '양성자 6개의 전하 <b>+6</b>과 전자 6개의 전하 <b>−6</b>을 더하면 0이에요. 중성자 6개는 전하가 없어서 계산에 들어가지 않아요.',
+        },
+        {
+          type: 'quiz',
+          title: '전자는 몇 개?',
+          goal: '원자핵에 <b>양성자 8개</b>와 <b>중성자 8개</b>가 있는 원자예요. 이 원자에 전자는 몇 개 있을까요?',
+          choices: ['0개', '4개', '8개', '16개'],
+          answer: 2,
+          feedback: [
+            '전자가 없으면 원자 전체가 (+)전하를 띠게 돼요. 원자는 전기적으로 중성이에요.',
+            '양성자 8개의 전하 +8을 없애려면 (−)전하가 얼마나 필요할까요?',
+            '',
+            '중성자는 전하가 <b>없어요</b>! (+)전하를 띠는 양성자 수만 생각해야 해요.',
+          ],
+          explain: '원자는 중성이므로 <b>전자 수 = 양성자 수 = 8개</b>예요. 중성자는 전하가 없어서 전자 수와 관계없어요. (공방에서 직접 확인해 봐도 좋아요)',
+        },
+        {
+          type: 'quiz',
+          title: '원자는 왜 중성일까?',
+          goal: '원자가 전체적으로 전하를 띠지 않는(<b>전기적으로 중성</b>인) 까닭으로 옳은 것은?',
+          setup() { if (!is(6, 6)) setState(6, 6); },
+          choices: [
+            '원자 속 입자들은 모두 전하를 띠지 않기 때문',
+            '중성자가 양성자와 전자의 전하를 없애 주기 때문',
+            '양성자 수와 전자 수가 같아 (+)전하량과 (−)전하량이 같기 때문',
+            '전자가 원자핵 속에 들어가 있기 때문',
+          ],
+          answer: 2,
+          feedback: [
+            '양성자는 (+), 전자는 (−)전하를 띠어요. 전하가 없는 것은 중성자뿐이에요.',
+            '중성자는 전하가 없어서 다른 입자의 전하를 바꾸지 못해요. 계기판에서 중성자는 0이었죠?',
+            '',
+            '전자는 원자핵 <b>밖</b>, 원자핵 주위를 움직여요.',
+          ],
+          explain: '원자 속에는 (+)전하를 띤 양성자와 (−)전하를 띤 전자가 <b>같은 수</b>만큼 있어요. 그래서 (+)전하량과 (−)전하량이 같아 원자는 <b>전기적으로 중성</b>이에요.',
+        },
+      ],
+    },
+    {
+      title: '양성자 수가 원소를 결정한다', short: '원소 결정', icon: '🏷️', phase: '설명',
+      features: ['pbin', 'idcard'],
+      intro: '<div class="si-link">🔗 <b>앞 단계에서</b> 원자는 양성자 수와 전자 수가 같아 <b>전기적으로 중성</b>이라는 것을 알았어요. 양성자 6개인 원자도 만들었죠.</div>' +
+        '<p>원자마다 양성자 수가 달라요. 양성자 수가 바뀌면 무엇이 달라질까요? <b>양성자 상자</b>와 <b>원소 카드</b>로 알아봐요.</p>',
+      setup() { setState(6, 6); showHint('🏷️ 원소 카드에서 양성자 6개인 원자의 정체를 확인해요', 6000); },
+      recap: '원소의 종류는 <b>양성자 수</b>로 정해져요. 양성자 수가 달라지면 다른 원소가 돼요.',
+      summary: '<ul><li>원소의 종류는 원자핵 속 <b>양성자 수</b>에 따라 달라진다.</li>' +
+        '<li>양성자 수가 같으면 같은 원소이다. 전자 수나 중성자 수로 원소를 정하지 않는다.</li></ul>' +
+        '<table><tr><th>원소</th><th>양성자 수</th><th>원소</th><th>양성자 수</th></tr>' +
+        '<tr><td>수소 (H)</td><td>1</td><td>질소 (N)</td><td>7</td></tr>' +
+        '<tr><td>헬륨 (He)</td><td>2</td><td>산소 (O)</td><td>8</td></tr>' +
+        '<tr><td>리튬 (Li)</td><td>3</td><td>플루오린 (F)</td><td>9</td></tr>' +
+        '<tr><td>탄소 (C)</td><td>6</td><td>나트륨 (Na)</td><td>11</td></tr></table>',
+      missions: [
+        {
+          title: '탄소를 산소로!',
+          goal: '지금은 양성자가 6개인 <b>탄소 원자</b>예요. 양성자와 전자를 넣어 <b>산소 원자</b>(중성)로 바꿔 보세요.',
+          hint: '빨간 <b>양성자 상자</b>에서 양성자를 하나씩 넣으며 원소 카드를 보세요. 산소가 되면 전자도 같은 수만큼 넣어 중성으로 맞춰요.',
+          focus: 'p',
+          setup() { setState(6, 6); setTarget(8, 8, '산소 원자 (중성)'); },
+          check: () => is(8, 8),
+          status: () => {
+            const p = np(), e = ne();
+            let extra = '';
+            if (p === 8 && e < 8) extra = '<br>👍 산소가 되었어요! 이제 전체 전하를 0으로 맞춰요.';
+            else if (p < 8 && e > p) extra = '<br>🤔 전자만 넣으면 원소는 바뀌지 않아요. 원소 카드를 보세요!';
+            else if (p > 8) extra = '<br>⚠️ 양성자가 너무 많아요. 원소 카드를 보세요.';
+            return statusLine() + extra;
+          },
+          hold: 0.6,
+          explain: '양성자를 넣을 때마다 원소가 탄소(6) → 질소(7) → <b>산소(8)</b>로 바뀌었어요. 전자를 넣어도 원소는 그대로였죠? <b>원소를 정하는 것은 양성자 수</b>예요.',
+        },
+        {
+          type: 'quiz',
+          title: '원소를 정하는 것은?',
+          goal: '원자의 종류, 즉 <b>원소</b>를 결정하는 것은 무엇일까요?',
+          choices: ['전자의 수', '양성자의 수', '중성자의 수', '원자핵 속 입자의 총수'],
+          answer: 1,
+          feedback: [
+            '앞 미션에서 전자를 넣어도 원소 카드는 바뀌지 않았어요. 전자 수로는 원소가 정해지지 않아요!',
+            '',
+            '중성자는 양성자 수에 맞춰 함께 바뀌었을 뿐이에요. 원소 카드를 바꾼 것은 어떤 입자였나요?',
+            '원자핵 속에는 양성자와 중성자가 있어요. 그중 원소를 결정하는 것은 하나뿐이에요.',
+          ],
+          explain: '원소의 종류는 <b>양성자 수</b>로 정해져요. 양성자가 1개면 언제나 수소, 6개면 탄소, 8개면 산소예요.',
+        },
+      ],
+    },
+    {
+      title: '원소 탐정', short: '적용', icon: '🕵️', phase: '적용',
+      features: [],
+      intro: '<div class="si-link">🔗 <b>앞 단계에서</b> 원소의 종류는 <b>양성자 수</b>로 정해진다는 것을 알았어요.</div>' +
+        '<p>이제 원자 모형이나 단서만 보고 어떤 원소인지 찾아내는 <b>원소 탐정</b>이 되어 봐요!</p>',
+      setup() { setState(8, 8); },
+      recap: '원자 모형에서 <b>양성자 수</b>를 세면 원소를 알 수 있고, 중성 원자는 <b>전자 수 = 양성자 수</b>예요.',
+      summary: '<ul><li>원자 모형에서 원소를 찾으려면 <b>양성자 수</b>만 센다. (중성자 수, 전체 입자 수 ✗)</li>' +
+        '<li>중성 원자는 전자 수 = 양성자 수이므로, 전자 수로도 양성자 수를 알 수 있다.</li></ul>',
+      missions: [
+        {
+          type: 'quiz',
+          title: '이 원자는 무엇일까?',
+          goal: '다음 원자 모형이 나타내는 원소는? (빨간색: 양성자, 회색: 중성자, 파란색: 전자)',
+          figure: modelSVG(),
+          choices: ['리튬 (양성자 3개인 원소)', '베릴륨 (양성자 4개인 원소)', '질소 (양성자 7개인 원소)', '네온 (양성자 10개인 원소)'],
+          answer: 0,
+          feedback: [
+            '',
+            '회색 입자 4개는 전하가 없는 <b>중성자</b>예요. 원소는 빨간 양성자 수로 정해요!',
+            '원자핵 속 입자를 모두 센 7개는 양성자와 중성자를 합한 수예요. 양성자만 세어 보세요.',
+            '모든 입자(10개)를 세면 안 돼요. 원소를 정하는 입자는 하나뿐이에요.',
+          ],
+          explain: '빨간 <b>양성자가 3개</b>이므로 이 원자는 <b>리튬</b>이에요. 전자도 3개라서 중성 원자예요. 중성자 수는 원소를 정할 때 세지 않아요.',
+        },
+        {
+          title: '수수께끼 원자 X',
+          goal: '원자 X는 전자가 <b>9개</b>인 중성 원자예요. 공방에서 원자 X를 만들어 원소 카드로 정체를 밝혀 보세요.',
+          hint: '중성 원자는 양성자 수와 전자 수가 같아요. 양성자도 9개가 되도록 넣어 보세요.',
+          focus: 'id',
+          setup() { setState(8, 8); setTarget(9, 9, '전자 9개인 중성 원자 X'); },
+          check: () => is(9, 9),
+          status: () => {
+            const p = np(), e = ne();
+            let extra = '';
+            if (e === 9 && p !== 9) extra = '<br>👍 전자 9개! 그런데 아직 중성이 아니에요. 양성자는 몇 개여야 할까요?';
+            else if (p === 9 && e !== 9) extra = '<br>👍 양성자 9개! 이제 전자를 9개로 맞춰 중성으로 만들어요.';
+            return statusLine() + extra;
+          },
+          hold: 0.6,
+          explain: '중성 원자는 <b>양성자 수 = 전자 수</b>이므로 원자 X의 양성자는 9개예요. 원소 카드가 알려 준 원자 X의 정체는 <b>플루오린(F)</b>이에요.',
+        },
+      ],
+    },
+  ];
+
+  function resetCurrent() {
+    if (!game || game.phase === 'complete' || game.free) { setState(6, 6); return; }
+    const m = game.current();
+    if (game.phase !== 'intro' && m && m.setup) { m.setup(); return; }
+    const lv = LEVELS[game.level];
+    if (lv && lv.setup) lv.setup(); else setState(6, 6);
+  }
+
+  game = SciSim.game({
     simId: 'm2-build-atom',
     mount: '#game',
-    concept: CONCEPT,
-    badge: '이온 연금술사',
+    badge: '원자 탐험가',
     homeHref: '../../index.html#g2',
-    onMissionStart() { S.target = null; },
-    levels: [
-      {
-        title: '원자 만들기',
-        missions: [
-          {
-            title: '첫 원자: 수소',
-            goal: '원자핵(양성자 1개)만 있어요. <b>전자</b>를 끌어다 넣어 전기적으로 중성인 <b>수소 원자</b>를 만들어 보세요.',
-            hint: '왼쪽 아래 파란 <b>전자 상자</b>에서 전자를 끌어 원자핵 근처에 놓아요. (오른쪽의 전자 <b>+</b> 버튼도 돼요)',
-            setup() { setState(1, 0); setTarget(1, 1); },
-            check: () => is(1, 1),
-            status: () => statusLine() + (np() !== 1 ? '<br>⚠️ 수소는 양성자가 1개예요. 양성자 수를 되돌려요.' : ne() > 1 ? '<br>⚠️ 전자가 너무 많아요! (−)전하가 더 커졌어요.' : ''),
-            hold: 0.6,
-            explain: '수소 원자핵의 전하는 <b>+1</b>, 전자 1개의 전하는 <b>−1</b>이에요. (+)전하량과 (−)전하량이 같아서 합이 0, 즉 <b>전기적으로 중성</b>인 원자가 되었어요. 전하 계기판의 바늘이 0을 가리키죠?',
-          },
-          {
-            title: '탄소 원자 만들기',
-            goal: '양성자와 전자를 넣어 <b>탄소(C) 원자</b>를 만들어 보세요. 정체 카드에 ‘탄소’가 나타나고, 전체 전하가 <b>0</b>이어야 해요.',
-            hint: '원소 이름은 <b>양성자 수</b>로 정해져요. 양성자를 하나씩 넣으며 정체 카드를 보세요. 탄소는 양성자가 <b>6개</b>! 그다음 전자도 같은 수만큼 넣어요.',
-            setup() { setState(1, 1); setTarget(6, 6); },
-            check: () => is(6, 6),
-            status: () => statusLine() + (np() === 6 && ne() !== 6 ? '<br>👍 원소는 탄소! 이제 전체 전하를 0으로 맞춰요.' : np() > 6 ? '<br>⚠️ 양성자가 너무 많아요.' : ''),
-            hold: 0.6,
-            explain: '양성자를 넣을 때마다 원소가 수소 → 헬륨 → 리튬 → … 으로 바뀌었죠? 원소의 종류는 <b>원자핵의 (+)전하량(양성자 수)</b>으로 정해져요. 탄소 원자는 원자핵의 전하 +6, 전자 6개로 전체 전하가 0이에요.',
-          },
-          {
-            type: 'quiz',
-            title: '원자는 왜 중성일까?',
-            goal: '원자가 전체적으로 전하를 띠지 않는(<b>전기적으로 중성</b>인) 까닭으로 옳은 것은?',
-            setup() { setState(6, 6); },
-            choices: [
-              '원자 속에 전자가 없기 때문',
-              '원자핵이 전하를 띠지 않기 때문',
-              '원자핵의 (+)전하량과 전자의 총 (−)전하량이 같기 때문',
-              '전자가 원자핵 안에 들어 있기 때문',
-            ],
-            answer: 2,
-            feedback: [
-              '화면의 탄소 원자에도 전자가 6개 있어요! 원자에는 전자가 있어요.',
-              '원자핵은 <b>(+)전하</b>를 띠어요. 원자핵 속 빨간 (+) 입자를 보세요.',
-              '',
-              '전자는 원자핵 <b>밖</b>, 원자핵 주위를 움직여요.',
-            ],
-            explain: '원자핵은 (+)전하, 전자는 (−)전하를 띠어요. 탄소 원자는 원자핵의 전하 <b>+6</b>과 전자 6개의 전하 <b>−6</b>이 같아서 합이 0이에요. 그래서 원자는 <b>전기적으로 중성</b>이에요.',
-          },
-          {
-            title: '질소를 산소로!',
-            goal: '지금은 <b>질소(N) 원자</b>예요. 입자를 더 넣어 전기적으로 중성인 <b>산소(O) 원자</b>로 바꿔 보세요.',
-            hint: '산소는 양성자가 <b>8개</b>예요. 양성자 1개를 넣으면 원소가 산소로 바뀌지만 전체 전하가 +1이 돼요. 전자도 1개 넣어 중성으로 맞춰요.',
-            setup() { setState(7, 7); setTarget(8, 8); },
-            check: () => is(8, 8),
-            status: () => {
-              let extra = '';
-              if (np() === 8 && ne() === 7) extra = '<br>👍 산소가 되었어요! 그런데 전체 전하가 +1이네요.';
-              else if (np() === 7 && ne() === 8) extra = '<br>🤔 전자만 넣으면 원소는 그대로 질소예요!';
-              return statusLine() + extra;
-            },
-            hold: 0.6,
-            explain: '양성자 1개를 넣어 원자핵의 전하가 <b>+8</b>이 되자 원소가 <b>산소</b>로 바뀌었어요. 전자도 1개 넣어 (−)전하를 −8로 맞추니 중성 원자가 되었어요. <b>원소를 정하는 것은 양성자 수</b>, 중성을 맞추는 것은 전자 수예요.',
-          },
-        ],
-      },
-      {
-        title: '이온 만들기',
-        missions: [
-          {
-            title: '나트륨 이온 만들기',
-            goal: '<b>나트륨(Na) 원자</b>에서 <b>전자 1개를 떼어 내어</b> 나트륨 이온(Na<sup>+</sup>)을 만들어 보세요.',
-            hint: '가장 바깥쪽에서 도는 전자 1개를 끌어서 <b>전자 상자</b>(또는 원 밖)에 놓아요. 전자 <b>−</b> 버튼도 돼요.',
-            setup() { setState(11, 11); setTarget(11, 10); },
-            check: () => is(11, 10),
-            status: () => statusLine() + (np() !== 11 ? '<br>⚠️ 양성자 수가 바뀌면 나트륨이 아니에요!' : ne() > 11 ? '<br>🤔 전자를 넣으면 (−)전하가 늘어나요.' : ''),
-            hold: 0.6,
-            explain: '전자 1개를 잃자 원자핵의 (+)전하(+11)가 전자의 (−)전하(−10)보다 많아져 전체 전하가 <b>+1</b>인 <b>양이온</b>이 되었어요. 이온식은 <b>Na<sup>+</sup></b>, 이름은 <b>나트륨 이온</b>! 원자핵은 그대로라서 여전히 나트륨이에요.',
-          },
-          {
-            title: '염화 이온 만들기',
-            goal: '<b>염소(Cl) 원자</b>에 <b>전자 1개를 더해</b> 음이온 Cl<sup>−</sup>을 만들어 보세요.',
-            hint: '파란 <b>전자 상자</b>에서 전자 1개를 끌어 원자 안에 놓아요.',
-            setup() { setState(17, 17); setTarget(17, 18); },
-            check: () => is(17, 18),
-            status: () => statusLine() + (np() !== 17 ? '<br>⚠️ 양성자 수가 바뀌면 염소가 아니에요!' : ne() < 17 ? '<br>🤔 전자를 잃으면 양이온이 돼요. 음이온은 전자를 <b>얻어야</b> 해요.' : ''),
-            hold: 0.6,
-            explain: '전자 1개를 얻자 (−)전하(−18)가 (+)전하(+17)보다 많아져 전체 전하가 <b>−1</b>인 <b>음이온</b>이 되었어요. 이온식은 <b>Cl<sup>−</sup></b>, 이름은 <b>염화 이온</b>이에요. (‘염소 이온’이 아니에요!)',
-          },
-          {
-            type: 'quiz',
-            title: '전자를 잃으면?',
-            goal: '원자가 <b>전자를 잃으면</b> 어떤 이온이 될까요? 그 까닭까지 바르게 짝지은 것은?',
-            choices: [
-              '양이온 — 전자를 잃어 (+)전하량이 (−)전하량보다 많아지므로',
-              '음이온 — (−)전하를 띠는 전자를 잃었으므로',
-              '양이온 — 전자를 잃는 대신 양성자를 얻어 (+)전하가 늘어나므로',
-              '변하지 않음 — 원자핵이 그대로이므로 여전히 중성이다',
-            ],
-            answer: 0,
-            feedback: [
-              '',
-              '전자를 <b>잃으면</b> (−)전하가 줄어요. 그러면 (+)와 (−) 중 어느 쪽이 더 많아질까요?',
-              '이온이 될 때 원자핵(양성자 수)은 <b>변하지 않아요</b>. 양성자 수가 바뀌면 아예 다른 원소가 돼요!',
-              '원자핵은 그대로지만 전자가 줄어 (+)전하량과 (−)전하량이 더 이상 같지 않아요.',
-            ],
-            explain: '이온이 될 때는 <b>전자만</b> 이동해요. 전자를 잃으면 (+)전하량 &gt; (−)전하량 → <b>양이온</b>, 전자를 얻으면 (−)전하량 &gt; (+)전하량 → <b>음이온</b>이 돼요.',
-          },
-          {
-            type: 'quiz',
-            title: 'Na<sup>+</sup>도 나트륨일까?',
-            goal: '나트륨 원자가 전자를 잃어 Na<sup>+</sup>이 되어도 여전히 ‘나트륨’이라고 하는 까닭은? (화면의 Na<sup>+</sup>를 살펴보세요)',
-            setup() { setState(11, 10); },
-            choices: [
-              '전자 수가 변하지 않았기 때문',
-              '원자핵의 (+)전하량, 즉 양성자 수가 그대로이기 때문',
-              'Na<sup>+</sup>도 전기적으로 중성이기 때문',
-              '양성자도 전자와 함께 1개 줄었기 때문',
-            ],
-            answer: 1,
-            feedback: [
-              '전자 수는 11개 → 10개로 <b>변했어요</b>. 화면을 확인해 보세요.',
-              '',
-              'Na<sup>+</sup>은 전체 전하가 +1이라 중성이 아니에요.',
-              '이온이 될 때 양성자 수는 변하지 않아요. 화면의 원자핵 속 양성자를 세어 보세요: 여전히 11개!',
-            ],
-            explain: '원소의 종류는 <b>원자핵의 (+)전하량(양성자 수)</b>으로 정해져요. 이온이 될 때는 전자만 이동하고 원자핵은 그대로이므로 Na<sup>+</sup>도 여전히 나트륨이에요. 그래서 이온식에도 같은 원소 기호 Na를 써요.',
-          },
-        ],
-      },
-      {
-        title: '이온 마스터',
-        missions: [
-          {
-            title: '마그네슘 이온 Mg<sup>2+</sup>',
-            manual: true,
-            goal: '<b>마그네슘 이온(Mg<sup>2+</sup>)</b>을 만든 뒤 <b>✔ 확인하기</b>를 누르세요. 마그네슘 원자를 먼저 만들고, 이온이 되게 해 보세요.',
-            hint: '마그네슘은 양성자가 <b>12개</b>예요. 양성자 12개·전자 12개로 마그네슘 원자를 만든 뒤, 전자 <b>2개</b>를 빼면 전체 전하가 +2가 돼요.',
-            setup() { setState(1, 1); setTarget(12, 10); },
-            check: () => {
-              const p = np(), e = ne(), q = p - e;
-              if (p === 12 && e === 10) return true;
-              if (p !== 12) return '지금 원소는 ' + iyeyo(identify(p, e).name) + '. 정체 카드에 ‘마그네슘’이 나올 때까지 양성자 수를 맞춰요.';
-              if (e === 12) return '마그네슘 원자 완성! 이제 전자를 잃게 해서 전체 전하를 +2로 만들어요.';
-              if (e > 12) return '전자를 얻으면 음이온이 돼요. Mg<sup>2+</sup>은 (+)전하가 2만큼 많아야 해요.';
-              if (e === 11) return '전체 전하가 +1이에요. 전자를 하나 더 잃어야 해요.';
-              return '전자를 너무 많이 뺐어요. (지금 전체 전하: ' + signed(q) + ')';
-            },
-            status: () => statusLine(),
-            explain: '마그네슘 원자(+12, −12)가 전자 <b>2개</b>를 잃으면 (+)전하가 2만큼 많아져 <b>Mg<sup>2+</sup></b>이 돼요. 이온식은 원소 기호 오른쪽 위에 전하의 크기(2)와 종류(+)를 써요. 이름은 <b>마그네슘 이온</b>!',
-          },
-          {
-            title: '산화 이온 O<sup>2−</sup>',
-            manual: true,
-            goal: '이번엔 음이온! <b>산화 이온(O<sup>2−</sup>)</b>을 만든 뒤 <b>✔ 확인하기</b>를 누르세요.',
-            hint: '산소는 양성자가 <b>8개</b>예요. 산소 원자(양성자 8, 전자 8)를 만든 뒤 전자 <b>2개</b>를 더 넣어요.',
-            setup() { setState(1, 1); setTarget(8, 10); },
-            check: () => {
-              const p = np(), e = ne(), q = p - e;
-              if (p === 8 && e === 10) return true;
-              if (p !== 8) return '지금 원소는 ' + iyeyo(identify(p, e).name) + '. 산소는 양성자가 몇 개였는지 떠올려 보세요. (레벨 1의 질소 → 산소 미션!)';
-              if (e === 8) return '산소 원자 완성! 이제 전자를 얻게 해서 전체 전하를 −2로 만들어요.';
-              if (e < 8) return '전자를 잃으면 양이온이 돼요! 음이온은 전자를 <b>얻어야</b> 해요.';
-              if (e === 9) return '전체 전하가 −1이에요. 전자를 하나 더 얻어야 해요.';
-              return '전자가 너무 많아요. (지금 전체 전하: ' + signed(q) + ')';
-            },
-            status: () => statusLine(),
-            explain: '산소 원자(+8, −8)가 전자 <b>2개</b>를 얻으면 (−)전하가 2만큼 많아져 <b>O<sup>2−</sup></b>이 돼요. 음이온은 원소 이름 뒤에 ‘-화 이온’을 붙이는데, ‘산소’처럼 ‘소’로 끝나면 ‘소’를 빼고 <b>산화 이온</b>이라고 해요.',
-          },
-          {
-            type: 'quiz',
-            title: '모형을 이온식으로',
-            goal: '다음 모형이 나타내는 입자의 <b>이온식</b>은? 원자핵의 전하와 전자 수를 비교해 보세요.',
-            figure: modelSVG(),
-            choices: ['S<sup>2−</sup>', 'S<sup>2+</sup>', 'Ar', 'S'],
-            answer: 0,
-            feedback: [
-              '',
-              '전자가 18개로, 원자핵의 전하 +16보다 (−)전하가 많아요. 그럼 전체 전하는 (+)일까요, (−)일까요?',
-              '아르곤은 <b>양성자가 18개</b>인 원소예요. 원소의 종류는 전자 수가 아니라 <b>원자핵의 (+)전하량</b>으로 정해져요!',
-              '원자핵의 전하(+16)와 전자 수(18개)가 같지 않아요. 중성 원자가 아니라 이온이에요.',
-            ],
-            explain: '원자핵의 전하가 <b>+16</b>이므로 원소는 <b>황(S)</b>이에요. 전자는 18개(−18)라 전체 전하는 (+16) + (−18) = <b>−2</b>. 이온식은 <b>S<sup>2−</sup></b>, 이름은 <b>황화 이온</b>이에요. (왼쪽 공방에서 직접 만들어 확인해 봐도 좋아요!)',
-          },
-          {
-            type: 'quiz',
-            title: '이름을 붙여 줘!',
-            goal: 'Cl<sup>−</sup>의 올바른 이름은?',
-            choices: ['염소 이온', '염화 이온', '염화 나트륨', '염소 원자'],
-            answer: 1,
-            feedback: [
-              '‘원소 이름 + 이온’은 <b>양이온</b>의 이름 짓는 법이에요. 음이온은 다르게 불러요!',
-              '',
-              '염화 나트륨은 나트륨 이온과 염화 이온으로 이루어진 <b>물질</b>(소금의 주성분)의 이름이에요.',
-              'Cl<sup>−</sup>은 전자를 1개 얻어 전하를 띤 <b>이온</b>이에요. 중성인 원자가 아니에요.',
-            ],
-            explain: '음이온은 원소 이름 뒤에 ‘-화 이온’을 붙이고, 이름이 ‘소’로 끝나면 ‘소’를 빼요: 염소 → <b>염화 이온</b>(Cl<sup>−</sup>), 산소 → 산화 이온(O<sup>2−</sup>), 황 → 황화 이온(S<sup>2−</sup>). 양이온은 ‘원소 이름 + 이온’: 나트륨 이온(Na<sup>+</sup>).',
-          },
-        ],
-      },
-    ],
+    featureLabels: {
+      inspect: '🔍 입자 눌러 관찰하기 · 원자핵 확대',
+      ebin: '🔵 전자 상자',
+      meter: '⚖️ 전하 계기판',
+      pbin: '🔴 양성자 상자 (중성자는 자동)',
+      idcard: '🏷️ 원소 카드',
+    },
+    onFeatures(set) {
+      F = set;
+      if (S.drag && ((S.drag.kind === 'p' && !on('pbin')) || (S.drag.kind === 'e' && !on('ebin')))) S.drag = null;
+      $('#tbLabel').hidden = on('meter');
+      document.body.classList.toggle('no-ctrl', !on('ebin'));
+      $('#sideNote').innerHTML = sideNote();
+      if (!on('idcard')) S.banner = null;
+      updateUI(true);
+    },
+    onMissionStart(m) {
+      S.target = null; S.focus = null;
+      if (!S.nucleons.length) { const lv = LEVELS[m._level]; if (lv && lv.setup) lv.setup(); }
+    },
+    onHint(m) { if (m.focus) S.focus = { what: m.focus, t0: S.time }; },
+    onComplete() { S.target = null; S.focus = null; },
+    levels: LEVELS,
   });
 
   /* ---------- 시작 ---------- */
-  if (!S.protons.length) setState(1, 1);   // 미션 setup이 없을 때 기본 상태
-  setTimeout(hideHint, 7000);
-  SciSim.loop((dt) => {
-    step(dt);
-    draw();
-    updateUI();
-  });
+  if (!S.nucleons.length) setState(2, 2);
+  SciSim.loop((dt) => { step(dt); draw(); updateUI(); });
 })();
