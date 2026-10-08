@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>기체 압력 탐험대 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎈</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+</head>
+<body class="sim-page" data-subject="chem">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#g1">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">중1 · Ⅵ. 기체의 성질</div>
+      <h1>기체 압력 탐험대</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <div class="segmented" role="tablist" aria-label="실험 모드">
+            <button type="button" data-mode="boyle" class="on">🖐️ 누르기 <small>(온도 일정)</small></button>
+            <button type="button" data-mode="charles">🔥 가열하기 <small>(압력 일정)</small></button>
+          </div>
+          <span class="spacer"></span>
+          <label class="switch"><input type="checkbox" id="showHits" checked> 충돌 표시</label>
+        </div>
+        <canvas id="cv" aria-label="실린더 속 기체 입자 시뮬레이션"></canvas>
+        <div class="stage-hint" id="stageHint">↕ 피스톤 손잡이를 위아래로 끌어 보세요</div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label">부피</span><span class="value" id="rV">100<small>mL</small></span></div>
+        <div class="readout"><span class="label">압력</span><span class="value" id="rP">1.00<small>기압</small></span></div>
+        <div class="readout"><span class="label">온도</span><span class="value" id="rT">27<small>°C</small></span></div>
+        <div class="readout"><span class="label" id="r4Label">피스톤 충돌 횟수</span><span class="value" id="r4">0<small>회/초</small></span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad">
+        <div class="control" id="ctrlV">
+          <div class="control-head"><label for="sV">🖐️ 피스톤 위치(부피)</label><output id="oV"></output></div>
+          <input type="range" id="sV" min="25" max="200" step="1" value="100">
+        </div>
+        <div class="control" id="ctrlT" hidden>
+          <div class="control-head"><label for="sT">🔥 온도</label><output id="oT"></output></div>
+          <input type="range" id="sT" min="-73" max="177" step="1" value="27">
+        </div>
+        <div class="control">
+          <div class="control-row">
+            <button class="btn btn-sm btn-primary" id="recBtn" type="button">📍 데이터 기록</button>
+            <button class="btn btn-sm" id="clearBtn" type="button">지우기</button>
+            <span class="spacer" style="flex:1"></span>
+            <button class="btn btn-sm btn-ghost" id="resetBtn" type="button">↺ 초기화</button>
+          </div>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

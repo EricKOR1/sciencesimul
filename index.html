@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>중학 과학 시뮬레이션 게임</title>
+  <meta name="description" content="2022 개정 교육과정 중학교 과학 1~3학년 단원별 게임형 과학 시뮬레이션">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔬</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/common.css">
+  <link rel="stylesheet" href="assets/css/hub.css">
+</head>
+<body class="hub">
+  <header class="hero">
+    <div class="hero-inner">
+      <div class="hero-text">
+        <p class="hero-kicker">2022 개정 교육과정 · 중학교 과학 1~3학년</p>
+        <h1 class="display">중학 과학 시뮬레이션 게임</h1>
+        <p class="hero-sub">직접 조작하고, 미션을 깨며 과학 원리를 발견해요!</p>
+      </div>
+      <div class="hero-stats" id="heroStats" aria-live="polite"></div>
+    </div>
+    <div class="hero-deco" aria-hidden="true"><span>⚛️</span><span>🧪</span><span>🔭</span><span>🧬</span><span>🧲</span></div>
+  </header>
+
+  <main class="hub-main">
+    <nav class="grade-tabs" id="gradeTabs" role="tablist" aria-label="학년 선택"></nav>
+
+    <div class="hub-tools">
+      <label class="search">
+        <span aria-hidden="true">🔍</span>
+        <input id="search" type="search" placeholder="실험 이름이나 개념으로 찾기 (예: 압력, 전류, 유전)" autocomplete="off">
+      </label>
+      <label class="switch"><input type="checkbox" id="onlyReady"> 실험 있는 단원만 보기</label>
+    </div>
+
+    <section id="unitList" class="unit-list" aria-live="polite"></section>
+
+    <section class="howto card card-pad">
+      <h2 class="display">이렇게 사용해요</h2>
+      <ol>
+        <li><b>학년 → 단원</b>을 고르고 실험 카드를 눌러요.</li>
+        <li>왼쪽 화면에서 <b>자유롭게 조작</b>하며 관찰해요.</li>
+        <li>오른쪽 <b>🎯 미션</b>을 하나씩 해결하면 레벨마다 <b>⭐ 별</b>을 받아요.</li>
+        <li>미션이 끝나면 <b>📘 핵심 원리</b>로 배운 내용을 정리해요.</li>
+      </ol>
+      <p class="muted">진행 상황(별·점수)은 이 기기의 브라우저에 저장됩니다. 단원 순서는 교육과정 내용 체계 기준이며, 사용하는 교과서(출판사)에 따라 다를 수 있어요.</p>
+    </section>
+  </main>
+
+  <footer class="hub-foot">
+    <p>PhET Interactive Simulations(콜로라도 대학교)에서 아이디어를 얻어, 중학교 수업용으로 새로 만든 시뮬레이션입니다.</p>
+    <p><button class="link-btn" id="resetAll">진행 기록 모두 지우기</button></p>
+  </footer>
+
+  <script src="assets/js/common.js"></script>
+  <script src="assets/js/catalog.js"></script>
+  <script src="assets/js/hub.js"></script>
+</body>
+</html>
