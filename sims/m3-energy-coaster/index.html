@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>에너지 롤러코스터 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎢</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    /* 이 시뮬레이션 전용 스타일 */
+    .run-btn { min-width: 118px; }
+    #stageHint { bottom: auto; top: 64px; }
+    .readout .label .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; }
+    .readout.ep .value { color: #1d4ed8; }
+    .readout.ek .value { color: #c2410c; }
+    .rate-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .rate-row > span { font-weight: 700; font-size: 14.5px; }
+    .rate-row .segmented button { padding: 6px 12px; font-size: 13.5px; }
+    .fric-box { border: 1px solid var(--line); background: var(--surface-2); border-radius: 12px; padding: 10px 12px; }
+    .fric-box .switch { font-size: 15px; }
+    .fric-note { margin: 6px 0 0; font-size: 13px; color: var(--muted); }
+    .fric-box.on { background: #fff1f2; border-color: #fecdd3; }
+    .fric-box.on .fric-note { color: #9f1239; }
+    .stage-toolbar .segmented button { padding: 7px 12px; }
+    @media (max-width: 480px) {
+      .readouts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .stage-toolbar { gap: 6px; padding: 8px 10px; }
+      .stage-toolbar .segmented button { padding: 6px 10px; font-size: 13px; }
+      .run-btn { min-width: 0; }
+      #stageHint { font-size: 12.5px; padding: 5px 12px; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="phy">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#g3">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">중3 · Ⅳ. 운동과 에너지</div>
+      <h1>에너지 롤러코스터</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar" id="toolbar">
+          <button class="btn btn-primary btn-sm run-btn" id="runBtn" type="button">▶ 출발</button>
+          <button class="btn btn-sm" id="resetBtn" type="button">⏹ 리셋</button>
+          <span class="spacer"></span>
+          <div class="segmented" id="presetSeg" role="tablist" aria-label="레일 모양">
+            <button type="button" data-preset="valley" class="on">U자 계곡</button>
+            <button type="button" data-preset="hill">언덕 넘기</button>
+            <button type="button" data-preset="twin">두 개의 언덕</button>
+          </div>
+        </div>
+        <canvas id="cv" aria-label="롤러코스터 레일 위를 달리는 수레와 에너지 막대그래프"></canvas>
+        <div class="stage-hint" id="stageHint">↕ 동그란 손잡이를 끌어 레일 높이를 바꿔 보세요</div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label">높이</span><span class="value" id="rH">8.0<small>m</small></span></div>
+        <div class="readout"><span class="label">속력</span><span class="value" id="rV">0.0<small>m/s</small></span></div>
+        <div class="readout ep"><span class="label"><i class="dot" style="background:#3b82f6"></i>위치 에너지</span><span class="value" id="rEp">157<small>J</small></span></div>
+        <div class="readout ek"><span class="label"><i class="dot" style="background:#f97316"></i>운동 에너지</span><span class="value" id="rEk">0<small>J</small></span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad">
+        <div class="control">
+          <div class="control-head"><label for="sH">🚩 출발 높이</label><output id="oH"></output></div>
+          <input type="range" id="sH" min="0.5" max="10" step="0.1" value="8">
+        </div>
+        <div class="control">
+          <div class="control-head"><label for="sM">⚖️ 수레의 질량</label><output id="oM"></output></div>
+          <input type="range" id="sM" min="1" max="5" step="1" value="2">
+        </div>
+        <div class="control fric-box" id="fricBox">
+          <label class="switch"><input type="checkbox" id="fric"> 🔥 마찰 있음</label>
+          <p class="fric-note" id="fricNote">마찰이 없어요. 역학적 에너지가 그대로 보존돼요.</p>
+        </div>
+        <div class="control rate-row">
+          <span>⏱ 재생 속도</span>
+          <div class="segmented" id="rateSeg" aria-label="재생 속도">
+            <button type="button" data-rate="1" class="on">1×</button>
+            <button type="button" data-rate="0.5">0.5×</button>
+            <button type="button" data-rate="0.25">0.25×</button>
+          </div>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

@@ -90,7 +90,7 @@ window.SCI_CATALOG = {
             {
               id: 'm3-energy-coaster', path: 'sims/m3-energy-coaster/index.html', icon: '🎢',
               title: '에너지 롤러코스터',
-              desc: '레일 높이를 바꾸며 공을 굴려 위치 에너지와 운동 에너지가 서로 전환되는 모습을 관찰해요.',
+              desc: '레일 높이를 바꾸며 수레를 달리게 해, 위치 에너지와 운동 에너지가 서로 전환되는 모습을 관찰해요.',
               tags: ['위치 에너지', '운동 에너지', '역학적 에너지 보존'],
             },
           ],
