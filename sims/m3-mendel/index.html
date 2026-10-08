@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>완두콩 유전 연구소 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🫛</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    /* ---------- 무대 ---------- */
+    .stage-card { background: #f3f8ef; }
+    .stage-hint { white-space: normal; width: max-content; max-width: calc(100% - 24px); text-align: center; }
+    .tb-group { display: inline-flex; align-items: center; gap: 6px; }
+    .tb-label { font-size: 13px; font-weight: 800; color: var(--muted); }
+    #nSeg button { min-width: 44px; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+    .stage-actions {
+      display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+      padding: 10px 12px; border-top: 1px solid var(--line); background: var(--surface);
+    }
+    .stage-actions .spacer { flex: 1; }
+    .btn-cross {
+      background: #ec4899; border-color: #ec4899; color: #fff; box-shadow: 0 3px 0 #be185d;
+      font-size: 16px; padding: 10px 22px;
+    }
+    .btn-cross:hover { background: #db2777; border-color: #db2777; }
+    .btn-cross:active { box-shadow: 0 1px 0 #be185d; transform: translateY(2px); }
+    .target { animation: tgtPulse 1.1s ease-in-out infinite; }
+    .segmented button.target { color: #0b6b39; }
+    @keyframes tgtPulse {
+      0%, 100% { box-shadow: inset 0 0 0 2px #14a058, 0 0 0 0 rgba(20, 160, 88, 0); }
+      50% { box-shadow: inset 0 0 0 2px #14a058, 0 0 0 5px rgba(20, 160, 88, .28); }
+    }
+    .readout .value { overflow: hidden; text-overflow: ellipsis; }
+    .readout .value.sm { font-size: 17px; line-height: 29px; }
+
+    /* ---------- 퍼넷 사각형 ---------- */
+    #pnCard { transition: box-shadow .25s; }
+    #pnCard.pn-target { box-shadow: 0 0 0 3px #14a058, var(--shadow); }
+    .pn-title { margin-bottom: 6px; }
+    .pn-sub { margin-left: auto; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 15px; color: var(--ink); }
+    .pn-help { font-size: 13.5px; color: var(--muted); margin: 0 0 10px; }
+    .pn-palette { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; align-items: center; }
+    .pn-pal {
+      border: 2px solid var(--line); background: #fff; border-radius: 10px; padding: 4px 10px; cursor: pointer;
+      font-weight: 800; font-size: 16px; display: inline-flex; gap: 4px; align-items: center; min-height: 38px;
+    }
+    .pn-pal:hover { background: var(--surface-2); }
+    .pn-pal.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 12%, white); box-shadow: 0 0 0 2px color-mix(in srgb, var(--subject) 25%, transparent); }
+    .pn-pal.erase { font-size: 13.5px; }
+    .pn-grid { display: grid; gap: 5px; }
+    .pn-grid.g2 { grid-template-columns: 54px repeat(2, minmax(0, 1fr)); max-width: 420px; }
+    .pn-grid.g4 { grid-template-columns: 42px repeat(4, minmax(0, 1fr)); gap: 4px; max-width: 560px; }
+    .pn-corner { font-size: 12px; color: var(--muted); display: grid; place-items: center; font-weight: 800; line-height: 1.15; text-align: center; }
+    .pn-gam { display: grid; place-items: center; min-height: 40px; }
+    .pn-gam > span {
+      min-width: 36px; height: 36px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 17px; padding: 0 7px; white-space: nowrap;
+    }
+    .g4 .pn-gam > span { min-width: 30px; height: 30px; font-size: 13px; padding: 0 5px; }
+    .pn-gam.f > span { background: #ffe4ef; border: 2px solid #e0518d; }
+    .pn-gam.m > span { background: #e3edff; border: 2px solid #4b7be5; }
+    .pn-gam.q > span { background: #f1f3f7; border: 2px dashed #b4bfcf; color: #8a95a6; }
+    .pn-cell {
+      min-height: 60px; border: 2px dashed #c8d2e0; border-radius: 12px; background: #fafcff;
+      display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;
+      font-weight: 800; font-size: 19px; color: var(--ink); padding: 2px; transition: background .15s, border-color .15s;
+    }
+    .pn-cell:hover:not([disabled]) { background: var(--surface-2); border-color: #a9b6c9; }
+    .pn-cell.filled { border-style: solid; border-color: #b9c6d8; background: #fff; }
+    .pn-cell.bad { border-color: var(--bad); background: var(--bad-soft); }
+    .pn-cell.warn { border-color: var(--warn); background: var(--warn-soft); }
+    .pn-cell.good { border-color: var(--good); background: var(--good-soft); }
+    .pn-cell[disabled] { cursor: default; color: #9aa5b6; }
+    .pn-cell .ph { font-size: 11.5px; font-weight: 700; color: var(--muted); }
+    .g4 .pn-cell { min-height: 50px; flex-direction: column; gap: 1px; font-size: 12px; border-style: solid; cursor: default; padding: 3px 1px; }
+    .g4 .pn-cell.c-RY { background: #fff7d1; border-color: #f0d36a; }
+    .g4 .pn-cell.c-Ry { background: #e9f7dd; border-color: #a8d68a; }
+    .g4 .pn-cell.c-rY { background: #fbeccb; border-color: #dcb35e; }
+    .g4 .pn-cell.c-ry { background: #dcefd0; border-color: #86b86a; }
+    .pn-foot { display: flex; gap: 8px; align-items: center; margin-top: 10px; flex-wrap: wrap; }
+    .pn-msg { font-size: 13.5px; font-weight: 700; color: var(--muted); flex-basis: 100%; }
+    .pn-msg:empty { display: none; }
+    .pn-msg.good { color: #0b6b39; }
+    .pn-allele-R { color: #c2410c; }
+    .pn-allele-Y { color: #2563eb; }
+
+    /* ---------- 탐정 판정 ---------- */
+    .verdict { display: flex; gap: 8px; justify-content: center; align-items: center; flex-wrap: wrap; }
+    .verdict-label { font-weight: 800; color: var(--muted); font-size: 14px; }
+    .verdict button {
+      border: 2px solid var(--line); background: #fff; border-radius: 12px; padding: 8px 16px; cursor: pointer;
+      font-weight: 800; font-size: 18px; min-width: 104px;
+    }
+    .verdict button small { font-size: 13px; color: var(--muted); font-weight: 700; }
+    .verdict button:hover { background: var(--surface-2); }
+    .verdict button.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 12%, white); box-shadow: 0 0 0 3px color-mix(in srgb, var(--subject) 22%, transparent); }
+
+    @media (max-width: 480px) {
+      .stage-hint { font-size: 12.5px; padding: 5px 12px; }
+      .segmented button { padding: 6px 11px; font-size: 13.5px; }
+      .btn-cross { padding: 9px 18px; font-size: 15px; }
+      .pn-grid.g4 { grid-template-columns: 36px repeat(4, minmax(0, 1fr)); }
+      .g4 .pn-cell { font-size: 11px; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="bio">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#g3">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">중3 · Ⅵ. 생식과 유전</div>
+      <h1>완두콩 유전 연구소</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar" id="toolbar">
+          <div class="segmented" id="modeSeg" role="tablist" aria-label="관찰할 형질">
+            <button type="button" data-mode="shape" class="on">씨 모양</button>
+            <button type="button" data-mode="color">씨 색깔</button>
+            <button type="button" data-mode="both">두 가지 함께</button>
+          </div>
+          <span class="spacer"></span>
+          <div class="tb-group">
+            <span class="tb-label">자손 수</span>
+            <div class="segmented" id="nSeg" role="tablist" aria-label="자손 수">
+              <button type="button" data-n="4">4</button>
+              <button type="button" data-n="20" class="on">20</button>
+              <button type="button" data-n="100">100</button>
+              <button type="button" data-n="400">400</button>
+            </div>
+          </div>
+          <label class="switch"><input type="checkbox" id="showG"> 🧬 유전자형 보기</label>
+        </div>
+        <canvas id="cv" aria-label="완두 교배 실험대: 씨앗 보관함, 부모 자리, 생식세포, 자손 트레이"></canvas>
+        <div class="stage-hint" id="stageHint">👆 보관함의 완두를 ♀·♂ 자리로 끌어다 놓거나 눌러 보세요</div>
+        <div class="stage-actions">
+          <button class="btn btn-cross" id="crossBtn" type="button">🌸 교배하기</button>
+          <button class="btn btn-sm" id="selfBtn" type="button" title="한 그루의 완두가 스스로 꽃가루받이를 해요">🌼 자가 수분</button>
+          <button class="btn btn-sm btn-ghost" id="clearBtn" type="button">↺ 부모 비우기</button>
+          <span class="spacer"></span>
+          <button class="btn btn-sm" id="saveBtn" type="button" disabled>＋ 이 자손을 보관함에 추가</button>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label">부모 유전자형 (♀ × ♂)</span><span class="value" id="rParents">–</span></div>
+        <div class="readout"><span class="label">자손 수</span><span class="value" id="rN">0<small>개</small></span></div>
+        <div class="readout"><span class="label">표현형 비 (실제)</span><span class="value" id="rRatio">–</span></div>
+        <div class="readout"><span class="label">예상 비율</span><span class="value" id="rExpect">–</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="pnCard">
+        <div class="card-title pn-title">🧮 퍼넷 사각형 <span class="pn-sub" id="pnSub"></span></div>
+        <p class="pn-help" id="pnHelp"></p>
+        <div class="pn-palette" id="pnPalette"></div>
+        <div class="pn-grid g2" id="pnGrid"></div>
+        <div class="pn-foot" id="pnFoot">
+          <button class="btn btn-sm btn-primary" id="pnCheck" type="button">✔ 채점하기</button>
+          <button class="btn btn-sm" id="pnClear" type="button">지우기</button>
+          <div class="pn-msg" id="pnMsg"></div>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>
