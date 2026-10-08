@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#f26b3a">
+  <title>자유 낙하 운동 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍎</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    /* 이 시뮬레이션 전용 스타일 */
+    .stage-toolbar { min-height: 61px; }
+    .stage-toolbar .btn { min-height: 44px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-right: 4px; white-space: nowrap; }
+    .drop-btn { min-width: 150px; }
+    .stage-canvas .stage-hint { top: 10px; bottom: auto; }
+
+    /* 켜고 끄는 버튼 */
+    .tgl {
+      display: inline-flex; align-items: center; gap: 7px; min-height: 44px;
+      border: 2px solid var(--line); background: var(--surface); color: var(--muted);
+      border-radius: 999px; padding: 6px 14px; font-weight: 800; font-size: 15px; cursor: pointer;
+      transition: background .15s, border-color .15s, color .15s; user-select: none; -webkit-user-select: none;
+    }
+    .tgl .chk {
+      width: 18px; height: 18px; border-radius: 50%; border: 2px solid #cbd5e1; display: grid; place-items: center;
+      font-size: 11px; line-height: 1; color: transparent; flex: none;
+    }
+    .tgl[aria-pressed="true"] { color: #9a3412; border-color: #fdba8c; background: #fff2e9; }
+    .tgl[aria-pressed="true"] .chk { background: var(--phy); border-color: var(--phy); color: #fff; }
+    .tgl:active { transform: scale(.97); }
+    @media (hover: hover) { .tgl:hover { background: var(--surface-2); } .tgl[aria-pressed="true"]:hover { background: #ffe8d9; } }
+
+    /* 조작 카드 */
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    .range-row { display: flex; align-items: center; gap: 8px; }
+    .range-row input[type=range] { flex: 1; min-width: 0; height: 44px; }
+    .nudge {
+      flex: none; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line);
+      background: var(--surface); font-weight: 900; font-size: 20px; line-height: 1; cursor: pointer;
+      display: grid; place-items: center; color: var(--ink);
+    }
+    .nudge:active:not([disabled]) { transform: scale(.94); background: var(--surface-2); }
+    .nudge[disabled] { opacity: .35; cursor: not-allowed; }
+    @media (hover: hover) { .nudge:hover:not([disabled]) { background: var(--surface-2); } }
+    .rec-row { display: flex; gap: 8px; align-items: center; margin-top: 6px; }
+    .rec-row .btn-primary { flex: 1; min-height: 46px; font-size: 16px; }
+    .rec-row .btn { min-height: 44px; }
+    .ctrl-note { font-size: 13.5px; color: var(--muted); margin: 6px 0 0; }
+    .cond-box { border: 1px solid var(--line); background: var(--surface-2); border-radius: 12px; padding: 8px 10px; display: flex; flex-direction: column; gap: 8px; }
+    .cond-box:empty { display: none; }
+    .cond { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .cond > span { font-weight: 800; font-size: 15px; white-space: nowrap; }
+    .cond .segmented { background: #fff; }
+    .cond .segmented button { min-height: 40px; padding: 6px 12px; font-size: 14.5px; }
+    .cond .segmented button.on { background: var(--phy); color: #fff; }
+
+    /* 배운 내용 속 작은 표 */
+    .concept table.mini { border-collapse: collapse; margin: 6px 0; font-size: 14px; width: 100%; }
+    .concept table.mini th, .concept table.mini td { border: 1px solid var(--line); padding: 4px 6px; text-align: center; }
+    .concept table.mini th { background: var(--surface-2); font-weight: 800; }
+
+    /* 조작 카드가 아직 없을 때(1단계) 세로 태블릿에서 미션 카드가 넓게 */
+    /* 작은 가로 화면: 도구 막대가 두 줄이 되지 않게 탑 높이 표시는 숨김 (캔버스 눈금에 있음) */
+    @media (max-width: 1100px) and (orientation: landscape) { .toolbar-label { display: none; } }
+    @media (orientation: portrait) and (min-width: 600px) {
+      .side-col:has(> #ctrlCard[hidden]) > #game { grid-column: 1 / -1; }
+    }
+    @media (max-width: 599px) {
+      .stage-toolbar { gap: 6px; padding: 8px; }
+      .tgl { padding: 5px 10px; font-size: 14px; gap: 5px; }
+      .drop-btn { min-width: 0; }
+      .toolbar-label { display: none; }
+      .stage-hint { font-size: 13px; padding: 5px 12px; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="phy">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#g3">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">중3 · Ⅳ. 운동과 에너지</div>
+      <h1>자유 낙하 운동</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <button class="btn btn-primary btn-sm drop-btn" id="dropBtn" type="button">▶ 떨어뜨리기</button>
+          <button class="tgl" id="strobeBtn" type="button" aria-pressed="false" data-feature="strobe"><span class="chk">✓</span>📸 다중 섬광 사진</button>
+          <button class="tgl" id="slowBtn" type="button" aria-pressed="false" data-feature="slow"><span class="chk">✓</span>🐢 느리게</button>
+          <span class="spacer"></span>
+          <span class="toolbar-label" id="tbLabel">🏗️ 높이 20 m 낙하 탑</span>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="낙하 탑에서 떨어지는 물체와 시간–속력 그래프, 측정 기록표"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label">시간</span><span class="value" id="rT">0.0<small>s</small></span></div>
+        <div class="readout"><span class="label">낙하 거리</span><span class="value" id="rD">0.0<small>m</small></span></div>
+        <div class="readout" data-feature="sensor"><span class="label" id="rVLabel">속력</span><span class="value" id="rV">0.0<small>m/s</small></span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard" data-feature="graph">
+        <div class="control">
+          <div class="control-head"><label for="sTime">⏱ 기록할 시각</label><output id="oTime">0.0 s</output></div>
+          <div class="range-row">
+            <button class="nudge" id="tMinus" type="button" aria-label="0.1초 앞으로">−</button>
+            <input type="range" id="sTime" min="0" max="2" step="0.1" value="0">
+            <button class="nudge" id="tPlus" type="button" aria-label="0.1초 뒤로">+</button>
+          </div>
+          <div class="rec-row">
+            <button class="btn btn-primary btn-sm" id="recBtn" type="button">📍 기록</button>
+            <button class="btn btn-sm btn-ghost" id="clearBtn" type="button">🗑 지우기</button>
+          </div>
+          <p class="ctrl-note" id="timeNote">공을 떨어뜨린 뒤 시각을 골라요. 화면 속 공을 위아래로 끌어도 돼요.</p>
+        </div>
+        <div class="cond-box" data-feature="compare">
+          <div class="cond">
+            <span>⚖️ 물체</span>
+            <div class="segmented" id="modeSeg" role="group" aria-label="떨어뜨릴 물체">
+              <button type="button" data-mode="single" class="on">쇠공 하나</button>
+              <button type="button" data-mode="compare">세 물체 함께</button>
+            </div>
+          </div>
+          <div class="cond" data-feature="air">
+            <span>🌬️ 공기</span>
+            <div class="segmented" id="airSeg" role="group" aria-label="공기">
+              <button type="button" data-air="0" class="on">없음 (진공)</button>
+              <button type="button" data-air="1">있음</button>
+            </div>
+          </div>
+          <div class="cond" data-feature="tall">
+            <span>🏢 탑 높이</span>
+            <div class="segmented" id="hSeg" role="group" aria-label="낙하 탑 높이">
+              <button type="button" data-h="20" class="on">20 m</button>
+              <button type="button" data-h="45">45 m</button>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

@@ -791,6 +791,16 @@
         try { s = m.status() || ''; } catch (e) { s = ''; }
         if (s !== lastStatus) { refs.status.innerHTML = s; lastStatus = s; }
       }
+      // 확인 버튼형: 틀렸다는 표시가 남아 있는데 학생이 고쳐서 이제 맞으면 안내로 바꿔 줌
+      if (m.type === 'task' && m.manual && m.check && refs.feedback && refs.feedback.classList.contains('bad')) {
+        const nowT = performance.now();
+        if (!refs._lastPoll || nowT - refs._lastPoll > 300) {
+          refs._lastPoll = nowT;
+          let r = false;
+          try { r = m.check(); } catch (e) { r = false; }
+          if (r === true) { refs.feedback.className = 'mission-feedback hint'; refs.feedback.innerHTML = '✨ 좋아요! 이제 <b>✔ 확인하기</b>를 눌러 보세요.'; }
+        }
+      }
       if (m.type !== 'task' || m.manual || !m.check) return;
       let ok = false;
       try { ok = !!m.check(); } catch (e) { ok = false; }
