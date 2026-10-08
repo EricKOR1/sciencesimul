@@ -131,7 +131,7 @@
     if (opts.dismissible !== false) back.addEventListener('click', (e) => { if (e.target === back) close(); });
     document.body.appendChild(back);
     const first = actions.querySelector('.btn-primary') || actions.querySelector('button');
-    if (first) setTimeout(() => first.focus(), 50);
+    if (first) setTimeout(() => first.focus({ preventScroll: true }), 50);
     return { close };
   }
 
