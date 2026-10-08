@@ -344,6 +344,21 @@
      반환값: game.has(name), game.isNew(name), game.level, game.free ...
      HTML 요소에 data-feature="이름"을 달면 그 도구가 열릴 때까지 자동으로 숨겨집니다.
      ========================================================= */
+  /* 목록(catalog.js)에서 이 실험의 학년·단원·성취기준·차시 순서를 찾기 */
+  function catalogInfo(simId) {
+    const CAT = global.SCI_CATALOG;
+    if (!CAT) return null;
+    for (const g of CAT.grades) {
+      for (let ui = 0; ui < g.units.length; ui++) {
+        const u = g.units[ui];
+        const i = u.sims.findIndex((x) => x.id === simId);
+        if (i >= 0) return { grade: g, unit: u, sim: u.sims[i], index: i, next: u.sims[i + 1] || null, prev: u.sims[i - 1] || null };
+      }
+    }
+    return null;
+  }
+  const PHASE_ICON = { '관찰': '👀', '실험': '🧪', '탐구': '🧪', '설명': '💡', '적용': '🏠', '확인': '✅', '정리': '📝' };
+
   function game(opts) {
     const mount = typeof opts.mount === 'string' ? $(opts.mount) : opts.mount;
     const simId = opts.simId;
@@ -357,6 +372,25 @@
       flat.push(m);
     }));
     const firstOf = (li) => flat.findIndex((m) => m._level === li);
+    const info = catalogInfo(opts.simId);
+    const std = opts.standard || (info && info.sim.std ? { code: info.sim.std, text: info.sim.stdText } : null);
+    function stdBox() {
+      if (!std) return null;
+      return el('div', { class: 'std-box' }, [
+        el('div', { class: 'std-k', html: '📜 성취기준 <b>[' + std.code + ']</b>' }),
+        el('div', { class: 'std-t', text: std.text || '' }),
+      ]);
+    }
+    function unitSeq() {
+      if (!info || info.unit.sims.length < 2) return null;
+      return el('div', { class: 'unit-seq' }, [
+        el('div', { class: 'us-k', text: '🧭 ' + info.unit.title + ' 단원 학습 순서' }),
+        el('ol', {}, info.unit.sims.map((x, i) => el('li', { class: i === info.index ? 'now' : '' }, [
+          el('span', { class: 'n', text: String(i + 1) }), el('span', { text: x.icon + ' ' + x.title }),
+        ]))),
+      ]);
+    }
+    const phaseOf = (lv) => (lv.phase ? (PHASE_ICON[lv.phase] || '') + ' ' + lv.phase : '');
     const allFeatures = new Set();
     levels.forEach((lv) => (lv.features || []).forEach((f) => allFeatures.add(f)));
 
@@ -480,16 +514,18 @@
       card.appendChild(el('div', { class: 'si-top' }, [
         el('div', { class: 'si-icon', text: lv.icon || '🔬' }),
         el('div', {}, [
-          el('div', { class: 'si-kicker', text: 'STEP ' + (li + 1) + ' / ' + levels.length }),
+          el('div', { class: 'si-kicker', text: 'STEP ' + (li + 1) + ' / ' + levels.length + (lv.phase ? ' · ' + phaseOf(lv) : '') }),
           el('h3', { html: lv.title }),
         ]),
       ]));
+      if (li === 0) { const sb = stdBox(); if (sb) card.appendChild(sb); }
       if (lv.intro) card.appendChild(el('div', { class: 'si-body', html: lv.intro }));
       if (li === 0 && levels.length > 1) {
         const rm = el('ol', { class: 'roadmap' });
-        levels.forEach((l, i) => rm.appendChild(el('li', { class: i === 0 ? 'now' : '', text: l.title })));
+        levels.forEach((l, i) => rm.appendChild(el('li', { class: i === 0 ? 'now' : '', text: (l.phase ? '[' + l.phase + '] ' : '') + l.title })));
         card.appendChild(el('div', { class: 'si-link' }, [el('b', { text: '🗺️ 이렇게 차근차근 배워요' }), rm]));
       }
+      if (li === 0) { const us = unitSeq(); if (us) card.appendChild(us); }
       const tools = (lv.features || []).filter((f) => labels[f]);
       if (tools.length) {
         card.appendChild(el('div', { class: 'si-tools' }, [
@@ -514,7 +550,7 @@
       bodyMission.innerHTML = '';
 
       const head = el('div', { class: 'level-head' }, [
-        el('span', { class: 'level-badge', text: 'STEP ' + (m._level + 1) }),
+        el('span', { class: 'level-badge', text: 'STEP ' + (m._level + 1) + (lv.phase ? ' · ' + lv.phase : '') }),
         el('span', { class: 'level-name', html: lv.title }),
         el('span', { class: 'score-pill', text: '점수 ' + score }),
       ]);
@@ -695,13 +731,17 @@
         el('div', { class: 'mission-actions', style: 'justify-content:center' }, [
           el('button', { class: 'btn', type: 'button', html: '📘 배운 내용', onclick: () => { Sound.click(); showTab('concept'); } }),
           el('button', { class: 'btn', type: 'button', html: '↺ 처음부터', onclick: () => { Sound.click(); free = false; score = 0; renderIntro(0, false); } }),
-          el('a', { class: 'btn btn-primary', href: opts.homeHref || '../../index.html', html: '다른 실험 하러 가기' }),
+          info && info.next
+            ? el('a', { class: 'btn btn-primary', href: '../../' + info.next.path, html: '다음 차시: ' + info.next.icon + ' ' + info.next.title + ' →' })
+            : el('a', { class: 'btn btn-primary', href: opts.homeHref || '../../index.html', html: '다른 실험 하러 가기' }),
         ]),
       ]));
       modal({
         icon: '🏆', stars: 3, title: '모든 단계 완료!',
         html: '최종 점수 <b>' + finalScore + '점</b>' + (opts.badge ? '<br>칭호 <b>🏅 ' + opts.badge + '</b> 획득!' : '') + '<br><br>📘 <b>배운 내용</b>에 단계별 정리가 모두 모였어요.',
-        buttons: [{ label: '배운 내용 보기', onClick: () => showTab('concept') }, { label: '자유 탐구하기', primary: true }],
+        buttons: info && info.next
+          ? [{ label: '배운 내용 보기', onClick: () => showTab('concept') }, { label: '자유 탐구하기' }, { label: '다음 차시 →', primary: true, onClick: () => { location.href = '../../' + info.next.path; } }]
+          : [{ label: '배운 내용 보기', onClick: () => showTab('concept') }, { label: '자유 탐구하기', primary: true }],
       });
       opts.onComplete && opts.onComplete(finalScore);
     }
@@ -717,6 +757,7 @@
     function renderNotes() {
       if (!hasNotes) { bodyConcept.innerHTML = opts.concept || ''; return; }
       bodyConcept.innerHTML = '';
+      { const sb = stdBox(); if (sb) bodyConcept.appendChild(sb); }
       const cur = phase === 'complete' ? -1 : flat[idx]._level;
       levels.forEach((lv, i) => {
         const done = free || i < rec.levelsDone;
@@ -785,7 +826,7 @@
   }
 
   global.SciSim = {
-    Store, Sound, el, $, $$, toast, modal, confetti, stage, pointer, loop, bindRange,
+    catalogInfo, Store, Sound, el, $, $$, toast, modal, confetti, stage, pointer, loop, bindRange,
     clamp, lerp, fmt, starsHTML, game, wireHeader,
   };
 })(window);

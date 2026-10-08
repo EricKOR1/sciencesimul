@@ -147,3 +147,9 @@
   .grade-tab .gtext span { display: none; }
   .grade-tab .gprog { white-space: nowrap; }
 }
+
+/* 차시 · 성취기준 */
+.sim-side { display: flex; flex-direction: column; align-items: center; gap: 6px; flex: none; }
+.lesson-no { font-family: var(--font-display); font-size: 15px; color: #fff; background: var(--subject); padding: 2px 10px; border-radius: 999px; }
+.std-chip { align-self: flex-start; font-size: 12px; font-weight: 800; color: color-mix(in srgb, var(--subject) 80%, black); background: color-mix(in srgb, var(--subject) 12%, white); padding: 1px 8px; border-radius: 6px; }
+.unit-sims { counter-reset: lesson; }

@@ -57,7 +57,7 @@
     return null;
   }
 
-  function simCard(sim, unit, grade) {
+  function simCard(sim, unit, grade, order) {
     const rec = Store.allSims()[sim.id] || {};
     const steps = sim.steps || [];
     const done = rec.cleared ? steps.length : Math.min(steps.length, rec.levelsDone || 0);
@@ -73,8 +73,12 @@
     }
     const label = rec.cleared ? '↺ 다시 하기' : started ? '▶ 이어하기' : '▶ 시작';
     return el('a', { class: 'sim-card', href: sim.path, 'data-subject': unit.subject, 'aria-label': sim.title + ' 시작하기' }, [
-      el('div', { class: 'sim-icon', text: sim.icon }),
+      el('div', { class: 'sim-side' }, [
+        el('span', { class: 'lesson-no', text: (order + 1) + '차시' }),
+        el('div', { class: 'sim-icon', text: sim.icon }),
+      ]),
       el('div', { class: 'sim-info' }, [
+        sim.std ? el('span', { class: 'std-chip', text: '[' + sim.std + ']', title: sim.stdText || '' }) : null,
         el('h4', {}, [el('span', { text: sim.title }), rec.cleared ? el('span', { class: 'done-badge', text: '완료' }) : null]),
         el('p', { text: sim.desc }),
         path,
@@ -97,12 +101,12 @@
           el('h3', { text: unit.title }),
           el('span', { class: 'chip chip-subject', text: subj.name }),
         ]),
-        el('span', { class: 'unit-count', text: unit.sims.length ? '실험 ' + unit.sims.length + '개' : '' }),
+        el('span', { class: 'unit-count', text: unit.sims.length ? unit.sims.length + '차시' : '' }),
       ]),
     ]);
     const list = sims || unit.sims;
     if (list.length) {
-      box.appendChild(el('div', { class: 'unit-sims' }, list.map((s) => simCard(s, unit, grade))));
+      box.appendChild(el('div', { class: 'unit-sims' }, list.map((s) => simCard(s, unit, grade, unit.sims.indexOf(s)))));
     } else {
       box.appendChild(el('div', { class: 'unit-empty', text: '🚧 시뮬레이션 준비 중이에요' }));
     }
