@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>달 모양 탐정 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌙</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-card { background: #070d1f; }
+    .stage-toolbar { gap: 6px 18px; }
+    .stage-hint { top: auto; bottom: 14px; }
+    /* 넓은 화면: 가로 배치 캔버스, 좁은 화면(휴대폰): 세로 배치 캔버스 */
+    .stage-card canvas.cv-tall { display: none; }
+    @media (max-width: 620px) {
+      .stage-card canvas.cv-wide { display: none; }
+      .stage-card canvas.cv-tall { display: block; }
+      /* 세로 배치: 아래쪽 '지구에서 본 달' 창을 가리지 않도록 그 위에 표시 (창 높이 ≈ 캔버스 너비 × 216/520) */
+      .stage-hint { bottom: calc((100vw - 22px) * 0.415 + 10px); }
+    }
+    .readout .value.name {
+      font-family: var(--font-display); font-weight: 400; font-size: 21px;
+      overflow: hidden; text-overflow: ellipsis;
+    }
+    .ctrl-note { margin: 6px 0 0; font-size: 12.5px; color: var(--muted); line-height: 1.45; }
+    .play-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .play-row .btn { min-width: 128px; }
+    .play-row .grow { flex: 1; }
+    .mission-figure svg { border-radius: 12px; }
+    @media (max-width: 480px) {
+      .readout .value.name { font-size: 18px; }
+      .stage-toolbar .switch { font-size: 13.5px; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="earth">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#g1">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">중1 · Ⅶ. 태양계</div>
+      <h1>달 모양 탐정</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <label class="switch"><input type="checkbox" id="tGhost"> 🔢 8개 위치 표시</label>
+          <label class="switch"><input type="checkbox" id="tSight" checked> 👀 지구에서 본 모습 연결선</label>
+          <label class="switch"><input type="checkbox" id="tEclipse"> 🌑 일식·월식 모드</label>
+        </div>
+        <canvas id="cvWide" class="cv-wide" aria-label="북극 위에서 내려다본 지구와 달의 공전 궤도, 그리고 지구에서 본 달의 모양"></canvas>
+        <canvas id="cvTall" class="cv-tall" aria-label="북극 위에서 내려다본 지구와 달의 공전 궤도, 그리고 지구에서 본 달의 모양"></canvas>
+        <div class="stage-hint" id="stageHint">🌙 달을 끌어서 지구 둘레를 돌려 보세요</div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label">달의 위치 (θ)</span><span class="value" id="rTheta">40<small>°</small></span></div>
+        <div class="readout"><span class="label">달의 모양</span><span class="value name" id="rName">초승달</span></div>
+        <div class="readout"><span class="label">음력 날짜</span><span class="value" id="rDay"><small>약 </small>4<small>일</small></span></div>
+        <div class="readout"><span class="label">밝게 보이는 부분</span><span class="value" id="rLit">12<small>%</small></span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad">
+        <div class="control">
+          <div class="control-head"><label for="sTheta">🌙 달의 위치 (θ)</label><output id="oTheta"></output></div>
+          <input type="range" id="sTheta" min="0" max="359" step="1" value="40">
+          <p class="ctrl-note">θ는 지구에서 본 <b>태양 쪽</b>을 0°로 하여, 달이 공전하는 방향(시계 반대 방향)으로 잰 각이에요.</p>
+        </div>
+        <div class="control">
+          <div class="control-head"><label for="sSpeed">⏩ 공전 속도</label><output id="oSpeed"></output></div>
+          <input type="range" id="sSpeed" min="1" max="5" step="1" value="2">
+        </div>
+        <div class="control">
+          <div class="play-row">
+            <button class="btn btn-sm btn-primary" id="playBtn" type="button" aria-pressed="false">▶ 공전 재생</button>
+            <span class="grow"></span>
+            <button class="btn btn-sm btn-ghost" id="resetBtn" type="button">↺ 초기화</button>
+          </div>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>
