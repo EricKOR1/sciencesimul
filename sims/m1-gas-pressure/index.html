@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#8b5cf6">
+  <title>기체의 압력 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎈</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; }
+    .stage-toolbar { min-height: 61px; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 14px; }
+    #ctrlCard .control { margin: 0; }
+    .ctrl-title { font-weight: 800; font-size: 15.5px; margin-bottom: 8px; }
+    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn-row .btn { flex: 1 1 0; min-width: 0; min-height: 48px; }
+    .ctrl-note { font-size: 13.5px; color: var(--muted); margin: 6px 0 0; }
+    .face-btn.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 12%, white); color: color-mix(in srgb, var(--subject) 80%, black); }
+    .readout .value.word { font-family: var(--font); font-size: 19px; }
+    #resetBtn { font-size: 20px; }
+    @media (max-width: 599px) {
+      .readout .value.word { font-size: 17px; }
+      .segmented button { padding: 6px 10px; font-size: 14px; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="chem">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#g1">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">중1 · Ⅵ. 기체의 성질</div>
+      <h1>기체의 압력</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">❄️ 눈 위에 벽돌 놓기</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="sceneSeg" role="tablist" aria-label="실험 장면" hidden>
+            <button type="button" data-scene="block">🧱 압력</button>
+            <button type="button" data-scene="box">🫧 입자</button>
+            <button type="button" data-scene="membrane">💥 충돌</button>
+            <button type="button" data-scene="balloon">🎈 풍선</button>
+          </div>
+          <label class="switch" data-sc="membrane balloon" data-need="hits"><input type="checkbox" id="showHits" checked> 충돌 표시</label>
+          <button class="icon-btn" id="resetBtn" type="button" title="처음 상태로" aria-label="처음 상태로">↺</button>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="압력과 기체 입자의 충돌 시뮬레이션"></canvas>
+          <div class="stage-hint" id="stageHint">✋ 벽돌을 끌어서 눈 위에 놓아 보세요</div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout" data-sc="block"><span class="label">누르는 힘 (벽돌의 무게)</span><span class="value word" id="rForce">항상 같음</span></div>
+        <div class="readout" data-sc="block"><span class="label">눈에 닿는 면</span><span class="value word" id="rArea">-</span></div>
+        <div class="readout" data-sc="block"><span class="label">눈이 눌린 깊이</span><span class="value" id="rDepth">-</span></div>
+        <div class="readout" data-sc="box membrane balloon"><span class="label">입자 수</span><span class="value" id="rN">0<small>개</small></span></div>
+        <div class="readout" data-sc="box"><span class="label">따라가는 입자가 벽에 부딪힌 횟수</span><span class="value" id="rTrack">-</span></div>
+        <div class="readout" data-sc="membrane" data-need="gauge"><span class="label">압력 (압력계)</span><span class="value" id="rP">1.00<small>기압</small></span></div>
+        <div class="readout" data-sc="membrane" data-need="hits"><span class="label">벽에 부딪히는 횟수</span><span class="value" id="rHits">0<small>회/초</small></span></div>
+        <div class="readout" data-sc="balloon"><span class="label">풍선의 지름</span><span class="value" id="rD">0<small>cm</small></span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" data-sc="block">
+          <div class="ctrl-title">🧱 같은 벽돌을 눈 위에 놓기</div>
+          <div class="btn-row">
+            <button class="btn face-btn" id="wideBtn" type="button">▬ 넓은 면으로</button>
+            <button class="btn face-btn" id="narrowBtn" type="button">▮ 좁은 면으로</button>
+          </div>
+          <p class="ctrl-note">벽돌을 끌어서 옮기거나, 톡 눌러 세우고 눕힐 수 있어요.</p>
+        </div>
+        <div class="control" data-sc="box" data-need="track">
+          <div class="btn-row">
+            <button class="btn btn-sm" id="trackBtn" type="button">🔍 입자 따라가기</button>
+            <button class="btn btn-sm btn-ghost" id="untrackBtn" type="button" hidden>✖ 그만 보기</button>
+          </div>
+          <p class="ctrl-note">화면 속 입자를 직접 눌러도 돼요.</p>
+        </div>
+        <div class="control" data-sc="membrane balloon" data-need="pump">
+          <div class="ctrl-title" id="pumpTitle">🫧 공기 펌프</div>
+          <div class="btn-row">
+            <button class="btn btn-primary" id="pumpIn" type="button">🫧 공기 넣기</button>
+            <button class="btn" id="pumpOut" type="button">💨 공기 빼기</button>
+          </div>
+          <p class="ctrl-note" id="pumpNote">한 번 누를 때마다 기체 입자가 10개씩 들어가거나 나와요.</p>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

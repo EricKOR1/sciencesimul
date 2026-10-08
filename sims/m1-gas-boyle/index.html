@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#8b5cf6">
+  <title>압력과 부피 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💉</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; }
+    .stage-toolbar { min-height: 61px; }
+    #resetBtn { font-size: 20px; }
+    .tgl {
+      display: inline-flex; align-items: center; gap: 6px; min-height: 42px;
+      border: 2px solid var(--line); background: var(--surface); color: var(--muted);
+      border-radius: 999px; padding: 5px 14px; font-weight: 800; font-size: 15px; cursor: pointer;
+    }
+    .tgl[aria-pressed="true"] { color: #5b21b6; border-color: #c4b5fd; background: #f3efff; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 14px; }
+    #ctrlCard .control { margin: 0; }
+    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn-row .btn { flex: 1 1 0; min-width: 0; min-height: 46px; }
+    .ctrl-note { font-size: 13.5px; color: var(--muted); margin: 4px 0 0; }
+
+    /* 실험 결과 표 (가로로 납작하게) */
+    .data-card { flex: none; padding: 8px 12px; display: flex; align-items: center; gap: 12px; }
+    .data-head { flex: none; display: flex; flex-direction: column; gap: 2px; font-size: 14.5px; line-height: 1.25; }
+    .data-head .n { font-size: 12.5px; color: var(--muted); font-weight: 700; }
+    .data-scroll { flex: 1; min-width: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .data-table { border-collapse: collapse; font-size: 14.5px; }
+    .data-table th { text-align: left; white-space: nowrap; padding: 3px 10px 3px 2px; color: var(--muted); font-weight: 800; font-size: 13.5px; }
+    .data-table td {
+      min-width: 54px; text-align: center; padding: 3px 6px; border-left: 1px solid var(--line);
+      font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-weight: 800; white-space: nowrap;
+    }
+    .data-table td.empty { color: #c3ccd9; font-weight: 600; }
+    .data-table tr:first-child td { color: #1d4ed8; }
+    .data-table tr:last-child td { color: #b91c1c; }
+    .data-table td.fresh { background: #fff4dc; }
+    @media (max-width: 599px) {
+      .data-card { flex-direction: column; align-items: stretch; gap: 4px; }
+      .data-head { flex-direction: row; gap: 8px; align-items: baseline; }
+      .tgl { padding: 4px 10px; font-size: 14px; }
+      .data-table td { min-width: 44px; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="chem">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#g1">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">중1 · Ⅵ. 기체의 성질</div>
+      <h1>압력과 부피</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label">💉 끝을 막은 주사기 <small>(온도 일정)</small></span>
+          <span class="spacer"></span>
+          <button type="button" class="tgl" id="tgParticles" aria-pressed="true" data-feature="particles">🔬 입자 모형</button>
+          <label class="switch" data-feature="hits"><input type="checkbox" id="showHits" checked> 충돌 표시</label>
+          <button class="icon-btn" id="resetBtn" type="button" title="처음 상태로" aria-label="처음 상태로">↺</button>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="끝을 막은 주사기 속 기체의 부피와 압력 실험"></canvas>
+          <div class="stage-hint" id="stageHint">↕ 주황색 손잡이를 끌어 피스톤을 눌러 보세요</div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label">기체의 부피</span><span class="value" id="rV">40<small>mL</small></span></div>
+        <div class="readout" data-feature="gauge"><span class="label">기체의 압력 (압력계)</span><span class="value" id="rP">1.00<small>기압</small></span></div>
+        <div class="readout" data-feature="particles"><span class="label">입자 수</span><span class="value" id="rN">30<small>개</small></span></div>
+        <div class="readout" data-feature="hits"><span class="label">피스톤에 부딪히는 횟수</span><span class="value" id="rHits">0<small>회/초</small></span></div>
+      </div>
+      <section class="card data-card" data-feature="record">
+        <div class="data-head"><b>📋 실험 결과</b><span class="n" id="dataN">기록 0개</span><span class="n">부피가 큰 것부터</span></div>
+        <div class="data-scroll">
+          <table class="data-table"><tbody>
+            <tr id="rowV"><th>부피 (mL)</th></tr>
+            <tr id="rowP"><th>압력 (기압)</th></tr>
+          </tbody></table>
+        </div>
+      </section>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" data-feature="piston">
+          <div class="control-head"><label for="sV">🖐️ 피스톤 위치 (부피)</label><output id="oV"></output></div>
+          <input type="range" id="sV" min="10" max="50" step="1" value="40">
+          <p class="ctrl-note">화면 속 주황색 손잡이를 끌어도 돼요.</p>
+        </div>
+        <div class="control" data-feature="record">
+          <div class="btn-row">
+            <button class="btn btn-primary" id="recBtn" type="button">📍 기록하기</button>
+            <button class="btn" id="clearBtn" type="button">지우기</button>
+          </div>
+          <p class="ctrl-note">지금의 부피와 압력을 표와 그래프에 기록해요.</p>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>
