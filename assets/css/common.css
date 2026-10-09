@@ -291,6 +291,7 @@ input[type=range]:disabled { opacity: .45; cursor: not-allowed; }
 .unit-seq li .n { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font-size: 11.5px; background: #e3e9f2; }
 .unit-seq li.now { color: #fff; background: var(--subject); }
 .unit-seq li.now .n { background: #fff; color: var(--subject); }
+.unit-seq li.soon { opacity: .55; background: transparent; outline: 1px dashed var(--line); outline-offset: -1px; }
 
 /* 단계 소개 카드 */
 .step-intro {

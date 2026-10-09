@@ -352,7 +352,11 @@
       for (let ui = 0; ui < g.units.length; ui++) {
         const u = g.units[ui];
         const i = u.sims.findIndex((x) => x.id === simId);
-        if (i >= 0) return { grade: g, unit: u, sim: u.sims[i], index: i, next: u.sims[i + 1] || null, prev: u.sims[i - 1] || null };
+        if (i >= 0) {
+          // 아직 만들지 않은(준비 중) 차시는 '다음 차시'에서 건너뜀
+          const next = u.sims.slice(i + 1).find((x) => !x.soon) || null;
+          return { grade: g, unit: u, sim: u.sims[i], index: i, next, prev: u.sims[i - 1] || null };
+        }
       }
     }
     return null;
@@ -385,7 +389,7 @@
       if (!info || info.unit.sims.length < 2) return null;
       return el('div', { class: 'unit-seq' }, [
         el('div', { class: 'us-k', text: '🧭 ' + info.unit.title + ' 단원 학습 순서' }),
-        el('ol', {}, info.unit.sims.map((x, i) => el('li', { class: i === info.index ? 'now' : '' }, [
+        el('ol', {}, info.unit.sims.map((x, i) => el('li', { class: i === info.index ? 'now' : x.soon ? 'soon' : '', title: x.soon ? '준비 중' : '' }, [
           el('span', { class: 'n', text: String(i + 1) }), el('span', { text: x.icon + ' ' + x.title }),
         ]))),
       ]);

@@ -13,7 +13,8 @@
   if (!CAT.grades.some((g) => g.id === current)) current = 'g1';
   onlyReadyEl.checked = !!Store.get('hubOnlyReady', false);
 
-  function simsOf(grade) { return grade.units.flatMap((u) => u.sims); }
+  function simsOf(grade) { return grade.units.flatMap((u) => u.sims).filter((s) => !s.soon); }
+  const readyOf = (unit) => unit.sims.filter((s) => !s.soon);
   function starsOf(sims) {
     const all = Store.allSims();
     return sims.reduce((sum, s) => sum + ((all[s.id] && all[s.id].stars) || 0), 0);
@@ -57,7 +58,22 @@
     return null;
   }
 
+  function soonCard(sim, unit, order) {
+    return el('div', { class: 'sim-card soon', 'data-subject': unit.subject, 'aria-disabled': 'true', title: '준비 중이에요' }, [
+      el('div', { class: 'sim-side' }, [
+        el('span', { class: 'lesson-no', text: (order + 1) + '차시' }),
+        el('div', { class: 'sim-icon', text: sim.icon }),
+      ]),
+      el('div', { class: 'sim-info' }, [
+        sim.std ? el('span', { class: 'std-chip', text: '[' + sim.std + ']', title: sim.stdText || '' }) : null,
+        el('h4', {}, [el('span', { text: sim.title }), el('span', { class: 'soon-badge', text: '🚧 준비 중' })]),
+        el('p', { text: sim.desc }),
+      ]),
+    ]);
+  }
+
   function simCard(sim, unit, grade, order) {
+    if (sim.soon) return soonCard(sim, unit, order);
     const rec = Store.allSims()[sim.id] || {};
     const steps = sim.steps || [];
     const done = rec.cleared ? steps.length : Math.min(steps.length, rec.levelsDone || 0);
@@ -101,7 +117,7 @@
           el('h3', { text: unit.title }),
           el('span', { class: 'chip chip-subject', text: subj.name }),
         ]),
-        el('span', { class: 'unit-count', text: unit.sims.length ? unit.sims.length + '차시' : '' }),
+        el('span', { class: 'unit-count', text: unit.sims.length ? (readyOf(unit).length < unit.sims.length ? readyOf(unit).length + ' / ' + unit.sims.length + '차시 완성' : unit.sims.length + '차시') : '' }),
       ]),
     ]);
     const list = sims || unit.sims;
@@ -137,7 +153,7 @@
     const g = CAT.grades.find((x) => x.id === current);
     let i = 0;
     g.units.forEach((u) => {
-      if (onlyReadyEl.checked && !u.sims.length) return;
+      if (onlyReadyEl.checked && !readyOf(u).length) return;
       listEl.appendChild(unitBlock(u, g, null, i++ * 40));
     });
   }
