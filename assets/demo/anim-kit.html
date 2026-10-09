@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>애니메이션 도구 모음 (개발용)</title>
+  <link rel="stylesheet" href="../css/common.css">
+  <style>body{padding:16px} .stage-canvas{height:640px;border-radius:16px;overflow:hidden;box-shadow:var(--shadow)}</style>
+</head>
+<body>
+  <h2 style="margin:0 0 10px">SciSim.draw / anim 도구 모음 (개발용 미리보기)</h2>
+  <div class="stage-canvas"><canvas id="cv"></canvas></div>
+  <script src="../js/common.js"></script>
+  <script src="../js/anim.js"></script>
+  <script>
+    const view = SciSim.stage(document.getElementById('cv'), { width: 1000, height: 620, background: '#f7f9fd' });
+    const ctx = view.ctx, D = SciSim.draw(ctx), P = new SciSim.Particles();
+    const ball = { x: 80, y: 560 }; const spring = new SciSim.Spring(0, { stiffness: 120, damping: 8 });
+    SciSim.tween(ball, { x: 300 }, { duration: 1.6, ease: 'outBounce' });
+    view.canvas.addEventListener('pointerdown', (e) => { const p = view.toLocal(e); P.burst(p.x, p.y, { count: 24 }); spring.target = spring.target ? 0 : 60; });
+    let last = performance.now();
+    function loop(t) {
+      const dt = Math.min(0.05, (t - last) / 1000); last = t; const s = t / 1000;
+      P.update(dt); spring.update(dt);
+      if (Math.random() < 0.3) P.emit({ x: 180 + Math.random() * 60, y: 300, vy: -40 - Math.random() * 30, vx: (Math.random() - .5) * 10, life: 2, size: 3 + Math.random() * 3, color: '#7cc4ff', shape: 'bubble', fade: true });
+      view.clear('#f7f9fd');
+      D.sky(0, 0, 1000, 200); D.ground(0, 580, 1000, 40);
+      D.space(700, 0, 300, 200, s);
+      D.sphere(80, 80, 30, '#e2464b', { shadow: true, text: '+' });
+      D.sphere(150, 80, 30, '#9aa5b6', { shadow: true });
+      D.sphere(220, 80, 20, '#3867f4', { shadow: true, text: '−' });
+      D.glow(320, 80, 60, '#ffb400', .7); D.sphere(320, 80, 24, '#ffb400');
+      D.beaker(160, 230, 120, 140, { level: .55, t: s, liquid: '#57b6ff', ticks: 6 });
+      D.flask(400, 370, 120, 150, { level: .4, t: s, liquid: '#c084fc' });
+      D.testTube(500, 230, 26, 130, { level: .5, liquid: '#22c55e' });
+      D.flame(620, 370, 60, s);
+      D.thermometer(700, 230, 120, 40 + 30 * Math.sin(s), -20, 100, { step: 20 });
+      D.dial(860, 300, 70, 2 + Math.sin(s), 0, 4, { label: '기압', target: [1.9, 2.1] });
+      D.arrow(80, 460, 260, 460, { label: '힘 10 N', color: '#e2464b' });
+      D.arrow(300, 520, 300, 420, { color: '#3867f4', width: 5, label: '부력' });
+      D.wave(380, 700, 470, { amp: 25, wavelength: 140, phase: s * 4 });
+      D.label(560, 540, '🎯 목표 50 mL', { bg: '#14a058' });
+      D.ring(760, 520, 22, s); D.check(860, 520, 22, (s % 2) / 1.2);
+      D.spark(940, 470, 14, s);
+      D.dashedLine(20, 600, 980, 600, { offset: s * 20 });
+      D.sphere(ball.x, ball.y - spring.value, 16, '#f26b3a', { shadow: true });
+      P.draw(ctx);
+      requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>
