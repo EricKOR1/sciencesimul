@@ -291,6 +291,7 @@
     S.zoomK = approach(S.zoomK, S.scene === 'contact' && on('zoom') && S.zoomOn ? 1 : 0, dt, 7);
     if (S.zoomK < 0.002) S.zoomK = 0;
     updateLife(dt, V);
+    watchSuccess(dt);
     VIEWS.forEach((W) => { W.fx.update(dt); W.steam.update(dt); });
   }
   function stepZoomSafe(dt) {
@@ -388,6 +389,28 @@
   /* =========================================================
      그리기
      ========================================================= */
+  /* ---------- 미션 성공 표시: 화면 오른쪽 위에 체크가 톡 튀어나오며 반짝임이 터짐 ---------- */
+  const SUCC = { s: 0, a: 0, t: 0 };
+  let lastPhase = '';
+  function watchSuccess(dt) {
+    const ph = game ? game.phase : '';
+    if (ph === 'success' && lastPhase !== 'success') {
+      SUCC.s = 0; SUCC.a = 1; SUCC.t = 0;
+      SciSim.tween(SUCC, { s: 1 }, { duration: 0.55, ease: 'outBack' });
+      const V = activeView();
+      if (!RM) V.fx.burst(V.L.vw - 42, 42, { count: 20, speed: 170, life: 0.9, colors: ['#14a058', '#ffb400', '#3867f4', '#f26b3a'] });
+    }
+    lastPhase = ph;
+    if (SUCC.a > 0) { SUCC.t += dt; if (SUCC.t > 1.3) SUCC.a = Math.max(0, SUCC.a - dt * 2.2); }
+  }
+  function drawSuccess(V) {
+    if (SUCC.a <= 0.01) return;
+    const { ctx, D } = V;
+    ctx.save(); ctx.globalAlpha = SUCC.a;
+    D.check(V.L.vw - 42, 42, 24 * clamp(SUCC.s, 0, 1.15), clamp(SUCC.s, 0, 1));
+    ctx.restore();
+  }
+
   function drawView(V, t) {
     const { ctx } = V;
     V.v.clear();
@@ -403,6 +426,7 @@
     else if (S.scene === 'contact') drawContact(V, t);
     else drawLife(V, t);
     ctx.restore();
+    drawSuccess(V);
     V.fx.draw(ctx);
   }
 

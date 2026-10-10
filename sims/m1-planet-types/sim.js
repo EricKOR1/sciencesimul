@@ -318,6 +318,18 @@
     return (SPR[id] = out);
   }
 
+  // 한 번만 그려 두고 계속 쓰는 배경 그림 (큰 방사형 그라데이션을 매 프레임 칠하면 느려요)
+  const SPRITES = {}, SPR_SCALE = Math.min(2, window.devicePixelRatio || 1);
+  function sprite(key, w, h, fn) {
+    let c = SPRITES[key];
+    if (!c) {
+      c = document.createElement('canvas'); c.width = Math.ceil(w * SPR_SCALE); c.height = Math.ceil(h * SPR_SCALE);
+      const g = c.getContext('2d'); g.scale(SPR_SCALE, SPR_SCALE); fn(g, w, h);
+      SPRITES[key] = c;
+    }
+    return c;
+  }
+
   /* =========================================================
      작은 행성 그림 (칩·궤도 그림용)
      ========================================================= */
@@ -582,12 +594,14 @@
     const G = scopeGeo(L), E = G.eyeP, cx = G.cx, cy = G.cy, r = G.r, k = r / 200, fs = L.fs;
     panelBase(ctx, E, L.starsEye, t);
     const id = S.sel, err = focusErr(), bl = blurOf(err), inF = err <= FOCUS_OK;
-    // 렌즈 안쪽
+    // 렌즈 안쪽 (배경은 미리 그려 둔 그림)
+    ctx.drawImage(sprite('lensBg' + L.key, r * 2, r * 2, (g, w, h) => {
+      g.beginPath(); g.arc(w / 2, h / 2, w / 2, 0, TAU); g.clip();
+      const bg = g.createRadialGradient(w / 2 - r * 0.2, h / 2 - r * 0.25, 10, w / 2, h / 2, r);
+      bg.addColorStop(0, '#0b1230'); bg.addColorStop(1, '#02040c'); g.fillStyle = bg; g.fillRect(0, 0, w, h);
+    }), cx - r, cy - r, r * 2, r * 2);
     ctx.save();
     circle(ctx, cx, cy, r); ctx.clip();
-    const bg = ctx.createRadialGradient(cx - r * 0.2, cy - r * 0.25, 10, cx, cy, r);
-    bg.addColorStop(0, '#0b1230'); bg.addColorStop(1, '#02040c');
-    ctx.fillStyle = bg; ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
     drawStars(ctx, L.starsLens, t, 0.8 / (1 + bl * 0.15));
     ctx.globalAlpha = clamp(S.eyeA, 0, 1);
     ctx.save(); ctx.translate(cx, cy); ctx.scale(k, k);
@@ -611,15 +625,16 @@
     if (id === 'jupiter') front.forEach((o) => dot(o.m, o.x, 1));
     ctx.restore();
     ctx.globalAlpha = 1;
-    // 둘레 어둡게(비네팅) + 유리 반사
-    const vg = ctx.createRadialGradient(cx, cy, r * 0.55, cx, cy, r * 1.02);
-    vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(0.8, 'rgba(0,0,0,.45)'); vg.addColorStop(1, 'rgba(0,0,0,.92)');
-    ctx.fillStyle = vg; ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
-    const lg = ctx.createLinearGradient(cx - r, cy - r, cx + r * 0.2, cy + r * 0.2);
-    lg.addColorStop(0, 'rgba(255,255,255,.10)'); lg.addColorStop(0.5, 'rgba(255,255,255,0)');
-    ctx.fillStyle = lg; ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
-    // 초점 안내 눈금(십자선은 아주 연하게)
     ctx.restore();
+    // 둘레 어둡게(비네팅) + 유리 반사 (미리 그려 둔 그림)
+    ctx.drawImage(sprite('lensVig' + L.key, r * 2, r * 2, (g, w, h) => {
+      g.beginPath(); g.arc(w / 2, h / 2, w / 2, 0, TAU); g.clip();
+      const vg = g.createRadialGradient(w / 2, h / 2, r * 0.55, w / 2, h / 2, r * 1.02);
+      vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(0.8, 'rgba(0,0,0,.45)'); vg.addColorStop(1, 'rgba(0,0,0,.92)');
+      g.fillStyle = vg; g.fillRect(0, 0, w, h);
+      const lg = g.createLinearGradient(0, 0, w * 0.6, h * 0.6);
+      lg.addColorStop(0, 'rgba(255,255,255,.10)'); lg.addColorStop(0.5, 'rgba(255,255,255,0)'); g.fillStyle = lg; g.fillRect(0, 0, w, h);
+    }), cx - r, cy - r, r * 2, r * 2);
     // 접안렌즈 테두리
     const rg = ctx.createLinearGradient(cx - r, cy - r, cx + r, cy + r);
     rg.addColorStop(0, '#e6ecfa'); rg.addColorStop(0.45, '#5b6784'); rg.addColorStop(1, '#232b44');

@@ -174,7 +174,7 @@
   /* =========================================================
      무대 (태블릿 800×520 / 휴대폰 480×820)
      ========================================================= */
-  const LAYS = { wide: { kind: 'wide', w: 800, h: 520 }, tall: { kind: 'tall', w: 480, h: 820 } };
+  const LAYS = { wide: { kind: 'wide', w: 800, h: 600 }, tall: { kind: 'tall', w: 480, h: 820 } };
   let view = null, ctx = null, D = null, LAY = null;
   const mq = window.matchMedia ? window.matchMedia('(max-width: 599px)') : null;
   const handlers = {
@@ -223,6 +223,11 @@
   function rr(x, y, w, h, r) { D.roundRect(x, y, w, h, r); }
   function T(str, x, y, size, o) {
     o = o || {};
+    if (o.fit) {
+      ctx.font = fnt(size, o.w, o.jua);
+      const tw = ctx.measureText(str).width;
+      if (tw > o.fit) size = Math.max(11, size * o.fit / tw);
+    }
     ctx.font = fnt(size, o.w, o.jua);
     ctx.textAlign = o.a || 'left';
     ctx.textBaseline = o.b || 'alphabetic';
@@ -394,10 +399,10 @@
     ctx.save();
     ctx.strokeStyle = 'rgba(139,92,246,' + (0.35 + a * 0.5) + ')';
     ctx.lineWidth = 4;
-    rr(x - 6, y - 6, w + 12, h + 12, 16); ctx.stroke();
+    rr(x, y, w, h, 14); ctx.stroke();
     ctx.fillStyle = '#8b5cf6';
-    rr(x + w - 44, y - 17, 52, 22, 11); ctx.fill();
-    T('NEW', x + w - 18, y - 2, 13, { c: '#fff', a: 'center', w: 800 });
+    rr(x + w - 58, y + 6, 52, 22, 11); ctx.fill();
+    T('NEW', x + w - 32, y + 22, 13, { c: '#fff', a: 'center', w: 800 });
     ctx.restore();
   }
   function breathe(x, y, w, h, r, t, color) {
@@ -444,7 +449,7 @@
     ctx.save();
     ctx.globalAlpha *= k.alpha;
     ctx.translate(k.x + sx, k.y);
-    ctx.rotate(k.rot + k.tilt);
+    ctx.rotate(k.rot + k.tilt + (k.idle && !k.drag && !k.busy && !RM ? Math.sin(now() * 1.3 + k.hx * 0.03) * 0.009 : 0));
     const s = k.sc * (1 + 0.04 * k.lift);
     ctx.scale(s, s);
     body(-k.w / 2, -k.h / 2, k.w, k.h, k);
@@ -499,7 +504,7 @@
      STEP 1 · 민지의 하루
      ========================================================= */
   const Day = {
-    frame() { return LAY.kind === 'wide' ? { x: 0, y: 52, w: 800, h: 468, s: 1, ox: 0 } : { x: 0, y: 0, w: 480, h: 351, s: 0.75, ox: -60 }; },
+    frame() { return LAY.kind === 'wide' ? { x: 0, y: 0, w: 800, h: 468, s: 1, ox: 0 } : { x: 0, y: 0, w: 480, h: 351, s: 0.75, ox: -60 }; },
     toBase(p) { const f = this.frame(); return { x: (p.x - f.x - f.ox) / f.s, y: (p.y - f.y) / f.s }; },
     toCanvas(bx, by) { const f = this.frame(); return { x: f.x + f.ox + bx * f.s, y: f.y + by * f.s }; },
     spot(id) { for (const c of CUTS) for (const s of c.spots) if (s.id === id) return s; return null; },
@@ -556,7 +561,7 @@
     },
     // 찾은 기술 선반의 칸 위치 (캔버스 좌표)
     slotPos(i) {
-      if (LAY.kind === 'wide') return { x: 262 + i * 66, y: 26 };
+      if (LAY.kind === 'wide') return { x: 12 + (i % 4) * 197 + 36, y: 468 + 36 + Math.floor(i / 4) * 54 + 23 };
       const col = i % 2, row = Math.floor(i / 2);
       return { x: 12 + col * 234 + 30, y: 372 + row * 110 + 34 };
     },
@@ -574,7 +579,8 @@
     o = o || {};
     const skin = o.skin || '#ffd9b8', hair = o.hair || '#3b2a20', shirt = o.shirt || '#f472b6', pants = o.pants || '#3b4a6b';
     ctx.save();
-    ctx.translate(x, y); ctx.scale(s, s);
+    const br = RM ? 0 : Math.sin(now() * 2.1 + x * 0.013) * 0.011;   // 숨쉬기
+    ctx.translate(x, y); ctx.scale(s, s * (1 + br));
     ctx.lineCap = 'round'; ctx.lineJoin = 'round';
     if (!o.sit) {
       contact(0, 0, 30, 7, 0.22);
@@ -625,7 +631,10 @@
       ctx.strokeStyle = '#334155'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(0, -126, 22, Math.PI * 1.1, Math.PI * 1.9); ctx.stroke();
     } else {
       ctx.fillStyle = '#2a2230';
-      ctx.beginPath(); ctx.ellipse(-7.5, -124, 2.3, 3, 0, 0, TAU); ctx.ellipse(7.5, -124, 2.3, 3, 0, 0, TAU); ctx.fill();
+      if (!RM && ((now() + x * 0.37) % 4.3) < 0.13) {   // 눈 깜빡임
+        ctx.strokeStyle = '#2a2230'; ctx.lineWidth = 1.8;
+        ctx.beginPath(); ctx.moveTo(-10, -124); ctx.lineTo(-5, -124); ctx.moveTo(5, -124); ctx.lineTo(10, -124); ctx.stroke();
+      } else { ctx.beginPath(); ctx.ellipse(-7.5, -124, 2.3, 3, 0, 0, TAU); ctx.ellipse(7.5, -124, 2.3, 3, 0, 0, TAU); ctx.fill(); }
       ctx.fillStyle = 'rgba(255,120,140,.35)'; ctx.beginPath(); ctx.arc(-12, -117, 3.6, 0, TAU); ctx.arc(12, -117, 3.6, 0, TAU); ctx.fill();
     }
     ctx.strokeStyle = '#9a4b3d'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(0, -117, 5, 0.15 * Math.PI, 0.85 * Math.PI); ctx.stroke();
@@ -665,7 +674,7 @@
       ctx.fillRect(-700, -40, 2200, 560);
       if (ci === 0) { D.glow(178, 236, 110, '#fff2c4', 0.85); ellipse(178, 236, 24, 24, '#fff7dc'); }
       if (ci === 1) { const dx = (t * 6) % 900; cloud(120 + dx - 300, 70, 1.2); cloud(520 + dx - 300, 100, 0.9); cloud(860 + dx - 300, 60, 1.1); }
-      if (ci === 2) { cloud(150, 96, 1, 0.8); cloud(260, 150, 0.7, 0.7); }
+      if (ci === 2) { const dr = RM ? 0 : t * 7; cloud(((150 + dr) % 520) - 140, 96, 1, 0.8); cloud(((300 + dr * 0.7) % 520) - 140, 150, 0.7, 0.7); }
       if (ci === 3) {
         const rnd = seeded(77);
         for (let i = 0; i < 26; i++) { const x = rnd() * 900 - 50, y = rnd() * 120, a = 0.4 + 0.5 * Math.sin(t * 2 + i); ctx.fillStyle = 'rgba(255,255,255,' + a.toFixed(2) + ')'; ctx.fillRect(x, y, 2, 2); }
@@ -1138,29 +1147,37 @@
     const d = S.day;
     const n = Math.min(6, d.found.length);
     if (LAY.kind === 'wide') {
-      ctx.fillStyle = lingrad(0, 0, 0, 52, ['#ffffff', '#f2f5fa']); ctx.fillRect(0, 0, 800, 52);
-      ctx.fillStyle = '#dde4ef'; ctx.fillRect(0, 51, 800, 1);
-      T('🔎 찾은 첨단 기술', 14, 24, 15, { w: 800, c: '#334155' });
-      T(n + ' / 6', 14, 44, 15, { w: 800, c: n >= 6 ? '#14a058' : '#64748b' });
+      // 아래 선반: 찾은 기술이 카드로 모인다 (2줄 × 4칸)
+      ctx.fillStyle = lingrad(0, 468, 0, 600, ['#ffffff', '#eef2f8']); ctx.fillRect(0, 468, 800, 132);
+      ctx.fillStyle = '#dde4ef'; ctx.fillRect(0, 468, 800, 1.5);
+      T('🔎 찾은 첨단 기술', 14, 489, 15, { w: 800, c: '#334155' });
+      T(n + ' / 6', 150, 489, 15, { w: 800, c: n >= 6 ? '#14a058' : '#64748b' });
+      if (n < 6) T('6곳 이상 찾아 보세요', 800 - 14, 489, 13.5, { w: 700, c: '#94a3b8', a: 'right' });
+      else T('✔ 목표 달성!', 800 - 14, 489, 13.5, { w: 800, c: '#14a058', a: 'right' });
       for (let i = 0; i < 8; i++) {
-        const p = Day.slotPos(i);
+        const sx = 12 + (i % 4) * 197, sy = 496 + Math.floor(i / 4) * 52;
         const id = d.found[i];
         const flying = id && d.fly.some((fl) => fl.spot.id === id);
         if (id && !flying) {
-          const s = Day.spot(id);
+          const s = Day.spot(id), tech = TECH[s.tech];
           const age = Day.foundAge(id) - 0.5;
           const pop = age < 0 ? 0 : EZ.outBack(clamp(age / 0.35, 0, 1));
-          ctx.save(); ctx.translate(p.x, p.y); ctx.scale(pop, pop);
-          ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(0, 0, 21, 0, TAU); ctx.fill();
-          ctx.strokeStyle = TECH[s.tech].color; ctx.lineWidth = 3; ctx.stroke();
-          emo(s.icon, 0, 0, 22);
+          ctx.save(); ctx.translate(sx + 94, sy + 23); ctx.scale(pop, pop); ctx.translate(-(sx + 94), -(sy + 23));
+          softShadow(sx, sy, 188, 46, 12, 0, 0.7);
+          ctx.fillStyle = '#fff'; rr(sx, sy, 188, 46, 12); ctx.fill();
+          ctx.fillStyle = tech.color; rr(sx, sy, 5, 46, 2.5); ctx.fill();
+          ctx.fillStyle = rgba(tech.color, 0.14); ctx.beginPath(); ctx.arc(sx + 25, sy + 23, 17, 0, TAU); ctx.fill();
+          emo(s.icon, sx + 25, sy + 23, 21);
+          T(s.name, sx + 50, sy + 20, 14.5, { w: 800 });
+          T(tech.name, sx + 50, sy + 37, 13, { w: 800, c: tech.color });
           ctx.restore();
         } else {
-          ctx.setLineDash([4, 4]); ctx.strokeStyle = i < 6 ? '#c3ccd9' : '#e2e8f1'; ctx.lineWidth = 2;
-          ctx.beginPath(); ctx.arc(p.x, p.y, 19, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
+          ctx.setLineDash([5, 5]); ctx.strokeStyle = i < 6 ? '#c3ccd9' : '#e2e8f1'; ctx.lineWidth = 2;
+          rr(sx, sy, 188, 46, 12); ctx.stroke(); ctx.setLineDash([]);
+          T('?', sx + 94, sy + 31, 22, { a: 'center', c: i < 6 ? '#cbd5e1' : '#e8edf4', jua: true });
         }
       }
-      if (isNew('day')) newBadge(4, 4, 792, 44, t);
+      if (isNew('day')) newBadge(4, 472, 792, 124, t);
     } else {
       ctx.fillStyle = '#f8fafc'; ctx.fillRect(0, 351, 480, 469);
       ctx.fillStyle = '#dde4ef'; ctx.fillRect(0, 351, 480, 1);
@@ -1201,7 +1218,7 @@
   }
   function drawDay(t) {
     const d = S.day;
-    if (LAY.kind === 'wide') { ctx.fillStyle = BG; ctx.fillRect(0, 0, 800, 520); }
+    if (LAY.kind === 'wide') { ctx.fillStyle = BG; ctx.fillRect(0, 0, 800, 600); }
     const f = Day.frame();
     if (d.p < 1) {
       const e = d.p;
@@ -1217,10 +1234,10 @@
      ========================================================= */
   const Board = {
     cards: {},     // techId → rect
-    toks: [],
+    toks: [], lastPinAt: 0,
     geo() {
-      if (LAY.kind === 'wide') return { cw: 248, ch: 104, cols: 3, x0: 14, y0: 8, gx: 13, gy: 8, trayY: 236, aw: 248, ah: 128, ay0: 252, agy: 8 };
-      return { cw: 222, ch: 96, cols: 2, x0: 12, y0: 8, gx: 12, gy: 8, trayY: 318, aw: 222, ah: 152, ay0: 334, agy: 8 };
+      if (LAY.kind === 'wide') return { cw: 248, ch: 114, cols: 3, x0: 14, y0: 12, gx: 13, gy: 10, trayY: 270, aw: 248, ah: 140, ay0: 300, agy: 10 };
+      return { cw: 222, ch: 96, cols: 2, x0: 12, y0: 8, gx: 12, gy: 8, trayY: 318, aw: 222, ah: 152, ay0: 344, agy: 8 };
     },
     layout(reset) {
       const g = this.geo();
@@ -1228,7 +1245,7 @@
         const c = i % g.cols, r = Math.floor(i / g.cols);
         this.cards[id] = { x: g.x0 + c * (g.cw + g.gx), y: g.y0 + r * (g.ch + g.gy), w: g.cw, h: g.ch };
       });
-      if (!this.toks.length) ARTICLES.forEach((a) => this.toks.push(Tok({ id: a.id, a, placed: null, pinAt: -99 })));
+      if (!this.toks.length) ARTICLES.forEach((a) => this.toks.push(Tok({ id: a.id, a, placed: null, pinAt: -99, idle: true })));
       ART_ORDER.forEach((id, i) => {
         const k = this.toks.find((x) => x.id === id);
         const c = i % g.cols, r = Math.floor(i / g.cols);
@@ -1243,7 +1260,7 @@
     },
     pinPos(tech) {
       const r = this.cards[tech];
-      return { x: r.x + 38, y: r.y + r.h - 26, sc: 0.27, rot: -0.06 };
+      return { x: r.x + 37, y: r.y + r.h - 25, sc: 0.2, rot: -0.07 };
     },
     reset() {
       this.toks.forEach((k) => { k.placed = null; k.pinAt = -99; k.drag = false; k.alpha = 1; });
@@ -1267,7 +1284,8 @@
       if (id) { drag = { kind: 'tapcard', id, sx: p.x, sy: p.y }; return true; }
       return false;
     },
-    move(p) { if (drag.kind === 'article') { tokFollow(drag.tok, p); drag.over = this.cardAt({ x: drag.tok.x, y: drag.tok.y }) || this.cardAt(p); } },
+    dropCard(k, p) { return this.cardAt(p) || this.cardAt({ x: k.tx, y: k.ty }); },   // 손가락 위치 우선 (카드는 손가락을 따라 늦게 움직이므로)
+    move(p) { if (drag.kind === 'article') { tokFollow(drag.tok, p); drag.over = this.dropCard(drag.tok, p); } },
     up(p) {
       if (drag.kind === 'tapcard') {
         if (Math.hypot(p.x - drag.sx, p.y - drag.sy) < 12) {
@@ -1278,7 +1296,7 @@
         return;
       }
       const k = drag.tok;
-      const target = this.cardAt({ x: k.x, y: k.y }) || this.cardAt(p);
+      const target = this.dropCard(k, p);
       if (!target) { k.drag = false; tokHome(k); return; }
       if (target !== k.a.tech) {
         tokReject(k, k.a.fb);
@@ -1291,6 +1309,7 @@
       const pp = this.pinPos(target);
       SciSim.tween(k, { x: pp.x, y: pp.y, sc: pp.sc, rot: pp.rot }, { duration: 0.32, ease: 'outBack', onDone: () => { k.busy = false; } });
       k.pinAt = now() + 0.25;
+      this.lastPinAt = now();
       const r = this.cards[target];
       successFx(r.x + r.w / 2, r.y + r.h / 2);
     },
@@ -1310,7 +1329,14 @@
         ctx.fillStyle = 'rgba(20,40,80,.12)'; ctx.fillRect(0, g.trayY, LAY.w, 3);
       });
       ctx.drawImage(bg, 0, 0, LAY.w, LAY.h);
-      T('📰 사례 기사 보관함 · 기사를 끌어 알맞은 기술 카드에 놓아요', 14, g.trayY + 13, 13.5, { w: 800, c: '#64748b', b: 'middle' });
+      T('📰 사례 기사 보관함 · 기사를 끌어 알맞은 기술 카드에 놓아요', 14, g.trayY + 14, 13.5, { w: 800, c: '#64748b', b: 'middle' });
+      if (this.count() >= 6) {
+        const a = clamp((now() - this.lastPinAt - 0.5) / 0.4, 0, 1);
+        ctx.save(); ctx.globalAlpha = a;
+        T('✅ 사례 6개를 모두 조사했어요!', LAY.w / 2, (g.trayY + LAY.h) / 2 - 4, 22, { a: 'center', jua: true, c: '#15803d' });
+        T('기술 카드를 누르면 연결한 기사를 다시 읽을 수 있어요', LAY.w / 2, (g.trayY + LAY.h) / 2 + 24, 14, { a: 'center', w: 700, c: '#64748b' });
+        ctx.restore();
+      }
       TECH_IDS.forEach((id) => this.drawCard(id, t));
       if (isNew('cards')) newBadge(6, 4, LAY.w - 12, g.trayY - 10, t);
       // 붙은 기사 (작게) → 그 위에 핀 → 리본
@@ -1333,13 +1359,14 @@
       para(c.desc, r.x + 66, r.y + 52, r.w - 76, 13, { lh: 17, max: 3, c: '#475569' });
       const placed = this.toks.find((k) => k.placed === id);
       if (placed && !placed.busy) {
-        const age = now() - placed.pinAt;
-        const p = EZ.outBack(clamp(age / 0.4, 0, 1));
-        if (p > 0) {
+        const k = clamp((now() - placed.pinAt) / 0.4, 0, 1);
+        const p = EZ.outBack(k);
+        if (k > 0) {
           ctx.save(); rr(r.x, r.y, r.w, r.h, 14); ctx.clip();
-          ctx.translate(r.x + r.w - 30, r.y + 30); ctx.rotate(Math.PI / 4); ctx.scale(p, p);
-          ctx.fillStyle = '#14a058'; ctx.fillRect(-60, -12, 120, 24);
-          T('조사 완료', 0, 5, 13, { c: '#fff', a: 'center', w: 800 });
+          ctx.translate(r.x + r.w - 17, r.y + 17); ctx.rotate(Math.PI / 4);
+          const sc = RM ? 1 : 1 + 1.1 * (1 - p); ctx.scale(sc, sc); ctx.globalAlpha = clamp(k * 2, 0, 1);
+          ctx.fillStyle = '#14a058'; ctx.fillRect(-34, -9, 68, 18);
+          T('조사 완료', 0, 4.5, 11.5, { c: '#fff', a: 'center', w: 800 });
           ctx.restore();
         }
       }
@@ -1402,14 +1429,14 @@
     chips: [], cards: [],
     geo() {
       if (LAY.kind === 'wide') return {
-        cx: 400, cy: 214, hw: 196, hh: 98, th: 44,
-        call: { traffic: [8, 8, 226, 150], hospital: [566, 8, 226, 150], farm: [8, 262, 226, 150], home: [566, 262, 226, 150] },
-        shelfY: 420, chipW: 122, chipH: 50, cardW: 188, cardH: 74,
+        cx: 400, cy: 238, hw: 214, hh: 107, th: 48,
+        call: { traffic: [8, 10, 232, 172], hospital: [560, 10, 232, 172], farm: [8, 286, 232, 172], home: [560, 286, 232, 172] },
+        shelfY: 476, chipW: 122, chipH: 52, cardW: 190, cardH: 78,
       };
       return {
-        cx: 240, cy: 196, hw: 186, hh: 93, th: 40,
-        call: { traffic: [8, 352, 228, 150], hospital: [244, 352, 228, 150], farm: [8, 510, 228, 150], home: [244, 510, 228, 150] },
-        shelfY: 668, chipW: 146, chipH: 50, cardW: 228, cardH: 64,
+        cx: 240, cy: 150, hw: 158, hh: 79, th: 34,
+        call: { traffic: [8, 270, 228, 178], hospital: [244, 270, 228, 178], farm: [8, 456, 228, 178], home: [244, 456, 228, 178] },
+        shelfY: 646, chipW: 146, chipH: 50, cardW: 228, cardH: 62,
       };
     },
     iso(u, v, z) {
@@ -1443,7 +1470,7 @@
         const c = i % per, r = Math.floor(i / per);
         k.w = cw; k.h = ch;
         k.hx = (LAY.w - totalW) / 2 + c * (cw + 8) + cw / 2;
-        k.hy = g.shelfY + 30 + r * (ch + 8) + ch / 2;
+        k.hy = g.shelfY + 42 + r * (ch + 8) + ch / 2;
         if (!k.drag) { k.x = k.hx; k.y = k.hy; }
       });
       const per2 = LAY.kind === 'wide' ? 4 : 2;
@@ -1453,7 +1480,7 @@
         const cc = i % per2, r = Math.floor(i / per2);
         k.w = g.cardW; k.h = g.cardH;
         k.hx = (LAY.w - tw2) / 2 + cc * (g.cardW + 8) + g.cardW / 2;
-        k.hy = g.shelfY + 26 + r * (g.cardH + 8) + g.cardH / 2;
+        k.hy = g.shelfY + 40 + r * (g.cardH + 8) + g.cardH / 2;
         k.hsc = 1;
         if (!k.placed && (reset || !k.drag)) { k.x = k.hx; k.y = k.hy; k.sc = 1; k.alpha = 1; }
       });
@@ -1575,7 +1602,7 @@
     modeRects() {
       const g = this.geo();
       const y = g.shelfY + 2;
-      return { tech: [LAY.w - 214, y, 100, 30], worry: [LAY.w - 110, y, 100, 30] };
+      return { tech: [LAY.w - 236, y - 2, 112, 38], worry: [LAY.w - 118, y - 2, 112, 38] };
     },
     modeHit(p) {
       const R = this.modeRects();
@@ -1892,14 +1919,14 @@
       const g = this.geo();
       const mode = S.city.mode;
       const label = mode === 'tech' ? '🧩 기술 칩을 끌어 도시의 구역에 놓아요' : '⚠️ 걱정 카드를 가장 관계 깊은 구역에 놓아요';
-      T(label, 14, g.shelfY + 16, 14, { w: 800, c: '#475569', b: 'middle' });
+      T(label, 14, g.shelfY + 18, 14, { w: 800, c: '#475569', b: 'middle', fit: (game && game.free ? this.modeRects().tech[0] - 28 : LAY.w - 28) });
       if (game && game.free) {
         const R = this.modeRects();
         [['tech', '🧩 기술'], ['worry', '⚠️ 걱정']].forEach(([k, txt]) => {
           const r = R[k];
-          ctx.fillStyle = mode === k ? '#64748b' : '#ffffff'; rr(r[0], r[1], r[2], r[3], 15); ctx.fill();
-          ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 1.5; rr(r[0], r[1], r[2], r[3], 15); ctx.stroke();
-          T(txt, r[0] + r[2] / 2, r[1] + 20, 13.5, { a: 'center', w: 800, c: mode === k ? '#fff' : '#475569' });
+          ctx.fillStyle = mode === k ? '#64748b' : '#ffffff'; rr(r[0], r[1], r[2], r[3], 19); ctx.fill();
+          ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 1.5; rr(r[0], r[1], r[2], r[3], 19); ctx.stroke();
+          T(txt, r[0] + r[2] / 2, r[1] + 24, 14.5, { a: 'center', w: 800, c: mode === k ? '#fff' : '#475569' });
         });
       }
       if (mode === 'tech') {
@@ -1910,7 +1937,7 @@
         if (drag && drag.tok && drag.tok.ghost) tokDraw(drag.tok, (x, y, w, h, kk) => drawChip(kk.id, x, y, w, h, 1, kk.lift));
       } else {
         this.cards.forEach((k) => { if (!k.placed || k.busy) tokDraw(k, (x, y, w, h, kk) => drawConcernCard(kk.c, x, y, w, h, kk.lift)); });
-        if (this.cards.every((k) => k.placed)) T('✅ 걱정 카드를 모두 놓았어요', LAY.w / 2, g.shelfY + 62, 15, { a: 'center', w: 800, c: '#14a058' });
+        if (this.cards.every((k) => k.placed)) T('✅ 걱정 카드를 모두 놓았어요', LAY.w / 2, g.shelfY + 76, 16, { a: 'center', w: 800, c: '#14a058' });
       }
       this.ghosts.forEach((k) => tokDraw(k, (x, y, w, h, kk) => drawChip(kk.id, x, y, w, h, 1, 0)));
     },
@@ -1941,23 +1968,26 @@
   const Poster = {
     toks: [], stk: [],
     geo() {
-      if (LAY.kind === 'wide') return { paper: { x: 10, y: 8, w: 512, h: 504 }, panel: { x: 532, y: 8, w: 258, h: 504 } };
+      if (LAY.kind === 'wide') return { paper: { x: 10, y: 10, w: 512, h: 580 }, panel: { x: 532, y: 10, w: 258, h: 580 } };
       return { paper: { x: 8, y: 8, w: 464, h: 512 }, panel: { x: 8, y: 528, w: 464, h: 284 } };
     },
     L() {
       const P = this.geo().paper;
       const x = P.x + 14, w = P.w - 28;
       const leftW = Math.round(w * 0.56);
-      const y0 = P.y + 194;
+      const wide = LAY.kind === 'wide';
+      const hd = wide ? { y: 126, h: 88, y0: 222, tech: 50, good: 72, worry: 100, src: 76 } : { y: 122, h: 66, y0: 194, tech: 44, good: 64, worry: 88, src: 64 };
+      const y0 = P.y + hd.y0;
+      const yg = y0 + hd.tech + 8, yw = yg + hd.good + 8, ys = yw + hd.worry + 8;
       return {
         mast: { x, y: P.y + 8, w, h: 58 },
-        tabs: { x, y: P.y + 72, w, h: 40 },
-        head: { x, y: P.y + 118, w, h: 70 },
-        tech: { x, y: y0, w: leftW, h: 44 },
-        good: { x, y: y0 + 52, w: leftW, h: 64 },
-        worry: { x, y: y0 + 124, w: leftW, h: 88 },
-        src: { x, y: y0 + 220, w: leftW, h: 64 },
-        pic: { x: x + leftW + 10, y: y0, w: w - leftW - 10, h: 284 },
+        tabs: { x, y: P.y + 72, w, h: 44 },
+        head: { x, y: P.y + hd.y, w, h: hd.h },
+        tech: { x, y: y0, w: leftW, h: hd.tech },
+        good: { x, y: yg, w: leftW, h: hd.good },
+        worry: { x, y: yw, w: leftW, h: hd.worry },
+        src: { x, y: ys, w: leftW, h: hd.src },
+        pic: { x: x + leftW + 10, y: y0, w: w - leftW - 10, h: ys + hd.src - y0 },
       };
     },
     tabRect(i) { const r = this.L().tabs; const tw = (r.w - 18) / 4; return { x: r.x + i * (tw + 6), y: r.y, w: tw, h: r.h }; },
@@ -2057,7 +2087,7 @@
     layoutCands(reset) {
       const g = this.geo().panel;
       const wide = LAY.kind === 'wide';
-      let y = g.y + 62;
+      let y = g.y + (wide ? 92 : 62);
       this.toks.forEach((k, i) => {
         if (wide) { k.hx = g.x + g.w / 2; k.hy = y + k.h / 2; y += k.h + 10; }
         else {
@@ -2080,7 +2110,7 @@
         const col = i % cols, row = Math.floor(i / cols);
         const gx = wide ? (g.w - cols * size) / (cols + 1) : (g.w - cols * size) / (cols + 1);
         const hx = g.x + gx + col * (size + gx) + size / 2;
-        const hy = g.y + 82 + row * (size + 30) + size / 2;
+        const hy = g.y + (wide ? 112 : 82) + row * (size + 30) + size / 2;
         return Tok({ id: 'stk' + i, emoji: s[0], label: s[1], w: size, h: size, hx, hy, x: hx, y: hy, placed: false, popAt: -99 });
       });
     },
@@ -2184,10 +2214,15 @@
       const g = this.geo();
       ctx.fillStyle = '#e9edf4'; ctx.fillRect(0, 0, LAY.w, LAY.h);
       const pr = S.present;
-      let zoom = 1, cx = g.paper.x + g.paper.w / 2, cy = g.paper.y + g.paper.h / 2;
-      if (pr) { const e = EZ.inOutSine(clamp((now() - pr.t0) / 6, 0, 1)); zoom = 1 + 0.12 * e; }
       ctx.save();
-      if (zoom !== 1) { ctx.translate(cx, cy); ctx.scale(zoom, zoom); ctx.translate(-cx, -cy); }
+      if (pr && !RM) {
+        // 발표 카메라: 천천히 확대하며 위에서 아래로 훑는다 (처음과 끝은 부드럽게 제자리)
+        const k = clamp((now() - pr.t0) / 6.2, 0, 1);
+        const m = EZ.inOutCubic(clamp(k / 0.14, 0, 1)) * EZ.inOutCubic(clamp((1 - k) / 0.1, 0, 1));
+        const zoom = 1 + (LAY.kind === 'wide' ? 0.05 : 0.04) * m * (0.3 + 0.7 * k);
+        const ax = g.paper.x + 30, ay = g.paper.y + g.paper.h / 2;
+        ctx.translate(ax, ay + (0.5 - k) * 12 * m); ctx.scale(zoom, zoom); ctx.translate(-ax, -ay);
+      }
       this.drawPaper(t);
       ctx.restore();
       if (!pr) this.drawPanel(t);
@@ -2205,7 +2240,7 @@
       // 제호
       T('2045 미래 신문', L.mast.x + L.mast.w / 2, L.mast.y + 34, 30, { a: 'center', jua: true, c: '#111827' });
       ctx.fillStyle = '#111827'; ctx.fillRect(L.mast.x, L.mast.y + 44, L.mast.w, 3); ctx.fillRect(L.mast.x, L.mast.y + 50, L.mast.w, 1);
-      T('미래 도시 리포터 특집', L.mast.x, L.mast.y + 14, 13, { w: 700, c: '#6b7280' });
+      T('리포터 특집', L.mast.x, L.mast.y + 14, 13, { w: 700, c: '#6b7280' });
       T('2045년', L.mast.x + L.mast.w, L.mast.y + 14, 13, { a: 'right', w: 700, c: '#6b7280' });
       // ① 주제 탭
       const next = P.theme ? this.next() : 'theme';
@@ -2255,7 +2290,7 @@
         let text = val;
         const pr = S.present;
         if (pr) { const n = Math.floor(clamp((now() - pr.t0 - 0.5) / 0.04, 0, text.length)); text = text.slice(0, n); }
-        para(text, r.x + r.w / 2, r.y + 30, r.w - 16, 21, { jua: true, lh: 27, a: 'center', c: '#111827', max: 2 });
+        para(text, r.x + r.w / 2, r.y + (LAY.kind === 'wide' ? 46 : 37), r.w - 16, 21, { jua: true, lh: LAY.kind === 'wide' ? 27 : 25, a: 'center', c: '#111827', max: 2 });
         T(SLOT_NAME.head, r.x + 4, r.y + 2, 13, { w: 700, c: '#9ca3af', b: 'top' });
       } else if (s === 'tech') {
         const c = TECH[val];
@@ -2287,7 +2322,8 @@
       }
       if (slot === 'pic') {
         T('⑦ 그림 붙이기', g.x + 16, g.y + 32, 20, { jua: true });
-        T('스티커를 그림 칸으로 끌어 2개 이상 붙여요', g.x + 16, g.y + 56, 13.5, { w: 700, c: '#475569' });
+        if (LAY.kind === 'wide') para('스티커를 그림 칸으로 끌어 2개 이상 붙여요', g.x + 16, g.y + 56, g.w - 32, 13.5, { w: 700, c: '#475569', lh: 18 });
+        else T('스티커를 그림 칸으로 끌어 2개 이상 붙여요', g.x + 16, g.y + 56, 13.5, { w: 700, c: '#475569' });
         this.stk.forEach((k) => {
           if (k.placed && !k.drag) return;
           tokDraw(k, (x, y, w, h, kk) => drawSticker(kk, x, y, w, h));
@@ -2300,8 +2336,14 @@
         }
         return;
       }
-      T('다음 칸: ' + SLOT_NAME[slot], g.x + 16, g.y + 30, 18, { jua: true });
-      T('알맞은 카드를 끌어 빛나는 칸에 놓아요', g.x + 16, g.y + 50, 13.5, { w: 700, c: '#64748b' });
+      if (LAY.kind === 'wide') {
+        T('다음 칸', g.x + 16, g.y + 28, 13, { w: 800, c: '#64748b' });
+        T(SLOT_NAME[slot], g.x + 16, g.y + 54, 20, { jua: true, fit: g.w - 32 });
+        T('알맞은 카드를 끌어 빛나는 칸에 놓아요', g.x + 16, g.y + 76, 13, { w: 700, c: '#64748b', fit: g.w - 32 });
+      } else {
+        T('다음 칸: ' + SLOT_NAME[slot], g.x + 16, g.y + 30, 18, { jua: true });
+        T('알맞은 카드를 끌어 빛나는 칸에 놓아요', g.x + 16, g.y + 50, 13.5, { w: 700, c: '#64748b' });
+      }
       this.toks.forEach((k) => {
         if (k.alpha < 0.01) return;
         const bob = k.drag || k.busy || RM ? 0 : Math.sin(t * 2 + k.hy * 0.05);
@@ -2325,7 +2367,7 @@
       g.addColorStop(0, 'rgba(10,14,30,0)'); g.addColorStop(1, 'rgba(10,14,30,' + (0.62 * a).toFixed(3) + ')');
       ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
       // 마이크 + 소리 물결
-      const mx = LAY.kind === 'wide' ? 660 : W / 2, my = LAY.kind === 'wide' ? 400 : H - 140;
+      const mx = LAY.kind === 'wide' ? 662 : W / 2, my = LAY.kind === 'wide' ? 470 : H - 140;
       ctx.save(); ctx.globalAlpha = a;
       for (let i = 0; i < 3; i++) {
         const k = ((age * 0.9) + i / 3) % 1;
@@ -2490,7 +2532,7 @@
       features: ['cards'],
       intro: '<div class="si-link">🔗 <b>앞 단계에서</b> 생활 속에 숨은 첨단 과학기술을 찾았어요.</div>' +
         '<p>이번에는 신문 기사 카드를 읽고, 각 첨단 과학기술이 사회의 어떤 분야에서 <b>어떻게 활용</b>되고 있는지 <b>조사</b>해 봐요.</p>',
-      setup() { setScene('board'); Board.reset(); showHint('📰 기사를 끌어 알맞은 기술 카드에 놓아요', 5000); },
+      setup() { setScene('board'); Board.reset(); hintEl.classList.add('hide'); },
       recap: '첨단 과학기술은 의료·농업·교통·안전·교육 등 여러 분야에서 활용되며, 조사할 때는 믿을 만한 출처의 자료를 비교해야 해요.',
       summary: '<ul><li>인공지능: 의료 영상 진단 보조, 번역</li><li>사물 인터넷: 스마트 팜, 스마트 홈</li><li>빅데이터: 심야버스 노선, 교통 정보</li><li>로봇: 재난 구조, 공장 자동화</li><li>3D 프린팅: 맞춤형 의수</li><li>가상 현실: 안전한 훈련, 체험 학습</li></ul><p>조사할 때는 출처를 확인하고 여러 자료를 비교한다.</p>',
       missions: [
@@ -2521,7 +2563,7 @@
       features: ['city'],
       intro: '<div class="si-link">🔗 <b>앞 단계에서</b> 첨단 과학기술이 오늘날 활용되는 사례를 조사했어요.</div>' +
         '<p>조사한 사례를 근거로 20년 뒤 우리 도시가 어떻게 달라질지 <b>예측</b>해 봐요. 좋은 점뿐 아니라 <b>걱정되는 점</b>도 함께 따져 봐요.</p>',
-      setup() { setScene('city'); City.reset(); S.city.mode = 'tech'; showHint('🧩 기술 칩을 끌어 도시의 구역에 놓아요', 5000); },
+      setup() { setScene('city'); City.reset(); S.city.mode = 'tech'; hintEl.classList.add('hide'); },
       recap: '조사한 사례를 근거로 미래 사회의 변화를 예측하고, 좋은 점과 걱정되는 점을 함께 따져 보았어요.',
       summary: '<ul><li>교통: 자율 주행 자동차 ↔ 사고 책임 문제</li><li>병원: 인공지능 진단·원격 진료 ↔ 정보 격차, 개인 정보</li><li>집: 스마트 홈 ↔ 개인 정보 유출</li><li>농장: 스마트 팜·로봇 ↔ 일자리 변화</li></ul><p>첨단 과학기술의 영향은 양면적이므로 법·제도·윤리·교육으로 바르게 활용해야 한다.</p>',
       missions: [
@@ -2567,7 +2609,7 @@
       features: ['poster', 'present'],
       intro: '<div class="si-link">🔗 <b>앞 단계에서</b> 미래 도시의 변화와 걱정되는 점을 예측했어요.</div>' +
         '<p>예측한 미래 생활을 <b>글과 그림</b>으로 표현한 발표 자료(미래 신문)로 만들고, 친구들 앞에서 <b>발표</b>해 봐요.</p>',
-      setup() { setScene('poster'); Poster.reset(); syncUI(); showHint('① 신문 위쪽의 주제 탭을 눌러 시작해요', 5000); },
+      setup() { setScene('poster'); Poster.reset(); syncUI(); hintEl.classList.add('hide'); },
       recap: '조사한 근거로 미래 생활을 예측해 글과 그림으로 표현하고 발표했어요.',
       summary: '<p><b>발표 자료</b>: 주제 · 첨단 과학기술 · 예상되는 변화 · 좋은 점 · 걱정되는 점과 해결 노력 · 근거(출처) + 그림</p><p>좋은 발표: 근거를 바탕으로 예측하고, 좋은 점과 걱정되는 점을 함께 제시한다.</p>',
       missions: [
@@ -2595,9 +2637,11 @@
       ],
     },
   ];
+  let wasComplete = false;   // 신문이 방금 완성되었는지 (자동 발표 재생용)
   // 다시 열었을 때 신문이 비어 있으면 예시 신문을 채워 둠
   function autoPoster() {
     Poster.reset();
+    wasComplete = true;   // 예시 신문은 자동으로 발표하지 않음
     const th = 'traffic';
     S.poster.theme = th; S.poster.slotAt.theme = now() - 5;
     const tech = (S.city.zones[th].tech && PRED[th][S.city.zones[th].tech]) ? S.city.zones[th].tech : 'ai';
@@ -2609,6 +2653,12 @@
     Poster.stk.slice(0, 2).forEach((k, i) => { k.placed = true; k.fx = 0.32 + i * 0.36; k.fy = 0.4 + i * 0.2; k.x = pic.x + k.fx * pic.w; k.y = pic.y + k.fy * pic.h; k.sc = 0.92; });
   }
 
+  // 무대는 게임 엔진보다 먼저 만들어 둔다 (이어하기로 중간 미션부터 시작해도 setup()이 바로 장면을 바꿀 수 있게)
+  buildStage();
+  if (mq) {
+    if (mq.addEventListener) mq.addEventListener('change', buildStage);
+    else if (mq.addListener) mq.addListener(buildStage);
+  }
   game = SciSim.game({
     simId: 'm1-future-tech',
     mount: '#game',
@@ -2628,7 +2678,6 @@
     levels,
   });
   // 발표 자료가 완성되면 발표 연출 자동 재생
-  let wasComplete = false;
   function watchPoster() {
     const c = Poster.complete();
     if (c && !wasComplete && S.scene === 'poster') setTimeout(startPresent, RM ? 0 : 500);
@@ -2688,11 +2737,6 @@
     drawOverlay(t);
   }
 
-  buildStage();
-  if (mq) {
-    if (mq.addEventListener) mq.addEventListener('change', buildStage);
-    else if (mq.addListener) mq.addListener(buildStage);
-  }
   syncUI();
   let uiT = 0;
   SciSim.loop((dt) => {
@@ -2724,6 +2768,7 @@
     stickers() { return Poster.stk.map((k) => ({ x: k.x, y: k.y, placed: k.placed })); },
     pic() { const r = Poster.L().pic; return { x: r.x + r.w / 2, y: r.y + r.h / 2, w: r.w, h: r.h }; },
     next: () => Poster.next(),
+    autoPoster, startPresent, setScene,
     busy() { return S.sceneP < 1 || S.day.p < 1 || !!S.present; },
   };
 })();

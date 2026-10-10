@@ -153,6 +153,15 @@
     view = SciSim.stage(cv, { width: LAY.W, height: LAY.H, background: BG, onResize: () => caches.clear() });
     ctx = ctxMain = view.ctx; D = Dmain = SciSim.draw(ctx);
     SciSim.pointer(view, handlers);
+    if (kind === 'tall') {
+      // 휴대폰: 캔버스 위에서도 페이지를 세로로 밀 수 있게 하고, 카드를 잡았을 때만 스크롤을 막는다
+      cv.style.touchAction = 'pan-y';
+      cv.addEventListener('touchstart', (e) => {
+        if (e.touches.length !== 1 || S.cam.moving) return;
+        const d = activeDeck();
+        if (d && d.hit(view.toLocal(e.touches[0]))) e.preventDefault();
+      }, { passive: false });
+    }
     wrapCache.clear();
     patterns = null;
     if (S.cam) { S.cam.x = SCENES.indexOf(S.scene) * LAY.W; S.cam.moving = false; }
@@ -691,7 +700,7 @@
     v.drops = v.drops.filter((d) => d.splash < 0.4);
     // 김: 증발 빠르기 > 0.3 g/분이면 피어오름
     const rate = rateOf(T, env);
-    if (rate > 0.3 && !RM && phi > 0.03) {
+    if (rate > 0.12 && !RM && phi > 0.03) {
       v.steamAcc += dt * rate * 4.2 * fast;
       while (v.steamAcc >= 1) {
         v.steamAcc -= 1;
@@ -731,10 +740,11 @@
       const rise = 18 + 46 * k;
       const bend = windDir * (8 + 34 * k);
       const x0 = s.x + bend * 0.3, y0 = s.y - rise * 0.3;
-      ctx.strokeStyle = 'rgba(255,255,255,' + clamp(a, 0, 0.25) + ')'; ctx.lineWidth = s.w;
       ctx.beginPath(); ctx.moveTo(x0, y0);
       ctx.bezierCurveTo(x0 + Math.sin(s.ph + k * 6) * 8 + bend * 0.3, y0 - rise * 0.35, x0 + bend * 0.7 - Math.sin(s.ph + k * 5) * 8, y0 - rise * 0.7, x0 + bend, y0 - rise);
-      ctx.stroke();
+      // 밝은 배경에서도 보이도록 푸른 회색 테두리 + 흰 심지의 두 겹
+      ctx.strokeStyle = 'rgba(140,168,200,' + clamp(a * 1.5, 0, 0.34) + ')'; ctx.lineWidth = s.w + 3; ctx.stroke();
+      ctx.strokeStyle = 'rgba(255,255,255,' + clamp(a * 3, 0, 0.78) + ')'; ctx.lineWidth = s.w; ctx.stroke();
     });
     ctx.restore();
   }
@@ -762,6 +772,19 @@
         PTS[j][i][0] = x + xx + dx; PTS[j][i][1] = y + yy + dy;
       }
     }
+    // 외곽선 경로
+    const outline = () => {
+      ctx.beginPath();
+      ctx.moveTo(PTS[0][0][0], PTS[0][0][1]);
+      for (let i = 1; i < 12; i++) ctx.lineTo(PTS[0][i][0], PTS[0][i][1]);
+      for (let j = 1; j < 9; j++) ctx.lineTo(PTS[j][11][0], PTS[j][11][1]);
+      for (let i = 10; i >= 0; i--) ctx.lineTo(PTS[8][i][0], PTS[8][i][1]);
+      for (let j = 7; j > 0; j--) ctx.lineTo(PTS[j][0][0], PTS[j][0][1]);
+      ctx.closePath();
+    };
+    // 수건 전체의 부드러운 그림자(두께감): 배경과 구분되도록 한 번에 깐다
+    ctx.save(); ctx.shadowColor = 'rgba(30,50,80,.34)'; ctx.shadowBlur = 9; ctx.shadowOffsetY = 3;
+    outline(); ctx.fillStyle = rgb(base, 0.93); ctx.fill(); ctx.restore();
     // 띠 사각형으로 채우기 + 정점 기울기로 명암(0.85~1)
     for (let j = 0; j < 8; j++) {
       const a = PTS[j], b = PTS[j + 1];
@@ -775,20 +798,10 @@
       ctx.closePath(); ctx.fill();
       ctx.strokeStyle = rgb(base, shade); ctx.lineWidth = 0.8; ctx.stroke();   // 띠 사이 틈 메우기
     }
-    // 외곽선 경로
-    const outline = () => {
-      ctx.beginPath();
-      ctx.moveTo(PTS[0][0][0], PTS[0][0][1]);
-      for (let i = 1; i < 12; i++) ctx.lineTo(PTS[0][i][0], PTS[0][i][1]);
-      for (let j = 1; j < 9; j++) ctx.lineTo(PTS[j][11][0], PTS[j][11][1]);
-      for (let i = 10; i >= 0; i--) ctx.lineTo(PTS[8][i][0], PTS[8][i][1]);
-      for (let j = 7; j > 0; j--) ctx.lineTo(PTS[j][0][0], PTS[j][0][1]);
-      ctx.closePath();
-    };
     const pat = getPatterns();
     ctx.save();
     outline(); ctx.clip();
-    ctx.globalAlpha = T.cloth === 'micro' ? 0.22 : 0.06;
+    ctx.globalAlpha = T.cloth === 'micro' ? 0.22 : 0.035;
     ctx.fillStyle = T.cloth === 'micro' ? pat.fluff : pat.weave;
     ctx.fillRect(x - 30, y - 10, w + 60, h + 20);
     // 젖을수록 짙어지는 광택 띠
@@ -806,7 +819,7 @@
     ctx.fillStyle = g2; ctx.fillRect(x - 30, y + h - 14, w + 60, 26);
     ctx.restore();
     outline();
-    ctx.strokeStyle = T.cloth === 'micro' ? rgb(base, 0.8) : 'rgba(110,130,150,.45)';
+    ctx.strokeStyle = T.cloth === 'micro' ? rgb(base, 0.8) : 'rgba(100,120,142,.62)';
     ctx.lineWidth = T.cloth === 'micro' ? 3 : 1.2; ctx.lineJoin = 'round'; ctx.stroke();
     // 단(헴) 무늬
     if (T.cloth === 'cotton') {
@@ -1175,7 +1188,7 @@
     ctx.save(); ctx.globalAlpha = a;
     ctx.translate(l.x, l.y); ctx.scale(Math.max(0.01, sc), Math.max(0.01, sc));
     const same = l.kind === 'same';
-    const r = pill(0, 0, l.text + (same ? '' : '  '), { bg: same ? '#eef1f5' : '#fff', color: same ? '#3a4456' : '#0b6b39', size: 15, h: 30, shadow: true, border: same ? '#cfd6e0' : '#9fdcb8', bw: 2 });
+    const r = pill(0, 0, l.text + (same ? '' : '     '), { bg: same ? '#eef1f5' : '#fff', color: same ? '#3a4456' : '#0b6b39', size: 15, h: 30, shadow: true, border: same ? '#cfd6e0' : '#9fdcb8', bw: 2 });
     if (!same) D.check(r.x + r.w - 15, 0, 9, clamp((age - 0.25) / 0.3, 0, 1));
     ctx.font = f(13, 700);
     const sw = ctx.measureText(l.sub).width + 16;
@@ -1209,10 +1222,11 @@
   /* 4단계 해결 방안: 구석에 선풍기가 톡 떨어져 켜지고, 1시간 타임랩스 */
   function runSolution() {
     if (H.sol) return;
-    resetHome();
+    resetHome(); H.labels = [];
     H.sol = { stage: 'drop' };
     H.cornerFan = { dy: -260, on: false, omega: 0, ang: 0, lines: makeWindLines(26) };
     SciSim.tween(H.cornerFan, { dy: 0 }, { duration: 0.6, ease: 'outBack', delay: 0.15, onDone: () => {
+      if (!H.cornerFan || !H.sol) return;
       Sound.tick(); ringFx(...fanScreenPos(), COL.good, 20);
       H.cornerFan.on = true;
       setTimeout(() => { if (!H.sol) return; H.sol.stage = 'lapse'; H.lapse = { from: 0, n: 0, total: Math.round(60 / DT), t0: nowS(), dur: RM ? 0.6 : 3 }; }, RM ? 100 : 900);
@@ -1239,7 +1253,7 @@
     scale: { x: 152, y: 380, w: 180, h: 66 },
     lcd: { x: 184, y: 395, w: 116, h: 44 },
     rack: { x0: 174, x1: 310, top: 112, base: 376 },
-    cup: { x: 344, y: 352, w: 42, h: 78 },
+    cup: { x: 336, y: 352, w: 42, h: 78 },
   };
   function benchMode() { return has('graph') ? 'graph' : 'design'; }
   function benchTarget() { const L = LAY.bench; return benchMode() === 'graph' ? L.graph : L.design; }
@@ -1385,7 +1399,7 @@
       stepPour(T);
       // 김(증발): 실험대에서는 증발 빠르기에 따라
       const rate = rateOf(T, benchEnv(T));
-      if (rate > 0.3 && !RM && T.w > 0.5) {
+      if (rate > 0.12 && !RM && T.w > 0.5) {
         v.steamAcc += dt * rate * 3.6 * (B.lapse ? 3 : 1);
         while (v.steamAcc >= 1) {
           v.steamAcc -= 1;
@@ -1438,7 +1452,7 @@
     const full = bt.s > 0.999 && Math.abs(bt.x) < 0.5 && Math.abs(bt.y) < 0.5 && LAY.kind === 'wide';
     // 바깥 배경
     ctx.save(); ctx.translate(off * 0.6, 0);
-    ctx.fillStyle = '#e6ebf2'; ctx.fillRect(-2, 0, LAY.W + 4, LAY.H);
+    ctx.fillStyle = BG; ctx.fillRect(-2, 0, LAY.W + 4, LAY.H);
     if (full) blit(layer('benchBg', 800, 520, paintBenchBg), 0, 0);
     ctx.restore();
     ctx.save(); ctx.translate(off, 0);
@@ -1454,16 +1468,16 @@
     drawWallThermo(384, 96, 25, '방 25 °C');
     ['A', 'B'].forEach((k) => drawSetup(k, CELL[k], t));
     // 공정한 실험 도장
-    if (B.stamp.p > 0.01 && (B.stamp.on || B.stamp.p < 1)) drawStamp(400, 50, '⚖️ 공정한 실험', B.stamp.on ? B.stamp.p : 0, '#14a058', -0.17, 1);
+    if (B.stamp.p > 0.01 && (B.stamp.on || B.stamp.p < 1)) drawStamp(400, 48, '⚖️ 공정한 실험', B.stamp.on ? B.stamp.p : 0, '#14a058', -0.12, 0.8);
     ctx.restore();
     // 장치 이름표(화면 크기 기준으로 읽기 좋게)
     ['A', 'B'].forEach((k) => {
-      const q = fromBench(CELL[k] + 30, 36);
+      const q = fromBench(CELL[k] + 130, 38);
       const r = Math.max(13, 22 * bt.s);
-      D.sphere(q.x, q.y, r, k === 'A' ? COL.A : COL.B, { text: k, textScale: 1.05 });
+      D.sphere(q.x, q.y, r, k === 'A' ? COL.A : COL.B, { text: k, textScale: 1.05, shadow: true });
       if (benchMode() === 'graph' || freeMode()) {
         const T = B[k];
-        pill(q.x + r + 6, q.y, T.fan ? '🌀 바람 있음' : '바람 없음', { align: 'left', bg: T.fan ? rgba(COL.A, 0.14) : 'rgba(56,103,244,.12)', color: T.fan ? '#c2410c' : '#1d4ed8', size: 13, h: 24 });
+        pill(q.x + r + 6, q.y, T.fan ? '바람 있음' : '바람 없음', { align: 'left', bg: T.fan ? rgba(COL.A, 0.14) : 'rgba(56,103,244,.12)', color: T.fan ? '#c2410c' : '#1d4ed8', size: 13, h: 24 });
       }
     });
     // 세로형(휴대폰) 2단계: 조건 비교 판
@@ -2229,7 +2243,7 @@
         if (i === ni) { breathe(r.x, r.y, r.w, r.h, 10, COL.good); txt('👉 알맞은 카드를 놓아요', r.x + r.w / 2, r.y + r.h / 2, f(13, 700), rgba(COL.good, 0.75)); }
       }
     });
-    if (S.plan.stampOn) drawStamp(pp.x + pp.w - 112, pp.y + 34, '탐구 계획 완료!', S.plan.stamp, '#e2464b', -0.21, LAY.kind === 'tall' ? 0.85 : 0.95);
+    if (S.plan.stampOn) drawStamp(P.cand.x + P.cand.w / 2, P.cand.y + (LAY.kind === 'tall' ? 150 : 200), '탐구 계획 완료!', S.plan.stamp, '#e2464b', -0.21, LAY.kind === 'tall' ? 1.0 : 1.15);
     if (isNew('plan')) newRing(pp.x, pp.y, pp.w, pp.h);
     // 후보 카드 영역
     const cd = P.cand;
@@ -2270,7 +2284,7 @@
     vis.forEach((v, i) => {
       if (i > 0 && vis.length > 1) {
         ctx.save(); ctx.globalAlpha = clamp(1 - Math.abs(v.off) / W, 0, 1);
-        ctx.fillStyle = v.n === 'home' ? BG : v.n === 'bench' ? '#e6ebf2' : '#cfa274';
+        ctx.fillStyle = v.n === 'plan' ? '#cfa274' : BG;
         ctx.fillRect(0, 0, W, LAY.H);
         ctx.restore();
       }
@@ -2279,7 +2293,7 @@
     // 오버레이(실험대를 흐리게)
     if (S.overlay && S.scene === 'bench' && !S.cam.moving) {
       ctx.save(); ctx.globalAlpha = S.overlayA;
-      ctx.fillStyle = 'rgba(246,248,252,.86)'; ctx.fillRect(0, 0, W, LAY.H);
+      ctx.fillStyle = 'rgba(246,248,252,.95)'; ctx.fillRect(0, 0, W, LAY.H);
       ctx.translate(0, (1 - S.overlayA) * 14);
       if (S.overlay === 'sort') drawSortOverlay(t); else drawFlowOverlay(t);
       ctx.restore();
@@ -2462,8 +2476,24 @@
     rowB.innerHTML = '<th>B</th>' + b.map((v, i) => '<td class="' + (!noFlash && prev.b && prev.b[i] !== v ? 'flash' : '') + '">' + v + '</td>').join('');
     rowJ.innerHTML = '<th>판정</th>' + COND_ROWS.map((r) => { const j = judge(r.part); return '<td><span class="j ' + j.c + '">' + j.t + '</span></td>'; }).join('');
     renderCond.prev = { a, b };
+    renderCondLine();
     clearTimeout(renderCond.t);
     renderCond.t = setTimeout(() => document.querySelectorAll('.cond-table td.flash').forEach((td) => td.classList.remove('flash')), 600);
+  }
+  /* 3단계부터 한 줄로 접힌 조건 요약 (자유 탐구에서 조건을 바꾸면 그대로 따라감) */
+  function renderCondLine() {
+    const el = $('#condLine');
+    if (!el) return;
+    const A = B.A, C = B.B;
+    const diffs = [];
+    if (A.fan !== C.fan) diffs.push('<span class="pill iv">🎛️ 바람</span>');
+    if (A.cloth !== C.cloth) diffs.push('<span class="pill bad">✖ 수건 종류</span>');
+    if (A.W0 !== C.W0) diffs.push('<span class="pill bad">✖ 물의 양</span>');
+    if (A.shape !== C.shape) diffs.push('<span class="pill bad">✖ 펼친 모양</span>');
+    const html = isFair()
+      ? '⚖️ 공정한 실험: 바람만 다름 <span class="pill iv">🎛️ 바람</span><span class="pill">🔒 ' + (A.cloth === 'cotton' ? '면' : '극세사') + ' · 물 ' + A.W0 + ' g · ' + (A.shape === 'spread' ? '펼침' : '접음') + ' · 25 °C</span>'
+      : (diffs.length ? '🔎 A와 B가 다른 조건 ' : '🔎 A와 B의 조건이 모두 같아요') + diffs.join('');
+    if (el.innerHTML !== html) el.innerHTML = html;
   }
   /* 실험 결과 표(DOM) */
   function renderTable(fresh) {
@@ -2489,6 +2519,8 @@
     const s = seriesFor('A');
     if (!s || s.pts.size < 7) toast('📋 표가 비어 있어요. 먼저 10분마다 질량을 기록한 뒤 답해 보세요.', null, 3500);
   }
+  // 새로고침 등으로 3단계 도중에 다시 시작해도 공정한 장치와 기록 표가 갖춰지도록
+  function ensureFairRun() { if (!isFair() || !seriesFor('A')) { setFairBench(); resetRun(false); } }
   function fillStandardData() {
     // 4단계 근거 자료: 기록이 없으면 3단계 실험 결과를 그대로 채움
     const s = seriesFor('A');
@@ -2533,7 +2565,7 @@
     title: '변인 분류하기',
     goal: '실험의 조건과 결과를 적은 카드 6장을 알맞은 <b>변인</b> 상자로 끌어 놓으세요.',
     hint: '우리가 바꾸는 것은 하나뿐이고, 저울로 재는 것도 하나뿐이에요.',
-    setup() { goScene('bench'); setFairBench(); resetSort(); openOverlay('sort'); hint('카드를 알맞은 상자로 끌어 놓으세요', 5000); },
+    setup() { goScene('bench'); setFairBench(); resetSort(); openOverlay('sort'); hideHint(); },
     check: () => sortCount() === 6,
     hold: 0,
     status: () => '분류한 카드 <b>' + sortCount() + '/6</b>',
@@ -2553,7 +2585,7 @@
     title: '탐구 과정 정리하기',
     goal: '이번 탐구에서 한 일을 적은 카드 6장을 <b>순서대로</b> 칸에 놓아 과학적 탐구 과정을 정리하세요.',
     hint: '궁금증 → 잠정적인 답 → 실험 방법 → 실험 → 결과 분석 → 결론 순서예요.',
-    setup() { goScene('bench'); resetFlow(); openOverlay('flow'); hint('1번 칸부터 순서대로 카드를 끌어 놓으세요', 5000); },
+    setup() { goScene('bench'); ensureFairRun(); resetFlow(); openOverlay('flow'); hideHint(); },
     check: () => S.flow.n === 6,
     hold: 0,
     status: () => '놓은 카드 <b>' + S.flow.n + '/6</b>',
@@ -2563,7 +2595,7 @@
     type: 'quiz',
     title: '과학적 해결 방안 제안하기',
     goal: '장마철에 집 안에서 빨래를 빨리 말리려면? 우리 실험 결과를 <b>근거</b>로 한 해결 방안을 고르세요.',
-    setup() { goScene('home'); resetHome(); fillStandardData(); },
+    setup() { goScene('home'); resetHome(); H.labels = []; fillStandardData(); S.solArm = true; },
     choices: ['섬유유연제를 평소보다 많이 넣는다.', '선풍기나 제습기를 켜서 빨래에 바람이 잘 통하게 한다.', '공간을 아끼려고 빨래를 겹쳐서 촘촘히 넌다.', '창문을 모두 닫아 바람이 들어오지 못하게 한다.'],
     answer: 1,
     feedback: ['우리 실험에서는 섬유유연제를 조사하지 않았어요. 근거가 없는 방법이에요.', '', '겹쳐 널면 바람이 잘 닿지 않아요. 실험 결과와 반대예요.', '바람이 없을 때 더 느리게 말랐어요.'],
@@ -2691,7 +2723,7 @@
           {
             type: 'quiz',
             title: '그래프 해석하고 결론 내리기',
-            setup() { goScene('bench'); closeOverlay(); needData(); },
+            setup() { goScene('bench'); closeOverlay(); ensureFairRun(); needData(); },
             goal: '60분 동안 A(바람 있음)는 약 29 g, B(바람 없음)는 약 15 g 가벼워졌어요. 이 결과로 내릴 수 있는 결론은?',
             choices: ['다른 조건이 같을 때 바람이 불면 빨래가 더 빨리 마른다. 가설이 옳다.', '바람이 불면 빨래가 더 느리게 마른다. 가설이 틀렸다.', '수건 A가 원래 더 잘 마르는 수건이다.', '바람만 있으면 어떤 빨래든, 어떤 날씨든 10분 만에 마른다.'],
             answer: 0,
@@ -2706,7 +2738,7 @@
         features: ['plan'],
         intro: '<div class="si-link">🔗 <b>앞 단계에서</b> 실험으로 ‘바람이 불면 빨래가 더 빨리 마른다’는 결론을 얻었어요.</div>' +
           '<p>탐구 결과를 근거로 우리 집 빨래 문제의 <b>과학적 해결 방안</b>을 제안하고, 내 주변의 다른 문제를 탐구할 <b>탐구 계획서</b>를 세워 봐요.</p>',
-        setup() { closeOverlay(); goScene('home'); resetHome(); },
+        setup() { closeOverlay(); goScene('home'); resetHome(); H.labels = []; },
         recap: '탐구 결과를 근거로 생활 속 문제의 과학적 해결 방안을 제안하고, 주변 문제를 탐구할 계획서를 세웠어요.',
         summary: '<p><b>과학적 해결 방안</b>: 탐구로 얻은 근거를 바탕으로 제안한다. 예) 선풍기·제습기로 빨래에 바람이 잘 통하게 한다.</p>' +
           '<p><b>탐구 계획서</b>: 탐구 문제 · 가설 · 조작/통제/종속 변인 · 측정 방법 · 안전 수칙을 정해 꾸준히 탐구한다.</p>',
@@ -2760,7 +2792,7 @@
     if (S.plan.deck) S.plan.deck.update(dt);
     updateFx(dt);
     // 4단계 정답 연출(퀴즈 성공을 감지)
-    if (game && game.phase === 'success' && game.current() === M4_1 && !H.sol) runSolution();
+    if (S.solArm && game && game.phase === 'success' && game.current() === M4_1) { S.solArm = false; runSolution(); }
     draw(t);
     uiT += dt;
     if (uiT > 0.2) { uiT = 0; syncDom(); }

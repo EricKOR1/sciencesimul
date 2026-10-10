@@ -64,8 +64,10 @@
     .cond-line { flex: 1; font-weight: 800; font-size: 15px; color: #3a4456; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
     .cond-line .pill { font-size: 13px; font-weight: 800; padding: 2px 10px; border-radius: 999px; background: var(--surface-2); color: var(--muted); border: 1px solid var(--line); }
     .cond-line .pill.iv { background: #efe8ff; color: #6d28d9; border-color: #ddd0fb; }
+    .cond-line .pill.bad { background: var(--bad-soft); color: #b91c1c; border-color: #f3c3c5; }
     #condCard.line { padding: 7px 12px; }
 
+    .sim-title { min-width: 0; }
     .mission-figure .fig-big { font-size: 38px; line-height: 1.3; letter-spacing: 2px; }
     .mission-figure .fig-big .vs { font-size: 22px; color: #9aa5b6; font-weight: 800; margin: 0 8px; letter-spacing: 0; vertical-align: middle; }
 
@@ -79,6 +81,8 @@
       .data-table td { min-width: 40px; padding: 2px 4px; }
       .toolbar-label { font-size: 14px; }
       #condCard .cond-full { display: none; }
+      .sim-unit { font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .stage-hint { font-size: 12.5px; padding: 5px 12px; bottom: 6px; max-width: 94%; }
     }
   </style>
 </head>

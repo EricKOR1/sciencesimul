@@ -195,7 +195,8 @@
     for (let i = 0; i < oct; i++) { v += a * vnoise(x * f, y * f, seed + i * 17); f *= 2; a *= 0.5; }
     return v / (1 - Math.pow(0.5, oct));
   }
-  const GRAN_SIZE = 560;
+  const GRAN_SIZE = 520;
+  const SUN_RAMP = [[0, [255, 251, 232]], [0.5, [255, 240, 184]], [0.86, [255, 208, 112]], [1, [246, 160, 58]]];
   function makeGranTex(seed) {
     const size = GRAN_SIZE, c = size / 2, Rpx = c - 2, cv = document.createElement('canvas');
     cv.width = cv.height = size;
@@ -207,7 +208,7 @@
       for (let px = 0; px < size; px++) {
         const x = (px + 0.5 - c) / Rpx, y = (py + 0.5 - c) / Rpx, r2 = x * x + y * y;
         if (r2 > 1.004) continue;
-        const z = Math.sqrt(Math.max(0, 1 - r2)), lon = Math.atan2(x, z), lat = Math.asin(clamp(-y, -1, 1));
+        const rr = Math.sqrt(r2), z = Math.sqrt(Math.max(0, 1 - r2)), lon = Math.atan2(x, z), lat = Math.asin(clamp(-y, -1, 1));
         const u = (lon + Math.PI / 2) / cs + 2.5, v = (lat + Math.PI / 2) / cs + 2.5;
         const iu = Math.floor(u), iv = Math.floor(v);
         let f1 = 99, f2 = 99, id = 0;
@@ -217,41 +218,47 @@
         }
         const e = Math.sqrt(f2) - Math.sqrt(f1), s = clamp(e / 0.36, 0, 1), sm = s * s * (3 - 2 * s);
         const br = (0.74 + 0.26 * sm) * (0.9 + 0.1 * fb[id]);
-        const edge = clamp((1 - Math.sqrt(r2)) * Rpx + 0.5, 0, 1), gv = clamp(br * 255, 0, 255), k4 = (py * size + px) * 4;
-        d[k4] = d[k4 + 1] = d[k4 + 2] = gv; d[k4 + 3] = 255 * edge;
+        // 가장자리로 갈수록 붉고 어두워지는 바탕색(주연 감광)
+        const bd = clamp(Math.hypot(x + 0.06, y + 0.07) / 1.06, 0, 1), col = ramp(SUN_RAMP, bd);
+        const lm = clamp((rr - 0.78) / 0.22, 0, 1), la = 0.4 * lm * lm * 0.9 + 0.08 * lm * (1 - lm);
+        const edge = clamp((1 - rr) * Rpx + 0.5, 0, 1), k4 = (py * size + px) * 4;
+        d[k4] = (col[0] * br) * (1 - la) + 170 * la; d[k4 + 1] = (col[1] * br) * (1 - la) + 64 * la; d[k4 + 2] = (col[2] * br) * (1 - la) + 0 * la; d[k4 + 3] = 255 * edge;
       }
     }
     g.putImageData(img, 0, 0);
     return cv;
   }
+  function ramp(stops, s) {
+    if (s <= stops[0][0]) return stops[0][1];
+    for (let i = 1; i < stops.length; i++) {
+      if (s <= stops[i][0]) { const a = stops[i - 1], b = stops[i], u = (s - a[0]) / (b[0] - a[0]); return [a[1][0] + (b[1][0] - a[1][0]) * u, a[1][1] + (b[1][1] - a[1][1]) * u, a[1][2] + (b[1][2] - a[1][2]) * u]; }
+    }
+    return stops[stops.length - 1][1];
+  }
   let GRAN = null;
-  const GRAN_MIX = document.createElement('canvas'); GRAN_MIX.width = GRAN_MIX.height = GRAN_SIZE;
-  const gmx = GRAN_MIX.getContext('2d');
   // 첫 장은 바로 만들고 나머지는 틈틈이 만들어서 처음 열 때 화면이 멈추지 않게 해요
   function granTex() {
     if (!GRAN) {
       GRAN = [makeGranTex(11)];
-      setTimeout(() => { GRAN.push(makeGranTex(47)); setTimeout(() => GRAN.push(makeGranTex(93)), 120); }, 400);
+      setTimeout(() => { GRAN.push(makeGranTex(47)); setTimeout(() => GRAN.push(makeGranTex(93)), 150); }, 500);
     }
     return GRAN;
   }
-  // 6초 주기로 세 장을 번갈아 섞어요 (끓어오르듯)
+  // 6초 주기로 세 장을 번갈아 겹쳐 그려요 (끓어오르듯). 반환: [아래 장, 위 장, 위 장 투명도]
+  const GM = [null, null, 0];
   function granMixed(t) {
     const T = granTex(), n = T.length;
-    if (n === 1) return T[0];
+    if (n === 1) { GM[0] = T[0]; GM[1] = null; GM[2] = 0; return GM; }
     const ph = (RM ? 0 : t / 6) % 1, k = Math.floor(ph * n), u = ph * n - k, e = u * u * (3 - 2 * u);
-    gmx.clearRect(0, 0, GRAN_SIZE, GRAN_SIZE);
-    gmx.globalAlpha = 1; gmx.drawImage(T[k % n], 0, 0);
-    if (e > 0.01) { gmx.globalAlpha = e; gmx.drawImage(T[(k + 1) % n], 0, 0); }
-    gmx.globalAlpha = 1;
-    return GRAN_MIX;
+    GM[0] = T[k % n]; GM[1] = T[(k + 1) % n]; GM[2] = e;
+    return GM;
   }
   let CORONA = null;
   function coronaTex() {
     if (CORONA) return CORONA;
-    const size = 640, c = size / 2, cv = document.createElement('canvas');
+    const size = 512, c = size / 2, cv = document.createElement('canvas');
     cv.width = cv.height = size;
-    const g = cv.getContext('2d'), img = g.createImageData(size, size), d = img.data, RR = 3.0;
+    const g = cv.getContext('2d'), img = g.createImageData(size, size), d = img.data, RR = 2.6;
     for (let py = 0; py < size; py++) {
       for (let px = 0; px < size; px++) {
         const x = (px + 0.5 - c) / c * RR, y = (py + 0.5 - c) / c * RR, rr = Math.sqrt(x * x + y * y);
@@ -268,6 +275,21 @@
     }
     g.putImageData(img, 0, 0);
     return (CORONA = cv);
+  }
+
+  /* =========================================================
+     한 번만 그려 두고 계속 쓰는 배경 그림 (그라데이션이 큰 배경은 매 프레임 다시 칠하면 느려요)
+     ========================================================= */
+  const SPRITES = {};
+  const SPR_SCALE = Math.min(2, window.devicePixelRatio || 1);
+  function sprite(key, w, h, fn) {
+    let c = SPRITES[key];
+    if (!c) {
+      c = document.createElement('canvas'); c.width = Math.ceil(w * SPR_SCALE); c.height = Math.ceil(h * SPR_SCALE);
+      const g = c.getContext('2d'); g.scale(SPR_SCALE, SPR_SCALE); fn(g, w, h);
+      SPRITES[key] = c;
+    }
+    return c;
   }
 
   /* =========================================================
@@ -337,26 +359,19 @@
     void t;
     return { x, y, rx: r * k + 4, ry: r + 4, ang };
   }
-  // 원반 한 장 그리기. o: {spots: [{sp, lon, scale, alpha}], t, texA, limb}
+  // 원반 한 장 그리기. o: {spots: [{sp, lon, scale, alpha}], t}
+  // 바탕색·쌀알 무늬·가장자리 어두움은 미리 구워 둔 그림 한 장으로 그려요 (한 프레임에 그림 1~2번)
   function drawSunDisc(ctx, cx, cy, R, o) {
-    ctx.save();
-    circle(ctx, cx, cy, R); ctx.clip();
-    const g = ctx.createRadialGradient(cx - R * 0.08, cy - R * 0.1, R * 0.05, cx, cy, R);
-    g.addColorStop(0, '#fffbe8'); g.addColorStop(0.5, '#fff0b8'); g.addColorStop(0.86, '#ffd070'); g.addColorStop(1, '#f6a03a');
-    ctx.fillStyle = g; ctx.fillRect(cx - R, cy - R, R * 2, R * 2);
-    if (o.tex !== false) {
-      const T = granMixed(o.t), s = GRAN_SIZE / (GRAN_SIZE / 2 - 2) * R;
-      ctx.globalCompositeOperation = 'multiply'; ctx.globalAlpha = o.texA != null ? o.texA : 0.85;
-      ctx.drawImage(T, cx - s / 2, cy - s / 2, s, s);
-      ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
-    }
+    const M = granMixed(o.t), s = GRAN_SIZE / (GRAN_SIZE / 2 - 2) * R;
+    ctx.drawImage(M[0], cx - s / 2, cy - s / 2, s, s);
+    if (M[1] && M[2] > 0.01) { ctx.globalAlpha = M[2]; ctx.drawImage(M[1], cx - s / 2, cy - s / 2, s, s); ctx.globalAlpha = 1; }
     const hits = [];
-    (o.spots || []).forEach((q, i) => { const h = drawSpot(ctx, cx, cy, R, q.sp, q.lon, q.scale || 1, q.alpha != null ? q.alpha : 1, o.t); if (h) { h.i = i; hits.push(h); } });
-    // 가장자리 어두움 (주연 감광)
-    const lg = ctx.createRadialGradient(cx, cy, R * 0.55, cx, cy, R);
-    lg.addColorStop(0, 'rgba(120,40,0,0)'); lg.addColorStop(0.78, 'rgba(180,70,0,.08)'); lg.addColorStop(1, 'rgba(170,64,0,.4)');
-    ctx.fillStyle = lg; ctx.fillRect(cx - R, cy - R, R * 2, R * 2);
-    ctx.restore();
+    if (o.spots && o.spots.length) {
+      ctx.save();
+      circle(ctx, cx, cy, R * 0.998); ctx.clip();
+      o.spots.forEach((q, i) => { const h = drawSpot(ctx, cx, cy, R, q.sp, q.lon, q.scale || 1, q.alpha != null ? q.alpha : 1, o.t); if (h) { h.i = i; hits.push(h); } });
+      ctx.restore();
+    }
     return hits;
   }
 
@@ -432,28 +447,32 @@
     // 바탕
     ctx.fillStyle = '#04070f'; ctx.fillRect(0, 0, L.vw, L.vh);
     drawStars(ctx, L.starsPhoto, t, 0.5);
-    // 접안렌즈 안쪽
-    ctx.save(); circle(ctx, G.cx, G.cy, G.eye); ctx.clip();
-    const bg = ctx.createRadialGradient(G.cx, G.cy, 20, G.cx, G.cy, G.eye);
-    bg.addColorStop(0, '#16100a'); bg.addColorStop(1, '#050304');
-    ctx.fillStyle = bg; ctx.fillRect(G.cx - G.eye, G.cy - G.eye, G.eye * 2, G.eye * 2);
+    // 접안렌즈 안쪽 (배경·비네팅은 미리 그려 둔 그림)
+    const ES = G.eye * 2, eyeSpr = sprite('eyeBg' + L.key, ES, ES, (g, w, h) => {
+      g.beginPath(); g.arc(w / 2, h / 2, w / 2, 0, TAU); g.clip();
+      const bg = g.createRadialGradient(w / 2, h / 2, 20, w / 2, h / 2, w / 2);
+      bg.addColorStop(0, '#16100a'); bg.addColorStop(1, '#050304'); g.fillStyle = bg; g.fillRect(0, 0, w, h);
+    });
+    const vigSpr = sprite('eyeVig' + L.key, ES, ES, (g, w, h) => {
+      const vg = g.createRadialGradient(w / 2, h / 2, w / 2 * 0.7, w / 2, h / 2, w / 2 * 1.02);
+      vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,.78)');
+      g.beginPath(); g.arc(w / 2, h / 2, w / 2, 0, TAU); g.clip(); g.fillStyle = vg; g.fillRect(0, 0, w, h);
+    });
+    const glowSpr = sprite('eyeGlow' + L.key, ES, ES, (g, w, h) => {
+      const gg = g.createRadialGradient(w / 2, h / 2, G.R * 0.96, w / 2, h / 2, G.R * 1.18);
+      gg.addColorStop(0, 'rgba(255,170,70,.32)'); gg.addColorStop(1, 'rgba(255,140,50,0)'); g.fillStyle = gg; g.fillRect(0, 0, w, h);
+    });
+    ctx.drawImage(eyeSpr, G.cx - G.eye, G.cy - G.eye, ES, ES);
     let hits = [];
     const spotsArr = daySpots(S.dayA);
     if (S.filter || S.capA > 0.02) {
       ctx.globalAlpha = clamp(S.capA * 1.4 - 0.15, 0, 1);
-      // 원반 둘레 은은한 빛
-      const gg = ctx.createRadialGradient(G.cx, G.cy, G.R * 0.96, G.cx, G.cy, G.R * 1.18);
-      gg.addColorStop(0, 'rgba(255,170,70,.32)'); gg.addColorStop(1, 'rgba(255,140,50,0)');
-      ctx.fillStyle = gg; circle(ctx, G.cx, G.cy, G.R * 1.18); ctx.fill();
+      ctx.drawImage(glowSpr, G.cx - G.eye, G.cy - G.eye, ES, ES);
       hits = drawSunDisc(ctx, G.cx, G.cy, G.R, { spots: spotsArr, t });
       ctx.globalAlpha = 1;
     }
-    // 비네팅
-    const vg = ctx.createRadialGradient(G.cx, G.cy, G.eye * 0.7, G.cx, G.cy, G.eye * 1.02);
-    vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,.78)');
-    ctx.fillStyle = vg; ctx.fillRect(G.cx - G.eye, G.cy - G.eye, G.eye * 2, G.eye * 2);
+    ctx.drawImage(vigSpr, G.cx - G.eye, G.cy - G.eye, ES, ES);
     drawCap(ctx, L, G, S.capA);
-    ctx.restore();
     // 접안렌즈 테두리
     const rg = ctx.createLinearGradient(G.cx - G.rim, G.cy - G.rim, G.cx + G.rim, G.cy + G.rim);
     rg.addColorStop(0, '#e6ecfa'); rg.addColorStop(0.45, '#566280'); rg.addColorStop(1, '#202840');
@@ -547,20 +566,19 @@
     S.c = c;
     ctx.save();
     roundRect(ctx, P.x, P.y, P.w, P.h, 14); ctx.clip();
-    // 하늘
-    const sg = ctx.createRadialGradient(cx, cy, R, cx, cy, Math.max(P.w, P.h) * 0.7);
-    sg.addColorStop(0, '#16224a'); sg.addColorStop(1, '#04081a');
-    ctx.fillStyle = sg; ctx.fillRect(P.x, P.y, P.w, P.h);
+    // 하늘 (미리 그려 둔 배경)
+    ctx.drawImage(sprite('atmoSky' + L.key, P.w, P.h, (g, w, h) => {
+      const sg = g.createRadialGradient(cx - P.x, cy - P.y, R, cx - P.x, cy - P.y, Math.max(P.w, P.h) * 0.7);
+      sg.addColorStop(0, '#16224a'); sg.addColorStop(1, '#04081a'); g.fillStyle = sg; g.fillRect(0, 0, w, h);
+    }), P.x, P.y, P.w, P.h);
     drawStars(ctx, L.starsAtmo, t, 0.25 + 0.75 * c);
     // 코로나: α ∝ c⁴
     const ca = Math.pow(c, 4);
     if (ca > 0.01) {
-      const T = coronaTex(), s = R * 6, wob = RM ? 0 : Math.sin(t * 0.35) * 0.012;
+      const T = coronaTex(), s = R * 5.2, wob = RM ? 0 : Math.sin(t * 0.35) * 0.012;
       ctx.save(); ctx.translate(cx, cy); ctx.rotate(wob);
-      ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = ca;
-      ctx.drawImage(T, -s / 2, -s / 2, s, s);
-      if (!RM) { ctx.rotate(-wob * 2 - 0.02); ctx.globalAlpha = ca * 0.4; ctx.drawImage(T, -s / 2, -s / 2, s, s); }
-      ctx.restore(); ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
+      ctx.globalAlpha = ca; ctx.drawImage(T, -s / 2, -s / 2, s, s);
+      ctx.restore(); ctx.globalAlpha = 1;
     }
     // 광구 (가리개 밑)
     if (c < 0.999) {
@@ -574,9 +592,12 @@
     // 눈부심: α = 1 − c  (은은한 크림색 번짐)
     const ga = 1 - c;
     if (ga > 0.01) {
-      const bl = ctx.createRadialGradient(cx, cy, R * 0.4, cx, cy, R * 3.4);
-      bl.addColorStop(0, 'rgba(255,248,214,' + (0.95 * ga) + ')'); bl.addColorStop(0.45, 'rgba(255,240,190,' + (0.62 * ga) + ')'); bl.addColorStop(1, 'rgba(255,232,170,' + (0.3 * ga) + ')');
-      ctx.fillStyle = bl; ctx.fillRect(P.x, P.y, P.w, P.h);
+      ctx.globalAlpha = ga;
+      ctx.drawImage(sprite('atmoGlare' + L.key, P.w, P.h, (g, w, h) => {
+        const bl = g.createRadialGradient(cx - P.x, cy - P.y, R * 0.4, cx - P.x, cy - P.y, R * 3.4);
+        bl.addColorStop(0, 'rgba(255,248,214,.95)'); bl.addColorStop(0.45, 'rgba(255,240,190,.62)'); bl.addColorStop(1, 'rgba(255,232,170,.3)'); g.fillStyle = bl; g.fillRect(0, 0, w, h);
+      }), P.x, P.y, P.w, P.h);
+      ctx.globalAlpha = 1;
     }
     // 채층 · 홍염 (거의 다 가렸을 때) — 붉은 고리와 불꽃 모양 홍염
     const fa = clamp((c - 0.95) / 0.05, 0, 1);
@@ -674,21 +695,14 @@
   function drawYearDisc(ctx, L, G, t, N) {
     const R = G.dR, cx = G.dcx, cy = G.dcy, k = 1.06 * (1 + N / 250);
     // 코로나 (크기 ∝ 1 + N/250)
-    const T = coronaTex(), s = R * 6 * k;
-    ctx.save(); ctx.globalCompositeOperation = 'lighter';
-    const ig = ctx.createRadialGradient(cx, cy, R * 0.98, cx, cy, R * (1 + 0.75 * k));
-    ig.addColorStop(0, 'rgba(255,246,225,.45)'); ig.addColorStop(0.25, 'rgba(255,236,200,.2)'); ig.addColorStop(1, 'rgba(255,230,190,0)');
-    ctx.fillStyle = ig; circle(ctx, cx, cy, R * (1 + 0.75 * k)); ctx.fill();
-    ctx.globalAlpha = 0.5 + 0.4 * clamp(N / 160, 0, 1); ctx.drawImage(T, cx - s / 2, cy - s / 2, s, s);
+    const T = coronaTex(), s = R * 5.2 * k;
+    ctx.save();
+    ctx.globalAlpha = 0.55 + 0.4 * clamp(N / 160, 0, 1); ctx.drawImage(T, cx - s / 2, cy - s / 2, s, s);
     ctx.restore();
     // 흑점: 해에 따라 바뀌는 무리 (겹쳐서 부드럽게 바뀜)
     const mk = (arr, alpha) => (arr || []).map((sp) => ({ sp, lon: sp.lon, scale: 1, alpha }));
     const mix = S.spotMix;
     const arr = mk(S.spotsFrom, 1 - mix).concat(mk(S.spotsTo, mix));
-    ctx.save(); ctx.globalCompositeOperation = 'lighter';
-    const hg2 = ctx.createRadialGradient(cx, cy, R * 0.9, cx, cy, R * 1.28);
-    hg2.addColorStop(0, 'rgba(255,170,70,.5)'); hg2.addColorStop(1, 'rgba(255,140,50,0)');
-    ctx.fillStyle = hg2; circle(ctx, cx, cy, R * 1.28); ctx.fill(); ctx.restore();
     drawSunDisc(ctx, cx, cy, R, { spots: arr, t, texA: 0.9 });
     // 플레어 섬광
     const n = nowS();
@@ -700,7 +714,7 @@
       const fg = ctx.createRadialGradient(x, y, 0, x, y, rr * (0.6 + a * 0.9));
       fg.addColorStop(0, 'rgba(255,255,255,' + (1 - a) + ')'); fg.addColorStop(0.35, 'rgba(255,240,170,' + (0.7 * (1 - a)) + ')'); fg.addColorStop(1, 'rgba(255,200,100,0)');
       ctx.fillStyle = fg; circle(ctx, x, y, rr * (0.6 + a * 0.9)); ctx.fill();
-      ctx.strokeStyle = 'rgba(255,255,255,' + (0.8 * (1 - a)) + ')'; ctx.lineWidth = 2.4 * (1 - a) + 0.6; circle(ctx, x, y, rr * (0.5 + a * 1.8)); ctx.stroke();
+      ctx.strokeStyle = 'rgba(255,255,255,' + (0.8 * (1 - a)) + ')'; ctx.lineWidth = 2.4 * (1 - a) + 0.6; circle(ctx, x, y, rr * (0.4 + a * 1.1)); ctx.stroke();
       ctx.restore();
     }
   }
@@ -751,8 +765,8 @@
       const bg = ctx.createLinearGradient(0, y, 0, G.py + G.ph);
       if (isCur) { bg.addColorStop(0, '#fde68a'); bg.addColorStop(1, '#f59e0b'); } else if (found) { bg.addColorStop(0, '#6ee7b7'); bg.addColorStop(1, '#0f766e'); } else { bg.addColorStop(0, '#7dd3fc'); bg.addColorStop(1, '#1d4ed8'); }
       ctx.fillStyle = bg;
-      if (isCur) { ctx.shadowColor = 'rgba(253,224,71,.8)'; ctx.shadowBlur = 14; }
-      roundRect(ctx, x - bw / 2, y, bw, Math.max(1, G.py + G.ph - y), Math.min(3, bw / 2)); ctx.fill(); ctx.shadowColor = 'transparent';
+      roundRect(ctx, x - bw / 2, y, bw, Math.max(1, G.py + G.ph - y), Math.min(3, bw / 2)); ctx.fill();
+      if (isCur) { ctx.strokeStyle = 'rgba(255,248,200,.9)'; ctx.lineWidth = 2; ctx.stroke(); }
     }
     // 매끈한 선
     if (S.barA > 0.7) {
@@ -769,7 +783,7 @@
         const y = G.py + 22 * fs + (i % 2) * 20 * fs, x0 = mids[i], x1 = mids[i + 1], a = clamp((nowS() - (S.peakMsg ? S.peakMsg.t0 : 0)) * 2, 0, 1);
         ctx.save(); ctx.globalAlpha = Math.max(a, 0.9); ctx.strokeStyle = '#fde68a'; ctx.lineWidth = 2; ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1, y); ctx.stroke(); ctx.setLineDash([]);
         ctx.beginPath(); ctx.moveTo(x0, y - 5); ctx.lineTo(x0, y + 5); ctx.moveTo(x1, y - 5); ctx.lineTo(x1, y + 5); ctx.stroke();
-        pill(ctx, '약 ' + Math.round(PEAKS_GAP(i)) + '년', (x0 + x1) / 2, y - 12 * fs, { font: fnt(L, 12.5, 'bold'), h: Math.round(22 * fs), pad: 8, bg: 'rgba(120,53,15,.92)', color: '#fde68a' });
+        pill(ctx, '약 11년', (x0 + x1) / 2, y - 12 * fs, { font: fnt(L, 12.5, 'bold'), h: Math.round(22 * fs), pad: 8, bg: 'rgba(120,53,15,.92)', color: '#fde68a' });
         ctx.restore();
       }
     }
@@ -782,12 +796,11 @@
     // 안내 / 피드백
     const my2 = G.G.y + G.G.h - 22 * fs;
     if (S.peakMsg && nowS() - S.peakMsg.t0 < 2.6) { ctx.globalAlpha = clamp((2.6 - (nowS() - S.peakMsg.t0)) * 2, 0, 1); pill(ctx, S.peakMsg.text, G.G.x + G.G.w / 2, my2, { font: fnt(L, 13.5, 'bold'), h: Math.round(28 * fs), pad: 12, bg: S.peakMsg.good ? 'rgba(6,95,70,.96)' : 'rgba(127,29,29,.96)' }); ctx.globalAlpha = 1; }
-    else if (game && !isFree() && game.level === 2 && game.index === 5) { ctx.textAlign = 'center'; ctx.fillStyle = 'rgba(199,211,242,.92)'; ctx.font = fnt(L, 13, 'bold'); ctx.fillText('👆 막대가 가장 높은 해(극대기)를 눌러 표시해요', G.G.x + G.G.w / 2, my2 + 4); }
+    else if (game && !isFree() && game.level === 2 && game.index === 6) { ctx.textAlign = 'center'; ctx.fillStyle = 'rgba(199,211,242,.92)'; ctx.font = fnt(L, 13, 'bold'); ctx.fillText('👆 막대가 가장 높은 해(극대기)를 눌러 표시해요', G.G.x + G.G.w / 2, my2 + 4); }
     panelEdge(ctx, G.G);
     if (isNew('years')) newRing(ctx, L, G.G.x, G.G.y, G.G.w, G.G.h);
     void V;
   }
-  const PEAKS_GAP = (i) => { const a = PEAKS.filter((g, k) => S.found[k]); return (a[i + 1].mid - a[i].mid); };
   function actHit(L, p) {
     const G = actGeo(L);
     if (p.x < G.px - 4 || p.x > G.px + G.pw + 4 || p.y < G.py - 30 || p.y > G.py + G.ph + 10) return null;
@@ -981,16 +994,16 @@
   function drawEarthScene(ctx, L, t, V) {
     const G = earthGeo(L), P = G.P, fs = L.fs, st = S.storm, N = snAt(S.yearA);
     ctx.save(); roundRect(ctx, P.x, P.y, P.w, P.h, 14); ctx.clip();
-    const bg = ctx.createRadialGradient(G.ex, G.ey, 20, G.ex, G.ey, P.w);
-    bg.addColorStop(0, '#16224a'); bg.addColorStop(1, '#050a1c');
-    ctx.fillStyle = bg; ctx.fillRect(P.x, P.y, P.w, P.h);
+    ctx.drawImage(sprite('earthBg' + L.key, P.w, P.h, (g, w, h) => {
+      const bg = g.createRadialGradient(G.ex - P.x, G.ey - P.y, 20, G.ex - P.x, G.ey - P.y, P.w);
+      bg.addColorStop(0, '#16224a'); bg.addColorStop(1, '#050a1c'); g.fillStyle = bg; g.fillRect(0, 0, w, h);
+      const sgl = g.createRadialGradient(G.sx - P.x, G.sy - P.y, G.sR * 0.6, G.sx - P.x, G.sy - P.y, G.sR * 2.8);
+      sgl.addColorStop(0, 'rgba(255,196,100,.55)'); sgl.addColorStop(1, 'rgba(255,150,60,0)'); g.fillStyle = sgl; g.fillRect(0, 0, w, h);
+    }), P.x, P.y, P.w, P.h);
     drawStars(ctx, L.starsEarth, t, 0.8);
     const shk = S.shake > 0 && !RM ? (Math.random() - 0.5) * 6 * Math.min(1, S.shake * 3) : 0;
     ctx.translate(shk, shk * 0.5);
     // 태양
-    const sgl = ctx.createRadialGradient(G.sx, G.sy, G.sR * 0.6, G.sx, G.sy, G.sR * 2.8);
-    sgl.addColorStop(0, 'rgba(255,196,100,.55)'); sgl.addColorStop(1, 'rgba(255,150,60,0)');
-    ctx.fillStyle = sgl; circle(ctx, G.sx, G.sy, G.sR * 2.8); ctx.fill();
     drawSunDisc(ctx, G.sx, G.sy, G.sR, { spots: spotsOfYear(S.year).slice(0, 8).map((sp) => ({ sp, lon: sp.lon * 0.6, scale: 0.8 })), t, texA: 0.85 });
     // 플레어 섬광
     if (st && !st.done && st.T < 1.4) {
@@ -1023,7 +1036,7 @@
     const gl = st && st.hit && !st.done ? st.dmg * clamp((st.T - 3.6) / 1.2, 0, 1) * (1 - clamp((st.T - 14) / 3.5, 0, 1)) : 0;
     S.sats.forEach((sa, i) => { const a = sa.a + (RM ? 0 : t * sa.sp); drawSat(ctx, G.ex + Math.cos(a) * G.eR * 1.7, G.ey + Math.sin(a) * G.eR * 0.95 * (i ? 1.0 : 0.8) - G.eR * 0.1, L.col ? 1.3 : 1.1, gl > 0.15 ? gl : 0, t); });
     // 태양풍 입자
-    ctx.save(); ctx.globalCompositeOperation = 'lighter';
+    ctx.save();
     if (st && !st.done && st.cloud && !st.hit) {   // 폭풍 입자 구름의 은은한 빛
       let cxm = 0, n = 0; S.wind.forEach((p) => { if (p.k === 1) { cxm += p.x; n++; } });
       if (n > 6) { const q = windScreen(G, { x: cxm / n, y: 0 }), gg = ctx.createRadialGradient(q.x, q.y, 0, q.x, q.y, 120 * (L.col ? 1 : 0.8)); gg.addColorStop(0, 'rgba(255,170,90,.26)'); gg.addColorStop(1, 'rgba(255,140,60,0)'); ctx.fillStyle = gg; circle(ctx, q.x, q.y, 120 * (L.col ? 1 : 0.8)); ctx.fill(); }
@@ -1166,7 +1179,7 @@
         V.P.burst(barX(G, PEAKS[pk].mid - Y0), barY(G, PEAKS[pk].max) - 18, { count: 12, colors: ['#34d399', '#5eead4', '#fde68a'], speed: 110, gravity: 100, size: 3 });
         tipPeak('✅ 극대기 찾았어요! (' + PEAKS[pk].name + ')', true);
       }
-    } else if (game && !isFree() && game.level === 2 && game.index === 5) { Sound.fail(); tipPeak('🤔 ' + year + '년은 극대기가 아니에요. 가장 높은 막대를 찾아요', false); }
+    } else if (game && !isFree() && game.level === 2 && game.index === 6) { Sound.fail(); tipPeak('🤔 ' + year + '년은 극대기가 아니에요. 가장 높은 막대를 찾아요', false); }
   }
   function attachPointer(V) {
     const { v, L } = V;
@@ -1464,6 +1477,21 @@
             status: () => chk(S.atmoLab.chromo, '채층') + ' · ' + chk(S.atmoLab.corona, '코로나') + ' · ' + chk(S.atmoLab.prom, '홍염'),
             explain: '<b>채층</b>은 광구 바로 위의 얇은 붉은 대기층, <b>코로나</b>는 그 바깥으로 멀리 퍼진 진주색 대기(100만 °C 이상), <b>홍염</b>은 고온의 기체가 대기로 솟아오르는 현상이에요.',
           },
+          {
+            type: 'quiz',
+            title: '🌤️ 평소에 코로나가 안 보이는 까닭',
+            goal: '코로나는 가리개로 광구를 가렸을 때(또는 개기 일식 때) 잘 보여요. 그렇다면 평소에 코로나가 보이지 않는 까닭은 무엇일까요?',
+            setup() { setScene('atmo'); S.occSp.x.value = S.occSp.x.target = 0; S.occSp.y.value = S.occSp.y.target = 0; S.occTouched = true; S.snapped = true; syncControls(); },
+            choices: ['코로나는 밤에만 생기기 때문에', '코로나는 일식이 일어날 때만 생기기 때문에', '광구가 너무 밝아서 희미한 코로나가 가려지기 때문에', '지구 대기가 코로나의 빛을 모두 막기 때문에'],
+            answer: 2,
+            feedback: [
+              '태양은 밤에는 보이지 않아요. 코로나는 낮이든 밤이든 늘 태양 둘레에 있어요.',
+              '코로나는 일식 때만 생기는 게 아니라 <b>늘 있어요</b>. 일식 때는 달이 광구를 가려서 볼 수 있을 뿐이에요.',
+              '',
+              '지구 대기도 빛을 조금 흩뜨리지만, 가장 큰 까닭은 <b>광구가 훨씬 밝기</b> 때문이에요. 가리개로 광구를 가리니까 코로나가 보였죠?',
+            ],
+            explain: '코로나는 <b>늘 있지만</b> 광구가 너무 밝아서 평소에는 보이지 않아요. 달이 광구를 가리는 <b>개기 일식</b> 때나 가리개로 광구를 가렸을 때 볼 수 있어요.',
+          },
         ],
       },
       /* ---------- 3단계 · 분석 ---------- */
@@ -1480,28 +1508,13 @@
         missions: [
           {
             title: '📈 극대기 찾기',
-            goal: '그래프에서 흑점 수가 가장 많은 <b>극대기</b> 세 곳을 눌러 표시해요.',
+            goal: '그래프에서 흑점 수가 가장 많은 <b>극대기</b> 세 곳을 눌러 표시하고, 극대기 사이의 <b>간격</b>이 얼마인지 살펴봐요.',
             hint: '막대가 가장 높게 솟은 해 무리를 찾아요. 1990년 무렵, 2001년 무렵, 2013년 무렵, 2024년 무렵 중 세 곳을 눌러요.',
             setup() { setScene('activity'); S.found = [false, false, false, false]; S.peakMsg = null; setYear(2000, true); syncControls(); },
             check: () => S.found.filter(Boolean).length >= 3,
-            hold: 0.5,
-            status: () => '찾은 극대기 <b>' + S.found.filter(Boolean).length + ' / 3</b> · ' + peakChips(),
-            explain: '흑점 수는 늘었다 줄었다를 되풀이해요. 흑점 수가 가장 많은 <b>극대기</b>가 40년 동안 네 번 나타났어요. 극대기 사이는 <b>약 11년</b>이에요.',
-          },
-          {
-            type: 'quiz',
-            title: '⏱️ 극대기의 주기',
-            goal: '그래프에서 흑점 수가 가장 많은 극대기는 얼마 간격으로 나타날까요?',
-            setup() { setScene('activity'); if (S.found.filter(Boolean).length < 3) S.found = [true, true, true, true]; syncControls(); },
-            choices: ['약 1년', '약 27일', '약 11년', '약 100년'],
-            answer: 2,
-            feedback: [
-              '1년마다라면 40년 동안 극대기가 40번 있어야 해요. 그래프에는 4번뿐이에요.',
-              '27일은 한 달 정도로 너무 짧아요. 이 그래프는 해마다 평균을 낸 값이에요.',
-              '',
-              '그래프의 40년 동안 극대기가 4번 나타났어요. 100년이면 너무 길어요.',
-            ],
-            explain: '극대기는 <b>약 11년</b>마다 나타나요. 흑점 수는 약 11년을 주기로 많아졌다 적어졌다를 되풀이해요.',
+            hold: 0.8,
+            status: () => '찾은 극대기 <b>' + S.found.filter(Boolean).length + ' / 3</b> · ' + peakChips() + (S.found.filter(Boolean).length >= 2 ? '<br>극대기 사이의 간격: <b>약 11년</b>' : ''),
+            explain: '흑점 수는 늘었다 줄었다를 되풀이해요. 흑점 수가 가장 많은 <b>극대기</b>가 40년 동안 네 번 나타났고, 극대기 사이의 간격은 <b>약 11년</b>이에요. 흑점 수는 약 11년을 주기로 변해요.',
           },
           {
             type: 'quiz',
@@ -1539,7 +1552,7 @@
             setup() { setScene('earth'); setYear(2024, true); yearEl.value = 2024; yearEl.dispatchEvent(new Event('input')); S.storm = null; S.stormOnce = false; S.hit = false; S.auroraSeen = false; S.auroraT = 0; S.aurora = 0; S.wind = S.wind.filter((p) => p.k === 0); syncControls(); },
             check: () => S.hit && S.auroraSeen,
             hold: 0.5,
-            status: () => chk(S.hit, '입자가 지구에 도착') + ' · ' + chk(S.auroraSeen, '오로라 켜짐'),
+            status: () => chk(S.hit, '입자가 지구에 도착') + ' · ' + chk(S.auroraSeen, '오로라 켜짐') + (S.storm && S.storm.done && !S.auroraSeen ? '<br>💡 흑점이 많은 해(2024년)로 바꿔 다시 눌러 봐요.' : ''),
             explain: '태양 폭풍(플레어)이 일어나면 많은 입자가 태양풍을 타고 지구로 와요. 입자는 지구 <b>자기장</b>을 따라 극지방으로 들어와 대기와 부딪쳐 <b>오로라</b>를 만들어요. 통신·위성·전력에도 문제가 생길 수 있어요.',
           },
           {

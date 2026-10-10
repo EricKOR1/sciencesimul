@@ -291,11 +291,11 @@
           cols: 22, rows: 4,
         };
       }
-      const rodH = lerp(70, 56, e);
-      const yc = [lerp(170, 78, e), lerp(340, 188, e), lerp(510, 298, e)];
+      const rodH = lerp(86, 56, e), ho = lerp(72, 52, e);
+      const yc = [lerp(236, 78, e), lerp(466, 188, e), lerp(696, 298, e)];
       return {
         x0: 62, x1: 410, rodH, yc,
-        heater: { x: 6, y: yc[0] - 52, w: 56, h: yc[2] - yc[0] + 104 },
+        heater: { x: 6, y: yc[0] - ho, w: 56, h: yc[2] - yc[0] + ho + 52 },
         disp: yc.map((y) => ({ x: 418, y: y - 29, w: 96, h: 58 })),
         panel: { x: 6, y: lerp(990, 392, e), w: 508, h: 500 },
         cols: 14, rows: 6,
@@ -697,12 +697,35 @@
     else if (S.scene === 'room') updateRoom(dt);
     else if (S.scene === 'rad') updateRad(dt);
     else if (S.scene === 'thermos') updateThermos(dt);
+    watchSuccess(dt);
     VIEWS.forEach((V) => V.fx.update(dt));
   }
 
   /* =========================================================
      그리기 공통
      ========================================================= */
+  /* ---------- 미션 성공 표시: 화면 오른쪽 위에 체크가 톡 튀어나오며 반짝임이 터짐 ---------- */
+  const SUCC = { s: 0, a: 0, t: 0 };
+  let lastPhase = '';
+  function watchSuccess(dt) {
+    const ph = game ? game.phase : '';
+    if (ph === 'success' && lastPhase !== 'success') {
+      SUCC.s = 0; SUCC.a = 1; SUCC.t = 0;
+      SciSim.tween(SUCC, { s: 1 }, { duration: 0.55, ease: 'outBack' });
+      const V = activeView();
+      if (!REDUCE) V.fx.burst(V.L.vw - 42, 42, { count: 20, speed: 170, life: 0.9, colors: ['#14a058', '#ffb400', '#3867f4', '#f26b3a'] });
+    }
+    lastPhase = ph;
+    if (SUCC.a > 0) { SUCC.t += dt; if (SUCC.t > 1.3) SUCC.a = Math.max(0, SUCC.a - dt * 2.2); }
+  }
+  function drawSuccess(V) {
+    if (SUCC.a <= 0.01) return;
+    const { ctx, D } = V;
+    ctx.save(); ctx.globalAlpha = SUCC.a;
+    D.check(V.L.vw - 42, 42, 24 * clamp(SUCC.s, 0, 1.15), clamp(SUCC.s, 0, 1));
+    ctx.restore();
+  }
+
   function drawView(V, t) {
     const { ctx } = V;
     V.v.clear();
@@ -720,6 +743,7 @@
     else if (S.scene === 'rad') drawRad(V, t);
     else drawThermos(V, t);
     ctx.restore();
+    drawSuccess(V);
     V.fx.draw(ctx);
   }
   function tangents(a, b) {
@@ -852,7 +876,7 @@
     if (C.camK > 0.01) {
       ctx.save();
       ctx.globalAlpha *= C.camK;
-      const top = G.yc[0] - G.rodH / 2 - 40, bot = G.yc[2] + G.rodH / 2 + 34;
+      const top = G.yc[0] - G.rodH / 2 - (tall ? lerp(54, 40, C.modelK) : 40), bot = G.yc[2] + G.rodH / 2 + 34;
       const pan = { x: 4, y: top, w: L.vw - 8, h: bot - top };
       const bgG = ctx.createLinearGradient(0, pan.y, 0, pan.y + pan.h);
       bgG.addColorStop(0, '#141a3a'); bgG.addColorStop(1, '#0b1026');
@@ -860,6 +884,12 @@
       // 스캔 줄무늬
       ctx.fillStyle = 'rgba(255,255,255,.035)';
       for (let yy = pan.y + 4; yy < pan.y + pan.h; yy += 5) ctx.fillRect(pan.x + 6, yy, pan.w - 12, 1);
+      // 뷰파인더 모서리 (이름표보다 아래에 그림)
+      ctx.strokeStyle = 'rgba(255,255,255,.75)'; ctx.lineWidth = 2.5; ctx.lineCap = 'round';
+      const bl = 20, bx0 = pan.x + 8, by0 = pan.y + 8, bx1 = pan.x + pan.w - 8, by1 = pan.y + pan.h - 8;
+      [[bx0, by0, 1, 1], [bx1, by0, -1, 1], [bx0, by1, 1, -1], [bx1, by1, -1, -1]].forEach(([x, y, sx, sy]) => {
+        ctx.beginPath(); ctx.moveTo(x, y + sy * bl); ctx.lineTo(x, y); ctx.lineTo(x + sx * bl, y); ctx.stroke();
+      });
       drawHeaterBlock(V, G.heater, true, t, fs);
       RODS.forEach((r, i) => {
         const y = G.yc[i] - G.rodH / 2;
@@ -874,13 +904,8 @@
         circle(ctx, px, py, 8); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(px - 14, py); ctx.lineTo(px - 4, py); ctx.moveTo(px + 4, py); ctx.lineTo(px + 14, py); ctx.moveTo(px, py - 14); ctx.lineTo(px, py - 4); ctx.moveTo(px, py + 4); ctx.lineTo(px, py + 14); ctx.stroke();
       });
-      // 뷰파인더 모서리 + 색 막대
-      ctx.strokeStyle = 'rgba(255,255,255,.75)'; ctx.lineWidth = 2.5; ctx.lineCap = 'round';
-      const bl = 20, bx0 = pan.x + 8, by0 = pan.y + 8, bx1 = pan.x + pan.w - 8, by1 = pan.y + pan.h - 8;
-      [[bx0, by0, 1, 1], [bx1, by0, -1, 1], [bx0, by1, 1, -1], [bx1, by1, -1, -1]].forEach(([x, y, sx, sy]) => {
-        ctx.beginPath(); ctx.moveTo(x, y + sy * bl); ctx.lineTo(x, y); ctx.lineTo(x + sx * bl, y); ctx.stroke();
-      });
-      const cbw = tall ? 110 : 190, cbx = pan.x + pan.w - cbw - 62, cby = pan.y + 14;
+      // 색 막대
+      const cbw = tall ? 110 : 190, cbx = pan.x + pan.w - cbw - (tall ? 76 : 62), cby = pan.y + 14;
       ctx.fillStyle = '#e8eefc'; ctx.font = font(13 * fs, 800); ctx.textAlign = 'right';
       ctx.fillText(tall ? '📷 열화상' : '📷 열화상 카메라', cbx - 44, cby + 11);
       const cg = ctx.createLinearGradient(cbx, 0, cbx + cbw, 0);
@@ -1437,6 +1462,12 @@
         D.label(G.tray.x + 10, G.tray.y + 15, '🪞 은박지 (끌어서 놓기)', { bg: '#64748b', size: 13 * fs, align: 'left' });
       }
       drawFoilSheet(V, pose, t, RD.lift, G);
+      // 놓을 자리 안내: 난로를 켰는데 은박지를 아직 안 놓았으면 점선 자리가 살짝 깜빡임
+      if (!RD.foil && !RD.drag && RD.stove) {
+        const ha = REDUCE ? 0.6 : 0.28 + 0.42 * (0.5 + 0.5 * Math.sin(t * 4));
+        ctx.save(); ctx.setLineDash([8, 6]); ctx.strokeStyle = rgba('#14a058', ha); ctx.lineWidth = 3;
+        D.roundRect(fxp - 14, G.foilY0 - 6, 28, G.foilY1 - G.foilY0 + 12, 10); ctx.stroke(); ctx.restore();
+      }
       // 놓을 자리 표시
       if (RD.drag && Math.abs(RD.pose.x - fxp) < 90) {
         ctx.save(); ctx.setLineDash([8, 6]); ctx.strokeStyle = '#14a058'; ctx.lineWidth = 3; D.roundRect(fxp - 14, G.foilY0 - 6, 28, G.foilY1 - G.foilY0 + 12, 10); ctx.stroke(); ctx.restore();

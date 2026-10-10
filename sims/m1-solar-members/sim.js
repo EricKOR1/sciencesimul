@@ -127,6 +127,17 @@
     bg.addColorStop(0, '#17264f'); bg.addColorStop(0.6, '#0e1838'); bg.addColorStop(1, '#070d1f');
     ctx.fillStyle = bg; ctx.fillRect(R.x, R.y, R.w, R.h);
   }
+  // 한 번만 그려 두고 계속 쓰는 배경 그림 (큰 방사형 그라데이션을 매 프레임 칠하면 느려요)
+  const SPRITES = {}, SPR_SCALE = Math.min(2, window.devicePixelRatio || 1);
+  function sprite(key, w, h, fn) {
+    let c = SPRITES[key];
+    if (!c) {
+      c = document.createElement('canvas'); c.width = Math.ceil(w * SPR_SCALE); c.height = Math.ceil(h * SPR_SCALE);
+      const g = c.getContext('2d'); g.scale(SPR_SCALE, SPR_SCALE); fn(g, w, h);
+      SPRITES[key] = c;
+    }
+    return c;
+  }
   function panelBase(ctx, P, stars, t) {
     roundRect(ctx, P.x, P.y, P.w, P.h, 14);
     const g = ctx.createLinearGradient(0, P.y, 0, P.y + P.h);
@@ -743,7 +754,7 @@
     const M = L.main, X = xfMain(L), fs = L.fs;
     ctx.save();
     ctx.beginPath(); ctx.rect(M.x, M.y, M.w, M.h); ctx.clip();
-    spaceBg(ctx, M, L.mcx, L.mcy, Math.max(M.w, M.h) * 0.75);
+    ctx.drawImage(sprite('mapBg' + L.key, M.w, M.h, (g, w, h) => spaceBg(g, { x: 0, y: 0, w, h }, w / 2, h / 2, Math.max(w, h) * 0.75)), M.x, M.y, M.w, M.h);
     drawStars(ctx, L.starsMain, t, 1);
     // 궤도
     ctx.setLineDash([3, 6]); ctx.strokeStyle = 'rgba(160,190,255,.3)'; ctx.lineWidth = 1.2;

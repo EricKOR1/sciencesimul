@@ -57,8 +57,7 @@ window.SCI_CATALOG = {
                 "탐구 설계",
                 "자료 해석",
                 "해결 방안"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m1-science-civilization",
@@ -99,8 +98,7 @@ window.SCI_CATALOG = {
                 "사례 조사",
                 "미래 예측",
                 "발표하기"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m1-sustainable-life",
@@ -148,8 +146,7 @@ window.SCI_CATALOG = {
                 "세포 구조",
                 "구조와 기능",
                 "모양과 기능"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m1-organization",
@@ -170,8 +167,7 @@ window.SCI_CATALOG = {
                 "동물",
                 "식물",
                 "비교"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m1-variation",
@@ -261,8 +257,7 @@ window.SCI_CATALOG = {
                 "열의 이동",
                 "열평형",
                 "적용"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m1-heat-transfer",
@@ -283,8 +278,7 @@ window.SCI_CATALOG = {
                 "대류",
                 "복사",
                 "단열"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m1-specific-heat",
@@ -304,8 +298,7 @@ window.SCI_CATALOG = {
                 "비열 비교",
                 "열팽창",
                 "생활 활용"
-              ],
-              "soon": true
+              ]
             }
           ]
         },
@@ -601,8 +594,7 @@ window.SCI_CATALOG = {
                 "분류 기준",
                 "소행성과 혜성",
                 "새 천체 분류"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m1-planet-types",
@@ -622,8 +614,7 @@ window.SCI_CATALOG = {
                 "행성 자료 분석",
                 "두 무리의 특징",
                 "행성 판정"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m1-sun-activity",
@@ -644,8 +635,7 @@ window.SCI_CATALOG = {
                 "태양의 대기",
                 "태양 활동의 변화",
                 "지구에 미치는 영향"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m1-diurnal-motion",
