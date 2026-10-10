@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0ea5e9">
+  <title>지구의 공전과 별자리 변화 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌃</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-card { background: #070d1f; }
+    /* 태블릿: 가로 배치 캔버스 · 휴대폰: 세로 배치 캔버스 */
+    .sc-tall { display: none; }
+    @media (max-width: 599px) { .sc-wide { display: none; } .sc-tall { display: block; } }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    .is-off { display: none !important; }
+    .seg-label { display: block; font-weight: 800; font-size: 14.5px; color: var(--muted); margin-bottom: 6px; }
+    .switch { min-height: 44px; }
+    .play-row { display: flex; gap: 8px 12px; align-items: center; flex-wrap: wrap; margin-top: 2px; }
+    .play-row .btn { min-width: 132px; }
+    .ctrl-note { margin: 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; flex: 1 1 110px; }
+    .btn-sm { min-height: 44px; }
+    input[type=range] { height: 44px; }
+    .game-foot button { min-height: 44px; }
+    .mission-figure svg { border-radius: 12px; }
+    .note-fig { margin: 6px 0; text-align: center; }
+    .note-fig svg { max-width: 100%; height: auto; border-radius: 10px; }
+  </style>
+</head>
+<body class="sim-page" data-subject="earth">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#g1">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">중1 · Ⅶ. 태양계</div>
+      <h1>지구의 공전과 별자리 변화</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-canvas sc-wide"><canvas id="cvWide" aria-label="서울의 한밤중 남쪽 하늘과 월별 별자리, 북극 위에서 내려다본 태양 둘레를 도는 지구와 황도 12궁"></canvas></div>
+        <div class="stage-canvas sc-tall"><canvas id="cvTall" aria-label="서울의 한밤중 남쪽 하늘과 월별 별자리, 북극 위에서 내려다본 태양 둘레를 도는 지구와 황도 12궁"></canvas></div>
+      </section>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" id="cMonth" data-feature="month">
+          <div class="control-head"><label for="sMonth">📅 월</label><output id="oMonth"></output></div>
+          <input type="range" id="sMonth" min="1" max="13" step="0.05" value="1" aria-label="월">
+          <div class="play-row" id="playRow">
+            <button class="btn btn-sm btn-primary" id="playBtn" type="button" aria-pressed="false">▶ 공전 재생</button>
+            <p class="ctrl-note" id="monthNote">한 달이 1.2초로 흘러요.</p>
+          </div>
+        </div>
+        <div class="control" id="cCmp" data-feature="month">
+          <label class="switch"><input type="checkbox" id="tCmp"> 🔁 지난달 위치와 비교</label>
+        </div>
+        <div class="control" id="cGlare" data-feature="noglare">
+          <label class="switch"><input type="checkbox" id="tGlare"> ☀️ 햇빛 가리기</label>
+          <p class="ctrl-note" id="glareNote">낮 하늘의 눈부심을 지우면 태양 뒤의 별자리가 보여요. (실제로는 볼 수 없어요)</p>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#16a34a">
+  <title>생물다양성의 보전 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌱</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-card { background: #eef4ef; }
+    .stage-toolbar { min-height: 61px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+    #sceneSeg button { min-height: 44px; padding: 6px 13px; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+    .btn-row .btn { flex: 1 1 0; min-width: 0; min-height: 50px; font-size: 16px; }
+    .btn[disabled] { opacity: .5; cursor: default; }
+    .ctrl-note { font-size: 13.5px; color: var(--muted); margin: 8px 0 0; line-height: 1.4; }
+    .mission-figure svg { border-radius: 12px; display: block; max-width: 100%; height: auto; }
+    @media (max-width: 599px) {
+      #sceneSeg { flex-wrap: nowrap; }
+      #sceneSeg button { padding: 6px 12px; font-size: 14px; }
+      #sceneSeg button:not(.on) .t { display: none; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="bio">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#g1">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">중1 · Ⅱ. 생물의 구성과 다양성</div>
+      <h1>생물다양성의 보전</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="sceneLabel">🕸️ 생물을 하나씩 없애 보기</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="sceneSeg" role="tablist" aria-label="학습 장면" data-feature="threat">
+            <button type="button" data-scene="web" data-feature="web" title="먹이 그물" aria-label="먹이 그물">🕸️<span class="t"> 먹이 그물</span></button>
+            <button type="button" data-scene="threat" data-feature="threat" title="위협 요인" aria-label="위협 요인">⚠️<span class="t"> 위협 요인</span></button>
+            <button type="button" data-scene="fix" data-feature="fix" title="보전 방법" aria-label="보전 방법">🛡️<span class="t"> 보전 방법</span></button>
+            <button type="button" data-scene="act" data-feature="act" title="실천" aria-label="실천">🤝<span class="t"> 실천</span></button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="생물다양성의 보전: 단순한 생태계와 복잡한 생태계의 먹이 그물, 서식지 파괴 외래종 남획 환경오염 기후 변화 장면, 보전 방법 카드, 개인과 사회의 실천 카드 분류 화면"></canvas>
+        </div>
+      </section>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard" hidden>
+        <div class="control" id="ctrlWeb" hidden>
+          <div class="control-head"><label>🕸️ 먹이 그물 놀이</label><output id="oWeb">없앤 생물 0</output></div>
+          <div class="btn-row"><button class="btn btn-primary" id="btnRestore" type="button">↺ 모두 되살리기</button></div>
+          <p class="ctrl-note">그림 속 생물을 누르면 사라지고, 다시 누르면 되살아나요.</p>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>
