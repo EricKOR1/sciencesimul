@@ -1318,7 +1318,7 @@
     const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#f4f8ff'); g.addColorStop(1, '#e1ebf7');
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
     // 안내판
-    pill('카드를 끌어서 알맞은 통에 넣어요', W / 2, 26, { color: '#475569', size: 15 });
+    pill(CS.done >= CS.cards.length ? '✔ 모두 분류했어요! ↻ 를 누르면 카드를 다시 섞어요' : '카드를 끌어서 알맞은 통에 넣어요', W / 2, 26, { color: CS.done >= CS.cards.length ? '#15803d' : '#475569', size: 15 });
     ctx.fillStyle = 'rgba(100,130,180,.1)'; rr(14, 46, W - 28, 308, 20); ctx.fill();
     drawBin('L', t); drawBin('R', t);
     const order = CS.cards.slice().sort((a, b) => (a.it.mode === 'drag') - (b.it.mode === 'drag'));

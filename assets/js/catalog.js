@@ -451,8 +451,7 @@ window.SCI_CATALOG = {
                 "마찰력 크기",
                 "부력",
                 "적용"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m1-net-force-motion",
