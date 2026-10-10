@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#8b5cf6">
+  <title>확산과 증발 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💨</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-toolbar { min-height: 61px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+    #resetBtn { font-size: 20px; }
+    .tgl {
+      display: inline-flex; align-items: center; gap: 6px; min-height: 44px;
+      border: 2px solid var(--line); background: var(--surface); color: var(--muted);
+      border-radius: 999px; padding: 5px 14px; font-weight: 800; font-size: 15px; cursor: pointer;
+    }
+    .tgl[aria-pressed="true"] { color: #5b21b6; border-color: #c4b5fd; background: #f3efff; }
+    .segmented button { min-height: 44px; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    .ctrl-title { font-weight: 800; font-size: 15.5px; margin-bottom: 8px; }
+    .ctrl-note { font-size: 13.5px; color: var(--muted); margin: 6px 0 0; line-height: 1.45; }
+    .btn-block { min-height: 50px; }
+    /* 빨래 말리기 조건 (2 x 2) */
+    .cond-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+    .cond {
+      display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; column-gap: 8px; align-items: center;
+      text-align: left; min-height: 58px; padding: 6px 10px; border-radius: 14px; cursor: pointer;
+      border: 2px solid var(--line); background: var(--surface); color: var(--muted);
+      transition: border-color .15s, background .15s, transform .08s;
+    }
+    .cond:active { transform: scale(.97); }
+    .cond .ci { grid-row: 1 / 3; font-size: 24px; line-height: 1; }
+    .cond .ct { font-size: 13px; font-weight: 800; }
+    .cond .cv { font-size: 15px; font-weight: 800; color: var(--ink); white-space: nowrap; }
+    .cond[aria-pressed="true"] { border-color: #f59e0b; background: #fff7e6; }
+    .cond[aria-pressed="true"] .cv { color: #b45309; }
+    .trial-log { margin-top: 8px; display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
+    .trial-log:empty { display: none; }
+    .trial-log .tl { display: flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--line); }
+    .trial-log .tl b { min-width: 74px; font-family: ui-monospace, Menlo, Consolas, monospace; }
+    .trial-log .tl.ok { background: var(--good-soft); border-color: #a7e3c1; }
+    .trial-log .ic { opacity: .3; filter: grayscale(1); }
+    .trial-log .ic.on { opacity: 1; filter: none; }
+    .trial-log .k { margin-left: auto; font-size: 12.5px; color: var(--muted); font-weight: 700; }
+    .readout .value.word { font-family: var(--font); font-size: 19px; }
+    .mission-figure svg { border-radius: 12px; }
+    @media (max-width: 599px) {
+      .stage-toolbar { min-height: 0; }
+      .segmented button { padding: 6px 10px; font-size: 14px; }
+      .cond .cv { font-size: 14px; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="chem">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#g1">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">중1 · Ⅳ. 물질의 상태 변화</div>
+      <h1>확산과 증발</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">💧 물에 잉크 한 방울</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="sceneSeg" role="group" aria-label="실험 장면" hidden>
+            <button type="button" data-scene="ink">💧 잉크</button>
+            <button type="button" data-scene="perfume">🌸 향수</button>
+            <button type="button" data-scene="temp">🌡️ 온도</button>
+            <button type="button" data-scene="laundry">👕 증발</button>
+            <button type="button" data-scene="sort">🗂️ 분류</button>
+          </div>
+          <button type="button" class="tgl" id="zoomBtn" aria-pressed="true" data-sc="ink temp laundry" data-need="zoom">🔍 입자 모형</button>
+          <button class="icon-btn" id="resetBtn" type="button" title="처음 상태로" aria-label="처음 상태로">↺</button>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="확산과 증발 현상을 입자 모형으로 보여 주는 실험 화면"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts" id="readouts">
+        <div class="readout" data-sc="ink"><span class="label">물의 온도</span><span class="value" id="rTemp">20<small>°C</small></span></div>
+        <div class="readout" data-sc="ink"><span class="label">잉크가 고르게 퍼진 정도</span><span class="value" id="rU">0<small>%</small></span></div>
+        <div class="readout" data-sc="perfume"><span class="label">뿌린 향수 입자</span><span class="value" id="rSpray">0<small>개</small></span></div>
+        <div class="readout" data-sc="perfume"><span class="label">친구 쪽에 도착한 향수 입자</span><span class="value" id="rArrive">0<small>개</small></span></div>
+        <div class="readout" data-sc="temp"><span class="label">❄️ 찬물(10 °C)에 퍼진 정도</span><span class="value" id="rUc">0<small>%</small></span></div>
+        <div class="readout" data-sc="temp"><span class="label">🔥 뜨거운 물(60 °C)에 퍼진 정도</span><span class="value" id="rUh">0<small>%</small></span></div>
+        <div class="readout" data-sc="laundry"><span class="label">빨래의 물기</span><span class="value" id="rWet">100<small>%</small></span></div>
+        <div class="readout" data-sc="laundry"><span class="label">널어 둔 시간</span><span class="value" id="rTime">0<small>분</small></span></div>
+        <div class="readout" data-sc="laundry"><span class="label">가장 빠른 기록</span><span class="value" id="rBest">-</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" data-sc="ink">
+          <button class="btn btn-primary btn-block" id="dropBtn" type="button">💧 잉크 한 방울 떨어뜨리기</button>
+          <p class="ctrl-note">화면 속 스포이트를 눌러도 돼요. 물은 젓지 않아요.</p>
+        </div>
+        <div class="control" data-sc="perfume">
+          <button class="btn btn-primary btn-block" id="sprayBtn" type="button">🌸 향수 뿌리기</button>
+          <p class="ctrl-note">향수병을 직접 눌러도 돼요. 창문을 닫아 교실에는 바람이 없어요.</p>
+        </div>
+        <div class="control" data-sc="temp">
+          <button class="btn btn-primary btn-block" id="drop2Btn" type="button">💧 두 비커에 동시에 떨어뜨리기</button>
+          <p class="ctrl-note">같은 양의 잉크를 같은 높이에서 떨어뜨려요. 온도만 달라요.</p>
+        </div>
+        <div class="control" data-sc="laundry">
+          <div class="ctrl-title">👕 빨래 말리기 조건</div>
+          <div class="cond-grid">
+            <button class="cond" type="button" data-cond="temp" aria-pressed="false"><span class="ci">🌡️</span><span class="ct">온도</span><span class="cv" data-on="따뜻함 30 °C" data-off="쌀쌀함 10 °C"></span></button>
+            <button class="cond" type="button" data-cond="wind" aria-pressed="false"><span class="ci">🌬️</span><span class="ct">바람</span><span class="cv" data-on="선풍기 바람" data-off="바람 없음"></span></button>
+            <button class="cond" type="button" data-cond="dry" aria-pressed="false"><span class="ci">💧</span><span class="ct">습도</span><span class="cv" data-on="건조함 30 %" data-off="습함 85 %"></span></button>
+            <button class="cond" type="button" data-cond="spread" aria-pressed="false"><span class="ci">👕</span><span class="ct">널기</span><span class="cv" data-on="넓게 펼쳐서" data-off="접어서"></span></button>
+          </div>
+          <button class="btn btn-primary btn-block" id="hangBtn" type="button">▶ 젖은 빨래 널기</button>
+          <div class="trial-log" id="trialLog" aria-live="polite"></div>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

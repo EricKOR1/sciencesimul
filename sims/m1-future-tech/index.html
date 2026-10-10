@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#64748b">
+  <title>첨단 과학기술과 미래 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-toolbar { min-height: 61px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+    .tb-group { display: inline-flex; align-items: center; gap: 6px; }
+    .tb-btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; min-width: 44px;
+      border: 2px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px;
+      padding: 6px 14px; font-weight: 800; font-size: 15px; cursor: pointer; user-select: none; -webkit-user-select: none;
+      transition: transform .08s ease, background .15s, border-color .15s, opacity .15s;
+    }
+    .tb-btn:active:not([disabled]) { transform: scale(.95); }
+    .tb-btn[disabled] { opacity: .4; cursor: not-allowed; }
+    .tb-btn.primary { background: var(--subject); border-color: var(--subject); color: #fff; box-shadow: 0 3px 0 color-mix(in srgb, var(--subject) 70%, black); }
+    .tb-btn.round { padding: 0; width: 46px; font-size: 18px; }
+    @media (hover: hover) { .tb-btn:hover:not([disabled]) { border-color: #c4cfdf; } .tb-btn.primary:hover:not([disabled]) { background: color-mix(in srgb, var(--subject) 88%, black); } }
+    .day-name { min-width: 104px; text-align: center; font-weight: 800; font-size: 15px; color: var(--ink); }
+    #ctrlCard { display: flex; flex-direction: column; gap: 10px; }
+    .ctrl-title { font-weight: 800; font-size: 15px; color: var(--muted); }
+    .scene-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .scene-grid button {
+      min-height: 48px; border-radius: 14px; border: 2px solid var(--line); background: var(--surface); cursor: pointer;
+      font-weight: 800; font-size: 15px; color: var(--muted); padding: 6px 8px;
+    }
+    .scene-grid button.on { border-color: var(--subject); color: var(--ink); background: color-mix(in srgb, var(--subject) 10%, white); }
+    .ctrl-note { font-size: 13.5px; color: var(--muted); margin: 0; }
+    .mission-figure .fig-row { font-size: 38px; line-height: 1.2; }
+    @media (max-width: 599px) {
+      .stage-toolbar { min-height: 0; }
+      .day-name { min-width: 84px; font-size: 14px; }
+      .tb-btn { padding: 6px 12px; font-size: 14px; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="sci">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#g1">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">중1 · Ⅰ. 과학과 인류의 지속가능한 삶</div>
+      <h1>첨단 과학기술과 미래</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="sceneLabel">🗓️ 민지의 하루</span>
+          <span class="spacer"></span>
+          <div class="tb-group" id="dayCtrl" data-feature="day">
+            <button class="tb-btn round" id="prevBtn" type="button" aria-label="이전 장면">◀</button>
+            <span class="day-name" id="dayName" aria-live="polite">🌅 아침 1/4</span>
+            <button class="tb-btn round" id="nextBtn" type="button" aria-label="다음 장면">▶</button>
+          </div>
+          <button class="tb-btn primary" id="presentBtn" type="button" data-feature="present">🎤 발표하기</button>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="민지의 하루, 사례 조사 보드, 미래 도시 2045, 미래 신문을 차례로 보여 주는 실험 화면"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard" hidden>
+        <div class="ctrl-title">🔓 자유 탐구 · 장면 고르기</div>
+        <div class="scene-grid" id="sceneGrid">
+          <button type="button" data-scene="day">🗓️ 민지의 하루</button>
+          <button type="button" data-scene="board">🗂️ 사례 조사</button>
+          <button type="button" data-scene="city">🏙️ 미래 도시</button>
+          <button type="button" data-scene="poster">📰 미래 신문</button>
+        </div>
+        <p class="ctrl-note">네 주제의 신문을 모두 만들어 발표해 보세요.</p>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

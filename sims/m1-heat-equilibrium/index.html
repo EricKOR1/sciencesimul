@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#f26b3a">
+  <title>온도와 열평형 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌡️</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+    .stage-toolbar { min-height: 61px; flex-wrap: nowrap; }
+    .free-mode .toolbar-label { display: none; }
+    .stage-toolbar .segmented button { min-height: 40px; padding: 6px 12px; font-size: 14.5px; }
+    #resetBtn { font-size: 20px; }
+    .tgl {
+      display: inline-flex; align-items: center; gap: 6px; min-height: 44px; flex: none;
+      border: 2px solid var(--line); background: var(--surface); color: var(--muted);
+      border-radius: 999px; padding: 5px 14px; font-weight: 800; font-size: 15px; cursor: pointer;
+    }
+    .tgl[aria-pressed="true"] { color: #9a3412; border-color: #fdba74; background: #fff3ea; }
+    /* 태블릿: 가로 배치 캔버스 · 휴대폰: 세로 배치 캔버스 */
+    .sc-tall { display: none; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 14px; }
+    #ctrlCard .control { margin: 0; }
+    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn-row .btn { flex: 1 1 0; min-width: 0; min-height: 46px; }
+    .ctrl-note { font-size: 13.5px; color: var(--muted); margin: 4px 0 0; line-height: 1.45; }
+    .readout .value.hot { color: #c2410c; }
+    .readout .value.cold { color: #1d4ed8; }
+    .mission-figure svg { border-radius: 12px; }
+    @media (max-width: 599px) {
+      .sc-wide { display: none; }
+      .sc-tall { display: block; }
+      .stage-toolbar { flex-wrap: wrap; }
+      .tgl { padding: 4px 10px; font-size: 14px; }
+      .readouts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="phy">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#g1">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">중1 · Ⅲ. 열</div>
+      <h1>온도와 열평형</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="sceneLabel">🔬 20 °C 물과 80 °C 물</span>
+          <div class="segmented" id="sceneSeg" role="group" aria-label="실험 장면" hidden>
+            <button type="button" data-scene="beakers">🔬 온도와 입자</button>
+            <button type="button" data-scene="contact">🥤 열평형 실험</button>
+            <button type="button" data-scene="life">🏠 생활 속</button>
+          </div>
+          <span class="spacer"></span>
+          <button type="button" class="tgl only-contact" id="tgZoom" aria-pressed="true" data-feature="zoom">🔍 경계면 확대</button>
+          <button class="icon-btn" id="resetBtn" type="button" title="처음 상태로" aria-label="처음 상태로">↺</button>
+        </div>
+        <div class="stage-canvas sc-wide">
+          <canvas id="cvWide" aria-label="온도가 다른 물의 입자 운동, 금속 컵과 수조의 열평형 실험, 생활 속 열평형 장면"></canvas>
+          <div class="stage-hint hide" id="hintWide"></div>
+        </div>
+        <div class="stage-canvas sc-tall">
+          <canvas id="cvTall" aria-label="온도가 다른 물의 입자 운동, 금속 컵과 수조의 열평형 실험, 생활 속 열평형 장면"></canvas>
+          <div class="stage-hint hide" id="hintTall"></div>
+        </div>
+      </section>
+      <div class="readouts" id="readouts">
+        <div class="readout only-beakers"><span class="label">💧 왼쪽 비커 물</span><span class="value cold" id="rA">20<small>°C</small></span></div>
+        <div class="readout only-beakers"><span class="label">💧 오른쪽 비커 물</span><span class="value hot" id="rB">80<small>°C</small></span></div>
+        <div class="readout only-contact" data-feature="sensor"><span class="label">🔴 컵 속 물</span><span class="value hot" id="rC">80.0<small>°C</small></span></div>
+        <div class="readout only-contact" data-feature="sensor"><span class="label">🔵 수조 물</span><span class="value cold" id="rT">20.0<small>°C</small></span></div>
+        <div class="readout only-contact" data-feature="graph"><span class="label">⏱️ 지난 시간</span><span class="value" id="rTime">0.0<small>분</small></span></div>
+        <div class="readout only-contact" data-feature="eq"><span class="label">두 물의 온도 차</span><span class="value" id="rDiff">60.0<small>°C</small></span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control only-beakers" data-feature="temp">
+          <div class="control-head"><label for="sTB">🌡️ 오른쪽 비커 물의 온도</label><output id="oTB"></output></div>
+          <input type="range" id="sTB" min="0" max="100" step="1" value="80">
+          <p class="ctrl-note">온도를 바꾸며 🔍 돋보기 속 입자의 움직임을 비교해 보세요.</p>
+        </div>
+        <div class="control only-contact" data-feature="cup">
+          <div class="btn-row">
+            <button class="btn btn-primary" id="cupBtn" type="button">🥤 컵 넣기</button>
+            <button class="btn" id="againBtn" type="button">↺ 다시 실험</button>
+          </div>
+          <p class="ctrl-note">화면 속 금속 컵을 아래로 끌어 수조에 넣어도 돼요.</p>
+        </div>
+        <div class="control only-life" data-feature="life">
+          <p class="ctrl-note" style="margin:0">🖐️ 화면 속 장면 카드를 눌러 열이 어느 쪽으로 이동하는지 살펴보세요.</p>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

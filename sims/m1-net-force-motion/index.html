@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#f26b3a">
+  <title>힘과 운동 상태 변화 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏒</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+    .stage-toolbar { min-height: 61px; flex-wrap: nowrap; }
+    #resetBtn { font-size: 20px; }
+    .tgl {
+      display: inline-flex; align-items: center; gap: 6px; min-height: 44px; flex: none;
+      border: 2px solid var(--line); background: var(--surface); color: var(--muted);
+      border-radius: 999px; padding: 5px 14px; font-weight: 800; font-size: 15px; cursor: pointer;
+    }
+    .tgl[aria-pressed="true"] { color: #5b21b6; border-color: #c4b5fd; background: #f3efff; }
+    .stage-canvas .stage-hint { top: 10px; bottom: auto; }
+
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    .grp { display: flex; flex-direction: column; gap: 10px; }
+    .grp-title { font-weight: 800; font-size: 15.5px; display: flex; align-items: center; gap: 6px; }
+    .ctrl-note { font-size: 13.5px; color: var(--muted); margin: 0; line-height: 1.45; }
+    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn-row .btn { flex: 1 1 0; min-width: 0; min-height: 48px; }
+    .btn-run { font-size: 17px; }
+
+    /* 힘의 방향 모드 · 실험 고르기 */
+    .mode-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .mode-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .mode-btn {
+      min-height: 48px; border: 2px solid var(--line); border-radius: 12px; background: #fff; cursor: pointer;
+      font-weight: 800; font-size: 14.5px; color: #334155; padding: 6px 8px; line-height: 1.2;
+      display: flex; align-items: center; justify-content: center; gap: 4px; text-align: center;
+      transition: border-color .15s, background .15s, transform .08s;
+    }
+    .mode-btn:active { transform: scale(.97); }
+    .mode-btn.on { border-color: #8b5cf6; background: #f3efff; color: #4c1d95; box-shadow: 0 0 0 3px rgba(139,92,246,.18); }
+    .mode-btn .ok { color: var(--good); font-weight: 900; }
+    .mode-btn[disabled] { opacity: .5; cursor: not-allowed; }
+
+    /* 결과 표 (가로로 납작하게) */
+    .data-card { flex: none; padding: 6px 12px; display: flex; align-items: center; gap: 12px; }
+    .data-head { flex: none; display: flex; flex-direction: column; gap: 2px; font-size: 14.5px; line-height: 1.25; }
+    .data-head .n { font-size: 12.5px; color: var(--muted); font-weight: 700; }
+    .data-scroll { flex: 1; min-width: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .res-table { border-collapse: collapse; font-size: 13.5px; width: 100%; }
+    .res-table th { text-align: left; white-space: nowrap; padding: 1px 8px 1px 2px; color: var(--muted); font-weight: 800; font-size: 12.5px; }
+    .res-table td { text-align: center; padding: 1px 4px; border-left: 1px solid var(--line); font-weight: 800; white-space: nowrap; min-width: 92px; height: 22px; }
+    .res-table tr.hd td { font-size: 12.5px; color: #4c1d95; }
+    .res-table td.empty { color: #c3ccd9; font-weight: 600; }
+    .res-table td.fresh { background: #fff4dc; }
+    .res-table .up { color: #c2410c; } .res-table .down { color: #1d4ed8; } .res-table .same { color: #475569; } .res-table .turn { color: #7c3aed; }
+    .res-table svg { display: block; margin: 0 auto; }
+
+    @media (max-width: 1100px) { .toolbar-label { font-size: 14px; } }
+    @media (max-width: 599px) {
+      .data-card { flex-direction: column; align-items: stretch; gap: 4px; }
+      .data-head { flex-direction: row; gap: 8px; align-items: baseline; }
+      .tgl { padding: 4px 10px; font-size: 14px; }
+      .res-table td { min-width: 78px; }
+      .readouts { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .readout .label { font-size: 11.5px; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="phy">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#g1">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">중1 · Ⅴ. 힘의 작용</div>
+      <h1>힘과 운동 상태 변화</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="sceneLabel">🏒 위에서 본 얼음판</span>
+          <span class="spacer"></span>
+          <button type="button" class="tgl" id="tgStrobe" aria-pressed="true" data-feature="strobe">📸 다중 섬광</button>
+          <button class="icon-btn" id="resetBtn" type="button" title="처음 상태로" aria-label="처음 상태로">↺</button>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="위에서 본 얼음판 위의 퍽에 작용하는 힘과 운동 상태의 변화를 보여 주는 실험 화면"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="rL1">속력</span><span class="value" id="rV1">0.0<small>m/s</small></span></div>
+        <div class="readout"><span class="label" id="rL2">처음 방향에서 돌아간 각도</span><span class="value" id="rV2">0<small>°</small></span></div>
+        <div class="readout"><span class="label" id="rL3">알짜힘</span><span class="value" id="rV3">0<small>N</small></span></div>
+      </div>
+      <section class="card data-card" id="resultCard" hidden>
+        <div class="data-head"><b>📋 결과 표</b><span class="n" id="resN">기록 0 / 4</span><span class="n">자동 기록</span></div>
+        <div class="data-scroll">
+          <table class="res-table"><tbody id="resBody"></tbody></table>
+        </div>
+      </section>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="grp" id="grpFree" hidden>
+          <div class="grp-title">🔓 자유 탐구: 실험 고르기</div>
+          <div class="mode-grid three" id="freeGrid">
+            <button type="button" class="mode-btn" data-free="hands">👐 두 손</button>
+            <button type="button" class="mode-btn" data-free="zone">💨 힘 구역</button>
+            <button type="button" class="mode-btn" data-free="two">↔️ 두 힘</button>
+            <button type="button" class="mode-btn" data-free="toss">⚾ 던진 공</button>
+            <button type="button" class="mode-btn" data-free="roll">🏐 구르는 공</button>
+            <button type="button" class="mode-btn" data-free="park">🎡 놀이공원</button>
+          </div>
+        </div>
+        <div class="grp" id="grpHands" hidden>
+          <div class="grp-title">👐 양쪽에서 당기기</div>
+          <p class="ctrl-note">화면 속 <b>손</b>을 바깥쪽으로 끌면 당기는 힘이 커져요 (0~6 N, 1 N 단위).</p>
+          <div class="btn-row">
+            <button class="btn btn-primary btn-run" id="releaseBtn" type="button">▶ 놓기</button>
+          </div>
+        </div>
+        <div class="grp" id="grpZone" hidden>
+          <div class="grp-title">🔀 힘 구역에서 작용하는 힘</div>
+          <div class="mode-grid" id="modeGrid">
+            <button type="button" class="mode-btn" data-mode="1">① → 같은 방향</button>
+            <button type="button" class="mode-btn" data-mode="2">② ← 반대 방향</button>
+            <button type="button" class="mode-btn" data-mode="3">③ 🪢 줄과 기둥</button>
+            <button type="button" class="mode-btn" data-mode="4">④ ↗ 비스듬히</button>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-primary btn-run" id="goBtn" type="button">▶ 출발</button>
+          </div>
+        </div>
+        <div class="grp" id="grpTwo" hidden>
+          <div class="grp-title">↔️ 움직이는 퍽에 두 힘 걸기</div>
+          <p class="ctrl-note">앞쪽 손과 뒤쪽 손을 끌어 두 힘의 크기를 정해요. 퍽은 처음에 오른쪽으로 1.0 m/s로 움직여요.</p>
+          <div class="btn-row">
+            <button class="btn btn-primary btn-run" id="runBtn" type="button">▶ 실행</button>
+          </div>
+        </div>
+        <div class="grp" id="grpSide" hidden>
+          <div class="grp-title" id="sideTitle">⚾ 옆에서 본 장면</div>
+          <p class="ctrl-note" id="sideNote">공기 저항은 생각하지 않아요.</p>
+          <div class="btn-row">
+            <button class="btn btn-run" id="replayBtn" type="button">↺ 처음부터 다시 보기</button>
+          </div>
+        </div>
+        <div class="grp" id="grpPark" hidden>
+          <div class="grp-title">🎡 놀이 기구 조사·분류</div>
+          <p class="ctrl-note" id="parkNote">카드를 <b>누르면</b> 조사 창에서 움직임을 보여 줘요. 카드를 알맞은 통으로 <b>끌어다 놓아</b> 분류해요.</p>
+          <div class="btn-row">
+            <button class="btn" id="parkResetBtn" type="button">🃏 다시 분류하기</button>
+            <button class="btn btn-primary" id="posterBtn" type="button" hidden>📸 포스터 저장</button>
+          </div>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>
