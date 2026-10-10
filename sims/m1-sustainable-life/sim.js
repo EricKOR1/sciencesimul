@@ -495,6 +495,7 @@
   /* 장면(view) 전환: 'meters' 지구 계기판 · 'power' 마을 전기 · 'cards' 마을 + 실천 카드 · 'plan' 실천 계획 */
   function goView(name, instant) {
     if (!TARGETS[LAY.kind][name]) return;
+    if (S.run && name !== S.view) { S.run = null; S.dots.length = 0; }
     S.view = name;
     const T = TARGETS[LAY.kind][name];
     for (const k in T) {
@@ -1565,7 +1566,6 @@
     ctx.strokeStyle = 'rgba(100,116,139,.2)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(P.x, P.y + P.h); ctx.lineTo(P.x + P.w, P.y + P.h); ctx.stroke();
     // 목표선: 1 kWh
     D.dashedLine(P.x, Y(1), P.x + P.w, Y(1), { color: '#14a058', width: 2, dash: [6, 4] });
-    txt('목표 1 kWh 이하', P.x + 2, Y(1) - 8, f(10.5, 800), '#0b7a41', 'left');
     const last3 = S.runs.slice(-3), bw = Math.min(54, P.w / 4.2), gap = (P.w - bw * 3) / 4, base = S.runs.length - last3.length;
     for (let k = 0; k < 3; k++) {
       const bx = P.x + gap * (k + 1) + bw * k, rec = last3[k];
@@ -1581,6 +1581,7 @@
       const icons = '👤'.repeat(rec.indiv) + '🏛️'.repeat(rec.social);
       txt(icons || '카드 없음', bx + bw / 2, P.y + P.h + (tall ? 34 : 32), f(rec.indiv + rec.social ? 12 : 10.5, 700), icons ? COL.ink : '#94a3b8');
     }
+    D.text(P.x + 2, Y(1) - 7, '목표 1 kWh 이하', { size: 10.5, weight: 800, color: '#0b7a41', align: 'left', stroke: '#fff', strokeWidth: 4 });
     ctx.restore();
   }
 
@@ -1750,11 +1751,11 @@
         tray: { x: 22, y: 466, w: 454, h: 114 }, card: { w: 142, h: 86 }, home: (k) => ({ x: 30 + k * 148, y: 490 }),
       };
     }
-    const sh = { x: 6, y: 6, w: 468, h: 500 };
+    const sh = { x: 6, y: 6, w: 468, h: 518 };
     return {
-      sheet: sh, tree: { x: 6, y: 512, w: 468, h: 302 }, head: { y: sh.y + 28 },
-      row: (i) => { const y = 54 + i * 98; return { x: sh.x + 8, y, w: sh.w - 16, label: { x: sh.x + 18, y: y + 10 }, slot: { x: sh.x + 18, y: y + 24, w: sh.w - 36, h: 44 }, ask: { x: sh.x + 20, y: y + 82 }, chips: [0, 1, 2].map((k) => ({ x: sh.x + 74 + k * 130, y: y + 70, w: 122, h: 24 })) }; },
-      tray: { x: 12, y: 356, w: 456, h: 144 }, card: { w: 144, h: 100 }, home: (k) => ({ x: 20 + k * 150, y: 392 }),
+      sheet: sh, tree: { x: 6, y: 530, w: 468, h: 284 }, head: { y: sh.y + 28 },
+      row: (i) => { const y = 70 + i * 100; return { x: sh.x + 8, y, w: sh.w - 16, label: { x: sh.x + 18, y: y + 10 }, slot: { x: sh.x + 18, y: y + 24, w: sh.w - 36, h: 44 }, ask: { x: sh.x + 20, y: y + 82 }, chips: [0, 1, 2].map((k) => ({ x: sh.x + 74 + k * 130, y: y + 70, w: 122, h: 24 })) }; },
+      tray: { x: 12, y: 372, w: 456, h: 144 }, card: { w: 144, h: 100 }, home: (k) => ({ x: 20 + k * 150, y: 406 }),
     };
   }
   const PAN_PLAN_RECT = () => ({ x: 0, y: 0, w: LAY.W, h: LAY.H });
@@ -2122,7 +2123,7 @@
     E.title.textContent = yrOn ? '⏩ 시간을 앞으로 보내 봐요' : runOn ? '🔬 하루 전기 실험' : saveOn ? '📝 계획표 완성!' : '';
     let note = '';
     if (yrOn) note = S.year >= 2075 ? '바닥난 탱크를 눌러 확인해 봐요' : '지금 ' + S.year + '년 · 버튼을 누를 때마다 10년이 지나요';
-    else if (runOn) note = running ? '태양이 뜨고 지는 하루가 지나가고 있어요' : v === 'cards' ? '카드를 켜고 꺼 보며 하루를 돌려 비교해요' : has('build') ? '지붕·언덕·창고 부지를 눌러 설치해요 (다시 누르면 철거)' : '';
+    else if (runOn) note = running ? '태양이 뜨고 지는 하루가 지나가고 있어요' : v === 'cards' ? '카드를 켜고 꺼 보며 하루를 돌려 비교해요' : (has('build') && !(level() >= 2 && !free)) ? '지붕·언덕·창고 부지를 눌러 설치해요 (다시 누르면 철거)' : '설치한 기술로 하루를 돌려 볼 수 있어요';
     else if (saveOn) note = '그림 파일로 저장해 일주일 동안 실천하고 기록해 보세요';
     E.note.textContent = note; E.note.hidden = !note;
     const lab = S.sortOn ? VIEW_LABEL.sort : VIEW_LABEL[v === 'power' && has('actions') && freeMode() ? 'cards' : v];

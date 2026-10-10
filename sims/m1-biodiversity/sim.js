@@ -35,9 +35,9 @@
   }
 
   /* =========================================================
-     무대: 태블릿 = 가로형 800×640, 휴대폰 = 세로형 460×800
+     무대: 태블릿 = 가로형 800×640, 휴대폰 = 세로형 460×860
      ========================================================= */
-  const LAYOUTS = { wide: { w: 800, h: 640 }, tall: { w: 460, h: 800 } };
+  const LAYOUTS = { wide: { w: 800, h: 640 }, tall: { w: 460, h: 860 } };
   const BG = '#eef4ef';
   const mq = window.matchMedia ? window.matchMedia('(max-width: 599px)') : null;
   let view = null, ctx = null, D = null, W = 800, H = 640, TALL = false, KIND = '';
@@ -392,7 +392,7 @@
     {
       key: 'simple', title: '🌿 단순한 생태계', sub: '종 4가지', sp: ['grass', 'hopper', 'frog', 'snake'],
       diet: { hopper: { grass: 1 }, frog: { hopper: 1 }, snake: { frog: 1 } },
-      pos: { grass: [0.13, 0.7], hopper: [0.38, 0.34], frog: [0.62, 0.7], snake: [0.87, 0.34] }, bg: ['#e8f6e2', '#d3ecc8'],
+      pos: { grass: [0.13, 0.7], hopper: [0.38, 0.34], frog: [0.62, 0.7], snake: [0.87, 0.34] }, posT: { grass: [0.13, 0.62], hopper: [0.38, 0.3], frog: [0.62, 0.62], snake: [0.87, 0.3] }, bg: ['#e8f6e2', '#d3ecc8'],
     },
     {
       key: 'complex', title: '🌳 복잡한 생태계', sub: '종 10가지', sp: ['grass', 'tree', 'hopper', 'rabbit', 'mouse', 'sparrow', 'frog', 'snake', 'fox', 'hawk'],
@@ -497,21 +497,21 @@
     return {
       web: {
         eco: [
-          { net: { x: 8, y: 44, w: 444, h: 150 }, bars: { x: 8, y: 198, w: 444, h: 92 }, stats: { x: 8, y: 294, w: 444, h: 34 } },
-          { net: { x: 8, y: 334, w: 444, h: 232 }, bars: { x: 8, y: 570, w: 444, h: 104 }, stats: { x: 8, y: 678, w: 444, h: 34 } },
+          { net: { x: 8, y: 44, w: 444, h: 150 }, bars: { x: 8, y: 198, w: 444, h: 100 }, stats: { x: 8, y: 302, w: 444, h: 32 } },
+          { net: { x: 8, y: 340, w: 444, h: 232 }, bars: { x: 8, y: 576, w: 444, h: 110 }, stats: { x: 8, y: 690, w: 444, h: 32 } },
         ],
-        cap: { x: 8, y: 720, w: 444, h: 72 }, hint: { x: 230, y: 24, maxW: 430 },
+        cap: { x: 8, y: 728, w: 444, h: 124 }, hint: { x: 230, y: 24, maxW: 430 },
       },
       panels: {
-        p: [0, 1, 2, 3, 4].map((i) => ({ x: 8, y: 44 + i * 101, w: 444, h: 96 })), vertical: false,
-        tray: [0, 1, 2, 3, 4].map((i) => ({ x: 8 + (i % 2) * 226, y: 554 + Math.floor(i / 2) * 48, w: 218, h: 44 })),
-        cap: { x: 8, y: 704, w: 444, h: 88 }, hint: { x: 230, y: 24, maxW: 430 },
+        p: [0, 1, 2, 3, 4].map((i) => ({ x: 8, y: 44 + i * 108, w: 444, h: 104 })), vertical: false,
+        tray: [0, 1, 2, 3, 4].map((i) => ({ x: 8 + (i % 2) * 226, y: 604 + Math.floor(i / 2) * 48, w: 218, h: 44 })),
+        cap: { x: 8, y: 750, w: 444, h: 102 }, hint: { x: 230, y: 24, maxW: 430 },
       },
       act: {
-        box: [{ x: 8, y: 44, w: 444, h: 190 }, { x: 8, y: 242, w: 444, h: 190 }],
-        tray: (i) => ({ x: 8 + (i % 2) * 226, y: 464 + Math.floor(i / 2) * 56, w: 218, h: 50 }), trayLabelY: 454,
-        cap: { x: 8, y: 694, w: 444, h: 98 }, hint: { x: 230, y: 24, maxW: 430 },
-        pl: { list: { x: 8, y: 44, w: 444, h: 292 }, card: { x: 8, y: 344, w: 444, h: 300 }, cap: { x: 8, y: 652, w: 444, h: 140 } },
+        box: [{ x: 8, y: 44, w: 444, h: 216 }, { x: 8, y: 268, w: 444, h: 216 }],
+        tray: (i) => ({ x: 8 + (i % 2) * 226, y: 510 + Math.floor(i / 2) * 58, w: 218, h: 52 }), trayLabelY: 502,
+        cap: { x: 8, y: 746, w: 444, h: 106 }, hint: { x: 230, y: 24, maxW: 430 },
+        pl: { list: { x: 8, y: 44, w: 444, h: 340 }, card: { x: 8, y: 392, w: 444, h: 318 }, cap: { x: 8, y: 718, w: 444, h: 134 } },
       },
     };
   }
@@ -638,8 +638,8 @@
   function drawBars(E, ei, t) {
     const R = LAY.web.eco[ei].bars;
     panel(R.x, R.y, R.w, R.h, { bg: '#fff', border: '#e2e8f0', r: 16 });
-    txt('개체 수 (처음 = 100)', R.x + 12, R.y + 20, { size: 13, weight: 800, color: '#64748b' });
-    const x0 = R.x + 12, x1 = R.x + R.w - 12, yb = R.y + R.h - 26, yt = R.y + 34, slot = (x1 - x0) / E.n, bw = Math.min(TALL ? 30 : 34, slot * 0.72), u = (yb - yt) / 1.5;
+    txt('개체 수 (처음 = 100)', R.x + 12, R.y + (TALL ? 17 : 20), { size: 13, weight: 800, color: '#64748b' });
+    const x0 = R.x + 12, x1 = R.x + R.w - 12, yb = R.y + R.h - 26, yt = R.y + (TALL ? 26 : 34), slot = (x1 - x0) / E.n, bw = Math.min(TALL ? 30 : 34, slot * 0.72), u = (yb - yt) / 1.5;
     ctx.strokeStyle = '#e8edf3'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x0, yb); ctx.lineTo(x1, yb); ctx.stroke();
     ctx.save(); ctx.strokeStyle = '#94a3b8'; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.moveTo(x0, yb - u); ctx.lineTo(x1, yb - u); ctx.stroke(); ctx.restore();
     for (let i = 0; i < E.n; i++) {
@@ -730,7 +730,7 @@
   function panelParts(i) {
     const p = panelRect(i);
     if (LAY.panels.vertical) return { scene: { x: p.x + 4, y: p.y + 4, w: p.w - 8, h: 116 }, gauge: { x: p.x + 10, y: p.y + 128, w: p.w - 20, h: 20 }, text: { x: p.x + 10, y: p.y + 162, w: p.w - 20 }, slot: { x: p.x + 7, y: p.y + p.h - 46, w: p.w - 14, h: 38 }, lh: 17.5, fs: 13.5 };
-    return { scene: { x: p.x + 4, y: p.y + 4, w: 136, h: p.h - 8 }, gauge: { x: p.x + 150, y: p.y + 8, w: p.w - 158, h: 18 }, text: { x: p.x + 150, y: p.y + 40, w: p.w - 160 }, slot: { x: p.x + 148, y: p.y + p.h - 34, w: p.w - 156, h: 28 }, lh: 16, fs: 13 };
+    return { scene: { x: p.x + 4, y: p.y + 4, w: 136, h: p.h - 8 }, gauge: { x: p.x + 150, y: p.y + 6, w: p.w - 158, h: 18 }, text: { x: p.x + 150, y: p.y + 38, w: p.w - 160 }, slot: { x: p.x + 148, y: p.y + p.h - 32, w: p.w - 156, h: 28 }, lh: 15.5, fs: 13 };
   }
   const thrOf = (P) => (PM.mode === 'fix' ? 1 : P.thr), fixOf = (P) => (PM.mode === 'fix' ? P.fix : 0);
   const popOf = (P) => 1 - 0.72 * thrOf(P) * (1 - 0.93 * fixOf(P));
@@ -816,7 +816,7 @@
     txt(Math.round(pop * 100) + '%', g.x + g.w, g.y + g.h / 2 + 1, { size: 13.5, weight: 800, color: shade(col, -0.2), align: 'right', base: 'middle' });
     // 이야기
     const showFix = PM.mode === 'fix' && P.fixed, body = showFix ? plain(th.fixHow) : th.story, tcol = showFix ? '#166534' : '#334155';
-    const tmax = vert ? 6 : 2, ls = lines(body, pt.text.w, pt.fs, 800).slice(0, tmax);
+    const tmax = vert ? 6 : 3, ls = lines(body, pt.text.w, pt.fs, 800).slice(0, tmax);
     ls.forEach((ln, k) => txt(ln + (k === tmax - 1 && lines(body, pt.text.w, pt.fs, 800).length > tmax ? '…' : ''), pt.text.x, pt.text.y + k * pt.lh + (vert ? 4 : 0), { size: pt.fs, weight: 800, color: tcol }));
     // 카드 칸
     const s = pt.slot, assigned = pcards().some((c) => c.panel === i);
@@ -893,7 +893,7 @@
   const PL = { sel: [false, false, false, false, false], grow: 0, doneT: -9, flyT0: 0 };
   const plCount = () => PL.sel.filter(Boolean).length;
   function actSlot(bi, idx, n) {
-    const B = LAY.act.box[bi], ix = B.x + 8, iy = B.y + (TALL ? 50 : 62), iw = B.w - 16, ih = B.h - (TALL ? 58 : 70), cols = 2, rows = Math.max(1, Math.ceil(n / cols)), gw = 6;
+    const B = LAY.act.box[bi], ix = B.x + 8, iy = B.y + (TALL ? 60 : 62), iw = B.w - 16, ih = B.h - (TALL ? 68 : 70), cols = 2, rows = Math.max(1, Math.ceil(n / cols)), gw = 6;
     const w = (iw - gw) / cols, h = Math.min(TALL ? 56 : 70, (ih - (rows - 1) * gw) / rows);
     return { x: ix + (idx % cols) * (w + gw), y: iy + Math.floor(idx / cols) * (h + gw), w, h };
   }
@@ -930,6 +930,22 @@
     while (ls.length * (fs + 4) > h - 6 && fs > 13) { fs -= 0.5; ls = lines(a.text, mw, fs, 800); }
     ls.forEach((ln, i) => txt(ln, tx, h / 2 + (i - (ls.length - 1) / 2) * (fs + 4) + 1, { size: fs, weight: 800, color: '#1e293b', base: 'middle' }));
   }
+  function drawActSummary() {                       // 분류가 끝나면 빈 자리에 두 상자의 뜻을 보여 줘요
+    const el = now() - ACT.doneT, L = LAY.act, y0 = L.tray(0).y - 4, y1 = TALL ? L.cap.y - 8 : L.cap.y - 14;
+    const msgs = ['일상의 작은 습관이 모이면 쓰레기와 외래종, 온실가스를 줄일 수 있어요.', '법과 제도, 국제 협약, 보호 구역과 복원 사업처럼 큰 규모로 생물다양성을 지켜요.'];
+    for (let i = 0; i < 2; i++) {
+      const B = L.box[i], K = SIDE[i], u = EASE.outCubic(clamp((el - 0.3 - i * 0.2) / 0.55, 0, 1)); if (u <= 0.01) continue;
+      const hh = TALL ? (y1 - y0 - 8) / 2 : y1 - y0, r = { x: B.x, y: TALL ? y0 + i * (hh + 8) : y0, w: B.w, h: hh };
+      ctx.save(); ctx.globalAlpha = u; ctx.translate(0, (1 - u) * 14);
+      dropShadow(r.x, r.y, r.w, r.h, 16, 8, 2, 'rgba(30,60,40,.14)');
+      rr(r.x, r.y, r.w, r.h, 16); ctx.fillStyle = 'rgba(255,255,255,.88)'; ctx.fill(); rr(r.x, r.y, r.w, r.h, 16); ctx.strokeStyle = rgba(K.color, 0.55); ctx.lineWidth = 2; ctx.stroke();
+      const ex = r.x + (TALL ? 34 : 44), ey = r.y + r.h / 2;
+      ctx.beginPath(); ctx.arc(ex, ey, TALL ? 24 : 30, 0, TAU); ctx.fillStyle = K.soft; ctx.fill();
+      emo(ctx, i ? '🏛️' : '🙋', ex, ey + 1, TALL ? 26 : 34, { alpha: 1 });
+      para(msgs[i], r.x + (TALL ? 70 : 90), r.y + (TALL ? 22 : r.h / 2 - 22), r.w - (TALL ? 82 : 106), { size: TALL ? 14 : 16, weight: 800, color: '#1e293b', lh: TALL ? 20 : 24 });
+      ctx.restore();
+    }
+  }
   function drawActSort(t) {
     const L = LAY.act, hot = (() => { const d = S.drag; if (!d || d.set !== 'act' || d.px == null) return -1; return actBoxAt({ x: d.px, y: d.py }); })();
     for (let i = 0; i < 2; i++) {
@@ -943,6 +959,7 @@
       ctx.restore();
     }
     if (!ACT.done && ACT.cards.some((c) => c.box < 0)) txt('🃏 실천 카드 (끌어서 상자에 넣어요)', TALL ? 12 : 18, L.trayLabelY - 2, { size: 13.5, weight: 800, color: '#64748b' });
+    if (ACT.done) drawActSummary();
     const dragCd = S.drag && S.drag.set === 'act' ? S.drag.card : null;
     const draw1 = (cd) => cardFrame(cd, t, cd.box >= 0 ? SIDE[cd.box].color : '#94a3b8', (w, h) => actFace(cd, w, h), { r: 12 });
     ACT.cards.forEach((cd) => { if (cd !== dragCd) draw1(cd); });
@@ -952,7 +969,7 @@
     const fs = TALL ? 13.5 : 15.5, lh = TALL ? 19 : 22, tx = C.x + 16, mw = C.w - 32;
     if (ACT.selBox != null) { const K = SIDE[ACT.selBox]; pill(K.name, tx, C.y + 22, { size: 14, align: 'left', bg: K.color, pad: 11, h: 26 }); para(ACT.selBox ? '법·제도 만들기, 국제 협약, 보호 구역 지정, 복원 사업처럼 나라와 여러 사람이 함께 하는 일이에요. 큰 규모로 생물다양성을 지켜요.' : '일회용품 줄이기, 분리배출, 외래 생물 함부로 버리지 않기처럼 내가 날마다 실천할 수 있는 일이에요. 작은 실천이 모이면 큰 힘이 돼요.', tx, C.y + 52, mw, { size: fs, weight: 800, color: '#1e293b', lh }); }
     else if (ACT.sel != null && !ACT.done) { const a = ACTS[ACT.sel]; pill(a.icon + ' ' + a.text, tx, C.y + 22, { size: 13.5, align: 'left', bg: '#334155', pad: 11, h: 26 }); para('이 일은 누가 하는 일일까요? 혼자 일상에서 할 수 있는 일이면 개인, 나라나 여러 사람이 함께 해야 하면 사회예요.', tx, C.y + 52, mw, { size: fs, weight: 800, color: '#475569', lh }); }
-    else if (ACT.done) para('🎉 개인과 사회의 실천을 모두 알맞게 분류했어요! 개인의 작은 실천과 사회의 큰 노력이 함께할 때 생물다양성을 잘 지킬 수 있어요. 상자를 누르면 설명이 나와요.', tx, C.y + (TALL ? 26 : 30), mw, { size: fs, weight: 800, color: '#166534', lh });
+    else if (ACT.done) para('🎉 모두 알맞게 분류했어요! 개인의 작은 실천과 사회의 큰 노력이 함께할 때 생물다양성을 잘 지킬 수 있어요. 상자를 누르면 설명이 나와요.', tx, C.y + (TALL ? 26 : 30), mw, { size: fs, weight: 800, color: '#166534', lh });
     else if (ACT.msg && now() - ACT.msgT < 12) para('🤔 ' + ACT.msg, tx, C.y + (TALL ? 26 : 30), mw, { size: fs, weight: 800, color: '#b91c1c', lh });
     else para('생물다양성을 지키는 방법 8가지를 \'개인의 실천\'과 \'사회의 실천\' 상자로 나눠 봐요. 카드를 누르면 힌트가 나와요.', tx, C.y + (TALL ? 26 : 30), mw, { size: fs, weight: 800, color: '#475569', lh });
     if (isNew('act')) { const a = L.box[0], b = L.box[1]; newRing({ x: a.x, y: a.y, w: b.x + b.w - a.x, h: Math.max(a.y + a.h, b.y + b.h) - a.y }, 18); }
@@ -1003,14 +1020,14 @@
     rr(C.x, C.y, C.w, C.h, 20); ctx.strokeStyle = n >= 2 ? '#22c55e' : '#cfe5c6'; ctx.lineWidth = n >= 2 ? 3 : 2; ctx.stroke();
     ctx.save(); rr(C.x, C.y, C.w, C.h, 20); ctx.clip();
     ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.beginPath(); ctx.arc(C.x + C.w * 0.85, C.y + 30, 34, 0, TAU); ctx.fill();
-    drawPlant(C.x + C.w / 2, C.y + C.h - (TALL ? 74 : 80), C.h - (TALL ? 130 : 140), n, t);
+    drawPlant(C.x + C.w / 2, C.y + C.h - (TALL ? 88 : 82), C.h - (TALL ? 148 : 144), n, t);
     // 찾아오는 생물들
     const guests = ['🦋', '🐝', '🐞', '🐦'];
     guests.forEach((g, k) => { if (n < k + 2) return; const u = RM ? 0.3 : (t * 0.22 + k * 0.27) % 1, gx = C.x + C.w * (0.2 + 0.6 * ((k * 0.37 + u) % 1)), gy = C.y + C.h * 0.28 + Math.sin(t * 1.7 + k * 2) * 12 + k * 12, a = clamp(n - k - 1, 0, 1); emo(ctx, g, gx, gy, 22, { alpha: a, flip: Math.cos(t * 1.7 + k * 2) < 0 }); });
     ctx.restore();
     txt('나의 생물다양성 실천 다짐', C.x + C.w / 2, C.y + 28, { size: TALL ? 15 : 16.5, weight: 800, color: '#166534', align: 'center' });
     const picked = PLEDGES.filter((p, i) => PL.sel[i]);
-    picked.slice(0, 5).forEach((p, i) => txt('✓ ' + p.text, C.x + 18, C.y + C.h - 54 + i * 17 - Math.max(0, picked.length - 2) * 17 + 14, { size: 13, weight: 800, color: '#166534', max: C.w - 36, min: 10.5 }));
+    picked.slice(0, 3).forEach((p, i) => txt(i === 2 && picked.length > 3 ? '✓ … 외 ' + (picked.length - 2) + '가지' : '✓ ' + p.text, C.x + 18, C.y + C.h - 52 + i * 17, { size: 13, weight: 800, color: '#166534', max: C.w - 36, min: 13 }));
     if (n >= 2) { const u = EASE.outBack(clamp((now() - PL.doneT) / 0.6, 0, 1)); ctx.save(); ctx.translate(C.x + C.w - 14, C.y + 62); ctx.scale(u, u); ctx.rotate(-0.08); pill('🌱 다짐 완성!', 0, 0, { size: 14, align: 'right', bg: '#16a34a', pad: 12, h: 30, shadow: true }); ctx.restore(); }
     else txt('2가지 이상 골라요 (' + n + '/2)', C.x + C.w / 2, C.y + 52, { size: 13.5, weight: 800, color: '#64748b', align: 'center' });
     const Cp = L.cap; panel(Cp.x, Cp.y, Cp.w, Cp.h, { bg: '#fff', border: n >= 2 ? '#86efac' : '#e2e8f0', bw: n >= 2 ? 2 : 1.5 });

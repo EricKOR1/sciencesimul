@@ -602,7 +602,7 @@
       const a = px(T - 3), b = px(T);
       ctx.fillStyle = 'rgba(94,234,212,.28)'; roundRect(ctx, a, y - h / 2 + 2, Math.max(2, b - a), h - 4, (h - 4) / 2); ctx.fill();
     }
-    ctx.fillStyle = 'rgba(214,228,255,.85)'; ctx.font = fnt(L, 12.5, 'bold'); ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(214,228,255,.85)'; ctx.font = fnt(L, 13, 'bold'); ctx.textAlign = 'center';
     for (let hh = 0; hh <= 12; hh++) {
       const xx = px(T_MIN + hh);
       ctx.strokeStyle = 'rgba(214,228,255,' + (hh % 3 === 0 ? 0.7 : 0.35) + ')'; ctx.lineWidth = 1.2;
@@ -631,7 +631,7 @@
       ctx.fillStyle = '#d6e4ff'; ctx.font = fnt(L, 13.5, 'bold'); ctx.textAlign = 'left';
       ctx.fillText('🌙 서울의 밤 시간표 (1월 중순)', G.lx, G.ly - 24 * fs);
       drawTimeline(ctx, L, G.lx, G.ly + 4 * fs, G.lw, G.lh, T);
-      ctx.fillStyle = 'rgba(94,234,212,.9)'; ctx.font = fnt(L, 12.5, 'bold');
+      ctx.fillStyle = 'rgba(94,234,212,.9)'; ctx.font = fnt(L, 13, 'bold');
       if (L.col) { ctx.textAlign = 'right'; ctx.fillText('청록색 띠 = 지난 3시간 (별의 자취)', G.lx + G.lw, G.ly - 24 * fs); }
       else { ctx.textAlign = 'left'; ctx.fillText('청록색 띠 = 지난 3시간 (별의 자취)', G.lx, G.ly + 62 * fs); }
     }
@@ -788,7 +788,7 @@
     bg.addColorStop(0, 'rgba(94,234,212,.04)'); bg.addColorStop(0.8, 'rgba(94,234,212,.12)'); bg.addColorStop(1, 'rgba(94,234,212,.2)');
     ctx.fillStyle = bg; circle(ctx, cx, cy, PG.rad); ctx.fill();
     ctx.strokeStyle = pc.snap ? '#34d399' : 'rgba(150,240,225,.8)'; ctx.lineWidth = 2.2; circle(ctx, cx, cy, PG.rad); ctx.stroke();
-    ctx.strokeStyle = 'rgba(190,250,240,.75)'; ctx.fillStyle = 'rgba(206,252,244,.9)'; ctx.font = fnt(L, 10.5, 'bold'); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.strokeStyle = 'rgba(190,250,240,.75)'; ctx.fillStyle = 'rgba(206,252,244,.9)'; ctx.font = fnt(L, 12, 'bold'); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     for (let a = 0; a < 360; a += 10) {
       const big = a % 30 === 0, c = Math.cos(-a * DEG), s2 = Math.sin(-a * DEG);
       ctx.lineWidth = big ? 1.6 : 1;
@@ -809,7 +809,7 @@
       ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(hx, hy); ctx.stroke();
       ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.5)'; ctx.shadowBlur = 8; ctx.shadowOffsetY = 3;
       ctx.fillStyle = i ? '#fde68a' : '#7dd3fc'; circle(ctx, hx, hy, PG.hr * (arm.grab ? 1.2 : 1)); ctx.fill(); ctx.restore();
-      ctx.fillStyle = '#0b1d3a'; ctx.font = fnt(L, 12, 'bold'); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(i ? '②' : '①', hx, hy + 0.5); ctx.textBaseline = 'alphabetic';
+      ctx.fillStyle = '#0b1d3a'; ctx.font = fnt(L, 13, 'bold'); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(i ? '②' : '①', hx, hy + 0.5); ctx.textBaseline = 'alphabetic';
       if (!S.armTouched && pc.snap) { ctx.strokeStyle = 'rgba(253,230,138,' + (0.3 + 0.6 * pulse()) + ')'; ctx.lineWidth = 2.4; circle(ctx, hx, hy, PG.hr + 5 + 3 * pulse()); ctx.stroke(); }
     });
     // 중심 표시
@@ -943,7 +943,7 @@
           ctx.strokeStyle = 'rgba(160,190,255,.25)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x0 + 16, y0 + 268); ctx.lineTo(x0 + Pn.w - 16, y0 + 268); ctx.stroke();
           ctx.fillStyle = '#9fb3e0'; ctx.font = fnt(L, 13, 'bold'); ctx.fillText('각도기로 잰 각', cx, y0 + 294);
           ctx.fillStyle = S.pc.snap ? '#fde68a' : '#7a8bb8'; ctx.font = dfnt(L, 46); ctx.fillText(angTxt(), cx, y0 + 346);
-          ctx.fillStyle = S.pc.snap ? '#9fb3e0' : '#f59e0b'; ctx.font = fnt(L, 12.5, 'bold');
+          ctx.fillStyle = S.pc.snap ? '#9fb3e0' : '#f59e0b'; ctx.font = fnt(L, 13, 'bold');
           ctx.fillText(S.pc.snap ? '중심이 북극성에 맞았어요' : '각도기 중심을 북극성에!', cx, y0 + 370);
           wrapSmall(ctx, L, '두 팔을 같은 별의 호 양 끝에 맞춰요.', cx, y0 + 408, Pn.w - 24, 18 * fs);
         }
@@ -951,7 +951,7 @@
         const gv = Math.round(S.ghost.a);
         ctx.fillStyle = '#9fb3e0'; ctx.font = fnt(L, 13, 'bold'); ctx.fillText('내가 돌린 각', cx, y0 + 270);
         ctx.fillStyle = S.ghostTouched ? '#fde68a' : '#7a8bb8'; ctx.font = dfnt(L, 46); ctx.fillText(Math.abs(gv) + '°', cx, y0 + 322);
-        ctx.fillStyle = '#9fb3e0'; ctx.font = fnt(L, 12.5, 'bold'); ctx.fillText(gv < -1 ? '시계 방향' : gv > 1 ? '시계 반대 방향' : '', cx, y0 + 346);
+        ctx.fillStyle = '#9fb3e0'; ctx.font = fnt(L, 13, 'bold'); ctx.fillText(gv < -1 ? '시계 방향' : gv > 1 ? '시계 반대 방향' : '', cx, y0 + 346);
         wrapSmall(ctx, L, '1시간에 몇 도씩 돌았는지 떠올려 봐요.', cx, y0 + 392, Pn.w - 24, 18 * fs);
       }
     } else {
@@ -977,7 +977,7 @@
   }
   const angTxt = () => ((S.pc.snap || S.armTouched) ? Math.round(S.armAng) + '°' : '—');
   function wrapSmall(ctx, L, text, cx, y, maxW, lh) {
-    ctx.fillStyle = 'rgba(190,205,240,.85)'; ctx.font = fnt(L, 12.5, 'bold'); ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(190,205,240,.85)'; ctx.font = fnt(L, 13, 'bold'); ctx.textAlign = 'center';
     const words = text.split(' '); let line = '', yy = y;
     words.forEach((w) => { const test = line ? line + ' ' + w : w; if (ctx.measureText(test).width > maxW && line) { ctx.fillText(line, cx, yy); yy += lh; line = w; } else line = test; });
     if (line) ctx.fillText(line, cx, yy);
@@ -1064,7 +1064,7 @@
     ctx.strokeStyle = 'rgba(190,225,255,.7)'; ctx.lineWidth = 1.6; circle(ctx, cx, cy, R); ctx.stroke();
     // 북극 점
     ctx.fillStyle = '#ffffff'; circle(ctx, cx, cy, 3.2 * fs); ctx.fill();
-    ctx.fillStyle = '#cfe0ff'; ctx.font = fnt(L, 11.5, 'bold'); ctx.textAlign = 'center'; ctx.fillText('북극', cx, cy - 8 * fs);
+    ctx.fillStyle = '#cfe0ff'; ctx.font = fnt(L, 13, 'bold'); ctx.textAlign = 'center'; ctx.fillText('북극', cx, cy - 8 * fs);
   }
 
   // 먼 별 방향 표지 (작은 별자리 그림)
@@ -1186,7 +1186,7 @@
     // 지구 둘레 네 지점 (정오·해 질 무렵·한밤중·해 뜰 무렵)
     QUADS.forEach((q) => {
       const a = q.a * DEG, ok = S.space.hit[q.i];
-      ctx.font = fnt(L, 12, 'bold');
+      ctx.font = fnt(L, 13, 'bold');
       const w = ctx.measureText(q.name).width + 16, h = Math.round(22 * fs), rr = R + 14 * fs + Math.abs(Math.cos(a)) * w / 2 + Math.abs(Math.sin(a)) * h / 2 + 4;
       const x = cx + rr * Math.cos(a), y = cy - rr * Math.sin(a);
       pill(ctx, (ok ? '✓ ' : '') + q.name, x, y, { font: ctx.font, h, pad: 8, color: ok ? '#34d399' : '#cfe0ff', bg: 'rgba(6,10,26,.78)', stroke: ok ? 'rgba(52,211,153,.8)' : null });
@@ -1213,7 +1213,7 @@
   function spaceSide(ctx, L, t) {
     const Mn = L.mini, Cb = L.cbox, fs = L.fs, T = S.tA;
     drawSky(ctx, L, Mn, t, { mini: true, view: 'south', tt: T, fade: 1, links: S.link });
-    pill(ctx, '🔭 서울의 남쪽 하늘', Mn.x + 10, Mn.y + 20 * fs, { align: 'left', font: fnt(L, 12.5, 'bold'), h: Math.round(24 * fs), pad: 9, bg: 'rgba(6,10,26,.68)', color: '#e6eeff' });
+    pill(ctx, '🔭 서울의 남쪽 하늘', Mn.x + 10, Mn.y + 20 * fs, { align: 'left', font: fnt(L, 13, 'bold'), h: Math.round(24 * fs), pad: 9, bg: 'rgba(6,10,26,.68)', color: '#e6eeff' });
     panelEdge(ctx, Mn);
     panelBase(ctx, Cb, L.starsCbox, t); panelEdge(ctx, Cb);
     const cx = Cb.x + Cb.w / 2, r = L.col ? 52 : 46;
