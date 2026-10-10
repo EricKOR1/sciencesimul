@@ -1576,12 +1576,17 @@
       softShadow(() => { ctx.fillStyle = g; rr(bx, P.y + P.h - hh, bw, hh, 7); ctx.fill(); }, 6, 2);
       ctx.fillStyle = 'rgba(255,255,255,.28)'; rr(bx + 5, P.y + P.h - hh + 4, 6, Math.max(2, hh - 8), 3); ctx.fill();
       if (over) { ctx.fillStyle = '#fff'; ctx.beginPath(); const by = P.y + P.h - hh * 0.55; ctx.moveTo(bx - 2, by); for (let z = 0; z <= 6; z++) ctx.lineTo(bx - 2 + (bw + 4) * z / 6, by + (z % 2 ? 5 : -1)); ctx.lineTo(bx + bw + 2, by + 9); for (let z = 6; z >= 0; z--) ctx.lineTo(bx - 2 + (bw + 4) * z / 6, by + 9 + (z % 2 ? 5 : -1)); ctx.closePath(); ctx.fill(); }
-      txt(S.bars[k].toFixed(1), bx + bw / 2, Math.max(P.y + 8, P.y + P.h - hh - 9), fm(12.5), good ? '#0b7a41' : '#334155');
+      const vy = Math.max(P.y + 8, Math.min(P.y + P.h - hh - 9, Y(1) - 10)), vin = vy > P.y + P.h - hh - 4;   // 막대 안쪽에 걸리면 흰 글씨
+      if (vin) { ctx.font = fm(12.5); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round'; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(30,41,59,.85)'; ctx.strokeText(S.bars[k].toFixed(1), bx + bw / 2, vy); }
+      txt(S.bars[k].toFixed(1), bx + bw / 2, vy, fm(12.5), vin ? '#fff' : good ? '#0b7a41' : '#334155');
       txt((base + k + 1) + '번째', bx + bw / 2, P.y + P.h + 14, f(11.5, 800), COL.muted);
       const icons = '👤'.repeat(rec.indiv) + '🏛️'.repeat(rec.social);
       txt(icons || '카드 없음', bx + bw / 2, P.y + P.h + (tall ? 34 : 32), f(rec.indiv + rec.social ? 12 : 10.5, 700), icons ? COL.ink : '#94a3b8');
     }
-    D.text(P.x + 2, Y(1) - 7, '목표 1 kWh 이하', { size: 10.5, weight: 800, color: '#0b7a41', align: 'left', stroke: '#fff', strokeWidth: 4 });
+    // 목표선 이름표: 제목 아래 오른쪽(막대와 겹치지 않게)
+    ctx.font = f(10.5, 800); const gw = ctx.measureText('목표 1 kWh 이하').width;
+    D.dashedLine(H.x + H.w - 14 - gw - 24, H.y + 29, H.x + H.w - 14 - gw - 6, H.y + 29, { color: '#14a058', width: 2, dash: [5, 3] });
+    txt('목표 1 kWh 이하', H.x + H.w - 14, H.y + 29, f(10.5, 800), '#0b7a41', 'right');
     ctx.restore();
   }
 

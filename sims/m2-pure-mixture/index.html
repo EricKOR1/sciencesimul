@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#8b5cf6">
+  <title>순물질과 혼합물 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥛</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-toolbar { min-height: 61px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+    #resetBtn { font-size: 20px; }
+    .tgl {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px;
+      border: 2px solid var(--line); background: var(--surface); color: var(--muted);
+      border-radius: 999px; padding: 5px 14px; font-weight: 800; font-size: 15px; cursor: pointer;
+    }
+    .tgl[aria-pressed="true"] { color: #5b21b6; border-color: #c4b5fd; background: #f3efff; }
+    .segmented button { min-height: 44px; padding: 6px 12px; font-size: 14.5px; }
+    .seg-full { display: flex; width: 100%; }
+    .seg-full button { flex: 1 1 0; min-width: 0; padding-left: 6px; padding-right: 6px; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    .ctrl-note { font-size: 13.5px; color: var(--muted); margin: 8px 0 0; line-height: 1.45; }
+    .btn-block { min-height: 52px; font-size: 17px; }
+    .ctrl-row { display: flex; gap: 8px; margin-top: 10px; }
+    .ctrl-row .tgl { flex: 1; }
+    .readout .value.word { font-family: var(--font); font-size: 17px; line-height: 1.5; overflow: hidden; text-overflow: ellipsis; }
+    .mission-figure svg { border-radius: 12px; max-width: 100%; height: auto; }
+    @media (max-width: 599px) {
+      .stage-toolbar { min-height: 0; }
+      .segmented button { padding: 6px 10px; font-size: 14px; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="chem">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#g2">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">중2 · Ⅰ. 물질의 특성</div>
+      <h1>순물질과 혼합물</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🔎 겉모습으로 나누기</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="sceneSeg" role="group" aria-label="실험 장면" hidden>
+            <button type="button" data-scene="look">🔎 겉모습</button>
+            <button type="button" data-scene="heat">🔥 가열</button>
+            <button type="button" data-scene="mix">🔬 섞임</button>
+            <button type="button" data-scene="build">🧩 모형</button>
+            <button type="button" data-scene="sort">🗂️ 분류</button>
+          </div>
+          <button class="icon-btn" id="resetBtn" type="button" title="처음 상태로" aria-label="처음 상태로">↺</button>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="순물질과 혼합물을 겉모습, 가열 곡선, 입자 모형으로 알아보는 실험 화면"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts" id="readouts">
+        <div class="readout" data-sc="heat"><span class="label">온도 (온도계)</span><span class="value" id="rT">20<small>°C</small></span></div>
+        <div class="readout" data-sc="heat"><span class="label">경과 시간</span><span class="value" id="rTime">0.0<small>분</small></span></div>
+        <div class="readout" data-sc="heat"><span class="label">지금 모습</span><span class="value word" id="rState">가열 전</span></div>
+        <div class="readout" data-sc="mix"><span class="label">넣은 물질</span><span class="value word" id="rMixK">-</span></div>
+        <div class="readout" data-sc="mix"><span class="label">섞인 모습</span><span class="value word" id="rMixS">-</span></div>
+        <div class="readout" data-sc="build"><span class="label">놓은 입자</span><span class="value" id="rBuild">0<small>/ 54개</small></span></div>
+        <div class="readout" data-sc="sort"><span class="label">상자에 넣은 카드</span><span class="value" id="rSort">0<small>/ 10장</small></span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" data-sc="heat">
+          <div class="control-head"><label>🧪 가열할 시료</label></div>
+          <div class="segmented seg-full" id="sampleSeg" role="group" aria-label="가열할 시료">
+            <button type="button" data-s="water">💧 물</button>
+            <button type="button" data-s="salt1">🧂 소금물</button>
+            <button type="button" data-s="salt2" hidden>🧂 진한 소금물</button>
+          </div>
+        </div>
+        <div class="control" data-sc="heat">
+          <button class="btn btn-primary btn-block" id="runBtn" type="button">🔥 가열하기</button>
+          <div class="ctrl-row"><button class="tgl" id="fastBtn" type="button" aria-pressed="false">⏩ 빠르게 (×3)</button></div>
+          <p class="ctrl-note" id="runNote"></p>
+        </div>
+        <div class="control" data-sc="mix">
+          <div class="control-head"><label>🥄 물에 넣을 물질</label></div>
+          <div class="segmented seg-full" id="mixSeg" role="group" aria-label="물에 넣을 물질">
+            <button type="button" data-k="salt">🧂 소금</button>
+            <button type="button" data-k="soil">🟤 흙</button>
+          </div>
+        </div>
+        <div class="control" data-sc="mix">
+          <button class="btn btn-primary btn-block" id="mixBtn" type="button">🥄 넣고 저어 보기</button>
+          <p class="ctrl-note" id="mixNote"></p>
+        </div>
+        <div class="control" data-sc="build">
+          <div class="control-head"><label>🖌️ 놓을 입자 고르기</label></div>
+          <div class="segmented seg-full" id="brushSeg" role="group" aria-label="놓을 입자">
+            <button type="button" data-b="0">🔵 물 입자</button>
+            <button type="button" data-b="1">🟠 다른 물질 입자</button>
+          </div>
+          <p class="ctrl-note">상자 안을 손가락으로 쓸어 보세요. 지나간 자리에 입자가 놓여요. 입자를 누르면 지울 수 있어요.</p>
+        </div>
+        <div class="control" data-sc="build">
+          <button class="btn btn-block" id="clearBtn" type="button">🧹 상자 모두 비우기</button>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

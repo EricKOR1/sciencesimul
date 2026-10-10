@@ -147,14 +147,46 @@
     }
     ctx.drawImage(e.c, x - e.pad, y - e.pad + oy);
   }
-  function panel(x, y, w, h, o) {
+  // 한 번만 그려 두는 층(layer)과 작은 그림(sprite): 매 프레임 다시 그리는 일을 줄여요
+  const LAYERS = new Map(), SPR = new Map();
+  function offscreen(w, h) { const c = document.createElement('canvas'); c.width = Math.max(1, Math.ceil(w)); c.height = Math.max(1, Math.ceil(h)); return c; }
+  function layer(key, fn) {                          // 화면 전체 크기의 층
+    const cv = view.canvas, k = key + '|' + cv.width + 'x' + cv.height;
+    let c = LAYERS.get(k);
+    if (!c) {
+      c = offscreen(cv.width, cv.height);
+      const g = c.getContext('2d'), s = view.scale * view.dpr; g.setTransform(s, 0, 0, s, 0, 0);
+      const saved = ctx; ctx = g;
+      try { fn(); } finally { ctx = saved; }
+      LAYERS.set(k, c); if (LAYERS.size > 14) LAYERS.delete(LAYERS.keys().next().value);
+    }
+    ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(c, 0, 0); ctx.restore();
+  }
+  function sprite(key, w, h, fn) {                   // 가상 크기 w×h (중심이 0,0)
+    const s = view.scale * view.dpr, k = key + '|' + s.toFixed(3);
+    let e = SPR.get(k);
+    if (!e) {
+      const c = offscreen(w * s, h * s), g = c.getContext('2d'); g.setTransform(s, 0, 0, s, c.width / 2, c.height / 2);
+      const saved = ctx; ctx = g;
+      try { fn(); } finally { ctx = saved; }
+      e = { c, w, h }; SPR.set(k, e); if (SPR.size > 800) SPR.delete(SPR.keys().next().value);
+    }
+    return e;
+  }
+  const drawSpr = (e, x, y, sc) => { sc = sc || 1; ctx.drawImage(e.c, x - e.w * sc / 2, y - e.h * sc / 2, e.w * sc, e.h * sc); };
+  function drawBackdrop() {
+    layer('bg', () => { const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#eef7f1'); g.addColorStop(1, '#dcebe2'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); });
+  }
+  function panelBase(x, y, w, h, o) {                // 그림자 + 바탕 (움직이지 않는 부분)
     o = o || {};
     dropShadow(x, y, w, h, o.r || 16, 12, 3, 'rgba(30,60,40,.12)');
-    ctx.save();
     rr(x, y, w, h, o.r || 16); ctx.fillStyle = o.bg || '#fff'; ctx.fill();
-    ctx.restore();
+  }
+  function panelBorder(x, y, w, h, o) {              // 테두리만 (색이 바뀔 수 있어요)
+    o = o || {};
     if (o.border) { rr(x, y, w, h, o.r || 16); ctx.strokeStyle = o.border; ctx.lineWidth = o.bw || 1.5; ctx.stroke(); }
   }
+  function panel(x, y, w, h, o) { panelBase(x, y, w, h, o); panelBorder(x, y, w, h, o); }
   const inR = (p, r, pad) => { pad = pad || 0; return p.x >= r.x - pad && p.x <= r.x + r.w + pad && p.y >= r.y - pad && p.y <= r.y + r.h + pad; };
   const PFX = new SciSim.Particles();
   function burst(x, y, colors, n, o) { PFX.burst(x, y, Object.assign({ count: n || 18, colors: colors || ['#22c55e', '#facc15', '#38bdf8', '#f472b6'], speed: 150, gravity: 120, size: 4 }, o || {})); }
@@ -167,7 +199,9 @@
     return 'rgb(' + f(A.r, B.r) + ',' + f(A.g, B.g) + ',' + f(A.b, B.b) + ')';
   }
   const shade = SciSim.color.shade;
-  const josa = (w, a, b) => { const c = w.charCodeAt(w.length - 1) - 0xAC00; return w + (c >= 0 && c % 28 !== 0 ? a : b); };
+  const jp = (w, a, b) => { const c = w.charCodeAt(w.length - 1) - 0xAC00; return c >= 0 && c % 28 !== 0 ? a : b; };
+  const josa = (w, a, b) => w + jp(w, a, b);
+  const iyeyo = (w) => jp(w, '이에요', '예요');
 
   /* =========================================================
      그림 ① 위협 요인 장면 5가지 (가상 크기 160×110)
@@ -439,7 +473,7 @@
     { key: 'invasive', name: '외래종 유입', color: '#e0457b', soft: '#fde1ec', story: '다른 나라에서 온 황소개구리가 연못에 퍼지면서 토종 개구리가 줄었어요.', def: '원래 살지 않던 다른 지역의 생물이 들어와 토종 생물을 위협하는 것', fix: '외래종 관리', fixDesc: '더 퍼지지 않게 막고 줄여요', fixHow: '외래종이 더 퍼지지 않게 막고 이미 퍼진 것은 잡아 없애는 <b>외래종 관리</b>를 했어요.' },
     { key: 'overhunt', name: '남획', color: '#2f7fe8', soft: '#dfeafd', story: '그물로 물고기를 너무 많이 잡아서 바다의 물고기가 크게 줄었어요.', def: '생물을 필요 이상으로 너무 많이 잡는 것', fix: '보호 구역 지정', fixDesc: '잡는 것을 제한해 지켜요', fixHow: '물고기가 많은 곳을 <b>보호 구역</b>으로 정하고 그물로 잡는 것을 막았어요.' },
     { key: 'pollution', name: '환경 오염', color: '#8b5cf6', soft: '#ece5fd', story: '공장 폐수가 강으로 흘러들어 물이 더러워지고 물고기가 죽어 가요.', def: '폐수·쓰레기·오염 물질 때문에 생물이 사는 환경이 나빠지는 것', fix: '오염 줄이기', fixDesc: '폐수를 정화하고 쓰레기를 줄여요', fixHow: '폐수를 정화하는 장치를 달아 <b>오염을 줄였더니</b> 물이 맑아졌어요.' },
-    { key: 'climate', name: '기후변화', color: '#e8890c', soft: '#fdecd0', story: '지구가 따뜻해져 높은 산의 구상나무가 점점 말라 죽어 가요.', def: '지구의 평균 기온이 높아져 생물이 살기 어려워지는 것', fix: '종자 은행·복원 사업', fixDesc: '씨앗을 보관하고 다시 심어요', fixHow: '씨앗을 보관하는 <b>종자 은행</b>을 만들고 사라진 곳에 다시 심는 <b>복원 사업</b>을 했어요.' },
+    { key: 'climate', name: '기후변화', color: '#e8890c', soft: '#fdecd0', story: '지구가 따뜻해져 높은 산의 구상나무가 점점 말라 죽어 가요.', def: '지구의 평균 기온이 높아져 생물이 살기 어려워지는 것', fix: '종자 은행·복원 사업', fixShort: '종자 은행·복원', fixDesc: '씨앗을 보관하고 다시 심어요', fixHow: '씨앗을 보관하는 <b>종자 은행</b>을 만들고 사라진 곳에 다시 심는 <b>복원 사업</b>을 했어요.' },
   ];
   const ACTS = [
     { id: 0, side: 0, icon: '🥤', text: '일회용품 사용 줄이기', why: '쓰레기와 오염을 줄이는 개인의 실천이에요.' },
@@ -580,8 +614,13 @@
       E.rem[i] = false; E.x[i] = 0.12; E.pop[i] = now(); Sound.tone(660, 0.12, 'triangle', 0.07); Sound.tone(880, 0.14, 'triangle', 0.06, 0.09);
       burst(N.x, N.y, ['#86efac', '#fde047', '#ffffff'], 12, { speed: 110, life: 0.7, gravity: 40 });
     } else {
-      E.rem[i] = true; E.x[i] = 0; E.shake[i] = now(); Sound.fail(); WB.tapped++;
+      E.rem[i] = true; E.x[i] = 0; E.remT[i] = 0; E.shake[i] = now(); Sound.fail(); WB.tapped++;
       burst(N.x, N.y, ['#cbd5e1', '#94a3b8', '#ffffff'], 14, { speed: 120, life: 0.8, gravity: 90, size: 3.4, shape: 'smoke' });
+      E.links.forEach((l) => {                       // 연결선이 툭 끊기는 느낌
+        if (l.from !== i && l.to !== i) return;
+        const A = nodeAt(ei, l.from), B = nodeAt(ei, l.to);
+        burst((A.x + B.x) / 2, (A.y + B.y) / 2, ['#94a3b8', '#e2e8f0', '#ffffff'], 4, { speed: 55, life: 0.45, gravity: 30, size: 2.4 });
+      });
     }
     E.since = 0;
   }
@@ -614,11 +653,12 @@
     ctx.lineWidth = 4.2; ctx.lineCap = 'round'; ctx.strokeStyle = 'rgba(148,163,184,.3)'; ctx.beginPath(); ctx.arc(0, 0, r + 3, 0, TAU); ctx.stroke();
     if (frac > 0.01) { ctx.strokeStyle = col; ctx.beginPath(); ctx.arc(0, 0, r + 3, -Math.PI / 2, -Math.PI / 2 + TAU * frac); ctx.stroke(); }
     if (v > 1.12 && !rem) { ctx.strokeStyle = rgba(col, 0.35 + 0.25 * Math.sin(t * 5)); ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(0, 0, r + 8 + Math.sin(t * 5) * 1.5, 0, TAU); ctx.stroke(); }
-    if (sp.emoji) { ctx.font = Math.round(r * 1.15) + 'px ' + EMOJI_FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#000'; ctx.fillText(sp.emoji, 0, r * 0.06); }
+    if (sp.emoji) { const sz = Math.round(r * 1.15); drawSpr(sprite('emo|' + sp.emoji + '|' + sz, sz * 1.7, sz * 1.7, () => { ctx.font = sz + 'px ' + EMOJI_FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#000'; ctx.fillText(sp.emoji, 0, 0); }), 0, r * 0.06); }
     else drawHopperArt(ctx, -r * 0.05, r * 0.14, r / 24, t);
     if (rem) { ctx.globalAlpha = 0.9; ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(-r * 0.6, -r * 0.6); ctx.lineTo(r * 0.6, r * 0.6); ctx.moveTo(r * 0.6, -r * 0.6); ctx.lineTo(-r * 0.6, r * 0.6); ctx.stroke(); }
     ctx.restore();
-    txt(sp.name, x, y + r * sc + 17, { size: 13, weight: 800, color: rem ? '#94a3b8' : '#334155', align: 'center', halo: 'rgba(255,255,255,.9)', haloW: 4 });
+    const lab = sprite('lab|' + sp.name + '|' + (rem ? 1 : 0), 72, 26, () => { txt(sp.name, 0, 5, { size: 13, weight: 800, color: rem ? '#94a3b8' : '#334155', align: 'center', halo: 'rgba(255,255,255,.9)', haloW: 4 }); });
+    drawSpr(lab, x, y + r * sc + 12);
   }
   function drawLinks(E, ei, t) {
     E.links.forEach((l, li) => {
@@ -627,30 +667,46 @@
       const x0 = A.x + ux * (A.r + 5), y0 = A.y + uy * (A.r + 5), x1 = B.x - ux * (B.r + 8), y1 = B.y - uy * (B.r + 8);
       const vm = Math.min(E.vis[l.from], E.vis[l.to]), dead = E.rem[l.from] || E.rem[l.to];
       const a = dead ? 0.2 : clamp(0.28 + 0.4 * Math.min(vm, 1), 0.12, 0.7);
+      const age = dead ? Math.min(E.rem[l.from] ? E.remT[l.from] : 9, E.rem[l.to] ? E.remT[l.to] : 9) : 9, snap = dead && !RM && age < 0.6 ? EASE.outCubic(age / 0.6) : 1;
       ctx.save(); ctx.strokeStyle = 'rgba(71,85,105,' + a.toFixed(2) + ')'; ctx.fillStyle = ctx.strokeStyle; ctx.lineWidth = 1.2 + 2 * l.w * (ei ? 0.9 : 1.2); ctx.lineCap = 'round';
-      if (dead) ctx.setLineDash([4, 5]);
+      if (dead) { ctx.setLineDash([4, 5]); ctx.globalAlpha = snap; }
       ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke(); ctx.setLineDash([]);
+      if (snap < 1) {                                // 끊어지는 순간: 가운데가 벌어지며 두 토막이 움츠러들어요
+        const g = 0.12 + 0.88 * snap, h0 = 0.5 - g / 2, h1 = 0.5 + g / 2;
+        ctx.globalAlpha = (1 - snap) * 0.9; ctx.strokeStyle = 'rgba(71,85,105,.75)';
+        ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(lerp(x0, x1, h0), lerp(y0, y1, h0)); ctx.moveTo(lerp(x0, x1, h1), lerp(y0, y1, h1)); ctx.lineTo(x1, y1); ctx.stroke();
+        ctx.globalAlpha = snap;
+      }
       const ah = 6 + (ei ? 0 : 2); ctx.beginPath(); ctx.moveTo(x1 + ux * 3, y1 + uy * 3); ctx.lineTo(x1 - ux * ah - uy * ah * 0.55, y1 - uy * ah + ux * ah * 0.55); ctx.lineTo(x1 - ux * ah + uy * ah * 0.55, y1 - uy * ah - ux * ah * 0.55); ctx.closePath(); ctx.fill();
       if (!dead && !RM) { const u = (t * 0.32 + li * 0.173) % 1; ctx.fillStyle = 'rgba(245,158,11,' + (0.85 * Math.min(vm, 1)).toFixed(2) + ')'; ctx.beginPath(); ctx.arc(lerp(x0, x1, u), lerp(y0, y1, u), 2.6, 0, TAU); ctx.fill(); }
       ctx.restore();
     });
   }
-  function drawBars(E, ei, t) {
+  function barGeom(E, ei) {
     const R = LAY.web.eco[ei].bars;
+    const x0 = R.x + 12, x1 = R.x + R.w - 12, yb = R.y + R.h - 26, yt = R.y + (TALL ? 26 : 34), slot = (x1 - x0) / E.n, bw = Math.min(TALL ? 30 : 34, slot * 0.72), u = (yb - yt) / 1.5;
+    return { R, x0, x1, yb, yt, slot, bw, u };
+  }
+  function drawBarsFrame(E, ei) {                    // 변하지 않는 부분 (층에 한 번만 그려요)
+    const { R, x0, x1, yb, u, slot } = barGeom(E, ei);
     panel(R.x, R.y, R.w, R.h, { bg: '#fff', border: '#e2e8f0', r: 16 });
     txt('개체 수 (처음 = 100)', R.x + 12, R.y + (TALL ? 17 : 20), { size: 13, weight: 800, color: '#64748b' });
-    const x0 = R.x + 12, x1 = R.x + R.w - 12, yb = R.y + R.h - 26, yt = R.y + (TALL ? 26 : 34), slot = (x1 - x0) / E.n, bw = Math.min(TALL ? 30 : 34, slot * 0.72), u = (yb - yt) / 1.5;
     ctx.strokeStyle = '#e8edf3'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x0, yb); ctx.lineTo(x1, yb); ctx.stroke();
     ctx.save(); ctx.strokeStyle = '#94a3b8'; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.moveTo(x0, yb - u); ctx.lineTo(x1, yb - u); ctx.stroke(); ctx.restore();
+    for (let i = 0; i < E.n; i++) {
+      const sp = SPC[E.sp[i]]; if (!sp.emoji) continue;
+      ctx.font = (E.n > 6 ? 17 : 22) + 'px ' + EMOJI_FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#000'; ctx.fillText(sp.emoji, x0 + slot * (i + 0.5), yb + 14);
+    }
+  }
+  function drawBars(E, ei, t) {
+    const { x0, yb, slot, bw, u } = barGeom(E, ei);
     for (let i = 0; i < E.n; i++) {
       const cx = x0 + slot * (i + 0.5), v = E.vis[i], rem = E.rem[i], h = Math.max(rem ? 0 : 2, v * u * (rem ? 0 : 1) + (RM || rem ? 0 : Math.sin(t * 1.6 + E.ph[i]) * 0.012 * u));
       const col = stateCol(v);
       if (h > 0.5) { rr(cx - bw / 2, yb - h, bw, h, 6); ctx.fillStyle = lgrad(ctx, 0, yb - h, 0, yb, [[0, rgba(col, 0.95)], [1, rgba(col, 0.6)]]); ctx.fill(); }
-      if (rem) { rr(cx - bw / 2, yb - u, bw, u, 6); ctx.strokeStyle = 'rgba(148,163,184,.55)'; ctx.setLineDash([3, 4]); ctx.lineWidth = 1.4; ctx.stroke(); ctx.setLineDash([]); txt('없음', cx, yb - 8, { size: 13, weight: 800, color: '#94a3b8', align: 'center' }); }
-      else txt(String(Math.round(v * 100)), cx, yb - h - 5, { size: 13, weight: 800, color: col === '#9ca3af' ? '#94a3b8' : shade(col, -0.25), align: 'center' });
-      const sp = SPC[E.sp[i]];
-      if (sp.emoji) { ctx.font = (E.n > 6 ? 17 : 22) + 'px ' + EMOJI_FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#000'; ctx.fillText(sp.emoji, cx, yb + 14); }
-      else drawHopperArt(ctx, cx, yb + 15, E.n > 6 ? 0.52 : 0.68, t);
+      if (rem) { rr(cx - bw / 2, yb - u, bw, u, 6); ctx.strokeStyle = 'rgba(148,163,184,.55)'; ctx.setLineDash([3, 4]); ctx.lineWidth = 1.4; ctx.stroke(); ctx.setLineDash([]); drawSpr(sprite('lab|없음', 40, 20, () => { txt('없음', 0, 5, { size: 13, weight: 800, color: '#94a3b8', align: 'center' }); }), cx, yb - 13); }
+      else { const vt = String(Math.round(v * 100)), vc = col === '#9ca3af' ? '#94a3b8' : shade(col, -0.25); drawSpr(sprite('num|' + vt + '|' + vc, 36, 20, () => { txt(vt, 0, 5, { size: 13, weight: 800, color: vc, align: 'center' }); }), cx, yb - h - 10); }
+      if (!SPC[E.sp[i]].emoji) drawHopperArt(ctx, cx, yb + 15, E.n > 6 ? 0.52 : 0.68, t);
     }
   }
   function drawStats(E, ei, t) {
@@ -673,7 +729,7 @@
   }
   function webCaption() {
     const C = LAY.web.cap;
-    panel(C.x, C.y, C.w, C.h, { bg: '#fff', border: WB.done ? '#86efac' : '#e2e8f0', bw: WB.done ? 2 : 1.5 });
+    panelBorder(C.x, C.y, C.w, C.h, { border: WB.done ? '#86efac' : '#e2e8f0', bw: WB.done ? 2 : 1.5 });
     const fs = TALL ? 13.5 : 15.5, lh = TALL ? 19 : 22, tx = C.x + 14, mw = C.w - 28;
     const A = ECOS[0], B = ECOS[1], sa = webStats(A), sb = webStats(B);
     if (!sa.any && !sb.any) { para('생물을 눌러 없애 보세요. 막대그래프와 \'영향 받은 종\'을 두 생태계에서 비교해 봐요. 같은 생물을 없애면 비교하기 좋아요.', tx, C.y + (TALL ? 26 : 30), mw, { size: fs, weight: 800, color: '#475569', lh }); return; }
@@ -689,22 +745,30 @@
     if (WB.cmpT > 4 && sa.any && sb.any && E_common()) para('👉 같은 생물을 없애도 단순한 생태계는 ' + sa.aff + '/' + sa.total + '종, 복잡한 생태계는 ' + sb.aff + '/' + sb.total + '종이 영향을 받았어요.', tx, y + (TALL ? 2 : 2), mw, { size: fs, weight: 800, color: '#166534', lh });
   }
   function E_common() { const A = ECOS[0], B = ECOS[1]; return A.sp.some((k, i) => A.rem[i] && B.rem[B.idx[k]]); }
+  function drawWebStatic() {                         // 그림판 바탕, 상자, 막대그래프 틀: 한 번만 그려 둬요
+    drawBackdrop();
+    { const C = LAY.web.cap; panelBase(C.x, C.y, C.w, C.h); }
+    for (let ei = 0; ei < 2; ei++) {
+      const E = ECOS[ei], N = LAY.web.eco[ei].net;
+      dropShadow(N.x, N.y, N.w, N.h, 18, 12, 3, 'rgba(30,60,40,.14)');
+      ctx.save(); rr(N.x, N.y, N.w, N.h, 18); ctx.clip();
+      ctx.fillStyle = lgrad(ctx, 0, N.y, 0, N.y + N.h, [[0, E.bg[0]], [1, E.bg[1]]]); ctx.fillRect(N.x, N.y, N.w, N.h);
+      const R = rng(ei + 3); ctx.fillStyle = 'rgba(255,255,255,.22)'; for (let k = 0; k < 7; k++) { ctx.beginPath(); ctx.arc(N.x + R() * N.w, N.y + R() * N.h, 14 + R() * 26, 0, TAU); ctx.fill(); }
+      ctx.restore();
+      rr(N.x, N.y, N.w, N.h, 18); ctx.strokeStyle = 'rgba(255,255,255,.95)'; ctx.lineWidth = 3; ctx.stroke();
+      pill(E.title, N.x + 10, N.y + 20, { size: TALL ? 13.5 : 14.5, align: 'left', bg: ei ? '#0e93a6' : '#16a34a', pad: 11, h: TALL ? 26 : 28, shadow: true });
+      pill(E.sub, N.x + N.w - 10, N.y + 20, { size: TALL ? 13 : 13.5, align: 'right', bg: 'rgba(255,255,255,.92)', color: '#334155', pad: 10, h: TALL ? 24 : 26 });
+      drawBarsFrame(E, ei);
+    }
+  }
   function drawEco(ei, t) {
-    const E = ECOS[ei], L = LAY.web.eco[ei], N = L.net;
-    dropShadow(N.x, N.y, N.w, N.h, 18, 12, 3, 'rgba(30,60,40,.14)');
-    ctx.save(); rr(N.x, N.y, N.w, N.h, 18); ctx.clip();
-    ctx.fillStyle = lgrad(ctx, 0, N.y, 0, N.y + N.h, [[0, E.bg[0]], [1, E.bg[1]]]); ctx.fillRect(N.x, N.y, N.w, N.h);
-    const R = rng(ei + 3); ctx.fillStyle = 'rgba(255,255,255,.22)'; for (let k = 0; k < 7; k++) { ctx.beginPath(); ctx.arc(N.x + R() * N.w, N.y + R() * N.h, 14 + R() * 26, 0, TAU); ctx.fill(); }
+    const E = ECOS[ei];
     drawLinks(E, ei, t);
     for (let i = 0; i < E.n; i++) drawNode(E, ei, i, t);
-    ctx.restore();
-    rr(N.x, N.y, N.w, N.h, 18); ctx.strokeStyle = 'rgba(255,255,255,.95)'; ctx.lineWidth = 3; ctx.stroke();
-    pill(E.title, N.x + 10, N.y + 20, { size: TALL ? 13.5 : 14.5, align: 'left', bg: ei ? '#0e93a6' : '#16a34a', pad: 11, h: TALL ? 26 : 28, shadow: true });
-    pill(E.sub, N.x + N.w - 10, N.y + 20, { size: TALL ? 13 : 13.5, align: 'right', bg: 'rgba(255,255,255,.92)', color: '#334155', pad: 10, h: TALL ? 24 : 26 });
     drawBars(E, ei, t); drawStats(E, ei, t);
   }
   function drawWebScene(t) {
-    const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#eef7f1'); g.addColorStop(1, '#dcebe2'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    layer('web', drawWebStatic);
     drawEco(0, t); drawEco(1, t); webCaption();
     if (isNew('web')) { const a = LAY.web.eco[0].net, b = LAY.web.eco[1].net; newRing({ x: a.x, y: a.y, w: b.x + b.w - a.x, h: a.h }, 18); }
   }
@@ -759,7 +823,7 @@
     const wrong = CAUSE.filter((c) => c.idx !== c.panel);
     if (wrong.length) {
       if (MANUAL) { const t = now(); wrong.forEach((c) => { c.bad = t; }); setTimeout(() => { wrong.forEach((c) => { c.panel = -1; }); snapPanels(true); }, 750); }
-      const shown = wrong.slice(0, 2).map((c) => '<b>' + SHORT[c.panel] + '</b> 시나리오는 \'' + THREATS[c.panel].name + '\'이에요. (' + THREATS[c.panel].def + ')').join('<br>');
+      const shown = wrong.slice(0, 2).map((c) => { const nm = THREATS[c.panel].name; return '<b>' + SHORT[c.panel] + '</b> 시나리오는 \'' + nm + '\'' + iyeyo(nm) + '. (' + THREATS[c.panel].def + ')'; }).join('<br>');
       return '빨간 카드 ' + wrong.length + '장이 알맞지 않아요. 시나리오를 다시 읽어 봐요!<br>' + shown + (wrong.length > 2 ? '<br>… 외 ' + (wrong.length - 2) + '장' : '');
     }
     if (MANUAL) {
@@ -779,7 +843,7 @@
       Sound.success(); PM.msg = ''; PM.selPanel = pi;
     } else {
       cd.panel = -1; cd.bad = now(); Sound.fail(); snapPanels(true);
-      PM.msg = '<b>' + THREATS[cd.idx].fix + '</b>은(는) ' + THREATS[cd.idx].fixDesc + ' 방법이에요. \'' + THREATS[pi].name + '\' 시나리오에는 어떤 방법이 알맞을까요?'; PM.msgT = now(); PM.selPanel = null; PM.sel = cd;
+      PM.msg = '<b>' + THREATS[cd.idx].fix + '</b>' + jp(THREATS[cd.idx].fix, '은', '는') + ' ' + THREATS[cd.idx].fixDesc + '. \'' + THREATS[pi].name + '\' 시나리오에는 어떤 방법이 알맞을까요?'; PM.msgT = now(); PM.selPanel = null; PM.sel = cd;
     }
   }
   function panelsUpdate(dt) {
@@ -804,8 +868,7 @@
     const p = panelRect(i), P = PN[i], th = THREATS[i], pt = panelParts(i), pop = popOf(P), vert = LAY.panels.vertical;
     const sel = PM.selPanel === i;
     ctx.save(); const pr = hot ? 1.012 : 1; ctx.translate(p.x + p.w / 2, p.y + p.h / 2); ctx.scale(pr, pr); ctx.translate(-(p.x + p.w / 2), -(p.y + p.h / 2));
-    dropShadow(p.x, p.y, p.w, p.h, 16, hot ? 16 : 10, 3, hot ? rgba(th.color, 0.4) : 'rgba(30,60,40,.16)');
-    rr(p.x, p.y, p.w, p.h, 16); ctx.fillStyle = '#fff'; ctx.fill();
+    if (hot) { rr(p.x - 3, p.y - 3, p.w + 6, p.h + 6, 19); ctx.fillStyle = rgba(th.color, 0.14); ctx.fill(); rr(p.x, p.y, p.w, p.h, 16); ctx.fillStyle = '#fff'; ctx.fill(); }
     drawPanelScene(i, t);
     // 개체 수 막대
     const g = pt.gauge, col = pop > 0.8 ? '#22c55e' : pop > 0.5 ? '#f59e0b' : '#ef4444';
@@ -838,11 +901,17 @@
   function fixFace(cd, w, h) {
     const th = THREATS[cd.idx], inSlot = cd.panel >= 0;
     ctx.fillStyle = '#0e93a6'; rr(6, 7, 5, h - 14, 2.5); ctx.fill();
-    txt(th.fix, 20, h / 2 + 1, { size: inSlot ? 14 : 15, weight: 800, color: '#0e7490', base: 'middle', max: w - 28, min: 12.5 });
+    const mw = w - 28 - (cd.ok ? 14 : 0), label = inSlot ? (th.fixShort || th.fix) : th.fix, size = inSlot ? 14 : 15;
+    ctx.font = font(size, 800);
+    if (!inSlot && ctx.measureText(label).width > mw && label.indexOf('·') > 0) {          // 긴 이름은 두 줄로
+      const k = label.indexOf('·') + 1;
+      txt(label.slice(0, k), 20, h / 2 - 9, { size, weight: 800, color: '#0e7490', base: 'middle', max: mw, min: 13 });
+      txt(label.slice(k), 20, h / 2 + 10, { size, weight: 800, color: '#0e7490', base: 'middle', max: mw, min: 13 });
+    } else txt(label, 20, h / 2 + 1, { size, weight: 800, color: '#0e7490', base: 'middle', max: mw, min: 13 });
   }
   function panelsCaption() {
     const C = LAY.panels.cap, fix = PM.mode === 'fix';
-    panel(C.x, C.y, C.w, C.h, { bg: '#fff', border: (fix ? PM.solved === 5 : PM.checked) ? '#86efac' : '#e2e8f0', bw: (fix ? PM.solved === 5 : PM.checked) ? 2 : 1.5 });
+    panelBorder(C.x, C.y, C.w, C.h, { border: (fix ? PM.solved === 5 : PM.checked) ? '#86efac' : '#e2e8f0', bw: (fix ? PM.solved === 5 : PM.checked) ? 2 : 1.5 });
     const fs = TALL ? 13.5 : 15.5, lh = TALL ? 19 : 22, tx = C.x + 16, mw = C.w - 32;
     if (PM.sel && now() - PM.msgT > 0 && PM.mode === 'threat' && !PM.checked) {
       const th = THREATS[PM.sel.idx];
@@ -867,8 +936,13 @@
       para('시나리오를 읽고 그림의 개체 수 변화를 살펴본 뒤, 원인 카드를 알맞은 시나리오에 끌어 놓아요. 카드를 누르면 뜻이 나와요.', tx, C.y + (TALL ? 26 : 30), mw, { size: fs, weight: 800, color: '#475569', lh });
     }
   }
+  function drawPanelsStatic() {                      // 시나리오 카드의 그림자·바탕과 설명 상자: 한 번만 그려 둬요
+    drawBackdrop();
+    for (let i = 0; i < 5; i++) { const p = panelRect(i); dropShadow(p.x, p.y, p.w, p.h, 16, 10, 3, 'rgba(30,60,40,.16)'); rr(p.x, p.y, p.w, p.h, 16); ctx.fillStyle = '#fff'; ctx.fill(); }
+    const C = LAY.panels.cap; panelBase(C.x, C.y, C.w, C.h);
+  }
   function drawPanelsScene(t, fixMode) {
-    const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#eef7f1'); g.addColorStop(1, '#dcebe2'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    layer('panels', drawPanelsStatic);
     const hot = (() => { const d = S.drag; if (!d || d.set !== 'pn' || d.px == null) return -1; return panelAt({ x: d.px, y: d.py }); })();
     for (let i = 0; i < 5; i++) drawPanel(i, t, hot === i);
     const list = pcards(), tray0 = LAY.panels.tray[0];
@@ -946,17 +1020,25 @@
       ctx.restore();
     }
   }
+  function drawActStatic() {                         // 상자 바탕·이름표, 설명 상자: 한 번만 그려 둬요
+    drawBackdrop();
+    const L = LAY.act;
+    for (let i = 0; i < 2; i++) {
+      const B = L.box[i], K = SIDE[i];
+      dropShadow(B.x, B.y, B.w, B.h, 18, 10, 3, 'rgba(30,60,40,.16)');
+      rr(B.x, B.y, B.w, B.h, 18); ctx.fillStyle = rgba(K.soft, 0.9); ctx.fill();
+      pill(K.name, B.x + 12, B.y + (TALL ? 24 : 26), { size: TALL ? 15 : 16, align: 'left', bg: K.color, pad: 12, h: TALL ? 30 : 32 });
+      txt(K.sub, B.x + 14, B.y + (TALL ? 50 : 56), { size: 13, weight: 700, color: '#475569', max: B.w - 24 });
+    }
+    const C = L.cap; panelBase(C.x, C.y, C.w, C.h);
+  }
   function drawActSort(t) {
+    layer('actsort', drawActStatic);
     const L = LAY.act, hot = (() => { const d = S.drag; if (!d || d.set !== 'act' || d.px == null) return -1; return actBoxAt({ x: d.px, y: d.py }); })();
     for (let i = 0; i < 2; i++) {
-      const B = L.box[i], K = SIDE[i], empty = !ACT.cards.some((c) => c.box === i), pr = hot === i ? 1.012 : 1;
-      ctx.save(); ctx.translate(B.x + B.w / 2, B.y + B.h / 2); ctx.scale(pr, pr); ctx.translate(-B.w / 2, -B.h / 2);
-      dropShadow(0, 0, B.w, B.h, 18, hot === i ? 16 : 10, 3, hot === i ? rgba(K.color, 0.4) : 'rgba(30,60,40,.16)');
-      rr(0, 0, B.w, B.h, 18); ctx.fillStyle = rgba(K.soft, 0.9); ctx.fill();
-      ctx.setLineDash(empty && !ACT.done ? [7, 5] : []); rr(0, 0, B.w, B.h, 18); ctx.strokeStyle = K.color; ctx.lineWidth = hot === i || ACT.selBox === i ? 4 : 2.4; ctx.stroke(); ctx.setLineDash([]);
-      pill(K.name, 12, TALL ? 24 : 26, { size: TALL ? 15 : 16, align: 'left', bg: K.color, pad: 12, h: TALL ? 30 : 32 });
-      txt(K.sub, 14, TALL ? 50 : 56, { size: 13, weight: 700, color: '#475569', max: B.w - 24 });
-      ctx.restore();
+      const B = L.box[i], K = SIDE[i], empty = !ACT.cards.some((c) => c.box === i);
+      if (hot === i) { rr(B.x - 3, B.y - 3, B.w + 6, B.h + 6, 21); ctx.fillStyle = rgba(K.color, 0.12); ctx.fill(); }
+      ctx.setLineDash(empty && !ACT.done ? [7, 5] : []); rr(B.x, B.y, B.w, B.h, 18); ctx.strokeStyle = K.color; ctx.lineWidth = hot === i || ACT.selBox === i ? 4 : 2.4; ctx.stroke(); ctx.setLineDash([]);
     }
     if (!ACT.done && ACT.cards.some((c) => c.box < 0)) txt('🃏 실천 카드 (끌어서 상자에 넣어요)', TALL ? 12 : 18, L.trayLabelY - 2, { size: 13.5, weight: 800, color: '#64748b' });
     if (ACT.done) drawActSummary();
@@ -965,7 +1047,7 @@
     ACT.cards.forEach((cd) => { if (cd !== dragCd) draw1(cd); });
     if (dragCd) draw1(dragCd);
     // 캡션
-    const C = L.cap; panel(C.x, C.y, C.w, C.h, { bg: '#fff', border: ACT.done ? '#86efac' : '#e2e8f0', bw: ACT.done ? 2 : 1.5 });
+    const C = L.cap; panelBorder(C.x, C.y, C.w, C.h, { border: ACT.done ? '#86efac' : '#e2e8f0', bw: ACT.done ? 2 : 1.5 });
     const fs = TALL ? 13.5 : 15.5, lh = TALL ? 19 : 22, tx = C.x + 16, mw = C.w - 32;
     if (ACT.selBox != null) { const K = SIDE[ACT.selBox]; pill(K.name, tx, C.y + 22, { size: 14, align: 'left', bg: K.color, pad: 11, h: 26 }); para(ACT.selBox ? '법·제도 만들기, 국제 협약, 보호 구역 지정, 복원 사업처럼 나라와 여러 사람이 함께 하는 일이에요. 큰 규모로 생물다양성을 지켜요.' : '일회용품 줄이기, 분리배출, 외래 생물 함부로 버리지 않기처럼 내가 날마다 실천할 수 있는 일이에요. 작은 실천이 모이면 큰 힘이 돼요.', tx, C.y + 52, mw, { size: fs, weight: 800, color: '#1e293b', lh }); }
     else if (ACT.sel != null && !ACT.done) { const a = ACTS[ACT.sel]; pill(a.icon + ' ' + a.text, tx, C.y + 22, { size: 13.5, align: 'left', bg: '#334155', pad: 11, h: 26 }); para('이 일은 누가 하는 일일까요? 혼자 일상에서 할 수 있는 일이면 개인, 나라나 여러 사람이 함께 해야 하면 사회예요.', tx, C.y + 52, mw, { size: fs, weight: 800, color: '#475569', lh }); }
@@ -999,27 +1081,37 @@
     }
     ctx.restore();
   }
+  function drawPledgeStatic() {                      // 다짐 목록 상자·다짐 카드 바탕·설명 상자: 한 번만 그려 둬요
+    drawBackdrop();
+    const L = LAY.act.pl;
+    panelBase(L.list.x, L.list.y, L.list.w, L.list.h, { bg: 'rgba(255,255,255,.7)', r: 18 });
+    panelBorder(L.list.x, L.list.y, L.list.w, L.list.h, { border: '#e2e8f0', r: 18 });
+    PLEDGES.forEach((pl, i) => { const r = plRect(i); dropShadow(r.x, r.y, r.w, r.h, 14, 6, 2, 'rgba(20,40,30,.12)'); });
+    const C = L.card;
+    dropShadow(C.x, C.y, C.w, C.h, 20, 12, 3, 'rgba(30,60,40,.16)');
+    rr(C.x, C.y, C.w, C.h, 20); ctx.fillStyle = lgrad(ctx, 0, C.y, 0, C.y + C.h, [[0, '#f3fbef'], [1, '#d9f0cf']]); ctx.fill();
+    ctx.save(); rr(C.x, C.y, C.w, C.h, 20); ctx.clip(); ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.beginPath(); ctx.arc(C.x + C.w * 0.85, C.y + 30, 34, 0, TAU); ctx.fill(); ctx.restore();
+    const Cp = LAY.act.pl.cap; panelBase(Cp.x, Cp.y, Cp.w, Cp.h);
+  }
   function drawPledge(t) {
+    layer('pledge', drawPledgeStatic);
     const L = LAY.act.pl, n = plCount();
     // 다짐 고르기
-    panel(L.list.x, L.list.y, L.list.w, L.list.h, { bg: 'rgba(255,255,255,.7)', border: '#e2e8f0', r: 18 });
     PLEDGES.forEach((pl, i) => {
       const r = plRect(i), on = PL.sel[i], hov = S.plHov === i;
       ctx.save(); ctx.translate(r.x + r.w / 2, r.y + r.h / 2); const sc = on ? 1.015 : hov ? 1.02 : 1; ctx.scale(sc, sc);
-      dropShadow(-r.w / 2, -r.h / 2, r.w, r.h, 14, on ? 10 : 6, 2, on ? 'rgba(22,163,74,.3)' : 'rgba(20,40,30,.12)');
+      if (on) { rr(-r.w / 2 - 3, -r.h / 2 - 3, r.w + 6, r.h + 6, 17); ctx.fillStyle = 'rgba(34,197,94,.16)'; ctx.fill(); }
       rr(-r.w / 2, -r.h / 2, r.w, r.h, 14); ctx.fillStyle = on ? '#ecfdf5' : '#fff'; ctx.fill(); rr(-r.w / 2, -r.h / 2, r.w, r.h, 14); ctx.strokeStyle = on ? '#22c55e' : '#d6dee8'; ctx.lineWidth = on ? 3 : 1.8; ctx.stroke();
-      ctx.font = Math.round(r.h * 0.5) + 'px ' + EMOJI_FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#000'; ctx.fillText(pl.icon, -r.w / 2 + 28, 1);
-      txt(pl.text, -r.w / 2 + 54, 1, { size: TALL ? 14 : 15.5, weight: 800, color: '#1e293b', base: 'middle', max: r.w - 54 - 52, min: 11 });
+      const isz = Math.round(r.h * 0.5);
+      drawSpr(sprite('emo|' + pl.icon + '|' + isz, isz * 1.7, isz * 1.7, () => { ctx.font = isz + 'px ' + EMOJI_FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#000'; ctx.fillText(pl.icon, 0, 0); }), -r.w / 2 + 28, 1);
+      txt(pl.text, -r.w / 2 + 54, 1, { size: TALL ? 14 : 15.5, weight: 800, color: '#1e293b', base: 'middle', max: r.w - 54 - 52, min: 13 });
       ctx.beginPath(); ctx.arc(r.w / 2 - 24, 0, 13, 0, TAU); ctx.fillStyle = on ? '#22c55e' : '#e2e8f0'; ctx.fill(); if (on) D.check(r.w / 2 - 24, 0, 11, 1);
       ctx.restore();
     });
     // 다짐 카드
     const C = L.card;
-    dropShadow(C.x, C.y, C.w, C.h, 20, 12, 3, 'rgba(30,60,40,.16)');
-    rr(C.x, C.y, C.w, C.h, 20); ctx.fillStyle = lgrad(ctx, 0, C.y, 0, C.y + C.h, [[0, '#f3fbef'], [1, '#d9f0cf']]); ctx.fill();
     rr(C.x, C.y, C.w, C.h, 20); ctx.strokeStyle = n >= 2 ? '#22c55e' : '#cfe5c6'; ctx.lineWidth = n >= 2 ? 3 : 2; ctx.stroke();
     ctx.save(); rr(C.x, C.y, C.w, C.h, 20); ctx.clip();
-    ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.beginPath(); ctx.arc(C.x + C.w * 0.85, C.y + 30, 34, 0, TAU); ctx.fill();
     drawPlant(C.x + C.w / 2, C.y + C.h - (TALL ? 88 : 82), C.h - (TALL ? 148 : 144), n, t);
     // 찾아오는 생물들
     const guests = ['🦋', '🐝', '🐞', '🐦'];
@@ -1030,13 +1122,12 @@
     picked.slice(0, 3).forEach((p, i) => txt(i === 2 && picked.length > 3 ? '✓ … 외 ' + (picked.length - 2) + '가지' : '✓ ' + p.text, C.x + 18, C.y + C.h - 52 + i * 17, { size: 13, weight: 800, color: '#166534', max: C.w - 36, min: 13 }));
     if (n >= 2) { const u = EASE.outBack(clamp((now() - PL.doneT) / 0.6, 0, 1)); ctx.save(); ctx.translate(C.x + C.w - 14, C.y + 62); ctx.scale(u, u); ctx.rotate(-0.08); pill('🌱 다짐 완성!', 0, 0, { size: 14, align: 'right', bg: '#16a34a', pad: 12, h: 30, shadow: true }); ctx.restore(); }
     else txt('2가지 이상 골라요 (' + n + '/2)', C.x + C.w / 2, C.y + 52, { size: 13.5, weight: 800, color: '#64748b', align: 'center' });
-    const Cp = L.cap; panel(Cp.x, Cp.y, Cp.w, Cp.h, { bg: '#fff', border: n >= 2 ? '#86efac' : '#e2e8f0', bw: n >= 2 ? 2 : 1.5 });
+    const Cp = L.cap; panelBorder(Cp.x, Cp.y, Cp.w, Cp.h, { border: n >= 2 ? '#86efac' : '#e2e8f0', bw: n >= 2 ? 2 : 1.5 });
     const fs = TALL ? 13.5 : 15.5, lh = TALL ? 19 : 22;
     para(n >= 2 ? '🎉 멋진 다짐이에요! 오늘부터 작은 실천을 시작해 봐요. 다짐을 고를수록 식물이 자라고 나비, 벌 같은 생물이 찾아와요.' : '내가 앞으로 실천할 약속을 2가지 이상 골라 보세요. 약속을 고를수록 식물이 자라고, 나비와 벌 같은 생물이 찾아와요.', Cp.x + 16, Cp.y + (TALL ? 28 : 32), Cp.w - 32, { size: fs, weight: 800, color: n >= 2 ? '#166534' : '#475569', lh });
     if (isNew('act') && ACT.mode === 'pledge') newRing({ x: L.list.x, y: L.list.y, w: L.card.x + L.card.w - L.list.x, h: L.list.h }, 18);
   }
   function drawActScene(t) {
-    const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#eef7f1'); g.addColorStop(1, '#dcebe2'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
     if (ACT.mode === 'sort') drawActSort(t); else drawPledge(t);
   }
 
