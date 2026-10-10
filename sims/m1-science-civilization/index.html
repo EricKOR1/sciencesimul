@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#64748b">
+  <title>과학과 인류 문명 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏛️</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-card { background: #0a0f26; }
+    .stage-canvas { transition: background-color .8s ease; }
+    .stage-toolbar { min-height: 52px; padding: 6px 10px; }
+    .toolbar-label { font-weight: 800; color: #3a4456; font-size: 15px; padding-left: 4px; min-width: 0; flex: 1 1 auto;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .toolbar-label small { font-weight: 700; color: var(--muted); }
+    .stage-hint { white-space: normal; width: max-content; max-width: calc(100% - 24px); text-align: center; }
+    #sceneSeg button { min-height: 40px; padding: 6px 11px; font-size: 14px; }
+    .sim-title { min-width: 0; }
+
+    /* 조작 카드 */
+    #ctrlCard { display: flex; flex-direction: column; gap: 8px; }
+    #ctrlCard .control { margin: 0; }
+    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn-row .btn { flex: 1 1 auto; min-width: 0; min-height: 48px; padding: 8px 12px; }
+    .ctrl-note { font-size: 13.5px; color: var(--muted); margin: 0; min-height: 1.2em; }
+    .ctrl-note:empty { display: none; }
+    #sYear { margin-top: 2px; }
+    .mission-figure .fig-big { font-size: 38px; line-height: 1.3; letter-spacing: 2px; }
+
+    @media (max-width: 599px) {
+      .toolbar-label { font-size: 14px; }
+      .sim-unit { font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .stage-hint { font-size: 12.5px; padding: 5px 12px; bottom: 6px; max-width: 94%; }
+      #sceneSeg button { padding: 6px 8px; font-size: 13px; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="sci">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#g1">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">중1 · Ⅰ. 과학과 인류의 지속가능한 삶</div>
+      <h1>과학과 인류 문명</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="sceneLabel">🌃 시간 여행 <small>· 우리 동네의 밤</small></span>
+          <div class="segmented" id="sceneSeg" role="group" aria-label="장면 고르기" hidden>
+            <button type="button" data-scene="night">🌃 밤거리</button>
+            <button type="button" data-scene="chain">🔗 사슬</button>
+            <button type="button" data-scene="twoface">🪙 두 얼굴</button>
+            <button type="button" data-scene="fields">🎨 분야</button>
+            <button type="button" data-scene="phone">📱 폰</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="시간 여행 밤거리, 발견의 사슬 판, 과학기술의 두 얼굴, 과학과 다른 분야 잇기, 스마트폰 분해도 장면"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" id="yearCtl" data-feature="timeline">
+          <div class="control-head"><label for="sYear">🕰️ 연도 손잡이</label><output id="oYear">1800년</output></div>
+          <input type="range" id="sYear" min="1800" max="2025" step="1" value="1800" aria-label="연도 (1800~2025년)">
+          <p class="ctrl-note" id="yearNote"></p>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" id="phoneBtn" type="button" data-feature="phone">📱 분해하기</button>
+          <button class="btn" id="resetBtn" type="button">↺ 다시 하기</button>
+        </div>
+        <p class="ctrl-note" id="ctrlNote"></p>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>
