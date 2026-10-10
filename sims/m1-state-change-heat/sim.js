@@ -79,7 +79,7 @@
     const W = Math.round(w), H = Math.round(h), key = W + '|' + H + '|' + r + '|' + blur + '|' + color;
     let sp = SHC.get(key);
     if (!sp) {
-      const pad = Math.ceil(blur * 1.5) + 2, OFF = 3000;
+      const pad = Math.ceil(blur * 1.5) + 2, OFF = W + pad;      // 모양을 그림 밖(왼쪽)에 그리고 그림자만 안으로 들여옴
       const cv = document.createElement('canvas');
       cv.width = Math.ceil((W + pad * 2) * k); cv.height = Math.ceil((H + pad * 2) * k);
       const c = cv.getContext('2d');

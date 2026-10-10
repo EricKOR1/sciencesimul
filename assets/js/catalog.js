@@ -374,8 +374,7 @@ window.SCI_CATALOG = {
                 "6가지 이름",
                 "부피와 질량",
                 "적용"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m1-state-change-heat",
@@ -395,8 +394,7 @@ window.SCI_CATALOG = {
                 "냉각 곡선",
                 "열 출입",
                 "생활 적용"
-              ],
-              "soon": true
+              ]
             }
           ]
         },
