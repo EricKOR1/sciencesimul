@@ -15,3 +15,5 @@
 ```
 python3 design/src/gen_all.py && node design/src/merge_catalog.js design/src/plans_all.json
 ```
+
+검수를 마친 차시는 `node design/src/mark_ready.js <차시 id>`로 '준비 중' 표시를 지워요.

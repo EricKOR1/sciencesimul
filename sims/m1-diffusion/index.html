@@ -28,18 +28,18 @@
     .ctrl-title { font-weight: 800; font-size: 15.5px; margin-bottom: 8px; }
     .ctrl-note { font-size: 13.5px; color: var(--muted); margin: 6px 0 0; line-height: 1.45; }
     .btn-block { min-height: 50px; }
-    /* 빨래 말리기 조건 (2 x 2) */
-    .cond-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+    /* 빨래 말리기 조건 (한 줄 4칸) */
+    .cond-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 10px; }
     .cond {
-      display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; column-gap: 8px; align-items: center;
-      text-align: left; min-height: 58px; padding: 6px 10px; border-radius: 14px; cursor: pointer;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+      min-height: 76px; padding: 6px 2px; border-radius: 14px; cursor: pointer; font-family: inherit;
       border: 2px solid var(--line); background: var(--surface); color: var(--muted);
       transition: border-color .15s, background .15s, transform .08s;
     }
-    .cond:active { transform: scale(.97); }
-    .cond .ci { grid-row: 1 / 3; font-size: 24px; line-height: 1; }
-    .cond .ct { font-size: 13px; font-weight: 800; }
-    .cond .cv { font-size: 15px; font-weight: 800; color: var(--ink); white-space: nowrap; }
+    .cond:active { transform: scale(.96); }
+    .cond .ci { font-size: 22px; line-height: 1.1; }
+    .cond .ct { font-size: 12px; font-weight: 800; }
+    .cond .cv { font-size: 14px; font-weight: 800; color: var(--ink); white-space: nowrap; }
     .cond[aria-pressed="true"] { border-color: #f59e0b; background: #fff7e6; }
     .cond[aria-pressed="true"] .cv { color: #b45309; }
     .trial-log { margin-top: 8px; display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
@@ -55,7 +55,6 @@
     @media (max-width: 599px) {
       .stage-toolbar { min-height: 0; }
       .segmented button { padding: 6px 10px; font-size: 14px; }
-      .cond .cv { font-size: 14px; }
     }
   </style>
 </head>
@@ -121,12 +120,11 @@
           <p class="ctrl-note">같은 양의 잉크를 같은 높이에서 떨어뜨려요. 온도만 달라요.</p>
         </div>
         <div class="control" data-sc="laundry">
-          <div class="ctrl-title">👕 빨래 말리기 조건</div>
-          <div class="cond-grid">
-            <button class="cond" type="button" data-cond="temp" aria-pressed="false"><span class="ci">🌡️</span><span class="ct">온도</span><span class="cv" data-on="따뜻함 30 °C" data-off="쌀쌀함 10 °C"></span></button>
-            <button class="cond" type="button" data-cond="wind" aria-pressed="false"><span class="ci">🌬️</span><span class="ct">바람</span><span class="cv" data-on="선풍기 바람" data-off="바람 없음"></span></button>
-            <button class="cond" type="button" data-cond="dry" aria-pressed="false"><span class="ci">💧</span><span class="ct">습도</span><span class="cv" data-on="건조함 30 %" data-off="습함 85 %"></span></button>
-            <button class="cond" type="button" data-cond="spread" aria-pressed="false"><span class="ci">👕</span><span class="ct">널기</span><span class="cv" data-on="넓게 펼쳐서" data-off="접어서"></span></button>
+          <div class="cond-grid" role="group" aria-label="빨래 말리기 조건">
+            <button class="cond" type="button" data-cond="temp" aria-pressed="false"><span class="ci">🌡️</span><span class="ct">온도</span><span class="cv" data-on="30 °C" data-off="10 °C"></span></button>
+            <button class="cond" type="button" data-cond="wind" aria-pressed="false"><span class="ci">🌬️</span><span class="ct">바람</span><span class="cv" data-on="선풍기" data-off="없음"></span></button>
+            <button class="cond" type="button" data-cond="dry" aria-pressed="false"><span class="ci">💧</span><span class="ct">습도</span><span class="cv" data-on="30 %" data-off="85 %"></span></button>
+            <button class="cond" type="button" data-cond="spread" aria-pressed="false"><span class="ci">👕</span><span class="ct">널기</span><span class="cv" data-on="펼쳐서" data-off="접어서"></span></button>
           </div>
           <button class="btn btn-primary btn-block" id="hangBtn" type="button">▶ 젖은 빨래 널기</button>
           <div class="trial-log" id="trialLog" aria-live="polite"></div>

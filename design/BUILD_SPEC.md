@@ -105,3 +105,12 @@ apple-mobile-web-app-capable, mobile-web-app-capable, emoji favicon, Jua font li
      empty areas, cut-off labels).
 - Final reply (concise): files created; per lesson the step list (phase · title · short · mission count); test results;
   anything unverified; engine issues.
+
+## 8. Engine behaviours to know (learned from earlier builds)
+- `SciSim.loop` dt is clamped to 0–0.05 s; still guard any `sqrt`/`log` against NaN.
+- A manual task's `check()` is re-polled about every 300 ms while its red feedback is visible: keep `check()` free of side
+  effects (trigger shakes/marks only for newly wrong items).
+- The engine resets the side panel scroll at each step intro and mission start.
+- `SciSim.stage` sets `touch-action: none` on the canvas. If a phone layout needs page scroll over the canvas, set
+  `touch-action: pan-y` yourself and call `preventDefault()` in `touchstart` only when the touch starts on a draggable.
+- `feature-new` pulsing applies to `data-feature` elements; for other elements toggle the class yourself.

@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#8b5cf6">
+  <title>물질의 세 가지 상태 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧊</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-toolbar { min-height: 61px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+    #resetBtn { font-size: 20px; }
+    .tgl {
+      display: inline-flex; align-items: center; gap: 6px; min-height: 44px;
+      border: 2px solid var(--line); background: var(--surface); color: var(--muted);
+      border-radius: 999px; padding: 5px 14px; font-weight: 800; font-size: 15px; cursor: pointer;
+    }
+    .tgl[aria-pressed="true"] { color: #5b21b6; border-color: #c4b5fd; background: #f3efff; }
+    .segmented button { min-height: 44px; padding: 6px 9px; font-size: 14px; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    .ctrl-note { font-size: 13.5px; color: var(--muted); margin: 8px 0 0; line-height: 1.45; }
+    /* 비교 도구 (거리 · 배열 · 운동) */
+    .view-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .vw {
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+      min-height: 72px; padding: 6px 2px; border-radius: 14px; cursor: pointer; font-family: inherit;
+      border: 2px solid var(--line); background: var(--surface); color: var(--muted);
+      transition: border-color .15s, background .15s, transform .08s;
+    }
+    .vw:active { transform: scale(.96); }
+    .vw .ci { font-size: 24px; line-height: 1.1; }
+    .vw .ct { font-size: 14.5px; font-weight: 800; color: var(--ink); }
+    .vw .cs { font-size: 11.5px; font-weight: 800; color: var(--muted); }
+    .vw[aria-pressed="true"] { border-color: #8b5cf6; background: #f3efff; }
+    .vw[aria-pressed="true"] .ct { color: #5b21b6; }
+    .vw.seen .cs { color: #14a058; }
+    .readout .value.word { font-family: var(--font); font-size: 17px; }
+    .mission-figure svg { border-radius: 12px; max-width: 100%; height: auto; }
+    @media (max-width: 599px) {
+      .stage-toolbar { min-height: 0; }
+      .segmented button { padding: 6px 9px; font-size: 14px; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="chem">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#g1">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">중1 · Ⅳ. 물질의 상태 변화</div>
+      <h1>물질의 세 가지 상태</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🥣 그릇에 옮기기</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="sceneSeg" role="group" aria-label="실험 장면" hidden>
+            <button type="button" data-scene="pour" data-lv="0">🥣 옮기기</button>
+            <button type="button" data-scene="syringe" data-lv="0">💉 누르기</button>
+            <button type="button" data-scene="table" data-lv="0">📋 기록표</button>
+            <button type="button" data-scene="compare" data-lv="1">🔍 비교</button>
+            <button type="button" data-scene="tags" data-lv="1">🏷️ 태그</button>
+            <button type="button" data-scene="build" data-lv="2">🧩 모형</button>
+            <button type="button" data-scene="sort" data-lv="3">🗂️ 분류</button>
+          </div>
+          <button type="button" class="tgl" id="zoomBtn" aria-pressed="true" data-sc="compare" data-need="zoom">🔍 입자 모형</button>
+          <button class="icon-btn" id="resetBtn" type="button" title="처음 상태로" aria-label="처음 상태로">↺</button>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="고체·액체·기체의 성질과 입자 모형을 보여 주는 실험 화면"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts" id="readouts">
+        <div class="readout" data-sc="pour"><span class="label">🧪 가늘고 긴 병 (100 mL)</span><span class="value word" id="rPA">비어 있음</span></div>
+        <div class="readout" data-sc="pour"><span class="label">🥣 넓고 낮은 통 (150 mL)</span><span class="value word" id="rPB">비어 있음</span></div>
+        <div class="readout" data-sc="syringe"><span class="label">🪵 나무 조각의 부피</span><span class="value" id="rS0">30<small>mL</small></span></div>
+        <div class="readout" data-sc="syringe"><span class="label">💧 물의 부피</span><span class="value" id="rS1">30<small>mL</small></span></div>
+        <div class="readout" data-sc="syringe"><span class="label">💨 공기의 부피</span><span class="value" id="rS2">30<small>mL</small></span></div>
+        <div class="readout" data-sc="tags"><span class="label">붙인 태그</span><span class="value" id="rTag">0<small>/ 9개</small></span></div>
+        <div class="readout" data-sc="build"><span class="label">🧊 고체 모형 입자</span><span class="value" id="rB0">0<small>/ 8개</small></span></div>
+        <div class="readout" data-sc="build"><span class="label">💧 액체 모형 입자</span><span class="value" id="rB1">0<small>/ 8개</small></span></div>
+        <div class="readout" data-sc="build"><span class="label">☁️ 기체 모형 입자</span><span class="value" id="rB2">0<small>/ 8개</small></span></div>
+        <div class="readout" data-sc="sort"><span class="label">상자에 넣은 카드</span><span class="value" id="rSort">0<small>/ 9장</small></span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" data-sc="compare" data-need="views">
+          <div class="view-grid" role="group" aria-label="비교 도구">
+            <button class="vw" type="button" data-view="dist" aria-pressed="false"><span class="ci">📏</span><span class="ct">거리</span><span class="cs">입자 사이</span></button>
+            <button class="vw" type="button" data-view="order" aria-pressed="false"><span class="ci">🧩</span><span class="ct">배열</span><span class="cs">늘어선 모양</span></button>
+            <button class="vw" type="button" data-view="move" aria-pressed="false"><span class="ci">🏃</span><span class="ct">운동</span><span class="cs">움직임</span></button>
+          </div>
+          <p class="ctrl-note" id="viewNote">버튼을 하나씩 눌러 얼음·물·수증기의 입자를 비교해요.</p>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

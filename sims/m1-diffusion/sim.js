@@ -199,14 +199,15 @@
       for (let i = 0; i < n && i < byDist.length; i++) {
         const q = byDist[i].q;
         q.out = now();
-        this.p.push({ x: q.x, y: q.y, vx: gauss() * 30, vy: gauss() * 30 + 40, ink: true, k: 0.3, born: now() });
+        this.p.push({ x: q.x, y: q.y, vx: gauss() * 30, vy: gauss() * 30 + 40, ink: true, k: 0.3, born: now(), tr: new Float32Array(28), tn: 0, tt: 0 });
       }
       this.hasInk = true;
     }
     step(dt) {
       const P = this.p, M = this.M, L = this.L;
       const T = this.T0 * this.act;
-      const dec = Math.exp(-this.gamma * dt), kick = Math.sqrt(T * (1 - dec * dec));
+      const dec = Math.exp(-this.gamma * dt), kick = Math.sqrt(Math.max(0, T * (1 - dec * dec)));
+      if (P.length && P[0].x !== P[0].x) { this.reset(); return; }
       const t = now();
       for (let i = P.length - 1; i >= 0; i--) {
         const q = P[i];
@@ -214,8 +215,14 @@
         if (q.k < 1) q.k = Math.min(1, q.k + dt * 3);
         q.vx = q.vx * dec + kick * gauss(); q.vy = q.vy * dec + kick * gauss();
         q.x += q.vx * dt; q.y += q.vy * dt;
-        if (q.x < -M) q.x += L; else if (q.x >= M) q.x -= L;
-        if (q.y < -M) q.y += L; else if (q.y >= M) q.y -= L;
+        let wrapped = false;
+        if (q.x < -M) { q.x += L; wrapped = true; } else if (q.x >= M) { q.x -= L; wrapped = true; }
+        if (q.y < -M) { q.y += L; wrapped = true; } else if (q.y >= M) { q.y -= L; wrapped = true; }
+        if (q.tr) {                                   // 잉크 입자가 지나간 자취 (최근 0.45초)
+          if (wrapped) q.tn = 0;
+          q.tt += dt;
+          if (q.tt > 0.05) { q.tt = 0; q.tr.copyWithin(2, 0, 26); q.tr[0] = q.x; q.tr[1] = q.y; if (q.tn < 14) q.tn++; }
+        }
       }
       this.collide();
     }
@@ -257,9 +264,29 @@
         }
       }
     }
+    /* 잉크 입자가 지나간 길: 새것일수록 진하게 (빠른 입자일수록 길게 남음) */
+    drawTrails(cx, cy, s, rr) {
+      ctx.save();
+      ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.lineWidth = Math.max(2.5, rr * 0.8);
+      const bands = [[0, 4, 0.55], [4, 8, 0.34], [8, 14, 0.18]], lim = (this.R + this.r) ** 2;
+      for (const [k0, k1, a] of bands) {
+        ctx.strokeStyle = rgba(COL.inkP, a);
+        ctx.beginPath();
+        for (const q of this.p) {
+          if (!q.tr || q.out || q.tn <= k0 || q.x * q.x + q.y * q.y > lim) continue;
+          const tr = q.tr, kEnd = Math.min(k1, q.tn);
+          let px = k0 === 0 ? q.x : tr[2 * (k0 - 1)], py = k0 === 0 ? q.y : tr[2 * (k0 - 1) + 1];
+          ctx.moveTo(cx + px * s, cy + py * s);
+          for (let k = k0; k < kEnd; k++) ctx.lineTo(cx + tr[2 * k] * s, cy + tr[2 * k + 1] * s);
+        }
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
     draw(cx, cy, rad) {
       const s = rad / this.R, rr = this.r * s, lim = (this.R + this.r * 1.5) ** 2, t = now();
       for (let pass = 0; pass < 2; pass++) {
+        if (pass === 1 && !RM) this.drawTrails(cx, cy, s, rr);
         for (const q of this.p) {
           if (q.ink !== (pass === 1)) continue;
           if (q.x * q.x + q.y * q.y > lim) continue;
@@ -281,8 +308,8 @@
     constructor(T, gw, gh, lensR) {
       this.T = T; this.act = actOf(T);
       this.field = new InkField(gw, gh);
-      this.lens = new LiquidSim({ R: 150, r: 12, act: this.act });
-      this.lensR = lensR;
+      this.lens = new LiquidSim({ R: 150, r: 12, act: Math.pow(this.act, 1.5) });   // 돋보기 속 입자는 온도 차이가 눈에 띄게
+      this.lensR = lensR; this.speed = 1;
       this.reset();
     }
     reset() {
@@ -326,7 +353,7 @@
         inj.lobes.forEach((l) => this.field.add(inj.x + l.dx * p1, 0.05 + l.dy * p1, amt * 0.1 * l.a, 1.2 + p1));
         if (p1 >= 1) this.inject = null;
       }
-      this.field.step(dt, DIFF_K * this.act);
+      this.field.step(dt, DIFF_K * Math.pow(this.act, 1.4) * this.speed);
       this.u = this.field.uniformity();
       if (this.dropped) this.elapsed += dt;
       this.lens.step(dt);
@@ -461,7 +488,7 @@
     step(dt, wet, running) {
       const r = this.r, M = this.M, d0 = 2 * r, d02 = d0 * d0, P = this.liq;
       // 액체: 천 위에 고인 물 (무작위로 밀치며 움직임 + 아래로 당김)
-      const T = 700 * this.act, dec = Math.exp(-3 * dt), kick = Math.sqrt(T * (1 - dec * dec));
+      const T = 700 * this.act, dec = Math.exp(-3 * dt), kick = Math.sqrt(Math.max(0, T * (1 - dec * dec)));
       for (const q of P) {
         q.vx = q.vx * dec + kick * gauss(); q.vy = q.vy * dec + kick * gauss() + 900 * dt;
         q.x += q.vx * dt; q.y += q.vy * dt;
@@ -551,13 +578,13 @@
      배치
      ========================================================= */
   const LAY = PHONE ? {
-    ink: { beaker: { x: 40, y: 118, w: 230, h: 252, level: 0.84 }, dropX: 155, dropTop: 10, lens: { cx: 306, cy: 484, r: 108 }, bar: { x: 22, y: 414, w: 168 } },
+    ink: { beaker: { x: 40, y: 118, w: 230, h: 252, level: 0.84 }, dropX: 155, dropTop: 10, lens: { cx: 306, cy: 468, r: 108 }, bar: { x: 22, y: 416, w: 168 } },
     perfume: { room: { x: 10, y: 46, w: 420, h: 478 }, bottle: { x: 58, y: 486 }, friend: { x: 372, y: 470 }, zoneX: 318 },
     temp: { b: [{ x: 22, y: 112, w: 182, h: 196, level: 0.84 }, { x: 236, y: 112, w: 182, h: 196, level: 0.84 }], lens: [{ cx: 113, cy: 418, r: 78 }, { cx: 327, cy: 418, r: 78 }], dropTop: 6, meter: { x: 22, y: 526, w: 396 } },
     laundry: { lineY: 96, lineX0: 14, lineX1: 300, shirtX: 158, basket: { x: 150, y: 566 }, fan: { x: 40, y: 430 }, lens: { cx: 330, cy: 470, r: 92 }, sun: { x: 386, y: 70 }, card: { x: 12, y: 10 }, clock: { x: 330, y: 180 } },
     sort: {},
   } : {
-    ink: { beaker: { x: 60, y: 150, w: 300, h: 320, level: 0.86 }, dropX: 210, dropTop: 22, lens: { cx: 592, cy: 284, r: 162 }, bar: { x: 66, y: 504, w: 288 } },
+    ink: { beaker: { x: 60, y: 150, w: 300, h: 320, level: 0.86 }, dropX: 210, dropTop: 22, lens: { cx: 592, cy: 284, r: 162 }, bar: { x: 66, y: 512, w: 288 } },
     perfume: { room: { x: 20, y: 50, w: 760, h: 448 }, bottle: { x: 92, y: 462 }, friend: { x: 706, y: 448 }, zoneX: 630 },
     temp: { b: [{ x: 70, y: 126, w: 240, h: 228, level: 0.85 }, { x: 490, y: 126, w: 240, h: 228, level: 0.85 }], lens: [{ cx: 190, cy: 458, r: 88 }, { cx: 610, cy: 458, r: 88 }], dropTop: 6, meter: { x: 328, y: 132, w: 144, h: 236 } },
     laundry: { lineY: 104, lineX0: 30, lineX1: 500, shirtX: 270, basket: { x: 270, y: 490 }, fan: { x: 66, y: 400 }, lens: { cx: 656, cy: 318, r: 128 }, sun: { x: 560, y: 70 }, card: { x: 14, y: 12 }, clock: { x: 656, y: 128 } },
@@ -570,6 +597,7 @@
   const S = { scene: '', zoom: true, sceneT: 0, lensK: new SciSim.Spring(0, { stiffness: 210, damping: 19 }) };
   const INK = new InkBeaker(20, PHONE ? 30 : 36, PHONE ? 32 : 34, 12);
   const TP = { cold: new InkBeaker(10, 30, 28, 12), hot: new InkBeaker(60, 30, 28, 12), dropped: false };
+TP.cold.speed = TP.hot.speed = 0.42;           // 두 비커의 차이를 충분히 지켜볼 수 있게 조금 천천히
   const PF = { room: new GasRoom(), squeeze: 0, smell: 0 };
   const EV = new EvapSim();
   const LD = {
@@ -633,7 +661,7 @@
     rg.addColorStop(0, '#c4b5fd'); rg.addColorStop(0.5, '#7c3aed'); rg.addColorStop(1, '#4c1d95');
     ctx.strokeStyle = rg; ctx.lineWidth = 8; circle(L.cx, L.cy, r + 3); ctx.stroke();
     ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = 2.5;
-    ctx.beginPath(); ctx.arc(L.cx, L.cy, r - 4, Math.PI * 1.1, Math.PI * 1.42); ctx.stroke();
+    ctx.beginPath(); ctx.arc(L.cx, L.cy, Math.max(0.5, r - 4), Math.PI * 1.1, Math.PI * 1.42); ctx.stroke();
     D.label(L.cx, L.cy - r - 6, o.title || '🔍 입자 모형', { bg: '#5b21b6', size: PHONE ? 13 : 14 });
     ctx.restore();
   }
@@ -732,7 +760,6 @@
     const L = LAY.ink, g = inkGeom();
     drawBeaker(INK, g, t);
     drawDropper(L.dropX, L.dropTop, INK);
-    text(g.x + g.w / 2, g.y + g.h + 28 - (PHONE ? 4 : 0), '물 (20 °C) · 젓지 않음', { size: 14, weight: 800, color: COL.muted });
     if (INK.dropped && INK.u < 0.985) D.label(g.x + 12, g.y - 16, '⏩ 빨리 감기로 보는 중', { bg: 'rgba(27,35,51,.78)', size: 13, align: 'left' });
     uniformBar(L.bar.x, L.bar.y + (PHONE ? 0 : 0), L.bar.w, INK.u, '고르게 퍼진 정도');
     if (!INK.dropped && !INK.drop) {
@@ -969,7 +996,7 @@
     LD.state = 'done'; LD.wet = 0; LD.hours = hours; LD.doneAt = now();
     const c = Object.assign({}, LD.cond), ok = hours * 60 <= TARGET_MIN + 1e-6;
     LD.trials.unshift({ h: hours, c, ok });
-    if (LD.trials.length > 4) LD.trials.length = 4;
+    if (LD.trials.length > 3) LD.trials.length = 3;
     LD.best = LD.best == null ? hours : Math.min(LD.best, hours);
     LD.missionBest = LD.missionBest == null ? hours : Math.min(LD.missionBest, hours);
     Sound.tone(880, 0.1, 'triangle', 0.06); Sound.tone(1175, 0.14, 'triangle', 0.06, 0.08);
@@ -1065,13 +1092,11 @@
       }
       if (!c.dry) { ctx.fillStyle = 'rgba(203,213,225,.25)'; ctx.fillRect(cx - r, cy - r, r * 2, r * 2); }
       EV.draw(cx, cy, r);
+      text(cx - r * 0.5, cy - r * 0.56, '공기', { size: 13, weight: 800, color: '#64748b', stroke: 'rgba(255,255,255,.85)', strokeWidth: 4 });
+      text(cx, cy + r * 0.86, '젖은 천', { size: 13, weight: 800, color: '#3f5f8f', stroke: 'rgba(255,255,255,.8)', strokeWidth: 4 });
       if (LD.state === 'done') D.label(cx, cy - r * 0.35, '✨ 물이 모두 날아갔어요', { bg: COL.good, size: 13 });
     }, { title: '🔍 젖은 빨래의 표면', bg: '#f4f9ff' });
     if (lk > 0.5) legend(L.lens.cx, L.lens.cy + L.lens.r + (PHONE ? 18 : 22), [[COL.waterP, '물 입자']]);
-    if (lk > 0.5 && !PHONE) {
-      text(L.lens.cx - L.lens.r - 2, L.lens.cy + L.lens.r * 0.62, '천', { size: 13, weight: 800, color: '#5b7aa6', align: 'right' });
-      text(L.lens.cx + L.lens.r + 6, L.lens.cy - L.lens.r * 0.4, '공기', { size: 13, weight: 800, color: COL.muted, align: 'left' });
-    }
   }
   function cloud(x, y, s, t) {
     const dx = RM ? 0 : Math.sin(t * 0.3) * 6;
@@ -1293,14 +1318,16 @@
   }
 
   const SCENES = {
-    ink: { label: '💧 물에 잉크 한 방울', hint: '💧 스포이트를 눌러 잉크를 한 방울 떨어뜨려 보세요' },
+    ink: { label: '💧 물(20 °C)에 잉크 한 방울 · 젓지 않아요', hint: '💧 스포이트를 눌러 잉크를 한 방울 떨어뜨려 보세요' },
     perfume: { label: '🌸 교실에 퍼지는 향수', hint: '🌸 향수병을 눌러 향수를 뿌려 보세요' },
     temp: { label: '🌡️ 찬물과 뜨거운 물', hint: '💧 두 비커에 동시에 잉크를 떨어뜨려 보세요' },
     laundry: { label: '👕 빨래 말리기', hint: '👕 조건을 고르고 ▶ 젖은 빨래 널기를 눌러 보세요' },
     sort: { label: '🗂️ 확산일까, 증발일까?', hint: '✋ 카드를 끌어 알맞은 상자에 넣어 보세요' },
   };
+  function sideTop() { const sc = document.querySelector('.side-col'); if (sc) sc.scrollTop = 0; }
   function setScene(name, reset) {
     const changed = S.scene !== name;
+    if (changed || reset) sideTop();
     S.scene = name;
     if (changed) { S.sceneT = 0; FX.clear(); S.lensK.value = 0; S.lensK.velocity = 0; }
     if (reset || changed && !sceneReady[name]) resetScene(name);
@@ -1338,7 +1365,7 @@
     ro.hidden = !ro.querySelector('.readout:not([hidden])');
     const free = !!(game && game.free);
     $('#sceneSeg').hidden = !free;
-    $('#tbLabel').hidden = free && window.innerWidth < 1000;
+    $('#tbLabel').hidden = free;
     $$('#sceneSeg button').forEach((b) => b.classList.toggle('on', b.dataset.scene === S.scene));
     $('#zoomBtn').setAttribute('aria-pressed', S.zoom ? 'true' : 'false');
     lastFree = free;
@@ -1517,6 +1544,7 @@
     },
     onFeatures(set) { F = set; refreshUI(); },
     onMissionStart(m) {
+      sideTop();
       if (game && game.free) return;
       if (m.scene) setScene(m.scene, false);
       refreshUI();
@@ -1538,7 +1566,7 @@
           {
             title: '물에 잉크 한 방울', scene: 'ink',
             goal: '스포이트로 물에 잉크를 한 방울 떨어뜨리고, 잉크가 물 전체에 <b>고르게 퍼질 때까지</b> 지켜보세요.',
-            hint: '<b>💧 잉크 한 방울 떨어뜨리기</b>를 누르고 기다려요. 🔍 입자 모형에서 보라색 잉크 입자가 어떻게 움직이는지도 보세요.',
+            hint: '<b>💧 잉크 한 방울 떨어뜨리기</b>를 누르고 기다려요. 🔍 입자 모형에서 보라색 잉크 입자의 <b>자취(꼬리)</b>가 어떻게 흩어지는지 보세요.',
             setup() { if (!(INK.dropped && INK.u < 0.9)) setScene('ink', true); },
             check: () => INK.dropped && INK.u >= 0.9,
             onWin() { const g = inkGeom(); celebrate(g.x + g.w / 2, g.y + g.h * 0.55); },
@@ -1699,6 +1727,7 @@
   refreshCondUI(); renderTrials(); refreshUI();
 
   function update(dt) {
+    dt = clamp(dt, 0, 0.05);                  // 첫 프레임의 시간 차이가 음수가 되면 입자 위치가 NaN이 되어 사라지므로 막아 둠
     S.sceneT += dt;
     const lensOn = S.zoom && on('zoom');
     S.lensK.target = lensOn ? 1 : 0;
@@ -1726,11 +1755,17 @@
       ctx.fillStyle = BG; ctx.fillRect(0, 0, VW, VH); ctx.restore();
     }
   }
+  let loopErr = 0;
   SciSim.loop((dt, t) => {
-    update(dt);
-    draw(now());
-    updateReadouts(t);
-    watchGame();
+    try {
+      update(dt);
+      draw(now());
+      updateReadouts(t);
+      watchGame();
+    } catch (e) {
+      view.apply(); ctx.globalAlpha = 1;
+      if (loopErr++ < 3) console.error(e);
+    }
   });
 
   /* ---------- 점검용 (자동 테스트) ---------- */
@@ -1750,6 +1785,6 @@
     solveSort() { SORT.cards.forEach((c) => { c.bin = c.k; c.order = orderSeq++; c.wrong = false; }); layoutCards(false); },
     wrongSort() { SORT.cards.forEach((c) => { c.bin = 'diff'; c.order = orderSeq++; }); layoutCards(false); },
     setCond(o) { Object.assign(LD.cond, o); applyCondToSims(); refreshCondUI(); },
-    perf() { return { liq: INK.lens.p.length, gas: PF.room.p.length }; },
+    perf() { return { liq: INK.lens.p.length, gas: PF.room.p.length, nan: INK.lens.p.some((q) => q.x !== q.x) || TP.hot.lens.p.some((q) => q.x !== q.x) || EV.liq.some((q) => q.x !== q.x) }; },
   };
 })();

@@ -1,6 +1,6 @@
 // node design/src/merge_catalog.js design/src/plans_all.json → rewrites assets/js/catalog.js
-// - keeps existing sim entries untouched (incl. prereq)
-// - adds planned sims; `soon: true` when sims/<id>/index.html does not exist yet
+// - refreshes planned entries from the designs (keeps prereq)
+// - adds planned sims as `soon: true`; existing entries keep their soon/ready state (see mark_ready.js)
 // - orders each unit by plan.order
 const fs = require('fs'), vm = require('vm'), path = require('path');
 const REPO = path.resolve(__dirname, '..', '..') + '/';
@@ -14,7 +14,6 @@ const unitMap = {};
 let n = 0;
 CAT.grades.forEach((g, gi) => g.units.forEach((u, ui) => { n++; unitMap[n] = [gi, ui]; }));
 
-const built = (id) => fs.existsSync(path.join(REPO, 'sims', id, 'index.html'));
 const report = [];
 for (const plan of plans) {
   const [gi, ui] = unitMap[plan.unit];
@@ -28,9 +27,8 @@ for (const plan of plans) {
       std: s.std, stdText: s.stdText, desc: s.desc, tags: s.tags, steps: s.steps,
     };
     if (prev && prev.prereq) entry.prereq = prev.prereq;
-    if (!built(s.id)) entry.soon = true;
-    // an already-built sim keeps its existing catalog entry unless it was a planned (soon) entry
-    if (prev && !prev.soon && built(s.id)) return;
+    // keep the current ready/soon state; new entries start as soon (mark_ready.js flips them after review)
+    if (prev ? prev.soon : true) entry.soon = true;
     byId[s.id] = entry;
   });
   const order = (plan.order || []).filter((id) => byId[id]);

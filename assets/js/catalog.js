@@ -332,8 +332,7 @@ window.SCI_CATALOG = {
                 "온도와 확산",
                 "증발",
                 "입자 운동"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m1-three-states",
@@ -354,8 +353,7 @@ window.SCI_CATALOG = {
                 "입자 배열",
                 "입자 모형",
                 "적용"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m1-state-change",

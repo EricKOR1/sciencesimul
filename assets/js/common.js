@@ -255,7 +255,8 @@
     let running = true;
     function frame(t) {
       if (!running) return;
-      const dt = Math.min(0.05, (t - last) / 1000);
+      // 첫 프레임의 t가 last보다 앞설 수 있어 음수가 되지 않도록 0~0.05초로 제한
+      const dt = Math.max(0, Math.min(0.05, (t - last) / 1000));
       last = t;
       fn(dt, t / 1000);
       requestAnimationFrame(frame);
@@ -430,6 +431,12 @@
       const sc = mount.closest('.side-col');
       if (sc && sc.scrollTop > mount.offsetTop) sc.scrollTop = mount.offsetTop - 8;
     }
+    // 새 단계·미션을 시작할 때 오른쪽 패널을 맨 위로 (이전 미션에서 내려간 스크롤 때문에 조작 도구가 가려지지 않게)
+    function resetPanelScroll() {
+      const sc = mount.closest('.side-col');
+      if (sc && sc.scrollTop) sc.scrollTop = 0;
+      if (mount.scrollTop) mount.scrollTop = 0;
+    }
     tabMission.addEventListener('click', () => { Sound.click(); showTab('mission'); });
     tabConcept.addEventListener('click', () => { Sound.click(); showTab('concept'); });
 
@@ -514,6 +521,7 @@
       applyFeatures(featuresUpTo(li), highlight !== false);
       if (lv.setup) { try { lv.setup(); } catch (e) { console.error(e); } }
       bodyMission.innerHTML = '';
+      resetPanelScroll();
       const card = el('div', { class: 'step-intro' });
       card.appendChild(el('div', { class: 'si-top' }, [
         el('div', { class: 'si-icon', text: lv.icon || '🔬' }),
@@ -552,6 +560,7 @@
       if (!free) applyFeatures(featuresUpTo(m._level), false);
       wrong = 0; hintUsed = false; holdStart = 0; lastStatus = null; phase = 'active';
       bodyMission.innerHTML = '';
+      resetPanelScroll();
 
       const head = el('div', { class: 'level-head' }, [
         el('span', { class: 'level-badge', text: 'STEP ' + (m._level + 1) + (lv.phase ? ' · ' + lv.phase : '') }),
