@@ -2580,6 +2580,18 @@
     explain: '탐구 계획서에는 탐구 문제, 가설, 변인, 측정 방법, 안전 수칙이 들어가요. 곰팡이나 식물처럼 <b>며칠 동안 꾸준히</b> 관찰해야 하는 탐구도 계획서를 세우면 체계적으로 할 수 있어요. 실제로 실천해 보고 결과를 친구들과 공유해 보세요!',
   };
 
+  /* 무대·표를 먼저 준비한 뒤 게임을 시작해야 단계 소개의 setup()이 장면을 옮길 수 있다 */
+  buildStage();
+  if (mq) {
+    if (mq.addEventListener) mq.addEventListener('change', buildStage);
+    else if (mq.addListener) mq.addListener(buildStage);
+  }
+  ensureSeries('A'); ensureSeries('B');
+  renderCond(true); renderTable();
+  syncBenchLayout(true);
+  syncDom();
+  setTimeout(() => { S.booted = true; }, 300);
+
   game = SciSim.game({
     simId: 'm1-inquiry-method',
     mount: '#game',
@@ -2736,16 +2748,6 @@
   /* =========================================================
      시작
      ========================================================= */
-  buildStage();
-  if (mq) {
-    if (mq.addEventListener) mq.addEventListener('change', buildStage);
-    else if (mq.addListener) mq.addListener(buildStage);
-  }
-  ensureSeries('A'); ensureSeries('B');
-  renderCond(true); renderTable();
-  syncBenchLayout(true);
-  syncDom();
-  setTimeout(() => { S.booted = true; }, 300);
   let uiT = 0;
   SciSim.loop((dt, t) => {
     S.t = t;

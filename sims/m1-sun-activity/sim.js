@@ -582,9 +582,9 @@
     const fa = clamp((c - 0.95) / 0.05, 0, 1);
     if (fa > 0.01) {
       ctx.save(); ctx.globalAlpha = fa;
-      const chg = ctx.createRadialGradient(cx, cy, R * 0.99, cx, cy, R * 1.075);
-      chg.addColorStop(0, 'rgba(255,60,90,1)'); chg.addColorStop(0.4, 'rgba(255,77,109,.78)'); chg.addColorStop(1, 'rgba(255,90,110,0)');
-      ctx.fillStyle = chg; circle(ctx, cx, cy, R * 1.075); ctx.fill();
+      const chg = ctx.createRadialGradient(cx, cy, R * 0.99, cx, cy, R * 1.12);
+      chg.addColorStop(0, 'rgba(255,60,90,1)'); chg.addColorStop(0.45, 'rgba(255,77,109,.8)'); chg.addColorStop(1, 'rgba(255,90,110,0)');
+      ctx.fillStyle = chg; circle(ctx, cx, cy, R * 1.12); ctx.fill();
       ctx.strokeStyle = 'rgba(255,110,125,.85)'; ctx.lineWidth = 1.5; ctx.lineCap = 'round';
       SPIC.forEach((sp) => { const l = sp.l * (0.6 + 0.4 * Math.sin(RM ? 1 : t * sp.k + sp.p)); ctx.beginPath(); ctx.moveTo(cx + Math.cos(sp.a) * R * 1.0, cy + Math.sin(sp.a) * R * 1.0); ctx.lineTo(cx + Math.cos(sp.a) * R * (1.0 + l * 1.2), cy + Math.sin(sp.a) * R * (1.0 + l * 1.2)); ctx.stroke(); });
       PROMS.forEach((p) => {
@@ -647,8 +647,8 @@
       const q = PROMS[i], da = Math.abs(((ang - q.a + Math.PI * 3) % TAU) - Math.PI), h = promHeight(q, performance.now() / 1000) * R;
       if (da < q.w + 0.18 && d > R * 0.98 && d < R + h * 1.9 + 14) return { name: '홍염', key: 'prom', u: dx / R, v: dy / R, col: '#ff8a6b' };
     }
-    if (d >= R * 0.97 && d <= R * 1.12 && S.c > 0.95) return { name: '채층', key: 'chromo', u: dx / R, v: dy / R, col: '#ff7a8f' };
-    if (d > R * 1.12 && d < R * 2.9) return { name: '코로나', key: 'corona', u: dx / R, v: dy / R, col: '#e6f0ff' };
+    if (d >= R * 0.97 && d <= R * 1.2 && S.c > 0.95) return { name: '채층', key: 'chromo', u: dx / R, v: dy / R, col: '#ff7a8f' };
+    if (d > R * 1.2 && d < R * 2.9) return { name: '코로나', key: 'corona', u: dx / R, v: dy / R, col: '#e6f0ff' };
     return null;
   }
 
@@ -1193,7 +1193,7 @@
         }
         if (S.scene === 'atmo') {
           const G = atmoGeo(L), ox = G.cx + S.occSp.x.value * G.R, oy = G.cy + S.occSp.y.value * G.R;
-          if (Math.hypot(p.x - ox, p.y - oy) < G.R + 6) {
+          if (Math.hypot(p.x - ox, p.y - oy) < G.R * 1.0) {
             S.occDrag = true; S.occTouched = true; drag = { type: 'occ', gx: p.x - ox, gy: p.y - oy };
             Sound.tone(620, 0.05, 'triangle', 0.05); v.canvas.style.cursor = 'grabbing'; return true;
           }
@@ -1209,7 +1209,7 @@
         }
         if (S.scene === 'activity') {
           const y = actHit(L, p);
-          if (y) { setYear(y); yearEl.value = y; yearEl.dispatchEvent(new Event('input')); markPeak(V, y); drag = { type: 'year' }; return true; }
+          if (y) { setYear(y); yearEl.value = y; yearEl.dispatchEvent(new Event('input')); drag = { type: 'year' }; return true; }
           return false;
         }
         if (S.scene === 'cards') {
@@ -1230,7 +1230,7 @@
         } else if (drag.type === 'occ') {
           const G = atmoGeo(L);
           let ox = (p.x - drag.gx - G.cx) / G.R, oy = (p.y - drag.gy - G.cy) / G.R;
-          if (Math.hypot(ox, oy) < 0.2) { if (!S.snapped) { S.snapped = true; Sound.tone(520, 0.06, 'square', 0.05); Sound.tone(780, 0.1, 'triangle', 0.07, 0.04); ringFx(V, G.cx, G.cy, G.R, '#5eead4'); } ox = 0; oy = 0; } else S.snapped = false;
+          if (Math.hypot(ox, oy) < 0.14) { if (!S.snapped) { S.snapped = true; Sound.tone(520, 0.06, 'square', 0.05); Sound.tone(780, 0.1, 'triangle', 0.07, 0.04); ringFx(V, G.cx, G.cy, G.R, '#5eead4'); } ox = 0; oy = 0; } else S.snapped = false;
           S.occSp.x.target = ox; S.occSp.y.target = oy;
         } else if (drag.type === 'year') {
           const y = actHit(L, p);
@@ -1259,7 +1259,7 @@
         const p = v.toLocal(tc);
         // pointerdown은 touchstart보다 먼저 일어나므로, 이미 끌기가 시작됐으면(drag) 페이지 스크롤을 막아요
         const G = atmoGeo(L);
-        if (drag || (S.scene === 'atmo' && Math.hypot(p.x - (G.cx + S.occSp.x.value * G.R), p.y - (G.cy + S.occSp.y.value * G.R)) < G.R + 6) || (S.scene === 'photo' && S.filter && photoHit(L, p)) || (S.scene === 'activity' && actHit(L, p))) e.preventDefault();
+        if (drag || (S.scene === 'atmo' && Math.hypot(p.x - (G.cx + S.occSp.x.value * G.R), p.y - (G.cy + S.occSp.y.value * G.R)) < G.R) || (S.scene === 'photo' && S.filter && photoHit(L, p)) || (S.scene === 'activity' && actHit(L, p))) e.preventDefault();
       }, { passive: false });
     }
   }
@@ -1317,8 +1317,8 @@
   const SVG_OPEN = (w, h, label) => '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + w + ' ' + h + '" width="' + w + '" role="img" aria-label="' + label + '" font-family=\'' + FONT.replace(/"/g, '') + '\'>';
   const FIG = {};
   FIG.spots = (function () {
-    const W = 340, H = 176, R = 46, cy = 82, xs = [64, 170, 276];
-    let s = SVG_OPEN(W, H, '같은 흑점을 1일, 4일, 7일째 관측한 모습') + '<defs><radialGradient id="fsD" cx="42%" cy="40%" r="70%"><stop offset="0" stop-color="#fff3cf"/><stop offset=".75" stop-color="#ffcf6a"/><stop offset="1" stop-color="#f2972a"/></radialGradient></defs>';
+    const W = 340, H = 176, R = 38, cy = 86, xs = [56, 170, 284];
+    let s = SVG_OPEN(W, H, '같은 흑점을 1일, 4일, 7일째 관측한 모습') + '<defs><radialGradient id="fsD" cx="42%" cy="40%" r="70%"><stop offset="0" stop-color="#fff3cf"/><stop offset=".75" stop-color="#ffcf6a"/><stop offset="1" stop-color="#f2972a"/></radialGradient><marker id="fsA" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#fde68a"/></marker></defs>';
     s += '<rect width="' + W + '" height="' + H + '" rx="12" fill="#0e1838"/>';
     s += '<text x="14" y="22" font-size="13" font-weight="800" fill="#9fb3e0">← 동쪽</text><text x="' + (W - 14) + '" y="22" text-anchor="end" font-size="13" font-weight="800" fill="#9fb3e0">서쪽 →</text>';
     [1, 4, 7].forEach((d, k) => {
@@ -1327,12 +1327,12 @@
       [0, 3, 6].forEach((i) => {
         const sp = SPOTS[i], P = spotProj(sp.lat, sp.lon0 + ROT * (d - 1), R);
         if (P.c < 0.1) return;
-        const r = sp.r * (R / 214) * 2.1, ang = Math.atan2(P.y, P.x) * 180 / Math.PI, kx = Math.max(0.2, P.c);
+        const r = sp.r * (R / 214) * 2.5, ang = Math.atan2(P.y, P.x) * 180 / Math.PI, kx = Math.max(0.2, P.c);
         s += '<g transform="translate(' + (cx + P.x).toFixed(1) + ' ' + (cy + P.y).toFixed(1) + ') rotate(' + ang.toFixed(1) + ') scale(' + kx.toFixed(2) + ' 1)"><circle r="' + r.toFixed(1) + '" fill="#8a4a18"/><circle r="' + (r * 0.5).toFixed(1) + '" fill="#2b1408"/></g>';
       });
       s += '<text x="' + cx + '" y="' + (H - 14) + '" text-anchor="middle" font-size="14" font-weight="800" fill="#fff">' + d + '일째</text>';
     });
-    s += '<path d="M104,82 L128,82" stroke="#fde68a" stroke-width="2.4" marker-end="url(#fsA)" fill="none"/>';
+    [[xs[0] + R + 8, xs[1] - R - 8], [xs[1] + R + 8, xs[2] - R - 8]].forEach((a) => { s += '<path d="M' + a[0] + ',' + cy + ' L' + a[1] + ',' + cy + '" stroke="#fde68a" stroke-width="2.6" marker-end="url(#fsA)" fill="none"/>'; });
     return s + '</svg>';
   })();
   FIG.layers = (function () {
@@ -1585,7 +1585,7 @@
   let lastDayTxt = '';
   function update(dt, t) {
     S.occSp.x.update(dt); S.occSp.y.update(dt);
-    if (!S.occDrag && Math.hypot(S.occSp.x.target, S.occSp.y.target) < 0.2 && (S.occSp.x.target !== 0 || S.occSp.y.target !== 0)) { S.occSp.x.target = 0; S.occSp.y.target = 0; }
+    if (!S.occDrag && Math.hypot(S.occSp.x.target, S.occSp.y.target) < 0.14 && (S.occSp.x.target !== 0 || S.occSp.y.target !== 0)) { S.occSp.x.target = 0; S.occSp.y.target = 0; }
     if (S.lens) { S.lens.u = approach(S.lens.u, S.lens.tu, dt, 22); S.lens.v = approach(S.lens.v, S.lens.tv, dt, 22); }
     // 플레어 섬광: 흑점 수에 비례해 자주 일어나요
     if (S.scene === 'activity') {

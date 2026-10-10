@@ -3,7 +3,7 @@
    ① [관찰] 생물다양성의 세 가지: 유전적 다양성 · 종 다양성 · 생태계 다양성
    ② [탐구] 변이 관찰: 무당벌레 30마리의 점 개수 → 막대그래프
    ③ [실험] 환경과 변이: 두 섬의 새 무리(부리 두께) 세대 진행
-   ④ [적용] 다양성 형성: 변이 → 환경에 적응 → 오랜 시간 → 생물다양성 (※ '자연선택'·'진화' 용어는 쓰지 않음)
+   ④ [적용] 다양성 형성: 변이 → 환경에 적응 → 오랜 시간 → 생물다양성 (※ 교육과정 용어 범위를 지켜 '환경에 적응'으로 설명)
    ========================================================= */
 (function () {
   'use strict';
@@ -162,9 +162,9 @@
      장면 ① 생물다양성의 세 가지
      ========================================================= */
   const DIV_TYPES = {
-    gen: { name: '유전적 다양성', color: '#8b5cf6', soft: '#ece5fd', def: '같은 종 안에서도 형질(생김새, 색 등)이 다양한 것' },
-    spe: { name: '종 다양성', color: '#2f7fe8', soft: '#dfeafd', def: '한 지역에 사는 생물의 종류(종)가 다양한 것' },
-    eco: { name: '생태계 다양성', color: '#12a06a', soft: '#dcf6ea', def: '숲, 갯벌, 사막처럼 서로 다른 생태계가 있는 것' },
+    gen: { name: '유전적 다양성', color: '#8b5cf6', soft: '#ece5fd', def: '같은 종 안에서도 형질(생김새, 색 등)이 다양한 것', short: '같은 종 안에서도 형질이 다양해요' },
+    spe: { name: '종 다양성', color: '#2f7fe8', soft: '#dfeafd', def: '한 지역에 사는 생물의 종류(종)가 다양한 것', short: '여러 종의 생물이 함께 살아요' },
+    eco: { name: '생태계 다양성', color: '#12a06a', soft: '#dcf6ea', def: '숲, 갯벌, 사막처럼 서로 다른 생태계가 있는 것', short: '여러 생태계가 있어요' },
   };
   const DIV_SCENES = [
     { key: 'A', type: 'gen', title: '장면 1', cap: '바지락 8마리예요. 모두 같은 종인데 껍데기의 무늬와 색이 서로 달라요.' },
@@ -617,10 +617,10 @@
     if (!TALL) {
       return {
         div: {
-          cards: { x0: 14, y: 54, w: 248, h: 300, gap: 12, artH: 268 },
-          slots: { y: 362, h: 64 },
-          tray: { x0: 14, y: 440, w: 248, h: 88, gap: 12 },
-          cap: { x: 14, y: 542, w: 772, h: 88 },
+          cards: { x0: 14, y: 54, w: 248, h: 290, gap: 12, artH: 258 },
+          slots: { y: 352, h: 58 },
+          tray: { x0: 14, y: 450, w: 248, h: 84, gap: 12 },
+          cap: { x: 14, y: 544, w: 772, h: 86 },
           hint: { x: 400, y: 28, maxW: 700 },
         },
         bugs: {
@@ -630,11 +630,11 @@
           hint: { x: 252, y: 30, maxW: 440 },
         },
         isl: {
-          panel: [{ x: 12, y: 46, w: 386, h: 234 }, { x: 402, y: 46, w: 386, h: 234 }],
-          hist: [{ x: 12, y: 286, w: 386, h: 148 }, { x: 402, y: 286, w: 386, h: 148 }],
-          trend: { x: 12, y: 442, w: 776, h: 190 },
-          home: { cols: 6, rows: 4, dx: 52, dy: 27, y0: 0.52, bird: 1.0 },
-          env: { x: 205, y: 78 },
+          panel: [{ x: 12, y: 46, w: 386, h: 224 }, { x: 402, y: 46, w: 386, h: 224 }],
+          hist: [{ x: 12, y: 276, w: 386, h: 166 }, { x: 402, y: 276, w: 386, h: 166 }],
+          trend: { x: 12, y: 450, w: 776, h: 182 },
+          home: { cols: 6, rows: 4, dx: 52, dy: 27, y0: 0.5, bird: 1.0 },
+          env: { x: 205, y: 122 },
           hint: { x: 400, y: 24, maxW: 700 },
         },
         story: {
@@ -647,10 +647,10 @@
     }
     return {
       div: {
-        cards: { x0: 8, y: 48, w: 306, h: 160, gap: 8, artH: 130, rows: true },
-        slots: { x: 320, w: 132, y: 48, h: 160 },
-        tray: { x0: 8, y: 566, w: 144, h: 56, gap: 6 },
-        cap: { x: 8, y: 636, w: 444, h: 156 },
+        cards: { x0: 8, y: 48, w: 306, h: 166, gap: 8, artH: 136, rows: true },
+        slots: { x: 320, w: 132, y: 48, h: 166 },
+        tray: { x0: 8, y: 598, w: 144, h: 56, gap: 6 },
+        cap: { x: 8, y: 664, w: 444, h: 128 },
         hint: { x: 230, y: 24, maxW: 430 },
       },
       bugs: {
@@ -660,18 +660,18 @@
         hint: { x: 230, y: 26, maxW: 430 },
       },
       isl: {
-        panel: [{ x: 8, y: 42, w: 444, h: 168 }, { x: 8, y: 306, w: 444, h: 168 }],
-        hist: [{ x: 8, y: 214, w: 444, h: 86 }, { x: 8, y: 478, w: 444, h: 86 }],
-        trend: { x: 8, y: 570, w: 444, h: 222 },
+        panel: [{ x: 8, y: 42, w: 444, h: 140 }, { x: 8, y: 327, w: 444, h: 140 }],
+        hist: [{ x: 8, y: 186, w: 444, h: 135 }, { x: 8, y: 471, w: 444, h: 135 }],
+        trend: { x: 8, y: 612, w: 444, h: 180 },
         home: { cols: 6, rows: 4, dx: 62, dy: 20, y0: 0.5, bird: 0.92 },
-        env: { x: 230, y: 70 },
+        env: { x: 230, y: 112 },
         hint: { x: 230, y: 22, maxW: 430 },
       },
       story: {
-        slot: { x0: 8, y: 44, w: 444, h: 84, gap: 6, rows: true },
-        tray: { x0: 8, y: 506, w: 218, h: 84, gapX: 8, gapY: 6, cols: 2 },
-        cap: { x: 8, y: 700, w: 444, h: 92 },
-        arrowY: 0, hint: { x: 230, y: 482, maxW: 430 },
+        slot: { x0: 8, y: 44, w: 444, h: 58, gap: 6, rows: true },
+        tray: { x0: 8, y: 398, w: 218, h: 76, gapX: 8, gapY: 6, cols: 2 },
+        cap: { x: 8, y: 660, w: 444, h: 132 },
+        arrowY: 0, hint: { x: 230, y: 24, maxW: 430 },
       },
     };
   }
@@ -681,9 +681,9 @@
      ========================================================= */
   function mkCard(o) { return Object.assign({ x: 0, y: 0, w: 100, h: 50, lift: 0, bad: -9, ok: false, tw: null }, o); }
   function moveCard(cd, r, animate) {
-    cd.w = r.w; cd.h = r.h;
-    if (animate && !RM) { cd.tw = SciSim.tween(cd, { x: r.x, y: r.y }, { duration: 0.42, ease: 'outBack' }); }
-    else { if (cd.tw) cd.tw.cancel(); cd.x = r.x; cd.y = r.y; }
+    if (cd.tw) cd.tw.cancel();
+    if (animate && !RM) { cd.tw = SciSim.tween(cd, { x: r.x, y: r.y, w: r.w, h: r.h }, { duration: 0.42, ease: 'outBack' }); }
+    else { cd.x = r.x; cd.y = r.y; cd.w = r.w; cd.h = r.h; }
   }
   function cardAt(list, p) { for (let i = list.length - 1; i >= 0; i--) if (inR(p, list[i], 4)) return list[i]; return null; }
   function raise(list, cd) { list.splice(list.indexOf(cd), 1); list.push(cd); }
@@ -731,7 +731,7 @@
   }
   function tagTarget(tg) {
     const T = LAY.div.tray;
-    if (tg.slot >= 0) { const s = slotRectD(tg.slot); return TALL ? { x: s.x + 4, y: s.y + (s.h - 56) / 2, w: s.w - 8, h: 56 } : { x: s.x + 6, y: s.y + (s.h - T.h * 0.72) / 2, w: s.w - 12, h: T.h * 0.72 }; }
+    if (tg.slot >= 0) { const s = slotRectD(tg.slot); return TALL ? { x: s.x + 4, y: s.y + (s.h - 56) / 2, w: s.w - 8, h: 56 } : { x: s.x + 5, y: s.y + 5, w: s.w - 10, h: s.h - 10 }; }
     return { x: T.x0 + tg.home * (T.w + T.gap), y: T.y, w: T.w, h: T.h };
   }
   function snapTags(animate) { snapAll(TAGS, tagTarget, animate); }
@@ -807,8 +807,26 @@
       ctx.restore();
       if (!TAGS.some((tg) => tg.slot === i)) txt(TALL ? '이름표를 여기에' : '👇 알맞은 이름표를 여기에', s.x + s.w / 2, s.y + s.h / 2 + 1, { size: TALL ? 13.5 : 14.5, weight: 700, color: '#94a3b8', align: 'center', base: 'middle' });
     }
-    if (!TAGS.every((tg) => tg.slot >= 0) || !S.divDone) {
-      if (!S.divDone) txt('🏷️ 이름표 (끌어서 놓아요)', TALL ? 10 : 16, L.tray.y - 8, { size: 13.5, weight: 800, color: '#64748b' });
+    if (!S.divDone) txt('🏷️ 이름표 (끌어서 놓아요)', TALL ? 10 : 16, L.tray.y - 10, { size: 13.5, weight: 800, color: '#64748b' });
+    // 완료: 장면마다 뜻풀이 (이름표를 놓았던 자리에)
+    if (S.divDone) {
+      for (let i = 0; i < 3; i++) {
+        const tp = DIV_TYPES[DIV_SCENES[i].type], T0 = L.tray;
+        const a = clamp((now() - S.divDoneT - 0.55 - i * 0.15) / 0.45, 0, 1);
+        if (a <= 0) continue;
+        const r = TALL ? { x: T0.x0 + i * (T0.w + T0.gap), y: T0.y, w: T0.w, h: T0.h } : { x: cardRect(i).x, y: T0.y, w: cardRect(i).w, h: T0.h };
+        ctx.save(); ctx.globalAlpha = a; ctx.translate(0, (1 - EASE.outCubic(a)) * 12);
+        ctx.shadowColor = 'rgba(20,40,30,.14)'; ctx.shadowBlur = 8; ctx.shadowOffsetY = 2; rr(r.x, r.y, r.w, r.h, 14); ctx.fillStyle = tp.soft; ctx.fill(); ctx.shadowColor = 'transparent';
+        rr(r.x, r.y, r.w, r.h, 14); ctx.strokeStyle = tp.color; ctx.lineWidth = 2; ctx.stroke();
+        if (TALL) {
+          txt(tp.name, r.x + 12, r.y + 21, { size: 14, weight: 800, color: tp.color, max: r.w - 22 });
+          para(tp.short, r.x + 12, r.y + 39, r.w - 22, { size: 12, weight: 700, color: '#475569', lh: 14.5 });
+        } else {
+          txt(tp.name, r.x + 16, r.y + 28, { size: 17, weight: 800, color: tp.color, max: r.w - 30 });
+          para(tp.def, r.x + 16, r.y + 50, r.w - 30, { size: 13.5, weight: 700, color: '#334155', lh: 18 });
+        }
+        ctx.restore();
+      }
     }
     // 설명 상자
     const C = L.cap;
@@ -817,7 +835,6 @@
       const sc = DIV_SCENES[S.divSel];
       pill(sc.title, C.x + 14, C.y + 24, { size: 14, align: 'left', bg: '#e8f1ec', color: '#166534', pad: 11, h: 26 });
       para(sc.cap, C.x + 16, C.y + 58, C.w - 32, { size: TALL ? 15 : 16.5, weight: 800, color: '#1e293b', lh: TALL ? 21 : 23 });
-      if (S.divDone) { const tp = DIV_TYPES[sc.type]; para(tp.name + ': ' + tp.def, C.x + 16, C.y + C.h - (TALL ? 52 : 24), C.w - 32, { size: TALL ? 14 : 14.5, weight: 700, color: tp.color, lh: 19 }); }
     } else {
       txt('👆 장면을 눌러 보세요', C.x + 16, C.y + 32, { size: 17, weight: 800, color: '#166534' });
       para('세 장면의 생물을 살펴본 뒤, 생물다양성의 종류를 알맞은 이름표로 나눠 봐요.', C.x + 16, C.y + 62, C.w - 32, { size: 15, weight: 700, color: '#475569', lh: 21 });
@@ -854,7 +871,7 @@
   }
   function chartGeom() {
     const C = LAY.bugs.chart;
-    const padL = TALL ? 40 : 38, padR = 12, padT = TALL ? 54 : 64, padB = TALL ? 58 : 66;
+    const padL = TALL ? 40 : 38, padR = 12, padT = TALL ? 72 : 64, padB = TALL ? 58 : 66;
     const x0 = C.x + padL, x1 = C.x + C.w - padR, yBase = C.y + C.h - padB;
     const bw = (x1 - x0) / 8, u = Math.min(40, (yBase - (C.y + padT)) / 8);
     return { C, x0, x1, yBase, bw, u, yTop: yBase - 8 * u };
@@ -923,7 +940,7 @@
     // 그래프 판
     const C = G.C;
     panel(C.x, C.y, C.w, C.h, { bg: '#fff', border: '#e2e8f0', r: 20 });
-    pill('점 개수별 무당벌레 수', C.x + 14, C.y + 26, { size: 14.5, align: 'left', bg: '#fee2e2', color: '#991b1b', pad: 12, h: 30 });
+    pill('점 개수별 무당벌레 수', C.x + 14, C.y + (TALL ? 24 : 26), { size: 14.5, align: 'left', bg: '#fee2e2', color: '#991b1b', pad: 12, h: 30 });
     ctx.strokeStyle = '#e5eaf1'; ctx.lineWidth = 1.2; ctx.fillStyle = '#94a3b8';
     for (let v = 0; v <= 8; v += 2) { const y = G.yBase - v * G.u; ctx.beginPath(); ctx.moveTo(G.x0 - 4, y); ctx.lineTo(G.x1, y); ctx.stroke(); txt(String(v), G.x0 - 10, y + 5, { size: 13, weight: 700, color: '#94a3b8', align: 'right' }); }
     txt('마리', C.x + 8, G.yTop - 12, { size: 13, weight: 800, color: '#64748b' });
@@ -1111,38 +1128,42 @@
   function drawHist(i, t) {
     const R0 = LAY.isl.hist[i], is = ISL.isl[i], col = ISL_INFO[is.key].color;
     panel(R0.x, R0.y, R0.w, R0.h, { bg: '#fff', border: '#e2e8f0', r: 16 });
-    pill(is.key + '섬 · 부리 두께 분포', R0.x + 12, R0.y + 22, { size: 13.5, align: 'left', bg: rgba(col, 0.14), color: col, pad: 11, h: 26 });
-    const x0 = R0.x + 30, x1 = R0.x + R0.w - 14, yb = R0.y + R0.h - (TALL ? 26 : 32), yt = R0.y + (TALL ? 40 : 46);
-    const bw = (x1 - x0) / BINS, ymax = 14, u = (yb - yt) / ymax;
+    const chip = pill(TALL ? is.key + '섬' : is.key + '섬 · 부리 두께 분포', R0.x + 12, R0.y + (TALL ? 17 : 22), { size: TALL ? 13 : 13.5, align: 'left', bg: rgba(col, 0.14), color: col, pad: TALL ? 10 : 11, h: TALL ? 24 : 26 });
+    const x0 = R0.x + 30, x1 = R0.x + R0.w - 14, yb = R0.y + R0.h - (TALL ? 25 : 32), yt = R0.y + (TALL ? 42 : 66);
+    const bw = (x1 - x0) / BINS, ymax = 16, u = (yb - yt) / ymax;
     ctx.strokeStyle = '#eef1f5'; ctx.lineWidth = 1;
     for (let v = 0; v <= 12; v += 4) { const y = yb - v * u; ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1, y); ctx.stroke(); txt(String(v), x0 - 5, y + 4, { size: 11.5, weight: 700, color: '#a0abb9', align: 'right' }); }
     for (let k = 0; k < BINS; k++) {
-      const hh = is.histV[k] * u, bx = x0 + bw * k + 3;
+      const hh = Math.min(is.histV[k], ymax) * u, bx = x0 + bw * k + 3;
       if (hh > 0.5) {
         rr(bx, yb - hh, bw - 6, hh, 5); ctx.fillStyle = lgrad(ctx, 0, yb - hh, 0, yb, [[0, rgba(col, 0.95)], [1, rgba(col, 0.55)]]); ctx.fill();
-        if (is.histV[k] >= 0.6) txt(String(Math.round(is.histV[k])), bx + (bw - 6) / 2, yb - hh - 4, { size: 12.5, weight: 800, color: col, align: 'center' });
+        if (is.histV[k] >= 0.6) txt(String(Math.round(is.histV[k])), bx + (bw - 6) / 2, yb - hh - 4, { size: 12.5, weight: 800, color: col, align: 'center', halo: '#fff', haloW: 3.5 });
       }
     }
     ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(x0, yb); ctx.lineTo(x1, yb); ctx.stroke();
-    const mx = x0 + (x1 - x0) * is.meanV;
-    ctx.save(); ctx.strokeStyle = '#1f2937'; ctx.lineWidth = 2; ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.moveTo(mx, yb); ctx.lineTo(mx, yt - 2); ctx.stroke(); ctx.setLineDash([]);
-    ctx.fillStyle = '#1f2937'; ctx.beginPath(); ctx.moveTo(mx, yb + 1); ctx.lineTo(mx - 5, yb + 8); ctx.lineTo(mx + 5, yb + 8); ctx.closePath(); ctx.fill(); ctx.restore();
-    txt('평균', mx + 7, yt + 6, { size: 12.5, weight: 800, color: '#1f2937' });
-    txt('얇은 부리', x0, R0.y + R0.h - 8, { size: 12.5, weight: 800, color: '#64748b' });
-    txt('두꺼운 부리', x1, R0.y + R0.h - 8, { size: 12.5, weight: 800, color: '#64748b', align: 'right' });
+    // 평균: 점선 + 꼬리표
+    const mx = x0 + (x1 - x0) * is.meanV, tagW = 40, tagH = 18, tagY = yt - 12;
+    let tx = clamp(mx, x0 + tagW / 2, x1 - tagW / 2);
+    if (TALL) tx = Math.max(tx, chip.x + chip.w + 6 + tagW / 2);
+    ctx.save(); ctx.strokeStyle = '#1f2937'; ctx.lineWidth = 2; ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.moveTo(mx, yb); ctx.lineTo(mx, tagY + tagH / 2 - 1); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = '#1f2937'; ctx.beginPath(); ctx.moveTo(mx, yb + 1); ctx.lineTo(mx - 5, yb + 8); ctx.lineTo(mx + 5, yb + 8); ctx.closePath(); ctx.fill();
+    rr(tx - tagW / 2, tagY - tagH / 2, tagW, tagH, tagH / 2); ctx.fillStyle = '#1f2937'; ctx.fill(); ctx.restore();
+    txt('평균', tx, tagY + 1, { size: 12.5, weight: 800, color: '#fff', align: 'center', base: 'middle' });
+    txt('얇은 부리', x0, R0.y + R0.h - 7, { size: 12.5, weight: 800, color: '#64748b' });
+    txt('두꺼운 부리', x1, R0.y + R0.h - 7, { size: 12.5, weight: 800, color: '#64748b', align: 'right' });
   }
   function drawTrend(t) {
     const R0 = LAY.isl.trend;
     panel(R0.x, R0.y, R0.w, R0.h, { bg: '#fff', border: '#e2e8f0', r: 16 });
     pill('세대에 따른 부리 두께 평균', R0.x + 12, R0.y + 22, { size: 13.5, align: 'left', bg: '#f1f5f9', color: '#334155', pad: 11, h: 26 });
-    const x0 = R0.x + 44, x1 = R0.x + R0.w - 16, yb = R0.y + R0.h - 30, yt = R0.y + 44;
+    const x0 = R0.x + 54, x1 = R0.x + R0.w - 18, yb = R0.y + R0.h - 30, yt = R0.y + 46;
     const gmax = Math.max(20, ISL.gen + 1);
     ctx.strokeStyle = '#eef1f5'; ctx.lineWidth = 1;
     [0, 0.5, 1].forEach((v) => { const y = yb - v * (yb - yt); ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1, y); ctx.stroke(); });
     txt('두꺼움', x0 - 6, yt + 4, { size: 12.5, weight: 700, color: '#94a3b8', align: 'right' });
     txt('얇음', x0 - 6, yb + 4, { size: 12.5, weight: 700, color: '#94a3b8', align: 'right' });
-    for (let g = 0; g <= gmax; g += 5) { const x = x0 + (x1 - x0) * g / gmax; ctx.strokeStyle = '#e2e8f0'; ctx.beginPath(); ctx.moveTo(x, yb); ctx.lineTo(x, yb + 5); ctx.stroke(); txt(String(g), x, yb + 20, { size: 12.5, weight: 700, color: '#94a3b8', align: 'center' }); }
-    txt('세대', x1, yb + 20, { size: 12.5, weight: 800, color: '#64748b', align: 'right' });
+    const gTop = Math.floor(gmax / 5) * 5;
+    for (let g = 0; g <= gmax; g += 5) { const x = x0 + (x1 - x0) * g / gmax; ctx.strokeStyle = '#e2e8f0'; ctx.beginPath(); ctx.moveTo(x, yb); ctx.lineTo(x, yb + 5); ctx.stroke(); const lab = g === gTop ? g + '세대' : String(g), rt = g === gTop && x + 24 > R0.x + R0.w - 6; txt(lab, rt ? Math.min(x, R0.x + R0.w - 8) : x, yb + 20, { size: 12.5, weight: 700, color: '#94a3b8', align: rt ? 'right' : 'center' }); }
     if (ISL.envChanged) { const x = x0 + (x1 - x0) * ISL.envGen / gmax; ctx.save(); ctx.setLineDash([4, 4]); ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x, yb); ctx.lineTo(x, yt); ctx.stroke(); ctx.restore(); txt('A섬 먹이 변화', x + 5, yt + 12, { size: 12.5, weight: 800, color: '#b45309' }); }
     [0, 1].forEach((i) => {
       const col = ISL_INFO[i === 0 ? 'A' : 'B'].color, pts = ISL.trend[i];
@@ -1198,7 +1219,7 @@
   function storySlot(i) { const s = LAY.story.slot; return s.rows ? { x: s.x0, y: s.y + i * (s.h + s.gap), w: s.w, h: s.h } : { x: s.x0 + i * (s.w + s.gap), y: s.y, w: s.w, h: s.h }; }
   function storyTray(i) { const T = LAY.story.tray, col = i % T.cols, row = Math.floor(i / T.cols); return { x: T.x0 + col * (T.w + (T.gapX != null ? T.gapX : T.gap)), y: T.y + row * (T.h + (T.gapY != null ? T.gapY : 0)), w: T.w, h: T.h }; }
   function storyTarget(cd) {
-    if (cd.slot >= 0) { const r = storySlot(cd.slot); return LAY.story.slot.rows ? { x: r.x + 4, y: r.y, w: LAY.story.tray.w, h: r.h } : r; }
+    if (cd.slot >= 0) { const r = storySlot(cd.slot); return LAY.story.slot.rows ? { x: r.x + 4, y: r.y + 3, w: r.w - 8, h: r.h - 6 } : r; }
     return storyTray(cd.home);
   }
   function snapStory(animate) { snapAll(STORY_C.cards, storyTarget, animate); }
@@ -1229,10 +1250,13 @@
   function drawStoryFace(cd, w, h) {
     if (!TALL) {
       ctx.save(); ctx.translate(w / 2, 56); artStory(ctx, cd.icon, now(), 0.82); ctx.restore();
-      para(cd.text, 12, 122, w - 24, { size: 14.5, weight: 800, color: '#1e293b', lh: 19, align: 'left' });
+      para(cd.text, 10, 122, w - 20, { size: 14.5, weight: 800, color: '#1e293b', lh: 19, align: 'left' });
     } else {
-      ctx.save(); ctx.translate(40, h / 2); artStory(ctx, cd.icon, now(), 0.6); ctx.restore();
-      para(cd.text, 78, h / 2 - 22, w - 86, { size: 13.5, weight: 800, color: '#1e293b', lh: 17 });
+      const placed = cd.slot >= 0, sc = Math.min(0.6, (h - 8) / 84), ix = placed ? 66 : 34, tx = placed ? 100 : 66;
+      ctx.save(); ctx.translate(ix, h / 2); artStory(ctx, cd.icon, now(), sc); ctx.restore();
+      if (placed) { ctx.fillStyle = '#16a34a'; ctx.beginPath(); ctx.arc(24, h / 2, 13, 0, TAU); ctx.fill(); txt(String(cd.slot + 1), 24, h / 2 + 1, { size: 15, weight: 800, color: '#fff', align: 'center', base: 'middle' }); }
+      const tw = Math.round(w - tx - (placed ? 44 : 8)), ls = lines(cd.text, tw, 13.5, 800), lh = 17;
+      ls.forEach((ln, i) => txt(ln, tx, h / 2 - (ls.length - 1) * lh / 2 + i * lh + 5, { size: 13.5, weight: 800, color: '#1e293b' }));
     }
   }
   function drawStoryScene(t) {
@@ -1258,7 +1282,7 @@
       if (hot === i) { ctx.fillStyle = 'rgba(34,197,94,.1)'; rr(r.x, r.y, r.w, r.h, 16); ctx.fill(); }
       ctx.restore();
       if (!STORY_C.cards.some((c) => c.slot === i)) txt(String(i + 1), TALL ? r.x + 34 : r.x + r.w / 2, TALL ? r.y + r.h / 2 + 2 : r.y + r.h / 2 + 10, { size: TALL ? 28 : 46, weight: 800, color: '#cbd5e1', align: 'center', base: 'middle' });
-      if (STORY_C.done) { const a = clamp((T - i * 0.2) / 0.35, 0, 1); ctx.save(); ctx.translate(TALL ? r.x + r.w - 40 : r.x + r.w / 2, TALL ? r.y + r.h / 2 : r.y + r.h + 20); ctx.scale(EASE.outBack(a), EASE.outBack(a)); pill(String(i + 1) + '단계', 0, 0, { size: 15, bg: '#16a34a', color: '#fff', pad: 12, h: 28, shadow: true }); ctx.restore(); }
+      if (STORY_C.done && !TALL) { const a = clamp((T - i * 0.2) / 0.35, 0, 1); ctx.save(); ctx.translate(r.x + r.w / 2, r.y + r.h + 20); ctx.scale(EASE.outBack(a), EASE.outBack(a)); pill(String(i + 1) + '단계', 0, 0, { size: 15, bg: '#16a34a', color: '#fff', pad: 12, h: 28, shadow: true }); ctx.restore(); }
       if (!TALL && i < 4) { const ax = r.x + r.w + L.slot.gap / 2, ay = r.y + r.h / 2; ctx.fillStyle = '#a8b5c4'; ctx.beginPath(); ctx.moveTo(ax - 4, ay - 7); ctx.lineTo(ax + 5, ay); ctx.lineTo(ax - 4, ay + 7); ctx.closePath(); ctx.fill(); }
     }
     if (!STORY_C.done && !STORY_C.cards.every((c) => c.slot >= 0)) txt('🃏 카드 (섞여 있어요)', TALL ? 12 : 22, L.tray.y - 10, { size: 13.5, weight: 800, color: '#64748b' });
@@ -1289,7 +1313,7 @@
   /* =========================================================
      장면 전환 · 안내 말풍선 · 입력
      ========================================================= */
-  const SCENE_LABEL = { div: '🌍 생물다양성의 세 가지 살펴보기', bugs: '🐞 같은 종의 변이 관찰하기', isl: '🐦 환경에 따라 달라지는 부리', story: '🌱 생물다양성이 생기는 과정' };
+  const SCENE_LABEL = { div: '🌍 생물다양성의 세 가지', bugs: '🐞 같은 종 안의 변이', isl: '🐦 섬마다 달라지는 부리', story: '🌱 다양성이 생기는 과정' };
   const SCENE_BG = { div: 'linear-gradient(180deg,#eef7f1,#dcebe2)', bugs: 'linear-gradient(180deg,#eef7f1,#dcebe2)', isl: 'linear-gradient(180deg,#eaf4f9,#d9e8ef)', story: 'linear-gradient(180deg,#f2f8ec,#e0eed6)' };
   let snapCv = null;
   function setView(scene, instant) {
@@ -1360,7 +1384,13 @@
       }
       if (S.scene === 'bugs') { const b = bugAt(p); if (b) recordBug(b); return false; }
       if (S.scene === 'isl') { if (S.hasEnvBtn && !ISL.envChanged && inR(p, envBtnRect())) envChange(); return false; }
-      if (!STORY_C.done) { const cd = cardAt(STORY_C.cards, p); if (cd) return dragSetup(cd, 'story', STORY_C.cards, p); }
+      if (!STORY_C.done) {
+        const cd = cardAt(STORY_C.cards, p);
+        if (cd) {
+          if (TALL && cd.slot >= 0) { const tr = storyTray(cd.home), kx = tr.w / cd.w, ky = tr.h / cd.h, ox = p.x - cd.x, oy = p.y - cd.y; if (cd.tw) cd.tw.cancel(); cd.w = tr.w; cd.h = tr.h; cd.x = p.x - ox * kx; cd.y = p.y - oy * ky; }
+          return dragSetup(cd, 'story', STORY_C.cards, p);
+        }
+      }
       return false;
     },
     move(p) {
@@ -1386,10 +1416,18 @@
     $$('#sceneSeg button').forEach((b) => { b.classList.toggle('on', b.dataset.scene === S.scene); b.setAttribute('aria-selected', b.dataset.scene === S.scene ? 'true' : 'false'); });
     $('#ctrlCard').hidden = S.scene !== 'isl';
     $('#resetBtn').hidden = S.scene !== 'isl';
-    const seg = $('#sceneSeg');
-    $('#sceneLabel').hidden = !!(seg && !seg.hidden);
-    $('#sceneLabel').textContent = SCENE_LABEL[S.scene];
+    fitLabel();
   }
+  // 장면 이름표: 자리가 넉넉할 때만 보여요
+  function fitLabel() {
+    const lab = $('#sceneLabel'), seg = $('#sceneSeg'), bar = lab.parentElement, rb = $('#resetBtn');
+    lab.hidden = false; lab.textContent = SCENE_LABEL[S.scene];
+    if (seg && !seg.hidden) {
+      const free = bar.clientWidth - seg.offsetWidth - (rb && !rb.hidden ? rb.offsetWidth + 10 : 0) - 36;
+      if (lab.scrollWidth + 8 > free) lab.hidden = true;
+    }
+  }
+  window.addEventListener('resize', fitLabel);
   function update(dt, t) {
     [TAGS, STORY_C.cards].forEach((list) => list.forEach((cd) => { cd.lift = SciSim.approach(cd.lift, S.drag && S.drag.card === cd ? 1 : 0, dt, 14); }));
     updateBugFlights();
@@ -1491,7 +1529,7 @@
           setup() { setView('bugs'); resetBugs(); layoutBugs(); showHint('🐞 무당벌레를 눌러 그래프에 기록해요', 6000); },
           check: () => S.recN >= 20,
           hold: 0.6,
-          status: () => '기록한 무당벌레: <b>' + S.recN + '</b> / 20마리 ' + mark(S.recN >= 20),
+          status: () => '기록한 무당벌레: <b>' + S.recN + '</b>마리 (20마리 이상) ' + mark(S.recN >= 20),
           explain: '같은 종(무당벌레)인데도 날개의 점 개수와 색이 서로 달라요. 이렇게 같은 종의 개체 사이에 나타나는 형질의 차이를 <b>변이</b>라고 해요.',
         },
         {

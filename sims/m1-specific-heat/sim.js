@@ -233,13 +233,13 @@
     graph(L) {
       if (L.key === 'wide') {
         return {
-          cx: [100, 266, 432], bw: 118, bh: 162, benchTop: 300, gauzeY: 230, wickY: 258, bench: { x: 8, y: 300, w: 512, h: 12 },
-          dispW: 148, dispY: 8, dispH: 52, table: { x: 530, y: 10, w: 262, h: 292 }, graph: { x: 8, y: 318, w: 784, h: 256 }, tall: false,
+          cx: [100, 266, 432], bw: 118, bh: 150, benchTop: 300, gauzeY: 230, wickY: 258, bench: { x: 8, y: 300, w: 512, h: 12 },
+          dispW: 148, dispY: 6, dispH: 62, table: { x: 530, y: 10, w: 262, h: 292 }, graph: { x: 8, y: 318, w: 784, h: 256 }, tall: false,
         };
       }
       return {
-        cx: [92, 260, 428], bw: 126, bh: 174, benchTop: 326, gauzeY: 258, wickY: 286, bench: { x: 6, y: 326, w: 508, h: 12 },
-        dispW: 156, dispY: 10, dispH: 58, table: { x: 6, y: 350, w: 508, h: 230 }, graph: { x: 6, y: 592, w: 508, h: 298 }, tall: true,
+        cx: [92, 260, 428], bw: 126, bh: 170, benchTop: 340, gauzeY: 272, wickY: 300, bench: { x: 6, y: 340, w: 508, h: 12 },
+        dispW: 160, dispY: 8, dispH: 72, table: { x: 6, y: 366, w: 508, h: 226 }, graph: { x: 6, y: 604, w: 508, h: 288 }, tall: true,
       };
     },
     expand(L, e) {
@@ -675,16 +675,19 @@
     }
     if (HX.done) {
       const s = clamp(HX.finishPop.s, 0, 1.2);
-      ctx.save(); ctx.translate(gp.x0 + (gp.x1 - gp.x0) * 0.3, gp.y1 + 20); ctx.scale(0.6 + 0.4 * s, 0.6 + 0.4 * s);
-      D.label(0, 0, '기울기가 가장 가파른 건 모래, 가장 완만한 건 물!', { bg: '#14a058', size: 13.5 * fs });
+      const msg = '기울기가 가장 가파른 건 모래, 가장 완만한 건 물!';
+      ctx.save(); ctx.font = font(13.5 * fs, 800); const lw = ctx.measureText(msg).width + 16; ctx.restore();
+      ctx.save(); ctx.translate(Math.max(G.graph.x + 12 + lw / 2, gp.x0 + (gp.x1 - gp.x0) * 0.3), gp.y1 + 20); ctx.scale(0.6 + 0.4 * s, 0.6 + 0.4 * s);
+      D.label(0, 0, msg, { bg: '#14a058', size: 13.5 * fs });
       ctx.restore();
     }
     if (HX.tableK > 0.01) drawTable(V, G.table, HX.tableK);
-    else if (!tall) {                                                    // 비열 표를 열기 전에는 안내
+    else {                                                               // 비열 표를 열기 전에는 안내
       const R = G.table; panel(V, R, 16);
-      ctx.fillStyle = '#2b3445'; ctx.font = font(14.5 * fs, 800); ctx.fillText('🔎 이렇게 비교해요', R.x + 14, R.y + 28);
+      ctx.fillStyle = '#2b3445'; ctx.font = font(14.5 * fs, 800); ctx.fillText('🔎 이렇게 비교해요', R.x + 14, R.y + 28 * (tall ? 1.1 : 1));
       ctx.fillStyle = '#3a4456'; ctx.font = font(13.5 * fs, 700);
-      ['• 같은 질량, 같은 불꽃, 같은 시간', '• 그래프의 기울기 = 온도가 오르는 빠르기', '• 기울기가 클수록 온도가 빨리 올라요', '', '📊 비열 표를 열면 물질마다 다른', '    비열 값을 볼 수 있어요.'].forEach((s, i) => ctx.fillText(s, R.x + 14, R.y + 62 + i * 26));
+      const tl = tall ? ['• 같은 질량 · 같은 불꽃 · 같은 시간', '• 그래프의 기울기 = 온도가 오르는 빠르기', '• 기울기가 클수록 온도가 빨리 올라요', '', '📊 비열 표를 열면 비열 값을 볼 수 있어요.'] : ['• 같은 질량 · 같은 불꽃 · 같은 시간', '• 기울기 = 온도가 오르는 빠르기', '• 기울기가 클수록 빨리 올라요', '', '📊 비열 표를 열면 물질마다', '    다른 비열 값을 볼 수 있어요.'];
+      tl.forEach((s, i) => ctx.fillText(s, R.x + 14, R.y + (tall ? 64 : 62) + i * (tall ? 30 : 26)));
     }
     if (isNew('table') && HX.tableK < 0.5) newRing(V, G.table, t);
     if (isNew('graph')) newRing(V, G.graph, t);
