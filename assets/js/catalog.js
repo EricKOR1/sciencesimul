@@ -77,8 +77,7 @@ window.SCI_CATALOG = {
                 "발견 사슬",
                 "영향 분석",
                 "스마트폰"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m1-future-tech",
@@ -187,8 +186,7 @@ window.SCI_CATALOG = {
                 "변이",
                 "환경과 변이",
                 "다양성 형성"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m1-classification",
@@ -208,8 +206,7 @@ window.SCI_CATALOG = {
                 "분류 단계",
                 "5계 기준",
                 "계 분류"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m1-biodiversity",
@@ -414,8 +411,7 @@ window.SCI_CATALOG = {
                 "합력",
                 "힘의 평형",
                 "적용"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m1-gravity-elastic",
@@ -435,8 +431,7 @@ window.SCI_CATALOG = {
                 "탄성력",
                 "질량과 무게",
                 "적용"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m1-friction-buoyancy",
@@ -477,8 +472,7 @@ window.SCI_CATALOG = {
                 "힘의 방향",
                 "알짜힘",
                 "사례 분류"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m1-force-design",
@@ -498,8 +492,7 @@ window.SCI_CATALOG = {
                 "평형 찾기",
                 "평형 관계",
                 "장치 설계"
-              ],
-              "soon": true
+              ]
             }
           ]
         },
@@ -655,8 +648,7 @@ window.SCI_CATALOG = {
                 "일주 운동 측정",
                 "우주에서 보기",
                 "움직임 예측"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m1-constellation-change",

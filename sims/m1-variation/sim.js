@@ -1101,8 +1101,8 @@
   function envChange() {
     if (ISL.envChanged || ISL.busy) return false;
     ISL.envChanged = true; ISL.envGen = ISL.gen; ISL.envMean = ISL.isl[0].mean; ISL.isl[0].env = 'small'; ISL.envAnim = { t0: now() };
-    burst(LAY.isl.panel[0].x + 200, LAY.isl.panel[0].y + 100, ['#fde68a', '#fb923c', '#ffffff'], 24, { speed: 150 });
-    Sound.tone(300, 0.25, 'sawtooth', 0.04); Sound.tone(420, 0.2, 'triangle', 0.06, 0.12);
+    burst(LAY.isl.panel[0].x + 200, LAY.isl.panel[0].y + 100, ['#bfe3ff', '#86efac', '#ffffff'], 24, { speed: 150, shape: 'bubble' });
+    Sound.tone(520, 0.18, 'sine', 0.05); Sound.tone(660, 0.2, 'triangle', 0.05, 0.12); Sound.tone(780, 0.2, 'triangle', 0.04, 0.26);
     updateIslUI();
     return true;
   }
@@ -1134,8 +1134,25 @@
     artIsland(ctx, P.w, P.h, i === 0 ? 'big' : 'small', i === 0 ? ISL.envT : 0, t);
     ctx.restore();
     ctx.save(); ctx.translate(P.x, P.y); drawBirdsOf(is, P, t); ctx.restore();
-    // 가뭄 효과
-    if (i === 0 && ISL.envAnim) { const u = clamp((now() - ISL.envAnim.t0) / 2.2, 0, 1); if (u < 1) { rr(P.x, P.y, P.w, P.h, 18); ctx.fillStyle = 'rgba(255,214,120,' + (0.35 * Math.sin(u * Math.PI)).toFixed(3) + ')'; ctx.fill(); } }
+    // 비 내리는 효과
+    if (i === 0 && ISL.envAnim) {                              // 비가 내려요: 어두운 하늘빛 + 빗줄기
+      const u = clamp((now() - ISL.envAnim.t0) / 3.0, 0, 1);
+      if (u < 1) {
+        const a = Math.sin(u * Math.PI), tn = now();
+        ctx.save(); rr(P.x, P.y, P.w, P.h, 18); ctx.clip();
+        ctx.fillStyle = 'rgba(70,100,150,' + (0.24 * a).toFixed(3) + ')'; ctx.fillRect(P.x, P.y, P.w, P.h);
+        if (!RM) {
+          ctx.strokeStyle = 'rgba(232,244,255,' + (0.8 * a).toFixed(3) + ')'; ctx.lineWidth = 1.7; ctx.lineCap = 'round'; ctx.beginPath();
+          for (let k = 0; k < 48; k++) {
+            const sp = 300 + (k % 5) * 45, x0 = ((k * 0.61803) % 1) * (P.w + 60) - 30, y = ((tn * sp + k * 53) % (P.h + 40)) - 20;
+            const x = P.x + x0 + y * 0.22;
+            ctx.moveTo(x, P.y + y); ctx.lineTo(x - 3.4, P.y + y - 12);
+          }
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+    }
     rr(P.x, P.y, P.w, P.h, 18); ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = 3; ctx.stroke();
     const col = ISL_INFO[is.key].color;
     const label = i === 0 ? (ISL.envChanged ? 'A섬 · 작은 씨앗만 남았어요' : 'A섬 · 크고 단단한 씨앗') : 'B섬 · 작은 씨앗과 곤충';
@@ -1224,7 +1241,7 @@
     if (envBtnOn()) {
       const b = envBtnRect(), a = 0.5 + 0.5 * Math.sin(now() * 5);
       ctx.save(); ctx.strokeStyle = 'rgba(245,158,11,' + (0.4 + 0.5 * a).toFixed(2) + ')'; ctx.lineWidth = 4; rr(b.x - 2, b.y - 2, b.w + 4, b.h + 4, (b.h + 4) / 2); ctx.stroke(); ctx.restore();
-      pill('🌵 A섬에 가뭄! 먹이 바꾸기', b.x + b.w / 2, b.y + b.h / 2, { size: TALL ? 16.5 : 16, bg: '#f59e0b', color: '#fff', pad: 16, h: b.h - 6, shadow: true });
+      pill('🌧️ A섬에 비가 내려요! 먹이 바꾸기', b.x + b.w / 2, b.y + b.h / 2, { size: TALL ? 16.5 : 16, bg: '#f59e0b', color: '#fff', pad: 16, h: b.h - 6, shadow: true });
     }
     if (isNew('islands')) newRing({ x: LAY.isl.panel[0].x, y: LAY.isl.panel[0].y, w: 776, h: LAY.isl.panel[0].h }, 18);
   }
@@ -1807,14 +1824,14 @@
         },
         {
           title: '먹이가 바뀌면?',
-          goal: 'A섬에 가뭄이 들어 큰 씨앗이 사라졌어요! <b>먹이 바꾸기</b>를 누르고 <b>10세대 이상</b> 진행해 보세요.',
+          goal: 'A섬에 비가 많이 내리면 큰 씨앗은 사라지고 작은 씨앗이 많아져요! <b>먹이 바꾸기</b>를 누르고 <b>10세대 이상</b> 진행해 보세요.',
           hint: '그림 속 주황색 \'먹이 바꾸기\' 단추를 눌러요. 그다음 ▶ 1세대나 ⏩ 5세대로 진행하며 A섬 새들의 부리가 어떻게 달라지는지 보세요.',
           setup() {
             setView('isl');
             if (ISL.gen < 20) { simulateTo(20); toast('이어서 하기 위해 20세대까지 진행된 상태로 준비했어요.'); }
             S.hasEnvBtn = !ISL.envChanged;
             ctrlNote.textContent = '먹이가 바뀌면 어떤 부리가 더 유리할까요? 세대를 진행하며 A섬 새들의 변화를 지켜봐요.';
-            updateIslUI(); showHint('🌵 A섬의 \'먹이 바꾸기\' 단추를 눌러 보세요', 7000);
+            updateIslUI(); showHint('🌧️ A섬의 \'먹이 바꾸기\' 단추를 눌러 보세요', 7000);
           },
           check: () => ISL.envChanged && sinceEnv() >= 10 && ISL.isl[0].mean < ISL.envMean - 0.08,
           hold: 0.5,

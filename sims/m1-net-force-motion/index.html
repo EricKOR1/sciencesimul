@@ -14,6 +14,7 @@
   <link rel="stylesheet" href="../../assets/css/common.css">
   <style>
     .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+    .toolbar-label small { font-weight: 700; color: #8a95a6; }
     .stage-toolbar { min-height: 61px; flex-wrap: nowrap; }
     #resetBtn { font-size: 20px; }
     .tgl {
@@ -22,12 +23,13 @@
       border-radius: 999px; padding: 5px 14px; font-weight: 800; font-size: 15px; cursor: pointer;
     }
     .tgl[aria-pressed="true"] { color: #5b21b6; border-color: #c4b5fd; background: #f3efff; }
-    .stage-canvas .stage-hint { top: 10px; bottom: auto; }
+    .off { display: none !important; }
 
     #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
     .grp { display: flex; flex-direction: column; gap: 10px; }
     .grp-title { font-weight: 800; font-size: 15.5px; display: flex; align-items: center; gap: 6px; }
     .ctrl-note { font-size: 13.5px; color: var(--muted); margin: 0; line-height: 1.45; }
+    .ctrl-note b { color: #9a3412; }
     .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
     .btn-row .btn { flex: 1 1 0; min-width: 0; min-height: 48px; }
     .btn-run { font-size: 17px; }
@@ -45,6 +47,7 @@
     .mode-btn.on { border-color: #8b5cf6; background: #f3efff; color: #4c1d95; box-shadow: 0 0 0 3px rgba(139,92,246,.18); }
     .mode-btn .ok { color: var(--good); font-weight: 900; }
     .mode-btn[disabled] { opacity: .5; cursor: not-allowed; }
+    .btn[disabled] { opacity: .5; cursor: not-allowed; }
 
     /* 결과 표 (가로로 납작하게) */
     .data-card { flex: none; padding: 6px 12px; display: flex; align-items: center; gap: 12px; }
@@ -53,8 +56,10 @@
     .data-scroll { flex: 1; min-width: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; }
     .res-table { border-collapse: collapse; font-size: 13.5px; width: 100%; }
     .res-table th { text-align: left; white-space: nowrap; padding: 1px 8px 1px 2px; color: var(--muted); font-weight: 800; font-size: 12.5px; }
-    .res-table td { text-align: center; padding: 1px 4px; border-left: 1px solid var(--line); font-weight: 800; white-space: nowrap; min-width: 92px; height: 22px; }
-    .res-table tr.hd td { font-size: 12.5px; color: #4c1d95; }
+    .res-table td { text-align: center; padding: 1px 3px; border-left: 1px solid var(--line); font-weight: 800; white-space: nowrap; min-width: 118px; height: 24px; }
+    .res-table tr.hd td { font-size: 12.5px; color: #4c1d95; height: 22px; }
+    .res-table td svg { width: 118px; height: 33px; }
+    .res-table tr.pic td { height: 44px; padding: 0; }
     .res-table td.empty { color: #c3ccd9; font-weight: 600; }
     .res-table td.fresh { background: #fff4dc; }
     .res-table .up { color: #c2410c; } .res-table .down { color: #1d4ed8; } .res-table .same { color: #475569; } .res-table .turn { color: #7c3aed; }
@@ -68,6 +73,7 @@
       .res-table td { min-width: 78px; }
       .readouts { grid-template-columns: repeat(3, minmax(0, 1fr)); }
       .readout .label { font-size: 11.5px; }
+      .toolbar-label small { display: none; }
     }
   </style>
 </head>
@@ -88,7 +94,7 @@
     <div class="stage-col">
       <section class="card stage-card">
         <div class="stage-toolbar">
-          <span class="toolbar-label" id="sceneLabel">🏒 위에서 본 얼음판</span>
+          <span class="toolbar-label" id="sceneLabel">🏒 얼음판 위의 퍽 <small>(위에서 본 모습)</small></span>
           <span class="spacer"></span>
           <button type="button" class="tgl" id="tgStrobe" aria-pressed="true" data-feature="strobe">📸 다중 섬광</button>
           <button class="icon-btn" id="resetBtn" type="button" title="처음 상태로" aria-label="처음 상태로">↺</button>
@@ -100,11 +106,11 @@
       </section>
       <div class="readouts">
         <div class="readout"><span class="label" id="rL1">속력</span><span class="value" id="rV1">0.0<small>m/s</small></span></div>
-        <div class="readout"><span class="label" id="rL2">처음 방향에서 돌아간 각도</span><span class="value" id="rV2">0<small>°</small></span></div>
-        <div class="readout"><span class="label" id="rL3">알짜힘</span><span class="value" id="rV3">0<small>N</small></span></div>
+        <div class="readout"><span class="label" id="rL2">처음 방향에서 돌아간 각도</span><span class="value" id="rV2">—</span></div>
+        <div class="readout"><span class="label" id="rL3">알짜힘</span><span class="value" id="rV3" style="color:#6d28d9">0<small>N</small></span></div>
       </div>
-      <section class="card data-card" id="resultCard" hidden>
-        <div class="data-head"><b>📋 결과 표</b><span class="n" id="resN">기록 0 / 4</span><span class="n">자동 기록</span></div>
+      <section class="card data-card off" id="resultCard" data-feature="results">
+        <div class="data-head" title="실험이 끝나면 자동으로 기록돼요"><b>📋 결과 표</b><span class="n" id="resN">기록 0 / 4</span></div>
         <div class="data-scroll">
           <table class="res-table"><tbody id="resBody"></tbody></table>
         </div>
@@ -113,56 +119,49 @@
 
     <aside class="side-col">
       <section class="card card-pad" id="ctrlCard">
-        <div class="grp" id="grpFree" hidden>
+        <div class="grp off" id="grpFree">
           <div class="grp-title">🔓 자유 탐구: 실험 고르기</div>
           <div class="mode-grid three" id="freeGrid">
             <button type="button" class="mode-btn" data-free="hands">👐 두 손</button>
             <button type="button" class="mode-btn" data-free="zone">💨 힘 구역</button>
             <button type="button" class="mode-btn" data-free="two">↔️ 두 힘</button>
             <button type="button" class="mode-btn" data-free="toss">⚾ 던진 공</button>
-            <button type="button" class="mode-btn" data-free="roll">🏐 구르는 공</button>
+            <button type="button" class="mode-btn" data-free="roll">🎳 구르는 공</button>
             <button type="button" class="mode-btn" data-free="park">🎡 놀이공원</button>
           </div>
         </div>
-        <div class="grp" id="grpHands" hidden>
-          <div class="grp-title">👐 양쪽에서 당기기</div>
-          <p class="ctrl-note">화면 속 <b>손</b>을 바깥쪽으로 끌면 당기는 힘이 커져요 (0~6 N, 1 N 단위).</p>
+        <div class="grp off" id="grpPull" data-feature="hands">
+          <div class="grp-title" id="pullTitle">👐 양쪽에서 당기기</div>
+          <p class="ctrl-note" id="pullNote">화면 속 <b>손</b>을 바깥쪽으로 끌면 당기는 힘이 커져요 (0~6 N, 1 N 단위).</p>
           <div class="btn-row">
-            <button class="btn btn-primary btn-run" id="releaseBtn" type="button">▶ 놓기</button>
+            <button class="btn btn-primary btn-run" id="goPull" type="button">▶ 놓기</button>
           </div>
         </div>
-        <div class="grp" id="grpZone" hidden>
-          <div class="grp-title">🔀 힘 구역에서 작용하는 힘</div>
-          <div class="mode-grid" id="modeGrid">
+        <div class="grp off" id="grpZone" data-feature="zone">
+          <div class="grp-title">💨 힘 구역에서 작용하는 힘</div>
+          <div class="mode-grid" id="modeGrid" data-feature="modes">
             <button type="button" class="mode-btn" data-mode="1">① → 같은 방향</button>
             <button type="button" class="mode-btn" data-mode="2">② ← 반대 방향</button>
             <button type="button" class="mode-btn" data-mode="3">③ 🪢 줄과 기둥</button>
             <button type="button" class="mode-btn" data-mode="4">④ ↗ 비스듬히</button>
           </div>
           <div class="btn-row">
-            <button class="btn btn-primary btn-run" id="goBtn" type="button">▶ 출발</button>
+            <button class="btn btn-primary btn-run" id="goZone" type="button">▶ 출발</button>
           </div>
         </div>
-        <div class="grp" id="grpTwo" hidden>
-          <div class="grp-title">↔️ 움직이는 퍽에 두 힘 걸기</div>
-          <p class="ctrl-note">앞쪽 손과 뒤쪽 손을 끌어 두 힘의 크기를 정해요. 퍽은 처음에 오른쪽으로 1.0 m/s로 움직여요.</p>
-          <div class="btn-row">
-            <button class="btn btn-primary btn-run" id="runBtn" type="button">▶ 실행</button>
-          </div>
-        </div>
-        <div class="grp" id="grpSide" hidden>
-          <div class="grp-title" id="sideTitle">⚾ 옆에서 본 장면</div>
+        <div class="grp off" id="grpSide" data-feature="toss">
+          <div class="grp-title" id="sideTitle">⚾ 옆에서 본 모습</div>
           <p class="ctrl-note" id="sideNote">공기 저항은 생각하지 않아요.</p>
           <div class="btn-row">
-            <button class="btn btn-run" id="replayBtn" type="button">↺ 처음부터 다시 보기</button>
+            <button class="btn btn-primary btn-run" id="replayBtn" type="button">↺ 처음부터 다시 보기</button>
           </div>
         </div>
-        <div class="grp" id="grpPark" hidden>
+        <div class="grp off" id="grpPark" data-feature="park">
           <div class="grp-title">🎡 놀이 기구 조사·분류</div>
           <p class="ctrl-note" id="parkNote">카드를 <b>누르면</b> 조사 창에서 움직임을 보여 줘요. 카드를 알맞은 통으로 <b>끌어다 놓아</b> 분류해요.</p>
           <div class="btn-row">
             <button class="btn" id="parkResetBtn" type="button">🃏 다시 분류하기</button>
-            <button class="btn btn-primary" id="posterBtn" type="button" hidden>📸 포스터 저장</button>
+            <button class="btn btn-primary off" id="posterBtn" type="button">📸 포스터 저장</button>
           </div>
         </div>
       </section>

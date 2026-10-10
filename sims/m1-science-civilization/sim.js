@@ -53,7 +53,7 @@
      무대(캔버스) — 휴대폰(599px 이하)은 세로형 480×820으로 교체
      ========================================================= */
   const LAYOUTS = {
-    wide: { kind: 'wide', W: 800, H: 520 },
+    wide: { kind: 'wide', W: 800, H: 600 },
     tall: { kind: 'tall', W: 480, H: 820 },
   };
   const mq = window.matchMedia ? window.matchMedia('(max-width: 599px)') : null;
@@ -106,6 +106,18 @@
     return c;
   }
   function blit(c, x, y) { ctx.drawImage(c.cv, x, y, c.w, c.h); }
+  /* 장면 바탕: 위·아래 가장자리가 캔버스 바깥 색(SCENE_BG)과 정확히 이어지도록, 무늬는 가장자리에서 서서히 사라진다 */
+  function backdrop(key, bg, glow, pattern) {
+    const c = layer('bd-' + key + LAY.kind, LAY.W, LAY.H, () => {
+      const W = LAY.W, H = LAY.H;
+      ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+      const g = ctx.createLinearGradient(0, 0, 0, H);
+      g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(0.32, 'rgba(255,255,255,' + glow + ')'); g.addColorStop(0.68, 'rgba(255,255,255,' + glow + ')'); g.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+      if (pattern) pattern(W, H, (y) => Math.pow(Math.sin(Math.PI * clamp(y / H, 0, 1)), 0.7));
+    });
+    blit(c, 0, 0);
+  }
 
   /* 그리기 도우미 */
   function rr(x, y, w, h, r) {
@@ -299,7 +311,7 @@
       d.moved = Math.max(d.moved, Math.hypot(p.x - d.sx, p.y - d.sy));
       d.c.tx = clamp(p.x - d.ox, -d.c.w * 0.3, LAY.W - d.c.w * 0.7);
       d.c.ty = clamp(p.y - d.oy, -d.c.h * 0.3, LAY.H - d.c.h * 0.7);
-      deck.hoverT = opts.findTarget ? opts.findTarget(d.c, { x: d.c.tx + d.c.w / 2, y: d.c.ty + d.c.h / 2 }) : null;
+      deck.hoverT = opts.findTarget ? opts.findTarget(d.c, { x: d.c.tx + d.c.w / 2, y: d.c.ty + d.c.h / 2 }, p) : null;
     };
     deck.up = (p) => {
       const d = deck.drag;
@@ -318,11 +330,10 @@
         if (res.w) { to.w = res.w; to.h = res.h; }
         SciSim.tween(c, to, { duration: 0.28, ease: 'outBack', onDone: () => res.done && res.done(c) });
         const cx = res.x + (res.w || c.w) / 2, cy = res.y + (res.h || c.h) / 2;
-        ringFx(cx, cy, COL.good, 18); sparkle(cx, cy, 10);
-        Sound.tick();
+        if (!res.quiet) { ringFx(cx, cy, COL.good, 18); sparkle(cx, cy, 10); Sound.tick(); }
       } else if (res && res.msg) {
         c.shake = 0.3; c.flash = 0.9; c.ret = true;
-        bubble(c.x + c.w / 2, c.y, res.msg, { kind: 'bad', tag: 'deck' });
+        bubble(res.bx != null ? res.bx : c.x + c.w / 2, res.by != null ? res.by : c.y, res.msg, { kind: 'bad', tag: 'deck' });
         softFail();
         res.after && res.after(c);
       } else {
@@ -539,11 +550,12 @@
     const mk = clamp(1 - f / 0.55, 0, 1);
     if (mk > 0.01) {
       const sk = g.gy - 40;
-      ctx.save(); ctx.globalAlpha = mk * 0.9;
-      MILKY.pts.forEach((p) => { const gr = ctx.createRadialGradient(p.x, p.fy * sk, 0, p.x, p.fy * sk, p.rad); gr.addColorStop(0, 'rgba(170,190,255,' + p.a + ')'); gr.addColorStop(1, 'rgba(170,190,255,0)'); ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(p.x, p.fy * sk, p.rad, 0, TAU); ctx.fill(); });
-      ctx.fillStyle = '#dfe8ff';
-      MILKY.dust.forEach((p) => { ctx.globalAlpha = mk * p.a; ctx.beginPath(); ctx.arc(p.x, p.fy * sk, p.r, 0, TAU); ctx.fill(); });
-      ctx.restore();
+      const mc = layer('milky' + LAY.kind, 800, sk + 60, () => {      // 은하수는 모양이 변하지 않으므로 한 번만 그려 두고 투명도만 바꾼다
+        MILKY.pts.forEach((p) => { const gr = ctx.createRadialGradient(p.x, p.fy * sk, 0, p.x, p.fy * sk, p.rad); gr.addColorStop(0, 'rgba(170,190,255,' + p.a + ')'); gr.addColorStop(1, 'rgba(170,190,255,0)'); ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(p.x, p.fy * sk, p.rad, 0, TAU); ctx.fill(); });
+        ctx.fillStyle = '#dfe8ff';
+        MILKY.dust.forEach((p) => { ctx.globalAlpha = p.a; ctx.beginPath(); ctx.arc(p.x, p.fy * sk, p.r, 0, TAU); ctx.fill(); });
+      });
+      ctx.save(); ctx.globalAlpha = mk * 0.9; blit(mc, 0, 0); ctx.restore();
     }
     // 별: 시대마다 앞쪽 N개
     const n = eraMix(f, 'stars'), gl = eraMix(f, 'glow'), sk = g.gy - 70;
@@ -576,23 +588,26 @@
     }
   }
   function paintFar(ei, k, g) {
-    const arr = FAR[ei], base = SciSim.color.mix(ERAS[ei].sky[1], '#04050c', 0.62);
     const px = -k.f * 11;
-    ctx.save(); ctx.globalAlpha *= clamp(k.a, 0, 1);
-    ctx.translate(px, 0);
-    ctx.fillStyle = base;
-    if (ei === 0) {
-      ctx.beginPath(); ctx.moveTo(-100, g.gy);
-      arr.forEach((m) => { ctx.lineTo(m.x, g.gy - m.h * 0.45); ctx.quadraticCurveTo(m.x + m.w * 0.5, g.gy - m.h * 1.25, m.x + m.w, g.gy - m.h * 0.45); });
-      ctx.lineTo(1000, g.gy); ctx.closePath(); ctx.fill();
-    } else {
-      arr.forEach((b) => ctx.fillRect(b.x, g.gy - b.h, b.w, b.h + 2));
-      if (ei >= 3) {
-        const warm = ei === 3 ? '#ffd9a0' : '#e6f0ff';
-        ctx.fillStyle = warm; ctx.globalAlpha *= 0.55;
-        arr.forEach((b, i) => { for (let yy = g.gy - b.h + 8; yy < g.gy - 6; yy += 11) for (let xx = b.x + 5; xx < b.x + b.w - 6; xx += 8) if (h01(i * 131 + yy + xx) < 0.38) ctx.fillRect(xx, yy, 3, 4); });
+    const c = layer('far' + ei + LAY.kind, 1000, g.gy + 4, () => {       // 먼 풍경은 시대마다 한 번만 그려 두고, 옆으로만 밀어 패럴랙스를 준다
+      const arr = FAR[ei], base = SciSim.color.mix(ERAS[ei].sky[1], '#04050c', 0.62);
+      ctx.translate(100, 0);
+      ctx.fillStyle = base;
+      if (ei === 0) {
+        ctx.beginPath(); ctx.moveTo(-100, g.gy);
+        arr.forEach((m) => { ctx.lineTo(m.x, g.gy - m.h * 0.45); ctx.quadraticCurveTo(m.x + m.w * 0.5, g.gy - m.h * 1.25, m.x + m.w, g.gy - m.h * 0.45); });
+        ctx.lineTo(1000, g.gy); ctx.closePath(); ctx.fill();
+      } else {
+        arr.forEach((b) => ctx.fillRect(b.x, g.gy - b.h, b.w, b.h + 2));
+        if (ei >= 3) {
+          const warm = ei === 3 ? '#ffd9a0' : '#e6f0ff';
+          ctx.fillStyle = warm; ctx.globalAlpha = 0.55;
+          arr.forEach((b, i) => { for (let yy = g.gy - b.h + 8; yy < g.gy - 6; yy += 11) for (let xx = b.x + 5; xx < b.x + b.w - 6; xx += 8) if (h01(i * 131 + yy + xx) < 0.38) ctx.fillRect(xx, yy, 3, 4); });
+        }
       }
-    }
+    });
+    ctx.save(); ctx.globalAlpha *= clamp(k.a, 0, 1);
+    ctx.drawImage(c.cv, px - 100, 0, c.w, c.h);
     ctx.restore();
   }
   function paintRoad(ei, g) {
@@ -1034,10 +1049,10 @@
   const freeMode = () => !!(game && game.free);
 
   Object.assign(LAYOUTS.wide, {
-    night: { sc: { x: 0, y: 0, w: 800, h: 456 }, s: 1, ox: 0, bar: { x: 0, y: 456, w: 800, h: 64 }, track: { x0: 60, x1: 740, y: 490, names: 467, years: 511 }, stats: { x: 12, y: 12, w: 224, h: 152, wide: false }, label: { x: 420, y: 26 } },
+    night: { sc: { x: 0, y: 0, w: 800, h: 536 }, s: 1, ox: 0, bar: { x: 0, y: 536, w: 800, h: 64 }, track: { x0: 60, x1: 740, y: 570, names: 547, years: 591 }, stats: { x: 12, y: 12, w: 224, h: 152, wide: false }, label: { x: 420, y: 26 }, hint: { x: 400, y: 504 } },
   });
   Object.assign(LAYOUTS.tall, {
-    night: { sc: { x: 0, y: 0, w: 480, h: 560 }, s: 0.75, ox: 80, bar: { x: 0, y: 704, w: 480, h: 116 }, track: { x0: 38, x1: 442, y: 762, names: 730, years: 800 }, stats: { x: 10, y: 574, w: 460, h: 118, wide: true }, label: { x: 240, y: 22 } },
+    night: { sc: { x: 0, y: 0, w: 480, h: 560 }, s: 0.75, ox: 80, bar: { x: 0, y: 704, w: 480, h: 116 }, track: { x0: 38, x1: 442, y: 762, names: 730, years: 800 }, stats: { x: 10, y: 574, w: 460, h: 118, wide: true }, label: { x: 240, y: 22 }, hint: { x: 240, y: 548 } },
   });
 
   const yearX = (y) => { const T = LAY.night.track; return T.x0 + ((clamp(y, 1800, 2025) - 1800) / 225) * (T.x1 - T.x0); };
@@ -1175,7 +1190,8 @@
   function drawTimeline(t) {
     const N = LAY.night, B = N.bar, T = N.track;
     ctx.fillStyle = nightTop(); ctx.fillRect(B.x, B.y, B.w, B.h + 2);
-    ctx.fillStyle = 'rgba(0,0,0,.28)'; ctx.fillRect(B.x, B.y, B.w, B.h + 2);
+    const bg2 = ctx.createLinearGradient(0, B.y, 0, B.y + B.h); bg2.addColorStop(0, 'rgba(0,0,0,.36)'); bg2.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = bg2; ctx.fillRect(B.x, B.y, B.w, B.h + 2);
     ctx.fillStyle = 'rgba(160,180,230,.18)'; ctx.fillRect(B.x, B.y, B.w, 1.5);
     const hx = yearX(S.year), cur = S.arrived;
     // 트랙
@@ -1250,18 +1266,1212 @@
     return null;
   }
 
-  /* ---- (임시) 아직 만들지 않은 장면 ---- */
-  function drawChain() { ctx.fillStyle = '#e8eef6'; ctx.fillRect(0, 0, LAY.W, LAY.H); }
-  function drawTwoface() { ctx.fillStyle = '#f4efe6'; ctx.fillRect(0, 0, LAY.W, LAY.H); }
-  function drawFields() { ctx.fillStyle = '#edf3ef'; ctx.fillRect(0, 0, LAY.W, LAY.H); }
-  function drawPhone() { ctx.fillStyle = '#e7edf6'; ctx.fillRect(0, 0, LAY.W, LAY.H); }
-  const chainDown = () => false, tfDown = () => false, fieldsDown = () => false, phoneDown = () => false;
-  const fieldsMove = () => {}, fieldsUp = () => {}, fieldsHover = () => null, phoneHover = () => null, fieldsGrabbable = () => false;
-  const relayoutChain = () => {}, relayoutTf = () => {}, relayoutFields = () => {}, relayoutPhone = () => {};
-  const chainRowDone = () => false, chainSlot = () => false, resetChain = () => {}, ensureChain = () => {}, resetTf = () => {}, ensureTf = () => {}, tfCount = () => 0;
-  const resetFields = () => {}, fieldsLinked = () => 0, resetPhone = () => {}, ensurePhone = () => {}, phoneFound = () => 0, togglePhone = () => {};
-  function resetScene() {}
 
+  /* =========================================================
+     🔗 발견의 사슬 판 (2단계)
+     원리 → 기술·기기 → 생활의 변화
+     ========================================================= */
+  const CHAIN_COL = { 0: '#3867f4', 1: '#f26b3a', 2: '#14a058' };
+  const CHAINS = [
+    { prin: { icon: '♨️', t: '물을 끓인 수증기는 물체를 세게 밀어낼 수 있다' },
+      tech: { icon: '🚂', t: '증기 기관', s: '1769년 와트가 개량' },
+      life: { icon: '🏭', t: '공장과 기차', s: '대량 생산·빠른 운반(산업 혁명)' }, pic: 'train' },
+    { prin: { icon: '🦠', t: '세균 같은 미생물이 감염병을 일으킨다', s: '파스퇴르·코흐(1860~1880년대)' },
+      tech: { icon: '💉', t: '백신·소독법·항생제', s: '1928년 플레밍의 페니실린' },
+      life: { icon: '❤️', t: '감염병 사망자가 줄고 평균 수명이 늘어남' }, pic: 'heart' },
+    { prin: { icon: '🧲', t: '자석과 코일을 움직이면 전기가 생긴다', s: '1831년 패러데이' },
+      tech: { icon: '💡', t: '발전기와 전구', s: '1879년 에디슨의 전구' },
+      life: { icon: '🌃', t: '밤에도 밝게 생활하고 여러 전기 제품을 사용' }, pic: 'bulbs' },
+    { prin: { icon: '🔍', t: '렌즈를 지나는 빛은 꺾여 물체를 크게 보이게 한다' },
+      tech: { icon: '🔭', t: '망원경·현미경', s: '17세기' },
+      life: { icon: '🌌', t: '우주관이 바뀌고 세포를 발견함', s: '갈릴레이(1610)·훅(1665)' }, pic: 'tele' },
+  ];
+  Object.assign(LAYOUTS.wide, {
+    chain: {
+      head: { y: 40 }, cols: [{ x: 20, w: 250 }, { x: 290, w: 240 }, { x: 550, w: 240 }], rowY: [76, 154, 232, 310], rowH: 66,
+      tray: { x: 12, y: 394, w: 776, h: 194 }, card: { w: 186, h: 66 }, trayHome: (i) => ({ x: 22 + (i % 4) * 192, y: 432 + Math.floor(i / 4) * 76 }),
+    },
+  });
+  Object.assign(LAYOUTS.tall, {
+    chain: {
+      head: { y: 22 }, stacked: true, rowY: [48, 166, 284, 402], pH: 46, sH: 56,
+      tray: { x: 6, y: 520, w: 468, h: 292 }, card: { w: 226, h: 60 }, trayHome: (i) => ({ x: 10 + (i % 2) * 234, y: 548 + Math.floor(i / 2) * 66 }),
+    },
+  });
+  function prinRect(r) {
+    const C = LAY.chain;
+    return C.stacked ? { x: 10, y: C.rowY[r], w: 460, h: C.pH } : { x: C.cols[0].x, y: C.rowY[r], w: C.cols[0].w, h: C.rowH };
+  }
+  function slotRect(r, col) {
+    const C = LAY.chain;
+    if (C.stacked) return { x: col === 1 ? 10 : 244, y: C.rowY[r] + C.pH + 6, w: 226, h: C.sH };
+    return { x: C.cols[col].x, y: C.rowY[r], w: C.cols[col].w, h: C.rowH };
+  }
+  const CHAIN_CARDS = [];
+  CHAINS.forEach((c, i) => { CHAIN_CARDS.push({ id: 't' + i, chain: i, col: 1, d: c.tech }); CHAIN_CARDS.push({ id: 'l' + i, chain: i, col: 2, d: c.life }); });
+  const CHAIN_ORDER = shuffled([0, 1, 2, 3, 4, 5, 6, 7], 21);
+
+  function paintCardBody(d, band, x, y, w, h, o) {
+    o = o || {};
+    ctx.fillStyle = band; rr(x, y, 8, h, 4); ctx.fill();
+    const cx = x + 31, cy = y + h / 2;
+    ctx.fillStyle = rgba(band, 0.14); ctx.beginPath(); ctx.arc(cx, cy, Math.min(17, h / 2 - 5), 0, TAU); ctx.fill();
+    ctx.font = f(h < 56 ? 18 : 20, 400); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#1b2333'; ctx.fillText(d.icon, cx, cy + 1);
+    const tx = x + 56, tw = w - 56 - 10;
+    let size = 14, wl = null;
+    for (const sz of [14, 13, 12.5, 12, 11.5]) {        // 낱말 가운데서 줄이 꺾이지 않고 두 줄 안에 들어가는 가장 큰 글자 크기
+      size = sz; wl = wrapLines(d.t, tw, f(sz, 800));
+      if (wl.lines.length <= 2 && wl.lines.join(' ') === d.t) break;
+    }
+    const lh = size + 2, sub = d.s && wl.lines.length <= 2 ? d.s : null;
+    const total = wl.lines.length * lh + (sub ? 14 : 0);
+    let ty = y + h / 2 - total / 2 + lh / 2;
+    ctx.font = f(size, 800); ctx.fillStyle = o.color || '#1b2333'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    wl.lines.forEach((l, i) => ctx.fillText(l, tx, ty + i * lh));
+    if (sub) {
+      ctx.font = f(11.5, 700); ctx.fillStyle = '#6b7788';
+      let s = sub;
+      while (ctx.measureText(s).width > tw && s.length > 4) s = s.slice(0, -2);
+      if (s !== sub) s += '…';
+      ctx.fillText(s, tx, ty + wl.lines.length * lh - 1);
+    }
+  }
+  function rowComplete(r) {
+    const C = S.sc.chain, R = C.rows[r];
+    if (R.done) return;
+    R.done = true; R.t0 = nowS();
+    Sound.success();
+    const s = slotRect(r, 2);
+    ringFx(s.x + s.w / 2, s.y + s.h / 2, COL.good, 22); sparkle(s.x + s.w / 2, s.y + s.h / 2, 14);
+    syncDom();
+  }
+  function chainTarget(c, p) {     // 놓을 수 있는 칸: {r, col}
+    const C = S.sc.chain;
+    for (let r = 0; r < 4; r++) for (let col = 1; col <= 2; col++) if (inR(p, slotRect(r, col), 10)) return { r, col };
+    void C;
+    return null;
+  }
+  function chainTry(c, tg) {
+    const C = S.sc.chain;
+    if (!tg) return null;
+    const { r, col } = tg;
+    if (!C.active[r]) return { msg: '아직 잠겨 있어요 🔒 먼저 열려 있는 줄부터 이어요' };
+    if (col !== c.col) return { msg: col === 1 ? '이 칸에는 ‘기술·기기’ 카드를 놓아요' : '이 칸에는 ‘생활의 변화’ 카드를 놓아요' };
+    if (c.chain !== r) return { msg: '이 카드는 다른 원리와 이어져요' };
+    const R = C.rows[r];
+    if (R[col === 1 ? 'mid' : 'right']) return { msg: '이미 카드가 놓여 있어요' };
+    const s = slotRect(r, col);
+    return { ok: true, x: s.x, y: s.y, w: s.w, h: s.h, done: () => { R[col === 1 ? 'mid' : 'right'] = c; if (R.mid && R.right) rowComplete(r); syncDom(); } };
+  }
+  function buildChain() {
+    const C = LAY.chain;
+    const ch = { rows: [0, 1, 2, 3].map(() => ({ mid: null, right: null, done: false, t0: 0 })), active: [true, false, false, false], deck: null };
+    ch.deck = makeDeck({
+      findTarget: (c, p) => { const tg = chainTarget(c, p); return tg && tg.col === c.col && S.sc.chain.active[tg.r] ? tg.r * 3 + tg.col : null; },
+      onDrop: (c, p) => chainTry(c, chainTarget(c, p)),
+      onTap: () => ({ msg: '카드를 끌어서 빈칸에 놓아요' }),
+    });
+    CHAIN_ORDER.forEach((oi, i) => {
+      const cd = CHAIN_CARDS[oi], h = C.trayHome(i);
+      const c = ch.deck.add({ id: cd.id, chain: cd.chain, col: cd.col, d: cd.d, hx: h.x, hy: h.y, w: C.card.w, h: C.card.h });
+      c.order = i;
+    });
+    return ch;
+  }
+  function resetChain(activeRows) {
+    S.sc.chain = buildChain();
+    S.sc.chain.active = [0, 1, 2, 3].map((r) => (activeRows || [0]).includes(r));
+  }
+  /* 지정한 줄은 이미 완성된 상태로(되돌아와도 같은 장면), 나머지는 비워 둔다 */
+  function ensureChain(activeRows, doneRows) {
+    if (!S.sc.chain) resetChain(activeRows);
+    const C = S.sc.chain;
+    C.active = [0, 1, 2, 3].map((r) => activeRows.includes(r));
+    doneRows.forEach((r) => {
+      const R = C.rows[r];
+      if (R.done) return;
+      [1, 2].forEach((col) => {
+        const c = C.deck.cards.find((x) => x.chain === r && x.col === col), s = slotRect(r, col);
+        c.placed = true; c.x = c.tx = s.x; c.y = c.ty = s.y; c.w = s.w; c.h = s.h; c.ret = false;
+        R[col === 1 ? 'mid' : 'right'] = c;
+      });
+      R.done = true; R.t0 = nowS() - 20;
+    });
+  }
+  const chainRowDone = (r) => !!(S.sc.chain && S.sc.chain.rows[r].done);
+  const chainSlot = (r, col) => !!(S.sc.chain && S.sc.chain.rows[r][col === 1 ? 'mid' : 'right']);
+  function relayoutChain() {
+    const C = S.sc.chain;
+    if (!C) { resetChain([0]); return; }
+    const L = LAY.chain;
+    C.deck.cards.forEach((c) => {
+      const h = L.trayHome(c.order);
+      c.hx = h.x; c.hy = h.y;
+      const r = c.chain, R = C.rows[r];
+      if (c.placed) { const s = slotRect(r, c.col); c.x = c.tx = s.x; c.y = c.ty = s.y; c.w = s.w; c.h = s.h; }
+      else { c.w = L.card.w; c.h = L.card.h; c.x = c.hx; c.y = c.hy; }
+      void R;
+    });
+  }
+
+  /* 연결선(원리 → 기술 → 생활): 왼쪽부터 그려지고, 빛 구슬이 달린다 */
+  function chainPath(r) {
+    const P = prinRect(r), A = slotRect(r, 1), B = slotRect(r, 2), C = LAY.chain;
+    const pts = [];
+    const seg = (p0, c0, c1, p1) => { for (let i = 0; i <= 18; i++) { const u = i / 18, v = 1 - u; pts.push([v * v * v * p0[0] + 3 * v * v * u * c0[0] + 3 * v * u * u * c1[0] + u * u * u * p1[0], v * v * v * p0[1] + 3 * v * v * u * c0[1] + 3 * v * u * u * c1[1] + u * u * u * p1[1]]); } };
+    if (C.stacked) {
+      const a = [P.x + P.w / 2, P.y + P.h], b = [A.x + A.w / 2, A.y];
+      seg(a, [a[0], a[1] + 14], [b[0], b[1] - 14], b);
+      const c = [A.x + A.w, A.y + A.h / 2], d = [B.x, B.y + B.h / 2];
+      seg(c, [c[0] + 8, c[1]], [d[0] - 8, d[1]], d);
+    } else {
+      const a = [P.x + P.w, P.y + P.h / 2], b = [A.x, A.y + A.h / 2];
+      seg(a, [a[0] + 12, a[1]], [b[0] - 12, b[1]], b);
+      const c = [A.x + A.w, A.y + A.h / 2], d = [B.x, B.y + B.h / 2];
+      seg(c, [c[0] + 12, c[1]], [d[0] - 12, d[1]], d);
+    }
+    return pts;
+  }
+  function strokePath(pts, upto) {
+    const n = Math.max(2, Math.floor(pts.length * upto));
+    ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]);
+    for (let i = 1; i < n; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+  }
+  function drawOrb(pts, u) {
+    // u: 0~1 진행. 꼬리 + 빛나는 구슬
+    const n = pts.length - 1;
+    for (let k = 8; k >= 0; k--) {
+      const uu = clamp(u - k * 0.018, 0, 1), i = Math.min(n, Math.floor(uu * n)), p = pts[i];
+      halo(p[0], p[1], 15 - k * 1.2, k === 0 ? '#ffb400' : '#ffc933', 0.62 - k * 0.06);
+    }
+    const p = pts[Math.min(n, Math.floor(u * n))];
+    ctx.fillStyle = '#fff'; ctx.strokeStyle = '#e08a00'; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.arc(p[0], p[1], 3.8, 0, TAU); ctx.fill(); ctx.stroke();
+  }
+
+  /* 생활 카드가 뒤집혀 작은 그림 카드가 된다 */
+  function miniPic(kind, x, y, w, h, t) {
+    ctx.save(); rr(x, y, w, h, 9); ctx.clip();
+    if (kind === 'train') {
+      const g = ctx.createLinearGradient(0, y, 0, y + h); g.addColorStop(0, '#9ec5e8'); g.addColorStop(1, '#dbe9f5'); ctx.fillStyle = g; ctx.fillRect(x, y, w, h);
+      ctx.fillStyle = '#7d8a99'; ctx.fillRect(x, y + h - 9, w, 9); ctx.fillStyle = '#5b6574'; ctx.fillRect(x, y + h - 10, w, 2);
+      const tx = x + ((t * 28) % (w + 50)) - 40, by = y + h - 10;
+      for (let i = 0; i < 5; i++) { const age = ((t * 1.4 + i * 0.22) % 1.1), px = tx + 18 - age * 26, py = by - 28 - age * 22; ctx.fillStyle = 'rgba(255,255,255,' + (0.8 * (1 - age / 1.1)) + ')'; ctx.beginPath(); ctx.arc(px, py, 3 + age * 7, 0, TAU); ctx.fill(); }
+      ctx.fillStyle = '#26303d'; ctx.fillRect(tx, by - 20, 30, 14); ctx.fillRect(tx + 18, by - 28, 12, 10); ctx.fillRect(tx + 3, by - 27, 5, 9); ctx.fillStyle = '#e2464b'; ctx.fillRect(tx - 4, by - 8, 6, 3);
+      [tx + 6, tx + 24].forEach((wx) => { ctx.fillStyle = '#12161d'; ctx.beginPath(); ctx.arc(wx, by - 4, 4.5, 0, TAU); ctx.fill(); ctx.strokeStyle = '#aab4c2'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(wx, by - 4); ctx.lineTo(wx + Math.cos(t * 9) * 4, by - 4 + Math.sin(t * 9) * 4); ctx.stroke(); });
+    } else if (kind === 'heart') {
+      ctx.fillStyle = '#ffe9ee'; ctx.fillRect(x, y, w, h);
+      const k = 1 + 0.14 * Math.max(0, Math.sin(t * 6.5)) , cx = x + w * 0.32, cy = y + h * 0.5;
+      ctx.save(); ctx.translate(cx, cy); ctx.scale(k * 1.0, k); ctx.fillStyle = '#e2464b'; ctx.beginPath(); ctx.moveTo(0, 12); ctx.bezierCurveTo(-24, -4, -12, -22, 0, -9); ctx.bezierCurveTo(12, -22, 24, -4, 0, 12); ctx.fill(); ctx.restore();
+      const bx = x + w * 0.62, bw = 10, bh = h - 16, fill = ((t * 0.5) % 1.4) / 1.4;
+      ctx.fillStyle = '#fff'; rr(bx, y + 8, bw, bh, 5); ctx.fill(); ctx.fillStyle = '#14a058'; const hh = bh * Math.min(1, fill * 1.2); rr(bx, y + 8 + bh - hh, bw, hh, 5); ctx.fill();
+      ctx.font = f(11, 800); ctx.fillStyle = '#14a058'; ctx.textAlign = 'left'; ctx.fillText('수명↑', bx + 14, y + h / 2 + 4);
+    } else if (kind === 'bulbs') {
+      ctx.fillStyle = '#10152e'; ctx.fillRect(x, y, w, h);
+      for (let i = 0; i < 3; i++) {
+        const cx = x + w * (0.2 + i * 0.3), on = ((t * 1.1) % 3.6) > i * 1.0 + 0.2 || ((t * 1.1) % 3.6) > 3.4 ? 0 : 0; const ph = (t * 1.0) % 4, lit = ph > i * 0.9 + 0.2 && ph < 3.7;
+        if (lit) add(() => halo(cx, y + h * 0.46, 26, '#ffd84d', 0.7));
+        ctx.fillStyle = lit ? '#fff3b0' : '#4a5270'; ctx.beginPath(); ctx.arc(cx, y + h * 0.42, 8, 0, TAU); ctx.fill(); ctx.fillStyle = lit ? '#e6c84a' : '#39405c'; ctx.fillRect(cx - 3.5, y + h * 0.42 + 6, 7, 7);
+        void on;
+      }
+    } else {
+      ctx.fillStyle = '#0c1330'; ctx.fillRect(x, y, w, h);
+      ctx.fillStyle = '#fff'; [[6, 8], [30, 20], [50, 6], [70, 24], [88, 10]].forEach(([a, b]) => ctx.fillRect(x + (a % w), y + b, 1.3, 1.3));
+      const jx = x + w * 0.33, jy = y + h / 2; D.sphere(jx, jy, 12, '#d9a066', { gloss: false });
+      ctx.strokeStyle = 'rgba(120,70,30,.5)'; ctx.lineWidth = 1.5; [-4, 1, 6].forEach((d) => { ctx.beginPath(); ctx.moveTo(jx - 11, jy + d); ctx.lineTo(jx + 11, jy + d); ctx.stroke(); });
+      for (let i = 0; i < 4; i++) { const a = t * (1.2 + i * 0.5) + i * 1.6, r = 19 + i * 5; D.sphere(jx + Math.cos(a) * r, jy + Math.sin(a) * r * 0.32, 2.1, '#fff', { gloss: false }); }
+      const cx = x + w * 0.76, cy = jy; ctx.fillStyle = 'rgba(120,230,160,.35)'; ctx.beginPath(); ctx.ellipse(cx, cy, 14, 12, 0, 0, TAU); ctx.fill(); ctx.strokeStyle = '#7be0a8'; ctx.lineWidth = 1.5; ctx.stroke(); D.sphere(cx + 1, cy, 4, '#3b8f6a', { gloss: false });
+    }
+    ctx.restore();
+  }
+  function drawChainRow(r, t) {
+    const C = S.sc.chain, R = C.rows[r], active = C.active[r], deck = C.deck;
+    const P = prinRect(r), A = slotRect(r, 1), B = slotRect(r, 2), d = CHAINS[r];
+    if (R.act == null) { R.act = active ? 1 : 0.4; R.wasLocked = !active; }
+    R.act += ((active ? 1 : 0.4) - R.act) * (1 - Math.exp(-6 * (S.dt || 0.016)));
+    if (active && R.wasLocked) {      // 잠겨 있던 줄이 열린다: 고리 + 반짝이 + 소리
+      R.wasLocked = false; R.openT = nowS();
+      ringFx(P.x + P.w / 2, P.y + P.h / 2, COL.good, 26); sparkle(P.x + 30, P.y + P.h / 2, 8); sparkle(B.x + B.w - 30, B.y + B.h / 2, 8);
+      Sound.tick();
+    }
+    ctx.save(); ctx.globalAlpha = R.act;
+    // 원리 카드(고정)
+    softShadow(() => { ctx.fillStyle = '#fff'; rr(P.x, P.y, P.w, P.h, 12); ctx.fill(); }, 8, 3);
+    paintCardBody(d.prin, CHAIN_COL[0], P.x, P.y, P.w, P.h);
+    // 빈칸
+    [[A, 1], [B, 2]].forEach(([s, col]) => {
+      const filled = col === 1 ? R.mid : R.right;
+      if (!filled) {
+        ctx.fillStyle = 'rgba(255,255,255,.55)'; rr(s.x, s.y, s.w, s.h, 12); ctx.fill();
+        ctx.strokeStyle = rgba(CHAIN_COL[col], 0.55); ctx.lineWidth = 2; ctx.setLineDash([7, 5]); rr(s.x, s.y, s.w, s.h, 12); ctx.stroke(); ctx.setLineDash([]);
+        txt(col === 1 ? '⚙️ 기술·기기' : '🏙️ 생활의 변화', s.x + s.w / 2, s.y + s.h / 2, f(13.5, 800), rgba(CHAIN_COL[col], 0.8));
+        if (!active || R.act < 0.97) { ctx.save(); ctx.globalAlpha = clamp((0.97 - R.act) * 3, 0, 1) * (active ? 1 : 1); txt('🔒', s.x + s.w - 20, s.y + 16, f(15, 400), '#6b7788'); ctx.restore(); }
+        if (deck.drag && active && deck.drag.c.col === col && deck.drag.c.chain !== undefined) {
+          breathe(s.x, s.y, s.w, s.h, 12, deck.hoverT === r * 3 + col ? COL.good : '#8fd9ae');
+          if (deck.hoverT === r * 3 + col) { ctx.fillStyle = 'rgba(20,160,88,.12)'; rr(s.x, s.y, s.w, s.h, 12); ctx.fill(); }
+        }
+      }
+    });
+    ctx.restore();
+    // 완성 연출: 선 → 구슬 → 뒤집기
+    if (R.done) {
+      const e = nowS() - R.t0;
+      const pts = chainPath(r);
+      const grow = RM ? 1 : clamp(e / 0.4, 0, 1);
+      ctx.save(); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      const lg = ctx.createLinearGradient(P.x, 0, B.x + B.w, 0); lg.addColorStop(0, CHAIN_COL[0]); lg.addColorStop(0.5, CHAIN_COL[1]); lg.addColorStop(1, CHAIN_COL[2]);
+      ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = 7; strokePath(pts, EASE.outCubic(grow)); ctx.stroke();
+      ctx.strokeStyle = lg; ctx.lineWidth = 4; strokePath(pts, EASE.outCubic(grow)); ctx.stroke();
+      ctx.restore();
+      let orb = -1;
+      if (!RM) { if (e > 0.4 && e < 1.1) orb = (e - 0.4) / 0.7; else if (e > 1.6) { const ph = (e - 1.6) % 3; if (ph < 1.1) orb = ph / 1.1; } }
+      if (orb >= 0) drawOrb(pts, EASE.inOutCubic(clamp(orb, 0, 1)));
+      // 뒤집기(scaleX 1→0→1, 500ms)
+      const fl = RM ? 1 : clamp((e - 0.9) / 0.5, 0, 1), card = R.right;
+      card.hidden = true;
+      const sx = Math.abs(Math.cos(fl * Math.PI)), showPic = fl >= 0.5;
+      ctx.save(); ctx.translate(B.x + B.w / 2, B.y + B.h / 2); ctx.scale(Math.max(0.02, sx), 1); ctx.translate(-B.w / 2, -B.h / 2);
+      softShadow(() => { ctx.fillStyle = '#fff'; rr(0, 0, B.w, B.h, 12); ctx.fill(); }, 8, 3);
+      if (!showPic) paintCardBody(card.d, CHAIN_COL[2], 0, 0, B.w, B.h);
+      else {
+        ctx.save(); ctx.translate(0, 0);
+        const pw = Math.min(96, B.w * 0.4);
+        ctx.save(); ctx.translate(-B.x, -B.y); miniPic(d.pic, B.x + 6, B.y + 6, pw, B.h - 12, t); ctx.restore();
+        ctx.fillStyle = CHAIN_COL[2]; rr(B.w - 6, 0, 6, B.h, 3); ctx.fill();
+        const tw = B.w - pw - 26;
+        let size = 13.5, wl = wrapLines(card.d.t, tw, f(size, 800));
+        if (wl.lines.length > 3) { size = 12.5; wl = wrapLines(card.d.t, tw, f(size, 800)); }
+        drawLines(card.d.t, pw + 16 + tw / 2, B.h / 2 + 1, tw, size, '#1b2333', { weight: 800, lh: size + 2, align: 'center' });
+        ctx.restore();
+      }
+      ctx.restore();
+    }
+  }
+  /* 네 줄을 모두 이으면 보관함 자리에 '과학 ⇄ 기술' 순환 그림이 나타난다 */
+  function drawChainCycle(t) {
+    const C = S.sc.chain, L = LAY.chain;
+    if (![0, 1, 2, 3].every((r) => C.rows[r].done)) return;
+    const e = nowS() - Math.max(...C.rows.map((R) => R.t0)), k = RM ? 1 : clamp((e - 1.5) / 0.6, 0, 1);
+    if (k <= 0) return;
+    const T = L.tray, tall = LAY.kind === 'tall', top = T.y + 12, cx = T.x + T.w / 2;
+    ctx.save(); ctx.globalAlpha = k; ctx.translate(0, (1 - EASE.outCubic(k)) * 10);
+    softShadow(() => { ctx.fillStyle = '#fff'; rr(T.x + 14, top, T.w - 28, T.h - 24, 16); ctx.fill(); }, 10, 3);
+    drawLines('과학과 기술은 서로 영향을 주고받으며 함께 발전해요', cx, top + (tall ? 30 : 24), T.w - 70, tall ? 14.5 : 16, COL.ink, { weight: 800, lh: 20 });
+    const ny = top + (tall ? 112 : 68), dx = (T.w - 28) * (tall ? 0.3 : 0.3);
+    const nodes = [['🔬', '과학 원리', CHAIN_COL[0]], ['⚙️', '기술·기기', CHAIN_COL[1]], ['🏙️', '생활의 변화', CHAIN_COL[2]]];
+    nodes.forEach(([ic, name, col], i) => {
+      const x = cx + (i - 1) * dx, pop = RM ? 1 : EASE.outBack(clamp((e - 1.6 - i * 0.12) / 0.4, 0, 1));
+      ctx.save(); ctx.translate(x, ny); ctx.scale(pop, pop);
+      ctx.fillStyle = rgba(col, 0.14); ctx.beginPath(); ctx.arc(0, 0, 25, 0, TAU); ctx.fill();
+      ctx.strokeStyle = col; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(0, 0, 25, 0, TAU); ctx.stroke();
+      txt(ic, 0, 1, f(25, 400), '#1b2333');
+      ctx.restore();
+      txt(name, x, ny + 40, f(13, 800), col);
+      if (i < 2) D.arrow(x + 34, ny, x + dx - 34, ny, { color: '#9aa8bd', width: 3, head: 9 });
+    });
+    // 되돌아오는 화살표: 기술이 새로운 과학 발견을 돕는다
+    const x1 = cx - dx, x3 = cx + dx, y0 = ny + 56, p0 = { x: x3, y: y0 }, p1 = { x: x3, y: y0 + 46 }, p2 = { x: x1, y: y0 + 46 }, p3 = { x: x1, y: y0 };
+    ctx.strokeStyle = rgba('#14a058', 0.85); ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.setLineDash([2, 7]);
+    ctx.lineDashOffset = RM ? 0 : -t * 14;
+    ctx.beginPath(); ctx.moveTo(p0.x, p0.y); ctx.bezierCurveTo(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y - 10); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = '#14a058'; ctx.beginPath(); ctx.moveTo(x1, y0 - 12); ctx.lineTo(x1 - 7, y0 + 2); ctx.lineTo(x1 + 7, y0 + 2); ctx.closePath(); ctx.fill();
+    if (!RM) for (let q = 0; q < 2; q++) { const u = (t * 0.28 + q * 0.5) % 1, v = 1 - u, pt = { x: v * v * v * p0.x + 3 * v * v * u * p1.x + 3 * v * u * u * p2.x + u * u * u * p3.x, y: v * v * v * p0.y + 3 * v * v * u * p1.y + 3 * v * u * u * p2.y + u * u * u * p3.y }; halo(pt.x, pt.y, 12, '#14a058', 0.5); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(pt.x, pt.y, 2.8, 0, TAU); ctx.fill(); ctx.strokeStyle = '#14a058'; ctx.lineWidth = 1.2; ctx.stroke(); }
+    pill(cx, y0 + 35, '🔭 새로운 기술이 새로운 과학 발견을 도와요', { bg: '#e8f8ef', color: '#0b6b39', size: tall ? 12 : 13, h: 26, border: '#9fdcba' });
+    ctx.restore();
+  }
+  function drawChain(t) {
+    const C = S.sc.chain, L = LAY.chain;
+    backdrop('chain', SCENE_BG.chain, 0.5, (W, H, fade) => {
+      ctx.lineWidth = 1;
+      for (let x = 0; x < W; x += 32) for (let y = 0; y < H; y += 32) { ctx.strokeStyle = 'rgba(100,120,160,' + (0.09 * fade(y + 16)).toFixed(3) + ')'; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + 32); ctx.stroke(); }
+      for (let y = 0; y < H; y += 32) { ctx.strokeStyle = 'rgba(100,120,160,' + (0.09 * fade(y)).toFixed(3) + ')'; ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+    });
+    // 열 머리글
+    const heads = [['🔬 과학 원리의 발견', CHAIN_COL[0]], ['⚙️ 기술 발달·기기 발명', CHAIN_COL[1]], ['🏙️ 생활(문명)의 변화', CHAIN_COL[2]]];
+    heads.forEach(([name, col], i) => {
+      if (L.stacked) { pill(80 + i * 160, L.head.y, name, { bg: col, size: 12.5, h: 26, pad: 8 }); return; }
+      const c = L.cols[i];
+      ctx.fillStyle = col; rr(c.x, L.head.y - 15, c.w, 28, 14); ctx.fill();
+      txt(name, c.x + c.w / 2, L.head.y, f(14.5, 800), '#fff');
+    });
+    // 화살표 안내(칸 사이)
+    if (!L.stacked) { [270, 530].forEach((x) => D.arrow(x + 1, L.head.y, x + 19, L.head.y, { color: '#9aa8bd', width: 3, head: 9 })); }
+    for (let r = 0; r < 4; r++) drawChainRow(r, t);
+    // 보관함
+    ctx.fillStyle = 'rgba(100,116,139,.10)'; rr(L.tray.x, L.tray.y, L.tray.w, L.tray.h, 16); ctx.fill();
+    ctx.strokeStyle = 'rgba(100,116,139,.28)'; ctx.lineWidth = 2; ctx.setLineDash([8, 6]); rr(L.tray.x, L.tray.y, L.tray.w, L.tray.h, 16); ctx.stroke(); ctx.setLineDash([]);
+    if (![0, 1, 2, 3].every((r) => C.rows[r].done)) txt('📦 보관함 · 카드를 끌어 빈칸에 놓아요', L.tray.x + 14, L.tray.y + 14, f(13, 800), '#64748b', 'left');
+    drawChainCycle(t);
+    C.deck.draw((c, x, y, w, h, shadowPass) => {
+      ctx.fillStyle = '#fff'; rr(x, y, w, h, 12); ctx.fill();
+      if (shadowPass) return;
+      paintCardBody(c.d, CHAIN_COL[c.col], x, y, w, h);
+    });
+    if (isNew('chains')) newRing(6, 6, LAY.W - 12, LAY.H - 12);
+  }
+  function chainDown(p) { const C = S.sc.chain; return C ? C.deck.down(p) : false; }
+
+  /* =========================================================
+     🪙 과학기술의 두 얼굴 보드 (3단계 · 자동차)
+     ========================================================= */
+  const TF_CARDS = [
+    { id: 'c1', t: '먼 곳까지 빠르게 이동할 수 있다', good: true, icon: '🛣️' },
+    { id: 'c2', t: '많은 물건을 한꺼번에 실어 나른다', good: true, icon: '📦' },
+    { id: 'c3', t: '배기가스가 공기를 오염시킨다', good: false, icon: '🏭' },
+    { id: 'c4', t: '교통사고와 소음이 생긴다', good: false, icon: '🚧' },
+  ];
+  Object.assign(LAYOUTS.wide, {
+    twoface: {
+      coin: { x: 400, y: 104, r: 58 }, boxes: { good: { x: 26, y: 202, w: 364, h: 192 }, bad: { x: 410, y: 202, w: 364, h: 192 } },
+      card: { w: 186, h: 84 }, home: [[22, 448], [214, 448], [406, 448], [598, 448]], tray: { x: 12, y: 412, w: 776, h: 176 },
+      slot: (side, i) => { const b = LAY.twoface.boxes[side]; return { x: b.x + 8 + (i % 2) * 176, y: b.y + 54 + Math.floor(i / 2) * 64, w: 168, h: 56 }; },
+    },
+  });
+  Object.assign(LAYOUTS.tall, {
+    twoface: {
+      coin: { x: 240, y: 108, r: 58 }, boxes: { good: { x: 8, y: 200, w: 230, h: 236 }, bad: { x: 242, y: 200, w: 230, h: 236 } },
+      card: { w: 226, h: 88 }, home: [[8, 498], [246, 498], [8, 598], [246, 598]], tray: { x: 4, y: 456, w: 472, h: 252 },
+      slot: (side, i) => { const b = LAY.twoface.boxes[side]; return { x: b.x + 6, y: b.y + 52 + i * 84, w: 218, h: 76 }; },
+    },
+  });
+  function tfFaceOf(side) { return side === 'good' ? 'good' : 'bad'; }
+  function buildTf() {
+    const L = LAY.twoface;
+    const tf = { deck: null, placed: { good: [], bad: [] }, face: 'car', flip: null, done: false, doneT: 0, spin: 0 };
+    tf.deck = makeDeck({
+      findTarget: (c, p) => (inR(p, L.boxes.good, 6) ? 'good' : inR(p, L.boxes.bad, 6) ? 'bad' : null),
+      onDrop: (c, p) => {
+        const side = inR(p, L.boxes.good, 6) ? 'good' : inR(p, L.boxes.bad, 6) ? 'bad' : null;
+        if (!side) return null;
+        if ((side === 'good') !== c.good) return { msg: c.good ? '이것 덕분에 생활이 편해졌어요' : '이것 때문에 사람과 환경이 피해를 입어요' };
+        const i = tf.placed[side].length, s = L.slot(side, i);
+        tf.placed[side].push(c.id);
+        return { ok: true, x: s.x, y: s.y, w: s.w, h: s.h, done: () => { flipCoin(tfFaceOf(side)); if (tfCount() === 4) tfComplete(); syncDom(); } };
+      },
+      onTap: () => ({ msg: '카드를 끌어서 😊 또는 😟 상자에 넣어요' }),
+    });
+    shuffled([0, 1, 2, 3], 9).forEach((oi, i) => {
+      const cd = TF_CARDS[oi], h = L.home[i];
+      tf.deck.add({ id: cd.id, t: cd.t, good: cd.good, icon: cd.icon, hx: h[0], hy: h[1], w: L.card.w, h: L.card.h });
+    });
+    return tf;
+  }
+  function resetTf() { S.sc.tf = buildTf(); }
+  function ensureTf() {
+    if (!S.sc.tf) resetTf();
+    const tf = S.sc.tf;
+    if (tfCount() === 4) return;
+    const L = LAY.twoface;
+    tf.placed = { good: [], bad: [] };
+    tf.deck.cards.forEach((c) => {
+      const side = c.good ? 'good' : 'bad', s = L.slot(side, tf.placed[side].length);
+      tf.placed[side].push(c.id); c.placed = true; c.x = c.tx = s.x; c.y = c.ty = s.y; c.w = s.w; c.h = s.h; c.ret = false;
+    });
+    tf.face = 'good'; tf.done = true; tf.doneT = nowS() - 5;
+  }
+  const tfCount = () => (S.sc.tf ? S.sc.tf.placed.good.length + S.sc.tf.placed.bad.length : 0);
+  function flipCoin(face) {
+    const tf = S.sc.tf;
+    tf.flip = { from: tf.face, to: face, t0: nowS() };
+  }
+  function tfComplete() {
+    const tf = S.sc.tf;
+    tf.done = true; tf.doneT = nowS() + 0.6;
+    const c = LAY.twoface.coin;
+    setTimeout(() => { Sound.success(); ringFx(c.x, c.y, '#ffb400', c.r); sparkle(c.x, c.y, 18, ['#ffd84d', '#fff3b0', '#ffffff']); }, 600);
+  }
+  function relayoutTf() {
+    const tf = S.sc.tf;
+    if (!tf) { resetTf(); return; }
+    const L = LAY.twoface, cnt = { good: 0, bad: 0 };
+    tf.deck.cards.forEach((c, i) => {
+      const idx = TF_CARDS.findIndex((x) => x.id === c.id), order = shuffled([0, 1, 2, 3], 9).indexOf(idx);
+      const h = L.home[order];
+      c.hx = h[0]; c.hy = h[1];
+      if (c.placed) { const side = c.good ? 'good' : 'bad', s = L.slot(side, cnt[side]++); c.x = c.tx = s.x; c.y = c.ty = s.y; c.w = s.w; c.h = s.h; }
+      else { c.w = L.card.w; c.h = L.card.h; c.x = c.hx; c.y = c.hy; }
+      void i;
+    });
+  }
+  /* 동전: 금속 그라데이션 + 톱니 가장자리 + 문양(🚗 / 😊 / 😟) */
+  function drawCoinFace(face, r, t) {
+    // 옆면(톱니)
+    const g = ctx.createRadialGradient(-r * 0.3, -r * 0.35, r * 0.1, 0, 0, r);
+    g.addColorStop(0, '#fff3c4'); g.addColorStop(0.55, '#f0c24a'); g.addColorStop(1, '#a8761a');
+    ctx.fillStyle = g; ctx.beginPath();
+    for (let i = 0; i < 48; i++) { const a = (i / 48) * TAU, rr2 = r * (i % 2 ? 0.965 : 1); ctx.lineTo(Math.cos(a) * rr2, Math.sin(a) * rr2); }
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = 'rgba(120,80,10,.55)'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,248,214,.7)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(0, 0, r * 0.84, 0, TAU); ctx.stroke();
+    ctx.fillStyle = face === 'good' ? '#fff0a8' : face === 'bad' ? '#cdd6e6' : '#ffe9a0'; ctx.beginPath(); ctx.arc(0, 0, r * 0.76, 0, TAU); ctx.fill();
+    if (face === 'car') { ctx.font = f(r * 0.9, 400); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#1b2333'; ctx.fillText('🚗', 0, r * 0.04); }
+    else if (face === 'good') {
+      const gg = ctx.createRadialGradient(-r * 0.15, -r * 0.2, 2, 0, 0, r * 0.62); gg.addColorStop(0, '#fff7a0'); gg.addColorStop(1, '#ffc928');
+      ctx.fillStyle = gg; ctx.beginPath(); ctx.arc(0, 0, r * 0.58, 0, TAU); ctx.fill();
+      ctx.fillStyle = '#6b4a00'; ctx.beginPath(); ctx.arc(-r * 0.2, -r * 0.14, r * 0.07, 0, TAU); ctx.arc(r * 0.2, -r * 0.14, r * 0.07, 0, TAU); ctx.fill();
+      ctx.strokeStyle = '#6b4a00'; ctx.lineWidth = r * 0.07; ctx.lineCap = 'round'; ctx.beginPath(); ctx.arc(0, r * 0.02, r * 0.28, 0.15 * Math.PI, 0.85 * Math.PI); ctx.stroke();
+    } else {
+      const gg = ctx.createRadialGradient(-r * 0.15, -r * 0.2, 2, 0, 0, r * 0.62); gg.addColorStop(0, '#d9e4f7'); gg.addColorStop(1, '#8da2c6');
+      ctx.fillStyle = gg; ctx.beginPath(); ctx.arc(0, 0, r * 0.58, 0, TAU); ctx.fill();
+      ctx.fillStyle = '#2b3a58'; ctx.beginPath(); ctx.arc(-r * 0.2, -r * 0.14, r * 0.07, 0, TAU); ctx.arc(r * 0.2, -r * 0.14, r * 0.07, 0, TAU); ctx.fill();
+      ctx.strokeStyle = '#2b3a58'; ctx.lineWidth = r * 0.07; ctx.lineCap = 'round'; ctx.beginPath(); ctx.arc(0, r * 0.3, r * 0.26, 1.15 * Math.PI, 1.85 * Math.PI); ctx.stroke();
+      ctx.fillStyle = '#7aa7e8'; ctx.beginPath(); ctx.ellipse(r * 0.34, r * 0.06, r * 0.045, r * 0.08, 0, 0, TAU); ctx.fill();   // 땀방울
+    }
+    void t;
+  }
+  function drawCoin(t) {
+    const L = LAY.twoface, c = L.coin, tf = S.sc.tf;
+    // 그림자 + 받침
+    contactShadow(c.x, c.y + c.r + 12, c.r * 1.15, 10, 0.28);
+    // 각도: 뒤집는 중 / 완성 후 천천히 회전
+    let sx = 1, face = tf.face;
+    if (tf.flip) {
+      const p = clamp((nowS() - tf.flip.t0) / 0.5, 0, 1);
+      sx = RM ? 1 : Math.abs(Math.cos(p * Math.PI)); face = p < 0.5 ? tf.flip.from : tf.flip.to;
+      if (p >= 1) { tf.face = tf.flip.to; tf.flip = null; face = tf.face; sx = 1; }
+    } else if (tf.done && nowS() > tf.doneT && !RM) {
+      const th = (nowS() - tf.doneT) * 1.3;
+      sx = Math.abs(Math.cos(th)); face = Math.floor(th / Math.PI + 0.5) % 2 === 0 ? 'good' : 'bad';
+      if (sx < 0.12) sx = 0.12;
+    } else if (tf.done) face = tf.face;
+    const lift = tf.flip ? Math.sin(clamp((nowS() - tf.flip.t0) / 0.5, 0, 1) * Math.PI) * 14 : 0;
+    ctx.save(); ctx.translate(c.x, c.y - lift); ctx.scale(Math.max(0.04, sx), 1);
+    softShadow(() => { ctx.fillStyle = '#e0b43c'; ctx.beginPath(); ctx.arc(0, 0, c.r, 0, TAU); ctx.fill(); }, 14, 6, 'rgba(60,40,0,.35)');
+    drawCoinFace(face, c.r, t);
+    // 명암(옆으로 기울수록 어둡게)
+    ctx.fillStyle = 'rgba(40,24,0,' + (0.28 * (1 - Math.abs(sx))) + ')'; ctx.beginPath(); ctx.arc(0, 0, c.r, 0, TAU); ctx.fill();
+    ctx.restore();
+    if (tf.done && nowS() > tf.doneT) {
+      const k = clamp((nowS() - tf.doneT) / 0.5, 0, 1);
+      ctx.save(); ctx.globalAlpha = k; ctx.translate(0, (1 - k) * 8);
+      pill(c.x, c.y + c.r + 34, '🪙 과학기술의 두 얼굴', { bg: '#1b2333', size: 15, h: 30, shadow: true });
+      ctx.restore();
+    }
+  }
+  function paintTfCard(c, x, y, w, h, shadow) {
+    ctx.fillStyle = '#fff'; rr(x, y, w, h, 12); ctx.fill();
+    if (shadow) return;
+    const band = c.placed ? (c.good ? '#14a058' : '#e2464b') : '#94a3b8';
+    ctx.fillStyle = band; rr(x, y, 8, h, 4); ctx.fill();
+    ctx.font = f(h < 60 ? 18 : 22, 400); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#1b2333'; ctx.fillText(c.icon, x + 29, y + h / 2 + 1);
+    drawLines(c.t, x + 50 + (w - 62) / 2, y + h / 2 + 1, w - 62, h < 60 ? 12.5 : 14, '#1b2333', { weight: 800, align: 'center', lh: h < 60 ? 15 : 17 });
+    if (c.placed) D.check(x + w - 3, y + 3, 8.5, 1);
+  }
+  function drawTwoface(t) {
+    const L = LAY.twoface, tf = S.sc.tf, deck = tf.deck;
+    backdrop('twoface', SCENE_BG.twoface, 0.45, (W, H, fade) => {
+      ctx.lineWidth = 1.2;
+      for (let i = 0; i < 20; i++) { const y = i * (H / 19); ctx.strokeStyle = 'rgba(150,110,60,' + (0.11 * fade(y)).toFixed(3) + ')'; ctx.beginPath(); ctx.moveTo(0, y); ctx.bezierCurveTo(W * 0.3, y + 5, W * 0.6, y - 6, W, y + 2); ctx.stroke(); }
+    });
+    // 양쪽 상자
+    [['good', '😊 편리해진 점', '#14a058', '#e6f6ec'], ['bad', '😟 새로 생긴 문제', '#e2464b', '#fdecec']].forEach(([side, name, col, soft]) => {
+      const b = L.boxes[side];
+      softShadow(() => { ctx.fillStyle = soft; rr(b.x, b.y, b.w, b.h, 16); ctx.fill(); }, 10, 3);
+      ctx.strokeStyle = rgba(col, 0.5); ctx.lineWidth = 2; ctx.setLineDash([7, 5]); rr(b.x, b.y, b.w, b.h, 16); ctx.stroke(); ctx.setLineDash([]);
+      if (deck.hoverT === side) { breathe(b.x, b.y, b.w, b.h, 16, COL.good); ctx.fillStyle = 'rgba(20,160,88,.07)'; rr(b.x, b.y, b.w, b.h, 16); ctx.fill(); }
+      txt(name, b.x + 16, b.y + 24, f(18, 800), col, 'left');
+      txt(tf.placed[side].length + '장', b.x + b.w - 16, b.y + 24, f(14, 800), rgba(col, 0.85), 'right');
+    });
+    drawCoin(t);
+    // 보관함
+    if (tfCount() < 4) {
+      ctx.fillStyle = 'rgba(100,116,139,.10)'; rr(L.tray.x, L.tray.y, L.tray.w, L.tray.h, 16); ctx.fill();
+      txt('🚗 자동차가 가져온 변화 · 카드를 끌어 알맞은 상자에 넣어요', L.tray.x + 14, L.tray.y + 14, f(13, 800), '#64748b', 'left');
+    } else {
+      const k = clamp((nowS() - tf.doneT - 0.3) / 0.6, 0, 1);
+      if (k > 0) {
+        ctx.save(); ctx.globalAlpha = k;
+        softShadow(() => { ctx.fillStyle = '#fff'; rr(L.tray.x + 20, L.tray.y + 14, L.tray.w - 40, LAY.kind === 'tall' ? 120 : 92, 16); ctx.fill(); }, 10, 3);
+        txt('🌃', L.tray.x + 54, L.tray.y + (LAY.kind === 'tall' ? 74 : 60), f(34, 400), '#1b2333');
+        drawLines('과학기술의 영향에는 좋은 점과 문제점이 함께 있어요.\n1단계에서 밤하늘의 별이 사라진 것(빛 공해)도 밝은 밤의 또 다른 얼굴이에요.', L.tray.x + 92 + (L.tray.w - 130) / 2, L.tray.y + (LAY.kind === 'tall' ? 74 : 60), L.tray.w - 140, LAY.kind === 'tall' ? 14 : 15, '#1b2333', { weight: 800, align: 'center', lh: LAY.kind === 'tall' ? 20 : 22 });
+        ctx.restore();
+      }
+    }
+    deck.draw((c, x, y, w, h, shadowPass) => paintTfCard(c, x, y, w, h, shadowPass));
+    if (isNew('twoface')) newRing(6, 6, LAY.W - 12, LAY.H - 12);
+  }
+  function tfDown(p) { const tf = S.sc.tf; return tf ? tf.deck.down(p) : false; }
+
+  /* =========================================================
+     🎨 과학과 다른 분야 잇기 (3단계)
+     왼쪽 과학 원리 카드의 고리를 끌어 오른쪽 분야 사례 카드에 잇는다(탭 → 탭도 가능)
+     ========================================================= */
+  const FIELD_PAIRS = [
+    { icon: '📏', t: '빛은 곧게 나아가므로, 멀리 있는 물체일수록 작게 보인다', f: { icon: '🎨', name: '미술', t: '원근법으로 그린 그림' }, col: '#8b5cf6', anim: 'persp' },
+    { icon: '🎵', t: '줄의 길이가 짧을수록 높은 소리가 난다', f: { icon: '🎶', name: '음악', t: '가야금·기타 같은 현악기' }, col: '#e2464b', anim: 'string' },
+    { icon: '🏗️', t: '여러 개의 바퀴(도르래)와 줄을 쓰면 작은 힘으로 무거운 물체를 들 수 있다', f: { icon: '🏯', name: '공학·건축', t: '정약용이 설계한 거중기로 쌓은 수원 화성(1794~1796년)' }, col: '#f26b3a', anim: 'pulley' },
+    { icon: '📊', t: '비의 양을 늘 같은 그릇으로 재어 기록하면 비교할 수 있다', f: { icon: '🧮', name: '수학', t: '측우기(1441년)로 잰 강수량 기록을 비교해 농사에 이용' }, col: '#0d9488', anim: 'rain' },
+  ];
+  const FIELD_ORDER = shuffled([0, 1, 2, 3], 4);   // 오른쪽 칸 → 짝 번호
+  Object.assign(LAYOUTS.wide, {
+    fields: { title: { x: 400, y: 24 }, sub: 47, lx: 22, rx: 452, w: 326, h: 100, ys: [64, 174, 284, 394], ring: 13, note: { x: 400, y: 554 } },
+  });
+  Object.assign(LAYOUTS.tall, {
+    fields: { title: { x: 240, y: 22 }, sub: 45, lx: 8, rx: 258, w: 214, h: 152, ys: [66, 234, 402, 570], ring: 13, note: { x: 240, y: 776 } },
+  });
+  const fLeft = (i) => { const F2 = LAY.fields; return { x: F2.lx, y: F2.ys[i], w: F2.w, h: F2.h }; };
+  const fRight = (slot) => { const F2 = LAY.fields; return { x: F2.rx, y: F2.ys[slot], w: F2.w, h: F2.h }; };
+  const fRing = (i) => { const r = fLeft(i); return { x: r.x + r.w, y: r.y + r.h / 2 }; };
+  const fSlotOfPair = (pair) => FIELD_ORDER.indexOf(pair);
+  function resetFields() {
+    S.sc.fl = { links: [-1, -1, -1, -1], tLink: [0, 0, 0, 0], sel: -1, drag: null, retract: null, cp: { x: 0, y: 0 }, shakeAt: {} };
+  }
+  function ensureFields() {
+    if (!S.sc.fl) resetFields();
+    S.sc.fl.links = [0, 1, 2, 3]; S.sc.fl.tLink = [-20, -20, -20, -20]; S.sc.fl.sel = -1; S.sc.fl.drag = null;
+  }
+  const fieldsLinked = () => (S.sc.fl ? S.sc.fl.links.filter((v) => v >= 0).length : 0);
+  function relayoutFields() { if (!S.sc.fl) resetFields(); }
+
+  function linkTry(li, slot, endPt) {
+    const fl = S.sc.fl;
+    if (fl.links[li] >= 0) return false;
+    const pair = FIELD_ORDER[slot];
+    const R = fRight(slot);
+    if (pair === li) {
+      fl.links[li] = pair; fl.tLink[li] = nowS();
+      Sound.tick();
+      ringFx(R.x + 30, R.y + R.h / 2, COL.good, 18); ringFx(fLeft(li).x + 30, fLeft(li).y + fLeft(li).h / 2, COL.good, 18);
+      sparkle(R.x + R.w / 2, R.y + R.h / 2, 12); sparkle(fLeft(li).x + fLeft(li).w / 2, fLeft(li).y + fLeft(li).h / 2, 8);
+      fl.sel = -1;
+      syncDom();
+      return true;
+    }
+    // 틀림: 줄이 튕겨 돌아온다
+    const ring = fRing(li);
+    fl.retract = { li, ex: endPt ? endPt.x : R.x, ey: endPt ? endPt.y : R.y + R.h / 2, t0: nowS() };
+    softFail();
+    bubble(R.x + R.w / 2, R.y + 10, '이 원리와는 어울리지 않아요. 다시 생각해 봐요 🤔', { kind: 'bad', tag: 'fl', maxW: 240 });
+    fl.sel = -1;
+    void ring;
+    return false;
+  }
+  function fieldsHit(p) {
+    const fl = S.sc.fl;
+    for (let i = 0; i < 4; i++) {
+      if (fl.links[i] >= 0) continue;
+      const rg = fRing(i);
+      if (Math.hypot(p.x - rg.x, p.y - rg.y) < 24) return { kind: 'ring', i };
+      const L = fLeft(i);
+      if (inR(p, L, 2)) return { kind: 'left', i };
+    }
+    for (let s = 0; s < 4; s++) if (inR(p, fRight(s), 2)) return { kind: 'right', slot: s };
+    return null;
+  }
+  const fieldsGrabbable = (p) => { const h = S.sc.fl && fieldsHit(p); return !!(h && (h.kind === 'ring' || h.kind === 'left')); };
+  function fieldsDown(p) {
+    const fl = S.sc.fl, h = fieldsHit(p);
+    if (!h) { fl.sel = -1; return false; }
+    if (h.kind === 'right') {
+      if (fl.sel >= 0) linkTry(fl.sel, h.slot, { x: p.x, y: p.y });
+      else { Sound.click(); bubble(fRight(h.slot).x + fRight(h.slot).w / 2, fRight(h.slot).y + 8, '왼쪽 카드의 ⭕ 고리를 이 카드로 끌어 와요', { kind: 'info', tag: 'fl', maxW: 230, dur: 2 }); }
+      return false;
+    }
+    // 고리 · 왼쪽 카드: 끌기 시작(짧게 누르면 선택)
+    const rg = fRing(h.i);
+    fl.drag = { li: h.i, x: p.x, y: p.y, sx: p.x, sy: p.y, moved: 0 };
+    fl.cp = { x: (rg.x + p.x) / 2, y: (rg.y + p.y) / 2 + 40 };
+    fl.sel = h.i;
+    Sound.click();
+    return true;
+  }
+  function fieldsMove(p) {
+    const d = S.sc.fl.drag;
+    if (!d) return;
+    d.x = p.x; d.y = p.y; d.moved = Math.max(d.moved, Math.hypot(p.x - d.sx, p.y - d.sy));
+  }
+  function fieldsUp(p) {
+    const fl = S.sc.fl, d = fl.drag;
+    if (!d) return;
+    fl.drag = null;
+    if (d.moved < 10) { fl.sel = d.li; return; }   // 탭: 선택만
+    const h = fieldsHit(p);
+    if (h && h.kind === 'right') linkTry(d.li, h.slot, p);
+    else { fl.retract = { li: d.li, ex: p.x, ey: p.y, t0: nowS() }; fl.sel = -1; }
+  }
+  function fieldsHover(p) {
+    S.hover = null;
+    const fl = S.sc.fl, h = fl && fieldsHit(p);
+    if (!h) return null;
+    if (h.kind === 'ring') return 'grab';
+    return h.kind === 'right' && fl.sel >= 0 ? 'pointer' : h.kind === 'left' ? 'pointer' : null;
+  }
+
+  /* 맞게 이어졌을 때 카드 안에서 재생되는 작은 그림 */
+  function fieldMini(kind, cx, cy, s, t, col) {
+    ctx.save(); ctx.translate(cx, cy); ctx.scale(s, s);
+    ctx.beginPath(); rr(-27, -27, 54, 54, 12); ctx.clip();
+    ctx.fillStyle = rgba(col, 0.14); ctx.fillRect(-27, -27, 54, 54);
+    ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.lineCap = 'round';
+    if (kind === 'persp') {       // 소실점으로 모이는 선 + 작아지는 나무
+      ctx.globalAlpha = 0.9;
+      [[-27, 22], [27, 22], [-27, 6], [27, 6]].forEach(([x, y]) => { ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(0, -6); ctx.stroke(); });
+      for (let i = 0; i < 3; i++) { const u = ((t * 0.6 + i / 3) % 1), y = -6 + u * 28, w = 4 + u * 22; ctx.beginPath(); ctx.moveTo(-w / 2 * 0 - 0, y); ctx.globalAlpha = 0.5; ctx.strokeStyle = col; ctx.moveTo(-w, y); ctx.lineTo(w, y); ctx.stroke(); }
+      ctx.globalAlpha = 1; ctx.fillStyle = col; ctx.beginPath(); ctx.arc(0, -6, 2.5, 0, TAU); ctx.fill();
+    } else if (kind === 'string') {   // 길이가 다른 줄의 떨림
+      [[-17, 18], [-6, 13], [5, 9], [16, 6]].forEach(([x, hh], i) => {
+        const amp = RM ? 0 : 3.2 * Math.max(0, 1 - ((t * 0.9 + i * 0.2) % 2) * 0.5) * Math.sin(t * (7 + i * 3));
+        ctx.beginPath(); ctx.moveTo(x, -22); for (let y = -22; y <= -22 + hh * 2.2; y += 3) ctx.lineTo(x + amp * Math.sin(((y + 22) / (hh * 2.2)) * Math.PI), y); ctx.stroke();
+      });
+      ctx.fillStyle = col; ctx.fillRect(-24, -26, 48, 4); ctx.fillRect(-24, 18, 48, 4);
+    } else if (kind === 'pulley') {   // 도르래가 돌고 무거운 돌이 올라간다
+      const a = RM ? 0 : t * 2.2, up = RM ? 0.5 : (0.5 + 0.5 * Math.sin(t * 1.1));
+      ctx.beginPath(); ctx.arc(-6, -12, 9, 0, TAU); ctx.stroke(); ctx.beginPath(); for (let i = 0; i < 4; i++) { ctx.moveTo(-6, -12); ctx.lineTo(-6 + Math.cos(a + i * Math.PI / 2) * 9, -12 + Math.sin(a + i * Math.PI / 2) * 9); } ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(-15, -12); ctx.lineTo(-15, 10 - up * 14); ctx.moveTo(3, -12); ctx.lineTo(3, 6 + up * 10); ctx.stroke();
+      ctx.fillStyle = '#7d8794'; ctx.fillRect(-23, 10 - up * 14, 16, 12); ctx.fillStyle = col; ctx.beginPath(); ctx.arc(3, 8 + up * 10, 3.5, 0, TAU); ctx.fill();
+    } else {                       // 측우기에 빗물이 차오름
+      const lvl = RM ? 0.5 : ((t * 0.35) % 1);
+      ctx.strokeStyle = '#475569'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(-10, -4); ctx.lineTo(-10, 22); ctx.lineTo(10, 22); ctx.lineTo(10, -4); ctx.stroke();
+      ctx.fillStyle = 'rgba(80,150,230,.85)'; ctx.fillRect(-9, 22 - lvl * 24, 18, lvl * 24);
+      ctx.fillStyle = 'rgba(80,150,230,.9)';
+      for (let i = 0; i < 5; i++) { const u = ((t * 1.3 + i * 0.37) % 1); ctx.fillRect(-22 + i * 11, -26 + u * 28, 1.6, 6); }
+    }
+    ctx.restore();
+  }
+  function paintFieldCard(x, y, w, h, o) {
+    softShadow(() => { ctx.fillStyle = '#fff'; rr(x, y, w, h, 14); ctx.fill(); }, 9, 3);
+    ctx.fillStyle = o.col; rr(x, y, 8, h, 4); ctx.fill();
+    const tall = LAY.kind === 'tall';
+    const cx = x + 36, cy = y + (tall ? 34 : h / 2);
+    if (o.mini) fieldMini(o.mini, cx, cy, 1, S.t, o.col);
+    else { ctx.fillStyle = rgba(o.col, 0.14); ctx.beginPath(); ctx.arc(cx, cy, 24, 0, TAU); ctx.fill(); ctx.font = f(26, 400); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#1b2333'; ctx.fillText(o.icon, cx, cy + 1); }
+    const tx = tall ? x + 14 : x + 70, tw = tall ? w - 28 : w - 70 - 38, ty = tall ? y + 68 : y + h / 2;
+    if (o.name) { pill(tall ? x + 70 : tx, tall ? y + 22 : y + 16, o.name, { bg: o.col, size: 13, h: 22, align: 'left', pad: 9 }); }
+    drawLines(o.t, tx + (tall ? tw / 2 : tw / 2), tall ? ty + (h - 68) / 2 - 4 : ty + (o.name ? 12 : 0), tw, tall ? 13.5 : 14, '#1b2333', { weight: 800, align: 'center', lh: tall ? 18 : 18 });
+  }
+  function drawFields(t) {
+    const F2 = LAY.fields, fl = S.sc.fl;
+    backdrop('fields', SCENE_BG.fields, 0.5, (W, H, fade) => {
+      for (let x = 0; x < W; x += 28) for (let y = 0; y < H; y += 28) { ctx.fillStyle = 'rgba(80,120,100,' + (0.1 * fade(y)).toFixed(3) + ')'; ctx.fillRect(x, y, 2, 2); }
+    });
+    txt('🎨 과학 원리와 어울리는 분야를 이어요', F2.title.x, F2.title.y, fj(LAY.kind === 'tall' ? 18 : 21), '#1b2333');
+    txt('왼쪽 카드의 ⭕ 고리를 끌어 오른쪽 카드에 이어요 (카드를 차례로 눌러도 돼요)', F2.title.x, F2.sub, f(LAY.kind === 'tall' ? 11.5 : 12.5, 700), '#5d6879');
+    // 줄(카드 뒤)
+    const ropeEnds = [];
+    for (let i = 0; i < 4; i++) {
+      const rg = fRing(i);
+      if (fl.links[i] >= 0) {
+        const R = fRight(fSlotOfPair(fl.links[i])), ex = R.x, ey = R.y + R.h / 2;
+        const e = nowS() - fl.tLink[i], tight = RM ? 1 : EASE.outCubic(clamp(e / 0.45, 0, 1));
+        const sag = 34 * (1 - tight) * (1 - clamp((e - 0.45) / 0.3, 0, 1) * 0) + (RM ? 0 : Math.sin(clamp(e, 0, 1.2) * 18) * 6 * Math.max(0, 1 - e / 0.8));
+        ropeEnds.push({ i, rg, ex, ey, sag, tight });
+      }
+    }
+    // 끌고 있는 줄 / 튕겨 돌아오는 줄
+    let cur = null;
+    if (fl.drag) {
+      const rg = fRing(fl.drag.li);
+      const tx = (rg.x + fl.drag.x) / 2, ty = (rg.y + fl.drag.y) / 2 + 36;
+      const kk = 1 - Math.exp(-9 * (S.dt || 0.016)); fl.cp.x += (tx - fl.cp.x) * kk; fl.cp.y += (ty - fl.cp.y) * kk;
+      cur = { rg, ex: fl.drag.x, ey: fl.drag.y, cx: fl.cp.x, cy: fl.cp.y, col: '#64748b' };
+    } else if (fl.retract) {
+      const e = (nowS() - fl.retract.t0) / 0.4;
+      if (e >= 1) fl.retract = null;
+      else {
+        const rg = fRing(fl.retract.li), k = EASE.inCubic(clamp(e, 0, 1)) , ex = lerp(fl.retract.ex, rg.x, k), ey = lerp(fl.retract.ey, rg.y, k);
+        cur = { rg, ex, ey, cx: (rg.x + ex) / 2, cy: (rg.y + ey) / 2 + 36 * (1 - k) + Math.sin(e * 22) * 10 * (1 - e), col: '#e2464b' };
+      }
+    }
+    const rope = (rg, ex, ey, cx, cy, col, w) => {
+      ctx.save(); ctx.lineCap = 'round'; ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.lineWidth = w + 3; ctx.beginPath(); ctx.moveTo(rg.x, rg.y); ctx.quadraticCurveTo(cx, cy, ex, ey); ctx.stroke();
+      ctx.strokeStyle = col; ctx.lineWidth = w; ctx.beginPath(); ctx.moveTo(rg.x, rg.y); ctx.quadraticCurveTo(cx, cy, ex, ey); ctx.stroke(); ctx.restore();
+    };
+    ropeEnds.forEach((r) => rope(r.rg, r.ex, r.ey, (r.rg.x + r.ex) / 2, (r.rg.y + r.ey) / 2 + r.sag, FIELD_PAIRS[r.i].col, 4));
+    if (cur) rope(cur.rg, cur.ex, cur.ey, cur.cx, cur.cy, cur.col, 3.5);
+    // 카드
+    for (let i = 0; i < 4; i++) {
+      const L = fLeft(i), linked = fl.links[i] >= 0, P = FIELD_PAIRS[i];
+      const sel = fl.sel === i && !linked;
+      ctx.save();
+      if (sel || (fl.drag && fl.drag.li === i)) { ctx.translate(L.x + L.w / 2, L.y + L.h / 2); ctx.scale(1.02, 1.02); ctx.translate(-L.w / 2 - L.x, -L.h / 2 - L.y); }
+      paintFieldCard(L.x, L.y, L.w, L.h, { col: '#3867f4', icon: P.icon, t: P.t, mini: linked ? P.anim : null });
+      if (sel) { ctx.strokeStyle = COL.good; ctx.lineWidth = 3; rr(L.x, L.y, L.w, L.h, 14); ctx.stroke(); }
+      ctx.restore();
+      if (linked) D.check(L.x + L.w - 14, L.y + 14, 9, clamp((nowS() - fl.tLink[i] - 0.2) / 0.3, 0, 1));
+    }
+    for (let s = 0; s < 4; s++) {
+      const R = fRight(s), pair = FIELD_ORDER[s], P = FIELD_PAIRS[pair], linked = fl.links.indexOf(pair) >= 0;
+      ctx.save();
+      const hot = fl.drag && cur && inR({ x: cur.ex, y: cur.ey }, R, 4);
+      if (hot) { ctx.translate(R.x + R.w / 2, R.y + R.h / 2); ctx.scale(1.025, 1.025); ctx.translate(-R.w / 2 - R.x, -R.h / 2 - R.y); }
+      paintFieldCard(R.x, R.y, R.w, R.h, { col: linked ? P.col : '#94a3b8', icon: P.f.icon, name: P.f.name, t: P.f.t, mini: linked ? P.anim : null });
+      if (hot) breathe(R.x, R.y, R.w, R.h, 14, COL.good);
+      ctx.restore();
+    }
+    // 고리(왼쪽 카드의 오른쪽 가장자리)
+    for (let i = 0; i < 4; i++) {
+      const rg = fRing(i), linked = fl.links[i] >= 0, P = FIELD_PAIRS[i];
+      const pulse = !linked && !RM && !fl.drag ? 1 + 0.12 * Math.sin(t * 4 + i) : 1;
+      ctx.save(); ctx.translate(rg.x, rg.y); ctx.scale(pulse, pulse);
+      softShadow(() => { ctx.fillStyle = linked ? P.col : '#fff'; ctx.beginPath(); ctx.arc(0, 0, F2.ring, 0, TAU); ctx.fill(); }, 6, 2);
+      ctx.strokeStyle = linked ? '#fff' : '#3867f4'; ctx.lineWidth = 3.5; ctx.beginPath(); ctx.arc(0, 0, F2.ring - (linked ? 5 : 1), 0, TAU); ctx.stroke();
+      ctx.restore();
+    }
+    if (fieldsLinked() === 4) {
+      const e = nowS() - Math.max(...fl.tLink);
+      const k = clamp((e - 0.3) / 0.5, 0, 1);
+      if (k > 0) { ctx.save(); ctx.globalAlpha = k; pill(F2.note.x, F2.note.y, '🇰🇷 우리 선조들도 측우기와 거중기처럼 과학 원리를 생활에 활용했어요', { bg: '#1b2333', size: LAY.kind === 'tall' ? 12.5 : 15, h: 32, shadow: true }); ctx.restore(); }
+    }
+    if (isNew('fields')) newRing(6, 6, LAY.W - 12, LAY.H - 12);
+  }
+
+  /* =========================================================
+     📱 스마트폰 분해도 + 발견 연표 (4단계)
+     등각 투영(30°) 층 4장: 화면 · 회로 기판(카메라 렌즈 + 칩) · 배터리 · 뒷판(안테나)
+     [분해하기]로 층이 벌어지면, 아래 연표의 발견 카드를 알맞은 부품으로 끌어 놓는다.
+     ========================================================= */
+  const ISO_C = Math.cos(Math.PI / 6), ISO_S = 0.5;
+  const PA = 150, PB = 78, PT = 7;                    // 한 층의 긴 변 · 짧은 변 · 두께(가상 길이)
+  const PH_LAYERS = [
+    { name: '화면', top: '#27335c', side: '#121a33' },
+    { name: '회로 기판', top: '#2f9e72', side: '#14503a' },
+    { name: '배터리', top: '#b3bfd3', side: '#56647c' },
+    { name: '뒷판', top: '#e3e8f0', side: '#848fa4' },
+  ];
+  const PH_PARTS = [
+    { id: 'camera', icon: '📷', name: '카메라 렌즈', layer: 1, ax: 56, ay: 54, r: 26, chip: 'lens', what: '빛을 모아 사진을 찍어요' },
+    { id: 'chip', icon: '🧠', name: '칩(반도체)', layer: 1, ax: 108, ay: 38, r: 26, chip: 'trans', what: '전기 신호로 계산하고 기억해요' },
+    { id: 'battery', icon: '🔋', name: '배터리', layer: 2, ax: 76, ay: 40, r: 44, chip: 'cell', what: '전기를 모아 두었다가 써요' },
+    { id: 'antenna', icon: '📡', name: '안테나', layer: 3, ax: 134, ay: 40, r: 32, chip: 'wave', what: '전파를 주고받아요', extra: '🛰️ 위성 전파로 내 위치를 찾는 GPS에도 쓰여요 (최초의 인공위성 1957년)' },
+  ];
+  const PH_CHIPS = [
+    { id: 'lens', part: 'camera', icon: '🔍', t: '렌즈와 빛의 굴절', s: '망원경·현미경\n1609년 무렵', year: 1609, col: '#3867f4', use: '렌즈는 빛을 모아 상을 만들어요.' },
+    { id: 'cell', part: 'battery', icon: '⚡', t: '최초의 전지', s: '볼타\n1800년', year: 1800, col: '#e08a00', use: '전지는 전기를 모아 두었다가 필요할 때 내보내요.' },
+    { id: 'wave', part: 'antenna', icon: '〰️', t: '전파(전자기파)의 확인', s: '헤르츠\n1888년', year: 1888, col: '#8b5cf6', use: '전파는 공기 중으로 퍼져 멀리 신호를 전해요.' },
+    { id: 'trans', part: 'chip', icon: '🔌', t: '트랜지스터 발명', s: '1947년', year: 1947, col: '#14a058', use: '트랜지스터는 전기 신호를 켜고 끄며 계산해요.' },
+  ];
+  const partById = (id) => PH_PARTS.find((p) => p.id === id);
+  const chipById = (id) => PH_CHIPS.find((c) => c.id === id);
+  const Y0 = 1600, Y1 = 2010;
+  Object.assign(LAYOUTS.wide, {
+    phone: {
+      cx: 322, cy: 196, k: 1.1, gap: 68,
+      panel: { x: 12, y: 392, w: 776, h: 198 },
+      chip: (i) => ({ x: 28 + i * 189, y: 424, w: 178, h: 76 }),
+      axis: { horiz: true, a: 52, b: 742, y: 546 },
+      labels: { camera: { x: 26, y: 112, w: 196, h: 46, side: 'L' }, chip: { x: 478, y: 138, w: 196, h: 46, side: 'R' }, battery: { x: 478, y: 214, w: 196, h: 46, side: 'R' }, antenna: { x: 478, y: 312, w: 196, h: 46, side: 'R' } },
+      screenLabel: { x: 26, y: 38 }, banner: { x: 400, y: 24 }, hintY: 372,
+    },
+  });
+  Object.assign(LAYOUTS.tall, {
+    phone: {
+      cx: 150, cy: 236, k: 0.98, gap: 66,
+      panel: { x: 6, y: 476, w: 468, h: 336 },
+      chip: (i) => ({ x: 84, y: 504 + i * 72, w: 384, h: 62 }),
+      axis: { horiz: false, a: 522, b: 764, x: 50 },
+      labels: { camera: { x: 300, y: 118, w: 174, h: 44, side: 'R' }, chip: { x: 300, y: 178, w: 174, h: 44, side: 'R' }, battery: { x: 300, y: 262, w: 174, h: 44, side: 'R' }, antenna: { x: 300, y: 372, w: 174, h: 44, side: 'R' } },
+      screenLabel: { x: 300, y: 56 }, banner: { x: 240, y: 22 }, hintY: 452,
+    },
+  });
+  const axisPt = (year) => {
+    const A = LAY.phone.axis, u = clamp((year - Y0) / (Y1 - Y0), 0, 1);
+    return A.horiz ? { x: lerp(A.a, A.b, u), y: A.y } : { x: A.x, y: lerp(A.a, A.b, u) };
+  };
+  const chipLeader = (i) => { const r = LAY.phone.chip(i); return LAY.phone.axis.horiz ? { x: r.x + r.w / 2, y: r.y + r.h } : { x: r.x, y: r.y + r.h / 2 }; };
+
+  /* ---- 상태 ---- */
+  function buildPhone() {
+    const ph = { deck: null, exploded: false, layers: [0, 1, 2, 3].map(() => ({ p: 0 })), found: {}, tFound: {}, sel: null, done: false, doneT: 0, celebrated: false, tapPart: null, ptr: null };
+    ph.deck = makeDeck({
+      findTarget: (c, ctr, ptr) => phPartAt(ptr || ctr) || phPartAt(ctr),
+      onDrop: (c, ctr, ptr) => phDrop(c, ctr, ptr),
+      onTap: (c) => { ph.sel = ph.sel === c.id ? null : c.id; if (ph.sel) bubble(c.x + c.w / 2, c.y, ph.exploded ? '이제 알맞은 부품을 눌러요' : '먼저 📱 분해하기를 눌러요', { kind: 'info', tag: 'deck', dur: 2.2 }); return null; },
+    });
+    const L = LAY.phone;
+    PH_CHIPS.forEach((cd, i) => {
+      const h = L.chip(i);
+      const c = ph.deck.add({ id: cd.id, part: cd.part, d: cd, hx: h.x, hy: h.y, w: h.w, h: h.h });
+      c.order = i;
+    });
+    return ph;
+  }
+  function resetPhone() { S.sc.ph = buildPhone(); FX.bubbles = []; }
+  /* 되돌아와도 같은 장면: 4개를 모두 찾아 조립된 상태 */
+  function ensurePhone() {
+    if (!S.sc.ph) resetPhone();
+    const ph = S.sc.ph;
+    if (phoneFound() === 4 && ph.done) return;
+    PH_CHIPS.forEach((cd) => { ph.found[cd.part] = true; ph.tFound[cd.part] = nowS() - 30; });
+    ph.deck.cards.forEach((c) => { c.placed = true; c.x = c.tx = c.hx; c.y = c.ty = c.hy; c.ret = false; });
+    ph.done = true; ph.celebrated = true; ph.doneT = nowS() - 30; ph.exploded = false;
+    ph.layers.forEach((l) => { SciSim.tween(l, { p: 0 }, { duration: 0.01 }); l.p = 0; });
+  }
+  const phoneFound = () => (S.sc.ph ? Object.keys(S.sc.ph.found).length : 0);
+  function relayoutPhone() {
+    const ph = S.sc.ph;
+    if (!ph) { resetPhone(); return; }
+    const L = LAY.phone;
+    ph.deck.cards.forEach((c) => {
+      const h = L.chip(c.order);
+      c.hx = h.x; c.hy = h.y; c.w = h.w; c.h = h.h;
+      if (c.placed || !c.dragging) { c.x = c.tx = c.hx; c.y = c.ty = c.hy; }
+    });
+  }
+  function phSetExploded(v) {
+    const ph = S.sc.ph;
+    if (!ph || ph.exploded === v) return;
+    ph.exploded = v; ph.sel = null;
+    ph.layers.forEach((l, i) => SciSim.tween(l, { p: v ? 1 : 0 }, { duration: 0.7, delay: (v ? i : 3 - i) * 0.06, ease: 'inOutCubic' }));
+    Sound.click();
+    
+    syncDom();
+  }
+  function togglePhone() { if (S.sc.ph) phSetExploded(!S.sc.ph.exploded); }
+  const phReady = () => { const ph = S.sc.ph; return !!(ph && ph.exploded && ph.layers.every((l) => l.p > 0.85)); };
+
+  /* ---- 좌표: 층 · 부품 · 라벨 ---- */
+  function phBase(i) {
+    const ph = S.sc.ph, L = LAY.phone, p = ph.layers[i].p;
+    const pa = (ph.layers[0].p + ph.layers[1].p + ph.layers[2].p + ph.layers[3].p) / 4, k = L.k * lerp(L.zoom || 1.2, 1, pa);
+    const dy = (i - 1.5) * (PT * k + L.gap * p) + (RM ? 0 : Math.sin(S.t * 1.7 + i * 1.3) * 1.5 * p);
+    return { cx: L.cx, cy: L.cy + dy, rot: -0.07 * (1 - p), k };
+  }
+  function phLocal(i, X, Y) {
+    const b = phBase(i), c = ISO_C * b.k, s = ISO_S * b.k;
+    const ux = X - PA / 2, uy = Y - PB / 2;
+    const dx = (ux - uy) * c, dy = (ux + uy) * s, cr = Math.cos(b.rot), sr = Math.sin(b.rot);
+    return { x: b.cx + dx * cr - dy * sr, y: b.cy + dx * sr + dy * cr };
+  }
+  const phAnchor = (part) => phLocal(part.layer, part.ax, part.ay);
+  const phLabelRect = (part) => LAY.phone.labels[part.id];
+  function phPartAt(pt) {
+    if (!pt || !phReady()) return null;
+    let best = null, bd = 1e9;
+    PH_PARTS.forEach((part) => {
+      const a = phAnchor(part), d = Math.hypot(pt.x - a.x, pt.y - a.y), inLab = inR(pt, phLabelRect(part), 4);
+      if ((d < part.r * phBase(0).k || inLab) && (inLab ? 0 : d) < bd) { best = part.id; bd = inLab ? 0 : d; }
+    });
+    return best;
+  }
+  const overPhoneArea = (pt) => pt.y < LAY.phone.panel.y - 4;
+
+  /* ---- 끌어 놓기 ---- */
+  function phDrop(c, ctr, ptr) {
+    const ph = S.sc.ph;
+    if (!phReady()) {
+      if (overPhoneArea(ptr || ctr)) return { msg: '먼저 📱 분해하기를 눌러요', bx: (ptr || ctr).x, by: (ptr || ctr).y - 24 };
+      return null;
+    }
+    const part = phPartAt(ptr) || phPartAt(ctr);
+    if (!part) return null;
+    return phTry(c, part, ptr || ctr);
+  }
+  function phTry(c, partId, at) {
+    const ph = S.sc.ph, P = partById(partId), cd = chipById(c.id), a = phAnchor(P);
+    if (ph.found[partId]) return { msg: '이 부품의 발견은 이미 찾았어요', bx: a.x, by: a.y - 30 };
+    if (cd.part !== partId) return { msg: '여기는 아니에요. ' + cd.use + ' 어떤 부품에 쓰일까요?', bx: a.x, by: a.y - 30 };
+    ph.found[partId] = true; ph.tFound[partId] = nowS(); ph.sel = null;
+    ringFx(a.x, a.y, cd.col, 20); sparkle(a.x, a.y, 14, [cd.col, '#fff6c2', '#ffffff']);
+    Sound.success();
+    return { ok: true, x: c.hx, y: c.hy, lock: true, quiet: true, done: () => { syncDom(); if (phoneFound() === 4) phAllFound(); } };
+  }
+  function phAllFound() {
+    const ph = S.sc.ph;
+    if (ph.done) return;
+    ph.done = true; ph.doneT = nowS();
+  }
+  function phoneDown(p) {
+    const ph = S.sc.ph;
+    if (!ph) return false;
+    // 카드를 눌러 고른 뒤(탭) 부품을 눌러도 놓을 수 있다
+    const part = phPartAt(p);
+    if (part && ph.sel) {
+      const c = ph.deck.cards.find((x) => x.id === ph.sel);
+      ph.sel = null;
+      if (c && !c.placed) { const res = phTry(c, part, p); ph.deck.resolve(c, res); }
+      return false;
+    }
+    if (ph.deck.down(p)) return true;
+    // 부품(또는 라벨)을 눌러 설명 보기
+    if (part) {
+      const P = partById(part), cd = chipById(P.chip), a = phAnchor(P);
+      bubble(a.x, a.y - 26, P.icon + ' ' + P.name + ' · ' + P.what + (ph.found[part] ? '\n⮕ ' + cd.t + ' (' + cd.s.split('\n').pop() + ')' + (P.extra && freeMode() ? '\n' + P.extra : '') : ''), { kind: 'info', tag: 'part', dur: 3.4, maxW: 250 });
+      ringFx(a.x, a.y, '#3867f4', 14);
+      Sound.click();
+    }
+    return false;
+  }
+  function phoneHover(p) {
+    S.hover = null;
+    const ph = S.sc.ph;
+    if (ph && phPartAt(p)) return 'pointer';
+    return null;
+  }
+
+  /* ---- 층 그리기 ---- */
+  const phPath = (r) => { rr(0, 0, PA, PB, r); };
+  function phPlace(b, dy) {
+    const c = ISO_C * b.k, s = ISO_S * b.k;
+    ctx.translate(0, dy || 0); ctx.translate(b.cx, b.cy); ctx.rotate(b.rot);
+    ctx.transform(c, s, -c, s, 0, 0); ctx.translate(-PA / 2, -PB / 2);
+  }
+  const PAINT_LAYER = [
+    function screen(t) {
+      const g = ctx.createLinearGradient(0, 0, PA, PB); g.addColorStop(0, '#4f86ff'); g.addColorStop(0.55, '#8b5cf6'); g.addColorStop(1, '#f472b6');
+      ctx.fillStyle = g; rr(5, 5, PA - 10, PB - 10, 6); ctx.fill();
+      // 시계 · 날짜 막대
+      ctx.fillStyle = 'rgba(255,255,255,.92)'; rr(14, 12, 40, 9, 4); ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,.55)'; rr(14, 25, 26, 5, 2.5); ctx.fill();
+      // 앱 아이콘 4×2
+      const cols = ['#ffd84d', '#7be0a8', '#5ce1e6', '#ff8a8a', '#c4b5fd', '#ffffff', '#ffb35c', '#9fd0ff'];
+      for (let r = 0; r < 2; r++) for (let c = 0; c < 4; c++) { ctx.fillStyle = cols[r * 4 + c]; ctx.globalAlpha = 0.92; rr(18 + c * 28, 38 + r * 16, 18, 11, 3.5); ctx.fill(); }
+      ctx.globalAlpha = 1;
+      // 위쪽 반사광
+      const gl = ctx.createLinearGradient(0, 0, PA * 0.5, PB);
+      gl.addColorStop(0, 'rgba(255,255,255,.34)'); gl.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = gl; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(PA * 0.62, 0); ctx.lineTo(PA * 0.2, PB); ctx.lineTo(0, PB); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#0b1128'; ctx.beginPath(); ctx.arc(PA - 9, PB / 2, 2.6, 0, TAU); ctx.fill();
+    },
+    function board(t) {
+      ctx.strokeStyle = 'rgba(210,255,230,.38)'; ctx.lineWidth = 1.1; ctx.lineJoin = 'round';
+      const tr = [[[10, 12], [40, 12], [48, 22], [84, 22]], [[10, 66], [30, 66], [40, 56], [70, 56], [80, 46]], [[140, 12], [118, 12], [112, 24]], [[140, 66], [120, 66], [110, 54]], [[86, 70], [96, 62], [96, 54]], [[14, 36], [30, 36], [38, 44]]];
+      tr.forEach((pts) => { ctx.beginPath(); pts.forEach((q, i) => (i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]))); ctx.stroke(); });
+      ctx.fillStyle = 'rgba(255,240,170,.85)'; [[10, 12], [10, 66], [140, 12], [140, 66], [84, 22], [14, 36]].forEach(([x, y]) => { ctx.beginPath(); ctx.arc(x, y, 1.9, 0, TAU); ctx.fill(); });
+      // 칩(반도체): 금색 다리 + 검은 몸체
+      const cx = 108, cy = 38, h = 17;
+      ctx.fillStyle = '#e6c25a';
+      for (let q = -3; q <= 3; q++) { ctx.fillRect(cx + q * 4.6 - 1, cy - h - 4, 2.2, 5); ctx.fillRect(cx + q * 4.6 - 1, cy + h - 1, 2.2, 5); ctx.fillRect(cx - h - 4, cy + q * 4.6 - 1, 5, 2.2); ctx.fillRect(cx + h - 1, cy + q * 4.6 - 1, 5, 2.2); }
+      const cg = ctx.createLinearGradient(cx - h, cy - h, cx + h, cy + h); cg.addColorStop(0, '#3a4258'); cg.addColorStop(1, '#161b2b');
+      ctx.fillStyle = cg; rr(cx - h, cy - h, h * 2, h * 2, 4); ctx.fill();
+      ctx.strokeStyle = 'rgba(160,190,255,.55)'; ctx.lineWidth = 1; rr(cx - 9, cy - 9, 18, 18, 2); ctx.stroke();
+      ctx.fillStyle = 'rgba(160,200,255,.28)'; ctx.fillRect(cx - 5, cy - 5, 10, 10);
+      const on = RM ? 1 : (Math.sin(t * 5) > 0 ? 1 : 0.25);
+      ctx.fillStyle = 'rgba(120,255,160,' + on + ')'; ctx.beginPath(); ctx.arc(cx + 10, cy + 12, 1.6, 0, TAU); ctx.fill();
+      // 카메라 모듈: 둥근 받침 + 금속 테 + 렌즈
+      const lx = 56, ly = 54;
+      ctx.fillStyle = '#394155'; rr(lx - 20, ly - 20, 40, 40, 9); ctx.fill();
+      const mg = ctx.createRadialGradient(lx - 4, ly - 5, 1, lx, ly, 16); mg.addColorStop(0, '#f4f7fc'); mg.addColorStop(1, '#8793a8');
+      ctx.fillStyle = mg; ctx.beginPath(); ctx.arc(lx, ly, 15, 0, TAU); ctx.fill();
+      ctx.fillStyle = '#080c1a'; ctx.beginPath(); ctx.arc(lx, ly, 11.5, 0, TAU); ctx.fill();
+      const lg = ctx.createRadialGradient(lx - 3, ly - 3, 0.5, lx, ly, 9); lg.addColorStop(0, '#9ec8ff'); lg.addColorStop(0.5, '#2b4f9e'); lg.addColorStop(1, '#0a1230');
+      ctx.fillStyle = lg; ctx.beginPath(); ctx.arc(lx, ly, 8.5, 0, TAU); ctx.fill();
+      const gl = RM ? 0.7 : 0.55 + 0.35 * Math.sin(t * 2.3);
+      ctx.fillStyle = 'rgba(255,255,255,' + gl + ')'; ctx.beginPath(); ctx.arc(lx - 3.2, ly - 3.4, 2.4, 0, TAU); ctx.fill();
+      ctx.fillStyle = '#ffd84d'; ctx.beginPath(); ctx.arc(lx + 15, ly - 14, 2.6, 0, TAU); ctx.fill();   // 플래시
+    },
+    function battery(t) {
+      const g = ctx.createLinearGradient(0, 0, PA, 0); g.addColorStop(0, '#d9e2f1'); g.addColorStop(1, '#9fb0cb');
+      ctx.fillStyle = g; rr(10, 9, PA - 24, PB - 18, 8); ctx.fill();
+      ctx.fillStyle = '#e0b84a'; rr(PA - 14, PB / 2 - 9, 7, 18, 2.5); ctx.fill();   // 단자
+      ctx.fillStyle = 'rgba(30,45,80,.16)'; rr(18, 16, PA - 40, PB - 32, 5); ctx.fill();
+      // 충전 칸: 차례로 켜진다
+      const lit = RM ? 4 : Math.floor((t * 1.6) % 6);
+      for (let q = 0; q < 5; q++) {
+        ctx.fillStyle = q < lit ? '#2fbf71' : 'rgba(255,255,255,.55)'; rr(22 + q * 20, 26, 16, PB - 52, 3); ctx.fill();
+      }
+      // 번개 표시
+      ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.beginPath(); ctx.moveTo(PA / 2 - 14, PB - 24); ctx.lineTo(PA / 2 - 6, PB - 24); ctx.lineTo(PA / 2 - 12, PB - 15); ctx.lineTo(PA / 2 - 4, PB - 15); ctx.lineTo(PA / 2 - 14, PB - 6); ctx.lineTo(PA / 2 - 11, PB - 13); ctx.lineTo(PA / 2 - 18, PB - 13); ctx.closePath(); ctx.globalAlpha = 0.0; ctx.fill(); ctx.globalAlpha = 1;
+    },
+    function back(t) {
+      const g = ctx.createLinearGradient(0, 0, PA, PB); g.addColorStop(0, '#f4f6fa'); g.addColorStop(1, '#cfd6e2');
+      ctx.fillStyle = g; rr(3, 3, PA - 6, PB - 6, 8); ctx.fill();
+      // 안테나: 금속 선(구불구불)
+      ctx.strokeStyle = '#d3a62e'; ctx.lineWidth = 2.6; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(22, PB - 12);
+      for (let q = 0; q < 12; q++) ctx.lineTo(30 + q * 9.6, PB - 12 - (q % 2 ? 0 : 9));
+      ctx.lineTo(PA - 12, PB - 12); ctx.lineTo(PA - 12, PB - 12 - 11);
+      for (let q = 0; q < 4; q++) ctx.lineTo(PA - 12 - (q % 2 ? 0 : 9), PB - 24 - q * 10);
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(70,80,100,.14)'; ctx.beginPath(); ctx.arc(PA * 0.42, PB * 0.4, 13, 0, TAU); ctx.fill();   // 뒷면 둥근 무늬
+      ctx.strokeStyle = 'rgba(70,80,100,.2)'; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.arc(PA * 0.42, PB * 0.4, 8, 0, TAU); ctx.stroke();
+    },
+  ];
+  function drawPhoneLayer(i, t) {
+    const ph = S.sc.ph, b = phBase(i), d = PH_LAYERS[i], p = ph.layers[i].p, tk = Math.max(2, Math.round(PT * b.k));
+    // 층 아래로 드리우는 부드러운 그림자(분해될수록 진하게)
+    if (p > 0.03) {
+      ctx.save(); phPlace(b, tk + 10 * p); ctx.fillStyle = 'rgba(12,22,48,' + (0.12 * p).toFixed(3) + ')'; ctx.shadowColor = 'rgba(12,22,48,.25)'; ctx.shadowBlur = 16; phPath(9); ctx.fill(); ctx.restore();
+    }
+    // 옆면(두께): 윗면 모양을 아래로 겹쳐 칠한다
+    ctx.fillStyle = d.side;
+    for (let j = tk; j >= 1; j--) { ctx.save(); phPlace(b, j); phPath(9); ctx.fill(); ctx.restore(); }
+    // 윗면
+    ctx.save(); phPlace(b, 0);
+    const g = ctx.createLinearGradient(0, 0, PA, PB); g.addColorStop(0, SciSim.color.shade(d.top, 0.14)); g.addColorStop(1, SciSim.color.shade(d.top, -0.1));
+    ctx.fillStyle = g; phPath(9); ctx.fill();
+    ctx.save(); phPath(9); ctx.clip(); PAINT_LAYER[i](t); ctx.restore();
+    ctx.strokeStyle = 'rgba(255,255,255,.42)'; ctx.lineWidth = 1.3; phPath(9); ctx.stroke();
+    ctx.restore();
+  }
+
+  /* ---- 연표 · 라벨 · 연결선 ---- */
+  function bez(p0, p1, p2, p3, u) {
+    const v = 1 - u;
+    return { x: v * v * v * p0.x + 3 * v * v * u * p1.x + 3 * v * u * u * p2.x + u * u * u * p3.x, y: v * v * v * p0.y + 3 * v * v * u * p1.y + 3 * v * u * u * p2.y + u * u * u * p3.y };
+  }
+  function phConn(c, part) {          // 연표 칩 → 부품 연결선(베지어)
+    const a = phAnchor(part), s = chipLeader(PH_CHIPS.findIndex((x) => x.id === c.id));
+    const horiz = LAY.phone.axis.horiz;
+    const p0 = horiz ? { x: c.x + c.w / 2, y: c.y } : { x: c.x + c.w, y: c.y + c.h / 2 };
+    void s;
+    const dy = Math.abs(a.y - p0.y);
+    return [p0, { x: p0.x, y: p0.y - dy * 0.45 }, { x: a.x + (p0.x - a.x) * 0.1, y: a.y + dy * 0.45 }, a];
+  }
+  function drawConn(c, part, t) {
+    const ph = S.sc.ph, cd = chipById(c.id), tf = ph.tFound[part.id];
+    const e = nowS() - tf, grow = RM ? 1 : clamp(e / 0.55, 0, 1);
+    const pts = phConn(c, part), n = 28;
+    ctx.save(); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    const upto = Math.max(2, Math.floor(n * EASE.outCubic(grow)));
+    const stroke = (w, col) => { ctx.strokeStyle = col; ctx.lineWidth = w; ctx.beginPath(); for (let i = 0; i <= upto; i++) { const q = bez(pts[0], pts[1], pts[2], pts[3], i / n); i ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y); } ctx.stroke(); };
+    stroke(7, rgba(cd.col, 0.18)); stroke(2.6, rgba(cd.col, 0.85));
+    // 선을 따라 계속 흐르는 빛 구슬
+    if (grow >= 1 && !RM) for (let k = 0; k < 3; k++) {
+      const u = ((t * 0.42 + k / 3) % 1), q = bez(pts[0], pts[1], pts[2], pts[3], u);
+      halo(q.x, q.y, 13, cd.col, 0.6); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(q.x, q.y, 2.6, 0, TAU); ctx.fill(); ctx.strokeStyle = cd.col; ctx.lineWidth = 1.2; ctx.stroke();
+    }
+    ctx.restore();
+  }
+  function drawPartLabel(part, t) {
+    const ph = S.sc.ph, R = phLabelRect(part), a = phAnchor(part), found = !!ph.found[part.id], cd = chipById(part.chip);
+    const show = clamp((ph.layers[1].p - 0.4) / 0.5, 0, 1);
+    if (show <= 0.01) return;
+    const hot = ph.deck.hoverT === part.id, drag = !!ph.deck.drag;
+    ctx.save(); ctx.globalAlpha = show;
+    // 안내선 + 점
+    const ex = R.side === 'L' ? R.x + R.w : R.x, ey = R.y + R.h / 2;
+    ctx.strokeStyle = found ? 'rgba(20,160,88,.8)' : 'rgba(40,52,76,.5)'; ctx.lineWidth = 1.6; ctx.setLineDash(found ? [] : [4, 3]);
+    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(lerp(a.x, ex, 0.5), ey); ctx.lineTo(ex, ey); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = found ? '#14a058' : '#2b3550'; ctx.beginPath(); ctx.arc(a.x, a.y, 3.6, 0, TAU); ctx.fill();
+    // 라벨 카드
+    const sc = hot ? 1.06 : 1;
+    ctx.translate(R.x + R.w / 2, R.y + R.h / 2); ctx.scale(sc, sc); ctx.translate(-(R.x + R.w / 2), -(R.y + R.h / 2));
+    softShadow(() => { ctx.fillStyle = found ? '#e9f8ef' : '#ffffff'; rr(R.x, R.y, R.w, R.h, 12); ctx.fill(); }, hot ? 16 : 9, 3);
+    ctx.strokeStyle = found ? '#14a058' : hot ? '#14a058' : drag ? '#8fd9ae' : '#cfd8e6'; ctx.lineWidth = hot || found ? 2.5 : 2;
+    if (drag && !found && !hot) ctx.setLineDash([6, 4]);
+    rr(R.x, R.y, R.w, R.h, 12); ctx.stroke(); ctx.setLineDash([]);
+    txt(part.icon, R.x + 24, R.y + R.h / 2 + 1, f(21, 400), '#1b2333');
+    if (found) {
+      txt(part.name, R.x + 46, R.y + 15, f(13.5, 800), '#0b6b39', 'left');
+      ctx.font = f(11.5, 700); let s = '← ' + cd.t; while (ctx.measureText(s).width > R.w - 78 && s.length > 4) s = s.slice(0, -2);
+      txt(s, R.x + 46, R.y + 32, f(11.5, 700), '#3a6b4e', 'left');
+      D.check(R.x + R.w - 16, R.y + R.h / 2, 9, clamp((nowS() - ph.tFound[part.id] - 0.35) / 0.3, 0, 1));
+    } else txt(part.name, R.x + 46, R.y + R.h / 2 + 1, f(14.5, 800), '#1b2333', 'left');
+    ctx.restore();
+    // 끌고 있을 때: 아직 못 찾은 부품이 숨 쉬듯 반짝여 놓을 곳을 알려 준다
+    if (drag && !found && !RM) { ctx.save(); ctx.globalAlpha = show; const k = 0.5 + 0.5 * Math.sin(t * 5 + part.layer); ctx.strokeStyle = rgba(hot ? '#14a058' : '#8fd9ae', 0.45 + 0.4 * k); ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(a.x, a.y, part.r * LAY.phone.k * 0.9, part.r * LAY.phone.k * 0.52, 0, 0, TAU); ctx.stroke(); ctx.restore(); }
+    // 찾은 부품: 초록 고리 + 전파가 퍼지는 안테나
+    if (found) {
+      const k = (nowS() - ph.tFound[part.id]);
+      ctx.save(); ctx.globalAlpha = show * clamp(k / 0.3, 0, 1);
+      ctx.strokeStyle = rgba('#14a058', 0.85); ctx.lineWidth = 2.6; ctx.beginPath(); ctx.ellipse(a.x, a.y, part.r * LAY.phone.k * 0.85, part.r * LAY.phone.k * 0.5, 0, 0, TAU); ctx.stroke();
+      if (part.id === 'antenna' && !RM) for (let q = 0; q < 3; q++) { const u = (t * 0.7 + q / 3) % 1; ctx.strokeStyle = rgba('#8b5cf6', 0.6 * (1 - u)); ctx.lineWidth = 2.4; ctx.beginPath(); ctx.arc(a.x, a.y - 4, 10 + u * 34, -2.5, -0.65); ctx.stroke(); }
+      ctx.restore();
+    }
+  }
+  function drawPhoneChip(c, x, y, w, h, shadow) {
+    const cd = c.d, ph = S.sc.ph, found = !!ph.found[c.part], sel = ph.sel === c.id;
+    ctx.fillStyle = found ? '#f1fbf5' : '#fff'; rr(x, y, w, h, 12); ctx.fill();
+    if (shadow) return;
+    ctx.fillStyle = found ? '#14a058' : cd.col; rr(x, y, 8, h, 4); ctx.fill();
+    ctx.fillStyle = rgba(found ? '#14a058' : cd.col, 0.13); ctx.beginPath(); ctx.arc(x + 32, y + h / 2, 18, 0, TAU); ctx.fill();
+    txt(cd.icon, x + 32, y + h / 2 + 1, f(20, 400), '#1b2333');
+    const tw = w - 58 - 8, wideCard = w > 300;
+    let size = 13.5, wl = wrapLines(cd.t, tw, f(size, 800));
+    if (wl.lines.length > 2) { size = 12.5; wl = wrapLines(cd.t, tw, f(size, 800)); }
+    const subs = wideCard ? [cd.s.replace('\n', ' · ')] : cd.s.split('\n');
+    const lh = size + 2, slh = 14, total = wl.lines.length * lh + subs.length * slh + 2, ty = y + h / 2 - total / 2 + lh / 2;
+    ctx.font = f(size, 800); ctx.fillStyle = '#1b2333'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    wl.lines.forEach((l, i) => ctx.fillText(l, x + 58, ty + i * lh));
+    ctx.font = f(11.5, 700); ctx.fillStyle = '#6b7788';
+    subs.forEach((sub, i) => ctx.fillText(sub, x + 58, ty + wl.lines.length * lh + 3 + i * slh));
+    if (found) D.check(x + w - 15, y + h - 15, 9, 1);
+    if (sel) { ctx.strokeStyle = COL.good; ctx.lineWidth = 3; rr(x, y, w, h, 12); ctx.stroke(); }
+  }
+  function drawPhoneTimeline(t) {
+    const L = LAY.phone, P = L.panel, ph = S.sc.ph, A = L.axis, horiz = A.horiz;
+    softShadow(() => { ctx.fillStyle = 'rgba(255,255,255,.88)'; rr(P.x, P.y, P.w, P.h, 16); ctx.fill(); }, 12, 3);
+    txt('🕰️ 발견 연표', P.x + 16, P.y + 16, f(13.5, 800), '#475569', 'left');
+    if (phoneFound() === 0 && !ph.exploded) txt('발견 카드를 끌어 부품에 놓아요', P.x + P.w - 16, P.y + 16, f(12, 700), '#8a97ab', 'right');
+    // 축
+    const a0 = axisPt(Y0), a1 = axisPt(Y1);
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = '#d5dde9'; ctx.lineWidth = 7; ctx.beginPath(); ctx.moveTo(a0.x, a0.y); ctx.lineTo(a1.x, a1.y); ctx.stroke();
+    // 찾은 연도까지 색이 채워진다
+    const maxY = Math.max(0, ...PH_CHIPS.filter((c) => ph.found[c.part]).map((c) => c.year));
+    const orbU = ph.done && !RM ? clamp((nowS() - ph.doneT - 0.5) / 1.8, 0, 1) : (ph.done ? 1 : 0);
+    const fillY = ph.done ? lerp(1609, 2007, EASE.inOutCubic(orbU)) : maxY;
+    if (fillY > 0) {
+      const f1 = axisPt(fillY), gr = ctx.createLinearGradient(a0.x, a0.y, a1.x, a1.y); gr.addColorStop(0, '#6f8cff'); gr.addColorStop(1, '#14a058');
+      ctx.strokeStyle = gr; ctx.lineWidth = 7; ctx.beginPath(); ctx.moveTo(axisPt(1609).x, axisPt(1609).y); ctx.lineTo(f1.x, f1.y); ctx.stroke();
+    }
+    // 눈금 + 안내선 + 연도
+    PH_CHIPS.forEach((cd, i) => {
+      const tp = axisPt(cd.year), ld = chipLeader(i), found = !!ph.found[cd.part];
+      ctx.strokeStyle = found ? rgba('#14a058', 0.7) : 'rgba(100,116,139,.45)'; ctx.lineWidth = 1.6; ctx.setLineDash(found ? [] : [4, 4]);
+      ctx.beginPath(); ctx.moveTo(ld.x, ld.y);
+      if (horiz) ctx.bezierCurveTo(ld.x, (ld.y + tp.y) / 2, tp.x, (ld.y + tp.y) / 2, tp.x, tp.y - 6); else ctx.bezierCurveTo((ld.x + tp.x) / 2, ld.y, (ld.x + tp.x) / 2, tp.y, tp.x + 6, tp.y);
+      ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = found ? '#14a058' : '#fff'; ctx.strokeStyle = found ? '#14a058' : '#7f93c7'; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.arc(tp.x, tp.y, 6.5, 0, TAU); ctx.fill(); ctx.stroke();
+      if (found) D.check(tp.x, tp.y, 6, 1);
+      if (horiz) txt(String(cd.year), tp.x, tp.y + 21, f(12.5, 800), found ? '#0b6b39' : '#64748b');
+      else txt(String(cd.year), tp.x - 11, tp.y, f(12, 800), found ? '#0b6b39' : '#64748b', 'right');
+    });
+    // 끝: 스마트폰 등장(2007년 무렵)
+    const e7 = axisPt(2007), pop = ph.done ? EASE.outBack(clamp((nowS() - ph.doneT - 2.3) / 0.45, 0, 1)) : 0;
+    ctx.save(); ctx.translate(e7.x, e7.y); ctx.scale(1 + 0.35 * pop, 1 + 0.35 * pop);
+    softShadow(() => { ctx.fillStyle = ph.done ? '#14a058' : '#fff'; ctx.beginPath(); ctx.arc(0, 0, 11, 0, TAU); ctx.fill(); }, 6, 2);
+    ctx.strokeStyle = ph.done ? '#0b6b39' : '#7f93c7'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(0, 0, 11, 0, TAU); ctx.stroke();
+    txt('📱', 0, 1, f(13, 400), '#1b2333');
+    ctx.restore();
+    if (horiz) txt('📱 2007년 무렵 스마트폰 등장', e7.x + 6, e7.y + 38, f(12.5, 800), ph.done ? '#0b6b39' : '#64748b', 'right');
+    else txt('📱 2007년 무렵 스마트폰 등장', A.x - 36, e7.y + 28, f(12, 800), ph.done ? '#0b6b39' : '#64748b', 'left');
+    // 모두 찾으면 빛 구슬이 연표를 1609 → 2007로 달린다
+    if (ph.done && orbU < 1 && !RM) {
+      const q = axisPt(lerp(1609, 2007, EASE.inOutCubic(orbU)));
+      for (let k = 7; k >= 0; k--) { const qq = axisPt(lerp(1609, 2007, EASE.inOutCubic(clamp(orbU - k * 0.018, 0, 1)))); halo(qq.x, qq.y, 17 - k * 1.5, k === 0 ? '#ffb400' : '#ffc933', 0.6 - k * 0.055); }
+      ctx.fillStyle = '#fff'; ctx.strokeStyle = '#e08a00'; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.arc(q.x, q.y, 4, 0, TAU); ctx.fill(); ctx.stroke();
+    }
+  }
+
+  /* 모두 찾았을 때의 마무리(한 번만): 휴대폰이 스스로 조립되고 배너가 뜬다 */
+  function phUpdate(dt) {
+    const ph = S.sc.ph;
+    if (!ph || !ph.done || ph.celebrated) return;
+    if (nowS() - ph.doneT > (RM ? 0.3 : 2.35)) {
+      ph.celebrated = true;
+      phSetExploded(false);
+      const L = LAY.phone;
+      sparkle(L.cx, L.cy, 24, ['#ffd84d', '#fff6c2', '#7be0a8', '#9fd0ff', '#f9a8d4']);
+      ringFx(L.cx, L.cy, '#ffd84d', 40);
+      Sound.level();
+      syncDom();
+    }
+    void dt;
+  }
+  function drawPhone(t) {
+    const L = LAY.phone, ph = S.sc.ph, W = LAY.W, H = LAY.H;
+    backdrop('phone', SCENE_BG.phone, 0.55, (Wd, Hd, fade) => {
+      for (let x = 10; x < Wd; x += 26) for (let y = 10; y < Hd; y += 26) { ctx.fillStyle = 'rgba(80,100,150,' + (0.11 * fade(y)).toFixed(3) + ')'; ctx.fillRect(x, y, 2, 2); }
+    });
+    // 바닥 그림자(조립된 휴대폰 아래)
+    contactShadow(L.cx, L.cy + 116 * L.k * 0.78 + 30 * (1 - ph.layers[1].p), 120 * L.k, 20 * L.k, 0.16 * (1 - 0.5 * ph.layers[1].p));
+    for (let i = 3; i >= 0; i--) drawPhoneLayer(i, t);
+    // 화면 층 이름표(찾기 대상 아님)
+    const sl = L.screenLabel, show = clamp((ph.layers[1].p - 0.4) / 0.5, 0, 1);
+    if (show > 0.02) { ctx.save(); ctx.globalAlpha = show * 0.9; const a = phLocal(0, 24, 30); ctx.strokeStyle = 'rgba(40,52,76,.35)'; ctx.lineWidth = 1.4; ctx.setLineDash([4, 3]); ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(sl.x + (L.labels.camera.side === 'L' ? 196 : 0), sl.y + 14); ctx.stroke(); ctx.setLineDash([]); pill(sl.x, sl.y + 14, '🖥️ 화면(터치 화면)', { bg: 'rgba(255,255,255,.8)', color: '#475569', size: 12.5, h: 26, align: 'left', border: '#cfd8e6' }); ctx.restore(); }
+    // 연결선(아래 연표 → 부품)
+    ph.deck.cards.forEach((c) => { if (c.placed && ph.found[c.part]) drawConn(c, partById(c.part), t); });
+    PH_PARTS.forEach((part) => drawPartLabel(part, t));
+    // 안내 문구
+    if (!ph.exploded && !ph.done) { ctx.save(); const k = RM ? 1 : 0.7 + 0.3 * Math.sin(t * 3); ctx.globalAlpha = k; pill(W / 2, L.hintY, '👇 [📱 분해하기] 버튼으로 스마트폰 속을 들여다봐요', { bg: 'rgba(27,35,51,.86)', size: LAY.kind === 'tall' ? 12.5 : 14, h: 30, shadow: true }); ctx.restore(); }
+    drawPhoneTimeline(t);
+    ph.deck.draw((c, x, y, w, h, shadowPass) => drawPhoneChip(c, x, y, w, h, shadowPass));
+    // 완성 배너
+    if (ph.done) {
+      const k = clamp((nowS() - ph.doneT - (RM ? 0 : 2.3)) / 0.5, 0, 1);
+      if (k > 0) { ctx.save(); ctx.globalAlpha = k; ctx.translate(0, (1 - EASE.outCubic(k)) * -14); pill(L.banner.x, L.banner.y, '✨ 수백 년의 발견이 한 손에!', { bg: '#1b2333', size: LAY.kind === 'tall' ? 15 : 17, h: 36, shadow: true }); ctx.restore(); }
+    }
+    if (isNew('phone')) newRing(6, 6, LAY.W - 12, LAY.H - 12);
+  }
+  function resetScene(name) {
+    if (name === 'chain') resetChain([0, 1, 2, 3]);
+    else if (name === 'twoface') resetTf();
+    else if (name === 'fields') resetFields();
+    else if (name === 'phone') resetPhone();
+    FX.bubbles = [];
+    syncDom();
+  }
   /* =========================================================
      장면 전환 · 그리기 · 입력 · DOM
      ========================================================= */
@@ -1308,6 +2518,7 @@
       ctx.restore();
     } else SCENE_DRAW[S.scene](t);
     drawFx();
+    drawHint();
   }
   function drawNight(t) {
     ctx.fillStyle = SKY; ctx.fillRect(0, 0, LAY.W, LAY.H);
@@ -1365,12 +2576,19 @@
   }
 
   /* ---- DOM: 조작 카드 · 장면 이름 ---- */
-  const hintEl = $('#stageHint');
-  function hint(text, ms) {
-    hintEl.textContent = text; hintEl.classList.remove('hide');
-    clearTimeout(hint.t); hint.t = setTimeout(hideHint, ms || 5000);
+  /* 안내 문구: 캔버스 안에 알약으로 그린다(밤거리 장면에서만, 연표 위) */
+  const HINT = { text: '', t0: 0, until: 0 };
+  function hint(text, ms) { HINT.text = text; HINT.t0 = nowS(); HINT.until = nowS() + (ms || 5000) / 1000; }
+  function hideHint() { HINT.until = 0; }
+  function drawHint() {
+    const pos = LAY.night && LAY.night.hint;
+    if (S.scene !== 'night' || !pos || !HINT.text) return;
+    const n = nowS(), a = clamp(Math.min((n - HINT.t0) / 0.3, (HINT.until - n) / 0.4), 0, 1);
+    if (a <= 0.01) return;
+    ctx.save(); ctx.globalAlpha = a; ctx.translate(0, (1 - a) * 8);
+    pill(pos.x, pos.y, HINT.text, { bg: 'rgba(20,28,56,.88)', size: LAY.kind === 'tall' ? 12.5 : 14, h: 30, border: 'rgba(160,180,230,.4)', shadow: true });
+    ctx.restore();
   }
-  function hideHint() { hintEl.classList.add('hide'); }
   const sYear = $('#sYear'), oYear = $('#oYear'), yearNote = $('#yearNote');
   const btnPhone = $('#phoneBtn'), btnReset = $('#resetBtn'), ctrlNote = $('#ctrlNote');
   const seg = $('#sceneSeg');
@@ -1404,7 +2622,7 @@
     btnPhone.classList.toggle('btn-primary', !(phs && phs.exploded));
     oYear.textContent = Math.round(S.year) + '년';
     const e = nearestEra(S.year);
-    yearNote.textContent = S.arrived >= 0 ? ERAS[S.arrived].name + ' · 반짝이는 물건을 눌러 보세요' : '손잡이를 놓으면 가장 가까운 시대에 딱 붙어요';
+    yearNote.textContent = S.arrived >= 0 ? (ERAS[S.arrived].name || ERAS[S.arrived].label + '년') + ' · 반짝이는 물건을 눌러 보세요' : '손잡이를 놓으면 가장 가까운 시대에 딱 붙어요';
     ctrlNote.textContent = phoneOn ? (phs && phs.exploded ? '아래 연표의 발견 카드를 부품 위에 끌어 놓아요' : '먼저 📱 분해하기를 눌러요') : '';
     void e;
     const lab = $('#sceneLabel');
@@ -1441,7 +2659,7 @@
     title: '첫 번째 사슬 잇기',
     goal: '♨️ 증기의 원리에서 시작하는 첫 줄을 완성하세요. 보관함에서 알맞은 <b>기술·기기</b> 카드와 <b>생활의 변화</b> 카드를 끌어 놓으세요.',
     hint: '증기의 힘으로 움직이는 기계는? 그 기계 덕분에 생긴 공장과 기차를 찾아보세요.',
-    setup() { goScene('chain'); resetChain([0]); hint('보관함의 카드를 끌어 빈칸에 놓아요', 5000); },
+    setup() { goScene('chain'); resetChain([0]); },
     check: () => chainRowDone(0),
     hold: 0,
     status: () => '기술·기기 카드 ' + mark(chainSlot(0, 1)) + ' · 생활의 변화 카드 ' + mark(chainSlot(0, 2)),
@@ -1451,7 +2669,7 @@
     title: '나머지 사슬 잇기',
     goal: '남은 세 줄도 원리 → 기술·기기 → 생활의 변화 순서로 완성하세요.',
     hint: '원리 카드의 그림(🦠 🧲 🔍)과 연결되는 기기를 먼저 찾아보세요.',
-    setup() { goScene('chain'); ensureChain([0], [0, 1, 2, 3]); hideHint(); },
+    setup() { goScene('chain'); ensureChain([0, 1, 2, 3], [0]); },
     check: () => [1, 2, 3].every(chainRowDone),
     hold: 0,
     status: () => '완성한 사슬 <b>' + [0, 1, 2, 3].filter(chainRowDone).length + '/4</b>',
@@ -1472,7 +2690,7 @@
     title: '자동차의 두 얼굴',
     goal: '자동차가 가져온 변화 카드 4장을 😊 편리해진 점과 😟 새로 생긴 문제로 나누어 놓으세요.',
     hint: '“이것 덕분에 생활이 편해졌나?”, “이것 때문에 사람과 환경이 피해를 입나?”를 생각해 보세요.',
-    setup() { goScene('twoface'); resetTf(); hint('카드를 끌어 알맞은 상자에 넣어요', 5000); },
+    setup() { goScene('twoface'); resetTf(); },
     check: () => tfCount() === 4,
     hold: 0,
     status: () => '나눈 카드 <b>' + tfCount() + '/4</b>',
@@ -1493,7 +2711,7 @@
     title: '과학과 다른 분야 잇기',
     goal: '왼쪽 과학 원리 카드의 고리를 끌어 알맞은 분야 사례 카드에 이으세요. (카드를 차례로 눌러도 이어져요)',
     hint: '미술은 ‘보이는 크기’, 음악은 ‘소리’, 건축은 ‘무거운 돌’, 수학은 ‘기록과 비교’를 떠올려 보세요.',
-    setup() { goScene('fields'); resetFields(); hint('왼쪽 카드의 ⭕ 고리를 오른쪽 카드로 끌어요', 5500); },
+    setup() { goScene('fields'); resetFields(); },
     check: () => fieldsLinked() === 4,
     hold: 0,
     status: () => '이은 짝 <b>' + fieldsLinked() + '/4</b>',
@@ -1503,7 +2721,7 @@
     title: '스마트폰 속 발견 찾기',
     goal: '[📱 분해하기]를 누른 뒤, 아래 연표의 발견 카드를 스마트폰의 알맞은 부품으로 끌어 놓으세요(4개).',
     hint: '사진을 찍는 부분에는 빛을 모으는 렌즈가, 전기를 저장하는 부분에는 전지가 들어 있어요.',
-    setup() { goScene('phone'); resetPhone(); hint('먼저 📱 분해하기를 눌러 스마트폰 속을 들여다봐요', 6000); },
+    setup() { goScene('phone'); resetPhone(); },
     check: () => phoneFound() === 4,
     hold: 0,
     status: () => (S.sc.ph && S.sc.ph.exploded ? '' : '⬜ 먼저 <b>📱 분해하기</b>를 눌러요 · ') + '찾은 발견 <b>' + phoneFound() + '/4</b>',
@@ -1616,13 +2834,27 @@
     eraPoint(i) { return client(yearX(ERA_YEARS[i]), LAY.night.track.y); },
     hot(i, id) { const p = S.hot[i] && S.hot[i][id]; if (!p) return null; const c = worldToCanvas(p.x, p.y); return client(c.x, c.y - 34); },
     get busy() { return !!S.trans; },
+    go(name) { goScene(name, true); },
+    deckCards() { const d = activeDeck(); return d ? d.cards.filter((c) => !c.placed && !c.hidden).map((c) => ({ id: c.id, chain: c.chain, col: c.col, good: c.good, ph: c.ph, at: client(c.x + c.w / 2, c.y + c.h / 2) })) : []; },
+    slotPt(r, col) { const s = slotRect(r, col); return client(s.x + s.w / 2, s.y + s.h / 2); },
+    boxPt(side) { const b = LAY.twoface.boxes[side]; return client(b.x + b.w / 2, b.y + b.h / 2); },
+    fieldRing(i) { const r = fRing(i); return client(r.x, r.y); },
+    fieldRight(slot) { const r = fRight(slot); return client(r.x + r.w / 2, r.y + r.h / 2); },
+    fieldLeft(i) { const r = fLeft(i); return client(r.x + r.w / 2, r.y + r.h / 2); },
+    FIELD_ORDER,
+    phChips() { const ph = S.sc.ph; return ph.deck.cards.map((c) => ({ id: c.id, part: c.part, placed: !!c.placed, at: client(c.x + c.w / 2, c.y + c.h / 2) })); },
+    partPt(id) { const a = phAnchor(partById(id)); return client(a.x, a.y); },
+    labelPt(id) { const r = phLabelRect(partById(id)); return client(r.x + r.w / 2, r.y + r.h / 2); },
+    get ph() { return S.sc.ph; },
   };
 
   let uiT = 0;
   SciSim.loop((dt, t) => {
-    S.t = t;
+    S.t = t; S.dt = dt;
     stepTrans();
     if (S.scene === 'night' || S.trans) stepNight(dt);
+    ['chain', 'tf', 'ph'].forEach((k) => { const o = S.sc[k]; if (o && o.deck) o.deck.update(dt); });
+    phUpdate(dt);
     updateFx(dt);
     stageBg();
     draw(t);

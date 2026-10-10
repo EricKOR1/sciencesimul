@@ -488,6 +488,7 @@
     ctx.fillStyle = '#334155'; ctx.beginPath(); ctx.arc(x, y, 2.6, 0, Math.PI * 2); ctx.fill();
   }
   function drawCart(x, alpha, ghost) {
+    if (x == null) x = A.cart.x;
     const g = cartGeo(x);
     ctx.save();
     if (alpha != null) ctx.globalAlpha *= alpha;
@@ -731,7 +732,7 @@
     x: BC.cx, y: BC.cy, th: 0, vx: 0, vy: 0, w: 0,
     still: 0, run: null, ghosts: [], gT: 0, scr: [[], []], scrA: 1, ret: null,
     drag: null, rows: [], fresh: -1, appear: 1, sq: new SciSim.Spring(0, { stiffness: 320, damping: 11 }),
-    bump: { L: 0, R: 0 }, ticks: 0,
+    bump: { L: 0, R: 0 }, ticks: 0, kl: [0, 0],
   };
   const net = () => B.F[0] + B.F[1];
   const fmtF = (f) => (f === 0 ? '0 N' : (f > 0 ? '→ ' : '← ') + Math.abs(f) + ' N');
@@ -825,23 +826,27 @@
     D.sphere(0, -lift * 20, r, '#ef4444', {});
     ctx.restore();
   }
+  /* 끌 수 있는 손잡이: 누르면 살짝 떠오르며(커지고 그림자가 깊어짐) 따라와요 */
   function knob(x, y, o) {
     o = o || {};
+    const lift = o.lift || 0, r = (o.r || 11.5) * (1 + 0.2 * lift), ac = o.locked ? '#94a3b8' : COL.push;
     ctx.save();
-    ctx.shadowColor = 'rgba(15,23,42,.25)'; ctx.shadowBlur = 6; ctx.shadowOffsetY = 2;
-    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x, y, 12, 0, Math.PI * 2); ctx.fill();
+    ctx.shadowColor = 'rgba(15,23,42,' + (0.25 + 0.1 * lift).toFixed(2) + ')'; ctx.shadowBlur = 6 + 9 * lift; ctx.shadowOffsetY = 2 + 5 * lift;
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x, y - lift * 2, r, 0, Math.PI * 2); ctx.fill();
     ctx.shadowColor = 'transparent';
-    ctx.lineWidth = 3; ctx.strokeStyle = o.locked ? '#94a3b8' : COL.push; ctx.stroke();
+    ctx.lineWidth = 3; ctx.strokeStyle = ac; ctx.stroke();
     ctx.fillStyle = o.locked ? '#94a3b8' : '#c2410c';
-    ctx.beginPath(); ctx.moveTo(x - 8, y); ctx.lineTo(x - 3, y - 4.5); ctx.lineTo(x - 3, y + 4.5); ctx.closePath(); ctx.fill();
-    ctx.beginPath(); ctx.moveTo(x + 8, y); ctx.lineTo(x + 3, y - 4.5); ctx.lineTo(x + 3, y + 4.5); ctx.closePath(); ctx.fill();
+    const k = r / 12, yy = y - lift * 2;
+    ctx.beginPath(); ctx.moveTo(x - 8 * k, yy); ctx.lineTo(x - 3 * k, yy - 4.5 * k); ctx.lineTo(x - 3 * k, yy + 4.5 * k); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(x + 8 * k, yy); ctx.lineTo(x + 3 * k, yy - 4.5 * k); ctx.lineTo(x + 3 * k, yy + 4.5 * k); ctx.closePath(); ctx.fill();
     ctx.restore();
   }
+  /* 손잡이 위치: 당기는 힘이면 장갑 소매 끝, 미는 힘이면 화살표 머리 뒤, 힘이 0이면 고리 옆 */
   function knobPos(i) {
     const hk = hookLocal(i), f = B.F[i], side = i === 0 ? -1 : 1;
     if (!f) return { x: hk.x + side * 30, y: hk.y };
     const pull = i === 0 ? f < 0 : f > 0;
-    return { x: hk.x + f * NPX + Math.sign(f) * (pull ? 20 : 15), y: hk.y };
+    return { x: hk.x + f * NPX + Math.sign(f) * (pull ? 56 : 18), y: hk.y };
   }
   function drawSceneB(dt) {
     drawRink();
@@ -895,7 +900,7 @@
     if (B.st === 'pinned' && on('twoForces')) {
       for (let i = 0; i < 2; i++) {
         const kp = knobPos(i), wp = toW(kp.x, kp.y);
-        knob(wp.x, wp.y, { locked: B.lock[i] });
+        knob(wp.x, wp.y, { locked: B.lock[i], lift: B.kl[i] });
         const m = game && game.current();
         if (m && game.isActive(m) && !B.lock[i] && (m.key === 'B1' || m.key === 'B2' || m.key === 'B4') && B.F[i] === 0) D.ring(wp.x, wp.y, 16, NOW(), { color: COL.push, width: 2 });
       }
@@ -972,6 +977,7 @@
     B.a[0].set(B.F[0] * NPX, 0); B.a[1].set(B.F[1] * NPX, 0); B.an.set(net() * NPX, 0);
     B.hy2 = SciSim.approach(B.hy2, BC.slots[B.slot], dt, 18);
     B.sq.update(dt);
+    for (let i = 0; i < 2; i++) B.kl[i] = SciSim.approach(B.kl[i], B.drag && B.drag.i === i && B.drag.mode === 'mag' ? 1 : 0, dt, 18);
     B.appear = Math.min(1, B.appear + dt / 0.5);
     B.bump.L = Math.max(0, B.bump.L - dt * 4); B.bump.R = Math.max(0, B.bump.R - dt * 4);
     for (let i = B.ghosts.length - 1; i >= 0; i--) { B.ghosts[i].a -= dt / 0.45; if (B.ghosts[i].a <= 0) B.ghosts.splice(i, 1); }
@@ -1079,9 +1085,10 @@
       const hk = hookLocal(i), hx = B.x + hk.x, hy = B.y + hk.y;
       if (Math.hypot(p.x - hx, p.y - hy) < 24) return { i, mode: i === 1 && on('line') ? 'pend' : 'mag' };
       const f = B.F[i];
-      if (f) {
-        const x1 = Math.min(hx, hx + f * NPX), x2 = Math.max(hx, hx + f * NPX);
-        if (p.x >= x1 - 8 && p.x <= x2 + 30 && Math.abs(p.y - hy) < 20) return { i, mode: 'mag' };
+      if (f) {                                   // 화살표 몸통·머리·장갑 어디를 잡아도 돼요
+        const pull = i === 0 ? f < 0 : f > 0, sg = Math.sign(f), tip = hx + f * NPX;
+        const a = hx - sg * 8, b = tip + sg * (pull ? 84 : 34);
+        if (p.x >= Math.min(a, b) && p.x <= Math.max(a, b) && Math.abs(p.y - hy) < 22) return { i, mode: 'mag' };
       }
     }
     return null;
@@ -1092,6 +1099,7 @@
       const dx = p.x - d.sx, dy = p.y - d.sy;
       if (Math.hypot(dx, dy) < 8) return;
       d.mode = Math.abs(dy) > Math.abs(dx) ? 'slot' : 'mag';
+      d.sx = p.x; d.f0 = B.F[d.i];
     }
     if (d.mode === 'slot') {
       let k = 0, best = 1e9;
@@ -1103,8 +1111,7 @@
       if (!d.warned) { d.warned = true; toast('🔒 왼쪽 힘은 4 N으로 잠겨 있어요. 오른쪽 힘을 조절해 보세요.'); Sound.fail(); }
       return;
     }
-    const hk = hookLocal(d.i);
-    setF(d.i, (p.x - (BC.cx + hk.x)) / NPX);
+    setF(d.i, d.f0 + (p.x - d.sx) / NPX);        // 처음 누른 자리에서 움직인 만큼(1칸 = 1 N)
   }
 
   /* ---------- 실험 결과 표 ---------- */
@@ -1160,7 +1167,7 @@
     for (let x = gx0; x <= gx1 + 0.1; x += TPX) { ctx.moveTo(x + 0.5, gy0); ctx.lineTo(x + 0.5, gy1); }
     for (let y = gy0; y <= gy1 + 0.1; y += TPX) { ctx.moveTo(gx0, y + 0.5); ctx.lineTo(gx1, y + 0.5); }
     ctx.stroke();
-    pill('1칸 = 100 N', gx0 - 2, gy0 - 2, { align: 'left', color: '#3b82f6', size: 13 });
+    pill('1칸 = 100 N', gx0 - 20, gy0 + 8, { align: 'right', color: '#3b82f6', size: 13 });
   }
   function drawRope(xo) {
     const x1 = kidX(-1, 2) - 46 + xo, x2 = kidX(1, 4) + 46 + xo, y = TGX.ry;
@@ -1182,32 +1189,57 @@
     ctx.beginPath(); ctx.moveTo(fx + 3, y + 7); ctx.quadraticCurveTo(fx + 13, y + 20, fx + 9, y + 33); ctx.lineTo(fx + 1, y + 20); ctx.closePath(); ctx.fillStyle = '#dc2626'; ctx.fill();
     ctx.restore();
   }
+  /* 위에서 본 아이: 어깨(팀 색 옷) · 머리(머리카락 + 얼굴) · 팔 · 신발. 줄 가운데(상대 팀)를 바라보며 뒤로 기대어 당겨요. */
+  const HAIR = ['#3b2a1e', '#5b3a24', '#1f2937', '#7c4a2a', '#2b2118'];
   function drawKid(x, y, team, i, alpha, sc, t) {
     if (alpha <= 0.01) return;
-    const side = kidSide(i), dir = team;           // dir: 당기는 방향
+    const side = kidSide(i), dir = team, fc = -dir;     // dir: 당기는 방향, fc: 바라보는 방향
     const effort = TG.st === 'run' || TG.st === 'tie' ? 1 : 0.35;
     const jig = RM ? 0 : Math.sin(t * 9 + i * 1.7 + team) * 1.6 * effort;
     const lean = dir * (8 + 5 * effort) + jig;
-    ctx.save(); ctx.globalAlpha *= alpha; ctx.translate(x, y); ctx.scale(sc, sc);
-    const bx = lean, by = side * 19;
-    softShadow(bx + 5, by + 6, 22, 15, 0.26);
-    // 발
-    ctx.fillStyle = '#334155';
-    [-7, 7].forEach((o) => { ctx.beginPath(); ctx.ellipse(bx - dir * 18, by + o, 6, 4, 0, 0, Math.PI * 2); ctx.fill(); });
-    // 팔 (어깨 → 줄)
-    ctx.strokeStyle = '#f1c39b'; ctx.lineWidth = 6; ctx.lineCap = 'round';
-    ctx.beginPath(); ctx.moveTo(bx, by - side * 11); ctx.lineTo(-dir * 10, 0); ctx.moveTo(bx, by + side * 6); ctx.lineTo(-dir * 1, 0); ctx.stroke();
-    // 몸 (어깨)
-    const shirt = team < 0 ? ['#60a5fa', '#2563eb'] : ['#fde047', '#eab308'];
-    const g = ctx.createLinearGradient(bx - 12, by - 16, bx + 12, by + 16);
+    const shirt = team < 0 ? ['#7cb8ff', '#2563eb'] : ['#fde047', '#e0a800'];
+    ctx.save(); ctx.globalAlpha *= alpha; ctx.translate(x, y); ctx.scale(sc * 1.12, sc * 1.12);
+    const bx = lean, by = side * 20;
+    softShadow(bx + 4, by + 7, 25, 17, 0.28);
+    // 신발: 어깨너비로 벌려 뒤쪽에 버티고 있어요
+    [-1, 1].forEach((o) => {
+      const sx = bx + dir * 15, sy = by + o * 8;
+      ctx.fillStyle = '#334155'; ctx.beginPath(); ctx.ellipse(sx, sy, 7, 4.2, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#f8fafc'; ctx.beginPath(); ctx.ellipse(sx - dir * 1.5, sy - 0.6, 4.4, 2.3, 0, 0, Math.PI * 2); ctx.fill();
+    });
+    // 팔: 어깨 → 팔꿈치 → 줄을 잡은 두 손
+    const hands = [[fc * 6 - dir * 8, 0], [fc * 6 + dir * 1, 0]];
+    const shoulders = [[bx + fc * 2, by - side * 12], [bx + fc * 2, by + side * 8]];
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    shoulders.forEach((sp, k) => {
+      const hp = hands[k], mx = (sp[0] + hp[0]) / 2 - dir * 3, my = (sp[1] + hp[1]) / 2;
+      ctx.strokeStyle = shirt[1]; ctx.lineWidth = 7.4; ctx.beginPath(); ctx.moveTo(sp[0], sp[1]); ctx.lineTo(mx, my); ctx.stroke();
+      ctx.strokeStyle = shirt[0]; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(sp[0], sp[1]); ctx.lineTo(mx, my); ctx.stroke();
+      ctx.strokeStyle = '#f1c39b'; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(mx, my); ctx.lineTo(hp[0], hp[1]); ctx.stroke();
+    });
+    // 몸(어깨)
+    const g = ctx.createLinearGradient(bx - 10, by - 18, bx + 10, by + 18);
     g.addColorStop(0, shirt[0]); g.addColorStop(1, shirt[1]);
-    ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(bx, by, 12, 17, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = 'rgba(15,23,42,.25)'; ctx.lineWidth = 1.5; ctx.stroke();
-    // 손 (줄을 잡음)
-    ctx.fillStyle = '#f1c39b';
-    [-dir * 10, -dir * 1].forEach((hx) => { ctx.beginPath(); ctx.arc(hx, 0, 4.2, 0, Math.PI * 2); ctx.fill(); });
-    // 머리 (위에서 보면 머리카락)
-    D.sphere(bx - dir * 1.5, by, 9.5, ['#3b2a1e', '#5b3a24', '#1f2937', '#7c4a2a', '#2b2118'][(i + (team > 0 ? 2 : 0)) % 5], { gloss: true });
+    ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(bx, by, 10.5, 17.5, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = 'rgba(15,23,42,.3)'; ctx.lineWidth = 1.4; ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.ellipse(bx, by, 7.4, 14, 0, Math.PI * 1.05, Math.PI * 1.55); ctx.stroke();
+    // 손
+    ctx.fillStyle = '#f1c39b'; ctx.strokeStyle = 'rgba(146,82,40,.55)'; ctx.lineWidth = 1;
+    hands.forEach((hp) => { ctx.beginPath(); ctx.arc(hp[0], hp[1], 3.6, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); });
+    // 머리: 얼굴(앞쪽, 피부색) + 머리카락(뒤쪽)
+    const hx = bx + fc * 1.5, hy = by + side * 0.5, hr = 9.6;
+    ctx.fillStyle = '#f1c39b'; ctx.beginPath(); ctx.arc(hx, hy, hr, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#f1c39b'; [-1, 1].forEach((o) => { ctx.beginPath(); ctx.arc(hx - fc * 1, hy + o * (hr - 0.5), 2.4, 0, Math.PI * 2); ctx.fill(); });
+    ctx.save();
+    ctx.beginPath(); ctx.arc(hx, hy, hr, 0, Math.PI * 2); ctx.clip();
+    const hc = HAIR[(i + (team > 0 ? 2 : 0)) % 5];
+    const hg = ctx.createRadialGradient(hx - fc * 3 - 2, hy - 3, 1, hx - fc * 3, hy, hr * 1.1);
+    hg.addColorStop(0, shade(hc, 0.35)); hg.addColorStop(0.6, hc); hg.addColorStop(1, shade(hc, -0.3));
+    ctx.fillStyle = hg; ctx.beginPath(); ctx.arc(hx - fc * 4.2, hy, hr * 0.98, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,.28)'; ctx.beginPath(); ctx.ellipse(hx - fc * 4.5 - 1.5, hy - 3.4, 3.6, 2, -0.5, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+    ctx.strokeStyle = 'rgba(15,23,42,.28)'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(hx, hy, hr, 0, Math.PI * 2); ctx.stroke();
     ctx.restore();
   }
   function drawSceneT() {
@@ -1394,7 +1426,7 @@
         if (!on('twoForces')) return false;
         const h = handleB(p);
         if (!h) return false;
-        B.drag = { i: h.i, mode: h.mode, sx: p.x, sy: p.y };
+        B.drag = { i: h.i, mode: h.mode, sx: p.x, sy: p.y, f0: B.F[h.i] };
         hideHint();
         return true;
       }
@@ -1811,7 +1843,7 @@
   // 테스트·디버깅용
   window.__sim = {
     get scene() { return scene; }, A, B, TG, get game() { return game; }, W, H, NPX, TPX, BC, TGX, TY, AX,
-    cartGeo, kidX, kidSide, clayBox, setScene, pullPin, setKids, startTug,
+    cartGeo, kidX, kidSide, clayBox, setScene, pullPin, setKids, startTug, knobPos, hookLocal, hitT,
     setF(f1, f2) { B.F[0] = f1; B.F[1] = f2; },
   };
 })();

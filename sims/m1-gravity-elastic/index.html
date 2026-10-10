@@ -6,8 +6,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#f26b3a">
-  <title>힘의 표현과 평형 | 중학 과학 시뮬레이션</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🪢</text></svg>">
+  <title>중력과 탄성력 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌍</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
@@ -20,16 +20,16 @@
     .stage-toolbar .segmented button { min-height: 40px; padding: 6px 12px; }
     .off { display: none !important; }
     #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
-    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
-    .btn-row .btn { flex: 1 1 0; min-width: 0; min-height: 48px; }
-    .ctrl-note { font-size: 13.5px; color: var(--muted); margin: 2px 0 0; line-height: 1.45; }
+    #ctrlCard .btn-block { min-height: 52px; font-size: 16.5px; }
+    #ctrlCard .btn small { font-weight: 700; opacity: .85; }
+    .ctrl-note { font-size: 13.5px; color: var(--muted); margin: 8px 0 0; line-height: 1.45; }
     .kid-row { display: flex; align-items: center; gap: 10px; }
     .kid-row .lbl { font-weight: 800; font-size: 15.5px; flex: 1; }
-    .kid-row .n { font-family: ui-monospace, Menlo, Consolas, monospace; font-weight: 800; font-size: 19px; min-width: 64px; text-align: center; color: #9a3412; }
+    .kid-row .n { font-family: ui-monospace, Menlo, Consolas, monospace; font-weight: 800; font-size: 19px; min-width: 72px; text-align: center; color: #9a3412; }
     .kid-row .icon-btn { width: 48px; height: 48px; font-size: 22px; font-weight: 800; }
-    .readout .value.r-net { color: #6d28d9; }
+    .readout .value small { margin-left: 3px; }
 
-    /* 실험 결과 표 (가로로 납작하게) */
+    /* 기록 표 (가로로 납작하게) */
     .data-card { flex: none; padding: 8px 12px; display: flex; align-items: center; gap: 12px; }
     .data-head { flex: none; display: flex; flex-direction: column; gap: 2px; font-size: 14.5px; line-height: 1.25; }
     .data-head .n { font-size: 12.5px; color: var(--muted); font-weight: 700; }
@@ -38,15 +38,19 @@
     .data-table th { text-align: left; white-space: nowrap; padding: 2px 10px 2px 2px; color: var(--muted); font-weight: 800; font-size: 13.5px; }
     .data-table td {
       min-width: 62px; text-align: center; padding: 2px 6px; border-left: 1px solid var(--line);
-      font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-weight: 800; white-space: nowrap;
+      font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-weight: 800; white-space: nowrap; color: #15803d;
     }
     .data-table td.empty { color: #c3ccd9; font-weight: 600; }
-    .data-table tr.net td { color: #6d28d9; }
-    .data-table td.fresh { background: #fff4dc; }
+
+    /* 공책의 작은 표 */
+    .mini-table { border-collapse: collapse; width: 100%; font-size: 14px; margin: 6px 0; }
+    .mini-table th, .mini-table td { border: 1px solid var(--line); padding: 5px 8px; text-align: center; vertical-align: middle; }
+    .mini-table tr:first-child th { background: var(--surface-2); }
+    .mini-table th { font-weight: 800; background: #f8fafc; white-space: nowrap; }
     @media (max-width: 599px) {
       .data-card { flex-direction: column; align-items: stretch; gap: 4px; }
       .data-head { flex-direction: row; gap: 8px; align-items: baseline; }
-      .data-table td { min-width: 52px; }
+      .data-table td { min-width: 50px; }
       .toolbar-label small { display: none; }
     }
   </style>
@@ -56,7 +60,7 @@
     <a class="btn btn-sm btn-back" href="../../index.html#g1">←<span> 목록</span></a>
     <div class="sim-title">
       <div class="sim-unit">중1 · Ⅴ. 힘의 작용</div>
-      <h1>힘의 표현과 평형</h1>
+      <h1>중력과 탄성력</h1>
     </div>
     <div class="sim-header-right">
       <div class="star-meter" id="starMeter" title="획득한 별"></div>
@@ -68,37 +72,31 @@
     <div class="stage-col">
       <section class="card stage-card">
         <div class="stage-toolbar">
-          <span class="toolbar-label" id="sceneLabel">🧪 힘 실험대 <small>(옆에서 본 모습)</small></span>
+          <span class="toolbar-label" id="sceneLabel">🌍 지구와 사과</span>
           <span class="spacer"></span>
           <div class="segmented" id="sceneSeg" role="group" aria-label="자유 탐구 장면" hidden>
-            <button type="button" data-scene="A">🧪 실험대</button>
-            <button type="button" data-scene="B">🧊 얼음판</button>
-            <button type="button" data-scene="T">🪢 줄다리기</button>
+            <button type="button" data-scene="G">🌍 중력</button>
+            <button type="button" data-scene="S">🔩 용수철</button>
+            <button type="button" data-scene="W">🌕 질량·무게</button>
           </div>
           <button class="icon-btn" id="resetBtn" type="button" title="처음 상태로" aria-label="처음 상태로">↺</button>
         </div>
         <div class="stage-canvas">
-          <canvas id="cv" aria-label="힘을 화살표로 나타내고 두 힘의 합력과 힘의 평형을 알아보는 실험 화면"></canvas>
+          <canvas id="cv" aria-label="중력의 방향, 용수철의 탄성력, 질량과 무게를 알아보는 실험 화면"></canvas>
           <div class="stage-hint hide" id="stageHint"></div>
         </div>
       </section>
-      <div class="readouts" id="roA">
-        <div class="readout"><span class="label">① 작용점</span><span class="value" id="rP">—</span></div>
-        <div class="readout"><span class="label">② 힘의 방향</span><span class="value" id="rD">—</span></div>
-        <div class="readout"><span class="label">③ 힘의 크기</span><span class="value" id="rF">0<small>N</small></span></div>
+      <div class="readouts" id="ro">
+        <div class="readout"><span class="label" id="r1L">① 작용점</span><span class="value" id="r1V">—</span></div>
+        <div class="readout"><span class="label" id="r2L">② 힘의 방향</span><span class="value" id="r2V">—</span></div>
+        <div class="readout"><span class="label" id="r3L">③ 힘의 크기</span><span class="value" id="r3V">—</span></div>
       </div>
-      <div class="readouts off" id="roT">
-        <div class="readout"><span class="label">왼쪽 팀의 힘</span><span class="value" id="rTL">300<small>N</small></span></div>
-        <div class="readout"><span class="label">오른쪽 팀의 힘</span><span class="value" id="rTR">100<small>N</small></span></div>
-        <div class="readout"><span class="label">합력</span><span class="value r-net" id="rTN">0<small>N</small></span></div>
-      </div>
-      <section class="card data-card off" id="dataCard">
-        <div class="data-head"><b>📋 실험 결과</b><span class="n" id="dataN">기록 0개</span><span class="n">핀을 뺄 때마다 기록</span></div>
+      <section class="card data-card off" id="dataCard" data-feature="record">
+        <div class="data-head"><b>📋 기록</b><span class="n" id="dataN">기록 0/5</span></div>
         <div class="data-scroll">
           <table class="data-table"><tbody>
-            <tr id="rowF1"><th>힘1 (왼쪽 고리)</th></tr>
-            <tr id="rowF2"><th>힘2 (오른쪽 고리)</th></tr>
-            <tr id="rowN" class="net"><th>합력</th></tr>
+            <tr id="rowN"><th>탄성력 (= 추의 무게)</th></tr>
+            <tr id="rowC"><th>늘어난 길이</th></tr>
           </tbody></table>
         </div>
       </section>
@@ -106,22 +104,22 @@
 
     <aside class="side-col">
       <section class="card card-pad" id="ctrlCard" hidden>
-        <div id="ctrlB">
-          <div class="btn-row">
-            <button class="btn btn-primary" id="pinBtn" type="button">▶ 핀 빼기</button>
-            <button class="btn" id="zeroBtn" type="button">↺ 힘 지우기</button>
-          </div>
-          <p class="ctrl-note">주황 화살표 끝의 손잡이를 좌우로 끌어 힘의 크기를 정해요. <b>1칸 = 1 N</b></p>
+        <div id="ctrlS" class="off">
+          <button class="btn btn-primary btn-block" id="recBtn" type="button" disabled>📍 기록하기</button>
+          <p class="ctrl-note">추를 <b>눌러서</b> 용수철에 매달아요. 출렁임이 멈추면 기록 버튼이 켜져요. 매달린 추를 눌러 내릴 수도 있어요.</p>
         </div>
-        <div id="ctrlT" class="off">
+        <div id="ctrlW" class="off">
+          <button class="btn btn-primary btn-block" id="rocketBtn" type="button">🚀 저울을 달로 옮기기</button>
+          <p class="ctrl-note">양팔저울을 통째로 달로 옮겨도 여전히 수평일까요?</p>
+        </div>
+        <div id="ctrlU" class="off">
           <div class="kid-row">
-            <span class="lbl">👧 오른쪽 팀</span>
-            <button class="icon-btn" id="kidMinus" type="button" aria-label="아이 한 명 빼기">−</button>
-            <span class="n" id="kidN">1명</span>
-            <button class="icon-btn" id="kidPlus" type="button" aria-label="아이 한 명 더하기">+</button>
+            <span class="lbl">📦 상자의 무게</span>
+            <button class="icon-btn" id="wMinus" type="button" aria-label="무게 0.5 N 줄이기">−</button>
+            <span class="n" id="wVal">3.0 N</span>
+            <button class="icon-btn" id="wPlus" type="button" aria-label="무게 0.5 N 늘리기">+</button>
           </div>
-          <button class="btn btn-primary btn-block" id="tugBtn" type="button">▶ 시작</button>
-          <p class="ctrl-note">아이 1명이 <b>100 N</b>으로 당겨요. 화면의 빈 자리(＋)를 눌러도 돼요.</p>
+          <p class="ctrl-note">늘어난 길이로 무게를 구해 입력해요. (0.5 N 단위)</p>
         </div>
       </section>
       <section class="card" id="game"></section>
