@@ -934,11 +934,12 @@
   }
   const sMonth = $('#sMonth'), oMonth = $('#oMonth'), playBtn = $('#playBtn'), tCmp = $('#tCmp'), tGlare = $('#tGlare');
   const monthTxt = (v) => { const m = v >= 13 ? 1 : v, mi = Math.min(12, Math.floor(m + 1e-6)), fr = m - mi; return mi + '월 ' + (fr < 0.34 ? '초' : fr < 0.67 ? '중순' : '말'); };
-  const rangeMonth = SciSim.bindRange(sMonth, oMonth, monthTxt, (v) => { setPlaying(false); setMonth(v); });
-  function setMonth(v, instant) {
+  const rangeMonth = SciSim.bindRange(sMonth, oMonth, monthTxt, (v) => { setPlaying(false); setMonth(v, false, true); });
+  function setMonth(v, instant, fromSlider) {
     S.th += sdiff(thOfMonth(v), S.th);
     if (instant) { S.thA = S.th; S.thAV = 0; S.monthShown = monthBits(S.th).mi; }
     S.hint = false;
+    if (!fromSlider) syncSlider();
   }
   const syncSlider = () => rangeMonth.set(clamp(monthF(S.th), 1, 13));
   function setPlaying(p) {

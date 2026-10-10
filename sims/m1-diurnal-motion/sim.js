@@ -1797,7 +1797,7 @@
   function update(dt, t) {
     // 시간 재생
     if (S.playing) {
-      const top = S.scene === 'sky' ? T_MAX : 48;
+      const top = S.scene === 'sky' ? T_MAX : Infinity;
       const nt = Math.min(top, S.t + dt * 0.5);
       setTime(nt, false);
       if (nt >= top - 1e-6) setPlaying(false);

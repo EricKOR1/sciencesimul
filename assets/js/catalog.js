@@ -667,8 +667,7 @@ window.SCI_CATALOG = {
                 "공전하는 지구",
                 "태양의 연주 운동",
                 "관측 계획"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m1-moon-phase",
