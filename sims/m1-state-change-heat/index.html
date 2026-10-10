@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#8b5cf6">
+  <title>상태 변화와 열에너지 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>♨️</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-toolbar { min-height: 61px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+    #resetBtn { font-size: 20px; }
+    .tgl {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px;
+      border: 2px solid var(--line); background: var(--surface); color: var(--muted);
+      border-radius: 999px; padding: 5px 14px; font-weight: 800; font-size: 15px; cursor: pointer;
+    }
+    .tgl[aria-pressed="true"] { color: #b45309; border-color: #fcd34d; background: #fff7e0; }
+    .segmented button { min-height: 44px; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    .ctrl-note { font-size: 13.5px; color: var(--muted); margin: 8px 0 0; line-height: 1.45; }
+    .btn-block { min-height: 52px; font-size: 17px; }
+    .ctrl-row { display: flex; gap: 8px; margin-top: 10px; }
+    .ctrl-row .tgl { flex: 1; }
+    .readout .value.word { font-family: var(--font); font-size: 17px; line-height: 1.5; overflow: hidden; text-overflow: ellipsis; }
+    .mission-figure svg { border-radius: 12px; }
+    @media (max-width: 599px) {
+      .stage-toolbar { min-height: 0; }
+      .segmented button { padding: 6px 10px; font-size: 14px; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="chem">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#g1">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">중1 · Ⅳ. 물질의 상태 변화</div>
+      <h1>상태 변화와 열에너지</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🔥 가열 곡선 그리기</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="sceneSeg" role="group" aria-label="실험 장면" hidden>
+            <button type="button" data-scene="heat">🔥 가열</button>
+            <button type="button" data-scene="cool">❄️ 냉각</button>
+            <button type="button" data-scene="flow">↔️ 열 출입</button>
+            <button type="button" data-scene="life">🏠 생활</button>
+          </div>
+          <button class="icon-btn" id="resetBtn" type="button" title="처음 상태로" aria-label="처음 상태로">↺</button>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="가열 곡선과 냉각 곡선을 그리고 열에너지의 출입을 알아보는 실험 화면"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts" id="readouts">
+        <div class="readout" data-sc="heat cool"><span class="label">온도 (온도계)</span><span class="value" id="rT">-20<small>°C</small></span></div>
+        <div class="readout" data-sc="heat cool"><span class="label">경과 시간</span><span class="value" id="rTime">0.0<small>분</small></span></div>
+        <div class="readout" data-sc="heat cool"><span class="label">현재 상태</span><span class="value word" id="rState">고체 (얼음)</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" data-sc="heat cool">
+          <button class="btn btn-primary btn-block" id="runBtn" type="button">🔥 가열하기</button>
+          <div class="ctrl-row"><button class="tgl" id="fastBtn" type="button" aria-pressed="false">⏩ 빠르게 (×3)</button></div>
+          <p class="ctrl-note" id="runNote"></p>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

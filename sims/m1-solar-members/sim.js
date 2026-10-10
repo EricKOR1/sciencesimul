@@ -198,15 +198,15 @@
 
   const PLANETS = ['mercury', 'venus', 'earth', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune'];
   const PD = {
-    mercury: { au: 0.39, size: 4.2, th0: 38 }, venus: { au: 0.72, size: 6.4, th0: 146 },
-    earth: { au: 1.0, size: 6.8, th0: 228 }, mars: { au: 1.52, size: 5.2, th0: 312 },
-    jupiter: { au: 5.2, size: 14, th0: 58 }, saturn: { au: 9.58, size: 11.5, th0: 168 },
-    uranus: { au: 19.2, size: 8.6, th0: 262 }, neptune: { au: 30.1, size: 8.6, th0: 338 },
+    mercury: { au: 0.39, size: 4.8, th0: 38 }, venus: { au: 0.72, size: 7.2, th0: 146 },
+    earth: { au: 1.0, size: 7.6, th0: 228 }, mars: { au: 1.52, size: 5.8, th0: 312 },
+    jupiter: { au: 5.2, size: 15, th0: 58 }, saturn: { au: 9.58, size: 12.5, th0: 168 },
+    uranus: { au: 19.2, size: 9.4, th0: 262 }, neptune: { au: 30.1, size: 9.4, th0: 338 },
   };
   PLANETS.forEach((id) => { const p = PD[id]; p.rad = AU2R(p.au); p.w = TAU / (EARTH_T * Math.pow(p.au, 1.5)); });
   // 위성: 거리·주기는 보기 좋게 정한 모형 값 (정성적)
   const MOONS = [
-    { id: 'moon', parent: 'earth', d: 13, size: 2.3, per: 2.6, th0: 40 },
+    { id: 'moon', parent: 'earth', d: 14, size: 2.6, per: 2.6, th0: 40 },
     { id: 'io', parent: 'jupiter', d: 20, size: 2.0, per: 1.3, th0: 20 },
     { id: 'europa', parent: 'jupiter', d: 25, size: 1.9, per: 2.6, th0: 140 },
     { id: 'ganymede', parent: 'jupiter', d: 31, size: 2.5, per: 5.2, th0: 250 },
@@ -282,8 +282,9 @@
     keyA: 0, keyMsg: null, flash: null, chips: [], hoverBasket: null,
     lens: null, lensInfo: null, beltFound: false, beltTried: 0,
     cE: 2.2, cDrag: false, cTouched: false, peri: false, outAgain: false,
-    subject: null, apophis: false, mapHint: true,
+    subject: null, apophis: false, mapHint: true, panelT: 1,
   };
+  let lastPanelKey = null;
   const cSpring = new SciSim.Spring(S.cE, { stiffness: 196, damping: 28 });
   let cSpringActive = false;
   const CAM = { x: 0, y: 0, z: 0.92 };
@@ -303,8 +304,8 @@
   const CB = cometBox();
   function presetFor(v) {
     if (v === 'full') return { x: 0, y: 0, z: 0.352 };
-    if (v === 'comet') return { x: CB.cx, y: CB.cy, z: 0.9 * 548 / Math.max(CB.w, CB.h) };
-    if (v === 'jupiter' || v === 'earth') { const p = POS[v]; return { x: p.x, y: p.y, z: v === 'jupiter' ? 2.5 : 2.7 }; }
+    if (v === 'comet') { const L = activeView().L, M = L.main; return { x: CB.cx, y: CB.cy, z: Math.min((M.w - 120) / CB.w, (M.h - 130) / CB.h) / L.zs }; }
+    if (v === 'jupiter' || v === 'earth') { const p = POS[v]; return { x: p.x + (v === 'earth' ? 14 : 0), y: p.y - (v === 'earth' ? 6 : 0), z: v === 'jupiter' ? 3.1 : 2.3 }; }
     return { x: 0, y: 0, z: 0.92 };
   }
   function setView(v, instant) {
@@ -324,7 +325,7 @@
     ['ceres', 'pluto', 'eris'].forEach((id) => { const o = ORB[id]; o.at(kepler(o.M0 + o.n * S.time, o.e), POS[id]); });
     ORB.comet.at(S.cE, POS.comet);
     const e = POS.earth;
-    POS.apophis.x = e.x + 12; POS.apophis.y = e.y - 8;
+    POS.apophis.x = e.x + 34; POS.apophis.y = e.y - 15;
   }
 
   /* =========================================================
@@ -551,41 +552,44 @@
     nightShade(ctx, x, y, r * 1.1, ux, uy, 0.95);
     ctx.restore();
   }
-  // 혜성: 핵 + 코마 + 꼬리 (tx, ty = 꼬리 방향 = 태양 반대쪽)
+  // 부드러운 빛 덩어리 스프라이트 (혜성 코마·꼬리용, 한 번만 만들어 재사용)
+  let GLOW_SPR = null;
+  function glowSprite() {
+    if (GLOW_SPR) return GLOW_SPR;
+    const c = document.createElement('canvas'); c.width = c.height = 64;
+    const g = c.getContext('2d'), gr = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+    gr.addColorStop(0, 'rgba(226,242,255,1)'); gr.addColorStop(0.3, 'rgba(190,224,255,.62)'); gr.addColorStop(0.7, 'rgba(160,205,255,.16)'); gr.addColorStop(1, 'rgba(150,200,255,0)');
+    g.fillStyle = gr; g.fillRect(0, 0, 64, 64);
+    return (GLOW_SPR = c);
+  }
+  // 혜성: 핵 + 코마 + 꼬리 (tx, ty = 꼬리 방향 = 태양 반대쪽). 꼬리는 겹친 빛 덩어리로 부드럽게 퍼지며 끝으로 갈수록 옅어져요.
   function drawComet(ctx, x, y, nucR, comaR, tailLen, tx, ty, t) {
-    const px = -ty, py = tx;
-    const wob = RM ? 0 : Math.sin(t * 2.3) * 0.06;
+    const px = -ty, py = tx, spr = glowSprite();
+    ctx.save(); ctx.globalCompositeOperation = 'lighter';
     if (tailLen > 2) {
-      ctx.save(); ctx.globalCompositeOperation = 'lighter';
-      const ex = x + tx * tailLen, ey = y + ty * tailLen;
-      const w0 = comaR * 1.05, w1 = Math.max(w0 * 1.5, tailLen * (0.27 + wob));
-      let g = ctx.createLinearGradient(x, y, ex, ey);
-      g.addColorStop(0, 'rgba(207,232,255,0.55)'); g.addColorStop(0.45, 'rgba(170,210,255,0.2)'); g.addColorStop(1, 'rgba(150,200,255,0)');
-      ctx.fillStyle = g;
-      ctx.beginPath();
-      ctx.moveTo(x + px * w0, y + py * w0);
-      ctx.quadraticCurveTo(x + tx * tailLen * 0.55 + px * w1 * 0.75, y + ty * tailLen * 0.55 + py * w1 * 0.75, ex + px * w1, ey + py * w1);
-      ctx.lineTo(ex - px * w1, ey - py * w1);
-      ctx.quadraticCurveTo(x + tx * tailLen * 0.55 - px * w1 * 0.75, y + ty * tailLen * 0.55 - py * w1 * 0.75, x - px * w0, y - py * w0);
-      ctx.closePath(); ctx.fill();
-      const L2 = tailLen * 0.9, ix = x + tx * L2, iy = y + ty * L2, v0 = comaR * 0.55, v1 = Math.max(1, tailLen * 0.07);
-      g = ctx.createLinearGradient(x, y, ix, iy);
-      g.addColorStop(0, 'rgba(230,244,255,0.9)'); g.addColorStop(0.5, 'rgba(207,232,255,0.35)'); g.addColorStop(1, 'rgba(207,232,255,0)');
-      ctx.fillStyle = g;
-      ctx.beginPath();
-      ctx.moveTo(x + px * v0, y + py * v0); ctx.lineTo(ix + px * v1, iy + py * v1); ctx.lineTo(ix - px * v1, iy - py * v1); ctx.lineTo(x - px * v0, y - py * v0);
-      ctx.closePath(); ctx.fill();
-      ctx.restore();
+      const N = 26;
+      for (let i = 0; i < N; i++) {
+        const u = i / (N - 1), d = tailLen * Math.pow(u, 1.12);
+        const sway = RM ? 0 : Math.sin(t * 1.2 - u * 3.4) * tailLen * 0.05 * u;
+        const rr = comaR * 0.7 + tailLen * 0.17 * Math.pow(u, 0.78);
+        ctx.globalAlpha = 0.2 * Math.pow(1 - u, 1.45) + 0.012;
+        ctx.drawImage(spr, x + tx * d + px * sway - rr, y + ty * d + py * sway - rr, rr * 2, rr * 2);
+      }
+      // 밝은 중심 줄기
+      const M = 12;
+      for (let i = 0; i < M; i++) {
+        const u = i / (M - 1), d = tailLen * 0.72 * u, rr = comaR * 0.5 + tailLen * 0.05 * u;
+        ctx.globalAlpha = 0.34 * Math.pow(1 - u, 1.2);
+        ctx.drawImage(spr, x + tx * d - rr, y + ty * d - rr, rr * 2, rr * 2);
+      }
     }
-    if (comaR > nucR * 1.3) {
-      ctx.save(); ctx.globalCompositeOperation = 'lighter';
-      const cg = ctx.createRadialGradient(x, y, 0, x, y, comaR * 2.2);
-      cg.addColorStop(0, 'rgba(255,255,255,0.95)'); cg.addColorStop(0.25, 'rgba(207,232,255,0.55)'); cg.addColorStop(1, 'rgba(160,210,255,0)');
-      ctx.fillStyle = cg; circle(ctx, x, y, comaR * 2.2); ctx.fill();
-      ctx.restore();
+    if (comaR > nucR * 1.2) {
+      ctx.globalAlpha = 0.85; const cr = comaR * 2.1;
+      ctx.drawImage(spr, x - cr, y - cr, cr * 2, cr * 2);
     }
-    ctx.fillStyle = '#e8eef8'; circle(ctx, x, y, nucR); ctx.fill();
-    ctx.fillStyle = 'rgba(80,90,110,.6)'; circle(ctx, x - tx * nucR * 0.3 + px * nucR * 0.2, y - ty * nucR * 0.3 + py * nucR * 0.2, nucR * 0.5); ctx.fill();
+    ctx.restore();
+    ctx.fillStyle = '#eef3fb'; circle(ctx, x, y, nucR); ctx.fill();
+    ctx.fillStyle = 'rgba(70,82,105,.55)'; circle(ctx, x - tx * nucR * 0.3 + px * nucR * 0.2, y - ty * nucR * 0.3 + py * nucR * 0.2, nucR * 0.5); ctx.fill();
   }
   // 카드·토큰용 천체 하나 그리기 (ux, uy = 태양 쪽)
   function drawBody(ctx, id, x, y, r, ux, uy, t, o) {
@@ -671,7 +675,7 @@
     const tailLen = 160 * f * Math.min(1.25, Math.pow(X.s / 0.9, 0.55));
     if (cx > M.x - tailLen - 30 && cx < M.x + M.w + tailLen + 30 && cy > M.y - tailLen - 30 && cy < M.y + M.h + tailLen + 30) {
       if (!lens) drawDust(ctx, V, cx, cy, -cd.ux, -cd.uy, tailLen, t);
-      drawComet(ctx, cx, cy, Math.max(1.6, 2.2 * X.k), (2 + 8 * f) * X.k, tailLen, -cd.ux, -cd.uy, t);
+      drawComet(ctx, cx, cy, Math.max(2.4, 2.4 * X.k), Math.max(3.6, (2 + 8 * f) * X.k), tailLen, -cd.ux, -cd.uy, t);
     }
     // 태양
     drawSun(ctx, X.ox, X.oy, SUN_R * X.k, t);
@@ -787,7 +791,7 @@
     ctx.beginPath(); ctx.moveTo(ex + tx * hs, ey + ty * hs); ctx.lineTo(ex - tx * hs * 0.6 - ty * hs, ey - ty * hs * 0.6 + tx * hs); ctx.lineTo(ex - tx * hs * 0.6 + ty * hs, ey - ty * hs * 0.6 - tx * hs); ctx.closePath(); ctx.fill();
 
     // 첫 안내
-    if (S.mapHint && S.scene === 'map' && S.panel === 'card' && on('cards') && !(game && game.free)) {
+    if (S.mapHint && S.scene === 'map' && S.panel === 'card' && on('cards') && game && !game.free && game.level === 0) {
       const txt = '👆 천체를 눌러 카드를 모아 보세요', o = { font: fnt(L, 14, 'bold'), h: Math.round(28 * fs), pad: 11, bg: 'rgba(14,165,233,.94)' };
       pill(ctx, txt, L.mcx, M.y + M.h - 44 * fs, o);
     }
@@ -809,7 +813,15 @@
       }
       // 근일점 표시
       const pp = {}; ORB.comet.at(0, pp);
-      pill(ctx, '태양에 가장 가까운 곳', SX(X, pp) + 14, SY(X, pp) + 22 * fs, { align: 'left', font: fnt(L, 13, 'bold'), h: Math.round(20 * fs), bg: 'rgba(10,16,40,.86)', color: '#bfefff', stroke: 'rgba(150,226,255,.45)' });
+      {
+        const po = { font: fnt(L, 13, 'bold'), h: Math.round(20 * fs), bg: 'rgba(10,16,40,.86)', color: '#bfefff', stroke: 'rgba(150,226,255,.45)' };
+        const pw = pillWidth(ctx, '근일점', po), ppx = SX(X, pp), ppy = SY(X, pp);
+        const dx = ppx - X.ox, dy = ppy - X.oy, dl = Math.hypot(dx, dy) || 1, ux = dx / dl, uy = dy / dl;
+        // 근일점 표시점 + 태양 바깥쪽으로 알약
+        ctx.strokeStyle = 'rgba(150,226,255,.9)'; ctx.lineWidth = 2; circle(ctx, ppx, ppy, 5 + 1.5 * Math.sin(t * 4)); ctx.stroke();
+        const lx = clamp(ppx + ux * (26 + pw / 2 * Math.abs(ux)), M.x + pw / 2 + 6, M.x + M.w - pw / 2 - 6), ly = clamp(ppy + uy * 26 + 6, M.y + 60, M.y + M.h - 44);
+        pill(ctx, '근일점', lx, ly, po);
+      }
       ctx.font = fnt(L, 13, 'bold'); ctx.fillStyle = '#fdba74'; ctx.textAlign = 'center';
       const ja = -2.25, jx = X.ox + Math.cos(ja) * R_JUP * X.s, jy = X.oy - Math.sin(ja) * R_JUP * X.s;
       pill(ctx, '목성 궤도', jx, jy, { font: fnt(L, 13, 'bold'), h: Math.round(20 * fs), bg: 'rgba(40,20,6,.85)', color: '#fdba74', stroke: 'rgba(251,146,60,.5)' });
@@ -821,29 +833,55 @@
     ctx.restore();
   }
 
+  const LABRECTS = [];
   function drawLabels(ctx, L, X, t) {
     const fs = L.fs, h = Math.round(20 * fs), M = L.main;
     const o = { font: fnt(L, 13, 'bold'), h, pad: Math.round(7 * fs), bg: 'rgba(6,10,26,.74)', color: '#e6eeff' };
     const full = CAM.z < 0.6, zoomed = CAM.z > 1.5;
+    const placed = LABRECTS; placed.length = 0;
+    // 이미 놓인 이름표와 겹치면 아래·위로 비켜 놓기
+    const fit = (cx, cy, w, tries) => {
+      for (let k = 0; k < (tries || 4); k++) {
+        let hit = false;
+        for (let i = 0; i < placed.length; i += 4) {
+          if (Math.abs(cx - placed[i]) < (w + placed[i + 2]) / 2 + 2 && Math.abs(cy - placed[i + 1]) < h + 2) { hit = true; break; }
+        }
+        if (!hit) break;
+        cy += (k % 2 === 0 ? 1 : -1) * (h + 3) * (k + 2 >> 1);
+      }
+      placed.push(cx, cy, w, h);
+      return cy;
+    };
     const lab = (txt, x, y, r, extra) => {
       if (x < M.x - 20 || x > M.x + M.w + 20 || y < M.y - 20 || y > M.y + M.h + 20) return;
       const oo = extra ? Object.assign({}, o, extra) : o;
-      const w = pillWidth(ctx, txt, oo);
-      pill(ctx, txt, clamp(x, M.x + w / 2 + 4, M.x + M.w - w / 2 - 4), Math.min(y + r + 5 + h / 2, M.y + M.h - h), oo);
+      const w = pillWidth(ctx, txt, oo), cx = clamp(x, M.x + w / 2 + 4, M.x + M.w - w / 2 - 4);
+      const cy = fit(cx, Math.min(y + r + 5 + h / 2, M.y + M.h - h), w);
+      pill(ctx, txt, cx, cy, oo);
     };
     const hidden = (id) => S.subject === id && game && game.phase === 'active';
+    // 천체 바깥쪽(중심 cx,cy 반대 방향)에 이름표를 달아 겹치지 않게 함
+    const labOut = (txt, x, y, r, cx, cy, extra) => {
+      const oo = Object.assign({}, o, extra), w = pillWidth(ctx, txt, oo);
+      const a = Math.atan2(y - cy, x - cx), ca = Math.cos(a), sa = Math.sin(a);
+      const lx = x + ca * (r + 7 + w / 2 * Math.abs(ca)), ly = y + sa * (r + 7 + h / 2 * Math.abs(sa) + 4);
+      if (lx < M.x - 20 || lx > M.x + M.w + 20 || ly < M.y - 20 || ly > M.y + M.h + 20) return;
+      const px2 = clamp(lx, M.x + w / 2 + 4, M.x + M.w - w / 2 - 4);
+      pill(ctx, txt, px2, fit(px2, clamp(ly, M.y + h, M.y + M.h - h), w), oo);
+    };
     if (!full) lab('태양', X.ox, X.oy, SUN_R * X.k + 2, { color: '#ffe7a3' });
     for (const id of PLANETS) {
       if (full && (id === 'mercury' || id === 'venus' || id === 'mars' || id === 'earth')) continue;
+      if (id === 'jupiter' && S.view === 'jupiter') continue;
       const p = POS[id];
       lab(BODY[id].name, SX(X, p), SY(X, p), PD[id].size * X.k * (BODY[id].ring ? 0.9 : 1));
     }
     if (!full) {
       const m = MOONS[0]; moonScreen(X, m, tmpP);
-      if (zoomed) lab('달', tmpP.x, tmpP.y, m.size * X.k, { bg: 'rgba(6,10,26,.6)' });
+      if (zoomed) labOut('달', tmpP.x, tmpP.y, m.size * X.k, SX(X, POS.earth), SY(X, POS.earth), { bg: 'rgba(6,10,26,.6)' });
       lab('세레스', SX(X, POS.ceres), SY(X, POS.ceres), DWARF_SIZE.ceres * X.k);
     }
-    if (zoomed && S.view === 'jupiter') MOONS.slice(1).forEach((m) => { moonScreen(X, m, tmpP); lab(hidden(m.id) ? '❓ 새 천체' : BODY[m.id].name, tmpP.x, tmpP.y, m.size * X.k, { bg: 'rgba(6,10,26,.6)' }); });
+    if (zoomed && S.view === 'jupiter') MOONS.slice(1).forEach((m) => { moonScreen(X, m, tmpP); labOut(hidden(m.id) ? '❓ 새 천체' : BODY[m.id].name, tmpP.x, tmpP.y, m.size * X.k, SX(X, POS.jupiter), SY(X, POS.jupiter), { bg: 'rgba(6,10,26,.6)' }); });
     ['pluto', 'eris'].forEach((id) => { const p = POS[id]; lab(hidden(id) ? '❓ 새 천체' : BODY[id].name, SX(X, p), SY(X, p), DWARF_SIZE[id] * X.k); });
     const cp = POS.comet;
     lab('혜성', SX(X, cp), SY(X, cp), 6);
@@ -1135,7 +1173,7 @@
   const EDGES = [['q1', 'b:moon', '행성 둘레'], ['q1', 'q2', '태양 둘레'], ['q2', 'q2b', '아니요'], ['q2', 'q3', '예'], ['q2b', 'b:comet', '예'], ['q2b', 'b:asteroid', '아니요'], ['q3', 'b:planet', '예'], ['q3', 'b:dwarf', '아니요']];
   const BRANCH_OF_EDGE = { 'q1>b:moon': 'planet', 'q1>q2': 'sun', 'q2>q2b': 'no', 'q2>q3': 'yes', 'q2b>b:comet': 'yes', 'q2b>b:asteroid': 'no', 'q3>b:planet': 'yes', 'q3>b:dwarf': 'no' };
   const HOP = 0.3;
-  const CARDS = SORT.map((c, i) => Object.assign({ slot: i, where: 'tray', basket: null, sx: new SciSim.Spring(0, { stiffness: 196, damping: 28 }), sy: new SciSim.Spring(0, { stiffness: 196, damping: 28 }), dragL: null, anim: null, ret: null, bounceT: 0, shakeT: 0 }, c));
+  const CARDS = SORT.map((c, i) => Object.assign({ cid: i, slot: i, where: 'tray', basket: null, sx: new SciSim.Spring(0, { stiffness: 196, damping: 28 }), sy: new SciSim.Spring(0, { stiffness: 196, damping: 28 }), dragL: null, anim: null, ret: null, bounceT: 0, shakeT: 0 }, c));
 
   function keyGeo(L) {
     if (L._key) return L._key;
@@ -1198,7 +1236,7 @@
   }
   function resetCards() {
     CARDS.forEach((c) => { c.where = 'tray'; c.basket = null; c.anim = null; c.ret = null; c.placedAt = 0; });
-    S.chips = []; S.flash = null; S.keyMsg = null;
+    S.chips = []; S.flash = null; S.keyMsg = null; S.sortTouched = false;
   }
   function placeAll() {
     let n = 0;
@@ -1208,10 +1246,14 @@
       c.anim = null; c.ret = null;
     });
   }
+  // 바구니 안 자리 번호: 이미 들어간 카드 + 마지막 칸을 지나는 카드 수
+  function seatCount(basket, except) {
+    return CARDS.filter((d) => d !== except && ((d.where === 'placed' && d.basket === basket) || (d.where === 'path' && d.anim.basket === basket && d.anim.k >= d.anim.steps.length))).length;
+  }
   function startPath(c, basket, L, x, y) {
-    S.chips = [];
-    c.where = 'path';
-    c.anim = { steps: PATHS[basket], basket, k: 0, u: 0, pause: 0, from: { L: L.key, x, y }, fail: false, slotIdx: CARDS.filter((d) => d.where === 'placed' && d.basket === basket).length };
+    S.chips = S.chips.filter((ch) => ch.cid !== c.cid);
+    c.where = 'path'; S.sortTouched = true;
+    c.anim = { steps: PATHS[basket], basket, k: 0, u: 0, pause: 0, from: { L: L.key, x, y }, fail: false, slotIdx: 0 };
     Sound.click();
   }
   function startReturn(c, L, from) {
@@ -1232,8 +1274,8 @@
     const [node, branch] = A.steps[A.k];
     const truth = c.ans[node];
     const ok = truth === branch;
-    S.chips.push({ node, text: c.chip[node], ok, t0: nowS() });
-    if (ok) { Sound.tick(); A.pause = 0.22; A.next = true; }
+    S.chips.push({ cid: c.cid, node, text: c.chip[node], ok, t0: nowS() });
+    if (ok) { Sound.tick(); A.pause = 0.13; A.next = true; }
     else {
       A.fail = true; A.pause = 0.95;
       c.shakeT = nowS();
@@ -1251,7 +1293,7 @@
           A.pause -= dt;
           if (A.pause <= 0) {
             if (A.fail) { const V = activeView(); const p = cardPos(V.L, c); startReturn(c, V.L, p); }
-            else { A.k++; A.u = 0; }
+            else { A.k++; A.u = 0; A.next = false; if (A.k >= A.steps.length) A.slotIdx = seatCount(A.basket, c); }
           }
           return;
         }
@@ -1279,10 +1321,13 @@
     ctx.strokeStyle = 'rgba(160,190,255,.4)'; ctx.lineWidth = 1.5; ctx.stroke();
     ctx.textAlign = 'left'; ctx.fillStyle = '#fff'; ctx.font = dfnt(L, 20);
     ctx.fillText('🔑 분류 열쇠', G.x0 + 14, G.y0 + 30 * fs);
-    // 지금 움직이는 카드의 경로
-    const moving = CARDS.find((c) => c.where === 'path');
+    // 지금 움직이는 카드들의 경로
     const onPath = {};
-    if (moving) { const st = moving.anim.steps; st.forEach((s, i) => { const to = i + 1 < st.length ? st[i + 1][0] : 'b:' + moving.anim.basket; onPath[s[0] + '>' + to] = i < moving.anim.k || (i === moving.anim.k && moving.anim.next) ? 2 : 1; }); }
+    CARDS.forEach((mv) => {
+      if (mv.where !== 'path') return;
+      const st = mv.anim.steps;
+      st.forEach((s, i) => { const to = i + 1 < st.length ? st[i + 1][0] : 'b:' + mv.anim.basket; onPath[s[0] + '>' + to] = i < mv.anim.k || (i === mv.anim.k && mv.anim.next) ? 2 : (onPath[s[0] + '>' + to] || 1); });
+    });
     // 화살표
     EDGES.forEach(([f, to, lab]) => {
       const A = G.nodes[f], B = G.nodes[to];
@@ -1321,7 +1366,10 @@
       ctx.fillStyle = bg; ctx.fill();
       ctx.strokeStyle = hov ? '#5eead4' : SciSim.color.rgba(K.col, 0.85); ctx.lineWidth = hov ? 3 : 1.8; ctx.stroke();
       ctx.fillStyle = 'rgba(255,255,255,.08)'; ctx.fillRect(x + 6, N.top + 4, N.w - 12, 3);
-      ctx.textAlign = 'center'; ctx.font = fnt(L, 14, 'bold'); ctx.fillStyle = '#fff';
+      ctx.textAlign = 'center'; ctx.fillStyle = '#fff';
+      let bf = 14 * L.fs; ctx.font = 'bold ' + bf.toFixed(1) + 'px ' + FONT;
+      const bw = ctx.measureText(K.icon + ' ' + K.name).width;
+      if (bw > N.w - 8) { bf = Math.max(11, bf * (N.w - 8) / bw); ctx.font = 'bold ' + bf.toFixed(1) + 'px ' + FONT; }
       ctx.fillText(K.icon + ' ' + K.name, N.cx, N.bottom - 10 * Math.min(fs, 1.1));
     });
     // 답 칩
@@ -1395,13 +1443,25 @@
     void K;
     ctx.restore();
   }
+  function drawSortHint(ctx, L) {
+    const c0 = CARDS[0];
+    if (S.sortTouched || S.scene !== 'key' || S.keyA < 0.7 || !on('sorter') || c0.where !== 'tray') return;
+    const s = slotPos(L, 0), T = L.tok, pu = RM ? 0.5 : 0.5 + 0.5 * Math.sin(nowS() * 4.2);
+    ctx.save();
+    ctx.setLineDash([6, 4]); ctx.strokeStyle = 'rgba(94,234,212,' + (0.45 + 0.5 * pu) + ')'; ctx.lineWidth = 2.5;
+    roundRect(ctx, s.x - T.w / 2 - 4 - pu * 2, s.y - T.h / 2 - 4 - pu * 2, T.w + 8 + pu * 4, T.h + 8 + pu * 4, 15); ctx.stroke();
+    ctx.restore();
+    if (L.col) pill(ctx, '👆 끌어 보세요', s.x + T.w / 2 - 8, s.y, { align: 'right', font: fnt(L, 13, 'bold'), h: Math.round(24 * L.fs), bg: 'rgba(14,165,233,.96)' });
+  }
+  const ORDER_WHERE = { placed: 0, tray: 1, return: 2, path: 3, drag: 4 };
+  const TOKEN_SORT = (a, b) => ORDER_WHERE[a.where] - ORDER_WHERE[b.where];
   function drawTokens(ctx, L, t) {
     // 바구니 안 → 쟁반 → 움직이는 카드 → 끄는 카드 순서
-    const order = { placed: 0, tray: 1, return: 2, path: 3, drag: 4 };
-    CARDS.slice().sort((a, b) => order[a.where] - order[b.where]).forEach((c) => {
+    CARDS.slice().sort(TOKEN_SORT).forEach((c) => {
       const p = cardPos(L, c);
       drawToken(ctx, L, c, p.x, p.y, p.mini, c.where === 'drag' ? 1 : 0, t);
     });
+    drawSortHint(ctx, L);
   }
 
   /* =========================================================
@@ -1411,11 +1471,19 @@
     const { v, L } = V, ctx = v.ctx;
     v.clear('#070d1f');
     drawMap(ctx, L, t, V);
-    if (S.keyA > 0.01) drawKey(ctx, L, t);
+    if (S.keyA > 0.01) {
+      const M = L.main;
+      ctx.fillStyle = 'rgba(7,13,31,' + (0.93 * S.keyA) + ')'; ctx.fillRect(M.x, M.y, M.w, M.h);
+      drawKey(ctx, L, t);
+    }
     if (S.scene === 'key') drawTrayPanel(ctx, L, t);
     else if (S.panel === 'lens') drawLensPanel(ctx, L, t, V);
     else if (S.panel === 'comet') drawCometPanel(ctx, L, t);
     else drawCardPanel(ctx, L, t);
+    if (S.panelT < 0.995) { // 오른쪽 창이 바뀔 때 부드럽게 나타남
+      const P = L.panel;
+      ctx.fillStyle = 'rgba(7,13,31,' + ((1 - S.panelT) * 0.96) + ')'; roundRect(ctx, P.x, P.y, P.w, P.h, 14); ctx.fill();
+    }
     if (S.scene === 'key' || CARDS.some((c) => c.where === 'path' || c.where === 'return' || c.where === 'drag')) drawTokens(ctx, L, t);
     V.P.draw(ctx);
   }
@@ -1456,6 +1524,12 @@
     $('#ctrlCard').hidden = !any;
   }
 
+  function showSubject(id) {
+    S.subject = id; S.card = id; S.selRock = -1;
+    S.cardA.s = 0.85; S.cardA.a = 0;
+    SciSim.tween(S.cardA, { s: 1 }, { duration: 0.25, ease: 'outBack' });
+    SciSim.tween(S.cardA, { a: 1 }, { duration: 0.2, ease: 'outCubic' });
+  }
   function openCard(id, rockIdx) {
     const fresh = S.card !== id;
     S.card = id; S.selRock = rockIdx == null ? -1 : rockIdx;
@@ -1543,9 +1617,9 @@
         if (S.scene === 'key') {
           if (!on('sorter')) return false;
           const c = tokenHit(L, p);
-          if (!c || CARDS.some((d) => d.where === 'path')) return false;
+          if (!c) return false;
           const s = slotPos(L, c.slot);
-          c.where = 'drag'; c.dragL = L.key;
+          c.where = 'drag'; c.dragL = L.key; S.sortTouched = true;
           c.sx.value = s.x; c.sy.value = s.y; c.sx.velocity = c.sy.velocity = 0;
           c.grab = { x: p.x - s.x, y: p.y - s.y };
           c.sx.target = s.x; c.sy.target = s.y;
@@ -1613,7 +1687,8 @@
         const tc = e.touches[0];
         if (!tc) return;
         const p = v.toLocal(tc);
-        if ((S.scene === 'key' && tokenHit(L, p)) || (S.scene === 'map' && cometHit(L, p) && (S.panel === 'comet' || (game && game.free)))) e.preventDefault();
+        // pointerdown은 touchstart보다 먼저 일어나므로, 이미 끌기가 시작됐으면(drag) 페이지 스크롤을 막아요
+        if (drag || (S.scene === 'key' && tokenHit(L, p)) || (S.scene === 'map' && cometHit(L, p) && (S.panel === 'comet' || (game && game.free)))) e.preventDefault();
       }, { passive: false });
     }
   }
@@ -1665,31 +1740,39 @@
     return s + '</svg>';
   })();
   FIG.tail = (function () {
-    const W = 330, H = 176, cx = 196, cy = 92, a = 136, b = 62, c = Math.sqrt(a * a - b * b), sx = cx - c, sy = cy;
-    let s = SVG_OPEN(W, H, '타원 궤도의 세 곳에 있는 혜성과 움직이는 방향') + '<defs><radialGradient id="fgS"><stop offset="0" stop-color="#fff3c4"/><stop offset=".55" stop-color="#ffbf47"/><stop offset="1" stop-color="#ff9a2e" stop-opacity="0"/></radialGradient>';
-    s += '<linearGradient id="fgT" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#e6f4ff" stop-opacity=".95"/><stop offset="1" stop-color="#9fd3ff" stop-opacity="0"/></linearGradient>';
-    s += '<marker id="fgA" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#fde68a"/></marker></defs>';
+    // 궤도 위 세 곳 (가)~(다): 꼬리는 늘 태양 반대쪽, 노란 화살표는 움직이는 방향
+    const W = 360, H = 244, cx = 196, cy = 100, a = 146, b = 74, c = Math.sqrt(a * a - b * b), sx = cx - c, sy = cy;
+    let s = SVG_OPEN(W, H, '타원 궤도의 세 곳에 있는 혜성, 움직이는 방향과 꼬리') + '<defs>';
+    s += '<radialGradient id="fgS"><stop offset="0" stop-color="#fff3c4"/><stop offset=".5" stop-color="#ffbf47"/><stop offset="1" stop-color="#ff9a2e" stop-opacity="0"/></radialGradient>';
+    s += '<filter id="fgB" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="2.4"/></filter>';
+    s += '<marker id="fgA" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#fde68a"/></marker></defs>';
     s += '<rect width="' + W + '" height="' + H + '" rx="12" fill="#0e1838"/>';
+    const st = rng(31);
+    for (let i = 0; i < 26; i++) s += '<circle cx="' + (st() * W).toFixed(0) + '" cy="' + (st() * H).toFixed(0) + '" r="' + (0.5 + st() * 0.9).toFixed(1) + '" fill="#fff" opacity="' + (0.25 + st() * 0.4).toFixed(2) + '"/>';
     s += '<ellipse cx="' + cx + '" cy="' + cy + '" rx="' + a + '" ry="' + b + '" fill="none" stroke="#96e2ff" stroke-opacity=".5" stroke-dasharray="4 5"/>';
-    s += '<circle cx="' + sx + '" cy="' + sy + '" r="22" fill="url(#fgS)"/><circle cx="' + sx + '" cy="' + sy + '" r="9" fill="#ffcf5a"/>';
-    s += '<text x="' + sx + '" y="' + (sy + 36) + '" text-anchor="middle" font-size="13" font-weight="800" fill="#ffd36b">태양</text>';
-    const pts = [[2.15, '(가)'], [Math.PI + 0.0001 + 2.6, '(나)'], [-0.9 + TAU, '(다)']];
-    // E: 이심 이각. 화면 좌표 (y 아래쪽), 운동 방향 = 시계 반대(화면에서 위→왼쪽→아래→오른쪽)
-    [[2.0, '(가)'], [3.75, '(나)'], [4.75, '(다)']].forEach(([E, lab]) => {
-      const x = cx + a * Math.cos(E), y = cy - b * Math.sin(E);
-      const vx = -a * Math.sin(E), vy = -b * Math.cos(E), vl = Math.hypot(vx, vy);
-      const tx = (x - sx), ty = (y - sy), tl = Math.hypot(tx, ty);
-      const len = Math.min(70, 2600 / tl), ux = tx / tl, uy = ty / tl, px = -uy, py = ux;
-      const ex = x + ux * len, ey = y + uy * len, w = len * 0.22;
-      s += '<path d="M' + (x + px * 3).toFixed(1) + ',' + (y + py * 3).toFixed(1) + ' L' + (ex + px * w).toFixed(1) + ',' + (ey + py * w).toFixed(1) + ' L' + (ex - px * w).toFixed(1) + ',' + (ey - py * w).toFixed(1) + ' L' + (x - px * 3).toFixed(1) + ',' + (y - py * 3).toFixed(1) + ' Z" fill="url(#fgT)" transform="rotate(0)" style="fill:#d7ecff;opacity:.55"/>';
-      s += '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="4.5" fill="#fff"/>';
-      const ax = x + vx / vl * 26, ay = y + vy / vl * 26;
-      s += '<line x1="' + x.toFixed(1) + '" y1="' + y.toFixed(1) + '" x2="' + ax.toFixed(1) + '" y2="' + ay.toFixed(1) + '" stroke="#fde68a" stroke-width="2.2" marker-end="url(#fgA)"/>';
-      s += '<text x="' + (x - ux * 18 + (lab === '(가)' ? 0 : 0)).toFixed(1) + '" y="' + (y - uy * 18 + 5).toFixed(1) + '" text-anchor="middle" font-size="13" font-weight="800" fill="#fff">' + lab + '</text>';
+    s += '<circle cx="' + sx.toFixed(1) + '" cy="' + sy + '" r="26" fill="url(#fgS)"/><circle cx="' + sx.toFixed(1) + '" cy="' + sy + '" r="10" fill="#ffcf5a"/>';
+    s += '<text x="' + sx.toFixed(1) + '" y="' + (sy - 22) + '" text-anchor="middle" font-size="14" font-weight="800" fill="#ffd36b">태양</text>';
+    // 타원 위의 점: 중심 기준 각 φ (화면에서 반시계로 움직임)
+    [[0.85, '(가)', 44], [3.62, '(나)', 78], [4.78, '(다)', 58]].forEach(([ph, lab, len]) => {
+      const x = cx + a * Math.cos(ph), y = cy - b * Math.sin(ph);
+      const vx = -a * Math.sin(ph), vy = -b * Math.cos(ph), vl = Math.hypot(vx, vy);
+      const tx = x - sx, ty = y - sy, tl = Math.hypot(tx, ty), ux = tx / tl, uy = ty / tl, qx = -uy, qy = ux;
+      const ex = x + ux * len, ey = y + uy * len, w = len * 0.2 + 3;
+      // 꼬리 (부드러운 번짐)
+      s += '<linearGradient id="fgT' + lab.charCodeAt(1) + '" gradientUnits="userSpaceOnUse" x1="' + x.toFixed(1) + '" y1="' + y.toFixed(1) + '" x2="' + ex.toFixed(1) + '" y2="' + ey.toFixed(1) + '"><stop offset="0" stop-color="#eaf5ff" stop-opacity=".95"/><stop offset=".55" stop-color="#bfe0ff" stop-opacity=".45"/><stop offset="1" stop-color="#9fd0ff" stop-opacity="0"/></linearGradient>';
+      s += '<g filter="url(#fgB)"><path d="M' + (x + qx * 3.5).toFixed(1) + ',' + (y + qy * 3.5).toFixed(1) + ' L' + (ex + qx * w).toFixed(1) + ',' + (ey + qy * w).toFixed(1) + ' L' + (ex - qx * w).toFixed(1) + ',' + (ey - qy * w).toFixed(1) + ' L' + (x - qx * 3.5).toFixed(1) + ',' + (y - qy * 3.5).toFixed(1) + ' Z" fill="url(#fgT' + lab.charCodeAt(1) + ')"/></g>';
+      s += '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="5.5" fill="#fff"/><circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="11" fill="#cfe8ff" opacity=".28"/>';
+      // 움직이는 방향 화살표
+      const ax = x + vx / vl * 30, ay = y + vy / vl * 30;
+      s += '<line x1="' + x.toFixed(1) + '" y1="' + y.toFixed(1) + '" x2="' + ax.toFixed(1) + '" y2="' + ay.toFixed(1) + '" stroke="#fde68a" stroke-width="2.4" stroke-linecap="round" marker-end="url(#fgA)"/>';
+      // 이름표: 꼬리·화살표의 반대쪽 위쪽 모서리에
+      const lx = x - ux * 2 + (vy / vl) * 0, ly = y;
+      const side = (qy * 1 > 0 ? -1 : 1);
+      s += '<text x="' + (x + qx * 24 * side * -1 * -1).toFixed(1) + '" y="' + (y + qy * 24 * side + 5).toFixed(1) + '" text-anchor="middle" font-size="14" font-weight="800" fill="#fff" stroke="#0e1838" stroke-width="3" paint-order="stroke">' + lab + '</text>';
+      void lx; void ly;
     });
-    void pts;
-    s += '<line x1="16" y1="160" x2="38" y2="160" stroke="#fde68a" stroke-width="2.2" marker-end="url(#fgA)"/><text x="44" y="165" font-size="13" font-weight="700" fill="#fde68a">움직이는 방향</text>';
-    s += '<rect x="150" y="155" width="22" height="9" rx="4" fill="#d7ecff" opacity=".7"/><text x="178" y="165" font-size="13" font-weight="700" fill="#d7ecff">꼬리</text>';
+    s += '<line x1="14" y1="228" x2="40" y2="228" stroke="#fde68a" stroke-width="2.4" stroke-linecap="round" marker-end="url(#fgA)"/><text x="48" y="233" font-size="13" font-weight="700" fill="#fde68a">움직이는 방향</text>';
+    s += '<g filter="url(#fgB)"><rect x="168" y="223" width="26" height="9" rx="4.5" fill="#cfe8ff" opacity=".8"/></g><text x="202" y="233" font-size="13" font-weight="700" fill="#d7ecff">혜성의 꼬리</text>';
     return s + '</svg>';
   })();
   function journal(no, title, body, mini) {
@@ -1753,8 +1836,13 @@
       if (!set.has('map')) setPlaying(false);
       syncControls();
     },
-    onMissionStart() { S.subject = null; S.apophis = false; S.beltHint = false; },
+    onMissionStart() { if (S.subject && S.card === S.subject) S.card = null; S.subject = null; S.apophis = false; S.beltHint = false; },
     onHint(m) { if (m.beltHint) S.beltHint = true; },
+    onComplete() {
+      if (S.subject && S.card === S.subject) S.card = null;
+      S.subject = null; S.apophis = false; S.panel = 'card'; S.beltHint = false;
+      setPlaying(false); setScene('map'); setView('inner');
+    },
     levels: [
       /* ---------- 1단계 · 관찰 ---------- */
       {
@@ -1782,12 +1870,12 @@
             title: '✨ 스스로 빛나는 천체',
             goal: '태양계의 천체 중 <b>스스로 빛을 내는</b> 천체는 무엇일까요?',
             setup() { S.panel = 'card'; setScene('map'); },
-            choices: ['태양', '목성 — 가장 큰 행성이라서', '달 — 밤하늘에서 가장 밝아서', '혜성 — 꼬리가 빛나서'],
-            answer: 0,
+            choices: ['목성 — 가장 큰 행성이라서', '달 — 밤하늘에서 가장 밝아서', '태양', '혜성 — 꼬리가 빛나서'],
+            answer: 2,
             feedback: [
-              '',
               '목성은 크지만 스스로 빛을 내지 못해요. <b>햇빛을 반사</b>해서 밝게 보여요.',
               '달이 밝은 까닭은 <b>햇빛을 반사</b>하기 때문이에요. 스스로 빛을 내지는 못해요.',
+              '',
               '혜성의 꼬리도 <b>햇빛을 받아</b> 빛나는 거예요. 스스로 빛을 내지는 못해요.',
             ],
             explain: '태양은 태양계에서 <b>유일하게 스스로 빛을 내는 별</b>이에요. 태양계 전체 질량의 약 <b>99.8 %</b>를 차지해요. 행성·위성·혜성은 햇빛을 반사해서 밝게 보여요.',
@@ -1826,11 +1914,11 @@
             goal: '목성의 <b>가니메데</b>(지름 5,268 km)는 행성인 <b>수성</b>(지름 4,879 km)보다 커요. 그런데도 가니메데가 <b>위성</b>인 까닭은?',
             figure: FIG.size,
             setup() { S.panel = 'tray'; setScene('key'); placeAll(); },
-            choices: ['목성 둘레를 돌기 때문에', '스스로 빛을 내지 못해서', '둥근 모양이 아니어서', '크기가 작아서'],
-            answer: 0,
+            choices: ['스스로 빛을 내지 못해서', '목성 둘레를 돌기 때문에', '둥근 모양이 아니어서', '크기가 작아서'],
+            answer: 1,
             feedback: [
-              '',
               '행성도 스스로 빛을 내지 못해요. 빛은 분류 기준이 아니에요.',
+              '',
               '가니메데는 <b>둥근</b> 천체예요. 분류 열쇠의 첫 질문을 다시 보세요.',
               '가니메데는 수성보다 <b>커요</b>! 크기는 분류 기준이 아니에요.',
             ],
@@ -1842,13 +1930,13 @@
             goal: '명왕성은 예전에 행성으로 불렸지만, 지금은 <b>왜소행성</b>으로 분류해요. 그 까닭은?',
             figure: FIG.pluto,
             setup() { S.panel = 'tray'; setScene('key'); placeAll(); },
-            choices: ['태양 둘레를 돌고 둥글지만, 궤도 주변의 다른 천체를 치우지 못해서', '태양 둘레를 돌지 않아서', '둥근 모양이 아니어서', '위성이 없어서'],
-            answer: 0,
+            choices: ['태양 둘레를 돌지 않아서', '둥근 모양이 아니어서', '위성이 없어서', '태양 둘레를 돌고 둥글지만, 궤도 주변의 다른 천체를 치우지 못해서'],
+            answer: 3,
             feedback: [
-              '',
               '명왕성은 <b>태양 둘레</b>를 돌아요.',
               '명왕성은 <b>둥근</b> 모양이에요.',
               '명왕성에도 위성이 있어요. 위성이 있는지는 분류 기준이 아니에요.',
+              '',
             ],
             explain: '명왕성은 태양 둘레를 돌고 둥글지만, 궤도 주변에 비슷한 천체가 많아 <b>궤도 주변을 치우지 못했어요</b>. 그래서 <b>2006년 국제천문연맹</b>이 왜소행성으로 분류했어요. 명왕성이 사라진 게 아니라 <b>분류만 바뀐</b> 거예요.',
           },
@@ -1901,12 +1989,12 @@
             goal: '그림은 궤도의 세 곳 (가)~(다)에 있는 혜성과 움직이는 방향이에요. 혜성의 꼬리는 어느 쪽을 향할까요?',
             figure: FIG.tail,
             setup() { S.panel = 'comet'; setScene('map'); setView('comet'); setPlaying(true); },
-            choices: ['항상 태양 반대쪽을 향한다', '항상 움직이는 방향의 뒤쪽을 향한다', '항상 화면의 아래쪽을 향한다', '항상 태양 쪽을 향한다'],
-            answer: 0,
+            choices: ['항상 움직이는 방향의 뒤쪽을 향한다', '항상 화면의 아래쪽을 향한다', '항상 태양 반대쪽을 향한다', '항상 태양 쪽을 향한다'],
+            answer: 2,
             feedback: [
-              '',
               '자동차 배기가스처럼 뒤로 끌리는 게 아니에요. (다)처럼 태양에서 <b>멀어질 때는 꼬리가 앞장서요</b>.',
               '우주에는 위아래가 없어요. 꼬리의 방향은 <b>태양의 위치</b>로 정해져요.',
+              '',
               '꼬리는 태양 쪽에서 밀려나 태양 <b>반대쪽</b>으로 뻗어요. 지도에서 혜성을 다시 살펴보세요.',
             ],
             explain: '혜성의 꼬리는 늘 <b>태양 반대쪽</b>을 향해요. 그래서 태양에 다가갈 때는 꼬리가 뒤에 있지만, 태양에서 <b>멀어질 때는 꼬리가 혜성보다 앞장서요</b>.',
@@ -1931,7 +2019,7 @@
             title: '🛰️ 탐사 일지 ① 에리스',
             goal: '<b>에리스</b>: 해왕성 바깥에서 <b>태양 둘레</b>를 돌고, <b>둥근</b> 모양이에요. 궤도 주변에 <b>비슷한 천체가 많아요</b>. 에리스는 무엇일까요?',
             figure: FIG.eris,
-            setup() { prep(); S.panel = 'card'; setScene('map'); setView('full'); S.subject = 'eris'; },
+            setup() { prep(); S.panel = 'card'; setScene('map'); setView('full'); showSubject('eris'); },
             choices: ['행성', '왜소행성', '소행성', '혜성'],
             answer: 1,
             feedback: [
@@ -1947,7 +2035,7 @@
             title: '🛰️ 탐사 일지 ② 유로파',
             goal: '<b>유로파</b>: <b>목성 둘레</b>를 돌고, 표면이 <b>얼음</b>으로 덮여 있어요. 유로파는 무엇일까요?',
             figure: FIG.europa,
-            setup() { prep(); S.panel = 'card'; setScene('map'); S.subject = 'europa'; setView('jupiter'); },
+            setup() { prep(); S.panel = 'card'; setScene('map'); showSubject('europa'); setView('jupiter'); },
             choices: ['행성', '왜소행성', '위성', '혜성'],
             answer: 2,
             feedback: [
@@ -1963,7 +2051,7 @@
             title: '🛰️ 탐사 일지 ③ 아포피스',
             goal: '<b>아포피스</b>: 지름 약 <b>340 m</b>의 <b>불규칙한 바위</b> 덩어리로 <b>태양 둘레</b>를 돌아요. <b>2029년 4월 13일</b>에 지구에서 약 <b>3만 2천 km</b>까지 다가와요. 아포피스는 무엇일까요?',
             figure: FIG.apophis,
-            setup() { prep(); S.panel = 'card'; setScene('map'); S.apophis = true; S.subject = 'apophis'; setView('earth'); },
+            setup() { prep(); S.panel = 'card'; setScene('map'); S.apophis = true; showSubject('apophis'); setView('earth'); },
             choices: ['위성', '소행성', '왜소행성', '혜성'],
             answer: 1,
             feedback: [
@@ -1983,6 +2071,11 @@
      움직임
      ========================================================= */
   function update(dt, t) {
+    const pk = S.scene === 'key' ? 'tray' : S.panel;
+    if (pk !== lastPanelKey) {
+      if (lastPanelKey !== null) { S.panelT = 0; SciSim.tween(S, { panelT: 1 }, { duration: 0.45, ease: 'outCubic' }); }
+      lastPanelKey = pk;
+    }
     if (S.playing) {
       S.time += dt;
       if (!S.cDrag) { const o = ORB.comet, rev = Math.floor((S.cE + Math.PI) / TAU), Er = S.cE - rev * TAU; S.cE = kepler(Er - o.e * Math.sin(Er) + o.n * dt, o.e) + rev * TAU; }
@@ -2003,14 +2096,17 @@
   }
   computePositions();
   setView(S.view, true);
+  let frameMs = 0;
   SciSim.loop((dt, t) => {
+    const t0 = performance.now();
     update(dt, t);
     views.forEach((V) => { if (V.v.canvas.offsetWidth > 0) draw(V, t); });
+    frameMs += (performance.now() - t0 - frameMs) * 0.05;
   });
 
   /* ---------- 점검용 ---------- */
   window.__sim = {
-    S, CAM, CARDS, game: () => game,
+    S, CAM, CARDS, FIG, frameMs: () => frameMs, game: () => game,
     view: () => activeView(),
     // 화면(클라이언트) 좌표로 바꾸기
     client(L, x, y) { const V = views.find((q) => q.L === L) || activeView(); const r = V.v.canvas.getBoundingClientRect(); return { x: r.left + x * r.width / V.L.vw, y: r.top + y * r.height / V.L.vh }; },

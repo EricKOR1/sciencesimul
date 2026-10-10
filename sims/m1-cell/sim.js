@@ -43,38 +43,44 @@
           view: { cx: 580, cy: 262, r: 196 }, focusY: 40, capY: 486,
           mic: { x: 186, y: 616, s: 1.16 },
           tray: { x: 380, y: 512, w: 408, h: 118, dir: 'row' },
+          hint: { x: 190, y: 34, maxW: 340 },
         },
-        model: { cells: [{ kind: 'plant', cx: 205, cy: 356, sc: 1.0 }, { kind: 'animal', cx: 600, cy: 356, sc: 1.0 }], titleY: 132 },
+        model: { cells: [{ kind: 'plant', cx: 205, cy: 350, sc: 1.05 }, { kind: 'animal', cx: 600, cy: 350, sc: 1.05 }], titleY: 168, hint: { x: 400, y: 22, maxW: 720 } },
         func: {
           cell: { cx: 210, cy: 300, sc: 1.06 },
           cap: { x: 12, y: 516, w: 396, h: 114 },
-          table: { x: 420, y: 10, w: 368, rowH: 64, gap: 8, nameW: 126 },
+          table: { x: 420, y: 12, w: 368, rowH: 64, gap: 8, nameW: 126, rowHBig: 98, gapBig: 12 },
           tray: { x: 420, y: 392, w: 368, cols: 2, cardH: 60, gap: 8 },
+          hint: { x: 200, y: 40, maxW: 380 },
         },
         shape: {
-          rows: [0, 1, 2].map((i) => ({ x: 12, y: 10 + i * 180, w: 530, h: 170 })),
-          slots: [0, 1, 2].map((i) => ({ x: 554, y: 10 + i * 180, w: 234, h: 170 })),
-          tray: { x: 12, y: 562, w: 776, cols: 3, cardH: 66, gap: 10 },
+          rows: [0, 1, 2].map((i) => ({ x: 12, y: 8 + i * 172, w: 530, h: 164 })),
+          slots: [0, 1, 2].map((i) => ({ x: 554, y: 8 + i * 172, w: 234, h: 164 })),
+          tray: { x: 12, y: 562, w: 776, cols: 3, cardH: 64, gap: 10 },
+          hint: { x: 132, y: 548, maxW: 640, align: 'left' },
         },
       };
     }
     return {
       scope: {
         view: { cx: 230, cy: 214, r: 198 }, focusY: 0, capY: 440,
-        mic: { x: 146, y: 984, s: 0.97 },
+        mic: { x: 166, y: 984, s: 0.97 },
         tray: { x: 292, y: 478, w: 160, h: 506, dir: 'col' },
+        hint: { x: 150, y: 492, maxW: 276 },
       },
-      model: { cells: [{ kind: 'plant', cx: 230, cy: 262, sc: 0.98 }, { kind: 'animal', cx: 230, cy: 742, sc: 0.98 }], titleY: 40, titleY2: 530 },
+      model: { cells: [{ kind: 'plant', cx: 230, cy: 262, sc: 0.98 }, { kind: 'animal', cx: 230, cy: 742, sc: 0.98 }], titleY: 40, titleY2: 530, hint: { x: 230, y: 482, maxW: 430 } },
       func: {
         cell: { cx: 230, cy: 280, sc: 0.98 },
         cap: { x: 10, y: 482, w: 440, h: 96 },
         table: { x: 10, y: 588, w: 440, rowH: 56, gap: 6, nameW: 128 },
         tray: { x: 10, y: 898, w: 440, cols: 2, cardH: 46, gap: 6 },
+        hint: { x: 230, y: 40, maxW: 430 },
       },
       shape: {
         rows: [0, 1, 2].map((i) => ({ x: 10, y: 8 + i * 248, w: 440, h: 168 })),
         slots: [0, 1, 2].map((i) => ({ x: 10, y: 8 + i * 248 + 174, w: 440, h: 64 })),
-        tray: { x: 10, y: 758, w: 440, cols: 1, cardH: 70, gap: 9 },
+        tray: { x: 10, y: 780, w: 440, cols: 1, cardH: 62, gap: 8 },
+        hint: { x: 132, y: 764, maxW: 320, align: 'left' },
       },
     };
   }
@@ -159,9 +165,10 @@
     ctx.save();
     ctx.strokeStyle = 'rgba(22,163,74,' + (0.35 + a * 0.5).toFixed(2) + ')'; ctx.lineWidth = 4;
     rr(r.x - 6, r.y - 6, r.w + 12, r.h + 12, (rad || 14) + 6); ctx.stroke();
-    ctx.fillStyle = '#16a34a'; rr(r.x + r.w - 44, r.y - 17, 50, 22, 11); ctx.fill();
+    const tx = Math.min(r.x + r.w - 44, W - 56), ty = Math.max(r.y - 17, 3);
+    ctx.fillStyle = '#16a34a'; rr(tx, ty, 50, 22, 11); ctx.fill();
     ctx.restore();
-    txt('NEW', r.x + r.w - 19, r.y - 5, { size: 13, weight: 800, color: '#fff', align: 'center', base: 'middle' });
+    txt('NEW', tx + 25, ty + 12, { size: 13, weight: 800, color: '#fff', align: 'center', base: 'middle' });
   }
   function panel(x, y, w, h, o) {
     o = o || {};
@@ -179,15 +186,15 @@
      세포 구조 정보 (교육과정 범위: 5가지)
      ========================================================= */
   const ST = {
-    wall: { name: '세포벽', color: '#6f8a1f', soft: '#eef4d4', card: '세포를 보호하고 모양을 유지해요',
+    wall: { name: '세포벽', ga: '이', color: '#6f8a1f', soft: '#eef4d4', card: '세포를 보호하고 모양을 유지해요',
       fn: '세포막 바깥의 단단한 벽이에요. 세포를 보호하고 모양을 일정하게 유지해요.' },
-    memb: { name: '세포막', color: '#b7791f', soft: '#fff3d6', card: '세포 안팎으로 물질의 출입을 조절해요',
+    memb: { name: '세포막', ga: '이', color: '#b7791f', soft: '#fff3d6', card: '세포 안팎으로 물질의 출입을 조절해요',
       fn: '세포를 둘러싼 얇은 막이에요. 세포 안팎으로 물질이 드나드는 것을 조절해요.' },
-    nuc: { name: '핵', color: '#6a43c2', soft: '#efe8fc', card: '유전 물질이 있어 생명 활동을 조절해요',
+    nuc: { name: '핵', ga: '이', color: '#6a43c2', soft: '#efe8fc', card: '유전 물질이 있어 생명 활동을 조절해요',
       fn: '유전 물질이 들어 있어 세포의 생명 활동을 조절해요.' },
-    chl: { name: '엽록체', color: '#23843a', soft: '#e3f5e1', card: '광합성을 하여 양분을 만들어요',
+    chl: { name: '엽록체', ga: '가', color: '#23843a', soft: '#e3f5e1', card: '광합성을 하여 양분을 만들어요',
       fn: '빛을 받아 광합성을 하여 양분을 만들어요.' },
-    mito: { name: '미토콘드리아', color: '#cc4b25', soft: '#fde8df', card: '양분을 분해하여 에너지를 얻어요',
+    mito: { name: '미토콘드리아', ga: '가', color: '#cc4b25', soft: '#fde8df', card: '양분을 분해하여 에너지를 얻어요',
       fn: '양분을 분해하여 생명 활동에 필요한 에너지를 얻어요.' },
   };
   const KEYS = ['wall', 'memb', 'nuc', 'chl', 'mito'];
@@ -214,7 +221,7 @@
     // 세포 모형
     labels: { plant: {}, animal: {} }, pickMode: false, picks: new Set(), pickFlash: 0,
     // 구조와 기능
-    fn: null, watched: {}, fnCards: false, fnNewAt: -9,
+    fn: null, watched: {}, fnCards: false, fnNewAt: -9, fnK: 0,
     // 카드 끌기
     drag: null,
     // 모양과 기능
@@ -222,6 +229,11 @@
   };
   let game = null;
   let F = new Set();
+  // '확인하기' 버튼을 누르는 순간에만 true (엔진이 check()를 주기적으로도 부르므로, 흔들림·되돌리기 같은 부작용은 이때만 일으킴)
+  let MANUAL = false;
+  $('#game').addEventListener('click', (e) => {
+    if (e.target.closest && e.target.closest('.mission-actions .btn-primary')) { MANUAL = true; setTimeout(() => { MANUAL = false; }, 0); }
+  }, true);
   const on = (f) => F.has(f) || !!(game && game.free);
   const isNew = (f) => !!(game && game.isNew(f));
 
@@ -639,7 +651,7 @@
     };
     lab('접안렌즈', AX - 18, -432, 'l');
     lab('대물렌즈', AX - 26, -276, 'l');
-    lab('재물대', -52, stY + 8, 'l');
+    lab('재물대', -52, stY - 8, 'l');
     lab('조동 나사', -92, -168, 'l');
     lab('미동 나사', -82, -112, 'l');
     lab('조명', AX + 22, -44, 'r');
@@ -1014,20 +1026,26 @@
     const a = c.a - inset, b = c.b - inset;
     return Math.pow(Math.pow(Math.abs(x) / a, c.n) + Math.pow(Math.abs(y) / b, c.n), 1 / c.n);
   }
+  // 타원 안에 있는지 (엽록체·미토콘드리아 누르기 판정용)
+  function inEll(x, y, cx, cy, ang, a, b) {
+    const dx = x - cx, dy = y - cy, c = Math.cos(ang), s = Math.sin(ang);
+    const u = dx * c + dy * s, v = -dx * s + dy * c;
+    return (u * u) / (a * a) + (v * v) / (b * b) <= 1;
+  }
   function hitPlant(x, y) {
     const c = PLANT;
-    for (let i = c.chl.length - 1; i >= 0; i--) { const h = c.chl[i]; if (Math.hypot(x - h.x, y - h.y) < 20 * h.s) return { key: 'chl', inst: i }; }
-    for (let i = 0; i < c.mito.length; i++) { const m = c.mito[i]; if (Math.hypot(x - m.x, y - m.y) < 21) return { key: 'mito', inst: i }; }
+    for (let i = c.chl.length - 1; i >= 0; i--) { const h = c.chl[i]; if (inEll(x, y, h.x, h.y, h.ang, 17 * h.s + 4, 9.5 * h.s + 4)) return { key: 'chl', inst: i }; }
+    for (let i = 0; i < c.mito.length; i++) { const m = c.mito[i]; if (inEll(x, y, m.x, m.y, m.ang, 16 * m.s + 5, 8 * m.s + 5)) return { key: 'mito', inst: i }; }
     if (Math.hypot(x - c.nuc.x, y - c.nuc.y) < c.nuc.r + 5) return { key: 'nuc' };
     const k0 = seK(c, x, y, 0);
     if (k0 > 1.06) return null;
     if (seK(c, x, y, c.wallT) >= 1) { const k = seK(c, x, y, 7); return { key: 'wall', ux: x / k, uy: y / k }; }
-    if (seK(c, x, y, 34) >= 1) { const k = seK(c, x, y, c.membI); return { key: 'memb', ux: x / k, uy: y / k }; }
+    if (seK(c, x, y, 31) >= 1) { const k = seK(c, x, y, c.membI); return { key: 'memb', ux: x / k, uy: y / k }; }
     return { key: null };
   }
   function hitAnimal(x, y) {
     const c = ANIMAL;
-    for (let i = 0; i < c.mito.length; i++) { const m = c.mito[i]; if (Math.hypot(x - m.x, y - m.y) < 21) return { key: 'mito', inst: i }; }
+    for (let i = 0; i < c.mito.length; i++) { const m = c.mito[i]; if (inEll(x, y, m.x, m.y, m.ang, 16 * m.s + 5, 8 * m.s + 5)) return { key: 'mito', inst: i }; }
     if (Math.hypot(x - c.nuc.x, y - c.nuc.y) < c.nuc.r + 5) return { key: 'nuc' };
     const th = Math.atan2(y / c.ay, x / c.ax), d = Math.hypot(x / c.ax, y / c.ay), R = animalRad(c, th);
     if (d > R + 12) return null;
@@ -1048,6 +1066,7 @@
   function cellOf(kind) { return LAY.model.cells.find((c) => c.kind === kind); }
   function drawLabels(cellKind, C, t) {
     const labs = S.labels[cellKind];
+    const placed = [];
     KEYS.forEach((key) => {
       const lab = labs[key];
       if (!lab) return;
@@ -1063,6 +1082,14 @@
       ctx.font = font(15, 800);
       const w = ctx.measureText(s).width + 22;
       lx = clamp(lx, w / 2 + 4, W - w / 2 - 4); ly = clamp(ly, 16, H - 16);
+      // 앞에 놓인 이름표와 겹치면 위·아래로 비켜 놓기
+      const dir = ly >= ay ? 1 : -1;
+      for (let k = 0; k < 6; k++) {
+        const hit = placed.some((q) => Math.abs(q.x - lx) < (q.w + w) / 2 + 4 && Math.abs(q.y - ly) < 30);
+        if (!hit) break;
+        ly = clamp(ly + dir * 31, 16, H - 16);
+      }
+      placed.push({ x: lx, y: ly, w });
       const age = now() - lab.t0;
       const sc = age < 0.35 ? EASE.outBack(clamp(age / 0.35, 0, 1)) : 1;
       ctx.strokeStyle = picked ? '#dc2626' : ST[key].color; ctx.lineWidth = 2;
@@ -1078,9 +1105,12 @@
     const g = ctx.createLinearGradient(0, 0, 0, H);
     g.addColorStop(0, '#f3faf2'); g.addColorStop(1, '#e4f0e6');
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-    // 배경 무늬 (부드러운 원)
-    ctx.fillStyle = 'rgba(255,255,255,.5)';
-    ctx.beginPath(); ctx.arc(W * 0.12, H * 0.1, 90, 0, TAU); ctx.arc(W * 0.92, H * 0.88, 120, 0, TAU); ctx.fill();
+    // 배경 무늬 (가장자리가 번지는 부드러운 빛)
+    [[W * 0.1, H * 0.2, 150], [W * 0.9, H * 0.82, 170]].forEach((b) => {
+      const gl = ctx.createRadialGradient(b[0], b[1], 0, b[0], b[1], b[2]);
+      gl.addColorStop(0, 'rgba(255,255,255,.62)'); gl.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(b[0], b[1], b[2], 0, TAU); ctx.fill();
+    });
     const P = cellOf('plant'), A = cellOf('animal');
     // 제목
     const ty1 = M.titleY, ty2 = TALL ? M.titleY2 : M.titleY;
@@ -1222,7 +1252,7 @@
       // 햇빛
       for (let k = 0; k < 6; k++) {
         const h = c.chl[(k * 3) % c.chl.length];
-        const sx = -60 + k * 34, sy = -c.b - 110;
+        const sx = -60 + k * 34, sy = -c.b - 76;
         const u = clamp(tau / 0.8 - k * 0.08, 0, 1);
         const ex = lerp(sx, h.x, u), ey = lerp(sy, h.y, u);
         ctx.strokeStyle = 'rgba(250,204,21,.85)'; ctx.lineWidth = 3; ctx.setLineDash([9, 7]);
@@ -1230,8 +1260,8 @@
         ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(ex, ey); ctx.stroke();
         ctx.setLineDash([]);
       }
-      D.glow(-10, -c.b - 120, 46, '#fde047', 0.75);
-      D.sphere(-10, -c.b - 120, 18, '#facc15', { gloss: true });
+      D.glow(-10, -c.b - 84, 46, '#fde047', 0.75);
+      D.sphere(-10, -c.b - 84, 18, '#facc15', { gloss: true });
       // 양분 반짝이
       if (tau > 1.0) {
         c.chl.forEach((h, i) => {
@@ -1288,12 +1318,17 @@
     const col = i % cols, row = Math.floor(i / cols);
     return { x: T.x + col * (w + T.gap), y: T.y + row * (T.cardH + T.gap), w, h: T.cardH };
   }
-  function funcSlotRect(i) {
-    const T = LAY.func.table;
-    const y = T.y + i * (T.rowH + T.gap);
-    return { x: T.x + T.nameW, y: y + 4, w: T.w - T.nameW - 4, h: T.rowH - 8 };
+  // 기능 카드가 없을 때는 표가 크게, 카드가 나오면 작게 줄어듦
+  function fnMetrics() {
+    const T = LAY.func.table, k = S.fnK;
+    return { rowH: lerp(T.rowHBig || T.rowH, T.rowH, k), gap: lerp(T.gapBig != null ? T.gapBig : T.gap, T.gap, k) };
   }
-  function funcRowRect(i) { const T = LAY.func.table; return { x: T.x, y: T.y + i * (T.rowH + T.gap), w: T.w, h: T.rowH }; }
+  function funcSlotRect(i) {
+    const T = LAY.func.table, m = fnMetrics();
+    const y = T.y + i * (m.rowH + m.gap);
+    return { x: T.x + T.nameW, y: y + 4, w: T.w - T.nameW - 4, h: m.rowH - 8 };
+  }
+  function funcRowRect(i) { const T = LAY.func.table, m = fnMetrics(); return { x: T.x, y: T.y + i * (m.rowH + m.gap), w: T.w, h: m.rowH }; }
   function shapeSlotRect(i) {
     const s = LAY.shape.slots[i];
     if (TALL) return { x: s.x + 108, y: s.y + 6, w: s.w - 114, h: s.h - 12 };
@@ -1379,19 +1414,21 @@
     const showKey = S.fn ? S.fn.key : null;
     if (showKey) {
       drawStructIcon(showKey, cp.x + 30, cp.y + 30, 1);
-      txt(ST[showKey].name + '이(가) 하는 일', cp.x + 54, cp.y + 36, { size: 17, weight: 800, color: ST[showKey].color, max: cp.w - 64 });
+      txt(ST[showKey].name + ST[showKey].ga + ' 하는 일', cp.x + 54, cp.y + 36, { size: 17, weight: 800, color: ST[showKey].color, max: cp.w - 64 });
       para(ST[showKey].fn, cp.x + 16, cp.y + 64, cp.w - 30, { size: 15, weight: 700, color: '#1f2937' });
     } else {
       txt('👆 세포의 구조를 눌러 보세요', cp.x + 16, cp.y + 34, { size: 17, weight: 800, color: '#166534' });
       para('구조를 누르면 그 구조가 하는 일을 움직이는 그림으로 보여 줘요.', cp.x + 16, cp.y + 62, cp.w - 30, { size: 14.5, weight: 700, color: '#475569' });
     }
     // 오른쪽 표: 구조 이름 + 기능 칸
+    const hot = dragSlot('func');
     FUNC_ORDER.forEach((k, i) => {
       const r = funcRowRect(i);
       const active = key === k;
       panel(r.x, r.y, r.w, r.h, { bg: active ? ST[k].soft : '#fff', border: active ? ST[k].color : '#e2e8f0', r: 14, bw: active ? 2 : 1.2 });
+      if (hot === i) slotGlow(r, 14);
       const T = LAY.func.table;
-      drawStructIcon(k, r.x + 24, r.y + r.h / 2, TALL ? 0.85 : 0.95);
+      drawStructIcon(k, r.x + 24, r.y + r.h / 2, (TALL ? 0.85 : 0.95) + (1 - S.fnK) * (TALL ? 0 : 0.2));
       txt(ST[k].name, r.x + 46, r.y + r.h / 2 + 5, { size: 15, weight: 800, color: ST[k].color, max: T.nameW - 50 });
       const sr = funcSlotRect(i);
       if (S.fnCards) {
@@ -1410,7 +1447,7 @@
       fnCards.forEach((cd) => { if (cd !== dragCd) drawCard(cd, t, '#16a34a'); });
       if (dragCd) drawCard(dragCd, t, '#16a34a');
     }
-    if (isNew('func')) { const T = Fl.table; newRing({ x: T.x, y: T.y, w: T.w, h: 5 * (T.rowH + T.gap) - T.gap }, 14); }
+    if (isNew('func')) { const T = Fl.table, m = fnMetrics(); newRing({ x: T.x, y: T.y, w: T.w, h: 5 * (m.rowH + m.gap) - m.gap }, 14); }
   }
 
   /* =========================================================
@@ -1494,13 +1531,14 @@
     }
     ctx.restore();
     // 옆에서 본 모양 (오목한 원반)
-    const ix = R.x + R.w - 74, iy = R.y + 52;
-    if (!TALL || R.w > 400) {
-      ctx.fillStyle = '#c62828';
+    {
+      const ix = R.x + R.w - 112, iy = R.y + 24;     // 제목 줄 오른쪽에 '옆에서 본 모양'
+      const g2 = ctx.createLinearGradient(0, iy - 9, 0, iy + 9); g2.addColorStop(0, '#ef5350'); g2.addColorStop(1, '#b71c1c');
+      ctx.fillStyle = g2;
       ctx.beginPath();
-      ctx.moveTo(ix - 22, iy); ctx.bezierCurveTo(ix - 22, iy - 10, ix - 8, iy - 9, ix, iy - 4); ctx.bezierCurveTo(ix + 8, iy - 9, ix + 22, iy - 10, ix + 22, iy);
-      ctx.bezierCurveTo(ix + 22, iy + 10, ix + 8, iy + 9, ix, iy + 4); ctx.bezierCurveTo(ix - 8, iy + 9, ix - 22, iy + 10, ix - 22, iy); ctx.fill();
-      txt('옆모습', ix + 30, iy + 5, { size: 13, weight: 700, color: '#64748b' });
+      ctx.moveTo(ix - 20, iy); ctx.bezierCurveTo(ix - 20, iy - 9, ix - 8, iy - 8, ix, iy - 3); ctx.bezierCurveTo(ix + 8, iy - 8, ix + 20, iy - 9, ix + 20, iy);
+      ctx.bezierCurveTo(ix + 20, iy + 9, ix + 8, iy + 8, ix, iy + 3); ctx.bezierCurveTo(ix - 8, iy + 8, ix - 20, iy + 9, ix - 20, iy); ctx.fill();
+      txt('옆모습', ix + 26, iy + 5, { size: 13, weight: 700, color: '#64748b' });
     }
     pill('산소', x0 + 70, vy + 44, { size: 13, bg: '#e0f2fe', color: '#075985' });
   }
@@ -1605,8 +1643,10 @@
     drawRBCRow(Sl.rows[0], t);
     drawNeuronRow(Sl.rows[1], t);
     drawEpiRow(Sl.rows[2], t);
+    const hotS = dragSlot('shape');
     Sl.slots.forEach((s, i) => {
       panel(s.x, s.y, s.w, s.h, { bg: '#ffffff', border: '#e2e8f0' });
+      if (hotS === i) slotGlow(s, 16);
       if (TALL) txt('하는 일', s.x + 14, s.y + s.h / 2 + 5, { size: 15, weight: 800, color: SHAPES[i].color });
       else txt('▶ 하는 일', s.x + 14, s.y + 32, { size: 15, weight: 800, color: SHAPES[i].color });
       const r = shapeSlotRect(i);
@@ -1677,7 +1717,7 @@
       ctx.translate(zc[0], zc[1]); ctx.scale(s0, s0); ctx.translate(-zc[0], -zc[1]);
       ctx.drawImage(snapCv, 0, 0, W, H);
       ctx.restore();
-    } else drawScene(S.scene, t);
+    } else { drawScene(S.scene, t); drawHint(); }
     PFX.draw(ctx);
   }
 
@@ -1740,7 +1780,7 @@
       if (S.scene === 'model') { modelTap(p); return false; }
       if (S.scene === 'func') {
         if (S.fnCards) { const cd = cardAt(fnCards, p); if (cd) return startDrag(cd, 'func', p); }
-        const ri = FUNC_ORDER.findIndex((k, i) => inR(p, { x: funcRowRect(i).x, y: funcRowRect(i).y, w: LAY.func.table.nameW, h: LAY.func.table.rowH }));
+        const ri = FUNC_ORDER.findIndex((k, i) => inR(p, { x: funcRowRect(i).x, y: funcRowRect(i).y, w: LAY.func.table.nameW, h: funcRowRect(i).h }));
         if (ri >= 0) { tapStruct(FUNC_ORDER[ri], null); return false; }
         if (!S.fnCards) { const ri2 = FUNC_ORDER.findIndex((k, i) => inR(p, funcRowRect(i))); if (ri2 >= 0) { tapStruct(FUNC_ORDER[ri2], null); return false; } }
         const h = cellHit(p);
@@ -1755,6 +1795,7 @@
       const d = S.drag;
       if (!d) return;
       d.card.x = p.x - d.dx; d.card.y = p.y - d.dy;
+      d.px = p.x; d.py = p.y;
       if (Math.hypot(p.x - d.sx, p.y - d.sy) > 6) d.moved = true;
     },
     up(p) {
@@ -1774,9 +1815,27 @@
       else { if (d.card.slot >= 0) d.card.slot = -1; snapCards(d.set, true); if (d.moved) Sound.tick(); }
     },
   };
+  function dragSlot(set) {
+    const d = S.drag;
+    if (!d || d.set !== set || d.px == null) return -1;
+    const p = { x: d.px, y: d.py };
+    if (set === 'func') {
+      let i = FUNC_ORDER.findIndex((k, j) => inR(p, funcRowRect(j), 6));
+      if (i < 0) { const h = cellHit(p); if (h && h.key) i = FUNC_ORDER.indexOf(h.key); }
+      return i;
+    }
+    return [0, 1, 2].findIndex((i) => inR(p, LAY.shape.slots[i], 6) || inR(p, LAY.shape.rows[i], 0));
+  }
+  function slotGlow(r, rad) {
+    const a = 0.55 + 0.45 * Math.sin(now() * 7);
+    ctx.save();
+    ctx.fillStyle = 'rgba(34,197,94,.10)'; rr(r.x - 3, r.y - 3, r.w + 6, r.h + 6, rad + 3); ctx.fill();
+    ctx.strokeStyle = 'rgba(22,163,74,' + (0.5 + a * 0.4).toFixed(2) + ')'; ctx.lineWidth = 3.5; ctx.stroke();
+    ctx.restore();
+  }
   function startDrag(cd, set, p) {
     if (cd.tw) cd.tw.cancel();
-    S.drag = { card: cd, set, dx: p.x - cd.x, dy: p.y - cd.y, sx: p.x, sy: p.y, moved: false };
+    S.drag = { card: cd, set, dx: p.x - cd.x, dy: p.y - cd.y, sx: p.x, sy: p.y, px: p.x, py: p.y, moved: false };
     const list = set === 'func' ? fnCards : jobCards;
     list.splice(list.indexOf(cd), 1); list.push(cd);       // 맨 위로
     cd.ok = false;
@@ -1840,8 +1899,7 @@
   function modelTap(p) {
     const h = cellHit(p);
     if (!h || !h.key) return;
-    if (S.pickMode) {
-      if (h.cell !== 'plant') { Sound.tick(); toast('👈 왼쪽(위쪽) 식물 세포에서 골라요.'); return; }
+    if (S.pickMode && h.cell === 'plant') {      // 고르기는 식물 세포에서만 (동물 세포는 눌러서 이름을 확인)
       if (S.picks.has(h.key)) S.picks.delete(h.key); else S.picks.add(h.key);
       if (!S.labels.plant[h.key]) S.labels.plant[h.key] = Object.assign({ t0: now() }, h);
       Sound.tick();
@@ -1879,27 +1937,61 @@
     Sound.tone(520, 0.06, 'square', 0.03, 0.16);
   }
   magBtns.forEach((b) => b.addEventListener('click', () => setMag(+b.dataset.mag)));
+  // 현미경을 처음 상태로 (40배, 초점 흐림, 양파 표피, 염색 전)
+  function resetScope() {
+    S.coarse = 8; S.fine = 0; rCoarse.set(8); rFine.set(0);
+    setMag(40);
+    S.found = { onion: -1, cheek: -1 }; S.stain = { onion: 0, cheek: 0 };
+    S.swap = null; S.drop = null; S.stainAnim = null; S.slide = 'onion';
+  }
   const rCoarse = SciSim.bindRange($('#sCoarse'), null, null, (v) => { S.coarse = v; });
   const rFine = SciSim.bindRange($('#sFine'), null, null, (v) => { S.fine = v; });
   $$('#sceneSeg button').forEach((b) => b.addEventListener('click', () => { Sound.click(); setScene(b.dataset.scene); }));
+  const SCENE_BG = {
+    scope: 'linear-gradient(180deg,#f4f8fb,#e1e9ef)', model: 'linear-gradient(180deg,#f3faf2,#e4f0e6)',
+    func: 'linear-gradient(180deg,#f2f9f3,#e3efe6)', shape: 'linear-gradient(180deg,#f6f8fb,#e8eef4)',
+  };
   function updateSceneUI() {
+    if (view) view.wrap.style.setProperty('--stage-bg', SCENE_BG[S.scene]);
     $$('#sceneSeg button').forEach((b) => { b.classList.toggle('on', b.dataset.scene === S.scene); b.setAttribute('aria-selected', b.dataset.scene === S.scene ? 'true' : 'false'); });
     $('#ctrlCard').hidden = S.scene !== 'scope';
     const seg = $('#sceneSeg');
     $('#sceneLabel').hidden = !!(seg && !seg.hidden);
     $('#sceneLabel').textContent = SCENE_LABEL[S.scene];
   }
-  const hintEl = $('#stageHint');
-  function showHint(msg, ms) {
-    hintEl.textContent = msg; hintEl.classList.remove('hide');
-    clearTimeout(showHint.t); showHint.t = setTimeout(hideHint, ms || 6000);
+  /* 캔버스 안 안내 말풍선 (장면마다 비어 있는 자리에 그림) */
+  const HINT = { msg: '', t0: 0, tEnd: 0 };
+  function showHint(msg, ms) { HINT.msg = msg; HINT.t0 = now(); HINT.tEnd = now() + (ms || 6000) / 1000; }
+  function hideHint() { if (HINT.msg && HINT.tEnd > now()) HINT.tEnd = now(); }
+  function drawHint() {
+    if (!HINT.msg) return;
+    const hp = LAY[S.scene] && LAY[S.scene].hint;
+    if (!hp) return;
+    const t = now();
+    const inA = clamp((t - HINT.t0) / 0.35, 0, 1);
+    const a = Math.min(inA, clamp(1 - (t - HINT.tEnd) / 0.4, 0, 1));
+    if (a <= 0.01) { if (t > HINT.tEnd + 0.5) HINT.msg = ''; return; }
+    const size = 14, padX = 14, lh = 19;
+    const ls = lines(HINT.msg, hp.maxW - padX * 2, size, 800);
+    ctx.save();
+    ctx.font = font(size, 800);
+    let tw = 0; ls.forEach((ln) => { tw = Math.max(tw, ctx.measureText(ln).width); });
+    const w = tw + padX * 2, h = ls.length * lh + 10;
+    const x = hp.align === 'left' ? hp.x : hp.x - w / 2;
+    const y = hp.y - h / 2 + (1 - EASE.outCubic(inA)) * 8;
+    ctx.globalAlpha = a;
+    ctx.shadowColor = 'rgba(15,23,42,.25)'; ctx.shadowBlur = 10; ctx.shadowOffsetY = 3;
+    rr(x, y, w, h, Math.min(h / 2, 18)); ctx.fillStyle = 'rgba(27,35,51,.88)'; ctx.fill();
+    ctx.shadowColor = 'transparent';
+    ls.forEach((ln, i) => txt(ln, x + w / 2, y + 5 + lh / 2 + i * lh, { size, weight: 800, color: '#fff', align: 'center', base: 'middle' }));
+    ctx.restore();
   }
-  function hideHint() { hintEl.classList.add('hide'); }
 
   /* =========================================================
      상태 갱신
      ========================================================= */
   function update(dt, t) {
+    S.fnK = SciSim.approach(S.fnK, S.fnCards ? 1 : 0, dt, RM ? 60 : 8);
     S.zShown = SciSim.approach(S.zShown, zTarget(), dt, 12);
     S.zoomLog = SciSim.approach(S.zoomLog, Math.log(S.mag), dt, RM ? 60 : 4.2);
     if (Math.abs(S.zoomLog - Math.log(S.mag)) < 1e-4) S.zoomLog = Math.log(S.mag);
@@ -1984,7 +2076,7 @@
           setup() {
             setScene('scope');
             S.trayOn = false;
-            if (S.slide !== 'onion' && !S.swap) S.slide = 'onion';
+            resetScope();
             showHint('⚙️ 조동 나사를 움직여 초점을 맞춰 보세요', 6000);
           },
           check: () => S.mag === 400 && isSharp(),
@@ -1999,6 +2091,11 @@
           setup() {
             setScene('scope');
             if (!S.trayOn) { S.trayOn = true; S.trayNewAt = now(); }
+            S.found = { onion: -1, cheek: -1 }; S.stain = { onion: 0, cheek: 0 }; S.drop = null; S.stainAnim = null;
+            if (S.slide !== 'onion' && !S.swap) S.slide = 'onion';
+            if (!sharpNow() && !S.swap) {      // 다시 시작했을 때: 초점이 흐리면 먼저 맞춰 둠
+              S.coarse = 23; S.fine = S.mag === 400 ? 4 : 0; rCoarse.set(S.coarse); rFine.set(S.fine);
+            }
             showHint('💧 아래 표본 상자의 염색약을 눌러 보세요', 6000);
           },
           check: () => S.found.onion >= 0 && S.found.cheek >= 0,
@@ -2040,7 +2137,7 @@
           title: '식물 세포에서 5가지 찾기',
           goal: '<b>식물 세포</b>의 여러 부분을 눌러 이름표를 붙여 보세요. <b>5가지 구조</b>를 모두 찾아요.',
           hint: '가장자리의 두꺼운 벽, 그 안쪽의 노란 얇은 막, 가운데의 큰 보라색 공, 초록색 알갱이, 주황색 알갱이를 눌러 봐요.',
-          setup() { setScene('model'); S.pickMode = false; showHint('👆 식물 세포의 여러 부분을 눌러 보세요', 5000); },
+          setup() { setScene('model'); S.pickMode = false; S.labels = { plant: {}, animal: {} }; S.picks = new Set(); showHint('👆 식물 세포의 여러 부분을 눌러 보세요', 5000); },
           check: () => KEYS.every((k) => !!S.labels.plant[k]),
           hold: 0.5,
           status: () => KEYS.map((k) => mark(!!S.labels.plant[k]) + ' ' + ST[k].name).join(' · '),
@@ -2104,7 +2201,7 @@
           title: '하는 일 살펴보기',
           goal: '세포의 <b>5가지 구조</b>를 하나씩 눌러, 각 구조가 하는 일을 살펴보세요.',
           hint: '세포 그림을 직접 누르거나, 오른쪽 표의 구조 이름을 눌러도 돼요. 그림이 끝날 때까지 지켜봐요.',
-          setup() { setScene('func'); S.fnCards = false; showHint('👆 세포의 구조를 눌러 하는 일을 살펴보세요', 5000); },
+          setup() { setScene('func'); S.fnCards = false; S.watched = {}; S.fn = null; showHint('👆 세포의 구조를 눌러 하는 일을 살펴보세요', 5000); },
           check: () => KEYS.every((k) => S.watched[k]),
           hold: 0.3,
           status: () => KEYS.map((k) => mark(!!S.watched[k]) + ' ' + ST[k].name).join(' · '),
@@ -2117,7 +2214,7 @@
           hint: '헷갈리면 구조를 다시 눌러 움직이는 그림을 보세요. 카드는 세포 그림 위에 놓아도 돼요.',
           setup() {
             setScene('func');
-            if (!S.fnCards) { S.fnCards = true; resetCards('func'); }
+            S.fnCards = true; resetCards('func');
             showHint('🃏 카드를 끌어 알맞은 칸에 놓아 보세요', 5000);
           },
           status: () => '놓은 카드: <b>' + fnCards.filter((c) => c.slot >= 0).length + ' / 5</b>',
@@ -2126,14 +2223,18 @@
             if (empty) return '아직 놓지 않은 카드가 ' + empty + '장 있어요. 5장을 모두 칸에 놓아 주세요.';
             const wrong = fnCards.filter((c) => FUNC_ORDER[c.slot] !== c.key);
             if (wrong.length) {
-              const t = now();
-              wrong.forEach((c) => { c.bad = t; });
-              setTimeout(() => { wrong.forEach((c) => { c.slot = -1; }); snapCards('func', true); }, 650);
+              if (MANUAL) {
+                const t = now();
+                wrong.forEach((c) => { c.bad = t; });
+                setTimeout(() => { wrong.forEach((c) => { c.slot = -1; }); snapCards('func', true); }, 650);
+              }
               return '빨간 카드 ' + wrong.length + '장이 알맞지 않아요. 구조를 다시 눌러 하는 일을 확인해 보세요.';
             }
-            fnCards.forEach((c) => { c.ok = true; });
-            const T = LAY.func.table;
-            burst(T.x + T.w / 2, T.y + 160, null, 26);
+            if (MANUAL) {
+              fnCards.forEach((c) => { c.ok = true; });
+              const T = LAY.func.table;
+              burst(T.x + T.w / 2, T.y + 160, null, 26);
+            }
             return true;
           },
           explain: '구조마다 맡은 일이 달라요. 특히 <b>세포벽</b>은 보호와 모양 유지, <b>세포막</b>은 물질 출입 조절을 해요. 이름이 비슷해도 하는 일은 달라요!',
@@ -2177,21 +2278,25 @@
           manual: true,
           goal: '세 가지 세포의 모양과 움직임을 살펴보고, <b>하는 일</b> 카드를 알맞은 세포의 칸에 끌어다 놓은 뒤 <b>✔ 확인하기</b>를 누르세요.',
           hint: '적혈구 주위의 파란 알갱이(산소), 신경세포를 따라 흐르는 빛(자극), 상피세포에 막혀 튕겨 나가는 세균을 보세요.',
-          setup() { setScene('shape'); showHint('🃏 하는 일 카드를 알맞은 세포 칸으로 끌어 보세요', 5000); },
+          setup() { setScene('shape'); resetCards('shape'); S.shapeOK = [false, false, false]; showHint('🃏 하는 일 카드를 알맞은 세포 칸으로 끌어 보세요', 5000); },
           status: () => '놓은 카드: <b>' + jobCards.filter((c) => c.slot >= 0).length + ' / 3</b>',
           check() {
             const empty = jobCards.filter((c) => c.slot < 0).length;
             if (empty) return '아직 놓지 않은 카드가 ' + empty + '장 있어요.';
             const wrong = jobCards.filter((c) => SHAPES[c.slot].key !== c.key);
             if (wrong.length) {
-              const t = now();
-              wrong.forEach((c) => { c.bad = t; });
-              setTimeout(() => { wrong.forEach((c) => { c.slot = -1; }); snapCards('shape', true); }, 650);
+              if (MANUAL) {
+                const t = now();
+                wrong.forEach((c) => { c.bad = t; });
+                setTimeout(() => { wrong.forEach((c) => { c.slot = -1; }); snapCards('shape', true); }, 650);
+              }
               return '빨간 카드가 알맞지 않아요. 각 세포의 모양이 어떤 일에 알맞을지 생각해 보세요.';
             }
-            jobCards.forEach((c) => { c.ok = true; });
-            S.shapeOK = [true, true, true];
-            LAY.shape.rows.forEach((r) => burst(r.x + r.w - 20, r.y + 20, null, 12));
+            if (MANUAL) {
+              jobCards.forEach((c) => { c.ok = true; });
+              S.shapeOK = [true, true, true];
+              LAY.shape.rows.forEach((r) => burst(r.x + r.w - 20, r.y + 20, null, 12));
+            }
             return true;
           },
           explain: '<b>적혈구</b>는 가운데가 오목한 원반 모양이라 산소를 운반하기에 알맞고 좁은 혈관도 잘 지나가요. <b>신경세포</b>는 돌기가 길게 뻗어 있어 자극을 먼 곳까지 전달해요. <b>상피세포</b>는 납작한 세포가 빽빽하게 붙어 있어 몸의 표면을 덮어 보호해요.',
@@ -2279,7 +2384,7 @@
     onMissionStart(m) {
       S.pickMode = false;
       const sc = SCENE_ORDER[m._level];
-      if (sc && !game.free) setScene(sc);
+      if (sc && !(game && game.free)) setScene(sc);
     },
     onComplete() {
       S.trayOn = true; S.pickMode = false; S.fnCards = true;
@@ -2310,7 +2415,15 @@
       if (key === 'nuc') { x = c.nuc.x; y = c.nuc.y; }
       else if (key === 'chl') { x = c.chl[0].x; y = c.chl[0].y; }
       else if (key === 'mito') { x = c.mito[1].x; y = c.mito[1].y; }
-      else if (cell === 'plant') { const p = plantPt(PLANT, -0.6, key === 'wall' ? 7 : PLANT.membI + 4); x = p[0]; y = p[1]; }
+      else if (cell === 'plant') {
+        // 둘레를 돌며 주변 6px까지 같은 구조로 판정되는 안전한 지점을 찾음
+        const inset = key === 'wall' ? 7 : PLANT.membI + 1;
+        for (let k = 0; k < 63; k++) {
+          const p = plantPt(PLANT, -0.6 + k * 0.1, inset);
+          const okAll = [[0, 0], [6, 0], [-6, 0], [0, 6], [0, -6]].every((d) => { const h = hitPlant(p[0] + d[0], p[1] + d[1]); return h && h.key === key; });
+          if (okAll) { x = p[0]; y = p[1]; break; }
+        }
+      }
       else { const R = animalRad(c, 0.4); x = Math.cos(0.4) * (R - 4) * c.ax; y = Math.sin(0.4) * (R - 4) * c.ay; }
       return this.toClient(C.cx + x * C.sc, C.cy + y * C.sc);
     },

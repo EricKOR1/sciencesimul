@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#16a34a">
+  <title>생물의 구성 단계 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧩</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-card { background: #eef4ef; }
+    .stage-toolbar { min-height: 61px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+    #sceneSeg button { min-height: 44px; padding: 6px 13px; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    #orgSeg { display: flex; width: 100%; }
+    #orgSeg button { flex: 1; min-height: 46px; padding: 6px 8px; font-size: 16px; }
+    .zoom-ticks { display: flex; justify-content: space-between; font-size: 12.5px; font-weight: 700; color: var(--muted); margin-top: 2px; padding: 0 2px; }
+    .zoom-ticks span { width: 20%; text-align: center; }
+    .zoom-ticks span:first-child { text-align: left; }
+    .zoom-ticks span:last-child { text-align: right; }
+    input[type=range] { height: 44px; }
+    .ctrl-note { font-size: 13.5px; color: var(--muted); margin: 2px 0 0; line-height: 1.4; }
+    .mission-figure svg { border-radius: 12px; }
+    @media (max-width: 599px) {
+      #sceneSeg { flex-wrap: nowrap; }
+      #sceneSeg button { padding: 6px 12px; font-size: 14px; }
+      #sceneSeg button:not(.on) .t { display: none; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="bio">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#g1">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">중1 · Ⅱ. 생물의 구성과 다양성</div>
+      <h1>생물의 구성 단계</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="sceneLabel">🔭 사람과 나무를 확대해 보기</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="sceneSeg" role="tablist" aria-label="학습 장면" data-feature="animal">
+            <button type="button" data-scene="zoom" data-feature="zoom" title="확대 탐험" aria-label="확대 탐험">🔭<span class="t"> 확대 탐험</span></button>
+            <button type="button" data-scene="animal" data-feature="animal" title="동물" aria-label="동물">🐾<span class="t"> 동물</span></button>
+            <button type="button" data-scene="plant" data-feature="plant" title="식물" aria-label="식물">🌿<span class="t"> 식물</span></button>
+            <button type="button" data-scene="compare" data-feature="compare" title="비교" aria-label="비교">⚖️<span class="t"> 비교</span></button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="생물의 구성 단계: 사람과 나무를 개체에서 세포까지 확대하고, 동물과 식물의 구성 단계를 비교하는 화면"></canvas>
+        </div>
+      </section>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" data-feature="zoom">
+          <div class="control-head"><label>🔎 살펴볼 생물</label></div>
+          <div class="segmented" id="orgSeg" role="group" aria-label="살펴볼 생물">
+            <button type="button" data-org="human" class="on">🧍 사람</button>
+            <button type="button" data-org="tree">🌳 나무</button>
+          </div>
+        </div>
+        <div class="control" data-feature="zoom">
+          <div class="control-head"><label for="sZoom">🔭 확대 정도</label><output id="oZoom">개체</output></div>
+          <input type="range" id="sZoom" min="0" max="4" step="0.01" value="0" aria-label="확대 정도">
+          <div class="zoom-ticks" aria-hidden="true"><span>개체</span><span></span><span></span><span></span><span>세포</span></div>
+          <p class="ctrl-note">그림 속 반짝이는 동그라미를 누르거나, 그림을 위로 밀어도 확대돼요.</p>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#16a34a">
+  <title>변이와 생물다양성 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐞</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-card { background: #eef4ef; }
+    .stage-toolbar { min-height: 61px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+    #sceneSeg button { min-height: 44px; padding: 6px 13px; }
+    #resetBtn { font-size: 20px; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn-row .btn { flex: 1 1 0; min-width: 0; min-height: 50px; font-size: 16px; }
+    .btn[disabled] { opacity: .5; cursor: default; }
+    .ctrl-note { font-size: 13.5px; color: var(--muted); margin: 4px 0 0; line-height: 1.4; }
+    .gen-out { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-weight: 800; color: var(--ink); font-size: 16px; }
+    .mission-figure svg { border-radius: 12px; display: block; max-width: 100%; height: auto; }
+    @media (max-width: 599px) {
+      #sceneSeg { flex-wrap: nowrap; }
+      #sceneSeg button { padding: 6px 12px; font-size: 14px; }
+      #sceneSeg button:not(.on) .t { display: none; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="bio">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#g1">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">중1 · Ⅱ. 생물의 구성과 다양성</div>
+      <h1>변이와 생물다양성</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="sceneLabel">🌍 생물다양성의 세 가지 살펴보기</span>
+          <span class="spacer"></span>
+          <button class="icon-btn" id="resetBtn" type="button" title="처음 상태로" aria-label="처음 상태로" hidden>↺</button>
+          <div class="segmented" id="sceneSeg" role="tablist" aria-label="학습 장면" data-feature="bugs">
+            <button type="button" data-scene="div" data-feature="div" title="다양성" aria-label="다양성">🌍<span class="t"> 다양성</span></button>
+            <button type="button" data-scene="bugs" data-feature="bugs" title="변이" aria-label="변이">🐞<span class="t"> 변이</span></button>
+            <button type="button" data-scene="isl" data-feature="islands" title="환경과 변이" aria-label="환경과 변이">🐦<span class="t"> 환경과 변이</span></button>
+            <button type="button" data-scene="story" data-feature="story" title="다양성 형성" aria-label="다양성 형성">🌱<span class="t"> 다양성 형성</span></button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="생물다양성과 변이: 바지락·생태계·곤충 장면, 무당벌레의 변이 그래프, 두 섬의 새 부리 변화 모형, 다양성이 생기는 과정"></canvas>
+        </div>
+      </section>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard" hidden>
+        <div class="control">
+          <div class="control-head"><label>🐦 세대 진행</label><output class="gen-out" id="oGen">0세대</output></div>
+          <div class="btn-row">
+            <button class="btn btn-primary" id="btnStep" type="button">▶ 1세대</button>
+            <button class="btn" id="btnStep5" type="button">⏩ 5세대</button>
+          </div>
+          <p class="ctrl-note" id="ctrlNote">두 섬의 새 무리를 한 세대씩 지켜봐요. 먹이에 맞는 부리를 가진 새가 더 많이 살아남아요.</p>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

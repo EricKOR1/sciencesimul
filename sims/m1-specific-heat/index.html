@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#f26b3a">
+  <title>비열과 열팽창 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🫕</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+    .stage-toolbar { min-height: 61px; flex-wrap: nowrap; }
+    .free-mode .toolbar-label { display: none; }
+    .stage-toolbar .segmented { flex-wrap: nowrap; }
+    .stage-toolbar .segmented button { min-height: 40px; padding: 6px 11px; font-size: 14.5px; white-space: nowrap; }
+    .tgl {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 46px; flex: 1 1 0; min-width: 0;
+      border: 2px solid var(--line); background: var(--surface); color: var(--muted);
+      border-radius: 999px; padding: 5px 12px; font-weight: 800; font-size: 15px; cursor: pointer; white-space: nowrap;
+      transition: background .2s, border-color .2s, color .2s, transform .1s;
+    }
+    .tgl:active { transform: scale(.97); }
+    .tgl[aria-pressed="true"] { color: #9a3412; border-color: #fdba74; background: #fff3ea; }
+    /* 태블릿: 가로 배치 캔버스 · 휴대폰: 세로 배치 캔버스 */
+    .sc-tall { display: none; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; display: flex; flex-direction: column; gap: 10px; }
+    .btn-row { display: flex; gap: 8px; flex-wrap: nowrap; }
+    .btn-row .btn { flex: 1 1 0; min-width: 0; min-height: 48px; }
+    .btn-row .btn[aria-pressed="true"] { background: #fff3ea; border-color: #fdba74; color: #9a3412; box-shadow: none; }
+    .ctrl-note { font-size: 13.5px; color: var(--muted); margin: 0; line-height: 1.45; }
+    .readout .value.hot { color: #c2410c; }
+    .readout .value.cold { color: #1d4ed8; }
+    .mission-figure svg { border-radius: 12px; max-width: 100%; }
+    @media (max-width: 599px) {
+      .sc-wide { display: none; }
+      .sc-tall { display: block; }
+      .stage-toolbar { flex-wrap: wrap; }
+      .readouts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="phy">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#g1">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">중1 · Ⅲ. 열</div>
+      <h1>비열과 열팽창</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="sceneLabel">🔥 같은 열을 받으면 온도는 얼마나 오를까요?</span>
+          <div class="segmented" id="sceneSeg" role="group" aria-label="실험 장면" hidden>
+            <button type="button" data-scene="same">🥛 같은 열</button>
+            <button type="button" data-scene="graph">📈 비열</button>
+            <button type="button" data-scene="expand">📏 열팽창</button>
+            <button type="button" data-scene="bimetal">🧲 바이메탈</button>
+            <button type="button" data-scene="life">🗂️ 생활</button>
+          </div>
+        </div>
+        <div class="stage-canvas sc-wide">
+          <canvas id="cvWide" aria-label="비열과 열팽창 실험 화면: 물과 식용유 가열, 금속 막대와 바이메탈, 생활 속 사례 분류"></canvas>
+          <div class="stage-hint hide" id="hintWide"></div>
+        </div>
+        <div class="stage-canvas sc-tall">
+          <canvas id="cvTall" aria-label="비열과 열팽창 실험 화면: 물과 식용유 가열, 금속 막대와 바이메탈, 생활 속 사례 분류"></canvas>
+          <div class="stage-hint hide" id="hintTall"></div>
+        </div>
+      </section>
+      <div class="readouts" id="readouts">
+        <div class="readout only-same" data-feature="lamp"><span class="label">💧 물</span><span class="value cold" id="rSW">20.0<small>°C</small></span></div>
+        <div class="readout only-same" data-feature="lamp"><span class="label">🛢️ 식용유</span><span class="value hot" id="rSO">20.0<small>°C</small></span></div>
+        <div class="readout only-same" data-feature="lamp"><span class="label">⏱️ 가열한 시간</span><span class="value" id="rST">0:00<small>분</small></span></div>
+        <div class="readout only-graph" data-feature="graph"><span class="label">💧 물</span><span class="value cold" id="rGW">20.0<small>°C</small></span></div>
+        <div class="readout only-graph" data-feature="graph"><span class="label">🛢️ 식용유</span><span class="value hot" id="rGO">20.0<small>°C</small></span></div>
+        <div class="readout only-graph" data-feature="graph"><span class="label">🏖️ 모래</span><span class="value" id="rGS">20.0<small>°C</small></span></div>
+        <div class="readout only-graph" data-feature="graph"><span class="label">⏱️ 가열한 시간</span><span class="value" id="rGT">0:00<small>분</small></span></div>
+        <div class="readout only-expand" data-feature="rods"><span class="label">🌡️ 막대 온도</span><span class="value hot" id="rEX">20<small>°C</small></span></div>
+        <div class="readout only-expand" data-feature="rods"><span class="label">🟠 구리 막대 (1 m 기준)</span><span class="value" id="rEC">0.00<small>mm</small></span></div>
+        <div class="readout only-expand" data-feature="rods"><span class="label">⚪ 철 막대 (1 m 기준)</span><span class="value" id="rEF">0.00<small>mm</small></span></div>
+        <div class="readout only-bimetal" data-feature="bimetal"><span class="label">🌡️ 바이메탈 온도</span><span class="value hot" id="rBT">20.0<small>°C</small></span></div>
+        <div class="readout only-bimetal" data-feature="bimetal"><span class="label">🔌 전기 회로</span><span class="value" id="rBC">닫힘</span></div>
+        <div class="readout only-life" data-feature="cards"><span class="label">🗂️ 맞게 분류한 카드</span><span class="value" id="rLC">0<small>/ 6장</small></span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control only-same" data-feature="lamp">
+          <div class="btn-row">
+            <button class="btn btn-primary" id="btnSame" type="button">🔥 가열 시작</button>
+            <button class="btn" id="btnSameReset" type="button">↺ 다시 하기</button>
+          </div>
+          <p class="ctrl-note">같은 질량(200 g)의 물과 식용유를 똑같은 알코올램프로 가열해요. 화면에서는 시간이 빠르게 흘러요.</p>
+        </div>
+        <div class="control only-graph" data-feature="graph">
+          <div class="btn-row">
+            <button class="btn btn-primary" id="btnGraph" type="button">🔥 가열 시작</button>
+            <button class="btn" id="btnGraphReset" type="button">↺ 다시 하기</button>
+          </div>
+          <div class="btn-row"><button class="tgl" id="tgTable" type="button" aria-pressed="false" data-feature="table">📊 비열 표 보기</button></div>
+          <p class="ctrl-note">물·식용유·모래 200 g을 똑같은 알코올램프로 3분 동안 가열해요.</p>
+        </div>
+        <div class="control only-expand" data-feature="rods">
+          <div class="btn-row">
+            <button class="btn btn-primary" id="btnRods" type="button">🔥 가열 시작</button>
+            <button class="tgl" id="tgModelX" type="button" aria-pressed="true" data-feature="model">🔍 입자 모형</button>
+          </div>
+          <p class="ctrl-note" id="noteRods">막대를 눌러 고르면 입자 모형에서 그 막대를 볼 수 있어요.</p>
+        </div>
+        <div class="control only-bimetal" data-feature="bimetal">
+          <div class="btn-row">
+            <button class="btn btn-primary" id="btnBim" type="button">🔥 가열 시작</button>
+            <button class="tgl" id="tgAuto" type="button" aria-pressed="false">🔌 자동 조절</button>
+          </div>
+          <p class="ctrl-note" id="noteBim">구리(주황)와 철(회색)을 붙인 얇은 판이에요. 가열하면 어떻게 될까요?</p>
+        </div>
+        <div class="control only-life" data-feature="cards">
+          <p class="ctrl-note" style="margin:0">🖐️ 카드를 끌어서 알맞은 상자에 넣어 보세요. 카드를 누르면 설명을 볼 수 있어요.</p>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

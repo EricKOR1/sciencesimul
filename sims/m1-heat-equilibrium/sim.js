@@ -85,7 +85,7 @@
         lensA: { x: 166, y: 440, r: 24 }, lensB: { x: 576, y: 440, r: 24 },
         thA: { x: 262, y: 286, h: 172 }, thB: { x: 672, y: 286, h: 172 },
         tagY: 549,
-        bars: { x: 330, y: 70, w: 140, h: 288, horiz: false },
+        bars: { x: 330, y: 56, w: 140, h: 316, horiz: false },
       },
       contact: {
         bench: { x: 0, y: 524, w: 398, h: 56 },
@@ -185,8 +185,8 @@
 
   /* ---------- 2·3단계: 금속 컵(80 °C 물) + 수조(20 °C 물) ----------
      두 물의 온도는 같은 열평형 온도로 지수적으로 다가감 (열량 계산은 하지 않음) */
-  const T_C0 = 80, T_T0 = 20, T_EQ = 35, TAU_M = 1.4, T_END = 10, TSPEED = 0.625; // 분, 분/초
-  const EQ_TOL = 0.3;
+  const T_C0 = 80, T_T0 = 20, T_EQ = 35, TAU_M = 1.15, T_END = 10, TSPEED = 0.75; // 분, 분/초
+  const EQ_TOL = 0.06;                                // 두 온도계가 같은 값(소수 첫째 자리)을 가리키는 정도
   const EXP = {
     k: 0, tw: null, drag: false, dk0: 0, dy0: 0, lift: 0, inserting: false,
     cupIn: false, run: false, done: false, t: 0, rec: [], nextRec: 0.05,
@@ -252,7 +252,7 @@
   const LIFE = [
     { title: '🌡️ 체온 재기', hot: '몸', cold: '체온계', h0: 36.5, c0: 25, eq: 36.5, flow: '몸 → 체온계' },
     { title: '🍉 계곡물 속 수박', hot: '수박', cold: '계곡물', h0: 30, c0: 15, eq: 15, flow: '수박 → 계곡물' },
-    { title: '🧊 냉장고 속 음식', hot: '음식', cold: '냉장고 속 공기', h0: 60, c0: 4, eq: 4, flow: '음식 → 차가운 공기' },
+    { title: '🧊 냉장고 속 음식', hot: '음식', cold: '냉장고 공기', h0: 60, c0: 4, eq: 4, flow: '음식 → 차가운 공기' },
     { title: '🥄 뜨거운 국 속 숟가락', hot: '국', cold: '숟가락', h0: 70, c0: 20, eq: 66, flow: '국 → 숟가락' },
   ];
   const LS = LIFE.map(() => ({ p: 0, play: false, seen: false, press: new SciSim.Spring(0, { stiffness: 260, damping: 14 }) }));
@@ -426,7 +426,7 @@
     ctx.save();
     ctx.strokeStyle = rgba('#f26b3a', 0.35 + a * 0.5); ctx.lineWidth = 4;
     D.roundRect(R.x - 5, R.y - 5, R.w + 10, R.h + 10, 18); ctx.stroke();
-    D.label(R.x + R.w - 22, R.y - 3, 'NEW', { bg: '#f26b3a', size: 12 });
+    D.label(R.x + R.w - 22, R.y - 3, 'NEW', { bg: '#f26b3a', size: 13 });
     ctx.restore();
   }
 
@@ -516,51 +516,56 @@
     const items = [[S.vA, S.TA, '왼쪽'], [S.vB, S.TB, '오른쪽']];
     ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
     const tgt = S.target;
+    // 목표 칸: 막대 위에 초록 테두리로 겹쳐 그림 (막대가 목표에 들어오면 같이 보임)
+    const targetBox = (x, y, w, h, hit) => {
+      const a = 0.5 + 0.5 * Math.sin(t * 5);
+      ctx.fillStyle = rgba('#14a058', 0.14 + a * 0.12 + (hit ? 0.12 : 0)); D.roundRect(x, y, w, h, 7); ctx.fill();
+      ctx.strokeStyle = '#14a058'; ctx.lineWidth = hit ? 3.2 : 2.4; ctx.setLineDash(hit ? [] : [6, 4]); D.roundRect(x, y, w, h, 7); ctx.stroke(); ctx.setLineDash([]);
+    };
     if (!R.horiz) {
       const cx = R.x + R.w / 2;
       ctx.fillStyle = '#2b3445'; ctx.font = font(14, 800);
-      ctx.fillText('입자 운동의', cx, R.y + 24); ctx.fillText('빠르기', cx, R.y + 42);
-      const top = R.y + 70, bot = R.y + R.h - 34, bw = 34, H = bot - top;
-      ctx.fillStyle = '#8a95a6'; ctx.font = font(12, 700);
-      ctx.fillText('빠름 ▲', cx, top - 9); ctx.fillText('느림 ▼', cx, bot + 26);
+      ctx.fillText('입자 운동의', cx, R.y + 25); ctx.fillText('빠르기', cx, R.y + 44);
+      const top = R.y + 78, bot = R.y + R.h - 56, bw = 34, H = bot - top;
+      ctx.fillStyle = '#8a95a6'; ctx.font = font(13, 700);
+      ctx.fillText('빠름 ▲', cx, top - 10);
       items.forEach(([v, T, lab], i) => {
         const x = R.x + R.w * (i ? 0.71 : 0.29);
         ctx.fillStyle = '#edf1f6'; D.roundRect(x - bw / 2, top, bw, H, 10); ctx.fill();
-        if (i === 1 && tgt) {
-          const y1 = bot - H * clamp(speedOf(tgt.hi) / VMAX, 0, 1), y0 = bot - H * clamp(speedOf(tgt.lo) / VMAX, 0, 1);
-          const a = 0.5 + 0.5 * Math.sin(t * 5);
-          ctx.fillStyle = rgba('#14a058', 0.18 + a * 0.12); ctx.fillRect(x - bw / 2 - 7, y1, bw + 14, y0 - y1);
-          ctx.strokeStyle = '#14a058'; ctx.lineWidth = 2; ctx.setLineDash([5, 4]);
-          ctx.strokeRect(x - bw / 2 - 7, y1, bw + 14, y0 - y1); ctx.setLineDash([]);
-          ctx.fillStyle = '#0b7a41'; ctx.font = font(13, 800);
-          ctx.fillText('🎯', x + bw / 2 + 14, (y0 + y1) / 2 + 5);
-        }
         const h = H * clamp(v / VMAX, 0, 1), col = partColor(T);
         const g = ctx.createLinearGradient(x - bw / 2, 0, x + bw / 2, 0);
         g.addColorStop(0, SciSim.color.shade(col, 0.35)); g.addColorStop(0.5, col); g.addColorStop(1, SciSim.color.shade(col, -0.2));
         ctx.fillStyle = g; D.roundRect(x - bw / 2, bot - h, bw, h, 10); ctx.fill();
-        ctx.fillStyle = '#3a4456'; ctx.font = font(13, 800);
-        ctx.fillText(lab, x, bot + 44 > R.y + R.h ? bot + 16 : bot + 16);
+        ctx.fillStyle = 'rgba(255,255,255,.35)'; D.roundRect(x - bw / 2 + 5, bot - h + 4, 5, Math.max(0, h - 8), 3); ctx.fill();
+        if (i === 1 && tgt) {
+          const y1 = bot - H * clamp(speedOf(tgt.hi) / VMAX, 0, 1), y0 = bot - H * clamp(speedOf(tgt.lo) / VMAX, 0, 1);
+          const hh = Math.max(16, y0 - y1), yy = (y0 + y1) / 2 - hh / 2;
+          targetBox(x - bw / 2 - 7, yy, bw + 14, hh, v >= speedOf(tgt.lo) && v <= speedOf(tgt.hi));
+          ctx.fillStyle = '#0b7a41'; ctx.font = font(15, 800); ctx.fillText('🎯', x + bw / 2 + 17, yy + hh / 2 + 5);
+        }
+        ctx.fillStyle = '#3a4456'; ctx.font = font(13.5, 800);
+        ctx.fillText(lab, x, bot + 21);
       });
+      ctx.fillStyle = '#8a95a6'; ctx.font = font(13, 700);
+      ctx.fillText('느림 ▼', cx, bot + 44);
     } else {
       const x0 = R.x + 110 * fs * 0.8, x1 = R.x + R.w - 24, bh = 30, W = x1 - x0;
       ctx.fillStyle = '#2b3445'; ctx.font = font(15 * fs, 800); ctx.textAlign = 'left';
       ctx.fillText('입자 운동의 빠르기', R.x + 16, R.y + 30 * fs);
-      ctx.fillStyle = '#8a95a6'; ctx.font = font(12 * fs, 700); ctx.textAlign = 'right';
+      ctx.fillStyle = '#8a95a6'; ctx.font = font(13 * fs, 700); ctx.textAlign = 'right';
       ctx.fillText('느림 ◀  ▶ 빠름', x1, R.y + 30 * fs);
       items.forEach(([v, T, lab], i) => {
         const y = R.y + 66 * fs + i * 74 * fs;
         ctx.fillStyle = '#edf1f6'; D.roundRect(x0, y, W, bh, 10); ctx.fill();
-        if (i === 1 && tgt) {
-          const xa = x0 + W * clamp(speedOf(tgt.lo) / VMAX, 0, 1), xb = x0 + W * clamp(speedOf(tgt.hi) / VMAX, 0, 1);
-          const a = 0.5 + 0.5 * Math.sin(t * 5);
-          ctx.fillStyle = rgba('#14a058', 0.18 + a * 0.12); ctx.fillRect(xa, y - 7, xb - xa, bh + 14);
-          ctx.strokeStyle = '#14a058'; ctx.lineWidth = 2; ctx.setLineDash([5, 4]); ctx.strokeRect(xa, y - 7, xb - xa, bh + 14); ctx.setLineDash([]);
-        }
         const w = W * clamp(v / VMAX, 0, 1), col = partColor(T);
         const g = ctx.createLinearGradient(0, y, 0, y + bh);
         g.addColorStop(0, SciSim.color.shade(col, 0.35)); g.addColorStop(0.5, col); g.addColorStop(1, SciSim.color.shade(col, -0.2));
         ctx.fillStyle = g; D.roundRect(x0, y, Math.max(bh, w), bh, 10); ctx.fill();
+        if (i === 1 && tgt) {
+          const xa = x0 + W * clamp(speedOf(tgt.lo) / VMAX, 0, 1), xb = x0 + W * clamp(speedOf(tgt.hi) / VMAX, 0, 1);
+          const ww = Math.max(18, xb - xa), xx = (xa + xb) / 2 - ww / 2;
+          targetBox(xx, y - 7, ww, bh + 14, v >= speedOf(tgt.lo) && v <= speedOf(tgt.hi));
+        }
         ctx.fillStyle = '#3a4456'; ctx.font = font(14 * fs, 800); ctx.textAlign = 'left';
         ctx.fillText(lab, R.x + 16, y + bh / 2 + 6);
       });
@@ -680,7 +685,7 @@
     ctx.restore();
     if (!EXP.cupIn) {
       D.label(c.x + c.w / 2, c.y + G.cupWater + 40, '80 °C 물', { bg: 'rgba(194,65,12,.92)', size: 13 * fs });
-      D.label(c.x + c.w / 2, c.y + c.h - 30, '금속 컵', { bg: 'rgba(58,68,86,.88)', size: 12.5 * fs });
+      D.label(c.x + c.w / 2, c.y + c.h - 30, '금속 컵', { bg: 'rgba(58,68,86,.88)', size: 13 * fs });
     }
   }
   function drawHeatFlow(V, c, wTop, t) {
@@ -748,7 +753,7 @@
   function drawDisplay(V, R, label, T, col) {
     const { ctx, D } = V, fs = V.L.fs;
     D.shadow(() => { ctx.fillStyle = '#2b3445'; D.roundRect(R.x, R.y, R.w, R.h, 12); ctx.fill(); }, { blur: 10, y: 3 });
-    ctx.fillStyle = '#d6deeb'; ctx.font = font(12.5 * fs, 800); ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle = '#d6deeb'; ctx.font = font(13 * fs, 800); ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
     ctx.fillText(label, R.x + 10, R.y + 19 * fs);
     const lx = R.x + 8, ly = R.y + 27 * fs, lw = R.w - 16, lh = R.h - 27 * fs - 8;
     ctx.fillStyle = '#101a2b'; D.roundRect(lx, ly, lw, lh, 7); ctx.fill();
@@ -801,22 +806,22 @@
     if (EXP.cupIn && dT > EQ_TOL) {
       const w = 4 + 10 * clamp(dT / 60, 0, 1), aw = Math.min(70, bw * 0.16);
       D.arrow(cx - aw, by + bh - 16 * fs, cx + aw, by + bh - 16 * fs, { color: HEAT, width: w, head: w * 2.2 + 6, alpha: 0.82 });
-      D.label(cx, by + bh - 36 * fs - w / 2, '열', { bg: 'rgba(194,65,12,.9)', size: 12.5 * fs });
+      D.label(cx, by + bh - 36 * fs - w / 2, '열', { bg: 'rgba(194,65,12,.9)', size: 13 * fs });
     }
     ctx.restore();
-    D.label(bx + 8, by + 14 * fs, '컵 속 물', { bg: 'rgba(194,65,12,.88)', size: 12 * fs, align: 'left' });
-    D.label(bx + bw - 8, by + 14 * fs, '수조 물', { bg: 'rgba(29,78,216,.88)', size: 12 * fs, align: 'right' });
-    if (!EXP.cupIn) D.label(cx, cy, '컵을 넣으면 맞닿아요', { bg: 'rgba(43,52,69,.86)', size: 12.5 * fs });
+    D.label(bx + 8, by + 14 * fs, '컵 속 물', { bg: 'rgba(194,65,12,.88)', size: 13 * fs, align: 'left' });
+    D.label(bx + bw - 8, by + 14 * fs, '수조 물', { bg: 'rgba(29,78,216,.88)', size: 13 * fs, align: 'right' });
+    if (!EXP.cupIn) D.label(cx, cy, '컵을 넣으면 맞닿아요', { bg: 'rgba(43,52,69,.86)', size: 13 * fs });
     else if (dT <= EQ_TOL) {
       const s = 0.6 + 0.4 * clamp(EXP.eqPop.s, 0, 1.2);
       ctx.save(); ctx.translate(cx, cy); ctx.scale(s, s);
-      D.label(0, 0, '⚖️ 열평형: 입자 운동의 활발한 정도가 같아요', { bg: 'rgba(20,160,88,.92)', size: 12.5 * fs });
+      D.label(0, 0, '⚖️ 열평형: 입자 운동의 활발한 정도가 같아요', { bg: 'rgba(20,160,88,.92)', size: 13 * fs });
       ctx.restore();
     }
     // 아래: 두 쪽 입자의 평균 빠르기 막대
     const yb = by + bh + 12 * fs, bwid = (bw - 16) / 2 - 56 * fs;
     [[Z.mL, EXP.Tc, bx, '빠르기'], [Z.mR, EXP.Tt, bx + bw / 2 + 8, '빠르기']].forEach(([m, T, x0, lab]) => {
-      ctx.fillStyle = '#5d6879'; ctx.font = font(12 * fs, 800); ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#5d6879'; ctx.font = font(13 * fs, 800); ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
       ctx.fillText(lab, x0, yb + 9 * fs);
       const x1 = x0 + 50 * fs, W = bwid;
       ctx.fillStyle = '#edf1f6'; D.roundRect(x1, yb + 2 * fs, W, 14 * fs, 7 * fs); ctx.fill();
@@ -830,7 +835,7 @@
     const { ctx, D } = V, fs = V.L.fs;
     D.shadow(() => { ctx.fillStyle = '#fff'; D.roundRect(R.x, R.y, R.w, R.h, 14); ctx.fill(); }, { blur: 14, y: 4, color: 'rgba(20,40,80,.14)' });
     ctx.strokeStyle = '#dde4ef'; ctx.lineWidth = 1.2; D.roundRect(R.x, R.y, R.w, R.h, 14); ctx.stroke();
-    const x0 = R.x + 46 * fs, x1 = R.x + R.w - 16, y1 = R.y + 44 * fs, y0 = R.y + R.h - 38 * fs;
+    const x0 = R.x + 46 * fs, x1 = R.x + R.w - 16, y1 = R.y + 54 * fs, y0 = R.y + R.h - 38 * fs;
     const XM = T_END, YMIN = 0, YMAX = 100;
     const px = (v) => x0 + (v / XM) * (x1 - x0);
     const py = (v) => y0 - ((v - YMIN) / (YMAX - YMIN)) * (y0 - y1);
@@ -838,7 +843,7 @@
     ctx.fillStyle = '#2b3445'; ctx.font = font(14 * fs, 800); ctx.textAlign = 'left';
     ctx.fillText('📈 시간–온도 그래프', R.x + 12, R.y + 21 * fs);
     // 범례
-    ctx.font = font(12.5 * fs, 800); ctx.textAlign = 'right';
+    ctx.font = font(13 * fs, 800); ctx.textAlign = 'right';
     const lgY = R.y + 21 * fs;
     ctx.fillStyle = COLD; ctx.fillText('● 수조 물', R.x + R.w - 12, lgY);
     const w2 = ctx.measureText('● 수조 물').width;
@@ -846,12 +851,12 @@
     // 처음 두 온도 사이 구간
     if (on('eq')) {
       ctx.fillStyle = 'rgba(255,180,0,.10)'; ctx.fillRect(x0, py(T_C0), x1 - x0, py(T_T0) - py(T_C0));
-      ctx.fillStyle = '#9a6b00'; ctx.font = font(11.5 * fs, 800); ctx.textAlign = 'right';
+      ctx.fillStyle = '#9a6b00'; ctx.font = font(13 * fs, 800); ctx.textAlign = 'right';
       ctx.fillText('처음 두 온도 사이', x1 - 4, py(T_C0) + 14 * fs);
     }
     // 눈금
     const ySmall = R.h < 260;
-    ctx.font = font(12 * fs, 600); ctx.lineWidth = 1;
+    ctx.font = font(13 * fs, 600); ctx.lineWidth = 1;
     for (let v = 0; v <= XM; v += 2) {
       ctx.strokeStyle = '#eef2f7'; ctx.beginPath(); ctx.moveTo(px(v), y0); ctx.lineTo(px(v), y1); ctx.stroke();
       ctx.fillStyle = '#5d6879'; ctx.textAlign = 'center'; ctx.fillText(String(v), px(v), y0 + 16 * fs);
@@ -862,15 +867,15 @@
     }
     ctx.strokeStyle = '#5d6879'; ctx.lineWidth = 1.5;
     ctx.beginPath(); ctx.moveTo(x0, y1 - 6); ctx.lineTo(x0, y0); ctx.lineTo(x1 + 4, y0); ctx.stroke();
-    ctx.fillStyle = '#5d6879'; ctx.font = font(12 * fs, 800); ctx.textAlign = 'right';
+    ctx.fillStyle = '#5d6879'; ctx.font = font(13 * fs, 800); ctx.textAlign = 'right';
     ctx.fillText('시간 (분)', x1, y0 + 31 * fs);
-    ctx.textAlign = 'left'; ctx.fillText('온도 (°C)', x0 - 38 * fs, y1 - 14 * fs);
+    ctx.textAlign = 'left'; ctx.fillText('온도 (°C)', R.x + 12, y1 - 12 * fs);
     // 열평형 온도 선
     if (on('eq') && EXP.eqT >= 0) {
       D.dashedLine(x0, py(T_EQ), x1, py(T_EQ), { color: '#14a058', width: 2, dash: [7, 5] });
       const s = clamp(EXP.eqPop.s, 0, 1.3);
       ctx.save(); ctx.translate(px(Math.min(XM - 2.2, EXP.eqT + 1.4)), py(T_EQ) - 16 * fs); ctx.scale(s, s);
-      D.label(0, 0, '열평형 온도 ' + T_EQ + ' °C', { bg: '#14a058', size: 12.5 * fs });
+      D.label(0, 0, '열평형 온도 ' + T_EQ + ' °C', { bg: '#14a058', size: 13 * fs });
       ctx.restore();
     }
     // 측정 곡선
@@ -932,7 +937,7 @@
       drawLifeInfo(V, inf, it, s, Th, Tc, t);
       // 안내/완료 표시
       if (!s.play && !s.seen) D.label(ill.x + ill.w / 2, ill.y + ill.h - 14 * fs, '▶ 눌러서 보기', { bg: 'rgba(242,107,58,.95)', size: 13 * fs });
-      if (s.play) D.label(ill.x + ill.w / 2, ill.y + ill.h - 14 * fs, '🔥 열: ' + it.flow, { bg: 'rgba(194,65,12,.92)', size: 12.5 * fs });
+      if (s.play) D.label(ill.x + ill.w / 2, ill.y + ill.h - 14 * fs, '🔥 열: ' + it.flow, { bg: 'rgba(194,65,12,.92)', size: 13 * fs });
       if (s.seen && !s.play) D.check(R.x + R.w - 22, R.y + 22, 12, 1);
       ctx.restore();
     });
@@ -942,7 +947,7 @@
     ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
     const row = (y, name, T, col) => {
       ctx.fillStyle = col; circle(ctx, R.x + 6, y - 5 * fs, 5 * fs); ctx.fill();
-      ctx.fillStyle = '#3a4456'; ctx.font = font(12.5 * fs, 700); ctx.fillText(name, R.x + 16 * fs, y);
+      ctx.fillStyle = '#3a4456'; ctx.font = font(13 * fs, 700); ctx.fillText(name, R.x + 16 * fs, y);
       ctx.fillStyle = col; ctx.font = mono(15 * fs, 800); ctx.textAlign = 'right'; ctx.fillText(T.toFixed(1) + '°', R.x + R.w, y); ctx.textAlign = 'left';
     };
     row(R.y + 14 * fs, it.hot, Th, HOT);
@@ -964,12 +969,12 @@
       }
       ctx.stroke();
     });
-    ctx.fillStyle = '#8a95a6'; ctx.font = font(10.5 * fs, 700); ctx.textAlign = 'right';
+    ctx.fillStyle = '#8a95a6'; ctx.font = font(13 * fs, 700); ctx.textAlign = 'right';
     ctx.fillText('시간 →', gx + gw - 6, gy + gh - 12);
     ctx.textAlign = 'left';
     // 상태
     const done = s.seen && !s.play;
-    D.label(R.x + R.w / 2, R.y + R.h - 9 * fs, done ? '⚖️ 열평형' : s.play ? '온도가 변하는 중…' : '온도 변화 보기', { bg: done ? '#14a058' : s.play ? '#f59e0b' : '#94a3b8', size: 12 * fs });
+    D.label(R.x + R.w / 2, R.y + R.h - 9 * fs, done ? '⚖️ 열평형' : s.play ? '온도가 변하는 중…' : '온도 변화 보기', { bg: done ? '#14a058' : s.play ? '#f59e0b' : '#94a3b8', size: 13 * fs });
   }
 
   // 흐르는 점으로 열의 이동 표시 (그림 좌표 220×200)
@@ -1103,20 +1108,10 @@
     // 뜨거운 국 속 숟가락
     function (ctx, D, s, t, Th, Tc) {
       const a = s.play ? 1 - s.p * 0.85 : 0, bx = 104, by = 132;
-      // 숟가락(국 속 부분은 아래에 그림)
       const heat = clamp((Tc - 20) / 46, 0, 1);
-      ctx.save(); ctx.lineCap = 'round';
-      const sx0 = bx - 18, sy0 = by + 14, sx1 = 202, sy1 = 26;
-      const sg = ctx.createLinearGradient(sx0, sy0, sx1, sy1);
-      sg.addColorStop(0, ramp([[0, '#b8c2cf'], [1, '#ff7a3d']], heat));
-      sg.addColorStop(clamp(heat * 0.9, 0.01, 0.99), ramp([[0, '#d8dee7'], [1, '#ffb26b']], heat));
-      sg.addColorStop(1, '#c7cfda');
-      ctx.strokeStyle = sg; ctx.lineWidth = 9;
-      ctx.beginPath(); ctx.moveTo(sx0, sy0); ctx.lineTo(sx1, sy1); ctx.stroke();
-      ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(sx0 + 10, sy0 - 6); ctx.lineTo(sx1 - 4, sy1 - 3); ctx.stroke();
-      ctx.restore();
-      ctx.fillStyle = '#b8c2cf'; ellipse(ctx, sx0 - 6, sy0 + 4, 20, 11); ctx.fill();
+      const hx0 = bx - 36, hy0 = by + 3, ex = 204, ey = 22;            // 숟가락 머리 중심 · 손잡이 끝
+      const ang = Math.atan2(ey - hy0, ex - hx0), ux = Math.cos(ang), uy = Math.sin(ang);
+      const metal = (h) => ramp([[0, '#c9d1dc'], [1, '#ff9a55']], h);
       // 그릇
       const bg = ctx.createLinearGradient(0, by, 0, by + 64);
       bg.addColorStop(0, '#ffffff'); bg.addColorStop(1, '#c4cedb');
@@ -1127,17 +1122,29 @@
       const sp = ctx.createRadialGradient(bx - 20, by - 4, 4, bx, by, 92);
       sp.addColorStop(0, '#ffb070'); sp.addColorStop(1, '#c4502a');
       ctx.fillStyle = sp; ellipse(ctx, bx, by, 88, 15); ctx.fill();
-      ctx.fillStyle = '#5bb25a'; ctx.fillRect(bx - 40, by - 4, 8, 3); ctx.fillRect(bx + 22, by + 3, 9, 3); ctx.fillRect(bx + 50, by - 6, 7, 3);
-      // 국 밖으로 나온 숟가락 손잡이 다시 위에
+      ctx.fillStyle = '#5bb25a'; ctx.fillRect(bx - 4, by - 6, 8, 3); ctx.fillRect(bx + 22, by + 3, 9, 3); ctx.fillRect(bx + 50, by - 6, 7, 3);
+      // 숟가락 머리(국에 반쯤 잠김)
+      ctx.save(); ctx.translate(hx0, hy0); ctx.rotate(ang);
+      const hg = ctx.createLinearGradient(-26, 0, 26, 0); hg.addColorStop(0, '#e4e9f0'); hg.addColorStop(1, metal(heat));
+      ctx.fillStyle = hg; ellipse(ctx, 0, 0, 26, 13); ctx.fill();
+      ctx.fillStyle = 'rgba(196,80,42,.38)'; ellipse(ctx, 0, 0, 26, 13); ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.ellipse(0, 0, 21, 8, 0, Math.PI * 1.05, Math.PI * 1.6); ctx.stroke();
+      ctx.restore();
+      // 손잡이 (뜨거운 쪽부터 색이 번짐)
       ctx.save(); ctx.lineCap = 'round';
-      const sg2 = ctx.createLinearGradient(bx + 30, by - 10, sx1, sy1);
-      sg2.addColorStop(0, ramp([[0, '#d0d7e1'], [1, '#ff9a55']], heat)); sg2.addColorStop(1, ramp([[0, '#c7cfda'], [1, '#ffcf9e']], heat * heat));
-      ctx.strokeStyle = sg2; ctx.lineWidth = 9;
-      ctx.beginPath(); ctx.moveTo(bx + 34, by - 12); ctx.lineTo(sx1, sy1); ctx.stroke();
+      const sg = ctx.createLinearGradient(hx0, hy0, ex, ey);
+      sg.addColorStop(0, metal(heat)); sg.addColorStop(clamp(heat * 0.95, 0.02, 0.98), metal(heat * 0.55)); sg.addColorStop(1, '#c7cfda');
+      ctx.strokeStyle = sg; ctx.lineWidth = 9;
+      ctx.beginPath(); ctx.moveTo(hx0 + ux * 22, hy0 + uy * 22); ctx.lineTo(ex, ey); ctx.stroke();
+      ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(hx0 + ux * 30 + uy * 3, hy0 + uy * 30 - ux * 3); ctx.lineTo(ex - 3 + uy * 3, ey - 3 - ux * 3); ctx.stroke();
       ctx.restore();
       wisps(ctx, bx - 40, by - 8, 3, 18, t, 0.9);
-      flowArrow(ctx, bx + 6, by + 2, bx + 64, by - 40, t, a);
-      flowArrow(ctx, bx + 46, by - 24, bx + 96, by - 66, t + 0.3, a);
+      // 열의 이동: 국 → 숟가락 머리 → 손잡이 쪽 (손잡이 옆에 나란히)
+      const px = uy * 22, py = -ux * 22;
+      flowArrow(ctx, bx - 8, by + 22, hx0 + 8, hy0 + 12, t, a);
+      flowArrow(ctx, hx0 + ux * 44 - px, hy0 + uy * 44 - py, hx0 + ux * 96 - px, hy0 + uy * 96 - py, t, a);
+      flowArrow(ctx, hx0 + ux * 112 - px, hy0 + uy * 112 - py, hx0 + ux * 158 - px, hy0 + uy * 158 - py, t + 0.3, a);
     },
   ];
 
@@ -1245,12 +1252,6 @@
   cupBtn.addEventListener('click', () => { Sound.click(); insertCup(); });
   $('#againBtn').addEventListener('click', () => { Sound.click(); resetExp(); showHint('↓ 금속 컵을 끌어 수조에 넣어 보세요', 4000); });
   $('#tgZoom').addEventListener('click', () => { Sound.click(); S.zoomOn = !S.zoomOn; syncUI(); });
-  $('#resetBtn').addEventListener('click', () => {
-    Sound.click();
-    if (S.scene === 'beakers') setTB(80);
-    else if (S.scene === 'contact') resetExp();
-    else LS.forEach((s) => { s.p = 0; s.play = false; });
-  });
   $$('#sceneSeg button').forEach((b) => b.addEventListener('click', () => { Sound.click(); setScene(b.dataset.scene); }));
 
   function setScene(name) {

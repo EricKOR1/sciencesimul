@@ -17,7 +17,6 @@
     .stage-toolbar { min-height: 61px; }
     .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
     #sceneSeg button { min-height: 44px; padding: 6px 13px; }
-    .stage-hint { white-space: normal; width: max-content; max-width: calc(100% - 24px); text-align: center; }
     #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
     #ctrlCard .control { margin: 0; }
     #magSeg { display: flex; width: 100%; }
@@ -31,7 +30,9 @@
     .fig-cells figure { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 2px; }
     .fig-cells figcaption { font-size: 13.5px; font-weight: 700; color: var(--muted); }
     @media (max-width: 599px) {
-      #sceneSeg button { padding: 6px 10px; font-size: 14px; }
+      #sceneSeg { flex-wrap: nowrap; }
+      #sceneSeg button { padding: 6px 12px; font-size: 14px; }
+      #sceneSeg button:not(.on) .t { display: none; }
     }
   </style>
 </head>
@@ -55,15 +56,14 @@
           <span class="toolbar-label" id="sceneLabel">🔬 광학 현미경으로 세포 관찰하기</span>
           <span class="spacer"></span>
           <div class="segmented" id="sceneSeg" role="tablist" aria-label="실험 장면" data-feature="model">
-            <button type="button" data-scene="scope" data-feature="scope">🔬 현미경</button>
-            <button type="button" data-scene="model" data-feature="model">🧫 세포 구조</button>
-            <button type="button" data-scene="func" data-feature="func">⚙️ 구조와 기능</button>
-            <button type="button" data-scene="shape" data-feature="shape">🩸 모양과 기능</button>
+            <button type="button" data-scene="scope" data-feature="scope" title="현미경" aria-label="현미경">🔬<span class="t"> 현미경</span></button>
+            <button type="button" data-scene="model" data-feature="model" title="세포 구조" aria-label="세포 구조">🧫<span class="t"> 세포 구조</span></button>
+            <button type="button" data-scene="func" data-feature="func" title="구조와 기능" aria-label="구조와 기능">⚙️<span class="t"> 구조와 기능</span></button>
+            <button type="button" data-scene="shape" data-feature="shape" title="모양과 기능" aria-label="모양과 기능">🩸<span class="t"> 모양과 기능</span></button>
           </div>
         </div>
         <div class="stage-canvas">
           <canvas id="cv" aria-label="광학 현미경과 세포 모형: 현미경 시야, 식물 세포와 동물 세포, 여러 가지 모양의 세포"></canvas>
-          <div class="stage-hint hide" id="stageHint"></div>
         </div>
       </section>
     </div>

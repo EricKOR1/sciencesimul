@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0ea5e9">
+  <title>지구형 행성과 목성형 행성 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔭</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-card { background: #070d1f; }
+    /* 태블릿: 가로 배치 캔버스 · 휴대폰: 세로 배치 캔버스 */
+    .sc-tall { display: none; }
+    @media (max-width: 599px) { .sc-wide { display: none; } .sc-tall { display: block; } }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    .is-off { display: none !important; }
+    .seg-label { display: block; font-weight: 800; font-size: 14.5px; color: var(--muted); margin-bottom: 6px; }
+    .segmented { display: flex; width: 100%; }
+    .segmented button { flex: 1 1 auto; min-height: 44px; padding: 6px 8px; font-size: 14px; }
+    .segmented button.on { color: #075985; }
+    .play-row { display: flex; gap: 8px 12px; align-items: center; flex-wrap: wrap; }
+    .play-row .btn { min-width: 140px; }
+    .ctrl-note { margin: 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; flex: 1 1 120px; }
+    .btn-sm { min-height: 44px; }
+    input[type=range] { height: 44px; }
+    .game-foot button { min-height: 44px; }
+    .mission-figure svg { border-radius: 12px; }
+    /* 요약 노트의 비교표 */
+    .cmp { width: 100%; border-collapse: collapse; font-size: 14px; margin: 6px 0; }
+    .cmp th, .cmp td { border: 1px solid var(--line); padding: 5px 8px; text-align: left; vertical-align: top; }
+    .cmp th { background: var(--surface-2); font-weight: 800; }
+    .cmp th.t { background: #fff1e6; color: #9a4a12; }
+    .cmp th.j { background: #e6f0ff; color: #1d4f9a; }
+    .cmp td.k { font-weight: 800; background: var(--surface-2); white-space: nowrap; }
+    .note-fig { margin: 6px 0; text-align: center; }
+    .note-fig svg { max-width: 100%; height: auto; border-radius: 10px; }
+  </style>
+</head>
+<body class="sim-page" data-subject="earth">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#g1">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">중1 · Ⅶ. 태양계</div>
+      <h1>지구형 행성과 목성형 행성</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-canvas sc-wide"><canvas id="cvWide" aria-label="망원경으로 본 행성, 행성 자료 그래프, 탐사선 투하, 행성 궤도와 특징 표"></canvas></div>
+        <div class="stage-canvas sc-tall"><canvas id="cvTall" aria-label="망원경으로 본 행성, 행성 자료 그래프, 탐사선 투하, 행성 궤도와 특징 표"></canvas></div>
+      </section>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" id="cScene">
+          <span class="seg-label">🧭 화면</span>
+          <div class="segmented" id="sceneSeg" role="group" aria-label="화면 고르기">
+            <button type="button" data-s="scope">🔭 망원경</button><button type="button" data-s="graph">📊 그래프</button><button type="button" data-s="probe">🚀 탐사선</button><button type="button" data-s="orbits">🗺️ 궤도</button><button type="button" data-s="table">📋 표</button>
+          </div>
+        </div>
+        <div class="control" id="cFocus" data-feature="focus">
+          <div class="control-head"><label for="sFocus">🔭 초점 손잡이</label><output id="oFocus"></output></div>
+          <input type="range" id="sFocus" min="0" max="100" step="1" value="12" aria-label="망원경 초점">
+        </div>
+        <div class="control" id="cNight" data-feature="scope">
+          <div class="play-row">
+            <button class="btn btn-sm btn-primary" id="nightBtn" type="button">🌙 다음 날 밤</button>
+            <p class="ctrl-note" id="nightNote">같은 시각에 하루 뒤 하늘을 봐요.</p>
+          </div>
+        </div>
+        <div class="control" id="cProbe" data-feature="probe">
+          <div class="play-row">
+            <button class="btn btn-sm btn-primary" id="probeBtn" type="button">🚀 탐사선 투하</button>
+            <p class="ctrl-note" id="probeNote">위에서 행성을 고른 뒤 눌러요.</p>
+          </div>
+        </div>
+        <div class="control" id="cReset">
+          <button class="btn btn-sm" id="resetBtn" type="button">↺ 되돌리기</button>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>
