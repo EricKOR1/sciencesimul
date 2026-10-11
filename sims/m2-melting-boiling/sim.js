@@ -528,7 +528,7 @@
     if (kind === 'water') return mkCurve('boil', { V: s.amt, bp: 100, tr: 0.16 * s.amt, kb: 0.1, xmax: 30, ymax: 120 });
     if (kind === 'eth') return mkCurve('boil', { V: s.amt, bp: 78, k: 0, tr: 0.7 * s.amt, kb: 0.8, xmax: 16, ymax: 100 });
     if (kind === 'press') { const bp = bpWater(P); return mkCurve('boil', { V: 100, bp, tr: 0.1 * (bp - 20), tb: 5, xmax: 16, ymax: 130 }); }
-    if (s.unk === 'X') return mkCurve('melt', { m: 8, mp: 80, xmax: 16, ymax: 100, rise: 14 });
+    if (s.unk === 'X') return mkCurve('melt', { m: 8, mp: 80, xmax: 16, ymax: 100, rise: 9 });
     return mkCurve('boil', { V: 8, bp: 78, tr: 5.6, tb: 6.6, xmax: 16, ymax: 100 });
   }
 
@@ -980,7 +980,7 @@
     D.sphere(x + 18, P.y + P.h / 2 + 1, PHONE ? 4.4 : 5.4, heat > 0.2 ? '#ff8a3d' : '#94a3b8', { gloss: true });
     // 손잡이(눈금판)
     D.sphere(x + P.w - 22, P.y + P.h / 2 + 1, PHONE ? 5.6 : 7, '#cbd5e1', { gloss: true });
-    text(P.cx, P.y + P.h + (PHONE ? 15 : 19), '가열판', { size: 12, weight: 800, color: COL.muted });
+    text(P.cx, P.y + P.h + (PHONE ? 15 : 19), '가열판', { size: 13, weight: 800, color: COL.muted });
   }
 
   /* 중탕 비커 (뜨거운 물) */
@@ -1172,12 +1172,12 @@
     c.scale(k, k); c.translate(-r.x, -r.y);
     c.strokeStyle = 'rgba(120,135,160,.22)'; c.lineWidth = 1;
     const ys = cv.ymax - cv.ymin > 100 ? 20 : 20;
-    for (let T = Math.ceil(cv.ymin / ys) * ys; T <= cv.ymax + 0.1; T += ys) { c.beginPath(); c.moveTo(P.x0, Y(T)); c.lineTo(P.x1, Y(T)); c.stroke(); d.text(P.x0 - 7, Y(T) + 4.5, String(T), { size: 12.5, weight: 700, color: COL.muted, align: 'right' }); }
+    for (let T = Math.ceil(cv.ymin / ys) * ys; T <= cv.ymax + 0.1; T += ys) { c.beginPath(); c.moveTo(P.x0, Y(T)); c.lineTo(P.x1, Y(T)); c.stroke(); d.text(P.x0 - 7, Y(T) + 4.5, String(T), { size: PHONE ? 12.5 : 13, weight: 700, color: COL.muted, align: 'right' }); }
     const xs = cv.xmax > 20 ? 5 : cv.xmax > 10 ? 4 : 2;
-    for (let m = 0; m <= cv.xmax + 0.01; m += xs) { c.beginPath(); c.moveTo(X(m), P.y0); c.lineTo(X(m), P.y1); c.stroke(); d.text(X(m), P.y1 + 16, String(m), { size: 12.5, weight: 700, color: COL.muted }); }
+    for (let m = 0; m <= cv.xmax + 0.01; m += xs) { c.beginPath(); c.moveTo(X(m), P.y0); c.lineTo(X(m), P.y1); c.stroke(); d.text(X(m), P.y1 + 16, String(m), { size: PHONE ? 12.5 : 13, weight: 700, color: COL.muted }); }
     c.strokeStyle = '#5d6879'; c.lineWidth = 2; c.beginPath(); c.moveTo(P.x0, P.y0 - 6); c.lineTo(P.x0, P.y1); c.lineTo(P.x1 + 4, P.y1); c.stroke();
-    d.text(P.x0 - 6, P.y0 - (PHONE ? 10 : 12), '온도 (°C)', { size: 12.5, weight: 800, color: COL.muted, align: 'left' });
-    d.text(P.x1, P.y1 + (PHONE ? 30 : 31), '가열 시간 (분)', { size: 12.5, weight: 800, color: COL.muted, align: 'right' });
+    d.text(P.x0 - 6, P.y0 - (PHONE ? 10 : 12), '온도 (°C)', { size: PHONE ? 12.5 : 13, weight: 800, color: COL.muted, align: 'left' });
+    d.text(P.x1, P.y1 + (PHONE ? 30 : 31), '가열 시간 (분)', { size: PHONE ? 12.5 : 13, weight: 800, color: COL.muted, align: 'right' });
     b = { cv: cvs, k }; GBASE[kk] = b;
     return b;
   }
@@ -1207,7 +1207,7 @@
       R.press.forEach((q) => {
         if (Math.abs(q.P - R.P) < 0.02) return;
         const cv = curveFor('press', null, q.P); drawSegCurve({ cv }, 99, X, Y, rgba(PCOL(q.P), 0.55), 3, 0.7);
-        const g = cv.segs[1]; pill(X(g.t1) - 2, Y(g.T0) - 14, q.P.toFixed(1) + '기압', { bg: rgba(PCOL(q.P), 0.8), size: 11.5, pad: 6, align: 'right' });
+        const g = cv.segs[1]; pill(X(g.t1) - 2, Y(g.T0) - 14, q.P.toFixed(1) + '기압', { bg: rgba(PCOL(q.P), 0.8), size: PHONE ? 11.5 : 13, pad: 6, align: 'right' });
       });
     }
     // 평평한 구간의 기준선
@@ -1229,7 +1229,7 @@
       if (heads.length > 1 && Math.abs(heads[1].y - heads[0].y) < 26 && Math.abs(heads[1].x - heads[0].x) < 96) {   // 머리가 가까우면 위 · 아래로 나눠요
         const o = heads[1 - i]; if (!(hy < o.y || (hy === o.y && i === 0))) py = hy + 17;
       }
-      pill(Math.min(hx + 8, P.x1 - 54), py, tStr(s.st.T) + ' °C', { bg: s.col, size: 12.5, align: 'left', pad: 7 });
+      pill(Math.min(hx + 8, P.x1 - 54), py, tStr(s.st.T) + ' °C', { bg: s.col, size: PHONE ? 12.5 : 13, align: 'left', pad: 7 });
     });
     // 수평 구간 설명 (선 아래)
     R.samples.forEach((s, i) => {
@@ -1239,7 +1239,7 @@
         const mx = (X(g.t0) + X(shown)) / 2, my = Y(g.T0) + 22 + i * 24;
         ctx.save(); ctx.globalAlpha = Math.min(1, k);
         const lbl = R.kind === 'press' ? tStr(g.T0) + ' °C에서 끓어요' : (g.name + ' ' + tStr(g.T0) + ' °C') + (R.kind === 'unk' ? '' : ' · ' + tStr(g.t1 - g.t0) + '분');
-        pill(clamp(mx, P.x0 + 70, P.x1 - 70), my, (R.samples.length > 1 && R.kind !== 'unk' ? s.label + ': ' : '') + lbl, { bg: R.kind === 'press' ? rgba(PCOL(R.P), 0.92) : s.col, size: PHONE ? 11.5 : 12.5, pad: 8 });
+        pill(clamp(mx, P.x0 + 70, P.x1 - 70), my, (R.samples.length > 1 && R.kind !== 'unk' ? s.label + ': ' : '') + lbl, { bg: R.kind === 'press' ? rgba(PCOL(R.P), 0.92) : s.col, size: PHONE ? 12 : 13, pad: 8 });
         ctx.restore();
       });
     });
@@ -1247,6 +1247,7 @@
 
   /* ---- 입자 모형 창 (🔍) : 시료마다 한 칸씩 ---- */
   const stateWord = (s) => { const id = s.st.id; return id === 'sol' ? '고체' : id === 'melt' ? '녹는 중' : id === 'liq' ? '액체' : id === 'boil' ? '끓는 중' : ''; };
+  const stateNote = (s) => { const id = s.st.id; return id === 'sol' ? '제자리에서 떨어요' : id === 'melt' ? '자리를 벗어나요' : id === 'liq' ? '붙은 채 미끄러져요' : id === 'boil' ? '멀리 날아가요' : ''; };
   function drawLensM() {
     const r = LAY.bot, R = RUN;
     lensFrame(r, { title: '🔍 입자 모형' }, () => {
@@ -1255,9 +1256,11 @@
     });
     R.samples.forEach((s) => {
       const b = lensBoxOf(s.i, R.samples.length), cx = (b.x0 + b.x1) / 2;
-      if (R.samples.length > 1) pill(cx, b.y0 + (PHONE ? 11 : 13), s.label + ' · 입자 ' + s.N + '개', { bg: s.col, size: PHONE ? 11.5 : 12.5, pad: 7 });
+      if (R.samples.length > 1) pill(cx, b.y0 + (PHONE ? 11 : 13), s.label + ' · 입자 ' + s.N + '개', { bg: s.col, size: PHONE ? 12 : 13, pad: 7 });
       const w = stateWord(s);
       if (w) pill(cx, b.y0 + (PHONE ? 36 : 42), w, { bg: s.st.seg.flat ? '#7c3aed' : '#64748b', size: PHONE ? 12 : 13, pad: 9 });
+      const nt = stateNote(s);
+      if (nt) text(cx, b.y0 + (PHONE ? 62 : 71), nt, { size: PHONE ? 12 : 13, weight: 700, color: COL.muted });
     });
   }
 
@@ -1278,14 +1281,14 @@
       if (rec) {
         ctx.save(); const s = 1 + 0.2 * rec.pop; ctx.translate(cx, cd.y + cd.h - (PHONE ? 12 : 13)); ctx.scale(s, s);
         if (PHONE) text(0, 0, '끓는점 ' + tStr(rec.bp) + ' °C', { size: 14, weight: 800, color: PCOL(cd.q.p) });
-        else { text(0, -19, '잰 끓는점', { size: 12, weight: 700, color: COL.muted }); text(0, 0, tStr(rec.bp) + ' °C', { size: 18, weight: 800, color: PCOL(cd.q.p) }); }
+        else { text(0, -19, '잰 끓는점', { size: 13, weight: 700, color: COL.muted }); text(0, 0, tStr(rec.bp) + ' °C', { size: 18, weight: 800, color: PCOL(cd.q.p) }); }
         ctx.restore();
-      } else text(cx, cd.y + cd.h - (PHONE ? 12 : 14), '눌러서 압력 맞추기', { size: PHONE ? 11.5 : 12.5, weight: 700, color: '#94a3b8' });
+      } else text(cx, cd.y + cd.h - (PHONE ? 12 : 14), '눌러서 압력 맞추기', { size: PHONE ? 12 : 13, weight: 700, color: '#94a3b8' });
     });
   }
 
   /* ---- ④ 녹는점 · 끓는점 표 ---- */
-  const PICK = { X: '', Y: '' };
+  const PICK = { X: '', Y: '', flagX: '', flagY: '', shX: 0, shY: 0 };
   function drawPropTable() {
     const r = LAY.bot;
     panel(r.x, r.y, r.w, r.h, 16, '#fff', 12, 4, 'rgba(30,50,100,.16)');
@@ -1293,17 +1296,18 @@
     const x0 = r.x + 12, w = r.w - 24, y0 = r.y + (PHONE ? 36 : 44), hh = PHONE ? 24 : 30, rh = PHONE ? 22 : 36, cw = [w * 0.34, w * 0.33, w * 0.33];
     ctx.fillStyle = '#f3f0ff'; D.roundRect(x0, y0, w, hh, 10); ctx.fill();
     ['물질', '녹는점', '끓는점'].forEach((h, i) => text(x0 + cw.slice(0, i).reduce((a, b) => a + b, 0) + cw[i] / 2, y0 + hh / 2 + 5, h, { size: PHONE ? 13 : 14.5, weight: 800, color: COL.subD }));
-    // 시료에서 읽은 수평 구간 표시
-    const found = { X: RUN.kind === 'unk' && RUN.samples[0] && RUN.t >= RUN.samples[0].cv.segs[1].t0 + 0.4, Y: RUN.kind === 'unk' && RUN.samples[1] && RUN.t >= RUN.samples[1].cv.segs[1].t0 + 0.4 };
     TABLE.forEach((id, i) => {
-      const S = SUBS[id], y = y0 + hh + 4 + i * rh, hl = PICK.X === id ? 'X' : PICK.Y === id ? 'Y' : '';
-      ctx.fillStyle = hl ? 'rgba(139,92,246,.12)' : i % 2 ? '#fafbfe' : '#f5f8fd'; D.roundRect(x0, y, w, rh - 3, 9); ctx.fill();
-      if (hl) { ctx.strokeStyle = 'rgba(139,92,246,.65)'; ctx.lineWidth = 2; D.roundRect(x0, y, w, rh - 3, 9); ctx.stroke(); }
+      const S = SUBS[id], y = y0 + hh + 4 + i * rh, tags = ['X', 'Y'].filter((k) => PICK[k] === id), hl = tags.length > 0;
+      const sh = Math.max(tags.indexOf('X') >= 0 ? PICK.shX : 0, tags.indexOf('Y') >= 0 ? PICK.shY : 0), bad = sh > 0.02;
+      ctx.save(); if (bad) ctx.translate(Math.sin(CLK.t * 50) * 3.2 * sh, 0);
+      ctx.fillStyle = hl ? (bad ? 'rgba(226,70,75,.14)' : 'rgba(139,92,246,.12)') : i % 2 ? '#fafbfe' : '#f5f8fd'; D.roundRect(x0, y, w, rh - 3, 9); ctx.fill();
+      if (hl) { ctx.strokeStyle = bad ? 'rgba(226,70,75,.85)' : 'rgba(139,92,246,.65)'; ctx.lineWidth = 2; D.roundRect(x0, y, w, rh - 3, 9); ctx.stroke(); }
       drawBall(ctx, S.pcol, x0 + 16, y + rh / 2 - 1.5, PHONE ? 5.5 : 7);
       text(x0 + 30, y + rh / 2 + 4, S.name, { size: PHONE ? 13.5 : 16, weight: 800, color: COL.ink, align: 'left' });
       const v = (c, val, col) => { const cx = x0 + cw.slice(0, c).reduce((a, b) => a + b, 0) + cw[c] / 2; text(cx, y + rh / 2 + 5, val == null ? '–' : tStr(val), { size: PHONE ? 14 : 17, weight: 800, color: val == null ? '#c3ccd9' : col }); };
       v(1, S.mp, '#1d4ed8'); v(2, S.bp, '#b91c1c');
-      if (hl) pill(x0 + w - 14, y + rh / 2 - 1, hl, { bg: hl === 'X' ? '#64748b' : '#7c6bd6', size: PHONE ? 11 : 12.5, align: 'right', pad: 6 });
+      tags.forEach((k, j) => pill(x0 + w - 14 - j * (PHONE ? 30 : 34), y + rh / 2 - 1, k, { bg: k === 'X' ? '#64748b' : '#7c6bd6', size: PHONE ? 12 : 13, align: 'right', pad: 6 }));
+      ctx.restore();
     });
   }
 
@@ -1377,10 +1381,18 @@
 
   function resetScene(key) {
     FX.clear(); hideHint();
-    if (key === 'unk') { PICK.X = PICK.Y = ''; selX.value = ''; selY.value = ''; }
+    if (key === 'unk') { PICK.X = PICK.Y = ''; PICK.flagX = PICK.flagY = ''; PICK.shX = PICK.shY = 0; selX.value = ''; selY.value = ''; }
     setupRun(kindOf(key), key === 'press' ? { P: +pressR.value } : {});
     ready[key] = true; S.sceneT = 0;
     refreshReadouts(); refreshUI();
+  }
+  /* 새 단계에서 처음 나타나는 조절 상자는 잠깐 깜빡여서 알려 줘요 */
+  const CTL_OF = { boil: '#ctlSub', press: '#ctlPress', unk: '#ctlPick' };
+  function pulseCtl(sc) {
+    const el = CTL_OF[sc] && $(CTL_OF[sc]);
+    if (!el || el.hidden || RM) return;
+    el.classList.remove('feature-new'); void el.offsetWidth; el.classList.add('feature-new');
+    setTimeout(() => el.classList.remove('feature-new'), 4600);
   }
   function setScene(key, reset) {
     const was = S.scene;
@@ -1389,6 +1401,7 @@
     if (reset || !ready[key] || RUN.kind !== kindOf(key)) resetScene(key); else refreshReadouts();
     if (key !== was || reset) showHintMsg(SCENES[key].hint, 6500);
     refreshUI();
+    if (key !== was && !(game && game.free)) pulseCtl(key);
   }
   function setSub(id) {
     if (RUN.on) return;
@@ -1412,20 +1425,32 @@
   $('#resetBtn').addEventListener('click', () => { Sound.click(); resetScene(S.scene); showHintMsg(SCENES[S.scene].hint, 5000); });
   $$('#sceneSeg button').forEach((b) => b.addEventListener('click', () => { Sound.click(); setScene(b.dataset.scene, true); }));
   subBtns.forEach((b) => b.addEventListener('click', () => setSub(b.dataset.sub)));
-  [[selX, 'X'], [selY, 'Y']].forEach((q) => q[0].addEventListener('change', () => { PICK[q[1]] = q[0].value; Sound.click(); refreshUI(); refreshReadouts(); }));
+  [[selX, 'X'], [selY, 'Y']].forEach((q) => q[0].addEventListener('change', () => { PICK[q[1]] = q[0].value; PICK['flag' + q[1]] = ''; Sound.click(); refreshUI(); refreshReadouts(); }));
 
-  /* ---------- 캔버스 입력: 가열판 · 압력 카드를 눌러도 돼요 ---------- */
+  /* ---------- 캔버스 입력: 가열판 · 압력 카드를 눌러도 돼요 (손가락을 뗄 때 실행: 휴대폰에서 화면을 밀어 내려도 잘못 눌리지 않아요) ---------- */
   const platePad = () => { const P = curA().plate; return { x: P.cx - P.w / 2 - 6, y: P.y - 8, w: P.w + 12, h: P.h + 16 }; };
+  if (PHONE) view.canvas.style.touchAction = 'pan-y';
+  let tapStart = null;
   SciSim.pointer(view, {
     hover(p) {
       if (S.scene === 'press' && prCards().some((c) => inRect(p, c, 2))) return 'pointer';
       return inRect(p, platePad()) ? 'pointer' : null;
     },
-    down(p) {
+    down(p, e) {
       hideHint();
-      if (S.scene === 'press') { const c = prCards().find((q) => inRect(p, q, 2)); if (c) { if (!RUN.on) { Sound.click(); setPressure(c.q.p); } return false; } }
-      if (inRect(p, platePad())) startRun();
-      return false;
+      let target = null;
+      if (S.scene === 'press') { const c = prCards().find((q) => inRect(p, q, 2)); if (c) target = { card: c }; }
+      if (!target && inRect(p, platePad())) target = { plate: true };
+      if (!target) return false;
+      tapStart = { x: e.clientX, y: e.clientY, target };
+      return true;
+    },
+    move() {},
+    up(p, e) {
+      const st = tapStart; tapStart = null;
+      if (!st || e.type !== 'pointerup' || Math.hypot(e.clientX - st.x, e.clientY - st.y) > 14) return;
+      if (st.target.card) { if (!RUN.on) { Sound.click(); setPressure(st.target.card.q.p); } return; }
+      startRun();
     },
   });
 
@@ -1438,6 +1463,7 @@
     FX.update(dt);
     updateRun(dt);
     PD.v.target = RUN.P; PD.v.update(dt);
+    PICK.shX = Math.max(0, PICK.shX - dt * 2.6); PICK.shY = Math.max(0, PICK.shY - dt * 2.6);
   }
   function draw() {
     view.clear(BG);
@@ -1477,7 +1503,7 @@
     '<line x1="42" y1="70" x2="300" y2="70" stroke="#8b5cf6" stroke-width="1.6" stroke-dasharray="5 5"/><text x="46" y="64" font-size="12" font-weight="800" fill="#6d28d9">약 63 °C</text>' +
     '<path d="M44 122 L88 70 L128 70 L158 40" fill="none" stroke="#2f7de1" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>' +
     '<path d="M44 122 L122 70 L210 70 L258 40" fill="none" stroke="#e2464b" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" opacity=".9"/>' +
-    '<g font-size="15" font-weight="800"><text x="62" y="104" fill="#2f7de1">가</text><text x="152" y="96" fill="#e2464b">나</text></g>' +
+    '<g font-size="16" font-weight="800"><text x="165" y="46" fill="#2f7de1">가</text><text x="267" y="46" fill="#e2464b">나</text></g>' +
     '<g font-size="12" font-weight="700" fill="#5d6879"><text x="10" y="172">가: 팔미트산 5 g · 나: 팔미트산 10 g</text></g></svg>';
 
   game = SciSim.game({
@@ -1558,7 +1584,7 @@
             hint: '🔥 가열하기를 눌러요. 물이 끓을 때 거품이 어떻게 생기는지, 온도가 변하는지 보세요.',
             check: () => isK('water') && RUN.done,
             hold: 0.8,
-            status: () => isK('water') ? '50 mL 끓음 ' + mark(passed(smp(0), 'boil')) + ' · 100 mL 끓음 ' + mark(passed(smp(1), 'boil')) + ' · 지금 <b>' + tStr(smp(1).st.T) + ' °C</b>' : '',
+            status: () => isK('water') ? '50 mL 끓음 ' + mark(passed(smp(0), 'boil')) + ' · 100 mL 끓음 ' + mark(passed(smp(1), 'boil')) + ' · 지금 <b>' + tStr(smp(1).st.T) + ' °C</b>' : '위쪽에서 <b>물</b> 단추를 눌러 주세요.',
             onWin() { celebrate(LAY.top.x + LAY.top.w / 2, LAY.top.y + 80); },
             explain: '두 양 모두 <b>100 °C</b>에서 온도가 일정한 수평 구간이 나타났어요. 100 mL는 끓기까지 더 오래 걸리고 수평 구간도 길었지만 <b>끓는점은 같았어요</b>.',
           },
@@ -1568,7 +1594,7 @@
             hint: '오른쪽 위의 <b>에탄올</b> 단추가 눌려 있는지 확인하고 🔥 가열하기를 눌러요.',
             check: () => isK('eth') && RUN.done,
             hold: 0.8,
-            status: () => isK('eth') ? '5 mL 끓음 ' + mark(passed(smp(0), 'boil')) + ' · 10 mL 끓음 ' + mark(passed(smp(1), 'boil')) + ' · 지금 <b>' + tStr(smp(1).st.T) + ' °C</b>' : '',
+            status: () => isK('eth') ? '5 mL 끓음 ' + mark(passed(smp(0), 'boil')) + ' · 10 mL 끓음 ' + mark(passed(smp(1), 'boil')) + ' · 지금 <b>' + tStr(smp(1).st.T) + ' °C</b>' : '위쪽에서 <b>에탄올</b> 단추를 눌러 주세요.',
             onWin() { celebrate(LAY.top.x + LAY.top.w / 2, LAY.top.y + 80); },
             explain: '에탄올은 <b>78 °C</b>에서 끓었어요. 양이 달라도 같았고, 물(100 °C)과는 달랐어요. 끓는점도 물질마다 다른 특성이에요.',
           },
@@ -1645,8 +1671,8 @@
               const miss = ['X', 'Y'].filter((k) => !PICK[k]);
               if (miss.length) return miss.join(', ') + '의 물질을 오른쪽에서 골라 주세요.';
               const msg = [];
-              if (PICK.X !== 'naph') msg.push('X는 고체가 <b>녹는</b> 동안 온도가 80 °C로 일정했어요. 표의 <b>녹는점</b> 칸에서 80 °C를 찾아보세요.');
-              if (PICK.Y !== 'eth') msg.push('Y는 액체가 <b>끓는</b> 동안 온도가 78 °C로 일정했어요. 표의 <b>끓는점</b> 칸에서 78 °C를 찾아보세요.');
+              if (PICK.X !== 'naph') { msg.push('X는 고체가 <b>녹는</b> 동안 온도가 80 °C로 일정했어요. 표의 <b>녹는점</b> 칸에서 80 °C를 찾아보세요.'); if (PICK.flagX !== PICK.X) { PICK.flagX = PICK.X; PICK.shX = 1; } }
+              if (PICK.Y !== 'eth') { msg.push('Y는 액체가 <b>끓는</b> 동안 온도가 78 °C로 일정했어요. 표의 <b>끓는점</b> 칸에서 78 °C를 찾아보세요.'); if (PICK.flagY !== PICK.Y) { PICK.flagY = PICK.Y; PICK.shY = 1; } }
               return msg.length ? msg.join(' ') : true;
             },
             status: () => isK('unk') ? '가열 ' + (RUN.done ? '✅ 끝' : RUN.on ? '▶ 중' : '⬜') + ' · 고른 물질: X ' + (PICK.X ? SUBS[PICK.X].name : '–') + ' · Y ' + (PICK.Y ? SUBS[PICK.Y].name : '–') : '',

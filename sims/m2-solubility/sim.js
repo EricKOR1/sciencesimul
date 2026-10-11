@@ -461,6 +461,16 @@
     c.restore();
   }
 
+  /* 범례: 오른쪽 끝에 맞춰 (공 + 글자)를 늘어놓아요. items: [{c: 색, t: 글자}] */
+  function legendRow(xRight, y, items) {
+    ctx.save(); ctx.font = D.font(PHONE ? 12 : 13, 800);
+    let w = 0; const ws = items.map((q) => { const m = ctx.measureText(q.t).width; w += m + 26; return m; });
+    let x = xRight - w + 6;
+    items.forEach((q, i) => { drawBall(ctx, q.c, x + 6, y, 6.2); ctx.fillStyle = COL.ink; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(q.t, x + 16, y + 1); x += ws[i] + 26; });
+    ctx.restore();
+  }
+
+
 
   let game = null;
   let F = new Set();
@@ -1173,14 +1183,6 @@
   /* =========================================================
      입자 모형 창 · 녹은 양 막대 · 용해도 그래프 · 기록표
      ========================================================= */
-  function legendRow(xRight, y, items) {
-    // items: [{c: 색, t: 글자}] — 오른쪽 끝에 맞춰 그려요
-    ctx.save(); ctx.font = D.font(PHONE ? 12 : 13, 800);
-    let w = 0; const ws = items.map((q) => { const m = ctx.measureText(q.t).width; w += m + 26; return m; });
-    let x = xRight - w + 6;
-    items.forEach((q, i) => { drawBall(ctx, q.c, x + 6, y, 6.2); ctx.fillStyle = COL.ink; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(q.t, x + 16, y + 1); x += ws[i] + 26; });
-    ctx.restore();
-  }
   function drawLens(key, r, soluteName, extra) {
     const b = LENS[key];
     lensFrame(r, { title: '🔍 입자 모형' }, () => { b.draw(ctx); });
@@ -1684,6 +1686,9 @@
     const J = LB.jar, sp = LABS.spoon;
     return (p.x > J.cx - J.w / 2 - 10 && p.x < J.cx + J.w / 2 + 10 && p.y > J.bot - J.h - 12 && p.y < J.bot + 4) || (Math.hypot(p.x - sp.x, p.y - sp.y) < 34);
   }
+  /* 캔버스는 눌러서(손가락을 뗄 때) 쓰는 단추 역할이에요. 휴대폰에서는 화면을 위아래로 밀어도 잘못 눌리지 않아요 */
+  if (PHONE) view.canvas.style.touchAction = 'pan-y';
+  let tapStart = null;
   SciSim.pointer(view, {
     hover(p) {
       if (S.scene === 'dissolve' && !LABS.busy && hitJar(p)) return 'pointer';
@@ -1691,12 +1696,23 @@
       if (S.scene === 'gas' && gasHit(p)) return 'pointer';
       return null;
     },
-    down(p) {
+    down(p, e) {
       hideHint();
-      if (S.scene === 'dissolve' && hitJar(p)) { if (!LABS.busy) { Sound.click(); addSpoon(); refreshUI(); } return false; }
-      if (S.scene === 'measure' && hitJar(p)) { if (!LABS.busy) { Sound.click(); startMeasure(); } return false; }
-      if (S.scene === 'gas' && gasHit(p)) { toggleCap(); return false; }
-      return false;
+      let k = null;
+      if (S.scene === 'dissolve' && hitJar(p)) k = 'add';
+      else if (S.scene === 'measure' && hitJar(p)) k = 'measure';
+      else if (S.scene === 'gas' && gasHit(p)) k = 'cap';
+      if (!k) return false;
+      tapStart = { x: e.clientX, y: e.clientY, k };
+      return true;
+    },
+    move() {},
+    up(p, e) {
+      const st = tapStart; tapStart = null;
+      if (!st || e.type !== 'pointerup' || Math.hypot(e.clientX - st.x, e.clientY - st.y) > 14) return;
+      if (st.k === 'add') { if (!LABS.busy) { Sound.click(); addSpoon(); refreshUI(); } }
+      else if (st.k === 'measure') { if (!LABS.busy) { Sound.click(); startMeasure(); } }
+      else toggleCap();
     },
   });
 

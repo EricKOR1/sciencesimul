@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#f26b3a">
+  <title>빛의 반사와 굴절 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔦</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+    .toolbar-label small { font-weight: 700; color: #8a95a6; }
+    .stage-toolbar { min-height: 61px; flex-wrap: nowrap; }
+    #resetBtn { font-size: 20px; }
+    .off { display: none !important; }
+
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    .grp { display: flex; flex-direction: column; gap: 10px; }
+    .grp-title { font-weight: 800; font-size: 15.5px; display: flex; align-items: center; gap: 6px; }
+    .ctrl-note { font-size: 13.5px; color: var(--muted); margin: 0; line-height: 1.45; }
+    .ctrl-note b { color: #9a3412; }
+    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn-row .btn { flex: 1 1 0; min-width: 0; min-height: 48px; }
+    .grp .control { margin-bottom: 0; }
+    .grp .control-head output.amber { color: #b45309; }
+
+    .mode-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .mode-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .mode-btn {
+      min-height: 48px; border: 2px solid var(--line); border-radius: 12px; background: #fff; cursor: pointer;
+      font-weight: 800; font-size: 14.5px; color: #334155; padding: 6px 8px; line-height: 1.2;
+      display: flex; align-items: center; justify-content: center; gap: 4px; text-align: center;
+      transition: border-color .15s, background .15s, transform .08s;
+    }
+    .mode-btn:active { transform: scale(.97); }
+    .mode-btn.on { border-color: var(--phy); background: #fff1ea; color: #9a3412; box-shadow: 0 0 0 3px rgba(242,107,58,.18); }
+    .mode-btn .ok { color: var(--good); font-weight: 900; }
+    .mode-btn[disabled] { opacity: .45; cursor: not-allowed; }
+    .btn[disabled] { opacity: .5; cursor: not-allowed; }
+
+    @media (max-width: 1100px) { .toolbar-label { font-size: 14px; } }
+    @media (max-width: 599px) {
+      .readouts { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .readout .label { font-size: 11.5px; }
+      .toolbar-label small { display: none; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="phy">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#g2">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">중2 · Ⅲ. 빛과 파동</div>
+      <h1>빛의 반사와 굴절</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="sceneLabel">🔦 어두운 방</span>
+          <span class="spacer"></span>
+          <button class="icon-btn" id="resetBtn" type="button" title="처음 상태로" aria-label="처음 상태로">↺</button>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="레이저 빛의 반사와 굴절, 물체를 보는 과정의 빛의 경로를 보여 주는 실험 화면"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="rL1">입사각</span><span class="value" id="rV1">—</span></div>
+        <div class="readout"><span class="label" id="rL2">반사각</span><span class="value" id="rV2">—</span></div>
+        <div class="readout"><span class="label" id="rL3">기록</span><span class="value" id="rV3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="grp off" id="g-free">
+          <div class="grp-title">🔓 자유 탐구: 실험 고르기</div>
+          <div class="mode-grid three" id="freeGrid">
+            <button type="button" class="mode-btn" data-free="see">👀 보는 과정</button>
+            <button type="button" class="mode-btn" data-free="reflect">🪞 반사</button>
+            <button type="button" class="mode-btn" data-free="surface">📄 정·난반사</button>
+            <button type="button" class="mode-btn" data-free="refract">💧 굴절</button>
+            <button type="button" class="mode-btn" data-free="fish">🐟 물고기</button>
+            <button type="button" class="mode-btn" data-free="puzzle">🧩 퍼즐</button>
+          </div>
+        </div>
+
+        <div class="grp" id="g-see">
+          <div class="grp-title">✏️ 빛의 경로 그리기</div>
+          <p class="ctrl-note" id="seeNote">손가락(마우스)으로 <b>전등</b>에서 <b>사과</b>까지, 다시 <b>사과</b>에서 <b>눈</b>까지 끌어 화살표를 그려요. 전등을 누르면 불을 켜고 꺼요.</p>
+          <div class="btn-row">
+            <button class="btn" id="seeClear" type="button">↺ 화살표 지우기</button>
+          </div>
+        </div>
+
+        <div class="grp off" id="g-reflect">
+          <div class="grp-title">🔦 레이저 입사각</div>
+          <div class="control">
+            <div class="control-head"><label for="slInc">입사각</label><output id="outInc" class="amber">30°</output></div>
+            <input type="range" id="slInc" min="5" max="80" step="5" value="30" aria-label="입사각">
+          </div>
+          <p class="ctrl-note">레이저를 <b>원호를 따라 끌어도</b> 돼요. 각도는 거울면이 아니라 <b>법선</b>(점선)에서부터 재요.</p>
+        </div>
+
+        <div class="grp off" id="g-surface">
+          <div class="grp-title">📄 반사하는 면 고르기</div>
+          <div class="mode-grid" id="surfGrid">
+            <button type="button" class="mode-btn on" data-surf="mirror">🪞 매끄러운 거울</button>
+            <button type="button" class="mode-btn" data-surf="rough">📄 거친 종이</button>
+          </div>
+          <div class="control">
+            <div class="control-head"><label for="slInc2">입사각</label><output id="outInc2" class="amber">35°</output></div>
+            <input type="range" id="slInc2" min="10" max="50" step="5" value="35" aria-label="입사각">
+          </div>
+        </div>
+
+        <div class="grp off" id="g-refract">
+          <div class="grp-title">💧 빛이 들어가는 물질</div>
+          <div class="mode-grid" id="medGrid">
+            <button type="button" class="mode-btn on" data-med="water">💧 물</button>
+            <button type="button" class="mode-btn" data-med="glass">🔷 유리</button>
+          </div>
+          <div class="control">
+            <div class="control-head"><label for="slInc3">입사각</label><output id="outInc3" class="amber">40°</output></div>
+            <input type="range" id="slInc3" min="0" max="80" step="5" value="40" aria-label="입사각">
+          </div>
+        </div>
+
+        <div class="grp off" id="g-fish">
+          <div class="grp-title">🐟 레이저로 물고기 맞히기</div>
+          <p class="ctrl-note">화면을 <b>눌러 끌면</b> 레이저가 그쪽을 향해요. <b>눈에 보이는</b> 물고기를 겨냥해 보세요.</p>
+          <div class="btn-row">
+            <button class="btn" id="fishNext" type="button">🐟 물고기 옮기기</button>
+          </div>
+        </div>
+
+        <div class="grp off" id="g-puzzle">
+          <div class="grp-title">🧩 거울 퍼즐</div>
+          <div class="mode-grid three" id="boardGrid">
+            <button type="button" class="mode-btn on" data-board="0">판 1</button>
+            <button type="button" class="mode-btn" data-board="1">판 2</button>
+            <button type="button" class="mode-btn" data-board="2">판 3</button>
+          </div>
+          <p class="ctrl-note">거울의 <b>끝</b>을 끌어 돌려요. 5°씩 딱딱 맞춰져요.</p>
+          <div class="btn-row">
+            <button class="btn" id="pzReset" type="button">↺ 거울 되돌리기</button>
+          </div>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

@@ -461,6 +461,16 @@
     c.restore();
   }
 
+  /* 범례: 오른쪽 끝에 맞춰 (공 + 글자)를 늘어놓아요. items: [{c: 색, t: 글자}] */
+  function legendRow(xRight, y, items) {
+    ctx.save(); ctx.font = D.font(PHONE ? 12 : 13, 800);
+    let w = 0; const ws = items.map((q) => { const m = ctx.measureText(q.t).width; w += m + 26; return m; });
+    let x = xRight - w + 6;
+    items.forEach((q, i) => { drawBall(ctx, q.c, x + 6, y, 6.2); ctx.fillStyle = COL.ink; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(q.t, x + 16, y + 1); x += ws[i] + 26; });
+    ctx.restore();
+  }
+
+
 
   let game = null;
   let F = new Set();

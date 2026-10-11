@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0ea5e9">
+  <title>대륙 이동과 판의 경계 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧭</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-card { background: #1c2f4f; }
+    /* 태블릿: 가로 배치 캔버스 · 휴대폰: 세로 배치 캔버스 */
+    .sc-tall { display: none; }
+    @media (max-width: 599px) { .sc-wide { display: none; } .sc-tall { display: block; } }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    .is-off { display: none !important; }
+    .seg-label { display: block; font-weight: 800; font-size: 14.5px; color: var(--muted); margin-bottom: 6px; }
+    .segmented { display: flex; width: 100%; }
+    .segmented button { flex: 1 1 auto; min-height: 44px; padding: 6px 8px; font-size: 14.5px; white-space: nowrap; }
+    .segmented.dense button { padding: 6px 2px; font-size: 13.5px; }
+    .segmented button.on { color: #075985; }
+    .play-row { display: flex; gap: 8px 12px; align-items: center; flex-wrap: wrap; margin-top: 2px; }
+    .play-row .btn { min-width: 132px; }
+    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn-row .btn { flex: 1 1 0; min-width: 0; min-height: 46px; white-space: nowrap; }
+    .ctrl-note { margin: 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; flex: 1 1 110px; }
+    .btn-sm { min-height: 44px; }
+    input[type=range] { height: 44px; }
+    .game-foot button { min-height: 44px; }
+    .mission-figure svg { border-radius: 12px; }
+    .tgls { display: flex; gap: 6px; flex-wrap: wrap; }
+    .tgl {
+      flex: 1 1 0; min-width: 0; display: inline-flex; align-items: center; justify-content: center; gap: 4px; min-height: 46px;
+      border: 2px solid var(--line); background: var(--surface); color: var(--muted);
+      border-radius: 999px; padding: 5px 8px; font-weight: 800; font-size: 14px; cursor: pointer; white-space: nowrap;
+    }
+    .tgl[aria-pressed="true"] { color: #075985; border-color: #7dd3fc; background: #e6f6ff; }
+    .tgl .dot { width: 12px; height: 12px; border-radius: 50%; flex: none; }
+    .btn.nudge { animation: nudge .9s ease 2; }
+    @keyframes nudge { 0%, 100% { transform: none; } 30% { transform: translateY(-3px) scale(1.04); } 60% { transform: none; } }
+    .note-fig { margin: 6px 0; text-align: center; }
+    .note-fig svg { max-width: 100%; height: auto; border-radius: 10px; }
+  </style>
+</head>
+<body class="sim-page" data-subject="earth">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#g2">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">중2 · Ⅱ. 지권의 변화</div>
+      <h1>대륙 이동과 판의 경계</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-canvas sc-wide"><canvas id="cvWide" aria-label="세계 지도: 대륙 조각을 끌어 맞춰 판게아를 만들고, 화석·빙하 흔적·산맥 증거를 확인하고, 지진과 화산 분포를 판의 경계와 비교하는 지도"></canvas></div>
+        <div class="stage-canvas sc-tall"><canvas id="cvTall" aria-label="세계 지도: 대륙 조각을 끌어 맞춰 판게아를 만들고, 화석·빙하 흔적·산맥 증거를 확인하고, 지진과 화산 분포를 판의 경계와 비교하는 지도"></canvas></div>
+      </section>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" id="cScene" data-feature="evidence">
+          <span class="seg-label">🧭 화면 고르기</span>
+          <div class="segmented dense" id="sceneSeg" role="group" aria-label="화면 고르기"></div>
+        </div>
+        <div class="control" id="cPuzzle" data-feature="puzzle">
+          <div class="play-row">
+            <button class="btn btn-sm" id="shuffleBtn" type="button">🔀 처음 위치로</button>
+            <p class="ctrl-note" id="puzzleNote">대륙 조각을 손가락으로 끌어요.</p>
+          </div>
+        </div>
+        <div class="control" id="cEvid" data-feature="evidence">
+          <span class="seg-label">🔎 증거 표시</span>
+          <div class="tgls" role="group" aria-label="증거 표시">
+            <button class="tgl" type="button" data-ev="fossil" aria-pressed="false"><span class="dot" style="background:#16a34a"></span>화석</button>
+            <button class="tgl" type="button" data-ev="ice" aria-pressed="false"><span class="dot" style="background:#06b6d4"></span>빙하 흔적</button>
+            <button class="tgl" type="button" data-ev="mtn" aria-pressed="false"><span class="dot" style="background:#92400e"></span>산맥</button>
+          </div>
+        </div>
+        <div class="control" id="cTime" data-feature="evidence">
+          <div class="control-head"><label for="sTime">⏳ 시간</label><output id="oTime"></output></div>
+          <input type="range" id="sTime" min="0" max="200" step="1" value="200" aria-label="시간 (왼쪽은 약 2억 년 전, 오른쪽은 현재)">
+          <div class="play-row">
+            <button class="btn btn-sm btn-primary" id="playBtn" type="button">⏪ 되감기</button>
+            <p class="ctrl-note" id="timeNote">왼쪽으로 밀면 과거로 가요.</p>
+          </div>
+        </div>
+        <div class="control" id="cData" data-feature="quakes">
+          <div class="btn-row">
+            <button class="btn btn-sm btn-primary" id="collectBtn" type="button">📍 자료 찍기</button>
+            <button class="btn btn-sm" id="clearBtn" type="button">🧹 지우기</button>
+          </div>
+          <p class="ctrl-note" id="dataNote" style="margin-top:6px"></p>
+        </div>
+        <div class="control" id="cPlates" data-feature="bounds">
+          <span class="seg-label">🧭 지도에 겹쳐 보기</span>
+          <div class="segmented dense" id="viewSeg" role="group" aria-label="겹쳐 보기">
+            <button type="button" data-v="0">분포만</button><button type="button" data-v="1">판 경계</button><button type="button" data-v="2">판 움직임</button>
+          </div>
+          <p class="ctrl-note" id="viewNote" style="margin-top:6px"></p>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

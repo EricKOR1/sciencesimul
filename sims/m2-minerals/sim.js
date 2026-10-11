@@ -187,7 +187,7 @@
     { id: 'chalco', name: '황동석', color: '노란색', streak: '녹흑색', streakCol: '#25382c', swatch: '#cfa83a', kind: 'chalco', yaw: 0.9, pitch: 0.4, hint: '놋쇠 같은 노란색이에요.' },
     { id: 'pyrite', name: '황철석', color: '노란색', streak: '검은색', streakCol: '#1b1b1f', swatch: '#d6bf55', kind: 'pyrite', yaw: 0.6, pitch: 0.38, hint: '정육면체 모양 결정이 많아요.' },
     { id: 'quartz', name: '석영', color: '투명한 흰색', streak: '흰색', streakCol: '#f1f1ec', swatch: '#e4eff7', kind: 'quartz', yaw: 0.4, pitch: 0.18, hint: '유리처럼 맑고 투명해요.' },
-    { id: 'calcite', name: '방해석', color: '투명한 흰색', streak: '흰색', streakCol: '#f1efe6', swatch: '#efeadf', kind: 'calcite', yaw: 0.7, pitch: 0.3, acid: true, hint: '마름모꼴로 쪼개져요.' },
+    { id: 'calcite', name: '방해석', color: '투명한 흰색', streak: '흰색', streakCol: '#f1efe6', swatch: '#efeadf', kind: 'calcite', yaw: 1.0, pitch: 0.55, acid: true, hint: '마름모꼴로 쪼개져요.' },
     { id: 'magnetite', name: '자철석', color: '검은색', streak: '검은색', streakCol: '#19191e', swatch: '#2b2d35', kind: 'magnetite', yaw: 0.5, pitch: 0.35, mag: true, hint: '팔면체 결정이 모여 있어요.' },
     { id: 'feldspar', name: '장석', color: '흰색·분홍색', swatch: '#e8c9c0', kind: 'feldspar', yaw: 0.6, pitch: 0.4 },
     { id: 'granite', name: '화강암', color: '밝은 회색', swatch: '#cfc8c2', kind: 'granite', yaw: 0.6, pitch: 0.4 },
@@ -416,11 +416,15 @@
         // 부드러운 바탕 밝기 (구 모양 빛) 위에 면별 밝기를 겹쳐 울퉁불퉁함을 표현
         baseG = ctx.createRadialGradient(cx - s * 0.34, cy - s * 0.4, s * 0.05, cx - s * 0.1, cy - s * 0.1, s * 1.45);
         baseG.addColorStop(0, rgbs(st.light)); baseG.addColorStop(0.3, rgbs(mix3(st.light, st.base, 0.55))); baseG.addColorStop(0.62, rgbs(st.base)); baseG.addColorStop(1, rgbs(st.dark));
+        const allP = new Path2D();
         for (let oi = 0; oi < order.length; oi++) {
           const i = order[oi]; if (fnz[i] <= 0) continue;
-          const f = F[i]; path(f); ctx.fillStyle = baseG; ctx.fill(); ctx.strokeStyle = baseG; ctx.lineWidth = 0.8; ctx.stroke();
+          const c = F[i].idx; allP.moveTo(px[c[0]], py[c[0]]); for (let k = 1; k < c.length; k++) allP.lineTo(px[c[k]], py[c[k]]); allP.closePath();
         }
+        ctx.fillStyle = baseG; ctx.fill(allP); ctx.strokeStyle = baseG; ctx.lineWidth = 0.7; ctx.stroke(allP);
       }
+      // 같은 색의 면은 한꺼번에 칠해서 그리기 횟수를 줄여요 (울퉁불퉁한 덩어리용)
+      const buckets = baseG ? new Map() : null, dotP = baseG && st.speckle ? [new Path2D(), new Path2D(), new Path2D()] : null;
       for (let oi = 0; oi < order.length; oi++) {
         const i = order[oi]; if (fnz[i] <= 0) continue;
         const f = F[i], nx = fnx[i], ny = fny[i], nz = fnz[i];
@@ -435,7 +439,11 @@
         }
         const sh = nx * HALF[0] + ny * HALF[1] + nz * HALF[2];
         if (sh > 0) { const sp2 = Math.pow(sh, st.pow) * st.k; c = [c[0] + (255 - c[0]) * sp2, c[1] + (252 - c[1]) * sp2, c[2] + (240 - c[2]) * sp2]; }
-        if (baseG) { ctx.globalAlpha = 0.42; path(f); ctx.fillStyle = rgbs(c); ctx.fill(); ctx.globalAlpha = 1; }
+        if (baseG) {
+          const kc = ((c[0] > 255 ? 255 : c[0] < 0 ? 0 : c[0]) >> 4) << 8 | ((c[1] > 255 ? 255 : c[1] < 0 ? 0 : c[1]) >> 4) << 4 | ((c[2] > 255 ? 255 : c[2] < 0 ? 0 : c[2]) >> 4);
+          let b = buckets.get(kc); if (!b) { b = { col: rgbs(c), p: new Path2D() }; buckets.set(kc, b); }
+          const cc2 = f.idx; b.p.moveTo(px[cc2[0]], py[cc2[0]]); for (let k = 1; k < cc2.length; k++) b.p.lineTo(px[cc2[k]], py[cc2[k]]); b.p.closePath();
+        }
         else { path(f); ctx.fillStyle = rgbs(c); ctx.fill(); ctx.strokeStyle = ctx.fillStyle; ctx.lineWidth = 0.8; ctx.stroke(); }
         if (st.striate && f.quad && nz > 0.2) {
           const cc = f.idx; ctx.strokeStyle = 'rgba(60,46,6,.34)'; ctx.lineWidth = 1;
@@ -451,21 +459,20 @@
             ctx.beginPath(); ctx.moveTo(px[i0] + (px[i1] - px[i0]) * t, py[i0] + (py[i1] - py[i0]) * t); ctx.lineTo(px[i3] + (px[i2] - px[i3]) * t, py[i3] + (py[i2] - py[i3]) * t); ctx.stroke();
           }
         }
-        if (st.speckle && nz > 0.1) {
+        if (dotP && nz > 0.1) {
           const cc = f.idx, r = rng(i * 131 + 7);
-          ctx.save(); path(f); ctx.clip();
           const x0 = px[cc[0]], y0 = py[cc[0]], x1 = px[cc[1]], y1 = py[cc[1]], x2 = px[cc[2]], y2 = py[cc[2]];
           const nd = s > 56 ? 5 : 2;
           for (let d = 0; d < nd; d++) {
             let u = r(), v = r(); if (u + v > 1) { u = 1 - u; v = 1 - v; }
-            const dx = x0 + (x1 - x0) * u + (x2 - x0) * v, dy = y0 + (y1 - y0) * u + (y2 - y0) * v, q = r();
-            ctx.fillStyle = q < 0.4 ? 'rgba(30,28,30,.7)' : q < 0.7 ? 'rgba(255,250,246,.7)' : 'rgba(214,150,138,.7)';
-            ctx.beginPath(); ctx.arc(dx, dy, (0.8 + r() * 1.6) * Math.max(0.5, s / 90), 0, TAU); ctx.fill();
+            const dx = x0 + (x1 - x0) * u + (x2 - x0) * v, dy = y0 + (y1 - y0) * u + (y2 - y0) * v, q = r(), rr = (0.8 + r() * 1.6) * Math.max(0.5, s / 90);
+            const dp = dotP[q < 0.4 ? 0 : q < 0.7 ? 1 : 2]; dp.moveTo(dx + rr, dy); dp.arc(dx, dy, rr, 0, TAU);
           }
-          ctx.restore();
         }
         if (nz > 0.3 && !st.speckle && !st.smooth) { ctx.strokeStyle = 'rgba(255,255,255,' + (0.12 + 0.18 * diff) + ')'; ctx.lineWidth = 0.9; path(f); ctx.stroke(); }
       }
+      if (buckets) { ctx.globalAlpha = 0.42; buckets.forEach((b) => { ctx.fillStyle = b.col; ctx.fill(b.p); }); ctx.globalAlpha = 1; }
+      if (dotP) { ctx.fillStyle = 'rgba(30,28,30,.7)'; ctx.fill(dotP[0]); ctx.fillStyle = 'rgba(255,250,246,.7)'; ctx.fill(dotP[1]); ctx.fillStyle = 'rgba(214,150,138,.7)'; ctx.fill(dotP[2]); }
     }
     ctx.restore();
     if (o.hull) return convexHull(M, order);
@@ -572,6 +579,25 @@
     ctx.drawImage(sp.cv, cx - half, cy - half, half * 2, half * 2);
     return null;
   }
+  // 계속 돌아가는 표본: 초당 30번만 새로 그리고 그 사이에는 그림을 재사용해요
+  const liveCache = {};
+  function drawSpecLive(V, key, id, cx, cy, s, rot, fastNow) {
+    const res = Math.max(1, (V.v.scale || 1) * (V.v.dpr || 1)), k = V.L.key + key, pad = 1.7;
+    let e = liveCache[k];
+    const size = Math.ceil(s * pad * 2 * res);
+    if (!e || e.id !== id || e.s !== s || e.res !== res) {
+      const cv = document.createElement('canvas'); cv.width = cv.height = size;
+      e = liveCache[k] = { cv, c: cv.getContext('2d'), id, s, res, t: -1e9, yaw: NaN, pitch: NaN };
+    }
+    const now = performance.now();
+    if ((e.yaw !== rot.yaw || e.pitch !== rot.pitch) && (fastNow || now - e.t >= 30)) {
+      e.c.setTransform(1, 0, 0, 1, 0, 0); e.c.clearRect(0, 0, size, size); e.c.scale(res, res);
+      drawSpecimen(e.c, id, s * pad, s * pad, s, rot);
+      e.t = now; e.yaw = rot.yaw; e.pitch = rot.pitch;
+    }
+    const half = s * pad;
+    V.ctx.drawImage(e.cv, cx - half, cy - half, half * 2, half * 2);
+  }
   function specShadow(ctx, x, y, s, a) {
     ctx.save();
     const g = ctx.createRadialGradient(x, y, 2, x, y, s * 1.05);
@@ -617,7 +643,7 @@
     ctx.restore();
     pedestal(ctx, G.vx, G.vplat, 300 * fs * (wide ? 1 : 0.85));
     specShadow(ctx, G.vx, G.vplat + 2, G.vs * 0.78);
-    drawSpec(V, S.sel, G.vx, G.vcy, G.vs, rot, { live: true });
+    drawSpecLive(V, 'viewer', S.sel, G.vx, G.vcy, G.vs, rot, !!S.rotDrag);
     // 반짝임
     const sp = (Math.sin(t * 2.2) * 0.5 + 0.5);
     if (!RM && (mn.kind === 'gold' || mn.kind === 'pyrite' || mn.kind === 'quartz' || mn.kind === 'calcite' || mn.kind === 'chalco')) SciSim.draw(ctx).spark(G.vx - G.vs * 0.42, G.vcy - G.vs * 0.48, 8 + 6 * sp, t, 'rgba(255,252,230,.95)');
@@ -664,7 +690,7 @@
       ctx.fillStyle = '#1f2a44'; ctx.font = dfnt(L, 30); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('ABC'[i], sl.x, G.labY + 2);
       pedestal(ctx, sl.x, sl.plat, sl.s * 2.1);
       specShadow(ctx, sl.x, sl.plat + 2, sl.s * 0.8);
-      drawSpec(V, id, sl.x, sl.cy, sl.s, { yaw: S.blindRot[i], pitch: m.pitch }, { live: true });
+      drawSpecLive(V, 'blind' + i, id, sl.x, sl.cy, sl.s, { yaw: S.blindRot[i], pitch: m.pitch }, false);
       // 겉보기 색 견본
       roundRect(ctx, sl.x - G.swW / 2, G.swY - 18 * fs, G.swW, 36 * fs, 10); ctx.fillStyle = m.swatch; ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = 2; ctx.stroke();
       ctx.font = fnt(L, 14, 'bold'); ctx.fillStyle = 'rgba(232,239,255,.85)'; ctx.fillText('겉보기 색: 노란색', sl.x, G.swY + 36 * fs);
@@ -808,6 +834,11 @@
     syncControls();
   }
   function syncControls() {
+    const cr = $('#cReset'), ct = $('#cTable'), cc = $('#ctrlCard');
+    const showR = S.scene === 'streak' || S.scene === 'tests' || S.scene === 'lab', showT = S.scene === 'lab';
+    if (cr) cr.classList.toggle('is-off', !showR);
+    if (ct) ct.classList.toggle('is-off', !showT);
+    if (cc) cc.classList.toggle('is-off', !showR && !showT);
     const rb = $('#resetBtn'), rn = $('#resetNote'), tb = $('#tableBtn');
     if (rb) rb.textContent = S.scene === 'streak' ? '🧽 조흔판 닦기' : S.scene === 'tests' ? '↺ 시험 다시 하기' : '↺ 기록 지우기';
     if (rn) rn.textContent = S.scene === 'streak' ? '긁은 줄을 지우고 다시 긁을 수 있어요.' : S.scene === 'tests' ? '흠집과 시험 기록을 지우고 처음부터 해 봐요.' : S.scene === 'lab' ? '시험 기록을 모두 지우고 다시 조사해요.' : '';
@@ -916,8 +947,10 @@
       S.streakDone[h.id] = true; Sound.tone(880, 0.12, 'triangle', 0.08); Sound.tone(1180, 0.14, 'triangle', 0.07, 0.08);
       ringFx(V, h.x, h.y, 26, MN[h.id].streakCol === '#f1f1ec' ? '#ffffff' : '#ffd36b');
     }
-    if (S.scene === 'lab') labRecordStreak(V, h);
-    S.spec[h.id] = { x: h.x, y: h.y - 62, vx: 0, vy: 0 };
+    if (S.scene === 'lab') {
+      labRecordStreak(V, h);
+      if (Math.hypot(h.x - h.x0, h.y - h.y0) < 8 && !h.stroke && h.len === 0) { S.lab.menu = { letter: h.letter }; Sound.tick(); }
+    } else S.spec[h.id] = { x: h.x, y: h.y - 62, vx: 0, vy: 0 };
     S.held = null;
   }
   // 아래 장면(시험 · 감정 · 쓰임)에서 채울 입력 처리 (3~4단계)
@@ -1228,9 +1261,18 @@
     dockSpec(id) { const V = activeView(), G = streakGeo(V.L), d = G.docks.find((q) => q.id === id), h = specHome(G, d, V.L.key === 'wide'); return this.client(h.x, h.y); },
     platePt(u, w) { const V = activeView(), P = streakGeo(V.L).plate; return this.client(P.x + P.w * u, P.y + P.h * w); },
     ready: () => true,
+    pedClient(key) { const V = activeView(), t = targetsOf(V.L).find((q) => q.key === key); return this.client(t.x, t.y); },
+    pipClient() { const V = activeView(), G = geoNow(V.L), ph = pipHome(G); return this.client(ph.x - 15, ph.y - 54); },
+    clipClient() { const V = activeView(), G = geoNow(V.L); return this.client(G.clip.x, G.clip.y); },
+    nameBtn(letter) { const V = activeView(), G = labGeo(V.L), p = G.peds.find((q) => q.letter === letter); return this.client(p.x, G.nameY); },
+    menuItem(id) { const V = activeView(), G = labGeo(V.L), M = nameMenuGeo(G, V.L), it = M.items.find((q) => q.id === id); return this.client(it.x + it.w / 2, it.y + it.h / 2); },
+    labPlatePt(u, w) { const V = activeView(), P = labGeo(V.L).plate; return this.client(P.x + P.w * u, P.y + P.h * w); },
+    useCard(id) { const V = activeView(), c = V.cards[id]; return this.client(c.x, c.y); },
+    useSlot(id) { const V = activeView(), it = usesGeo(V.L).items.find((q) => q.id === id), s = it.slot; return this.client(s.x + s.w / 2, s.y + s.h / 2); },
+    setLabMap(m) { S.lab.map = m; },
+    drawSpecimen,
     bench(n) { const V = activeView(); const t0 = performance.now(); for (let i = 0; i < n; i++) { draw(V, nowS()); V.ctx.getImageData(0, 0, 1, 1); } return (performance.now() - t0) / n; },
   };
-})();
 
   /* =========================================================
      3단계 화면: 굳기 · 염산 반응 · 자성 시험대
@@ -1240,8 +1282,8 @@
     if (L.key === 'wide') {
       return {
         M: { x: 12, y: 12, w: 776, h: 616 },
-        peds: [160, 400, 640].map((x, i) => ({ id: TEST_IDS[i], x, plat: 318, cy: 266, s: 84 })),
-        dropper: { x: 112, y: 548, label: '묽은 염산' }, clip: { x: 300, y: 540, label: '클립' }, trayR: { x: 34, y: 420, w: 380, h: 190 },
+        peds: [160, 400, 640].map((x, i) => ({ id: TEST_IDS[i], x, plat: 312, cy: 250, s: 96 })),
+        dropper: { x: 112, y: 556, label: '묽은 염산' }, clip: { x: 300, y: 548, label: '클립' }, trayR: { x: 34, y: 416, w: 380, h: 196 },
         rec: { x: 430, y: 408, w: 346, h: 206 },
       };
     }
@@ -1338,12 +1380,11 @@
     // 도구 쟁반
     const tr = G.trayR;
     roundRect(ctx, tr.x, tr.y, tr.w, tr.h, 14); ctx.fillStyle = 'rgba(255,255,255,.06)'; ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,.2)'; ctx.lineWidth = 1.3; ctx.stroke();
-    ctx.font = fnt(L, 13.5, '800'); ctx.fillStyle = 'rgba(232,239,255,.75)'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText('🧰 시험 도구', tr.x + 14, tr.y + 20 * fs);
+    ctx.font = fnt(L, 13.5, '800'); ctx.fillStyle = 'rgba(232,239,255,.75)'; ctx.textAlign = 'right'; ctx.textBaseline = 'middle'; ctx.fillText('🧰 시험 도구', tr.x + tr.w - 14, tr.y + 20 * fs);
     // 스포이트 병 + 스포이트
     const dk = G.dropper, dp = S.dropper;
     drawBottle(ctx, dk.x + 4, dk.y + 8, '', L);
     if (dp.home && !dp.held) drawPipette(ctx, dk.x - 8, dk.y - 6, -0.28, 0, { scale: 0.9 });
-    pill(ctx, dk.label, dk.x + 4, tr.y + tr.h - 18 * fs, { font: fnt(L, 13, 'bold'), bg: 'rgba(255,255,255,.12)', h: 22 * fs, pad: 9 });
     // 클립
     const ck = G.clip, cl = S.clip;
     if (cl.home && !cl.held && !cl.attached) { ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.beginPath(); ctx.ellipse(ck.x + 3, ck.y + 26, 12, 4, 0, 0, TAU); ctx.fill(); drawClipShape(ctx, ck.x, ck.y, -0.5, 1.7); }
@@ -1390,8 +1431,8 @@
       return {
         M: { x: 12, y: 12, w: 776, h: 616 },
         peds: ['A', 'B', 'C'].map((letter, i) => ({ letter, x: 150 + i * 250, plat: 262, cy: 214, s: 72, labY: 86 })),
-        chipY: 318, nameY: 442, plate: { x: 34, y: 492, w: 292, h: 118 },
-        dropper: { x: 420, y: 556, label: '묽은 염산' }, clip: { x: 540, y: 548, label: '클립' }, trayR: { x: 24, y: 470, w: 560, h: 150 },
+        chipY: 318, nameY: 440, plate: { x: 38, y: 490, w: 292, h: 120 },
+        dropper: { x: 424, y: 578, label: '묽은 염산' }, clip: { x: 540, y: 566, label: '클립' }, trayR: { x: 24, y: 472, w: 560, h: 148 },
         note: { x: 596, y: 470, w: 180, h: 150 },
       };
     }
@@ -1430,8 +1471,8 @@
       // 시험 기록 칩
       const o = S.lab.obs[p.letter], rows = [
         ['조흔색', o.streak ? o.streak : null, o.streak ? MN[id].streakCol : null],
-        ['염산 반응', o.acid ? (o.acid === 'yes' ? '거품 있음' : '거품 없음') : null, null],
-        ['자성', o.mag ? (o.mag === 'yes' ? '클립이 붙음' : '붙지 않음') : null, null],
+        [wide ? '염산 반응' : '염산', o.acid ? (o.acid === 'yes' ? '거품 있음' : '거품 없음') : null, null],
+        ['자성', o.mag ? (o.mag === 'yes' ? (wide ? '클립이 붙음' : '붙음') : (wide ? '붙지 않음' : '안 붙음')) : null, null],
       ];
       rows.forEach((r, k) => {
         const y = G.chipY + k * 30 * fs, w = wide ? 214 : 160;
@@ -1439,8 +1480,8 @@
         ctx.fillStyle = r[1] ? 'rgba(255,255,255,.14)' : 'rgba(255,255,255,.05)'; ctx.fill(); ctx.strokeStyle = r[1] ? 'rgba(255,255,255,.4)' : 'rgba(255,255,255,.15)'; ctx.lineWidth = 1.2; ctx.stroke();
         ctx.font = fnt(L, wide ? 12.5 : 11.5, '700'); ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillStyle = 'rgba(232,239,255,.7)'; ctx.fillText(r[0], p.x - w / 2 + 10, y + 1);
         ctx.fillStyle = r[1] ? '#fff' : 'rgba(232,239,255,.35)'; ctx.textAlign = 'right';
-        if (r[2]) { ctx.fillStyle = r[2]; ctx.beginPath(); ctx.arc(p.x + w / 2 - 12 - ctx.measureText(r[1]).width - 4, y, 6 * fs, 0, TAU); ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineWidth = 1; ctx.stroke(); ctx.fillStyle = '#fff'; }
-        ctx.fillText(r[1] || '아직 시험 안 함', p.x + w / 2 - 10, y + 1);
+        if (r[2]) { ctx.fillStyle = r[2]; ctx.beginPath(); ctx.arc(p.x + w / 2 - 10 - ctx.measureText(r[1]).width - 10, y, 6 * fs, 0, TAU); ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineWidth = 1; ctx.stroke(); ctx.fillStyle = '#fff'; }
+        ctx.fillText(r[1] || (wide ? '아직 시험 안 함' : '시험 전'), p.x + w / 2 - 10, y + 1);
       });
       // 이름 고르기 버튼
       const nm = S.lab.names[p.letter], bw = wide ? 190 : 150, bh = 34 * fs, by = G.nameY;
@@ -1456,7 +1497,7 @@
     // 도구 쟁반
     const tr = G.trayR;
     roundRect(ctx, tr.x, tr.y, tr.w, tr.h, 14); ctx.fillStyle = 'rgba(255,255,255,.06)'; ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,.2)'; ctx.lineWidth = 1.3; ctx.stroke();
-    ctx.font = fnt(L, 13.5, '800'); ctx.fillStyle = 'rgba(232,239,255,.75)'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText('🧰 시험 도구 (표본이나 도구를 끌어요)', tr.x + 14, tr.y + 20 * fs);
+    
     // 조흔판
     const P = G.plate;
     ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.5)'; ctx.shadowBlur = 16; ctx.shadowOffsetY = 7; roundRect(ctx, P.x, P.y, P.w, P.h, 14); ctx.fillStyle = '#d8d0bd'; ctx.fill(); ctx.restore();
@@ -1467,13 +1508,12 @@
     const dk = G.dropper, dp = S.dropper, ck = G.clip, cl = S.clip;
     drawBottle(ctx, dk.x + 4, dk.y + 8, '', L);
     if (dp.home && !dp.held) drawPipette(ctx, dk.x - 8, dk.y - 6, -0.28, 0, { scale: 0.9 });
-    pill(ctx, dk.label, dk.x + 4, tr.y + tr.h - 16 * fs, { font: fnt(L, 13, 'bold'), bg: 'rgba(255,255,255,.12)', h: 22 * fs, pad: 9 });
     if (cl.home && !cl.held && !cl.attached) { ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.beginPath(); ctx.ellipse(ck.x + 3, ck.y + 26, 12, 4, 0, 0, TAU); ctx.fill(); drawClipShape(ctx, ck.x, ck.y, -0.5, 1.7); }
     pill(ctx, ck.label, ck.x, tr.y + tr.h - 16 * fs, { font: fnt(L, 13, 'bold'), bg: 'rgba(255,255,255,.12)', h: 22 * fs, pad: 9 });
     if (G.note) {
       const n = G.note; roundRect(ctx, n.x, n.y, n.w, n.h, 14); ctx.fillStyle = 'rgba(255,255,255,.07)'; ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,.2)'; ctx.lineWidth = 1.3; ctx.stroke();
       ctx.fillStyle = '#ffe9b8'; ctx.font = fnt(L, 13.5, '800'); ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
-      const lines = ['조흔판: 광물을 끌어 긋기', '염산: 병 속 스포이트를 광물 위로', '클립: 광물 가까이로'];
+      const lines = ['조흔판: 광물을 끌어 긋기', '염산: 스포이트를 광물 위로', '클립: 광물 가까이로'];
       lines.forEach((ln, i) => { ctx.fillStyle = i ? 'rgba(232,239,255,.85)' : '#ffe9b8'; ctx.font = fnt(L, 13, i ? '600' : '800'); ctx.fillText(ln, n.x + 12, n.y + 30 * fs + i * 30 * fs); });
     }
     // 들고 있는 것
@@ -1555,3 +1595,297 @@
     ctx.fillText('굳기: 석영이 방해석보다 단단해요 (방해석에는 흠집이 나요)', x + 16, y + hh + rowH * 6 + 22 * fs);
     ctx.restore();
   }
+
+  /* =========================================================
+     시험 도구 (스포이트 · 클립 · 문질러 긁기): 3단계 시험대 · 4단계 감정실 공통
+     ========================================================= */
+  const pipHome = (G) => ({ x: G.dropper.x - 8, y: G.dropper.y - 6 });
+  const geoNow = (L) => (S.scene === 'tests' ? testsGeo(L) : labGeo(L));
+  function targetsOf(L) {
+    if (S.scene === 'tests') return testsGeo(L).peds.map((p) => ({ key: p.id, id: p.id, x: p.x, y: p.cy, s: p.s, plat: p.plat }));
+    return labGeo(L).peds.map((p) => ({ key: p.letter, id: S.lab.map[p.letter], letter: p.letter, x: p.x, y: p.cy, s: p.s, plat: p.plat }));
+  }
+  const specAt = (L, p, r) => targetsOf(L).find((t) => Math.hypot(p.x - t.x, p.y - t.y) < t.s * (r || 1.05)) || null;
+  const labelOf = (tg) => (tg.letter ? tg.letter : MN[tg.id].name);
+  function recordAcid(tg, yes) {
+    if (S.scene === 'tests') { if (yes) S.res.acid = true; else S.acidTried[tg.id] = true; }
+    else S.lab.obs[tg.letter].acid = yes ? 'yes' : 'no';
+  }
+  function recordMag(tg, yes) {
+    if (S.scene === 'tests') { if (yes) S.res.mag = true; else S.magTried[tg.id] = true; }
+    else S.lab.obs[tg.letter].mag = yes ? 'yes' : 'no';
+  }
+  function startDrop(V, p, tg) {
+    S.drops.push({ x0: p.x, y0: p.y + 2, x1: tg.x + (Math.random() - 0.5) * 14, y1: tg.y - tg.s * 0.12, t0: nowS(), dur: 0.3, tg });
+    S.dropper.squeeze = 1; Sound.tone(520, 0.05, 'sine', 0.05);
+  }
+  function landDrop(V, d) {
+    const tg = d.tg, yes = !!MN[tg.id].acid;
+    recordAcid(tg, yes);
+    if (yes) {
+      S.fizz = { x: tg.x, y: tg.y - tg.s * 0.1, t0: nowS(), acc: 0 };
+      Sound.tone(1500, 0.05, 'square', 0.02); Sound.tone(1900, 0.06, 'square', 0.018, 0.06);
+      tip(S.scene === 'tests' ? '방해석에서 거품이 생겼어요!' : labelOf(tg) + '에서 거품이 생겼어요!');
+      ringFx(V, tg.x, tg.y - tg.s * 0.1, 20, '#7fe3ff');
+    } else {
+      ringFx(V, d.x1, d.y1, 12, '#7fb7ff');
+      tip(labelOf(tg) + '에서는 거품이 생기지 않아요');
+    }
+  }
+  function rubMove(V, p) {
+    const G = testsGeo(V.L), h = S.held, other = h.id === 'quartz' ? 'calcite' : h.id === 'calcite' ? 'quartz' : null;
+    if (!other) return;
+    const tg = pedOf(G, other), d = Math.hypot(p.x - tg.x, p.y - tg.cy);
+    if (d < tg.s * 0.95) {
+      if (h.lx != null) {
+        const mv = Math.hypot(p.x - h.lx, p.y - h.ly);
+        if (mv > 2) {
+          h.rub = (h.rub || 0) + mv;
+          if (h.id === 'quartz') {
+            if (!h.stroke) { h.stroke = []; S.scratch.calcite.push(h.stroke); }
+            h.stroke.push([(p.x - tg.x) / tg.s, (p.y - tg.cy) / tg.s]);
+            for (let i = 0; i < 2; i++) V.P.emit({ x: p.x, y: p.y, vx: (Math.random() - 0.5) * 60, vy: -20 + Math.random() * 20, life: 0.55, size: 1.2 + Math.random() * 1.4, color: '#f4f2e8', gravity: 220, shape: 'square' });
+            if (h.rub > 70 && !S.res.scratch) { S.res.scratch = true; Sound.tone(880, 0.1, 'triangle', 0.08); Sound.tone(1175, 0.12, 'triangle', 0.07, 0.07); ringFx(V, tg.x, tg.cy, tg.s * 0.8, '#34d399'); tip('방해석에 흠집이 생겼어요! 석영이 더 단단해요'); }
+          } else {
+            V.P.emit({ x: p.x, y: p.y, vx: (Math.random() - 0.5) * 30, vy: -10, life: 0.4, size: 1.1, color: '#e9e6da', gravity: 150, shape: 'square' });
+            if (h.rub > 70 && !S.res.reverse) { S.res.reverse = true; Sound.tone(420, 0.1, 'triangle', 0.06); tip('방해석으로는 석영에 흠집이 나지 않아요'); }
+          }
+          if (Math.random() < 0.25) Sound.tone(200 + Math.random() * 60, 0.04, 'sawtooth', 0.012);
+        }
+      }
+      h.lx = p.x; h.ly = p.y;
+    } else { h.lx = null; h.stroke = null; }
+  }
+  function sceneHover(V, p) {
+    const L = V.L;
+    if (S.scene === 'tests' || S.scene === 'lab') {
+      const G = geoNow(L), ph = pipHome(G);
+      if (Math.hypot(p.x - (ph.x - 15), p.y - (ph.y - 54)) < 48 || Math.hypot(p.x - G.clip.x, p.y - G.clip.y) < 36) return 'grab';
+      if (specAt(L, p, 1.05)) return S.scene === 'tests' ? 'grab' : 'pointer';
+      return null;
+    }
+    if (S.scene === 'uses') { const G = usesGeo(L); return cardAtU(V, p) ? 'grab' : null; }
+    return null;
+  }
+  function sceneBlocks(V, p) {
+    const L = V.L;
+    if (S.scene === 'tests' || S.scene === 'lab') {
+      const G = geoNow(L), ph = pipHome(G);
+      return !!(S.lab.menu || S.dropper.held || S.clip.held || specAt(L, p, 1.1) || Math.hypot(p.x - (ph.x - 15), p.y - (ph.y - 54)) < 50 || Math.hypot(p.x - G.clip.x, p.y - G.clip.y) < 40 || (S.scene === 'lab' && (inRect(p, G.plate) || G.peds.some((q) => Math.abs(p.x - q.x) < 100 && Math.abs(p.y - G.nameY) < 24))));
+    }
+    if (S.scene === 'uses') return !!cardAtU(V, p) || usesGeo(L).items.some((it) => inRect(p, it.slot));
+    return false;
+  }
+  function sceneHeldOnPlate(V, p) { const P = labPlate(V.L); return p.x > P.x + 6 && p.x < P.x + P.w - 6 && p.y > P.y + 6 && p.y < P.y + P.h - 6; }
+  function sceneDown(V, p) {
+    const L = V.L;
+    if (S.scene === 'tests' || S.scene === 'lab') {
+      const G = geoNow(L), ph = pipHome(G), dp = S.dropper, cl = S.clip;
+      if (S.scene === 'lab' && S.lab.menu) {
+        const M = nameMenuGeo(G, L), it = M.items.find((q) => inRect(p, q));
+        if (it) {
+          const letter = S.lab.menu.letter; S.lab.names[letter] = it.id; if (S.flagLab) S.flagLab.delete(letter);
+          Sound.tone(700, 0.08, 'triangle', 0.07); const pd = G.peds.find((q) => q.letter === letter); ringFx(V, pd.x, G.nameY, 36, '#5eead4');
+        }
+        S.lab.menu = null; return null;
+      }
+      if (!dp.held && (dp.home ? Math.hypot(p.x - (ph.x - 15), p.y - (ph.y - 54)) < 50 : Math.hypot(p.x - dp.x, p.y - (dp.y - 54)) < 50)) {
+        dp.held = true; dp.home = false; dp.ret = false; dp.x = p.x; dp.y = p.y; dp.vx = dp.vy = 0; Sound.tick(); return { kind: 'dropper' };
+      }
+      const cp = cl.home && !cl.attached ? { x: G.clip.x, y: G.clip.y } : { x: cl.x, y: cl.y };
+      if (!cl.held && Math.hypot(p.x - cp.x, p.y - cp.y) < 38) {
+        if (cl.home) { cl.x = G.clip.x; cl.y = G.clip.y; }
+        cl.held = true; cl.home = false; cl.ret = false; cl.attached = null; cl.px = p.x; cl.py = p.y; cl.vx = cl.vy = 0; Sound.tick(); return { kind: 'clip' };
+      }
+      if (S.scene === 'tests') {
+        const tg = specAt(L, p, 1.05);
+        if (tg && (tg.id === 'quartz' || tg.id === 'calcite')) { S.held = { id: tg.id, x: p.x, y: p.y, lx: null, ly: null, rub: 0, stroke: null }; Sound.tick(); return { kind: 'tspec' }; }
+        if (tg) { tip(MN[tg.id].name + ': 겉보기 색은 ' + MN[tg.id].color + '이에요'); return null; }
+        return null;
+      }
+      // 감정실: 이름 버튼 · 표본
+      for (let i = 0; i < G.peds.length; i++) { const q = G.peds[i], bw = (L.key === 'wide' ? 190 : 150) / 2; if (Math.abs(p.x - q.x) < bw && Math.abs(p.y - G.nameY) < 22 * L.fs) { S.lab.menu = { letter: q.letter }; Sound.tick(); return null; } }
+      const tg = specAt(L, p, 1.1);
+      if (tg) { S.held = { id: tg.id, letter: tg.letter, x: p.x, y: p.y, x0: p.x, y0: p.y, onPlate: false, len: 0, stroke: null }; Sound.tick(); return { kind: 'held' }; }
+      return null;
+    }
+    if (S.scene === 'uses') {
+      const G = usesGeo(L), cid = cardAtU(V, p);
+      if (cid) { const c = V.cards[cid]; S.useDrag = { id: cid, x: c.x, y: c.y, gx: p.x - c.x, gy: p.y - c.y, x0: p.x, y0: p.y, moved: false }; Sound.tick(); return { kind: 'ucard' }; }
+      const it = G.items.find((q) => inRect(p, q.slot));
+      if (it && S.useSel) { placeUse(V, S.useSel, it.id); S.useSel = null; return null; }
+      return null;
+    }
+    return null;
+  }
+  function sceneMove(V, drag, p) {
+    const L = V.L;
+    if (drag.kind === 'dropper') { S.dropper.x = p.x; S.dropper.y = p.y; }
+    else if (drag.kind === 'clip') { S.clip.px = p.x; S.clip.py = p.y; }
+    else if (drag.kind === 'tspec' && S.held) { S.held.x = p.x; S.held.y = p.y; rubMove(V, p); }
+    else if (drag.kind === 'ucard' && S.useDrag) {
+      const d = S.useDrag; d.x = p.x - d.gx; d.y = p.y - d.gy;
+      if (!d.moved && Math.hypot(p.x - d.x0, p.y - d.y0) > 8) d.moved = true;
+      const it = usesGeo(L).items.find((q) => inRect(p, q.slot, 6)); d.over = it ? it.id : null;
+    }
+  }
+  function sceneUp(V, drag, p) {
+    const L = V.L;
+    if (drag.kind === 'dropper') {
+      const dp = S.dropper; dp.held = false;
+      const tg = specAt(L, p, 1.1);
+      if (tg) { startDrop(V, p, tg); dp.hold = nowS() + 0.55; }
+      dp.ret = true;
+    } else if (drag.kind === 'clip') {
+      const cl = S.clip; cl.held = false;
+      if (!cl.attached) {
+        cl.ret = true;
+        const tg = specAt(L, p, 1.0);
+        if (tg && tg.id !== 'magnetite') { recordMag(tg, false); tip(labelOf(tg) + '에는 클립이 붙지 않아요'); }
+      }
+    } else if (drag.kind === 'tspec') {
+      if (S.held) ringFx(V, S.held.x, S.held.y, 14, 'rgba(255,255,255,.8)');
+      S.held = null;
+    } else if (drag.kind === 'ucard' && S.useDrag) {
+      const d = S.useDrag; S.useDrag = null;
+      const G = usesGeo(L), it = G.items.find((q) => inRect(p, q.slot, 6));
+      if (d.moved) { if (it) placeUse(V, d.id, it.id); else { const prev = Object.keys(S.useSlots).find((k) => S.useSlots[k] === d.id); if (prev) delete S.useSlots[prev]; } }
+      else { if (it) placeUse(V, d.id, it.id); else S.useSel = S.useSel === d.id ? null : d.id; }
+    }
+  }
+  function updateScene(dt, t) {
+    if (S.scene !== 'tests' && S.scene !== 'lab') return;
+    const V = activeView(), L = V.L, G = geoNow(L), dp = S.dropper, cl = S.clip, now = nowS();
+    // 스포이트 돌아가기
+    if (!dp.held && dp.ret && now >= (dp.hold || 0)) {
+      const ph = pipHome(G); springTo(dp, ph.x, ph.y, dt, 190, 20);
+      if (Math.hypot(dp.x - ph.x, dp.y - ph.y) < 3 && Math.hypot(dp.vx, dp.vy) < 12) { dp.home = true; dp.ret = false; }
+    }
+    if (dp.squeeze > 0) dp.squeeze = Math.max(0, dp.squeeze - dt * 3);
+    // 방울이 닿으면
+    for (let i = S.drops.length - 1; i >= 0; i--) { const d = S.drops[i]; if (now - d.t0 >= d.dur) { S.drops.splice(i, 1); landDrop(V, d); } }
+    // 거품
+    if (S.fizz && now - S.fizz.t0 < 3.4) {
+      S.fizz.acc += dt * 42;
+      while (S.fizz.acc >= 1) {
+        S.fizz.acc -= 1;
+        V.P.emit({ x: S.fizz.x + (Math.random() - 0.5) * 60, y: S.fizz.y + (Math.random() - 0.5) * 16, vx: (Math.random() - 0.5) * 26, vy: -40 - Math.random() * 60, life: 0.7 + Math.random() * 0.6, size: 2 + Math.random() * 3.6, color: '#d8f0ff', shape: 'bubble', gravity: -20, drag: 0.4 });
+      }
+      if (Math.random() < dt * 14) Sound.tone(1600 + Math.random() * 900, 0.03, 'square', 0.012);
+    }
+    // 클립: 자석에 끌려가요
+    const mgT = targetsOf(L).find((q) => MN[q.id].mag);
+    const ap = mgT ? { x: mgT.x - mgT.s * 0.66, y: mgT.y - mgT.s * 0.08 } : null;
+    if (cl.held && mgT) {
+      const px = cl.px != null ? cl.px : cl.x, py = cl.py != null ? cl.py : cl.y, d = Math.hypot(px - mgT.x, py - mgT.y);
+      const w = smooth(mgT.s * 2.5, mgT.s * 1.05, d);
+      let tx = px + (ap.x - px) * w * w, ty = py + (ap.y - py) * w * w;
+      let ang = -0.45 + (Math.atan2(mgT.y - ty, mgT.x - tx) + 0.45 - Math.PI / 2 + 0.3) * 0.0 + (-0.2 - (-0.45)) * w;
+      if (!cl.attached && d < mgT.s * 1.08) {
+        cl.attached = mgT.key; recordMag(mgT, true); Sound.tone(300, 0.07, 'square', 0.05); Sound.tone(620, 0.1, 'triangle', 0.08, 0.05);
+        ringFx(V, ap.x, ap.y, 22, '#ffd36b'); V.P.burst(ap.x, ap.y, { count: 8, colors: ['#ffd36b', '#ffffff'], speed: 90, gravity: 60, size: 2.5, life: 0.6 });
+        tip(S.scene === 'tests' ? '자철석에 클립이 붙었어요!' : labelOf(mgT) + '에 클립이 붙었어요!');
+      }
+      if (cl.attached) { tx = ap.x; ty = ap.y; ang = -0.2 + Math.sin(t * 3) * 0.04; if (d > mgT.s * 2.3) cl.attached = null; }
+      cl.x = approach(cl.x, tx, dt, 24); cl.y = approach(cl.y, ty, dt, 24); cl.ang = approach(cl.ang, ang, dt, 12);
+      // 자석이 아닌 표본 위에서 잠깐 머무르면 안내
+      const o = targetsOf(L).find((q) => !MN[q.id].mag && Math.hypot(px - q.x, py - q.y) < q.s * 1.0);
+      if (o) { if (!cl.near || cl.near.key !== o.key) cl.near = { key: o.key, t0: now }; else if (now - cl.near.t0 > 0.8 && !cl.near.done) { cl.near.done = true; recordMag(o, false); tip(labelOf(o) + '에는 클립이 붙지 않아요'); } } else cl.near = null;
+    } else if (!cl.held && cl.attached && ap) {
+      cl.x = approach(cl.x, ap.x, dt, 14); cl.y = approach(cl.y, ap.y, dt, 14); cl.ang = -0.2 + Math.sin(t * 2.4) * 0.05;
+    } else if (!cl.held && cl.ret) {
+      springTo(cl, G.clip.x, G.clip.y, dt, 190, 20); cl.ang = approach(cl.ang, -0.5, dt, 8);
+      if (Math.hypot(cl.x - G.clip.x, cl.y - G.clip.y) < 3 && Math.hypot(cl.vx, cl.vy) < 12) { cl.home = true; cl.ret = false; }
+    }
+  }
+
+  /* =========================================================
+     4단계 화면: 광물과 암석의 쓰임 짝짓기
+     ========================================================= */
+  const USE_ORDER = ['magnetite', 'granite', 'feldspar', 'quartz'];
+  function usesGeo(L) {
+    const wide = L.key === 'wide';
+    const items = USES.map((u, i) => wide
+      ? { id: u.id, x: 28, y: 92 + i * 128, w: 420, h: 112, slot: { x: 28 + 226, y: 92 + i * 128 + 18, w: 180, h: 76 } }
+      : { id: u.id, x: 20, y: 70 + i * 106, w: 480, h: 96, slot: { x: 20 + 250, y: 70 + i * 106 + 10, w: 214, h: 76 } });
+    const cards = USE_ORDER.map((id, i) => wide
+      ? { id, x: 470 + (i % 2) * 160, y: 92 + Math.floor(i / 2) * 192, w: 150, h: 180 }
+      : { id, x: 20 + (i % 2) * 244, y: 514 + Math.floor(i / 2) * 150, w: 236, h: 140 });
+    return { M: wide ? { x: 12, y: 12, w: 776, h: 616 } : { x: 10, y: 10, w: 500, h: 826 }, items, cards };
+  }
+  function useTarget(V, G, id) {
+    const home = G.cards.find((c) => c.id === id);
+    if (S.useDrag && S.useDrag.id === id) return { x: S.useDrag.x, y: S.useDrag.y, w: home.w * 1.06, h: home.h * 1.06, drag: true };
+    const slotOf = Object.keys(S.useSlots).find((k) => S.useSlots[k] === id);
+    if (slotOf) { const it = G.items.find((q) => q.id === slotOf), s = it.slot; return { x: s.x + s.w / 2, y: s.y + s.h / 2, w: s.w - 8, h: s.h - 8 }; }
+    return { x: home.x + home.w / 2, y: home.y + home.h / 2, w: home.w, h: home.h };
+  }
+  function cardAtU(V, p) {
+    const ids = USE_ORDER.slice().reverse();
+    for (let i = 0; i < ids.length; i++) { const c = V.cards && V.cards[ids[i]]; if (c && Math.abs(p.x - c.x) <= c.w / 2 && Math.abs(p.y - c.y) <= c.h / 2) return ids[i]; }
+    return null;
+  }
+  function placeUse(V, cardId, itemId) {
+    const prev = Object.keys(S.useSlots).find((k) => S.useSlots[k] === cardId), old = S.useSlots[itemId];
+    if (prev) delete S.useSlots[prev];
+    S.useSlots[itemId] = cardId;
+    if (old && old !== cardId && prev) S.useSlots[prev] = old;
+    S.flagUse.delete(cardId); if (old) S.flagUse.delete(old);
+    Sound.tone(700, 0.08, 'triangle', 0.07);
+    const G = usesGeo(V.L), it = G.items.find((q) => q.id === itemId), s = it.slot; ringFx(V, s.x + s.w / 2, s.y + s.h / 2, 30, '#5eead4');
+  }
+  function drawUses(V, t) {
+    const ctx = V.ctx, L = V.L, G = usesGeo(L), fs = L.fs, wide = L.key === 'wide', dt = V.dt || 0.016;
+    if (!V.cards) V.cards = {};
+    benchPanel(ctx, G.M, t);
+    pill(ctx, S.tipText && nowS() - S.tipText.t0 < 3 ? S.tipText.text : '카드를 끌어서 알맞은 칸에 놓아요', G.M.x + G.M.w / 2, G.M.y + 30 * fs, { font: fnt(L, 14.5, 'bold'), bg: 'rgba(8,16,40,.84)', h: 28 * fs, pad: 14, stroke: 'rgba(160,190,255,.35)' });
+    G.items.forEach((it) => {
+      const u = USES.find((q) => q.id === it.id), m = MN[it.id], filled = S.useSlots[it.id];
+      let sh = 0; if (S.useShake[it.id]) { const k = (nowS() - S.useShake[it.id]) / 0.45; if (k < 1) sh = k; }
+      ctx.save(); if (sh) ctx.translate(Math.sin(sh * 40) * 5 * (1 - sh), 0);
+      roundRect(ctx, it.x, it.y, it.w, it.h, 14); ctx.fillStyle = 'rgba(255,255,255,.07)'; ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,.2)'; ctx.lineWidth = 1.3; ctx.stroke();
+      const sp = wide ? 36 : 32;
+      pedestal(ctx, it.x + 62, it.y + it.h * 0.72, 92);
+      specShadow(ctx, it.x + 62, it.y + it.h * 0.72 + 2, sp * 0.8);
+      drawSpec(V, it.id, it.x + 62, it.y + it.h * 0.72 - sp * 0.62, sp, { yaw: m.yaw, pitch: m.pitch });
+      ctx.fillStyle = '#fff'; ctx.font = dfnt(L, 24); ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(u.label, it.x + 122, it.y + it.h * 0.38);
+      ctx.font = fnt(L, 12.5, '700'); ctx.fillStyle = 'rgba(232,239,255,.7)'; ctx.fillText(it.id === 'granite' ? '(암석)' : it.id === 'magnetite' ? '(광물)' : '(조암 광물)', it.x + 122, it.y + it.h * 0.68);
+      const s = it.slot, over = S.useDrag && S.useDrag.over === it.id;
+      if (!filled) {
+        roundRect(ctx, s.x, s.y, s.w, s.h, 12); ctx.fillStyle = over ? 'rgba(120,220,255,.28)' : 'rgba(255,255,255,.06)'; ctx.fill();
+        ctx.setLineDash([6, 5]); ctx.lineDashOffset = -nowS() * 10; ctx.strokeStyle = over ? '#7fe3ff' : 'rgba(255,255,255,.4)'; ctx.lineWidth = 1.8; ctx.stroke(); ctx.setLineDash([]);
+        ctx.font = fnt(L, 13, 'bold'); ctx.fillStyle = 'rgba(232,239,255,.65)'; ctx.textAlign = 'center'; ctx.fillText('쓰임 카드를 놓아요', s.x + s.w / 2, s.y + s.h / 2);
+      }
+      ctx.restore();
+    });
+    // 카드
+    const ids = USE_ORDER.slice().sort((a, b) => (S.useDrag && S.useDrag.id === a ? 1 : 0) - (S.useDrag && S.useDrag.id === b ? 1 : 0));
+    USE_ORDER.forEach((id) => { const h = G.cards.find((c) => c.id === id); roundRect(ctx, h.x, h.y, h.w, h.h, 14); ctx.fillStyle = 'rgba(255,255,255,.04)'; ctx.fill(); ctx.setLineDash([5, 5]); ctx.strokeStyle = 'rgba(255,255,255,.18)'; ctx.lineWidth = 1.2; ctx.stroke(); ctx.setLineDash([]); });
+    USE_ORDER.forEach((id) => {
+      const tg = useTarget(V, G, id); let c = V.cards[id];
+      if (!c) { const h = G.cards.find((q) => q.id === id); c = V.cards[id] = { x: h.x + h.w / 2, y: h.y + h.h / 2, vx: 0, vy: 0, w: h.w, h: h.h }; }
+      if (tg.drag) { c.x = approach(c.x, tg.x, dt, 40); c.y = approach(c.y, tg.y, dt, 40); c.vx = c.vy = 0; } else springTo(c, tg.x, tg.y, dt, 230, 20);
+      c.w = approach(c.w, tg.w, dt, 15); c.h = approach(c.h, tg.h, dt, 15);
+    });
+    ids.forEach((id) => {
+      const c = V.cards[id], u = USES.find((q) => q.id === id), drag = S.useDrag && S.useDrag.id === id, sel = S.useSel === id;
+      const slotOf = Object.keys(S.useSlots).find((k) => S.useSlots[k] === id), bad = S.flagUse.has(id) && !!slotOf;
+      let sh = 0; if (slotOf && S.useShake[slotOf]) { const k = (nowS() - S.useShake[slotOf]) / 0.45; if (k < 1) sh = k; }
+      ctx.save(); if (sh) ctx.translate(Math.sin(sh * 40) * 5 * (1 - sh), 0);
+      ctx.shadowColor = 'rgba(0,0,0,' + (drag ? 0.5 : 0.3) + ')'; ctx.shadowBlur = drag ? 20 : 8; ctx.shadowOffsetY = drag ? 10 : 3;
+      roundRect(ctx, c.x - c.w / 2, c.y - c.h / 2, c.w, c.h, 14); ctx.fillStyle = '#f4f7ff'; ctx.fill(); ctx.shadowColor = 'transparent';
+      ctx.strokeStyle = bad ? '#ef4444' : sel ? '#38bdf8' : '#c6d3ee'; ctx.lineWidth = bad || sel ? 3.2 : 1.5; ctx.stroke();
+      const small = c.h < 100;
+      ctx.textAlign = small ? 'left' : 'center'; ctx.textBaseline = 'middle';
+      ctx.font = Math.round((small ? 30 : 46) * fs) + 'px ' + FONT; ctx.fillStyle = '#1f2a44';
+      if (small) { ctx.fillText(u.emoji, c.x - c.w / 2 + 12, c.y); ctx.font = fnt(L, 14.5, '800'); drawWrapped(ctx, u.use, c.x - c.w / 2 + 12 + 40 * fs, c.y - (u.use.length > 8 ? 9 : 0), c.w - 62 * fs, 18 * fs, 2); }
+      else { ctx.fillText(u.emoji, c.x, c.y - c.h * 0.17); ctx.font = fnt(L, 16, '800'); ctx.textAlign = 'center'; drawWrapped(ctx, u.use, c.x, c.y + c.h * 0.22, c.w - 16, 20 * fs, 2); }
+      ctx.restore();
+    });
+  }
+  function drawScene2(V, t) {
+    if (S.scene === 'tests') drawTests(V, t);
+    else if (S.scene === 'lab') drawLab(V, t);
+    else if (S.scene === 'uses') drawUses(V, t);
+  }
+})();
