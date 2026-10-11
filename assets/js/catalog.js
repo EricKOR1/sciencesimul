@@ -911,8 +911,7 @@ window.SCI_CATALOG = {
                 "얼음과 뿌리",
                 "토양 생성",
                 "토양 보전"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m2-plates",
@@ -933,8 +932,7 @@ window.SCI_CATALOG = {
                 "증거 찾기",
                 "지진·화산 분포",
                 "판의 경계"
-              ],
-              "soon": true
+              ]
             }
           ]
         },
