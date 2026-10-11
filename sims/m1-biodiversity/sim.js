@@ -1594,7 +1594,7 @@
 
   // 테스트·점검용
   window.__sim = {
-    S, WB, ECOS, PN, PM, CAUSE, FIXC, ACT, PL, game, setView, LAY: () => LAY, KIND: () => KIND, THREATS, webStats, webToggle, webReset, causeSolve, fixSolve, actSolve, panelsReset, actReset, plToggle,
+    S, WB, ECOS, PN, PM, CAUSE, FIXC, ACT, PL, game, TOPB: () => TOPB, setView, LAY: () => LAY, KIND: () => KIND, THREATS, webStats, webToggle, webReset, causeSolve, fixSolve, actSolve, panelsReset, actReset, plToggle,
     toClient(x, y) { const r = view.canvas.getBoundingClientRect(); return { x: r.left + (x / W) * r.width, y: r.top + (y / H) * r.height }; },
     nodePoint(ei, i) { const N = nodeAt(ei, i); return this.toClient(N.x, N.y); },
     cardPoint(list, pred) { const cd = list.find(pred); return this.toClient(cd.x + cd.w / 2, cd.y + cd.h / 2); },
