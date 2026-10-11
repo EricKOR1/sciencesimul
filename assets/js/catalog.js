@@ -225,8 +225,7 @@ window.SCI_CATALOG = {
                 "위협 요인",
                 "보전 방법",
                 "실천"
-              ],
-              "soon": true
+              ]
             }
           ]
         },

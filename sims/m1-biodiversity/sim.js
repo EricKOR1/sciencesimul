@@ -7,14 +7,13 @@
    ========================================================= */
 (function () {
   'use strict';
-  const { $, $$, clamp, lerp, Sound, toast } = SciSim;
+  const { $, $$, clamp, lerp, Sound } = SciSim;
   const TAU = Math.PI * 2;
   const RM = !!SciSim.reduceMotion;
   const EASE = SciSim.ease;
   const FONT = '"Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif';
   const EMOJI_FONT = '"Apple Color Emoji","Noto Color Emoji","Segoe UI Emoji",sans-serif';
   const now = () => performance.now() / 1000;
-  const smoothstep = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
 
   // 고정 시드 난수 (그림이 매번 같도록)
   function rng(seed) {
@@ -57,13 +56,23 @@
     r = Math.max(0, Math.min(r, w / 2, h / 2));
     c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath();
   }
+  const TW = new Map(), FIT = new Map();
+  function textW(s, size, weight) {                  // 글자 너비는 한 번만 재요
+    const k = size + '|' + (weight || 700) + '|' + s;
+    let w = TW.get(k);
+    if (w == null) { ctx.font = font(size, weight); w = ctx.measureText(s).width; if (TW.size > 1500) TW.clear(); TW.set(k, w); }
+    return w;
+  }
   function txt(s, x, y, o) {
     o = o || {};
     let size = o.size || 14;
-    ctx.font = font(size, o.weight);
     if (o.max) {
-      while (size > (o.min || 11) && ctx.measureText(s).width > o.max) { size -= 0.5; ctx.font = font(size, o.weight); }
+      const fk = s + '|' + size + '|' + (o.weight || 700) + '|' + o.max + '|' + (o.min || 11);
+      let fs = FIT.get(fk);
+      if (fs == null) { fs = size; while (fs > (o.min || 11) && textW(s, fs, o.weight) > o.max) fs -= 0.5; if (FIT.size > 600) FIT.clear(); FIT.set(fk, fs); }
+      size = fs;
     }
+    ctx.font = font(size, o.weight);
     ctx.textAlign = o.align || 'left';
     ctx.textBaseline = o.base || 'alphabetic';
     if (o.halo) { ctx.lineJoin = 'round'; ctx.strokeStyle = o.halo; ctx.lineWidth = o.haloW || 4; ctx.strokeText(s, x, y); }
@@ -105,20 +114,20 @@
     ls.forEach((ln, i) => txt(ln, x, y + i * lh, { size, weight: o.weight, color: o.color, align: o.align, base: o.base }));
     return ls.length * lh;
   }
-  function pill(s, x, y, o) {
+  function pill(s, x, y, o) {                        // 알약 모양 이름표 (같은 모양은 한 번만 그려 두고 붙여요)
     o = o || {};
-    const size = o.size || 14, pad = o.pad != null ? o.pad : 10, h = o.h || size + 12;
-    ctx.font = font(size, o.weight || 800);
-    const w = ctx.measureText(s).width + pad * 2;
+    const size = o.size || 14, pad = o.pad != null ? o.pad : 10, h = o.h || size + 12, wt = o.weight || 800;
+    const w = textW(s, size, wt) + pad * 2;
     let lx = x - w / 2;
     if (o.align === 'left') lx = x; else if (o.align === 'right') lx = x - w;
-    ctx.save();
-    if (o.shadow) { ctx.shadowColor = 'rgba(20,40,30,.22)'; ctx.shadowBlur = 8; ctx.shadowOffsetY = 2; }
-    rr(lx, y - h / 2, w, h, h / 2);
-    ctx.fillStyle = o.bg || '#1b2333'; ctx.fill();
-    ctx.restore();
-    if (o.border) { rr(lx, y - h / 2, w, h, h / 2); ctx.strokeStyle = o.border; ctx.lineWidth = o.borderW || 2; ctx.stroke(); }
-    txt(s, lx + w / 2, y + 1, { size, weight: o.weight || 800, color: o.color || '#fff', align: 'center', base: 'middle' });
+    const m = 26, key = 'pill|' + s + '|' + size + '|' + wt + '|' + pad + '|' + h + '|' + (o.bg || '') + '|' + (o.color || '') + '|' + (o.border || '') + '|' + (o.borderW || '') + '|' + (o.shadow ? 1 : 0);
+    const spr = sprite(key, w + m * 2, h + m * 2, () => {
+      if (o.shadow) dropShadow(-w / 2, -h / 2, w, h, h / 2, 8, 2, 'rgba(20,40,30,.22)');
+      rr(-w / 2, -h / 2, w, h, h / 2); ctx.fillStyle = o.bg || '#1b2333'; ctx.fill();
+      if (o.border) { rr(-w / 2, -h / 2, w, h, h / 2); ctx.strokeStyle = o.border; ctx.lineWidth = o.borderW || 2; ctx.stroke(); }
+      txt(s, 0, 1, { size, weight: wt, color: o.color || '#fff', align: 'center', base: 'middle' });
+    });
+    drawSpr(spr, lx + w / 2, y);
     return { x: lx, y: y - h / 2, w, h };
   }
   function newRing(r, rad) {
@@ -132,38 +141,47 @@
     txt('NEW', tx + 25, ty + 12, { size: 13, weight: 800, color: '#fff', align: 'center', base: 'middle' });
   }
   // 부드러운 그림자: 한 번만 만들어 두었다가 붙여요 (매 프레임 번짐 계산을 피해요)
+  // 그림자를 그린 뒤 도형 자리를 지워서, 도형 둘레의 번진 부분만 남겨요 (어느 브라우저에서나 같게 보여요)
   const SHC = new Map();
   function dropShadow(x, y, w, h, r, blur, oy, col) {
-    const key = Math.round(w) + 'x' + Math.round(h) + '/' + r + '/' + blur + '/' + col;
+    const key = Math.round(w) + 'x' + Math.round(h) + '/' + r + '/' + blur + '/' + oy + '/' + col;
     let e = SHC.get(key);
     if (!e) {
-      const pad = Math.ceil(blur * 2) + 4, c = document.createElement('canvas');
+      const pad = Math.ceil(blur * 2) + Math.ceil(Math.abs(oy)) + 4, c = document.createElement('canvas');
       c.width = Math.ceil(w) + pad * 2; c.height = Math.ceil(h) + pad * 2;
-      const g = c.getContext('2d'), rad = Math.max(0, Math.min(r, w / 2, h / 2)), rx = pad - 9000, ry = pad;
-      g.shadowColor = col; g.shadowBlur = blur; g.shadowOffsetX = 9000; g.fillStyle = '#000';
-      g.beginPath(); g.moveTo(rx + rad, ry); g.arcTo(rx + w, ry, rx + w, ry + h, rad); g.arcTo(rx + w, ry + h, rx, ry + h, rad); g.arcTo(rx, ry + h, rx, ry, rad); g.arcTo(rx, ry, rx + w, ry, rad); g.closePath(); g.fill();
+      const g = c.getContext('2d'), rad = Math.max(0, Math.min(r, w / 2, h / 2)), rx = pad, ry = pad;
+      const path = (k) => { const x0 = rx + k, y0 = ry + k, x1 = rx + w - k, y1 = ry + h - k, q = Math.max(0, rad - k); g.beginPath(); g.moveTo(x0 + q, y0); g.arcTo(x1, y0, x1, y1, q); g.arcTo(x1, y1, x0, y1, q); g.arcTo(x0, y1, x0, y0, q); g.arcTo(x0, y0, x1, y0, q); g.closePath(); };
+      g.shadowColor = col; g.shadowBlur = blur; g.shadowOffsetY = oy; g.fillStyle = '#000'; path(0); g.fill();
+      g.shadowColor = 'rgba(0,0,0,0)'; g.shadowBlur = 0; g.shadowOffsetY = 0; g.globalCompositeOperation = 'destination-out'; path(1); g.fill();   // 도형보다 조금 작게 지워서 가장자리에 틈이 안 생겨요
       e = { c, pad }; SHC.set(key, e);
       if (SHC.size > 80) SHC.delete(SHC.keys().next().value);
     }
-    ctx.drawImage(e.c, x - e.pad, y - e.pad + oy);
+    ctx.drawImage(e.c, x - e.pad, y - e.pad);
   }
   // 한 번만 그려 두는 층(layer)과 작은 그림(sprite): 매 프레임 다시 그리는 일을 줄여요
   const LAYERS = new Map(), SPR = new Map();
+  let cacheW = 0, cacheH = 0, cacheS = 0, cacheKind = '';
   function offscreen(w, h) { const c = document.createElement('canvas'); c.width = Math.max(1, Math.ceil(w)); c.height = Math.max(1, Math.ceil(h)); return c; }
+  function cacheCheck() {                            // 화면 크기나 가로·세로형이 바뀌면 옛 그림은 모두 버려요 (메모리 절약)
+    const cv = view.canvas, s = view.scale * view.dpr;
+    if (cv.width !== cacheW || cv.height !== cacheH || s !== cacheS || KIND !== cacheKind) { cacheW = cv.width; cacheH = cv.height; cacheS = s; cacheKind = KIND; LAYERS.clear(); SPR.clear(); }
+  }
   function layer(key, fn) {                          // 화면 전체 크기의 층
-    const cv = view.canvas, k = key + '|' + cv.width + 'x' + cv.height;
-    let c = LAYERS.get(k);
+    cacheCheck();
+    const cv = view.canvas;
+    let c = LAYERS.get(key);
     if (!c) {
       c = offscreen(cv.width, cv.height);
       const g = c.getContext('2d'), s = view.scale * view.dpr; g.setTransform(s, 0, 0, s, 0, 0);
       const saved = ctx; ctx = g;
       try { fn(); } finally { ctx = saved; }
-      LAYERS.set(k, c); if (LAYERS.size > 14) LAYERS.delete(LAYERS.keys().next().value);
+      LAYERS.set(key, c);
     }
     ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(c, 0, 0); ctx.restore();
   }
   function sprite(key, w, h, fn) {                   // 가상 크기 w×h (중심이 0,0)
-    const s = view.scale * view.dpr, k = key + '|' + s.toFixed(3);
+    cacheCheck();
+    const s = view.scale * view.dpr, k = key;
     let e = SPR.get(k);
     if (!e) {
       const c = offscreen(w * s, h * s), g = c.getContext('2d'); g.setTransform(s, 0, 0, s, c.width / 2, c.height / 2);
@@ -216,7 +234,7 @@
   }
   const popN = (max, pop) => Math.max(0, Math.round(max * pop));
   function sceneHabitat(c, t, thr, fix, pop) {          // 위에서 내려다본 숲과 도로
-    const tt = RM ? 0 : t, d = thr * (1 - fix);
+    const tt = RM ? 0 : t;
     c.fillStyle = lgrad(c, 0, 0, 160, 110, [[0, '#9bd68d'], [1, '#6fb86a']]); c.fillRect(0, 0, SC_W, SC_H);
     const R = rng(12); c.fillStyle = 'rgba(255,255,255,.12)'; for (let i = 0; i < 16; i++) { c.beginPath(); c.arc(R() * 160, R() * 110, 6 + R() * 10, 0, TAU); c.fill(); }
     // 나무 (도로 쪽 나무는 위협이 커지면 사라져요)
@@ -255,7 +273,7 @@
       emo(c, '🦌', x, y, 15, { alpha: a, flip: x > 80 });
     }
   }
-  function dropShadowC(c, x, y, w, h, b) { c.save(); c.shadowColor = 'rgba(0,0,0,.25)'; c.shadowBlur = b; c.shadowOffsetY = 2; c.fillStyle = '#000'; rr2(c, x, y, w, h, 7); c.fill(); c.restore(); }
+  function dropShadowC(c, x, y, w, h) { c.save(); c.fillStyle = 'rgba(0,0,0,.08)'; for (let k = 3; k >= 1; k--) { rr2(c, x - k * 0.8, y + 1.6 - k * 0.3, w + k * 1.6, h + k * 1.6, 7 + k); c.fill(); } c.restore(); }
   function bullfrog(c, x, y, s, t, ph) {
     c.save(); c.translate(x, y - (RM ? 0 : Math.max(0, Math.sin(t * 3 + ph)) * 3)); c.scale(s, s);
     c.fillStyle = 'rgba(0,0,0,.2)'; c.beginPath(); c.ellipse(0, 7, 11, 3, 0, 0, TAU); c.fill();
@@ -305,7 +323,6 @@
     if (prot > 0) {
       c.save(); c.globalAlpha = prot; c.strokeStyle = '#fde047'; c.lineWidth = 2; c.setLineDash([6, 5]); c.lineDashOffset = RM ? 0 : -tt * 14; c.beginPath(); c.ellipse(80, 76, 66, 28, 0, 0, TAU); c.stroke(); c.setLineDash([]);
       for (let k = 0; k < 8; k++) { const a = k / 8 * TAU, bx = 80 + Math.cos(a) * 66, by = 76 + Math.sin(a) * 28 + (RM ? 0 : Math.sin(tt * 2 + k) * 1); c.fillStyle = k % 2 ? '#ef4444' : '#fff'; c.beginPath(); c.arc(bx, by, 3.2, 0, TAU); c.fill(); c.strokeStyle = '#334155'; c.lineWidth = 0.8; c.stroke(); }
-      pill('보호 구역', 80, 56, { size: 14, bg: '#16a34a', pad: 8, h: 20 });
       c.restore();
     }
     // 물고기
@@ -331,6 +348,7 @@
       c.globalAlpha = 1;
     }
     c.restore();
+    if (prot > 0.02) { c.save(); c.globalAlpha = prot; pill('보호 구역', 80, 52, { size: 13, bg: '#16a34a', pad: 8, h: 19 }); c.restore(); }   // 이름표는 맨 위에 (물고기에 가려지지 않게)
   }
   function scenePollution(c, t, thr, fix, pop) {          // 공장 폐수가 강으로
     const tt = RM ? 0 : t, d = thr * (1 - fix);
@@ -392,8 +410,8 @@
   const SCENES = { habitat: sceneHabitat, invasive: sceneInvasive, overhunt: sceneOverhunt, pollution: scenePollution, climate: sceneClimate };
 
   // 풀(생산자)·메뚜기: 먹이 그물 그림용
-  function drawHopperArt(c, x, y, s, t) {
-    const hop = RM ? 0 : Math.max(0, Math.sin(t * 1.4)) * 3;
+  function drawHopperArt(c, x, y, s, t, still) {
+    const hop = RM || still ? 0 : Math.max(0, Math.sin(t * 1.4)) * 3;
     c.save(); c.translate(x, y - hop); c.scale(s, s);
     c.strokeStyle = '#4a7a2a'; c.lineWidth = 2.2; c.lineCap = 'round'; c.lineJoin = 'round';
     c.beginPath(); c.moveTo(-3, 3); c.lineTo(-12, -4); c.lineTo(-18, 9); c.moveTo(2, 3); c.lineTo(-6, -2); c.lineTo(-9, 10); c.stroke();
@@ -405,6 +423,12 @@
     c.strokeStyle = '#4a7a2a'; c.lineWidth = 1; c.beginPath(); c.moveTo(17, -6); c.quadraticCurveTo(23, -11, 28, -9); c.stroke();
     c.restore();
   }
+  // 메뚜기 그림은 한 번만 그려 두고, 폴짝 뛰는 높이만 바꿔서 붙여요
+  function drawHopper(x, y, s, t) {
+    const k = Math.round(s * 1000), hop = RM ? 0 : Math.max(0, Math.sin(t * 1.4)) * 3;
+    drawSpr(sprite('hop|' + k, 64 * s + 8, 30 * s + 8, () => drawHopperArt(ctx, 0, 0, k / 1000, 0, true)), x, y - hop);
+  }
+
 
   /* =========================================================
      자료
@@ -445,18 +469,29 @@
     E.diets = E.sp.map((k) => { const e = Object.entries(E.diet[k] || {}), tot = e.reduce((a, p) => a + p[1], 0); return e.map(([p, w]) => [E.idx[p], w / tot]); });
     E.P0 = new Array(E.n).fill(0); E.diets.forEach((d) => d.forEach(([j, w]) => { E.P0[j] += w; }));
     E.links = []; E.diets.forEach((d, p) => d.forEach(([j, w]) => E.links.push({ from: j, to: p, w })));
-    E.x = new Array(E.n).fill(1); E.vis = new Array(E.n).fill(1); E.rem = new Array(E.n).fill(false); E.remT = new Array(E.n).fill(0); E.shake = new Array(E.n).fill(-9); E.pop = new Array(E.n).fill(-9);
+    E.x = new Array(E.n).fill(1); E.vis = new Array(E.n).fill(1); E.rem = new Array(E.n).fill(false); E.remT = new Array(E.n).fill(0); E.shake = new Array(E.n).fill(-9); E.pop = new Array(E.n).fill(-9); E.hv = new Array(E.n).fill(0);
     E.since = 0; E.ph = E.sp.map((k, i) => i * 1.37);
+    E.dj = E.diets.map((d) => d.map((q) => q[0])); E.dw = E.diets.map((d) => d.map((q) => q[1])); E.Pp = new Array(E.n).fill(0);
+    E.rip = []; E.hold = new Array(E.n).fill(0); E.hit = new Array(E.n).fill(-9); E.hitMag = new Array(E.n).fill(0);
   });
-  function webStep(E, dt) {
-    const Pp = new Array(E.n).fill(0);
-    E.diets.forEach((d, p) => d.forEach(([j, w]) => { Pp[j] += w * E.x[p]; }));
-    for (let i = 0; i < E.n; i++) {
-      if (E.rem[i]) { E.x[i] = 0; continue; }
-      const d = E.diets[i], S = d.length ? d.reduce((a, p) => a + p[1] * E.x[p[0]], 0) : 1, k = d.length ? WEB_K.kc : WEB_K.kp;
-      const target = clamp(S * (1 + k * (E.P0[i] - Pp[i])), 0, WEB_K.cap);
-      E.x[i] += (target - E.x[i]) * Math.min(1, WEB_K.rate * dt);
+  function webStepOn(E, x, dt) {                       // x: 개체 수 배열 (E.x 또는 미리 계산용 복사본)
+    const Pp = E.Pp, n = E.n;
+    Pp.fill(0);
+    for (let p = 0; p < n; p++) { const dj = E.dj[p], dw = E.dw[p]; for (let k = 0; k < dj.length; k++) Pp[dj[k]] += dw[k] * x[p]; }
+    for (let i = 0; i < n; i++) {
+      if (E.rem[i]) { x[i] = 0; continue; }
+      const dj = E.dj[i], dw = E.dw[i];
+      let S = dj.length ? 0 : 1; for (let k = 0; k < dj.length; k++) S += dw[k] * x[dj[k]];
+      const kk = dj.length ? WEB_K.kc : WEB_K.kp;
+      const target = clamp(S * (1 + kk * (E.P0[i] - Pp[i])), 0, WEB_K.cap);
+      x[i] += (target - x[i]) * Math.min(1, WEB_K.rate * dt);
     }
+  }
+  const webStep = (E, dt) => webStepOn(E, E.x, dt);
+  function webPredict(E, secs) {                       // 지금 상태가 이어질 때 곧 도달할 개체 수 (영향이 퍼지는 모습에 써요)
+    const x = E.x.slice(), steps = Math.round(secs * 30);
+    for (let s = 0; s < steps; s++) webStepOn(E, x, 1 / 30);
+    return x;
   }
   function webStats(E) {
     let aff = 0, gone = 0, worst = -1, best = -1, wv = 1, bv = 1;
@@ -604,6 +639,7 @@
   function webReset(instant) {
     ECOS.forEach((E) => {
       E.rem.fill(false); E.x.fill(1); E.remT.fill(0); E.since = 0; E.shake.fill(-9);
+      E.rip.length = 0; E.hold.fill(0); E.hit.fill(-9); E.descT = null;
       if (instant) E.vis.fill(1);
     });
     WB.cmpT = 0; WB.maxAff = 0; WB.done = false;
@@ -611,10 +647,11 @@
   function webToggle(ei, i) {
     const E = ECOS[ei], N = nodeAt(ei, i);
     if (E.rem[i]) {
-      E.rem[i] = false; E.x[i] = 0.12; E.pop[i] = now(); Sound.tone(660, 0.12, 'triangle', 0.07); Sound.tone(880, 0.14, 'triangle', 0.06, 0.09);
+      E.rem[i] = false; E.x[i] = 0.12; E.pop[i] = now(); E.rip.length = 0; E.hold.fill(0); Sound.tone(660, 0.12, 'triangle', 0.07); Sound.tone(880, 0.14, 'triangle', 0.06, 0.09);
       burst(N.x, N.y, ['#86efac', '#fde047', '#ffffff'], 12, { speed: 110, life: 0.7, gravity: 40 });
     } else {
       E.rem[i] = true; E.x[i] = 0; E.remT[i] = 0; E.shake[i] = now(); Sound.fail(); WB.tapped++;
+      webRipple(ei, i);
       burst(N.x, N.y, ['#cbd5e1', '#94a3b8', '#ffffff'], 14, { speed: 120, life: 0.8, gravity: 90, size: 3.4, shape: 'smoke' });
       E.links.forEach((l) => {                       // 연결선이 툭 끊기는 느낌
         if (l.from !== i && l.to !== i) return;
@@ -622,12 +659,14 @@
         burst((A.x + B.x) / 2, (A.y + B.y) / 2, ['#94a3b8', '#e2e8f0', '#ffffff'], 4, { speed: 55, life: 0.45, gravity: 30, size: 2.4 });
       });
     }
-    E.since = 0;
+    E.since = 0; E.descT = null;
   }
   function webUpdate(dt) {
     ECOS.forEach((E) => {
       webStep(E, dt); E.since += dt;
-      for (let i = 0; i < E.n; i++) { E.vis[i] = SciSim.approach(E.vis[i], E.x[i], dt, 7); if (E.rem[i]) E.remT[i] += dt; }
+      const tn = now(), hv = S.nodeHov && S.scene === 'web' ? S.nodeHov : null, ei = ECOS.indexOf(E);
+      for (let i = 0; i < E.n; i++) { E.hv[i] = SciSim.approach(E.hv[i], hv && hv.ei === ei && hv.i === i ? 1 : 0, dt, 16); if (tn >= E.hold[i]) E.vis[i] = SciSim.approach(E.vis[i], E.x[i], dt, 7); if (E.rem[i]) E.remT[i] += dt; }
+      if (E.rip.length && tn > E.rip[E.rip.length - 1].t0 + 3) E.rip.length = 0;
     });
     const A = ECOS[0], B = ECOS[1];
     let both = false;
@@ -636,25 +675,79 @@
     const st = webStats(B);
     if (st.any && B.since > 3) WB.maxAff = Math.max(WB.maxAff, st.aff);
   }
+  /* 영향이 연결선을 따라 퍼져 나가는 모습: 없앤 종 → 먹고 먹히는 이웃 → (크게 변하는) 그 이웃 …
+     이웃의 숫자는 신호가 닿은 뒤에 변하기 시작해요. 퍼지는 범위는 실제 계산 결과(크게 변하는 종)를 따라요. */
+  const HOP = 0.36;
+  function webRipple(ei, i) {
+    const E = ECOS[ei];
+    E.rip.length = 0; E.hold.fill(0);
+    if (RM) return;
+    const xf = webPredict(E, 9), t0 = now(), hop = new Array(E.n).fill(-1);
+    hop[i] = 0;
+    let frontier = [i];
+    for (let h = 1; h <= 4 && frontier.length; h++) {
+      const next = [];
+      frontier.forEach((a) => {
+        E.links.forEach((l) => {
+          const b = l.from === a ? l.to : l.to === a ? l.from : -1;
+          if (b < 0 || E.rem[b] || (hop[b] !== -1 && hop[b] < h)) return;
+          if (h > 1 && Math.abs(xf[b] - 1) <= 0.2) return;            // 두 칸째부터는 크게 변하는 종으로만 퍼져요
+          if (hop[b] === -1) { hop[b] = h; next.push(b); }
+          const arrive = t0 + h * HOP, mag = clamp(Math.abs(xf[b] - 1) / 0.5, 0.2, 1);
+          E.rip.push({ a, b, t0: t0 + (h - 1) * HOP, dur: HOP, up: xf[b] > 1, mag });
+          if (E.hold[b] === 0 || arrive < E.hold[b]) { E.hold[b] = arrive; E.hit[b] = arrive; E.hitMag[b] = mag; }
+        });
+      });
+      frontier = next;
+    }
+  }
+  function drawRipples(E, ei) {
+    if (!E.rip.length) return;
+    const tn = now();
+    E.rip.forEach((p) => {
+      const u = (tn - p.t0) / p.dur, B = nodeAt(ei, p.b), col = p.mag < 0.3 ? '#94a3b8' : p.up ? '#0ea5e9' : '#ef4444';
+      if (u < 0) return;
+      if (u <= 1) {
+        const A = nodeAt(ei, p.a), dx = B.x - A.x, dy = B.y - A.y, len = Math.hypot(dx, dy) || 1, ux = dx / len, uy = dy / len;
+        const x0 = A.x + ux * (A.r + 3), y0 = A.y + uy * (A.r + 3), x1 = B.x - ux * (B.r + 4), y1 = B.y - uy * (B.r + 4), e = EASE.inOutQuad(u);
+        for (let k = 3; k >= 1; k--) { const ee = Math.max(0, e - k * 0.08); ctx.fillStyle = rgba(col, (0.5 - k * 0.12) * (0.4 + 0.6 * p.mag)); ctx.beginPath(); ctx.arc(lerp(x0, x1, ee), lerp(y0, y1, ee), 5.4 - k * 0.9, 0, TAU); ctx.fill(); }
+        const px = lerp(x0, x1, e), py = lerp(y0, y1, e);
+        ctx.fillStyle = rgba(col, 0.28 + 0.2 * p.mag); ctx.beginPath(); ctx.arc(px, py, 9, 0, TAU); ctx.fill();
+        ctx.fillStyle = col; ctx.beginPath(); ctx.arc(px, py, 5.2, 0, TAU); ctx.fill();
+        ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(px - 1, py - 1, 2, 0, TAU); ctx.fill();
+      } else {
+        const q = (tn - p.t0 - p.dur) / 0.7;
+        if (q >= 1) return;
+        ctx.strokeStyle = rgba(col, (1 - q) * (0.3 + 0.55 * p.mag)); ctx.lineWidth = 1 + 3.2 * (1 - q);
+        ctx.beginPath(); ctx.arc(B.x, B.y, B.r + 5 + q * (9 + 9 * p.mag), 0, TAU); ctx.stroke();
+      }
+    });
+  }
   function drawNode(E, ei, i, t) {
     const N = nodeAt(ei, i), k = E.sp[i], sp = SPC[k], v = E.vis[i], rem = E.rem[i];
     const bob = RM ? 0 : Math.sin(t * 1.4 + E.ph[i]) * 1.6, sh = now() - E.shake[i];
     const popA = E.pop[i] > 0 ? Math.max(0, 1 - (now() - E.pop[i]) / 0.5) : 0;
     let x = N.x, y = N.y + bob, r = N.r;
     if (sh < 0.5) x += Math.sin(sh * 50) * 4 * (1 - sh / 0.5);
-    const sc = rem ? 0.92 : 0.8 + 0.22 * clamp(v, 0, 1.3) + popA * 0.15;
+    const hw = now() - E.hit[i]; if (hw >= 0 && hw < 0.45 && !rem) x += Math.sin(hw * 46) * (1 + 2.4 * E.hitMag[i]) * (1 - hw / 0.45);
+    const sc = (rem ? 0.92 : 0.8 + 0.22 * clamp(v, 0, 1.3) + popA * 0.15) * (1 + 0.07 * E.hv[i]);
     ctx.save(); ctx.translate(x, y); ctx.scale(sc, sc);
     const a = rem ? 0.4 : 1;
     ctx.globalAlpha = a;
-    dropShadow(-r, -r, r * 2, r * 2, r, 9, 3, 'rgba(20,40,30,.28)');
-    ctx.fillStyle = rem ? '#e5e7eb' : rgrad(ctx, -r * 0.3, -r * 0.35, 2, 0, 0, r, [[0, '#ffffff'], [1, TIER_BG[sp.tier]]]); ctx.beginPath(); ctx.arc(0, 0, r, 0, TAU); ctx.fill();
+    // 그림자 + 둥근 바탕 + 고리 바탕선은 한 번만 그려 둬요
+    const half = r + 38;
+    drawSpr(sprite('disc|' + sp.tier + '|' + r + '|' + (rem ? 1 : 0), half * 2, half * 2, () => {
+      dropShadow(-r - 4, -r - 4, r * 2 + 8, r * 2 + 8, r + 4, 11, 4, 'rgba(20,40,30,.36)');
+      ctx.fillStyle = rem ? '#e5e7eb' : rgrad(ctx, -r * 0.3, -r * 0.35, 2, 0, 0, r, [[0, '#ffffff'], [1, TIER_BG[sp.tier]]]); ctx.beginPath(); ctx.arc(0, 0, r, 0, TAU); ctx.fill();
+      ctx.lineWidth = 4.2; ctx.strokeStyle = 'rgba(148,163,184,.3)'; ctx.beginPath(); ctx.arc(0, 0, r + 3, 0, TAU); ctx.stroke();
+    }), 0, 0);
     // 개체 수 고리
     const col = stateCol(v), frac = rem ? 0 : clamp(v, 0, 1);
-    ctx.lineWidth = 4.2; ctx.lineCap = 'round'; ctx.strokeStyle = 'rgba(148,163,184,.3)'; ctx.beginPath(); ctx.arc(0, 0, r + 3, 0, TAU); ctx.stroke();
+    ctx.lineWidth = 4.2; ctx.lineCap = 'round';
     if (frac > 0.01) { ctx.strokeStyle = col; ctx.beginPath(); ctx.arc(0, 0, r + 3, -Math.PI / 2, -Math.PI / 2 + TAU * frac); ctx.stroke(); }
     if (v > 1.12 && !rem) { ctx.strokeStyle = rgba(col, 0.35 + 0.25 * Math.sin(t * 5)); ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(0, 0, r + 8 + Math.sin(t * 5) * 1.5, 0, TAU); ctx.stroke(); }
     if (sp.emoji) { const sz = Math.round(r * 1.15); drawSpr(sprite('emo|' + sp.emoji + '|' + sz, sz * 1.7, sz * 1.7, () => { ctx.font = sz + 'px ' + EMOJI_FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#000'; ctx.fillText(sp.emoji, 0, 0); }), 0, r * 0.06); }
-    else drawHopperArt(ctx, -r * 0.05, r * 0.14, r / 24, t);
+    else drawHopper(-r * 0.05, r * 0.14, r / 24, t);
     if (rem) { ctx.globalAlpha = 0.9; ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(-r * 0.6, -r * 0.6); ctx.lineTo(r * 0.6, r * 0.6); ctx.moveTo(r * 0.6, -r * 0.6); ctx.lineTo(-r * 0.6, r * 0.6); ctx.stroke(); }
     ctx.restore();
     const lab = sprite('lab|' + sp.name + '|' + (rem ? 1 : 0), 72, 26, () => { txt(sp.name, 0, 5, { size: 13, weight: 800, color: rem ? '#94a3b8' : '#334155', align: 'center', halo: 'rgba(255,255,255,.9)', haloW: 4 }); });
@@ -706,22 +799,31 @@
       if (h > 0.5) { rr(cx - bw / 2, yb - h, bw, h, 6); ctx.fillStyle = lgrad(ctx, 0, yb - h, 0, yb, [[0, rgba(col, 0.95)], [1, rgba(col, 0.6)]]); ctx.fill(); }
       if (rem) { rr(cx - bw / 2, yb - u, bw, u, 6); ctx.strokeStyle = 'rgba(148,163,184,.55)'; ctx.setLineDash([3, 4]); ctx.lineWidth = 1.4; ctx.stroke(); ctx.setLineDash([]); drawSpr(sprite('lab|없음', 40, 20, () => { txt('없음', 0, 5, { size: 13, weight: 800, color: '#94a3b8', align: 'center' }); }), cx, yb - 13); }
       else { const vt = String(Math.round(v * 100)), vc = col === '#9ca3af' ? '#94a3b8' : shade(col, -0.25); drawSpr(sprite('num|' + vt + '|' + vc, 36, 20, () => { txt(vt, 0, 5, { size: 13, weight: 800, color: vc, align: 'center' }); }), cx, yb - h - 10); }
-      if (!SPC[E.sp[i]].emoji) drawHopperArt(ctx, cx, yb + 15, E.n > 6 ? 0.52 : 0.68, t);
+      if (!SPC[E.sp[i]].emoji) drawHopper(cx, yb + 15, E.n > 6 ? 0.52 : 0.68, t);
     }
   }
   function drawStats(E, ei, t) {
     const R = LAY.web.eco[ei].stats, st = webStats(E), settled = E.since > 2.4;
     if (!st.any) { pill('생물을 눌러 없애 보세요', R.x + R.w / 2, R.y + R.h / 2, { size: TALL ? 13.5 : 14.5, bg: '#e2e8f0', color: '#475569', pad: 14, h: TALL ? 28 : 32 }); return; }
-    const frac = st.aff / Math.max(1, st.total), bad = frac >= 0.5;
-    const col = bad ? '#dc2626' : frac >= 0.2 ? '#f59e0b' : '#16a34a';
+    const frac = st.aff / Math.max(1, st.total), lv = frac >= 0.5 ? 2 : frac >= 0.3 ? 1 : 0;
+    const col = ['#16a34a', '#f59e0b', '#dc2626'][lv], tone = [['비교적 안정적이에요', '#dcfce7', '#166534', '#86efac', '안정적'], ['조금 흔들려요', '#fef3c7', '#92400e', '#fcd34d', '조금 흔들림'], ['크게 흔들려요', '#fee2e2', '#b91c1c', '#fca5a5', '크게 흔들림']][lv];
     const p1 = pill('영향 받은 종 ' + st.aff + ' / ' + st.total, R.x + 8, R.y + R.h / 2, { size: TALL ? 13.5 : 15, align: 'left', bg: settled ? col : '#94a3b8', pad: 12, h: TALL ? 28 : 32, shadow: true });
     let nx = p1.x + p1.w + 8;
     if (st.gone > 0) { const p2 = pill('사라진 종 ' + st.gone, nx, R.y + R.h / 2, { size: TALL ? 13.5 : 15, align: 'left', bg: '#7f1d1d', pad: 12, h: TALL ? 28 : 32 }); nx += p2.w + 8; }
-    if (settled) pill(bad ? '크게 흔들려요' : '비교적 안정적이에요', R.x + R.w - 8, R.y + R.h / 2, { size: TALL ? 13 : 14.5, align: 'right', bg: bad ? '#fee2e2' : '#dcfce7', color: bad ? '#b91c1c' : '#166534', pad: 11, h: TALL ? 28 : 32, border: bad ? '#fca5a5' : '#86efac', borderW: 1.5 });
+    if (settled) {                                   // 자리가 모자라면 더 짧은 말로 바꿔요 (알약끼리 겹치지 않게)
+      const sz = TALL ? 13 : 14.5, room = R.x + R.w - 8 - nx;
+      const msg = textW(tone[0], sz, 800) + 22 <= room ? tone[0] : textW(tone[4], sz, 800) + 22 <= room ? tone[4] : '';
+      if (msg) pill(msg, R.x + R.w - 8, R.y + R.h / 2, { size: sz, align: 'right', bg: tone[1], color: tone[2], pad: 11, h: TALL ? 28 : 32, border: tone[3], borderW: 1.5 });
+    }
+  }
+  function descOf(E) {                               // 설명 글은 0.25초에 한 번만 새로 만들어요
+    const tn = now();
+    if (E.descT == null || tn - E.descT > 0.25) { E.descT = tn; E.descS = describe(E); }
+    return E.descS;
   }
   function describe(E) {
     const st = webStats(E); if (!st.any) return '';
-    const rn = E.sp.filter((k, i) => E.rem[i]).map((k) => SPC[k].name), rs = rn.length > 1 ? rn.join('·') + '이' : josa(rn[0], '이', '가');
+    const rn = E.sp.filter((k, i) => E.rem[i]).map((k) => SPC[k].name), rs = josa(rn.join('·'), '이', '가');
     const ch = E.sp.map((k, i) => ({ k, v: E.x[i], rem: E.rem[i] })).filter((o) => !o.rem && Math.abs(o.v - 1) > 0.2).sort((a, b) => Math.abs(b.v - 1) - Math.abs(a.v - 1)).slice(0, 3);
     if (!ch.length) return rs + ' 사라져도 다른 생물은 크게 달라지지 않았어요.';
     const ph = ch.map((o) => josa(SPC[o.k].name, '은', '는') + (o.v < 0.08 ? ' 거의 사라졌' : o.v < 1 ? ' 줄었' : ' 늘었'));
@@ -732,17 +834,26 @@
     panelBorder(C.x, C.y, C.w, C.h, { border: WB.done ? '#86efac' : '#e2e8f0', bw: WB.done ? 2 : 1.5 });
     const fs = TALL ? 13.5 : 15.5, lh = TALL ? 19 : 22, tx = C.x + 14, mw = C.w - 28;
     const A = ECOS[0], B = ECOS[1], sa = webStats(A), sb = webStats(B);
-    if (!sa.any && !sb.any) { para('생물을 눌러 없애 보세요. 막대그래프와 \'영향 받은 종\'을 두 생태계에서 비교해 봐요. 같은 생물을 없애면 비교하기 좋아요.', tx, C.y + (TALL ? 26 : 30), mw, { size: fs, weight: 800, color: '#475569', lh }); return; }
+    if (!sa.any && !sb.any) {
+      const h = para('생물을 눌러 없애 보세요. 화살표(→)는 먹이에서 먹는 생물로 향해요.', tx, C.y + (TALL ? 26 : 30), mw, { size: fs, weight: 800, color: '#475569', lh });
+      para('막대그래프와 \'영향 받은 종\'을 두 생태계에서 비교해 봐요. 같은 생물을 없애면 비교하기 좋아요.', tx, C.y + (TALL ? 26 : 30) + h + 2, mw, { size: fs, weight: 800, color: '#64748b', lh });
+      return;
+    }
     let y = C.y + (TALL ? 22 : 26);
     [[A, sa, '단순'], [B, sb, '복잡']].forEach(([E, st, nm]) => {
       if (!st.any) return;
-      const msg = E.since < 2.4 ? '변화를 지켜보는 중…' : describe(E);
+      const msg = E.since < 2.4 ? '변화를 지켜보는 중…' : descOf(E);
       ctx.font = font(fs, 800);
       pill(nm, tx, y - 4, { size: TALL ? 12 : 13, align: 'left', bg: nm === '단순' ? '#16a34a' : '#0e93a6', pad: 8, h: TALL ? 20 : 22 });
       const h = para(msg, tx + (TALL ? 46 : 52), y, mw - (TALL ? 46 : 52), { size: fs, weight: 800, color: '#1e293b', lh });
       y += Math.max(h, lh) + (TALL ? 4 : 6);
     });
-    if (WB.cmpT > 4 && sa.any && sb.any && E_common()) para('👉 같은 생물을 없애도 단순한 생태계는 ' + sa.aff + '/' + sa.total + '종, 복잡한 생태계는 ' + sb.aff + '/' + sb.total + '종이 영향을 받았어요.', tx, y + (TALL ? 2 : 2), mw, { size: fs, weight: 800, color: '#166534', lh });
+    if (WB.cmpT > 4 && sa.any && sb.any && E_common() && A.since > 2.4 && B.since > 2.4) {
+      const fa = sa.aff / Math.max(1, sa.total), fb = sb.aff / Math.max(1, sb.total);
+      const base = A.sp.some((k, i) => A.rem[i] && B.rem[B.idx[k]] && SPC[k].tier === 0);     // 풀: 먹이 그물의 바탕
+      const concl = base ? '풀은 바탕이라 둘 다 크게 흔들려요.' : fb < fa - 0.08 ? '복잡한 생태계가 덜 흔들려요!' : sb.gone < sa.gone ? '복잡한 쪽은 사라진 종이 적어요.' : '';
+      para('👉 영향 받은 종: 단순 ' + sa.aff + '/' + sa.total + ' · 복잡 ' + sb.aff + '/' + sb.total + (concl ? ' → ' + concl : ''), tx, y + 2, mw, { size: fs, weight: 800, color: '#166534', lh });
+    }
   }
   function E_common() { const A = ECOS[0], B = ECOS[1]; return A.sp.some((k, i) => A.rem[i] && B.rem[B.idx[k]]); }
   function drawWebStatic() {                         // 그림판 바탕, 상자, 막대그래프 틀: 한 번만 그려 둬요
@@ -757,20 +868,46 @@
       ctx.restore();
       rr(N.x, N.y, N.w, N.h, 18); ctx.strokeStyle = 'rgba(255,255,255,.95)'; ctx.lineWidth = 3; ctx.stroke();
       pill(E.title, N.x + 10, N.y + 20, { size: TALL ? 13.5 : 14.5, align: 'left', bg: ei ? '#0e93a6' : '#16a34a', pad: 11, h: TALL ? 26 : 28, shadow: true });
-      pill(E.sub, N.x + N.w - 10, N.y + 20, { size: TALL ? 13 : 13.5, align: 'right', bg: 'rgba(255,255,255,.92)', color: '#334155', pad: 10, h: TALL ? 24 : 26 });
+      pill(E.sub, N.x + N.w - 10, ei === 0 && TALL ? N.y + N.h - 16 : N.y + 20, { size: TALL ? 13 : 13.5, align: 'right', bg: 'rgba(255,255,255,.92)', color: '#334155', pad: 10, h: TALL ? 24 : 26 });
       drawBarsFrame(E, ei);
     }
   }
   function drawEco(ei, t) {
     const E = ECOS[ei];
     drawLinks(E, ei, t);
+    drawRipples(E, ei);
     for (let i = 0; i < E.n; i++) drawNode(E, ei, i, t);
     drawBars(E, ei, t); drawStats(E, ei, t);
   }
   function drawWebScene(t) {
     layer('web', drawWebStatic);
-    drawEco(0, t); drawEco(1, t); webCaption();
+    drawEco(0, t); drawEco(1, t); webCaption(); drawWebLegend();
     if (isNew('web')) { const a = LAY.web.eco[0].net, b = LAY.web.eco[1].net; newRing({ x: a.x, y: a.y, w: b.x + b.w - a.x, h: a.h }, 18); }
+  }
+  // 그림 위쪽 안내줄: 화살표와 고리 색의 뜻 (말풍선 안내가 나올 때는 잠깐 사라져요)
+  function drawWebLegend() {
+    const hp = LAY.web.hint;
+    let a = 1;
+    if (HINT.msg) { const tn = now(), inA = clamp((tn - HINT.t0) / 0.35, 0, 1), outA = clamp(1 - (tn - HINT.tEnd) / 0.4, 0, 1); a = 1 - Math.min(inA, outA); }
+    if (a <= 0.02) return;
+    const W2 = TALL ? 440 : 640, H2 = 26;
+    const spr = sprite('legend|' + KIND, W2, H2, () => {
+      const items = TALL
+        ? [['먹이 → 먹는 생물', null], ['비슷', '#22c55e'], ['줄어듦', '#f59e0b'], ['많이 줄어듦', '#ef4444'], ['늘어남', '#0ea5e9']]
+        : [['화살표: 먹이 → 먹는 생물', null], ['처음과 비슷', '#22c55e'], ['줄어듦', '#f59e0b'], ['많이 줄어듦', '#ef4444'], ['늘어남', '#0ea5e9'], ['사라짐', '#9ca3af']];
+      const sz = TALL ? 12.5 : 13, gap = TALL ? 10 : 14;
+      ctx.font = font(sz, 800);
+      const ws = items.map((it) => ctx.measureText(it[0]).width + (it[1] ? 14 : 0));
+      const tot = ws.reduce((x, y) => x + y, 0) + gap * (items.length - 1) + 20;
+      rr(-tot / 2, -H2 / 2 + 1, tot, H2 - 2, (H2 - 2) / 2); ctx.fillStyle = 'rgba(255,255,255,.78)'; ctx.fill();
+      let x = -tot / 2 + 10;
+      items.forEach((it, i) => {
+        if (it[1]) { ctx.strokeStyle = it[1]; ctx.lineWidth = 3.2; ctx.beginPath(); ctx.arc(x + 5, 0, 4.2, 0, TAU); ctx.stroke(); x += 14; }
+        txt(it[0], x, 0, { size: sz, weight: 800, color: '#475569', base: 'middle' });
+        x += ws[i] - (it[1] ? 14 : 0) + gap;
+      });
+    });
+    ctx.save(); ctx.globalAlpha = a; drawSpr(spr, hp.x, hp.y); ctx.restore();
   }
   function webHit(p) {
     for (let ei = 1; ei >= 0; ei--) {
@@ -812,7 +949,21 @@
   }
   function causeSolve() { CAUSE.forEach((c) => { c.panel = c.idx; c.ok = true; c.locked = true; }); PM.checked = true; PM.doneT = now() - 99; snapPanels(false); }
   function fixSolve() { FIXC.forEach((c) => { c.panel = c.idx; c.ok = true; c.locked = true; }); PN.forEach((P) => { P.fixed = true; P.fix = 1; }); PM.solved = 5; PM.doneT = now() - 99; snapPanels(false); }
+  const freeMode = () => !!(game && game.free);
+  function causeFree(cd, pi) {                      // 자유 탐구: 미션 없이도 놓는 순간 바로 알려 줘요
+    if (cd.idx === pi) {
+      cd.panel = pi; cd.ok = true; cd.locked = true; cd.pop = now(); PM.selPanel = pi; PM.sel = null; PM.msg = '';
+      const s = panelParts(pi).slot; burst(s.x + s.w / 2, s.y + s.h / 2, [THREATS[pi].color, '#fff', '#fde047'], 12, { speed: 120, life: 0.8 });
+      if (CAUSE.every((c) => c.locked)) { PM.checked = true; PM.doneT = now(); Sound.success(); } else Sound.tone(660, 0.12, 'triangle', 0.07);
+    } else {
+      const th = THREATS[cd.idx];
+      cd.panel = -1; cd.bad = now(); Sound.fail(); PM.sel = cd; PM.selPanel = null;
+      PM.msg = '<b>' + th.name + '</b>' + jp(th.name, '은', '는') + ' ' + th.def + '이에요. 이 시나리오와 맞는지 다시 읽어 봐요!'; PM.msgT = now();
+    }
+    snapPanels(true);
+  }
   function causeAssign(cd, pi) {
+    if (freeMode() && !PM.checked) { causeFree(cd, pi); return; }
     const other = CAUSE.find((o) => o !== cd && o.panel === pi);
     if (other) { other.panel = cd.panel >= 0 && cd.panel !== pi ? cd.panel : -1; other.ok = false; }
     cd.panel = pi; cd.ok = false; Sound.tick(); snapPanels(true);
@@ -822,7 +973,10 @@
     if (un) return '아직 놓지 않은 원인 카드가 ' + un + '장 있어요. 시나리오 5개에 하나씩 놓아 주세요.';
     const wrong = CAUSE.filter((c) => c.idx !== c.panel);
     if (wrong.length) {
-      if (MANUAL) { const t = now(); wrong.forEach((c) => { c.bad = t; }); setTimeout(() => { wrong.forEach((c) => { c.panel = -1; }); snapPanels(true); }, 750); }
+      if (MANUAL) {
+        const t = now(); wrong.forEach((c) => { c.bad = t; }); setTimeout(() => { wrong.forEach((c) => { c.panel = -1; }); snapPanels(true); }, 750);
+        const w0 = THREATS[wrong[0].panel]; PM.msg = '<b>' + SHORT[wrong[0].panel] + '</b> 시나리오는 \'' + w0.name + '\'' + iyeyo(w0.name) + '. (' + w0.def + ')'; PM.msgT = now(); PM.sel = null; PM.selPanel = null;
+      }
       const shown = wrong.slice(0, 2).map((c) => { const nm = THREATS[c.panel].name; return '<b>' + SHORT[c.panel] + '</b> 시나리오는 \'' + nm + '\'' + iyeyo(nm) + '. (' + THREATS[c.panel].def + ')'; }).join('<br>');
       return '빨간 카드 ' + wrong.length + '장이 알맞지 않아요. 시나리오를 다시 읽어 봐요!<br>' + shown + (wrong.length > 2 ? '<br>… 외 ' + (wrong.length - 2) + '장' : '');
     }
@@ -835,7 +989,7 @@
   }
   function fixDrop(cd, pi) {
     const P = PN[pi];
-    if (P.fixed) { cd.panel = -1; snapPanels(true); return; }
+    if (P.fixed) { cd.panel = -1; snapPanels(true); Sound.tick(); PM.msg = '이 시나리오는 이미 해결했어요. 아직 해결하지 못한 시나리오에 놓아 보세요.'; PM.msgT = now(); PM.selPanel = null; PM.sel = cd; return; }
     if (cd.idx === pi) {
       cd.panel = pi; cd.ok = true; cd.locked = true; cd.pop = now(); P.fixed = true; P.solT = now(); PM.solved++; snapPanels(true);
       P.tw = SciSim.tween(P, { fix: 1 }, { duration: RM ? 0.05 : 3.0, ease: 'inOutCubic' });
@@ -888,8 +1042,8 @@
       if (hot) { rr(s.x, s.y, s.w, s.h, 10); ctx.fillStyle = 'rgba(34,197,94,.1)'; ctx.fill(); }
       if (!assigned) txt(PM.mode === 'fix' ? '해결책 카드를 여기에' : '원인 카드를 여기에', s.x + s.w / 2, s.y + s.h / 2 + 1, { size: 13, weight: 700, color: '#94a3b8', align: 'center', base: 'middle', max: s.w - 10 });
     }
-    if (PM.mode === 'fix') pill(th.name, p.x + (vert ? p.w - 8 : p.w - 8), p.y + (vert ? 18 : 18), { size: 12.5, align: 'right', bg: th.color, pad: 8, h: 20, shadow: true });
-    else if (PM.checked) pill(th.name, p.x + p.w - 8, p.y + 18, { size: 12.5, align: 'right', bg: th.color, pad: 8, h: 20, shadow: true });
+    // 이름표는 그림 위쪽 모서리에 붙여요 (가로형: 오른쪽, 세로형: 그림이 왼쪽이라 왼쪽)
+    if (PM.mode === 'fix' || PM.checked) pill(th.name, vert ? p.x + p.w - 8 : p.x + 10, p.y + 18, { size: 12.5, align: vert ? 'right' : 'left', bg: th.color, pad: 8, h: 20, shadow: true });
     if (sel) { rr(p.x, p.y, p.w, p.h, 16); ctx.strokeStyle = th.color; ctx.lineWidth = 3; ctx.stroke(); }
     ctx.restore();
   }
@@ -902,8 +1056,7 @@
     const th = THREATS[cd.idx], inSlot = cd.panel >= 0;
     ctx.fillStyle = '#0e93a6'; rr(6, 7, 5, h - 14, 2.5); ctx.fill();
     const mw = w - 28 - (cd.ok ? 14 : 0), label = inSlot ? (th.fixShort || th.fix) : th.fix, size = inSlot ? 14 : 15;
-    ctx.font = font(size, 800);
-    if (!inSlot && ctx.measureText(label).width > mw && label.indexOf('·') > 0) {          // 긴 이름은 두 줄로
+    if (!inSlot && textW(label, size, 800) > mw && label.indexOf('·') > 0) {          // 긴 이름은 두 줄로
       const k = label.indexOf('·') + 1;
       txt(label.slice(0, k), 20, h / 2 - 9, { size, weight: 800, color: '#0e7490', base: 'middle', max: mw, min: 13 });
       txt(label.slice(k), 20, h / 2 + 10, { size, weight: 800, color: '#0e7490', base: 'middle', max: mw, min: 13 });
@@ -913,7 +1066,9 @@
     const C = LAY.panels.cap, fix = PM.mode === 'fix';
     panelBorder(C.x, C.y, C.w, C.h, { border: (fix ? PM.solved === 5 : PM.checked) ? '#86efac' : '#e2e8f0', bw: (fix ? PM.solved === 5 : PM.checked) ? 2 : 1.5 });
     const fs = TALL ? 13.5 : 15.5, lh = TALL ? 19 : 22, tx = C.x + 16, mw = C.w - 32;
-    if (PM.sel && now() - PM.msgT > 0 && PM.mode === 'threat' && !PM.checked) {
+    if (!fix && PM.msg && now() - PM.msgT < 14 && !PM.checked) {
+      para('🤔 ' + plain(PM.msg), tx, C.y + (TALL ? 26 : 30), mw, { size: fs, weight: 800, color: '#b91c1c', lh });
+    } else if (PM.sel && now() - PM.msgT > 0 && PM.mode === 'threat' && !PM.checked) {
       const th = THREATS[PM.sel.idx];
       pill(th.name, tx, C.y + 22, { size: 14, align: 'left', bg: th.color, pad: 11, h: 26 });
       para(th.def, tx, C.y + 52, mw, { size: fs, weight: 800, color: '#1e293b', lh });
@@ -979,7 +1134,20 @@
   function actReset() { ACT.cards.forEach((c) => { c.box = -1; c.ok = false; c.bad = -9; }); ACT.done = false; ACT.sel = null; ACT.selBox = null; ACT.msg = ''; actSnap(false); }
   function actSolve() { ACT.cards.forEach((c) => { c.box = ACTS[c.id].side; c.ok = true; c.bad = -9; c.ord = ++ACT.ordN; }); ACT.done = true; ACT.doneT = now() - 99; actSnap(false); }
   const actBoxAt = (p) => { for (let i = 0; i < 2; i++) if (inR(p, LAY.act.box[i], 5)) return i; return -1; };
-  function actAssign(cd, bi) { cd.box = bi; cd.ok = false; cd.ord = ++ACT.ordN; Sound.tick(); actSnap(true); }
+  function actAssignFree(cd, bi) {                  // 자유 탐구: 넣는 순간 바로 알려 줘요
+    const a = ACTS[cd.id];
+    if (a.side === bi) {
+      cd.box = bi; cd.ok = true; cd.ord = ++ACT.ordN; cd.pop = now(); ACT.msg = ''; actSnap(true);
+      const r = actTarget(cd); burst(r.x + r.w / 2, r.y + r.h / 2, [SIDE[bi].color, '#fff', '#fde047'], 10, { speed: 100, life: 0.7 });
+      if (ACT.cards.every((c) => c.ok)) { ACT.done = true; ACT.doneT = now(); ACT.sel = null; Sound.success(); } else Sound.tone(660, 0.12, 'triangle', 0.07);
+    } else {
+      cd.box = -1; cd.ok = false; cd.bad = now(); Sound.fail(); ACT.msg = a.text + ': ' + a.why; ACT.msgT = now(); actSnap(true);
+    }
+  }
+  function actAssign(cd, bi) {
+    if (freeMode() && !ACT.done) { actAssignFree(cd, bi); return; }
+    cd.box = bi; cd.ok = false; cd.ord = ++ACT.ordN; Sound.tick(); actSnap(true);
+  }
   function actCheck() {
     const un = ACT.cards.filter((c) => c.box < 0).length;
     if (un) return '아직 상자에 넣지 않은 카드가 ' + un + '장 있어요. 8장을 모두 넣어 주세요.';
@@ -997,7 +1165,7 @@
     return true;
   }
   function actFace(cd, w, h) {
-    const a = ACTS[cd.id], inBox = cd.box >= 0;
+    const a = ACTS[cd.id];
     ctx.fillStyle = cd.box >= 0 ? SIDE[cd.box].color : '#94a3b8'; rr(6, 7, 5, h - 14, 2.5); ctx.fill();
     ctx.font = Math.round(h * 0.46) + 'px ' + EMOJI_FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#000'; ctx.fillText(a.icon, 28, h / 2 + 1);
     const tx = 50, mw = w - tx - 8; let fs = TALL ? 13.5 : 14.5, ls = lines(a.text, mw, fs, 800);
@@ -1049,10 +1217,10 @@
     // 캡션
     const C = L.cap; panelBorder(C.x, C.y, C.w, C.h, { border: ACT.done ? '#86efac' : '#e2e8f0', bw: ACT.done ? 2 : 1.5 });
     const fs = TALL ? 13.5 : 15.5, lh = TALL ? 19 : 22, tx = C.x + 16, mw = C.w - 32;
-    if (ACT.selBox != null) { const K = SIDE[ACT.selBox]; pill(K.name, tx, C.y + 22, { size: 14, align: 'left', bg: K.color, pad: 11, h: 26 }); para(ACT.selBox ? '법·제도 만들기, 국제 협약, 보호 구역 지정, 복원 사업처럼 나라와 여러 사람이 함께 하는 일이에요. 큰 규모로 생물다양성을 지켜요.' : '일회용품 줄이기, 분리배출, 외래 생물 함부로 버리지 않기처럼 내가 날마다 실천할 수 있는 일이에요. 작은 실천이 모이면 큰 힘이 돼요.', tx, C.y + 52, mw, { size: fs, weight: 800, color: '#1e293b', lh }); }
+    if (ACT.msg && now() - ACT.msgT < 12 && !ACT.done && ACT.selBox == null) para('🤔 ' + ACT.msg, tx, C.y + (TALL ? 26 : 30), mw, { size: fs, weight: 800, color: '#b91c1c', lh });
+    else if (ACT.selBox != null) { const K = SIDE[ACT.selBox]; pill(K.name, tx, C.y + 22, { size: 14, align: 'left', bg: K.color, pad: 11, h: 26 }); para(ACT.selBox ? '법·제도 만들기, 국제 협약, 보호 구역 지정, 복원 사업처럼 나라와 여러 사람이 함께 하는 일이에요. 큰 규모로 생물다양성을 지켜요.' : '일회용품 줄이기, 분리배출, 외래 생물 함부로 버리지 않기처럼 내가 날마다 실천할 수 있는 일이에요. 작은 실천이 모이면 큰 힘이 돼요.', tx, C.y + 52, mw, { size: fs, weight: 800, color: '#1e293b', lh }); }
     else if (ACT.sel != null && !ACT.done) { const a = ACTS[ACT.sel]; pill(a.icon + ' ' + a.text, tx, C.y + 22, { size: 13.5, align: 'left', bg: '#334155', pad: 11, h: 26 }); para('이 일은 누가 하는 일일까요? 혼자 일상에서 할 수 있는 일이면 개인, 나라나 여러 사람이 함께 해야 하면 사회예요.', tx, C.y + 52, mw, { size: fs, weight: 800, color: '#475569', lh }); }
     else if (ACT.done) para('🎉 모두 알맞게 분류했어요! 개인의 작은 실천과 사회의 큰 노력이 함께할 때 생물다양성을 잘 지킬 수 있어요. 상자를 누르면 설명이 나와요.', tx, C.y + (TALL ? 26 : 30), mw, { size: fs, weight: 800, color: '#166534', lh });
-    else if (ACT.msg && now() - ACT.msgT < 12) para('🤔 ' + ACT.msg, tx, C.y + (TALL ? 26 : 30), mw, { size: fs, weight: 800, color: '#b91c1c', lh });
     else para('생물다양성을 지키는 방법 8가지를 \'개인의 실천\'과 \'사회의 실천\' 상자로 나눠 봐요. 카드를 누르면 힌트가 나와요.', tx, C.y + (TALL ? 26 : 30), mw, { size: fs, weight: 800, color: '#475569', lh });
     if (isNew('act')) { const a = L.box[0], b = L.box[1]; newRing({ x: a.x, y: a.y, w: b.x + b.w - a.x, h: Math.max(a.y + a.h, b.y + b.h) - a.y }, 18); }
   }
@@ -1139,7 +1307,7 @@
   let snapCv = null;
   function setView(scene, instant) {
     if (S.scene === scene) { updateSceneUI(); return; }
-    if (!instant && !RM && view && view.canvas.width > 2) {
+    if (!instant && !RM && view && S.drawn && view.canvas.width > 2) {       // 처음 그리기 전에는 전환 없이 바로 보여 줘요
       if (!snapCv) snapCv = document.createElement('canvas');
       snapCv.width = view.canvas.width; snapCv.height = view.canvas.height;
       snapCv.getContext('2d').drawImage(view.canvas, 0, 0);
@@ -1153,9 +1321,9 @@
     if (key === 'web') drawWebScene(t); else if (key === 'threat') drawPanelsScene(t, false); else if (key === 'fix') drawPanelsScene(t, true); else drawActScene(t);
   }
   function draw(t) {
-    view.clear(BG);
     const key = S.scene;
     const p = S.snapOK ? clamp((now() - S.sceneT0) / 0.75, 0, 1) : 1;
+    if (p < 1) view.clear(BG);                       // 각 장면의 바탕 층이 화면을 모두 덮으므로 전환 중에만 지워요
     if (p < 1) {
       const fwd = VIEW_ORDER.indexOf(key) > VIEW_ORDER.indexOf(S.prevKey);
       const e = EASE.inOutCubic(p);
@@ -1165,6 +1333,7 @@
       ctx.save(); ctx.globalAlpha = 1 - EASE.inQuad(p); ctx.translate(W / 2, H / 2); ctx.scale(s0, s0); ctx.translate(-W / 2, -H / 2); ctx.drawImage(snapCv, 0, 0, W, H); ctx.restore();
     } else { drawView(key, t); drawTopBtns(); drawHint(); }
     PFX.draw(ctx);
+    S.drawn = true;
   }
   const HINT = { msg: '', t0: 0, tEnd: 0 };
   function showHint(msg, ms) { HINT.msg = msg; HINT.t0 = now(); HINT.tEnd = now() + (ms || 6000) / 1000; }
@@ -1198,7 +1367,7 @@
     const spec = topSpec(); if (!spec.length) return;
     ctx.save(); ctx.font = font(13.5, 800);
     let x = W - 12;
-    spec.slice().reverse().forEach(([id, label]) => { const w = ctx.measureText(label).width + 26, r = { id, label, x: x - w, y: 8, w, h: 32 }; x -= w + 8; TOPB.unshift(r); });
+    spec.slice().reverse().forEach(([id, label]) => { const w = textW(label, 13.5, 800) + 26, r = { id, label, x: x - w, y: 8, w, h: 32 }; x -= w + 8; TOPB.unshift(r); });
     ctx.restore();
     TOPB.forEach((r) => {
       const hov = S.togHov === r.id;
@@ -1226,7 +1395,7 @@
     hover(p) {
       { const tb = topAt(p); S.togHov = tb ? tb.id : null; if (tb) return 'pointer'; }
       const sc = S.scene;
-      if (sc === 'web') return webHit(p) ? 'pointer' : null;
+      if (sc === 'web') { S.nodeHov = webHit(p); return S.nodeHov ? 'pointer' : null; }
       if (sc === 'threat' || sc === 'fix') { const cd = cardAt(pcards(), p); return cd && !cd.locked ? 'grab' : cd || panelAt(p) >= 0 ? 'pointer' : null; }
       if (sc === 'act') {
         if (ACT.mode === 'pledge') { const i = PLEDGES.findIndex((q, k) => inR(p, plRect(k))); S.plHov = i >= 0 ? i : null; return i >= 0 ? 'pointer' : null; }
@@ -1248,7 +1417,7 @@
       if (sc === 'act') {
         if (ACT.mode === 'pledge') { for (let i = 0; i < PLEDGES.length; i++) if (inR(p, plRect(i))) { plToggle(i); break; } return false; }
         const cd = cardAt(ACT.cards, p);
-        if (cd) { ACT.sel = cd.id; ACT.selBox = null; if (!ACT.done) return dragSetup(cd, 'act', ACT.cards, p); Sound.tick(); return false; }
+        if (cd) { ACT.sel = cd.id; ACT.selBox = null; ACT.msg = ''; if (!ACT.done) return dragSetup(cd, 'act', ACT.cards, p); Sound.tick(); return false; }
         const bi = actBoxAt(p); if (bi >= 0) { ACT.selBox = ACT.selBox === bi ? null : bi; ACT.sel = null; Sound.tone(520 + bi * 120, 0.1, 'triangle', 0.06); }
         return false;
       }
@@ -1321,8 +1490,9 @@
       title: '먹이 그물 놀이', short: '먹이 그물', icon: '🕸️', phase: '관찰',
       features: ['web'],
       intro: '<p class="si-q">❓ 탐구 질문: 생물 한 종이 사라지면 생태계에는 어떤 일이 생길까?</p>' +
-        '<p>생물들은 서로 먹고 먹히며 <b>먹이 그물</b>처럼 연결되어 있어요. <b>단순한 생태계</b>(종 4가지)와 <b>복잡한 생태계</b>(종 10가지)에서 생물을 하나씩 없애 보며 어떤 일이 생기는지 관찰해요.</p>',
-      setup() { setView('web', true); },
+        '<p>생물들은 서로 먹고 먹히며 <b>먹이 그물</b>처럼 연결되어 있어요. 화살표는 먹이가 되는 생물에서 먹는 생물로 향해요. (풀 → 메뚜기)</p>' +
+        '<p><b>단순한 생태계</b>(종 4가지)와 <b>복잡한 생태계</b>(종 10가지)에서 생물을 하나씩 없애 보며 어떤 일이 생기는지 관찰해요.</p>',
+      setup() { setView('web'); },
       recap: '종이 다양하고 먹이 그물이 복잡할수록, 한 종이 사라져도 다른 생물이 버틸 수 있어 생태계가 <b>안정</b>해요.',
       summary: '<ul><li><b>먹이 그물</b>: 여러 먹이 사슬이 서로 얽혀 그물처럼 연결된 것</li>' +
         '<li>종이 단순한 생태계에서는 한 종이 사라지면, 그 종을 먹거나 그 종에게 먹히던 종도 크게 변하거나 사라지기 쉬워요.</li>' +
@@ -1332,12 +1502,12 @@
         {
           title: '같은 생물 없애서 비교하기',
           goal: '두 생태계에서 <b>같은 생물</b>(예: 개구리)을 눌러 없애고, 막대그래프와 \'영향 받은 종\'이 어떻게 다른지 비교해 보세요.',
-          hint: '개구리·뱀·메뚜기·풀은 두 생태계에 모두 있어요. 같은 생물을 한 번씩 눌러 보고 4초쯤 지켜보세요.',
+          hint: '개구리·뱀·메뚜기는 두 생태계에 모두 있어요. 같은 생물을 한 번씩 눌러 보고 4초쯤 지켜보세요.',
           setup() { setView('web'); webReset(true); updateSceneUI(); showHint('🐸 두 생태계에서 같은 생물을 눌러 없애 보세요', 6500); },
           check: () => WB.cmpT >= 4,
           hold: 0.5,
           status: () => '같은 생물 없애기 ' + mark(E_common()) + ' · 비교하는 시간 <b>' + Math.min(4, WB.cmpT).toFixed(1) + ' / 4초</b>',
-          explain: '같은 생물이 사라졌는데, <b>단순한 생태계</b>에서는 그 생물과 먹고 먹히던 종이 모두 크게 흔들렸고 한 종은 사라지기도 했어요. 반면 <b>복잡한 생태계</b>에서는 다른 먹이와 다른 포식자가 있어서 영향을 받은 종이 적었어요.',
+          explain: '같은 생물이 사라졌을 때, 보통 <b>단순한 생태계</b>에서는 그 생물과 먹고 먹히던 종이 모두 크게 흔들렸고 사라지는 종도 생겼어요. 반면 <b>복잡한 생태계</b>에서는 다른 먹이와 다른 포식자가 있어서 영향을 받은 종이 적었어요. (단, 풀처럼 먹이 그물의 바탕이 되는 생물이 사라지면 두 생태계 모두 크게 흔들려요.)',
         },
         {
           title: '가장 큰 영향을 주는 생물 찾기',
@@ -1346,7 +1516,7 @@
           setup() { setView('web'); webReset(false); updateSceneUI(); showHint('🌳 복잡한 생태계의 생물을 하나씩 눌러 보세요', 6500); },
           check: () => WB.maxAff >= 5,
           hold: 0.5,
-          status: () => '가장 많이 영향 받은 종: <b>' + WB.maxAff + ' / 9</b>종 (5종 이상) ' + mark(WB.maxAff >= 5),
+          status: () => '가장 많이 영향 받은 종: <b>' + WB.maxAff + ' / 9</b>종 (5종 이상) ' + mark(WB.maxAff >= 5) + (webStats(ECOS[1]).any && ECOS[1].since <= 3 && WB.maxAff < 5 ? ' · 변화를 지켜보는 중…' : ''),
           explain: '<b>풀</b> 같은 생산자는 많은 생물의 먹이라서 사라지면 거의 모든 생물이 영향을 받아요. 종이 다양해도 먹이 그물의 바탕이 되는 생물은 특히 중요해요.',
         },
         {
@@ -1377,7 +1547,7 @@
       features: ['threat'],
       intro: '<div class="si-link">🔗 <b>앞 단계에서</b> 한 종이 사라지면 생태계가 흔들릴 수 있다는 것을 알았어요.</div>' +
         '<p>그럼 생물은 왜 사라질까요? 다섯 가지 <b>시나리오</b>를 보고, 생물다양성을 위협하는 <b>원인</b>을 찾아봐요.</p>',
-      setup() { setView('threat', true); },
+      setup() { setView('threat'); },
       recap: '생물다양성을 위협하는 요인에는 <b>서식지 파괴, 외래종 유입, 남획, 환경 오염, 기후변화</b>가 있어요.',
       summary: '<ul><li><b>서식지 파괴</b>: 생물이 사는 곳이 개발로 없어지거나 갈라져요. (예: 숲에 도로)</li>' +
         '<li><b>외래종 유입</b>: 다른 지역의 생물이 들어와 토종 생물을 위협해요. (황소개구리·뉴트리아·큰입배스)</li>' +
@@ -1401,17 +1571,17 @@
           goal: '다음 중 위협 요인과 예가 <b>바르게</b> 짝지어진 것은?',
           setup() { setView('threat'); if (!PM.checked) causeSolve(); },
           choices: [
-            '서식지 파괴 — 희귀한 물고기를 마구 잡는 것',
-            '외래종 유입 — 사람이 들여온 뉴트리아가 강가에 퍼지는 것',
-            '환경 오염 — 지구의 평균 기온이 올라가는 것',
             '남획 — 습지를 메워 아파트 단지를 짓는 것',
+            '서식지 파괴 — 희귀한 물고기를 마구 잡는 것',
+            '환경 오염 — 지구의 평균 기온이 올라가는 것',
+            '외래종 유입 — 사람이 들여온 뉴트리아가 강가에 퍼지는 것',
           ],
-          answer: 1,
+          answer: 3,
           feedback: [
-            '희귀한 물고기를 마구 잡는 것은 남획이에요. 서식지 파괴는 생물이 사는 곳이 없어지거나 갈라지는 것이에요.',
-            '',
-            '평균 기온이 올라가는 것은 기후변화예요. 환경 오염은 폐수·쓰레기 등으로 환경이 나빠지는 것이에요.',
             '습지를 메워 아파트를 짓는 것은 서식지 파괴예요. 남획은 생물을 너무 많이 잡는 것이에요.',
+            '희귀한 물고기를 마구 잡는 것은 남획이에요. 서식지 파괴는 생물이 사는 곳이 없어지거나 갈라지는 것이에요.',
+            '평균 기온이 올라가는 것은 기후변화예요. 환경 오염은 폐수·쓰레기 등으로 환경이 나빠지는 것이에요.',
+            '',
           ],
           explain: '<b>외래종 유입</b>은 원래 살지 않던 지역의 생물이 들어와 토종 생물을 위협하는 것이에요. 뉴트리아는 사람이 들여온 대표적인 외래종이에요.',
         },
@@ -1423,7 +1593,7 @@
       features: ['fix'],
       intro: '<div class="si-link">🔗 <b>앞 단계에서</b> 생물다양성을 위협하는 다섯 가지 원인을 알아보았어요.</div>' +
         '<p>이번에는 같은 시나리오에 <b>해결책</b>을 적용해 봐요. 알맞은 해결책을 끌어 놓으면 줄었던 개체 수가 다시 회복되는 모습을 볼 수 있어요.</p>',
-      setup() { setView('fix', true); },
+      setup() { setView('fix'); },
       recap: '원인에 알맞은 보전 방법(<b>생태 통로, 외래종 관리, 보호 구역 지정, 오염 줄이기, 종자 은행·복원 사업</b>)을 쓰면 개체 수를 회복시킬 수 있어요.',
       summary: '<ul><li><b>생태 통로</b>: 도로 때문에 갈라진 서식지를 이어 줘요. (서식지 파괴)</li>' +
         '<li><b>외래종 관리</b>: 외래종이 더 퍼지지 않게 막고 줄여요. (외래종 유입)</li>' +
@@ -1449,16 +1619,16 @@
           setup() { setView('fix'); if (PM.solved < 5) fixSolve(); },
           choices: [
             '생태계가 안정하게 유지되도록 하려고',
+            '사람에게 당장 이익이 없는 생물은 사라져도 괜찮으니까',
             '식량·약품·목재 같은 자원을 계속 얻으려고',
             '모든 생명이 소중하고, 다음 세대에게도 물려주어야 하니까',
-            '사람에게 당장 이익이 없는 생물은 사라져도 괜찮으니까',
           ],
-          answer: 3,
+          answer: 1,
           feedback: [
             '알맞은 까닭이에요. 먹이 그물이 복잡할수록 생태계가 안정해요. 알맞지 않은 것을 골라 보세요.',
+            '',
             '알맞은 까닭이에요. 생물은 우리에게 식량과 약품 등 다양한 자원을 줘요. 알맞지 않은 것을 골라 보세요.',
             '알맞은 까닭이에요. 모든 생명을 존중하는 마음도 중요해요. 알맞지 않은 것을 골라 보세요.',
-            '',
           ],
           explain: '생물다양성을 보전하는 까닭은 생태계의 <b>안정</b>, 사람에게 필요한 <b>자원</b>, 모든 <b>생명의 소중함</b> 때문이에요. 당장 이익이 없어 보이는 생물도 먹이 그물의 한 부분이라 사라지면 생태계가 흔들릴 수 있어요.',
         },
@@ -1468,15 +1638,15 @@
           goal: '황소개구리 때문에 토종 생물이 줄어드는 문제를 해결하는 방안으로 가장 알맞은 것은?',
           setup() { setView('fix'); if (PM.solved < 5) fixSolve(); },
           choices: [
-            '황소개구리를 더 많은 연못에 풀어 준다',
             '황소개구리가 더 퍼지지 않도록 관리하고, 이미 퍼진 것은 줄인다',
+            '황소개구리를 더 많은 연못에 풀어 준다',
             '토종 생물을 모두 잡아 동물원에서만 키운다',
             '아무것도 하지 않고 자연에 맡긴다',
           ],
-          answer: 1,
+          answer: 0,
           feedback: [
-            '외래종을 더 퍼뜨리면 토종 생물이 더 많이 줄어들어요.',
             '',
+            '외래종을 더 퍼뜨리면 토종 생물이 더 많이 줄어들어요.',
             '생물은 원래 사는 곳에서 지키는 것이 중요해요. 서식지와 생태계를 함께 지켜야 해요.',
             '외래종은 천적이 적어 빠르게 늘 수 있어서, 사람이 관리해 주어야 해요.',
           ],
@@ -1490,7 +1660,7 @@
       features: ['act'],
       intro: '<div class="si-link">🔗 <b>앞 단계에서</b> 위협 요인과 보전 방법을 알아보았어요.</div>' +
         '<p>생물다양성을 지키는 일은 <b>개인</b>의 작은 실천과 <b>사회</b>의 큰 노력이 함께할 때 가장 큰 힘이 돼요. 지금의 필요를 채우면서도 다음 세대의 자연을 지키는 <b>지속가능한 생활</b>을 함께 찾아봐요.</p>',
-      setup() { setView('act', true); ACT.mode = 'sort'; },
+      setup() { setView('act'); ACT.mode = 'sort'; },
       recap: '생물다양성은 <b>개인의 실천</b>(일회용품 줄이기 등)과 <b>사회의 노력</b>(법·국제 협약, 보호 구역 등)이 함께할 때 잘 지킬 수 있어요.',
       summary: '<ul><li><b>개인의 실천</b>: 일회용품 줄이기, 쓰레기 분리배출, 외래 생물 함부로 버리지 않기, 걷기·대중교통 이용하기</li>' +
         '<li><b>사회의 실천</b>: 법·제도 만들기, 국제 협약, 보호 구역 지정, 생태 통로·복원 사업</li>' +
@@ -1523,15 +1693,15 @@
           setup() { setView('act'); ACT.mode = 'sort'; if (!ACT.done) actSolve(); updateSceneUI(); },
           choices: [
             '강에는 먹이가 없어서 바로 죽기 때문에',
-            '외래종이 자연에 퍼져 토종 생물의 먹이와 살 곳을 빼앗을 수 있기 때문에',
             '거북은 물에서 살 수 없기 때문에',
+            '외래종이 자연에 퍼져 토종 생물의 먹이와 살 곳을 빼앗을 수 있기 때문에',
             '거북을 키우는 것은 법으로 모두 금지되어 있기 때문에',
           ],
-          answer: 1,
+          answer: 2,
           feedback: [
             '오히려 먹이를 잘 구해 퍼질 수 있어서 문제예요. 그러면 토종 생물이 위협받아요.',
-            '',
             '거북은 물에서도 살아요. 문제는 외래종이 자연에 퍼지는 것이에요.',
+            '',
             '키우는 것 자체가 모두 금지된 것은 아니에요. 함부로 자연에 풀어 놓는 것이 문제예요.',
           ],
           explain: '외래종을 자연에 함부로 풀어 놓으면 토종 생물의 먹이와 살 곳을 빼앗아 생물다양성이 줄어들 수 있어요. 끝까지 책임지고 키우거나, 키우기 어려우면 알맞은 방법으로 도움을 구해야 해요.',
@@ -1559,6 +1729,9 @@
     view = SciSim.stage(cv, { width: W, height: H, background: BG });
     ctx = view.ctx; D = SciSim.draw(ctx);
     SciSim.pointer(view, handlers);
+    const clearHov = () => { S.nodeHov = null; S.plHov = null; S.togHov = null; };       // 포인터가 떠나거나 손가락을 떼면 '올려 둔' 표시를 지워요
+    cv.addEventListener('pointerleave', clearHov);
+    ['pointerup', 'pointercancel'].forEach((n) => cv.addEventListener(n, (e) => { if (e.pointerType !== 'mouse') clearHov(); }));
     if (TALL) {
       cv.style.touchAction = 'pan-y';
       cv.addEventListener('touchstart', (e) => { const tc = e.touches[0]; if (tc && interactiveAt(view.toLocal(tc))) e.preventDefault(); }, { passive: false });
