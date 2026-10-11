@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#8b5cf6">
+  <title>혼합물의 분리 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚗️</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-toolbar { min-height: 61px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+    #resetBtn { font-size: 20px; }
+    .tgl {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px;
+      border: 2px solid var(--line); background: var(--surface); color: var(--muted);
+      border-radius: 999px; padding: 5px 14px; font-weight: 800; font-size: 15px; cursor: pointer;
+    }
+    .tgl[aria-pressed="true"] { color: #5b21b6; border-color: #c4b5fd; background: #f3efff; }
+    .segmented button { min-height: 44px; padding: 6px 12px; font-size: 14.5px; }
+    .seg-full { display: flex; width: 100%; }
+    .seg-full button { flex: 1 1 0; min-width: 0; padding-left: 6px; padding-right: 6px; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    .ctrl-note { font-size: 13.5px; color: var(--muted); margin: 8px 0 0; line-height: 1.45; }
+    .btn-block { min-height: 52px; font-size: 17px; }
+    .ctrl-row { display: flex; gap: 8px; margin-top: 10px; }
+    .ctrl-row > * { flex: 1; }
+    .readout .value.word { font-family: var(--font); font-size: 17px; line-height: 1.5; overflow: hidden; text-overflow: ellipsis; }
+    .mission-figure svg { border-radius: 12px; max-width: 100%; height: auto; }
+    @media (max-width: 599px) {
+      .stage-toolbar { min-height: 0; }
+      .segmented button { padding: 6px 10px; font-size: 14px; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="chem">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#g2">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">중2 · Ⅰ. 물질의 특성</div>
+      <h1>혼합물의 분리</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">⚗️ 증류로 분리하기</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="sceneSeg" role="group" aria-label="실험 장면" hidden>
+            <button type="button" data-scene="distill">⚗️ 증류</button>
+            <button type="button" data-scene="funnel">🫙 깔때기</button>
+            <button type="button" data-scene="recrys">❄️ 재결정</button>
+            <button type="button" data-scene="chroma">🌈 크로마토</button>
+            <button type="button" data-scene="design">📐 설계</button>
+          </div>
+          <button class="icon-btn" id="resetBtn" type="button" title="처음 상태로" aria-label="처음 상태로">↺</button>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="증류, 분별 깔때기, 재결정, 크로마토그래피로 혼합물을 분리하는 실험 화면"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts" id="readouts">
+        <div class="readout" data-sc="distill"><span class="label">온도계</span><span class="value" id="rDT">20<small>°C</small></span></div>
+        <div class="readout" data-sc="distill"><span class="label">모은 액체</span><span class="value" id="rDV">0<small>mL</small></span></div>
+        <div class="readout" data-sc="distill"><span class="label">받는 시험관</span><span class="value word" id="rDS">A</span></div>
+        <div class="readout" data-sc="funnel"><span class="label">깔때기 속 물</span><span class="value" id="rFW">60<small>mL</small></span></div>
+        <div class="readout" data-sc="funnel"><span class="label">깔때기 속 식용유</span><span class="value" id="rFO">40<small>mL</small></span></div>
+        <div class="readout" data-sc="funnel"><span class="label">층의 모습</span><span class="value word" id="rFS">섞여 있음</span></div>
+        <div class="readout" data-sc="recrys"><span class="label">온도</span><span class="value" id="rRT">20<small>°C</small></span></div>
+        <div class="readout" data-sc="recrys"><span class="label">질산 칼륨 결정</span><span class="value" id="rRC">0<small>g</small></span></div>
+        <div class="readout" data-sc="recrys"><span class="label">단계</span><span class="value word" id="rRS">-</span></div>
+        <div class="readout" data-sc="chroma"><span class="label">물이 올라간 높이</span><span class="value" id="rCH">0<small>mm</small></span></div>
+        <div class="readout" data-sc="chroma"><span class="label">경과 시간</span><span class="value" id="rCT">0<small>초</small></span></div>
+        <div class="readout" data-sc="design"><span class="label">놓은 방법 카드</span><span class="value" id="rGS">0<small>/ 3개</small></span></div>
+        <div class="readout" data-sc="design"><span class="label">얻은 물질</span><span class="value word" id="rGP">-</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" data-sc="distill">
+          <button class="btn btn-primary btn-block" id="dsHeat" type="button">🔥 가열하기</button>
+          <p class="ctrl-note" id="dsNote"></p>
+        </div>
+        <div class="control" data-sc="distill">
+          <div class="control-head"><label>🧪 증류액을 받는 시험관</label></div>
+          <div class="segmented seg-full" id="dsTube" role="group" aria-label="받는 시험관">
+            <button type="button" data-t="0">A</button>
+            <button type="button" data-t="1">B</button>
+            <button type="button" data-t="2">C</button>
+          </div>
+        </div>
+        <div class="control" data-sc="distill">
+          <button class="tgl" id="dsFast" type="button" aria-pressed="false" style="width:100%">⏩ 빠르게 (×3)</button>
+        </div>
+        <div class="control" data-sc="funnel">
+          <button class="btn btn-block" id="fnShake" type="button">🫙 흔들어 섞기</button>
+        </div>
+        <div class="control" data-sc="funnel">
+          <button class="btn btn-primary btn-block" id="fnCock" type="button">🚰 꼭지 열기</button>
+          <p class="ctrl-note" id="fnNote"></p>
+        </div>
+        <div class="control" data-sc="recrys">
+          <button class="btn btn-primary btn-block" id="rcBtn" type="button">🔥 가열해서 녹이기</button>
+          <p class="ctrl-note" id="rcNote"></p>
+        </div>
+        <div class="control" data-sc="recrys" id="rcSliderBox">
+          <div class="control-head"><label for="rcTemp">❄️ 식힐 온도</label><output id="rcTempOut">40 °C</output></div>
+          <input type="range" id="rcTemp" min="0" max="50" step="5" value="40">
+          <div class="ctrl-row"><button class="btn" id="rcFilter" type="button">🧻 거르기</button></div>
+        </div>
+        <div class="control" data-sc="chroma">
+          <button class="btn btn-primary btn-block" id="chBtn" type="button">💧 물에 담그기</button>
+          <p class="ctrl-note" id="chNote"></p>
+        </div>
+        <div class="control" data-sc="chroma">
+          <div class="control-head"><label>🖊️ 증거 잉크와 같은 사인펜은?</label></div>
+          <div class="segmented seg-full" id="penSeg" role="group" aria-label="내가 고른 사인펜">
+            <button type="button" data-p="A">A</button>
+            <button type="button" data-p="B">B</button>
+            <button type="button" data-p="C">C</button>
+          </div>
+        </div>
+        <div class="control" data-sc="design">
+          <button class="btn btn-primary btn-block" id="dgRun" type="button">▶ 실행하기</button>
+          <p class="ctrl-note" id="dgNote">방법 카드를 끌어서 ①②③ 칸에 순서대로 놓아요.</p>
+        </div>
+        <div class="control" data-sc="design">
+          <button class="btn btn-block" id="dgClear" type="button">↺ 카드 비우기</button>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0ea5e9">
+  <title>풍화와 토양 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌱</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-card { background: #cfe8fb; }
+    /* 태블릿: 가로 배치 캔버스 · 휴대폰: 세로 배치 캔버스 */
+    .sc-tall { display: none; }
+    @media (max-width: 599px) { .sc-wide { display: none; } .sc-tall { display: block; } }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    .is-off { display: none !important; }
+    .seg-label { display: block; font-weight: 800; font-size: 14.5px; color: var(--muted); margin-bottom: 6px; }
+    .segmented { display: flex; width: 100%; }
+    .segmented button { flex: 1 1 auto; min-height: 44px; padding: 6px 8px; font-size: 14.5px; white-space: nowrap; }
+    .segmented.dense button { padding: 6px 2px; font-size: 13.5px; }
+    .segmented button.on { color: #075985; }
+    .play-row { display: flex; gap: 8px 12px; align-items: center; flex-wrap: wrap; margin-top: 2px; }
+    .play-row .btn { min-width: 132px; }
+    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn-row .btn { flex: 1 1 0; min-width: 0; min-height: 46px; white-space: nowrap; }
+    .ctrl-note { margin: 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; flex: 1 1 110px; }
+    .btn-sm { min-height: 44px; }
+    input[type=range] { height: 44px; }
+    .game-foot button { min-height: 44px; }
+    .mission-figure svg { border-radius: 12px; }
+    .btn.nudge { animation: nudge .9s ease 2; }
+    @keyframes nudge { 0%, 100% { transform: none; } 30% { transform: translateY(-3px) scale(1.04); } 60% { transform: none; } }
+    .note-fig { margin: 6px 0; text-align: center; }
+    .note-fig svg { max-width: 100%; height: auto; border-radius: 10px; }
+  </style>
+</head>
+<body class="sim-page" data-subject="earth">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#g2">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">중2 · Ⅱ. 지권의 변화</div>
+      <h1>풍화와 토양</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-canvas sc-wide"><canvas id="cvWide" aria-label="산의 바위가 오랜 세월 동안 부서지는 모습, 물이 얼 때와 뿌리가 자랄 때 바위가 쪼개지는 실험, 풍화로 토양층이 생기는 단면 모형, 숲이 있는 비탈과 없는 비탈의 토양 유실 비교"></canvas></div>
+        <div class="stage-canvas sc-tall"><canvas id="cvTall" aria-label="산의 바위가 오랜 세월 동안 부서지는 모습, 물이 얼 때와 뿌리가 자랄 때 바위가 쪼개지는 실험, 풍화로 토양층이 생기는 단면 모형, 숲이 있는 비탈과 없는 비탈의 토양 유실 비교"></canvas></div>
+      </section>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" id="cScene" data-feature="lab">
+          <span class="seg-label" id="sceneLabel">🧭 실험 고르기</span>
+          <div class="segmented" id="sceneSeg" role="group" aria-label="화면 고르기"></div>
+        </div>
+        <div class="control" id="cTime" data-feature="timelapse">
+          <div class="control-head"><label for="sTime" id="timeLabel">⏳ 세월</label><output id="oTime"></output></div>
+          <input type="range" id="sTime" min="0" max="1000" step="1" value="0" aria-label="세월">
+          <div class="play-row">
+            <button class="btn btn-sm btn-primary" id="playBtn" type="button" aria-pressed="false">▶ 재생</button>
+            <p class="ctrl-note" id="timeNote">막대를 오른쪽으로 밀면 시간이 흘러요.</p>
+          </div>
+        </div>
+        <div class="control" id="cIce" data-feature="lab">
+          <div class="btn-row">
+            <button class="btn btn-sm" id="pourBtn" type="button">💧 물 붓기</button>
+            <button class="btn btn-sm btn-primary" id="freezeBtn" type="button">❄ 얼리기</button>
+          </div>
+          <p class="ctrl-note" id="iceNote" style="margin-top:6px"></p>
+        </div>
+        <div class="control" id="cSlope" data-feature="slope">
+          <span class="seg-label">🛠️ 숲이 없는 비탈에 해 줄 일</span>
+          <div class="segmented dense" id="methodSeg" role="group" aria-label="흙을 지키는 방법">
+            <button type="button" data-m="none">그대로</button><button type="button" data-m="trees">🌳 나무 심기</button><button type="button" data-m="terrace">🌾 계단식 밭</button>
+          </div>
+          <div class="play-row" style="margin-top:8px">
+            <button class="btn btn-sm btn-primary" id="rainBtn" type="button" aria-pressed="false">☔ 비 내리기</button>
+            <p class="ctrl-note" id="rainNote"></p>
+          </div>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

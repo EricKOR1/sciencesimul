@@ -6,8 +6,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#8b5cf6">
-  <title>물질의 특성과 밀도 | 중학 과학 시뮬레이션</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚖️</text></svg>">
+  <title>녹는점과 끓는점 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌡️</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
@@ -20,6 +20,15 @@
     #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
     #ctrlCard .control { margin: 0; }
     .ctrl-note { font-size: 13.5px; color: var(--muted); margin: 8px 0 0; line-height: 1.45; }
+    .btn-block { min-height: 52px; font-size: 17px; }
+    .opt-seg { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 4px; }
+    .opt-seg button {
+      min-height: 48px; border-radius: 12px; border: 2px solid var(--line); background: var(--surface); color: var(--ink);
+      font-weight: 800; font-size: 16px; cursor: pointer; padding: 6px 8px; line-height: 1.25;
+    }
+    .opt-seg button small { display: block; font-size: 12px; font-weight: 700; color: var(--muted); }
+    .opt-seg button[aria-pressed="true"] { border-color: var(--subject); background: #f3eeff; color: #4c1d95; box-shadow: 0 0 0 3px color-mix(in srgb, var(--subject) 18%, transparent); }
+    .opt-seg button[disabled] { opacity: .55; cursor: not-allowed; }
     .pick-row { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
     .pick-tag {
       flex: none; width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center;
@@ -34,9 +43,7 @@
     .pick-sel.set { border-color: #c4b5fd; background: #f6f3ff; }
     .readout .value.word { font-family: var(--font); font-size: 17px; line-height: 1.5; overflow: hidden; text-overflow: ellipsis; }
     .mission-figure svg { border-radius: 12px; }
-    .mini-table { border-collapse: collapse; width: 100%; font-size: 14px; margin: 6px 0; }
-    .mini-table th, .mini-table td { border: 1px solid var(--line); padding: 4px 8px; text-align: center; }
-    .mini-table th { background: var(--surface-2); font-weight: 800; }
+    #heatBtn[disabled], #pressR[disabled] { opacity: .55; cursor: not-allowed; }
     @media (max-width: 599px) {
       .stage-toolbar { min-height: 0; }
       .stage-toolbar .segmented { width: 100%; }
@@ -50,7 +57,7 @@
     <a class="btn btn-sm btn-back" href="../../index.html#g2">←<span> 목록</span></a>
     <div class="sim-title">
       <div class="sim-unit">중2 · Ⅰ. 물질의 특성</div>
-      <h1>물질의 특성과 밀도</h1>
+      <h1>녹는점과 끓는점</h1>
     </div>
     <div class="sim-header-right">
       <div class="star-meter" id="starMeter" title="획득한 별"></div>
@@ -62,48 +69,55 @@
     <div class="stage-col">
       <section class="card stage-card">
         <div class="stage-toolbar">
-          <span class="toolbar-label" id="tbLabel">⚖️ 알루미늄 조각의 질량과 부피 재기</span>
+          <span class="toolbar-label" id="tbLabel">🧊 팔미트산의 녹는점 재기</span>
           <span class="spacer"></span>
           <div class="segmented" id="sceneSeg" role="group" aria-label="실험 장면" hidden>
-            <button type="button" data-scene="bench1">⚖️ 측정</button>
-            <button type="button" data-scene="bench2">🔎 금속</button>
-            <button type="button" data-scene="tower">🧪 층</button>
-            <button type="button" data-scene="life">🏠 생활</button>
-          </div>
-          <div class="segmented" id="lifeSeg" role="group" aria-label="생활 속 장면" hidden>
-            <button type="button" data-v="vest">🛟 구명조끼</button>
-            <button type="button" data-v="balloon">🔥 열기구</button>
-            <button type="button" data-v="oil">🛢️ 기름</button>
-            <button type="button" data-v="seeds">🌾 볍씨</button>
-            <button type="button" data-v="helium">🎈 헬륨</button>
+            <button type="button" data-scene="melt">🧊 녹는점</button>
+            <button type="button" data-scene="boil">♨️ 끓는점</button>
+            <button type="button" data-scene="press">⛰️ 압력</button>
+            <button type="button" data-scene="unk">🔎 구별</button>
           </div>
           <button class="icon-btn" id="resetBtn" type="button" title="처음 상태로" aria-label="처음 상태로">↺</button>
         </div>
         <div class="stage-canvas">
-          <canvas id="cv" aria-label="전자저울과 눈금실린더로 질량과 부피를 재고, 액체 층 위에 물체를 띄워 밀도를 알아보는 실험 화면"></canvas>
+          <canvas id="cv" aria-label="시료를 가열하며 시간에 따른 온도를 재어 녹는점과 끓는점을 알아보고, 압력에 따른 끓는점의 변화와 물질 구별을 해 보는 실험 화면"></canvas>
           <div class="stage-hint hide" id="stageHint"></div>
         </div>
       </section>
       <div class="readouts" id="readouts">
-        <div class="readout"><span class="label" id="rl1">질량 (전자저울)</span><span class="value" id="r1">–</span></div>
-        <div class="readout"><span class="label" id="rl2">부피 (눈금실린더)</span><span class="value" id="r2">–</span></div>
-        <div class="readout"><span class="label" id="rl3">질량 ÷ 부피</span><span class="value" id="r3">–</span></div>
+        <div class="readout"><span class="label" id="rl1">5 g의 온도</span><span class="value" id="r1">25<small>°C</small></span></div>
+        <div class="readout"><span class="label" id="rl2">10 g의 온도</span><span class="value" id="r2">25<small>°C</small></span></div>
+        <div class="readout"><span class="label" id="rl3">녹는점 (수평 구간)</span><span class="value" id="r3">–</span></div>
       </div>
     </div>
 
     <aside class="side-col">
       <section class="card card-pad" id="ctrlCard">
-        <div class="control" id="pickCtl" hidden>
-          <div class="control-head"><label>🔎 어떤 금속일까요?</label></div>
+        <div class="control" id="ctlSub" hidden>
+          <div class="opt-seg" id="subSeg" role="group" aria-label="끓는점을 잴 물질">
+            <button type="button" data-sub="water" aria-pressed="true">물<small>H₂O</small></button>
+            <button type="button" data-sub="eth" aria-pressed="false">에탄올<small>중탕으로 데워요</small></button>
+          </div>
+        </div>
+        <div class="control" id="ctlPress" hidden>
+          <div class="control-head"><label for="pressR">🧭 압력</label><output id="pressO">1.0 기압</output></div>
+          <input type="range" id="pressR" min="0.5" max="2" step="0.1" value="1" aria-label="압력(기압)">
+          <p class="ctrl-note">낮은 쪽은 높은 산, 높은 쪽은 압력솥이에요. 아래 카드를 눌러도 돼요.</p>
+        </div>
+        <div class="control" id="ctlPick" hidden>
+          <div class="control-head"><label>🔎 X, Y는 어떤 물질일까?</label></div>
           <div class="pick-row"><span class="pick-tag">X</span>
-            <select id="selX" class="pick-sel" aria-label="X 조각의 물질">
-              <option value="">물질 고르기</option><option value="al">알루미늄</option><option value="fe">철</option><option value="cu">구리</option><option value="pb">납</option><option value="au">금</option>
+            <select id="selX" class="pick-sel" aria-label="시료 X의 물질">
+              <option value="">물질 고르기</option><option value="water">물</option><option value="eth">에탄올</option><option value="palm">팔미트산</option><option value="naph">나프탈렌</option>
             </select></div>
           <div class="pick-row"><span class="pick-tag y">Y</span>
-            <select id="selY" class="pick-sel" aria-label="Y 조각의 물질">
-              <option value="">물질 고르기</option><option value="al">알루미늄</option><option value="fe">철</option><option value="cu">구리</option><option value="pb">납</option><option value="au">금</option>
+            <select id="selY" class="pick-sel" aria-label="시료 Y의 물질">
+              <option value="">물질 고르기</option><option value="water">물</option><option value="eth">에탄올</option><option value="palm">팔미트산</option><option value="naph">나프탈렌</option>
             </select></div>
-          <p class="ctrl-note">측정한 밀도와 같은 값을 <b>밀도표</b>에서 찾아요.</p>
+        </div>
+        <div class="control" id="ctlHeat">
+          <button class="btn btn-primary btn-block" id="heatBtn" type="button">🔥 가열하기</button>
+          <p class="ctrl-note" id="heatNote"></p>
         </div>
       </section>
       <section class="card" id="game"></section>

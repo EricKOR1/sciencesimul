@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0ea5e9">
+  <title>광물의 특성 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💎</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-card { background: #0d1626; }
+    /* 태블릿: 가로 배치 캔버스 · 휴대폰: 세로 배치 캔버스 */
+    .sc-tall { display: none; }
+    @media (max-width: 599px) { .sc-wide { display: none; } .sc-tall { display: block; } }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    .seg-label { display: block; font-weight: 800; font-size: 14.5px; color: var(--muted); margin-bottom: 6px; }
+    .ctrl-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+    .ctrl-btns .btn { flex: 1 1 140px; }
+    .ctrl-note { margin: 8px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    .btn-sm { min-height: 44px; }
+    .btn.on-state { background: #0f766e; border-color: #0f766e; color: #fff; box-shadow: 0 3px 0 #0a4f49; }
+    .game-foot button { min-height: 44px; }
+    .mission-figure svg { border-radius: 12px; }
+    .note-fig { margin: 6px 0; text-align: center; }
+    .note-fig svg { max-width: 100%; height: auto; border-radius: 10px; }
+    .cmp { width: 100%; border-collapse: collapse; font-size: 14px; margin: 6px 0; }
+    .cmp th, .cmp td { border: 1px solid var(--line); padding: 5px 8px; text-align: left; vertical-align: top; }
+    .cmp th { background: var(--surface-2); font-weight: 800; }
+  </style>
+</head>
+<body class="sim-page" data-subject="earth">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#g2">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">중2 · Ⅱ. 지권의 변화</div>
+      <h1>광물의 특성</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-canvas sc-wide"><canvas id="cvWide" aria-label="광물 표본을 관찰하고 조흔판, 굳기, 염산, 클립으로 시험하는 실험대"></canvas></div>
+        <div class="stage-canvas sc-tall"><canvas id="cvTall" aria-label="광물 표본을 관찰하고 조흔판, 굳기, 염산, 클립으로 시험하는 실험대"></canvas></div>
+      </section>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard" data-feature="ctrl">
+        <div class="control" id="cReset" data-feature="reset">
+          <div class="ctrl-btns"><button class="btn btn-sm" id="resetBtn" type="button">🧽 조흔판 닦기</button></div>
+          <p class="ctrl-note" id="resetNote"></p>
+        </div>
+        <div class="control" id="cTable" data-feature="table">
+          <div class="ctrl-btns"><button class="btn btn-sm" id="tableBtn" type="button" aria-pressed="false">📋 광물 특성표 보기</button></div>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

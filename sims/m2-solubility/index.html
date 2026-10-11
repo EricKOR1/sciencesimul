@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#8b5cf6">
+  <title>용해도 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧂</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-toolbar { min-height: 61px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+    #resetBtn { font-size: 20px; }
+    .stage-toolbar .segmented button { min-height: 44px; padding: 6px 12px; font-size: 14.5px; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    .ctrl-note { font-size: 13.5px; color: var(--muted); margin: 8px 0 0; line-height: 1.45; }
+    .btn-block { min-height: 52px; font-size: 17px; }
+    .btn-row { display: flex; gap: 8px; }
+    .btn-row .btn { flex: 1; }
+    .opt-seg { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+    .opt-seg button {
+      min-height: 48px; border-radius: 12px; border: 2px solid var(--line); background: var(--surface); color: var(--ink);
+      font-weight: 800; font-size: 15.5px; cursor: pointer; padding: 6px 8px; line-height: 1.25;
+    }
+    .opt-seg button small { display: block; font-size: 12px; font-weight: 700; color: var(--muted); }
+    .opt-seg button[aria-pressed="true"] { border-color: var(--subject); background: #f3eeff; color: #4c1d95; box-shadow: 0 0 0 3px color-mix(in srgb, var(--subject) 18%, transparent); }
+    .pick-sel {
+      width: 100%; min-height: 48px; border-radius: 12px; border: 2px solid var(--line); background: var(--surface);
+      font-size: 17px; font-weight: 700; padding: 6px 12px; color: var(--ink); cursor: pointer;
+    }
+    .pick-sel:focus-visible { outline: 3px solid color-mix(in srgb, var(--subject) 30%, transparent); border-color: var(--subject); }
+    .pick-sel.set { border-color: #c4b5fd; background: #f6f3ff; }
+    .readout .value.word { font-family: var(--font); font-size: 17px; line-height: 1.5; overflow: hidden; text-overflow: ellipsis; }
+    .mission-figure svg { border-radius: 12px; }
+    #measureBtn[disabled] { opacity: .55; cursor: not-allowed; }
+    @media (max-width: 599px) {
+      .stage-toolbar { min-height: 0; }
+      .stage-toolbar .segmented { width: 100%; }
+      .stage-toolbar .segmented button { flex: 1 1 auto; padding: 6px 6px; font-size: 13.5px; }
+      .readout .value.word { font-size: 15px; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="chem">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#g2">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">중2 · Ⅰ. 물질의 특성</div>
+      <h1>용해도</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🧂 소금을 계속 녹여 보기</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="sceneSeg" role="group" aria-label="실험 장면" hidden>
+            <button type="button" data-scene="dissolve">🧂 포화</button>
+            <button type="button" data-scene="measure">📈 곡선</button>
+            <button type="button" data-scene="cool">❄️ 석출</button>
+            <button type="button" data-scene="gas">🥤 기체</button>
+          </div>
+          <button class="icon-btn" id="resetBtn" type="button" title="처음 상태로" aria-label="처음 상태로">↺</button>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="물 100 g에 소금과 질산 칼륨을 녹이며 포화 용액, 용해도 곡선, 결정의 석출, 탄산음료 속 기체의 용해도를 알아보는 실험 화면"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts" id="readouts">
+        <div class="readout"><span class="label" id="rl1">넣은 소금</span><span class="value" id="r1">0.0<small>g</small></span></div>
+        <div class="readout"><span class="label" id="rl2">녹은 소금</span><span class="value" id="r2">0.0<small>g</small></span></div>
+        <div class="readout"><span class="label" id="rl3">바닥에 남은 소금</span><span class="value" id="r3">0.0<small>g</small></span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" id="ctlAdd" hidden>
+          <button class="btn btn-primary btn-block" id="addBtn" type="button">🥄 소금 한 숟가락 (5 g) 넣기</button>
+          <p class="ctrl-note">20 °C 물 100 g에 소금을 한 숟가락씩 넣고 저어요.</p>
+        </div>
+        <div class="control" id="ctlMeasure" hidden>
+          <div class="opt-seg" id="subSeg" role="group" aria-label="용질 고르기">
+            <button type="button" data-sub="KNO3" aria-pressed="true">질산 칼륨<small>KNO₃</small></button>
+            <button type="button" data-sub="NaCl" aria-pressed="false">염화 나트륨<small>소금, NaCl</small></button>
+          </div>
+          <div class="control-head"><label for="tempR">🌡️ 물의 온도</label><output id="tempO">20 °C</output></div>
+          <input type="range" id="tempR" min="0" max="80" step="20" value="20" aria-label="물의 온도">
+          <button class="btn btn-primary btn-block" id="measureBtn" type="button" style="margin-top:12px">🧪 녹는 양 재기</button>
+          <p class="ctrl-note">물 100 g에 용질을 녹을 때까지 넣어, 최대로 녹는 양(용해도)을 재요.</p>
+        </div>
+        <div class="control" id="ctlPredict" hidden>
+          <div class="control-head"><label for="predSel">🎯 석출될 결정의 양은?</label></div>
+          <select id="predSel" class="pick-sel" aria-label="석출될 결정의 양 예측">
+            <option value="">예측해서 고르기</option>
+            <option value="31.6">약 31.6 g</option><option value="105.1">약 105.1 g</option><option value="137.4">약 137.4 g</option><option value="169">약 169 g</option>
+          </select>
+          <p class="ctrl-note">80 °C에서 녹인 169 g을 20 °C로 식힐 때 생기는 결정의 양을 곡선에서 읽어 예측해요.</p>
+        </div>
+        <div class="control" id="ctlCool" hidden>
+          <div class="control-head"><label for="coolR">🌡️ 용액의 온도</label><output id="coolO">80 °C</output></div>
+          <input type="range" id="coolR" min="20" max="80" step="1" value="80" aria-label="용액의 온도">
+          <button class="btn btn-primary btn-block" id="coolBtn" type="button" style="margin-top:12px">❄️ 20 °C까지 식히기</button>
+          <p class="ctrl-note">슬라이더를 끌어서 식혀도 돼요.</p>
+        </div>
+        <div class="control" id="ctlGas" hidden>
+          <div class="control-head"><label for="gasR">🌡️ 음료의 온도</label><output id="gasO">5 °C</output></div>
+          <input type="range" id="gasR" min="5" max="40" step="1" value="5" aria-label="음료의 온도">
+          <button class="btn btn-primary btn-block" id="capBtn" type="button" style="margin-top:12px">🔓 뚜껑 열기</button>
+          <p class="ctrl-note">온도를 바꿔 보고, 뚜껑을 열어 거품을 살펴봐요.</p>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>
