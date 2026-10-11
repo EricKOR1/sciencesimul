@@ -739,8 +739,7 @@ window.SCI_CATALOG = {
                 "밀도 측정",
                 "뜨고 가라앉기",
                 "적용"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m2-solubility",
@@ -760,8 +759,7 @@ window.SCI_CATALOG = {
                 "용해도 곡선",
                 "석출",
                 "기체 용해도"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m2-melting-boiling",
@@ -781,8 +779,7 @@ window.SCI_CATALOG = {
                 "끓는점",
                 "압력과 끓는점",
                 "물질 구별"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m2-pure-mixture",
