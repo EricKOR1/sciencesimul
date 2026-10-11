@@ -117,8 +117,7 @@ window.SCI_CATALOG = {
                 "과학기술",
                 "함께 실천",
                 "실천 계획"
-              ],
-              "soon": true
+              ]
             }
           ]
         },
