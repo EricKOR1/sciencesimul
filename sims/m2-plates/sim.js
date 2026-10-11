@@ -126,7 +126,7 @@
   function hintPill(ctx, L, text, y) {
     ctx.font = fnt(L, 14);
     ctx.globalAlpha = 0.8 + 0.2 * pulse();
-    pill(ctx, text, L.vw / 2, y, { bg: 'rgba(27,35,51,.88)', h: 32 * L.fs, shadow: true });
+    pill(ctx, text, L.map.x + 14, y, { align: 'left', bg: 'rgba(27,35,51,.88)', h: 32 * L.fs, shadow: true });
     ctx.globalAlpha = 1;
   }
   function gaugeBar(ctx, x, y, w, h, frac, col, bg) {
@@ -606,7 +606,7 @@
   const EV = {
     meso: EVD.meso.map((e) => ({ k: e[0], pts: e[1].map((p) => toVec(p[0] / 10, p[1] / 10)), c: toVec(e[1].reduce((a, p) => a + p[0], 0) / e[1].length / 10, e[1].reduce((a, p) => a + p[1], 0) / e[1].length / 10) })),
     glos: EVD.glos.map((e) => ({ k: e[0], pts: e[1].map((p) => toVec(p[0] / 10, p[1] / 10)), c: toVec(e[1].reduce((a, p) => a + p[0], 0) / e[1].length / 10, e[1].reduce((a, p) => a + p[1], 0) / e[1].length / 10) })),
-    ice: EVD.ice.map((e) => ({ k: e[0], a: toVec(e[1] / 10, e[2] / 10), b: toVec(e[3] / 10, e[4] / 10) })),
+    ice: EVD.ice.filter((e) => Math.abs(e[1] - e[3]) < 1200).map((e) => ({ k: e[0], a: toVec(e[1] / 10, e[2] / 10), b: toVec(e[3] / 10, e[4] / 10) })),
     mtn: [].concat.apply([], Object.keys(EVD.mtn).map((k) => EVD.mtn[k].map((line) => ({ k, pts: line.map((p) => toVec(p[0] / 10, p[1] / 10)) })))),
   };
   const EV_INFO = {
