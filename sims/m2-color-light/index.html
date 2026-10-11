@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#f26b3a">
+  <title>빛의 합성과 물체의 색 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌈</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+    .stage-toolbar { min-height: 61px; flex-wrap: nowrap; }
+    .free-mode .toolbar-label { display: none; }
+    .stage-toolbar .segmented { flex-wrap: nowrap; flex: none; }
+    .stage-toolbar .segmented button { min-height: 40px; padding: 6px 12px; font-size: 14.5px; white-space: nowrap; }
+    .off { display: none !important; }
+    /* 태블릿: 가로 배치 캔버스 · 휴대폰: 세로 배치 캔버스 */
+    .sc-tall { display: none; }
+
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    .grp { display: flex; flex-direction: column; gap: 10px; }
+    .grp-title { font-weight: 800; font-size: 15.5px; display: flex; align-items: center; gap: 6px; }
+    .ctrl-note { font-size: 13.5px; color: var(--muted); margin: 0; line-height: 1.45; }
+    .ctrl-note b { color: #9a3412; }
+    .btn-row { display: flex; gap: 8px; flex-wrap: nowrap; }
+    .btn-row .btn { flex: 1 1 0; min-width: 0; min-height: 48px; }
+    .btn[disabled] { opacity: .5; cursor: not-allowed; }
+    .grp .control { margin-bottom: 0; }
+
+    /* 켜고 끄는 큰 버튼 */
+    .tgl {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 48px; flex: 1 1 0; min-width: 0;
+      border: 2px solid var(--line); background: var(--surface); color: var(--muted);
+      border-radius: 14px; padding: 5px 10px; font-weight: 800; font-size: 15px; cursor: pointer; white-space: nowrap;
+      transition: background .2s, border-color .2s, color .2s, transform .1s;
+    }
+    .tgl:active { transform: scale(.97); }
+    .tgl[aria-pressed="true"] { color: #9a3412; border-color: #fdba74; background: #fff3ea; }
+    /* 반사하는 빛 고르기: 두 줄 버튼 */
+    .refl-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+    .refl-btn {
+      min-height: 62px; border: 2px solid var(--line); border-radius: 14px; background: #fff; cursor: pointer; padding: 6px 4px;
+      font-weight: 800; font-size: 15px; color: #475569; line-height: 1.25; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+      transition: border-color .15s, background .15s, transform .08s, color .15s;
+    }
+    .refl-btn small { font-size: 12.5px; font-weight: 800; color: #94a3b8; }
+    .refl-btn:active { transform: scale(.97); }
+    .refl-btn[aria-pressed="true"] { color: #1b2333; box-shadow: 0 0 0 3px rgba(20,160,88,.14); }
+    .refl-btn[aria-pressed="true"] small { color: #0b6b39; }
+    .refl-btn[data-ch="0"][aria-pressed="true"] { border-color: #f08a8d; background: #fff1f1; }
+    .refl-btn[data-ch="1"][aria-pressed="true"] { border-color: #7ccf9d; background: #effbf3; }
+    .refl-btn[data-ch="2"][aria-pressed="true"] { border-color: #8fb0f6; background: #eff4ff; }
+    /* 조명 색 고르기 */
+    .mode-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+    .mode-btn {
+      min-height: 52px; border: 2px solid var(--line); border-radius: 12px; background: #fff; cursor: pointer;
+      font-weight: 800; font-size: 14.5px; color: #334155; padding: 6px 4px; line-height: 1.2;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; text-align: center;
+      transition: border-color .15s, background .15s, transform .08s;
+    }
+    .mode-btn .dot { width: 18px; height: 18px; border-radius: 50%; box-shadow: inset 0 -2px 3px rgba(0,0,0,.18), 0 0 0 1px rgba(0,0,0,.12); }
+    .mode-btn:active { transform: scale(.97); }
+    .mode-btn.on { border-color: var(--phy); background: #fff1ea; color: #9a3412; box-shadow: 0 0 0 3px rgba(242,107,58,.18); }
+    /* 빨강·초록·파랑 슬라이더 */
+    .ctl-r { --subject: #e2464b; } .ctl-g { --subject: #16a34a; } .ctl-b { --subject: #2f6df0; }
+    .ctl-r .control-head output { color: #c2262b; } .ctl-g .control-head output { color: #0f7a38; } .ctl-b .control-head output { color: #1d4fc4; }
+    #g-mix .control { margin: 0; }
+    #g-mix input[type=range] { height: 38px; }
+
+    .readout .value { display: flex; align-items: center; gap: 7px; font-size: 19px; }
+    .sw { display: inline-block; width: 20px; height: 20px; border-radius: 6px; flex: none; box-shadow: inset 0 0 0 1.5px rgba(0,0,0,.22); background: #111; }
+    .mission-figure svg { border-radius: 12px; max-width: 100%; }
+    .feature-new.stage-ring { border-radius: 999px; }
+
+    @media (max-width: 1100px) { .toolbar-label { font-size: 14px; } }
+    @media (max-width: 599px) {
+      .sc-wide { display: none; }
+      .sc-tall { display: block; }
+      .stage-toolbar { flex-wrap: wrap; }
+      .readouts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .readout .value { font-size: 17px; }
+      .stage-toolbar .segmented button { padding: 6px 9px; font-size: 13.5px; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="phy">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#g2">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">중2 · Ⅲ. 빛과 파동</div>
+      <h1>빛의 합성과 물체의 색</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="sceneLabel">🍎 어두운 방에서 물체를 보는 과정</span>
+          <span class="spacer"></span>
+          <div class="segmented off" id="sceneSeg" role="group" aria-label="실험 장면">
+            <button type="button" data-scene="see">🍎 물체의 색</button>
+            <button type="button" data-scene="mix">🔦 빛의 합성</button>
+            <button type="button" data-scene="stage">🎭 조명</button>
+            <button type="button" data-scene="screen">🖥️ 화면</button>
+          </div>
+          <div class="segmented off" id="zoomSeg" role="group" aria-label="화면 확대 정도" data-feature="zoom">
+            <button type="button" data-zoom="0">🖥️ 화면</button>
+            <button type="button" data-zoom="1">🔍 화소</button>
+            <button type="button" data-zoom="2">🔬 부분 화소</button>
+          </div>
+        </div>
+        <div class="stage-canvas sc-wide">
+          <canvas id="cvWide" aria-label="빛의 합성과 물체의 색 실험 화면: 물체를 보는 과정, 삼원색 조명의 합성, 색 조명 아래의 물체, 화면의 화소"></canvas>
+          <div class="stage-hint hide" id="hintWide"></div>
+        </div>
+        <div class="stage-canvas sc-tall">
+          <canvas id="cvTall" aria-label="빛의 합성과 물체의 색 실험 화면: 물체를 보는 과정, 삼원색 조명의 합성, 색 조명 아래의 물체, 화면의 화소"></canvas>
+          <div class="stage-hint hide" id="hintTall"></div>
+        </div>
+      </section>
+      <div class="readouts" id="readouts">
+        <div class="readout"><span class="label" id="rL1">반사하는 빛</span><span class="value" id="rV1">—</span></div>
+        <div class="readout"><span class="label" id="rL2">흡수하는 빛</span><span class="value" id="rV2">—</span></div>
+        <div class="readout"><span class="label" id="rL3">눈에 보이는 색</span><span class="value" id="rV3">—</span></div>
+        <div class="readout" id="rBox4"><span class="label" id="rL4">—</span><span class="value" id="rV4">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="grp only-see" id="g-lamp" data-feature="lamp">
+          <div class="grp-title">💡 어두운 방의 전등</div>
+          <div class="btn-row"><button class="tgl" id="tgLamp" type="button" aria-pressed="false">💡 전등 켜기</button></div>
+          <p class="ctrl-note" id="noteLamp">화면 속 <b>전등</b>을 끌어서 옮겨 볼 수도 있어요.</p>
+        </div>
+        <div class="grp only-see" id="g-reflect" data-feature="reflect">
+          <div class="grp-title">🎨 바나나가 반사하는 빛 고르기</div>
+          <div class="refl-row" id="reflRow">
+            <button type="button" class="refl-btn" data-ch="0" aria-pressed="false">🔴 빨강<small>흡수</small></button>
+            <button type="button" class="refl-btn" data-ch="1" aria-pressed="true">🟢 초록<small>반사</small></button>
+            <button type="button" class="refl-btn" data-ch="2" aria-pressed="false">🔵 파랑<small>흡수</small></button>
+          </div>
+          <p class="ctrl-note">누르면 그 색의 빛을 <b>반사</b>하고, 다시 누르면 <b>흡수</b>해요.</p>
+        </div>
+        <div class="grp only-mix" id="g-mix" data-feature="mix">
+          <div class="grp-title" id="mixTitle">🔦 조명의 밝기</div>
+          <div class="control ctl-r"><div class="control-head"><label for="slR" id="lbR">🔴 빨강 조명</label><output id="outR">0%</output></div><input type="range" id="slR" min="0" max="100" step="5" value="0" aria-label="빨강"></div>
+          <div class="control ctl-g"><div class="control-head"><label for="slG" id="lbG">🟢 초록 조명</label><output id="outG">0%</output></div><input type="range" id="slG" min="0" max="100" step="5" value="0" aria-label="초록"></div>
+          <div class="control ctl-b"><div class="control-head"><label for="slB" id="lbB">🔵 파랑 조명</label><output id="outB">0%</output></div><input type="range" id="slB" min="0" max="100" step="5" value="0" aria-label="파랑"></div>
+        </div>
+        <div class="grp only-stage" id="g-gel" data-feature="gel">
+          <div class="grp-title">🎭 무대 조명의 색</div>
+          <div class="mode-grid" id="gelGrid">
+            <button type="button" class="mode-btn on" data-gel="white"><span class="dot" style="background:#fff"></span>흰색</button>
+            <button type="button" class="mode-btn" data-gel="red"><span class="dot" style="background:#f23a3f"></span>빨강</button>
+            <button type="button" class="mode-btn" data-gel="green"><span class="dot" style="background:#1db954"></span>초록</button>
+            <button type="button" class="mode-btn" data-gel="blue"><span class="dot" style="background:#2f6df0"></span>파랑</button>
+          </div>
+          <p class="ctrl-note" id="noteGel">조명 색을 바꾸면 물체의 색이 어떻게 달라지는지 살펴봐요.</p>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

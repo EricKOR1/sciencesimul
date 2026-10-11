@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#8b5cf6">
+  <title>원소와 화합물 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💧</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-toolbar { min-height: 61px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+    #resetBtn { font-size: 20px; }
+    .segmented button { min-height: 44px; padding: 6px 12px; font-size: 14.5px; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    .btn-block { min-height: 52px; font-size: 17px; }
+    .ctrl-note { font-size: 13.5px; color: var(--muted); margin: 8px 0 0; line-height: 1.45; }
+    .stage-hint { white-space: normal; text-align: center; max-width: calc(100% - 32px); }
+
+    /* 원소 기호 타일 */
+    .tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-top: 6px; }
+    .tile {
+      min-height: 64px; border: 2px solid rgba(255,255,255,.7); border-radius: 14px; cursor: pointer; padding: 6px 2px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.15;
+      box-shadow: 0 3px 0 rgba(30,40,80,.22), inset 0 1px 0 rgba(255,255,255,.55); transition: transform .08s, box-shadow .08s; touch-action: manipulation;
+    }
+    .tile b { font-size: 24px; font-weight: 800; }
+    .tile small { font-size: 13px; font-weight: 800; opacity: .95; }
+    .tile:active { transform: translateY(2px) scale(.96); box-shadow: 0 1px 0 rgba(30,40,80,.22); }
+    .sub-row { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
+    .sub-row .lbl { flex: 1; min-width: 0; font-weight: 800; font-size: 14.5px; line-height: 1.25; }
+    .sub-btn {
+      width: 48px; height: 48px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface);
+      font-size: 20px; font-weight: 800; cursor: pointer; display: grid; place-items: center; padding: 0; touch-action: manipulation;
+      transition: transform .08s, background .15s;
+    }
+    .sub-btn:active:not([disabled]) { transform: scale(.92); background: var(--surface-2); }
+    .sub-btn[disabled] { opacity: .35; cursor: not-allowed; }
+    .sub-val { min-width: 34px; text-align: center; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 24px; font-weight: 800; }
+    .safe-note { background: #fff4dc; color: #7c4a00; border-radius: 12px; padding: 8px 12px; margin: 8px 0; font-size: 14.5px; line-height: 1.45; }
+    .mission-figure svg { border-radius: 12px; max-width: 100%; height: auto; }
+    .concept table { border-collapse: collapse; width: 100%; font-size: 14px; margin: 6px 0; }
+    .concept th, .concept td { border: 1px solid var(--line); padding: 4px 6px; text-align: center; }
+    .concept th { background: var(--surface-2); }
+    .concept ul ul { margin: 2px 0; }
+    @media (max-width: 599px) {
+      .stage-toolbar { min-height: 0; }
+      .segmented button { padding: 6px 10px; font-size: 14px; }
+      .toolbar-label { font-size: 13.5px; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="chem">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#g2">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">중2 · Ⅳ. 물질의 구성</div>
+      <h1>원소와 화합물</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">⚡ 물에 전기를 흘려 보내요</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="sceneSeg" role="group" aria-label="장면 고르기" hidden>
+            <button type="button" data-scene="electro">⚡ 전기 분해</button>
+            <button type="button" data-scene="decomp">🔬 분해 장치</button>
+            <button type="button" data-scene="formula">🧩 화학식</button>
+            <button type="button" data-scene="earth">🌏 지구 환경</button>
+          </div>
+          <button class="icon-btn" id="resetBtn" type="button" title="처음 상태로" aria-label="처음 상태로">↺</button>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="물의 전기 분해, 분해 장치, 원자 모형과 화학식, 지구 환경 물질 도감 화면"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" data-sc="electro" id="gogglesCtl">
+          <button class="btn btn-block" id="gogglesBtn" type="button">🥽 보안경 쓰기</button>
+        </div>
+        <div class="control" data-sc="electro">
+          <button class="btn btn-primary btn-block" id="powerBtn" type="button" aria-pressed="false">⚡ 전원 켜기</button>
+          <p class="ctrl-note" id="elNote"></p>
+        </div>
+        <div class="control" data-sc="decomp">
+          <button class="btn btn-primary btn-block" id="decBtn" type="button" disabled>🔬 분해하기</button>
+          <p class="ctrl-note" id="dcNote"></p>
+        </div>
+        <div class="control" data-sc="formula earth" id="fmCtl">
+          <div class="control-head"><label>🧩 원소 기호 타일</label></div>
+          <div class="tiles" id="tiles"></div>
+          <div class="sub-row">
+            <div class="lbl"><div>아래첨자(원자 수)</div><div id="subLbl" style="font-size:12.5px;color:var(--muted);font-weight:700"></div></div>
+            <button class="sub-btn" id="subDown" type="button" aria-label="원자 수 줄이기" disabled>▼</button>
+            <output class="sub-val" id="subVal">-</output>
+            <button class="sub-btn" id="subUp" type="button" aria-label="원자 수 늘리기" disabled>▲</button>
+          </div>
+        </div>
+        <p class="ctrl-note" id="earthNote" data-sc="earth"></p>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

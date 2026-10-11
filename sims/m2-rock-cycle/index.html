@@ -63,6 +63,13 @@
 
     <aside class="side-col">
       <section class="card card-pad is-off" id="ctrlCard">
+        <!-- 자유 탐색(모든 단계를 마친 뒤): 장면 고르기 -->
+        <div class="control is-off" id="cTabs">
+          <span class="seg-label">📍 장면 고르기</span>
+          <div class="segmented" id="tabSeg" role="group" aria-label="장면 고르기">
+            <button type="button" data-sc="igneous">🌋 화성암</button><button type="button" data-sc="sed">🪨 퇴적암</button><button type="button" data-sc="meta">💠 변성암</button><button type="button" data-sc="cycle">♻️ 순환</button>
+          </div>
+        </div>
         <!-- 1단계: 화성암 -->
         <div class="control is-off" id="cIg" data-scene="igneous">
           <div>

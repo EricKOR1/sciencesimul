@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#f26b3a">
+  <title>거울과 렌즈의 상 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🪞</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+    .toolbar-label small { font-weight: 700; color: #8a95a6; }
+    .stage-toolbar { min-height: 61px; flex-wrap: nowrap; }
+    #resetBtn { font-size: 20px; }
+    .off { display: none !important; }
+
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    .grp { display: flex; flex-direction: column; gap: 10px; }
+    .grp-title { font-weight: 800; font-size: 15.5px; display: flex; align-items: center; gap: 6px; }
+    .ctrl-note { font-size: 13.5px; color: var(--muted); margin: 0; line-height: 1.45; }
+    .ctrl-note b { color: #9a3412; }
+    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn-row .btn { flex: 1 1 0; min-width: 0; min-height: 48px; }
+    .grp .control { margin-bottom: 0; }
+    .grp .control-head output.amber { color: #b45309; }
+
+    .mode-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .mode-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .mode-btn {
+      min-height: 48px; border: 2px solid var(--line); border-radius: 12px; background: #fff; cursor: pointer;
+      font-weight: 800; font-size: 14.5px; color: #334155; padding: 6px 8px; line-height: 1.2;
+      display: flex; align-items: center; justify-content: center; gap: 4px; text-align: center;
+      transition: border-color .15s, background .15s, transform .08s;
+    }
+    .mode-btn:active { transform: scale(.97); }
+    .mode-btn.on { border-color: var(--phy); background: #fff1ea; color: #9a3412; box-shadow: 0 0 0 3px rgba(242,107,58,.18); }
+    .mode-btn[disabled] { opacity: .45; cursor: not-allowed; }
+    .btn[disabled] { opacity: .5; cursor: not-allowed; }
+    .tgl {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 48px; flex: 1 1 0;
+      border: 2px solid var(--line); background: var(--surface); color: var(--muted);
+      border-radius: 999px; padding: 5px 14px; font-weight: 800; font-size: 15px; cursor: pointer;
+    }
+    .tgl[aria-pressed="true"] { color: #9a3412; border-color: var(--phy); background: #fff1ea; box-shadow: 0 0 0 3px rgba(242,107,58,.16); }
+
+    @media (max-width: 1100px) { .toolbar-label { font-size: 14px; } }
+    @media (max-width: 599px) {
+      .readouts { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .readout .label { font-size: 11.5px; }
+      .readout .value { font-size: 16px; }
+      .toolbar-label small { display: none; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="phy">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#g2">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">중2 · Ⅲ. 빛과 파동</div>
+      <h1>거울과 렌즈의 상</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="sceneLabel">🪞 평면거울</span>
+          <span class="spacer"></span>
+          <button class="icon-btn" id="resetBtn" type="button" title="처음 상태로" aria-label="처음 상태로">↺</button>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="평면거울, 볼록 거울, 오목 거울, 볼록 렌즈, 오목 렌즈로 만들어지는 상과 빛의 경로를 보여 주는 실험 화면"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="rL1">물체 ↔ 거울</span><span class="value" id="rV1">—</span></div>
+        <div class="readout"><span class="label" id="rL2">거울 ↔ 상</span><span class="value" id="rV2">—</span></div>
+        <div class="readout"><span class="label" id="rL3">상의 모습</span><span class="value" id="rV3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="grp off" id="g-free">
+          <div class="grp-title">🔓 자유 탐구: 실험 고르기</div>
+          <div class="mode-grid three" id="freeGrid">
+            <button type="button" class="mode-btn" data-free="plane">🪞 평면거울</button>
+            <button type="button" class="mode-btn" data-free="rays">✨ 광선과 상</button>
+            <button type="button" class="mode-btn" data-free="eye">👁️ 눈의 위치</button>
+            <button type="button" class="mode-btn" data-free="mirror">🔍 곡면 거울</button>
+            <button type="button" class="mode-btn" data-free="lens">🔭 렌즈</button>
+            <button type="button" class="mode-btn" data-free="sortM">🃏 거울 짝짓기</button>
+            <button type="button" class="mode-btn" data-free="sortL">🃏 렌즈 분류</button>
+          </div>
+        </div>
+
+        <div class="grp" id="g-plane" data-feature="plane">
+          <div class="grp-title">🪞 글자 카드를 거울에 비춰요</div>
+          <div class="control">
+            <div class="control-head"><label for="slPlane">물체와 거울 사이의 거리</label><output id="outPlane" class="amber">6.0 cm</output></div>
+            <input type="range" id="slPlane" min="2" max="10" step="0.5" value="6" aria-label="물체와 거울 사이의 거리">
+          </div>
+          <p class="ctrl-note">화면 속 <b>글자 카드</b>를 끌어도 돼요. 카드와 상의 거리를 눈금자로 비교해 봐요.</p>
+        </div>
+
+        <div class="grp off" id="g-rays" data-feature="rays">
+          <div class="grp-title">✨ 한 점에서 나온 빛 두 줄기</div>
+          <p class="ctrl-note" id="raysNote"><b>거울 위의 주황색 점</b>을 위아래로 끌어 두 광선을 서로 멀리 떨어뜨려요. 그런 다음 반사 광선을 거울 뒤로 <b>연장</b>해 봐요.</p>
+          <div class="btn-row">
+            <button class="tgl" id="extBtn" type="button" aria-pressed="false">📏 연장선 그리기</button>
+            <button class="btn" id="raysReset" type="button">↺ 처음으로</button>
+          </div>
+        </div>
+
+        <div class="grp off" id="g-eye" data-feature="eye">
+          <div class="grp-title">👁️ 눈을 옮겨 보기</div>
+          <p class="ctrl-note"><b>눈</b>을 끌어서 거울 앞 여러 곳으로 옮겨 봐요. 눈에 보이는 <b>상의 위치</b>도 달라질까요?</p>
+          <div class="btn-row">
+            <button class="btn" id="eyeReset" type="button">↺ 눈을 처음 자리로</button>
+          </div>
+        </div>
+
+        <div class="grp off" id="g-mirror" data-feature="mirror">
+          <div class="grp-title">🔍 거울의 종류와 물체의 위치</div>
+          <div class="mode-grid" id="mtypeGrid">
+            <button type="button" class="mode-btn on" data-mtype="convex">볼록 거울</button>
+            <button type="button" class="mode-btn" data-mtype="concave">오목 거울</button>
+          </div>
+          <div class="control">
+            <div class="control-head"><label for="slMir">물체의 위치</label><output id="outMir" class="amber">초점 바깥쪽</output></div>
+            <input type="range" id="slMir" min="0" max="100" step="1" value="60" aria-label="물체와 거울 사이의 거리">
+          </div>
+        </div>
+
+        <div class="grp off" id="g-lens" data-feature="lens">
+          <div class="grp-title">🔭 렌즈의 종류와 물체의 위치</div>
+          <div class="mode-grid" id="ltypeGrid">
+            <button type="button" class="mode-btn on" data-ltype="convex">볼록 렌즈</button>
+            <button type="button" class="mode-btn" data-ltype="concave">오목 렌즈</button>
+          </div>
+          <div class="control">
+            <div class="control-head"><label for="slLens">물체의 위치</label><output id="outLens" class="amber">초점 바깥쪽</output></div>
+            <input type="range" id="slLens" min="0" max="100" step="1" value="60" aria-label="물체와 렌즈 사이의 거리">
+          </div>
+        </div>
+
+        <div class="grp off" id="g-sort">
+          <div class="grp-title" id="sortTitle">🃏 카드를 알맞은 상자에 놓아요</div>
+          <p class="ctrl-note" id="sortNote">카드를 <b>끌어서</b> 알맞은 상자에 놓아요. 맞으면 쏙 들어가고, 틀리면 되돌아와요.</p>
+          <div class="btn-row">
+            <button class="btn" id="sortReset" type="button">🃏 카드 다시 섞기</button>
+          </div>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>
