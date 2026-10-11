@@ -802,8 +802,7 @@ window.SCI_CATALOG = {
                 "가열 곡선",
                 "입자 모형",
                 "분류하기"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m2-separation",
@@ -824,8 +823,7 @@ window.SCI_CATALOG = {
                 "밀도 차",
                 "용해도 차",
                 "크로마토"
-              ],
-              "soon": true
+              ]
             }
           ]
         },

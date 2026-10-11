@@ -180,6 +180,9 @@
 
   /* ---------------- 색 도우미 ---------------- */
   function hexToRgb(hex) {
+    // '#rgb', '#rrggbb' 외에 shade()·mix()가 돌려주는 'rgb(…)'·'rgba(…)' 문자열도 받음
+    const m = /^rgba?\(\s*([\d.]+)[\s,]+([\d.]+)[\s,]+([\d.]+)/i.exec(String(hex).trim());
+    if (m) return { r: Math.round(+m[1]), g: Math.round(+m[2]), b: Math.round(+m[3]) };
     let h = String(hex).replace('#', '');
     if (h.length === 3) h = h.split('').map((c) => c + c).join('');
     const n = parseInt(h, 16);

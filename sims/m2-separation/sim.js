@@ -1771,7 +1771,7 @@
     let msg = '카드를 놓고 ▶ 실행하기를 눌러 보세요.', col = COL.muted;
     if (run && !run.done) msg = ['①', '②', '③'][run.step] + ' 단계를 실행하는 중…', col = COL.sub;
     else if (fin && run && run.done) { msg = fin.ok ? '🎉 세 가지 물질을 모두 분리했어요!' : '아직 다 분리하지 못했어요. 순서와 방법을 바꿔 보세요.'; col = fin.ok ? '#0b6b39' : '#b4232b'; }
-    if (!PHONE) text(R.x + 14, R.y + R.h - 14, msg, { size: 15, weight: 800, color: col, align: 'left' }); else text(R.x + 14, R.y + R.h - 10, msg, { size: 13.5, weight: 800, color: col, align: 'left' });
+    if (!PHONE) text(R.x + 14, R.y + R.h - 14, msg, { size: 15, weight: 800, color: col, align: 'left' }); else text(R.x + R.w - 12, R.y + 26, msg.length > 20 ? msg.replace('아직 다 분리하지 못했어요. 순서와 방법을 바꿔 보세요.', '아직 다 분리하지 못했어요.').replace('카드를 놓고 ▶ 실행하기를 눌러 보세요.', '카드를 놓고 ▶ 실행!') : msg, { size: 13, weight: 800, color: col, align: 'right' });
   }
   function dgDraw(t) {
     dgDrawMix(t);
