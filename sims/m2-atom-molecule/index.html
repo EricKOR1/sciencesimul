@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#8b5cf6">
+  <title>원자와 분자 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔬</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-toolbar { min-height: 61px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+    #resetBtn { font-size: 20px; }
+    .segmented button { min-height: 44px; padding: 6px 12px; font-size: 14.5px; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; display: flex; flex-direction: column; gap: 10px; }
+    .btn-block { min-height: 52px; font-size: 17px; }
+    #lensSeg { width: 100%; }
+    #lensSeg button { flex: 1; font-size: 15.5px; }
+    .ctrl-note { font-size: 13.5px; color: var(--muted); margin: 0; line-height: 1.45; }
+    .stage-hint { white-space: normal; text-align: center; max-width: calc(100% - 32px); }
+    .concept table { border-collapse: collapse; width: 100%; font-size: 14px; margin: 6px 0; }
+    .concept th, .concept td { border: 1px solid var(--line); padding: 4px 6px; text-align: center; }
+    .concept th { background: var(--surface-2); }
+    @media (max-width: 599px) {
+      .stage-toolbar { min-height: 0; }
+      .segmented button { padding: 6px 10px; font-size: 13.5px; }
+      .toolbar-label { font-size: 13.5px; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="chem">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#g2">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">중2 · Ⅳ. 물질의 구성</div>
+      <h1>원자와 분자</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">💧 물방울을 1/10로 계속 나눠요</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="sceneSeg" role="group" aria-label="장면 고르기" hidden>
+            <button type="button" data-scene="zoom">💧 나누기</button>
+            <button type="button" data-scene="scope">🔬 현미경</button>
+            <button type="button" data-scene="count">🔍 세어 보기</button>
+          </div>
+          <button class="icon-btn" id="resetBtn" type="button" title="처음 상태로" aria-label="처음 상태로">↺</button>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="물방울을 나누며 분자를 찾는 장면, 입자 현미경, 분자 조립대 장면"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" data-sc="zoom">
+          <button class="btn btn-primary btn-block" id="zoomBtn" type="button" data-feature="zoom">✂️ 1/10로 나누기</button>
+          <button class="btn btn-block" id="zoomResetBtn" type="button" data-feature="zoom">↺ 처음으로</button>
+          <p class="ctrl-note" id="zoomNote"></p>
+        </div>
+        <div class="control" data-sc="scope">
+          <p class="ctrl-note" id="scopeNote"></p>
+        </div>
+        <div class="control" data-sc="count">
+          <div class="segmented" id="lensSeg" role="group" aria-label="렌즈 고르기" data-feature="lens">
+            <button type="button" data-lens="mol" class="on">🫧 분자</button>
+            <button type="button" data-lens="atom">⚪ 원자</button>
+            <button type="button" data-lens="elem">🎨 원소</button>
+          </div>
+          <div id="clearWrap" hidden><button class="btn btn-block" id="clearBtn" type="button" data-feature="build">↺ 원자 비우기</button></div>
+          <p class="ctrl-note" id="countNote"></p>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>
