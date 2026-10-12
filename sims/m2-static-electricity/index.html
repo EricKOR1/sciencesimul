@@ -20,6 +20,7 @@
     #ctrlCard { display: flex; flex-direction: column; gap: 14px; }
     #ctrlCard .control { margin: 0; }
     #ctrlCard .btn-sm { min-height: 44px; }
+    #ctrlCard .control[hidden] { display: none !important; }
     .ctrl-note { font-size: 14px; color: var(--muted); margin: 6px 0 0; }
     .seg-wide { display: flex; width: 100%; }
     .seg-wide button { flex: 1; min-width: 0; padding: 6px 8px; }
@@ -110,7 +111,7 @@
         </div>
         <div class="control" data-scenes="scope">
           <p class="ctrl-note" style="margin-top:0">오른쪽의 막대를 끌어 <b>금속판</b>에 가까이 대 보고, 대전된 막대는 <b>톡 눌러서</b> 표시해요.</p>
-          <button class="btn btn-sm btn-block" id="scopeReset" type="button" style="margin-top:8px">↺ 표시 지우기</button>
+          <button class="btn btn-sm btn-block" id="scopeReset" type="button" style="margin-top:8px">↺ 막대 정리 · 표시 지우기</button>
         </div>
       </section>
       <section class="card" id="game"></section>
