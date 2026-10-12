@@ -450,13 +450,13 @@
     // 컵 표면의 물방울
     const target = ex > 0.02 ? Math.min(PHONE ? 46 : 64, Math.ceil(ex * 9)) : 0;
     C.film = appr(C.film, clamp(ex / 2.2, 0, 1), dt, 2.5);
-    if (C.drops.length < target && Math.random() < dt * 14) C.drops.push({ u: rand(0.06, 0.94), v: rand(0.1, 0.95), r: 0, rt: rand(3, 7), slide: false, trail: 0, v0: 0 });
+    if (C.drops.length < target && Math.random() < dt * 14) C.drops.push({ u: rand(0.06, 0.94), v: rand(0.1, 0.95), r: 0, rt: rand(4, 8.5), slide: false, trail: 0, v0: 0 });
     for (let i = C.drops.length - 1; i >= 0; i--) {
       const d = C.drops[i];
       const gone = i >= target && !d.slide;
       d.r = appr(d.r, gone ? 0 : d.rt, dt, gone ? 2.5 : 1.4);
       if (gone && d.r < 0.25) { C.drops.splice(i, 1); continue; }
-      if (!d.slide && d.r > 5.2 && d.rt > 5.6 && Math.random() < dt * 0.5) { d.slide = true; d.v0 = d.v; }
+      if (!d.slide && d.r > 6 && d.rt > 6.4 && Math.random() < dt * 0.5) { d.slide = true; d.v0 = d.v; }
       if (d.slide) { d.v += dt * 0.16; d.trail = d.v - d.v0; if (d.v > 0.97) { C.puddle = Math.min(1, C.puddle + 0.06); C.drops.splice(i, 1); } }
     }
     if (ex <= 0.02) C.puddle = appr(C.puddle, 0, dt, 0.15);
@@ -651,7 +651,7 @@
     const w = C.wv, ex = excess();
     // 방 안 공기의 수증기량 (수평선)
     D.dashedLine(GP.x, gy(w), GP.x + GP.w, gy(w), { color: 'rgba(14,165,233,.9)', width: 2.5, dash: [8, 6], offset: -CLK.t * 16 });
-    text(GP.x + 6, gy(w) - 7, '공기 속 수증기량 ' + f1(w) + ' g/kg', { size: PHONE ? 12 : 13, weight: 800, align: 'left', color: COL.skyD });
+    text(GP.x + 6, gy(w) + 17, '공기 속 수증기량 ' + f1(w) + ' g/kg', { size: PHONE ? 12 : 13, weight: 800, align: 'left', color: COL.skyD });
     gdot(gx(AIRT), gy(w), 7.5, COL.sky);
     text(gx(AIRT), gy(w) + 24, '방 공기 ' + AIRT + ' °C', { size: PHONE ? 12 : 13, weight: 800, color: COL.skyD });
     // 컵 표면 온도에 해당하는 곡선 위의 점 (점이 이동해요)
@@ -890,7 +890,7 @@
       const x = g.x + 4 + d.u * (g.cw - 8), y = g.y + 6 + d.v * (g.ch - 14);
       if (d.slide && d.trail > 0.01) { ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = Math.max(1.5, d.r * 0.6); ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(x, y - d.trail * (g.ch - 14)); ctx.lineTo(x, y); ctx.stroke(); }
       if (d.r < 0.3) return;
-      ctx.fillStyle = 'rgba(190,225,250,.62)'; ctx.beginPath(); ctx.arc(x, y, d.r, 0, TAU); ctx.fill();
+      ctx.fillStyle = 'rgba(160,210,248,.72)'; ctx.beginPath(); ctx.arc(x, y, d.r, 0, TAU); ctx.fill();
       ctx.strokeStyle = 'rgba(255,255,255,.95)'; ctx.lineWidth = 1.2; ctx.stroke();
       ctx.fillStyle = 'rgba(255,255,255,.95)'; ctx.beginPath(); ctx.arc(x - d.r * 0.35, y - d.r * 0.4, Math.max(0.8, d.r * 0.3), 0, TAU); ctx.fill();
     });
