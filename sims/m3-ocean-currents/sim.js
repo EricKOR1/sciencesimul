@@ -219,6 +219,9 @@
       D.arrow(cx - dir * l2, TK.wy + 24, cx + dir * l2, TK.wy + 24, { color: '#ffffff', width: 6, alpha: clamp(w, 0, 1) });
       D.label(cx, TK.wy + 24 + 24, '표층 물의 흐름', { bg: 'rgba(11,80,140,.85)', size: 13, });
     }
+    card(20, 22, 280, 80, { bg: 'rgba(255,255,255,.92)' });
+    D.text(36, 55, '🔎 선풍기 바람을 불면', { size: 16, weight: 800, color: '#1b3a5c', align: 'left' });
+    D.text(36, 83, '물은 어떻게 움직일까요?', { size: 16, weight: 800, color: '#0b6fb8', align: 'left' });
     // 속력 카드
     const px = 316, py = 16, pw = 466, ph = 118;
     card(px, py, pw, ph, {});

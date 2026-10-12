@@ -1879,8 +1879,7 @@ window.SCI_CATALOG = {
                 "염분의 변화",
                 "염분비 일정",
                 "우리나라 바다"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m3-ocean-currents",
@@ -1900,8 +1899,7 @@ window.SCI_CATALOG = {
                 "북태평양 순환",
                 "난류와 한류",
                 "해류와 기후"
-              ],
-              "soon": true
+              ]
             }
           ]
         },
