@@ -208,7 +208,7 @@
   });
   function setScene(name, instant) {
     if (S.scene === name) return;
-    S.scene = name; S.sceneT = instant ? 0 : 0;
+    S.scene = name; S.sceneT = 0; hideHint();
     const s = SC[name]; if (s && s.enter) s.enter();
     refreshUI();
   }

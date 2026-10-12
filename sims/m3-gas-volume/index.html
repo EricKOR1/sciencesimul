@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#8b5cf6">
+  <title>기체 반응 법칙 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💨</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-toolbar { min-height: 61px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+    #resetBtn { font-size: 20px; }
+    .segmented button { min-height: 44px; padding: 6px 12px; font-size: 14.5px; white-space: nowrap; }
+    .segmented button[hidden], .segmented[hidden] { display: none; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; display: flex; flex-direction: column; gap: 10px; }
+    #ctrlCard .control[hidden], .readout[hidden] { display: none; }
+    .btn-block { min-height: 52px; font-size: 17px; }
+    .btn:disabled { opacity: .5; cursor: default; }
+    .ctrl-note { font-size: 13.5px; color: var(--muted); margin: 0; line-height: 1.45; }
+    .vol-ctl { display: flex; flex-direction: column; gap: 6px; }
+    .vc-label { font-weight: 800; font-size: 15px; color: var(--ink); display: flex; align-items: center; gap: 6px; }
+    .vc-label .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; border: 1px solid rgba(0,0,0,.2); }
+    .vc-row { display: flex; gap: 8px; align-items: center; }
+    .vc-row .btn { min-width: 58px; min-height: 50px; font-size: 24px; padding: 0; line-height: 1; }
+    .vc-row output { flex: 1; text-align: center; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-weight: 800; font-size: 22px; color: var(--ink); }
+    .stage-hint { white-space: normal; text-align: center; max-width: calc(100% - 32px); }
+    .concept table { border-collapse: collapse; width: 100%; font-size: 14px; margin: 6px 0; }
+    .concept th, .concept td { border: 1px solid var(--line); padding: 4px 6px; text-align: center; }
+    .concept th { background: var(--surface-2); }
+    .mission-figure svg { border-radius: 12px; }
+    @media (max-width: 599px) {
+      .stage-toolbar { min-height: 0; }
+      .segmented button { padding: 6px 10px; font-size: 13.5px; }
+      .toolbar-label { font-size: 13.5px; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="chem">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#g3">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">중3 · Ⅰ. 화학 반응의 규칙성</div>
+      <h1>기체 반응 법칙</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">💨 기체 주사기로 반응시켜요</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="sceneSeg" role="group" aria-label="장면 고르기" hidden></div>
+          <div class="segmented" id="subSeg" role="group" aria-label="종류 고르기" hidden></div>
+          <button class="icon-btn" id="resetBtn" type="button" title="처음 상태로" aria-label="처음 상태로">↺</button>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="기체 주사기와 반응 용기로 기체 반응의 부피를 재는 실험, 분석표, 분자 칸 모형 화면"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts" id="readouts">
+        <div class="readout" data-sc="react"><span class="label" id="rdLA">넣은 수소</span><span class="value" id="rdA">20<small> mL</small></span></div>
+        <div class="readout" data-sc="react"><span class="label" id="rdLB">넣은 산소</span><span class="value" id="rdB">10<small> mL</small></span></div>
+        <div class="readout" data-sc="react"><span class="label">반응 전 기체 부피</span><span class="value" id="rdBef">30<small> mL</small></span></div>
+        <div class="readout" data-sc="react"><span class="label">반응 후 기체 부피</span><span class="value" id="rdAft">-</span></div>
+        <div class="readout" data-sc="table"><span class="label">확인한 실험</span><span class="value" id="rdExp">0/9<small>개</small></span></div>
+        <div class="readout" data-sc="table"><span class="label">반응한 부피의 비</span><span class="value" id="rdTR">-</span></div>
+        <div class="readout" data-sc="model"><span class="label">완성한 물 분자 칸</span><span class="value" id="rdCell">0/2</span></div>
+        <div class="readout" data-sc="model"><span class="label">배치한 원자</span><span class="value" id="rdAtom">0/6<small>개</small></span></div>
+        <div class="readout" data-sc="model"><span class="label">반응 전 원자</span><span class="value word" id="rdMol">수소 4 · 산소 2</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" data-sc="react">
+          <div class="vol-ctl"><span class="vc-label" id="lblA">수소 부피</span><div class="vc-row"><button class="btn" id="aDn" type="button" aria-label="줄이기">−</button><output id="aVal">20 mL</output><button class="btn" id="aUp" type="button" aria-label="늘리기">+</button></div></div>
+          <div class="vol-ctl"><span class="vc-label" id="lblB">산소 부피</span><div class="vc-row"><button class="btn" id="bDn" type="button" aria-label="줄이기">−</button><output id="bVal">10 mL</output><button class="btn" id="bUp" type="button" aria-label="늘리기">+</button></div></div>
+          <button class="btn btn-primary btn-block" id="goBtn" type="button">⚡ 반응시키기</button>
+          <p class="ctrl-note" id="rxNote"></p>
+        </div>
+        <div class="control" data-sc="table">
+          <button class="btn btn-primary btn-block" id="revBtn" type="button">🔍 반응한 부피 구하기</button>
+          <button class="btn btn-block" id="tbResetBtn" type="button">↺ 처음으로</button>
+          <p class="ctrl-note">반응한 부피 = 넣은 부피 − 남은 부피</p>
+        </div>
+        <div class="control" data-sc="model">
+          <button class="btn btn-primary btn-block" id="mdAutoBtn" type="button">✨ 자동으로 맞추기</button>
+          <button class="btn btn-block" id="mdResetBtn" type="button">↺ 처음으로</button>
+          <p class="ctrl-note">같은 크기의 칸 하나가 분자 1개예요.</p>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>
