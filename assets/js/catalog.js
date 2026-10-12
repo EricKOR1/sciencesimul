@@ -1219,8 +1219,7 @@ window.SCI_CATALOG = {
                 "침의 소화",
                 "소화 효소",
                 "흡수"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m2-circulation",
@@ -1241,8 +1240,7 @@ window.SCI_CATALOG = {
                 "혈관과 혈액",
                 "순환 경로",
                 "종합"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m2-breathing",
@@ -1263,8 +1261,7 @@ window.SCI_CATALOG = {
                 "호흡 운동 모형",
                 "들숨과 날숨",
                 "기체 교환"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m2-excretion",
