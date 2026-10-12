@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#8b5cf6">
+  <title>일정 성분비 법칙 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧱</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-toolbar { min-height: 61px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+    #resetBtn { font-size: 20px; }
+    .segmented button { min-height: 44px; padding: 6px 12px; font-size: 14.5px; white-space: nowrap; }
+    .segmented button[hidden] { display: none; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; display: flex; flex-direction: column; gap: 10px; }
+    #ctrlCard .control[hidden], .readout[hidden] { display: none; }
+    .btn-block { min-height: 52px; font-size: 17px; }
+    .btn:disabled { opacity: .5; cursor: default; }
+    .ctrl-note { font-size: 13.5px; color: var(--muted); margin: 0; line-height: 1.45; }
+    .amt-seg { width: 100%; }
+    .amt-seg button { flex: 1; font-size: 16px; }
+    .stage-hint { white-space: normal; text-align: center; max-width: calc(100% - 32px); }
+    .concept table { border-collapse: collapse; width: 100%; font-size: 14px; margin: 6px 0; }
+    .concept th, .concept td { border: 1px solid var(--line); padding: 4px 6px; text-align: center; }
+    .concept th { background: var(--surface-2); }
+    .mission-figure svg { border-radius: 12px; }
+    @media (max-width: 599px) {
+      .stage-toolbar { min-height: 0; }
+      .segmented button { padding: 6px 10px; font-size: 13.5px; }
+      .toolbar-label { font-size: 13.5px; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="chem">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#g3">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">중3 · Ⅰ. 화학 반응의 규칙성</div>
+      <h1>일정 성분비 법칙</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🔥 구리 가루를 가열하며 질량을 재요</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="sceneSeg" role="group" aria-label="장면 고르기" hidden></div>
+          <button class="icon-btn" id="resetBtn" type="button" title="처음 상태로" aria-label="처음 상태로">↺</button>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="구리 가열 실험, 모둠 데이터 그래프, 원자 짝짓기 모형, 마그네슘 연소와 물 생성 실험 화면"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts" id="readouts">
+        <div class="readout" data-sc="lab"><span class="label">처음 구리</span><span class="value" id="rC">2.00<small> g</small></span></div>
+        <div class="readout" data-sc="lab"><span class="label">가열 횟수</span><span class="value" id="rRound">0<small>회</small></span></div>
+        <div class="readout" data-sc="lab"><span class="label">현재 질량</span><span class="value" id="rMass">2.00<small> g</small></span></div>
+        <div class="readout" data-sc="lab"><span class="label">결합한 산소</span><span class="value" id="rO">0.00<small> g</small></span></div>
+        <div class="readout" data-sc="graph"><span class="label">찍은 점</span><span class="value" id="rPts">0/4<small>개</small></span></div>
+        <div class="readout" data-sc="graph"><span class="label">산소 ÷ 구리</span><span class="value" id="rSlope">-</span></div>
+        <div class="readout" data-sc="graph"><span class="label">구리 : 산소</span><span class="value" id="rRatio">-</span></div>
+        <div class="readout" data-sc="cuo"><span class="label">CuO 짝</span><span class="value" id="rPair">0/6<small>쌍</small></span></div>
+        <div class="readout" data-sc="cuo"><span class="label">짝 없는 산소 원자</span><span class="value" id="rLeftO">8<small>개</small></span></div>
+        <div class="readout" data-sc="cuo"><span class="label">질량 칸 (구리 : 산소)</span><span class="value" id="rMR">-</span></div>
+        <div class="readout" data-sc="sugar"><span class="label">설탕</span><span class="value" id="rSug">0<small> g</small></span></div>
+        <div class="readout" data-sc="sugar"><span class="label">물</span><span class="value" id="rWat">100<small> g</small></span></div>
+        <div class="readout" data-sc="sugar"><span class="label">설탕 : 물</span><span class="value" id="rSW">-</span></div>
+        <div class="readout" data-sc="mg"><span class="label">마그네슘</span><span class="value" id="rMg">6.0<small> g</small></span></div>
+        <div class="readout" data-sc="mg"><span class="label">결합한 산소</span><span class="value" id="rMgO">-</span></div>
+        <div class="readout" data-sc="mg"><span class="label">산화 마그네슘</span><span class="value" id="rMgOx">-</span></div>
+        <div class="readout" data-sc="water"><span class="label">수소</span><span class="value" id="rH">2<small> g</small></span></div>
+        <div class="readout" data-sc="water"><span class="label">산소</span><span class="value" id="rO2">20<small> g</small></span></div>
+        <div class="readout" data-sc="water"><span class="label">생성된 물</span><span class="value" id="rWa">-</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" data-sc="lab">
+          <button class="btn btn-primary btn-block" id="heatBtn" type="button">🔥 가열하며 젓기</button>
+          <button class="btn btn-block" id="labResetBtn" type="button">↺ 새 구리로 다시</button>
+          <p class="ctrl-note">가열 → 식히기 → 질량 재기를 한 번으로 해요.</p>
+        </div>
+        <div class="control" data-sc="graph">
+          <button class="btn btn-primary btn-block" id="recvBtn" type="button">📨 모둠 데이터 받기</button>
+          <button class="btn btn-block" id="fitBtn" type="button" data-feature="fit">📏 직선 긋기</button>
+          <button class="btn btn-block" id="gdResetBtn" type="button">↺ 점 지우기</button>
+        </div>
+        <div class="control" data-sc="cuo">
+          <button class="btn btn-primary btn-block" id="autoBtn" type="button">✨ 자동으로 짝짓기</button>
+          <button class="btn btn-block" id="cuoResetBtn" type="button">↺ 처음으로</button>
+          <p class="ctrl-note">직접 해 보려면 산소 분자를 눌러 쪼개고, 산소 원자를 구리 원자 옆으로 끌어다 놓아요.</p>
+        </div>
+        <div class="control" data-sc="sugar">
+          <button class="btn btn-primary btn-block" id="sugarBtn" type="button">🥄 설탕 +10 g</button>
+          <button class="btn btn-block" id="waterAddBtn" type="button">💧 물 +50 g</button>
+          <button class="btn btn-block" id="sugarResetBtn" type="button">↺ 비우기</button>
+        </div>
+        <div class="control" data-sc="mg">
+          <div class="segmented amt-seg" id="mgAmt" role="group" aria-label="마그네슘의 양">
+            <button type="button" data-v="3">3 g</button><button type="button" data-v="6" class="on">6 g</button><button type="button" data-v="9">9 g</button>
+          </div>
+          <button class="btn btn-primary btn-block" id="mgBtn" type="button">🔥 태우기</button>
+        </div>
+        <div class="control" data-sc="water">
+          <div class="segmented amt-seg" id="wtAmt" role="group" aria-label="산소의 양 (수소는 2 g)">
+            <button type="button" data-v="8">산소 8 g</button><button type="button" data-v="16">16 g</button><button type="button" data-v="20" class="on">20 g</button>
+          </div>
+          <button class="btn btn-primary btn-block" id="wtBtn" type="button">💧 반응시키기</button>
+          <p class="ctrl-note">수소는 2 g으로 정해져 있어요.</p>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

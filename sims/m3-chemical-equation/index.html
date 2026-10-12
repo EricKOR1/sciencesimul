@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#8b5cf6">
+  <title>화학 반응식 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧩</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-toolbar { min-height: 61px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+    #resetBtn { font-size: 20px; }
+    .segmented button { min-height: 44px; padding: 6px 12px; font-size: 14.5px; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; display: flex; flex-direction: column; gap: 10px; }
+    .btn-block { min-height: 52px; font-size: 17px; }
+    .seg-full { width: 100%; }
+    .seg-full button { flex: 1; font-size: 15px; }
+    .ctrl-note { font-size: 13.5px; color: var(--muted); margin: 0; line-height: 1.45; }
+    .stage-hint { white-space: normal; text-align: center; max-width: calc(100% - 32px); }
+    .tgl {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 48px; width: 100%;
+      border: 2px solid var(--line); background: var(--surface); color: var(--muted);
+      border-radius: 999px; padding: 5px 14px; font-weight: 800; font-size: 16px; cursor: pointer;
+    }
+    .tgl[aria-pressed="true"] { color: #5b21b6; border-color: #c4b5fd; background: #f3efff; }
+    .stepper { display: flex; align-items: center; gap: 8px; }
+    .stepper .lab { flex: 1; font-weight: 800; font-size: 16px; display: flex; align-items: center; gap: 6px; min-width: 0; }
+    .stepper button { width: 48px; height: 48px; border-radius: 14px; border: 2px solid var(--line); background: var(--surface); font-size: 24px; font-weight: 800; color: var(--ink); cursor: pointer; }
+    .stepper button:active { transform: scale(.94); }
+    .stepper output { min-width: 28px; text-align: center; font-size: 22px; font-weight: 800; font-family: ui-monospace, Menlo, Consolas, monospace; }
+    .concept table { border-collapse: collapse; width: 100%; font-size: 14px; margin: 6px 0; }
+    .concept th, .concept td { border: 1px solid var(--line); padding: 4px 6px; text-align: center; }
+    .concept th { background: var(--surface-2); }
+    @media (max-width: 599px) {
+      .stage-toolbar { min-height: 0; }
+      .segmented button { padding: 6px 10px; font-size: 13.5px; }
+      .toolbar-label { font-size: 13.5px; }
+    }
+
+  </style>
+</head>
+<body class="sim-page" data-subject="chem">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#g3">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">중3 · Ⅰ. 화학 반응의 규칙성</div>
+      <h1>화학 반응식</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel"></span>
+          <span class="spacer"></span>
+          <div class="segmented" id="sceneSeg" role="group" aria-label="장면 고르기" hidden>
+            <button type="button" data-scene="react" data-feature="react">💥 반응</button>
+            <button type="button" data-scene="balance" data-feature="balance">⚖️ 원자 수</button>
+            <button type="button" data-scene="write" data-feature="write">🧩 반응식</button>
+            <button type="button" data-scene="ratio" data-feature="ratio">🔢 계수비</button>
+          </div>
+          <button class="icon-btn" id="resetBtn" type="button" title="처음 상태로" aria-label="처음 상태로">↺</button>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="수소와 산소가 반응해 물이 되는 분자 모형, 원자 수를 맞추는 저울, 반응식 작성대, 계수의 비 확인 장면"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" data-sc="react">
+          <button class="btn btn-primary btn-block" id="igniteBtn" type="button">⚡ 점화하기</button>
+          <p class="ctrl-note">용기 속 수소 분자와 산소 분자에 전기 불꽃을 튀겨요.</p>
+        </div>
+        <div class="control" data-sc="balance">
+          <div class="stepper"><span class="lab">수소 분자 H₂</span><button id="stm0" type="button" aria-label="하나 줄이기">−</button><output id="stv0">1</output><button id="stp0" type="button" aria-label="하나 늘리기">+</button></div>
+          <div class="stepper"><span class="lab">산소 분자 O₂</span><button id="stm1" type="button" aria-label="하나 줄이기">−</button><output id="stv1">1</output><button id="stp1" type="button" aria-label="하나 늘리기">+</button></div>
+          <div class="stepper"><span class="lab">물 분자 H₂O</span><button id="stm2" type="button" aria-label="하나 줄이기">−</button><output id="stv2">1</output><button id="stp2" type="button" aria-label="하나 늘리기">+</button></div>
+          <p class="ctrl-note" id="balNote"></p>
+        </div>
+        <div class="control" data-sc="write">
+          <div class="segmented seg-full" id="eqSeg" role="group" aria-label="반응 고르기">
+            <button type="button" data-eq="0" class="on">탄소 연소</button>
+            <button type="button" data-eq="1">물 분해</button>
+            <button type="button" data-eq="2">암모니아</button>
+          </div>
+          <button class="btn btn-primary btn-block" id="stageBtn" type="button">② 화학식으로 바꾸기 ▶</button>
+          <p class="ctrl-note" id="writeNote"></p>
+        </div>
+        <div class="control" data-sc="ratio">
+          <div class="stepper"><span class="lab">산소 분자 O₂</span><button id="o2m" type="button" aria-label="하나 줄이기">−</button><output id="o2v">1</output><button id="o2p" type="button" aria-label="하나 늘리기">+</button></div>
+          <button class="btn btn-primary btn-block" id="runBtn" type="button">⚡ 반응 시작</button>
+          <p class="ctrl-note" id="ratioNote"></p>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

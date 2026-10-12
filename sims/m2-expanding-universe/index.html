@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0ea5e9">
+  <title>팽창하는 우주 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎈</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-card { background: #eaf6ff; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    .is-off { display: none !important; }
+    .range-ends { display: flex; justify-content: space-between; font-size: 13px; font-weight: 700; color: var(--muted); margin-top: -2px; }
+    .ctrl-note { margin: 4px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    .btn-sm { min-height: 44px; }
+    input[type=range] { height: 44px; }
+    .game-foot button { min-height: 44px; }
+    .mission-figure svg, .note-fig svg { max-width: 100%; height: auto; border-radius: 12px; }
+    .note-fig { margin: 6px 0; text-align: center; }
+  </style>
+</head>
+<body class="sim-page" data-subject="earth">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#g2">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">중2 · Ⅷ. 별과 우주</div>
+      <h1>팽창하는 우주</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-canvas"><canvas id="cv" aria-label="스티커를 붙인 풍선 모형. 풍선을 부풀리면 스티커 사이의 거리가 멀어지고, 되감으면 한 점으로 모여요."></canvas></div>
+      </section>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" id="cSize" data-feature="balloon">
+          <div class="control-head"><label for="sSize" id="sizeLabel">🎈 풍선 크기</label><output id="oSize"></output></div>
+          <input type="range" id="sSize" min="1" max="2" step="0.01" value="1" aria-label="풍선 크기">
+          <div class="range-ends"><span id="endL">처음(1배)</span><span id="endR">2배</span></div>
+          <p class="ctrl-note" id="sizeNote">슬라이더를 오른쪽으로 밀어 풍선을 불어요.</p>
+        </div>
+        <div class="control" id="cPlay" data-feature="past">
+          <button class="btn btn-sm btn-primary" id="playBtn" type="button">💥 대폭발부터 다시 보기</button>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>
