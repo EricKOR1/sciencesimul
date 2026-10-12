@@ -1172,8 +1172,7 @@ window.SCI_CATALOG = {
                 "낮과 밤",
                 "비교",
                 "적용"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m2-plant-products",
@@ -1193,8 +1192,7 @@ window.SCI_CATALOG = {
                 "이동",
                 "저장",
                 "이용"
-              ],
-              "soon": true
+              ]
             }
           ]
         },

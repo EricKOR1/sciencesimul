@@ -126,6 +126,7 @@
 
   /* ---------- 축하 효과 · NEW 표시 ---------- */
   const checks = [];
+  let FRAME_DT = 0.016;
   function celebrate(x, y) {
     FX.burst(x, y, { count: 26, speed: 190, life: 0.9, size: 4 });
     checks.push({ x, y, t: 0 });
@@ -134,7 +135,7 @@
   function drawChecks(dt) {
     for (let i = checks.length - 1; i >= 0; i--) {
       const c = checks[i];
-      c.t += dt;
+      c.t += dt || FRAME_DT;
       if (c.t > 1.8) { checks.splice(i, 1); continue; }
       ctx.save(); ctx.globalAlpha = c.t > 1.3 ? 1 - (c.t - 1.3) / 0.5 : 1;
       const s = 0.75 + 0.25 * ease.outBack(Math.min(1, c.t / 0.35));
@@ -1083,7 +1084,7 @@
   }
   let roTimer = 0;
   function update(dt) {
-    CLK.t += dt;
+    CLK.t += dt; FRAME_DT = dt;
     if (scene === 'btb') updateBtb(dt);
     else if (scene === 'day') updateDay(dt);
     else if (scene === 'table') TBL.update(dt);

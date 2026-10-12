@@ -134,7 +134,7 @@
   function drawChecks(dt) {
     for (let i = checks.length - 1; i >= 0; i--) {
       const c = checks[i];
-      c.t += dt;
+      c.t += dt || 1 / 60; // 호출부가 0을 넘겨도 체크 표시가 진행되도록
       if (c.t > 1.8) { checks.splice(i, 1); continue; }
       ctx.save(); ctx.globalAlpha = c.t > 1.3 ? 1 - (c.t - 1.3) / 0.5 : 1;
       const s = 0.75 + 0.25 * ease.outBack(Math.min(1, c.t / 0.35));
