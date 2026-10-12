@@ -1088,7 +1088,7 @@
       sysDraw(SCP.sys, x, y, SCP.sys.t);
       ctx.restore();
       if (SCP.ap < 0.98) { ctx.strokeStyle = 'rgba(210,230,255,' + (0.8 * (1 - SCP.ap)).toFixed(2) + ')'; ctx.lineWidth = 3; circle(ctx, x, y, SCP.ap * Rin); ctx.stroke(); }
-      D.label(x, y - Rin + 24, '입자 모형 (실제보다 아주 크게)', { bg: 'rgba(8,14,36,.78)', size: 13, pad: 10 });
+      D.label(x, y - Rin + 52, '입자 모형 (실제보다 아주 크게)', { bg: 'rgba(8,14,36,.78)', size: 13, pad: 10 });
     } else {
       txt('🔬', x, y - 6, 34, '#fff', 'center', 800);
       txt('시료를 끌어 넣어요', x, y + 28, 15, 'rgba(210,225,255,.85)', 'center', 800);

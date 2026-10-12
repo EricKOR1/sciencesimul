@@ -1105,8 +1105,7 @@ window.SCI_CATALOG = {
                 "원자·분자",
                 "세어 보기",
                 "입자 분류"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m2-ion",
