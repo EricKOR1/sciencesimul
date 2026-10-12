@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#16a34a">
+  <title>감각 기관과 자극의 전달 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👁️</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-card { background: #eef4ef; }
+    .stage-toolbar { min-height: 61px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+    #sceneSeg button { min-height: 44px; padding: 6px 11px; }
+    #sceneSeg [hidden] { display: none !important; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard [hidden] { display: none !important; }
+    .cgrp { display: flex; flex-direction: column; gap: 10px; }
+    .cgrp .btn { min-height: 48px; font-size: 16px; }
+    .cgrp .btn[disabled] { opacity: .45; cursor: default; }
+    .cgrp .segmented { align-self: stretch; }
+    .cgrp .segmented button { flex: 1; min-height: 44px; font-size: 15px; }
+    .cgrp .segmented button.on { background: var(--bio); color: #fff; }
+    input[type=range] { height: 44px; }
+    .ctrl-note { font-size: 13.5px; color: var(--muted); margin: 2px 0 0; line-height: 1.4; }
+    .tgl {
+      display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 48px;
+      border: 2px solid var(--line); background: var(--surface); color: var(--muted);
+      border-radius: 999px; padding: 6px 14px; font-weight: 800; font-size: 16px; cursor: pointer;
+      transition: background .15s, border-color .15s, color .15s; user-select: none; -webkit-user-select: none;
+    }
+    .tgl .chk { width: 18px; height: 18px; border-radius: 50%; border: 2px solid #cbd5e1; display: grid; place-items: center; font-size: 11px; line-height: 1; color: transparent; flex: none; }
+    .tgl[aria-pressed="true"] { color: #166534; border-color: #86efac; background: #ecfdf3; }
+    .tgl[aria-pressed="true"] .chk { background: var(--bio); border-color: var(--bio); color: #fff; }
+    .tgl:active { transform: scale(.97); }
+    .mission-figure svg { border-radius: 12px; }
+    .concept .gnote { font-size: 13.5px; color: var(--muted); }
+    @media (orientation: portrait) and (min-width: 600px) {
+      .side-col > #ctrlCard { width: calc(44% - 6px); }
+    }
+    @media (max-width: 599px) {
+      #sceneSeg { flex-wrap: nowrap; }
+      #sceneSeg button { padding: 6px 10px; font-size: 14px; }
+      #sceneSeg button:not(.on) .t { display: none; }
+      .toolbar-label { display: none; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="bio">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#g3">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">중3 · Ⅴ. 자극과 반응</div>
+      <h1>감각 기관과 자극의 전달</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="sceneLabel">🔬 맹점 실험</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="sceneSeg" role="tablist" aria-label="학습 장면">
+            <button type="button" data-scene="blind" data-feature="blind" title="맹점 실험" aria-label="맹점 실험">🔬<span class="t"> 맹점</span></button>
+            <button type="button" data-scene="adjust" data-feature="adjust" title="눈의 조절" aria-label="눈의 조절">👁️<span class="t"> 눈 조절</span></button>
+            <button type="button" data-scene="ear" data-feature="ear" title="귀" aria-label="귀">👂<span class="t"> 귀</span></button>
+            <button type="button" data-scene="nose" data-feature="nose" title="코와 혀" aria-label="코와 혀">👃<span class="t"> 코·혀</span></button>
+            <button type="button" data-scene="skin" data-feature="skin" title="피부" aria-label="피부">✋<span class="t"> 피부</span></button>
+            <button type="button" data-scene="path" data-feature="path" title="자극의 전달" aria-label="자극의 전달">🧠<span class="t"> 전달</span></button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="눈의 단면과 맹점 실험, 홍채와 수정체의 조절, 귀·코·혀·피부의 자극 받아들이기, 자극이 뇌로 전달되는 경로를 살펴보는 화면"></canvas>
+        </div>
+      </section>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="cgrp" data-scene="blind">
+          <div class="control">
+            <div class="control-head"><label for="sOff">● 의 위치</label><output id="oOff">+에서 8.0 cm</output></div>
+            <input type="range" id="sOff" min="0" max="24" step="0.1" value="3" aria-label="+에서 ●까지의 거리">
+          </div>
+          <div class="control">
+            <div class="control-head"><label for="sDist">👁️ 눈 ↔ 카드</label><output id="oDist">30 cm</output></div>
+            <input type="range" id="sDist" min="20" max="60" step="1" value="30" aria-label="눈과 카드 사이의 거리">
+          </div>
+          <p class="ctrl-note">왼쪽 카드의 ●를 끌어도 돼요. 오른눈으로 +만 바라보는 실험이에요.</p>
+        </div>
+        <div class="cgrp" data-scene="adjust" hidden>
+          <div class="control">
+            <div class="control-head"><label for="sBright">💡 주변 밝기</label><output id="oBright">보통</output></div>
+            <input type="range" id="sBright" min="0" max="1" step="0.01" value="0.5" aria-label="주변 밝기">
+          </div>
+          <div class="control" id="distCtl">
+            <div class="control-head"><label for="sObj">🌸 물체까지 거리</label><output id="oObj">1 m</output></div>
+            <input type="range" id="sObj" min="0" max="1" step="0.01" value="0.5" aria-label="물체까지의 거리">
+          </div>
+          <p class="ctrl-note" id="adjNote">밝기를 바꾸면 홍채가, 거리를 바꾸면 수정체가 어떻게 달라지는지 봐요.</p>
+        </div>
+        <div class="cgrp" data-scene="ear" hidden>
+          <button class="btn btn-subject" type="button" id="btnSound">🔔 소리 내기</button>
+          <p class="ctrl-note">소리가 지나가는 길을 따라가 봐요. 귀 그림의 이름표를 눌러 보세요.</p>
+        </div>
+        <div class="cgrp" data-scene="nose" hidden>
+          <div class="segmented" id="foodSeg" role="group" aria-label="음식 고르기">
+            <button type="button" data-food="apple" class="on">🍎 사과</button><button type="button" data-food="onion">🧅 양파</button>
+          </div>
+          <button class="tgl" type="button" id="btnPinch" aria-pressed="false"><span class="chk">✓</span>👃 코 막기</button>
+          <button class="btn btn-subject" type="button" id="btnTaste">😋 맛보기</button>
+        </div>
+        <div class="cgrp" data-scene="skin" hidden>
+          <div class="segmented" id="regionSeg" role="group" aria-label="자극할 부위">
+            <button type="button" data-region="finger" class="on">☝️ 손끝</button><button type="button" data-region="back">🧍 등</button>
+          </div>
+          <div class="control">
+            <div class="control-head"><label>📏 두 점 사이 간격</label><output id="oGap">3 mm</output></div>
+            <div class="segmented" id="gapSeg" role="group" aria-label="두 점 사이의 간격"></div>
+          </div>
+        </div>
+        <div class="cgrp" data-scene="path" hidden>
+          <button class="btn btn-subject" type="button" id="btnSend">⚡ 자극 보내기</button>
+          <p class="ctrl-note">자극 카드 옆 칸을 눌러 감각 기관과 감각 세포를 골라요.</p>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>
