@@ -892,7 +892,8 @@
     // 땅 (지도 확대)
     ctx.save(); ctx.translate(MOX, MOY); ctx.scale(MZ, MZ); ctx.translate(-MOX, -MOY);
     const landCol = mixc('#e4ebf2', '#8cc56f', ms), isleCol = mixc('#dde6ee', '#7fb865', ms);
-    D.shadow(() => { poly(CONT); ctx.fillStyle = landCol; ctx.fill(); }, { blur: 14, y: 4, color: 'rgba(5,20,50,.35)' });
+    ctx.save(); ctx.translate(0, 6); poly(CONT); ctx.fillStyle = 'rgba(5,20,50,.28)'; ctx.fill(); ctx.restore();
+    poly(CONT); ctx.fillStyle = landCol; ctx.fill();
     ISLES.forEach((p) => { poly(p); ctx.fillStyle = isleCol; ctx.fill(); ctx.strokeStyle = 'rgba(40,70,40,.35)'; ctx.lineWidth = 1.5; ctx.stroke(); });
     ctx.save(); poly(CONT); ctx.clip();
     const tg = ctx.createRadialGradient(150, 200, 20, 150, 200, 380);
