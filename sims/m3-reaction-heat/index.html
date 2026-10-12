@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#8b5cf6">
+  <title>화학 반응과 열에너지 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>♨️</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-toolbar { min-height: 61px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+    #resetBtn { font-size: 20px; }
+    .segmented button { min-height: 44px; padding: 6px 12px; font-size: 14.5px; white-space: nowrap; }
+    .segmented button[hidden], .segmented[hidden] { display: none; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; display: flex; flex-direction: column; gap: 10px; }
+    #ctrlCard .control[hidden], .readout[hidden] { display: none; }
+    .btn-block { min-height: 52px; font-size: 17px; }
+    .btn:disabled { opacity: .5; cursor: default; }
+    .ctrl-note { font-size: 13.5px; color: var(--muted); margin: 0; line-height: 1.45; }
+    .tgl { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 48px; border: 2px solid var(--line); background: var(--surface); color: var(--muted); border-radius: 999px; padding: 6px 14px; font-weight: 800; font-size: 16px; cursor: pointer; width: 100%; }
+    .tgl[aria-pressed="true"] { color: #1d5fb8; border-color: #8fbdf3; background: #eaf3ff; }
+    .amt-seg { width: 100%; }
+    .amt-seg button { flex: 1; font-size: 15px; padding: 6px 4px; }
+    .vol-ctl { display: flex; flex-direction: column; gap: 6px; }
+    .vc-label { font-weight: 800; font-size: 15px; color: var(--ink); display: flex; align-items: center; gap: 6px; }
+    .vc-label .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; border: 1px solid rgba(0,0,0,.2); }
+    .vc-row { display: flex; gap: 8px; align-items: center; }
+    .vc-row .btn { min-width: 58px; min-height: 50px; font-size: 24px; padding: 0; line-height: 1; }
+    .vc-row output { flex: 1; text-align: center; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-weight: 800; font-size: 22px; color: var(--ink); }
+    .stage-hint { white-space: normal; text-align: center; max-width: calc(100% - 32px); }
+    .concept table { border-collapse: collapse; width: 100%; font-size: 14px; margin: 6px 0; }
+    .concept th, .concept td { border: 1px solid var(--line); padding: 4px 6px; text-align: center; }
+    .concept th { background: var(--surface-2); }
+    .mission-figure svg { border-radius: 12px; }
+    @media (max-width: 599px) {
+      .stage-toolbar { min-height: 0; }
+      .segmented button { padding: 6px 10px; font-size: 13.5px; }
+      .toolbar-label { font-size: 13.5px; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="chem">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#g3">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">중3 · Ⅰ. 화학 반응의 규칙성</div>
+      <h1>화학 반응과 열에너지</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🧤 손난로와 냉각 팩의 온도를 재요</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="sceneSeg" role="group" aria-label="장면 고르기" hidden></div>
+          <div class="segmented" id="subSeg" role="group" aria-label="반응 고르기" hidden></div>
+          <button class="icon-btn" id="resetBtn" type="button" title="처음 상태로" aria-label="처음 상태로">↺</button>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="손난로와 냉각 팩, 발열 반응, 흡열 반응의 온도 변화와 열의 이동, 냉각 장치 설계, 사례 카드 분류 화면"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts" id="readouts">
+        <div class="readout" data-sc="packs"><span class="label">손난로 온도</span><span class="value" id="rW">22.0<small> °C</small></span></div>
+        <div class="readout" data-sc="packs"><span class="label">손난로 최고</span><span class="value" id="rWp">22.0<small> °C</small></span></div>
+        <div class="readout" data-sc="packs"><span class="label">냉각 팩 온도</span><span class="value" id="rC">22.0<small> °C</small></span></div>
+        <div class="readout" data-sc="packs"><span class="label">냉각 팩 최저</span><span class="value" id="rCl">22.0<small> °C</small></span></div>
+        <div class="readout" data-sc="exo"><span class="label">반응</span><span class="value word" id="rEq">산화 칼슘 + 물</span></div>
+        <div class="readout" data-sc="exo"><span class="label">현재 온도</span><span class="value" id="rET">25.0<small> °C</small></span></div>
+        <div class="readout" data-sc="exo"><span class="label">최고 온도</span><span class="value" id="rEp">25.0<small> °C</small></span></div>
+        <div class="readout" data-sc="exo"><span class="label">온도 변화</span><span class="value" id="rEd">0.0<small> °C</small></span></div>
+        <div class="readout" data-sc="endo" data-sub="ba"><span class="label">현재 온도</span><span class="value" id="rBT">22.0<small> °C</small></span></div>
+        <div class="readout" data-sc="endo" data-sub="ba"><span class="label">최저 온도</span><span class="value" id="rBl">22.0<small> °C</small></span></div>
+        <div class="readout" data-sc="endo" data-sub="ba"><span class="label">나무판 위 물</span><span class="value word" id="rBs">물</span></div>
+        <div class="readout" data-sc="endo" data-sub="na"><span class="label">분해 정도</span><span class="value" id="rNp">0<small> %</small></span></div>
+        <div class="readout" data-sc="endo" data-sub="na"><span class="label">불</span><span class="value word" id="rNf">꺼짐</span></div>
+        <div class="readout" data-sc="endo" data-sub="na"><span class="label">불을 껐을 때</span><span class="value word" id="rNs">-</span></div>
+        <div class="readout" data-sc="design"><span class="label">음료 온도</span><span class="value" id="rDT">25.0<small> °C</small></span></div>
+        <div class="readout" data-sc="design"><span class="label">최저 기록</span><span class="value" id="rDb">-</span></div>
+        <div class="readout" data-sc="design"><span class="label">시도</span><span class="value" id="rDn">0<small>회</small></span></div>
+        <div class="readout" data-sc="cards"><span class="label">분류한 카드</span><span class="value" id="rCn">0/8<small>장</small></span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" data-sc="packs">
+          <button class="btn btn-primary btn-block" id="shakeBtn" type="button">💪 손난로 흔들기</button>
+          <button class="btn btn-block" id="burstBtn" type="button">🧊 냉각 팩 터뜨리기</button>
+          <button class="btn btn-block" id="pkResetBtn" type="button">↺ 새 팩으로</button>
+        </div>
+        <div class="control" data-sc="exo">
+          <button class="btn btn-primary btn-block" id="exoBtn" type="button">▶ 반응시키기</button>
+          <p class="ctrl-note">주황색 화살표는 열에너지가 나가는 방향이에요. 반응은 위 단추에서 골라요.</p>
+        </div>
+        <div class="control" data-sc="endo" data-sub="ba">
+          <button class="btn btn-primary btn-block" id="baStirBtn" type="button">🥄 섞기</button>
+          <button class="btn btn-block" id="baLiftBtn" type="button">🫳 비커 들어올리기</button>
+          <button class="btn btn-block" id="baResetBtn" type="button">↺ 다시 하기</button>
+        </div>
+        <div class="control" data-sc="endo" data-sub="na">
+          <button class="btn btn-primary btn-block" id="naBtn" type="button">🔥 가열하기</button>
+          <button class="btn btn-block" id="naResetBtn" type="button">↺ 다시 하기</button>
+          <p class="ctrl-note">파란색 화살표는 열에너지가 들어오는 방향이에요.</p>
+        </div>
+        <div class="control" data-sc="design">
+          <div class="segmented amt-seg" id="matSeg" role="group" aria-label="재료">
+            <button type="button" data-v="nh4" class="on">질산 암모늄</button><button type="button" data-v="cao">산화 칼슘</button><button type="button" data-v="cacl">염화 칼슘</button>
+          </div>
+          <div class="segmented amt-seg" id="amtSeg" role="group" aria-label="양">
+            <button type="button" data-v="10">10 g</button><button type="button" data-v="20" class="on">20 g</button><button type="button" data-v="30">30 g</button>
+          </div>
+          <button class="tgl" id="insBtn" type="button" aria-pressed="false">🧣 단열재 씌우기</button>
+        </div>
+        <div class="control" data-sc="cards">
+          <button class="btn btn-block" id="cdResetBtn" type="button">↺ 카드 다시 섞기</button>
+          <p class="ctrl-note">카드를 끌어서 상자에 넣고, 분류한 카드를 누르면 발표 카드가 나와요.</p>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

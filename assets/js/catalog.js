@@ -1618,8 +1618,7 @@ window.SCI_CATALOG = {
                 "질량비 그래프",
                 "입자 모형",
                 "적용"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m3-gas-volume",
@@ -1639,8 +1638,7 @@ window.SCI_CATALOG = {
                 "부피비 분석",
                 "분자 모형",
                 "적용"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m3-reaction-heat",
@@ -1660,8 +1658,7 @@ window.SCI_CATALOG = {
                 "발열 반응",
                 "흡열 반응",
                 "냉각 장치"
-              ],
-              "soon": true
+              ]
             }
           ]
         },
