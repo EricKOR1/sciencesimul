@@ -14,7 +14,6 @@
   const FONT = '"Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif';
   const DISPLAY = '"Jua", ' + FONT;
   const RM = !!SciSim.reduceMotion;
-  const shade = SciSim.color.shade, rgba = SciSim.color.rgba, mixc = SciSim.color.mix;
   const EZ = SciSim.ease, approach = SciSim.approach;
   const nowS = () => performance.now() / 1000;
   const FRAME = '#140f18';
@@ -44,19 +43,6 @@
   function fbm(x, y, seed, oct) {
     let v = 0, a = 0.5, f = 1;
     for (let i = 0; i < oct; i++) { v += a * vnoise(x * f, y * f, seed + i * 17); f *= 2; a *= 0.5; }
-    return v / (1 - Math.pow(0.5, oct));
-  }
-  // 가로·세로로 이어 붙여도 이음새가 없는 잡음 (무늬 타일용)
-  function pnoise(x, y, px, py, seed) {
-    const ix = Math.floor(x), iy = Math.floor(y), fx = x - ix, fy = y - iy;
-    const sx = fx * fx * (3 - 2 * fx), sy = fy * fy * (3 - 2 * fy);
-    const mx = (v) => ((v % px) + px) % px, my = (v) => ((v % py) + py) % py;
-    const a = hash2(mx(ix), my(iy), seed), b = hash2(mx(ix + 1), my(iy), seed), c = hash2(mx(ix), my(iy + 1), seed), d = hash2(mx(ix + 1), my(iy + 1), seed);
-    return a + (b - a) * sx + (c - a) * sy + (a - b - c + d) * sx * sy;
-  }
-  function pfbm(x, y, px, py, seed, oct) {
-    let v = 0, a = 0.5, f = 1;
-    for (let i = 0; i < oct; i++) { v += a * pnoise(x * f, y * f, px * f, py * f, seed + i * 17); f *= 2; a *= 0.5; }
     return v / (1 - Math.pow(0.5, oct));
   }
   function roundRect(ctx, x, y, w, h, r) {
@@ -100,11 +86,6 @@
     if (line) lines.push(line);
     return lines;
   }
-  function drawWrapped(ctx, text, x, y, maxW, lh, maxLines) {
-    const lines = wrapLines(ctx, text, maxW), n = maxLines ? Math.min(maxLines, lines.length) : lines.length;
-    for (let i = 0; i < n; i++) ctx.fillText(lines[i], x, y + i * lh);
-    return n;
-  }
   const pulse = () => 0.5 + 0.5 * Math.sin(performance.now() / 160);
   const chk = (ok, label) => (ok ? '✅ ' : '⬜ ') + label;
   const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
@@ -120,37 +101,8 @@
 
 
   /* =========================================================
-     우주 배경 · 공통 부품
+     공통 부품 (효과 고리)
      ========================================================= */
-  function makeStars(rect, n, seed) {
-    const r = rng(seed), a = [];
-    for (let i = 0; i < n; i++) {
-      const c = r();
-      a.push({ x: rect.x + r() * rect.w, y: rect.y + r() * rect.h, s: 0.5 + Math.pow(r(), 1.8) * 1.5, p: r() * TAU, k: 0.6 + r() * 1.8, c: c < 0.14 ? '#ffe7c2' : c < 0.3 ? '#cfe0ff' : '#eef3ff' });
-    }
-    return a;
-  }
-  function drawStars(ctx, stars, t, alpha) {
-    for (let i = 0; i < stars.length; i++) {
-      const s = stars[i];
-      const tw = RM ? 0.7 : 0.45 + 0.4 * Math.sin(t * s.k + s.p);
-      ctx.globalAlpha = alpha * tw; ctx.fillStyle = s.c;
-      if (s.s > 1.45) {
-        ctx.beginPath(); ctx.arc(s.x, s.y, s.s * 0.75, 0, TAU); ctx.fill();
-        ctx.globalAlpha = alpha * tw * 0.35; ctx.fillRect(s.x - s.s * 2.2, s.y - 0.4, s.s * 4.4, 0.8); ctx.fillRect(s.x - 0.4, s.y - s.s * 2.2, 0.8, s.s * 4.4);
-      } else ctx.fillRect(s.x, s.y, s.s * 1.3, s.s * 1.3);
-    }
-    ctx.globalAlpha = 1;
-  }
-  function spacePanel(ctx, P, stars, t) {
-    roundRect(ctx, P.x, P.y, P.w, P.h, 16);
-    const g = ctx.createLinearGradient(0, P.y, 0, P.y + P.h);
-    g.addColorStop(0, '#0c1636'); g.addColorStop(1, '#1b2d60');
-    ctx.fillStyle = g; ctx.fill();
-    if (stars) drawStars(ctx, stars, t, 0.75);
-    roundRect(ctx, P.x, P.y, P.w, P.h, 16);
-    ctx.strokeStyle = 'rgba(160,190,255,.28)'; ctx.lineWidth = 1.5; ctx.stroke();
-  }
   function ringFx(V, x, y, r, col) { V.fx.push({ x, y, r, col: col || '#34d399', t0: nowS() }); }
   function drawFx(ctx, V) {
     const n = nowS();
@@ -162,22 +114,6 @@
     }
     ctx.globalAlpha = 1;
   }
-  // 캔버스 안 안내 띠
-  function hintBar(ctx, L, rect, text, o) {
-    o = o || {};
-    ctx.save();
-    if (o.alpha != null) ctx.globalAlpha *= o.alpha;
-    ctx.font = fnt(L, 15, 'bold');
-    const lines = wrapLines(ctx, text, rect.w - 28 * L.fs), lh = 20 * L.fs, h = Math.max(36 * L.fs, lines.length * lh + 14 * L.fs);
-    const y = rect.y + (rect.h - h) / 2;
-    roundRect(ctx, rect.x, y, rect.w, h, 14);
-    ctx.fillStyle = o.bg || 'rgba(10,18,44,.82)'; ctx.fill();
-    ctx.strokeStyle = o.stroke || 'rgba(160,190,255,.35)'; ctx.lineWidth = 1.5; ctx.stroke();
-    ctx.fillStyle = o.color || '#e8efff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    lines.forEach((ln, i) => ctx.fillText(ln, rect.x + rect.w / 2, y + h / 2 + (i - (lines.length - 1) / 2) * lh + 0.5));
-    ctx.restore();
-  }
-
 
   /* =========================================================
      자료
@@ -196,11 +132,6 @@
     lime: { id: 'lime', name: '석회 물질', emoji: '🐚', rock: '석회암', h0: 60, k: 0.3, col: '#e9e1c8', rockCol: '#d9d0b4', desc: '석회질 조개 껍데기·산호 등이 굳은 암석' },
   };
   const SEDIDS = ['gravel', 'sand', 'mud', 'lime'];
-  const META = {
-    mud: { id: 'mud', name: '이암', stages: ['이암', '편암', '편마암'] },
-    sand: { id: 'sand', name: '사암', stages: ['사암', '규암'] },
-    lime: { id: 'lime', name: '석회암', stages: ['석회암', '대리암'] },
-  };
   const metaStageOf = (rid, p) => {
     if (rid === 'mud') return p < 0.3 ? 0 : p < 0.66 ? 1 : 2;
     return p < 0.4 ? 0 : 1;
@@ -261,10 +192,6 @@
   let game = null;
   let FEAT = new Set();
   const isFree = () => !!(game && game.free);
-  function frameOf(L, trayH) {
-    if (L.key === 'wide') return { M: { x: 12, y: 12, w: 776, h: L.vh - 24 - trayH }, T: { x: 12, y: L.vh - 12 - trayH + 10, w: 776, h: trayH - 10 } };
-    return { M: { x: 10, y: 10, w: 500, h: L.vh - 20 - trayH }, T: { x: 10, y: L.vh - 10 - trayH + 10, w: 500, h: trayH - 10 } };
-  }
   // 화면 바탕 (어두운 흙빛 판)
   function earthPanel(ctx, P, t, o) {
     o = o || {};
@@ -970,7 +897,7 @@
       ctx.restore();
     }
     const G = run ? I.G : (IGG.slow || IGG.fast), have = !!G;
-    if (have) renderIgLens(G, run ? I.A : null, run ? I.key : igKey(), I.darkS, run ? I.tau : 0, t);
+    if (have) { renderIgLens(G, run ? I.A : null, run ? I.key : igKey(), I.darkS, run ? I.tau : 0, t); LENSKEY.k = ''; }
     lensFrame(V, ln.cx, ln.cy, ln.R, (c) => {
       c.fillStyle = '#1b0d0d'; c.fillRect(ln.cx - ln.R, ln.cy - ln.R, ln.R * 2, ln.R * 2);
       if (have) { c.imageSmoothingEnabled = true; c.drawImage(lensCv, ln.cx - ln.R, ln.cy - ln.R, ln.R * 2, ln.R * 2); }
@@ -1421,8 +1348,30 @@
   }
   const sedTop = (g) => { const b = sedBands(g); return b.length ? b[b.length - 1].y0 : g.tank.y + g.tank.h; };
   const sedFullH = (g) => S.sed.layers.reduce((a, l) => a + SED[l.id].h0 * g.k, 0);
+  const SWATCH = {};
+  function getSwatch(id, sz, sc) {
+    const key = id + '|' + sz + '|' + sc;
+    if (SWATCH[key]) return SWATCH[key];
+    const cv = document.createElement('canvas'); cv.width = cv.height = Math.round(sz * sc);
+    const c = cv.getContext('2d'); c.scale(sc, sc); c.translate(sz / 2, sz / 2);
+    const z = sz / 100 * 0.9; c.scale(z, z); drawPack(c, id, 60, 60, 0.5);
+    return (SWATCH[key] = cv);
+  }
+  // 돋보기 속 알갱이 그림: 눌림 정도가 달라질 때만 다시 그려요
+  const LENSPACK = { key: '', cv: null, size: 0 };
+  function lensPackImage(V, id, c, R) {
+    const sc = Math.max(1, Math.min(2, V.v.scale * V.v.dpr)), q = Math.round(c * 60) / 60;
+    const key = id + '|' + q + '|' + R + '|' + sc.toFixed(1);
+    if (LENSPACK.key !== key) {
+      const size = Math.ceil(R * 2 + 4), px = Math.round(size * sc);
+      if (!LENSPACK.cv || LENSPACK.cv.width !== px) { LENSPACK.cv = document.createElement('canvas'); LENSPACK.cv.width = LENSPACK.cv.height = px; }
+      const c2 = LENSPACK.cv.getContext('2d'); c2.setTransform(sc, 0, 0, sc, 0, 0); c2.clearRect(0, 0, size, size);
+      c2.translate(size / 2, size / 2); const z = R / 120; c2.scale(z, z); drawPack(c2, id, 135, 135, q);
+      LENSPACK.key = key; LENSPACK.size = size;
+    }
+    return LENSPACK;
+  }
   const POUR = { gravel: { n: 16, vy: 560, r: 6.2, dur: 0.8 }, sand: { n: 100, vy: 430, r: 2.7, dur: 1.0 }, mud: { n: 150, vy: 330, r: 1.7, dur: 1.0 }, lime: { n: 80, vy: 380, r: 2.6, dur: 1.0 } };
-  const sedName = (id) => SED[id].name + (id === 'lime' ? '' : '');
   const sedLayerName = (id) => (id === 'lime' ? '석회 물질층' : SED[id].name + '층');
   function sedTimeText(p) { return p < 0.04 ? '막 쌓였어요' : p < 0.35 ? '시간이 흘러요…' : p < 0.7 ? '위에서 눌려 다져져요' : p < 0.93 ? '알갱이가 붙기 시작해요' : '굳어서 암석이 됐어요'; }
   function sedDesc(p, id) {
@@ -1551,7 +1500,8 @@
       ctx.translate(flip ? T.x + T.w : T.x, b.y1 - sh);
       if (flip) ctx.scale(-1, 1);
       const s0 = getStrip(V, g, b.id, i0), s1 = getStrip(V, g, b.id, i0 + 1);
-      if (s0) { ctx.drawImage(s0, 0, 0, T.w, sh); if (s1 && aa > 0.01) { ctx.globalAlpha = aa; ctx.drawImage(s1, 0, 0, T.w, sh); ctx.globalAlpha = 1; } }
+      if (aa > 0.995 && s1) ctx.drawImage(s1, 0, 0, T.w, sh);
+      else if (s0) { ctx.drawImage(s0, 0, 0, T.w, sh); if (s1 && aa > 0.01) { ctx.globalAlpha = aa; ctx.drawImage(s1, 0, 0, T.w, sh); ctx.globalAlpha = 1; } }
       else { ctx.fillStyle = PACK[b.id].cols[0]; ctx.fillRect(0, 0, T.w, sh); }
       ctx.restore();
       // 층 사이의 경계 (눌려서 굳으면 또렷한 줄무늬: 층리)
@@ -1622,8 +1572,9 @@
     lensFrame(V, ln.cx, ln.cy, ln.R, (cx) => {
       cx.fillStyle = PORE; cx.fillRect(ln.cx - ln.R, ln.cy - ln.R, ln.R * 2, ln.R * 2);
       if (lay) {
+        const lp = lensPackImage(V, lay.id, c, ln.R);
+        cx.drawImage(lp.cv, ln.cx - lp.size / 2, ln.cy - lp.size / 2, lp.size, lp.size);
         cx.save(); cx.translate(ln.cx, ln.cy); const z = ln.R / 120; cx.scale(z, z);
-        drawPack(cx, lay.id, 135, 135, c);
         if (c > 0.02) {
           cx.globalAlpha = smooth(0.02, 0.2, c) * 0.9; cx.fillStyle = '#fff'; cx.strokeStyle = '#fff'; cx.lineWidth = 5; cx.lineCap = 'round';
           for (let i = 0; i < 3; i++) { const ax = -64 + i * 64, by = RM ? 0 : 3 * Math.sin(t * 4 + i); cx.beginPath(); cx.moveTo(ax, -112 + by); cx.lineTo(ax, -84 + by); cx.stroke(); cx.beginPath(); cx.moveTo(ax - 9, -90 + by); cx.lineTo(ax, -78 + by); cx.lineTo(ax + 9, -90 + by); cx.closePath(); cx.fill(); }
@@ -1640,12 +1591,13 @@
       tagPill(ctx, L, rocked ? '🪨 ' + SED[lay.id].rock : SED[lay.id].emoji + ' ' + sedLayerName(lay.id), ln.cx, ln.cy + ln.R - 22 * fs + (L.key === 'tall' ? 30 * fs : 0), { bg: rocked ? 'rgba(180,83,9,.92)' : 'rgba(6,10,26,.8)', size: 13.5 });
       // 범례
       const ly = L.key === 'wide' ? LC.y + LC.h - 15 : ln.cy + ln.R + 34 * fs;
-      ctx.font = fnt(L, 12.5, 'bold'); ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-      const items = [[PACK[lay.id].cols[0], '알갱이'], [PORE, '빈틈(물)'], [PACK[lay.id].cement, '붙이는 물질']];
-      let lx = L.key === 'wide' ? LC.x + 22 : LC.x + 18;
-      items.forEach((q) => {
-        ctx.fillStyle = q[0]; roundRect(ctx, lx, ly - 6, 12, 12, 3); ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = 1; ctx.stroke();
-        ctx.fillStyle = 'rgba(255,233,207,.9)'; ctx.fillText(q[1], lx + 17, ly + 0.5); lx += 17 + ctx.measureText(q[1]).width + (L.key === 'wide' ? 22 : 14);
+      ctx.font = fnt(L, L.key === 'wide' ? 12.5 : 11.5, 'bold'); ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      const items = [[PACK[lay.id].cols[0], '알갱이'], [PORE, '빈틈(물)'], [PACK[lay.id].cement, '붙이는 물질']], sq = L.key === 'wide' ? 12 : 10, gp = L.key === 'wide' ? 20 : 9;
+      const widths = items.map((q) => sq + 5 + ctx.measureText(q[1]).width), total = widths.reduce((a2, b2) => a2 + b2, 0) + gp * (items.length - 1);
+      let lx = LC.x + (LC.w - total) / 2;
+      items.forEach((q, i) => {
+        ctx.fillStyle = q[0]; roundRect(ctx, lx, ly - sq / 2, sq, sq, 3); ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = 1; ctx.stroke();
+        ctx.fillStyle = 'rgba(255,233,207,.9)'; ctx.fillText(q[1], lx + sq + 5, ly + 0.5); lx += widths[i] + gp;
       });
     }
     if (L.key === 'tall') {
@@ -1671,7 +1623,7 @@
       // 퇴적물 알갱이 그림
       const sx = TC.x + 20, sy = y + (wide ? (rowH - sw) / 2 : 7);
       ctx.save(); roundRect(ctx, sx, sy, sw, sw, 8); ctx.clip();
-      ctx.translate(sx + sw / 2, sy + sw / 2); ctx.scale(sw / 100 * 0.9, sw / 100 * 0.9); drawPack(ctx, id, 60, 60, 0.5);
+      ctx.drawImage(getSwatch(id, sw, Math.max(1, Math.min(2, V.v.scale * V.v.dpr))), sx, sy, sw, sw);
       ctx.restore();
       roundRect(ctx, sx, sy, sw, sw, 8); ctx.strokeStyle = 'rgba(255,255,255,.4)'; ctx.lineWidth = 1.2; ctx.stroke();
       ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#fff4e4'; ctx.font = fnt(L, 15, 'bold');
@@ -1697,7 +1649,7 @@
       lines.forEach((ln2, i) => ctx.fillText(ln2, TC.x + TC.w / 2, TC.y + TC.h - 20 * lines.length + 10 + i * 18));
     } else if (SD.layers.length >= 2 && SD.pressS >= 0.93) {
       ctx.fillStyle = '#ffe9cf'; ctx.font = fnt(L, 13.5, 'bold'); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText('줄무늬 = 층리', TC.x + TC.w / 2, TC.y + TC.h - 12);
+      ctx.fillText('줄무늬 = 층리', TC.x + TC.w / 2, TC.y + TC.h - 9);
     }
   }
   function drawSed(V, t) {
@@ -2020,13 +1972,16 @@
     if (rock === 'sand') return idx === 0 ? '알갱이 사이에 틈이 있어요' : '알갱이가 단단히 붙어 한 덩어리가 돼요';
     return idx === 0 ? '작은 결정들이 모여 있어요' : '결정이 커지고 서로 맞물려요';
   }
+  const LENSKEY = { k: '' };
   function drawMetaLens(V, g, t) {
     const { ctx, L } = V, LC = g.LC, ln = g.lens, M = S.meta, p = M.ps, rock = M.rock, fs = L.fs;
     cardPanel(ctx, LC);
     cardTitle(ctx, L, LC, L.key === 'wide' ? '🔍 광물 알갱이를 확대해서 봐요' : '🔍 알갱이 확대');
     let ready = true;
-    if (rock === 'sand') { ready = !!metaCells.sand; if (ready) renderSandLens(metaCells.sand, p, t); }
-    else if (rock === 'lime') { ready = !!(metaCells.fine && metaCells.coarse); if (ready) renderLimeLens(metaCells.fine, metaCells.coarse, p, t); }
+    const mkey = rock + '|' + Math.round(p * 400);
+    if (rock === 'sand') { ready = !!metaCells.sand; if (ready && LENSKEY.k !== mkey) { renderSandLens(metaCells.sand, p, t); LENSKEY.k = mkey; } }
+    else if (rock === 'lime') { ready = !!(metaCells.fine && metaCells.coarse); if (ready && LENSKEY.k !== mkey) { renderLimeLens(metaCells.fine, metaCells.coarse, p, t); LENSKEY.k = mkey; } }
+    else LENSKEY.k = '';
     lensFrame(V, ln.cx, ln.cy, ln.R, (c) => {
       c.fillStyle = '#2a2024'; c.fillRect(ln.cx - ln.R, ln.cy - ln.R, ln.R * 2, ln.R * 2);
       if (rock === 'mud') { c.save(); c.translate(ln.cx, ln.cy); const z = ln.R / 120; c.scale(z, z); drawFlakes(c, p, t); c.restore(); }
