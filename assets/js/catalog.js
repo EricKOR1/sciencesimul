@@ -1332,8 +1332,7 @@ window.SCI_CATALOG = {
                 "전기력",
                 "정전기 유도",
                 "검전기"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m2-circuit",
@@ -1400,8 +1399,7 @@ window.SCI_CATALOG = {
                 "병렬",
                 "에너지 전환",
                 "소비 전력"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m2-electromagnet",
@@ -1421,8 +1419,7 @@ window.SCI_CATALOG = {
                 "코일과 전류",
                 "자기장 속 전류",
                 "전동기"
-              ],
-              "soon": true
+              ]
             }
           ]
         },

@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#f26b3a">
+  <title>전류의 자기 작용과 전동기 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧲</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; }
+    .stage-toolbar { min-height: 61px; }
+    .segmented button { min-height: 44px; }
+
+    #ctrlCard { display: flex; flex-direction: column; gap: 14px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard .control[hidden] { display: none !important; }
+    #ctrlCard .btn-sm { min-height: 44px; }
+    .ctrl-note { font-size: 14px; color: var(--muted); margin: 6px 0 0; }
+
+    .range-row { display: flex; align-items: center; gap: 8px; }
+    .range-row input[type=range] { flex: 1; min-width: 0; height: 44px; }
+    .nudge {
+      flex: none; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line);
+      background: var(--surface); font-weight: 900; font-size: 20px; line-height: 1; cursor: pointer;
+      display: grid; place-items: center; color: var(--ink);
+    }
+    .nudge:active { transform: scale(.94); background: var(--surface-2); }
+    @media (hover: hover) { .nudge:hover { background: var(--surface-2); } }
+
+    .tgl {
+      display: flex; align-items: center; justify-content: center; gap: 7px; min-height: 46px; width: 100%;
+      border: 2px solid var(--line); background: var(--surface); color: var(--muted);
+      border-radius: 14px; padding: 6px 14px; font-weight: 800; font-size: 16px; cursor: pointer;
+      transition: background .15s, border-color .15s, color .15s; user-select: none; -webkit-user-select: none;
+    }
+    .tgl[aria-pressed="true"] { color: #0b6b39; border-color: #86d9ab; background: var(--good-soft); }
+    .tgl-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    @media (hover: hover) { .tgl:hover { background: var(--surface-2); } }
+    .dir-btn { font-size: 16px; }
+    .dir-btn .arr { display: inline-block; transition: transform .35s; }
+
+    .readout .value.txt { font-family: var(--font); font-size: 18px; white-space: normal; line-height: 1.25; }
+    .readout .value .hot { color: #c2410c; }
+    .readout .value .ok { color: #0b7a41; }
+    .readout .value .nn { color: #b91c1c; }
+    .readout .value .ss { color: #1d4ed8; }
+
+    @media (max-width: 599px) {
+      .readout .value.txt { font-size: 15px; }
+      .stage-toolbar .spacer { display: none; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="phy">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#g2">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">중2 · Ⅶ. 전기와 자기</div>
+      <h1>전류의 자기 작용과 전동기</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🧲 막대자석의 자기장</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="sceneSeg" role="tablist" aria-label="실험 고르기" hidden>
+            <button type="button" data-scene="magnet">🧲 자석</button>
+            <button type="button" data-scene="coil">🌀 코일</button>
+            <button type="button" data-scene="force">🏇 도선 그네</button>
+            <button type="button" data-scene="motor">⚙️ 전동기</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="막대자석과 나침반, 철가루 무늬, 전류가 흐르는 코일, 자석 사이 도선 그네, 전동기 모형이 있는 전자기 실험 화면"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1"></span><span class="value txt" id="v1"></span></div>
+        <div class="readout"><span class="label" id="l2"></span><span class="value txt" id="v2"></span></div>
+        <div class="readout"><span class="label" id="l3"></span><span class="value txt" id="v3"></span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" data-scenes="magnet">
+          <div class="tgl-row">
+            <button class="tgl" id="fillBtn" type="button" aria-pressed="false">🧲 철가루 뿌리기</button>
+            <button class="tgl" id="lineBtn" type="button" aria-pressed="false">➰ 자기력선 보기</button>
+          </div>
+          <p class="ctrl-note">나침반을 <b>끌어서</b> 자석 주변 여러 곳에 놓아 봐요. 빨간 바늘 끝이 자기장의 방향이에요.</p>
+        </div>
+        <div class="control" data-scenes="coil force motor">
+          <div class="control-head"><label for="sI">🔋 전류의 세기</label><output id="oI"></output></div>
+          <div class="range-row">
+            <button class="nudge" type="button" data-d="-0.5" aria-label="전류 0.5 A 줄이기">−</button>
+            <input type="range" id="sI" min="0" max="3" step="0.5" value="0">
+            <button class="nudge" type="button" data-d="0.5" aria-label="전류 0.5 A 늘리기">+</button>
+          </div>
+        </div>
+        <div class="control" data-scenes="coil force motor">
+          <button class="btn btn-block dir-btn" id="dirBtn" type="button">🔄 전류 방향 바꾸기</button>
+          <p class="ctrl-note" id="dirNote"></p>
+        </div>
+        <div class="control" data-scenes="force">
+          <button class="btn btn-block dir-btn" id="poleBtn" type="button">🧲 자석의 N극·S극 바꾸기</button>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>
