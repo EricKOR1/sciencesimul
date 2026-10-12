@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#16a34a">
+  <title>소화와 소화 효소 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍙</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-card { background: #eef4ef; }
+    .stage-toolbar { min-height: 61px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+    #sceneSeg button { min-height: 44px; padding: 6px 12px; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard [hidden] { display: none !important; }
+    .cgrp { display: flex; flex-direction: column; gap: 10px; }
+    .cgrp .btn { min-height: 48px; font-size: 16px; }
+    .cgrp .btn[disabled] { opacity: .45; cursor: default; }
+    input[type=range] { height: 44px; }
+    .ctrl-note { font-size: 13.5px; color: var(--muted); margin: 2px 0 0; line-height: 1.4; }
+    .mission-figure svg { border-radius: 12px; }
+    @media (max-width: 599px) {
+      #sceneSeg { flex-wrap: nowrap; }
+      #sceneSeg button { padding: 6px 12px; font-size: 14px; }
+      #sceneSeg button:not(.on) .t { display: none; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="bio">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#g2">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">중2 · Ⅵ. 동물과 에너지</div>
+      <h1>소화와 소화 효소</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="sceneLabel">🧪 영양소 검출하기</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="sceneSeg" role="tablist" aria-label="학습 장면">
+            <button type="button" data-scene="tests" data-feature="tests" title="영양소 검출" aria-label="영양소 검출">🧪<span class="t"> 영양소</span></button>
+            <button type="button" data-scene="saliva" data-feature="saliva" title="침의 소화" aria-label="침의 소화">🥛<span class="t"> 침의 소화</span></button>
+            <button type="button" data-scene="tract" data-feature="tract" title="소화 기관" aria-label="소화 기관">🍙<span class="t"> 소화 기관</span></button>
+            <button type="button" data-scene="villi" data-feature="villi" title="소장 융털" aria-label="소장 융털">🔬<span class="t"> 융털</span></button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="소화와 소화 효소: 영양소 검출 실험, 침의 소화 실험, 소화 기관과 소화 효소, 소장 융털의 영양소 흡수를 살펴보는 화면"></canvas>
+        </div>
+      </section>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="cgrp" data-scene="tests">
+          <button class="btn" type="button" id="btnResetTests">🔄 시료 새로 준비하기</button>
+          <p class="ctrl-note">검출 용액 병을 누르고 시험관을 눌러요. 병을 시험관 위로 끌어다 놓아도 돼요.</p>
+        </div>
+        <div class="cgrp" data-scene="saliva" hidden>
+          <button class="btn btn-subject" type="button" id="btnAct">🌡️ 37 ℃ 물중탕에 넣기</button>
+          <div class="control" id="timeCtl">
+            <div class="control-head"><label for="sTime">⏱️ 시간</label><output id="oTime">0분</output></div>
+            <input type="range" id="sTime" min="0" max="10" step="0.1" value="0" aria-label="시간(분)">
+          </div>
+          <button class="btn" type="button" id="btnResetSaliva">🔄 처음부터 다시</button>
+        </div>
+        <div class="cgrp" data-scene="tract" hidden>
+          <button class="btn btn-subject" type="button" id="btnEat">🍽️ 음식 먹기</button>
+          <div class="control">
+            <div class="control-head"><label for="sPos">🧭 음식의 위치</label><output id="oPos">입</output></div>
+            <input type="range" id="sPos" min="0" max="1" step="0.001" value="0" aria-label="음식의 위치">
+          </div>
+          <p class="ctrl-note">슬라이더를 밀면 음식이 입에서 항문 쪽으로 이동해요.</p>
+        </div>
+        <div class="cgrp" data-scene="villi" hidden>
+          <div class="control">
+            <div class="control-head"><label for="sZoom">🔍 확대 정도</label><output id="oZoom">작은창자 벽</output></div>
+            <input type="range" id="sZoom" min="0" max="1" step="0.001" value="0" aria-label="확대 정도">
+          </div>
+          <p class="ctrl-note">융털 하나를 끝까지 확대하면 영양소를 흡수시킬 수 있어요.</p>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>
