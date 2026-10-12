@@ -1085,8 +1085,7 @@ window.SCI_CATALOG = {
                 "주기와 족",
                 "같은 족",
                 "원소 찾기"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m2-atom-molecule",
@@ -1154,8 +1153,7 @@ window.SCI_CATALOG = {
                 "빛의 세기",
                 "실험 설계",
                 "적용"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m2-plant-respiration",

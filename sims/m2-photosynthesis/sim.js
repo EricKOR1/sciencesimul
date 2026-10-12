@@ -1158,7 +1158,14 @@
       D.glow(lx, ly, 12, '#16a34a', 0.5); D.sphere(lx, ly, 5, '#16a34a', { gloss: false });
       D.label(f.px + 6, f.py + 12, Math.round(T.rateShown) + ' 개/분', { bg: rgba('#16a34a', 0.92), size: 13, align: 'left' });
     }
-    // (2) 측정 결과 그래프
+    // (2) 측정 결과 그래프 (아직 실험 도구가 열리기 전에는 관찰 안내)
+    if (!has('light')) {
+      panel(rb.x, rb.y, rb.w, rb.h, 12);
+      text(rb.x + 14, rb.y + 26, '👀 관찰해 봐요', { size: 15, weight: 800, align: 'left', color: '#14532d' });
+      const L2 = ['검정말 줄기 끝에서 기포가 올라와요.', '전등(빛)을 켜 둔 상태예요.', '물에는 탄산수소 나트륨이 녹아 있어요.', '기포 속 기체는 무엇일까요?'];
+      L2.forEach((t2, i) => { wrapText(rb.x + 34, rb.y + 62 + i * (PHONE ? 42 : 64), t2, rb.w - 50, { size: 14, weight: 700, align: 'left', color: COL.ink, lh: 17 }); D.sphere(rb.x + 20, rb.y + 62 + i * (PHONE ? 42 : 64), 8, i === 3 ? '#e2464b' : '#16a34a', { gloss: false, text: String(i + 1), textScale: 1.0 }); });
+      return;
+    }
     const kind = T.gk;
     const cfg = {
       light: { title: '빛의 세기와 기포 수', xlabel: '전등 거리 (cm)', xmin: 50, xmax: 10, xt: [50, 40, 30, 20, 10], arr: T.lightPts, fx: (v) => v },
