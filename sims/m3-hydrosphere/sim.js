@@ -111,7 +111,7 @@
   const PIPE = [[CYL.x + CYL.w - 2, 130], [520, 130], [520, 290]];
   const PN = PHONE
     ? { x: 10, y: 470, w: 580, h: 366, cx: [120, 300, 480], tubeTop: 504, tubeBot: 656, tubeW: 40, slotY: 696, slotW: 110, slotH: 58, trayY: 770, trayCx: [150, 300, 450], title: 490 }
-    : { x: 604, y: 74, w: 192, h: 400, cx: [640, 700, 760], tubeTop: 142, tubeBot: 298, tubeW: 34, slotY: 344, slotW: 60, slotH: 56, trayY: 410, trayCx: [636, 700, 764], title: 98 };
+    : { x: 604, y: 74, w: 192, h: 400, cx: [640, 700, 760], tubeTop: 142, tubeBot: 298, tubeW: 34, slotY: 352, slotW: 60, slotH: 56, trayY: 414, trayCx: [636, 700, 764], title: 98 };
   const TUBE_ML = [17.6, 7.6, 0.1];
   const TUBE_NAME = ['빙하', '지하수', '호수·하천수'];
   const PXML = 8;                                                    // 시험관 1 mL = 8 px
@@ -575,7 +575,7 @@
     if (F.tw[i] > 0.75) T(cx, bot + 20, TUBE_ML[i] + ' mL', 14, '#1b2333');
   }
   function drawChip(c, t) {
-    const w = 60, h = 56;
+    const w = 60, h = 54;
     ctx.save();
     const sc = 1 + 0.06 * c.lift;
     const shk = c.shake > 0 ? Math.sin(c.shake * 60) * 6 * (c.shake / 0.3) : 0;
@@ -612,7 +612,6 @@
         ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = 'rgba(139,92,246,.25)'; rr(s.x, s.y, s.w, s.h, 12); ctx.fill(); ctx.restore();
       }
     }
-    if (F.seqT > 3 && F.placedOk < 3) T(PN.x + PN.w / 2, PN.trayY - 6, '이름표를 끌어 놓아요', 13, '#64748b');
     F.chips.forEach((c) => { if (!c.drag) drawChip(c, t); });
     F.chips.forEach((c) => { if (c.drag) drawChip(c, t); });
     ctx.restore();
@@ -620,7 +619,7 @@
   function drawGoldLabel(t) {
     if (F.gold < 0.05) return;
     ctx.save(); ctx.globalAlpha = F.gold;
-    pill(PN.x + PN.w / 2, PN.tubeBot + (PHONE ? 40 : 30), '약 7.7 mL (0.77 %)', '#a16207', '#fff', 13);
+    pill(PN.x + PN.w / 2, PN.tubeBot + 40, '약 7.7 mL (0.77 %)', '#a16207', '#fff', 13);
     ctx.restore();
   }
 
@@ -1883,7 +1882,11 @@
     }
   }
   function setSceneUI() {
-    $$('.cg').forEach((el) => { el.hidden = el.getAttribute('data-scene') !== SCENE; });
+    $$('.cg').forEach((el) => {
+      const hide = el.getAttribute('data-scene') !== SCENE;
+      el.hidden = hide;
+      if (el.parentElement && el.parentElement.classList.contains('control')) el.parentElement.style.display = hide ? 'none' : '';
+    });
     $('#sceneName').textContent = SCENE_NAME[SCENE];
     hideHint();
   }
@@ -2081,7 +2084,8 @@
     village: (t, dt) => drawVillage(t, dt),
   };
   setSceneUI();
-  SciSim.loop((dt, t) => {
+  SciSim.loop((dt, t) => { try { frame(dt, t); } catch (e) { console.error(e); } });
+  function frame(dt, t) {
     const want = SCENE_BY_LEVEL[clamp(game.level, 0, 3)];
     if (want !== SCENE) {
       prevScene = SCENE; SCENE = want; trans = RM ? 1 : 0; setSceneUI();
@@ -2100,7 +2104,7 @@
       ctx.restore();
     } else DRAWERS[SCENE](t, dt);
     updateReadouts();
-  });
+  }
 
   // 테스트용 보조 도구
   window.__sim = {

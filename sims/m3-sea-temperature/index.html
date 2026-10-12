@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0ea5e9">
+  <title>해수의 수온 분포 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌡️</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-card { background: #0b1b33; }
+    .stage-toolbar .toolbar-label { font-weight: 800; font-size: 15px; }
+    .stage-toolbar .icon-btn { min-width: 44px; min-height: 44px; }
+    .stage-canvas .stage-hint { white-space: normal; text-align: center; max-width: 90%; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 14px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard .btn { min-height: 46px; }
+    .seg-label { display: block; font-weight: 800; font-size: 14.5px; color: var(--muted); margin-bottom: 6px; }
+    .segmented { display: flex; width: 100%; border-radius: 22px; }
+    .segmented button { flex: 1 1 auto; min-height: 44px; padding: 6px 4px; font-size: 14.5px; white-space: nowrap; }
+    .segmented button.on { color: #075985; }
+    .ctrl-note { font-size: 13.5px; color: var(--muted); margin: 6px 0 0; line-height: 1.45; }
+    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn-row .btn { flex: 1 1 0; min-width: 0; touch-action: none; user-select: none; -webkit-user-select: none; }
+    .btn.tgl-on { background: #fef3c7; border-color: #f59e0b; color: #92400e; }
+    .readout .value { font-size: 19px; }
+    .readout .value small { font-size: 12.5px; }
+    .game-foot button { min-height: 44px; }
+    .cmp { width: 100%; border-collapse: collapse; font-size: 14px; margin: 6px 0; }
+    .cmp th, .cmp td { border: 1px solid var(--line); padding: 5px 8px; text-align: left; vertical-align: top; }
+    .cmp th { background: var(--surface-2); font-weight: 800; white-space: nowrap; }
+    .cmp td.n { text-align: center; font-family: ui-monospace, Menlo, Consolas, monospace; font-weight: 800; }
+    .gchoice { display: flex; align-items: center; gap: 10px; text-align: left; }
+    .gchoice svg { flex: none; border: 1px solid var(--line); border-radius: 8px; background: #f8fbff; }
+    .mini-note { font-size: 12.5px; color: var(--muted); }
+    .note-fig { margin: 6px 0; text-align: center; }
+    .note-fig svg { max-width: 100%; height: auto; border-radius: 10px; }
+    @media (max-width: 599px) { .stage-toolbar { gap: 6px; padding: 6px 10px; } }
+  </style>
+</head>
+<body class="sim-page" data-subject="earth">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#g3">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">중3 · Ⅲ. 수권과 해수의 순환</div>
+      <h1>해수의 수온 분포</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="sceneName">🚢 2월 동해에서 수온 재기</span>
+          <span class="spacer"></span>
+          <button class="icon-btn" id="resetBtn" type="button" title="처음 상태로" aria-label="처음 상태로">↺</button>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="바다의 깊이에 따른 수온을 측정하고 그래프로 나타내는 화면"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">수심</span><span class="value" id="r1">-</span></div>
+        <div class="readout"><span class="label" id="l2">수온</span><span class="value" id="r2">-</span></div>
+        <div class="readout"><span class="label" id="l3">측정점</span><span class="value" id="r3">-</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" data-feature="probe">
+          <div class="cg" data-scene="column">
+            <span class="seg-label">🌡️ 수온 측정기 (누르고 있기)</span>
+            <div class="btn-row">
+              <button class="btn btn-primary" id="downBtn" type="button">⬇ 내리기</button>
+              <button class="btn" id="upBtn" type="button">⬆ 올리기</button>
+            </div>
+            <p class="ctrl-note">바다 속 측정기를 직접 끌어도 돼요.</p>
+          </div>
+        </div>
+        <div class="control" data-feature="lamp">
+          <div class="cg" data-scene="lab" hidden>
+            <span class="seg-label">💡 적외선등 (태양 역할)</span>
+            <div class="btn-row"><button class="btn btn-primary" id="lampBtn" type="button">💡 적외선등 켜기</button></div>
+            <p class="ctrl-note">⚠️ 실제 실험에서 적외선등은 매우 뜨거워요. 만지지 말고, 물이 튀지 않게 해요.</p>
+          </div>
+        </div>
+        <div class="control" data-feature="wind">
+          <div class="cg" data-scene="lab" id="windGroup" hidden>
+            <span class="seg-label">🌬️ 바람 (선풍기)</span>
+            <div class="segmented" id="windSeg" role="group" aria-label="바람 세기">
+              <button type="button" data-w="0" class="on">없음</button><button type="button" data-w="1">약</button><button type="button" data-w="2">강</button>
+            </div>
+          </div>
+        </div>
+        <div class="control" data-feature="record">
+          <div class="cg" data-scene="lab" hidden>
+            <div class="btn-row"><button class="btn" id="recBtn" type="button">📍 결과 기록</button></div>
+            <p class="ctrl-note" id="recNote">가열 시간이 10분이 되면 기록해요. 위쪽 ↺는 새 물로 바꿔요.</p>
+          </div>
+        </div>
+        <div class="control" data-feature="layers">
+          <div class="cg" data-scene="layers" hidden>
+            <p class="ctrl-note" style="margin:0" id="layersNote">🏷️ 이름표를 끌어 알맞은 깊이의 띠 위에 놓아요.</p>
+          </div>
+        </div>
+        <div class="control" data-feature="map">
+          <div class="cg" data-scene="map" hidden>
+            <span class="seg-label">🗺️ 관측 정점</span>
+            <div class="segmented" id="seaSeg" role="group" aria-label="바다 선택">
+              <button type="button" data-sea="east" class="on">동해</button><button type="button" data-sea="west">황해</button><button type="button" data-sea="south">남해</button>
+            </div>
+          </div>
+        </div>
+        <div class="control" data-feature="season">
+          <div class="cg" data-scene="map" hidden>
+            <span class="seg-label">📅 계절</span>
+            <div class="segmented" id="seasonSeg" role="group" aria-label="계절 선택">
+              <button type="button" data-s="2" class="on">❄️ 2월</button><button type="button" data-s="8">☀️ 8월</button>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

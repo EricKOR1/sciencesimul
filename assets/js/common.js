@@ -253,12 +253,14 @@
   function loop(fn) {
     let last = performance.now();
     let running = true;
+    let lastErr = null;
     function frame(t) {
       if (!running) return;
       // 첫 프레임의 t가 last보다 앞설 수 있어 음수가 되지 않도록 0~0.05초로 제한
       const dt = Math.max(0, Math.min(0.05, (t - last) / 1000));
       last = t;
-      fn(dt, t / 1000);
+      // 한 프레임의 오류로 애니메이션 전체가 멈추지 않도록 (같은 오류는 한 번만 기록)
+      try { fn(dt, t / 1000); } catch (e) { if (e && e.message !== lastErr) { lastErr = e && e.message; console.error(e); } }
       requestAnimationFrame(frame);
     }
     requestAnimationFrame(frame);

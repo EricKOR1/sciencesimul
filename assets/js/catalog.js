@@ -1840,8 +1840,7 @@ window.SCI_CATALOG = {
                 "활용 사례",
                 "지하수",
                 "물의 가치"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m3-sea-temperature",
@@ -1862,8 +1861,7 @@ window.SCI_CATALOG = {
                 "수온 실험",
                 "층상 구조",
                 "우리 바다"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m3-salinity",
