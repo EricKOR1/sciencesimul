@@ -666,13 +666,13 @@
     if (has('pmark')) {
       const dT = k.Ts - k.Tw, a = clamp((dT - 0.5) / 6, 0, 1);
       const yL = 482;
-      const lowC = mixc('#94a3b8', '#2563eb', a), hiC = mixc('#94a3b8', '#dc2626', a);
+      const lowC = mixc('#94a3b8', '#dc2626', a), hiC = mixc('#94a3b8', '#2563eb', a);
       ctx.save();
-      ctx.fillStyle = 'rgba(37,99,235,' + 0.07 * a + ')'; ctx.fillRect(TK.x0, TK.y0, 315, TKH);
-      ctx.fillStyle = 'rgba(220,38,38,' + 0.06 * a + ')'; ctx.fillRect(TK.x0 + 315, TK.y0, 315, TKH);
+      ctx.fillStyle = 'rgba(220,38,38,' + 0.06 * a + ')'; ctx.fillRect(TK.x0, TK.y0, 315, TKH);
+      ctx.fillStyle = 'rgba(37,99,235,' + 0.07 * a + ')'; ctx.fillRect(TK.x0 + 315, TK.y0, 315, TKH);
       ctx.restore();
-      D.sphere(250, yL, 22, a > 0.2 ? '#3b82f6' : '#94a3b8', { text: 'L', shadow: true });
-      D.sphere(554, yL, 22, a > 0.2 ? '#ef4444' : '#94a3b8', { text: 'H', shadow: true });
+      D.sphere(250, yL, 22, a > 0.2 ? '#ef4444' : '#94a3b8', { text: 'L', shadow: true });
+      D.sphere(554, yL, 22, a > 0.2 ? '#3b82f6' : '#94a3b8', { text: 'H', shadow: true });
       D.text(250, yL + 40, '모래 위: 저기압', { size: 13.5, weight: 800, color: lowC });
       D.text(554, yL + 40, '물 위: 고기압', { size: 13.5, weight: 800, color: hiC });
       if (k.flow > 0.12) D.arrow(512, yL, 292, yL, { color: '#334155', width: 3 + 7 * k.flow, head: 14 + 6 * k.flow, label: '바람', labelOffset: -20 });
@@ -823,8 +823,8 @@
         const landL = w > 0;
         const al = Math.min(1, (aw - 0.12) * 4) * vis;
         ctx.save(); ctx.globalAlpha = al;
-        D.sphere(620, 66, 21, landL ? '#3b82f6' : '#ef4444', { text: landL ? 'L' : 'H', shadow: true });
-        D.sphere(190, 66, 21, landL ? '#ef4444' : '#3b82f6', { text: landL ? 'H' : 'L', shadow: true });
+        D.sphere(620, 66, 21, landL ? '#ef4444' : '#3b82f6', { text: landL ? 'L' : 'H', shadow: true });
+        D.sphere(190, 66, 21, landL ? '#3b82f6' : '#ef4444', { text: landL ? 'H' : 'L', shadow: true });
         D.text(620, 108, landL ? '땅 위: 저기압' : '땅 위: 고기압', { size: 13.5, weight: 800, color: '#fff', stroke: 'rgba(15,23,42,.7)', strokeWidth: 4 });
         D.text(190, 108, landL ? '바다 위: 고기압' : '바다 위: 저기압', { size: 13.5, weight: 800, color: '#fff', stroke: 'rgba(15,23,42,.7)', strokeWidth: 4 });
         ctx.restore();
@@ -929,10 +929,10 @@
       D.text(x, y + 52, cap, { size: 14, weight: 800, color: '#fff', stroke: 'rgba(15,23,42,.72)', strokeWidth: 4.5 });
       ctx.restore();
     };
-    hl(200, 210, 'L', '#3b82f6', ms, '대륙: 뜨거워져 저기압');
-    hl(200, 210, 'H', '#ef4444', 1 - ms, '대륙: 차가워져 고기압');
-    hl(660, 440, 'H', '#ef4444', ms, '바다: 상대적으로 시원해 고기압');
-    hl(660, 440, 'L', '#3b82f6', 1 - ms, '바다: 상대적으로 따뜻해 저기압');
+    hl(200, 210, 'L', '#ef4444', ms, '대륙: 뜨거워져 저기압');
+    hl(200, 210, 'H', '#3b82f6', 1 - ms, '대륙: 차가워져 고기압');
+    hl(660, 440, 'H', '#3b82f6', ms, '바다: 상대적으로 시원해 고기압');
+    hl(660, 440, 'L', '#ef4444', 1 - ms, '바다: 상대적으로 따뜻해 저기압');
     // 우리나라 표시와 바람 화살표
     const [kx, ky] = mp(536, 284);
     const vlen = 105 * s * 0.7071;

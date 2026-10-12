@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#16a34a">
+  <title>뉴런과 신경계, 반응 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-card { background: #eef4ef; }
+    .stage-toolbar { min-height: 61px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+    #sceneSeg button { min-height: 44px; padding: 6px 11px; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard [hidden] { display: none !important; }
+    .cgrp { display: flex; flex-direction: column; gap: 10px; }
+    .cgrp .btn { min-height: 48px; font-size: 16px; }
+    .cgrp .btn[disabled] { opacity: .45; cursor: default; }
+    .cgrp .segmented { display: flex; }
+    .cgrp .segmented button { flex: 1; min-height: 44px; padding: 6px 8px; font-size: 14.5px; }
+    #rfSeg { display: grid; grid-template-columns: 1fr 1fr; border-radius: 18px; }
+    .ctrl-note { font-size: 13.5px; color: var(--muted); margin: 2px 0 0; line-height: 1.4; }
+    .mission-figure svg { border-radius: 12px; }
+    @media (max-width: 599px) {
+      #sceneSeg { flex-wrap: nowrap; }
+      #sceneSeg button { padding: 6px 10px; font-size: 14px; }
+      #sceneSeg button:not(.on) .t { display: none; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="bio">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#g3">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">중3 · Ⅴ. 자극과 반응</div>
+      <h1>뉴런과 신경계, 반응</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="sceneLabel">🧬 뉴런의 구조</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="sceneSeg" role="tablist" aria-label="학습 장면">
+            <button type="button" data-scene="neuron" data-feature="neuron" title="뉴런" aria-label="뉴런">🧬<span class="t"> 뉴런</span></button>
+            <button type="button" data-scene="nervous" data-feature="nervous" title="신경계" aria-label="신경계">🧠<span class="t"> 신경계</span></button>
+            <button type="button" data-scene="ruler" data-feature="ruler" title="자 잡기" aria-label="자 잡기">📏<span class="t"> 자 잡기</span></button>
+            <button type="button" data-scene="reflex" data-feature="reflex" title="반사" aria-label="반사">🦵<span class="t"> 반사</span></button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="뉴런과 신경계, 반응: 뉴런의 신호 전달, 뇌와 척수, 자 잡기 반응 시간 측정, 무릎 반사 경로를 살펴보는 화면"></canvas>
+        </div>
+      </section>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="cgrp" data-scene="neuron">
+          <div class="segmented" id="nvSeg" role="tablist" aria-label="뉴런 보기">
+            <button type="button" data-v="one" class="on">🧬 뉴런 1개</button>
+            <button type="button" data-v="chain">🔗 뉴런 연결</button>
+          </div>
+          <button class="btn btn-subject" type="button" id="btnStim">⚡ 자극 주기</button>
+          <p class="ctrl-note" id="nvNote">뉴런의 각 부분을 눌러 이름과 하는 일을 읽어 봐요.</p>
+        </div>
+        <div class="cgrp" data-scene="nervous" hidden>
+          <p class="ctrl-note">뇌의 각 부분과 척수를 눌러 하는 일을 알아봐요. 왼쪽 몸 그림에서는 중추 신경계(주황)와 말초 신경계(청록)를 볼 수 있어요.</p>
+        </div>
+        <div class="cgrp" data-scene="ruler" hidden>
+          <button class="btn btn-subject" type="button" id="btnDrop">▶ 자 떨어뜨리기</button>
+          <button class="btn" type="button" id="btnCatch">🤏 잡기! (화면을 탭해도 돼요)</button>
+          <p class="ctrl-note">자가 떨어지는 것을 보는 순간 잡아요. 떨어지기 전에 누르면 다시 해야 해요.</p>
+        </div>
+        <div class="cgrp" data-scene="reflex" hidden>
+          <div class="segmented" id="rfSeg" role="tablist" aria-label="반사 종류">
+            <button type="button" data-v="knee" class="on">🦵 무릎 반사</button>
+            <button type="button" data-v="hot">🔥 뜨거운 냄비</button>
+            <button type="button" data-v="sneeze">🤧 재채기</button>
+            <button type="button" data-v="pupil">👁️ 동공 반사</button>
+          </div>
+          <button class="btn btn-subject" type="button" id="btnRun">▶ 실행하기</button>
+          <p class="ctrl-note">천천히 재생해서 신호의 길을 보여 줘요. 실제로는 훨씬 빨라요.</p>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

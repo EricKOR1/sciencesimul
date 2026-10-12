@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#f26b3a">
+  <title>직선 운동의 그래프 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚗</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    /* 이 시뮬레이션 전용 스타일 */
+    .stage-toolbar { min-height: 61px; }
+    .stage-toolbar .btn { min-height: 44px; }
+    .go-btn { min-width: 128px; }
+    .stage-toolbar [hidden] { display: none !important; }
+
+    /* 켜고 끄는 버튼 */
+    .tgl {
+      display: inline-flex; align-items: center; gap: 7px; min-height: 44px;
+      border: 2px solid var(--line); background: var(--surface); color: var(--muted);
+      border-radius: 999px; padding: 6px 14px; font-weight: 800; font-size: 15px; cursor: pointer;
+      transition: background .15s, border-color .15s, color .15s; user-select: none; -webkit-user-select: none;
+    }
+    .tgl .chk {
+      width: 18px; height: 18px; border-radius: 50%; border: 2px solid #cbd5e1; display: grid; place-items: center;
+      font-size: 11px; line-height: 1; color: transparent; flex: none;
+    }
+    .tgl[aria-pressed="true"] { color: #9a3412; border-color: #fdba8c; background: #fff2e9; }
+    .tgl[aria-pressed="true"] .chk { background: var(--phy); border-color: var(--phy); color: #fff; }
+    .tgl:active { transform: scale(.97); }
+    @media (hover: hover) { .tgl:hover { background: var(--surface-2); } .tgl[aria-pressed="true"]:hover { background: #ffe8d9; } }
+
+    .segmented button { min-height: 40px; padding: 6px 12px; font-size: 14.5px; }
+    .segmented button.on { background: var(--phy); color: #fff; }
+    .segmented button:disabled { opacity: .45; cursor: not-allowed; }
+    #carSeg button .dot { display: inline-block; width: 11px; height: 11px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
+    #carSeg button.on .dot { box-shadow: 0 0 0 2px #fff; }
+
+    /* 페달 */
+    .pedal {
+      min-height: 52px; min-width: 128px; border-radius: 14px; border: 2px solid transparent; font-weight: 900; font-size: 16px; color: #fff;
+      cursor: pointer; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; touch-action: none;
+      transition: transform .08s, box-shadow .08s, filter .08s; font-family: inherit;
+    }
+    .pedal.gas { background: #14a058; box-shadow: 0 4px 0 #0c7a40; }
+    .pedal.brake { background: #e2464b; box-shadow: 0 4px 0 #b4272c; }
+    .pedal.down { transform: translateY(3px) scale(.96); box-shadow: inset 0 3px 8px rgba(0,0,0,.35); filter: brightness(.93); }
+
+    /* 배운 내용 속 작은 표·그림 */
+    .concept table.mini { border-collapse: collapse; margin: 6px 0; font-size: 14px; width: 100%; }
+    .concept table.mini th, .concept table.mini td { border: 1px solid var(--line); padding: 4px 6px; text-align: center; }
+    .concept table.mini th { background: var(--surface-2); font-weight: 800; }
+    .gshapes { display: flex; gap: 6px; justify-content: space-between; margin: 8px 0; }
+    .gshapes figure { margin: 0; text-align: center; flex: 1; font-size: 12.5px; font-weight: 700; color: var(--muted); }
+    .gshapes svg { width: 100%; max-width: 110px; height: auto; background: #fff; border: 1px solid var(--line); border-radius: 8px; }
+
+    /* 이 시뮬레이션은 오른쪽 열에 미션 카드만 둔다 */
+    @media (orientation: portrait) and (min-width: 600px) {
+      .side-col > #game { width: 100%; }
+    }
+    @media (max-width: 599px) {
+      .stage-toolbar { gap: 6px; padding: 8px; }
+      .tgl { padding: 5px 10px; font-size: 14px; gap: 5px; }
+      .go-btn { min-width: 0; }
+      .pedal { min-width: 0; flex: 1; }
+      .stage-hint { font-size: 13px; padding: 5px 12px; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="phy">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#g3">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">중3 · Ⅳ. 운동과 에너지</div>
+      <h1>직선 운동의 그래프</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <button class="btn btn-primary btn-sm go-btn" id="goBtn" type="button">▶ 출발</button>
+          <button class="tgl" id="stampBtn" type="button" aria-pressed="false" data-feature="stamp"><span class="chk">✓</span>📍 1초마다 점 찍기</button>
+          <div class="segmented" id="speedSeg" role="group" aria-label="자동차 A의 속력" data-feature="speed">
+            <button type="button" data-v="1">1 m/s</button><button type="button" data-v="2">2 m/s</button><button type="button" data-v="3" class="on">3 m/s</button><button type="button" data-v="4">4 m/s</button>
+          </div>
+          <div class="segmented" id="carSeg" role="group" aria-label="자동차 고르기" data-feature="cars">
+            <button type="button" data-car="A" class="on"><span class="dot" style="background:#3867f4"></span>A</button><button type="button" data-car="B"><span class="dot" style="background:#f26b3a"></span>B</button><button type="button" data-car="C"><span class="dot" style="background:#8b5cf6"></span>C</button>
+          </div>
+          <button class="pedal gas" id="gasBtn" type="button" data-feature="drive">▲ 가속 페달</button>
+          <button class="pedal brake" id="brakeBtn" type="button" data-feature="drive">▼ 브레이크</button>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="group" aria-label="화면 고르기" hidden>
+            <button type="button" data-mode="race">🏁 경주</button><button type="button" data-mode="lab">🔬 실험실</button><button type="button" data-mode="drive" class="on">🕹️ 운전</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="로봇 자동차 주행 시험장, 시간–이동 거리 그래프, 시간–속력 그래프"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label">시간</span><span class="value" id="rT">0.0<small>s</small></span></div>
+        <div class="readout" data-feature="dgraph"><span class="label">이동 거리</span><span class="value" id="rD">—</span></div>
+        <div class="readout" data-feature="speedo"><span class="label">속력</span><span class="value" id="rV">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

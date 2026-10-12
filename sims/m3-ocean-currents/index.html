@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0ea5e9">
+  <title>해류와 표층 순환 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌊</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-card { background: #e4eef6; }
+    .stage-toolbar { padding: 6px 10px; gap: 6px; }
+    .stage-toolbar .segmented button { min-height: 40px; padding: 5px 12px; font-size: 14.5px; white-space: nowrap; }
+    .stage-toolbar .segmented button:disabled { opacity: .38; cursor: not-allowed; }
+    .stage-toolbar .segmented button.nudge { animation: nudge .9s ease 3; }
+    .stage-toolbar .icon-btn { min-width: 44px; min-height: 44px; }
+    .is-off { display: none !important; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    .seg-label { display: block; font-weight: 800; font-size: 14.5px; color: var(--muted); margin-bottom: 6px; }
+    #ctrlCard .segmented { display: flex; width: 100%; }
+    #ctrlCard .segmented button { flex: 1 1 0; min-height: 44px; padding: 6px 4px; font-size: 14.5px; white-space: nowrap; }
+    #ctrlCard .segmented button.on { color: #075985; }
+    #ctrlCard .btn { min-height: 46px; width: 100%; margin-top: 8px; }
+    .btn-row { display: flex; gap: 8px; }
+    .btn-row .btn { margin-top: 0 !important; flex: 1 1 0; min-width: 0; }
+    .tgl {
+      display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; min-height: 46px; margin-top: 8px;
+      border: 2px solid var(--line); background: var(--surface); color: var(--muted);
+      border-radius: 999px; padding: 5px 14px; font-weight: 800; font-size: 14.5px; cursor: pointer;
+    }
+    .tgl[aria-pressed="true"] { color: #075985; border-color: #7dd3fc; background: #e6f6ff; }
+    .btn.nudge, .tgl.nudge { animation: nudge .9s ease 2; }
+    @keyframes nudge { 0%, 100% { transform: none; } 30% { transform: translateY(-3px) scale(1.04); } 60% { transform: none; } }
+    .ctrl-note { margin: 6px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    .readout .value { font-size: 19px; }
+    .readout .value small { font-size: 12.5px; }
+    .readouts { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .game-foot button { min-height: 44px; }
+    .mission-figure svg { border-radius: 12px; }
+    input[type=range] { height: 44px; }
+    @media (max-width: 599px) { .stage-toolbar .segmented button { padding: 5px 8px; font-size: 13.5px; } }
+  </style>
+</head>
+<body class="sim-page" data-subject="earth">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#g3">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">중3 · Ⅲ. 수권과 해수의 순환</div>
+      <h1>해류와 표층 순환</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <div class="segmented" id="sceneSeg" role="group" aria-label="화면 고르기">
+            <button type="button" data-s="0" class="on">① 바람과 해류</button>
+            <button type="button" data-s="1" disabled>② 순환</button>
+            <button type="button" data-s="2" disabled>③ 난류·한류</button>
+            <button type="button" data-s="3" disabled>④ 기후</button>
+          </div>
+          <span class="spacer"></span>
+          <button class="icon-btn" id="resetBtn" type="button" title="처음 상태로" aria-label="처음 상태로">↺</button>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="바람이 물을 움직이는 수조 실험, 북태평양의 바람과 해류 지도, 해수면 온도와 표류병, 도쿄와 샌프란시스코의 기온 비교"></canvas>
+        </div>
+      </section>
+      <div class="readouts" id="readouts">
+        <div class="readout"><span class="label" id="rl0"></span><span class="value" id="rv0"></span></div>
+        <div class="readout"><span class="label" id="rl1"></span><span class="value" id="rv1"></span></div>
+        <div class="readout"><span class="label" id="rl2"></span><span class="value" id="rv2"></span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" data-scene="0" data-feature="tank">
+          <span class="seg-label">🌬️ 선풍기 바람 세기</span>
+          <div class="segmented" id="windSeg" role="group" aria-label="바람 세기">
+            <button type="button" data-w="0" class="on">꺼짐</button>
+            <button type="button" data-w="1">약</button>
+            <button type="button" data-w="2">중</button>
+            <button type="button" data-w="3">강</button>
+          </div>
+          <button class="btn" id="dirBtn" type="button">🔄 바람 방향 바꾸기</button>
+        </div>
+        <div class="control" data-scene="1" data-feature="gyre">
+          <div class="control-head"><label for="sGyre">🔄 순환 만들기</label><output id="oGyre"></output></div>
+          <input type="range" id="sGyre" min="0" max="100" step="1" value="0" aria-label="바람이 해류와 순환을 만드는 과정">
+          <button class="btn btn-primary" id="playBtn" type="button">▶ 처음부터 재생</button>
+          <p class="ctrl-note">끝까지 밀면 해류 이름 카드가 나타나요.</p>
+        </div>
+        <div class="control" data-scene="2" data-feature="sst">
+          <button class="tgl" id="sstBtn" type="button" aria-pressed="false">🌡️ 해수면 온도 색 지도</button>
+          <button class="btn btn-primary" id="bottleBtn" type="button">🍾 표류병 띄우기</button>
+          <p class="ctrl-note">지도의 바다를 눌러도 그 자리에 표류병이 놓여요.</p>
+        </div>
+        <div class="control" data-scene="3" data-feature="climate">
+          <span class="seg-label">🏙️ 도시 고르기 (예시 자료)</span>
+          <div class="segmented" id="citySeg" role="group" aria-label="도시 고르기">
+            <button type="button" data-c="0" class="on">도쿄</button>
+            <button type="button" data-c="1">샌프란시스코</button>
+            <button type="button" data-c="2">둘 비교</button>
+          </div>
+          <button class="tgl" id="offBtn" type="button" aria-pressed="false">🌊 해류 끄기 (생각 실험)</button>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

@@ -395,7 +395,7 @@
     D.label(cx, 538, '알코올 램프', { bg: 'rgba(27,35,51,.78)', size: 13 });
     D.label(bx + bwid / 2, 576, '전자저울 (염류의 질량)', { bg: 'rgba(27,35,51,.78)', size: 13 });
     if (S1.prog < 0.995 && S1.heat > 0.4) D.label(cx - 30, 140 - 0, '수증기 (물만 날아가요)', { bg: 'rgba(255,255,255,.9)', color: '#1b4e7a', size: 14 });
-    if (S1.crystals.some((c) => c.sc > 0.9 && c.fly < 0)) D.label(DISH.cx - DISH.rx - 14, DISH.rimY + 52, '남은 염류 (소금 결정)', { bg: '#fff', color: '#0b4f8a', size: 14, align: 'right', border: '#7dd3fc' });
+    if (S1.crystals.some((c) => c.sc > 0.9 && c.fly < 0)) D.label(DISH.cx + DISH.rx + 14, DISH.rimY + 58, '남은 염류 (소금 결정)', { bg: '#fff', color: '#0b4f8a', size: 14, align: 'left', border: '#7dd3fc' });
 
     // 안내 카드
     card(20, 24, 376, 76, { bg: 'rgba(255,255,255,.92)' });
@@ -660,7 +660,7 @@
     for (let i = 0; i < 22; i++) { const px = TANK.x + 20 + rr2() * (TANK.w - 40), py = wy + 24 + rr2() * (TANK.y + TANK.h - wy - 50); ctx.beginPath(); ctx.arc(px + Math.sin(t * 0.6 + i) * 4, py + Math.cos(t * 0.5 + i * 1.3) * 3, 1.8, 0, TAU); ctx.fill(); }
     // 얼음
     if (S2.iceT > 0.05) {
-      const th = 5 + S2.iceT * 1.25, ix = 326, iw = 136, bob = Math.sin(t * 1.4) * 1.2;
+      const th = 9 + S2.iceT * 2.1, ix = 326, iw = 136, bob = Math.sin(t * 1.4) * 1.2;
       const top = wy - th * 0.32 + bob, bot = wy + th * 0.68 + bob;
       g = ctx.createLinearGradient(0, top, 0, bot);
       g.addColorStop(0, 'rgba(255,255,255,.98)'); g.addColorStop(1, 'rgba(190,230,250,.9)');
@@ -682,11 +682,11 @@
     if (evap > 0.02) {
       ctx.save(); ctx.lineCap = 'round';
       [150, 215, 285, 360, 430].forEach((x0, i) => {
-        ctx.strokeStyle = 'rgba(255,255,255,' + (0.95 * evap) + ')'; ctx.lineWidth = 4.5;
         ctx.setLineDash([16, 14]); ctx.lineDashOffset = t * 36 + i * 9;
         ctx.beginPath();
         for (let k = 0; k <= 22; k++) { const yy = wy - 6 - k * 6.2, xx = x0 + Math.sin(k * 0.55 + t * 3 + i) * 7; if (k === 0) ctx.moveTo(xx, yy); else ctx.lineTo(xx, yy); }
-        ctx.stroke();
+        ctx.strokeStyle = 'rgba(40,110,180,' + (0.35 * evap) + ')'; ctx.lineWidth = 8; ctx.stroke();
+        ctx.strokeStyle = 'rgba(255,255,255,' + (0.98 * evap) + ')'; ctx.lineWidth = 4.5; ctx.stroke();
       });
       ctx.setLineDash([]); ctx.restore();
     }
@@ -974,7 +974,7 @@
   const TSUSHIMA = [[129.3, 34.7], [129.45, 34.65], [129.35, 34.2], [129.15, 34.3]];
   const RIVERS = [
     { n: '양쯔 강', pts: [[118, 31.2], [120, 31.6], [121.9, 31.5]], mouth: [121.9, 31.6], k: 1.5, tx: 119.2, ty: 31.9 },
-    { n: '황허', pts: [[118, 36.3], [118.5, 37], [118.95, 37.7]], mouth: [119, 37.75], k: 1.2, tx: 118.3, ty: 36.6 },
+    { n: '황허', pts: [[118, 36.3], [118.5, 37], [118.95, 37.7]], mouth: [119, 37.75], k: 1.2, tx: 119.7, ty: 36.5 },
     { n: '압록강', pts: [[126.5, 41.5], [125.2, 40.5], [124.4, 39.9]], mouth: [124.35, 39.85], k: 1.0, tx: 126.3, ty: 41.2 },
     { n: '한강', pts: [[128.2, 37.6], [127.2, 37.55], [126.6, 37.65]], mouth: [126.55, 37.65], k: 0.9, tx: 127.7, ty: 37.9 },
     { n: '낙동강', pts: [[128.7, 36.5], [128.6, 35.6], [128.95, 35.1]], mouth: [128.95, 35.08], k: 0.7, tx: 129.4, ty: 35.75 },
@@ -1048,7 +1048,7 @@
     });
     ctx.restore();
     // 나라 이름
-    [['중국', 120.2, 34.2], ['북한', 126.9, 40.2], ['한국', 128.0, 36.7], ['일본', 137.6, 36.2], ['러시아', 134.2, 44.1]].forEach((q) => D.text(px4(q[1]), py4(q[2]), q[0], { size: 16, weight: 800, color: 'rgba(120,100,60,.85)', stroke: 'rgba(255,255,255,.7)', strokeWidth: 4 }));
+    [['중국', 120.2, 34.2], ['북한', 126.9, 40.2], ['한국', 128.0, 36.7], ['일본', 137.6, 36.2], ['러시아', 137.4, 44.0]].forEach((q) => D.text(px4(q[1]), py4(q[2]), q[0], { size: 16, weight: 800, color: 'rgba(120,100,60,.85)', stroke: 'rgba(255,255,255,.7)', strokeWidth: 4 }));
     // 구름과 비 (여름)
     if (sm > 0.03) {
       alphaDo(sm, () => {
@@ -1078,7 +1078,7 @@
     // 계절 배지와 안내
     card(14, 14, 150, 40, { r: 20, bg: S4.season ? '#fff4d6' : '#e4f1ff', blur: 8 });
     D.text(89, 40, S4.season ? '☀️ 여름 (장마)' : '❄️ 겨울', { size: 16, weight: 800, color: S4.season ? '#9a5b00' : '#1d4e89' });
-    card(176, 10, 612, 50, { r: 14, bg: 'rgba(255,255,255,.93)', blur: 8 });
+    card(176, 10, 408, 50, { r: 14, bg: 'rgba(255,255,255,.93)', blur: 8 });
     D.label(204, 28, '예시 자료', { bg: '#f59e0b', size: 13, pad: 7 });
     D.text(280, 29, '실제 값과 다를 수 있어요.', { size: 13.5, weight: 700, color: '#475569', align: 'left' });
     D.text(188, 50, '국립해양조사원 바다누리에서 실시간 자료를 확인해 보세요.', { size: 13.5, weight: 700, color: '#1d4e89', align: 'left' });
@@ -1275,7 +1275,7 @@
           title: '증발시켜 염분 구하기',
           goal: '해수 시료 1000 g을 <b>가열</b>해 물을 모두 증발시키고, 남은 <b>염류의 질량</b>으로 염분을 구하세요.',
           hint: '오른쪽의 <b>🔥 가열하기</b>를 눌러요. 물이 다 날아가면 소금 결정이 저울로 옮겨져요.',
-          setup() { startS1(0); showHint('🔥 가열하기를 눌러 보세요', 6000); },
+          setup() { startS1(0); },
           check: () => S1.measured[0],
           status: dishStatus,
           hold: 0.8,
@@ -1316,7 +1316,7 @@
           title: '염분을 높이는 일 찾기',
           goal: '바다 상자에서 염분이 <b>높아지는</b> 일을 <b>2가지</b> 일으켜 보세요. 돋보기 속 입자와 염분계를 지켜봐요.',
           hint: '<b>☀️ 햇빛</b>과 <b>❄️ 바닷물 얼기</b> 버튼을 눌러 보세요. 화면의 해를 눌러도 돼요.',
-          setup() { setScene(1); initBox(false); syncEvButtons(); showHint('☀️ 햇빛이나 ❄️ 얼기를 눌러 보세요', 6000); },
+          setup() { setScene(1); initBox(false); syncEvButtons(); },
           check: () => S2.fired.has('evap') && S2.fired.has('freeze'),
           status: () => chk(S2.fired.has('evap'), '증발') + ' · ' + chk(S2.fired.has('freeze'), '결빙') + ' · 염분 <b>' + S2.sal.toFixed(1) + ' psu</b>',
           hold: 1.0,
@@ -1357,7 +1357,7 @@
           title: '세 원그래프 비교하기',
           goal: '<b>크기 같게</b>와 <b>겹쳐 보기</b>로 바꿔 보고, 원그래프의 <b>조각을 눌러</b> 세 바다의 값을 비교하세요.',
           hint: '오른쪽 <b>🥧 원그래프 보기</b> 버튼으로 바꿔요. 조각이나 아래 이름표를 눌러 봐요.',
-          setup() { setScene(2); S3.mode = 0; S3.visited = new Set([0]); S3.tapped = new Set(); S3.sel = -1; syncSegs(); showHint('조각을 눌러 세 바다를 비교해 보세요', 6000); },
+          setup() { setScene(2); S3.mode = 0; S3.visited = new Set([0]); S3.tapped = new Set(); S3.sel = -1; syncSegs(); },
           check: () => S3.visited.has(1) && S3.visited.has(2) && S3.tapped.size >= 1,
           status: () => chk(S3.visited.has(1), '크기 같게') + ' · ' + chk(S3.visited.has(2), '겹쳐 보기') + ' · ' + chk(S3.tapped.size >= 1, '조각 누르기'),
           hold: 1.0,
@@ -1388,7 +1388,7 @@
           title: '염분 지도 읽기',
           goal: '<b>겨울</b>과 <b>여름</b> 모두에서 <b>황해</b>와 <b>동해</b> 이름표를 눌러 염분을 읽어 보세요.',
           hint: '오른쪽에서 계절을 바꾸고, 지도의 이름표를 눌러요. 4가지를 모두 확인해야 해요.',
-          setup() { setScene(3); S4.season = 0; S4.sel = -1; S4.seen = new Set(); syncSegs(); showHint('이름표를 눌러 염분을 읽어 보세요', 6000); },
+          setup() { setScene(3); S4.season = 0; S4.sel = -1; S4.seen = new Set(); syncSegs(); },
           check: () => ['0|0', '0|1', '2|0', '2|1'].every((k) => S4.seen.has(k)),
           status: () => chk(S4.seen.has('0|0'), '황해·겨울') + ' · ' + chk(S4.seen.has('0|1'), '황해·여름') + '<br>' + chk(S4.seen.has('2|0'), '동해·겨울') + ' · ' + chk(S4.seen.has('2|1'), '동해·여름'),
           hold: 1.0,

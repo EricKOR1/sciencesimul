@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0ea5e9">
+  <title>기단과 전선, 일기도 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⛈️</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-toolbar { min-height: 58px; }
+    .stage-toolbar .segmented button { min-height: 40px; padding: 5px 12px; font-size: 14.5px; white-space: nowrap; }
+    .segmented button.on { color: #075985; }
+    #resetBtn { font-size: 20px; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    .is-off { display: none !important; }
+    .seg-label { display: block; font-weight: 800; font-size: 14.5px; color: var(--muted); margin-bottom: 6px; }
+    .segmented.dense { display: flex; width: 100%; }
+    .segmented.dense button { flex: 1 1 auto; min-height: 44px; padding: 6px 4px; font-size: 14px; white-space: nowrap; }
+    .btn-block2 { width: 100%; min-height: 46px; white-space: nowrap; }
+    .ctrl-note { margin: 6px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    input[type=range] { height: 44px; }
+    .btn-sm { min-height: 44px; }
+    .game-foot button { min-height: 44px; }
+    .mission-figure svg { border-radius: 12px; max-width: 100%; height: auto; }
+    .note-fig { margin: 6px 0; text-align: center; }
+    .note-fig svg { max-width: 100%; height: auto; border-radius: 10px; }
+    .btn-row { display: flex; gap: 8px; }
+    .btn-row .btn { flex: 1 1 0; min-width: 0; min-height: 46px; white-space: nowrap; }
+    @media (max-width: 599px) { .stage-toolbar .segmented button { padding: 5px 9px; font-size: 14px; } }
+    @media (max-width: 599px) { .readout { min-width: 0; } .readout .value { white-space: normal; font-size: 17px; line-height: 1.25; overflow-wrap: anywhere; } .readout .label { white-space: normal; } }
+  </style>
+</head>
+<body class="sim-page" data-subject="earth">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#g3">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">중3 · Ⅱ. 날씨와 기후변화</div>
+      <h1>기단과 전선, 일기도</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <div class="segmented" id="sceneSeg" role="group" aria-label="화면 고르기"></div>
+          <span class="spacer"></span>
+          <button class="icon-btn" id="resetBtn" type="button" title="처음 상태로" aria-label="처음 상태로">↺</button>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="기단과 전선, 일기도 화면: 우리나라 주변 기단 지도, 찬물·따뜻한 물 수조 모형, 한랭 전선과 온난 전선 단면, 고기압과 저기압 공기 기둥, 예시 일기도"></canvas>
+          <div class="stage-hint" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="rl1"></span><span class="value" id="rv1"></span></div>
+        <div class="readout"><span class="label" id="rl2"></span><span class="value" id="rv2"></span></div>
+        <div class="readout"><span class="label" id="rl3"></span><span class="value" id="rv3"></span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" id="cMassCards">
+          <p class="ctrl-note" style="margin:0">🃏 아래 카드를 손가락으로 끌어, 지도 위 <b>점선 동그라미</b> 네 곳에 놓아 보세요.</p>
+        </div>
+        <div class="control" id="cMassSeason">
+          <span class="seg-label">📅 계절을 바꿔 보세요</span>
+          <div class="segmented dense" id="seasonSeg" role="group" aria-label="계절">
+            <button type="button" data-s="win">❄️ 겨울</button>
+            <button type="button" data-s="spr">🌸 봄·가을</button>
+            <button type="button" data-s="ear">🌧️ 초여름</button>
+            <button type="button" data-s="sum">☀️ 여름</button>
+          </div>
+          <p class="ctrl-note" id="seasonNote"></p>
+        </div>
+        <div class="control" id="cTank">
+          <button class="btn btn-primary btn-block2" id="tankBtn" type="button">🧹 칸막이 빼기</button>
+          <p class="ctrl-note" id="tankNote"></p>
+        </div>
+        <div class="control" id="cFront">
+          <span class="seg-label">🌐 어떤 전선일까요?</span>
+          <div class="segmented dense" id="frontSeg" role="group" aria-label="전선 종류">
+            <button type="button" data-f="cold">❄️ 한랭 전선</button>
+            <button type="button" data-f="warm">🔥 온난 전선</button>
+          </div>
+          <div class="control-head" style="margin-top:8px"><label for="sFront">➡️ 전선 이동</label><output id="oFront"></output></div>
+          <input type="range" id="sFront" min="0" max="100" step="1" value="0" aria-label="전선 위치 (왼쪽에서 오른쪽으로 이동)">
+          <button class="btn btn-block2" id="frontPlay" type="button">▶ 자동으로 이동</button>
+        </div>
+        <div class="control" id="cColumn">
+          <p class="ctrl-note" style="margin:0">👆 화면의 <b>?</b> 칸을 눌러 공기가 움직이는 방향을 골라요. 눌러서 바꿀 수 있어요.</p>
+        </div>
+        <div class="control" id="cMap">
+          <span class="seg-label">🗺️ 예시 일기도</span>
+          <div class="segmented dense" id="mapSeg" role="group" aria-label="예시 일기도">
+            <button type="button" data-m="win">❄️ 겨울</button>
+            <button type="button" data-m="spr">🌸 봄</button>
+          </div>
+          <span class="seg-label" style="margin-top:8px">🔎 보기</span>
+          <div class="segmented dense" id="layerSeg" role="group" aria-label="자료 종류">
+            <button type="button" data-l="chart">🗺️ 일기도</button>
+            <button type="button" data-l="sat">🛰️ 위성</button>
+            <button type="button" data-l="radar">📡 레이더</button>
+          </div>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>
