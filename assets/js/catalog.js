@@ -847,8 +847,7 @@ window.SCI_CATALOG = {
                 "상호작용",
                 "지권의 층",
                 "적용"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m2-minerals",
@@ -868,8 +867,7 @@ window.SCI_CATALOG = {
                 "조흔색",
                 "굳기·반응·자성",
                 "광물 감정"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m2-rock-cycle",
@@ -959,8 +957,7 @@ window.SCI_CATALOG = {
                 "반사",
                 "굴절",
                 "경로 퍼즐"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m2-mirror-lens",
@@ -1001,8 +998,7 @@ window.SCI_CATALOG = {
                 "빛의 합성",
                 "조명과 색",
                 "화면의 색"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m2-sound-wave",
@@ -1051,8 +1047,7 @@ window.SCI_CATALOG = {
                 "원소·화합물",
                 "화학식",
                 "지구 환경"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m2-build-atom",
