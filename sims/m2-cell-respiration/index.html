@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#16a34a">
+  <title>세포호흡과 기관계의 통합 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-card { background: #eef6ef; }
+    .stage-toolbar { min-height: 61px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+    #sceneSeg button { min-height: 44px; padding: 6px 13px; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    .seg-full { display: flex; width: 100%; }
+    .seg-full button { flex: 1; min-height: 46px; padding: 6px 4px; font-size: 15px; }
+    .zoom-ticks { display: flex; justify-content: space-between; font-size: 12.5px; font-weight: 700; color: var(--muted); margin-top: 2px; padding: 0 2px; }
+    input[type=range] { height: 44px; }
+    .ctrl-note { font-size: 13.5px; color: var(--muted); margin: 2px 0 0; line-height: 1.4; }
+    .btn-block { min-height: 46px; }
+    .mission-figure svg { border-radius: 12px; }
+    @media (max-width: 599px) {
+      #sceneSeg { flex-wrap: nowrap; }
+      #sceneSeg button { padding: 6px 12px; font-size: 14px; }
+      #sceneSeg button:not(.on) .t { display: none; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="bio">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#g2">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">중2 · Ⅵ. 동물과 에너지</div>
+      <h1>세포호흡과 기관계의 통합</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="sceneLabel">🏃 운동하면 몸이 어떻게 달라질까?</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="sceneSeg" role="tablist" aria-label="학습 장면" data-feature="cell">
+            <button type="button" data-scene="body" data-feature="body" title="운동과 몸" aria-label="운동과 몸">🏃<span class="t"> 운동과 몸</span></button>
+            <button type="button" data-scene="cell" data-feature="cell" title="세포호흡" aria-label="세포호흡">⚡<span class="t"> 세포호흡</span></button>
+            <button type="button" data-scene="map" data-feature="map" title="통합 지도" aria-label="통합 지도">🗺️<span class="t"> 통합 지도</span></button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="세포호흡과 기관계의 통합: 운동할 때의 심박수·호흡수·체온, 근육 세포의 세포호흡, 소화·순환·호흡·배설계를 잇는 몸 지도를 보여 주는 화면"></canvas>
+        </div>
+      </section>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" data-ctl="int">
+          <div class="control-head"><label for="sInt">🏃 운동 강도</label><output id="oInt">쉬기</output></div>
+          <input type="range" id="sInt" min="0" max="100" step="1" value="0" aria-label="운동 강도">
+          <div class="zoom-ticks" aria-hidden="true"><span>쉬기</span><span>걷기</span><span>달리기</span></div>
+        </div>
+        <div class="control" data-ctl="fault">
+          <div class="control-head"><label>🩺 문제가 생긴 기관계</label></div>
+          <div class="segmented seg-full" id="faultSeg" role="group" aria-label="문제가 생긴 기관계">
+            <button type="button" data-fault="none" class="on">정상</button>
+            <button type="button" data-fault="dig">소화</button>
+            <button type="button" data-fault="resp">호흡</button>
+            <button type="button" data-fault="circ">순환</button>
+            <button type="button" data-fault="exc">배설</button>
+          </div>
+        </div>
+        <div class="control" data-ctl="reset">
+          <button type="button" class="btn btn-block" id="resetLinks">↺ 연결선 다시 긋기</button>
+          <p class="ctrl-note">기관계에서 기관계로 끌어서 선을 이어요.</p>
+        </div>
+        <div class="control" data-ctl="cellnote">
+          <p class="ctrl-note" style="font-size:15px;color:var(--ink);font-weight:700">🍚 포도당과 💨 산소를 끌어서 <b>미토콘드리아</b>에 넣어 보세요.</p>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

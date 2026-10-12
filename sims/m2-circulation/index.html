@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#16a34a">
+  <title>순환계와 혈액 순환 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>❤️</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-card { background: #eef4ef; }
+    .stage-toolbar { min-height: 61px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+    #sceneSeg button { min-height: 44px; padding: 6px 11px; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard [hidden] { display: none !important; }
+    .cgrp { display: flex; flex-direction: column; gap: 10px; }
+    .cgrp .btn { min-height: 48px; font-size: 16px; }
+    .cgrp .btn[disabled] { opacity: .45; cursor: default; }
+    input[type=range] { height: 44px; }
+    .ctrl-note { font-size: 13.5px; color: var(--muted); margin: 2px 0 0; line-height: 1.4; }
+    .mission-figure svg { border-radius: 12px; }
+    @media (max-width: 599px) {
+      #sceneSeg { flex-wrap: nowrap; }
+      #sceneSeg button { padding: 6px 10px; font-size: 14px; }
+      #sceneSeg button:not(.on) .t { display: none; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="bio">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#g2">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">중2 · Ⅵ. 동물과 에너지</div>
+      <h1>순환계와 혈액 순환</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="sceneLabel">❤️ 박동하는 심장</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="sceneSeg" role="tablist" aria-label="학습 장면">
+            <button type="button" data-scene="heart" data-feature="heart" title="심장" aria-label="심장">❤️<span class="t"> 심장</span></button>
+            <button type="button" data-scene="vessel" data-feature="vessel" title="혈관" aria-label="혈관">🩸<span class="t"> 혈관</span></button>
+            <button type="button" data-scene="blood" data-feature="blood" title="혈액" aria-label="혈액">🔬<span class="t"> 혈액</span></button>
+            <button type="button" data-scene="route" data-feature="route" title="순환 경로" aria-label="순환 경로">🗺️<span class="t"> 순환 경로</span></button>
+            <button type="button" data-scene="order" data-feature="order" title="종합" aria-label="종합">🧩<span class="t"> 종합</span></button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="순환계와 혈액 순환: 박동하는 심장, 혈관과 혈액, 체순환과 폐순환 경로 지도를 살펴보는 화면"></canvas>
+        </div>
+      </section>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="cgrp" data-scene="heart">
+          <button class="btn btn-subject" type="button" id="btnPause">⏸ 멈추고 살펴보기</button>
+          <div class="control">
+            <div class="control-head"><label for="sRate">💓 박동 속도</label><output id="oRate">분당 64회</output></div>
+            <input type="range" id="sRate" min="0.25" max="1.6" step="0.05" value="0.8" aria-label="박동 속도">
+          </div>
+        </div>
+        <div class="cgrp" data-scene="vessel" hidden>
+          <p class="ctrl-note">동맥, 정맥, 모세 혈관의 벽과 혈액의 흐름을 비교해요. 짝짓기를 마치면 각 혈관을 눌러 설명을 볼 수 있어요.</p>
+        </div>
+        <div class="cgrp" data-scene="blood" hidden>
+          <p class="ctrl-note">오른쪽 단추나 현미경 속 세포를 눌러 혈액의 성분이 하는 일을 살펴봐요.</p>
+        </div>
+        <div class="cgrp" data-scene="route" hidden>
+          <button class="btn btn-subject" type="button" id="btnAuto">▶ 자동으로 흐르게</button>
+          <button class="btn" type="button" id="btnRouteReset">🔄 처음으로</button>
+          <p class="ctrl-note">혈액 방울을 끌어 길을 따라가요. 폐와 온몸에서 혈액의 색이 바뀌어요.</p>
+        </div>
+        <div class="cgrp" data-scene="order" hidden>
+          <button class="btn" type="button" id="btnOrderReset">🔄 카드 다시 섞기</button>
+          <p class="ctrl-note">카드를 끌어 번호 칸에 놓아요. 체순환과 폐순환 모두 심장에서 출발해 심장으로 돌아와요.</p>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

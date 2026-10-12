@@ -348,7 +348,7 @@
       const age = now() - n.t0;
       if (age > 5) { this.note = null; return; }
       const a = Math.min(clamp(age / 0.25, 0, 1), clamp((5 - age) / 0.5, 0, 1));
-      pill(n.text, clamp(this.x, 90, W - 90), this.top - 22 - (1 - a) * 8, { size: 13.5, bg: n.bg || '#1b2333', alpha: a, h: 26, pad: 10, shadow: true });
+      pill(n.text, clamp(this.x, 90, W - 90), this.top - 22 + (this.noteDy || 0) - (1 - a) * 8, { size: 13.5, bg: n.bg || '#1b2333', alpha: a, h: 26, pad: 10, shadow: true });
     }
   }
 
@@ -720,7 +720,8 @@
         startReaction(tb, dp.key, (amt, label, col) => {
           SAL.res[tb.tag][dp.key] = { label, col };
           const isI = dp.key === 'iodine';
-          const txtN = isI ? (tb.tag === 'A' ? '청람색: 녹말이 그대로 있어요' : '연한 청람색: 녹말이 줄었어요!') : (tb.tag === 'A' ? '파란색: 당이 없어요' : '황적색: 당(엿당)이 생겼어요!');
+          const txtN = isI ? (tb.tag === 'A' ? '청람색: 녹말 그대로' : '연한 청람색: 녹말이 줄었어요!') : (tb.tag === 'A' ? '파란색: 당 없음' : '황적색: 당(엿당)이 생겼어요!');
+          tb.noteDy = tb.tag === 'B' ? -30 : 0;
           tb.note = { text: txtN, bg: tb.tag === 'B' ? '#15803d' : '#475569', t0: now() };
           if (tb.tag === 'B') burst(tb.x, tb.top + 70, [col, '#facc15', '#fff'], 16);
           if (SAL.res.A[dp.key] && SAL.res.B[dp.key]) SAL.done[dp.key] = true;
@@ -863,8 +864,8 @@
       });
     } else {
       SAL.split.forEach((q) => pill(q.tag + (q.tag === 'A' ? ' (물)' : ' (침)'), q.x, 456, { size: 14.5, bg: q.tag === 'A' ? '#0369a1' : '#b45309', h: 28, pad: 12, shadow: true }));
-      pill('① 녹말 검사', 162, 222, { size: 14.5, bg: '#fff', color: '#1b2333', border: 'rgba(0,0,0,.12)', borderW: 1.5, h: 28, pad: 12 });
-      pill('② 당 검사 (가열)', 417, 222, { size: 14.5, bg: '#fff', color: '#1b2333', border: 'rgba(0,0,0,.12)', borderW: 1.5, h: 28, pad: 12 });
+      pill('① 녹말 검사', 162, 176, { size: 14.5, bg: '#fff', color: '#1b2333', border: 'rgba(0,0,0,.12)', borderW: 1.5, h: 28, pad: 12 });
+      pill('② 당 검사 (가열)', 417, 176, { size: 14.5, bg: '#fff', color: '#1b2333', border: 'rgba(0,0,0,.12)', borderW: 1.5, h: 28, pad: 12 });
     }
     // 시계와 진행 막대
     if (ph === 'bath') {

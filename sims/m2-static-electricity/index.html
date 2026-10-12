@@ -26,11 +26,12 @@
     .seg-wide button { flex: 1; min-width: 0; padding: 6px 8px; }
     .seg-wide button[data-q="-1"].on { color: #1d4ed8; }
     .seg-wide button[data-q="1"].on { color: #b91c1c; }
-    .readout .value.txt { font-family: var(--font); font-size: 18px; }
+    .readout .value.txt { font-family: var(--font); font-size: 18px; white-space: normal; line-height: 1.25; }
     .readout .value .neg { color: #1d4ed8; }
     .readout .value .pos { color: #b91c1c; }
 
     @media (max-width: 599px) {
+      .readout .value.txt { font-size: 15px; }
       .stage-toolbar .spacer { display: none; }
     }
   </style>

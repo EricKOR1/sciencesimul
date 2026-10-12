@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#f26b3a">
+  <title>저항의 연결과 전기 에너지 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔌</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; }
+    .stage-toolbar { min-height: 61px; }
+    .segmented button { min-height: 44px; }
+
+    #ctrlCard { display: flex; flex-direction: column; gap: 14px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard .control[hidden] { display: none !important; }
+    #ctrlCard .btn-sm { min-height: 44px; }
+    .ctrl-note { font-size: 14px; color: var(--muted); margin: 6px 0 0; }
+
+    .range-row { display: flex; align-items: center; gap: 8px; }
+    .range-row input[type=range] { flex: 1; min-width: 0; height: 44px; }
+    .nudge {
+      flex: none; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line);
+      background: var(--surface); font-weight: 900; font-size: 20px; line-height: 1; cursor: pointer;
+      display: grid; place-items: center; color: var(--ink);
+    }
+    .nudge:active { transform: scale(.94); background: var(--surface-2); }
+    @media (hover: hover) { .nudge:hover { background: var(--surface-2); } }
+    .play-btn { margin-top: 8px; font-size: 16px; }
+    .play-btn[aria-pressed="true"] { background: var(--good-soft); border-color: #86d9ab; color: #0b6b39; }
+
+    .readout .value.txt { font-family: var(--font); font-size: 18px; white-space: normal; line-height: 1.25; }
+    .readout .value small { font-size: 13px; }
+    .readout .value .hot { color: #c2410c; }
+    .readout .value .ok { color: #0b7a41; }
+
+    @media (max-width: 599px) {
+      .readout .value.txt { font-size: 15px; }
+      .stage-toolbar .spacer { display: none; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="phy">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#g2">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">중2 · Ⅶ. 전기와 자기</div>
+      <h1>저항의 연결과 전기 에너지</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🔌 직렬연결</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="sceneSeg" role="tablist" aria-label="실험 고르기" hidden>
+            <button type="button" data-scene="series">🔌 직렬</button>
+            <button type="button" data-scene="parallel">🔀 병렬</button>
+            <button type="button" data-scene="energy">🔄 에너지 전환</button>
+            <button type="button" data-scene="power">⚡ 소비 전력</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="전원 장치, 전류계, 전구 회로판과 전구 보관함, 가전제품의 에너지 전환, 전구의 소비 전력 비교 화면"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1"></span><span class="value txt" id="v1"></span></div>
+        <div class="readout"><span class="label" id="l2"></span><span class="value txt" id="v2"></span></div>
+        <div class="readout"><span class="label" id="l3"></span><span class="value txt" id="v3"></span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" data-scenes="series parallel">
+          <button class="btn btn-sm btn-block" id="resetBtn" type="button">↺ 전구 처음 상태로</button>
+          <p class="ctrl-note" id="noteBoard">전구를 <b>끌어서</b> 회로판의 빈 자리에 끼우거나, 전구를 <b>톡</b> 눌러 끼우고 빼요.</p>
+        </div>
+        <div class="control" data-scenes="energy">
+          <button class="btn btn-sm btn-block" id="energyReset" type="button">↺ 에너지 다시 고르기</button>
+          <p class="ctrl-note">아래의 <b>에너지 카드</b>를 끌어 가전제품 위에 놓아요. 맞으면 에너지가 흘러나와요.</p>
+        </div>
+        <div class="control" data-scenes="power">
+          <div class="control-head"><label for="sT">⏱️ 켜 둔 시간</label><output id="oT"></output></div>
+          <div class="range-row">
+            <button class="nudge" type="button" data-d="-1" aria-label="1시간 줄이기">−</button>
+            <input type="range" id="sT" min="0" max="10" step="0.1" value="0">
+            <button class="nudge" type="button" data-d="1" aria-label="1시간 늘리기">+</button>
+          </div>
+          <button class="btn btn-sm btn-block play-btn" id="playBtn" type="button" aria-pressed="false">▶ 시간 흐르게 하기</button>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>
