@@ -1789,8 +1789,7 @@ window.SCI_CATALOG = {
                 "기압의 크기",
                 "바람의 원리",
                 "해륙풍과 계절풍"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m3-fronts-weather",
@@ -1811,8 +1810,7 @@ window.SCI_CATALOG = {
                 "전선",
                 "고기압과 저기압",
                 "일기도 해석"
-              ],
-              "soon": true
+              ]
             }
           ]
         },
