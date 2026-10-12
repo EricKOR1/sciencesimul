@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0ea5e9">
+  <title>대기 대순환 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌀</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-card { background: #0a1330; }
+    /* 태블릿: 가로 배치 캔버스 · 휴대폰: 세로 배치 캔버스 */
+    .sc-tall { display: none; }
+    @media (max-width: 599px) { .sc-wide { display: none; } .sc-tall { display: block; } }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    .is-off { display: none !important; }
+    .seg-label { display: block; font-weight: 800; font-size: 14.5px; color: var(--muted); margin-bottom: 6px; }
+    .segmented { display: flex; width: 100%; border-radius: 22px; }
+    .segmented button { flex: 1 1 auto; min-height: 44px; padding: 6px 6px; font-size: 14px; white-space: nowrap; }
+    .segmented button.on { color: #075985; }
+    .play-row { display: flex; gap: 8px 10px; align-items: center; flex-wrap: wrap; }
+    .play-row .btn { flex: 1 1 130px; }
+    .ctrl-note { margin: 6px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    .btn-sm { min-height: 44px; }
+    .btn.on-state { background: #0f766e; border-color: #0f766e; color: #fff; box-shadow: 0 3px 0 #0a4f49; }
+    input[type=range] { height: 44px; }
+    .game-foot button { min-height: 44px; }
+    .mission-figure svg { border-radius: 12px; max-width: 100%; height: auto; }
+    .note-fig { margin: 6px 0; text-align: center; }
+    .note-fig svg { max-width: 100%; height: auto; border-radius: 10px; }
+    .cmp { width: 100%; border-collapse: collapse; font-size: 14px; margin: 6px 0; }
+    .cmp th, .cmp td { border: 1px solid var(--line); padding: 5px 8px; text-align: left; vertical-align: top; }
+    .cmp th { background: var(--surface-2); font-weight: 800; }
+
+  </style>
+</head>
+<body class="sim-page" data-subject="earth">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#g3">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">중3 · Ⅱ. 날씨와 기후변화</div>
+      <h1>대기 대순환</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-canvas sc-wide"><canvas id="cvWide" aria-label="위도별 태양 에너지 차이와 세 개의 순환, 위도별 바람, 대기 대순환의 역할을 탐구하는 화면"></canvas></div>
+        <div class="stage-canvas sc-tall"><canvas id="cvTall" aria-label="위도별 태양 에너지 차이와 세 개의 순환, 위도별 바람, 대기 대순환의 역할을 탐구하는 화면"></canvas></div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="rL1">위도</span><span class="value" id="rV1">0<small>°</small></span></div>
+        <div class="readout"><span class="label" id="rL2">빛이 퍼진 넓이</span><span class="value" id="rV2">1.0<small>배</small></span></div>
+        <div class="readout"><span class="label" id="rL3">단위 면적당 에너지</span><span class="value" id="rV3">100<small>%</small></span></div>
+      </div>
+
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" id="cLat" data-feature="lat">
+          <div class="control-head"><label for="sLat">🔦 손전등이 비추는 위도</label><output id="oLat">0°</output></div>
+          <input type="range" id="sLat" min="0" max="80" step="1" value="0" aria-label="비추는 위도">
+        </div>
+        <div class="control" id="cFocus" data-feature="focus">
+          <span class="seg-label">🔎 순환 하나씩 보기</span>
+          <div class="segmented" id="focusSeg" role="group" aria-label="순환 고르기">
+            <button type="button" data-f="all">전체</button><button type="button" data-f="h">저위도</button><button type="button" data-f="f">중위도</button><button type="button" data-f="p">고위도</button>
+          </div>
+        </div>
+        <div class="control" id="cScene" data-feature="views">
+          <span class="seg-label">🔭 화면</span>
+          <div class="segmented" id="sceneSeg" role="group" aria-label="화면 고르기">
+            <button type="button" data-s="role">🔥 열 운반</button><button type="button" data-s="sat">🛰️ 날씨 이동</button>
+          </div>
+        </div>
+        <div class="control" id="cCirc" data-feature="views">
+          <span class="seg-label">🌀 대기 대순환</span>
+          <div class="segmented" id="circSeg" role="group" aria-label="대순환 켜고 끄기">
+            <button type="button" data-c="0">⏸ 멈춘다고 가정</button><button type="button" data-c="1">🌀 작동</button>
+          </div>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

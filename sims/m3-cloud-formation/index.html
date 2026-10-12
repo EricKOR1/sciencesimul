@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0ea5e9">
+  <title>구름의 생성과 강수 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>☁️</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-toolbar { min-height: 61px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+    #resetBtn { font-size: 20px; }
+    .stage-toolbar .segmented button { min-height: 44px; padding: 6px 12px; font-size: 14.5px; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    .ctrl-note { font-size: 13.5px; color: var(--muted); margin: 8px 0 0; line-height: 1.45; }
+    .btn-block { min-height: 52px; font-size: 17px; }
+    .btn-stack { display: flex; flex-direction: column; gap: 10px; }
+    .btn[disabled] { opacity: .5; cursor: not-allowed; }
+    .opt-seg { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .opt-seg + .opt-seg { margin-top: 10px; }
+    .opt-seg button {
+      min-height: 48px; border-radius: 12px; border: 2px solid var(--line); background: var(--surface); color: var(--ink);
+      font-weight: 800; font-size: 15px; cursor: pointer; padding: 6px 8px; line-height: 1.25;
+    }
+    .opt-seg button small { display: block; font-size: 12px; font-weight: 700; color: var(--muted); }
+    .opt-seg button[aria-pressed="true"] { border-color: var(--subject); background: #e8f6ff; color: #075985; box-shadow: 0 0 0 3px color-mix(in srgb, var(--subject) 18%, transparent); }
+    .seg-label { font-weight: 800; font-size: 14px; margin: 0 0 6px; color: var(--muted); }
+    .mission-figure svg { border-radius: 12px; }
+    @media (max-width: 599px) {
+      .stage-toolbar { min-height: 0; }
+      .stage-toolbar .segmented { width: 100%; }
+      .stage-toolbar .segmented button { flex: 1 1 auto; padding: 6px 4px; font-size: 13px; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="earth">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#g3">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">중3 · Ⅱ. 날씨와 기후변화</div>
+      <h1>구름의 생성과 강수</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">💨 페트병 속 공기를 압축·팽창시키기</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="sceneSeg" role="group" aria-label="실험 장면" data-feature="cloud">
+            <button type="button" data-scene="pump">💨 단열 팽창</button>
+            <button type="button" data-scene="cloud" data-feature="cloud">☁️ 구름 실험</button>
+            <button type="button" data-scene="mtn" data-feature="mtn">⛰️ 구름의 생성</button>
+            <button type="button" data-scene="rain" data-feature="rain">🌧️ 강수 과정</button>
+          </div>
+          <button class="icon-btn" id="resetBtn" type="button" title="처음 상태로" aria-label="처음 상태로">↺</button>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="페트병 속 공기의 압축과 팽창, 구름 만들기 실험, 산을 타고 오르는 공기 덩어리, 비와 눈이 만들어지는 과정을 알아보는 실험 화면"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts" id="readouts">
+        <div class="readout"><span class="label" id="rl1">온도</span><span class="value" id="r1">20.0<small>°C</small></span></div>
+        <div class="readout"><span class="label" id="rl2">압력</span><span class="value" id="r2">1013<small>hPa</small></span></div>
+        <div class="readout"><span class="label" id="rl3">병 속 공기의 양</span><span class="value" id="r3">1.00<small>배</small></span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control btn-stack" id="ctlPump">
+          <button class="btn btn-primary btn-block" id="pumpBtn" type="button">💨 펌프질 (압축)</button>
+          <button class="btn btn-block" id="openBtn" type="button">🔓 뚜껑 열기 (팽창)</button>
+          <button class="btn btn-block" id="smokeBtn" type="button" data-feature="smoke" hidden>🕯️ 향 연기 넣기 (병 A)</button>
+          <p class="ctrl-note" id="pumpNote">펌프질을 여러 번 한 뒤, 병이 실내 온도로 돌아오면 뚜껑을 열어요.</p>
+        </div>
+        <div class="control" id="ctlMtn" hidden>
+          <div id="liftBox">
+            <div class="control-head"><label for="liftR">⛰️ 공기 덩어리의 높이</label><output id="liftO">0 m</output></div>
+            <input type="range" id="liftR" min="0" max="2000" step="10" value="0" aria-label="공기 덩어리의 높이">
+            <p class="ctrl-note">슬라이더나 공기 덩어리를 끌어서 산비탈을 올려 보내요.</p>
+          </div>
+          <div class="opt-seg" id="modeSeg" role="group" aria-label="장면 고르기" style="margin-top:12px">
+            <button type="button" data-mode="lift" aria-pressed="true">⛰️ 공기 올리기</button>
+            <button type="button" data-mode="match" aria-pressed="false">🧩 상승 원인</button>
+          </div>
+        </div>
+        <div class="control" id="ctlRain" hidden>
+          <p class="seg-label">구름의 종류</p>
+          <div class="opt-seg" id="cloudSeg" role="group" aria-label="구름의 종류">
+            <button type="button" data-ct="warm" aria-pressed="true">☁️ 따뜻한 구름<small>0 °C 이상</small></button>
+            <button type="button" data-ct="cold" aria-pressed="false">❄️ 차가운 구름<small>0 °C 이하</small></button>
+          </div>
+          <div id="groundBox" hidden>
+            <p class="seg-label" style="margin-top:12px">땅 가까이의 기온</p>
+            <div class="opt-seg" id="groundSeg" role="group" aria-label="지표 부근 기온">
+              <button type="button" data-g="warm" aria-pressed="true">🌞 따뜻해요</button>
+              <button type="button" data-g="cold" aria-pressed="false">🥶 추워요</button>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

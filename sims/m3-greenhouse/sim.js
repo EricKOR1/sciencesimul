@@ -552,7 +552,7 @@
       pill(ctx, '들어오는 에너지', ux + nx * (off + 30 * fs) + dx * 30, uy + ny * (off + 30 * fs) + dy * 30, { bg: '#f59e0b', color: '#1f1300', font: fnt(L, 12.5, '800'), h: 22 * fs, pad: 8 });
       const wOut = 2 + 0.07 * Eu, ox = cupX + cupW / 2 + 4, oy = cupTop + cupH * 0.5;
       [-40, 0, 40].forEach((a) => { const r = a * DEG; thickArrow(D, ox, oy, ox + Math.cos(r) * 52 * fs, oy + Math.sin(r) * 52 * fs, wOut, '#f87171'); });
-      pill(ctx, '나가는 에너지', Math.min(W - 58 * fs, ox + 30 * fs), oy + 60 * fs, { bg: '#ef4444', font: fnt(L, 12.5, '800'), h: 22 * fs, pad: 8 });
+      pill(ctx, '나가는 에너지', Math.min(W - 58 * fs, ox + 30 * fs), oy - 64 * fs, { bg: '#ef4444', font: fnt(L, 12.5, '800'), h: 22 * fs, pad: 8 });
     }
     // 복사 평형 표시
     if (S.eqNow) {
@@ -667,13 +667,14 @@
     const lines = [];
     if (vRef != null && vAbs != null && vRef + vAbs === 100) lines.push('100 = 반사 ' + vRef + ' + 흡수 ' + vAbs);
     if (vAbs != null && vEm != null && vAbs === vEm) lines.push('흡수 ' + vAbs + ' = 방출 ' + vEm + '  →  ⚖️ 복사 평형');
-    ctx.font = fnt(L, 15, '800'); ctx.textAlign = 'center';
+    ctx.textAlign = 'center';
     const baseY = H - 70 * fs;
-    ctx.fillStyle = 'rgba(8,14,38,.85)'; roundRect(ctx, 14, baseY - 22 * fs, W - 28, 28 * fs * Math.max(1, lines.length) + 20, 12); ctx.fill();
+    ctx.font = fnt(L, 14, '700');
+    const msg = lines.length ? lines : wrapLines(ctx, '숫자 카드를 끌어다 칸에 놓아요. 카드를 누른 뒤 칸을 눌러도 돼요.', W - 70);
+    ctx.fillStyle = 'rgba(8,14,38,.85)'; roundRect(ctx, 14, baseY - 22 * fs, W - 28, 26 * fs * msg.length + 18 * fs, 12); ctx.fill();
     ctx.strokeStyle = done ? '#4ade80' : 'rgba(255,255,255,.2)'; ctx.lineWidth = 2; ctx.stroke();
-    ctx.fillStyle = done ? '#bbf7d0' : '#c7d2fe';
-    if (!lines.length) { ctx.font = fnt(L, 14, '700'); ctx.fillText('숫자 카드를 끌어다 칸에 놓아요. 카드를 누른 뒤 칸을 눌러도 돼요.', W / 2, baseY + 2); }
-    else lines.forEach((s, i) => ctx.fillText(s, W / 2, baseY + 2 + i * 26 * fs));
+    ctx.fillStyle = done ? '#bbf7d0' : '#c7d2fe'; ctx.font = fnt(L, lines.length ? 15 : 14, '800');
+    msg.forEach((s, i) => ctx.fillText(s, W / 2, baseY + 2 + i * 24 * fs));
   }
 
   /* ---------- 장면 ③: 온실 효과 ---------- */
@@ -740,6 +741,7 @@
         ctx.fillStyle = '#e6edff'; ctx.textAlign = 'left'; ctx.fillText(MNAME[ty], lx + 28 * fs, ly + 4); ctx.restore();
       });
     }
+    if ((S.lv >= 3 || S.free) && S.Tm > 15.05) pill(ctx, '해수면 약 +' + Math.round((S.Tm - 15) * 18) + ' cm (예시)', L.w ? W - 10 : W / 2, surfY + (L.w ? 38 : 76) * fs, { align: L.w ? 'right' : 'center', bg: 'rgba(14,116,144,.9)', font: fnt(L, 13.5, '800'), h: 28 * fs, pad: 12 });
     // 처음 안내
     if (!S.atm && S.atmA < 0.1) pill(ctx, '대기가 없으면 지구 복사가 그대로 우주로 빠져나가요', W / 2, a0 + 60 * fs, { bg: 'rgba(15,23,42,.85)', font: fnt(L, 14, '700'), h: 28 * fs, pad: 14 });
     else if (S.atm && S.atmA > 0.9 && S.photons.some((p) => p.skip)) { /* 재방출 중 */ }
@@ -750,7 +752,7 @@
   function dataScene(V, G, t) {
     const { ctx, L, D } = V, fs = L.fs, W = G.M.w, H = G.M.h;
     const bg = ctx.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, '#0f1b3d'); bg.addColorStop(1, '#0a1330'); ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
-    const gx = 52 * fs, gw = W - gx - 18, y0 = 54 * fs, hh = (H - y0 - 100 * fs) / 2;
+    const gx = 52 * fs, gw = W - gx - 18, y0 = 54 * fs, hh = (H - y0 - 122 * fs) / 2;
     const prog = EZ.inOutCubic(S.dataP);
     const X = (y) => gx + (y - 1958) / (2024 - 1958) * gw;
     const yr = S.yearA;
@@ -783,7 +785,7 @@
     graph(y0 + hh + 54 * fs, '지구 평균 기온 편차 (°C, 산업화 이전 대비)', -0.4, 1.8, [0, 0.5, 1, 1.5], (v) => (v > 0 ? '+' : '') + v.toFixed(1), dts, '#38bdf8', { v: 0, t: '산업화 이전 = 0' });
     // 읽기 말풍선
     const y = Math.round(yr);
-    pill(ctx, y + '년: CO₂ 약 ' + Math.round(co2Base(y)) + ' ppm · 기온 편차 ' + (dtAt(y) >= 0 ? '+' : '') + dtAt(y).toFixed(1) + ' °C', W / 2, H - 22 * fs, { bg: 'rgba(8,14,38,.9)', stroke: '#fbbf24', font: fnt(L, 14, '800'), h: 30 * fs, pad: 14 });
+    pill(ctx, y + '년: CO₂ 약 ' + Math.round(co2Base(y)) + ' ppm · 기온 편차 ' + (dtAt(y) >= 0 ? '+' : '') + dtAt(y).toFixed(1) + ' °C', W / 2, H - 20 * fs, { bg: 'rgba(8,14,38,.9)', stroke: '#fbbf24', font: fnt(L, 14, '800'), h: 30 * fs, pad: 14 });
     D.text(W / 2, 22 * fs, '1958년 이후 하와이 관측을 단순화한 예시 자료', { size: 12.5 * fs, color: '#94a3c8' });
   }
 
