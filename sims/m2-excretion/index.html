@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#16a34a">
+  <title>배설계와 오줌의 생성 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💧</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-card { background: #eef4f1; }
+    .stage-toolbar { min-height: 61px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+    #sceneSeg button { min-height: 44px; padding: 6px 13px; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    .seg-full { display: flex; width: 100%; }
+    .seg-full button { flex: 1; min-height: 46px; padding: 6px 6px; font-size: 15.5px; }
+    .zoom-ticks { display: flex; justify-content: space-between; font-size: 12.5px; font-weight: 700; color: var(--muted); margin-top: 2px; padding: 0 2px; }
+    input[type=range] { height: 44px; }
+    .ctrl-note { font-size: 13.5px; color: var(--muted); margin: 2px 0 0; line-height: 1.4; }
+    .mission-figure svg { border-radius: 12px; }
+    @media (max-width: 599px) {
+      #sceneSeg { flex-wrap: nowrap; }
+      #sceneSeg button { padding: 6px 12px; font-size: 14px; }
+      #sceneSeg button:not(.on) .t { display: none; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="bio">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#g2">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">중2 · Ⅵ. 동물과 에너지</div>
+      <h1>배설계와 오줌의 생성</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="sceneLabel">🧪 노폐물은 어디로 갈까?</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="sceneSeg" role="tablist" aria-label="학습 장면" data-feature="kidney">
+            <button type="button" data-scene="waste" data-feature="waste" title="노폐물" aria-label="노폐물">🧪<span class="t"> 노폐물</span></button>
+            <button type="button" data-scene="kidney" data-feature="kidney" title="콩팥 구조" aria-label="콩팥 구조">🫘<span class="t"> 콩팥 구조</span></button>
+            <button type="button" data-scene="model" data-feature="model" title="오줌 생성" aria-label="오줌 생성">💧<span class="t"> 오줌 생성</span></button>
+            <button type="button" data-scene="diagram" data-feature="diagram" title="모식도" aria-label="모식도">📝<span class="t"> 모식도</span></button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="배설계와 오줌의 생성: 노폐물의 이동, 콩팥과 네프론의 구조, 여과·재흡수·분비 모형, 모식도를 보여 주는 화면"></canvas>
+        </div>
+      </section>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" data-ctl="waste">
+          <div class="control-head"><label>🍽️ 분해할 영양소</label></div>
+          <div class="segmented seg-full" id="nutSeg" role="group" aria-label="분해할 영양소">
+            <button type="button" data-nut="carb">🍚 탄수화물</button>
+            <button type="button" data-nut="fat">🥓 지방</button>
+            <button type="button" data-nut="prot">🥩 단백질</button>
+          </div>
+          <p class="ctrl-note">버튼을 누르면 세포 속에서 영양소가 분해돼요.</p>
+        </div>
+        <div class="control" data-ctl="kidney">
+          <div class="control-head"><label>🔭 살펴볼 범위</label></div>
+          <div class="segmented seg-full" id="viewSeg" role="group" aria-label="살펴볼 범위">
+            <button type="button" data-view="sys">배설계</button>
+            <button type="button" data-view="sec">콩팥 단면</button>
+            <button type="button" data-view="neph">네프론</button>
+          </div>
+          <p class="ctrl-note">그림 속 반짝이는 곳을 눌러도 확대돼요.</p>
+        </div>
+        <div class="control" data-ctl="model" id="ctlPore">
+          <div class="control-head"><label for="sPore">🔬 사구체 필터 구멍</label><output id="oPore">큼</output></div>
+          <input type="range" id="sPore" min="0" max="100" step="1" value="90" aria-label="사구체 필터 구멍 크기">
+          <div class="zoom-ticks" aria-hidden="true"><span>작음</span><span>큼</span></div>
+        </div>
+        <div class="control" data-ctl="model" id="ctlReabs">
+          <div class="control-head"><label>♻️ 세뇨관 재흡수</label></div>
+          <div class="segmented seg-full" id="reabsSeg" role="group" aria-label="재흡수">
+            <button type="button" data-reabs="1" class="on">켜기</button>
+            <button type="button" data-reabs="0">끄기</button>
+          </div>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

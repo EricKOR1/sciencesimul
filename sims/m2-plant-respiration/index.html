@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#16a34a">
+  <title>광합성과 호흡 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🫧</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-toolbar { min-height: 61px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+    #resetBtn { font-size: 20px; }
+    .stage-toolbar .segmented button { min-height: 44px; padding: 6px 12px; font-size: 14.5px; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    .ctrl-note { font-size: 13.5px; color: var(--muted); margin: 8px 0 0; line-height: 1.45; }
+    .btn-block { min-height: 52px; font-size: 17px; }
+    .btn-row { display: flex; gap: 8px; }
+    .btn-row .btn { flex: 1; min-height: 48px; }
+    .opt-seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
+    .opt-seg.two { grid-template-columns: 1fr 1fr; }
+    .opt-seg button {
+      min-height: 48px; border-radius: 12px; border: 2px solid var(--line); background: var(--surface); color: var(--ink);
+      font-weight: 800; font-size: 15px; cursor: pointer; padding: 6px 6px; line-height: 1.25;
+    }
+    .opt-seg button small { display: block; font-size: 12px; font-weight: 700; color: var(--muted); }
+    .opt-seg button[aria-pressed="true"] { border-color: var(--subject); background: #eaf8ee; color: #0f5a2c; box-shadow: 0 0 0 3px color-mix(in srgb, var(--subject) 18%, transparent); }
+    .tgl {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 46px; width: 100%;
+      border: 2px solid var(--line); background: var(--surface); color: var(--muted);
+      border-radius: 12px; padding: 5px 14px; font-weight: 800; font-size: 15px; cursor: pointer;
+    }
+    .tgl[aria-pressed="true"] { color: #0f5a2c; border-color: #86d9a0; background: #eaf8ee; }
+    .readout .value.word { font-family: var(--font); font-size: 17px; line-height: 1.5; overflow: hidden; text-overflow: ellipsis; }
+    .mission-figure svg { border-radius: 12px; max-width: 100%; height: auto; }
+    button[disabled].btn { opacity: .55; cursor: not-allowed; }
+    .dz { display: grid; grid-template-columns: 1fr auto; gap: 6px 8px; align-items: center; }
+    .dz .dz-name { font-weight: 800; font-size: 15px; line-height: 1.2; }
+    .dz .dz-name small { display: block; font-size: 12px; color: var(--muted); font-weight: 700; }
+    .dz .dz-pair { display: inline-flex; gap: 4px; }
+    .dz .dz-pair button {
+      min-height: 44px; min-width: 62px; border-radius: 10px; border: 2px solid var(--line); background: var(--surface);
+      font-weight: 800; font-size: 14.5px; cursor: pointer; color: var(--muted);
+    }
+    .dz .dz-pair button[data-v="diff"][aria-pressed="true"] { border-color: #f59e0b; background: #fff4de; color: #92400e; }
+    .dz .dz-pair button[data-v="same"][aria-pressed="true"] { border-color: #86d9a0; background: #eaf8ee; color: #0f5a2c; }
+    .dz-head { font-weight: 800; font-size: 15.5px; margin-bottom: 8px; }
+    @media (max-width: 599px) {
+      .stage-toolbar { min-height: 0; }
+      .stage-toolbar .segmented { width: 100%; }
+      .stage-toolbar .segmented button { flex: 1 1 auto; padding: 6px 6px; font-size: 13.5px; }
+      .readout .value.word { font-size: 15px; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="bio">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#g2">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">중2 · Ⅴ. 식물과 에너지</div>
+      <h1>광합성과 호흡</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🧪 BTB 용액 실험</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="sceneSeg" role="group" aria-label="장면 고르기">
+            <button type="button" data-scene="btb">🧪 BTB</button>
+            <button type="button" data-scene="day" data-feature="day">🍃 낮과 밤</button>
+            <button type="button" data-scene="table" data-feature="table">📋 비교표</button>
+            <button type="button" data-scene="room" data-feature="room">🛏️ 침실</button>
+          </div>
+          <button class="icon-btn" id="resetBtn" type="button" title="처음 상태로" aria-label="처음 상태로">↺</button>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="BTB 용액으로 식물의 기체 출입을 알아보는 실험, 낮과 밤의 광합성과 호흡 비교, 비교표 만들기, 침실의 화분 장면"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts" id="readouts">
+        <div class="readout"><span class="label" id="rl1">-</span><span class="value word" id="r1">-</span></div>
+        <div class="readout"><span class="label" id="rl2">-</span><span class="value word" id="r2">-</span></div>
+        <div class="readout"><span class="label" id="rl3">-</span><span class="value word" id="r3">-</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" id="ctlBtb">
+          <button class="btn btn-primary btn-block" id="playBtn" type="button">▶ 실험 시작 (3시간 지나기)</button>
+          <p class="ctrl-note" id="btbNote">시험관을 눌러 포일로 가리거나 벗길 수 있어요. 시간이 흐르면 BTB 용액의 색이 달라져요.</p>
+        </div>
+        <div class="control" id="ctlDay" hidden data-feature="day">
+          <div class="control-head"><label for="lightR">☀️ 빛의 세기</label><output id="lightO">80 %</output></div>
+          <input type="range" id="lightR" min="0" max="100" step="1" value="80" aria-label="빛의 세기">
+          <div class="opt-seg two" style="margin:10px 0 0">
+            <button type="button" id="btnNight">🌙 밤</button>
+            <button type="button" id="btnNoon">☀️ 한낮</button>
+          </div>
+          <p class="ctrl-note">빛의 세기를 바꾸며 광합성량과 호흡량을 비교해요.</p>
+        </div>
+        <div class="control" id="ctlTable" hidden data-feature="table">
+          <button class="btn btn-block" id="tableReset" type="button">↺ 카드 다시 놓기</button>
+          <p class="ctrl-note">카드를 끌어다 알맞은 칸에 놓아요. (카드를 누른 뒤 칸을 눌러도 돼요)</p>
+        </div>
+        <div class="control" id="ctlRoom" hidden data-feature="room">
+          <div class="control-head"><label for="potR">🪴 화분 수</label><output id="potO">1 개</output></div>
+          <input type="range" id="potR" min="1" max="10" step="1" value="1" aria-label="침실의 화분 수">
+          <p class="ctrl-note">밤의 침실에서 사람과 화분이 내놓는 이산화 탄소의 양을 비교해요.</p>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

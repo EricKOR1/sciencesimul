@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#f26b3a">
+  <title>마찰 전기와 정전기 유도 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎈</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; }
+    .stage-toolbar { min-height: 61px; }
+    .segmented button { min-height: 44px; }
+
+    #ctrlCard { display: flex; flex-direction: column; gap: 14px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard .btn-sm { min-height: 44px; }
+    .ctrl-note { font-size: 14px; color: var(--muted); margin: 6px 0 0; }
+    .seg-wide { display: flex; width: 100%; }
+    .seg-wide button { flex: 1; min-width: 0; padding: 6px 8px; }
+    .seg-wide button[data-q="-1"].on { color: #1d4ed8; }
+    .seg-wide button[data-q="1"].on { color: #b91c1c; }
+    .readout .value.txt { font-family: var(--font); font-size: 18px; }
+    .readout .value .neg { color: #1d4ed8; }
+    .readout .value .pos { color: #b91c1c; }
+
+    @media (max-width: 599px) {
+      .stage-toolbar .spacer { display: none; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="phy">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#g2">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">중2 · Ⅶ. 전기와 자기</div>
+      <h1>마찰 전기와 정전기 유도</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🧣 마찰 전기</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="sceneSeg" role="tablist" aria-label="실험 고르기" hidden>
+            <button type="button" data-scene="rub">🧣 마찰 전기</button>
+            <button type="button" data-scene="force">⚡ 전기력</button>
+            <button type="button" data-scene="induce">🧪 정전기 유도</button>
+            <button type="button" data-scene="scope">🔍 검전기</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="털가죽과 플라스틱 막대, 매달린 막대, 금속 막대, 검전기와 원자 모형 돋보기가 있는 정전기 실험 화면"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1"></span><span class="value txt" id="v1"></span></div>
+        <div class="readout"><span class="label" id="l2"></span><span class="value txt" id="v2"></span></div>
+        <div class="readout"><span class="label" id="l3"></span><span class="value txt" id="v3"></span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" data-scenes="rub">
+          <button class="btn btn-sm btn-block" id="resetBtn" type="button">↺ 전기 없애기 (처음 상태)</button>
+          <p class="ctrl-note">플라스틱 막대를 끌어 털가죽 위에서 좌우로 문질러요.</p>
+        </div>
+        <div class="control" data-scenes="force">
+          <div class="control-head"><span>🎣 매달린 막대</span></div>
+          <div class="segmented seg-wide" id="segHang">
+            <button type="button" data-q="-1">(−) 플라스틱</button>
+            <button type="button" data-q="1">(+) 유리</button>
+          </div>
+        </div>
+        <div class="control" data-scenes="force">
+          <div class="control-head"><span>✋ 손에 든 막대</span></div>
+          <div class="segmented seg-wide" id="segHeld">
+            <button type="button" data-q="-1">(−) 플라스틱</button>
+            <button type="button" data-q="1">(+) 유리</button>
+          </div>
+          <p class="ctrl-note">손에 든 막대를 끌어 매달린 막대에 가까이 가져가요.</p>
+        </div>
+        <div class="control" data-scenes="induce">
+          <div class="control-head"><span>⚡ 대전체(막대)의 전기</span></div>
+          <div class="segmented seg-wide" id="segInd">
+            <button type="button" data-q="-1">(−) 플라스틱</button>
+            <button type="button" data-q="1">(+) 유리</button>
+          </div>
+        </div>
+        <div class="control" data-scenes="induce">
+          <div class="control-head"><span>🧪 가까이 가져갈 물체</span></div>
+          <div class="segmented seg-wide" id="segObj">
+            <button type="button" data-obj="metal">금속 막대</button>
+            <button type="button" data-obj="paper">종잇조각</button>
+          </div>
+          <p class="ctrl-note">대전체 막대를 끌어서 가까이 가져가요.</p>
+        </div>
+        <div class="control" data-scenes="scope">
+          <p class="ctrl-note" style="margin-top:0">오른쪽의 막대를 끌어 <b>금속판</b>에 가까이 대 보고, 대전된 막대는 <b>톡 눌러서</b> 표시해요.</p>
+          <button class="btn btn-sm btn-block" id="scopeReset" type="button" style="margin-top:8px">↺ 표시 지우기</button>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

@@ -285,7 +285,7 @@
   const EL = {
     H:  { name: '수소',   c: '#f5f7fb', edge: '#c4ccd8', ink: '#4b5565', r: 22 },
     He: { name: '헬륨',   c: '#7fd8e8', ink: '#0f4a57', r: 24 },
-    C:  { name: '탄소',   c: '#3a3f4b', ink: '#ffffff', r: 30 },
+    C:  { name: '탄소',   c: '#3a3f4b', edge: '#8e97ad', ink: '#ffffff', r: 30 },
     N:  { name: '질소',   c: '#3f6fe8', ink: '#ffffff', r: 28 },
     O:  { name: '산소',   c: '#ef4b4b', ink: '#ffffff', r: 29 },
     Ne: { name: '네온',   c: '#ff8a5c', ink: '#ffffff', r: 27 },
@@ -923,9 +923,10 @@
   function sysDraw(S0, cx, cy, t) {
     const R = WIN.Rin;
     if (S0.kind === 'gas') {
+      const id3 = S0.id === 'ch4';
       S0.parts.forEach((p) => {
         if (p.mol) {
-          rotMol(p.mol, p.rx, p.ry, p.rz, SCW, p.P);
+          rotMol(p.mol, id3 ? p.rx : 0.9 * Math.sin(p.rx), id3 ? p.ry : 0.9 * Math.sin(p.ry), p.rz, SCW, p.P);
           molShadow(p.P, cx + p.x, cy + p.y, 0.0);
           drawMolP(p.P, cx + p.x, cy + p.y);
         } else {
@@ -942,7 +943,7 @@
       const r = rOf('Cu', SCW);
       S0.parts.forEach((p) => { drawBall('Cu', cx + p.x + Math.sin(t * 9 + p.ph) * 1.5, cy + p.y + Math.sin(t * 8 + p.ph2) * 1.5, r); });
     } else if (S0.kind === 'salt') {
-      const d = 60, ry = t * 0.3, rx = 0.5, cyr = Math.cos(ry), syr = Math.sin(ry), cxr = Math.cos(rx), sxr = Math.sin(rx);
+      const d = 72, ry = t * 0.3, rx = 0.5, cyr = Math.cos(ry), syr = Math.sin(ry), cxr = Math.cos(rx), sxr = Math.sin(rx);
       S0.parts.forEach((p) => {
         const x0 = p.i * d, y0 = p.j * d, z0 = p.k * d;
         const x1 = x0 * cyr + z0 * syr, z1 = -x0 * syr + z0 * cyr, y2 = y0 * cxr - z1 * sxr, z2 = y0 * sxr + z1 * cxr;
@@ -951,8 +952,8 @@
       const ord = S0.parts.slice().sort((a, b) => a.z - b.z);
       const first = !SCP.saltSeen;
       ord.forEach((p) => {
-        const sc = 1 + p.z / 700, r = rOf(p.cl ? 'Cl' : 'Na', SCW) * sc, dim = clamp(-p.z / 400, 0, 1) * 0.2;
-        const a = p.inner ? 1 : 0.38;
+        const sc = 1 + p.z / 700, r = rOf(p.cl ? 'Cl' : 'Na', SCW) * sc * 0.92, dim = clamp(-p.z / 400, 0, 1) * 0.2;
+        const a = p.inner ? 1 : 0.26;
         drawBall(p.cl ? 'Cl' : 'Na', cx + p.x, cy + p.y, r, { dark: dim, alpha: a });
         if (p.inner) {
           const k = first ? clamp((S0.t - 1.0 - p.order * 0.05) / 0.2, 0, 1) : clamp((S0.t - 0.5) / 0.2, 0, 1);
@@ -1241,7 +1242,7 @@
      장면 3 · count — 분자·원자·원소 렌즈로 세어 보고, 분자 조립대에서 만들기 (3단계)
      ========================================================= */
   const BX = { x: 40, y: 62, w: 380, h: 376 };
-  const SCC = 38;                                     // 상자 속 크기: 1 Å = 38 px
+  const SCC = 48;                                     // 상자 속 크기: 1 Å = 38 px
   const CIR = { x: 618, y: 300, R: 82 };
   const RING_COL = { H: '#1fb5d4', O: '#ff5d5d', C: '#5b6475', N: '#3f6fe8' };
   const SYM_NAME = { H: '수소', O: '산소', C: '탄소', N: '질소' };
@@ -1398,7 +1399,7 @@
   }
   function drawMolecules(t) {
     CT.mols.forEach((m) => {
-      rotMol(m.mol, m.rx, m.ry, m.rz, SCC, m.P);
+      rotMol(m.mol, 0.32 * Math.sin(m.rx), 0.42 * Math.sin(m.ry), m.rz, SCC, m.P);
       const k = outBack(m.born);
       ctx.save(); ctx.translate(m.x, m.y); ctx.scale(k, k); ctx.translate(-m.x, -m.y);
       molShadow(m.P, m.x, m.y, 0.55);
