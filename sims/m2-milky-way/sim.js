@@ -498,11 +498,11 @@
     if (topA > 0.05) {
       ctx.save(); ctx.globalAlpha = topA * S.zoom;
       dproj(9.5, 0, 0, _p);
-      leader(_p.x, _p.y, _p.x + 40, _p.y - 60, '막대 구조', '#ffd27a');
+      leader(_p.x, _p.y, 132, 98, '막대 구조', '#ffd27a');
       // 나선팔 이름표: 팔 위의 점
-      const kk = Math.tan(17 * DEG), th = 4.3, rr = 7 * Math.exp(kk * th);
-      dproj(rr * Math.cos(th + Math.PI / 2), rr * Math.sin(th + Math.PI / 2), 0, _p);
-      leader(_p.x, _p.y, _p.x - 54, _p.y - 36, '나선팔', '#9db8ff');
+      const kk = Math.tan(17 * DEG), th = 5.2, rr = 7 * Math.exp(kk * th);
+      dproj(rr * Math.cos(th), rr * Math.sin(th), 0, _p);
+      leader(_p.x, _p.y, 128, 552, '나선팔', '#9db8ff');
       ctx.restore();
     }
     if (sideA > 0.05) {
@@ -521,8 +521,9 @@
   }
   function leader(x, y, lx, ly, text, col) {
     ctx.save();
-    ctx.strokeStyle = col; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(lx, ly); ctx.stroke();
+    ctx.globalAlpha *= 0.75; ctx.strokeStyle = col; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(lx, ly); ctx.stroke();
     ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x, y, 3.2, 0, TAU); ctx.fill();
+    ctx.globalAlpha /= 0.75;
     D.label(lx, ly, text, { size: 13.5, bg: 'rgba(8,16,40,.86)', color: col, border: col });
     ctx.restore();
   }

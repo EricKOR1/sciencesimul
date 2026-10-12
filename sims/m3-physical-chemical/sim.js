@@ -1306,13 +1306,13 @@
     color: { label: '🎨 색 변화',   color: '#e8832b' },
     light: { label: '✨ 빛·열 발생', color: '#d9a000' },
   };
-  const CARD = { y: 44, w: 186, h: 340 };
+  const CARD = { y: 44, w: 186, h: 352 };
   const cardX = (i) => 12 + i * 194;
   const cardC = (i) => cardX(i) + CARD.w / 2;
   const LB = LAB.map(() => ({ st: 'idle', q: 0, t: 0, stk: null, shake: 0, puffs: [], drops: [], pulse: 0 }));
   const LS = { sel: 0, shaken: new Set() };
   const dragL = new DragSet();
-  const STK_Y = 458;
+  const STK_Y = 462;
   ['gas', 'ppt', 'color', 'light'].forEach((k, i) => {
     dragL.add({ kind: k, w: 166, h: 42, hx: 115 + i * 190, hy: STK_Y, x: 115 + i * 190, y: STK_Y, slot: -1, wrong: false });
   });
@@ -1398,7 +1398,7 @@
   function labFinish(i) {
     const e = LB[i];
     e.st = 'done'; e.q = 1; e.pulse = 1;
-    okFx(cardC(i), 150, COL.chem, false);
+    okFx(cardC(i) - 66, 130, COL.chem, false);
     labUI();
   }
 
@@ -1556,9 +1556,9 @@
       panel(x, y, CARD.w, CARD.h, 16, e.st === 'done' ? '#ffffff' : '#fbfcff', 10, 3);
       if (sel) { ctx.strokeStyle = rgba(COL.sub, 0.55 + 0.25 * Math.sin(now() * 5)); ctx.lineWidth = 3.5; D.roundRect(x - 1, y - 1, CARD.w + 2, CARD.h + 2, 17); ctx.stroke(); }
       ctx.save(); D.roundRect(x, y, CARD.w, CARD.h, 16); ctx.clip();
-      vgrad(ctx, x, y, CARD.w, 250, '#f3f7ff', '#e6edf8');
-      vgrad(ctx, x, y + 250, CARD.w, 40, '#efd3a6', '#d6ae75');
-      ctx.fillStyle = 'rgba(255,255,255,.5)'; ctx.fillRect(x, y + 250, CARD.w, 2.5);
+      vgrad(ctx, x, y, CARD.w, 236, '#f3f7ff', '#e6edf8');
+      vgrad(ctx, x, y + 236, CARD.w, 22, '#efd3a6', '#d6ae75');
+      ctx.fillStyle = 'rgba(255,255,255,.5)'; ctx.fillRect(x, y + 236, CARD.w, 2.5);
       ctx.restore();
       // 제목
       ctx.fillStyle = '#fff'; D.roundRect(x + 8, y + 8, CARD.w - 16, 56, 11); ctx.fill();
@@ -1567,22 +1567,22 @@
       // 결과 글 / 안내
       if (e.st === 'done') {
         const a = 1 - e.pulse * 0.5;
-        ctx.save(); ctx.globalAlpha = a; textBlock(LAB[i].res, c, y + 262 + 12, CARD.w - 24, 13, '#b4440f', 'center', 16, 800); ctx.restore();
+        ctx.save(); ctx.globalAlpha = a; textBlock(LAB[i].res, c, y + 278, CARD.w - 24, 13, '#b4440f', 'center', 16, 800); ctx.restore();
       } else if (e.st === 'run') {
-        txt('관찰 중…', c, y + 270, 14, COL.sub, 'center', 800);
+        txt('관찰 중…', c, y + 282, 14, COL.sub, 'center', 800);
       } else {
         const a = 0.6 + 0.4 * Math.sin(now() * 4 + i);
-        ctx.save(); ctx.globalAlpha = a; txt('▶ 눌러서 실험하기', c, y + 270, 14, COL.sub, 'center', 800); ctx.restore();
+        ctx.save(); ctx.globalAlpha = a; txt('▶ 눌러서 실험하기', c, y + 282, 14, COL.sub, 'center', 800); ctx.restore();
       }
       // 스티커 칸
-      const sx = c - 85, sy = y + CARD.h - 52;
+      const sx = c - 85, sy = y + CARD.h - 50;
       ctx.save(); ctx.setLineDash([6, 5]); ctx.strokeStyle = e.st === 'done' ? rgba(COL.sub, 0.7) : '#c3ccd9'; ctx.lineWidth = 2;
       D.roundRect(sx, sy, 170, 44, 14); ctx.stroke(); ctx.restore();
       if (!dragL.items.some((s) => s.slot === i) && e.st === 'done') txt('스티커 붙이는 곳', c, sy + 27, 13, '#8995a8', 'center', 700);
     }
     // 스티커 판
-    panel(12, 392, 776, 116, 16, '#ffffff', 10, 3);
-    txt('🏷️ 증거 스티커 — 알맞은 실험대에 끌어 붙여요', 400, 418, 15, COL.ink, 'center', 800);
+    panel(12, 406, 776, 104, 16, '#ffffff', 10, 3);
+    txt('🏷️ 증거 스티커 — 알맞은 실험대에 끌어 붙여요', 400, 430, 15, COL.ink, 'center', 800);
     dragL.items.forEach((s, i) => {
       if (s.slot < 0 && !s.dragging) { ctx.save(); ctx.setLineDash([5, 5]); ctx.strokeStyle = '#d3dae6'; ctx.lineWidth = 1.5; D.roundRect(s.hx - 84, s.hy - 23, 168, 46, 14); ctx.stroke(); ctx.restore(); }
     });
@@ -1614,7 +1614,7 @@
     if (target >= 0 && LB[target].st === 'done') {
       const old = dragL.items.find((s) => s.slot === target && s !== it);
       if (old) { old.slot = -1; old.tx = old.hx; old.ty = old.hy; old.wrong = false; }
-      it.slot = target; it.tx = cardC(target); it.ty = CARD.y + CARD.h - 30; it.pop = 1; Sound.tick();
+      it.slot = target; it.tx = cardC(target); it.ty = CARD.y + CARD.h - 28; it.pop = 1; Sound.tick();
       LS.shaken.delete(target);
     } else {
       it.slot = -1; it.tx = it.hx; it.ty = it.hy;
@@ -1636,21 +1636,21 @@
      ③ 모형 — 같은 물, 다른 변화: 끓음(물리) vs 전기 분해(화학)  (🔍 입자 모형)
      ========================================================= */
   const MC = [
-    { x: 12, w: 380, lx: 124, ly: 380, r: 88, sys: new Sys(), id: 'boil' },
-    { x: 408, w: 380, lx: 520, ly: 380, r: 88, sys: new Sys(), id: 'elec' },
+    { x: 12, w: 380, lx: 116, ly: 392, r: 94, sys: new Sys(), id: 'boil' },
+    { x: 408, w: 380, lx: 512, ly: 392, r: 94, sys: new Sys(), id: 'elec' },
   ];
-  MC.forEach((c) => { c.sys.sc = 17; });
+  MC.forEach((c) => { c.sys.sc = 22; });
   const MS = { lensOn: true, lensK: 1, boil: { st: 'idle', t: 0, k: 0, flame: 0, level: 0.62 }, elec: { st: 'idle', t: 0, k: 0, level: 0.66, power: 0 }, used: { boil: false, elec: false }, pop: {}, lensUsed: false };
   const SA = MC[0].sys, SB = MC[1].sys;
   const H_INIT = 8, O_INIT = 4;
   function modelFill() {
     SA.clear(); SB.clear();
     const a = MC[0], b = MC[1];
-    [[-24, 58], [24, 58], [0, 16], [-48, 22]].forEach((o) => {
-      SA.addMol('H2O', a.lx + o[0], a.ly + o[1], { mode: 'liquid', amp: 2.4, rot: rand(0, TAU), sc: 17 });
+    [[-30, 52], [30, 52], [0, 6], [-56, 10]].forEach((o) => {
+      SA.addMol('H2O', a.lx + o[0], a.ly + o[1], { mode: 'liquid', amp: 2.4, rot: rand(0, TAU), sc: 22 });
     });
-    [[-34, -26], [34, -26], [-34, 28], [34, 28]].forEach((o) => {
-      SB.addMol('H2O', b.lx + o[0], b.ly + o[1], { mode: 'liquid', amp: 2.4, rot: rand(0, TAU), sc: 17 });
+    [[-36, -30], [36, -30], [-36, 32], [36, 32]].forEach((o) => {
+      SB.addMol('H2O', b.lx + o[0], b.ly + o[1], { mode: 'liquid', amp: 2.4, rot: rand(0, TAU), sc: 22 });
     });
   }
   function modelReset() {
@@ -1671,14 +1671,14 @@
   function boilStart() {
     const B = MS.boil;
     if (B.st === 'run') return;
-    if (B.st === 'done') { SA.clear(); [[-24, 58], [24, 58], [0, 16], [-48, 22]].forEach((o) => SA.addMol('H2O', MC[0].lx + o[0], MC[0].ly + o[1], { mode: 'liquid', amp: 2.4, rot: rand(0, TAU), sc: 17 })); B.level = 0.62; B.k = 0; }
+    if (B.st === 'done') { SA.clear(); [[-30, 52], [30, 52], [0, 6], [-56, 10]].forEach((o) => SA.addMol('H2O', MC[0].lx + o[0], MC[0].ly + o[1], { mode: 'liquid', amp: 2.4, rot: rand(0, TAU), sc: 22 })); B.level = 0.62; B.k = 0; }
     B.st = 'run'; B.t = 0; MS.used.boil = false; hideHint();
     sfx.flame(); modelUI();
   }
   function elecStart() {
     const E = MS.elec;
     if (E.st === 'run') return;
-    if (E.st === 'done') { SB.clear(); [[-34, -26], [34, -26], [-34, 28], [34, 28]].forEach((o) => SB.addMol('H2O', MC[1].lx + o[0], MC[1].ly + o[1], { mode: 'liquid', amp: 2.4, rot: rand(0, TAU), sc: 17 })); E.level = 0.66; }
+    if (E.st === 'done') { SB.clear(); [[-36, -30], [36, -30], [-36, 32], [36, 32]].forEach((o) => SB.addMol('H2O', MC[1].lx + o[0], MC[1].ly + o[1], { mode: 'liquid', amp: 2.4, rot: rand(0, TAU), sc: 22 })); E.level = 0.66; }
     E.st = 'run'; E.t = 0; E.step = 0; MS.used.elec = false; hideHint();
     sfx.zap(); modelUI();
   }
@@ -1697,7 +1697,7 @@
       if (B.t > 2.2 && !B.s2) {
         B.s2 = 1;
         SA.mols.forEach((m, i) => {
-          m.mode = 'gas'; m.speed = 55; m.box = { x: a.lx - 64, y: a.ly - 66, w: 128, h: 132 }; m.vr = rand(-1.2, 1.2);
+          m.mode = 'gas'; m.speed = 55; m.box = { x: a.lx - 64, y: a.ly - 62, w: 128, h: 124 }; m.vr = rand(-1.2, 1.2);
           const ang = rand(0, TAU); m.vx = Math.cos(ang) * 55; m.vy = Math.sin(ang) * 55;
         });
         Sound.tone(300, 0.2, 'sine', 0.05);
@@ -1735,8 +1735,8 @@
         E.step++;
         const atoms = SB.dissolve(m, 40);
         atoms.forEach((at) => {
-          if (at.sym === 'H') { at.tx = b.lx - 56 + rand(-14, 14); at.ty = b.ly + rand(-64, 64); at.k = 22; }
-          else { at.tx = b.lx + 56 + rand(-14, 14); at.ty = b.ly + rand(-64, 64); at.k = 22; }
+          if (at.sym === 'H') { at.tx = b.lx - 50 + rand(-14, 14); at.ty = b.ly + rand(-56, 56); at.k = 22; }
+          else { at.tx = b.lx + 50 + rand(-14, 14); at.ty = b.ly + rand(-56, 56); at.k = 22; }
         });
         FX.burst(m.cx, m.cy, { count: 5, speed: 70, life: 0.5, size: 2.6, colors: ['#fff6c2', '#ffd23f'], shape: 'star', gravity: 0 });
         sfx.zap();
@@ -1745,16 +1745,16 @@
     if (t > 4.4 && !E.s3) {
       E.s3 = 1;
       const pool = SB.atoms.filter((q) => !q.mol);
-      [[-70, -34], [-34, -34], [-70, 22], [-34, 22]].forEach((o) => {
+      [[-56, -40], [-24, -40], [-56, 14], [-24, 14]].forEach((o) => {
         const m = SB.form('H2', pool, b.lx + o[0], b.ly + o[1], { k: 70, z: 0.4, rot: rand(0, 3) });
         m.cx = b.lx + o[0]; m.cy = b.ly + o[1]; m.ax = m.cx; m.ay = m.cy; m.mode = 'gas'; m.speed = 26; m.vr = rand(-1, 1);
-        m.box = { x: b.lx - 78, y: b.ly - 62, w: 62, h: 124 };
+        m.box = { x: b.lx - 80, y: b.ly - 62, w: 70, h: 124 };
         m.vx = rand(-20, 20); m.vy = rand(-20, 20);
       });
-      [[52, -20], [52, 30]].forEach((o) => {
+      [[46, -24], [46, 34]].forEach((o) => {
         const m = SB.form('O2', pool, b.lx + o[0], b.ly + o[1], { k: 70, z: 0.4, rot: rand(0, 3) });
         m.cx = b.lx + o[0]; m.cy = b.ly + o[1]; m.ax = m.cx; m.ay = m.cy; m.mode = 'gas'; m.speed = 26; m.vr = rand(-1, 1);
-        m.box = { x: b.lx + 14, y: b.ly - 62, w: 64, h: 124 };
+        m.box = { x: b.lx + 10, y: b.ly - 62, w: 72, h: 124 };
         m.vx = rand(-20, 20); m.vy = rand(-20, 20);
       });
       okFx(b.lx, b.ly - 10, COL.chem, false);
@@ -1815,8 +1815,8 @@
     pill(cx - 40, 140, '−극', { bg: '#3f6fe8', size: 13, pad: 8 });
     pill(cx + 40, 140, '+극', { bg: '#e24a4a', size: 13, pad: 8 });
     if (E.t > 3 || E.st === 'done') {
-      pill(cx - 40, 288, '수소 기체 (2)', { bg: '#3f8cf0', size: 13, pad: 8 });
-      pill(cx + 40, 288, '산소 기체 (1)', { bg: '#d9534f', size: 13, pad: 8 });
+      pill(cx - 40, 262, '수소 기체', { bg: '#3f8cf0', size: 13, pad: 8 });
+      pill(cx + 40, 262, '산소 기체', { bg: '#d9534f', size: 13, pad: 8 });
     }
   }
   function drawLensCol(c, i) {
@@ -1845,7 +1845,7 @@
     }
   }
   function drawLegend(c, i) {
-    const sys = c.sys, lx = c.x + 226;
+    const sys = c.sys, lx = c.x + 214;
     const nW = sys.molCount('H2O'), nH2 = sys.molCount('H2'), nO2 = sys.molCount('O2');
     const nH = sys.count('H'), nO = sys.count('O');
     txt('분자의 종류', lx, 306, 15, COL.ink, 'left', 800);
@@ -1918,7 +1918,7 @@
   const dragS = new DragSet();
   const SORT = { flagged: new Set(), order: [], sel: 0 };
   const POOL_W = 146, POOL_H = 56;
-  const poolPos = (n) => ({ x: 244 + 4 + POOL_W / 2 + (n % 2) * 158, y: 98 + Math.floor(n / 2) * 74 });
+  const poolPos = (n) => ({ x: 244 + 4 + POOL_W / 2 + (n % 2) * 158, y: 114 + Math.floor(n / 2) * 74 });
   function sortBuild(shuffle) {
     dragS.items.length = 0; SORT.flagged = new Set();
     const idx = CARDS.map((_, i) => i);
@@ -1982,7 +1982,7 @@
     });
     // 가운데 바닥 (카드 놓는 곳)
     panel(244, 44, 312, 466, 18, '#ffffff', 10, 3);
-    txt('📇 분류할 카드', 400, 70, 15, COL.muted, 'center', 800);
+    txt('📇 분류할 카드', 400, 68, 15, COL.muted, 'center', 800);
     dragS.items.forEach(drawCard);
   }
   function sortDown(p) {

@@ -253,7 +253,7 @@
     ctx.restore();
     txt(ctx, '← 밝다', G.x0 - 20, g.y + 16, 13, '#ffe9a8', { align: 'left', weight: 800 });
     txt(ctx, '어둡다 →', G.x1 + 20, g.y + 16, 13, '#9db4e8', { align: 'right', weight: 800 });
-    txt(ctx, '📏 등급 눈금', g.x + g.w / 2, g.y + 16, 14, '#bcd0ff', { weight: 800 });
+    
   }
 
   function drawSky(v, L, t) {
@@ -329,7 +329,7 @@
     txt(ctx, '빛 감지기', (refX + tstX) / 2, dY + 24, 13, '#8fa6d6', { weight: 700 });
     // 빛 알갱이 (초당 개수 ∝ 밝기, 화면상 상한)
     S.lightP.forEach((p) => {
-      const u = p.age / p.life, x = p.x0 + (p.x1 - p.x0) * u, y = lerp(sY + 8, dY, easeIO(clamp(u, 0, 1)));
+      const u = p.age / p.life, x = p.x0 + (p.x1 - p.x0) * u, y = lerp(sY + 26, dY, easeIO(clamp(u, 0, 1)));
       ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.9 * Math.sin(Math.PI * Math.min(1, u * 1.05));
       ctx.fillStyle = p.c; ctx.beginPath(); ctx.arc(x, y, 2.1, 0, TAU); ctx.fill(); ctx.restore();
     });
@@ -566,18 +566,18 @@
     if (mode === 'sort') {
       if (L.kind === 'wide') {
         const slots = [14, 275, 536].map((x) => R_(x, 312, 250, 112));
-        return { cw: 148, ch: 100, cap: 9, scIn: 0.8, slots, tray: [0, 1, 2, 3, 4].map((i) => ({ x: 10 + i * 158, y: 440 })), place: (s, i) => ({ x: slots[s].x + 6 + (i % 2) * 123, y: slots[s].y + 26 + Math.floor(i / 2) * 14 }) };
+        return { cw: 148, ch: 100, cap: 9, scIn: 0.8, slots, tray: [0, 1, 2, 3, 4].map((i) => ({ x: 10 + i * 158, y: 440 })), place: (s, i, n) => { const k = n <= 2 ? 2 : 3, sc = n <= 2 ? 0.8 : 0.56, w = 148 * sc, gap = 6, x0 = slots[s].x + (slots[s].w - (k * w + (k - 1) * gap)) / 2; return { x: x0 + (i % k) * (w + gap), y: slots[s].y + 26 + Math.floor(i / k) * (100 * sc + 4), sc }; } };
       }
-      const slots = [8, 178, 348].map((x) => R_(x, 340, 164, 190));
-      return { cw: 156, ch: 100, cap: 9, scIn: 0.8, slots, tray: [[8, 548], [178, 548], [348, 548], [8, 656], [178, 656]].map((p) => ({ x: p[0], y: p[1] })), place: (s, i) => ({ x: slots[s].x + 19, y: slots[s].y + 28 + i * 74 }) };
+      const slots = [8, 178, 348].map((x) => R_(x, 340, 164, 210));
+      return { cw: 156, ch: 100, cap: 9, scIn: 0.8, slots, tray: [[8, 562], [178, 562], [348, 562], [8, 668], [178, 668]].map((p) => ({ x: p[0], y: p[1] })), place: (s, i, n) => { const sc = n <= 2 ? 0.8 : 0.58, w = 156 * sc; return { x: slots[s].x + (slots[s].w - w) / 2, y: slots[s].y + 28 + i * (100 * sc + 4), sc }; } };
     }
     // 사다리 (표면 온도가 높은 별부터)
     if (L.kind === 'wide') {
       const slots = [0, 1, 2, 3, 4].map((i) => R_(548, 70 + i * 84, 244, 68));
-      return { cw: 150, ch: 62, cap: 1, scIn: 1, slots, tray: [[14, 232], [190, 232], [14, 306], [190, 306], [14, 380]].map((p) => ({ x: p[0], y: p[1] })), place: (s) => ({ x: slots[s].x + 6, y: slots[s].y + 3 }) };
+      return { cw: 150, ch: 62, cap: 1, scIn: 1, slots, tray: [[14, 232], [190, 232], [14, 306], [190, 306], [14, 380]].map((p) => ({ x: p[0], y: p[1] })), place: (s) => ({ x: slots[s].x + 6, y: slots[s].y + 3, sc: 1 }) };
     }
     const slots = [0, 1, 2, 3, 4].map((i) => R_(270, 40 + i * 78, 244, 68));
-    return { cw: 150, ch: 62, cap: 1, scIn: 1, slots, tray: [[14, 430], [190, 430], [14, 514], [190, 514], [14, 598]].map((p) => ({ x: p[0], y: p[1] })), place: (s) => ({ x: slots[s].x + 6, y: slots[s].y + 3 }) };
+    return { cw: 150, ch: 62, cap: 1, scIn: 1, slots, tray: [[14, 430], [190, 430], [14, 514], [190, 514], [14, 598]].map((p) => ({ x: p[0], y: p[1] })), place: (s) => ({ x: slots[s].x + 6, y: slots[s].y + 3, sc: 1 }) };
   }
   function csInit(mode, defs, perm) {
     CS.mode = mode;
@@ -586,8 +586,8 @@
   function csTarget(L, c) {
     const g = csGeo(L, CS.mode);
     if (c.slot < 0) { const p = g.tray[c.home]; return { x: p.x / L.vw, y: p.y / L.vh, sc: 1 }; }
-    const idx = CS.items.filter((o) => o.slot === c.slot && !o.drag).indexOf(c), p = g.place(c.slot, Math.max(0, idx));
-    return { x: p.x / L.vw, y: p.y / L.vh, sc: g.scIn };
+    const mates = CS.items.filter((o) => o.slot === c.slot && !o.drag), idx = mates.indexOf(c), p = g.place(c.slot, Math.max(0, idx), mates.length);
+    return { x: p.x / L.vw, y: p.y / L.vh, sc: p.sc };
   }
   const csPlaced = () => CS.items.filter((c) => c.slot >= 0).length;
   function csDrop(c, L) {
@@ -684,7 +684,7 @@
     { id: 'rigel', kind: 'mag', name: '리겔', color: '#cadcff', mTxt: '+0.1', MTxt: '약 −7', answer: 2 },
   ];
   function g10(L) {
-    if (L.kind === 'wide') return { map: R_(0, 0, 800, 296), axisY: 150, xAU: 90, xPc: 206, dec: 178, sky: R_(16, 306, 372, 246), info: R_(400, 306, 384, 246), rowD: 62, r: 17 };
+    if (L.kind === 'wide') return { map: R_(0, 0, 800, 296), axisY: 162, xAU: 90, xPc: 206, dec: 178, sky: R_(16, 306, 372, 246), info: R_(400, 306, 384, 246), rowD: 60, r: 17 };
     return { map: R_(0, 0, 520, 330), axisY: 172, xAU: 56, xPc: 132, dec: 124, sky: R_(10, 338, 500, 210), info: R_(10, 556, 500, 150), rowD: 66, r: 15 };
   }
   const xOfLg = (G, lg) => (lg >= 0 ? G.xPc + lg * G.dec : G.xPc + (lg / LG_AU) * (G.xAU - G.xPc));
