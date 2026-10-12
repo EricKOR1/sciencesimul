@@ -951,6 +951,8 @@
   const bPitch = SciSim.bindRange($('#slPitch'), $('#outPitch'), (v) => v + ' Hz', (v) => { S.pitch = v; hideHint(); const n = performance.now(); if (n - (bPitch.last || 0) > 120) { bPitch.last = n; Sound.tick(); } });
   function setVol(v) { S.vol = v; bVol.set(v); }
   function setPitch(f) { S.pitch = f; bPitch.set(f); }
+  // 직접 흔들기 시작할 때부터 관찰을 세요 (처음의 시범 파동은 세지 않아요)
+  function userRope() { if (!S.userRope) { S.userRope = true; S.mkMove = [0, 0, 0]; S.reach = false; } }
   function setTimbre(k) { S.timbre = k; syncUI(); }
 
   /* ----- 소리 듣기 (눌러야만 켜져요) ----- */
@@ -1019,7 +1021,7 @@
     lastUI = -1;
     uiKey = [free, lv, S.scene].join();
   }
-  $('#tgAuto').addEventListener('click', () => { S.auto = !S.auto; R.demo = -1; hideHint(); Sound.click(); syncUI(); });
+  $('#tgAuto').addEventListener('click', () => { S.auto = !S.auto; R.demo = -1; if (S.auto) userRope(); hideHint(); Sound.click(); syncUI(); });
   $('#tgSpk').addEventListener('click', () => { S.airOn = !S.airOn; hideHint(); Sound.click(); syncUI(); });
   $('#tgPump').addEventListener('click', () => { S.pump = !S.pump; if (S.pump) S.refill = false; hideHint(); Sound.click(); syncUI(); });
   $('#tgBack').addEventListener('click', () => { S.pump = false; S.refill = true; hideHint(); Sound.click(); syncUI(); });
@@ -1089,7 +1091,7 @@
       hover: (p) => (hitHandle(V, p) ? 'grab' : S.scene === 'scope' && hitGhost(p) ? 'pointer' : hitScope(V, p) ? 'pointer' : null),
       down(p) {
         if (hitHandle(V, p)) {
-          R.drag = true; S.auto = false; R.demo = -1; hideHint(); syncUI();
+          R.drag = true; S.auto = false; R.demo = -1; userRope(); hideHint(); syncUI();
           R.handT = clamp((p.y - handPos(V).G.yc) / handPos(V).G.ky, -74, 74);
           V.v.canvas.style.cursor = 'grabbing'; return true;
         }
@@ -1169,7 +1171,7 @@
   function prepMission(i) {
     SC.freeze = false; hideHint(); setGhost(null);
     switch (i) {
-      case 0: setScene('rope'); S.auto = false; R.demo = 0; S.mkMove = [0, 0, 0]; S.reach = false; showHint('손잡이를 위아래로 끌어 보세요', 6000); break;
+      case 0: setScene('rope'); S.auto = false; R.demo = 0; S.mkMove = [0, 0, 0]; S.reach = false; S.userRope = false; showHint('손잡이를 위아래로 끌어 보세요', 6000); break;
       case 1: setScene('air'); S.airOn = true; break;
       case 2: setScene('bell'); S.pump = false; S.refill = true; S.vac = { out: false, back: false }; showHint('펌프로 공기를 빼 보세요', 6000); break;
       case 3: setScene('scope'); setVol(2); S.vol0 = 2; setPitch(300); S.timbre = 'fork'; showHint('슬라이더로 소리의 크기를 바꿔요', 6000); break;
@@ -1433,7 +1435,7 @@
   }
   function updateMission(dt) {
     const f = gameFlatNow();
-    if (S.scene === 'rope') {
+    if (S.scene === 'rope' && S.userRope) {
       R.MKI.forEach((idx, k) => { S.mkMove[k] = Math.max(S.mkMove[k], Math.abs(R.u[idx])); });
       if (R.endE > 7) S.reach = true;
     }
@@ -1479,7 +1481,8 @@
   function successFx(V, t) {
     const ph = game ? game.phase : '';
     if (ph === 'success' && lastPhase === 'active') {
-      S.succ = S.scene === 'scope' ? { t0: t, x: V.L.vw - (V.L.key === 'wide' ? 78 : 66), y: V.L.key === 'wide' ? 78 : 80 } : { t0: t, x: V.L.vw / 2, y: V.L.key === 'wide' ? 64 : 78 };
+      hideHint();
+      S.succ = S.scene === 'scope' ? { t0: t, x: V.L.vw - (V.L.key === 'wide' ? 78 : 66), y: V.L.key === 'wide' ? 78 : 80 } : { t0: t, x: V.L.vw / 2, y: V.L.key === 'wide' ? 58 : 78 };
       if (!REDUCE) V.fx.burst(S.succ.x, S.succ.y, { count: 26, colors: ['#ffd24a', '#7be495', '#7fb2ff', '#ff8a8e', '#ffffff'], speed: 200, gravity: 120, life: 0.9 });
     }
     lastPhase = ph;

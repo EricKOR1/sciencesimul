@@ -1017,8 +1017,7 @@ window.SCI_CATALOG = {
                 "진폭",
                 "진동수",
                 "파형"
-              ],
-              "soon": true
+              ]
             }
           ]
         },
