@@ -225,7 +225,7 @@
   /* 머리 중심을 (ox, oy)로, 배율 k로 그리는 몸 */
   function drawSil(ox, oy, k, o) {
     o = o || {};
-    const c1 = o.c1 || '#e9eff9', c2 = o.c2 || '#cbd8ec';
+    const c1 = o.c1 || '#dde7f6', c2 = o.c2 || '#b9cae4';
     ctx.save(); ctx.translate(ox, oy); ctx.scale(k, k);
     ctx.shadowColor = 'rgba(40,60,100,.18)'; ctx.shadowBlur = 10; ctx.shadowOffsetY = 3;
     limb(-54, 252, 50, 262, 0.02, c1, c2); limb(54, 252, 50, 262, -0.02, c1, c2);
@@ -363,8 +363,8 @@
     [[0, 0, 11], [-13, 9, 9], [13, 10, 9], [3, 18, 8]].forEach((q) => bead(cl[0] + q[0], cl[1] + q[1], q[2], '#f6c6a0', { noShadow: true }));
     ctx.restore();
     // 목표 이름표
-    pill('뼈·근육', TARGET.gh.pos[0] + 58, TARGET.gh.pos[1] + 24, { bg: '#64748b', size: 13, h: 24, alpha: 0.92 });
-    pill('온몸의 세포', TARGET.thy.pos[0] + 66, TARGET.thy.pos[1] + 10, { bg: '#64748b', size: 13, h: 24, alpha: 0.92 });
+    pill('뼈·근육', 352, TARGET.gh.pos[1] + 10, { bg: '#64748b', size: 13, h: 24, alpha: 0.92 });
+    pill('온몸의 세포', 366, TARGET.thy.pos[1] + 2, { bg: '#64748b', size: 13, h: 24, alpha: 0.92 });
   }
   function drawGlandsBody(t) {
     panel(14, 14, 456, 576, { r: 18, bg: '#fbfdff' });
@@ -487,7 +487,7 @@
       const tgt = i === 1, gl = tgt ? CP.orgGlow : 0;
       if (gl > 0.02) D.glow(o[0], o[1], 56, '#8b5cf6', 0.65 * gl);
       ctx.fillStyle = tgt ? lgrad(0, o[1] - 24, 0, o[1] + 24, [[0, '#f4a6b8'], [1, '#d9607a']]) : '#d6dce8';
-      ctx.beginPath(); ctx.ellipse(o[0], o[1], 28 * (tgt ? 1 + gl * 0.12 : 1), 22 * (tgt ? 1 + gl * 0.12 : 1), 0, 0, TAU); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(o[0], o[1], 36 * (tgt ? 1 + gl * 0.12 : 1), 24 * (tgt ? 1 + gl * 0.12 : 1), 0, 0, TAU); ctx.fill();
       txt(tgt ? '표적 기관' : '기관', o[0], o[1] + 1, { size: tgt ? 13 : 14, weight: 800, color: tgt ? '#fff' : '#7c8799', align: 'center', base: 'middle' });
     });
     CP.hp.forEach((p) => {
@@ -499,11 +499,11 @@
     });
     // 비교표
     const rows = [['전달 통로', '뉴런(신경)', '혈액'], ['전달 속도', '빠르다', '느리다'], ['작용 범위', '좁다 (특정 부위)', '넓다 (온몸)'], ['효과 지속', '짧다', '오래 간다']];
-    panel(30, 432, 740, 148, { r: 14, bg: '#f6f8fb' });
-    txt('⚡ 신경', 380, 456, { size: 15, weight: 800, color: '#b87800', align: 'center' });
-    txt('🩸 호르몬', 590, 456, { size: 15, weight: 800, color: '#6b3fd0', align: 'center' });
+    panel(30, 426, 740, 158, { r: 14, bg: '#f6f8fb' });
+    txt('⚡ 신경', 380, 450, { size: 15, weight: 800, color: '#b87800', align: 'center' });
+    txt('🩸 호르몬', 590, 450, { size: 15, weight: 800, color: '#6b3fd0', align: 'center' });
     rows.forEach((r, i) => {
-      const y = 486 + i * 28;
+      const y = 480 + i * 27;
       txt(r[0], 50, y, { size: 15, weight: 800, color: '#5d6879', base: 'middle' });
       pill(r[1], 380, y, { bg: '#fff3cf', color: '#7a5600', size: 14.5, h: 24, pad: 12 });
       pill(r[2], 590, y, { bg: '#efe8ff', color: '#4b2ca8', size: 14.5, h: 24, pad: 12 });
@@ -527,7 +527,7 @@
     sc: 'none', m: 0, G: 90, dispG: 90, pend: 0, running: false, hist: [], press: [], pI: 0, pG: 0, auto: false, gly: 0.5, insLv: 0, gluLv: 0,
     dots: [], hps: [], endT: 0, adj: 0, emitT: 0, lastPress: 0, maxG: 90, minG: 90, bite: 0, cellGlow: 0, hist_t: 0, done: { meal: false, exercise: false, fast: false },
   };
-  const VY = 171, VX0 = 40, VX1 = 530, LIVER = [380, 240], CELL = [486, 240], PAN = [262, 76];
+  const VY = 142, VX0 = 40, VX1 = 530, LIVER = [380, 224], CELL = [486, 224], PAN = [262, 62];
   const inBand = (g) => g >= 70 && g <= 110;
   const SC_NAME = { meal: '식사', exercise: '운동', fast: '공복' };
   function inRate(m) {
@@ -627,16 +627,16 @@
     // 위 왼쪽: 몸속 그림
     panel(14, 14, 548, 268, { r: 18, bg: '#fbfdff' });
     // 음식
-    ctx.save(); ctx.translate(72, 74); const bs = 1 + 0.06 * Math.sin(t * 8) * GL.bite; ctx.scale(bs, bs);
+    ctx.save(); ctx.translate(72, 62); const bs = 1 + 0.06 * Math.sin(t * 8) * GL.bite; ctx.scale(bs, bs);
     ctx.fillStyle = '#fff'; ctx.shadowColor = 'rgba(0,0,0,.2)'; ctx.shadowBlur = 8; ctx.shadowOffsetY = 3; ctx.beginPath(); ctx.ellipse(0, 6, 36, 14, 0, 0, TAU); ctx.fill(); ctx.shadowBlur = 0;
     ctx.fillStyle = lgrad(0, -22, 0, 12, [[0, '#fff7e0'], [1, '#f1d9a3']]); ctx.beginPath(); ctx.arc(0, 0, 22, Math.PI, 0); ctx.lineTo(22, 6); ctx.lineTo(-22, 6); ctx.closePath(); ctx.fill();
     ctx.fillStyle = '#e8590c'; ctx.beginPath(); ctx.arc(-8, -10, 4, 0, TAU); ctx.arc(8, -8, 4, 0, TAU); ctx.fill();
     ctx.restore();
-    pill('음식', 72, 112, { bg: '#d97706', size: 13, h: 24 });
+    pill('음식', 72, 98, { bg: '#d97706', size: 13, h: 24 });
     // 혈관
     ctx.save(); rr(36, VY - 24, 500, 48, 24); ctx.fillStyle = '#ffe3e7'; ctx.fill(); ctx.strokeStyle = '#e5576b'; ctx.lineWidth = 3; ctx.stroke(); ctx.restore();
     ctx.save(); ctx.globalAlpha = 0.5; for (let i = 0; i < 8; i++) { const x = ((i * 66 + t * 40) % 480) + 44; D.arrow(x, VY + 18, x + 16, VY + 18, { color: '#e5576b', width: 2, head: 6 }); } ctx.restore();
-    pill('혈액 (혈관)', 150, VY - 38, { bg: '#e5576b', size: 13, h: 22, alpha: 0.95 });
+    pill('혈액 (혈관)', 150, VY + 40, { bg: '#e5576b', size: 13, h: 22, alpha: 0.95 });
     // 간
     ctx.fillStyle = lgrad(0, LIVER[1] - 30, 0, LIVER[1] + 30, [[0, '#c9794f'], [1, '#8f4a2c']]); ctx.beginPath(); ctx.ellipse(LIVER[0], LIVER[1] + 6, 56, 30, -0.05, 0, TAU); ctx.fill();
     txt('간', LIVER[0] - 40, LIVER[1] - 6, { size: 16, weight: 800, color: '#fff', align: 'center' });
@@ -655,17 +655,18 @@
     ctx.fillStyle = lgrad(0, PAN[1] - 14, 0, PAN[1] + 14, [[0, '#f4d35e'], [1, '#d9a400']]); ctx.beginPath(); ctx.ellipse(PAN[0], PAN[1], 54, 17, 0.05, 0, TAU); ctx.fill();
     txt('이자', PAN[0], PAN[1] + 1, { size: 15, weight: 800, color: '#5c4300', align: 'center', base: 'middle' });
     [['인슐린', '#2f7de1', GL.insLv, -4], ['글루카곤', '#f0b400', GL.gluLv, 16]].forEach((q) => {
-      txt(q[0], 330, PAN[1] + q[3] - 4, { size: 13, weight: 800, color: '#5d6879' });
-      ctx.fillStyle = '#eef1f6'; rr(398, PAN[1] + q[3] - 15, 90, 12, 6); ctx.fill();
-      if (q[2] > 0.02) { ctx.fillStyle = q[1]; rr(398, PAN[1] + q[3] - 15, Math.max(12, 90 * q[2]), 12, 6); ctx.fill(); }
+      txt(q[0], 330, PAN[1] + q[3] + 4, { size: 13, weight: 800, color: '#5d6879' });
+      ctx.fillStyle = '#eef1f6'; rr(408, PAN[1] + q[3] - 6, 90, 12, 6); ctx.fill();
+      if (q[2] > 0.02) { ctx.fillStyle = q[1]; rr(408, PAN[1] + q[3] - 6, Math.max(12, 90 * q[2]), 12, 6); ctx.fill(); }
     });
     // 포도당 알갱이
     GL.dots.forEach((d) => { ctx.save(); ctx.globalAlpha = clamp(d.a, 0, 1); bead(d.x, d.y, d.r, '#f5b800', { noShadow: true }); ctx.restore(); });
     GL.hps.forEach((p) => { if (p.delay <= 0) hormoneShape(p.type, p.x, p.y, 6.5, t + p.t, clamp(p.a, 0, 1)); });
-    bead(448, 126, 6, '#f5b800', { noShadow: true }); txt('포도당', 458, 127, { size: 13, weight: 800, color: '#5d6879', base: 'middle' });
-    hormoneShape('ins', 504, 126, 5.5, t, 1); hormoneShape('glu', 530, 126, 5.5, t, 1);
-    if (GL.sc === 'none') pill('아래 단추로 상황(식사·운동·공복)을 골라요', 300, 138, { bg: 'rgba(27,35,51,.9)', size: 15, h: 32, pad: 14, shadow: true });
-    if (GL.auto) pill('🤖 간뇌와 이자가 자동으로 조절해요', 300, 262, { bg: '#16a34a', size: 14, h: 26, pad: 14 });
+    bead(60, 214, 6, '#f5b800', { noShadow: true }); txt('포도당', 76, 215, { size: 13.5, weight: 800, color: '#5d6879', base: 'middle' });
+    hormoneShape('ins', 60, 238, 5.5, t, 1); txt('인슐린 (혈당량 ↓)', 76, 239, { size: 13.5, weight: 800, color: '#5d6879', base: 'middle' });
+    hormoneShape('glu', 60, 262, 5.5, t, 1); txt('글루카곤 (혈당량 ↑)', 76, 263, { size: 13.5, weight: 800, color: '#5d6879', base: 'middle' });
+    if (GL.sc === 'none') pill('오른쪽 위 단추로 상황(식사·운동·공복)을 골라요', 300, 112, { bg: 'rgba(27,35,51,.9)', size: 15, h: 32, pad: 14, shadow: true });
+    if (GL.auto) pill('🤖 건강한 몸 : 간뇌와 이자가 자동으로 조절해요', 400, 28, { bg: '#16a34a', size: 14, h: 26, pad: 14 });
 
     // 위 오른쪽: 혈당 게이지
     panel(574, 14, 212, 268, { r: 18 });
@@ -842,9 +843,8 @@
     ctx.strokeStyle = '#c3ccd9'; ctx.lineWidth = 2.5; rr(386, 366, 22, 158, 11); ctx.stroke();
     bead(397, 538, 17, col, { noShadow: true });
     [35, 36, 37, 38, 39].forEach((v) => { ctx.fillStyle = v === 37 ? '#16a34a' : '#8a93a3'; ctx.fillRect(408, ty(v) - 1, 8, 2); txt(String(v), 420, ty(v), { size: 12.5, weight: 800, color: v === 37 ? '#16a34a' : '#8a93a3', base: 'middle' }); });
-    txt((Math.round(TP.dispT * 10) / 10).toFixed(1), 468, 440, { size: 30, weight: 800, color: Math.abs(TP.dispT - 37) < 0.6 ? '#1b2333' : '#d0302c', align: 'center', base: 'middle' });
-    txt('°C', 468, 468, { size: 15, weight: 800, color: '#5d6879', align: 'center' });
-    pill(ENV_LABEL[TP.env][0], 450, 372, { bg: ENV_LABEL[TP.env][1], size: 13, h: 24, pad: 8 });
+    txt((Math.round(TP.dispT * 10) / 10).toFixed(1), 470, 440, { size: 30, weight: 800, color: Math.abs(TP.dispT - 37) < 0.6 ? '#1b2333' : '#d0302c', align: 'center', base: 'middle' });
+    txt('°C', 470, 470, { size: 15, weight: 800, color: '#5d6879', align: 'center' });
     // 반응 칩
     CHIPS.forEach((c, i) => {
       const r = chipRect(i), lv = c.cold ? (c.id === 'thyU' ? TP.rc : TP.rc) : TP.rh;
@@ -1004,7 +1004,7 @@
           const h = (Y0 - gy(q[1])) * ease, x = cx + q[3] * (bw / 2 + 3) - bw / 2, sel = DS.selBar && DS.selBar.i === i && DS.selBar.k === q[0];
           ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.18)'; ctx.shadowBlur = sel ? 12 : 5; ctx.shadowOffsetY = 3;
           ctx.fillStyle = lgrad(0, Y0 - h, 0, Y0, [[0, shade(q[2], sel ? 0.3 : 0.12)], [1, q[2]]]); rr(x, Y0 - h, bw, Math.max(0, h), 7); ctx.fill(); ctx.restore();
-          txt(q[1] + '%', x + bw / 2, Y0 - h - 8, { size: sel ? 16 : 14, weight: 800, color: shade(q[2], -0.3), align: 'center', alpha: ease });
+          txt(q[1].toFixed(1) + '%', x + bw / 2, Y0 - h - 8, { size: sel ? 16 : 14, weight: 800, color: shade(q[2], -0.3), align: 'center', alpha: ease });
           hit.push({ i, k: q[0], x: x - 3, w: bw + 6 });
         });
         txt(lb, cx, Y0 + 24, { size: 15, weight: 800, color: '#2b3445', align: 'center' });
@@ -1048,7 +1048,7 @@
   let F = new Set(), game = null;
   const SCENE_LABEL = { glands: '🩸 호르몬을 내보내는 내분비샘', glucose: '🍬 혈당량 조절 게임', temp: '🌡️ 체온 조절', disease: '📊 호르몬과 질병' };
   function setScene(name) {
-    S.scene = name;
+    S.scene = name; PFX.clear();
     $$('#sceneSeg button').forEach((b) => b.classList.toggle('on', b.dataset.scene === name));
     $$('#ctrlCard .cgrp').forEach((g) => { g.hidden = g.dataset.scene !== name; });
     const ab = $('#autoBtn'); if (ab) ab.hidden = name !== 'glucose';
