@@ -1717,12 +1717,22 @@
     });
     // 흡수된 영양소 목록
     const bx = 604;
-    panel(bx, 352, 188, 98, { r: 14, bg: '#fff', border: '#fca5a5', bw: 2 });
-    txt('모세 혈관 → 혈액', bx + 12, 372, { size: 14, weight: 800, color: '#b91c1c', base: 'middle' });
-    V.lists.cap.forEach((k, i) => { const d = nutrDef(k); pill(d.name, bx + 12 + (i % 2) * 88, 400 + Math.floor(i / 2) * 28, { size: 13, bg: '#fee2e2', color: '#7f1d1d', align: 'left', h: 24, pad: 8 }); });
-    panel(bx, 462, 188, 98, { r: 14, bg: '#fff', border: '#d9de5a', bw: 2 });
-    txt('암죽관 → 림프', bx + 12, 482, { size: 14, weight: 800, color: '#7c800a', base: 'middle' });
-    V.lists.lac.forEach((k, i) => { const d = nutrDef(k); pill(d.name, bx + 12 + (i % 2) * 88, 510 + Math.floor(i / 2) * 28, { size: 13, bg: '#fafcc8', color: '#5a5d06', align: 'left', h: 24, pad: 8, max: 84 }); });
+    const flow = (list, x0, y0, pw, bg, color) => {
+      let cx = x0, cy = y0;
+      list.forEach((k) => {
+        const nm = nutrDef(k).name; ctx.font = font(13, 800);
+        const w = ctx.measureText(nm).width + 16;
+        if (cx + w > x0 + pw && cx > x0) { cx = x0; cy += 26; }
+        pill(nm, cx, cy, { size: 13, bg, color, align: 'left', h: 23, pad: 8 });
+        cx += w + 6;
+      });
+    };
+    panel(bx, 336, 188, 112, { r: 14, bg: '#fff', border: '#fca5a5', bw: 2 });
+    txt('모세 혈관 → 혈액', bx + 12, 356, { size: 14, weight: 800, color: '#b91c1c', base: 'middle' });
+    flow(V.lists.cap, bx + 12, 384, 166, '#fee2e2', '#7f1d1d');
+    panel(bx, 458, 188, 112, { r: 14, bg: '#fff', border: '#d9de5a', bw: 2 });
+    txt('암죽관 → 림프', bx + 12, 478, { size: 14, weight: 800, color: '#7c800a', base: 'middle' });
+    flow(V.lists.lac, bx + 12, 506, 166, '#fafcc8', '#5a5d06');
     // 흡수 대상 영역
     if (V.drag && V.drag.moved) {
       const zs = [['cap', 'rgba(239,68,68,', 432], ['lac', 'rgba(214,219,92,', VX]];

@@ -578,6 +578,8 @@
   resetBtb(false);
 
   function toggleTube(i) {
+    if (!BTB.tubes[i].plant) { hint('C는 식물이 없는 비교 시험관이라 그대로 두어요.', 3200); Sound.click(); return; }
+    if (BTB.time > 0) { resetBtb(true); hint('조건을 바꿨어요. 실험을 처음부터 다시 해요.', 2600); }
     const t = BTB.tubes[i];
     t.cover = !t.cover; BTB.tap = false; BTB.flipN++;
     Sound.click();
@@ -675,11 +677,13 @@
     if (tb.cp > 0.01) {
       const top = y - 34, hh = (h + 44) * ease.outCubic(tb.cp);
       ctx.save();
+      ctx.globalAlpha = 0.5 + 0.12 * (1 - tb.cp);
       D.shadow(() => {
         ctx.fillStyle = lgrad(x - w / 2 - 8, 0, x + w / 2 + 8, 0, [[0, '#9aa7b8'], [0.3, '#e9eef5'], [0.55, '#aeb9c8'], [1, '#7f8ca0']]);
         D.roundRect(x - w / 2 - 8, top, w + 16, hh, 10); ctx.fill();
       }, { blur: 8, y: 3 });
       ctx.fillStyle = 'rgba(25,32,50,.34)'; D.roundRect(x - w / 2 - 8, top, w + 16, hh, 10); ctx.fill();
+      ctx.globalAlpha = 1;
       ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 2; for (let k = 0; k < 3; k++) { ctx.beginPath(); ctx.moveTo(x - 18 + k * 18, top + 8); ctx.lineTo(x - 22 + k * 18, top + hh - 8); ctx.stroke(); }
       if (tb.cp > 0.9) { text(x, top + hh / 2 - 2, '🌙', { size: 22, weight: 400 }); text(x, top + hh / 2 + 20, '어둠', { size: 13, weight: 800, color: '#fff', stroke: 'rgba(0,0,0,.4)', strokeWidth: 3 }); }
       ctx.restore();
@@ -705,7 +709,7 @@
     D.shadow(() => { ctx.fillStyle = lgrad(0, 22, 0, 52, [[0, '#7a8aa0'], [1, '#4a586b']]); D.roundRect(108, 22, 364, 30, 15); ctx.fill(); }, { blur: 8, y: 3 });
     ctx.fillStyle = '#fff6c4'; D.roundRect(124, 44, 332, 10, 5); ctx.fill();
     ctx.restore();
-    text(486, 40, '☀️ 전등', { size: 13, weight: 800, color: '#8a5a00', align: 'left' });
+    text(58, 40, '☀️ 전등', { size: 13.5, weight: 800, color: '#8a5a00' });
     // 빛줄기 (포일을 씌운 시험관에는 닿지 않아요)
     B.tubes.forEach((tb, i) => {
       const x = TB.XS[i], endY = TB.TY - 36 + (tb.cp > 0.5 ? 0 : 130 + tb.cp * 0);
@@ -807,7 +811,7 @@
     skyRect(0, 0, SW, SH, dayV);
     drawSun(64, 62, 24, clamp(L / 30, 0, 1));
     drawMoon(64, 62, 21, clamp(1 - L / 22, 0, 1));
-    cloud(380, 66, 0.8, 0.85 * dayV); cloud(470, 108, 0.5, 0.7 * dayV);
+    cloud(262, 60, 0.8, 0.85 * dayV); cloud(342, 106, 0.5, 0.7 * dayV);
     ctx.fillStyle = lgrad(0, 454, 0, SH, [[0, mix('#1e3d34', '#86d27c', dayV)], [1, mix('#14291f', '#4fa65a', dayV)]]); ctx.fillRect(0, 456, SW, SH - 456);
     // 햇빛이 엽록체로
     if (L > 6) {
@@ -856,8 +860,8 @@
       D.label(STO.x, 392, '안에서 서로 주고받아요', { bg: rgba('#475569', 0.92), size: 13.5 });
     }
     // 범례
-    legendItem(22, 24, 'co2', '이산화 탄소', { u: 3.2, size: 12.5 });
-    legendItem(22, 50, 'o2', '산소', { u: 3.2, size: 12.5 });
+    legendItem(398, 24, 'co2', '이산화 탄소', { u: 3.2, size: 12.5 });
+    legendItem(398, 50, 'o2', '산소', { u: 3.2, size: 12.5 });
   }
   function drawDayPanel() {
     const p = LAY.pn, L = DAY.Ls, P = Pof(L), R = R_RESP, st = DAY.st;
@@ -1181,4 +1185,208 @@
     up(p) { if (scene === 'table') TBL.up(p); },
   });
   TBL.onChange = () => refreshReadouts();
+
+
+  /* =========================================================
+     미션 (게임 엔진)
+     ========================================================= */
+  const btbDefault = () => { resetBtb(false); BTB.tap = true; syncBtbUI(); };
+  const tubeInfo = () => BTB.tubes.map((tb) => tb.id + ': ' + colName(tb.cs)).join(' · ');
+  const defaultCfg = () => { const [a, b, c] = BTB.tubes; return !a.cover && b.cover && !c.cover; };
+
+  game = SciSim.game({
+    simId: 'm2-plant-respiration',
+    mount: '#game',
+    badge: '호흡 박사',
+    homeHref: '../../index.html#g2',
+    featureLabels: {
+      btb: '🧪 BTB 용액 시험관 A·B·C · ⏱ 시간 흐르기',
+      day: '🍃 낮과 밤 · ☀️ 빛의 세기 · 엽록체와 미토콘드리아',
+      table: '📋 광합성과 호흡 비교표',
+      room: '🛏️ 밤의 침실과 화분',
+    },
+    onFeatures(set) { F = set; refreshUI(); },
+    onMissionStart(m) {
+      if (game && game.free) return;
+      if (m.scene) setScene(m.scene);
+      refreshUI();
+    },
+    onComplete() { refreshUI(); },
+    levels: [
+      {
+        title: 'BTB 실험: 식물은 밤에도 숨을 쉴까?', short: 'BTB 실험', icon: '🧪', phase: '실험',
+        features: ['btb'],
+        intro: '<p class="si-q">❓ 탐구 질문: 식물은 밤에도 숨을 쉴까?</p>' +
+          '<p><b>BTB 용액</b>은 이산화 탄소의 양에 따라 색이 변해요. <b>파랑</b>(이산화 탄소 적음) – <b>초록</b>(보통) – <b>노랑</b>(이산화 탄소 많음). 초록색 BTB 용액을 넣은 시험관 A·B·C로 식물의 기체 출입을 알아봐요.</p>' +
+          '<p>A: 검정말 + 빛 · B: 검정말 + 어둠(포일) · C: 식물 없음 + 빛</p>',
+        setup() { setScene('btb'); },
+        recap: '빛이 있을 때(A)는 이산화 탄소가 줄어 파랗게, 어둠 속(B)에서는 이산화 탄소가 늘어 노랗게 변해요. 식물은 어둠 속에서도 <b>호흡</b>을 해요.',
+        summary: '<ul><li><b>BTB 용액</b>: 이산화 탄소가 적으면 <b>파란색</b>, 보통이면 <b>초록색</b>, 많으면 <b>노란색</b>이에요.</li>' +
+          '<li>빛을 받는 식물(A): 광합성으로 이산화 탄소를 흡수 → 용액이 <b>파랗게</b> 변해요.</li>' +
+          '<li>어둠 속의 식물(B): 광합성은 못 하고 호흡으로 이산화 탄소를 내보냄 → 용액이 <b>노랗게</b> 변해요.</li>' +
+          '<li>식물이 없는 시험관(C)은 색이 변하지 않아요. 색 변화가 <b>식물 때문</b>임을 확인하는 비교 시험관이에요.</li></ul>',
+        missions: [
+          {
+            title: '3시간 뒤, 색은 어떻게 될까?', scene: 'btb',
+            setup() { btbDefault(); refreshUI(); },
+            goal: '<b>▶ 실험 시작</b>을 눌러 3시간이 지나게 하고, 시험관 A·B·C의 색 변화를 살펴봐요.',
+            hint: 'A는 빛을 받고, B는 포일로 가려져 있어요. 색과 함께 CO₂ 눈금도 살펴봐요.',
+            check: () => BTB.time >= 2.99 && defaultCfg(),
+            hold: 0.8,
+            status: () => '⏱ ' + f1(BTB.time) + ' / 3시간 · ' + tubeInfo(),
+            explain: 'A는 빛이 있어서 <b>광합성량이 호흡량보다 많아</b> 이산화 탄소가 줄어 파랗게 변했어요. B는 빛이 없어서 광합성은 못 하고 <b>호흡</b>만 일어나 이산화 탄소가 늘어 노랗게 변했어요. 식물이 없는 C는 변하지 않았지요.',
+          },
+          {
+            title: 'A도 어둡게 하면?', scene: 'btb',
+            setup() { btbDefault(); refreshUI(); },
+            goal: '시험관 <b>A를 눌러 포일을 씌우고</b> 실험을 다시 해요. A의 색은 어떻게 변할까요?',
+            hint: '시험관 A를 누르면 포일이 내려와요. 그다음 ▶ 실험 시작!',
+            check: () => BTB.tubes[0].cover && BTB.tubes[0].c > 0.55,
+            hold: 0.6,
+            status: () => mark(BTB.tubes[0].cover) + ' A에 포일 씌우기 · ' + mark(BTB.tubes[0].c > 0.55) + ' A가 노랗게 변함 (' + colName(BTB.tubes[0].cs) + ')',
+            explain: '빛이 없으면 검정말도 <b>광합성을 하지 못해요</b>. 그래도 살아 있는 세포는 <b>호흡</b>을 계속해서 이산화 탄소가 늘어나고, BTB 용액이 노랗게 변해요. 그러니까 식물은 밤에도 숨을 쉬어요.',
+          },
+          {
+            type: 'quiz', title: '시험관 C는 왜 필요할까?', scene: 'btb',
+            setup() { btbDefault(); BTB.time = 3; BTB.tubes[0].c = BTB.tubes[0].cs = -0.9; BTB.tubes[1].c = BTB.tubes[1].cs = 0.9; refreshUI(); },
+            goal: '식물이 없는 시험관 <b>C</b>도 함께 실험했어요. C는 어떤 역할을 할까요?',
+            choices: ['식물 없이도 이산화 탄소가 만들어지는지 알아보려고', 'A와 B의 색 변화가 식물 때문이라는 것을 확인하려고 (비교하는 시험관)', '빛이 없을 때 식물이 어떻게 되는지 보려고', '시험관이 하나 더 필요해서'],
+            answer: 1,
+            feedback: ['C에는 식물이 없어서 이산화 탄소를 만들거나 없앨 수 없어요. 식물이 없으면 색이 변하지 않는다는 것을 보여 주는 시험관이에요.', '', '빛이 없는 시험관은 B예요. C는 빛은 있지만 식물이 없어요.', '실험 결과를 해석하려면 비교할 시험관이 꼭 필요해요. 이런 시험관을 대조군이라고 해요.'],
+            explain: 'C는 식물만 빼고 나머지 조건이 같은 <b>비교(대조) 시험관</b>이에요. C의 색이 변하지 않았으니 A와 B의 색 변화는 <b>식물</b>(광합성과 호흡) 때문이라고 말할 수 있어요.',
+          },
+        ],
+      },
+      {
+        title: '낮과 밤: 광합성량과 호흡량 비교', short: '낮과 밤', icon: '🌗', phase: '탐구',
+        features: ['day'],
+        intro: '<div class="si-link">🔗 <b>앞 단계에서</b> 빛이 있으면 이산화 탄소가 줄고, 어둠 속에서는 늘어나는 것을 BTB 용액으로 확인했어요.</div>' +
+          '<p>식물은 낮에도 호흡을 해요! 빛의 세기를 바꾸며 잎 세포 속 <b>엽록체</b>(광합성)와 <b>미토콘드리아</b>(호흡)에서 일어나는 일, 그리고 <b>기공</b>으로 드나드는 기체를 살펴봐요.</p>',
+        setup() { setScene('day'); },
+        recap: '호흡은 낮과 밤에 항상 일어나요. 광합성량이 호흡량보다 많으면 산소 방출·이산화 탄소 흡수, 적으면 산소 흡수·이산화 탄소 방출로 보여요.',
+        summary: '<ul><li><b>광합성</b>은 빛이 있을 때만, <b>호흡</b>은 낮과 밤 <b>항상</b> 일어나요.</li>' +
+          '<li>광합성량 &gt; 호흡량 (밝은 낮): <b>산소 방출, 이산화 탄소 흡수</b>로 보여요.</li>' +
+          '<li>광합성량 = 호흡량: 서로의 산물을 이용해서 <b>겉으로 보이는 기체 출입이 없어요</b>.</li>' +
+          '<li>광합성량 &lt; 호흡량 (밤·어두울 때): <b>산소 흡수, 이산화 탄소 방출</b>로 보여요.</li></ul>',
+        missions: [
+          {
+            title: '기체 출입이 바뀌는 빛의 세기', scene: 'day',
+            setup() { setLight(80); refreshUI(); },
+            goal: '빛의 세기를 바꿔서 <b>광합성량과 호흡량이 같아지는 곳</b>을 찾아요. 겉으로 보이는 기체 출입이 없어져요.',
+            hint: '빛이 세면 산소가 나가고, 약하면 산소가 들어와요. 둘이 바뀌는 사이를 찾아봐요.',
+            check: () => DAY.st === 'eq',
+            hold: 1.2,
+            status: () => '광합성량 <b>' + Math.round(Pof(DAY.Ls)) + '</b> · 호흡량 <b>' + R_RESP + '</b> · ' + mark(DAY.st === 'eq') + ' 같아요',
+            explain: '광합성량과 호흡량이 같으면 광합성으로 만든 <b>산소를 호흡이 쓰고</b>, 호흡으로 나온 <b>이산화 탄소를 광합성이 써요</b>. 그래서 겉으로 보이는 기체 출입이 없어요. 빛이 이보다 세면 산소가 나가고, 약하면 산소가 들어와요.',
+          },
+          {
+            title: '밤과 한낮 모두 살펴보기', scene: 'day',
+            setup() { DAY.visited.night = false; DAY.visited.noon = false; setLight(40); refreshUI(); },
+            goal: '<b>🌙 밤</b>(빛 0 %)과 <b>☀️ 한낮</b>(빛 80 % 이상)의 기체 출입을 모두 살펴봐요.',
+            hint: '“🌙 밤”과 “☀️ 한낮” 버튼을 눌러도 돼요.',
+            check: () => DAY.visited.night && DAY.visited.noon && DAY.L >= 80,
+            hold: 0.8,
+            status: () => mark(DAY.visited.night) + ' 밤 · ' + mark(DAY.visited.noon) + ' 한낮 · ' + (DAY.L >= 80 ? '지금 한낮이에요' : DAY.L <= 3 ? '지금 밤이에요' : '지금 빛 ' + DAY.L + ' %'),
+            explain: '한낮에는 광합성량이 호흡량보다 많아 <b>산소를 내보내고 이산화 탄소를 흡수</b>해요. 밤에는 광합성이 멈추고 <b>호흡만</b> 일어나서 산소를 흡수하고 이산화 탄소를 내보내요. 호흡은 낮에도 밤에도 계속돼요.',
+          },
+          {
+            type: 'quiz', title: '낮에도 호흡을 할까?', scene: 'day',
+            setup() { setLight(90); refreshUI(); },
+            goal: '한낮에 식물은 산소를 내보내요. 이때 식물의 호흡에 대한 설명으로 옳은 것은?',
+            choices: ['낮에는 호흡을 하지 않고 광합성만 한다', '호흡은 밤에만 일어나는 과정이다', '낮에도 호흡이 일어나지만 광합성량이 더 많아서 겉으로는 산소 방출·이산화 탄소 흡수로 보인다', '낮에는 호흡이 광합성으로 바뀌어서 산소가 나온다'],
+            answer: 2,
+            feedback: ['낮에도 호흡은 멈추지 않아요. 미토콘드리아에서 계속 일어나요. 단지 광합성이 더 많이 일어날 뿐이에요.', '호흡은 살아 있는 모든 세포에서 낮과 밤 내내 일어나요.', '', '호흡과 광합성은 서로 바뀌는 것이 아니라, 동시에 일어나는 서로 다른 과정이에요.'],
+            explain: '호흡은 <b>살아 있는 세포에서 항상</b> 일어나요. 낮에는 광합성량이 호흡량보다 많아서 광합성의 결과(산소 방출·이산화 탄소 흡수)만 겉으로 드러나는 거예요.',
+          },
+        ],
+      },
+      {
+        title: '비교: 광합성과 호흡', short: '비교', icon: '⚖️', phase: '설명',
+        features: ['table'],
+        intro: '<div class="si-link">🔗 <b>앞 단계에서</b> 광합성은 빛이 있을 때 엽록체에서, 호흡은 낮과 밤에 미토콘드리아에서 일어나는 것을 보았어요.</div>' +
+          '<p>이제 두 과정을 나란히 비교해서 정리해요. <b>장소·때·재료·산물·에너지</b> 5가지를 표에 맞게 놓아요. 광합성과 호흡은 재료와 산물이 서로 <b>반대</b>예요!</p>',
+        setup() { setScene('table'); },
+        recap: '광합성은 빛에너지를 양분(포도당)에 <b>저장</b>하고, 호흡은 양분의 에너지를 <b>방출</b>해서 생명 활동에 써요. 두 과정은 재료와 산물이 반대예요.',
+        summary: '<table class="note-table"><tr><th></th><th>광합성</th><th>호흡</th></tr>' +
+          '<tr><td>장소</td><td>엽록체</td><td>미토콘드리아</td></tr><tr><td>때</td><td>빛이 있을 때</td><td>항상 (낮과 밤)</td></tr>' +
+          '<tr><td>재료</td><td>이산화 탄소 + 물</td><td>포도당 + 산소</td></tr><tr><td>산물</td><td>포도당 + 산소</td><td>이산화 탄소 + 물</td></tr>' +
+          '<tr><td>에너지</td><td>빛에너지를 양분(화학 에너지)에 저장</td><td>양분의 에너지를 방출 (생명 활동에 이용)</td></tr></table>' +
+          '<ul><li>호흡: 포도당 + 산소 → 이산화 탄소 + 물 + <b>에너지</b></li></ul>',
+        missions: [
+          {
+            title: '광합성 vs 호흡 표 완성하기', scene: 'table', manual: true,
+            setup() { TBL.reset(); refreshUI(); },
+            goal: '카드 10장을 알맞은 칸에 놓은 뒤 <b>✔ 확인하기</b>를 눌러요.',
+            hint: '광합성의 재료는 호흡의 산물이고, 광합성의 산물은 호흡의 재료예요.',
+            check: tableFeedback,
+            explain: '<b>광합성</b>: 이산화 탄소 + 물 → 포도당 + 산소 (엽록체, 빛이 있을 때, 빛에너지를 양분에 저장). <b>호흡</b>: 포도당 + 산소 → 이산화 탄소 + 물 + 에너지 (미토콘드리아, 항상, 양분의 에너지를 방출).',
+          },
+          {
+            type: 'quiz', title: '호흡으로 나오는 에너지', scene: 'table',
+            goal: '식물이 호흡으로 얻는 에너지는 어디에서 온 것일까요?',
+            choices: ['햇빛의 빛에너지가 곧바로 쓰인다', '광합성으로 만든 양분(포도당)에 저장되어 있던 에너지다', '산소가 가지고 있던 에너지다', '이산화 탄소가 가지고 있던 에너지다'],
+            answer: 1,
+            feedback: ['빛에너지는 광합성에서 양분에 저장돼요. 호흡은 그 양분을 분해해서 에너지를 꺼내 써요.', '', '산소는 양분을 분해하는 데 쓰이는 재료일 뿐, 에너지원은 양분이에요.', '이산화 탄소는 호흡의 산물이에요. 에너지는 양분(포도당)에서 나와요.'],
+            explain: '광합성으로 <b>빛에너지가 양분(포도당)의 화학 에너지로 저장</b>돼요. 호흡은 이 양분을 산소로 분해하면서 <b>에너지를 방출</b>해서 식물이 생명 활동에 써요.',
+          },
+        ],
+      },
+      {
+        title: '적용: 침실의 화분과 식물의 호흡', short: '적용', icon: '🛏️', phase: '적용',
+        features: ['room'],
+        intro: '<div class="si-link">🔗 <b>앞 단계에서</b> 호흡은 낮과 밤 항상 일어나고, 광합성과 재료·산물이 반대라는 것을 정리했어요.</div>' +
+          '<p>배운 내용을 생활에 적용해 봐요. <b>밤에 침실에 화분을 두면</b> 어떻게 될까요? 식물의 호흡으로 나오는 이산화 탄소를 사람과 비교해 보세요.</p>',
+        setup() { setScene('room'); },
+        recap: '식물도 밤에 호흡해서 이산화 탄소를 내보내지만, 그 양은 사람보다 훨씬 적어서 침실의 화분은 걱정하지 않아도 돼요.',
+        summary: '<ul><li>식물은 <b>밤에도 호흡</b>을 해서 산소를 쓰고 이산화 탄소를 내보내요.</li>' +
+          '<li>하지만 화분이 내놓는 이산화 탄소의 양은 사람에 비해 <b>매우 적어서</b> 침실의 공기에 주는 영향은 아주 작아요.</li>' +
+          '<li>식물이 호흡하는 까닭은 양분의 에너지를 꺼내어 <b>생명 활동</b>에 쓰기 위해서예요.</li></ul>',
+        missions: [
+          {
+            title: '화분 10개의 호흡량', scene: 'room',
+            setup() { setPots(1); refreshUI(); },
+            goal: '화분 수를 <b>10개</b>까지 늘려 보고, 사람 1명과 이산화 탄소의 양을 비교해요.',
+            hint: '오른쪽 슬라이더(🪴 화분 수)를 끝까지 올려요.',
+            check: () => ROOM.pots >= 10,
+            hold: 1,
+            status: () => '화분 <b>' + ROOM.pots + '개</b> · 사람의 약 ' + ROOM.pots + ' % ' + mark(ROOM.pots >= 10),
+            explain: '식물도 밤에 호흡해서 이산화 탄소를 내보내지만, 화분 한 개가 내놓는 양은 사람 한 명에 비해 아주 적어요. 화분 10개를 모두 합쳐도 사람의 약 1/10 정도예요. (대략적인 비교)',
+          },
+          {
+            type: 'quiz', title: '침실에 화분을 두어도 될까?', scene: 'room',
+            goal: '“밤에 침실에 화분을 두면 해롭다”는 말이 있어요. 과학적으로 가장 알맞은 설명은?',
+            choices: ['식물은 밤에 광합성을 해서 산소가 늘어난다', '식물은 밤에 호흡을 하지 않으므로 아무 영향이 없다', '식물이 밤에 산소를 모두 써 버려서 위험하다', '밤에 호흡으로 이산화 탄소가 조금 늘지만, 그 양이 아주 적어 실제 영향은 매우 작다'],
+            answer: 3,
+            feedback: ['밤에는 빛이 없어서 광합성이 일어나지 않아요.', '식물도 밤에 호흡을 해요. 다만 그 양이 적을 뿐이에요.', '식물이 쓰는 산소의 양은 사람이 쓰는 양에 비해 매우 적어서 산소를 모두 쓰는 일은 없어요.', ''],
+            explain: '식물도 밤에 호흡하므로 이산화 탄소가 <b>조금</b> 늘어나요. 하지만 그 양이 사람의 호흡에 비해 매우 적어서, 침실에 화분을 두는 것이 건강에 주는 영향은 거의 없어요.',
+          },
+          {
+            type: 'quiz', title: '식물은 왜 호흡을 할까?', scene: 'room',
+            goal: '식물이 낮이나 밤이나 호흡을 하는 까닭은 무엇일까요?',
+            choices: ['밤에는 광합성을 할 수 없어서 대신 하는 것이다', '체온을 낮추기 위해서이다', '양분을 분해해 생명 활동에 필요한 에너지를 얻기 위해서이다', '이산화 탄소를 만들어 광합성에 쓰기 위해서이다'],
+            answer: 2,
+            feedback: ['호흡은 광합성을 대신하는 것이 아니에요. 낮에도 광합성과 함께 일어나요.', '식물의 호흡은 체온 조절이 아니라 에너지를 얻는 과정이에요.', '', '이산화 탄소는 호흡의 결과로 생기지만, 호흡하는 까닭은 에너지를 얻기 위해서예요.'],
+            explain: '식물도 동물처럼 살아 있는 세포에서 <b>양분을 분해하며 에너지를 꺼내 써요</b>. 이렇게 얻은 에너지로 자라고, 물질을 옮기는 등 <b>생명 활동</b>을 해요.',
+          },
+        ],
+      },
+    ],
+  });
+
+  /* ---------- 시작 ---------- */
+  refreshUI();
+  SciSim.loop((dt) => { update(dt); draw(); });
+  window.__sim = {
+    VW, VH, LAY, BTB, DAY, ROOM, TBL, FX, TB,
+    get game() { return game; },
+    get scene() { return scene; },
+    setScene, setLight, setPots, setBtbRun, toggleTube, resetBtb, update, draw, dayState, Pof,
+    ff(sec) { const n = Math.round(sec * 60); for (let i = 0; i < n; i++) update(1 / 60); },
+    solveTable() {
+      TBL.reset();
+      TBL.slots.forEach((s) => { const c = TBL.chips.find((q) => !q.slot && s.accept.indexOf(q.kind) >= 0); TBL.place(c, s); });
+    },
+    v2s(x, y) { const r = view.canvas.getBoundingClientRect(); return { x: r.left + (x * r.width) / VW, y: r.top + (y * r.height) / VH }; },
+    bench(n) { const t0 = performance.now(); let mx = 0; for (let i = 0; i < n; i++) { const a = performance.now(); update(1 / 60); draw(); mx = Math.max(mx, performance.now() - a); } return { avg: (performance.now() - t0) / n, max: mx }; },
+  };
 })();

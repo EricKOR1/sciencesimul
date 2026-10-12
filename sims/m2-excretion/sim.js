@@ -280,8 +280,6 @@
   };
   function resetStats() { S.stat = { passed: {}, blocked: {}, urine: {} }; TKEYS.forEach((k) => { S.stat.passed[k] = 0; S.stat.blocked[k] = 0; S.stat.urine[k] = 0; }); }
   resetStats();
-  const PFX = new SciSim.Particles();
-  function burst(x, y, colors, n, o) { PFX.burst(x, y, Object.assign({ count: n || 18, colors: colors || ['#22c55e', '#facc15', '#38bdf8', '#f472b6'], speed: 150, gravity: 120, size: 4 }, o || {})); }
   function say(text, kind) { S.msg = text; S.msgT = 4.2; S.msgKind = kind || 'info'; }
   let F = new Set();
   let game = null;
@@ -332,14 +330,15 @@
     p.sSave = p.s;
     setMove(p, gx, WALL_Y - 9, 0.26, EASE.outCubic, () => {
       const pass = p.T.r <= S.poreDraw + 0.05;
+      const settled = Math.abs(S.poreDraw - poreOf(S.pore)) < 0.25;   // 슬라이더를 움직이는 중에는 집계하지 않아요
       if (pass) {
-        S.stat.passed[p.type]++;
+        if (settled) S.stat.passed[p.type]++;
         if (p.T.big) S.leakT = S.t;
         setMove(p, gx, WALL_Y + 32, 0.34, EASE.inOutQuad, () => {
           setMove(p, 250 + (Math.random() - 0.5) * 8, 256, 0.55, EASE.inOutQuad, () => enterTubule(p));
         });
       } else {
-        S.stat.blocked[p.type]++;
+        if (settled) S.stat.blocked[p.type]++;
         if (!p.T.big) S.stuckT = S.t;
         p.wob = 0.35;
         const back = p.sSave + 14;
@@ -372,7 +371,7 @@
     S.poreDraw = approach(S.poreDraw, poreOf(S.pore), dt, 10);
     S.reabsDraw = approach(S.reabsDraw, S.reabs ? 1 : 0, dt, 8);
     S.spawnT -= dt;
-    if (S.spawnT <= 0 && S.parts.length < 150) { S.spawnT += 0.36; spawnBlood(); }
+    if (S.spawnT <= 0 && S.parts.length < 150) { S.spawnT += 0.3; spawnBlood(); }
     const P = S.parts;
     for (let i = P.length - 1; i >= 0; i--) {
       const p = P[i];
@@ -383,7 +382,7 @@
         BLOOD.at(p.s, p);
         if (!p.tried && p.s >= S_FILTER) {
           p.tried = true;
-          if (Math.random() < 0.62) startFilterAttempt(p);
+          if (Math.random() < 0.75) startFilterAttempt(p);
         }
         if (p.secS != null && p.s >= p.secS) {
           const go = S.reabs; p.secS = null;
