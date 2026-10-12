@@ -2036,8 +2036,7 @@ window.SCI_CATALOG = {
                 "신경계",
                 "의식적 반응",
                 "무조건 반사"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m3-hormones",
@@ -2058,8 +2057,7 @@ window.SCI_CATALOG = {
                 "혈당량 조절",
                 "체온 조절",
                 "호르몬과 질병"
-              ],
-              "soon": true
+              ]
             }
           ]
         },

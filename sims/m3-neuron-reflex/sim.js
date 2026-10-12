@@ -1087,7 +1087,7 @@
       txt(v === 0 ? '0' : v.toFixed(1) + '초', x, 589, { size: 12, weight: 700, color: '#8a93a3', align: 'center' });
     }
   }
-  function orderChipRect(i) { return { x: 538, y: 140 + i * 52, w: 236, h: 42 }; }
+  function orderChipRect(i) { return { x: 538, y: 112 + i * 54, w: 236, h: 42 }; }
   function drawOrderPanel(t) {
     pill('🧩 무릎 반사 경로 순서', 656, 40, { bg: '#ef6c3e', size: 15, h: 30, pad: 12 });
     para('시작: 무릎 아래 힘줄이 자극을 받아요', 540, 76, 232, 14, 18, { weight: 800, color: '#2b3445' });
@@ -1104,7 +1104,7 @@
       else { ctx.strokeStyle = '#cfd6e2'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(r.x + 28, r.y + r.h / 2, 12, 0, TAU); ctx.stroke(); }
       ctx.restore();
     });
-    txt('끝: 다리가 올라가요', 656, 410, { size: 14, weight: 800, color: '#2b3445', align: 'center' });
+    txt('끝: 다리가 올라가요', 656, 398, { size: 14, weight: 800, color: '#2b3445', align: 'center' });
   }
   function reflexDown(p) {
     if (RF.order && p.x > 526) {
