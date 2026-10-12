@@ -1750,8 +1750,7 @@ window.SCI_CATALOG = {
                 "이슬점",
                 "상대 습도",
                 "적용"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m3-cloud-formation",
@@ -1772,8 +1771,7 @@ window.SCI_CATALOG = {
                 "구름 실험",
                 "구름의 생성",
                 "강수 과정"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m3-pressure-wind",
