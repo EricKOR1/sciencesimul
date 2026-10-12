@@ -43,11 +43,18 @@
     flute: { name: '피리', icon: '🪈', a: [1, 0.55, 0.28, 0.12, 0, 0], th: [0, 2.2, 0.4, 2.6, 0, 0] },
     guitar: { name: '기타', icon: '🎸', a: [1, 0.62, 0.5, 0.36, 0.22, 0.12], th: [0, 0.5, 1.2, 1.8, 2.4, 3.0] },
   };
+  // pk: 가장 크게 벗어난 값의 크기(진폭으로 쓰기 위해 이 값으로 나눠요), php: 마루(가장 높은 곳)의 위치
+  function peakOf(a, th) {
+    let pk = 0, mx = -9, pi = 0;
+    for (let i = 0; i < 128; i++) { const ph = (i / 128) * TAU; let v = 0; for (let n = 0; n < NH; n++) v += a[n] * Math.sin((n + 1) * ph + th[n]); pk = Math.max(pk, Math.abs(v)); if (v > mx) { mx = v; pi = i; } }
+    return { pk, mx, php: (pi / 128) * TAU };
+  }
+  // 모든 악기의 파형은 가장 크게 벗어난 곳이 위쪽(마루)이 되도록 맞춰 둬요 (소리는 같아요)
   Object.keys(SHAPES).forEach((k) => {
     const s = SHAPES[k];
-    let pk = 0;
-    for (let i = 0; i < 180; i++) { const ph = (i / 180) * TAU; let v = 0; for (let n = 0; n < NH; n++) v += s.a[n] * Math.sin((n + 1) * ph + s.th[n]); pk = Math.max(pk, Math.abs(v)); }
-    s.peak = pk;
+    let r = peakOf(s.a, s.th);
+    if (r.mx < r.pk - 1e-6) { for (let n = 0; n < NH; n++) s.th[n] += Math.PI; r = peakOf(s.a, s.th); }
+    s.peak = r.pk; s.php = r.php;
   });
   // 화면에 그리는 파형(부드럽게 바뀌는 값)
   const W = {
@@ -56,9 +63,8 @@
     ghostA: 0, ghostF: 0, ghostShape: null, ghostK: 0,
   };
   function updPeak(w) {
-    let pk = 0, pi = 0;
-    for (let i = 0; i < 64; i++) { const ph = (i / 64) * TAU; let v = 0; for (let n = 0; n < NH; n++) v += w.a[n] * Math.sin((n + 1) * ph + w.th[n]); if (v > pk) { pk = v; pi = i; } }
-    w.peak = Math.max(0.3, pk); w.php = (pi / 64) * TAU;
+    const r = peakOf(w.a, w.th);
+    w.peak = Math.max(0.3, r.pk); w.php = r.php;
   }
   const waveG = (a, th, pk, ph) => { let v = 0; for (let n = 0; n < NH; n++) v += a[n] * Math.sin((n + 1) * ph + th[n]); return v / pk; };
   // 입자의 밀림(변위): 압력 파형의 적분. 같은 파형으로부터 구해서 마루 아래에 입자가 모여요
@@ -368,7 +374,7 @@
       D.arrow(hx, hy + 48 - bob, hx, hy + 76 - bob, { color: COL.phy, width: 4, head: 10 });
       ctx.restore();
     }
-    pill(V, hx, G.rail.y0 - 20, '손잡이 (위아래로 끌어요)', { bg: '#1b2333', size: 13 * Math.min(1.15, fs) });
+    pill(V, Math.max(hx, 108), G.rail.y0 - 20, '손잡이 (위아래로 끌어요)', { bg: '#1b2333', size: 13 * Math.min(1.15, fs) });
     // 진행 방향 화살표
     D.arrow(G.arrow.x0, G.arrow.y, G.arrow.x1, G.arrow.y, { color: COL.amber, width: 6, head: 16 });
     pill(V, (G.arrow.x0 + G.arrow.x1) / 2, G.arrow.y - 26, '파동이 나아가는 방향', { bg: COL.amber, size: 14 * Math.min(1.15, fs) });
@@ -867,7 +873,7 @@
       ctx.restore();
     }
     // 칸 눈금 숫자
-    txt(ctx, '1칸', P.x - 8, cy - rowH, { size: 12.5 * fs, color: 'rgba(160,255,200,.65)', align: 'right' });
+    txt(ctx, '눈금 한 칸 = 1칸', P.x + 10, P.y + P.h - 13, { size: 12.5 * fs, color: 'rgba(160,255,200,.6)', align: 'left' });
     // 파형 이름표
     const nm = SHAPES[S.timbre];
     if (showShape) D.label(P.x + 78 * fs, P.y + 18, nm.icon + ' ' + nm.name + (S.timbre === 'fork' ? ' · 사인 곡선' : ''), { bg: 'rgba(20,60,45,.92)', color: '#aaffd2', size: 14 * fs });
@@ -1123,8 +1129,8 @@
   const trace = (d, col) => '<path d="' + d + '" fill="none" stroke="' + (col || '#7dffc0') + '" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>';
   const txtS = (x, y, s, col, sz, anchor) => '<text x="' + x + '" y="' + y + '" font-size="' + (sz || 14) + '" font-weight="800" fill="' + (col || '#d8f5e6') + '" text-anchor="' + (anchor || 'middle') + '">' + s + '</text>';
   const SVG_AMP = svgHead(196, '진폭이 서로 다른 두 소리 ㉮와 ㉯의 파형') +
-    grid(54, 322, 52, 0) + trace(wd(54, 322, 52, 15, 76, null, 0.6)) + txtS(26, 58, '㉮', '#ffd678', 20) +
-    grid(54, 322, 144, 0) + trace(wd(54, 322, 144, 38, 76, null, 0.6)) + txtS(26, 150, '㉯', '#ffd678', 20) +
+    grid(54, 322, 52, 0) + trace(wd(54, 322, 52, 15, 76, null, 0.6)) + txtS(26, 58, '㉮', '#ffd678', 24) +
+    grid(54, 322, 144, 0) + trace(wd(54, 322, 144, 38, 76, null, 0.6)) + txtS(26, 150, '㉯', '#ffd678', 24) +
     txtS(170, 190, '두 소리의 높이(진동수)는 같아요', '#9fd8bb', 12.5) + '</svg>';
   const SVG_WL = (() => {
     const x0 = 24, cy = 96, A = 40, lam = 110;
@@ -1135,21 +1141,21 @@
       '<line x1="' + c2 + '" y1="' + (cy - A - 3) + '" x2="' + c2 + '" y2="30" stroke="#8fd3ff" stroke-width="1.5" stroke-dasharray="3 4"/>' +
       '<line x1="' + (c1 + 5) + '" y1="38" x2="' + (c2 - 5) + '" y2="38" stroke="#8fd3ff" stroke-width="3" stroke-linecap="round"/>' +
       '<polygon points="' + (c1 + 1) + ',38 ' + (c1 + 10) + ',33 ' + (c1 + 10) + ',43" fill="#8fd3ff"/><polygon points="' + (c2 - 1) + ',38 ' + (c2 - 10) + ',33 ' + (c2 - 10) + ',43" fill="#8fd3ff"/>' +
-      txtS((c1 + c2) / 2, 24, '㉡', '#8fd3ff', 20);
+      txtS((c1 + c2) / 2, 24, '㉡', '#8fd3ff', 24);
     // ㉠: 중심선에서 마루까지 (x = c3)
     s += '<line x1="' + c3 + '" y1="' + (cy - 2) + '" x2="' + c3 + '" y2="' + (cy - A + 3) + '" stroke="#ffd678" stroke-width="3.4" stroke-linecap="round"/>' +
-      '<polygon points="' + c3 + ',' + (cy - A) + ' ' + (c3 - 5) + ',' + (cy - A + 10) + ' ' + (c3 + 5) + ',' + (cy - A + 10) + '" fill="#ffd678"/>' + txtS(c3 + 18, cy - A / 2 + 6, '㉠', '#ffd678', 20);
+      '<polygon points="' + c3 + ',' + (cy - A) + ' ' + (c3 - 5) + ',' + (cy - A + 10) + ' ' + (c3 + 5) + ',' + (cy - A + 10) + '" fill="#ffd678"/>' + txtS(c3 + 18, cy - A / 2 + 6, '㉠', '#ffd678', 24);
     // ㉢: 마루에서 골까지 (x = 골 위치)
     const tr = x0 + lam * 0.75 + lam;                              // 두 번째 골
     s += '<line x1="' + tr + '" y1="' + (cy - A + 2) + '" x2="' + tr + '" y2="' + (cy + A - 2) + '" stroke="#ff9aa0" stroke-width="3.4" stroke-linecap="round" opacity=".95"/>' +
       '<polygon points="' + tr + ',' + (cy + A) + ' ' + (tr - 5) + ',' + (cy + A - 10) + ' ' + (tr + 5) + ',' + (cy + A - 10) + '" fill="#ff9aa0"/>' +
-      '<polygon points="' + tr + ',' + (cy - A) + ' ' + (tr - 5) + ',' + (cy - A + 10) + ' ' + (tr + 5) + ',' + (cy - A + 10) + '" fill="#ff9aa0"/>' + txtS(tr + 18, cy + 6, '㉢', '#ff9aa0', 20);
+      '<polygon points="' + tr + ',' + (cy - A) + ' ' + (tr - 5) + ',' + (cy - A + 10) + ' ' + (tr + 5) + ',' + (cy - A + 10) + '" fill="#ff9aa0"/>' + txtS(tr + 18, cy + 6, '㉢', '#ff9aa0', 24);
     s += txtS(24, 172, '마루: 가장 높은 곳', '#9fd8bb', 12.5, 'start') + txtS(210, 172, '골: 가장 낮은 곳', '#9fd8bb', 12.5, 'start') + '</svg>';
     return s;
   })();
   const SVG_FREQ = svgHead(196, '진동수가 서로 다른 두 소리 ㉮와 ㉯의 파형') +
-    grid(54, 322, 52, 0) + trace(wd(54, 322, 52, 28, 134, null, 0.4)) + txtS(26, 58, '㉮', '#ffd678', 20) +
-    grid(54, 322, 144, 0) + trace(wd(54, 322, 144, 28, 46, null, 0.4)) + txtS(26, 150, '㉯', '#ffd678', 20) +
+    grid(54, 322, 52, 0) + trace(wd(54, 322, 52, 28, 134, null, 0.4)) + txtS(26, 58, '㉮', '#ffd678', 24) +
+    grid(54, 322, 144, 0) + trace(wd(54, 322, 144, 28, 46, null, 0.4)) + txtS(26, 150, '㉯', '#ffd678', 24) +
     txtS(170, 190, '같은 길이의 구간, 진폭은 같아요', '#9fd8bb', 12.5) + '</svg>';
   const SVG_SHAPE = svgHead(196, '높이와 크기가 같지만 모양이 다른 두 목소리의 파형') +
     grid(54, 322, 52, 0) + trace(wd(54, 322, 52, 30, 70, SHAPES.fork, 0.3)) + txtS(26, 58, '지연', '#ffd678', 15) +
@@ -1473,7 +1479,7 @@
   function successFx(V, t) {
     const ph = game ? game.phase : '';
     if (ph === 'success' && lastPhase === 'active') {
-      S.succ = { t0: t, x: V.L.vw / 2, y: V.L.key === 'wide' ? 64 : 78 };
+      S.succ = S.scene === 'scope' ? { t0: t, x: V.L.vw - (V.L.key === 'wide' ? 78 : 66), y: V.L.key === 'wide' ? 78 : 80 } : { t0: t, x: V.L.vw / 2, y: V.L.key === 'wide' ? 64 : 78 };
       if (!REDUCE) V.fx.burst(S.succ.x, S.succ.y, { count: 26, colors: ['#ffd24a', '#7be495', '#7fb2ff', '#ff8a8e', '#ffffff'], speed: 200, gravity: 120, life: 0.9 });
     }
     lastPhase = ph;
