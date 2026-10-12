@@ -976,8 +976,7 @@ window.SCI_CATALOG = {
                 "상의 원리",
                 "볼록·오목 거울",
                 "렌즈"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m2-color-light",
