@@ -1284,8 +1284,7 @@ window.SCI_CATALOG = {
                 "콩팥 구조",
                 "오줌 생성",
                 "모식도"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m2-cell-respiration",
@@ -1305,8 +1304,7 @@ window.SCI_CATALOG = {
                 "세포호흡",
                 "통합 지도",
                 "적용"
-              ],
-              "soon": true
+              ]
             }
           ]
         },
