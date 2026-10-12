@@ -639,10 +639,10 @@
     pill('혈액 (혈관)', 150, VY + 40, { bg: '#e5576b', size: 13, h: 22, alpha: 0.95 });
     // 간
     ctx.fillStyle = lgrad(0, LIVER[1] - 30, 0, LIVER[1] + 30, [[0, '#c9794f'], [1, '#8f4a2c']]); ctx.beginPath(); ctx.ellipse(LIVER[0], LIVER[1] + 6, 56, 30, -0.05, 0, TAU); ctx.fill();
-    txt('간', LIVER[0] - 40, LIVER[1] - 6, { size: 16, weight: 800, color: '#fff', align: 'center' });
+    txt('간', LIVER[0] - 40, LIVER[1] + 19, { size: 16, weight: 800, color: '#fff', align: 'center' });
     ctx.fillStyle = 'rgba(255,255,255,.35)'; rr(LIVER[0] - 28, LIVER[1] + 6, 78, 14, 7); ctx.fill();
     ctx.fillStyle = lgrad(LIVER[0] - 28, 0, LIVER[0] + 50, 0, [[0, '#ffe08a'], [1, '#f0b400']]); rr(LIVER[0] - 28, LIVER[1] + 6, Math.max(8, 78 * GL.gly), 14, 7); ctx.fill();
-    txt('글리코젠 저장', LIVER[0] + 11, LIVER[1] + 37, { size: 13, weight: 800, color: '#7a4a2c', align: 'center' });
+    txt('글리코젠 저장', LIVER[0] + 11, LIVER[1] + 49, { size: 13, weight: 800, color: '#7a4a2c', align: 'center' });
     // 세포
     const cg = GL.cellGlow;
     if (cg > 0.02) D.glow(CELL[0], CELL[1], 56, '#ff7a1a', 0.55 * cg);
@@ -650,7 +650,7 @@
     ctx.fillStyle = lgrad(0, -30, 0, 30, [[0, '#f9c7d1'], [1, '#e08096']]); ctx.beginPath(); ctx.ellipse(0, 0, 42, 30, 0, 0, TAU); ctx.fill();
     ctx.fillStyle = '#b84a6a'; ctx.beginPath(); ctx.arc(-4, -2, 11, 0, TAU); ctx.fill();
     ctx.restore();
-    txt('세포', CELL[0], CELL[1] + 46, { size: 14, weight: 800, color: '#8a2f4d', align: 'center' });
+    txt('세포', CELL[0], CELL[1] + 49, { size: 14, weight: 800, color: '#8a2f4d', align: 'center' });
     // 이자와 호르몬 수준
     ctx.fillStyle = lgrad(0, PAN[1] - 14, 0, PAN[1] + 14, [[0, '#f4d35e'], [1, '#d9a400']]); ctx.beginPath(); ctx.ellipse(PAN[0], PAN[1], 54, 17, 0.05, 0, TAU); ctx.fill();
     txt('이자', PAN[0], PAN[1] + 1, { size: 15, weight: 800, color: '#5c4300', align: 'center', base: 'middle' });
@@ -1219,7 +1219,7 @@
             const p = TP.picks;
             if (p.length < 3) return '아직 ' + (3 - p.length) + '가지를 더 골라야 해요.';
             const bad = p.filter((id) => !COLD_ANS.includes(id));
-            if (bad.length) { TP.bad = {}; bad.forEach((id) => { TP.bad[id] = true; }); return '<b>' + bad.map((id) => CHIPS.find((c) => c.id === id).label).join(', ') + '</b>은(는) 추울 때가 아니라 더울 때(또는 반대로) 일어나는 반응이에요.'; }
+            if (bad.length) { TP.bad = {}; bad.forEach((id) => { TP.bad[id] = true; }); return '고른 반응 중 <b>' + bad.map((id) => CHIPS.find((c) => c.id === id).label).join(', ') + '</b>는 추울 때의 반응이 아니에요. 더울 때 일어나는 반응이에요.'; }
             TP.bad = {};
             return true;
           },

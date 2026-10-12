@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#16a34a">
+  <title>수정과 발생 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐣</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-toolbar { min-height: 52px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; }
+    .stage-hint { white-space: normal; width: max-content; max-width: calc(100% - 24px); text-align: center; }
+    .stage-actions {
+      flex: none; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+      padding: 8px 12px; border-top: 1px solid var(--line); background: var(--surface); min-height: 62px;
+    }
+    .stage-actions .spacer { flex: 1; }
+    .stage-actions .btn { min-height: 46px; }
+    .stage-actions [hidden] { display: none !important; }
+    .btn-go { padding: 10px 24px; font-size: 17px; }
+    .btn-go[disabled] { opacity: .55; cursor: default; }
+    .tb-group { display: inline-flex; align-items: center; gap: 8px; }
+    .tb-label { font-size: 14px; font-weight: 800; color: var(--muted); }
+    #nSeg button { min-width: 46px; min-height: 40px; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 16px; }
+    .tgl {
+      display: inline-flex; align-items: center; gap: 6px; min-height: 44px;
+      border: 2px solid var(--line); background: var(--surface); color: var(--muted);
+      border-radius: 999px; padding: 5px 16px; font-weight: 800; font-size: 15px; cursor: pointer;
+    }
+    .tgl[aria-pressed="true"] { color: #0b6b39; border-color: #86d3a8; background: #e8f8ef; }
+    .target { animation: tgtPulse 1.1s ease-in-out infinite; }
+    @keyframes tgtPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(20, 160, 88, 0); }
+      50% { box-shadow: 0 0 0 6px rgba(20, 160, 88, .3); }
+    }
+    .step-intro .si-q {
+      background: #fff; border: 2px solid color-mix(in srgb, var(--subject) 45%, white); border-radius: 12px;
+      padding: 9px 12px; font-weight: 800; font-size: 16px; color: #14532d; margin: 4px 0 8px;
+    }
+    .mission-figure svg { max-width: 100%; height: auto; }
+    .tbl-fill { border-collapse: collapse; width: 100%; font-size: 14.5px; margin: 2px 0; }
+    .tbl-fill th, .tbl-fill td { border: 1px solid var(--line); padding: 4px 3px; text-align: center; }
+    .tbl-fill th { background: var(--surface-2); font-weight: 800; font-size: 13px; }
+    .tbl-fill td.k { font-weight: 800; background: #fafcff; }
+    .tbl-fill select {
+      min-height: 44px; min-width: 62px; font: inherit; font-weight: 800; border: 2px solid #b9c6d8; border-radius: 10px;
+      background: #fff; color: var(--ink); padding: 0 4px;
+    }
+    .tbl-fill select.has { border-color: var(--subject); background: #f1fbf5; }
+    .cards-note { font-size: 13px; color: var(--muted); margin: 2px 0 0; }
+    @media (max-width: 599px) {
+      .stage-actions { gap: 8px; padding: 8px; }
+      .btn-go { padding: 10px 16px; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="bio">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#g3">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">중3 · Ⅵ. 생식과 유전</div>
+      <h1>수정과 발생</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="sceneTitle">🔬 수정</span>
+          <span class="spacer"></span>
+          <span class="toolbar-label" id="sceneSub"></span>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="수정과 발생 모형: 정자와 난자, 난할, 그래프, 발생 순서 놓기"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+        <div class="stage-actions" id="actions">
+          <button class="btn btn-primary btn-go" id="goBtn" type="button" data-scene="fert">🏊 정자 출발!</button>
+          <button class="btn btn-primary btn-go" id="divBtn" type="button" data-scene="cleave">✂️ 분열시키기</button>
+          <div class="tb-group" data-scene="graph">
+            <span class="tb-label">분열 횟수</span>
+            <div class="segmented" id="nSeg" role="group" aria-label="분열 횟수">
+              <button type="button" data-n="0" class="on">0</button>
+              <button type="button" data-n="1">1</button>
+              <button type="button" data-n="2">2</button>
+              <button type="button" data-n="3">3</button>
+              <button type="button" data-n="4">4</button>
+              <button type="button" data-n="5">5</button>
+            </div>
+          </div>
+          <button class="tgl" id="cmpBtn" type="button" aria-pressed="false" data-scene="graph">🔍 비교 보기</button>
+          <span class="spacer"></span>
+          <button class="btn" id="resetBtn" type="button" title="처음 상태로">↺ 다시</button>
+        </div>
+      </section>
+    </div>
+    <aside class="side-col">
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>
