@@ -264,7 +264,7 @@
     // 라벨
     if (c.hand > 0.6) {
       const lx = cx + mx * 196 + tx * 90, ly = cy + my * 196 + ty * 90;
-      pill(clamp(lx, 120, 460), clamp(ly, 40, 420), '대기압 — 모든 방향에서 눌러요', { bg: 'rgba(37,99,235,.92)', color: '#fff', border: null });
+      pill(clamp(lx, 130, 370), clamp(ly, 40, 420), '대기압 — 모든 방향에서 눌러요', { bg: 'rgba(37,99,235,.92)', color: '#fff', border: null });
     } else if (c.angS > 90) {
       pill(cx, clamp(cy + 140, 40, 420), '손이 받치고 있어요', { bg: 'rgba(100,116,139,.9)', color: '#fff', border: null });
     }
@@ -544,7 +544,6 @@
     pill(215, 440 - len - 24, '대기압', { bg: 'rgba(37,99,235,.92)', color: '#fff', border: null });
     // 가상 안내
     pill(400, 520, '⚠️ 수은은 독성이 있어요. 실제 실험은 선생님과 함께, 여기서는 가상으로!', { bg: 'rgba(30,41,59,.88)', color: '#fff', border: null, size: 13 });
-    if (isNew('tube')) newRing(124, 100, 232, 392);
   }
 
   /* =========================================================
@@ -851,7 +850,6 @@
     } else if (aw > 0.2) {
       pill(400, 380, windName(w), { bg: 'rgba(15,23,42,.78)', color: '#fff', border: null, size: 15, pad: 14 });
     }
-    if (isNew('coast')) newRing(340, 14, 120, 40);
   }
 
   /* =========================================================
@@ -943,7 +941,6 @@
     pill(414, 396, '우리나라', { bg: '#1b2333', color: '#fff', border: null, size: 14 });
     pill(400, 34, moName(s), { bg: s > 0 ? 'rgba(234,88,12,.94)' : 'rgba(37,99,235,.94)', color: '#fff', border: null, size: 17, pad: 16 });
     pill(80, 520, '단순화한 지도', { bg: 'rgba(15,23,42,.55)', color: '#fff', border: null, size: 12.5 });
-    if (isNew('monsoon')) newRing(312, 14, 176, 40);
   }
 
   /* =========================================================
@@ -992,7 +989,6 @@
       b.addEventListener('click', () => { Sound.click(); setScene(s.id); });
       box.appendChild(b);
     });
-    box.hidden = list.length < 2;
   }
 
   const marks = [];

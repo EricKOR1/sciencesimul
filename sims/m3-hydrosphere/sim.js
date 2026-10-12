@@ -11,7 +11,7 @@
   const EA = SciSim.ease, RM = !!SciSim.reduceMotion;
   const approach = SciSim.approach;
   const PHONE = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches);
-  const VW = PHONE ? 600 : 800, VH = PHONE ? 900 : 540;
+  const VW = PHONE ? 600 : 800, VH = PHONE ? 840 : 540;
   const FS = PHONE ? 1.15 : 1;
   const fz = (n) => Math.round(n * FS * 2) / 2;
   const view = SciSim.stage($('#cv'), { width: VW, height: VH, background: '#dcecf7' });
@@ -110,7 +110,7 @@
   const LL = PHONE ? { s: 0.86, x: 8, y: 22 } : { s: 1, x: 0, y: 0 };   // 왼쪽 장면 변환
   const PIPE = [[CYL.x + CYL.w - 2, 130], [520, 130], [520, 290]];
   const PN = PHONE
-    ? { x: 10, y: 478, w: 580, h: 410, cx: [120, 300, 480], tubeTop: 520, tubeBot: 676, tubeW: 40, slotY: 730, slotW: 110, slotH: 62, trayY: 800, trayCx: [150, 300, 450], title: 500 }
+    ? { x: 10, y: 470, w: 580, h: 366, cx: [120, 300, 480], tubeTop: 504, tubeBot: 656, tubeW: 40, slotY: 696, slotW: 110, slotH: 58, trayY: 770, trayCx: [150, 300, 450], title: 490 }
     : { x: 604, y: 74, w: 192, h: 400, cx: [640, 700, 760], tubeTop: 142, tubeBot: 298, tubeW: 34, slotY: 344, slotW: 60, slotH: 56, trayY: 410, trayCx: [636, 700, 764], title: 98 };
   const TUBE_ML = [17.6, 7.6, 0.1];
   const TUBE_NAME = ['빙하', '지하수', '호수·하천수'];
@@ -1806,15 +1806,15 @@
     ctx.restore();
   }
   function drawResultBoard() {
-    const x = 10, y = 600, w = 580, h = 290;
+    const x = 10, y = 616, w = 580, h = 212;
     ctx.save(); D.shadow(() => { rr(x, y, w, h, 14); ctx.fillStyle = 'rgba(255,255,255,.93)'; ctx.fill(); }, { blur: 8, y: 3 });
     T(x + 14, y + 28, '📋 1년 결과', 16, '#0b3a82', { align: 'left' });
     const r = VS.state === 'done' ? VS.res : null;
-    if (!r) { T(x + w / 2, y + 140, '카드를 고르고 ▶ 1년 돌려 보기를 눌러요', 15, '#64748b'); ctx.restore(); return; }
-    T(x + 14, y + 62, '물 부족한 달: ' + (r.short.length ? r.short.map((m) => MONTH_ORDER[m] + '월').join(', ') : '없음 ✅'), 15, r.short.length ? '#b91c1c' : '#15803d', { align: 'left' });
-    T(x + 14, y + 92, '지하수면: ' + (r.gw >= 0 ? '+' : '−') + Math.abs(r.gw).toFixed(1) + ' m', 15, r.gw >= 0 ? '#15803d' : '#b91c1c', { align: 'left' });
-    T(x + 14, y + 122, '에너지: ' + r.energy + ' (한도 2)', 15, r.energy > 2 ? '#b91c1c' : '#15803d', { align: 'left' });
-    if (VS.result) wrapLines(VS.result.msg, w - 28, 15, 4).forEach((s, k) => T(x + 14, y + 160 + k * 24, s, 15, '#1b2333', { align: 'left' }));
+    if (!r) { T(x + w / 2, y + 110, '카드를 고르고 ▶ 1년 돌려 보기를 눌러요', 15, '#64748b'); ctx.restore(); return; }
+    T(x + 14, y + 56, '물 부족한 달: ' + (r.short.length ? r.short.map((m) => MONTH_ORDER[m] + '월').join(', ') : '없음 ✅'), 15, r.short.length ? '#b91c1c' : '#15803d', { align: 'left' });
+    T(x + 14, y + 82, '지하수면: ' + (r.gw >= 0 ? '+' : '−') + Math.abs(r.gw).toFixed(1) + ' m', 15, r.gw >= 0 ? '#15803d' : '#b91c1c', { align: 'left' });
+    T(x + 14, y + 108, '에너지: ' + r.energy + ' (한도 2)', 15, r.energy > 2 ? '#b91c1c' : '#15803d', { align: 'left' });
+    if (VS.result) wrapLines(VS.result.msg, w - 28, 15, 4).forEach((s, k) => T(x + 14, y + 140 + k * 22, s, 15, '#1b2333', { align: 'left' }));
     ctx.restore();
   }
   function villageDown(p) {
