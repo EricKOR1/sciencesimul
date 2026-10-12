@@ -1686,8 +1686,7 @@ window.SCI_CATALOG = {
                 "그래프 그리기",
                 "네 권역",
                 "적용"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m3-greenhouse",
@@ -1707,8 +1706,7 @@ window.SCI_CATALOG = {
                 "지구의 복사 평형",
                 "온실 효과",
                 "지구 온난화"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m3-global-circulation",
@@ -1729,8 +1727,7 @@ window.SCI_CATALOG = {
                 "순환 모형",
                 "위도별 바람",
                 "대순환의 역할"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m3-humidity",
