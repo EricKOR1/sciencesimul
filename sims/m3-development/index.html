@@ -23,6 +23,11 @@
     .stage-actions .spacer { flex: 1; }
     .stage-actions .btn { min-height: 46px; }
     .stage-actions [hidden] { display: none !important; }
+    #actions [data-scene] { display: none; }
+    #actions[data-sc="fert"] [data-scene="fert"],
+    #actions[data-sc="cleave"] [data-scene="cleave"] { display: inline-flex; }
+    #actions[data-sc="graph"] .tb-group[data-scene="graph"] { display: inline-flex; }
+    #actions[data-sc="graph"] .tgl[data-scene="graph"] { display: inline-flex; }
     .btn-go { padding: 10px 24px; font-size: 17px; }
     .btn-go[disabled] { opacity: .55; cursor: default; }
     .tb-group { display: inline-flex; align-items: center; gap: 8px; }
