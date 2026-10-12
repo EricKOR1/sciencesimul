@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0ea5e9">
+  <title>기압과 바람 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌬️</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-toolbar { min-height: 58px; }
+    .stage-toolbar .segmented button { min-height: 40px; padding: 5px 12px; font-size: 14.5px; white-space: nowrap; }
+    .segmented button.on { color: #075985; }
+    #resetBtn { font-size: 20px; }
+    .tgl {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px;
+      border: 2px solid var(--line); background: var(--surface); color: var(--muted);
+      border-radius: 999px; padding: 5px 14px; font-weight: 800; font-size: 15px; cursor: pointer; white-space: nowrap;
+    }
+    .tgl[aria-pressed="true"] { color: #075985; border-color: #7dd3fc; background: #e6f6ff; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    .is-off { display: none !important; }
+    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn-row .btn, .btn-block2 { flex: 1 1 0; min-width: 0; min-height: 46px; white-space: nowrap; }
+    .btn-block2 { width: 100%; }
+    .ctrl-note { margin: 4px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    input[type=range] { height: 44px; }
+    .btn-sm { min-height: 44px; }
+    .game-foot button { min-height: 44px; }
+    .tgls { display: flex; gap: 6px; flex-wrap: wrap; }
+    .tgls .tgl { flex: 1 1 0; min-width: 0; }
+    .mission-figure svg { border-radius: 12px; max-width: 100%; height: auto; }
+    .note-fig { margin: 6px 0; text-align: center; }
+    .note-fig svg { max-width: 100%; height: auto; border-radius: 10px; }
+    @media (max-width: 599px) { .stage-toolbar .segmented button { padding: 5px 9px; font-size: 14px; } }
+  </style>
+</head>
+<body class="sim-page" data-subject="earth">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#g3">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">중3 · Ⅱ. 날씨와 기후변화</div>
+      <h1>기압과 바람</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <div class="segmented" id="sceneSeg" role="group" aria-label="실험 고르기"></div>
+          <span class="spacer"></span>
+          <button type="button" class="tgl" id="tgLens" aria-pressed="true" data-feature="lens">🔍 입자 돋보기</button>
+          <button class="icon-btn" id="resetBtn" type="button" title="처음 상태로" aria-label="처음 상태로">↺</button>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="기압과 바람 실험 화면: 물 컵과 종이, 페트병, 토리첼리 실험, 수조 모형, 해륙풍과 계절풍 지도"></canvas>
+          <div class="stage-hint" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="rl1"></span><span class="value" id="rv1"></span></div>
+        <div class="readout"><span class="label" id="rl2"></span><span class="value" id="rv2"></span></div>
+        <div class="readout"><span class="label" id="rl3"></span><span class="value" id="rv3"></span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" id="cCup">
+          <div class="control-head"><label for="sAng">🔄 컵 돌리기</label><output id="oAng"></output></div>
+          <input type="range" id="sAng" min="0" max="180" step="1" value="0">
+          <button class="btn btn-block2" id="handBtn" type="button" style="margin-top:6px">🖐️ 손 떼기</button>
+        </div>
+        <div class="control" id="cBottle">
+          <button class="btn btn-primary btn-block2" id="btBtn" type="button">♨️ 뜨거운 물 붓기</button>
+          <p class="ctrl-note" id="btNote"></p>
+        </div>
+        <div class="control" id="cTube">
+          <div class="control-head"><label for="sAlt">⛰️ 해발 높이</label><output id="oAlt"></output></div>
+          <input type="range" id="sAlt" min="0" max="8000" step="100" value="0">
+          <div class="control-head" style="margin-top:4px"><label for="sTilt">📐 관 기울이기</label><output id="oTilt"></output></div>
+          <input type="range" id="sTilt" min="0" max="35" step="1" value="0">
+        </div>
+        <div class="control" id="cTank">
+          <div class="tgls" role="group" aria-label="수조 모형">
+            <button class="tgl" type="button" id="tgLamp" aria-pressed="false">💡 전등 켜기</button>
+            <button class="tgl" type="button" id="tgSmoke" aria-pressed="false">🌫️ 향 연기</button>
+          </div>
+          <p class="ctrl-note">전등과 향을 화면에서 눌러도 돼요.</p>
+        </div>
+        <div class="control" id="cCoast">
+          <div class="control-head"><label for="sHour">🕒 하루 시각</label><output id="oHour"></output></div>
+          <input type="range" id="sHour" min="0" max="23" step="1" value="12">
+          <button class="btn btn-block2" id="playBtn" type="button" style="margin-top:6px">▶ 하루 흘러가게 하기</button>
+        </div>
+        <div class="control" id="cMonsoon">
+          <div class="tgls" role="group" aria-label="계절">
+            <button class="tgl" type="button" id="seaSum" aria-pressed="true">☀️ 여름</button>
+            <button class="tgl" type="button" id="seaWin" aria-pressed="false">❄️ 겨울</button>
+          </div>
+          <p class="ctrl-note" id="monNote"></p>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0ea5e9">
+  <title>해수의 염분 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧂</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-card { background: #cfe3f1; }
+    .stage-toolbar { padding: 6px 10px; gap: 6px; }
+    .stage-toolbar .segmented button { min-height: 40px; padding: 5px 12px; font-size: 14.5px; white-space: nowrap; }
+    .stage-toolbar .segmented button:disabled { opacity: .38; cursor: not-allowed; }
+    .stage-toolbar .segmented button.nudge { animation: nudge .9s ease 3; }
+    .stage-toolbar .icon-btn { min-width: 44px; min-height: 44px; }
+    .is-off { display: none !important; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    .seg-label { display: block; font-weight: 800; font-size: 14.5px; color: var(--muted); margin-bottom: 6px; }
+    #ctrlCard .segmented { display: flex; width: 100%; }
+    #ctrlCard .segmented button { flex: 1 1 0; min-height: 44px; padding: 6px 4px; font-size: 14.5px; white-space: nowrap; }
+    #ctrlCard .segmented button.on { color: #075985; }
+    #ctrlCard .btn { min-height: 46px; width: 100%; margin-top: 8px; }
+    .ev-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .ev-grid button {
+      min-height: 52px; border: 2px solid var(--line); background: var(--surface); border-radius: 14px; cursor: pointer;
+      font-weight: 800; font-size: 14.5px; color: var(--ink); line-height: 1.25; padding: 4px 6px;
+      transition: transform .12s ease, border-color .2s, background .2s;
+    }
+    .ev-grid button small { display: block; font-weight: 700; font-size: 12px; color: var(--muted); }
+    .ev-grid button:active { transform: scale(.95); }
+    .ev-grid button.up { border-color: #fca5a5; background: #fff5f5; }
+    .ev-grid button.down { border-color: #93c5fd; background: #f1f7ff; }
+    .ev-grid button.done::after { content: " ✔"; color: #16a34a; }
+    .ev-grid button.shake { animation: shk .35s ease; }
+    @keyframes shk { 0%,100% { transform: none; } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+    .btn.nudge, .ev-grid button.nudge { animation: nudge .9s ease 2; }
+    @keyframes nudge { 0%, 100% { transform: none; } 30% { transform: translateY(-3px) scale(1.04); } 60% { transform: none; } }
+    .ctrl-note { margin: 6px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    .readout .value { font-size: 19px; }
+    .readout .value small { font-size: 12.5px; }
+    .readouts { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .game-foot button { min-height: 44px; }
+    .mission-figure svg { border-radius: 12px; }
+    @media (max-width: 599px) { .stage-toolbar .segmented button { padding: 5px 8px; font-size: 13.5px; } }
+  </style>
+</head>
+<body class="sim-page" data-subject="earth">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#g3">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">중3 · Ⅲ. 수권과 해수의 순환</div>
+      <h1>해수의 염분</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <div class="segmented" id="sceneSeg" role="group" aria-label="화면 고르기">
+            <button type="button" data-s="0" class="on">① 염분 측정</button>
+            <button type="button" data-s="1" disabled>② 변화</button>
+            <button type="button" data-s="2" disabled>③ 염분비</button>
+            <button type="button" data-s="3" disabled>④ 우리 바다</button>
+          </div>
+          <span class="spacer"></span>
+          <button class="icon-btn" id="resetBtn" type="button" title="처음 상태로" aria-label="처음 상태로">↺</button>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="증발 접시로 염분을 재는 실험, 바다 상자 모형과 입자 돋보기, 염류 구성 원그래프, 우리나라 바다의 염분 지도"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts" id="readouts">
+        <div class="readout"><span class="label" id="rl0"></span><span class="value" id="rv0"></span></div>
+        <div class="readout"><span class="label" id="rl1"></span><span class="value" id="rv1"></span></div>
+        <div class="readout"><span class="label" id="rl2"></span><span class="value" id="rv2"></span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" data-scene="0" data-feature="dish">
+          <span class="seg-label">🧂 시료 고르기 (각각 1000 g)</span>
+          <div class="segmented" id="sampleSeg" role="group" aria-label="시료 고르기">
+            <button type="button" data-i="0" class="on">해수</button>
+            <button type="button" data-i="1">황해 시료</button>
+            <button type="button" data-i="2">홍해 시료</button>
+          </div>
+          <button class="btn btn-primary" id="heatBtn" type="button">🔥 가열하기</button>
+        </div>
+        <div class="control" data-scene="1" data-feature="box">
+          <span class="seg-label">🌊 바다에 일어나는 일</span>
+          <div class="ev-grid" id="evGrid">
+            <button type="button" data-ev="evap" class="up">☀️ 햇빛<small>증발</small></button>
+            <button type="button" data-ev="freeze" class="up">❄️ 바닷물 얼기<small>결빙</small></button>
+            <button type="button" data-ev="rain" class="down">🌧️ 비<small>강수</small></button>
+            <button type="button" data-ev="river" class="down">🏞️ 강물 흘러듦<small>강물 유입</small></button>
+          </div>
+          <p class="ctrl-note">누를 때마다 바다 상자가 달라져요. ↺는 처음 상태예요.</p>
+        </div>
+        <div class="control" data-scene="2" data-feature="pies">
+          <span class="seg-label">🥧 원그래프 보기</span>
+          <div class="segmented" id="pieSeg" role="group" aria-label="원그래프 보기">
+            <button type="button" data-m="0" class="on">실제 크기</button>
+            <button type="button" data-m="1">크기 같게</button>
+            <button type="button" data-m="2">겹쳐 보기</button>
+          </div>
+          <p class="ctrl-note">원그래프의 조각이나 아래 이름표를 눌러 세 바다를 비교해요.</p>
+        </div>
+        <div class="control" data-scene="3" data-feature="map">
+          <span class="seg-label">🗺️ 계절 고르기 (예시 자료)</span>
+          <div class="segmented" id="seasonSeg" role="group" aria-label="계절 고르기">
+            <button type="button" data-s="0" class="on">❄️ 겨울</button>
+            <button type="button" data-s="1">☀️ 여름</button>
+          </div>
+          <p class="ctrl-note">지도 위 바다 이름표를 눌러 염분을 읽어요.</p>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>
