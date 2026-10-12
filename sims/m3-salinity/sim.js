@@ -94,7 +94,7 @@
   /* =========================================================
      장면 1 · 증발 접시로 염분 재기
      ========================================================= */
-  const DISH = { cx: 300, rimY: 322, rx: 118, depth: 46 };
+  const DISH = { cx: 300, rimY: 316, rx: 116, depth: 54 };
   const PAN = { cx: 622, y: 428, rx: 64 };
   const BOTTLE_REST = { x: 82, y: 346, rot: 0 };
 
@@ -397,6 +397,10 @@
     if (S1.prog < 0.995 && S1.heat > 0.4) D.label(cx - 30, 140 - 0, '수증기 (물만 날아가요)', { bg: 'rgba(255,255,255,.9)', color: '#1b4e7a', size: 14 });
     if (S1.crystals.some((c) => c.sc > 0.9 && c.fly < 0)) D.label(DISH.cx - DISH.rx - 14, DISH.rimY + 52, '남은 염류 (소금 결정)', { bg: '#fff', color: '#0b4f8a', size: 14, align: 'right', border: '#7dd3fc' });
 
+    // 안내 카드
+    card(20, 24, 376, 76, { bg: 'rgba(255,255,255,.92)' });
+    D.text(36, 56, '🔎 바닷물 1000 g을 증발시키면', { size: 17, weight: 800, color: '#1b3a5c', align: 'left' });
+    D.text(36, 84, '염류(소금)가 몇 g 남을까요?', { size: 17, weight: 800, color: '#0b6fb8', align: 'left' });
     // 염분 계산 카드
     const px = 420, py = 20, pw = 362, ph = 122;
     card(px, py, pw, ph, { bg: 'rgba(255,255,255,.95)' });
@@ -1410,6 +1414,7 @@
     },
   ];
 
+  s1Select(0, true);
   game = SciSim.game({
     simId: 'm3-salinity',
     mount: '#game',
