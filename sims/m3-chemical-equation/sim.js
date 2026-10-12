@@ -341,11 +341,15 @@
     Fe:   { a: [['Fe', 0, 0]], b: [] },
     H:    { a: [['H', 0, 0]], b: [] },
     O:    { a: [['O', 0, 0]], b: [] },
+    Ag:   { a: [['Ag', 0, 0]], b: [] },
+    Na:   { a: [['Na', 0, 0]], b: [] },
+    Cl:   { a: [['Cl', 0, 0]], b: [] },
+    NO3:  { a: NO3, b: NO3B },
     HCl:  { a: [['H', -0.56, 0], ['Cl', 0.6, 0]], b: [[0, 1, 1]] },
     NaCl: { a: [['Na', -0.62, 0], ['Cl', 0.66, 0]], b: [[0, 1, 1]] },
     AgCl: { a: [['Ag', -0.62, 0], ['Cl', 0.66, 0]], b: [[0, 1, 1]] },
-    AgNO3: { a: shiftA(NO3, -0.8, -0.1).concat([['Ag', 1.3, 0.95]]), b: NO3B.concat([[3, 4, 1]]) },
-    NaNO3: { a: shiftA(NO3, -0.8, -0.1).concat([['Na', 1.3, 0.95]]), b: NO3B.concat([[3, 4, 1]]) },
+    AgNO3: { a: shiftA(NO3, -0.8, -0.1).concat([['Ag', 1.5, 1.0]]), b: NO3B.concat([[3, 4, 1]]) },
+    NaNO3: { a: shiftA(NO3, -0.8, -0.1).concat([['Na', 1.5, 1.0]]), b: NO3B.concat([[3, 4, 1]]) },
     CaCO3: { a: [['C', -0.6, 0], ['O', -0.6, -1.08], ['O', -1.55, 0.54], ['O', 0.35, 0.54], ['Ca', 1.45, 0.5]], b: [[0, 1, 2], [0, 2, 1], [0, 3, 1], [3, 4, 1]] },
     CaCl2: { a: [['Ca', 0, 0], ['Cl', -1.5, 0.15], ['Cl', 1.5, 0.15]], b: [[0, 1, 1], [0, 2, 1]] },
     Fe2O3: { a: [['Fe', -0.95, 0.3], ['Fe', 0.95, 0.3], ['O', 0, 0.45], ['O', -0.95, -0.7], ['O', 0.95, -0.7]], b: [[0, 2, 1], [1, 2, 1], [0, 3, 1], [1, 4, 1]] },
@@ -392,7 +396,7 @@
       this.bonds.push(o); return o;
     }
     _mol(type, cx, cy, o) {
-      return { type, cx, cy, vx: 0, vy: 0, rot: o.rot || 0, vr: o.vr || 0, mode: o.mode || 'gas', box: o.box || null, sc: o.sc || this.sc, atoms: [], ax: cx, ay: cy, amp: o.amp != null ? o.amp : 3, ph: Math.random() * 6.28, jit: 0, scl: o.scl != null ? o.scl : 1, speed: o.speed != null ? o.speed : 40, life: o.life, age: 0, tag: o.tag };
+      return { type, cx, cy, vx: 0, vy: 0, rot: o.rot || 0, vr: o.vr || 0, mode: o.mode || 'gas', box: o.box || null, sc: o.sc || this.sc, atoms: [], ax: cx, ay: cy, amp: o.amp != null ? o.amp : 3, ph: Math.random() * 6.28, jit: 0, scl: o.scl != null ? o.scl : 1, speed: o.speed != null ? o.speed : 40, life: o.life, age: 0, tag: o.tag, chg: o.chg || 0 };
     }
     /* 분자 하나 만들기 (원자도 새로 만듦) */
     addMol(type, cx, cy, o) {
@@ -477,6 +481,7 @@
         const cs = Math.cos(m.rot), sn = Math.sin(m.rot), tpl = TPL[m.type];
         for (let k = 0; k < m.atoms.length; k++) {
           const a = m.atoms[k], q = tpl.a[k];
+          a.s = m.scl;
           a.tx = m.cx + jx + (q[1] * cs - q[2] * sn) * m.sc * m.scl;
           a.ty = m.cy + jy + (q[1] * sn + q[2] * cs) * m.sc * m.scl;
         }
@@ -509,6 +514,15 @@
         const a = L[i];
         const msc = a.mol ? a.mol.sc : sc;
         drawBall(a.sym, a.x, a.y, EL[a.sym].r * msc * a.s, a.alpha);
+      }
+      // 이온 전하 표시
+      for (const m of this.mols) {
+        if (!m.chg) continue;
+        const rr = TPL[m.type].rad * m.sc * m.scl;
+        const bx = m.cx + rr * 0.78, by = m.cy - rr * 0.78;
+        ctx.save(); ctx.fillStyle = m.chg > 0 ? '#e24a4a' : '#3f6fe8'; circle(ctx, bx, by, 7.5); ctx.fill();
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(bx - 3.2, by); ctx.lineTo(bx + 3.2, by); if (m.chg > 0) { ctx.moveTo(bx, by - 3.2); ctx.lineTo(bx, by + 3.2); } ctx.stroke(); ctx.restore();
       }
     }
   }
@@ -606,7 +620,7 @@
       const x = T / Math.pow(10, k), fl = Math.floor(x + 1e-9), d = fl % 10;
       let off;
       if (k === 0) off = x - fl;
-      else { const lower = (T / Math.pow(10, k - 1)) % 10; off = lower > 9 ? lower - 9 : 0; }
+      else { const lower = (T / Math.pow(10, k - 1)) % 10; off = lower > 9.6 ? (lower - 9.6) / 0.4 : 0; }
       off = clamp(off, 0, 1);
       if (k >= 2 && fl === 0 && off < 0.001) continue;
       const cx = k === 0 ? rx + cw * 0.85 : rx - cw * (k - 0.5) - cw * 0.35;
@@ -769,8 +783,8 @@
   const WORDS = ['수소', '산소', '물', '이산화 탄소'];
   const SLOT = [{ x: 230, y: 54 }, { x: 400, y: 54 }, { x: 570, y: 54 }];
   const WSL = [null, null, null];
-  const CHIP_Y = 438;
-  WORDS.forEach((w, i) => { dragW.add({ word: w, w: 124, h: 42, hx: 130 + i * 180, hy: CHIP_Y, x: 130 + i * 180, y: CHIP_Y, slot: -1, wrong: false }); });
+  const CHIP_Y = 456;
+  WORDS.forEach((w, i) => { dragW.add({ word: w, w: 124, h: 42, hx: 130 + i * 180, hy: CHIP_Y + 8, x: 130 + i * 180, y: CHIP_Y + 8, slot: -1, wrong: false }); });
   function wordsReset() { dragW.items.forEach((c) => { c.slot = -1; c.wrong = false; c.tx = c.hx; c.ty = c.hy; }); WSL[0] = WSL[1] = WSL[2] = null; }
   const wordsOk = () => {
     const a = dragW.items.filter((c) => c.slot >= 0);
@@ -887,13 +901,13 @@
     // 칩 트레이
     if (RS.shown > 0.02) {
       ctx.save(); ctx.globalAlpha = RS.shown;
-      panel(60, CHIP_Y - 36, 680, 72, 18, '#ffffff', 10, 3);
-      txt('낱말 카드를 위 빈칸으로 끌어 단어식을 완성해요', 400, CHIP_Y - 44 + 5, 14, COL.muted, 'center', 700);
-      dragW.items.forEach((c) => { if (c.slot < 0 && !c.dragging) { ctx.save(); ctx.setLineDash([5, 5]); ctx.strokeStyle = '#d3dae6'; ctx.lineWidth = 1.5; D.roundRect(c.hx - 66, c.hy - 24, 132, 48, 14); ctx.stroke(); ctx.restore(); } });
+      panel(60, CHIP_Y - 50, 680, 78, 18, '#ffffff', 10, 3);
+      txt('낱말 카드를 위 빈칸으로 끌어 단어식을 완성해요', 400, CHIP_Y - 30, 14, COL.muted, 'center', 700);
+      dragW.items.forEach((c) => { if (c.slot < 0 && !c.dragging) { ctx.save(); ctx.setLineDash([5, 5]); ctx.strokeStyle = '#d3dae6'; ctx.lineWidth = 1.5; D.roundRect(c.hx - 66, c.hy - 20 + 6, 132, 44, 14); ctx.stroke(); ctx.restore(); } });
       ctx.restore();
       dragW.items.forEach((c) => drawChip(c));
     } else if (done) {
-      pill(400, CHIP_Y, '수소와 산소 분자가 깨지고, 원자가 새로 짝지어 물 분자가 되었어요', { bg: '#1b2333', size: 15, pad: 14 });
+      pill(400, CHIP_Y + 4, '수소와 산소 분자가 깨지고, 원자가 새로 짝지어 물 분자가 되었어요', { bg: '#1b2333', size: 15, pad: 14 });
     }
     // 완성된 단어식 (자유 탐구)
     const Wk = wordsOk();
@@ -1203,12 +1217,14 @@
     sym(E.ops[0], 268); sym(E.ops[1], 532);
     // 분자 그림
     const MT = { C: 'C', O2: 'O2', CO2: 'CO2', H2O: 'H2O', H2: 'H2', NH3: 'NH3', N2: 'N2' };
-    const dxs = [-60, 0, 60, -60, 0, 60];
     for (let i = 0; i < 3; i++) {
+      const n = Math.max(1, W.coef[i]), rows = Math.ceil(n / 3);
       W.slots[i].forEach((s, k) => {
         if (s.s < 0.01) return;
-        const mx = TX[i] + dxs[k] + Math.sin(t * 1.5 + s.ph) * 1.5, my = (k < 3 ? 222 : 250) + Math.cos(t * 1.2 + s.ph) * 1.5;
-        drawMolStatic(MT[E.f[i]], mx, my, 17, s.rot + Math.sin(t + s.ph) * 0.1, Math.min(1, s.s * 1.5), s.s);
+        const r = Math.floor(k / 3), cnt = r < rows - 1 ? 3 : n - 3 * (rows - 1);
+        const dx = (k % 3 - (Math.max(1, cnt) - 1) / 2) * 68;
+        const mx = TX[i] + dx + Math.sin(t * 1.5 + s.ph) * 1.5, my = (rows === 1 ? 238 : 224 + r * 28) + Math.cos(t * 1.2 + s.ph) * 1.5;
+        drawMolStatic(MT[E.f[i]], mx, my, 20, s.rot + Math.sin(t + s.ph) * 0.1, Math.min(1, s.s * 1.5), s.s);
       });
     }
     // 원자 수 표
@@ -1228,8 +1244,8 @@
       ctx.restore();
     });
     if (W.st < 1) txt('화학식으로 바꾸면 원자 수를 셀 수 있어요', 400, 400, 15, '#8995a8', 'center', 700);
-    if (W.st === 2) { const bal = wBal(ei); if (bal && !wSimple(ei)) pill(400, 454, '더 작은 정수로 나타낼 수 있어요', { bg: '#b4440f', size: 14, pad: 12 }); }
-    if (W.st === 3) pill(400, 454, '🎉 ' + EQS[ei].eqStr, { bg: COL.good, size: 16, pad: 16 });
+    if (W.st === 2) { const bal = wBal(ei); if (bal && !wSimple(ei)) pill(400, 448, '더 작은 정수로 나타낼 수 있어요', { bg: '#b4440f', size: 14, pad: 12 }); }
+    if (W.st === 3) pill(400, 448, '🎉 ' + EQS[ei].eqStr, { bg: COL.good, size: 16, pad: 16 });
   }
   EQS[0].eqStr = 'C + O₂ → CO₂ 완성!'; EQS[1].eqStr = '2H₂O → 2H₂ + O₂ 완성!'; EQS[2].eqStr = 'N₂ + 3H₂ → 2NH₃ 완성!';
   SC.write = {
@@ -1354,7 +1370,7 @@
       if (sysT.mols.some((m) => m.box === tcBox)) pill(TC.x + TC.w / 2, TC.y + TC.h + 14, '빨간 점선 = 남은 분자', { bg: COL.bad, size: 13, pad: 10 });
     }
     // 표
-    panel(16, 346, 512, 134, 16, '#ffffff', 10, 3);
+    panel(16, 346, 512, 142, 16, '#ffffff', 10, 3);
     txt('분자 수', 82, 368, 13, COL.muted, 'left', 800); txt('처음', 300, 368, 14, COL.muted, 'center', 800); txt('반응 · 생성', 396, 368, 13, COL.muted, 'center', 800); txt('남은 수', 468, 368, 13, COL.muted, 'center', 800);
     drawRow(394, '수소 분자 H₂', 'H2', 6, 0, 0, RD.uH, RD.lH, RT.leftH > 0 && RT.st === 'done' ? COL.bad : COL.muted);
     drawRow(430, '산소 분자 O₂', 'O2', RT.o2, 0, 0, RD.uO, RD.lO, RT.leftO > 0 && RT.st === 'done' ? COL.bad : COL.muted);

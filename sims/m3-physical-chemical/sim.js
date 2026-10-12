@@ -341,11 +341,15 @@
     Fe:   { a: [['Fe', 0, 0]], b: [] },
     H:    { a: [['H', 0, 0]], b: [] },
     O:    { a: [['O', 0, 0]], b: [] },
+    Ag:   { a: [['Ag', 0, 0]], b: [] },
+    Na:   { a: [['Na', 0, 0]], b: [] },
+    Cl:   { a: [['Cl', 0, 0]], b: [] },
+    NO3:  { a: NO3, b: NO3B },
     HCl:  { a: [['H', -0.56, 0], ['Cl', 0.6, 0]], b: [[0, 1, 1]] },
     NaCl: { a: [['Na', -0.62, 0], ['Cl', 0.66, 0]], b: [[0, 1, 1]] },
     AgCl: { a: [['Ag', -0.62, 0], ['Cl', 0.66, 0]], b: [[0, 1, 1]] },
-    AgNO3: { a: shiftA(NO3, -0.8, -0.1).concat([['Ag', 1.3, 0.95]]), b: NO3B.concat([[3, 4, 1]]) },
-    NaNO3: { a: shiftA(NO3, -0.8, -0.1).concat([['Na', 1.3, 0.95]]), b: NO3B.concat([[3, 4, 1]]) },
+    AgNO3: { a: shiftA(NO3, -0.8, -0.1).concat([['Ag', 1.5, 1.0]]), b: NO3B.concat([[3, 4, 1]]) },
+    NaNO3: { a: shiftA(NO3, -0.8, -0.1).concat([['Na', 1.5, 1.0]]), b: NO3B.concat([[3, 4, 1]]) },
     CaCO3: { a: [['C', -0.6, 0], ['O', -0.6, -1.08], ['O', -1.55, 0.54], ['O', 0.35, 0.54], ['Ca', 1.45, 0.5]], b: [[0, 1, 2], [0, 2, 1], [0, 3, 1], [3, 4, 1]] },
     CaCl2: { a: [['Ca', 0, 0], ['Cl', -1.5, 0.15], ['Cl', 1.5, 0.15]], b: [[0, 1, 1], [0, 2, 1]] },
     Fe2O3: { a: [['Fe', -0.95, 0.3], ['Fe', 0.95, 0.3], ['O', 0, 0.45], ['O', -0.95, -0.7], ['O', 0.95, -0.7]], b: [[0, 2, 1], [1, 2, 1], [0, 3, 1], [1, 4, 1]] },
@@ -355,6 +359,30 @@
     t.a.forEach((q) => { r = Math.max(r, Math.hypot(q[1], q[2]) + EL[q[0]].r); });
     t.rad = r;
   });
+
+  /* 결합 막대 (1~3중) */
+  function drawBond(x1, y1, x2, y2, order, msc, w, alpha) {
+    const dx = x2 - x1, dy = y2 - y1, len = Math.hypot(dx, dy);
+    if (len < 1) return;
+    const nx = -dy / len, ny = dx / len;
+    const lw = Math.max(2, msc * 0.13) * w, gap = lw * 1.3;
+    ctx.save(); ctx.globalAlpha *= (alpha == null ? 1 : alpha) * Math.min(1, w * 1.5); ctx.lineCap = 'round';
+    for (let k = 0; k < order; k++) {
+      const off = (k - (order - 1) / 2) * gap;
+      ctx.strokeStyle = '#7d8aa0'; ctx.lineWidth = lw + 1.6; ctx.beginPath(); ctx.moveTo(x1 + nx * off, y1 + ny * off); ctx.lineTo(x2 + nx * off, y2 + ny * off); ctx.stroke();
+      ctx.strokeStyle = '#e6ebf3'; ctx.lineWidth = lw; ctx.beginPath(); ctx.moveTo(x1 + nx * off, y1 + ny * off); ctx.lineTo(x2 + nx * off, y2 + ny * off); ctx.stroke();
+    }
+    ctx.restore();
+  }
+  /* 물리 계산 없이 분자 한 개를 바로 그리기 (카드 · 저울 · 그림용) */
+  function drawMolStatic(type, cx, cy, sc, rot, alpha, scl) {
+    const tpl = TPL[type]; if (!tpl) return;
+    scl = scl == null ? 1 : scl;
+    const cs = Math.cos(rot || 0), sn = Math.sin(rot || 0);
+    const P = tpl.a.map((q) => ({ x: cx + (q[1] * cs - q[2] * sn) * sc * scl, y: cy + (q[1] * sn + q[2] * cs) * sc * scl, sym: q[0] }));
+    tpl.b.forEach((q) => drawBond(P[q[0]].x, P[q[0]].y, P[q[1]].x, P[q[1]].y, q[2], sc * scl, 1, alpha));
+    P.forEach((p) => drawBall(p.sym, p.x, p.y, EL[p.sym].r * sc * scl, alpha));
+  }
 
   class Sys {
     constructor() { this.atoms = []; this.mols = []; this.bonds = []; this.t = 0; this.sc = 30; }
@@ -368,7 +396,7 @@
       this.bonds.push(o); return o;
     }
     _mol(type, cx, cy, o) {
-      return { type, cx, cy, vx: 0, vy: 0, rot: o.rot || 0, vr: o.vr || 0, mode: o.mode || 'gas', box: o.box || null, sc: o.sc || this.sc, atoms: [], ax: cx, ay: cy, amp: o.amp != null ? o.amp : 3, ph: Math.random() * 6.28, jit: 0, scl: o.scl != null ? o.scl : 1, speed: o.speed != null ? o.speed : 40, life: o.life, age: 0, tag: o.tag };
+      return { type, cx, cy, vx: 0, vy: 0, rot: o.rot || 0, vr: o.vr || 0, mode: o.mode || 'gas', box: o.box || null, sc: o.sc || this.sc, atoms: [], ax: cx, ay: cy, amp: o.amp != null ? o.amp : 3, ph: Math.random() * 6.28, jit: 0, scl: o.scl != null ? o.scl : 1, speed: o.speed != null ? o.speed : 40, life: o.life, age: 0, tag: o.tag, chg: o.chg || 0 };
     }
     /* 분자 하나 만들기 (원자도 새로 만듦) */
     addMol(type, cx, cy, o) {
@@ -453,6 +481,7 @@
         const cs = Math.cos(m.rot), sn = Math.sin(m.rot), tpl = TPL[m.type];
         for (let k = 0; k < m.atoms.length; k++) {
           const a = m.atoms[k], q = tpl.a[k];
+          a.s = m.scl;
           a.tx = m.cx + jx + (q[1] * cs - q[2] * sn) * m.sc * m.scl;
           a.ty = m.cy + jy + (q[1] * sn + q[2] * cs) * m.sc * m.scl;
         }
@@ -478,25 +507,22 @@
       for (const b of this.bonds) {
         if (b.w < 0.02) continue;
         const a = b.a, c = b.b;
-        const dx = c.x - a.x, dy = c.y - a.y, len = Math.hypot(dx, dy);
-        if (len < 1) continue;
-        const ux = dx / len, uy = dy / len, nx = -uy, ny = ux;
-        const msc = (a.mol ? a.mol.sc : (c.mol ? c.mol.sc : sc));
-        const lw = Math.max(2, msc * 0.13) * b.w, gap = lw * 1.3;
-        ctx.save(); ctx.globalAlpha *= Math.min(a.alpha, c.alpha) * Math.min(1, b.w * 1.5); ctx.lineCap = 'round';
-        for (let k = 0; k < b.order; k++) {
-          const off = (k - (b.order - 1) / 2) * gap;
-          const x1 = a.x + nx * off, y1 = a.y + ny * off, x2 = c.x + nx * off, y2 = c.y + ny * off;
-          ctx.strokeStyle = '#7d8aa0'; ctx.lineWidth = lw + 1.6; ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
-          ctx.strokeStyle = '#e6ebf3'; ctx.lineWidth = lw; ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
-        }
-        ctx.restore();
+        drawBond(a.x, a.y, c.x, c.y, b.order, a.mol ? a.mol.sc : (c.mol ? c.mol.sc : sc), b.w, Math.min(a.alpha, c.alpha));
       }
       const L = this.atoms;
       for (let i = 0; i < L.length; i++) {
         const a = L[i];
         const msc = a.mol ? a.mol.sc : sc;
         drawBall(a.sym, a.x, a.y, EL[a.sym].r * msc * a.s, a.alpha);
+      }
+      // 이온 전하 표시
+      for (const m of this.mols) {
+        if (!m.chg) continue;
+        const rr = TPL[m.type].rad * m.sc * m.scl;
+        const bx = m.cx + rr * 0.78, by = m.cy - rr * 0.78;
+        ctx.save(); ctx.fillStyle = m.chg > 0 ? '#e24a4a' : '#3f6fe8'; circle(ctx, bx, by, 7.5); ctx.fill();
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(bx - 3.2, by); ctx.lineTo(bx + 3.2, by); if (m.chg > 0) { ctx.moveTo(bx, by - 3.2); ctx.lineTo(bx, by + 3.2); } ctx.stroke(); ctx.restore();
       }
     }
   }
@@ -594,7 +620,7 @@
       const x = T / Math.pow(10, k), fl = Math.floor(x + 1e-9), d = fl % 10;
       let off;
       if (k === 0) off = x - fl;
-      else { const lower = (T / Math.pow(10, k - 1)) % 10; off = lower > 9 ? lower - 9 : 0; }
+      else { const lower = (T / Math.pow(10, k - 1)) % 10; off = lower > 9.6 ? (lower - 9.6) / 0.4 : 0; }
       off = clamp(off, 0, 1);
       if (k >= 2 && fl === 0 && off < 0.001) continue;
       const cx = k === 0 ? rx + cw * 0.85 : rx - cw * (k - 0.5) - cw * 0.35;

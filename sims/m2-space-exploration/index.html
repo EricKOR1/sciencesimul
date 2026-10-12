@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0ea5e9">
+  <title>우주 탐사 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚀</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-card { background: #0a1230; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    .is-off { display: none !important; }
+    .seg-label { display: block; font-weight: 800; font-size: 14.5px; color: var(--muted); margin-bottom: 6px; }
+    .segmented { display: flex; width: 100%; }
+    .segmented button { flex: 1 1 auto; min-height: 44px; padding: 6px 6px; font-size: 14px; }
+    .segmented button.on { color: #075985; }
+    #sceneSeg button { font-size: 13px; padding: 6px 3px; min-width: 0; white-space: nowrap; }
+    .ctrl-note { margin: 6px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    .btn-sm { min-height: 44px; }
+    .btn-block2 { width: 100%; min-height: 48px; font-size: 16px; }
+    .game-foot button { min-height: 44px; }
+    .mission-figure svg, .note-fig svg { max-width: 100%; height: auto; border-radius: 12px; }
+    .note-fig { margin: 6px 0; text-align: center; }
+  </style>
+</head>
+<body class="sim-page" data-subject="earth">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#g2">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">중2 · Ⅷ. 별과 우주</div>
+      <h1>우주 탐사</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-canvas"><canvas id="cv" aria-label="로켓 발사와 우주 탐사 연표, 탐사 방법 짝짓기, 생활 속 우주 기술을 찾는 집 그림, 탐사 계획 카드"></canvas></div>
+      </section>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" id="cScene" data-feature="methods">
+          <span class="seg-label">🧭 화면</span>
+          <div class="segmented" id="sceneSeg" role="group" aria-label="화면 고르기">
+            <button type="button" data-s="history">🚀 역사</button>
+            <button type="button" data-s="match" data-feature="methods">🧩 짝짓기</button>
+            <button type="button" data-s="scope" data-feature="methods">🔭 망원경</button>
+            <button type="button" data-s="house" data-feature="house">🏠 생활</button>
+            <button type="button" data-s="plan" data-feature="plan">📋 계획</button>
+          </div>
+        </div>
+        <div class="control" id="cLaunch" data-feature="launch">
+          <button class="btn btn-sm btn-primary btn-block2" id="launchBtn" type="button">🚀 로켓 발사!</button>
+          <p class="ctrl-note" id="launchNote">버튼을 누르면 카운트다운 뒤에 로켓이 날아올라요.</p>
+        </div>
+        <div class="control" id="cTL" data-feature="timeline">
+          <span class="seg-label">📜 연표</span>
+          <div class="segmented" id="tlSeg" role="group" aria-label="연표 고르기">
+            <button type="button" data-v="world">🌍 세계</button><button type="button" data-v="korea">🇰🇷 우리나라</button>
+          </div>
+        </div>
+        <div class="control" id="cScope" data-feature="methods">
+          <span class="seg-label">🔭 망원경 비교</span>
+          <div class="segmented" id="scopeSeg" role="group" aria-label="망원경 위치">
+            <button type="button" data-v="ground">⛰️ 지상</button><button type="button" data-v="space">🛰️ 우주</button>
+          </div>
+        </div>
+        <div class="control" id="cPlan" data-feature="plan">
+          <button class="btn btn-sm btn-primary btn-block2" id="planBtn" type="button" disabled>🚀 계획대로 발사!</button>
+          <p class="ctrl-note" id="planNote">목표 · 방법 · 핵심 기술을 하나씩 골라요.</p>
+        </div>
+        <div class="control" id="cReset" data-feature="timeline">
+          <button class="btn btn-sm" id="resetBtn" type="button">↺ 카드 되돌리기</button>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

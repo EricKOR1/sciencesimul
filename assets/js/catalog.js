@@ -1483,8 +1483,7 @@ window.SCI_CATALOG = {
                 "우리은하 모형",
                 "성단",
                 "성운"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m2-expanding-universe",
@@ -1504,8 +1503,7 @@ window.SCI_CATALOG = {
                 "거리 측정",
                 "중심은?",
                 "우주의 과거"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m2-space-exploration",
@@ -1525,8 +1523,7 @@ window.SCI_CATALOG = {
                 "탐사 방법",
                 "생활 속 우주 기술",
                 "탐사 계획"
-              ],
-              "soon": true
+              ]
             }
           ]
         }
@@ -1560,8 +1557,7 @@ window.SCI_CATALOG = {
                 "새 물질의 증거",
                 "입자 모형",
                 "분류하기"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m3-chemical-equation",
@@ -1581,8 +1577,7 @@ window.SCI_CATALOG = {
                 "원자 수 맞추기",
                 "반응식 완성",
                 "계수의 비"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m3-mass-conservation",
@@ -1603,8 +1598,7 @@ window.SCI_CATALOG = {
                 "기체 발생",
                 "연소",
                 "원자 모형"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m3-definite-proportions",
