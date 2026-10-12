@@ -763,7 +763,7 @@
      ========================================================= */
   const LC = { x: 24, y: 104, w: 300, h: 246 }, RC = { x: 476, y: 104, w: 300, h: 246 };
   const lcBox = { x: LC.x + 26, y: LC.y + 30, w: LC.w - 52, h: LC.h - 56 }, rcBox = { x: RC.x + 26, y: RC.y + 30, w: RC.w - 52, h: RC.h - 56 };
-  const sysR = new Sys(); sysR.sc = 26;
+  const sysR = new Sys(); sysR.sc = 34;
   const RS = { st: 'idle', flash: 0, spark: 0, words: false, ghost: 1, shown: 0 };
   const dragW = new DragSet();
   const WORDS = ['수소', '산소', '물', '이산화 탄소'];
@@ -780,7 +780,7 @@
   };
   function reactFill() {
     sysR.clear();
-    const mk = (type, x, y) => sysR.addMol(type, x, y, { mode: 'gas', speed: 38, box: lcBox, sc: 26, rot: rand(0, 6) });
+    const mk = (type, x, y) => sysR.addMol(type, x, y, { mode: 'gas', speed: 38, box: lcBox, sc: 34, rot: rand(0, 6) });
     mk('H2', lcBox.x + 70, lcBox.y + 50); mk('H2', lcBox.x + 150, lcBox.y + 120); mk('O2', lcBox.x + 70, lcBox.y + 130);
   }
   function reactReset() {
@@ -856,6 +856,7 @@
   function drawReact(t) {
     RS.shown = SciSim.approach(RS.shown, RS.words ? 1 : 0, lastDt, 8);
     drawWordsBanner();
+    if (RS.shown < 0.98) { ctx.save(); ctx.globalAlpha = 1 - RS.shown; txt('수소 분자 2개와 산소 분자 1개가 들어 있는 용기예요', 400, 62, 18, COL.ink, 'center', 800); ctx.restore(); }
     chamber(LC, '반응물 (반응 전)', '#3f6fe8');
     chamber(RC, '생성물 (반응 후)', '#0ea5a5');
     // 가운데 화살표
@@ -871,7 +872,7 @@
     // 생성물 자리 (아직 없을 때)
     if (RS.ghost > 0.02) {
       ctx.save(); ctx.globalAlpha = RS.ghost * 0.45;
-      drawMolStatic('H2O', RC.x + 110, RC.y + 100, 26, -0.2, 0.5); drawMolStatic('H2O', RC.x + 200, RC.y + 160, 26, 0.3, 0.5);
+      drawMolStatic('H2O', RC.x + 110, RC.y + 100, 34, -0.2, 0.5); drawMolStatic('H2O', RC.x + 200, RC.y + 160, 34, 0.3, 0.5);
       txt('?', RC.x + 155, RC.y + 140, 40, '#8995a8', 'center', 800);
       ctx.restore();
     }
@@ -935,7 +936,7 @@
     { type: 'O2', name: '산소 분자', f: 'O2', col: '#d85a5a' },
     { type: 'H2O', name: '물 분자', f: 'H2O', col: '#0ea5a5' },
   ];
-  const CARDX = [20, 260, 560], CARDY = 70, CARDW = 200, CARDH = 150;
+  const CARDX = [20, 260, 560], CARDY = 66, CARDH = 136, CARDW = 200;
   const BL = {
     n: [1, 1, 1],
     roll: [new RollDigit(1), new RollDigit(1), new RollDigit(1)],
@@ -982,7 +983,7 @@
     if (dH !== 0 || dO !== 0) tgt = sum !== 0 ? -clamp(sum * 0.045, -0.3, 0.3) : -Math.sign(Math.abs(dO) >= Math.abs(dH) ? dO : dH) * 0.07;
     BL.beam.target = tgt; BL.beam.update(dt);
     const bal = isBal(BL.n);
-    if (bal && !BL.was) { okFx(400, 300, COL.good, true); sfx.ding(); }
+    if (bal && !BL.was) { okFx(400, 330, COL.good, true); sfx.ding(); }
     BL.was = bal;
     BL.flash = Math.max(0, BL.flash - dt);
   }
@@ -1019,20 +1020,20 @@
       BL.slot[i].forEach((s, k) => {
         if (s.s < 0.01) return;
         const col = k % 2, row = Math.floor(k / 2);
-        const mx = x + 58 + col * 86 + Math.sin(t * 1.6 + s.ph) * 2, my = y + 48 + row * 56 + Math.cos(t * 1.3 + s.ph) * 2;
-        drawMolStatic(S_.type, mx, my, 22, s.rot + Math.sin(t + s.ph) * 0.1, Math.min(1, s.s * 1.5), s.s);
+        const mx = x + 54 + col * 92 + Math.sin(t * 1.6 + s.ph) * 2, my = y + 40 + row * 58 + Math.cos(t * 1.3 + s.ph) * 2;
+        drawMolStatic(S_.type, mx, my, 27, s.rot + Math.sin(t + s.ph) * 0.1, Math.min(1, s.s * 1.5), s.s);
       });
       // 계수 + 화학식 (카드 위)
       const fw = formulaWidth(S_.f, 30);
       const gx = x + CARDW / 2 - (fw + 40) / 2;
       BL.roll[i].draw(gx + 14, y - 12, 34, BL.n[i] === 0 ? '#b6c0d0' : COL.sub, 'center');
       fml(S_.f, gx + 36, y - 12 + 11, 30, COL.ink, 'left');
-      txt(S_.name, x + CARDW / 2, y + CARDH + 20, 14, COL.muted, 'center', 800);
+      txt(S_.name, x + CARDW / 2, y + CARDH + 22, 14, COL.muted, 'center', 800);
     }
-    txt('+', 240, CARDY + 84, 38, COL.muted, 'center', 800);
-    D.arrow(482, CARDY + 76, 542, CARDY + 76, { color: '#8b5cf6', width: 6, head: 18 });
+    txt('+', 240, CARDY + 80, 38, COL.muted, 'center', 800);
+    D.arrow(482, CARDY + 68, 542, CARDY + 68, { color: '#8b5cf6', width: 6, head: 18 });
     // 저울
-    const px = 400, py = 352, L = 150;
+    const px = 400, py = 352, L = 140;
     const th = BL.beam.value;
     const c = counts(BL.n);
     ctx.save();
@@ -1045,7 +1046,7 @@
     ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(lx + 4, ly - 3); ctx.lineTo(rx - 4, ry - 3); ctx.stroke();
     D.sphere(px, py, 10, '#5b6a82', { gloss: true });
     // 줄 + 접시
-    const dropY = 72;
+    const dropY = 70;
     [[lx, ly], [rx, ry]].forEach((e, k) => {
       ctx.strokeStyle = '#8795ad'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(e[0], e[1]); ctx.lineTo(e[0] - 56, e[1] + dropY); ctx.moveTo(e[0], e[1]); ctx.lineTo(e[0] + 56, e[1] + dropY); ctx.stroke();
       D.sphere(e[0], e[1], 5, '#5b6a82', { gloss: false });
@@ -1053,21 +1054,21 @@
     ctx.restore();
     drawPan(lx, ly + dropY, c.LH, c.LO, t);
     drawPan(rx, ry + dropY, c.RH, c.RO, t);
-    txt('반응 전', lx, ly + dropY + 38, 14, COL.muted, 'center', 800);
-    txt('반응 후', rx, ry + dropY + 38, 14, COL.muted, 'center', 800);
+    txt('반응 전', lx, ly + dropY + 40, 14, COL.muted, 'center', 800);
+    txt('반응 후', rx, ry + dropY + 40, 14, COL.muted, 'center', 800);
     // 막대 (원자 수)
-    const scale = 15;
-    txt('반응 전 원자 수', 20, 266, 15, COL.ink, 'left', 800);
-    drawBar(14, 306, c.LH, '#8fa6d6', scale, '', 'H'); drawBar(14, 350, c.LO, '#ef6b6b', scale, '', 'O');
-    txt('반응 후 원자 수', 566, 266, 15, COL.ink, 'left', 800);
-    drawBar(560, 306, c.RH, '#8fa6d6', scale, '', 'H'); drawBar(560, 350, c.RO, '#ef6b6b', scale, '', 'O');
+    const scale = 12;
+    txt('반응 전 원자 수', 20, 288, 15, COL.ink, 'left', 800);
+    drawBar(14, 324, c.LH, '#8fa6d6', scale, '', 'H'); drawBar(14, 368, c.LO, '#ef6b6b', scale, '', 'O');
+    txt('반응 후 원자 수', 566, 288, 15, COL.ink, 'left', 800);
+    drawBar(560, 324, c.RH, '#8fa6d6', scale, '', 'H'); drawBar(560, 368, c.RO, '#ef6b6b', scale, '', 'O');
     // 비교 표시
-    const mk = (ok, y) => { ctx.save(); ctx.fillStyle = ok ? 'rgba(20,160,88,.14)' : 'rgba(226,70,75,.12)'; D.roundRect(704, y - 14, 74, 28, 14); ctx.fill(); ctx.restore(); txt(ok ? '= 같아요' : '≠ 달라요', 741, y + 6, 14, ok ? COL.good : COL.bad, 'center', 800); };
-    mk(c.LH === c.RH, 306 + 40 - 40 + 0); mk(c.LO === c.RO, 350);
+    const mk = (ok, y) => { ctx.save(); ctx.fillStyle = ok ? 'rgba(20,160,88,.14)' : 'rgba(226,70,75,.12)'; D.roundRect(712, y - 14, 72, 28, 14); ctx.fill(); ctx.restore(); txt(ok ? '= 같아요' : '≠ 달라요', 748, y + 6, 14, ok ? COL.good : COL.bad, 'center', 800); };
+    mk(c.LH === c.RH, 324); mk(c.LO === c.RO, 368);
     // 판정
     const bal = isBal(BL.n);
-    if (bal) pill(400, 250, '✔ 저울이 수평! 원자의 종류와 수가 같아요', { bg: COL.good, size: 15, pad: 14 });
-    else pill(400, 250, '원자 수가 달라 저울이 기울었어요', { bg: '#b4440f', size: 15, pad: 14 });
+    if (bal) pill(400, 252, '✔ 저울이 수평! 원자의 종류와 수가 같아요', { bg: COL.good, size: 15, pad: 14 });
+    else pill(400, 252, '원자 수가 달라 저울이 기울었어요', { bg: '#b4440f', size: 15, pad: 14 });
   }
   SC.balance = {
     enter() { balUI(); },
@@ -1207,7 +1208,7 @@
       W.slots[i].forEach((s, k) => {
         if (s.s < 0.01) return;
         const mx = TX[i] + dxs[k] + Math.sin(t * 1.5 + s.ph) * 1.5, my = (k < 3 ? 222 : 250) + Math.cos(t * 1.2 + s.ph) * 1.5;
-        drawMolStatic(MT[E.f[i]], mx, my, 14, s.rot + Math.sin(t + s.ph) * 0.1, Math.min(1, s.s * 1.5), s.s);
+        drawMolStatic(MT[E.f[i]], mx, my, 17, s.rot + Math.sin(t + s.ph) * 0.1, Math.min(1, s.s * 1.5), s.s);
       });
     }
     // 원자 수 표
@@ -1254,20 +1255,20 @@
   /* =========================================================
      ④ 계수의 비 = 분자 수의 비:  2H₂ + O₂ → 2H₂O  (수소 6개 + 산소 □개)
      ========================================================= */
-  const TC = { x: 16, y: 84, w: 352, h: 244 }, TR = { x: 432, y: 84, w: 352, h: 244 };
+  const TC = { x: 16, y: 56, w: 352, h: 262 }, TR = { x: 432, y: 56, w: 352, h: 262 };
   const tcBox = { x: TC.x + 24, y: TC.y + 34, w: TC.w - 48, h: TC.h - 56 };
   const trBox = { x: TR.x + 24, y: TR.y + 34, w: TR.w - 48, h: TR.h - 56 };
-  const sysT = new Sys(); sysT.sc = 19;
+  const sysT = new Sys(); sysT.sc = 25;
   const RT = { o2: 1, st: 'idle', ran: false, water: 0, usedH: 0, usedO: 0, leftH: 6, leftO: 1, groups: 0, nDone: 0, ring: 0 };
   const RD = { uH: new RollDigit(0), uO: new RollDigit(0), uW: new RollDigit(0), lH: new RollDigit(6), lO: new RollDigit(1) };
-  const WSLOTS = [0, 1, 2, 3, 4, 5].map((i) => ({ x: TR.x + 76 + (i % 3) * 100, y: TR.y + 88 + Math.floor(i / 3) * 96 }));
+  const WSLOTS = [0, 1, 2, 3, 4, 5].map((i) => ({ x: TR.x + 76 + (i % 3) * 100, y: TR.y + 96 + Math.floor(i / 3) * 100 }));
   function ratioFill(pop) {
     sysT.clear(); clearLater();
     const pts = [];
     for (let i = 0; i < 6; i++) pts.push(['H2', tcBox.x + 40 + (i % 3) * 82 + rand(-6, 6), tcBox.y + 36 + Math.floor(i / 3) * 70 + rand(-6, 6)]);
     for (let i = 0; i < RT.o2; i++) pts.push(['O2', tcBox.x + 30 + (i % 4) * 70 + rand(-6, 6), tcBox.y + 4 + 120 + Math.floor(i / 4) * 0 + rand(-4, 4)]);
     pts.forEach((q, i) => {
-      const m = sysT.addMol(q[0], q[1], q[2], { mode: 'gas', speed: 30, box: tcBox, sc: 19, rot: rand(0, 6), scl: pop ? 0.01 : 1 });
+      const m = sysT.addMol(q[0], q[1], q[2], { mode: 'gas', speed: 30, box: tcBox, sc: 25, rot: rand(0, 6), scl: pop ? 0.01 : 1 });
       if (pop) tw(m, { scl: 1 }, 0.5, 'outBack', { delay: i * 0.04, essential: true });
     });
     RT.st = 'idle'; RT.ran = false; RT.water = 0; RT.usedH = 0; RT.usedO = 0; RT.leftH = 6; RT.leftO = RT.o2; RT.nDone = 0; RT.ring = 0;
@@ -1339,7 +1340,7 @@
     // 물 분자 자리 표시
     if (RT.st !== 'done' || RT.water === 0) {
       ctx.save(); ctx.globalAlpha = 0.18;
-      WSLOTS.forEach((p) => drawMolStatic('H2O', p.x, p.y, 19, 0, 0.6));
+      WSLOTS.forEach((p) => drawMolStatic('H2O', p.x, p.y, 25, 0, 0.6));
       ctx.restore();
     }
     sysT.draw();
@@ -1348,26 +1349,26 @@
       sysT.mols.forEach((m) => {
         if (m.box !== tcBox) return;
         const a = 0.5 + 0.5 * Math.sin(RT.ring * 6);
-        ctx.save(); ctx.strokeStyle = rgba(COL.bad, 0.4 + 0.5 * a); ctx.lineWidth = 3; ctx.setLineDash([6, 5]); circle(ctx, m.cx, m.cy, 28); ctx.stroke(); ctx.restore();
+        ctx.save(); ctx.strokeStyle = rgba(COL.bad, 0.4 + 0.5 * a); ctx.lineWidth = 3; ctx.setLineDash([6, 5]); circle(ctx, m.cx, m.cy, 36); ctx.stroke(); ctx.restore();
       });
       if (sysT.mols.some((m) => m.box === tcBox)) pill(TC.x + TC.w / 2, TC.y + TC.h + 14, '빨간 점선 = 남은 분자', { bg: COL.bad, size: 13, pad: 10 });
     }
     // 표
-    panel(16, 352, 512, 124, 16, '#ffffff', 10, 3);
-    txt('분자 수', 82, 374, 13, COL.muted, 'left', 800); txt('처음', 300, 374, 14, COL.muted, 'center', 800); txt('반응한 수 · 생긴 수', 396, 374, 13, COL.muted, 'center', 800); txt('남은 수', 468, 374, 13, COL.muted, 'center', 800);
-    drawRow(398, '수소 분자 H₂', 'H2', 6, 0, 0, RD.uH, RD.lH, RT.leftH > 0 && RT.st === 'done' ? COL.bad : COL.muted);
-    drawRow(434, '산소 분자 O₂', 'O2', RT.o2, 0, 0, RD.uO, RD.lO, RT.leftO > 0 && RT.st === 'done' ? COL.bad : COL.muted);
-    drawRow(470, '물 분자 H₂O', 'H2O', 0, 0, null, RD.uW, null, COL.muted);
+    panel(16, 346, 512, 134, 16, '#ffffff', 10, 3);
+    txt('분자 수', 82, 368, 13, COL.muted, 'left', 800); txt('처음', 300, 368, 14, COL.muted, 'center', 800); txt('반응 · 생성', 396, 368, 13, COL.muted, 'center', 800); txt('남은 수', 468, 368, 13, COL.muted, 'center', 800);
+    drawRow(394, '수소 분자 H₂', 'H2', 6, 0, 0, RD.uH, RD.lH, RT.leftH > 0 && RT.st === 'done' ? COL.bad : COL.muted);
+    drawRow(430, '산소 분자 O₂', 'O2', RT.o2, 0, 0, RD.uO, RD.lO, RT.leftO > 0 && RT.st === 'done' ? COL.bad : COL.muted);
+    drawRow(466, '물 분자 H₂O', 'H2O', 0, 0, null, RD.uW, null, COL.muted);
     // 비 카드
-    panel(544, 352, 240, 124, 16, RT.st === 'done' && RT.water > 0 ? '#f3efff' : '#ffffff', 10, 3);
+    panel(544, 346, 240, 134, 16, RT.st === 'done' && RT.water > 0 ? '#f3efff' : '#ffffff', 10, 3);
     if (RT.st === 'done' && RT.water > 0) {
-      txt('반응한 분자 수의 비', 664, 376, 14, COL.sub, 'center', 800);
-      txt('H₂ : O₂ : H₂O', 664, 402, 15, COL.muted, 'center', 800);
-      txt(RT.usedH + ' : ' + RT.usedO + ' : ' + RT.water, 664, 436, 28, COL.ink, 'center', 800);
+      txt('반응한 분자 수의 비', 664, 372, 14, COL.sub, 'center', 800);
+      txt('H₂ : O₂ : H₂O', 664, 398, 15, COL.muted, 'center', 800);
+      txt(RT.usedH + ' : ' + RT.usedO + ' : ' + RT.water, 664, 434, 28, COL.ink, 'center', 800);
       const g = RT.usedO || 1;
-      txt('= ' + (RT.usedH / g) + ' : ' + (RT.usedO / g) + ' : ' + (RT.water / g) + ' (계수의 비)', 664, 462, 15, COL.good, 'center', 800);
+      txt('= ' + (RT.usedH / g) + ' : ' + (RT.usedO / g) + ' : ' + (RT.water / g) + ' (계수의 비)', 664, 464, 15, COL.good, 'center', 800);
     } else {
-      txt('반응하면 분자 수의 비를', 664, 408, 14, COL.muted, 'center', 700); txt('여기서 확인해요', 664, 430, 14, COL.muted, 'center', 700);
+      txt('반응하면 분자 수의 비를', 664, 410, 14, COL.muted, 'center', 700); txt('여기서 확인해요', 664, 432, 14, COL.muted, 'center', 700);
     }
   }
   SC.ratio = {

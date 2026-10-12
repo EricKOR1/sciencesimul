@@ -227,9 +227,9 @@
   const u = (v, unit) => v + '<small>' + unit + '</small>';
 
   /* ---------- 공통 그리기: 실험대 · 도가니 ---------- */
-  const BENCH_Y = 420;
+  const BENCH_Y = 420, CS = 1.35;
   function room() {
-    vgrad(ctx, 0, 0, VW, BENCH_Y, '#f7faff', '#e6edf8');
+    vgrad(ctx, 0, 0, VW, VH, '#f7faff', '#e3ebf7');
   }
   function bench() {
     vgrad(ctx, 0, BENCH_Y, VW, 52, '#e1c398', '#c9a06a');
@@ -237,8 +237,8 @@
     ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fillRect(0, BENCH_Y, VW, 2);
   }
   /* 도가니(단면): (cx, by)=바닥 가운데. 안의 내용은 fn(ctx)로 그림 */
-  function crucible(cx, by, fn) {
-    ctx.save(); ctx.translate(cx, by);
+  function crucible(cx, by, fn, sc) {
+    ctx.save(); ctx.translate(cx, by); if (sc) ctx.scale(sc, sc);
     const path = () => { ctx.beginPath(); ctx.moveTo(-52, -54); ctx.lineTo(-32, -4); ctx.quadraticCurveTo(-30, 0, -24, 0); ctx.lineTo(24, 0); ctx.quadraticCurveTo(30, 0, 32, -4); ctx.lineTo(52, -54); };
     ctx.save(); path(); ctx.closePath(); ctx.clip();
     ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.fillRect(-60, -60, 120, 64);
@@ -285,7 +285,7 @@
       LAB.hot = SciSim.approach(LAB.hot, 1, dt, 3);
       LAB.stir += dt;
       LAB.fracS = SciSim.approach(LAB.fracS, LAB.fracT, dt, 1.7);
-      if (Math.random() < dt * 14) FX.emit({ x: TRI.x + rand(-26, 26), y: TRI.baseY - 58, vx: rand(-8, 8), vy: -rand(30, 55), life: 1.3, size: 7, grow: 14, color: '#dfe5ee', shape: 'smoke', alpha: 0.7 });
+      if (Math.random() < dt * 14) FX.emit({ x: TRI.x + rand(-34, 34), y: TRI.baseY - 78, vx: rand(-8, 8), vy: -rand(30, 55), life: 1.3, size: 7, grow: 14, color: '#dfe5ee', shape: 'smoke', alpha: 0.7 });
       if (Math.random() < dt * 9) FX.emit({ x: TRI.x + rand(-30, 30), y: TRI.baseY - 30, vx: rand(-40, 40), vy: -rand(40, 110), life: 0.5, size: 1.6, color: '#ffb15a', gravity: 160, shape: 'circle' });
       if (LAB.pt > 2.2) { LAB.phase = 'move'; LAB.pt = 0; tw(LAB, { u: 1 }, 0.95, 'inOutCubic', { essential: true }); }
     } else {
@@ -335,17 +335,16 @@
         ctx.fillStyle = 'rgba(255,255,255,' + (0.34 * (1 - g.b * 0.7)).toFixed(2) + ')'; ctx.beginPath(); ctx.arc(g.x - g.r * 0.3 + jit, g.y - g.r * 0.35, g.r * 0.35, 0, TAU); ctx.fill();
       });
       if (LAB.hot > 0.05) { D.glow(0, -16, 46, '#ff6a1f', 0.28 * LAB.hot); }
-    });
+    }, CS);
     // 젓개
     if (LAB.phase === 'heat' || LAB.stir > 0 && LAB.phase === 'back') {
       const sw = Math.sin(LAB.stir * 8) * 14;
       ctx.save(); ctx.strokeStyle = 'rgba(120,150,190,.85)'; ctx.lineWidth = 4; ctx.lineCap = 'round';
-      ctx.beginPath(); ctx.moveTo(cx + 54 + sw * 0.4, cy - 118); ctx.lineTo(cx + sw, cy - 14); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(cx + 74 + sw * 0.4, cy - 150); ctx.lineTo(cx + sw * 1.2, cy - 18); ctx.stroke();
       ctx.restore();
     }
     // 이름표
-    if (uu < 0.5) txt('도가니', TRI.x, TRI.baseY + 6 + 104, 13, COL.muted, 'center', 800);
-    if (uu < 0.5) { const lb = LAB.fracS < 0.12 ? '구리 가루(붉은색)' : LAB.fracS > 0.97 ? '산화 구리(검은색)' : '구리 + 산화 구리'; D.label(TRI.x, 214, lb, { bg: 'rgba(255,255,255,.92)', color: COL.ink, size: 14 }); }
+        if (uu < 0.5) { const lb = LAB.fracS < 0.12 ? '구리 가루(붉은색)' : LAB.fracS > 0.97 ? '산화 구리(검은색)' : '구리 + 산화 구리'; D.label(TRI.x, 222, lb, { bg: 'rgba(255,255,255,.92)', color: COL.ink, size: 14 }); }
     // 그래프 패널
     drawLabChart(t);
   }
@@ -371,7 +370,6 @@
     if (LAB.stable) {
       const last = LAB.pts[LAB.pts.length - 1];
       D.dashedLine(gx(4), gy(2.5), px1, gy(2.5), { color: rgba(COL.good, 0.8), width: 2, dash: [6, 5], offset: t * 12 });
-      const k = smooth((LAB.pts.length - 1 - LAB.round + 1) + 0);
       D.arrow(px1 - 6, gy(2.0) - 2, px1 - 6, gy(2.5) + 4, { color: COL.good, width: 2.4, head: 9 });
       D.label(px1 - 28, (gy(2.0) + gy(2.5)) / 2, 'O 0.50 g', { bg: '#fff', color: COL.good, size: 13, border: COL.good, align: 'right' });
       txt('일정!', gx(5.2), gy(2.5) - 10, 14, COL.good, 'center', 800);
@@ -480,10 +478,12 @@
         D.roundRect(c.x + 10, c.y + 10, 56, 28, 14); ctx.fillStyle = '#8b5cf6'; ctx.fill();
         txt(r.d.g + '모둠', c.x + 38, c.y + 30, 14, '#fff', 'center', 800);
         txt('구리 ' + r.d.cu.toFixed(1) + ' g  →  산화 구리 ' + r.d.cuo.toFixed(2) + ' g', c.x + 78, c.y + 31, 15, COL.ink, 'left', 800);
-        txt('결합한 산소 = ' + r.d.cuo.toFixed(2) + ' − ' + r.d.cu.toFixed(1) + ' = ', c.x + 16, c.y + 66, 14, COL.muted, 'left', 700);
-        txt(r.d.o.toFixed(2) + ' g', c.x + 186, c.y + 66, 16, '#3867f4', 'left', 800);
+        const eq = '결합한 산소 = ' + r.d.cuo.toFixed(2) + ' − ' + r.d.cu.toFixed(1) + ' = ';
+        ctx.save(); ctx.font = D.font(14, 700); const eqw = ctx.measureText(eq).width; ctx.restore();
+        txt(eq, c.x + 16, c.y + 66, 14, COL.muted, 'left', 700);
+        txt(r.d.o.toFixed(2) + ' g', c.x + 16 + eqw + 2, c.y + 66, 16, '#3867f4', 'left', 800);
         if (r.plotted) txt('✓ 찍음', c.x + c.w - 14, c.y + 66, 14, COL.good, 'right', 800);
-        else txt('끌어서 그래프에 ▶', c.x + c.w - 14, c.y + 66, 13, '#8b5cf6', 'right', 800);
+        else txt('끌기 ▶', c.x + c.w - 14, c.y + 66, 14, '#8b5cf6', 'right', 800);
         ctx.restore();
       });
       // 그래프 패널
@@ -549,10 +549,10 @@
   const CUCOL = '#d2693a', OCOL = '#e2464b';
   function cuInit() {
     CU.cu = []; CU.mol = []; CU.atoms = []; CU.pairs = 0; CU.found = false; CU.drag = null; CU.auto = false; CU.barC = 0; CU.barO = 0;
-    for (let i = 0; i < 6; i++) CU.cu.push({ x: 84 + (i % 3) * 112, y: 190 + Math.floor(i / 3) * 128, r: 27, atom: null, pop: 0, dark: 0 });
-    [[404, 128], [508, 196], [404, 296], [508, 366]].forEach((h, k) => {
+    for (let i = 0; i < 6; i++) CU.cu.push({ x: 70 + (i % 3) * 112, y: 200 + Math.floor(i / 3) * 130, r: 34, atom: null, pop: 0, dark: 0 });
+    [[412, 150], [504, 220], [412, 320], [504, 392]].forEach((h, k) => {
       const m = { k, x: h[0], y: h[1], hx: h[0], hy: h[1], ph: rand(0, 6), split: false, a: [] };
-      for (let j = 0; j < 2; j++) { const at = { x: h[0] + (j ? 15 : -15), y: h[1], r: 15, mol: m, j, bonded: -1, hx: h[0], hy: h[1], ph: rand(0, 6) }; m.a.push(at); CU.atoms.push(at); }
+      for (let j = 0; j < 2; j++) { const at = { x: h[0] + (j ? 19 : -19), y: h[1], r: 19, mol: m, j, bonded: -1, hx: h[0], hy: h[1], ph: rand(0, 6) }; m.a.push(at); CU.atoms.push(at); }
       CU.mol.push(m);
     });
   }
@@ -562,7 +562,7 @@
     m.split = true; sfx.pop();
     FX.burst(m.x, m.y, { count: 8, speed: 70, colors: ['#ffd1d1', '#fff'], size: 2.5, life: 0.5, gravity: 0 });
     m.a.forEach((at, j) => {
-      const tx = clamp(m.x + (j ? 38 : -38), 372, 548), ty = clamp(m.y + rand(-14, 14), 70, 440);
+      const tx = clamp(m.x + (j ? 40 : -40), 384, 546), ty = clamp(m.y + rand(-14, 14), 120, 450);
       at.hx = tx; at.hy = ty;
       tw(at, { x: tx, y: ty }, 0.5, 'outBack', { essential: true });
     });
@@ -571,11 +571,11 @@
     const cu = CU.cu[ci]; if (cu.atom || at.bonded >= 0) return false;
     if (!at.mol.split) cuSplit(at.mol);
     cu.atom = at; at.bonded = ci; CU.pairs++;
-    tw(at, { x: cu.x + 42, y: cu.y }, 0.45, 'outBack', { essential: true });
+    tw(at, { x: cu.x + 52, y: cu.y }, 0.45, 'outBack', { essential: true });
     tw(cu, { dark: 1 }, 0.9, 'outCubic', { essential: true });
     cu.pop = 1; tw(cu, { pop: 0 }, 0.6, 'outCubic', { essential: true, delay: 0.3 });
     sfx.snap();
-    later(0.35, () => FX.burst(cu.x + 22, cu.y, { count: 10, speed: 90, colors: ['#ffb15a', '#ffd23f', '#fff'], size: 3, life: 0.6 }));
+    later(0.35, () => FX.burst(cu.x + 28, cu.y, { count: 10, speed: 90, colors: ['#ffb15a', '#ffd23f', '#fff'], size: 3, life: 0.6 }));
     if (CU.pairs === 6) later(0.7, () => { sfx.ding(); showHint('구리 원자 6개가 모두 짝을 지었어요. 남은 입자는 무엇일까요? 눌러 보세요', 6000); });
     return true;
   }
@@ -593,13 +593,13 @@
     };
     run();
   }
-  const molOf = (p) => CU.mol.find((m) => !m.split && Math.hypot(p.x - m.x, p.y - m.y) < 34);
-  const atomOf = (p) => { let b = null, bd = 28; CU.atoms.forEach((a) => { if (a.bonded < 0 && a.mol.split) { const d = Math.hypot(p.x - a.x, p.y - a.y); if (d < bd) { bd = d; b = a; } } }); return b; };
+  const molOf = (p) => CU.mol.find((m) => !m.split && Math.hypot(p.x - m.x, p.y - m.y) < 40);
+  const atomOf = (p) => { let b = null, bd = 32; CU.atoms.forEach((a) => { if (a.bonded < 0 && a.mol.split) { const d = Math.hypot(p.x - a.x, p.y - a.y); if (d < bd) { bd = d; b = a; } } }); return b; };
   SC.cuo = {
     enter() { showHint('산소 분자(O₂)를 눌러 쪼개고, 산소 원자를 구리 원자 옆으로 끌어다 놓아요', 6000); },
     update(dt) {
-      CU.mol.forEach((m) => { if (!m.split && !(CU.drag && CU.drag.m === m)) { m.a[0].x = m.x - 15; m.a[0].y = m.y; m.a[1].x = m.x + 15; m.a[1].y = m.y; } });
-      if (CU.drag && CU.drag.m) { const m = CU.drag.m; m.a[0].x = m.x - 15; m.a[0].y = m.y; m.a[1].x = m.x + 15; m.a[1].y = m.y; }
+      CU.mol.forEach((m) => { if (!m.split && !(CU.drag && CU.drag.m === m)) { m.a[0].x = m.x - 19; m.a[0].y = m.y; m.a[1].x = m.x + 19; m.a[1].y = m.y; } });
+      if (CU.drag && CU.drag.m) { const m = CU.drag.m; m.a[0].x = m.x - 19; m.a[0].y = m.y; m.a[1].x = m.x + 19; m.a[1].y = m.y; }
       CU.barC = SciSim.approach(CU.barC, CU.pairs * 4, dt, 5); CU.barO = SciSim.approach(CU.barO, CU.pairs, dt, 5);
     },
     hover(p) { return molOf(p) || atomOf(p) ? 'grab' : null; },
@@ -625,22 +625,22 @@
         return;
       }
       // 가까운 빈 구리 원자 찾기
-      let ci = -1, bd = 78;
-      CU.cu.forEach((c, i) => { if (!c.atom) { const dd = Math.hypot(ax - (c.x + 20), ay - c.y); if (dd < bd) { bd = dd; ci = i; } } });
+      let ci = -1, bd = 84;
+      CU.cu.forEach((c, i) => { if (!c.atom) { const dd = Math.hypot(ax - (c.x + 26), ay - c.y); if (dd < bd) { bd = dd; ci = i; } } });
       if (ci >= 0) {
         const at = d.a || d.m.a[0];
         if (d.m) { const m = d.m; m.hx = m.x; m.hy = m.y; cuSplit(m); }
         cuBond(at, ci);
-      } else if (d.a) { tw(d.a, { x: clamp(d.a.x, 372, 548), y: clamp(d.a.y, 70, 450) }, 0.4, 'outBack', { essential: true }); d.a.hx = clamp(d.a.x, 372, 548); d.a.hy = clamp(d.a.y, 70, 450); }
+      } else if (d.a) { tw(d.a, { x: clamp(d.a.x, 384, 546), y: clamp(d.a.y, 120, 450) }, 0.4, 'outBack', { essential: true }); d.a.hx = clamp(d.a.x, 384, 546); d.a.hy = clamp(d.a.y, 120, 450); }
       else if (d.m) { tw(d.m, { x: d.m.hx, y: d.m.hy }, 0.5, 'outBack', { essential: true }); }
     },
     draw(t) {
       room();
       panel(14, 14, 556, 492, { r: 18 });
-      txt('구리 원자 (Cu) 6개', 150, 52, 15, '#a14a22', 'left', 800);
-      txt('산소 분자 (O₂) 4개', 380, 52, 15, '#b9272d', 'left', 800);
+      txt('구리 원자 (Cu) 6개', 40, 56, 15, '#a14a22', 'left', 800);
+      txt('산소 분자 (O₂) 4개', 384, 56, 15, '#b9272d', 'left', 800);
       // 구분선
-      D.dashedLine(330, 66, 330, 480, { color: '#dde4ef', width: 2, dash: [5, 7] });
+      D.dashedLine(362, 70, 362, 480, { color: '#dde4ef', width: 2, dash: [5, 7] });
       const drag = CU.drag && CU.drag.moved >= 8 ? CU.drag : null;
       CU.cu.forEach((c) => {
         const col = mix(CUCOL, '#2b2523', c.dark);
@@ -656,7 +656,7 @@
         const x = a.x + bobx, y = a.y + bob;
         if (!a.mol.split && a.j === 1) {
           // 결합선
-          const o = a.mol.a[0]; ctx.strokeStyle = shade(OCOL, -0.3); ctx.lineWidth = 8; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(o.x + bobx, o.y + bob); ctx.lineTo(x, y); ctx.stroke();
+          const o = a.mol.a[0]; ctx.strokeStyle = shade(OCOL, -0.3); ctx.lineWidth = 10; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(o.x + bobx, o.y + bob); ctx.lineTo(x, y); ctx.stroke();
         }
         D.sphere(x, y, a.r * (lifted ? 1.15 : 1), OCOL, { shadow: true, text: 'O', textScale: 0.95 });
       });
@@ -673,7 +673,7 @@
       }
       // 안내
       const msg = CU.pairs === 0 ? '산소 분자를 눌러 쪼갠 뒤, 산소 원자를 구리 원자 옆에 놓아요' : CU.pairs < 6 ? '구리 원자와 산소 원자가 1 : 1로 결합해요 (' + CU.pairs + '/6)' : CU.found ? '구리 원자 6개 + 산소 원자 6개 → 산화 구리(CuO) 6개' : '남은 입자를 눌러 보세요';
-      D.label(292, 486, msg, { bg: 'rgba(27,35,51,.88)', size: 14 });
+      D.label(292, 92, msg, { bg: 'rgba(27,35,51,.88)', size: 14 });
       // 질량 비교 패널
       const PX = 586, PW = 200;
       panel(PX, 14, PW, 492, { r: 18 });
@@ -751,7 +751,7 @@
       txt('🧱 산화 구리(Ⅱ) — 화합물', X + 16, 46, 15, COL.ink, 'left', 800);
       D.roundRect(X + 16, 62, 150, 28, 14); ctx.fillStyle = '#d2693a'; ctx.fill(); txt('구리 4', X + 91, 82, 15, '#fff', 'center', 800);
       D.roundRect(X + 170, 62, 38, 28, 14); ctx.fillStyle = '#ef6a6a'; ctx.fill(); txt('산소 1', X + 240, 82, 15, '#b9272d', 'center', 800);
-      D.label(X + 120, 126, '질량비 구리 : 산소 = 4 : 1  (항상 일정)', { bg: '#e6f7ee', color: '#0b7a41', size: 14 });
+      D.label(X + W / 2, 126, '질량비 구리 : 산소 = 4 : 1  (항상 일정)', { bg: '#e6f7ee', color: '#0b7a41', size: 14 });
       panel(X, 184, W, 288);
       txt('🧃 설탕물 — 혼합물', X + 16, 212, 15, COL.ink, 'left', 800);
       textBlock('성분비가 정해져 있지 않아서 마음대로 달라져요', X + 16, 236, W - 32, 14, COL.muted, 'left');
@@ -772,7 +772,7 @@
      장면 4a · 마그네슘 연소 (3 : 2)
      ========================================================= */
   const MG = { amt: 6, phase: 'idle', pt: 0, p: 0, flame: 0, scale: 6, bp: 0, hist: [], grains: [] };
-  const MGX = 150, MGPAN = 418;
+  const MGX = 160, MGPAN = 418, MCS = 1.7;
   const mgOut = (a) => a * 5 / 3;
   function mgInit() {
     MG.phase = 'idle'; MG.pt = 0; MG.p = 0; MG.flame = 0; MG.scale = MG.amt; MG.bp = 0;
@@ -792,13 +792,13 @@
       if (MG.phase === 'burn') {
         MG.pt += dt; MG.p = clamp(MG.pt / MG_DUR, 0, 1);
         MG.flame = SciSim.approach(MG.flame, 1, dt, 10);
-        for (let i = 0; i < 2; i++) if (Math.random() < dt * 40) FX.emit({ x: MGX + rand(-26, 26), y: MGPAN - 60 + rand(-8, 8), vx: rand(-110, 110), vy: -rand(40, 170), gravity: 280, life: rand(0.35, 0.7), size: rand(1.6, 3), color: Math.random() < 0.5 ? '#ffffff' : '#bfe0ff', shape: Math.random() < 0.4 ? 'star' : 'circle' });
-        if (Math.random() < dt * 8) FX.emit({ x: MGX + rand(-18, 18), y: MGPAN - 70, vx: rand(-6, 6), vy: -rand(30, 60), life: 1.2, size: 8, grow: 14, color: '#f3f5f8', shape: 'smoke', alpha: 0.75 });
+        for (let i = 0; i < 2; i++) if (Math.random() < dt * 40) FX.emit({ x: MGX + rand(-36, 36), y: MGPAN - 90 + rand(-8, 8), vx: rand(-110, 110), vy: -rand(40, 170), gravity: 280, life: rand(0.35, 0.7), size: rand(1.6, 3), color: Math.random() < 0.5 ? '#ffffff' : '#bfe0ff', shape: Math.random() < 0.4 ? 'star' : 'circle' });
+        if (Math.random() < dt * 8) FX.emit({ x: MGX + rand(-26, 26), y: MGPAN - 100, vx: rand(-6, 6), vy: -rand(30, 60), life: 1.2, size: 8, grow: 14, color: '#f3f5f8', shape: 'smoke', alpha: 0.75 });
         if (MG.p >= 1) {
           MG.phase = 'done'; sfx.thud();
           tw(MG, { bp: 1 }, 0.9, 'outCubic', { essential: true });
           if (!MG.hist.some((h) => h.a === MG.amt)) { MG.hist.push({ a: MG.amt, pop: 0 }); const h = MG.hist[MG.hist.length - 1]; tw(h, { pop: 1 }, 0.5, 'outBack', { essential: true }); MG.hist.sort((a, b) => a.a - b.a); }
-          later(0.5, () => okFx(MGX, MGPAN - 80, COL.good));
+          later(0.5, () => okFx(MGX, MGPAN - 100, COL.good));
           syncControls();
         }
       } else MG.flame = SciSim.approach(MG.flame, 0, dt, 9);
@@ -806,8 +806,8 @@
     },
     draw(t) {
       room(); bench();
-      balance(MGX - 95, MGPAN - 26 - 0, 190, MG.scale, { dec: 1 });
-      txt('전자저울', MGX, MGPAN + 62, 13, COL.muted, 'center', 800);
+      balance(MGX - 115, MGPAN - 26, 230, MG.scale, { dec: 1 });
+      txt('전자저울', MGX, MGPAN + 66, 13, COL.muted, 'center', 800);
       // 도가니: 리본 → 흰 가루
       const burnP = MG.p;
       crucible(MGX, MGPAN - 2, () => {
@@ -825,14 +825,14 @@
           ctx.stroke();
           ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = 1.6; ctx.stroke();
         }
-      });
+      }, MCS);
       if (MG.flame > 0.03) {
-        const fy = MGPAN - 56;
-        D.flame(MGX, fy, 88 * MG.flame, t, { base: 'rgba(255,255,255,.98)', core: 'rgba(120,180,255,.95)', glow: '#bfe6ff' });
-        D.glow(MGX, fy - 20, 110 * MG.flame, '#ffffff', 0.5 * MG.flame);
+        const fy = MGPAN - 80;
+        D.flame(MGX, fy, 128 * MG.flame, t, { base: 'rgba(255,255,255,.98)', core: 'rgba(120,180,255,.95)', glow: '#bfe6ff' });
+        D.glow(MGX, fy - 30, 150 * MG.flame, '#ffffff', 0.5 * MG.flame);
       }
-      txt(MG.phase === 'done' ? '흰색 산화 마그네슘(MgO)' : '은백색 마그네슘(Mg)', MGX, 214, 14, COL.ink, 'center', 800);
-      D.label(MGX, 246, '마그네슘 ' + MG.amt + ' g', { bg: '#475569', size: 14 });
+      txt(MG.phase === 'done' ? '흰색 산화 마그네슘(MgO)' : '은백색 마그네슘(Mg)', MGX, 128, 15, COL.ink, 'center', 800);
+      D.label(MGX, 160, '마그네슘 ' + MG.amt + ' g', { bg: '#475569', size: 14 });
       // 막대
       const X = 420, W = 362, base = 304, k = 14.5;
       panel(X, 16, W, 332);
