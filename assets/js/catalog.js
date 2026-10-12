@@ -888,8 +888,7 @@ window.SCI_CATALOG = {
                 "퇴적암",
                 "변성암",
                 "순환"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m2-weathering",
