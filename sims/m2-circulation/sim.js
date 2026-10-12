@@ -580,7 +580,7 @@
   /* =========================================================
      장면 ② 혈관: 동맥 · 정맥 · 모세 혈관
      ========================================================= */
-  const VPW = 236, VPH = 372, VPY = 40, VPX = [28, 274, 520];
+  const VPW = 236, VPH = 380, VPY = 48, VPX = [28, 274, 520];
   const VESSELS = [
     { k: 'artery', name: '동맥', cap: '심장에서 나가는 혈액', callout: ['두껍고 탄력 있는 벽', '힘 있게 나가는 혈액을 견뎌요'], col: RED },
     { k: 'vein', name: '정맥', cap: '심장으로 돌아오는 혈액', callout: ['얇은 벽 + 판막', '혈액이 거꾸로 흐르지 않아요'], col: BLUE },
@@ -598,7 +598,7 @@
       { id: 'cap', lines: ['벽이 한 층의 세포로 얇아요', '온몸에 그물처럼 퍼져 있어요'], color: '#a855f7' },
     ];
     const order = [2, 0, 1];
-    const cards = order.map((di, i) => Object.assign({ hx: VPX[i] + 7, hy: 446, w: 222, h: 84, fs: 13.5 }, defs[di]));
+    const cards = order.map((di, i) => Object.assign({ hx: VPX[i] + 7, hy: 470, w: 222, h: 84, fs: 13.5 }, defs[di]));
     const tg = defs.map((d, i) => ({ id: d.id, x: VPX[i] + 7, y: VPY + VPH - 92, w: 222, h: 84, r: 12, hit: { x: VPX[i] - 8, y: VPY - 6, w: VPW + 16, h: VPH + 12 },
       draw(tt, st) {
         ctx.save();
@@ -727,10 +727,10 @@
   }
   function drawVessel(t) {
     for (let i = 0; i < 3; i++) drawVesselPanel(i, t);
-    if (VS.cardsOn) txt('📇 설명 카드를 끌어 알맞은 혈관의 칸에 놓아요', 30, 434, { size: 14.5, weight: 800, color: '#15803d' });
+    if (VS.cardsOn) txt('📇 설명 카드를 끌어 알맞은 혈관의 칸에 놓아요', 30, 458, { size: 14.5, weight: 800, color: '#15803d' });
     VS.cards.draw(t);
     if (VS.solved && !VS.cardsOn) {
-      pill('○ 산소   ● 이산화 탄소  — 모세 혈관에서 서로 바꿔요', 400, 432, { size: 13, bg: '#f1f5f9', color: '#475569', h: 26, pad: 12 });
+      pill('○ 산소   ● 이산화 탄소  — 모세 혈관에서 서로 바꿔요', 400, 450, { size: 13, bg: '#f1f5f9', color: '#475569', h: 26, pad: 12 });
     }
   }
   const vesselHandlers = {
@@ -1054,7 +1054,7 @@
       ctx.lineWidth = 6; ctx.strokeStyle = WALL; ctx.stroke();
     });
     ctx.restore();
-    RCHAM.forEach((c) => txt(c[6], c[1] + c[3] / 2, c[2] + c[4] - 8, { size: 12.5, weight: 800, color: c[5] === 'L' ? RED_D : BLUE_D, align: 'center' }));
+    RCHAM.forEach((c) => txt(c[6], c[1] + 9, c[0] === 'RA' || c[0] === 'LA' ? c[2] + 17 : c[2] + c[4] - 8, { size: 12.5, weight: 800, color: c[5] === 'L' ? RED_D : BLUE_D }));
   }
   function revealed(s) { return R.mode === 'all' || (R.mode === 'run' && s <= R.maxS + 1); }
   function drawRouteTubes(t) {
@@ -1149,7 +1149,7 @@
   }
   function drawRoutePanels(t) {
     // 오른쪽: 설명
-    panel(596, 44, 194, 232, { r: 16 });
+    panel(596, 44, 194, 176, { r: 16 });
     txt(R.mode === 'paint' ? '🎨 혈관 칠하기' : '지금 혈액은', 610, 72, { size: 14.5, weight: 800, color: '#64748b' });
     const msg = R.mode === 'paint' ? '네 혈관을 눌러 혈액의 색을 칠해요. 눌러서 🔴 산소 많음 / 🔵 산소 적음을 골라요.' : R.mode === 'all' && !R.vis.END ? '혈액 방울이나 ‘자동으로 흐르게’로 경로를 다시 따라가 봐요.' : R.msg;
     wrapLines(msg, 168, 14).forEach((ln, i) => txt(ln, 610, 100 + i * 21, { size: 14, weight: 700, color: '#1b2333' }));
@@ -1161,9 +1161,9 @@
       txt(q[0], 58, y + 6, { size: 16, weight: 800, color: q[1] ? '#15803d' : '#475569' });
     });
     // 범례
-    panel(596, 292, 194, 78, { r: 14 });
-    bead(616, 316, 7, RED, { noShadow: true }); txt('산소가 많은 혈액', 630, 321, { size: 13.5, weight: 800, color: RED_D });
-    bead(616, 346, 7, BLUE, { noShadow: true }); txt('산소가 적은 혈액', 630, 351, { size: 13.5, weight: 800, color: BLUE_D });
+    panel(596, 236, 194, 78, { r: 14 });
+    bead(616, 260, 7, RED, { noShadow: true }); txt('산소가 많은 혈액', 630, 265, { size: 13.5, weight: 800, color: RED_D });
+    bead(616, 290, 7, BLUE, { noShadow: true }); txt('산소가 적은 혈액', 630, 295, { size: 13.5, weight: 800, color: BLUE_D });
   }
   function paintVesselAt(p) {
     const q = nearestS(RPOLY, p.x, p.y, 0, RL);
@@ -1203,13 +1203,13 @@
     { id: 'pul', name: '폐순환', sub: '우심실에서 출발해 폐를 돌아요', col: '#0d9488', items: [['RV', '우심실', BLUE], ['PA', '폐동맥', BLUE], ['LUNG', '폐 모세 혈관', '#a855f7'], ['PV', '폐정맥', RED], ['LA', '좌심방', RED]] },
   ];
   const OS = { cards: new CardSet(), flag: {}, done: false, t0: -9, nWrong: 0 };
-  const OSX = (i) => 47 + i * 146, OSY = [134, 262];
+  const OSX = (i) => 47 + i * 146, OSY = [112, 242];
   function initOrder() {
     const R2 = rng(5);
     const cards = [], tg = [];
     ORD_LANES.forEach((ln, li) => ln.items.forEach((it, i) => {
-      cards.push({ id: ln.id + i, label: it[1], dot: it[2], w: 120, h: 48, fs: 15, color: ln.col, hx: 0, hy: 0 });
-      tg.push({ id: ln.id + i, x: OSX(i), y: OSY[li], w: 124, h: 54, r: 12, num: i + 1, lane: li,
+      cards.push({ id: ln.id + i, label: it[1], dot: it[2], w: 120, h: 52, fs: 16, color: ln.col, hx: 0, hy: 0 });
+      tg.push({ id: ln.id + i, x: OSX(i), y: OSY[li], w: 124, h: 58, r: 12, num: i + 1, lane: li,
         draw(tt, st) {
           ctx.save();
           rr(tt.x, tt.y, tt.w, tt.h, 12);
@@ -1221,7 +1221,7 @@
     }));
     // 섞어서 아래에 늘어놓기
     const order = cards.map((_, i) => i).sort(() => R2() - 0.5);
-    order.forEach((ci, k) => { const c = cards[ci]; c.hx = 49 + (k % 5) * 146 + 2; c.hy = 400 + Math.floor(k / 5) * 66; });
+    order.forEach((ci, k) => { const c = cards[ci]; c.hx = 49 + (k % 5) * 146 + 2; c.hy = 410 + Math.floor(k / 5) * 74; });
     OS.cards.setup(cards, tg);
     OS.flag = {}; OS.done = false; OS.t0 = -9;
   }
@@ -1232,12 +1232,12 @@
       pill(ln.name, OSX(0), y - 38, { size: 16, bg: ln.col, h: 28, pad: 14, align: 'left', shadow: true });
       txt(ln.sub, OSX(0) + 92, y - 33, { size: 14, weight: 700, color: '#475569' });
       for (let i = 0; i < 4; i++) {
-        const ax = OSX(i) + 124 + 11, ay = y + 27;
+        const ax = OSX(i) + 124 + 11, ay = y + 29;
         ctx.fillStyle = '#94a3b8'; ctx.beginPath(); ctx.moveTo(ax - 7, ay - 7); ctx.lineTo(ax + 7, ay); ctx.lineTo(ax - 7, ay + 7); ctx.closePath(); ctx.fill();
       }
     });
-    ctx.save(); ctx.strokeStyle = 'rgba(71,85,105,.25)'; ctx.setLineDash([4, 6]); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(40, 372); ctx.lineTo(760, 372); ctx.stroke(); ctx.restore();
-    txt('🃏 카드를 끌어 순서대로 놓아요', 47, 394, { size: 14.5, weight: 800, color: '#15803d' });
+    ctx.save(); ctx.strokeStyle = 'rgba(71,85,105,.25)'; ctx.setLineDash([4, 6]); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(40, 352); ctx.lineTo(760, 352); ctx.stroke(); ctx.restore();
+    txt('🃏 카드를 끌어 순서대로 놓아요', 47, 386, { size: 14.5, weight: 800, color: '#15803d' });
     OS.cards.draw(t);
     // 발표 애니메이션
     if (OS.done) {
@@ -1246,7 +1246,7 @@
         const u = clamp(age / 6, 0, 1), k = u * 9.999, li = Math.floor(k / 5), i = Math.floor(k % 5), f = k % 1;
         const idx = Math.min(4, i);
         const x0 = OSX(idx) + 62, nx = OSX(Math.min(4, idx + 1)) + 62;
-        const x = lerp(x0, nx, idx < 4 ? EASE.inOutCubic ? EASE.inOutCubic(f) : f : 0), y = OSY[li] + 27;
+        const x = lerp(x0, nx, idx < 4 ? EASE.inOutCubic ? EASE.inOutCubic(f) : f : 0), y = OSY[li] + 29;
         const q = ORD_LANES[li].items[idx];
         ctx.save(); ctx.shadowColor = rgba(q[2], 0.7); ctx.shadowBlur = 16;
         bead(x, y - 40 - 4 * Math.sin(age * 8), 10, q[2]); ctx.restore();
