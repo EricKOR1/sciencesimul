@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0ea5e9">
+  <title>우리은하와 성운·성단 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌌</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-card { background: #050a1a; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    .seg-label { display: block; font-weight: 800; font-size: 14.5px; color: var(--muted); margin-bottom: 6px; }
+    .segmented { display: flex; width: 100%; }
+    .segmented button { flex: 1 1 auto; min-height: 44px; padding: 6px 8px; font-size: 14.5px; }
+    .segmented button.on { color: #075985; }
+    .is-off { display: none !important; }
+    .ctrl-note { margin: 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    .btn-sm { min-height: 44px; }
+    .game-foot button { min-height: 44px; }
+    .mission-figure svg, .note-fig svg { max-width: 100%; height: auto; border-radius: 12px; }
+    .note-fig { margin: 6px 0; text-align: center; }
+  </style>
+</head>
+<body class="sim-page" data-subject="earth">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#g2">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">중2 · Ⅷ. 별과 우주</div>
+      <h1>우리은하와 성운·성단</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-canvas"><canvas id="cv" aria-label="밤하늘의 은하수, 회전하는 우리은하 모형, 산개 성단과 구상 성단 카드, 성운의 빛 원리 그림"></canvas></div>
+      </section>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" id="cScene" data-feature="disc">
+          <span class="seg-label">🧭 화면</span>
+          <div class="segmented" id="sceneSeg" role="group" aria-label="화면 고르기">
+            <button type="button" data-s="sky">🌠 은하수</button>
+            <button type="button" data-s="disc" data-feature="disc">🌌 모형</button>
+            <button type="button" data-s="cluster" data-feature="cluster">⭐ 성단</button>
+            <button type="button" data-s="nebula" data-feature="nebula">🌫️ 성운</button>
+          </div>
+        </div>
+        <div class="control" id="cSeason" data-feature="sky">
+          <span class="seg-label">🌙 계절의 밤하늘</span>
+          <div class="segmented" id="seasonSeg" role="group" aria-label="계절 고르기">
+            <button type="button" data-v="summer">🌞 여름밤</button><button type="button" data-v="winter">❄️ 겨울밤</button>
+          </div>
+          <p class="ctrl-note" id="skyNote">하늘을 눌러 은하수의 밝기를 재 봐요.</p>
+        </div>
+        <div class="control" id="cView" data-feature="disc">
+          <span class="seg-label">🔭 보는 방향</span>
+          <div class="segmented" id="viewSeg" role="group" aria-label="보는 방향">
+            <button type="button" data-v="top">⬆️ 위에서</button><button type="button" data-v="side">➡️ 옆에서</button>
+          </div>
+          <p class="ctrl-note">모형을 끌어서 돌려 볼 수도 있어요.</p>
+        </div>
+        <div class="control" id="cNeb" data-feature="nebula">
+          <span class="seg-label">💡 성운의 빛 원리</span>
+          <div class="segmented" id="nebSeg" role="group" aria-label="성운 종류">
+            <button type="button" data-v="0">방출</button><button type="button" data-v="1">반사</button><button type="button" data-v="2">암흑</button>
+          </div>
+        </div>
+        <div class="control" id="cReset" data-feature="cluster">
+          <button class="btn btn-sm" id="resetBtn" type="button">↺ 카드 되돌리기</button>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

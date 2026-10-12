@@ -143,6 +143,22 @@
   }
   const mark = (ok) => (ok ? '✅' : '⬜');
 
+  /* 줄 바꿈(띄어쓰기 기준) */
+  function wrapLines(s, maxW, size) {
+    ctx.font = font(size, 700);
+    const out = []; let cur = '';
+    const w = (q) => ctx.measureText(q).width;
+    s.split(' ').forEach((tok) => {
+      const test = cur ? cur + ' ' + tok : tok;
+      if (w(test) <= maxW) { cur = test; return; }
+      if (cur) { out.push(cur); cur = ''; }
+      if (w(tok) <= maxW) { cur = tok; return; }
+      for (const ch of tok) { if (w(cur + ch) > maxW && cur) { out.push(cur); cur = ch; } else cur += ch; }
+    });
+    if (cur) out.push(cur);
+    return out;
+  }
+
   /* ---------- 경로(스플라인) 도우미 ---------- */
   function splineSample(keys, per) {
     const n = keys.length, out = []; let L = 0;
@@ -193,13 +209,13 @@
 
   /* ---------- 끌어다 놓는 카드 ---------- */
   class CardSet {
-    constructor() { this.cards = []; this.targets = []; this.drag = null; this.enabled = false; this.hover = null; }
+    constructor() { this.cards = []; this.targets = []; this.drag = null; this.enabled = true; this.hover = null; }
     setup(cards, targets) {
       this.cards = cards; this.targets = targets; this.drag = null; this.hover = null;
       cards.forEach((c) => { c.slot = null; c.x = c.hx; c.y = c.hy; c.lift = 0; c.shake = 0; c.mark = null; if (c.w == null) c.w = 110; if (c.h == null) c.h = 44; });
     }
     targetOf(c) { return c.slot ? this.targets.find((t) => t.id === c.slot) : null; }
-    restPos(c) { const t = this.targetOf(c); return t ? { x: t.x + t.w / 2 - c.w / 2, y: t.y + t.h / 2 - c.h / 2 } : { x: c.hx, y: c.hy }; }
+    restPos(c) { const t = this.targetOf(c); return t ? { x: t.x + t.w / 2 - c.w / 2, y: t.y + t.h / 2 - c.h / 2 + (t.dy || 0) } : { x: c.hx, y: c.hy }; }
     snap(c, animate) {
       const r = this.restPos(c);
       if (animate) SciSim.tween(c, { x: r.x, y: r.y }, { duration: 0.45, ease: 'outBack' }); else { c.x = r.x; c.y = r.y; }
@@ -548,16 +564,6 @@
     bead(x + 30, ly + 46, 8, BLUE, { noShadow: true }); txt('산소가 적은 혈액', x + 46, ly + 51, { size: 14, weight: 800, color: BLUE_D });
     txt('(왼쪽 심장 = 빨강, 오른쪽 심장 = 파랑)', x + 18, ly + 72, { size: 11.5, weight: 700, color: '#64748b' });
   }
-  function wrapLines(s, maxW, size) {
-    ctx.font = font(size, 700);
-    const out = []; let cur = '';
-    for (const ch of s) {
-      const test = cur + ch;
-      if (ctx.measureText(test).width > maxW && cur) { out.push(cur.trim()); cur = ch; } else cur = test;
-    }
-    if (cur.trim()) out.push(cur.trim());
-    return out;
-  }
   function drawHeartCardsExtra(t) {
     txt('🏷️ 이름표를 알맞은 방에 놓아요', 568, 380, { size: 14, weight: 800, color: '#15803d' });
     ['RA', 'RV', 'LA', 'LV'].forEach((k) => {
@@ -571,10 +577,10 @@
     });
   }
   const heartHandlers = {
-    down(p) { return HT.cards.down(p); },
+    down(p) { return HT.cardsOn && HT.cards.down(p); },
     move(p) { HT.cards.move(p); },
     up() { HT.cards.up(); },
-    hover(p) { return HT.cards.cursor(p); },
+    hover(p) { return HT.cardsOn ? HT.cards.cursor(p) : null; },
   };
 
   /* =========================================================
@@ -666,8 +672,8 @@
       ctx.fillStyle = '#9fb3e8'; rr(x0 - 8, cy - h1 / 2, x1 - x0 + 16, h1, 8); ctx.fill();
       ctx.fillStyle = '#dbe6ff'; ctx.fillRect(x0 - 8, cy - h3 / 2, x1 - x0 + 16, h3);
       [70, 150].forEach((vx) => {
-        leaflet(vx - 14, cy - h3 / 2 + 1, vx + 10, cy - 8, 4);
-        leaflet(vx - 14, cy + h3 / 2 - 1, vx + 10, cy + 8, 4);
+        leaflet(vx - 14, cy - h3 / 2 + 1, vx + 12, cy - 15, 4);
+        leaflet(vx - 14, cy + h3 / 2 - 1, vx + 12, cy + 15, 4);
       });
       VS.rb[1].forEach((r) => rbcShape(x0 + r.x, cy + r.y * 22, 9, 6.2, BLUE, Math.sin(r.ph + t * 0.6) * 0.3));
     } else {                // ----- 모세 혈관
@@ -696,16 +702,16 @@
     ctx.beginPath(); ctx.moveTo(20, 76); ctx.lineTo(VPW - 30, 76); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(VPW - 20, 76); ctx.lineTo(VPW - 31, 70); ctx.lineTo(VPW - 31, 82); ctx.fill();
     // 단면
-    const ccx = VPW / 2, ccy = 216;
+    const ccx = VPW / 2, ccy = 200;
     txt('단면', 16, ccy + 4, { size: 12, weight: 800, color: '#94a3b8' });
     if (i === 0) {
-      const r0 = 36 * (1 + 0.04 * pulse);
+      const r0 = 32 * (1 + 0.04 * pulse);
       ctx.fillStyle = '#e8c9a0'; ctx.beginPath(); ctx.arc(ccx, ccy, r0, 0, TAU); ctx.fill();
       ctx.fillStyle = '#d9647a'; ctx.beginPath(); ctx.arc(ccx, ccy, r0 - 8, 0, TAU); ctx.fill();
       ctx.fillStyle = '#ffe7e7'; ctx.beginPath(); ctx.arc(ccx, ccy, 12, 0, TAU); ctx.fill();
     } else if (i === 1) {
-      ctx.fillStyle = '#9fb3e8'; ctx.beginPath(); ctx.ellipse(ccx, ccy, 38, 28, 0, 0, TAU); ctx.fill();
-      ctx.fillStyle = '#dbe6ff'; ctx.beginPath(); ctx.ellipse(ccx, ccy, 33, 23, 0, 0, TAU); ctx.fill();
+      ctx.fillStyle = '#9fb3e8'; ctx.beginPath(); ctx.ellipse(ccx, ccy, 36, 26, 0, 0, TAU); ctx.fill();
+      ctx.fillStyle = '#dbe6ff'; ctx.beginPath(); ctx.ellipse(ccx, ccy, 31, 21, 0, 0, TAU); ctx.fill();
     } else {
       ctx.fillStyle = '#c8a1e8'; ctx.beginPath(); ctx.arc(ccx, ccy, 18, 0, TAU); ctx.fill();
       ctx.fillStyle = '#f3e8ff'; ctx.beginPath(); ctx.arc(ccx, ccy, 14, 0, TAU); ctx.fill();
@@ -715,11 +721,11 @@
     // 설명 말풍선 (정답을 맞힌 뒤 누르면 보여 줘요)
     if (VS.glow[i] > 0.02 && VS.solved) {
       ctx.save(); ctx.globalAlpha = VS.glow[i];
-      const yy = 262;
+      const yy = 250;
       pill(v.callout[0], VPW / 2, yy, { size: 13.5, bg: v.col, h: 26, pad: 10 });
-      txt(v.callout[1], VPW / 2, yy + 28, { size: 12, weight: 700, color: '#475569', align: 'center', max: VPW - 20 });
+      txt(v.callout[1], VPW / 2, yy + 27, { size: 12, weight: 700, color: '#475569', align: 'center', max: VPW - 20 });
       ctx.restore();
-    } else if (VS.solved && !VS.cardsOn) txt('눌러 보세요', VPW / 2, 270, { size: 12, weight: 800, color: '#94a3b8', align: 'center' });
+    } else if (VS.solved && !VS.cardsOn) txt('눌러 보세요', VPW / 2, 262, { size: 12, weight: 800, color: '#94a3b8', align: 'center' });
     if (i === 2 && VS.solved) { // 범례
       ctx.save(); ctx.globalAlpha = VS.glow[2] > 0.5 ? 0 : 1; ctx.restore();
     }
@@ -730,19 +736,19 @@
     if (VS.cardsOn) txt('📇 설명 카드를 끌어 알맞은 혈관의 칸에 놓아요', 30, 458, { size: 14.5, weight: 800, color: '#15803d' });
     VS.cards.draw(t);
     if (VS.solved && !VS.cardsOn) {
-      pill('○ 산소   ● 이산화 탄소  — 모세 혈관에서 서로 바꿔요', 400, 450, { size: 13, bg: '#f1f5f9', color: '#475569', h: 26, pad: 12 });
+      pill('🔵 산소   ⚫ 이산화 탄소  — 모세 혈관에서 서로 바꿔요', 400, 450, { size: 13, bg: '#f1f5f9', color: '#475569', h: 26, pad: 12 });
     }
   }
   const vesselHandlers = {
     down(p) {
-      if (VS.cards.down(p)) return true;
+      if (VS.cardsOn && VS.cards.down(p)) return true;
       const i = VPX.findIndex((x) => p.x >= x && p.x <= x + VPW);
       if (i >= 0 && p.y >= VPY && p.y <= VPY + VPH && !VS.cardsOn) { VS.sel = VS.sel === i ? -1 : i; Sound.click(); }
       return false;
     },
     move(p) { VS.cards.move(p); },
     up() { VS.cards.up(); },
-    hover(p) { const c = VS.cards.cursor(p); if (c) return c; const i = VPX.findIndex((x) => p.x >= x && p.x <= x + VPW); return i >= 0 && p.y > VPY && p.y < VPY + VPH && VS.solved ? 'pointer' : null; },
+    hover(p) { const c = VS.cardsOn ? VS.cards.cursor(p) : null; if (c) return c; const i = VPX.findIndex((x) => p.x >= x && p.x <= x + VPW); return i >= 0 && p.y > VPY && p.y < VPY + VPH && VS.solved ? 'pointer' : null; },
   };
 
   /* =========================================================
@@ -1018,7 +1024,7 @@
     R.s = SciSim.approach(R.s, R.ts, dt, R.drag ? 16 : 9);
     if (Math.abs(R.s - R.ts) < 0.3) R.s = R.ts;
     R.maxS = Math.max(R.maxS, R.s);
-    RT_SEQ.forEach((k) => { if (!R.vis[k] && R.s >= RS[k] - 1.5) onTag(k); });
+    RT_SEQ.forEach((k) => { if (!R.vis[k] && R.s >= RS[k] - 14) onTag(k); });
     R.dots.forEach((d) => { d.s += 62 * dt; if (d.s > RL) d.s -= RL; });
   }
   function syncRouteUI() {
@@ -1117,7 +1123,7 @@
       const shown = R.mode === 'all' || R.mode === 'paint' || R.vis[k];
       if (!shown) return;
       const q = atLen(RPOLY, (v.a + v.b) / 2);
-      const off = { PA: [-48, -6], PV: [50, 0], AO: [48, 6], VC: [-44, 0] }[k];
+      const off = { PA: [-48, -6], PV: [-54, 0], AO: [48, 6], VC: [-44, 0] }[k];
       const sh = R.shakeV[k] ? Math.sin(t * 60) * 5 * R.shakeV[k] : 0;
       let col = '#475569', bg = '#fff';
       if (R.mode === 'paint') { const pc = R.paint[k]; if (pc) { bg = pc === 1 ? RED : BLUE; col = '#fff'; } }
@@ -1188,7 +1194,7 @@
       const q = nearestS(RPOLY, p.x, p.y, Math.max(0, R.ts - 40), Math.min(RL, R.ts + RL * 0.1));
       if (q.d < 90) R.ts = q.s;
     },
-    up() { R.drag = false; },
+    up() { R.drag = false; if (R.ts > RL - 26) R.ts = RL; },
     hover(p) {
       if (R.mode === 'paint') return paintVesselAt(p) ? 'pointer' : null;
       const q = atLen(RPOLY, R.s); return Math.hypot(p.x - q.x, p.y - q.y) < 38 ? 'grab' : null;
@@ -1242,6 +1248,12 @@
     // 발표 애니메이션
     if (OS.done) {
       const age = now() - OS.t0;
+      panel(47, 396, 706, 128, { r: 16, bg: '#fff' });
+      txt('📣 이렇게 발표해 보세요', 64, 424, { size: 15, weight: 800, color: '#15803d' });
+      ORD_LANES.forEach((ln, li) => {
+        pill(ln.name, 64, 458 + li * 40, { size: 14, bg: ln.col, h: 26, pad: 11, align: 'left' });
+        txt(ln.items.map((q) => q[1]).join(' → '), 156, 464 + li * 40, { size: 15, weight: 800, color: '#1b2333', max: 580 });
+      });
       if (age < 7) {
         const u = clamp(age / 6, 0, 1), k = u * 9.999, li = Math.floor(k / 5), i = Math.floor(k % 5), f = k % 1;
         const idx = Math.min(4, i);

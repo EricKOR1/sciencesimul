@@ -654,7 +654,7 @@
       const a = (180 + (m - 1) * 30) * DEG, c = Math.cos(a), s = Math.sin(a);
       ctx.strokeStyle = 'rgba(190,225,255,.8)'; ctx.lineWidth = 2;
       ctx.beginPath(); ctx.moveTo(cx + c * (R - 6), sunY - s * (R - 6)); ctx.lineTo(cx + c * (R + 6), sunY - s * (R + 6)); ctx.stroke();
-      if (mode !== 'dist' && !(wasOrbit && (m === 1 || m === 7) && hasLabel(m)) && !(S.options && (m === 4 || m === 10))) txt(ctx, m + '월', cx + c * (R + 26) + (m === 4 || m === 10 ? 20 : 0), sunY - s * (R + 26) + 5, 13, '#bfe3ff', { weight: 800 });
+      if (mode !== 'dist' && !(wasOrbit && (m === 1 || m === 7) && hasLabel(m)) && !(S.options && (m === 4 || m === 10))) txt(ctx, m + '월', cx + c * (R + (m === 1 || m === 7 ? 40 : 26)) + (m === 4 || m === 10 ? 20 : 0), sunY - s * (R + (m === 1 || m === 7 ? 40 : 26)) + 5, 13, '#bfe3ff', { weight: 800 });
     });
     ctx.restore();
     const pairShow = mode === 'dist' || S.pair;
@@ -1120,7 +1120,7 @@
       const show = (id, vis) => $('#' + id).classList.toggle('is-off', !vis);
       show('cEye', sc === 'pencil'); show('cPencil', sc === 'pencil'); show('cMonth', sc === 'orbit'); show('cShot', sc === 'orbit');
       show('cDist', sc === 'dist'); show('cRec', sc === 'dist'); show('recCard', sc === 'dist');
-      show('ctrlCard', sc !== 'map'); show('readouts', sc !== 'map');
+      $('#ctrlCard').hidden = sc === 'map'; show('readouts', sc !== 'map');
       show('spinBtn', !!(S.photos.length || free));
       show('sceneTabs', free);
       document.querySelectorAll('#sceneTabs button').forEach((b) => b.classList.toggle('on', b.getAttribute('data-scene') === sc));
