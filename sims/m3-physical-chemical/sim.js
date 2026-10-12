@@ -707,7 +707,7 @@
   const SC = {};
   const DR = { fn: null };
   const FIRE = new SciSim.Particles();         // 불꽃 · 불티 (밝게 겹쳐 그림)
-  function drawFire() { ctx.save(); ctx.globalCompositeOperation = 'lighter'; FIRE.draw(ctx); ctx.restore(); }
+  function drawFire() { FIRE.draw(ctx); }
   const SCENE_LABEL = {
     obs: '📄 종이와 설탕을 두 가지 방법으로 바꿔 봐요',
     lab: '🧪 네 실험대에서 새 물질의 증거를 찾아요',
@@ -823,14 +823,16 @@
   function resetItem(id) {
     if (id === 'cut' || id === 'burn') {
       const P = OB.paper; P.state = 'fresh'; P.p = -0.2; P.cutA = 0; P.cutB = 0; P.ap1 = 0; P.ap2 = 0; P.match = 0; P.ash = 0;
+    } else if (id === 'heat') {
+      const G = OB.sugar; G.heatQ = 0; G.state = 'fresh'; G.lampOn = 0; G.bubble = 0;
     } else {
-      const G = OB.sugar; G.diss = 0; G.heatQ = 0; G.state = 'fresh'; G.lampOn = 0; G.bubble = 0;
-      G.cubes = [0, 1, 2].map((i) => ({ x: 285 + i * 3, y: 358 - i * 17, s: 1, st: 'plate', t: 0, rot: rand(-0.2, 0.2) }));
+      const G = OB.sugar; G.diss = 0;
+      G.cubes = [0, 1, 2].map((i) => ({ x: 285 + i * 3, y: 378 - i * 17, s: 1, st: 'plate', t: 0, rot: rand(-0.2, 0.2) }));
     }
   }
   function obsReset(hard) {
     OB.act = null; FIRE.clear(); FX.clear();
-    ['cut', 'sugar'].forEach((k) => resetItem(k === 'cut' ? 'cut' : 'dissolve'));
+    resetItem('cut'); resetItem('dissolve'); resetItem('heat');
     OB.matGoal = OB.mat === 'paper' ? 0 : 0;
     obsUI();
   }
@@ -1082,7 +1084,7 @@
     return { tx: cx, ty: cy - MAT_H / 2 - 20, ang: Math.PI / 2, on: false };
   }
   function drawScissors(tx, ty, ang, open, alpha) {
-    const L = 84;
+    const L = 104;
     ctx.save(); ctx.globalAlpha *= alpha; ctx.translate(tx, ty); ctx.rotate(ang); ctx.translate(-L, 0);
     softShadow(0, -10, L + 10, 20, 8, 8, 6, 'rgba(0,0,0,.25)');
     [-1, 1].forEach((s) => {
@@ -1287,7 +1289,7 @@
   // 자르는 중에는 종이 위에 눌려 있던 연기 등이 없으므로, 장면 위 효과는 공통 FX가 그림
   SC.obs.status = () => ACT_IDS.map((id) => ACT[id].icon + ' ' + ACT[id].name.replace(/종이 |설탕 /, '') + ' ' + mark(OB.done[id])).join(' · ');
   OB.view = 'front';
-  resetItem('cut'); resetItem('dissolve');
+  resetItem('cut'); resetItem('dissolve'); resetItem('heat');
 
   /* =========================================================
      ② 실험 — 새 물질이 생긴 증거 4가지 (실험대 4개 + 증거 스티커)

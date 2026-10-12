@@ -695,11 +695,10 @@
       D.roundRect(0, 0, t.w, t.h, t.h / 2); ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 2; ctx.stroke();
     }
     if (showWrong) { D.roundRect(-2, -2, t.w + 4, t.h + 4, 13); ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 3.5; ctx.stroke(); }
-    if (S.sortDone && t.zone >= 0 && (kind === 'c' ? S.sortDone === 'c' || true : true)) { /* 완료 표시는 아래 */ }
     if (kind === 'c') {
-      const lines = wrap(t.text, t.w - 16, f(13, 700));
-      const lh = 17, y0 = t.h / 2 - ((lines.length - 1) * lh) / 2 + 4.5;
-      lines.forEach((ln, i) => txt(t.w / 2, y0 + i * lh, ln, { size: 13, weight: 700, color: t.ink }));
+      const lines = wrap(t.text, t.w - 14, f(14, 700));
+      const lh = 18, y0 = t.h / 2 - ((lines.length - 1) * lh) / 2 + 5;
+      lines.forEach((ln, i) => txt(t.w / 2, y0 + i * lh, ln, { size: 14, weight: 700, color: t.ink }));
     } else {
       txt(t.w / 2, t.h / 2 + 5.5, t.text, { size: 16, weight: 800, color: t.ink });
     }
@@ -1064,7 +1063,6 @@
     const w = wrongNow() && active;
     if (w && !S.wrongShown) { [CTOK, NTOK].forEach((list) => list.forEach((tk) => { if (tk.wrong && tk.zone >= 0) tk.shake = 1; })); Sound.fail(); }
     S.wrongShown = w;
-    if (!w) [CTOK, NTOK].forEach((list) => list.forEach((tk) => { if (!tk.zone) { /* noop */ } }));
     FX.update(dt);
   }
   function draw(t) {
