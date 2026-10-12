@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#16a34a">
+  <title>광합성과 환경 요인 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-toolbar { min-height: 61px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+    #resetBtn { font-size: 20px; }
+    .stage-toolbar .segmented button { min-height: 44px; padding: 6px 12px; font-size: 14.5px; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    .ctrl-note { font-size: 13.5px; color: var(--muted); margin: 8px 0 0; line-height: 1.45; }
+    .btn-block { min-height: 52px; font-size: 17px; }
+    .btn-row { display: flex; gap: 8px; }
+    .btn-row .btn { flex: 1; min-height: 48px; }
+    .opt-seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
+    .opt-seg.two { grid-template-columns: 1fr 1fr; }
+    .opt-seg button {
+      min-height: 48px; border-radius: 12px; border: 2px solid var(--line); background: var(--surface); color: var(--ink);
+      font-weight: 800; font-size: 15px; cursor: pointer; padding: 6px 6px; line-height: 1.25;
+    }
+    .opt-seg button small { display: block; font-size: 12px; font-weight: 700; color: var(--muted); }
+    .opt-seg button[aria-pressed="true"] { border-color: var(--subject); background: #eaf8ee; color: #0f5a2c; box-shadow: 0 0 0 3px color-mix(in srgb, var(--subject) 18%, transparent); }
+    .tgl {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 46px; width: 100%;
+      border: 2px solid var(--line); background: var(--surface); color: var(--muted);
+      border-radius: 12px; padding: 5px 14px; font-weight: 800; font-size: 15px; cursor: pointer;
+    }
+    .tgl[aria-pressed="true"] { color: #0f5a2c; border-color: #86d9a0; background: #eaf8ee; }
+    .readout .value.word { font-family: var(--font); font-size: 17px; line-height: 1.5; overflow: hidden; text-overflow: ellipsis; }
+    .mission-figure svg { border-radius: 12px; max-width: 100%; height: auto; }
+    button[disabled].btn { opacity: .55; cursor: not-allowed; }
+    .dz { display: grid; grid-template-columns: 1fr auto; gap: 6px 8px; align-items: center; }
+    .dz .dz-name { font-weight: 800; font-size: 15px; line-height: 1.2; }
+    .dz .dz-name small { display: block; font-size: 12px; color: var(--muted); font-weight: 700; }
+    .dz .dz-pair { display: inline-flex; gap: 4px; }
+    .dz .dz-pair button {
+      min-height: 44px; min-width: 62px; border-radius: 10px; border: 2px solid var(--line); background: var(--surface);
+      font-weight: 800; font-size: 14.5px; cursor: pointer; color: var(--muted);
+    }
+    .dz .dz-pair button[data-v="diff"][aria-pressed="true"] { border-color: #f59e0b; background: #fff4de; color: #92400e; }
+    .dz .dz-pair button[data-v="same"][aria-pressed="true"] { border-color: #86d9a0; background: #eaf8ee; color: #0f5a2c; }
+    .dz-head { font-weight: 800; font-size: 15.5px; margin-bottom: 8px; }
+    @media (max-width: 599px) {
+      .stage-toolbar { min-height: 0; }
+      .stage-toolbar .segmented { width: 100%; }
+      .stage-toolbar .segmented button { flex: 1 1 auto; padding: 6px 6px; font-size: 13.5px; }
+      .readout .value.word { font-size: 15px; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="bio">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#g2">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">중2 · Ⅴ. 식물과 에너지</div>
+      <h1>광합성과 환경 요인</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🍃 잎 속 들여다보기</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="sceneSeg" role="group" aria-label="장면 고르기">
+            <button type="button" data-scene="leaf">🍃 잎 속</button>
+            <button type="button" data-scene="tank">🧪 검정말</button>
+            <button type="button" data-scene="eq">📝 반응식</button>
+            <button type="button" data-scene="farm" data-feature="farm">🏡 비닐하우스</button>
+          </div>
+          <button class="icon-btn" id="resetBtn" type="button" title="처음 상태로" aria-label="처음 상태로">↺</button>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="잎 속 엽록체에서 일어나는 광합성, 검정말의 산소 기포 실험, 광합성 반응식 카드, 비닐하우스 조건 설정 화면"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts" id="readouts">
+        <div class="readout"><span class="label" id="rl1">-</span><span class="value word" id="r1">-</span></div>
+        <div class="readout"><span class="label" id="rl2">-</span><span class="value word" id="r2">-</span></div>
+        <div class="readout"><span class="label" id="rl3">-</span><span class="value word" id="r3">-</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" id="ctlZoom">
+          <div class="opt-seg" id="zoomSeg" role="group" aria-label="확대 단계">
+            <button type="button" data-z="0" aria-pressed="true">🍃 잎<small>눈으로</small></button>
+            <button type="button" data-z="1" aria-pressed="false">🔬 세포<small>현미경</small></button>
+            <button type="button" data-z="2" aria-pressed="false">🟢 엽록체<small>더 확대</small></button>
+          </div>
+          <button class="tgl" id="lightTgl" type="button" aria-pressed="true">💡 빛 켜짐 (눌러서 끄기)</button>
+          <p class="ctrl-note">단계를 누르거나 잎 위의 🔍 표시를 눌러 확대해요.</p>
+        </div>
+        <div class="control" id="ctlTankNote" hidden>
+          <p class="ctrl-note" style="margin:0">전등을 켠 검정말에서 올라오는 기포를 관찰해요. 어떤 기체일까요?</p>
+        </div>
+        <div class="control" id="ctlTank" hidden data-feature="light">
+          <div class="control-head"><label for="distR">💡 전등 거리</label><output id="distO">20 cm</output></div>
+          <input type="range" id="distR" min="10" max="50" step="5" value="20" aria-label="전등과 비커 사이의 거리">
+          <button class="btn btn-primary btn-block" id="measureBtn" type="button" style="margin-top:12px">⏱ 1분 동안 기포 세기</button>
+          <p class="ctrl-note">거리를 바꾸고 1분 동안 나오는 기포 수를 재요. 다른 거리에서도 반복해요.</p>
+        </div>
+        <div class="control" id="ctlEq" hidden>
+          <button class="btn btn-block" id="eqReset" type="button">↺ 카드 다시 놓기</button>
+          <p class="ctrl-note">카드를 끌어다 알맞은 칸에 놓아요. (카드를 누른 뒤 칸을 눌러도 돼요)</p>
+        </div>
+        <div class="control" id="ctlDesign" hidden data-feature="design">
+          <div class="dz-head" id="dzHead">🧪 실험 설계표</div>
+          <div class="dz" id="dzRows"></div>
+          <button class="btn btn-primary btn-block" id="runBtn" type="button" style="margin-top:12px" disabled>▶ 실험 실행</button>
+          <p class="ctrl-note" id="dzNote">알아보려는 조건만 <b>다르게</b>, 나머지는 모두 <b>같게</b> 정해요.</p>
+        </div>
+        <div class="control" id="ctlFarm" hidden data-feature="farm">
+          <div class="control-head"><label for="fLight">💡 조명 세기</label><output id="fLightO">50 %</output></div>
+          <input type="range" id="fLight" min="0" max="100" step="5" value="50" aria-label="조명 세기">
+          <div class="control-head" style="margin-top:8px"><label for="fCo2">☁️ 이산화 탄소 공급</label><output id="fCo2O">30 %</output></div>
+          <input type="range" id="fCo2" min="0" max="100" step="5" value="30" aria-label="이산화 탄소 공급량">
+          <div class="control-head" style="margin-top:8px"><label for="fTemp">🌡️ 하우스 온도</label><output id="fTempO">20 °C</output></div>
+          <input type="range" id="fTemp" min="10" max="45" step="1" value="20" aria-label="비닐하우스 온도">
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

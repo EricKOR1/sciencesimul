@@ -1274,6 +1274,8 @@
     if (AS.hose) { AS.hose.t += dt; if (AS.hose.t > 1.5) AS.hose = null; }
     if (AS.gas && AS.fill < 1) AS.fill = Math.min(1, AS.fill + dt / 1.0);
     else if (!AS.gas) AS.fill = Math.max(0, AS.fill - dt * 2);
+    const ready = !!(AS.gas && AS.fill > 0.95 && !AS.test && !AS.passed);
+    if (ready !== AS.ready) { AS.ready = ready; asRefresh(); }
     const wantRise = AS.gas ? AS.fill : 0;
     AS.rise = SciSim.approach(AS.rise, wantRise, dt, 6);
     AS.shake = Math.max(0, AS.shake - dt); AS.flash = Math.max(0, AS.flash - dt * 6);
@@ -1439,14 +1441,14 @@
     const k = outBack(seg(RBX.t, 0, 0.3)) * (RBX.t > 4 ? (4.4 - RBX.t) / 0.4 : 1);
     ctx.save(); ctx.translate(400, 270); ctx.scale(Math.max(0.01, k), Math.max(0.01, k)); ctx.translate(-400, -270);
     ctx.fillStyle = 'rgba(20,30,70,.28)'; ctx.fillRect(0, 0, VW, VH);
-    panel(250, 130, 300, 262, 20, 'rgba(255,255,255,.97)', 24, 8, 'rgba(10,20,60,.4)');
+    panel(250, 130, 300, 288, 20, 'rgba(255,255,255,.97)', 24, 8, 'rgba(10,20,60,.4)');
     txt('루비듐(Rb)을 물에 넣으면?', 400, 164, 17, COL.ink, 'center', 800);
     beakerGlass(400, 372, 124, 150, 0.62, RBX.tint, t, () => {
       RBX.ink.forEach((b) => { const kk = b.t / b.life, a = b.a * (1 - kk); const g = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, b.r); g.addColorStop(0, rgba('#ff4fa3', a)); g.addColorStop(1, rgba('#ff4fa3', 0)); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, TAU); ctx.fill(); });
       RBX.bub.forEach((b) => { ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.strokeStyle = 'rgba(70,130,200,.85)'; ctx.lineWidth = 1; circle(ctx, b.x, b.y, b.r); ctx.fill(); ctx.stroke(); });
     });
     if (RBX.t < 3.6) metalPiece('k', 400 + Math.sin(RBX.t * 20) * 2, RBX.y, 12 * (1 - 0.5 * seg(RBX.t, 2, 3.6)), { rot: RBX.t });
-    txt('가라앉으며 격렬하게 반응해요!', 400, 396 + 0, 14, COL.sub, 'center', 800);
+    txt('가라앉으며 격렬하게 반응해요!', 400, 404, 14, COL.sub, 'center', 800);
     ctx.restore();
   }
 

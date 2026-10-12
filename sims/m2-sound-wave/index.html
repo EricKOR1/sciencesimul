@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#f26b3a">
+  <title>파동과 소리 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔊</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+    .stage-toolbar { min-height: 61px; flex-wrap: nowrap; }
+    .free-mode .toolbar-label { display: none; }
+    .stage-toolbar .segmented { flex-wrap: nowrap; flex: none; }
+    .stage-toolbar .segmented button { min-height: 40px; padding: 6px 12px; font-size: 14.5px; white-space: nowrap; }
+    .off { display: none !important; }
+    /* 태블릿: 가로 배치 캔버스 · 휴대폰: 세로 배치 캔버스 */
+    .sc-tall { display: none; }
+
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    .grp { display: flex; flex-direction: column; gap: 10px; }
+    .grp-title { font-weight: 800; font-size: 15.5px; display: flex; align-items: center; gap: 6px; }
+    .ctrl-note { font-size: 13.5px; color: var(--muted); margin: 0; line-height: 1.45; }
+    .ctrl-note b { color: #9a3412; }
+    .btn-row { display: flex; gap: 8px; flex-wrap: nowrap; }
+    .btn-row .btn { flex: 1 1 0; min-width: 0; min-height: 48px; }
+    .btn[disabled] { opacity: .5; cursor: not-allowed; }
+    .grp .control { margin-bottom: 0; }
+
+    /* 켜고 끄는 큰 버튼 */
+    .tgl {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 48px; flex: 1 1 0; min-width: 0;
+      border: 2px solid var(--line); background: var(--surface); color: var(--muted);
+      border-radius: 14px; padding: 5px 10px; font-weight: 800; font-size: 15px; cursor: pointer; white-space: nowrap;
+      transition: background .2s, border-color .2s, color .2s, transform .1s;
+    }
+    .tgl:active { transform: scale(.97); }
+    .tgl[aria-pressed="true"] { color: #9a3412; border-color: #fdba74; background: #fff3ea; }
+    /* 악기 고르기 */
+    .inst-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+    .inst-btn {
+      min-height: 66px; border: 2px solid var(--line); border-radius: 14px; background: #fff; cursor: pointer; padding: 6px 4px;
+      font-weight: 800; font-size: 15px; color: #475569; line-height: 1.25; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+      transition: border-color .15s, background .15s, transform .08s, color .15s;
+    }
+    .inst-btn span { font-size: 24px; line-height: 1; }
+    .inst-btn:active { transform: scale(.96); }
+    .inst-btn[aria-pressed="true"] { color: #9a3412; border-color: var(--phy); background: #fff1ea; box-shadow: 0 0 0 3px rgba(242,107,58,.16); }
+    .ctl-s { --subject: #f26b3a; }
+    .ctl-s .control-head output { color: #c2410c; }
+    .grp input[type=range] { height: 38px; }
+    .tgl-sm { flex: none; min-height: 44px; padding: 4px 14px; font-size: 14.5px; }
+
+    .readout .value { font-size: 19px; }
+    .mission-figure svg { border-radius: 12px; max-width: 100%; }
+    .feature-new.stage-ring { border-radius: 999px; }
+
+    @media (max-width: 1100px) { .toolbar-label { font-size: 14px; } }
+    @media (max-width: 599px) {
+      .sc-wide { display: none; }
+      .sc-tall { display: block; }
+      .stage-toolbar { flex-wrap: wrap; }
+      .readouts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .readout .value { font-size: 17px; }
+      .stage-toolbar .segmented button { padding: 6px 9px; font-size: 13.5px; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="phy">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#g2">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">중2 · Ⅲ. 빛과 파동</div>
+      <h1>파동과 소리</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="sceneLabel">🪢 줄 위의 표시점은 제자리에서 위아래로만 움직여요</span>
+          <span class="spacer"></span>
+          <div class="segmented off" id="sceneSeg" role="group" aria-label="실험 장면">
+            <button type="button" data-scene="rope">🪢 줄</button>
+            <button type="button" data-scene="air">🔊 공기</button>
+            <button type="button" data-scene="bell">🔔 진공 종</button>
+            <button type="button" data-scene="scope">📈 소리 화면</button>
+          </div>
+          <button class="tgl tgl-sm off" id="audioBtn" type="button" aria-pressed="false" title="눌러야 소리가 나요">🎧 소리 듣기</button>
+        </div>
+        <div class="stage-canvas sc-wide">
+          <canvas id="cvWide" aria-label="파동과 소리 실험 화면: 줄 파동, 공기 속 소리, 진공 종, 소리의 진폭·진동수·파형을 보여 주는 소리 화면"></canvas>
+          <div class="stage-hint hide" id="hintWide"></div>
+        </div>
+        <div class="stage-canvas sc-tall">
+          <canvas id="cvTall" aria-label="파동과 소리 실험 화면: 줄 파동, 공기 속 소리, 진공 종, 소리의 진폭·진동수·파형을 보여 주는 소리 화면"></canvas>
+          <div class="stage-hint hide" id="hintTall"></div>
+        </div>
+      </section>
+      <div class="readouts" id="readouts">
+        <div class="readout" id="rBox1"><span class="label" id="rL1">—</span><span class="value" id="rV1">—</span></div>
+        <div class="readout" id="rBox2"><span class="label" id="rL2">—</span><span class="value" id="rV2">—</span></div>
+        <div class="readout" id="rBox3"><span class="label" id="rL3">—</span><span class="value" id="rV3">—</span></div>
+        <div class="readout" id="rBox4"><span class="label" id="rL4">—</span><span class="value" id="rV4">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="grp" id="g-rope">
+          <div class="grp-title">🪢 줄을 흔들어요</div>
+          <div class="btn-row"><button class="tgl" id="tgAuto" type="button" aria-pressed="false">🔁 자동으로 흔들기</button></div>
+          <p class="ctrl-note">화면 속 <b>손잡이</b>를 위아래로 끌어서 흔들 수도 있어요.</p>
+        </div>
+        <div class="grp" id="g-air">
+          <div class="grp-title">🔊 스피커</div>
+          <div class="btn-row"><button class="tgl" id="tgSpk" type="button" aria-pressed="true">🔇 스피커 끄기</button></div>
+          <p class="ctrl-note">🔴🔵🟢 <b>표시한 공기 입자</b>가 어떻게 움직이는지 살펴봐요.</p>
+        </div>
+        <div class="grp" id="g-bell">
+          <div class="grp-title">🔔 유리 종 속의 공기</div>
+          <div class="btn-row">
+            <button class="tgl" id="tgPump" type="button" aria-pressed="false">🌬️ 공기 빼기</button>
+            <button class="tgl" id="tgBack" type="button">↩ 공기 다시 넣기</button>
+          </div>
+          <p class="ctrl-note">종은 계속 울리고 있어요. <b>🎧 소리 듣기</b>를 켜면 종소리를 들을 수 있어요.</p>
+        </div>
+        <div class="grp" id="g-vol" data-feature="vol">
+          <div class="control ctl-s"><div class="control-head"><label for="slVol">🔉 소리의 크기</label><output id="outVol">보통</output></div><input type="range" id="slVol" min="1" max="5" step="1" value="3" aria-label="소리의 크기"></div>
+          <p class="ctrl-note">파형의 <b>높이</b>가 어떻게 변하는지 살펴봐요.</p>
+        </div>
+        <div class="grp" id="g-pitch" data-feature="pitch">
+          <div class="control ctl-s"><div class="control-head"><label for="slPitch">🎵 진동수 (소리의 높낮이)</label><output id="outPitch">400 Hz</output></div><input type="range" id="slPitch" min="150" max="900" step="10" value="400" aria-label="진동수"></div>
+          <p class="ctrl-note">1초 동안 진동하는 횟수예요. <b>마루 사이의 거리</b>가 어떻게 변하나요?</p>
+        </div>
+        <div class="grp" id="g-timbre" data-feature="timbre">
+          <div class="grp-title">🎼 악기 고르기</div>
+          <div class="inst-row" id="instRow">
+            <button type="button" class="inst-btn" data-inst="fork" aria-pressed="true"><span>🔔</span>소리굽쇠</button>
+            <button type="button" class="inst-btn" data-inst="flute" aria-pressed="false"><span>🪈</span>피리</button>
+            <button type="button" class="inst-btn" data-inst="guitar" aria-pressed="false"><span>🎸</span>기타</button>
+          </div>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

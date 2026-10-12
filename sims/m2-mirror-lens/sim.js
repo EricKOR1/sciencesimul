@@ -939,7 +939,16 @@
     ctx.save(); ctx.globalAlpha *= a; ctx.strokeStyle = 'rgba(255,255,255,.8)'; ctx.lineWidth = 2; ctx.setLineDash([7, 6]); ctx.lineDashOffset = RM ? 0 : -t * 20;
     ext.forEach(([s, e]) => { ctx.beginPath(); ctx.moveTo(s.x, s.y); ctx.lineTo(e.x, e.y); ctx.stroke(); });
     ctx.restore();
-    if (ext.length && a > 0.7 && !PHONE) { const s0 = ext[0][0], e0 = ext[0][1]; if (Math.hypot(e0.x - s0.x, e0.y - s0.y) > 120) pill('연장선(점선)', (s0.x + e0.x) / 2, (s0.y + e0.y) / 2 - 18, { color: '#ffffff', size: 12, alpha: a, fit: true }); }
+    if (ext.length && a > 0.7 && !PHONE) {                       // 범례: 실선 = 빛이 실제로 지나간 길, 점선 = 연장선
+      const lx = 24, ly = H - 26, la = Math.min(1, (a - 0.7) / 0.3);
+      ctx.save(); ctx.globalAlpha *= la;
+      rr(lx - 10, ly - 17, 262, 34, 17); ctx.fillStyle = 'rgba(9,15,36,.88)'; ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(160,185,235,.45)'; ctx.stroke();
+      ctx.lineWidth = 2.6; ctx.strokeStyle = '#ffd45e'; ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(lx + 22, ly); ctx.stroke();
+      ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.moveTo(lx + 118, ly); ctx.lineTo(lx + 140, ly); ctx.stroke(); ctx.setLineDash([]);
+      ctx.font = font(12.5, 800); ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#e8eefc';
+      ctx.fillText('빛이 지나간 길', lx + 28, ly + 0.5); ctx.fillText('연장선', lx + 146, ly + 0.5);
+      ctx.restore();
+    }
     glowDot(c.H1.x, c.H1.y, 15, col, 0.5 * a); glowDot(V.x, V.y, 15, col, 0.5 * a);
     if (isM && ent > 0.9) sparkAt(dt, V.x - 3, V.y, '#fff3c4', 0.2, 2.2);
     // 상
@@ -963,7 +972,7 @@
     drawCandle(T.x, ya - 2 * st.lift, g.hh, { glow: 1 });
     ctx.restore();
     pill('물체', T.x, ya + 24 * FS, { color: '#fcd34d', size: 12.5, alpha: ent, fit: true });
-    if (!st.dragged && ent > 0.9) txt('↔ 촛불을 끌어 보세요', clamp(T.x, 90 * FS, W - 90 * FS), ya - g.hh - 24 * FS, { size: 13, color: '#fde68a', alpha: 0.55 + 0.4 * Math.sin(t * 4) });
+    if (!st.dragged && ent > 0.9) txt('↔ 촛불을 끌어 보세요', clamp(Math.min(T.x, xe - 100 * FS), 90 * FS, W - 90 * FS), ya + 80 * FS, { size: 13, color: '#fde68a', alpha: 0.55 + 0.4 * Math.sin(t * 4) });
     if (isNew(isM ? 'mirror' : 'lens')) newTag(xe - 40, ya - g.ap - 40, 80, 24);
     drawViewInset(c, ent, t);
     benchInfo = { m: c.I ? c.m : null, d: c.d, f: isM ? c.f : c.f, real: c.real };
@@ -1138,7 +1147,7 @@
       const m = SORT.msg, a = clamp(Math.min(m.t / 0.2, (m.dur - m.t) / 0.4), 0, 1);
       pill(m.text, W / 2, H - (PHONE ? 176 : 232), { solid: true, color: m.good ? '#16a34a' : '#e11d48', size: 13.5, alpha: a, fit: true });
     }
-    if (SORT.placed[SORT.kind] === 0 && SORT.drag < 0 && SORT.wrong === 0 && ent > 0.9) txt('카드를 끌어 상자에 넣어 보세요', W / 2, PHONE ? 40 : 58, { size: 13, color: '#fde68a', alpha: 0.5 + 0.4 * Math.sin(t * 4) });
+    if (SORT.placed[SORT.kind] === 0 && SORT.drag < 0 && SORT.wrong === 0 && ent > 0.9 && !PHONE) txt('카드를 끌어 상자에 넣어 보세요', W / 2, PHONE ? 40 : 58, { size: 13, color: '#fde68a', alpha: 0.5 + 0.4 * Math.sin(t * 4) });
   }
   function sortSay(text, good, dur) { SORT.msg = { text, good, t: 0, dur: dur || 3.2 }; }
   function sortDown(p) {
@@ -1217,7 +1226,7 @@
   let scene = 'plane', sceneT = 0;
   function setScene(name, fresh) {
     if (!SCENE_LABEL[name]) return;
-    if (scene !== name || fresh) { sceneT = 0; trans.t = 0; hideHint(); }
+    if (scene !== name || fresh) { sceneT = 0; trans.t = 0; hideHint(); badges.length = 0; }
     scene = name;
     if (name === 'sortM' || name === 'sortL') { if (SORT.kind !== name || !SORT.cards.length || fresh) sortSetup(name); }
     BPU.reset(); LPU.reset();
