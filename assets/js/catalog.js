@@ -1443,8 +1443,7 @@ window.SCI_CATALOG = {
                 "연주시차",
                 "거리 구하기",
                 "가까운 별"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m2-star-properties",
@@ -1464,8 +1463,7 @@ window.SCI_CATALOG = {
                 "빛의 세기",
                 "절대 등급",
                 "색과 온도"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m2-milky-way",

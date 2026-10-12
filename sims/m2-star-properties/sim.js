@@ -172,7 +172,7 @@
     o = o || {};
     const v = starVis(m);
     const k = (1 + (RM ? 0 : (tw || 0))) * (o.k || 1);
-    star(ctx, x, y, v.r * k, color, { halo: 3.5, alpha: v.alpha * (o.alpha != null ? o.alpha : 1), flare: v.r > 5.5 ? v.r * 3.4 * k : 0 });
+    star(ctx, x, y, v.r * k, color, { halo: 3.5, alpha: Math.max(v.alpha, o.minA || 0) * (o.alpha != null ? o.alpha : 1), flare: v.r > 5.5 ? v.r * 3.4 * k : 0 });
     ctx.fillStyle = '#fff'; ctx.globalAlpha = (o.alpha != null ? o.alpha : 1); ctx.beginPath(); ctx.arc(x, y, Math.max(1.1, v.r * 0.32 * k), 0, TAU); ctx.fill(); ctx.globalAlpha = 1;
     return v;
   }
@@ -315,8 +315,8 @@
     const { refX, tstX, sY, l1, l2, dY } = cmpGeo(L, c);
     // 두 별
     const kk = wide ? 3.2 : 2.8;
-    drawMagStar(ctx, refX, sY, 6, '#dce8ff', 0, { k: kk });
-    drawMagStar(ctx, tstX, sY, m, '#fff4d6', RM ? 0 : Math.sin(t * 3) * 0.04, { k: kk });
+    drawMagStar(ctx, refX, sY, 6, '#dce8ff', 0, { k: kk, minA: 0.85 });
+    drawMagStar(ctx, tstX, sY, m, '#fff4d6', RM ? 0 : Math.sin(t * 3) * 0.04, { k: kk, minA: 0.85 });
     txt(ctx, '6등급 별', refX, sY + l1, 13, '#bcd0ff', { weight: 800 });
     txt(ctx, '(기준)', refX, sY + l2, 13, '#8fa6d6', { weight: 700 });
     txt(ctx, m + '등급 별', tstX, sY + l1, 14, '#ffe9a8', { weight: 800 });
@@ -521,7 +521,7 @@
     ctx.beginPath(); ctx.moveTo(px, py - 4); ctx.lineTo(px, py + ph); ctx.lineTo(px + pw + 4, py + ph); ctx.stroke();
     ctx.restore();
     txt(ctx, '📈 거리와 빛의 세기', g.x + 18, g.y + 24, 14, '#ffe9a8', { align: 'left', weight: 800 });
-    txt(ctx, '빛의 세기 (lx)', px - 6, py - 12, 13, '#bcd0ff', { align: 'left', weight: 700, alpha: wide ? 0 : 1 });
+    if (!wide) txt(ctx, '빛의 세기 (lx)', g.x + g.w - 18, g.y + 24, 13, '#bcd0ff', { align: 'right', weight: 700 });
     txt(ctx, '거리 (cm)', px + pw / 2, py + ph + (wide ? 38 : 40), 13, '#bcd0ff', { weight: 700 });
     if (wide) { ctx.save(); ctx.translate(g.x + 18, py + ph / 2); ctx.rotate(-Math.PI / 2); txt(ctx, '빛의 세기 (lx)', 0, 0, 13, '#bcd0ff', { weight: 700 }); ctx.restore(); }
     // 곡선
@@ -669,7 +669,7 @@
      ========================================================= */
   const LG_AU = Math.log10(4.848e-6);
   const STARS10 = {
-    sun: { id: 'sun', name: '태양', m: -26.7, M: 4.8, lg: LG_AU, color: '#ffe27a', row: -1, dTxt: '1 AU' },
+    sun: { id: 'sun', name: '태양', m: -26.7, M: 4.83, lg: LG_AU, color: '#ffe27a', row: -1, dTxt: '1 AU' },
     polaris: { id: 'polaris', name: '북극성', m: 2.0, M: -3.6, lg: Math.log10(133), color: '#fff1b4', row: 1, dTxt: '약 133 pc' },
     sirius: { id: 'sirius', name: '시리우스', m: -1.5, M: 1.4, lg: Math.log10(2.6), color: '#f2f6ff', row: -1, dTxt: '2.6 pc' },
     vega: { id: 'vega', name: '베가', m: 0.0, M: 0.6, lg: Math.log10(7.7), color: '#e4ecff', row: 1, dTxt: '7.7 pc' },
@@ -685,7 +685,7 @@
   ];
   function g10(L) {
     if (L.kind === 'wide') return { map: R_(0, 0, 800, 296), axisY: 162, xAU: 90, xPc: 206, dec: 178, sky: R_(16, 306, 372, 246), info: R_(400, 306, 384, 246), rowD: 60, r: 17 };
-    return { map: R_(0, 0, 520, 330), axisY: 172, xAU: 56, xPc: 132, dec: 124, sky: R_(10, 338, 500, 210), info: R_(10, 556, 500, 150), rowD: 66, r: 15 };
+    return { map: R_(0, 0, 520, 330), axisY: 172, xAU: 56, xPc: 132, dec: 118, sky: R_(10, 338, 500, 210), info: R_(10, 556, 500, 150), rowD: 66, r: 15 };
   }
   const xOfLg = (G, lg) => (lg >= 0 ? G.xPc + lg * G.dec : G.xPc + (lg / LG_AU) * (G.xAU - G.xPc));
   const lgOfX = (G, x) => (x >= G.xPc ? (x - G.xPc) / G.dec : ((x - G.xPc) / (G.xAU - G.xPc)) * LG_AU);
