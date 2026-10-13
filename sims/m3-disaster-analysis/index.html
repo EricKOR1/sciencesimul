@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#64748b">
+  <title>재해·재난의 원인과 피해 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌪️</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-toolbar { min-height: 58px; }
+    .stage-toolbar .segmented button { min-height: 40px; padding: 5px 12px; font-size: 14.5px; white-space: nowrap; }
+    .segmented button.on { color: #334155; }
+    #resetBtn { font-size: 20px; }
+    .tgl {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 46px; width: 100%;
+      border: 2px solid var(--line); background: var(--surface); color: var(--muted);
+      border-radius: 999px; padding: 5px 14px; font-weight: 800; font-size: 15px; cursor: pointer; white-space: nowrap;
+    }
+    .tgl[aria-pressed="true"] { color: #334155; border-color: #94a3b8; background: #eef2f7; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    .is-off { display: none !important; }
+    .btn-block2 { width: 100%; min-height: 46px; white-space: nowrap; }
+    .ctrl-note { margin: 6px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    input[type=range] { height: 44px; }
+    .btn-sm { min-height: 44px; }
+    .game-foot button { min-height: 44px; }
+    .tgls { display: flex; gap: 6px; flex-wrap: wrap; }
+    .tgls .tgl { flex: 1 1 0; min-width: 0; padding: 5px 6px; font-size: 14px; }
+    .mission-figure svg { border-radius: 12px; max-width: 100%; height: auto; }
+    .note-fig { margin: 6px 0; text-align: center; }
+    .note-fig svg { max-width: 100%; height: auto; border-radius: 10px; }
+    .ctrl-sep { margin-top: 8px; }
+    @media (max-width: 599px) { .stage-toolbar .segmented button { padding: 5px 9px; font-size: 14px; } }
+    @media (max-width: 599px) { .readout { min-width: 0; } .readout .value { white-space: normal; font-size: 17px; line-height: 1.25; overflow-wrap: anywhere; } .readout .label { white-space: normal; } }
+  </style>
+</head>
+<body class="sim-page" data-subject="sci">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#g3">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">중3 · Ⅶ. 재해·재난과 안전</div>
+      <h1>재해·재난의 원인과 피해</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <div class="segmented" id="sceneSeg" role="group" aria-label="장면 고르기"></div>
+          <span class="spacer"></span>
+          <button type="button" class="btn btn-primary btn-sm is-off" id="runBtn">▶ 시작</button>
+          <button class="icon-btn" id="resetBtn" type="button" title="처음 상태로" aria-label="처음 상태로">↺</button>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="재해·재난 분석 화면: 사례 카드 분류, 감염병 확산 점 모형과 감염자 곡선, 지진 마을 비교, 예시 자료 그래프, 화학 물질 확산 지도"></canvas>
+          <div class="stage-hint" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="rl1"></span><span class="value" id="rv1"></span></div>
+        <div class="readout"><span class="label" id="rl2"></span><span class="value" id="rv2"></span></div>
+        <div class="readout"><span class="label" id="rl3"></span><span class="value" id="rv3"></span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" id="cCards">
+          <p class="ctrl-note" style="margin:0">🗂️ 카드를 <b>눌러</b> 원인을 읽고, 알맞은 상자로 <b>끌어 놓아요</b>.</p>
+        </div>
+        <div class="control" id="cEpi">
+          <div class="control-head"><label for="sMove">🚶 사람들의 이동량</label><output id="oMove"></output></div>
+          <input type="range" id="sMove" min="10" max="100" step="10" value="100">
+          <div class="tgls ctrl-sep" role="group" aria-label="마스크"><button class="tgl" type="button" id="tgMask" aria-pressed="false">😷 마스크 쓰기</button></div>
+          <div class="control-head ctrl-sep"><label for="sVacc">💉 예방 접종 비율</label><output id="oVacc"></output></div>
+          <input type="range" id="sVacc" min="0" max="80" step="10" value="0">
+          <p class="ctrl-note">설정을 바꾸면 처음부터 다시 시작해요. (단순화한 모형, 예시 자료)</p>
+        </div>
+        <div class="control" id="cQuake">
+          <div class="control-head"><label for="sMag">📏 지진의 규모</label><output id="oMag"></output></div>
+          <input type="range" id="sMag" min="4" max="7" step="0.1" value="5.8">
+          <button class="btn btn-primary btn-block2 ctrl-sep" id="quakeBtn" type="button">💥 지진 일으키기</button>
+          <p class="ctrl-note">2016년 경주 지진은 규모 5.8, 2017년 포항 지진은 규모 5.4였어요. 거리·진도 값은 예시 자료예요.</p>
+        </div>
+        <div class="control" id="cGraph">
+          <div class="control-head"><label for="sY0">📅 보는 기간: 시작 연도</label><output id="oY0"></output></div>
+          <input type="range" id="sY0" min="2015" max="2022" step="1" value="2015">
+          <div class="control-head"><label for="sY1">📅 보는 기간: 끝 연도</label><output id="oY1"></output></div>
+          <input type="range" id="sY1" min="2017" max="2024" step="1" value="2024">
+          <p class="ctrl-note">그래프의 숫자는 모두 예시 자료예요. 점(●)을 눌러 값을 확인해요.</p>
+        </div>
+        <div class="control" id="cGas">
+          <div class="control-head"><label>🌬️ 바람이 불어가는 방향</label></div>
+          <div class="tgls" role="group" aria-label="바람 방향" id="windBtns"></div>
+          <button class="btn btn-primary btn-block2 ctrl-sep" id="leakBtn" type="button">☣️ 유출 시작</button>
+          <p class="ctrl-note">마을을 눌러 위험한 곳을 골라요.</p>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

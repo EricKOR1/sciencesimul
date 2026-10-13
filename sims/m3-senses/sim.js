@@ -322,8 +322,8 @@
     tag('시각 신경', eye.ne.x + 6, eye.ne.y + 22, eye.ne.x - eye.nx * 18, eye.ne.y - eye.ny * 18, { title: '시각 신경', msg: '시각 세포가 받아들인 자극을 뇌로 전달하는 신경이에요.' });
     const t1 = tag('맹점', D0.x + 50, D0.y - 16, D0.x + 3, D0.y, { title: '맹점', msg: '시각 신경이 모여 눈 밖으로 나가는 곳이에요. 시각 세포가 없어서 상이 맺혀도 보이지 않아요.', tag: 'blindspot' }, { bg: '#fef9c3', border: '#d6b45a' });
     // ---- 확대: 맹점 근처의 망막
-    const M = { x: 156, y: 392, r: 96 }, k = 3.1;
-    panel(20, 270, 280, 270, { bg: '#fff' });
+    const M = { x: 156, y: 378, r: 92 }, k = 3.0;
+    panel(20, 270, 280, 252, { bg: '#fff' });
     txt('🔍 망막 확대 (맹점 근처)', 34, 294, { size: 14, weight: 800 });
     ctx.save(); ctx.beginPath(); ctx.arc(M.x, M.y + 10, M.r, 0, TAU); ctx.clip();
     ctx.fillStyle = '#fdf2f2'; ctx.fillRect(M.x - M.r, M.y - M.r, M.r * 2, M.r * 2 + 20);
@@ -359,7 +359,7 @@
     ctx.strokeStyle = '#64748b'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(D0.x, D0.y, 20, 0, TAU); ctx.stroke();
     if (B.hidden) { ctx.save(); D.glow(D0.x, D0.y, 40 + 6 * Math.sin(clock * 6), '#dc2626', 0.25); ctx.restore(); }
     // 느낌표 안내
-    if (B.hidden && B.hitAt > 0 && clock - B.hitAt < 2.2) pill('빛은 눈에 들어오지만 시각 세포가 없어서 안 보여요!', EYE.cx - 40, 500, { size: 14, bg: '#92400e', pad: 14, shadow: true });
+    if (B.hidden && B.hitAt > 0 && clock - B.hitAt < 2.2) pill('빛은 눈에 들어오지만 시각 세포가 없어서 안 보여요!', EYE.cx - 40, 480, { size: 14, bg: '#92400e', pad: 14, shadow: true });
   }
   const drawEyeFor = () => drawEye({ pupil: 12, u: 0.18 });
 
@@ -402,24 +402,24 @@
   function drawAdjust() {
     const A = S.adj, m = DIST(A.obj), u = A.lens.value, b = A.bright;
     // ---- 왼쪽: 주변 환경
-    const bgc = mix('#2a3350', '#fff3c4', b), bgc2 = mix('#3a4570', '#cdeaff', b);
+    const bgc = b < 0.5 ? mix('#232b49', '#e3edf6', b * 2) : mix('#e3edf6', '#fff1b8', (b - 0.5) * 2), bgc2 = b < 0.5 ? mix('#34406a', '#c8def2', b * 2) : mix('#c8def2', '#9fd6ff', (b - 0.5) * 2);
     ctx.save(); ctx.shadowColor = 'rgba(30,60,40,.16)'; ctx.shadowBlur = 12; ctx.shadowOffsetY = 3;
     rr(20, 62, 282, 436, 16); ctx.fillStyle = lgrad(0, 62, 0, 498, [[0, bgc2], [1, bgc]]); ctx.fill(); ctx.restore();
     ctx.save(); rr(20, 62, 282, 436, 16); ctx.clip();
-    if (b > 0.5) {  // 해
-      const sx = 70, sy = 118, k = (b - 0.5) / 0.5;
+    if (b > 0.6) {  // 해
+      const sx = 70, sy = 118, k = (b - 0.6) / 0.4;
       D.glow(sx, sy, 80 + 20 * k, '#fde047', 0.5 * k + 0.2);
       ctx.strokeStyle = rgba('#f59e0b', 0.4 + 0.5 * k); ctx.lineWidth = 3; ctx.lineCap = 'round';
       for (let i = 0; i < 10; i++) { const a = i * TAU / 10 + clock * 0.3; ctx.beginPath(); ctx.moveTo(sx + Math.cos(a) * (28 + k * 4), sy + Math.sin(a) * (28 + k * 4)); ctx.lineTo(sx + Math.cos(a) * (38 + k * 12), sy + Math.sin(a) * (38 + k * 12)); ctx.stroke(); }
       bead(sx, sy, 22, '#fcd34d', { noShadow: true });
-    } else {  // 달과 별
-      const k = (0.5 - b) / 0.5;
+    } else if (b < 0.4) {  // 달과 별
+      const k = (0.4 - b) / 0.4;
       ctx.fillStyle = rgba('#e2e8f0', 0.5 + 0.5 * k); ctx.beginPath(); ctx.arc(70, 118, 22, 0, TAU); ctx.fill();
       ctx.fillStyle = mix('#2a3350', '#3a4570', 0.5); ctx.beginPath(); ctx.arc(80, 112, 20, 0, TAU); ctx.fill();
       for (let i = 0; i < 7; i++) { const sx = 130 + (i * 53) % 150, sy = 90 + (i * 37) % 70; D.spark(sx, sy, 5 + (i % 3), clock + i, rgba('#fff', 0.4 + 0.6 * k)); }
     }
     ctx.restore();
-    txt(b > 0.66 ? '☀️ 아주 밝아요' : b < 0.34 ? '🌙 어두워요' : '🙂 보통 밝기', 36, 92, { size: 14, weight: 800, color: b > 0.5 ? '#92400e' : '#e2e8f0', halo: b > 0.5 ? 'rgba(255,255,255,.6)' : 'rgba(0,0,0,.25)' });
+    txt(b > 0.66 ? '☀️ 아주 밝아요' : b < 0.34 ? '🌙 어두워요' : '🙂 보통 밝기', 36, 92, { size: 14, weight: 800, color: b > 0.4 ? '#475569' : '#e2e8f0', halo: b > 0.4 ? 'rgba(255,255,255,.6)' : 'rgba(0,0,0,.25)' });
     // 물체(꽃): 가까울수록 크게
     const sc = lerp(1.7, 0.55, smoothstep(0, 1, A.obj)), ox = 214, oy = EYE.cy - 5 * sc;
     const blurPx = Math.min(10, A.err * 28);
@@ -800,7 +800,7 @@
     { t: '온도(열)', icon: '🌡️', organ: '피부', cell: '온점·냉점', nerve: '감각 신경', col: '#ef4444' },
   ];
   const ORGANS = STIM.map((s) => s.organ), CELLS = STIM.map((s) => s.cell);
-  const PR = { y0: 126, dy: 82, h: 58, card: { x: 24, w: 128 }, organ: { x: 196, w: 132 }, cell: { x: 358, w: 146 }, brain: { x: 728, y: 292 } };
+  const PR = { y0: 126, dy: 82, h: 58, card: { x: 24, w: 128 }, organ: { x: 196, w: 132 }, cell: { x: 358, w: 146 }, brain: { x: 722, y: 292 } };
   function pathRows() { if (!S.path.rows.length) S.path.rows = STIM.map((s, i) => ({ organ: -1, cell: -1, shake: -9 })); return S.path.rows; }
   const rowY = (i) => PR.y0 + i * PR.dy;
   const rowOk = (i) => { const r = S.path.rows[i]; return r && r.organ === i && r.cell === i; };
@@ -822,7 +822,7 @@
     [[PR.card.x + PR.card.w / 2 + 52, PR.organ.x + PR.organ.w / 2 - 66], [PR.organ.x + PR.organ.w / 2 + 52, PR.cell.x + PR.cell.w / 2 - 56], [PR.cell.x + PR.cell.w / 2 + 62, 540], [606, PR.brain.x - 56]].forEach((a) => D.arrow(a[0] + 6, 74, a[1] + 2, 74, { color: '#15803d', width: 3, head: 9 }));
     // 대뇌
     const arrive = P.sendT >= 0 ? clamp((P.sendT - 1.6) / 0.6, 0, 1) * clamp((4.2 - P.sendT) / 0.8, 0, 1) : 0;
-    drawBrain(PR.brain.x, PR.brain.y, 1.35, arrive, '대뇌');
+    drawBrain(PR.brain.x, PR.brain.y, 1.25, arrive, '대뇌');
     for (let i = 0; i < 5; i++) {
       const y = rowY(i), st = STIM[i], r = P.rows[i], ok = rowOk(i);
       // 신경선

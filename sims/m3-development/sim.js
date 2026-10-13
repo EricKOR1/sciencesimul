@@ -263,7 +263,7 @@
           [0, 0.18, 0.36].forEach((d) => FT.rings.push({ t: -d }));
           Sound.success();
         }
-        if (p >= 1) beginZoom(s);
+        if (p >= 1 && FT.ph === 'enter') beginZoom(s);
       }
     });
     FT.memA = approach(FT.memA, FT.mem ? 1 : 0, dt, 5);
