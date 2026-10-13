@@ -384,6 +384,29 @@
       if (!f.same) f.sawA = true; else if (Math.abs(f.th.value) > 0.1) f.sawR = true;
     }
   }
+  // 막대 아래 (−)/(+) 선택 칩: 화면에서 바로 눌러 전기 종류를 고름
+  const CHIP_W = 74, CHIP_H = 38;
+  const chipPos = () => {
+    const h = S.force.held;
+    return { hang: { x: PIV.x, y: 420 }, held: { x: h.x, y: Math.min(h.y + 172, 468) } };
+  };
+  function drawChips(cx, cy, label, q) {
+    pill(cx, cy - 30, label, 'rgba(255,255,255,.95)');
+    [-1, 1].forEach((v, i) => {
+      const x = cx - CHIP_W + i * CHIP_W, on = q === v, col = v < 0 ? '#2f6df6' : '#e2464b';
+      D.shadow(() => { D.roundRect(x + 2, cy - CHIP_H / 2, CHIP_W - 4, CHIP_H, 12); ctx.fillStyle = on ? col : '#ffffff'; ctx.fill(); }, { blur: on ? 10 : 4, y: 2 });
+      D.roundRect(x + 2, cy - CHIP_H / 2, CHIP_W - 4, CHIP_H, 12); ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.stroke();
+      ctx.fillStyle = on ? '#fff' : col; ctx.font = '800 17px Pretendard, system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(v < 0 ? '(−) 전기' : '(+) 전기', x + CHIP_W / 2, cy + 1);
+    });
+  }
+  function chipAt(p) {
+    const c = chipPos();
+    for (const [which, pos] of [['hq', c.hang], ['hq2', c.held]]) {
+      if (Math.abs(p.y - pos.y) <= CHIP_H / 2 + 4 && p.x >= pos.x - CHIP_W && p.x <= pos.x + CHIP_W) return { which, q: p.x < pos.x ? -1 : 1 };
+    }
+    return null;
+  }
   function drawForce(t) {
     const f = S.force, h = f.held;
     floor(494, 'wood');
@@ -407,7 +430,7 @@
     ctx.rotate(Math.PI / 2);
     drawSigns(150, 26, f.hq, 6, { count: 5, from: 22, to: 22 });
     ctx.restore();
-    pill(PIV.x, 395, '매달린 막대 · 톡: (−)↔(+)', 'rgba(255,255,255,.9)');
+
     // 전기력 화살표 (크기 ∝ 세기)
     const s = f.strength;
     if (s > 0.06) {
@@ -431,7 +454,9 @@
     ctx.rotate(Math.PI / 2);
     drawSigns(150, 26, f.hq2, 6, { count: 5, from: 22, to: 22 });
     ctx.restore();
-    pill(h.x, h.y + 150, '손에 든 막대 · 톡: (−)↔(+)', 'rgba(255,255,255,.9)');
+    const cp = chipPos();
+    drawChips(cp.hang.x, cp.hang.y, '매달린 막대', f.hq);
+    drawChips(cp.held.x, cp.held.y, '손에 든 막대', f.hq2);
     // 안내 문구
     const strong = f.strength > 0.3;
     const txt = f.same ? '같은 종류의 전기 → 서로 밀어내요' : '다른 종류의 전기 → 서로 끌어당겨요';
@@ -762,7 +787,7 @@
   const hitScope = (p) => { const rs = S.scope.rods.slice().reverse(); return rs.find((r) => Math.abs(p.x - r.x) < 30 && Math.abs(p.y - r.y) < 98) || null; };
   function grabbableAt(p) {
     if (S.scene === 'rub') return hitRub(p) ? { kind: 'rub' } : null;
-    if (S.scene === 'force') return hitHeld(p) ? { kind: 'force' } : hitHang(p) ? { kind: 'hang' } : null;
+    if (S.scene === 'force') { const c = chipAt(p); if (c) return { kind: 'chip', which: c.which, q: c.q }; return hitHeld(p) ? { kind: 'force' } : hitHang(p) ? { kind: 'hang' } : null; }
     if (S.scene === 'induce') return hitInd(p) ? { kind: 'induce' } : null;
     if (S.scene === 'scope') { const r = hitScope(p); return r ? { kind: 'scope', rod: r } : null; }
     return null;
@@ -773,6 +798,11 @@
     down(p) {
       const g = grabbableAt(p);
       if (!g) return false;
+      if (g.kind === 'chip') {
+        if (S.force[g.which] !== g.q) { setForceQ(g.which, g.q); Sound.click(); }
+        S.touched.force = true; hideHint();
+        return true;
+      }
       const o = objOf(g);
       g.dx = o.tx - p.x; g.dy = o.ty - p.y; g.sx = p.x; g.sy = p.y; g.t0 = performance.now(); g.moved = 0;
       o.grab = true;
@@ -974,7 +1004,7 @@
         features: ['force'],
         intro: '<div class="si-link">🔗 <b>앞 단계에서</b> 문지른 막대는 전자를 얻어 (−), 털가죽은 전자를 잃어 (+)로 대전된다는 것을 알았어요.</div>' +
           '<p>전기를 띤 두 물체 사이에는 어떤 힘이 작용할까요? 실에 매단 막대에 다른 막대를 가까이 가져가 관찰해 봐요.</p>',
-        setup() { setScene('force'); showHint('👆 막대를 끌어 가까이 가져가요 · 막대를 톡 누르면 (−)↔(+)', 7000); },
+        setup() { setScene('force'); showHint('👆 막대 아래 (−)/(+) 버튼으로 전기를 고르고, 오른쪽 막대를 끌어 가까이 가져가요', 7000); },
         recap: '같은 종류의 전기를 띤 물체끼리는 서로 <b>밀어내고</b>, 다른 종류끼리는 <b>끌어당겨요</b>. 가까울수록 이 힘(전기력)이 세져요.',
         summary: '<ul><li><b>전기력</b>: 전기를 띤 물체 사이에 작용하는 힘</li>' +
           '<li>같은 종류의 전기(+와 +, −와 −) → 서로 <b>밀어내는</b> 힘(척력)</li>' +
@@ -983,8 +1013,8 @@
         missions: [
           {
             title: '끌림과 밀어냄 모두 만들기',
-            goal: '막대를 <b>톡</b> 눌러 (−)/(+)를 바꿔 가며 <b>끌어당김</b>과 <b>밀어냄</b>을 모두 만들어 보세요. 가까이 갈수록 화살표가 커져요.',
-            hint: '오른쪽 막대를 매달린 막대 가까이 끌어 가요. 막대를 톡 누르거나 오른쪽 버튼으로 (−)와 (+)를 바꿔요.',
+            goal: '막대 아래의 <b>(−)/(+) 버튼</b>으로 전기 종류를 바꿔 가며 <b>끌어당김</b>과 <b>밀어냄</b>을 모두 만들어 보세요. 가까이 갈수록 화살표가 커져요.',
+            hint: '각 막대 바로 아래의 (−)/(+) 버튼으로 전기 종류를 바꾸고, 오른쪽 막대를 매달린 막대 가까이 끌어 가요.',
             setup() { setScene('force'); resetForce(); setForceQ('hq', -1); setForceQ('hq2', -1); S.force.sawA = false; S.force.sawR = false; },
             check: () => S.scene === 'force' && S.force.sawA && S.force.sawR,
             status: () => box(S.force.sawA) + ' 끌어당김 (다른 종류) · ' + box(S.force.sawR) + ' 밀어냄 (같은 종류)',
