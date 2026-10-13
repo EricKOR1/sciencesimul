@@ -407,7 +407,7 @@
     ctx.rotate(Math.PI / 2);
     drawSigns(150, 26, f.hq, 6, { count: 5, from: 22, to: 22 });
     ctx.restore();
-    pill(PIV.x, 395, '매달린 막대', 'rgba(255,255,255,.9)');
+    pill(PIV.x, 395, '매달린 막대 · 톡: (−)↔(+)', 'rgba(255,255,255,.9)');
     // 전기력 화살표 (크기 ∝ 세기)
     const s = f.strength;
     if (s > 0.06) {
@@ -431,7 +431,7 @@
     ctx.rotate(Math.PI / 2);
     drawSigns(150, 26, f.hq2, 6, { count: 5, from: 22, to: 22 });
     ctx.restore();
-    pill(h.x, h.y + 150, '손에 든 막대', 'rgba(255,255,255,.9)');
+    pill(h.x, h.y + 150, '손에 든 막대 · 톡: (−)↔(+)', 'rgba(255,255,255,.9)');
     // 안내 문구
     const strong = f.strength > 0.3;
     const txt = f.same ? '같은 종류의 전기 → 서로 밀어내요' : '다른 종류의 전기 → 서로 끌어당겨요';
@@ -745,6 +745,14 @@
   /* ================= 입력 ================= */
   const hitRub = (p) => Math.abs(p.x - S.rod.x) < ROD_L / 2 + 10 && Math.abs(p.y - S.rod.y) < ROD_R + 20;
   const hitHeld = (p) => { const h = S.force.held; return Math.abs(p.x - h.x) < 34 && p.y > h.y - 82 && p.y < h.y + 140; };
+  // 매달린 막대: 줄 끝에 매달린 막대 몸통(회전 축 기준 118~268 거리)을 톡 누르면 전기 종류가 바뀜
+  const HANG_OBJ = { tx: 0, ty: 0, grab: false };
+  const hitHang = (p) => {
+    const th = S.force.th.value, sx = Math.sin(th), cy = Math.cos(th);
+    const ax = PIV.x + 118 * sx, ay = PIV.y + 2 + 118 * cy, bx = PIV.x + 268 * sx, by = PIV.y + 2 + 268 * cy;
+    const vx = bx - ax, vy = by - ay, tt = clamp(((p.x - ax) * vx + (p.y - ay) * vy) / (vx * vx + vy * vy), 0, 1);
+    return Math.hypot(p.x - (ax + vx * tt), p.y - (ay + vy * tt)) < 26;
+  };
   const hitInd = (p) => {
     const R = S.ind.rod, P = indPose(R), L = ROD_LEN / 2 + 30;
     const ax = R.x - P.ux * L, ay = R.y - P.uy * L, bx = R.x + P.ux * L, by = R.y + P.uy * L;
@@ -754,12 +762,12 @@
   const hitScope = (p) => { const rs = S.scope.rods.slice().reverse(); return rs.find((r) => Math.abs(p.x - r.x) < 30 && Math.abs(p.y - r.y) < 98) || null; };
   function grabbableAt(p) {
     if (S.scene === 'rub') return hitRub(p) ? { kind: 'rub' } : null;
-    if (S.scene === 'force') return hitHeld(p) ? { kind: 'force' } : null;
+    if (S.scene === 'force') return hitHeld(p) ? { kind: 'force' } : hitHang(p) ? { kind: 'hang' } : null;
     if (S.scene === 'induce') return hitInd(p) ? { kind: 'induce' } : null;
     if (S.scene === 'scope') { const r = hitScope(p); return r ? { kind: 'scope', rod: r } : null; }
     return null;
   }
-  const objOf = (g) => (g.kind === 'rub' ? S.rod : g.kind === 'force' ? S.force.held : g.kind === 'induce' ? S.ind.rod : g.rod);
+  const objOf = (g) => (g.kind === 'rub' ? S.rod : g.kind === 'force' ? S.force.held : g.kind === 'hang' ? HANG_OBJ : g.kind === 'induce' ? S.ind.rod : g.rod);
   const handlers = {
     hover(p) { return grabbableAt(p) ? 'grab' : null; },
     down(p) {
@@ -783,6 +791,8 @@
         const over = tx + ROD_L / 2 > FUR.x + 40 && tx - ROD_L / 2 < FUR.x + FUR.w - 40;
         if (over && ty > FUR.y - 62) ty = CONTACT_Y;
         o.tx = tx; o.ty = ty;
+      } else if (g.kind === 'hang') {
+        // 매달린 막대는 끌지 않고 톡 눌러 전기 종류만 바꿈
       } else if (g.kind === 'force') {
         o.tx = clamp(X, 120, 760); o.ty = clamp(Y, 110, 360);
       } else if (g.kind === 'induce') {
@@ -797,6 +807,16 @@
       const o = objOf(g);
       o.grab = false;
       if (g.kind === 'rub') SciSim.tween(o, { tx: ROD_HOME.x, ty: ROD_HOME.y }, { duration: 0.55, ease: 'outCubic' });
+      if ((g.kind === 'force' || g.kind === 'hang') && g.moved < 8 && performance.now() - g.t0 < 450) {
+        // 톡 누르면 (−) ↔ (+) 전환
+        const which = g.kind === 'hang' ? 'hq' : 'hq2';
+        setForceQ(which, -S.force[which]);
+        Sound.click();
+        const th = S.force.th.value;
+        const bx = g.kind === 'hang' ? PIV.x + 193 * Math.sin(th) : S.force.held.x;
+        const by = g.kind === 'hang' ? PIV.y + 2 + 193 * Math.cos(th) : S.force.held.y;
+        parts.burst(bx, by, { count: 10, colors: S.force[which] > 0 ? ['#e2464b', '#ffd24a'] : ['#2f6df6', '#9cc2ff'], speed: 90, life: 0.45, size: 3, gravity: 0 });
+      }
       if (g.kind === 'scope' && g.moved < 8 && performance.now() - g.t0 < 600) {
         o.marked = !o.marked; Sound.click();
         if (o.marked) parts.burst(o.x, o.y - 100, { count: 8, colors: ['#f26b3a', '#ffd24a'], speed: 90, life: 0.5, size: 3, gravity: 0 });
@@ -954,7 +974,7 @@
         features: ['force'],
         intro: '<div class="si-link">🔗 <b>앞 단계에서</b> 문지른 막대는 전자를 얻어 (−), 털가죽은 전자를 잃어 (+)로 대전된다는 것을 알았어요.</div>' +
           '<p>전기를 띤 두 물체 사이에는 어떤 힘이 작용할까요? 실에 매단 막대에 다른 막대를 가까이 가져가 관찰해 봐요.</p>',
-        setup() { setScene('force'); showHint('👆 오른쪽 막대를 끌어 매달린 막대에 가까이 가져가요', 7000); },
+        setup() { setScene('force'); showHint('👆 막대를 끌어 가까이 가져가요 · 막대를 톡 누르면 (−)↔(+)', 7000); },
         recap: '같은 종류의 전기를 띤 물체끼리는 서로 <b>밀어내고</b>, 다른 종류끼리는 <b>끌어당겨요</b>. 가까울수록 이 힘(전기력)이 세져요.',
         summary: '<ul><li><b>전기력</b>: 전기를 띤 물체 사이에 작용하는 힘</li>' +
           '<li>같은 종류의 전기(+와 +, −와 −) → 서로 <b>밀어내는</b> 힘(척력)</li>' +
@@ -963,8 +983,8 @@
         missions: [
           {
             title: '끌림과 밀어냄 모두 만들기',
-            goal: '두 막대의 전기 종류를 바꿔 가며 <b>끌어당김</b>과 <b>밀어냄</b>을 모두 만들어 보세요. 가까이 갈수록 화살표가 커져요.',
-            hint: '오른쪽 막대를 매달린 막대 가까이 가져가요. 아래 버튼으로 (−), (+)를 바꿔요.',
+            goal: '막대를 <b>톡</b> 눌러 (−)/(+)를 바꿔 가며 <b>끌어당김</b>과 <b>밀어냄</b>을 모두 만들어 보세요. 가까이 갈수록 화살표가 커져요.',
+            hint: '오른쪽 막대를 매달린 막대 가까이 끌어 가요. 막대를 톡 누르거나 오른쪽 버튼으로 (−)와 (+)를 바꿔요.',
             setup() { setScene('force'); resetForce(); setForceQ('hq', -1); setForceQ('hq2', -1); S.force.sawA = false; S.force.sawR = false; },
             check: () => S.scene === 'force' && S.force.sawA && S.force.sawR,
             status: () => box(S.force.sawA) + ' 끌어당김 (다른 종류) · ' + box(S.force.sawR) + ' 밀어냄 (같은 종류)',
