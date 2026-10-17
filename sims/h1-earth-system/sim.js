@@ -22,7 +22,7 @@
   function rng(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
 
   /* ---------- 캔버스 ---------- */
-  const view = SciSim.stage($('#cv'), { width: VW, height: VH, background: '#0b1226' });
+  const view = SciSim.stage($('#cv'), { width: VW, height: VH, background: '#e6eef9' });
   const ctx = view.ctx;
   const D = SciSim.draw(ctx);
   const parts = new SciSim.Particles();
@@ -506,11 +506,11 @@
   const layerShown = { geo: false, atm: false, hyd: false };
   function slotPos(i) {
     if (PHONE) return { x: 160 + (i % 2) * 290, y: 480 + Math.floor(i / 2) * 84 };
-    return { x: 640, y: 62 + i * 88 };
+    return { x: 640, y: 84 + i * 88 };
   }
   function tagPos(i) {
     if (PHONE) return { x: 80 + i * 147, y: 700 };
-    return { x: 572 + (i % 2) * 146, y: 424 + Math.floor(i / 2) * 52 };
+    return { x: 572 + (i % 2) * 146, y: 452 + Math.floor(i / 2) * 50 };
   }
   function initLayers() {
     Object.keys(boards).forEach((k) => {
@@ -545,7 +545,6 @@
     // 단면(쐐기 안)
     if (a > 0.001) {
       ctx.save(); ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + 3 * R * Math.cos(a), cy - 3 * R * Math.sin(a)); ctx.lineTo(cx + 3 * R * Math.cos(a), cy + 3 * R * Math.sin(a)); ctx.closePath(); ctx.clip();
-      ctx.fillStyle = '#0b1226'; ctx.fillRect(cx, cy - R * 1.2, R * 1.3, R * 2.4);
       const disc = (r, c1, c2) => { const g = ctx.createRadialGradient(cx - r * 0.2, cy - r * 0.2, r * 0.1, cx, cy, r); g.addColorStop(0, c1); g.addColorStop(1, c2); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, r, 0, 6.3); ctx.fill(); };
       disc(R, '#8b5a2b', SC_COL.crust);
       disc(R * 0.965, '#e0662c', '#9a3412');
@@ -579,7 +578,7 @@
     TX(PHONE ? 300 : 236, PHONE ? 420 : 548, '※ 지각은 실제보다 두껍게 그렸어요', { size: 13, color: '#94a3b8', weight: 700 });
     if (layerShown.geo) {
       const rv = layerReveal.geo;
-      ctx.globalAlpha = rv; D.label(cx - R * 0.9, cy + R * 1.18 + (PHONE ? -4 : 0), '외핵은 액체, 내핵은 고체', { bg: '#f59e0b', size: 14 }); ctx.globalAlpha = 1;
+      ctx.globalAlpha = rv; D.label(cx, cy + R + (PHONE ? 20 : 22), '외핵은 액체, 내핵은 고체', { bg: '#f59e0b', size: 14 }); ctx.globalAlpha = 1;
     }
   }
   function numDot(x, y, n) {
@@ -700,7 +699,7 @@
     const b = boards[sub], cfg = LYR[sub];
     // 오른쪽(또는 아래) 패널
     if (!PHONE) { ctx.fillStyle = '#eef3fb'; ctx.fillRect(480, 0, VW - 480, VH); } else { ctx.fillStyle = '#eef3fb'; ctx.fillRect(0, 430, VW, VH - 430); }
-    TX(PHONE ? 300 : 640, PHONE ? 458 : 30, cfg.title + ' — 번호에 이름표를 놓아요', { size: 15, color: '#1e293b', weight: 800 });
+    TX(PHONE ? 300 : 640, PHONE ? 458 : 28, cfg.title + ' — 번호에 이름표를 놓아요', { size: 15, color: '#1e293b', weight: 800 });
     b.slots.forEach((s) => {
       const filled = s.items.length > 0, c = s.items[0], right = filled && c.ans === s.idx, show = layerShown[sub] && right;
       const hit = b.drag && b.slotAt(b.drag.c) === s;
@@ -757,7 +756,7 @@
   }
   function paintIcoCard(c) {
     ctx.font = D.font(26, 700); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#000'; ctx.fillText(c.ico, -c.w / 2 + 28, 2); ctx.textBaseline = 'alphabetic';
-    TX(c.w / 2 - 16 - (c.label.length > 4 ? 14 : 0) + 4, 6, c.label, { size: 15, color: '#1b2333', weight: 800, align: 'right' });
+    TX(c.w * 0.14 + 8, 6, c.label, { size: 15, color: '#1b2333', weight: 800 });
   }
   function initPair() {
     PAIR.reset(); S.pairOK = 0;
@@ -790,7 +789,7 @@
   function drawSort(t) {
     drawBins(SORT, SPH, t, S.sortOK > 0.5, '사례 카드를 알맞은 권역에 놓아요');
     if (S.sortOK > 0.3) {
-      SORT.slots.forEach((s) => { if (s.items.length) { ctx.globalAlpha = S.sortOK; TX(s.x, s.y + s.h / 2 - 12, SORT_NOTE[s.key], { size: 12.5, color: '#0f766e', weight: 800 }); ctx.globalAlpha = 1; } });
+      SORT.slots.forEach((s) => { if (s.items.length) { ctx.globalAlpha = S.sortOK; para(s.x, s.y + s.h / 2 - (PHONE ? 52 : 46), SORT_NOTE[s.key], s.w - 16, 12.5, { color: '#0f766e', weight: 800 }); ctx.globalAlpha = 1; } });
     }
     if (!SORT.placed() && !SORT.drag) { const y = PHONE ? 650 : 395; TX(VW / 2, y, '▼ 카드를 끌어서 위의 권역 상자에 놓아요', { size: 13.5, color: '#64748b', weight: 800 }); }
   }
@@ -857,7 +856,7 @@
       const vx0 = cx + Math.cos(va) * 24, vy0 = cy + Math.sin(va) * 24, vx1 = cx + Math.cos(va) * 76, vy1 = cy + Math.sin(va) * 76;
       D.arrow(vx0, vy0, vx1, vy1, { color: '#fecaca', width: w, head: w * 1.5 + 5, alpha: 0.95 });
       [-0.55, 0.55].forEach((d) => { D.arrow(cx + Math.cos(va + d + 0.6) * 24, cy + Math.sin(va + d + 0.6) * 24, cx + Math.cos(va + d * 1.3 + 0.6) * 66, cy + Math.sin(va + d * 1.3 + 0.6) * 66, { color: '#fed7aa', width: 2.5, head: 8, alpha: 0.7 * A.core }); });
-      D.label(cx + 74, cy + 8, '지구 내부 에너지', { bg: '#b91c1c', size: 13.5, align: 'left' });
+      D.label(cx, cy + 40, '지구 내부 에너지', { bg: '#b91c1c', size: 13 });
     }
     // 화산 (지표)
     const vr = 96, vx = cx + Math.cos(va) * vr, vy = cy + Math.sin(va) * vr;
@@ -897,10 +896,11 @@
     ctx.lineWidth = ro - ri; ctx.strokeStyle = A.sun > 0.5 || S.srcSeen.size === 0 ? '#fbbf24' : '#fde68a'; ctx.beginPath(); ctx.arc(dx, dy, (ro + ri) / 2, 0, 6.3); ctx.stroke();
     ctx.strokeStyle = '#e11d48'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(dx, dy - ri + 1); ctx.lineTo(dx, dy - ro - 1); ctx.stroke();
     TX(dx, dy + 5, '100 %', { size: 15, color: '#92400e', weight: 800 });
+    TX(dx, dy + ro + 22, '빨간 눈금 = 나머지 0.03 %', { size: 12.5, color: '#be123c', weight: 800 });
     // 오른쪽 목록
     const rows = ['sun', 'core', 'moon'];
     rows.forEach((k, i) => {
-      const d = SRC[k], on = S.src[k], x = PHONE ? px + 190 : px + 14, y = PHONE ? py + 80 + i * 66 : py + 190 + i * 72;
+      const d = SRC[k], on = S.src[k], x = PHONE ? px + 190 : px + 14, y = PHONE ? py + 80 + i * 66 : py + 206 + i * 70;
       ctx.globalAlpha = on ? 1 : 0.55;
       ctx.fillStyle = d.col; rr(x - 2, y - 14, 6, 50, 3).fill();
       TX(x + 14, y + 2, d.ico + ' ' + d.name, { size: 15, color: '#1b2333', weight: 800, align: 'left' });
@@ -909,13 +909,11 @@
       ctx.globalAlpha = 1;
     });
     // 확대 막대
-    const by = PHONE ? py + 285 : py + 420;
-    TX(px + 14, by - 10, '🔍 태양을 뺀 나머지(0.03 %) 확대', { size: 13, color: '#be123c', weight: 800, align: 'left' });
+    const by = PHONE ? py + 285 : py + 442;
+    TX(px + 14, by - 10, '🔍 태양 빼고 확대 (0.03 %)', { size: 13, color: '#be123c', weight: 800, align: 'left' });
     const bw = PHONE ? 300 : 150;
     ctx.fillStyle = SRC.core.col; rr(px + 14, by + 4, bw, 14, 4).fill(); TX(px + 14, by + 36, '지구 내부 4.7×10¹³ W', { size: 12.5, color: '#334155', weight: 800, align: 'left' });
     ctx.fillStyle = SRC.moon.col; rr(px + 14, by + 46, Math.max(3, bw * 3.7 / 47), 14, 4).fill(); TX(px + 14, by + 78, '조석(달) 3.7×10¹² W', { size: 12.5, color: '#334155', weight: 800, align: 'left' });
-    // 점선으로 연결
-    ctx.strokeStyle = '#e11d48'; ctx.lineWidth = 1.4; ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.moveTo(dx, dy - ro - 1); ctx.lineTo(dx + (PHONE ? 70 : 40), py + (PHONE ? 20 : 54)); ctx.stroke(); ctx.setLineDash([]);
   }
 
   /* ======================================================
@@ -1028,16 +1026,19 @@
   const MODE_LABEL = { zoom: '🚲 시스템이란', layers: '🧅 권역의 층', sort: '🗂️ 권역 분류', energy: '⚡ 에너지원', pair: '🔗 에너지원 짝짓기', map: '🗺️ 지구시스템 한눈에' };
   const modeSeg = $('#modeSeg');
   function setMode(m, sub) {
-    if (S.mode !== m) S.fade = 1;
-    S.mode = m; if (sub) setSub(sub, true);
+    const enterLayers = m === 'layers' && S.mode !== 'layers';
+    if (S.mode !== m) { S.fade = 1; parts.clear(); }
+    S.mode = m;
+    if (sub) setSub(sub); else if (enterLayers) setSub(S.sub);
     updateCtl();
   }
-  function setSub(s, quiet) {
-    if (S.sub !== s || !quiet) {
-      S.sub = s; S.open = s === 'geo' ? 0 : 1;
-      if (s === 'geo') SciSim.tween(S, { open: 1 }, { duration: 1.1, ease: 'outCubic' });
-    }
+  function setSub(s) {
+    S.sub = s; S.open = s === 'geo' ? 0 : 1;
+    if (s === 'geo') SciSim.tween(S, { open: 1 }, { duration: 1.1, ease: 'outCubic' });
     boards[s].drag = null; updateCtl();
+  }
+  function stageBg() {
+    return S.mode === 'zoom' ? (S.zt > 0 ? '#070b1e' : '#cfe8ff') : S.mode === 'layers' ? '#0f172a' : S.mode === 'energy' ? '#050816' : '#eef3fb';
   }
   function updateCtl() {
     const lab = $('#tbLabel'); if (lab) lab.textContent = MODE_LABEL[S.mode] + (S.mode === 'layers' ? ' · ' + LYR[S.sub].title : '');
@@ -1049,11 +1050,12 @@
     $('#bChain').textContent = S.chainOff ? '🔗 체인 다시 걸기' : '⛓ 체인 떼기';
     $$('#modeSeg button').forEach((b) => b.classList.toggle('on', b.dataset.mode === S.mode));
     if (modeSeg) modeSeg.hidden = !(game && game.free);
+    view.wrap.style.setProperty('--stage-bg', stageBg());
   }
   function setZoom(k) { S.zt = k; Sound.tick(); updateCtl(); }
   $$('#zoomBtns .opt').forEach((b) => b.addEventListener('click', () => setZoom(+b.dataset.zoom)));
   $('#bChain').addEventListener('click', () => { S.chainOff = !S.chainOff; Sound.click(); updateCtl(); });
-  $$('#subBtns .opt').forEach((b) => b.addEventListener('click', () => { Sound.click(); setSub(b.dataset.sub); }));
+  $$('#subBtns .opt').forEach((b) => b.addEventListener('click', () => { Sound.click(); if (S.sub !== b.dataset.sub) setSub(b.dataset.sub); }));
   $('#bResetTags').addEventListener('click', () => { Sound.click(); boards[S.sub].home(); layerShown[S.sub] = false; layerReveal[S.sub] = 0; updateCtl(); });
   $('#bResetSort').addEventListener('click', () => { Sound.click(); initSort(); });
   $('#bResetPair').addEventListener('click', () => { Sound.click(); initPair(); });
@@ -1332,7 +1334,7 @@
     // 자전거
     const wTarget = S.chainOff ? 0 : 2.1 * 1.7;
     S.thC += 1.7 * dt * (S.pedalOn ? 1 : 0);
-    S.wSpeed = SciSim.approach(S.wSpeed, wTarget, dt, S.chainOff ? 1.1 : 3.5);
+    S.wSpeed = SciSim.approach(S.wSpeed, wTarget, dt, S.chainOff ? 1.7 : 3.5);
     S.thW += S.wSpeed * dt;
     S.chainFall = RM ? (S.chainOff ? 1 : 0) : SciSim.approach(S.chainFall, S.chainOff ? 1 : 0, dt, 4);
     if (S.chainOff && S.wSpeed < 0.35 && S.z < 0.2) S.chainTest += dt;
