@@ -957,8 +957,8 @@
      ========================================================= */
   function syncControls() {
     if (!CTRL_READY) return;
-    dis('heatBtn', LAB.busy); dis('labResetBtn', LAB.busy || LAB.round === 0);
-    q('heatBtn').textContent = LAB.stable ? '🔥 더 가열해 보기' : LAB.round === 0 ? '🔥 가열하며 젓기' : '🔥 한 번 더 가열';
+    dis('heatBtn', LAB.busy || LAB.round >= 6); dis('labResetBtn', LAB.busy || LAB.round === 0);
+    q('heatBtn').textContent = LAB.round >= 6 ? '✔ 질량이 더 이상 변하지 않아요' : LAB.stable ? '🔥 더 가열해 보기' : LAB.round === 0 ? '🔥 가열하며 젓기' : '🔥 한 번 더 가열';
     dis('recvBtn', GD.got); dis('fitBtn', GD.fitted || plottedN() < 4 || !GD.got); dis('gdResetBtn', !GD.got);
     dis('autoBtn', CU.auto || CU.pairs >= 6); dis('cuoResetBtn', CU.auto);
     q('mgBtn').textContent = MG.phase === 'idle' ? '🔥 태우기' : MG.phase === 'burn' ? '태우는 중…' : '↺ 다시 하기'; dis('mgBtn', MG.phase === 'burn');
@@ -1176,6 +1176,17 @@
       },
     ],
   });
+
+  // 폰: 끌 수 있는 카드·원자 위에서만 화면 스크롤을 막고, 그 밖에서는 손가락으로 화면을 밀어 올릴 수 있게
+  if (window.matchMedia && window.matchMedia('(max-width: 599px)').matches) {
+    view.canvas.style.touchAction = 'pan-y';
+    view.canvas.addEventListener('touchstart', (e) => {
+      const tc = e.touches[0]; if (!tc) return;
+      const p = view.toLocal(tc);
+      if (S.scene === 'graph' && GD.rows.some((r) => r.ox > -5 && !r.plotted && inRect(p, gdCardRect(r.i)))) e.preventDefault();
+      else if (S.scene === 'cuo' && (molOf(p) || atomOf(p))) e.preventDefault();
+    }, { passive: false });
+  }
 
   CTRL_READY = true;
   setScene('lab', true);
