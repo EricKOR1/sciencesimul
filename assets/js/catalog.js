@@ -2321,8 +2321,7 @@ window.SCI_CATALOG = {
                 "규모 비교",
                 "미시·거시",
                 "측정 도구"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "h1-scale-time",
@@ -2343,8 +2342,7 @@ window.SCI_CATALOG = {
                 "시계의 발전",
                 "옛날 시간",
                 "적용"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "h1-base-quantity",
@@ -2365,8 +2363,7 @@ window.SCI_CATALOG = {
                 "기본량",
                 "유도량",
                 "스마트 측정"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "h1-measure-standard",
