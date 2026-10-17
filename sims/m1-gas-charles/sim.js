@@ -199,7 +199,7 @@
   const NP = 30, R = 6, BASE_SPEED = 170;
   const speedScale = (T) => (T + 273) / (T0 + 273);   // 온도가 높을수록 빠르게 (정성적 표현)
   // 빠르기에 따라 입자 색이 파랑 → 빨강으로 (7단계로 미리 정해 두기)
-  const PCOL = [0, 1, 2, 3, 4, 5, 6].map((i) => mix('#3d6df2', '#ef4a2f', i / 6));
+  const PCOL = ['#2fb3f5', '#3a8af3', '#3d6df2', '#7a5af0', '#c24bd0', '#ee4f7a', '#ef4a2f'];
   const colIdx = (T) => clamp(Math.round((speedScale(T) - 0.76) / 0.68 * 6), 0, 6);
   const parts = [];
   let curScale = 1;
@@ -454,13 +454,13 @@
     ctx.strokeStyle = '#5d6879'; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(cx, wy - 50, 9, Math.PI, 0); ctx.stroke();
     D.text(cx, wy - 24, '추', { size: 15, weight: 800, color: '#fff' });
     D.text(cx, wy - 8, '(압력 일정)', { size: 13, weight: 800, color: '#e3e9f2' });
-    if (isNew('particles') && pk > 0.5) { D.ring(x1 + 12, CYL.bottom + 10, 24, t, { color: '#8b5cf6' }); newBadge(x1 + 54, CYL.bottom - 12); }
+    if (isNew('particles') && pk > 0.5) { D.ring(x1 + 12, CYL.bottom + 10, 24, t, { color: '#8b5cf6' }); newBadge(on('record') ? 292 : x1 + 54, on('record') ? 30 : CYL.bottom - 12); }
     if (isNew('hits') && S.showHits && pk > 0.5) newBadge(x1 + 34, top - 10);
   }
 
   function drawThermo(x, y, h) {
     const lo = -50, hi = 150, tk = clamp((S.Tg - lo) / (hi - lo), 0, 1);
-    const col = mix('#3b82f6', '#ef4444', tk);
+    const col = S.Tg <= T0 ? mix('#3b82f6', '#e2464b', clamp((S.Tg + 50) / 70, 0, 1)) : mix('#e2464b', '#b91c1c', clamp((S.Tg - T0) / 130, 0, 1));
     D.thermometer(x, y, h, S.Tg, lo, hi, { color: col, step: 50, unit: '°' });
     D.text(x + 8, y - 12, '🌡 온도계', { size: 13, weight: 800, color: '#34405a' });
     D.label(x, y + h + 48, fmt(S.Tg, 0) + ' °C', { bg: col, size: 14 });
@@ -1077,7 +1077,7 @@
   /* 미션 성공 순간을 감지해 화면 위에 축하 효과 */
   function winSpot() {
     if (S.scene === 'pong') return { x: S.ball.x, y: S.ball.y - BALL_R - 50 };
-    return on('record') ? { x: 340, y: 62 } : { x: CYL.x + CYL.w + 64, y: 150 };
+    return on('record') ? { x: 338, y: 474 } : { x: CYL.x + CYL.w + 64, y: 150 };
   }
   let lastPhase = '', lastIdx = -1;
   function watchGame() {
