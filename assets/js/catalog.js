@@ -2713,8 +2713,7 @@ window.SCI_CATALOG = {
                 "권역의 층",
                 "에너지원",
                 "확인"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "h1-sphere-interaction",
@@ -2735,8 +2734,7 @@ window.SCI_CATALOG = {
                 "탄소의 순환",
                 "연쇄 현상",
                 "균형과 책임"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "h1-plate-tectonics",
@@ -2757,8 +2755,7 @@ window.SCI_CATALOG = {
                 "맨틀 대류",
                 "판의 경계",
                 "이동 속도"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "h1-volcano-impact",

@@ -220,7 +220,7 @@
   /* ======================================================
      화면 1: 시스템이란 (자전거 → 태양계 → 지구)
      ====================================================== */
-  const BK = PHONE ? { cx: 300, cy: 330, u: 1.05 } : { cx: 400, cy: 262, u: 1.2 };
+  const BK = PHONE ? { cx: 300, cy: 350, u: 1.3 } : { cx: 400, cy: 262, u: 1.2 };
   const SOL = PHONE ? { cx: 300, cy: 410, rx: 258, flat: 0.95 } : { cx: 400, cy: 292, rx: 340, flat: 0.56 };
   const PLANETS = [
     { n: '수성', f: 0.13, r: 4.5, c: '#b8b8b8', T: 4 }, { n: '금성', f: 0.21, r: 6.5, c: '#e8c27a', T: 7 },
@@ -229,7 +229,7 @@
     { n: '천왕성', f: 0.86, r: 9, c: '#7fd6e6', T: 80 }, { n: '해왕성', f: 1.0, r: 9, c: '#4a6fe0', T: 110 },
   ];
   PLANETS.forEach((p, i) => { p.a0 = i * 1.1 + 0.5; });
-  const ES = PHONE ? { cx: 300, cy: 330, R: 112 } : { cx: 330, cy: 292, R: 128 };
+  const ES = PHONE ? { cx: 300, cy: 300, R: 128 } : { cx: 330, cy: 292, R: 128 };
   const STAGE_NAME = ['자전거', '태양계', '지구시스템'];
   const STARS = (() => { const r = rng(5); return Array.from({ length: 150 }, () => ({ x: r() * 800, y: r() * 840, s: 0.5 + r() * 1.3, p: r() * 6 })); })();
   const DUSTS = (() => { const r = rng(9); return Array.from({ length: 12 }, () => ({ a: r() * 6.28, p: r(), sp: 0.12 + r() * 0.18 })); })();
@@ -329,7 +329,7 @@
     const lab = (txt, ax, ay, lx, ly, col) => {
       ctx.strokeStyle = 'rgba(30,41,59,.55)'; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(lx, ly); ctx.stroke();
       ctx.fillStyle = '#1e293b'; ctx.beginPath(); ctx.arc(ax, ay, 3.2, 0, 6.3); ctx.fill();
-      D.label(lx, ly, txt, { bg: col || '#1e293b', size: 13.5 });
+      D.label(clamp(lx, 62, VW - 62), ly, txt, { bg: col || '#1e293b', size: 13.5 });
     };
     lab('안장', g.S.x - 8 * u, g.S.y - 14 * u, g.S.x - 60 * u, g.S.y - 66 * u);
     lab('핸들', g.G.x + 14 * u, g.G.y - 5 * u, g.G.x + 70 * u, g.G.y - 40 * u);
@@ -379,8 +379,8 @@
     bio: '생물권: 땅 위와 땅속, 물속, 공기 중에 걸쳐 살아가는 모든 생물이에요.',
     spc: '외권: 지구 대기권 밖의 우주 공간이에요. 태양과 달이 있고 우주 먼지도 들어와요.',
   };
-  const EBOX = PHONE ? { x: 20, w: 560, y0: 560 } : { x: 20, w: 560, y0: 474 };
-  const CHIP = PHONE ? SEL_ORDER.map((k, i) => ({ k, x: 80 + (i % 3) * 150 + (i >= 3 ? 75 : 0), y: 650 + Math.floor(i / 3) * 56, w: 138, h: 44 })) : SEL_ORDER.map((k, i) => ({ k, x: 700, y: 170 + i * 58, w: 150, h: 46 }));
+  const EBOX = PHONE ? { x: 20, w: 560, y0: 540 } : { x: 20, w: 560, y0: 474 };
+  const CHIP = PHONE ? SEL_ORDER.map((k, i) => ({ k, x: 80 + (i % 3) * 150 + (i >= 3 ? 75 : 0), y: 672 + Math.floor(i / 3) * 56, w: 138, h: 44 })) : SEL_ORDER.map((k, i) => ({ k, x: 700, y: 170 + i * 58, w: 150, h: 46 }));
   function drawEarthStage(t, dt) {
     const cx = ES.cx, cy = ES.cy, R = ES.R;
     const act = S.sel >= 0 ? SEL_ORDER[S.sel] : null;
@@ -498,18 +498,18 @@
   const LV = {
     geo: PHONE ? { cx: 300, cy: 214, R: 164 } : { cx: 236, cy: 282, R: 180 },
     atm: PHONE ? { cx: 50, w: 224, gy: 396, k: 0.86, tx: 330, tw: 236 } : { cx: 40, w: 190, gy: 506, k: 1, tx: 290, tw: 160 },
-    hyd: PHONE ? { bx: 30, bw: 540, by: 46, ox: 50, ow: 220, oy: 156, k: 0.74, tx: 330, tw: 236 } : { bx: 30, bw: 410, by: 56, ox: 50, ow: 190, oy: 176, k: 1, tx: 290, tw: 150 },
+    hyd: PHONE ? { bx: 30, bw: 540, by: 46, ox: 50, ow: 220, oy: 190, k: 0.64, tx: 330, tw: 236 } : { bx: 30, bw: 410, by: 56, ox: 50, ow: 190, oy: 176, k: 1, tx: 290, tw: 150 },
   };
   const SLOT_BOX = PHONE ? { w: 280, h: 74 } : { w: 290, h: 78 };
   const boards = { geo: new Board(), atm: new Board(), hyd: new Board() };
   const layerReveal = { geo: 0, atm: 0, hyd: 0 };
   const layerShown = { geo: false, atm: false, hyd: false };
   function slotPos(i) {
-    if (PHONE) return { x: 160 + (i % 2) * 290, y: 480 + Math.floor(i / 2) * 84 };
+    if (PHONE) return { x: 155 + (i % 2) * 290, y: 520 + Math.floor(i / 2) * 88 };
     return { x: 640, y: 84 + i * 88 };
   }
   function tagPos(i) {
-    if (PHONE) return { x: 80 + i * 147, y: 700 };
+    if (PHONE) return { x: 155 + (i % 2) * 290, y: 706 + Math.floor(i / 2) * 52 };
     return { x: 572 + (i % 2) * 146, y: 452 + Math.floor(i / 2) * 50 };
   }
   function initLayers() {
@@ -699,7 +699,7 @@
     const b = boards[sub], cfg = LYR[sub];
     // 오른쪽(또는 아래) 패널
     if (!PHONE) { ctx.fillStyle = '#eef3fb'; ctx.fillRect(480, 0, VW - 480, VH); } else { ctx.fillStyle = '#eef3fb'; ctx.fillRect(0, 430, VW, VH - 430); }
-    TX(PHONE ? 300 : 640, PHONE ? 458 : 28, cfg.title + ' — 번호에 이름표를 놓아요', { size: 15, color: '#1e293b', weight: 800 });
+    TX(PHONE ? 300 : 640, PHONE ? 472 : 28, cfg.title + ' — 번호에 이름표를 놓아요', { size: 15, color: '#1e293b', weight: 800 });
     b.slots.forEach((s) => {
       const filled = s.items.length > 0, c = s.items[0], right = filled && c.ans === s.idx, show = layerShown[sub] && right;
       const hit = b.drag && b.slotAt(b.drag.c) === s;
@@ -744,13 +744,13 @@
   function initSort() {
     SORT.reset(); S.sortOK = 0;
     SEL_ORDER.forEach((k, i) => {
-      if (PHONE) SORT.addSlot({ x: 100 + (i % 3) * 200, y: 150 + Math.floor(i / 3) * 266, w: 188, h: 252, cap: 3, isc: 0.84, key: k, top: 92, gh: 58, gw: 176 });
+      if (PHONE) SORT.addSlot({ x: 100 + (i % 3) * 200, y: 170 + Math.floor(i / 3) * 270, w: 188, h: 252, cap: 3, isc: 0.84, key: k, top: 92, gh: 58, gw: 176 });
       else SORT.addSlot({ x: 90 + i * 155, y: 190, w: 146, h: 290, cap: 3, isc: 0.84, key: k, top: 94, gh: 62, gw: 134 });
     });
     const order = [3, 0, 4, 1, 2];
     order.forEach((ci, j) => {
       const c = SORT_CARDS[ci];
-      const hx = PHONE ? 100 + (j % 3) * 200 : 90 + j * 155, hy = PHONE ? 700 + Math.floor(j / 3) * 76 : 440;
+      const hx = PHONE ? 100 + (j % 3) * 200 : 90 + j * 155, hy = PHONE ? 722 + Math.floor(j / 3) * 76 : 440;
       SORT.addItem({ label: c.label, ico: c.ico, ans: c.ans, hx, hy, w: 138, h: 56, fill: '#fff', stroke: '#64748b', paint: paintIcoCard });
     });
   }
@@ -761,12 +761,12 @@
   function initPair() {
     PAIR.reset(); S.pairOK = 0;
     ['sun', 'core', 'moon'].forEach((k, i) => {
-      if (PHONE) PAIR.addSlot({ x: 100 + i * 200, y: 230, w: 188, h: 340, cap: 3, isc: 0.9, key: k, top: 92, gh: 62, gw: 176 });
+      if (PHONE) PAIR.addSlot({ x: 100 + i * 200, y: 250, w: 188, h: 380, cap: 3, isc: 0.9, key: k, top: 92, gh: 62, gw: 176 });
       else PAIR.addSlot({ x: 140 + i * 260, y: 190, w: 240, h: 300, cap: 3, isc: 0.95, key: k, top: 84, gh: 66, gw: 224 });
     });
     [3, 0, 4, 1, 5, 2].forEach((ci, j) => {
       const c = PAIR_CARDS[ci];
-      const hx = PHONE ? 100 + (j % 3) * 200 : 140 + (j % 3) * 260, hy = PHONE ? 470 + Math.floor(j / 3) * 78 : 400 + Math.floor(j / 3) * 70;
+      const hx = PHONE ? 100 + (j % 3) * 200 : 140 + (j % 3) * 260, hy = PHONE ? 600 + Math.floor(j / 3) * 78 : 400 + Math.floor(j / 3) * 70;
       PAIR.addItem({ label: c.label, ico: c.ico, ans: c.ans, hx, hy, w: 158, h: 56, fill: '#fff', stroke: '#64748b', paint: paintIcoCard });
     });
   }
@@ -791,7 +791,7 @@
     if (S.sortOK > 0.3) {
       SORT.slots.forEach((s) => { if (s.items.length) { ctx.globalAlpha = S.sortOK; para(s.x, s.y + s.h / 2 - (PHONE ? 52 : 46), SORT_NOTE[s.key], s.w - 16, 12.5, { color: '#0f766e', weight: 800 }); ctx.globalAlpha = 1; } });
     }
-    if (!SORT.placed() && !SORT.drag) { const y = PHONE ? 650 : 395; TX(VW / 2, y, '▼ 카드를 끌어서 위의 권역 상자에 놓아요', { size: 13.5, color: '#64748b', weight: 800 }); }
+    if (!SORT.placed() && !SORT.drag) { const y = PHONE ? 685 : 395; TX(VW / 2, y, '▼ 카드를 끌어서 위의 권역 상자에 놓아요', { size: 13.5, color: '#64748b', weight: 800 }); }
   }
   function drawPair(t) {
     drawBins(PAIR, SRC, t, S.pairOK > 0.5, '현상 카드를 알맞은 에너지원에 놓아요');
@@ -889,8 +889,8 @@
     }
     TX(cx, cy + 172 + (PHONE ? 6 : 0), '※ 크기와 거리, 조석의 부풀음은 실제 비율이 아니에요', { size: 12.5, color: '#94a3b8', weight: 700 });
     // 오른쪽(또는 아래) 요약 패널
-    const px = PHONE ? 20 : 580, py = PHONE ? 470 : 14, pw = PHONE ? 560 : 206;
-    D.shadow(() => { ctx.fillStyle = 'rgba(255,255,255,.95)'; rr(px, py, pw, PHONE ? 360 : 534, 16).fill(); }, { blur: 8, y: 2, color: 'rgba(0,0,0,.4)' });
+    const px = PHONE ? 20 : 580, py = PHONE ? 462 : 14, pw = PHONE ? 560 : 206;
+    D.shadow(() => { ctx.fillStyle = 'rgba(255,255,255,.95)'; rr(px, py, pw, PHONE ? 372 : 534, 16).fill(); }, { blur: 8, y: 2, color: 'rgba(0,0,0,.4)' });
     TX(px + pw / 2, py + 28, '지구에 공급되는 에너지', { size: 15, color: '#1b2333', weight: 800 });
     const dx = PHONE ? px + 96 : px + pw / 2, dy = py + (PHONE ? 130 : 110), ro = PHONE ? 56 : 50, ri = ro * 0.62;
     ctx.lineWidth = ro - ri; ctx.strokeStyle = A.sun > 0.5 || S.srcSeen.size === 0 ? '#fbbf24' : '#fde68a'; ctx.beginPath(); ctx.arc(dx, dy, (ro + ri) / 2, 0, 6.3); ctx.stroke();
@@ -909,7 +909,7 @@
       ctx.globalAlpha = 1;
     });
     // 확대 막대
-    const by = PHONE ? py + 285 : py + 442;
+    const by = PHONE ? py + 276 : py + 442;
     TX(px + 14, by - 10, '🔍 태양 빼고 확대 (0.03 %)', { size: 13, color: '#be123c', weight: 800, align: 'left' });
     const bw = PHONE ? 300 : 150;
     ctx.fillStyle = SRC.core.col; rr(px + 14, by + 4, bw, 14, 4).fill(); TX(px + 14, by + 36, '지구 내부 4.7×10¹³ W', { size: 12.5, color: '#334155', weight: 800, align: 'left' });
