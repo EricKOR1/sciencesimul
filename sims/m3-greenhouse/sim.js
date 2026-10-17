@@ -384,7 +384,7 @@
   function readouts() {
     const sc = S.scene;
     if (sc === 'lamp') return [['컵의 온도', Math.round(S.T * 10) / 10 + '<small>°C</small>'], ['들어오는 에너지', Math.round(rel(lampA(S.d))) + '<small>(상대)</small>'], ['나가는 에너지', Math.round(rel(emitE(S.T))) + '<small>(상대)</small>']];
-    if (sc === 'earth') { const f = (id) => { const v = slotVal(id); return v == null ? '?' : v; }; return [['반사한 에너지', f('ref') + '<small>(태양 복사 100 중)</small>'], ['흡수한 에너지', f('abs') + '<small></small>'], ['방출하는 에너지', f('emit') + '<small></small>']]; }
+    if (sc === 'earth') { const f = (id) => { const v = slotVal(id); return v == null ? '?' : v; }; return [['반사한 에너지', f('ref') + '<small>(100 중)</small>'], ['흡수한 에너지', f('abs') + '<small></small>'], ['방출하는 에너지', f('emit') + '<small></small>']]; }
     if (sc === 'data') { const y = Math.round(S.yearA); return [['연도', y + '<small>년</small>'], ['CO₂ 농도(예시)', Math.round(co2Base(y)) + '<small>ppm</small>'], ['기온 편차(예시)', (dtAt(y) >= 0 ? '+' : '') + dtAt(y).toFixed(1) + '<small>°C</small>']]; }
     if (sc === 'act') return [['고른 카드', S.cards.size + '<small>장</small>'], ['온실 기체 양', S.g.toFixed(2) + '<small>배</small>'], ['지표 평균 기온', Math.round(S.Tm * 10) / 10 + '<small>°C</small>']];
     return [['지표 평균 기온', Math.round(S.Tm * 10) / 10 + '<small>°C</small>'], ['받는 에너지', '70'], ['우주로 나가는 에너지', Math.round(outBal()) + '']];

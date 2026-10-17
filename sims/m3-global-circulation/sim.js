@@ -381,11 +381,11 @@
     ctx.restore();
     [0, 30, 60].forEach((a) => { const y = gcy - R * Math.sin(a * DEG); D.text(gcx + R * Math.cos(a * DEG) + 6, y + 4, a + '°' + (a === 0 ? ' 적도' : ''), { size: 12.5 * fs, color: '#bfdbfe', align: 'left', weight: 700 }); });
     // 손전등 빛(평행한 빛줄기 9개)
-    const y0 = R * Math.sin(phi), fx = 0.1 * W, fy = gcy - y0, N = 9, sp = 4.4 * fs;
+    const y0 = R * Math.sin(phi), fx = 0.1 * W, fy = gcy - y0, N = 5, sp = 0.008 * R;   // 가느다란 빛줄기: 높은 위도에서도 줄기 전체가 지구본에 닿아 ×배 값과 그림이 일치해요
     let minA = 9, maxA = -9, hits = 0;
     const rays = [];
     for (let i = 0; i < N; i++) {
-      const ys = y0 + (i - 4) * sp;
+      const ys = y0 + (i - 2) * sp;
       const hit = Math.abs(ys) < R * 0.998;
       const x = hit ? gcx - Math.sqrt(R * R - ys * ys) : gcx + R + 30;
       rays.push({ ys, hit, x, y: gcy - ys });
@@ -393,7 +393,7 @@
     }
     // 빛이 비치는 부분(표면의 밝은 띠)
     if (hits) {
-      ctx.save(); ctx.lineCap = 'round';
+      ctx.save(); ctx.lineCap = 'butt';
       ctx.strokeStyle = 'rgba(255,224,102,.85)'; ctx.lineWidth = 7; ctx.shadowColor = '#fde047'; ctx.shadowBlur = 14;
       ctx.beginPath(); ctx.arc(gcx, gcy, R + 1, Math.PI + minA, Math.PI + maxA, false); ctx.stroke();
       ctx.restore();
@@ -402,7 +402,7 @@
     rays.forEach((r) => {
       ctx.strokeStyle = r.hit ? 'rgba(255,236,150,.8)' : 'rgba(255,236,150,.3)'; ctx.lineWidth = 2.2;
       ctx.beginPath(); ctx.moveTo(fx + 34, r.y); ctx.lineTo(r.x, r.y); ctx.stroke();
-      if (r.hit) { D.glow(r.x, r.y, 11, '#fff6b0', 0.9); D.sphere(r.x, r.y, 3.2, '#fff', { gloss: false }); }
+      if (r.hit) D.glow(r.x, r.y, 9, '#fff6b0', 0.7);
     });
     ctx.restore();
     // 손전등
@@ -421,7 +421,7 @@
       const aMid = (minA + maxA) / 2, px = gcx - R * Math.cos(aMid) - 26, py = gcy - R * Math.sin(aMid);
       pill(ctx, '비친 넓이 ×' + (1 / cosD(la)).toFixed(1), Math.max(60 * fs, px - 40 * fs), clamp(py - 34 * fs, 20, H * 0.5), { bg: '#f59e0b', color: '#1f1300', font: fnt(L, 13, '800'), h: 24 * fs, pad: 10 });
     }
-    D.text(gcx, gcy + R + 22 * fs, '같은 빛줄기 9개가 위도에 따라 얼마나 넓게 퍼지는지 봐요', { size: 13 * fs, color: '#c7d2fe', weight: 700 });
+    D.text(gcx, gcy + R + 22 * fs, '같은 빛줄기가 위도에 따라 얼마나 넓게 퍼지는지 봐요', { size: 13 * fs, color: '#c7d2fe', weight: 700 });
     // ----- 위도별 흡수·방출 그래프 -----
     const cx0 = 52 * fs, cx1 = W - 16, cy0 = (L.w ? 0.6 : 0.5) * H + 18, cy1 = H - 50 * fs, ch = cy1 - cy0, cw = cx1 - cx0;
     ctx.fillStyle = 'rgba(8,14,38,.55)'; roundRect(ctx, 8, cy0 - 34 * fs, W - 16, cy1 - cy0 + 34 * fs + 40 * fs, 12); ctx.fill();
@@ -797,7 +797,7 @@
   });
   function setLatFromY(V, y) {
     const M = geo(V.L).M, FG = flashGeo(M, V.L), R = FG.R, gcy = M.y + FG.gcy;
-    const s = clamp((gcy - y) / R, 0, 0.985), lat = Math.round(clamp(Math.asin(s) / DEG, 0, 80));
+    const s = clamp((gcy - y) / R, 0, 0.985), lat = Math.round(clamp(Math.asin(s) / DEG, 0, 75));
     S.lat = lat; bLat.set(lat);
   }
 

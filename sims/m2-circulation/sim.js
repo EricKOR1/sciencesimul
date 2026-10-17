@@ -1331,13 +1331,13 @@
   $('#btnOrderReset').addEventListener('click', () => { Sound.click(); initOrder(); });
 
   /* ---------- 퀴즈 그림 ---------- */
-  const FIG_VALVE = '<svg viewBox="0 0 340 140" width="100%" role="img" aria-label="판막이 열렸을 때와 닫혔을 때"><rect width="340" height="140" fill="#fff"/>' +
+  const FIG_VALVE = '<svg viewBox="0 0 340 140" width="100%" role="img" aria-label="판막이 열렸을 때와 닫혔을 때"><defs><marker id="valveArr" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="4.5" markerHeight="4.5" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#e5383b"/></marker></defs><rect width="340" height="140" fill="#fff"/>' +
     '<text x="85" y="20" font-size="14" font-weight="800" fill="#475569" text-anchor="middle">판막 열림</text><text x="255" y="20" font-size="14" font-weight="800" fill="#475569" text-anchor="middle">판막 닫힘</text>' +
-    '<rect x="55" y="34" width="60" height="96" fill="#cfdcf8" stroke="#2447a8" stroke-width="3"/><rect x="225" y="34" width="60" height="96" fill="#cfdcf8" stroke="#2447a8" stroke-width="3"/>' +
+    '<rect x="55" y="34" width="60" height="86" fill="#cfdcf8" stroke="#2447a8" stroke-width="3"/><rect x="225" y="34" width="60" height="86" fill="#cfdcf8" stroke="#2447a8" stroke-width="3"/>' +
     '<path d="M60 70 L72 108 M110 70 L98 108" stroke="#d4a72c" stroke-width="6" stroke-linecap="round"/><path d="M230 78 L254 88 M280 78 L256 88" stroke="#d4a72c" stroke-width="6" stroke-linecap="round"/>' +
-    '<path d="M85 40 V62" stroke="#e5383b" stroke-width="5" marker-end="url(#a)"/><path d="M255 112 V94" stroke="#94a3b8" stroke-width="5" stroke-dasharray="4 4"/>' +
-    '<text x="255" y="130" font-size="12" font-weight="800" fill="#64748b" text-anchor="middle">거꾸로는 못 가요 ✖</text>' +
-    '<circle cx="85" cy="50" r="6" fill="#3f6fd8"/><circle cx="85" cy="120" r="6" fill="#3f6fd8"/></svg>';
+    '<path d="M85 62 V90" stroke="#e5383b" stroke-width="5" marker-end="url(#valveArr)"/><path d="M255 112 V96" stroke="#94a3b8" stroke-width="5" stroke-dasharray="4 4"/>' +
+    '<text x="255" y="135" font-size="12" font-weight="800" fill="#64748b" text-anchor="middle">거꾸로는 못 가요 ✖</text>' +
+    '<circle cx="85" cy="48" r="6" fill="#3f6fd8"/><circle cx="85" cy="108" r="6" fill="#3f6fd8"/></svg>';
   const gameMissionIs = (id) => { const m = game && game.current && game.current(); return !!(m && m.id === id); };
   const ids = (m, id) => { m.id = id; return m; };
 

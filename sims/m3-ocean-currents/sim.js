@@ -553,7 +553,7 @@
     const wl = [[my(22), mx(150), mx(210), -1], [my(9), mx(150), mx(204), -1], [my(51), mx(165), mx(225), 1], [my(34.5), mx(188), mx(236), 1]];
     wl.forEach((w) => windLane(w[0], w[1], w[2], w[3], wa, t));
     alphaDo(wa, () => {
-      D.label(mx(150) + 4, my(22) - 31, '무역풍 (동 → 서)', { bg: 'rgba(100,70,160,.92)', size: 14, align: 'left' });
+      D.label(mx(150) + 4, my(22) + 22, '무역풍 (동 → 서)', { bg: 'rgba(100,70,160,.92)', size: 14, align: 'left' });
       D.label(mx(165) + 4, my(51) - 31, '편서풍 (서 → 동)', { bg: 'rgba(190,80,50,.92)', size: 14, align: 'left' });
     });
     drawFlow(t, { fr, mode: 'plain', alpha: 1 });
@@ -974,7 +974,7 @@
       return false;
     },
     move(p) {
-      if (S2.drag >= 0) { const c = S2.cards[S2.drag]; c.x = clamp(p.x + S2.dragDX, 70, 730); c.y = clamp(p.y + S2.dragDY, 70, VH - 20); }
+      if (S2.drag >= 0) { const c = S2.cards[S2.drag]; c.x = clamp(p.x + S2.dragDX, CARD_W / 2 + 4, VW - CARD_W / 2 - 4); c.y = clamp(p.y + S2.dragDY, 70, VH - 20); }
       else if (S3.dragging && S3.bottle) { S3.bottle.x = clamp(p.x + S3.dragDX, 14, 786); S3.bottle.y = clamp(p.y + S3.dragDY, MY0 + 14, MY0 + MAPH - 14); }
     },
     up() {

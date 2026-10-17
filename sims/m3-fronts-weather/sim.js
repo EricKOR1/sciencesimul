@@ -249,7 +249,8 @@
         if (!occ) { D.ring(t.x, t.y, 86, S.t, { color: '#ffffff', width: 2 }); pill(t.x, t.y - 4, t.label, { bg: 'rgba(15,23,42,.8)', color: '#fff', border: null, size: 15, pad: 12 }); }
       }
     });
-    // 기단 덩어리
+    // 기단 덩어리 (이름표는 모든 덩어리를 그린 뒤에 그려서 서로 가리지 않게 해요)
+    const massLabels = [];
     AIR.forEach((a, i) => {
       const b = m.blobs[i];
       if (b.rev < 0.02) return;
@@ -272,15 +273,16 @@
       }
       ctx.restore();
       if (b.rev > 0.5 && (massLocked() || !(set.cards.some((c) => c.slot === i)))) {
-        ctx.save(); ctx.globalAlpha = b.rev; pill(b.x, b.y - 6, a.name, { bg: 'rgba(255,255,255,.95)', color: '#1b2333', border: rgba(a.col, 0.9), size: 14 }); pill(b.x, b.y + 20, a.prop, { bg: shade(a.col, -0.28), color: '#fff', border: null, size: 13 }); ctx.restore();
+        massLabels.push(() => { ctx.save(); ctx.globalAlpha = b.rev; pill(b.x, b.y - 6, a.name, { bg: 'rgba(255,255,255,.95)', color: '#1b2333', border: rgba(a.col, 0.9), size: 14 }); pill(b.x, b.y + 20, a.prop, { bg: shade(a.col, -0.28), color: '#fff', border: null, size: 13 }); ctx.restore(); });
       } else if (b.rev > 0.5) {
-        ctx.save(); ctx.globalAlpha = b.rev; pill(b.x, b.y + 46, a.prop, { bg: shade(a.col, -0.28), color: '#fff', border: null, size: 13 }); ctx.restore();
+        massLabels.push(() => { ctx.save(); ctx.globalAlpha = b.rev; pill(b.x, b.y + 46, a.prop, { bg: shade(a.col, -0.28), color: '#fff', border: null, size: 13 }); ctx.restore(); });
       }
       if (k > 0.15) {
         const dx = KP[0] - b.x, dy = KP[1] - b.y, L = Math.hypot(dx, dy) || 1;
         D.arrow(b.x + dx / L * R * 0.55, b.y + dy / L * R * 0.55, KP[0] - dx / L * 34, KP[1] - dy / L * 34, { color: shade(a.col, -0.12), width: 5 + 5 * k, head: 18, alpha: Math.min(0.95, k * 1.3) });
       }
     });
+    massLabels.forEach((f) => f());
     // 초여름: 두 기단이 만나는 곳 (이름만)
     const ear = m.blobs[1].inf * m.blobs[2].inf;
     if (ear > 0.2) {
@@ -411,13 +413,15 @@
   const FR = { cold: { s: 2.0, label: '한랭 전선', col: '#2563eb' }, warm: { s: 0.34, label: '온난 전선', col: '#dc2626' } };
   const frX = (pos) => lerp(40, 780, pos / 100);
   function frTown(type, fx) {                           // 우리 동네의 상태
+    // 그림의 비 구역(한랭: 전선 −92 ~ +42 px, 온난: 전선 +6 ~ +250 px)과 같은 범위에서 날씨를 정해요
     if (type === 'cold') {
-      if (fx > TOWN + 40) return { temp: 12, wx: '맑고 쌀쌀해요', icon: 'clear' };
-      if (fx > TOWN - 85) return { temp: 24, wx: '소나기가 와요', icon: 'shower' };
-      return { temp: 24, wx: fx > TOWN - 260 ? '구름이 늘어나요' : '맑고 따뜻해요', icon: fx > TOWN - 260 ? 'cloud' : 'clear' };
+      const tmp = fx > TOWN ? 12 : 24;                                   // 지표 전선이 동네를 지나면 찬 공기
+      if (fx > TOWN + 92) return { temp: 12, wx: '맑고 쌀쌀해요', icon: 'clear' };
+      if (fx >= TOWN - 42) return { temp: tmp, wx: '소나기가 와요', icon: 'shower' };
+      return { temp: 24, wx: fx > TOWN - 330 ? '구름이 늘어나요' : '맑고 따뜻해요', icon: fx > TOWN - 330 ? 'cloud' : 'clear' };
     }
-    if (fx > TOWN + 20) return { temp: 24, wx: '맑아지고 따뜻해요', icon: 'clear' };
-    if (fx > TOWN - 270) return { temp: 12, wx: '지속적인 비가 와요', icon: 'rain' };
+    if (fx > TOWN) return { temp: 24, wx: '맑아지고 따뜻해요', icon: 'clear' };
+    if (fx >= TOWN - 250) return { temp: 12, wx: '지속적인 비가 와요', icon: 'rain' };
     return { temp: 12, wx: fx > TOWN - 560 ? '구름이 늘어나요' : '맑고 쌀쌀해요', icon: fx > TOWN - 560 ? 'cloud' : 'clear' };
   }
   function frStep(dt) {
@@ -460,7 +464,7 @@
     const pulse = RM ? 0 : (S.t * 40) % 40;
     if (cold) {
       D.arrow(fx - 210, 406, fx - 90, 406, { color: '#1d4ed8', width: 9, head: 24, alpha: 0.9 });
-      pill(fx - 150, 380, '찬 공기가 파고들어요', { bg: 'rgba(29,78,216,.92)', color: '#fff', border: null, size: 13 });
+      pill(avoidTown(fx - 150), 380, '찬 공기가 파고들어요', { bg: 'rgba(29,78,216,.92)', color: '#fff', border: null, size: 13 });
       for (let i = 0; i < 3; i++) { const yy = 330 - i * 60; const x0 = lineXcold(yy, fx) + 10, off = ((S.t * 0.8 + i * 0.33) % 1) * 36; D.arrow(x0 + 8 + off * 0.4, yy + 10 - off * 0.9, x0 + 34 + off * 0.4, yy - 26 - off * 0.9, { color: '#ea580c', width: 5, head: 14, alpha: 0.8 }); }
     } else {
       D.arrow(fx - 230, 300, fx - 90, 252, { color: '#dc2626', width: 9, head: 24, alpha: 0.9 });
@@ -547,7 +551,7 @@
     const x1 = fx + 6, x2 = fx + 250;
     ctx.strokeStyle = '#475569'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x1, GY + 12); ctx.lineTo(x2, GY + 12); ctx.moveTo(x1, GY + 5); ctx.lineTo(x1, GY + 19); ctx.moveTo(x2, GY + 5); ctx.lineTo(x2, GY + 19); ctx.stroke();
     pill(avoidTown((x1 + x2) / 2), 344, '지속적인 비 (넓은 지역)', { bg: '#475569', color: '#fff', border: null, size: 13 });
-    pill(clamp(fx - 80, 100, 700), 396, '경사 완만', { bg: 'rgba(220,38,38,.92)', color: '#fff', border: null, size: 13 });
+    pill(avoidTown(fx - 80), 396, '경사 완만', { bg: 'rgba(220,38,38,.92)', color: '#fff', border: null, size: 13 });
   }
   const avoidTown = (cx) => { cx = clamp(cx, 110, 700); return Math.abs(cx - TOWN) < 120 ? (cx < TOWN ? TOWN - 130 : TOWN + 130) : cx; };
   function drawTown(fx) {
@@ -681,9 +685,9 @@
   const gauss = (x, y, cx, cy, sg) => Math.exp(-((x - cx) * (x - cx) + (y - cy) * (y - cy)) / (2 * sg * sg));
   const FIELD = {
     win: (x, y) => 1010 + 28 * gauss(x, y, 150, 175, 200) - 32 * gauss(x, y, 735, 235, 125),
-    spr: (x, y) => 1012 - 24 * gauss(x, y, 430, 250, 120) + 12 * gauss(x, y, 90, 190, 170) + 14 * gauss(x, y, 700, 450, 150),
+    spr: (x, y) => 1012 - 24 * gauss(x, y, 430, 250, 120) + 12 * gauss(x, y, 90, 190, 170) + 14 * gauss(x, y, 740, 310, 150),
   };
-  const CENT = { win: { H: [150, 175], L: [735, 235] }, spr: { L: [430, 250], H: [90, 190], H2: [700, 450] } };
+  const CENT = { win: { H: [150, 175], L: [735, 235] }, spr: { L: [430, 250], H: [90, 190], H2: [740, 310] } };
   function isoPath(f) {
     const p = new Path2D(), st = 10, nx = 81, ny = 55;
     const grid = [];
@@ -813,13 +817,13 @@
       }
       // H / L
       const cs = CENT[mp];
-      const mark = (pos, txt, col) => {
-        const v = Math.round(FIELD[mp](pos[0], pos[1]));
-        D.text(pos[0], pos[1] + 12, txt, { size: 40, weight: 800, color: col, stroke: '#fff', strokeWidth: 6 });
-        D.text(pos[0], pos[1] + 32, String(v), { size: 13.5, weight: 800, color: col, stroke: '#fff', strokeWidth: 4 });
+      const mark = (pos, txt, col, dy) => {                     // dy: 지점 표시(A·B·C)에 가리지 않게 위로 올려요
+        const v = Math.round(FIELD[mp](pos[0], pos[1])), o = dy || 0;
+        D.text(pos[0], pos[1] + 12 + o, txt, { size: 40, weight: 800, color: col, stroke: '#fff', strokeWidth: 6 });
+        D.text(pos[0], pos[1] + 32 + o, String(v), { size: 13.5, weight: 800, color: col, stroke: '#fff', strokeWidth: 4 });
       };
-      if (mp === 'win') { mark(cs.H, '고', '#1d4ed8'); mark(cs.L, '저', '#dc2626'); }
-      else { mark(cs.L, '저', '#dc2626'); mark(cs.H, '고', '#1d4ed8'); mark(cs.H2, '고', '#1d4ed8'); drawFrontLine(COLD_FRONT, CF_L, 'cold', 1, w.phase); drawFrontLine(WARM_FRONT, WF_L, 'warm', -1, w.phase); }
+      if (mp === 'win') { mark(cs.H, '고', '#1d4ed8', -64); mark(cs.L, '저', '#dc2626', -64); }
+      else { mark(cs.L, '저', '#dc2626'); mark(cs.H, '고', '#1d4ed8'); mark(cs.H2, '고', '#1d4ed8'); drawFrontLine(COLD_FRONT, CF_L, 'cold', -1, w.phase); drawFrontLine(WARM_FRONT, WF_L, 'warm', -1, w.phase); }
       ctx.restore();
     }
     labelText(40, 520, 'N', 14);
@@ -1150,7 +1154,7 @@
           {
             id: 'seasons', title: '계절마다 달라지는 기단', scene: 'mass',
             goal: '📅 <b>네 계절</b> 버튼을 모두 눌러 보고, 우리나라에 영향을 주는 기단이 어떻게 바뀌는지 살펴보세요.',
-            hint: '계절 버튼을 하나씩 눌러 2초쯤 지켜보세요. 기단이 우리나라 쪽으로 다가와요.',
+            hint: '계절 버튼을 하나씩 눌러 3초쯤 지켜보세요. 기단이 우리나라 쪽으로 다가와요.',
             setup() { S.mass.revealAll = true; revKey = ''; S.mass.seen = { win: 0, spr: 0, ear: 0, sum: 0 }; setSeason(null); syncMassPanel(); },
             check: () => ['win', 'spr', 'ear', 'sum'].every((k) => S.mass.seen[k] >= 1.5),
             status: () => ['win', 'spr', 'ear', 'sum'].map((k) => chk(S.mass.seen[k] >= 1.5, SEASONS[k].name)).join(' · '),
