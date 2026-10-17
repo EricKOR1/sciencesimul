@@ -238,12 +238,14 @@
         e.preventDefault();
       }
     });
+    // 드래그 중에는 포인터가 캔버스 밖으로 나가도 좌표를 무대 안으로 묶어요 (물체를 무대 밖으로 잃어버리지 않게)
+    const inStage = (p) => ({ x: Math.max(0, Math.min(view.vw, p.x)), y: Math.max(0, Math.min(view.vh, p.y)) });
     c.addEventListener('pointermove', (e) => {
       const p = view.toLocal(e);
-      if (active) { h.move && h.move(p, e); e.preventDefault(); }
+      if (active) { h.move && h.move(inStage(p), e); e.preventDefault(); }
       else if (h.hover) { const cur = h.hover(p, e); c.style.cursor = cur || 'default'; }
     });
-    const end = (e) => { if (!active) return; active = false; h.up && h.up(view.toLocal(e), e); };
+    const end = (e) => { if (!active) return; active = false; h.up && h.up(inStage(view.toLocal(e)), e); };
     c.addEventListener('pointerup', end);
     c.addEventListener('pointercancel', end);
     c.addEventListener('pointerleave', (e) => { if (!active && h.hover) c.style.cursor = 'default'; });
