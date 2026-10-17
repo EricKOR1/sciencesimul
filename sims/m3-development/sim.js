@@ -958,7 +958,18 @@
      미션 · 퀴즈 내용
      ========================================================= */
   function frogCard(g, label) {
-    const cells = LAY[g], yaw = 0.3, R = 28, cx = 40, cy = 38;
+    const cells = LAY[g], R = 28, cx = 40, cy = 38;
+    // 세포가 서로 덜 가려지는 각도를 골라서, 그림 카드에서 세포 수를 세기 쉽게 해요
+    let yaw = 0.3, bestSc = 1e9;
+    for (let k = 0; k < 48; k++) {
+      const yy = k / 48 * TAU, pr = cells.map((c) => proj(c.x, c.y, c.z, yy));
+      let sc = 0;
+      for (let i = 0; i < pr.length; i++) for (let j = i + 1; j < pr.length; j++) {
+        const d = Math.hypot(pr[i].x - pr[j].x, pr[i].y - pr[j].y), o = cells[i].r + cells[j].r - d;
+        if (o > 0) sc += o * o;
+      }
+      if (sc < bestSc - 1e-9) { bestSc = sc; yaw = yy; }
+    }
     const list = cells.map((c) => ({ c, p: proj(c.x, c.y, c.z, yaw) })).sort((a, b) => a.p.z - b.p.z);
     let s = '<defs><radialGradient id="eg' + g + '" cx="35%" cy="30%" r="80%"><stop offset="0" stop-color="#9a7448"/><stop offset="1" stop-color="#4a3219"/></radialGradient></defs>';
     s += '<rect x="2" y="2" width="76" height="98" rx="10" fill="#fff" stroke="#c8d2e0" stroke-width="2"/>';
