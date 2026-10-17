@@ -425,20 +425,22 @@
 
   const boardRect = () => { const b = SEE.bd; return { x: b.x - b.w / 2 - 2, y: b.y - b.h / 2, w: b.w + 4, h: b.h }; };
   const blockedSeg = (ax, ay, bx, by) => SEE.boardOn && segHitRect(ax, ay, bx, by, boardRect()) != null;
-  /* 전등 → 사과 : 사과 위에 고른 표본 광선 중 막히지 않은 비율 */
+  /* 전등 → 사과 : 화면에 그린 빛줄기(전등 → 반사점 H) 둘레의 좁은 빛다발 중 막히지 않은 비율 */
   function litFraction() {
-    const L = SEEP.L, A = SEEP.A, r = SEEP.rA, K = 9;
-    const dx = A.x - L.x, dy = A.y - L.y, d = Math.hypot(dx, dy), nx = -dy / d, ny = dx / d;
+    const L = SEEP.L, Hp = SEEP.H, r = SEEP.rA, K = 9;
+    const dx = Hp.x - L.x, dy = Hp.y - L.y, d = Math.hypot(dx, dy), nx = -dy / d, ny = dx / d;
     let n = 0;
-    for (let i = 0; i < K; i++) { const o = (i / (K - 1) * 2 - 1) * r * 0.92; if (!blockedSeg(L.x, L.y, A.x + nx * o, A.y + ny * o)) n++; }
+    for (let i = 0; i < K; i++) { const o = (i / (K - 1) * 2 - 1) * r * 0.15; if (!blockedSeg(L.x, L.y, Hp.x + nx * o, Hp.y + ny * o)) n++; }
     return n / K;
   }
-  /* 사과 → 눈 */
+  /* 사과 → 눈 : 화면에 그린 반사 빛줄기(반사점 H → 눈) 둘레의 좁은 빛다발로 판정해요.
+     (사과 전체 폭으로 재면 빛줄기가 가림판에 막혀도 사과 아래쪽 빛이 판 밑으로 새어 '보여요'가 되어 그림과 어긋나요) */
   function eyeFraction() {
-    const E = SEEP.E, A = SEEP.A, r = SEEP.rA, K = 7;
-    const dx = E.x - A.x, dy = E.y - A.y, d = Math.hypot(dx, dy), nx = -dy / d, ny = dx / d;
+    const Hp = SEEP.H, r = SEEP.rA, K = 7, E0 = SEEP.E;
+    const dx = E0.x - Hp.x, dy = E0.y - Hp.y, d = Math.hypot(dx, dy), nx = -dy / d, ny = dx / d;
+    const g = 34 * (PHONE ? 0.8 : 1), E = { x: E0.x - dx / d * g, y: E0.y - dy / d * g };   // 빛줄기가 끝나는 눈 가장자리
     let n = 0;
-    for (let i = 0; i < K; i++) { const o = (i / (K - 1) * 2 - 1) * r * 0.9; if (!blockedSeg(A.x + nx * o, A.y + ny * o, E.x, E.y)) n++; }
+    for (let i = 0; i < K; i++) { const o = (i / (K - 1) * 2 - 1) * r * 0.15; if (!blockedSeg(Hp.x + nx * o, Hp.y + ny * o, E.x, E.y)) n++; }
     return n / K;
   }
   const sstep = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
