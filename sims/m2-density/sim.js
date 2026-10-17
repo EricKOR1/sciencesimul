@@ -554,6 +554,7 @@
     refreshReadouts();
   }
   const itemById = (id) => BN.items.find((q) => q.id === id);
+  const inCylZone = (q) => q.where === 'cyl' && Math.abs(q.x - GEO.cyl.cx) < GEO.cyl.w / 2;   // 가로로 눈금실린더 입구 안쪽
   const allMeasured = () => BN.items.length > 0 && BN.items.every((q) => q.meas.m != null && q.meas.v != null);
   const countMeasured = () => BN.items.filter((q) => q.meas.m != null && q.meas.v != null).length;
 
@@ -644,7 +645,7 @@
     BN.graph.forEach((q) => { q.pop = Math.max(0, q.pop - dt * 1.1); });
     let inCyl = null;
     for (const it of BN.items) {
-      if (it.where === 'cyl' && BN.busy === it) inCyl = it;
+      if (inCylZone(it) && BN.busy === it) inCyl = it;      // 눈금실린더 위·속에 있을 때만 (날아오는 동안은 수면이 오르지 않아요)
       it.shake = Math.max(0, it.shake - dt * 3);
       const c = BN.cells[it.id];
       ['m', 'v', 'r'].forEach((k) => { if (c[k].pop > 0) c[k].pop = Math.max(0, c[k].pop - dt * 1.6); });
@@ -728,7 +729,7 @@
     const C = GEO.cyl, x0 = C.x0, x1 = C.x1;
     glassFoot({ cx: C.cx, w: C.w, yBot: C.yBot, base: C.base });
     const lvl = BN.level.value, ySurf = C.yBot - lvl * C.ppm;
-    const insideItem = BN.items.filter((q) => q.where === 'cyl');
+    const insideItem = BN.items.filter(inCylZone);
     vessel({
       x0, x1, yTop: C.yTop, yBot: C.yBot, t, amp: 0.5, men: 3.4, ripple: BN.ripple,
       path: (c) => tubeClosed(c, x0, C.yTop, C.w, C.yBot - C.yTop, 9),
@@ -750,7 +751,7 @@
   function drawVolumeReading() {
     const C = GEO.cyl, a = BN.readA;
     if (a < 0.02) return;
-    const it = BN.items.find((q) => q.where === 'cyl');
+    const it = BN.items.find(inCylZone);
     if (!it) return;
     const lvl = BN.level.value, yNow = C.yBot - lvl * C.ppm, y0 = C.surf0;
     ctx.save(); ctx.globalAlpha = a;
@@ -1788,6 +1789,7 @@
   }
 
   /* ---- 4) 볍씨 고르기 ---- */
+  const SALT_RHO = [1.0, 1.04, 1.08, 1.12, 1.19];                  // 소금 n번 넣은 소금물의 밀도 (g/cm³)
   const SEEDG = () => (PHONE ? { bx: 150, bw: 170, by0: 56, bh: 176, gh: 118 } : { bx: LR.w / 2 - 40, bw: 220, by0: 74, bh: 214, gh: 150 });
   function drawSeeds(W, H, t, dt) {
     const s = LF.seeds;
@@ -1829,10 +1831,11 @@
     ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 6; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(gx + 12, gy0); ctx.lineTo(gx + 12, gy0 + gh); ctx.stroke();
     const yy = gy0 + gh - (gh * (s.rho - 1.0)) / 0.2;
     ctx.strokeStyle = '#3b82f6'; ctx.beginPath(); ctx.moveTo(gx + 12, gy0 + gh); ctx.lineTo(gx + 12, yy); ctx.stroke();
-    [1.0, 1.1, 1.2].forEach((v) => { const y = gy0 + gh - (gh * (v - 1.0)) / 0.2; ctx.fillStyle = '#64748b'; ctx.fillRect(gx + 20, y - 1, 8, 2); text(gx + 30, y + 4, String(v), { size: 11.5, weight: 700, color: COL.muted, align: 'left' }); });
+    const pillY = yy - 18 < gy0 - 2 ? gy0 - 2 : yy - 18;
+    [1.0, 1.1, 1.2].forEach((v) => { const y = gy0 + gh - (gh * (v - 1.0)) / 0.2; ctx.fillStyle = '#64748b'; ctx.fillRect(gx + 20, y - 1, 8, 2); if (Math.abs(y - pillY) > 13) text(gx + 30, y + 4, String(v), { size: 11.5, weight: 700, color: COL.muted, align: 'left' }); });   // 값 표시와 겹치는 눈금 글자는 생략
     D.sphere(gx + 12, yy, 7.5, '#3b82f6', { gloss: true });
     ctx.restore();
-    pill(gx + 22, yy - 18 < gy0 - 2 ? gy0 - 2 : yy - 18, (Math.round(s.rho * 100) / 100).toFixed(2), { bg: '#1e3a8a', size: 13, pad: 7 });
+    pill(gx + 22, pillY, (Math.round(s.rho * 100) / 100).toFixed(2), { bg: '#1e3a8a', size: 13, pad: 7 });
     // 안내
     const nF = s.list.filter((q) => q.up > 0.9).length, nS = s.list.length - nF;
     pill(x0 + 62, by0 - 18, '뜬 씨 ' + nF + '개', { bg: '#a16207', size: 13.5, pad: 9 });
@@ -1861,7 +1864,7 @@
   function updateSeeds(dt) {
     const s = LF.seeds;
     const G0 = SEEDG(), bx = G0.bx, bw = G0.bw, yb = G0.by0 + G0.bh, wTop = G0.by0 + 44;
-    s.rho = SciSim.approach(s.rho, 1.0 + 0.04 * s.salt, dt, 3);
+    s.rho = SciSim.approach(s.rho, SALT_RHO[Math.min(4, s.salt)], dt, 3);   // 소금 3번: 쭉정이만 떠요 · 4번: 알찬 씨(약 1.18)보다 진해서 알찬 씨도 떠요
     s.list.forEach((q, i) => {
       const P = seedPos(q, i, s, bx, bw, yb, wTop);
       const want = q.r < s.rho - 0.002 ? 1 : 0;
@@ -1951,10 +1954,10 @@
       C.note = LF.oil.deployed ? '오일펜스로 뜬 기름을 가둔 뒤 걷어내요. 기름이 물보다 가벼워서 가둘 수 있어요.' : '기름은 물보다 밀도가 작아서 물에 섞이지 않고 위로 떠올라 넓게 퍼져요.';
     } else if (c === 'seeds') {
       const up = s.list.filter((q) => q.up > 0.5), goodUp = up.filter((q) => q.good).length;
-      C.o = '알찬 볍씨'; C.od = 1.17; C.e = '소금물'; C.ed = Math.round(s.rho * 100) / 100; C.unit = 'g/cm³';
+      C.o = '알찬 볍씨'; C.od = 1.18; C.e = '소금물'; C.ed = Math.round(s.rho * 100) / 100; C.unit = 'g/cm³';
       const badUp = up.length - goodUp;
       C.verdict = up.length === 0 ? '모두 가라앉는다' : goodUp ? '알찬 씨도 뜬다' : badUp < 6 ? '쭉정이가 뜨기 시작해요' : '쭉정이만 뜬다'; C.vc = goodUp ? 'warn' : badUp >= 6 ? 'good' : 'info';
-      C.note = up.length === 0 ? '맹물에서는 모든 씨가 가라앉아요. 소금을 넣어 물의 밀도를 높여 봐요.' : goodUp ? '너무 진하면 알찬 씨도 떠 버려요. 알맞은 밀도가 중요해요!' : '소금물의 밀도가 쭉정이(약 1.05)보다 크고 알찬 씨(약 1.17)보다 작으면 쭉정이만 떠요.';
+      C.note = up.length === 0 ? '맹물에서는 모든 씨가 가라앉아요. 소금을 넣어 물의 밀도를 높여 봐요.' : goodUp ? '너무 진하면 알찬 씨도 떠 버려요. 알맞은 밀도가 중요해요!' : '소금물의 밀도가 쭉정이(약 1.06)보다 크고 알찬 씨(약 1.18)보다 작으면 쭉정이만 떠요.';
     } else {
       C.o = '헬륨'; C.od = 0.17; C.e = '공기'; C.ed = 1.2; C.unit = 'g/L';
       C.verdict = '헬륨 풍선은 뜬다'; C.vc = 'good';
@@ -2239,8 +2242,8 @@
     const t = CLK.t, dt = lastDt;
     if (S.scene === 'bench') {
       drawBenchBg(); drawTray(); drawScale(); benchLabels(); drawCylinder(t);
-      BN.items.filter((q) => q.where !== 'cyl').forEach((q) => { drawItemShadow(q); });
-      BN.items.filter((q) => q.where !== 'cyl' && q.where !== 'scale').forEach(drawItemBody);
+      BN.items.filter((q) => !inCylZone(q)).forEach((q) => { drawItemShadow(q); });
+      BN.items.filter((q) => !inCylZone(q) && q.where !== 'scale').forEach(drawItemBody);
       BN.items.filter((q) => q.where === 'scale').forEach(drawItemBody);
       drawVolumeReading();
       if (BN.set === 1) drawMVGraph(); else drawDensityCard();
