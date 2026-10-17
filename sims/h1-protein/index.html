@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#16a34a">
+  <title>단백질과 아미노산 | 고1 통합과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥚</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-toolbar { min-height: 58px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; }
+    .stage-toolbar .segmented button { min-height: 40px; padding: 5px 12px; font-size: 14.5px; white-space: nowrap; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    .seg-wide { display: flex; width: 100%; }
+    .seg-wide button { flex: 1; min-width: 0; padding: 6px 4px; font-size: 14.5px; min-height: 44px; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard [hidden] { display: none !important; }
+    .btn-sm { min-height: 44px; }
+    .btn-row { display: flex; gap: 8px; margin-top: 8px; }
+    .btn-row .btn { flex: 1; padding-left: 6px; padding-right: 6px; }
+    .ctrl-note { margin: 6px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    .num-in {
+      width: 100%; min-height: 48px; border: 2px solid var(--line); border-radius: 12px; padding: 6px 12px;
+      font: 800 20px ui-monospace, Menlo, Consolas, monospace; color: var(--ink); background: #fff;
+    }
+    .num-in:focus { outline: none; border-color: var(--subject); }
+    .match-row { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 8px; align-items: center; margin-bottom: 6px; }
+    .match-row b { font-size: 14.5px; }
+    .match-row select { min-height: 44px; border: 2px solid var(--line); border-radius: 10px; background: #fff; font-size: 14px; font-weight: 700; padding: 2px 6px; width: 100%; }
+    .match-row select.bad { border-color: var(--bad); background: var(--bad-soft); }
+    .match-row select.good { border-color: var(--good); background: var(--good-soft); }
+    .stepper .st .l { white-space: normal; text-align: center; line-height: 1.15; overflow: visible; }
+    .readout .value.txt { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .concept table.mini { border-collapse: collapse; margin: 6px 0; font-size: 14px; width: 100%; }
+    .concept table.mini th, .concept table.mini td { border: 1px solid var(--line); padding: 4px 6px; text-align: center; }
+    .concept table.mini th { background: var(--surface-2); font-weight: 800; }
+    @media (max-width: 599px) {
+      .readout .value.txt { font-size: 15px; }
+      .stage-toolbar .spacer { display: none; }
+      .stage-toolbar .segmented button { padding: 5px 8px; font-size: 13.5px; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="bio">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#h1a">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">통합과학1 · Ⅱ. 물질과 규칙성</div>
+      <h1>단백질과 아미노산</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🍳 먹은 단백질</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="tablist" aria-label="화면 고르기" hidden>
+            <button type="button" data-mode="digest">🍳 소화</button>
+            <button type="button" data-mode="chain">🔗 구슬 잇기</button>
+            <button type="button" data-mode="fold">🧶 모양과 기능</button>
+            <button type="button" data-mode="sick">🩸 적혈구</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="단백질의 소화와 조립, 아미노산 구슬 잇기, 접힘과 기능, 낫 모양 적혈구 장면"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1"> </span><span class="value txt" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2"> </span><span class="value txt" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3"> </span><span class="value txt" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" data-show="digest">
+          <div class="control-head"><span>🍽️ 먹는 음식</span></div>
+          <div class="segmented seg-wide" id="foodSeg"><button type="button" data-f="egg">🥚 달걀</button><button type="button" data-f="tofu">⬜ 두부</button></div>
+          <button class="btn btn-sm btn-primary btn-block" id="bPlay" type="button" style="margin-top:8px">▶ 소화 장면 재생</button>
+          <p class="ctrl-note">구슬 하나가 아미노산 한 개예요. 색이 같으면 같은 종류예요.</p>
+        </div>
+        <div class="control" data-show="chain">
+          <div class="control-head"><span>🔗 구슬 사슬</span><output id="oLen">0 / 10개</output></div>
+          <div class="btn-row"><button class="btn btn-sm" id="bUndo" type="button">↶ 하나 지우기</button><button class="btn btn-sm" id="bClear" type="button">↺ 모두 지우기</button></div>
+          <p class="ctrl-note">아래 구슬을 누르거나 사슬 쪽으로 끌어다 놓으면 끝에 이어 붙어요.</p>
+        </div>
+        <div class="control" data-show="chain:calc">
+          <div class="control-head"><span>🧮 구슬 3개 사슬의 서열 수</span></div>
+          <input class="num-in" type="text" id="inSeq" inputmode="numeric" placeholder="가짓수를 입력해요" aria-label="구슬 3개 사슬의 서열 수">
+          <button class="btn btn-sm btn-primary btn-block" id="bSeq" type="button" style="margin-top:8px">✔ 계산 확인</button>
+        </div>
+        <div class="control" data-show="fold:lab">
+          <div class="control-head"><span>🧪 시험할 단백질</span></div>
+          <div class="segmented seg-wide" id="protSeg"><button type="button" data-p="0">🩸 산소 운반</button><button type="button" data-p="1">🛡️ 항체</button></div>
+          <div class="btn-row"><button class="btn btn-sm" id="bOrig" type="button">↺ 원래 서열</button><button class="btn btn-sm" id="bRefold" type="button">▶ 다시 접기</button></div>
+          <p class="ctrl-note" id="foldNote">접힌 사슬의 구슬을 눌러 고른 뒤, 아래 구슬 중 하나를 눌러 바꿔 봐요.</p>
+        </div>
+        <div class="control" data-show="fold:match">
+          <div class="control-head"><span>🔗 단백질 → 하는 일</span></div>
+          <div id="matchRows"></div>
+        </div>
+        <div class="control" data-show="sick">
+          <div class="control-head"><span>🧬 6번째 아미노산</span></div>
+          <div class="segmented seg-wide" id="mutSeg"><button type="button" data-m="0">정상 글루탐산</button><button type="button" data-m="1">변이 발린</button></div>
+          <button class="btn btn-sm btn-block" id="bFlow" type="button" style="margin-top:8px">🔄 혈액 다시 흘려 보내기</button>
+          <p class="ctrl-note">둘을 번갈아 눌러 적혈구의 모양과 혈관 속 흐름을 비교해요.</p>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

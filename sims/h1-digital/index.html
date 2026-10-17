@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#64748b">
+  <title>디지털 변환과 통신 | 고1 통합과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💾</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; }
+    .stage-toolbar { min-height: 61px; }
+    .segmented button { min-height: 44px; }
+    .segmented button.on { background: var(--sci); color: #fff; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 14px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard .btn-sm { min-height: 44px; }
+    #ctrlCard [hidden] { display: none !important; }
+    .ctrl-note { font-size: 14px; color: var(--muted); margin: 6px 0 0; }
+    .btn-row { display: flex; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
+    .btn-row .btn { flex: 1; padding-left: 8px; padding-right: 8px; }
+    .seg-full { width: 100%; display: flex; }
+    .seg-full button { flex: 1; padding-left: 6px; padding-right: 6px; }
+    .num-in {
+      width: 100%; min-height: 48px; border: 2px solid var(--line); border-radius: 12px; padding: 6px 12px;
+      font: 800 20px ui-monospace, Menlo, Consolas, monospace; color: var(--ink); background: #fff;
+    }
+    .num-in:focus { outline: none; border-color: var(--sci); }
+    .readout .value.txt { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    @media (max-width: 599px) {
+      .readout .value.txt { font-size: 15px; }
+      .stage-toolbar .spacer { display: none; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="sci">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#h1a">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">통합과학1 · Ⅰ. 과학의 기초</div>
+      <h1>디지털 변환과 통신</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🕰️ 아날로그와 디지털</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="tablist" aria-label="화면 고르기" hidden>
+            <button type="button" data-mode="compare">🕰️ 아날로그·디지털</button>
+            <button type="button" data-mode="sample">📈 표본·양자</button>
+            <button type="button" data-mode="binary">🔢 이진 부호</button>
+            <button type="button" data-mode="pixel">🖼️ 그림 보내기</button>
+            <button type="button" data-mode="cards">🌐 통신과 문명</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="아날로그와 디지털 비교, 표본화와 양자화 그래프, 이진 부호 스위치와 전송 비교, 그림을 0과 1로 보내는 화면"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">—</span><span class="value txt" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">—</span><span class="value txt" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">—</span><span class="value txt" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" data-modes="compare cards">
+          <p class="ctrl-note" style="margin-top:0">아래 <b>카드</b>를 끌어 알맞은 상자에 놓아요. 놓은 카드는 다시 옮길 수 있어요.</p>
+          <button class="btn btn-sm btn-block" id="bSortReset" type="button" style="margin-top:8px">↺ 카드 모두 되돌리기</button>
+        </div>
+        <div class="control" data-modes="sample" data-sub="int">
+          <div class="control-head"><span>⏱️ 표본 간격</span><output id="oInt">1 s</output></div>
+          <div class="segmented seg-full" id="intSeg">
+            <button type="button" data-v="1" class="on">1 s</button>
+            <button type="button" data-v="0.5">0.5 s</button>
+            <button type="button" data-v="0.25">0.25 s</button>
+          </div>
+        </div>
+        <div class="control" data-modes="sample" data-sub="bit">
+          <div class="control-head"><span>🪜 비트 수 (단계 수)</span><output id="oBit">2비트 · 4단계</output></div>
+          <div class="segmented seg-full" id="bitSeg">
+            <button type="button" data-v="2" class="on">2비트</button>
+            <button type="button" data-v="3">3비트</button>
+            <button type="button" data-v="4">4비트</button>
+          </div>
+        </div>
+        <div class="control" data-modes="sample" data-sub="lvl">
+          <div class="control-head"><span>🔍 1초 표본의 단계 번호</span></div>
+          <input class="num-in" type="number" id="inLevel" inputmode="numeric" step="1" min="0" max="15" placeholder="예: 3" aria-label="1초 때의 표본이 속하는 단계 번호">
+        </div>
+        <div class="control" data-modes="binary" data-sub="noise">
+          <div class="control-head"><span>📶 전송 중 잡음</span><output id="oNoise">0 %</output></div>
+          <input type="range" id="sNoise" min="0" max="100" step="1" value="0" aria-label="전송 중 잡음의 크기">
+          <p class="ctrl-note">스위치는 화면에서 눌러요. 잡음이 커질수록 두 전송이 어떻게 달라지는지 봐요.</p>
+          <button class="btn btn-sm btn-block" id="bBinReset" type="button" style="margin-top:8px">↺ 스위치 모두 끄기</button>
+        </div>
+        <div class="control" data-modes="pixel">
+          <button class="btn btn-sm btn-primary btn-block" id="bSend" type="button">📤 송신하기</button>
+          <div class="btn-row"><button class="btn btn-sm" id="bPxClear" type="button">↺ 모두 0으로</button></div>
+          <p class="ctrl-note">가운데 칸을 눌러 <b>0 ↔ 1</b>로 바꿔요. 왼쪽 그림에서 <b>검은 칸 = 1</b>, 흰 칸 = 0이에요.</p>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

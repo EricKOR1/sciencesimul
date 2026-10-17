@@ -107,7 +107,7 @@
   /* ---------- 배치 ---------- */
   const LY = PHONE ? {
     scene: { x: 16, y: 16, w: 568, h: 236 },
-    box: { x: 238, y: 270, w: 112, h: 104 }, pk: { x0: 50, x1: 236, y: 322 }, wire: { x0: 350, x1: 392, y: 322 },
+    box: { x: 238, y: 263, w: 112, h: 118 }, pk: { x0: 50, x1: 236, y: 322 }, wire: { x0: 350, x1: 392, y: 322 },
     dial: { x: 392, y: 262, w: 192, h: 120 },
     graph: { x: 16, y: 396, w: 568, h: 428 },
   } : {
@@ -130,6 +130,8 @@
   /* ======================================================
      공통 그림
      ====================================================== */
+  /* 큰 카드는 그림자 대신 아래쪽 옅은 띠로 입체감(프레임 시간 절약) */
+  function panel(x, y, w, h, fill) { ctx.fillStyle = 'rgba(30,45,80,.10)'; rr(x, y + 3, w, h, 16).fill(); ctx.fillStyle = fill || '#fff'; rr(x, y, w, h, 16).fill(); }
   const clipTo = (r, fn, rad) => { ctx.save(); rr(r.x, r.y, r.w, r.h, rad == null ? 16 : rad).clip(); fn(); ctx.restore(); };
   const STARS = (() => { const a = []; for (let i = 0; i < 40; i++) a.push({ x: (hash(i * 3 + 1) + 1) / 2, y: (hash(i * 5 + 2) + 1) / 2 * 0.7, s: 0.6 + (hash(i * 7 + 3) + 1) * 0.6 }); return a; })();
   function skyScene(r, hr, t, o) {
@@ -262,7 +264,7 @@
   function graphFrame(r, title, win, xt, tf, o) {
     o = o || {};
     const gx = r.x + 50, gy = r.y + (o.top || 34), gw = r.w - 50 - 18, gh = r.h - (o.top || 34) - 40;
-    D.shadow(() => { ctx.fillStyle = '#fff'; rr(r.x, r.y, r.w, r.h, 16).fill(); }, { blur: 8, y: 3 });
+    panel(r.x, r.y, r.w, r.h);
     D.text(r.x + 16, r.y + 24, title, { size: 14.5, weight: 800, color: '#334155', align: 'left' });
     ctx.fillStyle = '#f8fafc'; ctx.fillRect(gx, gy, gw, gh);
     const Yv = (v) => gy + gh - (v / 3.3) * gh, X = (x) => gx + x / win * gw;
@@ -296,9 +298,15 @@
     if (s.u >= 1) { s.u = 1; s.hold = 1.4; }
   }
   function drawDial(r, sg, v, label) {
-    D.shadow(() => { ctx.fillStyle = '#fff'; rr(r.x, r.y, r.w, r.h, 16).fill(); }, { blur: 8, y: 3 });
+    panel(r.x, r.y, r.w, r.h);
     D.text(r.x + r.w / 2, r.y + 24, '전압계 (센서의 출력)', { size: 14, weight: 800, color: '#334155' });
-    if (PHONE) { D.dial(r.x + 62, r.y + 76, 44, v, 0, 3.3, { ticks: 3, color: sg.col }); D.text(r.x + r.w - 56, r.y + 78, v.toFixed(2), { size: 30, weight: 800, color: '#1b2333', align: 'center' }); D.text(r.x + r.w - 56, r.y + 100, 'V (볼트)', { size: 13, weight: 800, color: '#64748b' }); }
+    if (PHONE) {
+      D.text(r.x + r.w / 2, r.y + 66, v.toFixed(2) + ' V', { size: 28, weight: 800, color: '#1b2333' });
+      const bx = r.x + 18, bw = r.w - 36, by = r.y + 84;
+      ctx.fillStyle = '#e8edf4'; rr(bx, by, bw, 14, 7).fill();
+      ctx.fillStyle = sg.col; rr(bx, by, Math.max(14, bw * clamp(v / 3.3, 0, 1)), 14, 7).fill();
+      D.text(bx, by + 32, '0', { size: 12.5, weight: 700, color: '#64748b', align: 'left' }); D.text(bx + bw, by + 32, '3.3 V', { size: 12.5, weight: 700, color: '#64748b', align: 'right' });
+    }
     else { D.dial(r.x + r.w / 2, r.y + 112, 66, v, 0, 3.3, { ticks: 3, color: sg.col }); D.text(r.x + r.w / 2, r.y + 212, v.toFixed(2) + ' V', { size: 28, weight: 800, color: '#1b2333' }); D.text(r.x + r.w / 2, r.y + 236, label || '', { size: 13, weight: 700, color: '#64748b' }); }
   }
   function drawScene(t) {
@@ -306,7 +314,7 @@
     ctx.fillStyle = '#f3f6fb'; ctx.fillRect(0, 0, VW, VH);
     // 장면
     ctx.save(); const sc = { x: L.scene.x, y: L.scene.y, w: L.scene.w, h: L.scene.h };
-    D.shadow(() => { ctx.fillStyle = '#fff'; rr(sc.x, sc.y, sc.w, sc.h, 16).fill(); }, { blur: 8, y: 3 });
+    panel(sc.x, sc.y, sc.w, sc.h);
     clipTo(sc, () => SCENE_FN[s.id](sc, s.u, t));
     ctx.restore();
     D.label(sc.x + sc.w / 2, sc.y + sc.h + (PHONE ? -14 : -14), sg.ico + ' ' + sg.cap, { bg: 'rgba(15,23,42,.72)', size: PHONE ? 12.5 : 13, align: 'center' });
@@ -349,7 +357,7 @@
   function drawRecord(t) {
     const R = S.rec, L = RL(), sc = L.scene;
     ctx.fillStyle = '#f3f6fb'; ctx.fillRect(0, 0, VW, VH);
-    D.shadow(() => { ctx.fillStyle = '#fff'; rr(sc.x, sc.y, sc.w, sc.h, 16).fill(); }, { blur: 8, y: 3 });
+    panel(sc.x, sc.y, sc.w, sc.h);
     const hr = R.run || R.done || R.h > 0 ? R.h : 12;
     let yh;
     clipTo(sc, () => {
@@ -389,7 +397,7 @@
     if (vL != null) D.sphere(cx, G.Yv(vL), 5, '#f59e0b', { outline: '#fff' });
     // 변환표
     const tb = L.tab;
-    D.shadow(() => { ctx.fillStyle = '#fff'; rr(tb.x, tb.y, tb.w, tb.h, 16).fill(); }, { blur: 8, y: 3 });
+    panel(tb.x, tb.y, tb.w, tb.h);
     D.text(tb.x + tb.w / 2, tb.y + 24, '전압 ↔ 기온 변환표', { size: 14, weight: 800, color: '#334155' });
     const rows = [0, 1, 2, 3, 4, 5].map((k) => ({ V: k * 0.66, T: -10 + k * 10 }));
     const rh = Math.min(38, (tb.h - 100) / 6), ry0 = tb.y + 56;
@@ -511,13 +519,13 @@
     // 정보 카드
     const e = evalAn(A.id), tx = infoText(A.id, e), ik = L.info;
     if (!PHONE) {
-      D.shadow(() => { ctx.fillStyle = e.ok ? '#ecfdf3' : '#fff'; rr(ik.x, ik.y, ik.w, ik.h, 16).fill(); }, { blur: 8, y: 3 });
+      panel(ik.x, ik.y, ik.w, ik.h, e.ok ? '#ecfdf3' : '#fff');
       ctx.strokeStyle = e.ok ? '#14a058' : '#cbd5e1'; ctx.lineWidth = 2.5; rr(ik.x, ik.y, ik.w, ik.h, 16).stroke();
       D.text(ik.x + 18, ik.y + 26, e.ok ? '✅ 신호를 분석해 만든 정보' : '🔍 분석 중…', { size: 14, weight: 800, color: e.ok ? '#0b6b39' : '#64748b', align: 'left' });
       D.text(ik.x + 18, ik.y + 52, tx[0], { size: 15.5, weight: 800, color: '#1b2333', align: 'left' });
       D.text(ik.x + 18, ik.y + 76, tx[1], { size: 14.5, weight: 800, color: e.ok ? '#14a058' : '#5d6879', align: 'left' });
     } else {
-      D.shadow(() => { ctx.fillStyle = e.ok ? '#ecfdf3' : '#fff'; rr(ik.x, ik.y, ik.w, 150, 16).fill(); }, { blur: 8, y: 3 });
+      panel(ik.x, ik.y, ik.w, 150, e.ok ? '#ecfdf3' : '#fff');
       ctx.strokeStyle = e.ok ? '#14a058' : '#cbd5e1'; ctx.lineWidth = 2.5; rr(ik.x, ik.y, ik.w, 150, 16).stroke();
       D.text(ik.x + 16, ik.y + 28, e.ok ? '✅ 신호를 분석해 만든 정보' : '🔍 분석 중…', { size: 14, weight: 800, color: e.ok ? '#0b6b39' : '#64748b', align: 'left' });
       const h1 = paraText(ik.x + 16, ik.y + 56, tx[0], ik.w - 32, 15, { weight: 800 });
@@ -771,7 +779,7 @@
         '<p>실제 24시간은 너무 길어서 <b>24시간을 12초</b>로 빠르게 돌려요. 기록된 전압을 <b>변환표</b>로 기온으로 바꿔 읽어 봐요.</p>',
       setup() { enterLevel(1); recSub = ['run']; updateCtl(); showHint('▶ 측정 시작을 눌러요', 5000); },
       recap: '센서는 하루의 변화를 전압 그래프로 기록해 줘요. 변환표를 쓰면 전압을 기온 같은 값으로 읽을 수 있어요.',
-      summary: '<ul><li>온도 센서·빛 센서의 출력: 시간 → 전압 그래프. 기온은 낮에 오르고 새벽에 내려가요.</li><li>이 센서는 <b>0 V = −10 °C, 3.3 V = 40 °C</b>로 맞춰 두었어요. → 0.66 V마다 10 °C.</li><li>예: 14시 전압 약 2.38 V → 변환표에서 2.64 V(30 °C)와 1.98 V(20 °C) 사이 → 약 <b>26 °C</b></li><li>센서가 하는 일: 자연의 변화를 <b>전기 신호(전압)</b>로 바꾸는 것</li></ul>',
+      summary: '<ul><li>온도 센서·빛 센서의 출력: 시간 → 전압 그래프. 기온은 낮에 오르고 새벽에 내려가요.</li><li>이 센서는 <b>0 V = −10 °C, 3.3 V = 40 °C</b>로 맞춰 두었어요. → 0.66 V마다 10 °C.</li><li>예: 14시 전압 약 2.4 V → 변환표에서 2.64 V(30 °C)와 1.98 V(20 °C) 사이 → 약 <b>26 °C</b></li><li>센서가 하는 일: 자연의 변화를 <b>전기 신호(전압)</b>로 바꾸는 것</li></ul>',
       missions: [
         {
           title: '하루 변화를 기록하기',
@@ -785,7 +793,7 @@
         {
           title: '전압을 기온으로 바꿔 읽기',
           goal: '읽을 시각을 <b>14시</b>에 맞추고, 온도 센서의 전압을 <b>변환표</b>로 기온(°C)으로 바꿔 적으세요.',
-          hint: '14시의 전압은 약 2.38 V예요. 변환표에서 1.98 V = 20 °C, 2.64 V = 30 °C이니 그 사이를 어림해 봐요.',
+          hint: '14시의 전압은 약 2.4 V예요. 변환표에서 1.98 V = 20 °C, 2.64 V = 30 °C이니 그 사이를 어림해 봐요.',
           manual: true,
           setup() { ensure('record'); recSub = ['cur', 'tin']; updateCtl(); if (!S.rec.done) recFinish(); showHint('🔍 읽을 시각을 14시에 맞춰요', 5000); },
           check() {
@@ -795,10 +803,10 @@
             const v = parseFloat(raw.replace(',', '.')); if (!isFinite(v)) return '숫자로 적어 주세요.';
             if (v >= 25 && v <= 27) return true;
             if (v > 2 && v < 3.3) return '전압 값을 그대로 적은 것 같아요. <b>변환표</b>로 <b>°C</b>로 바꿔 적어 주세요.';
-            if (v >= 20 && v <= 30) return '조금 더 어림해 보세요. 2.38 V는 2.64 V(30 °C)보다 낮고 1.98 V(20 °C)보다 높아요. 어느 쪽에 더 가까운가요?';
-            return '14시 전압(약 2.38 V)이 변환표의 어디쯤인지 다시 살펴봐요.';
+            if (v >= 20 && v <= 30) return '조금 더 어림해 보세요. 2.4 V는 2.64 V(30 °C)보다 낮고 1.98 V(20 °C)보다 높아요. 어느 쪽에 더 가까운가요?';
+            return '14시 전압(약 2.4 V)이 변환표의 어디쯤인지 다시 살펴봐요.';
           },
-          explain: '14시 전압은 약 2.38 V예요. 1.98 V(20 °C)에서 0.40 V 올랐고, 0.66 V가 10 °C이므로 0.40 ÷ 0.66 × 10 ≈ 6 °C 올라 약 <b>26 °C</b>예요. 센서의 전압은 변환표(눈금)를 거쳐야 기온이라는 값이 돼요.',
+          explain: '14시 전압은 약 2.4 V예요. 1.98 V(20 °C)에서 0.42 V 올랐고, 0.66 V가 10 °C이므로 0.42 ÷ 0.66 × 10 ≈ 6 °C 올라 약 <b>26 °C</b>예요. 센서의 전압은 변환표(눈금)를 거쳐야 기온이라는 값이 돼요.',
         },
         {
           type: 'quiz', title: '센서가 하는 일',
