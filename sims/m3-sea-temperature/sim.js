@@ -719,18 +719,17 @@
     LY.newT = 0;
   }
   function chipPlacedPos(b) { return { x: 36, y: zY(b.z0) + 14 }; }
+  function nearBand(cy) {                 // 이름표 위치(cy)에서 가장 가까운 띠 (26 px 안)
+    let near = null, best = 1e9;
+    BANDS.forEach((b) => { const y0 = zY(b.z0), y1 = zY(b.z1); const d = cy < y0 ? y0 - cy : cy > y1 ? cy - y1 : 0; if (d < best) { best = d; near = b.k; } });
+    return best > 26 ? null : near;
+  }
   function updateLayers(dt, t) {
     LY.parcelK = approach(LY.parcelK, LY.parcelOn ? 1 : 0, dt, 5);
     LY.newT += dt;
     // 가까운 띠 찾기 (이름표를 끌고 있을 때)
-    let near = null;
     const c = LY.dragChip;
-    if (c) {
-      const cy = c.sy.value - 24;
-      let best = 1e9;
-      BANDS.forEach((b) => { const y0 = zY(b.z0), y1 = zY(b.z1); const d = cy < y0 ? y0 - cy : cy > y1 ? cy - y1 : 0; if (d < best) { best = d; near = b.k; } });
-      if (best > 26) near = null;
-    }
+    const near = c ? nearBand(c.sy.value - 24) : null;
     LY.near = near;
     BANDS.forEach((b) => { LY.glow[b.k] = approach(LY.glow[b.k], near === b.k ? 1 : 0, dt, 12); });
     LY.chips.forEach((ch) => {
@@ -864,7 +863,8 @@
     }
     const c = LY.dragChip; if (!c) return;
     LY.dragChip = null; c.drag = false;
-    const b = LY.near ? BANDS.find((x) => x.k === LY.near) : null;
+    const nb = nearBand(c.sy.target - 24);          // 놓는 순간 손가락 위치 기준 (끄는 값이 조금 늦게 따라와도 같은 판정)
+    const b = nb ? BANDS.find((x) => x.k === nb) : null;
     const h = chipHome(c.i);
     if (b) {
       if (b === c.band) {

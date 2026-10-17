@@ -470,6 +470,11 @@
   function fireEv(kind) {
     const e = EV[kind];
     const n2 = S2.nW + e.d;
+    if (kind === 'freeze' && S2.iceUsed + DELTA > S2.slots.length) {      // 얼음 칸이 모자라면 더 얼릴 수 없어요 (칸이 없는데 입자를 보내면 오류가 나요)
+      S2.cap = { text: '얼음이 가득 찼어요. ↺로 처음 상태에서 다시 해 보세요.', t: 2.4, col: '#64748b' };
+      Sound.fail();
+      return false;
+    }
     if (n2 < NW_MIN || n2 > NW_MAX) {
       S2.cap = { text: e.d < 0 ? '모형이 더 졸아들 수 없어요. 비나 강물로 물을 채워 보세요.' : '바다 상자가 가득 찼어요. 증발이나 결빙으로 물을 줄여 보세요.', t: 2.4, col: '#64748b' };
       Sound.fail();
