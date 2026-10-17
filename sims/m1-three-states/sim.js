@@ -1512,7 +1512,7 @@
       if (tagsPlaced() === 9 && !TG.drag) {
         const ty = PHONE ? 500 : 440;
         if (TG.solved) D.label(VW / 2, ty, '🎉 세 상태의 입자 특징을 모두 찾았어요!', { bg: COL.good, size: 15 });
-        else D.label(VW / 2, ty, '모두 붙였어요! 아래 ✔ 확인하기를 눌러 보세요', { bg: COL.sub, size: 14.5 });
+        else D.label(VW / 2, ty, (game && game.free) ? '모두 붙였어요! 태그를 끌어 다시 바꿔 볼 수 있어요' : '모두 붙였어요! 아래 ✔ 확인하기를 눌러 보세요', { bg: COL.sub, size: 14.5 });
       }
     },
     hover(p) { return !TG.solved && tgCardAt(p) ? 'grab' : null; },
@@ -1863,7 +1863,7 @@
       if (sortPlaced() === 9 && !SORT.drag) {
         const ty = PHONE ? 470 : 462;
         if (SORT.solved) D.label(VW / 2, ty, '🎉 모래·밀가루도 알갱이 하나하나는 고체예요!', { bg: COL.good, size: 15 });
-        else D.label(VW / 2, ty, '모두 넣었어요! 아래 ✔ 확인하기를 눌러 보세요', { bg: COL.sub, size: 14.5 });
+        else D.label(VW / 2, ty, (game && game.free) ? '모두 넣었어요! 카드를 끌어 다시 바꿔 볼 수 있어요' : '모두 넣었어요! 아래 ✔ 확인하기를 눌러 보세요', { bg: COL.sub, size: 14.5 });
       }
     },
     hover(p) { return !SORT.solved && sortCardAt(p) ? 'grab' : null; },

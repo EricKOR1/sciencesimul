@@ -1198,6 +1198,12 @@
     }
     return o;
   }
+  // 세포 좌표계에서 x 위치의 세포막(위쪽 둘레) y 좌표 — 이분법으로 찾는다
+  function membTopY(x) {
+    let lo = Math.PI, hi = TAU;
+    for (let i = 0; i < 28; i++) { const mid = (lo + hi) / 2; if (plantPt(PLANT, mid, PLANT.membI)[0] < x) lo = mid; else hi = mid; }
+    return plantPt(PLANT, (lo + hi) / 2, PLANT.membI)[1];
+  }
   // 세포 좌표계 안에서 그리는 효과
   function fnEffects(t) {
     const tau = fnTau(), key = S.fn ? S.fn.key : null;
@@ -1219,7 +1225,7 @@
       MEMB_PARTS.forEach((p) => {
         const u = tau - p.delay;
         if (u < 0) return;
-        const top = -c.b - 70, membY = -(c.b - c.membI) * plantRad(c, -Math.PI / 2) + 2;
+        const top = -c.b - 70, membY = membTopY(p.x) + 2;   // 그 알갱이가 내려오는 자리의 세포막(위쪽 둘레) 높이
         let y, a = 1;
         if (!p.big) {
           y = top + EASE.inOutSine(clamp(u / 1.6, 0, 1)) * (membY + 80 - top);

@@ -1165,9 +1165,9 @@
     panel(R0.x, R0.y, R0.w, R0.h, { bg: '#fff', border: '#e2e8f0', r: 16 });
     const chip = pill(TALL ? is.key + '섬' : is.key + '섬 · 부리 두께 분포', R0.x + 12, R0.y + (TALL ? 17 : 22), { size: TALL ? 13 : 13.5, align: 'left', bg: rgba(col, 0.14), color: col, pad: TALL ? 10 : 11, h: TALL ? 24 : 26 });
     const x0 = R0.x + 30, x1 = R0.x + R0.w - 14, yb = R0.y + R0.h - (TALL ? 25 : 32), yt = R0.y + (TALL ? 42 : 66);
-    const bw = (x1 - x0) / BINS, ymax = 16, u = (yb - yt) / ymax;
+    const bw = (x1 - x0) / BINS, ymax = NB, u = (yb - yt) / ymax;
     ctx.strokeStyle = '#eef1f5'; ctx.lineWidth = 1;
-    for (let v = 0; v <= 12; v += 4) { const y = yb - v * u; ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1, y); ctx.stroke(); txt(String(v), x0 - 5, y + 4, { size: 11.5, weight: 700, color: '#a0abb9', align: 'right' }); }
+    for (let v = 0; v <= ymax; v += 8) { const y = yb - v * u; ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1, y); ctx.stroke(); txt(String(v), x0 - 5, y + 4, { size: 11.5, weight: 700, color: '#a0abb9', align: 'right' }); }
     for (let k = 0; k < BINS; k++) {
       const hh = Math.min(is.histV[k], ymax) * u, bx = x0 + bw * k + 3;
       if (hh > 0.5) {

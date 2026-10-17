@@ -336,7 +336,7 @@
     ['ceres', 'pluto', 'eris'].forEach((id) => { const o = ORB[id]; o.at(kepler(o.M0 + o.n * S.time, o.e), POS[id]); });
     ORB.comet.at(S.cE, POS.comet);
     const e = POS.earth;
-    POS.apophis.x = e.x + 34; POS.apophis.y = e.y - 15;
+    POS.apophis.x = e.x + 7.4; POS.apophis.y = e.y - 5.4;  // 달 궤도(지구에서 14)보다 안쪽: 지구에서 약 3만 2천 km까지 접근
   }
 
   /* =========================================================
@@ -1144,7 +1144,7 @@
       y += 34 * fs;
     };
     const near = clamp((r - ORB.comet.rp) / (ORB.comet.ra - ORB.comet.rp), 0, 1);
-    bar('태양과의 거리: ' + (r < R_25 ? '가깝다' : '멀다'), near, 'linear-gradient', '가깝다', '멀다');
+    bar('태양과의 거리: ' + (r < R_25 ? '가깝다' : '멀다'), near, '#fbbf24', '가깝다', '멀다');
     bar('꼬리 길이', f, '#7dd3fc');
     // 진행 표시
     ctx.textAlign = 'left'; ctx.font = fnt(L, 13, 'bold');

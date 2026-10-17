@@ -772,7 +772,7 @@
     ctx.strokeStyle = '#3a2a22'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(cx, 402); ctx.lineTo(cx, 392); ctx.stroke();
     // 비커 + 내용물
     const bx = cx - 60, by = 160, bw = 120, bh = 156;
-    const waterLv = id === 'ice' ? 0 : id === 'melt' ? 0.1 + 0.34 * smooth(f) : id === 'water' ? 0.44 : id === 'boil' ? 0.44 * (1 - smooth(f)) : 0;
+    const waterLv = id === 'ice' ? 0 : id === 'melt' ? 0.44 * smooth(f) : id === 'water' ? 0.44 : id === 'boil' ? 0.44 * (1 - smooth(f)) : 0;
     D.beaker(bx, by, bw, bh, { level: waterLv, liquid: '#7cc4ff', t, wave: 1.3 + (id === 'boil' ? 2.5 : 0), glass: '#8fa3bd' });
     iceBlocks(cx - 8, by + bh - 4, id === 'ice' ? 1 : id === 'melt' ? 1 - smooth(f) : 0, 1, t);
     // 수증기(기체) 안개
@@ -810,7 +810,7 @@
     if (!R.on || RM) return;
     const bubR = id === 'boil' ? 26 : id === 'water' ? clamp((T - 55) / 45, 0, 1) * 9 : id === 'melt' ? 1.5 : 0;
     if (bubR > 0 && id !== 'steam' && Math.random() < dt * bubR) {
-      const wl = id === 'boil' ? 0.44 * (1 - smooth(st.f)) : id === 'melt' ? 0.1 + 0.34 * smooth(st.f) : 0.44;
+      const wl = id === 'boil' ? 0.44 * (1 - smooth(st.f)) : id === 'melt' ? 0.44 * smooth(st.f) : 0.44;
       if (wl > 0.03) {
         const p0 = appPt(123 + rand(-44, 44), 306), p1 = appPt(0, 316 - 156 * wl);
         AFX.emit({ x: p0.x, y: p0.y, vx: rand(-4, 4), vy: -(p0.y - p1.y) / 0.55, life: 0.55, size: rand(2, id === 'boil' ? 5.2 : 3.4) * p0.sc, color: '#ffffff', shape: 'bubble', fade: true });

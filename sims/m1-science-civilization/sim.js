@@ -1167,7 +1167,7 @@
         const born = RM ? 1 : clamp((nowS() - S.iconT[i]) / 0.32, 0, 1), sc = (RM ? 1 : EASE.outBack(born)) * (0.55 + 0.45 * v);
         const frac = clamp(S.stat.pop / 10 - i, 0, 1);
         ctx.save(); ctx.translate(cx, iy + 6); ctx.scale(sc, sc); ctx.translate(-cx, -(iy + 6));
-        ctx.beginPath(); ctx.rect(cx - 10, iy - 14, 20 * Math.max(0.3, frac), 34); ctx.clip();
+        ctx.beginPath(); ctx.rect(cx - 6, iy - 14, 12 * Math.max(0.04, frac), 34); ctx.clip();   // 사람 아이콘 폭(12)에 맞춰 10억 명 단위의 일부만 채운다
         ctx.fillStyle = '#3867f4';
         ctx.beginPath(); ctx.arc(cx, iy - 6, 4.6, 0, TAU); ctx.fill(); rr(cx - 6, iy - 0.5, 12, 14, 5); ctx.fill();
         ctx.restore();

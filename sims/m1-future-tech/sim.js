@@ -483,6 +483,7 @@
   function setScene(name, instant) {
     if (S.scene === name) { syncUI(); return; }
     endDrag();
+    if (S.present) { S.present = null; }   // 발표 연출 중 다른 장면으로 가면 연출을 끝낸다(입력이 잠긴 채 남지 않게)
     S.from = S.scene;
     S.scene = name;
     S.fb = null;
@@ -1957,9 +1958,10 @@
     softShadow(x, y, w, h, 12, lift);
     ctx.fillStyle = '#fffbea'; rr(x, y, w, h, 12); ctx.fill();
     ctx.strokeStyle = '#facc15'; ctx.lineWidth = 2; rr(x, y, w, h, 12); ctx.stroke();
-    emo(c.icon, x + 20, y + 22, 20);
-    T('걱정', x + 36, y + 27, 13, { w: 800, c: '#a16207' });
-    para(c.text, x + 10, y + 46, w - 20, 13, { lh: 16, max: 2, c: '#422006', w: 700 });
+    const tight = h < 70;   // 휴대폰(카드 높이 62): 두 줄 글이 카드 밖으로 잘리지 않게 위로 올린다
+    emo(c.icon, x + 20, y + (tight ? 17 : 22), 20);
+    T('걱정', x + 36, y + (tight ? 22 : 27), 13, { w: 800, c: '#a16207' });
+    para(c.text, x + 10, y + (tight ? 38 : 46), w - 20, 13, { lh: tight ? 15 : 16, max: 2, c: '#422006', w: 700 });
   }
 
   /* =========================================================
@@ -2719,6 +2721,7 @@
   }
   function frame(dt) {
     const t = now();
+    if (S.present && t - S.present.t0 > 6.6) { S.present = null; syncUI(); }   // 발표 장면이 안 보여도 연출은 제때 끝난다
     Day.update(dt);
     Board.update(dt);
     City.update(dt);

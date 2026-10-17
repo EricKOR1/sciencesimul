@@ -281,7 +281,8 @@
   }
   function skyProj(G, az, alt, o) {
     const d = ((az - 180 + 540) % 360) - 180;
-    o.x = G.cx + d * G.kx; o.y = G.baseY - alt * G.ky; o.ok = Math.abs(d) <= 99 && alt > -0.5; o.d = d;
+    // 가로 거리는 방위 차 × cos(고도): 높이 뜬 별도 하늘에서 움직인 각(한 달 약 30°)이 그림에서 같은 크기로 보이게 해요
+    o.x = G.cx + d * G.kx * Math.cos(clamp(alt, 0, 89) * DEG); o.y = G.baseY - alt * G.ky; o.ok = Math.abs(d) <= 99 && alt > -0.5; o.d = d;
     return o;
   }
   function spaceGeo(L) {
@@ -422,7 +423,7 @@
         if (Math.abs(d) > 112) continue;
         const sz = m.size * G.ky * (mini ? 1.5 : 1.7) * (1 - Math.max(0, 25 - m.alt) / 90);
         ctx.globalAlpha = m.a * mwStep * A * (m.alt < 4 ? Math.max(0, (m.alt + 4) / 8) : 1);
-        ctx.drawImage(gsp, G.cx + d * G.kx - sz, G.baseY - Math.max(m.alt, 0) * G.ky - sz, sz * 2, sz * 2);
+        ctx.drawImage(gsp, G.cx + d * G.kx * Math.cos(clamp(m.alt, 0, 89) * DEG) - sz, G.baseY - Math.max(m.alt, 0) * G.ky - sz, sz * 2, sz * 2);
       }
       ctx.restore();
       for (let i = 0; i < BG.length; i++) { const s = BG[i]; if (s.faint && s.mon) drawStarDot(ctx, s, s.mx, s.my, A, t, sc); }
@@ -472,7 +473,7 @@
     {
       const d = ((sunAz - 180 + 540) % 360) - 180;
       if (Math.abs(d) < 110 && sunAlt > -4) {
-        const x = G.cx + d * G.kx, y = G.baseY - sunAlt * G.ky, r = (mini ? 8 : 15) * fs, low = clamp(1 - sunAlt / 25, 0, 1);
+        const x = G.cx + d * G.kx * Math.cos(clamp(sunAlt, 0, 89) * DEG), y = G.baseY - sunAlt * G.ky, r = (mini ? 8 : 15) * fs, low = clamp(1 - sunAlt / 25, 0, 1);
         ctx.save(); ctx.globalCompositeOperation = 'lighter';
         const gs = r * (planet > 0.5 ? 6 : 7 + 3 * low);
         ctx.globalAlpha = 1 - planet * 0.35; ctx.drawImage(glowSpr(low > 0.5 ? '#ff9a4a' : '#ffd36b'), x - gs, y - gs, gs * 2, gs * 2);

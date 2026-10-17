@@ -1381,9 +1381,17 @@
     return { plot: { x: G.x + l, y: G.y + tp, w: G.w - l - r, h: G.h - tp - b }, kwh: { x: G.x + 8, y: G.y + tp - 20, w: 120, h: 18 } };
   }
   const clockStr = (h) => { const hh = Math.floor(h) % 24, mm = Math.floor((h % 1) * 60 / 5) * 5; return String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0'); };
+  /* 세로축 최댓값: 보통 12 kWh, 맑은 날 태양광 6곳 + 지원 제도 카드처럼 12를 넘으면 15로 늘려 그래프가 칸 밖으로 넘치지 않게 한다 */
+  function graphMax(res) {
+    if (res._ym) return res._ym;
+    let m = 0;
+    for (let i = 0; i < res.n; i++) m = Math.max(m, res.sol[i] + res.win[i] + res.dis[i] + res.coal[i], res.dem[i]);
+    res._ym = m > 12 ? 15 : 12;
+    return res._ym;
+  }
   function drawBands(P, res, upto, alpha) {
     const n = Math.min(DAY_STEPS, Math.max(1, Math.floor(upto)));
-    const X = (i) => P.x + (i / DAY_STEPS) * P.w, Y = (v) => P.y + P.h - (v / 12) * P.h;
+    const X = (i) => P.x + (i / DAY_STEPS) * P.w, Y = (v) => P.y + P.h - (v / graphMax(res)) * P.h;
     const cum = (i, k) => (k === 0 ? 0 : k === 1 ? res.sol[i] : k === 2 ? res.sol[i] + res.win[i] : k === 3 ? res.sol[i] + res.win[i] + res.dis[i] : res.sol[i] + res.win[i] + res.dis[i] + res.coal[i]);
     const cols = [GR_COL.sol, GR_COL.win, GR_COL.dis, GR_COL.coal];
     ctx.save(); ctx.globalAlpha *= alpha;
@@ -1411,7 +1419,8 @@
   function drawGraph(G, t, dt) {
     if (G.a < 0.01 || G.w < 60) return;
     const Lg = graphLayout(G), P = Lg.plot, tall = LAY.kind === 'tall';
-    const X = (i) => P.x + (i / DAY_STEPS) * P.w, Y = (v) => P.y + P.h - (v / 12) * P.h;
+    const resG = S.run ? S.run.res : S.gr ? S.gr.res : preview(), YM = graphMax(resG);
+    const X = (i) => P.x + (i / DAY_STEPS) * P.w, Y = (v) => P.y + P.h - (v / YM) * P.h;
     ctx.save(); ctx.globalAlpha = G.a;
     softShadow(() => { ctx.fillStyle = '#fff'; rr(G.x, G.y, G.w, G.h, 16); ctx.fill(); }, 12, 3);
     txt('📈 하루 전력 그래프', G.x + 14, G.y + 17, f(14, 800), COL.ink, 'left');
@@ -1425,7 +1434,7 @@
     // 축
     txt('시간당 전기량(kWh) ⓘ', G.x + 14, G.y + (tall ? 53 : 36), f(11.5, 800), S.hoverSpot === 'kwh' ? '#3867f4' : COL.muted, 'left');
     ctx.strokeStyle = 'rgba(100,116,139,.2)'; ctx.lineWidth = 1; ctx.fillStyle = COL.muted; ctx.font = f(11, 700); ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
-    [0, 3, 6, 9, 12].forEach((v) => { ctx.beginPath(); ctx.moveTo(P.x, Y(v)); ctx.lineTo(P.x + P.w, Y(v)); ctx.stroke(); ctx.fillText(String(v), P.x - 6, Y(v)); });
+    (YM > 12 ? [0, 3, 6, 9, 12, 15] : [0, 3, 6, 9, 12]).forEach((v) => { ctx.beginPath(); ctx.moveTo(P.x, Y(v)); ctx.lineTo(P.x + P.w, Y(v)); ctx.stroke(); ctx.fillText(String(v), P.x - 6, Y(v)); });
     ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
     for (let h = 0; h <= 24; h += 4) { const x = X(h * STEPS); ctx.strokeStyle = 'rgba(100,116,139,.35)'; ctx.beginPath(); ctx.moveTo(x, P.y + P.h); ctx.lineTo(x, P.y + P.h + 4); ctx.stroke(); ctx.fillText(String((8 + h) % 24).padStart(2, '0') + '시', x, P.y + P.h + 17); }
     // 밤 시간대 음영
@@ -1782,6 +1791,7 @@
   function planTry(c, pt) {
     const PL = S.plan, L = planLayout();
     if (c.row !== PL.cur) return null;
+    if (PL.slots[PL.cur] != null) return null;   // 방금 놓은 카드가 자리를 잡는 중이면 두 번째 카드는 받지 않는다(겹침 방지)
     const R = L.row(PL.cur);
     if (!inR(pt, R.slot, 14)) {
       for (let i = 0; i < 3; i++) if (i !== PL.cur && inR(pt, L.row(i).slot, 6)) return { msg: '빛나는 칸부터 채워요', bx: pt.x, by: pt.y - 10 };

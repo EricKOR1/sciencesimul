@@ -566,6 +566,7 @@
     H.cornerFan = null; H.sol = null; H.hand = null;
     H.labels = H.labels.filter((l) => l.kind === 'diff');
   }
+  const solBusy = () => !!(H.sol && H.sol.stage !== 'done');   // 해결 방안 연출 중에만 입력을 잠근다
   function zoneOf(id) { return LAY.home.zones.find((z) => z.id === id); }
   function towelRect(zone) {
     const tw = LAY.home.towel;
@@ -591,7 +592,7 @@
     return list;
   }
   function homeDown(p) {
-    if (H.lapse || H.sol) return false;
+    if (H.lapse || solBusy()) return false;
     const spots = homeHotspots();
     for (const s of spots) {
       if (!inR(p, s.r, 6)) continue;
@@ -666,7 +667,7 @@
     // 바람: 창가는 열린 창의 바람, 구석은 거의 없음(4단계 해결 방안: 선풍기)
     H.towels.win.v.wind = 1;
     const cf = H.cornerFan;
-    if (cf) { cf.omega += ((cf.on ? 18 : 0) - cf.omega) * Math.min(1, 2.5 * dt); cf.ang += cf.omega * dt; }
+    if (cf) { cf.omega += ((cf.on ? 18 : 0) - cf.omega) * Math.min(1, 2.5 * dt); cf.ang += cf.omega * dt; stepWindLines(cf.lines, dt, 160, clamp(cf.omega / 18, 0, 1)); }
     H.towels.corner.v.wind = cf && cf.on ? clamp(cf.omega / 18, 0, 1) * 0.95 : 0.06;
     ['win', 'corner'].forEach((k) => stepTowelFx(H.towels[k], k, dt, homeEnv(k)));
     H.labels = H.labels.filter((l) => !l.ttl || nowS() - l.t0 < l.ttl);
@@ -1342,13 +1343,13 @@
       bubble(pos.x, pos.y, '💧 ' + from + ' g → ' + nxt + ' g', { kind: 'info', tag: 'water' + k, dur: 1.6, maxW: 200 });
     }
     B.flash[part] = nowS();
-    afterBenchChange();
+    afterBenchChange();   // (수건 교체는 애니메이션 뒤에 값이 바뀌므로 swapTowel 안에서 한 번 더 판정한다)
   }
   function swapTowel(T, change) {
-    if (RM) { change(); renderCond(); return; }
+    if (RM) { change(); afterBenchChange(); return; }
     const v = T.v;
     SciSim.tween(v, { dy: -46, alpha: 0 }, { duration: 0.15, ease: 'inQuad', onDone: () => {
-      change(); renderCond();
+      change(); afterBenchChange();
       v.dy = -46;
       SciSim.tween(v, { dy: 0, alpha: 1 }, { duration: 0.2, ease: 'outBack' });
     } });
@@ -1786,9 +1787,13 @@
     txt('시간 (분)', (fr.x0 + fr.x1) / 2, fr.y0 + 33, f(13, 800), '#5d6879');
     ctx.save(); ctx.translate(G.x + 14, (fr.y0 + fr.y1) / 2); ctx.rotate(-Math.PI / 2); txt('질량 (g)', 0, 0, f(13, 800), '#5d6879'); ctx.restore();
     // 마른 수건 20 g 기준선
-    const y20 = fr.y0 - (20 / fr.ymax) * (fr.y0 - fr.y1);
-    D.dashedLine(fr.x0, y20, fr.x1, y20, { color: '#9aa5b6', width: 1.5, dash: [5, 5] });
-    txt('마른 수건 20 g', fr.x1 - 4, y20 - 9, f(12.5, 700), '#7a8596', 'right');
+    const dryKinds = [...new Set([B.A.cloth, B.B.cloth])];
+    dryKinds.forEach((ck, di) => {
+      const dm = DRY[ck], yd = fr.y0 - (dm / fr.ymax) * (fr.y0 - fr.y1);
+      D.dashedLine(fr.x0, yd, fr.x1, yd, { color: '#9aa5b6', width: 1.5, dash: [5, 5] });
+      const nm = dryKinds.length > 1 ? (ck === 'cotton' ? '마른 면 수건 ' : '마른 극세사 수건 ') : '마른 수건 ';
+      txt(nm + dm + ' g', fr.x1 - 4, yd + (ck === 'micro' ? -9 : 11), f(12.5, 700), '#7a8596', 'right');
+    });
     // 계열(점 + 선)
     const curA = sa, curB = sb;
     B.series.forEach((s) => {
@@ -2422,7 +2427,7 @@
     const any = homeCtl || designCtl || runCtl;
     shown($('#ctrlCard'), any);
     // 버튼 상태
-    btn.hour.disabled = !!H.lapse || !!H.sol || (!free && H.min >= 60);
+    btn.hour.disabled = !!H.lapse || solBusy() || (!free && H.min >= 60);
     const t10 = Math.round(B.t);
     btn.ten.disabled = !!B.lapse || t10 >= 60 || recordLock();
     btn.ten.title = recordLock() ? '먼저 기록해요' : '';

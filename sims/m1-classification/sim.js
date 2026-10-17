@@ -1331,7 +1331,7 @@
     if (!TALL) { const col = i % 5, row = Math.floor(i / 5); return { x: P.x + 8 + col * 57, y: P.y + 30 + row * 64, w: 44, h: 44 }; }
     return { x: P.x + 4 + i * 44, y: P.y + 40, w: 42, h: 46 };
   }
-  function nextBtnRect() { const C = LAY.key.card; return TALL ? { x: C.x + C.w - 138, y: C.y + C.h - 42, w: 128, h: 34 } : { x: C.x + C.w - 150, y: C.y + C.h - 44, w: 138, h: 36 }; }
+  function nextBtnRect() { const C = LAY.key.card; return TALL ? { x: C.x + C.w - 138, y: C.y + C.h - 36, w: 128, h: 32 } : { x: C.x + C.w - 150, y: C.y + C.h - 44, w: 138, h: 36 }; }
   const FEAT_LAB = ['핵막', '광합성', '세포벽', '몸'];
   function featVal(o, k) { return k === 0 ? (o.nuc ? '있음' : '없음') : k === 1 ? (o.photo ? '함' : '못 함') : k === 2 ? (o.wall ? '있음' : '없음') : o.body; }
   function drawKeyTree(t) {
@@ -1410,7 +1410,7 @@
     pill(o.name, bx, C.y + (TALL ? 118 : 128), { size: TALL ? 14.5 : 15.5, bg: '#334155', pad: 12, h: TALL ? 26 : 26 });
     // 특징 칩 (2×2)
     const act = KY.mode === 'flow' && KY.st === 'ask' ? KEY_QS[KY.node].chip : -1;
-    const cw = TALL ? 334 : 160, ch = TALL ? 30 : 40, x0 = C.x + (TALL ? 104 : 140), y0 = C.y + (TALL ? 12 : 14), vgap = TALL ? 4 : 6, hgap = 8;
+    const cw = TALL ? 334 : 160, ch = TALL ? 26 : 40, x0 = C.x + (TALL ? 104 : 140), y0 = C.y + (TALL ? 8 : 14), vgap = TALL ? 3 : 6, hgap = 8;
     for (let k = 0; k < 4; k++) {
       const rx = TALL ? x0 : x0 + (k % 2) * (cw + hgap), ry = TALL ? y0 + k * (ch + vgap) : y0 + Math.floor(k / 2) * (ch + vgap);
       const hl = act === k, pr = hl ? 0.5 + 0.5 * Math.sin(t * 6) : 0;
@@ -1432,7 +1432,7 @@
       dropShadow(r.x, r.y, r.w, r.h, 18, 8, 2, 'rgba(20,40,30,.25)');
       rr(r.x, r.y, r.w, r.h, 18); ctx.fillStyle = hov ? '#15803d' : '#16a34a'; ctx.fill();
       txt('다음 생물 ▶', r.x + r.w / 2, r.y + r.h / 2 + 1, { size: 15, weight: 800, color: '#fff', align: 'center', base: 'middle' });
-      pill('→ ' + K.name, C.x + (TALL ? 200 : 236), C.y + C.h - (TALL ? 25 : 26), { size: TALL ? 14 : 15.5, bg: K.color, pad: 13, h: 30, shadow: true });
+      pill('→ ' + K.name, C.x + (TALL ? 200 : 236), C.y + C.h - (TALL ? 20 : 26), { size: TALL ? 14 : 15.5, bg: K.color, pad: 13, h: 30, shadow: true });
     } else if (!TALL) txt('질문에 맞는 "예"/"아니오"를 눌러 길을 따라가요', C.x + 140, C.y + C.h - 16, { size: 13.5, weight: 700, color: '#64748b' });
     // 고르개
     panel(P.x, P.y, P.w, P.h, { bg: '#fff', border: '#e2e8f0', r: 18 });

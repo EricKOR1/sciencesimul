@@ -168,7 +168,7 @@
   const yearSpotCache = {};
   function spotsOfYear(y) {
     if (yearSpotCache[y]) return yearSpotCache[y];
-    const N = SN[y - Y0], r = rng(y * 97 + 13), groups = Math.round(N / 21), out = [];
+    const N = SN[y - Y0], r = rng(y * 97 + 13), groups = N >= 3 ? Math.max(1, Math.round(N / 21)) : 0, out = [];
     for (let g = 0; g < groups; g++) {
       const lat = (r() < 0.5 ? -1 : 1) * (6 + r() * 22), lon = -62 + r() * 124, n = 1 + Math.floor(r() * 3), base = 6 + r() * 6 + N / 40;
       for (let k = 0; k < n; k++) out.push({ lat: lat + (r() - 0.5) * 6, lon: lon + (r() - 0.5) * 12, r: k === 0 ? base : base * (0.35 + r() * 0.3), g });
@@ -1242,7 +1242,9 @@
           S.lens.tu = u; S.lens.tv = w;
         } else if (drag.type === 'occ') {
           const G = atmoGeo(L);
-          let ox = (p.x - drag.gx - G.cx) / G.R, oy = (p.y - drag.gy - G.cy) / G.R;
+          // 가리개 원판이 화면 밖으로 나가 버리면 다시 잡을 수 없으니 장면 안에 머물게 해요
+          const PP = G.P;
+          let ox = (clamp(p.x - drag.gx, PP.x + 24, PP.x + PP.w - 24) - G.cx) / G.R, oy = (clamp(p.y - drag.gy, PP.y + 24, PP.y + PP.h - 24) - G.cy) / G.R;
           if (Math.hypot(ox, oy) < 0.14) { if (!S.snapped) { S.snapped = true; Sound.tone(520, 0.06, 'square', 0.05); Sound.tone(780, 0.1, 'triangle', 0.07, 0.04); ringFx(V, G.cx, G.cy, G.R, '#5eead4'); } ox = 0; oy = 0; } else S.snapped = false;
           S.occSp.x.target = ox; S.occSp.y.target = oy;
         } else if (drag.type === 'year') {

@@ -1320,7 +1320,9 @@
   const inRect = (p, R) => p.x >= R.x && p.x <= R.x + R.w && p.y >= R.y && p.y <= R.y + R.h;
   const angOf = (cx, cy, p) => Math.atan2(cy - p.y, p.x - cx) / DEG;
   function setProtractorAt(V, p, grab) {
-    const G = polarGeo(V.L), x = p.x - grab.dx, y = p.y - grab.dy;
+    const G = polarGeo(V.L), P = G.P;
+    // 각도기 중심이 사진 밖으로 나가 버리면 다시 잡을 수 없으니 사진 안에 머물게 해요
+    const x = clamp(p.x - grab.dx, P.x + 16, P.x + P.w - 16), y = clamp(p.y - grab.dy, P.y + 16, P.y + P.h - 16);
     const ou = (x - G.cx) / G.k, ov = (y - G.cy) / G.k;
     if (Math.hypot(ou, ov) * G.k < 12 * V.L.fs + 2) {
       if (!S.pc.snap) { Sound.tone(880, 0.12, 'triangle', 0.08); ringFx(V, G.cx, G.cy, 18, '#5eead4'); V.P.burst(G.cx, G.cy, { count: 10, colors: ['#5eead4', '#fde68a'], speed: 90, gravity: 0, size: 2.5 }); }
@@ -1383,7 +1385,8 @@
         if (drag.type === 'pc') setProtractorAt(V, p, drag);
         else if (drag.type === 'arm') {
           const G = polarGeo(L), c = pcXY(G), arm = S.arm[drag.i];
-          let q = { x: p.x, y: p.y };
+          const PP = G.P;
+          let q = { x: clamp(p.x, PP.x + 14, PP.x + PP.w - 14), y: clamp(p.y, PP.y + 14, PP.y + PP.h - 14) };   // 손잡이가 사진 밖으로 나가지 않게
           if (S.pc.snap) {
             let best = null, bd = 18 * L.fs;
             trailEnds(G, S.expo).forEach((e) => { const d = Math.hypot(e.x - p.x, e.y - p.y); if (d < bd) { bd = d; best = e; } });

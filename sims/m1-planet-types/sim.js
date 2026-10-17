@@ -882,7 +882,7 @@
       ctx.fillStyle = '#c7d3f2'; ctx.fillText('질량 ' + p.M + ' · 위성 ' + p.moons, x + 46, y + 65);
     }
     ctx.textBaseline = 'alphabetic'; ctx.globalAlpha = 1;
-    if (st === 'placed') { ctx.fillStyle = '#10b981'; circle(ctx, x + w - 14, y + 14, 8); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.lineCap = 'round'; checkMark(ctx, x + w - 14, y + 14, 7); ctx.lineCap = 'butt'; }
+    if (st === 'placed') { const bxc = L.col ? x + 6 : x + w - 14, byc = L.col ? y + 6 : y + 14; ctx.fillStyle = '#10b981'; circle(ctx, bxc, byc, L.col ? 7 : 8); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.lineCap = 'round'; checkMark(ctx, bxc, byc, L.col ? 6 : 7); ctx.lineCap = 'butt'; }
     ctx.restore();
     void c; void lift;
   }

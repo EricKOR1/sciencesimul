@@ -648,9 +648,11 @@
     // 금속 컵 (단면)
     drawCup(V, G, cup, t);
     // 컵 앞쪽 물(컵이 물에 잠긴 듯 보이게)
-    if (subm > 0) {
+    if (subm > 0) {                                  // 물에 잠긴 금속 벽만 살짝 물빛을 입혀요 (컵 속은 그대로)
       ctx.fillStyle = rgba(wc, 0.2);
-      ctx.fillRect(cup.x - 2, wTop + 2, cup.w + 4, Math.min(cup.y + cup.h, T.y + T.h - 3) - wTop - 2);
+      const yb = Math.min(cup.y + cup.h, T.y + T.h - 3), hh = yb - wTop - 2;
+      ctx.fillRect(cup.x - 2, wTop + 2, 9, hh); ctx.fillRect(cup.x + cup.w - 7, wTop + 2, 9, hh);
+      ctx.fillRect(cup.x + 7, Math.max(wTop + 2, yb - 7), cup.w - 14, Math.min(7, hh));
     }
     // 수조 유리 테두리 + 반사
     ctx.strokeStyle = '#8fa3bd'; ctx.lineWidth = 3; ctx.lineJoin = 'round';
@@ -689,6 +691,13 @@
       const s = 1 + lift * 0.03;
       ctx.translate(c.x + c.w / 2, c.y + c.h / 2); ctx.scale(s, s); ctx.translate(-(c.x + c.w / 2), -(c.y + c.h / 2));
       ctx.shadowColor = 'rgba(20,40,80,' + (0.3 * lift).toFixed(3) + ')'; ctx.shadowBlur = 18 * lift; ctx.shadowOffsetY = 10 * lift;
+    }
+    // 컵 안쪽은 비어 있어요: 뒤쪽 수조 물이 컵 안으로 비쳐 보이지 않게 먼저 배경(공기)색으로 채워요
+    {
+      const ix = c.x + wall, iw = c.w - 2 * wall, ih = c.h - wall, Tk = G.tank;
+      ctx.fillStyle = V.bg || '#f1f5fb'; ctx.fillRect(ix, c.y, iw, ih);
+      const ty0 = Math.max(c.y, Tk.y), ty1 = c.y + ih;
+      if (ty1 > ty0 && ix >= Tk.x && ix + iw <= Tk.x + Tk.w) { ctx.fillStyle = 'rgba(214,230,246,.5)'; ctx.fillRect(ix, ty0, iw, ty1 - ty0); }
     }
     // 컵 속 물
     const wc = waterColor(EXP.Tc), ly = c.y + G.cupWater;

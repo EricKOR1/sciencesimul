@@ -941,7 +941,7 @@ TP.cold.speed = TP.hot.speed = 0.42;           // 두 비커의 차이를 충분
     });
     const gy = bot - (bot - top) * 0.9;
     D.dashedLine(M.x + 12, gy, M.x + M.w - 12, gy, { color: COL.good, dash: [4, 4] });
-    text(M.x + M.w - 10, gy - 5, '90%', { size: 13, weight: 800, color: COL.good, align: 'right' });
+    text(M.x + M.w - 10, gy - 5, '90%', { size: 13, weight: 800, color: COL.good, align: 'right', stroke: '#fff', strokeWidth: 4 });
   }
 
   /* =========================================================
