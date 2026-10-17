@@ -717,8 +717,9 @@
     ctx.fillStyle = '#e9eef4'; D.roundRect(c.x - 3, c.y - 3, wall + 6, 6, 3); ctx.fill(); D.roundRect(c.x + c.w - wall - 3, c.y - 3, wall + 6, 6, 3); ctx.fill();
     ctx.restore();
     if (!EXP.cupIn) {
-      D.label(c.x + c.w / 2, c.y + G.cupWater + 40, '80 °C 물', { bg: 'rgba(194,65,12,.92)', size: 13 * fs });
-      D.label(c.x + c.w / 2, c.y + c.h - 30, '금속 컵', { bg: 'rgba(58,68,86,.88)', size: 13 * fs });
+      // 이름표는 온도 센서 막대(왼쪽)를 피해 오른쪽으로 살짝 옮겨 둬요
+      D.label(c.x + c.w / 2 + 10, c.y + G.cupWater + 40, '80 °C', { bg: 'rgba(194,65,12,.92)', size: 13 * fs });
+      D.label(c.x + c.w / 2 + 10, c.y + c.h - 30, '금속 컵', { bg: 'rgba(58,68,86,.88)', size: 13 * fs });
     }
   }
   function drawHeatFlow(V, c, wTop, t) {
