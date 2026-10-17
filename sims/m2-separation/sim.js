@@ -1937,10 +1937,10 @@
   /* =========================================================
      미션
      ========================================================= */
-  const dsOk = () => DS.tubes.some((tb) => dsVol(tb) >= 10 && dsFrac(tb) >= 0.85) && DS.maxT >= 88;
+  const dsOk = () => DS.tubes.some((tb) => dsVol(tb) >= 9.95 && dsFrac(tb) >= 0.85) && DS.maxT >= 88;
   const dsStatus = () => {
     const part = DS.tubes.map((tb, i) => (dsVol(tb) >= 0.5 ? TUBE_NAME[i] + ' <b>' + (Math.round(dsVol(tb) * 10) / 10).toFixed(1) + ' mL</b>(에탄올 ' + Math.round(dsFrac(tb) * 100) + '%)' : '')).filter(Boolean).join(' · ');
-    return '지금 <b>' + (Math.round(DS.T * 10) / 10).toFixed(1) + ' °C</b> · ' + (part || '아직 모은 액체가 없어요') + '<br>에탄올 85% 이상 10 mL ' + mark(DS.tubes.some((tb) => dsVol(tb) >= 10 && dsFrac(tb) >= 0.85)) + ' · 온도가 오르는 구간까지 관찰 ' + mark(DS.maxT >= 88);
+    return '지금 <b>' + (Math.round(DS.T * 10) / 10).toFixed(1) + ' °C</b> · ' + (part || '아직 모은 액체가 없어요') + '<br>에탄올 85% 이상 10 mL ' + mark(DS.tubes.some((tb) => dsVol(tb) >= 9.95 && dsFrac(tb) >= 0.85)) + ' · 온도가 오르는 구간까지 관찰 ' + mark(DS.maxT >= 88);
   };
   const chCheck = () => {
     if (CH.phase !== 'done') return '먼저 💧 물에 담가 크로마토그래피를 끝까지 해 보세요.';
