@@ -3,15 +3,21 @@
    ① 관찰: 물질마다 다른 저항(도체·부도체, 반도체 소개)
    → ② 실험: 전압과 전류(비례) → ③ 실험: 저항과 전류(반비례)
    → ④ 적용: 세 양의 관계(옴의 법칙)로 예측하기
+   애니메이션: 전자(파란 점)는 전류에 비례한 속력으로 흐르고, 전류계·전압계 바늘은 스프링처럼 흔들리며 값을 가리켜요.
    ========================================================= */
 (function () {
   'use strict';
   const { $, $$, clamp, Sound, toast } = SciSim;
+  const RM = SciSim.reduceMotion;
+  const C = SciSim.color;
+  const EASE = SciSim.ease;
+  const ap = (cur, tgt, dt, rate) => (RM ? tgt : SciSim.approach(cur, tgt, dt, rate));
 
   /* ---------- 상수 / 상태 ---------- */
   const V_MAX = 10, V_BASE = 2, R_BASE = 10;
   const V_MAT = 3, R_BULB = 10;               // 물질 시험 회로: 3 V 전원 + 전구(10 Ω)
   const A_SCALE = 1, V_SCALE = 10;            // 전류계 0~1 A, 전압계 0~10 V
+  const E_SPEED = 160;                        // 전자 표시 속력(px/s) = E_SPEED × 전류(A)
   const R_LIST = [10, 20, 30, 40];
   const R_COLORS = { 10: '#2563eb', 20: '#9333ea', 30: '#0891b2', 40: '#d97706' };
   const MATS = [
@@ -25,6 +31,7 @@
     { id: 'plastic', name: '플라스틱 자', R: Infinity, col: '#c4b5fd' },
   ];
   const MAT = {}; MATS.forEach((m) => { MAT[m.id] = m; });
+  const spr = (v, k, d) => new SciSim.Spring(v, { stiffness: k || 130, damping: d || 9 });
   const S = {
     mode: 'material',     // material(물질 시험) | resistor(니크롬선 저항 실험)
     V: V_BASE, R: R_BASE,
@@ -32,12 +39,22 @@
     tested: {},           // 시험한 물질 id → 전류
     drag: null,           // 물질 끌기
     knob: null,
-    nA: 0, nV: 0, glow: 0,
     data: [],             // 기록: {V, I, R}
     tried: {},            // 3단계: 6 V에서 고른 저항 → 전류
     target: null,
     lockV: null, lockR: null,
+    // --- 그림용 (부드럽게 따라가는 값) ---
+    t: 0, mf: 1, modeRes: 0,
+    needA: spr(0, 120, 8), needV: spr(0, 120, 8),
+    glowSp: spr(0, 75, 9), glow: 0,
+    I: 0, Vd: V_BASE, Rd: R_BASE, gV: 0, gI: 0, heat: 0, phase: 0,
+    knobAng: spr((135 + 270 * V_BASE / V_MAX) * Math.PI / 180, 260, 15), knobLift: 0, knobShake: -9,
+    samp: { dx: 0, dy: 0, sc: 1 }, clamp: 0, slotShake: -9, resPop: spr(0, 260, 11), platePop: spr(0, 240, 10),
+    flyers: [], wrongAt: -9, chk: null, touched: { mat: false, knob: false },
   };
+  const T = { knob: 0, vm: 0, graph: 0, tray: 0, res: 0, intro: 0 };
+  const TT = {};
+  let featInit = false;
   const r1 = (x) => Math.round(x * 10) / 10;
   const r2 = (x) => Math.round(x * 100) / 100;
   const matAmps = (id) => (id && isFinite(MAT[id].R) ? V_MAT / (R_BULB + MAT[id].R) : 0);
@@ -45,7 +62,8 @@
   const volts = () => (S.mode === 'material' ? 0 : S.V);     // 니크롬선 양 끝의 전압(전압계)
   const shownI = () => r2(amps());
   const near = (a, b, tol) => Math.abs(a - b) <= tol + 1e-9;
-  const brightness = () => (S.mode === 'material' ? clamp(Math.pow(amps() / 0.3, 1.3), 0, 1) * 0.92 : 0);
+  // 전구 밝기 = 전구에서 쓰는 전력(P = I²R)에 비례 (눈에 잘 보이도록 약간 완만하게)
+  const brightness = () => (S.mode === 'material' ? clamp(Math.pow((amps() * amps() * R_BULB) / 0.9, 0.55), 0, 1) * 0.96 : 0);
   const resultOf = (I) => (I >= 0.25 ? { t: '💡 밝게 켜짐', c: '#0b7a41' } : I > 0 ? { t: '💡 약하게 켜짐', c: '#b45309' } : { t: '✖ 안 켜짐', c: '#b91c1c' });
 
   /* ---------- 열린 도구 ---------- */
@@ -57,9 +75,9 @@
   /* ---------- 회로 배치(가상 좌표) ---------- */
   const G = {
     L: 54, R: 440, T: 150, B: 482,
-    box: { x: 160, y: 384, w: 160, h: 128 },
+    box: { x: 160, y: 370, w: 160, h: 142 },
     tN: { x: 188, y: 482 }, tP: { x: 292, y: 482 },
-    knob: { x: 240, y: 482, r: 16 },
+    knob: { x: 240, y: 482, r: 18 },
     bulb: { x: 240, gy: 88, gr: 34 },
     vm: { x: 240, y: 268, r: 58 },
     am: { x: 440, y: 320, r: 58 },
@@ -74,10 +92,84 @@
   const FONT = '"Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif';
   const MONO = 'ui-monospace,"SF Mono",Menlo,Consolas,monospace';
   const f = (size, w) => (w || 'bold') + ' ' + size + 'px ' + FONT;
-  const WIRE = '#3f4a5c';
+  const WIRE_P = '#d9434f', WIRE_N = '#3d4a63';
+
+  /* ---------- 경로 도우미 ---------- */
+  function roundPoly(pts, r, closed) {
+    const n = pts.length, out = [];
+    const cnt = closed ? n : n - 2;
+    if (!closed) out.push({ x: pts[0].x, y: pts[0].y });
+    for (let k = 0; k < cnt; k++) {
+      const i = closed ? k : k + 1;
+      const p0 = pts[(i - 1 + n) % n], p1 = pts[i], p2 = pts[(i + 1) % n];
+      const l1 = Math.hypot(p0.x - p1.x, p0.y - p1.y), l2 = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+      const d = Math.min(r, l1 / 2, l2 / 2);
+      const a = { x: p1.x + (p0.x - p1.x) / l1 * d, y: p1.y + (p0.y - p1.y) / l1 * d };
+      const b = { x: p1.x + (p2.x - p1.x) / l2 * d, y: p1.y + (p2.y - p1.y) / l2 * d };
+      for (let s = 0; s <= 8; s++) {
+        const u = s / 8, w0 = (1 - u) * (1 - u), w1 = 2 * (1 - u) * u, w2 = u * u;
+        out.push({ x: a.x * w0 + p1.x * w1 + b.x * w2, y: a.y * w0 + p1.y * w1 + b.y * w2 });
+      }
+    }
+    if (!closed) out.push({ x: pts[n - 1].x, y: pts[n - 1].y });
+    return out;
+  }
+  function makePath(pts, closed) {
+    const segs = [];
+    let total = 0;
+    const n = closed ? pts.length : pts.length - 1;
+    for (let i = 0; i < n; i++) {
+      const a = pts[i], b = pts[(i + 1) % pts.length];
+      const len = Math.hypot(b.x - a.x, b.y - a.y);
+      if (len < 1e-6) continue;
+      segs.push({ a, b, len, s0: total });
+      total += len;
+    }
+    const out = { x: 0, y: 0 };
+    return {
+      total,
+      at(s) {
+        s = ((s % total) + total) % total;
+        for (let i = 0; i < segs.length; i++) {
+          const g = segs[i];
+          if (s <= g.s0 + g.len || i === segs.length - 1) {
+            const t = clamp((s - g.s0) / (g.len || 1), 0, 1);
+            out.x = g.a.x + (g.b.x - g.a.x) * t; out.y = g.a.y + (g.b.y - g.a.y) * t;
+            return out;
+          }
+        }
+        return out;
+      },
+    };
+  }
+  // 전자의 이동 방향: (−)극 → 왼쪽 → 위 → 오른쪽 → (+)극
+  const loopPath = makePath(roundPoly([
+    { x: G.tN.x, y: G.B }, { x: G.L, y: G.B }, { x: G.L, y: G.T }, { x: G.R, y: G.T }, { x: G.R, y: G.B }, { x: G.tP.x, y: G.B },
+  ], 18, true), true);
+  const NE = 40;
+  const WIRES_MAT = [
+    { pts: roundPoly([{ x: G.tN.x, y: G.B }, { x: G.L, y: G.B }, { x: G.L, y: G.slot.bot }], 18, false), col: WIRE_N },
+    { pts: roundPoly([{ x: G.L, y: G.slot.top }, { x: G.L, y: G.T }, { x: 218, y: G.T }], 18, false), col: WIRE_N },
+    { pts: roundPoly([{ x: G.tP.x, y: G.B }, { x: G.R, y: G.B }, { x: G.R, y: G.T }, { x: 262, y: G.T }], 18, false), col: WIRE_P },
+  ];
+  const WIRES_RES = [
+    { pts: roundPoly([{ x: G.tN.x, y: G.B }, { x: G.L, y: G.B }, { x: G.L, y: G.T }, { x: G.res.x0 + 4, y: G.T }], 18, false), col: WIRE_N },
+    { pts: roundPoly([{ x: G.tP.x, y: G.B }, { x: G.R, y: G.B }, { x: G.R, y: G.T }, { x: G.res.x1 - 4, y: G.T }], 18, false), col: WIRE_P },
+  ];
+  const VM_WIRES = [
+    roundPoly([{ x: G.jL, y: G.T }, { x: G.jL, y: G.vm.y }, { x: G.vm.x - G.vm.r, y: G.vm.y }], 14, false),
+    roundPoly([{ x: G.jR, y: G.T }, { x: G.jR, y: G.vm.y }, { x: G.vm.x + G.vm.r, y: G.vm.y }], 14, false),
+  ];
+  // 니크롬선 지그재그 (n: 꺾임 횟수, 연속값이라 저항을 바꾸면 부드럽게 변해요)
+  function zig(n, u) {
+    const q = (((u * n) % 1) + 1) % 1;
+    const s = q < 0.25 ? 4 * q : q < 0.75 ? 2 - 4 * q : -4 + 4 * q;
+    return -11 * s;
+  }
+  const zigN = () => 4 + S.Rd / 5;
 
   /* ---------- 캔버스 ---------- */
-  let view = null, ctx = null, LAY = null;
+  let view = null, ctx = null, D = null, LAY = null, bgPat = null;
   const mq = window.matchMedia ? window.matchMedia('(max-width: 599px)') : null;
   const handlers = {
     hover(p) {
@@ -88,13 +180,14 @@
     down(p) {
       if (S.mode === 'material') {
         const id = tileAt(p);
-        if (id) { S.drag = { id, from: 'tray', x: p.x, y: p.y, sx: p.x, sy: p.y, moved: false }; hideHint(); return true; }
-        if (S.slot && hitSlot(p)) { S.drag = { id: S.slot, from: 'slot', x: p.x, y: p.y, sx: p.x, sy: p.y, moved: false }; hideHint(); return true; }
+        if (id) { startDrag(id, 'tray', p); return true; }
+        if (S.slot && hitSlot(p)) { startDrag(S.slot, 'slot', p); return true; }
         return false;
       }
-      if (on('voltage') && hitKnob(p)) {
-        if (S.lockV != null) { Sound.click(); toast('🔒 이 미션에서는 전압이 ' + S.lockV + ' V로 고정되어 있어요'); return false; }
-        S.knob = { x: p.x, y: p.y, V0: S.V };
+      if (on('voltage') && T.knob > 0.5 && hitKnob(p)) {
+        if (S.lockV != null) { Sound.fail(); S.knobShake = S.t; toast('🔒 이 미션에서는 전압이 ' + S.lockV + ' V로 고정되어 있어요'); return false; }
+        S.knob = { x: p.x, y: p.y, V0: S.V }; S.touched.knob = true;
+        Sound.tick();
         hideHint();
         return true;
       }
@@ -103,23 +196,31 @@
     move(p) {
       if (S.drag) {
         S.drag.x = p.x; S.drag.y = p.y;
-        if (Math.hypot(p.x - S.drag.sx, p.y - S.drag.sy) > 10) S.drag.moved = true;
+        if (!S.drag.moved && Math.hypot(p.x - S.drag.sx, p.y - S.drag.sy) > 10) { S.drag.moved = true; Sound.tick(); }
         return;
       }
       if (!S.knob) return;
       const d = (p.x - S.knob.x) - (p.y - S.knob.y);     // 오른쪽·위로 끌면 전압 증가
+      const before = S.V;
       setV(S.knob.V0 + d * 0.025);
+      if (Math.floor(S.V) !== Math.floor(before)) Sound.tick();
     },
     up(p) {
       S.knob = null;
       const d = S.drag;
       if (!d) return;
       S.drag = null;
-      if (!d.moved) { if (d.from === 'tray') insert(d.id); else removeSample(); return; }
-      if (hitSlot(p, 30)) insert(d.id);
-      else if (d.from === 'slot') removeSample();
+      if (!d.moved) { if (d.from === 'tray') insert(d.id, tileCenter(d.id)); else removeSample(); return; }
+      if (hitSlot(p, 30)) insert(d.id, { x: d.px, y: d.py });
+      else if (d.from === 'slot') removeSample({ x: d.px, y: d.py });
+      else flyBack(d.id, d.px, d.py);
     },
   };
+  function startDrag(id, from, p) {
+    S.drag = { id, from, x: p.x, y: p.y, sx: p.x, sy: p.y, px: p.x, py: p.y, moved: false, lift: 0, tilt: 0 };
+    S.touched.mat = true;
+    hideHint();
+  }
   function buildStage() {
     const kind = mq && mq.matches ? 'tall' : 'wide';
     if (LAY && LAY.kind === kind) return;
@@ -132,14 +233,11 @@
       cv = fresh;
     }
     LAY = Object.assign({ kind }, LAYOUTS[kind]);
-    view = SciSim.stage(cv, { width: LAY.w, height: LAY.h, background: '#fff' });
+    view = SciSim.stage(cv, { width: LAY.w, height: LAY.h, background: '#ebf2fa' });
     ctx = view.ctx;
+    D = SciSim.draw(ctx);
+    bgPat = ctx.createPattern(BG_TILE, 'repeat');
     SciSim.pointer(view, handlers);
-  }
-  buildStage();
-  if (mq) {
-    if (mq.addEventListener) mq.addEventListener('change', buildStage);
-    else if (mq.addListener) mq.addListener(buildStage);
   }
 
   function hitKnob(p) { return Math.hypot(p.x - G.knob.x, p.y - G.knob.y) < 30; }
@@ -154,210 +252,350 @@
     return MATS.map((m, i) => ({ id: m.id, x: P.x + 8 + (i % cols) * (tw + gap), y: top + Math.floor(i / cols) * (th + gap), w: tw, h: th }));
   }
   function tileAt(p) {
+    if (T.tray < 0.5) return null;
     const t = trayLayout().find((r) => p.x > r.x && p.x < r.x + r.w && p.y > r.y && p.y < r.y + r.h);
     return t ? t.id : null;
   }
+  function tileCenter(id) {
+    const t = trayLayout().find((r) => r.id === id);
+    return t ? { x: t.x + t.w / 2, y: t.y + 24 } : { x: LAY.panel.x + 60, y: LAY.panel.y + 60 };
+  }
+
+  /* ---------- 미리 그려 둔 스프라이트 ---------- */
+  const SPR = 3;
+  function mk(size, fn) {
+    const c = document.createElement('canvas');
+    c.width = c.height = Math.ceil(size * SPR);
+    const x = c.getContext('2d');
+    x.scale(SPR, SPR);
+    fn(x, SciSim.draw(x));
+    return c;
+  }
+  const spE = mk(20, (x, d) => {
+    d.sphere(10, 10, 6.6, '#2f62f0', { light: '#b4cbff', dark: '#14308a' });
+    x.strokeStyle = 'rgba(255,255,255,.92)'; x.lineWidth = 1.3; x.beginPath(); x.arc(10, 10, 6.6, 0, Math.PI * 2); x.stroke();
+    x.strokeStyle = '#fff'; x.lineWidth = 2; x.lineCap = 'round'; x.beginPath(); x.moveTo(6.9, 10.2); x.lineTo(13.1, 10.2); x.stroke();
+  });
+  const BG_TILE = mk(28, (x) => { x.fillStyle = 'rgba(100,125,165,.16)'; x.beginPath(); x.arc(14, 14, 1.3, 0, Math.PI * 2); x.fill(); });
+  function blit(sp, size, x, y, k, a) {
+    ctx.globalAlpha = a == null ? 1 : a;
+    ctx.drawImage(sp, x - size * k / 2, y - size * k / 2, size * k, size * k);
+    ctx.globalAlpha = 1;
+  }
+
+  buildStage();
+  if (mq) {
+    if (mq.addEventListener) mq.addEventListener('change', buildStage);
+    else if (mq.addListener) mq.addListener(buildStage);
+  }
+  const fx = new SciSim.Particles();
 
   /* ---------- 그리기 도우미 ---------- */
-  function rr(x, y, w, h, r) {
-    ctx.beginPath();
-    ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
-    ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
-  }
-  function circle(x, y, r) { ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); }
-  function text(str, x, y, font, color, align, base) {
-    ctx.font = font; ctx.fillStyle = color; ctx.textAlign = align || 'left'; ctx.textBaseline = base || 'alphabetic';
-    ctx.fillText(str, x, y);
+  function text(str, x, y, font, color, align, base, stroke) {
+    ctx.font = font; ctx.textAlign = align || 'left'; ctx.textBaseline = base || 'alphabetic';
+    if (stroke) { ctx.lineJoin = 'round'; ctx.strokeStyle = stroke; ctx.lineWidth = 4; ctx.strokeText(str, x, y); }
+    ctx.fillStyle = color; ctx.fillText(str, x, y);
     ctx.textBaseline = 'alphabetic';
   }
-  function mix(c1, c2, t) {
-    const a = parseInt(c1.slice(1), 16), b = parseInt(c2.slice(1), 16);
-    const ch = (v, s) => (v >> s) & 255;
-    const m = (s) => Math.round(ch(a, s) + (ch(b, s) - ch(a, s)) * t);
-    return 'rgb(' + m(16) + ',' + m(8) + ',' + m(0) + ')';
+  function strokePath(pts, closed) {
+    ctx.beginPath();
+    for (let i = 0; i < pts.length; i++) i ? ctx.lineTo(pts[i].x, pts[i].y) : ctx.moveTo(pts[i].x, pts[i].y);
+    if (closed) ctx.closePath();
   }
-  function panel(x, y, w, h) {
-    ctx.save();
-    ctx.shadowColor = 'rgba(20,40,80,.08)'; ctx.shadowBlur = 8; ctx.shadowOffsetY = 2;
-    ctx.fillStyle = '#fff'; rr(x, y, w, h, 12); ctx.fill();
+  function wire(pts, base, w) {
+    w = w || 7;
+    ctx.save(); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    strokePath(pts);
+    ctx.shadowColor = 'rgba(25,40,75,.3)'; ctx.shadowBlur = 7; ctx.shadowOffsetY = 4;
+    ctx.strokeStyle = C.shade(base, -0.5); ctx.lineWidth = w + 3; ctx.stroke();
+    ctx.shadowColor = 'transparent';
+    ctx.strokeStyle = base; ctx.lineWidth = w; ctx.stroke();
+    ctx.translate(-1.2, -1.5);
+    strokePath(pts);
+    ctx.strokeStyle = C.rgba(C.shade(base, 0.6), 0.55); ctx.lineWidth = 2; ctx.stroke();
     ctx.restore();
-    ctx.strokeStyle = '#dde4ef'; ctx.lineWidth = 1.5; rr(x, y, w, h, 12); ctx.stroke();
   }
-  const pulseA = () => 0.5 + 0.5 * Math.sin(performance.now() / 160);
-  function newBadge(cx, cy) {
-    ctx.fillStyle = '#f26b3a'; rr(cx - 25, cy - 11, 50, 22, 11); ctx.fill();
-    text('NEW', cx, cy + 1, f(13), '#fff', 'center', 'middle');
+  function metalGrad(x0, y0, x1, y1, c) {
+    const g = ctx.createLinearGradient(x0, y0, x1, y1);
+    g.addColorStop(0, C.shade(c, 0.5)); g.addColorStop(0.45, c); g.addColorStop(1, C.shade(c, -0.4));
+    return g;
   }
-  function newRing(x, y, w, h) {
+  const pulseA = () => 0.5 + 0.5 * Math.sin(S.t * 6);
+  function newRing(x, y, w, h, badge) {
     ctx.save();
     ctx.strokeStyle = 'rgba(242,107,58,' + (0.35 + pulseA() * 0.5) + ')'; ctx.lineWidth = 4;
-    rr(x - 5, y - 5, w + 10, h + 10, 16); ctx.stroke();
-    newBadge(Math.min(x + w - 22, view.vw - 30), Math.max(14, y - 4));
+    D.roundRect(x - 5, y - 5, w + 10, h + 10, 16); ctx.stroke();
+    if (badge !== false) D.label(Math.min(x + w - 22, view.vw - 30), Math.max(14, y - 4), 'NEW', { bg: '#f26b3a', color: '#fff', size: 13 });
     ctx.restore();
   }
   function newCircle(x, y, r, bx, by) {
     ctx.save();
     ctx.strokeStyle = 'rgba(242,107,58,' + (0.35 + pulseA() * 0.5) + ')'; ctx.lineWidth = 4;
-    circle(x, y, r); ctx.stroke();
-    newBadge(bx != null ? bx : x + r * 0.72, by != null ? by : y - r * 0.85);
+    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke();
+    if (bx !== false) D.label(bx != null ? bx : x + r * 0.72, by != null ? by : y - r * 0.85, 'NEW', { bg: '#f26b3a', color: '#fff', size: 13 });
     ctx.restore();
   }
 
   /* ---------- 그리기 ---------- */
+  function backdrop() {
+    const g = ctx.createLinearGradient(0, 0, 0, LAY.h);
+    g.addColorStop(0, '#e9f0fa'); g.addColorStop(1, '#eef4fb');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, LAY.w, LAY.h);
+    ctx.save(); ctx.scale(1 / 2, 1 / 2); ctx.fillStyle = bgPat; ctx.fillRect(0, 0, LAY.w * 2, LAY.h * 2); ctx.restore();
+    if (S.glow > 0.02) {
+      const bx = G.bulb.x, by = G.bulb.gy + 40, R = 190 + 120 * S.glow;
+      const lg = ctx.createRadialGradient(bx, by, 10, bx, by, R);
+      lg.addColorStop(0, 'rgba(255,228,140,' + (0.42 * S.glow) + ')'); lg.addColorStop(1, 'rgba(255,228,140,0)');
+      ctx.fillStyle = lg; ctx.fillRect(0, 0, LAY.w, LAY.h);
+    }
+  }
+
   function draw() {
-    view.clear('#fff');
+    view.clear();
+    backdrop();
     const mat = S.mode === 'material';
+    const sh = RM ? 0 : Math.sin((S.t - S.wrongAt) * 38) * 4 * Math.exp(-(S.t - S.wrongAt) * 7) * ((S.t - S.wrongAt) < 0.7 ? 1 : 0);
+    ctx.save();
+    ctx.translate(sh, (1 - S.mf) * 12);
+    ctx.globalAlpha = clamp(S.mf * T.intro, 0, 1);
     if (mat) drawGlow();
-    drawWires();
+    drawSupply();
+    (mat ? WIRES_MAT : WIRES_RES).forEach((w) => wire(w.pts, w.col));
     if (mat) { drawSlot(); drawBulb(); }
     else {
       drawResistor();
-      if (on('voltmeter')) drawMeter(G.vm, { max: V_SCALE, major: 5, minor: 1, val: S.nV, letter: 'V', color: '#0891b2', reading: volts().toFixed(1) + ' V' });
+      if (T.vm > 0.02) drawVoltmeterWires();
     }
-    drawMeter(G.am, { max: A_SCALE, major: 0.5, minor: 0.1, val: S.nA, letter: 'A', color: '#7c3aed', reading: shownI().toFixed(2) + ' A', target: S.target && S.target.I, vertical: true });
-    drawSupply();
+    drawDots();
+    drawPosts();
+    drawDial(G.am, { max: A_SCALE, major: 0.5, minor: 0.1, val: S.needA.value, letter: 'A', color: '#7c3aed', reading: S.I.toFixed(2) + ' A', target: S.target && S.target.I, vertical: true, s: 1 });
+    if (!mat && T.vm > 0.02) drawDial(G.vm, { max: V_SCALE, major: 5, minor: 1, val: S.needV.value, letter: 'V', color: '#0891b2', reading: S.gV.toFixed(1) + ' V', s: T.vm });
     drawLabels();
-    if (mat) drawTray(); else if (on('graph')) drawGraph(LAY.panel);
-    // 새로 열린 도구 강조
+    drawLegend();
     if (!mat) {
-      if (isNew('voltage')) newCircle(G.knob.x, G.knob.y, G.knob.r + 11, G.knob.x + 44, G.knob.y - 30);
-      if (isNew('voltmeter')) newCircle(G.vm.x, G.vm.y, G.vm.r + 8);
-      if (isNew('graph')) newRing(LAY.panel.x, LAY.panel.y, LAY.panel.w, LAY.panel.h);
+      if (isNew('voltage') && T.knob > 0.8) newCircle(G.knob.x, G.knob.y, G.knob.r + 15, false);
+      if (isNew('voltmeter') && T.vm > 0.8) newCircle(G.vm.x, G.vm.y, G.vm.r + 8);
       if (isNew('resistance')) newRing(G.res.x0 - 6, 52, G.res.x1 - G.res.x0 + 12, 120);
     }
+    ctx.restore();
+    if (mat) drawTray(); else if (T.graph > 0.01) drawGraph(LAY.panel, T.graph);
+    if (!mat && isNew('graph') && T.graph > 0.9) newRing(LAY.panel.x, LAY.panel.y, LAY.panel.w, LAY.panel.h);
+    drawFlyers();
     if (S.drag && S.drag.moved) drawDragged();
+    fx.draw(ctx);
+    drawCheck();
   }
 
-  function drawWires() {
-    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-    const res = S.mode === 'resistor';
-    if (res && on('voltmeter')) {
-      ctx.strokeStyle = '#64748b'; ctx.lineWidth = 3.5;
-      ctx.beginPath();
-      ctx.moveTo(G.jL, G.T); ctx.lineTo(G.jL, G.vm.y); ctx.lineTo(G.vm.x - G.vm.r, G.vm.y);
-      ctx.moveTo(G.jR, G.T); ctx.lineTo(G.jR, G.vm.y); ctx.lineTo(G.vm.x + G.vm.r, G.vm.y);
-      ctx.stroke();
+  /* ----- 전자(파란 점): 속력은 전류에 비례 ----- */
+  function drawDots() {
+    const mat = S.mode === 'material', gap = loopPath.total / NE, t = S.t;
+    const a = mat ? 1 : 1, x0 = G.res.x0 + 14, x1 = G.res.x1 - 14, n = zigN();
+    const conductor = mat && S.slot && isFinite(MAT[S.slot].R);
+    const jam = conductor ? 1 + Math.min(3.5, MAT[S.slot].R * 0.4) : 1;
+    for (let i = 0; i < NE; i++) {
+      const p = loopPath.at(i * gap + S.phase);
+      let px = p.x, py = p.y, al = a;
+      if (Math.abs(py - G.B) < 1.5 && px > G.tN.x - 2 && px < G.tP.x + 2) continue;
+      if (Math.hypot(px - G.am.x, py - G.am.y) < G.am.r + 3) continue;
+      let amp = 1.1;
+      if (mat) {
+        if (Math.abs(py - G.T) < 1.5 && px > 214 && px < 266) continue;
+        if (Math.abs(px - G.L) < 1.5 && py > G.slot.top + 2 && py < G.slot.bot - 2) {
+          if (!conductor) continue;
+          al = S.clamp * 0.95; amp = jam;
+        }
+      } else if (Math.abs(py - G.T) < 1.5 && px > G.res.x0 + 4 && px < G.res.x1 - 4) {
+        if (px < x0 || px > x1) { al = 1; } else py += zig(n, (px - x0) / (x1 - x0));
+      }
+      if (al <= 0.01) continue;
+      if (!RM) { px += Math.sin(t * 2.9 + i * 1.9) * amp; py += Math.cos(t * 2.3 + i * 2.7) * amp; }
+      blit(spE, 20, px, py, 0.9, al * clamp(S.mf * 1.5, 0, 1));
     }
-    ctx.strokeStyle = WIRE; ctx.lineWidth = 5;
-    ctx.beginPath();
-    // 아래(전원 장치 (−)극) → 왼쪽 도선
-    ctx.moveTo(G.tN.x, G.B); ctx.lineTo(G.L, G.B);
-    if (res) ctx.lineTo(G.L, G.T); else { ctx.lineTo(G.L, G.slot.bot); ctx.moveTo(G.L, G.slot.top); ctx.lineTo(G.L, G.T); }
-    // 위쪽 도선
-    if (res) { ctx.lineTo(G.res.x0, G.T); ctx.moveTo(G.res.x1, G.T); ctx.lineTo(G.R, G.T); } else ctx.lineTo(G.R, G.T);
-    ctx.lineTo(G.R, G.B); ctx.lineTo(G.tP.x, G.B);
-    ctx.stroke();
-    if (res && on('voltmeter')) { ctx.fillStyle = WIRE; circle(G.jL, G.T, 6); ctx.fill(); circle(G.jR, G.T, 6); ctx.fill(); }
+  }
+  function drawLegend() {
+    const x = 12, y = 12;
+    ctx.font = f(13);
+    const label = '전자의 이동 (전류가 셀수록 빨라요)';
+    const w = ctx.measureText(label).width + 52;
+    D.shadow(() => { ctx.fillStyle = 'rgba(255,255,255,.94)'; D.roundRect(x, y, w, 32, 16); ctx.fill(); }, { blur: 8, y: 2, color: 'rgba(25,40,75,.16)' });
+    ctx.strokeStyle = '#dde4ef'; ctx.lineWidth = 1.5; D.roundRect(x, y, w, 32, 16); ctx.stroke();
+    blit(spE, 20, x + 20, y + 16, 0.95);
+    text(label, x + 36, y + 17, f(13), '#1d4ed8', 'left', 'middle');
   }
 
-  // 물질 모양 (가로 막대 기준, 가운데 0,0)
-  function drawSample(id, cx, cy, len, vertical, alpha) {
+  /* ----- 물질 집게 ----- */
+  function clip(x, y, dir, color, open) {
+    // dir: 1 = 아래를 물고 있는 위쪽 집게, -1 = 위를 물고 있는 아래쪽 집게
+    const oy = dir * -open * 9;
+    ctx.save(); ctx.translate(0, oy);
+    D.shadow(() => {
+      ctx.fillStyle = metalGrad(x - 10, y, x + 10, y, '#c7cfdb');
+      ctx.beginPath(); ctx.moveTo(x - 10, y + (dir > 0 ? -2 : 2)); ctx.lineTo(x, y + dir * 13); ctx.lineTo(x + 10, y + (dir > 0 ? -2 : 2)); ctx.closePath(); ctx.fill();
+    }, { blur: 5, y: 2 });
+    const g = ctx.createLinearGradient(x - 10, 0, x + 10, 0); g.addColorStop(0, C.shade(color, 0.45)); g.addColorStop(0.5, color); g.addColorStop(1, C.shade(color, -0.4));
+    ctx.fillStyle = g; D.roundRect(x - 11, y - (dir > 0 ? 20 : -2), 22, 18, 5); ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.8; ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,.4)'; D.roundRect(x - 7, y - (dir > 0 ? 17 : -5), 5, 12, 2); ctx.fill();
+    ctx.restore();
+  }
+  function drawSlot() {
+    const x = G.L, top = G.slot.top, bot = G.slot.bot, mid = (top + bot) / 2;
+    const dragging = S.drag && S.drag.moved;
+    const hot = dragging && hitSlot({ x: S.drag.px, y: S.drag.py }, 30);
+    const sk = RM ? 0 : Math.sin((S.t - S.slotShake) * 50) * 4 * Math.exp(-(S.t - S.slotShake) * 8) * ((S.t - S.slotShake) < 0.6 ? 1 : 0);
+    if (!S.slot || dragging) {
+      ctx.save();
+      const a = hot ? 0.9 : dragging ? 0.55 + 0.3 * pulseA() : 0.6;
+      ctx.strokeStyle = dragging ? 'rgba(20,160,88,' + a + ')' : '#bcc7d8'; ctx.lineWidth = hot ? 3.5 : 2.5; ctx.setLineDash([6, 5]);
+      ctx.fillStyle = hot ? 'rgba(20,160,88,.16)' : dragging ? 'rgba(20,160,88,.08)' : 'rgba(255,255,255,.7)';
+      D.roundRect(x - 26, top + 10, 52, bot - top - 20, 12); ctx.fill(); ctx.stroke();
+      ctx.restore();
+      if ((dragging || (!S.touched.mat && !S.slot)) && !RM) {       // 목표 지점이 맥박처럼 퍼져 나가요
+        const k = (S.t * 1.2) % 1;
+        ctx.strokeStyle = 'rgba(20,160,88,' + (0.7 * (1 - k)) + ')'; ctx.lineWidth = 3;
+        D.roundRect(x - 26 - k * 12, top + 10 - k * 12, 52 + k * 24, bot - top - 20 + k * 24, 12 + k * 6); ctx.stroke();
+      }
+    }
+    ctx.save(); ctx.translate(sk, 0);
+    if (S.slot && !(S.drag && S.drag.from === 'slot' && S.drag.moved)) {
+      ctx.fillStyle = 'rgba(255,255,255,.8)'; D.roundRect(x - 17, top + 8, 34, bot - top - 16, 10); ctx.fill();
+      ctx.strokeStyle = 'rgba(160,175,200,.6)'; ctx.lineWidth = 1.5; ctx.stroke();
+      ctx.save();
+      ctx.translate(x + S.samp.dx, mid + S.samp.dy); ctx.scale(S.samp.sc, S.samp.sc);
+      drawSample(S.slot, 0, 0, bot - top - 4, true, 1, S.samp.sc > 1.02 || S.samp.dx !== 0 ? { shadow: true } : null);
+      ctx.restore();
+    }
+    clip(x, top + 2, 1, '#dc2626', 1 - S.clamp);
+    clip(x, bot - 2, -1, '#1f2937', 1 - S.clamp);
+    ctx.restore();
+    // 이름표
+    const lx = x + 38;
+    if (S.slot) {
+      const r = resultOf(matAmps(S.slot));
+      text(MAT[S.slot].name, lx, mid - 6, f(16), '#1b2333', 'left', 'alphabetic', 'rgba(255,255,255,.85)');
+      ctx.save(); const sc = 1 + S.resPop.value * 0.15; ctx.translate(lx, mid + 20); ctx.scale(sc, sc);
+      D.label(0, 0, r.t, { bg: '#fff', color: r.c, size: 13, border: r.c, align: 'left' });
+      ctx.restore();
+    } else {
+      text('집게', lx, mid - 6, f(15), '#3a4456', 'left', 'alphabetic', 'rgba(255,255,255,.85)');
+      text('← 물질을 끼워요', lx, mid + 15, f(13, '600'), '#6b7689', 'left', 'alphabetic', 'rgba(255,255,255,.85)');
+    }
+  }
+
+  /* ----- 물질 모양 (가로 막대 기준, 가운데 0,0) ----- */
+  function drawSample(id, cx, cy, len, vertical, alpha, o) {
     const m = MAT[id];
     ctx.save();
-    ctx.globalAlpha = alpha == null ? 1 : alpha;
+    ctx.globalAlpha *= alpha == null ? 1 : alpha;
     ctx.translate(cx, cy); if (vertical) ctx.rotate(Math.PI / 2);
+    if (o && o.shadow) { ctx.shadowColor = 'rgba(20,40,80,.35)'; ctx.shadowBlur = 12; ctx.shadowOffsetY = vertical ? 0 : 6; ctx.shadowOffsetX = vertical ? 6 : 0; }
     const h = len / 2;
-    const rod = (th, fill, stroke) => { ctx.fillStyle = fill; rr(-h, -th / 2, len, th, Math.min(th / 2, 6)); ctx.fill(); if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 1.5; ctx.stroke(); } };
+    const cyl = (th, c, r, stroke) => {
+      const g = ctx.createLinearGradient(0, -th / 2, 0, th / 2);
+      g.addColorStop(0, C.shade(c, 0.6)); g.addColorStop(0.35, c); g.addColorStop(1, C.shade(c, -0.45));
+      ctx.fillStyle = g; D.roundRect(-h, -th / 2, len, th, r != null ? r : Math.min(th / 2, 6)); ctx.fill();
+      ctx.save(); ctx.shadowColor = 'transparent';
+      ctx.strokeStyle = stroke || C.shade(c, -0.55); ctx.lineWidth = 1.3; ctx.stroke(); ctx.restore();
+    };
+    const gloss = (th, a) => { ctx.fillStyle = 'rgba(255,255,255,' + (a || 0.5) + ')'; D.roundRect(-h + 5, -th / 2 + 1.5, len - 10, Math.max(1.5, th * 0.18), th * 0.1); ctx.fill(); };
     if (id === 'cu') {
-      rod(8, m.col, '#8a4b24');
-      ctx.strokeStyle = 'rgba(255,220,180,.8)'; ctx.lineWidth = 1.5;
+      cyl(9, m.col);
+      ctx.strokeStyle = 'rgba(255,225,190,.8)'; ctx.lineWidth = 1.3;
       for (let x = -h + 6; x < h - 4; x += 7) { ctx.beginPath(); ctx.moveTo(x, -4); ctx.lineTo(x + 4, 4); ctx.stroke(); }
+      gloss(9, 0.55);
     } else if (id === 'al') {
-      rod(20, m.col, '#94a3b8');
-      ctx.strokeStyle = 'rgba(255,255,255,.95)'; ctx.lineWidth = 1.5;
+      cyl(20, m.col, 5, '#94a3b8');
+      ctx.strokeStyle = 'rgba(255,255,255,.95)'; ctx.lineWidth = 1.6;
       ctx.beginPath(); for (let x = -h + 4; x < h - 4; x += 9) { ctx.moveTo(x, -6); ctx.lineTo(x + 5, 2); ctx.lineTo(x + 2, 7); } ctx.stroke();
+      ctx.strokeStyle = 'rgba(100,116,139,.35)'; ctx.lineWidth = 1;
+      ctx.beginPath(); for (let x = -h + 8; x < h - 4; x += 9) { ctx.moveTo(x, -8); ctx.lineTo(x - 3, 0); ctx.lineTo(x, 8); } ctx.stroke();
     } else if (id === 'fe') {
-      ctx.fillStyle = m.col; ctx.beginPath(); ctx.moveTo(-h + 6, -4); ctx.lineTo(h - 12, -4); ctx.lineTo(h, 0); ctx.lineTo(h - 12, 4); ctx.lineTo(-h + 6, 4); ctx.closePath(); ctx.fill();
-      rr(-h, -11, 7, 22, 2); ctx.fill();
-      ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(-h + 8, -2); ctx.lineTo(h - 14, -2); ctx.stroke();
+      const g = ctx.createLinearGradient(0, -4, 0, 4); g.addColorStop(0, '#d5dae3'); g.addColorStop(0.4, '#8b94a3'); g.addColorStop(1, '#4b5563');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(-h + 6, -4); ctx.lineTo(h - 12, -4); ctx.lineTo(h, 0); ctx.lineTo(h - 12, 4); ctx.lineTo(-h + 6, 4); ctx.closePath(); ctx.fill();
+      const g2 = ctx.createLinearGradient(0, -11, 0, 11); g2.addColorStop(0, '#e3e7ee'); g2.addColorStop(0.5, '#8b94a3'); g2.addColorStop(1, '#4b5563');
+      ctx.fillStyle = g2; D.roundRect(-h, -11, 7, 22, 2); ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(-h + 8, -2); ctx.lineTo(h - 14, -2); ctx.stroke();
     } else if (id === 'c') {
-      rod(7, m.col);
-      ctx.strokeStyle = 'rgba(255,255,255,.45)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(-h + 4, -1.5); ctx.lineTo(h - 4, -1.5); ctx.stroke();
+      cyl(11, '#5a5a66');
+      gloss(11, 0.5);
     } else if (id === 'rubber') {
-      rod(16, m.col, '#b45309');
+      cyl(18, m.col, 7, '#b45309'); gloss(18, 0.4);
     } else if (id === 'glass') {
-      rod(13, 'rgba(186,230,253,.85)', '#38bdf8');
-      ctx.strokeStyle = 'rgba(255,255,255,.95)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-h + 6, -2.5); ctx.lineTo(h - 6, -2.5); ctx.stroke();
+      const g = ctx.createLinearGradient(0, -7, 0, 7); g.addColorStop(0, 'rgba(240,250,255,.95)'); g.addColorStop(0.5, 'rgba(186,230,253,.75)'); g.addColorStop(1, 'rgba(125,190,230,.8)');
+      ctx.fillStyle = g; D.roundRect(-h, -7, len, 14, 7); ctx.fill();
+      ctx.save(); ctx.shadowColor = 'transparent'; ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 1.5; ctx.stroke(); ctx.restore();
+      ctx.strokeStyle = 'rgba(255,255,255,.95)'; ctx.lineWidth = 2.2; ctx.beginPath(); ctx.moveTo(-h + 7, -3); ctx.lineTo(h - 7, -3); ctx.stroke();
     } else if (id === 'wood') {
-      rod(11, m.col, '#a16207');
+      cyl(12, m.col, 5, '#a16207');
       ctx.strokeStyle = 'rgba(146,64,14,.45)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(-h + 6, -1); ctx.lineTo(h - 10, 1); ctx.moveTo(-h + 14, 2.5); ctx.lineTo(h - 20, 2); ctx.stroke();
+      gloss(12, 0.3);
     } else if (id === 'plastic') {
-      rod(20, 'rgba(196,181,253,.9)', '#8b5cf6');
+      const g = ctx.createLinearGradient(0, -10, 0, 10); g.addColorStop(0, 'rgba(221,214,254,.95)'); g.addColorStop(1, 'rgba(167,139,250,.9)');
+      ctx.fillStyle = g; D.roundRect(-h, -10, len, 20, 5); ctx.fill();
+      ctx.save(); ctx.shadowColor = 'transparent'; ctx.strokeStyle = '#8b5cf6'; ctx.lineWidth = 1.4; ctx.stroke(); ctx.restore();
       ctx.strokeStyle = '#6d28d9'; ctx.lineWidth = 1;
       ctx.beginPath(); for (let x = -h + 6, i = 0; x < h - 3; x += 6, i++) { ctx.moveTo(x, -10); ctx.lineTo(x, i % 5 === 0 ? -2 : -5); } ctx.stroke();
+      gloss(20, 0.3);
     }
     ctx.restore();
   }
 
-  function clip(x, y, dir, color) {
-    // dir: 1 = 아래를 물고 있는 위쪽 집게, -1 = 위를 물고 있는 아래쪽 집게
-    ctx.fillStyle = color; ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
-    rr(x - 10, y - (dir > 0 ? 18 : -2), 20, 16, 4); ctx.fill(); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(x - 10, y + (dir > 0 ? -2 : 2)); ctx.lineTo(x, y + dir * 12); ctx.lineTo(x + 10, y + (dir > 0 ? -2 : 2)); ctx.closePath(); ctx.fill();
-  }
-  function drawSlot() {
-    const x = G.L, top = G.slot.top, bot = G.slot.bot;
-    const dragging = S.drag && S.drag.moved;
-    if (!S.slot || dragging) {
-      ctx.save();
-      const a = dragging ? 0.4 + 0.5 * pulseA() : 0.6;
-      ctx.strokeStyle = dragging ? 'rgba(20,160,88,' + a + ')' : '#c9d2df'; ctx.lineWidth = dragging ? 3 : 2; ctx.setLineDash([6, 5]);
-      ctx.fillStyle = dragging ? 'rgba(20,160,88,.08)' : '#f8fafd';
-      rr(x - 26, top + 10, 52, bot - top - 20, 10); ctx.fill(); ctx.stroke();
-      ctx.restore();
-    }
-    if (S.slot && !(S.drag && S.drag.from === 'slot' && S.drag.moved)) drawSample(S.slot, x, (top + bot) / 2, bot - top - 4, true);
-    clip(x, top + 2, 1, '#dc2626');
-    clip(x, bot - 2, -1, '#111827');
-    // 이름표
-    const lx = x + 36;
-    if (S.slot) {
-      text(MAT[S.slot].name, lx, (top + bot) / 2 - 6, f(16), '#1b2333');
-      const r = resultOf(matAmps(S.slot));
-      text(r.t, lx, (top + bot) / 2 + 16, f(14), r.c);
-    } else {
-      text('집게', lx, (top + bot) / 2 - 6, f(15), '#3a4456');
-      text('← 물질을 끼워요', lx, (top + bot) / 2 + 15, f(13, '600'), '#8a95a6');
-    }
-  }
-
+  /* ----- 니크롬선 저항 ----- */
   function drawResistor() {
     const x0 = G.res.x0, x1 = G.res.x1, y = G.T;
-    ctx.fillStyle = '#f5e6c8'; rr(x0, y - 20, x1 - x0, 40, 8); ctx.fill();
-    ctx.strokeStyle = '#c9a66b'; ctx.lineWidth = 2; ctx.stroke();
+    const heat = S.heat;
+    D.shadow(() => {
+      const g = ctx.createLinearGradient(0, y - 22, 0, y + 22); g.addColorStop(0, '#fbf0d9'); g.addColorStop(1, '#e3cb9a');
+      ctx.fillStyle = g; D.roundRect(x0, y - 22, x1 - x0, 44, 9); ctx.fill();
+    }, { blur: 9, y: 4, color: 'rgba(25,40,75,.28)' });
+    ctx.strokeStyle = '#c9a66b'; ctx.lineWidth = 2; D.roundRect(x0, y - 22, x1 - x0, 44, 9); ctx.stroke();
+    ctx.fillStyle = 'rgba(120,85,40,.14)'; D.roundRect(x0 + 16, y - 17, x1 - x0 - 32, 34, 6); ctx.fill();
+    if (heat > 0.02) D.glow((x0 + x1) / 2, y, 70, '#ff8a3d', 0.35 * heat);
     // 단자
-    ctx.fillStyle = '#64748b'; circle(x0 + 8, y, 5); ctx.fill(); circle(x1 - 8, y, 5); ctx.fill();
-    // 니크롬선 (저항이 클수록 촘촘하게)
-    const n = 4 + S.R / 5, a = x0 + 14, b = x1 - 14;
-    ctx.strokeStyle = '#7c6a5c'; ctx.lineWidth = 2.6; ctx.lineJoin = 'round';
+    [x0 + 8, x1 - 8].forEach((tx) => { D.sphere(tx, y, 5.5, '#aab4c4', { gloss: true, outline: '#64748b', outlineWidth: 1.2 }); });
+    // 니크롬선 (저항이 클수록 촘촘하게, 전류가 셀수록 살짝 달아올라요)
+    const n = zigN(), a = x0 + 14, b = x1 - 14;
+    ctx.save();
+    if (heat > 0.05) { ctx.shadowColor = 'rgba(255,120,40,.9)'; ctx.shadowBlur = 10 * heat; }
+    ctx.strokeStyle = C.mix('#7c6a5c', '#ff7a2f', heat); ctx.lineWidth = 2.8; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
     ctx.beginPath(); ctx.moveTo(x0 + 8, y); ctx.lineTo(a, y);
-    for (let i = 0; i < n; i++) {
-      const xa = a + (b - a) * (i + 0.25) / n, xb = a + (b - a) * (i + 0.75) / n;
-      ctx.lineTo(xa, y - 11); ctx.lineTo(xb, y + 11);
-    }
+    const steps = 150;
+    for (let i = 0; i <= steps; i++) { const u = i / steps; ctx.lineTo(a + (b - a) * u, y + zig(n, u)); }
     ctx.lineTo(b, y); ctx.lineTo(x1 - 8, y); ctx.stroke();
+    ctx.restore();
     const col = R_COLORS[S.R] || '#334155';
-    text('니크롬선 (저항)', (x0 + x1) / 2, y - 52, f(14), '#3a4456', 'center');
-    text('R = ' + S.R + ' Ω', (x0 + x1) / 2, y - 28, f(19, '900'), col, 'center');
+    const pop = 1 + S.platePop.value * 0.12;
+    text('니크롬선 (저항)', (x0 + x1) / 2, y - 52, f(14), '#3a4456', 'center', 'alphabetic', 'rgba(255,255,255,.85)');
+    ctx.save(); ctx.translate((x0 + x1) / 2, y - 31); ctx.scale(pop, pop);
+    text('R = ' + Math.round(S.Rd) + ' Ω', 0, 0, f(19, '900'), col, 'center', 'middle', 'rgba(255,255,255,.9)');
+    ctx.restore();
+  }
+  function drawVoltmeterWires() {
+    ctx.save(); ctx.globalAlpha *= clamp(T.vm, 0, 1);
+    VM_WIRES.forEach((w) => wire(w, '#4b8fa8', 4));
+    [G.jL, G.jR].forEach((jx) => D.sphere(jx, G.T, 6, '#aab4c4', { gloss: true, outline: '#475569', outlineWidth: 1.4 }));
+    ctx.restore();
   }
 
+  /* ----- 전구 ----- */
   function drawGlow() {
     const b = S.glow;
     if (b < 0.01) return;
     const x = G.bulb.x, y = G.bulb.gy;
-    const R = 42 + 58 * b;
+    const R = 46 + 62 * b;
     const g = ctx.createRadialGradient(x, y, 8, x, y, R);
-    g.addColorStop(0, 'rgba(255,236,140,' + (0.25 + 0.7 * b) + ')');
+    g.addColorStop(0, 'rgba(255,238,150,' + Math.min(1, 0.3 + 0.7 * b) + ')');
     g.addColorStop(0.5, 'rgba(255,214,80,' + (0.45 * b) + ')');
     g.addColorStop(1, 'rgba(255,205,60,0)');
-    ctx.fillStyle = g; circle(x, y, R); ctx.fill();
-    if (b > 0.12) {
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, R, 0, Math.PI * 2); ctx.fill();
+    if (b > 0.1) {
       ctx.save();
       ctx.strokeStyle = 'rgba(255,170,0,' + Math.min(0.85, b) + ')'; ctx.lineWidth = 3; ctx.lineCap = 'round';
+      const wob = RM ? 0 : Math.sin(S.t * 3) * 0.04;
       for (let i = 0; i < 12; i++) {
-        const ang = -Math.PI / 2 + (i - 5.5) * (Math.PI / 7.5);
+        const ang = -Math.PI / 2 + (i - 5.5) * (Math.PI / 7.5) + wob;
         if (Math.sin(ang) > 0.45) continue;
-        const r0 = G.bulb.gr + 10, r1v = r0 + 8 + 20 * b;
+        const r0 = G.bulb.gr + 10, r1v = r0 + 8 + 20 * b + (RM ? 0 : Math.sin(S.t * 5 + i) * 2);
         ctx.beginPath();
         ctx.moveTo(x + Math.cos(ang) * r0, y + Math.sin(ang) * r0);
         ctx.lineTo(x + Math.cos(ang) * r1v, y + Math.sin(ang) * r1v);
@@ -366,53 +604,62 @@
       ctx.restore();
     }
   }
-
   function drawBulb() {
-    const x = G.bulb.x, gy = G.bulb.gy, gr = G.bulb.gr, b = S.glow;
+    const x = G.bulb.x, gy = G.bulb.gy, gr = G.bulb.gr, b = clamp(S.glow, 0, 1.15), bb = Math.min(1, b);
+    D.shadow(() => {
+      const sg = ctx.createLinearGradient(x - 23, 0, x + 23, 0); sg.addColorStop(0, '#e9edf3'); sg.addColorStop(0.5, '#fbfcfe'); sg.addColorStop(1, '#c4cdda');
+      ctx.fillStyle = sg; D.roundRect(x - 23, G.T - 13, 46, 30, 7); ctx.fill();
+    }, { blur: 7, y: 4, color: 'rgba(25,40,75,.3)' });
+    ctx.strokeStyle = '#a8b3c4'; ctx.lineWidth = 1.5; D.roundRect(x - 23, G.T - 13, 46, 30, 7); ctx.stroke();
+    const cg = ctx.createLinearGradient(x - 15, 0, x + 15, 0); cg.addColorStop(0, '#8b97aa'); cg.addColorStop(0.4, '#e4e9f1'); cg.addColorStop(1, '#707d92');
+    ctx.fillStyle = cg; D.roundRect(x - 15, 121, 30, 20, 4); ctx.fill();
+    ctx.strokeStyle = 'rgba(70,82,100,.6)'; ctx.lineWidth = 1.5; D.roundRect(x - 15, 121, 30, 20, 4); ctx.stroke();
+    ctx.beginPath(); for (let yy = 127; yy <= 137; yy += 5) { ctx.moveTo(x - 14, yy); ctx.lineTo(x + 14, yy + 1.6); } ctx.stroke();
     ctx.beginPath();
     ctx.arc(x, gy, gr, Math.PI * 0.68, Math.PI * 0.32);
-    ctx.lineTo(x + 12, 124); ctx.lineTo(x - 12, 124); ctx.closePath();
-    ctx.fillStyle = b > 0.01 ? mix('#eef2f7', '#fff3b8', Math.min(1, b * 1.4)) : 'rgba(238,242,247,.95)';
-    ctx.fill();
-    ctx.strokeStyle = b > 0.01 ? mix('#94a3b8', '#e0a100', b) : '#94a3b8'; ctx.lineWidth = 2.5; ctx.stroke();
-    ctx.strokeStyle = '#7b8798'; ctx.lineWidth = 1.6;
+    ctx.lineTo(x + 12, 123); ctx.lineTo(x - 12, 123); ctx.closePath();
+    const gg = ctx.createRadialGradient(x - 11, gy - 13, 3, x, gy, gr * 1.1);
+    gg.addColorStop(0, bb > 0.02 ? C.mix('#ffffff', '#fffbe0', Math.min(1, bb * 1.5)) : 'rgba(255,255,255,.9)');
+    gg.addColorStop(0.55, bb > 0.02 ? C.mix('#dee8f6', '#ffe9a0', Math.min(1, bb * 1.5)) : 'rgba(222,232,246,.62)');
+    gg.addColorStop(1, bb > 0.02 ? C.mix('#b0c2dc', '#ffc94d', Math.min(1, bb * 1.4)) : 'rgba(176,194,220,.55)');
+    ctx.fillStyle = gg; ctx.fill();
+    ctx.strokeStyle = bb > 0.01 ? C.mix('#8b9bb2', '#d99a00', bb) : '#8b9bb2'; ctx.lineWidth = 2.5; ctx.stroke();
+    ctx.strokeStyle = '#7b8798'; ctx.lineWidth = 1.6; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(x - 5, 123); ctx.lineTo(x - 14, gy + 4); ctx.moveTo(x + 5, 123); ctx.lineTo(x + 14, gy + 4); ctx.stroke();
+    const fc = bb < 0.5 ? C.mix('#5b6577', '#ff8a00', bb / 0.5) : C.mix('#ff8a00', '#fff6c8', (bb - 0.5) / 0.5);
+    ctx.save();
+    if (bb > 0.05) { ctx.shadowColor = 'rgba(255,170,0,.95)'; ctx.shadowBlur = 12 * bb; }
+    ctx.strokeStyle = fc; ctx.lineWidth = 2.3; ctx.lineJoin = 'round';
     ctx.beginPath();
-    ctx.moveTo(x - 6, 124); ctx.lineTo(x - 14, gy + 4);
-    ctx.moveTo(x + 6, 124); ctx.lineTo(x + 14, gy + 4);
-    ctx.stroke();
-    const fc = b < 0.5 ? mix('#5b6577', '#ff8a00', b / 0.5) : mix('#ff8a00', '#fff1a8', (b - 0.5) / 0.5);
-    if (b > 0.05) { ctx.save(); ctx.shadowColor = 'rgba(255,170,0,.9)'; ctx.shadowBlur = 10 * b; }
-    ctx.strokeStyle = fc; ctx.lineWidth = 2.2; ctx.lineJoin = 'round';
-    ctx.beginPath();
-    for (let i = 0; i <= 80; i++) {
-      const t = i / 80;
+    for (let i = 0; i <= 60; i++) {
+      const t = i / 60;
       const px = x - 14 + 28 * t, py = gy + 4 - Math.sin(t * Math.PI) * 6 + Math.sin(t * 3 * Math.PI * 2) * 4.5;
       if (i) ctx.lineTo(px, py); else ctx.moveTo(px, py);
     }
-    ctx.stroke();
-    if (b > 0.05) ctx.restore();
-    ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.lineWidth = 3.5; ctx.lineCap = 'round';
-    ctx.beginPath(); ctx.arc(x, gy, gr - 8, Math.PI * 1.08, Math.PI * 1.38); ctx.stroke();
-    const sg = ctx.createLinearGradient(x - 22, 0, x + 22, 0);
-    sg.addColorStop(0, '#8792a5'); sg.addColorStop(0.45, '#d5dbe5'); sg.addColorStop(1, '#7c8799');
-    ctx.fillStyle = sg; rr(x - 22, 124, 44, 30, 5); ctx.fill();
-    ctx.strokeStyle = '#5d6879'; ctx.lineWidth = 1.5; ctx.stroke();
-    ctx.strokeStyle = 'rgba(70,80,95,.55)'; ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    for (let yy = 131; yy <= 145; yy += 7) { ctx.moveTo(x - 20, yy); ctx.lineTo(x + 20, yy + 2); }
-    ctx.stroke();
+    ctx.stroke(); ctx.restore();
+    ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = 4; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.arc(x, gy, gr - 7, Math.PI * 1.08, Math.PI * 1.4); ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,255,255,.45)'; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.arc(x, gy, gr - 7, Math.PI * 0.05, Math.PI * 0.22); ctx.stroke();
   }
 
-  function drawMeter(m, o) {
-    const cx = m.x, cy = m.y, r = m.r;
+  /* ----- 계기판 (바늘이 스프링처럼 흔들려요) ----- */
+  function drawDial(m, o) {
+    const r = m.r, s = o.s == null ? 1 : o.s;
+    if (s <= 0.02) return;
     ctx.save();
-    ctx.shadowColor = 'rgba(20,40,80,.18)'; ctx.shadowBlur = 10; ctx.shadowOffsetY = 3;
-    ctx.fillStyle = '#fff'; circle(cx, cy, r); ctx.fill();
-    ctx.restore();
-    ctx.strokeStyle = o.color; ctx.lineWidth = 5; circle(cx, cy, r - 1); ctx.stroke();
-    const px = cx, py = cy + 16, ar = 40;
+    ctx.translate(m.x, m.y); ctx.scale(Math.max(0.01, s), Math.max(0.01, s));
+    ctx.globalAlpha *= clamp(s * 1.4, 0, 1);
+    D.shadow(() => {
+      const g = ctx.createRadialGradient(-r * 0.3, -r * 0.4, 4, 0, 0, r);
+      g.addColorStop(0, '#ffffff'); g.addColorStop(1, '#e8edf5');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill();
+    }, { blur: 14, y: 5, color: 'rgba(25,40,75,.3)' });
+    ctx.strokeStyle = o.color; ctx.lineWidth = 5.5; ctx.beginPath(); ctx.arc(0, 0, r - 1, 0, Math.PI * 2); ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,255,255,.45)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(0, 0, r - 5, 0, Math.PI * 2); ctx.stroke();
+    const px = 0, py = 16, ar = 40;
     const a0 = Math.PI * (7 / 6), a1 = Math.PI * (11 / 6);
-    const ang = (v) => a0 + (a1 - a0) * clamp(v / o.max, 0, 1.02);
+    const ang = (v) => a0 + (a1 - a0) * clamp(v / o.max, -0.03, 1.08);
     ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.arc(px, py, ar, a0, a1); ctx.stroke();
     const nMinor = Math.round(o.max / o.minor);
@@ -431,167 +678,285 @@
       }
     }
     if (o.target) {
-      const a = ang(o.target.v);
-      ctx.strokeStyle = 'rgba(20,160,88,.35)'; ctx.lineWidth = 9; ctx.lineCap = 'round';
+      const a = ang(o.target.v), pu = RM ? 1 : 0.7 + 0.3 * Math.sin(S.t * 4);
+      ctx.strokeStyle = 'rgba(20,160,88,' + (0.3 * pu) + ')'; ctx.lineWidth = 9; ctx.lineCap = 'round';
       ctx.beginPath(); ctx.moveTo(px + Math.cos(a) * 16, py + Math.sin(a) * 16); ctx.lineTo(px + Math.cos(a) * (ar - 3), py + Math.sin(a) * (ar - 3)); ctx.stroke();
       ctx.strokeStyle = '#14a058'; ctx.lineWidth = 2.5;
       ctx.beginPath(); ctx.moveTo(px + Math.cos(a) * 16, py + Math.sin(a) * 16); ctx.lineTo(px + Math.cos(a) * (ar + 1), py + Math.sin(a) * (ar + 1)); ctx.stroke();
-      ctx.fillStyle = '#14a058'; circle(px + Math.cos(a) * ar, py + Math.sin(a) * ar, 4); ctx.fill();
+      D.sphere(px + Math.cos(a) * ar, py + Math.sin(a) * ar, 4.5, '#14a058', { gloss: false });
     }
     const a = ang(o.val);
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,.3)'; ctx.shadowBlur = 4; ctx.shadowOffsetY = 2;
     ctx.strokeStyle = '#e2464b'; ctx.lineWidth = 3; ctx.lineCap = 'round';
     ctx.beginPath(); ctx.moveTo(px - Math.cos(a) * 6, py - Math.sin(a) * 6); ctx.lineTo(px + Math.cos(a) * (ar + 1), py + Math.sin(a) * (ar + 1)); ctx.stroke();
-    ctx.fillStyle = '#334155'; circle(px, py, 5); ctx.fill();
-    ctx.fillStyle = '#f1f5f9'; rr(cx - 31, cy + 26, 62, 21, 6); ctx.fill();
-    text(o.reading, cx, cy + 37, 'bold 14px ' + MONO, '#1b2333', 'center', 'middle');
-    const bx = cx - r * 0.72, by = cy - r * 0.72;
-    ctx.fillStyle = o.color; ctx.strokeStyle = '#fff'; ctx.lineWidth = 2.5;
-    circle(bx, by, 12); ctx.fill(); ctx.stroke();
-    text(o.letter, bx, by + 1, f(14), '#fff', 'center', 'middle');
+    ctx.restore();
+    D.sphere(px, py, 5.5, '#334155', { gloss: true });
+    // 유리 반사
+    ctx.save(); ctx.beginPath(); ctx.arc(0, 0, r - 6, 0, Math.PI * 2); ctx.clip();
+    const rg = ctx.createLinearGradient(-r, -r, r * 0.4, r * 0.2); rg.addColorStop(0, 'rgba(255,255,255,.5)'); rg.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = rg; ctx.beginPath(); ctx.ellipse(-8, -30, r * 0.85, r * 0.36, -0.45, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+    ctx.fillStyle = '#eef2f8'; D.roundRect(-31, 26, 62, 21, 6); ctx.fill();
+    text(o.reading, 0, 37, 'bold 14px ' + MONO, '#1b2333', 'center', 'middle');
+    const bx = -r * 0.72, by = -r * 0.72;
+    D.sphere(bx, by, 12.5, o.color, { text: o.letter, textScale: 1.1, outline: '#fff', outlineWidth: 2.5, gloss: false });
     let tp, tn;
-    if (o.vertical) { tp = { x: cx, y: cy + r }; tn = { x: cx, y: cy - r }; }
-    else { tp = { x: cx + r, y: cy }; tn = { x: cx - r, y: cy }; }
-    [[tp, '#dc2626', '+'], [tn, '#111827', '−']].forEach(([t, c, s]) => {
-      ctx.fillStyle = c; ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
-      circle(t.x, t.y, 6.5); ctx.fill(); ctx.stroke();
-      const lx = o.vertical ? t.x + 15 : t.x + (s === '+' ? 6 : -6);
-      const ly = o.vertical ? t.y + (s === '+' ? 5 : 3) : t.y + 18;
-      text(s, lx, ly, f(16, '900'), c, 'center', 'middle');
+    if (o.vertical) { tp = { x: 0, y: r }; tn = { x: 0, y: -r }; } else { tp = { x: r, y: 0 }; tn = { x: -r, y: 0 }; }
+    [[tp, '#dc2626', '+'], [tn, '#1f2937', '−']].forEach(([t, c, sg]) => {
+      D.sphere(t.x, t.y, 7.2, c, { outline: '#fff', outlineWidth: 2, gloss: true });
+      const lx = o.vertical ? t.x + 16 : t.x + (sg === '+' ? 6 : -6);
+      const ly = o.vertical ? t.y + (sg === '+' ? 6 : 3) : t.y + 19;
+      text(sg, lx, ly, f(16, '900'), c, 'center', 'middle');
     });
+    ctx.restore();
   }
 
+  /* ----- 전원 장치 ----- */
   function drawSupply() {
     const b = G.box;
-    ctx.save();
-    ctx.shadowColor = 'rgba(20,40,80,.25)'; ctx.shadowBlur = 10; ctx.shadowOffsetY = 3;
-    const bg = ctx.createLinearGradient(0, b.y, 0, b.y + b.h);
-    bg.addColorStop(0, '#475569'); bg.addColorStop(1, '#2b3546');
-    ctx.fillStyle = bg; rr(b.x, b.y, b.w, b.h, 12); ctx.fill();
-    ctx.restore();
+    ctx.fillStyle = '#1f2937'; D.roundRect(b.x + 14, b.y + b.h - 2, 30, 7, 3); ctx.fill(); D.roundRect(b.x + b.w - 44, b.y + b.h - 2, 30, 7, 3); ctx.fill();
+    D.shadow(() => {
+      const bg = ctx.createLinearGradient(0, b.y, 0, b.y + b.h);
+      bg.addColorStop(0, '#5b6a82'); bg.addColorStop(0.5, '#3e4a5f'); bg.addColorStop(1, '#2a3344');
+      ctx.fillStyle = bg; D.roundRect(b.x, b.y, b.w, b.h, 15); ctx.fill();
+    }, { blur: 16, y: 7, color: 'rgba(20,35,70,.38)' });
+    ctx.strokeStyle = 'rgba(255,255,255,.2)'; ctx.lineWidth = 2; D.roundRect(b.x + 1.5, b.y + 1.5, b.w - 3, b.h - 3, 13.5); ctx.stroke();
+    const sh = ctx.createLinearGradient(0, b.y, 0, b.y + 40); sh.addColorStop(0, 'rgba(255,255,255,.16)'); sh.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = sh; D.roundRect(b.x + 3, b.y + 3, b.w - 6, 38, 12); ctx.fill();
     text('전원 장치', b.x + b.w / 2, b.y + 17, f(13), '#e2e8f0', 'center');
-    ctx.fillStyle = '#0f241a'; rr(b.x + 16, b.y + 24, b.w - 32, 34, 6); ctx.fill();
-    ctx.strokeStyle = '#1f3b2c'; ctx.lineWidth = 2; ctx.stroke();
-    const shownV = S.mode === 'material' ? V_MAT : S.V;
-    text(shownV.toFixed(1) + ' V', b.x + b.w / 2, b.y + 42, 'bold 22px ' + MONO, '#4ade80', 'center', 'middle');
+    const lx = b.x + 16, ly = b.y + 25, lw = b.w - 32, lh = 34;
+    const lg = ctx.createLinearGradient(0, ly, 0, ly + lh); lg.addColorStop(0, '#07130e'); lg.addColorStop(1, '#0f2a1c');
+    ctx.fillStyle = lg; D.roundRect(lx, ly, lw, lh, 7); ctx.fill();
+    ctx.strokeStyle = '#1f4030'; ctx.lineWidth = 2; ctx.stroke();
+    const vShow = S.mode === 'material' ? V_MAT : (Math.abs(S.Vd - S.V) < 0.05 ? S.V : S.Vd);
+    ctx.save(); ctx.shadowColor = 'rgba(74,222,128,.75)'; ctx.shadowBlur = 8;
+    text(vShow.toFixed(1) + ' V', b.x + b.w / 2, ly + lh / 2 + 1, 'bold 22px ' + MONO, '#4ade80', 'center', 'middle');
+    ctx.restore();
+    ctx.fillStyle = 'rgba(255,255,255,.07)'; D.roundRect(lx + 3, ly + 3, lw - 6, lh / 2 - 3, 5); ctx.fill();
     text('(−)극', G.tN.x, b.y + 76, f(13), '#e2e8f0', 'center');
     text('(+)극', G.tP.x, b.y + 76, f(13), '#fca5a5', 'center');
-    [[G.tN, '#111827', '−'], [G.tP, '#dc2626', '+']].forEach(([t, c, s]) => {
-      ctx.fillStyle = c; ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 2;
-      circle(t.x, t.y, 11); ctx.fill(); ctx.stroke();
+    const kv = T.knob * S.modeRes;
+    if (kv > 0.01) drawKnob(kv);
+  }
+  function drawKnob(kv) {
+    const k = G.knob, lift = S.knobLift, locked = S.lockV != null;
+    const e = S.t - S.knobShake;
+    const ox = !RM && e < 0.6 ? Math.sin(e * 46) * 4 * Math.exp(-e * 7) : 0;
+    ctx.save();
+    ctx.globalAlpha *= clamp(kv * 1.4, 0, 1);
+    text('전압', k.x, G.box.y + 76, f(13), '#cbd5e1', 'center');
+    ctx.translate(k.x + ox, k.y);
+    for (let i = 0; i <= 10; i++) {
+      const aa = (135 + 270 * i / V_MAX) * Math.PI / 180, lit = i <= S.Vd + 0.01 && i > 0;
+      ctx.strokeStyle = lit ? '#ffa45e' : 'rgba(203,213,225,.45)'; ctx.lineWidth = lit ? 2.6 : 2; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(Math.cos(aa) * (k.r + 6), Math.sin(aa) * (k.r + 6)); ctx.lineTo(Math.cos(aa) * (k.r + 10), Math.sin(aa) * (k.r + 10)); ctx.stroke();
+    }
+    const s = (0.4 + 0.6 * kv) * (1 + 0.1 * lift);
+    ctx.scale(s, s);
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,' + (0.35 + 0.15 * lift) + ')'; ctx.shadowBlur = 6 + 12 * lift; ctx.shadowOffsetY = 2 + 6 * lift;
+    const kg = ctx.createRadialGradient(-5, -6, 2, 0, 0, k.r + 1);
+    kg.addColorStop(0, locked ? '#d5dbe5' : '#f8fafc'); kg.addColorStop(0.55, locked ? '#98a3b5' : '#b4bfcf'); kg.addColorStop(1, locked ? '#5a6577' : '#6b778b');
+    ctx.fillStyle = kg; ctx.beginPath(); ctx.arc(0, 0, k.r, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+    ctx.strokeStyle = S.knob ? '#f26b3a' : 'rgba(31,41,55,.85)'; ctx.lineWidth = S.knob ? 3.5 : 2; ctx.beginPath(); ctx.arc(0, 0, k.r, 0, Math.PI * 2); ctx.stroke();
+    ctx.strokeStyle = 'rgba(40,50,70,.35)'; ctx.lineWidth = 1.2;
+    for (let i = 0; i < 18; i++) { const aa = i * Math.PI / 9; ctx.beginPath(); ctx.moveTo(Math.cos(aa) * (k.r - 3), Math.sin(aa) * (k.r - 3)); ctx.lineTo(Math.cos(aa) * (k.r - 0.5), Math.sin(aa) * (k.r - 0.5)); ctx.stroke(); }
+    const ig = ctx.createRadialGradient(-3, -4, 1, 0, 0, k.r - 5); ig.addColorStop(0, '#ffffff'); ig.addColorStop(1, '#c3ccda');
+    ctx.fillStyle = ig; ctx.beginPath(); ctx.arc(0, 0, k.r - 5, 0, Math.PI * 2); ctx.fill();
+    const ka = S.knobAng.value;
+    ctx.strokeStyle = '#ea580c'; ctx.lineWidth = 3.4; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(Math.cos(ka) * 3, Math.sin(ka) * 3); ctx.lineTo(Math.cos(ka) * (k.r - 4), Math.sin(ka) * (k.r - 4)); ctx.stroke();
+    ctx.restore();
+    if (locked) text('🔒', k.x + 22, k.y - 16, f(14), '#fff', 'center', 'middle');
+    if (!S.touched.knob && !locked && !RM && kv > 0.9 && S.mode === 'resistor') D.ring(k.x, k.y, k.r + 14, S.t, { color: '#f26b3a' });
+  }
+  function drawPosts() {
+    [[G.tN, '#1f2937', '−'], [G.tP, '#dc2626', '+']].forEach(([t, c, s]) => {
+      ctx.save();
+      ctx.shadowColor = 'rgba(0,0,0,.4)'; ctx.shadowBlur = 6; ctx.shadowOffsetY = 3;
+      ctx.fillStyle = metalGrad(t.x - 13, t.y - 13, t.x + 13, t.y + 13, '#c3ccd9'); ctx.beginPath(); ctx.arc(t.x, t.y, 13.5, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+      D.sphere(t.x, t.y, 10.5, c, { outline: 'rgba(255,255,255,.85)', outlineWidth: 1.5 });
       text(s, t.x, t.y + 1, f(17, '900'), '#fff', 'center', 'middle');
     });
-    if (S.mode === 'material' || !on('voltage')) return;
-    const k = G.knob;
-    text('전압', k.x, b.y + 76, f(13), '#cbd5e1', 'center');
-    const kg = ctx.createRadialGradient(k.x - 4, k.y - 4, 2, k.x, k.y, k.r);
-    kg.addColorStop(0, '#f1f5f9'); kg.addColorStop(1, S.lockV != null ? '#7c8799' : '#94a3b8');
-    ctx.fillStyle = kg; ctx.strokeStyle = S.knob ? '#f26b3a' : '#1f2937'; ctx.lineWidth = S.knob ? 3.5 : 2;
-    circle(k.x, k.y, k.r); ctx.fill(); ctx.stroke();
-    const ka = (135 + 270 * S.V / V_MAX) * Math.PI / 180;
-    ctx.strokeStyle = '#1f2937'; ctx.lineWidth = 3.5; ctx.lineCap = 'round';
-    ctx.beginPath(); ctx.moveTo(k.x, k.y); ctx.lineTo(k.x + Math.cos(ka) * (k.r - 3), k.y + Math.sin(ka) * (k.r - 3)); ctx.stroke();
   }
 
   function drawLabels() {
-    if (S.mode === 'material') text('전구', 304, 86, f(15), '#1b2333');
-    else if (on('voltmeter')) text('전압계', G.vm.x, G.vm.y + G.vm.r + 20, f(13), '#0e7490', 'center');
-    text('전류계', G.am.x - G.am.r - 10, G.am.y - 4, f(13), '#6d28d9', 'right');
-    if (S.target && S.target.I) text('🎯 ' + S.target.I.v.toFixed(2) + ' A', G.am.x - G.am.r - 10, G.am.y + 16, f(13), '#0b7a41', 'right');
+    if (S.mode === 'material') text('전구', 306, 86, f(15), '#1b2333', 'left', 'alphabetic', 'rgba(255,255,255,.85)');
+    else if (T.vm > 0.5) text('전압계', G.vm.x, G.vm.y + G.vm.r + 20, f(13), '#0e7490', 'center', 'alphabetic', 'rgba(255,255,255,.85)');
+    text('전류계', G.am.x - G.am.r - 10, G.am.y - 4, f(13), '#6d28d9', 'right', 'alphabetic', 'rgba(255,255,255,.85)');
+    if (S.target && S.target.I) text('🎯 ' + S.target.I.v.toFixed(2) + ' A', G.am.x - G.am.r - 10, G.am.y + 16, f(13), '#0b7a41', 'right', 'alphabetic', 'rgba(255,255,255,.85)');
   }
 
-  // 물질 상자
+  /* ----- 물질 상자 ----- */
+  function drawPanelCard(P, a) {
+    const slide = (1 - clamp(a, 0, 1)) * 46;
+    ctx.translate(slide, 0);
+    ctx.globalAlpha *= clamp(a * 1.4, 0, 1);
+    D.shadow(() => {
+      const g = ctx.createLinearGradient(0, P.y, 0, P.y + P.h); g.addColorStop(0, '#ffffff'); g.addColorStop(1, '#f1f6fc');
+      ctx.fillStyle = g; D.roundRect(P.x, P.y, P.w, P.h, 14); ctx.fill();
+    }, { blur: 14, y: 4, color: 'rgba(25,40,75,.2)' });
+    ctx.strokeStyle = '#dbe4f0'; ctx.lineWidth = 1.5; D.roundRect(P.x, P.y, P.w, P.h, 14); ctx.stroke();
+  }
   function drawTray() {
     const P = LAY.panel;
-    panel(P.x, P.y, P.w, P.h);
+    if (T.tray < 0.02) return;
+    ctx.save();
+    ctx.globalAlpha = clamp(S.mf, 0, 1);
+    drawPanelCard(P, T.tray);
     text('🧺 물질 상자', P.x + 12, P.y + 24, f(15), '#3a4456');
-    text('끌어다 집게에 끼우거나 눌러요', P.x + 12, P.y + 43, f(13, '600'), '#8a95a6');
+    text('끌어다 집게에 끼우거나 눌러요', P.x + 12, P.y + 43, f(13, '600'), '#6b7689');
     const tiles = trayLayout();
+    const away = {}; S.flyers.forEach((q) => { away[q.id] = true; });
     tiles.forEach((t) => {
       const m = MAT[t.id];
       const inSlot = S.slot === t.id;
       const dragging = S.drag && S.drag.moved && S.drag.id === t.id && S.drag.from === 'tray';
-      ctx.fillStyle = inSlot ? '#f0fdf4' : '#f8fafd'; rr(t.x, t.y, t.w, t.h, 12); ctx.fill();
+      D.shadow(() => { ctx.fillStyle = inSlot ? '#f0fdf4' : '#fff'; D.roundRect(t.x, t.y, t.w, t.h, 12); ctx.fill(); }, { blur: 5, y: 2, color: 'rgba(25,40,75,.12)' });
       ctx.save();
-      if (inSlot) { ctx.setLineDash([6, 4]); ctx.strokeStyle = '#14a058'; ctx.lineWidth = 2; } else { ctx.strokeStyle = '#dde4ef'; ctx.lineWidth = 1.5; }
-      rr(t.x, t.y, t.w, t.h, 12); ctx.stroke();
+      if (inSlot || dragging) { ctx.setLineDash([6, 4]); ctx.strokeStyle = inSlot ? '#14a058' : '#9aa7ba'; ctx.lineWidth = 2; } else { ctx.strokeStyle = '#dde4ef'; ctx.lineWidth = 1.5; }
+      D.roundRect(t.x, t.y, t.w, t.h, 12); ctx.stroke();
       ctx.restore();
       const cx = t.x + t.w / 2;
-      if (!inSlot) drawSample(t.id, cx, t.y + 24, Math.min(t.w - 34, 92), false, dragging ? 0.3 : 1);
+      if (!inSlot) drawSample(t.id, cx, t.y + 24, Math.min(t.w - 34, 92), false, dragging || away[t.id] ? 0.25 : 1);
       else text('▶ 집게에 있음', cx, t.y + 28, f(13), '#0b7a41', 'center');
       text(m.name, cx, t.y + 56, f(14), '#1b2333', 'center');
-      if (S.tested[t.id] != null) { const r = resultOf(S.tested[t.id]); text(r.t, cx, t.y + Math.min(80, t.h - 12), f(13), r.c, 'center'); }
-      else text('?', cx, t.y + Math.min(80, t.h - 12), f(13), '#a3adbd', 'center');
+      const ty = t.y + Math.min(80, t.h - 12);
+      if (S.tested[t.id] != null) {
+        const r = resultOf(S.tested[t.id]);
+        const age = S.t - (S.testedAt[t.id] || -9), pop = RM ? 1 : EASE.outBack(clamp(age / 0.4, 0, 1));
+        ctx.save(); ctx.translate(cx, ty); ctx.scale(0.6 + 0.4 * pop, 0.6 + 0.4 * pop);
+        text(r.t, 0, 0, f(13), r.c, 'center');
+        ctx.restore();
+      } else text('?', cx, ty, f(13), '#a3adbd', 'center');
     });
     const n = Object.keys(S.tested).length;
     text('시험한 물질 ' + n + ' / ' + MATS.length, P.x + P.w / 2, P.y + P.h - 12, f(13), '#5d6879', 'center');
+    ctx.restore();
+  }
+  S.testedAt = {};
+  function drawFlyers() {
+    for (let i = S.flyers.length - 1; i >= 0; i--) {
+      const q = S.flyers[i], k = clamp((S.t - q.t0) / q.dur, 0, 1);
+      if (k >= 1) { S.flyers.splice(i, 1); continue; }
+      const e = RM ? 1 : EASE.outCubic(k);
+      const x = q.x + (q.tx - q.x) * e, y = q.y + (q.ty - q.y) * e - (RM ? 0 : Math.sin(Math.PI * k) * 26);
+      const sc = 1 + 0.12 * Math.sin(Math.PI * k);
+      ctx.save(); ctx.translate(x, y); ctx.scale(sc, sc);
+      drawSample(q.id, 0, 0, 92, false, 1, { shadow: true });
+      ctx.restore();
+    }
   }
   function drawDragged() {
-    const d = S.drag;
+    const d = S.drag, lift = EASE.outCubic(clamp(d.lift, 0, 1)), hot = hitSlot({ x: d.px, y: d.py }, 30);
     ctx.save();
-    ctx.shadowColor = 'rgba(20,40,80,.3)'; ctx.shadowBlur = 12; ctx.shadowOffsetY = 4;
-    ctx.fillStyle = 'rgba(255,255,255,.92)'; rr(d.x - 60, d.y - 30, 120, 58, 12); ctx.fill();
+    ctx.translate(d.px, d.py - 6 * lift); ctx.rotate(d.tilt); ctx.scale(1 + 0.1 * lift, 1 + 0.1 * lift);
+    ctx.shadowColor = 'rgba(20,40,80,' + (0.18 + 0.16 * lift) + ')'; ctx.shadowBlur = 8 + 16 * lift; ctx.shadowOffsetY = 4 + 10 * lift;
+    ctx.globalAlpha *= hot ? 0.82 : 1; ctx.fillStyle = 'rgba(255,255,255,.95)'; D.roundRect(-62, -34, 124, 66, 14); ctx.fill();
+    ctx.shadowColor = 'transparent';
+    ctx.strokeStyle = '#14a058'; ctx.lineWidth = 2; D.roundRect(-62, -34, 124, 66, 14); ctx.stroke();
+    drawSample(d.id, 0, -12, 92, false);
+    text(MAT[d.id].name, 0, 20, f(13), '#1b2333', 'center');
     ctx.restore();
-    drawSample(d.id, d.x, d.y - 10, 92, false);
-    text(MAT[d.id].name, d.x, d.y + 18, f(13), '#1b2333', 'center');
   }
 
-  function drawGraph(G2) {
-    const { x: gx, y: gy, w: gw, h: gh } = G2;
-    panel(gx, gy, gw, gh);
+  /* ----- 전압–전류 그래프 ----- */
+  function graphGeom(P) {
     const pad = { l: 50, r: 16, t: 42, b: 42 };
-    const x0 = gx + pad.l, x1 = gx + gw - pad.r, y0 = gy + gh - pad.b, y1 = gy + pad.t;
-    const XM = V_MAX, YM = 1;
-    const px = (v) => x0 + (v / XM) * (x1 - x0);
-    const py = (i) => y0 - (i / YM) * (y0 - y1);
-    text('📈 전압–전류 그래프', gx + 12, gy + 24, f(15), '#3a4456');
+    const x0 = P.x + pad.l, x1 = P.x + P.w - pad.r, y0 = P.y + P.h - pad.b, y1 = P.y + pad.t;
+    return { x0, x1, y0, y1, px: (v) => x0 + (v / V_MAX) * (x1 - x0), py: (i) => y0 - (i / 1) * (y0 - y1) };
+  }
+  function drawGraph(P, a) {
+    ctx.save();
+    ctx.globalAlpha = clamp(S.mf, 0, 1);
+    drawPanelCard(P, a);
+    const { x0, x1, y0, y1, px, py } = graphGeom(P);
+    text('📈 전압–전류 그래프', P.x + 12, P.y + 24, f(15), '#3a4456');
     ctx.lineWidth = 1;
-    for (let v = 0; v <= XM; v += 2) {
-      ctx.strokeStyle = '#eef2f7'; ctx.beginPath(); ctx.moveTo(px(v), y0); ctx.lineTo(px(v), y1); ctx.stroke();
+    for (let v = 0; v <= V_MAX; v += 2) {
+      ctx.strokeStyle = '#e9eef6'; ctx.beginPath(); ctx.moveTo(px(v), y0); ctx.lineTo(px(v), y1); ctx.stroke();
       text(String(v), px(v), y0 + 17, f(13, '600'), '#5d6879', 'center');
     }
     for (let i = 0; i <= 5; i++) {
       const v = i * 0.2;
-      ctx.strokeStyle = '#eef2f7'; ctx.beginPath(); ctx.moveTo(x0, py(v)); ctx.lineTo(x1, py(v)); ctx.stroke();
+      ctx.strokeStyle = '#e9eef6'; ctx.beginPath(); ctx.moveTo(x0, py(v)); ctx.lineTo(x1, py(v)); ctx.stroke();
       text(i === 0 ? '0' : v.toFixed(1), x0 - 7, py(v) + 5, f(13, '600'), '#5d6879', 'right');
     }
-    ctx.strokeStyle = '#5d6879'; ctx.lineWidth = 1.5;
+    ctx.strokeStyle = '#5d6879'; ctx.lineWidth = 1.5; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
     ctx.beginPath(); ctx.moveTo(x0, y1 - 4); ctx.lineTo(x0, y0); ctx.lineTo(x1 + 4, y0); ctx.stroke();
     text('전압 (V)', (x0 + x1) / 2, y0 + 35, f(13), '#5d6879', 'center');
-    ctx.save(); ctx.translate(gx + 13, (y0 + y1) / 2); ctx.rotate(-Math.PI / 2);
+    ctx.save(); ctx.translate(P.x + 13, (y0 + y1) / 2); ctx.rotate(-Math.PI / 2);
     text('전류 (A)', 0, 0, f(13), '#5d6879', 'center', 'middle');
     ctx.restore();
     const groups = {};
     S.data.forEach((d) => { (groups[d.R] = groups[d.R] || []).push(d); });
-    const Rs = Object.keys(groups).map(Number).sort((a, b) => a - b);
+    const Rs = Object.keys(groups).map(Number).sort((q, w) => q - w);
     Rs.forEach((R) => {
-      const pts = groups[R].slice().sort((a, b) => a.V - b.V);
+      const pts = groups[R].slice().sort((q, w) => q.V - w.V);
       const col = R_COLORS[R] || '#334155';
       if (pts.length > 1) {
-        ctx.strokeStyle = col; ctx.globalAlpha = 0.45; ctx.lineWidth = 2.4;
+        ctx.strokeStyle = C.rgba(col, 0.5); ctx.lineWidth = 2.6;
         ctx.beginPath(); pts.forEach((p, i) => (i ? ctx.lineTo(px(p.V), py(p.I)) : ctx.moveTo(px(p.V), py(p.I)))); ctx.stroke();
-        ctx.globalAlpha = 1;
       }
-      pts.forEach((p) => { ctx.fillStyle = col; circle(px(p.V), py(Math.min(p.I, YM)), 6); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke(); });
+      pts.forEach((p) => {
+        const k = RM ? 1 : EASE.outBack(clamp((S.t - (p.born || -9)) / 0.45, 0, 1));
+        D.sphere(px(p.V), py(Math.min(p.I, 1)), 6.5 * Math.max(0.01, k), col, { outline: '#fff', outlineWidth: 2 });
+      });
     });
-    const cx = px(clamp(volts(), 0, XM)), cy = py(clamp(amps(), 0, YM));
-    const pulse = 7 + Math.sin(performance.now() / 200) * 2;
-    ctx.strokeStyle = '#f26b3a'; ctx.lineWidth = 2; circle(cx, cy, pulse); ctx.stroke();
-    ctx.fillStyle = '#f26b3a'; circle(cx, cy, 3.5); ctx.fill();
+    // 지금 값 (부드럽게 따라가는 표시)
+    const cx = px(clamp(S.gV, 0, V_MAX)), cy = py(clamp(S.gI, 0, 1));
+    if (!RM) D.ring(cx, cy, 8, S.t, { color: '#f26b3a', width: 2 });
+    else { ctx.strokeStyle = '#f26b3a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(cx, cy, 8, 0, Math.PI * 2); ctx.stroke(); }
+    ctx.fillStyle = '#f26b3a'; ctx.beginPath(); ctx.arc(cx, cy, 3.6, 0, Math.PI * 2); ctx.fill();
     if (Rs.length) {
       Rs.forEach((R, i) => {
         const lx = x0 + 12, ly = y1 + 8 + i * 20;
-        ctx.fillStyle = R_COLORS[R] || '#334155'; circle(lx, ly, 6); ctx.fill();
+        D.sphere(lx, ly, 6, R_COLORS[R] || '#334155', { gloss: false });
         text(R + ' Ω', lx + 11, ly + 1, f(13), '#3a4456', 'left', 'middle');
       });
     } else {
-      text('📍 데이터 기록 버튼을 눌러', (x0 + x1) / 2, y1 + 24, f(13, '600'), '#8a95a6', 'center');
-      text('그래프에 점을 찍어 보세요', (x0 + x1) / 2, y1 + 44, f(13, '600'), '#8a95a6', 'center');
+      text('📍 데이터 기록 버튼을 눌러', (x0 + x1) / 2, y1 + 24, f(13, '600'), '#6b7689', 'center');
+      text('그래프에 점을 찍어 보세요', (x0 + x1) / 2, y1 + 44, f(13, '600'), '#6b7689', 'center');
     }
+    ctx.restore();
   }
+
+  /* ---------- 성공 표시 ---------- */
+  function celebrate() {
+    const x = 372, y = 64;
+    fx.burst(x, y, { count: 24, speed: 200, life: 0.9, size: 4 });
+    S.chk = { t0: S.t, x, y };
+  }
+  function drawCheck() {
+    if (!S.chk) return;
+    const e = S.t - S.chk.t0;
+    if (e > 1.8) { S.chk = null; return; }
+    const sc = RM ? 1 : EASE.outBack(clamp(e / 0.4, 0, 1));
+    ctx.save();
+    ctx.globalAlpha = clamp((1.8 - e) / 0.4, 0, 1);
+    ctx.translate(S.chk.x, S.chk.y); ctx.scale(sc, sc);
+    D.check(0, 0, 24, clamp(e / 0.5, 0, 1));
+    ctx.restore();
+  }
+  (function watchGame() {
+    const gm = $('#game');
+    if (!gm || !window.MutationObserver) return;
+    new MutationObserver((list) => {
+      list.forEach((m) => {
+        const el = m.target;
+        if (!el.classList) return;
+        if (el.classList.contains('mission-card') && el.classList.contains('success') && !el._ok) { el._ok = true; celebrate(); }
+        if (el.classList.contains('mission-feedback') && el.classList.contains('bad')) S.wrongAt = S.t;
+      });
+    }).observe(gm, { subtree: true, attributes: true, attributeFilter: ['class'] });
+  })();
 
   /* ---------- 입력 ---------- */
   const sV = $('#sV');
-  const rangeV = SciSim.bindRange(sV, $('#oV'), (v) => (+v).toFixed(1) + ' V', (v) => { S.V = clamp(r1(v), 0, V_MAX); hideHint(); });
+  const rangeV = SciSim.bindRange(sV, $('#oV'), (v) => (+v).toFixed(1) + ' V', (v) => { S.V = clamp(r1(v), 0, V_MAX); S.touched.knob = true; hideHint(); });
   function setV(v, force) {
     if (S.lockV != null && !force) v = S.lockV;
     S.V = clamp(r1(v), 0, V_MAX);
@@ -599,7 +964,9 @@
   }
   function setR(r, force) {
     if (S.lockR != null && !force) r = S.lockR;
+    const old = S.R;
     S.R = R_LIST.indexOf(r) >= 0 ? r : R_BASE;
+    if (S.R !== old && featInit) S.platePop.velocity = 6;
     $$('#rPick button').forEach((b) => {
       const v = +b.dataset.r;
       b.classList.toggle('on', v === S.R);
@@ -625,24 +992,46 @@
   function unlockAll() { S.lockV = null; S.lockR = null; applyLocks(); }
 
   function setMode(m) {
+    if (m !== S.mode && featInit && !RM) { S.mf = 0; SciSim.tween(S, { mf: 1 }, { duration: 0.55, ease: 'outCubic' }); }
     S.mode = m;
     S.drag = null; S.knob = null;
     $$('[data-mode]').forEach((n) => { if (n.closest('#modeSeg')) n.classList.toggle('on', n.dataset.mode === m); else n.style.display = n.dataset.mode === m ? '' : 'none'; });
     $('#tbLabel').textContent = m === 'material' ? '🧺 물질 시험: 집게 사이에 물질 끼우기' : '📏 니크롬선 저항 실험';
     $('#tbLabel').hidden = !!(game && game.free);
   }
-  function insert(id) {
+  // 물질을 집게에 끼우기: 놓은 자리에서 집게로 쏙 들어가요(outBack)
+  function insert(id, from) {
+    if (S.slot && S.slot !== id) flyBack(S.slot, G.L, (G.slot.top + G.slot.bot) / 2);
+    const mid = (G.slot.top + G.slot.bot) / 2;
     S.slot = id;
     S.tested[id] = matAmps(id);
+    S.testedAt[id] = S.t;
+    S.touched.mat = true;
+    S.samp.dx = from ? from.x - G.L : 0; S.samp.dy = from ? from.y - mid : -40; S.samp.sc = 1.25;
+    SciSim.tween(S.samp, { dx: 0, dy: 0, sc: 1 }, { duration: 0.5, ease: 'outBack' });
+    S.clamp = 0;
+    S.resPop.velocity = 6;
     Sound.tick();
+    if (!isFinite(MAT[id].R)) S.slotShake = S.t + 0.35;      // 부도체: 전류가 안 흘러 살짝 흔들려요
+    else if (!RM) setTimeout(() => { if (S.slot === id) fx.burst(G.L, mid, { count: 8, speed: 90, life: 0.5, size: 3, gravity: 0, colors: ['#ffe27a', '#fff', '#ffb400'], shape: 'star' }); }, 380);
     hideHint();
   }
-  function removeSample() { if (S.slot) { S.slot = null; Sound.click(); } }
+  function flyBack(id, x, y) {
+    const c = tileCenter(id);
+    S.flyers.push({ id, x, y, tx: c.x, ty: c.y, t0: S.t, dur: RM ? 0.01 : 0.38 });
+  }
+  function removeSample(from) {
+    if (!S.slot) return;
+    const mid = (G.slot.top + G.slot.bot) / 2;
+    flyBack(S.slot, from ? from.x : G.L, from ? from.y : mid);
+    S.slot = null; Sound.click();
+  }
 
   $$('.nudge').forEach((b) => b.addEventListener('click', () => {
     if (b.disabled) return;
     Sound.tick();
     setV(S.V + +b.dataset.d);
+    S.touched.knob = true;
     hideHint();
   }));
   setR(S.R, true);
@@ -653,7 +1042,7 @@
     hideHint();
   }));
   $$('#modeSeg button').forEach((b) => b.addEventListener('click', () => { Sound.click(); setMode(b.dataset.mode); }));
-  $('#emptyBtn').addEventListener('click', removeSample);
+  $('#emptyBtn').addEventListener('click', () => removeSample());
 
   const hintEl = $('#stageHint');
   function showHint(msg, ms) {
@@ -665,10 +1054,12 @@
   $('#recBtn').addEventListener('click', () => {
     if (S.mode !== 'resistor') return;
     Sound.tick();
-    const d = { V: S.V, I: r2(amps()), R: S.R };
+    const d = { V: S.V, I: r2(amps()), R: S.R, born: S.t };
     const i = S.data.findIndex((q) => q.R === d.R && Math.abs(q.V - d.V) < 0.05);
     if (i >= 0) S.data[i] = d; else S.data.push(d);
     if (S.data.length > 80) S.data.shift();
+    const g = graphGeom(LAY.panel);
+    fx.burst(g.px(d.V), g.py(Math.min(d.I, 1)), { count: 9, speed: 80, life: 0.5, size: 2.8, gravity: 0, colors: [R_COLORS[d.R] || '#334155', '#ffd24a', '#fff'], shape: 'star' });
     toast('📍 기록: ' + d.V.toFixed(1) + ' V, ' + d.I.toFixed(2) + ' A (' + d.R + ' Ω)');
   });
   $('#clearBtn').addEventListener('click', () => { Sound.click(); S.data = []; });
@@ -718,6 +1109,7 @@
       $('#modeSeg').hidden = !free;
       // 1단계는 물질 시험 회로, 2단계부터는 니크롬선 저항 회로 (자유 탐구에서는 직접 고름)
       setMode(free ? S.mode : set.has('voltage') ? 'resistor' : 'material');
+      syncTools(set);
     },
     onMissionStart() { S.target = null; unlockAll(); },
     onComplete() { S.target = null; unlockAll(); },
@@ -942,16 +1334,59 @@
     ],
   });
 
+  /* ---------- 새 도구가 열릴 때: 살짝 튕기며 나타나요 ---------- */
+  function tool(key, target, delay) {
+    if (!featInit) { T[key] = target; TT[key] = target; return; }
+    if (TT[key] === target) return;
+    TT[key] = target;
+    SciSim.tween(T, { [key]: target }, { duration: target ? 0.65 : 0.25, ease: target ? 'outBack' : 'outCubic', delay: target ? delay : 0 });
+  }
+  function syncTools(set) {
+    tool('tray', set.has('materials') ? 1 : 0, 0.1);
+    tool('knob', set.has('voltage') ? 1 : 0, 0.2);
+    tool('vm', set.has('voltmeter') ? 1 : 0, 0.35);
+    tool('graph', set.has('graph') ? 1 : 0, 0.5);
+    tool('res', set.has('resistance') ? 1 : 0, 0.1);
+    featInit = true;
+  }
+
   /* ---------- 시작 ---------- */
+  function step(dt) {
+    S.t += dt;
+    S.needA.target = amps(); S.needA.update(dt);
+    S.needV.target = volts(); S.needV.update(dt);
+    S.I = ap(S.I, amps(), dt, 8);
+    S.phase += E_SPEED * S.I * dt;
+    S.Vd = ap(S.Vd, S.V, dt, 9);
+    S.Rd = ap(S.Rd, S.R, dt, 9);
+    if (Math.abs(S.Rd - S.R) < 0.02) S.Rd = S.R;
+    S.gV = ap(S.gV, volts(), dt, 9);
+    S.gI = ap(S.gI, amps(), dt, 9);
+    S.heat = ap(S.heat, S.mode === 'resistor' ? clamp((S.V * S.V / S.R - 1.2) / 5, 0, 1) : 0, dt, 3);
+    S.glowSp.target = brightness(); S.glowSp.update(dt);
+    S.glow = Math.max(0, S.glowSp.value);
+    S.knobAng.target = (135 + 270 * S.V / V_MAX) * Math.PI / 180; S.knobAng.update(dt);
+    S.knobLift = ap(S.knobLift, S.knob ? 1 : 0, dt, 14);
+    S.modeRes = ap(S.modeRes, S.mode === 'resistor' ? 1 : 0, dt, 10);
+    S.clamp = ap(S.clamp, S.slot ? 1 : 0, dt, 10);
+    S.resPop.target = 0; S.resPop.update(dt);
+    S.platePop.target = 0; S.platePop.update(dt);
+    const d = S.drag;
+    if (d) {
+      d.px = ap(d.px, d.x, dt, 26); d.py = ap(d.py, d.y, dt, 26);
+      d.lift = ap(d.lift, d.moved ? 1 : 0, dt, 12);
+      d.tilt = RM ? 0 : clamp((d.x - d.px) * 0.012, -0.25, 0.25);
+    }
+    fx.update(dt);
+  }
   setR(S.R, true);
   setMode(S.mode);
   applyLocks();
+  SciSim.tween(T, { intro: 1 }, { duration: 0.7, ease: 'outCubic' });
   SciSim.loop((dt, t) => {
-    const k = Math.min(1, dt * 8);
-    S.nA += (amps() - S.nA) * k;
-    S.nV += (volts() - S.nV) * k;
-    S.glow += (brightness() - S.glow) * Math.min(1, dt * 10);
+    step(dt);
     draw();
     updateReadouts(t);
   });
+  window.__sim = { S, T, setV, setR, setMode, insert, removeSample, celebrate, MATS, get F() { return F; } };
 })();

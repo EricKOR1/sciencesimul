@@ -314,9 +314,7 @@
     ctx.strokeStyle = 'rgba(176,196,164,.6)'; ctx.lineWidth = 1.2; rr(r.x + 0.5, r.y + 0.5, r.w - 1, r.h - 1, 14); ctx.stroke();
   }
   function drawBackground(t) {
-    const g = ctx.createLinearGradient(0, 0, 0, LAY.h);
-    g.addColorStop(0, '#f2f9eb'); g.addColorStop(1, '#e2eed8');
-    ctx.fillStyle = g; ctx.fillRect(0, 0, LAY.w, LAY.h);
+    // 바탕색은 무대 상자와 같게 두어 이음매가 보이지 않게 (빛은 안쪽에만)
     // 꽃 뒤의 따뜻한 빛
     D.glow(FLOWER.x, FLOWER.y + 10, 130, '#ffd3e8', 0.38);
   }
@@ -450,33 +448,33 @@
     const pc = (a, b) => mix(b, a, litA);                 // 꺼진 색(회색) → 켜진 색
     ctx.save(); ctx.translate(cx, cy); ctx.rotate(sway);
     // 꽃받침
-    ctx.fillStyle = pc('#5fae3f', '#cfd6c8');
+    ctx.fillStyle = pc('#5fae3f', '#cdd8c4');
     ctx.beginPath(); ctx.moveTo(-R * 0.22, R * 0.52); ctx.lineTo(R * 0.22, R * 0.52); ctx.lineTo(R * 0.34, R * 0.95); ctx.lineTo(0, R * 0.78); ctx.lineTo(-R * 0.34, R * 0.95); ctx.closePath(); ctx.fill();
     // 기발꽃잎 (뒤로 젖혀지는 큰 꽃잎)
     ctx.save(); ctx.translate(0, R * 0.1); ctx.rotate(-0.05 * open); ctx.scale(1, 0.9 + 0.1 * open);
     const bg = ctx.createLinearGradient(0, -R, 0, R * 0.2);
-    bg.addColorStop(0, pc('#f6a6d3', '#e3e7ee')); bg.addColorStop(1, pc('#d94b9a', '#c7cdd8'));
+    bg.addColorStop(0, pc('#f6a6d3', '#e9dfe6')); bg.addColorStop(1, pc('#d94b9a', '#d3c3cf'));
     ctx.fillStyle = bg;
     ctx.beginPath(); ctx.moveTo(0, R * 0.1);
     ctx.bezierCurveTo(-R * 1.0, 0, -R * 0.9, -R * 1.05, -R * 0.2, -R * 0.86);
     ctx.quadraticCurveTo(0, -R * 0.7, R * 0.2, -R * 0.86);
     ctx.bezierCurveTo(R * 0.9, -R * 1.05, R * 1.0, 0, 0, R * 0.1); ctx.closePath();
-    ctx.fill(); ctx.strokeStyle = pc('#b83680', '#aab2c0'); ctx.lineWidth = 1.6; ctx.stroke();
-    ctx.strokeStyle = pc('rgba(184,54,128,.35)', 'rgba(150,160,175,.35)'); ctx.lineWidth = 1.2;
+    ctx.fill(); ctx.strokeStyle = pc('#b83680', '#b7a6b3'); ctx.lineWidth = 1.6; ctx.stroke();
+    ctx.strokeStyle = pc('rgba(184,54,128,.35)', 'rgba(150,130,145,.3)'); ctx.lineWidth = 1.2;
     for (let i = -2; i <= 2; i++) { ctx.beginPath(); ctx.moveTo(0, R * 0.06); ctx.quadraticCurveTo(i * R * 0.22, -R * 0.4, i * R * 0.3, -R * 0.74); ctx.stroke(); }
     ctx.restore();
     // 날개꽃잎 두 장 (열릴수록 벌어짐)
     [-1, 1].forEach((sd) => {
       ctx.save(); ctx.translate(sd * R * 0.3, R * 0.2); ctx.rotate(sd * (0.35 + 0.55 * open));
       const wg = ctx.createLinearGradient(0, -R * 0.5, 0, R * 0.4);
-      wg.addColorStop(0, pc('#fde4f1', '#f1f3f7')); wg.addColorStop(1, pc('#f3a3cf', '#d6dbe4'));
+      wg.addColorStop(0, pc('#fde4f1', '#f4eef2')); wg.addColorStop(1, pc('#f3a3cf', '#e0d5dc'));
       ctx.fillStyle = wg; ctx.beginPath(); ctx.ellipse(0, -R * 0.1, R * 0.34, R * 0.6, 0, 0, TAU); ctx.fill();
-      ctx.strokeStyle = pc('#d0569c', '#b4bcc9'); ctx.lineWidth = 1.5; ctx.stroke();
+      ctx.strokeStyle = pc('#d0569c', '#bfb0ba'); ctx.lineWidth = 1.5; ctx.stroke();
       ctx.restore();
     });
     // 용골꽃잎 (가운데의 작은 배 모양) + 꽃가루
     ctx.save(); ctx.translate(0, R * 0.36);
-    ctx.fillStyle = pc('#fff3f9', '#f4f6f9'); ctx.strokeStyle = pc('#d0569c', '#b4bcc9'); ctx.lineWidth = 1.4;
+    ctx.fillStyle = pc('#fff3f9', '#f7f3f6'); ctx.strokeStyle = pc('#d0569c', '#bfb0ba'); ctx.lineWidth = 1.4;
     ctx.beginPath(); ctx.moveTo(-R * 0.3, -R * 0.12); ctx.quadraticCurveTo(0, R * 0.62, R * 0.3, -R * 0.12); ctx.quadraticCurveTo(0, R * 0.08, -R * 0.3, -R * 0.12); ctx.closePath();
     ctx.fill(); ctx.stroke();
     if (litA > 0.5) {
@@ -800,7 +798,7 @@
     const pulse = ready && !RM ? 1 + 0.035 * Math.sin(t * 5) : 1;
     // 꽃 줄기
     ctx.save();
-    ctx.strokeStyle = mix('#5fae3f', '#cfd6c8', lit); ctx.lineWidth = 5; ctx.lineCap = 'round';
+    ctx.strokeStyle = mix('#cdd8c4', '#5fae3f', lit); ctx.lineWidth = 5; ctx.lineCap = 'round';
     ctx.beginPath(); ctx.moveTo(fx, f.y + f.r * 0.8); ctx.quadraticCurveTo(fx + 6, f.y + f.r * 1.15, fx, f.y + f.r * 1.4); ctx.stroke();
     ctx.restore();
     ctx.save(); ctx.translate(fx, f.y); ctx.scale(pulse, pulse); ctx.translate(-fx, -f.y);
@@ -1178,14 +1176,25 @@
     const lt = el - (T_SEP + 0.05 + T_MERGE);
     if (lt > 0 && lt < 1.0) {
       const lp = ease.outBack(clamp(lt / 0.25, 0, 1));
-      ctx.save(); ctx.globalAlpha = 1 - clamp((lt - 0.7) / 0.3, 0, 1); ctx.translate(mx, my - 36); ctx.scale(lp, lp);
+      ctx.save(); ctx.globalAlpha = 1 - clamp((lt - 0.7) / 0.3, 0, 1); ctx.translate(mx, my - 52); ctx.scale(lp, lp);
       D.label(0, 0, '수정!', { bg: '#15803d', color: '#fff', size: 15, pad: 10 });
       ctx.restore();
     }
   }
-  // 유전자를 배우기 전: 꽃가루가 꽃으로 날아가는 모습만
+  // 유전자를 배우기 전: 꽃가루가 꽃으로 날아가고, 꽃에서 씨가 자라 트레이로 내려옴
+  const seedStart = (e) => 0.45 + e * 0.15, SEED_FLY = 0.55;
+  const seedArrive = (e) => seedStart(e) + SEED_FLY;
   function drawPollen(t) {
     const A = S.anim, el = t - A.t0;
+    for (let e = 0; e < A.K; e++) {
+      const u = (el - seedStart(e)) / SEED_FLY;
+      if (u <= 0 || u >= 1) continue;
+      const kid = A.res.kids[e], L = looks(kid.g), ee = ease.inOutCubic(u);
+      const x0 = FLOWER.x, y0 = FLOWER.y + FLOWER.r + 4;
+      const x = x0 + (kid.x - x0) * ee, y = y0 + (kid.y - y0) * ee - Math.sin(u * Math.PI) * 12;
+      D.glow(x, y, 20, '#fde68a', 0.4 * (1 - u));
+      drawPea(x, y, 7 + (Math.max(5, A.res.r) - 7) * ee, L.round, L.yellow, kid.seed, { shadow: false });
+    }
     if (el > 0.8) return;
     const s = SLOTS[A.single ? 0 : 1];
     const sx = s.cx, sy = s.y + s.h / 2;
@@ -1357,12 +1366,12 @@
     S.result = res;
     const genes = on('genes');
     // 자손이 나타나는 시각: 앞의 몇 개는 생식세포 → 수정란 → 씨로 이어지는 장면과 맞추고, 나머지는 차례로 톡톡 나타남
-    const K = genes ? Math.min(4, S.n) : 0;
+    const K = Math.min(4, S.n);
     let last = 0;
     kids.forEach((k, i) => {
-      if (i < K) k.pop = kidArrive(i) - 0.1;
-      else if (genes) k.pop = kidArrive(0) + 0.1 + 0.9 * ((i - K) / Math.max(1, S.n - K));
-      else k.pop = 0.6 + 1.0 * (i / S.n);
+      const a0 = genes ? kidArrive(0) : seedArrive(0);
+      if (i < K) k.pop = (genes ? kidArrive(i) : seedArrive(i)) - 0.1;
+      else k.pop = a0 + 0.1 + 0.9 * ((i - K) / Math.max(1, S.n - K));
       last = Math.max(last, k.pop);
     });
     S.disp.res = res; S.disp.v = CLASSES.map(() => 0);
@@ -1536,6 +1545,7 @@
     D = SciSim.draw(ctx);
     sprites.clear();
     SciSim.pointer(view, handlers);
+    cv.addEventListener('pointerleave', () => { S.hov = null; });
     if (S.result) layoutKids(S.result, true);
     placeHint();
   }

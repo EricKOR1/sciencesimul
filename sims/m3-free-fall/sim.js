@@ -622,7 +622,7 @@
     const cols = []; let acc = hx;
     fr.forEach((f) => { cols.push({ x: acc, w: hw * f }); acc += hw * f; });
     ctx.fillStyle = '#f1f5fb'; rr(hx, hy, hw, hh, 6); ctx.fill();
-    const heads = showD ? ['시간 (s)', '속력 (m/s)', '속력 변화 (m/s)'] : ['시간 (s)', '속력 (m/s)'];
+    const heads = showD ? (PHONE ? ['시간(s)', '속력(m/s)', '변화(m/s)'] : ['시간 (s)', '속력 (m/s)', '속력 변화 (m/s)']) : ['시간 (s)', '속력 (m/s)'];
     heads.forEach((h, i) => D.text(cols[i].x + cols[i].w / 2, hy + hh / 2 + 4.5 * FS, h, { size: 13 * FS, weight: 800, color: '#334155' }));
     if (isNew('delta')) { ctx.strokeStyle = PURPLE; ctx.globalAlpha = a * (0.5 + 0.5 * Math.sin(SciSim.time() * 6)); ctx.lineWidth = 2.5; rr(cols[2].x + 2, hy - 2, cols[2].w - 4, r.h - (hy - r.y) - 8, 6); ctx.stroke(); ctx.globalAlpha = a; }
 
