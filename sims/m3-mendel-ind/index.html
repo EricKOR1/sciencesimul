@@ -98,6 +98,27 @@
     .pn-allele-R { color: #c2410c; }
     .pn-allele-Y { color: #2563eb; }
 
+    /* ---------- 움직임 ---------- */
+    /* 새로 열린 도구: 아래에서 튕기며 나타난 뒤 NEW 맥박 */
+    [data-feature].feature-new { animation: featIn .55s cubic-bezier(.34, 1.56, .64, 1) both, featPulse 1.1s ease .55s 4; }
+    @keyframes featIn { from { opacity: 0; transform: translateY(12px) scale(.94); } to { opacity: 1; transform: none; } }
+    /* 퍼넷 사각형: 생식세포와 칸이 위에서 톡 떨어져 채워짐 */
+    .pn-grid .drop { display: inline-block; animation: cellDrop .5s cubic-bezier(.34, 1.56, .64, 1) both; animation-delay: var(--d, 0s); }
+    @keyframes cellDrop {
+      0% { opacity: 0; transform: translateY(-16px) scale(.45); }
+      100% { opacity: 1; transform: none; }
+    }
+    .pn-grid.shake { animation: pnShake .4s; }
+    @keyframes pnShake { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-6px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(3px); } }
+    .pn-cell.bad { animation: pnShake .4s; }
+    .pn-cell.pop { animation: cellPop .55s cubic-bezier(.34, 1.56, .64, 1) both; animation-delay: var(--d, 0s); }
+    @keyframes cellPop { 0% { transform: scale(1); } 40% { transform: scale(1.14); } 100% { transform: scale(1); } }
+    .pn-cell.hov { border-color: var(--subject); box-shadow: 0 0 0 2px color-mix(in srgb, var(--subject) 25%, transparent); }
+    .pn-gam { transition: transform .15s; }
+    .pn-gam.hl { transform: scale(1.18); }
+    .pn-gam.hl > span { box-shadow: 0 0 0 3px color-mix(in srgb, var(--subject) 30%, transparent); }
+    @media (prefers-reduced-motion: reduce) { .pn-gam.hl { transform: none; } }
+
     /* 세로 태블릿: 퍼넷 사각형이 열리기 전에는 미션 패널을 넓게 */
     @media (orientation: portrait) and (min-width: 600px) {
       .side-col.solo > #game { grid-column: 1 / -1; }
@@ -162,6 +183,7 @@
   </main>
 
   <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
   <script src="../../assets/js/catalog.js"></script>
   <script src="sim.js"></script>
 </body>
