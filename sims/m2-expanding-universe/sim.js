@@ -316,7 +316,7 @@
       txt(cols[1] + 20, yy, bef != null ? fcm(bef) : '—', { size: 17, weight: 800, color: bef != null ? '#0f172a' : '#9aa7b8', alpha: 1 });
       txt(cols[2] + 20, yy, aft != null ? fcm(aft) : '—', { size: 17, weight: 800, color: aft != null ? '#0f172a' : '#9aa7b8' });
       if (bef != null && aft != null) {
-        const d = aft - bef; if (d > bestV) { bestV = d; best = i; }
+        const d = r1(aft) - r1(bef); if (d > bestV) { bestV = d; best = i; }
         txt(cols[3] + 20, yy, '+' + fcm(d), { size: 17, weight: 800, color: '#ea580c' });
         D.roundRect(x + 10, yy - 30, w - 20, 44, 10); ctx.strokeStyle = 'rgba(234,88,12,.0)'; ctx.stroke();
       } else txt(cols[3] + 20, yy, '—', { size: 17, weight: 800, color: '#9aa7b8' });
@@ -377,7 +377,7 @@
     drawMsg();
     // 처음 안내: 슬라이더를 밀어요
     if (S.hintTap > 0.02 && S.s < 1.05 && game && game.level === 0 && game.phase === 'active') {
-      txt(S.cx, 640, '👉 오른쪽 슬라이더로 풍선을 불어 봐요', { size: 14.5, weight: 800, color: '#0369a1', alpha: (0.6 + 0.4 * pulse()) });
+      txt(S.cx, 640, '👉 슬라이더로 풍선을 불어 봐요', { size: 14.5, weight: 800, color: '#0369a1', alpha: (0.6 + 0.4 * pulse()) });
     }
   }
 
@@ -434,9 +434,9 @@
       FX.emit({ x: S.cx + (Math.random() - 0.5) * 8, y: S.cy + BASE_R * S.s + 6, vx: (Math.random() - 0.5) * 14, vy: -70 - Math.random() * 40, life: 0.5, size: 3 + Math.random() * 2, color: '#ffffff', shape: 'bubble', gravity: 0 });
     }
     S.lon0 = RM ? S.lon0T : approach(S.lon0, S.lon0T, dt, 5.5); S.lat0 = RM ? S.lat0T : approach(S.lat0, S.lat0T, dt, 5.5);
-    const wantCx = (has('ruler') && !(game && game.level === 3 && !game.free)) ? 520 : 400;
+    const wantCx = (has('ruler') && !(game && game.level === 3 && !game.free)) ? (has('past') ? 500 : 520) : 400;
     S.cx = RM ? wantCx : approach(S.cx, wantCx, dt, 4);
-    S.tableA = approach(S.tableA, wantCx === 520 ? 1 : 0, dt, 5);
+    S.tableA = approach(S.tableA, wantCx !== 400 ? 1 : 0, dt, 5);
     S.legendA = approach(S.legendA, (game && game.level === 0 && !game.free) ? 1 : 0, dt, 4);
     S.hintTap = approach(S.hintTap, 1, dt, 1);
     if (S.tape) S.tapeA = approach(S.tapeA, 1, dt, 6);
@@ -513,7 +513,7 @@
       const y = 72 + row * 26, b = dist(0, i, 1), a = dist(0, i, 2);
       rows += svgSticker(46, y - 4, ST[i], 8) + '<text x="132" y="' + y + '" font-size="15" font-weight="800" fill="#0f172a" text-anchor="middle" font-family="sans-serif">' + fcm(b) + '</text>' +
         '<text x="215" y="' + y + '" font-size="15" font-weight="800" fill="#0f172a" text-anchor="middle" font-family="sans-serif">' + fcm(a) + '</text>' +
-        '<text x="300" y="' + y + '" font-size="15" font-weight="800" fill="#ea580c" text-anchor="middle" font-family="sans-serif">+' + fcm(a - b) + '</text>';
+        '<text x="300" y="' + y + '" font-size="15" font-weight="800" fill="#ea580c" text-anchor="middle" font-family="sans-serif">+' + fcm(r1(a) - r1(b)) + '</text>';
     });
     FIG.table = '<svg viewBox="0 0 360 180" width="360" role="img" aria-label="스티커 A에서 B부터 E까지의 거리를 부풀리기 전과 후에 잰 표">' +
       '<rect width="360" height="180" rx="12" fill="#f8fafc" stroke="#cbd5e1"/><text x="180" y="24" font-size="14" font-weight="800" fill="#1b2333" text-anchor="middle" font-family="sans-serif">A에서 잰 거리 (cm)</text>' +
@@ -538,7 +538,7 @@
     return s;
   }
   FIG.refs = '<svg viewBox="0 0 360 200" width="360" role="img" aria-label="스티커 A에서 본 모습과 스티커 E에서 본 모습. 어느 쪽에서 봐도 다른 스티커들이 모두 멀어져요.">' +
-    '<rect width="360" height="200" rx="12" fill="#f0f9ff"/><defs><marker id="ra" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto"><path d="M0 0L7 3.5L0 7z" fill="#ea580c"/></marker></defs>' +
+    '<rect width="360" height="200" rx="12" fill="#f0f9ff"/><defs><marker id="ra" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" refX="9" refY="5.5" orient="auto"><path d="M0 0L11 5.5L0 11z" fill="#ea580c"/></marker></defs>' +
     panelRef(92, 0, 'A에서 본 모습') + panelRef(268, 4, 'E에서 본 모습') + '</svg>';
   FIG.back = (function () {
     let s = '<svg viewBox="0 0 360 170" width="360" role="img" aria-label="풍선이 점점 작아져 한 점이 되는 그림. 시간을 거꾸로 돌리면 스티커들이 가까워져요.">' +

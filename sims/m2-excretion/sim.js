@@ -274,7 +274,7 @@
     modelStage: 0,               // 0: 여과만, 1: 재흡수·분비까지
     parts: [], spawnT: 0, bladder: 0.12, bladderDraw: 0.12, voidT: 0,
     stat: { passed: {}, blocked: {}, urine: {} }, statT: 0, leakT: -99, stuckT: -99,
-    offTime: 0, onAfterOff: 0, everOff: false,
+    offTime: 0, onAfterOff: 0, everOff: false, sawLeak: false,
     diagram: { cards: [], placed: [null, null, null], drag: null, done: false, pulse: 0 },
     t: 0,
   };
@@ -670,14 +670,14 @@
     ctx.restore();
     // 대동맥·대정맥
     ctx.save(); ctx.lineCap = 'round';
-    ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 8; ctx.beginPath(); ctx.moveTo(262, 92); ctx.lineTo(262, 340); ctx.stroke();
-    ctx.strokeStyle = '#3b82f6'; ctx.beginPath(); ctx.moveTo(282, 92); ctx.lineTo(282, 340); ctx.stroke();
+    ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 8; ctx.beginPath(); ctx.moveTo(282, 92); ctx.lineTo(282, 340); ctx.stroke();
+    ctx.strokeStyle = '#3b82f6'; ctx.beginPath(); ctx.moveTo(262, 92); ctx.lineTo(262, 340); ctx.stroke();
     ctx.lineWidth = 5;
-    ctx.strokeStyle = '#ef4444'; ctx.beginPath(); ctx.moveTo(262, 188); ctx.lineTo(206, 196); ctx.moveTo(262, 188); ctx.lineTo(334, 196); ctx.stroke();
-    ctx.strokeStyle = '#3b82f6'; ctx.beginPath(); ctx.moveTo(282, 206); ctx.lineTo(206, 212); ctx.moveTo(282, 206); ctx.lineTo(334, 212); ctx.stroke();
+    ctx.strokeStyle = '#ef4444'; ctx.beginPath(); ctx.moveTo(282, 188); ctx.lineTo(206, 196); ctx.moveTo(282, 188); ctx.lineTo(334, 196); ctx.stroke();
+    ctx.strokeStyle = '#3b82f6'; ctx.beginPath(); ctx.moveTo(262, 206); ctx.lineTo(206, 212); ctx.moveTo(262, 206); ctx.lineTo(334, 212); ctx.stroke();
     ctx.restore();
-    txt('대동맥', 262, 84, { size: 12.5, weight: 800, color: '#b91c1c', align: 'center' });
-    txt('대정맥', 288, 106, { size: 12.5, weight: 800, color: '#1d4ed8', align: 'left', halo: 'rgba(255,255,255,.8)' });
+    txt('대동맥', 292, 112, { size: 12.5, weight: 800, color: '#b91c1c', align: 'left', halo: 'rgba(255,255,255,.8)' });
+    txt('대정맥', 252, 112, { size: 12.5, weight: 800, color: '#1d4ed8', align: 'right', halo: 'rgba(255,255,255,.8)' });
     // 오줌관
     [ureterL, ureterR].forEach((u) => {
       u.stroke(ctx); ctx.lineCap = 'round'; ctx.strokeStyle = SYS.focus === 'ureter' ? '#fde047' : '#c9a24b'; ctx.lineWidth = 15; ctx.stroke();
@@ -826,7 +826,7 @@
     txt('눌러서 자세히 보기', ix + iw / 2, iy + ih + 24, { size: 13, weight: 800, color: '#6b7280', align: 'center' });
     ctx.save(); ctx.beginPath(); ctx.arc(lens.x, lens.y, 4, 0, TAU); ctx.fillStyle = '#16a34a'; ctx.fill(); ctx.restore();
     infoCard(556, 306, 224, 170);
-    txt('네프론은 겉질에서 속질까지 길게 이어져 있어요.', 556, 502, { size: 13, weight: 700, color: '#4b5563' });
+    para('네프론은 겉질에서 속질까지 길게 이어져 있어요.', 556, 502, 224, { size: 13, color: '#4b5563', lh: 18 });
   }
 
   /* =========================================================
@@ -1061,7 +1061,7 @@
         if (!RM && Math.random() < 0.3) PFX.emit({ x: CELL.x + 40, y: CELL.y + 40, vx: (Math.random() - 0.5) * 80, vy: -40 - Math.random() * 40, life: 0.7, size: 3, color: '#fde047', shape: 'star' });
       }
     } else if (!WS.nut) {
-      txt('아래에서 영양소를 골라 보세요', CELL.x, CELL.y + 4, { size: 14, weight: 800, color: '#a0527c', align: 'center' });
+      txt('영양소 버튼을 눌러 보세요', CELL.x, CELL.y + 4, { size: 14, weight: 800, color: '#a0527c', align: 'center' });
     }
     // 분해 식
     panel(14, 336, 316, 46, { r: 14 });
@@ -1219,9 +1219,9 @@
       { x: 539, y: 438, label: '모세 혈관 → 세뇨관', lx: 424, ly: 438, dir: [522, 438, 560, 438], name: '' },
     ],
     cards: [
-      { id: 'filter', label: '여과', color: '#2563eb', hx: 102, hy: 366 },
-      { id: 'reabs', label: '재흡수', color: '#16a34a', hx: 102, hy: 430 },
-      { id: 'secrete', label: '분비', color: '#c026d3', hx: 102, hy: 494 },
+      { id: 'filter', label: '여과', color: '#2563eb', hx: 102, hy: 378 },
+      { id: 'reabs', label: '재흡수', color: '#16a34a', hx: 102, hy: 440 },
+      { id: 'secrete', label: '분비', color: '#c026d3', hx: 102, hy: 502 },
     ],
   };
   DG.cards.forEach((c) => { c.x = c.hx; c.y = c.hy; c.slot = null; c.lift = 0; c.sc = 1; c.drag = false; });
@@ -1320,7 +1320,7 @@
     S.scene = name; S.sceneT = 0;
     if (!RM) SciSim.tween(S, { sceneT: 1 }, { duration: 0.5, ease: 'outCubic' }); else S.sceneT = 1;
     if (name === 'model') {
-      if (o.reset) { S.pore = 90; S.reabs = true; S.modelStage = 0; S.offTime = 0; S.onAfterOff = 0; S.everOff = false; syncControls(); }
+      if (o.reset) { S.pore = 90; S.reabs = true; S.modelStage = 0; S.offTime = 0; S.onAfterOff = 0; S.everOff = false; S.sawLeak = false; syncControls(); }
       resetNeph(true);
     }
     if (name === 'kidney' && S.view === 'neph') { S.pore = 40; S.reabs = true; syncControls(); resetNeph(true); }
@@ -1354,7 +1354,7 @@
     PFX.update(dt);
     // 재흡수 끄기 관찰 시간
     if (S.scene === 'model') {
-      if (!S.reabs) { S.offTime += dt; S.everOff = true; S.onAfterOff = 0; }
+      if (!S.reabs) { S.offTime += dt; S.everOff = true; S.onAfterOff = 0; if (S.stat.urine.gluc + S.stat.urine.amino > 0) S.sawLeak = true; }
       else if (S.everOff) S.onAfterOff += dt;
     }
   }
@@ -1548,7 +1548,7 @@
         {
           title: '세 영양소가 분해되는 모습 보기',
           goal: '탄수화물, 지방, 단백질을 하나씩 골라 세포 속에서 분해되는 모습을 지켜봐요.',
-          hint: '아래 영양소 버튼을 눌러 보세요. 분해가 끝나면 노폐물이 상자에 나타나요.',
+          hint: '영양소 버튼(탄수화물·지방·단백질)을 눌러 보세요. 분해가 끝나면 노폐물이 상자에 나타나요.',
           hold: 0.6,
           status: () => NUT_ORDER.map((k) => mark(WS.seen.has(k)) + ' ' + NUT[k].name).join(' · '),
           check: () => NUT_ORDER.every((k) => WS.seen.has(k)) && !WS.anim,
@@ -1644,12 +1644,12 @@
         },
         {
           title: '재흡수를 껐다 켜 보기',
-          goal: '"재흡수"를 끄고 3초 넘게 오줌 검사 결과를 본 뒤, 다시 켜 보세요.',
-          hint: '오른쪽의 "끄기"를 누르면 오줌 검사에 포도당과 아미노산이 쌓여요. 그 뒤 "켜기"를 눌러요.',
+          goal: '"재흡수"를 끄고, 오줌 검사에 포도당·아미노산이 나타나는 것을 본 뒤(10초쯤 걸려요) 다시 켜 보세요.',
+          hint: '오른쪽의 "끄기"를 누르고 잠시 기다리면 오줌 검사에 포도당과 아미노산이 쌓여요(10초쯤). 그 뒤 "켜기"를 눌러요.',
           hold: 0.5,
-          setup() { S.modelStage = 1; S.pore = 40; S.reabs = true; S.offTime = 0; S.onAfterOff = 0; S.everOff = false; resetStats(); syncControls(); },
-          status: () => mark(S.offTime >= 3) + ' 끄고 3초 관찰 · ' + mark(S.offTime >= 3 && S.reabs && S.onAfterOff >= 1.5) + ' 다시 켜기',
-          check: () => S.offTime >= 3 && S.reabs && S.onAfterOff >= 1.5,
+          setup() { S.modelStage = 1; S.pore = 40; S.reabs = true; S.offTime = 0; S.onAfterOff = 0; S.everOff = false; S.sawLeak = false; resetStats(); syncControls(); },
+          status: () => mark(S.sawLeak) + ' 끄고 포도당·아미노산이 오줌에 나타나는 것 보기 · ' + mark(S.sawLeak && S.reabs && S.onAfterOff >= 1.5) + ' 다시 켜기',
+          check: () => S.sawLeak && S.offTime >= 3 && S.reabs && S.onAfterOff >= 1.5,
           explain: '<b>재흡수</b>가 꺼지면 걸러진 포도당·아미노산·물이 그대로 오줌이 돼요. 정상일 때는 <b>세뇨관 → 모세 혈관</b>으로 되돌아가요. 또 혈액에 남은 노폐물 일부는 <b>분비</b>되어 모세 혈관 → 세뇨관으로 이동해요.',
         },
         {

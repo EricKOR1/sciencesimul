@@ -209,6 +209,22 @@
     D.sphere(0, 0, 3.6, '#64748b', { gloss: false });
     ctx.restore();
   }
+  // 나침반이 자석·코일(철심)·전원 장치 '안'에 들어가지 않게 가장자리 밖으로 밀어내요 (자석 안의 자기장은 이 모형으로 나타낼 수 없어요)
+  function keepOut(x, y) {
+    const R = 32;
+    const rects = S.scene === 'magnet'
+      ? [[MAG.x0, MAG.cy - MAG.hh, MAG.x1, MAG.cy + MAG.hh]]
+      : [[COIL.x0 - 14, COIL.cy - COIL.R - 8, COIL.x1 + 30, COIL.cy + COIL.R + 8], [BAT.x - 12, BAT.y, BAT.x + BAT.w + 12, BAT.y + BAT.h]];
+    for (let pass = 0; pass < 2; pass++) {
+      rects.forEach((r) => {
+        const x0 = r[0] - R, y0 = r[1] - R, x1 = r[2] + R, y1 = r[3] + R;
+        if (x <= x0 || x >= x1 || y <= y0 || y >= y1) return;
+        const d = [x - x0, x1 - x, y - y0, y1 - y], m = Math.min.apply(null, d);
+        if (m === d[0]) x = x0; else if (m === d[1]) x = x1; else if (m === d[2]) y = y0; else y = y1;
+      });
+    }
+    return { x: clamp(x, 30, 770), y: clamp(y, 40, 510) };
+  }
   const compassHit = (p) => { for (let i = comps.length - 1; i >= 0; i--) { const c = comps[i]; if (Math.hypot(p.x - c.x, p.y - c.y) < 36) return c; } return null; };
 
   /* ================= ① 막대자석 ================= */
@@ -541,7 +557,8 @@
     },
     move(p) {
       const c = S.drag; if (!c) return;
-      c.tx = clamp(p.x + c.dx, 30, 770); c.ty = clamp(p.y + c.dy, 40, 510);
+      const q = keepOut(clamp(p.x + c.dx, 30, 770), clamp(p.y + c.dy, 40, 510));
+      c.tx = q.x; c.ty = q.y;
     },
     up() { const c = S.drag; if (!c) return; c.grab = false; S.drag = null; Sound.click(); },
   };

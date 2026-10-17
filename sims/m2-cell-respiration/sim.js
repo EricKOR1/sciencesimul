@@ -244,9 +244,12 @@
     S.ph += dt * (S.Id < 0.04 ? 0 : 3.2 + 9.5 * S.Id);
     S.track += dt * S.Id * 300;
     if (S.scene === 'body') {
-      if (S.I <= 0.12 && S.Id < 0.15) S.rest += dt;
-      if (S.I >= 0.28 && S.I <= 0.62 && S.Id > 0.25 && S.Id < 0.65) S.walk += dt;
-      if (S.I >= 0.85 && S.Id >= 0.8) S.run += dt;
+      // 슬라이더 옆에 적힌 이름(쉬기 < 0.12 · 걷기 0.12~0.65 · 달리기 0.65~)과 같은 구간으로 세어요
+      if (Math.abs(S.Id - S.I) < 0.03) {          // 화면 값이 슬라이더를 따라잡은 뒤부터 세요
+        if (S.I < 0.12) S.rest += dt;
+        else if (S.I < 0.65) S.walk += dt;
+        else S.run += dt;
+      }
     }
   }
   const runnerHead = { hx: 240, hy: 200 };
