@@ -2405,8 +2405,7 @@ window.SCI_CATALOG = {
                 "센서 측정",
                 "정보 만들기",
                 "적용"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "h1-digital",
@@ -2427,8 +2426,7 @@ window.SCI_CATALOG = {
                 "표본·양자",
                 "이진 부호",
                 "통신과 문명"
-              ],
-              "soon": true
+              ]
             }
           ]
         },

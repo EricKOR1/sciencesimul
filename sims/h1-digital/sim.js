@@ -74,7 +74,8 @@
     o = o || {};
     const lift = c.lift || 0, sc = 1 + lift * 0.07, sh = c.shake > 0 ? Math.sin(c.shake * 40) * 5 * Math.min(1, c.shake * 3) : 0;
     ctx.save(); ctx.translate(c.x + sh, c.y); ctx.scale(sc, sc);
-    D.shadow(() => { ctx.fillStyle = o.fill || '#fff'; rr(-c.w / 2, -c.h / 2, c.w, c.h, 12).fill(); }, { blur: 5 + lift * 14, y: 2 + lift * 7, color: 'rgba(30,45,80,' + (0.16 + lift * 0.12) + ')' });
+    if (lift > 0.05) D.shadow(() => { ctx.fillStyle = o.fill || '#fff'; rr(-c.w / 2, -c.h / 2, c.w, c.h, 12).fill(); }, { blur: 5 + lift * 14, y: 2 + lift * 7, color: 'rgba(30,45,80,' + (0.16 + lift * 0.12) + ')' });
+    else { ctx.fillStyle = 'rgba(30,45,80,.13)'; rr(-c.w / 2, -c.h / 2 + 3, c.w, c.h, 12).fill(); ctx.fillStyle = o.fill || '#fff'; rr(-c.w / 2, -c.h / 2, c.w, c.h, 12).fill(); }
     ctx.strokeStyle = o.stroke || '#cbd5e1'; ctx.lineWidth = o.sw || 2; rr(-c.w / 2, -c.h / 2, c.w, c.h, 12).stroke();
     return () => ctx.restore();
   }
@@ -109,7 +110,7 @@
       D.sphere(0, 0, 3.5, '#1b2333', { gloss: false });
     },
     clockD(t) {
-      D.shadow(() => { ctx.fillStyle = '#0f172a'; rr(-62, -28, 124, 56, 10).fill(); }, { blur: 6, y: 2 });
+      ctx.fillStyle = '#0f172a'; rr(-62, -28, 124, 56, 10).fill();
       const s = Math.floor(t) % 60, pop = 1 - Math.min(1, (t % 1) * 5);
       ctx.save(); ctx.font = '800 26px ui-monospace, Menlo, Consolas, monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#4ade80';
       ctx.fillText('12:34:' + ('0' + s).slice(-2), 0, 1 + pop * 1.5); ctx.restore();
@@ -133,7 +134,7 @@
     },
     lp(t) {
       const g = ctx.createRadialGradient(-6, -8, 4, 0, 0, 42); g.addColorStop(0, '#475569'); g.addColorStop(1, '#0f172a');
-      ctx.save(); ctx.translate(-34, 0); D.shadow(() => { ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, 42, 0, 6.3); ctx.fill(); }, { blur: 6, y: 3 });
+      ctx.save(); ctx.translate(-34, 0); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, 42, 0, 6.3); ctx.fill();
       ctx.strokeStyle = 'rgba(255,255,255,.12)'; ctx.lineWidth = 1; for (let r = 14; r < 40; r += 5) { ctx.beginPath(); ctx.arc(0, 0, r, 0, 6.3); ctx.stroke(); }
       ctx.rotate(t * 2.4); ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(0, 0, 28, 0.2, 1.1); ctx.stroke();
       ctx.rotate(-t * 2.4); D.sphere(0, 0, 11, '#e2464b', { gloss: false }); D.sphere(0, 0, 2.5, '#fff', { gloss: false }); ctx.restore();
@@ -141,12 +142,13 @@
       ctx.strokeStyle = '#3867f4'; ctx.lineWidth = 2.5; ctx.beginPath(); for (let i = 0; i <= 40; i++) { const x = 20 + i * 1.7, y = 24 + Math.sin(i * 0.42 - t * 5) * 9; i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); } ctx.stroke();
     },
     file(t) {
-      D.shadow(() => { ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.moveTo(-60, -38); ctx.lineTo(-24, -38); ctx.lineTo(-8, -22); ctx.lineTo(-8, 38); ctx.lineTo(-60, 38); ctx.closePath(); ctx.fill(); }, { blur: 6, y: 2 });
+      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.moveTo(-60, -38); ctx.lineTo(-24, -38); ctx.lineTo(-8, -22); ctx.lineTo(-8, 38); ctx.lineTo(-60, 38); ctx.closePath(); ctx.fill();
       ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-60, -38); ctx.lineTo(-24, -38); ctx.lineTo(-8, -22); ctx.lineTo(-8, 38); ctx.lineTo(-60, 38); ctx.closePath(); ctx.stroke();
       ctx.fillStyle = '#8b5cf6'; rr(-52, -8, 36, 20, 5).fill(); D.text(-34, 7, '.mp3', { size: 13, weight: 800, color: '#fff' });
       const shift = Math.floor(t * 5);
       ctx.save(); ctx.beginPath(); ctx.rect(6, -40, 92, 80); ctx.clip();
-      for (let c = 0; c < 5; c++) for (let r = 0; r < 5; r++) { const v = hash(c * 17 + (r + shift) * 3.1 + 5) > 0 ? '1' : '0'; D.text(16 + c * 17, -26 + r * 18 + ((t * 5) % 1) * 18 - 0, v, { size: 15, weight: 800, color: v === '1' ? '#4ade80' : '#94a3b8', alpha: 0.9 }); }
+      ctx.font = D.font(15, 800); ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+      for (let c = 0; c < 5; c++) for (let r = 0; r < 5; r++) { const v = hash(c * 17 + (r + shift) * 3.1 + 5) > 0 ? '1' : '0'; ctx.fillStyle = v === '1' ? '#4ade80' : '#94a3b8'; ctx.fillText(v, 16 + c * 17, -26 + r * 18 + ((t * 5) % 1) * 18); }
       ctx.restore();
     },
   };
@@ -428,7 +430,7 @@
       D.text(cx, sw.y + 26, String(Math.pow(2, 7 - i)), { size: 15, weight: 800, color: '#475569' });
       ctx.fillStyle = k > 0.5 ? '#dbe7ff' : '#e8edf4'; rr(cx - 17, top, 34, trackH, 17).fill(); ctx.strokeStyle = k > 0.5 ? '#3867f4' : '#cbd5e1'; ctx.lineWidth = 2.5; rr(cx - 17, top, 34, trackH, 17).stroke();
       const ky = top + trackH - 17 - k * (trackH - 34);
-      D.sphere(cx, ky, 15, k > 0.5 ? '#3867f4' : '#94a3b8', { shadow: true });
+      D.sphere(cx, ky, 15, k > 0.5 ? '#3867f4' : '#94a3b8');
       D.text(cx, ky + 5, k > 0.5 ? '1' : '0', { size: 15, weight: 800, color: '#fff' });
       D.text(cx, top + trackH + 22, '2' + '⁰¹²³⁴⁵⁶⁷'[7 - i], { size: 13, weight: 800, color: '#64748b' });
       if (B.popT > 0 && false) D.ring(cx, ky, 20, t, { color: '#3867f4' });
@@ -507,7 +509,7 @@
     for (let r = 0; r < 8; r++) for (let q = 0; q < 8; q++) {
       const i = r * 8 + q, v = arr[i];
       ctx.fillStyle = '#eef2f7'; ctx.fillRect(x + q * c + 0.5, y + r * c + 0.5, c - 1, c - 1);
-      if (v) { const s = o.pop ? SciSim.ease.outBack(clamp(o.pop[i], 0, 1)) : 1; ctx.fillStyle = '#1f2937'; ctx.fillRect(x + q * c + 0.5 + (c - 1) * (1 - s) / 2, y + r * c + 0.5 + (c - 1) * (1 - s) / 2, (c - 1) * s, (c - 1) * s); }
+      if (v === 1) { const s = o.pop ? SciSim.ease.outBack(clamp(o.pop[i], 0, 1)) : 1; ctx.fillStyle = '#1f2937'; ctx.fillRect(x + q * c + 0.5 + (c - 1) * (1 - s) / 2, y + r * c + 0.5 + (c - 1) * (1 - s) / 2, (c - 1) * s, (c - 1) * s); }
       else if (v === 0 && o.pop && o.pop[i] < 1) { ctx.fillStyle = 'rgba(56,103,244,' + (1 - o.pop[i]) * 0.5 + ')'; ctx.fillRect(x + q * c + 0.5, y + r * c + 0.5, c - 1, c - 1); }
     }
   }
@@ -524,11 +526,12 @@
     // 비트 격자
     panel(gx - 12, gy - 12, c * 8 + 24 + (PHONE ? 0 : 50), c * 8 + 24);
     D.text(gx + c * 4, gy - 22 - (PHONE ? 6 : 0), '0과 1로 부호화 (검은 칸 = 1)', { size: 14, weight: 800, color: '#334155' });
+    ctx.font = D.font(17, 800); ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
     for (let r = 0; r < 8; r++) {
       for (let q = 0; q < 8; q++) {
-        const i = r * 8 + q, v = p.bits[i], ok = v === HEART[i], x = gx + q * c, y = gy + r * c;
+        const i = r * 8 + q, v = p.bits[i], x = gx + q * c, y = gy + r * c;
         ctx.fillStyle = v ? '#1f2937' : '#fff'; rr(x + 2, y + 2, c - 4, c - 4, 6).fill(); ctx.strokeStyle = v ? '#1f2937' : '#cbd5e1'; ctx.lineWidth = 1.5; rr(x + 2, y + 2, c - 4, c - 4, 6).stroke();
-        D.text(x + c / 2, y + c / 2 + 6, String(v), { size: PHONE ? 17 : 17, weight: 800, color: v ? '#fff' : '#94a3b8' });
+        ctx.fillStyle = v ? '#fff' : '#94a3b8'; ctx.fillText(v ? '1' : '0', x + c / 2, y + c / 2 + 6);
       }
       const byte = p.bits.slice(r * 8, r * 8 + 8).reduce((a, b) => a * 2 + b, 0);
       if (!PHONE) D.text(gx + c * 8 + 8, gy + r * c + c / 2 + 5, '= ' + byte, { size: 12.5, weight: 700, color: '#94a3b8', align: 'left' });
