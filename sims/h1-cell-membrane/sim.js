@@ -215,14 +215,14 @@
   /* ================= ① 살아 있는 세포 ================= */
   const CX = PHONE ? 240 : 270, CY = PHONE ? 150 : 205, CRX = PHONE ? 205 : 190, CRY = PHONE ? 96 : 128;
   const CW = PHONE ? 100 : 116, CH = PHONE ? 38 : 44;
-  const OZ = PHONE ? { x: 10, y: 270, w: 460, h: 100 } : { x: 548, y: 50, w: 236, h: 330 };
+  const OZ = PHONE ? { x: 10, y: 270, w: 460, h: 100 } : { x: 526, y: 50, w: 266, h: 330 };
   const ITEMS = [
     ['o2', '산소 O₂', 'in', '#ef4444', 'O₂'], ['glu', '포도당', 'in', '#f59e0b', 'C'], ['aa', '아미노산', 'in', '#22c55e', 'A'],
     ['co2', '이산화 탄소', 'out', '#6b7280', 'CO₂'], ['urea', '요소', 'out', '#fb923c', 'U'], ['nh3', '암모니아', 'out', '#a855f7', 'N'],
   ];
   const trayPos = (i) => PHONE ? { x: 22 + (i % 3) * 152, y: 400 + Math.floor(i / 3) * 56 } : { x: 24 + i * 124, y: 440 };
   const slotIn = (k) => ({ x: CX - CW * 1.5 - 6 + (k % 3) * (CW + 6), y: CY + (k < 3 ? -30 : 26) });
-  const slotOut = (k) => PHONE ? { x: OZ.x + 14 + (k % 3) * (CW + 14), y: OZ.y + 22 + Math.floor(k / 3) * (CH + 12) } : { x: OZ.x + 8 + (k % 2) * (CW + 12), y: OZ.y + 70 + Math.floor(k / 2) * (CH + 18) };
+  const slotOut = (k) => PHONE ? { x: OZ.x + 14 + (k % 3) * (CW + 14), y: OZ.y + 22 + Math.floor(k / 3) * (CH + 12) } : { x: OZ.x + 10 + (k % 2) * (CW + 14), y: OZ.y + 70 + Math.floor(k / 2) * (CH + 18) };
   function makeContents() {
     const c = []; for (let i = 0; i < 26; i++) { const a = rnd(0, TAU), r = Math.sqrt(Math.random()); c.push({ hx: CX + Math.cos(a) * r * (CRX - 22), hy: CY + Math.sin(a) * r * (CRY - 18), a, s: rnd(2, 4), col: ['#9bd3a9', '#7cc48e', '#b9e0c3'][i % 3] }); }
     return c;
@@ -457,7 +457,7 @@
   const IOD_TYPES = { iodine: { name: '아이오딘', r: 5, speed: 100, pass: 'free', color: '#b8741a' }, starch: { name: '녹말', r: 12, speed: 55, pass: 'none', color: '#d1d5db', shape: 'chain' } };
   const POT_TYPES = { water: { name: '물', r: 4.5, speed: 115, pass: 'free', color: '#3b9eff' }, salt: { name: '소금', r: 6, speed: 75, pass: 'none', color: '#f59e0b' } };
   const IB = PHONE ? { x: 168, y: 64, w: 302, h: 270 } : { x: 346, y: 66, w: 436, h: 330 };
-  const PB = PHONE ? { x: 10, y: 212, w: 460, h: 176 } : { x: 584, y: 62, w: 200, h: 300 };
+  const PB = PHONE ? { x: 10, y: 238, w: 460, h: 158 } : { x: 584, y: 62, w: 200, h: 300 };
   function newIodBox() {
     const b = new MBox({ x: IB.x, y: IB.y, w: IB.w, h: IB.h, memH: 40, types: IOD_TYPES, kind: 'cello', channels: [] });
     b.add('iodine', 'out', 30, true); b.add('starch', 'in', 7, true); return b;
@@ -544,7 +544,7 @@
     D.label(b.x + b.w - 10, b.memY - b.memH / 2 - 16, '🔍 셀로판막 확대', { bg: '#3b6fb0', size: PHONE ? 11 : 12.5, align: 'right' });
     // 시간·관찰
     const ty2 = PHONE ? 350 : 408, x = PHONE ? 10 : 24, w = VW - x * 2;
-    panel(x, ty2, w, PHONE ? 230 : 146, 16);
+    panel(x, ty2, w, PHONE ? 196 : 150, 16);
     T(x + 16, ty2 + 26, '⏱️ 경과 시간 ' + Math.round(r.t) + '분 / 30분', PHONE ? 14 : 16, '#26324a', 'left', 800);
     D.roundRect(x + 16, ty2 + 36, w - 32, 12, 6); ctx.fillStyle = '#e8ecf4'; ctx.fill();
     if (r.t > 0) { D.roundRect(x + 16, ty2 + 36, Math.max(12, (w - 32) * r.t / LAB_MIN), 12, 6); ctx.fillStyle = '#16a34a'; ctx.fill(); }
@@ -556,19 +556,19 @@
       D.sphere(cx0 + 24, cy0 + (PHONE ? 22 : 23), 13, o[2], { gloss: true });
       T(cx0 + 46, cy0 + 19, o[0], PHONE ? 12 : 12.5, '#5a6679', 'left', 800); T(cx0 + 46, cy0 + 38, o[1], PHONE ? 13 : 14.5, '#26324a', 'left', 800);
     });
-    if (r.st === 'done') { textBlock(x + 16, ty2 + (PHONE ? 152 : 128), w - 32, '아이오딘은 셀로판막을 지나 튜브 안으로 들어가 녹말과 만나 청람색이 되었어요. 녹말은 막을 지나지 못해서 비커 용액은 색이 변하지 않았어요.', PHONE ? 13 : 13, '#166534', 18, 800); }
-    else if (r.st === 'idle') T(x + 16, ty2 + (PHONE ? 160 : 128), '▶ 30분 지나기를 눌러 시작해요', PHONE ? 13 : 14, '#5a6679', 'left', 700);
+    if (r.st === 'done') { textBlock(x + 16, ty2 + (PHONE ? 152 : 122), w - 32, '아이오딘은 셀로판막을 지나 튜브 안으로 들어가 녹말과 만나 청람색이 되었어요. 녹말은 막을 지나지 못해서 비커 용액은 색이 변하지 않았어요.', PHONE ? 13 : 13, '#166534', 18, 800); }
+    else if (r.st === 'idle') T(x + 16, ty2 + (PHONE ? 160 : 126), '▶ 30분 지나기를 눌러 시작해요', PHONE ? 13 : 14, '#5a6679', 'left', 700);
     parts.update(dt); parts.draw(ctx);
   }
   function drawPotato(dt) {
     const L = S.lab, b = L.potBox, k = L.sol;
     bgFill('#eef7f0', '#f7fbf8');
-    const bw = PHONE ? 130 : 150, bh = PHONE ? 120 : 160, by = PHONE ? 70 : 78;
+    const bw = PHONE ? 130 : 150, bh = PHONE ? 104 : 160, by = PHONE ? 62 : 78;
     const xs = PHONE ? [12, 175, 338] : [34, 214, 394];
     SKEYS.forEach((s, i) => {
       const r = L.pot[s], x = xs[i], sel = s === k;
       const cur = potMass(s, r.t);
-      if (sel) { D.roundRect(x - 8, by - 12, bw + 16, bh + (PHONE ? 62 : 82), 14); ctx.fillStyle = 'rgba(22,163,74,.12)'; ctx.fill(); }
+      if (sel) { D.roundRect(x - 8, by - 12, bw + 16, bh + (PHONE ? 66 : 82), 14); ctx.fillStyle = 'rgba(22,163,74,.12)'; ctx.fill(); }
       drawBeakerShape(x, by, bw, bh, by + bh * 0.3, SOLS[s].color, '');
       // 감자 조각 (질량에 따라 크기가 변해요, 변화를 알아보기 쉽게 과장해서 그려요)
       const sz = 1 + (cur - 10) / 10 * 1.2;
@@ -577,7 +577,7 @@
       ctx.fillStyle = 'rgba(160,110,40,.35)'; for (let j = 0; j < 5; j++) { ctx.beginPath(); ctx.arc(x + bw / 2 - pw / 2 + 10 + (j * 17) % (pw - 16), by + bh - ph + 2 + (j * 11) % (ph - 12), 2.2, 0, TAU); ctx.fill(); }
       T(x + bw / 2, by + bh + 20, SOLS[s].name, PHONE ? 11.5 : 13.5, '#26324a', 'center', 800);
       T(x + bw / 2, by + bh + 40, r.st === 'idle' ? '10.0 g' : cur.toFixed(1) + ' g', PHONE ? 14 : 16, r.st === 'done' ? (SOLS[s].dm > 0 ? '#0b6b39' : SOLS[s].dm < 0 ? '#c0392b' : '#26324a') : '#26324a', 'center', 800);
-      if (r.st === 'run') T(x + bw / 2, by + bh + (PHONE ? 56 : 62), Math.round(r.t) + '분', PHONE ? 11.5 : 12.5, '#5a6679', 'center', 800);
+      if (r.st === 'run') T(x + bw / 2, by + bh + (PHONE ? 58 : 62), Math.round(r.t) + '분', PHONE ? 11.5 : 12.5, '#5a6679', 'center', 800);
     });
     // 확대 상자 (선택한 용액)
     ctx.save(); D.roundRect(b.x, b.y, b.w, b.h, 14); ctx.clip();
@@ -589,7 +589,7 @@
     const wo = b.alive('water', 'out'), wi = b.alive('water', 'in'), diff = wo - wi;
     D.label(b.x + 10, b.y + 18, SOLS[k].name, { bg: '#3b6fb0', size: PHONE ? 11 : 12.5, align: 'left' });
     D.label(b.x + 10, b.y + b.h - 18, '감자 세포 안', { bg: '#a9791f', size: PHONE ? 11 : 12.5, align: 'left' });
-    D.label(b.x + b.w / 2, b.y - 12, '🔍 감자 세포막 확대', { bg: '#7a5a1a', size: PHONE ? 11 : 12 });
+    if (PHONE) D.label(b.x + b.w - 8, b.y + b.h - 18, '🔍 감자 세포막 확대', { bg: '#7a5a1a', size: 11, align: 'right' }); else D.label(b.x + b.w / 2, b.y - 12, '🔍 감자 세포막 확대', { bg: '#7a5a1a', size: 12 });
     const ax = b.x + b.w - (PHONE ? 40 : 34);
     if (Math.abs(diff) >= 3) {
       const down = diff > 0;
@@ -681,7 +681,7 @@
     D.shadow(() => { ctx.fillStyle = g; ctx.fill(); }, { blur: 12, y: 4, color: 'rgba(120,20,20,.35)' });
     // 가운데 오목한 부분 (부풀수록, 쭈그러들수록 사라져요)
     const dimple = clamp(1 - Math.abs(s - 1) / 0.28, 0, 1);
-    if (dimple > 0.02) { const dg = ctx.createRadialGradient(x, y, 0, x, y, R * 0.52 * s); dg.addColorStop(0, 'rgba(252,165,165,' + (0.85 * dimple) + ')'); dg.addColorStop(1, 'rgba(252,165,165,0)'); ctx.fillStyle = dg; ctx.beginPath(); ctx.arc(x, y, R * 0.52 * s, 0, TAU); ctx.fill(); }
+    if (dimple > 0.02) { ctx.strokeStyle = 'rgba(120,20,20,' + (0.35 * dimple) + ')'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(x, y, R * 0.5 * s, 0, TAU); ctx.stroke(); const dg = ctx.createRadialGradient(x, y, 0, x, y, R * 0.5 * s); dg.addColorStop(0, 'rgba(254,205,205,' + (0.9 * dimple) + ')'); dg.addColorStop(1, 'rgba(254,205,205,' + (0.25 * dimple) + ')'); ctx.fillStyle = dg; ctx.beginPath(); ctx.arc(x, y, R * 0.5 * s, 0, TAU); ctx.fill(); }
     ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.beginPath(); ctx.ellipse(x - R * 0.35 * s, y - R * 0.42 * s, R * 0.22 * s, R * 0.11 * s, -0.6, 0, TAU); ctx.fill();
     ctx.restore();
   }
