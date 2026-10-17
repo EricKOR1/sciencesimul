@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#f26b3a">
+  <title>지구 주위의 공전 | 고1 통합과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛰️</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-toolbar { min-height: 61px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; }
+    .stage-toolbar .segmented button { min-height: 44px; padding: 5px 12px; font-size: 14.5px; white-space: nowrap; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard [hidden] { display: none !important; }
+    .ctrl-note { margin: 6px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    .range-row { display: flex; align-items: center; gap: 8px; }
+    .range-row input[type=range] { flex: 1; min-width: 0; }
+    .nudge {
+      flex: none; width: 46px; height: 46px; border-radius: 50%; border: 2px solid var(--line); background: #fff;
+      font-size: 22px; font-weight: 800; cursor: pointer; line-height: 1; display: grid; place-items: center;
+    }
+    .nudge:active:not([disabled]) { transform: scale(.94); background: var(--surface-2); }
+    .nudge[disabled] { opacity: .35; cursor: not-allowed; }
+    .ticks { display: flex; justify-content: space-between; font-size: 12.5px; font-weight: 700; color: var(--muted); padding: 0 6px; margin-top: -4px; }
+    .opt-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+    .opt {
+      min-height: 50px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 12px;
+      font-weight: 800; font-size: 14.5px; cursor: pointer; padding: 4px 6px; font-family: inherit; line-height: 1.2;
+    }
+    .opt small { display: block; font-size: 12px; font-weight: 700; color: var(--muted); }
+    .opt[aria-pressed="true"] { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); color: color-mix(in srgb, var(--subject) 65%, black); }
+    .opt[aria-pressed="true"] small { color: inherit; }
+    .opt.wide { grid-column: 1 / -1; }
+    .opt:disabled { opacity: .5; cursor: not-allowed; }
+    .opt.shake { animation: shakeX .38s; }
+    @keyframes shakeX { 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+    .budget { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 15px; }
+    .budget .bar { flex: 1; height: 14px; border-radius: 99px; background: #e6ebf3; overflow: hidden; }
+    .budget .bar i { display: block; height: 100%; background: var(--subject); border-radius: 99px; transition: width .25s; }
+    .budget output { font-family: ui-monospace, Menlo, Consolas, monospace; white-space: nowrap; color: color-mix(in srgb, var(--subject) 75%, black); }
+    .run-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .run-row .btn { min-height: 56px; padding: 4px 4px; font-size: 14px; line-height: 1.2; flex-direction: column; gap: 0; }
+    .run-row .btn small { font-size: 11.5px; font-weight: 700; opacity: .85; }
+    .run-row .btn.done { background: var(--good-soft); border-color: var(--good); color: #0b6b39; box-shadow: none; }
+    .num-row { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+    .num-row label { flex: 1; font-weight: 800; font-size: 14.5px; }
+    .num-row input[type=number] { width: 96px; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 10px; font-weight: 800; font-size: 17px; font-family: ui-monospace, Menlo, Consolas, monospace; text-align: right; }
+    .num-row input[type=number]:focus { outline: none; border-color: var(--subject); }
+    .num-row .u { width: 34px; color: var(--muted); font-weight: 800; font-size: 14px; }
+    .seg4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+    .seg4 .opt { min-height: 48px; }
+    .stage-hint { white-space: normal; width: max-content; max-width: calc(100% - 24px); text-align: center; }
+    .readout .value.txt { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .concept table.mini { border-collapse: collapse; margin: 6px 0; font-size: 14px; width: 100%; }
+    .concept table.mini th, .concept table.mini td { border: 1px solid var(--line); padding: 4px 6px; text-align: center; }
+    .concept table.mini th { background: var(--surface-2); font-weight: 800; }
+    @media (max-width: 599px) {
+      .readout .value.txt { font-size: 15px; }
+      .stage-toolbar .spacer, .toolbar-label { display: none; }
+      .stage-toolbar { padding: 6px; }
+      .stage-toolbar .segmented { width: 100%; flex-wrap: nowrap; }
+      .stage-toolbar .segmented button { flex: 1 1 0; min-width: 0; padding-left: 2px; padding-right: 2px; font-size: 13.5px; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="phy">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#h1a">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">통합과학1 · Ⅲ. 시스템과 상호작용</div>
+      <h1>지구 주위의 공전</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">💥 뉴턴의 대포</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="tablist" aria-label="화면 고르기" data-feature="orbit">
+            <button type="button" data-mode="cannon" data-feature="cannon">💥 대포</button>
+            <button type="button" data-mode="orbit" data-feature="orbit">🛰️ 공전</button>
+            <button type="button" data-mode="dist" data-feature="dist">📏 거리</button>
+            <button type="button" data-mode="station" data-feature="station">🧑‍🚀 정거장</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="뉴턴의 대포 실험, 위성의 직선 경로와 실제 궤도 비교, 거리에 따른 중력 가속도, 우주 정거장 안의 무중량 상태"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">발사 속력</span><span class="value txt" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">결과</span><span class="value txt" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">—</span><span class="value txt" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <!-- ① 대포 -->
+        <div class="control" data-modes="cannon">
+          <div class="control-head"><label for="sV">💥 발사 속력</label><output id="oV">5.0 km/s</output></div>
+          <div class="range-row">
+            <button class="nudge" id="vMinus" type="button" aria-label="0.1 km/s 줄이기">−</button>
+            <input type="range" id="sV" min="1" max="9" step="0.1" value="5" aria-label="발사 속력 (1부터 9 km/s까지)">
+            <button class="nudge" id="vPlus" type="button" aria-label="0.1 km/s 늘리기">+</button>
+          </div>
+          <div class="ticks" aria-hidden="true"><span>1</span><span>3</span><span>5</span><span>7</span><span>9</span></div>
+          <div class="opt-grid" style="margin-top:8px"><button type="button" class="btn btn-subject" id="fireBtn">🔥 발사!</button><button type="button" class="opt" id="clearShots">↺ 기록 지우기</button></div>
+          <p class="ctrl-note" id="fireNote">수평으로 쏘는 대포예요. 속력을 바꿔 가며 쏴 보세요. (공기 저항은 없다고 해요)</p>
+        </div>
+        <!-- ② 공전 -->
+        <div class="control" data-modes="orbit">
+          <div class="opt-grid">
+            <button type="button" class="opt wide" id="gravBtn" aria-pressed="true">🌍 지구의 중력: 켜짐</button>
+            <button type="button" class="opt wide" id="satReset">↺ 위성을 처음 자리로</button>
+          </div>
+          <p class="ctrl-note" id="orbitNote">중력을 껐다 켜 보며 위성의 움직임을 비교해요.</p>
+        </div>
+        <!-- ③ 거리 -->
+        <div class="control" data-modes="dist">
+          <div class="control-head"><span>📏 지구 중심에서의 거리</span><output id="oDist">지표</output></div>
+          <div class="opt-grid" id="distBtns">
+            <button type="button" class="opt" data-d="0" aria-pressed="true">🌍 지표</button>
+            <button type="button" class="opt" data-d="1" aria-pressed="false">🚀 국제 우주 정거장<small>400 km 위</small></button>
+            <button type="button" class="opt" data-d="2" aria-pressed="false">📡 정지 위성<small>3.6만 km 위</small></button>
+            <button type="button" class="opt" data-d="3" aria-pressed="false">🌙 달<small>38만 km</small></button>
+          </div>
+          <p class="ctrl-note">거리를 고르면 그 자리의 중력 가속도를 볼 수 있어요.</p>
+        </div>
+        <!-- ④ 정거장 -->
+        <div class="control" data-modes="station">
+          <div class="control-head"><span>🧑‍🚀 장면 고르기</span></div>
+          <div class="opt-grid" id="stSeg">
+            <button type="button" class="opt" data-s="iss" aria-pressed="true">🛰️ 우주 정거장</button>
+            <button type="button" class="opt" data-s="lift" aria-pressed="false">🛗 자유 낙하 승강기</button>
+          </div>
+        </div>
+        <div class="control" data-modes="station">
+          <div class="opt-grid">
+            <button type="button" class="btn btn-subject" id="stGo">💧 물방울 건드리기</button>
+            <button type="button" class="opt" id="stReset">↺ 처음으로</button>
+          </div>
+          <p class="ctrl-note" id="stNote">물방울이나 우주인을 눌러 살짝 밀어 보세요.</p>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

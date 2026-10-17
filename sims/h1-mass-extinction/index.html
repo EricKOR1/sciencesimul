@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0ea5e9">
+  <title>생물 대멸종의 원인 | 고1 통합과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>☄️</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-toolbar { min-height: 58px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; }
+    .stage-toolbar .segmented button { min-height: 40px; padding: 5px 12px; font-size: 14.5px; white-space: nowrap; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    .seg-wide { display: flex; width: 100%; margin-top: 8px; }
+    .seg-wide button { flex: 1; min-width: 0; padding: 6px 4px; font-size: 14px; min-height: 44px; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard [hidden] { display: none !important; }
+    .btn-sm { min-height: 44px; }
+    .btn-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+    .btn-row .btn { flex: 1; padding-left: 8px; padding-right: 8px; }
+    .ctrl-note { margin: 6px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    .stepper .st .l { white-space: normal; text-align: center; line-height: 1.15; overflow: visible; }
+    .readout .value { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .concept table.mini { border-collapse: collapse; margin: 6px 0; font-size: 14px; width: 100%; }
+    .concept table.mini th, .concept table.mini td { border: 1px solid var(--line); padding: 4px 6px; text-align: center; }
+    .pick-grid { display: grid; grid-template-columns: 1fr; gap: 6px; margin-top: 8px; }
+    .pick-grid button { min-height: 46px; border: 2px solid var(--line); background: var(--surface); border-radius: 12px; font-weight: 800; font-size: 14.5px; cursor: pointer; text-align: left; padding: 6px 12px; }
+    .pick-grid button.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); }
+    @media (max-width: 599px) { .readout .value { font-size: 15px; } .stage-toolbar .spacer { display: none; } .stage-toolbar .segmented button { padding: 5px 8px; font-size: 13.5px; } }
+  </style>
+</head>
+<body class="sim-page" data-subject="earth">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#h1b">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">통합과학2 · Ⅰ. 변화와 다양성</div>
+      <h1>생물 대멸종의 원인</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">📈 대멸종 기록</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="tablist" aria-label="화면 고르기" hidden>
+            <button type="button" data-mode="record">📈 기록</button>
+            <button type="button" data-mode="hyp">☄️ 가설</button>
+            <button type="button" data-mode="evid">⚖️ 증거</button>
+            <button type="button" data-mode="after">🌱 이후</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="해양 생물 다양성 그래프, 대멸종 원인 가설 애니메이션, 증거 카드와 타당성 막대, 멸종 이후 회복 곡선과 빈 생태적 지위"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1"> </span><span class="value" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2"> </span><span class="value" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3"> </span><span class="value" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" data-show="record">
+          <div class="control-head"><span>📈 찾은 대멸종</span><output id="oRec">0 / 5</output></div>
+          <p class="ctrl-note">그래프에서 곡선이 갑자기 뚝 떨어지는 곳을 눌러요. 찾으면 아래에 카드가 생겨요.</p>
+        </div>
+        <div class="control" data-show="hyp" id="subHypWrap">
+          <div class="segmented seg-wide" id="subHyp"><button type="button" data-sub="play">🎞 가설 보기</button><button type="button" data-sub="link">🔗 연결하기</button></div>
+        </div>
+        <div class="control" data-show="hyp:play">
+          <div class="control-head"><span>🎞 열어 본 가설</span><output id="oHyp">0 / 3</output></div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bReplay" type="button">▶ 다시 보기</button></div>
+          <p class="ctrl-note">위쪽 가설 카드 3장을 눌러 어떤 환경 변화가 일어나는지 살펴봐요.</p>
+        </div>
+        <div class="control" data-show="hyp:link">
+          <div class="control-head"><span>🔗 연결한 카드</span><output id="oLink">0 / 6</output></div>
+          <div class="btn-row"><button class="btn btn-sm" id="bLinkReset" type="button">↺ 다시 하기</button></div>
+          <p class="ctrl-note">카드를 끌어다 놓거나, 카드를 누른 뒤 칸을 눌러도 돼요.</p>
+        </div>
+        <div class="control" data-show="evid" id="subEvidWrap">
+          <div class="segmented seg-wide" id="subEvid" hidden><button type="button" data-sub="sort">🗂 분류</button><button type="button" data-sub="pick">🏁 판단</button></div>
+        </div>
+        <div class="control" data-show="evid:sort">
+          <div class="control-head"><span>🗂 분류한 증거</span><output id="oEvd">0 / 10</output></div>
+          <div class="btn-row"><button class="btn btn-sm" id="bEvdReset" type="button">↺ 다시 하기</button></div>
+          <p class="ctrl-note">증거 카드를 눌러 설명을 읽고, 가설의 지지 / 반박 칸에 끌어다 놓아요. 맞지 않으면 튕겨 나와요.</p>
+        </div>
+        <div class="control" data-show="evid:pick">
+          <div class="control-head"><span>🏁 지금까지의 판단</span></div>
+          <div class="pick-grid" id="pickSeg"><button type="button" data-pick="imp">㉠ 소행성 충돌</button><button type="button" data-pick="vol">㉡ 대규모 화산 활동</button><button type="button" data-pick="cli">㉢ 기후 변화·해수면 하강</button><button type="button" data-pick="combo">㉠ + ㉡ 충돌과 화산이 함께</button></div>
+          <p class="ctrl-note" id="pickNote"></p>
+        </div>
+        <div class="control" data-show="after" id="subAfterWrap">
+          <div class="segmented seg-wide" id="subAfter" hidden><button type="button" data-sub="recov">📈 회복</button><button type="button" data-sub="niche">🌱 빈 자리</button></div>
+        </div>
+        <div class="control" data-show="after:recov">
+          <div class="control-head"><span>⏱ 대멸종 뒤 흐른 시간</span><output id="oAf">5백만 년</output></div>
+          <input type="range" id="rAf" min="0" max="15" step="0.5" value="5" aria-label="대멸종 뒤 흐른 시간 (백만 년)">
+          <div class="segmented seg-wide" id="afSeg"><button type="button" data-ev="0">페름기 말</button><button type="button" data-ev="1">백악기 말</button></div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bAfPin" type="button">📍 이때 처음 100 %로 회복했어요</button></div>
+          <p class="ctrl-note" id="afOk"></p>
+        </div>
+        <div class="control" data-show="after:niche">
+          <div class="control-head"><span>🌱 놓은 카드</span><output id="oNiche">0 / 4</output></div>
+          <div class="btn-row"><button class="btn btn-sm" id="bNicheReset" type="button">↺ 다시 하기</button></div>
+          <p class="ctrl-note">카드를 어느 대멸종 이후인지 알맞은 칸으로 끌어다 놓아요. 칸의 빈 자리가 채워져요.</p>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

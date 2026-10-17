@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#f26b3a">
+  <title>중력과 낙하 운동 | 고1 통합과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍎</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-toolbar { min-height: 61px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; }
+    .stage-toolbar .segmented button { min-height: 44px; padding: 5px 12px; font-size: 14.5px; white-space: nowrap; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard [hidden] { display: none !important; }
+    .ctrl-note { margin: 6px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    .range-row { display: flex; align-items: center; gap: 8px; }
+    .range-row input[type=range] { flex: 1; min-width: 0; }
+    .nudge {
+      flex: none; width: 46px; height: 46px; border-radius: 50%; border: 2px solid var(--line); background: #fff;
+      font-size: 22px; font-weight: 800; cursor: pointer; line-height: 1; display: grid; place-items: center;
+    }
+    .nudge:active:not([disabled]) { transform: scale(.94); background: var(--surface-2); }
+    .nudge[disabled] { opacity: .35; cursor: not-allowed; }
+    .ticks { display: flex; justify-content: space-between; font-size: 12.5px; font-weight: 700; color: var(--muted); padding: 0 6px; margin-top: -4px; }
+    .opt-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+    .opt {
+      min-height: 50px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 12px;
+      font-weight: 800; font-size: 14.5px; cursor: pointer; padding: 4px 6px; font-family: inherit; line-height: 1.2;
+    }
+    .opt small { display: block; font-size: 12px; font-weight: 700; color: var(--muted); }
+    .opt[aria-pressed="true"] { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); color: color-mix(in srgb, var(--subject) 65%, black); }
+    .opt[aria-pressed="true"] small { color: inherit; }
+    .opt.wide { grid-column: 1 / -1; }
+    .opt:disabled { opacity: .5; cursor: not-allowed; }
+    .opt.shake { animation: shakeX .38s; }
+    @keyframes shakeX { 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+    .budget { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 15px; }
+    .budget .bar { flex: 1; height: 14px; border-radius: 99px; background: #e6ebf3; overflow: hidden; }
+    .budget .bar i { display: block; height: 100%; background: var(--subject); border-radius: 99px; transition: width .25s; }
+    .budget output { font-family: ui-monospace, Menlo, Consolas, monospace; white-space: nowrap; color: color-mix(in srgb, var(--subject) 75%, black); }
+    .run-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .run-row .btn { min-height: 56px; padding: 4px 4px; font-size: 14px; line-height: 1.2; flex-direction: column; gap: 0; }
+    .run-row .btn small { font-size: 11.5px; font-weight: 700; opacity: .85; }
+    .run-row .btn.done { background: var(--good-soft); border-color: var(--good); color: #0b6b39; box-shadow: none; }
+    .num-row { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+    .num-row label { flex: 1; font-weight: 800; font-size: 14.5px; }
+    .num-row input[type=number] { width: 96px; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 10px; font-weight: 800; font-size: 17px; font-family: ui-monospace, Menlo, Consolas, monospace; text-align: right; }
+    .num-row input[type=number]:focus { outline: none; border-color: var(--subject); }
+    .num-row .u { width: 34px; color: var(--muted); font-weight: 800; font-size: 14px; }
+    .seg4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+    .seg4 .opt { min-height: 48px; }
+    .stage-hint { white-space: normal; width: max-content; max-width: calc(100% - 24px); text-align: center; }
+    .readout .value.txt { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .concept table.mini { border-collapse: collapse; margin: 6px 0; font-size: 14px; width: 100%; }
+    .concept table.mini th, .concept table.mini td { border: 1px solid var(--line); padding: 4px 6px; text-align: center; }
+    .concept table.mini th { background: var(--surface-2); font-weight: 800; }
+    @media (max-width: 599px) {
+      .readout .value.txt { font-size: 15px; }
+      .stage-toolbar .spacer, .toolbar-label { display: none; }
+      .stage-toolbar { padding: 6px; }
+      .stage-toolbar .segmented { width: 100%; flex-wrap: nowrap; }
+      .stage-toolbar .segmented button { flex: 1 1 0; min-width: 0; padding-left: 2px; padding-right: 2px; font-size: 13.5px; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="phy">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#h1a">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">통합과학1 · Ⅲ. 시스템과 상호작용</div>
+      <h1>중력과 낙하 운동</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">📸 자유 낙하</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="tablist" aria-label="화면 고르기" data-feature="throw">
+            <button type="button" data-mode="fall" data-feature="fall">📸 낙하</button>
+            <button type="button" data-mode="throw" data-feature="throw">➡️ 수평 투사</button>
+            <button type="button" data-mode="compare" data-feature="compare">📐 비교</button>
+            <button type="button" data-mode="planet" data-feature="planet">🪐 천체</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="다중섬광 사진으로 보는 자유 낙하, 수평으로 던진 공과 떨어뜨린 공의 비교, 속도 성분 화살표, 여러 천체에서의 낙하 실험"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">경과 시간</span><span class="value txt" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">낙하 거리</span><span class="value txt" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">속력</span><span class="value txt" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <!-- 낙하 -->
+        <div class="control" data-modes="fall">
+          <div class="opt-grid"><button type="button" class="btn btn-subject" id="fallGo">▶ 떨어뜨리기</button><button type="button" class="opt" id="fallReset">↺ 처음으로</button></div>
+          <p class="ctrl-note">1 kg 공과 5 kg 공을 같은 높이에서 동시에 놓아요. 0.1초마다 번쩍이는 사진 속 공을 눌러 위치를 읽어 봐요.</p>
+        </div>
+        <!-- 수평 투사 -->
+        <div class="control" data-modes="throw">
+          <div class="control-head"><label for="sV">➡️ 수평 속력</label><output id="oV">2.0 m/s</output></div>
+          <input type="range" id="sV" min="0" max="4" step="0.5" value="2" aria-label="수평 속력 (0부터 4 m/s까지)">
+          <div class="opt-grid" style="margin-top:8px"><button type="button" class="btn btn-subject" id="throwGo">▶ 던지기</button><button type="button" class="opt" id="throwReset">↺ 처음으로</button></div>
+          <p class="ctrl-note">주황 공은 던지고, 파랑 공은 같은 순간에 그냥 떨어뜨려요.</p>
+        </div>
+        <div class="control" data-modes="throw" id="readBox" hidden>
+          <div class="control-head"><span>📏 0.4 s 사진 속 주황 공</span></div>
+          <div class="num-row"><label for="inX">수평 위치</label><input type="number" id="inX" inputmode="decimal" step="any" placeholder="0"><span class="u">cm</span></div>
+          <div class="num-row"><label for="inY">연직 위치 (낙하 거리)</label><input type="number" id="inY" inputmode="decimal" step="any" placeholder="0"><span class="u">cm</span></div>
+        </div>
+        <!-- 비교 -->
+        <div class="control" data-modes="compare">
+          <div class="control-head"><span>➡️ 수평 속력 고르기</span><output id="oCv">2 m/s</output></div>
+          <div class="seg4" id="cvSeg">
+            <button type="button" class="opt" data-v="1" aria-pressed="false">1 m/s</button>
+            <button type="button" class="opt" data-v="2" aria-pressed="true">2 m/s</button>
+            <button type="button" class="opt" data-v="3" aria-pressed="false">3 m/s</button>
+            <button type="button" class="opt" data-v="4" aria-pressed="false">4 m/s</button>
+          </div>
+          <div class="opt-grid" style="margin-top:8px"><button type="button" class="btn btn-subject" id="cmpGo">▶ 던지기</button><button type="button" class="opt" id="cmpReset">↺ 기록 지우기</button></div>
+        </div>
+        <div class="control" data-modes="compare" id="predBox" hidden>
+          <div class="control-head"><span id="predHead">🔮 4 m/s로 던지면?</span></div>
+          <div class="num-row"><label for="inT">낙하 시간 t</label><input type="number" id="inT" inputmode="decimal" step="any" placeholder="0"><span class="u">s</span></div>
+          <div class="num-row"><label for="inD">도달 거리 x</label><input type="number" id="inD" inputmode="decimal" step="any" placeholder="0"><span class="u">m</span></div>
+        </div>
+        <!-- 천체 -->
+        <div class="control" data-modes="planet">
+          <div class="control-head"><span>🪐 천체 고르기</span><output id="oBody">지구</output></div>
+          <div class="seg4" id="bodySeg">
+            <button type="button" class="opt" data-b="moon" aria-pressed="false">달</button>
+            <button type="button" class="opt" data-b="mars" aria-pressed="false">화성</button>
+            <button type="button" class="opt" data-b="earth" aria-pressed="true">지구</button>
+            <button type="button" class="opt" data-b="jup" aria-pressed="false">목성</button>
+          </div>
+        </div>
+        <div class="control" data-modes="planet jump">
+          <div class="opt-grid">
+            <button type="button" class="btn btn-subject" id="planGo">▶ 놓고 던지기</button>
+            <button type="button" class="opt" id="planMode">🦘 점프 체험</button>
+          </div>
+          <p class="ctrl-note" id="planNote">높이 19.6 m에서 파랑 공은 놓고, 주황 공은 3 m/s로 던져요.</p>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

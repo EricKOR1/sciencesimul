@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#16a34a">
+  <title>효소와 화학 반응 | 고1 통합과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔑</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-toolbar { min-height: 58px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; }
+    .stage-toolbar .segmented button { min-height: 40px; padding: 5px 12px; font-size: 14.5px; white-space: nowrap; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    .seg-wide { display: flex; width: 100%; }
+    .seg-wide button { flex: 1; min-width: 0; padding: 6px 4px; font-size: 14.5px; min-height: 44px; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard [hidden] { display: none !important; }
+    .btn-sm { min-height: 44px; }
+    .btn-row { display: flex; gap: 8px; margin-top: 8px; }
+    .btn-row .btn { flex: 1; padding-left: 6px; padding-right: 6px; }
+    .ctrl-note { margin: 6px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    .zrow { display: flex; align-items: center; gap: 8px; }
+    .zrow input[type=range] { flex: 1; min-width: 0; }
+    .zrow .btn { min-width: 44px; padding: 0 8px; font-weight: 800; }
+    .txt-in {
+      width: 100%; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 6px 10px;
+      font: 700 15px var(--font); color: var(--ink); background: #fff;
+    }
+    .txt-in:focus { outline: none; border-color: var(--subject); }
+    .txt-in:disabled { background: var(--surface-2); color: var(--muted); }
+    .form-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .form-pair label, .form-one label { font-weight: 800; font-size: 13.5px; display: block; margin-bottom: 2px; }
+    .form-one { margin-top: 8px; }
+    .info-box { margin-top: 8px; background: #f0fdf4; border: 1.5px solid #bbf7d0; border-radius: 12px; padding: 8px 10px; font-size: 13.5px; line-height: 1.45; color: #14532d; }
+    .stepper .st .l { white-space: normal; text-align: center; line-height: 1.15; overflow: visible; }
+    .readout .value.txt { font-family: var(--font); font-size: 16px; white-space: normal; line-height: 1.25; }
+    .concept table.mini { border-collapse: collapse; margin: 6px 0; font-size: 14px; width: 100%; }
+    .concept table.mini th, .concept table.mini td { border: 1px solid var(--line); padding: 4px 6px; text-align: center; }
+    .concept table.mini th { background: var(--surface-2); font-weight: 800; }
+    @media (max-width: 599px) {
+      .readout .value.txt { font-size: 14px; }
+      .stage-toolbar .spacer { display: none; }
+      .stage-toolbar .segmented button { padding: 5px 8px; font-size: 13.5px; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="bio">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#h1a">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">통합과학1 · Ⅲ. 시스템과 상호작용</div>
+      <h1>효소와 화학 반응</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🧪 효소 실험</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="tablist" aria-label="화면 고르기" hidden>
+            <button type="button" data-mode="tubes">🧪 효소 실험</button>
+            <button type="button" data-mode="meas">🌡 조건 변화</button>
+            <button type="button" data-mode="lock">🔑 열쇠-자물쇠</button>
+            <button type="button" data-mode="cards">🗂 사례 발표</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="과산화 수소 분해 실험 시험관, 온도와 pH에 따른 반응 속도 그래프, 효소와 기질 모형, 생활 속 화학 반응 사례 카드"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1"> </span><span class="value txt" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2"> </span><span class="value txt" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3"> </span><span class="value txt" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" id="tubeSegBox" data-show="tubes:four tubes:reuse">
+          <div class="segmented seg-wide" id="tubeSeg"><button type="button" data-s="four">🧪 4가지 비교</button><button type="button" data-s="reuse">🥢 간 조각 재사용</button></div>
+        </div>
+        <div class="control" data-show="tubes:four">
+          <div class="control-head"><span>🧪 시험관에 넣기</span><output id="oTube">0 / 4</output></div>
+          <div class="btn-row"><button class="btn btn-sm" id="bAll" type="button">⏩ 모두 넣기</button><button class="btn btn-sm" id="bTubeReset" type="button">↺ 다시 하기</button></div>
+          <p class="ctrl-note">시험관(또는 위의 카드)을 눌러 물질을 넣어요. 거품이 높이 올라올수록 산소가 빨리 만들어지는 거예요.</p>
+        </div>
+        <div class="control" data-show="tubes:reuse">
+          <div class="control-head"><span>🥢 간 조각 다시 쓰기</span></div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bMove" type="button">🥢 간 조각 옮기기</button><button class="btn btn-sm" id="bReuseReset" type="button">↺ 다시 하기</button></div>
+          <p class="ctrl-note">왼쪽 시험관의 간 조각을 끌어다 오른쪽 새 시험관에 넣어요. (버튼으로도 옮길 수 있어요.)</p>
+        </div>
+        <div class="control" data-show="meas">
+          <div class="segmented seg-wide" id="measSeg"><button type="button" data-k="temp">🌡 온도</button><button type="button" data-k="ph">🧪 pH</button></div>
+        </div>
+        <div class="control" data-show="meas:ph">
+          <div class="control-head"><span>🧬 효소 고르기</span></div>
+          <div class="segmented seg-wide" id="enzSeg"><button type="button" data-e="pepsin">펩신</button><button type="button" data-e="amylase">아밀레이스</button><button type="button" data-e="trypsin">트립신</button></div>
+        </div>
+        <div class="control" data-show="meas">
+          <div class="control-head"><span id="mLabel">🌡 온도</span><output id="oM">37 °C</output></div>
+          <div class="zrow">
+            <button class="btn" id="bMm" type="button" aria-label="1 줄이기">−</button>
+            <input type="range" id="sM" min="0" max="100" step="1" value="37" aria-label="조건 값">
+            <button class="btn" id="bMp" type="button" aria-label="1 늘리기">+</button>
+          </div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bMeas" type="button">📏 측정하기</button><button class="btn btn-sm" id="bMark" type="button">⭐ 최적 표시</button></div>
+          <p class="ctrl-note" id="mNote">값을 정하고 측정하면 그래프에 점이 찍혀요.</p>
+        </div>
+        <div class="control" data-show="lock">
+          <div class="control-head"><span>🔑 효소와 기질</span></div>
+          <p class="ctrl-note" style="margin:0">기질 3개 중 하나를 골라 효소의 <b>활성 부위</b>에 끌어다 대 봐요. 눌러서 고를 수도 있어요.</p>
+        </div>
+        <div class="control" data-show="lock:heat">
+          <div class="control-head"><span>🌡 온도</span><output id="oLT">37 °C</output></div>
+          <div class="zrow">
+            <button class="btn" id="bLm" type="button" aria-label="온도 낮추기">−</button>
+            <input type="range" id="sLT" min="20" max="80" step="1" value="37" aria-label="온도 (20 도부터 80 도까지)">
+            <button class="btn" id="bLp" type="button" aria-label="온도 높이기">+</button>
+          </div>
+          <div class="btn-row"><button class="btn btn-sm" id="bFresh" type="button">🔄 새 효소로 바꾸기 (37 °C)</button></div>
+        </div>
+        <div class="control" data-show="cards">
+          <div class="control-head"><span id="cTitle">🗂 발표 카드</span><output id="oCard">0 / 8장</output></div>
+          <p class="ctrl-note" id="cNote" style="margin:0">위쪽 카드에서 사례를 하나 골라 발표 카드를 채워요.</p>
+          <div id="cForm" hidden>
+            <button class="btn btn-sm btn-block" id="bInfo" type="button" style="margin-top:8px">📖 조사 자료 보기</button>
+            <div class="form-pair form-one">
+              <div><label for="inR">반응물</label><input class="txt-in" type="text" id="inR" maxlength="24" placeholder="예) 녹말" autocomplete="off"></div>
+              <div><label for="inP">생성물</label><input class="txt-in" type="text" id="inP" maxlength="24" placeholder="예) 엿당" autocomplete="off"></div>
+            </div>
+            <div class="form-one"><label>효소가 관여하나요?</label>
+              <div class="segmented seg-wide" id="enzYN"><button type="button" data-y="yes">○ 효소 반응</button><button type="button" data-y="no">✕ 효소 아님</button></div>
+            </div>
+            <div class="form-one"><label for="inM">생활·세포에서의 의미</label><input class="txt-in" type="text" id="inM" maxlength="40" placeholder="한 줄로 정리해요" autocomplete="off"></div>
+          </div>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>
