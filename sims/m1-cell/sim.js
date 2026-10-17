@@ -1891,6 +1891,7 @@
     toast('🎯 핵을 찾았어요! (' + SLIDES[key].name + ' 세포)', 'good');
   }
   function putSlide(key) {
+    if (S.drop || S.stainAnim) { toast('💧 염색약이 번지는 중이에요. 잠깐만 기다려요.'); return; }   // 염색 중에 표본을 바꾸면 염색이 엉뚱한 표본에 번진다
     if (S.swap || S.slide === key) { if (S.slide === key) toast('이미 재물대에 있는 표본이에요.'); return; }
     S.swap = { from: S.slide, to: key, t0: now() };
     Sound.tone(520, 0.1, 'triangle', 0.06);

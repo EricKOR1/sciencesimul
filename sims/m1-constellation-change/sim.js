@@ -691,7 +691,9 @@
       ctx.fillStyle = '#9fb3e0'; ctx.font = fnt(L, 13, 'bold'); ctx.textAlign = 'left';
       ctx.fillText('🌙 한밤중(24시) 정남쪽', P.x + 590, P.y + 40);
       ctx.fillStyle = mb.mid.col; ctx.font = dfnt(L, 24); ctx.fillText(mb.mid.name, P.x + 590, P.y + 72);
-      if (names.length) { ctx.fillStyle = '#b9c8ee'; ctx.font = fnt(L, 13, 'bold'); ctx.fillText('함께 보여요', P.x + 590, P.y + 98); ctx.fillStyle = '#d6e4ff'; ctx.fillText(names.join(' · '), P.x + 590, P.y + 116); }
+      if (names.length) { ctx.fillStyle = '#b9c8ee'; ctx.font = fnt(L, 13, 'bold'); ctx.fillText('함께 보여요', P.x + 590, P.y + 98); ctx.fillStyle = '#d6e4ff';
+        let nt = ''; for (let i = 0; i < names.length; i++) { const cand = nt ? nt + ' · ' + names[i] : names[i]; if (ctx.measureText(cand).width > P.w - 590 - 18 && nt) break; nt = cand; }   // 칸 밖으로 넘치지 않게
+        ctx.fillText(nt, P.x + 590, P.y + 116); }
     } else {
       ctx.fillStyle = '#fff'; ctx.font = dfnt(L, 62); ctx.fillText(mb.mi + '월', P.x + 22, P.y + 78);
       ctx.fillStyle = '#b9c8ee'; ctx.font = fnt(L, 15, 'bold'); ctx.fillText(mb.part, P.x + 26, P.y + 106);
@@ -724,7 +726,7 @@
     ctx.fillStyle = 'rgba(190,205,240,.85)'; ctx.font = fnt(L, 13, 'bold');
     ctx.fillText(S.glare ? '햇빛을 가려서 본 모습' : '낮이라 보이지 않아요', x0, y + (L.col ? 52 : 46));
     ctx.fillStyle = 'rgba(190,205,240,.7)'; ctx.font = fnt(L, 13, 'bold');
-    ctx.fillText(L.col ? '※ 실제 별자리 크기는 서로 달라요' : '※ 실제 크기는 서로 달라요', x0, Cb.y + Cb.h - 14);
+    ctx.fillText(L.col ? '※ 실제 별자리 크기는 서로 달라요' : '※ 실제 크기는 서로 달라요', x0, Cb.y + Cb.h - 14, w);
   }
 
   /* =========================================================
