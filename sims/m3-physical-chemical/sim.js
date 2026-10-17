@@ -1698,14 +1698,14 @@
     const B = MS.boil;
     if (B.st === 'run') return;
     if (B.st === 'done') { SA.clear(); [[-30, 52], [30, 52], [0, 6], [-56, 10]].forEach((o) => SA.addMol('H2O', MC[0].lx + o[0], MC[0].ly + o[1], { mode: 'liquid', amp: 2.4, rot: rand(0, TAU), sc: 22 })); B.level = 0.62; B.k = 0; }
-    B.st = 'run'; B.t = 0; MS.used.boil = false; hideHint();
+    B.st = 'run'; B.t = 0; B.s1 = 0; B.s2 = 0; B.flame = 0; MS.used.boil = false; hideHint();
     sfx.flame(); modelUI();
   }
   function elecStart() {
     const E = MS.elec;
     if (E.st === 'run') return;
     if (E.st === 'done') { SB.clear(); [[-36, -30], [36, -30], [-36, 32], [36, 32]].forEach((o) => SB.addMol('H2O', MC[1].lx + o[0], MC[1].ly + o[1], { mode: 'liquid', amp: 2.4, rot: rand(0, TAU), sc: 22 })); E.level = 0.66; }
-    E.st = 'run'; E.t = 0; E.step = 0; MS.used.elec = false; hideHint();
+    E.st = 'run'; E.t = 0; E.step = 0; E.s1 = 0; E.s3 = 0; MS.used.elec = false; hideHint();
     sfx.zap(); modelUI();
   }
   $('#boilBtn').addEventListener('click', () => { Sound.click(); boilStart(); });

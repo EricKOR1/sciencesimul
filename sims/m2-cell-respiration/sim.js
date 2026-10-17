@@ -911,7 +911,7 @@
       rr(566, 502, 204, 16, 8); ctx.fillStyle = '#ffedd5'; ctx.fill();
       rr(566, 502, Math.max(10, 204 * S.wasteD), 16, 8); ctx.fillStyle = S.wasteD > 0.5 ? '#b45309' : '#fdba74'; ctx.fill();
       txt(Math.round(S.energyD * 100) + '%', 770, 438, { size: 14, weight: 800, color: '#854d0e', align: 'right' });
-      txt(S.wasteD > 0.6 ? '많이 쌓여요' : S.wasteD > 0.3 ? '조금 쌓여요' : '정상', 770, 494, { size: 14, weight: 800, color: '#7c2d12', align: 'right' });
+      txt(S.wasteD > 0.57 ? '많이 쌓여요' : S.wasteD > 0.3 ? '조금 쌓여요' : '정상', 770, 494, { size: 14, weight: 800, color: '#7c2d12', align: 'right' });
     } else {
       const n = LINKS.filter((L) => L.done).length;
       pill('연결선 ' + n + ' / 6', 664, 436, { bg: n === 6 ? '#16a34a' : '#475569', size: 15, h: 30, pad: 14 });

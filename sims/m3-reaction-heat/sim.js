@@ -454,7 +454,7 @@
       // 열 화살표 (주황: 나감)
       if (s > 0.04) {
         const out = [[BK.x - 30, BK.y + 100, Math.PI], [BK.x + BK.w + 30, BK.y + 100, 0], [cx, BK.y - 34, -Math.PI / 2], [BK.x - 24, BK.y + 30, -Math.PI * 0.75], [BK.x + BK.w + 24, BK.y + 30, -Math.PI * 0.25]];
-        if (k === 'ch4') { out.length = 0; out.push([BK.x - 26, BK.y + BK.h - 10, Math.PI], [cx - 70, BK.y + BK.h + 40, Math.PI * 0.85], [cx + 70, BK.y + BK.h + 40, Math.PI * 0.15]); }
+        if (k === 'ch4') { out.length = 0; out.push([BK.x - 22, BK.y + BK.h - 24, -Math.PI * 0.8], [cx - 70, BK.y + BK.h + 40, Math.PI * 0.85], [cx + 70, BK.y + BK.h + 40, Math.PI * 0.15]); }
         out.forEach((p) => heatArrow(p[0], p[1], p[2], s, true, t));
         D.label(cx, k === 'ch4' ? BK.y - 22 : BK.y + BK.h + 24, '열에너지가 밖으로 나가요', { bg: 'rgba(255,255,255,.95)', color: '#c2410c', size: 13.5, border: '#f9c9a4' });
       }
@@ -480,7 +480,7 @@
   const ENDO = { k: 'ba' };
   const BA = { ht: null, stirT: 0, ice: 0, frost: 0, lift: 0, lifted: false, stuck: false, tries: 0, nh3: [] };
   const NA = { flame: false, prog: 0, offT: 0, offSeen: false, t: 0, pts: [], acc: 0, bub: [], fl: 0, everOn: false, milk: 0 };
-  function baInit() { BA.ht = mkHT({ T0: 22, Ta: 22, h: 0.15, R: (t) => -60 * (1 - E(-t / 0.2)) * E(-t / 1.2), tEnd: 8, Rref: 25 }); BA.stirT = 0; BA.ice = 0; BA.frost = 0; BA.lift = 0; BA.lifted = false; BA.stuck = false; BA.tries = 0; BA.nh3 = []; }
+  function baInit() { for (let i = ANIM.length - 1; i >= 0; i--) if (ANIM[i].obj === BA) ANIM.splice(i, 1); BA.sticking = false; BA.ht = mkHT({ T0: 22, Ta: 22, h: 0.15, R: (t) => -60 * (1 - E(-t / 0.2)) * E(-t / 1.2), tEnd: 8, Rref: 25 }); BA.stirT = 0; BA.ice = 0; BA.frost = 0; BA.lift = 0; BA.lifted = false; BA.stuck = false; BA.tries = 0; BA.nh3 = []; }
   function naInit() { NA.flame = false; NA.prog = 0; NA.offT = 0; NA.offSeen = false; NA.t = 0; NA.pts = [{ t: 0, p: 0, f: 0 }]; NA.acc = 0; NA.bub = []; NA.fl = 0; NA.everOn = false; NA.milk = 0; }
   baInit(); naInit();
   function endoSelect(k) { ENDO.k = k; syncControls(); }
@@ -489,8 +489,9 @@
     if (!BA.ht.on && !BA.ht.done) { showHint('먼저 🥄 섞기를 눌러 반응시켜요', 3200); return; }
     if (BA.lifted) { BA.lifted = false; tw(BA, { lift: 0 }, 0.8, 'outBounce', { essential: true }); return; }
     BA.lifted = true; BA.tries++;
-    const stick = BA.ice > 0.8;
+    const stick = BA.ice > 0.8; BA.sticking = stick;
     tw(BA, { lift: 1 }, 0.9, 'outCubic', { essential: true, onDone: () => {
+      if (!BA.lifted) return;
       if (stick) { BA.stuck = true; sfx.ding(); FX.burst(230, 330, { count: 14, speed: 120, colors: ['#bfe3ff', '#ffffff', '#7cc4ff'], size: 3, life: 0.8, gravity: 160 }); showHint('나무판이 비커에 붙어서 같이 올라왔어요!', 4200); }
       else { sfx.thud(); showHint('아직 물이 얼지 않아서 나무판이 떨어져 있어요. 온도가 더 내려갈 때까지 기다려요', 4600); }
     } });
@@ -524,7 +525,7 @@
     const liftY = -92 * BA.lift;
     D.label(240, 34, 'Ba(OH)₂·8H₂O + 2NH₄Cl → BaCl₂ + 2NH₃ + 10H₂O (열 흡수)', { bg: '#1b2333', size: 13, pad: 9 });
     // 나무판 (붙으면 같이 올라감)
-    const bdY = 380 + (BA.stuck || (BA.lifted && BA.ice > 0.8) ? liftY : 0);
+    const bdY = 380 + (BA.stuck || (BA.lifted && BA.sticking) ? liftY : 0);
     D.shadow(() => { D.roundRect(BB.x - 24, bdY - 14, BB.w + 48, 18, 4); const g = ctx.createLinearGradient(0, bdY - 14, 0, bdY + 4); g.addColorStop(0, '#d8b27a'); g.addColorStop(1, '#b98a52'); ctx.fillStyle = g; ctx.fill(); }, { blur: 6, y: 3 });
     for (let i = 0; i < 4; i++) { ctx.strokeStyle = 'rgba(120,80,40,.25)'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(BB.x - 14 + i * 70, bdY - 11); ctx.lineTo(BB.x + 18 + i * 70, bdY - 5); ctx.stroke(); }
     // 물 (젖은 나무판) / 얼음
@@ -694,7 +695,7 @@
       // 열 화살표
       const rate = Math.abs(DS.S) / 20;
       if (DS.run && rate > 0.03) {
-        if (m.sgn < 0) { [[jx - 36, jy + 110, Math.PI], [jx + jw + 36, jy + 110, 0]].forEach((p) => heatArrow(p[0], p[1], p[2], rate * (DS.ins ? 0.5 : 1), false, t)); heatArrow(cx - 80, jy + 100, Math.PI, clamp(rate * 0.9, 0, 1), false, t, {}); }
+        if (m.sgn < 0) { [[jx - 36, jy + 110, Math.PI], [jx + jw + 36, jy + 110, 0]].forEach((p) => heatArrow(p[0], p[1], p[2], rate * (DS.ins ? 0.5 : 1), false, t)); [[cx - 80, 0], [cx + 80, Math.PI]].forEach((p) => heatArrow(p[0], jy + 100, p[1], clamp(rate * 0.9, 0, 1), false, t, {})); }
         else [[jx - 36, jy + 110, Math.PI], [jx + jw + 36, jy + 110, 0], [cx, jy - 36, -Math.PI / 2]].forEach((p) => heatArrow(p[0], p[1], p[2], clamp(rate, 0, 1), true, t));
       }
       if (DS.run && rate > 0.03) D.label(cx, jy - 26, m.sgn < 0 ? '열을 흡수해요' : '열을 내보내요', { bg: 'rgba(255,255,255,.95)', color: m.sgn < 0 ? '#1d5fb8' : '#c2410c', size: 13, border: m.sgn < 0 ? '#a8c9f1' : '#f9c9a4' });
@@ -834,7 +835,7 @@
   q('naResetBtn').addEventListener('click', () => { Sound.click(); naInit(); syncControls(); });
   $$('#matSeg button').forEach((b) => b.addEventListener('click', () => { Sound.click(); dsSet('mat', b.dataset.v); }));
   $$('#amtSeg button').forEach((b) => b.addEventListener('click', () => { Sound.click(); dsSet('amt', +b.dataset.v); }));
-  q('insBtn').addEventListener('click', () => { Sound.click(); DS.ins = !DS.ins; dsStart(); });
+  q('insBtn').addEventListener('click', () => { Sound.click(); DS.ins = !DS.ins; DS.run = false; dsStart(); });
   q('cdResetBtn').addEventListener('click', () => { Sound.click(); cdInit(); syncControls(); });
   q('resetBtn').addEventListener('click', () => {
     Sound.click();
@@ -945,7 +946,7 @@
           {
             title: '나무판 붙이기', scene: 'endo', focus: 'baStirBtn',
             goal: '수산화 바륨과 염화 암모늄을 섞어 온도를 내려 보세요. 나무판의 물이 얼면 비커를 들어 올려 나무판이 붙는지 확인해요.',
-            hint: '🥄 섞기 → 온도가 0 °C 아래로 내려가길 기다린 뒤 🫳 비커 들어올리기!',
+            hint: '🥄 섞기 → 온도가 많이 내려가 ‘나무판의 물이 얼음’ ✅이 켜질 때까지 기다린 뒤 🫳 비커 들어올리기!',
             setup() { baInit(); endoSelect('ba'); setScene('endo'); refreshUI(); },
             check: () => BA.stuck, hold: 0.6,
             status: () => '섞기 ' + MARK(BA.ht.on || BA.ht.done) + ' · 최저 <b>' + fT(BA.ht.low) + ' °C</b> · 나무판 붙음 ' + MARK(BA.stuck),

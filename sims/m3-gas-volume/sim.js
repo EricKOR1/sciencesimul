@@ -857,7 +857,7 @@
             title: '산소가 O 1개라면?', scene: 'model', focus: 'mdResetBtn',
             goal: '❓ 산소가 원자 1개짜리 분자(O)라고 가정하고 같은 반응을 만들어 보세요. 어떤 문제가 생기나요?',
             hint: '위 단추에서 ❓ 가정 모형을 고른 뒤, 원자를 모두 끌어다 놓아 봐요.',
-            setup() { mdMode(true); setScene('model'); refreshUI(); },
+            setup() { MD.hypo = true; mdInit(); setScene('model'); refreshUI(); },
             check: () => MD.hypo && MD.fail, hold: 0.5,
             status: () => (MD.hypo ? '원자 ' + MD.atoms.filter((a) => a.sock).length + '/' + MD.atoms.length + ' 배치' : '❓ 가정 모형을 골라요') + ' · 문제 발견 ' + MARK(MD.hypo && MD.fail),
             explain: '산소 원자가 1개뿐이면 물 분자 1개밖에 못 만들어요. 수증기 2칸이 되려면 산소 원자가 2개 필요하니 <b>산소는 원자 2개가 결합한 O₂ 분자</b>여야 해요. (원자는 쪼갤 수 없어요.)',

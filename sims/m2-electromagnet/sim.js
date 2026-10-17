@@ -431,6 +431,8 @@
     const m = S;
     if (m.Is <= 0.02 && Math.abs(m.w) < 0.02) { m.w = 0; return; }
     const n = Math.max(1, Math.ceil(dt / 0.01)), h = dt / n;
+    // 코일 면이 자기장과 수직인 '죽은 점'에서 멈춰 서 버리지 않게, 관성으로 넘어가도록 살짝 밀어 줘요
+    if (m.Is > 0.25 && Math.abs(m.w) < 0.1 && Math.abs(Math.cos(m.phi)) < 0.08) m.w += 0.8 * (m.dirS >= 0 ? 1 : -1);
     for (let i = 0; i < n; i++) {
       const torque = 10.4 * m.Is * m.dirS * Math.abs(Math.cos(m.phi));
       m.w += (torque - 3 * m.w) * h;

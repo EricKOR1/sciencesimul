@@ -1025,7 +1025,7 @@
   function capture() {
     if (S.spin || !on('photo')) return;
     const L = curL, g = qGeo(L);
-    const jan = nearJan(S.ang), jul = nearJul(S.ang);
+    const jan = nearJan(S.ang) || monthOf(S.ang) === 1, jul = nearJul(S.ang) || monthOf(S.ang) === 7;   // 1월·7월 표시에서 멀리 떨어진 곳을 1월·7월로 기록하지 않게 맞춰요
     const label = jan ? 1 : jul ? 7 : monthOf(S.ang);
     const ang = jan ? ANG_JAN : jul ? ANG_JUL : normA(S.ang);
     if (jan || jul) { S.ang = S.angT = ang; }

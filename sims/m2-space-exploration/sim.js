@@ -546,7 +546,7 @@
     D.roundRect(0, 0, t.w, t.h, 14); ctx.strokeStyle = BM.done && t.zone >= 0 ? '#22c55e' : t.zone >= 0 ? '#818cf8' : 'rgba(160,190,255,.6)'; ctx.lineWidth = BM.done && t.zone >= 0 ? 3.5 : 2; ctx.stroke();
     if (showWrong) { D.roundRect(-2, -2, t.w + 4, t.h + 4, 16); ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 3.5; ctx.stroke(); }
     ctx.save(); ctx.beginPath(); D.roundRect(6, 8, 74, 94, 10); ctx.clip(); ctx.fillStyle = 'rgba(255,255,255,.06)'; ctx.fillRect(6, 8, 74, 94); ctx.restore();
-    methodIcon(t.kind, 43, 54, t.kind === 3 ? 1.05 : t.kind === 2 ? 1.15 : 1.4);
+    methodIcon(t.kind, 43, 54, t.kind === 3 ? 1.05 : t.kind === 2 ? 1.15 : t.kind === 1 ? 1.15 : 1.4);
     const nl = wrap(t.name, 90, f(16, 800));
     nl.forEach((ln, i) => txt(86, 38 + i * 19, ln, { size: 16, weight: 800, color: '#fff', align: 'left' }));
     wrap(t.sub, 86, f(13, 600)).forEach((ln, i) => txt(86, 38 + nl.length * 19 + 5 + i * 16, ln, { size: 13, weight: 600, color: '#a5b4d8', align: 'left' }));
@@ -870,7 +870,7 @@
   function bezT(p0, p1, p2, u) { return Math.atan2(2 * (1 - u) * (p1.y - p0.y) + 2 * u * (p2.y - p1.y), 2 * (1 - u) * (p1.x - p0.x) + 2 * u * (p2.x - p1.x)); }
   const P0 = { x: 140, y: 222 };
   function goalGeom(g) {
-    if (g === 0) return { M: { x: 656, y: 112, r: 38 } };
+    if (g === 0) return { M: { x: 656, y: 140, r: 38 } };
     if (g === 1) return { Pl: { x: 618, y: 168, r: 44 } };
     if (g === 2) return { F: { x: 690, y: 92 } };
     return { ST: { r: STN.r } };
@@ -884,8 +884,8 @@
     const u = F.t / F.dur, g = F.g;
     if (g === 0) {
       const a = clamp(u / 0.68, 0, 1), e = ease.inOutSine(a);
-      const p = bez(P0, { x: 360, y: 10 }, { x: 640, y: 46 }, e);
-      return { x: p.x, y: p.y, rot: bezT(P0, { x: 360, y: 10 }, { x: 640, y: 46 }, e) + Math.PI / 2, burn: u < 0.66 };
+      const p = bez(P0, { x: 360, y: 10 }, { x: 580, y: 30 }, e);
+      return { x: p.x, y: p.y, rot: bezT(P0, { x: 360, y: 10 }, { x: 580, y: 30 }, e) + Math.PI / 2, burn: u < 0.66 };
     }
     if (g === 1) {
       // 행성 가까이(A)를 지나 계속 날아가는 근접 통과 경로
@@ -919,7 +919,7 @@
     if (F.g === 0 && u > 0.7 && !F.landSnd) { F.landSnd = true; }
     if (F.t >= F.dur) {
       F.done = true; S.arrived = true; syncPlanUI(); Sound.success();
-      const gm = F.g === 0 ? [656, 100] : F.g === 1 ? [660, 120] : F.g === 2 ? [690, 92] : [EAR.x + STN.r * Math.cos(STN.a), EAR.y + STN.r * Math.sin(STN.a)];
+      const gm = F.g === 0 ? [656, 124] : F.g === 1 ? [660, 120] : F.g === 2 ? [690, 92] : [EAR.x + STN.r * Math.cos(STN.a), EAR.y + STN.r * Math.sin(STN.a)];
       FX.burst(gm[0], gm[1], { count: 22, colors: ['#fde68a', '#ffffff', '#5eead4', '#a78bfa'], speed: 170, gravity: 30, size: 3.5, life: 1 });
     }
   }
@@ -979,10 +979,10 @@
       if (u < 0.68) { rocketShape(pos.x, pos.y, 0.42, pos.rot); if (pos.burn) flameShape(pos.x, pos.y, 0.42, pos.rot, 40, t); }
       else {
         const k = ease.inOutSine(clamp((u - 0.68) / 0.32, 0, 1)), M = goalGeom(0).M;
-        const sx = 640, sy = 46 + (1 - 0) * 0;
+        const sx = 580, sy = 30;
         // 모선은 달 궤도에서 대기, 착륙선이 내려감
         rocketShape(sx, sy, 0.34, Math.PI * 0.5, 0.9);
-        const ly = 54 + (M.y - M.r - 54 - 20) * k, lx = 640 + (M.x - 640) * 0.0 + 14 * k;
+        const ly = 56 + (M.y - M.r - 16 - 56) * k, lx = 616 + (M.x - 616) * k;
         if (k < 0.97 && !RM) { FXF.emit({ x: lx, y: ly + 20, vx: (Math.random() - 0.5) * 30, vy: 80, life: 0.3, size: 2.4, grow: -4, color: '#ffd27a', shape: 'circle' }); }
         if (k > 0.85 && !RM && Math.random() < 0.7) FXS.emit({ x: lx + (Math.random() - 0.5) * 10, y: M.y - M.r + 10, vx: (Math.random() < 0.5 ? -1 : 1) * (40 + Math.random() * 40), vy: -10, life: 0.9, size: 5, grow: 18, color: 'rgba(200,200,205,.9)', shape: 'smoke', alpha: 0.6, drag: 1.5 });
         iconLander(lx, ly, 0.62);
@@ -1001,12 +1001,12 @@
         // 접혀 있던 거울이 펼쳐짐
         ctx.save(); ctx.translate(Fp.x, Fp.y); ctx.scale(1.6, 1.6);
         const sg = ctx.createLinearGradient(-40, 30, 40, 40); sg.addColorStop(0, '#94a3b8'); sg.addColorStop(1, '#e2e8f0');
-        ctx.globalAlpha = ease.outCubic(k); ctx.fillStyle = sg; ctx.beginPath(); ctx.moveTo(-46 * k, 34); ctx.lineTo(46 * k, 34); ctx.lineTo(30 * k, 44); ctx.lineTo(-30 * k, 44); ctx.closePath(); ctx.fill();
+        ctx.globalAlpha = ease.outCubic(k); ctx.fillStyle = sg; ctx.beginPath(); ctx.moveTo(-46 * k, 25); ctx.lineTo(46 * k, 25); ctx.lineTo(30 * k, 34); ctx.lineTo(-30 * k, 34); ctx.closePath(); ctx.fill();
         ctx.globalAlpha = 1;
         const hx = [[0, 0], [-1, 0.5], [1, 0.5], [-1, -0.5], [1, -0.5], [0, 1], [0, -1]];
         hx.forEach((q, i) => { const kk = clamp(k * 7 - i, 0, 1); if (kk <= 0) return; ctx.save(); ctx.translate(q[0] * 11, q[1] * 12.5); ctx.scale(kk, kk); ctx.fillStyle = '#fbbf24'; ctx.strokeStyle = '#92400e'; ctx.lineWidth = 1; ctx.beginPath(); for (let a = 0; a < 6; a++) { const an = a * Math.PI / 3 + Math.PI / 6; ctx.lineTo(Math.cos(an) * 7.2, Math.sin(an) * 7.2); } ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore(); });
         ctx.restore();
-        if (u > 0.9) { const k2 = ease.outBack(clamp((u - 0.9) / 0.1, 0, 1)); ctx.save(); ctx.translate(560, 230); ctx.scale(k2, k2); rr(-56, -40, 112, 80, 8, '#02040e', '#e2e8f0'); iconGalaxy(0, 0, 26, t); ctx.restore(); }
+        if (u > 0.9) { const k2 = ease.outBack(clamp((u - 0.9) / 0.1, 0, 1)); ctx.save(); ctx.translate(450, 232); ctx.scale(k2, k2); rr(-56, -40, 112, 80, 8, '#02040e', '#e2e8f0'); iconGalaxy(0, 0, 26, t); ctx.restore(); }
       }
     } else {
       rocketShape(pos.x, pos.y, 0.34, pos.rot, u < 0.85 ? 1 : clamp(1 - (u - 0.85) * 6, 0, 1)); if (pos.burn) flameShape(pos.x, pos.y, 0.34, pos.rot, 36, t);
@@ -1133,7 +1133,7 @@
         tk.drag = true; tk.wrong = false; pdrag = { tk, B, ox: p.x - tk.x, oy: p.y - tk.y, sx: p.x, sy: p.y, moved: false }; Sound.tick(); return true;
       }
       if (S.scene === 'house') { houseTap(p); return false; }
-      if (S.scene === 'plan') { const c = chipAt(p); if (c) { S.plan[c.row.key] = c.i; S.planPop[c.ri] = 1; Sound.tone(560 + c.ri * 90, 0.08, 'triangle', 0.08); if (S.flight && S.flight.done) { /* 새 계획 */ } if (c.row.key === 'goal') { S.flight = null; S.arrived = false; } syncPlanUI(); } return false; }
+      if (S.scene === 'plan') { const c = chipAt(p); if (c) { const changed = S.plan[c.row.key] !== c.i; S.plan[c.row.key] = c.i; S.planPop[c.ri] = 1; Sound.tone(560 + c.ri * 90, 0.08, 'triangle', 0.08); if (changed) { S.flight = null; S.arrived = false; FXS.clear(); FXF.clear(); } syncPlanUI(); } return false; }
       if (S.scene === 'scope') {
         const sx = 14 + 330, sy = 14 + 150, gx = 14 + 96, gy = 14 + 462;
         if (Math.hypot(p.x - sx, p.y - sy) < 56) { S.scopeV = 'space'; Sound.click(); syncControls(); } else if (Math.hypot(p.x - gx, p.y - gy) < 56) { S.scopeV = 'ground'; Sound.click(); syncControls(); }
@@ -1164,7 +1164,7 @@
     if (h.type === 'spin') {
       if (!S.found[h.id]) { S.found[h.id] = true; Sound.tone(700 + h.id * 80, 0.14, 'triangle', 0.1); FX.burst(h.x, h.y, { count: 14, colors: ['#bbf7d0', '#fde68a', '#ffffff'], speed: 130, gravity: 40, size: 3 }); S.infoSel = h.id; }
       else Sound.tick();
-    } else { S.shake[h.id] = 1; S.decoyMsg = { x: h.x, y: h.y, text: h.name + '은(는) 우주 기술과 관계가 없어요' }; S.decoyT = 1.8; Sound.fail(); }
+    } else { S.shake[h.id] = 1; S.decoyMsg = { x: h.x, y: h.y, text: h.name + (((h.name.charCodeAt(h.name.length - 1) - 0xAC00) % 28) ? '은' : '는') + ' 우주 기술과 관계가 없어요' }; S.decoyT = 1.8; Sound.fail(); }
   }
 
   /* =========================================================

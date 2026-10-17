@@ -388,7 +388,8 @@
   const CHIP_W = 74, CHIP_H = 38;
   const chipPos = () => {
     const h = S.force.held;
-    return { hang: { x: PIV.x, y: 420 }, held: { x: h.x, y: Math.min(h.y + 172, 468) } };
+    // 매달린 막대의 선택 칩은 왼쪽 위에 고정해요 (손에 든 막대를 가까이 가져가도 두 칩이 겹치지 않게)
+    return { hang: { x: 196, y: 108 }, held: { x: h.x, y: Math.min(h.y + 172, 468) } };
   };
   function drawChips(cx, cy, label, q) {
     pill(cx, cy - 30, label, 'rgba(255,255,255,.95)');
@@ -787,7 +788,7 @@
   const hitScope = (p) => { const rs = S.scope.rods.slice().reverse(); return rs.find((r) => Math.abs(p.x - r.x) < 30 && Math.abs(p.y - r.y) < 98) || null; };
   function grabbableAt(p) {
     if (S.scene === 'rub') return hitRub(p) ? { kind: 'rub' } : null;
-    if (S.scene === 'force') { const c = chipAt(p); if (c) return { kind: 'chip', which: c.which, q: c.q }; return hitHeld(p) ? { kind: 'force' } : hitHang(p) ? { kind: 'hang' } : null; }
+    if (S.scene === 'force') { if (hitHeld(p)) return { kind: 'force' }; const c = chipAt(p); if (c) return { kind: 'chip', which: c.which, q: c.q }; return hitHang(p) ? { kind: 'hang' } : null; }
     if (S.scene === 'induce') return hitInd(p) ? { kind: 'induce' } : null;
     if (S.scene === 'scope') { const r = hitScope(p); return r ? { kind: 'scope', rod: r } : null; }
     return null;
@@ -1004,7 +1005,7 @@
         features: ['force'],
         intro: '<div class="si-link">🔗 <b>앞 단계에서</b> 문지른 막대는 전자를 얻어 (−), 털가죽은 전자를 잃어 (+)로 대전된다는 것을 알았어요.</div>' +
           '<p>전기를 띤 두 물체 사이에는 어떤 힘이 작용할까요? 실에 매단 막대에 다른 막대를 가까이 가져가 관찰해 봐요.</p>',
-        setup() { setScene('force'); showHint('👆 막대 아래 (−)/(+) 버튼으로 전기를 고르고, 오른쪽 막대를 끌어 가까이 가져가요', 7000); },
+        setup() { setScene('force'); showHint('👆 막대 이름표의 (−)/(+) 버튼으로 전기를 고르고, 오른쪽 막대를 끌어 가까이 가져가요', 7000); },
         recap: '같은 종류의 전기를 띤 물체끼리는 서로 <b>밀어내고</b>, 다른 종류끼리는 <b>끌어당겨요</b>. 가까울수록 이 힘(전기력)이 세져요.',
         summary: '<ul><li><b>전기력</b>: 전기를 띤 물체 사이에 작용하는 힘</li>' +
           '<li>같은 종류의 전기(+와 +, −와 −) → 서로 <b>밀어내는</b> 힘(척력)</li>' +
@@ -1013,8 +1014,8 @@
         missions: [
           {
             title: '끌림과 밀어냄 모두 만들기',
-            goal: '막대 아래의 <b>(−)/(+) 버튼</b>으로 전기 종류를 바꿔 가며 <b>끌어당김</b>과 <b>밀어냄</b>을 모두 만들어 보세요. 가까이 갈수록 화살표가 커져요.',
-            hint: '각 막대 바로 아래의 (−)/(+) 버튼으로 전기 종류를 바꾸고, 오른쪽 막대를 매달린 막대 가까이 끌어 가요.',
+            goal: '각 막대의 <b>(−)/(+) 버튼</b>으로 전기 종류를 바꿔 가며 <b>끌어당김</b>과 <b>밀어냄</b>을 모두 만들어 보세요. 가까이 갈수록 화살표가 커져요.',
+            hint: '‘매달린 막대’와 ‘손에 든 막대’ 이름표가 붙은 (−)/(+) 버튼으로 전기 종류를 바꾸고(오른쪽 패널의 버튼도 같아요), 오른쪽 막대를 매달린 막대 가까이 끌어 가요.',
             setup() { setScene('force'); resetForce(); setForceQ('hq', -1); setForceQ('hq2', -1); S.force.sawA = false; S.force.sawR = false; },
             check: () => S.scene === 'force' && S.force.sawA && S.force.sawR,
             status: () => box(S.force.sawA) + ' 끌어당김 (다른 종류) · ' + box(S.force.sawR) + ' 밀어냄 (같은 종류)',
