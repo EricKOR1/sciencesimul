@@ -684,9 +684,10 @@
     { id: 'rigel', kind: 'mag', name: '리겔', color: '#cadcff', mTxt: '+0.1', MTxt: '약 −7', answer: 2 },
   ];
   function g10(L) {
-    if (L.kind === 'wide') return { map: R_(0, 0, 800, 296), axisY: 162, xAU: 90, xPc: 206, dec: 178, sky: R_(16, 306, 372, 246), info: R_(400, 306, 384, 246), rowD: 60, r: 17 };
-    return { map: R_(0, 0, 520, 330), axisY: 172, xAU: 56, xPc: 132, dec: 118, sky: R_(10, 338, 500, 210), info: R_(10, 556, 500, 150), rowD: 66, r: 15 };
+    if (L.kind === 'wide') return { map: R_(0, 0, 800, 296), axisY: 162, xAU: 90, xPc: 206, dec: 178, sky: R_(16, 306, 372, 246), info: R_(400, 306, 384, 246), rowD: 60, rowDn: 72, r: 17 };
+    return { map: R_(0, 0, 520, 330), axisY: 172, xAU: 56, xPc: 132, dec: 118, sky: R_(10, 338, 500, 210), info: R_(10, 556, 500, 190), rowD: 66, rowDn: 66, r: 15 };
   }
+  const rowY = (G, row) => G.axisY + (row > 0 ? G.rowDn : row * G.rowD);   // 아래 줄 별은 눈금 숫자(10, 100)와 이름이 겹치지 않게 조금 더 아래에
   const xOfLg = (G, lg) => (lg >= 0 ? G.xPc + lg * G.dec : G.xPc + (lg / LG_AU) * (G.xAU - G.xPc));
   const lgOfX = (G, x) => (x >= G.xPc ? (x - G.xPc) / G.dec : ((x - G.xPc) / (G.xAU - G.xPc)) * LG_AU);
   const magAt = (tk) => tk.def.M + 5 * (tk.lg - 1);
@@ -733,7 +734,7 @@
     // 토큰
     const toks = S.sortMode ? sortTokens(L, G) : S.tokens;
     toks.forEach((tk) => {
-      const x = tk.px != null ? tk.px : xOfLg(G, tk.lg), y = tk.py != null ? tk.py : ay + (tk.def.row || 1) * G.rowD;
+      const x = tk.px != null ? tk.px : xOfLg(G, tk.lg), y = tk.py != null ? tk.py : rowY(G, tk.def.row || 1);
       const sel = !S.sortMode && S.selTok === tk.id;
       // 고스트와 겉보기 등급
       if (tk.ghostA > 0.01) {
@@ -766,7 +767,7 @@
     SORT_DEFS.forEach((d, i) => {
       const c = CS.items.find((o) => o.def === d), p = clamp((S.sortT - i * 0.15) / 0.9, 0, 1);
       if (!c || p <= 0) return;
-      const def = STARS10[d.id], tx = xOfLg(G, def.lg), ty = G.axisY + def.row * G.rowD;
+      const def = STARS10[d.id], tx = xOfLg(G, def.lg), ty = rowY(G, def.row);
       const sx = c.fx * L.vw + g.cw * c.sc / 2, sy = c.fy * L.vh + g.ch * c.sc / 2, u = easeIO(p), mx = (sx + tx) / 2, my = Math.min(sy, ty) - 60;
       const bz = (a, b2, c2) => (1 - u) * (1 - u) * a + 2 * (1 - u) * u * b2 + u * u * c2;
       out.push({ id: d.id, def, lg: def.lg, ghostA: 0, badge: 0, px: bz(sx, mx, tx), py: bz(sy, my, ty), arrived: p >= 1 });
@@ -1046,7 +1047,7 @@
   function snapToken(tk, L) {
     tk.lg = 1; tk.snapped = true; Sound.tone(988, 0.14, 'triangle', 0.1);
     tween(tk, { ghostA: 1 }, { duration: 0.4 }); tween(tk, { badge: 1 }, { duration: 0.4, delay: 0.1 });
-    const G = g10(L), x = xOfLg(G, 1), y = G.axisY + tk.def.row * G.rowD;
+    const G = g10(L), x = xOfLg(G, 1), y = rowY(G, tk.def.row);
     particles.burst(x, y, { count: 14, size: 3.2, speed: 150, gravity: 40, life: 0.8, colors: ['#ffd36b', '#fff', '#9be7ff'] });
     S.msg = tk.id === 'sun' ? '태양도 10 pc에서는 희미한 별!' : '북극성이 −3.6등급으로 아주 밝아졌어요!'; S.msgT = 3.2;
   }
@@ -1110,7 +1111,7 @@
 
   /* ---------- 캔버스 입력 ---------- */
   function sensorHit(p, L) { const G = labGeo(L), x = G.xL + A.sensorV * G.pxcm, top = G.lampY - 14 * G.ps; return Math.abs(p.x - x) < 38 && p.y > top - 12 && p.y < top + 134 * G.ps + 14; }
-  function tokenAt(p, L) { const G = g10(L); return S.tokens.slice().reverse().find((tk) => { const x = xOfLg(G, tk.lg), y = G.axisY + tk.def.row * G.rowD; return Math.hypot(p.x - x, p.y - y) < G.r + 12; }); }
+  function tokenAt(p, L) { const G = g10(L); return S.tokens.slice().reverse().find((tk) => { const x = xOfLg(G, tk.lg), y = rowY(G, tk.def.row); return Math.hypot(p.x - x, p.y - y) < G.r + 12; }); }
   function dialHit(p, L) { const d = gH(L).dial; return Math.hypot(p.x - d.x, p.y - d.y) < d.r + 18; }
   const cardMode = () => (S.scene === 'map10' && S.sortMode ? 'sort' : S.scene === 'heater' && S.ladderMode ? 'ladder' : null);
   const cardsLocked = () => (CS.mode === 'sort' ? S.sortDone : S.ladderDone) && !(game && game.free);

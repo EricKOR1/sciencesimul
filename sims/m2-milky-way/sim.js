@@ -1121,7 +1121,7 @@
         const sun = S.sun;
         if (has('disc') && Math.hypot(p.x - sun.sx, p.y - sun.sy) < 34 && (sun.mode === 'park' || sun.mode === 'placed' || sun.mode === 'return')) {
           if (S.tilt > 20) { S.tiltT = 0; S.pause = 3; syncControls(); }
-          sun.mode = 'drag'; sun.sx = p.x; sun.sy = p.y; sun.pop = 0;
+          sunSnapId++; sun.mode = 'drag'; sun.sx = p.x; sun.sy = p.y; sun.pop = 0;
           pdrag = { kind: 'sun' }; S.pause = 9; Sound.tick(); return true;
         }
         pdrag = { kind: 'view', x: p.x, y: p.y, vx: 0 }; S.dragView = true; S.pause = 4; S.yawV = 0;
@@ -1174,6 +1174,7 @@
         if (S.tilt < 25 && dist <= GR + 3) {
           sun.mode = 'placed'; sun.gx = dd.x; sun.gy = dd.y; sun.pop = 1;
           S.sunHint = dist < 22 ? '중심에 너무 가까워요' : dist > 34 ? '중심에서 너무 멀어요' : '나선팔 위에 있어요';
+          if (dist >= 22 && dist <= 34) snapSunToArm(sun);       // 글자(나선팔 위)와 그림이 맞도록 가장 가까운 나선팔 위로 살짝 붙여요
           Sound.tone(660, 0.1, 'triangle', 0.09);
           FX.burst(sun.sx, sun.sy, { count: 12, colors: ['#fde68a', '#ffffff'], speed: 110, gravity: 20, size: 3 });
         } else {
@@ -1194,6 +1195,19 @@
       }
     },
   });
+  // 나선팔의 중심선(r = 7·e^(kθ), 팔 4개)과 같은 식으로 태양계를 가장 가까운 팔 위로 옮겨요 (중심에서의 거리는 그대로)
+  let sunSnapId = 0;
+  function snapSunToArm(sun) {
+    const r = Math.hypot(sun.gx, sun.gy), a0 = Math.atan2(sun.gy, sun.gx), th = Math.log(r / 7) / Math.tan(17 * DEG);
+    let bd = Infinity;
+    for (let a = 0; a < 4; a++) {
+      const d = Math.atan2(Math.sin(th + a * Math.PI / 2 - a0), Math.cos(th + a * Math.PI / 2 - a0));
+      if (Math.abs(d) < Math.abs(bd)) bd = d;
+    }
+    const id = ++sunSnapId, put = (u) => { if (id !== sunSnapId || sun.mode !== 'placed') return; sun.gx = r * Math.cos(a0 + bd * u); sun.gy = r * Math.sin(a0 + bd * u); };
+    if (RM) put(1);
+    else { const q = { u: 0 }; SciSim.tween(q, { u: 1 }, { duration: 0.45, ease: 'outCubic', onUpdate: () => put(q.u), onDone: () => put(1) }); }
+  }
   function refreshWrong(list, kind) { list.forEach((t) => { t.wrong = t.zone >= 0 && t.zone !== t.kind; }); }
 
   /* =========================================================
