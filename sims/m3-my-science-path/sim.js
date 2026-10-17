@@ -919,7 +919,7 @@
         const fy = 436;
         set('integ2', 8, fy, 100, 46);
         set('hist', 118, fy, 112, 46); set('climate', 236, fy, 112, 46); set('conv', 354, fy, 112, 46);
-        st.heads = [{ t: '공통 과목', x: 8, y: 68, c: TIER.common.color, left: true }, { t: '일반 선택', x: 8, y: 182, c: TIER.general.color, left: true }, { t: '진로 선택', x: 8, y: 268, c: TIER.career.color, left: true }, { t: '융합 선택', x: 118, y: 428, c: TIER.fusion.color, left: true }];
+        st.heads = [{ t: '공통 과목', x: 8, y: 68, c: TIER.common.color, left: true }, { t: '일반 선택', x: 8, y: 182, c: TIER.general.color, left: true }, { t: '진로 선택', x: 8, y: 262, c: TIER.career.color, left: true }, { t: '융합 선택', x: 118, y: 428, c: TIER.fusion.color, left: true }];
         st.busY = 502;
         st.chipRect = (i) => ({ x: 8 + i * 158, y: 524, w: 150, h: 46 });
         st.panel = { x: 8, y: 590, w: 464, h: 190 };

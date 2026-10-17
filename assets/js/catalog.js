@@ -2266,8 +2266,7 @@ window.SCI_CATALOG = {
                 "직업 속 과학",
                 "미래의 변화",
                 "새 직업 설계"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m3-my-science-path",
@@ -2287,8 +2286,7 @@ window.SCI_CATALOG = {
                 "모든 직업 속 과학",
                 "고등학교 과학",
                 "학습 계획"
-              ],
-              "soon": true
+              ]
             }
           ]
         }
