@@ -467,7 +467,7 @@
     { const sp2 = 34, x0 = VW / 2 - (FN - 1) * sp2 / 2 + 22, y2 = 62;
       D.text(x0 - 40, y2 + 5, '서열', { size: 13.5, weight: 800, color: '#64748b' });
       F.seq.forEach((tt, i) => { bead(x0 + i * sp2, y2, 13, tt, { shadow: false, outline: miss.includes(i) ? '#e2464b' : null }); });
-      ctx.strokeStyle = 'rgba(100,116,139,.5)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x0 + 6 * sp2 + 20, y2); ctx.lineTo(x0 + 6 * sp2 + 32, y2); ctx.stroke(); }
+    }
     // 위치 계산
     const fp = clamp(F.ph === 'fold' ? F.t / 2.0 : 1, 0, 1);
     const pos = F.seq.map((tt, i) => {

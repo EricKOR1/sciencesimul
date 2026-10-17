@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#16a34a">
+  <title>핵산과 DNA 모형 | 고1 통합과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧬</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-toolbar { min-height: 58px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; }
+    .stage-toolbar .segmented button { min-height: 40px; padding: 5px 12px; font-size: 14.5px; white-space: nowrap; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    .seg-wide { display: flex; width: 100%; }
+    .seg-wide button { flex: 1; min-width: 0; padding: 6px 4px; font-size: 14.5px; min-height: 44px; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard [hidden] { display: none !important; }
+    .btn-sm { min-height: 44px; }
+    .btn-row { display: flex; gap: 8px; margin-top: 8px; }
+    .btn-row .btn { flex: 1; padding-left: 6px; padding-right: 6px; }
+    .ctrl-note { margin: 6px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    .num-in {
+      width: 100%; min-height: 48px; border: 2px solid var(--line); border-radius: 12px; padding: 6px 12px;
+      font: 800 20px ui-monospace, Menlo, Consolas, monospace; color: var(--ink); background: #fff;
+    }
+    .num-in:focus { outline: none; border-color: var(--subject); }
+    .num-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .num-pair label { font-weight: 800; font-size: 14.5px; display: block; margin-bottom: 2px; }
+    .base-seg button { font-weight: 800; }
+    .base-seg .dot { display: inline-block; width: 11px; height: 11px; border-radius: 3px; margin-right: 4px; vertical-align: -1px; }
+    .stepper .st .l { white-space: normal; text-align: center; line-height: 1.15; overflow: visible; }
+    .readout .value.txt { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .concept table.mini { border-collapse: collapse; margin: 6px 0; font-size: 14px; width: 100%; }
+    .concept table.mini th, .concept table.mini td { border: 1px solid var(--line); padding: 4px 6px; text-align: center; }
+    .concept table.mini th { background: var(--surface-2); font-weight: 800; }
+    @media (max-width: 599px) {
+      .readout .value.txt { font-size: 15px; }
+      .stage-toolbar .spacer { display: none; }
+      .stage-toolbar .segmented button { padding: 5px 8px; font-size: 13.5px; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="bio">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#h1a">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">통합과학1 · Ⅱ. 물질과 규칙성</div>
+      <h1>핵산과 DNA 모형</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🧱 뉴클레오타이드</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="tablist" aria-label="화면 고르기" hidden>
+            <button type="button" data-mode="unit">🧱 단위체</button>
+            <button type="button" data-mode="strand">🧵 한 가닥</button>
+            <button type="button" data-mode="model">🧬 DNA 모형</button>
+            <button type="button" data-mode="rule">🔍 규칙성</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="뉴클레오타이드 블록, 염기 서열 한 가닥, DNA 이중 가닥 모형, 이중 나선 구조 장면"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1"> </span><span class="value txt" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2"> </span><span class="value txt" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3"> </span><span class="value txt" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" data-show="unit">
+          <div class="control-head"><span>🎨 염기 고르기</span></div>
+          <div class="segmented seg-wide base-seg" id="baseSeg"><button type="button" data-b="A"><i class="dot" style="background:#22c55e"></i>A</button><button type="button" data-b="T"><i class="dot" style="background:#ef4444"></i>T</button><button type="button" data-b="G"><i class="dot" style="background:#eab308"></i>G</button><button type="button" data-b="C"><i class="dot" style="background:#3b82f6"></i>C</button></div>
+          <button class="btn btn-sm btn-primary btn-block" id="bSplit" type="button" style="margin-top:8px">🔧 분해하기</button>
+          <p class="ctrl-note" id="unitNote">뉴클레오타이드를 분해한 뒤, 3부분을 점선 자리로 끌어다 다시 조립해요.</p>
+        </div>
+        <div class="control" data-show="strand">
+          <div class="control-head"><span>🧵 이어 붙인 뉴클레오타이드</span><output id="oLen">0 / 10개</output></div>
+          <div class="btn-row"><button class="btn btn-sm" id="bUndo" type="button">↶ 하나 지우기</button><button class="btn btn-sm" id="bClear" type="button">↺ 모두 지우기</button></div>
+          <p class="ctrl-note">아래 염기 블록을 누르거나 끌어다 놓으면 한 가닥 끝에 이어 붙어요.</p>
+        </div>
+        <div class="control" data-show="strand:calc">
+          <div class="control-head"><span>🧮 염기 3개 가닥의 서열 수</span></div>
+          <input class="num-in" type="text" id="inSeq" inputmode="numeric" placeholder="가짓수를 입력해요" aria-label="염기 3개 가닥의 서열 수">
+          <button class="btn btn-sm btn-primary btn-block" id="bSeq" type="button" style="margin-top:8px">✔ 계산 확인</button>
+        </div>
+        <div class="control" data-show="model:build">
+          <div class="control-head"><span>🧬 반대쪽 가닥 만들기</span><output id="oPair">0 / 6쌍</output></div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bTwist" type="button" disabled>🌀 나선으로 꼬기</button><button class="btn btn-sm" id="bReset" type="button">↺ 다시 하기</button></div>
+          <p class="ctrl-note">염기 블록을 아래쪽 칸으로 끌어다 놓거나 눌러요. 맞지 않는 짝은 튕겨 나가요.</p>
+        </div>
+        <div class="control" data-show="model:ratio">
+          <div class="control-head"><span>📊 샤가프 자료</span></div>
+          <p class="ctrl-note" style="margin:0 0 8px">어떤 DNA에서 A가 30 %, G가 20 %예요. T와 C는 각각 몇 %일까요?</p>
+          <div class="num-pair"><div><label for="inT">T (%)</label><input class="num-in" type="text" id="inT" inputmode="numeric" aria-label="T 비율"></div><div><label for="inC">C (%)</label><input class="num-in" type="text" id="inC" inputmode="numeric" aria-label="C 비율"></div></div>
+          <button class="btn btn-sm btn-primary btn-block" id="bRatio" type="button" style="margin-top:8px">✔ 계산 확인</button>
+        </div>
+        <div class="control" data-show="rule:helix">
+          <div class="control-head"><span>🔍 DNA 구조 살펴보기</span></div>
+          <div class="btn-row"><button class="btn btn-sm" id="bSpin" type="button">⏸ 회전 멈추기</button></div>
+          <p class="ctrl-note">화면 아래 4가지 버튼을 눌러 DNA의 구조적 특징을 하나씩 찾아봐요.</p>
+        </div>
+        <div class="control" data-show="rule:compare">
+          <div class="control-head"><span>🕵️ 누구의 DNA일까요?</span></div>
+          <div class="segmented seg-wide" id="whoSeg"><button type="button" data-w="A">사람 A</button><button type="button" data-w="B">사람 B</button><button type="button" data-w="N">둘 다 아님</button></div>
+          <button class="btn btn-sm btn-block" id="bDiff" type="button" style="margin-top:8px">🔍 서로 다른 곳 표시하기</button>
+          <p class="ctrl-note">현장 DNA 조각과 염기 서열이 <b>똑같은</b> 사람을 골라요.</p>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

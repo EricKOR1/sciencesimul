@@ -133,7 +133,7 @@
   }
   function tablePos(z) {
     const e = ELS[z - 1], col = GCOLS.indexOf(e.g);
-    return !PHONE ? { x: 92 + col * 88 + 0, y: 138 + (e.p - 1) * 66 } : { x: 51 + 24 + col * 54, y: 148 + (e.p - 1) * 60 };
+    return !PHONE ? { x: 92 + col * 88 + 0, y: 148 + (e.p - 1) * 66 } : { x: 51 + 24 + col * 54, y: 148 + (e.p - 1) * 60 };
   }
   function initLine() {
     S.cards = SHUF.map((z, k) => { const q = trayPos(k); const e = ELS[z - 1]; return { kind: 'el', z, e, x: q.x, y: q.y, tx: q.x, ty: q.y, w: LS.w, h: LS.h, slot: null, home: k, lift: 0, bad: false, shake: 0 }; });
@@ -497,7 +497,7 @@
         T(x, PHONE ? 66 : 74, g + '족', PHONE ? 14 : 16, '#2b2150', 'center', 800);
         T(x, PHONE ? 88 : 96, (PHONE ? 'e⁻ ' : '전자 ') + v, 13, '#4c1d95', 'center', 800);
         // 열 강조: 1족
-        if (g === 1 && S.marks.size >= 3) { ctx.strokeStyle = '#14a058'; ctx.lineWidth = 3; D.roundRect(x - (PHONE ? 26 : 42), PHONE ? 44 : 50, PHONE ? 52 : 84, PHONE ? 270 : 300, 12); ctx.stroke(); }
+        if (g === 1 && S.marks.size >= 3) { ctx.strokeStyle = '#14a058'; ctx.lineWidth = 3; D.roundRect(x - (PHONE ? 26 : 42), PHONE ? 44 : 50, PHONE ? 52 : 84, PHONE ? 270 : 334, 12); ctx.stroke(); }
       });
       for (let p = 1; p <= 4; p++) { const y = tablePos(p === 1 ? 1 : p === 2 ? 3 : p === 3 ? 11 : 19).y; T(PHONE ? 12 : 20, y + 5, p + '주기', 13, '#6b6490', 'left', 800); }
       ctx.restore();
