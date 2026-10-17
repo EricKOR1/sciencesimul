@@ -318,7 +318,7 @@
         const t = k / 10;
         if (t > ob.T + 1e-9) break;
         const yl = yB(posD(ob, t)) - R;
-        if (S.state === 'done' && on('graph') && Math.abs(yl - (yB(posD(ob, tNow)) - R)) < 16 * FS) continue;
+        if (S.state === 'done' && on('graph') && (() => { const dy = yl - (yB(posD(ob, tNow)) - R); return dy > -16 * FS && dy < (on('sensor') ? 78 : 16) * FS; })()) continue;   // 고른 시각 이름표·속력 이름표와 겹치지 않게
         D.text(lanes[0] - R - 8 * FS, yl + 4.5 * FS, t.toFixed(1) + ' s', { size: 13 * FS, weight: 800, align: 'right', color: '#fcd9c6', stroke: 'rgba(8,12,30,.7)', strokeWidth: 3 });
       }
       // 0.1초 동안 이동한 거리 (쇠공 하나일 때) - 괄호가 자라나며 나타남
@@ -862,7 +862,7 @@
     if (S.drag === 'scene') {
       const g = geo();
       const ob = S.run.objs[0];
-      const d = clamp((p.y - g.top) / g.ppm, 0, S.run.H);
+      const d = clamp((p.y + ob.o.r * FS - g.top) / g.ppm, 0, S.run.H);   // 공의 가운데를 잡고 끌면 공이 손가락을 따라와요(공의 아랫면 = 낙하 거리)
       setViewT(tForD(ob, d));
     } else if (S.drag === 'graph' && S.gmap) {
       setViewT(((p.x - S.gmap.x0) / (S.gmap.x1 - S.gmap.x0)) * T_AX);

@@ -663,7 +663,7 @@
     $$('#windSeg button').forEach((b) => b.classList.toggle('on', +b.dataset.w === LAB.wind));
   }
   $('#lampBtn').addEventListener('click', () => { LAB.lamp = !LAB.lamp; Sound.click(); syncLabUI(); });
-  $$('#windSeg button').forEach((b) => b.addEventListener('click', () => { LAB.wind = +b.dataset.w; Sound.click(); syncLabUI(); }));
+  $$('#windSeg button').forEach((b) => b.addEventListener('click', () => { LAB.wind = +b.dataset.w; if (LAB.heatT < 90) LAB.windUsed.clear(); Sound.click(); syncLabUI(); }));   // 켠 직후(실제 3초 이내)에 바람을 고른 건 처음부터 그 조건으로 쳐요
   const REC_NAME = { 0: 'A', 1: 'B', 2: 'C' };
   function validRecord() {
     if (!LAB.lamp) return '💡 적외선등을 켜고 가열한 뒤에 기록해요.';

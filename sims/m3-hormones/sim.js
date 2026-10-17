@@ -572,7 +572,7 @@
       if (!GL.auto) dG += -(GL.G - 90) * 0.004 * dm;
       else { const c = -0.25 * (GL.G - 90) * dm; dG += c; GL.gly = clamp(GL.gly - c * 0.003, 0.02, 0.98); }
       const take = GL.pend * (1 - Math.exp(-2.5 * dt)); GL.pend -= take; dG += take; GL.gly = clamp(GL.gly - take * 0.004, 0.02, 0.98);
-      GL.G = clamp(GL.G + dG, 30, 230);
+      GL.G = clamp(GL.G + dG, 40, 200);       // 게이지·그래프의 눈금(40~200)과 같은 범위
       GL.maxG = Math.max(GL.maxG, GL.G); GL.minG = Math.min(GL.minG, GL.G);
       GL.hist_t += dm;
       if (GL.hist_t >= 0.5) { GL.hist_t = 0; GL.hist.push([GL.m, GL.G]); }
@@ -762,7 +762,7 @@
     const th = TP.reg ? clamp(-err * 3 + (env === 'hot' ? 0.55 : 0), 0, 1) : 0;
     TP.rc = approach(TP.rc, tc, dt, 2.5); TP.rh = approach(TP.rh, th, dt, 2.5);
     const drive = env === 'cold' ? -0.09 : env === 'hot' ? 0.09 : 0;
-    TP.T = clamp(TP.T + (drive + 0.15 * TP.rc - 0.15 * TP.rh) * dt, 33.5, 40.5);
+    TP.T = clamp(TP.T + (drive + 0.15 * TP.rc - 0.15 * TP.rh) * dt, 34, 40);   // 체온계 눈금(34~40)과 같은 범위
     TP.dispT = approach(TP.dispT, TP.T, dt, 8);
     TP.vessel = approach(TP.vessel, 18 - 11 * TP.rc + 14 * TP.rh, dt, 3);
     if (env === 'cold' && TP.reg && TP.rc > 0.3) TP.tCold += dt;
