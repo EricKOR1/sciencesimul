@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0ea5e9">
+  <title>우주를 이루는 원소 | 고1 통합과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌌</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-toolbar { min-height: 58px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; }
+    .stage-toolbar .segmented button { min-height: 40px; padding: 5px 12px; font-size: 14.5px; white-space: nowrap; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 14px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard [hidden] { display: none !important; }
+    .opt-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin-top: 4px; }
+    .opt-grid.c3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .opt-grid.c4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .opt {
+      min-height: 46px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 12px;
+      font-weight: 800; font-size: 15px; cursor: pointer; padding: 4px 6px; white-space: nowrap; font-family: inherit;
+    }
+    .opt.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); color: color-mix(in srgb, var(--subject) 70%, black); }
+    .opt .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; vertical-align: 0; }
+    .opt.shake { animation: shake .4s; border-color: var(--bad); }
+    .opt.ok { border-color: var(--good); background: var(--good-soft); }
+    .ctrl-note { margin: 6px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    .btn-sm { min-height: 44px; }
+    .game-foot button { min-height: 44px; }
+    input[type=range] { height: 40px; }
+    .concept table.mini { border-collapse: collapse; margin: 6px 0; font-size: 14px; width: 100%; }
+    .concept table.mini th, .concept table.mini td { border: 1px solid var(--line); padding: 4px 6px; text-align: center; }
+    .concept table.mini th { background: var(--surface-2); font-weight: 800; }
+    .readout .value.txt { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .num-in { width: 100%; min-height: 48px; border: 2px solid var(--line); border-radius: 12px; padding: 6px 12px; font: 800 20px ui-monospace, Menlo, Consolas, monospace; color: var(--ink); background: #fff; }
+    .num-in:focus { outline: none; border-color: var(--subject); }
+    .row2 { display: flex; gap: 8px; align-items: center; }
+    .row2 .num-in { flex: 1; min-width: 0; }
+    @media (max-width: 599px) {
+      .readout { min-width: 0; }
+      .readout .value.txt { font-size: 15px; }
+      .stage-toolbar .spacer { display: none; }
+      .stage-toolbar .segmented button { padding: 5px 8px; font-size: 13.5px; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="earth">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#h1a">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">통합과학1 · Ⅱ. 물질과 규칙성</div>
+      <h1>우주를 이루는 원소</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🔭 천체 스펙트럼</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="stageSeg" role="group" aria-label="우주의 시간" hidden>
+            <button type="button" data-st="0">빅뱅</button>
+            <button type="button" data-st="1">1초</button>
+            <button type="button" data-st="2">3분</button>
+            <button type="button" data-st="3">38만 년</button>
+            <button type="button" data-st="4">1억 년 후</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="가상 망원경과 분광기로 태양, 오리온 성운, 먼 은하의 스펙트럼을 비교하고, 빅뱅 이후 우주 초기의 헬륨 생성과 우주 구성 원소 비율을 보여 주는 화면"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">관측 대상</span><span class="value txt" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">—</span><span class="value txt" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">—</span><span class="value txt" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" data-modes="free" id="sceneCtl" hidden>
+          <div class="control-head"><span>🎞 장면 바꾸기</span></div>
+          <div class="opt-grid c3" id="sceneBtns">
+            <button type="button" class="opt" data-scene="obs">🔭 스펙트럼</button>
+            <button type="button" class="opt" data-scene="bang">🕰️ 우주 초기</button>
+            <button type="button" class="opt" data-scene="pie">🥧 우주 구성</button>
+          </div>
+        </div>
+        <!-- 천체 스펙트럼 -->
+        <div class="control" data-modes="obs">
+          <div class="control-head"><span>🔭 관측할 천체</span></div>
+          <div class="opt-grid c3" id="objBtns">
+            <button type="button" class="opt" data-obj="sun">☀️ 태양</button>
+            <button type="button" class="opt" data-obj="orion">🌫️ 오리온<br>성운</button>
+            <button type="button" class="opt" data-obj="gal">🌌 먼 은하</button>
+          </div>
+          <button type="button" class="btn btn-primary btn-sm btn-block" id="bShot" style="margin-top:8px">📷 스펙트럼 촬영</button>
+        </div>
+        <div class="control" data-modes="obs" data-need="tmpl">
+          <div class="control-head"><span>📋 기준 선 막 겹치기</span></div>
+          <div class="opt-grid c3" id="tmplBtns">
+            <button type="button" class="opt" data-tmpl="H"><span class="dot" style="background:#e879f9"></span>수소</button>
+            <button type="button" class="opt" data-tmpl="He"><span class="dot" style="background:#38bdf8"></span>헬륨</button>
+            <button type="button" class="opt" data-tmpl="Na"><span class="dot" style="background:#facc15"></span>나트륨</button>
+          </div>
+        </div>
+        <div class="control" data-modes="obs" data-need="z">
+          <div class="control-head"><span>↔ 막 밀어 맞추기</span><output id="oZ">0.000</output></div>
+          <input type="range" id="sZ" min="0" max="0.15" step="0.005" value="0" aria-label="기준 선 막을 오른쪽(붉은 쪽)으로 미는 비율">
+          <p class="ctrl-note">모든 선이 같은 비율로 길어지는 파장 쪽으로 밀려요.</p>
+        </div>
+        <!-- 우주 초기 -->
+        <div class="control" data-modes="bang">
+          <p class="ctrl-note" id="bangNote" style="margin-top:0"></p>
+          <button type="button" class="btn btn-sm btn-block" id="bReset" style="margin-top:8px">↺ 입자 수프 다시 섞기</button>
+        </div>
+        <div class="control" data-modes="bang" data-need="pct">
+          <div class="control-head"><span>📊 수소의 질량비</span></div>
+          <div class="row2">
+            <input class="num-in" type="number" id="inPct" inputmode="decimal" min="0" max="100" step="1" placeholder="예: 50" aria-label="수소의 질량비(퍼센트)">
+            <span style="font-weight:800">%</span>
+            <button type="button" class="btn btn-primary btn-sm" id="bPct">막대 채우기</button>
+          </div>
+          <p class="ctrl-note">수소 핵 12개와 헬륨 핵 1개의 <b>질량</b>으로 계산해요. (양성자·중성자 1개 = 1)</p>
+        </div>
+        <!-- 우주 구성 -->
+        <div class="control" data-modes="pie">
+          <p class="ctrl-note" style="margin-top:0">값 카드 6장을 끌어 두 원 그래프 아래 알맞은 칸에 놓아요. 놓은 카드는 다시 끌어 옮길 수 있어요.</p>
+          <button type="button" class="btn btn-sm btn-block" id="bPieReset" style="margin-top:8px">↺ 카드 모두 되돌리기</button>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>
