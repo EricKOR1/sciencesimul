@@ -209,7 +209,7 @@
      화면 ②: 코돈표 — mRNA를 3개씩 끊어 아미노산으로
      ====================================================== */
   const TBG = () => (PHONE
-    ? { tx: 10, ty: 38, tw: 500, th: 306, rowY0: 78, rowH: 29, cx: 260, lw: 26, lh: 34, ly: 392, ry: 470, cw: 92, ch: 58, py: 548, pcw: 152, pch: 50, pcy: 568 }
+    ? { tx: 10, ty: 38, tw: 500, th: 306, rowY0: 78, rowH: 29, cx: 260, lw: 26, lh: 34, ly: 388, ry: 486, cw: 92, ch: 58, py: 556, pcw: 152, pch: 50, pcy: 576 }
     : { tx: 14, ty: 38, tw: 290, th: 510, rowY0: 84, rowH: 46, cx: 553, lw: 26, lh: 34, ly: 124, ry: 250, cw: 84, ch: 58, py: 330, pcw: 144, pch: 46, pcy: 352 });
   function tbLetterX(k, gapNow) {
     const g = TBG(), W = 15 * g.lw + 4 * gapNow;
@@ -230,7 +230,7 @@
       if (key === 'STOP') { T.done[q] = true; Sound.success(); T.msg = cod + '는 종결 코돈이에요. 아미노산을 정하지 않고 합성이 끝나요!'; T.msgT = 4; if (!RM) parts.burst(g.cx, g.ry, { count: 18, speed: 160, size: 4 }); }
     } else {
       T.wrong++; T.shake = 0.45; T.flashRow = rowOf(cod); T.flash = 2.4; Sound.fail();
-      T.msg = key === 'STOP' ? cod + '는 종결 코돈이 아니에요. 코돈표의 ' + cod + ' 행을 찾아봐요' : cod + '의 아미노산은 ' + eun(AAI[key].ko) + ' 아니에요. 코돈표에서 ' + cod + ' 행을 확인해요';
+      T.msg = key === 'STOP' ? cod + '는 종결 코돈이 아니에요. 코돈표의 ' + cod + ' 행을 찾아봐요' : cod + '의 아미노산은 ' + AAI[key].ko + (hasFinal(AAI[key].ko) ? '이' : '가') + ' 아니에요. 코돈표에서 ' + cod + ' 행을 확인해요';
       T.msgT = 4;
     }
     updateCtl();
@@ -313,7 +313,7 @@
      ====================================================== */
   const REP = { Met: 'AUG', Glu: 'GAA', Pro: 'CCA', Trp: 'UGG', Phe: 'UUU', Lys: 'AAA', Gly: 'GGU', Val: 'GUG' };
   const SYG = () => (PHONE
-    ? { sp: 28, bw: 25, pitch: 94, x0: 30, mY: 176, aY: 232, bY: 304, trayY: 506, trayBead: 586, xs: [90, 260, 430], rxB: 150, msgY: 440, F: [260, 330], coilK: 0.85 }
+    ? { sp: 28, bw: 25, pitch: 94, x0: 30, mY: 176, aY: 232, bY: 304, trayY: 506, trayBead: 586, xs: [90, 260, 430], rxB: 125, msgY: 440, F: [260, 330], coilK: 0.85 }
     : { sp: 38, bw: 34, pitch: 128, x0: 87, mY: 130, aY: 180, bY: 246, trayY: 420, trayBead: 486, xs: [200, 400, 600], rxB: 172, msgY: 354, F: [400, 212], coilK: 1 });
   const syCx = (c) => { const g = SYG(); return g.x0 + c * g.pitch + (g.pitch - (PHONE ? 10 : 14)) / 2; };
   const syBaseX = (c, k) => { const g = SYG(); return g.x0 + c * g.pitch + k * g.sp + g.sp / 2; };
@@ -348,7 +348,7 @@
     } else {
       Y.wrong++; Sound.fail(); Y.ghosts.push({ aa: tok.aa, anti: tok.anti, sx: fx, sy: fy, t: 0 });
       let i = 0; while (i < 3 && COMP[tok.anti[i]] === cod[i]) i++;
-      Y.msg = '안티코돈 ' + tok.anti + '의 ' + (i + 1) + '번째 염기 ' + tok.anti[i] + '는 코돈 ' + cod[i] + '와 짝이 아니에요 (' + cod[i] + '의 짝은 ' + COMP[cod[i]] + ')'; Y.msgT = 4.5;
+      Y.msg = '안티코돈 ' + tok.anti + '의 ' + (i + 1) + '번째 염기 ' + tok.anti[i] + '는 코돈 ' + cod + '의 ' + (i + 1) + '번째 염기 ' + cod[i] + '와 짝이 아니에요 (' + cod[i] + '의 짝은 ' + COMP[cod[i]] + ')'; Y.msgT = 4.5;
     }
     updateCtl();
   }

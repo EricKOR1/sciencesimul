@@ -402,7 +402,7 @@
   const TABS = ['🐞 무당벌레 무늬', '🐌 달팽이 껍데기', '🦋 나비 날개 길이'];
   const vrG = () => (PHONE
     ? { tab: (i) => ({ x: 8 + i * 168, y: 8, w: 162, h: 34 }), pos: (i) => ({ x: 56 + (i % 5) * 102, y: 100 + Math.floor(i / 5) * 52 }), plot: { x0: 52, x1: 504, y0: 330, y1: 658 }, grid: { x: 8, y: 52, w: 504, h: 600, cols: 4 } }
-    : { tab: (i) => ({ x: 14 + i * 190, y: 10, w: 182, h: 34 }), pos: (i) => ({ x: 56 + (i % 10) * 76, y: 104 + Math.floor(i / 10) * 54 }), plot: { x0: 62, x1: 774, y0: 218, y1: 506 }, grid: { x: 14, y: 54, w: 772, h: 490, cols: 5 } });
+    : { tab: (i) => ({ x: 14 + i * 190, y: 10, w: 182, h: 34 }), pos: (i) => ({ x: 56 + (i % 10) * 76, y: 104 + Math.floor(i / 10) * 54 }), plot: { x0: 62, x1: 774, y0: 234, y1: 510 }, grid: { x: 14, y: 54, w: 772, h: 490, cols: 5 } });
   const plotCell = () => { const p = vrG().plot; return (p.y1 - p.y0) / 8; };
   const binX = (b) => { const p = vrG().plot, w = (p.x1 - p.x0) / 6; return p.x0 + w * (b + 0.5); };
   function resetVar() {
