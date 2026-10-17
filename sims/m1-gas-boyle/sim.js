@@ -107,8 +107,19 @@
   function newBadge(x, y) {
     const a = 0.6 + 0.4 * Math.sin(now() * 6);
     ctx.save(); ctx.globalAlpha = a;
-    D.label(x, y, 'NEW', { bg: '#8b5cf6', size: 12 });
+    D.label(x, y, 'NEW', { bg: '#8b5cf6', size: 13 });
     ctx.restore();
+  }
+  /* 새 도구 둘레에서 맥박 치는 네모 고리 + NEW 이름표 (도구를 가리지 않게 바깥에 그림) */
+  function newRect(x, y, w, h, t, color) {
+    const k = (t * 1.2) % 1, c = color || '#8b5cf6', g = 4 + k * 10;
+    ctx.save();
+    ctx.strokeStyle = rgba(c, 0.9); ctx.lineWidth = 3.5;
+    D.roundRect(x - 6, y - 6, w + 12, h + 12, 16); ctx.stroke();
+    ctx.strokeStyle = rgba(c, 0.55 * (1 - k)); ctx.lineWidth = 3;
+    D.roundRect(x - 6 - g, y - 6 - g, w + 12 + 2 * g, h + 12 + 2 * g, 16 + g); ctx.stroke();
+    ctx.restore();
+    newBadge(x + w - 14, y - 8);
   }
   /* 성공 효과: 폭죽 + 체크 */
   const checks = [];
@@ -260,7 +271,7 @@
       ctx.translate((1 - ease.outCubic(S.k.graph)) * 36, 0);
       drawGraph(GRAPH, t);
       ctx.restore();
-      if (isNew('record')) { D.ring(GRAPH.x + GRAPH.w / 2, GRAPH.y + GRAPH.h / 2, 150, t, { color: '#8b5cf6' }); newBadge(GRAPH.x + GRAPH.w - 20, GRAPH.y + 6); }
+      if (isNew('record')) newRect(GRAPH.x, GRAPH.y, GRAPH.w, GRAPH.h, t);
     }
     FX.draw(ctx);
     drawChecks(t);
@@ -419,7 +430,8 @@
       ctx.restore();
       if (isNew('piston')) D.ring(cx, hy - 12, 70, t, { color: '#f26b3a' });
     }
-    if (isNew('particles') && pk > 0.5) { D.ring(cx, (top + SYR.bottom) / 2, Math.min(90, gasH / 2 + 12), t, { color: '#8b5cf6' }); newBadge(x1 - 12, top + 18); }
+    if (isNew('particles') && pk > 0.5) { D.ring(x1 + 14, SYR.bottom + 14, 24, t, { color: '#8b5cf6' }); newBadge(x1 + 52, SYR.bottom - 8); }
+    if (isNew('hits') && S.showHits && pk > 0.5) newBadge(x1 + 30, top - 8);
   }
   const handleY = () => Math.max(34, pistonY(S.Vs) - 96);
 

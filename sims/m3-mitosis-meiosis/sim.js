@@ -1049,7 +1049,7 @@
       D.arrow(x0, 356, xb, 356 + 26 * a3, { color: '#db2777', width: 3.5, head: 10, alpha: a3 });
     });
     if (a3 > 0.6) D.label(595, 372, '2회', { bg: '#db2777', size: 13.5, pad: 10 });
-    [[490, [0]], [550, [3]], [640, [1]], [700, [2]]].forEach(([cx, r], i) => miniCell(cx, 428, 28, r, smooth(ph(0.6 + i * 0.03, 0.78 + i * 0.03)), '#db2777'));
+    [[490, [0, 3]], [550, [0, 3]], [640, [1, 2]], [700, [1, 2]]].forEach(([cx, r], i) => miniCell(cx, 428, 28, r, smooth(ph(0.6 + i * 0.03, 0.78 + i * 0.03)), '#db2777'));
     // 결과
     const r1 = smooth(ph(0.8, 0.96));
     D.text(205, 424, '딸세포 2개 · 염색체 4개씩', { size: 14.5, weight: 800, color: '#1d4ed8', alpha: r1 });

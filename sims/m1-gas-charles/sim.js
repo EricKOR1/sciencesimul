@@ -107,8 +107,19 @@
   function newBadge(x, y) {
     const a = 0.6 + 0.4 * Math.sin(now() * 6);
     ctx.save(); ctx.globalAlpha = a;
-    D.label(x, y, 'NEW', { bg: '#8b5cf6', size: 12 });
+    D.label(x, y, 'NEW', { bg: '#8b5cf6', size: 13 });
     ctx.restore();
+  }
+  /* 새 도구 둘레에서 맥박 치는 네모 고리 + NEW 이름표 (도구를 가리지 않게 바깥에 그림) */
+  function newRect(x, y, w, h, t, color) {
+    const k = (t * 1.2) % 1, c = color || '#8b5cf6', g = 4 + k * 10;
+    ctx.save();
+    ctx.strokeStyle = rgba(c, 0.9); ctx.lineWidth = 3.5;
+    D.roundRect(x - 6, y - 6, w + 12, h + 12, 16); ctx.stroke();
+    ctx.strokeStyle = rgba(c, 0.55 * (1 - k)); ctx.lineWidth = 3;
+    D.roundRect(x - 6 - g, y - 6 - g, w + 12 + 2 * g, h + 12 + 2 * g, 16 + g); ctx.stroke();
+    ctx.restore();
+    newBadge(x + w - 14, y - 8);
   }
   /* 성공 효과: 폭죽 + 체크 */
   const checks = [];
@@ -264,7 +275,7 @@
       ctx.translate(0, (1 - ease.outCubic(S.k.heater)) * 30);
       drawHeater(t);
       ctx.restore();
-      if (isNew('heater')) { D.ring(CYL.x + CYL.w / 2, CYL.bottom + 56, 100, t, { color: '#8b5cf6' }); newBadge(CYL.x + CYL.w + 14, CYL.bottom + 20); }
+      if (isNew('heater')) newRect(CYL.x - 24, CYL.bottom + 24, CYL.w + 48, 58, t);
     }
     drawCylinder(t);
     if (S.k.thermo > 0.01) {
@@ -274,7 +285,7 @@
       ctx.translate(th, 240); ctx.scale(sc, sc); ctx.translate(-th, -240);
       drawThermo(th, 92, 290);
       ctx.restore();
-      if (isNew('thermo')) { D.ring(th + 4, 236, 62, t, { color: '#8b5cf6' }); newBadge(th + 36, 78); }
+      if (isNew('thermo')) newRect(th - 26, 62, 82, 400, t);
     }
     if (S.k.graph > 0.01) {
       ctx.save();
@@ -282,7 +293,7 @@
       ctx.translate((1 - ease.outCubic(S.k.graph)) * 36, 0);
       drawGraph(GRAPH, t);
       ctx.restore();
-      if (isNew('record')) { D.ring(GRAPH.x + GRAPH.w / 2, GRAPH.y + GRAPH.h / 2, 190, t, { color: '#8b5cf6' }); newBadge(GRAPH.x + GRAPH.w - 22, GRAPH.y + 8); }
+      if (isNew('record')) newRect(GRAPH.x, GRAPH.y, GRAPH.w, GRAPH.h, t);
     }
     if (S.pk > 0.02) {
       ctx.save(); ctx.globalAlpha = S.pk;
@@ -443,8 +454,8 @@
     ctx.strokeStyle = '#5d6879'; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(cx, wy - 50, 9, Math.PI, 0); ctx.stroke();
     D.text(cx, wy - 24, '추', { size: 15, weight: 800, color: '#fff' });
     D.text(cx, wy - 8, '(압력 일정)', { size: 13, weight: 800, color: '#e3e9f2' });
-    if (isNew('particles') && pk > 0.5) { D.ring(cx, (top + CYL.bottom) / 2, Math.min(100, gasH / 2 + 12), t, { color: '#8b5cf6' }); newBadge(x1 - 12, top + 20); }
-    if (isNew('hits') && S.showHits) { D.ring(cx, top, 50, t, { color: '#f26b3a' }); }
+    if (isNew('particles') && pk > 0.5) { D.ring(x1 + 12, CYL.bottom + 10, 24, t, { color: '#8b5cf6' }); newBadge(x1 + 54, CYL.bottom - 12); }
+    if (isNew('hits') && S.showHits && pk > 0.5) newBadge(x1 + 34, top - 10);
   }
 
   function drawThermo(x, y, h) {

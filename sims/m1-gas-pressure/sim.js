@@ -108,8 +108,19 @@
   function newBadge(x, y) {
     const a = 0.6 + 0.4 * Math.sin(now() * 6);
     ctx.save(); ctx.globalAlpha = a;
-    D.label(x, y, 'NEW', { bg: '#8b5cf6', size: 12 });
+    D.label(x, y, 'NEW', { bg: '#8b5cf6', size: 13 });
     ctx.restore();
+  }
+  /* 새 도구 둘레에서 맥박 치는 네모 고리 + NEW 이름표 (도구를 가리지 않게 바깥에 그림) */
+  function newRect(x, y, w, h, t, color) {
+    const k = (t * 1.2) % 1, c = color || '#8b5cf6', g = 4 + k * 10;
+    ctx.save();
+    ctx.strokeStyle = rgba(c, 0.9); ctx.lineWidth = 3.5;
+    D.roundRect(x - 6, y - 6, w + 12, h + 12, 16); ctx.stroke();
+    ctx.strokeStyle = rgba(c, 0.55 * (1 - k)); ctx.lineWidth = 3;
+    D.roundRect(x - 6 - g, y - 6 - g, w + 12 + 2 * g, h + 12 + 2 * g, 16 + g); ctx.stroke();
+    ctx.restore();
+    newBadge(x + w - 14, y - 8);
   }
   /* 성공 효과: 폭죽 + 체크 */
   const checks = [];
@@ -841,8 +852,8 @@
     toolIn(S.k.gauge, GAUGE_M.cx, GAUGE_M.cy, () => drawGauge(GAUGE_M.cx, GAUGE_M.cy, GAUGE_M.r, t));
     if (S.k.gauge > 0.01 && isNew('gauge')) { D.ring(GAUGE_M.cx, GAUGE_M.cy, GAUGE_M.r + 14, t, { color: '#8b5cf6' }); newBadge(GAUGE_M.cx + GAUGE_M.r * 0.8, GAUGE_M.cy - GAUGE_M.r * 0.85); }
     toolIn(S.k.pump, PUMP.x, (PUMP.top + PUMP.base) / 2, () => drawPump());
-    if (S.k.pump > 0.01 && isNew('pump')) { D.ring(PUMP.x, (PUMP.top + PUMP.base) / 2 + 10, 84, t, { color: '#8b5cf6' }); newBadge(PUMP.x + 54, PUMP.top - 40); }
-    if (S.k.hits > 0.01 && isNew('hits') && !isNew('gauge')) { D.ring(cx, cy, 190, t, { color: '#f26b3a' }); newBadge(x1 - 20, y0 - 22); }
+    if (S.k.pump > 0.01 && isNew('pump')) newRect(PUMP.x - 50, PUMP.top - 66, 100, PUMP.base - PUMP.top + 92, t);
+    if (S.k.hits > 0.01 && isNew('hits') && !isNew('gauge')) newBadge(cx + 52, y0 - bt - 40);
   }
 
   function drawGauge(cx, cy, r, t) {
