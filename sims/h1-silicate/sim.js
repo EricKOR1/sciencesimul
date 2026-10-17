@@ -225,7 +225,7 @@
     PIE.seen[CRUST[i][0]] = true;
     CRUST.forEach((c, k) => tween(PIE.pop, { [k]: k === i ? 1 : 0 }, { duration: RM ? 0.01 : 0.35, ease: 'outBack' }));
   }
-  const legendPos = (i) => (PHONE ? { x: 30 + (i % 2) * 262, y: 450 + Math.floor(i / 2) * 50, w: 244 } : { x: 470, y: 112 + i * 46, w: 300 });
+  const legendPos = (i) => (PHONE ? { x: 30 + (i % 2) * 262, y: 478 + Math.floor(i / 2) * 46, w: 244 } : { x: 470, y: 112 + i * 46, w: 300 });
   function pieHit(p) {
     const dx = p.x - PG.cx, dy = p.y - PG.cy, d = Math.hypot(dx, dy);
     if (d > PG.r - 4 && d < PG.R + 22) {
@@ -294,7 +294,7 @@
     const cols = PHONE ? 4 : 6, rows = 3;
     for (let k = 0; k < cols * rows; k++) {
       const gx = RR.x + (RR.w / cols) * ((k % cols) + 0.5) + (r() - 0.5) * 30, gy = RR.y + (RR.h / rows) * (Math.floor(k / cols) + 0.5) + (r() - 0.5) * 20;
-      const u = r(), type = u < 0.33 ? 0 : u < 0.8 ? 1 : 2;
+      const type = [0, 1, 1, 0, 2, 1, 0, 1, 2, 0, 1, 1, 0, 2, 1, 0, 1, 0, 1, 2, 0, 1, 1, 0][k % 24];
       ROCK.grains1.push({ x: gx, y: gy, r: (PHONE ? 38 : 46) + r() * 18, type, rot: r() * TAU, sides: 6 + Math.floor(r() * 3) });
     }
     // 이름표를 붙일 알갱이: 각 종류에서 하나씩
@@ -376,11 +376,11 @@
       const k = m.els.length, step = Math.min(PHONE ? 84 : 112, (PW - 40) / k);
       const x0 = PX + PW / 2 - (step * (k - 1)) / 2;
       m.els.forEach((e, i) => {
-        const x = x0 + i * step, y = PY + (PHONE ? 120 : 96), core = e === 'Si' || e === 'O';
+        const x = x0 + i * step, y = PY + (PHONE ? 110 : 84), core = e === 'Si' || e === 'O';
         const pop = clamp((t - (ROCK.selT || 0)) * 4 - i * 0.3, 0, 1);
         if (core) D.glow(x, y, 46, '#fde047', 0.6 * pop);
         D.sphere(x, y, (PHONE ? 30 : 30) * (0.3 + 0.7 * smooth(pop)), ELC[e], { shadow: true, outline: core ? '#facc15' : null, outlineWidth: 3 });
-        if (pop > 0.5) { D.text(x, y + 7, e, { size: fs(20), weight: 800, color: e === 'Si' ? '#5b3a00' : '#fff', stroke: e === 'Si' ? null : 'rgba(0,0,0,.2)' }); D.text(x, y + 52, ELN[e], { size: fs(13), weight: 700, color: INK }); }
+        if (pop > 0.5) { D.text(x, y + 7, e, { size: fs(20), weight: 800, color: e === 'Si' ? '#5b3a00' : '#fff', stroke: e === 'Si' ? null : 'rgba(0,0,0,.2)' }); D.text(x, y + 50, ELN[e], { size: fs(13), weight: 700, color: INK }); }
       });
       pill(PX + PW / 2, PY + PH - fs(26), 'Si와 O가 모두 들어 있어요 · 확인한 광물 ' + n + ' / 5', { bg: n >= 5 ? '#16a34a' : '#fff', color: n >= 5 ? '#fff' : INK, border: n >= 5 ? null : '#cfd8e3', size: fs(13) });
     }
@@ -400,8 +400,8 @@
      ========================================================= */
   const TE = { slots: [], supply: { Si: 1, O: 4 }, drag: null, done: false, flash: 0, join: -1, joinA: 0, jdrag: null, hover: -1, made: false };
   const BLK_A = { c: [0, 0, 0], flip: 1, yaw: 0 };
-  const TG_MAKE = PHONE ? { cx: 280, cy: 290, sc: 96 } : { cx: 520, cy: 300, sc: 112 };
-  const TG_JOIN = PHONE ? { cx: 280, cy: 330, sc: 62 } : { cx: 340, cy: 320, sc: 78 };
+  const TG_MAKE = PHONE ? { cx: 280, cy: 290, sc: 96 } : { cx: 470, cy: 310, sc: 122 };
+  const TG_JOIN = PHONE ? { cx: 280, cy: 330, sc: 70 } : { cx: 330, cy: 330, sc: 94 };
   const traySi = () => (PHONE ? { x: 150, y: 650 } : { x: 110, y: 200 });
   const trayO = () => (PHONE ? { x: 410, y: 650 } : { x: 110, y: 380 });
   const trayB = () => (PHONE ? { x: 440, y: 120 } : { x: 690, y: 150 });
@@ -587,7 +587,7 @@
   ];
   SPEC.forEach((s) => { ST.sp[s.id] = { p: 0 }; });
   const SG = PHONE ? { cx: 280, cy: 290, k: 0.74 } : { cx: 400, cy: 262, k: 1 };
-  const trayStruct = () => (PHONE ? { x: 280, y: 640 } : { x: 400, y: 520 });
+  const trayStruct = () => (PHONE ? { x: 280, y: 650 } : { x: 400, y: 532 });
   function resetStruct() {
     TYPES.forEach(initType); ST.done = {}; ST.drag = null; ST.hover = -1;
     updateUI();
@@ -665,8 +665,8 @@
     pill(PHONE ? 280 : 400, PHONE ? 42 : 40, ST.done[ty] ? '✔ ' + info.name + ' (' + info.mineral + ')' : info.name + '을 만들어요: 블록 ' + bl.length + '개', { bg: ST.done[ty] ? '#16a34a' : '#fff', color: ST.done[ty] ? '#fff' : INK, border: ST.done[ty] ? null : '#cfd8e3', size: fs(15) });
     if (ST.done[ty]) {
       pill(SG.cx, PHONE ? 90 : 84, '한 블록이 이웃과 함께 쓰는 산소: ' + info.share + '개', { bg: '#eab308', color: '#fff', size: fs(14) });
-      pill(SG.cx, SG.cy + (PHONE ? 220 : 236), info.desc, { bg: SKYD, color: '#fff', size: fs(PHONE ? 12 : 14) });
-      if (ty === 'sheet') D.text(SG.cx, SG.cy + (PHONE ? 250 : 268), '바깥으로 계속 이어져 판 모양이 돼요 (희미한 블록)', { size: fs(12), weight: 700, color: MUTED });
+      pill(SG.cx, SG.cy + (PHONE ? 196 : 176), info.desc, { bg: SKYD, color: '#fff', size: fs(PHONE ? 12 : 14) });
+      if (ty === 'sheet') D.text(SG.cx, SG.cy + (PHONE ? 226 : 204), '바깥으로 계속 이어져 판 모양이 돼요 (희미한 블록)', { size: fs(12), weight: 700, color: MUTED });
     } else if (!ST.drag) {
       const last = PHONE ? 'ph' : '';
     }
@@ -680,13 +680,6 @@
     D.text(T0.x + 44, T0.y - 6, '× ' + st.left, { size: fs(24), weight: 800, color: INK });
     D.text(T0.x, T0.y + 40, '사면체 블록 (끌어서 놓아요)', { size: fs(13), weight: 700, color: MUTED });
     if (ST.drag) { D.glow(ST.drag.x, ST.drag.y, 70, SKY, 0.22); tetraIcon(ST.drag.x, ST.drag.y, 40, 1); }
-    // 위쪽: 4가지 완성 현황
-    TYPES.forEach((k, i) => {
-      const x = (PHONE ? 70 : 150) + i * (PHONE ? 140 : 166), y = PHONE ? 710 : 580;
-      if (PHONE && false) return;
-      const ok = ST.done[k];
-      pill(x, y, (ok ? '✔ ' : '') + STRUCT_INFO[k].name, { bg: ok ? '#16a34a' : (k === ty ? '#e0f2fe' : '#fff'), color: ok ? '#fff' : INK, border: ok ? null : '#cfd8e3', size: fs(12) });
-    });
   }
   /* ---------- 광물 표본 ---------- */
   function drawSpecimen(id, x, y, p, t) {
@@ -711,7 +704,7 @@
       }
     } else if (id === 'biot') {
       for (let i = 0; i < 8; i++) {
-        const lift = i >= 5 ? p : 0, oy = 38 - i * 10 - lift * (i - 4) * 18, ox = lift * (i - 4) * 16, rot = lift * (i - 4) * 0.12;
+        const lift = i >= 5 ? p : 0, oy = 38 - i * 10 - lift * (i - 4) * 14, ox = lift * (i - 4) * 12, rot = lift * (i - 4) * 0.12;
         ctx.save(); ctx.translate(ox, oy); ctx.rotate(rot);
         D.roundRect(-42, -5, 84, 10, 4); const g = ctx.createLinearGradient(0, -5, 0, 5); g.addColorStop(0, '#6b5249'); g.addColorStop(1, '#2b1f1c'); ctx.fillStyle = g; ctx.fill(); ctx.strokeStyle = '#1b1210'; ctx.lineWidth = 1.5; ctx.stroke();
         ctx.fillStyle = 'rgba(255,255,255,.22)'; ctx.fillRect(-36, -3, 40, 2);
@@ -744,8 +737,10 @@
       D.shadow(() => { D.roundRect(P.x - P.w / 2, P.y - P.h / 2, P.w, P.h, 18); ctx.fillStyle = '#fff'; ctx.fill(); }, { blur: 8, y: 3 });
       ctx.strokeStyle = tested ? '#16a34a' : '#cfd8e3'; ctx.lineWidth = tested ? 3 : 2; D.roundRect(P.x - P.w / 2, P.y - P.h / 2, P.w, P.h, 18); ctx.stroke();
       D.text(P.x, P.y - P.h / 2 + fs(30), s.n, { size: fs(20), weight: 800, color: INK });
-      drawSpecimen(s.id, P.x, P.y - P.h / 2 + (PHONE ? 130 : 150), o.p, t);
-      const by = P.y - P.h / 2 + (PHONE ? 214 : 246);
+      ctx.save(); D.roundRect(P.x - P.w / 2 + 2, P.y - P.h / 2 + 2, P.w - 4, P.h - 4, 16); ctx.clip();
+      drawSpecimen(s.id, P.x, P.y - P.h / 2 + (PHONE ? 112 : 124), o.p, t);
+      ctx.restore();
+      const by = P.y - P.h / 2 + (PHONE ? 224 : 266);
       if (!tested) {
         pill(P.x, by, '🔨 눌러서 쪼개 보기', { bg: SKY, color: '#fff', size: fs(13) });
         D.text(P.x, by + fs(34), '(어떻게 부서질까요?)', { size: fs(12), weight: 700, color: MUTED });
@@ -758,8 +753,8 @@
         // 미니 구조
         const mb = structBlocks(s.type).map((b) => Object.assign({ a: 1 }, b));
         const msc = (PHONE ? 15 : 13) * (s.type === 'sheet' ? 1.15 : 1);
-        drawBlocks(mb, P.x, by + (PHONE ? 74 : 92), msc, { mono: true, faceA: 0.22 });
-        pill(P.x, by + (PHONE ? 130 : 156), STRUCT_INFO[s.type].name + ' 배열', { bg: '#fff', color: SKYD, border: SKY, size: fs(13) });
+        drawBlocks(mb, P.x, by + (PHONE ? 66 : 86), msc, { mono: true, faceA: 0.22 });
+        pill(P.x, by + (PHONE ? 118 : 148), STRUCT_INFO[s.type].name + ' 배열', { bg: '#fff', color: SKYD, border: SKY, size: fs(13) });
         ctx.restore();
       }
     });
@@ -928,7 +923,7 @@
     if (SO.drag) drawSortCard(SO.drag.card, t);
     const left = SO.cards.filter((c) => !c.bin).length;
     D.text(VW / 2, PHONE ? 436 : 450, left ? '광물 카드 ' + left + '장 · 끌어서 상자에 넣어요' : '모든 카드를 상자에 넣었어요 ✔', { size: fs(14), weight: 800, color: left ? MUTED : '#0b6b39' });
-    const ly = PHONE ? 710 : 580;
+    const ly = PHONE ? 722 : 590;
     D.sphere(VW / 2 - fs(130), ly, 9, SI, { gloss: false, shadow: false, outline: '#facc15', outlineWidth: 2 }); D.text(VW / 2 - fs(116), ly + 5, '규소(Si)', { size: fs(13), weight: 700, color: MUTED, align: 'left' });
     D.sphere(VW / 2 - fs(30), ly, 9, OX, { gloss: false, shadow: false }); D.text(VW / 2 - fs(16), ly + 5, '산소(O)', { size: fs(13), weight: 700, color: MUTED, align: 'left' });
     D.sphere(VW / 2 + fs(66), ly, 9, '#94a3b8', { gloss: false, shadow: false }); D.text(VW / 2 + fs(80), ly + 5, '그 밖의 원소', { size: fs(13), weight: 700, color: MUTED, align: 'left' });

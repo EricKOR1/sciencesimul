@@ -2580,8 +2580,7 @@ window.SCI_CATALOG = {
                 "이온 결정",
                 "전기 전도성",
                 "소금의 역할"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "h1-covalent-bond",
@@ -2602,8 +2601,7 @@ window.SCI_CATALOG = {
                 "분자 만들기",
                 "전도성 실험",
                 "결합 비교"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "h1-silicate",
@@ -2624,8 +2622,7 @@ window.SCI_CATALOG = {
                 "사면체",
                 "연결 방식",
                 "정리"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "h1-protein",
