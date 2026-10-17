@@ -45,9 +45,9 @@
   /* ---------- 시료(물질) 자료 ---------- */
   // 시료 크기는 모두 같음. 전류 I = 3 V ÷ (전구 3 Ω + 시료 저항), 시료 저항 = 비저항 × 10⁷ (같은 크기의 가는 시료)
   const MAT = [
-    { id: 'cu', name: '구리', rho: 1.7e-8 }, { id: 'fe', name: '철', rho: 1e-7 }, { id: 'al', name: '알루미늄 호일', rho: 2.8e-8 },
-    { id: 'gr', name: '연필심(흑연)', rho: 1e-5 }, { id: 'si', name: '규소 조각', rho: 2.3e3 }, { id: 'gn', name: '화강암 조각', rho: 1e8 },
-    { id: 'wd', name: '건조한 나무', rho: 1e10 }, { id: 'gl', name: '유리', rho: 1e12 }, { id: 'rb', name: '고무', rho: 1e13 }, { id: 'pl', name: '플라스틱', rho: 1e14 },
+    { id: 'cu', name: '구리', rho: 1.7e-8 }, { id: 'fe', name: '철', rho: 1e-7 }, { id: 'al', name: '알루미늄 호일', short: '알루미늄', rho: 2.8e-8 },
+    { id: 'gr', name: '연필심(흑연)', short: '연필심', rho: 1e-5 }, { id: 'si', name: '규소 조각', short: '규소', rho: 2.3e3 }, { id: 'gn', name: '화강암 조각', short: '화강암', rho: 1e8 },
+    { id: 'wd', name: '건조한 나무', short: '건조 나무', rho: 1e10 }, { id: 'gl', name: '유리', rho: 1e12 }, { id: 'rb', name: '고무', rho: 1e13 }, { id: 'pl', name: '플라스틱', rho: 1e14 },
   ];
   const MID = {}; MAT.forEach((m) => { MID[m.id] = m; m.I = 3 / (3 + m.rho * 1e7); m.tier = m.I >= 1e-3 ? 0 : m.I >= 1e-12 ? 1 : 2; });
   const TIER_NAME = ['전류가 잘 흐름', '전류가 조금 흐름', '전류가 거의 안 흐름'];
@@ -91,7 +91,7 @@
   /* ======================================================
      화면 ①-a: 전류 시험대 (전지 · 전구 · 전류계 · 시료 칸)
      ====================================================== */
-  const BG0 = () => (PHONE ? { x0: 50, x1: 470, y0: 78, y1: 244, g0: 180, g1: 340, br: 22, ar: 38, bx: 0.36 } : { x0: 86, x1: 714, y0: 86, y1: 292, g0: 300, g1: 500, br: 26, ar: 46, bx: 0.36 });
+  const BG0 = () => (PHONE ? { x0: 50, x1: 470, y0: 84, y1: 260, g0: 180, g1: 340, br: 22, ar: 40, bx: 0.36 } : { x0: 86, x1: 714, y0: 92, y1: 292, g0: 300, g1: 500, br: 26, ar: 50, bx: 0.36 });
   function loopPt(u, G) {
     const W = G.x1 - G.x0, H = G.y1 - G.y0, P = 2 * (W + H); let d = ((u % 1) + 1) % 1 * P;
     if (d < W) return { x: G.x0 + d, y: G.y0 };
@@ -100,8 +100,8 @@
     d -= W; return { x: G.x0, y: G.y1 - d };
   }
   const rackPos = (i) => {
-    if (!PHONE) return { x: 24 + (i % 5) * 154 + 72, y: 384 + Math.floor(i / 5) * 82 + 34, w: 140, h: 70 };
-    return { x: 8 + (i % 2) * 254 + 122, y: 304 + Math.floor(i / 2) * 62 + 28, w: 244, h: 56 };
+    if (!PHONE) return { x: 24 + (i % 5) * 154 + 72, y: 376 + Math.floor(i / 5) * 78 + 34, w: 140, h: 68 };
+    return { x: 8 + (i % 2) * 254 + 122, y: 338 + Math.floor(i / 2) * 62 + 28, w: 244, h: 56 };
   };
   const rackMat = (i) => MAT[S.test.order.indexOf(MAT[i].id) >= 0 ? i : i];
   function curCur() { const T = S.test; return T.cur ? MID[T.cur].I : 0; }
@@ -157,9 +157,9 @@
     battery(G.x0, mid, PHONE ? 34 : 42, PHONE ? 78 : 96);
     const bx = G.x0 + (G.x1 - G.x0) * 0.36;
     bulb(bx, G.y0, G.br, T.glowv);
-    D.text(bx, G.y0 - G.br - 12, '전구', { size: 13, color: '#64748b', weight: 800 });
-    D.dial(G.x1, mid, G.ar, T.needle, 0, 1, { label: 'A', color: '#e2464b', ticks: 5 });
-    D.text(G.x1, mid - G.ar - 12, '전류계', { size: 13, color: '#64748b', weight: 800 });
+    D.text(bx, G.y0 + G.br + 26, '전구', { size: 13, color: '#64748b', weight: 800 });
+    D.dial(G.x1, mid, G.ar, T.needle, 0, 1, { label: 'A', color: '#e2464b', ticks: 2 });
+    D.text(G.x1, mid - G.ar - 10, '전류계', { size: 13, color: '#64748b', weight: 800 });
     // 시료 칸
     ctx.fillStyle = '#334155'; ctx.beginPath(); ctx.arc(G.g0, G.y1, 8, 0, 6.283); ctx.fill(); ctx.beginPath(); ctx.arc(G.g1, G.y1, 8, 0, 6.283); ctx.fill();
     D.sphere(G.g0, G.y1, 7, '#94a3b8', { gloss: false }); D.sphere(G.g1, G.y1, 7, '#94a3b8', { gloss: false });
@@ -180,7 +180,7 @@
     const txt = !T.cur ? '전류 0 A' : I >= 1e-12 ? 'I = ' + sci(I) : 'I < 10' + sup(-12) + ' A  (측정 한계 이하)';
     D.label(PHONE ? VW - 130 : rx - 40, ry, txt, { bg: !T.cur ? '#94a3b8' : I >= 1e-3 ? '#16a34a' : I >= 1e-12 ? '#d97706' : '#64748b', size: PHONE ? 12 : 14 });
     // 시료 선반
-    const top = PHONE ? 276 : 352;
+    const top = PHONE ? 312 : 352;
     D.text(PHONE ? 14 : 24, top + 6, '🧪 시료 10가지 (모두 같은 모양 · 같은 크기)', { size: PHONE ? 12.5 : 13.5, weight: 800, color: '#7c2d12', align: 'left' });
     for (let i = 0; i < 10; i++) {
       const m = MAT[i], q = rackPos(i), on = T.cur === m.id, done = T.meas[m.id], hv = S.hover === m.id;
@@ -193,7 +193,7 @@
       if (done) D.text(q.x + q.w / 2 - 12, q.y - q.h / 2 + 16, '✓', { size: 14, weight: 800, color: '#16a34a' });
       ctx.restore();
     }
-    D.text(VW / 2, VH - 10, T.cur ? '전류계 바늘과 값(A)을 읽고 다른 시료로 바꿔 봐요' : '👆 시료 카드를 누르거나 위 시료 칸으로 끌어다 놓아요', { size: PHONE ? 12 : 13.5, weight: 700, color: '#64748b' });
+    D.text(VW / 2, VH - 8, T.cur ? '전류계 바늘과 값(A)을 읽고 다른 시료로 바꿔 봐요' : '👆 시료 카드를 누르거나 위 시료 칸으로 끌어다 놓아요', { size: PHONE ? 12 : 13.5, weight: 700, color: '#64748b' });
   }
 
   /* ======================================================
@@ -256,7 +256,7 @@
     D.shadow(() => { ctx.fillStyle = '#fff'; rr(-CHW / 2, -CHH / 2, CHW, CHH, 10).fill(); }, { blur: 5 + lift * 8, y: 2 + lift * 4 });
     ctx.strokeStyle = c.bad ? '#e2464b' : c.bin >= 0 ? TIER_COL[c.bin] : '#e2d6c8'; ctx.lineWidth = c.bad ? 3.5 : 2; rr(-CHW / 2, -CHH / 2, CHW, CHH, 10).stroke();
     sample(c.id, -CHW / 2 + 18, 0, 26, 12, null);
-    D.text(-CHW / 2 + 36, -3, m.name.replace('(흑연)', ''), { size: 12.5, weight: 800, color: '#1b2333', align: 'left' });
+    D.text(-CHW / 2 + 36, -3, m.short || m.name, { size: 12.5, weight: 800, color: '#1b2333', align: 'left' });
     D.text(-CHW / 2 + 36, 13, S.test.meas[c.id] || game && game.free ? (m.I >= 1e-12 ? sci(m.I) : '< 10⁻¹² A') : '?', { size: 11, weight: 700, color: '#475569', align: 'left' });
     ctx.restore();
   }
@@ -265,7 +265,7 @@
     if (un.length) return '아직 칸에 놓지 않은 시료가 <b>' + un.length + '개</b> 있어요.';
     const bad = T.chips.filter((c) => c.bin !== MID[c.id].tier);
     T.chips.forEach((c) => { const isBad = bad.includes(c); if (isBad && !c.bad) c.shake = 0.5; c.bad = isBad; });
-    if (bad.length) return bad.map((c) => '<b>' + MID[c.id].name.replace('(흑연)', '') + '</b>').join(', ') + '의 전류 값을 다시 읽어 보세요.';
+    if (bad.length) return bad.map((c) => '<b>' + (MID[c.id].short || MID[c.id].name) + '</b>').join(', ') + '의 전류 값을 다시 읽어 보세요.';
     T.sorted = true; return true;
   }
 
@@ -328,21 +328,22 @@
     M.e.forEach((e) => { D.glow(e.x, e.y, 13, '#60a5fa', 0.5); D.sphere(e.x, e.y, 6, '#2563eb', { shadow: false }); });
     // 설명 라벨
     const msg = mat === 'cu' ? '원자에서 떨어져 나온 자유전자가 이온 사이를 자유롭게 움직여요' : mat === 'gl' ? '전자가 모두 원자에 단단히 묶여 있어서 이동하지 못해요' : '자유전자가 아주 조금뿐이에요';
-    D.label(VW / 2, W.y + W.h + 30, msg, { bg: '#7c2d12', size: PHONE ? 12 : 14 });
+    const aby = W.y + W.h + 24;
+    D.label(VW / 2, aby + 32, msg, { bg: '#7c2d12', size: PHONE ? 12 : 14 });
     // 전류 표시
-    const by = W.y + W.h + (PHONE ? 78 : 76), bw = PHONE ? 340 : 480, bx = VW / 2 - bw / 2;
+    const by = aby + (PHONE ? 80 : 78), bw = PHONE ? 340 : 480, bx = VW / 2 - bw / 2;
     const frac = M.volt ? clamp(n / 40, 0, 1) : 0;
     D.text(bx - 8, by + 6, '전류', { size: 14, weight: 800, color: '#475569', align: 'right' });
     ctx.fillStyle = '#e8e2d8'; rr(bx, by - 8, bw, 22, 11).fill();
     if (frac > 0) { const gg = ctx.createLinearGradient(bx, 0, bx + bw, 0); gg.addColorStop(0, '#fde68a'); gg.addColorStop(1, '#f26b3a'); ctx.fillStyle = gg; rr(bx, by - 8, Math.max(22, bw * frac), 22, 11).fill(); }
     D.text(bx + bw + 8, by + 8, M.volt ? (n === 0 ? '0 (흐르지 않음)' : n <= 4 ? '아주 조금' : '많이') : '전압 꺼짐', { size: 13, weight: 800, color: '#475569', align: 'left' });
-    // 전압 · 방향 화살표
+    // 전압 · 방향 화살표 (전자는 −극 → +극, 전류 방향은 반대)
     if (M.volt) {
-      D.arrow(W.x + 40, W.y - 28 + 6, W.x + 180, W.y - 28 + 6, { color: '#2563eb', width: 3, label: '', head: 12 });
-      D.text(W.x + 190, W.y - 18 + 6, '전자의 이동 (−극 → +극)', { size: PHONE ? 11 : 12.5, weight: 800, color: '#2563eb', align: 'left' });
-      D.arrow(W.x + W.w - 40, W.y + W.h + 20 - 0, W.x + W.w - 180, W.y + W.h + 20, { color: '#dc2626', width: 3, head: 12 });
+      D.arrow(W.x + 20, W.y - 24, W.x + 130, W.y - 24, { color: '#2563eb', width: 3, head: 12 });
+      D.text(W.x + 140, W.y - 19, '전자의 이동 (−극 → +극)', { size: PHONE ? 11 : 12.5, weight: 800, color: '#2563eb', align: 'left' });
+      D.arrow(W.x + W.w - 20, aby - 4, W.x + W.w - 130, aby - 4, { color: '#dc2626', width: 3, head: 12 });
+      D.text(W.x + W.w - 140, aby + 1, '전류의 방향 (+극 → −극)', { size: PHONE ? 11 : 12.5, weight: 800, color: '#dc2626', align: 'right' });
     }
-    if (M.volt) D.text(W.x + W.w - 190, W.y + W.h + 24, '전류 방향', { size: PHONE ? 11 : 12.5, weight: 800, color: '#dc2626', align: 'right' });
     // 범례
     D.text(VW / 2, VH - 12, mat === 'cu' ? '● 파란 구슬 : 자유전자(−)    ◉ 금색 : 원자가 전자를 내놓은 이온(+)' : '● 파란 구슬 : 전자(−)    ◉ 회색 : 원자 — 고리 위의 전자는 원자에 묶여 있어요', { size: PHONE ? 10.5 : 12.5, weight: 700, color: '#64748b' });
   }
@@ -434,14 +435,14 @@
     D.label(W.x + W.w / 2, W.y + W.h + 26, E.d ? '불순물(인): ' + DNAME[E.d] + ' (그림은 크게 과장했어요)' : '순수한 규소 : 자유전자가 거의 없어요', { bg: '#7c2d12', size: PHONE ? 11.5 : 13.5 });
     // 오른쪽 계기
     const mx = PHONE ? 20 : W.x + W.w + 36, my = PHONE ? W.y + W.h + 56 : 70, mw = PHONE ? 480 : 188;
-    D.shadow(() => { ctx.fillStyle = '#fff'; rr(mx, my, mw, PHONE ? 130 : 354, 16).fill(); }, { blur: 7, y: 3 });
-    ctx.strokeStyle = '#e2d6c8'; ctx.lineWidth = 2; rr(mx, my, mw, PHONE ? 130 : 354, 16).stroke();
-    D.text(mx + mw / 2, my + 28, '전류의 크기 (기준 = 순수 규소, 20 °C)', { size: PHONE ? 12.5 : 12.5, weight: 800, color: '#475569' });
+    D.shadow(() => { ctx.fillStyle = '#fff'; rr(mx, my, mw, PHONE ? 176 : 354, 16).fill(); }, { blur: 7, y: 3 });
+    ctx.strokeStyle = '#e2d6c8'; ctx.lineWidth = 2; rr(mx, my, mw, PHONE ? 176 : 354, 16).stroke();
+    D.text(mx + mw / 2, my + 26, '전류의 크기', { size: 14, weight: 800, color: '#475569' }); D.text(mx + mw / 2, my + 44, '(순수 규소 20 °C = 1)', { size: 11.5, weight: 700, color: '#94a3b8' });
     const big = relText(E.relv);
-    D.text(mx + mw / 2, my + (PHONE ? 68 : 84), '×' + big, { size: big.length > 9 ? 22 : PHONE ? 32 : 34, weight: 800, color: E.rel >= 100 ? '#16a34a' : '#f26b3a' });
-    D.text(mx + mw / 2, my + (PHONE ? 90 : 112), E.rel >= 1e4 ? '(수만 배 이상!)' : E.rel >= 100 ? '(100배 이상)' : E.rel >= 10 ? '(10배 이상)' : '', { size: 13, weight: 800, color: '#15803d' });
+    D.text(mx + mw / 2, my + (PHONE ? 90 : 84), '×' + big, { size: big.length > 9 ? 22 : PHONE ? 32 : 34, weight: 800, color: E.rel >= 100 ? '#16a34a' : '#f26b3a' });
+    D.text(mx + mw / 2, my + (PHONE ? 114 : 112), E.rel >= 1e4 ? '(수만 배 이상!)' : E.rel >= 100 ? '(100배 이상)' : E.rel >= 10 ? '(10배 이상)' : '', { size: 13, weight: 800, color: '#15803d' });
     // 로그 막대
-    const lx = mx + 24, lw = mw - 48, ly = my + (PHONE ? 104 : 140), lg = clamp(Math.log10(E.relv) / 7, 0, 1);
+    const lx = mx + 24, lw = mw - 48, ly = my + (PHONE ? 130 : 140), lg = clamp(Math.log10(E.relv) / 7, 0, 1);
     ctx.fillStyle = '#e8e2d8'; rr(lx, ly, lw, 16, 8).fill();
     const gg = ctx.createLinearGradient(lx, 0, lx + lw, 0); gg.addColorStop(0, '#fde68a'); gg.addColorStop(1, '#ef4444'); ctx.fillStyle = gg; rr(lx, ly, Math.max(16, lw * lg), 16, 8).fill();
     ['1', '10²', '10⁴', '10⁶'].forEach((s, i) => D.text(lx + lw * (i * 2 / 7), ly + 32, s, { size: 11.5, weight: 700, color: '#94a3b8' }));
@@ -458,10 +459,10 @@
      화면 ④-a: 부품에 알맞은 소재 고르기
      ====================================================== */
   const PARTS = [
-    { id: 'wire', name: '전선', need: '전류가 잘 흐르게 해야 해요', ok: ['cu'] },
-    { id: 'sheath', name: '전선 피복', need: '전류가 밖으로 새지 않게 막아요', ok: ['rb', 'pl'] },
-    { id: 'chip', name: '스마트폰 칩', need: '전류를 켜고 끄는 스위치를 만들어요', ok: ['si'] },
-    { id: 'glove', name: '전기 안전 장갑', need: '전기가 몸으로 흐르지 않게 막아요', ok: ['rb'] },
+    { id: 'wire', name: '전선', need: '전류가 잘 흐르게 해요', ok: ['cu'] },
+    { id: 'sheath', name: '전선 피복', need: '전류가 새지 않게 막아요', ok: ['rb', 'pl'] },
+    { id: 'chip', name: '스마트폰 칩', need: '전류를 켜고 끄는 스위치', ok: ['si'] },
+    { id: 'glove', name: '전기 안전 장갑', need: '전기가 몸에 안 흐르게 막아요', ok: ['rb'] },
   ];
   const TOKENS = ['cu', 'fe', 'rb', 'pl', 'si', 'gl'];
   const PCOL = { cu: '#d2733f', fe: '#64748b', rb: '#334155', pl: '#60a5fa', si: '#475569', gl: '#7dd3fc' };
@@ -549,10 +550,10 @@
      화면 ④-b: 모래 → 규소 → 웨이퍼 → 칩
      ====================================================== */
   const FAB = [
-    { id: 'sand', name: '모래', sub: '규소와 산소가 결합한 규산염 물질' },
-    { id: 'ingot', name: '정제한 규소', sub: '순도가 매우 높은 규소 덩어리' },
-    { id: 'wafer', name: '웨이퍼', sub: '규소를 얇게 자른 둥근 판' },
-    { id: 'chip', name: '반도체 칩', sub: '회로와 스위치를 새겨 넣은 부품' },
+    { id: 'sand', name: '모래', sub: '규산염 (규소 + 산소)' },
+    { id: 'ingot', name: '정제한 규소', sub: '순도 높은 규소 덩어리' },
+    { id: 'wafer', name: '웨이퍼', sub: '얇게 자른 둥근 판' },
+    { id: 'chip', name: '반도체 칩', sub: '회로를 새긴 부품' },
   ];
   function fabSlot(i) { return PHONE ? { x: 18 + (i % 2) * 250, y: 64 + Math.floor(i / 2) * 118, w: 230, h: 104 } : { x: 14 + i * 196, y: 62, w: 184, h: 130 }; }
   function fabHome(i) { return PHONE ? { x: 18 + (i % 2) * 250 + 115, y: 340 + Math.floor(i / 2) * 84 + 36 } : { x: 14 + i * 196 + 92, y: 252 }; }
@@ -582,11 +583,11 @@
     if (A.fabOK && A.sw.length === 0) { for (let i = 0; i < 66; i++) A.sw.push({ on: rand() < 0.5, t: rand() * 2 }); }
     if (A.fabOK) A.sw.forEach((s) => { s.t -= dt; if (s.t <= 0) { s.on = !s.on; s.t = 0.4 + rand() * 1.4; } });
   }
-  function fabDrop(c, p) {
+  function fabDrop(c, p, from) {
     let k = -1;
     for (let i = 0; i < 4; i++) { const s = fabSlot(i); if (p.x >= s.x && p.x <= s.x + s.w && p.y >= s.y && p.y <= s.y + s.h) k = i; }
     const A = S.apply;
-    if (k >= 0) { const other = A.fab.find((o) => o !== c && o.slot === k); if (other) other.slot = c.slot; c.slot = k; Sound.tick(); } else c.slot = -1;
+    if (k >= 0) { const other = A.fab.find((o) => o !== c && o.slot === k); if (other) other.slot = from != null ? from : -1; c.slot = k; Sound.tick(); } else c.slot = -1;
     c.bad = false; SciSim.tween(c, { lift: 0 }, { duration: 0.15 }); A.fabOK = false; fabLayout(); updateCtl();
   }
   function fabCheck() {
@@ -604,7 +605,7 @@
     for (let i = 0; i < 4; i++) {
       const s = fabSlot(i);
       ctx.save(); ctx.strokeStyle = A.fabOK ? '#16a34a' : '#cbbfae'; ctx.lineWidth = 2.5; ctx.setLineDash([7, 6]); rr(s.x, s.y, s.w, s.h, 14).stroke(); ctx.restore();
-      D.label(s.x + 22, s.y + 14, String(i + 1) + '단계', { bg: A.fabOK ? '#16a34a' : '#94a3b8', size: 12 });
+      D.label(s.x + 28, s.y - 9, String(i + 1) + '단계', { bg: A.fabOK ? '#16a34a' : '#94a3b8', size: 12 });
       if (!PHONE && i < 3) D.arrow(s.x + s.w + 3, s.y + s.h / 2, s.x + s.w + 12, s.y + s.h / 2, { color: '#94a3b8', width: 3, head: 9 });
     }
     A.fab.forEach((c) => { if (S.drag && S.drag.fab === c) return; drawFabCard(c, t); });
@@ -632,8 +633,8 @@
     ctx.save(); ctx.translate(c.x + sh, c.y); ctx.scale(1 + lift * 0.07, 1 + lift * 0.07);
     D.shadow(() => { ctx.fillStyle = '#fff'; rr(-w / 2, -h / 2, w, h, 12).fill(); }, { blur: 5 + lift * 9, y: 2 + lift * 4 });
     ctx.strokeStyle = c.bad ? '#e2464b' : c.slot >= 0 ? '#f26b3a' : '#e2d6c8'; ctx.lineWidth = c.bad ? 3.5 : 2.5; rr(-w / 2, -h / 2, w, h, 12).stroke();
-    if (PHONE) { fabIcon(c.id, -w / 2 + 38, 0, 0.7, t); D.text(-w / 2 + 78, -8, F.name, { size: 15, weight: 800, color: '#1b2333', align: 'left' }); D.text(-w / 2 + 78, 12, F.sub.length > 14 ? F.sub.slice(0, 14) + '…' : F.sub, { size: 11, weight: 700, color: '#64748b', align: 'left' }); }
-    else { fabIcon(c.id, 0, -22, 0.85, t); D.text(0, 30, F.name, { size: 15, weight: 800, color: '#1b2333' }); D.text(0, 47, F.sub.length > 12 ? F.sub.slice(0, 12) + '…' : F.sub, { size: 11, weight: 700, color: '#64748b' }); }
+    if (PHONE) { fabIcon(c.id, -w / 2 + 38, 0, 0.7, t); D.text(-w / 2 + 78, -8, F.name, { size: 15, weight: 800, color: '#1b2333', align: 'left' }); D.text(-w / 2 + 78, 12, F.sub, { size: 11, weight: 700, color: '#64748b', align: 'left' }); }
+    else { fabIcon(c.id, 0, -22, 0.85, t); D.text(0, 30, F.name, { size: 15, weight: 800, color: '#1b2333' }); D.text(0, 47, F.sub, { size: 11.5, weight: 700, color: '#64748b' }); }
     ctx.restore();
   }
 
@@ -707,7 +708,7 @@
         return false;
       }
       if (S.mode === 'apply' && S.sub === 'chip') {
-        const cs = S.apply.fab; for (let i = cs.length - 1; i >= 0; i--) { const c = cs[i], w = PHONE ? 220 : 170, h = PHONE ? 92 : 114; if (Math.abs(p.x - c.x) <= w / 2 && Math.abs(p.y - c.y) <= h / 2) { c.free = true; if (c.slot >= 0) c.slot = -1; S.drag = { kind: 'fab', fab: c, ox: p.x - c.x, oy: p.y - c.y }; cs.splice(i, 1); cs.push(c); SciSim.tween(c, { lift: 1 }, { duration: 0.12 }); Sound.click(); S.apply.fabOK = false; return true; } }
+        const cs = S.apply.fab; for (let i = cs.length - 1; i >= 0; i--) { const c = cs[i], w = PHONE ? 220 : 170, h = PHONE ? 92 : 114; if (Math.abs(p.x - c.x) <= w / 2 && Math.abs(p.y - c.y) <= h / 2) { c.free = true; S.drag = { kind: 'fab', fab: c, ox: p.x - c.x, oy: p.y - c.y, from: c.slot }; if (c.slot >= 0) c.slot = -1; cs.splice(i, 1); cs.push(c); SciSim.tween(c, { lift: 1 }, { duration: 0.12 }); Sound.click(); S.apply.fabOK = false; return true; } }
       }
       return false;
     },
@@ -723,7 +724,7 @@
         const G = BG0(); const nearGap = Math.hypot(p.x - (G.g0 + G.g1) / 2, p.y - G.y1) < 120 || p.y < G.y1 + 60;
         if (!d.moved || nearGap) placeSample(d.id);
       } else if (d.kind === 'chip') { d.chip.free = false; chipDrop(d.chip, { x: d.chip.x, y: d.chip.y }); }
-      else if (d.kind === 'fab') { d.fab.free = false; fabDrop(d.fab, { x: d.fab.x, y: d.fab.y }); }
+      else if (d.kind === 'fab') { d.fab.free = false; fabDrop(d.fab, { x: d.fab.x, y: d.fab.y }, d.from); }
       else if (d.kind === 'tok') {
         if (!d.moved) { S.apply.sel = S.apply.sel === d.id ? '' : d.id; return; }
         for (let i = 0; i < 4; i++) if (inRect(p, partRect(i))) { placeToken(d.id, i); return; }
