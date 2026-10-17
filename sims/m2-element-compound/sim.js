@@ -1433,8 +1433,9 @@
       if (it.tested) {
         const dec = !it.el, k = outBack(Math.min(1, it.badgeT / 0.3));
         ctx.save(); ctx.translate(cp.x + CELL.w - 6, cp.y + 6); ctx.scale(k, k);
-        ctx.fillStyle = dec ? '#0f8a4b' : '#6b7486'; D.roundRect(-52, -9, 56, 18, 9); ctx.fill();
-        txt(dec ? '✔ 분해됨' : '✖ 분해 안 됨', -24, 4.5, 11.5, '#fff', 'center', 800);
+        ctx.font = D.font(11.5, 800); const bw = Math.ceil(ctx.measureText(dec ? '✔ 분해됨' : '✖ 분해 안 됨').width) + 12;   // 글자 길이에 맞춰 배지 폭을 정해요
+        ctx.fillStyle = dec ? '#0f8a4b' : '#6b7486'; D.roundRect(4 - bw, -9, bw, 18, 9); ctx.fill();
+        txt(dec ? '✔ 분해됨' : '✖ 분해 안 됨', 4 - bw / 2, 4.5, 11.5, '#fff', 'center', 800);
         ctx.restore();
       }
     });
@@ -1596,6 +1597,11 @@
       const bx = BOX.find((b) => it.x > b.x - 10 && it.x < b.x + b.w + 10 && it.y > b.y && it.y < b.y + b.h + 6);
       if (bx) { dcDropInBox(it, bx); return; }
       if (inDevice({ x: it.x, y: it.y })) {
+        if (DC.run) {                                   // 분해하는 동안에는 다른 물질을 넣을 수 없어요 (돌고 있던 물질이 밀려나지 않게)
+          it.state = 'shelf'; dcRefresh();
+          say(CHAMBER.x, 210, '분해하는 중이에요. 끝난 뒤에 넣어요!', { bg: COL.warn, maxW: 240, dur: 2.4 });
+          return;
+        }
         if (DC.loaded && DC.loaded !== it) dcPutBack(DC.loaded);
         it.state = 'dev'; DC.loaded = it;
         okFx(CHAMBER.x, 250, COL.sub); sfx.thud();

@@ -943,6 +943,35 @@
     b.p.forEach((q, i) => { lon[i] = q[0] / 10; lat[i] = q[1] / 10; mn = Math.min(mn, lon[i]); mx = Math.max(mx, lon[i]); });
     return { n, lon, lat, minLon: mn, maxLon: mx, sub: b.sub };
   });
+  // 동아프리카 열곡대: 아프리카판이 갈라지는 중인 곳이라 화산·지진이 많아요 (경계 자료에 빠져 있어서 선을 더해 줘요)
+  [[[41, 11.5], [39.5, 9], [38.5, 6.5], [36.5, 3.8], [36, 1], [36.2, -1.5], [35.7, -4], [34.8, -7]],
+    [[30.5, 2.5], [29.8, 0.5], [29.3, -2], [29.5, -5], [30.5, -8], [33, -9.5], [34.5, -12], [35.3, -16.5]]].forEach((pts) => {
+    const n = pts.length, lon = new Float32Array(n), lat = new Float32Array(n);
+    let mn = 1e9, mx = -1e9;
+    pts.forEach((q, i) => { lon[i] = q[0]; lat[i] = q[1]; mn = Math.min(mn, q[0]); mx = Math.max(mx, q[0]); });
+    PL_LINE.push({ n, lon, lat, minLon: mn, maxLon: mx, sub: 0 });
+  });
+  // 지진·화산이 '지도에 그려진' 판 경계에서 5° 안(약 550 km)에 있는지 직접 계산해요 (화면에 쓰는 비율과 그림이 어긋나지 않도록)
+  const NEAR_DEG = 5;
+  let NEAR_DONE = false;
+  function ensureNear() {
+    if (NEAR_DONE) return; NEAR_DONE = true;
+    const pts = [];
+    PL_LINE.forEach((ln) => {
+      for (let i = 0; i < ln.n - 1; i++) {
+        const steps = Math.max(1, Math.ceil(Math.hypot(ln.lon[i + 1] - ln.lon[i], ln.lat[i + 1] - ln.lat[i])));
+        for (let k = 0; k <= steps; k++) { const f = k / steps, v = toVec(ln.lon[i] + (ln.lon[i + 1] - ln.lon[i]) * f, ln.lat[i] + (ln.lat[i + 1] - ln.lat[i]) * f); pts.push(v[0], v[1], v[2]); }
+      }
+    });
+    const th = Math.cos(NEAR_DEG * DEG), np = pts.length / 3;
+    const flag = (lon, lat) => {
+      const v = toVec(lon, lat);
+      for (let j = 0; j < np; j++) if (v[0] * pts[j * 3] + v[1] * pts[j * 3 + 1] + v[2] * pts[j * 3 + 2] > th) return 1;
+      return 0;
+    };
+    for (let i = 0; i < NQ; i++) qNear[i] = flag(qLon[i], qLat[i]);
+    for (let i = 0; i < NV; i++) vNear[i] = flag(vLon[i], vLat[i]);
+  }
   // 판의 움직임 화살표: [경도, 위도, 방위(북쪽 0°, 시계 방향), 길이(상대)]
   const PL_ARROWS = [[-165, 6, 312, 1.25], [-100, 42, 250, 0.5], [-60, -8, 272, 0.55], [106, 62, 108, 0.45], [24, -8, 38, 0.75], [130, -24, 12, 1.0], [-98, -14, 84, 0.95], [131, 12, 318, 0.7]];
   const PL_MARK = {
@@ -1133,9 +1162,10 @@
     const m = PL_MARK[kind], cx = x + w / 2, cy = y + h / 2;
     ctx.save(); roundRect(ctx, x, y, w, h, 12); ctx.clip();
     const g = ctx.createLinearGradient(0, y, 0, y + h); g.addColorStop(0, '#d9eefb'); g.addColorStop(1, '#bfe0f5'); ctx.fillStyle = g; ctx.fillRect(x, y, w, h);
-    const ph = RM ? 0.5 : 0.5 - 0.5 * Math.cos(((t * 0.55) % 1) * TAU);       // 0~1~0
+    // 화살표 방향으로만 움직이고(0→1), 한 번 끝나면 살짝 사라졌다가 처음부터 다시 움직여요 (화살표와 반대로 움직이지 않도록)
+    const cyc = RM ? 0.5 : (t * 0.5) % 1, ph = cyc, fade = RM ? 1 : Math.min(1, cyc * 7, (1 - cyc) * 7);
     const sw = w * 0.34, sh = h * 0.5, A = '#7aa7e8', B = '#f0a96a';
-    const slab = (sx, sy, col) => { ctx.fillStyle = 'rgba(20,50,90,.2)'; roundRect(ctx, sx + 2, sy + 4, sw, sh, 8); ctx.fill(); ctx.fillStyle = col; roundRect(ctx, sx, sy, sw, sh, 8); ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(20,40,70,.45)'; ctx.stroke(); };
+    const slab = (sx, sy, col) => { ctx.save(); ctx.globalAlpha = fade; ctx.fillStyle = 'rgba(20,50,90,.2)'; roundRect(ctx, sx + 2, sy + 4, sw, sh, 8); ctx.fill(); ctx.fillStyle = col; roundRect(ctx, sx, sy, sw, sh, 8); ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(20,40,70,.45)'; ctx.stroke(); ctx.restore(); };
     const ar = (x0, y0, x1, y1) => arrowShape(ctx, x0, y0, x1, y1, 5, '#1b2333', t);
     if (kind === 'div') {
       const d = 4 + ph * 18;
@@ -1146,7 +1176,7 @@
       slab(cx - d - sw, cy - sh / 2, A); slab(cx + d, cy - sh / 2, B);
       ar(cx - sw - d - 30, cy, cx - sw - d + 6, cy); ar(cx + sw + d + 30, cy, cx + sw + d - 6, cy);
     } else {
-      const d = (ph - 0.5) * 24, ax = cx - sw - 3, bx = cx + 3, ay = cy - sh / 2 + d, by = cy - sh / 2 - d;
+      const d = (0.5 - ph) * 24, ax = cx - sw - 3, bx = cx + 3, ay = cy - sh / 2 + d, by = cy - sh / 2 - d;
       slab(ax, ay, A); slab(bx, by, B);
       ar(ax + sw * 0.5, ay + sh * 0.84, ax + sw * 0.5, ay + sh * 0.16); ar(bx + sw * 0.5, by + sh * 0.16, bx + sw * 0.5, by + sh * 0.84);
     }
@@ -1182,7 +1212,8 @@
     softShadow(ctx, H.x, H.y, H.w, H.h, 14, { blur: 12, a: 0.25 });
     ctx.fillStyle = 'rgba(255,255,255,.96)'; roundRect(ctx, H.x, H.y, H.w, H.h, 14); ctx.fill();
     const c = cityCount();
-    // 경계 근처 비율
+    // 경계 근처 비율 (그려진 판 경계 5° 안 = 약 550 km)
+    ensureNear();
     let near = 0, cnt = 0;
     for (let i = 0; i < D.nq; i++) { near += qNear[i]; cnt++; }
     for (let i = 0; i < D.nv; i++) { near += vNear[i]; cnt++; }
@@ -1202,7 +1233,7 @@
     } else {
       let msg;
       if (P.view === 0) msg = '지진과 화산이 일어난 곳이 띠 모양으로 이어져 있어요. 왜 이런 모양일까요? 위의 [판 경계]를 눌러 겹쳐 봐요.';
-      else if (P.view === 1) msg = '지진과 화산은 판의 경계를 따라 일어나요. 표시된 자료의 약 ' + pct + ' %가 경계 가까이(약 300 km 안)에 있어요.';
+      else if (P.view === 1) msg = '지진과 화산은 판의 경계를 따라 일어나요. 표시된 자료의 약 ' + pct + ' %가 경계 가까이(약 550 km 안)에 있어요.';
       else msg = '판은 화살표 방향으로 움직여요. 경계에서 판들이 멀어지거나, 가까워지거나, 어긋나요. 지도의 동그란 표시를 눌러 보세요.';
       ctx.fillStyle = '#1b2333'; ctx.font = '700 ' + Math.round(16 * Math.min(1.1, L.fs)) + 'px ' + FONT;
       const lines = wrapLines(ctx, msg, H.w - 28);
@@ -1658,7 +1689,7 @@
         {
           title: '➡ 판은 어떻게 움직일까요?',
           goal: '[판 움직임]을 눌러 판이 움직이는 방향을 보고, 지도의 동그란 표시 <b>3곳</b>을 눌러 경계에서 판이 어떻게 움직이는지 확인해요.',
-          hint: '태평양 동쪽 바다 한가운데, 일본 가까이, 미국 서쪽 바닷가에 있는 동그란 표시를 하나씩 눌러 봐요.',
+          hint: '태평양 동쪽 바다 한가운데, 남아메리카 서쪽 바닷가, 미국 서쪽 바닷가에 있는 동그란 표시를 하나씩 눌러 봐요.',
           setup() { setScene('plates', true); ensureData(900); const P = S.pl; if (P.view < 1) plSetView(1); P.found = { div: false, conv: false, trans: false }; P.inset = null; S.hintPlay = true; syncControls(); },
           check: () => S.scene === 'plates' && S.pl.view === 2 && foundN() >= 3,
           hold: 1.0,

@@ -1324,7 +1324,7 @@
   const FG = PHONE
     ? { px: 62, py: 84, x0: 174, x1: 502, ys: 170, yb: 396, rimY: 136 }
     : { px: 100, py: 104, x0: 286, x1: 764, ys: 218, yb: 486, rimY: 168 };
-  const FPOS = [[0.66, 0.62], [0.36, 0.78], [0.82, 0.44], [0.52, 0.5]];
+  const FPOS = [[0.66, 0.62], [0.54, 0.76], [0.82, 0.44], [0.4, 0.5]];     // 눈에 보이는 위치를 겨냥한 빛이 수면(탱크 안쪽)에 닿을 수 있는 자리만 써요
   const fishAt = (i) => { const f = FPOS[i % FPOS.length]; return { x: FG.x0 + f[0] * (FG.x1 - FG.x0), y: FG.ys + f[1] * (FG.yb - FG.ys) }; };
   const FSH = {
     qx: FG.x0 + 0.12 * (FG.x1 - FG.x0), qv: 0, q0: 0, armed: false, drag: false, lift: 0, dragged: false,

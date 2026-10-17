@@ -871,7 +871,7 @@
       const h = hMax * clamp(v / 100, 0, 1);
       ctx.fillStyle = '#e8eef5'; D.roundRect(cx - 28, base - hMax, 56, hMax, 10); ctx.fill();
       const g = lgrad(0, base - h, 0, base, [[0, shade(col, 0.25)], [1, col]]);
-      ctx.fillStyle = g; D.roundRect(cx - 28, base - Math.max(h, 8), 56, Math.max(h, 8), 10); ctx.fill();
+      if (v > 0.5) { ctx.fillStyle = g; D.roundRect(cx - 28, base - Math.max(h, 6), 56, Math.max(h, 6), 10); ctx.fill(); }
       text(cx, base - h - 8, Math.round(v) + '', { size: 17, weight: 800, color: col });
       text(cx, base + 20, name, { size: 14, weight: 800, color: COL.ink });
     };
@@ -963,7 +963,7 @@
       text(x, y - 8, label, { size: 14, weight: 800, align: 'left', color: COL.ink });
       text(x + w, y - 8, val, { size: 13.5, weight: 800, align: 'right', color: col });
       ctx.fillStyle = '#e8eef5'; D.roundRect(x, y, w, 22, 11); ctx.fill();
-      ctx.fillStyle = col; D.roundRect(x, y, Math.max(11, w * clamp(v / 100, 0, 1)), 22, 11); ctx.fill();
+      ctx.fillStyle = col; D.roundRect(x, y, Math.max(3, w * clamp(v / 100, 0, 1)), 22, 11); ctx.fill();
     };
     if (!PHONE) {
       text(p.x + p.w / 2, p.y + 28, '밤에 내놓는 이산화 탄소', { size: 16, weight: 800, color: '#14532d' });
@@ -998,7 +998,7 @@
       for (let k = 0; k < 10; k++) hs.push([104 + (k % 5) * 148 + 0, k < 5 ? 404 : 458]);
     } else {
       sw = 190; sh = 44; cx1 = 119; cx2 = 321; rowY = (i) => 92 + i * 64;
-      Object.assign(TBG, { panel: { x: 8, y: 6, w: 424, h: 376 }, head: [[cx1, 30], [cx2, 30]], rowLabel: (i) => ({ x: 24, y: rowY(i) - 34, align: 'left' }), tray: { x: 8, y: 390, w: 424, h: 292 }, cap: [24, 412] });
+      Object.assign(TBG, { panel: { x: 8, y: 6, w: 424, h: 376 }, head: [[cx1, 30], [cx2, 30]], rowLabel: (i) => ({ x: 24, y: rowY(i) - 28, align: 'left' }), tray: { x: 8, y: 390, w: 424, h: 292 }, cap: [24, 412] });
       hs = [];
       for (let k = 0; k < 10; k++) hs.push([k % 2 ? 321 : 119, 450 + Math.floor(k / 2) * 52]);
     }

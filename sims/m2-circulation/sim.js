@@ -380,10 +380,10 @@
     const going = !HT.paused;
     if (going) {
       const old = HT.ph;
-      HT.ph += dt * HT.rate * 1.18;
+      HT.ph += dt * HT.rate * (80 / 60);   // 분당 (속도 × 80)회 — 슬라이더 표시와 같게
       if (HT.ph >= 1) {
         HT.ph -= 1;
-        if (S.scene === 'heart') { HT.beats++; if (HT.rate <= 0.55) HT.slowBeats++; }
+        if (S.scene === 'heart') { HT.beats++; if (HT.rate < 0.6) HT.slowBeats++; }
         Sound.tone(150, 0.07, 'sine', 0.06);
       }
     }

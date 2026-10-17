@@ -672,10 +672,11 @@
     const L = LEAF, R = { x: 264, y: 238 };
     L.flash = 1;
     if (!L.light) { FX.emit({ x: R.x, y: R.y, size: 10, life: 0.5, color: '#9aa7b5', shape: 'smoke', grow: 20 }); return; }
-    L.merges++; L.o2n++;
+    // 이산화 탄소 6개 + 물 6개(들어온 분자 12개) → 포도당 1개 + 산소 6개: 분자 2개가 들어올 때마다 산소 1개가 나가요
+    L.merges++;
     if (L.zf > 1.2) FX.burst(R.x, R.y, { count: 5, speed: 60, life: 0.5, size: 3, colors: ['#ffe27a', '#fff'], gravity: 0 });
-    L.s[2].add(new Path([[R.x, R.y], [380, 215 + rand(-20, 20)], [SW + 24, 150 + rand(-30, 40)]]), 'o2', 120, { u: 6, fade: 22 });
-    if (L.merges % 6 === 0) {
+    if (L.merges % 2 === 0) { L.o2n++; L.s[2].add(new Path([[R.x, R.y], [380, 215 + rand(-20, 20)], [SW + 24, 150 + rand(-30, 40)]]), 'o2', 120, { u: 6, fade: 22 }); }
+    if (L.merges % 12 === 0) {
       L.gluc++;
       L.s[2].add(new Path([[R.x, R.y], [360, 300], [SW + 30, 380]]), 'glucose', 70, { u: 7.5, fade: 24 });
       if (L.zf > 1.2) { FX.burst(R.x, R.y, { count: 12, speed: 120, life: 0.7, size: 3.4, colors: ['#ffd34d', '#ffb400', '#fff3b0'], gravity: 0 }); Sound.click(); }
@@ -1008,7 +1009,7 @@
       ctx.beginPath(); ctx.moveTo(x, 410); ctx.lineTo(x, 410 + (c % 10 === 0 ? 12 : 7)); ctx.stroke();
       if (c % 10 === 0) text(x, 435, String(c), { size: 12, weight: 700, color: '#6b5d1f' });
     }
-    text(52, 424, 'cm', { size: 12, weight: 800, color: '#6b5d1f', align: 'left' });
+    text(38, 435, 'cm', { size: 12, weight: 800, color: '#6b5d1f', align: 'left' });
     contactShadow(BK.x + BK.w / 2, 394, BK.w * 0.62, 12, 0.9);
 
     const m = mouthX(T.dV), iv = Ivis(T.dV), ivp = Math.pow(iv, 0.7);
@@ -1172,7 +1173,7 @@
       co2: { title: '이산화 탄소 농도와 기포 수', xlabel: '탄산수소 나트륨 (%)', xmin: 0, xmax: 3, xt: [0, 1, 2, 3], arr: T.co2Pts, fx: (v) => v },
       temp: { title: '온도와 기포 수', xlabel: '물의 온도 (°C)', xmin: 10, xmax: 50, xt: [10, 20, 30, 40, 50], arr: T.tPts, fx: (v) => v },
     }[kind];
-    const g = plotFrame(rb, { title: PHONE ? null : cfg.title, xmin: cfg.xmin, xmax: cfg.xmax, ymin: 0, ymax: 40, yt: [0, 10, 20, 30, 40], xt: cfg.xt, xlabel: cfg.xlabel, ylabel: '1분 기포 수 (개)', ml: 44 });
+    const g = plotFrame(rb, { title: PHONE ? ' ' : cfg.title, xmin: cfg.xmin, xmax: cfg.xmax, ymin: 0, ymax: 40, yt: [0, 10, 20, 30, 40], xt: cfg.xt, xlabel: cfg.xlabel, ylabel: '1분 기포 수 (개)', ml: 44 });
     if (PHONE) text(rb.x + 10, rb.y + 20, cfg.title, { size: 12.5, weight: 800, align: 'left' });
     if (kind === 'light') {
       const cx = g.X(T.dV);
@@ -1354,7 +1355,7 @@
     text(x, y - 7, label, { size: 13.5, weight: 800, align: 'left', color: COL.ink });
     if (val != null) text(x + w, y - 7, val, { size: 13.5, weight: 800, align: 'right', color: COL.muted });
     ctx.fillStyle = '#e8eef5'; D.roundRect(x, y, w, h, h / 2); ctx.fill();
-    if (v > 0.01) { ctx.fillStyle = col; D.roundRect(x, y, Math.max(h, w * clamp(v, 0, 1)), h, h / 2); ctx.fill(); }
+    if (v > 0.01) { ctx.fillStyle = col; D.roundRect(x, y, Math.max(4, w * clamp(v, 0, 1)), h, h / 2); ctx.fill(); }
     if (flag) { const a = 0.5 + 0.5 * Math.sin(CLK.t * 6); ctx.strokeStyle = rgba('#e2464b', 0.5 + 0.5 * a); ctx.lineWidth = 3; D.roundRect(x - 3, y - 3, w + 6, h + 6, h / 2 + 3); ctx.stroke(); }
   }
   function drawFarmPanel() {
@@ -1369,9 +1370,9 @@
     text(dx, dy + r + 22, '초록 구간(88 이상)이 목표', { size: 12.5, weight: 700, color: COL.muted });
     const lowest = Math.min(lv, cv, tv);
     text(bx, by - 26, '조건별 충족도', { size: 14, weight: 800, align: 'left', color: '#14532d' });
-    bar(bx, by, bw, 16, lv, '#f5b301', '💡 빛', Math.round(lv * 100) + '%', lv === lowest && lowest < 0.95);
-    bar(bx, by + 46, bw, 16, cv, '#64748b', '☁️ 이산화 탄소', Math.round(cv * 100) + '%', cv === lowest && lowest < 0.95);
-    bar(bx, by + 92, bw, 16, tv, '#ef6c3a', '🌡️ 온도', Math.round(tv * 100) + '%', tv === lowest && lowest < 0.95);
+    bar(bx, by, bw, 16, lv, '#f5b301', '💡 빛', Math.round(lv * 100) + '%', lv === lowest && lowest < 0.93);
+    bar(bx, by + 46, bw, 16, cv, '#64748b', '☁️ 이산화 탄소', Math.round(cv * 100) + '%', cv === lowest && lowest < 0.93);
+    bar(bx, by + 92, bw, 16, tv, '#ef6c3a', '🌡️ 온도', Math.round(tv * 100) + '%', tv === lowest && lowest < 0.93);
     const cost = ev.cost;
     bar(bx, cy2, bw, 16, cost / 100, cost <= 50 ? '#0ea5e9' : '#e2464b', '💰 비용', Math.round(cost), false);
     const mx = bx + bw * 0.5;

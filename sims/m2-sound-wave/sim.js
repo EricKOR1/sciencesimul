@@ -343,6 +343,10 @@
     ctx.stroke();
     // 끝의 고리와 기둥 (파동의 에너지가 도착하면 고리가 흔들려요)
     const ex = G.pole.x, ey = pts[RN - 1].y;
+    ctx.strokeStyle = rgbS(COL.ropeD); ctx.lineWidth = 8; ctx.lineCap = 'round';           // 줄 끝이 기둥의 고리까지 이어져요
+    ctx.beginPath(); ctx.moveTo(pts[RN - 1].x, pts[RN - 1].y); ctx.lineTo(ex - 11, ey); ctx.stroke();
+    ctx.strokeStyle = rgbS(COL.rope); ctx.lineWidth = 4.6;
+    ctx.beginPath(); ctx.moveTo(pts[RN - 1].x, pts[RN - 1].y); ctx.lineTo(ex - 11, ey); ctx.stroke();
     const rv = clamp(Math.abs(R.v[RN - 2]) / 150, 0, 1);
     if (rv > 0.05) { ctx.save(); ctx.fillStyle = 'rgba(245,158,11,' + (0.45 * rv) + ')'; circle(ctx, ex, ey, 26 + 14 * rv); ctx.fill(); ctx.restore(); }
     ctx.strokeStyle = '#6a778f'; ctx.lineWidth = 6; circle(ctx, ex, ey, 11); ctx.stroke();
@@ -550,7 +554,7 @@
     }
     if (!BELL.init) return;
     const G = GEO.bell(activeView().L), J = G.jar;
-    const x0 = J.x + 16, x1 = J.x + J.w - 16, y0 = J.y + 22, y1 = G.base.y - 6, cx = J.x + J.w / 2, cyD = J.y + 100, RD = J.w / 2 - 16;
+    const x0 = J.x + 16, x1 = J.x + J.w - 16, y0 = J.y + 22, y1 = G.base.y - 6, cx = J.x + J.w / 2, cyD = J.y + J.w / 2, RD = J.w / 2 - 12;      // 유리 덮개(반원 지붕)의 안쪽 둘레
     const port = { x: J.x + J.w - 8, y: G.base.y - 22 };
     for (let i = 0; i < BN; i++) {
       const gone = BELL.th[i] > S.air + 0.02;

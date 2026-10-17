@@ -734,7 +734,7 @@
     text(87, 31, L.act === 'light' ? '⏳ 하루 동안…' : L.stage >= 1 ? '✅ 하루가 지났어요' : '☀️ 하루 전부터 빛 쬐기', { size: 12.5, weight: 800, color: COL.muted });
     const pr = L.stage >= 1 ? 1 : L.act === 'light' ? L.t : 0;
     ctx.fillStyle = '#e4eaf2'; D.roundRect(24, 42, 126, 8, 4); ctx.fill();
-    ctx.fillStyle = '#f59e0b'; D.roundRect(24, 42, Math.max(8, 126 * pr), 8, 4); ctx.fill();
+    if (pr > 0.01) { ctx.fillStyle = '#f59e0b'; D.roundRect(24, 42, Math.max(8, 126 * pr), 8, 4); ctx.fill(); }
     if (L.tap && !L.act) newBadge(SW - 40, 24);
     if (L.tap && !L.act) D.label(SW / 2, 448, '👆 잎의 부분을 누르면 은박지를 씌우거나 벗겨요', { bg: rgba('#16a34a', 0.95), size: 13.5, pad: 11 });
   }
@@ -1113,7 +1113,7 @@
       text(x, y - 8, label, { size: 14, weight: 800, align: 'left', color: COL.ink });
       text(x + w, y - 8, val, { size: 13.5, weight: 800, align: 'right', color: col });
       ctx.fillStyle = '#e8eef5'; D.roundRect(x, y, w, 20, 10); ctx.fill();
-      ctx.fillStyle = col; D.roundRect(x, y, Math.max(10, w * clamp(v, 0, 1)), 20, 10); ctx.fill();
+      if (v > 0.004) { ctx.fillStyle = col; D.roundRect(x, y, Math.max(4, w * clamp(v, 0, 1)), 20, 10); ctx.fill(); }
     };
     if (!PHONE) {
       text(p.x + p.w / 2, p.y + 28, '양분이 쌓인 정도 (대략)', { size: 16, weight: 800, color: '#14532d' });

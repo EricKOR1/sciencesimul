@@ -406,14 +406,41 @@
     const b = G.lampB;
     return { x: b.x + S.lampU * b.w, y: b.y + S.lampV * b.h };
   }
-  // 입사한 빛이 닿는 점(전등과 눈 방향의 이등분선 쪽 표면)
+  // 입사한 빛이 닿는 점(전등과 눈 방향의 이등분선 쪽 표면): 물체 그림의 윤곽을 따라 실제 표면에서 찾아요
+  const P2D = {};
+  function bodyPath(kind, r) {                          // 물체 그림과 같은 윤곽 (물체 중심이 (0,0))
+    const key = kind + r;
+    if (P2D[key]) return P2D[key];
+    const p = new Path2D();
+    if (kind === 'apple') {
+      p.moveTo(0, -r * 0.6);
+      p.bezierCurveTo(r * 0.3, -r * 1.02, r * 1.06, -r * 0.92, r * 1.02, -r * 0.05);
+      p.bezierCurveTo(r * 1.0, r * 0.68, r * 0.46, r * 1.02, 0, r * 0.9);
+      p.bezierCurveTo(-r * 0.46, r * 1.02, -r * 1.0, r * 0.68, -r * 1.02, -r * 0.05);
+      p.bezierCurveTo(-r * 1.06, -r * 0.92, -r * 0.3, -r * 1.02, 0, -r * 0.6);
+    } else {
+      p.moveTo(-1.5 * r, -0.25 * r);
+      p.bezierCurveTo(-1.0 * r, 0.95 * r, 0.7 * r, 1.05 * r, 1.5 * r, -0.55 * r);
+      p.bezierCurveTo(0.8 * r, 0.14 * r, -0.8 * r, 0.12 * r, -1.5 * r, -0.25 * r);
+    }
+    p.closePath();
+    return (P2D[key] = p);
+  }
+  const HITCTX = document.createElement('canvas').getContext('2d');
   function seeHit(G, lamp) {
-    const o = G.obj;
+    const o = G.obj, banana = S.obj === 'banana';
     const ul = norm(lamp.x - o.x, lamp.y - o.y), ue = norm(G.eye.x - o.x, G.eye.y - o.y);
     let b = norm(ul.x + ue.x, ul.y + ue.y);
     if (Math.hypot(ul.x + ue.x, ul.y + ue.y) < 0.25) b = { x: 0, y: -1 };
-    const rr = G.objR * (S.obj === 'banana' ? 0.42 : 0.93);
-    return { x: o.x + b.x * rr, y: o.y + b.y * rr + (S.obj === 'banana' ? 14 : 0), nx: b.x, ny: b.y };
+    // 물체 그림의 중심(drawObj 와 같은 위치)에서 b 방향 바깥에서부터 안쪽으로 다가가 처음 닿는 표면점
+    const r = banana ? G.objR * 0.95 : G.objR, cx = banana ? o.x + 2 : o.x, cy = banana ? o.y + G.objR * 0.3 : o.y;
+    const tx = 0, ty = banana ? r * 0.33 : 0, path = bodyPath(S.obj, r);
+    let hx = tx, hy = ty;
+    for (let d = r * 1.7; d >= 0; d -= 1) {
+      const px = tx + b.x * d, py = ty + b.y * d;
+      if (HITCTX.isPointInPath(path, px, py)) { hx = px; hy = py; break; }
+    }
+    return { x: cx + hx, y: cy + hy, nx: b.x, ny: b.y };
   }
 
   /* ----- 물체 그림 (반사율 × 닿는 빛으로 색을 정함) ----- */

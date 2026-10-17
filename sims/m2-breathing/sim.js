@@ -542,7 +542,22 @@
     dots: [], stage: 0, maxPull: 0, hintShown: false, cards: new CardSet(), cardsOn: false, flag: {}, pulledOnce: false,
   };
   const sheetY = (x, d) => { const u = clamp((x - (MX - 100)) / 200, 0, 1); return MY0 + 248 * d * u * (1 - u); };
-  const botTop = (x) => 150 + Math.max(0, Math.abs(x - MX) - 18) * 0.27;
+  // 병 어깨(곡선 유리벽)의 실제 높이 — 기체 입자가 유리 밖으로 나가지 않도록 같은 곡선을 써요
+  const SHOULDER = (function () {
+    const P = [[18, 150], [18, 172], [100, 168], [100, 205]], out = [];
+    for (let i = 0; i <= 40; i++) {
+      const t = i / 40, u = 1 - t, a = u * u * u, b = 3 * u * u * t, c = 3 * u * t * t, d = t * t * t;
+      out.push([a * P[0][0] + b * P[1][0] + c * P[2][0] + d * P[3][0], a * P[0][1] + b * P[1][1] + c * P[2][1] + d * P[3][1]]);
+    }
+    return out;
+  })();
+  const botTop = (x) => {
+    const dx = clamp(Math.abs(x - MX), 18, 100);
+    for (let i = 1; i < SHOULDER.length; i++) {
+      if (SHOULDER[i][0] >= dx) { const a = SHOULDER[i - 1], b = SHOULDER[i], u = (dx - a[0]) / ((b[0] - a[0]) || 1); return lerp(a[1], b[1], clamp(u, 0, 1)); }
+    }
+    return 205;
+  };
   function initModel() {
     const R = rng(33);
     MD.dots = [];
@@ -917,7 +932,7 @@
     },
     move(p) {
       const d = CH.drag; if (!d) return;
-      if (d.k === 'rib') CH.rib = clamp(d.v0 - (p.y - d.y0) / 70, 0, 1);
+      if (d.k === 'rib') CH.rib = clamp(d.v0 - (p.y - d.y0) / 36, 0, 1)   // 손잡이가 36 px 움직이는 만큼 — 손잡이가 손가락을 따라가요;
       else CH.dia = clamp(d.v0 + (p.y - d.y0) / 40, 0, 1);
     },
     up() { CH.drag = null; },
@@ -1002,7 +1017,7 @@
         const tx = ACX + Math.cos(a + (Math.random() - 0.5) * 0.4) * (AR - 24), ty = ACY + Math.sin(a + (Math.random() - 0.5) * 0.4) * (AR - 24);
         AL.cross.push({ k: 'co2', x: p.x + Math.cos(Math.atan2(0, 1)) * 0 + (q.off) * 0, y: p.y, tx, ty, t: 0, dur: 0.7, sx: p.x + Math.cos(a) * 0, sy: p.y, to: 'alv' });
         AL.blood.splice(i, 1); AL.co2n++;
-        if (AL.ex < 0.3) AL.restCO2++; if (AL.ex >= 0.7) AL.exCO2++;
+        if (AL.ex < 0.25) AL.restCO2++; if (AL.ex >= 0.7) AL.exCO2++;
         AL.glow = 1;
       }
     }
@@ -1027,7 +1042,7 @@
       if (u >= 1) {
         if (q.to === 'rbc') {
           q.rbc.o2 = Math.min(1, q.rbc.o2 + 0.1); AL.o2n++;
-          if (AL.ex < 0.3) AL.restO2++; if (AL.ex >= 0.7) AL.exO2++;
+          if (AL.ex < 0.25) AL.restO2++; if (AL.ex >= 0.7) AL.exO2++;
           burst(q.tx, q.ty, ['#38bdf8', '#e5383b', '#ffffff'], 5, { speed: 50 }); AL.glow = 1;
         } else AL.air.push({ k: 'co2', x: q.tx, y: q.ty, vx: (Math.random() - 0.5) * 40, vy: (Math.random() - 0.5) * 40 });
         AL.cross.splice(i, 1);
