@@ -264,7 +264,7 @@
       m.ph = Math.min(1, m.ph + dt * SPEED / (RM ? 0.05 : MKDUR));
       if (m.ph >= 1) {
         const i = m.act; m.res[i] = VEND[i].g; Sound.success(); updateVend();
-        parts.burst(vx(i) + 58, Y(252), { count: 6, speed: 70, size: 3, life: 0.5, colors: ['#fde68a', '#fff'] });
+        { const st = stall(i); parts.burst(st.cx + 58 * MO.dx, st.ry + MO.base - 56, { count: 6, speed: 70, size: 3, life: 0.5, colors: ['#fde68a', '#fff'] }); }
         if (m.res.every((v) => v != null) && !m.reveal) SciSim.tween(m, { reveal: 1 }, { duration: 1, delay: 0.4 });
       }
     }
@@ -287,35 +287,39 @@
     ctx.beginPath(); ctx.moveTo(-22, -4); ctx.quadraticCurveTo(-22, 12, 0, 12); ctx.quadraticCurveTo(22, 12, 22, -4); ctx.lineTo(22, -2); ctx.quadraticCurveTo(0, 6, -22, -2); ctx.closePath(); ctx.fill();
     ctx.restore();
   }
+  /* 가게 배치: 가로 화면은 세 칸, 휴대폰은 세 줄 */
+  const MO = PHONE ? { vend: 46, name: 98, hand: 50, handLab: 82, sack: 150, base: 186, rowH: 206, top: 44, dx: 1.75 } : { vend: 52, name: 116, hand: 58, handLab: 90, sack: 210, base: 248, rowH: 0, top: 52, dx: 1 };
+  const stall = (i) => (PHONE ? { cx: VW / 2, ry: MO.top + i * MO.rowH } : { cx: vx(i), ry: MO.top });
   function drawMarket(t) {
-    const m = S.mk;
+    const m = S.mk, dx = MO.dx;
     ctx.fillStyle = '#f3f6fb'; ctx.fillRect(0, 0, VW, VH);
-    ctx.fillStyle = '#ecdfc0'; ctx.fillRect(0, Y(300), VW, VH - Y(300));
-    D.text(VW / 2, Y(24), '시장에서 "한 줌만 주세요!" 라고 하면?', { size: 17, weight: 800, color: '#1b2333' });
+    if (!PHONE) { ctx.fillStyle = '#ecdfc0'; ctx.fillRect(0, Y(300), VW, VH - Y(300)); }
+    D.text(VW / 2, PHONE ? 28 : 24, '시장에서 "한 줌만 주세요!" 라고 하면?', { size: 17, weight: 800, color: '#1b2333' });
     VEND.forEach((v, i) => {
-      const cx = vx(i), py = Y(92);
+      const { cx, ry } = stall(i), sx = cx - 56 * dx, sy = ry + MO.sack, cx2 = cx + 58 * dx, base = ry + MO.base;
+      if (PHONE) { ctx.fillStyle = i % 2 ? '#fbf3df' : '#f7ecd0'; rr(20, ry - 6, VW - 40, MO.rowH - 6, 18).fill(); }
       // 가게 지붕
-      ctx.fillStyle = v.col; ctx.beginPath(); ctx.moveTo(cx - 100, Y(52)); ctx.lineTo(cx + 100, Y(52)); ctx.lineTo(cx + 112, Y(70)); ctx.lineTo(cx - 112, Y(70)); ctx.closePath(); ctx.fill();
-      for (let k = 0; k < 6; k++) { ctx.fillStyle = k % 2 ? 'rgba(255,255,255,.35)' : 'rgba(255,255,255,0)'; ctx.fillRect(cx - 100 + k * 33, Y(52), 33, 18); }
-      person(cx - 30, py + 12, v.col, 0.78, t, { hair: '#3b2418' });
-      D.text(cx - 30, Y(168), v.n, { size: 15, weight: 800, color: v.col });
+      const rw = PHONE ? 250 : 100;
+      ctx.fillStyle = v.col; ctx.beginPath(); ctx.moveTo(cx - rw, ry); ctx.lineTo(cx + rw, ry); ctx.lineTo(cx + rw + 12, ry + 18); ctx.lineTo(cx - rw - 12, ry + 18); ctx.closePath(); ctx.fill();
+      const nst = PHONE ? 10 : 6, stw = rw * 2 / nst;
+      for (let k = 0; k < nst; k++) { ctx.fillStyle = k % 2 ? 'rgba(255,255,255,.35)' : 'rgba(255,255,255,0)'; ctx.fillRect(cx - rw + k * stw, ry, stw, 18); }
+      person(cx - 30 * dx, ry + MO.vend, v.col, 0.78, t, { hair: '#3b2418' });
+      D.text(cx - 30 * dx, ry + MO.name, v.n, { size: 15, weight: 800, color: v.col });
       // 손 크기 견본
-      cupHand(cx + 54, Y(110), v.hs * 0.9, false, 0, i);
-      D.text(cx + 54, Y(142), v.size, { size: 13, weight: 800, color: '#7c5a2e' });
+      cupHand(cx + 54 * dx, ry + MO.hand, v.hs * 0.9, false, 0, i);
+      D.text(cx + 54 * dx, ry + MO.handLab, v.size, { size: 13, weight: 800, color: '#7c5a2e' });
       // 자루
-      const sx = cx - 56, sy = Y(262);
       D.shadow(() => { ctx.fillStyle = '#c9a56b'; ctx.beginPath(); ctx.moveTo(sx - 38, sy + 44); ctx.quadraticCurveTo(sx - 46, sy - 6, sx - 22, sy - 20); ctx.lineTo(sx + 22, sy - 20); ctx.quadraticCurveTo(sx + 46, sy - 6, sx + 38, sy + 44); ctx.closePath(); ctx.fill(); }, { blur: 8, y: 3 });
       ctx.fillStyle = '#a8864f'; ctx.fillRect(sx - 26, sy - 24, 52, 8);
       for (let k = 0; k < 14; k++) { const q = BEAN_POS[i][k % 24]; D.sphere(sx + (q.x * 1.1), sy - 22 + q.y * 0.6, 4.5, q.c > 0.5 ? '#a16207' : '#ca8a04', { gloss: false }); }
       D.text(sx, sy + 20, '콩', { size: 15, weight: 800, color: '#fff' });
       // 저울
-      const cx2 = cx + 58, base = Y(300);
       D.shadow(() => { ctx.fillStyle = '#e2e8f0'; rr(cx2 - 40, base - 40, 80, 40, 10).fill(); }, { blur: 8, y: 3 });
       ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 2; rr(cx2 - 40, base - 40, 80, 40, 10).stroke();
       ctx.fillStyle = '#0f172a'; rr(cx2 - 30, base - 34, 60, 22, 5).fill();
       D.text(cx2, base - 18, Math.round(m.disp[i]) + ' g', { size: 16, weight: 800, color: '#4ade80' });
       const sink = m.pan[i] * 4;
-      ctx.fillStyle = '#94a3b8'; ctx.fillRect(cx2 - 3, base - 58 + sink, 6, 20 - sink * 0.0);
+      ctx.fillStyle = '#94a3b8'; ctx.fillRect(cx2 - 3, base - 58 + sink, 6, 20);
       ctx.fillStyle = '#cbd5e1'; ctx.beginPath(); ctx.ellipse(cx2, base - 58 + sink, 38, 9, 0, 0, 6.3); ctx.fill();
       ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 2; ctx.stroke();
       // 저울 위 콩
@@ -324,7 +328,8 @@
       // 움직이는 손
       if (m.act === i && m.ph < 1) {
         const ph = Math.min(1, m.ph / 0.86), fade = m.ph < 0.86 ? 1 : 1 - (m.ph - 0.86) / 0.14;
-        ctx.save(); ctx.globalAlpha = clamp(fade, 0, 1); const pts = [[sx, Y(190)], [sx, sy - 18], [sx, Y(205)], [cx2, base - 108]];
+        ctx.save(); ctx.globalAlpha = clamp(fade, 0, 1);
+        const pts = [[sx, sy - 70], [sx, sy - 18], [sx, sy - 56], [cx2, base - 108]];
         let u, a, b;
         if (ph < 0.3) { u = ph / 0.3; a = pts[0]; b = pts[1]; }
         else if (ph < 0.5) { u = (ph - 0.3) / 0.2; a = pts[1]; b = pts[2]; }
@@ -336,23 +341,25 @@
       }
     });
     // 아래: 결과
-    const y0 = Y(338);
-    D.text(VW / 2, y0 + 14, '저울에 올린 "한 줌"의 질량', { size: 15, weight: 800, color: '#334155' });
-    VEND.forEach((v, i) => {
-      const w = (VW - 60) / 3 - 8, x = 30 + i * ((VW - 60) / 3 + 0), h = PHONE ? 74 : 62, yy = y0 + 30;
-      ctx.fillStyle = '#fff'; D.shadow(() => rr(x + 4, yy, w, h, 14).fill(), { blur: 6, y: 2 });
-      ctx.strokeStyle = m.res[i] != null ? v.col : '#cbd5e1'; ctx.lineWidth = 2.5; rr(x + 4, yy, w, h, 14).stroke();
-      D.text(x + 4 + w / 2, yy + 24, v.n, { size: 14, weight: 800, color: v.col });
-      D.text(x + 4 + w / 2, yy + 52, m.res[i] != null ? v.g + ' g' : '?', { size: 24, weight: 800, color: m.res[i] != null ? '#1b2333' : '#cbd5e1' });
-    });
+    let y0 = PHONE ? MO.top + 3 * MO.rowH + 6 : Y(338);
+    if (!PHONE) {
+      D.text(VW / 2, y0 + 14, '저울에 올린 "한 줌"의 질량', { size: 15, weight: 800, color: '#334155' });
+      VEND.forEach((v, i) => {
+        const w = (VW - 60) / 3 - 8, x = 30 + i * ((VW - 60) / 3), h = 62, yy = y0 + 30;
+        ctx.fillStyle = '#fff'; D.shadow(() => rr(x + 4, yy, w, h, 14).fill(), { blur: 6, y: 2 });
+        ctx.strokeStyle = m.res[i] != null ? v.col : '#cbd5e1'; ctx.lineWidth = 2.5; rr(x + 4, yy, w, h, 14).stroke();
+        D.text(x + 4 + w / 2, yy + 24, v.n, { size: 14, weight: 800, color: v.col });
+        D.text(x + 4 + w / 2, yy + 52, m.res[i] != null ? v.g + ' g' : '?', { size: 24, weight: 800, color: m.res[i] != null ? '#1b2333' : '#cbd5e1' });
+      });
+    }
     if (m.reveal > 0.01) {
-      const yy = y0 + 30 + (PHONE ? 74 : 62) + 18;
+      const yy = (PHONE ? y0 + 2 : y0 + 30 + 62 + 18) + (1 - m.reveal) * 12;
       ctx.save(); ctx.globalAlpha = m.reveal;
-      const bw = VW - 60, bh = PHONE ? 100 : 78;
-      ctx.fillStyle = '#fff'; D.shadow(() => rr(30, yy + (1 - m.reveal) * 12, bw, bh, 14).fill(), { blur: 8, y: 3 });
-      ctx.strokeStyle = '#14a058'; ctx.lineWidth = 2.5; rr(30, yy + (1 - m.reveal) * 12, bw, bh, 14).stroke();
-      D.text(VW / 2, yy + 28 + (1 - m.reveal) * 12, '같은 "한 줌"인데 60 g · 80 g · 100 g!', { size: 16, weight: 800, color: '#1b2333' });
-      paraText(VW / 2, yy + 54 + (1 - m.reveal) * 12, '사람마다 기준이 달라서 값이 달라요. 저울의 g처럼 모두가 같은 단위로 재면 누구나 같은 값을 얻어요.', bw - 40, 13.5, { align: 'center', color: '#0b6b39', weight: 800 });
+      const bw = VW - 60, bh = PHONE ? 112 : 78;
+      ctx.fillStyle = '#fff'; D.shadow(() => rr(30, yy, bw, bh, 14).fill(), { blur: 8, y: 3 });
+      ctx.strokeStyle = '#14a058'; ctx.lineWidth = 2.5; rr(30, yy, bw, bh, 14).stroke();
+      D.text(VW / 2, yy + 28, '같은 "한 줌"인데 60 g · 80 g · 100 g!', { size: 16, weight: 800, color: '#1b2333' });
+      paraText(VW / 2, yy + 54, '사람마다 기준이 달라서 값이 달라요. 저울의 g처럼 모두가 같은 단위로 재면 누구나 같은 값을 얻어요.', bw - 40, 13.5, { align: 'center', color: '#0b6b39', weight: 800 });
       ctx.restore();
     }
   }
@@ -885,7 +892,7 @@
     });
     if (cs.done > 0.01) {
       ctx.save(); ctx.globalAlpha = cs.done;
-      D.label(VW / 2, VH - 22, '주장 – 근거 – 이유가 연결됐어요!', { bg: '#14a058', size: 15 });
+      D.label(VW / 2, VH - (PHONE ? 130 : 84), '주장 – 근거 – 이유가 연결됐어요!', { bg: '#14a058', size: 15 });
       ctx.restore();
     }
   }

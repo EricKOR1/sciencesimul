@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#64748b">
+  <title>신호와 정보 | 고1 통합과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📡</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; }
+    .stage-toolbar { min-height: 61px; }
+    .segmented button { min-height: 44px; }
+    .segmented button.on { background: var(--sci); color: #fff; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 14px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard .btn-sm { min-height: 44px; }
+    #ctrlCard [hidden] { display: none !important; }
+    .ctrl-note { font-size: 14px; color: var(--muted); margin: 6px 0 0; }
+    .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .btn-col { display: flex; flex-direction: column; gap: 8px; }
+    .btn-row { display: flex; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
+    .btn-row .btn { flex: 1; padding-left: 8px; padding-right: 8px; }
+    .btn.who-on { background: #e8f0ff; border-color: var(--primary); }
+    .btn.who-done::after { content: " ✓"; color: var(--good); font-weight: 800; }
+    .btn-grid .btn { padding-left: 6px; padding-right: 6px; font-size: 14.5px; }
+    .num-in {
+      width: 100%; min-height: 48px; border: 2px solid var(--line); border-radius: 12px; padding: 6px 12px;
+      font: 800 20px ui-monospace, Menlo, Consolas, monospace; color: var(--ink); background: #fff;
+    }
+    .num-in:focus { outline: none; border-color: var(--sci); }
+    .readout .value.txt { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    @media (max-width: 599px) {
+      .readout .value.txt { font-size: 15px; }
+      .stage-toolbar .spacer { display: none; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="sci">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#h1a">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">통합과학1 · Ⅰ. 과학의 기초</div>
+      <h1>신호와 정보</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">📡 자연의 신호</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="tablist" aria-label="화면 고르기" hidden>
+            <button type="button" data-mode="scene">📡 자연의 신호</button>
+            <button type="button" data-mode="record">🌡️ 센서 측정</button>
+            <button type="button" data-mode="analyze">🔎 정보 만들기</button>
+            <button type="button" data-mode="apply">📱 센서와 생활</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="자연의 변화가 센서를 거쳐 전압 파형이 되고, 이를 분석해 정보를 얻는 과정을 보여 주는 화면"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">—</span><span class="value txt" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">—</span><span class="value txt" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">—</span><span class="value txt" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" data-modes="scene">
+          <div class="control-head"><span>📡 어떤 변화를 측정할까요?</span></div>
+          <div class="btn-grid" id="scBtns">
+            <button class="btn btn-sm" type="button" data-sc="light">☀️ 빛</button>
+            <button class="btn btn-sm" type="button" data-sc="temp">🌡️ 기온</button>
+            <button class="btn btn-sm" type="button" data-sc="sound">🔊 소리</button>
+            <button class="btn btn-sm" type="button" data-sc="quake">🌍 땅의 흔들림</button>
+            <button class="btn btn-sm" type="button" data-sc="heart" style="grid-column: 1 / 3">💓 심장 박동</button>
+          </div>
+          <p class="ctrl-note">장면을 누르면 센서가 그 변화를 재어 <b>전압 그래프</b>를 그려요.</p>
+        </div>
+        <div class="control" data-modes="record" data-sub="run">
+          <div class="control-head"><span>⏱️ 하루 24시간 → 12초</span></div>
+          <button class="btn btn-sm btn-primary btn-block" id="bRec" type="button">▶ 하루 측정 시작</button>
+          <div class="btn-row"><button class="btn btn-sm" id="bRecReset" type="button">↺ 기록 지우기</button></div>
+        </div>
+        <div class="control" data-modes="record" data-sub="cur">
+          <div class="control-head"><span>🔍 읽을 시각</span><output id="oCur">12시</output></div>
+          <input type="range" id="sCur" min="0" max="24" step="0.1" value="12" aria-label="그래프를 읽을 시각">
+        </div>
+        <div class="control" data-modes="record" data-sub="tin">
+          <div class="control-head"><span>🌡️ 그 시각의 기온 (°C)</span></div>
+          <input class="num-in" type="number" id="inTemp" inputmode="decimal" step="0.1" placeholder="예: 20" aria-label="변환표로 구한 기온 (섭씨)">
+        </div>
+        <div class="control" data-modes="analyze">
+          <div class="control-head"><span>🔎 어떤 신호를 분석할까요?</span></div>
+          <div class="btn-grid" id="anBtns">
+            <button class="btn btn-sm" type="button" data-an="temp">🌡️ 기온</button>
+            <button class="btn btn-sm" type="button" data-an="heart">💓 심전도</button>
+            <button class="btn btn-sm" type="button" data-an="sound">🔊 소리</button>
+            <button class="btn btn-sm" type="button" data-an="quake">🌍 지진계</button>
+          </div>
+          <p class="ctrl-note" id="anNote">그래프의 <b>깃발</b>을 끌어 알맞은 곳에 놓아요.</p>
+        </div>
+        <div class="control" data-modes="analyze" data-sub="smooth">
+          <div class="control-head"><span>〰️ 이동 평균 (다듬기)</span><output id="oSm">1개</output></div>
+          <input type="range" id="sSm" min="1" max="25" step="1" value="1" aria-label="이동 평균으로 묶을 측정값 개수">
+          <p class="ctrl-note">잡음이 섞인 신호는 이웃한 값끼리 평균을 내면 선명해져요.</p>
+        </div>
+        <div class="control" data-modes="apply">
+          <p class="ctrl-note" style="margin-top:0">아래 <b>카드</b>를 끌어 알맞은 칸에 놓아요. 놓은 카드는 다시 옮길 수 있어요.</p>
+          <button class="btn btn-sm btn-block" id="bApReset" type="button" style="margin-top:8px">↺ 카드 모두 되돌리기</button>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

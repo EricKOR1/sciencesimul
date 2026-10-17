@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#8b5cf6">
+  <title>이온 결합과 소금 | 고1 통합과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧂</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-card { background: #f3f0fb; }
+    .stage-toolbar { min-height: 58px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; }
+    .stage-toolbar .segmented button { min-height: 40px; padding: 5px 12px; font-size: 14.5px; white-space: nowrap; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    #resetBtn { font-size: 20px; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    .ctrl-set { display: flex; flex-direction: column; gap: 10px; }
+    .ctrl-set[hidden], .ctrl-row[hidden] { display: none; }
+    .ctrl-row { display: flex; flex-direction: column; gap: 8px; }
+    .ctrl-set .segmented { align-self: stretch; flex-wrap: nowrap; }
+    .ctrl-set .segmented button { flex: 1 1 0; min-width: 0; min-height: 44px; font-size: 14.5px; padding-left: 6px; padding-right: 6px; }
+    .ctrl-note { margin: 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    .opt-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+    .opt {
+      min-height: 46px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 12px;
+      font-weight: 800; font-size: 14.5px; cursor: pointer; padding: 4px 6px; font-family: inherit; line-height: 1.2;
+    }
+    .opt.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); color: color-mix(in srgb, var(--subject) 70%, black); }
+    .opt.done::after { content: " ✓"; color: var(--good); }
+    .opt.wide { grid-column: 1 / -1; }
+    .opt.sw-on { border-color: var(--good); background: var(--good-soft); color: #0b6b39; }
+    .opt:disabled { opacity: .5; cursor: not-allowed; }
+    .stepper-row { display: flex; align-items: center; gap: 8px; }
+    .stepper-row .lbl { flex: 1; font-weight: 800; font-size: 15px; }
+    .stepper-row .lbl sup { font-size: 11px; }
+    .stepper-row .num { min-width: 30px; text-align: center; font-weight: 800; font-size: 20px; font-family: ui-monospace, Menlo, monospace; }
+    .stepper-row button { width: 46px; height: 46px; border-radius: 50%; border: 2px solid var(--line); background: #fff; font-size: 24px; font-weight: 800; cursor: pointer; line-height: 1; }
+    .stepper-row button:active { transform: scale(.94); }
+    .target { animation: tgtPulse 1.1s ease-in-out infinite; }
+    @keyframes tgtPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0); }
+      50% { box-shadow: 0 0 0 6px rgba(139, 92, 246, .3); }
+    }
+    .stage-hint { white-space: normal; width: max-content; max-width: calc(100% - 24px); text-align: center; }
+    .readout .value.txt { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .readout .value sup { font-size: .6em; }
+    .step-intro .si-q {
+      background: #fff; border: 2px solid color-mix(in srgb, var(--subject) 45%, white); border-radius: 12px;
+      padding: 9px 12px; font-weight: 800; font-size: 16px; color: #4c1d95; margin: 4px 0 8px;
+    }
+    sup { font-size: .7em; line-height: 0; }
+    sub { font-size: .7em; line-height: 0; }
+    .fig-box { display: block; margin: 4px auto; max-width: 100%; }
+    .concept table.mini { border-collapse: collapse; margin: 6px 0; font-size: 14px; width: 100%; }
+    .concept table.mini th, .concept table.mini td { border: 1px solid var(--line); padding: 4px 6px; text-align: center; }
+    .concept table.mini th { background: var(--surface-2); font-weight: 800; }
+
+    /* 결과 표 */
+    .data-card { flex: none; padding: 8px 12px; display: flex; align-items: center; gap: 12px; }
+    .data-card[hidden] { display: none; }
+    .data-head { flex: none; display: flex; flex-direction: column; gap: 2px; font-size: 14.5px; line-height: 1.25; }
+    .data-head .n { font-size: 12.5px; color: var(--muted); font-weight: 700; }
+    .data-scroll { flex: 1; min-width: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .ctable { border-collapse: separate; border-spacing: 4px 3px; width: 100%; font-size: 14.5px; }
+    .ctable th { text-align: left; white-space: nowrap; padding: 2px 8px 2px 2px; color: var(--ink); font-weight: 800; font-size: 14px; }
+    .ctable thead th { text-align: center; color: var(--muted); font-size: 13.5px; }
+    .ctable td { text-align: center; padding: 0; }
+    .ctable select {
+      width: 100%; min-width: 0; height: 36px; border: 2px dashed #b4bfcf; border-radius: 10px; background: #fff; text-align: center; text-align-last: center;
+      font-weight: 800; font-size: 14.5px; color: var(--ink); padding: 0 4px; font-family: inherit;
+    }
+    .ctable select:focus { outline: none; border-style: solid; border-color: var(--subject); box-shadow: 0 0 0 3px color-mix(in srgb, var(--subject) 22%, transparent); }
+    .ctable select.ok { border-style: solid; border-color: var(--good); background: var(--good-soft); color: #0b6b39; }
+    .ctable select.bad { border-style: solid; border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    @keyframes shakeX { 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+    @media (max-width: 599px) {
+      .data-card { flex-direction: column; align-items: stretch; gap: 4px; }
+      .data-head { flex-direction: row; gap: 8px; align-items: baseline; }
+      .stage-toolbar .spacer { display: none; }
+      .stage-toolbar .segmented button { padding: 5px 8px; font-size: 13.5px; }
+      .readout .value.txt { font-size: 15px; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="chem">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#h1a">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">통합과학1 · Ⅱ. 물질과 규칙성</div>
+      <h1>이온 결합과 소금</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">⚛️ 전자의 이동</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="sceneSeg" role="group" aria-label="장면 고르기" hidden>
+            <button type="button" data-scene="atoms" data-feature="atoms">⚛️ 전자 이동</button>
+            <button type="button" data-scene="lattice" data-feature="lattice">🧊 이온 결정</button>
+            <button type="button" data-scene="conduct" data-feature="conduct">💡 전도성</button>
+            <button type="button" data-scene="dissolve" data-feature="dissolve">🧂 소금의 역할</button>
+          </div>
+          <button class="icon-btn" id="resetBtn" type="button" title="처음 상태로" aria-label="처음 상태로">↺</button>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="나트륨 원자에서 염소 원자로 전자가 이동해 이온 결합이 되는 모형, 염화 나트륨 이온 결정, 고체·액체·수용액의 전기 전도성 실험, 소금이 물에 녹는 모형"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts" id="readouts">
+        <div class="readout"><span class="label" id="roL1">-</span><span class="value txt" id="roV1">-</span></div>
+        <div class="readout"><span class="label" id="roL2">-</span><span class="value txt" id="roV2">-</span></div>
+        <div class="readout"><span class="label" id="roL3">-</span><span class="value txt" id="roV3">-</span></div>
+      </div>
+      <section class="card data-card" id="tableCard" hidden>
+        <div class="data-head"><b>📋 결과 표</b><span class="n">알맞은 것을 골라요</span></div>
+        <div class="data-scroll">
+          <table class="ctable" id="ctable"></table>
+        </div>
+      </section>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <!-- 전자 이동 -->
+        <div class="ctrl-set" id="cs-atoms" hidden>
+          <div class="control">
+            <div class="control-head"><span>↔️ 원자 사이의 거리</span><output id="oDist">멀리</output></div>
+            <input type="range" id="sDist" min="0" max="100" step="1" value="0" aria-label="나트륨 원자와 염소 원자 사이의 거리">
+          </div>
+          <p class="ctrl-note" id="atomNote">거리를 줄이면 두 원자의 바깥 전자껍질이 맞닿아요. 그다음 금빛 전자를 끌어 옮겨요.</p>
+        </div>
+        <!-- 이온 결정 / 화학식 -->
+        <div class="ctrl-set" id="cs-lattice" hidden>
+          <div class="segmented" id="latTabs" role="group" aria-label="보기">
+            <button type="button" data-v="lattice" class="on">🧊 결정 쌓기</button>
+            <button type="button" data-v="formula">⚖️ 화학식</button>
+          </div>
+          <div class="ctrl-row" id="formulaRow" hidden>
+            <div class="segmented" id="cmpSeg" role="group" aria-label="화합물">
+              <button type="button" data-c="MgO" class="on">MgO</button>
+              <button type="button" data-c="CaCl2">CaCl<sub>2</sub></button>
+            </div>
+            <div class="stepper-row"><span class="lbl" id="lblCat">Mg<sup>2+</sup></span><button type="button" id="catMinus" aria-label="양이온 줄이기">−</button><span class="num" id="numCat">1</span><button type="button" id="catPlus" aria-label="양이온 늘리기">+</button></div>
+            <div class="stepper-row"><span class="lbl" id="lblAn">O<sup>2−</sup></span><button type="button" id="anMinus" aria-label="음이온 줄이기">−</button><span class="num" id="numAn">1</span><button type="button" id="anPlus" aria-label="음이온 늘리기">+</button></div>
+          </div>
+          <p class="ctrl-note" id="latNote">아래 이온 통에서 이온을 끌어 격자의 빈칸에 놓아요.</p>
+        </div>
+        <!-- 전도성 -->
+        <div class="ctrl-set" id="cs-conduct" hidden>
+          <div class="control-head" style="margin-bottom:0"><span>🧪 시료 고르기</span></div>
+          <div class="opt-grid" id="sampleBtns">
+            <button type="button" class="opt" data-s="solid">🧊 고체 NaCl</button>
+            <button type="button" class="opt" data-s="melt">🔥 녹인 NaCl</button>
+            <button type="button" class="opt" data-s="aq">💧 NaCl 수용액</button>
+            <button type="button" class="opt" data-s="water">🚰 증류수</button>
+            <button type="button" class="opt wide" id="swBtn">⚡ 스위치 켜기</button>
+          </div>
+          <p class="ctrl-note" id="condNote">시료를 고르고 스위치를 켜서 전구와 전류계를 살펴봐요.</p>
+        </div>
+        <!-- 소금의 역할 -->
+        <div class="ctrl-set" id="cs-dissolve" hidden>
+          <div class="segmented" id="disTabs" role="group" aria-label="보기">
+            <button type="button" data-v="dissolve" class="on">🧂 소금 녹이기</button>
+            <button type="button" data-v="body">🌊 바닷물·몸속</button>
+          </div>
+          <div class="ctrl-row" id="saltRow">
+            <button type="button" class="opt wide" id="saltBtn">🧂 소금 알갱이 새로 받기</button>
+          </div>
+          <p class="ctrl-note" id="disNote">소금 알갱이를 끌어 물속에 넣어 봐요.</p>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>
