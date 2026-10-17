@@ -114,3 +114,14 @@ apple-mobile-web-app-capable, mobile-web-app-capable, emoji favicon, Jua font li
 - `SciSim.stage` sets `touch-action: none` on the canvas. If a phone layout needs page scroll over the canvas, set
   `touch-action: pan-y` yourself and call `preventDefault()` in `touchstart` only when the touch starts on a draggable.
 - `feature-new` pulsing applies to `data-feature` elements; for other elements toggle the class yourself.
+
+## 9. 고1 통합과학 lessons (units 24–29)
+- Grades `h1a` (통합과학1: 24 과학의 기초, 25 물질과 규칙성, 26 시스템과 상호작용) and `h1b` (통합과학2: 27 변화와 다양성,
+  28 환경과 에너지, 29 과학과 미래 사회). Ids start with `h1-`.
+- Header: back link `../../index.html#h1a` or `#h1b`; `.sim-unit` = "통합과학1 · Ⅱ. 물질과 규칙성" (exact text in the unit file);
+  `<title>` = "제목 | 고1 통합과학 시뮬레이션".
+- `data-subject` = the lesson's main discipline (phy/chem/bio/earth/sci) with its theme-color from §2 — it may differ from the
+  unit colour because 통합과학 units mix disciplines.
+- Level: 고1. Still friendly 해요체 and short, but more rigorous: quantities with units, simple formulas where the curriculum
+  implies them (e.g. 충격량 = 힘 × 시간), graphs read quantitatively. Explicitly link to the middle-school lesson it builds on
+  in STEP 1 (e.g. "🔗 중학교에서 …을 배웠어요") when the unit file names a 선수 lesson.

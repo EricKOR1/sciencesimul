@@ -36,8 +36,8 @@
     tabsEl.innerHTML = '';
     CAT.grades.forEach((g, i) => {
       const sims = simsOf(g);
-      const b = el('button', { class: 'grade-tab' + (g.id === current ? ' on' : ''), role: 'tab', 'aria-selected': g.id === current ? 'true' : 'false' }, [
-        el('span', { class: 'gnum', text: String(i + 1) }),
+      const b = el('button', { class: 'grade-tab' + (g.id.charAt(0) === 'h' ? ' hs' : '') + (g.id === current ? ' on' : ''), role: 'tab', 'aria-selected': g.id === current ? 'true' : 'false' }, [
+        el('span', { class: 'gnum', text: g.short || String(i + 1) }),
         el('span', { class: 'gtext' }, [el('b', { text: g.name }), el('span', { text: g.book + ' · ' + g.units.length + '개 단원' })]),
         el('span', { class: 'gprog', html: sims.length + '차시<br><span class="st">★</span> ' + starsOf(sims) + '/' + sims.length * 3 }),
       ]);
