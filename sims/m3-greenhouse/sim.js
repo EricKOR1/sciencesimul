@@ -294,7 +294,7 @@
     const inL4 = lv >= 3 || free;
     const show = (id, on) => $(id).classList.toggle('is-off', !on);
     show('#cDist', sc === 'lamp'); show('#cReset', sc === 'lamp');
-    show('#cAtm', sc === 'model' && !inL4);
+    show('#cAtm', sc === 'model' && (!inL4 || free));
     show('#cScene', inL4);
     show('#cGas', inL4 && sc === 'model');
     show('#cYear', inL4 && sc === 'data');

@@ -870,7 +870,7 @@
   function drawReact(t) {
     RS.shown = SciSim.approach(RS.shown, RS.words ? 1 : 0, lastDt, 8);
     drawWordsBanner();
-    if (RS.shown < 0.98) { ctx.save(); ctx.globalAlpha = 1 - RS.shown; txt('수소 분자 2개와 산소 분자 1개가 들어 있는 용기예요', 400, 62, 18, COL.ink, 'center', 800); ctx.restore(); }
+    if (RS.shown < 0.98) { ctx.save(); ctx.globalAlpha = 1 - RS.shown; txt(RS.st === 'idle' ? '수소 분자 2개와 산소 분자 1개가 들어 있는 용기예요' : RS.st === 'run' ? '전기 불꽃으로 반응이 일어나요…' : '반응 후에는 물 분자 2개가 생겼어요', 400, 62, 18, COL.ink, 'center', 800); ctx.restore(); }
     chamber(LC, '반응물 (반응 전)', '#3f6fe8');
     chamber(RC, '생성물 (반응 후)', '#0ea5a5');
     // 가운데 화살표
@@ -1244,8 +1244,8 @@
       ctx.restore();
     });
     if (W.st < 1) txt('화학식으로 바꾸면 원자 수를 셀 수 있어요', 400, 400, 15, '#8995a8', 'center', 700);
-    if (W.st === 2) { const bal = wBal(ei); if (bal && !wSimple(ei)) pill(400, 448, '더 작은 정수로 나타낼 수 있어요', { bg: '#b4440f', size: 14, pad: 12 }); }
-    if (W.st === 3) pill(400, 448, '🎉 ' + EQS[ei].eqStr, { bg: COL.good, size: 16, pad: 16 });
+    if (W.st === 2) { const bal = wBal(ei); if (bal && !wSimple(ei)) pill(400, 456, '더 작은 정수로 나타낼 수 있어요', { bg: '#b4440f', size: 14, pad: 12 }); }
+    if (W.st === 3) pill(400, 456, '🎉 ' + EQS[ei].eqStr, { bg: COL.good, size: 16, pad: 16 });
   }
   EQS[0].eqStr = 'C + O₂ → CO₂ 완성!'; EQS[1].eqStr = '2H₂O → 2H₂ + O₂ 완성!'; EQS[2].eqStr = 'N₂ + 3H₂ → 2NH₃ 완성!';
   SC.write = {
@@ -1282,7 +1282,7 @@
     sysT.clear(); clearLater();
     const pts = [];
     for (let i = 0; i < 6; i++) pts.push(['H2', tcBox.x + 40 + (i % 3) * 82 + rand(-6, 6), tcBox.y + 36 + Math.floor(i / 3) * 70 + rand(-6, 6)]);
-    for (let i = 0; i < RT.o2; i++) pts.push(['O2', tcBox.x + 30 + (i % 4) * 70 + rand(-6, 6), tcBox.y + 4 + 120 + Math.floor(i / 4) * 0 + rand(-4, 4)]);
+    for (let i = 0; i < RT.o2; i++) pts.push(['O2', tcBox.x + 30 + (i % 4) * 70 + rand(-6, 6), tcBox.y + 4 + 120 + Math.floor(i / 4) * 36 + rand(-4, 4)]);
     pts.forEach((q, i) => {
       const m = sysT.addMol(q[0], q[1], q[2], { mode: 'gas', speed: 30, box: tcBox, sc: 25, rot: rand(0, 6), scl: pop ? 0.01 : 1 });
       if (pop) tw(m, { scl: 1 }, 0.5, 'outBack', { delay: i * 0.04, essential: true });

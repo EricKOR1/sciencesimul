@@ -908,7 +908,7 @@
     poly(KOREA); ctx.fillStyle = mixc('#f8fafc', '#5fa347', ms); ctx.fill(); ctx.strokeStyle = '#1b2333'; ctx.lineWidth = 2 / MZ; ctx.stroke();
     ctx.restore();
     D.text(150, 70, '대륙 (유라시아)', { size: 17, weight: 800, color: 'rgba(255,255,255,.95)', stroke: 'rgba(30,50,70,.55)', strokeWidth: 4 });
-    D.text(700, 500, '태평양', { size: 17, weight: 800, color: 'rgba(255,255,255,.95)', stroke: 'rgba(20,50,90,.55)', strokeWidth: 4 });
+    D.text(715, 84, '태평양', { size: 17, weight: 800, color: 'rgba(255,255,255,.95)', stroke: 'rgba(20,50,90,.55)', strokeWidth: 4 });
     { const q = mp(594, 262); D.text(q[0], q[1], '동해', { size: 13, weight: 800, color: 'rgba(255,255,255,.9)', stroke: 'rgba(20,50,90,.5)', strokeWidth: 3 }); }
     { const q = mp(466, 392); D.text(q[0], q[1], '황해', { size: 13, weight: 800, color: 'rgba(255,255,255,.9)', stroke: 'rgba(20,50,90,.5)', strokeWidth: 3 }); }
     // 바람 줄기
@@ -1026,10 +1026,10 @@
   }
   function btStep(dt) {
     const b = S.bt;
-    const target = b.stage === 0 ? 25 : b.stage <= 2 ? 68 : 5;
+    const target = b.stage === 0 ? 25 : b.stage === 1 ? 68 : b.stage === 2 ? b.Tseal : 5;      // 뚜껑을 닫은 순간의 온도에서 식기 시작
     b.T = approach(b.T, target, dt, b.stage >= 3 ? 0.7 : 1.6);
     const pin = b.stage >= 2 ? (b.T + 273) / (b.Tseal + 273) : 1;
-    b.c.target = b.stage >= 3 ? clamp((1 - pin) / 0.17, 0, 1) : 0;
+    b.c.target = b.stage >= 3 ? clamp((1 - pin) / 0.15, 0, 1) : 0;
     b.c.update(dt);
     if (b.stage >= 3 && b.c.value > 0.3 && !b.creak) { b.creak = true; Sound.tick(); }
     if (b.stage >= 3 && !b.done && b.c.value > 0.96) { b.done = true; addMark(232, 300); updateBtBtn(); }
@@ -1053,7 +1053,8 @@
       SciSim.tween(b, { pour: 1 }, { duration: 1.8, ease: 'inOutSine' });
       SciSim.tween(b, { water: 0.16 }, { duration: 1.0, delay: 0.5, ease: 'outCubic' });
     } else if (b.stage === 1) {
-      b.stage = 2; b.Tseal = Math.max(b.T, 55);
+      if (b.T < 55) { toast('병 속 공기가 아직 덜 뜨거워요. 잠깐만 기다려요!', 'bad', 1600); return; }
+      b.stage = 2; b.Tseal = b.T;
       SciSim.tween(b, { water: 0 }, { duration: 0.5, ease: 'outCubic' });
       SciSim.tween(b, { capT: 1 }, { duration: 0.6, delay: 0.25, ease: 'outBack' });
     } else if (b.stage === 2) {

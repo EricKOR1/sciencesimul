@@ -1022,6 +1022,13 @@
         // 목을 향해 모이도록
         m.vx += (GX - m.cx) * dt * 3;
       }
+      // 좁은 목(입구)을 지날 때는 가운데로 모이고 세로로 서서 유리벽을 뚫지 않도록
+      if (m.type === 'CO2' && m.mode === 'fly' && m.cy < neckBot + 12 && m.cy > neckTop - 24) {
+        const k = Math.min(1, dt * 10);
+        m.cx += (GX - m.cx) * k; m.vx *= 0.8; m.vr = 0;
+        let d = (Math.PI / 2 - m.rot) % Math.PI; if (d > Math.PI / 2) d -= Math.PI; if (d < -Math.PI / 2) d += Math.PI;
+        m.rot += d * k;
+      }
     });
     if (GS.lid === 'off' && GS.lidT >= 0) {
       GS.lidT += dt;
@@ -1110,7 +1117,7 @@
     const r = GS.rec;
     const rows = [
       { label: '반응 전', val: fmtG(120) },
-      { label: GS.box === 'open' ? '반응 후' : '반응 후 (뚜껑 닫힘)', val: GS.box === 'open' ? (r.open != null ? fmtG(r.open) : '? g') : (r.closed != null ? fmtG(r.closed) : '? g'), col: GS.box === 'open' ? (r.open != null ? COL.bad : COL.muted) : (r.closed != null ? COL.good : COL.muted), on: GS.st === 'done' && GS.lid === 'on' },
+      { label: GS.box === 'open' ? '반응 후' : '반응 후 (닫힘)', val: GS.box === 'open' ? (r.open != null ? fmtG(r.open) : '? g') : (r.closed != null ? fmtG(r.closed) : '? g'), col: GS.box === 'open' ? (r.open != null ? COL.bad : COL.muted) : (r.closed != null ? COL.good : COL.muted), on: GS.st === 'done' && GS.lid === 'on' },
     ];
     if (GS.box === 'closed') rows.push({ label: '뚜껑 연 뒤', val: r.lid != null ? fmtG(r.lid) : '? g', col: r.lid != null ? COL.bad : COL.muted, on: GS.lid === 'off' });
     recPanel(566, 70, 226, GS.box === 'closed' ? 190 : 146, '⚖️ 질량 기록', rows);
@@ -1517,6 +1524,7 @@
     move(p, e) { if (DR.fn && DR.fn.move) DR.fn.move(SP(p), e); },
     up(p, e) { const s = DR.fn; DR.fn = null; if (s && s.up) s.up(SP(p), e); },
   });
+  view.canvas.style.touchAction = 'pan-y';             // 끌 물체가 없으므로 손가락으로 화면을 밀어 올릴 수 있게
   function update(dt) {
     S.sceneT += dt;
     const s = SC[S.scene];

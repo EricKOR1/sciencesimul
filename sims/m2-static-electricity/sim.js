@@ -341,6 +341,12 @@
 
   /* ================= ② 전기력 ================= */
   const PIV = { x: 330, y: 44 }, TH_L = 195;
+  const ROD_HALF = 75, ROD_GAP = 26;                 // 막대 길이의 절반 · 두 막대(굵기 26)가 닿는 중심선 간격
+  // 매달린 막대가 비스듬히 기울어도 손에 든 막대(수직)와 겹치지 않는 sin(th)의 한계
+  function sinLimit(hx, side) {
+    if (side > 0) { const n = hx - PIV.x - ROD_GAP; return n >= 0 ? n / (TH_L + ROD_HALF) : n / (TH_L - ROD_HALF); }
+    const n = hx + ROD_GAP - PIV.x; return n >= 0 ? n / (TH_L - ROD_HALF) : n / (TH_L + ROD_HALF);
+  }
   function resetForce() {
     const f = S.force;
     f.th.value = 0; f.th.velocity = 0; f.th.target = 0;
@@ -369,12 +375,17 @@
     const dir = (f.same ? -1 : 1) * f.dxs;
     let target = dir * f.strength * 0.5;
     if (Math.abs(dy) < 140) {
-      if (dx > 0) target = Math.min(target, Math.asin(clamp((h.x - 29 - PIV.x) / TH_L, -1, 1)));
-      else target = Math.max(target, Math.asin(clamp((h.x + 29 - PIV.x) / TH_L, -1, 1)));
+      if (dx > 0) target = Math.min(target, Math.asin(clamp(sinLimit(h.x, 1), -1, 1)));
+      else target = Math.max(target, Math.asin(clamp(sinLimit(h.x, -1), -1, 1)));
     }
     f.th.target = target;
     f.th.update(dt);
-    const touching = !f.same && Math.abs(dx) < 33 && Math.abs(dy) < 110;
+    if (Math.abs(dy) < 140) {   // 스프링이 출렁여도 손에 든 막대를 뚫고 들어가지 않게 해요 (튕겨 나옴)
+      if (dx > 0) { const m = Math.asin(clamp(sinLimit(h.x, 1), -1, 1)); if (f.th.value > m) { f.th.value = m; if (f.th.velocity > 0) f.th.velocity *= -0.25; } }
+      else { const m = Math.asin(clamp(sinLimit(h.x, -1), -1, 1)); if (f.th.value < m) { f.th.value = m; if (f.th.velocity < 0) f.th.velocity *= -0.25; } }
+    }
+    const sn = Math.abs(Math.sin(th)) * ROD_HALF, gapX = (dx > 0 ? h.x - (hx + sn) : (hx - sn) - h.x) - ROD_GAP;
+    const touching = !f.same && gapX < 4 && Math.abs(dy) < 110;
     if (touching && !f.touch) {
       Sound.tick();
       parts.burst((h.x + hx) / 2, (h.y + hy) / 2, { count: 10, colors: ['#ffd24a', '#fff', '#ffb400'], speed: 110, life: 0.5, size: 3, gravity: 0, shape: 'star' });
@@ -807,6 +818,7 @@
       const o = objOf(g);
       g.dx = o.tx - p.x; g.dy = o.ty - p.y; g.sx = p.x; g.sy = p.y; g.t0 = performance.now(); g.moved = 0;
       o.grab = true;
+      if (g.kind === 'force' && S.force.hx != null) o.side = o.x >= S.force.hx ? 1 : -1;
       S.drag = g; S.touched[S.scene] = true; hideHint();
       Sound.tick();
       return true;
@@ -825,7 +837,13 @@
       } else if (g.kind === 'hang') {
         // 매달린 막대는 끌지 않고 톡 눌러 전기 종류만 바꿈
       } else if (g.kind === 'force') {
-        o.tx = clamp(X, 120, 760); o.ty = clamp(Y, 110, 360);
+        // 손에 든 막대는 매달린 막대를 뚫고 지나가지 못해요 (처음 있던 쪽에 머물러요)
+        let nx = clamp(X, 120, 760); const ny = clamp(Y, 110, 360), F = S.force;
+        if (F.hx != null && Math.abs(ny - F.hy) < 150) {
+          const ext = Math.abs(Math.sin(F.th.value)) * ROD_HALF + ROD_GAP;
+          nx = (o.side || 1) > 0 ? Math.max(nx, F.hx + ext) : Math.min(nx, F.hx - ext);
+        }
+        o.tx = nx; o.ty = ny;
       } else if (g.kind === 'induce') {
         const q = clampRodOutside(clamp(X, 60, 740), clamp(Y, 70, 390));
         o.tx = q.x; o.ty = q.y;

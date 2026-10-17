@@ -250,7 +250,7 @@
         b.w -= d; b.F += d;
       } else {
         if (b.F > 0) { const d = Math.min(b.F, (sat - b.w) * (1 - Math.exp(-dt * 1.1))); b.F -= d; b.w += d; }
-        const tgt = sat * 0.97;
+        const tgt = Math.min(sat, satW(T0)) * 0.97;                // 닫힌 병 안의 수증기량은 실내(20 °C) 포화량 근처 — 가열돼도 늘지 않아요
         if (b.w < tgt && b.F < 0.01) b.w += (tgt - b.w) * (1 - Math.exp(-dt / 6));
       }
     }
@@ -1218,7 +1218,7 @@
             goal: '🕯️ 병 A에 향 연기를 넣고, 💨 펌프질을 한 뒤 🔓 뚜껑을 열어요. <b>병 A만 뿌옇게</b> 흐려지면 성공이에요!',
             hint: '순서: 향 연기 넣기 → 펌프질 3~4번 → 병이 식을 때까지 기다리기 → 뚜껑 열기. 펌프질을 많이 할수록 구름이 진해져요.',
             setup() { if (!BA.nuclei && !SM.on && REC.opened === 0 && BA.n === 1) refreshUI(); },
-            check: () => S.scene === 'cloud' && BA.nuclei && BA.Fv >= 1.2 && BB.Fv <= 0.35,
+            check: () => S.scene === 'cloud' && BA.nuclei && REC.opened > 0 && BA.Fv >= 1.2 && BB.Fv <= 0.35,
             hold: 0.8,
             status: () => chip(BA.nuclei, '연기 넣기') + ' · ' + chip(REC.opened > 0, '뚜껑 열기') + ' · ' + chip(BA.Fv >= 1.2 && BB.Fv <= 0.35, '병 A만 뿌옇게'),
             explain: '뚜껑을 열면 병 속 공기가 <b>팽창하며 냉각</b>되고, 수증기가 <b>이슬점</b> 아래로 식어요. 연기 입자(<b>응결핵</b>)가 있는 병 A에서는 수증기가 입자 둘레에 응결해 작은 물방울이 되어 뿌옇게 보여요. 응결핵이 없는 병 B는 거의 맑아요.',

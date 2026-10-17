@@ -830,7 +830,7 @@
       fx.burst(m.x + S.offX, m.y, { count: 8, speed: 90, life: 0.5, size: 3, gravity: 0, colors: [AM_COLOR, '#c4b5fd', '#fff'], shape: 'star' });
     }
     S.pop[k].velocity = 5;
-    S.read[k] = true;
+    if (S.closed) S.read[k] = true;     // 스위치가 열려 있으면 전류가 없으니 값을 읽은 것으로 치지 않아요
     hideHint();
   }
   const readAll = (v) => { S.read = { a: v, b: v, c: v }; };
