@@ -21,6 +21,14 @@
   const BG = '#eef2f8';
   const INK = '#1b2333', MUTED = '#5b6b82';
   const SUBJ = '#64748b';
+  // 받침 여부에 따라 은/는 · 이/가 고르기 (이름이 바뀌어도 문장이 자연스럽게)
+  const hasBatchim = (s) => {
+    const ch = String(s).trim().slice(-1), c = ch.charCodeAt(0);
+    if (c >= 0xAC00 && c <= 0xD7A3) return (c - 0xAC00) % 28 !== 0;
+    if (/[0-9]/.test(ch)) return '013678'.indexOf(ch) >= 0;
+    return false;
+  };
+  const iGa = (s) => s + (hasBatchim(s) ? '이' : '가');
   const store = {
     get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } },
     set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* 저장 못 해도 계속 */ } },
@@ -506,7 +514,7 @@
         } else { c.ta = 0; c.ts = 0.8; }
         if (instant) { c.x.value = c.x.target; c.y.value = c.y.target; c.a = c.ta; c.s = c.ts; }
       });
-      st.bar = { x: 20, y: tall ? 748 : 562, w: LAY.w - 40, h: tall ? 56 : 30 };
+      st.bar = { x: 20, y: tall ? 762 : 562, w: LAY.w - 40, h: tall ? 56 : 30 };
     }
     function setFilter(id) {
       st.filter = id;
@@ -702,7 +710,7 @@
         st.shake[j] = now();
         const a = anchorJ(j);
         st.retract = { j, x: pos.x, y: pos.y, t0: now() };
-        say('‘' + con.name + '’은 아니에요. ' + job.name + '이(가) 하는 일을 떠올려 봐요. ' + job.work, clamp(pos.x, 160, LAY.w - 160), clamp(pos.y - 10, 120, LAY.h - 100), 'bad', 4);
+        say('‘' + con.name + '’' + (hasBatchim(con.name) ? '은' : '는') + ' 아니에요. ' + iGa(job.name) + ' 하는 일을 떠올려 봐요. ' + job.work, clamp(pos.x, 160, LAY.w - 160), clamp(pos.y - 10, 120, LAY.h - 100), 'bad', 4);
         Sound.wrong && Sound.wrong();
       }
       st.sel = null;

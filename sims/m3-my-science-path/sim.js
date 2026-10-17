@@ -21,6 +21,14 @@
   const BG = '#eef2f8';
   const INK = '#1b2333', MUTED = '#5b6b82';
   const SUBJ = '#64748b';
+  // 받침 여부에 따라 은/는 · 이/가 고르기 (이름이 바뀌어도 문장이 자연스럽게)
+  const hasBatchim = (s) => {
+    const ch = String(s).trim().slice(-1), c = ch.charCodeAt(0);
+    if (c >= 0xAC00 && c <= 0xD7A3) return (c - 0xAC00) % 28 !== 0;
+    if (/[0-9]/.test(ch)) return '013678'.indexOf(ch) >= 0;
+    return false;
+  };
+  const iGa = (s) => s + (hasBatchim(s) ? '이' : '가');
   const store = {
     get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } },
     set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* 저장 못 해도 계속 */ } },
@@ -763,7 +771,7 @@
         if (doneCount() === st.cards.length) setTimeout(() => say('모든 직업에 필요한 과학 분야를 붙였어요!', LAY.w / 2, 50, 'good', 3), 500);
       } else {
         card_.shake = now();
-        say('‘' + FIELD[field].name + '’ 분야는 이 직업과 거리가 멀어요. ' + j.name + '이 하는 일을 떠올려 봐요: ' + j.work, clamp(card_.x + card_.w / 2, 170, LAY.w - 170), clamp(card_.y + 20, 110, LAY.h - 120), 'bad', 4.4);
+        say('‘' + FIELD[field].name + '’ 분야는 이 직업과 거리가 멀어요. ' + iGa(j.name) + ' 하는 일을 떠올려 봐요: ' + j.work, clamp(card_.x + card_.w / 2, 170, LAY.w - 170), clamp(card_.y + 20, 110, LAY.h - 120), 'bad', 4.4);
         st.info = null;
       }
     }
@@ -964,7 +972,7 @@
         }
       } else {
         n.shake = now();
-        say('‘' + sub.name + '’은 ' + sub.about.replace(/(해요|요)\.$/, '요.') + ' ' + j.name + '에는 이 과목이 꼭 필요하지는 않아요.', clamp(n.x + n.w / 2, 170, LAY.w - 170), clamp(n.y, 120, LAY.h - 150), 'bad', 4.4);
+        say('‘' + sub.name + '’' + (hasBatchim(sub.name) ? '은 ' : '는 ') + sub.about + ' ' + j.name + '에는 이 과목이 꼭 필요하지는 않아요.', clamp(n.x + n.w / 2, 170, LAY.w - 170), clamp(n.y, 120, LAY.h - 150), 'bad', 4.4);
       }
     }
     function drawNode(n, t) {
@@ -1142,8 +1150,8 @@
       const si = STAGES.findIndex((s) => s.id === stageId);
       const used = st.cards.filter((q) => q.placed === stageId).length;
       let msg = null;
-      if (c.kind === 'decoy') msg = '‘' + c.text + '’(' + SUB[c.sid].about + ') ' + j.name + '에는 꼭 필요하지 않은 과목이에요.';
-      else if (c.kind === 'subject' && c.stage !== stageId) msg = '‘' + c.text + '’은 ' + (c.stage === 'h1' ? '고1에서 모든 학생이 배우는 공통 과목이에요. 고1 칸에 놓아 보세요.' : '고1 이후 고2·3에서 고르는 ' + TIER[SUB[c.sid].tier].name + ' 과목이에요. 고2·3 칸에 놓아 보세요.');
+      if (c.kind === 'decoy') msg = '‘' + c.text + '’' + (hasBatchim(c.text) ? '은 ' : '는 ') + SUB[c.sid].about + ' ' + j.name + '에는 꼭 필요하지 않은 과목이에요.';
+      else if (c.kind === 'subject' && c.stage !== stageId) msg = '‘' + c.text + '’' + (hasBatchim(c.text) ? '은 ' : '는 ') + (c.stage === 'h1' ? '고1에서 모든 학생이 배우는 공통 과목이에요. 고1 칸에 놓아 보세요.' : '고1 이후 고2·3에서 고르는 ' + TIER[SUB[c.sid].tier].name + ' 과목이에요. 고2·3 칸에 놓아 보세요.');
       else if (used >= CAP) msg = '이 단계 칸이 가득 찼어요. 다른 단계에도 나누어 놓아 보세요.';
       if (msg) { c.shake = now(); say(msg, clamp(cx, 170, LAY.w - 170), clamp(cy - 16, 120, LAY.h - 120), 'bad', 4.2); relayout(false); st.sel = null; return; }
       c.placed = stageId; c.s = 1.12; st.sel = null;
@@ -1503,7 +1511,7 @@
       intro: '<div class="si-link">🔗 <b>앞 단계에서</b> 직업에 필요한 고등학교 과목 경로를 만들어 봤어요.</div>' +
         '<p>이제 <b>중3 → 고1 → 고2·3 → 진로</b>로 이어지는 나만의 <b>과학 학습 계획</b>을 세워요. 과목 카드와 <b>독서·탐구 활동·동아리·체험</b> 카드를 알맞은 단계에 놓으면 길이 자라요.</p>' +
         '<p>비슷한 진로를 가진 친구들과 모둠을 만들어 함께 조사하고 발표해도 좋아요.</p>',
-      setup() { ME.planJob = ME.pathJob || myJobs()[0]; ME.saved = false; SC.road.buildDeck(planJobId()); setScene('road'); showHint('카드를 끌어서 알맞은 단계 칸에 놓으세요', 6000); },
+      setup() { const mj = SC.map.current(); ME.planJob = myJobs().includes(mj) ? mj : myJobs()[0]; ME.saved = false; SC.road.buildDeck(planJobId()); setScene('road'); showHint('카드를 끌어서 알맞은 단계 칸에 놓으세요', 6000); },
       recap: '필요한 과목과 활동을 단계별로 계획하면 진로를 위한 과학 학습의 방향이 분명해져요.',
       summary: '<p><b>나의 과학 학습 계획</b>: 중3(지금) → 고1(공통 과목) → 고2·3(선택 과목) → 진로</p><ul><li>과목: 직업에 필요한 일반·진로·융합 선택 과목</li><li>활동: 독서, 탐구 활동, 동아리, 체험</li></ul><p>비슷한 진로를 가진 친구들과 모둠을 만들어 함께 조사하고 발표할 수 있다. 계획은 상황에 따라 바꿀 수 있다.</p>',
       missions: [
