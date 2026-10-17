@@ -554,6 +554,7 @@
 
   function drawAtom(q) {
     const ringR = S.ringR;
+    D.glow(C.x, C.y, ringR + 120, '#d6e2ff', 0.5);   // 원자 둘레의 부드러운 배경빛
     const bg = ctx.createRadialGradient(C.x, C.y, 10, C.x, C.y, ringR + 6);
     bg.addColorStop(0, '#f7f9ff'); bg.addColorStop(1, '#eef3fb');
     ctx.fillStyle = bg;
@@ -936,19 +937,24 @@
   function modelSVG() {
     const cx = 120, cy = 120;
     let s = '<svg viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="빨간 입자 3개와 회색 입자 4개로 된 원자핵, 전자 3개인 원자 모형">';
+    s += '<defs><radialGradient id="gP" cx="35%" cy="32%" r="75%"><stop offset="0" stop-color="#ffc2c2"/><stop offset=".55" stop-color="#e2464b"/><stop offset="1" stop-color="#9c1f27"/></radialGradient>' +
+      '<radialGradient id="gN" cx="35%" cy="32%" r="75%"><stop offset="0" stop-color="#f7f9fc"/><stop offset=".55" stop-color="#a6afbd"/><stop offset="1" stop-color="#656e80"/></radialGradient>' +
+      '<radialGradient id="gE" cx="35%" cy="32%" r="75%"><stop offset="0" stop-color="#c3d6ff"/><stop offset=".55" stop-color="#3867f4"/><stop offset="1" stop-color="#1b389c"/></radialGradient>' +
+      '<radialGradient id="gH" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#ffb4b4" stop-opacity=".75"/><stop offset="1" stop-color="#ffb4b4" stop-opacity="0"/></radialGradient></defs>';
     s += '<circle cx="120" cy="120" r="117" fill="#f4f7fd"/>';
     [74, 106].forEach((r) => { s += '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="none" stroke="#9fb3e6" stroke-width="1.5" stroke-dasharray="4 5"/>'; });
-    s += '<circle cx="120" cy="120" r="50" fill="#ffe3e3" opacity=".7"/>';
+    s += '<circle cx="120" cy="120" r="62" fill="url(#gH)"/>';
     const nuc = [[0, 0, 'n']];
     ['p', 'n', 'p', 'n', 'p', 'n'].forEach((t, i) => { const a = (i * 60 - 90) * Math.PI / 180; nuc.push([Math.cos(a) * 29, Math.sin(a) * 29, t]); });
     nuc.forEach(([dx, dy, t]) => {
       const x = (cx + dx).toFixed(1), y = (cy + dy).toFixed(1);
-      s += '<circle cx="' + x + '" cy="' + y + '" r="14" fill="' + (t === 'p' ? '#e2464b' : '#a3acbb') + '" stroke="#fff" stroke-width="2"/>';
+      s += '<circle cx="' + x + '" cy="' + y + '" r="14" fill="url(#' + (t === 'p' ? 'gP' : 'gN') + ')" stroke="#fff" stroke-width="1.5"/>';
+      s += '<ellipse cx="' + (x - 4.5) + '" cy="' + (y - 6) + '" rx="4.6" ry="2.6" transform="rotate(-35 ' + (x - 4.5) + ' ' + (y - 6) + ')" fill="#fff" opacity=".5"/>';
       if (t === 'p') s += '<text x="' + x + '" y="' + (+y + 6) + '" text-anchor="middle" font-size="19" font-weight="800" fill="#fff" font-family="sans-serif">+</text>';
     });
     [[74, 180], [74, 0], [106, -50]].forEach(([r, deg]) => {
       const a = deg * Math.PI / 180, x = (cx + Math.cos(a) * r).toFixed(1), y = (cy + Math.sin(a) * r).toFixed(1);
-      s += '<circle cx="' + x + '" cy="' + y + '" r="11" fill="#3867f4"/><text x="' + x + '" y="' + (+y + 5) + '" text-anchor="middle" font-size="16" font-weight="800" fill="#fff" font-family="sans-serif">' + MINUS + '</text>';
+      s += '<circle cx="' + x + '" cy="' + y + '" r="11" fill="url(#gE)"/><ellipse cx="' + (x - 3.6) + '" cy="' + (y - 4.8) + '" rx="3.6" ry="2" transform="rotate(-35 ' + (x - 3.6) + ' ' + (y - 4.8) + ')" fill="#fff" opacity=".5"/><text x="' + x + '" y="' + (+y + 5) + '" text-anchor="middle" font-size="16" font-weight="800" fill="#fff" font-family="sans-serif">' + MINUS + '</text>';
     });
     return s + '</svg>';
   }
@@ -1201,7 +1207,7 @@
       updateUI(true);
     },
     onMissionStart(m) {
-      S.target = null; S.focus = null;
+      S.target = null; S.focus = null; S.win = null;
       if (!S.nucleons.length) { const lv = LEVELS[m._level]; if (lv && lv.setup) lv.setup(); }
     },
     onHint(m) { if (m.focus) S.focus = { what: m.focus, t0: S.time }; },
@@ -1222,7 +1228,7 @@
 
   /* ---------- 점검용 ---------- */
   window.__sim = {
-    S, frameMs: () => frameMs, game: () => game, setState, np, nn, ne, plus, minus, C, binCenter, bins, cards,
+    S, frameMs: () => frameMs, game: () => game, setState, np, nn, ne, plus, minus, C, binCenter, bins, cards, insetPos,
     client(x, y) { const r = view.canvas.getBoundingClientRect(); return { x: r.left + x * r.width / 800, y: r.top + y * r.height / 520 }; },
   };
 })();

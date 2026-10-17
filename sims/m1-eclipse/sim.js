@@ -912,7 +912,7 @@
       tilt: '🌐 궤도 기울기 (실제처럼)',
     },
     onFeatures(set) { FEAT = set; },
-    onMissionStart() { aids(); },
+    onMissionStart() { aids(); views.forEach(({ L }) => { L.win = null; }); },
     onHint(m) { if (m.target) S.target = m.target; },
     levels: [
       /* ---------- 1단계 · 관찰 ---------- */

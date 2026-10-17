@@ -898,7 +898,7 @@
       if (!set.has('marks')) setGhost(false);
       $('#ctrlDay').hidden = set.has('model');
     },
-    onMissionStart() { aids(); },
+    onMissionStart() { aids(); views.forEach(({ L }) => { L.win = null; }); },
     onHint(m) { if (m.target) S.target = m.target; },
     levels: [
       /* ---------- 1단계 · 관찰 ---------- */

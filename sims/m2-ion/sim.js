@@ -67,6 +67,8 @@
     banner: null, idFlash: null, focus: null, ePt: null, lockToast: 0,
     time: 0,
     mig: { on: false, leftPos: true, cu: 0, mn: 0, moved: 0, ions: [] },
+    needleSp: new SciSim.Spring(0, { stiffness: 130, damping: 11 }),   // 계기판 바늘 (살짝 흔들리며 멈춤)
+    lift: 0, win: null, inT: -9, kindT: -9, lastKind: 'atom', polar: 1, flow: 0, sceneT: -9, pressT: -9, seenT: {},
   };
 
   let F = new Set();
@@ -80,6 +82,90 @@
   /* ---------- 캔버스 ---------- */
   const view = SciSim.stage($('#cv'), { width: 800, height: 520, background: '#fff' });
   const ctx = view.ctx;
+  const D = SciSim.draw(ctx);
+  /* ---------- 애니메이션 도구 (anim.js) ---------- */
+  const REDUCE = !!SciSim.reduceMotion;
+  const approach = SciSim.approach;
+  const EZ = SciSim.ease;
+  const FX = new SciSim.Particles();           // 반짝임 · 성공 효과
+  const BALL_COL = {
+    p: { light: '#ffc2c2', color: '#e2464b', dark: '#9c1f27' },
+    n: { light: '#f7f9fc', color: '#a6afbd', dark: '#656e80' },
+    e: { light: '#c3d6ff', color: '#3867f4', dark: '#1b389c' },
+  };
+  const SPR = 3;                                // 공 그림(스프라이트) 해상도 배율
+  const _spr = {};
+  /* 공은 한 번만 반짝이는 공 그림으로 만들어 두고 매 프레임 찍어요 (그라데이션을 매번 만들지 않아 빨라요) */
+  function ballSprite(kind) {
+    if (_spr[kind]) return _spr[kind];
+    const r = kind === 'e' ? ER : NR, size = Math.ceil(r * 2 + r * 1.9), cv = document.createElement('canvas');
+    cv.width = cv.height = Math.ceil(size * SPR);
+    const c = cv.getContext('2d');
+    c.scale(SPR, SPR);
+    const B = BALL_COL[kind], bx = size / 2, by = size / 2 - r * 0.08;
+    c.save();   // 부드러운 그림자 (그림자 값은 확대 배율의 영향을 받지 않아 직접 곱해 줘요)
+    c.shadowColor = 'rgba(20,30,70,.3)'; c.shadowBlur = r * 0.7 * SPR; c.shadowOffsetY = r * 0.28 * SPR;
+    c.fillStyle = B.color; c.beginPath(); c.arc(bx, by, r, 0, Math.PI * 2); c.fill();
+    c.restore();
+    SciSim.draw(c).sphere(bx, by, r, B.color, { light: B.light, dark: B.dark, text: kind === 'p' ? '+' : kind === 'e' ? MINUS : null, textScale: kind === 'p' ? 1.5 : 1.45 });
+    return (_spr[kind] = { cv, size });
+  }
+  const _ionSpr = {};
+  function ionSprite(kind, withText) {
+    const key = kind + (withText ? 't' : 'p');
+    if (_ionSpr[key]) return _ionSpr[key];
+    const r = 15, size = Math.ceil(r * 2 + r * 1.9), cv = document.createElement('canvas');
+    cv.width = cv.height = Math.ceil(size * SPR);
+    const c = cv.getContext('2d');
+    c.scale(SPR, SPR);
+    const cu = kind === 'cu', col = cu ? COL.cu : COL.mn, bx = size / 2, by = size / 2 - r * 0.08;
+    c.save();
+    c.shadowColor = 'rgba(20,30,70,.3)'; c.shadowBlur = r * 0.7 * SPR; c.shadowOffsetY = r * 0.28 * SPR;
+    c.fillStyle = col; c.beginPath(); c.arc(bx, by, r, 0, Math.PI * 2); c.fill();
+    c.restore();
+    SciSim.draw(c).sphere(bx, by, r, col, { light: cu ? '#a9d6ff' : '#e8c0f7', dark: cu ? '#0f4f9e' : '#5e1a7c' });
+    if (withText) {
+      c.fillStyle = '#fff'; c.font = font(cu ? 13 : 17, true); c.textAlign = 'center'; c.textBaseline = 'middle';
+      c.fillText(cu ? '2+' : MINUS, bx, by + 1);
+    }
+    return (_ionSpr[key] = { cv, size });
+  }
+  function popScale(o) {   // 눌러 본 입자가 통통 튀어요
+    if (!o || o.pop == null || REDUCE) return 1;
+    const a = S.time - o.pop;
+    return a > 0.7 ? 1 : 1 + 0.38 * Math.exp(-a * 7) * Math.cos(a * 16);
+  }
+  const popT = (t0, dur) => (t0 == null || REDUCE ? 1 : Math.max(0, (SciSim.time() - t0) / (dur || 0.45)));
+  const sparks = (x, y, color, n) => FX.burst(x, y, { count: n || 7, colors: [color, '#ffffff'], size: 2.4, speed: 70, gravity: 0, life: 0.5, shape: 'circle' });
+  /* 성공 효과: 터지는 반짝임 + 체크 표시 */
+  const WIN_COLORS = ['#ffd36b', '#e2464b', '#3867f4', '#14a058', '#8b5cf6', '#ffffff'];
+  function winAt() {
+    if (S.scene === 'move') return { x: 590, y: 150 };
+    return { x: C.x + Math.min(S.ringR, 190) * 0.72, y: C.y - Math.min(S.ringR, 190) * 0.72 };
+  }
+  function onWin() {
+    if (S.scene === 'move') FX.burst(MID, STRIP.y + STRIP.h / 2, { count: 26, colors: WIN_COLORS, speed: 190, size: 3.8, gravity: 140, life: 1 });
+    else FX.burst(C.x, C.y, { count: 26, colors: WIN_COLORS, speed: 190, size: 3.8, gravity: 140, life: 1 });
+    const p = winAt();
+    S.win = { x: p.x, y: p.y, t: 0 };
+  }
+  function drawWin(D) {
+    const w = S.win;
+    if (!w) return;
+    const k = REDUCE ? 1 : clamp(w.t / 0.45, 0, 1), s = EZ.outBack(k), a = w.t > 1.5 ? 1 - (w.t - 1.5) / 0.5 : 1, sz = Math.max(0.5, 19 * s);
+    ctx.save(); ctx.globalAlpha = clamp(a, 0, 1);
+    D.glow(w.x, w.y, sz * 2.3, '#34d399', 0.4).check(w.x, w.y, sz, clamp(w.t / 0.35, 0, 1));
+    ctx.restore();
+  }
+  // 미션 성공 순간 감지 (공통 엔진에는 성공 알림이 없어 phase로 알아냄)
+  let _wp = '', _wi = -1;
+  function watchGame() {
+    if (!game) return;
+    const ph = game.phase, idx = game.index;
+    if (ph === 'success' && (_wp !== 'success' || _wi !== idx)) onWin();
+    _wp = ph; _wi = idx;
+  }
+
 
   /* ---------- 원자핵 (양성자 + 중성자: 이온이 될 때 변하지 않음) ---------- */
   function relax(iter) {
@@ -131,8 +217,9 @@
     for (let i = 0; i < e; i++) { const s = slot(i, e); const el = newElectron(s.x, s.y, false); el.key = s.key; S.electrons.push(el); }
     S.lastP = p; S.lastE = e;
     S.banner = null; S.idFlash = null; S.ePt = null;
-    S.needle = p - e;
+    S.needle = p - e; S.needleSp.value = S.needle; S.needleSp.target = S.needle; S.needleSp.velocity = 0;
     S.ringR = outerR() + 18;
+    FX.clear(); S.win = null; S.inT = S.time; S.lastKind = identify(p, e).kind;
     $$('#pickSeg button').forEach((b) => b.classList.toggle('on', +b.dataset.z === p));
     updateUI(true);
   }
@@ -171,13 +258,14 @@
     // 두 종류의 이온을 엇갈린 격자로 배치 (처음에는 가운데에 섞여 있음)
     for (let i = 0; i < 8; i++) {
       const col = i % 4, row = Math.floor(i / 4);
-      m.ions.push({ kind: 'cu', ox: -78 + col * 52, oy: PANEL.y + 50 + row * 46, ph: Math.random() * 6.28 });
-      m.ions.push({ kind: 'mn', ox: -52 + col * 52, oy: PANEL.y + 73 + row * 46, ph: Math.random() * 6.28 });
+      m.ions.push({ kind: 'cu', ox: -78 + col * 52, oy: PANEL.y + 50 + row * 46, ph: Math.random() * 6.28, x: MID - 78 + col * 52 });
+      m.ions.push({ kind: 'mn', ox: -52 + col * 52, oy: PANEL.y + 73 + row * 46, ph: Math.random() * 6.28, x: MID - 52 + col * 52 });
     }
     updateMoveUI();
   }
   function setPower(v) {
-    S.mig.on = v; updateMoveUI();
+    S.mig.on = v; updateMoveUI(); S.pressT = S.time;
+    if (v) { FX.burst(STRIP.x - 6 + 14, STRIP.y - 12 + 20, { count: 8, colors: ['#ffe27a', '#ffffff'], speed: 90, size: 2.6, gravity: 0, life: 0.5 }); FX.burst(STRIP.x + STRIP.w - 22 + 14, STRIP.y - 12 + 20, { count: 8, colors: ['#ffe27a', '#ffffff'], speed: 90, size: 2.6, gravity: 0, life: 0.5 }); }
     Sound.tone(v ? 880 : 300, 0.08, 'triangle', 0.08);
     hideHint();
   }
@@ -195,6 +283,7 @@
     m.mn = clamp(m.mn - dirCu() * SPEED * dt, -MAXD, MAXD);
   }
   function setScene(sc) {
+    if (S.scene !== sc) S.sceneT = S.time;
     S.scene = sc;
     document.body.classList.toggle('scene-move', sc === 'move');
     $$('#sceneSeg button').forEach((b) => b.classList.toggle('on', b.dataset.scene === sc));
@@ -260,9 +349,9 @@
       const s = slot(i, n);
       if (el.key !== s.key) { if (el.key !== null) { el.sx = el.x; el.sy = el.y; el.t = 0; el.dur = 0.32; } el.key = s.key; }
       el.t = Math.min(1, el.t + dt / el.dur);
-      const k = ease(el.t);
+      const k = el.fresh ? EZ.outBack(el.t) : ease(el.t);
       el.x = lerp(el.sx, s.x, k); el.y = lerp(el.sy, s.y, k);
-      if (el.fresh && el.t >= 1) { el.fresh = false; S.pulses.push({ x: el.x, y: el.y, t: 0 }); Sound.tick(); }
+      if (el.fresh && el.t >= 1) { el.fresh = false; S.pulses.push({ x: el.x, y: el.y, t: 0 }); sparks(el.x, el.y, COL.e, 7); Sound.tick(); }
     });
     if (n) {
       const d = S.ringR + 20, ax = Math.min(590, C.x + d * 0.74) + 16, ay = Math.min(446, C.y + d * 0.68);
@@ -278,8 +367,27 @@
     S.pulses = S.pulses.filter((pl) => pl.t < 1);
 
     const p = np(), e = ne();
-    S.needle += (p - e - S.needle) * Math.min(1, dt * 7);
-    S.ringR += (outerR() + 18 - S.ringR) * Math.min(1, dt * 6);
+    S.needleSp.target = p - e; S.needle = S.needleSp.update(dt);
+    S.ringR = approach(S.ringR, outerR() + 18, dt, 6);
+    S.lift = approach(S.lift, S.drag ? 1 : 0, dt, 18);
+    S.polar = REDUCE ? (S.mig.leftPos ? 1 : 0) : approach(S.polar, S.mig.leftPos ? 1 : 0, dt, 7);
+    if (S.mig.on) S.flow += dt;
+    // 이온 입자 모형: 전극 쪽으로 부드럽게 따라가요
+    S.mig.ions.forEach((ion) => {
+      const tx = clamp(MID + (ion.kind === 'cu' ? S.mig.cu : S.mig.mn) * 0.9 + ion.ox, PANEL.x + 44, PANEL.x + PANEL.w - 44);
+      ion.x = REDUCE ? tx : approach(ion.x == null ? tx : ion.x, tx, dt, 8);
+    });
+    FX.update(dt);
+    if (S.win) { S.win.t += dt; if (S.win.t > 2.1) S.win = null; }
+    const kind = identify(p, e).kind;
+    if (kind !== S.lastKind) {   // 이온이 되는 순간 둘레에서 빛이 터져요
+      S.lastKind = kind;
+      if (on('ion')) {
+        S.kindT = S.time;
+        const col = kind === 'cation' ? COL.p : kind === 'anion' ? COL.e : COL.good;
+        for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4 + 0.3; sparks(C.x + Math.cos(a) * S.ringR, C.y + Math.sin(a) * S.ringR, col, 4); }
+      }
+    }
     if (e !== S.lastE || p !== S.lastP) {
       if (p === S.lastP) {
         S.idFlash = { t0: S.time };
@@ -307,6 +415,11 @@
     const a = 0.5 + 0.5 * Math.sin(performance.now() / 160);
     ctx.save(); ctx.strokeStyle = rgba(COL.sub, 0.35 + a * 0.5); ctx.lineWidth = 4;
     roundRect(b.x - 5, b.y - 5, b.w + 10, b.h + 10, 17); ctx.stroke();
+    if (!REDUCE) {   // 바깥으로 퍼지는 물결
+      const k = (performance.now() / 1000 * 1.1) % 1, e = 5 + k * 12;
+      ctx.strokeStyle = rgba(COL.sub, 0.5 * (1 - k)); ctx.lineWidth = 3;
+      roundRect(b.x - e, b.y - e, b.w + e * 2, b.h + e * 2, 17 + e); ctx.stroke();
+    }
     const bx = Math.min(b.x + b.w - 44, 800 - 54), by = Math.max(b.y - 12, 2);
     ctx.fillStyle = COL.sub; roundRect(bx, by, 50, 22, 11); ctx.fill();
     ctx.fillStyle = '#fff'; ctx.font = font(13, true); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -324,23 +437,15 @@
     ctx.save(); ctx.strokeStyle = rgba(COL.warn, 0.25 + 0.65 * a); ctx.lineWidth = 5;
     roundRect(b.x - 6, b.y - 6, b.w + 12, b.h + 12, 18); ctx.stroke(); ctx.restore();
   }
+  const _ord = [];
   function drawBall(x, y, kind, scale, alpha) {
-    const r = (kind === 'e' ? ER : NR) * (scale || 1);
-    ctx.save();
-    if (alpha != null) ctx.globalAlpha = alpha;
-    const g = ctx.createRadialGradient(x - r * 0.35, y - r * 0.4, r * 0.1, x, y, r);
-    if (kind === 'p') { g.addColorStop(0, '#ffb6b6'); g.addColorStop(0.55, '#e2464b'); g.addColorStop(1, '#a8222a'); }
-    else if (kind === 'n') { g.addColorStop(0, '#f4f6f9'); g.addColorStop(0.55, '#a6afbd'); g.addColorStop(1, '#6b7486'); }
-    else { g.addColorStop(0, '#b8d0ff'); g.addColorStop(0.55, '#3867f4'); g.addColorStop(1, '#1f3fa8'); }
-    ctx.fillStyle = g;
-    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
-    if (kind !== 'n') {
-      ctx.fillStyle = '#fff'; ctx.font = font(Math.round(14 * (scale || 1)), true);
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText(kind === 'p' ? '+' : MINUS, x, y + 1);
-    }
-    ctx.restore();
+    const s = scale == null ? 1 : scale;
+    if (s <= 0.03) return;
+    const sp = ballSprite(kind), w = sp.size * s;
+    if (alpha != null) { ctx.globalAlpha = alpha; ctx.drawImage(sp.cv, x - w / 2, y - w / 2, w, w); ctx.globalAlpha = 1; }
+    else ctx.drawImage(sp.cv, x - w / 2, y - w / 2, w, w);
   }
+  const byY = (a, b) => a.y - b.y;
   // 원소 기호 + 위첨자 전하
   function formulaWidth(sym, q, size) {
     ctx.font = font(size, true);
@@ -377,7 +482,12 @@
   /* ---------- 그리기: 원자 → 이온 ---------- */
   function drawAtomScene() {
     const p = np(), e = ne(), q = p - e, id = identify(p, e);
+    const ik = REDUCE ? 1 : Math.min(1, (S.time - S.inT) / 0.5), is0 = ik < 1 ? 0.88 + 0.12 * EZ.outBack(ik) : 1;
+    ctx.save();   // 원자를 새로 고르면 살짝 커지며 나타나요
+    if (ik < 1) { ctx.globalAlpha = Math.min(1, ik * 2.2); ctx.translate(C.x, C.y); ctx.scale(is0, is0); ctx.translate(-C.x, -C.y); }
+    D.glow(C.x, C.y, S.ringR + 120, '#d6e2ff', 0.5);   // 원자 둘레의 부드러운 배경빛
     drawAtom(q);
+    ctx.restore();
     if (on('meter') && !S.drag) drawLabels(p, e);
     if (on('ebin')) drawBin();
     drawIdCard(CARD1, id);
@@ -387,8 +497,12 @@
     drawBanner();
     S.flying.forEach((f) => { const k = ease(f.t); drawBall(lerp(f.x0, f.x1, k), lerp(f.y0, f.y1, k), 'e', 1 - 0.3 * k, 1 - f.t * 0.8); });
     if (S.drag) {
-      ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.28)'; ctx.shadowBlur = 10; ctx.shadowOffsetY = 4;
-      drawBall(S.drag.x, S.drag.y, 'e', 1.3); ctx.restore();
+      // 집어 올리면 커지고, 그림자는 멀어지며 흐려져요
+      const lf = S.lift;
+      ctx.save(); ctx.fillStyle = 'rgba(20,30,70,' + 0.16 * lf + ')';
+      ctx.beginPath(); ctx.ellipse(S.drag.x + 5 * lf, S.drag.y + ER * (1.3 + 0.7 * lf), ER * (1.1 + 0.3 * lf), ER * 0.45, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+      drawBall(S.drag.x, S.drag.y, 'e', 1 + 0.32 * lf);
     }
   }
   function drawAtom(q) {
@@ -397,18 +511,20 @@
     bg.addColorStop(0, '#f7f9ff'); bg.addColorStop(1, '#eef3fb');
     ctx.fillStyle = bg; ctx.beginPath(); ctx.arc(C.x, C.y, ringR + 6, 0, Math.PI * 2); ctx.fill();
     if (on('ion') && q !== 0) {
-      // 이온 빛: 양이온은 붉은빛, 음이온은 푸른빛 (부드러운 빛만)
-      const col = q > 0 ? COL.p : COL.e, a = clamp(0.2 + 0.1 * Math.abs(q), 0.2, 0.5);
+      // 이온 빛: 양이온은 붉은빛, 음이온은 푸른빛 (숨 쉬듯 일렁이고, 이온이 되는 순간 번쩍)
+      const col = q > 0 ? COL.p : COL.e, flash = REDUCE ? 0 : Math.exp(-(S.time - S.kindT) * 2.6);
+      const a = clamp((0.2 + 0.1 * Math.abs(q)) * (1 + 0.14 * (REDUCE ? 0 : Math.sin(S.time * 2.6)) + 1.1 * flash), 0.2, 0.85);
       const g = ctx.createRadialGradient(C.x, C.y, ringR - 30, C.x, C.y, ringR + 18);
       g.addColorStop(0, rgba(col, 0)); g.addColorStop(0.62, rgba(col, a)); g.addColorStop(1, rgba(col, 0));
       ctx.fillStyle = g; ctx.beginPath(); ctx.arc(C.x, C.y, ringR + 18, 0, Math.PI * 2); ctx.fill();
     } else {
+      if (q === 0) D.glow(C.x, C.y, ringR + 22, '#14a058', 0.12 + (REDUCE ? 0 : 0.05 * Math.sin(S.time * 2.2)));   // 중성이면 은은한 초록 빛
       ctx.strokeStyle = q === 0 ? 'rgba(20,160,88,.4)' : 'rgba(93,104,121,.22)'; ctx.lineWidth = 2; ctx.setLineDash([3, 7]);
       ctx.beginPath(); ctx.arc(C.x, C.y, ringR, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
     }
     if (S.drag) {
       const intoAtom = S.drag.from === 'bin', over = inAtom(S.drag);
-      ctx.save(); ctx.setLineDash([9, 7]);
+      ctx.save(); ctx.setLineDash([9, 7]); ctx.lineDashOffset = REDUCE ? 0 : -S.time * 26;   // 점선이 빙글 돌며 '여기에 놓아요'를 알려요
       ctx.strokeStyle = intoAtom ? rgba(COL.e, over ? 0.9 : 0.5) : 'rgba(93,104,121,.45)';
       ctx.lineWidth = intoAtom && over ? 3 : 2;
       ctx.fillStyle = intoAtom ? rgba(COL.e, over ? 0.07 : 0.03) : 'rgba(0,0,0,0)';
@@ -427,11 +543,24 @@
     }
     ctx.setLineDash([]);
     const nr = nucleusR();
-    const ng = ctx.createRadialGradient(C.x, C.y, 2, C.x, C.y, nr + 12);
-    ng.addColorStop(0, 'rgba(255,205,205,.6)'); ng.addColorStop(1, 'rgba(255,205,205,0)');
-    ctx.fillStyle = ng; ctx.beginPath(); ctx.arc(C.x, C.y, nr + 12, 0, Math.PI * 2); ctx.fill();
-    S.nucleons.slice().sort((a, b) => a.y - b.y).forEach((q2) => drawBall(q2.x, q2.y, q2.type, 1));
-    S.electrons.forEach((el) => drawBall(el.x, el.y, 'e', el.t < 1 ? 1.15 - 0.15 * el.t : 1));
+    D.glow(C.x, C.y, nr + 22 + (REDUCE ? 0 : 2.5 * Math.sin(S.time * 2.6)), '#ff9a9a', 0.55);   // 원자핵이 은은하게 숨 쉬어요
+    _ord.length = 0; S.nucleons.forEach((q2) => _ord.push(q2)); _ord.sort(byY);
+    _ord.forEach((q2) => drawBall(q2.x, q2.y, q2.type, 1));
+    // 전자: 푸른 빛과 지나온 자리를 따라 흐르는 꼬리
+    ctx.lineCap = 'round';
+    S.electrons.forEach((el, i) => {
+      if (!REDUCE && el.t >= 1) {
+        const rad = SHELL_R[shellOf(i).k], a = Math.atan2(el.y - C.y, el.x - C.x), da = 15 / rad;
+        ctx.lineWidth = 4;
+        for (let s = 0; s < 3; s++) {
+          ctx.strokeStyle = 'rgba(56,103,244,' + (0.07 + 0.08 * s) + ')';
+          ctx.beginPath(); ctx.arc(C.x, C.y, rad, a - da * (3 - s) - 0.02, a - da * (2 - s)); ctx.stroke();
+        }
+      }
+      D.glow(el.x, el.y, ER * 2.3, COL.e, 0.22);
+      drawBall(el.x, el.y, 'e', el.t < 1 ? 1.15 - 0.15 * el.t : 1);
+    });
+    ctx.lineCap = 'butt';
     S.pulses.forEach((pl) => {
       ctx.strokeStyle = rgba(COL.e, (1 - pl.t) * 0.8); ctx.lineWidth = 3;
       ctx.beginPath(); ctx.arc(pl.x, pl.y, 10 + pl.t * 18, 0, Math.PI * 2); ctx.stroke();
@@ -498,7 +627,10 @@
     const qs = ion ? id.q : 0;
     let size = 58;
     while (formulaWidth(id.sym, qs, size) > c.w - 30 && size > 30) size -= 2;
+    const pk = flashing && !REDUCE ? Math.max(0, 1 - (S.time - f.t0) / 0.5) : 0, ps = 1 + 0.3 * pk * pk;
+    ctx.save(); ctx.translate(cx, c.y + 102); ctx.scale(ps, ps); ctx.translate(-cx, -(c.y + 102));
     drawFormula(id.sym, qs, cx, c.y + 102, size, COL.ink, K.c);
+    ctx.restore();
     ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
     ctx.fillStyle = COL.ink; ctx.font = font(21, true); ctx.fillText(id.name, cx, c.y + 136);
     ctx.fillStyle = COL.muted; ctx.font = font(14, true);
@@ -581,36 +713,66 @@
   }
 
   /* ---------- 그리기: 이온의 이동 실험 ---------- */
+  const _bz = { x: 0, y: 0 };
+  function bez(p0, p1, p2, p3, u) {
+    const v = 1 - u, a = v * v * v, b = 3 * v * v * u, c = 3 * v * u * u, d = u * u * u;
+    _bz.x = a * p0.x + b * p1.x + c * p2.x + d * p3.x; _bz.y = a * p0.y + b * p1.y + c * p2.y + d * p3.y;
+    return _bz;
+  }
+  const mixc = SciSim.color.mix;
   function drawMoveScene() {
-    const m = S.mig, leftPos = m.leftPos;
+    const m = S.mig, pol = S.polar;   // pol: 1이면 왼쪽이 (+)극, 0이면 오른쪽이 (+)극 (바꾸면 부드럽게 넘어가요)
     const L = { x: STRIP.x - 6, y: STRIP.y - 12 }, R = { x: STRIP.x + STRIP.w - 22, y: STRIP.y - 12 };
-    const posClip = leftPos ? L : R, negClip = leftPos ? R : L;
-    // 전원 장치
+    const posClip = { x: lerp(R.x, L.x, pol), y: L.y }, negClip = { x: lerp(L.x, R.x, pol), y: L.y };
+    // 전원 장치 (누르면 살짝 눌렸다 올라와요)
+    const press = REDUCE ? 0 : 3 * Math.exp(-(S.time - S.pressT) * 12) * Math.cos((S.time - S.pressT) * 20);
+    ctx.save(); ctx.translate(0, press);
     cardBg(PSU);
+    const bodyG = ctx.createLinearGradient(0, PSU.y, 0, PSU.y + PSU.h);
+    bodyG.addColorStop(0, '#ffffff'); bodyG.addColorStop(1, '#e8edf5');
+    ctx.fillStyle = bodyG; roundRect(PSU.x + 2, PSU.y + 2, PSU.w - 4, PSU.h - 4, 12); ctx.fill();
     ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
     ctx.fillStyle = COL.ink; ctx.font = font(16, true); ctx.fillText('전원 장치', PSU.x + 92, PSU.y + 30);
     ctx.fillStyle = COL.muted; ctx.font = font(13, true); ctx.fillText(m.on ? '켜짐 (눌러서 끄기)' : '꺼짐 (눌러서 켜기)', PSU.x + 92, PSU.y + 52);
     const lx = PSU.x + PSU.w - 26, ly = PSU.y + 34;
-    if (m.on) { const g = ctx.createRadialGradient(lx, ly, 2, lx, ly, 22); g.addColorStop(0, 'rgba(20,200,90,.9)'); g.addColorStop(1, 'rgba(20,200,90,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(lx, ly, 22, 0, Math.PI * 2); ctx.fill(); }
-    ctx.fillStyle = m.on ? '#14c35a' : '#c9d1dd'; ctx.beginPath(); ctx.arc(lx, ly, 10, 0, Math.PI * 2); ctx.fill();
+    if (m.on) D.glow(lx, ly, 24 + (REDUCE ? 0 : 3 * Math.sin(S.time * 5)), '#14c35a', 0.9);
+    D.sphere(lx, ly, 10, m.on ? '#14c35a' : '#c9d1dd', { light: m.on ? '#b6f5cf' : '#f4f6f9', dark: m.on ? '#0b7a41' : '#97a1b2' });
+    ctx.restore();
     const tp = { x: PSU.x + 40, y: PSU.y + PSU.h }, tn = { x: PSU.x + PSU.w - 40, y: PSU.y + PSU.h };
-    // 전선
-    const wire = (from, to, col) => {
+    // 전선 (+극 → (+)전극 → 용액 → (−)전극 → (−)극 으로 전류가 흘러요)
+    const wire = (from, to, col, rev) => {
+      const c1 = { x: from.x, y: from.y + 60 }, c2 = { x: to.x + 11, y: to.y - 70 }, e = { x: to.x + 11, y: to.y };
+      ctx.save(); ctx.shadowColor = 'rgba(20,30,60,.25)'; ctx.shadowBlur = 6; ctx.shadowOffsetY = 3;
       ctx.strokeStyle = col; ctx.lineWidth = 4; ctx.lineCap = 'round';
-      ctx.beginPath(); ctx.moveTo(from.x, from.y); ctx.bezierCurveTo(from.x, from.y + 60, to.x + 11, to.y - 70, to.x + 11, to.y); ctx.stroke();
-      ctx.lineCap = 'butt';
+      ctx.beginPath(); ctx.moveTo(from.x, from.y); ctx.bezierCurveTo(c1.x, c1.y, c2.x, c2.y, e.x, e.y); ctx.stroke();
+      ctx.restore();
+      if (m.on) {
+        for (let i = 0; i < 5; i++) {
+          let u = ((REDUCE ? 0 : S.flow * 0.55) + i / 5) % 1;
+          if (rev) u = 1 - u;
+          const q = bez(from, c1, c2, e, u);
+          D.glow(q.x, q.y, 9, '#ffd23f', 0.8);
+          ctx.fillStyle = '#fff6c2'; ctx.beginPath(); ctx.arc(q.x, q.y, 2.4, 0, Math.PI * 2); ctx.fill();
+        }
+      }
     };
-    wire(tp, posClip, '#d0343a'); wire(tn, negClip, '#2b3445');
+    wire(tp, posClip, '#d0343a', false); wire(tn, negClip, '#2b3445', true);
     [[tp, '#d0343a', '+'], [tn, '#2b3445', MINUS]].forEach(([t, col, s]) => {
-      ctx.fillStyle = col; ctx.beginPath(); ctx.arc(t.x, t.y - 4, 12, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#fff'; ctx.font = font(17, true); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(s, t.x, t.y - 3);
+      D.sphere(t.x, t.y - 4, 12, col, { text: s, textScale: 1.3, shadow: true });
     });
     ctx.textBaseline = 'alphabetic';
     if (isNew('move')) newRing(PSU);
     // 유리판 + 거름종이
-    ctx.fillStyle = 'rgba(200,225,240,.45)'; ctx.strokeStyle = 'rgba(120,160,190,.6)'; ctx.lineWidth = 2;
-    roundRect(PLATE.x, PLATE.y, PLATE.w, PLATE.h, 12); ctx.fill(); ctx.stroke();
-    ctx.fillStyle = '#fbfaf5'; ctx.strokeStyle = '#e1ddd0'; ctx.lineWidth = 1.5;
+    D.shadow(() => {
+      const pg = ctx.createLinearGradient(0, PLATE.y, 0, PLATE.y + PLATE.h);
+      pg.addColorStop(0, 'rgba(214,234,246,.7)'); pg.addColorStop(1, 'rgba(190,218,236,.5)');
+      ctx.fillStyle = pg; roundRect(PLATE.x, PLATE.y, PLATE.w, PLATE.h, 12); ctx.fill();
+    }, { blur: 14, y: 5, color: 'rgba(40,80,120,.18)' });
+    ctx.strokeStyle = 'rgba(120,160,190,.6)'; ctx.lineWidth = 2; roundRect(PLATE.x, PLATE.y, PLATE.w, PLATE.h, 12); ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,.4)'; ctx.beginPath(); ctx.moveTo(PLATE.x + 20, PLATE.y + 3); ctx.lineTo(PLATE.x + 150, PLATE.y + 3); ctx.lineTo(PLATE.x + 120, PLATE.y + 14); ctx.lineTo(PLATE.x + 20, PLATE.y + 14); ctx.closePath(); ctx.fill();   // 유리 반사
+    const sg = ctx.createLinearGradient(0, STRIP.y, 0, STRIP.y + STRIP.h);
+    sg.addColorStop(0, '#fffef9'); sg.addColorStop(1, '#f3f0e3');
+    ctx.fillStyle = sg; ctx.strokeStyle = '#e1ddd0'; ctx.lineWidth = 1.5;
     roundRect(STRIP.x, STRIP.y, STRIP.w, STRIP.h, 6); ctx.fill(); ctx.stroke();
     ctx.fillStyle = COL.muted; ctx.font = font(13, true); ctx.textAlign = 'center';
     ctx.fillText('질산 칼륨 수용액을 적신 거름종이', MID, PLATE.y + PLATE.h - 10);
@@ -636,14 +798,16 @@
       if (Math.abs(m.cu) < MAXD) arrow(m.cu, dirCu(), COL.cu);
       if (Math.abs(m.mn) < MAXD) arrow(m.mn, -dirCu(), COL.mn);
     }
-    // 전극(집게)
-    [[L, leftPos], [R, !leftPos]].forEach(([clip, isPos]) => {
-      ctx.fillStyle = '#6b7486'; roundRect(clip.x, clip.y, 28, STRIP.h + 24, 5); ctx.fill();
-      ctx.fillStyle = '#9aa3b2'; ctx.fillRect(clip.x + 5, clip.y + 6, 18, STRIP.h + 12);
-      const col = isPos ? "#d0343a" : "#2b3445", lx2 = clip.x + 14, ly2 = PLATE.y + PLATE.h - 17;
+    // 전극(집게): 금속 느낌 + 극이 바뀌면 색이 부드럽게 바뀌어요
+    [[L, pol], [R, 1 - pol]].forEach(([clip, posK]) => {
+      const mg = ctx.createLinearGradient(clip.x, 0, clip.x + 28, 0);
+      mg.addColorStop(0, '#8b94a6'); mg.addColorStop(0.45, '#c2c9d6'); mg.addColorStop(1, '#6b7486');
+      D.shadow(() => { ctx.fillStyle = mg; roundRect(clip.x, clip.y, 28, STRIP.h + 24, 5); ctx.fill(); }, { blur: 8, y: 3 });
+      ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fillRect(clip.x + 5, clip.y + 6, 5, STRIP.h + 12);
+      const col = mixc('#2b3445', '#d0343a', posK), lx2 = clip.x + 14, ly2 = PLATE.y + PLATE.h - 17;
       ctx.fillStyle = col; roundRect(lx2 - 32, ly2 - 14, 64, 26, 13); ctx.fill();
       ctx.fillStyle = '#fff'; ctx.font = font(15, true); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText(isPos ? '(+)극' : '(−)극', lx2, ly2);
+      ctx.fillText(posK >= 0.5 ? '(+)극' : '(−)극', lx2, ly2);
       ctx.textBaseline = 'alphabetic';
     });
     drawPanel();
@@ -651,9 +815,9 @@
   }
   // 입자 모형으로 보기
   function drawPanel() {
-    const P = PANEL, m = S.mig;
-    ctx.fillStyle = '#f7f9fd'; ctx.strokeStyle = COL.line; ctx.lineWidth = 1.5;
-    roundRect(P.x, P.y, P.w, P.h, 12); ctx.fill(); ctx.stroke();
+    const P = PANEL, m = S.mig, pol = S.polar;
+    D.shadow(() => { ctx.fillStyle = '#f7f9fd'; roundRect(P.x, P.y, P.w, P.h, 12); ctx.fill(); }, { blur: 10, y: 3, color: 'rgba(20,40,80,.12)' });
+    ctx.strokeStyle = COL.line; ctx.lineWidth = 1.5; roundRect(P.x, P.y, P.w, P.h, 12); ctx.stroke();
     ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
     ctx.fillStyle = COL.ink; ctx.font = font(15, true); ctx.fillText('🔍 입자 모형으로 보면', P.x + 14, P.y + 24);
     // 범례
@@ -663,43 +827,50 @@
     ionBall(lx, P.y + 19, 'mn', 0.75); lx += 16;
     chem([['과망가니즈산 이온 MnO'], ['4', 'sub'], [MINUS, 'sup']], lx, P.y + 25, 14, COL.mn);
     // 양쪽 전극
-    [[P.x + 8, m.leftPos], [P.x + P.w - 18, !m.leftPos]].forEach(([x, isPos]) => {
-      ctx.fillStyle = isPos ? 'rgba(208,52,58,.85)' : 'rgba(43,52,69,.85)';
+    [[P.x + 8, pol], [P.x + P.w - 18, 1 - pol]].forEach(([x, posK]) => {
+      ctx.fillStyle = mixc('#2b3445', '#d0343a', posK);
       roundRect(x, P.y + 38, 10, P.h - 48, 5); ctx.fill();
-      ctx.fillStyle = isPos ? '#c4313a' : '#2b3445'; ctx.font = font(15, true); ctx.textAlign = 'center';
-      ctx.fillText(isPos ? '+' : MINUS, x + 5 + (x < MID ? 18 : -18), P.y + P.h / 2 + 12);
+      ctx.fillStyle = mixc('#2b3445', '#c4313a', posK); ctx.font = font(15, true); ctx.textAlign = 'center';
+      ctx.fillText(posK >= 0.5 ? '+' : MINUS, x + 5 + (x < MID ? 18 : -18), P.y + P.h / 2 + 12);
     });
     ctx.save(); roundRect(P.x + 20, P.y + 34, P.w - 40, P.h - 40, 8); ctx.clip();
     m.ions.forEach((ion) => {
-      const disp = ion.kind === 'cu' ? m.cu : m.mn;
-      const jx = 4 * Math.sin(S.time * 3.1 + ion.ph), jy = 3 * Math.cos(S.time * 2.7 + ion.ph * 1.3);
-      const x = clamp(MID + disp * 0.9 + ion.ox + jx, P.x + 44, P.x + P.w - 44);
-      ionBall(x, ion.oy + jy, ion.kind, 1);
+      const jx = REDUCE ? 0 : 4 * Math.sin(S.time * 3.1 + ion.ph), jy = REDUCE ? 0 : 3 * Math.cos(S.time * 2.7 + ion.ph * 1.3);
+      const x = (ion.x == null ? MID + ion.ox : ion.x) + jx, y = ion.oy + jy;
+      if (m.on) {   // 끌려가는 방향 표시
+        const dir = ion.kind === 'cu' ? dirCu() : -dirCu(), disp = ion.kind === 'cu' ? m.cu : m.mn;
+        if (Math.abs(disp) < MAXD - 4) {
+          const cx2 = x + dir * 24;
+          ctx.strokeStyle = rgba(ion.kind === 'cu' ? COL.cu : COL.mn, 0.5); ctx.lineWidth = 2.2; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+          ctx.beginPath(); ctx.moveTo(cx2 - dir * 4, y - 5); ctx.lineTo(cx2 + dir * 2, y); ctx.lineTo(cx2 - dir * 4, y + 5); ctx.stroke();
+        }
+      }
+      ionBall(x, y, ion.kind, 1);
     });
     ctx.restore();
     ctx.textAlign = 'left';
   }
   function ionBall(x, y, kind, s) {
-    const r = 15 * s, col = kind === 'cu' ? COL.cu : COL.mn;
-    const g = ctx.createRadialGradient(x - r * 0.35, y - r * 0.4, r * 0.1, x, y, r);
-    g.addColorStop(0, kind === 'cu' ? '#9fd0ff' : '#e3b5f5'); g.addColorStop(0.6, col); g.addColorStop(1, kind === 'cu' ? '#0f4f9e' : '#5e1a7c');
-    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
-    if (s >= 1) {
-      ctx.fillStyle = '#fff'; ctx.font = font(kind === 'cu' ? 13 : 17, true); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText(kind === 'cu' ? '2+' : MINUS, x, y + 1);
-      ctx.textBaseline = 'alphabetic';
-    }
+    const sp = ionSprite(kind, s >= 1), w = sp.size * s;
+    ctx.drawImage(sp.cv, x - w / 2, y - w / 2, w, w);
   }
 
   function draw() {
     view.clear('#ffffff');
+    // 장면을 바꾸면 부드럽게 나타나요
+    const sk = REDUCE ? 1 : Math.min(1, (S.time - S.sceneT) / 0.4), sa = EZ.outCubic(sk);
+    ctx.save();
+    if (sk < 1) { ctx.globalAlpha = sa; ctx.translate(0, (1 - sa) * 14); }
     if (S.scene === 'move') drawMoveScene();
     else { drawAtomScene(); focusRing(); }
+    ctx.restore();
+    FX.draw(ctx);
+    drawWin(D);
   }
 
   /* ---------- DOM ---------- */
   const rP = $('#rP'), rE = $('#rE'), rQ = $('#rQ'), rK = $('#rK'), oE = $('#oE');
-  let uiKey = '';
+  let uiKey = '', frameMs = 0;
   function updateUI(force) {
     const p = np(), e = ne(), key = p + ':' + e;
     if (!force && key === uiKey) return;
@@ -995,7 +1166,7 @@
       updateUI(true);
     },
     onMissionStart(m) {
-      S.target = null; S.focus = null;
+      S.target = null; S.focus = null; S.win = null;
       if (!S.nucleons.length) { const lv = LEVELS[m._level]; if (lv && lv.setup) lv.setup(); }
     },
     onHint(m) { if (m.focus) S.focus = { what: m.focus, t0: S.time }; },
@@ -1006,5 +1177,18 @@
   /* ---------- 시작 ---------- */
   if (!S.nucleons.length) setState(11, 11);
   if (!S.mig.ions.length) resetPaper();
-  SciSim.loop((dt) => { step(dt); draw(); updateUI(); });
+  SciSim.loop((dt) => {
+    step(dt);
+    watchGame();
+    const t0 = performance.now();
+    draw();
+    frameMs += (performance.now() - t0 - frameMs) * 0.05;
+    updateUI();
+  });
+
+  /* ---------- 점검용 ---------- */
+  window.__sim = {
+    S, frameMs: () => frameMs, game: () => game, setState, setScene, np, ne, plusE, minusE, binTop, setPower, swapPoles,
+    client(x, y) { const r = view.canvas.getBoundingClientRect(); return { x: r.left + x * r.width / 800, y: r.top + y * r.height / 520 }; },
+  };
 })();
