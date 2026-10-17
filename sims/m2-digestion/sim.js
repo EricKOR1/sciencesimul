@@ -509,7 +509,7 @@
      장면 ① 영양소 검출
      ========================================================= */
   const COLX = (i) => 120 + i * 187;
-  const T = { tubes: [], dp: {}, rec: {}, found: {}, tests: 0, armed: null };
+  const T = { tubes: [], dp: {}, rec: {}, found: {}, tests: 0, armed: null, gen: 0 };
   function initTests() {
     FOODS.forEach((f, i) => {
       T.tubes.push(new Tube({ x: COLX(i), top: 228, h: 188, base: f.liquid, cont: f.cont, food: f }));
@@ -518,6 +518,7 @@
     RG_KEYS.forEach((k, i) => { T.dp[k] = makeDropper(k, RG[k].color, RG[k].name, COLX(i), RG[k].color); });
   }
   function resetTests(clearFound) {
+    T.gen++;                                            // 진행 중이던 검사 결과가 새 실험에 섞이지 않게 해요
     T.tubes.forEach((tb) => { tb.busy = false; refreshTube(tb); tb.heat = 0; });
     FOODS.forEach((f) => { T.rec[f.key] = {}; });
     if (clearFound) { T.found = {}; T.tests = 0; }
@@ -530,8 +531,11 @@
     if (testsBusy() || tb.busy) return;
     hideHint();
     refreshTube(tb);
+    const gen = T.gen;
     startPour(dp, [tb], (tube) => {
+      if (gen !== T.gen) return;
       startReaction(tube, rg, (amt, label, col) => {
+        if (gen !== T.gen) return;
         const pos = amt > 0.5;
         T.rec[tube.food.key][rg] = { pos, label, col };
         T.tests++;
@@ -662,7 +666,7 @@
      장면 ② 침의 소화 작용 탐구
      ========================================================= */
   const STARCH_MILK = '#f0e9d8';
-  const SAL = { phase: 'prep', tubes: [], A: null, B: null, split: [], time: 0, hold: false, dp: {}, poured: { A: false, B: false }, done: { iodine: false, benedict: false }, res: { A: {}, B: {} }, insetA: 0, tableA: 0, bubbles: [], armed: null, hover: null, drag: null };
+  const SAL = { gen: 0, phase: 'prep', tubes: [], A: null, B: null, split: [], time: 0, hold: false, dp: {}, poured: { A: false, B: false }, done: { iodine: false, benedict: false }, res: { A: {}, B: {} }, insetA: 0, tableA: 0, bubbles: [], armed: null, hover: null, drag: null };
   const SAL_BATH = { x0: 480, x1: 770, y0: 318, y1: 500, water: 346 };
   function insetChains(seed) {
     const R = rng(seed);
@@ -676,6 +680,7 @@
   const INSET = { A: insetChains(11), B: insetChains(23) };
   const ENZ = [{ x: 0, y: 0, c: 0 }, { x: 0, y: 0, c: 2 }, { x: 0, y: 0, c: 3 }];
   function initSaliva() {
+    SAL.gen++;                                          // 이전 실험에서 진행 중이던 검사 결과가 새 실험에 섞이지 않게 해요
     SAL.phase = 'prep'; SAL.time = 0; SAL.hold = false; SAL.poured = { A: false, B: false }; SAL.done = { iodine: false, benedict: false }; SAL.res = { A: {}, B: {} };
     SAL.split = []; SAL.insetA = 0; SAL.tableA = 0; SAL.armed = null; SAL.drag = null;
     SAL.A = new Tube({ x: 140, top: 232, h: 190, base: STARCH_MILK, lvl: 0.5, cont: { starch: 1, sugar: 0, protein: 0, fat: 0 }, tag: 'A' });
@@ -716,8 +721,11 @@
       const pair = dp.key === 'iodine' ? SAL.split.filter((q) => q.group === 1) : SAL.split.filter((q) => q.group === 2);
       if (pair.some((q) => q.busy || SAL.res[q.tag][dp.key])) { dp.state = 'back'; dp.armed = false; SAL.armed = null; toast('이 검사는 이미 했어요.'); return; }
       pair.forEach((q) => refreshTube(q));
+      const gen = SAL.gen;
       startPour(dp, pair, (tb) => {
+        if (gen !== SAL.gen) return;
         startReaction(tb, dp.key, (amt, label, col) => {
+          if (gen !== SAL.gen) return;
           SAL.res[tb.tag][dp.key] = { label, col };
           const isI = dp.key === 'iodine';
           const txtN = isI ? (tb.tag === 'A' ? '청람색: 녹말 그대로' : '연한 청람색: 녹말이 줄었어요!') : (tb.tag === 'A' ? '파란색: 당 없음' : '황적색: 당(엿당)이 생겼어요!');
@@ -1500,6 +1508,15 @@
   const CAP = splineSample(CAP_KEYS, 10);
   const LAC = [[VX, 150, 0], [VX, 530, 380]];
   const VIL_KEYS = [[388, 528], [392, 420], [396, 300], [402, 200], [418, 124], [446, 84], [470, V_TOP], [494, 84], [522, 124], [538, 200], [544, 300], [548, 420], [552, 528]];
+  const VIL_POLY = splineSample(VIL_KEYS, 8);     // 융털 겉모양(다각형) — 흡수 영역 판정에 써요
+  function inVillus(x, y) {
+    let c = false;
+    for (let i = 0, j = VIL_POLY.length - 1; i < VIL_POLY.length; j = i++) {
+      const a = VIL_POLY[i], b = VIL_POLY[j];
+      if ((a[1] > y) !== (b[1] > y) && x < ((b[0] - a[0]) * (y - a[1])) / (b[1] - a[1]) + a[0]) c = !c;
+    }
+    return c;
+  }
   // 작은창자 벽 (z=0 좌표)
   const AX0 = 70, ADX = 55, AN = 13, A_BASE = 330, A_H = 110, A_TARGET = 6;
   const A_OUT = (function () {
@@ -1537,6 +1554,7 @@
   const nutrDef = (key) => NUTR.find((n) => n.key === key);
   function zoneAt(p) {
     if (p.x < 388 || p.x > 552 || p.y < V_TOP || p.y > 535) return null;
+    if (!(inVillus(p.x, p.y) || inVillus(p.x - 9, p.y) || inVillus(p.x + 9, p.y) || inVillus(p.x, p.y + 9))) return null;   // 융털 바깥(창자 안쪽 빈 곳)은 흡수되지 않아요
     return Math.abs(p.x - VX) < 22 && p.y > 140 ? 'lac' : 'cap';
   }
   function updateVilli(dt, t) {
@@ -1741,8 +1759,9 @@
       pill('암죽관', 520, 62, { size: 14, bg: V.hoverZone === 'lac' ? '#a3a80e' : '#c9ce3e', color: '#2f3202', h: 28, pad: 11, shadow: true });
       if (V.hoverZone) {
         ctx.save(); ctx.strokeStyle = V.hoverZone === 'cap' ? '#dc2626' : '#a3a80e'; ctx.lineWidth = 4;
-        if (V.hoverZone === 'lac') rr(VX - 22, 140, 44, 400, 20); else rr(396, 90, 148, 440, 40);
-        ctx.setLineDash([8, 6]); ctx.stroke(); ctx.restore();
+        ctx.setLineDash([8, 6]);
+        if (V.hoverZone === 'lac') { rr(VX - 22, 140, 44, 400, 20); ctx.stroke(); } else ctx.stroke(VIL_PATH);
+        ctx.restore();
       }
     }
   }
