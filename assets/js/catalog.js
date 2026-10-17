@@ -2839,8 +2839,7 @@ window.SCI_CATALOG = {
                 "관성 현상",
                 "속도 그래프",
                 "안전과 관성"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "h1-impulse",
@@ -2861,8 +2860,7 @@ window.SCI_CATALOG = {
                 "충격량=운동량",
                 "시간과 힘",
                 "안전장치 설계"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "h1-cell-membrane",
@@ -2905,8 +2903,7 @@ window.SCI_CATALOG = {
                 "조건 변화",
                 "열쇠-자물쇠",
                 "사례 발표"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "h1-transcription",
@@ -2927,8 +2924,7 @@ window.SCI_CATALOG = {
                 "전사 과정",
                 "코돈",
                 "전사 연습"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "h1-translation",
@@ -2986,8 +2982,7 @@ window.SCI_CATALOG = {
                 "지질시대",
                 "환경 변화",
                 "생물 변화"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "h1-mass-extinction",
@@ -3008,8 +3003,7 @@ window.SCI_CATALOG = {
                 "원인 가설",
                 "증거 평가",
                 "멸종 이후"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "h1-natural-selection",
