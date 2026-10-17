@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#16a34a">
+  <title>염색체와 세포분열 | 중학 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧬</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-card { background: #eef1fb; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; }
+    .stage-toolbar { min-height: 56px; }
+    #resetBtn { font-size: 20px; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 10px; }
+    .ctrl-set { display: flex; flex-direction: column; gap: 10px; }
+    .ctrl-set[hidden], .ctrl-row[hidden] { display: none; }
+    .ctrl-row { display: flex; flex-direction: column; gap: 10px; }
+    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn-row .btn { flex: 1 1 0; min-width: 0; min-height: 50px; font-size: 16px; }
+    .btn-row .btn.wide { flex: 2 1 0; }
+    .ctrl-note { font-size: 13.5px; color: var(--muted); margin: 0; }
+    .ctrl-set .segmented { align-self: stretch; flex-wrap: nowrap; }
+    .ctrl-set .segmented button { flex: 1 1 0; min-width: 0; min-height: 44px; font-size: 15px; padding-left: 6px; padding-right: 6px; }
+    .target { animation: tgtPulse 1.1s ease-in-out infinite; }
+    @keyframes tgtPulse {
+      0%, 100% { box-shadow: 0 3px 0 rgba(0,0,0,.18), 0 0 0 0 rgba(20, 160, 88, 0); }
+      50% { box-shadow: 0 3px 0 rgba(0,0,0,.18), 0 0 0 6px rgba(20, 160, 88, .32); }
+    }
+    .stage-hint { white-space: normal; width: max-content; max-width: calc(100% - 24px); text-align: center; }
+    .step-intro .si-q {
+      background: #fff; border: 2px solid color-mix(in srgb, var(--subject) 45%, white); border-radius: 12px;
+      padding: 9px 12px; font-weight: 800; font-size: 16px; color: #14532d; margin: 4px 0 8px;
+    }
+    .fig-sex { display: block; margin: 6px auto 2px; max-width: 100%; }
+
+    /* 비교표 */
+    .data-card { flex: none; padding: 8px 12px; display: flex; align-items: center; gap: 12px; }
+    .data-card[hidden] { display: none; }
+    .data-head { flex: none; display: flex; flex-direction: column; gap: 2px; font-size: 14.5px; line-height: 1.25; }
+    .data-head .n { font-size: 12.5px; color: var(--muted); font-weight: 700; }
+    .data-scroll { flex: 1; min-width: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .ctable { border-collapse: separate; border-spacing: 4px 3px; width: 100%; font-size: 14.5px; }
+    .ctable th { text-align: left; white-space: nowrap; padding: 2px 8px 2px 2px; color: var(--muted); font-weight: 800; font-size: 13.5px; }
+    .ctable thead th { text-align: center; color: var(--ink); }
+    .ctable td { text-align: center; padding: 0; }
+    .ctable select {
+      width: 100%; min-width: 0; height: 36px; border: 2px dashed #b4bfcf; border-radius: 10px; background: #fff; text-align: center; text-align-last: center;
+      font-weight: 800; font-size: 14.5px; color: var(--ink); padding: 0 4px; font-family: inherit;
+    }
+    .ctable select:focus { outline: none; border-style: solid; border-color: var(--subject); box-shadow: 0 0 0 3px color-mix(in srgb, var(--subject) 22%, transparent); }
+    .ctable select.ok { border-style: solid; border-color: var(--good); background: var(--good-soft); color: #0b6b39; }
+    .ctable select.bad { border-style: solid; border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    @keyframes shakeX { 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+    @media (max-width: 599px) {
+      .data-card { flex-direction: column; align-items: stretch; gap: 4px; }
+      .data-head { flex-direction: row; gap: 8px; align-items: baseline; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="bio">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#g3">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">중3 · Ⅵ. 생식과 유전</div>
+      <h1>염색체와 세포분열</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🔍 세포 속으로 확대</span>
+          <span class="spacer"></span>
+          <button class="icon-btn" id="resetBtn" type="button" title="처음 상태로" aria-label="처음 상태로">↺</button>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="세포에서 유전자까지 확대, 상동 염색체 짝 맞추기, 체세포분열과 생식세포 형성에서 염색체의 움직임, 수정"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts" id="readouts">
+        <div class="readout"><span class="label" id="roL1">-</span><span class="value" id="roV1">-</span></div>
+        <div class="readout"><span class="label" id="roL2">-</span><span class="value" id="roV2">-</span></div>
+        <div class="readout"><span class="label" id="roL3">-</span><span class="value" id="roV3">-</span></div>
+      </div>
+      <section class="card data-card" id="tableCard" hidden>
+        <div class="data-head"><b>📋 비교표</b><span class="n">알맞은 것을 골라요</span></div>
+        <div class="data-scroll">
+          <table class="ctable" id="ctable"></table>
+        </div>
+      </section>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <!-- 1단계 -->
+        <div class="ctrl-set" id="cs-zoom" hidden>
+          <div class="segmented" id="zoomTabs" role="group" aria-label="보기">
+            <button type="button" data-v="zoom" class="on">🔍 확대해 보기</button>
+            <button type="button" data-v="pair">🧩 상동 염색체</button>
+          </div>
+          <div class="ctrl-row" id="zoomRow">
+            <div class="btn-row">
+              <button class="btn" id="zoomOut" type="button">➖ 축소</button>
+              <button class="btn btn-subject" id="zoomIn" type="button">➕ 확대</button>
+            </div>
+          </div>
+          <div class="ctrl-row" id="sexRow" hidden>
+            <div class="segmented" id="sexSeg" role="group" aria-label="성별">
+              <button type="button" data-s="f" class="on">👩 여자 (XX)</button>
+              <button type="button" data-s="m">👨 남자 (XY)</button>
+            </div>
+          </div>
+          <p class="ctrl-note" id="zoomNote">확대 버튼을 눌러 세포 속으로 들어가 봐요.</p>
+        </div>
+        <!-- 2단계 -->
+        <div class="ctrl-set" id="cs-mito" hidden>
+          <div class="segmented" id="mitoTabs" role="group" aria-label="보기">
+            <button type="button" data-v="micro" class="on">🔬 현미경</button>
+            <button type="button" data-v="model">🧬 분열 모형</button>
+          </div>
+          <div class="ctrl-row" id="mitoRow" hidden>
+            <div class="btn-row">
+              <button class="btn" id="mPrev" type="button">◀ 이전</button>
+              <button class="btn btn-subject wide" id="mNext" type="button">다음 단계 ▶</button>
+            </div>
+          </div>
+          <p class="ctrl-note" id="mitoNote">양파 뿌리 끝을 현미경으로 봐요.</p>
+        </div>
+        <!-- 3단계 -->
+        <div class="ctrl-set" id="cs-meio" hidden>
+          <div class="btn-row">
+            <button class="btn" id="ePrev" type="button">◀ 이전</button>
+            <button class="btn btn-subject wide" id="eNext" type="button">다음 단계 ▶</button>
+          </div>
+          <p class="ctrl-note" id="meioNote">단계를 진행해 보세요.</p>
+        </div>
+        <!-- 4단계 -->
+        <div class="ctrl-set" id="cs-comp" hidden>
+          <div class="segmented" id="compTabs" role="group" aria-label="보기">
+            <button type="button" data-v="compare" class="on">📋 비교하기</button>
+            <button type="button" data-v="fert">🧬 수정</button>
+          </div>
+          <div class="ctrl-row" id="fertRow" hidden>
+            <div class="segmented" id="gameteSeg" role="group" aria-label="생식세포를 만드는 방법">
+              <button type="button" data-g="meio" class="on">생식세포 형성</button>
+              <button type="button" data-g="mito">체세포분열 (만약)</button>
+            </div>
+            <div class="btn-row"><button class="btn btn-subject" id="fertBtn" type="button">🧬 수정시키기</button></div>
+          </div>
+          <p class="ctrl-note" id="compNote">두 분열을 비교해 표를 채워요.</p>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

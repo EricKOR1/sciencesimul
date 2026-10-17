@@ -702,7 +702,7 @@
         st.shake[j] = now();
         const a = anchorJ(j);
         st.retract = { j, x: pos.x, y: pos.y, t0: now() };
-        say('‘' + con.name + '’과(와)는 거리가 멀어요. ' + job.name + '은(는) ' + job.work, clamp(pos.x, 160, LAY.w - 160), clamp(pos.y - 10, 120, LAY.h - 100), 'bad', 4);
+        say('‘' + con.name + '’은 아니에요. ' + job.name + '이(가) 하는 일을 떠올려 봐요. ' + job.work, clamp(pos.x, 160, LAY.w - 160), clamp(pos.y - 10, 120, LAY.h - 100), 'bad', 4);
         Sound.wrong && Sound.wrong();
       }
       st.sel = null;
@@ -1443,7 +1443,7 @@
         : { x0: 16, w: 222, gap: 8, y0: 332, h: 44, rowGap: 6, cols: 2, label: 320 };
       L.btn = tall ? { x: 8, y: 410, w: 464, h: 54 } : { x: 16, y: 438, w: 454, h: 54 };
       L.note = tall ? { x: 12, y: 480 } : { x: 18, y: 520 };
-      L.card = tall ? { x: 8, y: 508, w: 464, h: 304 } : { x: 490, y: 14, w: 294, h: 574 };
+      L.card = tall ? { x: 8, y: 508, w: 464, h: 304 } : { x: 490, y: 20, w: 294, h: 500 };
       st.L = L;
       buildChips(false);
     }
