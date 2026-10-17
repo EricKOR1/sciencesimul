@@ -1551,7 +1551,7 @@
   $('#yearBtn').addEventListener('click', runYear);
   function finishYear() {
     const r = VS.res;
-    VS.state = 'done'; $('#yearBtn').disabled = false;
+    VS.state = 'done'; $('#yearBtn').disabled = false; updateVillageNote();
     let msg = '', ok = r.ok;
     const hasE = VS.sel.indexOf('E') >= 0;
     if (hasE) msg = '지하수면이 ' + Math.abs(r.gw).toFixed(1) + ' m나 내려갔어요! 3단계에서 본 해수 침투가 생길 수 있어요.';

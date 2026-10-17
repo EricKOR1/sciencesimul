@@ -404,7 +404,7 @@
     B.sat = B.satT > 1.0;
     if (B.sat && !wasSat) { B.flash = 1; }
     B.flash = Math.max(0, B.flash - dt * 1.4);
-    B.wS = appr(B.wS, N / K, dt, 9);
+    B.wS = appr(B.wS, B.sat ? satW(B.T) : N / K, dt, 9);   // 포화일 때는 분자 수의 작은 흔들림 대신 포화 수증기량을 보여 줘요
     const evT = KC * Neq, coT = B.sat ? evT : KC * nFree;
     B.evS = appr(B.evS, evT, dt, 4); B.coS = appr(B.coS, coT, dt, 4);
     // 곡선에 점 찍기 (5 °C 간격의 포화 상태)
@@ -651,7 +651,7 @@
     const w = C.wv, ex = excess();
     // 방 안 공기의 수증기량 (수평선)
     D.dashedLine(GP.x, gy(w), GP.x + GP.w, gy(w), { color: 'rgba(14,165,233,.9)', width: 2.5, dash: [8, 6], offset: -CLK.t * 16 });
-    text(GP.x + 6, gy(w) + 17, '공기 속 수증기량 ' + f1(w) + ' g/kg', { size: PHONE ? 12 : 13, weight: 800, align: 'left', color: COL.skyD });
+    text(GP.x + 6, gy(w) + 17, '수증기량 ' + f1(w) + ' g/kg', { size: PHONE ? 12 : 13, weight: 800, align: 'left', color: COL.skyD });
     gdot(gx(AIRT), gy(w), 7.5, COL.sky);
     text(gx(AIRT), gy(w) + 24, '방 공기 ' + AIRT + ' °C', { size: PHONE ? 12 : 13, weight: 800, color: COL.skyD });
     // 컵 표면 온도에 해당하는 곡선 위의 점 (점이 이동해요)
@@ -744,11 +744,11 @@
     D.sphere(X(hh), YR(dayRH(hh)), 6.5, '#0ea5e9', { shadow: true, outline: '#fff' });
     if (Q.day.t > 0) {
       const clock = String(Math.floor(hh)).padStart(2, '0') + ':' + String(Math.floor((hh % 1) * 60)).padStart(2, '0');
-      D.label(P.x + P.w / 2, P.y + 14, '🕒 ' + clock, { bg: '#1b2333', size: 14 });
+      D.label(P.x + P.w / 2, P.y + P.h - 16, '🕒 ' + clock, { bg: '#1b2333', size: 14 });
     }
     if (Q.day.done) {
-      D.label(X(14.5), YT(26) - 18, '기온 최고 → 습도 최저', { bg: COL.warm, size: 13 });
-      D.label(X(5), YR(dayRH(5)) - 20, '기온 최저 → 습도 높음', { bg: COL.skyD, size: 13, align: 'left' });
+      D.label(X(17.5), YT(26) - 18, '기온 최고 → 습도 최저', { bg: COL.warm, size: 13 });
+      D.label(X(5.5), YR(dayRH(5)) - 20, '기온 최저 → 습도 높음', { bg: COL.skyD, size: 13 });
     }
   }
 
@@ -1265,7 +1265,7 @@
           {
             title: '맑은 날 하루의 습도 변화', scene: 'rh',
             goal: '☀️ <b>하루 보기</b>를 눌러 수증기량이 7.6 g/kg로 그대로일 때, 기온에 따라 습도가 어떻게 변하는지 끝까지 지켜봐요.',
-            hint: '하루 보기 단추를 누르면 새벽 5시부터 다음 날 5시까지 시간이 흘러요. 기온 그래프와 습도 그래프를 비교해 봐요.',
+            hint: '하루 보기 단추를 누르면 0시부터 24시까지 하루의 시간이 흘러요. 기온 그래프와 습도 그래프를 비교해 봐요.',
             setup() { RHS.day.done = false; RHS.day.t = 0; cancelDay(); RHS.view = 'curve'; },
             check: () => RHS.day.done,
             hold: 0.6,

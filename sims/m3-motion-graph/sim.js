@@ -306,11 +306,13 @@
     }
     // 주차 칸(4단계)
     if (S.mode === 'drive' && c === 'ME') {
-      const px = xm(21);
+      // 주차 칸: 21 m(주차선) ± 1 m 안에서 멈추면 '정확히 주차' (판정과 같은 범위)
+      const px = xm(20), pw = 2 * ppm();
       ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.setLineDash([]);
-      ctx.strokeRect(px - 2, y + 9 * FS, 1.0 * ppm() + 6, G.road - 18 * FS);
-      ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.fillRect(px - 2, y + 9 * FS, 1.0 * ppm() + 6, G.road - 18 * FS);
-      ctx.font = Math.round(18 * FS) + 'px ' + FONT; ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.fillText('🅿️', px + ppm() * 0.5, y + G.road / 2 + 7 * FS);
+      ctx.strokeRect(px, y + 9 * FS, pw, G.road - 18 * FS);
+      ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.fillRect(px, y + 9 * FS, pw, G.road - 18 * FS);
+      ctx.setLineDash([5, 4]); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(xm(21), y + 9 * FS); ctx.lineTo(xm(21), y + G.road - 9 * FS); ctx.stroke(); ctx.setLineDash([]);
+      ctx.font = Math.round(18 * FS) + 'px ' + FONT; ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.fillText('🅿️', px + pw * 0.75, y + G.road / 2 + 7 * FS);
     }
     // 차선 이름표
     if (S.mode !== 'drive' && c !== 'ME') {

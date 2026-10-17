@@ -405,9 +405,9 @@
       if (!NV.pulses.length && now() - NV.arrive > 1.2) pill('⚡ 자극 주기를 눌러요', 112, 330, { bg: '#ffd166', color: '#4a3500', size: 14, alpha: 0.7 + 0.3 * pulse });
     } else {
       // 중추 신경계 상자
-      ctx.fillStyle = 'rgba(181,139,255,.10)'; rr(333, 128, 236, 288, 20); ctx.fill();
+      ctx.fillStyle = 'rgba(181,139,255,.10)'; rr(333, 128, 318, 288, 20); ctx.fill();
       ctx.strokeStyle = 'rgba(181,139,255,.55)'; ctx.setLineDash([7, 6]); ctx.lineWidth = 2; ctx.stroke(); ctx.setLineDash([]);
-      txt('중추 신경계 (뇌·척수)', 451, 152, { size: 14, weight: 800, color: '#d9c4ff', align: 'center' });
+      txt('중추 신경계 (뇌·척수)', 492, 152, { size: 14, weight: 800, color: '#d9c4ff', align: 'center' });
       NV.neurons.forEach((n, i) => drawNeuronShape(n, NV.lit[i], t, { dend: hl(['sens', 'assoc', 'motor'][i]) * 0.7, soma: hl(['sens', 'assoc', 'motor'][i]), axon: hl(['sens', 'assoc', 'motor'][i]), term: hl(['sens', 'assoc', 'motor'][i]) * 0.7 }));
       // 자극 (뜨거운 것에 닿음)
       D.flame(44, 338, 26, t);
@@ -680,7 +680,8 @@
   };
   const RU_NODES = [['눈 (감각 기관)', '#5aa2ff'], ['감각 신경', '#5aa2ff'], ['대뇌 (판단·명령)', '#e86a8a'], ['운동 신경', '#ffab4a'], ['손가락 근육', '#d9534f']];
   const RY0 = 380, RX = 200, RPX = 6;      // 자의 0 cm 끝 위치, 가운데 x, cm 당 픽셀
-  const avgMs = () => (RU.trials.length ? Math.round(RU.trials.reduce((a, b) => a + b.ms, 0) / RU.trials.length) : 0);
+  const lastTrials = () => RU.trials.slice(-3);     // 기록표에 보이는 최근 3회
+  const avgMs = () => { const a = lastTrials(); return a.length ? Math.round(a.reduce((x, b) => x + b.ms, 0) / a.length) : 0; };
 
   function startDrop() {
     if (RU.st === 'wait' || RU.st === 'fall') return;
@@ -693,6 +694,7 @@
     }
     if (RU.st !== 'fall') return;
     const te = ((ts || performance.now()) - RU.t0) / 1000;
+    if (distOf(te) >= 50) { RU.st = 'miss'; RU.d = Math.max(RU.d, 50); RU.msg = '놓쳤어요! 자가 떨어지는 것을 보는 순간 바로 잡아요.'; RU.shake = 1; Sound.fail(); syncRulerUI(); return; }
     if (te < 0.09) { RU.st = 'early'; RU.msg = '짐작해서 잡았나 봐요. 자가 떨어지는 것을 본 뒤에 잡아야 해요.'; RU.shake = 1; Sound.fail(); syncRulerUI(); return; }
     RU.lastTe = te; RU.d = distOf(te); RU.st = 'caught'; RU.gapS.target = 0;
     const tr = { ms: Math.round(te * 1000), cm: Math.round(RU.d) };
@@ -716,7 +718,7 @@
     if (RU.st === 'wait' && pm >= RU.tRel) { RU.st = 'fall'; RU.t0 = pm; RU.gapH.target = 28; }
     if (RU.st === 'fall') {
       const te = (pm - RU.t0) / 1000; RU.d = distOf(te);
-      if (te > 0.36) { RU.st = 'miss'; RU.msg = '놓쳤어요! 자가 떨어지는 것을 보는 순간 바로 잡아요.'; RU.shake = 1; Sound.fail(); syncRulerUI(); }
+      if (RU.d >= 50) { RU.st = 'miss'; RU.msg = '놓쳤어요! 자가 떨어지는 것을 보는 순간 바로 잡아요.'; RU.shake = 1; Sound.fail(); syncRulerUI(); }
     }
     if (RU.st === 'miss') RU.d += 220 * dt;
     RU.gapS.update(dt); RU.gapH.update(dt);
@@ -775,19 +777,20 @@
     panel(440, 14, 346, 232, { r: 18 });
     txt('📋 측정 기록', 458, 42, { size: 17, weight: 800, color: '#1b2333' });
     ['회', '반응 시간', '떨어진 거리'].forEach((h, i) => txt(h, [478, 598, 716][i], 70, { size: 13, weight: 800, color: '#8a93a3', align: 'center' }));
+    const shown = lastTrials(), base = RU.trials.length - shown.length;
     for (let i = 0; i < 3; i++) {
-      const y = 82 + i * 38, tr = RU.trials[i], isNew = tr && i === RU.trials.length - 1 && RU.pop > 0.02;
+      const y = 82 + i * 38, tr = shown[i], isNew = tr && i === shown.length - 1 && RU.pop > 0.02;
       ctx.save(); ctx.translate(613, y + 16); const sc = 1 + (isNew ? RU.pop * 0.08 : 0); ctx.scale(sc, sc);
       rr(-163, -16, 326, 32, 12); ctx.fillStyle = tr ? (isNew ? '#d7f5e0' : '#eaf6ee') : '#f4f6fa'; ctx.fill();
       ctx.restore();
-      txt((i + 1) + '회', 478, y + 22, { size: 15, weight: 800, color: '#2b3445', align: 'center' });
+      txt((base + i + 1) + '회', 478, y + 22, { size: 15, weight: 800, color: '#2b3445', align: 'center' });
       txt(tr ? tr.ms + ' ms' : '–', 598, y + 22, { size: 17, weight: 800, color: tr ? '#16803c' : '#a8b0bf', align: 'center' });
       txt(tr ? tr.cm + ' cm' : '–', 716, y + 22, { size: 17, weight: 800, color: tr ? '#2b3445' : '#a8b0bf', align: 'center' });
     }
     ctx.fillStyle = '#e3e8f0'; ctx.fillRect(458, 198, 310, 1.5);
     txt('평균', 478, 226, { size: 15, weight: 800, color: '#2b3445', align: 'center' });
     txt(RU.trials.length >= 3 ? avgMs() + ' ms' : RU.trials.length ? avgMs() + ' ms (잠정)' : '–', 598, 226, { size: 18, weight: 800, color: '#e8590c', align: 'center' });
-    if (RU.trials.length > 3) txt('(최근 ' + RU.trials.length + '회 평균)', 716, 226, { size: 12.5, weight: 700, color: '#8a93a3', align: 'center' });
+    if (RU.trials.length > 3) txt('(최근 3회 평균)', 716, 226, { size: 12.5, weight: 700, color: '#8a93a3', align: 'center' });
 
     // 오른쪽 아래: 신호가 지나간 길
     panel(440, 258, 346, 202, { r: 18 });

@@ -381,7 +381,7 @@
     ctx.restore();
     [0, 30, 60].forEach((a) => { const y = gcy - R * Math.sin(a * DEG); D.text(gcx + R * Math.cos(a * DEG) + 6, y + 4, a + '°' + (a === 0 ? ' 적도' : ''), { size: 12.5 * fs, color: '#bfdbfe', align: 'left', weight: 700 }); });
     // 손전등 빛(평행한 빛줄기 9개)
-    const y0 = R * Math.sin(phi), fx = 0.1 * W, fy = gcy - y0, N = 5, sp = 0.008 * R;   // 가느다란 빛줄기: 높은 위도에서도 줄기 전체가 지구본에 닿아 ×배 값과 그림이 일치해요
+    const y0 = R * Math.sin(phi), fx = 0.1 * W, fy = gcy - y0, N = 5, sp = 0.012 * R;   // 가느다란 빛줄기: 높은 위도에서도 줄기 전체가 지구본에 닿아 ×배 값과 그림이 일치해요
     let minA = 9, maxA = -9, hits = 0;
     const rays = [];
     for (let i = 0; i < N; i++) {
