@@ -411,6 +411,7 @@
   function drawVMirror(mx, y0, y1, t, ent) {
     ctx.save();
     ctx.globalAlpha *= ent;
+    ctx.translate(7, 0);                       // 반사면(은색 왼쪽 가장자리)이 정확히 x = mx 에 오도록: 광선·상의 대칭 기준과 일치
     const w = 12;
     ctx.shadowColor = 'rgba(0,0,10,.55)'; ctx.shadowBlur = 14; ctx.shadowOffsetX = 5; ctx.shadowOffsetY = 3;
     ctx.fillStyle = '#18213d'; rr(mx - 1, y0 - 6, w + 6, y1 - y0 + 12, 6); ctx.fill();
@@ -536,10 +537,28 @@
     flag: { rays: false, ext: false, star: false }, drag: null, lift: { A: 0, B: 0, S: 0, E: 0, C: 0 }, off: { x: 0, y: 0 },
     sepHold: 0, extHold: 0, ghost: 0, dragged: false, tw: null, sel: 'A', selT: 0,
   };
-  const EY = { x: PHONE ? 66 : 96, y: PLG.cy - (PHONE ? 90 : 128), drag: false, lift: 0, moved: 0, blind: 0, last: null, flag: { moved: false, blind: false }, vis: true, shown: 1 };
+  const EY = { x: PHONE ? 66 : 96, y: PLG.cy - (PHONE ? 90 : 128), drag: false, lift: 0, moved: 0, blind: 0, last: null, flag: { moved: false, blind: false }, vis: true, why: 'ok', shown: 1 };
   const plrP = () => ({ x: PLR.cx + PLG.card * 0.36, y: PLR.cy - PLG.card * 0.36 });
   const plrP2 = () => { const P = plrP(); return { x: 2 * PLG.mx - P.x, y: P.y }; };
-  const mirrorYs = () => [PLG.y0 + 16, PLG.y1 - 16];
+  const mirrorYs = () => [PLG.y0 + 16, PLG.y1 - 16];          // 광선 손잡이를 끌 수 있는 범위
+  const mirrorEnds = () => [PLG.y0, PLG.y1];                    // 거울이 실제로 있는 범위 (눈에 보이는지 판단할 때)
+  /* 눈 → 상(P2) 으로 가는 직선이 거울의 어느 점 Q 를 지나는지, 거울 안인지, 글자 카드가 가로막는지 */
+  function eyeCalc() {
+    const g = PLG, R = PLR, P2 = plrP2();
+    const k = (g.mx - EY.x) / (P2.x - EY.x), qy = EY.y + (P2.y - EY.y) * k;
+    const ye = mirrorEnds(), inMirror = qy >= ye[0] && qy <= ye[1], hs = g.card / 2;
+    const t = inMirror ? segHitRect(g.mx, qy, EY.x, EY.y, { x: R.cx - hs, y: R.cy - hs, w: g.card, h: g.card }) : null;
+    return { qy, inMirror, blocked: t != null, t, vis: inMirror && t == null, why: !inMirror ? 'mirror' : t != null ? 'card' : 'ok' };
+  }
+  /* 눈이 카드 위에 겹쳐 놓이지 않게 카드 둘레 밖으로 밀어 내요 */
+  function eyeKeepOut(x, y) {
+    const g = PLG, R = PLR, sc = PHONE ? 0.8 : 1, hw = g.card / 2 + 40 * sc, hh = g.card / 2 + 26 * sc;
+    const dx = x - R.cx, dy = y - R.cy;
+    if (Math.abs(dx) < hw && Math.abs(dy) < hh) {
+      if (hw - Math.abs(dx) < hh - Math.abs(dy)) x = R.cx + (dx < 0 ? -hw : hw); else y = R.cy + (dy < 0 ? -hh : hh);
+    }
+    return { x: clamp(x, 44, g.mx - 54), y: clamp(y, 40, H - 60) };
+  }
   function stepRays(dt) {
     const R = PLR;
     ['A', 'B', 'S', 'E', 'C'].forEach((k) => { R.lift[k] = approach(R.lift[k], R.drag === k ? 1 : 0, dt, 14); });
@@ -554,13 +573,13 @@
       if (R.extOn && R.extT >= 1) R.extHold += dt; else R.extHold = 0;
       if (R.extHold > 0.3 && !R.flag.ext) { R.flag.ext = true; Sound.success(); }
     } else if (scene === 'eye') {
-      const P2 = plrP2(), k = (PLG.mx - EY.x) / (P2.x - EY.x), qy = EY.y + (P2.y - EY.y) * k;
-      const ys = mirrorYs(), vis = qy >= ys[0] && qy <= ys[1];
-      EY.vis = vis; EY.shown = approach(EY.shown, vis ? 1 : 0, dt, 12);
+      if (!EY.drag) { const o = eyeKeepOut(EY.x, EY.y); EY.x = o.x; EY.y = o.y; }
+      const ec = eyeCalc(), vis = ec.vis;
+      EY.vis = vis; EY.why = ec.why; EY.shown = approach(EY.shown, vis ? 1 : 0, dt, 12);
       if (EY.last) { if (vis) EY.moved += Math.hypot(EY.x - EY.last.x, EY.y - EY.last.y); }
       EY.last = { x: EY.x, y: EY.y };
       if (EY.moved >= 260 && !EY.flag.moved) { EY.flag.moved = true; Sound.success(); badge('눈을 옮겨도 상은 그 자리에 있어요!', W / 2, H - 28 * FS, COL.good); }
-      if (!vis && EY.moved > 20) EY.blind += dt; else EY.blind = Math.max(0, EY.blind - dt);
+      if (ec.why === 'mirror' && EY.moved > 20) EY.blind += dt; else EY.blind = Math.max(0, EY.blind - dt);
       if (EY.blind >= 0.6 && !EY.flag.blind) { EY.flag.blind = true; Sound.success(); badge('거울에 비치지 않는 곳이에요', W / 2, H - 28 * FS, COL.warn); }
     }
   }
@@ -619,7 +638,7 @@
       ctx.save(); ctx.globalAlpha *= gh; ctx.translate(P2.x, P2.y); ctx.scale(0.8 + 0.2 * gh, 0.8 + 0.2 * gh); ctx.translate(-P2.x, -P2.y);
       drawFCard(2 * g.mx - R.cx, R.cy, g.card, { ghost: true, flip: true, dot: true });
       ctx.restore();
-      pill('상', P2.x + 4, R.cy + g.card / 2 + 22 * FS, { color: '#9ec5ff', size: 13, alpha: gh });
+      pill('상', P2.x + 4, eyeMode ? R.cy - g.card / 2 - 24 * FS : R.cy + g.card / 2 + 22 * FS, { color: '#9ec5ff', size: 13, alpha: gh });
     }
     if (!eyeMode) {
       const ra = raySet(P, R.ay, '①', 0, ent, t), rb = raySet(P, R.by, '②', 1, ent, t);
@@ -648,7 +667,7 @@
       if (isNew('rays')) newTag(g.mx - 24, R.ay - 30, 48, 60);
     } else {
       // ----- 눈의 위치 -----
-      const ys0 = mirrorYs();
+      const ys0 = mirrorEnds();
       ctx.save(); ctx.globalAlpha *= ent;
       const wg = ctx.createLinearGradient(P2.x, 0, 20, 0);
       wg.addColorStop(0, 'rgba(125,211,252,.0)'); wg.addColorStop(0.45, 'rgba(125,211,252,.10)'); wg.addColorStop(1, 'rgba(125,211,252,.05)');
@@ -659,7 +678,9 @@
       ctx.beginPath(); ctx.moveTo(g.mx, ys0[0]); ctx.lineTo(ex0, P2.y + (ys0[0] - P2.y) * kk); ctx.moveTo(g.mx, ys0[1]); ctx.lineTo(ex0, P2.y + (ys0[1] - P2.y) * kk); ctx.stroke(); ctx.setLineDash([]);
       ctx.restore();
       pill('상이 보이는 구역', g.mx - (PHONE ? 70 : 100), g.y1 + (PHONE ? 26 : 34), { color: '#7dd3fc', size: 12.5, alpha: ent * 0.9, fit: true });
-      const k = (g.mx - EY.x) / (P2.x - EY.x), qy = EY.y + (P2.y - EY.y) * k, Q = { x: g.mx, y: qy }, vis = EY.vis;
+      const ec = eyeCalc(), qy = ec.qy, Q = { x: g.mx, y: qy }, vis = EY.vis;
+      // 설명 말풍선: 상(★)과 겹치지 않게 거울 오른쪽의 빈 곳에 놓아요
+      const sideY = qy <= P2.y ? P2.y + g.card / 2 + 62 * FS : P2.y - g.card / 2 - 56 * FS;
       if (vis) {
         const a = EY.shown;
         const le = Math.hypot(Q.x - EY.x, Q.y - EY.y) || 1, stop = { x: EY.x + (Q.x - EY.x) * (44 * (PHONE ? 0.8 : 1) / le), y: EY.y + (Q.y - EY.y) * (44 * (PHONE ? 0.8 : 1) / le) };
@@ -671,7 +692,16 @@
         if (!RM && NOW() % 0.12 < dt * 1.2) sparkAt(dt, Q.x - 4, Q.y, '#fff3c4', 0.05, 2.2);
         ctx.save(); ctx.strokeStyle = 'rgba(255,255,255,.8)'; ctx.lineWidth = 2; ctx.setLineDash([7, 6]); ctx.globalAlpha *= a;
         ctx.beginPath(); ctx.moveTo(Q.x, Q.y); ctx.lineTo(P2.x, P2.y); ctx.stroke(); ctx.restore();
-        pill('눈에는 빛이 상에서 온 것처럼 보여요', clamp((Q.x + P2.x) / 2 + 20, 150 * FS, W - 150 * FS), clamp((Q.y + P2.y) / 2 + (qy < P2.y ? -30 : 30), 30, H - 20), { color: '#ffffff', size: 12.5, alpha: a * ent, fit: true });
+        pill(PHONE ? '상에서 온 것처럼 보여요' : '눈에는 빛이 상에서 온 것처럼 보여요', Math.min(W - 6, g.mx + 16 * FS + (W - g.mx) / 2), sideY, { color: '#ffffff', size: 12.5, alpha: a * ent, fit: true });
+      } else if (ec.blocked) {
+        // 거울에서 반사된 빛이 눈으로 가는 길을 글자 카드가 가로막아요
+        const hp = { x: Q.x + (EY.x - Q.x) * ec.t, y: Q.y + (EY.y - Q.y) * ec.t };
+        beam([P, Q, hp], { color: '#ffd45e', width: 2.6, alpha: ent * 0.9 });
+        glowDot(Q.x, Q.y, 22, '#ffd45e', 0.6 * ent);
+        dashed(hp.x, hp.y, EY.x, EY.y, 'rgba(251,113,133,.7)', 1.8, [6, 7]);
+        ctx.save(); ctx.strokeStyle = '#fb7185'; ctx.lineWidth = 4; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(hp.x - 9, hp.y - 9); ctx.lineTo(hp.x + 9, hp.y + 9); ctx.moveTo(hp.x + 9, hp.y - 9); ctx.lineTo(hp.x - 9, hp.y + 9); ctx.stroke(); ctx.restore();
+        pill('글자 카드가 빛의 길을 가로막아서 상이 안 보여요', W / 2, H - 28 * FS, { solid: true, color: '#e11d48', size: 13, fit: true });
       } else {
         // 거울 밖을 지나가요
         const cy2 = clamp(qy, 20, H - 20);
@@ -681,7 +711,7 @@
         pill('눈에서 상으로 가는 길이 거울을 비켜 가서 상이 안 보여요', W / 2, H - 28 * FS, { solid: true, color: '#e11d48', size: 13, fit: true });
       }
       handleEyeNode(t, ent, vis);
-      if (!EY.flag.moved) txt('↕ 눈을 끌어서 옮겨 보세요', clamp(EY.x + 20, 100 * FS, W - 100 * FS), EY.y + 76 * FS, { size: 13, color: '#fde68a', alpha: 0.6 + 0.4 * Math.sin(t * 4) });
+      if (!EY.flag.moved) txt('↕ 눈을 끌어서 옮겨 보세요', clamp(EY.x + 20, 100 * FS, W - 100 * FS), PHONE ? EY.y - 48 * FS : EY.y + 76 * FS, { size: 13, color: '#fde68a', alpha: 0.6 + 0.4 * Math.sin(t * 4) });
       if (isNew('eye')) newTag(EY.x - 50, EY.y - 24, 100, 48);
     }
   }
@@ -692,7 +722,7 @@
     const P2 = plrP2();
     drawEye(EY.x, EY.y - 3 * EY.lift, sc, PLG.mx - EY.x, (vis ? (EY.y < P2.y ? 20 : -20) : 0) , { glow: vis ? 0.5 : 0 });
     ctx.restore();
-    pill(vis ? '보여요 👀' : '안 보여요 🚫', EY.x, EY.y + 48 * FS * (PHONE ? 0.85 : 1), { color: vis ? '#4ade80' : '#fb7185', size: 12.5, alpha: ent });
+    pill(vis ? '보여요 👀' : '안 보여요 🚫', EY.x, EY.y + 48 * FS * (PHONE ? 0.85 : 1), { color: vis ? '#4ade80' : '#fb7185', size: 12.5, alpha: ent, fit: true });
   }
   const eyeHit = (p) => Math.hypot(p.x - EY.x, p.y - EY.y) <= 44;
   function raysDown(p) {
@@ -701,7 +731,7 @@
       if (eyeHit(p)) { EY.drag = true; R.off = { x: p.x - EY.x, y: p.y - EY.y }; hideHint(); return true; }
       return false;
     }
-    if (Math.hypot(p.x - R.sx, p.y - R.sy) <= 32) { R.drag = 'S'; R.off = { x: p.x - R.sx, y: p.y - R.sy }; R.placed = false; R.flag.star = false; R.dragged = true; Sound.click(); hideHint(); return true; }
+    if (Math.hypot(p.x - R.sx, p.y - R.sy) <= 32) { R.drag = 'S'; if (R.tw) R.tw.cancel(); R.off = { x: p.x - R.sx, y: p.y - R.sy }; R.placed = false; R.flag.star = false; R.dragged = true; Sound.click(); hideHint(); return true; }
     if (Math.hypot(p.x - g.mx, p.y - R.ay) <= 30) { R.drag = 'A'; R.dragged = true; R.sel = 'A'; Sound.click(); hideHint(); return true; }
     if (Math.hypot(p.x - g.mx, p.y - R.by) <= 30) { R.drag = 'B'; R.dragged = true; R.sel = 'B'; Sound.click(); hideHint(); return true; }
     if (game && game.free && Math.hypot(p.x - R.cx, p.y - R.cy) <= g.card / 2 + 14) { R.drag = 'C'; R.off = { x: p.x - R.cx, y: p.y - R.cy }; hideHint(); return true; }
@@ -710,7 +740,7 @@
   function raysMove(p) {
     const R = PLR, g = PLG, ys = mirrorYs();
     if (scene === 'eye') {
-      if (EY.drag) { EY.x = clamp(p.x - R.off.x, 44, g.mx - 54); EY.y = clamp(p.y - R.off.y, 40, H - 60); }
+      if (EY.drag) { const o = eyeKeepOut(clamp(p.x - R.off.x, 44, g.mx - 54), clamp(p.y - R.off.y, 40, H - 60)); EY.x = o.x; EY.y = o.y; }
       return;
     }
     if (R.drag === 'A') R.ay = clamp(p.y, ys[0], ys[1]);
@@ -755,6 +785,7 @@
   const LN = { ltype: 'convex', kap: 1, d: BG_.dmax * 0.55 + BG_.dmin * 0.45, dt: 0, drag: false, ox: 0, lift: 0, fade: 1, dragged: false, hold: { cnear: 0, cfar: 0, vnear: 0, vfar: 0 }, seen: { cnear: false, cfar: false, vnear: false, vfar: false }, tw: null };
   BN.dt = BN.d; LN.dt = LN.d;
   const BPU = new Pulses(0.7, 460), LPU = new Pulses(0.7, 460);
+  const BADGE_Y = PHONE ? BG_.ins.y + BG_.ins.h + 52 : 34;              // 휴대폰에서는 '눈에 보이는 상' 창을 가리지 않게 그 아래에
   const Fm = () => BG_.f, Fl = () => BG_.fl;
 
   /* 거울 : 오목(+) / 볼록(−). 이상적인 거울 모형에서 평행 광선과 꼭짓점 광선의 교점이 상이에요. */
@@ -790,6 +821,8 @@
   const sizeWord = (m) => (Math.abs(m) > 1.12 ? '물체보다 커요' : Math.abs(m) < 0.89 ? '물체보다 작아요' : '물체와 크기가 같아요');
   const dirWord = (m) => (m > 0 ? '바로 서 있어요' : '거꾸로 서 있어요');
   const posWord = (d, f) => (Math.abs(d - f) < f * 0.07 ? '초점' : d < f ? '초점 안쪽' : '초점 바깥쪽');
+  /* 볼록 거울의 초점은 거울 '뒤'에 있어서 물체가 초점 안쪽·바깥쪽에 놓인다고 말할 수 없어요 → 가까이·멀리로만 말해요 */
+  const benchPos = (kind, c) => (kind === 'mirror' && !c.conc ? (c.d < c.f ? '거울 가까이' : '거울 멀리') : posWord(c.d, c.f));
 
   function stepBench(dt) {
     BN.d = approach(BN.d, BN.dt, dt, 18); LN.d = approach(LN.d, LN.dt, dt, 18);
@@ -803,7 +836,7 @@
       const msg = { convex: '볼록 거울: 작고 바로 선 상!', near: '오목 거울(가까이): 크고 바로 선 상!', far: '오목 거울(멀리): 거꾸로 선 상!' };
       Object.keys(conds).forEach((k) => {
         if (conds[k]) BN.hold[k] += dt; else BN.hold[k] = 0;
-        if (BN.hold[k] >= 0.9 && !BN.seen[k]) { BN.seen[k] = true; Sound.success(); badge(msg[k], W / 2, 34 * FS, COL.good, 2.6); }
+        if (BN.hold[k] >= 0.9 && !BN.seen[k]) { BN.seen[k] = true; Sound.success(); badge(msg[k], W / 2, BADGE_Y, COL.good, 2.6); }
       });
     } else if (scene === 'lens') {
       const c = calcLens(), vis = c.I && Math.abs(c.m) <= 3.4 && LN.fade > 0.9;
@@ -814,7 +847,7 @@
       const msg = { cnear: '볼록 렌즈(가까이): 크고 바로 선 상! (돋보기)', cfar: '볼록 렌즈(멀리): 거꾸로 선 상!', vnear: '오목 렌즈(가까이): 작고 바로 선 상!', vfar: '오목 렌즈(멀리): 역시 작고 바로 선 상!' };
       Object.keys(conds).forEach((k) => {
         if (conds[k]) LN.hold[k] += dt; else LN.hold[k] = 0;
-        if (LN.hold[k] >= 0.9 && !LN.seen[k]) { LN.seen[k] = true; Sound.success(); badge(msg[k], W / 2, 34 * FS, COL.good, 2.8); }
+        if (LN.hold[k] >= 0.9 && !LN.seen[k]) { LN.seen[k] = true; Sound.success(); badge(msg[k], W / 2, BADGE_Y, COL.good, 2.8); }
       });
     }
   }
@@ -883,7 +916,7 @@
     ctx.shadowColor = 'transparent'; ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(125,211,252,.6)'; ctx.stroke();
     ctx.save(); rr(p.x, p.y, p.w, p.h, 14); ctx.clip();
     txt('👁 눈에 보이는 상', p.x + 10 * FS, p.y + 13 * FS, { size: 12, align: 'left', color: '#bcd0f5', halo: false });
-    const top = p.y + 26 * FS, bottom = p.y + p.h - 17 * FS, avail = bottom - top, unitH = avail / 2.4;
+    const top = p.y + 26 * FS, bottom = p.y + p.h - 17 * FS, avail = bottom - top, unitH = avail / 3.4;
     const cxo = p.x + p.w * 0.27, cxi = p.x + p.w * 0.72;
     drawCandle(cxo, bottom, unitH, { glow: 0.5 });
     txt('물체', cxo, p.y + p.h - 8 * FS, { size: 11.5, color: '#fcd34d', halo: false });
@@ -891,7 +924,7 @@
     ctx.strokeStyle = 'rgba(160,185,235,.25)'; ctx.lineWidth = 1.5; ctx.setLineDash([4, 5]); ctx.beginPath(); ctx.moveTo(p.x + p.w * 0.5, top); ctx.lineTo(p.x + p.w * 0.5, p.y + p.h - 18 * FS); ctx.stroke(); ctx.setLineDash([]);
     if (has) {
       ctx.globalAlpha *= sstep(5.4, 3.6, Math.abs(m));
-      const hp = unitH * clamp(Math.abs(m), 0.14, 2.4) * sgn(m);
+      const hp = unitH * clamp(Math.abs(m), 0.14, 3.4) * sgn(m);
       if (m > 0) drawCandle(cxi, bottom, hp, { glow: 0.5 });
       else drawCandle(cxi, top, hp, { glow: 0.5 });
     } else txt('?', cxi, p.y + p.h / 2 + 4, { size: 28, color: 'rgba(160,175,215,.7)', halo: false });
@@ -1320,17 +1353,18 @@
       ro(3, '상의 모습', sm('같은 크기 · 좌우가 바뀜'));
     } else if (scene === 'rays') {
       const R = PLR, a = R.angs || [0, 0];
-      ro(1, '① 입사각 = 반사각', amber(a[0] + '°')); ro(2, '② 입사각 = 반사각', amber(a[1] + '°'));
+      const lb = PHONE ? '입사각=반사각' : ' 입사각 = 반사각';
+      ro(1, '①' + lb, amber(a[0] + '°')); ro(2, '②' + lb, amber(a[1] + '°'));
       ro(3, '상의 위치', R.placed ? sm('거울 뒤 ' + ((2 * PLG.mx - plrP().x - PLG.mx) / PLG.cm).toFixed(1) + ' cm') : sm('아직 못 찾았어요'));
     } else if (scene === 'eye') {
       ro(1, '눈에 보이나요?', EY.vis ? '보여요 👀' : '안 보여요');
       ro(2, '상의 위치', sm('거울 뒤 (그대로)'));
-      ro(3, '반사된 곳', sm(EY.vis ? '거울 위의 한 점' : '거울을 비켜 가요'));
+      ro(3, '반사된 곳', sm(EY.vis ? '거울 위의 한 점' : EY.why === 'card' ? '카드가 가로막아요' : '거울을 비켜 가요'));
     } else if (scene === 'mirror' || scene === 'lens') {
       const c = scene === 'mirror' ? calcMirror() : calcLens(), has = !!c.I && Math.abs(c.m) < 5;
       ro(1, '상의 크기', has ? sm(sizeWord(c.m)) : sm('—'));
       ro(2, '상의 방향', has ? sm(dirWord(c.m)) : sm('—'));
-      ro(3, '물체의 위치', sm(posWord(c.d, scene === 'mirror' ? c.f : c.f)));
+      ro(3, '물체의 위치', sm(benchPos(scene, c)));
     } else {
       const S = SORTS[SORT.kind], n = SORT.placed[SORT.kind];
       ro(1, '맞게 넣은 카드', n + '<small> / ' + S.cards.length + '</small>');
@@ -1341,10 +1375,10 @@
   function syncBenchSliders() {
     if (scene === 'mirror') {
       const v = benchSlider('mirror'); if (+$('#slMir').value !== v) slBind.mir.set(v);
-      const c = calcMirror(); const tx = posWord(c.d, c.f); if ($('#outMir').textContent !== tx) $('#outMir').textContent = tx;
+      const c = calcMirror(); const tx = benchPos('mirror', c); if ($('#outMir').textContent !== tx) $('#outMir').textContent = tx;
     } else if (scene === 'lens') {
       const v = benchSlider('lens'); if (+$('#slLens').value !== v) slBind.lens.set(v);
-      const c = calcLens(); const tx = posWord(c.d, c.f); if ($('#outLens').textContent !== tx) $('#outLens').textContent = tx;
+      const c = calcLens(); const tx = benchPos('lens', c); if ($('#outLens').textContent !== tx) $('#outLens').textContent = tx;
     }
   }
 
@@ -1388,7 +1422,7 @@
     const panel = (ox, title, wide) => {
       const r = '<rect x="' + (ox + 14) + '" y="34" width="142" height="132" rx="6" fill="#dfe7f3"/>' +
         svgLine(ox + 61, 34, ox + 61, 166, '#fff', 2, 'stroke-dasharray="7 6"') + svgLine(ox + 108, 34, ox + 108, 166, '#fff', 2, 'stroke-dasharray="7 6"');
-      const wedge = wide ? '<polygon points="' + (ox + 58) + ',58 ' + (ox + 16) + ',166 ' + (ox + 154) + ',166" fill="rgba(251,191,36,.38)"/>' : '<polygon points="' + (ox + 58) + ',58 ' + (ox + 62) + ',166 ' + (ox + 98) + ',166" fill="rgba(251,191,36,.38)"/>';
+      const wedge = wide ? '<polygon points="' + (ox + 58) + ',58 ' + (ox + 16) + ',166 ' + (ox + 154) + ',166 ' + (ox + 154) + ',66" fill="rgba(251,191,36,.38)"/>' : '<polygon points="' + (ox + 58) + ',58 ' + (ox + 62) + ',166 ' + (ox + 108) + ',166" fill="rgba(251,191,36,.38)"/>';
       const car = '<rect x="' + (ox + 20) + '" y="42" width="30" height="58" rx="8" fill="#3b82f6"/><circle cx="' + (ox + 52) + '" cy="58" r="4.5" fill="#fbbf24" stroke="#fff" stroke-width="1.5"/>';
       const other = '<rect x="' + (ox + 74) + '" y="116" width="22" height="38" rx="6" fill="#ef4444"/>' + '<rect x="' + (ox + 121) + '" y="76" width="22" height="38" rx="6" fill="' + (wide ? '#22c55e' : '#94a3b8') + '"/>' + (wide ? '' : svgText(ox + 132, 100, '?', 18, '#fff', 'middle', 900));
       return svgText(ox + 85, 22, title, 14, '#1e293b', 'middle', 900) + r + wedge + car + other;

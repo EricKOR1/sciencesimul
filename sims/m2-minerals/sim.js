@@ -674,8 +674,8 @@
   }
 
   function blindGeo(L) {
-    if (L.key === 'wide') return { M: { x: 12, y: 12, w: 776, h: 616 }, slots: [160, 400, 640].map((x) => ({ x, plat: 420, cy: 322, s: 100 })), labY: 168, swY: 508, swW: 170 };
-    return { M: { x: 10, y: 10, w: 500, h: 826 }, slots: [92, 260, 428].map((x) => ({ x, plat: 360, cy: 292, s: 62 })), labY: 220, swY: 440, swW: 150 };
+    if (L.key === 'wide') return { M: { x: 12, y: 12, w: 776, h: 616 }, slots: [160, 400, 640].map((x) => ({ x, plat: 420, cy: 356, s: 100 })), labY: 168, swY: 508, swW: 170 };
+    return { M: { x: 10, y: 10, w: 500, h: 826 }, slots: [92, 260, 428].map((x) => ({ x, plat: 360, cy: 320, s: 62 })), labY: 220, swY: 440, swW: 150 };
   }
   const BLIND = ['pyrite', 'gold', 'chalco'];
   function drawBlind(V, t) {

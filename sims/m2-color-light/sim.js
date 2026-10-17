@@ -349,7 +349,7 @@
           screen: { x: 410, y: 44, w: 364, h: 380 }, cx, cy, rho,
           spots: [{ x: cx - d / 2, y: cy - d * 0.29 }, { x: cx + d / 2, y: cy - d * 0.29 }, { x: cx, y: cy + d * 0.58 }],
           lamps: [{ x: 96, y: 118 }, { x: 96, y: 238 }, { x: 96, y: 358 }],
-          tray: { x: 410, y: 462, w: 364, h: 92 },
+          tray: { x: 410, y: 446, w: 364, h: 106 },
         };
       }
       const cx = 260, cy = 476, rho = 124, d = 122;
@@ -798,7 +798,7 @@
     txt(ctx, '🎯 찾은 색 ' + Object.keys(S.found).filter((k) => S.found[k]).length + ' / 4', T.x + 16, T.y + 20 * Math.min(1.3, fs), { size: 14 * Math.min(1.2, fs), align: 'left', color: '#dbe6ff' });
     const keys = ['Y', 'C', 'M', 'W'], tr = L.key === 'wide' ? 22 : 29, step = T.w / 4;
     keys.forEach((k, i) => {
-      const cx = T.x + step * (i + 0.5), cy = T.y + T.h * 0.6, tk = S.tok[k], f = S.found[k];
+      const cx = T.x + step * (i + 0.5), cy = T.y + T.h * 0.52, tk = S.tok[k], f = S.found[k];
       const sc2 = f ? (0.6 + 0.4 * clamp(tk.k, 0, 1.4)) : 1;
       ctx.save(); ctx.translate(cx, cy); ctx.scale(sc2, sc2);
       if (f) {
@@ -814,7 +814,7 @@
         txt(ctx, '?', 0, 1, { size: tr * 0.95, color: 'rgba(190,210,255,.75)' });
       }
       ctx.restore();
-      txt(ctx, MIX_COLORS[k].name, cx, cy + tr + 17 * Math.min(1.25, fs), { size: 14 * Math.min(1.2, fs), color: f ? '#fff' : '#8fa3d0' });
+      txt(ctx, MIX_COLORS[k].name, cx, cy + tr + 16 * Math.min(1.25, fs), { size: 14 * Math.min(1.2, fs), color: f ? '#fff' : '#8fa3d0' });
       if (tk.pop) {
         tk.pop = false;
         if (!REDUCE) V.fx.burst(cx, cy, { count: 16, colors: [rgbS(MIX_COLORS[k].rgb), '#ffffff', '#ffd24a'], speed: 150, gravity: 80, life: 0.7 });
@@ -827,7 +827,7 @@
      ========================================================= */
   const STAGE_OBJ = {
     shirt: { name: '흰 셔츠', refl: [0.97, 0.97, 0.97], pat: [1, 1, 1] },
-    leaf: { name: '초록 잎', refl: [0.06, 0.82, 0.1], pat: [0, 1, 0] },
+    leaf: { name: '초록 잎', refl: [0.05, 0.82, 0.03], pat: [0, 1, 0] },       // 초록빛만 반사 (파랑·빨강은 거의 0 → 반사할 빛이 없으면 검게 보여요)
     banana: { name: '노란 바나나', refl: [1, 0.88, 0.05], pat: [1, 1, 0] },
   };
   const gelTint = (g) => {      // 조명 색 → 눈에 보이는 광선 색

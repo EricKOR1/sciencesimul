@@ -1747,7 +1747,7 @@
         }
         // earth
         const G = earthGeo(L);
-        if (S.slotMode && (S.view === 'split')) {
+        if (S.slotMode && (S.view === 'split' || S.view === 'cut')) {
           const cid = cardAt(V, G, p);
           if (cid) { const c = V.cards[cid]; S.cardDrag = { id: cid, x: c.x, y: c.y, gx: p.x - c.x, gy: p.y - c.y, moved: false, x0: p.x, y0: p.y }; dragKind = 'card'; Sound.tick(); return true; }
           const rid = rowHit(G, p);
@@ -2118,7 +2118,7 @@
               const wrong = bad.concat(rev), now = new Set(wrong.map((c) => c.id));
               now.forEach((id) => { if (!S.flagLinks.has(id)) S.linkShake[id] = nowS(); });
               S.flagLinks = now;
-              if (bad.length) return '연결을 다시 살펴볼 카드: ' + bad.map((c) => c.short).join(', ') + '. 사건이 일어나는 권역과 영향을 받는 권역을 생각해 봐요.';
+              if (bad.length) return '연결을 다시 살펴볼 카드: ' + bad.map((c) => c.short).join(', ') + '. 사건이 일어나는 권역과 영향을 받는 권역을 생각해 봐요.' + (rev.length ? ' (' + rev.map((c) => c.short).join(', ') + '은(는) 화살표 방향이 거꾸로예요.)' : '');
               if (rev.length) return '두 권역은 맞아요! 하지만 화살표 방향이 거꾸로예요 (' + rev.map((c) => c.short).join(', ') + '). <b>영향을 주는 권역 → 받는 권역</b> 순서로 눌러요.';
               return true;
             },

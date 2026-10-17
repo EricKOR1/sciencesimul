@@ -125,7 +125,7 @@
     c.restore();
     SciSim.draw(c).sphere(bx, by, r, col, { light: cu ? '#a9d6ff' : '#e8c0f7', dark: cu ? '#0f4f9e' : '#5e1a7c' });
     if (withText) {
-      c.fillStyle = '#fff'; c.font = font(cu ? 13 : 17, true); c.textAlign = 'center'; c.textBaseline = 'middle';
+      c.fillStyle = '#fff'; c.font = font(cu ? 16 : 21, true); c.textAlign = 'center'; c.textBaseline = 'middle';
       c.fillText(cu ? '2+' : MINUS, bx, by + 1);
     }
     return (_ionSpr[key] = { cv, size });
@@ -258,8 +258,8 @@
     // 두 종류의 이온을 엇갈린 격자로 배치 (처음에는 가운데에 섞여 있음)
     for (let i = 0; i < 8; i++) {
       const col = i % 4, row = Math.floor(i / 4);
-      m.ions.push({ kind: 'cu', ox: -78 + col * 52, oy: PANEL.y + 50 + row * 46, ph: Math.random() * 6.28, x: MID - 78 + col * 52 });
-      m.ions.push({ kind: 'mn', ox: -52 + col * 52, oy: PANEL.y + 73 + row * 46, ph: Math.random() * 6.28, x: MID - 52 + col * 52 });
+      m.ions.push({ kind: 'cu', ox: -78 + col * 52, oy: PANEL.y + 47 + row * 48, ph: Math.random() * 6.28, x: MID - 78 + col * 52 });
+      m.ions.push({ kind: 'mn', ox: -52 + col * 52, oy: PANEL.y + 71 + row * 48, ph: Math.random() * 6.28, x: MID - 52 + col * 52 });
     }
     updateMoveUI();
   }
@@ -374,7 +374,7 @@
     if (S.mig.on) S.flow += dt;
     // 이온 입자 모형: 전극 쪽으로 부드럽게 따라가요
     S.mig.ions.forEach((ion) => {
-      const tx = clamp(MID + (ion.kind === 'cu' ? S.mig.cu : S.mig.mn) * 0.9 + ion.ox, PANEL.x + 44, PANEL.x + PANEL.w - 44);
+      const tx = clamp(MID + (ion.kind === 'cu' ? S.mig.cu : S.mig.mn) * 0.9 + ion.ox, PANEL.x + 52, PANEL.x + PANEL.w - 52);
       ion.x = REDUCE ? tx : approach(ion.x == null ? tx : ion.x, tx, dt, 8);
     });
     FX.update(dt);
@@ -640,7 +640,7 @@
     const big = (t, col) => { ctx.fillStyle = col; ctx.font = font(19, true); ctx.fillText(t, cx, c.y + 212); };
     const small = (t) => { ctx.fillStyle = COL.muted; ctx.font = font(13, true); ctx.fillText(t, cx, c.y + 234); };
     if (id.q === 0) { big(id.name + ' 원자', COL.good); small('전기적으로 중성'); }
-    else if (ion) { big(K.short, K.c); small(id.q > 0 ? '원자가 전자 ' + id.q + '개를 잃음' : '원자가 전자 ' + (-id.q) + '개를 얻음'); }
+    else if (ion) { big(K.short, K.c); small(id.q > 0 ? '전자 ' + id.q + '개를 잃음' : '전자 ' + (-id.q) + '개를 얻음'); }
     else { big('전체 전하 ' + signed(id.q), COL.warn); small('🔒 2단계에서 알아봐요'); }
   }
   function drawMeter(c, p, e) {
@@ -822,9 +822,9 @@
     ctx.fillStyle = COL.ink; ctx.font = font(15, true); ctx.fillText('🔍 입자 모형으로 보면', P.x + 14, P.y + 24);
     // 범례
     let lx = P.x + 220;
-    ionBall(lx, P.y + 19, 'cu', 0.75); lx += 16;
+    ionBall(lx, P.y + 19, 'cu', 0.74); lx += 16;
     lx += chem([['구리 이온 Cu'], ['2+', 'sup']], lx, P.y + 25, 14, COL.cu) + 22;
-    ionBall(lx, P.y + 19, 'mn', 0.75); lx += 16;
+    ionBall(lx, P.y + 19, 'mn', 0.74); lx += 16;
     chem([['과망가니즈산 이온 MnO'], ['4', 'sub'], [MINUS, 'sup']], lx, P.y + 25, 14, COL.mn);
     // 양쪽 전극
     [[P.x + 8, pol], [P.x + P.w - 18, 1 - pol]].forEach(([x, posK]) => {
@@ -835,7 +835,7 @@
     });
     ctx.save(); roundRect(P.x + 20, P.y + 34, P.w - 40, P.h - 40, 8); ctx.clip();
     m.ions.forEach((ion) => {
-      const jx = REDUCE ? 0 : 4 * Math.sin(S.time * 3.1 + ion.ph), jy = REDUCE ? 0 : 3 * Math.cos(S.time * 2.7 + ion.ph * 1.3);
+      const jx = REDUCE ? 0 : 4 * Math.sin(S.time * 3.1 + ion.ph), jy = REDUCE ? 0 : 1.2 * Math.cos(S.time * 2.7 + ion.ph * 1.3);
       const x = (ion.x == null ? MID + ion.ox : ion.x) + jx, y = ion.oy + jy;
       if (m.on) {   // 끌려가는 방향 표시
         const dir = ion.kind === 'cu' ? dirCu() : -dirCu(), disp = ion.kind === 'cu' ? m.cu : m.mn;
@@ -845,13 +845,13 @@
           ctx.beginPath(); ctx.moveTo(cx2 - dir * 4, y - 5); ctx.lineTo(cx2 + dir * 2, y); ctx.lineTo(cx2 - dir * 4, y + 5); ctx.stroke();
         }
       }
-      ionBall(x, y, ion.kind, 1);
+      ionBall(x, y, ion.kind, 0.77);
     });
     ctx.restore();
     ctx.textAlign = 'left';
   }
   function ionBall(x, y, kind, s) {
-    const sp = ionSprite(kind, s >= 1), w = sp.size * s;
+    const sp = ionSprite(kind, s >= 0.75), w = sp.size * s;
     ctx.drawImage(sp.cv, x - w / 2, y - w / 2, w, w);
   }
 
@@ -899,7 +899,7 @@
   $('#eMinus').addEventListener('click', minusE);
   $('#resetBtn').addEventListener('click', () => { Sound.click(); resetCurrent(); });
   $$('#pickSeg button').forEach((b) => b.addEventListener('click', () => { Sound.click(); hideHint(); const z = +b.dataset.z; setState(z, z); }));
-  $$('#sceneSeg button').forEach((b) => b.addEventListener('click', () => { Sound.click(); setScene(b.dataset.scene); }));
+  $$('#sceneSeg button').forEach((b) => b.addEventListener('click', () => { Sound.click(); hideHint(); setScene(b.dataset.scene); }));
   $('#powerBtn').addEventListener('click', () => setPower(!S.mig.on));
   $('#swapBtn').addEventListener('click', swapPoles);
   $('#paperBtn').addEventListener('click', () => { Sound.click(); resetPaper(); });

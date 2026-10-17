@@ -1476,8 +1476,10 @@
     const col = pr ? PACK[pr.id].cols[0] : '#7d8896';
     ctx.fillStyle = col; roundRect(ctx, T.x + 4, hy + hh - 8, T.w - 8, 6, 3); ctx.fill();
     ctx.restore();
-    if (pr) tagPill(ctx, L, SED[pr.id].emoji + ' ' + SED[pr.id].name + ' 쏟는 중', T.x + T.w / 2, hy - 16 * fs, { bg: 'rgba(14,165,233,.92)', stroke: '#bae6fd', size: 13.5 });
-    else if (!SD.layers.length) tagPill(ctx, L, '아래 버튼으로 퇴적물을 골라요', T.x + T.w / 2, hy - 16 * fs, { bg: 'rgba(6,10,26,.7)', size: 13.5 });
+    // 휴대폰 화면에서는 상자 제목과 겹치지 않게 제목 줄 오른쪽에 둬요
+    const pillAt = L.key === 'tall' ? { x: B.x + B.w - 14, y: B.y + 22 * fs, align: 'right' } : { x: T.x + T.w / 2, y: hy - 16 * fs };
+    if (pr) tagPill(ctx, L, SED[pr.id].emoji + ' ' + SED[pr.id].name + ' 쏟는 중', pillAt.x, pillAt.y, { bg: 'rgba(14,165,233,.92)', stroke: '#bae6fd', size: 13.5, align: pillAt.align });
+    else if (!SD.layers.length) tagPill(ctx, L, '아래 버튼으로 퇴적물을 골라요', pillAt.x, pillAt.y, { bg: 'rgba(6,10,26,.7)', size: 13.5, align: pillAt.align });
     // 상자 속: 물
     ctx.save();
     roundRect(ctx, T.x, T.y, T.w, T.h, 6); ctx.clip();

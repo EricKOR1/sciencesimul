@@ -860,11 +860,12 @@
   const newP = (mol) => mol.atoms.map(() => ({ x: 0, y: 0, z: 0, sym: '', k: 1, dark: 0, i: 0, r: 0 }));
   function buildSys(id) {
     const R = WIN.Rin, S0 = { id, t: 0, kind: '', parts: [] };
-    const spawn = (n, br, speed, make) => {
+    const spawn = (n, br, speed, make, k) => {                  // br: 바깥 반지름, k: 충돌 반지름 비율
       let guard = 0;
-      while (S0.parts.length < n && guard++ < 4000) {
-        const a = rand(0, TAU), d = Math.sqrt(Math.random()) * (R - br - 4), x = Math.cos(a) * d, y = Math.sin(a) * d;
-        if (S0.parts.some((q) => Math.hypot(q.x - x, q.y - y) < q.br + br + 6)) continue;
+      const er = br * (k || 1), wr = k ? br * 0.92 : br;
+      while (S0.parts.length < n && guard++ < 8000) {
+        const a = rand(0, TAU), d = Math.sqrt(Math.random()) * (R - wr - 4), x = Math.cos(a) * d, y = Math.sin(a) * d;
+        if (S0.parts.some((q) => Math.hypot(q.x - x, q.y - y) < q.er + er + 4)) continue;
         const va = rand(0, TAU), sp = speed * rand(0.8, 1.2);
         S0.parts.push(make(x, y, Math.cos(va) * sp, Math.sin(va) * sp, br));
       }
@@ -873,8 +874,8 @@
       S0.kind = 'gas'; const r = rOf(id === 'he' ? 'He' : 'Ne', SCW);
       spawn(10, r, 160, (x, y, vx, vy, br) => ({ x, y, vx, vy, br, er: br, sym: id === 'he' ? 'He' : 'Ne', r: br }));
     } else if (id === 'o2' || id === 'co2' || id === 'ch4') {
-      S0.kind = 'gas'; const mol = MOLS[id.toUpperCase()], n = id === 'o2' ? 7 : 5, br = mol.ext * SCW;
-      spawn(n, br, 150, (x, y, vx, vy, b) => ({ x, y, vx, vy, br: b, er: b * (id === 'co2' ? 0.7 : 0.8), mol, P: newP(mol), rx: rand(0, TAU), ry: rand(0, TAU), rz: rand(0, TAU), wx: rand(-1.4, 1.4), wy: rand(-1.4, 1.4), wz: (Math.random() < 0.5 ? -1 : 1) * rand(1.2, 2.8) }));
+      S0.kind = 'gas'; const mol = MOLS[id.toUpperCase()], n = id === 'o2' ? 7 : 5, br = mol.ext * SCW, kk = id === 'o2' ? 0.9 : id === 'co2' ? 0.8 : 0.85;
+      spawn(n, br, 150, (x, y, vx, vy, b) => ({ x, y, vx, vy, br: b, er: b * kk, wr: b * 0.92, mol, P: newP(mol), rx: rand(0, TAU), ry: rand(0, TAU), rz: rand(0, TAU), wx: rand(-1.4, 1.4), wy: rand(-1.4, 1.4), wz: (Math.random() < 0.5 ? -1 : 1) * rand(1.2, 2.8) }), kk);
     } else if (id === 'h2o') {
       S0.kind = 'liquid';
       const homes = packDisc(10, 0.27, 31);
@@ -904,7 +905,7 @@
         const p = ps[i];
         p.x += p.vx * dt; p.y += p.vy * dt;
         if (p.mol) { p.rx += p.wx * dt; p.ry += p.wy * dt; p.rz += p.wz * dt; }
-        const d = Math.hypot(p.x, p.y), lim = R - p.er;
+        const d = Math.hypot(p.x, p.y), lim = R - (p.wr || p.er);
         if (d > lim) { const nx = p.x / d, ny = p.y / d, dot = p.vx * nx + p.vy * ny; if (dot > 0) { p.vx -= 2 * dot * nx; p.vy -= 2 * dot * ny; } p.x = nx * lim; p.y = ny * lim; }
       }
       for (let i = 0; i < ps.length; i++) for (let j = i + 1; j < ps.length; j++) {
@@ -936,7 +937,7 @@
       });
     } else if (S0.kind === 'liquid') {
       S0.parts.forEach((p) => {
-        rotMol(MOLS.H2O, 0.12, 0.2 * Math.sin(t * 0.8 + p.ph), p.rz0 + 0.3 * Math.sin(t * 0.7 + p.ph2), SCW, p.P);
+        rotMol(MOLS.H2O, 0.12, 0.2 * Math.sin(t * 0.8 + p.ph), p.rz0 + 0.3 * Math.sin(t * 0.7 + p.ph2), SCW * 0.86, p.P);
         drawMolP(p.P, cx + p.x, cy + p.y);
       });
     } else if (S0.kind === 'lattice') {
@@ -1256,19 +1257,20 @@
   };
   const mkMol = (key, x, y) => {
     const mol = MOLS[key];
-    return { key, mol, x, y, vx: rand(-1, 1), vy: rand(-1, 1), rx: rand(0, TAU), ry: rand(0, TAU), rz: rand(0, TAU), wx: rand(-0.35, 0.35), wy: rand(-0.35, 0.35), wz: (Math.random() < 0.5 ? -1 : 1) * rand(0.35, 0.7), P: newP(mol), er: mol.ext * SCC * (key === 'CO2' ? 0.78 : 0.82), born: 0, fly: null };
+    return { key, mol, x, y, vx: rand(-1, 1), vy: rand(-1, 1), rx: rand(0, TAU), ry: rand(0, TAU), rz: rand(0, TAU), wx: rand(-0.35, 0.35), wy: rand(-0.35, 0.35), wz: (Math.random() < 0.5 ? -1 : 1) * rand(0.35, 0.7), P: newP(mol), er: mol.ext * SCC * (key === 'CO2' ? 0.78 : 0.82), wr: mol.ext * SCC, born: 0, fly: null };
   };
-  function freeSpot(er) {
+  function freeSpot(er, wr) {
+    wr = wr || er;
     for (let k = 0; k < 80; k++) {
-      const x = rand(BX.x + er + 8, BX.x + BX.w - er - 8), y = rand(BX.y + er + 8, BX.y + BX.h - er - 8);
-      if (CT.mols.every((m) => Math.hypot(m.x - x, m.y - y) > (m.er + er) * 1.05)) return { x, y };
+      const x = rand(BX.x + wr + 8, BX.x + BX.w - wr - 8), y = rand(BX.y + wr + 8, BX.y + BX.h - wr - 8);
+      if (CT.mols.every((m) => Math.hypot(m.x - x, m.y - y) > (m.wr + wr) * 0.97)) return { x, y };
     }
-    return { x: rand(BX.x + er, BX.x + BX.w - er), y: rand(BX.y + er, BX.y + BX.h - er) };
+    return { x: rand(BX.x + wr, BX.x + BX.w - wr), y: rand(BX.y + wr, BX.y + BX.h - wr) };
   }
   function ctPreset(name) {
     CT.preset = name; CT.mols = []; CT.atoms = []; CT.asm = []; CT.used = { C: 0, O: 0, H: 0, N: 0 }; CT.drag = null;
     const n = name === 'h2o3' ? 3 : name === 'h2o1' ? 1 : 0;
-    for (let i = 0; i < n; i++) { const m = mkMol('H2O', 0, 0); const s = freeSpot(m.er); m.x = s.x; m.y = s.y; m.born = 0; CT.mols.push(m); }
+    for (let i = 0; i < n; i++) { const m = mkMol('H2O', 0, 0); const s = freeSpot(m.er, m.wr); m.x = s.x; m.y = s.y; m.born = 0; CT.mols.push(m); }
   }
   function ctBaskets() {
     const syms = (game && game.free) ? ['C', 'O', 'H', 'N'] : ['C', 'O'];
@@ -1309,7 +1311,7 @@
     sfx.whoosh();
   }
   function finishAssemble(g) {
-    const mol = MOLS[g.key], m = mkMol(g.key, CIR.x, CIR.y), s = freeSpot(m.er);
+    const mol = MOLS[g.key], m = mkMol(g.key, CIR.x, CIR.y), s = freeSpot(m.er, m.wr);
     m.born = 0; m.fly = { x0: CIR.x, y0: CIR.y, x1: s.x, y1: s.y, t: 0 };
     CT.mols.push(m);
     CT.atoms = CT.atoms.filter((a) => g.atoms.indexOf(a) < 0);
@@ -1348,13 +1350,13 @@
         return;
       }
       m.x += m.vx * 30 * dt; m.y += m.vy * 30 * dt;
-      const l = BX.x + m.er + 6, r = BX.x + BX.w - m.er - 6, tp = BX.y + m.er + 6, bt = BX.y + BX.h - m.er - 6;
+      const l = BX.x + m.wr + 6, r = BX.x + BX.w - m.wr - 6, tp = BX.y + m.wr + 6, bt = BX.y + BX.h - m.wr - 6;
       if (m.x < l) { m.x = l; m.vx = Math.abs(m.vx); } if (m.x > r) { m.x = r; m.vx = -Math.abs(m.vx); }
       if (m.y < tp) { m.y = tp; m.vy = Math.abs(m.vy); } if (m.y > bt) { m.y = bt; m.vy = -Math.abs(m.vy); }
     });
     for (let i = 0; i < ms.length; i++) for (let j = i + 1; j < ms.length; j++) {
       const a = ms[i], b = ms[j]; if (a.fly || b.fly) continue;
-      const dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || 1e-3, mn = (a.er + b.er) * 1.12;
+      const dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || 1e-3, mn = (a.wr + b.wr) * 0.97;
       if (d < mn) { const nx = dx / d, ny = dy / d, push = (mn - d) * 0.5; a.x -= nx * push * Math.min(1, dt * 8); a.y -= ny * push * Math.min(1, dt * 8); b.x += nx * push * Math.min(1, dt * 8); b.y += ny * push * Math.min(1, dt * 8); a.vx -= nx * 0.05; a.vy -= ny * 0.05; b.vx += nx * 0.05; b.vy += ny * 0.05; }
     }
     ms.forEach((m) => { const sp = Math.hypot(m.vx, m.vy); if (sp < 0.4 || sp > 1.6) { const k = clamp(sp, 0.4, 1.6) / (sp || 1); m.vx *= k; m.vy *= k; if (sp < 1e-3) { m.vx = 0.7; m.vy = 0.5; } } });

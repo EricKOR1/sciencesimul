@@ -287,7 +287,7 @@
       if (roll > 0.001) { c.globalAlpha = 0.15 + roll * 0.85; c.fillText(String((ip + 1) % 10), cx, cy + (1 - roll) * lineH); }
     }
     c.globalAlpha = 1;
-    if (dec > 0) { c.fillText('.', x + 9 + cw * (nd - dec) + cw * 0.17, cy + fs * 0.3); }
+    if (dec > 0) { c.textBaseline = 'alphabetic'; c.fillText('.', x + 9 + cw * (nd - dec) + cw * 0.17, cy + fs * 0.36); c.textBaseline = 'middle'; }   // 소수점이 가려지지 않게 글자 바닥선에 맞춰요
     c.shadowBlur = 0;
     if (o.unit) { c.font = D.font(Math.min(15, h * 0.5), 800); c.fillStyle = '#7cf2c4'; c.textAlign = 'right'; c.fillText(o.unit, x + w - 8, cy + 3); }
     // 안정 표시등

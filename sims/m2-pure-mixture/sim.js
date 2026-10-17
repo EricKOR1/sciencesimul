@@ -652,7 +652,7 @@
     ctx.save();
     panel(cx - 56, y, 112, 44, 14, '#fff', 8, 2, 'rgba(30,50,100,.2)');
     ctx.strokeStyle = rgba(col, 0.7); ctx.lineWidth = 2.5; D.roundRect(cx - 56, y, 112, 44, 14); ctx.stroke();
-    text(cx, y + 31, (Math.round(T * 10) / 10).toFixed(T >= 100 ? 1 : 0) + ' °C', { size: 25, weight: 800, color: col });
+    text(cx, y + 31, (Math.round(T * 10) / 10).toFixed(T >= 99.45 ? 1 : 0) + ' °C', { size: 25, weight: 800, color: col });
     ctx.restore();
   }
   /* 소금 숟가락: u 0~1 사이의 자세 */

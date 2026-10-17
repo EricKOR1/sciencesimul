@@ -287,7 +287,7 @@
       if (roll > 0.001) { c.globalAlpha = 0.15 + roll * 0.85; c.fillText(String((ip + 1) % 10), cx, cy + (1 - roll) * lineH); }
     }
     c.globalAlpha = 1;
-    if (dec > 0) { c.fillText('.', x + 9 + cw * (nd - dec) + cw * 0.17, cy + fs * 0.3); }
+    if (dec > 0) { c.textBaseline = 'alphabetic'; c.fillText('.', x + 9 + cw * (nd - dec) + cw * 0.17, cy + fs * 0.36); c.textBaseline = 'middle'; }   // 소수점이 가려지지 않게 글자 바닥선에 맞춰요
     c.shadowBlur = 0;
     if (o.unit) { c.font = D.font(Math.min(15, h * 0.5), 800); c.fillStyle = '#7cf2c4'; c.textAlign = 'right'; c.fillText(o.unit, x + w - 8, cy + 3); }
     // 안정 표시등
@@ -848,7 +848,7 @@
       const useLens = kind === 'melt' || kind === 'water' || kind === 'eth';
       const box = useLens ? new PBox({ N, R: PHONE ? 5.4 : 7.2, color: S.pcol, box: lensBoxOf(i, K.samples.length), lattice: 'hex', cols: PHONE ? 5 : 5, state: 0, therm: 0.3, vl: 40, vg: 120, gap: 0.05, flashUp: '#ff8a3d', flashDown: '#4a90ff' }) : null;
       const first = cv.segs[0];
-      const o = new Odo(0); o.jump(first.T0);
+      const o = new Odo(kind === 'press' ? 1 : 0); o.jump(first.T0);       // 압력 장면의 끓는점은 소수 첫째 자리까지 (90.4 · 120.5 °C)
       const s = { i, q, sub: q.sub, S, cv, st: curveAt(cv, 0), box, N, odo: o, bub: [], bacc: 0, solid: q.sub === 'palm' || q.sub === 'naph', label: q.unk ? q.unk : q.amt + ' ' + q.unit, col: i ? '#e2464b' : '#2f7de1' };
       if (box) { if (s.solid) box.reset(0); else box.reset(1); }
       return s;
@@ -910,7 +910,7 @@
     let boilK = 0;
     R.samples.forEach((s) => {
       s.st = curveAt(s.cv, Math.min(R.t, endOf(s.cv)));
-      s.odo.set(s.st.T); s.odo.update(dt);
+      s.odo.set(s.odo.dec ? Math.round(s.st.T * 10) / 10 : s.st.T); s.odo.update(dt);
       syncBox(s);
       if (s.box) s.box.step(dt);
       // 끓는 정도 (0~1): 끓는 구간에서 1
@@ -1081,7 +1081,7 @@
     ctx.fillStyle = s.col; D.roundRect(x, y, w, 6, 3); ctx.fill();
     const lab = s.q.unk ? '시료 ' + s.q.unk : s.label;
     text(U.cx, y + 21, lab, { size: PHONE ? 12.5 : 14, weight: 800, color: COL.ink });
-    drawLCD(x + 8, y + h - (PHONE ? 22 : 26), w - 16, PHONE ? 17 : 20, s.odo, { digits: 3, unit: '°C', unitW: 20 });
+    drawLCD(x + 8, y + h - (PHONE ? 22 : 26), w - 16, PHONE ? 17 : 20, s.odo, { digits: s.odo.dec ? 4 : 3, unit: '°C', unitW: 20 });
   }
 
   /* 압력 용기 (물을 담은 비커 + 마개 + 압력계) */
