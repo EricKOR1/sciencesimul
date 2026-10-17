@@ -83,7 +83,7 @@
   /* =========================================================
      ① 전자쌍 공유 (H₂, Cl₂)
      ========================================================= */
-  const R3 = PHONE ? 70 : 98;                        // 가장 바깥 껍질 반지름
+  const R3 = PHONE ? 94 : 98;                        // 가장 바깥 껍질 반지름
   const RH = R3 * 0.82;                               // 수소의 (유일한) 껍질 반지름
   const AY = PHONE ? 300 : 270;
   const MOLS = {
@@ -230,7 +230,7 @@
       ctx.save(); ctx.globalAlpha = smooth((bA - 0.6) * 2.5);
       D.arrow(mid, topY - fs(10), mid, AY - 20, { color: '#b45309', width: 3 });
       pill(mid, topY - fs(30), '공유 전자쌍 (결합 1개)', { bg: '#b45309', color: '#fff', size: fs(13) });
-      if (!isH) pill(lx - Ro - fs(8), AY, '비공유 전자쌍', { bg: '#7c3aed', color: '#fff', size: fs(12), align: 'right' });
+      if (!isH) { if (PHONE) pill(4, AY, '비공유 전자쌍', { bg: '#7c3aed', color: '#fff', size: fs(11), align: 'left', pad: 6 }); else pill(lx - Ro - fs(8), AY, '비공유 전자쌍', { bg: '#7c3aed', color: '#fff', size: fs(12), align: 'right' }); }
       ctx.restore();
     }
     // 분자 이름 / 구조 표시 (결합 후)

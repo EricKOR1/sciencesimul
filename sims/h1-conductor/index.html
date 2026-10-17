@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#f26b3a">
+  <title>도체·부도체·반도체 | 고1 통합과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔌</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-toolbar { min-height: 58px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; }
+    .stage-toolbar .segmented button { min-height: 40px; padding: 5px 12px; font-size: 14.5px; white-space: nowrap; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    .seg-wide { display: flex; width: 100%; }
+    .seg-wide button { flex: 1; min-width: 0; padding: 6px 4px; font-size: 14.5px; min-height: 44px; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard [hidden] { display: none !important; }
+    .btn-sm { min-height: 44px; }
+    .btn-row { display: flex; gap: 8px; margin-top: 8px; }
+    .btn-row .btn { flex: 1; padding-left: 6px; padding-right: 6px; }
+    .ctrl-note { margin: 6px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    .match-row { display: grid; grid-template-columns: 70px minmax(0, 1fr); gap: 8px; align-items: center; margin-bottom: 6px; }
+    .match-row b { font-size: 15px; }
+    .match-row select { min-height: 44px; border: 2px solid var(--line); border-radius: 10px; background: #fff; font-size: 15px; font-weight: 700; padding: 2px 6px; width: 100%; }
+    .match-row select.bad { border-color: var(--bad); background: var(--bad-soft); }
+    .match-row select.good { border-color: var(--good); background: var(--good-soft); }
+    .stepper .st .l { white-space: normal; text-align: center; line-height: 1.15; overflow: visible; }
+    .readout .value.txt { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .concept table.mini { border-collapse: collapse; margin: 6px 0; font-size: 14px; width: 100%; }
+    .concept table.mini th, .concept table.mini td { border: 1px solid var(--line); padding: 4px 6px; text-align: center; }
+    .concept table.mini th { background: var(--surface-2); font-weight: 800; }
+    @media (max-width: 599px) {
+      .readout .value.txt { font-size: 15px; }
+      .stage-toolbar .spacer { display: none; }
+      .stage-toolbar .segmented button { padding: 5px 8px; font-size: 13.5px; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="phy">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#h1a">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">통합과학1 · Ⅱ. 물질과 규칙성</div>
+      <h1>도체·부도체·반도체</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🔌 전류 시험</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="tablist" aria-label="화면 고르기" hidden>
+            <button type="button" data-mode="test">🔌 전류 시험</button>
+            <button type="button" data-mode="model">⚡ 자유전자</button>
+            <button type="button" data-mode="semi">🧪 반도체</button>
+            <button type="button" data-mode="apply">📱 소재 선택</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="물질의 전류 시험 회로, 자유전자 입자 모형, 반도체 불순물·온도·빛 실험, 소재 선택과 반도체 칩 공정 장면"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1"> </span><span class="value txt" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2"> </span><span class="value txt" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3"> </span><span class="value txt" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" data-show="test">
+          <div class="control-head"><span>🧰 시험 도구</span></div>
+          <div class="segmented seg-wide" id="subTest"><button type="button" data-s="bench">🔌 시험대</button><button type="button" data-s="sort">🗂️ 분류</button></div>
+          <button class="btn btn-sm btn-block" id="bEject" type="button" style="margin-top:8px">⏏ 시료 빼기</button>
+          <p class="ctrl-note" id="testNote">시료 카드를 누르거나 회로의 빈칸으로 끌어다 놓아요. 전류계와 아래 값(A)을 읽어요.</p>
+        </div>
+        <div class="control" data-show="model:main">
+          <div class="control-head"><span>🔍 물질 고르기</span></div>
+          <div class="segmented seg-wide" id="matSeg"><button type="button" data-m="cu">구리</button><button type="button" data-m="gl">유리</button><button type="button" data-m="si">규소</button></div>
+          <button class="btn btn-sm btn-primary btn-block" id="bVolt" type="button" style="margin-top:8px">⚡ 전압 걸기</button>
+          <div class="control-head" style="margin-top:10px"><span>자유전자 수</span><output id="oN">36개</output></div>
+          <input type="range" id="sN" min="0" max="40" step="1" value="36" aria-label="자유전자 수">
+        </div>
+        <div class="control" data-show="model:cls">
+          <div class="control-head"><span>🗂️ 물질 → 종류</span></div>
+          <div id="clsRows"></div>
+          <p class="ctrl-note">화면의 자유전자 수와 전류를 보고 도체 · 부도체 · 반도체 중에서 골라요.</p>
+        </div>
+        <div class="control" data-show="semi">
+          <div class="control-head"><span>🧫 불순물(인) 비율</span><output id="oD">없음</output></div>
+          <input type="range" id="sD" min="0" max="4" step="1" value="0" aria-label="불순물 비율">
+          <div class="control-head" style="margin-top:8px"><span>🌡️ 온도</span><output id="oT">20 °C</output></div>
+          <input type="range" id="sT" min="20" max="120" step="5" value="20" aria-label="온도">
+          <div class="control-head" style="margin-top:8px"><span>💡 빛의 세기</span><output id="oL">0 %</output></div>
+          <input type="range" id="sL" min="0" max="100" step="5" value="0" aria-label="빛의 세기">
+        </div>
+        <div class="control" data-show="apply:parts">
+          <div class="control-head"><span>🔧 소재 고르기</span></div>
+          <div class="btn-row"><button class="btn btn-sm" id="bPartsReset" type="button">↺ 모두 비우기</button></div>
+          <p class="ctrl-note">아래 재료를 눌러 고른 뒤 부품 칸을 누르거나, 재료를 부품 칸으로 끌어다 놓아요.</p>
+        </div>
+        <div class="control" data-show="apply:chip">
+          <div class="control-head"><span>🏭 반도체 칩 만들기</span></div>
+          <div class="btn-row"><button class="btn btn-sm" id="bFabReset" type="button">↺ 카드 섞기</button></div>
+          <p class="ctrl-note">카드 4장을 모래부터 칩까지 만드는 순서대로 칸에 끌어다 놓아요.</p>
+        </div>
+        <div class="control" data-show="apply">
+          <div class="segmented seg-wide" id="subApply"><button type="button" data-s="parts">🔧 부품 소재</button><button type="button" data-s="chip">🏭 칩 만들기</button></div>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

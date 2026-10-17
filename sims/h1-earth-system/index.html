@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0ea5e9">
+  <title>지구시스템 | 고1 통합과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌍</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-hint { bottom: auto; top: 14px; }
+    .stage-toolbar { min-height: 58px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; }
+    .stage-toolbar .segmented button { min-height: 40px; padding: 5px 12px; font-size: 14.5px; white-space: nowrap; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 14px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard [hidden] { display: none !important; }
+    .opt-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin-top: 4px; }
+    .opt-grid.c3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .opt {
+      min-height: 46px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 12px;
+      font-weight: 800; font-size: 15px; cursor: pointer; padding: 4px 6px; font-family: inherit; line-height: 1.2;
+    }
+    .opt.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); color: color-mix(in srgb, var(--subject) 70%, black); }
+    .opt .ok { color: var(--good); margin-left: 3px; }
+    .ctrl-note { margin: 6px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    .btn-sm { min-height: 44px; }
+    .game-foot button { min-height: 44px; }
+    .readout .value.txt { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .concept table.mini { border-collapse: collapse; margin: 6px 0; font-size: 14px; width: 100%; }
+    .concept table.mini th, .concept table.mini td { border: 1px solid var(--line); padding: 4px 6px; text-align: center; }
+    .concept table.mini th { background: var(--surface-2); font-weight: 800; }
+    @media (max-width: 599px) {
+      .readout { min-width: 0; }
+      .readout .value.txt { font-size: 15px; }
+      .stage-toolbar .spacer { display: none; }
+      .stage-toolbar .segmented button { padding: 5px 8px; font-size: 13.5px; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="earth">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#h1a">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">통합과학1 · Ⅲ. 시스템과 상호작용</div>
+      <h1>지구시스템</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🚲 시스템이란</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="group" aria-label="장면 고르기" hidden>
+            <button type="button" data-mode="zoom">🔭 시스템</button>
+            <button type="button" data-mode="layers">🧅 권역의 층</button>
+            <button type="button" data-mode="sort">🗂️ 권역 분류</button>
+            <button type="button" data-mode="energy">☀️ 에너지원</button>
+            <button type="button" data-mode="map">🗺️ 한눈에</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="자전거, 태양계, 지구의 다섯 권역을 보여 주는 줌 화면, 지구 내부와 대기, 해양의 층 구조, 권역 분류판, 에너지원 화면, 권역과 에너지원 관계도"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">—</span><span class="value txt" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">—</span><span class="value txt" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">—</span><span class="value txt" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" data-modes="zoom">
+          <div class="control-head"><span>🔭 줌 단계</span></div>
+          <div class="opt-grid c3" id="zoomBtns">
+            <button class="opt" type="button" data-zoom="0">🚲 자전거</button>
+            <button class="opt" type="button" data-zoom="1">☀️ 태양계</button>
+            <button class="opt" type="button" data-zoom="2">🌍 지구</button>
+          </div>
+          <div id="bikeCtl" style="margin-top:10px">
+            <button class="btn btn-sm btn-block" id="bChain" type="button">⛓ 체인 떼기</button>
+          </div>
+          <p class="ctrl-note" id="zoomNote">단계를 눌러 화면을 확대·축소해 보세요.</p>
+        </div>
+        <div class="control" data-modes="layers">
+          <div class="control-head"><span>🧅 어느 층을 볼까요?</span></div>
+          <div class="opt-grid c3" id="subBtns">
+            <button class="opt" type="button" data-sub="geo">🪨 지권</button>
+            <button class="opt" type="button" data-sub="atm">☁️ 기권</button>
+            <button class="opt" type="button" data-sub="hyd">🌊 수권</button>
+          </div>
+          <p class="ctrl-note">이름표를 끌어 그림의 번호 칸에 놓아요. 놓은 이름표는 다시 옮길 수 있어요.</p>
+          <button class="btn btn-sm btn-block" id="bResetTags" type="button" style="margin-top:8px">↺ 이름표 되돌리기</button>
+        </div>
+        <div class="control" data-modes="sort">
+          <p class="ctrl-note" style="margin-top:0">사례 카드를 끌어 알맞은 <b>권역 상자</b>에 놓아요.</p>
+          <button class="btn btn-sm btn-block" id="bResetSort" type="button" style="margin-top:8px">↺ 카드 되돌리기</button>
+        </div>
+        <div class="control" data-modes="energy">
+          <div class="control-head"><span>⚡ 에너지원 켜기</span></div>
+          <div class="opt-grid c3" id="srcBtns">
+            <button class="opt" type="button" data-src="sun">☀️ 태양</button>
+            <button class="opt" type="button" data-src="core">🌋 지구 내부</button>
+            <button class="opt" type="button" data-src="moon">🌙 달</button>
+          </div>
+          <p class="ctrl-note">화살표 굵기는 에너지 양의 <b>로그 눈금</b>이에요. 실제 양의 차이는 오른쪽 원 그래프로 확인해요.</p>
+        </div>
+        <div class="control" data-modes="pair">
+          <p class="ctrl-note" style="margin-top:0">현상 카드를 끌어 알맞은 <b>에너지원 상자</b>에 놓아요.</p>
+          <button class="btn btn-sm btn-block" id="bResetPair" type="button" style="margin-top:8px">↺ 카드 되돌리기</button>
+        </div>
+        <div class="control" data-modes="map">
+          <p class="ctrl-note" style="margin-top:0">관계도의 <b>빈칸 6곳</b>에 알맞은 이름표를 끌어 놓아요. 화살표 옆 글자가 단서예요.</p>
+          <button class="btn btn-sm btn-block" id="bResetMap" type="button" style="margin-top:8px">↺ 이름표 되돌리기</button>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="world.js"></script>
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

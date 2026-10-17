@@ -77,6 +77,8 @@
 
   const MODE_LABEL = { atom: '⚛️ 전자 배치', noble: '🔥 안정한 원소 시험', bond: '🤝 결합의 이유', major: '🌍 주요 원소' };
   function setScene(mode, sub) {
+    if (!sub && mode === 'major') sub = 'need';
+    if (!sub && mode === 'atom') sub = 'view';
     if (S.mode !== mode) { S.fade = 1; }
     S.mode = mode; S.sub = sub || '';
     $('#tbLabel').textContent = MODE_LABEL[mode];
@@ -88,7 +90,7 @@
     $$('#ctrlCard [data-modes]').forEach((n) => {
       const modes = n.getAttribute('data-modes').split(' ');
       const sub = n.getAttribute('data-sub'), ns = n.getAttribute('data-notsub');
-      n.hidden = !(modes.indexOf(S.mode) >= 0 && (!sub || sub === S.sub) && (!ns || ns !== S.sub));
+      n.hidden = !(modes.indexOf(S.mode) >= 0 && (!sub || sub === S.sub) && (!ns || ns !== S.sub) && (!n.hasAttribute('data-freeonly') || (game && game.free)));
     });
     $$('#modeSeg button').forEach((b) => b.classList.toggle('on', b.dataset.mode === S.mode));
     $$('#centerSeg button').forEach((b) => b.classList.toggle('on', b.dataset.c === S.center));
@@ -97,7 +99,15 @@
     $('#bBondReset').disabled = !it || !it.done && !it.act;
     $('#bTest').disabled = S.tsel < 0 || !!(S.test && S.test.t < 5.2);
     $('#oH').textContent = S.hCount;
+    const fs = $$('#freeSeg button');
+    if (S.mode === 'atom') { fs[0].textContent = '🔢 슬라이더'; fs[1].textContent = '🧱 직접 채우기'; fs[0].classList.toggle('on', S.sub !== 'build'); fs[1].classList.toggle('on', S.sub === 'build'); }
+    else { fs[0].textContent = '🔢 빈자리 세기'; fs[1].textContent = '💧 수소 붙이기'; fs[0].classList.toggle('on', S.sub !== 'build'); fs[1].classList.toggle('on', S.sub === 'build'); }
   }
+  $$('#freeSeg button').forEach((b) => b.addEventListener('click', () => {
+    Sound.click(); const build = b.dataset.fs === '1';
+    if (S.mode === 'atom') { setScene('atom', build ? 'build' : 'view'); if (build) startBuild(15); }
+    else { setScene('major', build ? 'build' : 'need'); if (build) setCenter(S.center); }
+  }));
   $$('#modeSeg button').forEach((b) => b.addEventListener('click', () => { Sound.click(); setScene(b.dataset.mode, ''); }));
 
   /* ================= 원자 (전자껍질 모형) ================= */
@@ -980,7 +990,7 @@
   let lastFree = false, lastMode = '';
   SciSim.loop((dt, t) => {
     S.clock = t;
-    if (game && game.free !== lastFree) { lastFree = game.free; if (game.free) { S.sub = S.mode === 'atom' || S.mode === 'major' ? (S.mode === 'major' ? 'need' : 'view') : ''; } updateCtl(); }
+    if (game && game.free !== lastFree) { lastFree = game.free; updateCtl(); }
     if (S.mode !== lastMode) { lastMode = S.mode; updateCtl(); }
     // 슬라이더 표시, 본 원소 기록
     if (S.mode === 'atom' && S.sub !== 'build') {

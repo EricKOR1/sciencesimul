@@ -106,6 +106,7 @@
       const sub = n.getAttribute('data-sub'), hsub = n.getAttribute('data-hsub');
       n.hidden = !(modes.indexOf(S.mode) >= 0 && (!sub || sub === S.sub) && (!hsub || hsub === S.hview));
     });
+    $$('#ctrlCard [data-freeonly]').forEach((n) => { n.hidden = !(game && game.free); });
     $$('#modeSeg button').forEach((b) => b.classList.toggle('on', b.dataset.mode === S.mode));
     $$('#layoutSeg button').forEach((b) => b.classList.toggle('on', b.dataset.l === S.layout));
     $$('#haloSeg button').forEach((b) => b.classList.toggle('on', b.dataset.h === S.hview));
@@ -329,6 +330,8 @@
   function filled(key) { const v = S.dsel[key]; return v instanceof Set ? v.size > 0 : !!v; }
   $('#bWizPrev').addEventListener('click', () => { Sound.click(); S.dstep = Math.max(0, S.dstep - 1); wizRender(); });
   $('#bWizNext').addEventListener('click', () => { Sound.click(); S.dstep = Math.min(DSTEPS.length - 1, S.dstep + 1); wizRender(); });
+  $('#bDesignRun').addEventListener('click', () => { Sound.click(); const r = checkDesign(); if (r === true) startRun(); else showHint(r, 6000); });
+  $('#bDesignReset').addEventListener('click', () => { Sound.click(); resetDesign(); });
   function resetDesign() {
     S.dstep = 0; S.dsel = { sample: new Set(), manip: null, ctrl: new Set(), meas: new Set(), safe: new Set() }; S.run = null; wizRender();
   }
