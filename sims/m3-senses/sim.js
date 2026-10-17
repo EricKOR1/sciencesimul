@@ -429,8 +429,13 @@
     txt('👁️ 눈의 단면 (위에서 본 모습)', EYE.cx + 20, 52, { size: 15, weight: 800, color: '#14532d', align: 'center' });
     const O = { x: ox + 24 * sc, y: EYE.cy };
     const Fx = EYE.LX + A.iNorm * (EYE.cx + EYE.rin - EYE.LX);
-    rayBundle(O, { x: Fx, y: EYE.cy }, A.pupil, 0.25 + 0.6 * b, '#f59e0b', Math.max(2, Math.round(A.pupil / 5)));
     const eye = drawEye({ pupil: A.pupil, u });
+    { // 들어오는 빛의 양: 동공이 클수록 빛 다발이 굵고 밝다
+      const hy = A.pupil * 0.96, Fp = { x: Fx, y: EYE.cy };
+      ctx.save(); ctx.fillStyle = rgba('#fbbf24', 0.14 + 0.2 * (A.pupil / 21));
+      ctx.beginPath(); ctx.moveTo(O.x, O.y); ctx.lineTo(EYE.IX - 2, EYE.cy - hy); ctx.lineTo(Fp.x, Fp.y); ctx.lineTo(EYE.IX - 2, EYE.cy + hy); ctx.closePath(); ctx.fill(); ctx.restore();
+    }
+    rayBundle(O, { x: Fx, y: EYE.cy }, A.pupil, 0.5 + 0.4 * b, '#f59e0b', Math.max(3, Math.round(A.pupil / 4)));
     // 망막 위의 점(상)
     const rp = retPt(0);
     ctx.save(); D.glow(rp.x, rp.y, 12 + A.spotR * 2.2, '#f59e0b', A.sharp ? 0.8 : 0.45); ctx.fillStyle = A.sharp ? '#f59e0b' : 'rgba(245,158,11,.55)'; ctx.beginPath(); ctx.arc(rp.x, rp.y, Math.max(3, A.spotR * 0.9), 0, TAU); ctx.fill(); ctx.restore();
@@ -442,9 +447,9 @@
     tag('망막', 660, 186, EYE.cx + EYE.R - 8, 214, { title: '망막', msg: '시각 세포가 있어서 빛 자극을 받아들이는 곳이에요.' });
     // 상태 알약
     const pu = A.pupil < 9 ? '작아요 (밝은 곳)' : A.pupil > 17 ? '커요 (어두운 곳)' : '보통';
-    pill('동공: ' + pu, 150, 500 + 0, { size: 13.5, bg: '#7aa3c9', pad: 10, h: 28 });
+    pill('동공: ' + pu, 150, 522, { size: 13.5, bg: '#7aa3c9', pad: 10, h: 28 });
     const lens = u > 0.7 ? '두꺼워요 (가까운 곳)' : u < 0.3 ? '얇아요 (먼 곳)' : '중간';
-    pill('수정체: ' + lens, 540, 500, { size: 13.5, bg: '#d9a21b', pad: 10, h: 28 });
+    pill('수정체: ' + lens, 540, 522, { size: 13.5, bg: '#d9a21b', pad: 10, h: 28 });
     // 망막의 상(확대)
     const IC = { x: 726, y: 110, r: 42 };
     ctx.save(); ctx.shadowColor = 'rgba(30,60,40,.2)'; ctx.shadowBlur = 8; ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(IC.x, IC.y, IC.r + 4, 0, TAU); ctx.fill(); ctx.restore();
@@ -690,7 +695,7 @@
     const rs = N.result && clock - N.resultAt < 5 ? clamp((5 - (clock - N.resultAt)) / 0.4, 0, 1) * clamp((clock - N.resultAt) / 0.2, 0, 1) : 0;
     if (rs > 0.01) {
       const txtR = N.result === 'blur' ? '❓ 음… 무슨 맛이지? 맛이 흐릿해요' : N.result === 'apple' ? '🍎 사과 맛이야! (맛 + 향)' : '🧅 양파 맛이야! (맛 + 향)';
-      pill(txtR, 640, 70, { size: 15, bg: N.result === 'blur' ? '#b45309' : '#16a34a', pad: 14, h: 36, alpha: rs, shadow: true });
+      pill(txtR, 610, 70, { size: 15, bg: N.result === 'blur' ? '#b45309' : '#16a34a', pad: 14, h: 36, alpha: rs, shadow: true });
     }
     if (N.pinched && N.t < 0) pill('코가 막혀서 냄새 입자가 후각 세포에 닿지 못해요', 270, 112, { size: 13, bg: 'rgba(180,83,9,.92)', pad: 12 });
     else if (N.t < 0 && !N.pinched) pill('냄새 입자(●)가 코로 들어가 후각 세포에 닿아요', 270, 112, { size: 13, bg: 'rgba(22,101,52,.92)', pad: 12 });
@@ -914,7 +919,7 @@
   SciSim.pointer(view, {
     down(p) {
       if (S.scene === 'blind' && inR(p, { x: CARD.x, y: CARD.y + 30, w: CARD.w, h: CARD.h - 60 }, 6)) {
-        S.blind.drag = true; setBlindOff((p.x - CARD.px) / CARD.K); return true;
+        S.blind.drag = true; S.blind.touched = true; setBlindOff((p.x - CARD.px) / CARD.K); return true;
       }
       // 특별한 조작이 없으면 이름표
       for (let i = HOT.length - 1; i >= 0; i--) { if (inR(p, HOT[i])) { tapTag(HOT[i], p); return false; } }

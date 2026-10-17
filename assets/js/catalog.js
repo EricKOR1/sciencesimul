@@ -2013,8 +2013,7 @@ window.SCI_CATALOG = {
                 "눈의 조절",
                 "여러 감각",
                 "뇌로 전달"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m3-neuron-reflex",
