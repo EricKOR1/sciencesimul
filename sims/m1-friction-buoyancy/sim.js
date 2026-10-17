@@ -473,7 +473,7 @@
       f.t += dt;
       const t = f.t, s = 46 * (1 - Math.exp(-7 * t) * (Math.cos(16 * t) + 0.44 * Math.sin(16 * t)));
       f.x = f.x0 + (RM ? 46 : s);
-      f.F = fs * (0.84 + 0.16 * (1 - Math.exp(-4 * t)));
+      f.F = fs;                                         // 이 차시는 정지·운동 마찰을 구분하지 않아요: 기록한 값 그대로 보여 줘요
       if (!RM && t < 0.5 && Math.random() < 0.7) FX.emit({ x: f.x - BW / 2 + 6, y: FLOOR - 2, vx: -30 - Math.random() * 40, vy: -8 - Math.random() * 24, life: 0.45, size: 2 + Math.random() * 2.2, color: SURF[f.surf].dust, shape: 'smoke', drag: 2 });
       if (t > 1.3) { f.st = 'back'; f.t = 0; f.x1 = f.x; }
     } else if (f.st === 'back') {
@@ -1176,7 +1176,7 @@
         pill('부력 ' + fm(f.frac * BALL.FBF, 1) + ' N', xl - 12, yb + bL * 0.5, { align: 'right', color: COL.buoy, size: 13.5 });
       }
       if (Math.abs(gL) > 3) { forceArrow(xr, b.y, 0, gL, COL.grav, {}); pill('중력 ' + fm(BALL.W, 1) + ' N', xr + 12, b.y + gL * 0.5 + 6, { align: 'left', color: COL.grav, size: 13.5 }); }
-      if (b.drag || f.depth > 0.05) pill('잠긴 깊이 ' + Math.round(f.depth * 100) + ' %', TK.x1 - 100, TK.wl0 - 30, { solid: true, color: f.depth >= 0.8 ? COL.good : COL.buoy, size: 13.5 });
+      if (f.depth > 0.05) pill('잠긴 깊이 ' + Math.round(f.depth * 100) + ' %', TK.x1 - 100, TK.wl0 - 30, { solid: true, color: f.depth >= 0.8 ? COL.good : COL.buoy, size: 13.5 });
     } else drawBForces(t, g);
     if (BB.stage === 2) drawInfoCard(g);
     // 기록 직후 반짝

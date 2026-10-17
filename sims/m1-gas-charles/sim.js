@@ -544,7 +544,10 @@
         const ty = POT.water + BALL_R * 0.35 + (RM ? 0 : Math.sin(performance.now() / 500) * 2);
         b.y += (ty - b.y) * Math.min(1, dt * 6);
         b.x += (clamp(b.x, POT.x + BALL_R + 6, POT.x + POT.w - BALL_R - 6) - b.x) * Math.min(1, dt * 8);
-      } else if (b.y < TABLE - BALL_R) {
+      } else {
+        if (b.sx != null) { b.x = ap(b.x, b.sx, dt, 10); if (Math.abs(b.x - b.sx) < 0.5) { b.x = b.sx; b.sx = null; } }
+      }
+      if (!b.inWater && b.y < TABLE - BALL_R) {
         // 탁자 위로 떨어짐
         b.vy += 1800 * dt; b.y = Math.min(TABLE - BALL_R, b.y + b.vy * dt);
         if (b.y >= TABLE - BALL_R) { S.bsq.velocity = Math.min(8, b.vy / 130); b.vy = 0; Sound.tick(); }
@@ -782,7 +785,7 @@
       if (S.scene !== 'pong') return false;
       const b = S.ball;
       if (Math.hypot(p.x - b.x, p.y - b.y) > BALL_R + 14) return false;
-      b.drag = { ox: p.x - b.x, oy: p.y - b.y }; hideHint();
+      b.drag = { ox: p.x - b.x, oy: p.y - b.y }; b.sx = null; hideHint();
       return true;
     },
     move(p) {
@@ -796,8 +799,10 @@
       const b = S.ball;
       if (!b.drag) return;
       b.drag = null;
-      b.inWater = inPot(b.x);
-      if (b.inWater) { Sound.tick(); splash(b.x); }
+      b.inWater = b.x > POT.x + 16;                       // 비커 오른쪽 가장자리에 놓아도 물속(안쪽으로 밀려 들어가요)
+      b.sx = null;
+      if (b.inWater) { Sound.tick(); splash(clamp(b.x, POT.x + BALL_R + 6, POT.x + POT.w - BALL_R - 6)); }
+      else if (b.x > POT.x - BALL_R - 4) b.sx = POT.x - BALL_R - 8;   // 비커 벽에 걸쳐 놓이지 않게 왼쪽 탁자 위로
     },
   });
 

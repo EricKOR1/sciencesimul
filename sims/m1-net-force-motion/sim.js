@@ -883,7 +883,7 @@
     ctx.beginPath(); ctx.moveTo(ZX, top); ctx.lineTo(ZX, top + bh); ctx.moveTo(ZX + bw, top); ctx.lineTo(ZX + bw, top + bh); ctx.stroke();
     ctx.restore();
     const lab = m === 3 ? '🪢 줄이 당기는 힘 3 N' : '💨 힘 구역 ' + ZF + ' N ' + (m === 1 ? '→' : m === 2 ? '←' : '↗');
-    pill(lab, ZX + bw / 2, top + 20, { solid: true, color: '#7c3aed', size: 13 });
+    pill(lab, ZX + bw / 2, m === 3 ? top + bh - 22 : top + 20, { solid: true, color: '#7c3aed', size: 13 });   // ③은 퍽이 위쪽에서 도니까 라벨을 아래로
     if (isNew('zone')) newTag(ZX, top + 40, bw, 56);
   }
   function drawPost(t) {
@@ -924,7 +924,7 @@
     ctx.beginPath(); ctx.moveTo(PU.x + a.x * s, PU.y + a.y * s); ctx.lineTo(PU.x + (a.x + b.x) * s, PU.y + (a.y + b.y) * s); ctx.lineTo(PU.x + b.x * s, PU.y + b.y * s); ctx.stroke();
     ctx.lineWidth = 1.8; ctx.strokeStyle = '#0f172a'; ctx.stroke();
     ctx.restore();
-    const lx = PU.x - (a.x + b.x) * 46, ly = PU.y - (a.y + b.y) * 46;
+    const lx = PU.x + (a.x + b.x) * 40, ly = PU.y + (a.y + b.y) * 40;   // 두 화살표 사이(∟ 바깥쪽)에 놓아서 다른 라벨과 겹치지 않게
     pill('수직 ∟', lx, ly, { color: '#0f172a', size: 12, fit: true });
   }
   function drawZone(dt, t) {

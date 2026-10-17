@@ -858,7 +858,7 @@
       forceArrow(OX + 18, 318, 0, 40, COL.grav, { width: 5, head: 12, dot: false });
       forceArrow(OX - 18, 360, 0, -40, COL.supp, { width: 5, head: 12, dot: false });
       ctx.restore();
-      if (!FB.quiz) pill('위아래 힘은 이미 평형 (중력 = 떠받치는 힘)', OX, 394, { color: '#64748b', size: 12.5, fit: true });
+      if (!FB.quiz) pill('위아래 힘은 이미 평형 (중력 = 떠받치는 힘)', OX, 432, { color: '#64748b', size: 12.5, fit: true });
     }
     // 값 pill
     if (FB.quiz) {
@@ -1281,7 +1281,7 @@
   const SH = {
     task: 'scale', sel: { scale: -1, buoy: -1, wheel: -1 }, tested: { scale: {}, buoy: {}, wheel: {} },
     st: 'idle', t: 0, cur: -1, res: null, cWarned: false, hover: -1, ghosts: [], gclk: 0, msg: null,
-    ext: new Spring(0, { stiffness: 150, damping: 5.5 }),
+    ext: new Spring(0, { stiffness: 150, damping: 15 }),   // 거의 임계 감쇠: 추가 받침대를 뚫고 내려가지 않게
     bz: 0, bv: 0, bt: 0, sunk: false,
     cs: 0, cv: 0, wheelRot: 0, crash: 0,
     aA: new AArrow(), aB: new AArrow(), aC: new AArrow(),
@@ -1489,17 +1489,19 @@
   SLOPE.L = Math.round((SHL.stW - 80) / Math.cos(SLOPE.ang)); SLOPE.stopS = Math.round(0.62 * SLOPE.L); SLOPE.v0 = Math.sqrt(2 * 90 * 0.36 * SLOPE.L);
   const wheelPos = (s) => ({ x: SLOPE.x0 + Math.cos(SLOPE.ang) * s, y: SLOPE.y0 + Math.sin(SLOPE.ang) * s });
 
+  const nfmt1 = (v) => (Math.abs(v - Math.round(v)) < 0.05 ? String(Math.round(v)) : v.toFixed(1));
   function drawShopScale(t) {
-    const st = SHL, ax = st.stX + st.stW * (PHONE ? 0.3 : 0.28), y0 = st.stY + 40, L0 = 36;
-    const pxc = PHONE ? 8 : 9;
     const sel = shopSel(), p = sel >= 0 ? PARTS.scale[sel] : null;
+    const st = SHL, ax = st.stX + st.stW * (PHONE ? 0.3 : 0.28), y0 = st.stY + 34, L0 = 32;
+    const pxc = 8;                                       // 1 cm = 8 px (용수철 A가 20 cm 늘어나도 받침대에 닿지 않게)
     // 스탠드
     ctx.fillStyle = '#94a3b8'; rr(ax - 112, st.stY + st.stH - 26, 224, 16, 7); ctx.fill();
     ctx.fillStyle = '#64748b'; rr(ax - 104, st.stY + 18, 14, st.stH - 36, 5); ctx.fill();
     ctx.fillStyle = '#64748b'; rr(ax - 104, st.stY + 18, 108, 14, 5); ctx.fill();
     ctx.fillStyle = '#475569'; ctx.beginPath(); ctx.arc(ax, y0 - 4, 6, 0, TAU); ctx.fill();
     // 눈금판 (길이 10 cm)
-    const bx = ax + 34, by0 = y0 + L0, by1 = by0 + 10 * pxc;
+    const bx = ax + 34, by0 = y0 + L0 + 6, by1 = by0 + 10 * pxc;       // +6: 바늘(고리 중심)이 0 눈금에서 시작하도록
+    const perN = p ? p.cm : 1;                           // 고른 용수철이 1 N에 늘어나는 길이(cm): 눈금판의 N 표시는 용수철에 맞춰요
     const ext = SH.st === 'idle' ? 0 : SH.ext.value;
     const over = ext > 10.4;
     ctx.save();
@@ -1510,7 +1512,7 @@
     for (let i = 0; i <= 10; i++) {
       const y = by0 + i * pxc;
       ctx.beginPath(); ctx.moveTo(bx + 4, y); ctx.lineTo(bx + (i % 5 === 0 ? 24 : 15), y); ctx.stroke();
-      if (i % 5 === 0) txt(i + ' N', bx + 28, y, { align: 'left', size: 12, halo: false, color: '#44403c' });
+      if (i % 5 === 0) txt(nfmt1(i / perN) + ' N', bx + 28, y, { align: 'left', size: 12, halo: false, color: '#44403c' });
     }
     ctx.restore();
     txt('눈금판 10 cm', bx + 31, by1 + 30, { size: 12, color: '#78716c', halo: false });
@@ -1530,7 +1532,7 @@
       ctx.strokeStyle = over ? '#ef4444' : '#dc2626'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(ax + 4, yb + 6); ctx.lineTo(bx + 56, yb + 6); ctx.stroke();
       ctx.fillStyle = '#dc2626'; ctx.beginPath(); ctx.moveTo(bx + 62, yb + 6); ctx.lineTo(bx + 50, yb); ctx.lineTo(bx + 50, yb + 12); ctx.closePath(); ctx.fill();
     } else {
-      txt('부품을 골라요', ax, y0 + 80, { size: 14, color: '#94a3b8' });
+      txt('부품을 골라요', ax - 28, y0 + 80, { size: 14, color: '#94a3b8' });
     }
     // 오른쪽: 시험 결과 패널
     const px = st.stX + st.stW * (PHONE ? 0.58 : 0.52), pw = st.stX + st.stW - px - 16, py = st.stY + 18;

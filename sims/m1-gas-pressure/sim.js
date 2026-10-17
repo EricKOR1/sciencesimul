@@ -837,14 +837,14 @@
       ctx.save(); ctx.globalAlpha = Math.min(1, S.k.hits * 1.4);
       const L = S.arrowL, col = '#e0552a';
       const kk = 1 + 0.06 * Math.sin(t * 6);
-      D.arrow(cx, y0 - bt - 6, cx, y0 - bt - 6 - L * kk, { color: col, width: 4, head: 12 });
-      D.arrow(cx, y1 + bb + 6, cx, y1 + bb + 6 + L * kk, { color: col, width: 4, head: 12 });
+      D.arrow(cx + 30, y0 - bt - 6, cx + 30, y0 - bt - 6 - L * kk, { color: col, width: 4, head: 12 });     // 왼쪽 위 안내 라벨과 겹치지 않게 살짝 오른쪽
+      D.arrow(cx + 30, y1 + bb + 6, cx + 30, y1 + bb + 6 + L * kk, { color: col, width: 4, head: 12 });
       D.arrow(x0 - bl - 6, cy, x0 - bl - 6 - L * kk, cy, { color: col, width: 4, head: 12 });
       D.arrow(x1 + br + 6, cy, x1 + br + 6 + L * kk, cy, { color: col, width: 4, head: 12 });
       const lab = (w) => '💥 ' + fmt(S.shown[w], 0) + '회/초';
       const o = { bg: 'rgba(255,255,255,.94)', color: '#9a3412', size: 13, border: 'rgba(224,85,42,.35)' };
-      D.label(cx + 96, y0 - bt - 20, lab('top'), o);
-      D.label(cx + 96, y1 + bb + 24, lab('bottom'), o);
+      D.label(cx + 118, y0 - bt - 20, lab('top'), o);
+      D.label(cx + 118, y1 + bb + 24, lab('bottom'), o);
       D.label(x0 - bl - 48, cy + 40, lab('left'), o);
       D.label(x1 + br + 52, cy + 40, lab('right'), o);
       ctx.restore();
