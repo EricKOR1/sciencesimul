@@ -2083,8 +2083,7 @@ window.SCI_CATALOG = {
                 "표면적과 부피",
                 "세포의 크기",
                 "생장"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m3-mitosis-meiosis",
@@ -2216,8 +2215,7 @@ window.SCI_CATALOG = {
                 "감염병 확산",
                 "지진",
                 "기상·화학 재난"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m3-disaster-response",
