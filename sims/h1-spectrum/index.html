@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#8b5cf6">
+  <title>스펙트럼과 원소 | 고1 통합과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌈</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-toolbar { min-height: 58px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; }
+    .stage-toolbar .segmented button { min-height: 40px; padding: 5px 12px; font-size: 14.5px; white-space: nowrap; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 14px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard [hidden] { display: none !important; }
+    .opt-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin-top: 4px; }
+    .opt-grid.c3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .opt-grid.c4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .opt {
+      min-height: 46px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 12px;
+      font-weight: 800; font-size: 15px; cursor: pointer; padding: 4px 6px; white-space: nowrap; font-family: inherit;
+    }
+    .opt.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); color: color-mix(in srgb, var(--subject) 70%, black); }
+    .opt .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; vertical-align: 0; }
+    .opt.shake { animation: shake .4s; border-color: var(--bad); }
+    .opt.ok { border-color: var(--good); background: var(--good-soft); }
+    .ctrl-note { margin: 6px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    .btn-sm { min-height: 44px; }
+    .game-foot button { min-height: 44px; }
+    input[type=range] { height: 40px; }
+    .concept table.mini { border-collapse: collapse; margin: 6px 0; font-size: 14px; width: 100%; }
+    .concept table.mini th, .concept table.mini td { border: 1px solid var(--line); padding: 4px 6px; text-align: center; }
+    .concept table.mini th { background: var(--surface-2); font-weight: 800; }
+    .readout .value.txt { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    @media (max-width: 599px) {
+      .readout { min-width: 0; }
+      .readout .value.txt { font-size: 15px; }
+      .stage-toolbar .spacer { display: none; }
+      .stage-toolbar .segmented button { padding: 5px 8px; font-size: 13.5px; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="chem">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#h1a">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">통합과학1 · Ⅱ. 물질과 규칙성</div>
+      <h1>스펙트럼과 원소</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🔭 분광기</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="group" aria-label="장면 고르기" hidden>
+            <button type="button" data-mode="sources">🔭 분광기</button>
+            <button type="button" data-mode="tubes">⚡ 선스펙트럼</button>
+            <button type="button" data-mode="unknown">🕵️ 지문 맞추기</button>
+            <button type="button" data-mode="absorb">☀️ 흡수선</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="분광기: 광원의 빛이 슬릿과 회절 격자를 지나 색별로 나뉘어 스펙트럼으로 보이는 화면과 원소별 선스펙트럼 기록표"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">광원</span><span class="value txt" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">스펙트럼</span><span class="value txt" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">선명도</span><span class="value txt" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <!-- STEP 1 · 분광기 -->
+        <div class="control" data-modes="sources">
+          <div class="control-head"><span>💡 광원 고르기</span></div>
+          <div class="opt-grid" id="srcBtns">
+            <button type="button" class="opt" data-src="incand">🔆 백열등</button>
+            <button type="button" class="opt" data-src="sun">☀️ 햇빛</button>
+            <button type="button" class="opt" data-src="fluor">💡 형광등</button>
+            <button type="button" class="opt" data-src="led">🔦 LED</button>
+          </div>
+        </div>
+        <div class="control" data-modes="sources">
+          <div class="control-head"><span>🎚 슬릿 폭</span><output id="oSlit">2.4 mm</output></div>
+          <input type="range" id="sSlit" min="0.2" max="3" step="0.05" value="2.4" aria-label="슬릿 폭">
+          <div class="control-head" style="margin-top:6px"><span>🔍 초점</span><output id="oFocus">어긋남</output></div>
+          <input type="range" id="sFocus" min="-1" max="1" step="0.02" value="0.6" aria-label="초점 맞추기">
+        </div>
+        <!-- STEP 2 · 방전관 -->
+        <div class="control" data-modes="tubes">
+          <div class="control-head"><span>⚡ 방전관 고르기</span></div>
+          <div class="opt-grid" id="tubeBtns">
+            <button type="button" class="opt" data-tube="H"><span class="dot" style="background:#e879f9"></span>수소</button>
+            <button type="button" class="opt" data-tube="He"><span class="dot" style="background:#fde68a"></span>헬륨</button>
+            <button type="button" class="opt" data-tube="Ne"><span class="dot" style="background:#fb923c"></span>네온</button>
+            <button type="button" class="opt" data-tube="Na"><span class="dot" style="background:#facc15"></span>나트륨</button>
+          </div>
+        </div>
+        <div class="control" data-modes="tubes">
+          <div class="control-head"><span>📏 눈금 읽기</span><output id="oCur">550 nm</output></div>
+          <input type="range" id="sCur" min="400" max="700" step="0.5" value="550" aria-label="스펙트럼 눈금 위치(nm)">
+          <button type="button" class="btn btn-primary btn-sm btn-block" id="bRec" style="margin-top:6px">📝 이 선 기록하기</button>
+          <p class="ctrl-note">스펙트럼 위를 끌어도 돼요. 선 가까이 가면 눈금이 선에 달라붙어요.</p>
+        </div>
+        <!-- STEP 3 · 지문 맞추기 -->
+        <div class="control" data-modes="unknown">
+          <div class="control-head"><span>🧪 이름 없는 방전관</span></div>
+          <div class="opt-grid c4" id="unkBtns">
+            <button type="button" class="opt" data-unk="A">A</button>
+            <button type="button" class="opt" data-unk="B">B</button>
+            <button type="button" class="opt" data-unk="C">C</button>
+            <button type="button" class="opt" data-unk="M">혼합관</button>
+          </div>
+        </div>
+        <div class="control" data-modes="unknown">
+          <div class="control-head"><span>📋 기준 선 겹쳐 보기</span></div>
+          <div class="opt-grid c4" id="ovBtns">
+            <button type="button" class="opt" data-ov="H">수소</button>
+            <button type="button" class="opt" data-ov="He">헬륨</button>
+            <button type="button" class="opt" data-ov="Ne">네온</button>
+            <button type="button" class="opt" data-ov="Na">나트륨</button>
+          </div>
+        </div>
+        <div class="control" data-modes="unknown" data-sub="ans">
+          <div class="control-head"><span>🕵️ 내 추리 (누르면 바뀌어요)</span></div>
+          <div class="opt-grid c3" id="ansBtns">
+            <button type="button" class="opt" data-ans="A">A: ?</button>
+            <button type="button" class="opt" data-ans="B">B: ?</button>
+            <button type="button" class="opt" data-ans="C">C: ?</button>
+          </div>
+        </div>
+        <!-- STEP 4 · 흡수선 -->
+        <div class="control" data-modes="absorb">
+          <div class="control-head"><span>🔬 관측 장면</span></div>
+          <div class="opt-grid" id="subBtns">
+            <button type="button" class="opt" data-sub="lab">🧊 실험실</button>
+            <button type="button" class="opt" data-sub="sun">☀️ 태양</button>
+          </div>
+        </div>
+        <div class="control" data-modes="absorb" data-sub="lab">
+          <button type="button" class="opt" id="bCell" style="width:100%">🧊 차가운 수소 기체 관 넣기</button>
+          <button type="button" class="opt" id="bEmis" style="width:100%;margin-top:6px">📍 수소 방출선 위치 겹쳐 보기</button>
+        </div>
+        <div class="control" data-modes="absorb" data-sub="sun">
+          <div class="control-head"><span>📍 기준 선 겹쳐 보기</span></div>
+          <div class="opt-grid c3" id="sunBtns">
+            <button type="button" class="opt" data-sunov="H">수소</button>
+            <button type="button" class="opt" data-sunov="Na">나트륨</button>
+            <button type="button" class="opt" data-sunov="Ca">칼슘</button>
+          </div>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

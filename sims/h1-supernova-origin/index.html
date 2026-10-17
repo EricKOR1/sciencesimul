@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0ea5e9">
+  <title>원소의 기원과 우리 몸 | 고1 통합과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💥</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-hint { bottom: auto; top: 98px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; }
+    .stage-toolbar { min-height: 61px; }
+    .segmented button { min-height: 44px; }
+    .segmented button.on { background: var(--earth); color: #fff; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 14px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard .btn-sm { min-height: 44px; }
+    #ctrlCard [hidden] { display: none !important; }
+    .ctrl-note { font-size: 14px; color: var(--muted); margin: 6px 0 0; }
+    .btn-row { display: flex; gap: 8px; margin-top: 6px; }
+    .btn-row .btn { flex: 1; padding-left: 8px; padding-right: 8px; }
+    .stage-chips { display: flex; gap: 6px; margin-top: 4px; }
+    .stage-chips button {
+      flex: 1; min-width: 0; min-height: 44px; border: 2px solid var(--line); background: #fff; border-radius: 12px;
+      font-weight: 800; font-size: 16px; cursor: pointer; color: var(--muted);
+    }
+    .stage-chips button.on { border-color: var(--earth); background: color-mix(in srgb, var(--earth) 14%, white); color: #075985; }
+    .stage-chips button.seen:not(.on) { color: #0b6b39; border-color: #9fdcb8; }
+    .view-seg { display: flex; width: 100%; }
+    .view-seg button { flex: 1 1 0; min-width: 0; padding-left: 4px; padding-right: 4px; font-size: 14.5px; }
+    .readout .value.txt { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    table.cmp { border-collapse: separate; border-spacing: 4px 5px; width: 100%; font-size: 14.5px; }
+    table.cmp th { text-align: left; white-space: nowrap; color: var(--muted); font-weight: 800; font-size: 14px; padding-right: 4px; }
+    table.cmp thead th { text-align: center; color: var(--ink); }
+    table.cmp select, .sentence select {
+      width: 100%; min-width: 0; height: 44px; border: 2px dashed #b4bfcf; border-radius: 10px; background: #fff;
+      text-align: center; text-align-last: center; font-weight: 800; font-size: 15px; color: var(--ink); padding: 0 4px; font-family: inherit;
+    }
+    table.cmp select:focus, .sentence select:focus { outline: none; border-style: solid; border-color: var(--earth); box-shadow: 0 0 0 3px color-mix(in srgb, var(--earth) 22%, transparent); }
+    table.cmp select.ok, .sentence select.ok { border-style: solid; border-color: var(--good); background: var(--good-soft); color: #0b6b39; }
+    table.cmp select.bad, .sentence select.bad { border-style: solid; border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    @keyframes shakeX { 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+    .sentence { font-size: 15.5px; line-height: 2.5; color: #2b3445; }
+    .sentence select { display: inline-block; width: auto; min-width: 100px; max-width: 100%; margin: 0 3px; height: 40px; }
+    .concept table.mini { border-collapse: collapse; margin: 6px 0; font-size: 14px; width: 100%; }
+    .concept table.mini th, .concept table.mini td { border: 1px solid var(--line); padding: 4px 6px; text-align: center; }
+    .concept table.mini th { background: var(--surface-2); font-weight: 800; }
+    @media (max-width: 599px) {
+      .readout .value.txt { font-size: 15px; }
+      .stage-toolbar .spacer { display: none; }
+      .segmented button { padding-left: 10px; padding-right: 10px; font-size: 14px; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="earth">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#h1a">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">통합과학1 · Ⅱ. 물질과 규칙성</div>
+      <h1>원소의 기원과 우리 몸</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">💥 초신성</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="tablist" aria-label="화면 고르기" data-feature="bars">
+            <button type="button" data-mode="sn" data-feature="sn">💥 초신성</button>
+            <button type="button" data-mode="bars" data-feature="bars">📊 성분 비교</button>
+            <button type="button" data-mode="map" data-feature="map">🗺️ 원소 지도</button>
+            <button type="button" data-mode="time" data-feature="time">🕰️ 우주 역사</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="초신성 폭발과 태양계 형성 장면, 우주·지구 지각·사람 몸의 원소 막대그래프, 원소 기원 분류판, 우주 역사 연대표"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">장면</span><span class="value txt" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">확인한 것</span><span class="value txt" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">진행</span><span class="value txt" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" data-modes="sn">
+          <div class="btn-row" style="margin-top:0">
+            <button class="btn btn-sm btn-primary" id="bPlay" type="button">▶ 폭발시키기</button>
+            <button class="btn btn-sm" id="bRewind" type="button">↺ 처음으로</button>
+          </div>
+        </div>
+        <div class="control" data-modes="sn">
+          <div class="control-head"><span>⏱ 시간 흐름</span><output id="oStage">① 폭발 직전</output></div>
+          <input type="range" id="sTime" min="0" max="1000" step="1" value="0" aria-label="시간 흐름 (폭발 직전부터 태양계까지)">
+          <div class="stage-chips" id="stageChips" aria-label="장면 바로 가기">
+            <button type="button" data-st="0">①</button><button type="button" data-st="1">②</button><button type="button" data-st="2">③</button><button type="button" data-st="3">④</button><button type="button" data-st="4">⑤</button>
+          </div>
+          <p class="ctrl-note">흩어지는 <b>금·은·우라늄 알갱이</b>를 눌러 보세요.</p>
+        </div>
+        <div class="control" data-modes="bars">
+          <div class="control-head"><span>📊 어디의 성분일까?</span></div>
+          <div class="segmented view-seg" id="viewSeg" role="tablist">
+            <button type="button" data-v="uni">우주</button>
+            <button type="button" data-v="crust">지각</button>
+            <button type="button" data-v="body">몸</button>
+            <button type="button" data-v="all">함께</button>
+          </div>
+          <p class="ctrl-note">막대나 원소 공을 누르면 세 곳에서 같은 원소가 함께 강조돼요.</p>
+        </div>
+        <div class="control" data-modes="bars" data-sub="table">
+          <div class="control-head"><span>📋 가장 많은 원소 1위 · 2위</span></div>
+          <table class="cmp">
+            <thead><tr><th></th><th>1위</th><th>2위</th></tr></thead>
+            <tbody>
+              <tr><th>우주</th><td><select data-row="uni" data-pos="0"></select></td><td><select data-row="uni" data-pos="1"></select></td></tr>
+              <tr><th>지각</th><td><select data-row="crust" data-pos="0"></select></td><td><select data-row="crust" data-pos="1"></select></td></tr>
+              <tr><th>사람 몸</th><td><select data-row="body" data-pos="0"></select></td><td><select data-row="body" data-pos="1"></select></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="control" data-modes="map">
+          <p class="ctrl-note" style="margin-top:0">원소 카드를 끌어(또는 눌러서 고른 뒤 칸을 눌러) <b>처음 만들어진 곳</b>에 놓아요. 놓은 카드는 다시 옮길 수 있어요.</p>
+          <button class="btn btn-sm btn-block" id="bResetMap" type="button" style="margin-top:8px">↺ 카드 모두 되돌리기</button>
+        </div>
+        <div class="control" data-modes="time">
+          <p class="ctrl-note" style="margin-top:0">사건 카드를 끌어 <b>오래된 순서대로</b> 1번부터 놓아요.</p>
+          <button class="btn btn-sm btn-block" id="bResetTime" type="button" style="margin-top:8px">↺ 카드 모두 되돌리기</button>
+        </div>
+        <div class="control" data-modes="time" data-sub="sentence">
+          <div class="control-head"><span>✍️ 문장 완성하기</span></div>
+          <div class="sentence" id="sentence">
+            지구와 생명을 이루는 원소는 태양계가 생기기
+            <select id="sel1" aria-label="전 또는 후"></select>에 이미
+            <select id="sel2" aria-label="원소가 만들어진 곳"></select>에서 만들어져 있었어요.
+            그래서 지구와 생명의 역사는
+            <select id="sel3" aria-label="우주 역사와의 관계"></select>이에요.
+          </div>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>
