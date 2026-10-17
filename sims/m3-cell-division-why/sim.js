@@ -230,6 +230,7 @@
   function stepSoak(dt) {
     const q = soak;
     q.bottle.update(dt);
+    if (q.phase === 'ready') { q.liq = 0; q.xray = 1; }   // 도중에 처음 상태로 돌렸을 때 남은 애니메이션이 덮어쓰지 않게
     if (q.phase === 'soaking') {
       q.tMin = Math.min(10, q.tMin + dt * 1.25);
       if (q.tMin >= 10) {
@@ -455,7 +456,7 @@
      장면 2 · 표면적과 부피 (표 + 막대그래프)
      ========================================================= */
   const TU = 34;
-  const TCUBES = [{ n: 1, x: 66, y: 384 }, { n: 2, x: 160, y: 384 }, { n: 3, x: 292, y: 384 }];
+  const TCUBES = [{ n: 1, x: 54, y: 384 }, { n: 2, x: 148, y: 384 }, { n: 3, x: 295, y: 384 }];   // 서로 가리지 않게
   const ANS = { sa2: 24, sa3: 54, v2: 8, v3: 27, r2: 3, r3: 2 };
   const SA = [6, 24, 54], VO = [1, 8, 27], RA = [6, 3, 2];
   const tbl = { inputs: {}, marked: {} };
@@ -795,7 +796,7 @@
     // 안쪽으로 들어온 영양분
     cell.nut.forEach((p) => {
       if (p.st === 0) return;
-      ctx.globalAlpha = Math.max(0, p.a);
+      ctx.globalAlpha = Math.max(0, p.a) * (1 - clamp((p.depth - DELTA * 0.5) / (DELTA * 0.5), 0, 1) * 0.85);   // 깊이 들어갈수록 줄어요
       D.sphere(p.x, p.y, 4.2, '#ff9d2e', { gloss: false });
     });
     ctx.globalAlpha = 1;
@@ -973,7 +974,8 @@
   const rt = { len: 0.4, zoom: null, lz: new Spring(0, { stiffness: 140, damping: 14 }), grown: false, seenTip: false, seenOld: false, ring: 0, kind: 'tip', pulse: 0 };
   const rtBottom = () => RT.minB + (RT.maxB - RT.minB) * rt.len;
   function resetRoot() {
-    rt.len = 0.4; rt.zoom = null; rt.lz.value = rt.lz.target = 0; rt.grown = false; rt.seenTip = false; rt.seenOld = false;
+    rt.len = 0.4; tween(rt, { len: 0.4 }, { duration: 0.01 }); rt.zoom = null;   // 자라는 중이던 애니메이션 취소
+    rt.lz.value = rt.lz.target = 0; rt.grown = false; rt.seenTip = false; rt.seenOld = false;
     syncRootButtons();
   }
   function syncRootButtons() {

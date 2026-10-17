@@ -397,9 +397,10 @@
     d.it.x.target = p.x + d.dx; d.it.y.target = clamp(p.y + d.dy, 70, 330);
     d.it.x.value += (d.it.x.target - d.it.x.value) * 0.5; d.it.y.value += (d.it.y.target - d.it.y.value) * 0.5;
   }
-  function pairUp() {
+  function pairUp(p) {
     const d = PR.drag; if (!d) return; PR.drag = null;
     const it = d.it;
+    if (p && isFinite(p.x) && isFinite(p.y)) { it.x.value = p.x + d.dx; it.y.value = clamp(p.y + d.dy, 70, 330); }   // 빨리 끌어도 손가락 위치에서 판정
     tween(it, { lift: 0 }, { duration: 0.25 });
     let best = null, bd = 1e9;
     PR.items.forEach((o) => { if (o === it || o.matched) return; const dd = Math.hypot(o.x.value - it.x.value, o.y.value - it.y.value); if (dd < bd) { bd = dd; best = o; } });
@@ -1437,7 +1438,7 @@
           goal: '사람의 체세포(염색체 <b>46개</b>)가 체세포분열을 하면, 딸세포 하나의 염색체 수는?',
           choices: ['23개', '46개', '92개', '69개'],
           answer: 1,
-          feedback: ['', '', '복제로 염색 분체가 2배가 되지만, 딸세포로 나뉠 때 다시 반씩 나뉘어요. 딸세포 하나는 모세포와 같아요.', '염색체 수가 늘어나거나 어중간하게 변하지 않아요.'],
+          feedback: ['23개는 정자·난자 같은 생식세포의 염색체 수예요. 체세포분열에서는 염색체 수가 줄지 않아요.', '', '복제로 염색 분체가 2배가 되지만, 딸세포로 나뉠 때 다시 반씩 나뉘어요. 딸세포 하나는 모세포와 같아요.', '염색체 수가 늘어나거나 어중간하게 변하지 않아요.'],
           explain: '체세포분열에서는 복제된 염색 분체가 나뉘어 딸세포로 들어가므로, 딸세포의 염색체 수는 모세포와 같은 <b>46개</b>예요. 모형에서도 4 → 4였지요.',
         },
       ],
@@ -1460,7 +1461,7 @@
         {
           title: '상동 염색체 나누어 생식세포 만들기',
           goal: '가운데 배열 단계에서 <b>상동 염색체를 양쪽 극으로 끌어서</b> 나눈 뒤, 끝까지 진행해 <b>생식세포 4개</b>를 만들어 보세요.',
-          hint: '2번 눌러 가운데 배열(4/9)까지 가요. 짝지은 염색체를 한쪽 극으로 끌면 짝은 반대쪽으로 끌려가요. 그다음 다음 단계 ▶ 를 계속 눌러요.',
+          hint: '다음 단계 ▶ 를 3번 눌러 가운데 배열(4/9)까지 가요. 짝지은 염색체를 한쪽 극으로 끌면 짝은 반대쪽으로 끌려가요. 그다음 다음 단계 ▶ 를 계속 눌러요.',
           check: () => meio.stage === 8 && meio.ready && meio.userSep[0] && meio.userSep[1],
           hold: 0.5,
           status: () => mark(meio.userSep[0]) + ' 주황 염색체 쌍 분리 · ' + mark(meio.userSep[1]) + ' 보라 염색체 쌍 분리 · ' + mark(meio.maxStage >= 5) + ' 세포 2개 · ' + mark(meio.stage === 8 && meio.ready) + ' 생식세포 4개',

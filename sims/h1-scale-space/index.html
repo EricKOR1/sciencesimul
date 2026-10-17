@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#64748b">
+  <title>공간의 규모 | 고1 통합과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔭</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-hint { bottom: auto; top: 98px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; }
+    .stage-toolbar { min-height: 61px; }
+    .segmented button { min-height: 44px; }
+    .segmented button.on { background: var(--sci); color: #fff; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 14px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard .btn-sm { min-height: 44px; }
+    #ctrlCard [hidden] { display: none !important; }
+    .ctrl-note { font-size: 14px; color: var(--muted); margin: 6px 0 0; }
+    .btn-row { display: flex; gap: 8px; margin-top: 6px; }
+    .btn-row .btn { flex: 1; padding-left: 8px; padding-right: 8px; }
+    .num-in {
+      width: 100%; min-height: 48px; border: 2px solid var(--line); border-radius: 12px; padding: 6px 12px;
+      font: 800 20px ui-monospace, Menlo, Consolas, monospace; color: var(--ink); background: #fff;
+    }
+    .num-in:focus { outline: none; border-color: var(--sci); }
+    .readout .value.txt { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .concept table.mini { border-collapse: collapse; margin: 6px 0; font-size: 14px; width: 100%; }
+    .concept table.mini th, .concept table.mini td { border: 1px solid var(--line); padding: 4px 6px; text-align: center; }
+    .concept table.mini th { background: var(--surface-2); font-weight: 800; }
+    @media (max-width: 599px) {
+      .readout .value.txt { font-size: 15px; }
+      .stage-toolbar .spacer { display: none; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="sci">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#h1a">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">통합과학1 · Ⅰ. 과학의 기초</div>
+      <h1>공간의 규모</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🔭 줌 여행</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="tablist" aria-label="화면 고르기" hidden>
+            <button type="button" data-mode="zoom">🔭 줌 여행</button>
+            <button type="button" data-mode="cards">📏 규모 비교</button>
+            <button type="button" data-mode="table">🔬 미시·거시</button>
+            <button type="button" data-mode="tools">🧰 측정 도구</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="양성자에서 관측 가능한 우주까지 길이의 규모를 보여 주는 줌 화면, 지수 눈금자, 미시·거시 비교표, 길이 측정 도구 화면"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">눈금 막대 길이</span><span class="value txt" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">지금 보이는 것</span><span class="value txt" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">우리말로 하면</span><span class="value txt" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" data-modes="zoom">
+          <div class="control-head"><span>🔭 길이 눈금 (지수)</span><output id="oExp">10⁰ m</output></div>
+          <input type="range" id="sExp" min="-15" max="27" step="0.05" value="0" aria-label="길이 눈금의 지수">
+          <div class="btn-row">
+            <button class="btn btn-sm" id="bPrev" type="button">◀ 더 작게</button>
+            <button class="btn btn-sm" id="bNext" type="button">더 크게 ▶</button>
+          </div>
+          <p class="ctrl-note">슬라이더가 오른쪽일수록 큰 세계예요. 지수가 1 커지면 길이는 10배!</p>
+        </div>
+        <div class="control" data-modes="cards">
+          <p class="ctrl-note" style="margin-top:0">카드를 끌어 <b>지수 눈금자</b>에 놓아요. 놓은 카드는 다시 끌어 옮길 수 있어요.</p>
+          <button class="btn btn-sm btn-block" id="bResetCards" type="button" style="margin-top:8px">↺ 카드 모두 되돌리기</button>
+        </div>
+        <div class="control" data-modes="table">
+          <p class="ctrl-note" style="margin-top:0">아래 카드를 끌어 <b>비교표</b>의 빈칸에 놓아요. 칸에 놓은 카드는 다시 옮길 수 있어요.</p>
+          <button class="btn btn-sm btn-block" id="bResetTable" type="button" style="margin-top:8px">↺ 카드 모두 되돌리기</button>
+        </div>
+        <div class="control" data-modes="tools" data-sub="match">
+          <p class="ctrl-note" style="margin-top:0">각 칸에서 재려는 대상에 알맞은 <b>측정 도구 카드</b>를 끌어다 놓아요.</p>
+          <button class="btn btn-sm btn-block" id="bResetTools" type="button" style="margin-top:8px">↺ 카드 모두 되돌리기</button>
+        </div>
+        <div class="control" data-modes="tools" data-sub="laser">
+          <button class="btn btn-sm btn-primary btn-block" id="bFire" type="button">🔦 레이저 쏘기</button>
+          <div class="control-head" style="margin-top:12px"><span>🌙 지구–달 거리</span><output>(×10⁸ m)</output></div>
+          <input class="num-in" type="number" id="inDist" inputmode="decimal" step="0.01" placeholder="예: 1.23" aria-label="지구에서 달까지의 거리 (10의 8제곱 미터 단위)">
+          <p class="ctrl-note">거리 = 빛의 속력 × 걸린 시간 ÷ 2 로 구해서, <b>×10⁸ m</b> 단위로 적어요.</p>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

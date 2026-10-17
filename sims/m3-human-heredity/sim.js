@@ -306,7 +306,7 @@
         D.text(190, y - 4, '많다', { size: 20, weight: 800, color: '#2f7a2c', align: 'left' });
         D.text(190, y + 20, '한 번에 수십 개 이상', { size: 14, weight: 700, color: MUTED, align: 'left' });
         const pp = ease.outBack(clamp(p * 1.4, 0, 1));
-        person(500, y + 2, 1.15 * pp, '#f2a04a'); person(540, y + 2, 1.15 * clamp(pp - 0.1, 0, 1) / 1, '#f2a04a');
+        person(520, y + 2, 1.15 * pp, '#f2a04a');
         D.text(590, y - 4, '적다', { size: 20, weight: 800, color: '#b45d0a', align: 'left' });
         D.text(590, y + 20, '한 번에 보통 1명', { size: 14, weight: 700, color: MUTED, align: 'left' });
       } else if (k === 2) {

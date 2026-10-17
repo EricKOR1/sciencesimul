@@ -217,7 +217,7 @@
         if (d.y < 8) { d.y = 8; d.a = -d.a; } else if (d.y > H - 8) { d.y = H - 8; d.a = -d.a; }
         d.tc += dt;
       }
-      const R2 = EPI.R * EPI.R, pr = EPI.BETA * dt * mf;
+      const R2 = EPI.R * EPI.R, pr = EPI.BETA * dt * mf * (0.2 + 0.8 * this.P.move / 100);   // 이동이 적으면 새로 만나는 사람이 적어 접촉이 줄어요
       for (const i of dots) {
         if (i.s !== 1) continue;
         for (const d of dots) {
