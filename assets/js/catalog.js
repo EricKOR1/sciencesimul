@@ -1926,8 +1926,7 @@ window.SCI_CATALOG = {
                 "등속 운동",
                 "속력 그래프",
                 "그래프 해석"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m3-free-fall",
