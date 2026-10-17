@@ -2127,8 +2127,7 @@ window.SCI_CATALOG = {
                 "난할",
                 "난할의 특징",
                 "발생 모형"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m3-mendel",
@@ -2189,8 +2188,7 @@ window.SCI_CATALOG = {
                 "가계도 읽기",
                 "혈액형 유전",
                 "적록 색맹"
-              ],
-              "soon": true
+              ]
             }
           ]
         },
