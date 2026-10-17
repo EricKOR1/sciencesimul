@@ -3022,8 +3022,7 @@ window.SCI_CATALOG = {
                 "모의실험",
                 "세대 변화",
                 "자연선택설"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "h1-biodiversity",
