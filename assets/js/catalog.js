@@ -2881,8 +2881,7 @@ window.SCI_CATALOG = {
                 "막 모형",
                 "막 통과 실험",
                 "삼투 적용"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "h1-enzyme",
