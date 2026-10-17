@@ -554,7 +554,7 @@
       const y = TB.ty + TB.th + i * TB.rh;
       ctx.fillStyle = i % 2 ? '#fff' : '#f8fafc'; ctx.fillRect(TB.lx, y, VW - TB.lx * 2, TB.rh);
       ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1; ctx.strokeRect(TB.lx, y, VW - TB.lx * 2, TB.rh);
-      D.text(TB.lx + 8, y + TB.rh / 2 + 5, r.name, { size: 14, color: '#1b2333', weight: 800, align: 'left' });
+      D.text(TB.lx + 8, y + TB.rh / 2 + 5, r.name, { size: PHONE ? 12 : 14, color: '#1b2333', weight: 800, align: 'left' });
     });
     S.cells.forEach((c) => {
       const empty = !c.chip;

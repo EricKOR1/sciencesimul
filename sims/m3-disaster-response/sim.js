@@ -153,7 +153,7 @@
   function homeTap(p) {
     for (const k of Object.keys(HZ)) {
       const o = HZ[k];
-      const hx = k === 'vase' ? HM.vase.x - 45 : o.x, hy = k === 'vase' ? HM.vase.y - 60 : (k === 'alarm' ? HM.alarmY - 18 : o.y);
+      const hx = k === 'vase' ? HM.vase.x - 45 : k === 'alarm' ? lerp(o.x, 672, sstep(0, 1, o.fix)) : o.x, hy = k === 'vase' ? HM.vase.y - 60 : (k === 'alarm' ? HM.alarmY - 18 : o.y);
       if (p.x >= hx && p.x <= hx + o.w && p.y >= hy && p.y <= hy + o.h) {
         HM.bounce[k] = 1; HM.looked.add(k);
         if (o.hazard) {
@@ -322,6 +322,7 @@
   BG.z = BG.items.slice();
   const BAGBOX = { x: 548, y: 64, w: 236, h: 340 };
   const bagWeight = () => BG.items.reduce((s, c) => s + (c.inb ? c.kg : 0), 0);
+  const kgText = (w) => (Math.round(w * 100) / 100).toString();   // 게이지·읽기 값·안내 글이 같은 숫자를 보이게
   function bagSlot(c) {
     const i = BG.order.indexOf(c);
     return { x: BAGBOX.x + 20 + (i % 3) * 68, y: BAGBOX.y + 96 + Math.floor(i / 3) * 62 };
@@ -375,7 +376,7 @@
     const lx = gx + gw / 1.25;
     ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(lx, gy - 6); ctx.lineTo(lx, gy + gh + 6); ctx.stroke();
     D.text(lx, gy - 10, '6 kg', { size: 13, weight: 800, color: '#1e293b' });
-    D.text(gx + gw / 2, gy + gh + 22, '지금 무게 ' + bagWeight().toFixed(2).replace(/\.?0+$/, '') + ' kg' + (over ? '  — 너무 무거워요!' : ''), { size: 14.5, weight: 800, color: over ? '#b91c1c' : '#334155' });
+    D.text(gx + gw / 2, gy + gh + 22, '지금 무게 ' + kgText(bagWeight()) + ' kg' + (over ? '  — 너무 무거워요!' : ''), { size: 14.5, weight: 800, color: over ? '#b91c1c' : '#334155' });
     // 설명 줄
     ctx.save(); ctx.fillStyle = '#fff'; ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 1.5; D.roundRect(8, 420, 532, 56, 14); ctx.fill(); ctx.stroke(); ctx.restore();
     if (BG.sel) {
@@ -408,7 +409,7 @@
     if (miss.length) { return '아직 빠진 필수품이 있어요: <b>' + miss.slice(0, 3).map((c) => c.ess).join(', ') + (miss.length > 3 ? ' 외' : '') + '</b>. 물건을 눌러 설명을 읽어 보세요.'; }
     if (bagWeight() > BAG_LIMIT + 1e-6) {
       const heavy = BG.items.filter((c) => c.inb && !c.ess).sort((a, b) => b.kg - a.kg)[0];
-      return '가방이 <b>' + bagWeight().toFixed(1) + ' kg</b>로 너무 무거워요. 꼭 필요하지 않은 물건' + (heavy ? '(예: ' + heavy.name + ')' : '') + '을 빼 보세요.';
+      return '가방이 <b>' + kgText(bagWeight()) + ' kg</b>로 너무 무거워요. 꼭 필요하지 않은 물건' + (heavy ? '(예: ' + heavy.name + ')' : '') + '을 빼 보세요.';
     }
     return true;
   }
@@ -1391,7 +1392,7 @@
         setRO(1, '찾은 위험 요소', HM.found.size + '<small>/ 3곳</small>'); setRO(2, '살펴본 곳', HM.looked.size + '<small>/ 6곳</small>'); setRO(3, '고친 곳', HM.found.size + '<small>곳</small>'); break;
       case 'bag': {
         const n = BG.items.filter((c) => c.inb).length, miss = BG.items.filter((c) => c.ess && !c.inb).length;
-        setRO(1, '가방 무게 (6 kg까지)', bagWeight().toFixed(1) + '<small>kg</small>'); setRO(2, '담은 물건', n + '<small>개</small>'); setRO(3, '빠진 필수품', miss + '<small>개</small>'); break;
+        setRO(1, '가방 무게 (6 kg까지)', kgText(bagWeight()) + '<small>kg</small>'); setRO(2, '담은 물건', n + '<small>개</small>'); setRO(3, '빠진 필수품', miss + '<small>개</small>'); break;
       }
       case 'fire':
         setRO(1, '대피 자세', FR.posture ? '낮은 자세' : '서서 걷기'); setRO(2, '연기를 마신 정도', Math.round(FR.expA) + '<small>/ 100</small>'); setRO(3, '젖은 수건', FR.towel ? '쓰는 중' : '안 씀'); break;

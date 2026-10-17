@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#64748b">
+  <title>측정과 어림, 표준 | 고1 통합과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚖️</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-hint { bottom: auto; top: 12px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; }
+    .stage-toolbar { min-height: 61px; }
+    .segmented button { min-height: 44px; }
+    .segmented button.on { background: var(--sci); color: #fff; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 14px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard .btn-sm { min-height: 44px; }
+    #ctrlCard [hidden] { display: none !important; }
+    .ctrl-note { font-size: 14px; color: var(--muted); margin: 6px 0 0; }
+    .btn-col { display: flex; flex-direction: column; gap: 8px; }
+    .btn-row { display: flex; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
+    .btn-row .btn { flex: 1; padding-left: 8px; padding-right: 8px; }
+    .btn.who-on { background: #e8f0ff; border-color: var(--primary); }
+    .btn.who-done::after { content: " ✓"; color: var(--good); font-weight: 800; }
+    .num-in {
+      width: 100%; min-height: 48px; border: 2px solid var(--line); border-radius: 12px; padding: 6px 12px;
+      font: 800 20px ui-monospace, Menlo, Consolas, monospace; color: var(--ink); background: #fff;
+    }
+    .num-in:focus { outline: none; border-color: var(--sci); }
+    .sel-in {
+      width: 100%; min-height: 48px; border: 2px solid var(--line); border-radius: 12px; padding: 6px 8px;
+      font: 700 14.5px var(--font); color: var(--ink); background: #fff;
+    }
+    .sel-in:focus { outline: none; border-color: var(--sci); }
+    .arg { border: 2px solid var(--line); border-radius: 14px; padding: 10px; background: #fff; margin-top: 8px; }
+    .arg h4 { font-size: 15px; margin-bottom: 4px; }
+    .arg label { display: block; font-size: 13px; font-weight: 800; color: var(--muted); margin: 8px 0 3px; }
+    .claim-box { background: #fff7e0; border: 2px solid #f5c542; border-radius: 12px; padding: 8px 12px; font-weight: 800; font-size: 14.5px; }
+    .readout .value.txt { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    @media (max-width: 599px) {
+      .readout .value.txt { font-size: 15px; }
+      .stage-toolbar .spacer { display: none; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="sci">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#h1a">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">통합과학1 · Ⅰ. 과학의 기초</div>
+      <h1>측정과 어림, 표준</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">📐 제각각 측정</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="tablist" aria-label="화면 고르기" hidden>
+            <button type="button" data-mode="span">📐 뼘 재기</button>
+            <button type="button" data-mode="market">🛒 시장</button>
+            <button type="button" data-mode="ruler">🔎 눈금 읽기</button>
+            <button type="button" data-mode="est">🧮 어림하기</button>
+            <button type="button" data-mode="cases">⚖️ 표준 사례</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="뼘으로 책상 재기, 눈금자 읽기, 어림 계산 카드, 측정 표준 사례 카드를 보여 주는 화면"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">—</span><span class="value txt" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">—</span><span class="value txt" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">—</span><span class="value txt" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" data-modes="span">
+          <div class="control-head"><span>📐 누가 책상을 잴까요?</span></div>
+          <div class="btn-col" id="whoBtns">
+            <button class="btn btn-sm" type="button" data-who="0">👧 민지 (뼘 18 cm)</button>
+            <button class="btn btn-sm" type="button" data-who="1">🧒 준호 (뼘 20 cm)</button>
+            <button class="btn btn-sm" type="button" data-who="2">👦 도윤 (뼘 22 cm)</button>
+          </div>
+          <p class="ctrl-note">친구를 누르면 그 친구의 뼘으로 책상 길이를 재요.</p>
+        </div>
+        <div class="control" data-modes="market">
+          <div class="control-head"><span>🛒 누구에게 사 볼까요?</span></div>
+          <div class="btn-col" id="vendBtns">
+            <button class="btn btn-sm" type="button" data-v="0">🧑‍🌾 상인 A에게 "한 줌 주세요"</button>
+            <button class="btn btn-sm" type="button" data-v="1">👩‍🌾 상인 B에게 "한 줌 주세요"</button>
+            <button class="btn btn-sm" type="button" data-v="2">🧔 상인 C에게 "한 줌 주세요"</button>
+          </div>
+          <p class="ctrl-note">같은 "한 줌"을 저울에 올려 얼마나 되는지 봐요.</p>
+        </div>
+        <div class="control" data-modes="ruler" data-sub="tool">
+          <div class="control-head"><span>🔧 측정 도구</span></div>
+          <div class="segmented" id="toolSeg" style="width:100%">
+            <button type="button" data-tool="ruler" class="on" style="flex:1">📏 눈금자 (1 mm)</button>
+            <button type="button" data-tool="vernier" style="flex:1">🗜️ 버니어 캘리퍼스</button>
+          </div>
+        </div>
+        <div class="control" data-modes="ruler" data-sub="zoom">
+          <div class="control-head"><span>🔍 확대</span><output id="oZoom">1배</output></div>
+          <input type="range" id="sZoom" min="1" max="8" step="0.05" value="1" aria-label="눈금 확대 배율">
+        </div>
+        <div class="control" data-modes="ruler" data-sub="meas">
+          <button class="btn btn-sm btn-primary btn-block" id="bMeasure" type="button">📏 측정하기</button>
+          <div class="btn-row"><button class="btn btn-sm" id="bMeasReset" type="button">↺ 측정값 지우기</button></div>
+        </div>
+        <div class="control" data-modes="ruler" data-sub="read">
+          <div class="control-head"><span>✏️ 읽은 값 (cm)</span></div>
+          <input class="num-in" type="number" id="inRead" inputmode="decimal" step="0.01" placeholder="예: 7.43" aria-label="연필의 길이를 센티미터로 읽은 값">
+        </div>
+        <div class="control" data-modes="ruler" data-sub="avg">
+          <div class="control-head"><span>🧮 눈금자로 잰 5회 평균 (cm)</span></div>
+          <input class="num-in" type="number" id="inAvg" inputmode="decimal" step="0.001" placeholder="예: 7.43" aria-label="눈금자로 잰 다섯 번의 평균값">
+        </div>
+        <div class="control" data-modes="est">
+          <div class="control-head"><span>🧮 어림할 문제</span></div>
+          <div class="btn-col" id="qBtns">
+            <button class="btn btn-sm" type="button" data-q="0">🏫 교실 공기의 질량</button>
+            <button class="btn btn-sm" type="button" data-q="1">💓 평생 뛰는 심장 박동 수</button>
+            <button class="btn btn-sm" type="button" data-q="2">🏃 운동장을 둘러쌀 사람 수</button>
+          </div>
+          <p class="ctrl-note">아래 <b>가정 카드</b>를 끌어 빈칸에 놓아요. 어울리지 않는 카드도 섞여 있어요.</p>
+          <button class="btn btn-sm btn-block" id="bEstReset" type="button" style="margin-top:8px">↺ 카드 모두 되돌리기</button>
+        </div>
+        <div class="control" data-modes="cases">
+          <div class="claim-box">📣 주장: 측정 표준은 꼭 필요하다.</div>
+          <p class="ctrl-note" id="argNote">카드를 눌러 <b>2장</b>을 고르면 근거와 이유를 고를 수 있어요.</p>
+          <div id="argBox"></div>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

@@ -971,7 +971,7 @@
           title: '사라지는 곳 찾기',
           goal: '오른눈으로 <b>+</b>만 본다고 생각하고, <b>●</b>를 끌어(또는 슬라이더로) <b>●가 사라지는 곳</b>을 찾으세요.',
           hint: '+에서 오른쪽으로 8 cm쯤 떨어진 곳이에요. 눈 단면에서 빨간 점(●의 상)이 노란 <b>맹점</b> 위에 오는지 봐요.',
-          setup() { setScene('blind'); S.blind.hold = 0; showHint('● 를 끌어서 사라지는 곳을 찾아봐요', 6500); },
+          setup() { setScene('blind'); S.blind.hold = 0; bDist.set(30); S.blind.dist = 30; showHint('● 를 끌어서 사라지는 곳을 찾아봐요', 6500); },   // 힌트의 '약 8 cm'는 눈↔카드 30 cm일 때의 값
           check: () => S.blind.hidden, hold: 0.8,
           status: () => mark(S.blind.hidden) + ' ● 사라짐 · 지금 + 에서 <b>' + S.blind.off.toFixed(1) + ' cm</b>',
           explain: '●가 사라질 때 눈 속에서는 ●의 상이 망막의 <b>한 지점</b>에 맺혀요. 그곳이 <b>시각 신경이 모여 눈 밖으로 나가는 곳</b>(맹점)이에요. 빛은 눈에 들어왔는데도 보이지 않았죠?',

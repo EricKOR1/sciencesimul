@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#64748b">
+  <title>시간의 규모 | 고1 통합과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⏳</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-hint { bottom: auto; top: 98px; }
+    .seg-wide { display: flex; width: 100%; }
+    .seg-wide button { flex: 1; min-width: 0; padding: 6px 8px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; }
+    .stage-toolbar { min-height: 61px; }
+    .segmented button { min-height: 44px; }
+    .segmented button.on { background: var(--sci); color: #fff; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 14px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard .btn-sm { min-height: 44px; }
+    #ctrlCard [hidden] { display: none !important; }
+    .ctrl-note { font-size: 14px; color: var(--muted); margin: 6px 0 0; }
+    .btn-row { display: flex; gap: 8px; margin-top: 6px; }
+    .btn-row .btn { flex: 1; padding-left: 8px; padding-right: 8px; }
+    .num-in {
+      width: 100%; min-height: 48px; border: 2px solid var(--line); border-radius: 12px; padding: 6px 12px;
+      font: 800 20px ui-monospace, Menlo, Consolas, monospace; color: var(--ink); background: #fff;
+    }
+    .num-in:focus { outline: none; border-color: var(--sci); }
+    .readout .value.txt { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .concept table.mini { border-collapse: collapse; margin: 6px 0; font-size: 14px; width: 100%; }
+    .concept table.mini th, .concept table.mini td { border: 1px solid var(--line); padding: 4px 6px; text-align: center; }
+    .concept table.mini th { background: var(--surface-2); font-weight: 800; }
+    @media (max-width: 599px) {
+      .readout .value.txt { font-size: 15px; }
+      .stage-toolbar .spacer { display: none; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="sci">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#h1a">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">통합과학1 · Ⅰ. 과학의 기초</div>
+      <h1>시간의 규모</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">⏳ 시간 여행</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="subSeg" role="tablist" aria-label="장면 고르기" hidden></div>
+          <div class="segmented" id="modeSeg" role="tablist" aria-label="화면 고르기" hidden>
+            <button type="button" data-mode="trip">⏳ 시간 여행</button>
+            <button type="button" data-mode="clock">⏱ 시계의 발전</button>
+            <button type="button" data-mode="old">🌳 옛날 시간</button>
+            <button type="button" data-mode="apply">🛰️ 적용</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="아토초에서 우주의 나이까지 시간의 규모, 진자·수정·세슘 시계 비교, 나이테·빙하·방사성 시계, GPS 시계 오차와 고속 카메라 화면"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">시간 눈금</span><span class="value txt" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">가까운 사건</span><span class="value txt" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">우리말로 하면</span><span class="value txt" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" data-modes="trip">
+          <div class="control-head"><span>⏳ 시간 눈금 (지수)</span><output id="oT">10⁰ s</output></div>
+          <input type="range" id="sT" min="-18" max="18" step="0.05" value="0" aria-label="시간 눈금의 지수">
+          <div class="btn-row">
+            <button class="btn btn-sm" id="bPrev" type="button">◀ 더 짧게</button>
+            <button class="btn btn-sm" id="bNext" type="button">더 길게 ▶</button>
+          </div>
+          <p class="ctrl-note">오른쪽일수록 긴 시간이에요. 지수가 1 커지면 시간은 10배!</p>
+        </div>
+        <div class="control" data-modes="clock">
+          <div class="control-head"><span>🎚️ 진자의 길이</span><output id="oL">0.25 m</output></div>
+          <input type="range" id="sL" min="0.05" max="1" step="0.005" value="0.25" aria-label="진자의 길이">
+          <button class="btn btn-sm btn-primary btn-block" id="bRun" type="button" style="margin-top:10px">▶ 세 시계로 1분 재기</button>
+          <p class="ctrl-note">진자가 한 번 왕복하는 시간(주기)이 정확히 <b>1.0 s</b>가 되도록 길이를 맞춰 보세요.</p>
+        </div>
+        <div class="control" data-modes="old" data-sub="tree">
+          <p class="ctrl-note" style="margin-top:0">나무 단면의 <b>나이테를 하나씩 눌러</b> 안쪽부터 세어 봐요. 고리 1개 = 1년!</p>
+          <button class="btn btn-sm btn-block" id="bTreeReset" type="button" style="margin-top:8px">↺ 다시 세기</button>
+        </div>
+        <div class="control" data-modes="old" data-sub="ice">
+          <div class="control-head"><span>🧊 얼음 깊이</span><output id="oD">0 m</output></div>
+          <input type="range" id="sD" min="0" max="3000" step="5" value="0" aria-label="빙하 코어의 깊이">
+          <p class="ctrl-note">깊이 파고 들어갈수록 어떻게 달라질까요? 줄무늬 한 쌍(밝음+어두움)이 1년이에요.</p>
+        </div>
+        <div class="control" data-modes="old" data-sub="radio">
+          <div class="control-head"><span>☢️ 흐른 시간</span><output id="oR">0억 년</output></div>
+          <input type="range" id="sR" min="0" max="140" step="0.5" value="0" aria-label="흐른 시간(억 년)">
+          <p class="ctrl-note">반감기 45억 년 (소개 수준) · 시간을 흘려 보내 분석한 암석과 같은 비율을 찾아요.</p>
+        </div>
+        <div class="control" data-modes="apply" data-sub="gps">
+          <div class="control-head"><span>🕰️ 위성 시계 오차</span><output id="oE">0.00 µs</output></div>
+          <input type="range" id="sE" min="0" max="10" step="0.01" value="3" aria-label="위성 시계의 오차(마이크로초)">
+          <p class="ctrl-note">1 µs = 10⁻⁶ s. 빛의 속력은 3×10⁸ m/s예요.</p>
+        </div>
+        <div class="control" data-modes="apply" data-sub="cam">
+          <div class="control-head"><span>🎥 고속 카메라</span><output id="oF">30장/초</output></div>
+          <div class="segmented seg-wide" id="fpsSeg">
+            <button type="button" data-fps="30" class="on">30</button><button type="button" data-fps="1000">1000</button><button type="button" data-fps="10000">10000</button>
+          </div>
+          <button class="btn btn-sm btn-primary btn-block" id="bCam" type="button" style="margin-top:10px">🎬 촬영하고 재생하기</button>
+          <p class="ctrl-note">물방울이 튀는 약 0.02초를 1초에 몇 장씩 찍느냐에 따라 달라져요.</p>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>
