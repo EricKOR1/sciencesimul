@@ -427,9 +427,9 @@
       ctx.font = font(on ? 28 : 22); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#fff';
       ctx.fillText(p.icon, x, ay - 28 * FS);
       const ly = ay - 66 * FS, nm = p.name === '국제 우주 정거장' ? (PHONE ? 'ISS' : '국제 우주 정거장') : p.name;
-      const dx = PHONE ? (i === 0 ? -44 : i === 1 ? 30 : 0) : (i === 0 ? -34 : i === 1 ? 46 : 0), al = PHONE ? (i < 2 ? 'left' : 'center') : (i === 0 ? 'right' : i === 1 ? 'left' : 'center');
-      D.text(x + dx + (i === 0 && !PHONE ? 14 : 0), ly, nm, { size: 12.5, weight: 800, color: on ? '#fde68a' : '#cbd5f5', align: al });
-      if (S.dseen.has(i)) D.text(x + dx + (i === 0 && !PHONE ? 14 : 0), ay + 46 * FS, fmtG(gAt(p.r)) + ' m/s²', { size: 12.5, weight: 800, color: '#ffd0d0', align: al });
+      const dx = PHONE ? (i === 0 ? -44 : i === 1 ? 30 : 0) : (i === 0 ? -40 : i === 1 ? 40 : 0), al = i < 2 ? 'left' : 'center';
+      D.text(x + dx, ly, nm, { size: 12.5, weight: 800, color: on ? '#fde68a' : '#cbd5f5', align: al });
+      if (S.dseen.has(i)) D.text(x + dx, ay + 46 * FS, fmtG(gAt(p.r)) + ' m/s²', { size: 12.5, weight: 800, color: '#ffd0d0', align: al });
     });
     // 선택한 곳의 중력 화살표 (지구 쪽)
     const sx = logX(sel.r / R) + (S.dsel === 1 ? 10 : 0);
@@ -575,7 +575,7 @@
       y += 26 * FS; D.text(lx, y - 6 * FS, val + ' N', { size: 14, weight: 800, color: col === '#94a3b8' ? '#475569' : col, align: 'left', baseline: 'middle' }); y += 14 * FS;
     };
     row('지표에서의 중력', MG_SURF, 600, '#f26b3a');
-    row('정거장에서의 중력(약 8.7 m/s²)', MG_ISS, 600, '#e2464b');
+    row('정거장에서의 중력 (8.7 m/s²)', MG_ISS, 600, '#e2464b');
     row('저울 눈금 (정거장 안)', 0, 600, '#94a3b8');
     if (!PHONE || y < py + 290) textBlock('중력이 약해진 게 아니에요! 우주인과 정거장이 함께 지구로 떨어지는(자유 낙하) 중이라 무중량이에요.', lx, y + 4, tw, { size: 12.5, weight: 800, color: '#9a3412' });
     // 지구 중심 방향 화살표

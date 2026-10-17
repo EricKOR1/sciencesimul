@@ -2776,8 +2776,7 @@ window.SCI_CATALOG = {
                 "영향 연쇄",
                 "피해 조사",
                 "대책 수립"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "h1-gravity-motion",
@@ -2798,8 +2797,7 @@ window.SCI_CATALOG = {
                 "수평으로 던지기",
                 "두 운동 비교",
                 "여러 천체"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "h1-orbit",
@@ -2820,8 +2818,7 @@ window.SCI_CATALOG = {
                 "낙하와 공전",
                 "거리와 가속도",
                 "우주 정거장"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "h1-inertia",
