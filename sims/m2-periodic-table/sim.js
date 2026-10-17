@@ -1043,8 +1043,10 @@
   function woolDraw(x, y, heat, burnt, seed, sc, o) {
     ctx.save(); ctx.translate(x, y); ctx.scale(sc || 1, sc || 1);
     // 손잡이 (철사)
-    ctx.strokeStyle = '#6b7280'; ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(8, 8); ctx.lineTo(66, 58); ctx.stroke();
-    ctx.strokeStyle = '#9aa3b2'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(7, 7); ctx.lineTo(65, 57); ctx.stroke();
+    // 집기병 안에 넣을 때는 철사 손잡이가 병 입구 위로 곧게 올라와요 (유리 벽을 뚫고 나가지 않게)
+    const up = (o && o.up) || 0, hx2 = lerp(66, 12, up), hy2 = lerp(58, -150, up), hx1 = lerp(8, 2, up), hy1 = lerp(8, -6, up);
+    ctx.strokeStyle = '#6b7280'; ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(hx1, hy1); ctx.lineTo(hx2, hy2); ctx.stroke();
+    ctx.strokeStyle = '#9aa3b2'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(hx1 - 1, hy1 - 1); ctx.lineTo(hx2 - 1, hy2 - 1); ctx.stroke();
     const sz = (1 - burnt * 0.25) * 17;
     if (heat > 0.05) D.glow(0, 0, sz * (1.6 + heat * 1.8), mix('#ff7a2a', '#ffd27a', heat * heat), 0.35 + 0.5 * heat);
     const base = burnt > 0.5 ? '#24262c' : mix('#8a909c', mix('#d8421a', '#ffb347', Math.max(0, heat - 0.55) * 2), clamp(heat * 1.25, 0, 1));
@@ -1108,7 +1110,7 @@
   }
   function gasRunUpdate(dt) {
     const r = G.run, j = r.jar, w = G.wool, t = (r.t += dt);
-    const cx = j.x, inX = cx + 6, inY = 332;
+    const cx = j.x, inX = cx - 18, inY = 332;            // 열린 뚜껑(오른쪽으로 비켜 있어요)에 부딪히지 않게 입구의 왼쪽으로 넣어요
     // 병 입구 위로 → 안으로 → 잠시 머물기 → 나오기
     const a = ease.inOutCubic(seg(t, 0, 0.6)), b = ease.inOutCubic(seg(t, 0.6, 1.2)), c = ease.inOutCubic(seg(t, r.dur - 0.9, r.dur - 0.2));
     const mx = lerp(r.x0, cx, a), my = lerp(r.y0, 240, a);
@@ -1158,7 +1160,7 @@
       // 기체의 일렁임
       ctx.strokeStyle = 'rgba(140,170,215,.25)'; ctx.lineWidth = 1.4;
       for (let k = 0; k < 3; k++) { ctx.beginPath(); for (let i = 0; i <= 10; i++) { const yy = JAR.bottom - 24 - i * 14 - k * 6, xx = x - 24 + k * 24 + Math.sin(t * 1.4 + i * 0.7 + k * 2 + j.x) * 4; i ? ctx.lineTo(xx, yy) : ctx.moveTo(xx, yy); } ctx.stroke(); }
-      if (j.flash > 0) D.glow(x + 6, 332, 80 * (0.6 + j.flash), '#ffffff', 0.9 * j.flash);
+      if (j.flash > 0) D.glow(x - 18, 332, 80 * (0.6 + j.flash), '#ffffff', 0.9 * j.flash);
       // 불티
       j.sparks.forEach((s) => { const a = 1 - s.age / s.life; ctx.strokeStyle = 'rgba(255,' + Math.round(180 + 60 * a) + ',' + Math.round(80 + 100 * a) + ',' + a.toFixed(2) + ')'; ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(s.x, s.y); ctx.lineTo(s.x - s.vx * 0.03, s.y - s.vy * 0.03); ctx.stroke(); });
       ctx.restore();
@@ -1179,7 +1181,8 @@
       if (G.drag && Math.abs(G.drag.x - x) < 56 && G.drag.y < 330) { ctx.save(); ctx.strokeStyle = rgba(COL.sub, 0.5 + 0.4 * Math.sin(t * 9)); ctx.lineWidth = 4; D.roundRect(x - JAR.w / 2 - 8, top - 30, JAR.w + 16, 62, 12); ctx.stroke(); ctx.restore(); }
     });
     // 철솜
-    woolDraw(w.x, w.y, w.heat, w.burnt, w.seed, 1 + w.lift * 0.1);
+    const upK = G.run ? clamp(Math.min(seg(G.run.t, 0.1, 0.55), 1 - seg(G.run.t, G.run.dur - 0.9, G.run.dur - 0.35)), 0, 1) : 0;
+    woolDraw(w.x, w.y, w.heat, w.burnt, w.seed, 1 + w.lift * 0.1, { up: upK });
     if (!w.hold && w.state === 'home' && w.heat < 0.05 && G.t > 0.4) { const a = 0.5 + 0.5 * Math.sin(t * 5); txt('👆 철솜을 끌어요', w.hx - 20, w.hy + 44, 13.5, rgba(COL.sub, 0.6 + 0.4 * a), 'center', 800); }
     if (G.msg > 0) { }
   }
