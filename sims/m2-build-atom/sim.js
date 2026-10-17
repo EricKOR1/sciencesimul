@@ -58,6 +58,8 @@
     seen: { p: false, n: false, e: false },
     callout: null,    // {kind, ref, inset, t0}
     time: 0,
+    needleSp: new SciSim.Spring(0, { stiffness: 130, damping: 11 }),   // 계기판 바늘 (살짝 흔들리며 멈춤)
+    lift: 0, seenT: {}, win: null,
   };
 
   let F = new Set();
@@ -73,6 +75,66 @@
   /* ---------- 캔버스 ---------- */
   const view = SciSim.stage($('#cv'), { width: 800, height: 520, background: '#fff' });
   const ctx = view.ctx;
+  const D = SciSim.draw(ctx);
+  /* ---------- 애니메이션 도구 (anim.js) ---------- */
+  const REDUCE = !!SciSim.reduceMotion;
+  const approach = SciSim.approach;
+  const EZ = SciSim.ease;
+  const FX = new SciSim.Particles();           // 반짝임 · 성공 효과
+  const BALL_COL = {
+    p: { light: '#ffc2c2', color: '#e2464b', dark: '#9c1f27' },
+    n: { light: '#f7f9fc', color: '#a6afbd', dark: '#656e80' },
+    e: { light: '#c3d6ff', color: '#3867f4', dark: '#1b389c' },
+  };
+  const SPR = 3;                                // 공 그림(스프라이트) 해상도 배율
+  const _spr = {};
+  /* 공은 한 번만 반짝이는 공 그림으로 만들어 두고 매 프레임 찍어요 (그라데이션을 매번 만들지 않아 빨라요) */
+  function ballSprite(kind) {
+    if (_spr[kind]) return _spr[kind];
+    const r = kind === 'e' ? ER : NR, size = Math.ceil(r * 2 + r * 1.9), cv = document.createElement('canvas');
+    cv.width = cv.height = Math.ceil(size * SPR);
+    const c = cv.getContext('2d');
+    c.scale(SPR, SPR);
+    const B = BALL_COL[kind], bx = size / 2, by = size / 2 - r * 0.08;
+    c.save();   // 부드러운 그림자 (그림자 값은 확대 배율의 영향을 받지 않아 직접 곱해 줘요)
+    c.shadowColor = 'rgba(20,30,70,.3)'; c.shadowBlur = r * 0.7 * SPR; c.shadowOffsetY = r * 0.28 * SPR;
+    c.fillStyle = B.color; c.beginPath(); c.arc(bx, by, r, 0, Math.PI * 2); c.fill();
+    c.restore();
+    SciSim.draw(c).sphere(bx, by, r, B.color, { light: B.light, dark: B.dark, text: kind === 'p' ? '+' : kind === 'e' ? MINUS : null, textScale: kind === 'p' ? 1.5 : 1.45 });
+    return (_spr[kind] = { cv, size });
+  }
+  function popScale(o) {   // 눌러 본 입자가 통통 튀어요
+    if (!o || o.pop == null || REDUCE) return 1;
+    const a = S.time - o.pop;
+    return a > 0.7 ? 1 : 1 + 0.38 * Math.exp(-a * 7) * Math.cos(a * 16);
+  }
+  const popT = (t0, dur) => (t0 == null || REDUCE ? 1 : Math.max(0, (SciSim.time() - t0) / (dur || 0.45)));
+  const sparks = (x, y, color, n) => FX.burst(x, y, { count: n || 7, colors: [color, '#ffffff'], size: 2.4, speed: 70, gravity: 0, life: 0.5, shape: 'circle' });
+  /* 성공 효과: 터지는 반짝임 + 체크 표시 */
+  const WIN_COLORS = ['#ffd36b', '#e2464b', '#3867f4', '#14a058', '#8b5cf6', '#ffffff'];
+  function winAt() { return { x: C.x + Math.min(S.ringR, 190) * 0.72, y: C.y - Math.min(S.ringR, 190) * 0.72 }; }
+  function onWin() {
+    FX.burst(C.x, C.y, { count: 26, colors: WIN_COLORS, speed: 190, size: 3.8, gravity: 140, life: 1 });
+    const p = winAt();
+    S.win = { x: p.x, y: p.y, t: 0 };
+  }
+  function drawWin(D) {
+    const w = S.win;
+    if (!w) return;
+    const k = REDUCE ? 1 : clamp(w.t / 0.45, 0, 1), s = EZ.outBack(k), a = w.t > 1.5 ? 1 - (w.t - 1.5) / 0.5 : 1, sz = Math.max(0.5, 19 * s);
+    ctx.save(); ctx.globalAlpha = clamp(a, 0, 1);
+    D.glow(w.x, w.y, sz * 2.3, '#34d399', 0.4).check(w.x, w.y, sz, clamp(w.t / 0.35, 0, 1));
+    ctx.restore();
+  }
+  // 미션 성공 순간 감지 (공통 엔진에는 성공 알림이 없어 phase로 알아냄)
+  let _wp = '', _wi = -1;
+  function watchGame() {
+    if (!game) return;
+    const ph = game.phase, idx = game.index;
+    if (ph === 'success' && (_wp !== 'success' || _wi !== idx)) onWin();
+    _wp = ph; _wi = idx;
+  }
+
 
   /* ---------- 화면 배치 (열린 도구에 따라) ---------- */
   function bins() {
@@ -178,8 +240,9 @@
     }
     S.lastP = p; S.lastE = e;
     S.banner = null; S.idFlash = null; S.ePt = null;
-    S.needle = p - e;
+    S.needle = p - e; S.needleSp.value = S.needle; S.needleSp.target = S.needle; S.needleSp.velocity = 0;
     S.ringR = outerR() + 18;
+    FX.clear(); S.win = null;
     updateUI(true);
   }
 
@@ -230,6 +293,12 @@
 
   /* ---------- 관찰: 입자 눌러 보기 ---------- */
   function inspect(kind, ref, inset) {
+    if (!S.seen[kind]) {
+      S.seenT[kind] = SciSim.time();
+      const rb = cards().record;
+      if (rb) sparks(rb.x + 30, rb.y + 66 + ['p', 'n', 'e'].indexOf(kind) * 112 + 30, kind === 'p' ? COL.p : kind === 'e' ? COL.e : '#aab3c2', 9);
+    }
+    if (ref && typeof ref === 'object') ref.pop = S.time;
     S.seen[kind] = true;
     S.callout = { kind, ref, inset: !!inset, t0: S.time };
     Sound.tick();
@@ -333,7 +402,7 @@
       const wob = 0.5 * Math.sin(S.time * 2.2 + i * 1.7);
       const tx = C.x + q.hx + wob, ty = C.y + q.hy + 0.5 * Math.cos(S.time * 1.9 + i);
       q.t = Math.min(1, q.t + dt / q.dur);
-      const k = ease(q.t);
+      const k = q.fresh ? EZ.outBack(q.t) : ease(q.t);
       if (q.type === 'n' && q.grow < 1) { q.grow = Math.min(1, q.grow + dt / 0.35); q.x = tx; q.y = ty; }
       else { q.x = lerp(q.sx, tx, k); q.y = lerp(q.sy, ty, k); }
       if (q.fresh && q.t >= 1) { q.fresh = false; snapFx(q.x, q.y, COL.p); }
@@ -347,7 +416,7 @@
         el.key = s.key;
       }
       el.t = Math.min(1, el.t + dt / el.dur);
-      const k = ease(el.t);
+      const k = el.fresh ? EZ.outBack(el.t) : ease(el.t);
       el.x = lerp(el.sx, s.x, k); el.y = lerp(el.sy, s.y, k);
       if (el.fresh && el.t >= 1) { el.fresh = false; snapFx(el.x, el.y, COL.e); }
     });
@@ -370,15 +439,18 @@
     S.pulses = S.pulses.filter((pl) => pl.t < 1);
 
     const p = np(), e = ne(), q = p - e;
-    S.needle += (q - S.needle) * Math.min(1, dt * 7);
-    S.ringR += (outerR() + 18 - S.ringR) * Math.min(1, dt * 6);
+    S.needleSp.target = q; S.needle = S.needleSp.update(dt);
+    S.ringR = approach(S.ringR, outerR() + 18, dt, 6);
+    S.lift = approach(S.lift, S.drag ? 1 : 0, dt, 18);
+    FX.update(dt);
+    if (S.win) { S.win.t += dt; if (S.win.t > 2.1) S.win = null; }
 
     if (p !== S.lastP || e !== S.lastE) {
       onCountsChanged(S.lastP, S.lastE, p, e);
       S.lastP = p; S.lastE = e;
     }
   }
-  function snapFx(x, y, color) { S.pulses.push({ x, y, color, t: 0 }); Sound.tick(); }
+  function snapFx(x, y, color) { S.pulses.push({ x, y, color, t: 0 }); sparks(x, y, color, 7); Sound.tick(); }
 
   function onCountsChanged(p0, e0, p1, e1) {
     if (p0 !== p1) {
@@ -411,6 +483,11 @@
     const a = 0.5 + 0.5 * Math.sin(performance.now() / 160);
     ctx.save(); ctx.strokeStyle = rgba(COL.sub, 0.35 + a * 0.5); ctx.lineWidth = 4;
     roundRect(b.x - 5, b.y - 5, b.w + 10, b.h + 10, 17); ctx.stroke();
+    if (!REDUCE) {   // 바깥으로 퍼지는 물결
+      const k = (performance.now() / 1000 * 1.1) % 1, e = 5 + k * 12;
+      ctx.strokeStyle = rgba(COL.sub, 0.5 * (1 - k)); ctx.lineWidth = 3;
+      roundRect(b.x - e, b.y - e, b.w + e * 2, b.h + e * 2, 17 + e); ctx.stroke();
+    }
     const bx = Math.min(b.x + b.w - 44, 800 - 54), by = Math.max(b.y - 12, 2);
     ctx.fillStyle = COL.sub; roundRect(bx, by, 50, 22, 11); ctx.fill();
     ctx.fillStyle = '#fff'; ctx.font = font(13, true); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -433,25 +510,15 @@
     ctx.restore();
   }
 
+  const _ord = [];
   function drawBall(x, y, kind, scale, alpha) {
-    const r = (kind === 'e' ? ER : NR) * (scale || 1);
-    if (r <= 0.5) return;
-    ctx.save();
-    if (alpha != null) ctx.globalAlpha = alpha;
-    const g = ctx.createRadialGradient(x - r * 0.35, y - r * 0.4, r * 0.1, x, y, r);
-    if (kind === 'p') { g.addColorStop(0, '#ffb6b6'); g.addColorStop(0.55, '#e2464b'); g.addColorStop(1, '#a8222a'); }
-    else if (kind === 'n') { g.addColorStop(0, '#f4f6f9'); g.addColorStop(0.55, '#a6afbd'); g.addColorStop(1, '#6b7486'); }
-    else { g.addColorStop(0, '#b8d0ff'); g.addColorStop(0.55, '#3867f4'); g.addColorStop(1, '#1f3fa8'); }
-    ctx.fillStyle = g;
-    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
-    if (kind !== 'n') {
-      ctx.fillStyle = '#fff';
-      ctx.font = font(Math.round(15 * (scale || 1) * (kind === 'p' ? 0.95 : 1)), true);
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText(kind === 'p' ? '+' : MINUS, x, y + 1);
-    }
-    ctx.restore();
+    const s = scale == null ? 1 : scale;
+    if (s <= 0.03) return;
+    const sp = ballSprite(kind), w = sp.size * s;
+    if (alpha != null) { ctx.globalAlpha = alpha; ctx.drawImage(sp.cv, x - w / 2, y - w / 2, w, w); ctx.globalAlpha = 1; }
+    else ctx.drawImage(sp.cv, x - w / 2, y - w / 2, w, w);
   }
+  const byY = (a, b) => a.y - b.y;
 
   /* ---------- 그리기 ---------- */
   function draw() {
@@ -474,10 +541,15 @@
       drawBall(lerp(f.x0, f.x1, k), lerp(f.y0, f.y1, k), f.kind, 1 - 0.3 * k, 1 - f.t * 0.8);
     });
     if (S.drag) {
-      ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.28)'; ctx.shadowBlur = 10; ctx.shadowOffsetY = 4;
-      drawBall(S.drag.x, S.drag.y, S.drag.kind, 1.3);
+      // 집어 올리면 커지고, 그림자는 멀어지며 흐려져요
+      const lf = S.lift, r = S.drag.kind === 'e' ? ER : NR;
+      ctx.save(); ctx.fillStyle = 'rgba(20,30,70,' + 0.16 * lf + ')';
+      ctx.beginPath(); ctx.ellipse(S.drag.x + 5 * lf, S.drag.y + r * (1.3 + 0.7 * lf), r * (1.1 + 0.3 * lf), r * 0.45, 0, 0, Math.PI * 2); ctx.fill();
       ctx.restore();
+      drawBall(S.drag.x, S.drag.y, S.drag.kind, 1 + 0.32 * lf);
     }
+    FX.draw(ctx);
+    drawWin(D);
   }
 
   function drawAtom(q) {
@@ -487,6 +559,7 @@
     ctx.fillStyle = bg;
     ctx.beginPath(); ctx.arc(C.x, C.y, ringR + 6, 0, Math.PI * 2); ctx.fill();
     const neutral = q === 0 && on('meter');
+    if (neutral) D.glow(C.x, C.y, ringR + 22, '#14a058', 0.13 + (REDUCE ? 0 : 0.05 * Math.sin(S.time * 2.2)));   // 중성이면 은은한 초록 빛
     ctx.strokeStyle = neutral ? 'rgba(20,160,88,.4)' : 'rgba(93,104,121,.22)'; ctx.lineWidth = 2; ctx.setLineDash([3, 7]);
     ctx.beginPath(); ctx.arc(C.x, C.y, ringR, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
 
@@ -496,7 +569,7 @@
       const col = S.drag.kind === 'p' ? COL.p : COL.e;
       const over = inAtom(S.drag);
       ctx.save();
-      ctx.setLineDash([9, 7]);
+      ctx.setLineDash([9, 7]); ctx.lineDashOffset = REDUCE ? 0 : -S.time * 26;   // 점선이 빙글 돌며 '여기에 놓아요'를 알려요
       ctx.strokeStyle = intoAtom ? rgba(col, over ? 0.9 : 0.5) : 'rgba(93,104,121,.45)';
       ctx.lineWidth = intoAtom && over ? 3 : 2;
       ctx.fillStyle = intoAtom ? rgba(col, over ? 0.07 : 0.03) : 'rgba(0,0,0,0)';
@@ -521,16 +594,28 @@
 
     // 원자핵
     const nr = nucleusR();
-    const ng = ctx.createRadialGradient(C.x, C.y, 2, C.x, C.y, nr + 12);
-    ng.addColorStop(0, 'rgba(255,205,205,.6)'); ng.addColorStop(1, 'rgba(255,205,205,0)');
-    ctx.fillStyle = ng;
-    ctx.beginPath(); ctx.arc(C.x, C.y, nr + 12, 0, Math.PI * 2); ctx.fill();
-    S.nucleons.slice().sort((a, b) => a.y - b.y).forEach((q2) => {
-      const sc = q2.type === 'n' ? ease(q2.grow) : (q2.t < 1 ? 1.15 - 0.15 * q2.t : 1);
+    D.glow(C.x, C.y, nr + 22 + (REDUCE ? 0 : 2.5 * Math.sin(S.time * 2.6)), '#ff9a9a', 0.55);   // 원자핵이 은은하게 숨 쉬어요
+    _ord.length = 0; S.nucleons.forEach((q2) => _ord.push(q2)); _ord.sort(byY);
+    _ord.forEach((q2) => {
+      const sc = (q2.type === 'n' ? ease(q2.grow) : (q2.t < 1 ? 1.15 - 0.15 * q2.t : 1)) * popScale(q2);
       drawBall(q2.x, q2.y, q2.type, sc);
     });
     S.fading.forEach((f) => drawBall(f.x, f.y, 'n', 1 - f.t * 0.5, 1 - f.t));
-    S.electrons.forEach((el) => drawBall(el.x, el.y, 'e', el.t < 1 ? 1.15 - 0.15 * el.t : 1));
+    // 전자: 푸른 빛과 지나온 자리를 따라 흐르는 꼬리
+    ctx.lineCap = 'round';
+    S.electrons.forEach((el, i) => {
+      if (!REDUCE && el.t >= 1) {
+        const rad = SHELL_R[shellOf(i).k], a = Math.atan2(el.y - C.y, el.x - C.x), da = 15 / rad;
+        ctx.lineWidth = 4;
+        for (let s = 0; s < 3; s++) {
+          ctx.strokeStyle = 'rgba(56,103,244,' + (0.07 + 0.08 * s) + ')';
+          ctx.beginPath(); ctx.arc(C.x, C.y, rad, a - da * (3 - s) - 0.02, a - da * (2 - s)); ctx.stroke();
+        }
+      }
+      D.glow(el.x, el.y, ER * 2.3, COL.e, 0.22);
+      drawBall(el.x, el.y, 'e', (el.t < 1 ? 1.15 - 0.15 * el.t : 1) * popScale(el));
+    });
+    ctx.lineCap = 'butt';
     S.pulses.forEach((pl) => {
       ctx.strokeStyle = rgba(pl.color, (1 - pl.t) * 0.8); ctx.lineWidth = 3;
       ctx.beginPath(); ctx.arc(pl.x, pl.y, 10 + pl.t * 18, 0, Math.PI * 2); ctx.stroke();
@@ -547,13 +632,17 @@
     ctx.setLineDash([]);
     ctx.strokeStyle = 'rgba(139,92,246,.6)'; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.arc(C.x, C.y, nr + 3, 0, Math.PI * 2); ctx.stroke();
-    ctx.fillStyle = '#fff'; ctx.strokeStyle = COL.sub; ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.arc(I.x, I.y, I.r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.strokeStyle = COL.sub; ctx.lineWidth = 3;
+    D.shadow(() => { ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(I.x, I.y, I.r, 0, Math.PI * 2); ctx.fill(); }, { blur: 16, y: 6, color: 'rgba(60,40,140,.22)' });
+    ctx.beginPath(); ctx.arc(I.x, I.y, I.r, 0, Math.PI * 2); ctx.stroke();
     ctx.beginPath(); ctx.arc(I.x, I.y, I.r - 2, 0, Math.PI * 2); ctx.clip();
     const g = ctx.createRadialGradient(I.x, I.y, 4, I.x, I.y, I.r);
     g.addColorStop(0, 'rgba(255,205,205,.55)'); g.addColorStop(1, 'rgba(255,205,205,0)');
     ctx.fillStyle = g; ctx.fillRect(I.x - I.r, I.y - I.r, I.r * 2, I.r * 2);
-    S.nucleons.slice().sort((a, b) => a.y - b.y).forEach((q) => { const s = insetPos(q); drawBall(s.x, s.y, q.type, k * (q.type === 'n' ? ease(q.grow) : 1)); });
+    _ord.length = 0; S.nucleons.forEach((q) => _ord.push(q)); _ord.sort(byY);
+    _ord.forEach((q) => { const s = insetPos(q); drawBall(s.x, s.y, q.type, k * (q.type === 'n' ? ease(q.grow) : 1) * popScale(q)); });
+    ctx.fillStyle = 'rgba(255,255,255,.4)';   // 렌즈에 비친 빛
+    ctx.beginPath(); ctx.ellipse(I.x - I.r * 0.38, I.y - I.r * 0.55, I.r * 0.42, I.r * 0.13, -0.7, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
     ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
     ctx.fillStyle = '#5b37c9'; ctx.font = font(15, true);
@@ -576,7 +665,7 @@
       const y0 = b.y + 66 + i * 112, P = PART[k], seen = S.seen[k];
       ctx.strokeStyle = COL.line; ctx.lineWidth = 1.5;
       ctx.beginPath(); ctx.moveTo(b.x + 12, y0); ctx.lineTo(b.x + b.w - 12, y0); ctx.stroke();
-      if (seen) drawBall(b.x + 30, y0 + 30, k, 1.5);
+      if (seen) { const pk = popT(S.seenT[k], 0.5); drawBall(b.x + 30, y0 + 30, k, 1.5 * (pk >= 1 ? 1 : EZ.outBack(Math.min(1, pk)))); }
       else {
         ctx.fillStyle = '#eef2f7'; ctx.beginPath(); ctx.arc(b.x + 30, y0 + 30, 15, 0, Math.PI * 2); ctx.fill();
         ctx.fillStyle = '#9aa5b6'; ctx.font = font(16, true); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -710,7 +799,8 @@
     }
     ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
     ctx.fillStyle = COL.ink; ctx.font = font(58, true);
-    ctx.fillText(el.sym, cx, c.y + 102);
+    const symK = f && f.kind === 'element' && !REDUCE ? Math.max(0, 1 - (S.time - f.t0) / 0.5) : 0, symS = 1 + 0.32 * symK * symK;
+    ctx.save(); ctx.translate(cx, c.y + 102); ctx.scale(symS, symS); ctx.fillText(el.sym, 0, 0); ctx.restore();
     ctx.font = font(21, true);
     ctx.fillText(el.name, cx, c.y + 136);
     ctx.fillStyle = COL.muted; ctx.font = font(14, true);
@@ -808,7 +898,7 @@
 
   /* ---------- DOM 측정값/버튼 ---------- */
   const rP = $('#rP'), rN = $('#rN'), rE = $('#rE'), oP = $('#oP'), oE = $('#oE');
-  let uiKey = '';
+  let uiKey = '', frameMs = 0;
   function updateUI(force) {
     const p = np(), n = nn(), e = ne(), key = p + ':' + n + ':' + e;
     if (!force && key === uiKey) return;
@@ -1121,5 +1211,18 @@
 
   /* ---------- 시작 ---------- */
   if (!S.nucleons.length) setState(2, 2);
-  SciSim.loop((dt) => { step(dt); draw(); updateUI(); });
+  SciSim.loop((dt) => {
+    step(dt);
+    watchGame();
+    const t0 = performance.now();
+    draw();
+    frameMs += (performance.now() - t0 - frameMs) * 0.05;
+    updateUI();
+  });
+
+  /* ---------- 점검용 ---------- */
+  window.__sim = {
+    S, frameMs: () => frameMs, game: () => game, setState, np, nn, ne, plus, minus, C, binCenter, bins, cards,
+    client(x, y) { const r = view.canvas.getBoundingClientRect(); return { x: r.left + x * r.width / 800, y: r.top + y * r.height / 520 }; },
+  };
 })();

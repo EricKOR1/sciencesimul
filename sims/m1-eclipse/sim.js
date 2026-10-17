@@ -36,6 +36,9 @@
     align: false, lined: new Set(), holdKey: null, holdT: 0,  // 1단계: 일직선 두 가지
     sideTask: false, seen: new Set(),                // 4단계: 기울어진 궤도에서 삭·망
   };
+  S.thV = S.theta;                                   // 화면에 그리는 각(실제 값을 부드럽게 따라가요)
+  S.tiltA = 1; S.shFade = 1; S.snapT = null; S.snapA = 0; S.snapped = null; S.spotT = {};
+  S.lift = new SciSim.Spring(1, { stiffness: 230, damping: 14 });   // 달을 집어 올리는 느낌
 
   let FEAT = new Set();
   const on = (f) => FEAT.has(f);
@@ -46,7 +49,8 @@
   const norm = (a) => ((a % 360) + 360) % 360;
   const signed = (a) => { a = norm(a); return a > 180 ? a - 360 : a; };
   const spotAt = (th) => SPOTS.findIndex((a) => Math.abs(signed(th - a)) <= SPOT_TOL);
-  const tiltZ = (th) => (tiltOn() ? -ZT * Math.cos(th * DEG) : 0); // 지구 공전 궤도면 위(+)·아래(−)로 벗어난 거리
+  // 지구 공전 궤도면 위(+)·아래(−)로 벗어난 거리. k: 기울기 정도(0~1), 생략하면 켜짐/꺼짐 그대로
+  const tiltZ = (th, k) => -ZT * Math.cos(th * DEG) * (k == null ? (tiltOn() ? 1 : 0) : k);
 
   const PH = { new: '삭', wxc: '초승달', fq: '상현달', wxg: '볼록한 달', full: '보름달 (망)', wng: '볼록한 달', lq: '하현달', wnc: '그믐달' };
   function phaseKey(th) {
@@ -71,9 +75,9 @@
   }
 
   /* 관측 지역에서 본 태양과 달 (일식) */
-  function solarView(o) {
-    const th = S.theta * DEG;
-    const dx = R * Math.cos(th) - o.x, dy = R * Math.sin(th) - o.y, z = tiltZ(S.theta);
+  function solarView(o, T, k) {
+    const th = T * DEG;
+    const dx = R * Math.cos(th) - o.x, dy = R * Math.sin(th) - o.y, z = tiltZ(T, k);
     if (dx <= 0) return { cover: 0, near: false };
     const dist = Math.hypot(dx, dy, z);
     const sIn = Math.atan2(dy, dx), sZ = Math.asin(z / dist);
@@ -85,29 +89,81 @@
     };
   }
   /* 지구의 밤 쪽에서 본 달 (월식) */
-  function lunarView() {
-    const th = S.theta * DEG, along = -R * Math.cos(th);
+  function lunarView(T, k) {
+    const th = T * DEG, along = -R * Math.cos(th);
     if (along <= 0) return { umb: 0, pen: 0, total: false };
-    const dy = R * Math.sin(th), z = tiltZ(S.theta), off = Math.hypot(dy, z);
+    const dy = R * Math.sin(th), z = tiltZ(T, k), off = Math.hypot(dy, z);
     const U = RE - along * AS, Pn = RE + along * AS;
     const area = Math.PI * RM * RM;
-    const dl = signed(S.theta - 180);
+    const dl = signed(T - 180);
     return {
       umb: circleOverlap(RM, U, off) / area, pen: circleOverlap(RM, Pn, off) / area, total: off <= U - RM,
       ox: (dl < 0 ? -1 : 1) * Math.abs(dy) / RM, oy: z / RM, U: U / RM, P: Pn / RM, // 달 반지름 단위: 그림자 중심의 위치와 크기
     };
   }
   /* 달의 그림자가 지구에 닿는가 */
-  function moonShadowOnEarth() {
-    const th = S.theta * DEG, d = R * Math.cos(th) - RE;
+  function moonShadowOnEarth(T, k) {
+    const th = T * DEG, d = R * Math.cos(th) - RE;
     if (d <= 0) return { pen: false, umb: false };
-    const off = Math.hypot(R * Math.sin(th), tiltZ(S.theta));
+    const off = Math.hypot(R * Math.sin(th), tiltZ(T, k));
     return { pen: off < RE + RM + d * AS, umb: off < RE + Math.max(0, RM - d * AS) };
   }
-  function state() {
-    const A = solarView(OBS.A), B = solarView(OBS.B), Lv = lunarView(), Ms = moonShadowOnEarth();
+  function state(T, k) {
+    T = T == null ? S.theta : T;
+    const A = solarView(OBS.A, T, k), B = solarView(OBS.B, T, k), Lv = lunarView(T, k), Ms = moonShadowOnEarth(T, k);
     const solar = Math.max(A.cover, B.cover) > 0.01;
     return { A, B, Lv, Ms, solar, solarTotal: A.total || B.total, lunar: Lv.umb > 0.01, lunarTotal: Lv.total, penOnly: Lv.umb <= 0.01 && Lv.pen > 0.01 };
+  }
+
+  /* ---------- 애니메이션 도구 (anim.js) ---------- */
+  const REDUCE = !!SciSim.reduceMotion;
+  const approach = SciSim.approach;
+  const ease = SciSim.ease;
+  const _dm = new WeakMap();
+  const Dof = (ctx) => { let d = _dm.get(ctx); if (!d) { d = SciSim.draw(ctx); _dm.set(ctx, d); } return d; };
+  const _sh = {};
+  const shd = (c, a) => _sh[c + a] || (_sh[c + a] = SciSim.color.shade(c, a));
+  const C_EARTH = ['#9bd6ff', '#2f86e0', '#10366f'];
+  const C_MOON = ['#56628a', '#343c58', '#12172b'];
+  const WIN_COLORS = ['#ffd36b', '#5eead4', '#fff7d6', '#a5b4fc', '#fda4af'];
+  /* 빛이 (lx, ly) 방향에서 오는 공 (기본: 오른쪽 = 태양 쪽) */
+  function litSphere(ctx, x, y, r, c, lx, ly) {
+    if (lx == null) { lx = 0.8; ly = -0.25; }
+    const g = ctx.createRadialGradient(x + lx * r * 0.5, y + ly * r * 0.5, r * 0.06, x, y, r * 1.04);
+    g.addColorStop(0, c[0]); g.addColorStop(0.5, c[1]); g.addColorStop(1, c[2]);
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill();
+  }
+  const angApproach = (cur, target, dt, rate) => norm(cur + signed(target - cur) * (1 - Math.exp(-rate * dt)));
+  const popT = (t0, dur) => (t0 == null || REDUCE ? 1 : Math.max(0, (SciSim.time() - t0) / (dur || 0.45)));
+
+  /* 성공 효과: 터지는 반짝임 + 체크 표시 (화면 배치마다 따로 가지고 있음) */
+  function fxBurst(posFn, o) {
+    views.forEach(({ L }) => {
+      const p = posFn(L);
+      if (p) L.fx.burst(p.x, p.y, Object.assign({ count: 22, colors: WIN_COLORS, speed: 170, size: 3.6, gravity: 120, life: 0.9 }, o));
+    });
+  }
+  function winPop(posFn) {
+    views.forEach(({ L }) => { const p = posFn(L); if (p) L.win = { x: p.x, y: p.y, t: 0 }; });
+  }
+  function drawWin(ctx, L) {
+    const w = L.win;
+    if (!w) return;
+    const k = REDUCE ? 1 : clamp(w.t / 0.45, 0, 1), s = ease.outBack(k), a = w.t > 1.5 ? 1 - (w.t - 1.5) / 0.5 : 1, sz = Math.max(0.5, 17 * L.fs * s);
+    ctx.save(); ctx.globalAlpha = clamp(a, 0, 1);
+    Dof(ctx).glow(w.x, w.y, sz * 2.3, '#34d399', 0.4).check(w.x, w.y, sz, clamp(w.t / 0.35, 0, 1));
+    ctx.restore();
+  }
+  function fxStep(dt) {
+    views.forEach(({ L }) => { L.fx.update(dt); if (L.win) { L.win.t += dt; if (L.win.t > 2.1) L.win = null; } });
+  }
+  /* 미션 성공 순간 감지 (공통 엔진에는 성공 알림이 없어 phase로 알아냄) */
+  let _wp = '', _wi = -1;
+  function watchGame(onWin) {
+    if (!game) return;
+    const ph = game.phase, idx = game.index;
+    if (ph === 'success' && (_wp !== 'success' || _wi !== idx)) onWin();
+    _wp = ph; _wi = idx;
   }
 
   /* ---------- 화면 배치 ----------
@@ -187,13 +243,30 @@
     ctx.beginPath(); ctx.moveTo(x - s * 0.5, y); ctx.lineTo(x - s * 0.12, y + s * 0.4); ctx.lineTo(x + s * 0.55, y - s * 0.4); ctx.stroke();
   }
   function drawStars(ctx, stars, t, alpha) {
-    stars.forEach((s) => {
-      ctx.globalAlpha = alpha * (0.45 + 0.4 * Math.sin(t * s.k + s.p));
-      ctx.fillStyle = '#dfe8ff';
-      ctx.fillRect(s.x, s.y, s.s * 1.4, s.s * 1.4);
-    });
+    ctx.fillStyle = '#dfe8ff';
+    for (let i = 0; i < stars.length; i++) {
+      const s = stars[i], tw = REDUCE ? 0.5 : 0.5 + 0.5 * Math.sin(t * s.k + s.p);
+      ctx.globalAlpha = alpha * (0.32 + 0.55 * tw);
+      ctx.beginPath(); ctx.arc(s.x, s.y, s.s * 0.7, 0, TAU); ctx.fill();
+      if (s.s > 1.4) {   // 밝은 별: 십자 모양으로 반짝여요
+        const g = (0.4 + 0.6 * tw) * 3.6;
+        ctx.globalAlpha = alpha * 0.5 * tw;
+        ctx.fillRect(s.x - g, s.y - 0.4, g * 2, 0.8); ctx.fillRect(s.x - 0.4, s.y - g, 0.8, g * 2);
+      }
+    }
     ctx.globalAlpha = 1;
   }
+  // 우주 배경: 은은한 성운 + 반짝이는 별 (별 위치는 seed로 고정)
+  function spaceBg(ctx, L, M, cx, cy, t) {
+    const bg = ctx.createRadialGradient(cx, cy, 20, cx, cy, 340);
+    bg.addColorStop(0, '#17264f'); bg.addColorStop(0.6, '#0e1838'); bg.addColorStop(1, '#070d1f');
+    ctx.fillStyle = bg; ctx.fillRect(M.x, M.y, M.w, M.h);
+    const D = Dof(ctx);
+    D.glow(M.x + M.w * 0.16, M.y + M.h * 0.84, 190, '#7c5cff', 0.13);
+    D.glow(M.x + M.w * 0.5, M.y + M.h * 0.08, 170, '#2dd4bf', 0.07);
+    drawStars(ctx, L.starsMain, t, 1);
+  }
+  // 새로 열린 도구 강조
   const pulse = () => 0.5 + 0.5 * Math.sin(performance.now() / 160);
   function newTag(ctx, L, rx, ty) {
     ctx.font = fnt(L, 13, 'bold');
@@ -204,13 +277,24 @@
   }
   function newRing(ctx, L, x, y, w, h) {
     ctx.save();
-    ctx.strokeStyle = 'rgba(56,189,248,' + (0.35 + pulse() * 0.6) + ')'; ctx.lineWidth = 4;
+    ctx.strokeStyle = 'rgba(56,189,248,' + (0.5 + pulse() * 0.45) + ')'; ctx.lineWidth = 4;
     roundRect(ctx, x - 4, y - 4, w + 8, h + 8, 14); ctx.stroke();
+    if (!REDUCE) {   // 바깥으로 퍼지는 물결
+      const k = (performance.now() / 1000 * 1.1) % 1, e = 4 + k * 12;
+      ctx.strokeStyle = 'rgba(56,189,248,' + 0.55 * (1 - k) + ')'; ctx.lineWidth = 3;
+      roundRect(ctx, x - e, y - e, w + e * 2, h + e * 2, 14 + e); ctx.stroke();
+    }
     newTag(ctx, L, x + w - 6, Math.max(0, y - Math.round(11 * L.fs)));   // 테두리 위에 걸쳐서 (제목을 가리지 않게)
     ctx.restore();
   }
+  function newRingCircle(ctx, L, x, y, r) {
+    ctx.save();
+    Dof(ctx).ring(x, y, r + 2 * pulse(), REDUCE ? 0 : performance.now() / 1000, { color: '#38bdf8', width: 4, speed: 1.1 });
+    newTag(ctx, L, x + r * 0.71 + 40 * L.fs, y - r * 0.71 - 12 * L.fs);
+    ctx.restore();
+  }
 
-  /* 지구에서 본 달의 모양 (위상) */
+  /* 지구에서 본 달의 모양: 원점 기준, 오른쪽이 밝은 경우의 밝은 영역 (t: 0~180°) */
   function litPath(ctx, r, t) {
     const c = Math.cos(t * DEG), a = Math.max(0.001, r * Math.abs(c));
     ctx.beginPath();
@@ -220,53 +304,79 @@
     ctx.closePath();
   }
   const CRATERS = [[-0.36, -0.3, 0.17], [0.28, 0.36, 0.13], [0.42, -0.22, 0.1], [-0.08, 0.52, 0.09], [-0.52, 0.22, 0.12], [0.06, -0.06, 0.08], [0.2, -0.55, 0.07]];
-  function drawPhase(ctx, x, y, r, th) {
+  function drawPhase(ctx, x, y, r, th, o) {
+    o = o || {};
     th = norm(th);
-    circle(ctx, x, y, r);
-    ctx.fillStyle = '#262d40'; ctx.fill();
-    const waxing = th <= 180, t = waxing ? th : 360 - th;
+    const waxing = th <= 180, t = waxing ? th : 360 - th, side = waxing ? 1 : -1, dk = o.dark || '#262d40';
+    // 어두운 쪽도 은은하게 입체감 (지구에서 반사된 빛)
+    const dg = ctx.createRadialGradient(x + side * r * 0.3, y - r * 0.1, r * 0.1, x, y, r * 1.02);
+    dg.addColorStop(0, shd(dk, 0.2)); dg.addColorStop(1, shd(dk, -0.4));
+    ctx.fillStyle = dg; circle(ctx, x, y, r); ctx.fill();
     if (t > 0.4) {
       ctx.save(); ctx.translate(x, y); if (!waxing) ctx.scale(-1, 1);
       litPath(ctx, r, t);
-      const g = ctx.createRadialGradient(r * 0.25, -r * 0.25, r * 0.1, 0, 0, r * 1.05);
-      g.addColorStop(0, '#fffdf2'); g.addColorStop(1, '#ead58e');
+      const g = ctx.createRadialGradient(r * 0.3, -r * 0.3, r * 0.08, 0, 0, r * 1.05);
+      g.addColorStop(0, '#fffef6'); g.addColorStop(0.6, '#f6e6a8'); g.addColorStop(1, '#d9bf6c');
       ctx.fillStyle = g; ctx.fill();
-      ctx.clip(); if (!waxing) ctx.scale(-1, 1);
-      ctx.fillStyle = 'rgba(150,128,80,.2)';
-      CRATERS.forEach((c) => { circle(ctx, c[0] * r, c[1] * r, c[2] * r); ctx.fill(); });
+      ctx.clip();
+      // 밝은 부분과 어두운 부분의 경계는 부드럽게
+      const c = Math.cos(t * DEG), a = r * Math.abs(c), x0 = c >= 0 ? a : -a;
+      const tg = ctx.createLinearGradient(x0, 0, x0 + (r - x0) * 0.6, 0);
+      tg.addColorStop(0, 'rgba(120,92,30,.4)'); tg.addColorStop(1, 'rgba(120,92,30,0)');
+      ctx.fillStyle = tg; ctx.fillRect(-r, -r, r * 2, r * 2);
+      if (o.craters) {
+        if (!waxing) ctx.scale(-1, 1);
+        ctx.fillStyle = 'rgba(150,128,80,.2)';
+        CRATERS.forEach((cr) => { circle(ctx, cr[0] * r, cr[1] * r, cr[2] * r); ctx.fill(); });
+        ctx.strokeStyle = 'rgba(255,255,255,.28)'; ctx.lineWidth = 1;
+        CRATERS.forEach((cr) => { ctx.beginPath(); ctx.arc(cr[0] * r, cr[1] * r, cr[2] * r, Math.PI * 1.05, Math.PI * 1.55); ctx.stroke(); });
+      }
       ctx.restore();
     }
     circle(ctx, x, y, r);
-    ctx.strokeStyle = 'rgba(190,205,240,.38)'; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.strokeStyle = 'rgba(190,205,240,.38)'; ctx.lineWidth = o.mini ? 1 : 1.5; ctx.stroke();
   }
-  /* 위에서 본 달: 태양 쪽(오른쪽) 반이 밝음 */
-  function drawMoonTop(ctx, x, y, r) {
-    circle(ctx, x, y, r); ctx.fillStyle = '#333b52'; ctx.fill();
-    ctx.beginPath(); ctx.arc(x, y, r, -Math.PI / 2, Math.PI / 2); ctx.closePath();
-    const g = ctx.createLinearGradient(x, y, x + r, y);
-    g.addColorStop(0, '#f8e7a8'); g.addColorStop(1, '#fffdf2');
-    ctx.fillStyle = g; ctx.fill();
-    circle(ctx, x, y, r); ctx.strokeStyle = 'rgba(255,255,255,.65)'; ctx.lineWidth = 1.2; ctx.stroke();
+  /* 위에서 본 달: 태양 쪽(오른쪽) 반이 항상 밝음. lift > 1이면 들어 올린 느낌(빛무리) */
+  function drawMoonTop(ctx, x, y, r, alpha, lift) {
+    ctx.save(); ctx.globalAlpha = alpha == null ? 1 : alpha;
+    if (lift > 1.03) Dof(ctx).glow(x, y, r * 2.6, '#fff3c0', Math.min(0.5, (lift - 1) * 0.8));
+    litSphere(ctx, x, y, r, C_MOON, 0.9, -0.1);
+    ctx.save(); ctx.beginPath(); ctx.arc(x, y, r, -Math.PI / 2, Math.PI / 2); ctx.closePath(); ctx.clip();
+    const g = ctx.createRadialGradient(x + r * 0.45, y - r * 0.3, r * 0.05, x + r * 0.1, y, r * 1.05);
+    g.addColorStop(0, '#fffef4'); g.addColorStop(0.65, '#f7e7ab'); g.addColorStop(1, '#d9bf6c');
+    ctx.fillStyle = g; ctx.fillRect(x - r, y - r, r * 2, r * 2);
+    const tg = ctx.createLinearGradient(x, 0, x + r * 0.75, 0);
+    tg.addColorStop(0, 'rgba(110,84,24,.45)'); tg.addColorStop(1, 'rgba(110,84,24,0)');
+    ctx.fillStyle = tg; ctx.fillRect(x - r, y - r, r * 2, r * 2);
+    ctx.restore();
+    circle(ctx, x, y, r); ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = 1.1; ctx.stroke();
+    ctx.restore();
   }
-  function drawEarth(ctx, L, x, y, r) {
-    const ag = ctx.createRadialGradient(x, y, r * 0.9, x, y, r * 1.5);
-    ag.addColorStop(0, 'rgba(120,180,255,.35)'); ag.addColorStop(1, 'rgba(120,180,255,0)');
-    ctx.fillStyle = ag; circle(ctx, x, y, r * 1.5); ctx.fill();
-    const og = ctx.createRadialGradient(x + r * 0.45, y - r * 0.2, r * 0.15, x, y, r);
-    og.addColorStop(0, '#6cc0ff'); og.addColorStop(1, '#1f5fb6');
-    ctx.fillStyle = og; circle(ctx, x, y, r); ctx.fill();
+  /* 지구: 오른쪽(태양 쪽)이 낮, 왼쪽이 밤. 북극 위에서 본 모습이라 대륙이 천천히 돌아요 */
+  function drawEarth(ctx, L, x, y, r, t) {
+    const D = Dof(ctx);
+    D.glow(x, y, r * 2.2, '#6cb8ff', 0.4);
+    litSphere(ctx, x, y, r, C_EARTH);
     ctx.save(); circle(ctx, x, y, r); ctx.clip();
+    ctx.translate(x, y); ctx.rotate(REDUCE ? 0.6 : (t || 0) * 0.28);
     ctx.fillStyle = '#3fae6a';
     [[0.35, -0.45, 0.32, 0.22], [-0.3, 0.35, 0.36, 0.2], [0.5, 0.45, 0.2, 0.16], [-0.55, -0.35, 0.22, 0.14]].forEach((c) => {
-      ctx.beginPath(); ctx.ellipse(x + c[0] * r, y + c[1] * r, c[2] * r, c[3] * r, 0.5, 0, TAU); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(c[0] * r, c[1] * r, c[2] * r, c[3] * r, 0.5, 0, TAU); ctx.fill();
     });
-    ctx.fillStyle = 'rgba(3,7,22,.72)'; ctx.fillRect(x - r - 1, y - r - 1, r + 1, r * 2 + 2);
+    ctx.fillStyle = 'rgba(255,255,255,.55)';
+    ctx.beginPath(); ctx.ellipse(0.1 * r, -0.05 * r, 0.3 * r, 0.06 * r, 0.4, 0, TAU); ctx.fill();   // 구름
+    ctx.rotate(REDUCE ? -0.6 : -(t || 0) * 0.28); ctx.translate(-x, -y);
+    const sh = ctx.createRadialGradient(x + r * 0.45, y - r * 0.25, r * 0.1, x, y, r * 1.05);
+    sh.addColorStop(0, 'rgba(255,255,255,.2)'); sh.addColorStop(0.5, 'rgba(255,255,255,0)'); sh.addColorStop(1, 'rgba(0,10,40,.4)');
+    ctx.fillStyle = sh; ctx.fillRect(x - r, y - r, r * 2, r * 2);
+    const ng = ctx.createLinearGradient(x - r, 0, x + 3, 0);   // 밤 쪽
+    ng.addColorStop(0, 'rgba(3,7,22,.84)'); ng.addColorStop(0.86, 'rgba(3,7,22,.7)'); ng.addColorStop(1, 'rgba(3,7,22,0)');
+    ctx.fillStyle = ng; ctx.fillRect(x - r - 1, y - r - 1, r + 4, r * 2 + 2);
     ctx.restore();
-    circle(ctx, x, y, r); ctx.strokeStyle = 'rgba(200,225,255,.6)'; ctx.lineWidth = 1; ctx.stroke();
-    ctx.font = fnt(L, 13, 'bold'); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillStyle = '#06325f'; ctx.fillText('낮', x + r * 0.45, y + 1);
-    ctx.fillStyle = '#d4defc'; ctx.fillText('밤', x - r * 0.45, y + 1);
-    ctx.textBaseline = 'alphabetic';
+    circle(ctx, x, y, r); ctx.strokeStyle = 'rgba(200,225,255,.55)'; ctx.lineWidth = 1; ctx.stroke();
+    const fs = Math.round(13 * L.fs);
+    D.text(x + r * 0.5, y + 1, '낮', { size: fs, color: '#06325f', stroke: 'rgba(255,255,255,.55)', strokeWidth: 3, baseline: 'middle' });
+    D.text(x - r * 0.5, y + 1, '밤', { size: fs, color: '#d4defc', stroke: 'rgba(3,7,22,.6)', strokeWidth: 3, baseline: 'middle' });
   }
   // 그림자 원뿔: (x, y)에서 왼쪽(태양 반대쪽)으로, 시작 반폭 r0, 거리 d에서 반폭 r0 + sgn·d·AS
   function cone(ctx, x, y, r0, sgn, len) {
@@ -274,55 +384,72 @@
     const w = Math.max(0, r0 + sgn * end * AS);
     ctx.beginPath(); ctx.moveTo(x, y - r0); ctx.lineTo(x - end, y - w); ctx.lineTo(x - end, y + w); ctx.lineTo(x, y + r0); ctx.closePath();
   }
+  // 그림자는 멀어질수록 조금씩 옅어져요 (a0: 시작 진하기, a1: 끝 진하기)
+  function shadowFill(ctx, x, y, r0, sgn, len, a0, a1) {
+    const g = ctx.createLinearGradient(x, 0, x - len, 0);
+    g.addColorStop(0, 'rgba(0,0,0,' + a0 + ')'); g.addColorStop(1, 'rgba(0,0,0,' + a1 + ')');
+    ctx.fillStyle = g; cone(ctx, x, y, r0, sgn, len); ctx.fill();
+  }
 
   /* ---------- 위에서 본 모형 ---------- */
   function moonPos(L, th) {
-    th = th == null ? S.theta : th;
+    th = th == null ? S.thV : th;
     return { x: L.cx + R * Math.cos(th * DEG), y: L.cy - R * Math.sin(th * DEG) };
   }
   function drawSpots(ctx, L, t) {
+    const D = Dof(ctx);
     SPOTS.forEach((a, k) => {
       const p = moonPos(L, a), done = S.visit.has(k);
       const q = { x: L.cx + (R + 34) * Math.cos(a * DEG), y: L.cy - (R + 34) * Math.sin(a * DEG) };
       ctx.save();
       if (done) {
-        ctx.strokeStyle = '#34d399'; ctx.lineWidth = 2.5; circle(ctx, p.x, p.y, 19); ctx.stroke();
-        ctx.fillStyle = '#10b981'; circle(ctx, q.x, q.y, 11 * L.fs); ctx.fill();
-        ctx.strokeStyle = '#fff'; ctx.lineWidth = 2.6; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-        checkMark(ctx, q.x, q.y, 11 * L.fs);
+        const pr = popT(S.spotT[k], 0.5), e = ease.outBack(Math.min(1, pr));
+        ctx.fillStyle = 'rgba(52,211,153,' + 0.2 * Math.min(1, pr * 2) + ')'; circle(ctx, p.x, p.y, 19); ctx.fill();
+        ctx.strokeStyle = '#34d399'; ctx.lineWidth = 2.5; circle(ctx, p.x, p.y, 19 * (0.75 + 0.25 * Math.min(1, e))); ctx.stroke();
+        D.check(q.x, q.y, Math.max(0.5, 11 * L.fs * e), Math.min(1, pr * 1.6));
       } else {
-        ctx.setLineDash([5, 4]); ctx.strokeStyle = 'rgba(255,224,130,' + (0.45 + 0.4 * Math.sin(t * 4 + k)) + ')'; ctx.lineWidth = 2.5;
-        circle(ctx, p.x, p.y, 19); ctx.stroke(); ctx.setLineDash([]);
-        ctx.fillStyle = 'rgba(255,214,90,.9)'; starShape(ctx, q.x, q.y, 9 * L.fs); ctx.fill();
+        D.ring(p.x, p.y, 19, REDUCE ? 0 : t + k * 0.27, { color: '#ffd36b', width: 2.5, speed: 0.9 });
+        D.spark(q.x, q.y, 11 * L.fs, REDUCE ? 0 : t + k, '#ffd66b');
       }
       ctx.restore();
     });
   }
   function drawTop(ctx, L, st, t) {
-    const M = L.main, cx = L.cx, cy = L.cy, right = M.x + M.w, fs = L.fs;
+    const M = L.main, cx = L.cx, cy = L.cy, right = M.x + M.w, fs = L.fs, D = Dof(ctx);
     const top = { x: M.x, y: M.y, w: M.w, h: L.strip.y - 6 - M.y };
-    const m = moonPos(L);
+    const m = moonPos(L), mr = RM * S.lift.value;
     ctx.save();
     ctx.beginPath(); ctx.rect(top.x, top.y, top.w, top.h); ctx.clip();
 
-    // 햇빛
-    const sg = ctx.createLinearGradient(right - 90, 0, right, 0);
-    sg.addColorStop(0, 'rgba(255,196,80,0)'); sg.addColorStop(1, 'rgba(255,200,90,.45)');
-    ctx.fillStyle = sg; ctx.fillRect(right - 90, top.y, 90, top.h);
-    ctx.strokeStyle = 'rgba(255,214,110,.85)'; ctx.fillStyle = 'rgba(255,214,110,.85)'; ctx.lineWidth = 2.5;
+    // 태양 (오른쪽 가장자리에 걸친 큰 공) + 지구 쪽으로 흘러오는 햇빛
+    const sunX = right + 128, sunR = 178;
+    D.glow(sunX, cy, sunR * 2.1, '#ffb21e', 0.3);
+    const sgr = ctx.createRadialGradient(sunX - sunR * 0.55, cy - sunR * 0.15, sunR * 0.1, sunX, cy, sunR);
+    sgr.addColorStop(0, '#fffbe0'); sgr.addColorStop(0.45, '#ffd24a'); sgr.addColorStop(1, '#ff8a1e');
+    ctx.fillStyle = sgr; circle(ctx, sunX, cy, sunR); ctx.fill();
+    D.glow(sunX, cy, sunR * (1.3 + (REDUCE ? 0 : 0.05 * Math.sin(t * 1.4))), '#ffe08a', 0.2);
+    const rayEnd = cx + RE + 8, rg = ctx.createLinearGradient(right - 58, 0, rayEnd, 0);
+    rg.addColorStop(0, 'rgba(255,214,110,.85)'); rg.addColorStop(1, 'rgba(255,214,110,0)');
+    ctx.strokeStyle = rg; ctx.lineWidth = 2.2; ctx.lineCap = 'butt'; ctx.setLineDash([14, 22]); ctx.lineDashOffset = REDUCE ? 0 : -(t * 46);
+    ctx.fillStyle = 'rgba(255,214,110,.9)';
     for (let dy = -180; dy <= 180; dy += 60) {
-      const y = cy + dy, x0 = right - 5, x1 = right - 34;
+      const y = cy + dy;
       if (y < top.y + 48 || y > top.y + top.h - 14) continue;
-      ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1 + 6, y); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(right - 58, y); ctx.lineTo(rayEnd, y); ctx.stroke();
+    }
+    ctx.setLineDash([]); ctx.lineDashOffset = 0;
+    for (let dy = -180; dy <= 180; dy += 60) {
+      const y = cy + dy, x1 = right - 96;
+      if (y < top.y + 48 || y > top.y + top.h - 14) continue;
       ctx.beginPath(); ctx.moveTo(x1, y); ctx.lineTo(x1 + 9, y - 5); ctx.lineTo(x1 + 9, y + 5); ctx.closePath(); ctx.fill();
     }
 
-    // 궤도
+    // 궤도 (화살표가 천천히 공전 방향으로 흘러가요)
     ctx.setLineDash([3, 6]); ctx.strokeStyle = 'rgba(160,190,255,.45)'; ctx.lineWidth = 1.5;
     circle(ctx, cx, cy, R); ctx.stroke(); ctx.setLineDash([]);
     ctx.fillStyle = 'rgba(170,200,255,.75)';
     for (let k = 0; k < 4; k++) {
-      const a = (22.5 + 90 * k) * DEG, px = cx + R * Math.cos(a), py = cy - R * Math.sin(a);
+      const a = (22.5 + 90 * k + (REDUCE ? 0 : (t * 7) % 90)) * DEG, px = cx + R * Math.cos(a), py = cy - R * Math.sin(a);
       const tx = -Math.sin(a), ty = -Math.cos(a), nx = Math.cos(a), ny = -Math.sin(a);
       ctx.beginPath();
       ctx.moveTo(px + tx * 8, py + ty * 8);
@@ -339,14 +466,14 @@
 
     // 지구의 그림자 (반그림자 → 본그림자)
     const far = cx - top.x;
-    ctx.fillStyle = 'rgba(0,0,0,.32)'; cone(ctx, cx, cy, RE, 1, far); ctx.fill();
-    ctx.fillStyle = 'rgba(0,0,0,.62)'; cone(ctx, cx, cy, RE, -1, far); ctx.fill();
+    shadowFill(ctx, cx, cy, RE, 1, far, 0.34, 0.16);
+    shadowFill(ctx, cx, cy, RE, -1, far, 0.66, 0.5);
     // 달의 그림자 (기울기 때문에 지구를 비껴가면 흐리게)
-    const tz = Math.abs(tiltZ(S.theta)), fade = tiltOn() && Math.cos(S.theta * DEG) > 0 && tz > RE ? 0.45 : 1;
-    ctx.fillStyle = 'rgba(0,0,0,' + 0.32 * fade + ')'; cone(ctx, m.x, m.y, RM, 1, 2 * R); ctx.fill();
-    ctx.fillStyle = 'rgba(0,0,0,' + 0.7 * fade + ')'; cone(ctx, m.x, m.y, RM, -1, 2 * R); ctx.fill();
+    const fade = S.shFade;
+    shadowFill(ctx, m.x, m.y, RM, 1, 2 * R, 0.34 * fade, 0.12 * fade);
+    shadowFill(ctx, m.x, m.y, RM, -1, 2 * R, 0.72 * fade, 0.55 * fade);
 
-    drawEarth(ctx, L, cx, cy, RE);
+    drawEarth(ctx, L, cx, cy, RE, t);
     // 지구에 생긴 달의 그림자
     if (st.Ms.pen) {
       ctx.save(); circle(ctx, cx, cy, RE); ctx.clip();
@@ -359,27 +486,30 @@
       [['A', OBS.A, st.A], ['B', OBS.B, st.B]].forEach(([k, o, v]) => {
         const px = cx + o.x, py = cy - o.y, ang = Math.atan2(o.y, o.x);
         const lx = cx + (RE + 14 * fs) * Math.cos(ang), ly = cy - (RE + 14 * fs) * Math.sin(ang);
+        if (v.cover > 0.01) D.glow(lx, ly, 26 * fs, v.total ? '#fb7185' : '#fb923c', 0.55);
         circle(ctx, px, py, 3.5); ctx.fillStyle = '#fff'; ctx.fill();
         ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = 1.2;
         ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(lx - 6 * Math.cos(ang), ly + 6 * Math.sin(ang)); ctx.stroke();
-        circle(ctx, lx, ly, 10 * fs); ctx.fillStyle = v.total ? '#e11d48' : v.cover > 0.01 ? '#f97316' : 'rgba(14,30,70,.92)'; ctx.fill();
-        ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+        D.sphere(lx, ly, 10 * fs, v.total ? '#e11d48' : v.cover > 0.01 ? '#f97316' : '#16275a', { outline: '#fff', outlineWidth: 1.5 });
         ctx.fillStyle = '#fff'; ctx.font = fnt(L, 13, 'bold'); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText(k, lx, ly + 0.5); ctx.textBaseline = 'alphabetic';
       });
     }
 
-    // 달
-    if (S.dragging || !S.interacted) {
-      const rr = RM + (S.dragging ? 9 : 8 + 2 * Math.sin(t * 4));
-      ctx.setLineDash(S.dragging ? [] : [4, 4]);
-      ctx.strokeStyle = 'rgba(255,255,255,.65)'; ctx.lineWidth = 2;
-      circle(ctx, m.x, m.y, rr); ctx.stroke(); ctx.setLineDash([]);
+    // 달 (끌면 위로 번쩍 들리고, 일직선 자리에 닿으면 찰칵 달라붙어요)
+    if (!S.interacted && !S.dragging) D.ring(m.x, m.y, RM + 11, REDUCE ? 0 : t, { color: '#ffffff', width: 2, speed: 1 });
+    if (S.snapT != null && !REDUCE) {
+      const k = (SciSim.time() - S.snapT) / 0.55;
+      if (k < 1) {
+        const sp = moonPos(L, S.snapA);
+        ctx.strokeStyle = 'rgba(94,234,212,' + 0.9 * (1 - k) + ')'; ctx.lineWidth = 3;
+        circle(ctx, sp.x, sp.y, RM + 6 + 24 * ease.outCubic(k)); ctx.stroke();
+      }
     }
-    drawMoonTop(ctx, m.x, m.y, RM);
+    drawMoonTop(ctx, m.x, m.y, mr, 1, S.lift.value);
     if (st.Lv.pen > 0.01) {
       // 지구의 그림자 속에 들어간 달
-      ctx.save(); circle(ctx, m.x, m.y, RM); ctx.clip();
+      ctx.save(); circle(ctx, m.x, m.y, mr); ctx.clip();
       ctx.fillStyle = 'rgba(0,0,0,.35)'; cone(ctx, cx, cy, RE, 1, far); ctx.fill();
       if (st.Lv.umb > 0.01) { ctx.fillStyle = 'rgba(150,40,16,.85)'; cone(ctx, cx, cy, RE, -1, far); ctx.fill(); }
       ctx.restore();
@@ -391,10 +521,10 @@
       const mid = ((S.target.lo + S.target.hi) / 2) * DEG;
       pill(ctx, '🎯 이쯤!', cx + (R - 52) * Math.cos(mid), cy - (R - 52) * Math.sin(mid), { bg: 'rgba(16,128,86,.92)', font: fnt(L, 13, 'bold'), h: Math.round(22 * fs) });
     }
-    if (!S.spots) { const a = S.theta * DEG, rr = R + 26 * fs; pill(ctx, '달', cx + rr * Math.cos(a), cy - rr * Math.sin(a), { h: ph, pad: pp, font: fnt(L, 13, 'bold'), bg: 'rgba(255,240,190,.92)', color: '#3b3000' }); }
+    if (!S.spots) { const a = S.thV * DEG, rr = R + 26 * fs; pill(ctx, '달', cx + rr * Math.cos(a), cy - rr * Math.sin(a), { h: ph, pad: pp, font: fnt(L, 13, 'bold'), bg: 'rgba(255,240,190,.92)', color: '#3b3000' }); }
     pill(ctx, '지구', cx, cy + RE + 10 + ph / 2, { h: ph, pad: pp, font: fnt(L, 13, 'bold'), color: '#d6e6ff' });
     pill(ctx, '지구의 그림자', cx - 128 * fs, cy + 50 * fs, { h: ph, pad: pp, font: fnt(L, 13, 'bold'), color: '#c3cdea', bg: 'rgba(6,10,26,.66)' });
-    if (Math.cos(S.theta * DEG) > 0.35) {
+    if (Math.cos(S.thV * DEG) > 0.35) {
       const lx = m.x - 70, ly = m.y + (m.y > cy ? 32 : -32) * fs;
       pill(ctx, '달의 그림자', lx, ly, { h: ph, pad: pp, font: fnt(L, 13, 'bold'), color: '#ffd1d1', bg: 'rgba(6,10,26,.72)' });
     }
@@ -406,7 +536,7 @@
     const sw = ctx.measureText('태양 빛').width;
     ctx.fillText('태양 빛', right - 8, M.y + 25 * fs);
     sunIcon(ctx, right - 8 - sw - 12 * fs, M.y + 20 * fs, 4.5 * fs);
-    if (tiltOn() && (Math.abs(signed(S.theta)) < 20 || Math.abs(signed(S.theta - 180)) < 20)) {
+    if (tiltOn() && (Math.abs(signed(S.thV)) < 20 || Math.abs(signed(S.thV - 180)) < 20)) {
       pill(ctx, '📐 실제로는 그림자의 위·아래로 비껴가요', M.x + 10, top.y + top.h - 16 * fs, { align: 'left', h: Math.round(26 * fs), font: fnt(L, 13, 'bold'), bg: 'rgba(36,70,140,.92)' });
     }
     if (!S.interacted && !S.dragging) {
@@ -444,44 +574,46 @@
   }
   function drawSide(ctx, L, st, t) {
     const B = L.strip, fs = L.fs, ey = B.y + B.h * 0.56, x0 = L.cx;
-    const P = (th) => ({ x: x0 + R * Math.cos(th * DEG), y: ey - KS * tiltZ(th) });
+    const P = (th) => ({ x: x0 + R * Math.cos(th * DEG), y: ey - KS * tiltZ(th, S.tiltA) });
+    const D = Dof(ctx);
     // 태양
     const sx = B.x + B.w + 34, sr = 62;
-    const sg = ctx.createRadialGradient(sx, ey, sr * 0.6, sx, ey, sr * 1.5);
-    sg.addColorStop(0, 'rgba(255,214,110,.5)'); sg.addColorStop(1, 'rgba(255,214,110,0)');
-    ctx.fillStyle = sg; circle(ctx, sx, ey, sr * 1.5); ctx.fill();
-    ctx.fillStyle = '#ffc23a'; circle(ctx, sx, ey, sr); ctx.fill();
+    D.glow(sx, ey, sr * 1.9, '#ffb21e', 0.4 + (REDUCE ? 0 : 0.05 * Math.sin(t * 1.4)));
+    const sgr = ctx.createRadialGradient(sx - sr * 0.5, ey - sr * 0.2, sr * 0.1, sx, ey, sr);
+    sgr.addColorStop(0, '#fffbe0'); sgr.addColorStop(0.45, '#ffd24a'); sgr.addColorStop(1, '#ff8a1e');
+    ctx.fillStyle = sgr; circle(ctx, sx, ey, sr); ctx.fill();
     // 지구 공전 궤도면
     ctx.setLineDash([6, 5]); ctx.strokeStyle = 'rgba(125,211,252,.9)'; ctx.lineWidth = 1.5;
     ctx.beginPath(); ctx.moveTo(B.x + 4, ey); ctx.lineTo(sx - sr - 4, ey); ctx.stroke(); ctx.setLineDash([]);
     // 지구의 그림자 (세로 축척 KS)
     const far = x0 - B.x;
-    const band = (sgn, a) => {
+    const band = (sgn, a, a2) => {
       const w = Math.max(0, RE + sgn * far * AS) * KS;
-      ctx.fillStyle = 'rgba(0,0,0,' + a + ')';
+      const bg = ctx.createLinearGradient(x0, 0, B.x, 0);
+      bg.addColorStop(0, 'rgba(0,0,0,' + a + ')'); bg.addColorStop(1, 'rgba(0,0,0,' + a2 + ')');
+      ctx.fillStyle = bg;
       ctx.beginPath(); ctx.moveTo(x0, ey - RE * KS); ctx.lineTo(B.x, ey - w); ctx.lineTo(B.x, ey + w); ctx.lineTo(x0, ey + RE * KS); ctx.closePath(); ctx.fill();
     };
-    band(1, 0.3); band(-1, 0.55);
+    band(1, 0.34, 0.18); band(-1, 0.6, 0.45);
     // 달의 공전 궤도
     const p0 = P(0), p180 = P(180);
     ctx.strokeStyle = 'rgba(252,165,165,.95)'; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(p180.x, p180.y); ctx.lineTo(p0.x, p0.y); ctx.stroke();
     // 달과 그림자
-    const mp = P(S.theta), c = Math.cos(S.theta * DEG), rm = RM * KS;
+    const mp = P(S.thV), c = Math.cos(S.thV * DEG), rm = RM * KS;
     if (c > 0.3) {
       ctx.fillStyle = 'rgba(0,0,0,.6)';
       ctx.beginPath(); ctx.moveTo(mp.x, mp.y - rm); ctx.lineTo(mp.x - R - 10, mp.y); ctx.lineTo(mp.x, mp.y + rm); ctx.closePath(); ctx.fill();
     }
-    const behind = Math.sin(S.theta * DEG) > 0.05;
+    const behind = Math.sin(S.thV * DEG) > 0.05;
     const moon = () => {
       drawMoonTop(ctx, mp.x, mp.y, rm);
       if (st.lunar) { ctx.fillStyle = 'rgba(170,50,20,.8)'; circle(ctx, mp.x, mp.y, rm); ctx.fill(); }
     };
     if (behind) moon();
     const er = RE * KS;
-    const og = ctx.createRadialGradient(x0 + er * 0.4, ey - er * 0.2, er * 0.1, x0, ey, er);
-    og.addColorStop(0, '#6cc0ff'); og.addColorStop(1, '#1f5fb6');
-    ctx.fillStyle = og; circle(ctx, x0, ey, er); ctx.fill();
+    D.glow(x0, ey, er * 2, '#6cb8ff', 0.35);
+    litSphere(ctx, x0, ey, er, C_EARTH);
     ctx.save(); circle(ctx, x0, ey, er); ctx.clip(); ctx.fillStyle = 'rgba(3,7,22,.65)'; ctx.fillRect(x0 - er - 1, ey - er - 1, er + 1, 2 * er + 2); ctx.restore();
     if (st.Ms.pen) { ctx.strokeStyle = 'rgba(255,110,110,' + (0.55 + 0.4 * Math.sin(t * 6)) + ')'; ctx.lineWidth = 2; circle(ctx, x0 + er * 0.75, ey, 5); ctx.stroke(); }
     if (!behind) moon();
@@ -498,7 +630,7 @@
     };
     leg(B.y + 24 * fs, 'rgba(125,211,252,.95)', true, '지구 공전 궤도면');
     leg(B.y + 43 * fs, 'rgba(252,165,165,.95)', false, '달 공전 궤도');
-    const k = phaseKey(S.theta);
+    const k = phaseKey(S.theta);   // 글자는 실제 값 기준
     let s = ['달을 삭이나 망 위치에 놓아 보세요', '#c7d3f2'];
     if (st.solar || st.Ms.pen) s = ['☀️ 달의 그림자가 지구에 닿아요 → 일식', '#fca5a5'];
     else if (st.lunar) s = ['🌕 달이 지구 그림자 속에 → 월식', '#fca5a5'];
@@ -522,7 +654,7 @@
   }
 
   /* ---------- 오른쪽 창 ①: 낮인 곳에서 본 태양 (필터) ---------- */
-  function drawSunTile(ctx, L, x, y, w, h, v, label) {
+  function drawSunTile(ctx, L, x, y, w, h, v, label, t) {
     const fs = L.fs, f = Math.pow(v.cover, 3);
     ctx.save();
     roundRect(ctx, x, y, w, h, 12); ctx.clip();
@@ -532,16 +664,28 @@
       const cg = ctx.createRadialGradient(cx, cy, rs * 0.95, cx, cy, rs * 2.1);
       cg.addColorStop(0, 'rgba(255,255,255,.9)'); cg.addColorStop(0.35, 'rgba(220,235,255,.35)'); cg.addColorStop(1, 'rgba(220,235,255,0)');
       ctx.fillStyle = cg; circle(ctx, cx, cy, rs * 2.1); ctx.fill();
+      // 코로나: 달 둘레로 길게 뻗은 은백색 빛줄기
+      ctx.save(); ctx.translate(cx, cy); ctx.rotate(REDUCE ? 0 : t * 0.04);
+      for (let i = 0; i < 12; i++) {
+        const a = i * Math.PI / 6 + (i % 2) * 0.12, len = rs * (1.8 + 0.5 * ((i * 7) % 5) / 4 + (REDUCE ? 0 : 0.08 * Math.sin(t * 1.3 + i)));
+        const gg = ctx.createLinearGradient(Math.cos(a) * rs, Math.sin(a) * rs, Math.cos(a) * len, Math.sin(a) * len);
+        gg.addColorStop(0, 'rgba(235,242,255,.6)'); gg.addColorStop(1, 'rgba(235,242,255,0)');
+        ctx.strokeStyle = gg; ctx.lineWidth = rs * 0.22; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(Math.cos(a) * rs, Math.sin(a) * rs); ctx.lineTo(Math.cos(a) * len, Math.sin(a) * len); ctx.stroke();
+      }
+      ctx.restore();
     } else {
       const gg = ctx.createRadialGradient(cx, cy, rs * 0.9, cx, cy, rs * 1.5);
       gg.addColorStop(0, 'rgba(255,150,40,' + (0.45 * (1 - v.cover) + 0.1) + ')'); gg.addColorStop(1, 'rgba(255,150,40,0)');
       ctx.fillStyle = gg; circle(ctx, cx, cy, rs * 1.5); ctx.fill();
     }
     const g = ctx.createRadialGradient(cx - rs * 0.2, cy - rs * 0.2, rs * 0.1, cx, cy, rs);
-    g.addColorStop(0, '#ffd27a'); g.addColorStop(0.75, '#ff9a1f'); g.addColorStop(1, '#e8620c');
+    g.addColorStop(0, '#ffe7a3'); g.addColorStop(0.6, '#ffa629'); g.addColorStop(1, '#e8620c');
     ctx.fillStyle = g; circle(ctx, cx, cy, rs); ctx.fill();
     if (v.near) {
-      ctx.fillStyle = '#07080c'; circle(ctx, cx + v.ox * rs, cy + v.oy * rs, rs * v.k); ctx.fill();
+      const mx = cx + v.ox * rs, my = cy + v.oy * rs, mrr = rs * v.k;
+      litSphere(ctx, mx, my, mrr, ['#1b1e2a', '#08090d', '#020203'], 0.5, -0.6);
+      if (v.cover > 0.01 && !v.total) { ctx.strokeStyle = 'rgba(255,190,110,.35)'; ctx.lineWidth = 1.5; circle(ctx, mx, my, mrr); ctx.stroke(); }
     }
     ctx.restore();
     roundRect(ctx, x, y, w, h, 12); ctx.strokeStyle = 'rgba(255,190,120,.35)'; ctx.lineWidth = 1.2; ctx.stroke();
@@ -578,9 +722,9 @@
     const ty = P.y + 60 * fs, th = P.h - 60 * fs - 64 * fs;
     if (on('places')) {
       const w = (P.w - 30) / 2;
-      drawSunTile(ctx, L, P.x + 10, ty, w, th, st.A, 'A 지역');
-      drawSunTile(ctx, L, P.x + 20 + w, ty, w, th, st.B, 'B 지역');
-    } else drawSunTile(ctx, L, P.x + 10, ty, P.w - 20, th, st.A, '');
+      drawSunTile(ctx, L, P.x + 10, ty, w, th, st.A, 'A 지역', t);
+      drawSunTile(ctx, L, P.x + 20 + w, ty, w, th, st.B, 'B 지역', t);
+    } else drawSunTile(ctx, L, P.x + 10, ty, P.w - 20, th, st.A, '', t);
     ctx.textAlign = 'center'; ctx.font = fnt(L, 13); ctx.fillStyle = '#c7d3f2';
     const note = on('places') ? (st.solar ? '본그림자 → 개기, 반그림자 → 부분' : '지역마다 보이는 모습이 달라요') : (st.solar ? '달이 태양을 가렸어요!' : '태양이 가려지면 낮이 어두워져요');
     ctx.fillText(note, P.x + P.w / 2, P.y + P.h - 38 * fs);
@@ -597,12 +741,10 @@
     ctx.save();
     panelBase(ctx, L, P, t, '🌙 밤인 곳에서 본 달', '지구의 밤 쪽에서 바라본 모습');
     const dx = P.x + P.w / 2, dy = P.y + 138 * fs, dr = 56 * fs;
-    if (Lv.total) {
-      const gg = ctx.createRadialGradient(dx, dy, dr, dx, dy, dr * 1.4);
-      gg.addColorStop(0, 'rgba(220,80,40,.35)'); gg.addColorStop(1, 'rgba(220,80,40,0)');
-      ctx.fillStyle = gg; circle(ctx, dx, dy, dr * 1.4); ctx.fill();
-    }
-    drawPhase(ctx, dx, dy, dr, S.theta);
+    const lfd = (1 - Math.cos(S.thV * DEG)) / 2;
+    if (Lv.total) Dof(ctx).glow(dx, dy, dr * (1.6 + (REDUCE ? 0 : 0.06 * Math.sin(t * 2))), '#dc5028', 0.42);
+    else if (lfd > 0.02) Dof(ctx).glow(dx, dy, dr * 1.6, '#fff0b8', 0.28 * lfd);
+    drawPhase(ctx, dx, dy, dr, S.thV, { craters: true });
     if (Lv.pen > 0.01) {
       ctx.save(); circle(ctx, dx, dy, dr); ctx.clip();
       const sx = dx + Lv.ox * dr, sy = dy + Lv.oy * dr;
@@ -614,7 +756,7 @@
       }
       ctx.restore();
     }
-    let name = PH[phaseKey(S.theta)], sub = phaseKey(S.theta) === 'new' ? '태양 쪽에 있어 밤에는 보이지 않아요' : '태양 빛을 반사해 밝게 보여요', col = '#fff';
+    let name = PH[phaseKey(S.thV)], sub = phaseKey(S.thV) === 'new' ? '태양 쪽에 있어 밤에는 보이지 않아요' : '태양 빛을 반사해 밝게 보여요', col = '#fff';
     if (st.lunar) {
       name = on('lunar') ? (Lv.total ? '개기 월식' : '부분 월식') : '그림자 속 달';
       sub = Lv.total ? '지구 그림자 속에서 붉게 보여요' : '달이 지구 그림자에 가려져요'; col = '#ffb4a2';
@@ -649,15 +791,14 @@
     const ctx = v.ctx, M = L.main;
     ctx.save();
     ctx.beginPath(); ctx.rect(M.x, M.y, M.w, M.h); ctx.clip();
-    const bg = ctx.createRadialGradient(L.cx, L.cy, 20, L.cx, L.cy, 360);
-    bg.addColorStop(0, '#17264f'); bg.addColorStop(0.6, '#0e1838'); bg.addColorStop(1, '#070d1f');
-    ctx.fillStyle = bg; ctx.fillRect(M.x, M.y, M.w, M.h);
-    drawStars(ctx, L.starsMain, t, 1);
+    spaceBg(ctx, L, M, L.cx, L.cy, t);
     ctx.restore();
     drawTop(ctx, L, st, t);
     drawStrip(ctx, L, st, t);
     drawSunPanel(ctx, L, st, t);
     drawMoonPanel(ctx, L, st, t);
+    L.fx.draw(ctx);
+    drawWin(ctx, L);
   }
 
   /* ---------- 입력 ---------- */
@@ -678,8 +819,10 @@
       return Math.abs(Math.hypot(p.x - L.cx, p.y - L.cy) - R) < 32;
     };
     const dragTo = (p) => {
-      let a = norm(Math.atan2(L.cy - p.y, p.x - L.cx) / DEG);
-      [0, 180].forEach((s) => { if (Math.abs(signed(a - s)) < SNAP) a = s; });
+      let a = norm(Math.atan2(L.cy - p.y, p.x - L.cx) / DEG), snapped = null;
+      [0, 180].forEach((s) => { if (Math.abs(signed(a - s)) < SNAP) { a = s; snapped = s; } });
+      if (snapped !== null && S.snapped !== snapped) { S.snapT = SciSim.time(); S.snapA = snapped; Sound.tick(); }
+      S.snapped = snapped;
       setTheta(a);
     };
     SciSim.pointer(v, {
@@ -691,7 +834,7 @@
         return true;
       },
       move: dragTo,
-      up() { S.dragging = false; v.canvas.style.cursor = ''; },
+      up() { S.dragging = false; S.snapped = null; v.canvas.style.cursor = ''; },
     });
     return (p) => hitMoon(p) || onOrbit(p);
   }
@@ -701,6 +844,7 @@
     const v = SciSim.stage($(k === 'wide' ? '#cvWide' : '#cvTall'), { width: L.vw, height: L.vh, background: '#070d1f' });
     L.starsMain = makeStars(L.main, 80, k === 'wide' ? 7 : 11);
     L.stars = { '☀️ 낮인 곳에서 본 태양': makeStars(L.sunP, 20, 23), '🌙 밤인 곳에서 본 달': makeStars(L.moonP, 30, 29) };
+    L.fx = new SciSim.Particles(); L.win = null;
     const hits = attachPointer(v, L);
     if (k === 'tall') {
       v.canvas.style.touchAction = 'pan-y';
@@ -714,7 +858,7 @@
 
   /* ---------- 퀴즈 그림 (SVG) ---------- */
   function svgEarth(x, y, r) {
-    return '<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="#3b8fe0"/><path d="M' + x + ',' + (y - r) + ' A' + r + ',' + r + ' 0 0 0 ' + x + ',' + (y + r) + ' Z" fill="#040a1f" opacity=".72"/>';
+    return '<defs><radialGradient id="fgEarth" cx="75%" cy="35%" r="80%"><stop offset="0" stop-color="#9bd6ff"/><stop offset=".5" stop-color="#2f86e0"/><stop offset="1" stop-color="#10366f"/></radialGradient></defs><circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="url(#fgEarth)"/><path d="M' + x + ',' + (y - r) + ' A' + r + ',' + r + ' 0 0 0 ' + x + ',' + (y + r) + ' Z" fill="#040a1f" opacity=".72"/>';
   }
   function svgMoonTop(x, y, r) {
     return '<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="#3a4258"/><path d="M' + x + ',' + (y - r) + ' A' + r + ',' + r + ' 0 0 1 ' + x + ',' + (y + r) + ' Z" fill="#fff6d2"/>';
@@ -979,21 +1123,57 @@
 
   /* ---------- 시작 ---------- */
   const tone = () => Sound.tone(880, 0.12, 'triangle', 0.08);
-  let lastSolar = false, lastLunar = false;
+  const WARM = ['#fff7d6', '#ffd36b', '#fb923c', '#fda4af'];
+  const winPoint = (L) => moonPos(L);
+  function onWin() {
+    fxBurst(winPoint);
+    winPop((L) => { const p = winPoint(L); return { x: p.x + 30 * L.fs, y: p.y - 30 * L.fs }; });
+  }
+  let lastSolar = false, lastLunar = false, STV = ST, frameMs = 0;
   SciSim.loop((dt, t) => {
     ST = state();
-    if (S.spots) { const k = spotAt(S.theta); if (k >= 0 && !S.visit.has(k)) { S.visit.add(k); tone(); } }
+    // 화면에 그리는 값이 실제 값을 부드럽게 따라가요
+    S.thV = REDUCE ? S.theta : angApproach(S.thV, S.theta, dt, 16);
+    S.tiltA = REDUCE ? (tiltOn() ? 1 : 0) : approach(S.tiltA, tiltOn() ? 1 : 0, dt, 5);
+    S.lift.target = S.dragging ? 1.55 : 1; S.lift.update(dt);
+    const tzv = Math.abs(tiltZ(S.thV, S.tiltA));
+    S.shFade = approach(S.shFade, (S.tiltA > 0.5 && Math.cos(S.thV * DEG) > 0 && tzv > RE) ? 0.45 : 1, dt, 9);
+    STV = state(S.thV, S.tiltA);
+    if (S.spots) {
+      const k = spotAt(S.theta);
+      if (k >= 0 && !S.visit.has(k)) {
+        S.visit.add(k); S.spotT[k] = SciSim.time(); tone();
+        fxBurst((L) => { const a = SPOTS[k] * DEG; return { x: L.cx + (R + 34) * Math.cos(a), y: L.cy - (R + 34) * Math.sin(a) }; }, { count: 14, speed: 120, size: 3, gravity: 40, life: 0.7 });
+      }
+    }
     if (S.align) {
       const key = Math.abs(signed(S.theta)) <= 1 ? 'sme' : Math.abs(signed(S.theta - 180)) <= 1 ? 'sem' : null;
       if (key === S.holdKey) S.holdT += dt; else { S.holdKey = key; S.holdT = 0; }
-      if (key && S.holdT >= 0.3 && !S.lined.has(key)) { S.lined.add(key); tone(); }
+      if (key && S.holdT >= 0.3 && !S.lined.has(key)) { S.lined.add(key); tone(); fxBurst(winPoint, { count: 12, speed: 110, size: 3, gravity: 40, life: 0.7 }); }
     }
     if (S.sideTask && tiltOn()) {
       const k = phaseKey(S.theta);
-      if ((k === 'full' || k === 'new') && !S.seen.has(k) && !S.dragging) { S.seen.add(k); tone(); }
+      if ((k === 'full' || k === 'new') && !S.seen.has(k) && !S.dragging) { S.seen.add(k); tone(); fxBurst(winPoint, { count: 12, speed: 110, size: 3, gravity: 40, life: 0.7 }); }
     }
-    if (ST.solar !== lastSolar) { if (ST.solar) Sound.tone(330, 0.35, 'sine', 0.08); lastSolar = ST.solar; }
-    if (ST.lunar !== lastLunar) { if (ST.lunar) Sound.tone(262, 0.35, 'sine', 0.08); lastLunar = ST.lunar; }
-    views.forEach(({ v, L }) => { if (v.canvas.offsetWidth > 0) draw(v, L, ST, t); });
+    if (ST.solar !== lastSolar) {
+      if (ST.solar) { Sound.tone(330, 0.35, 'sine', 0.08); fxBurst((L) => ({ x: L.cx + RE * 0.85, y: L.cy }), { count: 14, speed: 120, size: 3, gravity: 0, life: 0.8, colors: WARM }); }
+      lastSolar = ST.solar;
+    }
+    if (ST.lunar !== lastLunar) {
+      if (ST.lunar) { Sound.tone(262, 0.35, 'sine', 0.08); fxBurst(winPoint, { count: 14, speed: 100, size: 3, gravity: 0, life: 0.8, colors: ['#fecaca', '#fb7185', '#f97354', '#fff7d6'] }); }
+      lastLunar = ST.lunar;
+    }
+    watchGame(onWin);
+    fxStep(dt);
+    const t0 = performance.now();
+    views.forEach(({ v, L }) => { if (v.canvas.offsetWidth > 0) draw(v, L, STV, t); });
+    frameMs += (performance.now() - t0 - frameMs) * 0.05;
   });
+
+  /* ---------- 점검용 ---------- */
+  window.__sim = {
+    S, frameMs: () => frameMs, game: () => game, setTheta, setTilt, moonPos, views, norm, phaseKey, state: () => ST,
+    active() { return views.find((q) => q.v.canvas.offsetWidth > 0) || views[0]; },
+    client(x, y) { const V = this.active(), r = V.v.canvas.getBoundingClientRect(); return { x: r.left + x * r.width / V.L.vw, y: r.top + y * r.height / V.L.vh }; },
+  };
 })();

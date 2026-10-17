@@ -1138,7 +1138,7 @@
     winPop((L) => { const p = winPoint(L); return { x: p.x + 30 * L.fs, y: p.y - 30 * L.fs }; });
   }
   S.dayV = dayTheta(S.day); S.selC = (S.day - 1) % 7; S.selR = Math.floor((S.day - 1) / 7);
-  let lastKey = phaseKey(S.theta);
+  let lastKey = phaseKey(S.theta), frameMs = 0;
   SciSim.loop((dt, t) => {
     if (S.playing) setTheta(S.theta + 30 * dt);
     // 화면에 그리는 값이 실제 값을 부드럽게 따라가요
@@ -1169,12 +1169,14 @@
     }
     watchGame(onWin);
     fxStep(dt);
+    const t0 = performance.now();
     views.forEach(({ v, L }) => { if (v.canvas.offsetWidth > 0) draw(v, L, t); });
+    frameMs += (performance.now() - t0 - frameMs) * 0.05;
   });
 
   /* ---------- 점검용 ---------- */
   window.__sim = {
-    S, game: () => game, setTheta, selectDay, moonPos, calGeo, panelGeo, views, norm, phaseKey,
+    S, frameMs: () => frameMs, game: () => game, setTheta, selectDay, moonPos, calGeo, panelGeo, views, norm, phaseKey,
     active() { return views.find((q) => q.v.canvas.offsetWidth > 0) || views[0]; },
     client(x, y) { const V = this.active(), r = V.v.canvas.getBoundingClientRect(); return { x: r.left + x * r.width / V.L.vw, y: r.top + y * r.height / V.L.vh }; },
   };
