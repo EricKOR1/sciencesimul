@@ -381,7 +381,7 @@
         return;
       }
       D.text(x + 12, y + 54, '힘 10 N · 힘의 방향', { size: 13 * FS, weight: 700, align: 'left', color: '#5d6879' });
-      D.text(x + 12, y + 74, '이동 거리 ' + f1(rec.d) + ' m', { size: 13 * FS, weight: 700, align: 'left', color: '#5d6879' });
+      D.text(x + 12, y + 74, (PHONE ? '힘 방향 이동 ' : '힘의 방향 이동 거리 ') + f1(rec.d) + ' m', { size: 13 * FS, weight: 700, align: 'left', color: '#5d6879' });
       D.text(x + 12, y + (PHONE ? 130 : 104), '일 = ' + fJ(rec.W) + ' J', { size: 19 * FS, weight: 800, align: 'left', color: rec.W > 0 ? C.work : '#475569' });
       ctx.restore();
     });
@@ -721,6 +721,8 @@
   }
   function setMass(v) {
     v = clamp(Math.round(v), 1, 5);
+    // 땅에 닿은 뒤 질량을 바꾸면 이전 낙하 결과(옛 질량)와 상자 표시가 어긋나므로 '들어 올리기' 상태로 돌아가요
+    if (v !== S.m && S.state === 'landed') { S.state = 'hold'; S.ghosts = []; S.v = 0; updateButtons(); }
     S.m = v; rangeM.set(v);
   }
   function drop() {
