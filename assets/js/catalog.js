@@ -2104,8 +2104,7 @@ window.SCI_CATALOG = {
                 "체세포분열",
                 "생식세포 형성",
                 "비교와 의미"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "m3-development",
