@@ -259,13 +259,13 @@
     D.shadow(() => { const gg = ctx.createLinearGradient(716, 0, 760, 0); gg.addColorStop(0, '#93a8c6'); gg.addColorStop(0.5, '#cbd5e1'); gg.addColorStop(1, '#7b8ba3'); ctx.fillStyle = gg; D.roundRect(716, 332, 44, 98, 14); ctx.fill(); }, { blur: 6, y: 3 });
     ctx.fillStyle = '#475569'; ctx.fillRect(732, 322, 12, 12); ctx.restore();
     D.text(738, 392, 'LPG', { size: 14, weight: 800, color: '#1e293b' });
-    pill(738, 450, 'LPG 가스통', { bg: '#fef3c7', color: '#92400e', border: '#fcd34d', size: 12.5 });
+    pill(738, 452, 'LPG 가스통', { bg: '#fef3c7', color: '#92400e', border: '#fcd34d', size: 12.5 });
     // 바닥에 고이는 LPG
     if (HM.gasLayer > 0.02) {
       const gl = ctx.createLinearGradient(0, FLOOR - 32, 0, FLOOR); gl.addColorStop(0, 'rgba(250,204,21,0)'); gl.addColorStop(1, 'rgba(250,204,21,' + 0.5 * HM.gasLayer + ')');
       ctx.fillStyle = gl; ctx.fillRect(560, FLOOR - 32, 230, 32);
       HM.gasP.forEach((q) => { ctx.fillStyle = 'rgba(234,179,8,' + (0.7 * HM.gasLayer) + ')'; ctx.beginPath(); ctx.arc(q.x, q.y, 3.2, 0, TAU); ctx.fill(); });
-      if (HM.gasLayer > 0.4) pill(676, 408 - 34, '무거운 가스는 바닥에 고여요', { bg: 'rgba(30,41,59,.84)', color: '#fff', border: null, size: 12.5 });
+      if (HM.gasLayer > 0.4) pill(676, 270, '무거운 가스는 바닥에 고여요 ↓', { bg: 'rgba(30,41,59,.84)', color: '#fff', border: null, size: 12.5 });
     }
     // 가스 경보기
     {
@@ -580,7 +580,7 @@
     { id: 'l', name: '동쪽 강가 마을회관', x: 660, y: 430, tag: '낮은 곳 · 바람이 불어가는 쪽' },
   ];
   const EV = { grid: null, h: null, gx: null, gy: null, c: null, c2: null, t: 0, st: 'idle', sel: null, selA: {}, pos: { x: EHOME.x, y: EHOME.y }, exp: 0, expA: 0, peaks: {}, shPeak: 0, result: '', msg: '', safe: false, tries: 0, parts: [], emit: 0, terr: null, shake: {}, path: null, dist: 0 };
-  const E_WSPD = 40, E_K = 9000, E_LEAK = 8, E_END = 20, E_Q = 110, E_DIFF = 0.35, E_SP = 62;
+  const E_WSPD = 40, E_K = 9000, E_LEAK = 8, E_END = 20, E_Q = 70, E_DIFF = 0.35, E_SP = 62;
   function initGasGrid() {
     EV.h = new Float32Array(GW * GH); EV.gx = new Float32Array(GW * GH); EV.gy = new Float32Array(GW * GH); EV.c = new Float32Array(GW * GH); EV.c2 = new Float32Array(GW * GH);
     for (let j = 0; j < GH; j++) for (let i = 0; i < GW; i++) EV.h[j * GW + i] = terrE(i * GC + GC / 2, j * GC + GC / 2);
@@ -667,7 +667,7 @@
   const gasImgCtx = gasImg.getContext('2d'); const gasData = gasImgCtx.createImageData(GW, GH);
   function drawGasLayer(arr) {
     for (let k = 0; k < GW * GH; k++) {
-      const v = arr[k], a = 0.86 * (1 - Math.exp(-4 * v)), t = clamp(v / 1.2, 0, 1), o = k * 4;
+      const v = arr[k], a = 0.86 * (1 - Math.exp(-4 * v)), t = clamp(v / 2, 0, 1), o = k * 4;
       gasData.data[o] = 250 - 20 * t; gasData.data[o + 1] = 215 - 175 * t; gasData.data[o + 2] = 40 - 10 * t; gasData.data[o + 3] = a * 255;
     }
     gasImgCtx.putImageData(gasData, 0, 0);
@@ -751,7 +751,7 @@
       ctx.fillStyle = '#e2e8f0'; D.roundRect(572, 168, 200, 12, 6); ctx.fill();
       const w = clamp(EV.expA / 12, 0, 1); ctx.beginPath(); D.roundRect(572, 168, 200, 12, 6); ctx.clip(); ctx.fillStyle = mixc('#22c55e', '#ef4444', w); ctx.fillRect(572, 168, 200 * w, 12);
       ctx.restore();
-      pill(784, 462, '유출 후 ' + Math.floor(EV.t) + '초', { bg: 'rgba(30,41,59,.84)', color: '#fff', border: null, size: 13, align: 'right' });
+      pill(784, 214, '유출 후 ' + Math.floor(EV.t) + '초', { bg: 'rgba(30,41,59,.84)', color: '#fff', border: null, size: 13, align: 'right' });
     }
     if (EV.st === 'done') {
       ctx.save(); ctx.fillStyle = EV.safe ? '#f0fdf4' : '#fff7ed'; ctx.strokeStyle = EV.safe ? '#22c55e' : '#fb923c'; ctx.lineWidth = 2.5; D.roundRect(290, 482, 494, 46, 14); ctx.fill(); ctx.stroke(); ctx.restore();
@@ -952,21 +952,21 @@
      ③ 홍수 대피 지도
      ========================================================= */
   const FH = (x, y) => {
-    const yr = 400 - 0.06 * x + 18 * Math.sin(x / 130);
+    const yr = 450 - 0.06 * x + 16 * Math.sin(x / 130);
     const d2 = (y - yr) * (y - yr);
     const gs = (cx, cy, sg, a) => a * Math.exp(-((x - cx) * (x - cx) + (y - cy) * (y - cy)) / (2 * sg * sg));
-    return clamp(0.52 - 0.22 * Math.exp(-d2 / (2 * 26 * 26)) - 0.14 * Math.exp(-d2 / (2 * 90 * 90)) + gs(590, 110, 110, 0.5) + gs(120, 110, 100, 0.3) - gs(360, 470, 28, 0.14), 0, 1.2);
+    return clamp(0.52 - 0.22 * Math.exp(-d2 / (2 * 26 * 26)) - 0.14 * Math.exp(-d2 / (2 * 90 * 90)) + gs(590, 110, 110, 0.5) + gs(120, 110, 100, 0.3) - gs(350, 455, 22, 0.07), 0, 1.2);
   };
   const FHOME = { x: 250, y: 360 };
   const FRT = [
-    { id: 'r1', name: '하천 둑길', icon: '🏞️', pts: [[250, 360], [330, 372], [450, 388], [560, 398], [650, 402]], dest: '하천 아래쪽 마을회관 (낮은 곳)' },
-    { id: 'r2', name: '지하차도 지름길', icon: '🚇', pts: [[250, 360], [280, 430], [350, 468], [440, 472], [530, 480]], dest: '건너편 역 (지하차도로)' },
+    { id: 'r1', name: '하천 둑길', icon: '🏞️', pts: [[250, 360], [330, 372], [450, 372], [560, 355], [650, 352]], dest: '하천 아래쪽 마을회관 (낮은 곳)' },
+    { id: 'r2', name: '지하차도 지름길', icon: '🚇', pts: [[250, 360], [285, 425], [350, 455], [440, 452], [530, 440]], dest: '건너편 역 (지하차도로)' },
     { id: 'r3', name: '언덕 위 학교', icon: '🏫', pts: [[250, 360], [268, 300], [330, 234], [440, 170], [560, 128]], dest: '언덕 위 학교 (높은 곳)' },
   ];
   FRT.forEach((r) => { let L = 0; r.seg = []; for (let i = 1; i < r.pts.length; i++) { const l = Math.hypot(r.pts[i][0] - r.pts[i - 1][0], r.pts[i][1] - r.pts[i - 1][1]); r.seg.push(l); L += l; } r.L = L; });
   const FL_SP = 56;
   const FLD = { sel: null, selA: {}, st: 'idle', t: 0, dist: 0, pos: { x: FHOME.x, y: FHOME.y }, wl: 0.2, wlA: 0.2, msg: '', safe: false, terr: null, wimg: null, wctx: null, wdata: null, hgrid: null, blockedAt: -1, shake: {} };
-  const WL0 = 0.2, WL_RATE = 0.045;
+  const WL0 = 0.18, WL_RATE = 0.04;
   FRT.forEach((r) => { FLD.selA[r.id] = 0; FLD.shake[r.id] = 0; });
   const FGW = 200, FGH = 135;
   function floodInit() {
@@ -1184,10 +1184,9 @@
     P.z.forEach((c) => { if (!c.drag) drawPosterCard(c, k); }); P.z.forEach((c) => { if (c.drag) drawPosterCard(c, k); });
     // 완성 도장
     if (P.stamp > 0.01) {
-      ctx.save(); ctx.translate(400, 214); ctx.rotate(-0.12); const sc = P.stamp; ctx.scale(sc, sc);
-      ctx.globalAlpha = 0.92; ctx.strokeStyle = '#16a34a'; ctx.lineWidth = 6; D.roundRect(-120, -34, 240, 68, 16); ctx.stroke();
-      ctx.fillStyle = 'rgba(240,253,244,.92)'; D.roundRect(-120, -34, 240, 68, 16); ctx.fill();
-      D.text(0, 9, '✔ 안전 포스터 완성!', { size: 22, weight: 800, color: '#15803d' });
+      ctx.save(); ctx.translate(676, 72); ctx.rotate(-0.08); const sc = P.stamp; ctx.scale(sc, sc);
+      ctx.globalAlpha = 0.97; ctx.fillStyle = 'rgba(240,253,244,.96)'; D.roundRect(-104, -19, 208, 38, 12); ctx.fill(); ctx.strokeStyle = '#16a34a'; ctx.lineWidth = 3.5; D.roundRect(-104, -19, 208, 38, 12); ctx.stroke();
+      D.text(0, 6, '✔ 안전 포스터 완성!', { size: 16, weight: 800, color: '#15803d' });
       ctx.restore();
     }
     if (isNew('poster')) newTag();
@@ -1398,7 +1397,7 @@
         setRO(1, '대피 자세', FR.posture ? '낮은 자세' : '서서 걷기'); setRO(2, '연기를 마신 정도', Math.round(FR.expA) + '<small>/ 100</small>'); setRO(3, '젖은 수건', FR.towel ? '쓰는 중' : '안 씀'); break;
       case 'evac': {
         const s = ESH.find((q) => q.id === EV.sel);
-        setRO(1, '고른 대피 장소', s ? s.name : '아직 안 골랐어요'); setRO(2, '장소의 특징', s ? s.tag.replace(' · ', ' / ') : '-'); setRO(3, '유출 후 시간', Math.floor(EV.t) + '<small>초</small>'); break;
+        setRO(1, '고른 대피 장소', s ? s.name : '아직 안 골랐어요'); setRO(2, '높이', s ? s.tag.split(' · ')[0] : '-'); setRO(3, '바람 기준', s ? s.tag.split(' · ')[1].replace('바람이 ', '').replace('바람의 ', '') : '-'); break;
       }
       case 'shake':
         setRO(1, '진동 세기', SK.I + '<small>/ 10 (예시)</small>'); setRO(2, '진동 상태', SK.st === 'run' ? '흔들리는 중' : SK.done ? '끝났어요' : '대기'); setRO(3, '살펴본 횟수', SK.ran + '<small>번</small>'); break;

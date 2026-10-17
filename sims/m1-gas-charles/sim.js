@@ -309,7 +309,7 @@
     ctx.fillStyle = 'rgba(255,255,255,.35)'; D.roundRect(x0 - 8, hy - 6, w + 16, 3, 1.5); ctx.fill();
     // 불꽃
     if (h > 0.08) {
-      const n = 5, size = 14 + 24 * h;
+      const n = 5, size = 24 + 26 * h;
       for (let i = 0; i < n; i++) {
         const fx = x0 + (i + 0.5) * w / n;
         D.flame(fx, hy - 6, size * (0.85 + 0.15 * Math.sin(t * 7 + i * 2)), t * (RM ? 0 : 1) + i * 1.3, {});
@@ -583,23 +583,25 @@
     }
     ctx.closePath();
   }
+  /* 공 → 돋보기 연결 (확대 원뿔) */
+  function drawCone(b) {
+    const L = LENS, r = L.r;
+    const dx = L.cx - b.x, dy = L.cy - b.y, d = Math.hypot(dx, dy);
+    if (d <= r + BALL_R) return;
+    const th = Math.atan2(dy, dx), be = Math.acos((BALL_R - r) / d);
+    const a1 = th + be, a2 = th - be;
+    const x1 = b.x + BALL_R * Math.cos(a1), y1 = b.y + BALL_R * Math.sin(a1), x2 = L.cx + r * Math.cos(a1), y2 = L.cy + r * Math.sin(a1);
+    const x3 = L.cx + r * Math.cos(a2), y3 = L.cy + r * Math.sin(a2), x4 = b.x + BALL_R * Math.cos(a2), y4 = b.y + BALL_R * Math.sin(a2);
+    ctx.save();
+    ctx.fillStyle = 'rgba(139,92,246,.10)';
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.lineTo(x3, y3); ctx.lineTo(x4, y4); ctx.closePath(); ctx.fill();
+    ctx.setLineDash([6, 5]); ctx.strokeStyle = 'rgba(124,58,237,.5)'; ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.moveTo(x4, y4); ctx.lineTo(x3, y3); ctx.stroke();
+    ctx.restore();
+  }
   /* 🔍 돋보기 창: 탁구공 속 입자를 크게 */
   function drawLens(b, t) {
     const L = LENS, r = L.r;
-    // 공 → 돋보기 연결 (확대 원뿔)
-    const dx = L.cx - b.x, dy = L.cy - b.y, d = Math.hypot(dx, dy);
-    if (d > r + BALL_R) {
-      const th = Math.atan2(dy, dx), be = Math.acos((BALL_R - r) / d);
-      const a1 = th + be, a2 = th - be;
-      ctx.save();
-      ctx.fillStyle = 'rgba(139,92,246,.09)';
-      ctx.beginPath();
-      ctx.moveTo(b.x + BALL_R * Math.cos(a1), b.y + BALL_R * Math.sin(a1)); ctx.lineTo(L.cx + r * Math.cos(a1), L.cy + r * Math.sin(a1));
-      ctx.lineTo(L.cx + r * Math.cos(a2), L.cy + r * Math.sin(a2)); ctx.lineTo(b.x + BALL_R * Math.cos(a2), b.y + BALL_R * Math.sin(a2));
-      ctx.closePath(); ctx.fill();
-      ctx.setLineDash([6, 5]); ctx.strokeStyle = 'rgba(124,58,237,.5)'; ctx.lineWidth = 1.6; ctx.stroke();
-      ctx.restore();
-    }
     ctx.save();
     D.shadow(() => { ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(L.cx, L.cy, r + 7, 0, TAU); ctx.fill(); }, { blur: 20, y: 6, color: 'rgba(40,30,90,.25)' });
     ctx.save();
@@ -656,6 +658,7 @@
     ctx.fillStyle = 'rgba(255,255,255,.5)'; ctx.fillRect(px0 + 4, wy - 1, pw - 8, 3);
     ctx.restore();
     // 공 (물 위에 있을 때 앞쪽 물을 다시 그려 잠긴 느낌)
+    drawCone(b);
     drawBall(b, t);
     if (b.inWater && !b.drag) {
       ctx.save(); ballPath(b.x, b.y, BALL_R + 3, b.dent); ctx.clip();

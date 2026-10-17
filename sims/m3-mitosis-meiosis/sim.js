@@ -127,6 +127,8 @@
     $('#tableCard').hidden = sc !== 'compare';
     $('#readouts').hidden = sc === 'compare';
     $('#tbLabel').textContent = TB_LABEL[sc];
+    if (sc === 'pair') $('#zoomNote').textContent = PR.done ? '여자와 남자의 성염색체를 눌러 비교해 보세요.' : '같은 모양·크기의 염색체끼리 끌어서 짝지어요. (4쌍을 맞추면 성염색체가 나타나요)';
+    else if (sc === 'zoom') syncZoomButtons();
     view.wrap.style.setProperty('--stage-bg', BG[sc]);
     view.resize();
   }
@@ -149,7 +151,7 @@
     'DNA는 이중 나선 구조예요. 단백질에 감겨 염색체를 이루어요.',
     '유전자는 유전 정보를 담고 있는 DNA의 특정 부분이에요. (눌러 보세요)',
   ];
-  const LV_RO = ['생물의 기본 단위', '유전 물질이 들어 있어요', 'DNA + 단백질', '유전 정보를 담은 물질', 'DNA의 특정 부분'];
+  const LV_RO = ['기본 단위', '유전 물질', 'DNA+단백질', '유전 정보', 'DNA 일부'];
   const zs = { zv: new Spring(0, { stiffness: 70, damping: 13 }), lv: 0, visited: [true, false, false, false, false], gene: [false, false, false, false], geneA: [0, 0, 0, 0], pulse: 0 };
   function zoomTo(k) {
     k = clamp(k, 0, 4);
@@ -238,7 +240,7 @@
       const L = 186;
       D.glow(cx, cy, 250, '#fde68a', 0.35);
       [-1, 1].forEach((s, i) => {
-        drawRod(cx, cy, Math.PI / 2 + s * 0.085, L, 0.5, 40, i ? '#f08a3c' : PAIRS[0].f, { cond: 1, flat: false });
+        drawRod(cx, cy, Math.PI / 2 + s * 0.11, L, 0.5, 38, i ? '#f08a3c' : PAIRS[0].f, { cond: 1, flat: false });
       });
       // DNA가 감겨 있는 모습(줄무늬)
       ctx.save(); ctx.strokeStyle = 'rgba(255,255,255,.42)'; ctx.lineWidth = 3; ctx.lineCap = 'round';
@@ -252,7 +254,8 @@
       D.arrow(cx + 190, cy - 100, cx + 40, cy - 70, { color: '#c2410c', width: 3, head: 11 });
       pill(cx + 215, cy - 112, '염색체', { bg: '#c2410c', size: 16, pad: 14 });
       pill(cx + 210, cy + 120, 'DNA + 단백질', { bg: '#1b2333', size: 14.5, pad: 12 });
-      pill(cx - 190, cy - 130, '염색 분체 2가닥', { bg: 'rgba(27,35,51,.85)', size: 13.5, pad: 11 });
+      D.arrow(cx - 150, cy - 112, cx - 24, cy - 84, { color: '#334155', width: 2.5, head: 9 });
+      pill(cx - 190, cy - 126, '염색 분체 2가닥', { bg: '#334155', size: 13.5, pad: 11 });
     } else if (k === 3) { // DNA와 단백질
       ctx.fillStyle = 'rgba(255,255,255,.55)'; D.roundRect(20, 110, 760, 360, 26); ctx.fill();
       const ph = t * 1.4;
@@ -349,7 +352,7 @@
   /* =========================================================
      장면 2 · 상동 염색체 짝 맞추기 + 성염색체
      ========================================================= */
-  const SLOT_X = [100, 250, 400, 550, 700], SLOT_Y = 410, HOME_Y = 170;
+  const SLOT_X = [152, 318, 482, 648], SLOT_Y = 410, HOME_Y = 170;
   const PR = { items: [], matched: 0, drag: null, done: false, msg: '', msgT: 0, sx: 0, sexA: 0, legend: 0 };
   const GREY = '#9aa6bb';
   function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
@@ -374,7 +377,7 @@
   function placeMatched(a, b, k) {
     [a, b].forEach((it, i) => {
       it.matched = true; it.slot = k;
-      it.x.target = SLOT_X[k] + (i ? 26 : -26); it.y.target = SLOT_Y - 4;
+      it.x.target = SLOT_X[k] + (i ? 26 : -26); it.y.target = SLOT_Y - 12;
       it.x.stiffness = it.y.stiffness = 120; it.x.damping = it.y.damping = 13;
     });
   }
@@ -408,7 +411,7 @@
         fx.burst(SLOT_X[k], SLOT_Y - 20, { count: 16, speed: 150, size: 3.6, colors: [PAIRS[it.pair].f, PAIRS[it.pair].m, '#fff'] });
         tween(PR, { legend: 1 }, { duration: 0.6 });
         pairMsg('짝이 맞아요! 모양과 크기가 같은 상동 염색체예요.');
-        if (PR.matched === 4) { PR.done = true; tween(PR, { sexA: 1 }, { duration: 0.8, ease: 'outBack', delay: 0.6 }); setTimeout(() => showHint('👇 마지막 쌍은 성염색체예요. 여자·남자를 눌러 비교해 보세요', 5500), 900); syncSexUI(); }
+        if (PR.matched === 4) { PR.done = true; tween(PR, { sexA: 1 }, { duration: 0.8, ease: 'outBack', delay: 0.6 }); setTimeout(() => showHint('👆 성염색체 쌍이 나타났어요. 여자·남자를 눌러 비교해 보세요', 5500), 900); syncSexUI(); updateUI(); }
       } else {
         Sound.click();
         [it, best].forEach((o) => { o.shake = 1; tween(o, { shake: 0 }, { duration: 0.5 }); });
@@ -425,7 +428,7 @@
     if (!PR.done) { showHint('먼저 상염색체 4쌍을 모두 맞춰 보세요', 3500); return; }
     if (S.sexMode !== s) Sound.click();
     S.sexMode = s; S.sexSeen[s] = true; syncSexUI();
-    fx.burst(SLOT_X[4], SLOT_Y - 30, { count: 10, speed: 110, size: 3, colors: ['#38bdf8', '#fff', '#1e3a8a'] });
+    fx.burst(400, 170, { count: 10, speed: 110, size: 3, colors: ['#38bdf8', '#fff', '#1e3a8a'] });
   }
   function resetPair() { initPair(); S.sexSeen = { f: false, m: false }; S.sexMode = 'f'; syncSexUI(); }
   function stepPair(dt) {
@@ -443,27 +446,23 @@
     // 위쪽 안내
     if (!PR.done) pill(400, 38, '같은 모양·크기의 염색체끼리 만나게 끌어다 놓아요', { bg: 'rgba(27,35,51,.84)', size: 15, pad: 16 });
     else pill(400, 38, '체세포 = 상염색체 22쌍 + 성염색체 1쌍 = 23쌍 (46개)', { bg: '#14532d', size: 15, pad: 16 });
-    // 바닥 쟁반
-    for (let k = 0; k < 5; k++) {
-      const locked = k === 4 && !PR.done;
-      ctx.save();
-      if (k === 4) ctx.globalAlpha *= 0.55 + 0.45 * PR.sexA;
+    // 바닥 쟁반 (상염색체 4쌍)
+    for (let k = 0; k < 4; k++) {
       D.shadow(() => { ctx.fillStyle = k < PR.matched ? '#fff' : 'rgba(255,255,255,.62)'; D.roundRect(SLOT_X[k] - 66, SLOT_Y - 104, 132, 196, 18); ctx.fill(); }, { blur: 10, y: 3 });
-      if (k >= PR.matched && k < 4) { ctx.strokeStyle = '#b7c2db'; ctx.lineWidth = 2.5; ctx.setLineDash([7, 6]); D.roundRect(SLOT_X[k] - 66, SLOT_Y - 104, 132, 196, 18); ctx.stroke(); ctx.setLineDash([]); }
-      D.text(SLOT_X[k], SLOT_Y + 78, k < 4 ? (k + 1) + '번째 쌍' : '성염색체', { size: 13.5, weight: 800, color: '#6b7788' });
-      if (locked) D.text(SLOT_X[k], SLOT_Y - 2, '🔒', { size: 28, color: '#9aa5b6' });
-      ctx.restore();
+      if (k >= PR.matched) { ctx.strokeStyle = '#b7c2db'; ctx.lineWidth = 2.5; ctx.setLineDash([7, 6]); D.roundRect(SLOT_X[k] - 66, SLOT_Y - 104, 132, 196, 18); ctx.stroke(); ctx.setLineDash([]); }
+      D.text(SLOT_X[k], SLOT_Y + 84, '상염색체 ' + (k + 1) + '번째 쌍', { size: 13, weight: 800, color: '#6b7788' });
     }
-    // 성염색체 슬롯
+    // 성염색체 카드 (4쌍을 모두 맞추면 위쪽에 나타나요)
     if (PR.sexA > 0.02) {
-      ctx.save(); ctx.globalAlpha *= clamp(PR.sexA, 0, 1);
-      const cx = SLOT_X[4], cy = SLOT_Y - 8, s = PR.sx;
-      drawRod(cx - 26, cy, -Math.PI / 2, 124, 0.5, 15, SEXC.Xf, { cond: 1, bands: [0.3, 0.7] });
-      // 두 번째: X → Y
-      drawRod(cx + 26, cy, -Math.PI / 2, 124 + (62 - 124) * s, 0.5, 15, CO.mix(SEXC.Xm, SEXC.Y, 0.0 + s), { cond: 1, bands: [0.4] });
-      D.text(cx - 26, cy + 76, 'X', { size: 18, weight: 800, color: SEXC.Xf });
-      D.text(cx + 26, cy + 76, s < 0.5 ? 'X' : 'Y', { size: 18, weight: 800, color: s < 0.5 ? SEXC.Xf : SEXC.Y });
-      pill(cx, SLOT_Y - 118, S.sexMode === 'f' ? '여자 XX' : '남자 XY', { bg: S.sexMode === 'f' ? '#db2777' : '#2563eb', size: 14.5, pad: 12 });
+      ctx.save();
+      const sa = clamp(PR.sexA, 0, 1), cx = 400, cy = 168, s = PR.sx;
+      ctx.globalAlpha *= sa; ctx.translate(cx, cy + (1 - sa) * 30); ctx.scale(0.8 + 0.2 * sa, 0.8 + 0.2 * sa); ctx.translate(-cx, -cy);
+      D.shadow(() => { ctx.fillStyle = '#fff'; D.roundRect(cx - 150, cy - 108, 300, 214, 20); ctx.fill(); }, { blur: 12, y: 4 });
+      drawRod(cx - 40, cy + 6, -Math.PI / 2, 124, 0.5, 18, SEXC.Xf, { cond: 1, bands: [0.3, 0.7] });
+      drawRod(cx + 40, cy + 6, -Math.PI / 2, 124 + (62 - 124) * s, 0.5, 18, CO.mix(SEXC.Xm, SEXC.Y, s), { cond: 1, bands: [0.4] });
+      D.text(cx - 40, cy + 92, 'X', { size: 19, weight: 800, color: SEXC.Xf });
+      D.text(cx + 40, cy + 92, s < 0.5 ? 'X' : 'Y', { size: 19, weight: 800, color: s < 0.5 ? SEXC.Xf : SEXC.Y });
+      D.label(cx, cy - 92, '성염색체 (23번째 쌍) · ' + (S.sexMode === 'f' ? '여자 XX' : '남자 XY'), { bg: S.sexMode === 'f' ? '#db2777' : '#2563eb', size: 14.5, pad: 14 });
       ctx.restore();
     }
     // 염색체 카드(끌 수 있어요)
@@ -484,22 +483,23 @@
     // 범례 + 안내 말풍선
     if (PR.legend > 0.02) {
       ctx.save(); ctx.globalAlpha *= PR.legend;
-      D.sphere(214, 292, 6, '#d9480f', { gloss: false }); D.text(226, 297, '진한 색: 아버지에게서 받은 염색체', { size: 13.5, weight: 700, color: '#334', align: 'left' });
-      D.sphere(500, 292, 6, '#fdba74', { gloss: false }); D.text(512, 297, '연한 색: 어머니에게서', { size: 13.5, weight: 700, color: '#334', align: 'left' });
+      D.sphere(190, 523, 6, '#d9480f', { gloss: false }); D.text(202, 528, '진한 색: 아버지에게서 받은 염색체', { size: 13.5, weight: 700, color: '#334', align: 'left' });
+      D.sphere(480, 523, 6, '#fdba74', { gloss: false }); D.text(492, 528, '연한 색: 어머니에게서', { size: 13.5, weight: 700, color: '#334', align: 'left' });
       ctx.restore();
     }
-    if (PR.msgT > 0) pill(400, 268, PR.msg, { bg: PR.msg.indexOf('맞아요') >= 0 ? '#14a058' : '#dc2626', size: 14.5, pad: 14 });
+    if (PR.msgT > 0) pill(400, 282, PR.msg, { bg: PR.msg.indexOf('맞아요') >= 0 ? '#14a058' : '#dc2626', size: 14.5, pad: 14 });
   }
 
   /* =========================================================
      장면 3·4 · 분열 모형 (체세포분열 / 생식세포 형성) — 염색체 4개(2쌍)
      ========================================================= */
-  const MCX = 400, MCY = 285, MR = 185, MRD = MR * 0.72, MH1 = MRD + 3, MRD2 = MRD * 0.72, MH2 = MRD2 + 3;
+  const MCX = 400, MCY = 285, MR = 185, MRD = MR * 0.72, MH1 = MRD + 10, MRD2 = MRD * 0.72, MH2 = MRD2 + 8;
   const PL = [PAIRS[0].len * 0.64, PAIRS[1].len * 0.54];       // 모형의 염색체 길이
   const PCEN = [PAIRS[0].c, PAIRS[1].c];
   const A0 = [[-38, -30, 0.5], [36, -34, 2.4], [-36, 34, 1.6], [38, 32, -0.6]];
   const A2 = [[-85, -62, 0.9], [78, -52, 2.3], [-70, 62, 2.0], [80, 68, 0.3]];
   const ROWY = [-108, 34, -38, 106];
+  const A5 = [[-30, -34, 0.18], [30, -28, -0.22], [-24, 34, 0.28], [32, 36, -0.12]];
   const MITO_TAGS = ['간기', 'DNA 복제', '전기', '중기', '후기', '말기'];
   const MITO_TXT = [
     '분열 전: 염색체가 가늘고 길게 풀려 핵 속에 있어요. (염색체 4개)',
@@ -545,7 +545,7 @@
     const L = { groups: [], nuc: [], fib: 0, link: 0, units: [], poles: [] };
     const two = meio && st >= 6;
     if (two) {
-      L.groups = [{ cx: MCX - MH1, cy: MCY, th: Math.PI / 2, R: MRD, d: st === 8 ? 1 : 0 }, { cx: MCX + MH1, cy: MCY, th: Math.PI / 2, R: MRD, d: st === 8 ? 1 : 0 }];
+      L.groups = [{ cx: MCX - MH1, cy: MCY, th: Math.PI / 2, R: MRD, d: st === 8 ? 1 : 0, gap: 8 }, { cx: MCX + MH1, cy: MCY, th: Math.PI / 2, R: MRD, d: st === 8 ? 1 : 0, gap: 8 }];
       L.poles = L.groups.map((g) => [[g.cx, MCY - 122], [g.cx, MCY + 122]]);
     } else {
       L.groups = [{ cx: MCX, cy: MCY, th: 0, R: MR, d: st === 5 ? 1 : 0 }];
@@ -564,10 +564,10 @@
       let x = MCX + A0[ci][0], y = MCY + A0[ci][1], base = A0[ci][2], cond = 0, alpha = k ? 0 : 1, att = [], sc = 0.62, g = 0, xs = 0.17;
       if (st >= 1) alpha = 1;
       if (!meio) {
-        if (st === 2) { x = MCX + A2[ci][0]; y = MCY + A2[ci][1]; base = A2[ci][2]; cond = 1; sc = 1; }
-        else if (st === 3) { x = MCX; y = MCY + ROWY[ci]; base = HP; cond = 1; sc = 1; att = [0, 1]; }
-        else if (st === 4) { x = MCX + (k ? 125 : -125); y = MCY + ROWY[ci]; base = HP + (k ? -0.55 : 0.55); xs = 0; cond = 1; sc = 1; att = [k ? 1 : 0]; }
-        else if (st === 5) { x = MCX + (k ? MH1 : -MH1); y = MCY + ROWY[ci] * 0.45; base = HP + (k ? 0.1 : -0.1); xs = 0; cond = 0.4; sc = 0.75; }
+        if (st === 2) { x = MCX + A2[ci][0]; y = MCY + A2[ci][1]; base = A2[ci][2]; cond = 1; sc = 0.9; }
+        else if (st === 3) { x = MCX; y = MCY + ROWY[ci]; base = HP; cond = 1; sc = 0.8; att = [0, 1]; }
+        else if (st === 4) { x = MCX + (k ? 125 : -125); y = MCY + ROWY[ci]; base = HP + (k ? -0.55 : 0.55); xs = 0; cond = 1; sc = 0.8; att = [k ? 1 : 0]; }
+        else if (st === 5) { const q = A5[ci]; x = MCX + (k ? MH1 : -MH1) + q[0]; y = MCY + q[1]; base = HP + q[2]; xs = 0; cond = 0.4; sc = 0.7; }
       } else {
         const pairX = [[-70, -62, -20, 20], [70, 64, 20, -20]];     // 짝짓기 위치 (중심 x, y, 아버지 x, 어머니 x)
         const eq = [-72, 72];
@@ -598,7 +598,7 @@
     } else {
       m.groups.forEach((g, i) => {
         const T = L.groups[i];
-        g.cx = T.cx; g.cy = T.cy; g.th = T.th; g.R = T.R;
+        g.cx = T.cx; g.cy = T.cy; g.th = T.th; g.R = T.R; g.gap = T.gap;
         if (g.td !== T.d) {
           g.td = T.d;
           if (instant) g.d = T.d; else tween(g, { d: T.d }, { duration: 1.9, ease: 'inOutCubic' });
@@ -651,7 +651,7 @@
   /* ---- 세포 몸 그리기 ---- */
   function lobesOf(g) {
     const e = g.d, Rd = g.R * 0.72;
-    const rho = lerp(g.R, Rd, e), h = lerp(0, Rd + 3, e);
+    const rho = lerp(g.R, Rd, e), h = lerp(0, Rd + (g.gap || 10), e);
     const ax = Math.cos(g.th), ay = Math.sin(g.th);
     const neck = rho * (1 - smooth((e - 0.1) / 0.72));
     return { rho, h, ax, ay, neck, a: { x: g.cx - ax * h, y: g.cy - ay * h }, b: { x: g.cx + ax * h, y: g.cy + ay * h } };
@@ -991,7 +991,7 @@
       ctx.save(); ctx.translate(cx, cy); ctx.scale(v, v); ctx.translate(-cx, -cy);
       D.shadow(() => { ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(cx, cy, R + 6, 0, TAU); ctx.fill(); }, { blur: 12, y: 4 });
       ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, R, 0, TAU); ctx.clip(); ctx.fillStyle = '#fdf3f8'; ctx.fillRect(cx - R, cy - R, 2 * R, 2 * R);
-      drawMicroCell(MI.last, 2.7, t, { cx, cy, noRing: true });
+      drawMicroCell(MI.last, 2.25, t, { cx, cy, noRing: true });
       ctx.restore();
       ctx.strokeStyle = '#5a5470'; ctx.lineWidth = 6; ctx.beginPath(); ctx.arc(cx, cy, R + 3, 0, TAU); ctx.stroke();
       ctx.restore();
@@ -1063,7 +1063,7 @@
   /* =========================================================
      장면 · 수정: 정자 23 + 난자 23 = 수정란 46
      ========================================================= */
-  const EGG = { x: 520, y: 292, r: 132 }, ENUC = { x: 520, y: 292, r: 54 }, SP0 = { x: 112, y: 392 }, SP1 = { x: 396, y: 302 };
+  const EGG = { x: 440, y: 292, r: 132 }, ENUC = { x: 440, y: 292, r: 54 }, SP0 = { x: 100, y: 396 }, SP1 = { x: 312, y: 302 };
   const FE = { run: false, t: 0, mode: 'meio', doneMeio: false, doneMito: false, done: false, roll: 0, ring: 0 };
   const URODS = [];
   (function () { let s = 11; const rr = () => { s = (s * 16807) % 2147483647; return s / 2147483647; };
@@ -1315,7 +1315,7 @@
       setRO(1, '짝 맞춘 수', PR.matched + ' / 4'); setRO(2, '체세포 염색체', '46개 (23쌍)');
       setRO(3, '성염색체', PR.done ? (S.sexMode === 'f' ? 'XX (여자)' : 'XY (남자)') : '-');
     } else if (sc === 'micro') {
-      setRO(1, '찾은 분열 세포', MI.found + ' / 3'); setRO(2, '관찰 재료', '양파 뿌리 끝'); setRO(3, '핵이 뚜렷한 세포', '분열 전');
+      setRO(1, '찾은 분열 세포', MI.found + ' / 3'); setRO(2, '관찰 재료', '양파 뿌리 끝'); setRO(3, '핵이 뚜렷하면', '분열 전');
     } else if (sc === 'mito') {
       setRO(1, '모세포 염색체', '4개'); setRO(2, '딸세포', mito.stage >= 5 ? '2개' : '-'); setRO(3, '딸세포 염색체', mito.stage >= 5 ? '각 4개' : '-');
     } else if (sc === 'meio') {
