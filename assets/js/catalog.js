@@ -2384,8 +2384,7 @@ window.SCI_CATALOG = {
                 "측정과 어림",
                 "어림하기",
                 "표준의 필요"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "h1-signal-info",
@@ -2457,8 +2456,7 @@ window.SCI_CATALOG = {
                 "선스펙트럼",
                 "지문 맞추기",
                 "흡수선"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "h1-cosmic-elements",
@@ -2523,8 +2521,7 @@ window.SCI_CATALOG = {
                 "성분 비교",
                 "원소 지도",
                 "우주 역사"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "h1-periodic-table",
