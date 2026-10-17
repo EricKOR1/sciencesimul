@@ -2475,8 +2475,7 @@ window.SCI_CATALOG = {
                 "원소 알아내기",
                 "우주 초기",
                 "적용"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "h1-stellar-fusion",
@@ -2497,8 +2496,7 @@ window.SCI_CATALOG = {
                 "수소 핵융합",
                 "무거운 별",
                 "원소의 고향"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "h1-supernova-origin",
@@ -2540,8 +2538,7 @@ window.SCI_CATALOG = {
                 "1족 원소",
                 "17족 원소",
                 "실험 설계"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "h1-electron-config",
@@ -2562,8 +2559,7 @@ window.SCI_CATALOG = {
                 "안정한 원소",
                 "결합의 이유",
                 "적용"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "h1-ionic-bond",
