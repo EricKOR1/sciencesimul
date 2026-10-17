@@ -2643,8 +2643,7 @@ window.SCI_CATALOG = {
                 "구슬 잇기",
                 "모양과 기능",
                 "낫 모양 적혈구"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "h1-dna",
@@ -2665,8 +2664,7 @@ window.SCI_CATALOG = {
                 "한 가닥",
                 "DNA 모형",
                 "규칙성"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "h1-conductor",
@@ -2687,8 +2685,7 @@ window.SCI_CATALOG = {
                 "자유전자",
                 "반도체",
                 "소재 선택"
-              ],
-              "soon": true
+              ]
             }
           ]
         },
