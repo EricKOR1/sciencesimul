@@ -561,13 +561,12 @@
     // 게이지
     const n = 1 << CL.g, gx = 520, gw = 264;
     // 1) 세포 수
-    gaugeCard(gx, 16, gw, 98, '세포 수');
+    gaugeCard(gx, 16, gw, 98, '세포 수 (개)');
     D.text(gx + gw - 16, 62, String(Math.round(CL.disp)), { size: 40, weight: 800, color: '#d1337a', align: 'right' });
-    D.text(gx + 14, 66, '개', { size: 15, weight: 800, color: '#d1337a', align: 'left' });
     barTrack(gx + 14, 80, gw - 28, 12);
     barFill(gx + 14, 80, (gw - 28) * clamp(CL.disp / 32, 0, 1), 12, '#e0518d');
     // 2) 세포 하나의 크기
-    gaugeCard(gx, 126, gw, 142, '세포 하나의 크기 (수정란 = 1)');
+    gaugeCard(gx, 126, gw, 142, '세포 하나의 크기');
     D.text(gx + gw - 16, 168, fracText(n), { size: 34, weight: 800, color: '#2f6bd1', align: 'right' });
     const ref = 30, rr = ref / Math.cbrt(Math.max(1, CL.disp));
     ctx.save(); ctx.setLineDash([4, 4]); ctx.strokeStyle = '#8a95a6'; ctx.lineWidth = 1.6;
@@ -753,9 +752,9 @@
         [-1, 1].forEach((dx) => [-1, 1].forEach((dy) => { ctx.save(); ctx.translate(X3 + dx * 19, row.y + dy * 19); ctx.scale(s3, s3); drawCell(0, 0, r3, 1, {}); ctx.restore(); }));
         ctx.restore();
         ctx.save(); ctx.globalAlpha = fade * smooth(u, 2.0, 2.5);
-        D.label(X2, row.y - 44, '바로 분열', { bg: '#d1337a', size: 14 }); ctx.restore();
+        D.label(X2, row.y + 40, '바로 분열', { bg: '#d1337a', size: 14 }); ctx.restore();
         ctx.save(); ctx.globalAlpha = fade * smooth(u, 4.4, 4.9);
-        D.label(X3 + 4, row.y - 50, '점점 작아져요', { bg: '#d1337a', size: 14 }); ctx.restore();
+        D.label(X3 + 4, row.y + 52, '점점 작아져요', { bg: '#d1337a', size: 14 }); ctx.restore();
       }
       ctx.restore();
     });
@@ -936,6 +935,9 @@
     scene = name;
     parts.clear();
     $('#actions').setAttribute('data-sc', name);
+    const bgs = { fert: ['#fff6ee', '#fbdccd'], cleave: ['#eaf5fc', '#d6e8f5'], graph: ['#f4f8f2', '#f4f8f2'], clay: ['#f8efe3', '#efdcc4'] };
+    const sc = $('.stage-canvas');
+    if (sc && bgs[name]) sc.style.background = 'linear-gradient(' + bgs[name][0] + ',' + bgs[name][1] + ')';
     $('#sceneTitle').textContent = SC_TITLE[name][0];
     $('#sceneSub').textContent = SC_TITLE[name][1];
     if (name === 'fert') resetFert();

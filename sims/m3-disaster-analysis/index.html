@@ -60,7 +60,6 @@
         <div class="stage-toolbar">
           <div class="segmented" id="sceneSeg" role="group" aria-label="장면 고르기"></div>
           <span class="spacer"></span>
-          <button type="button" class="btn btn-primary btn-sm is-off" id="runBtn">▶ 시작</button>
           <button class="icon-btn" id="resetBtn" type="button" title="처음 상태로" aria-label="처음 상태로">↺</button>
         </div>
         <div class="stage-canvas">
@@ -95,17 +94,20 @@
           <p class="ctrl-note">2016년 경주 지진은 규모 5.8, 2017년 포항 지진은 규모 5.4였어요. 거리·진도 값은 예시 자료예요.</p>
         </div>
         <div class="control" id="cGraph">
-          <div class="control-head"><label for="sY0">📅 보는 기간: 시작 연도</label><output id="oY0"></output></div>
-          <input type="range" id="sY0" min="2015" max="2022" step="1" value="2015">
-          <div class="control-head"><label for="sY1">📅 보는 기간: 끝 연도</label><output id="oY1"></output></div>
-          <input type="range" id="sY1" min="2017" max="2024" step="1" value="2024">
+          <div class="control-head"><label for="sY0">📅 시작 연도</label><output id="oY0"></output></div>
+          <input type="range" id="sY0" min="2005" max="2022" step="1" value="2005">
+          <div class="control-head"><label for="sY1">📅 끝 연도</label><output id="oY1"></output></div>
+          <input type="range" id="sY1" min="2007" max="2024" step="1" value="2024">
           <p class="ctrl-note">그래프의 숫자는 모두 예시 자료예요. 점(●)을 눌러 값을 확인해요.</p>
         </div>
+        <div class="control" id="cTy">
+          <p class="ctrl-note" style="margin:0">🌀 점(●)을 <b>눌러</b> 태풍 하나하나의 값을 읽어요. 점이 흩어진 모양에서 어떤 경향이 보이는지 살펴봐요. (예시 자료)</p>
+        </div>
         <div class="control" id="cGas">
-          <div class="control-head"><label>🌬️ 바람이 불어가는 방향</label></div>
+          <div class="control-head"><label>🌬️ 바람이 불어가는 쪽</label></div>
           <div class="tgls" role="group" aria-label="바람 방향" id="windBtns"></div>
           <button class="btn btn-primary btn-block2 ctrl-sep" id="leakBtn" type="button">☣️ 유출 시작</button>
-          <p class="ctrl-note">마을을 눌러 위험한 곳을 골라요.</p>
+          <p class="ctrl-note">유출이 끝나면 위험한 마을을 눌러 골라요. (단순화한 모형)</p>
         </div>
       </section>
       <section class="card" id="game"></section>
