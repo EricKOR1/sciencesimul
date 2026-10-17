@@ -360,19 +360,19 @@
   const TYPES = {
     water: { name: '물 H₂O', r: 4.5, speed: 130, pass: 'free', color: '#3b9eff' },
     oxygen: { name: '산소 O₂', r: 5.5, speed: 120, pass: 'free', color: '#ef4444' },
-    ion: { name: '이온 Na⁺', r: 6, speed: 115, pass: 'channel', color: '#a855f7', text: '+' },
+    ion: { name: '이온 Na⁺', r: 6, speed: 150, pass: 'channel', color: '#a855f7', text: '+' },
     starch: { name: '녹말', r: 12, speed: 70, pass: 'none', color: '#eab308', shape: 'chain' },
     protein: { name: '단백질', r: 14, speed: 55, pass: 'none', color: '#b45309', shape: 'blob' },
   };
   const TKEYS = ['water', 'oxygen', 'ion', 'starch', 'protein'];
-  const MB = PHONE ? { x: 10, y: 66, w: 460, h: 316, memH: 56, ch: [100, 240, 380] } : { x: 24, y: 62, w: 540, h: 440, memH: 60, ch: [130, 290, 450] };
+  const MB = PHONE ? { x: 10, y: 66, w: 460, h: 316, memH: 56, ch: [80, 190, 300, 410] } : { x: 24, y: 62, w: 540, h: 440, memH: 60, ch: [100, 230, 360, 490] };
   function resetModel() {
     const prev = S.md;
-    const box = new MBox({ x: MB.x, y: MB.y, w: MB.w, h: MB.h, memH: MB.memH, channels: MB.ch.map((c) => MB.x + c), chW: 28, types: TYPES, kind: 'lipid' });
-    const ts = {}; TKEYS.forEach((k) => { ts[k] = { out: 20, in: 0, obs: 0, res: null }; });
+    const box = new MBox({ x: MB.x, y: MB.y, w: MB.w, h: MB.h, memH: MB.memH, channels: MB.ch.map((c) => MB.x + c), chW: 36, types: TYPES, kind: 'lipid' });
+    const ts = {}; TKEYS.forEach((k) => { ts[k] = { out: k === 'ion' ? 30 : 20, in: 0, obs: 0, res: null }; });
     S.md = { box, sel: prev ? prev.sel : 'water', ts, pred: null };
     box.vis = [S.md.sel];
-    TKEYS.forEach((k) => box.add(k, 'out', 20, true));
+    TKEYS.forEach((k) => box.add(k, 'out', k === 'ion' ? 30 : 20, true));
     updateCtl();
   }
   function selectType(k) {
@@ -393,7 +393,7 @@
       t.obs += dt;
       const cr = b.cross[k];
       if (t.res === null) {
-        if (d.pass !== 'none' && cr.down + cr.up >= 3) { t.res = 'pass'; Sound.success(); parts.burst(b.x + b.w / 2, b.memY, { count: 12, speed: 120, size: 3, colors: [d.color, '#fff', '#fbbf24'], gravity: 0, life: 0.6 }); }
+        if (d.pass !== 'none' && cr.down + cr.up >= (d.pass === 'channel' ? 2 : 3)) { t.res = 'pass'; Sound.success(); parts.burst(b.x + b.w / 2, b.memY, { count: 12, speed: 120, size: 3, colors: [d.color, '#fff', '#fbbf24'], gravity: 0, life: 0.6 }); }
         else if (d.pass === 'none' && t.obs >= 5 && b.alive(k, 'out') >= 8) { t.res = 'block'; Sound.tick(); }
       }
     }

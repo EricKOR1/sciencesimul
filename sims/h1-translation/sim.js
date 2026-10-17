@@ -134,16 +134,19 @@
   }
   function drawRibosomeBig(rx, sy, g, t, o) {
     o = o || {};
-    // 큰 소단위 (아래) / 작은 소단위 (위) — 사이의 틈으로 mRNA가 지나가요
-    const big = ctx.createLinearGradient(0, sy + 20, 0, sy + 160); big.addColorStop(0, '#fdba74'); big.addColorStop(1, '#ea580c');
-    D.shadow(() => { ctx.fillStyle = big; ctx.beginPath(); ctx.ellipse(rx, sy + 24 + 56, g.rxB, 56, 0, 0, 6.3); ctx.fill(); }, { blur: 8, y: 3 });
-    ctx.strokeStyle = '#9a3412'; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(rx, sy + 24 + 56, g.rxB, 56, 0, 0, 6.3); ctx.stroke();
-    const sm = ctx.createLinearGradient(0, sy - 120, 0, sy - 20); sm.addColorStop(0, '#fed7aa'); sm.addColorStop(1, '#fb923c');
-    D.shadow(() => { ctx.fillStyle = sm; ctx.beginPath(); ctx.ellipse(rx, sy - 24 - g.ryS, g.rxS, g.ryS, 0, 0, 6.3); ctx.fill(); }, { blur: 8, y: 3 });
-    ctx.strokeStyle = '#9a3412'; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(rx, sy - 24 - g.ryS, g.rxS, g.ryS, 0, 0, 6.3); ctx.stroke();
+    // 큰 소단위(아래, 그릇 모양) / 작은 소단위(위, 돔 모양) — 사이의 틈으로 mRNA가 지나가요
+    const gap = g.bh / 2 + 6, hb = PHONE ? 84 : 100, hs = PHONE ? 62 : 74;
+    const big = ctx.createLinearGradient(0, sy + gap, 0, sy + gap + hb); big.addColorStop(0, '#fdba74'); big.addColorStop(1, '#ea580c');
+    const bowl = () => { ctx.beginPath(); ctx.ellipse(rx, sy + gap, g.rxB, hb, 0, 0, Math.PI, false); ctx.closePath(); };
+    D.shadow(() => { ctx.fillStyle = big; bowl(); ctx.fill(); }, { blur: 8, y: 3 });
+    ctx.strokeStyle = '#9a3412'; ctx.lineWidth = 3; bowl(); ctx.stroke();
+    const sm = ctx.createLinearGradient(0, sy - gap - hs, 0, sy - gap); sm.addColorStop(0, '#fed7aa'); sm.addColorStop(1, '#fb923c');
+    const dome = () => { ctx.beginPath(); ctx.ellipse(rx, sy - gap, g.rxS, hs, 0, Math.PI, 2 * Math.PI, false); ctx.closePath(); };
+    D.shadow(() => { ctx.fillStyle = sm; dome(); ctx.fill(); }, { blur: 8, y: 3 });
+    ctx.strokeStyle = '#9a3412'; ctx.lineWidth = 3; dome(); ctx.stroke();
     if (o.labels !== false) {
-      D.text(rx, sy - 24 - g.ryS + 6, '작은 소단위', { size: 13, weight: 800, color: '#7c2d12' });
-      D.text(rx, sy + 24 + 56 + 36, '큰 소단위', { size: 13, weight: 800, color: '#fff7ed', stroke: 'rgba(124,45,18,.6)', strokeWidth: 3 });
+      D.text(rx, sy - gap - hs * 0.42, '작은 소단위', { size: 13, weight: 800, color: '#7c2d12' });
+      D.text(rx, sy + gap + hb * 0.55, '큰 소단위', { size: 13, weight: 800, color: '#fff7ed', stroke: 'rgba(124,45,18,.6)', strokeWidth: 3 });
     }
   }
   function drawRibo(t) {
@@ -176,6 +179,8 @@
       if (x < -g.sp || x > VW + g.sp) continue;
       block(x, stripY - (dragging ? 6 : 0), g.bw, g.bh, MRNA1[i], { size: g.bh * 0.52, glow: inWin && isStart, alpha: R.loaded && !inWin && !R.locked ? 0.55 : 1, scale: dragging ? 1.04 : 1 });
     }
+    // 가닥이 계속 이어진다는 표시 (양쪽 끝 흐리게)
+    [[8, 1], [VW - 8, -1]].forEach(([x, dir]) => { const gr = ctx.createLinearGradient(x, 0, x + dir * 46, 0); gr.addColorStop(0, '#fefce8'); gr.addColorStop(1, 'rgba(254,252,232,0)'); ctx.fillStyle = gr; ctx.fillRect(dir > 0 ? x : x - 46, g.sy - 40, 46, 80); });
     // 코돈 구분(잠근 뒤)
     if (R.locked) {
       for (let c = START_W; c + 3 <= N; c += 3) {
@@ -189,14 +194,14 @@
     // 작은 소단위가 가닥 위를 덮는 모습 (틈 가장자리)
     // 이름표
     if (R.loaded) {
-      D.label(g.rx, g.sy - 24 - g.ryS * 2 - 14, '읽는 창 : ' + cod.split('').join(' '), { bg: R.locked ? '#15803d' : isStart ? '#ca8a04' : '#475569', size: PHONE ? 13 : 15 });
+      D.label(g.rx, g.sy - g.bh / 2 - 6 - (PHONE ? 62 : 74) - 18, '읽는 창 : ' + cod.split('').join(' '), { bg: R.locked ? '#15803d' : isStart ? '#ca8a04' : '#475569', size: PHONE ? 13 : 15 });
     } else {
-      D.label(g.rx, g.loadY - 50, 'mRNA는 세포질에 떠 있어요', { bg: '#64748b', size: PHONE ? 12 : 13.5 });
-      D.arrow(g.rx, g.loadY - 66, g.rx, g.sy + 130, { color: '#16a34a', width: 3.5, head: 12, dash: [8, 6] });
-      D.label(g.rx + (PHONE ? 80 : 110), (g.loadY + g.sy) / 2 + 40, '끌어다 리보솜 틈에 끼워요', { bg: '#16a34a', size: PHONE ? 12 : 13.5 });
+      D.label(g.rx, g.loadY + 46, 'mRNA는 세포질에 떠 있어요', { bg: '#64748b', size: PHONE ? 12 : 13.5 });
+      D.arrow(g.rx, g.loadY - 34, g.rx, g.sy + g.bh / 2 + (PHONE ? 100 : 118), { color: '#16a34a', width: 3.5, head: 12, dash: [8, 6] });
+      D.label(g.rx + (PHONE ? 100 : 150), g.loadY - 62, '끌어다 리보솜 틈에 끼워요', { bg: '#16a34a', size: PHONE ? 12 : 13.5 });
       if (!R.drag) D.ring(g.rx, g.loadY, 34, t, { color: '#16a34a', speed: 0.9, width: 2 });
     }
-    if (R.loaded && !R.locked && !R.drag) D.text(g.rx, g.sy + g.bh / 2 + 120 + (PHONE ? 20 : 30), '◀ ▶ 로 읽는 창을 옮겨 시작 코돈 AUG를 찾아요', { size: PHONE ? 12.5 : 14, weight: 800, color: '#a16207' });
+    if (R.loaded && !R.locked && !R.drag) D.text(g.rx, g.sy + g.bh / 2 + 6 + (PHONE ? 84 : 100) + 40, '◀ ▶ 로 읽는 창을 옮겨 시작 코돈 AUG를 찾아요', { size: PHONE ? 12.5 : 14, weight: 800, color: '#a16207' });
     if (R.msgT > 0) D.label(VW / 2, PHONE ? 90 : 84, R.msg, { bg: R.msg.includes('않') || R.msg.includes('아니') || R.msg.includes('시작 코돈은') ? '#b45309' : '#15803d', size: PHONE ? 11.5 : 13.5 });
   }
 
@@ -247,7 +252,7 @@
       ctx.fillStyle = hot ? 'rgba(250,204,21,' + (0.35 + 0.25 * Math.sin(t * 10)) + ')' : i % 2 ? '#f8fafc' : '#fff'; rr(g.tx + 8, y, g.tw - 16, g.rowH - 4, 8).fill();
       if (hot) { ctx.strokeStyle = '#eab308'; ctx.lineWidth = 3; rr(g.tx + 8, y, g.tw - 16, g.rowH - 4, 8).stroke(); }
       D.text(g.tx + 18, y + g.rowH / 2 + 4, r.join(' · '), { size: PHONE ? 13.5 : 15.5, weight: 800, color: '#334155', align: 'left' });
-      const ax = g.tx + g.tw - (PHONE ? 130 : 128);
+      const ax = g.tx + g.tw - (PHONE ? 126 : 112);
       D.sphere(ax - 14, y + (g.rowH - 4) / 2, PHONE ? 7 : 9, a.col, { gloss: false });
       D.text(ax, y + g.rowH / 2 + 4, (key === 'STOP' ? '종결' : a.ko) + (i === 0 ? ' (시작)' : ''), { size: PHONE ? 12.5 : 14, weight: 800, color: key === 'STOP' ? '#111827' : '#334155', align: 'left' });
     });
@@ -299,7 +304,7 @@
       D.sphere(p.x - g.pcw / 2 + 22, p.y, PHONE ? 10 : 11, a.col, { gloss: true });
       D.text(p.x + 12, p.y + 5, k === 'STOP' ? '종결' : a.ko, { size: PHONE ? 13.5 : 15, weight: 800, color: '#1f2937', alpha: active ? 1 : 0.5 });
     });
-    if (T.msgT > 0) D.label(g.cx, PHONE ? 360 : 70, T.msg, { bg: T.msg.includes('아니') || T.msg.includes('않') && !T.msg.includes('정하지') ? '#b45309' : '#15803d', size: PHONE ? 11 : 13 });
+    if (T.msgT > 0) D.label(g.cx, PHONE ? 360 : 58, T.msg, { bg: T.msg.includes('아니') || T.msg.includes('않') && !T.msg.includes('정하지') ? '#b45309' : '#15803d', size: PHONE ? 11 : 13 });
     if (T.done[q]) D.label(g.cx, g.ry + g.ch / 2 + (PHONE ? 20 : 26), '서열 ' + (q + 1) + ' 번역 완료! ' + (T.done[1 - q] ? '두 서열 모두 끝났어요' : '다른 서열도 해 봐요'), { bg: '#15803d', size: PHONE ? 12 : 13.5 });
   }
 
@@ -308,8 +313,8 @@
      ====================================================== */
   const REP = { Met: 'AUG', Glu: 'GAA', Pro: 'CCA', Trp: 'UGG', Phe: 'UUU', Lys: 'AAA', Gly: 'GGU', Val: 'GUG' };
   const SYG = () => (PHONE
-    ? { sp: 28, bw: 25, pitch: 94, x0: 30, mY: 176, aY: 232, bY: 304, trayY: 506, trayBead: 586, xs: [90, 260, 430], rxB: 150, msgY: 440, F: [260, 350], coilK: 0.8 }
-    : { sp: 38, bw: 34, pitch: 128, x0: 87, mY: 130, aY: 180, bY: 246, trayY: 420, trayBead: 486, xs: [200, 400, 600], rxB: 172, msgY: 354, F: [400, 250], coilK: 1 });
+    ? { sp: 28, bw: 25, pitch: 94, x0: 30, mY: 176, aY: 232, bY: 304, trayY: 506, trayBead: 586, xs: [90, 260, 430], rxB: 150, msgY: 440, F: [260, 330], coilK: 0.85 }
+    : { sp: 38, bw: 34, pitch: 128, x0: 87, mY: 130, aY: 180, bY: 246, trayY: 420, trayBead: 486, xs: [200, 400, 600], rxB: 172, msgY: 354, F: [400, 212], coilK: 1 });
   const syCx = (c) => { const g = SYG(); return g.x0 + c * g.pitch + (g.pitch - (PHONE ? 10 : 14)) / 2; };
   const syBaseX = (c, k) => { const g = SYG(); return g.x0 + c * g.pitch + k * g.sp + g.sp / 2; };
   const syXw = (c) => syCx(c) - SYG().pitch / 2;
@@ -350,7 +355,7 @@
   function syEnd() { const Y = S.sy; if (Y.ph !== 'stop') return; Y.ph = 'release'; Y.relT = 0; Y.trna.forEach((t) => { if (!t.leaving) { t.leaving = true; t.lt = 0; } }); Sound.click(); updateCtl(); }
   function syFold() { const Y = S.sy; if (Y.ph !== 'released') return; Y.ph = 'fold'; Y.fspr.target = 1; Sound.click(); updateCtl(); }
   function coilPos(i, n, t) {
-    const g = SYG(), a = i * 2.35 + 0.4 + (t || 0) * 0.25, r = (14 + i * 9) * g.coilK;
+    const g = SYG(), a = i * 2.35 + 0.4 + (t || 0) * 0.25, r = (20 + i * 13) * g.coilK;
     return { x: g.F[0] + Math.cos(a) * r, y: g.F[1] + Math.sin(a) * r * 0.85 };
   }
   function stepSy(dt) {
@@ -386,17 +391,17 @@
     // 리보솜 (코돈 2개 = P · A 자리를 덮어요)
     const rel = Y.ph === 'release' ? smooth(Y.relT) : (Y.ph === 'released' || Y.ph === 'fold' || Y.ph === 'folded') ? 1 : 0;
     const rx = Y.rx, big = ctx.createLinearGradient(0, g.mY, 0, g.bY + 90); big.addColorStop(0, '#fdba74'); big.addColorStop(1, '#ea580c');
-    ctx.save(); ctx.globalAlpha = 1 - 0.6 * rel;
-    D.shadow(() => { ctx.fillStyle = big; ctx.beginPath(); ctx.ellipse(rx, g.aY + 62 + rel * 40, g.rxB, 96, 0, 0, 6.3); ctx.fill(); }, { blur: 8, y: 3 });
-    ctx.strokeStyle = '#9a3412'; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(rx, g.aY + 62 + rel * 40, g.rxB, 96, 0, 0, 6.3); ctx.stroke();
+    ctx.save(); ctx.globalAlpha = 1 - 0.85 * rel;
+    D.shadow(() => { ctx.fillStyle = big; ctx.beginPath(); ctx.ellipse(rx, g.aY + 62 + rel * 14, g.rxB, 96, 0, 0, 6.3); ctx.fill(); }, { blur: 8, y: 3 });
+    ctx.strokeStyle = '#9a3412'; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(rx, g.aY + 62 + rel * 14, g.rxB, 96, 0, 0, 6.3); ctx.stroke();
     const sm = ctx.createLinearGradient(0, g.mY - 80, 0, g.mY - 12); sm.addColorStop(0, '#fed7aa'); sm.addColorStop(1, '#fb923c');
     D.shadow(() => { ctx.fillStyle = sm; ctx.beginPath(); ctx.ellipse(rx, g.mY - 36 - rel * 30, g.rxB * 0.78, 34, 0, 0, 6.3); ctx.fill(); }, { blur: 8, y: 3 });
     ctx.strokeStyle = '#9a3412'; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(rx, g.mY - 36 - rel * 30, g.rxB * 0.78, 34, 0, 0, 6.3); ctx.stroke();
     ctx.restore();
     // P 자리 · A 자리 이름표
     if (rel < 0.5) {
-      D.text(syCx(c) - g.pitch, g.aY + 76 + (PHONE ? 20 : 10), 'P 자리', { size: 12.5, weight: 800, color: '#fff7ed', stroke: 'rgba(124,45,18,.7)', strokeWidth: 3, alpha: c > 0 ? 1 : 0.4 });
-      D.text(syCx(c), g.aY + 76 + (PHONE ? 20 : 10), 'A 자리', { size: 12.5, weight: 800, color: '#fff7ed', stroke: 'rgba(124,45,18,.7)', strokeWidth: 3 });
+      D.text(syCx(c) - g.pitch, g.aY + 62 + 96 - 16, 'P 자리', { size: 12.5, weight: 800, color: '#fff7ed', stroke: 'rgba(124,45,18,.7)', strokeWidth: 3, alpha: c > 0 ? 1 : 0.4 });
+      D.text(syCx(c), g.aY + 62 + 96 - 16, 'A 자리', { size: 12.5, weight: 800, color: '#fff7ed', stroke: 'rgba(124,45,18,.7)', strokeWidth: 3 });
     }
     // mRNA
     ctx.save(); ctx.strokeStyle = '#a8a29e'; ctx.lineWidth = 6; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(g.x0 - 14, g.mY); ctx.lineTo(g.x0 + 5 * g.pitch - (PHONE ? 6 : 8) + 8, g.mY); ctx.stroke(); ctx.restore();
@@ -436,8 +441,7 @@
     });
     // 아미노산 구슬
     Y.chain.forEach((b, i) => { const p = pos[i], r = (PHONE ? 15 : 18) * Math.max(0.3, b.pop); aaBead(p.x, p.y, r, b.aa); });
-    if (Y.ph === 'folded') { D.label(g.F[0], g.F[1] + (PHONE ? 74 : 86), '🧶 단백질 (입체 구조)', { bg: '#c2410c', size: PHONE ? 13 : 15 }); D.text(g.F[0], g.F[1] + (PHONE ? 106 : 118), Y.chain.map((b) => AAI[b.aa].ko).join('–'), { size: PHONE ? 12 : 13.5, weight: 800, color: '#7c2d12' }); }
-    else if (Y.chain.length > 0 && Y.ph !== 'fold') D.text(Math.min(syCx(Math.max(0, Y.chain.length - 1)) + 80, VW - 70), g.bY + 40, Y.chain.length ? '아미노산 사슬 ' + Y.chain.length + '개' : '', { size: 12.5, weight: 800, color: '#7c2d12' });
+    if (Y.ph === 'folded') { D.label(g.F[0], g.F[1] + (PHONE ? 84 : 84), '🧶 단백질 (입체 구조)', { bg: '#c2410c', size: PHONE ? 13 : 15 }); D.text(g.F[0], g.F[1] + (PHONE ? 114 : 112), Y.chain.map((b) => AAI[b.aa].ko).join('–'), { size: PHONE ? 12 : 13.5, weight: 800, color: '#7c2d12' }); }
     // 아래: tRNA 후보
     D.shadow(() => { ctx.fillStyle = 'rgba(255,255,255,.88)'; rr(PHONE ? 10 : 100, g.trayY - 52, PHONE ? VW - 20 : 600, PHONE ? 250 : 170, 16).fill(); }, { blur: 5, y: 2 });
     if (Y.ph === 'read') {

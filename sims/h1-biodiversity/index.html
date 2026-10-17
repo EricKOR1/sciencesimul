@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#16a34a">
+  <title>진화와 생물다양성 | 고1 통합과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦜</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-toolbar { min-height: 58px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; }
+    .stage-toolbar .segmented button { min-height: 40px; padding: 5px 12px; font-size: 14.5px; white-space: nowrap; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    .seg-wide { display: flex; width: 100%; margin-top: 8px; }
+    .seg-wide button { flex: 1; min-width: 0; padding: 6px 4px; font-size: 14px; min-height: 44px; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard [hidden] { display: none !important; }
+    .btn-sm { min-height: 44px; }
+    .btn-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+    .btn-row .btn { flex: 1; padding-left: 8px; padding-right: 8px; }
+    .btn.done { background: var(--good-soft); border-color: var(--good); color: #0b6b39; }
+    .btn.on { background: var(--subject); border-color: var(--subject); color: #fff; }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+    .ctrl-note { margin: 6px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    .stepper .st .l { white-space: normal; text-align: center; line-height: 1.15; overflow: visible; }
+    .readout .value { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .concept table.mini { border-collapse: collapse; margin: 6px 0; font-size: 14px; width: 100%; }
+    .concept table.mini th, .concept table.mini td { border: 1px solid var(--line); padding: 4px 6px; text-align: center; }
+    .concept table.mini th { background: var(--surface-2); font-weight: 800; }
+    .sl-row { margin-bottom: 10px; }
+    .sl-row:last-of-type { margin-bottom: 0; }
+    .sl-row .dot { display: inline-block; width: 11px; height: 11px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+    .step-intro .si-q { background: #fff; border: 2px solid color-mix(in srgb, var(--subject) 45%, white); border-radius: 12px; padding: 9px 12px; font-weight: 800; font-size: 16px; color: #14532d; margin: 4px 0 8px; }
+    @media (max-width: 599px) { .readout .value { font-size: 15px; } .stage-toolbar .spacer { display: none; } .stage-toolbar .segmented button { padding: 5px 8px; font-size: 13.5px; } }
+  </style>
+</head>
+<body class="sim-page" data-subject="bio">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#h1b">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">통합과학2 · Ⅰ. 변화와 다양성</div>
+      <h1>진화와 생물다양성</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🐦 종의 분화</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="tablist" aria-label="화면 고르기" hidden>
+            <button type="button" data-mode="speci" data-feature="speci">🐦 종 분화</button>
+            <button type="button" data-mode="div" data-feature="div">🌈 세 가지 다양성</button>
+            <button type="button" data-mode="risk" data-feature="risk">⚠️ 위기</button>
+            <button type="button" data-mode="act" data-feature="act">🌱 보전</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="섬의 핀치 집단이 강으로 나뉘어 종이 갈라지는 모형, 유전적 다양성·종 다양성·생태계 다양성 관찰 화면, 서식지 단편화·외래종·오염에 따른 종 수 변화, 생물다양성 보전 실천 사례 분류와 계획"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1"> </span><span class="value" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2"> </span><span class="value" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3"> </span><span class="value" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <!-- 종 분화 -->
+        <div class="control" data-show="speci">
+          <div class="control-head"><span>🌊 서식지와 세대</span><output id="oGen">0세대</output></div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bSplit" type="button">🌊 강으로 서식지 나누기</button></div>
+          <div class="btn-row"><button class="btn btn-sm" id="bPlay" type="button">▶ 세대 진행</button><button class="btn btn-sm" id="bSkip" type="button">⏭ 10세대</button></div>
+          <div class="btn-row"><button class="btn btn-sm" id="bMerge" type="button" disabled>🤝 두 집단 합쳐 짝짓기</button><button class="btn btn-sm" id="bSpReset" type="button" style="flex:0 0 auto">↺</button></div>
+          <p class="ctrl-note" id="spNote"></p>
+        </div>
+        <!-- 세 가지 다양성 -->
+        <div class="control" data-show="div">
+          <div class="segmented seg-wide" id="subDiv"><button type="button" data-sub="gene">🧬 유전적</button><button type="button" data-sub="species">🐾 종</button><button type="button" data-sub="eco">🗺️ 생태계</button><button type="button" data-sub="sort">🗂️ 분류</button></div>
+        </div>
+        <div class="control" data-show="div:gene">
+          <div class="control-head"><span>🦠 전염병 실험</span><output id="oDis">대기</output></div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bDisease" type="button">🦠 전염병 퍼뜨리기</button><button class="btn btn-sm" id="bDisReset" type="button">↺ 다시</button></div>
+          <p class="ctrl-note">이 병은 <b>빨간 바탕에 까만 점 6개</b> 무늬의 무당벌레만 죽여요. 두 집단에서 살아남는 개체 수를 비교해요.</p>
+        </div>
+        <div class="control" data-show="div:species">
+          <div class="control-head"><span>🐾 종 세어 보기</span><output id="oSpc">—</output></div>
+          <p class="ctrl-note">그림 아래 <b>종 이름 줄</b>을 누르면 그 종이 반짝여요. 두 숲의 종 수와 각 종의 비율을 비교해요.</p>
+        </div>
+        <div class="control" data-show="div:eco">
+          <div class="control-head"><span>🗺️ 생태계 세어 보기</span><output id="oEco">—</output></div>
+          <p class="ctrl-note">그림 아래 <b>생태계 이름</b>을 누르면 그 생태계 칸이 반짝여요. 지도에 서로 다른 생태계가 몇 가지 있는지 세요.</p>
+        </div>
+        <div class="control" data-show="div:sort">
+          <div class="control-head"><span>🗂️ 분류한 카드</span><output id="oSort">0 / 9</output></div>
+          <div class="btn-row"><button class="btn btn-sm" id="bSortReset" type="button">↺ 카드 다시 모으기</button></div>
+          <p class="ctrl-note">카드를 끌어다 알맞은 칸에 놓아요. 카드를 누른 뒤 칸을 눌러도 돼요.</p>
+        </div>
+        <!-- 위기 -->
+        <div class="control" data-show="risk">
+          <div class="sl-row">
+            <div class="control-head"><span><i class="dot" style="background:#92400e"></i>서식지 파괴·분단</span><output id="oH">0 %</output></div>
+            <input type="range" id="rH" min="0" max="100" step="5" value="0" aria-label="서식지 파괴·분단 정도">
+          </div>
+          <div class="sl-row">
+            <div class="control-head"><span><i class="dot" style="background:#dc2626"></i>외래종 유입</span><output id="oA">0 %</output></div>
+            <input type="range" id="rA" min="0" max="100" step="5" value="0" aria-label="외래종 유입 정도">
+          </div>
+          <div class="sl-row">
+            <div class="control-head"><span><i class="dot" style="background:#7c6f3a"></i>환경 오염</span><output id="oP">0 %</output></div>
+            <input type="range" id="rP" min="0" max="100" step="5" value="0" aria-label="환경 오염 정도">
+          </div>
+          <div class="btn-row"><button class="btn btn-sm" id="bRiskReset" type="button">↺ 모두 0 %로</button></div>
+          <p class="ctrl-note">한 가지 요인만 올리고 나머지는 0 %로 두면 그 요인의 영향만 볼 수 있어요.</p>
+        </div>
+        <!-- 보전 -->
+        <div class="control" data-show="act">
+          <div class="segmented seg-wide" id="subAct"><button type="button" data-sub="match">🔗 연결</button><button type="button" data-sub="plan">📋 우리 지역 계획</button></div>
+        </div>
+        <div class="control" data-show="act:match">
+          <div class="control-head"><span>🔗 연결한 카드</span><output id="oMatch">0 / 8</output></div>
+          <div class="btn-row"><button class="btn btn-sm" id="bMatchReset" type="button">↺ 카드 다시 모으기</button></div>
+          <p class="ctrl-note">보전 사례 카드를 그것이 <b>지키는 다양성</b> 칸에 놓아요. 카드를 누르면 설명이 나와요.</p>
+        </div>
+        <div class="control" data-show="act:plan">
+          <div class="control-head"><span>📋 고른 사례</span><output id="oPlan">0 / 3칸</output></div>
+          <div class="btn-row"><button class="btn btn-sm" id="bPlanReset" type="button">↺ 다시 고르기</button></div>
+          <p class="ctrl-note">예산은 <b>3칸</b>이에요. 사례 카드 1장이 1칸이고, 카드를 누르면 고르거나 취소해요.</p>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>
