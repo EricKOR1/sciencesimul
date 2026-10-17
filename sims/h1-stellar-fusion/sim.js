@@ -24,12 +24,12 @@
     sky: { x: 12, y: 8, w: 776, h: 372 }, c: { x: 400, y: 172 }, rs: 1, trackY: 336, chart: { x: 12, y: 392, w: 776, h: 158 },
   };
   const CORE = PHONE ? {
-    c: { x: 300, y: 262 }, R: 252, bal: { x: 8, y: 530, w: 584, h: 240 }, pivot: { x: 300, y: 590 }, L: 130,
+    c: { x: 300, y: 262 }, R: 252, bal: { x: 8, y: 530, w: 584, h: 240 }, pivot: { x: 300, y: 582 }, L: 130,
   } : {
     c: { x: 290, y: 284 }, R: 246, bal: { x: 548, y: 8, w: 240, h: 544 }, pivot: { x: 668, y: 190 }, L: 84,
   };
   const ONION = PHONE ? {
-    c: { x: 300, y: 224 }, R: 200, leg: { x: 8, y: 440, w: 584, h: 332 },
+    c: { x: 300, y: 202 }, R: 176, leg: { x: 8, y: 392, w: 584, h: 380 },
   } : {
     c: { x: 262, y: 284 }, R: 236, leg: { x: 510, y: 8, w: 278, h: 544 },
   };
@@ -41,12 +41,12 @@
   ];
   function binRect(i) {
     if (PHONE) return { x: 8 + (i % 2) * 296, y: 8 + Math.floor(i / 2) * 184, w: 288, h: 176 };
-    return { x: 12 + i * 196, y: 12, w: 186, h: 330 };
+    return { x: 12 + i * 196, y: 12, w: 186, h: 300 };
   }
   const BIN_CW = PHONE ? 84 : 82, BIN_CH = PHONE ? 44 : 46;
   function poolRect(k) {
     if (PHONE) return { x: 8 + 70 + (k % 4) * 148, y: 432 + Math.floor(k / 4) * 62, w: 140, h: 52 };
-    return { x: 166 + (k % 4) * 156, y: 400 + Math.floor(k / 4) * 66, w: 148, h: 56 };
+    return { x: 166 + (k % 4) * 156, y: 386 + Math.floor(k / 4) * 72, w: 148, h: 60 };
   }
 
   /* ---------- 자료 ---------- */
@@ -353,9 +353,9 @@
       }
     } else {
       D.text(B.x + B.w / 2, B.y + B.h - 30, S.balPressed ? '' : '같은 질량일까요? (⚖ 버튼을 눌러요)', { size: 14.5, color: '#fde68a', weight: 800 });
-      D.text(lx, ly + 100, '수소 핵 4개', { size: 14, color: '#fca5a5', weight: 800 }); D.text(lx, ly + 122, S.balShow > 0.3 ? '4.0291 u' : '? u', { size: 15, color: '#fff', weight: 800 });
-      D.text(rx, ry + 100, '헬륨 핵 1개', { size: 14, color: '#fde68a', weight: 800 }); D.text(rx, ry + 122, S.balShow > 0.3 ? '4.0015 u' : '? u', { size: 15, color: '#fff', weight: 800 });
-      if (S.balShow > 0.6) { ctx.globalAlpha = smooth((S.balShow - 0.6) / 0.4); D.text(B.x + B.w / 2, B.y + B.h - 44, '사라진 질량 0.0276 u (약 0.7 %) → 빛 에너지', { size: 14.5, color: '#fde68a', weight: 800 }); ctx.globalAlpha = 1; }
+      D.text(pv.x - Lh, B.y + B.h - 84, '수소 핵 4개', { size: 14, color: '#fca5a5', weight: 800 }); D.text(pv.x - Lh, B.y + B.h - 62, S.balShow > 0.3 ? '4.0291 u' : '? u', { size: 15, color: '#fff', weight: 800 });
+      D.text(pv.x + Lh, B.y + B.h - 84, '헬륨 핵 1개', { size: 14, color: '#fde68a', weight: 800 }); D.text(pv.x + Lh, B.y + B.h - 62, S.balShow > 0.3 ? '4.0015 u' : '? u', { size: 15, color: '#fff', weight: 800 });
+      if (S.balShow > 0.6) { ctx.globalAlpha = smooth((S.balShow - 0.6) / 0.4); D.text(B.x + B.w / 2, B.y + B.h - 28, '사라진 질량 0.0276 u (약 0.7 %) → 빛 에너지', { size: 14.5, color: '#fde68a', weight: 800 }); ctx.globalAlpha = 1; }
     }
   }
 
@@ -404,14 +404,14 @@
     D.label(C.x - R + (PHONE ? 6 : 0), C.y - R + 2, '⚖ ' + S.m3 + '배 · ' + (end ? '진화의 끝' : STN[S.st]), { bg: 'rgba(15,23,42,.82)', color: '#fde68a', size: 15, align: 'left', border: 'rgba(253,230,138,.5)' });
     // 범례
     const P = ONION.leg; panel(P, '🧅 층과 핵융합');
-    const rowH = PHONE ? 35 : 44, y0 = P.y + 36;
+    const rowH = PHONE ? 40 : 44, y0 = P.y + 36;
     LAYERS.forEach((ly, i) => {
       const y = y0 + i * rowH, on = !end && i <= S.st, cur = !end && i === S.st;
       if (cur) { ctx.fillStyle = 'rgba(255,255,255,.10)'; rr(P.x + 8, y - 2, P.w - 16, rowH - 4, 10).fill(); }
       ctx.globalAlpha = on || end && i < 2 ? 1 : 0.35;
       D.sphere(P.x + 26, y + rowH / 2 - 3, 9, ly.col, { gloss: false });
-      D.text(P.x + 44, y + rowH / 2 - (PHONE ? 4 : 5), ly.name, { size: 14.5, color: '#f1f5f9', align: 'left', weight: 800 });
-      D.text(P.x + 44, y + rowH / 2 + (PHONE ? 13 : 14), ly.prod, { size: 13, color: '#bfd0ff', align: 'left', weight: 600 });
+      D.text(P.x + 44, y + rowH / 2 - (PHONE ? 3 : 5), ly.name, { size: 14.5, color: '#f1f5f9', align: 'left', weight: 800 });
+      D.text(P.x + 44, y + rowH / 2 + (PHONE ? 15 : 14), ly.prod, { size: 13, color: '#bfd0ff', align: 'left', weight: 600 });
       ctx.globalAlpha = 1;
     });
     const by = y0 + 6 * rowH + 6;
@@ -461,8 +461,9 @@
       D.text(r.x + r.w / 2, r.y + (PHONE ? 46 : 54), b.sub, { size: 13, color: '#cbd5e1', weight: 700 });
       if (!n) D.text(r.x + r.w / 2, r.y + r.h / 2 + (PHONE ? 20 : 30), '여기에 놓아요', { size: 13.5, color: '#64748b', weight: 700 });
     });
-    D.text(PHONE ? 16 : 24, PHONE ? 410 : 372, '👇 원소 카드 (끌어서 상자에 놓아요)', { size: 14.5, color: '#bae6fd', align: 'left', weight: 800 });
+    D.text(PHONE ? 16 : 24, PHONE ? 410 : 340, '👇 원소 카드 (끌어서 상자에 놓아요)', { size: 14.5, color: '#bae6fd', align: 'left', weight: 800 });
     S.cards.forEach((c) => drawCard(c));
+    paragraph('💡 별 속에서 핵융합은 철까지만 이어져요. 철보다 무거운 원소는 다음 차시에서 만나요.', PHONE ? 16 : 24, PHONE ? 566 : 526, VW - 40, 14.5, '#cbd5e1', 21, 700);
   }
   function drawCard(c) {
     const sh = c.shake > 0 ? Math.sin(c.shake * 30) * 4 : 0, lift = c.lift, small = c.bin >= 0 && !(S.drag && S.drag.c === c);
@@ -552,7 +553,7 @@
     let A, a, B, b, C, c;
     if (S.mode === 'life') { const M = MASS[S.mass]; A = '별의 질량'; a = '태양의 ' + S.mass + '배'; B = '수명 · 색'; b = M.life + ' · ' + M.tag; C = '표면 온도'; c = M.temp; }
     else if (S.mode === 'core') {
-      A = '중심 온도'; a = (S.T * 100).toLocaleString('ko-KR') + '만 K'; B = '핵융합'; b = S.T >= 10 ? '활발해요' : S.T >= 8 ? '가끔 일어나요' : '일어나지 않아요'; C = '만든 헬륨 핵'; c = S.heCount + '개';
+      A = '중심 온도'; a = (S.T * 100).toLocaleString('ko-KR') + '만 K'; B = '핵융합'; b = S.T >= 15 ? '활발해요' : S.T >= 10 ? '가끔 일어나요' : '거의 안 일어나요'; C = '만든 헬륨 핵'; c = S.heCount + '개';
     } else if (S.mode === 'onion') { A = '별의 질량'; a = '태양의 ' + S.m3 + '배'; B = '진화 단계'; b = endState() ? '진화의 끝' : STN[S.st]; C = '중심핵의 연료'; c = endState() ? '더 쓸 연료 없음' : LAYERS[S.st].name.replace(' 층', ''); }
     else { A = '놓은 카드'; a = S.cards.filter((x) => x.bin >= 0).length + ' / 8'; B = '빅뱅'; b = '수소·헬륨'; C = '별 속'; c = '탄소·질소·산소…'; }
     const key = A + a + B + b + C + c;
@@ -629,7 +630,7 @@
         {
           title: '헬륨 핵 3개 만들기',
           goal: '중심 온도를 높여 수소 핵을 합쳐서 <b>헬륨 핵 3개</b>를 만드세요.',
-          hint: '온도가 낮으면 수소 핵이 서로 밀어내며 튕겨 나가요. 슬라이더를 1000만 K 이상으로 올려 보세요.',
+          hint: '온도가 낮으면 수소 핵이 서로 밀어내며 튕겨 나가요. 슬라이더를 1500만 K 이상으로 올리면 더 활발해요.',
           setup() { ensure('core'); },
           check: () => S.heCount >= 3, hold: 0.3,
           status: () => '🌡 ' + (S.T * 100).toLocaleString('ko-KR') + '만 K · 헬륨 핵 <b>' + S.heCount + ' / 3</b>',
@@ -735,7 +736,7 @@
             S.cards.forEach((c) => { c.bad = false; });
             bad.forEach((c) => { c.bad = true; if (!c.shaken) { c.shaken = true; c.shake = 0.5; } });
             S.cards.forEach((c) => { if (!c.bad) c.shaken = false; });
-            if (bad.length) return '<b>' + bad.map((c) => c.name).join(', ') + '</b>의 자리를 다시 생각해 보세요. ' + TIPS[bad[0].id];
+            if (bad.length) return '<b>' + bad.slice(0, 3).map((c) => c.name).join(', ') + (bad.length > 3 ? ' 등' : '') + '</b>의 자리를 다시 생각해 보세요. ' + TIPS[bad[0].id];
             if (!S.originOK) { S.originOK = 1; BINS.forEach((b, i) => { const r = binRect(i); parts.burst(r.x + r.w / 2, r.y + r.h / 2, { count: 10, speed: 120, size: 3, life: 0.7 }); }); }
             return true;
           },

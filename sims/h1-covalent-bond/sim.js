@@ -68,7 +68,7 @@
   const S = { scene: 'share', sceneA: 1 };
   const TB = { share: '🤝 전자쌍 공유', build: '🧩 분자 만들기', conduct: '💡 전기 전도성 실험', classify: '📊 이온 결합 · 공유 결합 비교' };
   function setScene(sc) {
-    S.scene = sc;
+    S.scene = sc; hintEl.classList.add('hide');
     S.sceneA = 0; tween(S, { sceneA: 1 }, { duration: 0.4, ease: 'outCubic' });
     updateUI();
   }
@@ -83,7 +83,7 @@
   /* =========================================================
      ① 전자쌍 공유 (H₂, Cl₂)
      ========================================================= */
-  const R3 = PHONE ? 70 : 88;                        // 가장 바깥 껍질 반지름
+  const R3 = PHONE ? 70 : 98;                        // 가장 바깥 껍질 반지름
   const RH = R3 * 0.82;                               // 수소의 (유일한) 껍질 반지름
   const AY = PHONE ? 300 : 270;
   const MOLS = {
@@ -212,26 +212,25 @@
     D.text(rx, topY, el, { size: fs(22), weight: 800, color: INK });
     D.text(lx, topY + fs(22), '비금속 원소', { size: fs(13), weight: 700, color: MUTED });
     D.text(rx, topY + fs(22), '비금속 원소', { size: fs(13), weight: 700, color: MUTED });
-    // 바깥 전자 개수 알약
+    // 바깥 전자 개수 알약 (두 원자의 알약이 겹치지 않게 가운데를 기준으로 양쪽에 놓아요)
     const py = AY + Ro + fs(36);
-    const cnt = bA > 0.5 ? m.want : m.outer;
     const okc = bA > 0.5;
-    const txt = (bA > 0.5) ? (isH ? '전자 1 + 1(공유) = 2개' : '바깥 전자 7 + 1(공유) = 8개') : (isH ? '전자 1개' : '바깥 전자 7개');
-    [lx, rx].forEach((x) => pill(x, py, txt, { bg: okc ? '#e2f6eb' : '#fff', color: okc ? '#0b6b39' : INK, border: okc ? '#14a058' : '#c9d2e3', size: fs(13) }));
+    const txt = okc ? (isH ? 'H: 1 + 1 = 2개' : 'Cl: 7 + 1 = 8개') : (isH ? '전자 1개' : '바깥 전자 7개');
+    const gap = fs(6);
+    const side = (alignRight, y, text, o) => pill(alignRight ? mid - gap : mid + gap, y, text, Object.assign({ align: alignRight ? 'right' : 'left' }, o));
+    const pst = { bg: okc ? '#e2f6eb' : '#fff', color: okc ? '#0b6b39' : INK, border: okc ? '#14a058' : '#c9d2e3', size: fs(13) };
+    if (okc || d > 2 * Ro) { pill(lx, py, txt, pst); pill(rx, py, txt, pst); }
+    else { side(true, py, txt, pst); side(false, py, txt, pst); }
     if (okc) {
       ctx.save(); ctx.globalAlpha = smooth((bA - 0.5) * 2);
-      [lx, rx].forEach((x) => pill(x, py + fs(34), (m.ng === 'He' ? '헬륨(He)' : '아르곤(Ar)') + '과 같은 전자 배치', { bg: '#14a058', color: '#fff', size: fs(13) }));
+      const ngt = (m.ng === 'He' ? '헬륨(He)' : '아르곤(Ar)') + '과 같은 배치';
+      side(true, py + fs(34), ngt, { bg: '#14a058', color: '#fff', size: fs(13) }); side(false, py + fs(34), ngt, { bg: '#14a058', color: '#fff', size: fs(13) });
       ctx.restore();
       // 공유 전자쌍 · 비공유 전자쌍 표지
       ctx.save(); ctx.globalAlpha = smooth((bA - 0.6) * 2.5);
-      const ly = AY - Ro - fs(8);
-      D.arrow(mid, ly - fs(20), mid, AY - 20, { color: '#b45309', width: 3 });
-      pill(mid, ly - fs(34), '공유 전자쌍 (결합 1개)', { bg: '#b45309', color: '#fff', size: fs(13) });
-      if (!isH) {
-        const a = lx - Ro * Math.cos(0.5), b = AY - Ro * Math.sin(0.5);
-        pill(lx - Ro - fs(4), AY + Ro + fs(6) + 0 - fs(6), '', { bg: 'rgba(0,0,0,0)' });
-        D.text(lx - Ro * 0.74, AY + Ro * 0.98 + fs(4), '비공유 전자쌍', { size: fs(12), weight: 800, color: '#7c3aed' });
-      }
+      D.arrow(mid, topY - fs(10), mid, AY - 20, { color: '#b45309', width: 3 });
+      pill(mid, topY - fs(30), '공유 전자쌍 (결합 1개)', { bg: '#b45309', color: '#fff', size: fs(13) });
+      if (!isH) pill(lx - Ro - fs(8), AY, '비공유 전자쌍', { bg: '#7c3aed', color: '#fff', size: fs(12), align: 'right' });
       ctx.restore();
     }
     // 분자 이름 / 구조 표시 (결합 후)
@@ -341,6 +340,8 @@
     // 힘 계산
     atoms.forEach((a) => { a.fx = 0; a.fy = 0; });
     const dragSet = BU.drag && BU.drag.comp ? new Set(BU.drag.comp.map((a) => a.id)) : null;
+    const rootOf = {};
+    atoms.forEach((a) => { if (rootOf[a.id] != null) return; compOf(a).forEach((c) => { rootOf[c.id] = a.id; }); });
     for (let i = 0; i < atoms.length; i++) {
       const a = atoms[i];
       Object.keys(a.bonds).forEach((id) => {
@@ -353,14 +354,26 @@
       for (let j = i + 1; j < atoms.length; j++) {
         const b = atoms[j];
         const dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || 0.01;
-        const same = compOfId(a.id) === compOfId(b.id);
+        const same = rootOf[a.id] === rootOf[b.id];
         const rr = EL[a.el].r + EL[b.el].r;
-        const lim = same ? Math.max(120, rr + 56) : rr + 14;
+        if (same && sharesPair(a, b)) continue;
+        const lim = same ? rr + 56 : rr + 14;
         if (d < lim) {
-          const f = (lim - d) * (same ? 28 : 120);
+          const f = (lim - d) * (same ? 30 : 120);
           const ux = dx / d, uy = dy / d;
           a.fx -= ux * f; a.fy -= uy * f; b.fx += ux * f; b.fy += uy * f;
         }
+      }
+      // 중심 원자에 이웃이 2개이면 결합각을 맞춰요 (O는 굽은 모양, 나머지는 곧은 모양) — 모양을 외우는 것이 목적은 아니에요
+      const nb = Object.keys(a.bonds).map((id) => atomById(+id)).filter(Boolean);
+      if (nb.length === 2) {
+        const n1 = nb[0], n2 = nb[1];
+        const L1 = restLen(a, n1, a.bonds[n1.id]), L2 = restLen(a, n2, a.bonds[n2.id]);
+        const th = a.el === 'O' || a.el === 'N' ? (105 * Math.PI) / 180 : Math.PI;
+        const tgt = Math.sqrt(L1 * L1 + L2 * L2 - 2 * L1 * L2 * Math.cos(th));
+        const dx = n2.x - n1.x, dy = n2.y - n1.y, d = Math.hypot(dx, dy) || 0.01, f = (d - tgt) * 55;
+        const ux = dx / d, uy = dy / d;
+        n1.fx += ux * f; n1.fy += uy * f; n2.fx -= ux * f; n2.fy -= uy * f;
       }
     }
     atoms.forEach((a) => {
@@ -386,7 +399,11 @@
     BU.labels.forEach((l) => { l.t += dt; });
     BU.labels = BU.labels.filter((l) => l.t < 2.6);
   }
-  const compCache = {};
+  function sharesPair(a, b) {
+    // a와 b가 이웃이 2개뿐인 같은 원자에 결합해 있으면 (각도는 따로 맞춰요) true
+    for (const id of Object.keys(a.bonds)) { if (b.bonds[id] != null) { const c = atomById(+id); if (c && Object.keys(c.bonds).length === 2) return true; } }
+    return false;
+  }
   function compOfId(id) { const a = atomById(id); return a ? compOf(a).map((c) => c.id).sort((x, y) => x - y)[0] : -1; }
   function celebrate(comp) {
     const key = sigKey(comp), info = KNOWN[key];
@@ -481,7 +498,7 @@
       const gap = Math.hypot(a.x - b.x, a.y - b.y) - EL[a.el].r - EL[b.el].r;
       if (gap < bd) { bd = gap; best = [a, b]; }
     }));
-    if (!best || bd > 16) return;
+    if (!best || bd > 30) return;
     const [a, b] = best;
     if (free(a) >= 1 && free(b) >= 1) {
       // 결합 방향: 끌어 온 원자가 상대 쪽으로 붙도록 살짝 당겨 줘요
@@ -495,7 +512,7 @@
       Sound.fail();
       [a, b].forEach((x) => { x.shake = 1; });
       comp.forEach((c) => { const dx = c.x - best[1].x, dy = c.y - best[1].y, dd = Math.hypot(dx, dy) || 1; c.vx += (dx / dd) * 260; c.vy += (dy / dd) * 260; });
-      showHint(EL[full.el].name + '(' + full.el + ')은 결합을 ' + EL[full.el].v + '개만 만들 수 있고, 이미 다 채워졌어요', 4200);
+      showHint(EL[full.el].name + '(' + full.el + ') 원자는 결합을 ' + EL[full.el].v + '개만 만들 수 있고, 이미 다 채워졌어요', 4200);
     }
   }
   function cycleBond(a, b) {
@@ -1019,8 +1036,35 @@
     outb.forEach((c) => drawCard(c, t)); inb.forEach((c) => drawCard(c, t));
     if (CL.drag) drawCard(CL.drag.card, t);
     const ty = PHONE ? 370 : 346;
+    if (CL.verified) { /* 설명 칸이 아래에 나타나요 */ }
     const left = CL.cards.filter((c) => !c.bin).length;
     D.text(VW / 2, ty, left ? '물질 카드 ' + left + '장 · 끌어서 상자에 넣어요' : '모든 카드를 상자에 넣었어요 ✔', { size: fs(14), weight: 800, color: left ? MUTED : '#0b6b39' });
+    // 전도성 확인 뒤: 입자 모형 비교 (이온은 움직이고, 분자는 전하가 없어요)
+    if (CL.verified) {
+      const by = PHONE ? 400 : 372;
+      const bi = BIN.ion, bc = BIN.cov;
+      const pw = PHONE ? 262 : 364;
+      ctx.save(); ctx.globalAlpha = smooth(CL.lit.ion);
+      D.roundRect(bi.x, by, pw, PHONE ? 150 : 120, 16); ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.fill(); ctx.strokeStyle = ION_C; ctx.lineWidth = 2; ctx.stroke();
+      D.roundRect(bc.x, by, pw, PHONE ? 150 : 120, 16); ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.fill(); ctx.strokeStyle = COV_C; ctx.lineWidth = 2; ctx.stroke();
+      for (let i = 0; i < 6; i++) {
+        const na = i % 2 === 0, x = bi.x + 40 + i * (pw - 80) / 5 + Math.sin(t * 2 + i) * 6, y = by + (PHONE ? 52 : 46) + Math.cos(t * 1.7 + i * 1.3) * 8;
+        D.sphere(x, y, na ? 11 : 15, na ? POS : NEG, { shadow: false }); D.text(x, y + 5, na ? '+' : MINUS, { size: 15, weight: 800, color: '#fff' });
+        D.arrow(x, y + 24, x + (na ? -20 : 20), y + 24, { color: na ? POS : NEG, width: 3, head: 8 });
+      }
+      for (let i = 0; i < 4; i++) {
+        const x = bc.x + 52 + i * (pw - 104) / 3, y = by + (PHONE ? 52 : 46) + Math.sin(t * 1.5 + i * 2) * 5;
+        drawWaterMol(x, y, t * 0.3 + i, 1.5, 1);
+      }
+      if (PHONE) {
+        lines(bi.x + pw / 2, by + 98, ['이온이 움직여 전류를 나르니', '전기가 통해요'], { size: fs(12), color: '#5b21b6', weight: 800, lh: fs(18) });
+        lines(bc.x + pw / 2, by + 98, ['전하가 없는 분자라', '전기가 안 통해요'], { size: fs(12), color: '#0f766e', weight: 800, lh: fs(18) });
+      } else {
+        D.text(bi.x + pw / 2, by + 90, '이온이 움직여 전류를 나르니 전기가 통해요', { size: fs(13), weight: 800, color: '#5b21b6' });
+        D.text(bc.x + pw / 2, by + 90, '전하가 없는 분자라 전기가 안 통해요', { size: fs(13), weight: 800, color: '#0f766e' });
+      }
+      ctx.restore();
+    }
     // 범례
     const ly = PHONE ? 640 : 566;
     D.sphere(VW / 2 - fs(120), ly, 9, '#64748b', { gloss: false, shadow: false }); D.text(VW / 2 - fs(106), ly + 5, '금속 원소', { size: fs(13), weight: 700, color: MUTED, align: 'left' });

@@ -111,7 +111,7 @@
   };
   const curKey = () => (S.scene === 'lattice' ? S.latView : S.scene === 'dissolve' ? S.disView : S.scene);
   function setScene(sc, sub) {
-    S.scene = sc;
+    S.scene = sc; hintEl.classList.add('hide');
     if (sc === 'lattice' && sub) S.latView = sub;
     if (sc === 'dissolve' && sub) S.disView = sub;
     S.sceneA = 0; tween(S, { sceneA: 1 }, { duration: 0.4, ease: 'outCubic' });
