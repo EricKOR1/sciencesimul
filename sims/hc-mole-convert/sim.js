@@ -734,8 +734,8 @@
           check() {
             const bad = S.dr.ok.map((o, i) => (o ? -1 : i)).filter((i) => i >= 0);
             if (!bad.length) return true;
-            const i = bad[0], names = ['산소의 질량', '이산화 탄소의 질량', '질소의 질량', '3.01×10²²개의 부피'];
-            return isNaN(S.dr.val[i]) ? names[i] + '을(를) 써 주세요.' : names[i] + '을(를) 다시 계산해 보세요. ' + (i < 3 ? '0.5 mol × 몰질량이에요.' : '3.01×10²² ÷ 6.02×10²³ = 0.05 mol이에요.');
+            const i = bad[0], names = ['산소의 질량을', '이산화 탄소의 질량을', '질소의 질량을', '3.01×10²²개의 부피를'];
+            return isNaN(S.dr.val[i]) ? names[i] + ' 써 주세요.' : names[i] + ' 다시 계산해 보세요. ' + (i < 3 ? '0.5 mol × 몰질량이에요.' : '3.01×10²² ÷ 6.02×10²³ = 0.05 mol이에요.');
           },
           status: () => 'O₂ ' + mark(S.dr.ok[0]) + ' CO₂ ' + mark(S.dr.ok[1]) + ' N₂ ' + mark(S.dr.ok[2]) + ' 부피 ' + mark(S.dr.ok[3]),
           explain: '11.2 L는 <b>0.5 mol</b>이에요. 질량은 O₂ 0.5 × 32 = <b>16 g</b>, CO₂ 0.5 × 44 = <b>22 g</b>, N₂ 0.5 × 28 = <b>14 g</b>이에요. 분자 3.01×10²²개는 0.05 mol이라서 부피는 0.05 × 22.4 = <b>1.12 L</b>예요.',

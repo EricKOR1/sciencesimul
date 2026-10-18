@@ -4053,8 +4053,7 @@ window.SCI_CATALOG = {
                 "사례 조사",
                 "발표 준비",
                 "왜 배울까"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hc-mole",
@@ -4075,8 +4074,7 @@ window.SCI_CATALOG = {
                 "몰의 정의",
                 "입자 수↔몰",
                 "몰의 편리함"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hc-molar-mass",
@@ -4097,8 +4095,7 @@ window.SCI_CATALOG = {
                 "몰수만큼 달기",
                 "질량·몰·수",
                 "계산 도전"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hc-mole-convert",
@@ -4119,8 +4116,7 @@ window.SCI_CATALOG = {
                 "환산 허브",
                 "환산 연습",
                 "종합 도전"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hc-equation-mole",
@@ -4299,8 +4295,7 @@ window.SCI_CATALOG = {
                 "분자 그리기",
                 "5단계 요령",
                 "예외와 확장"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hc-vsepr",
@@ -4321,8 +4316,7 @@ window.SCI_CATALOG = {
                 "구조 표 만들기",
                 "비공유 전자쌍",
                 "분자 모델링"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hc-structure-property",
@@ -4343,8 +4337,7 @@ window.SCI_CATALOG = {
                 "물리적 성질",
                 "화학적 성질",
                 "구조로 예측"
-              ],
-              "soon": true
+              ]
             }
           ]
         },
