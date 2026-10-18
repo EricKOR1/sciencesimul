@@ -79,11 +79,16 @@
     .chips button.vd-eq.on { border-color: #3867f4; background: #e8eefe; color: #2447b8; }
     .val-row { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
     .val-row .nm { width: 66px; font-weight: 800; font-size: 14.5px; }
-    .val-row output { width: 52px; text-align: right; font: 800 14.5px ui-monospace, Menlo, Consolas, monospace; }
+    .val-row output { min-width: 52px; white-space: nowrap; text-align: right; font: 800 14.5px ui-monospace, Menlo, Consolas, monospace; }
     .ctrl-sub { font-weight: 800; font-size: 14px; color: var(--muted); margin: 8px 0 0; }
     .chk { display: flex; align-items: flex-start; gap: 8px; min-height: 44px; font-weight: 800; font-size: 14.5px; line-height: 1.35; padding: 6px 0; cursor: pointer; }
     .chk input { width: 22px; height: 22px; margin-top: 1px; flex: none; }
     .txt-area { width: 100%; min-height: 84px; border: 2px solid var(--line); border-radius: 12px; padding: 8px 10px; font: 700 15px var(--font); color: var(--ink); background: #fff; resize: vertical; box-sizing: border-box; }
+    .opt-list { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+    .opt-list button { text-align: left; width: 100%; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; background: #fff; padding: 8px 10px; font: 800 14px var(--font); color: var(--ink); line-height: 1.3; cursor: pointer; }
+    .opt-list button.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 12%, white); }
+    .opt-list button.done { border-color: var(--good); background: var(--good-soft); }
+    .opt-list button:disabled { cursor: default; }
     .sel-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
     .sel-row label { flex: 0 0 auto; font-weight: 800; font-size: 14.5px; max-width: 46%; line-height: 1.25; }
     .sel-row .sel-in { flex: 1; min-width: 0; }

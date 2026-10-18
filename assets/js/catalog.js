@@ -4518,8 +4518,7 @@ window.SCI_CATALOG = {
                 "M 계산",
                 "희석",
                 "이온 농도"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hc-standard-solution",
@@ -4540,8 +4539,7 @@ window.SCI_CATALOG = {
                 "용액 제조",
                 "오차 찾기",
                 "희석 제조"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hc-water-ionization",
@@ -4562,8 +4560,7 @@ window.SCI_CATALOG = {
                 "자동 이온화",
                 "Kw 규칙",
                 "액성 판단"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hc-ph",
@@ -4584,8 +4581,7 @@ window.SCI_CATALOG = {
                 "pH 계산",
                 "희석 그래프",
                 "생활 속 pH"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hc-neutralization-quant",

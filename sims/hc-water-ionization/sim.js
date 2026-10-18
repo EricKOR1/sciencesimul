@@ -243,7 +243,7 @@
       ctx.fillStyle = b > 0.05 ? C.rgba('#fde047', 0.4 + 0.6 * b) : 'rgba(0,0,0,0)'; ctx.beginPath(); ctx.arc(P.cx, cy, r - 2, 0, TAU); ctx.fill();
       ctx.strokeStyle = b > 0.05 ? '#f59e0b' : '#94a3b8'; ctx.lineWidth = 2.6; ctx.beginPath(); ctx.moveTo(P.cx - 9, cy + r - 3); ctx.lineTo(P.cx - 9, cy + 2); ctx.quadraticCurveTo(P.cx, cy - 12, P.cx + 9, cy + 2); ctx.lineTo(P.cx + 9, cy + r - 3); ctx.stroke();
       ctx.fillStyle = '#94a3b8'; D.roundRect(P.cx - 10, cy + r - 2, 20, 12, 3); ctx.fill();
-      if (!PHONE) T(P.cx, P.wy + 40, b > 0.5 ? '불이 켜졌어요' : '불이 안 켜져요', 14, b > 0.5 ? '#b45309' : MUTED, 'center', 800);
+      if (!PHONE) T(P.cx, cy - r - 12, b > 0.5 ? '불이 켜졌어요' : '불이 안 켜져요', 14, b > 0.5 ? '#b45309' : MUTED, 'center', 800);
     } else {
       const mw = P.dw, mh = PHONE ? 56 : 66, mx = P.cx - mw / 2, my = P.wy - mh / 2;
       D.shadow(() => { D.roundRect(mx, my, mw, mh, 10); ctx.fillStyle = '#e8edf6'; ctx.fill(); }, { blur: 6, y: 3 });

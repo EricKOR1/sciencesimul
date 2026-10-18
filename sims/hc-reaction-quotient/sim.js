@@ -183,6 +183,7 @@
       }
       for (let i = this.fx.length - 1; i >= 0; i--) { this.fx[i].t += dt; if (this.fx[i].t > 0.5) this.fx.splice(i, 1); }
     }
+    drawPs() { for (const p of this.ps) drawMol(p.k, p.x, p.y, p.a, this.sc); }
     glass(tint) {
       const r = this.r;
       D.shadow(() => { D.roundRect(r.x, r.y, r.w, r.h, 12); ctx.fillStyle = '#f6fbff'; ctx.fill(); }, { blur: 8, y: 3 });
@@ -236,10 +237,10 @@
     const d = dirOf(Q, K), col = DIR_COL[d];
     ctx.save();
     const kx = LX(K), qx = LX(Q);
-    D.roundRect(x, y - 7, w, 14, 7); ctx.fillStyle = '#e8eaf4'; ctx.fill();
+    D.roundRect(x, y - 9, w, 18, 9); ctx.fillStyle = '#e8eaf4'; ctx.fill();
     // K를 기준으로 왼쪽(Q < K, 정반응)과 오른쪽(Q > K, 역반응)
-    ctx.save(); D.roundRect(x, y - 7, w, 14, 7); ctx.clip();
-    ctx.fillStyle = rgba(GOOD, 0.22); ctx.fillRect(x, y - 7, kx - x, 14); ctx.fillStyle = rgba(BAD, 0.22); ctx.fillRect(kx, y - 7, x + w - kx, 14); ctx.restore();
+    ctx.save(); D.roundRect(x, y - 9, w, 18, 9); ctx.clip();
+    ctx.fillStyle = rgba(GOOD, 0.22); ctx.fillRect(x, y - 9, kx - x, 18); ctx.fillStyle = rgba(BAD, 0.22); ctx.fillRect(kx, y - 9, x + w - kx, 18); ctx.restore();
     for (let e = Math.ceil(lo); e <= hi; e++) {
       const tx = LX(Math.pow(10, e)); ctx.strokeStyle = '#9aa3b8'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(tx, y + 7); ctx.lineTo(tx, y + 13); ctx.stroke();
       T(tx, y + 28, '10' + supN(e), 12, MUTED, 'center', 700);
@@ -249,7 +250,8 @@
     const qpos = Q === 0 ? x : qx;
     D.sphere(clamp(qpos, x, x + w), y, 11, col, { shadow: true });
     D.label(clamp(qpos, x + 36, x + w - 36), y + 48, 'Q = ' + fq(Q), { bg: col, size: 13.5 });
-    T(x, y - 14, '← Q < K (정반응)', 12, GOOD, 'left', 800); T(x + w, y - 14, 'Q > K (역반응) →', 12, BAD, 'right', 800);
+    if (kx - x > 84) T(x + (kx - x) / 2, y + 4, '정반응 →', 11.5, '#0b6b39', 'center', 800);
+    if (x + w - kx > 84) T(kx + (x + w - kx) / 2, y + 4, '← 역반응', 11.5, '#a3262b', 'center', 800);
     ctx.restore();
   }
   // 가로 막대 (농도 등): frac 0~1 이내로 막대 안에서만 그려요
@@ -276,6 +278,34 @@
     const key = a.join('|'); if (key === rlast) return; rlast = key;
     l1.textContent = a[0]; v1.innerHTML = a[1]; l2.textContent = a[2]; v2.innerHTML = a[3]; l3.textContent = a[4]; v3.innerHTML = a[5];
   }
+
+  /* ---------- 일반 용기 패널 (분자 용기 + 농도 막대) ---------- */
+  // o: { title, vessel, sp:[{k,name,col}], c:[], barMax, unitTxt, tint, pill:{txt,col,blink}, stampAt }
+  function vpGeneric(r, o) {
+    panel(r.x, r.y, r.w, r.h, 14);
+    T(r.x + 14, r.y + 26, o.title, 14.5, INK, 'left', 800);
+    if (o.pill) { ctx.save(); ctx.globalAlpha = o.pill.blink ? 0.65 + 0.35 * Math.sin(S_T() * 8) : 1; D.label(r.x + r.w - 12, r.y + 24, o.pill.txt, { bg: o.pill.col, size: 13, align: 'right' }); ctx.restore(); }
+    const n = o.sp.length, stacked = r.h > r.w * 1.3;
+    let vr, bx, by, bw, step;
+    if (!stacked) {
+      const vw = clamp(r.w * 0.47, 130, 220);
+      vr = { x: r.x + 14, y: r.y + 42, w: vw, h: r.h - 56 };
+      bx = vr.x + vw + 18; bw = r.x + r.w - 14 - bx; by = r.y + 78; step = Math.min(58, (r.h - 120) / n);
+    } else {
+      vr = { x: r.x + 14, y: r.y + 42, w: r.w - 28, h: r.h - 42 - n * 54 - 44 };
+      bx = r.x + 40; bw = r.w - 56; by = vr.y + vr.h + 38; step = 54;
+    }
+    o.vessel.setRect(vr);
+    o.vessel.draw(o.tint || null);
+    o.sp.forEach((s, i) => {
+      const y = by + i * step;
+      drawMol(s.k, bx - 12 + (stacked ? -4 : 0), y - 8, 0, 0.8);
+      hbar(bx + 14, y, bw - 14, 14, o.c[i] / o.barMax, s.col, '[' + s.name + ']', fcx(o.c[i]));
+    });
+    textBlock(bx - (stacked ? 28 : 6), by + n * step + 6, (stacked ? r.w - 24 : bw + 8), o.unitTxt, 12, MUTED, 15, 700);
+    return vr;
+  }
+  let S_T = () => performance.now() / 1000;
 
   /* ---------- 반응 자료 ---------- */
   const RX = {

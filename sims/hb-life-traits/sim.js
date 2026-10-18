@@ -82,7 +82,7 @@
     ctx.strokeStyle = c.bad ? '#e2464b' : c.sel ? '#f59e0b' : C.shade(c.col || '#16a34a', 0.15); ctx.lineWidth = c.bad || c.sel ? 3 : 2; D.roundRect(-w / 2, -h / 2, w, h, r); ctx.stroke();
     const chip = h < 36;
     if (chip) {
-      TF(0, 5, c.short || c.label, w - 10, clamp(h * 0.58, 11, 14), 10.5, '#26324a', 'center', 800);
+      TF(0, 5, w > 300 ? c.label : (c.short || c.label), w - 10, clamp(h * 0.58, 11, 14), 10.5, '#26324a', 'center', 800);
     } else {
       let lx = -w / 2 + 10, maxW = w - 20;
       if (c.icon) { T(-w / 2 + 12 + 12, 7, c.icon, 22, '#26324a', 'center', 600); lx = -w / 2 + 40; maxW = w - 48; }
@@ -321,12 +321,12 @@
   ];
   const ITEM = {}; ITEMS.forEach((it) => { ITEM[it.id] = it; });
   const INS = PHONE
-    ? { x: 8, y: 8, w: 464, h: 262, st: { x: 8, y: 8, w: 160, h: 262 }, lamp: { x: 178, y: 44, w: 288, h: 138, cols: 2 }, note: { x: 182, y: 192, w: 282 } }
-    : { x: 16, y: 52, w: 520, h: 322, st: { x: 16, y: 52, w: 220, h: 322 }, lamp: { x: 248, y: 98, w: 280, h: 168, cols: 2 }, note: { x: 250, y: 290, w: 280 } };
+    ? { x: 8, y: 8, w: 464, h: 272, st: { x: 8, y: 8, w: 160, h: 272 }, lamp: { x: 178, y: 44, w: 288, h: 130, cols: 2 }, note: { x: 182, y: 190, w: 284 } }
+    : { x: 16, y: 52, w: 520, h: 322, st: { x: 16, y: 52, w: 220, h: 322 }, lamp: { x: 248, y: 92, w: 280, h: 150, cols: 2 }, note: { x: 250, y: 264, w: 282 } };
   const BOXES = PHONE
-    ? [{ id: 'bio', label: '🌱 생물', col: '#16a34a', x: 8, y: 278, w: 228, h: 150, cols: 2, hdr: 28 }, { id: 'non', label: '⚙️ 비생물', col: '#64748b', x: 244, y: 278, w: 228, h: 150, cols: 2, hdr: 28 }]
+    ? [{ id: 'bio', label: '🌱 생물', col: '#16a34a', x: 8, y: 288, w: 228, h: 150, cols: 2, hdr: 28 }, { id: 'non', label: '⚙️ 비생물', col: '#64748b', x: 244, y: 288, w: 228, h: 150, cols: 2, hdr: 28 }]
     : [{ id: 'bio', label: '🌱 생물', col: '#16a34a', x: 552, y: 52, w: 232, h: 152, cols: 2, hdr: 28 }, { id: 'non', label: '⚙️ 비생물', col: '#64748b', x: 552, y: 222, w: 232, h: 152, cols: 2, hdr: 28 }];
-  const trayPos = (i) => PHONE ? { x: 10 + (i % 2) * 236, y: 452 + Math.floor(i / 2) * 46 } : { x: 13 + (i % 4) * 196, y: 402 + Math.floor(i / 4) * 62 };
+  const trayPos = (i) => PHONE ? { x: 10 + (i % 2) * 236, y: 460 + Math.floor(i / 2) * 45 } : { x: 13 + (i % 4) * 196, y: 402 + Math.floor(i / 4) * 62 };
   function makeInspect() {
     S.insp = { id: null, t: 0, lit: [0, 0, 0, 0, 0, 0], fired: [], seen: {} };
     S.sorter = new Sorter({
@@ -412,12 +412,13 @@
       if (v) {
         const k = smooth((I.t - 2.3) / 0.4);
         D.label(g.note.x + 70, g.note.y - 2, v === 'bio' ? '🌱 생물이에요' : '⚙️ 비생물이에요', { bg: v === 'bio' ? '#16a34a' : '#64748b', size: PHONE ? 13.5 : 15, align: 'left' });
-        ctx.globalAlpha = k; textBlock(g.note.x, g.note.y + 28, g.note.w, it.note, PHONE ? 12.5 : 13.5, '#3a465c', PHONE ? 17 : 19, 700); ctx.globalAlpha = 1;
-        if (it.st.indexOf('T') >= 0) { ctx.globalAlpha = k; T(g.note.x, g.note.y + (PHONE ? 78 : 100) + 0, '≈ 는 비슷해 보이지만 생물의 특성은 아니에요', PHONE ? 11.5 : 12.5, '#a16207', 'left', 800); ctx.globalAlpha = 1; }
+        ctx.globalAlpha = k; const th = textBlock(g.note.x, g.note.y + (PHONE ? 26 : 30), g.note.w, it.note, PHONE ? 12.5 : 13.5, '#3a465c', PHONE ? 16 : 19, 700);
+        if (it.st.indexOf('T') >= 0) T(g.note.x, g.note.y + (PHONE ? 26 : 30) + th + 4, '≈ 는 비슷해 보이지만 생물의 특성은 아니에요', PHONE ? 11.5 : 12.5, '#a16207', 'left', 800);
+        ctx.globalAlpha = 1;
       } else T(g.note.x, g.note.y + 12, '검사하는 중…', 14, '#7b8a80', 'left', 800);
     } else textBlock(g.note.x, g.note.y + 12, g.note.w, '6가지를 모두 가지면 생물이에요. 하나라도 없으면 비생물이에요.', PHONE ? 12.5 : 13.5, '#5a6679', PHONE ? 17 : 19, 700);
     // 상자와 카드
-    T(PHONE ? 12 : 16, PHONE ? 446 : 394, '👇 눌러서 검사하고, 끌어서 생물/비생물 상자에 넣어요', PHONE ? 12.5 : 13.5, '#5a6679', 'left', 800);
+    T(PHONE ? 12 : 16, PHONE ? 452 : 394, '👇 눌러서 검사하고, 끌어서 생물/비생물 상자에 넣어요', PHONE ? 12.5 : 13.5, '#5a6679', 'left', 800);
     S.sorter.draw();
     parts.update(dt); parts.draw(ctx);
   }
@@ -482,8 +483,8 @@
         { id: 'asm', label: '새 바이러스 입자 조립', short: '조립', col: '#8b5cf6' },
         { id: 'out', label: '세포를 터뜨리고 나와 퍼지기', short: '방출', col: '#8b5cf6' },
       ],
-      slots: PHONE ? [0, 1, 2, 3, 4].map((i) => ({ x: 8, y: 452 + i * 37 })) : [0, 1, 2, 3, 4].map((i) => ({ x: 14 + i * 157, y: 440 })),
-      cw: PHONE ? 464 : 150, ch: PHONE ? 33 : 64, solution: ['attach', 'enter', 'copy', 'asm', 'out'],
+      slots: PHONE ? [0, 1, 2, 3, 4].map((i) => ({ x: 8, y: 474 + i * 32 })) : [0, 1, 2, 3, 4].map((i) => ({ x: 14 + i * 157, y: 440 })),
+      cw: PHONE ? 464 : 150, ch: PHONE ? 28 : 64, solution: ['attach', 'enter', 'copy', 'asm', 'out'],
       onChange: () => { S.vir.order.clearBad(); },
     });
   }
@@ -495,7 +496,7 @@
     ['⑤ 방출', '숙주 세포를 터뜨리고 나와 다른 세포로 퍼져요.'],
   ];
   function setHostStage(k) { const V = S.vir; V.hs = clamp(k, 0, 4); V.hostSeen = true; Sound.click(); syncControls(); }
-  const HV = PHONE ? { x: 262, y: 168, rx: 172, ry: 98 } : { x: 304, y: 212, rx: 200, ry: 136 };
+  const HV = PHONE ? { x: 262, y: 140, rx: 172, ry: 84 } : { x: 304, y: 212, rx: 200, ry: 136 };
   const RIBO = (() => { const r = mulberry(7), a = []; for (let i = 0; i < 16; i++) { const t = r() * TAU, d = Math.sqrt(r()) * 0.82; a.push([Math.cos(t) * d, Math.sin(t) * d * 0.8]); } return a; })();
   const COPYPOS = [[-0.05, 0.1], [0.12, -0.12], [0.3, 0.18], [0.02, 0.38], [0.36, -0.2], [0.22, 0.4]];
   const NEWPOS = [[0.0, 0.05], [0.25, -0.12], [0.3, 0.26], [0.02, 0.38]];
@@ -511,7 +512,7 @@
     ctx.lineWidth = 6 - 3 * burst; ctx.strokeStyle = '#f59e0b'; if (burst > 0.05) ctx.setLineDash([16 * (1 - burst) + 4, 6 + 18 * burst]); cell(h.x, h.y, h.rx, h.ry); ctx.stroke(); ctx.setLineDash([]);
     D.sphere(h.x - h.rx * 0.38, h.y - h.ry * 0.3, PHONE ? 26 : 34, '#a78bfa', { gloss: true }); T(h.x - h.rx * 0.38, h.y - h.ry * 0.3 + 5, '핵', 13, '#fff', 'center', 800);
     RIBO.forEach((r) => D.sphere(h.x + r[0] * h.rx * 0.95, h.y + r[1] * h.ry, 3.2, '#e0457b', { gloss: false }));
-    T(h.x + h.rx * 0.5, h.y + h.ry * 0.78, '숙주 세포', 13.5, '#9d174d', 'center', 800);
+    T(h.x + h.rx * 0.38, h.y + h.ry * 0.62, '숙주 세포', 13.5, '#9d174d', 'center', 800);
     ctx.restore();
     // 껍질(캡시드)
     const vx0 = h.x - h.rx - R * 1.05, vy0 = h.y;
@@ -562,7 +563,7 @@
     if (s > 3.4) { ctx.save(); ctx.globalAlpha = smooth((s - 3.4) / 0.6); D.label(h.x + h.rx - (PHONE ? 20 : 40), h.y + h.ry + (PHONE ? 20 : 18), '새 바이러스 수백 개 (예시 값)', { bg: '#7e22ce', size: PHONE ? 12 : 13.5, align: 'right' }); ctx.restore(); }
     if (s < 0.5) D.label(vx0, vy0 - R * 1.8, '바이러스', { bg: '#7e66c9', size: 13 });
     // 단계 점
-    const dy = PHONE ? h.y + h.ry + 22 : h.y + h.ry + 22;
+    const dy = h.y + h.ry + (PHONE ? 20 : 22);
     for (let i = 0; i < 5; i++) {
       const x = (PHONE ? 40 : 60) + i * (PHONE ? 100 : 106); const on = Math.abs(V.hs - i) < 0.5, done = V.hs > i;
       D.sphere(x, dy, 8, on ? '#7c3aed' : done ? '#a78bfa' : '#d1d5db', { gloss: false });
@@ -581,7 +582,7 @@
   function drawSize(dt) {
     const V = S.vir, g = SZG; V.scaleK = SciSim.approach(V.scaleK, V.scale, dt, RM ? 60 : 4);
     const k = V.scaleK;
-    panel(8, PHONE ? 8 : 52, VW - 16, PHONE ? 470 : 380, 16);
+    panel(8, PHONE ? 8 : 52, VW - 16, PHONE ? 612 : 500, 16);
     T(VW / 2, PHONE ? 36 : 80, k < 0.5 ? '📏 선형 눈금: 길이에 비례해요' : '📏 로그 눈금: 한 칸마다 10배예요', PHONE ? 15 : 17, '#26324a', 'center', 800);
     const y0 = g.y0 + (PHONE ? 12 : 22);
     SZ.forEach((it, i) => {
@@ -627,7 +628,7 @@
     if (sub === 'size' && V.scale === 1) V.logSeen = true;
   }
   const VLAMP_STRUCT = PHONE ? { x: 8, y: 344, w: 464, h: 168, cols: 2 } : { x: 384, y: 104, w: 400, h: 232, cols: 2 };
-  const VLAMP_HOST = PHONE ? { x: 8, y: 346, w: 464, h: 90, cols: 3 } : { x: 560, y: 94, w: 224, h: 286, cols: 1 };
+  const VLAMP_HOST = PHONE ? { x: 8, y: 356, w: 464, h: 82, cols: 3 } : { x: 560, y: 94, w: 224, h: 250, cols: 1 };
   function drawVirus(dt) {
     bgFill('#f1effa', '#f7f5fd');
     const V = S.vir, sub = S.sub.virus;
@@ -654,16 +655,14 @@
       T(PHONE ? VW / 2 : g.x + g.w / 2, g.y - (PHONE ? 10 : 20), '🔬 바이러스 검사판 · ' + (on ? '숙주 세포 안' : '숙주 세포 밖'), PHONE ? 13.5 : 14.5, '#3b2d77', 'center', 800);
       drawLampBoard(g, on ? 'XXXXOO' : 'XXXXXX', V.hostLit, { short: PHONE || true });
       if (!PHONE) {
-        textBlock(g.x, g.y + g.h + 26, g.w, on ? '숙주 안에서는 증식(생식·유전)하고 변이로 진화해요. 생물과 비생물의 특성을 모두 가져요.' : '숙주 밖에서는 아무 특성도 나타나지 않아요.', 13, '#46407a', 18, 700);
+        textBlock(g.x, g.y + g.h + 24, g.w, on ? '숙주 안에서만 증식·변이해요. 생물과 비생물의 특성을 모두 가져요.' : '숙주 밖에서는 아무 특성도 나타나지 않아요.', 13, '#46407a', 18, 700);
       }
       // 현재 단계 설명
       const k = clamp(Math.round(V.hs), 0, 4), cy = PHONE ? 330 : 405;
-      textBlock(PHONE ? 12 : 16, PHONE ? 328 : 400, PHONE ? 456 : 520, '', 1, '#000', 1);
-      D.label(PHONE ? 8 : 16, PHONE ? 332 : 392, STAGES[k][0] + ' ' + STAGES[k][1].slice(0, 0), { bg: '#7c3aed', size: 13, align: 'left' });
-      TF(PHONE ? 8 : 16, PHONE ? 372 : 424, STAGES[k][1], PHONE ? 460 : 530, PHONE ? 13 : 14, 11, '#46407a', 'left', 800);
-      T(PHONE ? 12 : 16, PHONE ? 444 : 432, '', 1, '#000', 'left');
+      D.label(PHONE ? 8 : 16, PHONE ? 298 : 392, STAGES[k][0], { bg: '#7c3aed', size: 13, align: 'left' });
+      TF(PHONE ? 8 : 16, PHONE ? 326 : 424, STAGES[k][1], PHONE ? 460 : 530, PHONE ? 13 : 14, 11, '#46407a', 'left', 800);
       V.order.draw();
-      T(PHONE ? 236 : 400, PHONE ? 448 : 523, '↑ 증식 과정을 순서대로 놓아요 (끌어서 자리 바꾸기)', PHONE ? 12.5 : 13.5, '#6b5fa8', 'center', 800);
+      T(PHONE ? 236 : 400, PHONE ? 466 : 523, PHONE ? '↓ 증식 과정을 순서대로 놓아요 (끌어서 바꾸기)' : '↑ 증식 과정을 순서대로 놓아요 (끌어서 자리 바꾸기)', PHONE ? 12.5 : 13.5, '#6b5fa8', 'center', 800);
     }
     parts.update(dt); parts.draw(ctx);
   }
@@ -777,7 +776,6 @@
     } else {
       // 비교표
       const tx = PHONE ? 8 : 16, tw = PHONE ? 464 : 520, ty = PHONE ? 52 : 92, rh = PHONE ? 38 : 40, rg = PHONE ? 6 : 6;
-      T(tx + (PHONE ? 200 : 250), ty - 16, '', 1, '#000');
       T(tx + tw - (PHONE ? 100 : 130), ty - 14, '🧑 사람', PHONE ? 13.5 : 15, '#166534', 'center', 800);
       T(tx + tw - (PHONE ? 38 : 50), ty - 14, '🤖 로봇', PHONE ? 13.5 : 15, '#334155', 'center', 800);
       for (let i = 0; i < 6; i++) {
@@ -923,8 +921,7 @@
       if (!a && k > 0) T(x + cw / 2, y + chh / 2 + 6, '내 카드를 올리면 도착해요', 13.5, '#98a2b3', 'center', 800);
       else if (!a) T(x + cw / 2, y + chh / 2 + 6, '위에서 성과를 골라요', 14, '#98a2b3', 'center', 800);
       else {
-        const lines = PHONE ? [[x + 12, y + 44], [x + 12, y + 64], [x + 12, y + 84]] : [[x + 14, y + 112], [x + 14, y + 172], [x + 14, y + 232]];
-        T(x + 14, y + (PHONE ? 38 : 58), '', 1, '#000');
+        const lines = PHONE ? [[x + 12, y + 44], [x + 12, y + 64], [x + 12, y + 84]] : [[x + 14, y + 124], [x + 14, y + 176], [x + 14, y + 228]];
         if (!PHONE) { T(x + cw / 2, y + 66, a.icon, 34, '#000', 'center', 600); TF(x + cw / 2, y + 90, a.label, cw - 24, 16, 12, '#26324a', 'center', 800); }
         const sel = k === 0 ? [bd.p1, bd.p2, bd.p3] : [ci, ci, ci], keys = ['p1', 'p2', 'p3'], heads = ['🎯 해결할 문제', '🛠 쓰인 기술', '🌍 사회에 준 영향'];
         for (let j = 0; j < 3; j++) {
@@ -958,7 +955,7 @@
     if (!F.posted) T(PHONE ? 240 : 40, PHONE ? 600 : 366, '내 카드를 올리면 모둠 융합 지도가 완성돼요', PHONE ? 12.5 : 13.5, '#7b8a80', PHONE ? 'center' : 'left', 800);
     else {
       const sh = DISC.filter((d, i) => counts[i] >= 2).map((d) => d.label);
-      textBlock(PHONE ? 20 : 40, PHONE ? 596 : 366, PHONE ? 440 : 200, sh.length ? '두 카드 이상이 함께 쓰는 학문: ' + sh.join(', ') : '서로 다른 학문이 모여 있어요', PHONE ? 12.5 : 13.5, '#3a465c', 18, 800);
+      textBlock(PHONE ? 20 : 40, PHONE ? 596 : 366, PHONE ? 440 : 230, sh.length ? '두 카드 이상이 함께 쓰는 학문: ' + sh.join(', ') : '서로 다른 학문이 모여 있어요', PHONE ? 12.5 : 13.5, '#3a465c', 18, 800);
       shown.forEach((ci, k) => { D.label(PHONE ? 20 + k * 150 : 560, PHONE ? 626 : 380 + k * 34, ACH[ci].icon + ' ' + ACH[ci].short, { bg: cols[k], size: 12.5, align: 'left' }); });
     }
     parts.update(dt); parts.draw(ctx);

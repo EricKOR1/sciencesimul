@@ -183,6 +183,7 @@
       }
       for (let i = this.fx.length - 1; i >= 0; i--) { this.fx[i].t += dt; if (this.fx[i].t > 0.5) this.fx.splice(i, 1); }
     }
+    drawPs() { for (const p of this.ps) drawMol(p.k, p.x, p.y, p.a, this.sc); }
     glass(tint) {
       const r = this.r;
       D.shadow(() => { D.roundRect(r.x, r.y, r.w, r.h, 12); ctx.fillStyle = '#f6fbff'; ctx.fill(); }, { blur: 8, y: 3 });

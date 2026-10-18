@@ -45,6 +45,7 @@
   const r6 = (v) => Math.round(v * 1e6) / 1e6;
   const fT = (v, d) => String(+(+v).toFixed(d == null ? 3 : d));    // 끝의 0은 생략
   const f2 = (v) => (+v).toFixed(2);
+  const fx = (v, d) => (+v).toFixed(d);
   const parseNum = (s) => {
     s = String(s).trim().replace(/,/g, '.').replace(/[×x]\s*10\s*\^?\s*(-?\d+)/i, 'e$1').replace(/\s+/g, '');
     const fr = /^(\d+(?:\.\d+)?)\/(\d+(?:\.\d+)?)$/.exec(s); if (fr && +fr[2] !== 0) return +fr[1] / +fr[2];
@@ -305,6 +306,7 @@
   }
   function tPrepare() {
     if (TT.ready || TT.lock > 0) return;
+    if (TT.canPrep && !TT.canPrep()) { Sound.fail(); showHint(TT.prepMsg || '', 4200); return; }
     TT.ready = true; TT.fill.v = 0; TT.indQ = 3; TT.lock = 1.2; Sound.click();
     tw(TT.fill, { v: 1 }, { duration: 0.9, ease: 'outCubic' });
   }
@@ -696,14 +698,14 @@
     const Ch = LC.chain; panel(Ch.x, Ch.y, Ch.w, Ch.h, 14);
     T(Ch.x + 14, Ch.y + 24, '🧮 a M V = b M′ V′  (a = 산의 H⁺ 수, b = 염기의 OH⁻ 수)', PHONE ? 13 : 14.5, INK, 'left', 800);
     const eqv = st >= 1 || C.pi === 1 && st >= 1;
-    const vTxt = C.pi === 0 ? (st >= 1 ? fT(p.mean, 1) : '?') : p.Vn.toFixed(1);
+    const vTxt = C.pi === 0 ? (st >= 1 ? fx(p.mean, 1) : '?') : p.Vn.toFixed(1);
     const aTxt = C.pi === 0 ? '1' : (st >= 1 ? '2' : '?');
-    const mTxt = st >= 2 ? fT(p.M, 4) : 'M';
+    const mTxt = st >= 2 ? fx(p.M, 4) : 'M';
     T(Ch.x + Ch.w / 2, Ch.y + 52, aTxt + ' × ' + mTxt + ' × ' + p.Vs + ' mL  =  1 × 0.100 × ' + vTxt + ' mL', PHONE ? 15 : 19, VIO, 'center', 800);
     const titles = C.pi === 0 ? ['① 평균 NaOH 부피', '② 몰수 비교 식', '③ HCl 농도 M'] : ['① H⁺ 수 a', '② 몰수 비교 식', '③ H₂SO₄ 농도 M'];
     const lines = C.pi === 0
-      ? [['(14.90 + 15.10 + 15.00) ÷ 3', '= ' + (st >= 1 ? fT(p.mean, 1) : '?') + ' mL'], ['1 × M × 20.00 = 1 × 0.100 × V′', 'V′ = ' + (st >= 1 ? fT(p.mean, 1) : '?') + ' mL'], ['M = 0.100 × ' + (st >= 1 ? fT(p.mean, 1) : '15.0') + ' ÷ 20.00', '= ' + (st >= 2 ? fT(p.M, 4) : '?') + ' M']]
-      : [['H₂SO₄ 1개가 내놓는 H⁺', '= ' + (st >= 1 ? '2' : '?') + '개'], ['a × M × 10.0 = 1 × 0.100 × 24.0', (st >= 1 ? '2' : 'a') + ' × M × 10.0 = 2.40'], ['M = 0.100 × 24.0 ÷ (' + (st >= 1 ? '2' : 'a') + ' × 10.0)', '= ' + (st >= 2 ? fT(p.M, 3) : '?') + ' M']];
+      ? [['(14.90 + 15.10 + 15.00) ÷ 3', '= ' + (st >= 1 ? fx(p.mean, 1) : '?') + ' mL'], ['1 × M × 20.00 = 1 × 0.100 × V′', 'V′ = ' + (st >= 1 ? fx(p.mean, 1) : '?') + ' mL'], ['M = 0.100 × ' + (st >= 1 ? fx(p.mean, 1) : '15.0') + ' ÷ 20.00', '= ' + (st >= 2 ? fx(p.M, 4) : '?') + ' M']]
+      : [['H₂SO₄ 1개가 내놓는 H⁺', '= ' + (st >= 1 ? '2' : '?') + '개'], ['a × M × 10.0 = 1 × 0.100 × 24.0', (st >= 1 ? '2' : 'a') + ' × M × 10.0 = 2.40'], ['M = 0.100 × 24.0 ÷ (' + (st >= 1 ? '2' : 'a') + ' × 10.0)', '= ' + (st >= 2 ? fx(p.M, 3) : '?') + ' M']];
     for (let i = 0; i < 3; i++) {
       const r = LC.card(i), done = i < st || (i === 1 && st >= 1) && false, filled = i === 0 ? st >= 1 : i === 1 ? st >= 1 : st >= 2, act = !filled && (i === 0 ? st === 0 : i === 2 ? st === 1 : false);
       if (i < 2) { const r2_ = LC.card(i + 1); if (PHONE) D.arrow(r.x + r.w / 2, r.y + r.h + 1, r2_.x + r2_.w / 2, r2_.y - 1, { color: '#b7bdd0', width: 3, head: 9 }); else D.arrow(r.x + r.w + 2, r.y + r.h / 2, r2_.x - 2, r.y + r.h / 2, { color: '#b7bdd0', width: 3, head: 9 }); }
@@ -714,19 +716,19 @@
       lines[i].forEach((ln, k) => T(r.x + 14, r.y + (PHONE ? 62 : 70) + k * (PHONE ? 30 : 36), ln, PHONE ? 14 : 15, k === 1 ? (filled ? '#0b6b39' : MUTED) : INK, 'left', 800));
       const pop = C.pop[i].v; if (pop > 0.01) D.glow(r.x + r.w / 2, r.y + r.h / 2, 60 * pop, '#14a058', 0.35 * (1 - pop * 0.5));
     }
-    if (calcSolved(C.pi)) D.label(Ch.x + Ch.w / 2, Ch.y + Ch.h - 22, C.pi === 0 ? '✅ 미지 HCl의 농도 = ' + fT(p.M, 4) + ' M' : '✅ 미지 H₂SO₄의 농도 = ' + fT(p.M, 3) + ' M', { bg: GOOD, size: 14, pad: 10 });
+    if (calcSolved(C.pi)) D.label(Ch.x + Ch.w / 2, Ch.y + Ch.h - 22, C.pi === 0 ? '✅ 미지 HCl의 농도 = ' + fx(p.M, 4) + ' M' : '✅ 미지 H₂SO₄의 농도 = ' + fx(p.M, 3) + ' M', { bg: GOOD, size: 14, pad: 10 });
   }
   function refreshCalc() {
     const C = S.calc, p = PB[C.pi], st = C.stage[C.pi];
     let h = '', unit = '';
     if (C.pi === 0) {
       if (st === 0) { h = '<span class="k">① 평균 부피</span><br>세 번 사용한 NaOH 부피 14.90, 15.10, 15.00 mL의 평균은?'; unit = 'mL'; }
-      else if (st === 1) { h = '<span class="k">② ③ 농도 구하기</span><br>1 × M × 20.00 = 1 × 0.100 × ' + fT(p.mean, 1) + '에서 HCl의 농도 M은?'; unit = 'M'; }
-      else h = '<div class="calc-done">🎉 HCl 20.00 mL를 중화하는 데 0.100 M NaOH가 평균 ' + fT(p.mean, 1) + ' mL 들었으니 M = <b>' + fT(p.M, 4) + ' M</b></div>';
+      else if (st === 1) { h = '<span class="k">② ③ 농도 구하기</span><br>1 × M × 20.00 = 1 × 0.100 × ' + fx(p.mean, 1) + '에서 HCl의 농도 M은?'; unit = 'M'; }
+      else h = '<div class="calc-done">🎉 HCl 20.00 mL를 중화하는 데 0.100 M NaOH가 평균 ' + fx(p.mean, 1) + ' mL 들었으니 M = <b>' + fx(p.M, 4) + ' M</b></div>';
     } else {
       if (st === 0) { h = '<span class="k">① H⁺ 수 a</span><br>H₂SO₄ 1개는 물에서 H⁺를 몇 개 내놓을까요?'; unit = '개'; }
       else if (st === 1) { h = '<span class="k">② ③ 농도 구하기</span><br>2 × M × 10.0 = 1 × 0.100 × 24.0에서 H₂SO₄의 농도 M은?'; unit = 'M'; }
-      else h = '<div class="calc-done">🎉 H₂SO₄ 10.0 mL를 중화하는 데 NaOH 24.0 mL가 들었으니 M = <b>' + fT(p.M, 3) + ' M</b></div>';
+      else h = '<div class="calc-done">🎉 H₂SO₄ 10.0 mL를 중화하는 데 NaOH 24.0 mL가 들었으니 M = <b>' + fx(p.M, 3) + ' M</b></div>';
     }
     $('#cPrompt').innerHTML = h; $('#cUnit').textContent = unit; $('#cRow').style.display = st < 2 ? '' : 'none';
     $('#bCalc').disabled = st >= 2; $('#cIn').disabled = st >= 2; $('#cIn').value = '';
@@ -744,7 +746,7 @@
       C.wrong[pi]++; Sound.fail(); shakeEl($('#cIn'));
       let m = '';
       if (pi === 0 && st === 0) m = near(v, 45.0, 0.02, 0) ? '합이에요. 3회로 나누어 평균을 구해요.' : '세 값을 더해 3으로 나누어요. (14.90 + 15.10 + 15.00) ÷ 3';
-      else if (pi === 0) m = near(v, r6(0.100 * 20 / p.mean), 0.03, 0) ? 'V와 V′의 자리를 바꿨어요. 시료는 20.00 mL, NaOH는 평균 부피예요.' : 'M × 20.00 = 0.100 × ' + fT(p.mean, 1) + '에서 M = 0.100 × ' + fT(p.mean, 1) + ' ÷ 20.00이에요.';
+      else if (pi === 0) m = near(v, r6(0.100 * 20 / p.mean), 0.03, 0) ? 'V와 V′의 자리를 바꿨어요. 시료는 20.00 mL, NaOH는 평균 부피예요.' : 'M × 20.00 = 0.100 × ' + fx(p.mean, 1) + '에서 M = 0.100 × ' + fx(p.mean, 1) + ' ÷ 20.00이에요.';
       else if (st === 0) m = v === 1 ? 'H₂SO₄ → 2H⁺ + SO₄²⁻이에요. 한 개가 H⁺를 두 개 내놓아요.' : 'H₂SO₄의 화학식에서 H의 개수를 보세요.';
       else m = near(v, 0.060, 0.03, 0) ? 'H⁺가 2개씩이라는 것(a = 2)을 곱하지 않았어요. 산 쪽에 2를 곱해요.' : near(v, 0.240, 0.03, 0) ? '2는 산 쪽(H₂SO₄)에 곱해요. M = 0.100 × 24.0 ÷ (2 × 10.0)이에요.' : '2 × M × 10.0 = 1 × 0.100 × 24.0에서 M을 구해요.';
       showHint(m, 5200);
@@ -854,7 +856,7 @@
       setRO(1, '뷰렛 눈금', r2(TT.start + tV()).toFixed(2) + ' mL'); setRO(2, '넣은 NaOH', tV().toFixed(2) + ' mL');
       setRO(3, '기록', R.rough ? '대략 ' + R.rough.used.toFixed(2) + ' · 평균 ' + (isNaN(m) ? '?' : m.toFixed(2)) : '대략 적정 전');
     } else if (S.mode === 'calc') {
-      const C = S.calc, p = PB[C.pi]; setRO(1, '시료', p.name + ' ' + p.Vs + ' mL'); setRO(2, 'NaOH 부피', C.stage[C.pi] >= 1 || C.pi === 1 ? fT(p.Vn || p.mean, 1) + ' mL' : '? mL'); setRO(3, '구한 농도', calcSolved(C.pi) ? fT(p.M, C.pi === 0 ? 4 : 3) + ' M' : '?');
+      const C = S.calc, p = PB[C.pi]; setRO(1, '시료', p.name + ' ' + p.Vs + ' mL'); setRO(2, 'NaOH 부피', C.stage[C.pi] >= 1 || C.pi === 1 ? fx(p.Vn || p.mean, 1) + ' mL' : '? mL'); setRO(3, '구한 농도', calcSolved(C.pi) ? fx(p.M, C.pi === 0 ? 4 : 3) + ' M' : '?');
     } else {
       const n = ERR.filter((e, i) => errOK(i)).length; setRO(1, '맞게 분류', n + ' / 4'); setRO(2, '참값', '0.0750 M'); setRO(3, '15.4 mL일 때', eCalcOK() ? '0.0770 M (높게)' : '?');
     }

@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#16a34a">
+  <title>소화제와 소화 효소 | 고등 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💊</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-toolbar { min-height: 58px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; }
+    .stage-toolbar .segmented button { min-height: 40px; padding: 5px 12px; font-size: 14.5px; white-space: nowrap; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    .seg-wide { display: flex; width: 100%; }
+    .seg-wide button { flex: 1; min-width: 0; padding: 6px 4px; font-size: 14.5px; min-height: 44px; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard [hidden] { display: none !important; }
+    .btn-sm { min-height: 44px; }
+    .btn-row { display: flex; gap: 8px; margin-top: 8px; }
+    .btn-row .btn { flex: 1; padding-left: 6px; padding-right: 6px; }
+    .ctrl-note { margin: 6px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    .zrow { display: flex; align-items: center; gap: 8px; }
+    .zrow input[type=range] { flex: 1; min-width: 0; }
+    .zrow .btn { min-width: 44px; padding: 0 8px; font-weight: 800; }
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+    .chip { border: 2px solid var(--line); background: #fff; border-radius: 999px; min-height: 40px; padding: 4px 12px; font: 700 14px var(--font); color: var(--ink); cursor: pointer; }
+    .chip.on { background: #dcfce7; border-color: #16a34a; color: #14532d; }
+    .stepper .st .l { white-space: normal; text-align: center; line-height: 1.15; overflow: visible; }
+    .readout .value.txt { font-family: var(--font); font-size: 16px; white-space: normal; line-height: 1.25; }
+    .concept table.mini { border-collapse: collapse; margin: 6px 0; font-size: 14px; width: 100%; }
+    .concept table.mini th, .concept table.mini td { border: 1px solid var(--line); padding: 4px 6px; text-align: center; }
+    .concept table.mini th { background: var(--surface-2); font-weight: 800; }
+    @media (max-width: 599px) {
+      .readout .value.txt { font-size: 14px; }
+      .stage-toolbar .spacer { display: none; }
+      .stage-toolbar .segmented button { padding: 5px 8px; font-size: 13.5px; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="bio">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#hb">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">생명과학 · Ⅰ. 생명 시스템의 구성</div>
+      <h1>소화제와 소화 효소</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🧪 시험관 세팅</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="viewSeg" role="tablist" aria-label="결과 보기" hidden>
+            <button type="button" data-v="res">📊 결과</button>
+            <button type="button" data-v="micro">🔍 입자 모형</button>
+            <button type="button" data-v="tab">📋 효소 표</button>
+          </div>
+          <div class="segmented" id="modeSeg" role="tablist" aria-label="화면 고르기" hidden>
+            <button type="button" data-mode="rack">🧪 세팅</button>
+            <button type="button" data-mode="lab">📊 분해 실험</button>
+            <button type="button" data-mode="cond">🌡 조건 비교</button>
+            <button type="button" data-mode="path">🚚 이어지는 길</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="가상 소화제의 효소 3종, 녹말·흰자·우유 시험관 9개와 37도 물중탕, 시간에 따른 분해 그래프, 온도와 pH 비교 실험, 소장 융털에서 온몸 세포로 이어지는 경로"></canvas>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1"> </span><span class="value txt" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2"> </span><span class="value txt" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3"> </span><span class="value txt" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" data-show="rack">
+          <div class="control-head"><span>🧪 시험관에 넣기</span><output id="oRack">0 / 9</output></div>
+          <p class="ctrl-note">그림 위쪽의 병(💧 물 · 💊 소화제 · ♨️ 끓인 소화제)을 <b>끌어다 시험관에</b> 넣어요. 병을 눌러 고른 뒤 시험관을 눌러도 돼요.</p>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bBath" type="button">🌡 37 °C 물중탕에 넣기</button><button class="btn btn-sm" id="bRackReset" type="button">↺ 다시 하기</button></div>
+        </div>
+        <div class="control" data-show="lab:res lab:micro">
+          <div class="control-head"><span>🥣 영양소 고르기</span></div>
+          <div class="segmented seg-wide" id="nutSeg"><button type="button" data-n="starch">🍚 녹말</button><button type="button" data-n="egg">🥚 단백질</button><button type="button" data-n="milk">🥛 지방</button></div>
+        </div>
+        <div class="control" data-show="lab:res lab:micro">
+          <div class="control-head"><span>⏱ 반응 시간</span><output id="oTime">0.0 분</output></div>
+          <div class="zrow">
+            <button class="btn btn-primary" id="bPlay" type="button" aria-label="재생">▶</button>
+            <input type="range" id="sTime" min="0" max="20" step="0.1" value="0" aria-label="반응 시간 (0분부터 20분까지)">
+            <button class="btn" id="bT0" type="button" aria-label="처음으로">⏮</button>
+          </div>
+          <div class="btn-row" id="bileRow"><button class="btn btn-sm" id="bBile" type="button">🧫 쓸개즙 시험관 추가</button></div>
+        </div>
+        <div class="control" data-show="lab:tab">
+          <div class="control-head"><span>📋 효소 표 채우기</span></div>
+          <p class="ctrl-note">표의 빈칸을 눌러 알맞은 <b>영양소</b>와 <b>분해 산물</b>을 골라요. 위의 <b>🔍 입자 모형</b>에서 효소가 일하는 모습을 다시 볼 수 있어요.</p>
+        </div>
+        <div class="control" data-show="cond">
+          <div class="segmented seg-wide" id="varSeg"><button type="button" data-k="temp">🌡 온도를 바꾼다</button><button type="button" data-k="ph">🧪 pH를 바꾼다</button></div>
+        </div>
+        <div class="control" data-show="cond">
+          <div class="control-head"><span>🔒 같게 유지할 조건</span><output id="oSame">0 / 5</output></div>
+          <div class="chips" id="sameChips"></div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bRun" type="button">▶ 20분 실험 실행</button><button class="btn btn-sm" id="bMark" type="button">⭐ 최적 표시</button></div>
+          <p class="ctrl-note" id="condNote">같게 둘 조건을 모두 고르면 실험을 실행할 수 있어요.</p>
+        </div>
+        <div class="control" data-show="path">
+          <div class="control-head"><span>🚚 분해 산물 따라가기</span><output id="oPath">0 / 3</output></div>
+          <div class="segmented seg-wide" id="pathSeg"><button type="button" data-p="glc">포도당</button><button type="button" data-p="aa">아미노산</button><button type="button" data-p="fa">지방산</button></div>
+          <p class="ctrl-note">산물을 골라 소장 융털에서 온몸 세포까지 가는 길을 따라가 봐요.</p>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

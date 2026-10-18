@@ -45,6 +45,7 @@
   const r6 = (v) => Math.round(v * 1e6) / 1e6;
   const fT = (v, d) => String(+(+v).toFixed(d == null ? 3 : d));    // 끝의 0은 생략
   const f2 = (v) => (+v).toFixed(2);
+  const fx = (v, d) => (+v).toFixed(d);
   const parseNum = (s) => {
     s = String(s).trim().replace(/,/g, '.').replace(/[×x]\s*10\s*\^?\s*(-?\d+)/i, 'e$1').replace(/\s+/g, '');
     const fr = /^(\d+(?:\.\d+)?)\/(\d+(?:\.\d+)?)$/.exec(s); if (fr && +fr[2] !== 0) return +fr[1] / +fr[2];
@@ -778,8 +779,8 @@
       T(Tb.x + 16, y + 44, W.ach[i] ? '✅ 중화 완료 (pH 7)' : '', 13, '#0b6b39', 'left', 800);
       y += 82;
     });
-    T(Tb.x + 14, Tb.y + Tb.h - 30, '지금 ' + AG[W.ag].nm + ' ' + W.dose + ' g → OH⁻ ' + fT(c.OH, 2) + ' mol 넣음', 13.5, INK, 'left', 800);
-    T(Tb.x + 14, Tb.y + Tb.h - 10, '남은 H⁺ ' + fT(c.H, 2) + ' mol' + (c.OHleft > 1e-6 ? ' · 남은 OH⁻ ' + fT(c.OHleft, 2) + ' mol' : ''), 13.5, c.neutral ? '#0b6b39' : INK, 'left', 800);
+    T(Tb.x + 14, Tb.y + Tb.h - 30, '지금 ' + AG[W.ag].nm + ' ' + W.dose + ' g → OH⁻ ' + fx(c.OH, 2) + ' mol 넣음', 13.5, INK, 'left', 800);
+    T(Tb.x + 14, Tb.y + Tb.h - 10, '남은 H⁺ ' + fx(c.H, 2) + ' mol' + (c.OHleft > 1e-6 ? ' · 남은 OH⁻ ' + fx(c.OHleft, 2) + ' mol' : ''), 13.5, c.neutral ? '#0b6b39' : INK, 'left', 800);
   }
 
   /* ---------- 컨트롤 연결 ---------- */
@@ -904,13 +905,13 @@
       setRO(3, 'pH', ok ? phTxt(r.ph) : '?');
     } else {
       const W = S.waste, c = wCalc(W.ag, W.dose);
-      setRO(1, '투입한 ' + AG[W.ag].nm, W.dose + ' g'); setRO(2, '남은 H⁺', fT(c.H, 2) + ' mol'); setRO(3, 'pH', c.ph.toFixed(1));
+      setRO(1, '투입한 ' + AG[W.ag].nm, W.dose + ' g'); setRO(2, '남은 H⁺', fx(c.H, 2) + ' mol'); setRO(3, 'pH', c.ph.toFixed(1));
     }
   }
 
   /* ================= 미션 ================= */
   const R5 = RS[0], R6 = RS[1], R7 = RS[2];
-  const caseTxt = (r) => fT(r.cNa, 3) + ' + ' + fT(r.cH, 3);
+  const caseTxt = (r) => fx(r.cNa, 3) + ' + ' + fx(r.cH, 3);
   const levels = [
     {
       title: '알짜 이온식: 구경꾼 이온', short: '알짜 이온식', icon: '🧩', phase: '모형',
