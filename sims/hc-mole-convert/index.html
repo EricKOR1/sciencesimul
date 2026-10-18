@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#8b5cf6">
+  <title>몰 환산과 기체 부피 | 고등 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔄</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; }
+    .stage-toolbar { min-height: 61px; }
+    .segmented button { min-height: 44px; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 14px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard .btn-sm { min-height: 44px; }
+    #ctrlCard [hidden] { display: none !important; }
+    .ctrl-note { font-size: 14px; color: var(--muted); margin: 6px 0 0; line-height: 1.4; }
+    .btn-row { display: flex; gap: 8px; margin-top: 6px; }
+    .btn-row .btn { flex: 1; padding-left: 8px; padding-right: 8px; }
+    .view-seg { display: flex; width: 100%; }
+    .view-seg button { flex: 1 1 0; min-width: 0; padding-left: 4px; padding-right: 4px; font-size: 14.5px; }
+    .seg-wrap { display: flex; flex-wrap: wrap; width: 100%; }
+    .seg-wrap button { flex: 1 1 30%; min-width: 0; padding-left: 6px; padding-right: 6px; font-size: 14.5px; }
+    .seg-wrap.two button { flex-basis: 44%; }
+    .range-row { display: flex; align-items: center; gap: 8px; }
+    .range-row input[type=range] { flex: 1; min-width: 0; height: 44px; }
+    .nudge { flex: none; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); font-weight: 900; font-size: 16px; line-height: 1; cursor: pointer; display: grid; place-items: center; color: var(--ink); font-family: inherit; }
+    .nudge:active { transform: scale(.94); background: var(--surface-2); }
+    .nudge:disabled { opacity: .4; }
+    .opt-col { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+    .opt { min-height: 46px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 12px; font-weight: 800; font-size: 14px; cursor: pointer; padding: 6px 10px; font-family: inherit; line-height: 1.3; text-align: left; }
+    .opt.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); color: color-mix(in srgb, var(--subject) 70%, black); }
+    .opt.ok { border-color: var(--good); background: var(--good-soft); color: #0b6b39; }
+    .opt.bad { border-color: var(--bad); background: var(--bad-soft); color: #a3262b; }
+    .opt:disabled { opacity: .55; cursor: default; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+    .chips button { min-height: 44px; padding: 6px 12px; border: 2px solid var(--line); background: #fff; border-radius: 999px; font-weight: 800; font-size: 14.5px; cursor: pointer; color: var(--ink); font-family: inherit; }
+    .chips button.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); color: color-mix(in srgb, var(--subject) 70%, black); }
+    .chips button.done { border-color: var(--good); background: var(--good-soft); }
+    .num-in { width: 100%; min-width: 0; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 10px; font: 800 16px var(--font); color: var(--ink); background: #fff; }
+    .num-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .num-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .in-grid { display: grid; grid-template-columns: 1fr 104px; gap: 6px 8px; align-items: center; margin-top: 6px; }
+    .in-grid .lab { font-weight: 800; font-size: 14px; line-height: 1.25; }
+    .in-grid .num-in { min-height: 42px; padding: 2px 8px; font-size: 15px; }
+    .sel-in { width: 100%; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 8px; font: 800 14.5px var(--font); color: var(--ink); background: #fff; }
+    .sel-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .sel-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    @keyframes shakeX { 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+    .readout .value.txt { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .readout .value sup { font-size: .62em; line-height: 0; }
+    .concept table.mini { border-collapse: collapse; margin: 6px 0; font-size: 14px; width: 100%; }
+    .concept table.mini th, .concept table.mini td { border: 1px solid var(--line); padding: 4px 6px; text-align: center; }
+    .concept table.mini th { background: var(--surface-2); font-weight: 800; }
+    sup { font-size: .7em; line-height: 0; }
+    sub { font-size: .7em; line-height: 0; }
+    .stage-canvas .stage-hint { top: 10px; bottom: auto; white-space: normal; width: max-content; text-align: center; }
+    @media (max-width: 1100px) and (orientation: landscape) { .toolbar-label { display: none; } }
+    @media (orientation: portrait) and (min-width: 600px) {
+      .side-col:has(> #ctrlCard[hidden]) > #game { grid-column: 1 / -1; }
+    }
+    @media (max-width: 599px) {
+      .readout .value.txt { font-size: 15px; }
+      .stage-toolbar { gap: 6px; padding: 8px; }
+      .stage-toolbar .spacer, .toolbar-label { display: none; }
+      .stage-toolbar:has(> .segmented[hidden]) { display: none; }
+      .segmented button { padding-left: 10px; padding-right: 10px; font-size: 14px; }
+      .stage-hint { font-size: 13px; padding: 5px 12px; }
+    }
+  </style>
+
+</head>
+<body class="sim-page" data-subject="chem">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#hc">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">화학 · Ⅰ. 화학의 언어</div>
+      <h1>몰 환산과 기체 부피</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🎈 기체 1몰</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="tablist" aria-label="화면 고르기" data-feature="hub">
+            <button type="button" data-mode="balloon" data-feature="balloon">🎈 기체 1몰</button>
+            <button type="button" data-mode="hub" data-feature="hub">🔄 환산 허브</button>
+            <button type="button" data-mode="drill" data-feature="drill">📝 환산 연습</button>
+            <button type="button" data-mode="final" data-feature="final">🧊 종합 도전</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="같은 부피의 수소·산소·이산화 탄소 풍선과 분자 모형, 온도에 따라 커지는 1몰 풍선, 질량·입자 수·기체 부피를 잇는 몰 환산 허브, 드라이아이스가 승화해 풍선이 부푸는 모습과 이산화 탄소가 아래로 깔리는 모습"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">—</span><span class="value txt" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">—</span><span class="value txt" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">—</span><span class="value txt" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <!-- ① 기체 1몰 -->
+        <div class="control" data-modes="balloon" data-gate-off="blfix">
+          <div class="control-head"><span>👀 보기</span></div>
+          <div class="segmented view-seg" id="bwView" role="group" aria-label="보기 고르기">
+            <button type="button" data-v="bal">🎈 풍선 3개</button>
+            <button type="button" data-v="temp">🌡️ 온도와 부피</button>
+          </div>
+        </div>
+        <div class="control" data-modes="balloon" data-sub="bal">
+          <div class="control-head"><span>🎈 부피를 바꿀 풍선</span></div>
+          <div class="chips seg-wrap two" id="blSel" role="group" aria-label="부피를 바꿀 풍선 고르기"></div>
+          <div class="control-head" style="margin-top:10px"><span>📏 풍선의 부피</span><output id="oBl">5.6 L</output></div>
+          <input type="range" id="sBl" min="1" max="240" step="1" value="56" aria-label="풍선의 부피 (0.1에서 24 L)">
+          <div class="btn-row" style="margin-top:8px">
+            <button class="btn btn-sm" id="bM1" type="button">−1</button><button class="btn btn-sm" id="bM01" type="button">−0.1</button>
+            <button class="btn btn-sm" id="bP01" type="button">+0.1</button><button class="btn btn-sm" id="bP1" type="button">+1</button>
+          </div>
+          <p class="ctrl-note">같은 온도(0 °C)와 압력(1기압)이에요. 수소 풍선은 11.2 L로 고정되어 있어요.</p>
+        </div>
+        <div class="control" data-modes="balloon" data-sub="temp">
+          <div class="control-head"><span>🌡️ 온도</span><output id="oT">0 °C</output></div>
+          <div class="range-row">
+            <button class="nudge" id="tMinus" type="button" aria-label="1도 낮추기">−</button>
+            <input type="range" id="sT" min="0" max="50" step="1" value="0" aria-label="온도 (0에서 50 °C)">
+            <button class="nudge" id="tPlus" type="button" aria-label="1도 높이기">+</button>
+          </div>
+          <div class="chips" id="tChips" role="group" aria-label="온도 바로 고르기"><button type="button" data-v="0">0 °C</button><button type="button" data-v="25">25 °C</button><button type="button" data-v="50">50 °C</button></div>
+          <p class="ctrl-note">압력은 1기압으로 같아요. 기체 1 mol의 부피가 어떻게 변하는지 봐요.</p>
+        </div>
+        <!-- ② 환산 허브 -->
+        <div class="control" data-modes="hub" data-gate-off="hubfix">
+          <div class="control-head"><span>🧪 기체 고르기</span></div>
+          <div class="chips seg-wrap two" id="hbSub" role="group" aria-label="기체 고르기"></div>
+          <div class="control-head" style="margin-top:10px"><span>⚖️ 올려놓은 질량</span><output id="oHb">11 g</output></div>
+          <input type="range" id="sHb" min="1" max="100" step="1" value="11" aria-label="올려놓은 질량 (1에서 100 g)">
+        </div>
+        <div class="control" data-modes="hub">
+          <div class="control-head"><span id="hbSelLab">① 질량 → 몰</span></div>
+          <div class="opt-col" id="hbOpt" role="group" aria-label="곱하기와 나누기 고르기"></div>
+          <p class="ctrl-note">그림의 화살표를 누르거나 위에서 고른 뒤, 곱하기·나누기와 숫자를 골라요.</p>
+        </div>
+        <!-- ③ 환산 연습 -->
+        <div class="control" data-modes="drill">
+          <div class="control-head"><span>👀 문제</span></div>
+          <div class="segmented view-seg" id="drView" role="group" aria-label="문제 고르기">
+            <button type="button" data-v="q1">① 질량이 같을 때</button>
+            <button type="button" data-v="calc">② 부피 · 분자 수</button>
+          </div>
+        </div>
+        <div class="control" data-modes="drill" data-sub="q1">
+          <div class="control-head"><span>🎯 예측하기</span></div>
+          <p class="ctrl-note" style="margin-top:0">그림의 기체 카드를 <b>부피가 큰 순서</b>대로 눌러 번호를 붙인 뒤 계산으로 확인해요.</p>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bQ1" type="button">🔍 계산으로 확인</button><button class="btn btn-sm" id="bQ1c" type="button">↺ 지우기</button></div>
+        </div>
+        <div class="control" data-modes="drill" data-sub="calc">
+          <div class="control-head"><span>✍️ 부피 11.2 L일 때 질량 (g)</span></div>
+          <div class="in-grid"><span class="lab">산소 O₂</span><input class="num-in" id="dqO" type="text" inputmode="decimal" autocomplete="off" placeholder="0"></div>
+          <div class="in-grid"><span class="lab">이산화 탄소 CO₂</span><input class="num-in" id="dqC" type="text" inputmode="decimal" autocomplete="off" placeholder="0"></div>
+          <div class="in-grid"><span class="lab">질소 N₂</span><input class="num-in" id="dqN" type="text" inputmode="decimal" autocomplete="off" placeholder="0"></div>
+          <div class="control-head" style="margin-top:10px"><span>✍️ 분자 3.01×10²²개의 부피 (L)</span></div>
+          <div class="in-grid"><span class="lab">0 °C, 1기압</span><input class="num-in" id="dqV" type="text" inputmode="decimal" autocomplete="off" placeholder="0"></div>
+        </div>
+        <!-- ④ 종합 도전 -->
+        <div class="control" data-modes="final">
+          <div class="control-head"><span>👀 보기</span></div>
+          <div class="segmented view-seg" id="fnView" role="group" aria-label="보기 고르기">
+            <button type="button" data-v="dry">🧊 드라이아이스</button>
+            <button type="button" data-v="dens">🕯️ 밀도</button>
+          </div>
+        </div>
+        <div class="control" data-modes="final" data-sub="dry">
+          <div class="control-head"><span>🌡️ 온도 (1기압)</span></div>
+          <div class="segmented view-seg" id="fnT" role="group" aria-label="온도 고르기">
+            <button type="button" data-v="0">0 °C</button>
+            <button type="button" data-v="25">25 °C</button>
+          </div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bSub" type="button">💨 모두 승화시키기</button><button class="btn btn-sm" id="bSubR" type="button">↺ 새로</button></div>
+          <div class="in-grid"><span class="lab" id="fnLab">기체의 부피 (L)</span><input class="num-in" id="fnV" type="text" inputmode="decimal" autocomplete="off" placeholder="0"></div>
+          <p class="ctrl-note">드라이아이스 22 g(CO₂ M = 44 g/mol)이 모두 기체가 되면 부피는 얼마일까요?</p>
+        </div>
+        <div class="control" data-modes="final" data-sub="dens">
+          <div class="control-head"><span>🫗 이산화 탄소 붓기</span></div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bPour" type="button">🫗 CO₂ 붓기</button><button class="btn btn-sm" id="bPourR" type="button">↺ 비우기</button></div>
+          <div class="in-grid"><span class="lab">CO₂ 밀도 (g/L)<br>(0 °C, 1기압)</span><input class="num-in" id="fnD" type="text" inputmode="decimal" autocomplete="off" placeholder="0.00"></div>
+          <p class="ctrl-note">기체의 밀도 = 질량 ÷ 부피예요. 기체 1 mol의 질량은 M, 부피는 22.4 L예요.</p>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

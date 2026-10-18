@@ -147,11 +147,11 @@
   ['#apOpA', '#apOpB'].forEach((id) => OPS.forEach((o, i) => { const op = document.createElement('option'); op.value = i; op.textContent = o; $(id).appendChild(op); }));
 
   /* ================= ① 몰질량 찾기 ================= */
-  const PAL = PHONE ? { x: 8, y: 50, w: 464, h: 150 } : { x: 12, y: 50, w: 776, h: 102 };
-  const TRY = PHONE ? { x: 8, y: 208, w: 464, h: 200 } : { x: 12, y: 160, w: 776, h: 150 };
-  const BARP = PHONE ? { x: 8, y: 416, w: 464, h: 100 } : { x: 12, y: 318, w: 776, h: 104 };
-  const INF = PHONE ? { x: 8, y: 524, w: 464, h: 226 } : { x: 12, y: 430, w: 776, h: 120 };
-  const palRect = (i) => (PHONE ? { x: 14 + (i % 4) * 114, y: PAL.y + 8 + Math.floor(i / 4) * 70, w: 108, h: 64 } : { x: 20 + i * 96, y: PAL.y + 8, w: 88, h: 86 });
+  const PAL = PHONE ? { x: 8, y: 50, w: 464, h: 182 } : { x: 12, y: 50, w: 776, h: 102 };
+  const TRY = PHONE ? { x: 8, y: 240, w: 464, h: 190 } : { x: 12, y: 160, w: 776, h: 150 };
+  const BARP = PHONE ? { x: 8, y: 438, w: 464, h: 100 } : { x: 12, y: 318, w: 776, h: 104 };
+  const INF = PHONE ? { x: 8, y: 546, w: 464, h: 204 } : { x: 12, y: 430, w: 776, h: 120 };
+  const palRect = (i) => (PHONE ? { x: 14 + (i % 3) * 152, y: PAL.y + 8 + Math.floor(i / 3) * 58, w: 146, h: 52 } : { x: 20 + i * 96, y: PAL.y + 8, w: 88, h: 86 });
   const TR_IN = PHONE ? { x: 16, y: TRY.y + 36, w: 448, h: 152 } : { x: 24, y: TRY.y + 34, w: 752, h: 106 };
   const slotPos = (i) => (PHONE ? { x: 8 + 58 + (i % 4) * 116, y: TR_IN.y + 40 + Math.floor(i / 4) * 74 } : { x: 24 + 50 + i * 92, y: TR_IN.y + 53 });
   const TR = PHONE ? 25 : 28;
@@ -196,7 +196,7 @@
       const r = palRect(i), hot = fd.drag && !fd.drag.fromTray && fd.drag.el === a;
       D.shadow(() => { D.roundRect(r.x, r.y, r.w, r.h, 12); ctx.fillStyle = hot ? '#f3edff' : '#fff'; ctx.fill(); }, { blur: hot ? 8 : 3, y: 2 });
       ctx.strokeStyle = hot ? PUR : '#d6dcea'; ctx.lineWidth = hot ? 2.5 : 1.5; D.roundRect(r.x, r.y, r.w, r.h, 12); ctx.stroke();
-      if (PHONE) { atomBall(r.x + 28, r.y + 32, 20, a); T(r.x + 54, r.y + 28, EL[a].name, 13, INK, 'left', 800); T(r.x + 54, r.y + 48, '원자량 ' + fm(EL[a].m), 13, '#b45309', 'left', 800); }
+      if (PHONE) { atomBall(r.x + 26, r.y + 26, 19, a); T(r.x + 52, r.y + 22, EL[a].name, 13, INK, 'left', 800); T(r.x + 52, r.y + 42, '원자량 ' + fm(EL[a].m), 13, '#b45309', 'left', 800); }
       else { atomBall(r.x + r.w / 2, r.y + 30, 22, a); T(r.x + r.w / 2, r.y + 66, EL[a].name, 13, INK, 'center', 800); T(r.x + r.w / 2, r.y + 82, '원자량 ' + fm(EL[a].m), 13, '#b45309', 'center', 800); }
     });
     panel(TRY.x, TRY.y, TRY.w, TRY.h, 14);
@@ -255,7 +255,7 @@
   function setMass(v) { const nv = clamp(Math.round(v * 10) / 10, 0, 250); if (nv === S.wg.m) return; S.wg.m = nv; S.wg.plate.velocity += 40; updateCtl(); }
   function wgReset() { S.wg.m = 0; S.wg.hold = 0; S.wg.tgtShown = false; updateCtl(); }
   function drawPile(cx, topY, w, m, ws, t) {
-    const n = Math.min(GRAINS.length, Math.ceil(clamp(m / 220, 0, 1) * GRAINS.length));
+    const n = Math.min(GRAINS.length, Math.ceil(Math.pow(clamp(m / 200, 0, 1), 0.6) * GRAINS.length));
     for (let i = 0; i < n; i++) {
       const g = GRAINS[i], layer = i / GRAINS.length, half = (w / 2) * (1 - 0.7 * layer), x = cx + (g.u * 2 - 1) * half, y = topY - 3 - layer * 46 - g.v * 6;
       if (ws.id === 'fe') { ctx.fillStyle = C.shade(ws.c, g.v * 0.3 - 0.1); ctx.fillRect(x - g.r, y - g.r, g.r * 2, g.r * 2); ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fillRect(x - g.r, y - g.r, g.r * 2, 1.6); }
@@ -306,10 +306,6 @@
     const hd = ['물질', '몰수', '질량(g)', '입자 수'], cx0 = PHONE ? [0, 0.34, 0.52, 0.72] : [0, 0.3, 0.46, 0.64];
     hd.forEach((h, i) => T(WR.x + 16 + (WR.w - 32) * cx0[i], WR.y + 50, h, 13, MUTED, 'left', 800));
     const recs = Object.keys(S.wg.rec).map((k) => S.wg.rec[k]).slice(-5);
-    recs.forEach((r, i) => {
-      const y = WR.y + 74 + i * (PHONE ? 30 : 15 + 0);
-      void y;
-    });
     const rrh = PHONE ? 30 : 20;
     recs.forEach((r, i) => {
       const y = WR.y + 74 + i * rrh, hl = r.key === wg.last;
@@ -396,8 +392,8 @@
       arr(P.B[0] + bw / 2, P.B[1] + bh + 4, P.Cc[0] + bw / 2, P.Cc[1] - 4, '× 6.02×10²³', ch[0], P.B[0] + bw / 2 + 14, P.B[1] + bh + 36, 'left');
       arr(P.B[0] + bw + 4, P.B[1] + bh / 2, P.Dd[0] - 4, P.Dd[1] + bh / 2, '', ch[0]); T(P.B[0] + bw + 20, P.B[1] + bh / 2 - 12, '× 4', 14, ch[0] ? '#5b21b6' : '#9aa5b6', 'left', 800);
     } else {
-      arr(P.A[0] + bw + 4, P.A[1] + bh / 2, P.B[0] - 4, P.B[1] + bh / 2, '÷ 98 g/mol', true, (P.A[0] + bw + P.B[0]) / 2, P.A[1] + bh / 2 - 14);
-      arr(P.B[0] + bw + 4, P.B[1] + bh / 2, P.Cc[0] - 4, P.Cc[1] + bh / 2, '× 6.02×10²³', ch[0], (P.B[0] + bw + P.Cc[0]) / 2, P.B[1] + bh / 2 - 14);
+      arr(P.A[0] + bw + 4, P.A[1] + bh / 2, P.B[0] - 4, P.B[1] + bh / 2, '÷ 98 g/mol', true, (P.A[0] + bw + P.B[0]) / 2, P.A[1] - 12);
+      arr(P.B[0] + bw + 4, P.B[1] + bh / 2, P.Cc[0] - 4, P.Cc[1] + bh / 2, '× 6.02×10²³', ch[0], (P.B[0] + bw + P.Cc[0]) / 2, P.B[1] - 12);
       arr(P.B[0] + bw / 2, P.B[1] + bh + 4, P.Dd[0] + bw / 2, P.Dd[1] - 4, '× 4 (H₂SO₄ 한 분자의 O 원자 수)', ch[0], P.B[0] + bw / 2 + 14, P.B[1] + bh + 52, 'left');
     }
     if (an.shake > 0) { ctx.fillStyle = 'rgba(226,70,75,' + an.shake * 0.3 + ')'; D.roundRect(AP1.x, AP1.y, AP1.w, AP1.h, 14); ctx.fill(); }
@@ -438,8 +434,8 @@
 
   /* ================= ④ 계산 도전 ================= */
   const AQ = PHONE ? { x: 8, y: 50, w: 464, h: 190 } : { x: 12, y: 50, w: 776, h: 150 };
-  const AF = PHONE ? { x: 8, y: 248, w: 464, h: 340 } : { x: 12, y: 208, w: 776, h: 230 };
-  const AR = PHONE ? { x: 8, y: 596, w: 464, h: 154 } : { x: 12, y: 446, w: 776, h: 104 };
+  const AF = PHONE ? { x: 8, y: 248, w: 464, h: 376 } : { x: 12, y: 208, w: 776, h: 230 };
+  const AR = PHONE ? { x: 8, y: 632, w: 464, h: 118 } : { x: 12, y: 446, w: 776, h: 104 };
   function drawApply(t) {
     const ap = S.ap, p = PB[ap.prob], solved = !!ap.solved[p.id], aOK = !!ap.a[p.id], bOK = !!ap.b[p.id];
     T(14, 26, '🧮 일상 속 양의 입자 수 구하기', PHONE ? 15 : 17, INK, 'left', 800);
@@ -454,8 +450,8 @@
     textBlock(AQ.x + 128, AQ.y + (PHONE ? 140 : 118), AQ.w - 144, p.who + '는 모두 몇 개일까요? (단계: 질량 → 몰 → 수)', 14, MUTED, 19, 700);
     // 흐름
     panel(AF.x, AF.y, AF.w, AF.h, 14);
-    const bw = PHONE ? 190 : 200, bh = PHONE ? 82 : 96;
-    const P = PHONE ? { A: [AF.x + (AF.w - bw) / 2, AF.y + 20], B: [AF.x + (AF.w - bw) / 2, AF.y + 130], Cc: [AF.x + (AF.w - bw) / 2, AF.y + 238] } : { A: [AF.x + 24, AF.y + 56], B: [AF.x + 288, AF.y + 56], Cc: [AF.x + 552, AF.y + 56] };
+    const bw = PHONE ? 190 : 190, bh = PHONE ? 82 : 96;
+    const P = PHONE ? { A: [AF.x + (AF.w - bw) / 2, AF.y + 18], B: [AF.x + (AF.w - bw) / 2, AF.y + 148], Cc: [AF.x + (AF.w - bw) / 2, AF.y + 278] } : { A: [AF.x + 24, AF.y + 56], B: [AF.x + 293, AF.y + 56], Cc: [AF.x + 562, AF.y + 56] };
     const box = (q, title, val, known) => {
       D.shadow(() => { D.roundRect(q[0], q[1], bw, bh, 14); ctx.fillStyle = known ? '#fff' : '#f7f3ff'; ctx.fill(); }, { blur: 7, y: 3 });
       ctx.strokeStyle = known ? '#14a058' : PUR; ctx.lineWidth = 2.4; if (!known) ctx.setLineDash([7, 5]); D.roundRect(q[0], q[1], bw, bh, 14); ctx.stroke(); ctx.setLineDash([]);
@@ -470,8 +466,8 @@
       D.arrow(P.A[0] + bw / 2, P.A[1] + bh + 4, P.B[0] + bw / 2, P.B[1] - 4, { color: aOK ? '#14a058' : '#8b5cf6', width: 5, head: 14 }); T(P.A[0] + bw / 2 + 16, P.A[1] + bh + 28, opA === OPS[0] ? '계산을 골라요' : opA, 14.5, colA, 'left', 800);
       D.arrow(P.B[0] + bw / 2, P.B[1] + bh + 4, P.Cc[0] + bw / 2, P.Cc[1] - 4, { color: bOK ? '#14a058' : '#8b5cf6', width: 5, head: 14 }); T(P.B[0] + bw / 2 + 16, P.B[1] + bh + 28, opB === OPS[0] ? '계산을 골라요' : opB, 14.5, colB, 'left', 800);
     } else {
-      D.arrow(P.A[0] + bw + 6, P.A[1] + bh / 2, P.B[0] - 6, P.B[1] + bh / 2, { color: aOK ? '#14a058' : '#8b5cf6', width: 5, head: 14 }); T((P.A[0] + bw + P.B[0]) / 2, P.A[1] + bh / 2 - 14, opA === OPS[0] ? '계산을 골라요' : opA, 14.5, colA, 'center', 800);
-      D.arrow(P.B[0] + bw + 6, P.B[1] + bh / 2, P.Cc[0] - 6, P.Cc[1] + bh / 2, { color: bOK ? '#14a058' : '#8b5cf6', width: 5, head: 14 }); T((P.B[0] + bw + P.Cc[0]) / 2, P.B[1] + bh / 2 - 14, opB === OPS[0] ? '계산을 골라요' : opB, 14.5, colB, 'center', 800);
+      D.arrow(P.A[0] + bw + 6, P.A[1] + bh / 2, P.B[0] - 6, P.B[1] + bh / 2, { color: aOK ? '#14a058' : '#8b5cf6', width: 5, head: 14 }); T((P.A[0] + bw + P.B[0]) / 2, P.A[1] - 12, opA === OPS[0] ? '계산을 골라요' : opA, 14.5, colA, 'center', 800);
+      D.arrow(P.B[0] + bw + 6, P.B[1] + bh / 2, P.Cc[0] - 6, P.Cc[1] + bh / 2, { color: bOK ? '#14a058' : '#8b5cf6', width: 5, head: 14 }); T((P.B[0] + bw + P.Cc[0]) / 2, P.B[1] - 12, opB === OPS[0] ? '계산을 골라요' : opB, 14.5, colB, 'center', 800);
     }
     if (ap.shake > 0) { ctx.fillStyle = 'rgba(226,70,75,' + ap.shake * 0.3 + ')'; D.roundRect(AF.x, AF.y, AF.w, AF.h, 14); ctx.fill(); }
     if (solved) D.check(AF.x + AF.w - 36, AF.y + 34, 18, 1);

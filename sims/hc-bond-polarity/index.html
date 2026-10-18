@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#8b5cf6">
+  <title>결합의 극성 | 고등 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>➕</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-card { background: #f3f0fb; }
+    .stage-toolbar { min-height: 58px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; }
+    .stage-toolbar .segmented button { min-height: 40px; padding: 5px 10px; font-size: 14px; white-space: nowrap; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    #resetBtn { font-size: 20px; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard [hidden] { display: none !important; }
+    .ctrl-set { display: flex; flex-direction: column; gap: 10px; }
+    .ctrl-set .segmented { align-self: stretch; flex-wrap: nowrap; }
+    .ctrl-set .segmented button { flex: 1 1 0; min-width: 0; min-height: 44px; font-size: 14.5px; padding-left: 6px; padding-right: 6px; }
+    .ctrl-note { margin: 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    .opt-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+    .opt {
+      min-height: 46px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 12px;
+      font-weight: 800; font-size: 14.5px; cursor: pointer; padding: 4px 6px; font-family: inherit; line-height: 1.2;
+    }
+    .opt.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); color: color-mix(in srgb, var(--subject) 70%, black); }
+    .opt.wide { grid-column: 1 / -1; }
+    .opt.go { background: var(--subject); color: #fff; border-color: var(--subject); }
+    .opt.go:disabled { background: var(--surface-2); color: var(--muted); border-color: var(--line); }
+    .opt:disabled { opacity: .5; cursor: not-allowed; }
+    .opt.big { min-height: 60px; font-size: 18px; }
+    .range-row { display: flex; align-items: center; gap: 8px; }
+    .range-row input[type=range] { flex: 1; min-width: 0; height: 44px; }
+    .nudge { flex: none; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); font-weight: 900; font-size: 20px; line-height: 1; cursor: pointer; display: grid; place-items: center; color: var(--ink); }
+    .nudge:active { transform: scale(.94); background: var(--surface-2); }
+    .nudge:disabled { opacity: .4; }
+    .stepper { display: flex; align-items: center; gap: 8px; }
+    .stepper .num { flex: 1; text-align: center; font-family: ui-monospace, Menlo, monospace; font-weight: 800; font-size: 22px; color: color-mix(in srgb, var(--subject) 85%, black); }
+    .stage-hint { white-space: normal; width: max-content; max-width: calc(100% - 24px); text-align: center; top: 10px; bottom: auto; }
+    .readout .value.txt { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    sup, sub { font-size: .7em; line-height: 0; }
+    .step-intro .si-q {
+      background: #fff; border: 2px solid color-mix(in srgb, var(--subject) 45%, white); border-radius: 12px;
+      padding: 9px 12px; font-weight: 800; font-size: 16px; color: #4c1d95; margin: 4px 0 8px;
+    }
+    .concept table.mini { border-collapse: collapse; margin: 6px 0; font-size: 14px; width: 100%; }
+    .concept table.mini th, .concept table.mini td { border: 1px solid var(--line); padding: 4px 6px; text-align: center; }
+    .concept table.mini th { background: var(--surface-2); font-weight: 800; }
+    @media (max-width: 599px) {
+      .stage-toolbar .spacer, .toolbar-label { display: none; }
+      .stage-toolbar .segmented button { padding: 5px 7px; font-size: 13px; }
+      .readout .value.txt { font-size: 15px; }
+    }
+    @media (max-width: 1100px) and (orientation: landscape) { .toolbar-label { display: none; } }
+  </style>
+</head>
+<body class="sim-page" data-subject="chem">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#hc">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">화학 · Ⅱ. 물질의 구조와 성질</div>
+      <h1>결합의 극성</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">☁️ 전자 구름</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="sceneSeg" role="group" aria-label="장면 고르기" data-feature="arrows">
+            <button type="button" data-scene="cloud" data-feature="cloud">☁️ 전자 구름</button>
+            <button type="button" data-scene="arrows" data-feature="arrows">➕ Δχ와 화살표</button>
+            <button type="button" data-scene="scale" data-feature="scale">📏 연속체</button>
+            <button type="button" data-scene="judge" data-feature="judge">🧐 판단</button>
+          </div>
+          <button class="icon-btn" id="resetBtn" type="button" title="처음 상태로" aria-label="처음 상태로">↺</button>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="두 원자의 전기 음성도에 따라 이동하는 공유 전자쌍 구름, 결합의 쌍극자 모멘트 화살표, 결합의 극성 연속체, 결합 판단 문제"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="roL1">-</span><span class="value txt" id="roV1">-</span></div>
+        <div class="readout"><span class="label" id="roL2">-</span><span class="value txt" id="roV2">-</span></div>
+        <div class="readout"><span class="label" id="roL3">-</span><span class="value txt" id="roV3">-</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <!-- ① 전자 구름 -->
+        <div class="ctrl-set" id="cs-cloud" hidden>
+          <div class="control" style="margin:0">
+            <div class="control-head"><label for="sA">🅰️ 왼쪽 원자의 전기 음성도</label><output id="oA">2.1</output></div>
+            <div class="range-row">
+              <button class="nudge" id="aMinus" type="button" aria-label="왼쪽 원자 전기 음성도 줄이기">−</button>
+              <input type="range" id="sA" min="8" max="40" step="1" value="21" aria-label="왼쪽 원자의 전기 음성도 (0.8부터 4.0)">
+              <button class="nudge" id="aPlus" type="button" aria-label="왼쪽 원자 전기 음성도 늘리기">+</button>
+            </div>
+          </div>
+          <div class="control" style="margin:0">
+            <div class="control-head"><label for="sB">🅱️ 오른쪽 원자의 전기 음성도</label><output id="oB">3.0</output></div>
+            <div class="range-row">
+              <button class="nudge" id="bMinus" type="button" aria-label="오른쪽 원자 전기 음성도 줄이기">−</button>
+              <input type="range" id="sB" min="8" max="40" step="1" value="30" aria-label="오른쪽 원자의 전기 음성도 (0.8부터 4.0)">
+              <button class="nudge" id="bPlus" type="button" aria-label="오른쪽 원자 전기 음성도 늘리기">+</button>
+            </div>
+          </div>
+        </div>
+        <!-- ② Δχ와 화살표 -->
+        <div class="ctrl-set" id="cs-arrow" hidden>
+          <div class="control-head" style="margin-bottom:0"><span id="arrHead">➕ 결합을 눌러 고르세요</span></div>
+          <div class="stepper">
+            <button class="nudge" id="dMinus" type="button" aria-label="Δχ 줄이기">−</button>
+            <div class="num" id="dNum">Δχ = 0.0</div>
+            <button class="nudge" id="dPlus" type="button" aria-label="Δχ 늘리기">+</button>
+          </div>
+          <div class="control-head" style="margin-bottom:0"><span>➡️ 쌍극자 모멘트 화살표의 방향 (+ → δ−)</span></div>
+          <div class="segmented" id="dirSeg" role="group" aria-label="화살표 방향 고르기">
+            <button type="button" data-v="L">←</button>
+            <button type="button" data-v="N">없음</button>
+            <button type="button" data-v="R">→</button>
+          </div>
+          <button type="button" class="opt go wide" id="drawArrowBtn">✔ 화살표 그리기</button>
+        </div>
+        <div class="ctrl-set" id="cs-ord" hidden>
+          <div class="control-head" style="margin-bottom:0"><span>📏 화살표가 짧은 것부터 놓아요</span></div>
+          <button type="button" class="opt wide" id="clearBtn">🧹 카드 모두 빼기</button>
+        </div>
+        <!-- ③ 연속체 -->
+        <div class="ctrl-set" id="cs-scale" hidden>
+          <div class="control-head" style="margin-bottom:0"><span>📏 결합 카드를 Δχ 눈금에 놓아요</span></div>
+          <button type="button" class="opt wide" id="scaleClear">🧹 카드 모두 빼기</button>
+        </div>
+        <!-- ④ 판단 -->
+        <div class="ctrl-set" id="cs-judge" hidden>
+          <div class="control-head" style="margin-bottom:0"><span id="jdHead">🧐 문제</span></div>
+          <div class="opt-grid" id="jdBtns"></div>
+        </div>
+        <p class="ctrl-note" id="ctlNote"></p>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

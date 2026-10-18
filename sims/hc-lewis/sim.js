@@ -713,7 +713,7 @@
     MgO: { f: 'MgO', name: '산화 마그네슘', metals: ['Mg'], nm: 'O', xs: [0.27, 0.73], nmX: 1, ions: '[Mg]²⁺ [:O:]²⁻', ionH: '[Mg]<sup>2+</sup>[:O:]<sup>2−</sup>', q: 2 },
     Na2O: { f: 'Na₂O', name: '산화 나트륨', metals: ['Na', 'Na'], nm: 'O', xs: [0.17, 0.5, 0.83], nmX: 1, ions: '2[Na]⁺ [:O:]²⁻', ionH: '2[Na]<sup>+</sup>[:O:]<sup>2−</sup>', q: 1 },
   };
-  const IO = { key: 'NaCl', mleft: [], recv: 0, resv: 0, fly: [], done: {}, brA: 0 };
+  const IO = { key: 'NaCl', mleft: [], recv: 0, resv: 0, fly: [], done: {}, brA: 0, tok: 0 };
   const iondef = () => IONDB[IO.key];
   const ionY = () => (PHONE ? 300 : 270);
   const ionNmPos = () => { const d = iondef(); return { x: VW * d.xs[1], y: ionY() }; };
@@ -731,7 +731,7 @@
   function resetIon(key) {
     if (key) IO.key = key;
     const d = iondef();
-    IO.mleft = d.metals.map((m) => valOf(m)); IO.recv = 0; IO.resv = 0; IO.fly = []; IO.brA = 0;
+    IO.tok++; IO.mleft = d.metals.map((m) => valOf(m)); IO.recv = 0; IO.resv = 0; IO.fly = []; IO.brA = 0;
     $$('#ionSeg button').forEach((b) => b.classList.toggle('on', b.dataset.i === IO.key));
     $('#ionNote').textContent = '금속 원자의 전자 점을 눌러 ' + d.nm + ' 원자로 옮겨 보세요. 금속은 전자를 잃고 비금속은 전자를 얻어요.';
   }
@@ -754,7 +754,9 @@
           IO.mleft[mi]--; IO.resv++;
           IO.fly.push(f);
           Sound.tick();
+          const tk = IO.tok;
           tween(f, { t: 1 }, { duration: 0.7, ease: 'inOutQuad', onDone: () => {
+            if (tk !== IO.tok) return;
             IO.fly = IO.fly.filter((z) => z !== f); IO.recv++;
             fx.burst(f.tx, f.ty, { count: 8, colors: [ORANGE, AMBER, '#fff6c2'], speed: 80, size: 3, gravity: 0, life: 0.5 });
             if (ionDone()) {
