@@ -154,11 +154,9 @@
   function setSel(sel, opts, val) { const e = $(sel); if (!e) return; e.innerHTML = ''; opts.forEach((o) => { const op = document.createElement('option'); op.value = o[0]; op.textContent = o[1]; e.appendChild(op); }); if (val != null) e.value = val; }
   function mark2(el, state) { el.classList.remove('ok', 'bad'); if (state) el.classList.add(state); }
   function shake(el) { el.classList.remove('bad'); void el.offsetWidth; el.classList.add('bad'); }
-  /* ---------- 자료 ---------- */
-  // 색–시간 자료 (N₂O₄ 0.030 mol/L만 넣은 밀봉 플라스크, 일정한 온도): [NO₂] mol/L
-  const WT_T = [0, 10, 20, 30, 40, 50, 60], WT_NO2 = [0, 0.0070, 0.0100, 0.0114, 0.0120, 0.0120, 0.0120];
-  const WT_END = 0.0120, WT_SPEED = 6;                 // 평형 농도, 화면 1초 = 실험 6초
-  function makeCurve(xs, ys) {                          // 단조 3차 보간 (자료 점을 모두 지나요)
+
+  /* 단조 3차 보간: 자료 점을 모두 지나고 값이 출렁이지 않아요 */
+  function makeCurve(xs, ys) {
     const n = xs.length, d = [], m = [];
     for (let i = 0; i < n - 1; i++) d[i] = (ys[i + 1] - ys[i]) / (xs[i + 1] - xs[i]);
     m[0] = d[0]; m[n - 1] = d[n - 2];
@@ -174,6 +172,27 @@
       return (2 * u3 - 3 * u2 + 1) * ys[k] + (u3 - 2 * u2 + u) * h * m[k] + (-2 * u3 + 3 * u2) * ys[k + 1] + (u3 - u2) * h * m[k + 1];
     };
   }
+
+  const FL_SHELL = (cx, by, w, h) => {            // 삼각 플라스크 모양
+    const neckW = w * 0.28, neckH = h * 0.32;
+    ctx.beginPath(); ctx.moveTo(cx - neckW / 2, by - h); ctx.lineTo(cx - neckW / 2, by - h + neckH); ctx.lineTo(cx - w / 2, by - 8); ctx.quadraticCurveTo(cx - w / 2, by, cx - w / 2 + 10, by);
+    ctx.lineTo(cx + w / 2 - 10, by); ctx.quadraticCurveTo(cx + w / 2, by, cx + w / 2, by - 8); ctx.lineTo(cx + neckW / 2, by - h + neckH); ctx.lineTo(cx + neckW / 2, by - h);
+  };
+  /* 기체가 든 밀봉 플라스크: gas = 갈색 진하기(0~1) */
+  function drawFlask(cx, by, w, h, gas, sealed) {
+    const neckW = w * 0.28, alpha = 0.04 + 0.76 * clamp(gas, 0, 1);
+    D.shadow(() => { FL_SHELL(cx, by, w, h); ctx.closePath(); ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.fill(); }, { blur: 6, y: 3, color: 'rgba(20,40,80,.14)' });
+    ctx.save(); FL_SHELL(cx, by, w, h); ctx.closePath(); ctx.clip();
+    const gr = ctx.createLinearGradient(cx - w / 2, by - h, cx + w / 2, by); gr.addColorStop(0, 'rgba(190,100,40,' + alpha.toFixed(3) + ')'); gr.addColorStop(1, 'rgba(120,55,15,' + Math.min(0.95, alpha + 0.08).toFixed(3) + ')');
+    ctx.fillStyle = gr; ctx.fillRect(cx - w, by - h, w * 2, h + 2); ctx.restore();
+    FL_SHELL(cx, by, w, h); ctx.strokeStyle = '#8fa3bd'; ctx.lineWidth = 3; ctx.lineJoin = 'round'; ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(cx - neckW / 2 + 5, by - h * 0.62); ctx.lineTo(cx - w / 2 + 12, by - 14); ctx.stroke();
+    if (sealed) { D.roundRect(cx - neckW / 2 - 4, by - h - 12, neckW + 8, 16, 4); ctx.fillStyle = '#7a8599'; ctx.fill(); ctx.fillStyle = 'rgba(255,255,255,.3)'; ctx.fillRect(cx - neckW / 2, by - h - 10, neckW - 4, 3); }
+  }
+  /* ---------- 자료 ---------- */
+  // 색–시간 자료 (N₂O₄ 0.030 mol/L만 넣은 밀봉 플라스크, 일정한 온도): [NO₂] mol/L
+  const WT_T = [0, 10, 20, 30, 40, 50, 60], WT_NO2 = [0, 0.0070, 0.0100, 0.0114, 0.0120, 0.0120, 0.0120];
+  const WT_END = 0.0120, WT_SPEED = 6;                 // 평형 농도, 화면 1초 = 실험 6초
   const wtNO2 = makeCurve(WT_T, WT_NO2);
   const CARDS = [
     { id: 'cu', name: 'CuSO₄·5H₂O', sub: '가열 ↔ 물 첨가', icon: '🔵', rev: true },
@@ -498,22 +517,6 @@
       a.log.push(a.bath); Sound.tick(); if (!RM) { const p = arPos(SPL.A, a.bath); parts.burst(p.x, p.y - 70, { count: 10, speed: 90, colors: a.bath === 'hot' ? ['#a65a2a', '#e2464b', '#ffd447'] : ['#9fd0ff', '#ffffff'] }); }
     }
   }
-  const FL_SHELL = (cx, by, w, h) => {            // 삼각 플라스크 모양
-    const neckW = w * 0.28, neckH = h * 0.32;
-    ctx.beginPath(); ctx.moveTo(cx - neckW / 2, by - h); ctx.lineTo(cx - neckW / 2, by - h + neckH); ctx.lineTo(cx - w / 2, by - 8); ctx.quadraticCurveTo(cx - w / 2, by, cx - w / 2 + 10, by);
-    ctx.lineTo(cx + w / 2 - 10, by); ctx.quadraticCurveTo(cx + w / 2, by, cx + w / 2, by - 8); ctx.lineTo(cx + neckW / 2, by - h + neckH); ctx.lineTo(cx + neckW / 2, by - h);
-  };
-  /* 기체가 든 밀봉 플라스크: gas = 갈색 진하기(0~1) */
-  function drawFlask(cx, by, w, h, gas, sealed) {
-    const neckW = w * 0.28, alpha = 0.04 + 0.76 * clamp(gas, 0, 1);
-    D.shadow(() => { FL_SHELL(cx, by, w, h); ctx.closePath(); ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.fill(); }, { blur: 6, y: 3, color: 'rgba(20,40,80,.14)' });
-    ctx.save(); FL_SHELL(cx, by, w, h); ctx.closePath(); ctx.clip();
-    const gr = ctx.createLinearGradient(cx - w / 2, by - h, cx + w / 2, by); gr.addColorStop(0, 'rgba(190,100,40,' + alpha.toFixed(3) + ')'); gr.addColorStop(1, 'rgba(120,55,15,' + Math.min(0.95, alpha + 0.08).toFixed(3) + ')');
-    ctx.fillStyle = gr; ctx.fillRect(cx - w, by - h, w * 2, h + 2); ctx.restore();
-    FL_SHELL(cx, by, w, h); ctx.strokeStyle = '#8fa3bd'; ctx.lineWidth = 3; ctx.lineJoin = 'round'; ctx.stroke();
-    ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(cx - neckW / 2 + 5, by - h * 0.62); ctx.lineTo(cx - w / 2 + 12, by - 14); ctx.stroke();
-    if (sealed) { D.roundRect(cx - neckW / 2 - 4, by - h - 12, neckW + 8, 16, 4); ctx.fillStyle = '#7a8599'; ctx.fill(); ctx.fillStyle = 'rgba(255,255,255,.3)'; ctx.fillRect(cx - neckW / 2, by - h - 10, neckW - 4, 3); }
-  }
   function drawBeaker(x, bottom, w, h, liq, tint, label, labelBg) {
     const x0 = x - w / 2, top = bottom - h;
     ctx.save(); ctx.beginPath(); ctx.moveTo(x0, top); ctx.lineTo(x0, bottom - 10); ctx.quadraticCurveTo(x0, bottom, x0 + 10, bottom); ctx.lineTo(x0 + w - 10, bottom); ctx.quadraticCurveTo(x0 + w, bottom, x0 + w, bottom - 10); ctx.lineTo(x0 + w, top); ctx.closePath(); ctx.clip();
@@ -679,18 +682,18 @@
     c.mols.forEach((m) => {
       // 기체 ↔ 녹음 전환 (뚜껑이 열려 있든 닫혀 있든 늘 일어나요)
       if (!m.trans) {
-        if (m.gas) { if (m.y < BT.surf - 14 && Math.random() < kd * dt) { m.gas = false; m.trans = 'down'; c.evD += 1; m.vy = 50; } }
-        else if (m.y > BT.surf + 14 && Math.random() < ke * dt) { m.gas = true; m.trans = 'up'; c.evE += 1; m.vy = -60; }
+        if (m.gas) { if (m.y < BT.surf - 14 && Math.random() < kd * (open ? 0.35 : 1) * dt) { m.gas = false; m.trans = 'down'; c.evD += 1; m.vy = 50; } }
+        else if (m.y > BT.surf + 14 && Math.random() < ke * (open ? 1.6 : 1) * dt) { m.gas = true; m.trans = 'up'; c.evE += 1; m.vy = -60; }
       }
       // 방향이 조금씩 바뀌고 빠르기는 거의 일정해요
       const sp = m.gas ? 70 : 32, j = rnd(-1.6, 1.6) * dt, cs = Math.cos(j), sn = Math.sin(j);
       let vx = m.vx * cs - m.vy * sn, vy = m.vx * sn + m.vy * cs;
-      if (m.gas && open && !m.trans) vy -= 70 * dt;
+      if (m.gas && open && !m.trans) { const dx = -m.x, dy = BT.capH - 12 - m.y, dl = Math.hypot(dx, dy) || 1, q = Math.min(1, 1.6 * dt); vx += (dx / dl * 70 - vx) * q; vy += (dy / dl * 70 - vy) * q; }
       if (m.trans === 'up') vy = -Math.abs(vy); else if (m.trans === 'down') vy = Math.abs(vy);
       const l = Math.hypot(vx, vy) || 1, k = Math.min(1, 2.5 * dt), ns = l + (sp - l) * k; vx *= ns / l; vy *= ns / l; m.vx = vx; m.vy = vy;
       let nx = m.x + vx * dt, ny = m.y + vy * dt;
-      if (Math.abs(nx) > halfW(m.y) - r) { m.vx = -m.vx; nx = m.x; }
       if (ny > BT.bodyEnd - r) { m.vy = -Math.abs(m.vy); ny = m.y; }
+      { const hw = Math.max(0, halfW(Math.max(ny, BT.capH + 0.01)) - r); if (Math.abs(nx) > hw) { const sg = nx < 0 ? -1 : 1; nx = sg * hw; m.vx = -sg * Math.abs(m.vx); } }
       if (m.gas) {
         if (ny < BT.capH + r) { if (!(open && Math.abs(nx) < BT.nw / 2 - r * 0.5)) { m.vy = Math.abs(m.vy); ny = m.y; } }
         if (!m.trans && ny > BT.surf - r) { m.vy = -Math.abs(m.vy); ny = m.y; }
