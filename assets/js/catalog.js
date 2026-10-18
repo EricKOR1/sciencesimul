@@ -4361,8 +4361,7 @@ window.SCI_CATALOG = {
                 "양방향 화살표",
                 "분류하기",
                 "멈춘 걸까?"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hc-dynamic-eq",
@@ -4383,8 +4382,7 @@ window.SCI_CATALOG = {
                 "분자 세기",
                 "속도 그래프",
                 "동적 평형"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hc-eq-ratio",
@@ -4405,8 +4403,7 @@ window.SCI_CATALOG = {
                 "규칙 찾기",
                 "식으로 쓰기",
                 "다른 반응"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hc-eq-constant",
@@ -4427,8 +4424,7 @@ window.SCI_CATALOG = {
                 "K의 크기",
                 "온도와 K",
                 "K 뒤집기"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hc-reaction-quotient",

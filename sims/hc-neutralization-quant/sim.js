@@ -222,7 +222,7 @@
       const major = v % 10 === 0, mid = v % 5 === 0, yy = yOf(v);
       if (h / max < 4 && !mid) continue;
       ctx.strokeStyle = '#4b5563'; ctx.lineWidth = major ? 1.6 : 1; ctx.beginPath(); ctx.moveTo(x + w / 2 - (major ? 12 : mid ? 8 : 5), yy); ctx.lineTo(x + w / 2, yy); ctx.stroke();
-      if (major) T(x + w / 2 + 5, yy + 4, String(v), 12, MUTED, 'left', 800);
+      if (major && ((h / max) * 10 >= 15 || v === 0 || v === max)) T(x + w / 2 + 5, yy + 4, String(v), 12, MUTED, 'left', 800);
     }
     // 밸브 + 끝
     const vy = bot + 6;

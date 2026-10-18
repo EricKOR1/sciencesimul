@@ -318,8 +318,13 @@
   const RXH = mkRx({ id: 'hi', sp: [{ k: 'H2', c: 1, side: 0 }, { k: 'I2', c: 1, side: 0 }, { k: 'HI', c: 2, side: 1 }], K: 25, unit: 0.01, n0: [2, 2, 10], eq: 'H₂(g) + I₂(g) ⇌ 2HI(g)' });
   const SPC = { Fe: '#d9941a', SCN: '#3867f4', FeSCN: '#c81e3a', N2O4: '#7c8db5', NO2: '#a65b1e', H2: '#7c8db5', I2: '#8b3fd1', HI: '#d97706' };
   // 온도에 따른 K (예시 값: 25 °C 0.0060, 100 °C 0.50)
-  const T1 = 298.15, T2 = 373.15, BB = Math.log(0.5 / 0.006) / (1 / T1 - 1 / T2);
-  const Kt = (C) => 0.006 * Math.exp(BB * (1 / T1 - 1 / (C + 273.15)));
+  // 온도에 따른 K (예시 값: 0 °C 0.00080, 25 °C 0.0060, 100 °C 0.50) — ln K를 1/T에 대해 이어 붙여요
+  const KA = [[273.15, 0.0008], [298.15, 0.006], [373.15, 0.5]];
+  const Kt = (C) => {
+    const T = C + 273.15, i = T <= KA[1][0] ? 0 : 1, a = KA[i], b = KA[i + 1];
+    const f = (1 / a[0] - 1 / T) / (1 / a[0] - 1 / b[0]);
+    return Math.exp(Math.log(a[1]) + (Math.log(b[1]) - Math.log(a[1])) * f);
+  };
   const K0C = Kt(0);
 
   const S = {
@@ -744,6 +749,10 @@
     up() { if (PS.drag) { PS.drag = false; const v = PS.Vt; PS.Vt = Math.abs(v - 1) < 0.07 ? 1 : Math.abs(v - 0.5) < 0.07 ? 0.5 : Math.abs(v - 2) < 0.07 ? 2 : v; updateCtl(); } },
     hover(p) { if (S.mode === 'press') return pressHit(p) ? 'ew-resize' : 'default'; if (S.mode === 'conc') return concHit(p) >= 0 ? 'pointer' : 'default'; if (S.mode === 'explain') { for (let r = 0; r < 5; r++) { if (inRect(p, labelRect(r))) return 'pointer'; for (let c = 0; c < 3; c++) if (inRect(p, cellRect(r, c))) return 'pointer'; } } return 'default'; },
   });
+
+  // 손잡이 말고는 화면을 위아래로 밀어 스크롤할 수 있게 해요 (손잡이를 잡을 때만 스크롤 막기)
+  $('#cv').style.touchAction = 'pan-y';
+  $('#cv').addEventListener('touchstart', (e) => { if (S.mode === 'press' && e.touches.length && pressHit(view.toLocal(e.touches[0]))) e.preventDefault(); }, { passive: false });
 
   /* ---------- 읽음 칸 ---------- */
   function readouts() {
