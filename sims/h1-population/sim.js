@@ -76,7 +76,7 @@
      토끼 R, 여우 F, 풀 상태 G(0~1): 토끼는 풀의 양(수용력 K)에 따라 늘고 여우에게 잡아먹혀요.
      여우는 토끼를 먹어야 번식해요. 토끼가 많으면 풀이 줄고, 풀은 다시 자라요.
      ========================================================= */
-  const MP = { r: 0.374, c: 2.4135, h: 745.5, e: 0.6221, d: 0.5057, rho: 0.1171, g: 0.1619 };
+  const MP = { r: 0.374368, c: 2.41346, h: 745.535, e: 0.622123, d: 0.50571, rho: 0.117078, g: 0.161853 };
   const K0 = 1000, R_INIT = 400, F_INIT = 40, M0 = 1;       // 풀의 양(수용력), 처음 토끼·여우, 포식 강도
   const SIM_YEARS = 40, ENV_YEARS = 50, EVENT_YEAR = 10;     // 모의실험 기간, 환경 변화 실험 기간, 변화가 일어나는 해
   const BAND = 0.25;                                          // 평형 범위: 평형 값의 ±25 %
@@ -555,7 +555,7 @@
   function readouts() {
     let L1, a, L2, b, L3, c;
     const m = S.mode;
-    if (m === 'eq') { L1 = '🐇 토끼 5년 범위'; a = rng(EQ_R) + '마리'; L2 = '🦊 여우 5년 범위'; b = rng(EQ_F) + '마리'; L3 = '읽은 막대'; c = eqReadN() + ' / ' + EQ_YEARS * 2; }
+    if (m === 'eq') { L1 = '🐇 토끼 범위'; a = rng(EQ_R) + '마리'; L2 = '🦊 여우 범위'; b = rng(EQ_F) + '마리'; L3 = '읽은 막대'; c = eqReadN() + ' / ' + EQ_YEARS * 2; }
     else if (m === 'sim') {
       const q = S.sim, d = q.data, y = d ? (q.cur != null && q.cur <= q.p ? q.cur : Math.floor(q.p)) : 0;
       L1 = '시간'; a = d ? y + '년째' : '시작 전'; L2 = '🐇 토끼'; b = d ? Math.round(d.R[y]) + '마리' : R_INIT + '마리'; L3 = '🦊 여우'; c = d ? Math.round(d.F[y]) + '마리' : q.fox + '마리';
@@ -634,7 +634,7 @@
       features: ['sim'],
       setup() { resetSim(); setMode('sim'); },
       recap: '피식자(토끼)가 늘면 포식자(여우)가 늘고, 포식자가 늘면 피식자가 줄고, 피식자가 줄면 포식자도 줄어요. 이런 되먹임 때문에 개체 수가 오르내리다가 평형 부근에서 안정돼요.',
-      summary: '<ul><li>모의실험(처음 토끼 ' + R_INIT + '마리, 여우 ' + F_INIT + '마리, 풀의 양 ' + K0 + '): 토끼는 <b>' + lvl(BASE_RT, BASE.R[BASE_RT]) + '</b>까지 늘고, 여우는 <b>' + lvl(BASE_FT, BASE.F[BASE_FT]) + '</b>까지 늘어요. 여우의 최대는 토끼의 최대보다 <b>늦게</b> 나타나요.</li><li><b>되먹임</b>: 피식자 증가 → 포식자 증가 → 피식자 감소 → 포식자 감소 → 피식자 증가 …</li><li>오르내림이 점점 작아지다가 약 ' + SIM_YEARS + '년 뒤 토끼 약 ' + ap(BASE.R[SIM_YEARS]) + '마리, 여우 약 ' + ap(BASE.F[SIM_YEARS]) + '마리 부근에서 <b>평형</b>을 이뤄요.</li></ul>',
+      summary: '<ul><li>모의실험(처음 토끼 ' + R_INIT + '마리, 여우 ' + F_INIT + '마리, 풀의 양 ' + K0 + '): 토끼는 <b>' + lvl(BASE_RT, BASE.R[BASE_RT]) + '</b>까지 늘고, 여우는 <b>' + lvl(BASE_FT, BASE.F[BASE_FT]) + '</b>까지 늘어요. 여우의 최대는 토끼의 최대보다 <b>늦게</b> 나타나요.</li><li><b>되먹임</b>: 피식자 증가 → 포식자 증가 → 피식자 감소 → 포식자 감소 → 피식자 증가 …</li><li>오르내림이 점점 작아져 ' + SIM_YEARS + '년쯤 뒤에는 <b>평형</b> 값(토끼 약 ' + ap(EQ.R) + '마리, 여우 약 ' + ap(EQ.F) + '마리) 부근에 가까워져요.</li></ul>',
       missions: [
         {
           id: 'peak', title: '토끼와 여우가 가장 많은 때 찾기',
@@ -683,7 +683,7 @@
             return true;
           },
           status: () => '여우 ' + PAR.fox.s + '마리 감소 ' + mark(!!S.env.tried['fox:s']) + ' &nbsp; 여우 모두 제거 ' + mark(!!S.env.tried['fox:l']) + ' &nbsp; 시도한 변화 ' + Object.keys(S.env.tried).length + ' (3개 이상)',
-          explain: '여우를 <b>' + PAR.fox.s + '마리</b> 줄이면 ' + OUT.fox.s.why + '(<b>평형 회복</b>). 여우를 <b>모두 없애면</b> ' + OUT.fox.l.why + ' 토끼는 풀의 양에 따라서만 늘어나고 풀이 줄어, <b>평형이 깨져요</b>. 작은 변화는 되먹임으로 회복되지만 포식자가 사라지는 큰 변화는 회복하기 어려워요.',
+          explain: '여우를 <b>' + PAR.fox.s + '마리</b> 줄여도 되먹임으로 곧 평형 범위 안에서 안정돼요(<b>평형 회복</b>). 여우를 <b>모두 없애면</b> 토끼 수를 조절하던 여우가 사라져 토끼가 평형 범위 위로 늘어나 약 ' + ap(envData("fox", "l").R[ENV_YEARS]) + '마리 부근에 머물고, 풀이 줄어요(<b>평형이 깨져요</b>). 작은 변화는 되먹임으로 회복되지만 포식자가 사라지는 큰 변화는 회복하기 어려워요.',
         },
         {
           type: 'quiz', title: '옐로스톤의 늑대',
