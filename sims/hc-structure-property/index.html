@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#8b5cf6">
+  <title>분자의 구조와 성질 | 고등 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧬</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-card { background: #f3f0fb; }
+    .stage-toolbar { min-height: 61px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; }
+    .stage-toolbar .segmented button { min-height: 44px; padding: 5px 12px; font-size: 14.5px; white-space: nowrap; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    #resetBtn { font-size: 20px; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    .ctrl-set { display: flex; flex-direction: column; gap: 10px; }
+    .ctrl-set[hidden] { display: none; }
+    .ctrl-set .segmented { align-self: stretch; flex-wrap: nowrap; }
+    .ctrl-set .segmented button { flex: 1 1 0; min-width: 0; min-height: 44px; font-size: 14.5px; padding-left: 4px; padding-right: 4px; }
+    .ctrl-note { margin: 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    .opt-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+    .opt-grid.g3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .opt {
+      min-height: 46px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 12px;
+      font-weight: 800; font-size: 14.5px; cursor: pointer; padding: 4px 6px; font-family: inherit; line-height: 1.2;
+    }
+    .opt[hidden] { display: none; }
+    .opt.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); color: color-mix(in srgb, var(--subject) 70%, black); }
+    .opt.done::after { content: " ✓"; color: var(--good); }
+    .opt.wide { grid-column: 1 / -1; }
+    .opt:disabled { opacity: .45; cursor: not-allowed; }
+    .opt.primary { background: var(--subject); border-color: var(--subject); color: #fff; }
+    .opt.primary:disabled { background: #b9a9ee; border-color: #b9a9ee; }
+    .step-card { background: #f8f6fe; border: 2px solid #ddd3fa; border-radius: 12px; padding: 8px 10px; font-size: 14px; line-height: 1.45; color: #2b3445; }
+    .step-card b { color: #5b21b6; }
+    .tbl-card { font-size: 14px; }
+    .tbl-card .tq { font-weight: 800; margin-bottom: 4px; }
+    .tbl { border-collapse: separate; border-spacing: 4px 3px; width: 100%; }
+    .tbl th { font-size: 13px; color: var(--muted); font-weight: 800; }
+    .tbl td:first-child { font-weight: 800; white-space: nowrap; }
+    .tbl select {
+      width: 100%; min-width: 0; height: 40px; border: 2px dashed #b4bfcf; border-radius: 10px; background: #fff; text-align: center; text-align-last: center;
+      font-weight: 800; font-size: 14.5px; color: var(--ink); padding: 0 2px; font-family: inherit;
+    }
+    .tbl select.ok { border-style: solid; border-color: var(--good); background: var(--good-soft); color: #0b6b39; }
+    .tbl select.bad { border-style: solid; border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    @keyframes shakeX { 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+    .stage-hint { white-space: normal; width: max-content; max-width: calc(100% - 24px); text-align: center; }
+    .stage-canvas .stage-hint { top: 10px; bottom: auto; }
+    .readout .value.txt { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .readout .value sup, .readout .value sub { font-size: .6em; }
+    .step-intro .si-q {
+      background: #fff; border: 2px solid color-mix(in srgb, var(--subject) 45%, white); border-radius: 12px;
+      padding: 9px 12px; font-weight: 800; font-size: 16px; color: #4c1d95; margin: 4px 0 8px;
+    }
+    sup, sub { font-size: .7em; line-height: 0; }
+    .fig-box { display: block; margin: 4px auto; max-width: 100%; }
+    .concept table.mini { border-collapse: collapse; margin: 6px 0; font-size: 14px; width: 100%; }
+    .concept table.mini th, .concept table.mini td { border: 1px solid var(--line); padding: 4px 6px; text-align: center; }
+    .concept table.mini th { background: var(--surface-2); font-weight: 800; }
+    .pred-row { display: flex; flex-direction: column; gap: 4px; }
+    .pred-row .q { font-weight: 800; font-size: 14px; }
+    .pred-row select { min-height: 44px; border: 2px solid var(--line); border-radius: 12px; font: 800 14.5px var(--font); padding: 4px 8px; background: #fff; color: var(--ink); }
+    .opt.sw-on { border-color: var(--good); background: var(--good-soft); color: #0b6b39; }
+    .stage-toolbar .segmented button .ic { font-size: 16px; }
+    #sceneSeg.compact button .tx { display: none; }
+    #sceneSeg.compact button { padding-left: 11px; padding-right: 11px; min-width: 46px; }
+    .range-row { display: flex; align-items: center; gap: 8px; }
+    .range-row input[type=range] { flex: 1; min-width: 0; height: 44px; }
+    .judge { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .opt.good-b { border-color: var(--good); }
+    .tbl.wide td:first-child { white-space: normal; }
+    .opt-grid.g4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .opt-grid.g4 .opt { font-size: 13.5px; padding: 4px 2px; }
+    @media (max-width: 599px) {
+      .stage-toolbar .spacer { display: none; }
+      .stage-toolbar { gap: 6px; padding: 8px; }
+      .stage-toolbar .segmented button { padding: 5px 7px; font-size: 13px; }
+      .readout .value.txt { font-size: 15px; }
+      .stage-hint { font-size: 13px; padding: 5px 12px; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="chem">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#hc">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">화학 · Ⅱ. 물질의 구조와 성질</div>
+      <h1>분자의 구조와 성질</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🧲 분자의 극성</span>
+          <div class="segmented" id="sceneSeg" role="group" aria-label="장면 고르기">
+            <button type="button" data-scene="polar" data-feature="polar" title="분자의 극성"><span class="ic">🧲</span><span class="tx"> 극성</span></button>
+            <button type="button" data-scene="stream" data-feature="phys" title="물줄기 실험"><span class="ic">💧</span><span class="tx"> 물줄기</span></button>
+            <button type="button" data-scene="mix" data-feature="phys" title="섞어 보기"><span class="ic">🧪</span><span class="tx"> 섞기</span></button>
+            <button type="button" data-scene="bp" data-feature="phys" title="끓는점 그래프"><span class="ic">📊</span><span class="tx"> 끓는점</span></button>
+            <button type="button" data-scene="isomer" data-feature="chem" title="같은 분자식, 다른 구조"><span class="ic">🧬</span><span class="tx"> 이성질체</span></button>
+            <button type="button" data-scene="bonds" data-feature="chem" title="N₂와 O₂의 결합"><span class="ic">⛓️</span><span class="tx"> N₂·O₂</span></button>
+            <button type="button" data-scene="predict" data-feature="apply" title="구조로 예측하기"><span class="ic">🔮</span><span class="tx"> 예측</span></button>
+          </div>
+          <span class="spacer"></span>
+          <button class="icon-btn" id="resetBtn" type="button" title="처음 상태로" aria-label="처음 상태로">↺</button>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="분자의 구조와 성질 시뮬레이션: 결합 쌍극자의 합과 분자의 극성, 물줄기와 섞임 실험, 끓는점 비교, 이성질체와 결합 수, 구조로 예측하기"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts" id="readouts">
+        <div class="readout"><span class="label" id="roL1">-</span><span class="value txt" id="roV1">-</span></div>
+        <div class="readout"><span class="label" id="roL2">-</span><span class="value txt" id="roV2">-</span></div>
+        <div class="readout"><span class="label" id="roL3">-</span><span class="value txt" id="roV3">-</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <!-- 분자의 극성 -->
+        <div class="ctrl-set" id="cs-polar" hidden>
+          <div class="opt-grid g3" id="plSel">
+            <button type="button" class="opt" data-m="H2O">H<sub>2</sub>O</button>
+            <button type="button" class="opt" data-m="NH3">NH<sub>3</sub></button>
+            <button type="button" class="opt" data-m="CO2">CO<sub>2</sub></button>
+            <button type="button" class="opt" data-m="CH4">CH<sub>4</sub></button>
+            <button type="button" class="opt" data-m="BF3">BF<sub>3</sub></button>
+            <button type="button" class="opt" data-m="CH3Cl">CH<sub>3</sub>Cl</button>
+          </div>
+          <div class="range-row" id="bendRow" hidden>
+            <span style="font-weight:800;font-size:14px;white-space:nowrap">O–C–O 각도</span>
+            <input type="range" id="sBend" min="100" max="180" step="1" value="180" aria-label="CO2의 결합각">
+            <output id="oBend" style="font-weight:800;min-width:46px">180°</output>
+          </div>
+          <div class="judge">
+            <button type="button" class="opt" id="jPolar">🧲 극성 분자</button>
+            <button type="button" class="opt" id="jNon">⚪ 무극성 분자</button>
+          </div>
+          <button type="button" class="opt wide" id="autoBtn">➡️ 화살표 자동으로 잇기</button>
+          <p class="ctrl-note" id="plNote">결합마다 쌍극자 화살표(δ+ → δ−)가 있어요. 화살표를 끌어 머리와 꼬리를 이어 붙여 합을 구해요.</p>
+        </div>
+        <!-- 물줄기 -->
+        <div class="ctrl-set" id="cs-stream" hidden>
+          <div class="segmented" id="liqSel" role="group" aria-label="액체 고르기">
+            <button type="button" data-l="water" class="on">물</button>
+            <button type="button" data-l="ethanol">에탄올</button>
+            <button type="button" data-l="hexane">헥세인</button>
+          </div>
+          <button type="button" class="opt wide" id="chgBtn">🔴 막대 전하: (−)</button>
+          <p class="ctrl-note" id="stNote">대전된 막대를 끌어 흘러내리는 액체 줄기에 가까이 가져가 보세요.</p>
+        </div>
+        <!-- 섞기 -->
+        <div class="ctrl-set" id="cs-mix" hidden>
+          <div class="opt-grid" id="mixSel">
+            <button type="button" class="opt on" data-x="we">물 + 에탄올</button>
+            <button type="button" class="opt" data-x="wh">물 + 헥세인</button>
+            <button type="button" class="opt" data-x="wi">물 + 아이오딘</button>
+            <button type="button" class="opt" data-x="hi">헥세인 + 아이오딘</button>
+          </div>
+          <button type="button" class="opt primary wide" id="mixGo">🧪 넣고 흔들기</button>
+          <p class="ctrl-note" id="mxNote">조합을 고르고 넣고 흔들어 어떻게 되는지 관찰해요.</p>
+        </div>
+        <!-- 끓는점 -->
+        <div class="ctrl-set" id="cs-bp" hidden>
+          <button type="button" class="opt wide" id="polBtn">🧲 분자의 극성 표시하기</button>
+          <p class="ctrl-note" id="bpNote">막대를 눌러 입자 모형을 살펴봐요. 분자량이 비슷해도 끓는점이 크게 달라요.</p>
+        </div>
+        <!-- 이성질체 -->
+        <div class="ctrl-set" id="cs-isomer" hidden>
+          <div class="segmented" id="isoSel" role="group" aria-label="분자 고르기">
+            <button type="button" data-i="eth" class="on">에탄올</button>
+            <button type="button" data-i="dme">다이메틸 에터</button>
+          </div>
+          <button type="button" class="opt primary wide" id="naBtn">🧂 나트륨 조각 넣기</button>
+          <p class="ctrl-note" id="isNote">분자식이 같은 C<sub>2</sub>H<sub>6</sub>O인데 구조가 달라요. 나트륨을 넣어 반응하는지 확인해요.</p>
+        </div>
+        <!-- N2 · O2 -->
+        <div class="ctrl-set" id="cs-bonds" hidden>
+          <div class="segmented" id="gasSel" role="group" aria-label="기체 고르기">
+            <button type="button" data-g="N2" class="on">N<sub>2</sub> 질소</button>
+            <button type="button" data-g="O2">O<sub>2</sub> 산소</button>
+          </div>
+          <button type="button" class="opt primary wide" id="splintBtn">🔥 꺼져 가는 불씨 넣기</button>
+          <p class="ctrl-note" id="bdNote">N≡N과 O=O의 결합 수를 비교하고, 불씨를 넣어 반응성을 확인해요.</p>
+        </div>
+        <!-- 예측 -->
+        <div class="ctrl-set" id="cs-predict" hidden>
+          <div class="opt-grid g3" id="cardSel">
+            <button type="button" class="opt" data-c="CCl4">CCl<sub>4</sub></button>
+            <button type="button" class="opt" data-c="CH3OH">CH<sub>3</sub>OH</button>
+            <button type="button" class="opt" data-c="I2">I<sub>2</sub></button>
+            <button type="button" class="opt" data-c="NH3">NH<sub>3</sub></button>
+            <button type="button" class="opt" data-c="CO2">CO<sub>2</sub></button>
+            <button type="button" class="opt" data-c="soap">🧼 비누</button>
+          </div>
+          <div class="pred-row"><span class="q" id="q1Lab">-</span><select id="q1Sel" aria-label="첫 번째 예측"></select></div>
+          <div class="pred-row"><span class="q" id="q2Lab">-</span><select id="q2Sel" aria-label="두 번째 예측"></select></div>
+          <button type="button" class="opt primary wide" id="verifyBtn">🔬 시뮬레이션으로 확인하기</button>
+        </div>
+        <!-- 공통 표: 물리적 성질 관찰표 -->
+        <div class="tbl-card" id="obsCard" hidden>
+          <div class="tq">📋 관찰표</div>
+          <table class="tbl wide"><tbody id="obsBody"></tbody></table>
+        </div>
+        <!-- 공통 표: 결합과 반응성 -->
+        <div class="tbl-card" id="bondCard" hidden>
+          <div class="tq">📋 결합 수와 반응성</div>
+          <table class="tbl wide"><tbody id="bondBody"></tbody></table>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>
