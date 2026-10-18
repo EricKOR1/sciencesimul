@@ -3869,8 +3869,7 @@ window.SCI_CATALOG = {
                 "이중 슬릿",
                 "간섭 조건",
                 "간섭 기술"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hp-convex-lens",
@@ -3891,8 +3890,7 @@ window.SCI_CATALOG = {
                 "광선 추적",
                 "초점거리",
                 "노광 공정"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hp-photon",
@@ -3913,8 +3911,7 @@ window.SCI_CATALOG = {
                 "진동수·세기",
                 "광자 모형",
                 "이미지 센서"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hp-matter-wave",
@@ -3935,8 +3932,7 @@ window.SCI_CATALOG = {
                 "물질파",
                 "분해능",
                 "응용"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hp-energy-level",

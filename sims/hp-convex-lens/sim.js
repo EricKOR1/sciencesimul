@@ -54,6 +54,7 @@
     if (!isFinite(x) || x === 0) return '0';
     let e = Math.floor(Math.log10(Math.abs(x))); let m = x / Math.pow(10, e);
     m = +m.toFixed(d); if (Math.abs(m) >= 10) { m /= 10; e += 1; }
+    if (e === 0) return m.toFixed(d);
     return m.toFixed(d) + '×10' + supOf(e);
   }
   // 파장(nm) → 색 (가시광선 근사, 380 미만은 자외선=보라 회색, 780 초과는 적외선)
@@ -893,8 +894,8 @@
       return false;
     },
     move(p) {
-      if (S.rf.drag) { S.rf.flag = clamp(Math.round((p.x - RP.LX) / RP.PXR * 10) / 10, 0.5, X_END - 0.5); }
-      else if (S.tr.hDrag) { S.tr.handle = { x: clamp((p.x - BP.LX) / BP.PXC, 0, XR_CM - 1), y: clamp((BP.AY - p.y) / PYC, -40, 40) }; }
+      if (S.rf.drag) { S.rf.flag = clamp(Math.round((p.x - RP.LX) / RP.PXR * 10) / 10, 1.5, X_END - 0.5); }
+      else if (S.tr.hDrag) { S.tr.handle = { x: clamp((p.x - BP.LX) / BP.PXC, 1.5, XR_CM - 1), y: clamp((BP.AY - p.y) / PYC, -40, 40) }; }
       else if (S.tr.odrag) { setObj(clamp((BP.LX - p.x) / BP.PXC, 5, 40)); }
       else if (S.bn.drag === 'scr') { S.bn.sx = clampSx(Math.round((p.x - BP.LX) / BP.PXC * 10) / 10); updateCtl(); }
       else if (S.bn.drag === 'obj') { const a = clamp(Math.round((BP.LX - p.x) / BP.PXC * 2) / 2, 14, 40); S.bn.a = a; slA2.set(a); }

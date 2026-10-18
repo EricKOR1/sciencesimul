@@ -53,6 +53,7 @@
     if (!isFinite(x) || x === 0) return '0';
     let e = Math.floor(Math.log10(Math.abs(x))); let m = x / Math.pow(10, e);
     m = +m.toFixed(d); if (Math.abs(m) >= 10) { m /= 10; e += 1; }
+    if (e === 0) return m.toFixed(d);
     return m.toFixed(d) + '×10' + supOf(e);
   }
   // 파장(nm) → 색 (가시광선 근사, 380 미만은 자외선=보라 회색, 780 초과는 적외선)

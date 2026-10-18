@@ -53,6 +53,7 @@
     if (!isFinite(x) || x === 0) return '0';
     let e = Math.floor(Math.log10(Math.abs(x))); let m = x / Math.pow(10, e);
     m = +m.toFixed(d); if (Math.abs(m) >= 10) { m /= 10; e += 1; }
+    if (e === 0) return m.toFixed(d);
     return m.toFixed(d) + '×10' + supOf(e);
   }
   // 파장(nm) → 색 (가시광선 근사, 380 미만은 자외선=보라 회색, 780 초과는 적외선)
@@ -301,14 +302,14 @@
     D.shadow(() => { ctx.fillStyle = '#05070d'; ctx.fillRect(DG.xs - 2, top2 - 2, DG.sw + 4, DG.sh * 2 + 4); }, { color: 'rgba(0,0,0,.6)', blur: 8, y: 2 });
     ctx.drawImage(scr, DG.xs, top2);
     ctx.strokeStyle = '#8fa0c4'; ctx.lineWidth = 1.5; ctx.strokeRect(DG.xs - 0.5, top2 - 0.5, DG.sw + 1, DG.sh * 2 + 1);
-    T(DG.xs + DG.sw / 2, top2 - 8, '스크린 (전자가 닿은 곳)', 13, '#cfd8ee', 'center', 800);
+    T(DG.xs + DG.sw / 2, top2 - 8, PHONE ? '스크린' : '스크린 (전자가 닿은 곳)', 13, '#cfd8ee', 'center', 800);
     d.flash.forEach((f) => { const k = (S.t - f.t) / 0.5; D.glow(f.x, f.y, 6 + 14 * k, '#bff0ff', 0.9 * (1 - k)); });
     // 쌓인 전자 수의 분포 (막대그래프)
     let mx = 1; for (let i = 0; i < 95; i++) mx = Math.max(mx, d.bins[i]);
     ctx.fillStyle = 'rgba(123,220,255,.85)';
     for (let i = 0; i < 95; i++) { const w = d.bins[i] / mx * DG.hw; if (w > 0.4) ctx.fillRect(DG.hx, top2 + i * 4, w, 3.4); }
     ctx.strokeStyle = 'rgba(255,255,255,.25)'; ctx.beginPath(); ctx.moveTo(DG.hx, top2); ctx.lineTo(DG.hx, top2 + DG.sh * 2); ctx.stroke();
-    T(DG.hx + DG.hw / 2, top2 - 8, '쌓인 전자 수', 13, '#cfd8ee', 'center', 800);
+    T(DG.hx + DG.hw / 2, top2 - 8, PHONE ? '개수' : '쌓인 전자 수', 13, '#cfd8ee', 'center', 800);
     // 아래 설명 칸
     const by = yc + DG.sh + 12, bh = VH - by - 12, bx0 = 16, bw0 = VW - 32;
     panel(bx0, by, bw0, bh, 14);
@@ -323,7 +324,7 @@
   }
 
   /* ================= ② 물질파 ================= */
-  const WP = PHONE ? [{ x: 8, y: 8, w: 464, h: 176 }, { x: 8, y: 192, w: 464, h: 214 }, { x: 8, y: 414, w: 464, h: 218 }] : [{ x: 12, y: 12, w: 776, h: 200 }, { x: 12, y: 222, w: 380, h: 326 }, { x: 404, y: 222, w: 384, h: 326 }];
+  const WP = PHONE ? [{ x: 8, y: 8, w: 464, h: 176 }, { x: 8, y: 192, w: 464, h: 190 }, { x: 8, y: 390, w: 464, h: 242 }] : [{ x: 12, y: 12, w: 776, h: 200 }, { x: 12, y: 222, w: 380, h: 326 }, { x: 404, y: 222, w: 384, h: 326 }];
   const PXNM = PHONE ? 1000 : 1500;                 // 파동 그림: 1 nm = PXNM 화면 픽셀 (원자 크기 0.1 nm ≈ 150 픽셀)
   const waveInfo = () => {                          // 현재 선택한 물체의 물질파
     if (S.wv.part === 'e') { const V = lamV(S.wv.idx), lam = lamE(V), p = H_PL / lam, v = p / M_E; return { name: '전자', V, lam, p, v, m: M_E }; }
@@ -352,7 +353,7 @@
       // 원자 크기 눈금
       const rx = p0.x + p0.w - 24, ry = p0.y + p0.h - 22, rl = 0.1 * PXNM;
       ctx.strokeStyle = '#ff9aa6'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(rx - rl, ry); ctx.lineTo(rx, ry); ctx.moveTo(rx - rl, ry - 6); ctx.lineTo(rx - rl, ry + 6); ctx.moveTo(rx, ry - 6); ctx.lineTo(rx, ry + 6); ctx.stroke();
-      T(rx - rl / 2, ry - 12, '0.1 nm (원자 하나의 크기쯤)', 13, '#ffc2ca', 'center', 800);
+      T(rx - rl / 2, ry - 12, PHONE ? '0.1 nm' : '0.1 nm (원자 하나의 크기쯤)', 13, '#ffc2ca', 'center', 800);
     } else {
       const bx = p0.x + 80 + ((S.t * 60) % (p0.w - 220));
       D.sphere(bx, midY, 26, '#f4f1ea', { shadow: true, outline: '#9a9488', outlineWidth: 1.5 });
@@ -374,11 +375,11 @@
     ctx.restore();
     T(g.x + g.w - 4, g.Y(-1) - 6, '원자 크기쯤 0.1 nm', 12.5, '#e2464b', 'right', 800); T(g.x + g.w - 4, g.Y(-2) + 16, '목표 0.01 nm', 12.5, '#14a058', 'right', 800);
     if (S.wv.part === 'e') { const q = S.wv.idx / 20 + 2, yy = Math.log10(lamNm); D.sphere(g.X(q), g.Y(yy), 8, '#ffb400', { shadow: true }); D.ring(g.X(q), g.Y(yy), 13, S.t, { color: '#ffb400', width: 2.5 }); }
-    T(p1.x + p1.w / 2, p1.y + p1.h - 12, '전압이 100배가 되면 파장은 1/10', 13, '#5d6879', 'center', 700);
+    if (!PHONE) T(p1.x + p1.w / 2, p1.y + p1.h - 12, '전압이 100배가 되면 파장은 1/10', 13, '#5d6879', 'center', 700);
     // 3) 크기 비교 (로그 눈금) + 계산
     panel(p2.x, p2.y, p2.w, p2.h, 14);
     T(p2.x + p2.w / 2, p2.y + 24, '파장과 크기 비교 (길이, 단위 m)', 14, '#26324a', 'center', 800);
-    const ax0 = p2.x + 24, ax1 = p2.x + p2.w - 24, ay = p2.y + (PHONE ? 80 : 96), E0 = -36, E1 = -5;
+    const ax0 = p2.x + 24, ax1 = p2.x + p2.w - 24, ay = p2.y + (PHONE ? 76 : 96), E0 = -36, E1 = -5;
     const X = (e) => ax0 + (e - E0) / (E1 - E0) * (ax1 - ax0);
     ctx.strokeStyle = '#8a95a8'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(ax0, ay); ctx.lineTo(ax1, ay); ctx.stroke();
     for (let e = E0; e <= E1; e += 5) { ctx.strokeStyle = '#8a95a8'; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(X(e), ay - 5); ctx.lineTo(X(e), ay + 5); ctx.stroke(); T(X(e), ay + 22, '10' + supOf(e), 12, '#5d6879', 'center', 700); }
@@ -387,7 +388,7 @@
       D.sphere(X(e), ay, 7, c, { gloss: false }); ctx.strokeStyle = c; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(X(e), ay + up * 7); ctx.lineTo(X(e), ay + up * (h - 8)); ctx.stroke();
       T(clamp(X(e), ax0 + 50, ax1 - 50), ay + up * h + (up > 0 ? 4 : 0), nm, 12.5, c, 'center', 800);
     });
-    const ty = p2.y + (PHONE ? 134 : 196), fs = PHONE ? 12.5 : 13.5, lh = PHONE ? 20 : 23;
+    const ty = p2.y + (PHONE ? 168 : 196), fs = PHONE ? 12.5 : 13.5, lh = PHONE ? 20 : 23;
     const e = { p: Math.sqrt(2 * M_E * Q_E * lamV(S.wv.idx)) }, bp = BALL.m * BALL.v;
     const bx0 = PHONE ? p2.x + p2.w / 2 + 6 : p2.x + 14, by0 = PHONE ? ty : ty + lh * 3.4;
     T(p2.x + 14, ty, '⚛️ 전자 (' + fmtV(lamV(S.wv.idx)) + ')', fs, '#4a7bd0', 'left', 800);
@@ -508,6 +509,7 @@
       T(tx, y, r.sp === 'virus' ? '🦠 바이러스: 지름 약 100 nm' : '🧬 DNA: 이중나선 지름 약 2 nm', fs, '#26324a', 'left', 800); y += lh + 4;
       const lookOk = (light && r.sp === 'virus') ? '흐릿한 덩어리로만 보여요 (바이러스 100 nm는 분해능 ' + Math.round(dminLight()) + ' nm 근처)' : (light ? '분해능보다 훨씬 작아서 거의 보이지 않아요' : '파장이 짧은 전자로 모양이 선명하게 보여요');
       textBlock(tx, y, tw, lookOk, fs - 0.5, light ? '#e2464b' : '#14a058', lh - 2, 800);
+      if (!PHONE) {
       const lx = RL.x + 20, ly = SQA.y + SQ + 40, lw = RL.w - 40;
       T(lx, ly, r.sp === 'virus' ? '광학 현미경 (분해능 약 ' + Math.round(dminLight()) + ' nm)' : '시료의 크기와 분해능 비교', 14.5, '#26324a', 'left', 800);
       if (r.sp === 'virus') {
@@ -517,6 +519,7 @@
       } else {
         textBlock(lx, ly + 28, lw, 'DNA 이중나선의 지름은 약 2 nm, 염기쌍 사이는 0.34 nm예요. 광학 현미경의 분해능(약 ' + Math.round(dminLight()) + ' nm)보다 훨씬 작아서 광학 현미경으로는 보이지 않아요.', 14, '#5d6879', 20, 700);
         textBlock(lx, ly + 94, lw, '전자 현미경의 분해능 약 ' + EM_FLOOR + ' nm는 염기쌍 간격(0.34 nm)보다 작아서 나선 모양이 보여요.', 14, '#5d6879', 20, 700);
+      }
       }
     }
   }

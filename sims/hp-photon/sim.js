@@ -53,6 +53,7 @@
     if (!isFinite(x) || x === 0) return '0';
     let e = Math.floor(Math.log10(Math.abs(x))); let m = x / Math.pow(10, e);
     m = +m.toFixed(d); if (Math.abs(m) >= 10) { m /= 10; e += 1; }
+    if (e === 0) return m.toFixed(d);
     return m.toFixed(d) + '×10' + supOf(e);
   }
   // 파장(nm) → 색 (가시광선 근사, 380 미만은 자외선=보라 회색, 780 초과는 적외선)
@@ -822,7 +823,7 @@
       missions: [
         {
           title: '노출을 맞춰 선명하게 찍기',
-          goal: '<b>밝은 장면</b>과 <b>어두운 장면</b> 각각에서, 노출 시간을 바꿔 가장 밝은 화소의 값이 알맞게(128~254) 사진이 <b>알맞은 노출</b>이 되게 하세요.',
+          goal: '<b>밝은 장면</b>과 <b>어두운 장면</b> 각각에서, 노출 시간을 바꿔 가장 밝은 화소의 값이 <b>128~254</b>가 되는 <b>알맞은 노출</b>을 찾으세요.',
           hint: '너무 어두우면 노출 시간을 늘리고, 빨간 막대(포화)가 생기면 줄여요. 어두운 장면은 밝은 장면보다 더 오래 노출해야 해요.',
           setup() { S.se.ok = { bright: false, dark: false }; S.se.scene = 'bright'; S.se.exp = 1; S.se.sel = null; setSlider('sEx', 1); seSeg.set('bright'); retake(); setScene('sensor'); },
           check: () => S.se.ok.bright && S.se.ok.dark,
