@@ -15,7 +15,7 @@
   const CO = SciSim.color;
 
   const PHONE = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches);
-  const VW = PHONE ? 480 : 800, VH = PHONE ? 700 : 560;
+  const VW = PHONE ? 480 : 800, VH = PHONE ? 770 : 560;
   const FS = PHONE ? 1.12 : 1;
   const fs = (n) => Math.round(n * FS);
   const RM = SciSim.reduceMotion;
@@ -135,7 +135,7 @@
       const put = (cxx, plus, k) => {
         if (k < 0.03) return;
         const txt = ion > 0.5 ? (plus ? '+' : '−') : (plus ? 'δ⁺' : 'δ⁻');
-        const sz = (ion > 0.5 ? 26 : 20 + 16 * q) * k * (PHONE ? 0.9 : 1);
+        const sz = (ion > 0.5 ? 26 : 20 + 16 * q) * k * (PHONE ? 0.9 : 1) * (o.dsz || 1);
         ctx.save(); ctx.globalAlpha = clamp(k, 0, 1);
         T(cxx, y - r - (o.dy != null ? o.dy : 12), txt, sz / FS, plus ? '#c0392b' : '#2457d6', 'center', 900, { stroke: 'rgba(255,255,255,.9)', strokeWidth: 4 });
         ctx.restore();
@@ -210,7 +210,7 @@
   const cardIdx = (a, b) => CARDS.findIndex((c) => c.a === a && c.b === b);
   const HXI = [cardIdx('H', 'F'), cardIdx('H', 'Cl'), cardIdx('H', 'Br'), cardIdx('H', 'I')];
   const CG = PHONE
-    ? { cols: 2, cw: 216, ch: 100, gx: 10, gy: 8, x0: 19, y0: 46 }
+    ? { cols: 2, cw: 216, ch: 128, gx: 10, gy: 8, x0: 19, y0: 44 }
     : { cols: 4, cw: 176, ch: 140, gx: 14, gy: 12, x0: 27, y0: 44 };
   const cardRect = (i) => ({ x: CG.x0 + (i % CG.cols) * (CG.cw + CG.gx), y: CG.y0 + Math.floor(i / CG.cols) * (CG.ch + CG.gy), w: CG.cw, h: CG.ch });
   const AIN = PHONE ? { x: 16, y: CG.y0 + 4 * (CG.ch + CG.gy) + 2, w: VW - 32, h: 150 } : { x: 24, y: CG.y0 + 2 * (CG.ch + CG.gy) + 4, w: VW - 48, h: 170 };
@@ -236,11 +236,11 @@
       ctx.save(); ctx.translate(sh, 0);
       panel(r.x, r.y, r.w, r.h, 14, done ? '#f3effd' : '#fff', cur ? '#8b5cf6' : done ? '#c9bfe8' : '#e3dcf5');
       if (cur) { D.roundRect(r.x, r.y, r.w, r.h, 14); ctx.strokeStyle = '#8b5cf6'; ctx.lineWidth = 3; ctx.stroke(); }
-      T(r.x + 12, r.y + 22, b.label, 16, INK, 'left', 900);
-      T(r.x + r.w - 12, r.y + 22, done ? 'Δχ = ' + f1(b.d10) : 'Δχ = ?', 14, done ? PURD : '#a2abb9', 'right', 900);
+      T(r.x + 12, r.y + 21, b.label, 16, INK, 'left', 900);
+      T(r.x + r.w - 12, r.y + 21, done ? 'Δχ = ' + f1(b.d10) : 'Δχ = ?', 14, done ? PURD : '#a2abb9', 'right', 900);
       const pos = done ? posOf(b.ea, b.eb) : 0.5;
-      const sep = r.w - 64, rr = PHONE ? 17 : 20, cy = r.y + r.h * (PHONE ? 0.6 : 0.64);
-      drawBondModel({ x: r.x + r.w / 2, y: cy, sep, r: rr, A: { s: b.a, e: b.ea }, B: { s: b.b, e: b.eb }, order: 1, pos, q: done ? qOf(b.d10) : 0, delta: done, dA: done ? 1 : 0, dB: done ? 1 : 0, arrow: done ? (S.ar.prog[b.id] != null ? S.ar.prog[b.id] : 1) : 0, d10: b.d10, U, ao: 30, dy: 8 });
+      const sep = r.w - 64, rr = PHONE ? 17 : 20, cy = r.y + r.h * (PHONE ? 0.7 : 0.66);
+      drawBondModel({ x: r.x + r.w / 2, y: cy, sep, r: rr, A: { s: b.a, e: b.ea }, B: { s: b.b, e: b.eb }, order: 1, pos, q: done ? qOf(b.d10) : 0, delta: done, dA: done ? 1 : 0, dB: done ? 1 : 0, arrow: done ? (S.ar.prog[b.id] != null ? S.ar.prog[b.id] : 1) : 0, d10: b.d10, U, ao: PHONE ? 36 : 32, dy: PHONE ? 6 : 8, dsz: 0.62 });
       T(r.x + 32, cy + rr + 17, 'χ ' + f1(b.ea), 12.5, MUTED, 'center', 800); T(r.x + r.w - 32, cy + rr + 17, 'χ ' + f1(b.eb), 12.5, MUTED, 'center', 800);
       ctx.restore();
     });
@@ -291,8 +291,8 @@
     D.roundRect(-w / 2, -h / 2, w, h, 14); ctx.fillStyle = '#fff'; ctx.fill(); ctx.shadowColor = 'transparent';
     ctx.strokeStyle = t.slot != null ? '#8b5cf6' : '#cdbdf5'; ctx.lineWidth = 2.5; ctx.stroke();
     T(0, -h / 2 + 22, b.label, 15, INK, 'center', 900);
-    drawBondModel({ x: 0, y: 14, sep: w - 34, r: PHONE ? 13 : 16, A: { s: b.a, e: b.ea }, B: { s: b.b, e: b.eb }, order: 1, pos: posOf(b.ea, b.eb), q: qOf(b.d10), arrow: 1, d10: b.d10, U: tileU, delta: false });
-    if (S.ar.odone) T(0, h / 2 - 12, 'Δχ ' + f1(b.d10), 13, PURD, 'center', 900);
+    drawBondModel({ x: 0, y: 22, sep: w - 34, r: PHONE ? 13 : 16, A: { s: b.a, e: b.ea }, B: { s: b.b, e: b.eb }, order: 1, pos: posOf(b.ea, b.eb), q: qOf(b.d10), arrow: 1, d10: b.d10, U: tileU, delta: false, ao: PHONE ? 22 : 26 });
+    if (S.ar.odone) T(0, h / 2 - 10, 'Δχ ' + f1(b.d10), 13, PURD, 'center', 900);
     ctx.restore();
   }
   function drawOrderScene() {
@@ -326,13 +326,13 @@
   const axV = (x) => clamp(Math.round(((x - AX.x0) / (AX.x1 - AX.x0)) * 3.2 * 10) / 10, 0, 3.2);
   const SCW = PHONE ? 86 : 100, SCH = PHONE ? 46 : 50;
   const LANES = PHONE ? [56, 108, 160] : [52, 112, 172];
-  const trayCard = (i) => PHONE ? { x: 20 + (i % 3) * (SCW + 12), y: 530 + Math.floor(i / 3) * (SCH + 12) } : { x: 428 + (i % 3) * (SCW + 12), y: 392 + Math.floor(i / 3) * (SCH + 12) };
+  const trayCard = (i) => PHONE ? { x: 20 + (i % 3) * (SCW + 12), y: 552 + Math.floor(i / 3) * (SCH + 12) } : { x: 428 + (i % 3) * (SCW + 12), y: 392 + Math.floor(i / 3) * (SCH + 12) };
   function buildScale() {
     const order = [4, 2, 5, 0, 3, 1];
     S.sc.items = order.map((bi, i) => { const p = trayCard(i); return { bi, b: SCB[bi], x: p.x, y: p.y, val: null, drag: false, lift: 0, tray: i, bad: false, ok: false }; });
     S.sc.sel = null; S.sc.ion = 0;
   }
-  const scTarget = (it) => (it.val == null ? trayCard(it.tray) : { x: axX(it.val) - SCW / 2, y: LANES[it.bi % 3] });
+  const scTarget = (it) => (it.val == null ? trayCard(it.tray) : { x: clamp(axX(it.val) - SCW / 2, 4, VW - SCW - 4), y: LANES[it.bi % 3] });
   function scAt(p) { const a = S.sc.items; for (let i = a.length - 1; i >= 0; i--) { const t = a[i]; if (p.x >= t.x && p.x <= t.x + SCW && p.y >= t.y && p.y <= t.y + SCH) return t; } return null; }
   function scStep(dt) {
     S.sc.items.forEach((t) => { t.lift = approach(t.lift, t.drag ? 1 : 0, dt, 14); if (!t.drag) { const g = scTarget(t); t.x = approach(t.x, g.x, dt, 12); t.y = approach(t.y, g.y, dt, 12); } });
@@ -365,7 +365,7 @@
     // 놓인 카드의 줄기
     S.sc.items.forEach((t) => { if (t.val != null) { ctx.strokeStyle = 'rgba(93,104,121,.5)'; ctx.setLineDash([4, 4]); ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(axX(t.val), t.y + SCH); ctx.lineTo(axX(t.val), AX.y); ctx.stroke(); ctx.setLineDash([]); } });
     // 트레이
-    const trY = PHONE ? 498 : 366;
+    const trY = PHONE ? 530 : 366;
     if (!PHONE) { panel(416, 360, 362, 190, 14, 'rgba(255,255,255,.6)', '#e3dcf5'); T(432, 384, '🧰 눈금에 놓을 카드', 13.5, PURD, 'left', 900); }
     else { T(20, trY + 6, '🧰 눈금에 놓을 카드 (끌어서 눈금 위로)', 13.5, PURD, 'left', 900); }
     const drawIt = (t) => {
@@ -382,7 +382,7 @@
     };
     S.sc.items.filter((t) => !t.drag).forEach(drawIt); S.sc.items.filter((t) => t.drag).forEach(drawIt);
     // 입자 모형 미리보기
-    const pv = PHONE ? { x: 16, y: 330, w: VW - 32, h: 160 } : { x: 24, y: 360, w: 380, h: 190 };
+    const pv = PHONE ? { x: 16, y: 330, w: VW - 32, h: 178 } : { x: 24, y: 360, w: 380, h: 190 };
     panel(pv.x, pv.y, pv.w, pv.h, 14, '#fff', '#e3dcf5');
     const sel = S.sc.sel != null ? SCB[S.sc.sel] : null;
     if (!sel) { T(pv.x + pv.w / 2, pv.y + pv.h / 2, '카드를 누르거나 끌면 입자 모형이 나와요', 14, '#a2abb9', 'center', 800); return; }
