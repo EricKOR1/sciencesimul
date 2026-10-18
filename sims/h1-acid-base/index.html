@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#8b5cf6">
+  <title>산과 염기 | 고1 통합과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍋</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-card { background: #f3f0fb; }
+    .stage-toolbar { min-height: 58px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; }
+    .stage-toolbar .segmented button { min-height: 40px; padding: 5px 11px; font-size: 14.5px; white-space: nowrap; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    #resetBtn { font-size: 20px; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    .ctrl-set { display: flex; flex-direction: column; gap: 10px; }
+    .ctrl-set[hidden], .ctrl-row[hidden] { display: none; }
+    .ctrl-row { display: flex; flex-direction: column; gap: 8px; }
+    .ctrl-set .segmented { align-self: stretch; flex-wrap: nowrap; }
+    .ctrl-set .segmented button { flex: 1 1 0; min-width: 0; min-height: 44px; font-size: 14.5px; padding-left: 6px; padding-right: 6px; }
+    .ctrl-note { margin: 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    .ctrl-title { font-weight: 800; font-size: 15px; }
+    .opt-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+    .opt {
+      min-height: 46px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 12px;
+      font-weight: 800; font-size: 14.5px; cursor: pointer; padding: 4px 6px; font-family: inherit; line-height: 1.2;
+    }
+    .opt.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); color: color-mix(in srgb, var(--subject) 70%, black); }
+    .opt.done::after { content: " ✓"; color: var(--good); }
+    .opt.wide { grid-column: 1 / -1; }
+    .opt.go { background: var(--subject); border-color: var(--subject); color: #fff; }
+    .opt:disabled { opacity: .5; cursor: not-allowed; }
+    .opt.target { animation: tgtPulse 1.1s ease-in-out infinite; }
+    @keyframes tgtPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0); }
+      50% { box-shadow: 0 0 0 6px rgba(139, 92, 246, .3); }
+    }
+    .sel-row { display: flex; flex-direction: column; gap: 3px; }
+    .sel-row label { font-weight: 800; font-size: 14px; }
+    .sel-row select, .ctrl-set select {
+      width: 100%; min-height: 44px; border: 2px solid var(--line); border-radius: 10px; background: #fff; font-weight: 800; font-size: 14.5px;
+      color: var(--ink); padding: 0 8px; font-family: inherit;
+    }
+    .ctrl-set select:focus { outline: none; border-color: var(--subject); box-shadow: 0 0 0 3px color-mix(in srgb, var(--subject) 22%, transparent); }
+    .ctrl-set select.ok { border-color: var(--good); background: var(--good-soft); color: #0b6b39; }
+    .ctrl-set select.bad { border-color: var(--bad); background: var(--bad-soft); }
+    .stage-hint { white-space: normal; width: max-content; max-width: calc(100% - 24px); text-align: center; }
+    .readout .value.txt { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .readout .value sup, .readout .value sub { font-size: .65em; }
+    .step-intro .si-q {
+      background: #fff; border: 2px solid color-mix(in srgb, var(--subject) 45%, white); border-radius: 12px;
+      padding: 9px 12px; font-weight: 800; font-size: 16px; color: #4c1d95; margin: 4px 0 8px;
+    }
+    sup { font-size: .7em; line-height: 0; }
+    sub { font-size: .7em; line-height: 0; }
+    .concept table.mini { border-collapse: collapse; margin: 6px 0; font-size: 14px; width: 100%; }
+    .concept table.mini th, .concept table.mini td { border: 1px solid var(--line); padding: 4px 6px; text-align: center; }
+    .concept table.mini th { background: var(--surface-2); font-weight: 800; }
+    .mission-figure svg { max-width: 100%; height: auto; }
+    .safety { background: #fff4dc; border: 1px solid #f3d38a; color: #7a4a00; border-radius: 10px; padding: 6px 10px; font-size: 13.5px; font-weight: 700; }
+    @media (max-width: 599px) {
+      .readout .value.txt { font-size: 15px; }
+      .stage-toolbar .spacer { display: none; }
+      .toolbar-label { display: none; }
+      .stage-toolbar { justify-content: space-between; }
+      .stage-toolbar .segmented button { padding: 5px 7px; font-size: 13px; }
+    }
+
+  </style>
+</head>
+<body class="sim-page" data-subject="chem">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#h1b">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">통합과학2 · Ⅰ. 변화와 다양성</div>
+      <h1>산과 염기</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🧪 지시약 검사대</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="sceneSeg" role="group" aria-label="장면 고르기" hidden>
+            <button type="button" data-scene="test" data-feature="test">🧪 검사</button>
+            <button type="button" data-scene="sort" data-feature="sort">🗂️ 분류</button>
+            <button type="button" data-scene="props" data-feature="props">⚗️ 성질</button>
+            <button type="button" data-scene="ion" data-feature="ion">🔬 이온</button>
+            <button type="button" data-scene="apply" data-feature="apply">🏠 생활</button>
+
+          </div>
+          <button class="icon-btn" id="resetBtn" type="button" title="처음 상태로" aria-label="처음 상태로">↺</button>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="시료 8종에 리트머스 종이, BTB 용액, 페놀프탈레인 용액을 떨어뜨리는 검사표, 산·중성·염기성 분류판, 산과 염기의 성질 실험, 물에 녹는 이온 모형"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts" id="readouts">
+        <div class="readout"><span class="label" id="roL1">-</span><span class="value txt" id="roV1">-</span></div>
+        <div class="readout"><span class="label" id="roL2">-</span><span class="value txt" id="roV2">-</span></div>
+        <div class="readout"><span class="label" id="roL3">-</span><span class="value txt" id="roV3">-</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <!-- 지시약 검사 -->
+        <div class="ctrl-set" id="cs-test" hidden>
+          <div class="ctrl-title">🧪 지시약 떨어뜨리기</div>
+          <p class="ctrl-note" id="testNote">표의 <b>빈 칸</b>을 누르면 그 줄의 시료에 그 열의 지시약을 떨어뜨려요. <b>시료 이름</b>을 누르면 4가지 지시약을 한꺼번에 써요.</p>
+          <div class="safety">⚠️ 실험실의 산·염기는 맛보거나 만지지 않아요. 맛 정보는 카드로만 확인해요.</div>
+        </div>
+        <!-- 분류 -->
+        <div class="ctrl-set" id="cs-sort" hidden>
+          <div class="ctrl-title">🗂️ 산성 · 중성 · 염기성으로 나누기</div>
+          <p class="ctrl-note" id="sortNote">시료 카드를 끌어 알맞은 상자에 넣어요. 카드 위의 <b>네 개의 색 점</b>(푸른 리트머스 · 붉은 리트머스 · BTB · 페놀프탈레인 순서)이 검사 결과예요. 점이 비어 있으면 <b>🧪 검사</b>에서 먼저 검사해요.</p>
+        </div>
+        <!-- 성질 실험 -->
+        <div class="ctrl-set" id="cs-props" hidden>
+          <div class="ctrl-title">⚗️ 실험 고르기</div>
+          <div class="opt-grid" id="expBtns">
+            <button type="button" class="opt on" data-e="mg">🧲 마그네슘</button>
+            <button type="button" class="opt" data-e="egg">🥚 달걀 껍데기</button>
+            <button type="button" class="opt" data-e="pro">🍳 단백질</button>
+            <button type="button" class="opt" data-e="lamp">💡 전구 회로</button>
+          </div>
+          <div class="ctrl-title" id="smpTitle">시료 고르기</div>
+          <div class="opt-grid" id="smpBtns"></div>
+          <div class="opt-grid">
+            <button type="button" class="opt go wide" id="runBtn">▶ 실험하기</button>
+            <button type="button" class="opt wide" id="matchBtn">🔥 성냥불 가까이</button>
+          </div>
+          <p class="ctrl-note" id="propNote"></p>
+        </div>
+        <!-- 이온 모형 -->
+        <div class="ctrl-set" id="cs-ion" hidden>
+          <div class="ctrl-title">🔬 물에 녹여 보기</div>
+          <p class="ctrl-note" id="ionNote">아래 물질 카드를 끌어 <b>비커의 물</b>에 넣어요. (카드를 누른 뒤 비커를 눌러도 돼요.)</p>
+          <div class="opt-grid"><button type="button" class="opt wide" id="clearBtn">💧 물 갈아 주기</button></div>
+          <div class="ctrl-row" id="defRow">
+            <div class="sel-row"><label for="defAcid">산은 수용액에서 (  )을 내놓는 물질</label>
+              <select id="defAcid"><option value="">고르기</option><option value="H+">수소 이온 H⁺</option><option value="OH-">수산화 이온 OH⁻</option><option value="Na+">나트륨 이온 Na⁺</option><option value="Cl-">염화 이온 Cl⁻</option></select></div>
+            <div class="sel-row"><label for="defBase">염기는 수용액에서 (  )을 내놓는 물질</label>
+              <select id="defBase"><option value="">고르기</option><option value="H+">수소 이온 H⁺</option><option value="OH-">수산화 이온 OH⁻</option><option value="Na+">나트륨 이온 Na⁺</option><option value="Cl-">염화 이온 Cl⁻</option></select></div>
+          </div>
+        </div>
+        <!-- 생활 속 물질 -->
+        <div class="ctrl-set" id="cs-apply" hidden>
+          <div class="ctrl-title">🏠 생활 속 물질 분류</div>
+          <p class="ctrl-note" id="applyNote">카드 12장을 <b>산성</b>과 <b>염기성</b> 상자로 나눈 뒤, 공통으로 들어 있는 이온과 성질을 골라요.</p>
+          <div class="ctrl-row" id="reasonRow">
+            <div class="sel-row"><label for="rsAcidIon">산성 물질에 공통으로 들어 있는 이온</label>
+              <select id="rsAcidIon"><option value="">고르기</option><option value="H+">H⁺</option><option value="OH-">OH⁻</option></select></div>
+            <div class="sel-row"><label for="rsAcidPr">그 이온이 나타내는 성질</label>
+              <select id="rsAcidPr"><option value="">고르기</option><option value="a">마그네슘과 반응해 수소 기체를 내요</option><option value="b">단백질을 녹여 만지면 미끌거려요</option></select></div>
+            <div class="sel-row"><label for="rsBaseIon">염기성 물질에 공통으로 들어 있는 이온</label>
+              <select id="rsBaseIon"><option value="">고르기</option><option value="H+">H⁺</option><option value="OH-">OH⁻</option></select></div>
+            <div class="sel-row"><label for="rsBasePr">그 이온이 나타내는 성질</label>
+              <select id="rsBasePr"><option value="">고르기</option><option value="a">마그네슘과 반응해 수소 기체를 내요</option><option value="b">단백질을 녹여 만지면 미끌거려요</option></select></div>
+          </div>
+        </div>
+
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

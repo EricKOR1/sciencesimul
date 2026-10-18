@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0ea5e9">
+  <title>생태계의 구성요소 | 고1 통합과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌳</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; }
+    .stage-toolbar { min-height: 58px; }
+    .stage-toolbar .segmented button { min-height: 40px; padding: 5px 10px; font-size: 14px; white-space: nowrap; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard [hidden] { display: none !important; }
+    .btn-sm { min-height: 44px; }
+    .btn-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+    .btn-row .btn { flex: 1; padding-left: 8px; padding-right: 8px; }
+    .btn.done { background: var(--good-soft); border-color: var(--good); color: #0b6b39; }
+    .btn.on { background: var(--subject); border-color: var(--subject); color: #fff; }
+    .ctrl-note { margin: 6px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    .ctrl-note b { color: var(--ink); }
+    .range-row { display: flex; align-items: center; gap: 8px; }
+    .range-row input[type=range] { flex: 1; min-width: 0; height: 44px; }
+    .tick-row { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--muted); font-weight: 700; padding: 0 6px; margin-top: -6px; }
+    .nudge { flex: none; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); font-weight: 900; font-size: 18px; line-height: 1; cursor: pointer; display: grid; place-items: center; color: var(--ink); }
+    .nudge:active { transform: scale(.94); background: var(--surface-2); }
+    .nav-row { display: flex; align-items: center; gap: 8px; }
+    .nav-row .mid { flex: 1; text-align: center; font-weight: 800; font-size: 15px; }
+    .cat-row { display: grid; grid-template-columns: 1fr; gap: 6px; margin-top: 8px; }
+    .cat-row button { min-height: 44px; border-radius: 12px; border: 2px solid var(--line); background: #fff; font-weight: 800; font-size: 14.5px; cursor: pointer; color: var(--ink); text-align: left; padding: 6px 12px; }
+    .cat-row button.act { border-color: #0ea5e9; } .cat-row button.rea { border-color: #16a34a; } .cat-row button.int { border-color: #ea8a1a; }
+    .cat-row button.on.act { background: #e0f2fe; } .cat-row button.on.rea { background: #dcfce7; } .cat-row button.on.int { background: #ffedd5; }
+    .cat-row button:active { transform: scale(.98); }
+    .sel-in { width: 100%; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 8px; font: 800 14px var(--font); color: var(--ink); background: #fff; }
+    .sel-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .sel-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .sel-row { margin-top: 8px; }
+    .sel-row:first-of-type { margin-top: 4px; }
+    .sel-row .q { font-weight: 800; font-size: 13.5px; margin-bottom: 3px; line-height: 1.25; }
+    @keyframes shakeX { 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+    .readout .value { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .concept table.mini { border-collapse: collapse; margin: 6px 0; font-size: 14px; width: 100%; }
+    .concept table.mini th, .concept table.mini td { border: 1px solid var(--line); padding: 4px 6px; text-align: center; }
+    .concept table.mini th { background: var(--surface-2); font-weight: 800; }
+    .stage-canvas .stage-hint { top: 10px; bottom: auto; }
+    @media (max-width: 1100px) and (orientation: landscape) { .toolbar-label { display: none; } }
+    @media (max-width: 599px) {
+      .readout .value { font-size: 15px; }
+      .stage-toolbar { gap: 6px; padding: 8px; }
+      .stage-toolbar .spacer, .toolbar-label { display: none; }
+      .stage-toolbar .segmented button { padding: 5px 8px; font-size: 13.5px; }
+      .stage-hint { font-size: 13px; padding: 5px 12px; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="earth">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#h1b">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">통합과학2 · Ⅱ. 환경과 에너지</div>
+      <h1>생태계의 구성요소</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🌳 숲 생태계</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="tablist" aria-label="화면 고르기">
+            <button type="button" data-mode="forest" data-feature="forest">🌳 숲</button>
+            <button type="button" data-mode="stack" data-feature="stack">🧱 쌓기</button>
+            <button type="button" data-mode="light" data-feature="light">☀️ 빛</button>
+            <button type="button" data-mode="adapt" data-feature="adapt">🦊 적응</button>
+            <button type="button" data-mode="cmp" data-feature="soil">🌡️ 측정</button>
+            <button type="button" data-mode="worm" data-feature="soil">🪱 흙</button>
+            <button type="button" data-mode="leaf" data-feature="soil">🍂 낙엽</button>
+            <button type="button" data-mode="pond" data-feature="pond">🏞️ 연못</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="숲 생태계 장면, 개체에서 생태계까지 블록 쌓기, 빛의 세기와 광합성 그래프, 생물의 적응, 맨땅과 숲속 측정, 지렁이와 낙엽 분해, 연못 생태계 상호 관계"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">—</span><span class="value" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">—</span><span class="value" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">—</span><span class="value" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <!-- 숲 -->
+        <div class="control" data-modes="forest">
+          <div class="control-head"><span>🔍 생태계 구성요소 찾기</span></div>
+          <p class="ctrl-note">숲 장면에서 <b>살아 있는 것</b>과 <b>살아 있지 않은 것</b>을 눌러 보세요. 하늘, 땅속, 물가도 살펴봐요.</p>
+          <div class="btn-row"><button class="btn btn-sm" id="bForestReset" type="button">↺ 다시 찾기</button></div>
+        </div>
+        <!-- 쌓기 -->
+        <div class="control" data-modes="stack">
+          <div class="control-head"><span>🧱 개체 → 생태계</span></div>
+          <p class="ctrl-note">오른쪽(또는 아래)의 <b>이름표 블록</b>을 끌어서 설명에 맞는 층에 놓아요.</p>
+          <div class="btn-row"><button class="btn btn-sm" id="bStackReset" type="button">↺ 블록 다시</button></div>
+        </div>
+        <!-- 빛 -->
+        <div class="control" data-modes="light">
+          <div class="control-head"><label for="sLight">☀️ 빛의 세기</label><output id="oLight">50 %</output></div>
+          <div class="range-row"><input type="range" id="sLight" min="0" max="4" step="1" value="2" aria-label="빛의 세기 5단계 (10, 25, 50, 75, 100퍼센트)"></div>
+          <div class="tick-row"><span>10</span><span>25</span><span>50</span><span>75</span><span>100 %</span></div>
+          <div class="btn-row">
+            <button class="btn btn-sm btn-primary" id="bRecord" type="button">📌 이 값 기록하기</button>
+            <button class="btn btn-sm" id="bLightReset" type="button">↺ 기록 지우기</button>
+          </div>
+        </div>
+        <!-- 적응 -->
+        <div class="control" data-modes="adapt">
+          <div class="control-head"><span>🔗 환경 요인과 생물의 특징 짝짓기</span></div>
+          <div id="adaptRows"></div>
+        </div>
+        <!-- 측정 -->
+        <div class="control" data-modes="cmp">
+          <div class="control-head"><span>📍 측정 도구를 놓을 곳</span></div>
+          <div class="btn-row">
+            <button class="btn btn-sm" id="bMeasBare" type="button">🏜️ 맨땅에서 재기</button>
+            <button class="btn btn-sm" id="bMeasForest" type="button">🌳 숲속에서 재기</button>
+          </div>
+          <p class="ctrl-note" id="cmpNote">한여름 낮에 온도계와 습도계를 두 곳에 차례로 놓아 값을 읽어요.</p>
+        </div>
+        <!-- 흙 -->
+        <div class="control" data-modes="worm">
+          <div class="control-head"><span>🪱 지렁이가 있는 흙 vs 없는 흙</span></div>
+          <div class="btn-row">
+            <button class="btn btn-sm btn-primary" id="bWormRun" type="button">▶ 4주 지나기</button>
+            <button class="btn btn-sm" id="bWormReset" type="button">↺ 다시</button>
+          </div>
+          <p class="ctrl-note">두 화분의 흙 속 공기 통로와 식물의 키를 비교해요.</p>
+        </div>
+        <div class="control" data-modes="leaf">
+          <div class="control-head"><span>🍂 낙엽 분해 모형</span></div>
+          <div class="btn-row">
+            <button class="btn btn-sm btn-primary" id="bLeafRun" type="button">▶ 분해 시작</button>
+            <button class="btn btn-sm" id="bLeafReset" type="button">↺ 다시</button>
+          </div>
+          <p class="ctrl-note">분해자가 낙엽을 분해하면 양분이 어디로 갈까요?</p>
+        </div>
+        <!-- 연못 -->
+        <div class="control" data-modes="pond">
+          <div class="control-head"><span>🃏 사례 카드</span></div>
+          <div class="nav-row">
+            <button class="nudge" id="bPrev" type="button" aria-label="이전 카드">◀</button>
+            <span class="mid" id="cardNo">1 / 12</span>
+            <button class="nudge" id="bNext" type="button" aria-label="다음 카드">▶</button>
+          </div>
+          <div class="cat-row" id="catRow">
+            <button type="button" class="act" data-c="act">➡ 작용 (환경 → 생물)</button>
+            <button type="button" class="rea" data-c="rea">⬅ 반작용 (생물 → 환경)</button>
+            <button type="button" class="int" data-c="int">↔ 상호 작용 (생물 ↔ 생물)</button>
+          </div>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>
