@@ -12,6 +12,7 @@
   const comma = (n) => String(Math.round(n)).replace(/(\d)(?=(\d{3})+$)/g, '$1,');
   const approach = (cur, tgt, dt, rate) => (RM ? tgt : SciSim.approach(cur, tgt, dt, rate));
   function rng(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+  const shuffle = (a) => { const b = a.slice(); for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b; };
   // 받침 유무에 따라 조사 고르기: josa('사과', '이/가') -> '가'
   const josa = (word, pair) => {
     const s = String(word); const ch = s.charCodeAt(s.length - 1);
@@ -380,7 +381,7 @@
      ========================================================= */
   const CAT_L = PHONE
     ? { cw: 274, ch: 50, gx: 10, gy: 8, cols: 2, x0: 21, y0: 52, panelY: 304 }
-    : { cw: 176, ch: 54, gx: 10, gy: 10, cols: 4, x0: 29, y0: 50, panelY: 190 };
+    : { cw: 176, ch: 54, gx: 10, gy: 10, cols: 4, x0: 33, y0: 50, panelY: 190 };
   function catCardRect(i) {
     const c = i % CAT_L.cols, r = Math.floor(i / CAT_L.cols);
     return { x: CAT_L.x0 + c * (CAT_L.cw + CAT_L.gx), y: CAT_L.y0 + r * (CAT_L.ch + CAT_L.gy), w: CAT_L.cw, h: CAT_L.ch };
@@ -493,9 +494,9 @@
     const rd = rng(7 + Math.floor(Math.random() * 1000)); order.sort(() => rd() - 0.5);
     order.forEach((si, k) => {
       const s = SRC[si], c = k % cols, r = Math.floor(k / cols);
-      const hx = PHONE ? 21 + SORT_W / 2 + c * (SORT_W + 10) + 36 : 29 + SORT_W / 2 + c * (SORT_W + 12) + 12 * 0;
+      const hx = (VW - (cols * SORT_W + (cols - 1) * 12)) / 2 + SORT_W / 2 + c * (SORT_W + 12);
       const hy = (PHONE ? 90 : 96) + r * ((PHONE ? SORT_H + 12 : SORT_H + 14));
-      sortBoard.addItem({ id: s.id, kind: s.kind, w: SORT_W, h: SORT_H, hx: PHONE ? 60 + SORT_W / 2 + c * (SORT_W + 12) : hx, hy, label: s.name, src: s,
+      sortBoard.addItem({ id: s.id, kind: s.kind, w: SORT_W, h: SORT_H, hx, hy, label: s.name, src: s,
         paint(cc) { TX(-cc.w / 2 + 26, 9, s.icon, { size: 24 }); TX(-cc.w / 2 + 50, 6, s.name, { size: 16.5, weight: 800, align: 'left', color: '#1e293b' }); } });
     });
   }

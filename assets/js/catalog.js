@@ -3365,8 +3365,7 @@ window.SCI_CATALOG = {
                 "원리와 효율",
                 "간헐성",
                 "마을 설계"
-              ],
-              "soon": true
+              ]
             }
           ]
         },
@@ -3394,8 +3393,7 @@ window.SCI_CATALOG = {
                 "핵산 진단",
                 "단백질 진단",
                 "결과 해석"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "h1-epidemic",
@@ -3416,8 +3414,7 @@ window.SCI_CATALOG = {
                 "확산 그래프",
                 "방역 효과",
                 "논증하기"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "h1-bigdata",
