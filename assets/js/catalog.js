@@ -3789,8 +3789,7 @@ window.SCI_CATALOG = {
                 "원자 자석",
                 "분류",
                 "활용"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hp-motor-speaker",
@@ -3811,8 +3810,7 @@ window.SCI_CATALOG = {
                 "전동기",
                 "스피커",
                 "설계"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hp-wireless-charging",
@@ -3833,8 +3831,7 @@ window.SCI_CATALOG = {
                 "충전기 구현",
                 "효율 분석",
                 "기술의 영향"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hp-induction-signal",
@@ -3855,8 +3852,7 @@ window.SCI_CATALOG = {
                 "금속·카드",
                 "무선통신",
                 "문명의 변화"
-              ],
-              "soon": true
+              ]
             }
           ]
         },
