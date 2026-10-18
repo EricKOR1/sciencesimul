@@ -3239,8 +3239,7 @@ window.SCI_CATALOG = {
                 "온실 강화",
                 "열수지 변동",
                 "배출과 흡수"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "h1-climate-impact",
@@ -3261,8 +3260,7 @@ window.SCI_CATALOG = {
                 "사막화",
                 "영향 분석",
                 "미래 시나리오"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "h1-solar-energy",
@@ -3283,8 +3281,7 @@ window.SCI_CATALOG = {
                 "질량→에너지",
                 "지구의 흐름",
                 "전환 추적"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "h1-induction",
