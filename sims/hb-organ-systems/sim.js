@@ -373,11 +373,11 @@
       const w = bw * clamp(b[1] / 100, 0, 1); ctx.fillStyle = b[2]; if (w > 1) rr(ds.x + 94, yy, w, 20, Math.min(10, w / 2)).fill();
       T(ds.x + 94 + bw + 10, yy + 15, Math.round(b[1]) + ' %', 13.5, INK, 'left', 800);
     });
-    T(ds.x + 12, ds.y + ds.h - 10, '교육용 가상 예시 값', 11.5, '#b45309', 'left', 800);
+    T(ds.x + ds.w - 12, ds.y + 22, '교육용 가상 예시 값', 11.5, '#b45309', 'right', 800);
     // 계기
     const gg = g.gauge;
     if (!PHONE) card(446, 340, 338, 200, '#fff', '#e2e8f0', 16); else card(10, 652, 500, 124, '#fff', '#e2e8f0', 16);
-    D.dial(gg.x, gg.y + (PHONE ? 10 : 6), gg.r, clamp(o.g, 0, 3.5), 0, 3.5, { label: '산소 소비량', color: '#16a34a', ticks: 7 });
+    D.dial(gg.x, gg.y + (PHONE ? 10 : 6), gg.r, clamp(o.g, 0, 4), 0, 4, { label: '산소 소비량', color: '#16a34a', ticks: 4 });
     const tx = PHONE ? 280 : 540 + gg.r + 70 - 40;
     const lines = [o.ok.rest ? '🛌 안정 ' + REST.vo + ' L/분' : '🛌 안정 ? L/분', o.ok.run ? '🏃 달리기 ' + RUN.vo.toFixed(1) + ' L/분' : '🏃 달리기 ? L/분'];
     lines.forEach((l, i) => T(PHONE ? 220 : gg.x + gg.r + 18, (PHONE ? 706 : 410) + i * 26, l, PHONE ? 14 : 15, '#0f172a', 'left', 800));

@@ -4678,8 +4678,7 @@ window.SCI_CATALOG = {
                 "바이러스",
                 "휴머노이드",
                 "융합 성과"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hb-life-hierarchy",
@@ -4699,8 +4698,7 @@ window.SCI_CATALOG = {
                 "개체~생태계",
                 "시스템",
                 "설명 자료"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hb-metabolism-atp",
@@ -4721,8 +4719,7 @@ window.SCI_CATALOG = {
                 "에너지 전환",
                 "ATP 충전",
                 "활동과 에너지"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hb-digest-enzyme",

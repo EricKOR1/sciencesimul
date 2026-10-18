@@ -85,6 +85,11 @@
       TF(0, 5, w > 300 ? c.label : (c.short || c.label), w - 10, clamp(h * 0.58, 11, 14), 10.5, '#26324a', 'center', 800);
     } else {
       let lx = -w / 2 + 10, maxW = w - 20;
+      if (c.wrap) {
+        const ls = wrap(c.label, w - 22, 13, 800).slice(0, Math.max(1, Math.floor((h - 12) / 17))), y0 = -(ls.length - 1) * 8.5;
+        ls.forEach((l, i) => T(0, y0 + i * 17 + 4.5, l, 13, '#26324a', 'center', 800));
+        ctx.restore(); return;
+      }
       if (c.icon) { T(-w / 2 + 12 + 12, 7, c.icon, 22, '#26324a', 'center', 600); lx = -w / 2 + 40; maxW = w - 48; }
       if (c.sub) {
         TF(lx, -2, c.label, maxW, 14.5, 12, '#26324a', 'left', 800);

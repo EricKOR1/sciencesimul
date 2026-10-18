@@ -232,8 +232,8 @@ class Placer {
   }
   reset() { this.chips.forEach((c) => { c.zone = null; c.bad = false; c.sel = false; }); this.drag = null; this.selId = null; this.layout(); this.o.onChange && this.o.onChange(); }
   get placed() { return this.chips.filter((c) => c.zone).length; }
-  get full() { return this.chips.every((c) => c.zone); }
-  wrongIds() { return this.chips.filter((c) => { const t = this.slotOf(c); return !t || t.ans !== c.id; }).map((c) => c.id); }
+  get full() { return this.chips.every((c) => c.zone || c.decoy); }
+  wrongIds() { return this.chips.filter((c) => { const t = this.slotOf(c); if (c.decoy) return !!t; return !t || t.ans !== c.id; }).map((c) => c.id); }
   get solved() { return this.wrongIds().length === 0; }
   markBad(ids) { this.chips.forEach((c) => { const bad = ids.indexOf(c.id) >= 0; if (bad && !c.bad) c.shake = 1; c.bad = bad; }); }
   down(p) {
@@ -395,6 +395,16 @@ function drawIon(x, y, r, col, sym, alpha) {
 }
 /* 선택 칩 (DOM) 켜기 */
 const fmtSec = (v) => v.toFixed(1);
+
+/* 이온 이름표(알약): ionLabel(x, y, 'Na', '+', ' 통로', 크기, 배경) */
+function ionLabel(x, y, base, sup, tail, size, bg) {
+  ctx.save(); ctx.font = D.font(size, 800);
+  const w1 = ctx.measureText(base).width; ctx.font = D.font(size * 0.68, 800); const w2 = ctx.measureText(sup).width; ctx.font = D.font(size, 800); const w3 = tail ? ctx.measureText(tail).width : 0;
+  const tw = w1 + w2 + w3 + 3, pad = 7, h = size + 9; ctx.restore();
+  D.roundRect(x - tw / 2 - pad, y - h / 2, tw + pad * 2, h, h / 2); ctx.fillStyle = bg || 'rgba(255,255,255,.92)'; ctx.fill(); ctx.strokeStyle = 'rgba(80,100,130,.35)'; ctx.lineWidth = 1; ctx.stroke();
+  const t = IONT(x - tw / 2, y + size * 0.36, base, sup, size, '#26324a', 'left');
+  if (tail) T(x - tw / 2 + t + 2, y + size * 0.36, tail, size, '#26324a', 'left', 800);
+}
 
 /* =========================================================
    고등학교 생명과학 Ⅱ. 항상성과 몸의 조절 - 뉴런과 활동 전위 (단원 1차시)
@@ -609,7 +619,7 @@ $('#bNameReset').addEventListener('click', () => { Sound.click(); S.nr.namer.res
 
 /* ================= ② 휴지 전위 ================= */
 const RG = PHONE
-  ? { A: { x: 8, y: 8, w: 464, h: 318 }, memY: 150, th: 28, M: { x: 8, y: 334, w: 228, h: 118 }, B: { x: 244, y: 334, w: 228, h: 298 }, L: { x: 8, y: 460, w: 228, h: 172 }, it: { k1: 56, nag: 126, nl: 190, k2: 254, p1: 332, p2: 406 }, pw: 40 }
+  ? { A: { x: 8, y: 8, w: 464, h: 318 }, memY: 150, th: 28, M: { x: 8, y: 334, w: 228, h: 132 }, B: { x: 244, y: 334, w: 228, h: 298 }, L: { x: 8, y: 474, w: 228, h: 158 }, it: { k1: 56, nag: 126, nl: 190, k2: 254, p1: 332, p2: 406 }, pw: 40 }
   : { A: { x: 14, y: 14, w: 540, h: 416 }, memY: 196, th: 30, M: { x: 568, y: 14, w: 218, h: 134 }, B: { x: 568, y: 156, w: 218, h: 274 }, L: { x: 14, y: 438, w: 772, h: 110 }, it: { k1: 78, nag: 152, nl: 222, k2: 292, p1: 384, p2: 466 }, pw: 46 };
 const outY0 = () => RG.A.y + 18, outY1 = () => RG.memY - RG.th / 2 - 5, inY0 = () => RG.memY + RG.th / 2 + 5, inY1 = () => RG.A.y + RG.A.h - 10;
 const IR = 7;
@@ -687,14 +697,6 @@ function stepRest(dt) {
   }
   rs.fx.forEach((f) => { f.t += dt; }); rs.fx = rs.fx.filter((f) => f.t < 1.1);
   rs.tipIn = rs.tip.y > RG.memY + RG.th / 2 + 1;
-}
-function ionLabel(x, y, base, sup, tail, size, bg) {
-  ctx.save(); ctx.font = D.font(size, 800);
-  const w1 = ctx.measureText(base).width; ctx.font = D.font(size * 0.68, 800); const w2 = ctx.measureText(sup).width; ctx.font = D.font(size, 800); const w3 = tail ? ctx.measureText(tail).width : 0;
-  const tw = w1 + w2 + w3 + 3, pad = 7, h = size + 9; ctx.restore();
-  D.roundRect(x - tw / 2 - pad, y - h / 2, tw + pad * 2, h, h / 2); ctx.fillStyle = bg || 'rgba(255,255,255,.92)'; ctx.fill(); ctx.strokeStyle = 'rgba(80,100,130,.35)'; ctx.lineWidth = 1; ctx.stroke();
-  const t = IONT(x - tw / 2, y + size * 0.36, base, sup, size, '#26324a', 'left');
-  if (tail) T(x - tw / 2 + t + 2, y + size * 0.36, tail, size, '#26324a', 'left', 800);
 }
 function drawRestScene(dt) {
   const rs = S.rs, A = RG.A, my = RG.memY, th = RG.th;
@@ -822,7 +824,7 @@ $('#bRsReset').addEventListener('click', () => { Sound.click(); resetRest(); upd
 
 /* ================= ③ 활동 전위 ================= */
 const AG = PHONE
-  ? { M: { x: 8, y: 8, w: 464, h: 172 }, memY: 92, th: 26, P: { x: 8, y: 188, w: 464, h: 444 }, plot: { x: 58, y: 204, w: 396, h: 190 }, rows: [400, 418], tickY: 446, xlY: 466, tray: 484, nax: 168, kax: 258, pmx: 392, lkx: 330 }
+  ? { M: { x: 8, y: 8, w: 464, h: 172 }, memY: 92, th: 26, P: { x: 8, y: 188, w: 464, h: 444 }, plot: { x: 58, y: 204, w: 396, h: 190 }, rows: [400, 418], tickY: 444, xlY: 462, tray: 498, nax: 168, kax: 258, pmx: 392, lkx: 330 }
   : { M: { x: 14, y: 12, w: 772, h: 190 }, memY: 100, th: 30, P: { x: 14, y: 208, w: 772, h: 340 }, plot: { x: 84, y: 222, w: 688, h: 192 }, rows: [418, 438], tickY: 472, xlY: 492, tray: 506, nax: 230, kax: 400, pmx: 640, lkx: 520 };
 const AY = [-110, 40], AXT = [0, 7];
 function apAxes() { return makeAxes(AG.plot, AXT, AY); }
@@ -918,7 +920,7 @@ function drawAPGraph(a) {
     const cx = A.X(a.t), cy = A.Y(fn(a.t));
     if (a.run) { D.glow(cx, cy, 16, '#ffd447', 0.8); D.sphere(cx, cy, 6, '#ffb400', { gloss: true }); }
     else { ctx.fillStyle = a.kind === 'ap' ? '#e2464b' : '#2563eb'; ctx.beginPath(); ctx.arc(cx, cy, 4, 0, TAU); ctx.fill(); }
-    if (a.kind === 'ap' && a.t >= 1.5) { const x = A.X(1.5), y = A.Y(-55); ctx.fillStyle = '#fff'; ctx.strokeStyle = '#e2464b'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(x, y, 5.5, 0, TAU); ctx.fill(); ctx.stroke(); T(x - 8, y + 20, '역치 도달', 13, '#c0392b', 'right', 800); }
+    if (a.kind === 'ap' && a.t >= 1.5) { const x = A.X(1.5), y = A.Y(-55); ctx.fillStyle = '#fff'; ctx.strokeStyle = '#e2464b'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(x, y, 5.5, 0, TAU); ctx.fill(); ctx.stroke(); T(x - 10, y - 9, '역치 도달', 13, '#c0392b', 'right', 800); }
     if (a.kind === 'ap' && a.t >= 2) { const x = A.X(2), y = A.Y(30); T(x + 8, y - 3, '+30 mV', 13, '#c0392b', 'left', 800); }
     if (a.kind === 'ap' && a.t >= 4) { const x = A.X(4), y = A.Y(-80); T(x + 4, y + 18, '−80 mV', 13, '#1d4ed8', 'center', 800); }
     if (a.kind === 'sub' && a.t >= 1.5) { const x = A.X(1.5), y = A.Y(subV(1.5, a.s)); T(x + 10, y - 8, '역치 미만: ' + mv(subV(1.5, a.s)) + ' mV', 13, '#1d4ed8', 'left', 800); }
@@ -956,7 +958,7 @@ function drawAPScene(dt) {
   drawAPGraph(a);
   if (PHONE) {
     const msg = a.kind === 'ap' ? (a.run ? '자극이 역치를 넘어서 Na⁺ 통로가 열렸어요!' : '활동 전위가 끝났어요. 다시 자극해 볼 수 있어요.') : a.kind === 'sub' ? '자극이 약해서 역치(−55 mV)에 못 미쳤어요.' : '자극 세기를 정하고 ⚡ 자극 주기를 눌러요.';
-    textBlock(14, tagsOn() ? 552 : 530, VW - 28, msg, 13.5, '#3a465c', 19, 700);
+    textBlock(14, tagsOn() ? 560 : 500, VW - 28, msg, 13.5, '#3a465c', 19, 700);
   }
   parts.update(dt); parts.draw(ctx);
 }
@@ -1010,7 +1012,7 @@ function drawThrScene(dt) {
     ctx.stroke(); ctx.restore();
     const cx = A.X(th.t), cy = A.Y(thV(th.t, q));
     if (th.run) { ctx.strokeStyle = 'rgba(255,180,0,.7)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(cx, pl.y); ctx.lineTo(cx, pl.y + pl.h); ctx.stroke(); D.sphere(cx, cy, 5, '#ffb400', { gloss: true }); }
-    T(pl.x + 10, pl.y + 20, '자극 세기 ' + q.s, 14.5, '#26324a', 'left', 800);
+    T(pl.x + 10, pl.y + pl.h - 8, '자극 세기 ' + q.s, 14.5, '#26324a', 'left', 800);
     if (!q.ap && th.t > 40) T(pl.x + pl.w / 2, A.Y(plateau(q.s)) - 12, '역치 미만: ' + mv(plateau(q.s)) + ' mV에서 멈춰요', 13.5, '#1d4ed8', 'center', 800);
   } else T(pl.x + pl.w / 2, pl.y + pl.h / 2, '자극 세기를 골라 1초 동안 기록해 보세요', 16, '#8795a8', 'center', 800);
   // 기록표

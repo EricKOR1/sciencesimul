@@ -65,6 +65,7 @@
       .stage-toolbar .segmented button { padding: 5px 8px; font-size: 13.5px; }
       .stage-hint { font-size: 13px; padding: 5px 12px; }
     }
+    #modeSeg button.lv-off { display: none; }
 
   </style>
 </head>
@@ -88,14 +89,14 @@
           <span class="toolbar-label" id="tbLabel">🌍 생태계 구조</span>
           <span class="spacer"></span>
           <div class="segmented" id="modeSeg" role="tablist" aria-label="화면 고르기">
-            <button type="button" data-mode="link" data-feature="link">🔗 연결</button>
-            <button type="button" data-mode="remove" data-feature="remove">🍄 분해자</button>
-            <button type="button" data-mode="cyc" data-feature="cyc">🔄 순환 고리</button>
-            <button type="button" data-mode="burn" data-feature="burn">📈 대기 탄소</button>
-            <button type="button" data-mode="flow" data-feature="flow">⚡ 에너지 도표</button>
-            <button type="button" data-mode="cmp" data-feature="cmp">🆚 비교표</button>
-            <button type="button" data-mode="chain" data-feature="chain">🌪️ 교란 연쇄</button>
-            <button type="button" data-mode="dist" data-feature="dist">📉 교란 크기</button>
+            <button type="button" data-mode="link" data-lv="1" data-feature="link">🔗 연결</button>
+            <button type="button" data-mode="remove" data-lv="1" data-feature="remove">🍄 분해자</button>
+            <button type="button" data-mode="cyc" data-lv="2" data-feature="cyc">🔄 순환 고리</button>
+            <button type="button" data-mode="burn" data-lv="2" data-feature="burn">📈 대기 탄소</button>
+            <button type="button" data-mode="flow" data-lv="3" data-feature="flow">⚡ 에너지 도표</button>
+            <button type="button" data-mode="cmp" data-lv="3" data-feature="cmp">🆚 비교표</button>
+            <button type="button" data-mode="chain" data-lv="4" data-feature="chain">🌪️ 교란 연쇄</button>
+            <button type="button" data-mode="dist" data-lv="4" data-feature="dist">📉 교란 크기</button>
           </div>
         </div>
         <div class="stage-canvas">
