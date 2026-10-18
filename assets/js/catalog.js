@@ -4957,8 +4957,7 @@ window.SCI_CATALOG = {
                 "대뇌",
                 "뇌 줄기·소뇌",
                 "말초 신경"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hb-neuro-endocrine",
@@ -4979,8 +4978,7 @@ window.SCI_CATALOG = {
                 "호르몬 신호",
                 "비교하기",
                 "함께 일하기"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hb-homeostasis",
@@ -5001,8 +4999,7 @@ window.SCI_CATALOG = {
                 "혈당 조절",
                 "체온·삼투압",
                 "헬스케어"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hb-pathogens",
