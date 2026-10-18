@@ -16,13 +16,18 @@
   const T = (x, y, s, size, color, align, weight, extra) => D.text(x, y, s, Object.assign({ size, color, align, weight }, extra));
   function wrap(str, maxW, size, weight) {
     ctx.save(); ctx.font = D.font(size, weight || 700);
-    const out = []; let line = '';
-    for (const ch of str) {
-      if (ch === '\n') { out.push(line); line = ''; continue; }
-      const t = line + ch;
-      if (ctx.measureText(t).width > maxW && line) { out.push(line); line = ch.trim() === '' ? '' : ch; } else line = t;
-    }
-    if (line) out.push(line);
+    const out = [];
+    String(str).split('\n').forEach((para) => {
+      let line = '';
+      para.split(' ').forEach((tok) => {
+        const sep = line ? ' ' : '';
+        if (ctx.measureText(line + sep + tok).width <= maxW) { line += sep + tok; return; }
+        if (line) { out.push(line); line = ''; }
+        if (ctx.measureText(tok).width <= maxW) { line = tok; return; }
+        for (const ch of tok) { if (ctx.measureText(line + ch).width > maxW && line) { out.push(line); line = ch; } else line += ch; }
+      });
+      out.push(line);
+    });
     ctx.restore(); return out;
   }
   function panel(x, y, w, h, r, fill) { D.shadow(() => { D.roundRect(x, y, w, h, r || 14); ctx.fillStyle = fill || '#fff'; ctx.fill(); }, { blur: 8, y: 2 }); }
@@ -180,8 +185,9 @@
   const SNAP = 4;                                                // 눈금이 선에 닿았다고 보는 범위 (nm)
 
   /* ---------- 상태 ---------- */
-  const mkS = () => ({ src: 'incand', nm: 550, rec: {}, cls: {}, clsOK: {} });
-  const mkL = () => ({ vals: ['', '', '', ''], ok: [false, false, false, false], rungA: [0, 0, 0, 0], hyp: {}, hypOK: {}, tried: 0 });
+  const mkS = () => ({ src: 'incand', nm: 550, rec: {} });
+  const mkL = () => ({ vals: ['', '', '', ''], ok: [false, false, false, false], rungA: [0, 0, 0, 0] });
+  const clsSt = {}, clsOk = {}, hypSt = {}, hypOk = {};
   const mkB = () => ({ mode: 'emit', n: 1, ang: 0, rad: 0, ph: 1.9, photon: null, seen: {}, absorbed: 0, lit: [], last: '', pred: { ly: '', pa: '' }, ion: 0, busy: 0 });
   const mkK = () => ({ view: 'he', ring: 3, ringSeen: false, ph: 0 });
   const S = { mode: 'spec', t: 0, fade: 0, s: mkS(), l: mkL(), b: mkB(), k: mkK() };
@@ -312,7 +318,7 @@
     panel(sp[0], sp[1], sp[2], sp[3]);
     const lines = s.src === 'H' ? LINES.H.map((l) => ({ nm: l.nm, a: l.a * (s.rec[l.nm] ? 1 : 0.88) })) : curLines();
     stripDraw(g.bx, g.by, g.bw, g.bh, { cont: s.src === 'incand' ? (nm) => 0.28 + 0.72 * Math.pow((nm - 400) / 300, 1.1) : null, lines, ruler: true });
-    T(sp[0] + sp[2] - 12, sp[1] + 18, src.kind, PHONE ? 12.5 : 13.5, '#7c5cff', 'right', 800);
+    T(g.app[0] + g.app[2] - 14, g.app[1] + 24, src.kind, PHONE ? 12.5 : 14, '#7c5cff', 'right', 800);
     // 눈금(커서)
     const cx = xOfNm(s.nm, g.bx, g.bw), nl = nearLine(s.nm);
     ctx.strokeStyle = nl ? '#ffd447' : '#ffffff'; ctx.lineWidth = 2; ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.moveTo(cx, g.by - 6); ctx.lineTo(cx, g.by + g.bh + 5); ctx.stroke(); ctx.setLineDash([]);
@@ -371,7 +377,7 @@
     T(g.pc[0] + 14, g.pc[1] + 26, '에너지 사다리', PHONE ? 13 : 14.5, '#26324a', 'left', 800);
     T(g.pc[0] + g.pc[2] - 14, g.pc[1] + 26, '맨 아래 준위 기준', 12, '#7b8aa3', 'right', 700);
     const ax = g.pc[0] + (PHONE ? 80 : 60), axw = g.pc[2] - (PHONE ? 130 : 90);
-    const yb = g.pc[1] + g.pc[3] - 40, ytop = g.pc[1] + 56, emax = 3.2, py = (e) => yb - (e / emax) * (yb - ytop);
+    const yb = g.pc[1] + g.pc[3] - (PHONE ? 70 : 84), ytop = g.pc[1] + 56, emax = 3.2, py = (e) => yb - (e / emax) * (yb - ytop);
     ctx.strokeStyle = '#8a95a8'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(ax - 22, yb + 6); ctx.lineTo(ax - 22, ytop - 12); ctx.stroke();
     D.arrow(ax - 22, ytop - 2, ax - 22, ytop - 16, { color: '#8a95a8', width: 2, head: 8 });
     T(ax - 30, ytop - 14, 'E (eV)', 12, '#5a6679', 'right', 700);
@@ -389,7 +395,7 @@
       ctx.restore();
     });
     const nOK = l.ok.filter(Boolean).length;
-    textBlock(g.pc[0] + 14, g.pc[1] + g.pc[3] - 20 - (PHONE ? 0 : 0), g.pc[2] - 28, nOK === 0 ? '계산한 값이 맞으면 눈금이 사다리에 놓여요.' : nOK < 4 ? '준위가 띄엄띄엄 놓이고 있어요 (' + nOK + ' / 4).' : '4개의 값이 아무 데나 있지 않고 일정한 칸에만 있어요!', 12.5, '#3a465c', 17, 700);
+    textBlock(g.pc[0] + 14, g.pc[1] + g.pc[3] - (PHONE ? 38 : 46), g.pc[2] - 28, nOK === 0 ? '계산한 값이 맞으면 눈금이 사다리에 놓여요.' : nOK < 4 ? '준위가 띄엄띄엄 놓이고 있어요 (' + nOK + ' / 4).' : '4개의 값이 아무 데나 있지 않고 일정한 칸에만 있어요!', 12.5, '#3a465c', 17, 700);
     parts.update(dt); parts.draw(ctx);
   }
   function evalL() {
@@ -577,20 +583,20 @@
       D.label(PHONE ? 240 : 400, 292, '예측한 선과 실제 헬륨의 선이 어긋나요', { bg: '#e2464b', size: PHONE ? 13 : 14.5 });
       textBlock(px + 14, 316, pw - 28, PHONE ? '전자가 둘이면 전자끼리도 밀어내서 준위가 달라져요. 보어 모형은 전자가 1개인 수소(와 비슷한 이온)에만 맞아요.' : '전자가 2개면 전자끼리도 서로 밀어내서 준위가 수소와 달라져요. 보어 모형은 전자가 1개인 수소(와 비슷한 이온)에만 맞아요.', PHONE ? 12.5 : 14, '#3a465c', 18, 700);
       panel(px, 358, pw, PHONE ? 350 : 188);
-      T(px + 14, 384, '수소 선의 실제 밝기', PHONE ? 13 : 14.5, '#26324a', 'left', 800);
+      T(px + 14, 382, '수소 선의 실제 밝기', PHONE ? 13 : 14.5, '#26324a', 'left', 800);
       const bw = PHONE ? 70 : 100;
       H_LINES.forEach((l, i) => {
-        const x = px + 40 + i * (PHONE ? 104 : 176), bhh = 80 * l.a;
-        ctx.fillStyle = '#eef1f7'; ctx.fillRect(x, 404, bw / 2, 80); ctx.fillStyle = wlSolid(l.nm); ctx.fillRect(x, 404 + 80 - bhh, bw / 2, bhh);
-        T(x + bw / 4, 502, l.nm + ' nm', 12.5, '#26324a', 'center', 800); T(x + bw / 4 + 38, 450, f2(l.a), 12.5, '#5a6679', 'left', 700);
+        const x = px + 40 + i * (PHONE ? 104 : 176);
+        ctx.fillStyle = '#eef1f7'; ctx.fillRect(x, 394, bw / 2, 70); ctx.fillStyle = wlSolid(l.nm); ctx.fillRect(x, 394 + 70 - 70 * l.a, bw / 2, 70 * l.a);
+        T(x + bw / 4, 482, l.nm + ' nm', 12.5, '#26324a', 'center', 800); T(x + bw / 4 + 38, 432, f2(l.a), 12.5, '#5a6679', 'left', 700);
       });
-      textBlock(px + 14, PHONE ? 540 : 528, pw - 28, '선마다 밝기가 달라요. 보어 모형은 선이 나타나는 위치는 맞히지만, 밝기 차이와 선이 미세하게 갈라지는 것은 설명하지 못해요.', PHONE ? 12.5 : 14, '#3a465c', 18, 700);
+      textBlock(px + 14, PHONE ? 520 : 506, pw - 28, '선마다 밝기가 달라요. 보어 모형은 선이 나타나는 위치는 맞히지만, 밝기 차이와 선이 미세하게 갈라지는 것은 설명하지 못해요.', PHONE ? 12.5 : 14, '#3a465c', 18, 700);
     } else if (v === 'cloud') {
       const px = PHONE ? 12 : 14, pw = PHONE ? 456 : 382, ph = PHONE ? 214 : 290;
       // 보어 궤도
       panel(px, 14, pw, ph);
       T(px + 14, 38, '보어 모형: 정해진 궤도를 도는 입자', PHONE ? 12.5 : 14, '#26324a', 'left', 800);
-      const cx = px + pw / 2, cy = 14 + ph / 2 + 14, R = PHONE ? 62 : 84;
+      const cx = px + pw / 2, cy = 14 + ph / 2 + 14, R = PHONE ? 34 : 46;
       ctx.beginPath(); ctx.arc(cx, cy, R, 0, TAU); ctx.strokeStyle = '#7c5cff'; ctx.lineWidth = 2.4; ctx.stroke();
       D.sphere(cx, cy, 8, '#e2464b', { gloss: true });
       const a = S.t * 2.6; D.sphere(cx + R * Math.cos(a), cy + R * Math.sin(a), 6.5, '#2f6df6', { gloss: true, shadow: true });
@@ -628,7 +634,7 @@
       if (ok) k.ringSeen = true;
     } else {
       const px = PHONE ? 12 : 14, pw = PHONE ? 456 : 772;
-      panel(px, 14, pw, PHONE ? 400 : 532);
+      panel(px, 14, pw, PHONE ? 400 : 440);
       const sx = P_BASE.sx, sw = P_BASE.sw, bh = PHONE ? 44 : 56;
       T(px + 14, 40, '같은 위치에서 흡수하고 같은 위치에서 방출해요', PHONE ? 13 : 15, '#26324a', 'left', 800);
       T(sx, PHONE ? 78 : 86, '① 백색광을 차가운 수소 기체에 통과시킨 뒤 (흡수 스펙트럼)', PHONE ? 11.5 : 13.5, '#1d4ed8', 'left', 800);
@@ -683,12 +689,12 @@
 
   const CLS = [['incand', '백열등의 스펙트럼은?'], ['H', '수소 방전관의 스펙트럼은?'], ['He', '헬륨 방전관의 스펙트럼은?'], ['Ne', '네온 방전관의 스펙트럼은?']];
   const clsDefs = CLS.map((c) => [c[1], [['c', '연속 스펙트럼'], ['l', '선스펙트럼']], SRC[c[0]].cls]);
-  const clsSels = mkSelects($('#clsRows'), clsDefs, S.s.cls, S.s.clsOK);
+  const clsSels = mkSelects($('#clsRows'), clsDefs, clsSt, clsOk);
   const HYP = [
     ['관찰한 선 4개를 설명할 수 있는 가설은?', [['A', '(A) 전자의 에너지는 연속적이다'], ['B', '(B) 전자의 에너지는 특정한 값만 가진다']], 'B'],
     ['(B)가 맞다면 원자가 내는 광자의 에너지는?', [['diff', '두 에너지 값의 차이와 같다'], ['any', '아무 값이나 될 수 있다'], ['same', '항상 13.6 eV이다']], 'diff'],
   ];
-  const hypSels = mkSelects($('#hypRows'), HYP, S.l.hyp, S.l.hypOK);
+  const hypSels = mkSelects($('#hypRows'), HYP, hypSt, hypOk);
   function resetSel(sels, store, okStore) { Object.keys(store).forEach((k) => delete store[k]); Object.keys(okStore).forEach((k) => delete okStore[k]); sels.forEach((s) => { s.value = ''; s.classList.remove('ok', 'bad'); }); }
 
   /* ================= 미션 ================= */
@@ -700,7 +706,7 @@
         '<div class="si-link">🔗 <b>통합과학에서</b> 분광기로 본 원소의 선스펙트럼이 “원소의 지문”이라는 것을 배웠어요. 이번에는 <b>왜 선인지</b>를 원자 속 전자의 에너지로 설명해요.</div>' +
         '<p>수소 방전관의 빛을 분광기(눈금 단위: nm)로 보고 밝은 선의 위치를 정확히 읽어 봐요. 백열등과도 비교해 봐요.</p>',
       features: ['spec'],
-      setup() { S.s = mkS(); need = ''; resetSel(clsSels, S.s.cls, S.s.clsOK); S.s.cls = {}; setScene('spec'); updateCtl(); },
+      setup() { S.s = mkS(); need = ''; resetSel(clsSels, clsSt, clsOk); setScene('spec'); updateCtl(); },
       recap: '백열등은 색이 끊김 없는 연속 스펙트럼이고, 수소 방전관은 656, 486, 434, 410 nm의 선 4개만 내는 선스펙트럼이에요. 선의 위치는 원소마다 정해져 있어요.',
       summary: '<ul><li><b>연속 스펙트럼</b>: 백열등처럼 색이 끊김 없이 이어져요. <b>선스펙트럼</b>: 방전관의 기체처럼 몇 개의 밝은 선만 나타나요.</li><li>수소의 가시광선 선 4개: <b>' + H_LINES.map((l) => l.nm).join(' · ') + ' nm</b> (빨강 · 청록 · 남색 · 보라).</li><li>선의 위치는 원소마다 달라서 <b>원소의 지문</b>이에요. 원자마다 낼 수 있는 빛이 정해져 있다는 뜻이에요.</li></ul>',
       missions: [
@@ -720,11 +726,11 @@
           hint: '위쪽 광원 버튼으로 바꿔 가며 스펙트럼 띠를 살펴봐요. 색이 끊김 없이 이어지면 연속, 몇 개의 밝은 선만 있으면 선스펙트럼이에요.',
           setup() { need = 'cls'; updateCtl(); setScene('spec'); },
           check() {
-            const r = checkSelects(clsDefs, clsSels, S.s.cls, S.s.clsOK);
+            const r = checkSelects(clsDefs, clsSels, clsSt, clsOk);
             if (r.miss) return '아직 고르지 않은 칸이 ' + r.miss + '개 있어요.';
             return r.bad ? '빨간 칸을 다시 골라 보세요. 광원 버튼으로 스펙트럼 띠를 다시 확인할 수 있어요.' : true;
           },
-          status: () => '고른 칸 ' + CLS.filter((c, i) => S.s.cls[i]).length + ' / ' + CLS.length,
+          status: () => '고른 칸 ' + CLS.filter((c, i) => clsSt[i]).length + ' / ' + CLS.length,
           explain: '<b>백열등</b>은 연속 스펙트럼, <b>수소 · 헬륨 · 네온 방전관</b>은 선스펙트럼이에요. 뜨거운 고체는 모든 색을 내고, 낮은 압력의 기체 원자는 정해진 색만 내요.',
         },
         {
@@ -743,7 +749,7 @@
       intro: '<div class="si-link">🔗 <b>앞 단계에서</b> 수소가 ' + H_LINES.map((l) => l.nm).join(' · ') + ' nm의 선만 낸다는 것을 관찰했어요. 선 하나는 광자 하나의 에너지예요. <b>광자 에너지 E(eV) = 1240 ÷ λ(nm)</b>를 써서 선의 파장을 에너지로 바꿔 봐요.</div>' +
         '<p>두 가설을 세워요. <b>(A)</b> 전자의 에너지는 아무 값이나 가질 수 있다. <b>(B)</b> 전자의 에너지는 특정한 값만 가진다. 관찰한 스펙트럼은 어느 가설을 지지할까요?</p>',
       features: ['ladder'],
-      setup() { S.l = mkL(); need = ''; eIn.forEach((e) => { e.value = ''; e.classList.remove('ok', 'bad'); }); resetSel(hypSels, S.l.hyp, S.l.hypOK); setScene('ladder'); updateCtl(); },
+      setup() { S.l = mkL(); need = ''; eIn.forEach((e) => { e.value = ''; e.classList.remove('ok', 'bad'); }); resetSel(hypSels, hypSt, hypOk); setScene('ladder'); updateCtl(); },
       recap: '선의 파장을 광자 에너지로 바꾸면 ' + E_OBS.map(f2).join(' · ') + ' eV예요. 전자의 에너지가 연속적이면 연속 스펙트럼이 나와야 하므로, 선스펙트럼은 전자의 에너지가 특정한 값만 가진다(양자화)는 증거예요.',
       summary: '<ul><li>광자 에너지 <b>E = hf = hc/λ</b> ≈ <b>1240 ÷ λ</b> (E: eV, λ: nm).</li><li>수소의 선: ' + H_LINES.map((l, i) => l.nm + ' nm → ' + f2(E_OBS[i]) + ' eV').join(', ') + '.</li><li>(A) 연속적인 에너지 → 연속 스펙트럼 예상, (B) 특정 값만 → 선스펙트럼 예상. 관찰은 <b>(B)를 지지</b>해요.</li><li>원자 속 전자의 에너지는 띄엄띄엄한 값만 가져요 = <b>양자화</b>. 이 값들이 <b>에너지 준위</b>예요. 빛은 두 준위의 <b>에너지 차이</b>만큼 나와요.</li></ul>',
       missions: [
@@ -763,11 +769,11 @@
           hint: '(A)가 맞다면 에너지 차이가 아무 값이나 될 수 있어서 색이 끊김 없이 나와야 해요. 위쪽 세 개의 스펙트럼 띠를 비교해 보세요.',
           setup() { need = 'hyp'; updateCtl(); setScene('ladder'); },
           check() {
-            const r = checkSelects(HYP, hypSels, S.l.hyp, S.l.hypOK);
+            const r = checkSelects(HYP, hypSels, hypSt, hypOk);
             if (r.miss) return '아직 고르지 않은 문장이 ' + r.miss + '개 있어요.';
             return r.bad ? '빨간 칸을 다시 골라 보세요. 위쪽의 세 스펙트럼 띠를 비교해 보세요.' : true;
           },
-          status: () => '고른 문장 ' + HYP.filter((h, i) => S.l.hyp[i]).length + ' / ' + HYP.length,
+          status: () => '고른 문장 ' + HYP.filter((h, i) => hypSt[i]).length + ' / ' + HYP.length,
           explain: '(A)가 맞다면 모든 에너지 차이가 가능해 <b>연속 스펙트럼</b>이 나와야 해요. 하지만 관찰된 것은 <b>선 4개</b>이므로 <b>(B) 전자의 에너지는 특정 값만 가진다</b>가 맞아요. 광자의 에너지는 전자가 옮겨 가는 <b>두 준위의 에너지 차이</b>와 같아요.',
         },
         {
