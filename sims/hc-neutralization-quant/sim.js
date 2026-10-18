@@ -882,6 +882,13 @@
   el('wCheck').addEventListener('click', checkWaste);
   ['wH', 'wMol', 'wG'].forEach((id) => el(id).addEventListener('keydown', (e) => { if (e.key === 'Enter') checkWaste(); }));
 
+  function resetWaste() {
+    const W = S.waste; W.ag = 0; W.dose = 0; W.lastDose = 0; W.calc = [false, false]; W.ach = [false, false]; W.neu = [0, 0]; W.inpOK = [{}, {}];
+    ['wH', 'wMol', 'wG'].forEach((k) => { el(k).value = ''; el(k).classList.remove('ok', 'bad'); });
+    el('wRange').value = 0; wBind.refresh();
+  }
+  function resetMolPair() { const M = S.mol; [2, 3].forEach((k) => { M.ach[k] = false; M.neu[k] = 0; M.v[k] = 0; M.lastV[k] = 0; }); }
+
   /* ---------- 읽음 칸 ---------- */
   function readouts() {
     if (S.mode === 'ion') {
@@ -979,7 +986,7 @@
           title: '③ ④ 2가 산 · 2가 염기',
           goal: '시료 <b>③</b>(H₂SO₄)과 <b>④</b>(Ca(OH)₂)도 BTB가 초록색이 되는 부피를 각각 찾으세요.',
           hint: '③은 H₂SO₄가 H⁺를 2개씩 내놓아 2 × 0.10 × 10 = 2.0 mmol이에요. ④는 Ca(OH)₂가 OH⁻를 2개씩 내놓아 2 × 0.050 × 20 = 2.0 mmol이에요.',
-          setup() { S.mol.si = 2; setScene('mol'); },
+          setup() { resetMolPair(); S.mol.si = 2; setScene('mol'); },
           check: () => S.mol.ach[2] && S.mol.ach[3],
           hold: 0.2,
           status: () => mark(S.mol.ach[2]) + ' ③ 완전 중화 &nbsp; ' + mark(S.mol.ach[3]) + ' ④ 완전 중화',
@@ -1046,7 +1053,7 @@
         '<p>묽은 염산 성분이 든 산성 폐수 <b>1000 L</b>의 [H⁺]는 <b>0.010 M</b>이에요. NaOH(몰질량 40 g/mol)와 Ca(OH)₂(74 g/mol)로 각각 중화하려면 몇 g이 필요할까요?</p>' +
         '<p>⚠️ 산 · 염기를 다룰 때는 보안경과 장갑을 끼고, 남은 물질은 폐수 처리 기준과 방법에 따라 처리해야 해요.</p>',
       features: ['waste'],
-      setup() { S.gate = ''; S.waste.ag = 0; S.waste.dose = 0; S.waste.lastDose = 0; setScene('waste'); },
+      setup() { S.gate = ''; resetWaste(); setScene('waste'); },
       recap: '폐수 속 H⁺ 몰수 = 농도 × 부피 = 10 mol을 구하고, 같은 몰수의 OH⁻를 내놓을 염기량을 계산해요. Ca(OH)₂는 OH⁻를 2개씩 내놓아 필요한 몰수가 절반이에요.',
       summary: '<ul><li>산성 폐수 1000 L, [H⁺] 0.010 M → H⁺ <b>10 mol</b></li><li>NaOH(OH⁻ 1개): 10 mol × 40 g/mol = <b>400 g</b></li><li>Ca(OH)₂(OH⁻ 2개): 5 mol × 74 g/mol = <b>370 g</b></li><li>중화 뒤 pH 센서로 7을 확인하고, 폐수 처리 기준에 따라 처리해요. 염기를 지나치게 넣으면 염기성 폐수가 돼요.</li></ul>',
       missions: [
@@ -1054,7 +1061,7 @@
           title: '필요량 계산하고 중화하기',
           goal: 'NaOH와 Ca(OH)₂ 각각 <b>필요한 양을 계산</b>해 ✔ 확인한 뒤, 투입량을 맞춰 <b>pH 7</b>이 되게 하세요.',
           hint: 'H⁺ = 0.010 × 1000 = 10 mol. NaOH는 10 mol(× 40 g), Ca(OH)₂는 OH⁻가 2개씩이라 5 mol(× 74 g)이에요. 슬라이더는 10 g씩 움직여요.',
-          setup() { S.gate = ''; S.waste.ag = 0; S.waste.dose = 0; S.waste.lastDose = 0; setScene('waste'); },
+          setup() { S.gate = ''; resetWaste(); setScene('waste'); },
           check: () => S.waste.ach[0] && S.waste.ach[1],
           hold: 0.2,
           status: () => mark(S.waste.ach[0]) + ' NaOH 400 g으로 pH 7 &nbsp; ' + mark(S.waste.ach[1]) + ' Ca(OH)₂ 370 g으로 pH 7',
