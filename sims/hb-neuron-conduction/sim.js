@@ -724,6 +724,8 @@ const CG = PHONE
 function newCA() { return { id: 'A', rows: {}, cur: { A: 0.5, B: 1.5 }, drag: null, inDt: '', inV: '' }; }
 function caseCur(ca) { const c = caseOf(ca.id); return ca.curs && ca.curs[ca.id] ? ca.curs[ca.id] : [c.win * 0.12, c.win * 0.45]; }
 function setCurs(ca, a, b) { ca.curs = ca.curs || {}; ca.curs[ca.id] = [a, b]; }
+const relAns = { selR1: '0', selR2: '0', selR3: 'A' };
+function relOK() { let ok = true; Object.keys(relAns).forEach((id) => { const e = $('#' + id); const v = e.value; if (v === '') { e.classList.remove('ok', 'bad'); ok = false; } else { const g = v === relAns[id]; e.classList.toggle('ok', g); e.classList.toggle('bad', !g); if (!g) ok = false; } }); return ok; }
 const caX = (c, t) => CG.plot.x + t / c.win * CG.plot.w;
 function drawCalcScene(dt) {
   const ca = S.ca, c = caseOf(ca.id);
@@ -1037,29 +1039,14 @@ const levels = [
     summary: '<ul><li><b>전도 속도 v = d / Δt</b> (d: 두 전극 사이 거리, Δt: 활동 전위가 두 전극에 도달한 시간 차)</li><li>단위 환산: <b>1 ms = 0.001 s</b>.</li><li>A) 말이집·굵은 축삭: d = 0.30 m, Δt = 3.0 ms → <b>100 m/s</b></li><li>B) 말이집·가는 축삭: 0.30 m, 6.0 ms → <b>50 m/s</b></li><li>C) 무말이집: 0.03 m, 30 ms → <b>1 m/s</b></li><li>축삭이 굵을수록, 말이집이 있을수록 빨라요.</li></ul>',
     missions: [
       {
-        title: '사례 3개의 속도 구하기',
-        goal: '사례 A·B·C에서 <b>t₁, t₂ 선</b>을 봉우리에 맞춰 Δt를 읽고, <b>v = d / Δt</b>를 계산해 입력한 뒤 <b>✔ 계산 확인</b>을 누르세요.',
-        hint: '사례 A: 두 봉우리의 시각이 3.0 ms, 6.0 ms라면 Δt = 3.0 ms = 0.0030 s예요. v = 0.30 / 0.0030 = ? (단위 m/s)',
-        setup() { setScene('calc'); },
-        check: () => CASES.every((c) => S.ca.rows[c.id]),
-        hold: 0.5,
-        status: () => CASES.map((c) => mark(!!S.ca.rows[c.id]) + c.id).join(' &nbsp; '),
-        explain: '<b>A</b>: 0.30 / 0.0030 = 100 m/s, <b>B</b>: 0.30 / 0.0060 = 50 m/s, <b>C</b>: 0.03 / 0.030 = 1 m/s. ms를 s로 바꾸는 것(÷1000)을 잊지 않는 것이 중요해요.',
-      },
-      {
-        title: '굵기·말이집과 속도의 관계', manual: true,
-        goal: '계산한 세 사례를 비교해 아래 <b>세 문장</b>을 완성하고 <b>✔ 확인하기</b>를 누르세요.',
-        hint: 'A와 B는 둘 다 말이집이 있고 굵기만 달라요. B와 C는 말이집 유무가 달라요(굵기는 비슷하지 않아도 속도 순서를 보면 돼요).',
+        title: '사례 3개의 속도 구하고 관계 정리하기',
+        goal: '사례 A·B·C에서 <b>t₁, t₂ 선</b>을 봉우리에 맞춰 Δt를 읽고 <b>v = d / Δt</b>를 계산해 <b>✔ 계산 확인</b>을 누르세요. 세 사례를 모두 마치면 나타나는 <b>세 문장</b>도 완성하세요.',
+        hint: '사례 A: 두 봉우리의 시각이 3.0 ms, 6.0 ms라면 Δt = 3.0 ms = 0.0030 s예요. v = 0.30 / 0.0030 = ? (단위 m/s). 문장은 세 사례의 속도 v를 비교해 골라요.',
         setup() { setScene('calc'); updateCtl(); },
-        check() {
-          const ans = { selR1: '0', selR2: '0', selR3: 'A' }; let bad = 0, empty = 0;
-          Object.keys(ans).forEach((id) => { const e = $('#' + id); if (!e.value) { empty++; e.classList.remove('ok', 'bad'); } else { const ok = e.value === ans[id]; e.classList.toggle('ok', ok); e.classList.toggle('bad', !ok); if (!ok) bad++; } });
-          if (empty) return '세 문장을 모두 골라 보세요.';
-          if (bad) return '빨간 문장을 다시 생각해 보세요. 표의 속도 v를 비교해 보세요.';
-          return true;
-        },
-        status: () => '문장 ' + ['selR1', 'selR2', 'selR3'].filter((id) => $('#' + id).value).length + ' / 3 선택',
-        explain: '같은 말이집 신경에서 <b>굵은 축삭(A, 100 m/s)이 가는 축삭(B, 50 m/s)보다 빨라요</b>. 말이집이 없는 C(1 m/s)는 가장 느려요. 가장 빠른 사례는 <b>A</b>예요.',
+        check: () => CASES.every((c) => S.ca.rows[c.id]) && relOK(),
+        hold: 0.5,
+        status: () => CASES.map((c) => mark(!!S.ca.rows[c.id]) + c.id).join(' &nbsp; ') + ' &nbsp; ' + mark(relOK()) + ' 관계 문장 ' + ['selR1', 'selR2', 'selR3'].filter((id) => relAns[id] === $('#' + id).value).length + ' / 3',
+        explain: '<b>A</b>: 0.30 / 0.0030 = 100 m/s, <b>B</b>: 0.30 / 0.0060 = 50 m/s, <b>C</b>: 0.03 / 0.030 = 1 m/s. ms를 s로 바꾸는 것(1 ms = 0.001 s)을 잊지 않는 것이 중요해요. 같은 말이집 신경에서 <b>굵은 축삭(A)이 가는 축삭(B)보다 빠르고</b>, 말이집이 없는 C가 가장 느려요.',
       },
       {
         type: 'quiz', title: '단위 환산 문제',

@@ -4898,8 +4898,7 @@ window.SCI_CATALOG = {
                 "휴지 전위",
                 "활동 전위",
                 "역치"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hb-neuron-conduction",
@@ -4920,8 +4919,7 @@ window.SCI_CATALOG = {
                 "말이집",
                 "속도 계산",
                 "모식도"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hb-synapse",
@@ -4942,8 +4940,7 @@ window.SCI_CATALOG = {
                 "신호 전달",
                 "신호 합산",
                 "약물 조사"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hb-nervous-system",

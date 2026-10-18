@@ -354,8 +354,8 @@ function newTree() {
   const ans = ['cns', 'pns', 'brain', 'cord', 'somatic', 'auto'];
   const pos = TR.l1.concat(TR.l2);
   const targets = pos.map((p, i) => ({ id: 'slot' + i, x: p[0] - TR.sw / 2, y: p[1] - TR.sh / 2, w: TR.sw, h: TR.sh, ans: ans[i], name: names[i] }));
-  const chips = [['pns', '말초 신경계', COL.pns], ['cord', '척수', COL.cns], ['cns', '중추 신경계', COL.cns], ['auto', '자율 신경계', COL.pns], ['brain', '뇌', COL.cns], ['somatic', '체성 신경계', COL.pns]]
-    .map((c) => ({ id: c[0], label: c[1], col: c[2] }));
+  const chips = [['pns', '말초 신경계'], ['cord', '척수'], ['cns', '중추 신경계'], ['auto', '자율 신경계'], ['brain', '뇌'], ['somatic', '체성 신경계']]
+    .map((c) => ({ id: c[0], label: c[1], col: '#4b6b8a' }));
   return new Placer({ chips, targets, tray: TR.tray, cw: CWT, ch: CHT, onChange() {} });
 }
 /* 상황 분류: 대뇌 / 체성 / 자율 */
@@ -608,22 +608,28 @@ function renderBrain(R, cam, o) {
   const cer = S.cer;
   ctx.save();
   D.roundRect(R.x, R.y, R.w, R.h, 18); const bg = ctx.createLinearGradient(0, R.y, 0, R.y + R.h); bg.addColorStop(0, '#dde7f4'); bg.addColorStop(1, '#f3f7fc'); ctx.fillStyle = bg; ctx.fill();
-  ctx.save(); D.roundRect(R.x, R.y, R.w, R.h, 18); ctx.clip();
+  ctx.save(); ctx.beginPath(); ctx.rect(R.x + 2, R.y + 2, R.w - 4, R.h - 4); ctx.clip();
   cer.cam = cam;
   const cutOn = o.cutX < BAx - 0.001, cutX = o.cutX;
   const n = BM.vx.length;
-  for (let k = 0; k < n; k++) { const p = proj(cam, BM.vx[k], BM.vy[k], BM.vz[k]); PX[k] = p.x; PY[k] = p.y; }
+  const cy_ = cam.cy, sy_ = cam.sy, cp_ = cam.cp, sp_ = cam.sp, s_ = cam.s, ox_ = cam.ox, oy_ = cam.oy;
+  for (let k = 0; k < n; k++) { const x = BM.vx[k], y = BM.vy[k], z = BM.vz[k]; PX[k] = ox_ - (x * cy_ + z * sy_) * s_; PY[k] = oy_ - (y * cp_ - (x * sy_ - z * cy_) * sp_) * s_; }
+  // 법선 계수: 깊이(D2)와 빛(lam)
+  const dA = sy_ * cp_, dB = sp_, dC = -cy_ * cp_;
+  const lamA = -cy_ * LIGHT[0] - sy_ * sp_ * LIGHT[1] + sy_ * cp_ * LIGHT[2];
+  const lamB = cp_ * LIGHT[1] + sp_ * LIGHT[2];
+  const lamC = -sy_ * LIGHT[0] + cy_ * sp_ * LIGHT[1] - cy_ * cp_ * LIGHT[2];
   // 바닥 그림자
   const by = cam.oy + cam.s * (BBb + 0.12), sh = ctx.createRadialGradient(cam.ox, by, 4, cam.ox, by, cam.s * 0.95); sh.addColorStop(0, 'rgba(40,60,100,.2)'); sh.addColorStop(1, 'rgba(40,60,100,0)');
   ctx.save(); ctx.fillStyle = sh; ctx.beginPath(); ctx.ellipse(cam.ox, by, cam.s * 0.95, cam.s * 0.13, 0, 0, TAU); ctx.fill(); ctx.restore();
   const vis = [], dep = new Float32Array(BM.q.length);
   BM.q.forEach((q, idx) => {
-    const nc = nrmCam(cam, q.n);
-    if (nc[2] < 0.01) return;
+    const nd = q.n[0] * dA + q.n[1] * dB + q.n[2] * dC;
+    if (nd < 0.01) return;
     q.mixed = false;
     if (cutOn) { let cnt = 0; for (let t = 0; t < 4; t++) if (BM.vx[q.v[t]] > cutX) cnt++; if (cnt === 4) return; q.mixed = cnt > 0; }
     dep[idx] = q.c[1] * cam.sp + (q.c[0] * cam.sy - q.c[2] * cam.cy) * cam.cp;
-    q.lam = nc[0] * LIGHT[0] + nc[1] * LIGHT[1] + nc[2] * LIGHT[2];
+    q.lam = q.n[0] * lamA + q.n[1] * lamB + q.n[2] * lamC;
     vis.push(idx);
   });
   vis.sort((a, b) => dep[a] - dep[b]);
@@ -637,7 +643,7 @@ function renderBrain(R, cam, o) {
     if (o.sel) { if (lobe !== o.sel) hex = C.mix(hex, '#cfd6e2', 0.62); else if (area === actArea(lobe) && !RM) pl = pulse; }
     if (q.fw > 0.05) hex = C.mix(hex, '#6b4b5a', clamp(q.fw * 0.5, 0, 0.5));
     ctx.fillStyle = litCol(hex, 0.4 + 0.65 * Math.max(0, q.lam), pl);
-    ctx.beginPath(); ctx.moveTo(xs[0], ys[0]); ctx.lineTo(xs[1], ys[1]); ctx.lineTo(xs[2], ys[2]); ctx.lineTo(xs[3], ys[3]); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(xs[0], ys[0]); ctx.lineTo(xs[1], ys[1]); ctx.lineTo(xs[2], ys[2]); ctx.lineTo(xs[3], ys[3]); ctx.closePath(); ctx.fill(); ctx.strokeStyle = ctx.fillStyle; ctx.lineWidth = 1; ctx.stroke();
     const eg = o.color === 'area' ? eA : eL;
     if (eg) {
       ctx.strokeStyle = o.color === 'area' ? 'rgba(60,40,60,.6)' : 'rgba(70,40,60,.66)'; ctx.lineWidth = 2; ctx.beginPath();
@@ -653,7 +659,7 @@ function renderBrain(R, cam, o) {
         let inN = 0;
         for (let k = 0; k < 4; k++) {
           let x = c.p[k * 3]; if (cutOn) { if (x > cutX) inN++; x = Math.min(x, cutX); }
-          const p = proj(cam, x, c.p[k * 3 + 1], c.p[k * 3 + 2]); xs[k] = p.x; ys[k] = p.y;
+          const yy = c.p[k * 3 + 1], zz = c.p[k * 3 + 2]; xs[k] = ox_ - (x * cy_ + zz * sy_) * s_; ys[k] = oy_ - (yy * cp_ - (x * sy_ - zz * cy_) * sp_) * s_;
         }
         if (inN === 4) return;
         paint(c.lobe, c.area, q, c.eL, c.eA); drew = true;
@@ -793,15 +799,19 @@ function drawLobeInfo(R) {
     });
   }
 }
-function drawCerScene(dt) {
+function drawCerScene(dt, full) {
   const cer = S.cer;
-  bgFill('#eef3fb', '#f7f9fd');
   cer.zoom = SciSim.approach(cer.zoom, cer.tzoom, dt, 12);
-  const R = CER_R.ex, cam = brainCam(R, cer.zoom, cer.yaw, cer.pitch);
-  renderBrain(R, cam, { color: cer.color, sel: cer.sel, labels: true, mark: true, cutX: cutXNow() });
-  if (!PHONE) T(R.x + R.w - 14, R.y + R.h - 14, '↔ 끌어서 돌려 보세요', 13, COL.mut, 'right', 800); else T(R.x + R.w - 12, R.y + R.h - 12, '↔ 끌어서 돌려요', 12.5, COL.mut, 'right', 800);
+  const R = CER_R.ex;
+  if (full) {
+    bgFill('#eef3fb', '#f7f9fd');
+    const cam = brainCam(R, cer.zoom, cer.yaw, cer.pitch);
+    renderBrain(R, cam, { color: cer.color, sel: cer.sel, labels: true, mark: true, cutX: cutXNow() });
+    if (!PHONE) T(R.x + R.w - 14, R.y + R.h - 14, '↔ 끌어서 돌려 보세요', 13, COL.mut, 'right', 800); else T(R.x + R.w - 12, R.y + R.h - 12, '↔ 끌어서 돌려요', 12.5, COL.mut, 'right', 800);
+  } else {
+    ctx.save(); ctx.beginPath(); ctx.rect(INFO_R.x - 8, INFO_R.y - 8, INFO_R.w + 16, INFO_R.h + 16); ctx.clip(); bgFill('#eef3fb', '#f7f9fd'); ctx.restore();
+  }
   drawLobeInfo(INFO_R);
-  parts.update(dt); parts.draw(ctx);
 }
 PT_TABLE['cer:ex'] = {
   down(p) {
@@ -842,7 +852,7 @@ const CASORD = ['fro', 'tem', 'par', 'occ'];       // 칸의 엽 차례
 function newCases() {
   const targets = CASORD.map((l, i) => { const s = CASG.slot(i); return { id: 'lb' + l, x: s.x, y: s.y, w: s.w, h: s.h, ans: l }; });
   const order = [2, 0, 3, 1];
-  return new Placer({ chips: order.map((k) => ({ id: CAS[k].lobe, label: CAS[k].label, icon: CAS[k].icon, col: LOBE[CAS[k].lobe].col })), targets, tray: CASG.tray, cw: CASG.cw, ch: CASG.ch, onChange() {} });
+  return new Placer({ chips: order.map((k) => ({ id: CAS[k].lobe, label: CAS[k].label, icon: CAS[k].icon, col: '#4b6b8a' })), targets, tray: CASG.tray, cw: CASG.cw, ch: CASG.ch, onChange() {} });
 }
 function drawCaseScene(dt) {
   const cer = S.cer, pl = S.cas.pl;
@@ -891,7 +901,7 @@ const PAIR_ORD = ['dien', 'mid', 'cb', 'med', 'cord'];
 function newPair() {
   const targets = PAIR_ORD.map((id, i) => { const s = PAIRG.slot(i); return { id: 'p' + id, x: s.x, y: s.y, w: s.w, h: s.h, ans: id }; });
   const order = [3, 0, 4, 1, 2];
-  const chips = order.map((k) => ({ id: PAIR_ORD[k], label: PARTS[PAIR_ORD[k]].short, col: PARTS[PAIR_ORD[k]].col }));
+  const chips = order.map((k) => ({ id: PAIR_ORD[k], label: PARTS[PAIR_ORD[k]].short, col: '#4b6b8a' }));
   return new Placer({ chips, targets, tray: PAIRG.tray, cw: PAIRG.cw, ch: PAIRG.ch, onChange() {} });
 }
 $('#bPairReset').addEventListener('click', () => { Sound.click(); S.pair.pl.reset(); });
@@ -1108,7 +1118,7 @@ function resetPer() {
 }
 const PERG = PHONE
   ? { tops: { x: 8, y: 8, w: 464, h: 58 }, cell: (i) => ({ x: 8 + (i % 2) * 236, y: 76 + Math.floor(i / 2) * 138, w: 228, h: 130 }) }
-  : { tops: { x: 14, y: 14, w: 772, h: 76 }, cell: (i) => ({ x: 14 + (i % 3) * 264, y: 100 + Math.floor(i / 3) * 172, w: 244, h: 162 }) };
+  : { tops: { x: 14, y: 14, w: 772, h: 76 }, cell: (i) => ({ x: 14 + (i % 3) * 264, y: 100 + Math.floor(i / 3) * 196, w: 244, h: 186 }) };
 function setAuto(m) {
   const p = S.per; if (p.mode === m) return; p.mode = m; if (m !== 'rest') p.visited[m] = true; Sound.click(); updateCtl();
   const s = $('#stageHint'); if (s) { /* 안내는 장면에 그려요 */ }
@@ -1198,11 +1208,11 @@ function drawPerScene(dt) {
     const on = p.mode === ln[0], x0 = bx + bw + 4, x1 = tp.x + tp.w - 6;
     ctx.strokeStyle = on ? ln[2] : '#c6d0de'; ctx.lineWidth = on ? 5 : 3; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(x0, ln[3]); ctx.lineTo(x1, ln[3]); ctx.stroke();
     D.arrow(x1 - 14, ln[3], x1 + 2, ln[3], { color: on ? ln[2] : '#c6d0de', width: 3, head: 9 });
-    D.label(x0 + (PHONE ? 52 : 70), ln[3], ln[1] + (on ? ' 활발' : ''), { bg: on ? ln[2] : '#9aa6b8', size: PHONE ? 12 : 13.5 });
     if (on && !RM) for (let a = 0; a < 7; a++) { const f = ((clock * 0.5 + a / 7) % 1); D.sphere(x0 + f * (x1 - x0), ln[3], 4.2, '#ffe27a', { gloss: false }); }
+    D.label(x0 + (PHONE ? 60 : 76), ln[3], ln[1] + (on ? ' 활발' : ''), { bg: on ? ln[2] : '#9aa6b8', size: PHONE ? 12 : 13.5 });
   });
   ORGANS.forEach((o, i) => drawOrgan(o, PERG.cell(i), p, dt));
-  const y0 = PERG.cell(5).y + PERG.cell(5).h + (PHONE ? 22 : 24);
+  const y0 = PERG.cell(5).y + PERG.cell(5).h + (PHONE ? 22 : 26);
   if (p.mode === 'rest') textBlock(PHONE ? 10 : 18, y0, VW - (PHONE ? 20 : 36), '👉 조작판에서 교감 신경 · 부교감 신경을 켜서 여섯 기관의 반응을 비교해요.', PHONE ? 13 : 14.5, COL.mut, PHONE ? 19 : 22, 800);
   else if (p.mode === 'sym') textBlock(PHONE ? 10 : 18, y0, VW - (PHONE ? 20 : 36), '교감 신경: 긴장하거나 활동할 때 작용해요. 여섯 기관이 모두 그에 맞게 변해요.', PHONE ? 13 : 14.5, COL.sym, PHONE ? 19 : 22, 800);
   else textBlock(PHONE ? 10 : 18, y0, VW - (PHONE ? 20 : 36), '부교감 신경: 쉬거나 소화할 때 작용해요. 같은 기관에 교감 신경과 반대로 작용해요(길항 작용).', PHONE ? 13 : 14.5, COL.par, PHONE ? 19 : 22, 800);
@@ -1214,14 +1224,14 @@ PT_TABLE['per:auto'] = {};
 const TBG = PHONE
   ? { hdr: [[8, 8, 228, 36], [244, 8, 228, 36]], slot: (r, c) => ({ x: 8 + c * 236, y: 52 + r * 100 + 26, w: 228, h: 56 }), rowLab: (r) => [10, 52 + r * 100 + 16], tray: (i) => ({ x: 12 + (i % 2) * 236, y: 372 + Math.floor(i / 2) * 54 }), cw: 218, ch: 46 }
   : { hdr: [[160, 46, 306, 44], [480, 46, 306, 44]], slot: (r, c) => ({ x: 164 + c * 320, y: 100 + r * 72, w: 298, h: 62 }), rowLab: (r) => [14, 138 + r * 72], tray: (i) => ({ x: 14 + (i % 3) * 262, y: 352 + Math.floor(i / 3) * 56 }), cw: 250, ch: 48 };
-const TAB_ROWS = ['의식(대뇌)의 관여', '명령을 받는 곳(효과기)', '대표 사례'];
+const TAB_ROWS = ['의식(대뇌)의\n관여', '명령을 받는 곳\n(효과기)', '대표 사례'];
 const TAB_ANS = [['conscious', 'unconscious'], ['skeletal', 'organs'], ['cup', 'heart']];
 const TAB_CH = { conscious: '의식적 (대뇌의 명령)', unconscious: '무의식적 (대뇌의 직접 명령 없음)', skeletal: '골격근', organs: '내장 기관 · 샘 · 동공', cup: '컵 잡기, 글씨 쓰기', heart: '심장 박동 · 소화 운동 조절' };
 function newTab() {
   const targets = [];
   for (let r = 0; r < 3; r++) for (let c = 0; c < 2; c++) { const s = TBG.slot(r, c); targets.push({ id: 't' + r + c, x: s.x, y: s.y, w: s.w, h: s.h, ans: TAB_ANS[r][c] }); }
   const order = ['organs', 'conscious', 'heart', 'skeletal', 'unconscious', 'cup'];
-  return new Placer({ chips: order.map((id) => ({ id, label: TAB_CH[id], col: id === 'conscious' || id === 'skeletal' || id === 'cup' ? '#d97706' : '#2563eb' })), targets, tray: TBG.tray, cw: TBG.cw, ch: TBG.ch, onChange() {} });
+  return new Placer({ chips: order.map((id) => ({ id, label: TAB_CH[id], col: '#4b6b8a' })), targets, tray: TBG.tray, cw: TBG.cw, ch: TBG.ch, onChange() {} });
 }
 function drawTabScene(dt) {
   const pl = S.tab.pl;
@@ -1232,14 +1242,14 @@ function drawTabScene(dt) {
   });
   for (let r = 0; r < 3; r++) {
     const lb = TBG.rowLab(r);
-    if (PHONE) T(lb[0], lb[1], TAB_ROWS[r], 13.5, COL.ink, 'left', 800);
-    else { textBlock(lb[0], lb[1] - 14, 140, TAB_ROWS[r], 14, COL.ink, 19, 800); }
+    if (PHONE) T(lb[0], lb[1], TAB_ROWS[r].replace('\n', ''), 13.5, COL.ink, 'left', 800);
+    else { textBlock(lb[0], lb[1] - 14, 146, TAB_ROWS[r], 14, COL.ink, 19, 800); }
   }
   pl.drawTargets({ col: '#9fb3a6' });
   const ty = TBG.tray(0).y - 12;
   T(PHONE ? 10 : 14, ty, pl.placed < 6 ? '👇 카드를 끌어서 표의 칸에 놓아요' : '✨ 모두 놓았어요! ✔ 확인하기를 눌러요', PHONE ? 12.5 : 14, pl.placed < 6 ? '#5a6679' : '#166534', 'left', 800);
   pl.follow(); pl.update(dt); pl.drawChips();
-  const y0 = PHONE ? 548 : 470;
+  const y0 = PHONE ? 548 : 480;
   textBlock(PHONE ? 10 : 14, y0, VW - (PHONE ? 20 : 28), '체성 신경은 골격근에 명령을 전해요(무릎 반사처럼 의식 없이 일어나는 반사도 있어요). 자율 신경은 교감 신경과 부교감 신경이 같은 기관에 길항 작용을 해요.', PHONE ? 12.5 : 13.5, COL.mut, PHONE ? 18 : 20, 700);
 }
 PT_TABLE['per:table'] = { down(p) { return S.tab.pl.down(p); }, move(p) { S.tab.pl.move(p); }, up(p) { S.tab.pl.up(p); }, hover(p) { return S.tab.pl.hover(p); } };
@@ -1440,16 +1450,23 @@ game = SciSim.game({
 /* ---------- 시작 ---------- */
 resetMap(); resetCer(); resetStem(); resetPer();
 setScene('map', 'tree');
-let lastFree = false, lastKey = '';
+let lastFree = false, lastKey = '', lastSig = '', lastKey2 = '';
 SciSim.loop((dt, t) => {
   clock = t;
   if (game && game.free !== lastFree) { lastFree = game.free; updateCtl(); }
   const key = viewKey();
   if (key !== lastKey) { lastKey = key; updateCtl(); }
   view.apply();
+  const sameView = key === lastKey2; lastKey2 = key;
   if (key === 'map:tree') drawTreeScene(dt);
   else if (key === 'map:sit') drawSitScene(dt);
-  else if (key === 'cer:ex') drawCerScene(dt);
+  else if (key === 'cer:ex') {
+    const cer = S.cer, pq = cer.sel && !RM ? Math.round((0.5 + 0.5 * Math.sin(t * 5.5)) * 5) : 0;
+    const sig = [cer.yaw.toFixed(4), cer.pitch.toFixed(4), cer.zoom.toFixed(3), cer.tzoom, cer.cutAmt.toFixed(3), cer.color, cer.sel, Object.keys(cer.seen).join(''), $('#cv').width, pq].join('|');
+    const full = sig !== lastSig || S.fade > 0.005 || !sameView;
+    if (full || cer.sel) drawCerScene(dt, full);
+    lastSig = sig;
+  }
   else if (key === 'cer:case') drawCaseScene(dt);
   else if (key === 'stem:info') drawStemInfo(dt);
   else if (key === 'stem:pair') drawStemPair(dt);
