@@ -531,9 +531,9 @@
   const protOf = (seq) => { const m = mrnaOf(seq), out = []; for (let i = 0; i < m.length; i += 3) out.push(CODON[m.substr(i, 3)] || '?'); return out; };
   const GENE_COL = ['#f59e0b', '#14b8a6', '#ec4899'];
   S.gene = { sel: -1, which: 0, seen: [false, false, false], pop: [0, 0, 0], selA: 0, t0: 0 };
-  const GR1 = PHONE ? { x: 10, y: 44, w: 460, h: 150 } : { x: 16, y: 52, w: 768, h: 184 };
-  const CH_X0 = PHONE ? 52 : 108, CH_X1 = PHONE ? 428 : 692, CH_H = PHONE ? 24 : 32;
-  const CH_YB = PHONE ? 96 : 118, CH_YR = PHONE ? 142 : 180;
+  const GR1 = PHONE ? { x: 10, y: 44, w: 460, h: 164 } : { x: 16, y: 52, w: 768, h: 184 };
+  const CH_X0 = PHONE ? 66 : 108, CH_X1 = PHONE ? 436 : 692, CH_H = PHONE ? 24 : 32;
+  const CH_YB = PHONE ? 118 : 118, CH_YR = PHONE ? 164 : 180;
   const locX = (g) => CH_X0 + (CH_X1 - CH_X0) * g.frac;
   function selectGene(i, which) {
     S.gene.sel = i; if (which != null) S.gene.which = which; S.gene.seen[i] = true; S.gene.t0 = S.clock; Sound.click();
@@ -575,7 +575,7 @@
     G.pop = G.pop.map((v, i) => approach(v, G.sel === i ? 1 : 0, dt, 9));
     panel(GR1.x, GR1.y, GR1.w, GR1.h, 16, '#fff');
     T(GR1.x + 14, GR1.y + 24, '상동 염색체 한 쌍', PHONE ? 14 : 16, '#14532d', 'left', 800);
-    T(GR1.x + GR1.w - 14, GR1.y + 24, '번호를 눌러 유전자 자리를 비교해요', PHONE ? 12 : 13.5, '#64748b', 'right', 700);
+    if (!PHONE) T(GR1.x + GR1.w - 14, GR1.y + 24, '번호를 눌러 유전자 자리를 비교해요', 13.5, '#64748b', 'right', 700);
     chromH(CH_X0, CH_X1, CH_YB, CH_H, PAT, 0.36);
     chromH(CH_X0, CH_X1, CH_YR, CH_H, MAT, 0.36);
     T(CH_X0 - 12, CH_YB + 5, '아버지', PHONE ? 12 : 13.5, PAT, 'right', 800);
@@ -636,16 +636,16 @@
       { h: '형질', b: '몸의 특징으로 나타남' },
     ];
     if (PHONE) {
-      const bh = 40, gap = 20, x = 56, w = VW - 112;
+      const bh = 34, gap = 16, x = 56, w = VW - 112;
       items.forEach((it, i) => {
         const y = y0 + i * (bh + gap);
         if (y + bh > VH - 4) return;
         D.roundRect(x, y, w, bh, 10); ctx.fillStyle = i === 0 ? col : '#fff'; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = col; ctx.stroke();
-        T(x + 10, y + 16, it.h, 12, i === 0 ? '#fff' : '#64748b', 'left', 800);
-        T(x + w / 2 + 40, y + 29, it.b, 14, i === 0 ? '#fff' : '#1f2d44', 'center', 800);
+        T(x + 10, y + 14, it.h, 11.5, i === 0 ? '#fff' : '#64748b', 'left', 800);
+        T(x + w / 2 + 40, y + 23, it.b, 14, i === 0 ? '#fff' : '#1f2d44', 'center', 800);
         if (i < 3) {
           D.arrow(VW / 2, y + bh + 2, VW / 2, y + bh + gap - 1, { color: '#64748b', width: 2.5, head: 8 });
-          T(VW / 2 + 14, y + bh + 15, i === 0 ? '전사' : i === 1 ? '번역' : '기능', 12.5, '#64748b', 'left', 800);
+          T(VW / 2 + 14, y + bh + 12, i === 0 ? '전사' : i === 1 ? '번역' : '기능', 12.5, '#64748b', 'left', 800);
         }
       });
     } else {
@@ -683,15 +683,16 @@
     D.roundRect(ox, oy, W, H, 20); ctx.fillStyle = '#e9e0fb'; ctx.fill(); ctx.strokeStyle = '#a78bda'; ctx.lineWidth = 2.5; ctx.stroke();
     T(ox + 16, oy + 24, '핵 (지름 약 6 µm)', PHONE ? 14 : 16, '#5b3fb0', 'left', 800);
     const inset = PHONE ? 38 : 56, top = PHONE ? 40 : 44;
+    const tinc = PHONE ? 46 : 50, binc = PHONE ? 34 : 36, xinc = PHONE ? 20 : 40;
     N.seq.forEach((id, i) => {
       const it = NEST_ITEMS.find((x) => x.id === id), p = N.p[i];
-      const x = ox + inset * (i + 1) * 0.55 * p + 10 * (1 - p) + (PHONE ? 12 : 22), y = oy + top + inset * i * 0.9 * p, w = W - 2 * (x - ox), h = H - (y - oy) - (inset * i * 0.9 * p) - 12 - (PHONE ? 0 : 0);
-      if (w < 20 || h < 20) return;
+      const x = ox + 14 + xinc * i * p + (1 - p) * 0, y = oy + top + tinc * i * p, w = W - 2 * (14 + xinc * i * p), bot = oy + H - 12 - binc * i * p, h = bot - y;
+      if (w < 20 || h < 24) return;
       ctx.save(); ctx.globalAlpha = clamp(p * 1.4, 0, 1);
       D.shadow(() => { D.roundRect(x, y, w, h, 16); ctx.fillStyle = C.mix ? C.mix('#ffffff', it.col, 0.12) : '#fff'; ctx.fill(); }, { blur: 6, y: 2 });
       D.roundRect(x, y, w, h, 16); ctx.lineWidth = 3; ctx.strokeStyle = it.col; ctx.stroke();
       D.label(x + 12, y + 18, (i + 1) + '. ' + it.name, { bg: it.col, color: '#fff', size: PHONE ? 14 : 16, align: 'left' });
-      T(x + (PHONE ? 16 : 20), y + 48, it.note, PHONE ? 12.5 : 14, '#334155', 'left', 700);
+      T(x + 16, bot - 10, it.note, PHONE ? 12.5 : 14, '#334155', 'left', 700);
       ctx.restore();
     });
     if (N.seq.length === 0) textBlock(VW / 2, oy + H / 2 - 10, W - 60, '아래 카드를 큰 것부터 차례로 눌러 보세요.\n눌린 순서대로 상자가 안쪽으로 겹쳐져요.', PHONE ? 14 : 16.5, '#5b3fb0', PHONE ? 21 : 26, 800, 'center');
@@ -1046,9 +1047,9 @@
           type: 'quiz', title: 'DNA가 감겨 있는 까닭',
           goal: 'DNA가 핵 속에서 길게 펴져 있지 않고 단백질에 <b>감겨</b> 있는 까닭으로 가장 알맞은 것은?',
           setup() { setMode('zoom'); },
-          choices: ['핵이 커서 DNA를 펴 둘 공간이 충분하기 때문이다', 'DNA가 매우 길어서, 히스톤 단백질에 감겨 응축되어야 작은 핵 속에 들어갈 수 있기 때문이다', 'DNA가 감기면 유전 정보가 사라져서 안전하기 때문이다', '세포가 필요 없을 때 DNA를 버리기 위해서이다'],
-          answer: 1,
-          feedback: ['핵 지름은 약 6 µm밖에 안 돼요. 2 m나 되는 DNA를 펴 둘 수 없어요.', '', '감겨도 염기 서열은 그대로예요. 정보는 사라지지 않아요.', 'DNA는 버려지지 않고 핵 속에 보관돼요.'],
+          choices: ['핵이 커서 DNA를 펴 둘 공간이 충분하기 때문이다', 'DNA가 감기면 유전 정보가 사라져서 안전하기 때문이다', '세포가 필요 없을 때 DNA를 버리기 위해서이다', 'DNA가 매우 길어서, 히스톤 단백질에 감겨 응축되어야 작은 핵 속에 들어갈 수 있기 때문이다'],
+          answer: 3,
+          feedback: ['핵 지름은 약 6 µm밖에 안 돼요. 2 m나 되는 DNA를 펴 둘 수 없어요.', '감겨도 염기 서열은 그대로예요. 정보는 사라지지 않아요.', 'DNA는 버려지지 않고 핵 속에 보관돼요.', ''],
           explain: 'DNA는 약 2 m인데 핵은 약 6 µm라서, 히스톤에 감기고 접혀서 약 3 × 10⁵배로 압축되어야 핵 속에 들어갈 수 있어요. 감겨 있어도 염기 서열(유전 정보)은 그대로예요.',
         },
       ],
@@ -1089,9 +1090,9 @@
           type: 'quiz', title: '염색 분체의 유전 정보',
           goal: '복제된 염색체를 이루는 <b>두 염색 분체</b>가 가진 유전 정보에 대한 설명으로 옳은 것은?',
           setup() { setMode('struct'); },
-          choices: ['하나는 아버지, 하나는 어머니에게서 와서 서로 다르다', '한 DNA가 복제되어 만들어졌으므로 염기 서열이 같다', '하나는 유전자만, 다른 하나는 단백질만 가지고 있다', '복제 후에는 유전 정보가 두 염색 분체로 반씩 나뉜다'],
-          answer: 1,
-          feedback: ['아버지와 어머니에게서 받은 것은 두 염색 분체가 아니라 두 염색체(상동 염색체)예요.', '', '염색 분체는 둘 다 DNA와 히스톤으로 이루어져 있어요.', '정보가 반씩 나뉘는 것이 아니라 똑같은 DNA가 하나 더 만들어져요.'],
+          choices: ['하나는 아버지, 하나는 어머니에게서 와서 서로 다르다', '하나는 유전자만, 다른 하나는 단백질만 가지고 있다', '한 DNA가 복제되어 만들어졌으므로 염기 서열이 같다', '복제 후에는 유전 정보가 두 염색 분체로 반씩 나뉜다'],
+          answer: 2,
+          feedback: ['아버지와 어머니에게서 받은 것은 두 염색 분체가 아니라 두 염색체(상동 염색체)예요.', '염색 분체는 둘 다 DNA와 히스톤으로 이루어져 있어요.', '', '정보가 반씩 나뉘는 것이 아니라 똑같은 DNA가 하나 더 만들어져요.'],
           explain: '염색 분체 2개는 DNA를 복제해서 만든 <b>복사본</b>이라 염기 서열이 같아요. 아버지·어머니에게서 받은 <b>상동 염색체</b>는 서로 다른 염색체이고, 같은 자리의 유전자가 대립유전자로 서로 다를 수 있어요.',
         },
       ],
@@ -1125,9 +1126,9 @@
           type: 'quiz', title: '"유전자 = DNA 전체"?',
           goal: '유전자와 DNA의 관계에 대한 설명으로 옳은 것은?',
           setup() { setMode('gene'); },
-          choices: ['유전자는 DNA 전체와 같은 말이다', '유전자는 DNA의 특정 부위이고, 한 염색체의 DNA에는 많은 유전자가 들어 있다', '유전자는 염색체 밖의 세포질에 따로 들어 있다', '유전자 하나가 염색체 하나에 해당한다'],
-          answer: 1,
-          feedback: ['DNA에는 유전자가 아닌 부분(유전자 사이 부위)도 있어요.', '', '유전자는 염색체의 DNA 위에 있어요.', '사람은 유전자가 약 2만 개인데 염색체는 46개예요. 한 염색체에 많은 유전자가 있어요.'],
+          choices: ['유전자는 DNA 전체와 같은 말이다', '유전자는 염색체 밖의 세포질에 따로 들어 있다', '유전자 하나가 염색체 하나에 해당한다', '유전자는 DNA의 특정 부위이고, 한 염색체의 DNA에는 많은 유전자가 들어 있다'],
+          answer: 3,
+          feedback: ['DNA에는 유전자가 아닌 부분(유전자 사이 부위)도 있어요.', '유전자는 염색체의 DNA 위에 있어요.', '사람은 유전자가 약 2만 개인데 염색체는 46개예요. 한 염색체에 많은 유전자가 있어요.', ''],
           explain: '유전자는 DNA 중 <b>단백질 등의 정보를 담은 특정 부위</b>예요. 한 DNA 분자(염색체 하나)에 수백~수천 개의 유전자가 있고, 사람 전체로는 약 2만 개예요. DNA 중 유전자가 아닌 부분도 많아요.',
         },
       ],
@@ -1175,9 +1176,9 @@
           type: 'quiz', title: '핵형 분석으로 알 수 있는 것',
           goal: '핵형 분석으로 <b>알 수 있는</b> 것은?',
           setup() { setMode('karyo'); },
-          choices: ['염색체의 수와 모양, 성별, 염색체 수의 이상', '유전자 하나하나의 염기 서열', '눈 색깔, 키 같은 모든 형질의 유전자형', '앞으로 걸릴 모든 질병'],
-          answer: 0,
-          feedback: ['', '핵형은 염색체의 크기와 모양을 보는 것이라 염기 서열까지는 알 수 없어요.', '핵형만으로 개별 유전자의 형태(유전자형)를 알 수는 없어요.', '핵형으로 알 수 있는 것은 염색체의 수와 큰 구조의 이상까지예요.'],
+          choices: ['유전자 하나하나의 염기 서열', '눈 색깔, 키 같은 모든 형질의 유전자형', '염색체의 수와 모양, 성별, 염색체 수의 이상', '앞으로 걸릴 모든 질병'],
+          answer: 2,
+          feedback: ['핵형은 염색체의 크기와 모양을 보는 것이라 염기 서열까지는 알 수 없어요.', '핵형만으로 개별 유전자의 형태(유전자형)를 알 수는 없어요.', '', '핵형으로 알 수 있는 것은 염색체의 수와 큰 구조의 이상까지예요.'],
           explain: '핵형 분석은 염색체의 <b>수·크기·모양</b>을 보는 방법이라 염색체 수 이상, 성별을 알 수 있어요. 염기 서열이나 개별 유전자는 알 수 없어요. 또 상동 염색체 두 개는 같은 자리에 같은 형질의 유전자를 갖지만, 대립유전자가 달라 유전 정보가 완전히 같지는 않을 수 있어요.',
         },
       ],
@@ -1194,12 +1195,14 @@
   /* ---------- 시작 ---------- */
   resetKaryo();
   setMode('zoom');
-  let lastFree = false, lastMode = '', lastLv = -1;
+  let lastFree = false, lastMode = '', lastLv = -1, lastPc = 0;
   SciSim.loop((dt, t) => {
     S.clock = t;
     if (game && game.free !== lastFree) { lastFree = game.free; updateCtl(); }
     if (S.mode !== lastMode) { lastMode = S.mode; updateCtl(); }
     if (game && game.level !== lastLv) { lastLv = game.level; updateCtl(); }
+    const pc = placedCount(); if (pc === 46) S.k.done = true;
+    if (pc !== lastPc) { lastPc = pc; updateCtl(); }
     view.apply();
     stepStruct(dt);
     ctx.clearRect(0, 0, VW, VH);

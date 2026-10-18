@@ -4803,8 +4803,7 @@ window.SCI_CATALOG = {
                 "탄소 순환",
                 "에너지 흐름",
                 "평형과 중요성"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hb-population",
@@ -4825,8 +4824,7 @@ window.SCI_CATALOG = {
                 "생장 곡선",
                 "연령 구조",
                 "개체군 내 관계"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hb-quadrat",
@@ -4847,8 +4845,7 @@ window.SCI_CATALOG = {
                 "밀도·빈도·피도",
                 "중요치",
                 "군집 해석"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hb-species-interaction",
@@ -4869,8 +4866,7 @@ window.SCI_CATALOG = {
                 "포식과 피식",
                 "공생과 기생",
                 "관계 발표"
-              ],
-              "soon": true
+              ]
             }
           ]
         },
