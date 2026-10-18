@@ -250,7 +250,7 @@
      ④ 적용: 보전 실천
      ※ 분자 진화, 계통수, 종 정의 논쟁은 다루지 않음
      ========================================================= */
-  initStage('#eef7ee', 800, 560, 520, 780);
+  initStage('#eef7ee', 800, 560, 520, 820);
   const SCALEF = PHONE ? 1 : 1;
 
   /* ---------- 모형 상수 (글에 나오는 숫자는 모두 이 상수에서 가져와요) ---------- */
@@ -440,9 +440,9 @@
     D.text(L.sc.w / 2, 26, '두 집단을 한 섬에 모았어요: 짝이 될 수 있을까?', { size: 15.5, weight: 800, color: '#14532d' });
     D.text(L.sc.w / 2, 46, '부리 두께 차이가 ' + MATE_TOL + ' mm 이하일 때만 짝으로 받아들인다고 가정해요', { size: 13, weight: 700, color: '#475569' });
     SP.mergeT += dt;
-    const cols = PHONE ? 3 : 6, rows = PHONE ? 2 : 1, cw = L.sc.w / cols, ch = PHONE ? 118 : 120;
+    const cols = PHONE ? 3 : 6, rows = PHONE ? 2 : 1, cw = L.sc.w / cols, ch = PHONE ? 100 : 120;
     SP.pairs.forEach((p, i) => {
-      const c = i % cols, r = Math.floor(i / cols), cx = cw * (c + 0.5), cy = (PHONE ? 100 : 108) + r * (ch + 10) + 40;
+      const c = i % cols, r = Math.floor(i / cols), cx = cw * (c + 0.5), cy = (PHONE ? 92 : 108) + r * (ch + 10) + 40;
       const k = clamp((SP.mergeT + p.t) / 0.5, 0, 1), e = SciSim.ease.outBack(k);
       ctx.save(); ctx.globalAlpha = clamp(k * 2, 0, 1);
       const off = (PHONE ? 38 : 40) * (1 - 0.35 * e);
@@ -503,7 +503,7 @@
     drawHist(L, t, dt);
     if (SP.msgT > 0) { SP.msgT -= dt; if (!SP.merge) D.label(L.sc.w / 2, L.sc.h - (PHONE ? 38 : 30) - 0, SP.msg, { bg: 'rgba(21,128,61,.95)', size: PHONE ? 12 : 14 }); }
     // 세대 표시
-    D.label(PHONE ? 70 : 74, PHONE ? 318 : 248, SP.gen + '세대', { bg: 'rgba(30,41,59,.88)', size: 14 });
+    D.label(L.pl.x + L.pl.w / 2, L.pl.y - 16, SP.gen + '세대', { bg: 'rgba(30,41,59,.88)', size: 14 });
   }
   function stepSpeci(dt) {
     SP.flowT += dt;
@@ -561,7 +561,7 @@
   }
   function gnPanels() {
     return PHONE
-      ? { A: { x: 10, y: 28, w: 500, h: 344 }, B: { x: 10, y: 388, w: 500, h: 344 }, cw: 78, ch: 58, gy: 70 }
+      ? { A: { x: 10, y: 28, w: 500, h: 372 }, B: { x: 10, y: 412, w: 500, h: 372 }, cw: 78, ch: 58, gy: 46 }
       : { A: { x: 14, y: 44, w: 378, h: 430 }, B: { x: 408, y: 44, w: 378, h: 430 }, cw: 58, ch: 70, gy: 62 };
   }
   function drawGene(t, dt) {
@@ -590,10 +590,10 @@
       });
       const al = gnAlive(k);
       const done = GN.run && GN.t > 3.6;
-      D.text(pn.x + pn.w / 2, pn.y + pn.h - 40, '무늬 ' + (k === 'A' ? '4' : '1') + '가지 · 모두 ' + GN_N + '마리', { size: 13.5, weight: 700, color: '#475569' });
-      D.label(pn.x + pn.w / 2, pn.y + pn.h - 16, GN.run ? '살아남은 개체 ' + al + ' / ' + GN_N : '전염병 실험 전 ' + GN_N + ' / ' + GN_N, { bg: GN.run ? (al === 0 ? '#b91c1c' : '#15803d') : '#475569', size: 14 });
-      if (done && k === 'B' && al === 0) D.text(pn.x + pn.w / 2, pn.y + P.gy + 4 * P.ch + 4, '모두 같은 무늬여서 한꺼번에 사라졌어요', { size: 13.5, weight: 800, color: '#b91c1c' });
-      if (done && k === 'A') D.text(pn.x + pn.w / 2, pn.y + P.gy + 4 * P.ch + 4, '다른 무늬는 병에 걸리지 않아 살아남았어요', { size: 13.5, weight: 800, color: '#15803d' });
+      D.text(pn.x + pn.w / 2, pn.y + pn.h - (PHONE ? 46 : 40), '무늬 ' + (k === 'A' ? '4' : '1') + '가지 · 모두 ' + GN_N + '마리', { size: 13.5, weight: 700, color: '#475569' });
+      D.label(pn.x + pn.w / 2, pn.y + pn.h - (PHONE ? 20 : 16), GN.run ? '살아남은 개체 ' + al + ' / ' + GN_N : '전염병 실험 전 ' + GN_N + ' / ' + GN_N, { bg: GN.run ? (al === 0 ? '#b91c1c' : '#15803d') : '#475569', size: 14 });
+      if (done && k === 'B' && al === 0) D.text(pn.x + pn.w / 2, pn.y + P.gy + 4 * P.ch + (PHONE ? 16 : 4), '모두 같은 무늬여서 한꺼번에 사라졌어요', { size: 13.5, weight: 800, color: '#b91c1c' });
+      if (done && k === 'A') D.text(pn.x + pn.w / 2, pn.y + P.gy + 4 * P.ch + (PHONE ? 16 : 4), '다른 무늬는 병에 걸리지 않아 살아남았어요', { size: 13.5, weight: 800, color: '#15803d' });
     });
     if (!GN.run) {
       // 표준 무늬 안내 (병에 취약한 무늬)
@@ -615,7 +615,7 @@
   }
   function spcPanels() {
     return PHONE
-      ? [{ x: 10, y: 24, w: 500, h: 352 }, { x: 10, y: 392, w: 500, h: 352 }]
+      ? [{ x: 10, y: 24, w: 500, h: 372 }, { x: 10, y: 408, w: 500, h: 372 }]
       : [{ x: 14, y: 36, w: 378, h: 508 }, { x: 408, y: 36, w: 378, h: 508 }];
   }
   function spcLegendRect(fi, s) {
@@ -737,7 +737,7 @@
   }
   function rkLay() {
     return PHONE
-      ? { map: { x: 90, y: 40, t: 34 }, dots: { x: 10, y: 352, w: 500, h: 108, cols: 10 }, chart: { x: 10, y: 468, w: 500, h: 168 }, bars: { x: 10, y: 644, w: 500, h: 130, rh: 30 } }
+      ? { map: { x: 110, y: 40, t: 30 }, dots: { x: 10, y: 334, w: 500, h: 108, cols: 10 }, chart: { x: 10, y: 450, w: 500, h: 168 }, bars: { x: 10, y: 626, w: 500, h: 176, rh: 31 } }
       : { map: { x: 14, y: 46, t: 32 }, dots: { x: 354, y: 40, w: 432, h: 118, cols: 10 }, chart: { x: 354, y: 168, w: 432, h: 174 }, bars: { x: 14, y: 366, w: 772, h: 188, rh: 38 } };
   }
   const RF = [{ k: 'h', n: '서식지 파괴·분단', c: '#b45309' }, { k: 'a', n: '외래종 유입', c: '#dc2626' }, { k: 'p', n: '환경 오염', c: '#6d28d9' }];
@@ -793,15 +793,16 @@
       ctx.save(); ctx.globalAlpha = RK.dots[i].a; ctx.font = D.font(PHONE ? 15 : 17, 700); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#000'; ctx.fillText(RK_ANI[i % RK_ANI.length], x, y); ctx.restore();
     });
     // --- 꺾은선 그래프
-    const C = L.chart, px0 = C.x + 46, py0 = C.y + 40, pw = C.w - 66, ph = C.h - 78;
+    const C = L.chart, px0 = C.x + 46, py0 = C.y + 40, pw = C.w - 66, ph = C.h - 82;
     D.shadow(() => { ctx.fillStyle = '#fff'; rr(C.x, C.y, C.w, C.h, 12).fill(); }, { blur: 5, y: 2 });
-    D.text(C.x + 14, C.y + 20, '요인이 커질수록 종 수 (한 가지씩만 작용할 때)', { size: 13, weight: 800, color: '#14532d', align: 'left' });
+    D.text(C.x + 14, C.y + 20, '요인의 크기(%)에 따른 종 수 (한 가지씩만 작용)', { size: 13, weight: 800, color: '#14532d', align: 'left' });
+    RF.forEach((f, i) => { const lx = C.x + 52 + i * (PHONE ? 100 : 118); ctx.fillStyle = f.c; ctx.fillRect(lx - 14, py0 + ph + 26, 10, 10); D.text(lx, py0 + ph + 36, f.n.replace('서식지 ', ''), { size: 12, weight: 700, color: '#475569', align: 'left' }); });
     const X = (v) => px0 + (v / 100) * pw, Y = (n) => py0 + ph - (clamp(n, 0, S0) / S0) * ph;
     ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1;
     [0, 10, 20, 30, 40].forEach((n) => { ctx.beginPath(); ctx.moveTo(px0, Y(n)); ctx.lineTo(px0 + pw, Y(n)); ctx.stroke(); D.text(px0 - 6, Y(n) + 4, String(n), { size: 12, weight: 700, color: '#64748b', align: 'right' }); });
     [0, 20, 40, 60, 80, 100].forEach((v) => D.text(X(v), py0 + ph + 16, String(v), { size: 12, weight: 700, color: '#475569' }));
-    D.text(px0 + pw, py0 + ph + 31, '요인의 크기 (%)', { size: 12, weight: 700, color: '#475569', align: 'right' });
-    D.text(px0 - 6, py0 - 8, '종 수', { size: 12, weight: 700, color: '#64748b', align: 'right' });
+    
+    D.text(px0 - 6, py0 - 16, '종 수', { size: 12, weight: 700, color: '#64748b', align: 'right' });
     RF.forEach((f) => {
       ctx.strokeStyle = f.c; ctx.lineWidth = 2.6; ctx.beginPath();
       for (let v = 0; v <= 100; v += 10) { const n = f.k === 'h' ? spCount(v, 0, 0) : f.k === 'a' ? spCount(0, v, 0) : spCount(0, 0, v); v ? ctx.lineTo(X(v), Y(n)) : ctx.moveTo(X(v), Y(n)); }
@@ -931,9 +932,9 @@
     return ids.map((id, i) => Object.assign({ id, label: o.labels[i], color: DCOL[id], fill: rgba(DCOL[id], 0.1), line: rgba(DCOL[id], 0.6), cap: 4, lsize: PHONE ? 13 : 15 }, o.pos[i]));
   }
   function buildDBoard() {
-    const cw = PHONE ? 160 : 240, ch = PHONE ? 66 : 48;
+    const cw = PHONE ? 160 : 240, ch = PHONE ? 72 : 48;
     const ids = ['gene', 'spc', 'eco'], labels = ['🧬 유전적 다양성', '🐾 종 다양성', '🗺️ 생태계 다양성'];
-    const pos = PHONE ? [{ x: 6, y: 292, w: 168, h: 292 }, { x: 176, y: 292, w: 168, h: 292 }, { x: 346, y: 292, w: 168, h: 292 }] : [{ x: 12, y: 262, w: 252, h: 236 }, { x: 274, y: 262, w: 252, h: 236 }, { x: 536, y: 262, w: 252, h: 236 }];
+    const pos = PHONE ? [{ x: 6, y: 304, w: 168, h: 330 }, { x: 176, y: 304, w: 168, h: 330 }, { x: 346, y: 304, w: 168, h: 330 }] : [{ x: 12, y: 262, w: 252, h: 236 }, { x: 274, y: 262, w: 252, h: 236 }, { x: 536, y: 262, w: 252, h: 236 }];
     dBoard = new Board({ zones: zoneDefs(ids, { labels, pos }), tray: PHONE ? { x: 14, y: 52, w: 492, cols: 3 } : { x: 12, y: 62, w: 776, cols: 3 }, cw, ch, gap: PHONE ? 6 : 8, vertical: PHONE, onPlace: () => { dBoard.cards.forEach((c) => { c.badge = ''; }); ctlUpdate(); } });
     [0, 3, 6, 1, 4, 7, 2, 5, 8].forEach((i) => dBoard.add({ id: DCARDS[i].id, label: DCARDS[i].label, t: DCARDS[i].t }));
     dBoard.layout(true);
@@ -984,6 +985,7 @@
     $$('#ctrlCard [data-show]').forEach((n) => { const k = n.dataset.show; n.hidden = !(k === MODE || k === key); });
     $$('#subDiv button').forEach((b) => b.classList.toggle('on', b.dataset.sub === SUB));
     $$('#subAct button').forEach((b) => b.classList.toggle('on', b.dataset.sub === SUB));
+    $('#modeSeg').hidden = !(game && game.free);
     $('#oGen').textContent = SP.gen + '세대';
     $('#bSplit').disabled = SP.split; $('#bSplit').classList.toggle('done', SP.split);
     $('#bSplit').textContent = SP.split ? '✓ 서식지가 나뉘었어요' : '🌊 강으로 서식지 나누기';

@@ -3043,8 +3043,7 @@ window.SCI_CATALOG = {
                 "세 가지 다양성",
                 "다양성 위기",
                 "보전 실천"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "h1-redox-oxygen",
@@ -3065,8 +3064,7 @@ window.SCI_CATALOG = {
                 "환원",
                 "철의 제련",
                 "연소·광합성"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "h1-redox-electron",
@@ -3087,8 +3085,7 @@ window.SCI_CATALOG = {
                 "전자 이동",
                 "규칙성",
                 "생활 속 변화"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "h1-acid-base",
