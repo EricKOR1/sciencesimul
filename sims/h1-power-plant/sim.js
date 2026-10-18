@@ -59,7 +59,7 @@
   const P_TARGET = 100, P_TOL = 1;                               // 화력 미션 목표 (MW)
   const FUEL_MAX = 60;                                           // 석탄 투입량 최댓값 (t/시간)
   const NU_P0 = 1000;                                            // 원자로 정격 전기 출력 (MW)
-  const NU_TAU = 2;                                              // 반응 변화 시간 상수 (초)
+  const NU_TAU = 3;                                              // 반응 변화 시간 상수 (초)
   const NU_SCRAM = 1.5;                                          // 자동 정지 기준 (정격의 배수)
   const kOf = (rod) => 1.5 - rod;                                // 제어봉을 넣은 비율에 따른 연쇄 반응 배율
   const NEU_PER_N = 14;                                          // 정격에서 그림에 보이는 중성자 수
