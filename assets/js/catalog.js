@@ -3106,8 +3106,7 @@ window.SCI_CATALOG = {
                 "성질 실험",
                 "이온 모형",
                 "분류·안전"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "h1-neutralization",
@@ -3128,8 +3127,7 @@ window.SCI_CATALOG = {
                 "온도 그래프",
                 "중화 모형",
                 "생활 속 중화"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "h1-energy-exchange",
@@ -3150,8 +3148,7 @@ window.SCI_CATALOG = {
                 "사례 분류",
                 "자연 속 에너지",
                 "조리 장치"
-              ],
-              "soon": true
+              ]
             }
           ]
         },
