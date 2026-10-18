@@ -3603,8 +3603,7 @@ window.SCI_CATALOG = {
                 "일차원 충돌",
                 "반동과 발사",
                 "적용"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hp-mech-energy",
@@ -3625,8 +3624,7 @@ window.SCI_CATALOG = {
                 "위치 에너지",
                 "에너지 보존",
                 "적용"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hp-energy-heat",
@@ -3647,8 +3645,7 @@ window.SCI_CATALOG = {
                 "에너지 장부",
                 "열 현상",
                 "총량 논증"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hp-heat-engine",
@@ -3669,8 +3666,7 @@ window.SCI_CATALOG = {
                 "열 흐름",
                 "영구기관",
                 "발명 심사"
-              ],
-              "soon": true
+              ]
             }
           ]
         },
@@ -3698,8 +3694,7 @@ window.SCI_CATALOG = {
                 "전기장",
                 "전위차",
                 "적용"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hp-resistor-connection",
@@ -3720,8 +3715,7 @@ window.SCI_CATALOG = {
                 "병렬 측정",
                 "합성 저항",
                 "예측"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hp-electric-power",
@@ -3742,8 +3736,7 @@ window.SCI_CATALOG = {
                 "연결과 전력",
                 "과부하",
                 "안전 설계"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hp-capacitor",
@@ -3764,8 +3757,7 @@ window.SCI_CATALOG = {
                 "전하 분리",
                 "에너지 저장",
                 "센서"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hp-magnetic-materials",
@@ -4035,6 +4027,39 @@ window.SCI_CATALOG = {
               "soon": true
             }
           ]
+        }
+      ]
+    },
+    {
+      "id": "hc",
+      "short": "화학",
+      "name": "화학",
+      "book": "일반선택",
+      "group": "hgeneral",
+      "units": [
+        {
+          "no": "Ⅰ",
+          "title": "화학의 언어",
+          "subject": "chem",
+          "sims": []
+        },
+        {
+          "no": "Ⅱ",
+          "title": "물질의 구조와 성질",
+          "subject": "chem",
+          "sims": []
+        },
+        {
+          "no": "Ⅲ",
+          "title": "화학 평형",
+          "subject": "chem",
+          "sims": []
+        },
+        {
+          "no": "Ⅳ",
+          "title": "역동적인 화학 반응",
+          "subject": "chem",
+          "sims": []
         }
       ]
     }
