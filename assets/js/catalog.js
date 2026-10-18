@@ -4445,8 +4445,7 @@ window.SCI_CATALOG = {
                 "Q와 K",
                 "방향 예측",
                 "판정 적용"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hc-le-shift",
@@ -4467,8 +4466,7 @@ window.SCI_CATALOG = {
                 "압력 변화",
                 "온도 변화",
                 "Q로 설명"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hc-eq-life",
@@ -4489,8 +4487,7 @@ window.SCI_CATALOG = {
                 "산소 운반",
                 "암모니아",
                 "사례 조사"
-              ],
-              "soon": true
+              ]
             }
           ]
         },

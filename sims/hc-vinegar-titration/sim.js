@@ -636,17 +636,17 @@
   const tipYNow = () => { const up = GP.pipTipRest; const dip = PIP.px.v < 0.5 ? jarDipY() : flaskDipY(); return up + (dip - up) * PIP.py.v; };
   function prepStep(dt) {
     const P = cur(), g = flaskGeom();
-    if (P.w !== 'none' && P.step === 2 && !P.over) {
-      const rate = P.w === 'fast' ? 24 : 4;
+    if (P.w !== 'none' && (P.step === 2 || P.step === 3) && !P.over) {
+      const rate = P.w === 'fast' ? 24 : 3;
       P.acc += rate * dt; let k = Math.floor(P.acc); P.acc -= k;
       while (k-- > 0) {
-        if (P.w === 'fast' && P.vol >= 90) { P.w = 'none'; showHint('표선 가까이에서는 스포이트로 한 방울씩! 💧 천천히를 써요.', 4200); break; }
+        if (P.w === 'fast' && P.vol >= 90) { P.w = 'none'; showHint('표선 가까이에서는 스포이트로 한 방울씩! 💧 한 방울을 써요.', 4200); break; }
         P.vol = r6(P.vol + 0.5);
-        if (P.vol > 100.0001) { P.over = true; P.w = 'none'; Sound.fail(); showHint('표선을 넘었어요! ↺ 다시 만들기를 눌러요.', 5000); break; }
+        if (P.vol > 100.0001) { P.over = true; P.w = 'none'; P.step = 2; Sound.fail(); showHint('표선을 넘었어요! ↺ 다시 만들기를 눌러요.', 5000); updateCtl(); break; }
+        if (Math.abs(P.vol - 100) < 1e-6) { P.step = 3; Sound.success(); showHint('표선에 딱 맞았어요! 손을 떼요.', 3000); parts.burst(g.cx, g.mk, { count: 14, speed: 100, size: 3, colors: ['#0ea5e9', '#14a058', '#fff'] }); updateCtl(); }
       }
-      if (P.vol >= 100 - 1e-6 && !P.over) { P.w = 'none'; P.step = 3; Sound.success(); parts.burst(g.cx, g.mk, { count: 14, speed: 100, size: 3, colors: ['#0ea5e9', '#14a058', '#fff'] }); updateCtl(); }
     }
-    if (P.w !== 'none' && P.step === 2 && !RM && Math.random() < dt * (P.w === 'fast' ? 40 : 7)) {
+    if (P.w !== 'none' && (P.step === 2 || P.step === 3) && !P.over && !RM && Math.random() < dt * (P.w === 'fast' ? 40 : 7)) {
       const wa = GP.wash; parts.emit({ x: P.w === 'fast' ? wa.x - 30 + rnd(-2, 2) : g.cx + rnd(-2, 2), y: P.w === 'fast' ? wa.y + 40 : g.nt - 10, vx: P.w === 'fast' ? (g.cx - wa.x + 30) * 1.3 : 0, vy: P.w === 'fast' ? -60 : 40, gravity: 900, size: P.w === 'fast' ? 3.2 : 2.6, life: 0.4, color: '#7cc4ff', fade: false });
     }
   }
@@ -943,8 +943,8 @@
     refreshChips(el('smpChips'), idx, (i) => PREP[i ? 'B' : 'A'].step >= 4);
     refreshChips(el('vsChips'), idx, (i) => cDone(i ? 'B' : 'A'));
     el('bPip').disabled = P.step !== 0 || P.busy; el('bPour').disabled = P.step !== 1 || P.busy;
-    el('wFast').disabled = P.step !== 2 || P.over || P.busy; el('wSlow').disabled = P.step !== 2 || P.over || P.busy;
-    el('bMixV').disabled = P.step !== 3 || P.busy;
+    const filling = (P.step === 2 || P.step === 3) && !P.over && !P.busy; el('wFast').disabled = !filling; el('wSlow').disabled = !filling;
+    el('bMixV').disabled = P.step !== 3 || P.busy || P.over;
     el('bPrepRedo').disabled = P.busy;
     el('pipSel').value = S.plan.pip;
     ['cs0', 'cs1', 'cs2', 'cs3'].forEach((id, i) => { el(id).value = S.eval.sel[i]; });
@@ -954,8 +954,8 @@
   chipsTo(el('vsChips'), ['식초 A', '식초 B (사과 식초)'], 0, (i) => { setSample(i ? 'B' : 'A'); refreshCalc(); }, (i) => cDone(i ? 'B' : 'A'));
   el('bPip').addEventListener('click', actPipette); el('bPour').addEventListener('click', actPour); el('bMixV').addEventListener('click', actMix);
   el('bPrepRedo').addEventListener('click', () => { Sound.click(); prepReset(); });
-  holdBtn('wFast', () => { const P = cur(); if (P.step === 2 && !P.over) P.w = 'fast'; }, () => { const P = cur(); if (P.w === 'fast') P.w = 'none'; });
-  holdBtn('wSlow', () => { const P = cur(); if (P.step === 2 && !P.over) P.w = 'slow'; }, () => { const P = cur(); if (P.w === 'slow') P.w = 'none'; });
+  holdBtn('wFast', () => { const P = cur(); if ((P.step === 2 || P.step === 3) && !P.over) P.w = 'fast'; }, () => { const P = cur(); if (P.w === 'fast') P.w = 'none'; });
+  holdBtn('wSlow', () => { const P = cur(); if ((P.step === 2 || P.step === 3) && !P.over) { P.w = 'slow'; P.acc = 1; } }, () => { const P = cur(); if (P.w === 'slow') P.w = 'none'; });
   ['cs0', 'cs1', 'cs2', 'cs3'].forEach((id, i) => el(id).addEventListener('change', () => { S.eval.sel[i] = el(id).value; el(id).classList.remove('bad'); Sound.click(); }));
   el('cMore').addEventListener('change', () => { S.eval.more = el('cMore').value; el('cMore').classList.remove('bad'); });
   el('cDiff').addEventListener('input', () => { S.eval.diff = el('cDiff').value; el('cDiff').classList.remove('bad'); });
