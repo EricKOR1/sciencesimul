@@ -125,3 +125,12 @@ apple-mobile-web-app-capable, mobile-web-app-capable, emoji favicon, Jua font li
 - Level: 고1. Still friendly 해요체 and short, but more rigorous: quantities with units, simple formulas where the curriculum
   implies them (e.g. 충격량 = 힘 × 시간), graphs read quantitatively. Explicitly link to the middle-school lesson it builds on
   in STEP 1 (e.g. "🔗 중학교에서 …을 배웠어요") when the unit file names a 선수 lesson.
+
+## 10. 고등학교 선택 과목 (일반선택 → 진로선택)
+- Each course is one grade entry in catalog.js with `group` = `hgeneral` (물리학 hp, 화학 hc, 생명과학 hb, 지구과학 he) or
+  `hcareer`. Unit numbers continue after 29 (물리학 = 30–32, …). Lesson ids use the course prefix (`hp-…`).
+- Header: back link `../../index.html#<grade id>`; `.sim-unit` = "물리학 · Ⅰ. 힘과 에너지" (exact text in the unit file);
+  `<title>` = "제목 | 고등 과학 시뮬레이션"; `data-subject` = the course's discipline (phy/chem/bio/earth).
+- Level: 고2–3. Formulas, units and calculations are expected where the curriculum implies them; graphs are read
+  quantitatively. Still friendly 해요체. STEP 1 links to the 중학교/통합과학 lesson it builds on ("🔗 통합과학에서 …").
+- Everything in §9 and the lessons-learned list of the builder brief applies.

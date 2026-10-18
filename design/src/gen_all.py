@@ -22,7 +22,7 @@ def clean(t):
 
 
 units = {}
-for f in ['design_g1.py', 'design_g2.py', 'design_g3.py', 'design_h1a.py', 'design_h1b.py']:
+for f in ['design_g1.py', 'design_g2.py', 'design_g3.py', 'design_h1a.py', 'design_h1b.py', 'design_hp.py', 'design_hc.py', 'design_hb.py', 'design_he.py']:
     if not os.path.exists(D + 'src/' + f):
         continue
     ns = {}
@@ -46,7 +46,7 @@ for g in cat['grades']:
         unit_meta[n] = dict(grade=g['id'], gname=g['name'], no=u['no'], title=u['title'], subject=u['subject'],
                             existing={s['id']: s for s in u['sims']})
 
-GRADE_KO = {'g1': '중1', 'g2': '중2', 'g3': '중3', 'h1a': '통합과학1', 'h1b': '통합과학2'}
+GRADE_KO = {'g1': '중1', 'g2': '중2', 'g3': '중3', 'h1a': '통합과학1', 'h1b': '통합과학2', 'hp': '물리학', 'hc': '화학', 'hb': '생명과학', 'he': '지구과학'}
 plans_out = []
 os.makedirs(D + 'units', exist_ok=True)
 summary = []

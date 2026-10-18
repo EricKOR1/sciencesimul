@@ -34,9 +34,15 @@
 
   function renderTabs() {
     tabsEl.innerHTML = '';
+    const GROUP_LABEL = { ms: '중학교', hcommon: '고등학교 공통 과목', hgeneral: '고등학교 일반선택', hcareer: '고등학교 진로선택', hfusion: '고등학교 융합선택' };
+    let lastGroup = null;
     CAT.grades.forEach((g, i) => {
-      const sims = simsOf(g);
-      const b = el('button', { class: 'grade-tab' + (g.id.charAt(0) === 'h' ? ' hs' : '') + (g.id === current ? ' on' : ''), role: 'tab', 'aria-selected': g.id === current ? 'true' : 'false' }, [
+      const sims = simsOf(g), group = g.group || 'ms';
+      if (group !== lastGroup) {                              // 과목 묶음이 바뀌면 작은 제목을 넣어요
+        tabsEl.appendChild(el('div', { class: 'grade-group', text: GROUP_LABEL[group] || '' }));
+        lastGroup = group;
+      }
+      const b = el('button', { class: 'grade-tab g-' + group + (g.id === current ? ' on' : ''), role: 'tab', 'aria-selected': g.id === current ? 'true' : 'false' }, [
         el('span', { class: 'gnum', text: g.short || String(i + 1) }),
         el('span', { class: 'gtext' }, [el('b', { text: g.name }), el('span', { text: g.book + ' · ' + g.units.length + '개 단원' })]),
         el('span', { class: 'gprog', html: sims.length + '차시<br><span class="st">★</span> ' + starsOf(sims) + '/' + sims.length * 3 }),

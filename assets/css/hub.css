@@ -30,9 +30,12 @@
 
 .hub-main { max-width: 1180px; width: 100%; margin: -40px auto 0; padding: 0 16px 30px; position: relative; z-index: 2; flex: 1; }
 
-.grade-tabs { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; }
-.grade-tabs > .grade-tab { grid-column: span 2; }
-.grade-tabs > .grade-tab.hs { grid-column: span 3; }
+.grade-tabs { display: grid; grid-template-columns: repeat(12, 1fr); gap: 12px; }
+.grade-tabs > .grade-tab { grid-column: span 4; }
+.grade-tabs > .grade-tab.g-hcommon { grid-column: span 6; }
+.grade-tabs > .grade-tab.g-hgeneral, .grade-tabs > .grade-tab.g-hcareer, .grade-tabs > .grade-tab.g-hfusion { grid-column: span 3; }
+.grade-group { grid-column: 1 / -1; font-size: 13px; font-weight: 800; color: var(--muted); margin: 4px 2px -4px; }
+.grade-group:first-child { display: none; }
 .grade-tab .gnum { font-size: 21px; }
 .grade-tab {
   border: 0; cursor: pointer; text-align: left; border-radius: 18px; padding: 14px 18px;
@@ -118,7 +121,7 @@
 .link-btn { border: 0; background: none; color: var(--muted); text-decoration: underline; cursor: pointer; font-size: 13px; }
 
 @media (max-width: 760px) {
-  .grade-tabs { grid-template-columns: repeat(6, 1fr); gap: 8px; }
+  .grade-tabs { grid-template-columns: repeat(12, 1fr); gap: 8px; }
   .grade-tab { flex-direction: column; align-items: center; text-align: center; padding: 10px 6px; gap: 6px; }
   .grade-tab .gnum { width: 42px; height: 42px; font-size: 22px; }
   .grade-tab .gnum { font-size: 17px; }
