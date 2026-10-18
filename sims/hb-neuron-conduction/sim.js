@@ -449,12 +449,12 @@ bindSeg('#subSeg', 'data-sub', (s) => setSub(s));
 /* ================= ① 국소 전류 (축삭 7구간) ================= */
 const NSEG = 7, DELTA = 1.5, CD_RATE = 2;            // 이웃 구간이 역치에 닿기까지 1.5 ms · 1 ms = 0.5 s
 const LG = PHONE
-  ? { x0: 12, sw: 65, cy: 92, hh: 30, TR: { x: 8, y: 176, w: 464, h: 360 }, r0: 212, rh: 36, px: 76, pw: 388, tickY: 490, xlY: 510, LEG: { x: 8, y: 548, w: 464, h: 84 } }
-  : { x0: 40, sw: 102, cy: 112, hh: 36, TR: { x: 14, y: 262, w: 772, h: 286 }, r0: 276, rh: 30, px: 90, pw: 676, tickY: 500, xlY: 522, LEG: { x: 14, y: 176, w: 772, h: 74 } };
+  ? { x0: 12, sw: 65, cy: 112, hh: 30, TR: { x: 8, y: 214, w: 464, h: 322 }, r0: 246, rh: 34, px: 76, pw: 388, tickY: 502, xlY: 522, LEG: { x: 8, y: 546, w: 464, h: 86 } }
+  : { x0: 40, sw: 102, cy: 122, hh: 36, TR: { x: 14, y: 274, w: 772, h: 274 }, r0: 288, rh: 27, px: 90, pw: 676, tickY: 497, xlY: 518, LEG: { x: 14, y: 226, w: 772, h: 42 } };
 const segX = (i) => LG.x0 + (i + 0.5) * LG.sw;
 const TMAX = 20;
 const cdX = (t) => LG.px + t / TMAX * LG.pw;
-const segState = (s) => (s.tau == null || s.tau < 1 ? 'pol' : s.tau < 2 ? 'dep' : 'rep');
+const segState = (s) => (s.tau == null || s.tau < 1.5 ? 'pol' : s.tau < 2 ? 'dep' : 'rep');
 const STNAME = { pol: '분극', dep: '탈분극', rep: '재분극' };
 function newCD(keepLoc) {
   const hist = []; for (let i = 0; i < NSEG; i++) hist.push(new Array(TMAX * 10 + 1).fill(null));
@@ -546,8 +546,8 @@ function drawLocalScene(dt) {
     else { T(x, cy + 8, '−', PHONE ? 22 : 28, '#1d4ed8', 'center', 900, { alpha: 0.4 }); T(x, cy - hh - 6, '+', 16, COL.pos, 'center', 900, { alpha: 0.35 }); T(x, cy + hh + 18, '+', 16, COL.pos, 'center', 900, { alpha: 0.35 }); }
   });
   // 구간 번호 · 방향 이름
-  for (let i = 0; i < NSEG; i++) { const x = segX(i); D.sphere(x, cy + hh + 42, 11, '#64748b', { gloss: false, text: String(i + 1), textScale: 1.1 }); }
-  T(LG.x0, cy + hh + 70, '← 가지 돌기 쪽', PHONE ? 12.5 : 13.5, '#5a6679', 'left', 800); T(LG.x0 + LG.sw * NSEG, cy + hh + 70, '축삭 말단 쪽 →', PHONE ? 12.5 : 13.5, '#5a6679', 'right', 800);
+  for (let i = 0; i < NSEG; i++) { const x = segX(i); D.sphere(x, cy + hh + 34, 11, '#64748b', { gloss: false, text: String(i + 1), textScale: 1.1 }); }
+  T(LG.x0, cy + hh + 58, '← 가지 돌기 쪽', PHONE ? 12.5 : 13.5, '#5a6679', 'left', 800); T(LG.x0 + LG.sw * NSEG, cy + hh + 58, '축삭 말단 쪽 →', PHONE ? 12.5 : 13.5, '#5a6679', 'right', 800);
   // 국소 전류 화살표
   cd.seg.forEach((s, i) => {
     if (s.tau == null || s.tau < 1.7 || s.tau > 3.3) return;
@@ -560,15 +560,15 @@ function drawLocalScene(dt) {
   });
   // 포착 이름표
   if (cd.cap) cd.cap.forEach((c) => { const x = segX(c.seg); D.sphere(x, cy - hh - 34, 15, '#7c3aed', { gloss: true, text: c.letter, textScale: 1.1 }); D.arrow(x, cy - hh - 18, x, cy - hh - 4, { color: '#7c3aed', width: 3, head: 7 }); });
-  if (cd.frozen) D.label(VW / 2, PHONE ? 52 : 52, '⏸ 순간 포착! A·B·C 구간의 상태를 골라요', { bg: '#7c3aed', size: PHONE ? 13 : 14.5 });
+  if (cd.frozen) D.label(VW / 2, PHONE ? 214 - 18 : 214,  '⏸ 순간 포착! A·B·C 구간의 상태를 골라요', { bg: '#7c3aed', size: PHONE ? 13 : 14.5 });
   // 범례
   const G = LG.LEG;
   panel(G.x, G.y, G.w, G.h, 14);
-  const gx = G.x + 16, gw = PHONE ? 200 : 300, gy = G.y + 22;
-  for (let i = 0; i < gw; i++) { ctx.fillStyle = C.mix(vColor(-80 + 110 * i / gw), '#ffffff', 0.38); ctx.fillRect(gx + i, gy, 2, 14); }
-  ctx.strokeStyle = '#7b8aa3'; ctx.lineWidth = 1.5; ctx.strokeRect(gx, gy, gw, 14);
-  T(gx, gy + 32, '−70 mV (분극)', 12.5, '#1d4ed8', 'left', 800); T(gx + gw, gy + 32, '+30 mV (탈분극)', 12.5, '#b91c1c', 'right', 800);
-  const tx = gx + gw + 20; textBlock(tx, G.y + 24, G.x + G.w - tx - 12, PHONE ? '안쪽 색 = 막전위. 노란 화살표 = 국소 전류(양전하 이동).' : '구간 안쪽의 색은 막전위예요. 노란 점선 화살표가 국소 전류(양전하의 이동)이고, ✕는 방금 흥분해서 다시 흥분할 수 없는 구간(불응기)이에요.', PHONE ? 12 : 13.5, '#3a465c', PHONE ? 16 : 19, 700);
+  const gx = G.x + 16, gw = PHONE ? 200 : 260, gy = G.y + (PHONE ? 20 : 8);
+  for (let i = 0; i < gw; i++) { ctx.fillStyle = C.mix(vColor(-80 + 110 * i / gw), '#ffffff', 0.38); ctx.fillRect(gx + i, gy, 2, 12); }
+  ctx.strokeStyle = '#7b8aa3'; ctx.lineWidth = 1.5; ctx.strokeRect(gx, gy, gw, 12);
+  T(gx, gy + 28, '−70 mV (분극)', 12.5, '#1d4ed8', 'left', 800); T(gx + gw, gy + 28, '+30 mV (탈분극)', 12.5, '#b91c1c', 'right', 800);
+  const tx = gx + gw + 20; textBlock(tx, G.y + (PHONE ? 24 : 17), G.x + G.w - tx - 12, PHONE ? '안쪽 색 = 막전위. 노란 점선 화살표 = 국소 전류(양전하의 이동). ✕ = 방금 흥분해서 다시 흥분할 수 없는 구간(불응기).' : '안쪽 색 = 막전위 · 노란 점선 화살표 = 국소 전류(양전하의 이동) · ✕ = 방금 흥분해서 다시 흥분할 수 없는 구간(불응기)', PHONE ? 12 : 12.5, '#3a465c', PHONE ? 16 : 16, 700);
   // 구간별 막전위 그래프 (같은 시간 축)
   const TR = LG.TR;
   panel(TR.x, TR.y, TR.w, TR.h, 14);

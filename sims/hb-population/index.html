@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#16a34a">
+  <title>개체군의 특성 | 고등 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦌</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; }
+    .stage-toolbar { min-height: 58px; }
+    .stage-toolbar .segmented { flex-wrap: wrap; }
+    .stage-toolbar .segmented button { min-height: 40px; padding: 5px 10px; font-size: 14px; white-space: nowrap; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard [hidden] { display: none !important; }
+    .btn-sm { min-height: 44px; }
+    .btn-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+    .btn-row .btn { flex: 1; padding-left: 8px; padding-right: 8px; }
+    .ctrl-note { margin: 6px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    .ctrl-note b { color: var(--ink); }
+    .range-row { display: flex; align-items: center; gap: 8px; }
+    .range-row input[type=range] { flex: 1; min-width: 0; height: 44px; }
+    .seg-full { display: flex; width: 100%; }
+    .seg-full button { flex: 1 1 0; min-width: 0; min-height: 44px; font-size: 14.5px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+    .chips button { min-height: 44px; padding: 6px 14px; border: 2px solid var(--line); background: #fff; border-radius: 999px; font-weight: 800; font-size: 14.5px; cursor: pointer; color: var(--ink); }
+    .chips button.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); }
+    .chip-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px; }
+    .chip-grid button { min-height: 44px; padding: 6px 8px; border: 2px solid var(--line); background: #fff; border-radius: 12px; font-weight: 800; font-size: 14px; cursor: pointer; color: var(--ink); text-align: center; }
+    .chip-grid button.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); }
+    .chip-grid button:active, .chips button:active { transform: scale(.98); }
+    .sel-in { width: 100%; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 8px; font: 800 14px var(--font); color: var(--ink); background: #fff; }
+    .sel-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .sel-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .sel-row { margin-top: 8px; }
+    .sel-row:first-of-type { margin-top: 4px; }
+    .sel-row .q { font-weight: 800; font-size: 13.5px; margin-bottom: 3px; line-height: 1.25; }
+    .num-in { width: 100%; min-width: 0; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 8px; font: 800 16px ui-monospace, Menlo, Consolas, monospace; color: var(--ink); background: #fff; text-align: right; }
+    .num-in:focus { outline: none; border-color: var(--subject); }
+    .num-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .num-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .in-grid { display: grid; gap: 6px 8px; align-items: center; margin-top: 6px; }
+    .in-grid .lab { font-weight: 800; font-size: 13.5px; line-height: 1.25; }
+    .in-grid .hd { font-weight: 800; font-size: 12.5px; color: var(--muted); text-align: center; }
+    .in-unit { font-size: 12.5px; color: var(--muted); font-weight: 700; }
+    @keyframes shakeX { 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+    .readout .value { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .concept table.mini { border-collapse: collapse; margin: 6px 0; font-size: 14px; width: 100%; }
+    .concept table.mini th, .concept table.mini td { border: 1px solid var(--line); padding: 4px 6px; text-align: center; }
+    .concept table.mini th { background: var(--surface-2); font-weight: 800; }
+    .stage-canvas .stage-hint { top: 10px; bottom: auto; }
+    @media (max-width: 1100px) and (orientation: landscape) { .toolbar-label { display: none; } }
+    @media (max-width: 599px) {
+      .readout .value { font-size: 15px; }
+      .stage-toolbar { gap: 6px; padding: 8px; }
+      .stage-toolbar .spacer, .toolbar-label { display: none; }
+      .stage-toolbar .segmented button { padding: 5px 8px; font-size: 13.5px; }
+      .stage-hint { font-size: 13px; padding: 5px 12px; }
+    }
+    #modeSeg button.lv-off { display: none; }
+    .btn-col { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+
+  </style>
+</head>
+<body class="sim-page" data-subject="bio">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#hb">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">생명과학 · Ⅰ. 생명 시스템의 구성</div>
+      <h1>개체군의 특성</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">📏 붕어 개체군의 밀도</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="tablist" aria-label="화면 고르기">
+            <button type="button" data-mode="dens" data-lv="1" data-feature="dens">📏 밀도</button>
+            <button type="button" data-mode="mark" data-lv="1" data-feature="mark">🎣 표지 재포획</button>
+            <button type="button" data-mode="growth" data-lv="2" data-feature="growth">📈 생장 곡선</button>
+            <button type="button" data-mode="age" data-lv="3" data-feature="age">🧑‍🤝‍🧑 연령 구조</button>
+            <button type="button" data-mode="rel" data-lv="4" data-feature="rel">🐝 관계 카드</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="호수의 붕어 밀도와 칸 세기, 표지 재포획법 시행, 짚신벌레 생장 곡선과 출생 사망 막대, 연령 구조 막대와 20년 예상 그래프, 개체군 안의 관계 장면 카드"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">—</span><span class="value" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">—</span><span class="value" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">—</span><span class="value" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" data-modes="dens">
+          <div class="control-head"><span>📏 밀도 구하기</span></div>
+          <p class="ctrl-note">붕어 <b>600마리</b>가 넓이 <b>2 km²</b>인 호수에 살아요. 호수의 칸(0.25 km²)을 눌러 마리 수를 세어 봐도 좋아요.</p>
+          <div class="control-head" style="margin-top:10px"><label for="denIn">밀도 = 600 ÷ 2 =</label><span class="in-unit">마리/km²</span></div>
+          <input class="num-in" id="denIn" type="number" inputmode="numeric" min="0" max="5000" step="1" aria-label="밀도 (마리/km²)">
+        </div>
+        <div class="control" data-modes="mark">
+          <div class="control-head"><span>🎣 표지 재포획 · <b id="trialNo">1</b>번째 시행</span></div>
+          <div class="btn-col">
+            <button class="btn btn-sm" id="bMk1" type="button">① 50마리 잡아 표지하기</button>
+            <button class="btn btn-sm" id="bMk2" type="button">② 놓아주고 섞이게 하기</button>
+            <button class="btn btn-sm" id="bMk3" type="button">③ 40마리 다시 잡기</button>
+          </div>
+          <div class="control-head" style="margin-top:10px"><label for="nIn">N = (M × n) ÷ m =</label><span class="in-unit">마리</span></div>
+          <div class="range-row"><input class="num-in" id="nIn" type="number" inputmode="numeric" min="0" max="5000" step="1" aria-label="추정한 개체 수 N" disabled><button class="btn btn-sm btn-primary" id="bNCheck" type="button" style="flex:none">✔ 확인</button></div>
+          <div class="btn-row"><button class="btn btn-sm" id="bMkNext" type="button">🔄 새 호수에서 다시</button></div>
+          <p class="ctrl-note" id="mkNote"></p>
+        </div>
+        <div class="control" data-modes="growth">
+          <div class="control-head"><span>🧫 먹이·공간 조건</span></div>
+          <div class="segmented seg-full" id="envSeg" role="group" aria-label="먹이와 공간 조건">
+            <button type="button" data-e="S">한정 (실제)</button>
+            <button type="button" data-e="J">무한 (이론)</button>
+          </div>
+          <div class="control-head" style="margin-top:10px"><label for="sDay">관찰할 날</label><output id="oDay">8일</output></div>
+          <div class="range-row"><input type="range" id="sDay" min="0" max="18" step="2" value="8" aria-label="관찰할 날 (0에서 18일)"></div>
+          <p class="ctrl-note" id="grNote"></p>
+        </div>
+        <div class="control" data-modes="age">
+          <div class="control-head"><span>🧑‍🤝‍🧑 연령 구조 판정</span></div>
+          <div id="ageSel"></div>
+          <div class="control-head" style="margin-top:12px"><label for="sPre">🧪 내 개체군: 생식 전 비율</label><output id="oPre">40 %</output></div>
+          <div class="range-row"><input type="range" id="sPre" min="10" max="50" step="5" value="40" aria-label="내 개체군의 생식 전 비율 (10에서 50퍼센트)"></div>
+          <p class="ctrl-note">생식 비율은 40 %로 고정이고, 생식 후 비율 = 60 % − 생식 전 비율이에요.</p>
+          <div class="btn-row"><button class="btn btn-sm" id="agePlay" type="button">▶ 20년 지켜보기</button></div>
+        </div>
+        <div class="control" data-modes="rel">
+          <div class="control-head"><span>🐝 개체군 안의 관계 5가지</span></div>
+          <p class="ctrl-note">장면 카드 아래의 <b>유형 이름</b>과 <b>이점</b> 칸을 누를 때마다 보기가 바뀌어요.</p>
+          <p class="ctrl-note">유형: <b>텃세 · 순위제 · 리더제 · 사회생활 · 가족생활</b></p>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

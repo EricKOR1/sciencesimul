@@ -480,7 +480,7 @@
       if (sel >= 0) { D.sphere(r.x + 26, r.y + 26, 15, '#16a34a', { gloss: true }); T(r.x + 26, r.y + 32, String(sel + 1), 17, '#fff', 'center', 800); if (h.reason[sel] === c.ans) D.check(r.x + r.w - 26, r.y + 26, 12, 1); }
       ctx.restore();
     });
-    const yb = P(480, 554);
+    const yb = P(494, 554);
     T(VW / 2, yb, '토의할 습관 카드 3개를 골라요  (고른 카드 ' + h.picks.length + ' / 3)', P(15, 14), INK, 'center', 800);
     block(VW / 2 - P(340, 240), yb + 24, P(680, 480), '카드를 고르면 오른쪽(아래) 칸에 이유를 고르는 목록이 나타나요. 이유는 앞에서 배운 에너지 균형이나 조사 자료를 근거로 골라요.', P(13, 12.5), MUTED, 17, 700);
     T(VW / 2, VH - 6, DISC, 11.5, WARN, 'center', 800);

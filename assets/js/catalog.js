@@ -4740,8 +4740,7 @@ window.SCI_CATALOG = {
                 "분해 실험",
                 "조건 비교",
                 "이어지는 길"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hb-organ-systems",
@@ -4762,8 +4761,7 @@ window.SCI_CATALOG = {
                 "산소 운반",
                 "통합 지도",
                 "사례 추론"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hb-metabolic-disease",
@@ -4784,8 +4782,7 @@ window.SCI_CATALOG = {
                 "조사 설계",
                 "자료 분석",
                 "습관 토의"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hb-ecosystem-flow",
