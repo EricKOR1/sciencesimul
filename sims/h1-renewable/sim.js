@@ -350,7 +350,7 @@
      장면 공통: NEW 표시, 전환 페이드
      ========================================================= */
   function newTag() {
-    const x = 12, y = VH - 34, a = 0.5 + 0.5 * Math.sin(S.t * 6);
+    const x = VW - 62, y = 5, a = 0.5 + 0.5 * Math.sin(S.t * 6);
     ctx.save(); ctx.fillStyle = '#ef4444'; rr(x, y, 46, 20, 10).fill();
     ctx.globalAlpha = 0.35 + a * 0.4; ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 3; rr(x - 3, y - 3, 52, 26, 13).stroke();
     ctx.globalAlpha = 1; ctx.fillStyle = '#fff'; ctx.font = D.font(12, 800); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('NEW', x + 23, y + 11); ctx.restore();
@@ -503,7 +503,7 @@
   function drawSortScene(t, dt) {
     sky(0, VH, '#eef4fb', '#f8fbff');
     caption('🗂️ 신에너지와 재생 에너지로 나누기');
-    TX(VW - 14, 31, '카드를 끌어다 알맞은 칸에 놓아요 (눌러서 고르고 칸을 눌러도 돼요)', { size: PHONE ? 11.5 : 12.5, align: 'right', color: '#64748b', weight: 700 });
+    TX(VW - 14, 56, '카드를 끌어다 알맞은 칸에 놓아요 (눌러서 고르고 칸을 눌러도 돼요)', { size: PHONE ? 11.5 : 12.5, align: 'right', color: '#64748b', weight: 700 });
     sortBoard.step(dt);
     const hv = sortBoard.drag ? sortBoard.slotAtPoint({ x: sortBoard.drag.c.x, y: sortBoard.drag.c.y }) : null;
     sortBoard.slots.forEach((s) => { s._h = approach(s._h || 0, hv === s ? 1 : 0, dt, 14); drawSlot(s, { hover: s._h }); });
@@ -619,7 +619,7 @@
     TX(px, bY + 28, '☀️ 패널 1 m²가 받는 햇빛 = 1000 W × cos(입사각) × 구름 보정', { size: PHONE ? 13.5 : 14.5, align: 'left', weight: 800, color: '#0f172a' });
     TX(px, bY + 52, 'cos(' + sm.inc + '°) = ' + Math.cos(sm.inc * Math.PI / 180).toFixed(2) + '   ·   구름 보정 ×' + cf.toFixed(2) + '   →   ' + sm.irr + ' W', { size: 14, align: 'left', weight: 700, color: '#475569' });
     energyBar(px, bY + (PHONE ? 100 : 88), pw2, 30, [{ v: sm.p, c: '#16a34a', l: '전기', t: sm.p + ' W' }, { v: sm.irr - sm.p, c: '#f59e0b', l: '열 등 손실', t: (sm.irr - sm.p) + ' W' }], 1000, '들어오는 빛 ' + sm.irr + ' W  (눈금 0 ~ 1000 W)');
-    TX(px, bY + DL.bh - 18, '태양 전지의 효율은 약 20 %라서 받은 빛의 일부만 전기가 돼요. (교육용 예시)', { size: 13, align: 'left', weight: 700, color: '#64748b' });
+    drawWrap(px, bY + DL.bh - (PHONE ? 40 : 26), '태양 전지의 효율은 약 20 %라서 받은 빛의 일부만 전기가 돼요. (교육용 예시)', pw2, 13, { align: 'left', weight: 700, color: '#64748b' });
   }
 
   /* --- 풍력 --- */
@@ -821,9 +821,9 @@
     const bY = DL.by;
     ctx.save(); D.shadow(() => { ctx.fillStyle = '#fff'; rr(10, bY, VW - 20, DL.bh, 14).fill(); }, { blur: 8, y: 2, color: 'rgba(15,23,42,.15)' }); ctx.restore();
     const fuel = DV.o2 ? 2 * h : 0;
-    TX(28, bY + 28, '🔋 연료 전지 한 개 (수소를 최대로 공급하면 수소가 2.00 kW의 에너지를 줘요)', { size: PHONE ? 13.5 : 14.5, align: 'left', weight: 800, color: '#0f172a' });
+    drawWrap(28, bY + 28, '🔋 연료 전지 한 개: 수소를 최대로 공급하면 수소가 2.00 kW의 에너지를 줘요', VW - 56, PHONE ? 13.5 : 14.5, { align: 'left', weight: 800, color: '#0f172a' });
     energyBar(28, bY + (PHONE ? 100 : 80), VW - 56, 30, [{ v: md.p, c: '#16a34a', l: '전기', t: md.p.toFixed(2) + ' kW' }, { v: fuel - md.p, c: '#f59e0b', l: '열', t: (fuel - md.p).toFixed(2) + ' kW' }], 2, '쓰이는 수소의 에너지 ' + fuel.toFixed(2) + ' kW  (눈금 0 ~ 2.00 kW)');
-    TX(28, bY + DL.bh - 18, '효율은 약 50 %예요. 수소를 만들 때도 에너지가 필요해서, 수소는 에너지를 저장·운반하는 수단이기도 해요. (교육용 예시)', { size: 12.5, align: 'left', weight: 700, color: '#64748b' });
+    drawWrap(28, bY + DL.bh - (PHONE ? 44 : 30), '효율은 약 50 %예요. 수소를 만들 때도 에너지가 필요해서, 수소는 에너지를 저장·운반하는 수단이기도 해요. (교육용 예시)', VW - 56, 12.5, { align: 'left', weight: 700, color: '#64748b' });
     if (!DV.o2) pill(g.chR[0] + FCL.ch / 2, g.y0 + 24, '✕ 산소가 없어요', { size: 13, bg: '#fee2e2', color: '#b91c1c', border: '#fca5a5', pad: 10 });
   }
   function drawDev(t, dt) {
@@ -865,13 +865,13 @@
     // 풍력 터빈
     const nT = P.wind > 0 ? clamp(Math.ceil(P.wind / 100), 1, 4) : 0, wfrac = WIN[hi] * WEATHER[P.wx].wf / 100;
     for (let i = 0; i < nT; i++) {
-      const tx = 30 + i * (PHONE ? 38 : 34), th = H - 14;
-      ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(tx, th); ctx.lineTo(tx, th - 52); ctx.stroke();
+      const tx = (PHONE ? 176 : 150) + i * (PHONE ? 26 : 28), th = H - 14, tH = H - 62;
+      ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(tx, th); ctx.lineTo(tx, th - tH); ctx.stroke();
       const a = t * (0.3 + 9 * wfrac) + i * 1.3; ctx.strokeStyle = '#f8fafc'; ctx.lineWidth = 3; ctx.lineCap = 'round';
-      for (let b = 0; b < 3; b++) { const ang = a + b * TAU / 3; ctx.beginPath(); ctx.moveTo(tx, th - 52); ctx.lineTo(tx + Math.cos(ang) * 20, th - 52 + Math.sin(ang) * 20); ctx.stroke(); }
+      for (let b = 0; b < 3; b++) { const ang = a + b * TAU / 3; ctx.beginPath(); ctx.moveTo(tx, th - tH); ctx.lineTo(tx + Math.cos(ang) * 17, th - tH + Math.sin(ang) * 17); ctx.stroke(); }
     }
     // 집 8채
-    const hx0 = VW * (PHONE ? 0.3 : 0.27), hw = (VW * (PHONE ? 0.4 : 0.42)) / 8, served = hr.d > 0 ? (hr.d - hr.un) / hr.d : 1, lit = Math.round(served * 16);
+    const hx0 = VW * (PHONE ? 0.4 : 0.33), hw = (VW * (PHONE ? 0.34 : 0.38)) / 8, served = hr.d > 0 ? (hr.d - hr.un) / hr.d : 1, lit = Math.round(served * 16);
     const nS = P.solar > 0 ? clamp(Math.ceil(P.solar / 100), 1, 4) : 0, sunNow = SOL[hi] * WEATHER[P.wx].sf / 90;
     for (let i = 0; i < 8; i++) {
       const x = hx0 + i * hw + hw / 2, y = H - 14, w = hw - 6, h = 24;
@@ -885,19 +885,20 @@
       }
     }
     // 가스 발전소 · 배터리
-    const gx = VW * (PHONE ? 0.8 : 0.82);
+    const gx = VW * (PHONE ? 0.84 : 0.84);
     if (P.gas > 0 || S.mode === 'plan') {
       ctx.fillStyle = '#6b7280'; rr(gx - 18, H - 36, 34, 24, 3).fill(); ctx.fillStyle = '#4b5563'; ctx.fillRect(gx + 6, H - 54, 8, 20);
       if (hr.gas > 0.5 && !RM && Math.random() < dt * (2 + hr.gas / 12)) parts.emit({ x: gx + 10, y: H - 56, vx: 8 + Math.random() * 10, vy: -22, life: 1.1, size: 6, color: '#9ca3af', shape: 'smoke', fade: true, grow: 7 });
     }
     if (P.batt > 0) {
-      const bx = VW * (PHONE ? 0.92 : 0.93), frac = clamp(hr.st / P.batt, 0, 1);
+      const bx = VW * 0.94, frac = clamp(hr.st / P.batt, 0, 1);
       ctx.fillStyle = '#e2e8f0'; rr(bx - 12, H - 38, 24, 26, 4).fill(); ctx.fillStyle = '#e2e8f0'; ctx.fillRect(bx - 4, H - 42, 8, 5);
       ctx.fillStyle = '#16a34a'; rr(bx - 9, H - 35 + 20 * (1 - frac), 18, 20 * frac, 2).fill();
     }
     // 시각 표시
     pill(12, 17, WEATHER[P.wx].icon + ' ' + WEATHER[P.wx].name + ' · ' + String(hi).padStart(2, '0') + '시', { size: 13, bg: 'rgba(15,23,42,.72)', color: '#fff', border: null, align: 'left', pad: 10 });
-    if (hr.un > 0.01 && G.showGap) { const bl = 0.5 + 0.5 * Math.sin(t * 8); pill(VW / 2 + (PHONE ? 0 : 0), 17, '⚠️ 정전 ' + Math.round(hr.un) + ' MW 부족', { size: 13, bg: rgba('#dc2626', 0.75 + 0.2 * bl), color: '#fff', border: null, pad: 12 }); }
+    if (S.mode === 'plan' && planOk(P)) pill(VW * 0.5, 17, '✅ 세 날씨 모두 조건 달성', { size: 13, bg: '#16a34a', color: '#fff', border: null, pad: 12 });
+    else if (hr.un > 0.01 && G.showGap) { const bl = 0.5 + 0.5 * Math.sin(t * 8); pill(VW / 2 + (PHONE ? 0 : 0), 17, '⚠️ 정전 ' + Math.round(hr.un) + ' MW 부족', { size: 13, bg: rgba('#dc2626', 0.75 + 0.2 * bl), color: '#fff', border: null, pad: 12 }); }
   }
 
   function gridStep(dt, res, P) {
@@ -980,11 +981,11 @@
     const sc = GL.soc;
     ctx.save(); D.shadow(() => { ctx.fillStyle = '#fff'; rr(8, sc.y, VW - 16, sc.h, 12).fill(); }, { blur: 6, y: 2, color: 'rgba(15,23,42,.12)' }); ctx.restore();
     if (P.batt > 0) {
-      TX(18, sc.y + (PHONE ? 22 : 24), '🔋 배터리 저장량', { size: PHONE ? 12 : 13, align: 'left', weight: 800, color: '#334155' });
-      TX(ch.x + ch.w, sc.y + (PHONE ? 22 : 24), '최대 ' + P.batt + ' MWh', { size: 12, align: 'right', weight: 700, color: '#64748b' });
-      const bh = sc.h - (PHONE ? 30 : 12), by = sc.y + sc.h - 6;
+      const bh = sc.h - (PHONE ? 30 : 10), by = sc.y + sc.h - 6;
       for (let h = 0; h < 24; h++) { const f = clamp(GA.soc[h] / P.batt, 0, 1); ctx.fillStyle = '#93c5fd'; rr(ch.x + h * CW24 + 2, by - bh * f, CW24 - 4, Math.max(1, bh * f), 2).fill(); }
       ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(ch.x, by); ctx.lineTo(ch.x + ch.w, by); ctx.stroke();
+      TX(16, sc.y + (PHONE ? 22 : 17), '🔋 배터리 저장량', { size: PHONE ? 12 : 12.5, align: 'left', weight: 800, color: '#334155', stroke: '#fff', strokeWidth: 4 });
+      TX(ch.x + ch.w, sc.y + (PHONE ? 22 : 17), '최대 ' + P.batt + ' MWh', { size: 12, align: 'right', weight: 800, color: '#475569', stroke: '#fff', strokeWidth: 4 });
     } else TX(VW / 2, sc.y + sc.h / 2 + 5, '🔋 배터리가 없어요 (남는 전기는 버려져요)', { size: 13.5, weight: 800, color: '#94a3b8' });
     // 아래 카드
     const b = GL.bot;
@@ -1019,13 +1020,12 @@
     const rows = [['🌍 환경', sc.env, '#16a34a'], ['💰 경제', sc.eco, '#f59e0b'], ['🔌 사회', sc.soc, '#0ea5e9']];
     TX(sx + 12, cy + 19, '균형 점수 (세 날씨 평균, 100점 만점)', { size: PHONE ? 11.5 : 12, align: 'left', weight: 800, color: '#64748b' });
     rows.forEach((r, i) => {
-      const y = cy + 28 + i * ((chh - 34) / 3) + 4, bw = sw - 110;
+      const y = cy + 28 + i * ((chh - 34) / 3) + 4, bw = sw - 124;
       TX(sx + 12, y + 14, r[0], { size: 13.5, align: 'left', weight: 800, color: '#1e293b' });
       G.sc = G.sc || [0, 0, 0]; G.sc[i] = approach(G.sc[i], r[1], dt, 8);
       glossBar(sx + 74, y + 2, bw, 15, G.sc[i] / 100, r[2]);
       TX(sx + sw - 12, y + 15, String(r[1]), { size: 14, align: 'right', weight: 800, color: '#1e293b' });
     });
-    if (ok) pill(VW / 2, GL.panelY + GL.panelH - 14, '✅ 세 날씨 모두 정전 없이, CO₂ ' + PLAN_CO2_MAX + ' t 이하, 비용 ' + PLAN_COST_MAX + ' 이하', { size: 12.5, bg: '#dcfce7', color: '#166534', border: '#86efac', pad: 10 });
   }
 
   // 그리드 포인터: 클릭하면 시각 이동, 눌러 끌면 '부족한 시간' 표시 (하루 전기 화면)
@@ -1098,7 +1098,8 @@
     sync('sBatt', G.batt); sync('pSol', PL.solar); sync('pWin', PL.wind); sync('pBatt', PL.batt); sync('pGas', PL.gas);
   }
   function bindUI() {
-    const bind = (id, fmt, fn) => { const inp = $('#' + id), out = $('#o' + id.slice(1)); if (!inp) return; SLIDERS[id] = SciSim.bindRange(inp, out, fmt, (v) => { fn(v); }); };
+    const OUT = { sAngle: 'oAngle', sCloud: 'oCloud', sWind: 'oWind', sH2: 'oH2', sBatt: 'oBatt', pSol: 'oPSol', pWin: 'oPWin', pBatt: 'oPBatt', pGas: 'oPGas' };
+    const bind = (id, fmt, fn) => { const inp = $('#' + id), out = $('#' + OUT[id]); if (!inp) return; SLIDERS[id] = SciSim.bindRange(inp, out, fmt, (v) => { fn(v); }); };
     bind('sAngle', (v) => v + '°', (v) => { DV.angle = v; });
     bind('sCloud', (v) => v + ' %', (v) => { DV.cloud = v; });
     bind('sWind', (v) => v + ' m/s', (v) => { DV.wind = v; });
