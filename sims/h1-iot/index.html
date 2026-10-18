@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#64748b">
+  <title>사물인터넷과 센서 | 고1 통합과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📡</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; }
+    .stage-toolbar { min-height: 61px; }
+    .segmented button { min-height: 44px; }
+    .segmented button.on { background: var(--sci); color: #fff; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 14px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard .btn-sm { min-height: 44px; }
+    #ctrlCard [hidden] { display: none !important; }
+    .ctrl-note { font-size: 14px; color: var(--muted); margin: 6px 0 0; }
+    .btn-row { display: flex; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
+    .btn-row .btn { flex: 1; padding-left: 8px; padding-right: 8px; }
+    .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .seg-full { width: 100%; display: flex; }
+    .seg-full button { flex: 1; padding-left: 6px; padding-right: 6px; }
+    .tgl {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px;
+      border: 2px solid var(--line); background: var(--surface); color: var(--muted);
+      border-radius: 999px; padding: 6px 10px; font-weight: 800; font-size: 14.5px; cursor: pointer; font-family: inherit;
+      transition: background .15s, border-color .15s, color .15s; user-select: none; -webkit-user-select: none;
+    }
+    .tgl[aria-pressed="true"] { color: #1e293b; border-color: var(--sci); background: #e8edf4; }
+    .tgl:active { transform: scale(.97); }
+    .num-in {
+      width: 100%; min-height: 48px; border: 2px solid var(--line); border-radius: 12px; padding: 6px 12px;
+      font: 800 20px ui-monospace, Menlo, Consolas, monospace; color: var(--ink); background: #fff;
+    }
+    .num-in:focus { outline: none; border-color: var(--sci); }
+    .readout .value.txt { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    @media (max-width: 599px) {
+      .readout .value.txt { font-size: 15px; }
+      .stage-toolbar .spacer { display: none; }
+    }
+    .seg-col { display: flex; flex-direction: column; gap: 6px; }
+    .seg-col button {
+      min-height: 44px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 12px;
+      padding: 6px 10px; font-weight: 800; font-size: 14px; cursor: pointer; font-family: inherit; text-align: left;
+    }
+    .seg-col button.on { border-color: var(--sci); background: #e8edf4; }
+    .seg-col button.done::after { content: " ✓"; color: var(--good); }
+    .seg-col button:disabled { opacity: .5; }
+
+  </style>
+</head>
+<body class="sim-page" data-subject="sci">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#h1b">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">통합과학2 · Ⅲ. 과학과 미래 사회</div>
+      <h1>사물인터넷과 센서</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🌡️ 센서로 읽기</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="tablist" aria-label="화면 고르기" hidden>
+            <button type="button" data-mode="sense">🌡️ 센서 측정</button>
+            <button type="button" data-mode="pipe">📶 연결과 전송</button>
+            <button type="button" data-mode="sim">⏱️ 자동 제어</button>
+            <button type="button" data-mode="city">🏙️ 스마트 시티</button>
+            <button type="button" data-mode="events">⚠️ 사건 실험</button>
+
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="스마트 화분의 센서 값, 센서에서 서버까지 이어지는 사물인터넷의 흐름, 임계값으로 펌프를 자동 제어하는 하루 시뮬레이션, 스마트 시티 사례를 보여 주는 화면"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">—</span><span class="value txt" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">—</span><span class="value txt" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">—</span><span class="value txt" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" data-modes="sense pipe">
+          <div class="control-head"><span>💧 흙의 물</span><output id="oMoist">60 %</output></div>
+          <div class="btn-grid">
+            <button class="btn btn-sm" id="bWater" type="button">💧 물 주기</button>
+            <button class="btn btn-sm" id="bDry" type="button">🌬️ 말리기</button>
+          </div>
+        </div>
+        <div class="control" data-modes="sense" data-sub="temp">
+          <div class="control-head"><span>🌡️ 방 온도 조절</span><output id="oTemp">25 °C</output></div>
+          <input type="range" id="sTemp" min="15" max="35" step="1" value="25" aria-label="방 온도">
+        </div>
+        <div class="control" data-modes="sense" data-sub="light">
+          <div class="control-head"><span>💡 빛의 세기</span><output id="oLight">40 %</output></div>
+          <input type="range" id="sLight" min="0" max="100" step="1" value="40" aria-label="화분에 비치는 빛의 세기">
+        </div>
+        <div class="control" data-modes="pipe">
+          <div class="control-head"><span>📶 통신 상태</span><output id="oComm">정상</output></div>
+          <div class="segmented seg-full" id="commSeg">
+            <button type="button" data-v="ok" class="on">📶 정상</button>
+            <button type="button" data-v="slow">🐢 느림</button>
+            <button type="button" data-v="off">❌ 끊김</button>
+          </div>
+          <p class="ctrl-note">서버가 받은 값이 어떻게 달라지는지 봐요.</p>
+          <button class="btn btn-sm btn-block" id="bPipeReset" type="button" style="margin-top:8px">↺ 블록 모두 되돌리기</button>
+        </div>
+        <div class="control" data-modes="sim">
+          <div class="control-head"><span>📏 임계값 (이 값보다 낮으면 펌프 켜기)</span><output id="oThr">50 %</output></div>
+          <input type="range" id="sThr" min="10" max="90" step="5" value="50" aria-label="펌프를 켜는 임계값">
+        </div>
+        <div class="control" data-modes="sim">
+          <div class="btn-grid" id="thrPre">
+            <button class="btn btn-sm" type="button" data-t="30">30 %</button>
+            <button class="btn btn-sm" type="button" data-t="50">50 %</button>
+            <button class="btn btn-sm" type="button" data-t="80">80 %</button>
+            <button class="btn btn-sm btn-primary" id="bRun" type="button">▶ 하루 시작</button>
+          </div>
+          <p class="ctrl-note">하루(24시간)를 약 6초로 빠르게 감아요.</p>
+        </div>
+        <div class="control" data-modes="city">
+          <p class="ctrl-note" style="margin-top:0">아래 <b>카드</b>를 끌어 알맞은 장치에 놓아요. 장치마다 <b>쓸모</b> 1장과 <b>한계</b> 1장이 있어요.</p>
+          <button class="btn btn-sm btn-block" id="bCityReset" type="button" style="margin-top:8px">↺ 카드 모두 되돌리기</button>
+        </div>
+        <div class="control" data-modes="events">
+          <div class="control-head"><span>⚠️ 일어날 사건</span></div>
+          <div class="seg-col" id="evSeg">
+            <button type="button" data-v="stuck">🔧 센서 고장 (값이 0 %로 고정)</button>
+            <button type="button" data-v="hack">🕸️ 해킹 (펌프를 마음대로 조작)</button>
+            <button type="button" data-v="comm">📵 통신 장애 (값이 안 들어옴)</button>
+          </div>
+        </div>
+        <div class="control" data-modes="events">
+          <div class="control-head"><span>🤔 먼저 예측해요</span></div>
+          <div class="seg-col" id="predSeg">
+            <button type="button" data-v="waste">💸 물이 많이 낭비돼요</button>
+            <button type="button" data-v="flood">🌊 물이 넘쳐 식물이 상해요</button>
+            <button type="button" data-v="wilt">🥀 물을 못 받아 시들어요</button>
+            <button type="button" data-v="none">😌 별다른 변화가 없어요</button>
+          </div>
+          <button class="btn btn-sm btn-primary btn-block" id="bEvRun" type="button" style="margin-top:8px">▶ 하루 시작</button>
+        </div>
+
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

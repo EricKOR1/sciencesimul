@@ -3435,8 +3435,7 @@ window.SCI_CATALOG = {
                 "데이터 축적",
                 "패턴 찾기",
                 "장점·문제점"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "h1-iot",
@@ -3457,8 +3456,7 @@ window.SCI_CATALOG = {
                 "연결과 전송",
                 "자동 제어",
                 "유용성·한계"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "h1-ai-robot",
