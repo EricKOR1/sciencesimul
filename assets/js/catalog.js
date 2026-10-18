@@ -4207,8 +4207,7 @@ window.SCI_CATALOG = {
                 "액체·용액",
                 "전하 운반자",
                 "결합 추론"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hc-water-electrolysis",
@@ -4229,8 +4228,7 @@ window.SCI_CATALOG = {
                 "전기 분해",
                 "부피비",
                 "입자 모형"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hc-electronegativity",
@@ -4251,8 +4249,7 @@ window.SCI_CATALOG = {
                 "주기성 탐색",
                 "경향과 까닭",
                 "순서 맞히기"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hc-bond-polarity",
@@ -4273,8 +4270,7 @@ window.SCI_CATALOG = {
                 "Δχ와 화살표",
                 "결합 연속체",
                 "결합 판단"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hc-lewis",
