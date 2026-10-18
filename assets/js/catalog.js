@@ -3953,8 +3953,7 @@ window.SCI_CATALOG = {
                 "불연속 에너지",
                 "보어 모형",
                 "한계"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hp-energy-band",
@@ -3975,8 +3974,7 @@ window.SCI_CATALOG = {
                 "띠 간격",
                 "전자·양공",
                 "도핑"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hp-pn-diode",
@@ -3997,8 +3995,7 @@ window.SCI_CATALOG = {
                 "전압 방향",
                 "정류",
                 "LED·전지"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hp-relativity",
@@ -4019,8 +4016,7 @@ window.SCI_CATALOG = {
                 "시간 팽창",
                 "길이 수축",
                 "영향 조사"
-              ],
-              "soon": true
+              ]
             }
           ]
         }
