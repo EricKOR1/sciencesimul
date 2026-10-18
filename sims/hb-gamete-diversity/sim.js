@@ -403,7 +403,7 @@
   function drawCross(dt, t) {
     const C_ = S.cr, y0 = cyTop();
     C_.bot.forEach((b) => { b.x = RM ? b.tx : approach(b.x, b.tx, dt, 7); });
-    C_.gT = RM ? (C_.made ? 1 : 0) : approach(C_.gT, C_.made ? 1 : 0, dt, 2.6);
+    C_.gT = RM ? (C_.made ? 1 : 0) : approach(C_.gT, C_.made ? 1 : 0, dt, 4);
     panel(CR.x, CR.y, CR.w, CR.h, 16, '#fff');
     T(CR.x + 12, CR.y + 24, C_.made ? '생식세포 4개의 유전자 조합' : '감수 1분열 전기: 2가 염색체', PHONE ? 14 : 16, '#14532d', 'left', 800);
     const xs = C_.xs, g = C_.gT;
@@ -420,12 +420,12 @@
       T((xs[2] + xs[3]) / 2, y0 - 12, '어머니', PHONE ? 13 : 14.5, MAT, 'center', 800);
       for (let i = 0; i < 4; i++) {
         if (C_.sel === i) { D.glow(xs[i], y0 + CLEN / 2, CLEN * 0.62, '#fde047', 0.6); }
-        drawChromatid(i, xs[i], y0, 1, true);
+        drawChromatid(i, xs[i], y0, 1 - g, true);
       }
       // 같은 염색체의 두 염색 분체를 잇는 동원체
       for (let k = 0; k < 2; k++) { const a = xs[k * 2], b = xs[k * 2 + 1], cy = y0 + CLEN * CCEN; ctx.fillStyle = C.shade(k ? MAT : PAT, -0.55); ctx.beginPath(); ctx.arc((a + b) / 2, cy, CWID * 0.42, 0, TAU); ctx.fill(); }
       // 교차 표시(키아스마)
-      C_.chi.forEach((c) => { const age = S.clock - c.t; const mx = (xs[c.a] + xs[c.b]) / 2, my = y0 + CLEN * CF_X; ctx.save(); ctx.strokeStyle = '#ca8a04'; ctx.lineWidth = 3; ctx.globalAlpha = 0.9; ctx.beginPath(); ctx.ellipse(mx, my, Math.abs(xs[c.a] - xs[c.b]) / 2 + 6, 9, 0, 0, TAU); ctx.stroke(); if (age < 1) { ctx.globalAlpha = (1 - age) * 0.6; ctx.beginPath(); ctx.ellipse(mx, my, Math.abs(xs[c.a] - xs[c.b]) / 2 + 6 + age * 20, 9 + age * 14, 0, 0, TAU); ctx.stroke(); } ctx.restore(); });
+      C_.chi.forEach((c) => { const age = S.clock - c.t; const mx = (xs[c.a] + xs[c.b]) / 2, my = y0 + CLEN * CF_X; ctx.save(); ctx.strokeStyle = '#ca8a04'; ctx.lineWidth = 3; ctx.globalAlpha = 0.9 * (1 - g); ctx.beginPath(); ctx.ellipse(mx, my, Math.abs(xs[c.a] - xs[c.b]) / 2 + 6, 9, 0, 0, TAU); ctx.stroke(); if (age < 1) { ctx.globalAlpha = (1 - age) * 0.6 * (1 - g); ctx.beginPath(); ctx.ellipse(mx, my, Math.abs(xs[c.a] - xs[c.b]) / 2 + 6 + age * 20, 9 + age * 14, 0, 0, TAU); ctx.stroke(); } ctx.restore(); });
       ctx.restore();
       if (!C_.crosses && !C_.made) {
         const tw = 0.5 + 0.5 * Math.sin(t * 4);
@@ -441,7 +441,7 @@
         ctx.save(); ctx.globalAlpha = q;
         cellDisc(gp.x, gp.y, r, r);
         ctx.restore();
-        const sc = lerp(1, (PHONE ? 0.5 : 0.52), q);
+        const sc = lerp(1, Math.min(0.5, r * 1.5 / CLEN), q);
         const len = CLEN * sc, w = CWID * sc, yTop = py - len / 2;
         ctx.save();
         const bt = C_.bot[i], tp = C_.top[i];
@@ -482,8 +482,8 @@
      ③ 연속성 : 수정으로 염색체 수 유지 / 체세포분열로 만들면 (가정)
      ========================================================= */
   const CS = PHONE ? { x: 6, y: 8, w: 468, h: 232 } : { x: 12, y: 12, w: 500, h: 296 };
-  const CB = PHONE ? { x: 6, y: 248, w: 468, h: 236 } : { x: 12, y: 318, w: 776, h: 230 };
-  const CC = PHONE ? { x: 6, y: 492, w: 468, h: 144 } : { x: 524, y: 12, w: 264, h: 296 };
+  const CB = PHONE ? { x: 6, y: 248, w: 468, h: 232 } : { x: 12, y: 318, w: 776, h: 230 };
+  const CC = PHONE ? { x: 6, y: 488, w: 468, h: 148 } : { x: 524, y: 12, w: 264, h: 296 };
   const GEN = [46, 92, 184, 368];
   S.ct = { hypo: false, f: null, pred: ['', '', ''], predOK: false, ferT: -1, done: false };
   function startFert() {
@@ -512,7 +512,7 @@
     panel(CS.x, CS.y, CS.w, CS.h, 16, '#fff');
     T(CS.x + 12, CS.y + 24, hypo ? '가정: 생식세포를 체세포분열로 만들면' : '실제: 생식세포를 감수 분열로 만들면', PHONE ? 13.5 : 16, hypo ? '#c2410c' : '#14532d', 'left', 800);
     const nG = hypo ? 46 : 23, nZ = hypo ? 92 : 46;
-    const ey = CS.y + CS.h * 0.52, er = PHONE ? 52 : 74, sx0 = CS.x + CS.w * 0.17, ex = CS.x + CS.w * 0.78, zx = CS.x + CS.w * 0.5;
+    const ey = CS.y + CS.h * 0.52, er = PHONE ? 52 : 74, sx0 = CS.x + CS.w * 0.24, ex = CS.x + CS.w * 0.78, zx = CS.x + CS.w * 0.5;
     let tt = F.f ? F.f.t : -1;
     if (F.f) { F.f.t += dt; tt = F.f.t; }
     const approachP = smooth(tt / 1.5), fuse = smooth((tt - 1.8) / 1.0);
@@ -546,8 +546,8 @@
     if (!F.f) T(CS.x + CS.w / 2, CS.y + CS.h - 14, '▶ 수정시키기 버튼을 눌러 보세요', PHONE ? 13 : 14.5, '#16a34a', 'center', 800);
     // 막대 그래프 : 세대별 염색체 수
     panel(CB.x, CB.y, CB.w, CB.h, 16, '#fff');
-    T(CB.x + 12, CB.y + 24, '세대별 염색체 수 (체세포)', PHONE ? 13.5 : 16, '#14532d', 'left', 800);
-    const px0 = CB.x + (PHONE ? 46 : 60), px1 = CB.x + CB.w - 16, py0 = CB.y + (PHONE ? 46 : 52), py1 = CB.y + CB.h - (PHONE ? 38 : 40), ymax = 400;
+    T(CB.x + 12, CB.y + 24, PHONE ? '세대별 염색체 수' : '세대별 염색체 수 (체세포)', PHONE ? 13.5 : 16, '#14532d', 'left', 800);
+    const px0 = CB.x + (PHONE ? 46 : 60), px1 = CB.x + CB.w - 16, py0 = CB.y + (PHONE ? 70 : 52), py1 = CB.y + CB.h - (PHONE ? 38 : 40), ymax = 400;
     const yv = (v) => py1 - clamp(v, 0, ymax) / ymax * (py1 - py0);
     for (let v = 0; v <= 400; v += 100) { ctx.strokeStyle = v === 0 ? '#64748b' : '#e2e8f0'; ctx.lineWidth = v === 0 ? 2 : 1.2; ctx.beginPath(); ctx.moveTo(px0, yv(v)); ctx.lineTo(px1, yv(v)); ctx.stroke(); T(px0 - 8, yv(v) + 5, String(v), 13.5, '#475569', 'right', 800); }
     const cw = (px1 - px0) / 4, names = ['부모 세대', '1세대', '2세대', '3세대'];
@@ -567,9 +567,9 @@
         T(x + 3 + bw / 2, Math.max(py0 + 6, yv(val) - 6), val > ymax ? String(val) + '↑' : String(val), 13, ok ? '#9a3412' : '#c2410c', 'center', 800);
       }
     }
-    const lx = CB.x + CB.w - 12;
-    D.label(lx, CB.y + 22, '체세포분열로 만들면 (가정)', { bg: COL_H, color: '#fff', size: PHONE ? 12.5 : 13.5, align: 'right' });
-    D.label(lx - (PHONE ? 196 : 218), CB.y + 22, '감수 분열 (실제)', { bg: COL_G, color: '#fff', size: PHONE ? 12.5 : 13.5, align: 'right' });
+    const lx = CB.x + CB.w - 12, ly = CB.y + (PHONE ? 48 : 22);
+    D.label(lx, ly, '체세포분열로 만들면 (가정)', { bg: COL_H, color: '#fff', size: PHONE ? 12.5 : 13.5, align: 'right' });
+    D.label(lx - (PHONE ? 196 : 218), ly, '감수 분열 (실제)', { bg: COL_G, color: '#fff', size: PHONE ? 12.5 : 13.5, align: 'right' });
     // 수정 조합 카드
     panel(CC.x, CC.y, CC.w, CC.h, 16, '#fff');
     const x = CC.x + 14, w = CC.w - 28;
@@ -633,17 +633,17 @@
     const cx = x + w / 2, cy = y + h / 2;
     const rr = (id2, ox, oy, pp, hh, dbl, a) => chr1(cx + ox * m, cy + oy * m, pp ? LSx : LLx, wd, pal[hh], pp ? 0.4 : 0.45, dbl, { alpha: a });
     const cell = (ox, oy, rx, ry) => cellDisc(cx + ox * m, cy + oy * m, rx * m, ry * m);
-    const bob = Math.sin(tm * 2) * m * 0.006;
+    const bobF = Math.sin(tm * 2) * 0.008, bob = bobF * m;
     const lab = (txt, ox, oy) => T(cx + ox * m, cy + oy * m, txt, o.fs || Math.max(12.5, m * 0.075), '#14532d', 'center', 800);
     switch (id) {
       case 'rep':
         cell(0, 0, 0.44, 0.44);
-        rr(0, -0.2, -0.05 + bob, 0, 0, true); rr(0, 0.0, 0.1 - bob, 0, 1, true); rr(0, 0.18, -0.12 + bob, 1, 0, true); rr(0, 0.12, 0.16 - bob, 1, 1, true);
+        rr(0, -0.2, -0.05 + bobF, 0, 0, true); rr(0, 0.0, 0.1 - bobF, 0, 1, true); rr(0, 0.18, -0.12 + bobF, 1, 0, true); rr(0, 0.12, 0.16 - bobF, 1, 1, true);
         break;
       case 'syn':
         cell(0, 0, 0.44, 0.44);
-        rr(0, -0.22 - wd / m * 1.4, 0 + bob, 0, 0, true); rr(0, -0.22 + wd / m * 1.4, 0 - bob, 0, 1, true);
-        rr(0, 0.2 - wd / m * 1.4, 0.04 + bob, 1, 0, true); rr(0, 0.2 + wd / m * 1.4, 0.04 - bob, 1, 1, true);
+        rr(0, -0.22 - wd / m * 1.4, 0 + bobF, 0, 0, true); rr(0, -0.22 + wd / m * 1.4, 0 - bobF, 0, 1, true);
+        rr(0, 0.2 - wd / m * 1.4, 0.04 + bobF, 1, 0, true); rr(0, 0.2 + wd / m * 1.4, 0.04 - bobF, 1, 1, true);
         break;
       case 'crs': {
         cell(0, 0, 0.44, 0.44);
@@ -657,7 +657,7 @@
       case 'sp1':
         cell(-0.24, 0, 0.23, 0.36); cell(0.24, 0, 0.23, 0.36);
         rr(0, -0.29, -0.05, 0, 0, true); rr(0, -0.19, 0.1, 1, 1, true); rr(0, 0.19, -0.05, 0, 1, true); rr(0, 0.29, 0.1, 1, 0, true);
-        if (nlab) { lab('n = 2', -0.24, 0.46); lab('n = 2', 0.24, 0.46); }
+        if (nlab && !o.mini) { lab('n = 2', -0.24, 0.46); lab('n = 2', 0.24, 0.46); }
         break;
       case 'sp2':
         cell(-0.24, 0, 0.23, 0.36); cell(0.24, 0, 0.23, 0.36);
@@ -677,7 +677,7 @@
         chr1(cx - 0.12 * m, cy - 0.02 * m + bob, LLx * 0.62, wd * 0.9, pal[0], 0.45, false); chr1(cx - 0.04 * m, cy - 0.02 * m - bob, LLx * 0.62, wd * 0.9, pal[1], 0.45, false);
         chr1(cx + 0.06 * m, cy + 0.02 * m + bob, LSx * 0.62, wd * 0.9, pal[0], 0.4, false); chr1(cx + 0.14 * m, cy + 0.02 * m - bob, LSx * 0.62, wd * 0.9, pal[1], 0.4, false);
         D.sphere(cx - 0.34 * m, cy - 0.34 * m, 0.04 * m, '#e0e7ff', { gloss: false });
-        if (nlab) lab('2n = 4', 0, 0.5);
+        if (nlab && !o.mini) lab('2n = 4', 0, 0.5);
         break;
       case 'bad1':
         cell(-0.24, 0, 0.23, 0.36); cell(0.24, 0, 0.23, 0.36);
@@ -686,7 +686,7 @@
       default: // bad2
         cell(-0.24, 0, 0.23, 0.36); cell(0.24, 0, 0.23, 0.36);
         [-0.24, 0.24].forEach((ox) => { chr1(cx + (ox - 0.1) * m, cy - 0.04 * m, LLx * 0.8, wd, pal[0], 0.45, false); chr1(cx + (ox - 0.03) * m, cy - 0.04 * m, LLx * 0.8, wd, pal[1], 0.45, false); chr1(cx + (ox + 0.05) * m, cy + 0.06 * m, LSx * 0.8, wd, pal[0], 0.4, false); chr1(cx + (ox + 0.12) * m, cy + 0.06 * m, LSx * 0.8, wd, pal[1], 0.4, false); });
-        if (nlab) { lab('2n = 4', -0.24, 0.46); lab('2n = 4', 0.24, 0.46); }
+        if (nlab && !o.mini) { lab('2n = 4', -0.24, 0.46); lab('2n = 4', 0.24, 0.46); }
     }
   }
   const tagOf = (seq, i, style) => (style === 'num' ? (i + 1) + '단계' : TOK[seq[i]].name);
@@ -717,11 +717,21 @@
     } else {
       const id = sq[clamp(vi, 0, sq.length - 1)], fl = St.flip;
       ctx.save(); ctx.globalAlpha = 1 - fl * 0.6; ctx.translate(STV.x + STV.w / 2, STV.y + STV.h / 2); ctx.scale(1 - fl * 0.06, 1 - fl * 0.06); ctx.translate(-(STV.x + STV.w / 2), -(STV.y + STV.h / 2));
-      const vh = STV.h - 40, vw = Math.min(STV.w - 40, vh * 1.7);
-      drawToken(id, STV.x + (STV.w - vw) / 2, STV.y + 36, vw, vh, { t, fs: PHONE ? 14 : 17 });
+      const vh = STV.h - (PHONE ? 74 : 40), vw = PHONE ? Math.min(STV.w - 40, vh * 1.7) : Math.min(STV.w - 250, vh * 1.7);
+      drawToken(id, PHONE ? STV.x + (STV.w - vw) / 2 : STV.x + 14 + (STV.w - 250 - vw) / 2 + 20, STV.y + 36, vw, vh, { t, fs: PHONE ? 14 : 17 });
       ctx.restore();
       if (St.tag) D.label(STV.x + 14, STV.y + 22, tagOf(sq, clamp(vi, 0, sq.length - 1), St.style), { bg: TOK[id].req < 0 ? '#dc2626' : '#16a34a', color: '#fff', size: PHONE ? 14 : 16, align: 'left' });
       T(STV.x + STV.w - 14, STV.y + 24, (clamp(vi, 0, sq.length - 1) + 1) + ' / ' + sq.length + (St.play ? '  ▶ 재생 중' : ''), PHONE ? 13.5 : 15, '#475569', 'right', 800);
+    }
+    // 필수 요소 점검표
+    const its = stItems();
+    if (PHONE) {
+      const n = its.filter(Boolean).length;
+      T(STV.x + STV.w / 2, STV.y + STV.h - 8, '필수 요소 ' + n + ' / 7  ' + its.map((v) => (v ? '●' : '○')).join(' '), 13.5, n === 7 ? '#16a34a' : '#64748b', 'center', 800);
+    } else {
+      const cx0 = STV.x + STV.w - 214;
+      T(cx0, STV.y + 56, '필수 요소 ' + its.filter(Boolean).length + ' / 7', 15, '#14532d', 'left', 800);
+      REQ_NAMES.forEach((nm, i) => { const y = STV.y + 80 + i * 26; D.sphere(cx0 + 9, y - 5, 8, its[i] ? '#16a34a' : '#e2e8f0', { gloss: false }); T(cx0 + 9, y - 0.5, its[i] ? '✓' : String(i + 1), 11, its[i] ? '#fff' : '#94a3b8', 'center', 800); T(cx0 + 24, y, nm, 13.5, its[i] ? '#166534' : '#64748b', 'left', 800); });
     }
     // 타임라인
     panel(STL.x, STL.y, STL.w, STL.h, 16, '#fff');
@@ -730,7 +740,7 @@
       if (!id) { D.roundRect(r.x, r.y, r.w, r.h, 10); ctx.fillStyle = '#f8fafc'; ctx.fill(); ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 1.6; ctx.setLineDash([5, 4]); ctx.stroke(); ctx.setLineDash([]); T(r.x + r.w / 2, r.y + r.h / 2 + 6, String(i + 1), 16, '#cbd5e1', 'center', 800); continue; }
       const on = i === vi, bad = TOK[id].req < 0;
       D.roundRect(r.x, r.y, r.w, r.h, 10); ctx.fillStyle = on ? '#f0fdf4' : '#fff'; ctx.fill(); ctx.lineWidth = on ? 3 : 1.8; ctx.strokeStyle = bad ? '#dc2626' : on ? '#16a34a' : '#cbd5e1'; ctx.stroke();
-      drawToken(id, r.x + 2, r.y + 18, r.w - 4, PHONE ? r.h - 56 : r.h - 82, { t, fs: 12.5 });
+      drawToken(id, r.x + 2, r.y + 18, r.w - 4, PHONE ? r.h - 56 : r.h - 82, { t, fs: 12.5, mini: true });
       D.sphere(r.x + 13, r.y + 13, 9, bad ? '#dc2626' : '#16a34a', { text: String(i + 1), gloss: false });
       if (St.tag) textBlock(r.x + r.w / 2, r.y + r.h - (PHONE ? 30 : 46), r.w - 6, tagOf(sq, i, St.style), PHONE ? 12 : 13, bad ? '#dc2626' : '#1f2d44', PHONE ? 14 : 16, 800, 'center');
     }
@@ -766,12 +776,13 @@
       D.label(x + 10, y + 20, g.name, { bg: g.mine ? '#16a34a' : '#64748b', color: '#fff', size: PHONE ? 13 : 14, align: 'left' });
       const pal = PALS[g.pal];
       T(x + gw - 10, y + 24, pal.n, PHONE ? 12.5 : 13.5, pal.c[0], 'right', 800);
-      const tcols = 3, tw = (gw - 16) / tcols, th = PHONE ? 56 : 60, ty0 = y + 38;
+      const tcols = PHONE ? 3 : 2, tw = (gw - 16) / tcols, th = PHONE ? 52 : 66, ty0 = y + 38;
+      const SHORT = { rep: '복제', syn: '2가 형성', crs: '교차', sp1: '상동 분리', sp2: '분체 분리', gam: '생식세포', fer: '수정', bad1: '복제 없이', bad2: '체세포식' };
       for (let k = 0; k < Math.min(9, g.seq.length); k++) {
-        const tx = x + 8 + (k % tcols) * tw, ty = ty0 + Math.floor(k / tcols) * (th + (PHONE ? 22 : 24));
-        D.roundRect(tx, ty, tw - 4, th + 20, 8); ctx.fillStyle = '#f8fafc'; ctx.fill(); ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1.4; ctx.stroke();
-        drawToken(g.seq[k], tx, ty + 2, tw - 4, th, { pal, nlab: g.nlab, fs: 12.5, t });
-        T(tx + (tw - 4) / 2, ty + th + 16, g.style === 'num' ? (k + 1) + '단계' : TOK[g.seq[k]].name.replace('염색체 ', '').replace(' (2n 회복)', ''), PHONE ? 12 : 12.5, '#334155', 'center', 800);
+        const tx = x + 8 + (k % tcols) * tw, ty = ty0 + Math.floor(k / tcols) * (th + (PHONE ? 22 : 26));
+        D.roundRect(tx, ty, tw - 4, th + (PHONE ? 20 : 22), 8); ctx.fillStyle = '#f8fafc'; ctx.fill(); ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1.4; ctx.stroke();
+        drawToken(g.seq[k], tx, ty + 2, tw - 4, th, { pal, nlab: g.nlab, fs: 12.5, t, mini: true });
+        T(tx + (tw - 4) / 2, ty + th + (PHONE ? 16 : 17), g.style === 'num' ? (k + 1) + '단계' : SHORT[g.seq[k]], PHONE ? 12.5 : 13, '#334155', 'center', 800);
       }
       const have = (id) => g.seq.indexOf(id) >= 0;
       const cnt = [have('rep'), have('syn'), have('crs'), have('sp1'), have('sp2'), have('gam') && g.nlab, have('fer')].filter(Boolean).length;
@@ -786,7 +797,7 @@
   const MODE_LABEL = { combo: '🎲 감수 분열로 만들어지는 염색체 조합', log: '📈 생식세포 종류 수 2ⁿ', cross: '✂️ 교차: 상동 염색체의 DNA 조각 교환', cont: '🔗 수정과 염색체 수의 유지', studio: '🛠️ 모델 스튜디오', gallery: '🖼️ 모둠 모델 갤러리' };
   S.ui = {};
   function setMode(mode) {
-    if (S.mode !== mode) { S.fade = 1; parts.clear(); hideHint(); }
+    if (S.mode !== mode) { S.fade = 1; parts.clear(); hideHint(); S.cb.a = null; S.st.play = null; }
     S.mode = mode; $('#tbLabel').textContent = MODE_LABEL[mode]; updateCtl();
   }
   const FREE = () => !!(game && game.free);
@@ -797,21 +808,7 @@
       const b = document.createElement('button'); b.type = 'button'; b.className = 'tok' + (k.req < 0 ? ' bad' : ''); b.innerHTML = '<span>' + k.ico + '</span> ' + k.name;
       b.addEventListener('click', () => stAdd(k.id)); tg.appendChild(b);
     });
-    const cl = $('#chkList'); cl.innerHTML = REQ_NAMES.map((n, i) => '<li data-i="' + i + '"><span>⬜</span> ' + (i + 1) + '. ' + n + '</li>').join('');
   }
-  function renderTimeline() {
-    const L_ = $('#tlList'); L_.innerHTML = '';
-    S.st.seq.forEach((id, i) => {
-      const row = document.createElement('div'); row.className = 'tl-row' + (i === S.st.sel ? ' on' : '') + (TOK[id].req < 0 ? ' bad' : '');
-      const nm = document.createElement('button'); nm.type = 'button'; nm.className = 'tl-name'; nm.innerHTML = '<b>' + (i + 1) + '</b> ' + TOK[id].name; nm.addEventListener('click', () => { S.st.sel = i; S.st.play = null; updateCtl(); });
-      const up = document.createElement('button'); up.type = 'button'; up.textContent = '▲'; up.setAttribute('aria-label', '앞으로'); up.disabled = i === 0; up.addEventListener('click', () => stMove(i, -1));
-      const dn = document.createElement('button'); dn.type = 'button'; dn.textContent = '▼'; dn.setAttribute('aria-label', '뒤로'); dn.disabled = i === S.st.seq.length - 1; dn.addEventListener('click', () => stMove(i, 1));
-      const rm = document.createElement('button'); rm.type = 'button'; rm.textContent = '✕'; rm.setAttribute('aria-label', '지우기'); rm.addEventListener('click', () => stRemove(i));
-      row.append(nm, up, dn, rm); L_.appendChild(row);
-    });
-    if (!S.st.seq.length) L_.innerHTML = '<p class="ctrl-note">아직 장면이 없어요. 위의 장면 도구를 눌러 순서대로 넣어요.</p>';
-  }
-  let tlKey = '';
   function updateCtl() {
     $$('#ctrlCard [data-modes]').forEach((n) => { n.hidden = n.getAttribute('data-modes').split(' ').indexOf(S.mode) < 0; });
     const curLv = game ? game.level + 1 : 1, showAll = FREE();
@@ -837,10 +834,10 @@
     S.ct.predOK = [0, 1, 2].every(predRight);
     $('#ctNote').innerHTML = S.ct.hypo ? '가정: 정자와 난자가 체세포분열로 만들어져 <b>46개</b>씩이면 수정란은 <b>92개</b>가 돼요.' : '실제: 감수 분열로 정자와 난자가 <b>23개</b>(n)씩이라 수정란은 <b>46개</b>(2n)로 일정해요.';
     // studio
-    const St = S.st, key = St.seq.join(',') + '|' + St.sel;
-    if (key !== tlKey) { tlKey = key; renderTimeline(); } else { $$('#tlList .tl-row').forEach((r, i) => r.classList.toggle('on', i === St.sel)); }
-    const it = stItems();
-    $$('#chkList li').forEach((li, i) => { li.classList.toggle('on', it[i]); li.firstChild.textContent = it[i] ? '✅' : '⬜'; });
+    const St = S.st, it = stItems();
+    const hasSel = St.seq.length > 0 && St.sel >= 0 && St.sel < St.seq.length;
+    $('#tlTitle').textContent = hasSel ? '🎞️ 선택한 장면: ' + (St.sel + 1) + '. ' + TOK[St.seq[St.sel]].name : '🎞️ 장면을 넣으면 아래에서 순서를 바꿀 수 있어요';
+    $('#tlUp').disabled = !hasSel || St.sel === 0; $('#tlDn').disabled = !hasSel || St.sel === St.seq.length - 1; $('#tlRm').disabled = !hasSel;
     $('#palSeg').querySelectorAll('button').forEach((b) => b.classList.toggle('on', +b.dataset.p === St.pal));
     $('#stStyle').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.s === St.style));
     $('#tgTag').checked = St.tag; $('#tgN').checked = St.nlab;
@@ -865,6 +862,9 @@
   $('#stStyle').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { S.st.style = b.dataset.s; S.st.posted = false; Sound.click(); updateCtl(); }));
   $('#tgTag').addEventListener('change', (e) => { S.st.tag = e.target.checked; S.st.posted = false; Sound.click(); updateCtl(); });
   $('#tgN').addEventListener('change', (e) => { S.st.nlab = e.target.checked; S.st.posted = false; Sound.click(); updateCtl(); });
+  $('#tlUp').addEventListener('click', () => stMove(S.st.sel, -1));
+  $('#tlDn').addEventListener('click', () => stMove(S.st.sel, 1));
+  $('#tlRm').addEventListener('click', () => stRemove(S.st.sel));
   $('#bPlay').addEventListener('click', stPlay);
   $('#bPost').addEventListener('click', stPost);
   $('#galB').addEventListener('change', (e) => { S.gal.ans.B = e.target.value; Sound.click(); });
@@ -973,6 +973,7 @@
             const C_ = S.cr;
             if (!C_.made) return '먼저 ▶ 생식세포 만들기를 눌러 생식세포 4개를 만들어요.';
             const need = [0, 1, 2, 3].filter(isRecomb), picked = [0, 1, 2, 3].filter((i) => C_.pick[i]);
+            if (!picked.length) return '생식세포를 눌러 ‘새 조합’이라고 생각하는 것을 표시해 주세요.';
             if (!need.length) return '교차가 일어나지 않아 새 조합이 없어요. ↺ 되돌리기 후 교차를 일으켜 보세요.';
             const extra = picked.filter((i) => need.indexOf(i) < 0), miss = need.filter((i) => picked.indexOf(i) < 0);
             if (extra.length) return '표시한 것 중에 원래 조합(AB 또는 ab)이 들어 있어요.';

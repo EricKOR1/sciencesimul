@@ -82,6 +82,9 @@
     .tok.bad { border-style: dashed; color: #b91c1c; }
     .tok:active { transform: scale(.98); }
     .tok-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 6px; }
+    .tl-sel { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-top: 6px; }
+    .tl-sel button { min-height: 44px; border: 2px solid var(--line); background: #fff; border-radius: 12px; font-weight: 800; font-size: 13.5px; cursor: pointer; color: var(--ink); }
+    .tl-sel button:disabled { opacity: .35; cursor: default; }
     .tl-list { display: grid; gap: 4px; margin-top: 6px; }
     .tl-row { display: grid; grid-template-columns: 1fr 36px 36px 36px; gap: 4px; align-items: center; }
     .tl-row button { min-height: 40px; border: 2px solid var(--line); background: #fff; border-radius: 10px; font-weight: 800; cursor: pointer; color: var(--ink); font-size: 13px; padding: 0 4px; }
@@ -178,14 +181,12 @@
         <div class="control" data-modes="studio">
           <div class="control-head"><span>🧰 장면 도구 (눌러서 넣기)</span></div>
           <div class="tok-grid" id="tokGrid"></div>
-          <div class="control-head" style="margin-top:12px"><span>🎞️ 내 모델 (장면 순서)</span></div>
-          <div class="tl-list" id="tlList"></div>
+          <div class="control-head" style="margin-top:12px"><span id="tlTitle">🎞️ 아래 장면을 눌러 고르면 옮길 수 있어요</span></div>
+          <div class="tl-sel"><button type="button" id="tlUp">◀ 앞으로</button><button type="button" id="tlDn">뒤로 ▶</button><button type="button" id="tlRm">✕ 지우기</button></div>
           <div class="control-head" style="margin-top:12px"><span>🎨 색상표 · 이름표</span></div>
           <div class="segmented seg-full" id="palSeg" role="group" aria-label="색상표"><button type="button" data-p="0">파랑·빨강</button><button type="button" data-p="1">초록·주황</button><button type="button" data-p="2">보라·노랑</button></div>
           <div class="segmented seg-full" id="stStyle" role="group" aria-label="이름표 방식" style="margin-top:6px"><button type="button" data-s="name">이름으로 표기</button><button type="button" data-s="num">번호로 표기</button></div>
           <div class="toggle-row"><label><input type="checkbox" id="tgTag" checked> 단계 이름표</label><label><input type="checkbox" id="tgN" checked> 염색체 수 표시 (n, 2n)</label></div>
-          <div class="control-head" style="margin-top:10px"><span>✅ 필수 요소 점검</span></div>
-          <ul class="check-list" id="chkList"></ul>
           <p class="ctrl-note" id="stNote"></p>
           <div class="btn-row"><button class="btn btn-sm" id="bPlay" type="button">▶ 재생</button><button class="btn btn-sm btn-primary" id="bPost" type="button">📤 갤러리에 올리기</button></div>
         </div>

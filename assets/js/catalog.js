@@ -5115,8 +5115,7 @@ window.SCI_CATALOG = {
                 "염색체 구조",
                 "유전자와 DNA",
                 "핵형 분석"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hb-meiosis",
@@ -5137,8 +5136,7 @@ window.SCI_CATALOG = {
                 "감수 1분열",
                 "감수 2분열",
                 "비교하기"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hb-gamete-diversity",
@@ -5159,8 +5157,7 @@ window.SCI_CATALOG = {
                 "교차",
                 "연속성",
                 "모델 만들기"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hb-evolution-evidence",

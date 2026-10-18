@@ -438,7 +438,7 @@
     tips.slice(0, 2).forEach((t) => { ctx.beginPath(); ctx.moveTo(j.x, j.y); ctx.lineTo(t.x, t.y); ctx.stroke(); });
     tips.slice(0, 2).forEach((t) => {
       const s = size * 0.3;
-      ctx.save(); ctx.translate(t.x, t.y); ctx.rotate(t.a);
+      ctx.save(); ctx.translate(t.x, t.y);
       // 결합 부위: 항원 모양의 홈을 가진 머리
       ctx.fillStyle = kind ? AGCOL[kind] : col; ctx.globalAlpha *= 0.28; agPath(kind || 'sq', s * 1.5); ctx.fill(); ctx.globalAlpha = o.alpha != null ? o.alpha : 1;
       ctx.strokeStyle = kind ? AGCOL[kind] : col; ctx.lineWidth = Math.max(1.6, size * 0.12); ctx.setLineDash([size * 0.18, size * 0.14]); agPath(kind || 'sq', s * 1.5); ctx.stroke(); ctx.setLineDash([]);
@@ -537,6 +537,83 @@
     $$(sel + ' button').forEach((b) => b.addEventListener('click', () => { Sound.click(); setter(b.dataset[attr]); syncControls(); }));
   }
   function markSeg(sel, attr, cur) { $$(sel + ' button').forEach((b) => b.classList.toggle('on', b.dataset[attr] === String(cur))); }
+
+  /* ---------- 면역 세포 그림 ---------- */
+  function starP(x, y, R, r, n) { ctx.beginPath(); for (let i = 0; i < n * 2; i++) { const rad = i % 2 ? r : R, a = (i / (n * 2)) * TAU - Math.PI / 2; ctx.lineTo(x + Math.cos(a) * rad, y + Math.sin(a) * rad); } ctx.closePath(); }
+  const CELLCOL = { B: '#60a5fa', Th: '#fb923c', Tc: '#ef4444', plasma: '#3b82f6', mem: '#38bdf8', phag: '#fcd34d', inf: '#fbb6c4' };
+  const CELLNAME = { B: 'B 림프구', Th: '보조 T 림프구', Tc: '세포독성 T 림프구', plasma: '형질 세포', mem: '기억 B 세포', phag: '식세포' };
+  /* kind: 'B' | 'Th' | 'Tc' | 'plasma' | 'mem' | 'phag' | 'inf'. o: {glow, rec:{kind,n}, ag:[kind,...], alpha, rot, nolabel, squash} */
+  function drawCell(kind, x, y, r, o) {
+    o = o || {};
+    const col = CELLCOL[kind], t = clock;
+    ctx.save();
+    if (o.alpha != null) ctx.globalAlpha *= o.alpha;
+    if (o.glow > 0.02) D.glow(x, y, r * 2.1, kind === 'Tc' ? '#fb7185' : '#fde047', clamp(o.glow, 0, 1) * 0.75);
+    ctx.translate(x, y); ctx.rotate(o.rot || 0);
+    if (o.squash) ctx.scale(1 + o.squash, 1 - o.squash);
+    // 세포막
+    ctx.beginPath();
+    if (kind === 'phag' || kind === 'inf') {
+      for (let i = 0; i <= 40; i++) { const a = i / 40 * TAU, k = 1 + (kind === 'phag' ? 0.11 : 0.05) * Math.sin(a * 5 + t * 1.8) + 0.05 * Math.sin(a * 3 - t * 1.1); const px = Math.cos(a) * r * k, py = Math.sin(a) * r * k; if (i) ctx.lineTo(px, py); else ctx.moveTo(px, py); }
+    } else ctx.arc(0, 0, r, 0, TAU);
+    const g = ctx.createRadialGradient(-r * 0.3, -r * 0.35, r * 0.1, 0, 0, r * 1.1);
+    g.addColorStop(0, C.shade(col, 0.5)); g.addColorStop(0.7, col); g.addColorStop(1, C.shade(col, -0.18));
+    ctx.fillStyle = g; ctx.fill(); ctx.strokeStyle = C.shade(col, -0.45); ctx.lineWidth = Math.max(1.4, r * 0.07); ctx.stroke();
+    if (kind === 'plasma') { // 소포체 물결
+      ctx.strokeStyle = C.rgba('#1e3a8a', 0.55); ctx.lineWidth = Math.max(1, r * 0.05);
+      for (let q = 0; q < 3; q++) { ctx.beginPath(); for (let i = 0; i <= 24; i++) { const a = i / 24 * TAU, rr = r * (0.66 + q * 0.11) + Math.sin(a * 6 + q) * r * 0.025; if (i) ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); else ctx.moveTo(Math.cos(a) * rr, Math.sin(a) * rr); } ctx.stroke(); }
+    }
+    // 핵
+    if (kind === 'phag') { D.sphere(-r * 0.12, -r * 0.05, r * 0.3, '#8b5cf6', { gloss: false }); D.sphere(r * 0.22, r * 0.1, r * 0.25, '#7c3aed', { gloss: false }); }
+    else if (kind === 'inf') { D.sphere(-r * 0.22, -r * 0.1, r * 0.3, '#8b5cf6', { gloss: false }); }
+    else D.sphere(0, 0, r * (kind === 'plasma' ? 0.36 : 0.54), '#6d28d9', { gloss: false });
+    ctx.restore();
+    if (!o.nolabel && kind !== 'phag' && kind !== 'inf') {
+      const lab = kind === 'B' ? 'B' : kind === 'Th' ? 'Th' : kind === 'Tc' ? 'Tc' : kind === 'mem' ? 'B' : '';
+      if (lab) { ctx.save(); if (o.alpha != null) ctx.globalAlpha *= o.alpha; T(x, y + r * 0.2, lab, Math.max(11, r * 0.62), '#fff', 'center', 900); ctx.restore(); }
+    }
+    if (kind === 'mem') { ctx.save(); if (o.alpha != null) ctx.globalAlpha *= o.alpha; ctx.fillStyle = '#fbbf24'; ctx.strokeStyle = '#b45309'; ctx.lineWidth = 1.4; starP(x + r * 0.78, y - r * 0.78, r * 0.42, r * 0.18, 5); ctx.fill(); ctx.stroke(); ctx.restore(); }
+    if (o.rec && o.rec.n) {
+      ctx.save(); if (o.alpha != null) ctx.globalAlpha *= o.alpha;
+      for (let i = 0; i < o.rec.n; i++) { const a = (i / o.rec.n) * TAU + (o.rot || 0) + 0.5 + (o.rec.off || 0); drawAb(x + Math.cos(a) * r * 0.98, y + Math.sin(a) * r * 0.98, Math.max(5, r * 0.26), a + Math.PI / 2, o.rec.kind, { col: C.shade(col, -0.45), open: 0.7 }); }
+      ctx.restore();
+    }
+    if (o.ag && o.ag.length) {
+      ctx.save(); if (o.alpha != null) ctx.globalAlpha *= o.alpha;
+      o.ag.forEach((k, i) => { const a = -0.6 + i * 0.7 + (o.rot || 0); drawAg(k, x + Math.cos(a) * r * 1.05, y + Math.sin(a) * r * 1.05, Math.max(5, r * 0.24), a + Math.PI / 2); });
+      ctx.restore();
+    }
+  }
+
+  /* ---------- 단조 3차 보간 (그래프 곡선) ---------- */
+  function monoFn(xs, ys) {
+    const n = xs.length, d = [], m = new Array(n).fill(0);
+    for (let i = 0; i < n - 1; i++) d[i] = (ys[i + 1] - ys[i]) / (xs[i + 1] - xs[i]);
+    m[0] = d[0]; m[n - 1] = d[n - 2];
+    for (let i = 1; i < n - 1; i++) m[i] = d[i - 1] * d[i] <= 0 ? 0 : (d[i - 1] + d[i]) / 2;
+    for (let i = 0; i < n - 1; i++) {
+      if (d[i] === 0) { m[i] = 0; m[i + 1] = 0; continue; }
+      const a = m[i] / d[i], b = m[i + 1] / d[i], s = a * a + b * b;
+      if (s > 9) { const tau = 3 / Math.sqrt(s); m[i] = tau * a * d[i]; m[i + 1] = tau * b * d[i]; }
+    }
+    return (x) => {
+      if (x <= xs[0]) return ys[0]; if (x >= xs[n - 1]) return ys[n - 1];
+      let i = 0; while (x > xs[i + 1]) i++;
+      const h = xs[i + 1] - xs[i], t = (x - xs[i]) / h, t2 = t * t, t3 = t2 * t;
+      return (2 * t3 - 3 * t2 + 1) * ys[i] + (t3 - 2 * t2 + t) * h * m[i] + (-2 * t3 + 3 * t2) * ys[i + 1] + (t3 - t2) * h * m[i + 1];
+    };
+  }
+  /* 항체 농도 자료(상대값, 예시): 항원 접촉 후 일수 → 농도 */
+  const AB1 = { x: [0, 4, 7, 14, 21, 28, 42], y: [0, 0, 2, 10, 7, 4, 2] };       // 1차 반응
+  const AB2 = { x: [0, 2, 4, 7, 14, 28, 42], y: [2, 20, 70, 100, 80, 50, 30] };  // 2차 반응
+  const ab1f = monoFn(AB1.x, AB1.y), ab2f = monoFn(AB2.x, AB2.y);
+  /* 감염 모형: 병원체 수 P(상대값). 증식 r, 최대 K, 항체 효과 k */
+  function simInfect(Af, days) {
+    const r = 1.1, K = 100, k = 0.5, dt = 0.02, out = [];
+    let P = 1;
+    for (let t = 0; t <= days + 1e-9; t += dt) { out.push(P); P = Math.max(0, P + (r * P * (1 - P / K) - k * Af(t) * P) * dt); }
+    return { dt, P: out, at: (t) => out[clamp(Math.round(t / dt), 0, out.length - 1)] };
+  }
 
   /* ============ 자료 ============ */
   const PATH = {
