@@ -5020,8 +5020,7 @@ window.SCI_CATALOG = {
                 "증식과 전염",
                 "질병 분류",
                 "예방·치료"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hb-immunity",
@@ -5042,8 +5041,7 @@ window.SCI_CATALOG = {
                 "림프구",
                 "기억 세포",
                 "면역 구분"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hb-blood-type",
@@ -5064,8 +5062,7 @@ window.SCI_CATALOG = {
                 "ABO 응집",
                 "혈액형 검사",
                 "수혈 적용"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hb-vaccine",
@@ -5086,8 +5083,7 @@ window.SCI_CATALOG = {
                 "백신 원리",
                 "백신 종류",
                 "집단 면역"
-              ],
-              "soon": true
+              ]
             }
           ]
         },

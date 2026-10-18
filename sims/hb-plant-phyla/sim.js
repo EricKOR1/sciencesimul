@@ -470,8 +470,8 @@
       const tray = PL.map((p, i) => ({ x: 20 + i * 95, y: 292, w: 88, h: 66 }));
       return { q, bin, tray, yes: { x: 200, y: 438, w: 190, h: 52 }, no: { x: 410, y: 438, w: 190, h: 52 }, txtY: 392, trailY: 416, cols: [1, 1, 1, 1] };
     }
-    const q = [{ x: 10, y: 66, w: 216, h: 44 }, { x: 10, y: 158, w: 216, h: 44 }, { x: 10, y: 250, w: 216, h: 44 }];
-    const bin = [{ x: 252, y: 50, w: 218, h: 78 }, { x: 252, y: 142, w: 218, h: 78 }, { x: 252, y: 234, w: 218, h: 78 }, { x: 10, y: 330, w: 216, h: 78 }];
+    const q = [{ x: 10, y: 66, w: 196, h: 44 }, { x: 10, y: 158, w: 196, h: 44 }, { x: 10, y: 250, w: 196, h: 44 }];
+    const bin = [{ x: 268, y: 50, w: 202, h: 78 }, { x: 268, y: 142, w: 202, h: 78 }, { x: 268, y: 234, w: 202, h: 78 }, { x: 10, y: 330, w: 196, h: 78 }];
     const tray = PL.map((p, i) => ({ x: 10 + (i % 4) * 115, y: 424 + Math.floor(i / 4) * 52, w: 110, h: 46 }));
     return { q, bin, tray, yes: { x: 20, y: 580, w: 200, h: 48 }, no: { x: 250, y: 580, w: 200, h: 48 }, txtY: 540, trailY: 562, cols: [3, 3, 3, 3] };
   }
@@ -737,7 +737,7 @@
       ctx.fillStyle = PH[s].soft; ctx.strokeStyle = PH[s].col; ctx.lineWidth = 2;
       ctx.beginPath(); ctx.moveTo(x, by + 42); ctx.lineTo(x + sw - 16, by + 42); ctx.lineTo(x + sw - 4, by + 42 + 30); ctx.lineTo(x + sw - 16, by + 42 + 60); ctx.lineTo(x, by + 42 + 60); ctx.lineTo(x + 12, by + 42 + 30); ctx.closePath(); ctx.fill(); ctx.stroke();
       T(x + sw / 2 - 2, by + 42 + 36, PH[s].short, L(15, 13.5), PH[s].col, 'center', 800);
-      if (PH[s].f !== undefined && stages[s].f) T(x + sw / 2 - 2, by + 42 + 84, stages[s].f, L(14.5, 13), '#1b2333', 'center', 800);
+      if (stages[s].f) T(x + sw / 2 - 2, by + 42 + 84, stages[s].f, L(14.5, 13), '#1b2333', 'center', 800);
       ctx.restore();
     }
     T(TB.x + TB.w / 2, by + bh - 8, '관다발 → 종자 → 씨방(꽃) 순서로 새 형질이 더해졌어요', 13, '#475569', 'center', 700);
@@ -765,16 +765,15 @@
       T(P.x + P.w / 2, P.y + 26, ttl, L(15.5, 14.5), phh.col, 'center', 800);
     });
     // 소나무: 비늘 위의 밑씨 → 종자(날개 달림), 계속 드러나 있음
-    ctx.save(); ctx.translate(P1.x + P1.w / 2, P1.y + 150 * (ph / 380) + (PHONE ? 10 : 0));
-    const sc1 = PHONE ? 0.78 : 1.0; ctx.scale(sc1, sc1);
-    ctx.fillStyle = '#6b4423'; D.roundRect(-110, 0, 40, 22, 6); ctx.fill();
-    ctx.fillStyle = '#8d5a2b'; ctx.beginPath(); ctx.moveTo(-76, -22); ctx.lineTo(110, -34); ctx.lineTo(124, 0); ctx.lineTo(110, 34 + 0); ctx.lineTo(-76, 24); ctx.closePath(); ctx.fill();
-    ctx.strokeStyle = '#6b4423'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-60, -10); ctx.lineTo(110, -22); ctx.moveTo(-60, 10); ctx.lineTo(110, 18); ctx.stroke();
-    for (const q of [-20, 40]) {
-      const sy = -28 + (q + 20) * -0.05;
-      ctx.save(); ctx.translate(q + 20, sy);
-      if (tt < 0.55) { ctx.fillStyle = '#f5e7a1'; ctx.strokeStyle = '#c9b45a'; ctx.lineWidth = 1.5; ell(0, -10, 14, 9); ctx.fill(); ctx.stroke(); }
-      else { const a = smooth((tt - 0.55) / 0.45); ctx.fillStyle = '#9a6a38'; ell(0, -10 - 2 * a, 8 + 2 * a, 10 + a * 2); ctx.fill(); ctx.fillStyle = 'rgba(205,170,120,' + (0.9 * a) + ')'; ctx.beginPath(); ctx.moveTo(-4, -16); ctx.quadraticCurveTo(-24 * a, -40 * a, -10 * a, -52 * a); ctx.quadraticCurveTo(8 * a, -34 * a, 4, -16); ctx.fill(); }
+    ctx.save(); ctx.translate(P1.x + P1.w / 2, P1.y + ph * 0.42);
+    const sc1 = PHONE ? 0.95 : 1.35; ctx.scale(sc1, sc1);
+    ctx.fillStyle = '#5a3a1c'; D.roundRect(-128, -62, 26, 124, 8); ctx.fill();
+    ctx.fillStyle = '#8d5a2b'; ctx.beginPath(); ctx.moveTo(-104, -16); ctx.lineTo(70, -26); ctx.quadraticCurveTo(112, -14, 112, 0); ctx.quadraticCurveTo(112, 14, 70, 26); ctx.lineTo(-104, 18); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = '#6b4423'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-90, -4); ctx.lineTo(90, -8); ctx.moveTo(-90, 8); ctx.lineTo(90, 10); ctx.stroke();
+    for (const q of [-52, 18]) {
+      ctx.save(); ctx.translate(q, -26);
+      if (tt < 0.55) { ctx.fillStyle = '#f5e7a1'; ctx.strokeStyle = '#c9b45a'; ctx.lineWidth = 1.5; ell(0, -9, 17, 10); ctx.fill(); ctx.stroke(); }
+      else { const a = smooth((tt - 0.55) / 0.45); ctx.fillStyle = 'rgba(214,184,140,' + (0.95 * a) + ')'; ctx.beginPath(); ctx.moveTo(-6, -14); ctx.quadraticCurveTo(-30 * a, -34 * a, -14 * a, -52 * a); ctx.quadraticCurveTo(12 * a, -34 * a, 8, -14); ctx.fill(); ctx.fillStyle = '#7a4e22'; ell(0, -11, 8 + 6 * a, 9 + 3 * a); ctx.fill(); }
       ctx.restore();
     }
     ctx.restore();
