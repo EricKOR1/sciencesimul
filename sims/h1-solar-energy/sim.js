@@ -559,10 +559,10 @@
     D.arrow(sx, sy, ex, ey, { color: '#fcd34d', width: wd(K.IN), head: 20 });
     D.label((sx + ex) / 2 + (PHONE ? 36 : 0), (sy + ey) / 2 + (PHONE ? 0 : -26), '도달 ' + K.IN, { bg: '#d97706', size: 14, pad: 9 });
     const rx = PHONE ? earth.x + 30 : earth.x - 10, ry = PHONE ? earth.y - earth.r - 4 : earth.y - earth.r - 6;
-    D.arrow(rx, ry, rx + (PHONE ? 70 : 60), ry - (PHONE ? 80 : 90), { color: '#fef3c7', width: wd(K.REFL), head: 16 });
-    D.label(rx + (PHONE ? 110 : 98), ry - (PHONE ? 86 : 96), '반사 ' + K.REFL, { bg: '#78716c', size: 14, pad: 9 });
+    D.arrow(rx, ry, rx + (PHONE ? 52 : 60), ry - (PHONE ? 66 : 90), { color: '#fef3c7', width: wd(K.REFL), head: 16 });
+    D.label(rx + (PHONE ? 66 : 98), ry - (PHONE ? 86 : 96), '반사 ' + K.REFL, { bg: '#78716c', size: 14, pad: 9 });
     D.text(earth.x, earth.y + 4, '흡수 ' + K.ABS, { size: 17, weight: 800, color: '#fff', stroke: 'rgba(8,47,100,.7)', strokeWidth: 5 });
-    D.text(earth.x, earth.y + earth.r + 24, K.ABS + ' = ' + [K.HEAT, K.WATER, K.WIND, K.CURR, K.PHOTO].map(FM).join(' + '), { size: 13.5, weight: 800, color: '#bfdbfe' });
+    D.text(PHONE ? 14 : earth.x, earth.y + earth.r + 26, K.ABS + ' = ' + [K.HEAT, K.WATER, K.WIND, K.CURR, K.PHOTO].map(FM).join(' + '), { size: 13.5, weight: 800, color: '#bfdbfe', align: PHONE ? 'left' : 'center' });
     // 리본과 상자
     PATHS.forEach((p, i) => {
       const b = pathBez(i, 1), w = p.v * 0.14, vis = S.visited.has(i), sel = S.sel === i;
@@ -657,7 +657,7 @@
   const CG = chainGeom();
   const clearBadB = (b) => b.cards.forEach((c) => { c.flagged = false; c.border = '#cfd8e6'; });
   const sortBoard = (() => {
-    const cw = PHONE ? 176 : 140, ch = PHONE ? 46 : 42;
+    const cw = PHONE ? 176 : 144, ch = PHONE ? 48 : 48;
     const zs = PHONE
       ? [{ id: 'sun', x: 10, y: 66, w: 580, h: 250 }, { id: 'not', x: 10, y: 326, w: 580, h: 120 }]
       : [{ id: 'sun', x: 20, y: 60, w: 470, h: 300 }, { id: 'not', x: 510, y: 60, w: 270, h: 300 }];
