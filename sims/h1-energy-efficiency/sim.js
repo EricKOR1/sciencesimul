@@ -317,9 +317,9 @@
 
   /* ================= ② 에너지 보존 ================= */
   // ---- 백열전구: 1 J 칸 100개 ----
-  const BT = PHONE ? 8 : 13, BG = PHONE ? 1.5 : 2;                     // 칸 크기, 틈
+  const BT = PHONE ? 10 : 13, BG = PHONE ? 1.5 : 2;                     // 칸 크기, 틈
   const bulbLayout = () => PHONE
-    ? { ix: 18, iy: 78, cx: 240, cy: 126, hx: 328, hy: 78, lx: 440, ly: 78 }
+    ? { ix: 14, iy: 84, cx: 232, cy: 134, hx: 326, hy: 84, lx: 452, ly: 84 }
     : { ix: 40, iy: 72, cx: 385, cy: 130, hx: 530, hy: 72, lx: 712, ly: 72 };
   const slotXY = (ox, oy, k) => ({ x: ox + (k % 10) * (BT + BG) + BT / 2, y: oy + Math.floor(k / 10) * (BT + BG) + BT / 2 });
   function resetBulb() {

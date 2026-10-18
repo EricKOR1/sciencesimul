@@ -3308,8 +3308,7 @@ window.SCI_CATALOG = {
                 "세기 요인",
                 "간이 발전기",
                 "에너지 전환"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "h1-power-plant",
@@ -3330,8 +3329,7 @@ window.SCI_CATALOG = {
                 "화력 발전",
                 "원자력 발전",
                 "비교·발표"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "h1-energy-efficiency",
@@ -3352,8 +3350,7 @@ window.SCI_CATALOG = {
                 "에너지 보존",
                 "에너지 효율",
                 "낭비 줄이기"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "h1-renewable",
