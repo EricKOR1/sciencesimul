@@ -3540,8 +3540,7 @@ window.SCI_CATALOG = {
                 "회전 평형",
                 "두 조건",
                 "안정성"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hp-equal-accel",
@@ -3562,8 +3561,7 @@ window.SCI_CATALOG = {
                 "속도 그래프",
                 "운동 식",
                 "적용"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hp-newton-safety",
@@ -3584,8 +3582,7 @@ window.SCI_CATALOG = {
                 "질량과 가속도",
                 "제동 거리",
                 "안전 설계"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hp-momentum",
