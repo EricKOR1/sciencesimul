@@ -3176,8 +3176,7 @@ window.SCI_CATALOG = {
                 "환경→생물",
                 "생물→환경",
                 "상호 관계"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "h1-food-web",
@@ -3198,8 +3197,7 @@ window.SCI_CATALOG = {
                 "먹이 그물",
                 "생태 피라미드",
                 "에너지 전달"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "h1-population",
@@ -3220,8 +3218,7 @@ window.SCI_CATALOG = {
                 "개체군 변동",
                 "환경 변화",
                 "함께 토의"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "h1-heat-budget",
