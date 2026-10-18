@@ -24,13 +24,16 @@
   const T = (x, y, s, size, color, align, weight, extra) => D.text(x, y, s, Object.assign({ size, color, align, weight }, extra));
   function wrap(str, maxW, size, weight) {
     ctx.save(); ctx.font = D.font(size, weight || 700);
-    const out = []; let line = '';
-    for (const ch of str) {
-      if (ch === '\n') { out.push(line); line = ''; continue; }
-      const t = line + ch;
-      if (ctx.measureText(t).width > maxW && line) { out.push(line); line = ch.trim() === '' ? '' : ch; } else line = t;
-    }
-    if (line) out.push(line);
+    const out = [], W = (t) => ctx.measureText(t).width;
+    str.split('\n').forEach((para) => {
+      let line = '';
+      para.split(' ').forEach((w) => {
+        const t = line ? line + ' ' + w : w;
+        if (W(t) <= maxW || !line) line = t; else { out.push(line); line = w; }
+        if (W(line) > maxW) { let cur = ''; for (const ch of line) { if (W(cur + ch) > maxW && cur) { out.push(cur); cur = ch; } else cur += ch; } line = cur; }
+      });
+      out.push(line);
+    });
     ctx.restore(); return out;
   }
   function panel(x, y, w, h, r, fill) { D.shadow(() => { D.roundRect(x, y, w, h, r || 14); ctx.fillStyle = fill || '#fff'; ctx.fill(); }, { blur: 8, y: 2 }); }
@@ -124,7 +127,7 @@
 
   /* ---------- 공통 UI ---------- */
   function setScene(mode) {
-    if (S.mode !== mode) { S.fade = 1; parts.clear(); if (S.mode === 'left') resetLeft(); }
+    if (S.mode !== mode) { S.fade = 1; parts.clear(); clearTimeout(vTimer); if (S.mode === 'left') resetLeft(); }
     S.mode = mode;
     $('#tbLabel').textContent = MODE_LABEL[mode];
     buildChips(); refreshCalc(); updateCtl();
@@ -204,10 +207,11 @@
   $('#bCalc').addEventListener('click', checkCalc);
   $('#cIn').addEventListener('keydown', (e) => { if (e.key === 'Enter') checkCalc(); });
   $('#cIn').addEventListener('input', () => $('#cIn').classList.remove('bad'));
+  let vTimer = 0;
   $('#bVerify').addEventListener('click', () => {
     const p = curProb(), s = stOf(p); if (!solved(p) || s.ver) return;
     Sound.click(); s.ver = true; tw(s.barp, { v: 1 }, { duration: RM ? 0.01 : 1.4, ease: 'outCubic' });
-    setTimeout(() => { Sound.success(); const B = LAY.bot; parts.burst(B.x + B.w / 2, B.y + 80, { count: 20, speed: 160, size: 3.4, colors: ['#8b5cf6', '#14a058', '#ffb400'] }); }, RM ? 0 : 900);
+    clearTimeout(vTimer); vTimer = setTimeout(() => { if (S.mode !== 'mass') return; Sound.success(); const B = LAY.bot; parts.burst(B.x + B.w / 2, B.y + 80, { count: 20, speed: 160, size: 3.4, colors: ['#8b5cf6', '#14a058', '#ffb400'] }); }, RM ? 0 : 900);
     refreshCalc(); updateCtl();
   });
 
@@ -542,7 +546,7 @@
     tws.forEach((h) => h.cancel()); tws.length = 0;
     Object.keys(stateOf).forEach((k) => { const s = stateOf[k]; s.tk.x = s.stage; s.barp.v = s.ver ? 1 : 0; });
   }
-  function resetProbs(list) { snapTweens(); list.forEach((p) => { const s = stOf(p); s.stage = 0; s.vals = []; s.ver = false; s.barp.v = 0; s.tk.x = 0; s.wrong = 0; }); }
+  function resetProbs(list) { clearTimeout(vTimer); snapTweens(); list.forEach((p) => { const s = stOf(p); s.stage = 0; s.vals = []; s.ver = false; s.barp.v = 0; s.tk.x = 0; s.wrong = 0; }); }
   function resetOrder() { S.order.picks = []; }
 
   /* ---------- 읽음 칸 ---------- */

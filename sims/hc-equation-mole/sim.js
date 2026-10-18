@@ -24,13 +24,16 @@
   const T = (x, y, s, size, color, align, weight, extra) => D.text(x, y, s, Object.assign({ size, color, align, weight }, extra));
   function wrap(str, maxW, size, weight) {
     ctx.save(); ctx.font = D.font(size, weight || 700);
-    const out = []; let line = '';
-    for (const ch of str) {
-      if (ch === '\n') { out.push(line); line = ''; continue; }
-      const t = line + ch;
-      if (ctx.measureText(t).width > maxW && line) { out.push(line); line = ch.trim() === '' ? '' : ch; } else line = t;
-    }
-    if (line) out.push(line);
+    const out = [], W = (t) => ctx.measureText(t).width;
+    str.split('\n').forEach((para) => {
+      let line = '';
+      para.split(' ').forEach((w) => {
+        const t = line ? line + ' ' + w : w;
+        if (W(t) <= maxW || !line) line = t; else { out.push(line); line = w; }
+        if (W(line) > maxW) { let cur = ''; for (const ch of line) { if (W(cur + ch) > maxW && cur) { out.push(cur); cur = ch; } else cur += ch; } line = cur; }
+      });
+      out.push(line);
+    });
     ctx.restore(); return out;
   }
   function panel(x, y, w, h, r, fill) { D.shadow(() => { D.roundRect(x, y, w, h, r || 14); ctx.fillStyle = fill || '#fff'; ctx.fill(); }, { blur: 8, y: 2 }); }

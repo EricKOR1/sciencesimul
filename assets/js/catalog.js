@@ -4141,8 +4141,7 @@ window.SCI_CATALOG = {
                 "계수비=몰수비",
                 "질량으로 읽기",
                 "반응식 읽기"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hc-stoich-calc",
@@ -4163,8 +4162,7 @@ window.SCI_CATALOG = {
                 "질량 계산",
                 "부피로 확장",
                 "남는 반응물"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hc-stoich-experiment",
@@ -4185,8 +4183,7 @@ window.SCI_CATALOG = {
                 "실험 수행",
                 "그래프 해석",
                 "결론·오차"
-              ],
-              "soon": true
+              ]
             }
           ]
         },
