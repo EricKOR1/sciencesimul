@@ -60,6 +60,7 @@
     return D.label(x, y, text, Object.assign({ bg: '#fff', color: INK, size: 13, border: '#cbd5e1' }, o));
   }
   const jong = (w) => { const c = w.charCodeAt(w.length - 1); return c >= 0xAC00 && c <= 0xD7A3 && (c - 0xAC00) % 28 !== 0; };
+  const eun = (w) => w + (jong(w) ? '은' : '는');
   const eul = (w) => w + (jong(w) ? '을' : '를');
   const hit = (p, r) => p.x >= r.x && p.x <= r.x + r.w && p.y >= r.y && p.y <= r.y + r.h;
 
@@ -269,7 +270,7 @@
       glassTube(cx, g.top + dy, g.tw, g.th, { liquid: look.liquid, level: lvl, cube: look.cube ? g.tw * 0.62 : 0, tint: tb.add ? KIND[tb.add].color : null, glow: S.hover === 't' + i && S.selB });
       if (tb.tag > 0.02) {
         ctx.save(); ctx.globalAlpha = tb.tag;
-        const lab = KIND[tb.add || 'water'].name; const ty = g.top + g.th + dy + 18;
+        const lab = tb.add === 'boil' ? '끓인' : KIND[tb.add || 'water'].name; const ty = g.top + g.th + dy + 18;
         D.label(cx, ty, tb.add ? lab : '', { bg: KIND[tb.add || 'water'].color, color: '#1f2937', size: PHONE ? 10.5 : 11.5, pad: 5 });
         ctx.restore();
       } else if (!S.bath.on) { T(cx, g.top + g.th + 18, String(tb.row + 1), 12, '#94a3b8', 'center', 700); }
@@ -311,8 +312,8 @@
      ② 분해 실험 (결과 · 입자 모형 · 효소 표)
      ====================================================== */
   function LG() {
-    if (PHONE) return { tcx: { starch: 86, egg: 252, milk: 424 }, tw: 30, sp: 44, ttop: 104, th: 150, titleY: 74, gx: 62, gy: 372, gw: 436, gh: 250, bath: { x: 8, y: 150, w: 504, h: 100 }, micro: { x: 12, y: 330, w: 156, h: 230, gap: 10 } };
-    return { tcx: { starch: 140, egg: 400, milk: 660 }, tw: 36, sp: 52, ttop: 92, th: 124, titleY: 62, gx: 84, gy: 288, gw: 490, gh: 212, bath: { x: 24, y: 150, w: 752, h: 78 }, micro: { x: 30, y: 270, w: 236, h: 232, gap: 16 } };
+    if (PHONE) return { tcx: { starch: 86, egg: 252, milk: 424 }, tw: 30, sp: 44, ttop: 104, th: 150, titleY: 74, gx: 62, gy: 372, gw: 436, gh: 250, bath: { x: 8, y: 150, w: 504, h: 100 }, micro: { x: 12, y: 150, w: 156, h: 420, gap: 10 } };
+    return { tcx: { starch: 140, egg: 400, milk: 660 }, tw: 36, sp: 52, ttop: 92, th: 124, titleY: 62, gx: 84, gy: 288, gw: 490, gh: 212, bath: { x: 24, y: 150, w: 752, h: 78 }, micro: { x: 30, y: 112, w: 236, h: 300, gap: 16 } };
   }
   const labKinds = () => (S.lab.nut === 'milk' && S.lab.bileA > 0.02 ? ['water', 'enz', 'boil', 'bile'] : KINDS);
   function labReset() {
@@ -338,24 +339,42 @@
   }
   function drawLabTubes(t) {
     const g = LG(), L = S.lab, b = g.bath;
-    // 물중탕
+    // 물중탕 (뒤)
     D.shadow(() => { ctx.fillStyle = '#e8eef5'; rr(b.x, b.y, b.w, b.h, 14).fill(); }, { blur: 5, y: 2 });
+    const geo = (n, k, i) => { const neff = 3 + (n === 'milk' ? L.bileA : 0); return { cx: g.tcx[n] + (i - (neff - 1) / 2) * g.sp, neff }; };
+    // 시험관
+    NUTS.forEach((n) => {
+      const ks = n === 'milk' ? ['water', 'enz', 'boil', 'bile'] : KINDS;
+      ks.forEach((k, i) => {
+        let a = 1, dy = 0;
+        if (k === 'bile') { a = L.bileA; dy = -(1 - L.bileA) * 40; if (a < 0.02) return; }
+        const cx = geo(n, k, i).cx, lk = labTubeLook(n, k, L.ts);
+        ctx.save(); ctx.globalAlpha = a;
+        glassTube(cx, g.ttop + dy, g.tw, g.th, { liquid: lk.liquid, level: 0.62, cube: lk.cube ? g.tw * 0.66 * lk.cube : 0 });
+        ctx.restore();
+      });
+    });
+    // 물 (앞)
+    ctx.save(); rr(b.x, b.y, b.w, b.h, 14).clip();
+    const wl = b.y + 18, gr = ctx.createLinearGradient(0, wl, 0, b.y + b.h);
+    gr.addColorStop(0, 'rgba(255,215,168,.34)'); gr.addColorStop(1, 'rgba(255,178,107,.42)');
+    ctx.fillStyle = gr; ctx.beginPath(); ctx.moveTo(b.x, b.y + b.h);
+    for (let i = 0; i <= 40; i++) ctx.lineTo(b.x + b.w * i / 40, wl + Math.sin(t * 2 + i * 0.6) * 1.4);
+    ctx.lineTo(b.x + b.w, b.y + b.h); ctx.closePath(); ctx.fill(); ctx.restore();
+    ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 2.5; rr(b.x, b.y, b.w, b.h, 14).stroke();
+    T((g.tcx.starch + g.tcx.egg) / 2, b.y + 14, '37 °C 물중탕', 12, '#92400e', 'center', 800);
+    // 이름표 · 값
     NUTS.forEach((n) => {
       const sel = L.nut === n, N = NUT[n], cx0 = g.tcx[n];
       const ks = n === 'milk' ? ['water', 'enz', 'boil', 'bile'] : KINDS;
       const neff = 3 + (n === 'milk' ? L.bileA : 0);
-      // 묶음 제목
-      const tl = D.label(cx0, g.titleY, N.icon + ' ' + N.name, { bg: sel ? N.col : '#fff', color: sel ? '#fff' : INK, size: PHONE ? 13 : 14.5, border: sel ? N.col : '#cbd5e1' });
+      D.label(cx0, g.titleY, N.icon + ' ' + N.name, { bg: sel ? N.col : '#fff', color: sel ? '#fff' : INK, size: PHONE ? 13 : 14.5, border: sel ? N.col : '#cbd5e1' });
       T(cx0, g.titleY + 22, N.sample, PHONE ? 11 : 12, MUTED, 'center', 700);
       ks.forEach((k, i) => {
         let a = 1, dy = 0;
         if (k === 'bile') { a = L.bileA; dy = -(1 - L.bileA) * 40; if (a < 0.02) return; }
-        const cx = cx0 + (i - (neff - 1) / 2) * g.sp;
-        const lk = labTubeLook(n, k, L.ts);
+        const cx = geo(n, k, i).cx;
         ctx.save(); ctx.globalAlpha = a;
-        glassTube(cx, g.ttop + dy, g.tw, g.th, { liquid: lk.liquid, level: 0.62, cube: lk.cube ? g.tw * 0.66 * lk.cube : 0, glow: sel && false });
-        // 이름 · 값
-        const nm = k === 'bile' ? '소화제+\n쓸개즙' : KIND[k].name;
         const lines = k === 'bile' ? ['소화제+', '쓸개즙'] : k === 'boil' ? ['끓인', '소화제'] : [KIND[k].name];
         lines.forEach((ln, li) => T(cx, g.ttop + g.th + 16 + li * 13 + dy, ln, PHONE ? 10.5 : 11.5, KIND[k].line, 'center', 800));
         if (sel) T(cx, g.ttop + g.th + 46 + dy, ROUND(yval(n, k, L.ts)) + ' %', PHONE ? 12 : 13, INK, 'center', 800);
@@ -363,15 +382,6 @@
       });
       if (sel) { ctx.save(); ctx.strokeStyle = N.col; ctx.lineWidth = 2.4; ctx.setLineDash([7, 5]); const w = neff * g.sp + 14; rr(cx0 - w / 2, g.titleY - 18, w, g.ttop + g.th + 52 - (g.titleY - 18), 12).stroke(); ctx.restore(); }
     });
-    // 물 앞면
-    ctx.save(); rr(b.x, b.y, b.w, b.h, 14).clip();
-    const wl = b.y + 18, gr = ctx.createLinearGradient(0, wl, 0, b.y + b.h);
-    gr.addColorStop(0, 'rgba(255,215,168,.40)'); gr.addColorStop(1, 'rgba(255,178,107,.5)');
-    ctx.fillStyle = gr; ctx.beginPath(); ctx.moveTo(b.x, b.y + b.h);
-    for (let i = 0; i <= 40; i++) ctx.lineTo(b.x + b.w * i / 40, wl + Math.sin(t * 2 + i * 0.6) * 1.4);
-    ctx.lineTo(b.x + b.w, b.y + b.h); ctx.closePath(); ctx.fill(); ctx.restore();
-    ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 2.5; rr(b.x, b.y, b.w, b.h, 14).stroke();
-    T(b.x + b.w - 12, b.y + b.h - 8, '37 °C 물중탕', 12, '#92400e', 'right', 800);
   }
   function legendItems() {
     const L = S.lab, n = L.nut;
@@ -500,16 +510,15 @@
       T(x + m.w / 2, m.y + 24, bx.title, 15, INK, 'center', 800);
       T(x + m.w / 2, m.y + m.h + 18, '온전한 ' + N.name + ' 분자 ' + intact + ' / 20', 12.5, intact < 20 ? '#166534' : '#475569', 'center', 800);
     });
-    T(VW / 2, P(72, 70), '🔍 입자 모형: ' + N.enz + '(효소) ' + (n === 'starch' ? '입이 녹말 사슬을 잘라 엿당으로' : n === 'egg' ? '입이 단백질 사슬을 잘라 아미노산으로' : '입이 지방을 잘라 지방산·모노글리세리드로'), PHONE ? 12 : 14.5, INK, 'center', 800);
-    block(P(34, 18), P(110, 100), P(730, 484), '물: 효소가 없어 그대로 · 소화제: 효소가 기질을 분해 · 끓인 소화제: 변성된 효소(모양이 변해 ✕)는 분해하지 못해요. 시간을 움직이면 온전한 분자 수가 그래프의 남은 양과 같은 비율로 변해요.', PHONE ? 12 : 13, MUTED, PHONE ? 16 : 17, 700);
+    T(VW / 2, P(34, 58), '🔍 입자 모형: ' + N.enz + '(효소) ' + (n === 'starch' ? '입이 녹말 사슬을 잘라 엿당으로' : n === 'egg' ? '입이 단백질 사슬을 잘라 아미노산으로' : '입이 지방을 잘라 지방산·모노글리세리드로'), PHONE ? 12 : 14.5, INK, 'center', 800);
+    block(P(34, 18), P(470, 632), P(730, 484), '물: 효소가 없어 그대로 · 소화제: 효소가 기질을 분해 · 끓인 소화제: 변성된 효소(모양이 변해 ✕)는 분해하지 못해요. 시간을 움직이면 온전한 분자 수가 그래프의 남은 양과 같은 비율로 변해요.', PHONE ? 12 : 13, MUTED, PHONE ? 16 : 17, 700);
     T(VW / 2, VH - 10, '※ 입자 모형은 이해를 돕는 그림이에요 · 교육용 가상 데이터', 12, '#b45309', 'center', 800);
-    // 시간 표시
-    D.label(VW - P(90, 70), P(30, 26), '⏱ ' + L.ts.toFixed(1) + ' 분', { bg: '#1b2333', size: 13 });
+    D.label(P(VW - 60, 62), P(30, 88), '⏱ ' + L.ts.toFixed(1) + ' 분', { bg: '#1b2333', size: 13 });
   }
   /* 효소 표 */
   function TGeo() {
     if (PHONE) return { x: 14, y: 70, hdr: 42, rh: 76, cols: [128, 168, 190], bile: { x: 14, y: 400, w: 492, h: 130 } };
-    return { x: 44, y: 66, hdr: 44, rh: 62, cols: [170, 200, 292], bile: { x: 44, y: 330, w: 712, h: 150 } };
+    return { x: 44, y: 66, hdr: 44, rh: 62, cols: [170, 200, 292], bile: { x: 44, y: 340, w: 712, h: 110 } };
   }
   function cellRect(row, col) { const g = TGeo(); let x = g.x; for (let i = 0; i < col; i++) x += g.cols[i]; return { x, y: g.y + g.hdr + row * g.rh, w: g.cols[col], h: g.rh }; }
   function drawTable(t) {
@@ -560,8 +569,8 @@
   function drawLab(t) {
     ctx.fillStyle = BG; ctx.fillRect(0, 0, VW, VH);
     if (S.view === 'tab') { drawTable(t); return; }
-    drawLabTubes(t);
-    if (S.view === 'micro') drawMicro(t); else drawGraph(t);
+    if (S.view === 'micro') { drawMicro(t); return; }
+    drawLabTubes(t); drawGraph(t);
   }
 
   /* ======================================================
@@ -741,7 +750,7 @@
     ctx.strokeStyle = '#eab308'; ctx.lineWidth = 11; ctx.beginPath(); ctx.moveTo(g.lac.x, g.bot + 14); ctx.lineTo(g.lac.x, g.top + 20); ctx.stroke();
     ctx.strokeStyle = '#fef9c3'; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(g.lac.x, g.bot + 14); ctx.lineTo(g.lac.x, g.top + 20); ctx.stroke();
     ctx.restore();
-    T(vx, g.top - 12, '소장 융털 (확대)', PHONE ? 12.5 : 13.5, INK, 'center', 800);
+    T(vx - vw / 2 - 8, g.top + 34, '소장 융털', PHONE ? 12.5 : 13.5, INK, 'right', 800); T(vx - vw / 2 - 8, g.top + 52, '(확대)', 12, MUTED, 'right', 700);
     T(g.cap.x - vw / 2 - 6, g.bot - 40, '모세혈관', 12, '#b91c1c', 'right', 800);
     T(g.lac.x + vw / 2 + 6, g.bot - 40, '암죽관', 12, '#a16207', 'left', 800);
     // 경로
@@ -967,7 +976,7 @@
   }
   function designFeedback() {
     const C = S.cond, k = C.kind, sm = C.same[k], lb = SAME_LABELS(k);
-    if (sm[4]) return '<b>' + COND[k].name + '</b>은 이번 실험에서 일부러 바꾸는 변인이에요. 바꾸는 변인의 값까지 같게 하면 비교할 수 없어요.';
+    if (sm[4]) return '<b>' + eun(COND[k].name) + '</b> 이번 실험에서 일부러 바꾸는 변인이에요. 바꾸는 변인의 값까지 같게 하면 비교할 수 없어요.';
     const miss = [0, 1, 2, 3].filter((i) => !sm[i]);
     if (miss.length) return '아직 같게 유지하지 않은 조건이 있어요: <b>' + miss.map((i) => lb[i]).join(', ') + '</b>. 이 조건이 달라지면 결과 차이가 ' + COND[k].name + ' 때문인지 알 수 없어요.';
     return true;

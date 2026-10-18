@@ -4599,8 +4599,7 @@ window.SCI_CATALOG = {
                 "완전 중화",
                 "남은 이온",
                 "폐수 중화"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hc-titration",
@@ -4621,8 +4620,7 @@ window.SCI_CATALOG = {
                 "적정 조작",
                 "농도 계산",
                 "오차 평가"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hc-vinegar-titration",
@@ -4643,8 +4641,7 @@ window.SCI_CATALOG = {
                 "식초 적정",
                 "함량 계산",
                 "결과 평가"
-              ],
-              "soon": true
+              ]
             }
           ]
         }

@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#16a34a">
+  <title>기관계의 통합적 작용 | 고등 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏃</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-toolbar { min-height: 58px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; }
+    .stage-toolbar .segmented button { min-height: 40px; padding: 5px 12px; font-size: 14.5px; white-space: nowrap; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    .seg-wide { display: flex; width: 100%; }
+    .seg-wide button { flex: 1; min-width: 0; padding: 6px 4px; font-size: 14.5px; min-height: 44px; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard [hidden] { display: none !important; }
+    .btn-sm { min-height: 44px; }
+    .btn-row { display: flex; gap: 8px; margin-top: 8px; }
+    .btn-row .btn { flex: 1; padding-left: 6px; padding-right: 6px; }
+    .ctrl-note { margin: 6px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    .zrow { display: flex; align-items: center; gap: 8px; }
+    .zrow input[type=range] { flex: 1; min-width: 0; }
+    .zrow .btn { min-width: 44px; padding: 0 8px; font-weight: 800; }
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+    .chip { border: 2px solid var(--line); background: #fff; border-radius: 999px; min-height: 40px; padding: 4px 12px; font: 700 14px var(--font); color: var(--ink); cursor: pointer; }
+    .chip.on { background: #dcfce7; border-color: #16a34a; color: #14532d; }
+    .txt-in, .sel-in {
+      width: 100%; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 6px 10px;
+      font: 700 15px var(--font); color: var(--ink); background: #fff;
+    }
+    .txt-in:focus, .sel-in:focus { outline: none; border-color: var(--subject); }
+    .form-one { margin-top: 8px; }
+    .form-one label { font-weight: 800; font-size: 13.5px; display: block; margin-bottom: 2px; }
+    .ok-pill { display: inline-block; margin-left: 6px; color: #166534; font-weight: 800; font-size: 13px; }
+    .stepper .st .l { white-space: normal; text-align: center; line-height: 1.15; overflow: visible; }
+    .readout .value.txt { font-family: var(--font); font-size: 16px; white-space: normal; line-height: 1.25; }
+    .concept table.mini { border-collapse: collapse; margin: 6px 0; font-size: 14px; width: 100%; }
+    .concept table.mini th, .concept table.mini td { border: 1px solid var(--line); padding: 4px 6px; text-align: center; }
+    .concept table.mini th { background: var(--surface-2); font-weight: 800; }
+    @media (max-width: 599px) {
+      .readout .value.txt { font-size: 14px; }
+      .stage-toolbar .spacer { display: none; }
+      .stage-toolbar .segmented button { padding: 5px 8px; font-size: 13.5px; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="bio">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#hb">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">생명과학 · Ⅰ. 생명 시스템의 구성</div>
+      <h1>기관계의 통합적 작용</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🏃 운동 중 몸</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="tablist" aria-label="화면 고르기" hidden>
+            <button type="button" data-mode="run">🏃 운동 중 몸</button>
+            <button type="button" data-mode="o2">🩸 산소 운반</button>
+            <button type="button" data-mode="map">🗺 통합 지도</button>
+            <button type="button" data-mode="case">🔎 사례 추론</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="달리는 사람의 심박수·호흡수·체온 변화와 측정표, 심박출량과 산소 소비량 계산 및 혈액의 산소 운반 모형, 기관계 통합 지도, 고산 적응·빈혈·땀 사례의 연쇄 반응"></canvas>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1"> </span><span class="value txt" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2"> </span><span class="value txt" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3"> </span><span class="value txt" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" data-show="run">
+          <div class="control-head"><span>🏃 달리기 강도</span><output id="oInt">0 %</output></div>
+          <div class="zrow">
+            <button class="btn" id="bInt0" type="button" aria-label="안정으로">🛌</button>
+            <input type="range" id="sInt" min="0" max="100" step="1" value="0" aria-label="달리기 강도 (0 안정부터 100 달리기까지)">
+            <button class="btn" id="bInt1" type="button" aria-label="달리기로">🏃</button>
+          </div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bRec" type="button">📏 지금 값 기록하기</button><button class="btn btn-sm" id="bRecReset" type="button">↺ 표 지우기</button></div>
+          <p class="ctrl-note" id="runNote">강도를 0 %(안정)에 두고 값이 멈추면 기록하고, 100 %(달리기)에서도 기록해요.</p>
+        </div>
+        <div class="control" data-show="o2">
+          <div class="segmented seg-wide" id="caseSeg"><button type="button" data-c="rest">🛌 안정 시</button><button type="button" data-c="run">🏃 달리기</button></div>
+        </div>
+        <div class="control" data-show="o2">
+          <div class="form-one"><label for="inCO">① 심박출량 (L/분)</label><input class="txt-in" id="inCO" type="number" inputmode="decimal" step="0.1" min="0" placeholder="예) 4.9" autocomplete="off"></div>
+          <div class="form-one"><label for="inVO">② 산소 소비량 (L/분)</label><input class="txt-in" id="inVO" type="number" inputmode="decimal" step="0.01" min="0" placeholder="예) 0.25" autocomplete="off"></div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bCalc" type="button">✔ 계산 확인</button></div>
+          <p class="ctrl-note" id="calcNote">식에 표의 값을 넣어 계산해요. 심박출량은 가까운 정수로 어림해서 ②에 써도 돼요.</p>
+        </div>
+        <div class="control" data-show="map">
+          <div class="control-head"><span>🎭 역할놀이 카드</span><output id="oRole">0 / 4</output></div>
+          <div class="form-one"><label for="rSys">기관계 고르기</label><select class="sel-in" id="rSys"></select></div>
+          <div class="form-one"><label for="rJob">내가 맡은 일</label><select class="sel-in" id="rJob"></select></div>
+          <div class="form-one"><label for="rTake">받는 것</label><select class="sel-in" id="rTake"></select></div>
+          <div class="form-one"><label for="rGive">주는 것</label><select class="sel-in" id="rGive"></select></div>
+          <div class="btn-row"><button class="btn btn-sm" id="bLinkReset" type="button">↺ 연결선 지우기</button></div>
+        </div>
+        <div class="control" data-show="case">
+          <div class="segmented seg-wide" id="casesSeg"><button type="button" data-k="a">ⓐ 고산 지대</button><button type="button" data-k="b">ⓑ 빈혈</button><button type="button" data-k="c">ⓒ 땀</button></div>
+          <div class="form-one"><label for="cS1">① 먼저 영향을 받는 곳</label><select class="sel-in" id="cS1"></select></div>
+          <div class="form-one"><label for="cS2">② 이어지는 변화</label><select class="sel-in" id="cS2"></select></div>
+          <div class="form-one"><label for="cS3">③ 나타나는 결과</label><select class="sel-in" id="cS3"></select></div>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

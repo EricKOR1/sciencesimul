@@ -527,7 +527,7 @@
   ];
   PLAN_ROWS.forEach((r) => { r.ml = r6(NEED_ML / r.f); });
   const LP = PHONE
-    ? { rx: rect(6, 6, 468, 112), left: rect(6, 124, 468, 320), right: rect(6, 450, 468, 304) }
+    ? { rx: rect(6, 6, 468, 124), left: rect(6, 136, 468, 312), right: rect(6, 454, 468, 300) }
     : { rx: rect(8, 8, 784, 84), left: rect(8, 100, 384, 452), right: rect(400, 100, 392, 452) };
   function drawPlan() {
     const P = S.plan, R0 = LP.rx;
@@ -535,7 +535,7 @@
     T(R0.x + 14, R0.y + 24, '식초 속 아세트산과 NaOH의 반응', 14, MUTED, 'left', 800);
     eqRowC(R0.x + R0.w / 2, R0.y + (PHONE ? 58 : 58), [{ t: 'CH₃COOH' }, { t: ' + ', c: MUTED }, { t: 'NaOH' }, { t: ' → ', c: VIO }, { t: 'CH₃COONa' }, { t: ' + ', c: MUTED }, { t: 'H₂O' }], PHONE ? 18 : 24);
     D.label(R0.x + R0.w - 12, R0.y + 24, '몰수비 1 : 1', { bg: VIO, size: 13, align: 'right', pad: 9 });
-    textBlock(R0.x + 14, R0.y + R0.h - (PHONE ? 22 : 12) - (PHONE ? 16 : 0), R0.w - 28, '아세트산은 1가 산이에요. (약산이라는 이름만 알아 두고, 약산의 pH는 계산하지 않아요.)', PHONE ? 12 : 13, MUTED, 17, 700);
+    textBlock(R0.x + 14, R0.y + R0.h - (PHONE ? 38 : 12), R0.w - 28, '아세트산은 1가 산이에요. (약산이라는 이름만 알아 두고, 약산의 pH는 계산하지 않아요.)', PHONE ? 12 : 13, MUTED, 17, 700);
     // 원액 계산
     const L = LP.left; panel(L.x, L.y, L.w, L.h, 14);
     T(L.x + 14, L.y + 24, '식초 A 원액 20.00 mL를 바로 적정하면?', PHONE ? 13.5 : 14.5, INK, 'left', 800);
@@ -560,6 +560,7 @@
     T(Rr.x + 14, Rr.y + 24, '희석하면 NaOH가 얼마나 들까? (희석 식초 20.00 mL)', PHONE ? 13 : 14.5, INK, 'left', 800);
     const gx = Rr.x + 16, gw = Rr.w - 32, gy = Rr.y + 56, rowH = PHONE ? 54 : 62;
     T(gx, gy - 6, '※ 알맞은 범위: 뷰렛 눈금의 절반 안팎 15 ~ 25 mL', PHONE ? 11.5 : 12.5, '#0b6b39', 'left', 800);
+    if (s2) { const bw2 = gw - 70, x50 = gx + bw2 * 50 / 200; ctx.save(); ctx.strokeStyle = GOOD; ctx.lineWidth = 2.5; ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.moveTo(x50, gy + 10); ctx.lineTo(x50, gy + 14 + 4 * rowH - 10); ctx.stroke(); ctx.restore(); T(x50 + 4, gy + 14 + 4 * rowH - 2, '뷰렛 50 mL', 11.5, '#0b6b39', 'left', 800); }
     PLAN_ROWS.forEach((r, i) => {
       const y = gy + 14 + i * rowH, tx = gx, bw2 = gw - 70, w = s2 ? bw2 * clamp(r.ml / 200, 0, 1) : 0;
       const sel = r.pip && P.pip === r.pip;
@@ -571,8 +572,6 @@
       if (s2 && w > 0.5) { const inRange = r.ml >= 15 && r.ml <= 25; D.roundRect(gx, y + 20, w, 20, 6); ctx.fillStyle = r.ml > 50 ? BAD : inRange ? GOOD : '#f59e0b'; ctx.fill(); }
       T(gx + bw2 + 8, y + 36, s2 ? fx(r.ml, 0) + ' mL' : '?', 13.5, INK, 'left', 800);
     });
-    // 50 mL 선
-    if (s2) { const bw2 = gw - 70, x50 = gx + bw2 * 50 / 200; ctx.save(); ctx.strokeStyle = GOOD; ctx.lineWidth = 2.5; ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.moveTo(x50, gy + 10); ctx.lineTo(x50, gy + 14 + 4 * rowH - 10); ctx.stroke(); ctx.restore(); T(x50 + 4, gy + 14 + 4 * rowH - 2, '뷰렛 50 mL', 11.5, '#0b6b39', 'left', 800); }
     if (!s2) T(Rr.x + Rr.w / 2, Rr.y + Rr.h / 2 + 6, '먼저 왼쪽의 계산을 끝내요', 14, MUTED, 'center', 800);
     // 선택한 홀피펫 결과
     if (s2 && P.pip) { const r = PLAN_ROWS.find((q) => q.pip === P.pip); T(Rr.x + 14, Rr.y + Rr.h - 14, '선택: 피펫 ' + P.pip + '.00 mL → ' + r.f + '배 → NaOH ' + fx(r.ml, 0) + ' mL', PHONE ? 12.5 : 13.5, VIO, 'left', 800); }

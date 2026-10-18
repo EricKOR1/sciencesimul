@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#16a34a">
+  <title>물질 순환과 에너지 흐름 | 고등 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌍</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; }
+    .stage-toolbar { min-height: 58px; }
+    .stage-toolbar .segmented { flex-wrap: wrap; }
+    .stage-toolbar .segmented button { min-height: 40px; padding: 5px 10px; font-size: 14px; white-space: nowrap; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard [hidden] { display: none !important; }
+    .btn-sm { min-height: 44px; }
+    .btn-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+    .btn-row .btn { flex: 1; padding-left: 8px; padding-right: 8px; }
+    .ctrl-note { margin: 6px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    .ctrl-note b { color: var(--ink); }
+    .range-row { display: flex; align-items: center; gap: 8px; }
+    .range-row input[type=range] { flex: 1; min-width: 0; height: 44px; }
+    .seg-full { display: flex; width: 100%; }
+    .seg-full button { flex: 1 1 0; min-width: 0; min-height: 44px; font-size: 14.5px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+    .chips button { min-height: 44px; padding: 6px 14px; border: 2px solid var(--line); background: #fff; border-radius: 999px; font-weight: 800; font-size: 14.5px; cursor: pointer; color: var(--ink); }
+    .chips button.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); }
+    .chip-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px; }
+    .chip-grid button { min-height: 44px; padding: 6px 8px; border: 2px solid var(--line); background: #fff; border-radius: 12px; font-weight: 800; font-size: 14px; cursor: pointer; color: var(--ink); text-align: center; }
+    .chip-grid button.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); }
+    .chip-grid button:active, .chips button:active { transform: scale(.98); }
+    .sel-in { width: 100%; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 8px; font: 800 14px var(--font); color: var(--ink); background: #fff; }
+    .sel-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .sel-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .sel-row { margin-top: 8px; }
+    .sel-row:first-of-type { margin-top: 4px; }
+    .sel-row .q { font-weight: 800; font-size: 13.5px; margin-bottom: 3px; line-height: 1.25; }
+    .num-in { width: 100%; min-width: 0; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 8px; font: 800 16px ui-monospace, Menlo, Consolas, monospace; color: var(--ink); background: #fff; text-align: right; }
+    .num-in:focus { outline: none; border-color: var(--subject); }
+    .num-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .num-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .in-grid { display: grid; gap: 6px 8px; align-items: center; margin-top: 6px; }
+    .in-grid .lab { font-weight: 800; font-size: 13.5px; line-height: 1.25; }
+    .in-grid .hd { font-weight: 800; font-size: 12.5px; color: var(--muted); text-align: center; }
+    .in-unit { font-size: 12.5px; color: var(--muted); font-weight: 700; }
+    @keyframes shakeX { 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+    .readout .value { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .concept table.mini { border-collapse: collapse; margin: 6px 0; font-size: 14px; width: 100%; }
+    .concept table.mini th, .concept table.mini td { border: 1px solid var(--line); padding: 4px 6px; text-align: center; }
+    .concept table.mini th { background: var(--surface-2); font-weight: 800; }
+    .stage-canvas .stage-hint { top: 10px; bottom: auto; }
+    @media (max-width: 1100px) and (orientation: landscape) { .toolbar-label { display: none; } }
+    @media (max-width: 599px) {
+      .readout .value { font-size: 15px; }
+      .stage-toolbar { gap: 6px; padding: 8px; }
+      .stage-toolbar .spacer, .toolbar-label { display: none; }
+      .stage-toolbar .segmented button { padding: 5px 8px; font-size: 13.5px; }
+      .stage-hint { font-size: 13px; padding: 5px 12px; }
+    }
+
+  </style>
+</head>
+<body class="sim-page" data-subject="bio">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#hb">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">생명과학 · Ⅰ. 생명 시스템의 구성</div>
+      <h1>물질 순환과 에너지 흐름</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🌍 생태계 구조</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="tablist" aria-label="화면 고르기">
+            <button type="button" data-mode="link" data-feature="link">🔗 연결</button>
+            <button type="button" data-mode="remove" data-feature="remove">🍄 분해자</button>
+            <button type="button" data-mode="cyc" data-feature="cyc">🔄 순환 고리</button>
+            <button type="button" data-mode="burn" data-feature="burn">📈 대기 탄소</button>
+            <button type="button" data-mode="flow" data-feature="flow">⚡ 에너지 도표</button>
+            <button type="button" data-mode="cmp" data-feature="cmp">🆚 비교표</button>
+            <button type="button" data-mode="chain" data-feature="chain">🌪️ 교란 연쇄</button>
+            <button type="button" data-mode="dist" data-feature="dist">📉 교란 크기</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="초원 생태계의 구성 요소와 물질·에너지 연결선, 분해자 제거 실험, 탄소 순환 고리와 대기 탄소 그래프, 에너지 흐름 도표와 비교표, 교란 시나리오와 교란 크기 그래프"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">—</span><span class="value" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">—</span><span class="value" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">—</span><span class="value" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <!-- 1 연결 -->
+        <div class="control" data-modes="link">
+          <div class="control-head"><span>🔗 연결 종류 고르기</span></div>
+          <div class="segmented seg-full" id="ltype" role="group" aria-label="연결 종류">
+            <button type="button" data-t="m">⬜ 물질 이동(실선)</button>
+            <button type="button" data-t="e">🟧 에너지 이동(주황)</button>
+          </div>
+          <p class="ctrl-note">노드를 <b>끌어서</b> 다른 노드에 놓거나, <b>두 노드를 차례로 눌러요.</b> 화살표는 이동하는 방향이에요.</p>
+          <div class="btn-row">
+            <button class="btn btn-sm" id="bUndo" type="button">↩ 마지막 연결 지우기</button>
+            <button class="btn btn-sm" id="bClear" type="button">↺ 모두 지우기</button>
+          </div>
+          <p class="ctrl-note" id="linkNote"></p>
+        </div>
+        <!-- 1 분해자 -->
+        <div class="control" data-modes="remove">
+          <div class="control-head"><span>🍄 분해자 실험</span></div>
+          <div class="segmented seg-full" id="decSeg" role="group" aria-label="분해자 있음 또는 없음">
+            <button type="button" data-d="1">🍄 분해자 있음</button>
+            <button type="button" data-d="0">🚫 분해자 없음</button>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-sm btn-primary" id="bRemRun" type="button">▶ 12주 실험</button>
+            <button class="btn btn-sm" id="bRemReset" type="button">↺ 처음으로</button>
+          </div>
+          <p class="ctrl-note" id="remNote">값은 모두 <b>상대 단위(예시)</b>예요. 사체·낙엽 더미, 토양 양분, 생산자의 양을 지켜봐요.</p>
+        </div>
+        <!-- 2 순환 고리 -->
+        <div class="control" data-modes="cyc">
+          <div class="control-head"><span>🔄 탄소의 길에 이름표 붙이기</span></div>
+          <p class="ctrl-note">화살표 가운데의 <b>❓ 자리</b>를 누를 때마다 이름이 바뀌어요: <b>광합성 → 호흡 → 먹이 섭취 → 분해 → 연소</b></p>
+          <div class="btn-row"><button class="btn btn-sm" id="bCycClear" type="button">↺ 이름표 지우기</button></div>
+          <p class="ctrl-note" id="cycNote"></p>
+        </div>
+        <!-- 2 대기 탄소 -->
+        <div class="control" data-modes="burn">
+          <div class="control-head"><span>🏭 화석 연료 연소</span></div>
+          <div class="segmented seg-full" id="burnSeg" role="group" aria-label="화석 연료 연소 켜기 끄기">
+            <button type="button" data-b="0">연소 끄기</button>
+            <button type="button" data-b="1">연소 켜기(연 9)</button>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-sm btn-primary" id="bBurnRun" type="button">▶ 50년</button>
+            <button class="btn btn-sm" id="bBurnReset" type="button">↺ 그래프 지우기</button>
+          </div>
+          <p class="ctrl-note" id="burnNote">대기 탄소는 <b>상대 단위</b>예요. 실제로는 바다와 숲이 일부를 흡수하지만, 여기서는 단순하게 나타냈어요.</p>
+        </div>
+        <!-- 3 에너지 도표 -->
+        <div class="control" data-modes="flow">
+          <div class="control-head"><span>⚡ 빈칸 채우기</span></div>
+          <p class="ctrl-note">들어온 에너지 = 나간 에너지의 합이에요. 입력하면 도표에 바로 나타나요.</p>
+          <div class="in-grid" id="flowIn" style="grid-template-columns: 1fr 92px"></div>
+        </div>
+        <!-- 3 비교표 -->
+        <div class="control" data-modes="cmp">
+          <div class="control-head"><span>🆚 물질 순환 vs 에너지 흐름</span></div>
+          <p class="ctrl-note">표의 <b>빈 칸을 누를 때마다</b> 보기가 바뀌어요. 물질(탄소)과 에너지의 성질을 비교해 완성해요.</p>
+          <div class="btn-row"><button class="btn btn-sm" id="bCmpClear" type="button">↺ 표 지우기</button></div>
+        </div>
+        <!-- 4 교란 연쇄 -->
+        <div class="control" data-modes="chain">
+          <div class="control-head"><span>🌪️ 영향이 이어지는 길</span></div>
+          <div id="chainRows"></div>
+          <p class="ctrl-note">고를 때마다 위 그림에 <b>고른 연쇄</b>가 그려져요. ↑는 늘어남, ↓는 줄어듦이에요.</p>
+        </div>
+        <!-- 4 교란 크기 -->
+        <div class="control" data-modes="dist">
+          <div class="control-head"><label for="sDist">🌪️ 교란의 크기</label><output id="oDist">20</output></div>
+          <div class="range-row"><input type="range" id="sDist" min="5" max="90" step="5" value="20" aria-label="교란의 크기 (5에서 90)"></div>
+          <div class="btn-row">
+            <button class="btn btn-sm btn-primary" id="bDistRun" type="button">▶ 교란 적용</button>
+            <button class="btn btn-sm" id="bDistReset" type="button">↺ 그래프 지우기</button>
+          </div>
+          <p class="ctrl-note" id="distNote"></p>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>
