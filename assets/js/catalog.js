@@ -3477,8 +3477,7 @@ window.SCI_CATALOG = {
                 "학습하는 AI",
                 "로봇 분석",
                 "개선 설계"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "h1-ssi-ethics",
@@ -3499,8 +3498,7 @@ window.SCI_CATALOG = {
                 "여러 입장",
                 "과학 윤리",
                 "논증하기"
-              ],
-              "soon": true
+              ]
             }
           ]
         }

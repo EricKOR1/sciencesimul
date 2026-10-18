@@ -11,7 +11,7 @@
   const { $, $$, clamp, Sound, toast } = SciSim;
   /* ---------- 공통 도우미 ---------- */
   const PHONE = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches);
-  const VW = PHONE ? 600 : 800, VH = PHONE ? 840 : 560;
+  const VW = PHONE ? 600 : 800, VH = PHONE ? (typeof PHONE_VH === 'number' ? PHONE_VH : 840) : 560;
   const RM = SciSim.reduceMotion;
   const TAU = Math.PI * 2;
   const mark = (b) => (b ? '✅' : '⬜');
@@ -106,6 +106,7 @@
     B.drag = null; c.free = false;
     const z = B.zones.find((q) => p.x >= q.x && p.x <= q.x + q.w && p.y >= q.y && p.y <= q.y + q.h);
     let ok = false;
+    if (z && z.accept && !z.accept(c)) { c.zone = null; c.slot = -1; c.shake = 0.45; Sound.fail(); bdLayout(B); SciSim.tween(c, { lift: 0 }, { duration: 0.25 }); return; }
     if (z) {
       const used = new Set(B.cards.filter((o) => o !== c && o.zone === z.id).map((o) => o.slot));
       if (z.fixed) {
@@ -430,7 +431,7 @@
         const wv = (() => { ctx.save(); ctx.font = D.font(PHONE ? 22 : 26, 800); const w = ctx.measureText(s.fmt(cur)).width; ctx.restore(); return w; })();
         D.text(c.x + 18 + wv, c.y + (PHONE ? 62 : 66), s.unit, { size: 12.5, weight: 700, color: '#64748b', align: 'left' });
         ctx.fillStyle = '#e8edf4'; rr(c.x + 14, c.y + c.h - 14, c.w - 28, 6, 3).fill();
-        ctx.fillStyle = s.col; rr(c.x + 14, c.y + c.h - 14, Math.max(6, (c.w - 28) * Lv.gauge[i]), 6, 3).fill();
+        if (Lv.gauge[i] > 0.004) { ctx.fillStyle = s.col; rr(c.x + 14, c.y + c.h - 14, (c.w - 28) * Lv.gauge[i], 6, 3).fill(); }
       } else D.text(c.x + 14, c.y + (PHONE ? 62 : 66), '꺼짐 · 눌러서 켜요', { size: 13, weight: 700, color: '#94a3b8', align: 'left' });
     });
     // 그래프 4개 (최근 60분)

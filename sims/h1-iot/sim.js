@@ -12,7 +12,7 @@
   const { $, $$, clamp, Sound, toast } = SciSim;
   /* ---------- 공통 도우미 ---------- */
   const PHONE = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches);
-  const VW = PHONE ? 600 : 800, VH = PHONE ? 840 : 560;
+  const VW = PHONE ? 600 : 800, VH = PHONE ? (typeof PHONE_VH === 'number' ? PHONE_VH : 840) : 560;
   const RM = SciSim.reduceMotion;
   const TAU = Math.PI * 2;
   const mark = (b) => (b ? '✅' : '⬜');
@@ -107,6 +107,7 @@
     B.drag = null; c.free = false;
     const z = B.zones.find((q) => p.x >= q.x && p.x <= q.x + q.w && p.y >= q.y && p.y <= q.y + q.h);
     let ok = false;
+    if (z && z.accept && !z.accept(c)) { c.zone = null; c.slot = -1; c.shake = 0.45; Sound.fail(); bdLayout(B); SciSim.tween(c, { lift: 0 }, { duration: 0.25 }); return; }
     if (z) {
       const used = new Set(B.cards.filter((o) => o !== c && o.zone === z.id).map((o) => o.slot));
       if (z.fixed) {
@@ -756,6 +757,7 @@
      단계 · 미션
      ====================================================== */
   function enterLevel(li) {
+    if (li < 3) S.ev.run = null; if (li !== 2) S.sim.run = null;
     if (li === 0) {
       Ph.M = Ph.Mt = START_M; Ph.T = 25; Ph.s = 40; setSlider('#sTemp', 25); setSlider('#sLight', 40);
       S.sn.hist = [[], [], []]; S.sn.init = false; setMode('sense');

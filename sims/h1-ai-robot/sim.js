@@ -12,7 +12,7 @@
   const { $, $$, clamp, Sound, toast } = SciSim;
   /* ---------- 공통 도우미 ---------- */
   const PHONE = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches);
-  const VW = PHONE ? 600 : 800, VH = PHONE ? 840 : 560;
+  const VW = PHONE ? 600 : 800, VH = PHONE ? (typeof PHONE_VH === 'number' ? PHONE_VH : 840) : 560;
   const RM = SciSim.reduceMotion;
   const TAU = Math.PI * 2;
   const mark = (b) => (b ? '✅' : '⬜');
@@ -107,6 +107,7 @@
     B.drag = null; c.free = false;
     const z = B.zones.find((q) => p.x >= q.x && p.x <= q.x + q.w && p.y >= q.y && p.y <= q.y + q.h);
     let ok = false;
+    if (z && z.accept && !z.accept(c)) { c.zone = null; c.slot = -1; c.shake = 0.45; Sound.fail(); bdLayout(B); SciSim.tween(c, { lift: 0 }, { duration: 0.25 }); return; }
     if (z) {
       const used = new Set(B.cards.filter((o) => o !== c && o.zone === z.id).map((o) => o.slot));
       if (z.fixed) {
@@ -294,7 +295,7 @@
   // 같은 방법으로 모으면 늘 같은 순서로 모여요
   function evenOrder(n) { const r = rng(5), S = [], used = new Set(); while (S.length < n) { const k = S.length % 3, cand = POOL.filter((p) => p.k === k && !used.has(p.i)); const b = cand[Math.floor(r() * cand.length)]; used.add(b.i); S.push(b); } return S; }
   const ONE_ORDER = (() => { const r = rng(9), c = POOL.filter((p) => p.y < DARK_Y); for (let i = c.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [c[i], c[j]] = [c[j], c[i]]; } return c; })();
-  const BENCH = { e3: accOf(evenOrder(3)), e12: accOf(evenOrder(12)), e30: accOf(evenOrder(30)), o30: accOf(ONE_ORDER.slice(0, 30)), all: accOf(POOL) };
+  const BENCH = { e3: accOf(evenOrder(3)), e12: accOf(evenOrder(12)), e15: accOf(evenOrder(15)), e30: accOf(evenOrder(30)), o30: accOf(ONE_ORDER.slice(0, 30)), all: accOf(POOL) };
   const f1 = (v) => v.toFixed(1);
   const GOAL_ACC = 90, GCELL = 40;
 
@@ -477,8 +478,8 @@
     const b1 = boxes[1];
     paraText(b1.x + 10, b1.y + 40, R.st === 'fall' ? '앗, 계단에서 떨어졌어요' : R.note || '준비 중…', b1.w - 20, 12.5, { color: '#334155' });
     const b2 = boxes[2];
-    [0, 1].forEach((k) => { const wx = b2.x + 30 + k * 48, wy = b2.y + 52; ctx.fillStyle = '#334155'; ctx.beginPath(); ctx.arc(wx, wy, 14, 0, TAU); ctx.fill(); ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 2; for (let q = 0; q < 4; q++) { const a = (R.st === 'stuck' ? 0 : R.wheel * 2.2) + q * Math.PI / 2; ctx.beginPath(); ctx.moveTo(wx, wy); ctx.lineTo(wx + Math.cos(a) * 12, wy + Math.sin(a) * 12); ctx.stroke(); } });
-    D.text(b2.x + 140, b2.y + 52, R.st === 'stuck' ? '바퀴만 헛돌아요' : R.st === 'fall' ? '멈췄어요' : '바퀴 · 브러시', { size: 12.5, weight: 800, color: R.st === 'stuck' ? '#e2464b' : '#334155', align: PHONE ? 'left' : 'left' });
+    [0, 1].forEach((k) => { const wx = b2.x + 30 + k * 48, wy = b2.y + (PHONE ? 46 : 52); ctx.fillStyle = '#334155'; ctx.beginPath(); ctx.arc(wx, wy, 14, 0, TAU); ctx.fill(); ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 2; for (let q = 0; q < 4; q++) { const a = (R.st === 'stuck' ? 0 : R.wheel * 2.2) + q * Math.PI / 2; ctx.beginPath(); ctx.moveTo(wx, wy); ctx.lineTo(wx + Math.cos(a) * 12, wy + Math.sin(a) * 12); ctx.stroke(); } });
+    D.text(PHONE ? b2.x + 10 : b2.x + 140, PHONE ? b2.y + b2.h - 10 : b2.y + 52, R.st === 'stuck' ? '바퀴만 헛돌아요' : R.st === 'fall' ? '멈췄어요' : '바퀴 · 브러시', { size: 12.5, weight: 800, color: R.st === 'stuck' ? '#e2464b' : '#334155', align: 'left' });
     // 아래 칸: 청소한 정도
     const cv = G.cov; panel(cv.x, cv.y, cv.w, cv.h);
     const pc = covPct(), bw = cv.w - 32;
@@ -534,8 +535,8 @@
     const Rp = G.Rp; panel(Rp.x, Rp.y, Rp.w, Rp.h);
     D.text(Rp.x + 14, Rp.y + 26, '🧠 인공지능의 정확도', { size: 14, weight: 800, color: '#334155', align: 'left' });
     const sa = shownAcc(), fin = L.done;
-    D.text(Rp.x + (PHONE ? 96 : Rp.w / 2), Rp.y + (PHONE ? 90 : 84), sa == null ? '–' : f1(fin ? L.acc : sa) + ' %', { size: PHONE ? 34 : 38, weight: 800, color: sa == null ? '#cbd5e1' : fin && !L.dirty ? (L.acc >= GOAL_ACC ? '#14a058' : '#1b2333') : '#94a3b8' });
-    D.text(Rp.x + (PHONE ? 96 : Rp.w / 2), Rp.y + (PHONE ? 114 : 106), sa == null ? '학습하기를 눌러요' : !fin ? '새 쓰레기 ' + L.shown + ' / ' + TEST.length + '개 분류 중…' : L.dirty ? '샘플이 바뀌었어요. 다시 학습해요' : '새 쓰레기 ' + TEST.length + '개로 확인', { size: 12, weight: 700, color: '#64748b' });
+    D.text(Rp.x + (PHONE ? 96 : Rp.w / 2), Rp.y + (PHONE ? 78 : 84), sa == null ? '–' : f1(fin ? L.acc : sa) + ' %', { size: PHONE ? 34 : 38, weight: 800, color: sa == null ? '#cbd5e1' : fin && !L.dirty ? (L.acc >= GOAL_ACC ? '#14a058' : '#1b2333') : '#94a3b8' });
+    D.text(Rp.x + (PHONE ? 96 : Rp.w / 2), Rp.y + (PHONE ? 100 : 106), sa == null ? '학습하기를 눌러요' : !fin ? '새 쓰레기 ' + L.shown + ' / ' + TEST.length + '개 분류 중…' : L.dirty ? '샘플이 바뀌었어요. 다시 학습해요' : '새 쓰레기 ' + TEST.length + '개로 확인', { size: 12, weight: 700, color: '#64748b' });
     const tx0 = Rp.x + (PHONE ? 214 : 14), ty0 = Rp.y + (PHONE ? 44 : 124), tw = PHONE ? 30 : 26, gap = PHONE ? 8 : 4;
     for (let k = 0; k < TEST.length; k++) {
       const c = k % 8, r = Math.floor(k / 8), x = tx0 + c * (tw + gap), y = ty0 + r * (tw + gap - (PHONE ? 2 : 0));
@@ -544,7 +545,7 @@
       if (st) D.text(x + tw / 2, y + tw / 2 + 4, st.ok ? '✓' : '✗', { size: 13, weight: 800, color: st.ok ? '#15803d' : '#b91c1c' });
     }
     const cnt = [0, 0, 0]; selList().forEach((p) => cnt[p.k]++);
-    const cy0 = PHONE ? Rp.y + 124 : Rp.y + 290;
+    const cy0 = PHONE ? Rp.y + 130 : Rp.y + 290;
     D.text(Rp.x + 14, cy0, '모은 샘플 ' + L.sel.size + '개', { size: 13.5, weight: 800, color: '#334155', align: 'left' });
     KINDS.forEach((k, i) => { const y = cy0 + 14 + i * (PHONE ? 15 : 28); ctx.fillStyle = '#e8edf4'; rr(Rp.x + 60, y, PHONE ? 130 : Rp.w - 110, 10, 5).fill(); const w = (PHONE ? 130 : Rp.w - 110) * cnt[i] / 30; if (w > 0.5) { ctx.fillStyle = k.col; rr(Rp.x + 60, y, w, 10, 5).fill(); } D.text(Rp.x + 14, y + 10, k.ico, { size: 12.5, align: 'left' }); D.text(Rp.x + (PHONE ? 198 : Rp.w - 14), y + 10, String(cnt[i]), { size: 12.5, weight: 800, color: k.col, align: 'right' }); });
     // 컨베이어
@@ -687,7 +688,7 @@
      ====================================================== */
   function nearestPool(p) {
     const G = lnGeom(), X = (v) => G.px + v / 100 * G.pw, Y = (v) => G.py + G.ph - v / 100 * G.ph;
-    let best = null, bd = 16; POOL.forEach((q) => { const d = Math.hypot(X(q.x) - p.x, Y(q.y) - p.y); if (d < bd) { bd = d; best = q; } }); return best;
+    let best = null, bd = PHONE ? 24 : 16; POOL.forEach((q) => { const d = Math.hypot(X(q.x) - p.x, Y(q.y) - p.y); if (d < bd) { bd = d; best = q; } }); return best;
   }
   function tbHit(p) { const G = tbGeom(); for (let ri = 0; ri < 4; ri++) for (let ci = 0; ci < 3; ci++) { const c = G.cell(ri, ci); if (p.x >= c.x && p.x <= c.x + c.w && p.y >= c.y && p.y <= c.y + c.h) return [ri, ci]; } return null; }
   function senHit(p) { const G = robGeom().sn; for (let i = 0; i < 3; i++) { const y = G.y + 34 + i * (PHONE ? 28 : 45); if (p.x >= G.x + 10 && p.x <= G.x + G.w - 10 && p.y >= y && p.y <= y + (PHONE ? 24 : 40)) return i; } return -1; }
@@ -806,7 +807,7 @@
         {
           title: '정확도 90 % 만들기',
           goal: '샘플을 모아 학습해서 새 쓰레기 ' + TEST.length + '개의 정확도를 <b>' + GOAL_ACC + ' % 이상</b>으로 만드세요.',
-          hint: '🎯 골고루 +5개를 여러 번 눌러 샘플을 모은 뒤 🎓 학습하기를 눌러요. (샘플 15개쯤이면 충분해요.)',
+          hint: '🎯 골고루 +5개를 세 번 눌러 샘플 15개를 모은 뒤 🎓 학습하기를 눌러요. (교실 예시에서는 샘플 15개의 정확도가 ' + f1(BENCH.e15) + ' %예요.)',
           setup() { ensure('learn'); L.dirty = true; },
           check: () => accFinal() != null && accFinal() >= GOAL_ACC, hold: 0.4,
           status: () => '샘플 <b>' + L.sel.size + '개</b> · 마지막 정확도 ' + (accFinal() == null ? '⬜ (학습하기를 눌러요)' : '<b>' + f1(accFinal()) + ' %</b> ' + mark(accFinal() >= GOAL_ACC)),
