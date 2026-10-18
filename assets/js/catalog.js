@@ -4660,6 +4660,60 @@ window.SCI_CATALOG = {
           ]
         }
       ]
+    },
+    {
+      "id": "hb",
+      "short": "생명",
+      "name": "생명과학",
+      "book": "일반선택",
+      "group": "hgeneral",
+      "units": [
+        {
+          "no": "Ⅰ",
+          "title": "생명 시스템의 구성",
+          "subject": "bio",
+          "sims": []
+        },
+        {
+          "no": "Ⅱ",
+          "title": "항상성과 몸의 조절",
+          "subject": "bio",
+          "sims": []
+        },
+        {
+          "no": "Ⅲ",
+          "title": "생명의 연속성과 다양성",
+          "subject": "bio",
+          "sims": []
+        }
+      ]
+    },
+    {
+      "id": "he",
+      "short": "지구",
+      "name": "지구과학",
+      "book": "일반선택",
+      "group": "hgeneral",
+      "units": [
+        {
+          "no": "Ⅰ",
+          "title": "대기와 해양의 상호작용",
+          "subject": "earth",
+          "sims": []
+        },
+        {
+          "no": "Ⅱ",
+          "title": "지구의 역사와 한반도의 암석",
+          "subject": "earth",
+          "sims": []
+        },
+        {
+          "no": "Ⅲ",
+          "title": "태양계 천체와 별과 우주의 진화",
+          "subject": "earth",
+          "sims": []
+        }
+      ]
     }
   ]
 };

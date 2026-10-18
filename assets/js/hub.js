@@ -44,7 +44,7 @@
       }
       const b = el('button', { class: 'grade-tab g-' + group + (g.id === current ? ' on' : ''), role: 'tab', 'aria-selected': g.id === current ? 'true' : 'false' }, [
         el('span', { class: 'gnum', text: g.short || String(i + 1) }),
-        el('span', { class: 'gtext' }, [el('b', { text: g.name }), el('span', { text: g.book + ' · ' + g.units.length + '개 단원' })]),
+        el('span', { class: 'gtext' }, [el('b', { text: g.name }), el('span', { text: (/^h(general|career|fusion)$/.test(g.group) ? '' : g.book + ' · ') + g.units.length + '개 단원' })]),
         el('span', { class: 'gprog', html: sims.length + '차시<br><span class="st">★</span> ' + starsOf(sims) + '/' + sims.length * 3 }),
       ]);
       b.addEventListener('click', () => {

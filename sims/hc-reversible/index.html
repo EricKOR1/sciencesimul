@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#8b5cf6">
+  <title>되돌릴 수 있는 반응 | 고등 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔁</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; }
+    .stage-toolbar { min-height: 61px; }
+    .segmented button { min-height: 44px; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 14px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard .btn-sm { min-height: 44px; }
+    #ctrlCard [hidden] { display: none !important; }
+    .ctrl-note { font-size: 14px; color: var(--muted); margin: 6px 0 0; line-height: 1.4; }
+    .btn-row { display: flex; gap: 8px; margin-top: 8px; }
+    .btn-row .btn { flex: 1; padding-left: 8px; padding-right: 8px; }
+    .view-seg { display: flex; width: 100%; }
+    .view-seg button { flex: 1 1 0; min-width: 0; padding-left: 4px; padding-right: 4px; font-size: 14.5px; }
+    .range-row { display: flex; align-items: center; gap: 8px; }
+    .range-row input[type=range] { flex: 1; min-width: 0; height: 44px; }
+    .nudge { flex: none; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); font-weight: 900; font-size: 20px; line-height: 1; cursor: pointer; display: grid; place-items: center; color: var(--ink); }
+    .nudge:active { transform: scale(.94); background: var(--surface-2); }
+    .nudge:disabled { opacity: .4; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+    .chips button { flex: 1 1 auto; min-height: 44px; padding: 6px 12px; border: 2px solid var(--line); background: #fff; border-radius: 999px; font-weight: 800; font-size: 14.5px; cursor: pointer; color: var(--ink); }
+    .chips button.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); color: color-mix(in srgb, var(--subject) 70%, black); }
+    .chips button.done { border-color: var(--good); background: var(--good-soft); }
+    .chips button.done.on { background: color-mix(in srgb, var(--good) 22%, white); }
+    .sel-in { width: 100%; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 8px; font: 800 14.5px var(--font); color: var(--ink); background: #fff; }
+    .sel-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .sel-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .sel-row { margin-top: 8px; }
+    .sel-row .q { font-weight: 800; font-size: 14px; margin-bottom: 3px; line-height: 1.3; }
+    .in-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+    .in-row label { flex: 1; font-weight: 800; font-size: 14.5px; line-height: 1.25; }
+    .in-row input { width: 100px; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 10px; font: 800 16px var(--font); color: var(--ink); background: #fff; text-align: right; }
+    .in-row input.ok { border-color: var(--good); background: var(--good-soft); }
+    .in-row input.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .in-row span.u { min-width: 34px; font-weight: 800; color: var(--muted); font-size: 14px; }
+    @keyframes shakeX { 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+    .readout .value.txt { font-family: var(--font); font-size: 16px; white-space: normal; line-height: 1.25; }
+    .concept table.mini { border-collapse: collapse; margin: 6px 0; font-size: 14px; width: 100%; }
+    .concept table.mini th, .concept table.mini td, .note-step table.mini th, .note-step table.mini td { border: 1px solid var(--line); padding: 4px 6px; text-align: center; }
+    .note-step table.mini { border-collapse: collapse; margin: 6px 0; font-size: 13.5px; width: 100%; }
+    table.mini th { background: var(--surface-2); font-weight: 800; }
+    .stage-canvas .stage-hint { top: 10px; bottom: auto; }
+    @media (max-width: 1100px) and (orientation: landscape) { .toolbar-label { display: none; } }
+    @media (orientation: portrait) and (min-width: 600px) {
+      .side-col:has(> #ctrlCard[hidden]) > #game { grid-column: 1 / -1; }
+    }
+    @media (max-width: 599px) {
+      .readout .value.txt { font-size: 14px; }
+      .stage-toolbar { gap: 6px; padding: 8px; }
+      .stage-toolbar .spacer, .toolbar-label { display: none; }
+      .segmented button { padding-left: 8px; padding-right: 8px; font-size: 13.5px; }
+      .stage-hint { font-size: 13px; padding: 5px 12px; white-space: normal; }
+    }
+
+  </style>
+</head>
+<body class="sim-page" data-subject="chem">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#hc">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">화학 · Ⅲ. 화학 평형</div>
+      <h1>되돌릴 수 있는 반응</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🔵 되돌리는 변화</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="tablist" aria-label="화면 고르기">
+            <button type="button" data-mode="heat" data-feature="heat">🔵 되돌리는 변화</button>
+            <button type="button" data-mode="arrow" data-feature="arrow">🔁 양방향 화살표</button>
+            <button type="button" data-mode="sort" data-feature="sort">🗂 분류하기</button>
+            <button type="button" data-mode="wait" data-feature="wait">⏱ 멈춘 걸까?</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="황산 구리 수화물을 가열하고 물을 떨어뜨리는 장면, 염화 코발트 종이, 온도에 따라 색이 변하는 NO₂ 플라스크, 가역과 비가역 카드 분류, 콜라 병, 색 변화 그래프"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">—</span><span class="value txt" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">—</span><span class="value txt" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">—</span><span class="value txt" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <!-- ① 되돌리는 변화 -->
+        <div class="control" data-modes="heat">
+          <div class="control-head"><span>🧪 살펴볼 변화</span></div>
+          <div class="segmented view-seg" id="sysSeg" role="group" aria-label="살펴볼 변화 고르기">
+            <button type="button" data-v="cu">🔵 황산 구리</button>
+            <button type="button" data-v="co" data-feature="cobalt">📄 염화 코발트 종이</button>
+          </div>
+        </div>
+        <div class="control" data-modes="heat" data-sys="cu">
+          <div class="control-head"><span>🔧 조작</span></div>
+          <div class="btn-row">
+            <button class="btn btn-sm btn-primary" id="bHeat" type="button">🔥 가열하기</button>
+            <button class="btn btn-sm btn-primary" id="bWater" type="button">💧 물 떨어뜨리기</button>
+          </div>
+          <p class="ctrl-note" id="cuNote">파란 가루를 가열하면 어떻게 될까요?</p>
+        </div>
+        <div class="control" data-modes="heat" data-sys="co">
+          <div class="control-head"><span>🔧 종이 놓기</span></div>
+          <div class="btn-row">
+            <button class="btn btn-sm btn-primary" id="bDry" type="button">🌬 마른 곳에 두기</button>
+            <button class="btn btn-sm btn-primary" id="bWet" type="button">💦 습한 곳에 두기</button>
+          </div>
+          <p class="ctrl-note">종이를 번갈아 옮기면 색이 바뀌어요.</p>
+        </div>
+        <!-- ② 양방향 화살표 -->
+        <div class="control" data-modes="arrow">
+          <div class="control-head"><span>🌡 플라스크 담그기</span></div>
+          <div class="btn-row">
+            <button class="btn btn-sm btn-primary" id="bHot" type="button">🔥 뜨거운 물</button>
+            <button class="btn btn-sm btn-primary" id="bIce" type="button">🧊 얼음물</button>
+          </div>
+          <div class="btn-row"><button class="btn btn-sm" id="bRoom" type="button">🌡 실온으로 꺼내기</button></div>
+          <p class="ctrl-note">밀봉한 플라스크예요. NO₂는 유독 기체라서 모의실험으로 해요.</p>
+        </div>
+        <div class="control" data-modes="arrow" data-gate="notation">
+          <div class="control-head"><span>✍️ 반응식 표기 완성</span></div>
+          <div class="sel-row"><div class="q">2NO₂ → N₂O₄ (왼쪽 → 오른쪽) 방향의 반응은?</div><select class="sel-in" id="selFwd" aria-label="왼쪽에서 오른쪽 방향의 반응 이름"></select></div>
+          <div class="sel-row"><div class="q">N₂O₄ → 2NO₂ (오른쪽 → 왼쪽) 방향의 반응은?</div><select class="sel-in" id="selBwd" aria-label="오른쪽에서 왼쪽 방향의 반응 이름"></select></div>
+          <div class="sel-row"><div class="q">두 방향이 모두 일어나는 반응식의 화살표는?</div><select class="sel-in" id="selSym" aria-label="화살표 종류"></select></div>
+        </div>
+        <!-- ③ 분류하기 -->
+        <div class="control" data-modes="sort">
+          <div class="control-head"><span>🗂 살펴볼 장면</span></div>
+          <div class="segmented view-seg" id="subSeg" role="group" aria-label="장면 고르기">
+            <button type="button" data-v="sort">🃏 카드 분류</button>
+            <button type="button" data-v="cola" data-feature="cola">🥤 콜라 병</button>
+          </div>
+        </div>
+        <div class="control" data-modes="sort" data-sub="sort">
+          <div class="control-head"><span>🃏 고른 카드</span></div>
+          <div class="calc-line" id="selName" style="font-weight:800;font-size:15px;margin:2px 0 4px">카드를 눌러 보세요</div>
+          <div class="btn-row">
+            <button class="btn btn-sm" id="bToRev" type="button">⬇ 가역 상자로</button>
+            <button class="btn btn-sm" id="bToIrr" type="button">⬇ 비가역 상자로</button>
+          </div>
+          <div class="btn-row"><button class="btn btn-sm" id="bSortClear" type="button">↺ 카드 모두 꺼내기</button></div>
+          <p class="ctrl-note">카드를 끌어서 상자에 넣어도 돼요.</p>
+        </div>
+        <div class="control" data-modes="sort" data-sub="cola">
+          <div class="control-head"><span>🥤 콜라 병</span></div>
+          <div class="btn-row">
+            <button class="btn btn-sm btn-primary" id="bCap" type="button">🔓 뚜껑 열기</button>
+            <button class="btn btn-sm" id="bColaReset" type="button">↺ 새 병</button>
+          </div>
+          <p class="ctrl-note" id="colaNote">닫힌 병 속에서는 기체 CO₂와 녹은 CO₂가 오가요.</p>
+        </div>
+        <!-- ④ 멈춘 걸까? -->
+        <div class="control" data-modes="wait">
+          <div class="control-head"><span>🧪 밀봉 플라스크 (N₂O₄만 넣음)</span></div>
+          <div class="btn-row">
+            <button class="btn btn-sm btn-primary" id="bStart" type="button">▶ 실험 시작</button>
+            <button class="btn btn-sm" id="bAgain" type="button">↺ 처음부터</button>
+          </div>
+          <p class="ctrl-note">시간은 실제보다 빠르게 흘러요. 색의 진하기를 그래프로 기록해요.</p>
+        </div>
+        <div class="control" data-modes="wait" data-gate="pred">
+          <div class="control-head"><span>🎯 내 예측</span></div>
+          <div class="sel-row"><div class="q">색이 더 이상 변하지 않을 때 반응은?</div><select class="sel-in" id="selPred" aria-label="예측 고르기"></select></div>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>
