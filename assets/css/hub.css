@@ -49,7 +49,9 @@
 }
 .grade-tab .gtext b { display: block; font-size: 18px; }
 .grade-tab .gtext span { font-size: 13px; color: var(--muted); font-weight: 600; }
-.grade-tab .gprog { margin-left: auto; text-align: right; font-size: 13px; color: var(--muted); font-weight: 700; }
+.grade-tab .gprog { margin-left: auto; text-align: right; font-size: 13px; color: var(--muted); font-weight: 700; white-space: nowrap; }
+.grade-tab .gnum.long { font-size: 17px; letter-spacing: -1px; }
+.grade-tabs > .grade-tab.g-hgeneral .gtext b, .grade-tabs > .grade-tab.g-hcareer .gtext b, .grade-tabs > .grade-tab.g-hfusion .gtext b { font-size: 16px; word-break: keep-all; }
 .grade-tab .gprog .st { color: var(--star); font-size: 15px; }
 .grade-tab.on { border-color: var(--primary); box-shadow: 0 8px 26px rgba(56, 103, 244, .25); }
 .grade-tab.on .gnum { background: var(--primary); color: #fff; }

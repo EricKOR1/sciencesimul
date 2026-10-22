@@ -22,7 +22,7 @@ def clean(t):
 
 
 units = {}
-for f in ['design_g1.py', 'design_g2.py', 'design_g3.py', 'design_h1a.py', 'design_h1b.py', 'design_hp.py', 'design_hc.py', 'design_hb.py', 'design_he.py']:
+for f in ['design_g1.py', 'design_g2.py', 'design_g3.py', 'design_h1a.py', 'design_h1b.py', 'design_hp.py', 'design_hc.py', 'design_hb.py', 'design_he.py', 'design_hm.py', 'design_hq.py', 'design_hx.py', 'design_hr.py', 'design_hy.py', 'design_hg.py', 'design_hs.py', 'design_hu.py']:
     if not os.path.exists(D + 'src/' + f):
         continue
     ns = {}
@@ -46,7 +46,7 @@ for g in cat['grades']:
         unit_meta[n] = dict(grade=g['id'], gname=g['name'], no=u['no'], title=u['title'], subject=u['subject'],
                             existing={s['id']: s for s in u['sims']})
 
-GRADE_KO = {'g1': '중1', 'g2': '중2', 'g3': '중3', 'h1a': '통합과학1', 'h1b': '통합과학2', 'hp': '물리학', 'hc': '화학', 'hb': '생명과학', 'he': '지구과학'}
+GRADE_KO = {'g1': '중1', 'g2': '중2', 'g3': '중3', 'h1a': '통합과학1', 'h1b': '통합과학2', 'hp': '물리학', 'hc': '화학', 'hb': '생명과학', 'he': '지구과학', 'hm': '역학과 에너지', 'hq': '전자기와 양자', 'hx': '물질과 에너지', 'hr': '화학 반응의 세계', 'hy': '세포와 물질대사', 'hg': '생물의 유전', 'hs': '지구시스템과학', 'hu': '행성우주과학'}
 plans_out = []
 os.makedirs(D + 'units', exist_ok=True)
 summary = []

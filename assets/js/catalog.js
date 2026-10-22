@@ -5909,6 +5909,228 @@ window.SCI_CATALOG = {
           ]
         }
       ]
+    },
+    {
+      "id": "hm",
+      "short": "역학",
+      "name": "역학과 에너지",
+      "book": "진로선택",
+      "group": "hcareer",
+      "units": [
+        {
+          "no": "Ⅰ",
+          "title": "시공간과 운동",
+          "subject": "phy",
+          "sims": []
+        },
+        {
+          "no": "Ⅱ",
+          "title": "열과 에너지",
+          "subject": "phy",
+          "sims": []
+        },
+        {
+          "no": "Ⅲ",
+          "title": "탄성파와 소리",
+          "subject": "phy",
+          "sims": []
+        }
+      ]
+    },
+    {
+      "id": "hq",
+      "short": "양자",
+      "name": "전자기와 양자",
+      "book": "진로선택",
+      "group": "hcareer",
+      "units": [
+        {
+          "no": "Ⅰ",
+          "title": "전자기적 상호작용",
+          "subject": "phy",
+          "sims": []
+        },
+        {
+          "no": "Ⅱ",
+          "title": "빛과 정보 통신",
+          "subject": "phy",
+          "sims": []
+        },
+        {
+          "no": "Ⅲ",
+          "title": "양자와 미시세계",
+          "subject": "phy",
+          "sims": []
+        }
+      ]
+    },
+    {
+      "id": "hx",
+      "short": "물질",
+      "name": "물질과 에너지",
+      "book": "진로선택",
+      "group": "hcareer",
+      "units": [
+        {
+          "no": "Ⅰ",
+          "title": "물질의 세 가지 상태",
+          "subject": "chem",
+          "sims": []
+        },
+        {
+          "no": "Ⅱ",
+          "title": "용액의 성질",
+          "subject": "chem",
+          "sims": []
+        },
+        {
+          "no": "Ⅲ",
+          "title": "화학 변화의 자발성",
+          "subject": "chem",
+          "sims": []
+        },
+        {
+          "no": "Ⅳ",
+          "title": "반응 속도",
+          "subject": "chem",
+          "sims": []
+        }
+      ]
+    },
+    {
+      "id": "hr",
+      "short": "반응",
+      "name": "화학 반응의 세계",
+      "book": "진로선택",
+      "group": "hcareer",
+      "units": [
+        {
+          "no": "Ⅰ",
+          "title": "산 염기 평형",
+          "subject": "chem",
+          "sims": []
+        },
+        {
+          "no": "Ⅱ",
+          "title": "산화⋅환원 반응",
+          "subject": "chem",
+          "sims": []
+        },
+        {
+          "no": "Ⅲ",
+          "title": "탄소 화합물과 반응",
+          "subject": "chem",
+          "sims": []
+        }
+      ]
+    },
+    {
+      "id": "hy",
+      "short": "세포",
+      "name": "세포와 물질대사",
+      "book": "진로선택",
+      "group": "hcareer",
+      "units": [
+        {
+          "no": "Ⅰ",
+          "title": "세포",
+          "subject": "bio",
+          "sims": []
+        },
+        {
+          "no": "Ⅱ",
+          "title": "물질대사와 에너지",
+          "subject": "bio",
+          "sims": []
+        },
+        {
+          "no": "Ⅲ",
+          "title": "세포호흡과 광합성",
+          "subject": "bio",
+          "sims": []
+        }
+      ]
+    },
+    {
+      "id": "hg",
+      "short": "유전",
+      "name": "생물의 유전",
+      "book": "진로선택",
+      "group": "hcareer",
+      "units": [
+        {
+          "no": "Ⅰ",
+          "title": "유전자와 유전물질",
+          "subject": "bio",
+          "sims": []
+        },
+        {
+          "no": "Ⅱ",
+          "title": "유전자의 발현",
+          "subject": "bio",
+          "sims": []
+        },
+        {
+          "no": "Ⅲ",
+          "title": "생명공학기술",
+          "subject": "bio",
+          "sims": []
+        }
+      ]
+    },
+    {
+      "id": "hs",
+      "short": "지구계",
+      "name": "지구시스템과학",
+      "book": "진로선택",
+      "group": "hcareer",
+      "units": [
+        {
+          "no": "Ⅰ",
+          "title": "지구 탄생과 생동하는 지구",
+          "subject": "earth",
+          "sims": []
+        },
+        {
+          "no": "Ⅱ",
+          "title": "해수의 운동",
+          "subject": "earth",
+          "sims": []
+        },
+        {
+          "no": "Ⅲ",
+          "title": "강수 과정과 대기의 운동",
+          "subject": "earth",
+          "sims": []
+        }
+      ]
+    },
+    {
+      "id": "hu",
+      "short": "행성",
+      "name": "행성우주과학",
+      "book": "진로선택",
+      "group": "hcareer",
+      "units": [
+        {
+          "no": "Ⅰ",
+          "title": "우주탐사와 행성계",
+          "subject": "earth",
+          "sims": []
+        },
+        {
+          "no": "Ⅱ",
+          "title": "태양과 별의 관측",
+          "subject": "earth",
+          "sims": []
+        },
+        {
+          "no": "Ⅲ",
+          "title": "은하와 우주",
+          "subject": "earth",
+          "sims": []
+        }
+      ]
     }
   ]
 };
