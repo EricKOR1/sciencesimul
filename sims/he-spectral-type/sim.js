@@ -355,7 +355,7 @@
     const xs = (nm) => x + (nm - NM0) / (NM1 - NM0) * w;
     let lastX = -99, row = 0, lastName = '', lastNm = -99;
     labs.forEach((ln) => {
-      if (ln[2] === lastName && ln[0] - lastNm < 14) return; lastName = ln[2]; lastNm = ln[0]; const xx = xs(ln[0]); row = xx - lastX < 40 ? 1 - row : 0; lastX = xx; D.text(xx, sy - 8 - row * 15, ln[2], { size: 12, weight: 800, color: '#334155' }); line([[xx, sy - 6 - row * 15 + 2], [xx, sy]], 'rgba(51,65,85,.5)', 1); });
+      if (ln[2] === lastName && ln[0] - lastNm < 14) return; lastName = ln[2]; lastNm = ln[0]; const xx = xs(ln[0]); row = xx - lastX < 40 ? 1 - row : 0; lastX = xx; D.text(clamp(xx, x + 24, x + w - 24), sy - 8 - row * 15, ln[2], { size: 12, weight: 800, color: '#334155' }); line([[xx, sy - 6 - row * 15 + 2], [xx, sy]], 'rgba(51,65,85,.5)', 1); });
     if (STR.TiO(T) > 0.25) { const xx = xs(616); D.text(xx, sy - 8, 'TiO 띠', { size: 12, weight: 800, color: '#92400e' }); }
     const cv = drawSpec(T, lum, x, sy, w, sh, rev);
     axisTicks(x, sy + sh, w, NM0, NM1, 50, true);
@@ -554,18 +554,23 @@
   function initBoard() {
     const L = lay4(), ids = STARS8.map((s) => s.id);
     for (let i = ids.length - 1; i > 0; i--) { const j = (i * 7 + 3) % (i + 1); [ids[i], ids[j]] = [ids[j], ids[i]]; }
-    S.cards4 = ids.map((id, i) => { const p = trayPos(L, i); return { id, x: p.x, y: p.y, tx: p.x, ty: p.y, cell: null, lift: 0, shake: 0, bad: false, ok: false }; });
+    S.cards4 = ids.map((id, i) => { const p = trayPos(L, i); return { id, x: p.x, y: p.y, tx: p.x, ty: p.y, cw: L.card.w, ch: L.card.h, tw: L.card.w, th: L.card.h, cell: null, lift: 0, shake: 0, bad: false, ok: false }; });
     S.d4 = null; S.sel4 = null; S.checked4 = false;
   }
   function relayout4() {
     const L = lay4(); let ti = 0;
-    S.cards4.forEach((c) => { if (c.cell) { const r = cellRect(L, c.cell[0], c.cell[1]); c.tx = r.x + r.w / 2; c.ty = r.y + r.h / 2; } else { const p = trayPos(L, ti++); c.tx = p.x; c.ty = p.y; } });
+    S.cards4.forEach((c) => {
+      if (c.cell) {
+        const r = cellRect(L, c.cell[0], c.cell[1]), mates = S.cards4.filter((q) => q.cell && q.cell[0] === c.cell[0] && q.cell[1] === c.cell[1]), n = mates.length, i = mates.indexOf(c), slotH = (r.h - 8) / n;
+        c.th = Math.min(L.card.h, slotH - 2); c.tw = L.card.w; c.tx = r.x + r.w / 2; c.ty = r.y + 4 + slotH * (i + 0.5);
+      } else { const p = trayPos(L, ti++); c.tx = p.x; c.ty = p.y; c.tw = L.card.w; c.th = L.card.h; }
+    });
   }
-  function cardAt4(p) { for (let i = S.cards4.length - 1; i >= 0; i--) { const c = S.cards4[i], L = lay4(); if (Math.abs(p.x - c.x) <= L.card.w / 2 && Math.abs(p.y - c.y) <= L.card.h / 2) return c; } return null; }
+  function cardAt4(p) { for (let i = S.cards4.length - 1; i >= 0; i--) { const c = S.cards4[i]; if (Math.abs(p.x - c.x) <= c.cw / 2 && Math.abs(p.y - c.y) <= c.ch / 2) return c; } return null; }
   function cellAt4(p) { const L = lay4(); for (let r = 0; r < 3; r++) for (let c = 0; c < 7; c++) { const q = cellRect(L, c, r); if (p.x >= q.x && p.x <= q.x + q.w && p.y >= q.y && p.y <= q.y + q.h) return [c, r]; } return null; }
   function place4(card, cell) {
-    if (cell) { const old = S.cards4.find((c) => c !== card && c.cell && c.cell[0] === cell[0] && c.cell[1] === cell[1]); if (old) old.cell = null; }
-    card.cell = cell; card.bad = false; card.ok = false; S.checked4 = false; relayout4();
+    if (cell) { const mates = S.cards4.filter((c) => c !== card && c.cell && c.cell[0] === cell[0] && c.cell[1] === cell[1]); if (mates.length >= 2) mates[0].cell = null; }
+    card.cell = cell; S.cards4.forEach((c) => { c.bad = false; c.ok = false; }); S.checked4 = false; relayout4();
   }
   const correct4 = (c) => { const s = BY8[c.id]; return c.cell && ORDER7[c.cell[0]] === classOf(s.T) && ROWS4[c.cell[1]].k === s.row; };
   function drawBoard(t, dt) {
@@ -574,20 +579,21 @@
     panel(L.x, L.y, L.bw, L.bh, { fill: 'rgba(255,255,255,.96)' });
     // 열 머리글
     ORDER7.forEach((k, ci) => { const r = cellRect(L, ci, 0), c = CLS[k]; ctx.fillStyle = rgba(c.col, 0.5); rr(r.x + 2, L.y + 4, r.w - 4, L.hh - 6, 8).fill(); D.text(r.x + r.w / 2, L.y + (PHONE ? 30 : 24), k, { size: 18, weight: 800, color: shade(c.col, k === 'A' || k === 'F' ? -0.6 : -0.35) }); if (!PHONE) D.text(r.x + r.w / 2, L.y + L.hh - 10, RANGE4[k], { size: 12, weight: 700, color: '#475569' }); });
-    D.text(L.x + L.lx / 2, L.y + (PHONE ? 28 : 24), '분광형', { size: 13, weight: 800, color: '#334155' }); D.text(L.x + L.lx / 2, L.y + L.hh - 10, PHONE ? '고온→저온' : '고온 → 저온 (K)', { size: 11.5, weight: 700, color: '#64748b' });
+    D.text(L.x + L.lx / 2, L.y + (PHONE ? 28 : 24), '분광형', { size: 13, weight: 800, color: '#334155' }); if (!PHONE) D.text(L.x + L.lx / 2, L.y + L.hh - 10, '고온 → 저온 (K)', { size: 11.5, weight: 700, color: '#64748b' });
     ROWS4.forEach((row, ri) => { const y = L.y + L.hh + ri * L.rh; ctx.fillStyle = ri % 2 ? 'rgba(241,245,249,.9)' : 'rgba(248,250,252,.9)'; ctx.fillRect(L.x + 4, y, L.bw - 8, L.rh); D.text(L.x + 12, y + L.rh / 2 + 5, PHONE ? row.k : row.name, { size: PHONE ? 16 : 14.5, weight: 800, color: '#0f172a', align: 'left' }); if (PHONE) D.text(L.x + 12, y + L.rh / 2 + 24, row.k === 'I' ? '초거성' : row.k === 'III' ? '거성' : '주계열', { size: 11.5, weight: 700, color: '#475569', align: 'left' }); });
     for (let r = 0; r < 3; r++) for (let c = 0; c < 7; c++) { const q = cellRect(L, c, r), hv = S.d4 && S.d4.hover && S.d4.hover[0] === c && S.d4.hover[1] === r; ctx.strokeStyle = hv ? '#0ea5e9' : 'rgba(148,163,184,.5)'; ctx.lineWidth = hv ? 3 : 1; ctx.setLineDash(hv ? [] : [4, 4]); rr(q.x + 2, q.y + 3, q.w - 4, q.h - 6, 8).stroke(); ctx.setLineDash([]); if (hv) { ctx.fillStyle = 'rgba(14,165,233,.12)'; rr(q.x + 2, q.y + 3, q.w - 4, q.h - 6, 8).fill(); } }
     // 카드 보관함
     const T = L.tray; D.text(T.x + 12, T.y + 18, '별 카드 (끌어서 칸에 놓아요)', { size: 14, weight: 800, color: '#cbd5e1', align: 'left' });
     // 카드
     const dragC = S.d4 && S.d4.c;
-    S.cards4.forEach((c) => { if (c !== dragC) { c.x = approach(c.x, c.tx, dt, 16); c.y = approach(c.y, c.ty, dt, 16); } c.lift = approach(c.lift, c === dragC ? 1 : 0, dt, 18); if (c.shake > 0) c.shake = Math.max(0, c.shake - dt); });
+    S.cards4.forEach((c) => { if (c !== dragC) { c.x = approach(c.x, c.tx, dt, 16); c.y = approach(c.y, c.ty, dt, 16); } c.cw = approach(c.cw, dragC === c ? L.card.w : c.tw, dt, 16); c.ch = approach(c.ch, dragC === c ? L.card.h : c.th, dt, 16); c.lift = approach(c.lift, c === dragC ? 1 : 0, dt, 18); if (c.shake > 0) c.shake = Math.max(0, c.shake - dt); });
     const drawCard = (c) => {
-      const s = BY8[c.id], w = L.card.w, h = L.card.h, lift = c.lift, sh = c.shake > 0 ? Math.sin(c.shake * 40) * 5 * c.shake * 4 : 0, cx = c.x + sh, cy = c.y - lift * 6, sel = S.sel4 === c.id;
+      const s = BY8[c.id], w = c.cw, h = c.ch, lift = c.lift, sh = c.shake > 0 ? Math.sin(c.shake * 40) * 5 * c.shake * 4 : 0, cx = c.x + sh, cy = c.y - lift * 6, sel = S.sel4 === c.id, compact = h < 58;
       D.shadow(() => { ctx.fillStyle = '#fff'; rr(cx - w / 2, cy - h / 2, w, h, 9).fill(); }, { blur: 4 + lift * 10, y: 2 + lift * 6 });
       ctx.strokeStyle = c.bad ? '#dc2626' : c.ok ? '#16a34a' : sel ? '#0ea5e9' : 'rgba(100,116,139,.6)'; ctx.lineWidth = c.bad || c.ok || sel ? 3 : 1.5; rr(cx - w / 2, cy - h / 2, w, h, 9).stroke();
-      const col = starColor(s.T); D.sphere(cx - w / 2 + 12, cy - h / 2 + 13, 6, col, { gloss: false });
-      D.text(cx - w / 2 + 22, cy - h / 2 + 18, PHONE ? s.short : s.name, { size: PHONE ? 11.5 : 12.5, weight: 800, color: '#0f172a', align: 'left' });
+      const col = starColor(s.T); D.sphere(cx - w / 2 + 12, cy - h / 2 + (compact ? h / 2 : 13), 6, col, { gloss: false });
+      D.text(cx - w / 2 + 22, cy - h / 2 + (compact ? h / 2 + 4 : 18), PHONE ? s.short : s.name, { size: PHONE ? 11.5 : 12.5, weight: 800, color: '#0f172a', align: 'left' });
+      if (compact) { if (!PHONE && h > 30) D.text(cx - w / 2 + 22, cy - h / 2 + h / 2 + 18, comma(s.T) + ' K', { size: 11.5, weight: 700, color: '#475569', align: 'left' }); return; }
       if (!PHONE) {
         D.text(cx - w / 2 + 8, cy - h / 2 + 36, comma(s.T) + ' K', { size: 12, weight: 700, color: '#334155', align: 'left' });
         D.text(cx - w / 2 + 8, cy - h / 2 + 52, s.L + ' L☉', { size: 12, weight: 700, color: '#334155', align: 'left' });

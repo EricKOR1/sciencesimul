@@ -5777,8 +5777,7 @@ window.SCI_CATALOG = {
                 "빈의 법칙",
                 "슈테판-볼츠만",
                 "별의 반지름"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "he-hr-diagram",
@@ -5799,8 +5798,7 @@ window.SCI_CATALOG = {
                 "H-R도 그리기",
                 "별의 집단",
                 "주계열 성질"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "he-stellar-evolution",
@@ -5821,8 +5819,7 @@ window.SCI_CATALOG = {
                 "주계열 이후",
                 "큰 별의 최후",
                 "물질 순환"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "he-galaxy-types",

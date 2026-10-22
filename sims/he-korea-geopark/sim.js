@@ -446,11 +446,11 @@
     { id: 'seds', name: '신생대 퇴적 분지', sub: '포항 일대', color: '#b8a58c', pat: 'silt', polys: [[[129.15, 35.9], [129.15, 36.3], [129.5, 36.3], [129.5, 35.9]]] },
   ];
   const PINS = [
-    { id: 'bukhan', name: '북한산', lon: 126.98, lat: 37.66, rock: 'granite', age: 'meso', clue: '밝은색의 큰 알갱이가 보이는 하얀 바위 봉우리' },
-    { id: 'jiri', name: '지리산', lon: 127.73, lat: 35.34, rock: 'gneiss', age: 'pre', clue: '밝은색·어두운색의 줄무늬 띠가 보이는 암석' },
+    { id: 'bukhan', name: '북한산', lon: 126.98, lat: 37.66, rock: 'granite', age: 'meso', clue: '밝은색 큰 알갱이의 하얀 바위 봉우리' },
+    { id: 'jiri', name: '지리산', lon: 127.73, lat: 35.34, rock: 'gneiss', age: 'pre', clue: '밝고 어두운 줄무늬 띠가 보이는 암석' },
     { id: 'halla', name: '한라산', lon: 126.53, lat: 33.36, rock: 'basalt', age: 'ceno', clue: '검고 구멍이 송송 난 돌' },
-    { id: 'taebaek', name: '강원 태백', lon: 128.98, lat: 37.17, rock: 'lime', age: 'pal', clue: '회백색 돌, 묽은 염산을 떨어뜨리면 거품이 나요' },
-    { id: 'hantan', name: '철원·한탄강', lon: 127.2, lat: 38.15, rock: 'basalt', age: 'ceno', clue: '검고 치밀한 돌이 기둥 모양으로 쪼개져요' },
+    { id: 'taebaek', name: '강원 태백', lon: 128.98, lat: 37.17, rock: 'lime', age: 'pal', clue: '회백색 돌, 묽은 염산에 거품이 나요' },
+    { id: 'hantan', name: '철원·한탄강', lon: 127.2, lat: 38.15, rock: 'basalt', age: 'ceno', clue: '검고 치밀한 돌, 기둥 모양으로 쪼개져요' },
     { id: 'goseong', name: '경남 고성', lon: 128.35, lat: 34.98, rock: 'sed', age: 'meso', clue: '공룡 발자국이 찍힌 알갱이 퇴적층' },
   ];
   const ROCKS = [['granite', '화강암'], ['gneiss', '편마암'], ['basalt', '현무암'], ['lime', '석회암'], ['sed', '퇴적암(사암·셰일)']];
@@ -473,7 +473,7 @@
     const M = ML.M, R = ML.R, Mp = S.map;
     Mp.rev = Mp.rev; // 색이 번져요
     panel(M.x, M.y, M.w, M.h, { fill: '#cfe6f5' });
-    tx(M.x + 10, M.y + 18, '한반도 (모식도)', 13, '#334155', 'left', 800);
+    tx(M.x + 10, M.y + 18, '한반도', 13, '#334155', 'left', 800); tx(M.x + M.w - 10, M.y + 18, '※ 경계를 단순화한 모식도', 11.5, '#64748b', 'right', 700);
     const landFill = () => { smoothPoly(COAST); };
     // 육지 바탕 + 지질 색
     ctx.save(); landFill(); ctx.fillStyle = '#e2dccb'; ctx.fill(); ctx.clip();
@@ -487,10 +487,10 @@
     // 섬 : 제주도(신생대 화산), 울릉도, 백령도
     [[126.55, 33.38, 0.42, 0.17, 0], [130.9, 37.5, 0.1, 0.08, 0]].forEach(([a, b, c, d, e], i) => { const al = clamp(Mp.rev * 7 - 4 - i, 0, 1); island(a, b, c, d, e); ctx.fillStyle = '#e2dccb'; ctx.fill(); ctx.globalAlpha = al * 0.95; ctx.fillStyle = REG[4].color; ctx.fill(); ctx.globalAlpha = 1; ctx.strokeStyle = '#6b5f45'; ctx.lineWidth = 2; ctx.stroke(); });
     island(124.72, 37.9, 0.1, 0.06, 0); ctx.fillStyle = '#e2dccb'; ctx.fill(); ctx.strokeStyle = '#6b5f45'; ctx.lineWidth = 1.6; ctx.stroke();
-    tx(lx(131.0), ly(37.1), '울릉도', 12, '#475569', 'left', 800); tx(lx(127.1), ly(33.0), '제주도', 12.5, '#475569', 'center', 800);
+    tx(lx(130.75), ly(37.5) + 4, '울릉도', 12, '#475569', 'right', 800); tx(lx(127.12), ly(33.38) + 5, '제주도', 12.5, '#475569', 'left', 800);
     // 핀
     PINS.forEach((p, i) => {
-      const [x, y] = pinXY(p), on = Mp.sel === i, done = mapAnsDone(i), r0 = PHONE ? 15 : 13;
+      const [x, y] = pinXY(p), on = Mp.sel === i, done = mapAnsDone(i), r0 = PHONE ? 15 : 11.5;
       ctx.save(); D.shadow(() => { ctx.fillStyle = done ? '#16a34a' : '#fff'; ctx.beginPath(); ctx.arc(x, y, r0 + (on ? 3 : 0), 0, TAU); ctx.fill(); }, { blur: 5, y: 2 });
       ctx.strokeStyle = on ? '#f59e0b' : '#0369a1'; ctx.lineWidth = on ? 4 : 2.6; ctx.beginPath(); ctx.arc(x, y, r0 + (on ? 3 : 0), 0, TAU); ctx.stroke(); ctx.restore();
       tx(x, y + 5, String(i + 1), 14, done ? '#fff' : '#0369a1', 'center', 800);
@@ -501,31 +501,31 @@
     tx(R.x + 12, R.y + 22, '지질도 범례', 14, '#334155', 'left', 800);
     const lc = PHONE ? 1 : 2, lw = (R.w - 24) / lc;
     REG.forEach((rg, i) => {
-      const cx = R.x + 12 + (i % lc) * lw, cy = R.y + 34 + Math.floor(i / lc) * (PHONE ? 22 : 30);
+      const cx = R.x + 12 + (i % lc) * lw, cy = R.y + 34 + Math.floor(i / lc) * (PHONE ? 22 : 26);
       ctx.fillStyle = rg.color; rr(cx, cy, 20, 16, 4).fill(); ctx.strokeStyle = 'rgba(60,50,40,.5)'; ctx.lineWidth = 1.2; rr(cx, cy, 20, 16, 4).stroke();
       tx(cx + 26, cy + 13, rg.name, PHONE ? 12 : 12.5, '#334155', 'left', 800);
     });
-    const ry0 = R.y + (PHONE ? 34 + 6 * 22 + 8 : 34 + 3 * 30 + 6), rh = (R.y + R.h - ry0 - 6) / 6;
+    const ry0 = R.y + (PHONE ? 34 + 6 * 22 + 8 : 34 + 3 * 26 + 6), rh = (R.y + R.h - ry0 - 6) / 6;
     tx(R.x + 12, ry0 + 4, '핀을 눌러 암석과 시대를 정해요', 13, '#64748b', 'left', 800);
     PINS.forEach((p, i) => {
       const y = ry0 + 14 + i * ((R.y + R.h - ry0 - 20) / 6), h = (R.y + R.h - ry0 - 20) / 6 - 6, on = Mp.sel === i, a = Mp.ans[i];
       ctx.fillStyle = on ? '#fff7e0' : '#f8fafc'; rr(R.x + 8, y, R.w - 16, h, 10).fill(); ctx.strokeStyle = on ? '#f59e0b' : '#cbd5e1'; ctx.lineWidth = on ? 2.6 : 1.6; rr(R.x + 8, y, R.w - 16, h, 10).stroke();
       D.sphere(R.x + 26, y + 18, 11, mapAnsDone(i) ? '#16a34a' : '#0ea5e9', { text: String(i + 1), textScale: 1.0 });
       tx(R.x + 44, y + 22, p.name, 14.5, '#1e293b', 'left', 800);
-      if (!PHONE) { para(R.x + 44, y + 40, 250, p.clue, 12.5, '#64748b'); }
+      if (!PHONE) { para(R.x + 44, y + 42, 260, p.clue, 12.5, '#64748b'); }
       else para(R.x + 14, y + 42, R.w - 28, p.clue, 11.5, '#64748b');
       const cx0 = PHONE ? R.x + 14 : R.x + R.w - 150, cy0 = PHONE ? y + h - 22 : y + 8;
       const chip = (x2, y2, txt, ok) => { D.label(x2, y2, txt, { bg: ok ? '#0ea5e9' : '#e2e8f0', color: ok ? '#fff' : '#94a3b8', size: PHONE ? 11.5 : 12.5, pad: 7, align: 'left' }); };
       if (PHONE) { chip(cx0, cy0 + 4, a.rock ? rockName(a.rock) : '암석 ?', !!a.rock); chip(cx0 + 100, cy0 + 4, a.age ? ageName(a.age) : '시대 ?', !!a.age); }
       else { chip(cx0, cy0 + 8, a.rock ? rockName(a.rock) : '암석 ?', !!a.rock); chip(cx0, cy0 + 34, a.age ? ageName(a.age) : '시대 ?', !!a.age); }
     });
-    tx(M.x + M.w / 2, M.y + M.h - 8, '※ 경계는 단순화한 모식도예요', 11.5, '#64748b', 'center', 700);
   }
   function mapTap(p) {
     const M = ML.M, R = ML.R;
-    for (let i = 0; i < PINS.length; i++) { const [x, y] = pinXY(PINS[i]); if (Math.hypot(p.x - x, p.y - y) <= (PHONE ? 26 : 22)) { S.map.sel = i; Sound.click(); updateCtl(); return true; } }
+    let bi = -1, bd = 1e9; PINS.forEach((q, i) => { const [x, y] = pinXY(q), d = Math.hypot(p.x - x, p.y - y); if (d < bd) { bd = d; bi = i; } });
+    if (bi >= 0 && bd <= (PHONE ? 26 : 20)) { S.map.sel = bi; Sound.click(); updateCtl(); return true; }
     if (p.x >= R.x && p.x <= R.x + R.w) {
-      const ry0 = R.y + (PHONE ? 34 + 6 * 22 + 8 : 34 + 3 * 30 + 6), step = (R.y + R.h - ry0 - 20) / 6;
+      const ry0 = R.y + (PHONE ? 34 + 6 * 22 + 8 : 34 + 3 * 26 + 6), step = (R.y + R.h - ry0 - 20) / 6;
       const i = Math.floor((p.y - ry0 - 14) / step); if (i >= 0 && i < 6) { S.map.sel = i; Sound.click(); updateCtl(); return true; }
     }
     return false;
@@ -806,7 +806,7 @@
       D.shadow(() => { ctx.fillStyle = on ? '#effaf2' : '#fff'; rr(p.x, p.y, PL.cw, PL.ch, 14).fill(); }, { blur: on ? 9 : 4, y: on ? 4 : 2 });
       ctx.strokeStyle = on ? '#16a34a' : '#cbd5e1'; ctx.lineWidth = on ? 3.4 : 2; rr(p.x, p.y, PL.cw, PL.ch, 14).stroke();
       tx(p.x + 12, p.y + 36, c.icon, 26, '#000', 'left', 700);
-      const ls = wrapLines(c.name, PL.cw - 76, 14.5, 800); ls.slice(0, 2).forEach((l, k) => tx(p.x + 52, p.y + 26 + k * 18, l, 14.5, '#1e293b', 'left', 800));
+      const ls = wrapLines(c.name, PL.cw - 96, 14.5, 800); ls.slice(0, 2).forEach((l, k) => tx(p.x + 52, p.y + 26 + k * 18, l, 14.5, '#1e293b', 'left', 800));
       c.s.forEach((v, a) => { D.label(p.x + 14 + a * ((PL.cw - 28) / 3) + 0, p.y + PL.ch - 18, AX[a][0].replace('지역 ', '') + ' ' + (v > 0 ? '+' + v : v), { bg: v < 0 ? '#fee2e2' : v === 0 ? '#f1f5f9' : '#eefbf1', color: v < 0 ? '#b91c1c' : v === 0 ? '#64748b' : '#15803d', size: 12, pad: 6, align: 'left', border: v < 0 ? '#fca5a5' : '#e2e8f0' }); });
       if (on) { tx(p.x + PL.cw - 16, p.y + 24, '✔', 18, '#16a34a', 'right', 800); }
       ctx.restore();
