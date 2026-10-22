@@ -5512,8 +5512,7 @@ window.SCI_CATALOG = {
                 "관입·포획",
                 "부정합",
                 "층서 대비"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "he-absolute-age",
@@ -5534,8 +5533,7 @@ window.SCI_CATALOG = {
                 "반감기",
                 "연령 계산",
                 "연대 해석"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "he-sedimentary-env",
@@ -5556,8 +5554,7 @@ window.SCI_CATALOG = {
                 "구조 만들기",
                 "퇴적 환경",
                 "환경 변화"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "he-geologic-time",

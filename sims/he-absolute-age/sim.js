@@ -468,7 +468,7 @@
     const gg = ctx.createLinearGradient(-30, -30, 30, 30); gg.addColorStop(0, '#f1d6e4'); gg.addColorStop(1, '#b57a9a'); ctx.fillStyle = gg; ctx.fill(); ctx.strokeStyle = '#6b3a55'; ctx.lineWidth = 2.5; ctx.stroke(); ctx.restore();
     D.text(g.x, g.y + 48, '광물 알갱이', { size: 13, weight: 800, color: gcl.ink });
     ctx.save(); ctx.setLineDash([5, 5]); ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.8; ctx.beginPath(); ctx.moveTo(g.x + 30, g.y - 24); ctx.lineTo(fr.x + 12, fr.y); ctx.moveTo(g.x + 30, g.y + 22); ctx.lineTo(fr.x + 12, fr.y + fr.h * 0.9); ctx.stroke(); ctx.restore();
-    D.label(fr.x + fr.w - 16, fr.y - 4, '🔍 입자 모형으로 보기', { bg: '#475569', size: 13, pad: 9, align: 'right' });
+    D.label(fr.x + fr.w - 16, fr.y - 18, '🔍 입자 모형으로 보기', { bg: '#475569', size: 13, pad: 9, align: 'right' });
     // 결정 틀 (온도 → 붉은 기운, 압력 → 누르는 화살표)
     const heat = clamp((Dc.temp - 200) / 1000, 0, 1);
     D.shadow(() => { ctx.fillStyle = '#f8fafc'; rr(fr.x, fr.y, fr.w, fr.h, 16).fill(); }, { blur: 8, y: 3 });

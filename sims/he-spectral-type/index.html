@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0ea5e9">
+  <title>별의 분광형 | 고등 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌈</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-hint { bottom: auto; top: 12px; }
+    .stage-toolbar { min-height: 58px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; }
+    .stage-toolbar .segmented button { min-height: 40px; padding: 5px 10px; font-size: 14px; white-space: nowrap; }
+    .stage-toolbar .segmented { flex-wrap: wrap; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard [hidden] { display: none !important; }
+    .opt-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin-top: 4px; }
+    .opt-grid.c3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .opt-grid.c4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .opt {
+      min-height: 46px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 12px;
+      font-weight: 800; font-size: 15px; cursor: pointer; padding: 4px 6px; font-family: inherit; line-height: 1.2;
+    }
+    .opt.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); color: color-mix(in srgb, var(--subject) 70%, black); }
+    .opt.seen::after { content: ' ✓'; color: #16a34a; }
+    .ctrl-note { margin: 6px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    .btn-sm { min-height: 44px; }
+    .btn-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+    .btn-row .btn { flex: 1; padding-left: 8px; padding-right: 8px; white-space: nowrap; }
+    .readout .value.txt { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .concept table.mini, table.mini { border-collapse: collapse; margin: 6px 0; font-size: 13px; width: 100%; }
+    .concept table.mini th, .concept table.mini td, table.mini th, table.mini td { border: 1px solid var(--line); padding: 4px 5px; text-align: center; }
+    .concept table.mini th, table.mini th { background: var(--surface-2); font-weight: 800; }
+    .mini-sel { width: 100%; min-height: 44px; border: 2px solid var(--line); border-radius: 10px; font: inherit; font-weight: 800; font-size: 14.5px; padding: 0 6px; background: var(--surface); color: var(--ink); }
+    .sel-row { display: grid; grid-template-columns: 62px 1fr; gap: 8px; align-items: center; margin-top: 6px; font-weight: 800; font-size: 14.5px; }
+    .src-note { margin: 4px 0 0; font-size: 12.5px; color: #a16207; background: #fff7e0; border: 1px solid #f2d38a; border-radius: 10px; padding: 6px 9px; line-height: 1.4; }
+    @media (max-width: 599px) {
+      .readout { min-width: 0; }
+      .readout .value.txt { font-size: 15px; }
+      .stage-toolbar .spacer { display: none; }
+      .stage-toolbar .segmented button { padding: 5px 7px; font-size: 13px; }
+    }
+    input[type=range] { height: 40px; }
+    .ticks { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--muted); font-weight: 700; margin-top: -6px; padding: 0 2px; }
+  </style>
+</head>
+<body class="sim-page" data-subject="earth">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#he">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">지구과학 · Ⅲ. 태양계 천체와 별과 우주의 진화</div>
+      <h1>별의 분광형</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🌈 별빛 분해</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="group" aria-label="장면 고르기" hidden>
+            <button type="button" data-view="obs">🌈 별빛 분해</button>
+            <button type="button" data-view="sort">🔤 분광형</button>
+            <button type="button" data-view="temp">🌡️ 온도와 선</button>
+            <button type="button" data-view="board">🗂️ 별 분류</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="프리즘으로 별빛을 분해한 스펙트럼, 분광형 카드 정렬, 온도에 따른 흡수선 세기 그래프, 분광형과 광도 계급 분류판"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">—</span><span class="value txt" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">—</span><span class="value txt" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">—</span><span class="value txt" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+
+        <div class="control" data-modes="obs">
+          <div class="control-head"><span>⭐ 별 고르기</span></div>
+          <div class="opt-grid c3" id="starSeg">
+            <button class="opt" type="button" data-k="rigel">리겔</button>
+            <button class="opt" type="button" data-k="sirius">시리우스 A</button>
+            <button class="opt" type="button" data-k="sun">태양</button>
+            <button class="opt" type="button" data-k="arcturus">아르크투루스</button>
+            <button class="opt" type="button" data-k="betel">베텔게우스</button>
+            <button class="opt" type="button" data-k="proxima">프록시마</button>
+          </div>
+          <p class="ctrl-note">아래 별 카드를 눌러도 돼요.</p>
+        </div>
+
+        <div class="control" data-modes="sort">
+          <div class="btn-row"><button class="btn btn-sm" id="bShuffle" type="button">🔀 카드 섞기</button></div>
+          <p class="ctrl-note" id="sortNote">카드를 위아래로 끌어서 순서를 바꿔요.</p>
+        </div>
+        <div class="control" data-modes="sort" id="pickBox" hidden>
+          <div class="control-head"><span>🔎 어느 카드일까요?</span></div>
+          <div class="opt-grid" id="pickSeg">
+            <button class="opt on" type="button" data-k="B">B형 고르기</button>
+            <button class="opt" type="button" data-k="K">K형 고르기</button>
+          </div>
+          <p class="ctrl-note">버튼을 고른 뒤 스펙트럼 카드를 눌러요. 분광형 글자는 가려져 있어요.</p>
+        </div>
+
+        <div class="control" data-modes="temp">
+          <div class="control-head"><span>🌡️ 별의 표면 온도</span><output id="oT">9,000 K</output></div>
+          <input type="range" id="sT" min="0" max="1000" step="1" value="552" aria-label="별의 표면 온도">
+          <div class="ticks"><span>3,000 K</span><span>10,000</span><span>35,000 K</span></div>
+          <div class="opt-grid c4" id="presetSeg">
+            <button class="opt" type="button" data-t="25000">B</button>
+            <button class="opt" type="button" data-t="9500">A</button>
+            <button class="opt" type="button" data-t="5700">G</button>
+            <button class="opt" type="button" data-t="3300">M</button>
+          </div>
+        </div>
+        <div class="control" data-modes="temp" id="unkBox" hidden>
+          <div class="control-head"><span>🕵️ 미지의 별 판정</span></div>
+          <div class="sel-row"><span>별 A</span><select class="mini-sel" data-i="0" aria-label="별 A의 분광형"><option value="">분광형</option><option>O</option><option>B</option><option>A</option><option>F</option><option>G</option><option>K</option><option>M</option></select></div>
+          <div class="sel-row"><span>별 B</span><select class="mini-sel" data-i="1" aria-label="별 B의 분광형"><option value="">분광형</option><option>O</option><option>B</option><option>A</option><option>F</option><option>G</option><option>K</option><option>M</option></select></div>
+          <div class="sel-row"><span>별 C</span><select class="mini-sel" data-i="2" aria-label="별 C의 분광형"><option value="">분광형</option><option>O</option><option>B</option><option>A</option><option>F</option><option>G</option><option>K</option><option>M</option></select></div>
+          <div class="control-head" style="margin-top:10px"><span>🌡️ 온도가 높은 순서</span></div>
+          <div class="sel-row"><span>1번째</span><select class="mini-sel" data-j="0" aria-label="가장 뜨거운 별"><option value="">고르세요</option><option>A</option><option>B</option><option>C</option></select></div>
+          <div class="sel-row"><span>2번째</span><select class="mini-sel" data-j="1" aria-label="두 번째로 뜨거운 별"><option value="">고르세요</option><option>A</option><option>B</option><option>C</option></select></div>
+          <div class="sel-row"><span>3번째</span><select class="mini-sel" data-j="2" aria-label="가장 차가운 별"><option value="">고르세요</option><option>A</option><option>B</option><option>C</option></select></div>
+        </div>
+
+        <div class="control" data-modes="board">
+          <div class="btn-row"><button class="btn btn-sm" id="bReset4" type="button">↺ 카드 모으기</button></div>
+          <p class="ctrl-note">카드를 끌어서 칸에 놓거나, 카드를 누른 뒤 칸을 눌러요.</p>
+        </div>
+
+        <div class="control" data-modes="obs sort temp board"><p class="src-note">스펙트럼은 <b>교육용 모형</b>이에요. 선의 세기와 위치는 대표적인 값으로 그렸어요.</p></div>
+
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

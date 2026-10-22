@@ -600,7 +600,7 @@
     // 이름표
     if (fadeOut > 0.05) LAYERS.forEach((l, i) => {
       const a = clamp(nL - i, 0, 1) * fadeOut; if (a <= 0.01) return;
-      const yy = iy - 40 + i * 20;
+      const yy = iy - (PHONE ? 30 : 40) + i * (PHONE ? 16 : 20);
       ctx.globalAlpha = a; ctx.fillStyle = l[2]; rr(lx, yy - 10, 14, 14, 4).fill(); TX(lx + 20, yy + 2, l[1], 12.5, '#e2e8f0', 'left', 700); ctx.globalAlpha = 1;
     });
   }
@@ -641,9 +641,9 @@
     }
     if (u >= 0.8) drawRemnant(cx, cy, fate, clamp((u - 0.8) / 0.1, 0, 1), t);
     // 단면 (중심부 확대)
-    if (u >= 0.3) {
-      const ir = PHONE ? 46 : 70, ix = Sc.x + (PHONE ? 80 : 102), iy = PHONE ? Sc.y + 318 : Sc.y + 392;
-      TX(ix, iy - ir - 10, '중심부 단면 (확대)', 12.5, '#cbd5e1', 'center', 800);
+    if (u >= 0.3 && u < 0.78) {
+      const ir = PHONE ? 42 : 70, ix = Sc.x + (PHONE ? 80 : 102), iy = PHONE ? Sc.y + 300 : Sc.y + 392;
+      TX(ix, iy - ir - 8, '중심부 단면 (확대)', 12.5, '#cbd5e1', 'center', 800);
       drawOnion(ix, iy, ir, u, t, ix + ir + 22);
     }
     return { T, r };
@@ -652,7 +652,7 @@
     const G = LAY.v3, Sc = G.sc, M = S.M3, fate = fateOf(M), u = S.u3;
     spaceBG(Sc);
     TX(Sc.x + 14, Sc.y + 26, '처음 질량 ' + sig(M, 3) + ' M☉ 인 별', 14.5, '#cbd5e1');
-    const cx = Sc.x + Sc.w / 2, cy = Sc.y + (PHONE ? 142 : 168);
+    const cx = Sc.x + Sc.w / 2, cy = Sc.y + (PHONE ? 126 : 168);
     let stage;
     if (fate === 'wd') {
       const s = u * 6; drawLowStar(cx, cy, s, t, PHONE ? 112 : 118);
@@ -685,7 +685,7 @@
     drawTrack(H, P, sNow, MCOL[M < 8 ? 1 : M < 25 ? 15 : 30], 4, { ghost: true });
     H.frameEnd();
     if (fate === 'wd') { [[0, '주계열'], [2, '적색 거성'], [4, '점근거성가지'], [5, '성운 중심별'], [6, '백색 왜성']].forEach((k) => { if (sNow >= k[0] - 0.01) { const p = P[k[0]]; markPt(H, pow(10, p[0]), pow(10, p[1]), k[1], '#92400e', [10, -12, -12, 12, 12][[0, 2, 4, 5, 6].indexOf(k[0])], [-14, -16, -14, 16, -14][[0, 2, 4, 5, 6].indexOf(k[0])], { size: 11 }); } }); }
-    else { const p0 = P[0], p3 = P[3]; markPt(H, pow(10, p0[0]), pow(10, p0[1]), '주계열', '#be123c', 10, 16, { size: 11 }); if (sNow >= 2.9) markPt(H, pow(10, p3[0]), pow(10, p3[1]), '초거성', '#be123c', -12, 18, { size: 11 }); }
+    else { const p0 = P[0], p3 = P[3]; markPt(H, pow(10, p0[0]), pow(10, p0[1]), '주계열', '#be123c', 10, 16, { size: 11 }); if (sNow >= 2.9 && u < 0.7) markPt(H, pow(10, p3[0]), pow(10, p3[1]), '초거성', '#be123c', -12, 18, { size: 11 }); }
     const col = MCOL[M < 8 ? 1 : M < 25 ? 15 : 30];
     if (fate !== 'wd' && u >= 0.7) { const end = splineAt(P, 3), ex = H.gx(pow(10, end[0])), ey = H.gyl(end[1]); snIcon(ex, ey, 11 + 8 * (1 - clamp((u - 0.7) / 0.3, 0, 1)), t, clamp(1 - (u - 0.85) / 0.15, 0.25, 1)); D.label(clamp(ex, H.x0 + 40, H.x1 - 40), ey + 26, '초신성', { bg: '#b45309', color: '#fff', size: 11.5, pad: 6 }); }
     else trackDot(H, P, sNow, col, 7.5);
@@ -707,7 +707,7 @@
     ctx.restore();
   }
   function drawRing(Sc, t) {
-    const rx = Sc.x + Sc.w / 2, ry = Sc.y + (PHONE ? 170 : 250), RR = PHONE ? 90 : 108, nr = PHONE ? 27 : 31;
+    const rx = Sc.x + Sc.w / 2, ry = Sc.y + (PHONE ? 148 : 250), RR = PHONE ? 80 : 108, nr = PHONE ? 25 : 31;
     const shown = S.ringShown || (game && game.free);
     const ang = (i) => -Math.PI / 2 + i * TAU / 5;
     // 화살표 호
@@ -741,7 +741,7 @@
     spaceBG(Sc);
     TX(Sc.x + 14, Sc.y + 26, '별과 성간 물질의 순환', 14.5, '#cbd5e1');
     drawRing(Sc, t);
-    drawWrap(Sc.x + Sc.w / 2, Sc.y + Sc.h - (PHONE ? 44 : 72), '행성상 성운과 초신성 폭발은 별 속에서 만든 헬륨·탄소·산소·철 등을 성간 물질로 돌려줘요. 태양은 이전 세대 별이 남긴 물질로 만들어졌어요.', Sc.w - 36, PHONE ? 12.5 : 13, { color: '#cbd5e1' });
+    drawWrap(Sc.x + Sc.w / 2, Sc.y + Sc.h - (PHONE ? 36 : 72), '행성상 성운과 초신성 폭발은 별 속에서 만든 헬륨·탄소·산소·철 등을 성간 물질로 돌려줘요. 태양은 이전 세대 별이 남긴 물질로 만들어졌어요.', Sc.w - 36, PHONE ? 12.5 : 13, { color: '#cbd5e1' });
     // H-R도
     const tNow = pow(10, S.tau);
     const H = hrFrame(G.hr, Object.assign({ title: '세 별의 H-R도 경로 (같은 시각)' }, EVC));
@@ -901,8 +901,8 @@
         '<p>이번 차시에서는 별이 태어나서 죽을 때까지 <b>H-R도 위를 어떻게 움직이는지</b> 따라가요. 먼저 별이 태어나는 <b>성간 분자운</b>의 한 조각이 <b>중력으로 수축</b>해 <b>원시별(전주계열)</b>이 되고, 중심 온도가 약 <b>1000만 K</b>에 이르러 수소 핵융합이 시작되면 <b>주계열성</b>이 되는 과정을 관찰해요.</p>',
       setup() { enterLevel(0); },
       recap: '원시별은 중력 수축으로 빛나다가 중심 온도가 약 1000만 K가 되면 핵융합을 시작해 주계열성이 돼요. 질량이 클수록 전주계열 기간이 짧아요.',
-      summary: '<ul><li><b>전주계열</b>: 성간 분자운 조각이 중력으로 수축 → <b>원시별</b>(수축 에너지로 빛나요).</li><li>중심 온도가 약 <b>1000만 K</b>에 이르면 수소 핵융합이 시작 → <b>영년 주계열(ZAMS)</b>에 도달해 주계열성이 돼요.</li>' +
-        tbl([['질량', '전주계열 기간(대략)', '주계열 도달 위치(T, L)'], ['1 M☉', '약 3,000만 년', '약 5700 K, 0.7 L☉'], ['5 M☉', '약 120만 년', '약 16000 K, 500 L☉'], ['15 M☉', '약 6만 년', '약 30000 K, 2×10⁴ L☉']]) + '<li>질량이 클수록 더 왼쪽 위(고온·고광도)에서 주계열에 도달하고, 전주계열 기간은 짧아요.</li></ul>',
+      summary: '<ul><li><b>전주계열</b>: 성간 분자운 조각이 중력으로 수축 → <b>원시별</b>(수축 에너지로 빛나요).</li><li>중심 온도가 약 <b>1000만 K</b>에 이르면 수소 핵융합이 시작 → <b>영년 주계열(ZAMS)</b>에 도달해 주계열성이 돼요.</li></ul>' +
+        tbl([['질량', '전주계열 기간(대략)', '주계열 도달 위치(T, L)'], ['1 M☉', '약 3,000만 년', '약 5700 K, 0.7 L☉'], ['5 M☉', '약 120만 년', '약 16000 K, 500 L☉'], ['15 M☉', '약 6만 년', '약 30000 K, 2×10⁴ L☉']]) + '<ul><li>질량이 클수록 더 왼쪽 위(고온·고광도)에서 주계열에 도달하고, 전주계열 기간은 짧아요.</li></ul>',
       missions: [
         {
           title: '세 질량의 별을 주계열에 도달시키기',
@@ -972,8 +972,8 @@
         '<p>처음 질량을 정하고 별의 최후를 <b>예측</b>한 뒤, ▶ 결과 보기로 확인해요.</p>',
       setup() { enterLevel(2); },
       recap: '처음 질량이 약 8 M☉ 미만이면 백색 왜성, 그 이상이면 초신성 폭발 후 중성자별(약 8~25 M☉) 또는 블랙홀(약 25 M☉ 이상)이 돼요.',
-      summary: '<ul><li>큰 별(약 8 M☉ 이상)은 H-R도에서 <b>주계열 → 오른쪽의 초거성</b>으로 거의 수평 이동한 뒤, 중심핵이 붕괴해 <b>초신성</b>으로 폭발해요.</li><li>초신성 직전 내부는 양파 껍질처럼 <b>바깥에서 안쪽으로 수소 → 헬륨 → 탄소·산소 → 더 무거운 원소 → 철 핵</b> 층이 있어요.</li><li>철은 핵융합을 해도 에너지를 얻지 못해 철 핵이 쌓이면 중력 붕괴가 일어나요.</li>' +
-        tbl([['처음 질량(대략)', '최후'], ['약 8 M☉ 미만', '행성상 성운 + 백색 왜성'], ['약 8 ~ 25 M☉', '초신성 → 중성자별 (남은 핵 1.4 ~ 3 M☉, 지름 약 20 km)'], ['약 25 M☉ 이상', '초신성 → 블랙홀']]) + '</ul>',
+      summary: '<ul><li>큰 별(약 8 M☉ 이상)은 H-R도에서 <b>주계열 → 오른쪽의 초거성</b>으로 거의 수평 이동한 뒤, 중심핵이 붕괴해 <b>초신성</b>으로 폭발해요.</li><li>초신성 직전 내부는 양파 껍질처럼 <b>바깥에서 안쪽으로 수소 → 헬륨 → 탄소·산소 → 더 무거운 원소 → 철 핵</b> 층이 있어요.</li><li>철은 핵융합을 해도 에너지를 얻지 못해 철 핵이 쌓이면 중력 붕괴가 일어나요.</li></ul>' +
+        tbl([['처음 질량(대략)', '최후'], ['약 8 M☉ 미만', '행성상 성운 + 백색 왜성'], ['약 8 ~ 25 M☉', '초신성 → 중성자별 (남은 핵 1.4 ~ 3 M☉, 지름 약 20 km)'], ['약 25 M☉ 이상', '초신성 → 블랙홀']]),
       missions: [
         {
           title: '별의 최후 예측하고 확인하기',
@@ -987,8 +987,8 @@
         {
           title: '초신성 직전 내부 층 순서',
           goal: '초신성 직전 큰 별의 내부 층을 <b>바깥에서 안쪽 순서로</b> 눌러요. 그리고 <b>✔ 확인하기</b>를 눌러요.', manual: true,
-          setup() { setView('v3'); if (S.M3 < 8) setM3(15); setOrd('layer'); },
-          hint: '15 M☉ 별의 결과를 끝까지 보면 중심부 단면에 층 이름이 나타나요. 가장 안쪽이 철 핵이에요.',
+          setup() { setView('v3'); setM3(15); S.u3 = 0.6; setOrd('layer'); },
+          hint: '왼쪽 아래의 중심부 단면에 층 이름이 적혀 있어요. 가장 안쪽이 철 핵이에요.',
           check: () => (S.ord.length < 5 ? '다섯 층을 모두 눌러요.' : ordOk() ? true : '순서가 달라요. 가장 바깥은 수소 층이고 가장 안쪽은 철 핵이에요.'),
           explain: '바깥에서 안쪽으로 <b>수소 → 헬륨 → 탄소·산소 → 더 무거운 원소 → 철 핵</b> 층이에요. 안쪽일수록 무거운 원소가 모여 있어요.',
         },
@@ -1008,8 +1008,8 @@
         '<p>세 질량(1, 5, 15 M☉)의 경로와 수명을 한 H-R도에서 비교하며 <b>순환 고리</b>를 완성해요.</p>',
       setup() { enterLevel(3); },
       recap: '별은 성간 물질에서 태어나 질량에 따라 다른 경로로 진화하고, 죽을 때 무거운 원소를 성간 물질로 돌려보내요. 무거운 별일수록 수명이 짧고 빨리 돌려줘요.',
-      summary: '<ul><li><b>물질 순환</b>: 성간 물질 → 원시별 → 주계열성 → 거성·초거성 → 행성상 성운·초신성 → 성간 물질</li><li>별 속에서 만든 헬륨·탄소·산소·철 등이 성간 물질에 섞여 다음 세대의 별과 행성의 재료가 돼요. 태양은 이전 세대 별이 남긴 물질로 만들어진 별이에요.</li>' +
-        tbl([['처음 질량', '주계열 수명(대략)', '최후'], ['1 M☉', '약 100억 년', '행성상 성운 + 백색 왜성'], ['5 M☉', '약 1억 년', '행성상 성운 + 백색 왜성'], ['15 M☉', '약 750만 년', '초신성 → 중성자별']]) + '<li>무거운 별일수록 수명이 짧고, 무거운 원소를 성간 물질로 더 빨리 돌려줘요.</li></ul>',
+      summary: '<ul><li><b>물질 순환</b>: 성간 물질 → 원시별 → 주계열성 → 거성·초거성 → 행성상 성운·초신성 → 성간 물질</li><li>별 속에서 만든 헬륨·탄소·산소·철 등이 성간 물질에 섞여 다음 세대의 별과 행성의 재료가 돼요. 태양은 이전 세대 별이 남긴 물질로 만들어진 별이에요.</li></ul>' +
+        tbl([['처음 질량', '주계열 수명(대략)', '최후'], ['1 M☉', '약 100억 년', '행성상 성운 + 백색 왜성'], ['5 M☉', '약 1억 년', '행성상 성운 + 백색 왜성'], ['15 M☉', '약 750만 년', '초신성 → 중성자별']]) + '<ul><li>무거운 별일수록 수명이 짧고, 무거운 원소를 성간 물질로 더 빨리 돌려줘요.</li></ul>',
       missions: [
         {
           title: '순환 고리 완성하고 경로 짝짓기',
@@ -1067,7 +1067,7 @@
     }
     if (S.view === 'v3') {
       const fate = fateOf(S.M3);
-      if (fate !== 'wd' && S.u3 >= 0.7 && !S.snFired) { S.snFired = true; S.flash = 1; Sound.level(); const Sc = LAY.v3.sc, cx = Sc.x + Sc.w / 2, cy = Sc.y + (PHONE ? 142 : 168); parts.burst(cx, cy, { count: 70, speed: 280, size: 4, life: 1.3, colors: ['#fde68a', '#fff', '#fb923c', '#f472b6'], gravity: 0 }); }
+      if (fate !== 'wd' && S.u3 >= 0.7 && !S.snFired) { S.snFired = true; S.flash = 1; Sound.level(); const Sc = LAY.v3.sc, cx = Sc.x + Sc.w / 2, cy = Sc.y + (PHONE ? 126 : 168); parts.burst(cx, cy, { count: 70, speed: 280, size: 4, life: 1.3, colors: ['#fde68a', '#fff', '#fb923c', '#f472b6'], gravity: 0 }); }
       if (S.u3 < 0.69) S.snFired = false;
     }
     S.flash = approach(S.flash, 0, dt, 3.2); if (S.flash < 0.01) S.flash = 0;
@@ -1092,6 +1092,7 @@
     get game() { return game; },
     enterLevel, setView, updateCtl, setM1, setP1, setS2, setM3, setTau, playRun3, finishRun3, recordRg, setOrd, ordPick, ordOk,
     setU3(u) { S.play3 = false; S.u3 = u; },
+    busy(li) { if (li === 0) { setM1(15); S.play1 = true; } else if (li === 1) { S.rgOn = true; setS2(5); } else if (li === 2) { setM3(15); S.pred = 'ns'; S.runM = 15; S.runPred = 'ns'; S.u3 = 0.68; S.play3 = true; } else { S.ringShown = true; S.play4 = true; setTau(6.2); } },
     igniteAll() { [1, 5, 15].forEach((m) => { S.ign[m] = true; }); updateCtl(); },
   };
 
