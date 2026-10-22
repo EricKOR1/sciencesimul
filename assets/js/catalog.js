@@ -5337,8 +5337,7 @@ window.SCI_CATALOG = {
                 "수온·염분",
                 "T-S도",
                 "수괴"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "he-deep-circulation",
@@ -5359,8 +5358,7 @@ window.SCI_CATALOG = {
                 "단면 모형",
                 "순환 연결",
                 "순환과 기후"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "he-midlat-cyclone",
@@ -5381,8 +5379,7 @@ window.SCI_CATALOG = {
                 "전선 통과",
                 "고기압 통과",
                 "일기도 읽기"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "he-weather-imagery",
@@ -5403,8 +5400,7 @@ window.SCI_CATALOG = {
                 "레이더 영상",
                 "소나기 저기압",
                 "날씨 예측"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "he-typhoon",
@@ -5425,8 +5421,7 @@ window.SCI_CATALOG = {
                 "태풍의 구조",
                 "이동·소멸",
                 "영향권 날씨"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "he-severe-weather",

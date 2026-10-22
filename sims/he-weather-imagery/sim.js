@@ -651,13 +651,13 @@
     const dur = size / 40, durTxt = dur < 1.5 ? Math.round(dur * 60) + '분' : dur < 36 ? f1(dur) + '시간' : f1(dur / 24) + '일 (' + Math.round(dur) + '시간)';
     const cls = size >= 1000 ? '종관 규모 저기압' : size < 200 ? '중규모 저기압' : '중규모와 종관 규모 사이 (경계)';
     const cy2 = R.y + (PHONE ? 650 : 0);
-    if (PHONE) { note(R.x, 652, R.w, '크기 약 ' + Math.round(size) + ' km → ' + cls + '\n한 지점을 지나는 데 약 ' + durTxt + ' (크기 ÷ 이동 속도 40 km/h)', 13.5, { border: col }); }
+    if (PHONE) { note(R.x, 652, R.w, '크기 약 ' + Math.round(size) + ' km → ' + cls + '\n한 지점을 지나는 데 약 ' + durTxt + ' (크기 / 이동 속도 40 km/h)', 13.5, { border: col }); }
     else {
       D.shadow(() => { ctx.fillStyle = 'rgba(255,255,255,.96)'; rr(R.x + R.w - 250, R.y + 40, 238, 120, 12).fill(); }, { blur: 5, y: 2 });
       ctx.strokeStyle = col; ctx.lineWidth = 2.5; rr(R.x + R.w - 250, R.y + 40, 238, 120, 12).stroke();
       T(R.x + R.w - 238, R.y + 66, '크기 약 ' + Math.round(size) + ' km', { size: 15, weight: 800, color: '#0f172a', align: 'left' });
       T(R.x + R.w - 238, R.y + 90, cls, { size: 14, weight: 800, color: col, align: 'left' });
-      drawWrap(R.x + R.w - 238, R.y + 116, '지나가는 데 약 ' + durTxt + '\n(크기 ÷ 이동 속도 40 km/h)', 220, 13, { align: 'left' });
+      drawWrap(R.x + R.w - 238, R.y + 116, '지나가는 데 약 ' + durTxt + '\n(크기 / 이동 속도 40 km/h)', 220, 13, { align: 'left' });
     }
   }
 

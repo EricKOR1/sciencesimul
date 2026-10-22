@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0ea5e9">
+  <title>지층의 선후 관계 | 고등 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥞</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-hint { bottom: auto; top: 12px; }
+    .stage-toolbar { min-height: 58px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; }
+    .stage-toolbar .segmented button { min-height: 40px; padding: 5px 10px; font-size: 14px; white-space: nowrap; }
+    .stage-toolbar .segmented { flex-wrap: wrap; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard [hidden] { display: none !important; }
+    .opt-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin-top: 4px; }
+    .opt-grid.c1 { grid-template-columns: minmax(0, 1fr); }
+    .opt-grid.c3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .opt-grid.c4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .opt {
+      min-height: 46px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 12px;
+      font-weight: 800; font-size: 15px; cursor: pointer; padding: 4px 6px; font-family: inherit; line-height: 1.2;
+    }
+    .opt.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); color: color-mix(in srgb, var(--subject) 70%, black); }
+    .opt.bad { border-color: #e2464b; background: #fff1f1; }
+    .opt.good { border-color: #16a34a; background: #effaf2; }
+    .opt:disabled { opacity: .45; cursor: not-allowed; }
+    .ctrl-note { margin: 6px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    .btn-sm { min-height: 44px; }
+    .btn-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+    .btn-row .btn { flex: 1; padding-left: 8px; padding-right: 8px; }
+    .readout .value.txt { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .concept table.mini, table.mini { border-collapse: collapse; margin: 6px 0; font-size: 13px; width: 100%; }
+    .concept table.mini th, .concept table.mini td, table.mini th, table.mini td { border: 1px solid var(--line); padding: 4px 5px; text-align: center; }
+    .concept table.mini th, table.mini th { background: var(--surface-2); font-weight: 800; }
+    table.mini td.now { background: color-mix(in srgb, var(--subject) 12%, white); font-weight: 800; }
+    table.mini td.none { color: var(--muted); }
+    .mini-sel { width: 100%; min-height: 44px; border: 2px solid var(--line); border-radius: 10px; font: inherit; font-weight: 800; font-size: 14.5px; padding: 0 6px; background: var(--surface); color: var(--ink); }
+    .num-in { width: 100%; min-height: 46px; border: 2px solid var(--line); border-radius: 10px; font: inherit; font-weight: 800; font-size: 17px; padding: 0 10px; background: var(--surface); color: var(--ink); text-align: center; }
+    .num-in:focus { outline: none; border-color: var(--subject); }
+    .row-sel { display: grid; grid-template-columns: 30px 1fr; gap: 8px; align-items: center; margin-top: 6px; font-weight: 800; }
+    .src-note { margin: 4px 0 0; font-size: 12.5px; color: #a16207; background: #fff7e0; border: 1px solid #f2d38a; border-radius: 10px; padding: 6px 9px; line-height: 1.4; }
+    .chip { min-height: 44px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px; font-weight: 800; font-size: 14px; cursor: pointer; padding: 4px 12px; font-family: inherit; line-height: 1.2; text-align: left; }
+    .chip.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 12%, white); }
+    .chip small { font-weight: 700; color: var(--muted); font-size: 12px; }
+    .seq-pool { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
+    .seq-ans { list-style: none; margin: 6px 0; padding: 0; display: flex; flex-direction: column; gap: 5px; }
+    .seq-ans .chip { width: 100%; }
+    .seq-done { font-size: 13px; color: var(--muted); font-weight: 700; padding: 6px 2px; }
+    .seq-box { margin-top: 4px; }
+    .cap-lbl { font-size: 13.5px; font-weight: 800; color: var(--muted); margin: 6px 0 2px; }
+    @media (max-width: 599px) {
+      .readout { min-width: 0; }
+      .readout .value.txt { font-size: 15px; }
+      .stage-toolbar .spacer { display: none; }
+      .stage-toolbar .segmented button { padding: 5px 7px; font-size: 13px; }
+    }
+    input[type=range] { height: 40px; }
+    .ticks { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--muted); font-weight: 700; margin-top: -6px; padding: 0 2px; }
+
+  </style>
+</head>
+<body class="sim-page" data-subject="earth">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#he">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">지구과학 · Ⅱ. 지구의 역사와 한반도의 암석</div>
+      <h1>지층의 선후 관계</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🥞 지층의 선후 관계</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="group" aria-label="장면 고르기" hidden>
+            <button type="button" data-view="box" data-feature="box">🧪 퇴적 상자</button>
+            <button type="button" data-view="rate" data-feature="rate">⏱ 퇴적 속도</button>
+            <button type="button" data-view="intr" data-feature="intr">🌋 관입</button>
+            <button type="button" data-view="case" data-feature="case">🗂 사례</button>
+            <button type="button" data-view="unc" data-feature="unc">⏳ 부정합 과정</button>
+            <button type="button" data-view="type" data-feature="type">🧱 부정합 종류</button>
+            <button type="button" data-view="corr" data-feature="corr">🔗 층서 대비</button>
+            <button type="button" data-view="secA" data-feature="secA">📐 단면도 A</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="퇴적 상자, 퇴적 속도, 관입 단면, 부정합 단면, 지역별 주상도를 보여 주는 지층 선후 관계 시뮬레이션"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">—</span><span class="value txt" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">—</span><span class="value txt" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">—</span><span class="value txt" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+
+        <div class="control" data-modes="box">
+          <div class="control-head"><span>🪣 퇴적물 흘려 넣기</span><output id="oLayers">0 / 5층</output></div>
+          <div class="opt-grid c3" id="pourSeg">
+            <button class="opt" type="button" data-k="gravel">자갈</button>
+            <button class="opt" type="button" data-k="sand">모래</button>
+            <button class="opt" type="button" data-k="clay">점토</button>
+          </div>
+        </div>
+        <div class="control" data-modes="box">
+          <div class="control-head"><span>📐 상자 기울이기</span><output id="oTilt">0°</output></div>
+          <input type="range" id="sTilt" min="0" max="30" step="1" value="0" aria-label="상자 기울기">
+          <div class="ticks"><span>0°</span><span>15°</span><span>30°</span></div>
+          <div class="btn-row"><button class="btn btn-sm" id="bDeform" type="button">🪨 굳히고 땅 기울이기</button><button class="btn btn-sm" id="bBoxReset" type="button">↺ 비우기</button></div>
+          <p class="ctrl-note" id="tiltNote">층을 쌓기 전에 상자를 기울여 두면, 쌓이는 층은 어떻게 될까요?</p>
+        </div>
+
+        <div class="control" data-modes="rate">
+          <div class="control-head"><span>📏 쌓인 두께</span><output id="oThick">30 m</output></div>
+          <input type="range" id="sThick" min="5" max="50" step="5" value="30" aria-label="쌓인 퇴적물의 두께">
+          <div class="ticks"><span>5 m</span><span>25 m</span><span>50 m</span></div>
+        </div>
+        <div class="control" data-modes="rate">
+          <div class="control-head"><span>🧮 걸린 시간 구하기</span></div>
+          <div class="opt-grid" id="envSeg">
+            <button class="opt" type="button" data-k="deep">🌊 심해 점토<br><small>1 mm / 천 년</small></button>
+            <button class="opt" type="button" data-k="delta">🏝️ 삼각주 모래<br><small>1 mm / 년</small></button>
+          </div>
+          <input class="num-in" id="inYr" type="text" inputmode="decimal" placeholder="걸린 시간 (만 년)" aria-label="걸린 시간 (만 년)" autocomplete="off" style="margin-top:8px">
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bYr" type="button">📝 기록</button></div>
+          <p class="ctrl-note">두께 ÷ 퇴적 속도 = 걸린 시간. 단위는 <b>만 년</b>으로 써요. (1 m = 1000 mm)</p>
+        </div>
+
+        <div class="control" data-modes="intr">
+          <div class="control-head"><span>🌋 마그마가 지층을 뚫고 올라와요</span></div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bIntrude" type="button">▶ 마그마 관입</button><button class="btn btn-sm" id="bIntrReset" type="button">↺ 처음으로</button></div>
+        </div>
+        <div class="control" data-modes="intr" id="laterBox">
+          <div class="control-head"><span>⏱ 나중에 생긴 것은?</span></div>
+          <div class="opt-grid" id="laterSeg">
+            <button class="opt" type="button" data-k="strata">세 지층<br><small>셰일·사암·석회암</small></button>
+            <button class="opt" type="button" data-k="dike">암맥 D</button>
+          </div>
+        </div>
+
+        <div class="control" data-modes="case">
+          <div class="control-head"><span>🗂 사례 고르기</span></div>
+          <div class="opt-grid c3" id="caseSeg">
+            <button class="opt" type="button" data-k="0">사례 1</button>
+            <button class="opt" type="button" data-k="1">사례 2</button>
+            <button class="opt" type="button" data-k="2">사례 3</button>
+          </div>
+          <div class="cap-lbl" id="caseQ">사례를 골라요.</div>
+          <div class="opt-grid" id="caseAns">
+            <button class="opt" type="button" data-k="0">—</button>
+            <button class="opt" type="button" data-k="1">—</button>
+          </div>
+        </div>
+
+        <div class="control" data-modes="unc">
+          <div class="control-head"><span>⏳ 부정합이 만들어지는 과정</span><output id="oStage">0 / 5</output></div>
+          <div class="btn-row"><button class="btn btn-sm" id="bStPrev" type="button">◀ 이전</button><button class="btn btn-sm btn-primary" id="bStNext" type="button">다음 단계 ▶</button></div>
+          <div class="btn-row"><button class="btn btn-sm" id="bStPlay" type="button">⏵ 처음부터 재생</button></div>
+        </div>
+        <div class="control" data-modes="unc" id="seqUncBox">
+          <div class="control-head"><span>🔢 일어난 순서대로 담아요</span></div>
+          <div class="seq-box" id="seqUnc"></div>
+        </div>
+
+        <div class="control" data-modes="type">
+          <div class="control-head"><span>🧱 아래 지층의 상태로 분류</span></div>
+          <div id="typeRows"></div>
+          <p class="ctrl-note">위 지층은 모두 수평이에요. <b>부정합면 아래 지층</b>이 어떤 상태인지 살펴봐요.</p>
+        </div>
+
+        <div class="control" data-modes="corr">
+          <div class="control-head"><span>🔗 대비할 층 고르기</span></div>
+          <div class="opt-grid" id="corrSeg">
+            <button class="opt" type="button" data-k="tuff">🌫️ 응회암 키층</button>
+            <button class="opt" type="button" data-k="amm">🐚 암모나이트층</button>
+          </div>
+          <p class="ctrl-note" id="corrNote">지역 1·2·3에서 같은 층을 하나씩 눌러 연결해요.</p>
+          <div class="btn-row"><button class="btn btn-sm" id="bCorrReset" type="button">↺ 연결 지우기</button></div>
+        </div>
+
+        <div class="control" data-modes="secA">
+          <div class="control-head"><span>📐 단면도 A: 오래된 일부터 담아요</span></div>
+          <div class="seq-box" id="seqA"></div>
+        </div>
+
+        <div class="control" data-modes="box rate intr case unc type corr secA"><p class="src-note">퇴적 속도·두께·단면도는 교육용 <b>예시 자료</b>예요. 퇴적 속도는 환경마다 크게 달라요.</p></div>
+
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>
