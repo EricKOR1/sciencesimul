@@ -5258,8 +5258,7 @@ window.SCI_CATALOG = {
                 "9개 문 비교",
                 "검색표",
                 "사례 분류"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hb-phylogeny",
@@ -5280,8 +5279,7 @@ window.SCI_CATALOG = {
                 "계통수 그리기",
                 "분자 계통수",
                 "프로그래밍"
-              ],
-              "soon": true
+              ]
             }
           ]
         }

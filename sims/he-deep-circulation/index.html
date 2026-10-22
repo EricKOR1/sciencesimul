@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0ea5e9">
+  <title>심층 순환과 기후 | 고등 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧊</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-hint { bottom: auto; top: 12px; }
+    .stage-toolbar { min-height: 58px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; }
+    .stage-toolbar .segmented button { min-height: 40px; padding: 5px 10px; font-size: 14px; white-space: nowrap; }
+    .stage-toolbar .segmented { flex-wrap: wrap; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard [hidden] { display: none !important; }
+    .opt-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin-top: 4px; }
+    .opt-grid.c3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .opt-grid.c4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .opt {
+      min-height: 46px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 12px;
+      font-weight: 800; font-size: 15px; cursor: pointer; padding: 4px 6px; font-family: inherit; line-height: 1.2;
+    }
+    .opt.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); color: color-mix(in srgb, var(--subject) 70%, black); }
+    .opt.bad { border-color: #e2464b; background: #fff1f1; }
+    .opt.good { border-color: #16a34a; background: #effaf2; }
+    .opt:disabled { opacity: .45; cursor: not-allowed; }
+    .ctrl-note { margin: 6px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    .btn-sm { min-height: 44px; }
+    .btn-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+    .btn-row .btn { flex: 1; padding-left: 8px; padding-right: 8px; }
+    .readout .value.txt { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .concept table.mini, table.mini { border-collapse: collapse; margin: 6px 0; font-size: 13px; width: 100%; }
+    .concept table.mini th, .concept table.mini td, table.mini th, table.mini td { border: 1px solid var(--line); padding: 4px 5px; text-align: center; }
+    .concept table.mini th, table.mini th { background: var(--surface-2); font-weight: 800; }
+    table.mini td.now { background: color-mix(in srgb, var(--subject) 12%, white); font-weight: 800; }
+    table.mini td.none { color: var(--muted); }
+    .mini-sel { width: 100%; min-height: 44px; border: 2px solid var(--line); border-radius: 10px; font: inherit; font-weight: 800; font-size: 14.5px; padding: 0 6px; background: var(--surface); color: var(--ink); }
+    .num-in { width: 100%; min-height: 46px; border: 2px solid var(--line); border-radius: 10px; font: inherit; font-weight: 800; font-size: 17px; padding: 0 10px; background: var(--surface); color: var(--ink); text-align: center; }
+    .num-in:focus { outline: none; border-color: var(--subject); }
+    .row-sel { display: grid; grid-template-columns: 30px 1fr; gap: 8px; align-items: center; margin-top: 6px; font-weight: 800; }
+    .src-note { margin: 4px 0 0; font-size: 12.5px; color: #a16207; background: #fff7e0; border: 1px solid #f2d38a; border-radius: 10px; padding: 6px 9px; line-height: 1.4; }
+    @media (max-width: 599px) {
+      .readout { min-width: 0; }
+      .readout .value.txt { font-size: 15px; }
+      .stage-toolbar .spacer { display: none; }
+      .stage-toolbar .segmented button { padding: 5px 7px; font-size: 13px; }
+    }
+    input[type=range] { height: 40px; }
+    .ticks { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--muted); font-weight: 700; margin-top: -6px; padding: 0 2px; }
+  </style>
+</head>
+<body class="sim-page" data-subject="earth">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#he">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">지구과학 · Ⅰ. 대기와 해양의 상호작용</div>
+      <h1>심층 순환과 기후</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🧊 심층 순환과 기후</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="group" aria-label="장면 고르기" hidden>
+            <button type="button" data-view="tank">🧊 침강 실험</button>
+            <button type="button" data-view="sect">🧩 단면 모형</button>
+            <button type="button" data-view="loop">🔄 순환 고리</button>
+            <button type="button" data-view="clim">🌍 담수와 기후</button>
+            <button type="button" data-view="chain">🔗 인과 사슬</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="수조에서 찬 짠물이 가라앉는 침강 실험, 단순화한 남북 바다 단면에서 수괴 배치, 표층 순환과 심층 순환을 잇는 순환 고리, 그린란드 담수 유입에 따른 침강 약화와 북유럽 기온 변화"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">—</span><span class="value txt" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">—</span><span class="value txt" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">—</span><span class="value txt" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+
+        <div class="control" data-modes="tank">
+          <div class="control-head"><span>🌡️ 부을 물의 수온</span><output id="oTp">20 °C</output></div>
+          <input type="range" id="sTp" min="0" max="25" step="1" value="20" aria-label="부을 물의 수온">
+          <div class="ticks"><span>0</span><span>10</span><span>20</span><span>25 °C</span></div>
+        </div>
+        <div class="control" data-modes="tank">
+          <div class="control-head"><span>🧂 부을 물의 염분</span><output id="oSp">34.5 psu</output></div>
+          <input type="range" id="sSp" min="33" max="38" step="0.5" value="34.5" aria-label="부을 물의 염분">
+          <div class="ticks"><span>33</span><span>35</span><span>38 psu</span></div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bPour" type="button">💧 붓기 시작</button><button class="btn btn-sm" id="bTpReset" type="button">↺ 다시 하기</button></div>
+        </div>
+        <div class="control" data-modes="sect">
+          <p class="ctrl-note" style="margin-top:0">카드를 <b>끌어서</b> 단면에 놓아요. 가로는 위도(침강 위치), 세로는 깊이예요. (카드를 누른 뒤 단면을 눌러도 돼요.)</p>
+          <div class="btn-row"><button class="btn btn-sm" id="bSecReset" type="button">↺ 카드 모으기</button></div>
+        </div>
+        <div class="control" data-modes="loop">
+          <div class="control-head"><span>⏱️ 시간 눈금</span><output id="oTime">1.0년/초</output></div>
+          <input type="range" id="sTime" min="0" max="3" step="0.05" value="0" aria-label="시간이 흐르는 빠르기">
+          <div class="ticks"><span>1년/초</span><span>100년/초</span><span>1000년/초</span></div>
+          <div class="btn-row"><button class="btn btn-sm" id="bPlay" type="button">⏸ 멈춤</button><button class="btn btn-sm" id="bLoopReset" type="button">↺ 처음부터</button></div>
+        </div>
+        <div class="control" data-modes="loop">
+          <div class="control-head"><span>🏷️ 번호에 이름 붙이기</span></div>
+          <div id="loopRows"><div class="row-sel"><span>1</span><select class="mini-sel" data-i="0" aria-label="번호 1의 이름"><option value="">고르세요</option><option>표층 난류(북상)</option><option>침강</option><option>심층 이동(남하)</option><option>느린 상승</option></select></div><div class="row-sel"><span>2</span><select class="mini-sel" data-i="1" aria-label="번호 2의 이름"><option value="">고르세요</option><option>표층 난류(북상)</option><option>침강</option><option>심층 이동(남하)</option><option>느린 상승</option></select></div><div class="row-sel"><span>3</span><select class="mini-sel" data-i="2" aria-label="번호 3의 이름"><option value="">고르세요</option><option>표층 난류(북상)</option><option>침강</option><option>심층 이동(남하)</option><option>느린 상승</option></select></div><div class="row-sel"><span>4</span><select class="mini-sel" data-i="3" aria-label="번호 4의 이름"><option value="">고르세요</option><option>표층 난류(북상)</option><option>침강</option><option>심층 이동(남하)</option><option>느린 상승</option></select></div></div>
+        </div>
+        <div class="control" data-modes="clim">
+          <div class="control-head"><span>🧊 그린란드 빙하 담수 유입량</span><output id="oMelt">0 · 표층 염분 35.20 psu</output></div>
+          <input type="range" id="sMelt" min="0" max="10" step="0.5" value="0" aria-label="담수 유입량 (예시 단위)">
+          <div class="ticks"><span>0 (없음)</span><span>5</span><span>10 (많음)</span></div>
+          <p class="ctrl-note">담수가 늘수록 북대서양 표층 염분이 낮아져요. 표층수는 3 °C로 가정해요(예시).</p>
+        </div>
+        <div class="control" data-modes="chain">
+          <p class="ctrl-note" style="margin-top:0">카드를 <b>끌어서</b> ① → ⑥ 칸에 순서대로 놓아요. (카드를 누른 뒤 칸을 눌러도 돼요.)</p>
+          <div class="btn-row"><button class="btn btn-sm" id="bChainReset" type="button">↺ 카드 모으기</button></div>
+        </div>
+        <div class="control" data-modes="tank sect loop clim chain"><p class="src-note">수치(밀도·시간·기온 변화)는 교육용 <b>예시 자료</b>예요. 실제 자료는 기상청·국립해양조사원·ARGO 누리집에서 확인해 볼 수 있어요.</p></div>
+
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

@@ -797,7 +797,7 @@
   const COOLP = plotFrame(LY.cool, Object.assign({ noDraw: true }, COOLO));
   const ISO_COOL = []; for (let v = 1026; v <= 1029.5; v += 0.5) ISO_COOL.push({ v, pts: isoLine(v, -2, 10) });
   const ISO_DEEP = { v: DEEP.rho, pts: isoLine(DEEP.rho, -2, 10) };
-  const tCol = (T) => colorStops(['#38bdf8', '#22c55e', '#eab308', '#f97316'], (T + 2) / 12);
+  const tCol = (T) => colorStops(['#38bdf8', '#2dd4bf', '#a3e635', '#f97316'], (T + 2) / 16);
   const coolRho = () => RHO(S.cool.T, S.cool.S);
   const coolSinks = () => r2(coolRho()) >= RHO_DEEP;
   const tMin = (s) => Math.ceil(FREEZE(s) * 10 - 1e-9) / 10;
