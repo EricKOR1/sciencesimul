@@ -876,7 +876,7 @@
           manual: true, setup() { setMode('horse'); updateCtl(); },
           check: () => {
             const pk = TRAITS.filter((t) => S.horse.pick[t.id]);
-            const bad = pk.find((t) => !t.ok); if (bad) return '"' + bad.n + '"은(는) 달라지지 않았어요. ' + bad.why;
+            const bad = pk.find((t) => !t.ok); if (bad) return '"' + bad.n + '"' + josa(bad.n, '은', '는') + ' 달라지지 않았어요. ' + bad.why;
             if (pk.length < 3) return '변한 형질이 ' + (3 - pk.length) + '개 더 있어요. 앞발 뼈, 키, 이빨을 다시 비교해요.';
             return true;
           },

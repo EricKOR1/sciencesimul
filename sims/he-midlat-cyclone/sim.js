@@ -340,7 +340,7 @@
     : { map1: { x: 0, y: 0, w: 800, h: 300 }, tray: { x: 8, y: 304, w: 784, h: 46 }, sec: { x: 0, y: 354, w: 800, h: 206 },
         map2: { x: 0, y: 0, w: 800, h: 288 }, pl1: { x: 8, y: 296, w: 388, h: 256 }, pl2: { x: 404, y: 296, w: 388, h: 256 },
         map3: { x: 0, y: 0, w: 800, h: 288 }, plH: { x: 8, y: 296, w: 784, h: 256 }, rangeR: { x: 8, y: 8, w: 784, h: 520 },
-        map4: { x: 0, y: 0, w: 800, h: 430 } };
+        map4: { x: 0, y: 0, w: 800, h: 500 } };
   function mkView(R, xmin, ymin, k) {
     return { R, xmin, ymin, k, sx: (wx) => R.x + (wx - xmin) * k, sy: (wy) => R.y + (wy - ymin) * k, wx: (px) => xmin + (px - R.x) / k, wy: (py) => ymin + (py - R.y) / k };
   }
@@ -747,7 +747,8 @@
       for (let h = 0; h <= 24.01; h += 0.5) pts.push([ax.x(h), ax.y(dayT(d, h))]);
       polyline(pts, d.col, k === S.day ? 5 : 3.4);
       const mx = ax.x(15), my = ax.y(dayT(d, 15)), nx = ax.x(3), ny = ax.y(dayT(d, 3));
-      [[mx, my, f1(dayT(d, 15)).replace('.0', '') + ' °C', -9], [nx, ny, f1(dayT(d, 3)).replace('.0', '') + ' °C', 17]].forEach(([x, y, s, dy]) => {
+      const offs = k === 'A' ? [-9, 17] : k === 'B' ? [-9, -9] : [17, 17];
+      [[mx, my, f1(dayT(d, 15)).replace('.0', '') + ' °C', offs[0]], [nx, ny, f1(dayT(d, 3)).replace('.0', '') + ' °C', offs[1]]].forEach(([x, y, s, dy]) => {
         ctx.fillStyle = '#fff'; ctx.strokeStyle = d.col; ctx.lineWidth = 2.4; ctx.beginPath(); ctx.arc(x, y, 5, 0, TAU); ctx.fill(); ctx.stroke();
         T(x, y + dy, s, { size: 12.5, weight: 800, color: d.col });
       });
@@ -811,7 +812,7 @@
       y += note(10, y, 580, '저기압과 전선은 12시간 동안 모양이 변하지 않고 같은 속도로 동쪽으로 이동한다고 가정해요.', 13.5) + 8;
       note(10, y, 580, '지도를 눌러 그 지점의 바람 방향을 알아봐요.', 13.5, { bg: 'rgba(204,251,241,.95)' });
     } else {
-      note(10, 440, 780, '저기압과 전선은 모양이 변하지 않고 같은 속도로 동쪽으로 이동한다고 가정해요. 지도를 눌러 그 지점의 바람 방향을 알아봐요.', 13.5);
+      note(10, 506, 780, '저기압과 전선은 모양이 변하지 않고 같은 속도로 동쪽으로 이동한다고 가정해요. 지도를 눌러 그 지점의 바람 방향을 알아봐요.', 13.5);
     }
   }
 
@@ -880,10 +881,11 @@
   $('#playBtn').addEventListener('click', () => { Sound.click(); if (!S.play && S.t >= 23.9) setTime(0); S.play = !S.play; updPlay(); });
   $('#playBtnH').addEventListener('click', () => { Sound.click(); if (!S.playH && S.th >= 47.8) setTimeH(0); S.playH = !S.playH; updPlay(); });
   $$('#obsSeg button').forEach((b) => b.addEventListener('click', () => { Sound.click(); S.obs = b.dataset.o; S.wang = S.obs === 'south' ? windS(S.t) : windN(S.t); updateCtl(); }));
-  $$('#toolSeg button').forEach((b) => b.addEventListener('click', () => { Sound.click(); S.tool = S.tool === b.dataset.tool && b.dataset.tool !== 'clear' ? null : b.dataset.tool; if (S.tool === 'clear') { S.marks.warm = S.marks.cold = null; S.tool = null; } updateCtl(); }));
+  $$('#toolSeg button').forEach((b) => b.addEventListener('click', () => { Sound.click(); if (b.dataset.tool === 'clear') { S.marks.warm = S.marks.cold = null; } else S.tool = b.dataset.tool; updateCtl(); }));
   $$('#dirSeg button').forEach((b) => b.addEventListener('click', () => { Sound.click(); S.dir = b.dataset.d; updateCtl(); }));
   $$('#predSeg button').forEach((b) => b.addEventListener('click', () => { Sound.click(); S.pred = b.dataset.p; updateCtl(); }));
   function setDay(k) { S.day = k; Sound.click(); updateCtl(); }
+  $$('#viewSeg button').forEach((b) => b.addEventListener('click', () => { Sound.click(); S.dayView = b.dataset.v; if (S.dayView === 'range') S.sub = 'range'; else S.sub = 'pred'; updateCtl(); }));
   $$('#daySeg .opt').forEach((b) => b.addEventListener('click', () => setDay(b.dataset.day)));
   $$('#chartSeg button').forEach((b) => b.addEventListener('click', () => { Sound.click(); S.chart = +b.dataset.c; S.chartTouched = true; S.probe = null; updateCtl(); }));
   $('#bResetCards').addEventListener('click', () => { Sound.click(); board.reset(); });
@@ -916,7 +918,7 @@
     $$('#ctrlCard .control').forEach((c) => {
       const okMode = c.dataset.modes.split(' ').includes(S.mode);
       const okSub = !c.dataset.sub || (game && game.free) || c.dataset.sub === S.sub;
-      c.hidden = !(okMode && okSub);
+      c.hidden = !(okMode && okSub) || (c.dataset.free && !(game && game.free));
     });
     $$('#modeSeg button').forEach((b) => b.classList.toggle('on', b.dataset.mode === S.mode));
     const ms = $('#modeSeg'); if (ms) ms.hidden = !(game && game.free);
@@ -925,6 +927,7 @@
     $$('#dirSeg button').forEach((b) => b.classList.toggle('on', b.dataset.d === S.dir));
     $$('#predSeg button').forEach((b) => b.classList.toggle('on', b.dataset.p === S.pred));
     $$('#daySeg .opt').forEach((b) => b.classList.toggle('on', b.dataset.day === S.day));
+    $$('#viewSeg button').forEach((b) => b.classList.toggle('on', b.dataset.v === S.dayView));
     $$('#chartSeg button').forEach((b) => b.classList.toggle('on', +b.dataset.c === S.chart));
     SCALE_ITEMS.forEach((it, i) => $$('#sc' + i + ' button').forEach((b) => b.classList.toggle('on', +b.dataset.v === S.scale[i])));
     const pn = $('#predNote');
@@ -1176,7 +1179,7 @@
 
   /* ---------- 디버그 (Playwright) ---------- */
   window.__sim = {
-    S, board, SER, SERH, DAYS, CH, LAY, MV1, MV2, MV3, MV4, windLow, windHigh, rainAt, cxAt, OBS_D, SPD_W, SPD_C, T_W, T_C, setTime, setTimeH, enterLevel,
+    S, plotAx, board, SER, SERH, DAYS, CH, LAY, MV1, MV2, MV3, MV4, windLow, windHigh, rainAt, cxAt, OBS_D, SPD_W, SPD_C, T_W, T_C, setTime, setTimeH, enterLevel,
     get game() { return game; },
     solveLabels() { board.cards.forEach((c) => { c.zone = c.id; }); board.layout(true); },
     solveScale() { SCALE_ITEMS.forEach((it, i) => { S.scale[i] = it.a; }); updateCtl(); },

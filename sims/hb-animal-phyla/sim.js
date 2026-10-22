@@ -365,7 +365,7 @@
     ctx.save(); const sh = q.shake * Math.sin(q.shake * 40) * 5; ctx.translate(sh, 0); ctx.scale(SYS, SYS);
     drawSpec(q.i, t);
     ctx.restore();
-    ctx.save(); const ar = q.ang * Math.PI / 180; ctx.rotate(ar); ctx.scale(1, -1); ctx.rotate(-ar); ctx.globalAlpha = 0.38; ctx.scale(SYS, SYS); ctx.filter = 'hue-rotate(160deg) saturate(1.6)'; drawSpec(q.i, t); ctx.filter = 'none'; ctx.restore();
+    ctx.save(); const ar = q.ang * Math.PI / 180; ctx.rotate(ar); ctx.scale(1, -1); ctx.rotate(-ar); ctx.globalAlpha = 0.38; ctx.scale(SYS, SYS); drawSpec(q.i, t); ctx.restore();
     // 칼(자르는 선)
     const ar2 = q.ang * Math.PI / 180, col = hit >= 0 ? '#16a34a' : '#475569';
     ctx.save(); ctx.rotate(ar2); ctx.strokeStyle = col; ctx.lineWidth = hit >= 0 ? 4 : 3; ctx.setLineDash(hit >= 0 ? [] : [10, 7]); ctx.beginPath(); ctx.moveTo(-SYR - 12, 0); ctx.lineTo(SYR + 12, 0); ctx.stroke(); ctx.setLineDash([]);
@@ -388,8 +388,8 @@
   const SEC_ORDER = [2, 0, 1];                 // 화면의 A, B, C 단면 종류 (진체강, 체강 없음, 가체강)
   const SEC_ANIMAL = ['플라나리아', '회충', '지렁이'];      // 체강 없음, 가체강, 진체강 순
   function resetCoel() { S.ce = { pick: [null, null, null], color: true, bad: [false, false, false], pop: [1, 1, 1] }; }
-  const CER = L(104, 74), CEY = L(238, 210);
-  const cePos = (k) => ({ x: L(140 + k * 260, 80 + k * 160), y: CEY });
+  const CER = L(104, 68), CEY = L(238, 210);
+  const cePos = (k) => ({ x: L(140 + k * 260, 88 + k * 152), y: CEY });
   function drawCoel(dt, t) {
     const c = S.ce;
     bgFill('#eaf3f9', '#f2f7fb');
@@ -405,13 +405,13 @@
       chip(p.x, p.y + CER + 30, '단면 ' + 'ABC'[k] + (c.pick[k] != null ? ' → ' + SEC_ANIMAL[c.pick[k]] : ''), { align: 'center', size: 14.5, bg: c.bad[k] ? '#fee2e2' : c.pick[k] != null ? '#dcfce7' : '#fff', border: c.bad[k] ? '#dc2626' : c.pick[k] != null ? '#16a34a' : '#94a3b8', color: '#1b2333', pad: 12, h: 30 });
     }
     // 범례
-    const ly = L(420, 450);
-    panel(L(20, 12), ly, VW - L(40, 24), L(118, 150), 14);
+    const ly = L(420, 436);
+    panel(L(20, 12), ly, VW - L(40, 24), L(118, 184), 14);
     if (c.color) {
       const items = [['외배엽', GL.ecto], ['중배엽', GL.meso], ['내배엽', GL.endo], ['체강(빈 공간)', GL.cav], ['소화관 안쪽', '#ffffff']];
       items.forEach((it, i) => { const x = L(40, 30) + (PHONE ? (i % 2) * 210 : i * 142), y = ly + (PHONE ? 26 + Math.floor(i / 2) * 26 : 28); ctx.fillStyle = it[1]; ctx.strokeStyle = '#64748b'; ctx.lineWidth = 1.2; D.roundRect(x, y - 11, 20, 20, 5); ctx.fill(); ctx.stroke(); T(x + 28, y + 5, it[0], 13.5, '#1b2333', 'left', 700); });
     } else T(L(40, 30), ly + 32, '색을 끄면 층 구분이 어려워요. 🎨 배엽 색 보기를 켜 보세요.', L(15, 14), '#475569', 'left', 700);
-    textBlock(L(40, 30), ly + L(62, 98), VW - L(80, 60), '체강은 몸속 빈 공간이에요. 진체강은 빈 공간의 안쪽과 바깥쪽이 모두 중배엽으로 둘러싸여 있고, 가체강은 소화관 쪽에 중배엽이 없어요.', L(14.5, 13.5), '#475569', 20, 700);
+    textBlock(L(40, 30), ly + L(62, 118), VW - L(80, 60), '체강은 몸속 빈 공간이에요. 진체강은 빈 공간의 안쪽과 바깥쪽이 모두 중배엽으로 둘러싸여 있고, 가체강은 소화관 쪽에 중배엽이 없어요.', L(14.5, 13.5), '#475569', 20, 700);
   }
 
   /* ---------- 1단계-다: 소화관 ---------- */
@@ -723,7 +723,7 @@
     { n: '해파리', ph: 1, clue: '몸이 투명하고 우산 모양으로 물에 떠다녀요.', tip: '해파리와 말미잘은 같은 무리예요. 입과 항문의 구분이 없는 방사 대칭 동물이에요.', why: '방사 대칭에 자포 세포가 있는 자포동물이에요.' },
   ];
   function resetCase() { S.cs = { sel: 0, pick: CASES.map(() => null), bad: CASES.map(() => false), pop: CASES.map(() => 1) }; }
-  const CASEG = (i) => (PHONE ? { x: 10 + (i % 2) * 232, y: 44 + Math.floor(i / 2) * 108, w: 226, h: 102 } : { x: 20 + (i % 4) * 192, y: 46 + Math.floor(i / 4) * 178, w: 184, h: 170 });
+  const CASEG = (i) => (PHONE ? { x: 10 + (i % 2) * 232, y: 44 + Math.floor(i / 2) * 114, w: 226, h: 108 } : { x: 20 + (i % 4) * 192, y: 46 + Math.floor(i / 4) * 178, w: 184, h: 170 });
   function pickCase(i) { S.cs.sel = i; Sound.click(); updateCtl(); }
   function setCasePh(v) { const c = S.cs; c.pick[c.sel] = v; c.bad[c.sel] = false; c.pop[c.sel] = 0.6; SciSim.tween(c.pop, { [c.sel]: 1 }, { duration: 0.4, ease: 'outBack' }); Sound.click(); updateCtl(); }
   function drawCase(dt, t) {
@@ -744,11 +744,11 @@
         animalIcon(cs.n, 34, 34, 44, t);
         T(70, 28, cs.n, 17, '#1b2333', 'left', 800);
         textBlock(70, 48, g.w - 80, cs.clue, 13, '#475569', 16, 700);
-        if (pk != null) chip(g.w / 2, g.h - 14, AP[pk].n, { align: 'center', size: 13, bg: AP[pk].col, color: '#fff', pad: 9, h: 22 }); else T(g.w / 2, g.h - 10, '문을 골라요', 13, '#94a3b8', 'center', 700);
+        if (pk != null) chip(g.w / 2, g.h - 13, AP[pk].n, { align: 'center', size: 13, bg: AP[pk].col, color: '#fff', pad: 9, h: 22 }); else T(g.w / 2, g.h - 9, '문을 골라요', 13, '#94a3b8', 'center', 700);
       }
       ctx.restore();
     });
-    const iy = PHONE ? 44 + 4 * 108 + 6 : 46 + 2 * 178 + 6;
+    const iy = PHONE ? 44 + 4 * 114 + 6 : 46 + 2 * 178 + 6;
     panel(L(20, 10), iy, VW - L(40, 20), VH - iy - 10, 14, '#fff');
     const cs = CASES[c.sel];
     T(L(40, 22), iy + 28, '🔎 ' + cs.n + ': ' + cs.clue, fitText('🔎 ' + cs.n + ': ' + cs.clue, VW - L(80, 44), L(15, 14), 800, 12.5), '#0f3a5a', 'left', 800);

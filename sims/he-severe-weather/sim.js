@@ -400,7 +400,6 @@
     // 0 °C 높이
     const fy = G.by - 0.42 * (G.by - G.ty);
     D.dashedLine(20 * U, fy, VW - 20 * U, fy, { color: 'rgba(30,64,120,.55)', width: 2, dash: [8, 6] });
-    D.text(VW - 24 * U, fy - 7, '0 °C 높이  (이 위는 영하)', { size: 13, weight: 800, color: '#1e4078', align: 'right' });
   }
   function drawCloud(t) {
     const by = G.by, top = by - S.top * (by - G.ty), h = Math.max(1, by - top);
@@ -435,6 +434,7 @@
     D.text(ox, oy + 22 * U, '나', { size: 14, weight: 800, color: '#1e293b' });
     // 구름 + 기류
     drawCloud(t);
+    D.text(VW - 20 * U, G.by - 0.42 * (G.by - G.ty) - 7, PHONE ? '0 °C 높이' : '0 °C 높이  (이 위는 영하)', { size: 13, weight: 800, color: '#1e4078', align: 'right', stroke: '#ffffff', strokeWidth: 4 });
     const by = G.by, top = by - S.top * (by - G.ty), h = by - top;
     if (S.up > 0.12) {
       const len = clamp(S.up, 0, 1) * h * 0.82;
@@ -525,10 +525,10 @@
     S.rtSmooth = S.rtPlay ? S.rt : S.rtSmooth;
     if (S.rtPlay) { S.rt += dt / 3; if (S.rt >= 1) { S.rt = 1; S.rtPlay = false; } }
     // 비구름: 앞에서 서쪽에서 동쪽으로 줄지어 지나가요
-    const R = rateOf(S.V), rate = 0.25 + S.V * 0.55;       // 초당 생기는 비구름 수
+    const R = rateOf(S.V), rate = 0.12 + S.V * 0.22;       // 초당 생기는 비구름 수
     S.cellT += dt * rate;
     while (S.cellT >= 1) { S.cellT -= 1; S.cells.push({ fx: 0.12, fy: FRONT_Y + rnd(-0.03, 0.03), w: rnd(0.05, 0.075), grow: 0 }); }
-    S.cells.forEach((c) => { c.fx += dt * 0.085; c.grow = Math.min(1, c.grow + dt * 1.5); });
+    S.cells.forEach((c) => { c.fx += dt * 0.11; c.grow = Math.min(1, c.grow + dt * 1.5); });
     S.cells = S.cells.filter((c) => c.fx < 0.92);
     // 관측 지점 위의 비
     const onObs = S.cells.some((c) => Math.abs(c.fx - OBSPT.fx) < c.w * 0.8);
@@ -605,7 +605,7 @@
       if (frac >= 1) D.text((x0 + x1) / 2, top - 6, R + ' mm/h', { size: 13, weight: 800, color: '#0f172a' });
     });
     ctx.save(); ctx.strokeStyle = '#b91c1c'; ctx.lineWidth = 2; ctx.setLineDash([6, 4]); ctx.beginPath(); ctx.moveTo(A.B.x, A.Y(K.CRIT)); ctx.lineTo(A.B.x + A.B.w, A.Y(K.CRIT)); ctx.stroke(); ctx.restore();
-    D.text(A.B.x + A.B.w - 4, A.Y(K.CRIT) - 5, '집중호우 기준 30 mm/h', { size: 12.5, weight: 800, color: '#b91c1c', align: 'right' });
+    D.text(A.B.x + 6, A.Y(K.CRIT) - 6, '집중호우 기준 30 mm/h', { size: 12.5, weight: 800, color: '#b91c1c', align: 'left', stroke: '#ffffff', strokeWidth: 4 });
     const cumNow = R * K.HOURS * cur;
     D.text(Ra.x + Ra.w - 14, Ra.y + 8 + 15 * FS, '누적 ' + Math.round(cumNow) + ' mm', { size: 15, weight: 800, color: '#0f172a', align: 'right' });
     if (cur > 0 && cur < 1) { const cx = A.X(cur * 3); ctx.strokeStyle = '#0f172a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(cx, A.B.y); ctx.lineTo(cx, A.B.y + A.B.h); ctx.stroke(); }
@@ -645,7 +645,7 @@
         while (S.vapAcc >= 1) { S.vapAcc -= 1; parts.emit({ x: R.x + R.w * rnd(0.2, 0.74), y: seaY - 2, vx: 16, vy: -rnd(30, 52), life: rnd(0.9, 1.5), size: 3, color: '#7dd3fc', shape: 'bubble' }); }
         if (th > 0.2) {
           S.snowAcc += dt * th * (th >= 3 ? 26 : 8);
-          while (S.snowAcc >= 1) { S.snowAcc -= 1; const sx = R.x + R.w * rnd(0.72, 0.99); parts.emit({ x: sx, y: seaY - th * pxKm * 0.9 - 40 * U, vx: -26, vy: rnd(50, 80), life: 1.2, size: rnd(1.8, 3), color: '#ffffff', shape: 'circle', fade: false, alpha: 0.95 }); }
+          while (S.snowAcc >= 1) { S.snowAcc -= 1; const sx = R.x + R.w * rnd(0.72, 0.99); const sy = seaY - th * pxKm * 0.5 - 20 * U, vy = rnd(50, 80); parts.emit({ x: sx, y: sy, vx: -26, vy, life: Math.min(6, (seaY - 6 - sy) / vy), size: rnd(2, 3.2), color: '#ffffff', shape: 'circle', fade: false, alpha: 0.95 }); }
         }
       } else if (S.mode === 'east') {
         S.snowAcc += dt * S.ewS * 7;
@@ -661,6 +661,16 @@
       g.addColorStop(0, rgba('#ffffff', alpha)); g.addColorStop(1, rgba(col || '#c5d2e0', alpha));
       ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, y, r, 0, TAU); ctx.fill();
     }
+  }
+  function cloudBand(x0, x1, baseFn, hFn, dark) {
+    const N = 48, top = [], bot = [];
+    for (let i = 0; i <= N; i++) { const x = lerp(x0, x1, i / N), b = baseFn(x), h = hFn(x) * Math.sqrt(Math.min(1, (x - x0) / (36 * U), (x1 - x) / (36 * U))); top.push([x, b - h]); bot.push([x, b]); }
+    let minY = 1e9, maxB = -1e9; top.forEach((p) => { if (p[1] < minY) minY = p[1]; }); bot.forEach((p) => { if (p[1] > maxB) maxB = p[1]; });
+    ctx.save();
+    const g = ctx.createLinearGradient(0, minY, 0, maxB); g.addColorStop(0, '#ffffff'); g.addColorStop(1, mixc('#d3deea', '#8a9bb0', dark));
+    ctx.fillStyle = g; ctx.beginPath(); top.forEach((p, i) => (i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]))); for (let i = N; i >= 0; i--) ctx.lineTo(bot[i][0], bot[i][1]); ctx.closePath(); ctx.fill();
+    for (let i = 0; i <= N; i += 2) { const h = bot[i][1] - top[i][1]; if (h < 6) continue; const r = clamp(h * 0.3, 4, 24 * U); const gg = ctx.createRadialGradient(top[i][0] - r * 0.3, top[i][1] - r * 0.3, r * 0.1, top[i][0], top[i][1] + r * 0.2, r * 1.2); gg.addColorStop(0, '#ffffff'); gg.addColorStop(1, mixc('#d6e0ec', '#92a3b8', dark * 0.7)); ctx.fillStyle = gg; ctx.beginPath(); ctx.arc(top[i][0], top[i][1] + r * 0.3, r, 0, TAU); ctx.fill(); }
+    ctx.restore();
   }
   function drawWest(t) {
     const R = MR, seaY = R.y + R.h - (PHONE ? 70 : 62), pxKm = (R.h - 90) / 6.6;
@@ -678,25 +688,14 @@
     // 상공 1.5 km 선
     const y15 = seaY - 1.5 * pxKm;
     D.dashedLine(R.x + 8, y15, R.x + R.w - 8, y15, { color: 'rgba(30,64,120,.5)', width: 1.8 });
-    D.text(R.x + 10, y15 - 6, '상공 약 1.5 km: ' + mn(S.tup, 0) + ' °C', { size: 13, weight: 800, color: '#1e4078', align: 'left' });
+    D.text(R.x + 10, y15 - 6, '상공 약 1.5 km: ' + mn(S.tup, 0) + ' °C', { size: 13, weight: 800, color: '#1e4078', align: 'left', stroke: '#ffffff', strokeWidth: 4 });
     // 눈구름: 바다 위에서 점점 두꺼워져요
     const th = S.thickS;
-    if (th > 0.05) {
-      ctx.save();
-      for (let i = 0; i < 18; i++) {
-        const f = i / 17, x = lerp(xL, xC + (R.x + R.w - xC) * 0.1, f), g = smooth((f - 0.05) / 0.85), h = th * pxKm * g;
-        if (h < 4) continue;
-        const r = Math.max(7 * U, h * 0.5), cy = seaY - 0.4 * pxKm - h / 2;
-        const gr = ctx.createRadialGradient(x - r * 0.3, cy - r * 0.3, r * 0.1, x, cy, r);
-        gr.addColorStop(0, '#ffffff'); gr.addColorStop(1, mixc('#cfdae7', '#8697ad', clamp(th / 6, 0, 1) * 0.8));
-        ctx.fillStyle = gr; ctx.beginPath(); ctx.ellipse(x, cy, r * 0.8, r, 0, 0, TAU); ctx.fill();
-      }
-      ctx.restore();
-    }
+    if (th > 0.05) cloudBand(xL, xC + (R.x + R.w - xC) * 0.1, () => seaY - 0.4 * pxKm, (x) => th * pxKm * smooth((x - xL) / (xC - xL) / 0.9), clamp(th / 6, 0, 1) * 0.8);
     // 찬 공기의 흐름 (왼쪽에서 오른쪽으로) — 바다 위를 지나며 데워져요
     const nA = 5;
     for (let i = 0; i < nA; i++) {
-      const yy = seaY - (0.7 + i * 0.55) * pxKm, x1 = R.x + 20, x2 = R.x + R.w * 0.62;
+      const yy = seaY - [0.9, 2.3, 3.2, 4.1, 5.0][i] * pxKm, x1 = R.x + 20, x2 = R.x + R.w * 0.62;
       const f = (t * 0.1 + i / nA) % 1, px = lerp(x1, x2, f), warm = smooth((px - xL) / (xC - xL));
       D.arrow(px - 34 * U, yy, px + 6, yy, { color: mixc('#2563eb', '#f97316', warm), width: 4, head: 11, alpha: 0.9 });
     }
@@ -732,18 +731,18 @@
     const baseY = R.y + R.h - 56;
     const sk = ctx.createLinearGradient(0, R.y, 0, baseY); sk.addColorStop(0, '#a9c4dc'); sk.addColorStop(1, '#dce9f4'); ctx.fillStyle = sk; ctx.fillRect(R.x, R.y, R.w, R.h);
     // 동해 (오른쪽), 태백산맥 (가운데), 서쪽 내륙
-    const mx = R.x + R.w * 0.40, my = baseY - R.h * 0.42, xs = R.x + R.w * 0.66;
+    const mx = R.x + R.w * 0.40, my = baseY - R.h * 0.36, xs = R.x + R.w * 0.66;
     ctx.fillStyle = '#3a8dc9'; ctx.fillRect(xs, baseY, R.x + R.w - xs, R.h);
     ctx.fillStyle = '#b8c79b'; ctx.fillRect(R.x, baseY, xs - R.x, R.h);
     ctx.fillStyle = '#8a9a6e'; ctx.beginPath(); ctx.moveTo(R.x, baseY); ctx.lineTo(R.x + R.w * 0.12, baseY - R.h * 0.08); ctx.lineTo(mx, my); ctx.lineTo(xs, baseY); ctx.closePath(); ctx.fill();
     ctx.fillStyle = '#f4f8fb'; ctx.beginPath(); ctx.moveTo(mx - 38 * U, my + 30 * U); ctx.lineTo(mx, my); ctx.lineTo(mx + 56 * U, my + 56 * U); ctx.lineTo(mx + 20 * U, my + 40 * U); ctx.closePath(); ctx.fill();
-    D.text(mx, my - 10, '태백산맥', { size: 13.5, weight: 800, color: '#3a4a2b' });
+    D.text(mx + 70 * U, my + 78 * U, '태백산맥', { size: 13.5, weight: 800, color: '#ffffff', stroke: 'rgba(40,60,30,.6)' });
     D.text(xs + (R.x + R.w - xs) / 2, baseY + 24 * FS, '동해', { size: 14, weight: 800, color: '#ffffff', stroke: 'rgba(0,50,100,.5)' });
     D.text(R.x + R.w * 0.14, baseY + 24 * FS, '영서 (산 너머)', { size: 12.5, weight: 800, color: '#3c4a2a' });
     D.text(xs - 54 * U, baseY + 24 * FS, '영동 (동해안)', { size: 12.5, weight: 800, color: '#3c4a2a' });
     // 바람 (동해에서 산 비탈을 타고 올라가요) + 눈구름
     const s = S.ewS, th = K.EAST_K * s;                       // 비탈 위 눈구름 두께 (km)
-    const pxKm = (R.h - 110) / 6.6;
+    const pxKm = (R.h - 150) / 6.6;
     const nA = 4;
     for (let i = 0; i < nA; i++) {
       const f = (t * (0.08 + 0.05 * s) + i / nA) % 1, px = lerp(R.x + R.w - 30, mx + 30, f);
@@ -751,15 +750,7 @@
       D.arrow(px + 28 * U, py, px - 6, py - (px > xs ? 0 : 10 * U), { color: '#2563eb', width: 2.5 + s * 1.5, head: 10, alpha: 0.9 });
     }
     // 눈구름: 바람받이 비탈에서 두꺼워져요
-    ctx.save(); ctx.globalAlpha = 0.95;
-    for (let i = 0; i < 10; i++) {
-      const f = i / 9, x = lerp(xs + 10, mx - 6, f), gy2 = baseY - clamp((xs - x) / (xs - mx), 0, 1) * (baseY - my);
-      const h = th * pxKm * smooth(f * 1.1), cy = gy2 - 30 * U - h / 2, r = Math.max(6 * U, h * 0.5);
-      if (h < 4) continue;
-      const g = ctx.createRadialGradient(x - r * 0.3, cy - r * 0.3, r * 0.1, x, cy, r); g.addColorStop(0, '#fff'); g.addColorStop(1, mixc('#cfdae7', '#8697ad', clamp(th / 6, 0, 1) * 0.8));
-      ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(x, cy, r * 0.8, r, 0, 0, TAU); ctx.fill();
-    }
-    ctx.restore();
+    cloudBand(mx - 6, xs + 10, (x) => baseY - clamp((xs - x) / (xs - mx), 0, 1) * (baseY - my) - 12 * U, (x) => th * pxKm * smooth(1 - (x - (mx - 6)) / (xs + 10 - (mx - 6))), clamp(th / 6, 0, 1) * 0.8);
     lbl(R.x + R.w * 0.78, R.y + 24, '북동풍이 동해에서 불어와요', { bg: '#2563eb', size: 13 });
     lbl(R.x + R.w * 0.2, R.y + 24, '산을 넘으면 건조해져요 (눈이 적어요)', { bg: '#64748b', size: 12.5 });
     ctx.restore();
@@ -776,26 +767,22 @@
   }
   function isobars(R, d, name, hide) {
     // 등압선: 지도 R 안에 가로로 나란히, 간격 d km (지도 폭 = 480 km)
-    const kmPx = R.w / 480;
+    const kmPx = R.w / 480, sp = d * kmPx, y0 = R.y + R.h * 0.30;
     ctx.save(); rr(R.x, R.y, R.w, R.h, 12).clip();
     ctx.fillStyle = '#f3f8e9'; ctx.fillRect(R.x, R.y, R.w, R.h);
-    ctx.lineWidth = 2.4; ctx.strokeStyle = '#475569';
-    const cy = R.y + R.h / 2, sp = d * kmPx;
-    let k = 0;
-    for (let y = cy - Math.floor((R.h / 2) / sp) * sp; y < R.y + R.h; y += sp) {
-      if (y < R.y + 6) continue;
-      ctx.beginPath(); for (let x = R.x; x <= R.x + R.w; x += 8) { const yy = y + Math.sin((x - R.x) / R.w * Math.PI * 1.2) * 10 * U; x === R.x ? ctx.moveTo(x, yy) : ctx.lineTo(x, yy); } ctx.stroke();
-      D.text(R.x + 16, y - 5, String(1012 - 4 * Math.round((y - cy) / sp)), { size: 12, weight: 800, color: '#475569', align: 'left' }); k++;
+    ctx.lineWidth = 2.6; ctx.strokeStyle = '#475569';
+    for (let k = 0, y = y0; y < R.y + R.h - 30; k++, y += sp) {
+      ctx.beginPath(); for (let x = R.x; x <= R.x + R.w; x += 8) { const yy = y + Math.sin((x - R.x) / R.w * Math.PI * 1.2) * 8 * U; x === R.x ? ctx.moveTo(x, yy) : ctx.lineTo(x, yy); } ctx.stroke();
+      D.text(R.x + 12, y - 8, (1004 + 4 * k) + ' hPa', { size: 12.5, weight: 800, color: '#475569', align: 'left' });
     }
     ctx.restore();
     ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 2; rr(R.x, R.y, R.w, R.h, 12).stroke();
-    D.text(R.x + 12, R.y + R.h - 10, '지도 ' + name, { size: 15, weight: 800, color: '#0f172a', align: 'left' });
-    D.text(R.x + R.w - 10, R.y + 20 * FS, '등압선 4 hPa 간격', { size: 12, weight: 800, color: '#475569', align: 'right' });
-    // 간격 표시자 (두 선 사이)
-    const v = windOf(d), L = clamp(v * 7.5 * U, 20, R.w * 0.8);
-    D.arrow(R.x + R.w / 2 - L / 2, cy + 22 * U + (name === 'B' ? 0 : 0), R.x + R.w / 2 + L / 2, cy + 22 * U, { color: '#e11d48', width: 4 + v * 0.18, head: 14 });
-    lbl(R.x + R.w / 2, cy + 52 * U, hide ? '바람 ? m/s' : '바람 약 ' + v + ' m/s', { bg: hide ? '#64748b' : '#e11d48', size: 13 });
-    return;
+    D.text(R.x + 12, R.y + 22 * FS, '지도 ' + name, { size: 16, weight: 800, color: '#0f172a', align: 'left' });
+    D.text(R.x + R.w - 10, R.y + 22 * FS, '등압선 4 hPa 간격', { size: 12, weight: 800, color: '#475569', align: 'right' });
+    D.text(R.x + R.w - 10, R.y + R.h - 10, '북쪽(위)이 저기압', { size: 12, weight: 700, color: '#64748b', align: 'right' });
+    const v = windOf(d), L = clamp(v * 7.5 * U, 20, R.w * 0.8), ay = y0 + sp / 2;
+    D.arrow(R.x + R.w / 2 - L / 2, ay, R.x + R.w / 2 + L / 2, ay, { color: '#e11d48', width: 4 + v * 0.18, head: 14 });
+    lbl(R.x + R.w / 2, ay + 30 * U, hide ? '바람 ? m/s' : '바람 약 ' + v + ' m/s', { bg: hide ? '#64748b' : '#e11d48', size: 13 });
   }
   function drawWind(t) {
     const gap = 12, w = PHONE ? MR.w : (MR.w - gap) / 2, h = PHONE ? (MR.h - gap) / 2 : MR.h;
@@ -868,8 +855,8 @@
     }
     ctx.restore();
     // 시계
-    const hh = Math.min(d.h, K.DUST_KM / d.v);
-    lbl(R.x + R.w * 0.5, R.y + 24, '⏱ 출발 후 ' + Math.floor(hh + 1e-6) + ' 시간 · ' + Math.round(K.DUST_KM * dustX(d.h)) + ' km 이동', { bg: '#1e293b', size: 14 });
+    const hh = Math.floor(Math.min(d.h, K.DUST_KM / d.v) + 1e-6);
+    lbl(R.x + R.w * 0.5, R.y + 24, '⏱ 출발 후 ' + hh + ' 시간 · ' + Math.min(K.DUST_KM, d.v * hh) + ' km 이동', { bg: '#1e293b', size: 14 });
   }
   function drawDustPanel(t) {
     const R = LR; card(R, '이동 시간 = 거리 ÷ 속력'.replace('÷', '/'));
@@ -1133,7 +1120,7 @@
 
   /* ---------- 디버그 (Playwright) ---------- */
   window.__sim = {
-    S, K, ord, stpDist, stpVol, stpHr, windCls, match, windOf, thickOf, totalOf, volOf, rateOf, setStage, setMode, strike, resetStep, MR, LR, G, INF,
+    VW, VH, S, K, ord, stpDist, stpVol, stpHr, windCls, match, windOf, thickOf, totalOf, volOf, rateOf, setStage, setMode, strike, resetStep, MR, LR, G, INF,
     get game() { return game; },
     setV(v) { S.V = v; setSlider($('#sVap'), $('#oVap'), v, (x) => '×' + x.toFixed(1)); },
     setSnow(s, t) { S.sst = s; S.tup = t; setSlider($('#sSst'), $('#oSst'), s, (x) => x + ' °C'); setSlider($('#sTup'), $('#oTup'), t, (x) => mn(x, 0) + ' °C'); },

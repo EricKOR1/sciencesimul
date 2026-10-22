@@ -139,7 +139,14 @@
         <div class="control" data-modes="pass" data-sub="rain" id="rainBox">
           <p class="ctrl-note" style="margin-top:0">비가 내리는 시간 = 비 구역의 <b>폭</b> ÷ 전선의 <b>속도</b></p>
         </div>
-        <div class="control" data-modes="high">
+        <div class="control" data-modes="high" data-free="1">
+          <span class="seg-label">🔎 보기</span>
+          <div class="segmented dense" id="viewSeg" role="group" aria-label="보기 고르기">
+            <button type="button" data-v="pass">📈 고기압 통과</button>
+            <button type="button" data-v="range">🌡️ 일교차</button>
+          </div>
+        </div>
+        <div class="control" data-modes="high" data-sub="pred">
           <div class="control-head"><span>🕐 시간</span><output id="oTimeH">0시간</output></div>
           <div class="play-row"><button class="btn btn-sm" id="playBtnH" type="button">▶ 재생</button><input type="range" id="sTimeH" min="0" max="48" step="0.2" value="0" aria-label="시간 (0부터 48시간)"></div>
           <div class="ticks"><span>0</span><span>24시간</span><span>48시간</span></div>
