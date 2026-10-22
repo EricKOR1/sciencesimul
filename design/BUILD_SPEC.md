@@ -134,3 +134,6 @@ apple-mobile-web-app-capable, mobile-web-app-capable, emoji favicon, Jua font li
 - Level: 고2–3. Formulas, units and calculations are expected where the curriculum implies them; graphs are read
   quantitatively. Still friendly 해요체. STEP 1 links to the 중학교/통합과학 lesson it builds on ("🔗 통합과학에서 …").
 - Everything in §9 and the lessons-learned list of the builder brief applies.
+- 진로선택 courses (group `hcareer`): same rules; `.sim-unit` uses the course name, e.g. "물질과 에너지 · Ⅰ. 물질의 세 가지 상태";
+  grade ids hm (역학과 에너지), hq (전자기와 양자), hx (물질과 에너지), hr (화학 반응의 세계), hy (세포와 물질대사),
+  hg (생물의 유전), hs (지구시스템과학), hu (행성우주과학). STEP 1 links to the 일반선택 lesson it builds on.
