@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0ea5e9">
+  <title>퇴적 구조와 퇴적 환경 | 고등 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏖️</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-hint { bottom: auto; top: 12px; }
+    .stage-toolbar { min-height: 58px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; }
+    .stage-toolbar .segmented button { min-height: 40px; padding: 5px 10px; font-size: 14px; white-space: nowrap; }
+    .stage-toolbar .segmented { flex-wrap: wrap; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard [hidden] { display: none !important; }
+    .opt-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin-top: 4px; }
+    .opt-grid.c1 { grid-template-columns: minmax(0, 1fr); }
+    .opt-grid.c3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .opt-grid.c4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .opt {
+      min-height: 46px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 12px;
+      font-weight: 800; font-size: 15px; cursor: pointer; padding: 4px 6px; font-family: inherit; line-height: 1.2;
+    }
+    .opt.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); color: color-mix(in srgb, var(--subject) 70%, black); }
+    .opt.bad { border-color: #e2464b; background: #fff1f1; }
+    .opt.good { border-color: #16a34a; background: #effaf2; }
+    .opt:disabled { opacity: .45; cursor: not-allowed; }
+    .ctrl-note { margin: 6px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    .btn-sm { min-height: 44px; }
+    .btn-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+    .btn-row .btn { flex: 1; padding-left: 8px; padding-right: 8px; }
+    .readout .value.txt { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .concept table.mini, table.mini { border-collapse: collapse; margin: 6px 0; font-size: 13px; width: 100%; }
+    .concept table.mini th, .concept table.mini td, table.mini th, table.mini td { border: 1px solid var(--line); padding: 4px 5px; text-align: center; }
+    .concept table.mini th, table.mini th { background: var(--surface-2); font-weight: 800; }
+    table.mini td.now { background: color-mix(in srgb, var(--subject) 12%, white); font-weight: 800; }
+    table.mini td.none { color: var(--muted); }
+    .mini-sel { width: 100%; min-height: 44px; border: 2px solid var(--line); border-radius: 10px; font: inherit; font-weight: 800; font-size: 14.5px; padding: 0 6px; background: var(--surface); color: var(--ink); }
+    .num-in { width: 100%; min-height: 46px; border: 2px solid var(--line); border-radius: 10px; font: inherit; font-weight: 800; font-size: 17px; padding: 0 10px; background: var(--surface); color: var(--ink); text-align: center; }
+    .num-in:focus { outline: none; border-color: var(--subject); }
+    .row-sel { display: grid; grid-template-columns: 30px 1fr; gap: 8px; align-items: center; margin-top: 6px; font-weight: 800; }
+    .src-note { margin: 4px 0 0; font-size: 12.5px; color: #a16207; background: #fff7e0; border: 1px solid #f2d38a; border-radius: 10px; padding: 6px 9px; line-height: 1.4; }
+    .chip { min-height: 44px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px; font-weight: 800; font-size: 14px; cursor: pointer; padding: 4px 12px; font-family: inherit; line-height: 1.2; text-align: left; }
+    .chip.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 12%, white); }
+    .chip small { font-weight: 700; color: var(--muted); font-size: 12px; }
+    .seq-pool { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
+    .seq-ans { list-style: none; margin: 6px 0; padding: 0; display: flex; flex-direction: column; gap: 5px; }
+    .seq-ans .chip { width: 100%; }
+    .seq-done { font-size: 13px; color: var(--muted); font-weight: 700; padding: 6px 2px; }
+    .seq-box { margin-top: 4px; }
+    .cap-lbl { font-size: 13.5px; font-weight: 800; color: var(--muted); margin: 6px 0 2px; }
+    @media (max-width: 599px) {
+      .readout { min-width: 0; }
+      .readout .value.txt { font-size: 15px; }
+      .stage-toolbar .spacer { display: none; }
+      .stage-toolbar .segmented button { padding: 5px 7px; font-size: 13px; }
+    }
+    input[type=range] { height: 40px; }
+    .ticks { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--muted); font-weight: 700; margin-top: -6px; padding: 0 2px; }
+    .cv-row { display: grid; grid-template-columns: 44px minmax(0, 1fr) 28px minmax(0, 1fr) auto; gap: 6px; align-items: center; margin-top: 6px; font-weight: 800; }
+    .cv-row .num-in { min-height: 44px; padding: 0 6px; font-size: 16px; }
+    .cv-row.ok .num-in { background: #effaf2; border-color: #16a34a; }
+    .cv-row .btn { min-width: 78px; }
+
+  </style>
+</head>
+<body class="sim-page" data-subject="earth">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#he">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">지구과학 · Ⅱ. 지구의 역사와 한반도의 암석</div>
+      <h1>퇴적 구조와 퇴적 환경</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🏖️ 퇴적 구조와 퇴적 환경</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="group" aria-label="장면 고르기" hidden>
+            <button type="button" data-view="sieve" data-feature="sieve">🧂 체 가르기</button>
+            <button type="button" data-view="flow" data-feature="flow">🌊 흐름과 퇴적</button>
+            <button type="button" data-view="graded" data-feature="graded">🥤 점이층리</button>
+            <button type="button" data-view="ripple" data-feature="ripple">〰️ 연흔</button>
+            <button type="button" data-view="crack" data-feature="crack">🧱 건열</button>
+            <button type="button" data-view="cross" data-feature="cross">📚 사층리</button>
+            <button type="button" data-view="match" data-feature="match">🧩 환경 짝짓기</button>
+            <button type="button" data-view="invert" data-feature="invert">🔄 위아래 판단</button>
+            <button type="button" data-view="column" data-feature="column">📊 노두 주상도</button>
+            <button type="button" data-view="trend" data-feature="trend">🌊 해침·해퇴</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="체로 가른 알갱이, 흐름 세기에 따른 퇴적, 점이층리·연흔·건열·사층리 실험, 퇴적 환경 짝짓기와 해침·해퇴를 보여 주는 시뮬레이션"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">—</span><span class="value txt" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">—</span><span class="value txt" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">—</span><span class="value txt" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+
+        <div class="control" data-modes="sieve flow" id="s1Nav">
+          <div class="control-head"><span>🔎 살펴볼 장면</span></div>
+          <div class="opt-grid" id="s1Seg">
+            <button class="opt" type="button" data-k="sieve">🧂 체 가르기</button>
+            <button class="opt" type="button" data-k="flow">🌊 흐름과 퇴적</button>
+          </div>
+        </div>
+        <div class="control" data-modes="sieve">
+          <div class="control-head"><span>🧂 체로 가르기</span></div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bSieve" type="button">▶ 체 흔들기</button><button class="btn btn-sm" id="bSieveReset" type="button">↺ 다시 섞기</button></div>
+          <p class="ctrl-note">구멍이 큰 체 → 작은 체 순서로 걸러서 크기별로 나눠요.</p>
+        </div>
+
+        <div class="control" data-modes="flow">
+          <div class="control-head"><span>💧 흐름의 세기 (물이 들어오는 곳)</span><output id="oFlow">5</output></div>
+          <input type="range" id="sFlow" min="1" max="10" step="1" value="5" aria-label="흐름의 세기">
+          <div class="ticks"><span>1 약함</span><span>5</span><span>10 센 흐름</span></div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bFlow" type="button">▶ 흘려보내기</button><button class="btn btn-sm" id="bFlowReset" type="button">↺ 비우기</button></div>
+          <p class="ctrl-note">흐름은 오른쪽으로 갈수록 약해져요. 세기를 바꿔서 여러 번 흘려보내 봐요.</p>
+        </div>
+
+        <div class="control" data-modes="graded ripple crack cross" id="expBox">
+          <div class="control-head"><span>🧪 실험 고르기</span></div>
+          <div class="opt-grid c4" id="expSeg">
+            <button class="opt" type="button" data-k="graded">점이<br>층리</button>
+            <button class="opt" type="button" data-k="ripple">연흔</button>
+            <button class="opt" type="button" data-k="crack">건열</button>
+            <button class="opt" type="button" data-k="cross">사층리</button>
+          </div>
+        </div>
+        <div class="control" data-modes="graded">
+          <div class="control-head"><span>🥤 흙탕물을 가만히 두면</span></div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bGraded" type="button">▶ 가라앉히기</button><button class="btn btn-sm" id="bGradedReset" type="button">🥤 흔들어 섞기</button></div>
+        </div>
+        <div class="control" data-modes="ripple">
+          <div class="control-head"><span>〰️ 모래 바닥 위의 물</span></div>
+          <div class="opt-grid" id="ripSeg">
+            <button class="opt" type="button" data-k="one">→ 한 방향<br>흐름</button>
+            <button class="opt" type="button" data-k="wave">⇄ 왕복<br>파도</button>
+          </div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bRip" type="button">▶ 흘려보내기</button><button class="btn btn-sm" id="bRipReset" type="button">↺ 평평하게</button></div>
+        </div>
+        <div class="control" data-modes="crack">
+          <div class="control-head"><span>💧 젖은 진흙</span></div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bCrack" type="button">☀️ 물 빼고 말리기</button><button class="btn btn-sm" id="bCrackReset" type="button">💧 다시 적시기</button></div>
+        </div>
+        <div class="control" data-modes="cross">
+          <div class="control-head"><span>📚 흐르는 물과 모래 언덕</span></div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bCross" type="button">▶ 흘려보내기</button><button class="btn btn-sm" id="bCrossReset" type="button">↺ 처음으로</button></div>
+        </div>
+
+        <div class="control" data-modes="match">
+          <div class="control-head"><span>🧩 단서에 알맞은 퇴적 환경</span></div>
+          <div id="matchRows"></div>
+        </div>
+        <div class="control" data-modes="invert">
+          <div class="control-head"><span>🔄 지층이 처음 모습 그대로일까요?</span></div>
+          <div id="invRows"></div>
+          <div class="btn-row"><button class="btn btn-sm" id="bFlip" type="button">↻ 뒤집어 보기</button></div>
+          <p class="ctrl-note">연흔의 뾰족한 마루는 위, 건열은 V가 벌어진 쪽이 위, 점이층리는 굵은 쪽이 아래예요.</p>
+        </div>
+
+        <div class="control" data-modes="column">
+          <div class="control-head"><span>📊 구간별 퇴적 환경</span></div>
+          <div id="colRows"></div>
+        </div>
+        <div class="control" data-modes="trend">
+          <div class="control-head"><span>🌊 위로 갈수록 어떻게 변했을까</span></div>
+          <div id="trendRows"></div>
+          <p class="ctrl-note">해침: 바다가 육지 쪽으로 밀려와요. 해퇴: 바다가 육지에서 물러나요.</p>
+        </div>
+
+        <div class="control" data-modes="sieve flow graded ripple crack cross match invert column trend"><p class="src-note">구조·주상도·알갱이 크기는 교육용 <b>예시 자료</b>예요. 실험은 원리를 단순하게 나타낸 모형이에요.</p></div>
+
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

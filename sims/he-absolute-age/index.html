@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0ea5e9">
+  <title>방사성 반감기와 연령 | 고등 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⏳</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-hint { bottom: auto; top: 12px; }
+    .stage-toolbar { min-height: 58px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; }
+    .stage-toolbar .segmented button { min-height: 40px; padding: 5px 10px; font-size: 14px; white-space: nowrap; }
+    .stage-toolbar .segmented { flex-wrap: wrap; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard [hidden] { display: none !important; }
+    .opt-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin-top: 4px; }
+    .opt-grid.c1 { grid-template-columns: minmax(0, 1fr); }
+    .opt-grid.c3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .opt-grid.c4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .opt {
+      min-height: 46px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 12px;
+      font-weight: 800; font-size: 15px; cursor: pointer; padding: 4px 6px; font-family: inherit; line-height: 1.2;
+    }
+    .opt.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); color: color-mix(in srgb, var(--subject) 70%, black); }
+    .opt.bad { border-color: #e2464b; background: #fff1f1; }
+    .opt.good { border-color: #16a34a; background: #effaf2; }
+    .opt:disabled { opacity: .45; cursor: not-allowed; }
+    .ctrl-note { margin: 6px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    .btn-sm { min-height: 44px; }
+    .btn-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+    .btn-row .btn { flex: 1; padding-left: 8px; padding-right: 8px; }
+    .readout .value.txt { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .concept table.mini, table.mini { border-collapse: collapse; margin: 6px 0; font-size: 13px; width: 100%; }
+    .concept table.mini th, .concept table.mini td, table.mini th, table.mini td { border: 1px solid var(--line); padding: 4px 5px; text-align: center; }
+    .concept table.mini th, table.mini th { background: var(--surface-2); font-weight: 800; }
+    table.mini td.now { background: color-mix(in srgb, var(--subject) 12%, white); font-weight: 800; }
+    table.mini td.none { color: var(--muted); }
+    .mini-sel { width: 100%; min-height: 44px; border: 2px solid var(--line); border-radius: 10px; font: inherit; font-weight: 800; font-size: 14.5px; padding: 0 6px; background: var(--surface); color: var(--ink); }
+    .num-in { width: 100%; min-height: 46px; border: 2px solid var(--line); border-radius: 10px; font: inherit; font-weight: 800; font-size: 17px; padding: 0 10px; background: var(--surface); color: var(--ink); text-align: center; }
+    .num-in:focus { outline: none; border-color: var(--subject); }
+    .row-sel { display: grid; grid-template-columns: 30px 1fr; gap: 8px; align-items: center; margin-top: 6px; font-weight: 800; }
+    .src-note { margin: 4px 0 0; font-size: 12.5px; color: #a16207; background: #fff7e0; border: 1px solid #f2d38a; border-radius: 10px; padding: 6px 9px; line-height: 1.4; }
+    .chip { min-height: 44px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px; font-weight: 800; font-size: 14px; cursor: pointer; padding: 4px 12px; font-family: inherit; line-height: 1.2; text-align: left; }
+    .chip.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 12%, white); }
+    .chip small { font-weight: 700; color: var(--muted); font-size: 12px; }
+    .seq-pool { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
+    .seq-ans { list-style: none; margin: 6px 0; padding: 0; display: flex; flex-direction: column; gap: 5px; }
+    .seq-ans .chip { width: 100%; }
+    .seq-done { font-size: 13px; color: var(--muted); font-weight: 700; padding: 6px 2px; }
+    .seq-box { margin-top: 4px; }
+    .cap-lbl { font-size: 13.5px; font-weight: 800; color: var(--muted); margin: 6px 0 2px; }
+    @media (max-width: 599px) {
+      .readout { min-width: 0; }
+      .readout .value.txt { font-size: 15px; }
+      .stage-toolbar .spacer { display: none; }
+      .stage-toolbar .segmented button { padding: 5px 7px; font-size: 13px; }
+    }
+    input[type=range] { height: 40px; }
+    .ticks { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--muted); font-weight: 700; margin-top: -6px; padding: 0 2px; }
+    .cv-row { display: grid; grid-template-columns: 44px minmax(0, 1fr) 28px minmax(0, 1fr) auto; gap: 6px; align-items: center; margin-top: 6px; font-weight: 800; }
+    .cv-row .num-in { min-height: 44px; padding: 0 6px; font-size: 16px; }
+    .cv-row.ok .num-in { background: #effaf2; border-color: #16a34a; }
+    .cv-row .btn { min-width: 78px; }
+
+  </style>
+</head>
+<body class="sim-page" data-subject="earth">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#he">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">지구과학 · Ⅱ. 지구의 역사와 한반도의 암석</div>
+      <h1>방사성 반감기와 연령</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">⏳ 방사성 반감기와 연령</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="group" aria-label="장면 고르기" hidden>
+            <button type="button" data-view="decay" data-feature="decay">⚛️ 붕괴 모형</button>
+            <button type="button" data-view="curve" data-feature="curve">📉 붕괴 곡선</button>
+            <button type="button" data-view="iso" data-feature="iso">📏 동위 원소</button>
+            <button type="button" data-view="age" data-feature="age">🧮 연령 계산</button>
+            <button type="button" data-view="pick" data-feature="pick">🧭 원소 고르기</button>
+            <button type="button" data-view="sect" data-feature="sect">🗺️ 연령 범위</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="방사성 동위 원소의 붕괴 입자 모형, 붕괴 곡선, 시료의 연령 계산, 지층의 연령 범위를 보여 주는 시뮬레이션"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">—</span><span class="value txt" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">—</span><span class="value txt" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">—</span><span class="value txt" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+
+        <div class="control" data-modes="decay">
+          <div class="control-head"><span>⏱ 경과 시간</span><output id="oT">0.00 반감기</output></div>
+          <input type="range" id="sT" min="0" max="4" step="0.05" value="0" aria-label="경과 시간 (반감기 단위)">
+          <div class="ticks"><span>0</span><span>1</span><span>2</span><span>3</span><span>4 반감기</span></div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bPlay" type="button">▶ 시간 흐르게</button><button class="btn btn-sm" id="bDecReset" type="button">↺ 처음으로</button></div>
+        </div>
+        <div class="control" data-modes="decay" id="tpBox">
+          <div class="control-head"><span>🌡️ 온도</span><output id="oTemp">600 °C</output></div>
+          <input type="range" id="sTemp" min="200" max="1200" step="50" value="600" aria-label="온도">
+          <div class="control-head" style="margin-top:6px"><span>🗜️ 압력</span><output id="oPress">1.0 GPa</output></div>
+          <input type="range" id="sPress" min="0.2" max="2" step="0.1" value="1" aria-label="압력">
+        </div>
+        <div class="control" data-modes="decay" id="countBox">
+          <div class="control-head"><span>🔢 남은 모원소(파랑) 개수</span></div>
+          <input class="num-in" id="inCount" type="text" inputmode="numeric" placeholder="세어서 개수 쓰기" aria-label="남은 모원소 개수" autocomplete="off">
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bCount" type="button">📝 기록</button></div>
+        </div>
+
+        <div class="control" data-modes="curve" id="tableBox">
+          <div class="control-head"><span>📋 반감기 수 n에 따른 표</span></div>
+          <div id="cvTable"></div>
+          <p class="ctrl-note">모원소 비율(%)과 <b>모원소 : 자원소 = 1 : □</b>의 □를 쓰고 <b>점 찍기</b>를 눌러요.</p>
+        </div>
+        <div class="control" data-modes="curve" id="cursorBox">
+          <div class="control-head"><span>📍 곡선 위의 점</span><output id="oCur">n = 0.00</output></div>
+          <input type="range" id="sCur" min="0" max="4" step="0.05" value="0" aria-label="곡선 위 점의 반감기 수">
+          <div class="opt-grid c3" id="markSeg">
+            <button class="opt" type="button" data-k="50">50 %<br><small>찍기</small></button>
+            <button class="opt" type="button" data-k="25">25 %<br><small>찍기</small></button>
+            <button class="opt" type="button" data-k="12.5">12.5 %<br><small>찍기</small></button>
+          </div>
+          <p class="ctrl-note">점을 움직여 모원소가 해당 비율인 곳에서 버튼을 눌러요.</p>
+        </div>
+
+        <div class="control" data-modes="iso">
+          <div class="control-head"><span>📏 측정할 암석의 나이</span></div>
+          <div class="opt-grid c3" id="isoSeg">
+            <button class="opt" type="button" data-k="1e4">1만 년</button>
+            <button class="opt" type="button" data-k="5e4">5만 년</button>
+            <button class="opt" type="button" data-k="1e8">1억 년</button>
+          </div>
+          <p class="ctrl-note">나이를 고르면 원소마다 반감기가 몇 번 지났는지(n = 나이 / 반감기)와 남은 모원소 양이 나와요.</p>
+        </div>
+
+        <div class="control" data-modes="age">
+          <div class="control-head"><span>🧪 시료 고르기</span></div>
+          <div class="opt-grid c4" id="smpSeg">
+            <button class="opt" type="button" data-k="0">①</button>
+            <button class="opt" type="button" data-k="1">②</button>
+            <button class="opt" type="button" data-k="2">③</button>
+            <button class="opt" type="button" data-k="3">④</button>
+          </div>
+        </div>
+        <div class="control" data-modes="age">
+          <div class="control-head"><span>🧮 연령 = n × 반감기</span></div>
+          <input class="num-in" id="inN" type="text" inputmode="numeric" placeholder="반감기가 지난 횟수 n" aria-label="반감기가 지난 횟수 n" autocomplete="off">
+          <input class="num-in" id="inAge" type="text" inputmode="decimal" placeholder="연령" aria-label="연령" autocomplete="off" style="margin-top:8px">
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bAge" type="button">📝 기록</button></div>
+          <p class="ctrl-note" id="ageUnit">연령의 단위: 년</p>
+        </div>
+
+        <div class="control" data-modes="pick">
+          <div class="control-head"><span>🧭 알맞은 동위 원소 고르기</span></div>
+          <div id="pickRows"></div>
+          <p class="ctrl-note">측정하려는 나이와 <b>반감기가 가장 비슷한</b> 원소를 골라요.</p>
+        </div>
+
+        <div class="control" data-modes="sect">
+          <div class="control-head"><span>🗺️ 지층 E의 연령 범위</span></div>
+          <div class="control-head"><span>최소 연령 (E는 이보다 오래됨)</span><output id="oYoung">0 Ma</output></div>
+          <input type="range" id="sYoung" min="0" max="200" step="5" value="0" aria-label="E 연령의 아래쪽 한계 (젊은 쪽)">
+          <div class="control-head"><span>최대 연령 (E는 이보다 젊음)</span><output id="oOld">200 Ma</output></div>
+          <input type="range" id="sOld" min="0" max="200" step="5" value="200" aria-label="E 연령의 위쪽 한계 (오래된 쪽)">
+          <p class="ctrl-note">1 Ma = 100만 년 전. 두 값 사이에 E의 연령이 있어요.</p>
+        </div>
+
+        <div class="control" data-modes="decay curve iso age pick sect"><p class="src-note">반감기와 시료 값은 교육용 <b>예시 자료</b>예요. 붕괴 모형은 원자 128개로 단순하게 나타냈어요.</p></div>
+
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

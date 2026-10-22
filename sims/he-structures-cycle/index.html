@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0ea5e9">
+  <title>지질 구조와 암석 순환 | 고등 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔄</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-hint { bottom: auto; top: 12px; }
+    .stage-toolbar { min-height: 58px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; }
+    .stage-toolbar .segmented button { min-height: 40px; padding: 5px 10px; font-size: 14px; white-space: nowrap; }
+    .stage-toolbar .segmented { flex-wrap: wrap; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard [hidden] { display: none !important; }
+    .opt-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin-top: 4px; }
+    .opt-grid.c1 { grid-template-columns: minmax(0, 1fr); }
+    .opt-grid.c3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .opt-grid.c4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .opt {
+      min-height: 46px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 12px;
+      font-weight: 800; font-size: 15px; cursor: pointer; padding: 4px 6px; font-family: inherit; line-height: 1.2;
+    }
+    .opt.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); color: color-mix(in srgb, var(--subject) 70%, black); }
+    .opt.bad { border-color: #e2464b; background: #fff1f1; }
+    .opt.good { border-color: #16a34a; background: #effaf2; }
+    .opt:disabled { opacity: .45; cursor: not-allowed; }
+    .ctrl-note { margin: 6px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    .btn-sm { min-height: 44px; }
+    .btn-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+    .btn-row .btn { flex: 1; padding-left: 8px; padding-right: 8px; }
+    .readout .value.txt { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .concept table.mini, table.mini { border-collapse: collapse; margin: 6px 0; font-size: 13px; width: 100%; }
+    .concept table.mini th, .concept table.mini td, table.mini th, table.mini td { border: 1px solid var(--line); padding: 4px 5px; text-align: center; }
+    .concept table.mini th, table.mini th { background: var(--surface-2); font-weight: 800; }
+    table.mini td.now { background: color-mix(in srgb, var(--subject) 12%, white); font-weight: 800; }
+    table.mini td.none { color: var(--muted); }
+    .mini-sel { width: 100%; min-height: 44px; border: 2px solid var(--line); border-radius: 10px; font: inherit; font-weight: 800; font-size: 14.5px; padding: 0 6px; background: var(--surface); color: var(--ink); }
+    .num-in { width: 100%; min-height: 46px; border: 2px solid var(--line); border-radius: 10px; font: inherit; font-weight: 800; font-size: 17px; padding: 0 10px; background: var(--surface); color: var(--ink); text-align: center; }
+    .num-in:focus { outline: none; border-color: var(--subject); }
+    .row-sel { display: grid; grid-template-columns: 30px 1fr; gap: 8px; align-items: center; margin-top: 6px; font-weight: 800; }
+    .src-note { margin: 4px 0 0; font-size: 12.5px; color: #a16207; background: #fff7e0; border: 1px solid #f2d38a; border-radius: 10px; padding: 6px 9px; line-height: 1.4; }
+    .chip { min-height: 44px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px; font-weight: 800; font-size: 14px; cursor: pointer; padding: 4px 12px; font-family: inherit; line-height: 1.2; text-align: left; }
+    .chip.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 12%, white); }
+    .chip small { font-weight: 700; color: var(--muted); font-size: 12px; }
+    .seq-pool { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
+    .seq-ans { list-style: none; margin: 6px 0; padding: 0; display: flex; flex-direction: column; gap: 5px; }
+    .seq-ans .chip { width: 100%; }
+    .seq-done { font-size: 13px; color: var(--muted); font-weight: 700; padding: 6px 2px; }
+    .seq-box { margin-top: 4px; }
+    .cap-lbl { font-size: 13.5px; font-weight: 800; color: var(--muted); margin: 6px 0 2px; }
+    @media (max-width: 599px) {
+      .readout { min-width: 0; }
+      .readout .value.txt { font-size: 15px; }
+      .stage-toolbar .spacer { display: none; }
+      .stage-toolbar .segmented button { padding: 5px 7px; font-size: 13px; }
+    }
+    input[type=range] { height: 40px; }
+    .ticks { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--muted); font-weight: 700; margin-top: -6px; padding: 0 2px; }
+
+  </style>
+</head>
+<body class="sim-page" data-subject="earth">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#he">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">지구과학 · Ⅱ. 지구의 역사와 한반도의 암석</div>
+      <h1>지질 구조와 암석 순환</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🔄 지질 구조와 암석 순환</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="group" aria-label="장면 고르기">
+            <button type="button" data-view="ign" data-feature="ign">🌋 관입</button>
+            <button type="button" data-view="col" data-feature="col">🔷 주상절리</button>
+            <button type="button" data-view="sheet" data-feature="sheet">📄 판상절리</button>
+            <button type="button" data-view="fold" data-feature="fold">🧱 지층 블록</button>
+            <button type="button" data-view="bound" data-feature="bound">🌍 변동대 짝짓기</button>
+            <button type="button" data-view="speed" data-feature="speed">⏱ 이동 거리</button>
+            <button type="button" data-view="cycle" data-feature="cycle">🔄 암석 순환도</button>
+            <button type="button" data-view="subd" data-feature="subd">🌊 섭입대 경로</button>
+            <button type="button" data-view="age" data-feature="age">📊 지각 나이</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="마그마 관입과 절리, 습곡과 단층 실험, 판 경계와 지질 구조, 암석 순환도를 보여 주는 지질 구조 시뮬레이션"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">—</span><span class="value txt" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">—</span><span class="value txt" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">—</span><span class="value txt" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+
+        <div class="control" data-modes="ign">
+          <div class="control-head"><span>🌋 마그마를 관입시켜요</span></div>
+          <div class="opt-grid">
+            <button class="btn btn-sm btn-primary" id="bRunA" type="button">▶ A 관입</button>
+            <button class="btn btn-sm btn-primary" id="bRunB" type="button">▶ B 관입</button>
+          </div>
+          <div class="btn-row"><button class="btn btn-sm" id="bIgReset" type="button">↺ 처음으로</button></div>
+        </div>
+
+        <div class="control" data-modes="col">
+          <div class="control-head"><span>🧊 용암이 식는 속도</span></div>
+          <div class="opt-grid c3" id="colSeg">
+            <button class="opt" type="button" data-k="1">느리게<br><small>두꺼운 용암</small></button>
+            <button class="opt on" type="button" data-k="2">보통</button>
+            <button class="opt" type="button" data-k="3">빠르게<br><small>물에 닿음</small></button>
+          </div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bColRun" type="button">▶ 용암 식히기</button><button class="btn btn-sm" id="bColReset" type="button">↺ 되돌리기</button></div>
+        </div>
+
+        <div class="control" data-modes="sheet">
+          <div class="control-head"><span>⛏ 깎여 나간 위 지층 두께</span><output id="oE">0.0 km</output></div>
+          <input type="range" id="sE" min="0" max="6" step="0.5" value="0" aria-label="침식으로 깎여 나간 두께">
+          <div class="ticks"><span>0</span><span>3</span><span>6 km</span></div>
+          <p class="ctrl-note">화강암체 위를 덮은 지층이 침식으로 깎이면 압력이 어떻게 될까요?</p>
+        </div>
+
+        <div class="control" data-modes="ign col sheet">
+          <div class="control-head"><span>📝 관찰 기록</span></div>
+          <div class="row-sel"><b>A</b><select class="mini-sel" id="selA" aria-label="A는 어떤 관입암체"><option value="">관입암체 고르기</option><option value="dike">암맥 (층리를 가로질러요)</option><option value="sill">암상 (층리와 나란해요)</option></select></div>
+          <div class="row-sel"><b>B</b><select class="mini-sel" id="selB" aria-label="B는 어떤 관입암체"><option value="">관입암체 고르기</option><option value="dike">암맥 (층리를 가로질러요)</option><option value="sill">암상 (층리와 나란해요)</option></select></div>
+          <div class="cap-lbl">주상절리는 왜 생길까?</div>
+          <select class="mini-sel" id="selCol" aria-label="주상절리의 원인"><option value="">원인 고르기</option><option value="shrink">식으면서 부피가 줄어(수축)</option><option value="unload">위 암석이 깎여 압력이 줄어(팽창)</option></select>
+          <div class="cap-lbl">판상절리는 왜 생길까?</div>
+          <select class="mini-sel" id="selSheet" aria-label="판상절리의 원인"><option value="">원인 고르기</option><option value="shrink">식으면서 부피가 줄어(수축)</option><option value="unload">위 암석이 깎여 압력이 줄어(팽창)</option></select>
+        </div>
+
+        <div class="control" data-modes="fold">
+          <div class="control-head"><span>↔ 힘의 종류</span></div>
+          <div class="opt-grid c3" id="modeSeg2">
+            <button class="opt on" type="button" data-k="comp">압축<br><small>양쪽에서 밀기</small></button>
+            <button class="opt" type="button" data-k="tens">인장<br><small>양쪽에서 당기기</small></button>
+            <button class="opt" type="button" data-k="shear">전단<br><small>엇갈리게 밀기</small></button>
+          </div>
+        </div>
+        <div class="control" data-modes="fold">
+          <div class="control-head"><span>🧪 암석의 성질</span></div>
+          <div class="opt-grid" id="behSeg">
+            <button class="opt on" type="button" data-k="duct">잘 휘어요<br><small>깊고 뜨거운 곳</small></button>
+            <button class="opt" type="button" data-k="brit">잘 부서져요<br><small>얕고 차가운 곳</small></button>
+          </div>
+        </div>
+        <div class="control" data-modes="fold">
+          <div class="control-head"><span>💪 힘을 가한 정도</span><output id="oF">0 %</output></div>
+          <input type="range" id="sF" min="0" max="100" step="5" value="0" aria-label="힘을 가한 정도">
+          <div class="ticks"><span>0</span><span>50</span><span>100 %</span></div>
+          <div class="btn-row"><button class="btn btn-sm" id="bFoldReset" type="button">↺ 처음 지층으로</button></div>
+        </div>
+        <div class="control" data-modes="fold">
+          <div class="control-head"><span>📍 습곡 읽기 (압축 · 연성)</span></div>
+          <div class="row-sel"><b>①</b><select class="mini-sel fsel" data-i="0" aria-label="1번 지점"><option value="">고르기</option><option value="anti">배사 (위로 볼록)</option><option value="syn">향사 (아래로 오목)</option></select></div>
+          <div class="row-sel"><b>②</b><select class="mini-sel fsel" data-i="1" aria-label="2번 지점"><option value="">고르기</option><option value="anti">배사 (위로 볼록)</option><option value="syn">향사 (아래로 오목)</option></select></div>
+          <div class="row-sel"><b>③</b><select class="mini-sel fsel" data-i="2" aria-label="3번 지점"><option value="">고르기</option><option value="anti">배사 (위로 볼록)</option><option value="syn">향사 (아래로 오목)</option></select></div>
+          <div class="cap-lbl">①에서 보이는 지층은 ②·③보다</div>
+          <select class="mini-sel fsel" data-i="3" aria-label="1번 지점 지층의 나이"><option value="">고르기</option><option value="old">오래됐어요</option><option value="young">젊어요</option></select>
+        </div>
+
+        <div class="control" data-modes="bound">
+          <div class="control-head"><span>🌍 카드를 판 경계에 놓아요</span></div>
+          <p class="ctrl-note">구조와 암석 카드 6장을 알맞은 판 경계 칸에 놓아요. 끌어다 놓거나, 카드를 누른 뒤 칸을 눌러요.</p>
+          <div class="btn-row"><button class="btn btn-sm" id="bBdReset" type="button">↺ 카드 모으기</button></div>
+        </div>
+
+        <div class="control" data-modes="speed">
+          <div class="control-head"><span>⏳ 걸린 시간 (속도 3 cm/년)</span></div>
+          <div class="opt-grid" id="spdSeg">
+            <button class="opt on" type="button" data-k="0">100년</button>
+            <button class="opt" type="button" data-k="1">1000년</button>
+            <button class="opt" type="button" data-k="2">1만 년</button>
+            <button class="opt" type="button" data-k="3">1000만 년</button>
+          </div>
+        </div>
+        <div class="control" data-modes="speed">
+          <div class="control-head"><span>🧮 100년 동안 이동한 거리</span></div>
+          <input class="num-in" id="inSpd" type="text" inputmode="decimal" placeholder="거리 (m)" aria-label="100년 동안 이동한 거리 (m)" autocomplete="off">
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bSpd" type="button">📝 기록</button></div>
+          <p class="ctrl-note">거리 = 속도 × 시간. 단위를 m로 맞춰서 계산해요. (1 m = 100 cm)</p>
+        </div>
+
+        <div class="control" data-modes="cycle">
+          <div class="control-head"><span>🪨 암석 알갱이가 되어 여행해요</span></div>
+          <p class="ctrl-note">빛나는 칸을 눌러 이동해요. 화살표가 있는 길로만 갈 수 있어요.</p>
+          <div class="btn-row"><button class="btn btn-sm" id="bCycWalk" type="button">↺ 마그마로 돌아가기</button><button class="btn btn-sm" id="bCycAll" type="button">🗑 찾은 경로 지우기</button></div>
+        </div>
+
+        <div class="control" data-modes="subd">
+          <div class="control-head"><span>🌊 섭입대의 퇴적물 따라가기</span></div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bSubRun" type="button">▶ 따라가기</button><button class="btn btn-sm" id="bSubReset" type="button">↺ 처음으로</button></div>
+        </div>
+        <div class="control" data-modes="subd">
+          <div class="control-head"><span>🔢 일어난 순서대로 담아요</span></div>
+          <div class="seq-box" id="seqSub"></div>
+        </div>
+        <div class="control" data-modes="subd">
+          <div class="control-head"><span>🔥 화강암이 변성암이 되려면?</span></div>
+          <div class="opt-grid c1" id="condSeg">
+            <button class="opt" type="button" data-k="0">풍화·침식·운반을 받아요</button>
+            <button class="opt" type="button" data-k="1">마그마처럼 완전히 녹아요</button>
+            <button class="opt" type="button" data-k="2">고체 상태에서 높은 열과 압력을 받아요</button>
+            <button class="opt" type="button" data-k="3">지표에서 빠르게 식어요</button>
+          </div>
+        </div>
+
+        <div class="control" data-modes="age">
+          <div class="control-head"><span>📏 해령에서의 거리</span><output id="oAge">3000 km</output></div>
+          <input type="range" id="sAge" min="0" max="10000" step="500" value="3000" aria-label="해령에서의 거리">
+          <div class="ticks"><span>0</span><span>5000</span><span>10 000 km</span></div>
+          <p class="ctrl-note">해저가 확장하는 속도를 5 cm/년이라고 하면 1000 km마다 2000만 년(20 Ma)이에요.</p>
+        </div>
+
+        <div class="control" data-modes="ign col sheet fold bound speed cycle subd age"><p class="src-note">힘·거리·속도·단면은 교육용 <b>예시 자료·모식도</b>예요. 실제 값은 지역마다 달라요.</p></div>
+
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

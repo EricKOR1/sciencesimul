@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0ea5e9">
+  <title>행성의 겉보기 운동 | 고등 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🪐</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-hint { bottom: auto; top: 12px; }
+    .stage-toolbar { min-height: 58px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; }
+    .stage-toolbar .segmented button { min-height: 40px; padding: 5px 10px; font-size: 14px; white-space: nowrap; }
+    .stage-toolbar .segmented { flex-wrap: wrap; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard [hidden] { display: none !important; }
+    .opt-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin-top: 4px; }
+    .opt-grid.c3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .opt-grid.c4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .opt-grid.c5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+    .opt {
+      min-height: 46px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 12px;
+      font-weight: 800; font-size: 15px; cursor: pointer; padding: 4px 4px; font-family: inherit; line-height: 1.2;
+    }
+    .opt.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); color: color-mix(in srgb, var(--subject) 70%, black); }
+    .opt.mk { border-color: #c2410c; background: #fff7ed; color: #9a3412; }
+    .ctrl-note { margin: 6px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    .btn-sm { min-height: 44px; }
+    .btn-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+    .btn-row .btn { flex: 1; padding-left: 8px; padding-right: 8px; white-space: nowrap; }
+    .readout .value.txt { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .concept table.mini, table.mini { border-collapse: collapse; margin: 6px 0; font-size: 13px; width: 100%; }
+    .concept table.mini th, .concept table.mini td, table.mini th, table.mini td { border: 1px solid var(--line); padding: 4px 5px; text-align: center; }
+    .concept table.mini th, table.mini th { background: var(--surface-2); font-weight: 800; }
+    .mini-sel { width: 100%; min-height: 44px; border: 2px solid var(--line); border-radius: 10px; font: inherit; font-weight: 800; font-size: 14.5px; padding: 0 6px; background: var(--surface); color: var(--ink); }
+    .num-in { width: 100%; min-height: 46px; border: 2px solid var(--line); border-radius: 10px; font: inherit; font-weight: 800; font-size: 17px; padding: 0 10px; background: var(--surface); color: var(--ink); text-align: center; }
+    .num-in:focus { outline: none; border-color: var(--subject); }
+    .in-row { display: grid; grid-template-columns: 74px 1fr; gap: 8px; align-items: center; margin-top: 6px; font-weight: 800; font-size: 14.5px; }
+    .card-row { display: grid; grid-template-columns: 70px 1fr; gap: 8px; align-items: center; margin-top: 8px; }
+    .card-row .q { font-size: 14px; font-weight: 700; line-height: 1.3; }
+    .card-row svg { width: 70px; height: 70px; background: #0b1230; border-radius: 10px; }
+    .card-row.txt { grid-template-columns: 1fr; }
+    .src-note { margin: 4px 0 0; font-size: 12.5px; color: #a16207; background: #fff7e0; border: 1px solid #f2d38a; border-radius: 10px; padding: 6px 9px; line-height: 1.4; }
+    @media (max-width: 599px) {
+      .readout { min-width: 0; }
+      .readout .value.txt { font-size: 15px; }
+      .stage-toolbar .spacer { display: none; }
+      .stage-toolbar .segmented button { padding: 5px 7px; font-size: 13px; }
+    }
+    input[type=range] { height: 40px; }
+    .ticks { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--muted); font-weight: 700; margin-top: -6px; padding: 0 2px; }
+  </style>
+</head>
+<body class="sim-page" data-subject="earth">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#he">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">지구과학 · Ⅲ. 태양계 천체와 별과 우주의 진화</div>
+      <h1>행성의 겉보기 운동</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🪐 태양계 공전 모형</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="group" aria-label="장면 고르기" hidden>
+            <button type="button" data-view="orbit">🪐 공전 모형</button>
+            <button type="button" data-view="inner">🌕 내행성</button>
+            <button type="button" data-view="outer">🔴 외행성</button>
+            <button type="button" data-view="retro">↩ 역행</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="위에서 본 태양계 공전 모형, 지구에서 본 행성의 위상과 이각, 외행성의 충과 합, 하늘 띠 위의 역행 경로"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">—</span><span class="value txt" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">—</span><span class="value txt" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">—</span><span class="value txt" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+
+        <div class="control" data-modes="orbit">
+          <div class="control-head"><span>🪐 행성 고르기</span></div>
+          <div class="opt-grid c5" id="plSeg1">
+            <button class="opt" type="button" data-k="mercury">수성</button>
+            <button class="opt" type="button" data-k="venus">금성</button>
+            <button class="opt" type="button" data-k="mars">화성</button>
+            <button class="opt" type="button" data-k="jupiter">목성</button>
+            <button class="opt" type="button" data-k="saturn">토성</button>
+          </div>
+        </div>
+        <div class="control" data-modes="orbit">
+          <div class="control-head"><span>⏱ 시간 속도</span><output id="oSp">30일/초</output></div>
+          <input type="range" id="sSp" min="0" max="5" step="1" value="3" aria-label="시간 속도">
+          <div class="ticks"><span>정지</span><span>느리게</span><span>빠르게</span></div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bPlay1" type="button">▶ 재생</button><button class="btn btn-sm" id="bReset1" type="button">↺ 처음 배치</button></div>
+        </div>
+        <div class="control" data-modes="orbit" id="calcBox1" hidden>
+          <div class="control-head"><span>🧮 회합 주기 S (일)</span></div>
+          <div class="in-row"><span>금성</span><input class="num-in" id="inVenus" type="text" inputmode="decimal" placeholder="예: 500" aria-label="금성의 회합 주기 (일)" autocomplete="off"></div>
+          <div class="in-row"><span>화성</span><input class="num-in" id="inMars" type="text" inputmode="decimal" placeholder="예: 500" aria-label="화성의 회합 주기 (일)" autocomplete="off"></div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bSyn" type="button">📝 기록</button></div>
+        </div>
+
+        <div class="control" data-modes="inner">
+          <div class="control-head"><span>🪐 내행성 고르기</span></div>
+          <div class="opt-grid" id="plSeg2">
+            <button class="opt" type="button" data-k="venus">금성</button>
+            <button class="opt" type="button" data-k="mercury">수성</button>
+          </div>
+        </div>
+        <div class="control" data-modes="inner">
+          <div class="control-head"><span>📅 내합으로부터</span><output id="oU2">0일</output></div>
+          <input type="range" id="sU2" min="0" max="584" step="1" value="0" aria-label="내합으로부터 지난 날수">
+          <div class="opt-grid c4" id="jump2">
+            <button class="opt" type="button" data-k="inf">내합</button>
+            <button class="opt" type="button" data-k="east">동방 최대</button>
+            <button class="opt" type="button" data-k="sup">외합</button>
+            <button class="opt" type="button" data-k="west">서방 최대</button>
+          </div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bPlay2" type="button">▶ 재생</button></div>
+        </div>
+        <div class="control" data-modes="inner" id="calcBox2" hidden>
+          <div class="control-head"><span>🧮 sinθ = 0.72일 때 θ (°)</span></div>
+          <input class="num-in" id="inTh" type="text" inputmode="decimal" placeholder="예: 30" aria-label="최대 이각 θ (도)" autocomplete="off">
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bTh" type="button">📝 기록</button></div>
+        </div>
+        <div class="control" data-modes="inner" id="cardsBox2" hidden>
+          <div class="control-head"><span>🃏 위상과 크기 짝짓기</span></div>
+          <div id="cardsRows2"></div>
+        </div>
+
+        <div class="control" data-modes="outer">
+          <div class="control-head"><span>🪐 외행성 고르기</span></div>
+          <div class="opt-grid c3" id="plSeg3">
+            <button class="opt" type="button" data-k="mars">화성</button>
+            <button class="opt" type="button" data-k="jupiter">목성</button>
+            <button class="opt" type="button" data-k="saturn">토성</button>
+          </div>
+        </div>
+        <div class="control" data-modes="outer">
+          <div class="control-head"><span>📅 충으로부터</span><output id="oU3">0일</output></div>
+          <input type="range" id="sU3" min="-390" max="390" step="1" value="-195" aria-label="충으로부터 지난 날수">
+          <div class="opt-grid c4" id="jump3">
+            <button class="opt" type="button" data-k="wq">서구</button>
+            <button class="opt" type="button" data-k="opp">충</button>
+            <button class="opt" type="button" data-k="eq">동구</button>
+            <button class="opt" type="button" data-k="conj">합</button>
+          </div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bPlay3" type="button">▶ 재생</button></div>
+        </div>
+        <div class="control" data-modes="outer" id="cardsBox3" hidden>
+          <div class="control-head"><span>🃏 합·충·구 판별</span></div>
+          <div id="cardsRows3"></div>
+        </div>
+
+        <div class="control" data-modes="retro">
+          <div class="control-head"><span>🪐 행성 고르기</span></div>
+          <div class="opt-grid c5" id="plSeg4">
+            <button class="opt" type="button" data-k="mercury">수성</button>
+            <button class="opt" type="button" data-k="venus">금성</button>
+            <button class="opt" type="button" data-k="mars">화성</button>
+            <button class="opt" type="button" data-k="jupiter">목성</button>
+            <button class="opt" type="button" data-k="saturn">토성</button>
+          </div>
+        </div>
+        <div class="control" data-modes="retro">
+          <div class="control-head"><span id="lU4">📅 충으로부터</span><output id="oU4">−110일</output></div>
+          <input type="range" id="sU4" min="-110" max="110" step="1" value="-110" aria-label="충(내합)으로부터 지난 날수">
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bPlay4" type="button">▶ 재생</button><button class="btn btn-sm" id="bReset4" type="button">↺ 처음으로</button></div>
+        </div>
+        <div class="control" data-modes="retro" id="markBox" hidden>
+          <div class="control-head"><span>📍 멈춘 것처럼 보이는 때(유) 표시</span></div>
+          <div class="opt-grid">
+            <button class="opt" type="button" id="bMk1">순행 → 역행</button>
+            <button class="opt" type="button" id="bMk2">역행 → 순행</button>
+          </div>
+          <p class="ctrl-note">시간을 움직이다가 점이 멈춘 듯한 때에 눌러요.</p>
+        </div>
+        <div class="control" data-modes="retro" id="calcBox4" hidden>
+          <div class="control-head"><span>🧮 화성의 역행 속도 (°/일)</span></div>
+          <input class="num-in" id="inRetro" type="text" inputmode="decimal" placeholder="예: 0.5" aria-label="충일 때 화성의 겉보기 역행 속도 (도/일)" autocomplete="off">
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bRetro" type="button">📝 기록</button></div>
+        </div>
+        <div class="control" data-modes="retro">
+          <div class="opt-grid" id="tabSeg4">
+            <button class="opt" type="button" data-k="car">🚗 추월 비유</button>
+            <button class="opt" type="button" data-k="bar">📊 역행 기간 비교</button>
+          </div>
+        </div>
+
+        <div class="control" data-modes="orbit inner outer retro"><p class="src-note">궤도는 원, 크기와 거리는 교육용 <b>모형 값</b>이에요. 모형 날짜는 실제 날짜가 아니에요.</p></div>
+
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

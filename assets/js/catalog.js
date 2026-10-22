@@ -5578,8 +5578,7 @@ window.SCI_CATALOG = {
                 "지질시대",
                 "생물 변천",
                 "한반도 화석"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "he-paleoclimate",
@@ -5600,8 +5599,7 @@ window.SCI_CATALOG = {
                 "생물 기록",
                 "빙하·퇴적물",
                 "방법 평가"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "he-magma-igneous",
@@ -5622,8 +5620,7 @@ window.SCI_CATALOG = {
                 "마그마 종류",
                 "분화 과정",
                 "화성암 분류"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "he-metamorphism",
