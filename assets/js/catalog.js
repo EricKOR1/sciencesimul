@@ -5638,8 +5638,7 @@ window.SCI_CATALOG = {
                 "변성암",
                 "변성 환경",
                 "변동대"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "he-structures-cycle",
@@ -5660,8 +5659,7 @@ window.SCI_CATALOG = {
                 "습곡·단층",
                 "변동대 구조",
                 "암석 순환"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "he-korea-geopark",
@@ -5682,8 +5680,7 @@ window.SCI_CATALOG = {
                 "화산 지형",
                 "퇴적·변성",
                 "발전 방안"
-              ],
-              "soon": true
+              ]
             }
           ]
         },

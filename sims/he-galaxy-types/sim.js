@@ -542,7 +542,7 @@
       const cxp = PHONE ? 10 + i * 196 : 580 + (i === 0 ? 0 : 0), yy = PHONE ? 780 : 470 + i * 28;
       D.label(PHONE ? 10 + i * 196 : 788, PHONE ? 800 : yy, (S.recE[i] ? '✓ ' : '') + x.nm + (S.recE[i] ? ' = E' + x.n : ''), { bg: S.recE[i] ? '#15803d' : 'rgba(255,255,255,.14)', color: '#fff', size: 13, align: PHONE ? 'left' : 'right', pad: 9 });
     });
-    if (S.matchT > 0.01) { const a = smooth(S.matchT); ctx.save(); ctx.globalAlpha = a; D.check && D.check(cx + 10 * U2 * 0.0, cy + e.b * U2 + 40, 15, '#22c55e'); ctx.restore(); }
+    if (S.matchT > 0.01) { const a = smooth(S.matchT); ctx.save(); ctx.globalAlpha = a; D.label(cx, cy + e.b * U2 + 40, '✓ 가장자리에 맞았어요: b/a = ' + (e.b / 10).toFixed(1), { bg: '#15803d', size: 13.5, pad: 10 }); ctx.restore(); }
   }
 
   /* ======================================================
