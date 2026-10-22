@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0ea5e9">
+  <title>허블-르메트르 법칙 | 고등 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎈</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-hint { bottom: auto; top: 12px; }
+    .stage-toolbar { min-height: 58px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; }
+    .stage-toolbar .segmented button { min-height: 40px; padding: 5px 10px; font-size: 14px; white-space: nowrap; }
+    .stage-toolbar .segmented { flex-wrap: wrap; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard [hidden] { display: none !important; }
+    .opt-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin-top: 4px; }
+    .opt-grid.c3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .opt-grid.c4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .opt {
+      min-height: 46px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 12px;
+      font-weight: 800; font-size: 15px; cursor: pointer; padding: 4px 6px; font-family: inherit; line-height: 1.2;
+    }
+    .opt.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); color: color-mix(in srgb, var(--subject) 70%, black); }
+    .opt.bad { border-color: #e2464b; background: #fff1f1; }
+    .opt.good { border-color: #16a34a; background: #effaf2; }
+    .opt:disabled { opacity: .45; cursor: not-allowed; }
+    .ctrl-note { margin: 6px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    .btn-sm { min-height: 44px; }
+    .btn-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+    .btn-row .btn { flex: 1; padding-left: 8px; padding-right: 8px; }
+    .readout .value.txt { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .concept table.mini, table.mini { border-collapse: collapse; margin: 6px 0; font-size: 13px; width: 100%; }
+    .concept table.mini th, .concept table.mini td, table.mini th, table.mini td { border: 1px solid var(--line); padding: 4px 5px; text-align: center; }
+    .concept table.mini th, table.mini th { background: var(--surface-2); font-weight: 800; }
+    table.mini td.now { background: color-mix(in srgb, var(--subject) 12%, white); font-weight: 800; }
+    table.mini td.none { color: var(--muted); }
+    .mini-sel { width: 100%; min-height: 44px; border: 2px solid var(--line); border-radius: 10px; font: inherit; font-weight: 800; font-size: 14.5px; padding: 0 6px; background: var(--surface); color: var(--ink); }
+    .num-in { width: 100%; min-height: 46px; border: 2px solid var(--line); border-radius: 10px; font: inherit; font-weight: 800; font-size: 17px; padding: 0 10px; background: var(--surface); color: var(--ink); text-align: center; }
+    .num-in:focus { outline: none; border-color: var(--subject); }
+    .row-sel { display: grid; grid-template-columns: 30px 1fr; gap: 8px; align-items: center; margin-top: 6px; font-weight: 800; }
+    .calc-line { font-size: 14px; font-weight: 700; color: var(--ink); background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 7px 10px; line-height: 1.5; margin-top: 6px; }
+    .ord-list { display: flex; flex-wrap: wrap; gap: 6px; min-height: 36px; margin-top: 6px; align-items: center; font-weight: 800; font-size: 14.5px; }
+    .ord-list .tag { background: color-mix(in srgb, var(--subject) 14%, white); border: 1.5px solid var(--subject); border-radius: 999px; padding: 3px 10px; }
+    .opt.picked { opacity: .4; }
+    .src-note { margin: 4px 0 0; font-size: 12.5px; color: #a16207; background: #fff7e0; border: 1px solid #f2d38a; border-radius: 10px; padding: 6px 9px; line-height: 1.4; }
+    @media (max-width: 599px) {
+      .readout { min-width: 0; }
+      .readout .value.txt { font-size: 15px; }
+      .stage-toolbar .spacer { display: none; }
+      .stage-toolbar .segmented button { padding: 5px 7px; font-size: 13px; }
+    }
+    input[type=range] { height: 40px; }
+    .ticks { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--muted); font-weight: 700; margin-top: -6px; padding: 0 2px; }
+  </style>
+</head>
+<body class="sim-page" data-subject="earth">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#he">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">지구과학 · Ⅲ. 태양계 천체와 별과 우주의 진화</div>
+      <h1>허블-르메트르 법칙</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🎈 허블-르메트르 법칙</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="group" aria-label="장면 고르기" hidden>
+            <button type="button" data-view="v1">🌈 적색 편이</button>
+            <button type="button" data-view="v2">📈 거리와 속도</button>
+            <button type="button" data-view="v3">🧮 계산</button>
+            <button type="button" data-view="v4">⏪ 나이</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="도플러 효과와 K선 이동 재기, 거리와 후퇴 속도 그래프, 허블 상수 계산과 관측자 모형, 시간 되감기와 우주의 나이"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">—</span><span class="value txt" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">—</span><span class="value txt" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">—</span><span class="value txt" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+
+        <div class="control" data-modes="v1">
+          <div class="control-head"><span>🔭 살펴볼 은하</span></div>
+          <div class="opt-grid c3" id="gSeg"></div>
+        </div>
+        <div class="control" data-modes="v1">
+          <div class="control-head"><span>📍 측정 눈금 λ</span><output id="oLam">400.0 nm</output></div>
+          <input type="range" id="sLam" min="385" max="420" step="0.1" value="400" aria-label="측정 눈금 파장">
+          <p class="ctrl-note">그래프를 직접 끌어도 돼요. 흡수선의 가운데에 맞춰요.</p>
+        </div>
+        <div class="control" data-modes="v1">
+          <div class="control-head"><span>🧮 z = (λ관측 − λ₀) ÷ λ₀ · v = cz</span></div>
+          <div class="row-sel"><b>z</b><input class="num-in" id="inZ" type="text" inputmode="decimal" placeholder="적색 편이 z" aria-label="적색 편이 z" autocomplete="off"></div>
+          <div class="row-sel"><b>v</b><input class="num-in" id="inV" type="text" inputmode="decimal" placeholder="속도 (km/s)" aria-label="후퇴 속도 (km/s)" autocomplete="off"></div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bRec1" type="button">📝 기록</button></div>
+        </div>
+
+        <div class="control" data-modes="v2">
+          <div class="control-head"><span>🌌 점을 찍을 은하</span></div>
+          <div class="opt-grid c4" id="pSeg"></div>
+          <p class="ctrl-note">은하를 고른 뒤, 그래프에서 그 은하의 (거리, 속도) 자리를 눌러요.</p>
+        </div>
+        <div class="control" data-modes="v2" id="hBox" hidden>
+          <div class="control-head"><span>📐 직선의 기울기 H</span><output id="oH">40 km/s/Mpc</output></div>
+          <input type="range" id="sH" min="30" max="120" step="1" value="40" aria-label="직선의 기울기">
+          <div class="ticks"><span>30</span><span>70</span><span>120</span></div>
+        </div>
+
+        <div class="control" data-modes="v3">
+          <div class="control-head"><span>📝 문제 고르기</span></div>
+          <div class="opt-grid c4" id="probSeg"></div>
+        </div>
+        <div class="control" data-modes="v3">
+          <div class="control-head"><span id="pUnit">답</span></div>
+          <input class="num-in" id="inP" type="text" inputmode="decimal" placeholder="계산한 값" aria-label="계산한 답" autocomplete="off">
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bRec3" type="button">📝 기록</button><button class="btn btn-sm" id="bSolve3" type="button">💡 풀이 보기</button></div>
+          <div class="calc-line" id="solveBox" hidden></div>
+        </div>
+        <div class="control" data-modes="v3">
+          <div class="btn-row"><button class="btn btn-sm" id="bObs" type="button">🔄 다음 관측자</button></div>
+        </div>
+
+        <div class="control" data-modes="v4">
+          <div class="control-head"><span>🎚 허블 상수 H₀ (km/s/Mpc)</span></div>
+          <div class="opt-grid c3" id="hSeg">
+            <button class="opt" type="button" data-k="50">50</button>
+            <button class="opt" type="button" data-k="70">70</button>
+            <button class="opt" type="button" data-k="100">100</button>
+          </div>
+        </div>
+        <div class="control" data-modes="v4">
+          <div class="control-head"><span>⏪ 시간 되감기</span><output id="oRew">0%</output></div>
+          <input type="range" id="sRew" min="0" max="1000" step="1" value="0" aria-label="시간 되감기">
+          <div class="ticks"><span>현재</span><span>과거로</span><span>한 점</span></div>
+        </div>
+        <div class="control" data-modes="v4" id="ageBox" hidden>
+          <div class="control-head"><span>🧮 H₀ = 70 일 때 t = 1/H₀ (억 년)</span></div>
+          <input class="num-in" id="inAge" type="text" inputmode="decimal" placeholder="우주의 나이 (억 년)" aria-label="우주의 나이 (억 년)" autocomplete="off">
+        </div>
+        <div class="control" data-modes="v4" id="pickBox" hidden>
+          <div class="control-head"><span>⚠️ 구상 성단과 모순되는 H₀</span></div>
+          <div class="opt-grid c3" id="pickSeg"></div>
+        </div>
+
+        <div class="control" data-modes="v1 v2 v3 v4"><p class="src-note">은하 자료는 교육용 <b>예시 값</b>이에요. z ≪ 1 에서 v = cz 로 계산해요. c = 3.0×10⁵ km/s.</p></div>
+
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>
