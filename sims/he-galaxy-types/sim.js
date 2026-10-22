@@ -166,7 +166,7 @@
      o.binAt(p) -> binId | null                           (포인터 위치가 어느 칸인지)
      o.cap(binId) -> 칸 크기 제한(없으면 무한)               */
   function makeDnD(o) {
-    const dn = { items: o.items, sel: null, drag: null, moved: false, order: 0 };
+    const dn = { items: o.items, sel: null, drag: null, moved: false, order: 0, binAt: o.binAt };
     o.items.forEach((it, i) => {
       const h = o.homeOf(it, i);
       it.x = h.x; it.y = h.y; it.w = h.w; it.h = h.h; it.bin = null; it.lift = 0; it.shake = 0; it.pop = 0; it.seq = 0;
@@ -1123,7 +1123,7 @@
 
   /* ---------- 디버그 (Playwright) ---------- */
   window.__sim = {
-    S, VW, VH, G1, G2, G4, ELL, TY3, FG, dn1, dn2, GRP_ORDER, SLOTS, card4, binRect, plot4, bar3,
+    S, VW, VH, U2, mc, G1, G2, G4, ELL, TY3, FG, dn1, dn2, GRP_ORDER, SLOTS, card4, binRect, plot4, bar3,
     get game() { return game; },
     enterLevel, setView, setGal, recordN, startTraining, resetAI, cycleLabel, setSel3, updateCtl, parseNum,
     solveGroups() { G1.forEach((g) => { dn1.assign(g, g.g); }); dn1.snap(); },
