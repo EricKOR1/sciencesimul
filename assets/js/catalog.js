@@ -5216,8 +5216,7 @@ window.SCI_CATALOG = {
                 "3역 구분",
                 "6계 구분",
                 "분류하기"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hb-plant-phyla",

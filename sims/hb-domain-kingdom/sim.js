@@ -231,7 +231,8 @@
   const RM_ = L({ x: 122, y: 100, c: 20 }, { x: 34, y: 84, c: 17 });
   const RLIST = L({ x: 478, y: 46, w: 308, h: 394 }, { x: 6, y: 420, w: 468, h: 274 });
   const RCMP = L({ x: 14, y: 450, w: 772, h: 98 }, { x: 6, y: 356, w: 468, h: 56 });
-  function resetRrna() { S.rn = { grp: Array(16).fill(0), order: Array.from({ length: 16 }, (_, i) => i), pos: Array.from({ length: 16 }, (_, i) => i), sel: null, solved: false, glow: 0, msg: '' }; }
+  const RN_SHUF = [4, 0, 9, 2, 12, 5, 15, 1, 7, 10, 3, 13, 6, 11, 8, 14];
+  function resetRrna() { const pos = Array(16).fill(0); RN_SHUF.forEach((id, k) => { pos[id] = k; }); S.rn = { grp: Array(16).fill(0), order: RN_SHUF.slice(), pos, tgt: null, sel: null, solved: false, glow: 0, msg: '' }; }
   const rnGrouped = () => S.rn.grp.filter((g) => g > 0).length;
   function rnEval() {
     const q = S.rn; if (q.grp.some((g) => g === 0)) return { ok: false, msg: '아직 집단을 정하지 않은 생물이 ' + q.grp.filter((g) => g === 0).length + '종 있어요.' };
@@ -383,7 +384,7 @@
   }
   const SIX_CARDS = ['ecoli', 'halo', 'parame', 'kelp', 'moss', 'yeast', 'oyster', 'jelly'];
   const FG = (function () {
-    const g = PHONE ? { lw: 88, lh: 54, ly0: 38, ldy: 64, nw: 88, nh: 58, cols: [4, 98, 192, 286], lx: 388, fs: 11, lh2: 13 } : { lw: 150, lh: 54, ly0: 40, ldy: 61, nw: 120, nh: 58, cols: [8, 150, 292, 448], lx: 636, fs: 12, lh2: 14 };
+    const g = PHONE ? { lw: 92, lh: 56, ly0: 38, ldy: 64, nw: 80, nh: 64, cols: [2, 88, 174, 262], lx: 382, fs: 11, lh2: 13 } : { lw: 150, lh: 54, ly0: 40, ldy: 61, nw: 120, nh: 58, cols: [8, 150, 292, 448], lx: 636, fs: 12, lh2: 14 };
     return g;
   })();
   function flowGeom() {
@@ -759,8 +760,8 @@
           check: () => {
             const q = S.ap; let first = null;
             UNK.forEach((u, i) => { q.flag[i][0] = q.dom[i] == null ? 0 : q.dom[i] === u.d ? 1 : 2; q.flag[i][1] = q.kin[i] == null ? 0 : q.kin[i] === u.k ? 1 : 2; });
-            for (let i = 0; i < 6; i++) { if (q.dom[i] == null || q.kin[i] == null) return UNK[i].n.replace('미지의 생물 ', '') + '번 생물의 ' + (q.dom[i] == null ? '역' : '계') + '을(를) 아직 고르지 않았어요.'; if (first == null && (q.dom[i] !== UNK[i].d || q.kin[i] !== UNK[i].k)) first = i; }
-            if (first != null) { const u = UNK[first]; if (q.kin[first] != null && KDOM[q.kin[first]] !== q.dom[first]) return (first + 1) + '번 생물: 고른 계는 고른 역에 속하지 않아요. 진핵생물역에는 원생생물계 · 식물계 · 균계 · 동물계가 있어요.'; return (first + 1) + '번 생물의 ' + (q.dom[first] !== u.d ? '역' : '계') + '을(를) 단서로 다시 확인해 봐요.'; }
+            for (let i = 0; i < 6; i++) { if (q.dom[i] == null || q.kin[i] == null) return UNK[i].n.replace('미지의 생물 ', '') + '번 생물의 ' + (q.dom[i] == null ? '역을' : '계를') + ' 아직 고르지 않았어요.'; if (first == null && (q.dom[i] !== UNK[i].d || q.kin[i] !== UNK[i].k)) first = i; }
+            if (first != null) { const u = UNK[first]; if (q.kin[first] != null && KDOM[q.kin[first]] !== q.dom[first]) return (first + 1) + '번 생물: 고른 계는 고른 역에 속하지 않아요. 진핵생물역에는 원생생물계 · 식물계 · 균계 · 동물계가 있어요.'; return (first + 1) + '번 생물의 ' + (q.dom[first] !== u.d ? '역을' : '계를') + ' 단서로 다시 확인해 봐요.'; }
             return true;
           },
           explain: '1번 <b>세균역 · 진정세균계</b>(핵막 없음, 펩티도글리칸, 광합성), 2번 <b>고세균역 · 고세균계</b>(펩티도글리칸 없음, 극한 환경), 3번 <b>진핵생물역 · 원생생물계</b>(핵막 있는 단세포), 4번 <b>균계</b>(키틴, 몸 밖에서 분해해 흡수), 5번 <b>식물계</b>(셀룰로스, 광합성, 조직 분화), 6번 <b>동물계</b>(세포벽 없는 다세포, 섭취)예요.',
