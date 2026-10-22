@@ -382,8 +382,8 @@
       const cA = clamp(S.cur, 0, revA), d = atAge(cA), mx = X(cA);
       ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 2.2; ctx.beginPath(); ctx.moveTo(mx, B.y); ctx.lineTo(mx, B.y + B.h); ctx.stroke();
       D.sphere(mx, ax.Y(d.C), 5.5, '#2563eb', { gloss: false, outline: '#fff', outlineWidth: 1.5 }); D.sphere(mx, ax.Y(tMap(d.T)), 5.5, '#dc2626', { gloss: false, outline: '#fff', outlineWidth: 1.5 });
-      const tx = clamp(mx, B.x + 90 * U, B.x + B.w - 90 * U);
-      D.label(tx, B.y + B.h - 16 * FS, fmtAge(cA) + ' · CO₂ ' + d.C + ' ppm · ' + sgn(d.T, 1) + ' °C', { bg: '#1e293b', size: 12.5, pad: 7 });
+      const txt = fmtAge(cA) + ' · CO₂ ' + d.C + ' ppm · ' + sgn(d.T, 1) + ' °C'; ctx.save(); ctx.font = D.font(12.5, 800); const lw2 = ctx.measureText(txt).width + 14; ctx.restore();
+      D.label(clamp(mx, B.x + lw2 / 2, B.x + B.w - lw2 / 2), B.y + B.h - 16 * FS, txt, { bg: '#1e293b', size: 12.5, pad: 7 });
     }
   }
   function drawZoom(t, R) {
@@ -428,7 +428,7 @@
     D.sphere(gx, gy, gr, '#60a5fa', { gloss: true });
     const ang = (S.epsS * Math.PI) / 180; ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(gx - Math.sin(ang) * (gr + 14), gy + Math.cos(ang) * (gr + 14)); ctx.lineTo(gx + Math.sin(ang) * (gr + 14), gy - Math.cos(ang) * (gr + 14)); ctx.stroke();
     ctx.setLineDash([4, 4]); ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(gx, gy + gr + 14); ctx.lineTo(gx, gy - gr - 14); ctx.stroke(); ctx.setLineDash([]);
-    D.text(gx, gy + gr + 30 * FS, '기울기 ' + fix(S.epsS, 1) + '°', { size: 12, weight: 800, color: '#1e293b' });
+    D.text(Ro.x + 8, gy + gr + 32 * FS, '기울기 ' + fix(S.epsS, 1) + '°', { size: 12, weight: 800, color: '#1e293b', align: 'left' });
     // 일사량 곡선
     card(Rq, '');
     D.text(Rq.x + 14, Rq.y + 8 + 15 * FS, '북위 65° 6월 하지 일사량 (W/m²)', { size: 13.5, weight: 800, color: '#334155', align: 'left' });
@@ -482,8 +482,8 @@
   /* 얼음 반사율 */
   const albOf = (f) => K.ALB_ICE * f + K.ALB_REST * (1 - f);
   function drawIce(t) {
-    const Rg = PHONE ? { x: MR.x, y: MR.y, w: MR.w, h: 210 } : { x: MR.x, y: MR.y, w: MR.w * 0.5, h: MR.h };
-    const Rb = PHONE ? { x: MR.x, y: MR.y + 218, w: MR.w, h: 182 } : { x: MR.x + MR.w * 0.5 + 8, y: MR.y, w: MR.w * 0.5 - 8, h: MR.h };
+    const Rg = PHONE ? { x: MR.x, y: MR.y, w: MR.w, h: 190 } : { x: MR.x, y: MR.y, w: MR.w * 0.5, h: MR.h };
+    const Rb = PHONE ? { x: MR.x, y: MR.y + 198, w: MR.w, h: 236 } : { x: MR.x + MR.w * 0.5 + 8, y: MR.y, w: MR.w * 0.5 - 8, h: MR.h };
     const f = S.iceS / 100, alb = albOf(f);
     card(Rg, '');
     const cx = Rg.x + Rg.w * 0.6, cy = Rg.y + Rg.h * 0.54, r = Math.min(Rg.w * 0.3, Rg.h * 0.34);
@@ -511,7 +511,7 @@
     D.text(bx + bw, by + 34 * FS, '← 흡수 (0 ~ 1)', { size: 12, weight: 700, color: '#64748b', align: 'right' });
   }
   function drawIcePanel(t) {
-    const R = LR; card(R, '양의 되먹임: 처음의 변화를 더 키워요');
+    const R = PHONE ? { x: LR.x, y: LR.y + 28, w: LR.w, h: LR.h - 28 } : LR; card(R, '양의 되먹임: 처음의 변화를 더 키워요');
     const n = ['얼음이 줄어요', '반사율이 낮아져요', '흡수하는 에너지가 늘어요', '기온이 올라요'], w = (R.w - 40 - (PHONE ? 0 : 0)) / (PHONE ? 1 : 4);
     for (let i = 0; i < 4; i++) {
       const x = PHONE ? R.x + 20 : R.x + 20 + i * (w + 0), y = PHONE ? R.y + 50 * FS + i * 62 * FS : R.y + 62 * FS, bw = PHONE ? w : w - 22, bh = PHONE ? 46 * FS : 56 * FS;
@@ -544,15 +544,15 @@
   }
   function drawForcCalc(t, R) {
     card(R, '이산화 탄소 농도 → 복사 강제력');
-    const c = S.co2S, F = forceCo2(c), dT = teq(c);
-    D.text(R.x + R.w / 2, R.y + 54 * FS, 'ΔF = 5.35 × ln(C / ' + K.C0 + ')', { size: 17, weight: 800, color: '#334155' });
-    D.text(R.x + R.w / 2, R.y + 84 * FS, 'ln(' + Math.round(c) + ' / ' + K.C0 + ') = ' + fix(Math.log(c / K.C0), 3), { size: 14, weight: 800, color: '#64748b' });
-    D.text(R.x + R.w / 2, R.y + 118 * FS, 'ΔF = ' + fix(F, 2) + ' W/m²', { size: 22, weight: 800, color: '#c2410c' });
-    D.text(R.x + R.w / 2, R.y + 148 * FS, '평형 기온 상승 ≈ ' + K.SENS + ' × ' + fix(F, 2) + ' = ' + fix(dT, 1) + ' °C', { size: 15, weight: 800, color: '#b91c1c' });
-    const bx = R.x + 16, bw = R.w - 32, by = R.y + R.h - 48 * FS;
-    ctx.fillStyle = '#eef2f7'; rr(bx, by, bw, 20, 7).fill(); const ww = clamp(F / 4, 0, 1) * bw; if (ww > 0.5) { ctx.fillStyle = '#ea580c'; rr(bx, by, ww, 20, 7).fill(); }
-    D.text(bx, by + 36 * FS, '0', { size: 12, weight: 700, color: '#64748b', align: 'left' }); D.text(bx + bw, by + 36 * FS, '4 W/m²', { size: 12, weight: 700, color: '#64748b', align: 'right' });
-    D.text(bx + bw / 2, by + 36 * FS, '막대 값과 조금 달라요(근사식)', { size: 11.5, weight: 700, color: '#94a3b8' });
+    const c = S.co2S, F = forceCo2(c), dT = teq(c), Y = (f) => R.y + R.h * f;
+    D.text(R.x + R.w / 2, Y(0.24), 'ΔF = 5.35 × ln(C / ' + K.C0 + ')', { size: 17, weight: 800, color: '#334155' });
+    D.text(R.x + R.w / 2, Y(0.38), 'ln(' + Math.round(c) + ' / ' + K.C0 + ') = ' + fix(Math.log(c / K.C0), 3), { size: 14, weight: 800, color: '#64748b' });
+    D.text(R.x + R.w / 2, Y(0.55), 'ΔF = ' + fix(F, 2) + ' W/m²', { size: 22, weight: 800, color: '#c2410c' });
+    D.text(R.x + R.w / 2, Y(0.70), '평형 기온 상승 ≈ ' + K.SENS + ' × ' + fix(F, 2) + ' = ' + fix(dT, 1) + ' °C', { size: 14.5, weight: 800, color: '#b91c1c' });
+    const bx = R.x + 16, bw = R.w - 32, by = Y(0.80);
+    ctx.fillStyle = '#eef2f7'; rr(bx, by, bw, 18, 7).fill(); const ww = clamp(F / 4, 0, 1) * bw; if (ww > 0.5) { ctx.fillStyle = '#ea580c'; rr(bx, by, ww, 18, 7).fill(); }
+    D.text(bx, by + 18 + 15 * FS, '0', { size: 12, weight: 700, color: '#64748b', align: 'left' }); D.text(bx + bw, by + 18 + 15 * FS, '4 W/m²', { size: 12, weight: 700, color: '#64748b', align: 'right' });
+    D.text(bx + bw / 2, by + 18 + 15 * FS, '막대 값과 조금 달라요(근사식)', { size: 11.5, weight: 700, color: '#94a3b8' });
   }
   function drawForcCurves(t, R) {
     card(R, PHONE ? '기온 편차 (예시, °C)' : '지구 평균 기온 편차 (예시 자료, °C)');
@@ -862,7 +862,7 @@
     else if (S.mode === 'ice') { drawIce(t); drawIcePanel(t); }
     else if (S.mode === 'forc') {
       const gap = 8;
-      if (PHONE) { drawForcBars(t, { x: MR.x, y: MR.y, w: MR.w, h: 250 }); drawForcCalc(t, { x: MR.x, y: MR.y + 258, w: MR.w, h: 150 + 0 }); drawForcCurves(t, { x: LR.x, y: LR.y + 6, w: LR.w, h: 270 }); }
+      if (PHONE) { drawForcBars(t, { x: MR.x, y: MR.y, w: MR.w, h: 300 }); drawForcCalc(t, { x: MR.x, y: MR.y + 308, w: MR.w, h: 200 }); drawForcCurves(t, { x: LR.x, y: MR.y + 516, w: LR.w, h: 290 }); }
       else { drawForcBars(t, { x: MR.x, y: MR.y, w: MR.w * 0.54 - gap / 2, h: MR.h }); drawForcCalc(t, { x: MR.x + MR.w * 0.54 + gap / 2, y: MR.y, w: MR.w * 0.46 - gap / 2, h: MR.h }); drawForcCurves(t, LR); }
     }
     else { drawFut(t); drawFutPanel(t); }

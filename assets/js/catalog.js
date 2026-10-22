@@ -5442,8 +5442,7 @@ window.SCI_CATALOG = {
                 "집중호우",
                 "폭설·강풍",
                 "황사·대처"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "he-enso",
@@ -5464,8 +5463,7 @@ window.SCI_CATALOG = {
                 "정상 상태",
                 "엘니뇨·라니냐",
                 "남방진동"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "he-climate-change",
@@ -5486,8 +5484,7 @@ window.SCI_CATALOG = {
                 "자연적 요인",
                 "인위적 요인",
                 "해결 방법"
-              ],
-              "soon": true
+              ]
             }
           ]
         },

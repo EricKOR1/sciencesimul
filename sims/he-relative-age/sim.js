@@ -419,7 +419,7 @@
   const BOX = PHONE ? { cx: 300, cy: 262, s: 300 } : { cx: 218, cy: 284, s: 268 };
   const LH = BOX.s * 0.19;
   const MAXL = 5;
-  const INFO = PHONE ? { x: 12, y: 508, w: 576, h: 320 } : { x: 504, y: 12, w: 284, h: 536 };
+  const INFO = PHONE ? { x: 12, y: 500, w: 576, h: 328 } : { x: 504, y: 12, w: 284, h: 536 };
   const SED = {
     gravel: { name: '자갈', kind: 'gravel', col: '#8f8a82', vy: 330, n: 64, dur: 0.9, r: [2.6, 4.2] },
     sand: { name: '모래', kind: 'sand', col: '#dcb55a', vy: 230, n: 90, dur: 1.2, r: [1.3, 2] },
@@ -520,7 +520,7 @@
     const B = S.box, g = boxGeom(), s = g.s, def = rad(B.def);
     const th0 = B.layers.length ? B.th0 : g.th;
     // 바닥 받침
-    D.shadow(() => { ctx.fillStyle = '#cbd5e1'; rr(BOX.cx - s * 0.5, BOX.cy + s * 0.8, s * 1.0, 14, 7).fill(); }, { blur: 6, y: 2 });
+    D.shadow(() => { ctx.fillStyle = '#cbd5e1'; rr(BOX.cx - s * 0.5, BOX.cy + s * 0.74, s * 1.0, 14, 7).fill(); }, { blur: 6, y: 2 });
     // 수평선 (세계 기준)
     const hy = g.yLow - boxH();
     ctx.save(); ctx.setLineDash([8, 6]); ctx.strokeStyle = 'rgba(2,132,199,.7)'; ctx.lineWidth = 2;
@@ -588,7 +588,7 @@
     const surf = B.def >= 0.5 ? Math.round(B.def) : 0;
     const dep = B.depTilt != null ? Math.round(B.depTilt) : Math.round(B.tilt);
     const rows = [['상자 기울기', (B.layers.length ? dep : Math.round(B.tilt)) + '°'], ['지층면 (수평면 기준)', B.layers.length ? (surf ? surf + '° 기울어짐' : '0° 수평') : '—'], ['상자 바닥 기준', B.layers.length ? (surf ? '—' : dep + '° 어긋남') : '—']];
-    rows.forEach((r) => { tx(INFO.x + 14, yy, r[0], 14, gcl.mute, 'left', 700); tx(INFO.x + INFO.w - 14, yy, r[1], 15, gcl.ink, 'right', 800); yy += 26; });
+    rows.forEach((r) => { tx(INFO.x + 14, yy, r[0], 14, gcl.mute, 'left', 700); tx(INFO.x + INFO.w - 14, yy, r[1], 15, gcl.ink, 'right', 800); yy += PHONE ? 22 : 26; });
     let msg;
     if (!B.layers.length) msg = '상자를 기울인 뒤 자갈·모래·점토를 흘려 넣어 보세요. 가라앉은 알갱이는 어떤 모양으로 쌓일까요?';
     else if (B.def >= 0.5) msg = '쌓일 때는 수평이던 지층면이 지금은 ' + surf + '° 기울어 있어요. 기울어진 지층은 쌓인 뒤에 땅이 변형된 거예요.';
@@ -597,16 +597,16 @@
     else msg = '퇴적물은 중력 때문에 수평하게 쌓이고, 아래층이 위층보다 먼저 쌓였어요(지층누중의 법칙).';
     note(INFO.x + 10, yy + 4, INFO.w - 20, msg, 13.5, { bg: '#f0f9ff', border: '#bae6fd' });
     // 쌓인 순서 목록 (위가 나중)
-    const ly = INFO.y + (PHONE ? 200 : 250);
+    const ly = INFO.y + (PHONE ? 168 : 250), rh = PHONE ? 25 : 30;
     tx(INFO.x + 14, ly, '쌓인 순서 (위가 가장 나중)', 13.5, gcl.mute, 'left', 800);
     for (let i = 0; i < MAXL; i++) {
-      const idx = B.layers.length - 1 - i, yb = ly + 12 + i * 30;
+      const idx = B.layers.length - 1 - i, yb = ly + 12 + i * rh;
       ctx.save(); ctx.globalAlpha = idx >= 0 ? 1 : 0.4;
-      rr(INFO.x + 14, yb, INFO.w - 28, 26, 7); ctx.fillStyle = '#f8fafc'; ctx.fill(); ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 1.4; ctx.stroke();
+      rr(INFO.x + 14, yb, INFO.w - 28, rh - 4, 7); ctx.fillStyle = '#f8fafc'; ctx.fill(); ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 1.4; ctx.stroke();
       if (idx >= 0) {
-        const l = B.layers[idx]; rr(INFO.x + 18, yb + 4, 36, 18, 5); ctx.save(); ctx.clip(); ctx.fillStyle = lithFill(SED[l.k].kind); ctx.fillRect(INFO.x + 18, yb + 4, 36, 18); ctx.restore();
-        tx(INFO.x + 62, yb + 18, ['①', '②', '③', '④', '⑤'][idx] + ' ' + SED[l.k].name + (idx === B.layers.length - 1 && B.layers.length > 1 ? '  (가장 젊음)' : idx === 0 && B.layers.length > 1 ? '  (가장 오래됨)' : ''), 13.5, gcl.ink, 'left', 800);
-      } else tx(INFO.x + 62, yb + 18, '비어 있음', 13, gcl.mute, 'left', 700);
+        const l = B.layers[idx]; rr(INFO.x + 18, yb + 3, 36, rh - 10, 5); ctx.save(); ctx.clip(); ctx.fillStyle = lithFill(SED[l.k].kind); ctx.fillRect(INFO.x + 18, yb + 3, 36, rh - 10); ctx.restore();
+        tx(INFO.x + 62, yb + rh - 8, ['①', '②', '③', '④', '⑤'][idx] + ' ' + SED[l.k].name + (idx === B.layers.length - 1 && B.layers.length > 1 ? '  (가장 젊음)' : idx === 0 && B.layers.length > 1 ? '  (가장 오래됨)' : ''), 13.5, gcl.ink, 'left', 800);
+      } else tx(INFO.x + 62, yb + rh - 8, '비어 있음', 13, gcl.mute, 'left', 700);
       ctx.restore();
     }
   }
@@ -781,7 +781,7 @@
     const I = S.intr;
     if (I.tw || I.done) return;
     I.ran = true; I.heat = 1; Sound.click();
-    I.tw = SciSim.tween(I, { p: 1 }, { duration: 3.6, ease: 'inOutQuad', onDone() { I.tw = null; I.done = true; Sound.success(); parts.burst(dikeX(IB.y + 60), IB.y + 60, { count: 14, speed: 110, colors: ['#ff9a3c', '#fde68a'], gravity: 120, life: 0.7 }); } });
+    I.tw = SciSim.tween(I, { p: 1 }, { duration: 3.6, ease: 'inOutQuad', onDone() { I.tw = null; I.done = true; Sound.success(); updateCtl(); parts.burst(dikeX(IB.y + 60), IB.y + 60, { count: 14, speed: 110, colors: ['#ff9a3c', '#fde68a'], gravity: 120, life: 0.7 }); } });
     updateCtl();
   }
   function intrReset() {
@@ -836,7 +836,7 @@
       tx(r.x + 12, r.y + 24, '사례 ' + (i + 1) + ' · ' + CASE_DEF[i].title, 14.5, gcl.ink, 'left', 800);
       drawCaseArt(i, r.x + 10 + sh, r.y + 36, r.w - 20, r.h - 48, t);
       // 범례
-      if (i === 0) { D.label(r.x + r.w * 0.5, r.y + r.h - 62 - (PHONE ? -8 : 0), '화성암', { bg: '#7f1d1d', color: '#fff', size: 12.5, pad: 6 }); D.label(r.x + 40, r.y + r.h - 22, '사암(모암)', { bg: '#fff', color: '#334155', size: 12.5, pad: 6, border: '#94a3b8' }); }
+      if (i === 0) { D.label(r.x + r.w * 0.5, r.y + r.h - 62 - (PHONE ? -8 : 0), '화성암', { bg: '#7f1d1d', color: '#fff', size: 12.5, pad: 6 }); D.label(r.x + 66, r.y + r.h - 22, '사암(모암)', { bg: '#fff', color: '#334155', size: 12.5, pad: 6, border: '#94a3b8' }); }
       if (i === 1) { D.label(r.x + r.w * 0.5, r.y + r.h - 22, '암맥', { bg: '#5b4a6b', color: '#fff', size: 12.5, pad: 6 }); }
       if (i === 2) { D.label(r.x + r.w - 62, r.y + r.h - 22, '분홍 무늬 = 화성암 자갈', { bg: '#fff', color: '#7f1d1d', size: 12, pad: 6, border: '#e3a9a0', align: 'right' }); }
       if (ans != null) D.label(r.x + r.w - 12, r.y + 22, ok ? '✓ 맞았어요' : '다시 생각', { bg: ok ? '#15803d' : '#b91c1c', color: '#fff', size: 12.5, pad: 7, align: 'right' });
@@ -851,7 +851,7 @@
     note(P.x + 12, P.y + 36, P.w - 24, msg, 14.5, { bg: ok ? '#f0fdf4' : '#f0f9ff', border: ok ? '#86efac' : '#bae6fd' });
     const laws = [['포획된 암석(조각)', '포획한 화성암보다 먼저'], ['관입한 암석', '관입당한 암석보다 나중'], ['역암 속 화성암 자갈', '역암보다 먼저']];
     laws.forEach((rw, k) => {
-      const got = C.ans[k] === CASE_DEF[k].ok, yy = P.y + (PHONE ? 98 : 118) + k * (PHONE ? 0 : 28);
+      const got = C.ans[k] === CASE_DEF[k].ok, yy = P.y + 60 + k * 32;
       if (PHONE) return;
       D.label(P.x + 14, yy + 40, '사례 ' + (k + 1), { bg: got ? '#15803d' : '#cbd5e1', color: got ? '#fff' : '#64748b', size: 12.5, pad: 8, align: 'left' });
       tx(P.x + 96, yy + 45, got ? rw[0] + ' → ' + rw[1] : '(맞히면 법칙이 나타나요)', 14, got ? '#5b21b6' : '#94a3b8', 'left', 800);
@@ -876,7 +876,7 @@
   function drawUnc(t, dt) {
     const U = S.unc;
     if (U.play) {
-      if (Math.abs(U.u - U.uT) < 0.01) { U.wait = (U.wait || 0) + dt; if (U.wait > 0.7) { U.wait = 0; if (U.uT >= 5) { U.play = false; updateCtl(); } else U.uT = Math.floor(U.uT + 1e-6) + 1; } } else U.wait = 0;
+      if (Math.abs(U.u - U.uT) < 0.01) { U.wait = (U.wait || 0) + dt; if (U.wait > 0.7) { U.wait = 0; if (U.uT >= 5) { U.play = false; updateCtl(); } else { U.uT = Math.floor(U.uT + 1e-6) + 1; updateCtl(); } } } else U.wait = 0;
     }
     const sp = 0.62 * dt; U.u = Math.abs(U.uT - U.u) <= sp ? U.uT : U.u + Math.sign(U.uT - U.u) * sp;
     if (RM) U.u = U.uT;
@@ -1223,11 +1223,8 @@
     ctx.save(); ctx.beginPath(); ctx.moveTo(0, AU(0)); for (let x = 0; x <= W; x += 4) ctx.lineTo(x, AU(x)); ctx.lineTo(W, Bm); ctx.lineTo(0, Bm); ctx.closePath(); ctx.clip();
     const bands = [['lime', 0, 1], ['sand', 1, 2], ['shale', 2, 3]];
     bands.forEach(([kd, a, b]) => {
-      const y0 = (x) => (a === 0 ? -400 : aLine(a - 1, x)), y1 = (x) => (b === 3 ? 900 : aLine(b - 1, x));
-      const top = (x) => (a === 0 ? -400 : aLine(a - 1, x)); const bot = (x) => (b === 3 ? 900 : aLine(b - 1, x));
-      const pt = (k, x) => aLine(k, x);
-      const yt0 = a === 0 ? -400 : pt(a - 1, 0), yt1 = a === 0 ? -400 : pt(a - 1, W), yb0 = b === 3 ? 900 : pt(b - 1, 0), yb1 = b === 3 ? 900 : pt(b - 1, W);
-      // aLine(k) : k=0 석회암 윗면, 1 석회암 밑면(사암 윗면), 2 사암 밑면(셰일 윗면)
+      // aLine(0) 석회암 윗면, aLine(1) 석회암 밑면(= 사암 윗면), aLine(2) 사암 밑면(= 셰일 윗면)
+      const yt0 = aLine(a, 0), yt1 = aLine(a, W), yb0 = b === 3 ? 900 : aLine(b, 0), yb1 = b === 3 ? 900 : aLine(b, W);
       ctx.save(); ctx.beginPath(); ctx.moveTo(0, yt0); ctx.lineTo(W, yt1); ctx.lineTo(W, yb1); ctx.lineTo(0, yb0); ctx.closePath(); ctx.clip();
       ctx.rotate(rad(15)); ctx.fillStyle = LITH_BASE[kd]; ctx.fillRect(-900, -900, 2400, 2400); ctx.fillStyle = lithFill(kd); ctx.fillRect(-900, -900, 2400, 2400);
       ctx.restore();
