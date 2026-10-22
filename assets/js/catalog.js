@@ -5174,8 +5174,7 @@ window.SCI_CATALOG = {
                 "비교 해부",
                 "분자 증거",
                 "다윈의 생각"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hb-evolution-cases",
@@ -5196,8 +5195,7 @@ window.SCI_CATALOG = {
                 "후추나방",
                 "내성균",
                 "핀치 부리"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hb-domain-kingdom",
@@ -5240,8 +5238,7 @@ window.SCI_CATALOG = {
                 "형질 검색표",
                 "문의 특징",
                 "식물도감"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hb-animal-phyla",
@@ -5322,8 +5319,7 @@ window.SCI_CATALOG = {
                 "수온·염분",
                 "용존 산소",
                 "자료 비교"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "he-ts-diagram",

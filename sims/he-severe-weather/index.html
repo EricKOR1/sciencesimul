@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0ea5e9">
+  <title>우리나라의 악기상 | 고등 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⛈️</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-hint { bottom: auto; top: 12px; }
+    .stage-toolbar { min-height: 58px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; }
+    .stage-toolbar .segmented button { min-height: 40px; padding: 5px 12px; font-size: 14.5px; white-space: nowrap; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard [hidden] { display: none !important; }
+    .opt-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin-top: 4px; }
+    .opt-grid.c3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .opt {
+      min-height: 46px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 12px;
+      font-weight: 800; font-size: 15px; cursor: pointer; padding: 4px 6px; font-family: inherit; line-height: 1.2;
+    }
+    .opt.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); color: color-mix(in srgb, var(--subject) 70%, black); }
+    .opt.bad { border-color: #e2464b; background: #fff1f1; color: #7f1d1d; }
+    .ctrl-note { margin: 6px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    .btn-sm { min-height: 44px; }
+    .btn-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+    .btn-row .btn { flex: 1; padding-left: 8px; padding-right: 8px; }
+    .readout .value.txt { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .concept table.mini, table.mini { border-collapse: collapse; margin: 6px 0; font-size: 13px; width: 100%; }
+    .concept table.mini th, .concept table.mini td, table.mini th, table.mini td { border: 1px solid var(--line); padding: 4px 5px; text-align: center; }
+    .concept table.mini th, table.mini th { background: var(--surface-2); font-weight: 800; }
+    table.mini td.now { background: color-mix(in srgb, var(--subject) 12%, white); font-weight: 800; }
+    @media (max-width: 599px) {
+      .readout { min-width: 0; }
+      .readout .value.txt { font-size: 15px; }
+      .stage-toolbar .spacer { display: none; }
+      .stage-toolbar .segmented button { padding: 5px 8px; font-size: 13.5px; }
+    }
+    input[type=range] { height: 40px; }
+    .ticks { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--muted); font-weight: 700; margin-top: -6px; padding: 0 2px; }
+    .cls, .ord { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+    .cls-row { border: 2px solid var(--line); border-radius: 12px; padding: 6px 8px; background: var(--surface); }
+    .cls-row.bad { border-color: #e2464b; background: #fff1f1; }
+    .cls-lab { font-weight: 800; font-size: 14px; line-height: 1.3; margin-bottom: 5px; }
+    .cls-bins { display: flex; gap: 6px; flex-wrap: wrap; }
+    .cls-bins .opt { flex: 1 1 0; min-width: 64px; min-height: 42px; font-size: 13.5px; }
+    .ord-item, .pair-item { display: flex; align-items: center; gap: 8px; text-align: left; padding: 6px 8px; font-size: 13.5px; font-weight: 700; min-height: 46px; }
+    .ord-n { flex: none; min-width: 24px; height: 24px; border-radius: 50%; background: var(--surface-2); border: 2px solid var(--line); display: inline-grid; place-items: center; font-size: 13px; font-weight: 800; }
+    .opt.on .ord-n { background: var(--subject); border-color: var(--subject); color: #fff; }
+    .opt.bad .ord-n { background: #e2464b; border-color: #e2464b; color: #fff; }
+    .ord-t { flex: 1; }
+    .pair { display: flex; gap: 8px; margin-top: 6px; }
+    .pair-col { flex: 1; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+    .stp { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+    .stp-b { min-width: 52px; font-size: 22px; font-weight: 800; padding: 0 12px; }
+    .stp-v { font-family: ui-monospace, Menlo, Consolas, monospace; font-weight: 800; font-size: 24px; min-width: 70px; text-align: center; color: color-mix(in srgb, var(--subject) 85%, black); }
+    .stp-u { font-weight: 800; color: var(--muted); font-size: 15px; }
+  </style>
+</head>
+<body class="sim-page" data-subject="earth">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#he">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">지구과학 · Ⅰ. 대기와 해양의 상호작용</div>
+      <h1>우리나라의 악기상</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">⛈️ 뇌우</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="group" aria-label="장면 고르기" hidden>
+            <button type="button" data-mode="storm">⛈️ 뇌우</button>
+            <button type="button" data-mode="rain">🌧️ 집중호우</button>
+            <button type="button" data-mode="west">❄️ 서해안 눈</button>
+            <button type="button" data-mode="east">🏔️ 동해안 눈</button>
+            <button type="button" data-mode="wind">💨 강풍</button>
+            <button type="button" data-mode="dust">🌫️ 황사</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="뇌우의 발달 단면과 번개·천둥 시간 재기, 장마 전선의 비구름과 시간별 강수 그래프, 서해와 동해안의 눈구름 단면, 등압선 간격과 바람, 황사의 이동 경로 그림"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">—</span><span class="value txt" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">—</span><span class="value txt" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">—</span><span class="value txt" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" data-k="stage">
+          <div class="control-head"><span>☁️ 뇌우의 발달 단계</span><output id="oStage">적운 단계</output></div>
+          <input type="range" id="sStage" min="1" max="3" step="1" value="1" aria-label="뇌우의 발달 단계">
+          <div class="ticks"><span>적운</span><span>성숙</span><span>소멸</span></div>
+          <button class="btn btn-sm btn-block" id="bLight" type="button" style="margin-top:8px">⚡ 번개 치게 하기</button>
+        </div>
+        <div class="control" data-k="order">
+          <div class="control-head"><span>🔢 일어나는 순서대로 눌러요</span></div>
+          <div id="ordBox"></div>
+          <button class="btn btn-sm btn-block" id="bOrdReset" type="button" style="margin-top:8px">↺ 다시 고르기</button>
+        </div>
+        <div class="control" data-k="dist">
+          <div class="control-head"><span>📏 내가 계산한 번개까지 거리</span></div>
+          <div id="stpDist"></div>
+          <p class="ctrl-note">소리의 속력은 약 340 m/s예요. 번개는 <b>⚡ 번개 치게 하기</b>를 누를 때마다 거리가 달라져요.</p>
+        </div>
+        <div class="control" data-k="vap">
+          <div class="control-head"><span>💧 남서 기류의 수증기 공급</span><output id="oVap">×2.0</output></div>
+          <input type="range" id="sVap" min="1" max="3.5" step="0.5" value="2" aria-label="남서 기류가 가져오는 수증기 공급량, 장마 시작 때의 몇 배">
+          <div class="ticks"><span>×1.0 보통</span><span>×2.0</span><span>×3.5</span></div>
+        </div>
+        <div class="control" data-k="vol">
+          <div class="control-head"><span>🧮 1 km²에 내린 비의 부피</span></div>
+          <div id="stpVol"></div>
+          <p class="ctrl-note">1 mm × 1 km² = 1000 m³ 예요. 3시간 누적 강수량을 <b>만 m³</b>로 바꿔 입력해요.</p>
+        </div>
+        <div class="control" data-k="surface">
+          <div class="control-head"><span>🏙️ 땅의 모습 (불투수 면적)</span></div>
+          <div class="opt-grid c3" id="surfBtns">
+            <button class="opt" type="button" data-s="forest">🌳 숲<br>10 %</button>
+            <button class="opt" type="button" data-s="house">🏘️ 주택지<br>40 %</button>
+            <button class="opt" type="button" data-s="city">🏙️ 도시<br>80 %</button>
+          </div>
+          <button class="btn btn-sm btn-block" id="bReplay" type="button" style="margin-top:8px">▶ 3시간 동안 지켜보기</button>
+        </div>
+        <div class="control" data-k="sst">
+          <div class="control-head"><span>🌊 서해 해수면 온도</span><output id="oSst">8 °C</output></div>
+          <input type="range" id="sSst" min="0" max="14" step="1" value="8" aria-label="서해 해수면 온도">
+          <div class="control-head" style="margin-top:6px"><span>🥶 상공 약 1.5 km 기온</span><output id="oTup">−4 °C</output></div>
+          <input type="range" id="sTup" min="-20" max="0" step="1" value="-4" aria-label="상공 약 1.5킬로미터의 기온">
+        </div>
+        <div class="control" data-k="ewind">
+          <div class="control-head"><span>🌬️ 북동풍의 세기</span><output id="oEw">보통</output></div>
+          <input type="range" id="sEw" min="1" max="3" step="1" value="2" aria-label="동해에서 불어오는 북동풍의 세기">
+          <div class="ticks"><span>약함</span><span>보통</span><span>강함</span></div>
+        </div>
+        <div class="control" data-k="windbox">
+          <div class="control-head"><span>🗺️ 지도마다 알맞은 바람을 골라요</span></div>
+          <div id="windBox"></div>
+        </div>
+        <div class="control" data-k="dust">
+          <div class="control-head"><span>🌬️ 상층 편서풍의 속력</span><output id="oDs">50 km/h</output></div>
+          <div class="opt-grid c3" id="dsBtns">
+            <button class="opt" type="button" data-v="40">40<br>km/h</button>
+            <button class="opt" type="button" data-v="50">50<br>km/h</button>
+            <button class="opt" type="button" data-v="80">80<br>km/h</button>
+          </div>
+          <button class="btn btn-sm btn-block" id="bDust" type="button" style="margin-top:8px">▶ 황사 출발</button>
+        </div>
+        <div class="control" data-k="hours">
+          <div class="control-head"><span>⏱️ 내가 예측한 도착 시간</span></div>
+          <div id="stpHr"></div>
+          <p class="ctrl-note">시간 = 거리 ÷ 속력 이에요.</p>
+        </div>
+        <div class="control" data-k="match">
+          <div class="control-head"><span>🛡️ 악기상과 대처 방안 짝짓기</span></div>
+          <p class="ctrl-note" style="margin-top:0">왼쪽 악기상을 누르고, 알맞은 대처 방안을 오른쪽에서 눌러 이어요. 다시 누르면 풀려요.</p>
+          <div id="matchBox"></div>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

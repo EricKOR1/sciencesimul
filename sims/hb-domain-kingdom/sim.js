@@ -128,9 +128,9 @@
   const CRIT = [
     { id: 'nuc', n: '핵막', good: true, vals: [{ k: 1, l: '핵막 있음' }, { k: 0, l: '핵막 없음' }] },
     { id: 'cells', n: '세포 수', good: true, vals: [{ k: 'uni', l: '단세포' }, { k: 'multi', l: '다세포' }] },
-    { id: 'wall', n: '세포벽 성분', good: true, vals: [{ k: 'pept', l: '펩티도글리칸' }, { k: 'arch', l: '펩티도글리칸 없는 고세균형' }, { k: 'cellu', l: '셀룰로스' }, { k: 'chitin', l: '키틴' }, { k: 'none', l: '세포벽 없음' }] },
+    { id: 'wall', n: '세포벽 성분', good: true, vals: [{ k: 'pept', l: '펩티도글리칸' }, { k: 'arch', l: '펩티도글리칸 없는 고세균형', s: '고세균형' }, { k: 'cellu', l: '셀룰로스' }, { k: 'chitin', l: '키틴' }, { k: 'none', l: '세포벽 없음' }] },
     { id: 'nutr', n: '영양 방식', good: true, vals: [{ k: 'photo', l: '광합성 (독립 영양)' }, { k: 'hetero', l: '섭취·흡수 (종속 영양)' }, { k: 'chemo', l: '화학 합성 (독립 영양)' }] },
-    { id: 'hab', n: '사는 곳', good: false, vals: [{ k: 'water', l: '물' }, { k: 'land', l: '땅' }, { k: 'both', l: '물·땅 모두 (애매해요)' }] },
+    { id: 'hab', n: '사는 곳', good: false, vals: [{ k: 'water', l: '물' }, { k: 'land', l: '땅' }, { k: 'both', l: '물·땅 모두 (애매해요)', s: '물·땅 모두' }] },
   ];
   const sname = (o) => o.s || o.n;
   const orgById = (id) => ORG.find((o) => o.id === id);
@@ -210,11 +210,11 @@
     panel(L(14, 6), iy, L(772, 468), ih, 14);
     if (!sel.length) textBlock(L(28, 20), iy + 28, L(744, 440), '카드 16장이 섞여 있어요. 핵막, 세포 수, 세포벽, 영양 방식 중 하나를 골라 두 무리 이상으로 나누고, 한 번 더 다른 기준으로 나누어 봐요.', L(15, 14), '#475569', 22, 700);
     else {
-      const sizes = (s) => s.vals.map((v) => { const n = ORG.filter((o) => o[s.id] === v.k).length; return v.l.replace(/ \(.*\)/, '') + ' ' + n; }).join(' · ');
-      textBlock(L(28, 20), iy + 26, L(744, 440), '기준 ① ' + sel[0].n + ': ' + sizes(sel[0]) + (sel[1] ? '   |   기준 ② ' + sel[1].n + ': ' + sizes(sel[1]) : ''), L(14, 13), '#27422f', L(21, 19), 800);
+      const sizes = (s) => s.vals.map((v) => { const n = ORG.filter((o) => o[s.id] === v.k).length; return (v.s || v.l.replace(/ \(.*\)/, '')) + ' ' + n; }).join(' · ');
+      textBlock(L(28, 20), iy + 24, L(744, 440), '기준 ① ' + sel[0].n + ': ' + sizes(sel[0]), L(14, 13), '#27422f', L(21, 19), 800);
+      if (sel[1]) textBlock(L(28, 20), iy + L(48, 50), L(744, 440), '기준 ② ' + sel[1].n + ': ' + sizes(sel[1]), L(14, 13), '#0369a1', L(21, 19), 800);
       const amb = crAmb();
-      textBlock(L(28, 20), iy + L(62, 66), L(744, 440), amb ? '⚠️ 사는 곳은 ' + amb + '종이 물·땅 모두에 살아 경계가 애매해요. 좋은 분류 기준이 아니에요.' : '✅ 모든 생물에 적용되고 뚜렷하게 나뉘는 기준이에요. 좋은 분류 기준의 조건: ① 모든 생물에 적용 ② 차이가 뚜렷', L(14, 13), amb ? '#c2410c' : '#15803d', L(21, 19), 800);
-      if (sel.length === 2 && !amb) T(L(28, 20), iy + L(100, 108), '기준이 달라지면 묶음도 달라져요. 두 기준을 함께 쓰면 더 잘게 나눌 수 있어요.', L(14, 13), '#64748b', 'left', 700);
+      textBlock(L(28, 20), iy + L(76, 80), L(744, 440), amb ? '⚠️ 사는 곳은 ' + amb + '종이 물·땅 모두에 살아 경계가 애매해요. 좋은 분류 기준이 아니에요.' : '✅ 모든 생물에 적용되고 뚜렷하게 나뉘는 좋은 기준이에요.', L(14, 13), amb ? '#c2410c' : '#15803d', L(21, 19), 800);
     }
     parts.update(dt); parts.draw(ctx);
   }
@@ -228,7 +228,7 @@
   const DM = SEQ.map((a) => SEQ.map((b) => ham(a, b)));
   const DSTAT = (function () { let wMax = 0, bMin = 99, bMax = 0; for (let i = 0; i < 16; i++) for (let j = i + 1; j < 16; j++) { if (DOMOF[i] === DOMOF[j]) wMax = Math.max(wMax, DM[i][j]); else { bMin = Math.min(bMin, DM[i][j]); bMax = Math.max(bMax, DM[i][j]); } } return { wMax, bMin, bMax }; })();
   const GRPC = ['#cbd5e1', '#f97316', '#0ea5e9', '#22c55e'];
-  const RM_ = L({ x: 122, y: 78, c: 20.5 }, { x: 34, y: 78, c: 17 });
+  const RM_ = L({ x: 122, y: 100, c: 20 }, { x: 34, y: 84, c: 17 });
   const RLIST = L({ x: 478, y: 46, w: 308, h: 394 }, { x: 6, y: 420, w: 468, h: 274 });
   const RCMP = L({ x: 14, y: 450, w: 772, h: 98 }, { x: 6, y: 356, w: 468, h: 56 });
   function resetRrna() { S.rn = { grp: Array(16).fill(0), order: Array.from({ length: 16 }, (_, i) => i), pos: Array.from({ length: 16 }, (_, i) => i), sel: null, solved: false, glow: 0, msg: '' }; }
@@ -269,7 +269,7 @@
     // 행렬
     const mx = RM_.x, my = RM_.y, c = RM_.c;
     panel(L(14, 6), L(44, 38), L(450, 468), L(396, 314), 16, '#fffefa');
-    T(L(24, 16), L(66, 58), '표의 숫자 = 두 서열에서 다른 글자 수 (눌러서 비교)', L(13, 12), '#64748b', 'left', 800);
+    T(L(24, 16), L(68, 60), '표의 숫자 = 두 서열에서 다른 글자 수 (눌러서 비교)', L(13, 12), '#64748b', 'left', 800);
     for (let k = 0; k < 16; k++) { T(mx + q.pos[k] * c + c / 2, my - 6, String(k + 1), L(11.5, 10.5), '#64748b', 'center', 800); }
     const sel = q.sel;
     for (let i = 0; i < 16; i++) {
@@ -383,7 +383,7 @@
   }
   const SIX_CARDS = ['ecoli', 'halo', 'parame', 'kelp', 'moss', 'yeast', 'oyster', 'jelly'];
   const FG = (function () {
-    const g = PHONE ? { lw: 88, lh: 54, ly0: 38, ldy: 64, nw: 88, nh: 58, cols: [4, 98, 192, 286], lx: 388, fs: 11, lh2: 13 } : { lw: 150, lh: 54, ly0: 40, ldy: 61, nw: 134, nh: 54, cols: [10, 156, 318, 484], lx: 636, fs: 12.5, lh2: 15 };
+    const g = PHONE ? { lw: 88, lh: 54, ly0: 38, ldy: 64, nw: 88, nh: 58, cols: [4, 98, 192, 286], lx: 388, fs: 11, lh2: 13 } : { lw: 150, lh: 54, ly0: 40, ldy: 61, nw: 120, nh: 58, cols: [8, 150, 292, 448], lx: 636, fs: 12, lh2: 14 };
     return g;
   })();
   function flowGeom() {
@@ -548,7 +548,7 @@
         const here = q.kin[q.cs] === k, ex = UNK.map((x, ui) => ui).filter((ui) => q.kin[ui] === k && q.dom[ui] === KDOM[k]);
         ctx.save(); D.roundRect(bx, by, bw, bh, 10); ctx.fillStyle = KCOL[k] + (here ? '55' : '22'); ctx.fill(); ctx.lineWidth = here ? 3 : 1.6; ctx.strokeStyle = KCOL[k]; ctx.stroke(); ctx.restore();
         T(bx + 10, by + 22, KN[k], L(14.5, 13), '#1f2d44', 'left', 800);
-        const exs = ORG.filter((o) => o.k === k).slice(0, 3).map(sname).join(' · ');
+        const exs = ORG.filter((o) => o.k === k).slice(0, 2).map(sname).join(' · ');
         T(bx + 10, by + 42, (PHONE ? '' : '예: ') + exs, L(12, 10.5), '#475569', 'left', 700);
         if (bh > 50) { ex.forEach((ui, n) => { E(UNK[ui].e, bx + bw - 18 - n * 24, by + 18, 16); }); } else ex.forEach((ui, n) => { E(UNK[ui].e, bx + bw - 18 - n * 24, by + 22, 16); });
       });

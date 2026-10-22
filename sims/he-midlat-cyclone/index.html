@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0ea5e9">
+  <title>중위도 저기압과 전선 | 고등 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌀</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-hint { bottom: auto; top: 12px; }
+    .stage-toolbar { min-height: 58px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; }
+    .stage-toolbar .segmented button { min-height: 40px; padding: 5px 12px; font-size: 14.5px; white-space: nowrap; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard [hidden] { display: none !important; }
+    .opt-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin-top: 4px; }
+    .opt-grid.c3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .opt {
+      min-height: 46px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 12px;
+      font-weight: 800; font-size: 14.5px; cursor: pointer; padding: 4px 6px; font-family: inherit; line-height: 1.2;
+    }
+    .opt.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); color: color-mix(in srgb, var(--subject) 70%, black); }
+    .opt.bad { border-color: #e2464b; background: #fff1f1; }
+    .ctrl-note { margin: 6px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    .src-note { margin: 0; font-size: 12.5px; color: var(--muted); line-height: 1.4; border-top: 1px dashed var(--line); padding-top: 8px; }
+    .btn-sm { min-height: 44px; }
+    .btn-row { display: flex; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
+    .btn-row .btn { flex: 1; padding-left: 8px; padding-right: 8px; }
+    .readout .value.txt { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .concept table.mini, table.mini { border-collapse: collapse; margin: 6px 0; font-size: 13px; width: 100%; }
+    .concept table.mini th, .concept table.mini td, table.mini th, table.mini td { border: 1px solid var(--line); padding: 4px 5px; text-align: center; }
+    .concept table.mini th, table.mini th { background: var(--surface-2); font-weight: 800; }
+    .mission-figure svg, .note-fig svg { border-radius: 12px; max-width: 100%; height: auto; }
+    .note-fig { margin: 6px 0; text-align: center; }
+    input[type=range] { height: 40px; }
+    .ticks { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--muted); font-weight: 700; margin-top: -6px; padding: 0 2px; }
+    .seg-label { display: block; font-weight: 800; font-size: 14px; color: var(--muted); margin-bottom: 4px; }
+    .segmented.dense { display: flex; width: 100%; }
+    .segmented.dense button { flex: 1 1 auto; min-height: 44px; padding: 6px 4px; font-size: 14px; white-space: nowrap; }
+    .ex-badge { font-size: 12.5px; font-weight: 800; color: #475569; background: var(--surface-2); border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; white-space: nowrap; }
+    .stp { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
+    .stp-l { flex: 1; font-weight: 800; font-size: 14px; line-height: 1.25; min-width: 0; }
+    .stp-b { flex: none; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); font-weight: 900; font-size: 22px; line-height: 1; cursor: pointer; color: var(--ink); }
+    .stp-b:active { transform: scale(.94); background: var(--surface-2); }
+    .stp-v { flex: none; min-width: 74px; text-align: center; font-family: ui-monospace, Menlo, Consolas, monospace; font-weight: 800; font-size: 17px; color: color-mix(in srgb, var(--subject) 85%, black); }
+    .row-q { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+    .row-q .lab { flex: 1; font-weight: 800; font-size: 13.5px; line-height: 1.3; min-width: 0; }
+    .row-q .segmented { flex: none; }
+    .row-q .segmented button { min-height: 40px; padding: 4px 8px; font-size: 13px; }
+    .row-q.bad .lab { color: #a3262b; }
+    .play-row { display: flex; gap: 8px; align-items: center; }
+    .play-row .btn { flex: none; min-width: 84px; }
+    .play-row input[type=range] { flex: 1; min-width: 0; }
+    @media (max-width: 599px) {
+      .readout { min-width: 0; }
+      .readout .value.txt { font-size: 15px; }
+      .stage-toolbar .spacer { display: none; }
+      .stage-toolbar .segmented button { padding: 5px 8px; font-size: 13.5px; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="earth">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#he">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">지구과학 · Ⅰ. 대기와 해양의 상호작용</div>
+      <h1>중위도 저기압과 전선</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🌀 중위도 저기압과 전선</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="group" aria-label="화면 고르기" hidden>
+            <button type="button" data-mode="struct">🌀 구조</button>
+            <button type="button" data-mode="pass">📈 전선 통과</button>
+            <button type="button" data-mode="high">🌤️ 고기압</button>
+            <button type="button" data-mode="chart">🗺️ 일기도</button>
+          </div>
+          <span class="ex-badge" title="교육용으로 만든 예시 자료예요">📊 예시 자료</span>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="중위도 저기압 지도, 전선 단면, 풍향·기압·기온 시계열 그래프, 일기도"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">—</span><span class="value txt" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">—</span><span class="value txt" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">—</span><span class="value txt" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" data-modes="struct">
+          <p class="ctrl-note" style="margin-top:0">🏷️ 아래 <b>이름표</b>를 끌어 지도의 <b>점선 칸</b>에 놓아요. (카드를 누른 뒤 칸을 눌러도 돼요.) 지도의 <b>AB선</b>을 위아래로 끌면 단면이 바뀌어요.</p>
+          <div id="scaleBox"></div>
+          <button class="btn btn-sm btn-block" id="bResetCards" type="button" style="margin-top:8px">↺ 이름표 모으기</button>
+        </div>
+        <div class="control" data-modes="pass">
+          <span class="seg-label">📍 관측점 위치</span>
+          <div class="segmented dense" id="obsSeg" role="group" aria-label="관측점 위치">
+            <button type="button" data-o="south">경로 남쪽 (서울)</button>
+            <button type="button" data-o="north">경로 북쪽</button>
+          </div>
+          <div class="control-head" style="margin-top:8px"><span>🕐 시각</span><output id="oTime">0시</output></div>
+          <div class="play-row"><button class="btn btn-sm" id="playBtn" type="button">▶ 재생</button><input type="range" id="sTime" min="0" max="24" step="0.1" value="0" aria-label="시각 (0시부터 24시)"></div>
+          <div class="ticks"><span>0시</span><span>12시</span><span>24시</span></div>
+        </div>
+        <div class="control" data-modes="pass" data-sub="mark">
+          <span class="seg-label">📌 표시 도구: 켠 뒤 그래프의 <b>관측 시각 점</b>을 눌러요</span>
+          <div class="segmented dense" id="toolSeg" role="group" aria-label="표시 도구">
+            <button type="button" data-tool="warm">🔥 온난 전선</button>
+            <button type="button" data-tool="cold">❄️ 한랭 전선</button>
+            <button type="button" data-tool="clear">지우기</button>
+          </div>
+          <span class="seg-label" style="margin-top:10px">🧭 풍향은 어느 방향으로 변했나요?</span>
+          <div class="segmented dense" id="dirSeg" role="group" aria-label="풍향 변화 방향">
+            <button type="button" data-d="cw">↻ 시계 방향</button>
+            <button type="button" data-d="ccw">↺ 반시계 방향</button>
+          </div>
+        </div>
+        <div class="control" data-modes="pass" data-sub="rain" id="rainBox">
+          <p class="ctrl-note" style="margin-top:0">비가 내리는 시간 = 비 구역의 <b>폭</b> ÷ 전선의 <b>속도</b></p>
+        </div>
+        <div class="control" data-modes="high">
+          <div class="control-head"><span>🕐 시간</span><output id="oTimeH">0시간</output></div>
+          <div class="play-row"><button class="btn btn-sm" id="playBtnH" type="button">▶ 재생</button><input type="range" id="sTimeH" min="0" max="48" step="0.2" value="0" aria-label="시간 (0부터 48시간)"></div>
+          <div class="ticks"><span>0</span><span>24시간</span><span>48시간</span></div>
+        </div>
+        <div class="control" data-modes="high" data-sub="pred">
+          <span class="seg-label">🔮 중심이 지나간 뒤 기압은 어떻게 될까요?</span>
+          <div class="segmented dense" id="predSeg" role="group" aria-label="기압 변화 예측">
+            <button type="button" data-p="up">↗ 계속 올라요</button>
+            <button type="button" data-p="down">↘ 내려가요</button>
+            <button type="button" data-p="same">→ 그대로</button>
+          </div>
+          <p class="ctrl-note" id="predNote"></p>
+        </div>
+        <div class="control" data-modes="high" data-sub="range">
+          <span class="seg-label">🌡️ 일교차가 가장 큰 날을 골라요</span>
+          <div class="opt-grid c3" id="daySeg">
+            <button class="opt" type="button" data-day="A">A날</button>
+            <button class="opt" type="button" data-day="B">B날</button>
+            <button class="opt" type="button" data-day="C">C날</button>
+          </div>
+        </div>
+        <div class="control" data-modes="chart">
+          <span class="seg-label">🗺️ 일기도 시각</span>
+          <div class="segmented dense" id="chartSeg" role="group" aria-label="일기도 시각">
+            <button type="button" data-c="0">00시</button>
+            <button type="button" data-c="12">12시</button>
+          </div>
+          <p class="ctrl-note">지도를 눌러 그 지점의 <b>바람 방향</b>을 확인할 수 있어요. 눈금 간격은 100 km예요.</p>
+        </div>
+        <div class="control" data-modes="chart" data-sub="speed" id="speedBox"></div>
+        <div class="control" data-modes="chart" data-sub="arrive" id="arriveBox"></div>
+
+        <p class="src-note">※ 이 화면의 관측 자료는 모두 <b>예시 자료</b>예요. 실제 자료는 기상청 날씨누리·기상자료개방포털에서 확인해 보세요.</p>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

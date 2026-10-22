@@ -864,13 +864,13 @@
     const row = (lab, val, ph) => {
       T(tx, ty, lab, 13.5, '#8a7f55', 'left', 800);
       if (val) { const s = fitText(val, tw, L(17, 15.5), 800, 13.5); T(tx, ty + L(24, 22), val, s, ph != null ? PH[ph].col : '#1b2333', 'left', 800); }
-      else T(tx, ty + L(24, 22), '— ' + L('오른쪽', '아래') + ' 패널에서 골라요 —', L(15, 14), '#c7bfa0', 'left', 700);
+      else T(tx, ty + L(24, 22), '— ' + '조작 패널에서 골라요 —', L(15, 14), '#c7bfa0', 'left', 700);
       ty += L(62, 54);
     };
     row('서식지', c.hab); row('소속 문', c.ph != null ? PH[c.ph].n : '', c.ph);
     T(tx, ty, '근거 형질 (2개)', 13.5, '#8a7f55', 'left', 800);
     c.ev.forEach((id, k) => { const e = EVID.find((x) => x.id === id); chip(tx, ty + 28 + k * 38, e.t, { size: L(15, 14), bg: '#fff', border: '#16a34a', color: '#0b6b39', pad: 12, h: 30 }); });
-    if (!c.ev.length) T(tx, ty + L(30, 26), '— ' + L('오른쪽', '아래') + ' 패널에서 골라요 —', L(15, 14), '#c7bfa0', 'left', 700);
+    if (!c.ev.length) T(tx, ty + L(30, 26), '— ' + '조작 패널에서 골라요 —', L(15, 14), '#c7bfa0', 'left', 700);
     ctx.restore();
     if (B.msg) { T(VW / 2, VH - 12, B.msg, 14, '#b91c1c', 'center', 800); }
   }
@@ -922,7 +922,7 @@
     const G2 = S.grp;
     bgFill('#fbf6e9', '#f7f1e0');
     T(L(20, 12), 30, '👥 모둠 도감: 잘못 분류된 카드를 찾아요', L(17, 14.5), '#14532d', 'left', 800);
-    T(L(20, 12), L(60, 58), '카드를 눌러 근거를 읽고, ' + L('오른쪽', '아래') + ' 패널에서 알맞은 문으로 옮겨요', L(14.5, 13.5), '#64748b', 'left', 700);
+    T(L(20, 12), L(60, 58), '카드를 눌러 근거를 읽고, ' + '조작 패널에서 알맞은 문으로 옮겨요', L(14.5, 13.5), '#64748b', 'left', 700);
     for (let ph = 0; ph < 4; ph++) { const x = BK.x + ph * (GCOL + L(10, 4)); box({ x: x + L(4, 0), y: BK.y + 8, w: GCW, h: 36 }, PH[ph].n, { bg: PH[ph].col, color: '#fff', size: 14.5, r: 12 }); }
     const order = PL.map((p, i) => i).sort((a, b) => (a === G2.sel) - (b === G2.sel));
     order.forEach((i) => {
