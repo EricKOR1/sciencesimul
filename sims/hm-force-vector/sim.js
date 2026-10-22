@@ -47,6 +47,14 @@
   const approach = (a, b, dt, k) => (RM ? b : SciSim.approach(a, b, dt, k));
   /* 물리 벡터(y가 위쪽)를 화면에 화살표로: 시작점, 성분, 배율 */
   function vec(ox, oy, vx, vy, k, o) { return D.arrow(ox, oy, ox + vx * k, oy - vy * k, o); }
+  /* 라벨을 [x0, x1] 범위 안에 두기 (정렬: center | left | right) */
+  function labIn(x, y, str, o, x0, x1) {
+    ctx.save(); ctx.font = D.font(Math.max(13, o.size || 13), 800); const w = ctx.measureText(str).width + 16; ctx.restore();
+    const al = o.align || 'center';
+    let lx = al === 'left' ? x : al === 'right' ? x - w : x - w / 2;
+    lx = Math.max(x0, Math.min(x1 - w, lx));
+    return D.label(al === 'left' ? lx : al === 'right' ? lx + w : lx + w / 2, y, str, Object.assign({}, o, { align: al }));
+  }
   function lines(x, y, lh, fs, arr) { arr.forEach((l, i) => T(x, y + i * lh, l[0], fs, l[1] || '#26324a', 'left', 800)); }
 
   /* ================= 상수 (글과 코드가 같은 값을 써요) ================= */
@@ -269,7 +277,7 @@
     if (cal.fy > 0.05) vec(cx, cy, 0, cal.fy, k, { color: '#f472b6', width: 4, head: 10, dash: [6, 4] });  // Fy (점선)
     vec(cx, cy, cal.fx, cal.fy, k, { color: '#e2464b', width: 5, head: 13 });                // F
     D.sphere(cx, cy, 7, '#7c8aa5', { gloss: false, outline: '#3a465c' });
-    const lab = (x, y, s, bg, al) => D.label(x, y, s, { bg, size: 13, align: al || 'center' });
+    const lab = (x, y, s, bg, al) => labIn(x, y, s, { bg, size: 13, align: al || 'center' }, f.bx + 4, VW - 12);
     lab(cx + 10, cy + PL.m * G * k * 0.7, 'mg = ' + (PL.m * G).toFixed(1) + ' N', '#5a6679', 'left');
     lab(cx + 10, cy - cal.N * k + 2, 'N = ' + cal.N.toFixed(1) + ' N', '#3867f4', 'left');
     if (cal.f > 0.02) lab(cx - cal.f * k - 6, cy + 24, 'f = ' + cal.f.toFixed(1) + ' N', '#d97706', 'right');
@@ -368,7 +376,7 @@
       else if (s.t > 0.2) D.label(clamp(cxp, 70, SL.bx), cyp - bsz - 14, '미끄러지지 않아요', { bg: '#5a6679', size: 13 });
     }
     // 자유물체도
-    const f = fbdCard('자유물체도 (1 N = ' + (PHONE ? 1.7 : 2.6) + ' px)'), k = PHONE ? 1.7 : 2.6, cx = f.cx + (PHONE ? 4 : 0), cy = SH - (PHONE ? 140 : 160);
+    const f = fbdCard('자유물체도 (1 N = ' + (PHONE ? 1.7 : 2.6) + ' px)'), k = PHONE ? 1.7 : 2.6, cx = f.cx + (PHONE ? -14 : 0), cy = SH - (PHONE ? 140 : 160);
     const e = { x: cs, y: -sn }, nrm = { x: sn, y: cs };              // 물리 좌표(y 위): 아래쪽 비탈 방향 e, 면에 수직 바깥 nrm
     const mg = c.mg;
     // mg 점선 보조선
@@ -382,7 +390,7 @@
     vec(cx, cy, -nrm.x * c.N, -nrm.y * c.N, k, { color: '#f472b6', width: 4, head: 10, dash: [6, 4] });  // mg cosθ
     vec(cx, cy, 0, -mg, k, { color: '#5a6679', width: 5, head: 12 });                         // mg
     D.sphere(cx, cy, 6, '#7c8aa5', { gloss: false, outline: '#3a465c' });
-    const lab = (x, y, str, bg, al) => D.label(x, y, str, { bg, size: 13, align: al || 'center' });
+    const lab = (x, y, str, bg, al) => labIn(x, y, str, { bg, size: 13, align: al || 'center' }, f.bx + 4, VW - 12);
     lab(cx + 8, Math.min(SH - 22, cy + mg * k + 12), 'mg = ' + mg.toFixed(0) + ' N', '#5a6679', 'left');
     lab(cx + nrm.x * c.N * k + 10, cy - nrm.y * c.N * k - 4, 'N = ' + c.N.toFixed(1) + ' N', '#3867f4', 'left');
     if (c.f > 0.02) lab(cx - e.x * c.f * k - 6, cy - e.y * c.f * k - 18, 'f = ' + c.f.toFixed(1) + ' N', '#d97706', 'right');
@@ -521,7 +529,7 @@
       for (let i = 0; i <= 30; i++) { const q = PA.T * i / 30, X = ox + PA.v0 * q * sc, Y = oy - yp * q * q * sc; if (i) ctx.lineTo(X, Y); else ctx.moveTo(X, Y); }
       ctx.stroke(); ctx.restore();
       ctx.strokeStyle = '#8a5cf6'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(ox + PA.v0 * sc, oy - yp * sc, 9, 0, TAU); ctx.stroke();
-      D.label(ox + PA.v0 * sc + 16, oy - yp * sc + 26, '내 예측 (t = 1 s)', { bg: '#8a5cf6', size: 13, align: 'left' });
+      labIn(ox + PA.v0 * sc + 16, oy - yp * sc + 26, '내 예측 (t = 1 s)', { bg: '#8a5cf6', size: 13, align: 'left' }, 12, VW - 12);
     }
     // 실제 궤적
     const pos = (q) => ({ x: PA.v0 * q, y: 0.5 * AA * q * q });
@@ -531,7 +539,7 @@
       for (let i = 0; i * 0.25 <= t + 1e-9; i++) { const P = pos(i * 0.25); ctx.fillStyle = 'rgba(124,138,165,.4)'; ctx.beginPath(); ctx.arc(ox + P.x * sc, oy - P.y * sc, 9, 0, TAU); ctx.fill(); }
     }
     const P = pos(t), px = ox + P.x * sc, py = oy - P.y * sc;
-    if (t >= 1) { ctx.strokeStyle = '#14a058'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(ox + 2 * sc, oy - 1 * sc, 13, 0, TAU); ctx.stroke(); D.label(ox + 2 * sc - 20, oy - 1 * sc - 4, '실제 t = 1 s: (2.0, 1.0) m', { bg: '#14a058', size: 13, align: 'right' }); }
+    if (t >= 1) { ctx.strokeStyle = '#14a058'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(ox + 2 * sc, oy - 1 * sc, 13, 0, TAU); ctx.stroke(); labIn(ox + 2 * sc - 20, oy - 1 * sc - 4, '실제 t = 1 s: (2.0, 1.0) m', { bg: '#14a058', size: 13, align: 'right' }, 12, VW - 12); }
     D.sphere(px, py, 11, '#7c8aa5', { shadow: true, outline: '#4a5670' });
     const vx = PA.v0, vy = AA * t;
     D.arrow(px, py, px + vx * (PHONE ? 16 : 24), py, { color: '#3867f4', width: 4, head: 10 });

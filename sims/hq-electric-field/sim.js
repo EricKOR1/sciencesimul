@@ -78,7 +78,7 @@
   const ROWS = [[2, 2, 0.2], [2, 2, 0.4], [2, 2, 0.8], [0.5, 2, 0.4], [1, 2, 0.4], [4, 2, 0.4]].map((r) => ({ qa: r[0], qb: r[1], r: r[2], F: null, flash: 0 }));
   const TB_Y = PHONE ? 308 : 326, TB_H = PHONE ? 36 : 28, TB_RH = PHONE ? 38 : 30;
   // ② 전기장
-  const R2 = { y0: 44, y1: PHONE ? 420 : 372, cx: VW / 2, pxm: PHONE ? 200 : 330 };
+  const R2 = { y0: 44, y1: PHONE ? 420 : 372, cx: VW / 2, pxm: PHONE ? 230 : 330 };
   R2.cy = (R2.y0 + R2.y1) / 2 + (PHONE ? 6 : 2);
   const RINGS = [0.15, 0.3, 0.6];
   const QR2 = PHONE ? 10 : 16, PR2 = PHONE ? 8 : 11;
@@ -118,7 +118,7 @@
   const S = {
     mode: 'force', t: 0, fade: 0, gate: '',
     f1: { qa: 2, qb: 3, r: 0.3, la: 0, lb: 0, drag: false, hov: false, done: false, seenDrag: false },
-    f2: { q: 1, qp: 2, has: true, px: 0, py: 0, fly: 1, flyFrom: { x: 0, y: 0 }, drag: false, pulse: 0, la: 0, lf: 0, log: { x: -999, y: -999, seen: {} }, ghostT: 0, tw: null },
+    f2: { q: 1, qp: 2, has: true, px: 0, py: 0, fly: 1, flyFrom: { x: 0, y: 0 }, drag: false, pulse: 0, la: 0, lf: 0, log: { x: -999, y: -999, seen: {} }, ghostT: 0, tw: null, ghosted: false },
     f3: { q: 1, r: 0.3, pts: { 1: [], 2: [], '-1': [] }, curveT: { 1: 0, 2: 0, '-1': 0 }, shown: false, firstDone: false },
     f4: { pre: 'a', px: 0.3, sumT: 1, tw: null, drag: false, ink: { q: 1, drops: [], dots: [] }, seenZero: false, seenPre: { a: true } },
   };
@@ -331,7 +331,7 @@
   function setQ2(v) { S.f2.q = v; S.f2.pulse = 0.6; updateCtl(); }
   $$('#qSeg button').forEach((b) => b.addEventListener('click', () => { Sound.click(); setQ2(+b.dataset.v); }));
   $$('#qpSeg button').forEach((b) => b.addEventListener('click', () => { Sound.click(); setQp(+b.dataset.v); }));
-  $('#bGhost').addEventListener('click', () => { Sound.click(); const f = S.f2; if (f.has) { f.has = false; f.ghostT = 0; } else { f.has = true; flyIn(); } updateCtl(); });
+  $('#bGhost').addEventListener('click', () => { Sound.click(); const f = S.f2; if (f.has) { f.has = false; f.ghostT = 0; f.ghosted = true; } else { f.has = true; flyIn(); } updateCtl(); });
   function resetField(pos) {
     const f = S.f2; f.has = true; f.log = { x: -999, y: -999, seen: {} };
     const p = pos || { x: R2.cx + 0.3 * R2.pxm, y: R2.cy };
@@ -645,8 +645,12 @@
       D.sphere(sx(c.x), sy(c.y), r, c.q > 0 ? POS : NEG, { shadow: true, text: c.q > 0 ? '+' : '−' });
       T(sx(c.x), sy(c.y) + r + (PHONE ? 14 : 17), (c.q > 0 ? '+' : '−') + Math.abs(c.q) * 1e6 + ' μC', PHONE ? 11.5 : 13, '#26324a', 'center', 800);
     });
-    // 점 P
+    // 점 P (b, c: 각 전하까지 거리를 점선으로)
     const px = sx(P.x), py = sy(P.y);
+    if (pre !== 'a') PRE[pre].ch.forEach((c) => {
+      ctx.save(); ctx.strokeStyle = 'rgba(81,96,121,.55)'; ctx.lineWidth = 1.5; ctx.setLineDash([4, 5]); ctx.beginPath(); ctx.moveTo(sx(c.x), sy(c.y)); ctx.lineTo(px, py); ctx.stroke(); ctx.restore();
+      T((sx(c.x) + px) / 2 + (c.x < 0 ? -12 : 12), (sy(c.y) + py) / 2 + 4, '0.50 m', PHONE ? 11 : 12.5, '#516079', c.x < 0 ? 'right' : 'left', 800);
+    });
     D.ring(px, py, 10, S.t, { color: '#16a34a', width: 3 });
     D.sphere(px, py, 5, '#16a34a', { gloss: false });
     T(px + (pre === 'a' ? 0 : 14), py + (pre === 'a' ? 28 : 4), 'P', 14, '#0b7a41', pre === 'a' ? 'center' : 'left', 800);
@@ -680,7 +684,7 @@
         const sz = PHONE ? 11 : 12.5;
         lbl(s1.tx + s1.ux * 36 + 0, s1.ty + s1.uy * 12, 'E₁', { color: '#1e40af', border: '#93b4f8', size: sz, pad: 6 });
         lbl(s2.tx + s2.ux * 36, s2.ty + s2.uy * 12, 'E₂', { color: '#0f766e', border: '#7dd3cb', size: sz, pad: 6 });
-        if (k3 > 0.95 && m > 1e3) lbl(px + ux * (len + 52), py + uy * (len + 16), 'E합 ' + (mk ? '?' : sci(m, 2)), { color: '#5b21b6', border: '#c4b5fd', size: sz });
+        if (k3 > 0.95 && m > 1e3) lbl(Math.abs(ux) < 0.2 ? px + 62 : px + ux * (len + 52), Math.abs(ux) < 0.2 ? py + uy * len * 0.85 : py + uy * (len + 16), 'E합 ' + (mk ? '?' : sci(m, 2)), { color: '#5b21b6', border: '#c4b5fd', size: sz });
       }
     }
     drawSumPanel(net, v1, v2);
@@ -691,7 +695,7 @@
     const sz = PHONE ? 12.5 : 14, lh = PHONE ? 19 : 22, x = 26;
     const lines = [];
     if (pre === 'a') {
-      lines.push(['P의 위치 x = ' + f.px.toFixed(2) + ' m (왼쪽 전하 2 μC까지 ' + v1.r.toFixed(2) + ' m, 오른쪽 전하 8 μC까지 ' + v2.r.toFixed(2) + ' m)', '#26324a']);
+      lines.push(['P의 위치 x = ' + f.px.toFixed(2) + ' m  (r₁ = ' + v1.r.toFixed(2) + ' m, r₂ = ' + v2.r.toFixed(2) + ' m)', '#26324a']);
       lines.push(['E₁ = k(2 μC)/r₁² = ' + sci(v1.m) + ' N/C (' + dirWord(v1) + ')', '#1e40af']);
       lines.push(['E₂ = k(8 μC)/r₂² = ' + sci(v2.m) + ' N/C (' + dirWord(v2) + ')', '#0f766e']);
       lines.push([m < 1e3 ? 'E합 = 0 → 두 전기장이 크기는 같고 방향이 반대로 상쇄돼요!' : 'E합 = ' + sci(m) + ' N/C (' + dirWord(net) + ')', m < 1e3 ? '#0b7a41' : '#5b21b6']);
@@ -701,7 +705,7 @@
       lines.push(['x, y 성분을 따로 더해요. ' + (pre === 'b' ? 'x 성분은 서로 상쇄, y 성분만 남아요.' : 'y 성분은 서로 상쇄, x 성분만 남아요.'), '#26324a']);
       lines.push(['E합 = ' + (mk ? '?' : sci(m, 2) + ' N/C, ' + dirWord(net)), '#5b21b6']);
     }
-    lines.forEach((l, i) => { const ls = wrap(l[0], VW - 56, sz, 800); T(x, y + 26 + i * lh + (PHONE && ls.length > 1 ? 0 : 0), ls[0], sz, l[1], 'left', 800); if (ls.length > 1) T(x, y + 26 + i * lh + lh * 0.9, ls.slice(1).join(''), sz, l[1], 'left', 800); });
+    let yy = y + 26; lines.forEach((l) => { yy += textBlock(x, yy, VW - 56, l[0], sz, l[1], lh, 800) + (PHONE ? 4 : 2); });
   }
   function drawInk() {
     sceneBg(); const f = S.f4, k = f.ink, I = INK;
@@ -772,7 +776,7 @@
     if (S.mode === 'force') {
       const f = S.f1; a = ['두 전하', 'A ' + f.qa.toFixed(1) + ' μC · B ' + f.qb.toFixed(1) + ' μC']; b = ['거리 r', f.r.toFixed(2) + ' m']; c = ['전기력 F', masked1() ? '?' : f3(curF()) + ' N'];
     } else if (S.mode === 'field') {
-      const g = f2Geo(), f = S.f2; a = ['거리 r', g.r.toFixed(2) + ' m']; b = ['전기장 E = k|q|/r²', sci(g.E) + ' N/C']; c = f.has ? ["힘 F = q′E", masked2() ? '?' : sci(g.F) + ' N'] : ['시험 전하', '없음 (E는 그대로)'];
+      const g = f2Geo(), f = S.f2; a = ['거리 r', g.r.toFixed(2) + ' m']; b = ['전기장 E', sci(g.E) + ' N/C']; c = f.has ? ["힘 F = q′E", masked2() ? '?' : sci(g.F) + ' N'] : ['시험 전하', '없음 (E는 그대로)'];
     } else if (S.mode === 'graph') {
       const f = S.f3, E = Eof(f.q, f.r); a = ['거리 r', f.r.toFixed(2) + ' m']; b = ['전기장 E', masked3() ? '?' : sci(E) + ' N/C']; c = ['E × r²', masked3() ? '?' : f3(E * f.r * f.r) + ' N·m²/C'];
     } else {
@@ -875,13 +879,13 @@
       missions: [
         {
           title: '같은 점에서 q′ 바꿔 보기',
-          goal: '시험 전하를 한 점에 놓고 <b>q′ = +1 nC, +2 nC, +3 nC</b>로 차례로 바꾸세요. F가 변해도 <b>F/q′</b>가 같은지 확인해요.',
-          hint: '시험 전하를 끌어 놓은 뒤에는 움직이지 말고 오른쪽의 q′ 버튼만 차례로 눌러요.',
-          setup() { S.gate = ''; S.f2.q = 1; S.f2.qp = 1; setScene('field'); resetField(); },
-          check: () => { const s = f2log(); return s[1] != null && s[2] != null && s[3] != null; },
+          goal: '시험 전하를 한 점에 놓고 <b>q′ = +1 nC, +2 nC, +3 nC</b>로 차례로 바꾸며 <b>F/q′</b>가 같은지 확인하고, <b>👻 시험 전하 치우기</b>로 전기장이 남는지도 보세요.',
+          hint: '시험 전하를 끌어 놓은 뒤에는 움직이지 말고 오른쪽의 q′ 버튼만 차례로 눌러요. 마지막에 👻 버튼도 눌러 보세요.',
+          setup() { S.gate = ''; S.f2.q = 1; S.f2.qp = 1; S.f2.ghosted = false; setScene('field'); resetField(); },
+          check: () => { const s = f2log(); return s[1] != null && s[2] != null && s[3] != null && S.f2.ghosted; },
           hold: 0.6,
-          status: () => { const s = f2log(); return [1, 2, 3].map((v) => mark(s[v] != null) + ' +' + v + ' nC' + (s[v] != null ? ' → F/q′ = ' + sci(s[v]) : '')).join(' &nbsp; '); },
-          explain: 'q′를 2배, 3배로 하면 힘 F도 2배, 3배가 되지만 <b>F/q′는 그대로</b>예요. 이 값이 그 자리의 전기장 E예요. E는 시험 전하의 크기와 상관없이 전하 q가 공간에 만들어 둔 성질이고, 식으로는 E = F/q′ = kq/r²이에요.',
+          status: () => { const s = f2log(); return [1, 2, 3].map((v) => mark(s[v] != null) + ' +' + v + ' nC' + (s[v] != null ? ' → F/q′ = ' + sci(s[v]) : '')).join(' &nbsp; ') + ' &nbsp; ' + mark(S.f2.ghosted) + ' 치워 보기'; },
+          explain: 'q′를 2배, 3배로 하면 힘 F도 2배, 3배가 되지만 <b>F/q′는 그대로</b>예요. 이 값이 그 자리의 전기장 E예요. 시험 전하를 <b>치워도</b> 파란 전기장 화살표가 그 자리에 남아 있죠? 전기장은 전하 q가 공간에 만들어 둔 성질이라서 시험 전하가 없어도 있어요(두 전하 사이에만 있는 것이 아니에요). 식으로는 E = F/q′ = kq/r²이에요.',
         },
         {
           title: 'E로 힘 계산하기', manual: true,
@@ -891,15 +895,6 @@
           check: () => checkNum(num2, 2.0e-4, 0.03, '다시 계산해 보세요. E = kq/r² = 1.0×10⁵ N/C를 먼저 구하고, F = q′E = (2.0×10⁻⁹ C)(E)를 계산해요. 10의 거듭제곱도 확인해요.'),
           status: () => 'E = ' + sci(K * 1e-6 / 0.09) + ' N/C &nbsp; (힘 F는 숨겨 두었어요)',
           explain: 'E = kq/r² = (9.0×10⁹)(1.0×10⁻⁶) / (0.30)² = <b>1.0×10⁵ N/C</b>이에요. 그 자리의 +2.0 nC은 F = q′E = (2.0×10⁻⁹)(1.0×10⁵) = <b>2.0×10⁻⁴ N</b>의 힘을 받고, 방향은 전하에서 멀어지는 쪽이에요.',
-        },
-        {
-          type: 'quiz', title: '시험 전하를 치우면?',
-          goal: '시험 전하를 치우면 그 점의 전기장은 어떻게 될까요? (👻 버튼으로 직접 확인해 보세요)',
-          setup() { S.gate = ''; S.f2.q = 1; setScene('field'); },
-          choices: ['사라져요. 전기장은 힘을 받는 전하가 있을 때만 있어요', '전하 q가 만든 전기장이 그 자리에 그대로 있어요', '전기장은 두 전하 사이에만 존재해요', '절반으로 줄어들어요'],
-          answer: 1,
-          feedback: ['시험 전하는 전기장을 확인하는 도구일 뿐이에요. 👻 버튼으로 치워도 파란 화살표가 남았죠?', '', '전기장은 전하 주위의 공간 어디에나 있어요. 지도에서 전하 바깥에도 화살표가 있었죠?', '시험 전하는 전기장 E = kq/r²에 들어 있지 않아요. 치워도 값이 변하지 않아요.'],
-          explain: '전기장은 전하 q가 주변 공간에 만든 성질이라서 시험 전하를 <b>치워도 그대로</b> 있어요. 시험 전하는 그 자리에 E가 있는지 확인하는 도구예요. 시험 전하를 놓으면 비로소 F = q′E의 힘이 나타나요.',
         },
       ],
     },

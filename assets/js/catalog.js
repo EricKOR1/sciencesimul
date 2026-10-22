@@ -5834,8 +5834,7 @@ window.SCI_CATALOG = {
                 "허블 분류",
                 "은하의 특징",
                 "AI 분류"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "he-peculiar-galaxy",
@@ -5856,8 +5855,7 @@ window.SCI_CATALOG = {
                 "활동성 은하",
                 "스펙트럼",
                 "은하 충돌"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "he-hubble-law",
@@ -5878,8 +5876,7 @@ window.SCI_CATALOG = {
                 "거리와 속도",
                 "허블 상수",
                 "우주의 나이"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "he-cosmology",
@@ -5900,8 +5897,7 @@ window.SCI_CATALOG = {
                 "배경 복사",
                 "급팽창",
                 "가속 팽창"
-              ],
-              "soon": true
+              ]
             }
           ]
         }
