@@ -127,10 +127,10 @@
   /* =========================================================
      ① 모의실험: 집단 100마리, 형질 A의 비율 p
      ========================================================= */
-  const HB = L({ x: 14, y: 46, w: 392, h: 394 }, { x: 6, y: 34, w: 468, h: 404 });
+  const HB = L({ x: 14, y: 46, w: 392, h: 394 }, { x: 6, y: 34, w: 468, h: 424 });
     const IP = L({ x: 418, y: 292, w: 368, h: 148 }, { x: 6, y: 0, w: 0, h: 0 });
-  const TB = L({ x: 14, y: 450, w: 772, h: 98 }, { x: 6, y: 612, w: 468, h: 80 });
-  const CELL = 36, G0 = L([HB.x + 16, HB.y + 36], [HB.x + (HB.w - 360) / 2, HB.y + 40]);
+  const TB = L({ x: 14, y: 450, w: 772, h: 98 }, { x: 6, y: 624, w: 468, h: 70 });
+  const CELL = 36, G0 = L([HB.x + 16, HB.y + 36], [HB.x + (HB.w - 360) / 2, HB.y + 62]);
   const cellXY = (i) => [G0[0] + (i % 10) * CELL + CELL / 2, G0[1] + Math.floor(i / 10) * CELL + CELL / 2];
   const PERM = (function () { const r = mulberry(7), a = Array.from({ length: 100 }, (_, i) => i); for (let i = 99; i > 0; i--) { const j = Math.floor(r() * (i + 1)); const t = a[i]; a[i] = a[j]; a[j] = t; } return a; })();
   const SIM_TYPES = { var: '변이 있음 · 유전됨', none: '변이 없음 (모두 A)', noinh: '변이 있음 · 유전 안 됨' };
@@ -225,11 +225,11 @@
       E('🦅', hx, hy, 40);
       D.label(HB.x + HB.w / 2, HB.y + HB.h - 16, '환경(선택압)이 작용해요', { bg: '#7c3aed', size: 14 });
     } else if (q.phase === 'breed') D.label(HB.x + HB.w / 2, HB.y + HB.h - 16, '살아남은 개체가 번식해요', { bg: '#15803d', size: 14 });
-    else if (q.g === 0) T(HB.x + HB.w / 2, HB.y + HB.h - 12, '▶ 다음 세대를 눌러 한 세대씩 진행해요', 13.5, '#64748b', 'center', 800);
+    else if (q.g === 0 && !PHONE) T(HB.x + HB.w / 2, HB.y + HB.h - 12, '▶ 다음 세대를 눌러 한 세대씩 진행해요', 13.5, '#64748b', 'center', 800);
     // 그래프
-    panel(PHONE ? 6 : 418, PHONE ? 444 : 46, PHONE ? 468 : 368, PHONE ? 154 : 236, 16);
-    const gx = PHONE ? { x: 52, y: 478, w: 400, h: 90 } : { x: 466, y: 88, w: 300, h: 150 };
-    T(PHONE ? 18 : 432, PHONE ? 466 : 70, 'A 형질의 비율', 15, '#26324a', 'left', 800);
+    panel(PHONE ? 6 : 418, PHONE ? 466 : 46, PHONE ? 468 : 368, PHONE ? 150 : 236, 16);
+    const gx = PHONE ? { x: 52, y: 498, w: 400, h: 84 } : { x: 466, y: 88, w: 300, h: 150 };
+    T(PHONE ? 18 : 432, PHONE ? 488 : 70, 'A 형질의 비율', 15, '#26324a', 'left', 800);
     const ax = axes(gx, { x0: 0, x1: 10, y0: 0, y1: 1, xt: [0, 2, 4, 6, 8, 10], yt: [0, 0.5, 1], yf: (v) => v.toFixed(1), xf: (v) => String(v) });
     T(gx.x + gx.w, gx.y + gx.h + (PHONE ? 34 : 36), '세대', 12.5, '#64748b', 'right', 800);
     if (q.ghost && q.ghost.length > 1) { ctx.save(); ctx.strokeStyle = 'rgba(100,116,139,.55)'; ctx.lineWidth = 2; ctx.setLineDash([5, 4]); ctx.beginPath(); q.ghost.forEach((v, k) => (k ? ctx.lineTo(ax.X(k), ax.Y(v)) : ctx.moveTo(ax.X(k), ax.Y(v)))); ctx.stroke(); ctx.restore(); T(gx.x + gx.w - 4, gx.y + 14, '점선: 이전 실행', 12, '#64748b', 'right', 700); }
@@ -255,13 +255,13 @@
     // 세대별 표
     panel(TB.x, TB.y, TB.w, TB.h, 14);
     const cw = (TB.w - (PHONE ? 70 : 110)) / 11, tx = TB.x + (PHONE ? 66 : 104);
-    T(TB.x + 12, TB.y + 25, '세대', L(14, 13), '#475569', 'left', 800); T(TB.x + 12, TB.y + 55, 'A 비율', L(14, 13), '#b45309', 'left', 800); T(TB.x + 12, TB.y + 82, 'A 개체', L(14, 13), '#64748b', 'left', 800);
+    T(TB.x + 12, TB.y + L(25, 20), '세대', L(14, 13), '#475569', 'left', 800); T(TB.x + 12, TB.y + L(55, 43), 'A 비율', L(14, 13), '#b45309', 'left', 800); T(TB.x + 12, TB.y + L(82, 63), 'A 개체', L(14, 13), '#64748b', 'left', 800);
     for (let k = 0; k <= 10; k++) {
       const x = tx + k * cw + cw / 2, on = k < q.hist.length, cur = k === q.g;
       if (cur) { ctx.fillStyle = 'rgba(245,158,11,.14)'; D.roundRect(x - cw / 2 + 2, TB.y + 6, cw - 4, TB.h - 12, 8); ctx.fill(); }
-      T(x, TB.y + 25, String(k), L(14, 13), '#475569', 'center', 800);
-      T(x, TB.y + 55, on ? f2(q.hist[k]) : '—', L(14.5, 12.5), on ? '#1f2d44' : '#cbd5e1', 'center', 800);
-      T(x, TB.y + 82, on ? String(Math.round(q.hist[k] * 100)) : '—', L(13.5, 12.5), on ? '#64748b' : '#cbd5e1', 'center', 700);
+      T(x, TB.y + L(25, 20), String(k), L(14, 13), '#475569', 'center', 800);
+      T(x, TB.y + L(55, 43), on ? f2(q.hist[k]) : '—', L(14.5, 12.5), on ? '#1f2d44' : '#cbd5e1', 'center', 800);
+      T(x, TB.y + L(82, 63), on ? String(Math.round(q.hist[k] * 100)) : '—', L(13.5, 12.5), on ? '#64748b' : '#cbd5e1', 'center', 700);
     }
     parts.update(dt); parts.draw(ctx);
   }
@@ -377,7 +377,7 @@
     // 비교 표
     T(MSTAT.x + 14, y0 + 20, '첫 사냥 비교 (처음엔 밝은색 10 : 어두운색 10)', 13.5, '#26324a', 'left', 800);
     const cols = ['나무 줄기', '잡힌 밝은색', '잡힌 어두운색', '다음 세대 어두운색'];
-    const cx = [14, 92, 164, 236].map((v) => MSTAT.x + v), tw = MSTAT.w;
+    const cx = L([14, 92, 164, 236], [14, 120, 232, 340]).map((v) => MSTAT.x + v), tw = MSTAT.w;
     const ty = y0 + 40; ctx.fillStyle = '#f1f5f9'; D.roundRect(MSTAT.x + 8, ty - 14, tw - 16, 26, 8); ctx.fill();
     cols.forEach((c, k) => T(cx[k], ty + 4, c, 12, '#475569', 'left', 800));
     ['light', 'soot'].forEach((e, k) => {
@@ -429,12 +429,12 @@
     const cx = ax.X(yr); D.dashedLine(cx, MGP.y, cx, MGP.y + MGP.h, { color: '#7c3aed', width: 2 }); D.sphere(cx, ax.Y(darkF(yr)), 8, '#7c3aed', { outline: '#fff', outlineWidth: 2.5, shadow: true });
     D.label(clamp(cx, MGP.x + 30, MGP.x + MGP.w - 30), MGP.y - 16, yr + '년 · ' + pct(darkF(yr)), { bg: '#7c3aed', size: 13.5 });
     // 나무 줄기와 나방 20마리
-    const tr = PHONE ? { x: 16, y: 312, w: 200, h: 270 } : { x: 30, y: 308, w: 248, h: 232 };
+    const tr = PHONE ? { x: 16, y: 280, w: 200, h: 290 } : { x: 30, y: 308, w: 248, h: 232 };
     drawTrunk(tr, polluF(yr), true);
     const nD = Math.round(20 * darkF(yr)), order = MOTH_SLOTS.map((_, i) => i);
     order.forEach((i, k) => { const m = MOTH_SLOTS[i], x = tr.x + 28 + m.fx * (tr.w - 56), y = tr.y + 22 + m.fy * (tr.h - 44); drawMoth(x, y, (k * 7 % 20) < nD ? 'D' : 'L', 1, 0.95, m.rot); });
     // 설명
-    const ix = PHONE ? 236 : 300, iy = PHONE ? 312 : 308, iw = PHONE ? 238 : 486, ih = PHONE ? 270 : 232;
+    const ix = PHONE ? 236 : 300, iy = PHONE ? 280 : 308, iw = PHONE ? 238 : 486, ih = PHONE ? 290 : 232;
     panel(ix, iy, iw, ih, 16, '#fffefa');
     T(ix + 14, iy + 28, yr + '년', L(19, 17), '#7c3aed', 'left', 800);
     const rows = [['어두운색 나방', nD + ' / 20마리 (' + pct(darkF(yr)) + ')'], ['나무 줄기', polluF(yr) > 0.66 ? '그을음으로 어두워졌어요' : polluF(yr) > 0.25 ? '점점 어두워져요' : '밝아요 (이끼가 있어요)'], ['대기 오염', polluF(yr) > 0.66 ? '심해요' : polluF(yr) > 0.25 ? '늘고 있어요' : '적어요']];
@@ -487,7 +487,7 @@
     else if (q.phase === 'grow') { q.t += dt; q.grow = clamp(q.t / 1.6, 0, 1); if (q.t > 1.7) { q.grow = 1; bacFinishGrow(); } }
   }
   const fmtN = (v) => (v >= 10 ? Math.round(v).toLocaleString('ko-KR') : v >= 1 ? v.toFixed(0) : v.toPrecision(1).replace(/^0\./, '0.'));
-  const fmtP = (r) => { const p = r * 100; return (p >= 10 ? p.toFixed(0) : p >= 0.1 ? p.toFixed(1) : String(parseFloat(p.toPrecision(2)))) + ' %'; };
+  const fmtP = (r) => { const p = r * 100; return (p >= 10 ? p.toFixed(0) : p >= 0.1 ? String(parseFloat(p.toFixed(1))) : String(parseFloat(p.toPrecision(2)))) + ' %'; };
   function drawBacMode(dt, t) {
     const q = S.bac, [cx, cy] = dishC(), R0 = dishR();
     bgFill('#eef0f8', '#f1eef7');
@@ -609,8 +609,8 @@
       else { const c = lerp(cb, ca, q.k); bar(i, c, q.view === 'before' ? '#6b8ccf' : '#f97316', 1, q.sel === i ? '#7c3aed' : null); }
     }
     // 평균 표시
-    const mkLine = (v, col, lab, locked) => { if (v == null) return; const x = fpX(v); ctx.save(); ctx.strokeStyle = col; ctx.lineWidth = locked ? 3.2 : 2.4; if (!locked) ctx.setLineDash([6, 5]); ctx.beginPath(); ctx.moveTo(x, FP.y - 8); ctx.lineTo(x, FP.y + FP.h); ctx.stroke(); ctx.restore(); D.label(clamp(x, FP.x + 40, FP.x + FP.w - 40), FP.y - 16, lab + ' ' + v.toFixed(1) + ' mm', { bg: col, size: 13 }); };
-    if (bothM) { mkLine(FIN.mB, '#475569', '전 평균', true); mkLine(FIN.mA, '#c2410c', '후 평균', true); D.arrow(fpX(FIN.mB), FP.y + 22, fpX(FIN.mA), FP.y + 22, { color: '#7c3aed', width: 3, head: 11 }); T((fpX(FIN.mB) + fpX(FIN.mA)) / 2, FP.y + 52, '+' + (FIN.mA - FIN.mB).toFixed(1) + ' mm', 14, '#7c3aed', 'center', 800); }
+    const mkLine = (v, col, lab, locked, dx) => { if (v == null) return; const x = fpX(v); ctx.save(); ctx.strokeStyle = col; ctx.lineWidth = locked ? 3.2 : 2.4; if (!locked) ctx.setLineDash([6, 5]); ctx.beginPath(); ctx.moveTo(x, FP.y - 8); ctx.lineTo(x, FP.y + FP.h); ctx.stroke(); ctx.restore(); D.label(clamp(x + (dx || 0), FP.x + 40, FP.x + FP.w - 40), FP.y - 16, lab + ' ' + v.toFixed(1) + ' mm', { bg: col, size: 13 }); };
+    if (bothM) { mkLine(FIN.mB, '#475569', '전 평균', true, -52); mkLine(FIN.mA, '#c2410c', '후 평균', true, 52); D.arrow(fpX(FIN.mB), FP.y + 22, fpX(FIN.mA), FP.y + 22, { color: '#7c3aed', width: 3, head: 11 }); T((fpX(FIN.mB) + fpX(FIN.mA)) / 2, FP.y + 52, '+' + (FIN.mA - FIN.mB).toFixed(1) + ' mm', 14, '#7c3aed', 'center', 800); }
     else { const v = q.view; if (q.mk[v] != null) mkLine(q.mk[v], q.lock[v] ? (v === 'before' ? '#475569' : '#c2410c') : '#7c3aed', '평균', q.lock[v]); }
     // 요약 카드
     const sy = FP.y + FP.h + 58;
@@ -642,18 +642,18 @@
     const q = S.fr;
     bgFill('#f2f0f8', '#eef4ee');
     T(L(14, 8), L(30, 22), '🧩 네 사례를 같은 틀에 넣어 비교해요', L(17, 15), '#3b2f63', 'left', 800);
-    const colW = L((772 - 120) / 4, (468 - 84) / 4), x0 = L(14, 6) + L(120, 84);
-    const hdr = ['변이', '환경(선택압)', '유리한 개체의 번식', '집단의 형질 비율 변화'];
-    hdr.forEach((h, k) => { const x = x0 + k * colW; D.label(x + colW / 2 - 2, L(60, 52), h, { bg: ['#0ea5e9', '#7c3aed', '#16a34a', '#d97706'][k], size: L(13.5, 11.5), pad: 6 }); if (k < 3) D.arrow(x + colW - 14, L(60, 52), x + colW + 8, L(60, 52), { color: '#94a3b8', width: 2, head: 7 }); });
+    const colW = L((772 - 120) / 4, (468 - 96) / 4), x0 = L(14, 6) + L(120, 96);
+    const hdr = L(['변이', '환경(선택압)', '유리한 개체의 번식', '집단의 형질 비율 변화'], ['변이', '환경', '번식', '비율 변화']);
+    hdr.forEach((h, k) => { const x = x0 + k * colW; D.label(x + colW / 2 - 2, L(60, 52), h, { bg: ['#0ea5e9', '#7c3aed', '#16a34a', '#d97706'][k], size: L(13.5, 12), pad: 6 }); if (k < 3) D.arrow(x + colW - 14, L(60, 52), x + colW + 8, L(60, 52), { color: '#94a3b8', width: 2, head: 7 }); });
     const rh = L(74, 62);
     FR_CASES.forEach((c, i) => {
       const y = L(84, 72) + i * (rh + 8), sel = q.cs === i;
       panel(L(14, 6), y, L(772, 468), rh, 14, sel ? '#fffbe9' : '#fff'); if (sel) { ctx.save(); ctx.strokeStyle = '#7c3aed'; ctx.lineWidth = 2.5; D.roundRect(L(14, 6), y, L(772, 468), rh, 14); ctx.stroke(); ctx.restore(); }
-      T(L(14, 6) + 12, y + rh / 2 - 2, c.ic, L(26, 22), '#000', 'left', 700); T(L(14, 6) + L(52, 40), y + rh / 2 + 5, c.n, L(15, 12.5), '#26324a', 'left', 800);
+      if (!PHONE) { T(L(14, 6) + 12, y + rh / 2 + 8, c.ic, 26, '#000', 'left', 700); T(L(14, 6) + 52, y + rh / 2 + 5, c.n, 15, '#26324a', 'left', 800); } else { E(c.ic, 6 + 48, y + 20, 20); T(6 + 48, y + 46, c.n, 12.5, '#26324a', 'center', 800); }
       [FR_VAR, FR_ENV, null, FR_RES].forEach((opts, k) => {
         const x = x0 + k * colW + 3, w = colW - 10, h = rh - 18, yy = y + 9;
         let txt, st = 0;
-        if (k === 2) { txt = '유리한 개체가 더 많이 살아남아 번식'; st = 1; }
+        if (k === 2) { txt = L('유리한 개체가 더 많이 살아남아 번식', '유리한 개체가 더 많이 번식'); st = 1; }
         else { const kk = k === 3 ? 2 : k, v = q.pick[i][kk]; txt = v == null ? '(비어 있음)' : opts[v]; st = v == null ? 0 : (q.flag[i][kk] === 2 ? 3 : q.flag[i][kk] === 1 ? 1 : 2); }
         ctx.save(); D.roundRect(x, yy, w, h, 10); ctx.fillStyle = st === 0 ? '#f8fafc' : st === 1 ? '#dcfce7' : st === 3 ? '#fee2e2' : '#ede9fe'; ctx.fill(); ctx.setLineDash(st === 0 ? [5, 4] : []); ctx.strokeStyle = st === 0 ? '#cbd5e1' : st === 1 ? '#22c55e' : st === 3 ? '#dc2626' : '#8b5cf6'; ctx.lineWidth = 1.8; ctx.stroke(); ctx.restore();
         textBlock(x + w / 2, yy + h / 2 - (wrap(txt, w - 12, L(13, 11.5)).length - 1) * L(8, 7) + 4.5, w - 12, txt, L(13, 11.5), st === 0 ? '#94a3b8' : '#1f2d44', L(16, 14), 800, 'center');

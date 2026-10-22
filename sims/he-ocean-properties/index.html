@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0ea5e9">
+  <title>수온·염분·용존 산소 | 고등 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌊</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-hint { bottom: auto; top: 12px; }
+    .stage-toolbar { min-height: 58px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; }
+    .stage-toolbar .segmented button { min-height: 40px; padding: 5px 10px; font-size: 14px; white-space: nowrap; }
+    .stage-toolbar .segmented { flex-wrap: wrap; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard [hidden] { display: none !important; }
+    .opt-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin-top: 4px; }
+    .opt-grid.c3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .opt-grid.c4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .opt {
+      min-height: 46px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 12px;
+      font-weight: 800; font-size: 15px; cursor: pointer; padding: 4px 6px; font-family: inherit; line-height: 1.2;
+    }
+    .opt.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); color: color-mix(in srgb, var(--subject) 70%, black); }
+    .opt.bad { border-color: #e2464b; background: #fff1f1; }
+    .opt.good { border-color: #16a34a; background: #effaf2; }
+    .opt:disabled { opacity: .45; cursor: not-allowed; }
+    .ctrl-note { margin: 6px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    .btn-sm { min-height: 44px; }
+    .btn-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+    .btn-row .btn { flex: 1; padding-left: 8px; padding-right: 8px; }
+    .readout .value.txt { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .concept table.mini, table.mini { border-collapse: collapse; margin: 6px 0; font-size: 13px; width: 100%; }
+    .concept table.mini th, .concept table.mini td, table.mini th, table.mini td { border: 1px solid var(--line); padding: 4px 5px; text-align: center; }
+    .concept table.mini th, table.mini th { background: var(--surface-2); font-weight: 800; }
+    table.mini td.now { background: color-mix(in srgb, var(--subject) 12%, white); font-weight: 800; }
+    table.mini td.none { color: var(--muted); }
+    .mini-sel { width: 100%; min-height: 44px; border: 2px solid var(--line); border-radius: 10px; font: inherit; font-weight: 800; font-size: 14.5px; padding: 0 6px; background: var(--surface); color: var(--ink); }
+    .num-in { width: 100%; min-height: 46px; border: 2px solid var(--line); border-radius: 10px; font: inherit; font-weight: 800; font-size: 17px; padding: 0 10px; background: var(--surface); color: var(--ink); text-align: center; }
+    .num-in:focus { outline: none; border-color: var(--subject); }
+    .row-sel { display: grid; grid-template-columns: 30px 1fr; gap: 8px; align-items: center; margin-top: 6px; font-weight: 800; }
+    .src-note { margin: 4px 0 0; font-size: 12.5px; color: #a16207; background: #fff7e0; border: 1px solid #f2d38a; border-radius: 10px; padding: 6px 9px; line-height: 1.4; }
+    @media (max-width: 599px) {
+      .readout { min-width: 0; }
+      .readout .value.txt { font-size: 15px; }
+      .stage-toolbar .spacer { display: none; }
+      .stage-toolbar .segmented button { padding: 5px 7px; font-size: 13px; }
+    }
+    input[type=range] { height: 40px; }
+    .ticks { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--muted); font-weight: 700; margin-top: -6px; padding: 0 2px; }
+  </style>
+</head>
+<body class="sim-page" data-subject="earth">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#he">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">지구과학 · Ⅰ. 대기와 해양의 상호작용</div>
+      <h1>수온·염분·용존 산소</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🌊 수온·염분·용존 산소</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="group" aria-label="장면 고르기" hidden>
+            <button type="button" data-view="map">🛰️ 위성·ARGO</button>
+            <button type="button" data-view="lat">📍 위도별</button>
+            <button type="button" data-view="prof">📈 수온 곡선</button>
+            <button type="button" data-view="evap">💧 증발−강수</button>
+            <button type="button" data-view="sat">🫧 포화 산소</button>
+            <button type="button" data-view="o2">🧩 산소 분포</button>
+            <button type="button" data-view="cmp">📋 비교</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="인공위성 표층 수온·염분 색 지도와 ARGO 부이의 연직 수온 그래프, 위도별 수온·염분 그래프, 용존 산소의 수온·깊이 분포, 두 해역의 자료 비교"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">—</span><span class="value txt" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">—</span><span class="value txt" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">—</span><span class="value txt" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+
+        <div class="control" data-modes="map">
+          <div class="control-head"><span>🛰️ 위성 색 지도</span></div>
+          <div class="opt-grid" id="mapSeg">
+            <button class="opt on" type="button" data-m="sst">🌡️ 표층 수온</button>
+            <button class="opt" type="button" data-m="sss">🧂 표층 염분</button>
+          </div>
+        </div>
+        <div class="control" data-modes="map">
+          <div class="control-head"><span>🛟 ARGO 부이 고르기</span></div>
+          <div class="opt-grid c3" id="buoySeg">
+            <button class="opt" type="button" data-b="low">저위도</button>
+            <button class="opt" type="button" data-b="mid">중위도</button>
+            <button class="opt" type="button" data-b="high">고위도</button>
+          </div>
+        </div>
+        <div class="control" data-modes="map">
+          <div class="control-head"><span>↕ 읽을 수심</span><output id="oDepth">200 m</output></div>
+          <input type="range" id="sDepth" min="0" max="2000" step="100" value="200" aria-label="읽을 수심">
+          <div class="ticks"><span>0</span><span>1000</span><span>2000 m</span></div>
+        </div>
+        <div class="control" data-modes="lat">
+          <p class="ctrl-note" style="margin-top:0">◎ 손잡이를 <b>위로 끌어</b> 오른쪽 표의 값에 맞춰 놓으면 점이 찍혀요. 모두 찍은 뒤 <b>염분이 가장 높은 점</b>을 눌러요.</p>
+          <div class="btn-row"><button class="btn btn-sm" id="bLatReset" type="button">↺ 점 지우고 다시</button></div>
+        </div>
+        <div class="control" data-modes="prof">
+          <div class="control-head"><span>🏷️ 곡선 이름표 고르기</span></div>
+          <div id="pfRows">
+            <div class="row-sel"><span>A</span><select class="mini-sel" data-tg="A" aria-label="곡선 A"><option value="">고르세요</option><option>저위도</option><option>중위도 여름</option><option>중위도 겨울</option><option>고위도</option></select></div>
+            <div class="row-sel"><span>B</span><select class="mini-sel" data-tg="B" aria-label="곡선 B"><option value="">고르세요</option><option>저위도</option><option>중위도 여름</option><option>중위도 겨울</option><option>고위도</option></select></div>
+            <div class="row-sel"><span>C</span><select class="mini-sel" data-tg="C" aria-label="곡선 C"><option value="">고르세요</option><option>저위도</option><option>중위도 여름</option><option>중위도 겨울</option><option>고위도</option></select></div>
+            <div class="row-sel"><span>D</span><select class="mini-sel" data-tg="D" aria-label="곡선 D"><option value="">고르세요</option><option>저위도</option><option>중위도 여름</option><option>중위도 겨울</option><option>고위도</option></select></div>
+          </div>
+        </div>
+        <div class="control" data-modes="evap">
+          <div class="control-head"><span>💧 증발량 − 강수량</span></div>
+          <button class="btn btn-sm btn-block" id="bEvap" type="button">📊 증발 − 강수 막대 겹쳐 보기</button>
+          <p class="ctrl-note">막대가 위쪽(+)이면 증발이 강수보다 많고, 아래쪽(−)이면 강수가 더 많아요.</p>
+        </div>
+        <div class="control" data-modes="sat">
+          <div class="control-head"><span>🌡️ 바닷물 수온</span><output id="oTemp">20 °C</output></div>
+          <input type="range" id="sTemp" min="0" max="30" step="1" value="20" aria-label="바닷물의 수온">
+          <div class="ticks"><span>0</span><span>10</span><span>20</span><span>30 °C</span></div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bRec" type="button">📝 기록</button></div>
+        </div>
+        <div class="control" data-modes="o2">
+          <p class="ctrl-note" style="margin-top:0">카드를 <b>끌어서</b> 알맞은 칸에 놓아요. (카드를 누른 뒤 칸을 눌러도 돼요.)</p>
+          <div class="btn-row"><button class="btn btn-sm" id="bO2Reset" type="button">↺ 카드 모으기</button></div>
+        </div>
+        <div class="control" data-modes="cmp">
+          <div class="control-head"><span>🌊 해역 고르기</span></div>
+          <div class="opt-grid" id="cmpArea">
+            <button class="opt" type="button" data-a="A">해역 A<br><small>적도 태평양</small></button>
+            <button class="opt" type="button" data-a="B">해역 B<br><small>북대서양 고위도</small></button>
+          </div>
+        </div>
+        <div class="control" data-modes="cmp" id="cmpReasonBox" hidden>
+          <div class="control-head"><span>💡 까닭 카드</span></div>
+          <div class="act-list" id="cmpReason" style="display:flex;flex-direction:column;gap:6px;margin-top:6px">
+            <button class="opt" type="button" style="text-align:left;font-size:14px;padding:8px 10px"></button>
+            <button class="opt" type="button" style="text-align:left;font-size:14px;padding:8px 10px"></button>
+            <button class="opt" type="button" style="text-align:left;font-size:14px;padding:8px 10px"></button>
+          </div>
+        </div>
+        <div class="control" data-modes="map lat prof evap sat o2 cmp"><p class="src-note">모든 지도·그래프·표의 값은 교육용 <b>예시 자료</b>예요. 실제 자료는 기상청·국립해양조사원·ARGO 누리집에서 확인해 볼 수 있어요.</p></div>
+
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

@@ -529,8 +529,8 @@
     if (o.border) { D.roundRect(r.x, r.y, r.w, r.h, 10); ctx.strokeStyle = o.border; ctx.lineWidth = 2.5; ctx.stroke(); }
     ctx.save(); if (o.alpha != null) ctx.globalAlpha = o.alpha;
     if (r.w > r.h * 1.6) {
-      sprite(i, r.x + 22, r.y + r.h - 6, (r.h - 12) / SPRITE_H[i] * 0.95, 0, { still: true });
-      T(r.x + 44, r.y + r.h / 2 + 5, PL[i].n, fitText(PL[i].n, r.w - 50, 14, 800, 12.5), '#1b2333', 'left', 800);
+      sprite(i, r.x + 26, r.y + r.h / 2 + Math.min(0.36, (r.h - 14) / SPRITE_H[i]) * SPRITE_H[i] * 0.5, Math.min(0.36, (r.h - 14) / SPRITE_H[i]), 0, { still: true });
+      T(r.x + 54, r.y + r.h / 2 + 5, PL[i].n, fitText(PL[i].n, r.w - 60, 14, 800, 12.5), '#1b2333', 'left', 800);
     } else {
       sprite(i, r.x + r.w / 2, r.y + r.h - 24, Math.min(0.62, 36 / SPRITE_H[i] * 1.1), 0, { still: true });
       T(r.x + r.w / 2, r.y + r.h - 7, PL[i].n, 13, '#1b2333', 'center', 800);
@@ -824,7 +824,7 @@
     S.book = { sel: 0, cards: PL.map(() => ({ hab: '', ph: null, ev: [], saved: false, flip: 1 })), view: 'card', gal: 0, galK: 0, msg: '' };
     S.grp = { sel: -1, ph: PL.map((p, i) => (i === 5 ? 2 : p.ph)), pos: PL.map(() => null), tapped: false, moves: 0 };
   }
-  const BK = L({ x: 20, y: 90, w: 760, h: 450 }, { x: 10, y: 128, w: 460, h: 500 });
+  const BK = L({ x: 20, y: 100, w: 760, h: 446 }, { x: 10, y: 128, w: 460, h: 500 });
   function tabRect(i) { const w = L(90, 112), h = L(34, 38); return PHONE ? { x: 10 + (i % 4) * 116, y: 40 + Math.floor(i / 4) * 44, w, h } : { x: 20 + i * 95, y: 44, w, h }; }
   function galPos(i, grouped) {      // 갤러리 카드 위치
     const colW = L(180, 112), cw = L(168, 106), ch = L(70, 56);
@@ -864,19 +864,19 @@
     const row = (lab, val, ph) => {
       T(tx, ty, lab, 13.5, '#8a7f55', 'left', 800);
       if (val) { const s = fitText(val, tw, L(17, 15.5), 800, 13.5); T(tx, ty + L(24, 22), val, s, ph != null ? PH[ph].col : '#1b2333', 'left', 800); }
-      else T(tx, ty + L(24, 22), '— 오른쪽 패널에서 골라요 —', L(15, 14), '#c7bfa0', 'left', 700);
+      else T(tx, ty + L(24, 22), '— ' + L('오른쪽', '아래') + ' 패널에서 골라요 —', L(15, 14), '#c7bfa0', 'left', 700);
       ty += L(62, 54);
     };
     row('서식지', c.hab); row('소속 문', c.ph != null ? PH[c.ph].n : '', c.ph);
     T(tx, ty, '근거 형질 (2개)', 13.5, '#8a7f55', 'left', 800);
     c.ev.forEach((id, k) => { const e = EVID.find((x) => x.id === id); chip(tx, ty + 28 + k * 38, e.t, { size: L(15, 14), bg: '#fff', border: '#16a34a', color: '#0b6b39', pad: 12, h: 30 }); });
-    if (!c.ev.length) T(tx, ty + L(30, 26), '— 오른쪽 패널에서 골라요 —', L(15, 14), '#c7bfa0', 'left', 700);
+    if (!c.ev.length) T(tx, ty + L(30, 26), '— ' + L('오른쪽', '아래') + ' 패널에서 골라요 —', L(15, 14), '#c7bfa0', 'left', 700);
     ctx.restore();
     if (B.msg) { T(VW / 2, VH - 12, B.msg, 14, '#b91c1c', 'center', 800); }
   }
   function drawGallery(dt, t) {
     const B = S.book;
-    T(L(20, 12), BK.y - 6, '📚 우리 정원 식물도감: 문별로 모아 봤어요', L(17, 14.5), '#14532d', 'left', 800);
+    if (!PHONE) T(20, BK.y - 6, '📚 우리 정원 식물도감: 문별로 모아 봤어요', 17, '#14532d', 'left', 800);
     const colW = L(180, 112);
     for (let ph = 0; ph < 4; ph++) {
       const x = BK.x + ph * (colW + L(10, 4)), op = clamp(B.galK * 1.5, 0, 1);
@@ -922,7 +922,7 @@
     const G2 = S.grp;
     bgFill('#fbf6e9', '#f7f1e0');
     T(L(20, 12), 30, '👥 모둠 도감: 잘못 분류된 카드를 찾아요', L(17, 14.5), '#14532d', 'left', 800);
-    T(L(20, 12), L(60, 58), '카드를 눌러 근거를 읽고, 오른쪽 패널에서 알맞은 문으로 옮겨요', L(14.5, 13.5), '#64748b', 'left', 700);
+    T(L(20, 12), L(60, 58), '카드를 눌러 근거를 읽고, ' + L('오른쪽', '아래') + ' 패널에서 알맞은 문으로 옮겨요', L(14.5, 13.5), '#64748b', 'left', 700);
     for (let ph = 0; ph < 4; ph++) { const x = BK.x + ph * (GCOL + L(10, 4)); box({ x: x + L(4, 0), y: BK.y + 8, w: GCW, h: 36 }, PH[ph].n, { bg: PH[ph].col, color: '#fff', size: 14.5, r: 12 }); }
     const order = PL.map((p, i) => i).sort((a, b) => (a === G2.sel) - (b === G2.sel));
     order.forEach((i) => {
