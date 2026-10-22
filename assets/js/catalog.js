@@ -5711,8 +5711,7 @@ window.SCI_CATALOG = {
                 "일식 종류",
                 "그림자 궤적",
                 "월식 종류"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "he-planet-motion",
@@ -5733,8 +5732,7 @@ window.SCI_CATALOG = {
                 "내행성",
                 "외행성",
                 "역행"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "he-spectral-type",
@@ -5755,8 +5753,7 @@ window.SCI_CATALOG = {
                 "분광형",
                 "온도와 흡수선",
                 "별의 분류"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "he-blackbody",
