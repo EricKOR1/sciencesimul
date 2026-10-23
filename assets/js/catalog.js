@@ -7539,8 +7539,7 @@ window.SCI_CATALOG = {
                 "양성자 이동",
                 "짝산·짝염기",
                 "구별하기"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hr-acid-strength",
@@ -7561,8 +7560,7 @@ window.SCI_CATALOG = {
                 "이온화 모형",
                 "Ka로 순위",
                 "짝산·짝염기"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hr-weak-ph",
@@ -7583,8 +7581,7 @@ window.SCI_CATALOG = {
                 "평형 표",
                 "근사식",
                 "농도와 pH"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hr-titration-strong",

@@ -277,7 +277,7 @@
     const c0 = tb.x + 12, c1 = tb.x + (PHONE ? 104 : 160), c2 = tb.x + (PHONE ? 158 : 280), c3 = tb.x + (PHONE ? 228 : 400);
     T(c0, tb.y + 22, '용액', 13, MUTED, 'left', 800); T(c1, tb.y + 22, '예측 ▽', 13, MUTED, 'left', 800); T(c2, tb.y + 22, '측정 ●', 13, MUTED, 'left', 800); if (!PHONE) T(c3, tb.y + 22, '예측 − 측정', 13, MUTED, 'left', 800);
     SK.forEach((k, i) => {
-      const yy = tb.y + 44 + i * 19, p = w.pred[k], d = w.done[k];
+      const yy = tb.y + (PHONE ? 40 : 44) + i * (PHONE ? 17 : 19), p = w.pred[k], d = w.done[k];
       T(c0, yy, SOL[k].f + (PHONE ? '' : ' (' + SOL[k].kind + ')'), PHONE ? 13 : 14, SOL[k].col, 'left', 800);
       T(c1, yy, p != null ? p.toFixed(1) : '—', 14, INK, 'left', 800); T(c2, yy, d ? SOL[k].meas.toFixed(2) : '—', 14, d ? INK : '#9ca3af', 'left', 800);
       if (!PHONE) T(c3, yy, d && p != null ? (p - SOL[k].meas >= 0 ? '+' : MINUS) + Math.abs(p - SOL[k].meas).toFixed(2) : '—', 14, INK, 'left', 800);
@@ -476,12 +476,12 @@
     // pH 그래프 (가로: −log C, 세로: pH)
     const gr = g.gr; D.roundRect(gr.x, gr.y, gr.w, gr.h, 12); ctx.fillStyle = '#fff'; ctx.fill(); ctx.strokeStyle = '#e3def5'; ctx.lineWidth = 2; ctx.stroke();
     const px0 = gr.x + 34, px1 = gr.x + gr.w - 14, py0 = gr.y + 28, py1 = gr.y + gr.h - 32, X = (v) => px0 + (v - 0.5) / 3 * (px1 - px0), Y = (v) => py1 - v / 5 * (py1 - py0);
-    T(gr.x + 10, gr.y + 18, 'pH 그래프', 13.5, INK, 'left', 800);
+    T(gr.x + 10, gr.y + 18, PHONE ? 'pH 그래프 (● HCl ● 정확)' : 'pH 그래프', PHONE ? 12.5 : 13.5, INK, 'left', 800);
     ctx.strokeStyle = '#e5e9f2'; ctx.lineWidth = 1.2;
     for (let y = 0; y <= 5; y++) { ctx.beginPath(); ctx.moveTo(px0, Y(y)); ctx.lineTo(px1, Y(y)); ctx.stroke(); T(px0 - 6, Y(y) + 4.5, String(y), 12.5, MUTED, 'right', 700); }
     for (let x = 1; x <= 3; x++) { ctx.beginPath(); ctx.moveTo(X(x), py0); ctx.lineTo(X(x), py1); ctx.stroke(); T(X(x), py1 + 16, String(x), 12.5, MUTED, 'center', 700); }
     ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(px0, py0 - 4); ctx.lineTo(px0, py1); ctx.lineTo(px1, py1); ctx.stroke();
-    T((px0 + px1) / 2, gr.y + gr.h - 6, '−log C  (1 = 0.10 M, 2 = 0.010 M, 3 = 0.0010 M)', PHONE ? 11 : 11.5, MUTED, 'center', 700);
+    T((px0 + px1) / 2, gr.y + gr.h - 6, PHONE ? '−log C (1=0.10, 2=0.010, 3=0.0010 M)' : '−log C  (1 = 0.10 M, 2 = 0.010 M, 3 = 0.0010 M)', PHONE ? 11 : 11.5, MUTED, 'center', 700);
     // 현재 농도 표시선
     const cxp = X(1 + c.pv); ctx.strokeStyle = 'rgba(139,92,246,.55)'; ctx.lineWidth = 2; ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.moveTo(cxp, py0); ctx.lineTo(cxp, py1); ctx.stroke(); ctx.setLineDash([]);
     const series = [{ key: 'hcl', name: '● HCl', col: '#dc2626', vals: [1, 2, 3] }, { key: 'ex', name: '● CH₃COOH 정확', col: '#d97706', vals: ccExact }];
@@ -491,7 +491,7 @@
       pts.forEach((q) => { const r = 6 * SPL.outBack(clamp(c.pop[q[2]] || 1, 0, 1)); D.sphere(q[0], q[1], Math.max(0.1, r), sr.col, { gloss: false, outline: '#fff', outlineWidth: 1.5 }); });
     });
     for (let k = 0; k < 3; k++) if (c.rec[k]) { const r = 5.5 * SPL.outBack(clamp(c.pop[k] || 1, 0, 1)); ctx.strokeStyle = '#d97706'; ctx.lineWidth = 2; ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(X(k + 1), Y(ccApprox[k]), Math.max(0.1, r + 4), 0, TAU); ctx.stroke(); }
-    T(px1 - 2, gr.y + 18, '● HCl  ● CH₃COOH(정확)  ○ 근사', PHONE ? 11 : 11.5, MUTED, 'right', 700);
+    if (!PHONE) T(px1 - 2, gr.y + 18, '● HCl  ● CH₃COOH(정확)  ○ 근사', 11.5, MUTED, 'right', 700);
     // 근사 조건 게이지 (x/C와 5 % 선)
     const ga = g.ga; D.roundRect(ga.x, ga.y, ga.w, ga.h, 12); ctx.fillStyle = '#faf8ff'; ctx.fill(); ctx.strokeStyle = '#e3def5'; ctx.lineWidth = 2; ctx.stroke();
     T(ga.x + 10, ga.y + 18, '근사 조건 x/C', 13.5, INK, 'left', 800);
