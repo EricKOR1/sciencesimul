@@ -338,7 +338,7 @@
     const hy = Y(p.h), cr = crossT(f, p.h);
     ctx.save(); ctx.setLineDash([8, 5]); ctx.strokeStyle = '#e2552a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(ox - 6, hy); ctx.lineTo(g.right, hy); ctx.stroke(); ctx.restore();
     D.roundRect(ox - 22, hy - 11, 22, 22, 6); ctx.fillStyle = '#e2552a'; ctx.fill(); T(ox - 11, hy + 5, '↕', 13, '#fff', 'center', 800);
-    D.label(g.right - 6, hy - 14, 'h = ' + p.h.toFixed(1) + ' m', { bg: '#e2552a', size: 13, align: 'right' });
+    D.label(g.right - 6, hy + 16, 'h = ' + p.h.toFixed(1) + ' m', { bg: '#e2552a', size: 13, align: 'right' });
     // 교차점 표시
     if (cr) [cr.up, cr.down].forEach((tt, i) => { const q = posF(f, tt); ctx.strokeStyle = '#e2552a'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(X(q.x), Y(q.y), 8, 0, TAU); ctx.stroke(); });
     else labIn((ox + g.right) / 2, hy + 24, '이 각도로는 h = ' + p.h.toFixed(1) + ' m까지 올라가지 못해요 (최고점 ' + f.H.toFixed(1) + ' m)', { bg: '#5a6679', size: 13 }, 8, VW - 8);
@@ -359,7 +359,7 @@
     }
     // 에너지 막대 (오른쪽 카드)
     const Etot = 0.5 * mm * V0 * V0, emax = Math.max(30, Math.ceil(Etot * 1.15 / 10) * 10);
-    const rc = PHONE ? { x: PX + 8, y: PY + 6, w: 150, h: PH - 12 } : { x: VW - 190, y: 44, w: 180, h: SH - 56 };
+    const rc = PHONE ? { x: PX + 8, y: PY + 6, w: 150, h: PH - 12 } : { x: VW - 190, y: 44, w: 180, h: gy - 50 };
     S.bar.ek = approach(S.bar.ek, Et.ek, dt, 12); S.bar.ep = approach(S.bar.ep, Et.ep, dt, 12);
     if (PHONE) panel(PX, PY, PW, PH, 16);
     energyBars(rc, S.bar.ek, S.bar.ep, emax, 'm = ' + mm.toFixed(1) + ' kg (E = ' + Etot.toFixed(0) + ' J)');
@@ -395,9 +395,9 @@
     card(rc.x, rc.y, rc.w, rc.h);
     T(rc.x + 10, rc.y + 20, '📋 h = ' + h.toFixed(1) + ' m에서 측정한 속력', 13.5, '#26324a', 'left', 800);
     [0.5, 2].forEach((m, i) => {
-      const r = p.rows[m], y = rc.y + 54 + i * 34;
-      T(rc.x + 10, y, 'm = ' + m.toFixed(1) + ' kg', 14, '#26324a', 'left', 800);
-      T(rc.x + 10, y + 18, r && r.up != null ? '올라갈 때 ' + r.up.toFixed(1) + ' · 내려올 때 ' + r.down.toFixed(1) + ' m/s (' + r.th + '°, h = ' + r.h.toFixed(1) + ')' : '아직 던지지 않았어요', 13, r ? '#0b6b39' : '#98a2b3', 'left', 800);
+      const r = p.rows[m], y = rc.y + 52 + i * 52;
+      T(rc.x + 10, y, 'm = ' + m.toFixed(1) + ' kg' + (r ? ' (' + r.th + '°)' : ''), 14, '#26324a', 'left', 800);
+      T(rc.x + 10, y + 20, r && r.up != null ? '올라갈 때 ' + r.up.toFixed(1) + ' · 내려올 때 ' + r.down.toFixed(1) + ' m/s' : '아직 던지지 않았어요', 13.5, r ? '#0b6b39' : '#98a2b3', 'left', 800);
     });
   }
 
@@ -455,7 +455,7 @@
       ctx.strokeStyle = '#e2552a'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(rx - rr, ry); ctx.lineTo(rx + rr, ry); ctx.stroke();
       ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = 1.5; for (let i = -2; i <= 2; i++) { ctx.beginPath(); ctx.moveTo(rx + i * rr / 2, ry); ctx.lineTo(rx + i * rr / 3.2, ry + 0.5 * s); ctx.stroke(); }
       ctx.beginPath(); ctx.moveTo(rx - rr * 0.7, ry + 0.25 * s); ctx.lineTo(rx + rr * 0.7, ry + 0.25 * s); ctx.stroke();
-      labIn(rx, ry - 26, '림 3.05 m', { bg: '#e2552a', size: 13 }, 8, VW - 8);
+      labIn(rx - 10, ry + 0.75 * s, '림 3.05 m', { bg: '#e2552a', size: 13, align: 'right' }, 8, VW - 8);
       // 던지는 사람 (릴리스 높이 2.0 m)
       ctx.strokeStyle = '#5a6679'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(X(-0.1), gy); ctx.lineTo(X(-0.1), Y(1.3)); ctx.stroke(); ctx.beginPath(); ctx.moveTo(X(-0.1), Y(1.3)); ctx.lineTo(X(0), Y(2.0)); ctx.stroke();
       D.sphere(X(-0.1), Y(1.65) - 0, 0.01, '#fff', { gloss: false });
@@ -480,27 +480,28 @@
       if (def === 'b' && a.st === 'done' && a.res) labIn(VW / 2, 60, a.res.ok ? '🎉 골인! 림을 지날 때 높이 ' + a.res.y.toFixed(2) + ' m' : '림을 벗어났어요', { bg: a.res.ok ? '#14a058' : '#e2552a', size: 14 }, 8, VW - 8);
     }
     // 오른쪽 위: 도달 시간 · 속력 막대 (a)
-    if (def === 'a') {
-      const rc = PHONE ? { x: 220, y: 44, w: VW - 228, h: 122 } : { x: 520, y: 44, w: VW - 530, h: 128 };
+    const apCard = (rc) => {
       card(rc.x, rc.y, rc.w, rc.h);
-      T(rc.x + 10, rc.y + 20, '⏱ 지면 도달 시간과 속력', 13, '#26324a', 'left', 800);
+      T(rc.x + 10, rc.y + 20, '⏱ 지면 도달 시간과 속력(m/s)', 13, '#26324a', 'left', 800);
       flights.forEach(({ b, f }, i) => {
-        const y = rc.y + 38 + i * 28, wmax = rc.w - 130, tt = Math.min(t, f.T), arrived = a.st !== 'idle' && t >= f.T - 1e-9;
+        const y = rc.y + 38 + i * 28, wmax = rc.w - 190, tt = Math.min(t, f.T), arrived = a.st !== 'idle' && t >= f.T - 1e-9;
         T(rc.x + 10, y + 14, b.nm, 13, '#26324a', 'left', 800);
         ctx.fillStyle = '#eef1f7'; ctx.fillRect(rc.x + 86, y + 2, wmax, 14);
         ctx.fillStyle = b.col; ctx.fillRect(rc.x + 86, y + 2, wmax * (a.st === 'idle' ? 0 : tt) / 2.0, 14);
-        T(rc.x + 90 + wmax, y + 14, arrived ? f.T.toFixed(2) + ' s · ' + speedF(f, f.T).toFixed(1) : '', 13, '#26324a', 'left', 800);
+        T(rc.x + 92 + wmax, y + 14, arrived ? f.T.toFixed(2) + ' s · ' + speedF(f, f.T).toFixed(1) : '', 13, '#26324a', 'left', 800);
       });
-    } else if (!PHONE) {
+    };
+    if (def === 'a' && !PHONE) apCard({ x: 520, y: 44, w: VW - 530, h: 128 });
+    else if (def === 'b' && !PHONE) {
       const f = flights[0].f, e = ENDS.b;
       const tt = a.st === 'idle' ? 0 : Math.min(a.t, f.T), sp = speedF(f, tt), q = posF(f, tt);
-      const Etot = 0.5 * 0.6 * e.v0 * e.v0;  // 농구공 약 0.6 kg
-      const rc = { x: VW - 190, y: 44, w: 180, h: SH - 56 };
+      const rc = { x: VW - 190, y: 44, w: 180, h: gy - 50 };
       const ek = 0.5 * 0.6 * sp * sp, ep = 0.6 * G * (q.y - e.h0);
       S.bar.ek = approach(S.bar.ek, ek, dt, 12); S.bar.ep = approach(S.bar.ep, ep, dt, 12);
-      energyBars(rc, S.bar.ek, S.bar.ep, 30, 'm = 0.6 kg: E_p는 릴리스 높이 기준');
+      energyBars(rc, S.bar.ek, S.bar.ep, 30, 'm = 0.6 kg');
     }
     drawApplyPanel(a, flights);
+    if (def === 'a' && PHONE) apCard({ x: PX + 8, y: PY + PH - 128, w: PW - 16, h: 120 });
     parts.update(dt); parts.draw(ctx);
   }
   function drawApplyPanel(a, flights) {

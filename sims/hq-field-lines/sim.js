@@ -434,7 +434,7 @@
       lbl(p.x + 28, p.y - 18, v + ' V', { bg: a[2], color: '#fff', size: PHONE ? 12 : 13.5 });
       if (l.drag === a[0]) D.ring(p.x, p.y, 15, S.t, { color: a[2], width: 2 });
     });
-    if (!S.seenXY && S.t > 1.5 && !msk2()) T(AR.x0 + 14, AR.y1 - 14, '점 X, Y를 끌어 등전위선 위에 올려 보세요', PHONE ? 12 : 13.5, '#9a3412', 'left', 800);
+    if (!S.seenXY && S.t > 1.5 && S.t < 12 && !msk2()) T(AR.x0 + 14, AR.y1 - 14, '점 X, Y를 끌어 등전위선 위에 올려 보세요', PHONE ? 12 : 13.5, '#9a3412', 'left', 800);
     drawEquiPanel();
   }
   function drawEquiPanel() {
