@@ -7024,8 +7024,7 @@ window.SCI_CATALOG = {
                 "몰 분율",
                 "분압 계산",
                 "혼합 기체 설계"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hx-intermolecular",

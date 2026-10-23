@@ -68,7 +68,7 @@
   /* ================= 상수 ================= */
   const G = 10, M = 0.50, FDT = 0.2, NFMAX = 9;
   const V0 = 10, E0 = 0.5 * M * V0 * V0;                    // 영상 속 공: v₀ = 10 m/s (53°), 처음 에너지 25 J
-  const NOISE = [0, 0.03, -0.02, 0.02, -0.03, 0.03, -0.02, 0.02, 0];   // 위치 읽기 오차 (m): 눈금 오차 때문에 E의 합이 조금 흔들려요
+  const NOISE = [0, 0.06, -0.04, 0.05, -0.06, 0.06, -0.04, 0.05, 0];   // 위치 읽기 오차 (m): 눈금 오차 때문에 E의 합이 조금 흔들려요
   const AIR_C = 0.033;                                      // 공기 저항 계수 (a = −c|v|v, 1/m)
   const ENDS = { a: { h0: 5, v0: 10 }, b: { h0: 2.0, v0: 7.5, th: 59, rx: 4.2, ry: 3.05 } };
 
@@ -204,7 +204,7 @@
   function drawCalcCard(rc, row) {
     card(rc.x, rc.y, rc.w, rc.h);
     T(rc.x + 10, rc.y + 22, '🧮 이 프레임의 속력 계산', 13.5, '#26324a', 'left', 800);
-    const k = S.vd.fr, ok = vReady(k), lh = PHONE ? 25 : 31, x0 = rc.x + 12, y0 = rc.y + 54, fs = PHONE ? 13 : 14.5;
+    const k = S.vd.fr, ok = vReady(k), lh = PHONE ? 21 : 31, x0 = rc.x + 12, y0 = rc.y + (PHONE ? 46 : 54), fs = PHONE ? 13 : 14.5;
     if (!ok) {
       T(x0, y0, k === 0 || k === NF() - 1 ? '양 끝 프레임은 이웃이 한쪽뿐이라' : '앞 프레임과 뒤 프레임을 모두', fs, '#5a6679', 'left', 800);
       T(x0, y0 + lh * 0.85, k === 0 || k === NF() - 1 ? '속력을 구하지 않아요.' : '찍으면 속력이 계산돼요.', fs, '#5a6679', 'left', 800);
@@ -359,11 +359,11 @@
     }
     // 에너지 막대 (오른쪽 카드)
     const Etot = 0.5 * mm * V0 * V0, emax = Math.max(30, Math.ceil(Etot * 1.15 / 10) * 10);
-    const rc = PHONE ? { x: PX + 8, y: PY + 6, w: 150, h: PH - 12 } : { x: VW - 190, y: 44, w: 180, h: gy - 50 };
+    const rc = PHONE ? { x: PX + 8, y: PY + 150, w: PW - 16, h: PH - 158 } : { x: VW - 190, y: 44, w: 180, h: gy - 50 };
     S.bar.ek = approach(S.bar.ek, Et.ek, dt, 12); S.bar.ep = approach(S.bar.ep, Et.ep, dt, 12);
     if (PHONE) panel(PX, PY, PW, PH, 16);
-    energyBars(rc, S.bar.ek, S.bar.ep, emax, 'm = ' + mm.toFixed(1) + ' kg (E = ' + Etot.toFixed(0) + ' J)');
     drawSpeedPanel(p, f);
+    energyBars(rc, S.bar.ek, S.bar.ep, emax, 'm = ' + mm.toFixed(1) + ' kg (E = ' + Etot.toFixed(0) + ' J)');
     parts.update(dt); parts.draw(ctx);
   }
   function energyBars(rc, ek, ep, emax, title) {
@@ -380,7 +380,7 @@
   }
   function drawSpeedPanel(p, f) {
     if (!PHONE) panel(PX, PY, PW, PH, 16);
-    const x0 = PHONE ? PX + 14 : PX + 14, lh = PHONE ? 24 : 27, fs = PHONE ? 13 : 14.5, y0 = PY + 25;
+    const x0 = PX + 14, lh = PHONE ? 24 : 27, fs = PHONE ? 13 : 14.5, y0 = PY + 25;
     const hide = eff('hide'), q = (s) => (hide ? '?' : s), h = p.h, v2 = V0 * V0 - 2 * G * h;
     const L = [
       ['처음 에너지 E = ½mv₀² = ½ × ' + p.m.toFixed(1) + ' × 10² = ' + (0.5 * p.m * V0 * V0).toFixed(0) + ' J (모두 E_k)'],
@@ -389,8 +389,8 @@
       ['v = ' + q(v2 >= 0 ? Math.sqrt(v2).toFixed(1) + ' m/s' : '—') + '  (올라갈 때와 내려올 때 같아요)', '#c2410c'],
       ['최고점 H = ' + f.H.toFixed(1) + ' m: v = v₀cosθ = ' + f.vx.toFixed(1) + ' m/s (0이 아니에요)', '#0b6b39'],
     ];
-    if (PHONE) { lines(x0, PY + 6 + 0 + 188, lh, fs, L.slice(1)); return; }
     lines(x0, y0, lh, fs, L);
+    if (PHONE) return;
     const rc = { x: PX + 520, y: PY + 8, w: PW - 528, h: PH - 16 };
     card(rc.x, rc.y, rc.w, rc.h);
     T(rc.x + 10, rc.y + 20, '📋 h = ' + h.toFixed(1) + ' m에서 측정한 속력', 13.5, '#26324a', 'left', 800);
@@ -516,7 +516,7 @@
         ['½mv₀² + mgh₀ = ½mv²  →  v = √(v₀² + 2gh₀)', '#6d3fd6'],
         ['v = √(10² + 2 × 10 × 5) = √200 = ' + q(v.toFixed(1) + ' m/s'), '#c2410c'],
         ['방향(위·수평·아래)과 질량에 관계없이 속력은 같아요', '#0b6b39'],
-        ['다른 것은 도달 시간: 아래로 던진 공이 가장 빨리, 위로 던진 공이 가장 늦게 닿아요', '#5a6679'],
+        [PHONE ? '다른 것은 도달 시간(아래 < 수평 < 위)이에요' : '다른 것은 도달 시간: 아래로 던진 공이 가장 빨리, 위로 던진 공이 가장 늦게 닿아요', '#5a6679'],
       ];
     } else {
       const e = ENDS.b, v = Math.sqrt(e.v0 * e.v0 - 2 * G * (e.ry - e.h0));
@@ -622,7 +622,7 @@
       title: '영상 분석: 프레임에서 속력 구하기', short: '영상 분석', icon: '🎞️', phase: '분석',
       intro: '<p class="si-q">❓ 탐구 질문: 던진 공의 운동 에너지는 올라갈 때 줄었다가 내려올 때 다시 늘어난다. 그 사이 에너지는 어디로 갔다 올까? 한 순간만 보고도 속력을 알 수 있을까?</p>' +
         '<div class="si-link">🔗 <b>앞 차시에서</b> 던진 공의 운동을 수평 등속 + 연직 등가속도로 설명했고, <b>물리학</b>에서 운동 에너지 E<sub>k</sub> = ½mv², 중력 위치 에너지 E<sub>p</sub> = mgh, 역학적 에너지 보존을 배웠어요. 이번에는 <b>같은 영상</b>(0.50 kg 공, v₀ = 10 m/s, 53°)에서 에너지를 구해 봐요.</div>' +
-        '<p>영상의 프레임마다 공의 위치를 찍으면, <b>앞뒤 프레임의 위치 차이 ÷ 시간 간격</b>으로 속력을 구할 수 있어요. 위치를 읽는 눈금에는 작은 오차가 있어요(±0.03 m).</p>',
+        '<p>영상의 프레임마다 공의 위치를 찍으면, <b>앞뒤 프레임의 위치 차이 ÷ 시간 간격</b>으로 속력을 구할 수 있어요. 위치를 읽는 눈금에는 작은 오차가 있어요(±0.05 m).</p>',
       features: ['video'],
       setup() { resetVid(false, false); S.eShow = false; setFlag('mE', false); setScene('video'); },
       recap: '프레임의 위치 차이로 속력 v = √(vx² + vy²)를 구하고, 이것으로 E_k = ½mv², E_p = mgy를 계산해요.',
@@ -690,7 +690,7 @@
             return true;
           },
           status: () => 'E 평균 ' + ($('#iEm').value.trim() || '—') + ' J · 오차 ± ' + ($('#iEe').value.trim() || '—') + ' J',
-          explain: '일곱 프레임의 E는 모두 약 <b>25 J ± ' + eSpread().toFixed(1) + ' J</b>(평균 ' + eMean().toFixed(1) + ' J)예요. 위치를 읽는 눈금에 ±0.03 m 정도의 오차가 있어서 합이 조금씩 흔들리지만, 오차 범위 안에서 <b>역학적 에너지는 일정</b>해요.',
+          explain: '일곱 프레임의 E는 모두 약 <b>25 J ± ' + eSpread().toFixed(1) + ' J</b>(평균 ' + eMean().toFixed(1) + ' J)예요. 위치를 읽는 눈금에 ±0.05 m 정도의 오차가 있어서 합이 조금씩 흔들리지만, 오차 범위 안에서 <b>역학적 에너지는 일정</b>해요.',
         },
         {
           title: '공기 저항을 켜고 비교하기',

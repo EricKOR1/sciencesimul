@@ -287,7 +287,7 @@
         if (a.t <= 0) {
           if (a.n < 3) { a.n++; a.t = 0.55; o.drops.push({ x: o.dr.x, y: o.dr.y + 12, vy: 40, key: a.key }); } else { a.phase = 2; a.t = 0.5; }
         }
-      } else { a.t -= dt; if (a.t <= 0) o.act = null; }
+      } else { a.t -= dt; if (a.t <= 0) { o.act = null; updateCtl(); } }
     }
     const surf = g.by + 5 + (g.bh - 11) * (1 - OB_LEVEL);
     for (let i = o.drops.length - 1; i >= 0; i--) {
