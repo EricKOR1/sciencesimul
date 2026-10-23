@@ -6444,8 +6444,7 @@ window.SCI_CATALOG = {
                 "등전위면",
                 "균일한 장",
                 "그림 해석"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hq-electrostatic-induction",
@@ -6466,8 +6465,7 @@ window.SCI_CATALOG = {
                 "유도 대전",
                 "유전 분극",
                 "생활 속 적용"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hq-magnetic-field",

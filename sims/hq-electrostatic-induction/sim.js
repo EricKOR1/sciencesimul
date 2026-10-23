@@ -126,7 +126,7 @@
 
   /* ================= ① 정전기 유도 ================= */
   const G1 = PHONE ? { ax0: 168, rw: 92, rh: 38, sepMax: 70, y: 232, bR: 26, bx0: 44, SR: 90, es: 9, bars: { y: 402, sc: 10, cx: 240 }, panelY: 320 }
-    : { ax0: 250, rw: 150, rh: 44, sepMax: 110, y: 240, bR: 36, bx0: 62, SR: 150, es: 12, bars: { y: 420, sc: 15, cx: 400 }, panelY: 350 };
+    : { ax0: 250, rw: 150, rh: 44, sepMax: 110, y: 210, bR: 36, bx0: 62, SR: 150, es: 12, bars: { y: 410, sc: 15, cx: 400 }, panelY: 340 };
   G1.bx1 = G1.ax0 - 14 - G1.bR;
   const rodA = () => ({ x0: G1.ax0, x1: G1.ax0 + G1.rw });
   const rodB = () => { const x0 = G1.ax0 + G1.rw + 2 + S.ind.sep * G1.sepMax; return { x0, x1: x0 + G1.rw }; };
@@ -238,8 +238,8 @@
   function indMove(p) { const f = S.ind; if (f.drag) f.bx = clamp(p.x + f.dOff, G1.bx0, G1.bx1); }
 
   /* ================= ② 유도 대전 : 검전기 · 정전 차폐 ================= */
-  const SP = PHONE ? { cx: 214, dy: 236, dw: 38, jx: 154, jy: 318, jw: 120, jh: 142, py: 352, ll: 62, rodL: 108, near: 214 + 38 + 22, far: 214 + 38 + 22 + 92, gx: 70, gy: 548, panelY: 470 }
-    : { cx: 400, dy: 232, dw: 50, jx: 330, jy: 300, jw: 140, jh: 170, py: 345, ll: 80, rodL: 150, near: 400 + 50 + 22, far: 400 + 50 + 22 + 146, gx: 262, gy: 506, panelY: 0 };
+  const SP = PHONE ? { cx: 214, dy: 236, dw: 38, jx: 154, jy: 318, jw: 120, jh: 142, py: 352, ll: 62, rodL: 96, hl: 24, near: 214 + 38 + 22, far: 214 + 38 + 22 + 76, gx: 70, gy: 548, panelY: 470 }
+    : { cx: 400, dy: 232, dw: 50, jx: 330, jy: 300, jw: 140, jh: 170, py: 345, ll: 80, rodL: 130, hl: 30, near: 400 + 50 + 22, far: 400 + 50 + 22 + 120, gx: 262, gy: 506, panelY: 0 };
   const KQ = 6;
   const scS = () => Math.pow(clamp(1 - (S.sc.xt - SP.near) / (SP.far - SP.near), 0, 1), 2);
   function initScope() { const s = S.sc; if (s.tw) s.tw.cancel(); s.tw = null; s.xt = SP.far; s.grounded = false; s.Qt = 0; s.Ql = 0; s.Qd = 0; s.leaf = 0; s.flags = {}; s.grSigma = 0; s.drag = false; s.flow = []; }
@@ -286,7 +286,7 @@
     ctx.strokeStyle = '#d4a017'; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(cx, SP.py); ctx.lineTo(lx, ly); ctx.moveTo(cx, SP.py); ctx.lineTo(rx, ly); ctx.stroke();
     D.shadow(() => { ctx.fillStyle = '#cbd5e1'; ctx.beginPath(); ctx.ellipse(cx, SP.dy, SP.dw, PHONE ? 8 : 10, 0, 0, TAU); ctx.fill(); }, { blur: 5, y: 2 });
     ctx.strokeStyle = '#64748b'; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(cx, SP.dy, SP.dw, PHONE ? 8 : 10, 0, 0, TAU); ctx.stroke();
-    T(cx + SP.dw + 10, SP.dy - 18, '금속판', PHONE ? 12 : 13, '#26324a', 'left', 800); T(cx + SP.jw / 2 + 8, SP.py + 22, '금박', PHONE ? 12 : 13, '#26324a', 'left', 800);
+    T(cx + SP.dw + 8, SP.dy + 24, '금속판', PHONE ? 12 : 13, '#26324a', 'left', 800); T(cx + SP.jw / 2 + 8, SP.py + 22, '금박', PHONE ? 12 : 13, '#26324a', 'left', 800);
     // 전하 기호
     const dpts = []; for (let i = 0; i < 8; i++) dpts.push([cx - SP.dw + 14 + i * (2 * SP.dw - 28) / 7, SP.dy - (i % 2 ? 6 : 14) - (PHONE ? 2 : 4)]);
     symbols(Math.abs(s.Qd), Math.sign(s.Qd), dpts);
@@ -295,13 +295,13 @@
     // 막대 (대전체)
     const ry = SP.dy, rx0 = s.xt, ccol = s.sign > 0 ? POS : NEG;
     D.shadow(() => { D.roundRect(rx0, ry - 14, SP.rodL, 28, 14); ctx.fillStyle = ccol; ctx.fill(); }, { blur: 8, y: 3 });
-    D.roundRect(rx0 + SP.rodL, ry - 9, 40, 18, 8); ctx.fillStyle = '#9aa5b8'; ctx.fill();
+    D.roundRect(rx0 + SP.rodL, ry - 9, SP.hl, 18, 8); ctx.fillStyle = '#9aa5b8'; ctx.fill();
     for (let i = 0; i < 4; i++) T(rx0 + 18 + i * (SP.rodL - 30) / 3, ry + 6, s.sign > 0 ? '+' : '−', 16, '#fff', 'center', 800);
     T(rx0 + SP.rodL / 2, ry - 24, '대전된 막대 (' + (s.sign > 0 ? '+' : '−') + ')', PHONE ? 12 : 13.5, '#26324a', 'center', 800);
     if (s.drag) D.ring(rx0 + SP.rodL / 2, ry, 22, S.t, { color: '#f26b3a', width: 2 });
     if (!s.flags.near && !s.drag && S.t > 1.5) D.arrow(rx0 + SP.rodL * 0.6, ry + 44, rx0 + SP.rodL * 0.6 - 18, ry + 20, { color: COL_F, width: 3 });
     // 안내 패널
-    const px = PHONE ? 12 : 14, py = PHONE ? 54 : 62, pw = PHONE ? VW - 24 : 292, ph = PHONE ? 100 : 160;
+    const px = PHONE ? 12 : 530, py = PHONE ? 54 : 330, pw = PHONE ? VW - 24 : 256, ph = PHONE ? 100 : 170;
     panel(px, py, pw, ph, 14);
     const sz = PHONE ? 12.5 : 14, lh = PHONE ? 19 : 22; let y = py + 24;
     T(px + 12, y, '지금 전하 상태', sz + 0.5, '#1e40af', 'left', 800);
@@ -332,7 +332,7 @@
     const wallCol = plastic ? '#e0b060' : '#94a3b8';
     D.roundRect(bx0, by0, bx1 - bx0, by1 - by0, 10); ctx.strokeStyle = wallCol; ctx.lineWidth = wt; ctx.stroke();
     T((bx0 + bx1) / 2, by0 - 14, plastic ? '플라스틱(절연체) 상자' : '금속 상자 (도체)', PHONE ? 13 : 15, '#26324a', 'center', 800);
-    T((bx0 + bx1) / 2, (by0 + by1) / 2 + 60, '🧍', 34, '#000', 'center', 700);
+    T(bx0 + 56, by1 - 30, '🧍', 34, '#000', 'center', 700);
     // 안쪽 전기장 (플라스틱은 그대로, 금속은 0)
     // 금속 표면의 유도 전하
     if (!plastic || mc > 0.02) {
@@ -342,8 +342,8 @@
         ctx.globalAlpha = a; T(bx0 - 14, y + 5, '−', 18, '#1d4ed8', 'center', 800); T(bx1 + 14, y + 5, '+', 18, '#c1272d', 'center', 800); ctx.globalAlpha = 1;
       }
     }
-    if (!plastic) lbl((bx0 + bx1) / 2, (by0 + by1) / 2 - 30, '상자 속 E = 0', { bg: '#16a34a', color: '#fff', size: PHONE ? 13 : 15 });
-    else lbl((bx0 + bx1) / 2, (by0 + by1) / 2 - 30, '전기장이 그대로 통과', { bg: '#f59e0b', color: '#fff', size: PHONE ? 12 : 14 });
+    if (!plastic) lbl((bx0 + bx1) / 2, by0 + 40, '상자 속 E = 0', { bg: '#16a34a', color: '#fff', size: PHONE ? 13 : 15 });
+    else lbl((bx0 + bx1) / 2, by0 + 40, '전기장이 그대로 통과', { bg: '#f59e0b', color: '#fff', size: PHONE ? 12 : 14 });
     // 탐침
     const pr = s.probe;
     D.shadow(() => { ctx.strokeStyle = '#26324a'; ctx.lineWidth = 4; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(pr.x - 11, pr.y); ctx.lineTo(pr.x + 11, pr.y); ctx.moveTo(pr.x, pr.y - 11); ctx.lineTo(pr.x, pr.y + 11); ctx.stroke(); }, { blur: 4, y: 1 });
@@ -357,7 +357,7 @@
   function scDown(p) {
     const s = S.sc;
     if (s.sub === 'scope') {
-      if (p.x >= s.xt - 8 && p.x <= s.xt + SP.rodL + 46 && Math.abs(p.y - SP.dy) <= 26) { if (s.tw) { s.tw.cancel(); s.tw = null; } s.drag = true; s.dOff = s.xt - p.x; Sound.click(); return true; }
+      if (p.x >= s.xt - 8 && p.x <= s.xt + SP.rodL + SP.hl + 8 && Math.abs(p.y - SP.dy) <= 26) { if (s.tw) { s.tw.cancel(); s.tw = null; } s.drag = true; s.dOff = s.xt - p.x; Sound.click(); return true; }
       return false;
     }
     if (Math.hypot(p.x - s.probe.x, p.y - s.probe.y) <= 30) { s.pdrag = true; Sound.click(); return true; }
@@ -395,7 +395,7 @@
     updateCtl();
   }
   const capVals = () => { const d = S.de, k = Math.round(d.k), C0 = 100, Q0 = 1.0, V0 = 10; return { k, C: k * C0, Q: d.conn ? k * Q0 : Q0, V: d.conn ? V0 : V0 / k, Ein: (d.conn ? V0 : V0 / k) / 1.0e-3 }; };
-  const PAPER = PHONE ? { rodY: 150, rx0: 140, rx1: 340, px: 240, base: 410, pw: 170, ph: 28 } : { rodY: 160, rx0: 290, rx1: 510, px: 400, base: 410, pw: 220, ph: 30 };
+  const PAPER = PHONE ? { rodY: 140, rx0: 140, rx1: 340, px: 240, base: 380, pw: 170, ph: 28 } : { rodY: 150, rx0: 290, rx1: 510, px: 400, base: 370, pw: 220, ph: 30 };
   const paperPos = () => { const d = S.de, rise = clamp(d.stF - 3, 0, 1), e = rise * rise * (3 - 2 * rise), top = PAPER.rodY + 13 + PAPER.ph / 2 + 1; return { x: PAPER.px, y: PAPER.base + (top - PAPER.base) * e }; };
   function stepDielec(dt) {
     const d = S.de; d.stF = SciSim.approach(d.stF, d.stage, dt, RM ? 60 : 2.4);
@@ -509,7 +509,7 @@
     const ang = -sw * 0.8; ctx.beginPath(); ctx.moveTo(swx - 20, wy1); ctx.lineTo(swx - 20 + Math.cos(ang) * 40, wy1 + Math.sin(ang) * 40); ctx.stroke(); D.sphere(swx - 20, wy1, 4, '#334155', { gloss: false }); D.sphere(swx + 20, wy1, 4, '#334155', { gloss: false });
     // 전지 기호
     ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(L.bx - 20, L.top + 70); ctx.lineTo(L.bx + 20, L.top + 70); ctx.stroke(); ctx.lineWidth = 8; ctx.beginPath(); ctx.moveTo(L.bx - 11, L.top + 86); ctx.lineTo(L.bx + 11, L.top + 86); ctx.stroke(); ctx.lineWidth = 3.5;
-    T(L.bx - 30, L.top + 76, '10 V', 13, '#334155', 'right', 800); T(L.bx + 28, L.top + 66, '+', 16, '#c1272d', 'left', 800);
+    T(L.bx + 28, L.top + 96, '10 V', 13, '#334155', 'left', 800); T(L.bx + 28, L.top + 70, '+', 16, '#c1272d', 'left', 800);
     T(swx, wy1 - 16, d.conn ? '전지 연결' : '전지 분리', 13, d.conn ? '#0b7a41' : '#9a3412', 'center', 800);
     // 표
     const tx = PHONE ? 12 : 540, ty = PHONE ? 440 : 70, tw = PHONE ? VW - 24 : VW - 540 - 12, th = PHONE ? 252 : 360;
@@ -517,7 +517,7 @@
     const sz = PHONE ? 14 : 15, lh = PHONE ? 28 : 32; let y = ty + 30;
     T(tx + 14, y, d.conn ? '전지를 연결한 채' : '전지를 뗀 채 (Q 고정)', sz + 1, '#1e40af', 'left', 800);
     const msk = S.gate === 'num3';
-    const rows = [['κ', String(cv.k), '#26324a'], ['전기 용량 C = κC₀', msk ? '?' : cv.C + ' pF', '#9a3412'], ['전하 Q', g3(cv.Q) + ' nC', '#c1272d'], ['전압 V', g3(cv.V) + ' V', '#1d4ed8'], ['안쪽 E = V/d', sci(cv.Ein) + ' V/m', '#0b7a41']];
+    const rows = [['κ', String(cv.k), '#26324a'], ['전기 용량 C = κC₀', msk ? '?' : cv.C + ' pF', '#9a3412'], ['전하 Q', (cv.Q >= 100 ? String(Math.round(cv.Q)) : cv.Q.toFixed(1)) + ' nC', '#c1272d'], ['전압 V', g3(cv.V) + ' V', '#1d4ed8'], ['안쪽 E = V/d', sci(cv.Ein) + ' V/m', '#0b7a41']];
     rows.forEach((r) => { y += lh; T(tx + 14, y, r[0], sz - 1, '#516079', 'left', 800); T(tx + tw - 14, y, r[1], sz, r[2], 'right', 800); });
     y += lh + 6; textBlock(tx + 14, y, tw - 28, d.conn ? '전지가 전압을 10 V로 유지하므로 C가 κ배가 되면 Q도 κ배가 돼요.' : 'Q가 그대로이고 C가 κ배가 되므로 V = Q/C는 1/κ배, 안쪽 E도 1/κ배가 돼요.', PHONE ? 12.5 : 13.5, '#0b7a41', PHONE ? 18 : 20, 800);
     if (Qn >= 36) T(L.pxL + 6, L.bot + 18, '※ 기호는 36개까지만 그려요 (실제 Q: ' + g3(cv.Q) + ' nC)', PHONE ? 11 : 12.5, '#516079', 'left', 700);
@@ -580,7 +580,7 @@
     const order = S.ap.cards.slice().sort((a, b) => (a.drag ? 1 : 0) - (b.drag ? 1 : 0));
     order.forEach(drawCard);
     const placed = S.ap.cards.filter((c) => c.bin != null).length;
-    if (placed === 0 && S.t > 1.5) T(VW / 2, AP.card.y0 - 8, '카드를 위의 칸으로 끌어 올려요 ↑', PHONE ? 12 : 14, '#9a3412', 'center', 800);
+    if (placed === 0 && S.t > 1.5) T(VW / 2, AP.card.y0 - 4, '카드를 위의 칸으로 끌어 올려요 ↑', PHONE ? 12 : 14, '#9a3412', 'center', 800);
   }
   const TS = PHONE ? { x0: 40, x1: 440, y0: 130, y1: 350, cols: 7, rows: 5, sg: 48 } : { x0: 110, x1: 690, y0: 120, y1: 400, cols: 7, rows: 5, sg: 66 };
   const GLOVE = { bare: { dc: 3.0, name: '맨손', col: '#f0c8a0' }, cond: { dc: 2.6, name: '도체 장갑', col: '#7aa7d8' }, plain: { dc: 0.2, name: '일반 장갑 (절연체)', col: '#9aa5b8' } };
@@ -667,7 +667,7 @@
     up(p) { S.ind.drag = false; S.sc.drag = false; S.sc.pdrag = false; if (S.mode === 'apply') apUp(p); },
     hover(p) {
       if (S.mode === 'induce') { const bp = bodyPix(); return Math.hypot(p.x - bp.x, p.y - bp.y) <= G1.bR + 14 ? 'grab' : 'default'; }
-      if (S.mode === 'electro') { const s = S.sc; if (s.sub === 'scope') return p.x >= s.xt - 8 && p.x <= s.xt + SP.rodL + 46 && Math.abs(p.y - SP.dy) <= 26 ? 'grab' : 'default'; return Math.hypot(p.x - s.probe.x, p.y - s.probe.y) <= 30 ? 'grab' : 'default'; }
+      if (S.mode === 'electro') { const s = S.sc; if (s.sub === 'scope') return p.x >= s.xt - 8 && p.x <= s.xt + SP.rodL + SP.hl + 8 && Math.abs(p.y - SP.dy) <= 26 ? 'grab' : 'default'; return Math.hypot(p.x - s.probe.x, p.y - s.probe.y) <= 30 ? 'grab' : 'default'; }
       if (S.mode === 'apply') return 'grab';
       return 'default';
     },
@@ -723,7 +723,7 @@
       const d = S.de, cv = capVals();
       if (d.sub === 'paper') { a = ['진행', Math.round(d.stage) + ' / 4 단계']; b = ['막대', '(−) 대전체']; c = ['종이 조각', d.stage >= 4 ? '끌려와 붙음' : d.stage >= 2 ? '분극됨' : '중성']; }
       else if (d.sub === 'mol') { const a2 = 1 - 1 / d.k; a = ['유전 상수 κ', String(Math.round(d.k))]; b = ['안쪽 전기장 E/E₀', g3(100 / Math.round(d.k)) + ' %']; c = ['표면 분극 전하', '8개 중 ' + Math.round(8 * (1 - 1 / d.kd)) + '개']; }
-      else { a = ['전기 용량 C', S.gate === 'num3' ? '?' : cv.C + ' pF']; b = ['전하 Q', g3(cv.Q) + ' nC']; c = ['전압 V', g3(cv.V) + ' V']; }
+      else { a = ['전기 용량 C', S.gate === 'num3' ? '?' : cv.C + ' pF']; b = ['전하 Q', (cv.Q >= 100 ? String(Math.round(cv.Q)) : cv.Q.toFixed(1)) + ' nC']; c = ['전압 V', g3(cv.V) + ' V']; }
     }
     else {
       const ap = S.ap;
@@ -814,7 +814,7 @@
         {
           type: 'quiz', title: '자동차 안은 왜 안전할까?',
           goal: '달리는 자동차 안에 있으면 번개를 맞아도 비교적 안전한 까닭은? (📦 정전 차폐 장면에서 금속 상자 속 E를 재 보세요)',
-          setup() { S.gate = ''; S.sc.sub = 'shield'; S.sc.box = 'metal'; S.sc.probe.x = VW / 2; S.sc.probe.y = PHONE ? 290 : 300; setScene('electro'); },
+          setup() { S.gate = ''; S.sc.sub = 'shield'; S.sc.box = 'metal'; S.sc.probe.x = VW / 2; S.sc.probe.y = PHONE ? 300 : 320; setScene('electro'); },
           choices: ['금속 차체가 정전 차폐 역할을 해서 안쪽의 전기장이 0이고, 전하는 바깥 표면으로만 흐르기 때문이에요', '자동차 타이어가 고무라서 전기가 절대 통하지 않기 때문이에요', '자동차가 움직이고 있으면 전기장이 생기지 않기 때문이에요', '금속은 전기를 통하지 않아서 번개를 막기 때문이에요'],
           answer: 0,
           feedback: ['', '타이어의 고무가 도움이 된다는 말은 흔한 오해예요. 번개는 공기도 뚫을 만큼 강해요. 금속 차체가 안쪽의 전기장을 0으로 만드는 것이 핵심이에요.', '움직임과 상관없이 금속 차체가 전기장을 차폐해요.', '금속은 전기를 잘 통하는 도체예요. 그래서 전하가 바깥 표면에 퍼져 안쪽 전기장이 0이 돼요.'],
@@ -906,7 +906,7 @@
 
   /* ---------- 시작 ---------- */
   initInd(); initScope(); initCards();
-  S.sc.probe.x = VW / 2; S.sc.probe.y = PHONE ? 290 : 300;
+  S.sc.probe.x = VW / 2; S.sc.probe.y = PHONE ? 300 : 320;
   S.ap.touch.x = (TS.x0 + TS.x1) / 2; S.ap.touch.y = (TS.y0 + TS.y1) / 2;
   updateCtl();
   function stepAll1(dt) {
