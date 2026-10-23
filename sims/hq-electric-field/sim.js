@@ -87,7 +87,7 @@
   const G = PHONE ? { x0: 56, x1: 456, y0: 66, y1: 256 } : { x0: 76, x1: 504, y0: 68, y1: 300 };
   const GEMAX = 20;                                         // 세로축 최대 (×10⁵ N/C)
   const GQ = { 1: '#e2464b', 2: '#8b5cf6', '-1': '#2f6df6' };
-  const ST = PHONE ? { x0: 50, sc: 360, y: 552, top: 468 } : { x0: 70, sc: 600, y: 440, top: 350 };   // 아래 측정 줄
+  const ST = PHONE ? { x0: 50, sc: 360, y: 580, top: 468 } : { x0: 70, sc: 600, y: 474, top: 350 };   // 아래 측정 줄
   // ④ 전기장 합
   const SPX = PHONE ? 320 : 400;
   const SO = PHONE ? { x: 144, y: 290 } : { x: 242, y: 330 };
@@ -578,7 +578,7 @@
       if (Es / 1e5 * unit > maxL + 0.5 && dir > 0) T(xp + L + 12, ay + 5, '≫', 16, COL_E, 'center', 800);
     }
     lbl(xp + dir * L / 2, ay - 18, 'E = ' + (mk ? '?' : sci(Es) + ' N/C'), { color: '#1e40af', border: '#93b4f8' });
-    T(26, top + (PHONE ? 150 : 176), mk ? '식을 떠올려 보세요: E·r²가 일정해요.' : 'E·r² = ' + f3(Es * f.r * f.r) + ' N·m²/C = kq', PHONE ? 12.5 : 14, '#0b7a41', 'left', 800);
+    T(26, top + (PHONE ? 158 : 180), mk ? '식을 떠올려 보세요: E·r²가 일정해요.' : 'E·r² = ' + f3(Es * f.r * f.r) + ' N·m²/C = kq', PHONE ? 12.5 : 14, '#0b7a41', 'left', 800);
   }
 
   /* ================= ④ 전기장의 합 ================= */

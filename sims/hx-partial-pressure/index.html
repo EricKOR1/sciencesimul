@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#8b5cf6">
+  <title>혼합 기체와 분압 | 고등 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🫧</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; }
+    .stage-toolbar { min-height: 61px; }
+    .segmented button { min-height: 44px; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    #resetBtn { font-size: 20px; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 14px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard .btn-sm { min-height: 44px; }
+    #ctrlCard [hidden], .stage-toolbar [hidden] { display: none !important; }
+    .ctrl-note { font-size: 14px; color: var(--muted); margin: 6px 0 0; line-height: 1.4; }
+    .btn-row { display: flex; gap: 8px; margin-top: 6px; }
+    .btn-row .btn { flex: 1; min-width: 0; padding-left: 8px; padding-right: 8px; min-height: 46px; }
+    .view-seg { display: flex; width: 100%; }
+    .view-seg button { flex: 1 1 0; min-width: 0; padding-left: 4px; padding-right: 4px; font-size: 14.5px; }
+    .range-row { display: flex; align-items: center; gap: 8px; }
+    .range-row input[type=range] { flex: 1; min-width: 0; height: 44px; }
+    .nudge { flex: none; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); font-weight: 900; font-size: 16px; line-height: 1; cursor: pointer; display: grid; place-items: center; color: var(--ink); font-family: inherit; }
+    .nudge:active { transform: scale(.94); background: var(--surface-2); }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+    .chips button { min-height: 44px; padding: 6px 12px; border: 2px solid var(--line); background: #fff; border-radius: 999px; font-weight: 800; font-size: 14.5px; cursor: pointer; color: var(--ink); font-family: inherit; }
+    .chips button.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); color: color-mix(in srgb, var(--subject) 70%, black); }
+    .chips button.done { border-color: var(--good); background: var(--good-soft); }
+    .num-in { width: 100%; min-width: 0; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 10px; font: 800 16px var(--font); color: var(--ink); background: #fff; }
+    .num-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .num-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .in-grid { display: grid; grid-template-columns: 1fr 104px; gap: 6px 8px; align-items: center; margin-top: 6px; }
+    .in-grid .lab { font-weight: 800; font-size: 14px; line-height: 1.25; }
+    .in-grid .num-in { min-height: 42px; padding: 2px 8px; font-size: 15px; }
+    @keyframes shakeX { 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+    .readout .value.txt { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    sup, sub { font-size: .7em; line-height: 0; }
+    .gbtn { flex: 1 1 0; min-width: 0; min-height: 52px; border: 2px solid var(--line); background: #fff; border-radius: 14px; font: 800 14.5px var(--font); cursor: pointer; padding: 4px 6px; line-height: 1.25; color: var(--ink); }
+    .gbtn:disabled { opacity: .55; cursor: default; }
+    .gbtn.done { border-color: var(--good); background: var(--good-soft); }
+    .gbtn small { display: block; font-weight: 700; color: var(--muted); font-size: 12.5px; }
+    .stage-canvas .stage-hint { top: 10px; bottom: auto; white-space: normal; width: max-content; max-width: 92%; text-align: center; }
+    @media (max-width: 1100px) and (orientation: landscape) { .toolbar-label { display: none; } }
+    @media (max-width: 599px) {
+      .readout .value.txt { font-size: 15px; }
+      .stage-toolbar { gap: 6px; padding: 8px; }
+      .stage-toolbar .spacer, .toolbar-label { display: none; }
+      .segmented button { padding-left: 8px; padding-right: 8px; font-size: 14px; }
+      .stage-toolbar:has(> .segmented[hidden]) { display: none; }
+      .stage-hint { font-size: 13px; padding: 5px 12px; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="chem">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#hx">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">물질과 에너지 · Ⅰ. 물질의 세 가지 상태</div>
+      <h1>혼합 기체와 분압</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🫧 분압의 합</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="tablist" aria-label="화면 고르기">
+            <button type="button" data-mode="sum" data-feature="sum">🫧 분압의 합</button>
+            <button type="button" data-mode="frac" data-feature="frac">🎚️ 몰 분율</button>
+            <button type="button" data-mode="calc" data-feature="calc">🧮 분압 계산</button>
+            <button type="button" data-mode="dive" data-feature="dive">🤿 혼합 기체 설계</button>
+          </div>
+          <button class="icon-btn" id="resetBtn" type="button" title="이 화면 처음으로" aria-label="이 화면 처음으로">↺</button>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="용기에 기체를 차례로 넣으며 분압 막대를 쌓는 모습, 몰 분율과 분압의 관계, 연결 용기와 물 위 포집의 분압 계산, 잠수 깊이와 산소 분압의 안전 범위"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">—</span><span class="value txt" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">—</span><span class="value txt" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">—</span><span class="value txt" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <!-- ① 분압의 합 -->
+        <div class="control" data-modes="sum">
+          <div class="control-head"><span>🧪 기체 넣기 (12.3 L, 300 K)</span></div>
+          <div class="btn-row" id="injRow"></div>
+          <div class="btn-row"><button class="btn btn-sm" id="bEmpty" type="button">↺ 용기 비우기</button></div>
+          <p class="ctrl-note">기체를 하나씩 넣을 때 막대가 어떻게 변하는지 봐요.</p>
+        </div>
+        <div class="control" data-modes="sum" data-gate="sumin">
+          <div class="control-head"><span>✍️ 분압의 합</span></div>
+          <div class="in-grid"><span class="lab">P(He) + P(N₂) + P(O₂) (atm)</span><input class="num-in" id="inSum" type="text" inputmode="decimal" autocomplete="off" placeholder="0.00"></div>
+          <p class="ctrl-note">세 분압을 더한 값이 압력계의 전체 압력과 같은지 비교해요.</p>
+        </div>
+        <!-- ② 몰 분율 -->
+        <div class="control" data-modes="frac">
+          <div class="control-head"><span>🎚️ O₂의 몰 분율 X(O₂)</span><output id="oX">0.50</output></div>
+          <div class="range-row">
+            <button class="nudge" id="xMinus" type="button" aria-label="산소 입자 하나 빼기">−</button>
+            <input type="range" id="sX" min="0" max="20" step="1" value="10" aria-label="산소의 몰 분율 (0에서 1)">
+            <button class="nudge" id="xPlus" type="button" aria-label="산소 입자 하나 넣기">+</button>
+          </div>
+          <div class="chips" id="xChips" role="group" aria-label="몰 분율 바로 고르기"></div>
+          <p class="ctrl-note">전체 입자 수(1.0 mol)는 그대로예요. 산소가 늘면 He와 N₂가 줄어요.</p>
+        </div>
+        <div class="control" data-modes="frac" data-gate="fracin">
+          <div class="control-head"><span>✍️ 읽어서 써요</span></div>
+          <div class="in-grid"><span class="lab">O₂ 분압 (atm)</span><input class="num-in" id="inXP" type="text" inputmode="decimal" autocomplete="off" placeholder="0.00"></div>
+        </div>
+        <!-- ③ 분압 계산 -->
+        <div class="control" data-modes="calc" data-nolock>
+          <div class="segmented view-seg" id="clSub" role="group" aria-label="문제 고르기">
+            <button type="button" data-v="conn">🔗 연결 용기</button>
+            <button type="button" data-v="vap">💧 물 위 포집</button>
+            <button type="button" data-v="air">⛰️ 공기</button>
+          </div>
+        </div>
+        <div class="control" data-modes="calc" data-sub="conn">
+          <div class="btn-row"><button class="btn btn-primary" id="bValve" type="button">🔓 밸브 열기</button><button class="btn" id="bValveR" type="button">↺ 닫기</button></div>
+          <div class="in-grid"><span class="lab">P(He) (atm)</span><input class="num-in" id="inC1" type="text" inputmode="decimal" autocomplete="off" placeholder="0.00"></div>
+          <div class="in-grid"><span class="lab">P(N₂) (atm)</span><input class="num-in" id="inC2" type="text" inputmode="decimal" autocomplete="off" placeholder="0.00"></div>
+          <div class="in-grid"><span class="lab">전체 압력 (atm)</span><input class="num-in" id="inC3" type="text" inputmode="decimal" autocomplete="off" placeholder="0.00"></div>
+          <p class="ctrl-note">온도가 같으면 부피가 커질 때 압력은 부피에 반비례해서 줄어요(P₁V₁ = P₂V₂).</p>
+        </div>
+        <div class="control" data-modes="calc" data-sub="vap">
+          <div class="control-head"><span>✍️ 포집한 산소 0.50 L</span></div>
+          <div class="in-grid"><span class="lab">O₂ 분압 (atm)</span><input class="num-in" id="inV1" type="text" inputmode="decimal" autocomplete="off" placeholder="0.000"></div>
+          <div class="in-grid"><span class="lab">O₂ 질량 (g)</span><input class="num-in" id="inV2" type="text" inputmode="decimal" autocomplete="off" placeholder="0.00"></div>
+          <p class="ctrl-note">대기압 1.00 atm, 20 °C(293 K), 물의 포화 증기압 0.023 atm(17.5 mmHg), O₂ M = 32 g/mol.</p>
+        </div>
+        <div class="control" data-modes="calc" data-sub="air">
+          <div class="control-head"><span>⛰️ 고도</span><output id="oAlt">0 km</output></div>
+          <div class="range-row"><button class="nudge" id="aMinus" type="button" aria-label="고도 낮추기">−</button><input type="range" id="sAlt" min="0" max="8" step="0.5" value="0" aria-label="고도 (0에서 8 km)"><button class="nudge" id="aPlus" type="button" aria-label="고도 높이기">+</button></div>
+          <p class="ctrl-note">공기는 N₂ 78 %, O₂ 21 %, Ar 1 %(부피 % = 몰 %)로 근사해요.</p>
+        </div>
+        <!-- ④ 혼합 기체 설계 -->
+        <div class="control" data-modes="dive">
+          <div class="control-head"><span>🤿 깊이</span><output id="oDep">40 m</output></div>
+          <div class="range-row"><button class="nudge" id="dMinus" type="button" aria-label="얕게">−</button><input type="range" id="sDep" min="0" max="70" step="1" value="40" aria-label="깊이 (0에서 70 m)"><button class="nudge" id="dPlus" type="button" aria-label="깊게">+</button></div>
+          <div class="chips" id="depChips" role="group" aria-label="깊이 바로 고르기"></div>
+        </div>
+        <div class="control" data-modes="dive">
+          <div class="control-head"><span>🧪 산소 비율</span><output id="oO2">21 %</output></div>
+          <div class="range-row"><button class="nudge" id="oMinus" type="button" aria-label="산소 비율 낮추기">−</button><input type="range" id="sO2" min="10" max="40" step="1" value="21" aria-label="산소 비율 (10에서 40 %)"><button class="nudge" id="oPlus" type="button" aria-label="산소 비율 높이기">+</button></div>
+          <div class="control-head" style="margin-top:8px"><span>나머지 기체</span></div>
+          <div class="segmented view-seg" id="dilSeg" role="group" aria-label="나머지 기체 고르기"><button type="button" data-v="n2">질소 N₂</button><button type="button" data-v="he">헬륨 He</button></div>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

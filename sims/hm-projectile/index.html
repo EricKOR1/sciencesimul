@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#f26b3a">
+  <title>포물선 운동 | 고등 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏹</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+<style>
+    .stage-toolbar { min-height: 61px; }
+    .segmented button { min-height: 44px; }
+    .segmented button.on { background: var(--phy); color: #fff; }
+    #modeSeg { width: 100%; }
+    #modeSeg button { flex: 1 1 auto; min-width: 0; padding-left: 8px; padding-right: 8px; font-size: 14.5px; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard .btn-sm { min-height: 44px; }
+    #ctrlCard [hidden] { display: none !important; }
+    .ctrl-note { font-size: 14px; color: var(--muted); margin: 6px 0 0; }
+    .btn-row { display: flex; gap: 8px; margin-top: 6px; }
+    .btn-row .btn { flex: 1; padding-left: 8px; padding-right: 8px; }
+    .view-seg { display: flex; width: 100%; }
+    .view-seg button { flex: 1 1 0; min-width: 0; padding-left: 4px; padding-right: 4px; font-size: 14.5px; }
+    .range-row { display: flex; align-items: center; gap: 8px; }
+    .range-row input[type=range] { flex: 1; min-width: 0; height: 44px; }
+    .sel-in { width: 100%; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 8px; font: 800 14.5px var(--font); color: var(--ink); background: #fff; }
+    .sel-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .sel-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .num-in { width: 100%; min-width: 0; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 10px; font: 800 16px var(--font); color: var(--ink); background: #fff; }
+    .num-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .num-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .in-grid { display: grid; grid-template-columns: 1fr 96px; gap: 6px 8px; align-items: center; margin-top: 6px; }
+    .in-grid .lab { font-weight: 800; font-size: 14px; line-height: 1.25; }
+    .in-grid .num-in { min-height: 40px; padding: 2px 8px; font-size: 15px; }
+    .sel-row { margin-top: 8px; }
+    .sel-row .q { font-weight: 800; font-size: 14px; margin-bottom: 3px; line-height: 1.25; }
+    @keyframes shakeX { 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+    .readout .value.txt { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .concept table.mini, table.mini { border-collapse: collapse; margin: 6px 0; font-size: 14px; width: 100%; }
+    .concept table.mini th, .concept table.mini td, table.mini th, table.mini td { border: 1px solid var(--line); padding: 4px 6px; text-align: center; }
+    .concept table.mini th, table.mini th { background: var(--surface-2); font-weight: 800; }
+    .stage-canvas .stage-hint { top: 10px; bottom: auto; }
+    @media (orientation: portrait) and (min-width: 600px) {
+      .side-col:has(> #ctrlCard[hidden]) > #game { grid-column: 1 / -1; }
+    }
+    @media (max-width: 599px) {
+      .readout .value.txt { font-size: 15px; }
+      .stage-toolbar { gap: 6px; padding: 8px; }
+      .stage-toolbar .spacer { display: none; }
+      #modeSeg button { font-size: 13.5px; padding-left: 6px; padding-right: 6px; }
+      .stage-hint { font-size: 13px; padding: 5px 12px; }
+    }
+
+  </style>
+</head>
+<body class="sim-page" data-subject="phy">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#hm">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">역학과 에너지 · Ⅰ. 시공간과 운동</div>
+      <h1>포물선 운동</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <div class="segmented" id="modeSeg" role="tablist" aria-label="화면 고르기">
+            <button type="button" data-mode="throw" data-feature="throw">🏹 던지기</button>
+            <button type="button" data-mode="video" data-feature="video">🎞️ 영상 분석</button>
+            <button type="button" data-mode="model" data-feature="model">📐 운동 식</button>
+            <button type="button" data-mode="target" data-feature="target">🎯 목표 맞히기</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="비스듬히 던진 공의 궤적을 보여 주는 화면. 0.2초 간격 잔상, 최고점과 사거리, 수평·연직 속도 성분, 영상 분석 표, 표적과 담장 장면이 있어요."></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">비행 시간 T</span><span class="value txt" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">최고점 H</span><span class="value txt" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">사거리 R</span><span class="value txt" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <!-- 던지기 / 운동 식 -->
+        <div class="control" data-modes="throw model" data-vctl>
+          <div class="control-head"><label for="sV0">💨 처음 속력 v₀</label><output id="oV0">20 m/s</output></div>
+          <div class="range-row"><input type="range" id="sV0" min="5" max="25" step="1" value="20" aria-label="처음 속력 (5미터 매 초부터 25미터 매 초까지)"></div>
+        </div>
+        <div class="control" data-modes="throw model" data-actl>
+          <div class="control-head"><label for="sTh">📐 던지는 각도 θ</label><output id="oTh">45°</output></div>
+          <div class="range-row"><input type="range" id="sTh" min="0" max="90" step="1" value="45" aria-label="던지는 각도 (0도부터 90도까지)"></div>
+        </div>
+        <div class="control" data-modes="throw model" data-thrbtn>
+          <div class="btn-row">
+            <button class="btn btn-sm btn-primary" id="bThrow" type="button">▶ 던지기</button>
+            <button class="btn btn-sm" id="bClear" type="button">🗑 기록 지우기</button>
+          </div>
+        </div>
+        <!-- 영상 분석 -->
+        <div class="control" data-modes="video">
+          <div class="control-head"><label for="sFr">🎞️ 프레임 (0.2 s 간격)</label><output id="oFr">0 / 8</output></div>
+          <div class="range-row"><input type="range" id="sFr" min="0" max="8" step="1" value="0" aria-label="영상의 프레임 번호 (0부터 8까지)"></div>
+          <div class="btn-row">
+            <button class="btn btn-sm" id="bPlay" type="button">▶ 재생</button>
+            <button class="btn btn-sm btn-primary" id="bMark" type="button">📍 공 위치 찍기</button>
+          </div>
+          <p class="ctrl-note">공을 눌러도 위치가 찍혀요. 프레임마다 한 번씩 찍어 표를 채워요.</p>
+        </div>
+        <div class="control" data-modes="video" data-vcalc>
+          <div class="control-head"><span>📝 표에서 계산하기 (영상 속 공)</span></div>
+          <div class="in-grid">
+            <span class="lab">수평 속도 v<sub>x</sub> (m/s)</span><input class="num-in" id="iVx" type="number" inputmode="decimal" step="0.1" aria-label="수평 속도 (미터 매 초)">
+            <span class="lab">처음 연직 속도 v<sub>y0</sub> (m/s)</span><input class="num-in" id="iVy" type="number" inputmode="decimal" step="0.1" aria-label="처음 연직 속도 (미터 매 초)">
+          </div>
+        </div>
+        <!-- 운동 식 -->
+        <div class="control" data-modes="model" data-order>
+          <div class="control-head"><span>🧩 풀이 순서에 맞게 ▲▼로 정렬하기</span></div>
+          <div id="orderList"></div>
+        </div>
+        <div class="control" data-modes="model" data-mcalc>
+          <div class="control-head"><span>📝 v₀ = 20 m/s, θ = 30°를 식으로 계산하기</span></div>
+          <div class="in-grid">
+            <span class="lab">비행 시간 T (s)</span><input class="num-in" id="iT" type="number" inputmode="decimal" step="0.1" aria-label="비행 시간 (초)">
+            <span class="lab">최고점 높이 H (m)</span><input class="num-in" id="iH" type="number" inputmode="decimal" step="0.1" aria-label="최고점 높이 (미터)">
+            <span class="lab">사거리 R (m)</span><input class="num-in" id="iR" type="number" inputmode="decimal" step="0.1" aria-label="사거리 (미터)">
+          </div>
+          <p class="ctrl-note">계산한 뒤 ▶ 던지기로 확인한 다음 ✔ 확인하기를 눌러요.</p>
+        </div>
+        <!-- 목표 맞히기 -->
+        <div class="control" data-modes="target">
+          <div class="control-head"><span>🎬 장면</span></div>
+          <div class="segmented view-seg" id="scSeg" role="group" aria-label="장면">
+            <button type="button" data-sc="a">🎯 지면 표적</button>
+            <button type="button" data-sc="b">🏢 옥상</button>
+            <button type="button" data-sc="c">🧱 담장</button>
+          </div>
+        </div>
+        <div class="control" data-modes="target" data-tv>
+          <div class="control-head"><label for="sTV">💨 처음 속력 v₀</label><output id="oTV">20 m/s</output></div>
+          <div class="range-row"><input type="range" id="sTV" min="5" max="25" step="1" value="20" aria-label="처음 속력 (5미터 매 초부터 25미터 매 초까지)"></div>
+        </div>
+        <div class="control" data-modes="target" data-ta>
+          <div class="control-head"><label for="sTA">📐 던지는 각도 θ</label><output id="oTA">45°</output></div>
+          <div class="range-row"><input type="range" id="sTA" min="0" max="90" step="1" value="45" aria-label="던지는 각도 (0도부터 90도까지)"></div>
+        </div>
+        <div class="control" data-modes="target">
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bTThrow" type="button">▶ 던지기</button></div>
+          <p class="ctrl-note" id="tNote"></p>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>
