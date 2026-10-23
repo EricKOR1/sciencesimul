@@ -277,7 +277,7 @@
     ctx.strokeStyle = '#475569'; ctx.lineWidth = 3; [[26, 0], [18, 7], [9, 14]].forEach((a) => { ctx.beginPath(); ctx.moveTo(wx1 - a[0], SP.gy - 10 + a[1]); ctx.lineTo(wx1 + a[0], SP.gy - 10 + a[1]); ctx.stroke(); });
     T(wx1, SP.gy + 22, '땅 (접지)', PHONE ? 12 : 13.5, '#475569', 'center', 800);
     T(wx0 - (PHONE ? 6 : 10), wy - 16, s.grounded ? '🖐 접지됨' : '☝ 접지 안 함', PHONE ? 12 : 14, s.grounded ? '#9a3412' : '#516079', 'right', 800);
-    s.flow.forEach((fo) => { const L1 = wx0 - wx1 + (SP.gy - 10 - wy), d = (fo.dir > 0 ? fo.t : 1 - fo.t) * (L1 > 0 ? (wx0 - wx1) + (SP.gy - 10 - wy) : 0); let x, y; const a = wx0 - 4 - wx1; if (d < a) { x = wx0 - 4 - d; y = wy; } else { x = wx1; y = wy + (d - a); } D.sphere(x, y, 4, '#2f6df6', { gloss: false }); });
+    s.flow.forEach((fo) => { const a = wx0 - 4 - wx1, b = SP.gy - 10 - wy, d = (fo.dir > 0 ? fo.t : 1 - fo.t) * (a + b); let x, y; if (d < a) { x = wx0 - 4 - d; y = wy; } else { x = wx1; y = wy + (d - a); } D.sphere(x, y, 4, '#2f6df6', { gloss: false }); });
     // 유리병
     ctx.save(); ctx.fillStyle = 'rgba(190,225,245,.22)'; D.roundRect(SP.jx, SP.jy, SP.jw, SP.jh, 16); ctx.fill(); ctx.strokeStyle = 'rgba(100,140,170,.65)'; ctx.lineWidth = 3; ctx.stroke(); ctx.restore();
     // 막대·금속판·금박
@@ -318,7 +318,7 @@
     rows.forEach((y, ri) => {
       const inBox = y > by0 + 4 && y < by1 - 4, off = RM ? 0 : (S.t * 40 + ri * 17) % 40;
       for (let x = 24 - 40 + off; x < VW - 24; x += 40) {
-        if (inBox && x + 24 > bx0 - 2 && x < bx1 + 2) { if (!(plastic)) { if (x < bx0 + wt || x > bx1 - wt - 24) continue; } else { /* 플라스틱: 그대로 통과 */ } if (!plastic) continue; }
+        if (inBox && !plastic && x + 24 > bx0 - 2 && x < bx1 + 2) continue;        // 금속 상자: 안쪽에는 전기장이 없어요
         if (x < 14) continue;
         D.arrow(x, y, x + 24, y, { color: 'rgba(37,99,235,.55)', width: 2.4, head: 8 });
       }
@@ -503,13 +503,12 @@
     // 회로선과 전지
     ctx.strokeStyle = '#334155'; ctx.lineWidth = 3.5; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
     const swx = (L.bx + L.pxL) / 2, sw = d.switchT;
-    ctx.beginPath(); ctx.moveTo(L.bx, wy1 + 0); ctx.lineTo(L.bx, L.top + 70 - 30); ctx.moveTo(L.bx, L.top + 40); ctx.lineTo(L.bx, wy1); ctx.lineTo(swx - 20, wy1); ctx.moveTo(swx + 20, wy1); ctx.lineTo(L.pxL, wy1); ctx.lineTo(L.pxL, L.top + 8); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(L.bx, L.top + 120); ctx.lineTo(L.bx, wy2); ctx.lineTo(L.pxR, wy2); ctx.lineTo(L.pxR, L.bot - 8); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(L.bx, L.top + 70); ctx.lineTo(L.bx, wy1); ctx.lineTo(swx - 20, wy1); ctx.moveTo(swx + 20, wy1); ctx.lineTo(L.pxL - 7, wy1); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(L.bx, L.top + 86); ctx.lineTo(L.bx, wy2); ctx.lineTo(L.pxR, wy2); ctx.lineTo(L.pxR, L.bot - 2); ctx.stroke();
     // 스위치 칼날
     const ang = -sw * 0.8; ctx.beginPath(); ctx.moveTo(swx - 20, wy1); ctx.lineTo(swx - 20 + Math.cos(ang) * 40, wy1 + Math.sin(ang) * 40); ctx.stroke(); D.sphere(swx - 20, wy1, 4, '#334155', { gloss: false }); D.sphere(swx + 20, wy1, 4, '#334155', { gloss: false });
     // 전지 기호
     ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(L.bx - 20, L.top + 70); ctx.lineTo(L.bx + 20, L.top + 70); ctx.stroke(); ctx.lineWidth = 8; ctx.beginPath(); ctx.moveTo(L.bx - 11, L.top + 86); ctx.lineTo(L.bx + 11, L.top + 86); ctx.stroke(); ctx.lineWidth = 3.5;
-    ctx.beginPath(); ctx.moveTo(L.bx, L.top + 70); ctx.lineTo(L.bx, L.top + 40); ctx.moveTo(L.bx, L.top + 86); ctx.lineTo(L.bx, L.top + 120); ctx.stroke();
     T(L.bx - 30, L.top + 76, '10 V', 13, '#334155', 'right', 800); T(L.bx + 28, L.top + 66, '+', 16, '#c1272d', 'left', 800);
     T(swx, wy1 - 16, d.conn ? '전지 연결' : '전지 분리', 13, d.conn ? '#0b7a41' : '#9a3412', 'center', 800);
     // 표
@@ -536,7 +535,7 @@
   ];
   const BINS = ['정전기 유도', '유전 분극', '정전 차폐'];
   const BIN_COL = ['#e0f2fe', '#fef3c7', '#dcfce7'];
-  const AP = PHONE ? { bin: { y: 56, h: 196, w: 148, gap: 8, x0: 10 }, card: { w: 228, h: 122, x0: 10, y0: 264, gx: 10, gy: 8 }, chip: { w: 134, h: 28, sp: 30 } }
+  const AP = PHONE ? { bin: { y: 56, h: 210, w: 148, gap: 8, x0: 10 }, card: { w: 228, h: 122, x0: 10, y0: 278, gx: 10, gy: 8 }, chip: { w: 134, h: 26, sp: 28 } }
     : { bin: { y: 54, h: 240, w: 250, gap: 11, x0: 14 }, card: { w: 250, h: 104, x0: 14, y0: 310, gx: 11, gy: 10 }, chip: { w: 226, h: 30, sp: 33 } };
   const binRect = (i) => ({ x: AP.bin.x0 + i * (AP.bin.w + AP.bin.gap), y: AP.bin.y, w: AP.bin.w, h: AP.bin.h });
   const cardHome = (i) => { const per = PHONE ? 2 : 3, c = i % per, r = (i / per) | 0; return { x: AP.card.x0 + c * (AP.card.w + AP.card.gx) + AP.card.w / 2, y: AP.card.y0 + r * (AP.card.h + AP.card.gy) + AP.card.h / 2 }; };
