@@ -231,7 +231,7 @@
   function dvL() {
     return PHONE
       ? { pic: { x: 6, y: 6, w: 468, h: 322 }, dia: { x: 6, y: 334, w: 468, h: 198 }, fo: { x: 6, y: 538, w: 468, h: 172 }, sc: 24, vk: 5, V: 76, ox: 300, oy: 506 }
-      : { pic: { x: 6, y: 6, w: 424, h: 468 }, dia: { x: 436, y: 6, w: 358, h: 468 }, fo: { x: 6, y: 480, w: 788, h: 132 }, sc: 32, vk: 6, V: 120, ox: 668, oy: 360 };
+      : { pic: { x: 6, y: 6, w: 424, h: 468 }, dia: { x: 436, y: 6, w: 358, h: 468 }, fo: { x: 6, y: 480, w: 788, h: 132 }, sc: 36, vk: 6, V: 120, ox: 668, oy: 360 };
   }
   const dvCalc = () => {
     const d = S.dv, w = d.v / d.r, dth = w * d.dt;
@@ -306,16 +306,29 @@
     const f = L.fo; panel(f.x, f.y, f.w, f.h, 14);
     const hide = eff('hideA');
     const fs = PHONE ? 13.5 : 14.5, lh = PHONE ? 25 : 27;
-    lines(f.x + 14, f.y + 28, lh, fs, [
-      ['|Δv| = 2v·sin(Δθ/2) ≈ v·Δθ = v·ω·Δt   →   a = |Δv| / Δt = v·ω = v² / r = r·ω²', '#26324a'],
-      ['v = ' + d.v.toFixed(1) + ' m/s,  r = ' + d.r.toFixed(1) + ' m   →   ω = v / r = ' + c.w.toFixed(2) + ' rad/s,  T = 2πr / v = ' + c.T.toFixed(2) + ' s', '#26324a'],
-      [hide ? '|Δv| / Δt = ?     a = v² / r = ?   (직접 계산해 보세요)' : '|Δv| / Δt = ' + (c.dvm / d.dt).toFixed(2) + ' m/s² (Δt = ' + d.dt.toFixed(2) + ' s)   a = v² / r = ' + c.a.toFixed(2) + ' m/s²   a = r·ω² = ' + (d.r * c.w * c.w).toFixed(2) + ' m/s²', hide ? '#b45309' : '#14753f'],
-    ].slice(0, PHONE ? 3 : 3));
+    const nv = d.v.toFixed(1), nr = d.r.toFixed(1);
+    const l3 = hide ? '|Δv| / Δt = ?     a = v² / r = ?   (직접 계산해 보세요)' : '|Δv| / Δt = ' + (c.dvm / d.dt).toFixed(2) + ' m/s² (Δt = ' + d.dt.toFixed(2) + ' s)   a = v² / r = ' + c.a.toFixed(2) + ' m/s²   a = r·ω² = ' + (d.r * c.w * c.w).toFixed(2) + ' m/s²';
+    if (!PHONE) {
+      lines(f.x + 14, f.y + 28, lh, fs, [
+        ['|Δv| = 2v·sin(Δθ/2) ≈ v·Δθ = v·ω·Δt   →   a = |Δv| / Δt = v·ω = v² / r = r·ω²', '#26324a'],
+        ['v = ' + nv + ' m/s,  r = ' + nr + ' m   →   ω = v / r = ' + c.w.toFixed(2) + ' rad/s,  T = 2πr / v = ' + c.T.toFixed(2) + ' s', '#26324a'],
+        [l3, hide ? '#b45309' : '#14753f'],
+      ]);
+    } else {
+      lines(f.x + 12, f.y + 24, 23, 13.5, [
+        ['|Δv| ≈ v·Δθ = v·ω·Δt  →  a = |Δv| / Δt = v·ω', '#26324a'],
+        ['a = v² / r = r·ω²', '#26324a'],
+        ['v = ' + nv + ' m/s, r = ' + nr + ' m → ω = ' + c.w.toFixed(2) + ' rad/s', '#26324a'],
+        ['T = 2πr / v = ' + c.T.toFixed(2) + ' s', '#26324a'],
+        [hide ? '|Δv| / Δt = ?, a = ? (직접 계산!)' : '|Δv| / Δt = ' + (c.dvm / d.dt).toFixed(2) + ' (Δt = ' + d.dt.toFixed(2) + ' s)', hide ? '#b45309' : '#14753f'],
+        [hide ? '' : 'a = v² / r = ' + c.a.toFixed(2) + ' m/s²', '#14753f'],
+      ]);
+    }
     if (PHONE) { /* 폰: 식이 길어 두 줄로 나뉘어 보이지 않게 폰트를 줄여 둠 */ }
   }
 
   /* ================= ③ 줄에 매단 공 ================= */
-  function blL() { return PHONE ? { sx: 6, sy: 6, sw: 468, sh: SH - 12, cx: 158, cy: SH / 2, sc: 78, gx: 322 } : { sx: 6, sy: 6, sw: 548, sh: SH - 12, cx: 196, cy: SH / 2, sc: 90, gx: 384 }; }
+  function blL() { return PHONE ? { sx: 6, sy: 6, sw: 468, sh: SH - 12, cx: 150, cy: SH / 2, sc: 78, gx: 312 } : { sx: 6, sy: 6, sw: 788, sh: SH - 12, cx: 285, cy: SH / 2, sc: 96, gx: 584 }; }
   const blF = (b) => b.m * b.v * b.v / b.r;
   function blStep(dt) {
     const b = S.bl, L = blL();
@@ -395,8 +408,8 @@
     vbar(barX, barY, 34, barH, F, 80, F > 72 ? '#b91c1c' : RED);
     for (let k = 0; k <= 4; k++) { const yy = barY + barH - barH * k / 4; ctx.strokeStyle = '#9aa6bb'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(barX + 34, yy); ctx.lineTo(barX + 42, yy); ctx.stroke(); T(barX + 46, yy + 5, String(k * 20), 13, '#5a6679', 'left', 700); }
     T(barX + 17, barY + barH + 22, 'N', 13, '#5a6679', 'center', 700);
-    T(gx + 78, barY + 18, F.toFixed(1) + ' N', 22, RED, 'left', 800);
-    lines(gx + 78, barY + 46, 22, 13.5, [['F = m·v² / r', '#26324a'], ['m = ' + b.m.toFixed(2) + ' kg', '#5a6679'], ['v = ' + b.v.toFixed(1) + ' m/s', '#5a6679'], ['r = ' + b.r.toFixed(2) + ' m', '#5a6679']]);
+    T(gx + 74, barY + 18, F.toFixed(1) + ' N', 22, RED, 'left', 800);
+    lines(gx + 74, barY + 46, 22, 13.5, [['F = m·v² / r', '#26324a'], ['m = ' + b.m.toFixed(2) + ' kg', '#5a6679'], ['v = ' + b.v.toFixed(1) + ' m/s', '#5a6679'], ['r = ' + b.r.toFixed(2) + ' m', '#5a6679']]);
     ctx.restore();
     // 아래: F–v² 그래프와 표
     const gr = PHONE ? { x: PX, y: PY, w: PW, h: 186 } : { x: PX, y: PY, w: Math.round(PW * 0.55), h: PH };
@@ -432,7 +445,7 @@
   }
 
   /* ================= ③ 커브 도로 ================= */
-  function rdL() { return PHONE ? { sx: 6, sy: 6, sw: 468, sh: SH - 12, cx: 160, cy: SH / 2, sc: 2.2, gx: 322 } : { sx: 6, sy: 6, sw: 548, sh: SH - 12, cx: 190, cy: SH / 2, sc: 2.6, gx: 384 }; }
+  function rdL() { return PHONE ? { sx: 6, sy: 6, sw: 468, sh: SH - 12, cx: 160, cy: SH / 2, sc: 2.2, gx: 322 } : { sx: 6, sy: 6, sw: 788, sh: SH - 12, cx: 285, cy: SH / 2, sc: 2.8, gx: 584 }; }
   const rdV = () => S.rd.kmh / 3.6;
   function rdPlace() { const r = S.rd, L = rdL(); r.x = L.cx + RD_R * L.sc * Math.cos(r.ang); r.y = L.cy - RD_R * L.sc * Math.sin(r.ang); }
   function rdReset() { const r = S.rd; r.skid = false; r.stop = false; r.ang = -Math.PI / 2; r.trail = []; r.sp = 0; rdPlace(); updateCtl(); }
@@ -534,7 +547,7 @@
   }
 
   /* ================= ④ 놀이기구 공통 ================= */
-  function sceneBox() { return { x: 6, y: 6, w: PHONE ? 468 : 548, h: SH - 12 }; }
+  function sceneBox() { return { x: 6, y: 6, w: PHONE ? 468 : 788, h: SH - 12 }; }
   function person(x, yFeet, h, color, flip) {
     // 단순한 사람 그림: 다리·몸·머리
     const w = h * 0.34;
@@ -552,7 +565,7 @@
     card(B.x, B.y, B.w, B.h);
     s.th = approach(s.th, swingTheta(s.w), dt, 5);
     s.phi += s.w * dt; s.r = SW_RP + SW_L * Math.sin(s.th);
-    const sc = PHONE ? 19 : 22, cx = PHONE ? 130 : 170, gy = B.y + B.h - 26, ytop = gy - SW_H * sc;
+    const sc = PHONE ? 19 : 22, cx = PHONE ? 130 : 260, gy = B.y + B.h - 26, ytop = gy - SW_H * sc;
     ctx.save(); D.roundRect(B.x, B.y, B.w, B.h, 10); ctx.clip();
     const sky = ctx.createLinearGradient(0, B.y, 0, gy); sky.addColorStop(0, '#cfe6fb'); sky.addColorStop(1, '#f1f8ff'); ctx.fillStyle = sky; ctx.fillRect(B.x, B.y, B.w, gy - B.y);
     ctx.fillStyle = '#8fc47a'; ctx.fillRect(B.x, gy, B.w, B.y + B.h - gy);
@@ -584,14 +597,14 @@
     T(B.x + 12, B.y + 22, '회전 그네 (옆에서 본 모습)', 14, '#26324a', 'left', 800);
     T(cx, gy + 18, '축', 13, '#26324a', 'center', 800);
     // 오른쪽: 줄의 기울기 도해 (단위 질량당 힘으로 평행사변형 그리기)
-    const ix = B.x + B.w - (PHONE ? 134 : 168);
+    const ix = B.x + B.w - (PHONE ? 150 : 168);
     ctx.fillStyle = '#f7f9fd'; ctx.fillRect(ix - 8, B.y, B.x + B.w - ix + 8, B.h);
     T(ix + 2, B.y + 24, '의자에 작용하는 힘', 13.5, '#26324a', 'left', 800);
     T(ix + 2, B.y + 42, '(단위 질량당)', 13, '#5a6679', 'left', 700);
     const sw = swing(s.w), kf = 6;
-    const ex = ix + (PHONE ? 100 : 124), ey = B.y + B.h - 90;
+    const ex = ix + (PHONE ? 98 : 124), ey = B.y + B.h - 90;
     const ang = sw.th;
-    const sl = 150 * (PHONE ? 0.85 : 1);
+    const sl = 150 * (PHONE ? 0.78 : 1);
     const px0 = ex - Math.sin(ang) * sl, py0 = ey - Math.cos(ang) * sl;
     D.dashedLine(px0, py0 - 10, px0, ey + 30, { color: '#9aa6bb', width: 2, dash: [4, 5] });
     T(px0 + 6, ey + 46, '축', 13, '#5a6679', 'left', 700);
@@ -604,7 +617,7 @@
     D.arrow(ex, ey, ex - sw.a * kf, ey - G * kf, { color: PURPLE, width: 3.5, head: 9 });
     T(ex - sw.a * kf / 2 + 14, ey - G * kf / 2 + 6, '장력 T', 13.5, PURPLE, 'left', 800);
     ctx.strokeStyle = PURPLE; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(px0, py0, 34, Math.PI / 2 - ang, Math.PI / 2); ctx.stroke();
-    T(px0 + 44, py0 + 50, eff('hideTh') ? 'θ = ?' : 'θ = ' + (ang / RAD).toFixed(1) + '°', 14, PURPLE, 'left', 800);
+    T(px0 + (PHONE ? 30 : 44), py0 + 50, eff('hideTh') ? 'θ = ?' : 'θ = ' + (ang / RAD).toFixed(1) + '°', 14, PURPLE, 'left', 800);
     ctx.restore();
     // 아래: 스마트폰 센서
     panel(PX, PY, PW, PH, 16);
@@ -636,7 +649,7 @@
     card(B.x, B.y, B.w, B.h);
     ctx.save(); D.roundRect(B.x, B.y, B.w, B.h, 10); ctx.clip();
     const sky = ctx.createLinearGradient(0, B.y, 0, B.y + B.h); sky.addColorStop(0, '#cfe6fb'); sky.addColorStop(1, '#f1f8ff'); ctx.fillStyle = sky; ctx.fillRect(B.x, B.y, B.w, B.h);
-    const sc = PHONE ? 12.6 : 14.2, cx = PHONE ? 160 : 190, cy = B.y + B.h / 2 - 2, R = WH_R * sc;
+    const sc = PHONE ? 12.6 : 14.2, cx = PHONE ? 160 : 290, cy = B.y + B.h / 2 - 2, R = WH_R * sc;
     ctx.fillStyle = '#8fc47a'; ctx.fillRect(B.x, cy + R + 20, B.w, B.y + B.h - (cy + R + 20));
     // 지지대
     ctx.strokeStyle = '#8b97ad'; ctx.lineWidth = 6; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(cx - 34, cy + R + 20); ctx.lineTo(cx, cy); ctx.lineTo(cx + 34, cy + R + 20); ctx.stroke();
@@ -708,7 +721,7 @@
     card(B.x, B.y, B.w, B.h);
     const N = RO_M * r.w * r.w * RO_R, fmax = r.mu * N, W = RO_M * G;
     ctx.save(); D.roundRect(B.x, B.y, B.w, B.h, 10); ctx.clip();
-    const sc = PHONE ? 46 : 54, cx = PHONE ? 112 : 142, top = B.y + 34, bot = top + RO_HT * sc, half = RO_R * sc;
+    const sc = PHONE ? 46 : 54, cx = PHONE ? 112 : 220, top = B.y + 34, bot = top + RO_HT * sc, half = RO_R * sc;
     ctx.fillStyle = '#e9eef7'; ctx.fillRect(B.x, B.y, B.w, B.h);
     ctx.fillStyle = '#c9d3e4'; ctx.fillRect(B.x, bot + 8, B.w, B.y + B.h - bot - 8);
     // 원통 안쪽 (뒤쪽 벽): 줄무늬가 가로로 움직여 회전을 보여 줘요
@@ -751,7 +764,7 @@
     ctx.restore();
     // 아래: 위에서 본 모습과 설명
     panel(PX, PY, PW, PH, 16);
-    const R2 = PHONE ? 62 : 72, tcx = PX + 16 + R2 + 14, tcy = PY + PH / 2 + 4, k = R2 / RO_R;
+    const R2 = PHONE ? 50 : 72, tcx = PX + 16 + R2 + 14, tcy = PY + PH / 2 + 4, k = R2 / RO_R;
     ctx.strokeStyle = '#56657f'; ctx.lineWidth = 6; ctx.beginPath(); ctx.arc(tcx, tcy, R2 + 3, 0, TAU); ctx.stroke();
     ctx.fillStyle = '#eef3fb'; ctx.beginPath(); ctx.arc(tcx, tcy, R2, 0, TAU); ctx.fill();
     const pa = r.ang, ppx = tcx + R2 * 0.88 * Math.cos(pa), ppy = tcy - R2 * 0.88 * Math.sin(pa);
@@ -759,14 +772,23 @@
     D.arrow(ppx, ppy, ppx - Math.cos(pa) * Math.min(N * 0.02, R2 * 1.1), ppy + Math.sin(pa) * Math.min(N * 0.02, R2 * 1.1), { color: RED, width: 3.5, head: 9 });
     D.sphere(ppx, ppy, 7, '#3867f4', { gloss: true });
     T(tcx, tcy + 5, '위에서', 13, '#7b869a', 'center', 700);
-    const tx0 = tcx + R2 + 26;
-    lines(tx0, PY + 34, PHONE ? 24 : 27, PHONE ? 13 : 14, [
+    const tx0 = tcx + R2 + 22;
+    if (!PHONE) lines(tx0, PY + 34, 27, 14, [
       ['실제로 사람에게 작용하는 수평 방향의 힘은', '#26324a'],
       ['중심 쪽으로 미는 벽의 수직항력 N 하나뿐이에요.', '#26324a'],
       ['몸이 바깥으로 밀리는 느낌은 직진하려는 관성이에요.', '#b45309'],
       ['(점선: 직진하려는 방향)', '#5a6679'],
       ['위쪽 마찰력 f ≤ μN 이 몸무게 mg를 받쳐요.', '#26324a'],
-    ].slice(0, PHONE ? 5 : 5));
+    ]);
+    else lines(tx0, PY + 34, 24, 13, [
+      ['수평 방향의 힘은 중심 쪽으로', '#26324a'],
+      ['미는 벽의 수직항력 N 하나뿐!', '#26324a'],
+      ['바깥으로 밀리는 느낌은', '#b45309'],
+      ['직진하려는 관성이에요.', '#b45309'],
+      ['(점선: 직진하려는 방향)', '#5a6679'],
+      ['위쪽 마찰력 f ≤ μN 이', '#26324a'],
+      ['몸무게 mg를 받쳐 줘요.', '#26324a'],
+    ]);
   }
 
   /* ================= 포인터: 구심 가속도 화면에서 공을 끌어 위치 바꾸기 ================= */
