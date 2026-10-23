@@ -458,7 +458,7 @@
       const r = S.mv.r[k];
       if (r.anim) {
         const an = r.anim; an.t += dt / an.dur;
-        const bp = beadPos(k); if (!RM) parts.emit({ x: bp.x, y: bp.y, vx: (Math.random() - 0.5) * 20, vy: (Math.random() - 0.5) * 20, life: 0.4, size: 3.4, color: 'rgba(139,92,246,.75)', shape: 'circle' });
+        const bp = beadPos(k); if (!RM && S.mode === 'move') parts.emit({ x: bp.x, y: bp.y, vx: (Math.random() - 0.5) * 20, vy: (Math.random() - 0.5) * 20, life: 0.4, size: 3.4, color: 'rgba(139,92,246,.75)', shape: 'circle' });
         if (an.t >= 1) {
           r.anim = null;
           if (an.kind === 'arc') { r.done = true; r.pop = 0.001; Sound.success(); const s = slotA(k); flash(s.x, s.y, ['#8b5cf6', '#ef4444', '#3b82f6']); updateCtl(); }
@@ -469,9 +469,9 @@
       if (!r.done) r.pop = 0;
       r.nuc = ap(r.nuc, MVR[k].gas && r.done && r.pop >= 0.9 ? 1 : 0, dt, 2.4); if (!MVR[k].gas || !r.done) r.nuc = 0;
     });
-    const d = S.mv.drag; if (d && !RM && Math.random() < 0.7) parts.emit({ x: d.x, y: d.y, vx: (Math.random() - 0.5) * 24, vy: (Math.random() - 0.5) * 24, life: 0.35, size: 3, color: 'rgba(139,92,246,.7)' });
+    const d = S.mv.drag; if (d && S.mode === 'move' && !RM && Math.random() < 0.7) parts.emit({ x: d.x, y: d.y, vx: (Math.random() - 0.5) * 24, vy: (Math.random() - 0.5) * 24, life: 0.35, size: 3, color: 'rgba(139,92,246,.7)' });
     const rr = S.mv.r[S.mv.k];
-    if (MVR[S.mv.k].gas && rr.nuc > 0.9 && !RM && Math.random() < 0.5) { const p = mvPos(S.mv.k), mx = (p.dx + p.ax) / 2; parts.emit({ x: mx + (Math.random() - 0.5) * 40, y: p.y + (Math.random() - 0.5) * 30, vx: (Math.random() - 0.5) * 12, vy: -14 - Math.random() * 10, life: 2, size: 9 + Math.random() * 4, grow: 8, color: 'rgba(120,130,150,.5)', shape: 'smoke' }); }
+    if (S.mode === 'move' && MVR[S.mv.k].gas && rr.nuc > 0.9 && !RM && Math.random() < 0.5) { const p = mvPos(S.mv.k), mx = (p.dx + p.ax) / 2; parts.emit({ x: mx + (Math.random() - 0.5) * 40, y: p.y + (Math.random() - 0.5) * 30, vx: (Math.random() - 0.5) * 12, vy: -14 - Math.random() * 10, life: 2, size: 9 + Math.random() * 4, grow: 8, color: 'rgba(120,130,150,.5)', shape: 'smoke' }); }
   }
   function drawMove(t) {
     const k = S.mv.k, m = MVR[k], r = S.mv.r[k], g = mvGeom(), P = mvPos(k), d = S.mv.drag;
@@ -664,7 +664,7 @@
     let bp = null;
     if (h) {
       if (hp < 0.12) bp = { x: dxC, y: cy - R - 14 * sm(hp / 0.12) };
-      else if (hp < 0.62) { const u = SPL.inOutCubic((hp - 0.12) / 0.5); bp = arcAt({ x: dxC, y: cy - R - 14 }, { x: axC, y: cy - R - 14 }, u, 58); if (!RM) parts.emit({ x: bp.x, y: bp.y, vx: (Math.random() - 0.5) * 20, vy: (Math.random() - 0.5) * 20, life: 0.4, size: 3.4, color: 'rgba(139,92,246,.75)' }); }
+      else if (hp < 0.62) { const u = SPL.inOutCubic((hp - 0.12) / 0.5); bp = arcAt({ x: dxC, y: cy - R - 14 }, { x: axC, y: cy - R - 14 }, u, 58); if (!RM && S.mode === 'pairs') parts.emit({ x: bp.x, y: bp.y, vx: (Math.random() - 0.5) * 20, vy: (Math.random() - 0.5) * 20, life: 0.4, size: 3.4, color: 'rgba(139,92,246,.75)' }); }
     }
     if (bp) bead(bp.x, bp.y, true, t, false);
     else if (!s.after) bead(dxC, cy - R - 14, false, t, false);

@@ -5955,8 +5955,7 @@ window.SCI_CATALOG = {
                 "성분 분해",
                 "운동 식",
                 "목표 맞히기"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hm-projectile-energy",
@@ -5977,8 +5976,7 @@ window.SCI_CATALOG = {
                 "에너지 보존",
                 "속력 예측",
                 "적용"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hm-circular-motion",

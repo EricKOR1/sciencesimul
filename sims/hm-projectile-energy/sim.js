@@ -256,7 +256,7 @@
     const v = S.vd, n = NF();
     card(tb.x, tb.y, tb.w, tb.h);
     T(tb.x + 10, tb.y + 18, '📋 영상 분석 표 (m = 0.50 kg)', 13.5, '#26324a', 'left', 800);
-    T(tb.x + tb.w - 10, tb.y + 18, '속력은 앞뒤 프레임의 위치 차이로 구해요', 13, '#5a6679', 'right', 800);
+    if (!PHONE) T(tb.x + tb.w - 10, tb.y + 18, '속력은 앞뒤 프레임의 위치 차이로 구해요', 13, '#5a6679', 'right', 800);
     const rows = ['t (s)', 'y (m)', 'v (m/s)', 'E_k (J)', 'E_p (J)', 'E (J)'], c0 = tb.x + (PHONE ? 6 : 10), lw = PHONE ? 58 : 76, cw = (tb.w - lw - 14) / NFMAX, rh = Math.min(PHONE ? 22 : 27, (tb.h - 30) / 6.3), y0 = tb.y + 26;
     rows.forEach((r, i) => T(c0, y0 + (i + 1) * rh, r, 13, ['#5a6679', '#5a6679', '#5a6679', '#c2410c', '#1d4ed8', '#0b6b39'][i], 'left', 800));
     for (let k = 0; k < NFMAX; k++) {

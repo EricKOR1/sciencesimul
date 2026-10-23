@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#8b5cf6">
+  <title>분자 간 힘과 액체 | 고등 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧲</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; }
+    .stage-toolbar { min-height: 61px; }
+    .segmented button { min-height: 44px; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    #resetBtn { font-size: 20px; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 14px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard .btn-sm { min-height: 44px; }
+    #ctrlCard [hidden], .stage-toolbar [hidden] { display: none !important; }
+    .ctrl-note { font-size: 14px; color: var(--muted); margin: 6px 0 0; line-height: 1.4; }
+    .btn-row { display: flex; gap: 8px; margin-top: 6px; }
+    .btn-row .btn { flex: 1; min-width: 0; padding-left: 8px; padding-right: 8px; min-height: 46px; }
+    .view-seg { display: flex; width: 100%; }
+    .view-seg button { flex: 1 1 0; min-width: 0; padding-left: 4px; padding-right: 4px; font-size: 14.5px; }
+    .range-row { display: flex; align-items: center; gap: 8px; }
+    .range-row input[type=range] { flex: 1; min-width: 0; height: 44px; }
+    .nudge { flex: none; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); font-weight: 900; font-size: 16px; line-height: 1; cursor: pointer; display: grid; place-items: center; color: var(--ink); font-family: inherit; }
+    .nudge:active { transform: scale(.94); background: var(--surface-2); }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+    .chips button { min-height: 44px; padding: 6px 12px; border: 2px solid var(--line); background: #fff; border-radius: 999px; font-weight: 800; font-size: 14.5px; cursor: pointer; color: var(--ink); font-family: inherit; }
+    .chips button.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); color: color-mix(in srgb, var(--subject) 70%, black); }
+    .chips button.done { border-color: var(--good); background: var(--good-soft); }
+    .num-in { width: 100%; min-width: 0; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 10px; font: 800 16px var(--font); color: var(--ink); background: #fff; }
+    .num-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .num-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .in-grid { display: grid; grid-template-columns: 1fr 104px; gap: 6px 8px; align-items: center; margin-top: 6px; }
+    .in-grid .lab { font-weight: 800; font-size: 14px; line-height: 1.25; }
+    .in-grid .num-in { min-height: 42px; padding: 2px 8px; font-size: 15px; }
+    @keyframes shakeX { 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+    .readout .value.txt { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    sup, sub { font-size: .7em; line-height: 0; }
+    .stage-canvas .stage-hint { top: 10px; bottom: auto; white-space: normal; width: max-content; max-width: 92%; text-align: center; }
+    .tog { display: flex; gap: 8px; margin-top: 6px; }
+    .tog .btn { flex: 1; min-width: 0; min-height: 46px; padding: 4px 8px; }
+    .tog .btn[aria-pressed=true] { background: color-mix(in srgb, var(--subject) 16%, white); border-color: var(--subject); }
+    .qrow { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+    .qrow button { flex: 1 1 0; min-width: 44px; min-height: 44px; border: 2px solid var(--line); background: #fff; border-radius: 12px; font: 800 15px var(--font); cursor: pointer; color: var(--ink); }
+    .qrow button.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); }
+    .qrow button.ok { border-color: var(--good); background: var(--good-soft); }
+    .qrow button.no { border-color: var(--bad); background: var(--bad-soft); }
+    @media (max-width: 1100px) and (orientation: landscape) { .toolbar-label { display: none; } }
+    @media (max-width: 599px) {
+      .readout .value.txt { font-size: 15px; }
+      .stage-toolbar { gap: 6px; padding: 8px; }
+      .stage-toolbar .spacer, .toolbar-label { display: none; }
+      .segmented button { padding-left: 8px; padding-right: 8px; font-size: 14px; }
+      .stage-toolbar:has(> .segmented[hidden]) { display: none; }
+      .stage-hint { font-size: 13px; padding: 5px 12px; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="chem">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#hx">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">물질과 에너지 · Ⅰ. 물질의 세 가지 상태</div>
+      <h1>분자 간 힘과 액체</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🌡️ 인력과 열운동</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="tablist" aria-label="화면 고르기">
+            <button type="button" data-mode="heat" data-feature="heat">🌡️ 열운동</button>
+            <button type="button" data-mode="forces" data-feature="forces">🔍 세 가지 힘</button>
+            <button type="button" data-mode="bp" data-feature="bp">📈 끓는점</button>
+            <button type="button" data-mode="pred" data-feature="pred">🎯 순서 예측</button>
+          </div>
+          <button class="icon-btn" id="resetBtn" type="button" title="이 화면 처음으로" aria-label="이 화면 처음으로">↺</button>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="분자 모형 상자와 온도 계기, 분자 간 힘 돋보기와 분류, 수소 화합물 끓는점 그래프, 끓는점 순서 예측 실험"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">—</span><span class="value txt" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">—</span><span class="value txt" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">—</span><span class="value txt" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <!-- ① 열운동 -->
+        <div class="control" data-modes="heat">
+          <div class="control-head"><span>🧪 물질 고르기</span></div>
+          <div class="chips" id="subChips" role="group" aria-label="물질 고르기"></div>
+        </div>
+        <div class="control" data-modes="heat">
+          <div class="control-head"><span>🌡️ 온도 T</span><output id="oT">100 K</output></div>
+          <div class="range-row"><button class="nudge" id="tMinus" type="button" aria-label="온도 낮추기">−</button><input type="range" id="sT" min="50" max="600" step="10" value="100" aria-label="온도 (50에서 600 K)"><button class="nudge" id="tPlus" type="button" aria-label="온도 높이기">+</button></div>
+        </div>
+        <div class="control" data-modes="heat">
+          <div class="tog"><button class="btn" id="bLines" type="button" aria-pressed="true">👁️ 인력 점선 보기</button></div>
+          <p class="ctrl-note">점선은 가까이 있는 분자 사이에 인력이 작용한다는 뜻이에요.</p>
+        </div>
+        <!-- ② 세 가지 힘 -->
+        <div class="control" data-modes="forces">
+          <div class="segmented view-seg" id="fSub" role="group" aria-label="화면 고르기">
+            <button type="button" data-v="look">🔍 힘 살펴보기</button>
+            <button type="button" data-v="sort">🗂️ 분류하기</button>
+          </div>
+        </div>
+        <div class="control" data-modes="forces" data-sub="look">
+          <div class="control-head"><span>🧲 어떤 힘일까요?</span></div>
+          <div class="chips" id="fChips" role="group" aria-label="분자 간 힘 고르기"></div>
+        </div>
+        <div class="control" data-modes="forces" data-sub="look" data-gate-f="disp">
+          <div class="control-head"><span>⚛️ 전자가 많은 정도</span></div>
+          <div class="segmented view-seg" id="szSeg" role="group" aria-label="원자 고르기"><button type="button" data-v="he">He (전자 2)</button><button type="button" data-v="ar">Ar (18)</button><button type="button" data-v="xe">Xe (54)</button></div>
+        </div>
+        <div class="control" data-modes="forces" data-sub="look" data-gate-f="hb">
+          <div class="control-head"><span>💧 분자 고르기</span></div>
+          <div class="segmented view-seg" id="hbSeg" role="group" aria-label="분자 고르기"><button type="button" data-v="h2o">H₂O</button><button type="button" data-v="hf">HF</button><button type="button" data-v="nh3">NH₃</button></div>
+        </div>
+        <div class="control" data-modes="forces" data-sub="look" data-gate-f="dip">
+          <div class="btn-row"><button class="btn" id="bScatter" type="button">🔀 방향 흩뜨리기</button></div>
+        </div>
+        <div class="control" data-modes="forces" data-sub="sort">
+          <p class="ctrl-note" style="margin-top:0">카드를 끌어서 알맞은 상자에 놓아요. (카드를 누른 뒤 상자를 눌러도 돼요.)</p>
+          <div class="btn-row"><button class="btn" id="bCardsReset" type="button">↺ 카드 모두 되돌리기</button></div>
+        </div>
+        <!-- ③ 끓는점 -->
+        <div class="control" data-modes="bp">
+          <div class="segmented view-seg" id="bSub" role="group" aria-label="화면 고르기">
+            <button type="button" data-v="graph">📈 그래프</button>
+            <button type="button" data-v="table">📋 요인 검증표</button>
+          </div>
+        </div>
+        <div class="control" data-modes="bp" data-sub="graph">
+          <div class="control-head"><span>🧪 보고 싶은 족</span></div>
+          <div class="chips" id="gChips" role="group" aria-label="족 고르기"></div>
+          <p class="ctrl-note">그래프의 점을 눌러 보세요. 점마다 끓는점과 분자량을 알려 줘요.</p>
+        </div>
+        <div class="control" data-modes="bp" data-sub="table">
+          <p class="ctrl-note" style="margin-top:0">칸을 눌러 ○ △ ×를 바꿔요. ○ 설명할 수 있다 · △ 일부만 설명한다 · × 설명할 수 없다</p>
+          <div class="btn-row"><button class="btn" id="bTblReset" type="button">↺ 표 비우기</button></div>
+        </div>
+        <!-- ④ 순서 예측 -->
+        <div class="control" data-modes="pred">
+          <div class="control-head"><span>🎯 문제</span></div>
+          <div class="qrow" id="qRow" role="group" aria-label="문제 고르기"></div>
+        </div>
+        <div class="control" data-modes="pred">
+          <div class="control-head"><span>끓는점이 더 높은 쪽은?</span></div>
+          <div class="btn-row"><button class="btn" id="pickA" type="button">◀ 왼쪽</button><button class="btn" id="pickB" type="button">오른쪽 ▶</button></div>
+          <div class="btn-row"><button class="btn btn-primary" id="bHeat" type="button">🔥 가열해서 확인</button></div>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

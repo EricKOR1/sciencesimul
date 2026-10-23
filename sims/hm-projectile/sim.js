@@ -426,7 +426,7 @@
     const tb = PHONE ? { x: PX + 8, y: PY + 172, w: PW - 16, h: PH - 180 } : { x: PX + 8, y: PY + 8, w: PW - 16, h: PH - 16 };
     card(tb.x, tb.y, tb.w, tb.h);
     const rows = ['t (s)', 'x (m)', 'y (m)', 'vx (m/s)', 'vy (m/s)'], c0 = tb.x + (PHONE ? 6 : 10), lw = PHONE ? 54 : 76, cw = (tb.w - lw - 14) / NF, rh = Math.min(PHONE ? 22 : 26, (tb.h - 28) / 5.6), y0 = tb.y + 24;
-    T(tb.x + tb.w - 10, tb.y + 17, '프레임마다 찍으면 채워져요 · v는 앞 프레임과의 구간 평균', 13, '#5a6679', 'right', 800);
+    if (!PHONE) T(tb.x + tb.w - 10, tb.y + 17, '프레임마다 찍으면 채워져요 · v는 앞 프레임과의 구간 평균', 13, '#5a6679', 'right', 800);
     T(tb.x + 10, tb.y + 17, '📋 영상 분석 표', 13.5, '#26324a', 'left', 800);
     rows.forEach((r, i) => T(c0, y0 + (i + 1) * rh, r, 13, '#5a6679', 'left', 800));
     for (let k = 0; k < NF; k++) {
