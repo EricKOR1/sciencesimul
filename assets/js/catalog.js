@@ -5997,8 +5997,7 @@ window.SCI_CATALOG = {
                 "구심 가속도",
                 "구심력",
                 "놀이기구"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hm-kepler-gravity",
@@ -6019,8 +6018,7 @@ window.SCI_CATALOG = {
                 "제3법칙",
                 "구심력 연결",
                 "만유인력"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hm-satellite",
@@ -6041,8 +6039,7 @@ window.SCI_CATALOG = {
                 "주기와 반지름",
                 "정지 위성",
                 "질량 구하기"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hm-escape-launch",

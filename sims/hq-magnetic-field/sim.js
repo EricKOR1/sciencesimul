@@ -130,11 +130,10 @@
   /* 슬라이더 + 증감 버튼 묶음: bindSl(id, get, set) — 슬라이더 id, 버튼 id+'M', id+'P' */
   function bindSl(id, get, set, after) {
     const s = $('#' + id); if (!s) return;
-    const step = +s.step || 1, mn = +s.min, mx = +s.max;
-    const put = (v) => { v = Math.round(clamp(v, mn, mx) / step) * step; set(Math.round(v * 1e6) / 1e6); if (after) after(); };
+    const put = (v) => { const step = +s.step || 1, mn = +s.min, mx = +s.max; v = Math.round(clamp(v, mn, mx) / step) * step; set(Math.round(v * 1e6) / 1e6); if (after) after(); };
     s.addEventListener('input', () => { put(+s.value); Sound.tick(); });
-    $('#' + id + 'M').addEventListener('click', () => { Sound.click(); put(get() - step); });
-    $('#' + id + 'P').addEventListener('click', () => { Sound.click(); put(get() + step); });
+    $('#' + id + 'M').addEventListener('click', () => { Sound.click(); put(get() - (+s.step || 1)); });
+    $('#' + id + 'P').addEventListener('click', () => { Sound.click(); put(get() + (+s.step || 1)); });
   }
 
   /* ---------- 타원 적분 · 고리 전류의 자속 함수 (단위: μ₀·I·R) ---------- */
@@ -470,7 +469,7 @@
       T(CXs + 28, CYs - Rpx / 2 + 4, 'R=' + l.R.toFixed(1) + ' cm', 13, '#0b7a41', 'left', 800, { stroke: 'rgba(255,255,255,.9)', strokeWidth: 4 });
     }
     if (l.clamped) T(SC.w - 10, 20, '선이 너무 많아 30개까지만 그렸어요', 12.5, '#9a3412', 'right', 800);
-    lbl(10, SC.h - 14, '중심의 B: ' + (l.dir > 0 ? '→' : '←') + '   (손가락 = 전류, 엄지 = B)', { size: 12.5, minX: 0, maxX: SC.w, bg: 'rgba(255,255,255,.88)', color: '#516079', align: 'left' });
+    lbl(CXs, SC.h - 14, '중심의 B: ' + (l.dir > 0 ? '→' : '←') + '   (손가락 = 전류, 엄지 = B)', { size: 12.5, minX: 0, maxX: SC.w, bg: 'rgba(255,255,255,.88)', color: '#516079' });
     sceneEnd();
     // 띠: 읽기 값
     panel(STP.x, STP.y, STP.w, STP.h, 14);
@@ -585,7 +584,7 @@
     solCompassPos.forEach((p, k) => drawCompass(p.x, p.y, 11, s.needles[k]));
     lbl(CXs, CYs + SOL.R + 40, '길이 0.50 m · 반지름 5.0 cm (감은 선은 일부만 그렸어요)', { size: 12.5, minX: 0, maxX: SC.w, bg: 'rgba(255,255,255,.88)', color: '#516079' });
     if (s.clamped) T(SC.w - 10, 20, '선이 너무 많아 30개까지만 그렸어요', 12.5, '#9a3412', 'right', 800);
-    lbl(10, SC.h - 14, '내부는 균일, 외부는 약해요. 선이 많을수록 B가 세요', { size: 12.5, minX: 0, maxX: SC.w, bg: 'rgba(255,255,255,.88)', color: '#516079', align: 'left' });
+    lbl(CXs, SC.h - 14, '내부는 균일, 외부는 약해요. 선이 많을수록 B가 세요', { size: 12.5, minX: 0, maxX: SC.w, bg: 'rgba(255,255,255,.88)', color: '#516079' });
     sceneEnd();
     panel(STP.x, STP.y, STP.w, STP.h, 14);
     T(STP.x + 12, STP.y + 22, '솔레노이드 내부의 자기장', 14, '#1e40af', 'left', 800);
