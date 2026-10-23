@@ -7041,8 +7041,7 @@ window.SCI_CATALOG = {
                 "세 가지 힘",
                 "끓는점 추론",
                 "순서 예측"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hx-vapor-boiling",
@@ -7063,8 +7062,7 @@ window.SCI_CATALOG = {
                 "증기압 곡선",
                 "압력과 끓는점",
                 "상평형 그림"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hx-solid-types",
@@ -7085,8 +7083,7 @@ window.SCI_CATALOG = {
                 "네 가지 결정",
                 "성질 시험",
                 "미지 시료 분류"
-              ],
-              "soon": true
+              ]
             }
           ]
         },

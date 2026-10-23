@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#f26b3a">
+  <title>인공위성의 운동 | 고등 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛰️</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+<style>
+    .stage-toolbar { min-height: 61px; }
+    .segmented button { min-height: 44px; }
+    .segmented button.on { background: var(--phy); color: #fff; }
+    #modeSeg { width: 100%; }
+    #modeSeg button { flex: 1 1 auto; min-width: 0; padding-left: 8px; padding-right: 8px; font-size: 14.5px; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard .btn-sm { min-height: 44px; }
+    #ctrlCard [hidden] { display: none !important; }
+    .ctrl-note { font-size: 14px; color: var(--muted); margin: 6px 0 0; }
+    .btn-row { display: flex; gap: 8px; margin-top: 6px; }
+    .btn-row .btn { flex: 1; padding-left: 8px; padding-right: 8px; }
+    .view-seg { display: flex; width: 100%; }
+    .view-seg button { flex: 1 1 0; min-width: 0; padding-left: 4px; padding-right: 4px; font-size: 14.5px; }
+    .range-row { display: flex; align-items: center; gap: 8px; }
+    .range-row input[type=range] { flex: 1; min-width: 0; height: 44px; }
+    .sel-in { width: 100%; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 8px; font: 800 14.5px var(--font); color: var(--ink); background: #fff; }
+    .sel-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .sel-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .num-in { width: 100%; min-width: 0; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 10px; font: 800 16px var(--font); color: var(--ink); background: #fff; }
+    .num-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .num-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .in-grid { display: grid; grid-template-columns: 1fr 96px; gap: 6px 8px; align-items: center; margin-top: 6px; }
+    .in-grid .lab { font-weight: 800; font-size: 14px; line-height: 1.25; }
+    .in-grid .num-in { min-height: 40px; padding: 2px 8px; font-size: 15px; }
+    .sel-row { margin-top: 8px; }
+    .sel-row .q { font-weight: 800; font-size: 14px; margin-bottom: 3px; line-height: 1.25; }
+    @keyframes shakeX { 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+    .readout .value.txt { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .concept table.mini, table.mini { border-collapse: collapse; margin: 6px 0; font-size: 14px; width: 100%; }
+    .concept table.mini th, .concept table.mini td, table.mini th, table.mini td { border: 1px solid var(--line); padding: 4px 6px; text-align: center; }
+    .concept table.mini th, table.mini th { background: var(--surface-2); font-weight: 800; }
+    .stage-canvas .stage-hint { top: 10px; bottom: auto; }
+    @media (orientation: portrait) and (min-width: 600px) {
+      .side-col:has(> #ctrlCard[hidden]) > #game { grid-column: 1 / -1; }
+    }
+    @media (max-width: 599px) {
+      .readout .value.txt { font-size: 15px; }
+      .stage-toolbar { gap: 6px; padding: 8px; }
+      .stage-toolbar .spacer { display: none; }
+      #modeSeg button { font-size: 13.5px; padding-left: 6px; padding-right: 6px; }
+      .stage-hint { font-size: 13px; padding: 5px 12px; }
+    }
+
+    .seg-wrap { display: flex; flex-wrap: wrap; width: 100%; }
+    .seg-wrap button { flex: 1 1 auto; min-width: 0; padding-left: 6px; padding-right: 6px; font-size: 14px; }
+    #modeSeg { flex-wrap: wrap; }
+    #modeSeg button[hidden] { display: none !important; }
+
+  </style>
+
+</head>
+<body class="sim-page" data-subject="phy">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#hm">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">역학과 에너지 · Ⅰ. 시공간과 운동</div>
+      <h1>인공위성의 운동</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <div class="segmented" id="modeSeg" role="tablist" aria-label="화면 고르기">
+            <button type="button" data-mode="orbit">🛰️ 궤도 속력</button>
+            <button type="button" data-mode="meas">📏 주기·반지름</button>
+            <button type="button" data-mode="geo">🌍 정지 위성</button>
+            <button type="button" data-mode="mass">⚖️ 질량 구하기</button>
+            <button type="button" data-mode="wless">🧑‍🚀 무중량</button>
+
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="인공위성의 운동을 탐구하는 화면. 중력과 필요한 구심 가속도를 비교하는 궤도 시뮬레이션, 반지름에 따른 속력과 주기 표와 T²–r³ 그래프, 정지 위성의 우주·지상·지도 시점, 천체 질량 계산, 위성 안의 무중량이 있어요."></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">원 궤도 속력 v꜀</span><span class="value txt" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">정한 속력 v</span><span class="value txt" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">궤도 판정</span><span class="value txt" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <!-- 궤도 속력 -->
+        <div class="control" data-modes="orbit">
+          <div class="control-head"><span>🪐 중심 천체</span></div>
+          <div class="segmented seg-wrap" id="bdSeg" role="group" aria-label="중심 천체">
+            <button type="button" data-bd="0">지구</button>
+            <button type="button" data-bd="1">달</button>
+            <button type="button" data-bd="2">화성</button>
+            <button type="button" data-bd="3">목성</button>
+          </div>
+        </div>
+        <div class="control" data-modes="orbit">
+          <div class="control-head"><label for="sH">📏 고도 h</label><output id="oH">0 km</output></div>
+          <div class="range-row"><input type="range" id="sH" min="0" max="38000" step="100" value="0" aria-label="고도 (킬로미터)"></div>
+        </div>
+        <div class="control" data-modes="orbit">
+          <div class="control-head"><label for="sV">💨 처음 속력 v</label><output id="oV">5.00 km/s</output></div>
+          <div class="range-row"><input type="range" id="sV" min="0" max="9.5" step="0.05" value="5" aria-label="처음 속력 (킬로미터 매 초)"></div>
+          <div class="btn-row">
+            <button class="btn btn-sm btn-primary" id="bLaunch" type="button">🚀 발사</button>
+            <button class="btn btn-sm" id="bReset" type="button">↺ 처음으로</button>
+          </div>
+        </div>
+        <!-- 주기와 반지름 -->
+        <div class="control" data-modes="meas">
+          <div class="control-head"><label for="sH2">📏 궤도 고도 h</label><output id="oH2">400 km</output></div>
+          <div class="range-row"><input type="range" id="sH2" min="0" max="38000" step="100" value="400" aria-label="고도 (킬로미터)"></div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bMeas" type="button">📏 v·T 측정 기록</button><button class="btn btn-sm" id="bMeasC" type="button">🗑 지우기</button></div>
+          <p class="ctrl-note">원 궤도(v = √(GM/r))로 자동으로 돌아요.</p>
+        </div>
+        <div class="control" data-modes="meas" data-calc="order">
+          <div class="control-head"><span>🧩 유도 과정 순서대로 ▲▼</span></div>
+          <div id="ordC"></div>
+        </div>
+        <!-- 정지 위성 -->
+        <div class="control" data-modes="geo">
+          <div class="control-head"><span>👀 보는 방법</span></div>
+          <div class="segmented seg-wrap" id="gvSeg" role="group" aria-label="보는 방법">
+            <button type="button" data-gv="space">우주에서</button>
+            <button type="button" data-gv="ground">지상에서</button>
+            <button type="button" data-gv="map">지도</button>
+          </div>
+        </div>
+        <div class="control" data-modes="geo" data-gcalt>
+          <div class="control-head"><label for="sGh">🛰️ 내 위성 고도 h</label><output id="oGh">20000 km</output></div>
+          <div class="range-row"><input type="range" id="sGh" min="0" max="40000" step="100" value="20000" aria-label="내 위성의 고도 (킬로미터)"></div>
+        </div>
+        <div class="control" data-modes="geo" data-gmap>
+          <div class="control-head"><span>🧭 궤도면</span></div>
+          <div class="segmented seg-wrap" id="giSeg" role="group" aria-label="궤도면">
+            <button type="button" data-gi="0">적도 궤도</button>
+            <button type="button" data-gi="90">극 궤도</button>
+          </div>
+        </div>
+        <div class="control" data-modes="geo">
+          <div class="control-head"><label for="sGs">⏩ 시간 빠르기</label><output id="oGs">2.0 시간/초</output></div>
+          <div class="range-row"><input type="range" id="sGs" min="0.5" max="6" step="0.5" value="2" aria-label="시간 빠르기 (초당 시간)"></div>
+        </div>
+        <div class="control" data-modes="geo" data-calc="gIn">
+          <div class="control-head"><span>📝 주기 24시간(86164 s)인 원 궤도</span></div>
+          <div class="in-grid">
+            <span class="lab">고도 h (만 km)</span><input class="num-in" id="iGh" type="number" inputmode="decimal" step="0.1" aria-label="정지 위성의 고도 (만 킬로미터)">
+          </div>
+        </div>
+        <!-- 질량 구하기 -->
+        <div class="control" data-modes="mass">
+          <div class="control-head"><span>🔭 관측 자료 고르기</span></div>
+          <div class="segmented seg-wrap" id="msSeg" role="group" aria-label="관측 자료">
+            <button type="button" data-ms="0">이오–목성</button>
+            <button type="button" data-ms="1">지구–태양</button>
+            <button type="button" data-ms="2">달–지구</button>
+          </div>
+        </div>
+        <div class="control" data-modes="mass" data-calc="mIn">
+          <div class="control-head"><span id="mInHead">📝 중심 천체의 질량 M</span></div>
+          <div class="in-grid">
+            <span class="lab" id="mInLab">M (× 10²⁷ kg)</span><input class="num-in" id="iM" type="number" inputmode="decimal" step="0.01" aria-label="계산한 질량 (지수 단위는 화면에 표시)">
+          </div>
+        </div>
+        <!-- 무중량 -->
+        <div class="control" data-modes="wless">
+          <div class="control-head"><label for="sWh">🛰️ 위성의 고도 h</label><output id="oWh">400 km</output></div>
+          <div class="range-row"><input type="range" id="sWh" min="0" max="36000" step="100" value="400" aria-label="위성의 고도 (킬로미터)"></div>
+          <p class="ctrl-note">고도가 달라도 위성과 우주인은 같은 가속도로 떨어지고 있어요.</p>
+        </div>
+
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>
