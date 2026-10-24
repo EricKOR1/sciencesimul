@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#f26b3a">
+  <title>패러데이와 자기 브레이크 | 고등 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌪️</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; }
+    .stage-toolbar { min-height: 61px; }
+    .segmented button { min-height: 44px; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 14px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard .btn-sm { min-height: 44px; }
+    #ctrlCard [hidden] { display: none !important; }
+    .ctrl-note { font-size: 14px; color: var(--muted); margin: 6px 0 0; }
+    .btn-row { display: flex; gap: 8px; margin-top: 6px; }
+    .btn-row .btn { flex: 1; padding-left: 8px; padding-right: 8px; }
+    .view-seg { display: flex; width: 100%; }
+    .view-seg button { flex: 1 1 0; min-width: 0; padding-left: 4px; padding-right: 4px; font-size: 14.5px; }
+    .seg-wrap { display: flex; flex-wrap: wrap; width: 100%; }
+    .seg-wrap button { flex: 1 1 44%; min-width: 0; padding-left: 6px; padding-right: 6px; font-size: 14.5px; }
+    .range-row { display: flex; align-items: center; gap: 8px; }
+    .range-row input[type=range] { flex: 1; min-width: 0; height: 44px; }
+    .nudge { flex: none; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); font-weight: 900; font-size: 20px; line-height: 1; cursor: pointer; display: grid; place-items: center; color: var(--ink); }
+    .nudge:active { transform: scale(.94); background: var(--surface-2); }
+    .nudge:disabled { opacity: .4; }
+    .sel-in { width: 100%; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 8px; font: 800 14.5px var(--font); color: var(--ink); background: #fff; }
+    .sel-in.ok, .num-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .sel-in.bad, .num-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .sel-row { margin-top: 8px; }
+    .sel-row .q { font-weight: 800; font-size: 14px; margin-bottom: 3px; line-height: 1.25; }
+    .numrow { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+    .numrow .q { flex: 1 1 100%; font-weight: 800; font-size: 14px; line-height: 1.3; margin-bottom: 2px; }
+    .numrow .pre, .numrow .unit { font-weight: 800; font-size: 15px; }
+    .num-in { width: 84px; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 8px; font: 800 16px var(--font); color: var(--ink); background: #fff; text-align: right; }
+    select.num-in { width: auto; text-align: left; padding-right: 4px; }
+    @keyframes shakeX { 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+    .readout .value.txt { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .stage-canvas .stage-hint { top: 10px; bottom: auto; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+    .chips button { min-height: 44px; padding: 6px 12px; border: 2px solid var(--line); background: #fff; border-radius: 999px; font-weight: 800; font-size: 14.5px; cursor: pointer; color: var(--ink); }
+    .chips button.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); color: color-mix(in srgb, var(--subject) 70%, black); }
+    .chips button:disabled { opacity: .45; cursor: not-allowed; }
+    @media (max-width: 1100px) and (orientation: landscape) { .toolbar-label { display: none; } }
+    @media (orientation: portrait) and (min-width: 600px) {
+      .side-col:has(> #ctrlCard[hidden]) > #game { grid-column: 1 / -1; }
+    }
+    @media (max-width: 599px) {
+      .readout .value.txt { font-size: 15px; }
+      .stage-toolbar { gap: 6px; padding: 8px; }
+      .stage-toolbar .spacer, .toolbar-label { display: none; }
+      .stage-toolbar:has(> .segmented[hidden]) { display: none; }
+      .segmented button { padding-left: 10px; padding-right: 10px; font-size: 14px; }
+      .stage-hint { font-size: 13px; padding: 5px 12px; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="phy">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#hq">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">전자기와 양자 · Ⅰ. 전자기적 상호작용</div>
+      <h1>패러데이와 자기 브레이크</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🧲 자기선속</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="tablist" aria-label="화면 고르기" data-feature="emf">
+            <button type="button" data-mode="flux" data-feature="flux">🧲 자기선속</button><button type="button" data-mode="emf" data-feature="emf">⚡ 유도 기전력</button><button type="button" data-mode="lenz" data-feature="lenz">🔁 렌츠 법칙</button><button type="button" data-mode="brake" data-feature="brake">🌪️ 자기 브레이크</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="자기선속 Φ = BA cosθ, 유도 기전력 ε = NΔΦ/Δt, 렌츠 법칙, 도체판 속 와전류가 만드는 자기 브레이크를 탐구하는 화면"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">—</span><span class="value txt" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">—</span><span class="value txt" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">—</span><span class="value txt" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" data-modes="flux">
+          <div class="control-head"><label for="sB">🧲 자기장 B</label><output id="osB"></output></div><div class="range-row"><button class="nudge" id="sBM" type="button" aria-label="자기장 세기 0.1테슬라부터 1.0테슬라 줄이기">−</button><input type="range" id="sB" min="0.1" max="1.0" step="0.1" value="0.5" aria-label="자기장 세기 0.1테슬라부터 1.0테슬라"><button class="nudge" id="sBP" type="button" aria-label="자기장 세기 0.1테슬라부터 1.0테슬라 늘리기">+</button></div>
+        </div>
+        <div class="control" data-modes="flux">
+          <div class="control-head"><label for="sA">⬜ 코일 면적 A</label><output id="osA"></output></div><div class="range-row"><button class="nudge" id="sAM" type="button" aria-label="코일 면적 0.005부터 0.030제곱미터 줄이기">−</button><input type="range" id="sA" min="0.005" max="0.03" step="0.005" value="0.02" aria-label="코일 면적 0.005부터 0.030제곱미터"><button class="nudge" id="sAP" type="button" aria-label="코일 면적 0.005부터 0.030제곱미터 늘리기">+</button></div>
+        </div>
+        <div class="control" data-modes="flux">
+          <div class="control-head"><label for="sT">📐 각도 θ</label><output id="osT"></output></div><div class="range-row"><button class="nudge" id="sTM" type="button" aria-label="자기장과 면의 수직선 사이의 각 0도부터 90도 줄이기">−</button><input type="range" id="sT" min="0" max="90" step="15" value="0" aria-label="자기장과 면의 수직선 사이의 각 0도부터 90도"><button class="nudge" id="sTP" type="button" aria-label="자기장과 면의 수직선 사이의 각 0도부터 90도 늘리기">+</button></div>
+        </div>
+        <div class="control" data-modes="flux" data-gate="mf2" id="selFHost"></div>
+        <div class="control" data-modes="emf" data-gate-off="me2">
+          <div class="control-head"><span>🔁 감은 수 N</span></div>
+          <div class="segmented view-seg" id="nSeg" role="group" aria-label="🔁 감은 수 N" ><button type="button" data-v="100">100회</button><button type="button" data-v="200">200회</button><button type="button" data-v="400">400회</button></div>
+        </div>
+        <div class="control" data-modes="emf" data-gate-off="me2">
+          <div class="control-head"><span>🧲 자석 세기 (선속 변화 ΔΦ)</span></div>
+          <div class="segmented view-seg" id="dpSeg" role="group" aria-label="🧲 자석 세기 (선속 변화 ΔΦ)" ><button type="button" data-v="0.005">0.005 Wb</button><button type="button" data-v="0.01">0.010 Wb</button><button type="button" data-v="0.02">0.020 Wb</button></div>
+        </div>
+        <div class="control" data-modes="emf" data-gate-off="me2">
+          <div class="control-head"><span>⏱️ 변화 시간 Δt</span></div>
+          <div class="segmented view-seg" id="dtSeg" role="group" aria-label="⏱️ 변화 시간 Δt" ><button type="button" data-v="0.05">0.05 s</button><button type="button" data-v="0.1">0.10 s</button><button type="button" data-v="0.2">0.20 s</button><button type="button" data-v="0.4">0.40 s</button></div>
+        </div>
+        <div class="control" data-modes="emf" data-gate-off="me2"><div class="btn-row"><button class="btn btn-sm btn-primary" id="bRun" type="button">▶ 자석 빼기</button><button class="btn btn-sm" id="bRec" type="button">📝 표에 기록</button></div></div>
+        <div class="control" data-modes="emf" data-gate="me2" id="numEHost"></div>
+        <div class="control" data-modes="lenz">
+          <div class="control-head"><span>🖼️ 화면</span></div>
+          <div class="segmented view-seg" id="lViewSeg" role="group" aria-label="🖼️ 화면" ><button type="button" data-v="mag">자석·코일</button><button type="button" data-v="rail">막대·레일</button><button type="button" data-v="fake">가상: 돕는다면?</button></div>
+        </div>
+        <div class="control" data-modes="lenz" data-view="mag"><div class="btn-row"><button class="btn btn-sm btn-primary" id="bAppr" type="button">→ 접근</button><button class="btn btn-sm btn-primary" id="bLeave" type="button">← 이탈</button></div><div class="btn-row"><button class="btn btn-sm" id="bFlip" type="button">🔄 자석 뒤집기</button></div><p class="ctrl-note">자석을 손가락으로 끌어도 돼요.</p></div>
+        <div class="control" data-modes="lenz" data-view="rail" data-gate-off="ml2">
+          <div class="control-head"><label for="sRv">🚀 막대 속력 v</label><output id="osRv"></output></div><div class="range-row"><button class="nudge" id="sRvM" type="button" aria-label="막대 속력 1부터 4미터 매 초 줄이기">−</button><input type="range" id="sRv" min="1" max="4" step="0.5" value="2" aria-label="막대 속력 1부터 4미터 매 초"><button class="nudge" id="sRvP" type="button" aria-label="막대 속력 1부터 4미터 매 초 늘리기">+</button></div>
+        </div>
+        <div class="control" data-modes="lenz" data-view="rail" data-gate-off="ml2">
+          <div class="control-head"><span>🧲 자기장 B</span></div>
+          <div class="segmented view-seg" id="rBSeg" role="group" aria-label="🧲 자기장 B" ><button type="button" data-v="0.25">0.25 T</button><button type="button" data-v="0.5">0.50 T</button><button type="button" data-v="0.75">0.75 T</button><button type="button" data-v="1.0">1.00 T</button></div>
+        </div>
+        <div class="control" data-modes="lenz" data-view="rail"><div class="btn-row"><button class="btn btn-sm btn-primary" id="bPush" type="button">▶ 막대 밀기</button></div></div>
+        <div class="control" data-modes="lenz" data-view="fake"><div class="btn-row"><button class="btn btn-sm btn-primary" id="bFake" type="button">▶ 가상 실험 시작</button></div><p class="ctrl-note">실제로는 일어날 수 없는 상상 속 장면이에요.</p></div>
+        <div class="control" data-modes="lenz" data-gate="ml2" id="numFHost"></div>
+        <div class="control" data-modes="brake" data-gate-off="mb2">
+          <div class="control-head"><span>🖼️ 화면</span></div>
+          <div class="segmented view-seg" id="bViewSeg" role="group" aria-label="🖼️ 화면" ><button type="button" data-v="pend">도체판 진자</button><button type="button" data-v="pipe">구리 파이프</button></div>
+        </div>
+        <div class="control" data-modes="brake" data-view="pend" data-gate-off="mb2">
+          <div class="control-head"><span>🧱 판의 재질</span></div>
+          <div class="segmented seg-wrap" id="matSeg" role="group" aria-label="🧱 판의 재질" ><button type="button" data-v="cu">구리</button><button type="button" data-v="al">알루미늄</button><button type="button" data-v="pl">플라스틱</button><button type="button" data-v="slot">틈 있는 구리</button></div>
+        </div>
+        <div class="control" data-modes="brake" data-gate-off="mb2">
+          <div class="control-head"><span>🧲 자석 세기</span></div>
+          <div class="segmented view-seg" id="magSeg" role="group" aria-label="🧲 자석 세기" ><button type="button" data-v="1">약</button><button type="button" data-v="2">중</button><button type="button" data-v="3">강</button></div>
+        </div>
+        <div class="control" data-modes="brake" data-view="pend" data-gate-off="mb2"><div class="btn-row"><button class="btn btn-sm btn-primary" id="bRelease" type="button">▶ 진자 놓기</button><button class="btn btn-sm" id="bFast" type="button">⏩ 빨리 감기</button></div></div>
+        <div class="control" data-modes="brake" data-view="pipe" data-gate-off="mb2"><div class="btn-row"><button class="btn btn-sm btn-primary" id="bDrop" type="button">▶ 자석 떨어뜨리기</button></div></div>
+        <div class="control" data-modes="brake" data-gate="mb2" id="selBHost"></div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

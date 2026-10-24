@@ -319,7 +319,7 @@
     const known = dlRows.every((r) => r.ok) || (game && game.free);
     let row = 0;
     BKS.forEach((b) => RGS.forEach((r) => {
-      const yy = tb.y + 56 + row * (PHONE ? 26 : 56), tr = k.trial[b][r];
+      const yy = tb.y + (PHONE ? 46 : 56) + row * (PHONE ? 22 : 56), tr = k.trial[b][r];
       if (!PHONE) { D.roundRect(tb.x + 8, yy - 24, tb.w - 16, 46, 9); ctx.fillStyle = tr ? '#fff' : 'rgba(255,255,255,.5)'; ctx.fill(); ctx.strokeStyle = '#e3def5'; ctx.lineWidth = 1.4; ctx.stroke(); }
       const label = (b === 'water' ? '물' : '완충') + ' + ' + RG[r].short;
       if (PHONE) {
@@ -369,6 +369,7 @@
       if (best) { best.claimed = true; q.tgt = best; }
       mc.p.push(q);
     }
+    mc.last = kind;
     if (kind === 'H') { mc.nH++; mc.shift = -1; } else { mc.nO++; mc.shift = 1; }
     mc.shiftT = 2.2; Sound.click();
     const sol = mc.sol, cnt = (k) => mc.p.filter((o) => o.k === k && !o.dead).length;
@@ -431,12 +432,12 @@
     D.roundRect(e.x, e.y, e.w, e.h, 12); ctx.fillStyle = '#fffdf5'; ctx.fill(); ctx.strokeStyle = '#d9c98a'; ctx.lineWidth = 2; ctx.stroke();
     T(e.x + 12, e.y + 22, '평형', 13.5, '#8a6d00', 'left', 800);
     const cy = e.y + (PHONE ? 46 : 56);
-    T(e.x + 12, cy, 'CH₃COOH', PHONE ? 15 : 16, INK, 'left', 800);
-    const ax0 = e.x + (PHONE ? 112 : 104), ax1 = ax0 + (PHONE ? 70 : 56);
+    T(e.x + 12, cy, 'CH₃COOH', PHONE ? 15 : 14, INK, 'left', 800);
+    const ax0 = e.x + (PHONE ? 112 : 86), ax1 = ax0 + (PHONE ? 70 : 40);
     const left = mc.shift < 0, right = mc.shift > 0;
     D.arrow(ax1, cy - 9, ax0, cy - 9, { color: left ? '#dc2626' : '#94a3b8', width: left ? 5 : 2.4, head: left ? 11 : 8 });
     D.arrow(ax0, cy + 6, ax1, cy + 6, { color: right ? '#2563eb' : '#94a3b8', width: right ? 5 : 2.4, head: right ? 11 : 8 });
-    T(ax1 + 10, cy, 'H⁺ + CH₃COO⁻', PHONE ? 15 : 16, INK, 'left', 800);
+    T(ax1 + 8, cy, 'H⁺ + CH₃COO⁻', PHONE ? 15 : 14, INK, 'left', 800);
     if (!PHONE) T(e.x + 12, e.y + 92, left ? '← 왼쪽으로 이동 (H⁺를 받아요)' : right ? '→ 오른쪽으로 이동 (H⁺를 내놓아요)' : '평형 상태: 양쪽이 모두 있어요', 13.5, left ? '#b91c1c' : right ? '#1d4ed8' : MUTED, 'left', 800);
     else T(e.x + 12, e.y + 66, left ? '← 왼쪽으로 이동' : right ? '→ 오른쪽으로 이동' : '평형 상태', 13, left ? '#b91c1c' : right ? '#1d4ed8' : MUTED, 'left', 800);
     // 개수 · 측정값 카드
@@ -446,9 +447,8 @@
       T(d.x + 12, d.y + 22, '입자 수', 13.5, INK, 'left', 800);
       [['HA', 'CH₃COOH'], ['A', 'CH₃COO⁻'], ['H', '자유 H⁺']].forEach(([k, lab], i) => { const yy = d.y + 46 + i * 22; D.sphere(d.x + 18, yy - 4, 6, MK[k].col, { gloss: false }); T(d.x + 32, yy, lab, 13.5, INK, 'left', 800); T(d.x + d.w - 14, yy, (k === 'H' ? mcFree() : mcCount(k)) + '개', 14, '#5b21b6', 'right', 800); });
       const m = mc.sol === 'buf' ? BK.buf : ACO;
-      T(d.x + 12, d.y + 124, '측정 pH', 13, MUTED, 'left', 800);
-      T(d.x + d.w - 12, d.y + 124, '처음 ' + m.base.toFixed(2) + ' · HCl ' + m.hcl.toFixed(2) + ' · NaOH ' + m.naoh.toFixed(2), 12.5, INK, 'right', 800);
-      T(d.x + d.w / 2, d.y + 148, '(HCl · NaOH 1 mL 넣었을 때, 100 mL)', 11.5, MUTED, 'center', 700);
+      T(d.x + 12, d.y + 124, '측정 pH (100 mL에 1 mL를 넣을 때)', 12.5, MUTED, 'left', 800);
+      T(d.x + 12, d.y + 146, '처음 ' + m.base.toFixed(2) + ' · HCl ' + m.hcl.toFixed(2) + ' · NaOH ' + m.naoh.toFixed(2), 13.5, INK, 'left', 800);
     } else {
       [['HA', 'CH₃COOH'], ['A', 'CH₃COO⁻'], ['H', '자유 H⁺']].forEach(([k, lab], i) => { const xx = d.x + 12 + i * 148; D.sphere(xx + 5, d.y + 22, 5, MK[k].col, { gloss: false }); T(xx + 16, d.y + 27, lab + ' ' + (k === 'H' ? mcFree() : mcCount(k)), 13, INK, 'left', 800); });
       const m = mc.sol === 'buf' ? BK.buf : ACO;
@@ -458,9 +458,9 @@
     T(INFO.x + 16, INFO.y + 26, '약산 + 짝염기가 함께 있어야 완충 작용을 해요', 15, '#b45309', 'left', 800);
     let body = 'H⁺나 OH⁻를 넣어 보세요. H⁺는 CH₃COO⁻가 받아 CH₃COOH가 되고, OH⁻는 CH₃COOH가 H⁺를 내놓아 물이 돼요. 그래서 자유 H⁺의 수가 거의 변하지 않아요. (입자 수는 모형이에요)';
     if (mc.sol === 'ac') body = '아세트산만 있는 용액에는 H⁺를 받아 줄 CH₃COO⁻가 거의 없어요. H⁺를 넣으면 그대로 남아 자유 H⁺ 수가 크게 늘고 pH가 크게 변해요. 측정값도 2.87 → ' + ACO.hcl.toFixed(2) + ' 로 완충 용액(4.74 → 4.73)보다 훨씬 많이 변해요.';
-    else if (mc.nH && mc.sol === 'buf' && mcCount('A') === 0) body = 'CH₃COO⁻가 모두 H⁺를 받아 CH₃COOH가 되어 더 받아 줄 입자가 없어요. 이제 넣은 H⁺는 그대로 남아요. 완충 용량의 한계예요!';
-    else if (mc.nH && mc.sol === 'buf') body = '넣은 H⁺를 CH₃COO⁻가 받아 CH₃COOH가 됐어요 (평형이 왼쪽으로). 자유 H⁺ 수는 그대로예요. 계속 넣으면 CH₃COO⁻가 줄어들어요.';
-    else if (mc.nO && mc.sol === 'buf') body = '넣은 OH⁻는 CH₃COOH가 H⁺를 내놓아 물(H₂O)이 됐어요 (평형이 오른쪽으로). 자유 H⁺ 수는 그대로예요.';
+    else if (mc.last === 'H' && mc.sol === 'buf' && mcCount('A') === 0) body = 'CH₃COO⁻가 모두 H⁺를 받아 CH₃COOH가 되어 더 받아 줄 입자가 없어요. 이제 넣은 H⁺는 그대로 남아요. 완충 용량의 한계예요!';
+    else if (mc.last === 'H' && mc.sol === 'buf') body = '넣은 H⁺를 CH₃COO⁻가 받아 CH₃COOH가 됐어요 (평형이 왼쪽으로). 자유 H⁺ 수는 그대로예요. 계속 넣으면 CH₃COO⁻가 줄어들어요.';
+    else if (mc.last === 'OH' && mc.sol === 'buf') body = '넣은 OH⁻는 CH₃COOH가 H⁺를 내놓아 물(H₂O)이 됐어요 (평형이 오른쪽으로). 자유 H⁺ 수는 그대로예요.';
     textBlock(INFO.x + 16, INFO.y + 54, INFO.w - 32, body, 14.5, INK, 21, 700);
   }
   /* 완충 용량 그래프 */
@@ -489,7 +489,7 @@
     // 카드: 입자 막대 + 표
     D.roundRect(cp.x, cp.y, cp.w, cp.h, 12); ctx.fillStyle = '#fbfaff'; ctx.fill(); ctx.strokeStyle = '#e3def5'; ctx.lineWidth = 2; ctx.stroke();
     T(cp.x + 12, cp.y + 22, '완충 용액 100 mL 속 물질 (mmol)', 13.5, INK, 'left', 800);
-    const a = Math.max(0, 10 - 0.1 * cx), ha = 10 + Math.min(0.1 * cx, 10), hx = Math.max(0, 0.1 * cx - 10), bw = cp.w - 130, bx = cp.x + 118;
+    const a = Math.max(0, 10 - 0.1 * cx), ha = 10 + Math.min(0.1 * cx, 10), hx = Math.max(0, 0.1 * cx - 10), bw = cp.w - 156, bx = cp.x + 112;
     [['CH₃COO⁻', a, '#ea580c'], ['CH₃COOH', ha, '#fbbf24'], ['남은 H⁺', hx, '#ef4444']].forEach(([lab, v, col], i) => {
       const yy = cp.y + 50 + i * (PHONE ? 28 : 36);
       T(cp.x + 12, yy + 4, lab, 13, INK, 'left', 800);
@@ -530,7 +530,7 @@
     } else if (bl.phase === 'breath') {
       bl.tm += dt; bl.co2 = 1.2; bl.needle = bl.kind === 'H' ? 7.39 : 7.41;
       if (!RM && bl.kind === 'H' && Math.random() < dt * 8) bl.bubbles.push({ x: 0, y: 0, u: 0, v: Math.random(), sp: 0.5 + Math.random() * 0.3 });
-      if (bl.tm > 3.2) { bl.phase = 'idle'; bl.needle = 7.4; bl.hco3 = 24; bl.co2 = 1.2; bl.tm = 0; }
+      if (bl.tm > 3.2) { bl.phase = 'idle'; bl.needle = 7.4; bl.hco3 = 24; bl.co2 = 1.2; bl.tm = 0; updateCtl(); }
     }
     bl.hcoD = ap(bl.hcoD, bl.hco3, dt, 3); bl.co2D = ap(bl.co2D, bl.co2, dt, 3); bl.nd = ap(bl.nd, bl.needle, dt, 5);
     for (let i = bl.bubbles.length - 1; i >= 0; i--) { const b = bl.bubbles[i]; b.u += dt * b.sp; if (b.u >= 1) bl.bubbles.splice(i, 1); }
@@ -559,9 +559,9 @@
     const nb = 5;
     for (let i = 0; i < nb; i++) {
       const u = ((t * 0.18 + i / nb) % 1), x = tis.x + tis.w - 8 + u * (vx1 - vx0 - 4), y = vy - vh / 2 + 4 + Math.sin(u * 9 + i) * 3;
-      if (u < 0.9) { ctx.fillStyle = 'rgba(100,116,139,.85)'; ctx.beginPath(); ctx.arc(x, y, 5.5, 0, TAU); ctx.fill(); T(x, y + 3.2, 'CO₂', 6.5, '#fff', 'center', 800); }
+      if (u < 0.9) { ctx.fillStyle = 'rgba(100,116,139,.85)'; ctx.beginPath(); ctx.arc(x, y, 7, 0, TAU); ctx.fill(); T(x, y + 3, 'CO₂', 7.5, '#fff', 'center', 800); }
     }
-    bl.bubbles.forEach((b) => { const x = lung.x + lung.w / 2 + (b.v - 0.5) * lung.w * 0.5, y = lung.y + lung.h - 20 - b.u * (lung.h - 20) - 10; ctx.fillStyle = 'rgba(100,116,139,' + (1 - b.u) * 0.9 + ')'; ctx.beginPath(); ctx.arc(x, y, 6, 0, TAU); ctx.fill(); T(x, y + 3.2, 'CO₂', 6.8, '#fff', 'center', 800); });
+    bl.bubbles.forEach((b) => { const x = lung.x + lung.w / 2 + (b.v - 0.5) * lung.w * 0.5, y = lung.y + lung.h - 20 - b.u * (lung.h - 20) - 10; ctx.fillStyle = 'rgba(100,116,139,' + (1 - b.u) * 0.9 + ')'; ctx.beginPath(); ctx.arc(x, y, 7.5, 0, TAU); ctx.fill(); T(x, y + 3, 'CO₂', 7.5, '#fff', 'center', 800); });
     if ((bl.phase === 'breath' && bl.kind === 'H') || (run && (bl.phase === 'r2' || bl.phase === 'r1') && (bl.kind === 'Cd' || (bl.kind === 'H' && bl.phase === 'r2')))) { D.arrow(lung.x + lung.w / 2, lung.y + 4, lung.x + lung.w / 2, lung.y - 6 + (PHONE ? 12 : 0), { color: '#475569', width: 3, head: 8 }); }
     // 산 / 염기 입자
     if (bl.phase === 'react' || (bl.phase === 'r1' && (bl.kind === 'H' || bl.kind === 'O'))) {
@@ -577,8 +577,8 @@
     T(eq.x + 12, ey, PHONE ? 'CO₂ + H₂O ⇌ H₂CO₃ ⇌ H⁺ + HCO₃⁻' : 'CO₂ + H₂O ⇌ H₂CO₃ ⇌ H⁺ + HCO₃⁻', PHONE ? 14.5 : 14, INK, 'left', 800);
     T(eq.x + 12, ey + 22, left ? '← 왼쪽으로 이동: HCO₃⁻가 H⁺를 받아요' : right ? '→ 오른쪽으로 이동: H₂CO₃가 H⁺를 내놓아요' : '평형 상태', PHONE ? 12.5 : 13, left ? '#b91c1c' : right ? '#1d4ed8' : MUTED, 'left', 800);
     // 막대 (mM): HCO₃⁻ 24, CO₂ 1.2 (0~30 mM 눈금)
-    const bx = eq.x + (PHONE ? 84 : 92), bw = eq.w - (PHONE ? 140 : 150), by0 = eq.y + (PHONE ? 90 : 106);
-    [['HCO₃⁻', bl.hcoD, '#8b5cf6'], ['CO₂ (H₂CO₃)', bl.co2D, '#64748b']].forEach(([lab, v, col], i) => {
+    const bx = eq.x + (PHONE ? 62 : 92), bw = eq.w - (PHONE ? 150 : 150), by0 = eq.y + (PHONE ? 90 : 106);
+    [['HCO₃⁻', bl.hcoD, '#8b5cf6'], [PHONE ? 'CO₂' : 'CO₂ (H₂CO₃)', bl.co2D, '#64748b']].forEach(([lab, v, col], i) => {
       const yy = by0 + i * (PHONE ? 30 : 34);
       T(eq.x + 12, yy + 4, lab, PHONE ? 12 : 12.5, INK, 'left', 800);
       D.roundRect(bx, yy - 8, bw, 14, 6); ctx.fillStyle = '#e9e5f5'; ctx.fill();
@@ -592,9 +592,9 @@
     D.roundRect(sx, sy, sw, 14, 7); ctx.fillStyle = '#fecaca'; ctx.fill();
     D.roundRect(pxv(7.35), sy, pxv(7.45) - pxv(7.35), 14, 3); ctx.fillStyle = '#4ade80'; ctx.fill();
     for (let p = 7.0; p <= 7.801; p += 0.2) { T(pxv(p), sy + 30, p.toFixed(1), 12, MUTED, 'center', 700); }
-    if (!(regul && S.rg.run)) T(pxv(7.4), sy - 6, '정상 7.35 ~ 7.45', 12, '#15803d', 'center', 800); else T(pxv(7.4), sy + 46, '정상 7.35 ~ 7.45', 11.5, '#15803d', 'center', 800);
-    const nx = pxv(clamp(bl.nd, 7.0, 7.8)), outR = regul && run && (bl.needle < 7.35 || bl.needle > 7.45);
-    if (regul && S.rg.run) { D.label(clamp(nx, eq.x + 50, eq.x + eq.w - 50), sy - 30, 'pH ' + S.rg.shown.toFixed(2) + (outR ? '  ⚠ 위험' : ''), { size: 13, bg: outR ? '#dc2626' : '#16a34a', color: '#fff' }); }
+    if (!(regul && bl.phase[0] === 'r')) T(pxv(7.4), sy - 6, '정상 7.35 ~ 7.45', 12, '#15803d', 'center', 800); else T(pxv(7.4), sy + 46, '정상 7.35 ~ 7.45', 11.5, '#15803d', 'center', 800);
+    const nx = pxv(clamp(bl.nd, 7.0, 7.8)), outR = regul && bl.phase[0] === 'r' && (bl.needle < 7.35 || bl.needle > 7.45);
+    if (regul && bl.phase[0] === 'r') { D.label(PHONE ? eq.x + eq.w - 78 : clamp(nx, eq.x + 50, eq.x + eq.w - 50), PHONE ? eq.y + 20 : sy - 30, 'pH ' + S.rg.shown.toFixed(2) + (outR ? '  ⚠ 위험' : ''), { size: 13, bg: outR ? '#dc2626' : '#16a34a', color: '#fff' }); }
     ctx.fillStyle = outR ? '#dc2626' : '#26324a'; ctx.beginPath(); ctx.moveTo(nx, sy + 16); ctx.lineTo(nx - 6, sy + 28); ctx.lineTo(nx + 6, sy + 28); ctx.closePath(); ctx.fill();
     panel(INFO.x, INFO.y, INFO.w, INFO.h, 14);
     if (regul) return drawRegulInfo(sc, run);
@@ -661,6 +661,12 @@
   }
 
   function onLeave(m) { if (m === 'beak') { S.bk.state = 'idle'; S.bk.drops = []; S.bk.tb = null; } if (m === 'regul') rgReset(); }
+  /* ---------- 포인터 (비커 눌러 고르기) ---------- */
+  const bkHit = (p) => { const g = bkG(); for (let i = 0; i < 2; i++) { if (Math.abs(p.x - g.xs[i]) <= g.bw / 2 + 8 && p.y >= g.by - 8 && p.y <= g.by + g.bh + 52) return BKS[i]; } return null; };
+  SciSim.pointer(view, {
+    down(p) { if (S.mode === 'beak') { const b = bkHit(p); if (b) bkSelect(b); } return false; },
+    hover(p) { return S.mode === 'beak' && bkHit(p) ? 'pointer' : 'default'; },
+  });
   /* ---------- UI 요소 ---------- */
   const mkSel = (host, label, opts, ans) => {
     const lab = document.createElement('span'); lab.className = 'lab'; lab.innerHTML = label;

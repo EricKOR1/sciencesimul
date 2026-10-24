@@ -602,11 +602,11 @@
     const mm = 0.1 * V;
     if (V < 20) {
       const rem = 2.0 - mm, tot = 20 + V, c = rem / tot;
-      return { l1: '넣은 NaOH ' + mm.toFixed(2) + ' mmol 이 HCl 2.00 mmol 과 반응해 H⁺ ' + rem.toFixed(2) + ' mmol 이 남아요.', l2: V === 0 ? 'H⁺ = 2.00 mmol ÷ 20.0 mL = 0.100 M' : '[H⁺] = ' + rem.toFixed(2) + ' mmol ÷ ' + tot.toFixed(1) + ' mL = ' + c.toFixed(4) + ' M', ph: pHr(C10, V) };
+      return { l1: '넣은 NaOH ' + mm.toFixed(2) + ' mmol 이 HCl 2.00 mmol 과 반응해 H⁺ ' + rem.toFixed(2) + ' mmol 이 남아요.', l2: V === 0 ? 'H⁺ = 2.00 mmol / 20.0 mL = 0.100 M' : '[H⁺] = ' + rem.toFixed(2) + ' mmol / ' + tot.toFixed(1) + ' mL = ' + c.toFixed(4) + ' M', ph: pHr(C10, V) };
     }
     if (V === 20) return { l1: 'H⁺ 2.00 mmol 과 OH⁻ 2.00 mmol 이 모두 H₂O 로 변했어요. 남은 이온은 Na⁺ 와 Cl⁻ 뿐이에요.', l2: 'H⁺ 와 OH⁻ 가 남지 않아 물의 자동 이온화([H⁺] = 1.0×10⁻⁷ M)만 남아요.', ph: 7.0 };
     const ex = mm - 2.0, tot = 20 + V, c = ex / tot;
-    return { l1: '넣은 NaOH ' + mm.toFixed(2) + ' mmol 중 ' + ex.toFixed(2) + ' mmol 이 반응하지 못하고 OH⁻ 로 남아요.', l2: '[OH⁻] = ' + ex.toFixed(2) + ' mmol ÷ ' + tot.toFixed(1) + ' mL = ' + c.toFixed(4) + ' M', ph: pHr(C10, V) };
+    return { l1: '넣은 NaOH ' + mm.toFixed(2) + ' mmol 중 ' + ex.toFixed(2) + ' mmol 이 반응하지 못하고 OH⁻ 로 남아요.', l2: '[OH⁻] = ' + ex.toFixed(2) + ' mmol / ' + tot.toFixed(1) + ' mL = ' + c.toFixed(4) + ' M', ph: pHr(C10, V) };
   }
   function drawIon(t) {
     const g = ioG(), P = plotArea(g.r, 30), io = S.io, V = io.V;

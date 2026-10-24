@@ -176,8 +176,8 @@
     const hl = gsel;
     if (hl === 'pct') { ctx.strokeStyle = GK.pct.col; ctx.lineWidth = 3; ctx.setLineDash([6, 4]); ctx.lineDashOffset = -t * 12; D.roundRect(g.bx - 8, sy - 4, g.bw + 16, g.by + g.bh - sy + 12, 10); ctx.stroke(); ctx.setLineDash([]); D.label(g.bx + g.bw / 2, sy - 18, '용액 질량 ' + c.mT.toFixed(1) + ' g', { size: 12.5, bg: GK.pct.col, align: 'center' }); }
     if (hl === 'M') { D.arrow(g.bx - 12, g.by + g.bh, g.bx - 12, sy, { color: GK.M.col, width: 3, head: 9 }); D.label(g.bx - 4, sy - 16, '용액 부피 ' + c.V.toFixed(1) + ' mL', { size: 12.5, bg: GK.M.col, align: 'left' }); }
-    if (hl === 'm') { D.label(g.bx + g.bw / 2, g.by + g.bh + 18, '용매(물)만 ' + (c.mW) + ' g = ' + (c.mW / 1000).toFixed(3) + ' kg', { size: 12.5, bg: GK.m.col, align: 'center' }); }
-    if (hl === 'X') { D.label(g.bx + g.bw / 2, g.by + g.bh + 18, '전체 몰수 ' + (c.nS + c.nW).toFixed(3) + ' mol', { size: 12.5, bg: GK.X.col, align: 'center' }); }
+    if (hl === 'm') { D.label(g.bx + g.bw / 2, g.by + g.bh + 26, '용매(물)만 ' + (c.mW) + ' g = ' + (c.mW / 1000).toFixed(3) + ' kg', { size: 12.5, bg: GK.m.col, align: 'center' }); }
+    if (hl === 'X') { D.label(g.bx + g.bw / 2, g.by + g.bh + 26, '전체 몰수 ' + (c.nS + c.nW).toFixed(3) + ' mol', { size: 12.5, bg: GK.X.col, align: 'center' }); }
     // 양
     if (!hl || hl === 'pct' || hl === 'M') {
       T(g.bx + g.bw / 2, g.by + g.bh + 22, s.nm + ' ' + c.mS.toFixed(1) + ' g (' + c.nS.toFixed(2) + ' mol)', 13, INK, 'center', 800);

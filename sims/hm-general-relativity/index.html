@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#f26b3a">
+  <title>등가 원리와 블랙홀 | 고등 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🕳️</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+<style>
+    .stage-toolbar { min-height: 61px; }
+    .segmented button { min-height: 44px; }
+    .segmented button.on { background: var(--phy); color: #fff; }
+    #modeSeg { width: 100%; }
+    #modeSeg button { flex: 1 1 auto; min-width: 0; padding-left: 8px; padding-right: 8px; font-size: 14.5px; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard .btn-sm { min-height: 44px; }
+    #ctrlCard [hidden] { display: none !important; }
+    .ctrl-note { font-size: 14px; color: var(--muted); margin: 6px 0 0; }
+    .btn-row { display: flex; gap: 8px; margin-top: 6px; }
+    .btn-row .btn { flex: 1; padding-left: 8px; padding-right: 8px; }
+    .view-seg { display: flex; width: 100%; }
+    .view-seg button { flex: 1 1 0; min-width: 0; padding-left: 4px; padding-right: 4px; font-size: 14.5px; }
+    .range-row { display: flex; align-items: center; gap: 8px; }
+    .range-row input[type=range] { flex: 1; min-width: 0; height: 44px; }
+    .sel-in { width: 100%; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 8px; font: 800 14.5px var(--font); color: var(--ink); background: #fff; }
+    .sel-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .sel-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .num-in { width: 100%; min-width: 0; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 10px; font: 800 16px var(--font); color: var(--ink); background: #fff; }
+    .num-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .num-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .in-grid { display: grid; grid-template-columns: 1fr 96px; gap: 6px 8px; align-items: center; margin-top: 6px; }
+    .in-grid .lab { font-weight: 800; font-size: 14px; line-height: 1.25; }
+    .in-grid .num-in { min-height: 40px; padding: 2px 8px; font-size: 15px; }
+    .sel-row { margin-top: 8px; }
+    .sel-row .q { font-weight: 800; font-size: 14px; margin-bottom: 3px; line-height: 1.25; }
+    @keyframes shakeX { 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+    .readout .value.txt { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .concept table.mini, table.mini { border-collapse: collapse; margin: 6px 0; font-size: 14px; width: 100%; }
+    .concept table.mini th, .concept table.mini td, table.mini th, table.mini td { border: 1px solid var(--line); padding: 4px 6px; text-align: center; }
+    .concept table.mini th, table.mini th { background: var(--surface-2); font-weight: 800; }
+    .stage-canvas .stage-hint { top: 10px; bottom: auto; }
+    @media (orientation: portrait) and (min-width: 600px) {
+      .side-col:has(> #ctrlCard[hidden]) > #game { grid-column: 1 / -1; }
+    }
+    @media (max-width: 599px) {
+      .readout .value.txt { font-size: 15px; }
+      .stage-toolbar { gap: 6px; padding: 8px; }
+      .stage-toolbar .spacer { display: none; }
+      #modeSeg button { font-size: 13.5px; padding-left: 6px; padding-right: 6px; }
+      .stage-hint { font-size: 13px; padding: 5px 12px; }
+    }
+
+    .seg-wrap { border-radius: 20px; display: flex; flex-wrap: wrap; width: 100%; }
+    .seg-wrap button { flex: 1 1 auto; min-width: 0; padding-left: 6px; padding-right: 6px; font-size: 14px; }
+    #modeSeg { flex-wrap: wrap; }
+    #modeSeg button[hidden] { display: none !important; }
+
+  </style>
+
+</head>
+<body class="sim-page" data-subject="phy">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#hm">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">역학과 에너지 · Ⅰ. 시공간과 운동</div>
+      <h1>등가 원리와 블랙홀</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <div class="segmented" id="modeSeg" role="tablist" aria-label="화면 고르기">
+            <button type="button" data-mode="equiv">🛗 등가 원리</button>
+            <button type="button" data-mode="laser">🔦 빛의 휨</button>
+            <button type="button" data-mode="sheet">🕸️ 고무막 모형</button>
+            <button type="button" data-mode="eclipse">🌑 1919 일식</button>
+            <button type="button" data-mode="collapse">⚫ 블랙홀</button>
+            <button type="button" data-mode="dilate">⏱️ 시간 지연</button>
+            <button type="button" data-mode="gps">🛰️ GPS 보정</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="일반 상대론을 살펴보는 화면. 지표의 방과 가속하는 로켓 방의 등가 원리, 가속하는 방에서 휘는 빛, 고무막 시공간 모형, 1919년 일식의 별빛 휨, 블랙홀이 되는 압축과 사건의 지평선, 중력 시간 지연, GPS 시간 보정이 있어요."></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">—</span><span class="value txt" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">—</span><span class="value txt" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">—</span><span class="value txt" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <!-- 등가 원리 -->
+        <div class="control" data-modes="equiv">
+          <div class="control-head"><span>🎬 상황</span></div>
+          <div class="segmented seg-wrap" id="eqSit" role="group" aria-label="상황">
+            <button type="button" data-sit="normal">🧱 보통</button>
+            <button type="button" data-sit="free">🪂 자유 낙하</button>
+          </div>
+          <div class="control-head" style="margin-top:8px"><span>👁️ 보는 위치</span></div>
+          <div class="segmented seg-wrap" id="eqView" role="group" aria-label="보는 위치">
+            <button type="button" data-view="in">방 안에서</button>
+            <button type="button" data-view="out">방 밖에서</button>
+          </div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bEq" type="button">🏀 공 놓기</button><button class="btn btn-sm" id="bEqR" type="button">↺ 처음으로</button></div>
+          <p class="ctrl-note">움직임은 천천히(0.5배) 보여 줘요.</p>
+        </div>
+        <div class="control" data-modes="equiv" data-calc="tbl">
+          <div class="control-head"><span>📝 관찰 결과 (A: 지표의 방, B: 가속 방)</span></div>
+<div class="sel-row"><div class="q">A와 B의 저울 눈금은?</div><select class="sel-in" id="tA" aria-label="A와 B의 저울 눈금 비교"><option value="0">고르세요</option><option value="1">같아요</option><option value="2">달라요</option></select></div><div class="sel-row"><div class="q">무거운 공과 가벼운 공이 바닥에 닿는 시간은?</div><select class="sel-in" id="tB" aria-label="무거운 공과 가벼운 공의 도착 시간 비교"><option value="0">고르세요</option><option value="1">같아요</option><option value="2">무거운 공이 먼저 닿아요</option><option value="3">가벼운 공이 먼저 닿아요</option></select></div><div class="sel-row"><div class="q">창문 없는 방 안의 실험만으로 A와 B를?</div><select class="sel-in" id="tC" aria-label="방 안 실험으로 A와 B를 구별할 수 있는지"><option value="0">고르세요</option><option value="1">구별할 수 있어요</option><option value="2">구별할 수 없어요</option></select></div>
+        </div>
+        <!-- 빛의 휨 -->
+        <div class="control" data-modes="laser">
+          <div class="control-head"><label for="sLa">🚀 로켓 방의 가속도</label><output id="oLa">2.0 g</output></div>
+          <div class="range-row"><input type="range" id="sLa" min="0" max="3" step="0.25" value="2" aria-label="로켓 방의 가속도 (지표 중력 가속도 g의 배수)"></div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bLz" type="button">🔦 레이저 쏘기</button></div>
+          <p class="ctrl-note">1 g = 지표의 중력 가속도(9.8 m/s²). 휘는 정도는 알아보기 쉽게 크게 과장했어요.</p>
+        </div>
+        <!-- 고무막 -->
+        <div class="control" data-modes="sheet">
+          <div class="control-head"><label for="sSm">⚫ 가운데 천체의 질량</label><output id="oSm">0</output></div>
+          <div class="range-row"><input type="range" id="sSm" min="0" max="5" step="1" value="0" aria-label="가운데 천체의 질량 (상대값)"></div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bSm" type="button">⚪ 구슬 굴리기</button><button class="btn btn-sm" id="bSl" type="button">💡 빛 쏘기</button></div>
+          <div class="btn-row"><button class="btn btn-sm" id="bSR" type="button">↺ 처음으로</button></div>
+        </div>
+        <!-- 일식 -->
+        <div class="control" data-modes="eclipse">
+          <div class="control-head"><span>🌤️ 하늘</span></div>
+          <div class="segmented seg-wrap" id="ecSeg" role="group" aria-label="하늘">
+            <button type="button" data-ec="day">평소 낮</button>
+            <button type="button" data-ec="total">개기 일식</button>
+          </div>
+          <div class="control-head" style="margin-top:8px"><span>⭐ 별의 위치</span></div>
+          <div class="segmented seg-wrap" id="ecCmp" role="group" aria-label="별의 위치 비교">
+            <button type="button" data-cmp="0">보이는 위치만</button>
+            <button type="button" data-cmp="1">원래 위치와 비교</button>
+          </div>
+        </div>
+        <!-- 블랙홀 -->
+        <div class="control" data-modes="collapse">
+          <div class="control-head"><span>⭐ 압축할 천체</span></div>
+          <div class="segmented seg-wrap" id="cpM" role="group" aria-label="압축할 천체">
+            <button type="button" data-cm="0">지구</button>
+            <button type="button" data-cm="1">태양</button>
+            <button type="button" data-cm="2">태양의 10배인 별</button>
+          </div>
+        </div>
+        <div class="control" data-modes="collapse">
+          <div class="control-head"><label for="sCr">🗜️ 반지름 R</label><output id="oCr">—</output></div>
+          <div class="range-row"><input type="range" id="sCr" min="0" max="100" step="1" value="0" aria-label="천체의 반지름 (로그 눈금, 줄이는 정도)"></div>
+          <p class="ctrl-note">질량은 그대로 두고 반지름만 줄여요 (눈금은 로그).</p>
+        </div>
+        <div class="control" data-modes="collapse" data-calc="match">
+          <div class="control-head"><span>🃏 질량 ↔ 지평선 반지름 2GM/c²</span></div>
+<div class="sel-row"><div class="q">지구 (6.0 × 10²⁴ kg)</div><select class="sel-in" id="mS0" aria-label="지구 (6.0 × 10²⁴ kg)의 사건의 지평선 반지름"><option value="0">고르세요</option><option value="1">약 9 mm</option><option value="2">약 3.0 km</option><option value="3">약 30 km</option><option value="4">약 1.3 × 10¹⁰ m</option><option value="5">약 1.9 × 10¹³ m</option></select></div><div class="sel-row"><div class="q">태양 (2.0 × 10³⁰ kg)</div><select class="sel-in" id="mS1" aria-label="태양 (2.0 × 10³⁰ kg)의 사건의 지평선 반지름"><option value="0">고르세요</option><option value="1">약 9 mm</option><option value="2">약 3.0 km</option><option value="3">약 30 km</option><option value="4">약 1.3 × 10¹⁰ m</option><option value="5">약 1.9 × 10¹³ m</option></select></div><div class="sel-row"><div class="q">우리은하 중심 블랙홀 (태양의 4.3 × 10⁶배)</div><select class="sel-in" id="mS2" aria-label="우리은하 중심 블랙홀 (태양의 4.3 × 10⁶배)의 사건의 지평선 반지름"><option value="0">고르세요</option><option value="1">약 9 mm</option><option value="2">약 3.0 km</option><option value="3">약 30 km</option><option value="4">약 1.3 × 10¹⁰ m</option><option value="5">약 1.9 × 10¹³ m</option></select></div><div class="sel-row"><div class="q">M87 블랙홀 (태양의 6.5 × 10⁹배)</div><select class="sel-in" id="mS3" aria-label="M87 블랙홀 (태양의 6.5 × 10⁹배)의 사건의 지평선 반지름"><option value="0">고르세요</option><option value="1">약 9 mm</option><option value="2">약 3.0 km</option><option value="3">약 30 km</option><option value="4">약 1.3 × 10¹⁰ m</option><option value="5">약 1.9 × 10¹³ m</option></select></div>
+        </div>
+        <!-- 시간 지연 -->
+        <div class="control" data-modes="dilate">
+          <div class="control-head"><label for="sDr">📍 아래 시계의 거리 r</label><output id="oDr">3.0 R_s</output></div>
+          <div class="range-row"><input type="range" id="sDr" min="0" max="100" step="1" value="36" aria-label="아래 시계가 질량 중심에서 떨어진 거리 (지평선 반지름의 배수, 로그 눈금)"></div>
+          <div class="btn-row"><button class="btn btn-sm" id="bDr" type="button">↺ 시계 맞추기</button></div>
+          <p class="ctrl-note">시계의 빠르기 차이는 알아보기 쉽게 가까운 곳(블랙홀 근처)에서 보여 줘요.</p>
+        </div>
+        <!-- GPS -->
+        <div class="control" data-modes="gps">
+          <div class="control-head"><span>🗓️ 보정하지 않고 몇 일 지나면?</span></div>
+          <div class="segmented seg-wrap" id="gpD" role="group" aria-label="지난 날짜">
+            <button type="button" data-gd="1">하루</button>
+            <button type="button" data-gd="2">이틀</button>
+            <button type="button" data-gd="7">일주일</button>
+          </div>
+        </div>
+        <div class="control" data-modes="gps" data-calc="gin">
+          <div class="control-head"><span>📝 GPS 시계 보정 계산</span></div>
+          <div class="in-grid">
+            <span class="lab">위성 시계가 하루에 빨라지는 양 (μs)</span><input class="num-in" id="iG1" type="number" inputmode="decimal" step="0.1" aria-label="위성 시계가 하루에 빨라지는 양 (마이크로초)">
+            <span class="lab">보정하지 않을 때 하루 거리 오차 (km)</span><input class="num-in" id="iG2" type="number" inputmode="decimal" step="0.1" aria-label="하루 동안 쌓이는 거리 오차 (킬로미터)">
+          </div>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

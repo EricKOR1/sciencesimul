@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#16a34a">
+  <title>핵산 모형 만들기 | 고등 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧬</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; }
+    .stage-toolbar { min-height: 58px; }
+    .stage-toolbar .segmented { flex-wrap: wrap; }
+    .stage-toolbar .segmented button { min-height: 40px; padding: 5px 10px; font-size: 14px; white-space: nowrap; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard [hidden] { display: none !important; }
+    .btn-sm { min-height: 44px; }
+    .btn-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+    .btn-row .btn { flex: 1; padding-left: 8px; padding-right: 8px; }
+    .ctrl-note { margin: 6px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    .ctrl-note b { color: var(--ink); }
+    .range-row { display: flex; align-items: center; gap: 8px; }
+    .range-row input[type=range] { flex: 1; min-width: 0; height: 44px; }
+    .seg-full { display: flex; width: 100%; }
+    .seg-full button { flex: 1 1 0; min-width: 0; min-height: 44px; font-size: 14.5px; }
+    .chip-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px; }
+    .chip-grid.three { grid-template-columns: 1fr 1fr 1fr; }
+    .chip-grid button { min-height: 44px; padding: 6px 8px; border: 2px solid var(--line); background: #fff; border-radius: 12px; font-weight: 800; font-size: 14px; cursor: pointer; color: var(--ink); text-align: center; }
+    .chip-grid button.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); }
+    .chip-grid button.seen:not(.on) { border-color: color-mix(in srgb, var(--subject) 45%, white); }
+    .chip-grid button:disabled { opacity: .45; cursor: not-allowed; }
+    .chip-grid button:active { transform: scale(.98); }
+    .sel-in { width: 100%; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 8px; font: 800 14px var(--font); color: var(--ink); background: #fff; }
+    .sel-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .sel-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .num-in { width: 100%; min-width: 0; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 8px; font: 800 16px ui-monospace, Menlo, Consolas, monospace; color: var(--ink); background: #fff; text-align: right; }
+    .num-in:focus { outline: none; border-color: var(--subject); }
+    .num-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .num-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .in-unit { font-size: 12.5px; color: var(--muted); font-weight: 700; }
+    .in-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 10px; align-items: end; margin-top: 8px; }
+    .in-row .lab { font-weight: 800; font-size: 13.5px; margin-bottom: 3px; line-height: 1.25; }
+    @keyframes shakeX { 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+    .readout .value { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .stage-canvas .stage-hint { top: 10px; bottom: auto; }
+    .pk-pool { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+    .pk-item { min-height: 44px; padding: 6px 12px; border: 2px solid var(--line); background: #fff; border-radius: 12px; font-weight: 800; font-size: 14px; cursor: pointer; color: var(--ink); }
+    .pk-item:disabled { opacity: .35; cursor: default; }
+    .pk-seq { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; min-height: 46px; border: 2px dashed var(--line); border-radius: 12px; padding: 6px; }
+    .pk-chip { min-height: 34px; padding: 3px 10px; border: 2px solid var(--subject); background: color-mix(in srgb, var(--subject) 12%, white); border-radius: 999px; font-weight: 800; font-size: 13.5px; cursor: pointer; color: var(--ink); }
+    .pk-chip b { color: var(--subject); margin-right: 2px; }
+    .pk-reset { margin-top: 8px; width: 100%; }
+    .tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; margin-top: 6px; }
+    .tbl th, .tbl td { border: 1px solid var(--line); padding: 4px 4px; text-align: center; }
+    .tbl th { background: var(--surface-2); font-weight: 800; }
+    .tbl td.rowh { font-weight: 800; text-align: left; background: var(--surface-2); }
+    .tbl select { width: 100%; min-height: 40px; border: 2px solid var(--line); border-radius: 8px; font: 800 13.5px var(--font); background: #fff; color: var(--ink); }
+    .tbl select.ok { border-color: var(--good); background: var(--good-soft); }
+    .tbl select.bad { border-color: var(--bad); background: var(--bad-soft); }
+    .check-list { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 4px; font-size: 13.5px; font-weight: 700; }
+    .check-list li { display: flex; gap: 6px; align-items: baseline; }
+    .check-list li.on { color: var(--good); }
+    .btn-col { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+    #modeSeg button.lv-off { display: none; }
+    @media (max-width: 1100px) and (orientation: landscape) { .toolbar-label { display: none; } }
+    @media (max-width: 599px) {
+      .readout .value { font-size: 15px; }
+      .stage-toolbar { gap: 6px; padding: 8px; }
+      .stage-toolbar .spacer, .toolbar-label { display: none; }
+      .stage-toolbar .segmented button { padding: 5px 8px; font-size: 13.5px; }
+      .stage-hint { font-size: 13px; padding: 5px 12px; }
+    }
+    .stage-toolbar .segmented button.lv-off { display: none; }
+    .tag-pill { display: inline-block; padding: 2px 9px; border-radius: 999px; font-weight: 800; font-size: 12.5px; background: color-mix(in srgb, var(--subject) 14%, white); color: var(--ink); }
+    .tbl-in { width: 100%; }
+
+  </style>
+</head>
+<body class="sim-page" data-subject="bio">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#hy">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">세포와 물질대사 · Ⅰ. 세포</div>
+      <h1>핵산 모형 만들기</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🧬 핵산 모형</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="tablist" aria-label="화면 고르기">
+            <button type="button" data-mode="nuc" data-lv="0" data-feature="nuc">🧱 조립대</button>
+            <button type="button" data-mode="strand" data-lv="0" data-feature="strand">🔗 한 가닥</button>
+            <button type="button" data-mode="dna" data-lv="1" data-feature="dna">🧬 DNA 만들기</button>
+            <button type="button" data-mode="ratio" data-lv="1" data-feature="ratio">🧮 염기 비율</button>
+            <button type="button" data-mode="rna" data-lv="2" data-feature="rna">✂️ 전사</button>
+            <button type="button" data-mode="kinds" data-lv="2" data-feature="kinds">🗂 RNA 3종</button>
+            <button type="button" data-mode="cell" data-lv="3" data-feature="cell">🔬 세포 속</button>
+            <button type="button" data-mode="thread" data-lv="3" data-feature="thread">🧵 실 감기</button>
+            <button type="button" data-mode="table" data-lv="3" data-feature="table">📋 비교표</button>
+
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="뉴클레오타이드 조립대, DNA 이중 가닥과 나선, 전사 모형, 세포 속 핵산 위치와 비교표"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">—</span><span class="value" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">—</span><span class="value" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">—</span><span class="value" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" data-modes="nuc">
+          <div class="control-head"><span>🧱 뉴클레오타이드 조립</span></div>
+          <p class="ctrl-note"><b>인산 · 당 · 염기</b> 블록을 끌어서(또는 눌러서) 조립대의 알맞은 칸에 놓아요. 놓인 블록을 누르면 빼요.</p>
+          <div class="btn-row"><button class="btn btn-sm" id="nucReset" type="button">↺ 조립대 비우기</button></div>
+        </div>
+        <div class="control" data-modes="strand">
+          <div class="control-head"><span>🔗 한 가닥 만들기</span></div>
+          <p class="ctrl-note" id="strNote"></p>
+          <div class="btn-row"><button class="btn btn-sm" id="strReset" type="button">↺ 가닥 지우기</button></div>
+        </div>
+        <div class="control" data-modes="dna">
+          <div class="control-head"><span>🧬 상보 가닥 만들기</span></div>
+          <p class="ctrl-note">염기 블록을 끌어서(또는 눌러서) 위 가닥과 <b>짝이 맞는</b> 칸에 놓아요.</p>
+          <div class="btn-row"><button class="btn btn-sm" id="dnaReset" type="button">↺ 다시 만들기</button></div>
+        </div>
+        <div class="control" data-modes="ratio">
+          <div class="control-head"><label for="sRatio">🧮 A의 비율</label><output id="oRatio">25 %</output></div>
+          <div class="range-row"><input type="range" id="sRatio" min="10" max="40" step="5" value="25" aria-label="A의 비율 (10에서 40 퍼센트)"></div>
+          <div class="in-row">
+            <div><div class="lab"><label for="inT">T의 개수</label></div><input class="num-in" id="inT" type="text" inputmode="numeric" maxlength="4" aria-label="타이민 개수"></div>
+            <div><div class="lab"><label for="inG">G의 개수</label></div><input class="num-in" id="inG" type="text" inputmode="numeric" maxlength="4" aria-label="구아닌 개수"></div>
+          </div>
+          <p class="ctrl-note">A를 <b>25 %</b>로 두고 T와 G의 개수를 써요. 비율을 바꿔 보면 규칙이 계속 맞는지 확인할 수 있어요.</p>
+        </div>
+        <div class="control" data-modes="rna">
+          <div class="control-head"><span>✂️ 전사 모형</span></div>
+          <p class="ctrl-note">① DNA를 열고 ② 주형 가닥 아래에 짝이 맞는 <b>RNA 염기</b>를 놓아요.</p>
+          <div class="btn-col"><button class="btn btn-sm" id="rnaZip" type="button">✂ DNA 열기 (두 가닥 풀기)</button><button class="btn btn-sm" id="rnaReset" type="button">↺ 다시 하기</button></div>
+        </div>
+        <div class="control" data-modes="kinds">
+          <div class="control-head"><span>🗂 RNA 3종</span></div>
+          <p class="ctrl-note">그림과 이름을 보고 <b>역할 카드</b>를 알맞은 상자에 끌어 넣은 뒤 <b>✔ 확인하기</b>를 눌러요.</p>
+          <div class="btn-row"><button class="btn btn-sm" id="kindsReset" type="button">↺ 카드 모으기</button></div>
+        </div>
+        <div class="control" data-modes="cell">
+          <div class="control-head"><span>🔬 표시 도구</span></div>
+          <div class="chip-grid" id="toolSel"><button type="button" data-v="dna">DNA 표시</button><button type="button" data-v="rna">RNA 표시</button></div>
+          <p class="ctrl-note">도구를 고르고 세포 그림에서 그 핵산이 있는 곳을 눌러요. 다시 누르면 지워져요.</p>
+          <div class="btn-row"><button class="btn btn-sm" id="cellReset" type="button">↺ 표시 모두 지우기</button></div>
+        </div>
+        <div class="control" data-modes="thread">
+          <div class="control-head"><label for="sThr">🧵 감은 실의 길이</label><output id="oThr">0 km</output></div>
+          <div class="range-row"><input type="range" id="sThr" min="0" max="20" step="1" value="0" aria-label="감은 실의 길이 (0에서 20 킬로미터)"></div>
+          <p class="ctrl-note">핵을 <b>지름 6 cm 공</b>에 비유하면 DNA는 <b>실 20 km</b>예요. 슬라이더로 공에 실을 감아 보세요.</p>
+        </div>
+        <div class="control" data-modes="table">
+          <div class="control-head"><span>📋 DNA · RNA 비교표</span></div>
+          <p class="ctrl-note">칸을 눌러 내용을 바꿔요. 다 맞추면 <b>✔ 확인하기</b>를 눌러요.</p>
+          <div class="btn-row"><button class="btn btn-sm" id="tabReset" type="button">↺ 칸 섞기</button></div>
+        </div>
+
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

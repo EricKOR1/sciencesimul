@@ -7593,8 +7593,7 @@ window.SCI_CATALOG = {
                 "곡선 그리기",
                 "이온 모형",
                 "지시약 선택"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hr-salt-hydrolysis",
@@ -7615,8 +7614,7 @@ window.SCI_CATALOG = {
                 "이온 모형",
                 "Ka·Kb 판단",
                 "예측·계산"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hr-titration-weak",
@@ -7637,8 +7635,7 @@ window.SCI_CATALOG = {
                 "반당량점",
                 "당량점 pH",
                 "지시약"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hr-buffer",
@@ -7659,8 +7656,7 @@ window.SCI_CATALOG = {
                 "완충 원리",
                 "혈액 완충",
                 "몸의 조절"
-              ],
-              "soon": true
+              ]
             }
           ]
         },
