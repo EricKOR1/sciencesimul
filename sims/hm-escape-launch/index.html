@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#f26b3a">
+  <title>탈출 속도와 로켓 | 고등 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚀</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+<style>
+    .stage-toolbar { min-height: 61px; }
+    .segmented button { min-height: 44px; }
+    .segmented button.on { background: var(--phy); color: #fff; }
+    #modeSeg { width: 100%; }
+    #modeSeg button { flex: 1 1 auto; min-width: 0; padding-left: 8px; padding-right: 8px; font-size: 14.5px; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard .btn-sm { min-height: 44px; }
+    #ctrlCard [hidden] { display: none !important; }
+    .ctrl-note { font-size: 14px; color: var(--muted); margin: 6px 0 0; }
+    .btn-row { display: flex; gap: 8px; margin-top: 6px; }
+    .btn-row .btn { flex: 1; padding-left: 8px; padding-right: 8px; }
+    .view-seg { display: flex; width: 100%; }
+    .view-seg button { flex: 1 1 0; min-width: 0; padding-left: 4px; padding-right: 4px; font-size: 14.5px; }
+    .range-row { display: flex; align-items: center; gap: 8px; }
+    .range-row input[type=range] { flex: 1; min-width: 0; height: 44px; }
+    .sel-in { width: 100%; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 8px; font: 800 14.5px var(--font); color: var(--ink); background: #fff; }
+    .sel-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .sel-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .num-in { width: 100%; min-width: 0; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 10px; font: 800 16px var(--font); color: var(--ink); background: #fff; }
+    .num-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .num-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .in-grid { display: grid; grid-template-columns: 1fr 96px; gap: 6px 8px; align-items: center; margin-top: 6px; }
+    .in-grid .lab { font-weight: 800; font-size: 14px; line-height: 1.25; }
+    .in-grid .num-in { min-height: 40px; padding: 2px 8px; font-size: 15px; }
+    .sel-row { margin-top: 8px; }
+    .sel-row .q { font-weight: 800; font-size: 14px; margin-bottom: 3px; line-height: 1.25; }
+    @keyframes shakeX { 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+    .readout .value.txt { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .concept table.mini, table.mini { border-collapse: collapse; margin: 6px 0; font-size: 14px; width: 100%; }
+    .concept table.mini th, .concept table.mini td, table.mini th, table.mini td { border: 1px solid var(--line); padding: 4px 6px; text-align: center; }
+    .concept table.mini th, table.mini th { background: var(--surface-2); font-weight: 800; }
+    .stage-canvas .stage-hint { top: 10px; bottom: auto; }
+    @media (orientation: portrait) and (min-width: 600px) {
+      .side-col:has(> #ctrlCard[hidden]) > #game { grid-column: 1 / -1; }
+    }
+    @media (max-width: 599px) {
+      .readout .value.txt { font-size: 15px; }
+      .stage-toolbar { gap: 6px; padding: 8px; }
+      .stage-toolbar .spacer { display: none; }
+      #modeSeg button { font-size: 13.5px; padding-left: 6px; padding-right: 6px; }
+      .stage-hint { font-size: 13px; padding: 5px 12px; }
+    }
+
+    .seg-wrap { border-radius: 20px; display: flex; flex-wrap: wrap; width: 100%; }
+    .seg-wrap button { flex: 1 1 auto; min-width: 0; padding-left: 6px; padding-right: 6px; font-size: 14px; }
+    #modeSeg { flex-wrap: wrap; }
+    #modeSeg button[hidden] { display: none !important; }
+
+  </style>
+
+</head>
+<body class="sim-page" data-subject="phy">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#hm">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">역학과 에너지 · Ⅰ. 시공간과 운동</div>
+      <h1>탈출 속도와 로켓</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <div class="segmented" id="modeSeg" role="tablist" aria-label="화면 고르기">
+            <button type="button" data-mode="well">📈 탈출 조건</button>
+            <button type="button" data-mode="planet">🪐 행성 비교</button>
+            <button type="button" data-mode="astro">🧑‍🚀 우주인과 공</button>
+            <button type="button" data-mode="rocket">🔥 로켓 분출</button>
+            <button type="button" data-mode="launch">🛰️ 궤도 진입</button>
+            <button type="button" data-mode="stage">🧱 다단 로켓</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="탈출 속도와 로켓을 탐구하는 화면. 위치 에너지 곡선과 총 에너지로 보는 탈출 조건, 행성별 탈출 속도와 대기 분자, 우주인과 공의 운동량 보존, 로켓의 분출과 이륙, 궤도 진입 순서, 다단 로켓 설계가 있어요."></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">—</span><span class="value txt" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">—</span><span class="value txt" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">—</span><span class="value txt" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <!-- 탈출 조건 -->
+        <div class="control" data-modes="well">
+          <div class="control-head"><label for="sV0">💨 발사 속력 v₀</label><output id="oV0">8.0 km/s</output></div>
+          <div class="range-row"><input type="range" id="sV0" min="6" max="12" step="0.1" value="8" aria-label="발사 속력 (킬로미터 매 초)"></div>
+          <div class="btn-row">
+            <button class="btn btn-sm btn-primary" id="bWL" type="button">🚀 발사</button>
+            <button class="btn btn-sm" id="bWR" type="button">↺ 처음으로</button>
+          </div>
+          <p class="ctrl-note">공기 저항과 지구 자전은 무시해요.</p>
+        </div>
+        <!-- 행성 비교 -->
+        <div class="control" data-modes="planet">
+          <div class="control-head"><span>🪐 천체 고르기</span></div>
+          <div class="segmented seg-wrap" id="plSeg" role="group" aria-label="천체"></div>
+        </div>
+        <div class="control" data-modes="planet" data-calc="pred">
+          <div class="control-head"><span>🔮 이 천체에 남을 기체는? (눌러 바꿔요)</span></div>
+          <div class="btn-row" id="predRow"></div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bPred" type="button">🔍 결과 보기</button></div>
+        </div>
+        <div class="control" data-modes="planet" data-calc="calc">
+          <div class="control-head"><span>📝 탈출 속도 √(2GM/R) (km/s)</span></div>
+          <div class="in-grid">
+            <span class="lab">수성</span><input class="num-in" id="iC0" type="number" inputmode="decimal" step="0.1" aria-label="수성의 탈출 속도 (킬로미터 매 초)">
+            <span class="lab">금성</span><input class="num-in" id="iC1" type="number" inputmode="decimal" step="0.1" aria-label="금성의 탈출 속도 (킬로미터 매 초)">
+            <span class="lab">화성</span><input class="num-in" id="iC2" type="number" inputmode="decimal" step="0.1" aria-label="화성의 탈출 속도 (킬로미터 매 초)">
+            <span class="lab">목성</span><input class="num-in" id="iC3" type="number" inputmode="decimal" step="0.1" aria-label="목성의 탈출 속도 (킬로미터 매 초)">
+          </div>
+        </div>
+        <!-- 우주인과 공 -->
+        <div class="control" data-modes="astro">
+          <div class="control-head"><span>🏀 공의 질량</span></div>
+          <div class="segmented seg-wrap" id="amSeg" role="group" aria-label="공의 질량">
+            <button type="button" data-am="2">2 kg</button>
+            <button type="button" data-am="5">5 kg</button>
+            <button type="button" data-am="10">10 kg</button>
+          </div>
+        </div>
+        <div class="control" data-modes="astro">
+          <div class="control-head"><label for="sAv">💨 공의 속력</label><output id="oAv">10 m/s</output></div>
+          <div class="range-row"><input type="range" id="sAv" min="4" max="16" step="1" value="10" aria-label="공의 속력 (미터 매 초)"></div>
+          <div class="btn-row">
+            <button class="btn btn-sm btn-primary" id="bAT" type="button">🏀 던지기</button>
+            <button class="btn btn-sm" id="bAR" type="button">↺ 처음으로</button>
+          </div>
+        </div>
+        <!-- 로켓 분출 -->
+        <div class="control" data-modes="rocket">
+          <div class="control-head"><span>📍 장소</span></div>
+          <div class="segmented seg-wrap" id="rkEnv" role="group" aria-label="장소">
+            <button type="button" data-env="space">🌌 우주 공간</button>
+            <button type="button" data-env="pad">🌍 발사대</button>
+          </div>
+        </div>
+        <div class="control" data-modes="rocket">
+          <div class="control-head"><label for="sRu">💨 분출 속력</label><output id="oRu">3</output></div>
+          <div class="range-row"><input type="range" id="sRu" min="1" max="5" step="1" value="3" aria-label="가스의 분출 속력 (상대값)"></div>
+          <div class="control-head" style="margin-top:8px"><label for="sRf">⛽ 분출량</label><output id="oRf">3</output></div>
+          <div class="range-row"><input type="range" id="sRf" min="1" max="5" step="1" value="3" aria-label="1초 동안 분출하는 가스의 양 (상대값)"></div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bRF" type="button">🔥 분출 시작</button><button class="btn btn-sm" id="bRR" type="button">↺ 처음으로</button></div>
+        </div>
+        <!-- 궤도 진입 -->
+        <div class="control" data-modes="launch">
+          <div class="control-head"><span>🛤️ 어떻게 쏠까요?</span></div>
+          <div class="segmented seg-wrap" id="lnPath" role="group" aria-label="발사 방법">
+            <button type="button" data-lp="vert">위로만</button>
+            <button type="button" data-lp="orbit">기울여 수평 가속</button>
+          </div>
+        </div>
+        <div class="control" data-modes="launch">
+          <div class="control-head"><span>🧭 발사 방향 (적도)</span></div>
+          <div class="segmented seg-wrap" id="lnDir" role="group" aria-label="발사 방향">
+            <button type="button" data-ld="E">동쪽</button>
+            <button type="button" data-ld="W">서쪽</button>
+          </div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bLP" type="button">▶ 발사</button><button class="btn btn-sm" id="bLR" type="button">↺ 처음으로</button></div>
+        </div>
+        <div class="control" data-modes="launch" data-calc="order">
+          <div class="control-head"><span>🧩 발사 순서대로 ▲▼</span></div>
+          <div id="ordC"></div>
+        </div>
+        <!-- 다단 로켓 -->
+        <div class="control" data-modes="stage">
+          <div class="control-head"><span>🧱 단 수</span></div>
+          <div class="segmented seg-wrap" id="sgN" role="group" aria-label="로켓의 단 수">
+            <button type="button" data-sn="1">1단</button>
+            <button type="button" data-sn="2">2단</button>
+            <button type="button" data-sn="3">3단</button>
+          </div>
+        </div>
+        <div class="control" data-modes="stage">
+          <div class="control-head"><label for="sS1">⛽ 1단 연료 비율</label><output id="oS1">50 %</output></div>
+          <div class="range-row"><input type="range" id="sS1" min="20" max="70" step="5" value="50" aria-label="1단에 담는 연료의 비율 (퍼센트)"></div>
+          <div id="s2wrap">
+            <div class="control-head" style="margin-top:8px"><label for="sS2">⛽ 2단 연료 비율</label><output id="oS2">30 %</output></div>
+            <div class="range-row"><input type="range" id="sS2" min="10" max="50" step="5" value="30" aria-label="2단에 담는 연료의 비율 (퍼센트)"></div>
+          </div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bSG" type="button">🚀 발사</button><button class="btn btn-sm" id="bSR" type="button">↺ 처음으로</button></div>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

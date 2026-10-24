@@ -6483,8 +6483,7 @@ window.SCI_CATALOG = {
                 "원형 전류",
                 "솔레노이드",
                 "그림 해석"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hq-lorentz-force",
@@ -6505,8 +6504,7 @@ window.SCI_CATALOG = {
                 "힘의 크기",
                 "원운동",
                 "궤적 해석"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hq-lorentz-tech",
@@ -6527,8 +6525,7 @@ window.SCI_CATALOG = {
                 "질량 분석",
                 "토카막",
                 "밴앨런대"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hq-faraday-law",

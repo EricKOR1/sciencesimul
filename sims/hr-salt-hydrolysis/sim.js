@@ -473,8 +473,8 @@
     panel(MAIN.x, MAIN.y, MAIN.w, MAIN.h, 14);
     D.roundRect(b.x, b.y, b.w, b.h, 14); const gr2 = ctx.createLinearGradient(0, b.y, 0, b.y + b.h); gr2.addColorStop(0, '#f4f9ff'); gr2.addColorStop(1, '#dcecff'); ctx.fillStyle = gr2; ctx.fill(); ctx.strokeStyle = '#8fb4e8'; ctx.lineWidth = 2.4; ctx.stroke();
     T(b.x + 12, b.y + 22, '🔍 ' + MD_SALT[md.salt].f + ' 수용액 (확대)', 13.5, '#1e40af', 'left', 800);
-    if (md.caption && ev) T(b.x + b.w - 12, b.y + 22, md.caption, PHONE ? 12 : 13, '#b45309', 'right', 800);
-    else if (!ev) T(b.x + b.w - 12, b.y + 22, md.hold > 0 ? '결정이 녹아 이온이 퍼져요' : '이온을 눌러 물과 만나게 해 보세요', PHONE ? 12 : 13, MUTED, 'right', 700);
+    if (!ev) T(b.x + b.w - 12, b.y + 22, md.hold > 0 ? '결정이 녹아 이온이 퍼져요' : '이온을 눌러 물과 만나게 해 보세요', PHONE ? 12 : 13, MUTED, 'right', 700);
+    if (ev && md.caption) D.label(b.x + b.w / 2, b.y + b.h - 18, md.caption, { size: PHONE ? 12 : 13, bg: 'rgba(255,251,235,.95)', color: '#b45309', border: '#d9c98a' });
     if (ev && (ev.phase === 'hold')) { const mx = (ev.A.x + ev.W.x) / 2, my = (ev.A.y + ev.W.y) / 2; D.glow(mx, my, 46, '#fde68a', 0.5); }
     md.p.forEach((q) => { if (q.k === 'w') drawIonShape(q, t); });
     md.p.forEach((q) => { if (q.k !== 'w') drawIonShape(q, t); });
@@ -643,15 +643,15 @@
     // 농도에 따른 pH
     const gg = g.gg; D.roundRect(gg.x, gg.y, gg.w, gg.h, 12); ctx.fillStyle = '#faf8ff'; ctx.fill(); ctx.strokeStyle = '#e3def5'; ctx.lineWidth = 2; ctx.stroke();
     T(gg.x + 12, gg.y + 22, '농도에 따른 pH', PHONE ? 13 : 14.5, '#5b21b6', 'left', 800);
-    const sx = gg.x + 18, sw = gg.w - 36, sy = gg.y + (PHONE ? 34 : 48), sh = 18, pxv = (v) => sx + sw * clamp(v, 0, 14) / 14;
+    const sx = gg.x + 18, sw = gg.w - 36, sy = gg.y + (PHONE ? 44 : 56), sh = 18, pxv = (v) => sx + sw * clamp(v, 0, 14) / 14;
     phStrip(sx, sy, sw, sh, { r: 6 });
     ctx.strokeStyle = 'rgba(40,50,80,.55)'; ctx.lineWidth = 1.4;
     for (let p = 0; p <= 14; p += 2) { ctx.beginPath(); ctx.moveTo(pxv(p), sy + sh); ctx.lineTo(pxv(p), sy + sh + 5); ctx.stroke(); T(pxv(p), sy + sh + 18, String(p), 12.5, INK, 'center', 800); }
     const known = ccDone(k) || free;
     if (known) {
-      const dn = (px2, label, col) => { ctx.fillStyle = col; ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(px2, sy - 1); ctx.lineTo(px2 - 7, sy - 13); ctx.lineTo(px2 + 7, sy - 13); ctx.closePath(); ctx.fill(); ctx.stroke(); T(px2, sy - 17, label, 12.5, col, 'center', 800); };
-      dn(pxv(cc.m1), '0.10 M', '#7c3aed');
-      if (c === 'c01') dn(pxv(cc.m2), '0.010 M', '#d97706');
+      const dn = (px2, label, col, al) => { ctx.fillStyle = col; ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(px2, sy - 1); ctx.lineTo(px2 - 7, sy - 13); ctx.lineTo(px2 + 7, sy - 13); ctx.closePath(); ctx.fill(); ctx.stroke(); T(px2 + (al === 'right' ? 2 : al === 'left' ? -2 : 0), sy - 17, label, 12.5, col, al || 'center', 800); };
+      if (c === 'c01') { const leftIs1 = cc.m1 <= cc.m2; dn(pxv(cc.m1), '0.10 M', '#7c3aed', leftIs1 ? 'right' : 'left'); dn(pxv(cc.m2), '0.010 M', '#d97706', leftIs1 ? 'left' : 'right'); }
+      else dn(pxv(cc.m1), '0.10 M', '#7c3aed', 'center');
       D.sphere(pxv(SALT[k].meas), sy + sh / 2, 6, '#14a058', { gloss: false, outline: '#fff', outlineWidth: 2 });
       if (!PHONE) textBlock(gg.x + 12, gg.y + sy - gg.y + sh + 34, gg.w - 24, c === 'c01' ? '10배 묽히면 [' + (acid ? 'H⁺' : 'OH⁻') + ']가 √10 분의 1이 되어 pH가 약 0.5만큼 ' + (acid ? '올라요' : '내려가요') + '. (' + ccTheory(k, 'c10').toFixed(2) + ' → ' + ccTheory(k, 'c01').toFixed(2) + ')' : '▼ 이론값, ● 측정값이에요. 농도를 0.010 M로 바꿔 보세요.', 13, MUTED, 18, 700);
     } else T(gg.x + gg.w / 2, gg.y + gg.h - (PHONE ? 6 : 40), '계산을 마치면 이론값이 표시돼요', 13.5, MUTED, 'center', 800);

@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#16a34a">
+  <title>탄수화물과 지질 | 고등 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍞</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; }
+    .stage-toolbar { min-height: 58px; }
+    .stage-toolbar .segmented { flex-wrap: wrap; }
+    .stage-toolbar .segmented button { min-height: 40px; padding: 5px 10px; font-size: 14px; white-space: nowrap; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard [hidden] { display: none !important; }
+    .btn-sm { min-height: 44px; }
+    .btn-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+    .btn-row .btn { flex: 1; padding-left: 8px; padding-right: 8px; }
+    .ctrl-note { margin: 6px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    .ctrl-note b { color: var(--ink); }
+    .range-row { display: flex; align-items: center; gap: 8px; }
+    .range-row input[type=range] { flex: 1; min-width: 0; height: 44px; }
+    .seg-full { display: flex; width: 100%; }
+    .seg-full button { flex: 1 1 0; min-width: 0; min-height: 44px; font-size: 14.5px; }
+    .chip-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px; }
+    .chip-grid.three { grid-template-columns: 1fr 1fr 1fr; }
+    .chip-grid button { min-height: 44px; padding: 6px 8px; border: 2px solid var(--line); background: #fff; border-radius: 12px; font-weight: 800; font-size: 14px; cursor: pointer; color: var(--ink); text-align: center; }
+    .chip-grid button.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); }
+    .chip-grid button.seen:not(.on) { border-color: color-mix(in srgb, var(--subject) 45%, white); }
+    .chip-grid button:disabled { opacity: .45; cursor: not-allowed; }
+    .chip-grid button:active { transform: scale(.98); }
+    .sel-in { width: 100%; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 8px; font: 800 14px var(--font); color: var(--ink); background: #fff; }
+    .sel-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .sel-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .num-in { width: 100%; min-width: 0; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 8px; font: 800 16px ui-monospace, Menlo, Consolas, monospace; color: var(--ink); background: #fff; text-align: right; }
+    .num-in:focus { outline: none; border-color: var(--subject); }
+    .num-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .num-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .in-unit { font-size: 12.5px; color: var(--muted); font-weight: 700; }
+    .in-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 10px; align-items: end; margin-top: 8px; }
+    .in-row .lab { font-weight: 800; font-size: 13.5px; margin-bottom: 3px; line-height: 1.25; }
+    @keyframes shakeX { 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+    .readout .value { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .stage-canvas .stage-hint { top: 10px; bottom: auto; }
+    .pk-pool { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+    .pk-item { min-height: 44px; padding: 6px 12px; border: 2px solid var(--line); background: #fff; border-radius: 12px; font-weight: 800; font-size: 14px; cursor: pointer; color: var(--ink); }
+    .pk-item:disabled { opacity: .35; cursor: default; }
+    .pk-seq { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; min-height: 46px; border: 2px dashed var(--line); border-radius: 12px; padding: 6px; }
+    .pk-chip { min-height: 34px; padding: 3px 10px; border: 2px solid var(--subject); background: color-mix(in srgb, var(--subject) 12%, white); border-radius: 999px; font-weight: 800; font-size: 13.5px; cursor: pointer; color: var(--ink); }
+    .pk-chip b { color: var(--subject); margin-right: 2px; }
+    .pk-reset { margin-top: 8px; width: 100%; }
+    .tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; margin-top: 6px; }
+    .tbl th, .tbl td { border: 1px solid var(--line); padding: 4px 4px; text-align: center; }
+    .tbl th { background: var(--surface-2); font-weight: 800; }
+    .tbl td.rowh { font-weight: 800; text-align: left; background: var(--surface-2); }
+    .tbl select { width: 100%; min-height: 40px; border: 2px solid var(--line); border-radius: 8px; font: 800 13.5px var(--font); background: #fff; color: var(--ink); }
+    .tbl select.ok { border-color: var(--good); background: var(--good-soft); }
+    .tbl select.bad { border-color: var(--bad); background: var(--bad-soft); }
+    .check-list { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 4px; font-size: 13.5px; font-weight: 700; }
+    .check-list li { display: flex; gap: 6px; align-items: baseline; }
+    .check-list li.on { color: var(--good); }
+    .btn-col { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+    #modeSeg button.lv-off { display: none; }
+    @media (max-width: 1100px) and (orientation: landscape) { .toolbar-label { display: none; } }
+    @media (max-width: 599px) {
+      .readout .value { font-size: 15px; }
+      .stage-toolbar { gap: 6px; padding: 8px; }
+      .stage-toolbar .spacer, .toolbar-label { display: none; }
+      .stage-toolbar .segmented button { padding: 5px 8px; font-size: 13.5px; }
+      .stage-hint { font-size: 13px; padding: 5px 12px; }
+    }
+    .stage-toolbar .segmented button.lv-off { display: none; }
+    .tag-pill { display: inline-block; padding: 2px 9px; border-radius: 999px; font-weight: 800; font-size: 12.5px; background: color-mix(in srgb, var(--subject) 14%, white); color: var(--ink); }
+    .tbl-in { width: 100%; }
+
+  </style>
+</head>
+<body class="sim-page" data-subject="bio">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#hy">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">세포와 물질대사 · Ⅰ. 세포</div>
+      <h1>탄수화물과 지질</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🍞 탄수화물과 지질</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="tablist" aria-label="화면 고르기">
+            <button type="button" data-mode="blocks" data-lv="0" data-feature="blocks">🧱 블록 상자</button>
+            <button type="button" data-mode="sort" data-lv="0" data-feature="sort">🗂 분류 카드</button>
+            <button type="button" data-mode="energy" data-lv="1" data-feature="energy">⚖ 에너지 저장</button>
+            <button type="button" data-mode="match" data-lv="1" data-feature="match">🔗 기능 연결</button>
+            <button type="button" data-mode="lab" data-lv="2" data-feature="lab">🧪 실험대</button>
+            <button type="button" data-mode="table" data-lv="2" data-feature="table">📋 결과표</button>
+            <button type="button" data-mode="micro" data-lv="3" data-feature="micro">🔬 현미경</button>
+
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="포도당 고리 블록과 지질 블록 조립대, 분류 카드, 에너지 저장 비교 막대, 검출 반응 실험대와 결과표, 가상 현미경"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">—</span><span class="value" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">—</span><span class="value" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">—</span><span class="value" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" data-modes="blocks">
+          <div class="control-head"><span>🧱 만들 물질</span></div>
+          <div class="segmented seg-full" id="subSeg"><button type="button" data-v="carb">🍞 탄수화물</button><button type="button" data-v="lipid">🧈 지질</button></div>
+        </div>
+        <div class="control" data-modes="blocks" data-sub="carb">
+          <div class="control-head"><span>🔷 다당류 모양</span></div>
+          <div class="chip-grid" id="shapeSel"><button type="button" data-v="line">한 줄</button><button type="button" data-v="helix">녹말 (나선)</button><button type="button" data-v="branch">글리코젠 (가지)</button><button type="button" data-v="bundle">셀룰로스 (다발)</button></div>
+          <p class="ctrl-note" id="carbNote"></p>
+          <div class="btn-row"><button class="btn btn-sm" id="carbReset" type="button">↺ 블록 모두 되돌리기</button></div>
+        </div>
+        <div class="control" data-modes="blocks" data-sub="lipid">
+          <div class="control-head"><span>🧈 지질 종류</span></div>
+          <div class="chip-grid" id="lipSel"><button type="button" data-v="tg">중성 지방</button><button type="button" data-v="pl">인지질</button><button type="button" data-v="st">스테로이드</button><button type="button" data-v="wx">왁스</button></div>
+          <p class="ctrl-note" id="lipNote"></p>
+          <div class="btn-row"><button class="btn btn-sm" id="lipWater" type="button">💧 물에 넣어 보기</button><button class="btn btn-sm" id="lipReset" type="button">↺ 다시 만들기</button></div>
+        </div>
+        <div class="control" data-modes="sort">
+          <div class="control-head"><span>🗂 탄수화물 · 지질 분류</span></div>
+          <p class="ctrl-note">카드를 끌어 알맞은 상자에 넣고 <b>✔ 확인하기</b>를 눌러요.</p>
+          <div class="btn-row"><button class="btn btn-sm" id="sortReset" type="button">↺ 카드 모으기</button></div>
+        </div>
+        <div class="control" data-modes="match">
+          <div class="control-head"><span>🔗 기능 연결</span></div>
+          <p class="ctrl-note">기능 카드를 알맞은 <b>물질 상자</b>에 한 장씩 넣어요.</p>
+          <div class="btn-row"><button class="btn btn-sm" id="matchReset" type="button">↺ 카드 모으기</button></div>
+        </div>
+        <div class="control" data-modes="energy">
+          <div class="control-head"><label for="sEnergy">⚖ 저장할 에너지</label><output id="oEnergy">600 kcal</output></div>
+          <div class="range-row"><input type="range" id="sEnergy" min="200" max="2000" step="100" value="600" aria-label="저장할 에너지 (200에서 2000 킬로칼로리)"></div>
+          <div class="in-row">
+            <div><div class="lab"><label for="inCarb">탄수화물 (g)</label></div><input class="num-in" id="inCarb" type="text" inputmode="decimal" maxlength="6" aria-label="탄수화물 질량 (그램)"></div>
+            <div><div class="lab"><label for="inFat">중성 지방 (g)</label></div><input class="num-in" id="inFat" type="text" inputmode="decimal" maxlength="6" aria-label="중성 지방 질량 (그램)"></div>
+          </div>
+          <p class="ctrl-note">에너지를 <b>1000 kcal</b>로 맞춘 뒤, 필요한 질량을 정수로 써요.</p>
+        </div>
+        <div class="control" data-modes="lab">
+          <div class="control-head"><span>🧪 시약 고르기</span></div>
+          <div class="chip-grid three" id="reagSel"><button type="button" data-v="0">아이오딘</button><button type="button" data-v="1">베네딕트</button><button type="button" data-v="2">수단 Ⅲ</button></div>
+          <p class="ctrl-note" id="labNote"></p>
+          <div class="btn-col"><button class="btn btn-sm" id="labAll" type="button">💧 모두 넣기</button><button class="btn btn-sm" id="labHeat" type="button">🔥 물중탕으로 가열하기</button></div>
+        </div>
+        <div class="control" data-modes="table">
+          <div class="control-head"><span>📋 결과표</span></div>
+          <p class="ctrl-note">관찰한 색을 보고, 시료마다 들어 있는 물질 칸을 <b>눌러 표시</b>해요. 다 되면 <b>✔ 확인하기</b>를 눌러요.</p>
+        </div>
+        <div class="control" data-modes="micro">
+          <div class="control-head"><span>🔬 표본 고르기</span></div>
+          <div class="chip-grid three" id="specSel"><button type="button" data-v="potato">감자</button><button type="button" data-v="peanut">땅콩</button><button type="button" data-v="onion">양파</button></div>
+          <div class="control-head" style="margin-top:10px"><span>🔍 배율</span></div>
+          <div class="chip-grid three" id="zoomSel"><button type="button" data-v="0">×100</button><button type="button" data-v="1">×400</button><button type="button" data-v="2">×1000</button></div>
+          <div class="btn-row"><button class="btn btn-sm" id="stainBtn" type="button">💧 염색하기</button></div>
+          <p class="ctrl-note" id="micNote"></p>
+        </div>
+
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>
