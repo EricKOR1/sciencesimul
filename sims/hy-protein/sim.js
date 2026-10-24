@@ -167,7 +167,7 @@
       this.cards.forEach((c) => { if (!c.zone && !(this.drag && this.drag.c === c)) this.moveTo(c, c.home.x, c.home.y, this.o.cw, this.o.ch, instant); });
     }
     moveTo(c, x, y, w, h, instant) {
-      if (instant || RM) { c.x = x; c.y = y; c.w = w; c.h = h; return; }
+      if (instant || RM) { c.x = x; c.y = y; c.w = w; c.h = h; SciSim.tween(c, { x, y, w, h }, { duration: 0.0001 }); return; }   // 진행 중인 이동을 끝내요
       SciSim.tween(c, { x, y, w, h }, { duration: 0.35, ease: 'outBack' });
     }
     place(c, zoneId) {
@@ -407,8 +407,8 @@
   const CHT = PHONE ? { x: 10, y: 360, w: 460, h: 270 } : { x: 14, y: 366, w: 772, h: 180 };
   const chX = (i) => CHP.x + CHP.w / 2 + (i - 2) * L(132, 84), chY = () => CHP.y + L(214, 228);
   const CTI = AAKEYS.map((k, i) => ({ key: k, x: PHONE ? CHT.x + 60 + (i % 3) * 150 : CHT.x + 74 + i * 124, y: PHONE ? CHT.y + 66 + Math.floor(i / 3) * 96 : CHT.y + 78 }));
-  S.ch = { pcs: [], seated: [], wrong: 0, drag: null, msg: '', done: false, flash: 0 };
-  function chReset() { S.ch.pcs = []; S.ch.seated = []; S.ch.wrong = 0; S.ch.done = false; S.ch.drag = null; FX.clear(); updateCtl(); }
+  S.ch = { tok: 0, pcs: [], seated: [], wrong: 0, drag: null, msg: '', done: false, flash: 0 };
+  function chReset() { S.ch.tok++; S.ch.pcs = []; S.ch.seated = []; S.ch.wrong = 0; S.ch.done = false; S.ch.drag = null; FX.clear(); updateCtl(); }
   function chPlace(key, from) {
     const c = S.ch, i = c.seated.length;
     if (i >= 5) return false;
@@ -420,7 +420,7 @@
     const pc = { key, x: from ? from.x : CTI[AAKEYS.indexOf(key)].x, y: from ? from.y : CTI[AAKEYS.indexOf(key)].y, st: 'seat', slot: i, pop: 1 };
     c.pcs.push(pc); c.seated.push(pc); Sound.click();
     if (i >= 1) FX.add({ kind: 'water', x: (chX(i - 1) + chX(i)) / 2, y: chY(i) - 22, vx: 26, vy: -80, life: 1.3, delay: 0.25 });
-    if (c.seated.length === 5) { c.done = true; c.flash = 1; setTimeout(() => { Sound.success(); parts.burst(chX(2), chY(2), { count: 26, speed: 200, colors: ['#3b82f6', '#f97316', '#22b455', '#a855f7'] }); }, 450); }
+    if (c.seated.length === 5) { c.done = true; c.flash = 1; const tok = c.tok; setTimeout(() => { if (tok !== c.tok) return; Sound.success(); parts.burst(chX(2), chY(2), { count: 26, speed: 200, colors: ['#3b82f6', '#f97316', '#22b455', '#a855f7'] }); }, 450); }
     updateCtl(); return true;
   }
   function chDraw(dt, t) {
@@ -581,7 +581,7 @@
     if (f.stage === 4) {
       f.subT += dt;
       const anchors = [[-1, -1], [1, -1], [-1, 1], [1, 1]];
-      f.sub.forEach((s, k) => { const tx = FCX + anchors[k][0] * L(120, 86), ty = FCY + anchors[k][1] * L(76, 70) - 8; s.x = approach(s.x, tx, dt, 3.2); s.y = approach(s.y, ty, dt, 3.2); });
+      f.sub.forEach((s, k) => { const tx = FCX + anchors[k][0] * L(120, 86), ty = FD.y + FD.h * 0.5 + anchors[k][1] * L(80, 66) - 4; s.x = approach(s.x, tx, dt, 3.2); s.y = approach(s.y, ty, dt, 3.2); });
     }
   }
   function drawChain(P, rot, o) {
@@ -610,9 +610,9 @@
       }
     } else {
       // 4차: 폴리펩타이드 4개가 모여요 (3차 구조 모양을 축소해서)
-      const c = foldCentroid(), rel = f.P.map((p) => ({ x: p.x - c.x, y: p.y - c.y })), sc = L(0.62, 0.55);
+      const c = foldCentroid(), rel = f.P.map((p) => ({ x: p.x - c.x, y: p.y - c.y })), sc = L(0.56, 0.5);
       f.sub.forEach((s, k) => {
-        const col = ['#3b82f6', '#3b82f6', '#06b6d4', '#06b6d4'][k]; T(s.x, s.y + L(70, 58), (k < 2 ? 'α 사슬 ' : 'β 사슬 ') + (k % 2 + 1), 13, k < 2 ? '#1d4ed8' : '#0e7490', 'center', 800);
+        const col = ['#3b82f6', '#3b82f6', '#06b6d4', '#06b6d4'][k]; T(s.x, s.y + L(60, 54), (k < 2 ? 'α 사슬 ' : 'β 사슬 ') + (k % 2 + 1), 13, k < 2 ? '#1d4ed8' : '#0e7490', 'center', 800);
         ctx.save(); ctx.globalAlpha = 0.24; D.glow(s.x, s.y, 92 * (PHONE ? 0.75 : 1), col, 0.9); ctx.restore();
         const P2 = rel.map((p) => ({ x: s.x + p.x * sc, y: s.y + p.y * sc }));
         drawChain(P2, null, { sc: 0.55 });
@@ -654,14 +654,20 @@
   }
   function drawRBC(cx, cy, r, m) {
     ctx.save(); ctx.translate(cx, cy); ctx.rotate(-0.5 * m);
-    const sm = smooth(m), sc = 1.0, R = r * 1.15, ox = sm * R * 0.62, ir = sm * R * 0.92;
-    ctx.beginPath(); ctx.ellipse(0, 0, r * (1 + 0.15 * sm), r * (1 + 0.15 * sm), 0, 0, TAU);
-    if (ir > 1) { ctx.moveTo(ox + ir, 0); ctx.arc(ox, 0, ir, 0, TAU, true); }
-    const g = ctx.createRadialGradient(-r * 0.3, -r * 0.3, r * 0.1, 0, 0, r * 1.2); g.addColorStop(0, '#f87171'); g.addColorStop(1, '#b91c1c');
-    ctx.fillStyle = g; ctx.shadowColor = 'rgba(120,20,20,.35)'; ctx.shadowBlur = 10; ctx.shadowOffsetY = 4; ctx.fill('evenodd');
-    ctx.shadowColor = 'transparent';
+    const sm = smooth(m), R = r * (1 + 0.15 * sm), ox = sm * R * 0.62, ir = sm * R * 0.92;
+    ctx.save(); ctx.shadowColor = 'rgba(120,20,20,.35)'; ctx.shadowBlur = 10; ctx.shadowOffsetY = 4; ctx.fillStyle = '#b91c1c';
+    ctx.beginPath(); ctx.arc(0, 0, R, 0, TAU); ctx.fill(); ctx.restore();
+    ctx.save(); ctx.beginPath(); ctx.arc(0, 0, R, 0, TAU); ctx.clip();
+    // 안쪽 원을 뺀 부분만 칠해요 (초승달 모양)
+    ctx.beginPath(); ctx.rect(-3 * R, -3 * R, 6 * R, 6 * R); if (ir > 1) { ctx.moveTo(ox + ir, 0); ctx.arc(ox, 0, ir, 0, TAU, true); }
+    const g = ctx.createRadialGradient(-R * 0.3, -R * 0.3, R * 0.1, 0, 0, R * 1.2); g.addColorStop(0, '#f87171'); g.addColorStop(1, '#b91c1c');
+    ctx.globalCompositeOperation = 'source-over';
+    // 바닥(그림자용 원)이 안쪽 원 부분에 남지 않도록 배경색으로 한 번 덮어요
+    ctx.fillStyle = '#fffbfb'; ctx.beginPath(); if (ir > 1) { ctx.arc(ox, 0, ir, 0, TAU); ctx.fill(); }
+    ctx.beginPath(); ctx.rect(-3 * R, -3 * R, 6 * R, 6 * R); if (ir > 1) { ctx.moveTo(ox + ir, 0); ctx.arc(ox, 0, ir, 0, TAU, true); }
+    ctx.fillStyle = g; ctx.fill('evenodd'); ctx.restore();
     const da = Math.max(0, 1 - 2 * sm);
-    if (da > 0.01) { ctx.fillStyle = 'rgba(120,20,20,' + (0.28 * da) + ')'; ctx.beginPath(); ctx.ellipse(0, 0, r * 0.5, r * 0.5, 0, 0, TAU); ctx.fill(); }
+    if (da > 0.01) { ctx.fillStyle = 'rgba(120,20,20,' + (0.28 * da) + ')'; ctx.beginPath(); ctx.arc(0, 0, R * 0.5, 0, TAU); ctx.fill(); }
     ctx.restore();
   }
   function skDraw(dt, t) {
@@ -781,7 +787,7 @@
     const T0 = d.T, ag = d.acid ? '강산' : d.alc ? '알코올' : T0 > 40 ? '가열' : '';
     T(cx, top + h + L(32, 22), '달걀 흰자 용액 (단백질)', L(14.5, 13.5), '#334155', 'center', 800);
     T(cx, top + h + L(54, 42), d.f > 0.95 ? '투명해요' : d.f > 0.1 ? '뿌옇게 변하는 중' : '하얗게 굳었어요', 13.5, d.f > 0.95 ? '#64748b' : '#b45309', 'center', 800);
-    if (d.bu > 0.9) D.label(cx, top + h + L(78, 62), '뷰렛 반응: 보라색', { bg: '#7c3aed', size: 13.5 });
+    if (d.bu > 0.9) D.label(PHONE ? TUBEP.x + TUBEP.w - 86 : cx, PHONE ? TUBEP.y + 70 : top + h + 78, '뷰렛 반응: 보라색', { bg: '#7c3aed', size: 13.5 });
     if (PHONE) { /* 폰은 튜브를 왼쪽에 두고 글을 오른쪽에 */ }
     if (T0 > 40) D.flame(cx, top + h + L(8, 4), clamp((T0 - 35) / 55, 0, 1) * L(34, 22), t);
   }

@@ -167,7 +167,7 @@
       this.cards.forEach((c) => { if (!c.zone && !(this.drag && this.drag.c === c)) this.moveTo(c, c.home.x, c.home.y, this.o.cw, this.o.ch, instant); });
     }
     moveTo(c, x, y, w, h, instant) {
-      if (instant || RM) { c.x = x; c.y = y; c.w = w; c.h = h; return; }
+      if (instant || RM) { c.x = x; c.y = y; c.w = w; c.h = h; SciSim.tween(c, { x, y, w, h }, { duration: 0.0001 }); return; }   // 진행 중인 이동을 끝내요
       SciSim.tween(c, { x, y, w, h }, { duration: 0.35, ease: 'outBack' });
     }
     place(c, zoneId) {
@@ -358,9 +358,9 @@
   const LT = L(250, 168);
   const RX = WS.x + L(118, 70), SPY = L(80, 76), RY0 = WS.y + L(104, 118);
   const slotY = (k) => RY0 + k * SPY;
-  S.lip = { type: 'tg', pieces: [], tgDone: false, plDone: false, waterSeen: false, water: 0, waterOn: false, stSeen: false, wxSeen: false, drag: null, flash: 0, bil: [] };
+  S.lip = { tok: 0, type: 'tg', pieces: [], tgDone: false, plDone: false, waterSeen: false, water: 0, waterOn: false, stSeen: false, wxSeen: false, drag: null, flash: 0, bil: [] };
   function lipBuild() {
-    S.lip.pieces = [];
+    S.lip.pieces = []; S.lip.tok++;
     const hy = (i) => (PHONE ? TRAY.y + 48 + i * 40 : TRAY.y + 44 + i * 36);
     const hx = TRAY.x + L(24, 14);
     const mk = (kind, i) => ({ kind, slot: -1, x: hx, y: hy(i), hx, hy: hy(i), lift: 0, pop: 0 });
@@ -393,8 +393,8 @@
     Sound.click(); updateCtl();
     if (lipDone()) {
       if (S.lip.type === 'tg') S.lip.tgDone = true; else if (S.lip.type === 'pl') S.lip.plDone = true;
-      S.lip.flash = 1;
-      setTimeout(() => { if (S.mode === 'blocks' && S.sub === 'lipid') { parts.burst(RX + 150, slotY(1), { count: 22, speed: 190, colors: ['#fbbf24', '#22d3ee', '#fb923c'] }); Sound.success(); } }, 450);
+      S.lip.flash = 1; const tok = ++S.lip.tok;
+      setTimeout(() => { if (tok === S.lip.tok && S.mode === 'blocks' && S.sub === 'lipid') { parts.burst(RX + 150, slotY(1), { count: 22, speed: 190, colors: ['#fbbf24', '#22d3ee', '#fb923c'] }); Sound.success(); } }, 450);
     }
     return true;
   }

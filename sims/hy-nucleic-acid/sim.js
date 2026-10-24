@@ -167,7 +167,7 @@
       this.cards.forEach((c) => { if (!c.zone && !(this.drag && this.drag.c === c)) this.moveTo(c, c.home.x, c.home.y, this.o.cw, this.o.ch, instant); });
     }
     moveTo(c, x, y, w, h, instant) {
-      if (instant || RM) { c.x = x; c.y = y; c.w = w; c.h = h; return; }
+      if (instant || RM) { c.x = x; c.y = y; c.w = w; c.h = h; SciSim.tween(c, { x, y, w, h }, { duration: 0.0001 }); return; }   // 진행 중인 이동을 끝내요
       SciSim.tween(c, { x, y, w, h }, { duration: 0.35, ease: 'outBack' });
     }
     place(c, zoneId) {
@@ -531,16 +531,16 @@
   const dCol = (i) => DP.x + 34 + (i + 0.5) * ((DP.w - 68) / 8);
   const dCW = (DP.w - 68) / 8;
   const D_TOP = DP.y + L(86, 84), D_BOT = DP.y + DP.h - L(54, 52), D_MID = (D_TOP + D_BOT) / 2, D_H = (D_BOT - D_TOP) / 2;
-  S.dna = { slots: Array(8).fill(null), done: false, tw: 0, rot: 0, wrong: 0, shake: Array(8).fill(0), pc: [], drag: null, msg: '' };
+  S.dna = { tok: 0, slots: Array(8).fill(null), done: false, tw: 0, rot: 0, wrong: 0, shake: Array(8).fill(0), pc: [], drag: null, msg: '' };
   const DNA_TRAY = ['A', 'T', 'G', 'C'].map((b, i) => ({ id: b, x: DTR.x + DTR.w / 2 + (i - 1.5) * L(120, 96), y: DTR.y + DTR.h / 2 - 6 }));
-  function dnaReset() { S.dna.slots = Array(8).fill(null); S.dna.done = false; S.dna.tw = 0; S.dna.wrong = 0; S.dna.pc = []; S.dna.msg = ''; updateCtl(); }
+  function dnaReset() { S.dna.tok++; SciSim.tween(S.dna, { tw: 0 }, { duration: 0.0001 }); S.dna.slots = Array(8).fill(null); S.dna.done = false; S.dna.tw = 0; S.dna.wrong = 0; S.dna.pc = []; S.dna.msg = ''; updateCtl(); }
   const dnaFilled = () => S.dna.slots.filter(Boolean).length;
   function dnaPlace(b, i) {
     if (S.dna.slots[i]) return false;
     if (CMP_DNA[TMPL[i]] === b) {
       S.dna.slots[i] = b; Sound.click();
       FX.add({ kind: 'text', x: dCol(i), y: D_BOT + 34, text: TMPL[i] + '–' + b, life: 0.9, color: '#16a34a', size: 15 });
-      if (dnaFilled() === 8) { S.dna.done = true; S.dna.tw = 0; SciSim.tween(S.dna, { tw: 1 }, { duration: RM ? 0.01 : 2.2, ease: 'inOutCubic' }); setTimeout(() => { Sound.success(); parts.burst(DP.x + DP.w / 2, D_MID, { count: 28, speed: 220, colors: ['#2563eb', '#16a34a', '#e11d48', '#f59e0b'] }); }, 700); }
+      if (dnaFilled() === 8) { S.dna.done = true; S.dna.tw = 0; SciSim.tween(S.dna, { tw: 1 }, { duration: RM ? 0.01 : 2.2, ease: 'inOutCubic' }); const tok = S.dna.tok; setTimeout(() => { if (tok !== S.dna.tok) return; Sound.success(); parts.burst(DP.x + DP.w / 2, D_MID, { count: 28, speed: 220, colors: ['#2563eb', '#16a34a', '#e11d48', '#f59e0b'] }); }, 700); }
       updateCtl(); return true;
     }
     S.dna.wrong++; S.dna.shake[i] = 1; Sound.fail();

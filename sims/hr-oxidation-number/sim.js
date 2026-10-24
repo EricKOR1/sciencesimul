@@ -215,15 +215,16 @@
     return { x: m.x + (gv.x - m.x) * p, y: m.y + (gv.y - m.y) * p, ux, uy };
   }
   function h2oReset() {
-    const h = S.lg.h2o; h.st = [0, 0]; h.p = [0, 0]; h.drag = null; h.shake = 0; h.pop = [0, 0, 0]; h.done = false; parts.clear(); updateCtl();
+    h2oAutoId++; const h = S.lg.h2o; h.st = [0, 0]; h.p = [0, 0]; h.drag = null; h.shake = 0; h.pop = [0, 0, 0]; h.done = false; parts.clear(); updateCtl();
   }
   function h2oGive(k) {
     const h = S.lg.h2o; if (h.st[k]) return;
     h.st[k] = 1; h.pop[0] = 1; h.pop[k + 1] = 1; Sound.tick(); const q = lgPairPos(k, 1); flash(q.x, q.y, ['#fbbf24', '#ef4444', '#ffffff']); updateCtl();
   }
+  let h2oAutoId = 0;
   function h2oAuto() {
-    const h = S.lg.h2o; let n = 0;
-    [0, 1].forEach((k) => { if (!h.st[k]) setTimeout(() => { if (S.mode === 'ledger' && S.sub.ledger === 'h2o') h2oGive(k); }, 150 + 600 * n++); });
+    const h = S.lg.h2o; let n = 0; const id = ++h2oAutoId;
+    [0, 1].forEach((k) => { if (!h.st[k]) setTimeout(() => { if (id === h2oAutoId && S.mode === 'ledger' && S.sub.ledger === 'h2o') h2oGive(k); }, 150 + 600 * n++); });
   }
   function stepH2o(dt) {
     const h = S.lg.h2o;
@@ -333,26 +334,21 @@
     // 전기 음성도와 산화수 태그
     const oOx = -got;
     oxTag(g.O.x, g.O.y - g.rO - 24, oOx, { text: got ? '산화수 ' + oxs(oOx) : '산화수 ?', dir: got ? 'down' : null, pop: h.pop[0] });
-    T(g.O.x - g.rO - 12, g.O.y + 5, 'O 3.5', 14, '#b91c1c', 'right', 800);
-    T(g.O.x - g.rO - 12, g.O.y + 22, '전기 음성도', 12.5, MUTED, 'right', 700);
+    T(g.O.x + g.rO + 12, g.O.y - 2, 'O 3.5', 14, '#b91c1c', 'left', 800);
+    T(g.O.x + g.rO + 12, g.O.y + 15, '전기 음성도', 12.5, MUTED, 'left', 700);
     for (let k = 0; k < 2; k++) {
       oxTag(g.H[k].x, g.H[k].y + g.rH + 22, 1, { text: h.st[k] ? '산화수 +1' : '산화수 ?', dir: h.st[k] ? 'up' : null, pop: h.pop[k + 1] });
       T(g.H[k].x, g.H[k].y + g.rH + 48, 'H 2.1', 14, MUTED, 'center', 800);
     }
-    if (h.hint > 0) { ctx.save(); ctx.globalAlpha = Math.min(1, h.hint * 1.5); pill(g.O.x, MAIN.y + MAIN.h - 26, '전기 음성도가 더 큰 O에게 전자쌍을 줘야 해요', { bg: '#7c3aed', color: '#fff', border: null, size: 14 }); ctx.restore(); }
-    else if (h.done) pill(g.O.x, MAIN.y + MAIN.h - 26, '산화수의 합: (−2) + (+1) + (+1) = 0', { bg: '#dcfce7', color: '#166534', border: '#4ade80', size: 14.5 });
+    if (h.done) pill(g.O.x, MAIN.y + MAIN.h - 26, '산화수의 합: (−2) + (+1) + (+1) = 0', { bg: '#dcfce7', color: '#166534', border: '#4ade80', size: 14.5 });
+    else if (h.hint > 0) { ctx.save(); ctx.globalAlpha = Math.min(1, h.hint * 1.5); pill(g.O.x, MAIN.y + MAIN.h - 26, '전기 음성도가 더 큰 O에게 전자쌍을 줘야 해요', { bg: '#7c3aed', color: '#fff', border: null, size: 14 }); ctx.restore(); }
     panel(INFO.x, INFO.y, INFO.w, INFO.h, 14);
-    textBlock(INFO.x + 16, INFO.y + 26, INFO.w - 32, '산화수 = 공유 전자쌍을 전기 음성도가 큰 원자에게 모두 준 것으로 가정한 값', PHONE ? 14 : 15, WARN, 19, 800);
-    const ln = [
-      [got === 0, '전자쌍을 O 쪽으로 옮기면 O는 전자를 1개씩 더 가진 것으로 쳐요 (−1씩).'],
-      [got >= 1, 'H는 전자쌍을 내준 것으로 쳐요 (+1씩).'],
-      [h.done, 'O는 −2, H는 +1. 산화수의 합은 분자 전체의 전하 0과 같아요.'],
-    ];
-    let yy = INFO.y + 54;
-    const lh = PHONE ? 20 : 20;
-    textBlock(INFO.x + 16, yy, INFO.w - 32, '전자쌍이 O 쪽으로 쏠려 있지만 완전히 옮겨 간 것은 아니에요. 그래서 산화수는 실제 전하가 아니라 장부에 적는 숫자예요.', 14, INK, lh, 700);
-    yy += wrap('전자쌍이 O 쪽으로 쏠려 있지만 완전히 옮겨 간 것은 아니에요. 그래서 산화수는 실제 전하가 아니라 장부에 적는 숫자예요.', INFO.w - 32, 14, 700).length * lh + 8;
-    T(INFO.x + 16, yy + 4, h.done ? '✅ ' + ln[2][1] : got ? '⬜ ' + ln[1][1] : '⬜ ' + ln[0][1], 14, h.done ? '#166534' : MUTED, 'left', 800);
+    const hh = textBlock(INFO.x + 16, INFO.y + 26, INFO.w - 32, '산화수 = 공유 전자쌍을 전기 음성도가 큰 원자에게 모두 준 것으로 가정한 값', PHONE ? 14 : 15, WARN, 19, 800);
+    const body = '전자쌍이 O 쪽으로 쏠려 있지만 완전히 옮겨 간 것은 아니에요. 그래서 산화수는 실제 전하가 아니라 장부에 적는 숫자예요.';
+    let yy = INFO.y + 26 + hh + 8;
+    yy += textBlock(INFO.x + 16, yy, INFO.w - 32, body, 14, INK, 20, 700) + 6;
+    const ln0 = '전자쌍을 O 쪽으로 옮기면 O는 전자를 1개씩 더 가진 것으로 쳐요 (−1씩).', ln1 = 'H는 전자쌍을 내준 것으로 쳐요 (+1씩).', ln2 = 'O는 −2, H는 +1. 산화수의 합은 분자 전체의 전하 0과 같아요.';
+    textBlock(INFO.x + 16, yy, INFO.w - 32, h.done ? '✅ ' + ln2 : got ? '⬜ ' + ln1 : '⬜ ' + ln0, 14, h.done ? '#166534' : MUTED, 19, 800);
   }
 
   /* ============ ② 산화수 규칙 ============ */
@@ -502,7 +498,7 @@
     }
     // 산화수 축 화살표
     D.arrow(G.x0 - 52, MAIN.y + MAIN.h - 26, G.x0 - 52, MAIN.y + 28, { color: '#cbd5e1', width: 3, head: 11 });
-    T(G.x0 - 52, MAIN.y + MAIN.h - 8, 'N의 산화수', 12.5, MUTED, 'center', 800, {});
+    T(MAIN.x + 12, MAIN.y + MAIN.h - 8, 'N의 산화수 ↑ 클수록 위', 12.5, MUTED, 'left', 800);
     T(MAIN.x + MAIN.w - (PHONE ? 76 : 120), MAIN.y + 36, '카드 보관함', 13.5, MUTED, 'center', 800);
     // 카드
     const order = ru.order.slice(); if (ru.drag) { const i = order.indexOf(ru.drag.c.id); order.splice(i, 1); order.push(ru.drag.c.id); }
@@ -586,7 +582,7 @@
   function jdAnswer(yes) {
     const jd = S.jd, rx = jdCur(); if (jd.tagT[jd.k] < 0 || jd.ok[jd.k]) return;
     if (yes === rx.redox) { jd.ok[jd.k] = true; jd.msg = ''; Sound.tick(); flash(MAIN.x + MAIN.w / 2, MAIN.y + MAIN.h - 60, ['#14a058', '#fbbf24', '#8b5cf6']); }
-    else { jd.shake = 0.45; Sound.fail && Sound.fail(); jd.msg = yes ? '산화수가 바뀐 원자가 있는지 다시 살펴보세요. 원자마다 산화수를 비교해 보면 알 수 있어요.' : '증가한 원자와 감소한 원자가 있어요. 전자가 이동한 반응이니 산화·환원 반응이에요.'; }
+    else { jd.shake = 0.45; Sound.fail && Sound.fail(); jd.msg = ''; showHint(yes ? '산화수가 바뀐 원자가 있는지 다시 살펴보세요. 원자마다 산화수를 비교해 보면 알 수 있어요.' : '증가한 원자와 감소한 원자가 있어요. 전자가 이동한 반응이니 산화·환원 반응이에요.', 4200); }
     updateCtl();
   }
   function stepJudge(dt) {
@@ -771,7 +767,7 @@
       // 이름표
       if (q.role > 0) {
         if (tg) pill(b.x + b.w / 2, b.y - 18, ROLE_NAME[tg] + (ok ? ' ✔' : ''), { bg: ROLE_COL[tg], color: '#fff', border: null, size: 14.5, scale: 1 + 0.25 * pop });
-        else T(b.x + b.w / 2, b.y - 14, '눌러서 이름표 붙이기', 13, MUTED, 'center', 700);
+        else T(b.x + b.w / 2, b.y - 14, '눌러서 붙이기', 13, MUTED, 'center', 700);
       }
       if (i < boxes.length - 1) T(b.x + b.w + G.gap / 2, b.y + b.h / 2 + 8, '+', 22, '#94a3b8', 'center', 800);
     });
@@ -1039,7 +1035,6 @@
     markChips($('#jdSel'), String(jd.k), dn);
     const tg = jd.tagT[jd.k] >= 0;
     $('#bJdTag').disabled = tg; $('#bJdYes').disabled = !tg || jd.ok[jd.k]; $('#bJdNo').disabled = !tg || jd.ok[jd.k];
-    $('#jdNote').textContent = jd.msg || (jd.ok[jd.k] ? '판별을 마쳤어요. 다른 반응도 살펴보세요.' : tg ? '산화수가 변한 원자가 있는지 살펴보고 판별해요.' : '먼저 “산화수 붙이기”를 눌러요.');
     const rd = {}; ROX.forEach((r, i) => { rd[String(i)] = roRxDone(i); });
     markChips($('#roRx'), String(S.rl.ex), rd);
     markChips($('#roSel'), S.sub.role, { tags: roDoneN() === 4, lab: !!(S.rl.seen['h2o2:A'] && S.rl.seen['h2o2:B']) });

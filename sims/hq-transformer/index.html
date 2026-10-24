@@ -101,11 +101,11 @@
 
     <aside class="side-col">
       <section class="card card-pad" id="ctrlCard">
-        <div class="control" data-modes="tr" data-gate-off="mt2">
+        <div class="control" data-modes="tr">
           <div class="control-head"><span>⚡ 전원</span></div>
           <div class="segmented view-seg" id="srcSeg" role="group" aria-label="⚡ 전원" ><button type="button" data-v="dc">🔋 직류</button><button type="button" data-v="ac">∿ 교류</button></div>
         </div>
-        <div class="control" data-modes="tr" data-gate-off="mt2"><div class="btn-row"><button class="btn btn-sm btn-primary" id="bSw" type="button">⏻ 스위치 켜기</button></div><p class="ctrl-note" id="trNote"></p></div>
+        <div class="control" data-modes="tr"><div class="btn-row"><button class="btn btn-sm btn-primary" id="bSw" type="button">⏻ 스위치 켜기</button></div><p class="ctrl-note" id="trNote"></p></div>
         <div class="control" data-modes="tr" data-gate="mt2" id="selTHost"></div>
         <div class="control" data-modes="ratio" data-gate-off="mr2">
           <div class="control-head"><label for="sN1">🌀 1차 코일 감은 수 N₁</label><output id="osN1"></output></div><div class="range-row"><button class="nudge" id="sN1M" type="button" aria-label="1차 코일 감은 수 10부터 1000회 줄이기">−</button><input type="range" id="sN1" min="10" max="1000" step="10" value="200" aria-label="1차 코일 감은 수 10부터 1000회"><button class="nudge" id="sN1P" type="button" aria-label="1차 코일 감은 수 10부터 1000회 늘리기">+</button></div>

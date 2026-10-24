@@ -7987,8 +7987,7 @@ window.SCI_CATALOG = {
                 "주요 기능",
                 "검출 반응",
                 "현미경 관찰"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hy-nucleic-acid",
@@ -8009,8 +8008,7 @@ window.SCI_CATALOG = {
                 "DNA 모형",
                 "RNA 모형",
                 "세포 속 역할"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hy-protein",
@@ -8031,8 +8029,7 @@ window.SCI_CATALOG = {
                 "펩타이드 사슬",
                 "접힘과 구조",
                 "기능과 변성"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hy-organelles",
