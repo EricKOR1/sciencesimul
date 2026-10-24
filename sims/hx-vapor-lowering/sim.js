@@ -102,7 +102,7 @@
   /* ---------- 상태 ---------- */
   const mkUnit = () => ({ gas: [], Pd: 0, exch: 0, spawnT: 0, absT: 0, eqT: 0, eq: false, evT: [], coT: [], pulse: 0 });
   const S = {
-    mode: 'cmp', fade: 0, lock: false, t: 0,
+    mode: 'cmp', fade: 0, lock: false, t: 0, clk: 0,
     sub: { law: 'rec', curve: 'boil' },
     cmp: { s: 5, u: [mkUnit(), mkUnit()] },
     surf: { j: 0, u: mkUnit(), seen: {}, flash: [] },
@@ -123,13 +123,13 @@
 
   /* ================= ① 증기압 비교: 밀폐 용기 두 개 ================= */
   const U_MM = 1.2, MMPX = 4.4;                    // 기체 분자 1개 ≈ 1.2 mmHg, 마노미터 1 mmHg = 4.4 px
-  const SLOT = []; (function () { const cols = 15, rows = 8; for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) SLOT.push({ x: 7 + c * 8.3 + (r % 2) * 4.1, y: 4 + r * 7.4 }); })();
+  const SLOT = []; (function () { const cols = 15, rows = 8; for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) SLOT.push({ x: 6 + c * 7.4 + (r % 2) * 3.7, y: 4 + r * 7.4 }); })();
   const LQ = (function () { const a = Array.from({ length: SLOT.length }, (_, i) => i); let s = 11; const r = () => { s = (s * 16807) % 2147483647; return s / 2147483647; }; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; })();
   const Peq = (i) => (i === 0 ? P25 : P25 * (100 - S.cmp.s) / 100);
   const dispP = (i) => +Peq(i).toFixed(1);                     // 화면에 보이는 증기압 (소수 첫째 자리)
   function cmpGeo(i) {
-    const L = RC.L, ux = L.x + 6 + i * (L.w / 2), vw = 130, vh = 180, vy = L.y + 98;
-    return { ux, vx: ux + 14, vy, vw, vh, surfY: vy + vh - 64, mTop: vy + 30, mBot: vy + 200, base: vy + 122, ml: ux + 14 + vw + 34, mr: ux + 14 + vw + 70 };
+    const L = RC.L, ux = L.x + 6 + i * (L.w / 2), vw = 118, vh = 176, vy = L.y + 98;
+    return { ux, vx: ux + 12, vy, vw, vh, surfY: vy + vh - 64, mTop: vy + 30, mBot: vy + 190, base: vy + 114, ml: ux + 12 + vw + 26, mr: ux + 12 + vw + 56 };
   }
   function unitReset(u) { u.gas = []; u.Pd = 0; u.exch = 0; u.spawnT = 0; u.absT = 0; u.eqT = 0; u.eq = false; u.evT = []; u.coT = []; u.pulse = 0; }
   function cmpRestart() { S.cmp.u.forEach(unitReset); updateCtl(); }
@@ -140,14 +140,14 @@
     u.spawnT -= dt; u.absT -= dt;
     const surf = g.surfY - g.vy;
     if (live < target && u.spawnT <= 0) {
-      const x = rnd(14, g.vw - 14), th = rnd(-2.5, -0.65), sp = rnd(40, 64);
-      u.gas.push({ x, y: surf - 6, vx: Math.cos(th) * sp, vy: Math.sin(th) * sp, ab: false, fade: 0, ang: rnd(0, TAU), spin: rnd(-2, 2) }); u.evT.push(S.t); u.spawnT = 0.07; live++; u.pulse = 1;
+      const x = rnd(12, g.vw - 12), th = rnd(-2.5, -0.65), sp = rnd(40, 64);
+      u.gas.push({ x, y: surf - 6, vx: Math.cos(th) * sp, vy: Math.sin(th) * sp, ab: false, fade: 0, ang: rnd(0, TAU), spin: rnd(-2, 2) }); u.evT.push(S.clk); u.spawnT = 0.07; live++; u.pulse = 1;
     } else if (live > target && u.absT <= 0) {
-      const cand = u.gas.filter((p) => !p.ab); if (cand.length) { cand.sort((a, b) => b.y - a.y); cand[0].ab = true; u.coT.push(S.t); u.absT = 0.07; }
+      const cand = u.gas.filter((p) => !p.ab); if (cand.length) { cand.sort((a, b) => b.y - a.y); cand[0].ab = true; u.coT.push(S.clk); u.absT = 0.07; }
     }
     if (live >= 1 && Math.abs(live - target) <= 1) {                // 평형: 증발과 응축이 같은 속도로 계속
       u.exch += (0.8 + 0.2 * target) * dt;
-      while (u.exch >= 1) { u.exch -= 1; const cand = u.gas.filter((p) => !p.ab); if (cand.length) { cand[Math.floor(Math.random() * cand.length)].ab = true; u.coT.push(S.t); const x = rnd(14, g.vw - 14), th = rnd(-2.5, -0.65), sp = rnd(40, 64); u.gas.push({ x, y: surf - 6, vx: Math.cos(th) * sp, vy: Math.sin(th) * sp, ab: false, fade: 0, ang: rnd(0, TAU), spin: rnd(-2, 2) }); u.evT.push(S.t); } }
+      while (u.exch >= 1) { u.exch -= 1; const cand = u.gas.filter((p) => !p.ab); if (cand.length) { cand[Math.floor(Math.random() * cand.length)].ab = true; u.coT.push(S.clk); const x = rnd(12, g.vw - 12), th = rnd(-2.5, -0.65), sp = rnd(40, 64); u.gas.push({ x, y: surf - 6, vx: Math.cos(th) * sp, vy: Math.sin(th) * sp, ab: false, fade: 0, ang: rnd(0, TAU), spin: rnd(-2, 2) }); u.evT.push(S.clk); } }
     }
     for (let k = u.gas.length - 1; k >= 0; k--) {
       const p = u.gas[k]; p.fade = Math.min(1, p.fade + dt * 5); p.ang += p.spin * dt;
@@ -157,7 +157,7 @@
       if (p.x < 8) { p.x = 8; p.vx = Math.abs(p.vx); } else if (p.x > g.vw - 8) { p.x = g.vw - 8; p.vx = -Math.abs(p.vx); }
       if (p.y < 8) { p.y = 8; p.vy = Math.abs(p.vy); } else if (p.y > surf - 6) { p.y = surf - 6; p.vy = -Math.abs(p.vy); }
     }
-    u.evT = u.evT.filter((t0) => S.t - t0 < 3); u.coT = u.coT.filter((t0) => S.t - t0 < 3);
+    u.evT = u.evT.filter((t0) => S.clk - t0 < 3); u.coT = u.coT.filter((t0) => S.clk - t0 < 3);
     const live2 = u.gas.filter((p) => !p.ab).length;
     const ok = Math.abs(u.Pd - peq) < 1e-6 && Math.abs(live2 - target) <= 1;
     u.eqT = ok ? u.eqT + dt : 0; const eqNew = u.eqT > 1.2; if (eqNew !== u.eq) { u.eq = eqNew; updateCtl(); }
@@ -198,9 +198,9 @@
     ctx.fillStyle = 'rgba(255,255,255,.45)'; ctx.fillRect(g.ml - 3, yL, 2, 5); ctx.fillRect(g.mr - 3, yR, 2, 5);
     ctx.fillStyle = 'rgba(180,190,210,.35)'; ctx.fillRect(g.mr - 5, g.mTop, 10, yR - g.mTop);
     T(g.mr, g.mTop - 6, '진공', 12, MUTED, 'center', 700);
-    if (dh > 6) { D.arrow(g.mr + 20, yL, g.mr + 20, yR, { color: BAD, width: 2.4, head: 8 }); }
-    D.label(g.mr + 22, (yL + yR) / 2 + (dh > 6 ? 0 : 14), fP(u.Pd) + '', { size: 13, bg: '#0b3a7a', align: 'left', pad: 6 });
-    T((g.ml + g.mr) / 2, g.mBot + 28, '마노미터 (mmHg)', 12, INK, 'center', 800);
+    if (dh > 6) { D.arrow(g.mr + 18, yL, g.mr + 18, yR, { color: BAD, width: 2.4, head: 8 }); }
+    D.label((g.ml + g.mr) / 2 + 4, g.mTop - 32, fP(u.Pd) + ' mmHg', { size: 13, bg: '#0b3a7a', align: 'center', pad: 7 });
+    T((g.ml + g.mr) / 2 + 6, g.mBot + 26, '마노미터', 12, INK, 'center', 800);
     // 이름
     T(g.ux + 14 + g.vw / 2 - 12, L.y + 70, sugar ? '🍬 설탕물 (설탕 ' + s + '개 / 100개)' : '💧 순수한 물', PHONE ? 13 : 14, sugar ? '#be185d' : '#0369a1', 'center', 800);
   }
@@ -210,8 +210,8 @@
     T(L.x + 14, L.y + 26, '🧪 뚜껑을 닫은 용기 두 개 (공기는 뺐어요)', PHONE ? 13 : 14.5, INK, 'left', 800);
     drawUnit(0, t); drawUnit(1, t);
     // 비교 막대
-    const by = L.y + 346, bw = L.w - 150, bx = L.x + 100;
-    T(L.x + 16, by - 12, '증기압 비교 (같은 눈금, mmHg)', 13, MUTED, 'left', 800);
+    const by = L.y + 372, bw = L.w - 150, bx = L.x + 100;
+    T(L.x + 16, by - 14, '증기압 비교 (같은 눈금, mmHg)', 13, MUTED, 'left', 800);
     [0, 1].forEach((i) => {
       const u = S.cmp.u[i], yy = by + i * 30, col = i ? '#be185d' : '#0369a1';
       T(L.x + 16, yy + 16, i ? '설탕물' : '순수한 물', 13.5, col, 'left', 800);
@@ -221,7 +221,7 @@
     });
     const both = cmpEq();
     const dP = +(dispP(0) - dispP(1)).toFixed(1);
-    textBlock(L.x + 16, by + 82, L.w - 32, both ? (S.cmp.s === 0 ? '둘 다 순수한 물이라 같아요. 설탕을 넣어 보세요.' : '평형이 되었어요. 설탕물의 증기압이 ' + dP.toFixed(1) + ' mmHg 더 낮아요 (' + fP(dispP(0)) + ' → ' + fP(dispP(1)) + ').') : '증발과 응축이 같아질 때까지 기다려요. 마노미터의 수은 기둥이 일정해지면 평형이에요.', PHONE ? 13 : 13.5, both ? (S.cmp.s ? '#be185d' : MUTED) : MUTED, 19, 800);
+    textBlock(L.x + 16, by + 76, L.w - 32, both ? (S.cmp.s === 0 ? '둘 다 순수한 물이라 같아요. 설탕을 넣어 보세요.' : '평형이 되었어요. 설탕물의 증기압이 ' + dP.toFixed(1) + ' mmHg 더 낮아요 (' + fP(dispP(0)) + ' → ' + fP(dispP(1)) + ').') : '증발과 응축이 같아질 때까지 기다려요. 마노미터의 수은 기둥이 일정해지면 평형이에요.', PHONE ? 13 : 13.5, both ? (S.cmp.s ? '#be185d' : MUTED) : MUTED, 19, 800);
   }
   function drawCmpInfo(t) {
     const R = RC.R, s = S.cmp.s;
@@ -249,12 +249,12 @@
     while (u.evAcc >= 1) {
       u.evAcc -= 1;
       const cs = []; for (let c = 0; c < NS; c++) if (!isSugar(0, c)) cs.push(c);
-      if (cs.length) { const c = cs[Math.floor(Math.random() * cs.length)], x = g.x + g.dx * (c + 0.5), th = rnd(-2.2, -0.9), sp = rnd(34, 58); u.gas.push({ x, y: g.ys - 14, vx: Math.cos(th) * sp, vy: Math.sin(th) * sp, ab: false, ang: rnd(0, TAU), spin: rnd(-2, 2), fade: 0 }); u.evT.push(S.t); sf.flash.push({ x, y: g.ys, t: 0, c: SKY, up: true }); }
+      if (cs.length) { const c = cs[Math.floor(Math.random() * cs.length)], x = g.x + g.dx * (c + 0.5), th = rnd(-2.2, -0.9), sp = rnd(34, 58); u.gas.push({ x, y: g.ys - 14, vx: Math.cos(th) * sp, vy: Math.sin(th) * sp, ab: false, ang: rnd(0, TAU), spin: rnd(-2, 2), fade: 0 }); u.evT.push(S.clk); sf.flash.push({ x, y: g.ys, t: 0, c: SKY, up: true }); }
     }
     u.coAcc = (u.coAcc || 0) + KC * live() * dt;
     while (u.coAcc >= 1) {
       u.coAcc -= 1;
-      const cand = u.gas.filter((p) => !p.ab); if (cand.length) { cand.sort((a, b) => b.y - a.y); cand[Math.floor(Math.random() * Math.min(3, cand.length))].ab = true; u.coT.push(S.t); }
+      const cand = u.gas.filter((p) => !p.ab); if (cand.length) { cand.sort((a, b) => b.y - a.y); cand[Math.floor(Math.random() * Math.min(3, cand.length))].ab = true; u.coT.push(S.clk); }
     }
     const top = g.y + 12, bot = g.ys - 16;
     for (let k = u.gas.length - 1; k >= 0; k--) {
@@ -266,7 +266,7 @@
       if (p.y < top) { p.y = top; p.vy = Math.abs(p.vy); } else if (p.y > bot) { p.y = bot; p.vy = -Math.abs(p.vy); }
     }
     sf.flash.forEach((f) => { f.t += dt * 2.6; }); sf.flash = sf.flash.filter((f) => f.t < 1);
-    u.evT = u.evT.filter((t0) => S.t - t0 < 3); u.coT = u.coT.filter((t0) => S.t - t0 < 3);
+    u.evT = u.evT.filter((t0) => S.clk - t0 < 3); u.coT = u.coT.filter((t0) => S.clk - t0 < 3);
     const n = live(), ok = Math.abs(n - sfW()) <= 1 && u.evT.length > 0;
     u.eqT = ok ? u.eqT + dt : 0; const e2 = u.eqT > 1.5; if (e2 !== u.eq) { u.eq = e2; updateCtl(); }
     if (u.eq) { if (sf.j === 0) sf.seen.pure = true; if (sf.j >= 4) sf.seen.sugar = true; }
@@ -328,11 +328,11 @@
   function recPoint() {
     const l = S.law, x = l.xw;
     if (XTARGET.indexOf(x) < 0) { showHint('X물을 1.00, 0.98, 0.95, 0.90, 0.80 중 하나로 맞춘 뒤 기록해요.'); Sound.fail(); return; }
-    if (l.rec[x] == null) { l.rec[x] = lawP(x); Sound.success(); const g = lawPlot(); parts.burst(g.X(x / 100), g.Y(l.rec[x]), { count: 10, speed: 110, life: 0.5, size: 3.5 }); l.pop = { x, t: 0 }; }
+    if (l.rec[x] == null) { l.rec[x] = lawP(x); Sound.success(); const g = lawPlot(); parts.burst(g.X(x / 100), g.Y(l.rec[x]), { count: 10, speed: 110, life: 0.5, size: 3.5 }); l.pop = { x, t: 0 }; l.last = x; }
     updateCtl();
   }
   const lawPlot = () => {
-    const L = RC.L, r = { x: L.x + 62, y: L.y + 64, w: L.w - 90, h: L.h - 150 };
+    const L = RC.L, r = { x: L.x + 62, y: L.y + 84, w: L.w - 90, h: L.h - 170 };
     return { r, X: (v) => r.x + v * r.w, Y: (p) => r.y + r.h - p / 25 * r.h };
   };
   function drawLawGraph(t) {
@@ -356,9 +356,9 @@
     const xw = l.xw / 100, pv = lawP(l.xw);
     ctx.strokeStyle = 'rgba(100,116,139,.5)'; ctx.lineWidth = 1.6; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.moveTo(G.X(xw), r.y + r.h); ctx.lineTo(G.X(xw), G.Y(pv)); ctx.lineTo(r.x, G.Y(pv)); ctx.stroke(); ctx.setLineDash([]);
     D.sphere(G.X(xw), G.Y(pv), 6, '#fff', { gloss: false, outline: PUR, outlineWidth: 2.6 });
-    D.label(clamp(G.X(xw), r.x + 70, r.x + r.w - 70), G.Y(pv) - 26, 'X물 ' + xw.toFixed(2) + ' → P ' + fP(pv), { size: 12.5, bg: '#475569', align: 'center' });
+    D.label(clamp(G.X(xw) + 60, r.x + 70, r.x + r.w - 70), G.Y(pv) + 30, 'X물 ' + xw.toFixed(2) + ' → P ' + fP(pv), { size: 12.5, bg: '#475569', align: 'center' });
     // 기록한 점
-    XTARGET.forEach((x) => { const v = l.rec[x]; if (v == null) return; const pop = l.pop && l.pop.x === x ? Math.max(0, 1 - l.pop.t * 2.2) : 0; D.sphere(G.X(x / 100), G.Y(v), 7 + pop * 4, SUGC, { gloss: true, outline: '#fff', shadow: true }); T(G.X(x / 100), G.Y(v) + 22, fP(v), 12, INK, 'center', 800, HALO); });
+    XTARGET.forEach((x) => { const v = l.rec[x]; if (v == null) return; const pop = l.pop && l.pop.x === x ? Math.max(0, 1 - l.pop.t * 2.2) : 0; D.sphere(G.X(x / 100), G.Y(v), 7 + pop * 4, SUGC, { gloss: true, outline: '#fff', shadow: true }); if (l.last === x) T(G.X(x / 100) - 12, G.Y(v) + 18, fP(v), 12.5, INK, 'right', 800, HALO); });
     T(L.x + L.w / 2, L.y + L.h - 14, '기록한 점 ' + n + ' / 5', 13, n === 5 ? GOOD : MUTED, 'center', 800);
   }
   function drawLawTable(t) {
@@ -378,7 +378,7 @@
     let y = hy + 30 + 5 * 28 + 10;
     if (lawCount() === 5) {
       D.roundRect(R.x + 12, y - 6, R.w - 24, PHONE ? 96 : 126, 10); ctx.fillStyle = 'rgba(20,160,88,.09)'; ctx.fill(); ctx.strokeStyle = GOOD; ctx.lineWidth = 1.8; ctx.stroke();
-      T(R.x + 24, y + 16, '기울기 = ' + lawSlope().toFixed(1) + ' mmHg = P° (순수한 물의 증기압)', 12.5, '#0f6b3c', 'left', 800);
+      T(R.x + 24, y + 16, '기울기 = ' + lawSlope().toFixed(1) + ' mmHg = P°', 12.5, '#0f6b3c', 'left', 800);
       T(R.x + 24, y + 42, 'P = X물 · P°', 18, INK, 'left', 800);
       T(R.x + 24, y + 70, 'ΔP = P° − P = X설탕 · P°', 15.5, BAD, 'left', 800);
       if (!PHONE) textBlock(R.x + 24, y + 94, R.w - 48, '증기압 내림은 용질의 몰 분율에 비례해요. 용질의 종류와는 관계없어요.', 12.5, MUTED, 17, 700);
@@ -405,7 +405,7 @@
 
   /* ================= ④ 곡선 이동 ================= */
   const CRNG = { boil: { x0: 98, x1: 103, y0: 690, y1: 850, step: 0.05 }, freeze: { x0: -6, x1: 1, y0: 2.0, y1: 5.0, step: 0.05 } };
-  const crPlot = () => { const L = RC.L, r = { x: L.x + 66, y: L.y + 58, w: L.w - 90, h: L.h - 134 }, g = CRNG[S.sub.curve]; return { r, g, X: (v) => r.x + (v - g.x0) / (g.x1 - g.x0) * r.w, Y: (p) => r.y + r.h - (p - g.y0) / (g.y1 - g.y0) * r.h }; };
+  const crPlot = () => { const L = RC.L, r = { x: L.x + 66, y: L.y + 80, w: L.w - 90, h: L.h - 156 }, g = CRNG[S.sub.curve]; return { r, g, X: (v) => r.x + (v - g.x0) / (g.x1 - g.x0) * r.w, Y: (p) => r.y + r.h - (p - g.y0) / (g.y1 - g.y0) * r.h }; };
   const curT = () => (S.sub.curve === 'boil' ? S.cur.cB : S.cur.cF);
   const Tw0 = () => Tboil(0), Tf0 = 0;
   const Tsol = () => (S.sub.curve === 'boil' ? Tboil(S.cur.m) : Tfreeze(S.cur.m));
@@ -421,6 +421,7 @@
     if (S.sub.curve === 'boil') { if (Math.abs(c.cB - Tw0()) <= 0.12) c.fB.water = true; if (c.m >= 0.25 && Math.abs(c.cB - Tboil(c.m)) <= 0.12) c.fB.sol = c.m; }
     else { if (Math.abs(c.cF - Tf0) <= 0.12) c.fF.water = true; if (c.m >= 0.25 && Math.abs(c.cF - Tfreeze(c.m)) <= 0.12) c.fF.sol = c.m; }
   }
+  const T2 = (v) => v.toFixed(2).replace('-', '−');
   const T1 = (v) => (Math.round(v * 10) / 10).toFixed(1).replace('-', '−');
   function drawCurve(t) {
     const L = RC.L, G = crPlot(), r = G.r, g = G.g, c = S.cur, boil = S.sub.curve === 'boil';
@@ -444,7 +445,7 @@
       const tw = Tw0(), ts = Tboil(c.m);
       [[tw, '#0ea5e9'], [ts, SUGC]].forEach(([tt, col], i) => { if (i && c.m <= 0) return; ctx.strokeStyle = C.rgba(col, 0.9); ctx.lineWidth = 2; ctx.setLineDash([3, 4]); ctx.beginPath(); ctx.moveTo(G.X(tt), G.Y(ATM)); ctx.lineTo(G.X(tt), r.y + r.h); ctx.stroke(); ctx.setLineDash([]); D.sphere(G.X(tt), G.Y(ATM), 6.5, col, { gloss: true, outline: '#fff' }); });
     } else {
-      curve((x) => Pice(x), '#64748b', 3.2);
+      ctx.save(); ctx.beginPath(); ctx.rect(r.x, r.y, G.X(0) - r.x, r.h); ctx.clip(); curve((x) => Pice(x), '#64748b', 3.2); ctx.restore();
       curve((x) => Pliq(x), '#0ea5e9', 3.4);
       if (c.m > 0) curve((x) => PsolF(x, c.m), SUGC, 3.4);
       const ts = Tfreeze(c.m);
@@ -458,14 +459,14 @@
     // 라벨
     if (boil) {
       T(r.x + r.w - 6, G.Y(ATM) - 8, '760 mmHg (1 atm)', 12.5, '#475569', 'right', 800);
-      T(G.X(98.15), G.Y(Pw(98.15)) - 12, '물', 13.5, '#0369a1', 'left', 800, HALO);
-      if (c.m > 0) T(G.X(98.15), G.Y(Psol(98.15, c.m)) + 18, '설탕물', 13.5, '#be185d', 'left', 800, HALO);
+      T(G.X(102.9), G.Y(Pw(102.9)) - 12, '물', 13.5, '#0369a1', 'right', 800, HALO);
+      if (c.m > 0) T(G.X(102.9), G.Y(Psol(102.9, c.m)) + 24, '설탕물', 13.5, '#be185d', 'right', 800, HALO);
       const tw = Tw0(), ts = Tboil(c.m);
       D.label(G.X(tw), r.y + r.h - 16, '물 ' + T1(tw) + ' °C', { size: 12, bg: '#0ea5e9', align: 'center' });
       if (c.m > 0) D.label(clamp(G.X(ts) + (ts - tw < 0.45 ? 34 : 0), r.x + 50, r.x + r.w - 60), r.y + r.h - 42, '설탕물 ' + T1(ts) + ' °C', { size: 12, bg: '#db2777', align: 'center' });
     } else {
       T(G.X(-5.9), G.Y(Pice(-5.9)) + 22, '얼음', 13.5, '#475569', 'left', 800, HALO); T(G.X(-5.9), G.Y(Pliq(-5.9)) - 12, '물(액체)', 13.5, '#0369a1', 'left', 800, HALO);
-      if (c.m > 0) T(G.X(-5.9), G.Y(PsolF(-5.9, c.m)) + 40, '설탕물', 13.5, '#be185d', 'left', 800, HALO);
+      if (c.m > 0) T(G.X(0.95), G.Y(PsolF(0.95, c.m)) + 24, '설탕물', 13.5, '#be185d', 'right', 800, HALO);
       const ts = Tfreeze(c.m);
       D.label(G.X(Tf0) + 6, r.y + r.h - 16, '물 0 °C', { size: 12, bg: '#0ea5e9', align: 'left' });
       if (c.m > 0) D.label(G.X(ts), r.y + r.h - 42, '설탕물 ' + T1(ts) + ' °C', { size: 12, bg: '#db2777', align: 'center' });
@@ -474,8 +475,8 @@
   function drawCurveInfo(t) {
     const R = RC.R, c = S.cur, boil = S.sub.curve === 'boil', ct = curT();
     panel(R.x, R.y, R.w, R.h, 14);
-    T(R.x + 14, R.y + 26, boil ? '🗺️ 전체 곡선 속의 위치' : '🧪 눈금에서 읽은 값', 14.5, INK, 'left', 800);
-    let y = R.y + 40;
+    T(R.x + 14, R.y + 26, boil ? '🗺️ 전체 곡선 속의 위치 (mmHg)' : '🧪 눈금에서 읽은 값', 14.5, INK, 'left', 800);
+    let y = R.y + (boil ? 40 : 60);
     if (boil) {
       // 전체 그림 (0 ~ 120 °C) 과 확대한 부분
       const ix = R.x + 40, iy = y + 8, iw = R.w - 58, ih = PHONE ? 110 : 120;
@@ -487,12 +488,11 @@
       T(X(98) - 6, Y(850) - 8, '확대한 부분', 11.5, BAD, 'right', 800);
       T(ix - 4, iy + 10, '1600', 10.5, MUTED, 'right', 700); T(ix - 4, iy + ih, '0', 10.5, MUTED, 'right', 700);
       T(ix, iy + ih + 14, '0', 10.5, MUTED, 'left', 700); T(ix + iw, iy + ih + 14, '120 °C', 10.5, MUTED, 'right', 700);
-      T(R.x + 14, iy + 18, 'mmHg', 10.5, MUTED, 'left', 700);
       y = iy + ih + 34;
     }
     const pw = boil ? Pw(ct) : Pliq(ct), ps = boil ? Psol(ct, c.m) : PsolF(ct, c.m);
-    const rows = boil ? [['눈금 온도', T1(ct) + ' °C', INK], ['물의 증기압', fP(pw) + ' mmHg', '#0369a1'], ['설탕물의 증기압', fP(ps) + ' mmHg', '#be185d'], ['차이 ΔP', (+(+fP(pw) - +fP(ps)).toFixed(1)).toFixed(1) + ' mmHg', BAD]]
-      : [['눈금 온도', T1(ct) + ' °C', INK], ['얼음의 증기압', Pice(ct).toFixed(2) + ' mmHg', '#475569'], ['물(액체)의 증기압', pw.toFixed(2) + ' mmHg', '#0369a1'], ['설탕물의 증기압', ps.toFixed(2) + ' mmHg', '#be185d']];
+    const rows = boil ? [['눈금 온도', T2(ct) + ' °C', INK], ['물의 증기압', fP(pw) + ' mmHg', '#0369a1'], ['설탕물의 증기압', fP(ps) + ' mmHg', '#be185d'], ['차이 ΔP', (+(+fP(pw) - +fP(ps)).toFixed(1)).toFixed(1) + ' mmHg', BAD]]
+      : [['눈금 온도', T2(ct) + ' °C', INK], ['얼음의 증기압', Pice(ct).toFixed(2) + ' mmHg', '#475569'], ['물(액체)의 증기압', pw.toFixed(2) + ' mmHg', '#0369a1'], ['설탕물의 증기압', ps.toFixed(2) + ' mmHg', '#be185d']];
     rows.forEach((r, i) => { T(R.x + 14, y + i * 24, r[0], 13, r[2], 'left', 800); T(R.x + R.w - 14, y + i * 24, r[1], 13.5, r[2], 'right', 800); });
     y += rows.length * 24 + 8;
     if (boil) {
@@ -514,7 +514,7 @@
     $$('#modeSeg button').forEach((b) => b.classList.toggle('on', b.dataset.mode === S.mode));
     $$('#lawSub button').forEach((b) => b.classList.toggle('on', b.dataset.v === S.sub.law));
     $$('#crSub button').forEach((b) => b.classList.toggle('on', b.dataset.v === S.sub.curve));
-    const s = S.cmp.s; $('#oSug').textContent = s + '개 (X설탕 = ' + (s / 100).toFixed(2) + ')'; $('#sSug').value = s; $('#sugMinus').disabled = s <= 0; $('#sugPlus').disabled = s >= 20;
+    const s = S.cmp.s; $('#oSug').textContent = s + '개 (' + (s / 100).toFixed(2) + ')'; $('#sSug').value = s; $('#sugMinus').disabled = s <= 0; $('#sugPlus').disabled = s >= 20;
     const j = S.surf.j; $('#oJ').textContent = j + '개 (' + (j * 5) + ' %)'; $('#sJ').value = j; $('#jMinus').disabled = j <= 0; $('#jPlus').disabled = j >= 8;
     const l = S.law; $('#oXw').textContent = (l.xw / 100).toFixed(2); $('#sXw').value = l.xw; $('#xwMinus').disabled = l.xw <= 80; $('#xwPlus').disabled = l.xw >= 100;
     $('#bRec').disabled = XTARGET.indexOf(l.xw) < 0 || l.rec[l.xw] != null; $('#bRec').textContent = l.rec[l.xw] != null ? '✅ 기록했어요' : '📝 이 점 기록하기';
@@ -585,7 +585,7 @@
     else if (S.mode === 'surf') { const u = S.surf.u; L1 = '↑ 증발 속도'; a = sfRate(u.evT).toFixed(1) + ' 개/초'; L2 = '↓ 응축 속도'; b = sfRate(u.coT).toFixed(1) + ' 개/초'; L3 = '증기 분자 수'; c = u.gas.filter((p) => !p.ab).length + '개' + (u.eq ? ' (평형)' : ''); }
     else if (S.mode === 'law') { const x = S.law.xw / 100; L1 = 'X물 (X설탕)'; a = x.toFixed(2) + ' (' + (1 - x).toFixed(2) + ')'; L2 = 'P = X물 · 23.8'; b = fP(lawP(S.law.xw)) + ' mmHg'; L3 = '기록한 점'; c = lawCount() + ' / 5'; }
     else {
-      const cu = S.cur, boil = S.sub.curve === 'boil', ct = curT(); L1 = '눈금 온도'; a = T1(ct) + ' °C'; L2 = boil ? '물 · 설탕물 증기압' : '얼음 · 설탕물 증기압';
+      const cu = S.cur, boil = S.sub.curve === 'boil', ct = curT(); L1 = '눈금 온도'; a = T2(ct) + ' °C'; L2 = boil ? '물 · 설탕물 증기압' : '얼음 · 설탕물 증기압';
       b = boil ? fP(Pw(ct)) + ' · ' + fP(Psol(ct, cu.m)) + ' mmHg' : Pice(ct).toFixed(2) + ' · ' + PsolF(ct, cu.m).toFixed(2) + ' mmHg';
       L3 = '찾은 교점'; c = (boil ? (cu.fB.water ? 1 : 0) + (cu.fB.sol ? 1 : 0) : (cu.fF.water ? 1 : 0) + (cu.fF.sol ? 1 : 0)) + ' / 2';
     }
@@ -710,7 +710,7 @@
       features: ['curve'],
       setup() { S.lock = false; S.sub.curve = 'boil'; setMode('curve'); },
       recap: '용액의 증기압 곡선은 순수한 용매보다 항상 아래에 있어요. 그래서 760 mmHg에 닿으려면 더 높은 온도가 필요해 끓는점이 올라가고(끓는점 오름), 얼음의 곡선과는 더 낮은 온도에서 만나 어는점이 내려가요(어는점 내림).',
-      summary: '<ul><li>1 m 설탕물: 25 °C에서 P = 23.8 × 0.982 = <b>23.4 mmHg</b>(ΔP = 0.42), 100 °C에서 P = 760 × 0.982 = <b>746 mmHg</b>(ΔP = 13.4).</li><li>용액의 증기압 곡선은 같은 온도에서 물보다 <b>항상 아래</b>에 있어요.</li><li>그래서 760 mmHg에 닿는 온도가 높아져요: 물 100.0 °C → 1 m 설탕물 약 <b>100.5 °C</b>(끓는점 오름).</li><li>얼음의 증기압 곡선과 만나는 온도는 낮아져요: 물 0 °C → 1 m 설탕물 약 <b>−1.9 °C</b>(어는점 내림). 정량적인 계산은 다음 차시에서 해요.</li><li>바닷물이 담수보다 천천히 증발하고, 설탕에 절인 과일이 오래 가는 것도 증기압 내림 때문이에요.</li></ul>',
+      summary: '<ul><li>1 m 설탕물: 25 °C에서 P = 23.8 × 0.9823 = <b>23.4 mmHg</b>(ΔP = 0.42), 100 °C에서 P = 760 × 0.9823 = <b>746.6 mmHg</b>(ΔP = 13.4).</li><li>용액의 증기압 곡선은 같은 온도에서 물보다 <b>항상 아래</b>에 있어요.</li><li>그래서 760 mmHg에 닿는 온도가 높아져요: 물 100.0 °C → 1 m 설탕물 약 <b>100.5 °C</b>(끓는점 오름).</li><li>얼음의 증기압 곡선과 만나는 온도는 낮아져요: 물 0 °C → 1 m 설탕물 약 <b>−1.9 °C</b>(어는점 내림). 정량적인 계산은 다음 차시에서 해요.</li><li>바닷물이 담수보다 천천히 증발하고, 설탕에 절인 과일이 오래 가는 것도 증기압 내림 때문이에요.</li></ul>',
       missions: [
         {
           title: '760 mmHg에서 두 곡선의 차이 읽기',
@@ -754,6 +754,7 @@
   surfRestart(); cmpRestart();
   setMode('cmp');
   function stepAll1(dt) {
+    S.clk += dt;
     if (S.mode === 'cmp') stepCmp(dt);
     if (S.mode === 'surf') stepSurf(dt);
     stepLaw(dt); stepCurve(dt);

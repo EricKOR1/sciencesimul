@@ -7105,8 +7105,7 @@ window.SCI_CATALOG = {
                 "끓는점·녹는점",
                 "얼음의 밀도",
                 "열·표면·용매"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hx-concentration",
@@ -7127,8 +7126,7 @@ window.SCI_CATALOG = {
                 "몰랄 농도",
                 "몰 분율",
                 "농도 변환"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hx-vapor-lowering",
@@ -7149,8 +7147,7 @@ window.SCI_CATALOG = {
                 "표면 모형",
                 "몰 분율 관계",
                 "곡선 이동"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hx-colligative",

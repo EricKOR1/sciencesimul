@@ -65,7 +65,7 @@
     R: PHONE ? { x: 8, y: 554, w: 464, h: 398 } : { x: 490, y: 50, w: 298, h: 498 },
     F: PHONE ? { x: 8, y: 50, w: 464, h: 900 } : { x: 12, y: 50, w: 776, h: 498 },
   };
-  const MODE_LABEL = { kinds: '🧪 같은 설탕물, 네 가지 농도', molal: '⚖️ 몰랄 농도는 온도가 변해도 그대로?', frac: '🔢 입자 100개로 보는 몰 분율', conv: '🧮 농도를 서로 바꾸어 계산해요' };
+  const MODE_LABEL = { kinds: '🧪 같은 용액, 네 가지 농도', molal: '⚖️ 몰랄 농도는 온도가 변해도 그대로?', frac: '🔢 입자 100개로 보는 몰 분율', conv: '🧮 농도를 서로 바꾸어 계산해요' };
   const parseNum = (s) => { const t = String(s).replace(',', '.').replace(/[−–]/g, '-').replace(/[^0-9.\-]/g, ''); return t === '' || isNaN(+t) ? NaN : +t; };
   const near = (v, a, tol) => !isNaN(v) && Math.abs(v - a) <= tol;
   const ap = SciSim.approach;

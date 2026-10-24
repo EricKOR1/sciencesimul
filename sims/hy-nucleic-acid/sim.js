@@ -297,20 +297,20 @@
   /* =========================================================
      ① 뉴클레오타이드 조립 (인산 + 당 + 염기)
      ========================================================= */
-  const ASM = PHONE ? { x: 10, y: 10, w: 460, h: 272 } : { x: 14, y: 14, w: 420, h: 346 };
-  const COLP = PHONE ? { x: 10, y: 292, w: 460, h: 150 } : { x: 446, y: 14, w: 340, h: 346 };
-  const TRP = PHONE ? { x: 10, y: 452, w: 460, h: 178 } : { x: 14, y: 372, w: 772, h: 174 };
+  const ASM = PHONE ? { x: 10, y: 10, w: 460, h: 244 } : { x: 14, y: 14, w: 420, h: 346 };
+  const COLP = PHONE ? { x: 10, y: 262, w: 460, h: 160 } : { x: 446, y: 14, w: 340, h: 346 };
+  const TRP = PHONE ? { x: 10, y: 430, w: 460, h: 200 } : { x: 14, y: 372, w: 772, h: 174 };
   const SL = PHONE
-    ? { p: { x: ASM.x + 96, y: ASM.y + 128 }, s: { x: ASM.x + 236, y: ASM.y + 128 }, b: { x: ASM.x + 236, y: ASM.y + 216 } }
+    ? { p: { x: ASM.x + 96, y: ASM.y + 112 }, s: { x: ASM.x + 236, y: ASM.y + 112 }, b: { x: ASM.x + 236, y: ASM.y + 194 } }
     : { p: { x: ASM.x + 92, y: ASM.y + 170 }, s: { x: ASM.x + 226, y: ASM.y + 170 }, b: { x: ASM.x + 226, y: ASM.y + 268 } };
   const PR = L(27, 21), SR = L(38, 30);
   const TRAY_IT = [{ k: 'p', id: 'p', nm: '인산' }, { k: 's', id: 'deoxy', nm: '디옥시리보스' }, { k: 's', id: 'ribo', nm: '리보스' }, { k: 'b', id: 'A', nm: '아데닌' }, { k: 'b', id: 'T', nm: '타이민' }, { k: 'b', id: 'G', nm: '구아닌' }, { k: 'b', id: 'C', nm: '사이토신' }, { k: 'b', id: 'U', nm: '유라실' }];
-  TRAY_IT.forEach((t, i) => { t.x = PHONE ? TRP.x + 58 + (i % 4) * 114 : TRP.x + 54 + i * 95; t.y = PHONE ? TRP.y + 62 + Math.floor(i / 4) * 88 : TRP.y + 82; });
+  TRAY_IT.forEach((t, i) => { t.x = PHONE ? TRP.x + 58 + (i % 4) * 114 : TRP.x + 54 + i * 95; t.y = PHONE ? TRP.y + 48 + Math.floor(i / 4) * 90 : TRP.y + 82; });
   const NUC_IDS = ['deoxy-A', 'deoxy-T', 'deoxy-G', 'deoxy-C', 'ribo-A', 'ribo-U', 'ribo-G', 'ribo-C'];
   NUC_IDS.forEach((id, i) => { /* 위치는 아래 colRect에서 */ });
   function colRect(i, panel, h0) {   // 수집 카드 위치 (패널 안)
     const grp = Math.floor(i / 4), k = i % 4;
-    if (PHONE) { const w = (panel.w - 20 - 18) / 4; return { x: panel.x + 10 + k * (w + 6), y: panel.y + 30 + grp * 60, w, h: 44 }; }
+    if (PHONE) { const w = (panel.w - 20 - 18) / 4; return { x: panel.x + 10 + k * (w + 6), y: panel.y + 52 + grp * 54, w, h: 40 }; }
     const w = (panel.w - 36) / 2; return { x: panel.x + 12 + (k % 2) * (w + 12), y: panel.y + 66 + grp * 146 + Math.floor(k / 2) * 60, w, h: 54 };
   }
   S.nuc = { pcs: [], slots: { p: null, s: null, b: null }, built: {}, msg: '', phase: 'build', t: 0, valid: false, lastId: '', glow: {} };
@@ -422,8 +422,8 @@
     if (have('b')) D.label(SL.b.x + (BS.w / 2) + 12, SL.b.y, BASES[n.slots.b.id].name, { bg: '#fff', color: '#334155', border: '#cbd5e1', size: 13, align: 'left' });
     if (n.phase === 'glue' && n.t < 1.0) D.label(ASM.x + ASM.w / 2, ASM.y + ASM.h - 26, (n.lastId.indexOf('deoxy') === 0 ? 'DNA' : 'RNA') + ' 뉴클레오타이드 완성!', { bg: '#15803d', size: 15 });
     // 수집 패널
-    T(COLP.x + 16, COLP.y + 26, '만든 뉴클레오타이드 ' + Object.keys(n.built).length + ' / 8', PHONE ? 15 : 17, '#1e3a8a', 'left', 800);
-    [['DNA의 뉴클레오타이드 (디옥시리보스)', 0], ['RNA의 뉴클레오타이드 (리보스)', 1]].forEach(([nm, g]) => { const r0 = colRect(g * 4, COLP); T(COLP.x + 16, r0.y - 12, PHONE ? (g ? 'RNA (리보스)' : 'DNA (디옥시리보스)') : nm, 13.5, g ? '#0f766e' : '#1d4ed8', 'left', 800); });
+    T(COLP.x + 16, COLP.y + L(26, 22), '만든 뉴클레오타이드 ' + Object.keys(n.built).length + ' / 8', PHONE ? 15 : 17, '#1e3a8a', 'left', 800);
+    [['DNA의 뉴클레오타이드 (디옥시리보스)', 0], ['RNA의 뉴클레오타이드 (리보스)', 1]].forEach(([nm, g]) => { const r0 = colRect(g * 4, COLP); T(COLP.x + 16, r0.y - (PHONE ? 6 : 12), PHONE ? (g ? 'RNA (리보스)' : 'DNA (디옥시리보스)') : nm, 13.5, g ? '#0f766e' : '#1d4ed8', 'left', 800); });
     NUC_IDS.forEach((id, i) => nucMini(colRect(i, COLP), id, !!n.built[id], n.glow[id] || 0));
     // 트레이
     T(TRP.x + 16, TRP.y + 26, '블록을 끌어서(또는 눌러서) 조립대에 놓아요', L(16, 14), '#334155', 'left', 800);
@@ -431,7 +431,7 @@
       if (it.k === 'p') drawPhos(it.x, it.y, PR);
       else if (it.k === 's') drawSugar(it.x, it.y, SR * 0.9, it.id);
       else drawBaseBlock(it.x, it.y, it.id, {});
-      const nmY = it.y + (it.k === 's' ? SR : it.k === 'p' ? PR : BS.h / 2) + (PHONE ? 22 : 24);
+      const nmY = it.y + (it.k === 's' ? SR : it.k === 'p' ? PR : BS.h / 2) + (PHONE ? 20 : 24);
       TF(it.x, nmY, it.nm, 92, 13.5, 12, '#475569', 'center', 800);
       if (it.k === 's') TF(it.x, nmY + 16, SUG[it.id].note, 92, 13, 11, it.id === 'ribo' ? '#dc2626' : '#64748b', 'center', 700);
     });
@@ -463,7 +463,7 @@
   const STRT = PHONE ? { x: 10, y: 402, w: 460, h: 228 } : { x: 14, y: 356, w: 772, h: 190 };
   const SS = L(1, 0.64);
   const strX = (k) => STR.x + L(70, 50) + k * L(116, 70);
-  function strCard(i) { const w = PHONE ? 105 : 88, h = PHONE ? 60 : 78; return PHONE ? { x: STRT.x + 8 + (i % 4) * (w + 6), y: STRT.y + 44 + Math.floor(i / 4) * (h + 8), w, h } : { x: STRT.x + 12 + i * (w + 8), y: STRT.y + 62, w, h }; }
+  function strCard(i) { const w = PHONE ? 105 : 86, h = PHONE ? 60 : 78; return PHONE ? { x: STRT.x + 8 + (i % 4) * (w + 6), y: STRT.y + 44 + Math.floor(i / 4) * (h + 8), w, h } : { x: STRT.x + 14 + i * (w + 8), y: STRT.y + 62, w, h }; }
   function strAdd(id) {
     const st = S.str;
     if (!S.nuc.built[id]) { st.msg = '이 뉴클레오타이드는 아직 만들지 않았어요. 조립대에서 먼저 만들어요.'; showHint(st.msg); return; }
@@ -704,7 +704,7 @@
     else { ctx.fillRect(PORE.x - 4, PORE.y - 26, 10, 52); D.sphere(PORE.x + 1, PORE.y - 28, 7, '#8b5cf6', { gloss: true }); D.sphere(PORE.x + 1, PORE.y + 28, 7, '#8b5cf6', { gloss: true }); }
     ctx.restore();
     T(NUCP.x + NUCP.w - 18, NUCP.y + 30, '핵 속 (전사)', L(18, 16), '#6d28d9', 'right', 800);
-    T(CYTP.x + CYTP.w / 2, CYTP.y + (PHONE ? 26 : 30), '세포질', L(18, 16), '#a16207', 'center', 800);
+    T(PHONE ? CYTP.x + 18 : CYTP.x + CYTP.w / 2, CYTP.y + (PHONE ? 26 : 30), '세포질', L(18, 16), '#a16207', PHONE ? 'left' : 'center', 800);
     D.label(PHONE ? PORE.x + 70 : PORE.x + 60, PHONE ? PORE.y - 14 : PORE.y - 92, '핵공', { bg: '#ede9fe', color: '#6d28d9', border: '#c4b5fd', size: 13 });
     // DNA 두 가닥
     const yC = lerp(R_YC[0], R_YC[1], zp), yT = lerp(R_YT[0], R_YT[1], zp);
@@ -983,7 +983,7 @@
     { k: '당', o: ['디옥시리보스', '리보스', '포도당'] },
     { k: '염기', o: ['A · T · G · C', 'A · U · G · C', 'A · T · U · C'] },
     { k: '가닥 수', o: ['보통 이중 가닥', '보통 한 가닥', '세 가닥'] },
-    { k: '위치 (진핵세포)', o: ['핵 (소량은 미토콘드리아 · 엽록체)', '핵과 세포질(리보솜)', '세포막'] },
+    { k: '위치 (진핵세포)', ks: '위치', o: ['핵 (소량은 미토콘드리아 · 엽록체)', '핵과 세포질(리보솜)', '세포막'] },
     { k: '기능', o: ['유전 정보 저장', '유전 정보 전달 · 단백질 합성에 관여', '에너지 저장'] },
   ];
   const TAB = PHONE ? { x: 8, y: 10, w: 464, kw: 64, rh: 92, hh: 44 } : { x: 14, y: 14, w: 772, kw: 128, rh: 78, hh: 52 };
@@ -999,7 +999,7 @@
     TAB_ROWS.forEach((row, i) => {
       const y = TAB.y + TAB.hh + i * TAB.rh;
       if (i % 2 === 0) { ctx.fillStyle = '#f6faf8'; ctx.fillRect(TAB.x + 2, y, TAB.w - 4, TAB.rh); }
-      TF(TAB.x + 10, y + TAB.rh / 2 + 5, row.k, TAB.kw - 12, 15, 12.5, '#26324a', 'left', 800);
+      TF(TAB.x + 10, y + TAB.rh / 2 + 5, PHONE && row.ks ? row.ks : row.k, TAB.kw - 12, 15, 12.5, '#26324a', 'left', 800);
       T0.pop[i] = T0.pop[i].map((q) => approach(q, 0, dt, 7)); T0.shake[i] = Math.max(0, T0.shake[i] - dt * 2.5);
       for (let c = 0; c < 2; c++) {
         const x = TAB.x + TAB.kw + 8 + c * cw + 4, w = cw - 8, h = TAB.rh - 10, idx = T0.c[i][c];

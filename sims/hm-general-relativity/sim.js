@@ -46,7 +46,10 @@
     out.push(line); ctx.restore();
     out.forEach((l, i) => T(x, y + i * lh, l, size, color, 'left', 800)); return out.length;
   }
-  function lines(x, y, lh, fs, arr) { arr.forEach((l, i) => T(x, y + i * lh, l[0], fs, l[1] || '#26324a', 'left', 800)); }
+  function lines(x, y, lh, fs, arr) {
+    let yy = y;
+    arr.forEach((l) => { const n = wrapL(l[0], x, yy, PX + PW - 14 - x, lh, fs, l[1] || '#26324a'); yy += n * lh; });
+  }
   const topCard = () => ({ x: 6, y: 6, w: PHONE ? 468 : 788, h: SH - 12 });
   const sup = (s) => String(s).replace(/[-0-9]/g, (c) => ({ '-': '⁻', 0: '⁰', 1: '¹', 2: '²', 3: '³', 4: '⁴', 5: '⁵', 6: '⁶', 7: '⁷', 8: '⁸', 9: '⁹' }[c]));
   function sci(x, d) { if (x === 0) return '0'; const e = Math.floor(Math.log10(Math.abs(x))); let m = x / Math.pow(10, e); if (+m.toFixed(d) >= 10) { m /= 10; return m.toFixed(d) + ' × 10' + sup(e + 1); } return m.toFixed(d) + ' × 10' + sup(e); }
@@ -544,10 +547,10 @@
     D.sphere(gx, gy, 5, '#ffd447', { gloss: false, outline: '#fff', outlineWidth: 1.2 });
     ctx.save(); ctx.translate(sx, sy); ctx.rotate(ga + Math.PI / 2); ctx.fillStyle = '#e8edf6'; D.roundRect(-5, -4, 10, 8, 2); ctx.fill(); ctx.fillStyle = '#3867f4'; ctx.fillRect(-14, -3, 8, 6); ctx.fillRect(6, -3, 8, 6); ctx.restore();
     D.label(clamp(sx, c.x + 54, c.x + (PHONE ? 180 : 300)), sy + (sy > ecy ? 22 : -20), 'GPS 위성 (시계)', { bg: 'rgba(255,255,255,.22)', color: '#fff', size: 13, pad: 6 });
-    D.label(c.x + 62, gy - 14, '지상 시계', { bg: 'rgba(255,229,138,.3)', color: '#fff', size: 13, pad: 6 });
+    D.label(ecx, ecy + Re + 18, '노란 점 = 지상 시계', { bg: 'rgba(255,229,138,.3)', color: '#fff', size: 13, pad: 6 });
     T(c.x + 12, c.y + 24, 'GPS 위성 (고도 약 2.0 × 10⁴ km, 속력 3.9 km/s) — 축척 아님', PHONE ? 13 : 14, '#fff', 'left', 800, { stroke: 'rgba(0,0,0,.5)', strokeWidth: 3 });
     // 막대 (하루 동안 위성 시계가 앞서는 양)
-    const x0 = c.x + (PHONE ? 196 : 330), w0 = c.x + c.w - x0 - (PHONE ? 70 : 150), sc = w0 / 50;
+    const x0 = c.x + (PHONE ? 196 : 330), w0 = c.x + c.w - x0 - (PHONE ? 112 : 150), sc = w0 / 50;
     ctx.fillStyle = 'rgba(247,249,253,.96)'; ctx.fillRect(x0 - 12, c.y + 34, c.x + c.w - x0 + 12 - 0, c.h - 34);
     T(x0, c.y + 58, '위성 시계가 하루에 앞서는 양', 13.5, '#26324a', 'left', 800);
     const rows = [['일반 상대론 (중력이 약해서 빨라짐)', GPS_G, '#14a058'], ['특수 상대론 (빨리 움직여서 느려짐)', -GPS_V, '#e2464b'], ['합', GPS_NET, '#2563eb']];
