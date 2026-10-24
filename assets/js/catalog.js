@@ -6060,8 +6060,7 @@ window.SCI_CATALOG = {
                 "행성 비교",
                 "로켓 원리",
                 "궤도 진입"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hm-general-relativity",
@@ -6082,8 +6081,7 @@ window.SCI_CATALOG = {
                 "시공간",
                 "블랙홀",
                 "시간 지연"
-              ],
-              "soon": true
+              ]
             }
           ]
         },
@@ -6111,8 +6109,7 @@ window.SCI_CATALOG = {
                 "단열재 비교",
                 "건축 단열",
                 "열팽창"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hm-latent-heat",

@@ -316,7 +316,7 @@
       const m = rc + 6;
       if (b.x < TANK.x + m) { b.x = TANK.x + m; b.vx = Math.abs(b.vx) * 0.5; } if (b.x > TANK.x + TANK.w - m) { b.x = TANK.x + TANK.w - m; b.vx = -Math.abs(b.vx) * 0.5; }
       if (b.y < TANK.y + 60) { fy += (TANK.y + 60 - b.y) * 6; } if (b.y > TANK.y + TANK.h - m - 4) { b.y = TANK.y + TANK.h - m - 4; b.vy = -Math.abs(b.vy) * 0.4; }
-      fy += 12;   // 약한 중력
+      fy += 12 + (TANK.y + TANK.h * 0.55 - b.y) * 0.5; fx += (TANK.x + TANK.w / 2 - b.x) * 0.25;   // 약한 중력과 가운데로 모이려는 경향(물 분자의 흐름)
       b.vx = (b.vx + fx * dt) * 0.93; b.vy = (b.vy + fy * dt) * 0.93;
       if (!RM) { b.x += b.vx * dt; b.y += b.vy * dt; }
       // R기 방향: 소수성은 이웃 소수성 쪽(안쪽), 친수성은 물 쪽(바깥)
@@ -385,7 +385,7 @@
     cards: AAKEYS.map((k) => ({ id: k, label: AA[k].name, col: '#64748b', sub: AA[k].ab })),
     boxes: ['phil', 'phob', 'chg'].map((c, i) => { const gap = 10, bw = (SB.w - gap * 2) / 3; return { id: c, label: CLS[c].name, col: CLS[c].col, x: SB.x + i * (bw + gap), y: SB.y, w: bw, h: SB.h, cols: 1, hdr: 34 }; }),
     cw: PHONE ? 140 : 190, ch: 48, kh: PHONE ? 40 : 44,
-    tray: (i) => (PHONE ? { x: 14 + (i % 3) * 154, y: 306 + Math.floor(i / 3) * 62 } : { x: 28 + (i % 3) * 252, y: 316 + Math.floor(i / 3) * 62 }),
+    tray: (i) => (PHONE ? { x: 14 + (i % 3) * 154, y: 316 + Math.floor(i / 3) * 62 } : { x: 28 + (i % 3) * 252, y: 346 + Math.floor(i / 3) * 70 }),
     onChange() { updateCtl(); },
   });
   const sortAAWrong = () => sortAA.cards.filter((c) => c.zone && c.zone !== AA[c.id].cls);
@@ -405,7 +405,7 @@
   const CHAIN_SEQ = CODONS.map((c) => AAKEYS.find((k) => AA[k].codon === c));
   const CHP = PHONE ? { x: 10, y: 10, w: 460, h: 340 } : { x: 14, y: 14, w: 772, h: 340 };
   const CHT = PHONE ? { x: 10, y: 360, w: 460, h: 270 } : { x: 14, y: 366, w: 772, h: 180 };
-  const chX = (i) => CHP.x + CHP.w / 2 + (i - 2) * L(132, 84), chY = CHP.y + L(214, 228);
+  const chX = (i) => CHP.x + CHP.w / 2 + (i - 2) * L(132, 84), chY = () => CHP.y + L(214, 228);
   const CTI = AAKEYS.map((k, i) => ({ key: k, x: PHONE ? CHT.x + 60 + (i % 3) * 150 : CHT.x + 74 + i * 124, y: PHONE ? CHT.y + 66 + Math.floor(i / 3) * 96 : CHT.y + 78 }));
   S.ch = { pcs: [], seated: [], wrong: 0, drag: null, msg: '', done: false, flash: 0 };
   function chReset() { S.ch.pcs = []; S.ch.seated = []; S.ch.wrong = 0; S.ch.done = false; S.ch.drag = null; FX.clear(); updateCtl(); }
@@ -502,7 +502,7 @@
   const isPh = (k) => AA[k].cls === 'phob';
   const FD = PHONE ? { x: 10, y: 10, w: 460, h: 360 } : { x: 14, y: 14, w: 772, h: 372 };
   const FINFO = PHONE ? { x: 10, y: 380, w: 460, h: 250 } : { x: 14, y: 398, w: 772, h: 148 };
-  const FR = R0 * 0.95, FB = 2 * FR * 1.08, FSC = FR / R0;
+  const FR = R0 * 1.25, FB = 2 * FR * 1.08, FSC = FR / R0;
   const FCX = FD.x + FD.w / 2, FCY = FD.y + FD.h / 2 + L(14, 4);
   S.fold = { stage: 1, P: [], V: [], rot: [], run: false, runT: 0, folded: false, coreOk: false, seen: [false, false, false, false], sub: [], subT: 0, ratio: 1 };
   function foldLayout(stage) {
@@ -581,7 +581,7 @@
     if (f.stage === 4) {
       f.subT += dt;
       const anchors = [[-1, -1], [1, -1], [-1, 1], [1, 1]];
-      f.sub.forEach((s, k) => { const tx = FCX + anchors[k][0] * (FD.w * 0.5 > 300 ? 74 : 54), ty = FCY + anchors[k][1] * L(70, 66); s.x = approach(s.x, tx, dt, 3.2); s.y = approach(s.y, ty, dt, 3.2); });
+      f.sub.forEach((s, k) => { const tx = FCX + anchors[k][0] * L(120, 86), ty = FCY + anchors[k][1] * L(76, 70) - 8; s.x = approach(s.x, tx, dt, 3.2); s.y = approach(s.y, ty, dt, 3.2); });
     }
   }
   function drawChain(P, rot, o) {
@@ -601,26 +601,26 @@
     if (st <= 3) {
       drawChain(f.P, f.rot);
       f.P.forEach((p, i) => drawAA(p.x, p.y, SEQ12[i], { rot: f.rot[i], scale: FSC, flat: false, halo: (f.folded || f.run) && !isPh(SEQ12[i]), t }));
-      if (st === 1) f.P.forEach((p, i) => T(p.x, p.y + (i % 2 ? -1 : 1) * R0 * 3.0 + (i % 2 ? -6 : 14), AA[SEQ12[i]].name, 13, '#26324a', 'center', 800, { stroke: 'rgba(255,255,255,.8)', strokeWidth: 3 }));
+      if (st === 1) f.P.forEach((p, i) => T(p.x, p.y + (i % 2 ? -1 : 1) * FR * 2.5 + (i % 2 ? -6 : 14), AA[SEQ12[i]].name, 13, '#26324a', 'center', 800, { stroke: 'rgba(255,255,255,.8)', strokeWidth: 3 }));
       if (st === 2) { D.label(f.P[2].x, f.P[2].y - FB * 1.5, '나선 모양', { bg: '#ede9fe', color: '#5b21b6', border: '#c4b5fd', size: 13 }); D.label((f.P[8].x + f.P[9].x) / 2, f.P[9].y + FB * 1.8, '병풍 모양', { bg: '#ccfbf1', color: '#0f766e', border: '#99f6e4', size: 13 }); }
       if (st === 3 && (f.folded || f.run)) {
         const c = foldCentroid();
-        if (f.folded) { D.label(c.x, c.y - FB * 3.2, '소수성 R기 (안쪽)', { bg: '#ffedd5', color: '#c2410c', border: '#fdba74', size: 13 }); D.label(c.x + FB * 3.1, c.y + FB * 2.2, '친수성 R기 (바깥, 물과 닿음)', { bg: '#dbeafe', color: '#1d4ed8', border: '#93c5fd', size: 13, align: 'left' }); }
+        if (f.folded) { callout(c.x - 4, c.y - 4, c.x - L(190, 130), c.y - L(104, 92), '소수성 R기: 안쪽에 모여요', { line: '#ea580c', border: '#fdba74', bg: '#fff7ed', color: '#c2410c' }); callout(c.x + FB * 1.8, c.y + FB * 1.3, c.x + L(170, 100), c.y + L(120, 106), '친수성 · 전하 R기: 바깥(물과 닿음)', { line: '#2563eb', border: '#93c5fd', bg: '#eff6ff', color: '#1d4ed8' }); }
         else { const k = Math.min(1, f.runT / 4.2); D.roundRect(FD.x + 18, FD.y + FD.h - 28, (FD.w - 36), 8, 4); ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.fill(); D.roundRect(FD.x + 18, FD.y + FD.h - 28, (FD.w - 36) * k, 8, 4); ctx.fillStyle = '#f97316'; ctx.fill(); }
       }
     } else {
       // 4차: 폴리펩타이드 4개가 모여요 (3차 구조 모양을 축소해서)
-      const c = foldCentroid(), rel = f.P.map((p) => ({ x: p.x - c.x, y: p.y - c.y })), sc = L(0.5, 0.5);
+      const c = foldCentroid(), rel = f.P.map((p) => ({ x: p.x - c.x, y: p.y - c.y })), sc = L(0.62, 0.55);
       f.sub.forEach((s, k) => {
-        const col = ['#3b82f6', '#3b82f6', '#06b6d4', '#06b6d4'][k];
-        ctx.save(); ctx.globalAlpha = 0.24; D.glow(s.x, s.y, 74 * (PHONE ? 0.8 : 1), col, 0.9); ctx.restore();
+        const col = ['#3b82f6', '#3b82f6', '#06b6d4', '#06b6d4'][k]; T(s.x, s.y + L(70, 58), (k < 2 ? 'α 사슬 ' : 'β 사슬 ') + (k % 2 + 1), 13, k < 2 ? '#1d4ed8' : '#0e7490', 'center', 800);
+        ctx.save(); ctx.globalAlpha = 0.24; D.glow(s.x, s.y, 92 * (PHONE ? 0.75 : 1), col, 0.9); ctx.restore();
         const P2 = rel.map((p) => ({ x: s.x + p.x * sc, y: s.y + p.y * sc }));
         drawChain(P2, null, { sc: 0.55 });
         P2.forEach((p, i) => { const ang = Math.atan2(rel[i].y, rel[i].x); drawAA(p.x, p.y, SEQ12[i], { rot: isPh(SEQ12[i]) ? ang + Math.PI : ang, scale: FSC * sc, flat: true }); });
         D.sphere(s.x, s.y, 7, '#dc2626', { gloss: true });
       });
-      D.label(FCX, FD.y + FD.h - 30, '헤모글로빈 = 폴리펩타이드 4개 (4차 구조)', { bg: '#1e3a8a', size: L(15, 13.5) });
-      T(FCX, FD.y + FD.h - 58, '● 붉은 점은 헴(산소와 결합하는 부분)', 13, '#b91c1c', 'center', 800);
+      D.label(FCX, FD.y + FD.h - 26, '헤모글로빈 = 폴리펩타이드 4개 (4차 구조)', { bg: '#1e3a8a', size: L(15, 13.5) });
+      T(FD.x + FD.w - 18, FD.y + 32, '● 붉은 점: 헴(산소와 결합)', 13, '#b91c1c', 'right', 800);
     }
     // 서열 칩
     T(FINFO.x + 16, FINFO.y + 28, '아미노산 서열 (1차 구조)', L(15, 14), '#334155', 'left', 800);
@@ -633,7 +633,7 @@
       '4차 구조: 폴리펩타이드 2개 이상이 모인 구조예요. 헤모글로빈은 폴리펩타이드 4개로 이루어져 있어요.',
     ];
     textBlock(FINFO.x + 16, FINFO.y + 100, FINFO.w - 32, msgs[st - 1], L(15, 13.5), '#475569', L(21, 19), 700);
-    if (st === 3 && f.folded) { const m = foldMetric(); T(FINFO.x + 16, FINFO.y + FINFO.h - 14, '중심까지 평균 거리: 소수성 ' + (m.ph / FR).toFixed(1) + ' / 친수성 · 전하 ' + (m.po / FR).toFixed(1) + ' (구슬 반지름의 배수)', 13, f.coreOk ? '#15803d' : '#b91c1c', 'left', 800); }
+    if (st === 3 && f.folded) { const m = foldMetric(); T(FD.x + 18, FD.y + FD.h - 14, '중심까지 평균 거리: 소수성 ' + (m.ph / FR).toFixed(1) + ' / 친수성 · 전하 ' + (m.po / FR).toFixed(1) + ' (구슬 반지름의 배수)', 13, f.coreOk ? '#15803d' : '#b91c1c', 'left', 800); }
   }
 
   /* ----- 낫 모양 적혈구 빈혈 ----- */
@@ -654,8 +654,8 @@
   }
   function drawRBC(cx, cy, r, m) {
     ctx.save(); ctx.translate(cx, cy); ctx.rotate(-0.5 * m);
-    const sm = smooth(m), sc = 1 + 0.15 * sm, ox = sm * r * 0.8, ir = r * 0.88 * sm;
-    ctx.beginPath(); ctx.ellipse(0, 0, r * sc, r, 0, 0, TAU);
+    const sm = smooth(m), sc = 1.0, R = r * 1.15, ox = sm * R * 0.62, ir = sm * R * 0.92;
+    ctx.beginPath(); ctx.ellipse(0, 0, r * (1 + 0.15 * sm), r * (1 + 0.15 * sm), 0, 0, TAU);
     if (ir > 1) { ctx.moveTo(ox + ir, 0); ctx.arc(ox, 0, ir, 0, TAU, true); }
     const g = ctx.createRadialGradient(-r * 0.3, -r * 0.3, r * 0.1, 0, 0, r * 1.2); g.addColorStop(0, '#f87171'); g.addColorStop(1, '#b91c1c');
     ctx.fillStyle = g; ctx.shadowColor = 'rgba(120,20,20,.35)'; ctx.shadowBlur = 10; ctx.shadowOffsetY = 4; ctx.fill('evenodd');
@@ -719,11 +719,11 @@
     cards: [3, 0, 5, 2, 4, 1].map((i) => ({ id: FUNCS[i].id, label: FUNCS[i].card, sub: FUNCS[i].sub, col: '#7c3aed' })),
     boxes: FUNCS.map((f, i) => ({ id: f.id, label: f.box, col: '#16a34a', x: PHONE ? 10 + (i % 2) * (FBOX.w + FBOX.g) : 14 + (i % 3) * (FBOX.w + FBOX.g), y: PHONE ? 10 + Math.floor(i / 2) * (FBOX.h + 10) : 14 + Math.floor(i / 3) * (FBOX.h + 12), w: FBOX.w, h: FBOX.h, cols: 1, hdr: PHONE ? 76 : 82, draw: (b) => { textBlock(b.x + 12, b.y + 44, b.w - 24, f.desc, 13.5, '#475569', 18, 700); } })),
     cw: PHONE ? 214 : 236, ch: 48, kh: 44,
-    tray: (i) => (PHONE ? { x: 16 + (i % 2) * 226, y: 392 + Math.floor(i / 2) * 58 } : { x: 28 + (i % 3) * 252, y: 332 + Math.floor(i / 3) * 62 }),
+    tray: (i) => (PHONE ? { x: 16 + (i % 2) * 226, y: 452 + Math.floor(i / 2) * 58 } : { x: 28 + (i % 3) * 252, y: 332 + Math.floor(i / 3) * 62 }),
     onChange() { updateCtl(); },
   });
   const funcWrong = () => funcS.cards.filter((c) => c.zone && c.zone !== c.id);
-  const FTRAY = PHONE ? { x: 10, y: 374, w: 460, h: 256 } : { x: 14, y: 290, w: 772, h: 256 };
+  const FTRAY = PHONE ? { x: 10, y: 404, w: 460, h: 226 } : { x: 14, y: 290, w: 772, h: 256 };
   function funcDraw(dt, t) {
     funcS.update(dt); funcS.drawBoxes();
     panel(FTRAY.x, FTRAY.y, FTRAY.w, FTRAY.h, 16, '#ffffff');
@@ -734,10 +734,10 @@
 
   /* ----- 변성 실험 ----- */
   const SEQ16 = ['ser', 'leu', 'val', 'lys', 'gln', 'leu', 'glu', 'val', 'leu', 'gln', 'lys', 'val', 'ser', 'leu', 'glu', 'val'];
-  const ENZ = PHONE ? { x: 10, y: 10, w: 460, h: 296 } : { x: 14, y: 14, w: 490, h: 396 };
-  const TUBEP = PHONE ? { x: 10, y: 314, w: 460, h: 170 } : { x: 516, y: 14, w: 270, h: 396 };
-  const SEQP = PHONE ? { x: 10, y: 494, w: 460, h: 136 } : { x: 14, y: 422, w: 772, h: 124 };
-  const ECX = ENZ.x + ENZ.w * 0.44, ECY = ENZ.y + ENZ.h * 0.52 + L(8, 0), ERR = L(92, 66), ECR = L(11, 8.5);
+  const ENZ = PHONE ? { x: 10, y: 10, w: 460, h: 280 } : { x: 14, y: 14, w: 490, h: 396 };
+  const TUBEP = PHONE ? { x: 10, y: 298, w: 460, h: 190 } : { x: 516, y: 14, w: 270, h: 396 };
+  const SEQP = PHONE ? { x: 10, y: 498, w: 460, h: 132 } : { x: 14, y: 422, w: 772, h: 124 };
+  const ECX = ENZ.x + ENZ.w * 0.44, ECY = ENZ.y + ENZ.h * 0.52 + L(8, 0), ERR = L(98, 68), ECR = L(13.5, 9.5);
   const FOLDP = SEQ16.map((k, i) => { const a = (38 + i * (284 / 15)) * Math.PI / 180; return { x: ECX + Math.cos(a) * ERR, y: ECY + Math.sin(a) * ERR }; });
   const UNFOLDP = (() => { const rr = mulberry(41); return SEQ16.map((k, i) => ({ x: ENZ.x + 34 + i * (ENZ.w - 68) / 15, y: ECY + Math.sin(i * 1.9) * L(34, 26) + (rr() - 0.5) * L(40, 26) })); })();
   S.dn = { T: 25, acid: false, alc: false, f: 1, fmin: 1, bu: 0, buOn: false, buDen: false, bub: [] };
@@ -781,14 +781,14 @@
     const T0 = d.T, ag = d.acid ? '강산' : d.alc ? '알코올' : T0 > 40 ? '가열' : '';
     T(cx, top + h + L(32, 22), '달걀 흰자 용액 (단백질)', L(14.5, 13.5), '#334155', 'center', 800);
     T(cx, top + h + L(54, 42), d.f > 0.95 ? '투명해요' : d.f > 0.1 ? '뿌옇게 변하는 중' : '하얗게 굳었어요', 13.5, d.f > 0.95 ? '#64748b' : '#b45309', 'center', 800);
-    if (d.bu > 0.9) D.label(cx, top - 22, '뷰렛 반응: 보라색 (펩타이드 결합 확인)', { bg: '#7c3aed', size: 13 });
+    if (d.bu > 0.9) D.label(cx, top + h + L(78, 62), '뷰렛 반응: 보라색', { bg: '#7c3aed', size: 13.5 });
     if (PHONE) { /* 폰은 튜브를 왼쪽에 두고 글을 오른쪽에 */ }
     if (T0 > 40) D.flame(cx, top + h + L(8, 4), clamp((T0 - 35) / 55, 0, 1) * L(34, 22), t);
   }
   function dnDraw(dt, t) {
     dnUpdate(dt);
     const d = S.dn;
-    panel(ENZ.x, ENZ.y, ENZ.w, ENZ.h, 18, '#fbfdf9'); panel(TUBEP.x, TUBEP.y, TUBEP.w, TUBEP.h, 18, '#ffffff'); panel(SEQP.x, SEQP.y, SEQP.w, SEQP.h, 18, '#ffffff');
+    panel(ENZ.x, ENZ.y, ENZ.w, ENZ.h, 18, '#fbfdf9'); panel(TUBEP.x, TUBEP.y, TUBEP.w, TUBEP.h, 18, '#eef3f8'); panel(SEQP.x, SEQP.y, SEQP.w, SEQP.h, 18, '#ffffff');
     T(ENZ.x + 18, ENZ.y + 32, '효소 단백질과 기질', L(19, 16), '#14532d', 'left', 800);
     T(ENZ.x + 18, ENZ.y + 56, d.f > 0.85 ? '입체 구조가 그대로라서 기질이 활성 부위에 꼭 맞아요.' : d.f > 0.1 ? '입체 구조가 풀리는 중이에요.' : '입체 구조가 풀려 기질이 맞지 않아요.', L(14, 13), d.f > 0.85 ? '#15803d' : '#b45309', 'left', 700);
     drawEnzyme(d.f, t);
