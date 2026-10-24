@@ -446,7 +446,7 @@
       ctx.save(); D.roundRect(bx, yy + 5, bw, 11, 5); ctx.clip(); ctx.fillStyle = colr; ctx.fillRect(bx, yy + 5, bw * clamp(v, 0, 1), 11); ctx.restore();
       T(bx + bw + 6, yy + 15, txt, 12, INK, 'left', 800);
     });
-    if (boiling) D.label(m.x + m.w - 12, by - 8, '같아졌어요: 끓어요', { size: 11.5, bg: GOOD, align: 'right' });
+    if (boiling) D.label(m.x + m.w - 10, m.y + 38, '같아졌어요: 끓어요', { size: 11.5, bg: GOOD, align: 'right' });
   }
   function drawFrzMag(t) {
     const m = MAG(), R = S.frz, i = R.idx, fr = frzF(i, R.tau);

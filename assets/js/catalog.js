@@ -6543,8 +6543,7 @@ window.SCI_CATALOG = {
                 "유도 기전력",
                 "렌츠 법칙",
                 "자기 브레이크"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hq-transformer",
@@ -6565,8 +6564,7 @@ window.SCI_CATALOG = {
                 "권선비",
                 "송전",
                 "인덕터"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hq-circuit-energy",
@@ -6587,8 +6585,7 @@ window.SCI_CATALOG = {
                 "축전기",
                 "인덕터",
                 "장치 분석"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hq-diode-circuit",
