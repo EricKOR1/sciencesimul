@@ -291,6 +291,7 @@
     const yw = A.y + A.h * (PHONE ? 0.85 : 0.84);
     return { A, x1, x2, y1, y2, xc, xa, yc, ph, d: xa - xc, yw, lamp: { x: A.x + A.w * 0.075, y: A.y + (PHONE ? 62 : 70) } };
   }
+  const ZERO_I = 0.005;               // 전류계가 0.00 μA로 읽히는 한계
   const tbIsat = () => isatOf(S.tb.lam, S.tb.k);
   const tbI = () => currentAt(S.tb.lam, S.tb.k, S.tb.V);
   const tbEk = () => ekOf(S.tb.lam);
@@ -332,7 +333,7 @@
   function recordV0() {
     const T_ = S.tb, ek = tbEk();
     if (ek <= 0) return showHint('이 파장에서는 광전자가 나오지 않아서 정지 전압이 없어요. 파장을 540 nm보다 짧게 해 보세요.');
-    if (tbI() > 1e-9) return showHint('아직 광전류가 흘러요. 전류가 0이 될 때까지 역전압을 더 올려 보세요.');
+    if (tbI() >= ZERO_I) return showHint('아직 광전류가 흘러요. 전류가 0이 될 때까지 역전압을 더 올려 보세요.');
     if (T_.V - ek > 0.06) return showHint('전압이 너무 높아요. 전류가 처음 0이 되는 가장 작은 역전압이 정지 전압 V₀예요.');
     const key = Math.round(T_.lam / 10);
     const ex = T_.rec.find((r) => Math.round(r.lam / 10) === key);
@@ -392,29 +393,30 @@
     T(xm2, yw + 50 * k, '(양극을 −로)', PHONE ? 10.5 : 12, '#5d6879', 'center', 700);
     const Inow = tbI();
     dial(xm1, yw, 30 * k, T_.needle, 'μA');
-    T(xm1, yw + 34 * k + 12, 'I = ' + Inow.toFixed(2) + ' μA', PHONE ? 12.5 : 14, Inow > 0.004 ? '#26324a' : '#1c7a4a', 'center', 800);
-    if (ek > 0 && Inow < 0.004 && T_.V > 0) D.label(G.xc + G.d / 2, G.y1 + 18 * k, '전류가 0이에요 ✔', { size: PHONE ? 12 : 13, bg: '#16a05a' });
+    T(xm1, yw + 34 * k + 12, 'I = ' + Inow.toFixed(2) + ' μA', PHONE ? 12.5 : 14, Inow >= ZERO_I ? '#26324a' : '#1c7a4a', 'center', 800);
+    if (ek > 0 && Inow < ZERO_I && T_.V > 0) D.label(G.xc + G.d / 2, G.y1 + 18 * k, '전류가 0이에요 ✔', { size: PHONE ? 12 : 13, bg: '#16a05a' });
     if (ek <= 0) D.label(G.xc + G.d / 2, G.y1 + 18 * k, '광전자가 나오지 않아요 (540 nm보다 길어요)', { size: PHONE ? 11.5 : 13, bg: '#7b8798' });
     // 오른쪽(또는 아래) 패널
     panel(B.x, B.y, B.w, B.h, 14);
-    const px = B.x + 14, pw = B.w - 28; let yy = B.y + 26;
+    const px = B.x + 14, pw = PHONE ? 226 : B.w - 28; let yy = B.y + 26;
     T(px, yy, '광자 한 개 → 전자 한 개', PHONE ? 13.5 : 14, '#26324a', 'left', 800); yy += PHONE ? 22 : 24;
     const eph = ephOf(T_.lam), rc = recFor(T_.lam);
     const line = (a, b, c) => { T(px, yy, a, PHONE ? 12.5 : 13, '#5d6879', 'left', 700); T(px + pw, yy, b, PHONE ? 13 : 13.5, c || '#26324a', 'right', 800); yy += PHONE ? 20 : 22; };
     line('광자 에너지 hf', eph.toFixed(2) + ' eV');
     line('일함수 W (나트륨)', W_NA.toFixed(2) + ' eV');
-    if (rc) line('E_k,max = eV₀', (rc.V * 1).toFixed(2) + ' eV', '#1c7a4a');
-    else line('E_k,max = hf − W', ek > 0 ? '? (V₀를 재면 알 수 있어요)' : '방출 없음', ek > 0 ? '#9aa6b8' : '#c0353b');
+    if (rc) line('E_k,max = eV₀', rc.V.toFixed(2) + ' eV', '#1c7a4a');
+    else line('E_k,max = hf − W', ek > 0 ? '? (V₀를 재요)' : '방출 없음', ek > 0 ? '#9aa6b8' : '#c0353b');
     if (rc) { textBlock(px, yy + 2, pw, 'hf − W = ' + eph.toFixed(2) + ' − ' + W_NA.toFixed(2) + ' = ' + ekOf(T_.lam).toFixed(2) + ' eV 와 같아요.', PHONE ? 12 : 12.5, '#1c7a4a', 17, 800); yy += 34; }
-    yy += 6; T(px, yy, '📋 측정한 V₀', PHONE ? 13 : 13.5, '#26324a', 'left', 800); yy += 4;
+    const rx = PHONE ? B.x + 258 : px, rw = PHONE ? B.w - 272 : pw; let ry = PHONE ? B.y + 26 : yy + 6;
+    T(rx, ry, '📋 측정한 V₀', PHONE ? 13 : 13.5, '#26324a', 'left', 800); ry += 4;
     const rows = T_.rec.slice().sort((a, b) => a.lam - b.lam);
-    if (!rows.length) textBlock(px, yy + 18, pw, '“V₀ 기록”을 누르면 여기에 쌓여요.', 12.5, '#9aa6b8', 17, 700);
-    rows.slice(0, PHONE ? 4 : 6).forEach((r, i) => { yy += PHONE ? 19 : 22; T(px, yy + 6, r.lam + ' nm', 13, '#26324a', 'left', 800); T(px + pw, yy + 6, r.V.toFixed(2) + ' V', 13, '#1c7a4a', 'right', 800); });
+    if (!rows.length) textBlock(rx, ry + 18, rw, '“V₀ 기록”을 누르면 여기에 쌓여요.', 12.5, '#9aa6b8', 17, 700);
+    rows.slice(0, PHONE ? 6 : 6).forEach((r) => { ry += PHONE ? 21 : 22; T(rx, ry + 6, r.lam + ' nm', 13, '#26324a', 'left', 800); T(rx + rw, ry + 6, r.V.toFixed(2) + ' V', 13, '#1c7a4a', 'right', 800); });
     // 아래 설명
     panel(BOT.x, BOT.y, BOT.w, BOT.h, 14);
     const msg = ek <= 0 ? '파장이 540 nm보다 길면 광자 한 개의 에너지가 일함수보다 작아서 세기를 아무리 키워도 전자가 나오지 않아요.'
       : T_.V < 0.005 ? '역전압이 0일 때는 나온 전자가 모두 양극에 닿아 광전류가 흘러요. 역전압을 올려 전류가 0이 되는 순간을 찾아요.'
-        : Inow < 0.004 ? '운동 에너지가 가장 큰 전자도 양극에 닿지 못해요. 이때의 전압이 정지 전압 V₀이고, eV₀ = E_k,max예요.'
+        : Inow < ZERO_I ? '운동 에너지가 가장 큰 전자도 양극에 닿지 못해요. 이때의 전압이 정지 전압 V₀이고, eV₀ = E_k,max예요.'
           : '운동 에너지가 작은 전자는 역전압에 막혀 돌아가고, 큰 전자만 양극에 닿아요. 전압을 더 올려요.';
     textBlock(BOT.x + 16, BOT.y + 28, BOT.w - 32, msg, PHONE ? 13.5 : 15, '#26324a', PHONE ? 20 : 22, 800);
     textBlock(BOT.x + 16, BOT.y + (PHONE ? 98 : 84), BOT.w - 32, '(그림의 광자와 전자 수는 실제보다 훨씬 적게 그렸어요. 화면에 보이는 방출은 모두 광자 1개가 전자 1개를 내보낸 거예요.)', 12.5, '#5d6879', 18, 700);
@@ -595,12 +597,15 @@
     panel(B.x, B.y, B.w, B.h, 14);
     const qx = B.x + 14, qw = B.w - 28; let yy = B.y + 28;
     T(qx, yy, '계산 순서', PHONE ? 14 : 15, '#26324a', 'left', 800); yy += PHONE ? 24 : 30;
+    let si = 0;
     const step = (no, name, formula, val, ok) => {
-      D.sphere(qx + 10, yy - 5, 10, '#f26b3a', { gloss: false, text: String(no) });
-      T(qx + 28, yy, name, PHONE ? 12.5 : 13.5, '#26324a', 'left', 800);
-      T(qx + 28, yy + (PHONE ? 16 : 19), formula, PHONE ? 11 : 12, '#5d6879', 'left', 700);
-      T(qx + qw, yy + (PHONE ? 33 : 40), val, PHONE ? 13.5 : 15, ok === false ? '#9aa6b8' : '#1c7a4a', 'right', 800);
-      yy += PHONE ? 50 : 62;
+      const cx0 = PHONE ? qx + (si % 2) * 226 : qx, cy0 = PHONE ? B.y + 54 + Math.floor(si / 2) * 74 : yy; si++;
+      D.sphere(cx0 + 10, cy0 - 5, 10, '#f26b3a', { gloss: false, text: String(no) });
+      T(cx0 + 28, cy0, name, PHONE ? 12.5 : 13.5, '#26324a', 'left', 800);
+      T(cx0 + 28, cy0 + (PHONE ? 16 : 19), formula, PHONE ? 11 : 12, '#5d6879', 'left', 700);
+      if (PHONE) T(cx0 + 28, cy0 + 36, val, 13, ok === false ? '#9aa6b8' : '#1c7a4a', 'left', 800);
+      else T(cx0 + qw, cy0 + 40, val, 15, ok === false ? '#9aa6b8' : '#1c7a4a', 'right', 800);
+      if (!PHONE) yy += 62;
     };
     const Jph = eph * QE;
     step(1, '광자 하나의 에너지', 'hf = 1240 / λ (eV)', eph.toFixed(2) + ' eV = ' + SCI(Jph, 2) + ' J');
@@ -608,7 +613,7 @@
     step(2, '초당 광자 수', 'N = P / (hf)', P.solved ? SCI(N, 1) + ' 개/s' : '? (직접 계산해요)', P.solved);
     step(3, '전자로 바뀌는 수 (1 %)', '전자 수 = N × 0.01', P.solved ? (em ? SCI(N * ETA, 1) : '0') + ' 개/s' : '?', P.solved);
     step(4, '광전류', 'I = (전자 수) × e', P.solved ? pnI().toFixed(1) + ' μA' : '?', P.solved);
-    if (!em) textBlock(qx, yy - 6, qw, '파장이 540 nm보다 길어서 광자 하나의 에너지가 W보다 작아요. 광자 수가 많아도 전자가 나오지 않아 I = 0이에요.', PHONE ? 12 : 12.5, '#c0353b', 17, 800);
+    if (!em && !PHONE) textBlock(qx, yy - 6, qw, '파장이 540 nm보다 길어서 광자 하나의 에너지가 W보다 작아요. 광자 수가 많아도 전자가 나오지 않아 I = 0이에요.', PHONE ? 12 : 12.5, '#c0353b', 17, 800);
     panel(BOT.x, BOT.y, BOT.w, BOT.h, 14);
     textBlock(BOT.x + 16, BOT.y + 28, BOT.w - 32, em ? '같은 출력이라도 파장이 길수록 광자 하나의 에너지가 작아서 광자가 더 많이 들어와요. 광자 100개 중 1개만 전자를 내보낸다고 하면 광전류가 정해져요.' : '문턱 파장(약 540 nm)보다 긴 빛은 광자 하나로 전자를 떼어 낼 수 없어요. 광전류는 0이에요.', PHONE ? 13.5 : 15, '#26324a', PHONE ? 20 : 22, 800);
     textBlock(BOT.x + 16, BOT.y + (PHONE ? 98 : 84), BOT.w - 32, '(양자 효율 1 %는 예시 값이에요. 광자 한 개는 전자 한 개에만 에너지를 통째로 줘요.)', 12.5, '#5d6879', 18, 700);
@@ -644,7 +649,7 @@
     const E = S.te, L = teLay(), A = L.a, B = L.b, k = PHONE ? 0.8 : 1;
     panel(A.x, A.y, A.w, A.h, 14);
     T(A.x + 14, A.y + 24, '📷 이미지 센서가 찍은 영상 (' + (E.day === 'day' ? '밝은 낮' : '어두운 밤') + ')', PHONE ? 13 : 15, '#26324a', 'left', 800);
-    const cs = PHONE ? 28 : 31, gx = A.x + (A.w - GW * cs) / 2, gy = A.y + 40;
+    const cs = PHONE ? 24 : 31, gx = A.x + (A.w - GW * cs) / 2, gy = A.y + 38;
     for (let y = 0; y < GH; y++) for (let x = 0; x < GW; x++) {
       const Lm = lumAt(x, y), Ne = neOf(Lm, E.day, E.ti), D0 = digOf(Lm, E.day, E.ti);
       const sg = 255 * Math.sqrt(Math.min(Ne, NFULL)) / NFULL;
@@ -658,10 +663,11 @@
     let yy = gy + GH * cs + 22;
     T(A.x + 14, yy, '노출 시간 ' + fmtT(TEXP[E.ti]) + ' · ' + (E.day === 'day' ? '밝은 곳' : '어두운 곳'), PHONE ? 12.5 : 14, '#26324a', 'left', 800); yy += PHONE ? 8 : 12;
     // 베이어 배열
-    const bx = A.x + A.w - (PHONE ? 78 : 90), by = yy - (PHONE ? 22 : 24);
+    const bx = A.x + A.w - (PHONE ? 62 : 90), by = yy - (PHONE ? 22 : 24);
     ['#ff5a4d', '#2fd66b', '#2fd66b', '#4a7dff'].forEach((c, i) => { ctx.fillStyle = c; ctx.fillRect(bx + (i % 2) * 20, by + Math.floor(i / 2) * 20, 18, 18); });
     T(bx - 6, by + 15, 'R G', 11, '#5d6879', 'right', 800); T(bx - 6, by + 35, 'G B', 11, '#5d6879', 'right', 800);
-    textBlock(A.x + 14, yy + (PHONE ? 18 : 22), A.w - (PHONE ? 100 : 118), '화소마다 R·G·B 필터 중 하나를 씌워서 한 가지 색의 빛만 세요 (베이어 배열).', PHONE ? 11.5 : 12.5, '#5d6879', 16, 700);
+    if (!PHONE) textBlock(A.x + 14, yy + 22, A.w - 118, '화소마다 R·G·B 필터 중 하나를 씌워서 한 가지 색의 빛만 세요 (베이어 배열).', 12.5, '#5d6879', 16, 700);
+    else T(A.x + 14, yy + 14, 'R·G·B 필터', 11.5, '#5d6879', 'left', 700);
     // 화소 한 개 확대
     panel(B.x, B.y, B.w, B.h, 14);
     const Lm = lumAt(TGT.x, TGT.y), Ne = neOf(Lm, E.day, E.ti), Dv = dTarget(), Vp = Math.min(1, Ne / NFULL);
@@ -679,20 +685,20 @@
       for (let i = 0; i < 8; i++) { const bit = (Dv >> (7 - i)) & 1; ctx.fillStyle = bit ? '#16a05a' : '#e3e8f2'; D.roundRect(vx + i * 19, y0 + 72, 17, 22, 4); ctx.fill(); T(vx + i * 19 + 8.5, y0 + 88, String(bit), 12, bit ? '#fff' : '#9aa6b8', 'center', 800); }
       T(vx, y0 + 112, '8비트 0~255', 11, '#5d6879', 'left', 700);
     } else {
-      const wx = px + 8, wy = B.y + 78, ww = 150, wh = 112;
+      const wx = px + 8, wy = B.y + 68, ww = 150, wh = 102;
       drawWell(wx, wy, ww, wh, Ne, Lm);
       T(wx + ww + 16, wy + 28, '전자 ' + Math.round(Ne) + '개', 15, '#1f4fcf', 'left', 800);
       T(wx + ww + 16, wy + 50, '잡음 ±√N ≈ ' + Math.round(Math.sqrt(Ne)) + '개', 13, '#c4501b', 'left', 800);
       T(wx + ww + 16, wy + 72, '잡음 비율 ' + (Ne > 0 ? Math.round(100 / Math.sqrt(Math.max(Ne, 1))) : 0) + ' %', 13, '#5d6879', 'left', 700);
       T(wx + ww + 16, wy + 98, '● 1개 = 전자 8개', 11.5, '#5d6879', 'left', 700);
       D.arrow(B.x + B.w / 2, wy + wh + 28, B.x + B.w / 2, wy + wh + 50, { color: '#9aa6b8', width: 3 });
-      let y2 = wy + wh + 72;
+      let y2 = wy + wh + 62;
       T(px, y2, '축전기 전압 (예: 전자 ' + NFULL + '개 = 1.0 V)', 12.5, '#5d6879', 'left', 700); y2 += 8;
-      barH(px, y2, pw, 20, Vp, '#16a05a'); T(px + 8, y2 + 15, Vp.toFixed(2) + ' V', 13, Vp > 0.12 ? '#fff' : '#26324a', 'left', 800); y2 += 40;
-      D.arrow(B.x + B.w / 2, y2 - 8, B.x + B.w / 2, y2 + 12, { color: '#9aa6b8', width: 3 }); y2 += 34;
-      T(px, y2, '아날로그–디지털 변환 (8비트)', 12.5, '#5d6879', 'left', 700); y2 += 12;
+      barH(px, y2, pw, 20, Vp, '#16a05a'); T(px + 8, y2 + 15, Vp.toFixed(2) + ' V', 13, Vp > 0.12 ? '#fff' : '#26324a', 'left', 800); y2 += 36;
+      D.arrow(B.x + B.w / 2, y2 - 8, B.x + B.w / 2, y2 + 10, { color: '#9aa6b8', width: 3 }); y2 += 30;
+      T(px, y2, '아날로그–디지털 변환 (8비트)', 12.5, '#5d6879', 'left', 700); y2 += 10;
       for (let i = 0; i < 8; i++) { const bit = (Dv >> (7 - i)) & 1; ctx.fillStyle = bit ? '#16a05a' : '#e3e8f2'; D.roundRect(px + i * (pw / 8), y2, pw / 8 - 4, 30, 6); ctx.fill(); T(px + i * (pw / 8) + (pw / 8 - 4) / 2, y2 + 21, String(bit), 15, bit ? '#fff' : '#9aa6b8', 'center', 800); }
-      y2 += 56; T(px, y2, '디지털 값 = ' + Dv + ' (0~255)', 18, '#26324a', 'left', 900);
+      y2 += 52; T(px, y2, '디지털 값 = ' + Dv + ' (0~255)', 18, '#26324a', 'left', 900);
     }
     panel(BOT.x, BOT.y, BOT.w, BOT.h, 14);
     const night = E.day === 'night';
@@ -720,11 +726,11 @@
 
   function drawLamp() {
     const E = S.te, L = teLay(), A = L.a, B = L.b, k = PHONE ? 0.8 : 1;
-    const AW = PHONE ? A.w : A.w + B.w + 12, AH = PHONE ? A.h : MA.h;
+    const AW = PHONE ? A.w : A.w + B.w + 12, AH = MA.h;
     panel(A.x, A.y, AW, AH, 14);
     T(A.x + 14, A.y + 24, '💡 광센서로 켜지고 꺼지는 자동 점멸등', PHONE ? 13 : 15, '#26324a', 'left', 800);
     const day = clamp(E.lux / 1000, 0, 1);
-    const sx = A.x + 12, sy = A.y + 38, sw = AW - 24, sh = PHONE ? 140 : 168;
+    const sx = A.x + 12, sy = A.y + 38, sw = AW - 24, sh = PHONE ? 190 : 168;
     ctx.save(); D.roundRect(sx, sy, sw, sh, 10); ctx.clip();
     const mc = (a, b, t) => 'rgb(' + a.map((v, i) => Math.round(v + (b[i] - v) * t)).join(',') + ')';
     const g = ctx.createLinearGradient(0, sy, 0, sy + sh); g.addColorStop(0, mc([12, 18, 48], [96, 170, 245], Math.pow(day, 0.7))); g.addColorStop(1, mc([30, 38, 70], [190, 225, 252], Math.pow(day, 0.7)));
@@ -788,10 +794,11 @@
       if (cyc > 0.3) { electron(phx, yV - (yV - yCb + 14) * e2, 7 * k); ctx.strokeStyle = '#c0353b'; ctx.lineWidth = 2.4; ctx.beginPath(); ctx.arc(phx, yV, 7 * k, 0, TAU); ctx.stroke(); T(phx + 14, yV - 3, '양공', 11.5, '#c0353b', 'left', 800); }
       if (cyc > 0.75) { const ru = (cyc - 0.75) / 0.25; electron(phx + (bx + bw * 0.7 - phx) * ru, yCb - 14 - 0, 6 * k); }
     } else {
-      const u = (cyc * 1.2) % 1; photon(phx - 40 + 120 * u, yV + 46 - 0 * u, col, 5);
-      ctx.strokeStyle = 'rgba(192,53,75,.0)';
+      const u = (cyc * 1.2) % 1;
+      ctx.strokeStyle = rgbaH(col, 0.5); ctx.lineWidth = 3; ctx.setLineDash([8, 6]); ctx.beginPath(); ctx.moveTo(phx - 90 * k, yV + 34); ctx.lineTo(phx + 130 * k, yV + 34); ctx.stroke(); ctx.setLineDash([]);
+      photon(phx - 90 * k + 220 * k * u, yV + 34, col, 6.5);
     }
-    T(phx, yV + 70 * k, 'hf = ' + eph.toFixed(2) + ' eV', PHONE ? 12.5 : 14, ok ? '#1c7a4a' : '#c0353b', 'center', 800);
+    T(phx + 10, Math.max(by0 + 40, clamp(yV - eph / eMax * (bh - 20), by0 - 4, yV) - 8), 'hf = ' + eph.toFixed(2) + ' eV', PHONE ? 12.5 : 14, ok ? '#1c7a4a' : '#c0353b', 'left', 800);
     D.label(bx + bw * 0.34, by0 + bh + 20, ok ? '✅ hf ≥ 1.1 eV: 전자–양공 쌍이 생겨요' : '❌ hf < 1.1 eV: 에너지가 모자라 그냥 통과해요', { size: PHONE ? 11.5 : 13.5, bg: ok ? '#16a05a' : '#c0353b' });
     // 오른쪽 정보
     panel(B.x, B.y, B.w, B.h, 14);
@@ -806,6 +813,13 @@
     textBlock(BOT.x + 16, BOT.y + 28, BOT.w - 32, ok ? '광자 하나가 전자 하나에게 에너지를 주어 가전자대의 전자를 전도대로 올려요. 이 전자와 양공이 p-n 접합의 전기장에 밀려 전류가 돼요.' : '광자 에너지가 띠 간격보다 작으면 전자가 전도대로 올라가지 못해요. 규소 태양전지는 파장이 약 1130 nm보다 긴 적외선으로는 작동하지 않아요.', PHONE ? 13.5 : 15, '#26324a', PHONE ? 20 : 22, 800);
     textBlock(BOT.x + 16, BOT.y + (PHONE ? 98 : 84), BOT.w - 32, '(광자 에너지가 띠 간격보다 커도 광자 하나는 전자 하나에게만 에너지를 줘요. 남는 에너지는 열이 돼요.)', 12.5, '#5d6879', 18, 700);
   }
+
+  /* ---------- 포인터 (그래프 장면: 표의 줄을 누르면 점이 찍혀요) ---------- */
+  const rowAt = (p) => { if (S.mode !== 'graph') return -1; const B = grLay().b; for (let i = 0; i < ROW.length; i++) { const r = rowPos(i); if (p.x > B.x + 6 && p.x < B.x + B.w - 6 && p.y > r.y - 4 && p.y < r.y + r.rh - 4) return i; } return -1; };
+  SciSim.pointer(view, {
+    down(p) { const i = rowAt(p); if (i >= 0) { Sound.click(); plotPoint(i); return true; } return false; },
+    hover(p) { return rowAt(p) >= 0 ? 'pointer' : 'default'; },
+  });
 
   /* ---------- 읽음 칸 ---------- */
   let rlast = '';

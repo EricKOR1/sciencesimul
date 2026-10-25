@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#f26b3a">
+  <title>현의 정상파 | 고등 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎸</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+<style>
+    .stage-toolbar { min-height: 61px; }
+    .segmented button { min-height: 44px; }
+    .segmented button.on { background: var(--phy); color: #fff; }
+    #modeSeg { width: 100%; flex-wrap: wrap; }
+    #modeSeg button { flex: 1 1 auto; min-width: 0; padding-left: 8px; padding-right: 8px; font-size: 14.5px; }
+    #modeSeg button[hidden] { display: none !important; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard .btn-sm { min-height: 44px; }
+    #ctrlCard [hidden] { display: none !important; }
+    .ctrl-note { font-size: 14px; color: var(--muted); margin: 6px 0 0; line-height: 1.4; }
+    .btn-row { display: flex; gap: 8px; margin-top: 6px; }
+    .btn-row .btn { flex: 1; padding-left: 8px; padding-right: 8px; }
+    .seg-wrap { border-radius: 20px; display: flex; flex-wrap: wrap; width: 100%; }
+    .seg-wrap button { flex: 1 1 auto; min-width: 0; padding-left: 6px; padding-right: 6px; font-size: 14px; }
+    .range-row { display: flex; align-items: center; gap: 8px; }
+    .range-row input[type=range] { flex: 1; min-width: 0; height: 44px; }
+    .sel-in { width: 100%; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 8px; font: 800 14.5px var(--font); color: var(--ink); background: #fff; }
+    .sel-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .sel-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .num-in { width: 100%; min-width: 0; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 10px; font: 800 16px var(--font); color: var(--ink); background: #fff; }
+    .num-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .num-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .in-grid { display: grid; grid-template-columns: 96px 1fr; gap: 6px 8px; align-items: center; margin-top: 6px; }
+    .in-grid .lab { font-weight: 800; font-size: 14px; line-height: 1.25; }
+    .in-grid .sel-in { min-height: 44px; padding: 2px 6px; font-size: 14px; }
+    .sel-row { margin-top: 8px; }
+    .sel-row .q { font-weight: 800; font-size: 14px; margin-bottom: 3px; line-height: 1.25; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+    .chips button { min-height: 44px; padding: 6px 12px; border: 2px solid var(--line); background: #fff; border-radius: 999px; font-weight: 800; font-size: 14.5px; cursor: pointer; color: var(--ink); font-family: inherit; }
+    .chips button.on { border-color: var(--phy); background: color-mix(in srgb, var(--phy) 14%, white); color: #9a3412; }
+    @keyframes shakeX { 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+    .readout .value.txt { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .concept table.mini, table.mini { border-collapse: collapse; margin: 6px 0; font-size: 14px; width: 100%; }
+    .concept table.mini th, .concept table.mini td, table.mini th, table.mini td { border: 1px solid var(--line); padding: 4px 6px; text-align: center; }
+    .concept table.mini th, table.mini th { background: var(--surface-2); font-weight: 800; }
+    .stage-canvas .stage-hint { top: 10px; bottom: auto; }
+    @media (orientation: portrait) and (min-width: 600px) {
+      .side-col:has(> #ctrlCard[hidden]) > #game { grid-column: 1 / -1; }
+    }
+    @media (max-width: 599px) {
+      .readout .value.txt { font-size: 15px; }
+      .stage-toolbar { gap: 6px; padding: 8px; }
+      .stage-toolbar .spacer { display: none; }
+      #modeSeg button { font-size: 13.5px; padding-left: 6px; padding-right: 6px; }
+      .stage-hint { font-size: 13px; padding: 5px 12px; }
+    }
+  </style>
+
+</head>
+<body class="sim-page" data-subject="phy">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#hm">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">역학과 에너지 · Ⅲ. 탄성파와 소리</div>
+      <h1>현의 정상파</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <div class="segmented" id="modeSeg" role="tablist" aria-label="화면 고르기">
+            <button type="button" data-mode="drive">〰 정상파</button>
+            <button type="button" data-mode="lam">📏 파장 조건</button>
+            <button type="button" data-mode="freq">🎵 진동수</button>
+            <button type="button" data-mode="inst">🎸 현악기</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="양 끝이 고정된 줄에서 진동수를 바꾸며 정상파가 생기는 공명을 찾고, 파장 조건 L = nλ/2, 줄의 길이·장력·굵기에 따른 기본 진동수, 기타와 가야금 같은 현악기의 음높이를 탐구하는 화면"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">—</span><span class="value txt" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">—</span><span class="value txt" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">—</span><span class="value txt" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+
+        <!-- ① 정상파 -->
+        <div class="control" data-modes="drive">
+          <div class="control-head"><label for="sDf">🎛 진동 발생기의 진동수 f</label><output id="oDf">0 Hz</output></div>
+          <div class="range-row"><input type="range" id="sDf" min="0" max="800" step="2" value="0" aria-label="진동 발생기의 진동수 (0헤르츠부터 800헤르츠까지)"></div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bSweep" type="button">▶ 천천히 올리기</button><button class="btn btn-sm" id="bParts" type="button">입사·반사파 숨기기</button></div>
+          <p class="ctrl-note" id="nDr"></p>
+        </div>
+        <div class="control" data-modes="drive" data-show="jump">
+          <div class="control-head"><span>🔖 찾은 정상파로 가기</span></div>
+          <div class="segmented seg-wrap" id="jumpSeg" role="group" aria-label="찾은 정상파로 가기">
+            <button type="button" data-n="1">첫 번째</button><button type="button" data-n="2">두 번째</button><button type="button" data-n="3">세 번째</button></div>
+        </div>
+        <div class="control" data-modes="drive" data-calc="count">
+          <div class="control-head"><span>📝 배와 마디의 개수 (양 끝의 마디도 세어요)</span></div>
+          <div class="in-grid" style="grid-template-columns: 74px 1fr 1fr">
+            <span class="lab">첫 번째</span><input class="num-in" id="iA1" type="number" inputmode="numeric" step="1" placeholder="배" aria-label="첫 번째 정상파의 배 개수"><input class="num-in" id="iN1" type="number" inputmode="numeric" step="1" placeholder="마디" aria-label="첫 번째 정상파의 마디 개수">
+            <span class="lab">두 번째</span><input class="num-in" id="iA2" type="number" inputmode="numeric" step="1" placeholder="배" aria-label="두 번째 정상파의 배 개수"><input class="num-in" id="iN2" type="number" inputmode="numeric" step="1" placeholder="마디" aria-label="두 번째 정상파의 마디 개수">
+            <span class="lab">세 번째</span><input class="num-in" id="iA3" type="number" inputmode="numeric" step="1" placeholder="배" aria-label="세 번째 정상파의 배 개수"><input class="num-in" id="iN3" type="number" inputmode="numeric" step="1" placeholder="마디" aria-label="세 번째 정상파의 마디 개수">
+          </div>
+        </div>
+        <!-- ② 파장 조건 -->
+        <div class="control" data-modes="lam">
+          <div class="control-head"><span>🔢 정상파의 번호 n (배의 개수)</span></div>
+          <div class="segmented seg-wrap" id="nSeg" role="group" aria-label="정상파의 번호 n">
+            <button type="button" data-n="1">n = 1</button><button type="button" data-n="2">n = 2</button><button type="button" data-n="3">n = 3</button></div>
+          <div class="control-head" style="margin-top:8px"><label for="sLl">↔ 줄의 길이 L</label><output id="oLl">0.500 m</output></div>
+          <div class="range-row"><input type="range" id="sLl" min="250" max="650" step="25" value="500" aria-label="줄의 길이 (0.25미터부터 0.65미터까지)"></div>
+          <p class="ctrl-note" id="nLam"></p>
+        </div>
+        <div class="control" data-modes="lam" data-calc="lamIn">
+          <div class="control-head"><span>📝 파장 λ (m)</span></div>
+          <div class="in-grid">
+            <span class="lab">L = 0.50 m, n = 1</span><input class="num-in" id="iW1" type="number" inputmode="decimal" step="any" aria-label="길이 0.50미터, n이 1일 때의 파장 (미터)">
+            <span class="lab">L = 0.50 m, n = 2</span><input class="num-in" id="iW2" type="number" inputmode="decimal" step="any" aria-label="길이 0.50미터, n이 2일 때의 파장 (미터)">
+            <span class="lab">L = 0.50 m, n = 3</span><input class="num-in" id="iW3" type="number" inputmode="decimal" step="any" aria-label="길이 0.50미터, n이 3일 때의 파장 (미터)">
+            <span class="lab">L = 0.375 m, n = 2</span><input class="num-in" id="iW4" type="number" inputmode="decimal" step="any" aria-label="길이 0.375미터, n이 2일 때의 파장 (미터)">
+          </div>
+        </div>
+        <!-- ③ 진동수 -->
+        <div class="control" data-modes="freq">
+          <div class="control-head"><label for="sFl">↔ 줄의 길이 L</label><output id="oFl">0.500 m</output></div>
+          <div class="range-row"><input type="range" id="sFl" min="250" max="650" step="25" value="500" aria-label="줄의 길이 (0.25미터부터 0.65미터까지)"></div>
+          <div class="control-head" style="margin-top:6px"><span>🏋 장력 T</span></div>
+          <div class="segmented seg-wrap" id="tSeg" role="group" aria-label="줄의 장력">
+            <button type="button" data-t="40">40 N</button><button type="button" data-t="80">80 N</button><button type="button" data-t="160">160 N</button></div>
+          <div class="control-head" style="margin-top:6px"><span>🧵 굵기 (단위 길이당 질량 μ)</span></div>
+          <div class="segmented seg-wrap" id="muSeg" role="group" aria-label="줄의 단위 길이당 질량">
+            <button type="button" data-m="1">1.0 g/m</button><button type="button" data-m="2">2.0 g/m</button><button type="button" data-m="4">4.0 g/m</button></div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bRecF" type="button">📝 기록</button><button class="btn btn-sm" id="bBaseF" type="button">↺ 기준 상태로</button><button class="btn btn-sm" id="bHearF" type="button">🔊 듣기</button></div>
+          <p class="ctrl-note" id="nFq"></p>
+        </div>
+        <div class="control" data-modes="freq" data-calc="fqIn">
+          <div class="control-head"><span>📝 L = 0.375 m, T = 40 N, μ = 1.0 g/m</span></div>
+          <div class="in-grid">
+            <span class="lab">속력 v (m/s)</span><input class="num-in" id="iFv" type="number" inputmode="decimal" step="any" aria-label="줄의 파동 속력 (미터 매 초)">
+            <span class="lab">f₁ (Hz)</span><input class="num-in" id="iFf" type="number" inputmode="decimal" step="any" aria-label="기본 진동수 (헤르츠)">
+          </div>
+        </div>
+        <!-- ④ 현악기 -->
+        <div class="control" data-modes="inst" data-show="tune">
+          <div class="control-head"><label for="sIT">🔩 줄을 당기는 장력 T (조율 나사)</label><output id="oIT">50.0 N</output></div>
+          <div class="range-row"><input type="range" id="sIT" min="600" max="2200" step="10" value="1000" aria-label="줄의 장력 (30뉴턴부터 110뉴턴까지)"></div>
+          <div class="btn-row"><button class="btn btn-sm" id="bHearI" type="button">🔊 소리 듣기</button></div>
+        </div>
+        <div class="control" data-modes="inst" data-show="fret">
+          <div class="control-head"><label for="sIF">👆 줄을 누르는 위치 (너트에서)</label><output id="oIF">0.0 cm</output></div>
+          <div class="range-row"><input type="range" id="sIF" min="0" max="65" step="1" value="0" aria-label="줄을 누르는 위치 (너트에서 0센티미터부터 32.5센티미터까지)"></div>
+        </div>
+        <div class="control" data-modes="inst" data-show="harm">
+          <div class="btn-row"><button class="btn btn-sm" id="bHarm" type="button">🖐 줄의 가운데를 가볍게 대기</button></div>
+        </div>
+        <div class="control" data-modes="inst"><p class="ctrl-note" id="nInst"></p></div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

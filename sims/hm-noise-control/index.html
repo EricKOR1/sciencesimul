@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#f26b3a">
+  <title>음파 간섭과 소음 제어 | 고등 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎧</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+<style>
+    .stage-toolbar { min-height: 61px; }
+    .segmented button { min-height: 44px; }
+    .segmented button.on { background: var(--phy); color: #fff; }
+    #modeSeg { width: 100%; flex-wrap: wrap; }
+    #modeSeg button { flex: 1 1 auto; min-width: 0; padding-left: 8px; padding-right: 8px; font-size: 14.5px; }
+    #modeSeg button[hidden] { display: none !important; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard .btn-sm { min-height: 44px; }
+    #ctrlCard [hidden] { display: none !important; }
+    .ctrl-note { font-size: 14px; color: var(--muted); margin: 6px 0 0; line-height: 1.4; }
+    .btn-row { display: flex; gap: 8px; margin-top: 6px; }
+    .btn-row .btn { flex: 1; padding-left: 8px; padding-right: 8px; }
+    .seg-wrap { border-radius: 20px; display: flex; flex-wrap: wrap; width: 100%; }
+    .seg-wrap button { flex: 1 1 auto; min-width: 0; padding-left: 6px; padding-right: 6px; font-size: 14px; }
+    .range-row { display: flex; align-items: center; gap: 8px; }
+    .range-row input[type=range] { flex: 1; min-width: 0; height: 44px; }
+    .sel-in { width: 100%; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 8px; font: 800 14.5px var(--font); color: var(--ink); background: #fff; }
+    .sel-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .sel-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .num-in { width: 100%; min-width: 0; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 10px; font: 800 16px var(--font); color: var(--ink); background: #fff; }
+    .num-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .num-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .in-grid { display: grid; grid-template-columns: 96px 1fr; gap: 6px 8px; align-items: center; margin-top: 6px; }
+    .in-grid .lab { font-weight: 800; font-size: 14px; line-height: 1.25; }
+    .in-grid .sel-in { min-height: 44px; padding: 2px 6px; font-size: 14px; }
+    .sel-row { margin-top: 8px; }
+    .sel-row .q { font-weight: 800; font-size: 14px; margin-bottom: 3px; line-height: 1.25; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+    .chips button { min-height: 44px; padding: 6px 12px; border: 2px solid var(--line); background: #fff; border-radius: 999px; font-weight: 800; font-size: 14.5px; cursor: pointer; color: var(--ink); font-family: inherit; }
+    .chips button.on { border-color: var(--phy); background: color-mix(in srgb, var(--phy) 14%, white); color: #9a3412; }
+    @keyframes shakeX { 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+    .readout .value.txt { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .concept table.mini, table.mini { border-collapse: collapse; margin: 6px 0; font-size: 14px; width: 100%; }
+    .concept table.mini th, .concept table.mini td, table.mini th, table.mini td { border: 1px solid var(--line); padding: 4px 6px; text-align: center; }
+    .concept table.mini th, table.mini th { background: var(--surface-2); font-weight: 800; }
+    .stage-canvas .stage-hint { top: 10px; bottom: auto; }
+    @media (orientation: portrait) and (min-width: 600px) {
+      .side-col:has(> #ctrlCard[hidden]) > #game { grid-column: 1 / -1; }
+    }
+    @media (max-width: 599px) {
+      .readout .value.txt { font-size: 15px; }
+      .stage-toolbar { gap: 6px; padding: 8px; }
+      .stage-toolbar .spacer { display: none; }
+      #modeSeg button { font-size: 13.5px; padding-left: 6px; padding-right: 6px; }
+      .stage-hint { font-size: 13px; padding: 5px 12px; }
+    }
+  </style>
+
+</head>
+<body class="sim-page" data-subject="phy">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#hm">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">역학과 에너지 · Ⅲ. 탄성파와 소리</div>
+      <h1>음파 간섭과 소음 제어</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <div class="segmented" id="modeSeg" role="tablist" aria-label="화면 고르기">
+            <button type="button" data-mode="sum">🌊 소리 중첩</button>
+            <button type="button" data-mode="spk">🔊 스피커 간섭</button>
+            <button type="button" data-mode="anc">🎧 소음 상쇄</button>
+            <button type="button" data-mode="cards">🗂 사례 분류</button>
+            <button type="button" data-mode="hall">🏛 공연장 배치</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="두 소리의 파형 중첩과 맥놀이, 두 스피커가 만드는 소리의 간섭, 능동 소음 제거 헤드폰의 원리, 소음 제어 사례 분류와 공연장 스피커 배치를 탐구하는 화면"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">—</span><span class="value txt" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">—</span><span class="value txt" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">—</span><span class="value txt" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+
+        <!-- ① 소리 중첩 -->
+        <div class="control" data-modes="sum" data-show="beatTab">
+          <div class="segmented seg-wrap" id="sumSeg" role="group" aria-label="겹치는 소리의 종류">
+            <button type="button" data-s="phase">같은 진동수</button><button type="button" data-s="beat">다른 진동수 (맥놀이)</button></div>
+        </div>
+        <div class="control" data-modes="sum" data-sub="phase">
+          <div class="control-head"><label for="sPh">⏱ 두 소리의 위상차</label><output id="oPh">0°</output></div>
+          <div class="range-row"><input type="range" id="sPh" min="0" max="180" step="15" value="0" aria-label="두 소리의 위상차 (0도부터 180도까지)"></div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bRecPh" type="button">📝 합성 진폭 기록</button></div>
+          <p class="ctrl-note" id="nPh"></p>
+        </div>
+        <div class="control" data-modes="sum" data-sub="beat">
+          <div class="control-head"><span>🎵 두 번째 소리의 진동수 (첫 번째는 440 Hz)</span></div>
+          <div class="segmented seg-wrap" id="f2Seg" role="group" aria-label="두 번째 소리의 진동수">
+            <button type="button" data-f="442">442 Hz</button><button type="button" data-f="444">444 Hz</button><button type="button" data-f="448">448 Hz</button></div>
+          <p class="ctrl-note" id="nBeat"></p>
+        </div>
+        <div class="control" data-modes="sum" data-sub="beat" data-calc="beatIn">
+          <div class="control-head"><span>📝 440 Hz + 444 Hz의 맥놀이 진동수 (Hz)</span></div>
+          <input class="num-in" id="iBeat" type="number" inputmode="decimal" step="any" aria-label="맥놀이 진동수 (헤르츠)">
+        </div>
+        <!-- ② 스피커 간섭 -->
+        <div class="control" data-modes="spk">
+          <div class="control-head"><label for="sSf">🎵 소리의 진동수 f</label><output id="oSf">680 Hz</output></div>
+          <div class="range-row"><input type="range" id="sSf" min="0" max="8" step="1" value="4" aria-label="소리의 진동수 (340헤르츠부터 1020헤르츠까지)"></div>
+          <div class="control-head" style="margin-top:6px"><label for="sSd">↔ 스피커 간격 d</label><output id="oSd">1.0 m</output></div>
+          <div class="range-row"><input type="range" id="sSd" min="5" max="20" step="1" value="10" aria-label="스피커 사이 간격 (0.5미터부터 2.0미터까지)"></div>
+          <div class="control-head" style="margin-top:6px"><label for="sSx">🎤 걷는 사람의 위치</label><output id="oSx">0.0 m</output></div>
+          <div class="range-row"><input type="range" id="sSx" min="-100" max="100" step="1" value="0" aria-label="걷는 사람의 가로 위치 (왼쪽 10미터부터 오른쪽 10미터까지)"></div>
+          <p class="ctrl-note" id="nSpk"></p>
+        </div>
+        <div class="control" data-modes="spk" data-show="recDark">
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bRecDark" type="button">📝 첫 상쇄 위치 기록</button><button class="btn btn-sm" id="bClrDark" type="button">🗑 지우기</button></div>
+        </div>
+        <!-- ③ 소음 상쇄 -->
+        <div class="control" data-modes="anc" data-show="ancA">
+          <div class="control-head"><label for="sAp">🔈 스피커 소리의 위상 (소음 기준)</label><output id="oAp">90°</output></div>
+          <div class="range-row"><input type="range" id="sAp" min="0" max="360" step="5" value="90" aria-label="스피커 소리의 위상 (0도부터 360도까지)"></div>
+          <div class="control-head" style="margin-top:6px"><label for="sAb">🔈 스피커 소리의 크기</label><output id="oAb">100 %</output></div>
+          <div class="range-row"><input type="range" id="sAb" min="70" max="130" step="1" value="100" aria-label="스피커 소리의 크기 (소음의 70퍼센트부터 130퍼센트까지)"></div>
+        </div>
+        <div class="control" data-modes="anc" data-show="ancB">
+          <div class="control-head"><span>🎵 소음의 진동수</span></div>
+          <div class="segmented seg-wrap" id="aFSeg" role="group" aria-label="소음의 진동수">
+            <button type="button" data-f="100">100 Hz</button><button type="button" data-f="500">500 Hz</button><button type="button" data-f="2000">2000 Hz</button></div>
+          <div class="control-head" style="margin-top:8px"><label for="sAd">⏳ 처리 지연 시간</label><output id="oAd">0.10 ms</output></div>
+          <div class="range-row"><input type="range" id="sAd" min="0" max="20" step="1" value="10" aria-label="처리 지연 시간 (0밀리초부터 0.20밀리초까지)"></div>
+        </div>
+        <div class="control" data-modes="anc"><p class="ctrl-note" id="nAnc"></p></div>
+        <div class="control" data-modes="anc" data-calc="ancIn">
+          <div class="control-head"><span>📝 0.10 ms 지연, 2000 Hz 소음의 잔여 진폭 (A)</span></div>
+          <input class="num-in" id="iAnc" type="number" inputmode="decimal" step="any" aria-label="잔여 진폭 (소음 진폭 A의 몇 배)">
+        </div>
+        <!-- ④ 사례 분류 / 공연장 배치 -->
+        <div class="control" data-modes="cards">
+          <p class="ctrl-note" id="nCards"></p>
+        </div>
+        <div class="control" data-modes="hall">
+          <div class="control-head"><span>🎵 시험용 소리의 진동수</span></div>
+          <div class="segmented seg-wrap" id="hFSeg" role="group" aria-label="시험용 소리의 진동수">
+            <button type="button" data-f="340">340 Hz</button><button type="button" data-f="680">680 Hz</button><button type="button" data-f="1020">1020 Hz</button></div>
+          <div class="control-head" style="margin-top:8px"><label for="sHd">↔ 스피커 간격 d</label><output id="oHd">5.0 m</output></div>
+          <div class="range-row"><input type="range" id="sHd" min="5" max="80" step="5" value="50" aria-label="스피커 사이 간격 (0.5미터부터 8.0미터까지)"></div>
+          <p class="ctrl-note" id="nHall"></p>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

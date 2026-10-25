@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#16a34a">
+  <title>에너지 섭취와 소비 | 고등 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚖️</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; }
+    .stage-toolbar { min-height: 58px; }
+    .stage-toolbar .segmented { flex-wrap: wrap; }
+    .stage-toolbar .segmented button { min-height: 40px; padding: 5px 10px; font-size: 14px; white-space: nowrap; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard [hidden] { display: none !important; }
+    .btn-sm { min-height: 44px; }
+    .btn-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+    .btn-row .btn { flex: 1; padding-left: 8px; padding-right: 8px; }
+    .ctrl-note { margin: 6px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    .ctrl-note b { color: var(--ink); }
+    .range-row { display: flex; align-items: center; gap: 8px; }
+    .range-row input[type=range] { flex: 1; min-width: 0; height: 44px; }
+    .seg-full { display: flex; width: 100%; }
+    .seg-full button { flex: 1 1 0; min-width: 0; min-height: 44px; font-size: 14.5px; }
+    .chip-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px; }
+    .chip-grid.three { grid-template-columns: 1fr 1fr 1fr; }
+    .chip-grid button { min-height: 44px; padding: 6px 8px; border: 2px solid var(--line); background: #fff; border-radius: 12px; font-weight: 800; font-size: 14px; cursor: pointer; color: var(--ink); text-align: center; }
+    .chip-grid button.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); }
+    .chip-grid button.seen:not(.on) { border-color: color-mix(in srgb, var(--subject) 45%, white); }
+    .chip-grid button:disabled { opacity: .45; cursor: not-allowed; }
+    .chip-grid button:active { transform: scale(.98); }
+    .sel-in { width: 100%; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 8px; font: 800 14px var(--font); color: var(--ink); background: #fff; }
+    .sel-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .sel-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .num-in { width: 100%; min-width: 0; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 8px; font: 800 16px ui-monospace, Menlo, Consolas, monospace; color: var(--ink); background: #fff; text-align: right; }
+    .num-in:focus { outline: none; border-color: var(--subject); }
+    .num-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .num-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .in-unit { font-size: 12.5px; color: var(--muted); font-weight: 700; }
+    .in-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 10px; align-items: end; margin-top: 8px; }
+    .in-row .lab { font-weight: 800; font-size: 13.5px; margin-bottom: 3px; line-height: 1.25; }
+    @keyframes shakeX { 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+    .readout .value { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .stage-canvas .stage-hint { top: 10px; bottom: auto; }
+    .pk-pool { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+    .pk-item { min-height: 44px; padding: 6px 12px; border: 2px solid var(--line); background: #fff; border-radius: 12px; font-weight: 800; font-size: 14px; cursor: pointer; color: var(--ink); }
+    .pk-item:disabled { opacity: .35; cursor: default; }
+    .pk-seq { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; min-height: 46px; border: 2px dashed var(--line); border-radius: 12px; padding: 6px; }
+    .pk-chip { min-height: 34px; padding: 3px 10px; border: 2px solid var(--subject); background: color-mix(in srgb, var(--subject) 12%, white); border-radius: 999px; font-weight: 800; font-size: 13.5px; cursor: pointer; color: var(--ink); }
+    .pk-chip b { color: var(--subject); margin-right: 2px; }
+    .pk-reset { margin-top: 8px; width: 100%; }
+    .tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; margin-top: 6px; }
+    .tbl th, .tbl td { border: 1px solid var(--line); padding: 4px 4px; text-align: center; }
+    .tbl th { background: var(--surface-2); font-weight: 800; }
+    .tbl td.rowh { font-weight: 800; text-align: left; background: var(--surface-2); }
+    .tbl select { width: 100%; min-height: 40px; border: 2px solid var(--line); border-radius: 8px; font: 800 13.5px var(--font); background: #fff; color: var(--ink); }
+    .tbl select.ok { border-color: var(--good); background: var(--good-soft); }
+    .tbl select.bad { border-color: var(--bad); background: var(--bad-soft); }
+    .check-list { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 4px; font-size: 13.5px; font-weight: 700; }
+    .check-list li { display: flex; gap: 6px; align-items: baseline; }
+    .check-list li.on { color: var(--good); }
+    .btn-col { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+    #modeSeg button.lv-off { display: none; }
+    @media (max-width: 1100px) and (orientation: landscape) { .toolbar-label { display: none; } }
+    @media (max-width: 599px) {
+      .readout .value { font-size: 15px; }
+      .stage-toolbar { gap: 6px; padding: 8px; }
+      .stage-toolbar .spacer, .toolbar-label { display: none; }
+      .stage-toolbar .segmented button { padding: 5px 8px; font-size: 13.5px; }
+      .stage-hint { font-size: 13px; padding: 5px 12px; }
+    }
+    .stage-toolbar .segmented button.lv-off { display: none; }
+    .tag-pill { display: inline-block; padding: 2px 9px; border-radius: 999px; font-weight: 800; font-size: 12.5px; background: color-mix(in srgb, var(--subject) 14%, white); color: var(--ink); }
+    .tbl-in { width: 100%; }
+
+    .case-list { display: grid; gap: 8px; margin-top: 6px; }
+    .case-row { display: grid; grid-template-columns: 1fr; gap: 4px; padding: 6px; border: 2px solid var(--line); border-radius: 12px; }
+    .case-btn.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); }
+    .case-btn.ok { border-color: var(--good); }
+    #ctrlCard [data-bv][hidden] { display: none !important; }
+  </style>
+</head>
+<body class="sim-page" data-subject="bio">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#hy">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">세포와 물질대사 · Ⅱ. 물질대사와 에너지</div>
+      <h1>에너지 섭취와 소비</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">⚖️ 에너지</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="tablist" aria-label="화면 고르기">
+            <button type="button" data-mode="cal" data-lv="0" data-feature="cal">🔎 영양소 열량</button>
+            <button type="button" data-mode="meal" data-lv="1" data-feature="meal">📱 하루 섭취</button>
+            <button type="button" data-mode="burn" data-lv="2" data-feature="burn">🏃 하루 소비</button>
+            <button type="button" data-mode="bal" data-lv="3" data-feature="bal">⚖️ 에너지 균형</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="식품 성분표 열량 계산, 하루 식단 기록, 24시간 활동 시간표, 에너지 균형 천칭"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">—</span><span class="value" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">—</span><span class="value" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">—</span><span class="value" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" data-modes="cal">
+          <div class="control-head"><span>🧮 열량 계산</span></div>
+          <p class="ctrl-note" id="clTitle"></p>
+          <div class="in-row" style="grid-template-columns:1fr 1fr 1fr">
+            <div><div class="lab"><label for="inC">탄수화물 × 4</label></div><input class="num-in" id="inC" type="text" inputmode="decimal" maxlength="7" aria-label="탄수화물 열량 (kcal)"><span class="in-unit">kcal</span></div>
+            <div><div class="lab"><label for="inP">단백질 × 4</label></div><input class="num-in" id="inP" type="text" inputmode="decimal" maxlength="7" aria-label="단백질 열량 (kcal)"><span class="in-unit">kcal</span></div>
+            <div><div class="lab"><label for="inF">지방 × 9</label></div><input class="num-in" id="inF" type="text" inputmode="decimal" maxlength="7" aria-label="지방 열량 (kcal)"><span class="in-unit">kcal</span></div>
+          </div>
+          <p class="ctrl-note" id="clNote"></p>
+        </div>
+        <div class="control" data-modes="meal">
+          <div class="control-head"><span>📱 담을 칸</span></div>
+          <div class="chip-grid" id="mealSel" style="grid-template-columns:1fr 1fr 1fr 1fr"><button type="button" data-v="b">🌅 아침</button><button type="button" data-v="l">🍱 점심</button><button type="button" data-v="s">🍪 간식</button><button type="button" data-v="d">🌙 저녁</button></div>
+          <p class="ctrl-note" id="mlNote"></p>
+          <p class="ctrl-note">음식을 눌러서 담거나 끌어서 칸에 놓아요. 칸 안의 음식을 누르면 빠져요. 입력한 식단은 저장되지 않아요.</p>
+          <div class="btn-row"><button class="btn btn-sm" id="mlClear" type="button">↺ 식단 비우기</button></div>
+        </div>
+        <div class="control" data-modes="burn">
+          <div class="control-head"><label for="sKg">⚖️ 체중</label><output id="oKg">60 kg</output></div>
+          <div class="range-row"><input type="range" id="sKg" min="40" max="80" step="1" value="60" aria-label="체중 (40에서 80 킬로그램)"></div>
+          <div class="control-head" style="margin-top:8px"><span>🖌 칠할 활동</span></div>
+          <div class="chip-grid three" id="brushSel"><button type="button" data-v="sleep">😴 수면·휴식</button><button type="button" data-v="study">📖 앉아 공부</button><button type="button" data-v="walk">🚶 걷기</button><button type="button" data-v="bike">🚴 자전거</button><button type="button" data-v="run">🏃 달리기</button></div>
+          <div class="in-row" style="grid-template-columns:1fr"><div><div class="lab"><label for="inTot">총 소비 에너지 (예시 하루)</label></div><input class="num-in" id="inTot" type="text" inputmode="numeric" maxlength="6" aria-label="총 소비 에너지 (kcal)"><span class="in-unit">kcal</span></div></div>
+          <p class="ctrl-note" id="burnNote"></p>
+          <div class="btn-row"><button class="btn btn-sm" id="bnClear" type="button">↺ 시간표 비우기</button></div>
+        </div>
+        <div class="control" data-modes="bal">
+          <div class="chip-grid" id="balView"><button type="button" data-v="free">🎚 직접 맞추기</button><button type="button" data-v="case">🗂 사례 카드</button></div>
+          <div data-bv="free">
+            <div class="control-head" style="margin-top:8px"><label for="sIn">🍽 섭취 에너지</label><output id="oIn">2,200 kcal</output></div>
+            <div class="range-row"><input type="range" id="sIn" min="1000" max="4500" step="50" value="2200" aria-label="섭취 에너지 (1000에서 4500 킬로칼로리)"></div>
+            <div class="control-head"><label for="sOut">🔥 소비 에너지</label><output id="oOut">2,200 kcal</output></div>
+            <div class="range-row"><input type="range" id="sOut" min="1500" max="4500" step="50" value="2200" aria-label="소비 에너지 (1500에서 4500 킬로칼로리)"></div>
+            <p class="ctrl-note">교육용 예시 값이에요. 개인의 건강 · 체중 조언이 아니며 입력은 저장되지 않아요.</p>
+          </div>
+          <div data-bv="case">
+            <p class="ctrl-note">사례 이름을 누르면 천칭이 기울어요. 방향과 몸의 변화를 골라요.</p>
+            <div class="case-list">
+            <div class="case-row"><button class="btn btn-sm case-btn" id="c1n" type="button">방학 내내 앉아서 간식</button>
+              <select class="sel-in" id="c1d" aria-label="방학 내내 앉아서 간식 천칭 방향"><option value="">천칭 방향</option><option value="in">섭취 &gt; 소비</option><option value="eq">섭취 = 소비</option><option value="out">섭취 &lt; 소비</option></select>
+              <select class="sel-in" id="c1b" aria-label="방학 내내 앉아서 간식 몸의 변화"><option value="">몸의 변화</option><option value="fat">남는 에너지가 지방으로 저장</option><option value="keep">체중 · 저장량 그대로</option><option value="use">저장 지방 · 근육을 이용</option><option value="grow">성장에 쓰임</option></select></div>
+            <div class="case-row"><button class="btn btn-sm case-btn" id="c2n" type="button">운동선수의 고에너지 식단</button>
+              <select class="sel-in" id="c2d" aria-label="운동선수의 고에너지 식단 천칭 방향"><option value="">천칭 방향</option><option value="in">섭취 &gt; 소비</option><option value="eq">섭취 = 소비</option><option value="out">섭취 &lt; 소비</option></select>
+              <select class="sel-in" id="c2b" aria-label="운동선수의 고에너지 식단 몸의 변화"><option value="">몸의 변화</option><option value="fat">남는 에너지가 지방으로 저장</option><option value="keep">체중 · 저장량 그대로</option><option value="use">저장 지방 · 근육을 이용</option><option value="grow">성장에 쓰임</option></select></div>
+            <div class="case-row"><button class="btn btn-sm case-btn" id="c3n" type="button">무리한 굶기</button>
+              <select class="sel-in" id="c3d" aria-label="무리한 굶기 천칭 방향"><option value="">천칭 방향</option><option value="in">섭취 &gt; 소비</option><option value="eq">섭취 = 소비</option><option value="out">섭취 &lt; 소비</option></select>
+              <select class="sel-in" id="c3b" aria-label="무리한 굶기 몸의 변화"><option value="">몸의 변화</option><option value="fat">남는 에너지가 지방으로 저장</option><option value="keep">체중 · 저장량 그대로</option><option value="use">저장 지방 · 근육을 이용</option><option value="grow">성장에 쓰임</option></select></div>
+            <div class="case-row"><button class="btn btn-sm case-btn" id="c4n" type="button">성장기 청소년</button>
+              <select class="sel-in" id="c4d" aria-label="성장기 청소년 천칭 방향"><option value="">천칭 방향</option><option value="in">섭취 &gt; 소비</option><option value="eq">섭취 = 소비</option><option value="out">섭취 &lt; 소비</option></select>
+              <select class="sel-in" id="c4b" aria-label="성장기 청소년 몸의 변화"><option value="">몸의 변화</option><option value="fat">남는 에너지가 지방으로 저장</option><option value="keep">체중 · 저장량 그대로</option><option value="use">저장 지방 · 근육을 이용</option><option value="grow">성장에 쓰임</option></select></div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

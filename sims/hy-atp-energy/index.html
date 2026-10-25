@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#16a34a">
+  <title>ATP와 에너지 공급 | 고등 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔋</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; }
+    .stage-toolbar { min-height: 58px; }
+    .stage-toolbar .segmented { flex-wrap: wrap; }
+    .stage-toolbar .segmented button { min-height: 40px; padding: 5px 10px; font-size: 14px; white-space: nowrap; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard [hidden] { display: none !important; }
+    .btn-sm { min-height: 44px; }
+    .btn-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+    .btn-row .btn { flex: 1; padding-left: 8px; padding-right: 8px; }
+    .ctrl-note { margin: 6px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    .ctrl-note b { color: var(--ink); }
+    .range-row { display: flex; align-items: center; gap: 8px; }
+    .range-row input[type=range] { flex: 1; min-width: 0; height: 44px; }
+    .seg-full { display: flex; width: 100%; }
+    .seg-full button { flex: 1 1 0; min-width: 0; min-height: 44px; font-size: 14.5px; }
+    .chip-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px; }
+    .chip-grid.three { grid-template-columns: 1fr 1fr 1fr; }
+    .chip-grid button { min-height: 44px; padding: 6px 8px; border: 2px solid var(--line); background: #fff; border-radius: 12px; font-weight: 800; font-size: 14px; cursor: pointer; color: var(--ink); text-align: center; }
+    .chip-grid button.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); }
+    .chip-grid button.seen:not(.on) { border-color: color-mix(in srgb, var(--subject) 45%, white); }
+    .chip-grid button:disabled { opacity: .45; cursor: not-allowed; }
+    .chip-grid button:active { transform: scale(.98); }
+    .sel-in { width: 100%; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 8px; font: 800 14px var(--font); color: var(--ink); background: #fff; }
+    .sel-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .sel-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .num-in { width: 100%; min-width: 0; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 8px; font: 800 16px ui-monospace, Menlo, Consolas, monospace; color: var(--ink); background: #fff; text-align: right; }
+    .num-in:focus { outline: none; border-color: var(--subject); }
+    .num-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .num-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .in-unit { font-size: 12.5px; color: var(--muted); font-weight: 700; }
+    .in-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 10px; align-items: end; margin-top: 8px; }
+    .in-row .lab { font-weight: 800; font-size: 13.5px; margin-bottom: 3px; line-height: 1.25; }
+    @keyframes shakeX { 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+    .readout .value { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .stage-canvas .stage-hint { top: 10px; bottom: auto; }
+    .pk-pool { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+    .pk-item { min-height: 44px; padding: 6px 12px; border: 2px solid var(--line); background: #fff; border-radius: 12px; font-weight: 800; font-size: 14px; cursor: pointer; color: var(--ink); }
+    .pk-item:disabled { opacity: .35; cursor: default; }
+    .pk-seq { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; min-height: 46px; border: 2px dashed var(--line); border-radius: 12px; padding: 6px; }
+    .pk-chip { min-height: 34px; padding: 3px 10px; border: 2px solid var(--subject); background: color-mix(in srgb, var(--subject) 12%, white); border-radius: 999px; font-weight: 800; font-size: 13.5px; cursor: pointer; color: var(--ink); }
+    .pk-chip b { color: var(--subject); margin-right: 2px; }
+    .pk-reset { margin-top: 8px; width: 100%; }
+    .tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; margin-top: 6px; }
+    .tbl th, .tbl td { border: 1px solid var(--line); padding: 4px 4px; text-align: center; }
+    .tbl th { background: var(--surface-2); font-weight: 800; }
+    .tbl td.rowh { font-weight: 800; text-align: left; background: var(--surface-2); }
+    .tbl select { width: 100%; min-height: 40px; border: 2px solid var(--line); border-radius: 8px; font: 800 13.5px var(--font); background: #fff; color: var(--ink); }
+    .tbl select.ok { border-color: var(--good); background: var(--good-soft); }
+    .tbl select.bad { border-color: var(--bad); background: var(--bad-soft); }
+    .check-list { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 4px; font-size: 13.5px; font-weight: 700; }
+    .check-list li { display: flex; gap: 6px; align-items: baseline; }
+    .check-list li.on { color: var(--good); }
+    .btn-col { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+    #modeSeg button.lv-off { display: none; }
+    @media (max-width: 1100px) and (orientation: landscape) { .toolbar-label { display: none; } }
+    @media (max-width: 599px) {
+      .readout .value { font-size: 15px; }
+      .stage-toolbar { gap: 6px; padding: 8px; }
+      .stage-toolbar .spacer, .toolbar-label { display: none; }
+      .stage-toolbar .segmented button { padding: 5px 8px; font-size: 13.5px; }
+      .stage-hint { font-size: 13px; padding: 5px 12px; }
+    }
+    .stage-toolbar .segmented button.lv-off { display: none; }
+    .tag-pill { display: inline-block; padding: 2px 9px; border-radius: 999px; font-weight: 800; font-size: 12.5px; background: color-mix(in srgb, var(--subject) 14%, white); color: var(--ink); }
+    .tbl-in { width: 100%; }
+
+    .org-list { display: grid; gap: 8px; margin-top: 6px; }
+    .org-row { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 6px; padding: 6px; border: 2px solid var(--line); border-radius: 12px; }
+    .org-row .lab { grid-column: 1 / -1; font-weight: 800; font-size: 13.5px; }
+    .org-row .sel-in { font-size: 13px; padding: 4px 4px; }
+  </style>
+</head>
+<body class="sim-page" data-subject="bio">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#hy">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">세포와 물질대사 · Ⅱ. 물질대사와 에너지</div>
+      <h1>ATP와 에너지 공급</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🔋 ATP</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="tablist" aria-label="화면 고르기">
+            <button type="button" data-mode="atp" data-lv="0" data-feature="atp">🔋 ATP 모형</button>
+            <button type="button" data-mode="flow" data-lv="1" data-feature="flow">🌞 에너지 흐름</button>
+            <button type="button" data-mode="couple" data-lv="2" data-feature="couple">⚙️ 에너지 연결</button>
+            <button type="button" data-mode="life" data-lv="3" data-feature="life">🌍 생명 활동</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="ATP 블록 만들기, 광합성과 세포호흡의 에너지 흐름도, ATP와 반응의 에너지 연결, 생물의 에너지 지도"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">—</span><span class="value" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">—</span><span class="value" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">—</span><span class="value" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" data-modes="atp">
+          <div class="control-head"><span>🔋 ATP 블록</span></div>
+          <div class="btn-row"><button class="btn btn-sm" id="atDis" type="button">✂ 인산기 떼기 (방전)</button><button class="btn btn-sm btn-primary" id="atChg" type="button">➕ 인산기 붙이기</button></div>
+          <div class="btn-row"><button class="btn btn-sm" id="atReset" type="button">↺ 처음으로</button></div>
+          <p class="ctrl-note" id="atNote"></p>
+          <p class="ctrl-note">인산기 구슬을 점선 원에 <b>끌어서</b> 놓거나 눌러서 붙여요. 2번째, 3번째 인산기는 <b>에너지</b>를 받아야 붙어요.</p>
+        </div>
+        <div class="control" data-modes="flow">
+          <div class="control-head"><label for="sMol">🍬 포도당 양</label><output id="oMol">1.0 mol (180 g)</output></div>
+          <div class="range-row"><input type="range" id="sMol" min="0.5" max="2" step="0.1" value="1" aria-label="포도당 양 (0.5에서 2 몰)"></div>
+          <div class="chip-grid" id="lightSeg"><button type="button" data-v="on">☀ 빛 있음</button><button type="button" data-v="off">🌙 빛 없음</button></div>
+          <div class="in-row">
+            <div><div class="lab"><label for="inPct">ATP로 저장된 비율</label></div><input class="num-in" id="inPct" type="text" inputmode="decimal" maxlength="5" aria-label="ATP로 저장된 에너지 비율 (퍼센트)"><span class="in-unit">% (1 mol일 때)</span></div>
+            <div><div class="lab"><label for="inHeat">0.5 mol일 때 열</label></div><input class="num-in" id="inHeat" type="text" inputmode="decimal" maxlength="7" aria-label="포도당 0.5몰일 때 열 에너지 (킬로줄)"><span class="in-unit">kJ</span></div>
+          </div>
+          <p class="ctrl-note" id="flNote"></p>
+        </div>
+        <div class="control" data-modes="couple">
+          <div class="control-head"><span>⚙️ 반응과 ATP 연결</span></div>
+          <p class="ctrl-note">ATP 토큰을 <b>끌어서</b> 기계에 놓거나, 토큰을 눌러 고른 뒤 기계를 눌러요. ADP는 🔥 세포호흡 충전기로 보내요.</p>
+          <p class="ctrl-note" id="cpNote"></p>
+          <div class="btn-row"><button class="btn btn-sm" id="cpReset" type="button">↺ 처음으로</button></div>
+        </div>
+        <div class="control" data-modes="life">
+          <div class="control-head"><span>🌍 에너지 출발점과 ATP 쓰임</span></div>
+          <div class="org-list">
+            <div class="org-row"><div class="lab">🌿 식물</div>
+              <select class="sel-in" id="ls_plant" aria-label="🌿 식물 에너지 출발점"><option value="">출발점</option><option value="sun">햇빛 (광합성)</option><option value="food">먹이의 유기물</option><option value="ferm">포도당 발효</option><option value="chem">무기물의 에너지</option></select>
+              <select class="sel-in" id="lu_plant" aria-label="🌿 식물 ATP 쓰임"><option value="">ATP 쓰임</option><option value="synth">물질 합성 · 생장</option><option value="move">근수축</option><option value="light">발광</option><option value="div">세포 분열 · 출아</option></select></div>
+            <div class="org-row"><div class="lab">🏃 근육 세포</div>
+              <select class="sel-in" id="ls_muscle" aria-label="🏃 근육 세포 에너지 출발점"><option value="">출발점</option><option value="sun">햇빛 (광합성)</option><option value="food">먹이의 유기물</option><option value="ferm">포도당 발효</option><option value="chem">무기물의 에너지</option></select>
+              <select class="sel-in" id="lu_muscle" aria-label="🏃 근육 세포 ATP 쓰임"><option value="">ATP 쓰임</option><option value="synth">물질 합성 · 생장</option><option value="move">근수축</option><option value="light">발광</option><option value="div">세포 분열 · 출아</option></select></div>
+            <div class="org-row"><div class="lab">🍞 효모(산소 없음)</div>
+              <select class="sel-in" id="ls_yeast" aria-label="🍞 효모(산소 없음) 에너지 출발점"><option value="">출발점</option><option value="sun">햇빛 (광합성)</option><option value="food">먹이의 유기물</option><option value="ferm">포도당 발효</option><option value="chem">무기물의 에너지</option></select>
+              <select class="sel-in" id="lu_yeast" aria-label="🍞 효모(산소 없음) ATP 쓰임"><option value="">ATP 쓰임</option><option value="synth">물질 합성 · 생장</option><option value="move">근수축</option><option value="light">발광</option><option value="div">세포 분열 · 출아</option></select></div>
+            <div class="org-row"><div class="lab">✨ 반딧불이</div>
+              <select class="sel-in" id="ls_firefly" aria-label="✨ 반딧불이 에너지 출발점"><option value="">출발점</option><option value="sun">햇빛 (광합성)</option><option value="food">먹이의 유기물</option><option value="ferm">포도당 발효</option><option value="chem">무기물의 에너지</option></select>
+              <select class="sel-in" id="lu_firefly" aria-label="✨ 반딧불이 ATP 쓰임"><option value="">ATP 쓰임</option><option value="synth">물질 합성 · 생장</option><option value="move">근수축</option><option value="light">발광</option><option value="div">세포 분열 · 출아</option></select></div>
+            <div class="org-row"><div class="lab">🌋 열수구 세균</div>
+              <select class="sel-in" id="ls_vent" aria-label="🌋 열수구 세균 에너지 출발점"><option value="">출발점</option><option value="sun">햇빛 (광합성)</option><option value="food">먹이의 유기물</option><option value="ferm">포도당 발효</option><option value="chem">무기물의 에너지</option></select>
+              <select class="sel-in" id="lu_vent" aria-label="🌋 열수구 세균 ATP 쓰임"><option value="">ATP 쓰임</option><option value="synth">물질 합성 · 생장</option><option value="move">근수축</option><option value="light">발광</option><option value="div">세포 분열 · 출아</option></select></div>
+          </div>
+          <p class="ctrl-note" id="lfNote"></p>
+          <div class="btn-row"><button class="btn btn-sm" id="lfReset" type="button">↺ 다시 고르기</button></div>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>
