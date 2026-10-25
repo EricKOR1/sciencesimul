@@ -299,7 +299,7 @@
   function stepCompare(dt) {
     const c = S.cp; if (S.mode !== 'compare') return;
     const tg = cpI(c.V); c.I = ap(c.I, tg, dt, 6); if (Math.abs(c.I - tg) < 0.003) c.I = tg;
-    c.q = clamp(c.q + c.I * dt * 0.05, -1, 1); c.qs = ap(c.qs, c.q, dt, 4);
+    c.q = clamp(c.q + c.I * dt * 0.1, -1, 1); c.qs = ap(c.qs, c.q, dt, 4);
     if (tg > 0.12 && c.I > 0.1) c.tDis += dt;
     if (tg < -0.1 && c.I < -0.08) c.tRev += dt;
   }

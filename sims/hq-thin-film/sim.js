@@ -561,7 +561,7 @@
     D.label(Math.min(Cx + Math.sin(th) * Lr * 0.9, sv.x + sv.w - 150), yT - Math.cos(th) * Lr * 0.45, '② 뒷면 반사', { size: PHONE ? 11.5 : 12.5, bg: '#f26b3a', align: 'left' });
     if (tp > 12) D.label(ax - 4, yT + tp + 16, '광로차 2nt = ' + Math.round(st.path) + ' nm', { size: PHONE ? 11.5 : 12.5, bg: '#fff', color: '#c4501b', border: '#f26b3a', align: 'left' });
     T(sv.x + sv.w - 14, sv.y + 22, 't = ' + Math.round(C2.t) + ' nm', PHONE ? 13 : 14.5, '#c4501b', 'right', 800);
-    if (!PHONE) T(sv.x + 14, sv.y + sv.h - 10, '(두께는 실제보다 훨씬 두껍게 그렸어요)', 12, '#5d6879', 'left', 700);
+    if (!PHONE) T(sv.x + 14, sv.y + sv.h - 10, '(두께와 기울기는 구분하려고 크게 그렸어요. 수직 입사로 다뤄요)', 12, '#5d6879', 'left', 700);
     /* --- 합성 (오실로스코프) --- */
     const o = L.osc; panel(o.x, o.y, o.w, o.h, 14);
     const rows = [
@@ -698,7 +698,7 @@
   function lensColor(t) {                      // 코팅한 렌즈가 반사하는 색: 파장마다 cos² 비율로 섞고, 코팅 없는 렌즈보다 어둡게
     const s = [0, 0, 0], ref = [0, 0, 0];
     for (let i = 0; i < LAMS.length; i++) { const I = coatR(LAMS[i], t); for (let k = 0; k < 3; k++) { s[k] += LCOL[i][k] * I; ref[k] += LCOL[i][k]; } }
-    return [0, 1, 2].map((k) => Math.round(255 * gam(s[k] / ref[k]) * 0.92 + 8));
+    return [0, 1, 2].map((k) => Math.round(255 * Math.pow(clamp(s[k] / ref[k], 0, 1), 1 / 3.2) * 0.92 + 8));
   }
   function drawTable() {
     const A = S.ap, x = BOT.x + 12, w = BOT.w - 24, rh = PHONE ? 34 : 22, y0 = BOT.y + 8;
@@ -733,7 +733,7 @@
     ctx.save();
     ctx.fillStyle = '#3a4455'; ctx.beginPath(); ctx.ellipse(cx, cy, rx + 14, ry + 10, 0, 0, TAU); ctx.fill();
     ctx.beginPath(); ctx.ellipse(cx, cy, rx, ry, 0, 0, TAU); ctx.clip();
-    for (let r = 0; r < rx; r += 2) {
+    for (let r = rx; r > 0; r -= 2) {          // 바깥쪽부터 칠하고 안쪽 원판으로 덮어요
       const f = r / rx;
       // 가운데가 두껍고 가장자리가 얇은 기름막 + 약간 비틀림
       for (let a0 = 0; a0 < 12; a0++) {
@@ -753,7 +753,7 @@
     for (let y = -br; y < br; y += 2) {
       const f = (y + br) / (2 * br);
       for (let x = -br; x < br; x += 6) {
-        const t = 120 + 520 * f * f + 70 * Math.sin(x * 0.08 + y * 0.05 + S.t * 0.5) ;
+        const t = 120 + 520 * f * f + 38 * Math.sin(x * 0.05 + y * 0.03 + S.t * 0.5);
         ctx.fillStyle = rgbCss(whiteColor(t, N_SOAP, 'film')); ctx.globalAlpha = 0.9;
         ctx.fillRect(bx + x, by + y, 6.6, 2.6);
       }
