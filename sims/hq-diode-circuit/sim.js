@@ -329,7 +329,8 @@
   // o: { pol, ev, powered, br[], ph, meter }
   function drawCir(ci, ox, oy, W, o) {
     const G = cirGeo(ci), c = CIRS[ci], ev = o.ev, pw = o.powered !== false, pol = o.pol;
-    ctx.save(); ctx.translate(ox + Math.round((W - G.total) / 2), oy);
+    const sc = o.sc || 1;
+    ctx.save(); ctx.translate(ox + Math.round((W - G.total * sc) / 2), oy); ctx.scale(sc, sc);
     if (pw && ev.on) { const ap = activePts(ci, G, ev, pol); ctx.beginPath(); ap.forEach((q, i) => (i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]))); ctx.strokeStyle = 'rgba(250,204,21,.42)'; ctx.lineWidth = 10; ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.stroke(); }
     const w = new Path2D();
     w.moveTo(G.xb, G.ym - 9); w.lineTo(G.xb, G.y0); w.lineTo(G.xr, G.y0); w.lineTo(G.xr, G.yb); w.lineTo(G.xb, G.yb); w.lineTo(G.xb, G.ym + 9);
@@ -356,13 +357,11 @@
     if (pw && ev.on && ev.I > 0.001) pathDots(activePts(ci, G, ev, pol), o.ph, 24, 2.8, '#f59e0b');
     if (o.meter) {                                            // 첫 다이오드 양단 전압계
       const x = slotX(G, 0, 0), lead = '#0d9488';
-      ctx.strokeStyle = lead; ctx.lineWidth = 1.8; ctx.setLineDash([4, 3]); ctx.beginPath(); ctx.moveTo(x - 22, G.y0); ctx.lineTo(x - 22, G.y0 - 22); ctx.lineTo(x - 12, G.y0 - 22); ctx.moveTo(x + 22, G.y0); ctx.lineTo(x + 22, G.y0 - 22); ctx.lineTo(x + 12, G.y0 - 22); ctx.stroke(); ctx.setLineDash([]);
+      ctx.strokeStyle = lead; ctx.lineWidth = 1.8; ctx.setLineDash([4, 3]); ctx.beginPath(); ctx.moveTo(x - 22, G.y0); ctx.lineTo(x - 22, G.y0 - 34); ctx.lineTo(x - 15, G.y0 - 34); ctx.moveTo(x + 22, G.y0); ctx.lineTo(x + 22, G.y0 - 34); ctx.lineTo(x + 15, G.y0 - 34); ctx.stroke(); ctx.setLineDash([]);
+      meterV(x, G.y0 - 34, '', ev.on ? '#0d9488' : '#dc2626');
+      lbl(x + 54, G.y0 - 34, o.meterText, { size: 12.5, bg: ev.on ? '#0d9488' : '#dc2626', pad: 7, minX: -1e4, maxX: 1e4 });
     }
     ctx.restore();
-    if (o.meter) {
-      const G2 = cirGeo(ci), x = ox + Math.round((W - G2.total) / 2) + slotX(G2, 0, 0), y = oy + G2.y0 - 22;
-      meterV(x, y, o.meterText, ev.on ? '#0d9488' : '#dc2626');
-    }
   }
   function drawPuzzle() {
     const rv = S.p.rv || 0, reveal = rv > 0.02;
@@ -399,9 +398,10 @@
     } else {
       const pol = p.flip ? -1 : 1, ev = cirEval(p.cir, pol), G = cirGeo(p.cir);
       const mt = p.cir === 0 ? (ev.on ? '다이오드 0.7 V' : '다이오드 5.0 V') : null;
-      drawCir(p.cir, 0, 40, SC.w, { pol, ev, powered: true, br: p.br, ph: p.ph, meter: p.cir === 0, meterText: mt });
+      const scx = p.cir === 3 || p.cir === 4 ? 1.2 : 1.35, oyc = p.cir === 0 ? 58 : 28;
+      drawCir(p.cir, 0, oyc, SC.w, { pol, ev, powered: true, br: p.br, ph: p.ph, meter: p.cir === 0, meterText: mt, sc: scx });
       // 아래: 측정 카드
-      const y0 = 40 + G.h + 12;
+      const y0 = oyc + (G.h + 6) * scx + 4;
       D.shadow(() => { D.roundRect(10, y0, 452, 394 - y0, 12); ctx.fillStyle = '#fff'; ctx.fill(); }, { blur: 6, y: 2 });
       let y = y0 + 22;
       if (p.cir === 0) {
@@ -452,12 +452,24 @@
   /* ================= ② 브리지 ================= */
   // 마디: 0 = AC₁, 1 = AC₂, 2 = P(+출력), 3 = N(−출력). 표준 방향 [양극(anode), 음극(cathode)]
   const BRD = [[0, 2], [1, 2], [3, 1], [3, 0]];
-  const BN = [[120, 84], [352, 84], [236, 26], [236, 138]];             // 마디 좌표 (장면 좌표)
-  const BSRC = { x: 236, y: 186, r: 17 };
+  const BN = [[120, 76], [352, 76], [236, 18], [236, 130]];             // 마디 좌표 (장면 좌표)
+  const BSRC = { x: 236, y: 172, r: 17 };
   const GD = 100;
   function bridgeSolve(v, orient) {
     const nv = (n) => (n === 0 ? v : n === 1 ? 0 : null);
     const dio = BRD.map((d, k) => (orient[k] > 0 ? d : [d[1], d[0]]));
+    const find = (a, k) => dio.findIndex((d) => d[0] === a && d[1] === k);
+    const shorts = [];
+    [2, 3].forEach((X) => {
+      const a1 = find(0, X), a2 = find(1, X), b1 = find(X, 0), b2 = find(X, 1);
+      if (a1 >= 0 && b2 >= 0 && v >= 2 * VD) shorts.push([a1, b2, 1]);
+      if (a2 >= 0 && b1 >= 0 && -v >= 2 * VD) shorts.push([a2, b1, -1]);
+    });
+    if (shorts.length) {                                       // 합선: 부하를 거치지 않고 다이오드 두 개만으로 전원이 이어짐
+      const on = [0, 0, 0, 0], di = [0, 0, 0, 0]; let isrc = 0;
+      shorts.forEach((s) => { on[s[0]] = on[s[1]] = 1; di[s[0]] = di[s[1]] = 0.15; isrc += s[2] * 0.15; });
+      return { short: true, on, vp: 0, vn: 0, vout: 0, il: 0, di, isrc };
+    }
     for (let m = 0; m < 16; m++) {
       if (m === 0) {                                          // 모두 꺼짐: 부하에 전류 없음, P = N = u
         let lo = -1e9, hi = 1e9;
@@ -525,7 +537,7 @@
   function flipDiode(k) {
     const b = S.b; b.orient[k] = -b.orient[k]; b.flipN_[k] = (b.flipN_[k] || 0) + 1; Sound.click(); b.cacheKey = ''; updateCtl();
   }
-  function brReset() { const b = S.b; b.orient = [1, -1, -1, 1]; b.flipN_ = [0, 1, 1, 0]; b.cacheKey = ''; for (let k = 0; k < 4; k++) b.ang[k] = (b.flipN_[k]) * Math.PI; }
+  function brReset() { const b = S.b; b.orient = [-1, -1, 1, 1]; b.flipN_ = [1, 1, 0, 0]; b.cacheKey = ''; for (let k = 0; k < 4; k++) b.ang[k] = (b.flipN_[k]) * Math.PI; }
   function bPos(k) { const d = BRD[k], A = BN[d[0]], K = BN[d[1]]; return { x: (A[0] + K[0]) / 2, y: (A[1] + K[1]) / 2, ang: Math.atan2(K[1] - A[1], K[0] - A[0]) }; }
   const BLBL = [[-16, -12], [16, -12], [16, 14], [-16, 14]];
   function drawBridgeCircuit() {
@@ -535,19 +547,19 @@
     w.moveTo(BN[0][0], BN[0][1]); w.lineTo(BN[0][0], BSRC.y); w.lineTo(BSRC.x - BSRC.r, BSRC.y);
     w.moveTo(BSRC.x + BSRC.r, BSRC.y); w.lineTo(BN[1][0], BSRC.y); w.lineTo(BN[1][0], BN[1][1]);
     for (let k = 0; k < 4; k++) { const d = BRD[k]; w.moveTo(BN[d[0]][0], BN[d[0]][1]); w.lineTo(BN[d[1]][0], BN[d[1]][1]); }
-    w.moveTo(BN[2][0], BN[2][1]); w.lineTo(236, 48); w.moveTo(236, 114); w.lineTo(BN[3][0], BN[3][1]);
+    w.moveTo(BN[2][0], BN[2][1]); w.lineTo(236, 40); w.moveTo(236, 106); w.lineTo(BN[3][0], BN[3][1]);
     wireStroke(w, 2.8, 0);
     // 전류 점
     const dotsCol = '#f59e0b';
     for (let k = 0; k < 4; k++) { if (sol.di[k] > 0.004) { const d = BRD[k], A = BN[d[0]], K = BN[d[1]]; const pts = b.orient[k] > 0 ? [A, K] : [K, A]; pathDots(pts, b.ph.d[k], 22, 2.8, dotsCol); } }
-    if (Math.abs(sol.il) > 0.004) pathDots(sol.il > 0 ? [[236, 26], [236, 138]] : [[236, 138], [236, 26]], b.ph.l, 22, 2.8, dotsCol);
+    if (Math.abs(sol.il) > 0.004) pathDots(sol.il > 0 ? [[236, 18], [236, 130]] : [[236, 130], [236, 18]], b.ph.l, 22, 2.8, dotsCol);
     if (Math.abs(sol.isrc) > 0.004) {
       const L = [[BSRC.x - BSRC.r, BSRC.y], [BN[0][0], BSRC.y], [BN[0][0], BN[0][1]]], R = [[BN[1][0], BN[1][1]], [BN[1][0], BSRC.y], [BSRC.x + BSRC.r, BSRC.y]];
       pathDots(sol.isrc > 0 ? L : L.slice().reverse(), b.ph.s, 22, 2.8, dotsCol); pathDots(sol.isrc > 0 ? R : R.slice().reverse(), b.ph.s, 22, 2.8, dotsCol);
     }
     // 부하
-    zig(236, 48, 236, 114, 6, 10, '#475569', 3.6);
-    T(266, 86, '부하 100 Ω', 12.5, '#334155', 'left', 800);
+    zig(236, 40, 236, 106, 6, 10, '#475569', 3.6);
+    T(264, 78, '부하 100 Ω', 12.5, '#334155', 'left', 800);
     // 다이오드
     for (let k = 0; k < 4; k++) {
       const q = bPos(k), on = sol.on[k] > 0;
@@ -558,10 +570,11 @@
     BN.forEach((p) => dot(p[0], p[1], 3.6, '#334155'));
     T(BN[0][0] - 12, BN[0][1] + 4, '', 12, '#000', 'right', 700);
     acSym(BSRC.x, BSRC.y, BSRC.r);
-    T(BSRC.x, BSRC.y + 34, '교류 12 V', 12, '#334155', 'center', 800);
+    T(BSRC.x, BSRC.y + 36, '교류 12 V', 12, '#334155', 'center', 800);
     T(BN[2][0] + 12, BN[2][1] + 4, '+', 14, '#dc2626', 'left', 800); T(BN[3][0] + 12, BN[3][1] + 4, '−', 16, '#2563eb', 'left', 800);
-    const hint = mk ? '' : '다이오드를 눌러 방향을 뒤집어요';
-    if (hint && !S.b.touched) lbl(CXs, 8, hint, { size: 12, bg: 'rgba(30,64,175,.9)', color: '#fff', pad: 8, minX: 0, maxX: SC.w });
+    for (let k = 0; k < 4; k++) if (sol.short && sol.on[k]) { const q = bPos(k); D.glow(q.x, q.y, 30, '#ef4444', 0.55); }
+    if (!mk && !S.b.touched) { T(414, 96, '👆 다이오드를', 12.5, COL_BLUE, 'center', 800); T(414, 114, '눌러 방향을', 12.5, COL_BLUE, 'center', 800); T(414, 132, '뒤집어요', 12.5, COL_BLUE, 'center', 800); }
+    if (sol.short) lbl(CXs, 206, '⚠ 합선! 전원이 부하를 거치지 않고 다이오드만 거쳐 돌아와요', { size: 12, bg: '#dc2626', pad: 8, minX: 0, maxX: SC.w });
   }
   function drawHalfCircuit() {
     const b = S.b, sol = b.sol || halfSolve(0);
@@ -750,7 +763,7 @@
     const l = S.l; if (dt <= 0) return;
     const I = ledI(), over = !l.burned && I > IMAXLED;
     if (over) l.burn = clamp(l.burn + dt * (I / IMAXLED - 1), 0, 1.01); else l.burn = clamp(l.burn - dt * 0.5, 0, 1.01);
-    if (!l.burned && l.burn >= 1) { l.burned = true; l.burnSeen = true; Sound.fail(); parts.burst(SC.x + 330, SC.y + 60, { count: 18, speed: 150, colors: ['#fde047', '#fb923c', '#fff7ed'], life: 0.6, shape: 'star', size: 3 }); showHint('LED가 전류를 견디지 못하고 타 버렸어요! 🔧 LED 새로 끼우기를 눌러요.', 5200); }
+    if (!l.burned && l.burn >= 1) { l.burned = true; l.burnSeen = true; updateCtl(); Sound.fail(); parts.burst(SC.x + 330, SC.y + 60, { count: 18, speed: 150, colors: ['#fde047', '#fb923c', '#fff7ed'], life: 0.6, shape: 'star', size: 3 }); showHint('LED가 전류를 견디지 못하고 타 버렸어요! 🔧 LED 새로 끼우기를 눌러요.', 5200); }
     if (l.burned && !RM && Math.random() < dt * 10) parts.emit({ x: SC.x + 330 + (Math.random() - 0.5) * 12, y: SC.y + 46, vx: (Math.random() - 0.5) * 12, vy: -(30 + Math.random() * 30), life: 1.2, size: 6, color: 'rgba(100,116,139,.45)', shape: 'smoke', grow: 10 });
     l.br = SciSim.approach(l.br, clamp(I / ILED, 0, 1.6), dt, 9);
     l.ph += dt * (30 + 1500 * I);
@@ -809,7 +822,7 @@
     infoPanel([
       { h: '발광 다이오드 (LED)' },
       { p: 'LED 도 다이오드라서 순방향에서만 전류가 흘러 빛을 내요. 순방향 전압은 적색 LED 약 2.0 V.', c: COL_BLUE },
-      { tbl: [['정격 전류', '20 mA', ''], ['보호 저항', '150 Ω', ''], ['저항 없음/너무 작음', '전류 급증 → 소손', '#b91c1c']], c1: 0.42 },
+      { tbl: [['정격 전류', '20 mA', ''], ['보호 저항', '150 Ω', ''], ['저항이 너무 작으면', '전류 급증 → 소손', '', '#b91c1c']], c1: 0.42 },
       { p: '순방향 전류는 전압에 아주 민감해서, 전압이 조금만 높아져도 전류가 크게 늘어요. 그래서 저항을 직렬로 달아 전류를 정해요.', c: '#9a3412' },
       { p: '🏭 LED 조명·전광판·리모컨·표시등. 같은 불빛에 전기를 훨씬 덜 써요.', c: '#0b7a41', big: 1 },
     ]);

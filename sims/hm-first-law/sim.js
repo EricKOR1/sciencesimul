@@ -199,10 +199,10 @@
     T(tx, c.y + (PHONE ? 268 : 288), 'ΔT = ' + (st.dT < 0 ? MINUS : '+') + f1(Math.abs(st.dT)) + ' K', 13.5, MUTED, 'center', 800);
     // 장부
     const lx = c.x + (PHONE ? 210 : 350), lw = PHONE ? c.w - 210 - 12 : 400;
-    T(lx, c.y + 34, p.mode === 'press' ? '외부가 500 J의 일을 해 줘요 (Q = 0)' : '같은 열 Q = ' + fN(QD) + ' J를 줘요', PHONE ? 13 : 14.5, '#c2410c', 'left', 800);
-    const hh = ledger(lx, c.y + 54, lw, { Q: st.Q, W: st.W, dU: st.dU });
+    T(lx, c.y + (PHONE ? 46 : 34), p.mode === 'press' ? '외부가 500 J의 일을 해 줘요 (Q = 0)' : '같은 열 Q = ' + fN(QD) + ' J를 줘요', PHONE ? 13 : 14.5, '#c2410c', 'left', 800);
+    const hh = ledger(lx, c.y + (PHONE ? 62 : 54), lw, { Q: st.Q, W: st.W, dU: st.dU });
     const dQ = Math.round(st.Q), dW = Math.round(st.W);
-    T(lx, c.y + 54 + hh + 14, 'Q = ΔU + W :  ' + fN(dQ) + ' = ' + fN(dQ - dW) + ' + ' + (dW < 0 ? '(' + fN(dW) + ')' : fN(dW)), PHONE ? 13.5 : 15, '#14753f', 'left', 800);
+    T(lx, c.y + (PHONE ? 62 : 54) + hh + 14, 'Q = ΔU + W :  ' + fN(dQ) + ' = ' + fN(dQ - dW) + ' + ' + (dW < 0 ? '(' + fN(dW) + ')' : fN(dW)), PHONE ? 13.5 : 15, '#14753f', 'left', 800);
     T(c.x + 12, c.y + 24, '기체(계)에 열을 주면 그 열은 어디로 갈까요?', PHONE ? 13 : 14.5, INK, 'left', 800);
     parts.update(dt); parts.draw(ctx);
     ctx.restore();
@@ -283,7 +283,7 @@
     const rc = PHONE ? { x: c.x + 4, y: c.y + 4, w: c.w - 8, h: c.h - 8 } : { x: c.x + 6, y: c.y + 4, w: 520, h: c.h - 8 };
     const M = pvFrame(rc);
     let cv = null;
-    if (v.grid) { cv = cellCover(pc, v.kind); ctx.save(); ctx.beginPath(); ctx.rect(M.ix, M.iy, M.iw, M.ih); ctx.clip(); drawCells(M, cv); ctx.restore(); }
+    if (v.grid) { const key = v.kind + '|' + v.T2 + '|' + v.V2; if (!v.cc || v.cc.key !== key) v.cc = { key, val: cellCover(pc, v.kind) }; cv = v.cc.val; ctx.save(); ctx.beginPath(); ctx.rect(M.ix, M.iy, M.iw, M.ih); ctx.clip(); drawCells(M, cv); ctx.restore(); }
     drawPV(M, pc, v.u, { ghost: true, light: v.grid });
     if (!PHONE) {
       const rx = c.x + 548, rw = c.w - 548 - 10;
@@ -436,7 +436,7 @@
     // 열이 빠져나가는 화살표
     const nA = 4; for (let i = 0; i < nA; i++) { const yy = yb - hp + 30 + i * (hp - 36) / nA; if (pc.f > 0 && e > 0.02) { D.arrow(x0 + W + 4, yy, x0 + W + 4 + clamp(pc.f * 38, 6, 38), yy, { color: 'rgba(37,99,235,.8)', width: 2 + pc.f * 4, head: 9 }); D.arrow(x0 - 4, yy, x0 - 4 - clamp(pc.f * 28, 6, 28), yy, { color: 'rgba(37,99,235,.8)', width: 2 + pc.f * 4, head: 9 }); } }
     if (p.run || p.u > 0) D.arrow(x0 + W / 2 + 22, cy.top - 8, x0 + W / 2 + 22, cy.top + 16, { color: '#2563eb', width: 5, head: 11 });
-    T(x0 + W / 2, yb + 70, '펌프 속 공기 (1 mol로 이상화)', PHONE ? 13 : 14, INK, 'center', 800);
+    if (PHONE) T(c.x + 10, yb + 70, '펌프 속 공기 (1 mol)', 13, INK, 'left', 800); else T(x0 + W / 2, yb + 70, '펌프 속 공기 (1 mol로 이상화)', 14, INK, 'center', 800);
     // 노즐 온도계
     const tx = c.x + (PHONE ? 176 : 290);
     D.thermometer(tx, c.y + 46, PHONE ? 150 : 170, clamp(Tn, 290, 350), 290, 350, { ticks: false, color: molColor(Tn + 40) });
@@ -444,10 +444,10 @@
     T(tx, c.y + (PHONE ? 266 : 286), '(+' + f1(Tn - T0) + ' K)', 13.5, MUTED, 'center', 800);
     // 장부
     const lx = c.x + (PHONE ? 222 : 350), lw = PHONE ? c.w - 222 - 12 : 400;
-    T(lx, c.y + 34, '같은 압축 일 500 J로 누를 때', PHONE ? 13 : 14.5, '#c2410c', 'left', 800);
+    T(lx, c.y + (PHONE ? 46 : 34), '같은 압축 일 500 J로 누를 때', PHONE ? 13 : 14.5, '#c2410c', 'left', 800);
     const rows = [['입력한 일 (외부가 한 일)', W_EXT * e, '#2563eb'], ['주위로 빠진 열 Q 방출', pc.Qout * e, '#7c3aed'], ['공기의 내부 에너지 증가 ΔU', pc.dU * e, '#ef4444']];
-    rows.forEach((r, i) => { const yy = c.y + 54 + i * (PHONE ? 52 : 52); T(lx, yy + 14, r[0], PHONE ? 13 : 14, INK, 'left', 800); T(lx + lw, yy + 14, fN(r[1]) + ' J', PHONE ? 14 : 15, r[2], 'right', 800); dbar(lx, yy + 22, lw, 14, r[1], W_EXT, r[2]); });
-    T(lx, c.y + 54 + 3 * 52 + 16, '500 = ' + fN(pc.Qout * e) + ' + ' + fN(pc.dU * e), PHONE ? 13.5 : 15, '#14753f', 'left', 800);
+    rows.forEach((r, i) => { const yy = c.y + (PHONE ? 62 : 54) + i * 52; T(lx, yy + 14, r[0], PHONE ? 13 : 14, INK, 'left', 800); T(lx + lw, yy + 14, fN(r[1]) + ' J', PHONE ? 14 : 15, r[2], 'right', 800); dbar(lx, yy + 22, lw, 14, r[1], W_EXT, r[2]); });
+    T(lx, c.y + (PHONE ? 62 : 54) + 3 * 52 + 16, '500 = ' + fN(pc.Qout * e) + ' + ' + fN(pc.dU * e), PHONE ? 13.5 : 15, '#14753f', 'left', 800);
     T(c.x + 12, c.y + 24, '🚲 펌프를 누르면 공기가 뜨거워질까요?', PHONE ? 13 : 14.5, INK, 'left', 800);
     parts.update(dt); parts.draw(ctx);
     ctx.restore();
