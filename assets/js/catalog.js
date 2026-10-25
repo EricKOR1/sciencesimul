@@ -6172,8 +6172,7 @@ window.SCI_CATALOG = {
                 "P–V 그래프",
                 "네 가지 과정",
                 "생활 속 예"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hm-heat-cycle",
