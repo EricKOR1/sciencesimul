@@ -6839,8 +6839,7 @@ window.SCI_CATALOG = {
                 "보어 모형",
                 "확률 구름",
                 "모형 비교"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hq-tunneling",
@@ -6861,8 +6860,7 @@ window.SCI_CATALOG = {
                 "장벽과 확률",
                 "터널링 현미경",
                 "소자와 별"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hq-stellar-fusion",
@@ -6883,8 +6881,7 @@ window.SCI_CATALOG = {
                 "질량 결손",
                 "태양의 수지",
                 "빛의 방출"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hq-star-spectrum",
@@ -6905,8 +6902,7 @@ window.SCI_CATALOG = {
                 "방출과 흡수",
                 "별빛 분석",
                 "원소 추리"
-              ],
-              "soon": true
+              ]
             }
           ]
         }

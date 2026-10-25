@@ -667,7 +667,9 @@
     ctx.strokeStyle = '#7f93bd'; ctx.lineWidth = 1.5; ctx.strokeRect(ix0, iy0, iw, ih);
     if (St.guess) { const gxp = ix0 + St.guess.x / AT.W * iw, gyp = iy0 + St.guess.y / AT.H * ih; ctx.strokeStyle = '#4ee0ff'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(gxp, gyp, pxs * 2.6, 0, TAU); ctx.stroke(); D.label(gxp, gyp - pxs * 2.6 - 12, '내가 고른 자리', { size: 11.5, bg: '#0e7490' }); }
     St.imgRect = { x: ix0, y: iy0, w: iw, h: ih };
+    const mc0 = sc ? sc.mode : St.mode;
     // 줄 그래프 (현재 줄의 값)
+    if (PHONE) { textBlock(Cc.x + 14, iy0 + ih + 22, Cc.w - 28, mc0 === 'ch' ? '탐침 높이를 일정하게 두고 훑으면 원자 위에서 전류가 크고, 원자 사이에서 작아요.' : '전류를 일정하게 유지하도록 탐침을 오르내리면, 그 높이 변화가 표면의 높낮이예요.', 12, '#5d6879', 16, 700); return; }
     const tx0 = PHONE ? Cc.x + 14 : ix0 + iw + 26, tw = PHONE ? Cc.w - 28 : Cc.x + Cc.w - tx0 - 16, ty0 = PHONE ? iy0 + ih + 30 : iy0 + 14, th = PHONE ? 42 : 120;
     const mc = sc ? sc.mode : St.mode;
     T(tx0, ty0 - 8, mc === 'ch' ? '지금 줄의 전류 (로그 눈금)' : '지금 줄에서 탐침이 오르내린 높이', PHONE ? 11.5 : 13, '#26324a', 'left', 800);
@@ -843,7 +845,7 @@
     T(wl + (wr - wl) / 2, bt - 7, '장벽', 12.5, '#5b3fb0', 'center', 800);
     const ay = fl - (PHONE ? 34 : 48);
     ctx.strokeStyle = '#3867f4'; ctx.setLineDash([5, 4]); ctx.lineWidth = 1.8; ctx.beginPath(); ctx.moveTo(wx0, ay); ctx.lineTo(wx1, ay); ctx.stroke(); ctx.setLineDash([]);
-    T(wx1, ay - 8, '알파 입자의 에너지 (장벽 꼭대기보다 낮아요)', PHONE ? 11 : 12, '#3867f4', 'right', 800);
+    T(wx1, ay + 16, '알파 입자의 에너지', PHONE ? 11 : 12, '#3867f4', 'right', 800); T(wx1, ay + 31, '(장벽보다 낮아요)', PHONE ? 11 : 12, '#3867f4', 'right', 800);
     T((wx0 + wl) / 2, base + 4, '핵 속', 12.5, '#5d6879', 'center', 800); T((wr + wx1) / 2, base + 4, '핵 밖', 12.5, '#5d6879', 'center', 800);
     const run = N.run, lo = wx0 + 16, hi = wl - 14;
     let ax = (lo + hi) / 2, alpha = 1, msg = '“▶ 시연 보기”를 눌러 보세요', col = '#5d6879';
@@ -874,7 +876,7 @@
       setReadouts('공: 넘은 횟수', Q.bPass + ' / ' + Q.bTry + '번', '전자: 반대편에서 발견', Q.eP + ' / ' + Q.eN + '개', '전자 모형 확률', fmtPct(log10T(0.2, 1, 1)));
     } else if (S.mode === 'prob') {
       const P = S.pr;
-      setReadouts('입자 · 높이 · 두께', (P.part === 'e' ? '전자' : '양성자') + ' · ' + (+P.vh).toFixed(1) + ' eV · ' + d1(P.v).toFixed(1) + ' nm', '모형 통과 확률', fmtPct(prLg(P.v)), '100만 번 중 통과', P.last && P.last.v === P.v && P.last.vh === P.vh && P.last.part === P.part ? P.last.count.toLocaleString('ko-KR') + '번' : '시도 중이거나 대기 중');
+      setReadouts('설정', (P.part === 'e' ? '전자' : '양성자') + ' · ' + (+P.vh).toFixed(1) + ' eV · ' + d1(P.v).toFixed(1) + ' nm', '모형 통과 확률', fmtPct(prLg(P.v)), '100만 번 중 통과', P.last && P.last.v === P.v && P.last.vh === P.vh && P.last.part === P.part ? P.last.count.toLocaleString('ko-KR') + '번' : '시도 중이거나 대기 중');
     } else if (S.mode === 'stm') {
       const ts = tipState();
       setReadouts('탐침과 표면 사이 거리', ts.gap.toFixed(2) + ' nm', '터널 전류', fmtI(ts.I), '스캔', S.st.scan ? (S.st.scan.done ? '완료' : Math.round(S.st.scan.k / (NXP * NYP) * 100) + ' %') : '안 했어요');
