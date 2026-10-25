@@ -761,7 +761,8 @@
   function recordGate() { const l = S.l; if (l.sub === 'led') return; const t = (l.tb[l.sub] = l.tb[l.sub] || {}); t[(l.A ? 2 : 0) + (l.B ? 1 : 0)] = gateY(l.sub, l.A, l.B); }
   function stepLed(dt) {
     const l = S.l; if (dt <= 0) return;
-    const I = ledI(), over = !l.burned && I > IMAXLED;
+    const I = ledI(), over = !l.burned && I > IMAXLED && !(l.grace > 0);
+    if (l.grace > 0) l.grace -= dt;
     if (over) l.burn = clamp(l.burn + dt * (I / IMAXLED - 1), 0, 1.01); else l.burn = clamp(l.burn - dt * 0.5, 0, 1.01);
     if (!l.burned && l.burn >= 1) { l.burned = true; l.burnSeen = true; updateCtl(); Sound.fail(); parts.burst(SC.x + 330, SC.y + 60, { count: 18, speed: 150, colors: ['#fde047', '#fb923c', '#fff7ed'], life: 0.6, shape: 'star', size: 3 }); showHint('LED가 전류를 견디지 못하고 타 버렸어요! 🔧 LED 새로 끼우기를 눌러요.', 5200); }
     if (l.burned && !RM && Math.random() < dt * 10) parts.emit({ x: SC.x + 330 + (Math.random() - 0.5) * 12, y: SC.y + 46, vx: (Math.random() - 0.5) * 12, vy: -(30 + Math.random() * 30), life: 1.2, size: 6, color: 'rgba(100,116,139,.45)', shape: 'smoke', grow: 10 });
@@ -902,7 +903,7 @@
   $$('#subSeg button').forEach((b) => b.addEventListener('click', () => { Sound.click(); setSub(b.dataset.v); }));
   $$('#rLSeg button').forEach((b) => b.addEventListener('click', () => { Sound.click(); S.l.R = +b.dataset.v; updateCtl(); }));
   $('#bFlipL').addEventListener('click', () => { Sound.click(); S.l.flip = !S.l.flip; updateCtl(); });
-  $('#bRepl').addEventListener('click', () => { const l = S.l; if (!l.burned) return; Sound.click(); l.burned = false; l.burn = 0; l.replN++; updateCtl(); });
+  $('#bRepl').addEventListener('click', () => { const l = S.l; if (!l.burned) return; Sound.click(); l.burned = false; l.burn = 0; l.replN++; l.grace = 1.6; updateCtl(); });
   function toggleIn(k) { const l = S.l; if (k === 'A') l.A = l.A ? 0 : 1; else l.B = l.B ? 0 : 1; Sound.click(); recordGate(); updateCtl(); }
   $('#bInA').addEventListener('click', () => toggleIn('A'));
   $('#bInB').addEventListener('click', () => toggleIn('B'));
