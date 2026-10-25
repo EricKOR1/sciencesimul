@@ -8035,8 +8035,7 @@ window.SCI_CATALOG = {
                 "구조와 기능",
                 "원심분리기",
                 "세포 분획"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hy-secretory-pathway",
@@ -8057,8 +8056,7 @@ window.SCI_CATALOG = {
                 "추적 실험",
                 "협력과 이상",
                 "세포의 특징"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hy-prok-euk",
@@ -8079,8 +8077,7 @@ window.SCI_CATALOG = {
                 "DNA와 핵",
                 "막·리보솜·벽",
                 "세포 분류"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hy-membrane-structure",

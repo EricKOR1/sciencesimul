@@ -539,7 +539,7 @@
         ctx.strokeStyle = 'rgba(226,70,75,.6)'; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.moveTo(x, SCY - 24); ctx.lineTo(x, SCY - 120); ctx.stroke(); ctx.setLineDash([]);
         D.label(x, SCY - 128, m.mark + '칸', { bg: '#e2464b', color: '#fff', size: 13 });
       }
-      if (msAligned()) D.label(EX0 + 34, SCY - 128, '0점 맞춤', { bg: '#15803d', color: '#fff', size: 13 });
+      if (msAligned()) D.label(EX0 + 66, SCY - 128, '0점 맞춤', { bg: '#15803d', color: '#fff', size: 13 });
     });
     D.label(SV.x + 14, SV.y + 22, SPEC[m.spec].nm + ' · ' + OBJ[m.obj].nm, { bg: 'rgba(0,0,0,.55)', color: '#fff', size: 13, align: 'left' });
     D.label(SV.x + SV.w - 14, SV.y + 22, !fits ? '시료가 시야보다 커요' : msAligned() ? '오른쪽 끝의 눈금을 눌러요' : '시료를 끌어서 왼쪽 끝을 0에 맞춰요', { bg: !fits ? '#b91c1c' : msAligned() ? '#15803d' : 'rgba(0,0,0,.55)', color: '#fff', size: 13, align: 'right' });
@@ -548,12 +548,18 @@
   const measurePT = {
     down(p) {
       if ((p.x - SCX) ** 2 + (p.y - SCY) ** 2 >= SR * SR) return false;
-      if (Math.abs(p.y - SCY) < 22 && p.x >= EX0 - 6 && p.x <= EX0 + NDIV * PXDIV + 6) { S.ms.mark = clamp(Math.round((p.x - EX0) / PXDIV * 2) / 2, 0, NDIV); S.ms.fb = ''; Sound.tick(); updateCtl(); return true; }
-      S.ms.drag = { x: p.x, o0: S.ms.ox }; return true;
+      S.ms.drag = { x: p.x, y: p.y, o0: S.ms.ox, moved: false }; return true;
     },
-    move(p) { const d = S.ms.drag; if (d) S.ms.ox = clamp(d.o0 + p.x - d.x, -120, NDIV * PXDIV * 0.7); },
-    up(p) { const d = S.ms.drag; if (!d) return; S.ms.drag = null; if (Math.abs(S.ms.ox) < 7) { S.ms.ox = 0; Sound.click(); } S.ms.mark = null; updateCtl(); },
-    hover(p) { return (p.x - SCX) ** 2 + (p.y - SCY) ** 2 < SR * SR ? (Math.abs(p.y - SCY) < 22 ? 'pointer' : 'ew-resize') : 'default'; },
+    move(p) { const d = S.ms.drag; if (!d) return; if (Math.abs(p.x - d.x) > 6) d.moved = true; if (d.moved) S.ms.ox = clamp(d.o0 + p.x - d.x, -120, NDIV * PXDIV * 0.7); },
+    up(p) {
+      const d = S.ms.drag; if (!d) return; S.ms.drag = null;
+      if (!d.moved) {   // 눈금을 눌러서 오른쪽 끝의 눈금을 읽어요
+        if (Math.abs(p.y - SCY) < 26 && p.x >= EX0 - 6 && p.x <= EX0 + NDIV * PXDIV + 6) { S.ms.mark = clamp(Math.round((p.x - EX0) / PXDIV * 2) / 2, 0, NDIV); S.ms.fb = ''; Sound.tick(); }
+        else showHint('눈금자 위의 시료 오른쪽 끝을 눌러 눈금을 읽어요. 시료는 옆으로 끌어서 움직여요.', 3600);
+      } else { if (Math.abs(S.ms.ox) < 7) { S.ms.ox = 0; Sound.click(); } S.ms.mark = null; }
+      updateCtl();
+    },
+    hover(p) { return (p.x - SCX) ** 2 + (p.y - SCY) ** 2 < SR * SR ? 'ew-resize' : 'default'; },
   };
   function msRecord() {
     const m = S.ms, sp = SPEC[m.spec], Lp = pxOf(sp.L, m.obj), cal = S.cal.v[m.obj];
@@ -669,7 +675,7 @@
     panel(CH.x, CH.y, CH.w, CH.h, 18, '#ffffff');
     const c = S.ch; c.anim = approach(c.anim, c.log ? 1 : 0, dt, RM ? 60 : 6);
     T(CH.x + 18, CH.y + 28, '세포의 크기 (내가 잰 값)', 16, '#334155', 'left', 800);
-    const px0 = CH.x + 70, pw = CH.w - 100, py0 = CH.y + 56, ph = CH.h - 130;
+    const px0 = CH.x + 70, pw = CH.w - 100, py0 = CH.y + 56, ph = CH.h - 166;
     const vmin = 1, vmax = 200;
     const ys = (v) => { const lin = ph - ph * clamp(v / 160, 0, 1), lg = ph - ph * clamp(Math.log10(Math.max(v, vmin) / vmin) / Math.log10(vmax / vmin), 0, 1); return py0 + lin + (lg - lin) * c.anim; };
     // 원핵 · 진핵 크기 범위
@@ -703,8 +709,8 @@
   const INS = PHONE ? { x: 10, y: 272, w: 460, h: 236 } : { x: 14, y: 324, w: 772, h: 222 };
   const OVS = PHONE ? 30 : 40;           // 개요 그림: 1 μm = OVS px
   const IS = PHONE ? 80 : 90, IR = PHONE ? 88 : 100;   // 확대 그림: 1 μm = IS px, 원 반지름
-  const CO = { x: OV.x + (PHONE ? 90 : 130), y: OV.y + OV.h / 2 + 4 }, YE = { x: OV.x + (PHONE ? 330 : 520), y: OV.y + OV.h / 2 + 4 };
-  const IC1 = { x: INS.x + (PHONE ? 120 : 130), y: INS.y + (PHONE ? 100 : INS.h / 2) }, IC2 = { x: INS.x + (PHONE ? 350 : 530), y: INS.y + (PHONE ? 100 : INS.h / 2) };
+  const CO = { x: OV.x + (PHONE ? 90 : 130), y: OV.y + OV.h / 2 }, YE = { x: OV.x + (PHONE ? 330 : 520), y: OV.y + (PHONE ? OV.h / 2 - 4 : 146) };
+  const IC1 = { x: INS.x + (PHONE ? 120 : 120), y: INS.y + (PHONE ? 100 : INS.h / 2) }, IC2 = { x: INS.x + (PHONE ? 350 : 500), y: INS.y + (PHONE ? 100 : INS.h / 2) };
   S.dn = { dapi: false, tag: { coli: false, yeast: false }, seen: false };
   const dnTagged = () => S.dn.tag.coli && S.dn.tag.yeast;
   /* 대장균 (중심 cx, cy / 1 μm = s px) */
@@ -729,8 +735,8 @@
     const dapi = mode === 'dapi';
     ctx.save(); ctx.translate(cx, cy);
     ctx.beginPath(); ctx.ellipse(0, 0, 4 * s, 3.25 * s, 0, 0, TAU); ctx.fillStyle = dapi ? '#0f172a' : '#fbe9b6'; ctx.fill(); ctx.strokeStyle = dapi ? '#334155' : '#b8892b'; ctx.lineWidth = 3; ctx.stroke();
-    ctx.beginPath(); ctx.ellipse(1.1 * s, 0.55 * s, 1.4 * s, 1.1 * s, 0, 0, TAU); ctx.fillStyle = dapi ? 'rgba(148,163,184,.1)' : 'rgba(160,200,230,.55)'; ctx.fill(); ctx.strokeStyle = dapi ? '#334155' : '#6aa7d6'; ctx.lineWidth = 2; ctx.stroke();   // 액포
-    ctx.beginPath(); ctx.arc(-0.5 * s, -0.15 * s, 1.0 * s, 0, TAU);
+    ctx.beginPath(); ctx.ellipse(1.9 * s, 0.7 * s, 1.3 * s, 1.0 * s, 0, 0, TAU); ctx.fillStyle = dapi ? 'rgba(148,163,184,.1)' : 'rgba(160,200,230,.55)'; ctx.fill(); ctx.strokeStyle = dapi ? '#334155' : '#6aa7d6'; ctx.lineWidth = 2; ctx.stroke();   // 액포
+    ctx.beginPath(); ctx.arc(-0.8 * s, -0.15 * s, 1.0 * s, 0, TAU);
     if (dapi) { ctx.fillStyle = 'rgba(59,130,246,.55)'; ctx.shadowColor = '#60a5fa'; ctx.shadowBlur = 20; ctx.fill(); ctx.shadowBlur = 0; ctx.strokeStyle = '#93c5fd'; ctx.lineWidth = 2; ctx.stroke(); }
     else { ctx.fillStyle = 'rgba(167,139,250,.55)'; ctx.fill(); ctx.strokeStyle = '#6d4fb3'; ctx.lineWidth = 2.4; ctx.stroke(); }
     ctx.restore();
@@ -759,29 +765,29 @@
     const tc = d.dapi ? '#cbd5e1' : '#334155';
     T(OV.x + 16, OV.y + 26, '같은 비율로 그린 두 세포', 14.5, tc, 'left', 800);
     drawColi(CO.x, CO.y, OVS, mode, false); drawYeastOv(YE.x, YE.y, OVS, mode);
-    T(CO.x, CO.y + OVS * 0.8 + 22, '대장균 (원핵생물)', 14, tc, 'center', 800); T(YE.x, YE.y + 3.3 * OVS + 20 - (PHONE ? 6 : 0), '효모 (진핵생물)', 14, tc, 'center', 800);
+    T(CO.x, CO.y + OVS * 0.8 + 22, '대장균 (원핵생물)', 14, tc, 'center', 800); T(YE.x, YE.y + 3.25 * OVS + 18, '효모 (진핵생물)', 14, tc, 'center', 800);
     // 축척 막대 1 μm
     const bx = OV.x + 16, by = OV.y + OV.h - 26; ctx.fillStyle = d.dapi ? '#e2e8f0' : '#111'; ctx.fillRect(bx, by, OVS, 4); ctx.fillRect(bx, by - 5, 2, 14); ctx.fillRect(bx + OVS - 2, by - 5, 2, 14); T(bx + OVS + 8, by + 5, '1 μm', 13, tc, 'left', 800);
     // 확대
-    T(INS.x + 16, INS.y + 24, '🔍 확대 (1 μm = ' + IS + ' px)', 14, tc, 'left', 800);
+    T(PHONE ? INS.x + 16 : INS.x + INS.w / 2 - 6, PHONE ? INS.y + INS.h - 10 : INS.y + 26, '🔍 확대 (1 μm = ' + IS + ' px)', 14, tc, PHONE ? 'left' : 'center', 800);
     [[IC1, 0], [IC2, 1]].forEach(([c, i]) => {
       ctx.save(); ctx.beginPath(); ctx.arc(c.x, c.y, IR, 0, TAU); ctx.clip(); ctx.fillStyle = d.dapi ? '#050816' : '#fffdf7'; ctx.fillRect(c.x - IR, c.y - IR, IR * 2, IR * 2);
       if (!i) drawColi(c.x, c.y, IS, mode, true); else drawYeastNuc(c.x, c.y, IS, mode);
       ctx.restore(); ctx.strokeStyle = d.dapi ? '#475569' : '#64748b'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(c.x, c.y, IR, 0, TAU); ctx.stroke();
       ctx.fillStyle = d.dapi ? '#e2e8f0' : '#111'; ctx.fillRect(c.x - 0.25 * IS, c.y + IR - 16, 0.5 * IS, 3.5); T(c.x, c.y + IR - 22, '0.5 μm', 13, d.dapi ? '#e2e8f0' : '#111', 'center', 800, { stroke: d.dapi ? 'rgba(5,8,22,.8)' : 'rgba(255,253,247,.8)', strokeWidth: 3 });
     });
-    const tx1 = PHONE ? IC1.x : IC1.x + IR + 14, ty1 = PHONE ? IC1.y + IR + 14 : IC1.y - 48, tx2 = PHONE ? IC2.x : IC2.x + IR + 14, ty2 = PHONE ? IC2.y + IR + 14 : IC2.y - 48, tw = PHONE ? 220 : 142;
+    const tx1 = PHONE ? IC1.x : IC1.x + IR + 12, ty1 = PHONE ? IC1.y + IR + 14 : IC1.y - 48, tx2 = PHONE ? IC2.x : IC2.x + IR + 12, ty2 = PHONE ? IC2.y + IR + 14 : IC2.y - 48, tw = PHONE ? 220 : 130;
     const t1 = d.tag.coli ? '핵양체: 고리 모양 DNA, 핵막 없음' : '대장균의 DNA는 어디에 있을까?', t2 = d.tag.yeast ? '핵: 선형 DNA + 히스톤, 핵막으로 싸임' : '효모의 DNA는 어디에 있을까?';
     if (PHONE) { T(IC1.x, ty1 + 4, d.tag.coli ? '핵양체 · 핵막 없음' : '대장균의 DNA는?', 13.5, d.tag.coli ? '#15803d' : tc, 'center', 800); T(IC2.x, ty2 + 4, d.tag.yeast ? '핵 · 핵막으로 싸임' : '효모의 DNA는?', 13.5, d.tag.yeast ? '#15803d' : tc, 'center', 800); }
     else { textBlock(tx1, ty1, tw, t1, 14, d.tag.coli ? '#15803d' : tc, 20, 800); textBlock(tx2, ty2, tw, t2, 14, d.tag.yeast ? '#15803d' : tc, 20, 800); }
     if (d.tag.coli) { D.label(CO.x, CO.y - OVS * 0.8 - 12, '핵양체', { bg: '#16a34a', color: '#fff', size: 13 }); }
-    if (d.tag.yeast) { D.label(YE.x - 0.5 * OVS, YE.y - 1.7 * OVS - 6, '핵', { bg: '#16a34a', color: '#fff', size: 13 }); }
+    if (d.tag.yeast) { D.label(YE.x - 0.8 * OVS, YE.y - 1.35 * OVS - 6, '핵', { bg: '#16a34a', color: '#fff', size: 13 }); }
     if (!d.dapi) D.label(OV.x + OV.w - 12, OV.y + 22, '일반 현미경: DNA를 구별하기 어려워요', { bg: 'rgba(100,116,139,.9)', color: '#fff', size: 13, align: 'right' });
     else D.label(OV.x + OV.w - 12, OV.y + 22, 'DAPI: DNA가 파랗게 빛나요', { bg: '#2563eb', color: '#fff', size: 13, align: 'right' });
   }
   const dnaHit = (p) => {
     if (Math.abs(p.x - CO.x) < 1.1 * OVS && Math.abs(p.y - CO.y) < 0.55 * OVS + 6 && inRect(p.x, p.y, OV)) return 'coli';
-    if (Math.hypot(p.x - (YE.x - 0.5 * OVS), p.y - (YE.y - 0.15 * OVS)) < 1.0 * OVS + 8) return 'yeast';
+    if (Math.hypot(p.x - (YE.x - 0.8 * OVS), p.y - (YE.y - 0.15 * OVS)) < 1.0 * OVS + 8) return 'yeast';
     if (Math.hypot(p.x - IC1.x, p.y - IC1.y) < IR && Math.abs(p.y - IC1.y) < 0.4 * IS && Math.abs(p.x - IC1.x) < 0.9 * IS) return 'coli';
     if (Math.hypot(p.x - IC2.x, p.y - IC2.y) < 0.95 * IS) return 'yeast';
     return null;
@@ -958,7 +964,7 @@
     } else textBlock(ix, iy, iw, '▶ 같은 시간 원심분리를 눌러 두 리보솜이 가라앉는 빠르기를 비교해요.', PHONE ? 13.5 : 14.5, '#64748b', 20, 800);
     if (!PHONE) textBlock(ix, iy + 120, iw, 'S(스베드베리)는 원심분리할 때 가라앉는 빠르기의 단위예요. 30S + 50S = 70S, 40S + 60S = 80S 처럼 S 값은 단순히 더해지지 않아요.', 13.5, '#64748b', 19, 700);
     // ---- 항생제 ----
-    T(AB.x + 16, AB.y + 26, '💊 항생제(세균 리보솜 억제)를 넣으면?', 15, '#334155', 'left', 800);
+    T(AB.x + 16, AB.y + 26, PHONE ? '💊 항생제를 넣으면?' : '💊 항생제(세균 리보솜 억제)를 넣으면?', 15, '#334155', 'left', 800);
     [0, 1].forEach((k) => {
       const c = abPos(k), blocked = k === 0 && r.bind > 0.6;
       ctx.save(); ctx.translate(c.x, c.y);
@@ -971,7 +977,7 @@
     });
     if (r.abx) {
       for (let i = 0; i < 4; i++) { const u = clamp(r.abxT / 2.2 - i * 0.12, 0, 1); const c0 = abPos(0), dx = AB.x + 40 + i * 24, dy = AB.y + 50; const x = dx + (c0.x - 34 + i * 18 - dx) * u, y = dy + (c0.y - 6 + (i % 2) * 10 - dy) * u; ctx.fillStyle = '#ef4444'; ctx.beginPath(); ctx.arc(x, y, 5, 0, TAU); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke(); }
-      T(AB.x + AB.w - 16, AB.y + 26, '항생제는 세균의 70S 리보솜에만 붙어요', 13.5, '#b91c1c', 'right', 800);
+      if (PHONE) T(AB.x + 16, AB.y + 48, '항생제는 세균의 70S 리보솜에만 붙어요', 13.5, '#b91c1c', 'left', 800); else T(AB.x + AB.w - 16, AB.y + 26, '항생제는 세균의 70S 리보솜에만 붙어요', 13.5, '#b91c1c', 'right', 800);
     }
   }
 
@@ -1028,7 +1034,7 @@
       const y = WI.y + 58 + i * 30, on = w.sel === k;
       T(x, y, (w.tested[k] ? '✅ ' : '⬜ ') + nm + ' → ' + tg, 14.5, on ? '#a21caf' : '#334155', 'left', 800);
     });
-    textBlock(x, WI.y + (PHONE ? 160 : 156), WI.w - 32, '세포벽의 성분이 달라서 효소마다 분해하는 벽이 달라요. 사람 세포(동물 세포)는 세포벽이 없어요.', 13.5, '#64748b', 19, 700);
+    textBlock(x, WI.y + (PHONE ? 154 : 150), WI.w - 32, '세포벽의 성분이 달라서 효소마다 분해하는 벽이 달라요. 사람 세포(동물 세포)는 세포벽이 없어요. (세포 그림의 크기는 실제 비율이 아니에요.)', 13.5, '#64748b', 19, 700);
   }
   const wlOk = () => Object.keys(S.wl.tested).length === 3;
 
@@ -1406,6 +1412,6 @@
   /* ---------- 디버그 (Playwright) ---------- */
   window.__sim = {
     S, VW, VH, PHONE, get game() { return game; }, levels, setMode, OBJ, SPEC, SV, SCX, SCY, EX0, PXDIV, NDIV, pxOf, IM, BAR, BARPX, CELLW, IMC, venn, classify, VNC, CLC,
-    CO, YE, IC1, IC2, OV, INS, EO, PO, orgGeo, orgHitEuk, orgHitPro, rbRun, rbReset, wlGo, wlReset, cmpAll, CMP, DNA_ANS, updateCtl, msRecord, msCount, imReset, evCount,
+    OVS, CO, YE, IC1, IC2, OV, INS, EO, PO, orgGeo, orgHitEuk, orgHitPro, rbRun, rbReset, wlGo, wlReset, cmpAll, CMP, DNA_ANS, updateCtl, msRecord, msCount, imReset, evCount,
   };
 })();
