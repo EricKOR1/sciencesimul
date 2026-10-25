@@ -285,7 +285,7 @@
   /* 카드를 누르면 선택, 상자를 누르면 놓기 (끌기가 어려운 기기를 위해) */
   function selectable(opts) {
     let so = null;
-    opts.onTap = (c) => { so.selected = so.selected === c ? null : c; Sound.click(); };
+    opts.onTap = (c) => { so.selected = so.selected === c ? null : c; Sound.click(); if (opts.afterTap) opts.afterTap(c); };
     opts.isSel = (c) => !!so && so.selected === c;
     so = new Sorter(opts); so.selected = null;
     return so;
@@ -502,7 +502,7 @@
       TF(b.x + 8, by + 18, b.lab + ' : ' + b.n + '쌍', bw - 16, L(13.5, 12), 10, b.ok ? '#166534' : '#92400e', 'left', 800);
     });
     // 카드 (쌍 하나 = 두 원)
-    const cw = Math.min(26, (bw - 14) / 4.4), chh = Math.min(15, cw * 0.62), cols = Math.max(1, Math.floor((bw - 12) / (cw + 3)));
+    const cw = Math.min(PHONE ? 22 : 26, (bw - 14) / 4.4), chh = Math.min(15, cw * 0.62), cols = Math.max(1, Math.floor((bw - 12) / (cw + 3)));
     const cells = S.tw.cells[kind] || [];
     let ci = 0, di = 0;
     cells.forEach((c) => {
@@ -520,7 +520,7 @@
   function twChart(x, y, w, h, dt) {
     panel(x, y, w, h, 14, '#fff');
     TF(x + 12, y + 24, '일치율 비교 (%) = 일치한 쌍 / 적어도 한 명에게 형질이 있는 쌍 × 100', w - 24, L(14.5, 12.5), 10.5, '#334155', 'left', 800);
-    const px = x + 40, pw = w - 56, top = y + 48, base = y + h - 38, ph = base - top;
+    const px = x + 40, pw = w - 56, top = y + 72, base = y + h - 34, ph = base - top;
     [0, 25, 50, 75, 100].forEach((v) => { const yy = base - ph * v / 100; ctx.strokeStyle = v === 0 ? '#94a3b8' : '#e2e8f0'; ctx.lineWidth = v === 0 ? 1.6 : 1; ctx.beginPath(); ctx.moveTo(px, yy); ctx.lineTo(px + pw, yy); ctx.stroke(); T(px - 6, yy + 4, v + '', 11.5, '#64748b', 'right', 700); });
     const slot = pw / 3, bw = Math.min(46, slot * 0.28);
     TW_IDS.forEach((id, i) => {
@@ -532,20 +532,25 @@
         if (hh > 0.5) { ctx.fillStyle = col; D.roundRect(bx, base - hh, bw, hh, 5); ctx.fill(); }
         if (done) T(bx + bw / 2, base - hh - 6, fmtN(twRate(id, kind), 0) + ' %', 13, '#1f2d44', 'center', 800);
       });
-      T(cx, base + 22, '형질 ' + TW_NAME[id] + (done ? '' : ' (계산 전)'), 14, '#26324a', 'center', 800);
+      T(cx, base + 20, '형질 ' + TW_NAME[id] + (done ? '' : ' (계산 전)'), 14, '#26324a', 'center', 800);
     });
-    D.roundRect(x + w - 150, y + 8, 12, 12, 3); ctx.fillStyle = COLS.mz; ctx.fill(); T(x + w - 134, y + 19, '1란성', 12, '#334155', 'left', 700);
-    D.roundRect(x + w - 82, y + 8, 12, 12, 3); ctx.fillStyle = COLS.dz; ctx.fill(); T(x + w - 66, y + 19, '2란성', 12, '#334155', 'left', 700);
+    const ly = y + 44;
+    D.roundRect(x + 14, ly - 11, 12, 12, 3); ctx.fillStyle = COLS.mz; ctx.fill(); T(x + 30, ly, '1란성', 12, '#334155', 'left', 700);
+    D.roundRect(x + 76, ly - 11, 12, 12, 3); ctx.fillStyle = COLS.dz; ctx.fill(); T(x + 92, ly, '2란성', 12, '#334155', 'left', 700);
   }
   function twinsDraw(dt, t) {
     S.tw.t0 += dt;
     if (PHONE) {
-      twPanel(8, 8, 464, 188, 'mz', dt); twPanel(8, 204, 464, 188, 'dz', dt); twChart(8, 400, 464, 232, dt);
+      twPanel(8, 8, 464, 206, 'mz', dt); twPanel(8, 222, 464, 206, 'dz', dt); twChart(8, 436, 464, 196, dt);
     } else {
       twPanel(14, 10, 382, 262, 'mz', dt); twPanel(404, 10, 382, 262, 'dz', dt); twChart(14, 282, 772, 266, dt);
     }
   }
-  function twinsSet(id) { S.tw.cur = id; twCellsInit(id); S.tw.ok = { mz: false, dz: false }; $('#inMz').value = ''; $('#inDz').value = ''; updateCtl(); }
+  function twinsSet(id) {
+    S.tw.cur = id; twCellsInit(id); const dn = !!S.tw.done[id];
+    S.tw.ok = { mz: dn, dz: dn }; $('#inMz').value = dn ? fmtN(twRate(id, 'mz'), 0) : ''; $('#inDz').value = dn ? fmtN(twRate(id, 'dz'), 0) : '';
+    $('#inMz').classList.toggle('ok', dn); $('#inDz').classList.toggle('ok', dn); updateCtl();
+  }
   function twCheckInputs() {
     const id = S.tw.cur, mz = numOf('inMz'), dz = numOf('inDz');
     const okM = isFinite(mz) && Math.abs(mz - twRate(id, 'mz')) < 0.5, okD = isFinite(dz) && Math.abs(dz - twRate(id, 'dz')) < 0.5;
@@ -679,10 +684,10 @@
   const pedRemain = (key) => candState(key).filter((q) => !q.out).map((q) => q.c.id);
 
   /* 가계도 그림 */
-  const PA = PHONE ? { x: 8, y: 8, w: 464, h: 262 } : { x: 14, y: 10, w: 772, h: 282 };
+  const PA = PHONE ? { x: 8, y: 8, w: 464, h: 262 } : { x: 14, y: 10, w: 772, h: 270 };
   function pedXY(pd, id, area) {
-    const n = pd.nodes[id], gens = 3, gap = (area.h - 80) / (gens - 1);
-    return { x: area.x + 36 + n.x * (area.w - 72), y: area.y + 44 + n.g * gap };
+    const n = pd.nodes[id], gens = 3, gap = (area.h - 100) / (gens - 1);
+    return { x: area.x + 36 + n.x * (area.w - 72), y: area.y + 42 + n.g * gap };
   }
   function pedNode(x, y, sz, n, o) {
     o = o || {};
@@ -704,7 +709,7 @@
     panel(area.x, area.y, area.w, area.h, 14, '#fff');
     D.label(area.x + 12, area.y + 18, '가계도 ' + key, { bg: '#1f2d44', color: '#fff', size: 13, align: 'left' });
     if (o.assume) T(area.x + area.w - 12, area.y + 22, '가정: ' + pd.assume + ' 유전', L(13.5, 12), '#475569', 'right', 800);
-    const gapY = (area.h - 80) / 2, tNode = (n) => n.g * 0.9 + 0.15;
+    const gapY = 0, tNode = (n) => n.g * 0.9 + 0.15;
     const pos = {}; Object.keys(pd.nodes).forEach((id) => { pos[id] = pedXY(pd, id, area); });
     const viol = {}; // 표시할 위반 (적용한 규칙만)
     if (o.applied) o.applied.forEach((on, r) => { if (on) PV[key][r].forEach((q) => { (viol[q.id] = viol[q.id] || []).push(r); }); });
@@ -763,7 +768,7 @@
   const remainAll = (key) => CANDS.filter((c) => !RULE_OF[c.id].some((r) => PV[key][r].length)).map((c) => c.id);
   const CG = PHONE
     ? { y: PA.y + PA.h + 8, w: 227, h: 88, gx: 8, gap: 10, cols: 2 }
-    : { y: PA.y + PA.h + 8, w: (772 - 30) / 4, h: 118, gx: 14, gap: 10, cols: 4 };
+    : { y: PA.y + PA.h + 8, w: (772 - 30) / 4, h: 104, gx: 14, gap: 10, cols: 4 };
   const candRect = (i) => ({ x: CG.gx + (i % CG.cols) * (CG.w + CG.gap), y: CG.y + Math.floor(i / CG.cols) * (CG.h + 8), w: CG.w, h: CG.h });
   const RP = { x: PHONE ? 8 : 14, y: CG.y + (PHONE ? 2 : 1) * (CG.h + 8) };
   RP.w = VW - RP.x * 2; RP.h = VH - RP.y - (PHONE ? 8 : 12);
@@ -808,7 +813,7 @@
     }
     if (pedAllApplied(key)) {
       const rem = pedRemain(key).map((id) => CANDS.find((c) => c.id === id).t);
-      TF(RP.x + 14, RP.y + RP.h - 14, '가능한 유전 양상: ' + rem.join(' · ') + (rem.length > 1 ? ' (이 가계도만으로는 하나로 정할 수 없어요)' : ''), RP.w - 28, L(15, 13), 10.5, '#166534', 'left', 800);
+      TF(RP.x + 14, RP.y + RP.h - 14, '가능한 유전 양상: ' + rem.join(' · ') + (rem.length > 1 ? ' (하나로 정할 수 없어요)' : ''), RP.w - 28, L(15, 13), 10.5, '#166534', 'left', 800);
     }
   }
   function pedApply(r) {
@@ -827,8 +832,9 @@
   function punnett(x, y, w, h, o) {
     const cw = (w - 56) / 2, ch = (h - 52) / 2;
     TF(x + w / 2, y + 14, o.title, w, L(13.5, 12), 10, '#334155', 'center', 800);
-    o.cols.forEach((c, j) => TF(x + 56 + cw * (j + 0.5), y + 40, c, cw - 4, L(15, 13), 11, '#be185d', 'center', 800));
-    o.rows.forEach((r, i) => TF(x + 28, y + 52 + ch * (i + 0.5) + 5, r, 52, L(15, 13), 11, '#1d4ed8', 'center', 800));
+    o.cols.forEach((c, j) => TF(x + 56 + cw * (j + 0.5), y + 40, c, cw - 4, L(15, 13), 11, '#1d4ed8', 'center', 800));
+    o.rows.forEach((r, i) => TF(x + 28, y + 52 + ch * (i + 0.5) + 5, r, 52, L(15, 13), 11, '#be185d', 'center', 800));
+    T(x + w / 2 + 28, y + h + 14, '분홍: 어머니의 난자 · 파랑: 아버지의 정자', 11.5, '#64748b', 'center', 700);
     let cnt = 0;
     o.cells.forEach((row, i) => row.forEach((g, j) => {
       const cx = x + 56 + cw * j, cy = y + 52 + ch * i, hl = o.hl(g);
@@ -864,9 +870,9 @@
     }
     const pn = PUN[key];
     TF(bx + 14, by + 24, '가정: ' + pd.assume + ' 유전 · 가계도 ' + key, bw - 28, L(15.5, 13.5), 11, '#26324a', 'left', 800);
-    const pw = PHONE ? bw - 28 : 270, ph = PHONE ? 140 : bh - 44;
+    const pw = PHONE ? bw - 28 : 270, ph = PHONE ? 130 : bh - 62;
     punnett(bx + 14, by + 38, pw, ph, { title: pn.title, rows: pn.rows, cols: pn.cols, cells: pn.cells, hl: pn.hl });
-    const tx = PHONE ? bx + 14 : bx + 14 + pw + 16, ty = PHONE ? by + 38 + ph + 14 : by + 46, tw = PHONE ? bw - 28 : bw - pw - 44;
+    const tx = PHONE ? bx + 14 : bx + 14 + pw + 16, ty = PHONE ? by + 38 + ph + 36 : by + 46, tw = PHONE ? bw - 28 : bw - pw - 44;
     const steps = {
       A: ['4와 5는 자녀 6이 aa이므로 둘 다 보인자 Aa예요.', 'Aa × Aa → aa는 4칸 중 1칸 : 1/4', '7은 정상이므로 AA · Aa · Aa 중 하나 → Aa일 확률 2/3'],
       B: ["4의 아버지는 XY(정상), 어머니 2는 XX'이므로 4가 보인자일 확률은 1/2", "4가 XX'이면 자녀 중 X'Y는 4칸 중 1칸이므로 1/4 → 1/2 × 1/4 = 1/8", "아들일 때: 4가 보인자(1/2) × 아들 중 X'Y(1/2) = 1/4"],
@@ -998,7 +1004,7 @@
             const w = matchWrong();
             S.match.flag = w.length ? Object.fromEntries(w.map((i) => [i, true])) : null;
             if (!w.length) return true;
-            return '\'' + METHODS[w[0]].t + '\'로 알아낼 수 있는 것을 다시 생각해 보세요. (빨간 선)';
+            const mt = METHODS[w[0]].t, fin = (mt.charCodeAt(mt.length - 1) - 0xAC00) % 28; return '\'' + mt + '\'' + (fin === 0 || fin === 8 ? '로' : '으로') + ' 알아낼 수 있는 것을 다시 생각해 보세요. (빨간 선)';
           },
           explain: '<b>가계도 조사</b>는 형질이 어떤 방식(우성 · 열성, 상염색체 · 성염색체)으로 유전되는지, <b>쌍둥이 연구</b>는 유전과 환경이 형질에 미치는 영향의 정도, <b>집단 조사</b>는 형질의 빈도와 성별 차이, <b>DNA · 유전체 분석</b>은 어떤 염기 서열의 변이가 형질과 관련되는지를 알아내요.',
         },

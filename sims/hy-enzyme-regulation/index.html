@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#16a34a">
+  <title>효소 저해와 조절 | 고등 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚦</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; }
+    .stage-toolbar { min-height: 58px; }
+    .stage-toolbar .segmented { flex-wrap: wrap; }
+    .stage-toolbar .segmented button { min-height: 40px; padding: 5px 10px; font-size: 14px; white-space: nowrap; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard [hidden] { display: none !important; }
+    .btn-sm { min-height: 44px; }
+    .btn-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+    .btn-row .btn { flex: 1; padding-left: 8px; padding-right: 8px; }
+    .ctrl-note { margin: 6px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    .ctrl-note b { color: var(--ink); }
+    .range-row { display: flex; align-items: center; gap: 8px; }
+    .range-row input[type=range] { flex: 1; min-width: 0; height: 44px; }
+    .seg-full { display: flex; width: 100%; }
+    .seg-full button { flex: 1 1 0; min-width: 0; min-height: 44px; font-size: 14.5px; }
+    .chip-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px; }
+    .chip-grid.three { grid-template-columns: 1fr 1fr 1fr; }
+    .chip-grid button { min-height: 44px; padding: 6px 8px; border: 2px solid var(--line); background: #fff; border-radius: 12px; font-weight: 800; font-size: 14px; cursor: pointer; color: var(--ink); text-align: center; }
+    .chip-grid button.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); }
+    .chip-grid button.seen:not(.on) { border-color: color-mix(in srgb, var(--subject) 45%, white); }
+    .chip-grid button:disabled { opacity: .45; cursor: not-allowed; }
+    .chip-grid button:active { transform: scale(.98); }
+    .sel-in { width: 100%; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 8px; font: 800 14px var(--font); color: var(--ink); background: #fff; }
+    .sel-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .sel-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .num-in { width: 100%; min-width: 0; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 8px; font: 800 16px ui-monospace, Menlo, Consolas, monospace; color: var(--ink); background: #fff; text-align: right; }
+    .num-in:focus { outline: none; border-color: var(--subject); }
+    .num-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .num-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .in-unit { font-size: 12.5px; color: var(--muted); font-weight: 700; }
+    .in-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 10px; align-items: end; margin-top: 8px; }
+    .in-row .lab { font-weight: 800; font-size: 13.5px; margin-bottom: 3px; line-height: 1.25; }
+    @keyframes shakeX { 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+    .readout .value { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .stage-canvas .stage-hint { top: 10px; bottom: auto; }
+    .pk-pool { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+    .pk-item { min-height: 44px; padding: 6px 12px; border: 2px solid var(--line); background: #fff; border-radius: 12px; font-weight: 800; font-size: 14px; cursor: pointer; color: var(--ink); }
+    .pk-item:disabled { opacity: .35; cursor: default; }
+    .pk-seq { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; min-height: 46px; border: 2px dashed var(--line); border-radius: 12px; padding: 6px; }
+    .pk-chip { min-height: 34px; padding: 3px 10px; border: 2px solid var(--subject); background: color-mix(in srgb, var(--subject) 12%, white); border-radius: 999px; font-weight: 800; font-size: 13.5px; cursor: pointer; color: var(--ink); }
+    .pk-chip b { color: var(--subject); margin-right: 2px; }
+    .pk-reset { margin-top: 8px; width: 100%; }
+    .tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; margin-top: 6px; }
+    .tbl th, .tbl td { border: 1px solid var(--line); padding: 4px 4px; text-align: center; }
+    .tbl th { background: var(--surface-2); font-weight: 800; }
+    .tbl td.rowh { font-weight: 800; text-align: left; background: var(--surface-2); }
+    .tbl select { width: 100%; min-height: 40px; border: 2px solid var(--line); border-radius: 8px; font: 800 13.5px var(--font); background: #fff; color: var(--ink); }
+    .tbl select.ok { border-color: var(--good); background: var(--good-soft); }
+    .tbl select.bad { border-color: var(--bad); background: var(--bad-soft); }
+    .check-list { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 4px; font-size: 13.5px; font-weight: 700; }
+    .check-list li { display: flex; gap: 6px; align-items: baseline; }
+    .check-list li.on { color: var(--good); }
+    .btn-col { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+    #modeSeg button.lv-off { display: none; }
+    @media (max-width: 1100px) and (orientation: landscape) { .toolbar-label { display: none; } }
+    @media (max-width: 599px) {
+      .readout .value { font-size: 15px; }
+      .stage-toolbar { gap: 6px; padding: 8px; }
+      .stage-toolbar .spacer, .toolbar-label { display: none; }
+      .stage-toolbar .segmented button { padding: 5px 8px; font-size: 13.5px; }
+      .stage-hint { font-size: 13px; padding: 5px 12px; }
+    }
+    .stage-toolbar .segmented button.lv-off { display: none; }
+    .tag-pill { display: inline-block; padding: 2px 9px; border-radius: 999px; font-weight: 800; font-size: 12.5px; background: color-mix(in srgb, var(--subject) 14%, white); color: var(--ink); }
+    .tbl-in { width: 100%; }
+
+    .org-list { display: grid; gap: 8px; margin-top: 6px; }
+    .org-row { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 6px; padding: 6px; border: 2px solid var(--line); border-radius: 12px; }
+    .org-row .lab { grid-column: 1 / -1; font-weight: 800; font-size: 13.5px; }
+    .org-row .sel-in { font-size: 13px; padding: 4px 4px; }
+      .lab-s { font-weight: 800; font-size: 13.5px; color: var(--muted); margin: 8px 0 2px; }
+    .chip-grid.four { grid-template-columns: 1fr 1fr 1fr 1fr; }
+    .tf-list { display: grid; gap: 6px; margin-top: 6px; }
+    .tf-row { display: grid; gap: 3px; }
+    .tf-row .lab { font-weight: 800; font-size: 13.5px; line-height: 1.3; }
+    .sent { font-size: 13.5px; font-weight: 700; line-height: 1.75; margin-top: 6px; }
+    .sent .sel-in { width: auto; display: inline-block; min-width: 120px; max-width: 100%; margin: 2px 0; font-size: 13px; padding: 4px 6px; vertical-align: middle; }
+    [data-sub][hidden], [data-asub][hidden] { display: none !important; }
+    [data-grp][hidden] { display: none !important; }
+    #ctrlCard .control > .control-head { margin-top: 4px; }
+    .in-row.three { grid-template-columns: 1fr 1fr 1fr; }
+    .srch-list { display: grid; gap: 4px; margin-top: 6px; }
+    .srch-list button { text-align: left; min-height: 44px; border: 2px solid var(--line); background: #fff; border-radius: 12px; padding: 4px 10px; font: 800 13.5px var(--font); color: var(--ink); cursor: pointer; }
+    .srch-list button.on { border-color: var(--good); background: var(--good-soft); }
+    .srch-list .sub { display: block; font-weight: 700; font-size: 12px; color: var(--muted); }
+    .num-in.tl { text-align: left; font: 700 14px var(--font); margin-bottom: 4px; }
+    [hidden] { display: none !important; }
+  </style>
+
+</head>
+<body class="sim-page" data-subject="bio">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#hy">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">세포와 물질대사 · Ⅱ. 물질대사와 에너지</div>
+      <h1>효소 저해와 조절</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🚦 효소 조절</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="tablist" aria-label="화면 고르기">
+            <button type="button" data-mode="assay" data-lv="0" data-feature="assay">🧪 저해제 실험</button>
+            <button type="button" data-mode="model" data-lv="1" data-feature="model">🔍 저해 모형</button>
+            <button type="button" data-mode="feedback" data-lv="2" data-feature="feedback">🔁 되먹임 조절</button>
+            <button type="button" data-mode="cards" data-lv="3" data-feature="cards">🗞 카드뉴스</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="저해제가 있을 때 기질 농도에 따른 효소 반응 속도 그래프, 경쟁적과 비경쟁적 저해의 입자 모형, 되먹임 억제 생산 라인, 효소 이상 카드뉴스"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">—</span><span class="value" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">—</span><span class="value" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">—</span><span class="value" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+
+        <div class="control" data-modes="assay">
+          <div class="control-head"><span>🧪 저해제 실험</span></div>
+          <div class="lab-s">용액 조건</div>
+          <div class="chip-grid three" id="asCond"><button type="button" data-v="none">저해제 없음</button><button type="button" data-v="A">저해제 A</button><button type="button" data-v="B">저해제 B</button></div>
+          <div class="control-head"><label for="sAs">기질 농도 [S]</label><output id="oAs">8 mM</output></div>
+          <div class="range-row"><input type="range" id="sAs" min="0" max="5" step="1" value="3" aria-label="기질 농도 (1에서 32 밀리몰 중 6단계)"></div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="asGo" type="button">📏 1점 측정</button><button class="btn btn-sm" id="asAll" type="button">⚡ 이 조건 6점</button></div>
+          <div class="btn-row"><button class="btn btn-sm" id="asClear" type="button">↺ 표 지우기</button></div>
+          <div data-grp="readV">
+            <div class="lab-s">곡선이 가까워지는 최대 속도 (Vmax)</div>
+            <div class="in-row three">
+              <div><div class="lab"><label for="vN">없음</label></div><input class="num-in" id="vN" type="text" inputmode="decimal" maxlength="5" aria-label="저해제 없음의 최대 속도"></div>
+              <div><div class="lab"><label for="vA">A</label></div><input class="num-in" id="vA" type="text" inputmode="decimal" maxlength="5" aria-label="저해제 A의 최대 속도"></div>
+              <div><div class="lab"><label for="vB">B</label></div><input class="num-in" id="vB" type="text" inputmode="decimal" maxlength="5" aria-label="저해제 B의 최대 속도"></div>
+            </div>
+          </div>
+          <p class="ctrl-note" id="asNote"></p>
+        </div>
+        <div class="control" data-modes="model">
+          <div class="control-head"><span>🔍 저해 모형</span></div>
+          <div class="lab-s">저해제</div>
+          <div class="chip-grid three" id="mdType"><button type="button" data-v="none">없음</button><button type="button" data-v="comp">경쟁적</button><button type="button" data-v="non">비경쟁적</button></div>
+          <div class="control-head"><label for="sMd">기질 농도 [S]</label><output id="oMd">4 mM</output></div>
+          <div class="range-row"><input type="range" id="sMd" min="0" max="5" step="1" value="2" aria-label="기질 농도 (1에서 32 밀리몰 중 6단계)"></div>
+          <div data-grp="judge">
+            <div class="lab-s">단서를 보고 저해제 유형을 판정해요</div>
+            <div class="tf-list">
+              <div class="tf-row"><div class="lab">① 저해제의 구조가 기질과 비슷하다.</div><select class="sel-in" id="jd1" aria-label="단서 1의 저해 유형"><option value="">유형 고르기</option><option value="comp">경쟁적 저해</option><option value="non">비경쟁적 저해</option></select></div>
+              <div class="tf-row"><div class="lab">② 기질을 아주 많이 넣으면 같은 최대 속도에 도달한다.</div><select class="sel-in" id="jd2" aria-label="단서 2의 저해 유형"><option value="">유형 고르기</option><option value="comp">경쟁적 저해</option><option value="non">비경쟁적 저해</option></select></div>
+              <div class="tf-row"><div class="lab">③ 활성 부위가 아닌 곳에 붙어 효소의 모양을 변화시킨다.</div><select class="sel-in" id="jd3" aria-label="단서 3의 저해 유형"><option value="">유형 고르기</option><option value="comp">경쟁적 저해</option><option value="non">비경쟁적 저해</option></select></div>
+            </div>
+          </div>
+          <p class="ctrl-note" id="mdNote"></p>
+        </div>
+        <div class="control" data-modes="feedback">
+          <div class="control-head"><span>🔁 생산 라인</span></div>
+          <div class="lab-s">되먹임 억제</div>
+          <div class="chip-grid" id="fbOn"><button type="button" data-v="off">없음</button><button type="button" data-v="on">있음</button></div>
+          <div class="control-head"><label for="sCons">소비 속도</label><output id="oCons">5 /초</output></div>
+          <div class="range-row"><input type="range" id="sCons" min="0" max="20" step="1" value="5" aria-label="최종 산물 소비 속도 (0에서 20, 초당)"></div>
+          <div class="lab-s">시간 속도</div>
+          <div class="chip-grid" id="fbSpd"><button type="button" data-v="1">보통</button><button type="button" data-v="4">⏩ 4배</button></div>
+          <div class="btn-row"><button class="btn btn-sm" id="fbReset" type="button">↺ 탱크 비우고 다시</button></div>
+          <p class="ctrl-note" id="fbNote"></p>
+        </div>
+        <div class="control" data-modes="cards">
+          <div class="control-head"><span>🗞 카드뉴스 만들기</span></div>
+          <div class="lab-s">소재 고르기</div>
+          <select class="sel-in" id="cdTopic" aria-label="카드뉴스 소재"><option value="">소재를 골라요</option></select>
+          <div class="lab-s">4칸 채우기</div>
+          <div class="tf-list">
+            <select class="sel-in" id="cd0" aria-label="카드 1 문제 칸"><option value="">① 문제</option></select>
+            <select class="sel-in" id="cd1" aria-label="카드 2 효소 칸"><option value="">② 어떤 효소가 어떻게?</option></select>
+            <select class="sel-in" id="cd2" aria-label="카드 3 몸의 변화 칸"><option value="">③ 몸에서 생기는 일</option></select>
+            <select class="sel-in" id="cd3" aria-label="카드 4 해결 칸"><option value="">④ 해결 · 예방</option></select>
+          </div>
+          <div class="lab-s">친구 카드와 짝지어 한 문장 합의하기</div>
+          <select class="sel-in" id="cdCons" aria-label="합의 문장"><option value="">효소는 왜 중요할까요?</option></select>
+          <div class="lab-s"><label for="cdNote">내 한마디 (선택 · 이 기기에만 저장)</label></div>
+          <input class="num-in" id="cdNote" type="text" maxlength="40" style="text-align:left;font-size:14px" aria-label="내 한마디 (이 기기에만 저장)" placeholder="예: 효소는 몸의 일꾼이에요">
+          <p class="ctrl-note" id="cdNote2"></p>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

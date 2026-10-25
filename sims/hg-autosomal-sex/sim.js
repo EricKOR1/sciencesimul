@@ -285,7 +285,7 @@
   /* 카드를 누르면 선택, 상자를 누르면 놓기 (끌기가 어려운 기기를 위해) */
   function selectable(opts) {
     let so = null;
-    opts.onTap = (c) => { so.selected = so.selected === c ? null : c; Sound.click(); };
+    opts.onTap = (c) => { so.selected = so.selected === c ? null : c; Sound.click(); if (opts.afterTap) opts.afterTap(c); };
     opts.isSel = (c) => !!so && so.selected === c;
     so = new Sorter(opts); so.selected = null;
     return so;
@@ -422,7 +422,7 @@
         const b = g.bars[d.k], e = SciSim.ease.inQuad(clamp(d.t, 0, 1)), ex = SciSim.ease.outQuad(clamp(d.t, 0, 1));
         const x = d.x0 + (b.cx + d.jx - d.x0) * ex, y = g.top - 6 + (b.top - (g.top - 6)) * e;
         const c = this.cats[d.k];
-        dot(x, y, 5, c.col, {});
+        ctx.fillStyle = c.col; ctx.beginPath(); ctx.arc(x, y, 5, 0, TAU); ctx.fill(); ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.beginPath(); ctx.arc(x - 1.5, y - 1.5, 1.8, 0, TAU); ctx.fill();
       });
     }
   }
@@ -626,7 +626,7 @@
     T(MAP.x + 12, MAP.y + 22, '사람의 염색체 지도 (상염색체 22쌍 + 성염색체 X · Y)', L(14.5, 12.5), '#334155', 'left', 800);
     const n = 24, gx = MAP.x + 14, gw = MAP.w - 28, slot = gw / n, bw = Math.min(PHONE ? 10 : 16, slot * 0.62);
     const top = MAP.y + (PHONE ? 76 : 78), maxH = MAP.h - (PHONE ? 76 : 78) - 22, mx = 248;
-    const pins = { 3: { c: '#7c6cf0', t: '4번 · FGFR3', f: 0.07, dy: 0 }, 10: { c: '#7c6cf0', t: '11번 · TYR', f: 0.4, dy: PHONE ? 1 : 0 }, 22: { c: '#ec4899', t: 'X · 색소 · 응고 인자 유전자', f: 0.78, dy: PHONE ? 0 : 1 } };
+    const pins = { 3: { c: '#7c6cf0', t: '4번 · FGFR3', f: 0.04, dy: 0 }, 10: { c: '#7c6cf0', t: '11번 · TYR', f: 0.62, dy: PHONE ? 1 : 0 }, 22: { c: '#ec4899', t: 'X · 색소 · 응고 인자 유전자', f: 0.94, dy: PHONE ? 0 : 1 } };
     for (let i = 0; i < n; i++) {
       const cx = gx + slot * (i + 0.5), h = CHR_MB[i] / mx * maxH, isX = i === 22, isY = i === 23;
       const col = isX ? COL.X : isY ? COL.Y : (pins[i] ? COL.auto : '#b8c0d6');
@@ -845,7 +845,7 @@
     const pa = rc[side], col = side === 'a' ? '#0ea5e9' : '#a855f7';
     panel(x, y, w, h, 16, '#fff'); ctx.strokeStyle = col; ctx.lineWidth = 2.5; D.roundRect(x, y, w, h, 16); ctx.stroke();
     TF(x + w / 2, y + 26, sideTitle(side), w - 24, L(16.5, 14.5), 11, col, 'center', 800);
-    const cx = x + w / 2, py = y + (PHONE ? 78 : 100), dx = Math.min(100, w * 0.24);
+    const cx = x + w / 2, py = y + (PHONE ? 68 : 100), dx = Math.min(100, w * 0.24);
     D.dashedLine(cx - dx + 22, py - 4, cx + dx - 22, py - 4, { color: '#64748b', width: 2, dash: [1, 0] });
     [[cx - dx, pa.mom, '어머니', COL.dau, 0], [cx + dx, pa.dad, '아버지', COL.son, 1]].forEach(([px, par, nm, c, k]) => {
       person(px, py, L(34, 28), par.aff ? C.mix(c, '#e2464b', 0.55) : c);
@@ -853,7 +853,7 @@
       T(px, py + L(34, 28) * 0.55 + 18, nm + ' ' + par.g, L(14.5, 13), '#26324a', 'center', 800);
       T(px, py + L(34, 28) * 0.55 + 35, par.aff ? rc.lab[1] : rc.lab[0], L(13, 12), par.aff ? '#b91c1c' : '#166534', 'center', 800);
     });
-    const ky = y + (PHONE ? 178 : 262);
+    const ky = y + (PHONE ? 158 : 262);
     if (!ran) {
       T(cx, ky, '▶ ' + '교배 실행 버튼을 눌러요', L(15, 13.5), '#94a3b8', 'center', 800);
       T(cx, ky + 24, '(자녀 4명: 아들 2 · 딸 2)', 12.5, '#94a3b8', 'center', 700);
@@ -878,12 +878,12 @@
       // 교차 유전: 어머니의 X가 아들에게
       const ay = ky + (PHONE ? 66 : 78);
       D.arrow(cx - dx, py + 78, cx - 1.5 * sp, ky - 40, { color: '#ec4899', width: 2.6, dash: [6, 4], alpha: 0.9 });
-      TF(cx, ky + (PHONE ? 78 : 84), '아들의 X는 어머니에게서 받아요', w - 20, L(13.5, 12), 10.5, '#be185d', 'center', 800);
+      TF(cx, ky + (PHONE ? 72 : 84), '아들의 X는 어머니에게서 받아요', w - 20, L(13.5, 12), 10.5, '#be185d', 'center', 800);
       void ay;
     }
     const sm = kidSummary(tr, side);
-    textBlock(x + 16, ky + (PHONE ? 100 : 124), w - 32, sm[0], L(14.5, 13), '#26324a', L(21, 19), 800);
-    textBlock(x + 16, ky + (PHONE ? 100 : 124) + L(24, 22), w - 32, sm[1], L(14.5, 13), '#26324a', L(21, 19), 800);
+    textBlock(x + 16, ky + (PHONE ? 92 : 124), w - 32, sm[0], L(14.5, 13), '#26324a', L(21, 19), 800);
+    textBlock(x + 16, ky + (PHONE ? 92 : 124) + L(24, 22), w - 32, sm[1], L(14.5, 13), '#26324a', L(21, 19), 800);
   }
   function recipDraw(dt, t) {
     const tr = S.recip.trait;
