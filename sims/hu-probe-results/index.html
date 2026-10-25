@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0ea5e9">
+  <title>탐사선이 밝힌 것 | 고등 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛰️</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-hint { bottom: auto; top: 12px; }
+    .stage-toolbar { min-height: 58px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; }
+    .stage-toolbar .segmented button { min-height: 40px; padding: 5px 10px; font-size: 14px; white-space: nowrap; }
+    .stage-toolbar .segmented { flex-wrap: wrap; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard [hidden] { display: none !important; }
+    .opt-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin-top: 4px; }
+    .opt-grid.c3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .opt-grid.c4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .opt-grid.c5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+    .opt {
+      min-height: 46px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 12px;
+      font-weight: 800; font-size: 14.5px; cursor: pointer; padding: 4px 4px; font-family: inherit; line-height: 1.2;
+    }
+    .opt.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); color: color-mix(in srgb, var(--subject) 70%, black); }
+    .opt.done { border-color: var(--good); background: var(--good-soft); color: #0b6b39; }
+    .opt:disabled { opacity: .5; cursor: not-allowed; }
+    .ctrl-note { margin: 6px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    .btn-sm { min-height: 44px; }
+    .btn-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+    .btn-row .btn { flex: 1; padding-left: 8px; padding-right: 8px; }
+    .readout .value.txt { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .concept table.mini, table.mini { border-collapse: collapse; margin: 6px 0; font-size: 13px; width: 100%; }
+    .concept table.mini th, .concept table.mini td, table.mini th, table.mini td { border: 1px solid var(--line); padding: 4px 5px; text-align: center; }
+    .concept table.mini th, table.mini th { background: var(--surface-2); font-weight: 800; }
+    .num-in { width: 100%; min-height: 46px; border: 2px solid var(--line); border-radius: 10px; font: inherit; font-weight: 800; font-size: 17px; padding: 0 10px; background: var(--surface); color: var(--ink); text-align: center; }
+    .num-in:focus { outline: none; border-color: var(--subject); }
+    .num-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .num-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .in-row { display: grid; grid-template-columns: 1fr 104px; gap: 8px; align-items: center; margin-top: 6px; font-weight: 800; font-size: 14.5px; line-height: 1.25; }
+    .in-row .num-in { min-height: 42px; font-size: 16px; }
+    @keyframes shakeX { 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+    .src-note { margin: 4px 0 0; font-size: 12.5px; color: #a16207; background: #fff7e0; border: 1px solid #f2d38a; border-radius: 10px; padding: 6px 9px; line-height: 1.4; }
+    @media (max-width: 599px) {
+      .readout { min-width: 0; }
+      .readout .value.txt { font-size: 15px; }
+      .stage-toolbar .spacer { display: none; }
+      .stage-toolbar .segmented button { padding: 5px 7px; font-size: 13px; }
+    }
+    input[type=range] { height: 40px; }
+    .ticks { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--muted); font-weight: 700; margin-top: -6px; padding: 0 2px; }
+  </style>
+</head>
+<body class="sim-page" data-subject="earth">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#hu">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">행성우주과학 · Ⅰ. 우주탐사와 행성계</div>
+      <h1>탐사선이 밝힌 것</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🛰️ 탐사선이 밝힌 것</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="group" aria-label="장면 고르기" hidden>
+            <button type="button" data-view="map">🗺️ 탐사 지도</button>
+            <button type="button" data-view="board">🗂 모둠 보드</button>
+            <button type="button" data-view="crater">🔍 충돌구</button>
+            <button type="button" data-view="atmo">🌫️ 대기 투과</button>
+            <button type="button" data-view="res">🔭 분해능</button>
+            <button type="button" data-view="korea">🇰🇷 우리나라</button>
+            <button type="button" data-view="debate">💬 토론</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="태양계 탐사 지도와 빛 신호 지연, 모둠 자료 카드 보드, 충돌구 헤아리기, 대기 투과 곡선, 분해능 비교, 우리나라 우주개발 카드, 토론 근거 카드가 있어요."></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">—</span><span class="value txt" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">—</span><span class="value txt" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">—</span><span class="value txt" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" data-modes="map">
+          <div class="control-head"><span>📍 목적지 고르기</span></div>
+          <div class="opt-grid c3" id="grpDest">
+            <button class="opt" type="button" data-k="0">🌕 달</button>
+            <button class="opt" type="button" data-k="1">☄️ 소행성</button>
+            <button class="opt" type="button" data-k="2">🔴 화성</button>
+            <button class="opt" type="button" data-k="3">🟤 목성</button>
+            <button class="opt" type="button" data-k="4">🪐 토성</button>
+            <button class="opt" type="button" data-k="5">⚪ 명왕성</button>
+          </div>
+        </div>
+        <div class="control" data-modes="map">
+          <div class="control-head"><span>🛠 탐사 방식 고르기</span></div>
+          <div class="opt-grid" id="grpMeth">
+            <button class="opt" type="button" data-k="0">➡️ 근접 통과</button>
+            <button class="opt" type="button" data-k="1">🔄 궤도선</button>
+            <button class="opt" type="button" data-k="2">🛬 착륙선·로버</button>
+            <button class="opt" type="button" data-k="3">📦 시료 회수</button>
+          </div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bSend" type="button">🚀 탐사선 보내기</button></div>
+          <p class="ctrl-note" id="sendNote"></p>
+        </div>
+        <div class="control" data-modes="map" id="calcDelay" hidden>
+          <div class="control-head"><span>🧮 목성 4.2 AU의 편도 신호 시간</span></div>
+          <div class="in-row"><span>t = d / c (분)</span><input class="num-in" id="inDelay" type="text" inputmode="decimal" placeholder="예: 20" aria-label="빛 신호의 편도 시간 (분)" autocomplete="off"></div>
+        </div>
+
+        <div class="control" data-modes="board">
+          <div class="control-head"><span>🗂 모둠 자료 보드</span></div>
+          <p class="ctrl-note" id="boardNote"></p>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bRecv" type="button">📡 다른 모둠 자료 받기</button></div>
+          <div class="btn-row"><button class="btn btn-sm" id="bBoardReset" type="button">↺ 다시 하기</button></div>
+        </div>
+
+        <div class="control" data-modes="crater">
+          <div class="control-head"><span>🛰 표면 사진 고르기</span></div>
+          <div class="opt-grid c3" id="grpReg">
+            <button class="opt" type="button" data-k="0">달 고지</button>
+            <button class="opt" type="button" data-k="1">달 바다</button>
+            <button class="opt" type="button" data-k="2">올림푸스 사면</button>
+          </div>
+          <div class="btn-row"><button class="btn btn-sm" id="bFind" type="button">💡 빠진 것 보이기</button><button class="btn btn-sm" id="bCClear" type="button">🗑 이 구역 지우기</button></div>
+          <p class="ctrl-note">충돌구를 눌러 번호를 붙여요. 다시 누르면 취소돼요.</p>
+        </div>
+
+        <div class="control" data-modes="atmo">
+          <div class="control-head"><label for="sLam">〰 파장 λ</label><output id="oLam">550 nm</output></div>
+          <input type="range" id="sLam" min="-12" max="2" step="0.01" value="-6.26" aria-label="파장 (로그 눈금)">
+          <div class="ticks"><span>짧음 (감마선)</span><span>긺 (전파)</span></div>
+          <div class="opt-grid c3" id="grpBand">
+            <button class="opt" type="button" data-k="0">감마선</button>
+            <button class="opt" type="button" data-k="1">X선</button>
+            <button class="opt" type="button" data-k="2">자외선</button>
+            <button class="opt" type="button" data-k="3">가시광선</button>
+            <button class="opt" type="button" data-k="4">적외선</button>
+            <button class="opt" type="button" data-k="5">전파</button>
+          </div>
+          <p class="ctrl-note">곡선을 끌어도 파장이 바뀌어요.</p>
+        </div>
+        <div class="control" data-modes="atmo" id="needBox" hidden>
+          <div class="control-head"><span>🛰 우주 망원경이 꼭 필요한 파장</span></div>
+          <div class="opt-grid c3" id="grpNeed">
+            <button class="opt" type="button" data-k="0">감마선</button>
+            <button class="opt" type="button" data-k="1">X선</button>
+            <button class="opt" type="button" data-k="2">자외선</button>
+            <button class="opt" type="button" data-k="3">가시광선</button>
+            <button class="opt" type="button" data-k="4">적외선</button>
+            <button class="opt" type="button" data-k="5">전파</button>
+          </div>
+        </div>
+
+        <div class="control" data-modes="res">
+          <div class="control-head"><label for="sD">🔭 망원경 지름 D</label><output id="oD">1.0 m</output></div>
+          <input type="range" id="sD" min="0.5" max="10" step="0.1" value="1" aria-label="망원경 지름 (미터)">
+        </div>
+        <div class="control" data-modes="res">
+          <div class="control-head"><label for="sLamR">🌈 파장 λ</label><output id="oLamR">550 nm</output></div>
+          <input type="range" id="sLamR" min="300" max="1000" step="10" value="550" aria-label="파장 (나노미터)">
+        </div>
+        <div class="control" data-modes="res">
+          <div class="control-head"><label for="sSep">✦✦ 두 별 사이 각도</label><output id="oSep">0.40″</output></div>
+          <input type="range" id="sSep" min="0.05" max="1.2" step="0.01" value="0.4" aria-label="두 별 사이의 각도 (초각)">
+        </div>
+        <div class="control" data-modes="res" id="calcRes" hidden>
+          <div class="control-head"><span>🧮 허블 (D = 2.4 m, λ = 550 nm)</span></div>
+          <div class="in-row"><span>θ (초각 ″)</span><input class="num-in" id="inTheta" type="text" inputmode="decimal" placeholder="예: 0.1" aria-label="허블의 분해능 (초각)" autocomplete="off"></div>
+        </div>
+
+        <div class="control" data-modes="korea">
+          <div class="control-head"><span>🇰🇷 우리나라 우주개발</span></div>
+          <p class="ctrl-note">왼쪽 카드를 누르고 오른쪽에서 짝을 눌러요. 이어진 카드를 다시 누르면 풀려요.</p>
+          <div class="btn-row"><button class="btn btn-sm" id="bKClear" type="button">↺ 모두 풀기</button></div>
+        </div>
+
+        <div class="control" data-modes="debate">
+          <div class="control-head"><span>💬 근거 카드 분류</span></div>
+          <p class="ctrl-note">카드를 눌러 고른 뒤 상자를 누르거나, 끌어다 놓아요. 상자 안의 카드를 누르면 다시 꺼내요.</p>
+        </div>
+        <div class="control" data-modes="debate" id="debBox" hidden>
+          <div class="control-head"><span>✍ 내 입장 문장 만들기</span></div>
+          <div class="opt-grid c3" id="grpStance">
+            <button class="opt" type="button" data-k="0">찬성</button>
+            <button class="opt" type="button" data-k="1">반대</button>
+            <button class="opt" type="button" data-k="2">조건부</button>
+          </div>
+          <select id="selEvid" class="num-in" aria-label="근거 카드 고르기" style="margin-top:8px"></select>
+          <div class="btn-row"><button class="btn btn-sm" id="bDebReset" type="button">↺ 다시 분류</button></div>
+        </div>
+
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>
