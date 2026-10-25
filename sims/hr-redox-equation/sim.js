@@ -190,19 +190,22 @@
     o = o || {};
     L = L.filter((t) => t.n > 0); R = R.filter((t) => t.n > 0);
     const opW = fs * 1.2, arW = fs * 2.2;
-    const measure = (f) => { let tot = 0; [L, R].forEach((side, si) => { side.forEach((t, i) => { const d = termDims(t, f); tot += d.cw + d.w + (i < side.length - 1 ? opW * f / fs : 0); }); }); return tot + arW * f / fs; };
-    let f = fs, total = measure(f);
-    if (total > maxW) { f = Math.max(11, fs * maxW / total); total = measure(f); }
-    const op = opW * f / fs, ar = arW * f / fs;
-    let x = cx - total / 2; const pos = {};
-    let lx0 = x, lx1 = x, rx0 = 0, rx1 = 0;
-    const drawTerm = (t, side) => {
+    const sideW = (side, f) => side.reduce((tot, t, i) => { const d = termDims(t, f); return tot + d.cw + d.w + (i < side.length - 1 ? opW * f / fs : 0); }, 0);
+    const oneRow = (f) => sideW(L, f) + sideW(R, f) + arW * f / fs;
+    let f = fs, stacked = false;
+    if (oneRow(f) > maxW) {
+      if (o.stack && oneRow(Math.max(15.5, fs * 0.85)) > maxW) { stacked = true; f = Math.min(fs, Math.max(13, maxW / Math.max(sideW(L, fs), sideW(R, fs)) * fs)); }
+      else f = Math.max(12, fs * maxW / oneRow(fs));
+    }
+    const op = opW * f / fs, ar = arW * f / fs, rowGap = f * 2.9;
+    const pos = {}; let lx0 = 0, lx1 = 0, rx0 = 0, rx1 = 0, arx = cx;
+    const drawTerm = (t, side, x, y) => {
       const s = SP[t.key], d = termDims(t, f), pk = (o.pk || 'q') + ':' + side + t.id;
       if (prevN[pk] !== undefined && prevN[pk] !== t.n) popMap[pk] = 1;
       prevN[pk] = t.n;
       const pop = popMap[pk] || 0, sc = 1 + 0.2 * pop, w = d.cw + d.w;
       const mx = x + w / 2, al = o.alpha && o.alpha[t.id] != null ? o.alpha[t.id] : 1;
-      ctx.save(); ctx.translate(mx, cy); ctx.scale(sc, sc); ctx.globalAlpha = al;
+      ctx.save(); ctx.translate(mx, y); ctx.scale(sc, sc); ctx.globalAlpha = al;
       if (d.cw) T(-w / 2 + d.cw / 2 - 1, f * 0.36, String(t.n), f, '#7c3aed', 'center', 900);
       const tx = -w / 2 + d.cw + d.w / 2;
       const hl = o.hl && o.hl[t.id];
@@ -215,16 +218,22 @@
       }
       ctx.restore();
       pos[t.id + side] = { x, w, cx: mx, tx: x + d.cw + d.w / 2, h: d.h };
-      if (o.balls) { const nb = Math.min(t.n, 8), r = Math.max(4, f * 0.26); for (let q = 0; q < nb; q++) { const bx = mx - (nb - 1) * (r + 1.5) + q * (r * 2 + 3), by = cy + d.h / 2 + r + 5; const col = s.e ? '#fbbf24' : (ELC[Object.keys(s.a)[0]] || '#94a3b8'); ctx.save(); ctx.globalAlpha = al; D.sphere(bx, by, r, col, { gloss: false, outline: s.e ? '#b7791f' : '#64748b', outlineWidth: 0.8 }); ctx.restore(); } }
-      x += w;
+      if (o.balls) { const nb = Math.min(t.n, 8), r = Math.max(4, f * 0.26); for (let q = 0; q < nb; q++) { const bx = mx - (nb - 1) * (r + 1.5) + q * (r * 2 + 3), by = y + d.h / 2 + r + 5; const col = s.e ? '#fbbf24' : (ELC[Object.keys(s.a)[0]] || '#94a3b8'); ctx.save(); ctx.globalAlpha = al; D.sphere(bx, by, r, col, { gloss: false, outline: s.e ? '#b7791f' : '#64748b', outlineWidth: 0.8 }); ctx.restore(); } }
+      return w;
     };
-    L.forEach((t, i) => { drawTerm(t, 'L'); lx1 = x; if (i < L.length - 1) { T(x + op / 2, cy + f * 0.36, '+', f * 0.95, '#94a3b8', 'center', 800); x += op; } });
-    const arx = x + ar / 2;
-    D.arrow(x + ar * 0.15, cy, x + ar * 0.85, cy, { color: '#64748b', width: 3, head: 10 });
-    x += ar; rx0 = x;
-    R.forEach((t, i) => { drawTerm(t, 'R'); rx1 = x; if (i < R.length - 1) { T(x + op / 2, cy + f * 0.36, '+', f * 0.95, '#94a3b8', 'center', 800); x += op; } });
-    if (!L.length) lx1 = lx0;
-    return { pos, lx0, lx1, rx0, rx1, arx, f, y: cy, h: f * 1.8 };
+    const drawSide = (side, tag, x0, y) => { let x = x0; side.forEach((t, i) => { x += drawTerm(t, tag, x, y); if (i < side.length - 1) { T(x + op / 2, y + f * 0.36, '+', f * 0.95, '#94a3b8', 'center', 800); x += op; } }); return x; };
+    if (!stacked) {
+      const total = oneRow(f); let x = cx - total / 2;
+      lx0 = x; x = drawSide(L, 'L', x, cy); lx1 = x;
+      arx = x + ar / 2; D.arrow(x + ar * 0.15, cy, x + ar * 0.85, cy, { color: '#64748b', width: 3, head: 10 });
+      x += ar; rx0 = x; x = drawSide(R, 'R', x, cy); rx1 = x;
+      return { pos, lx0, lx1, rx0, rx1, arx, f, y: cy, h: f * 1.8, bottom: cy + f * 0.9 };
+    }
+    const wl = sideW(L, f), wr = sideW(R, f);
+    lx0 = cx - wl / 2; drawSide(L, 'L', lx0, cy); lx1 = lx0 + wl;
+    rx0 = cx - wr / 2; drawSide(R, 'R', rx0, cy + rowGap); rx1 = rx0 + wr;
+    D.arrow(cx, cy + f * 1.05, cx, cy + rowGap - f * 1.05, { color: '#64748b', width: 3, head: 9 });
+    return { pos, lx0, lx1, rx0, rx1, arx: cx, f, y: cy, h: f * 1.8, bottom: cy + rowGap + f * 0.9, stacked: true };
   }
   function chargeBadges(lay, L, R, y, o) {
     o = o || {};
@@ -475,8 +484,8 @@
     panel(MAIN.x, MAIN.y, MAIN.w, MAIN.h, 14);
     const cx = MAIN.x + MAIN.w / 2, fs = PHONE ? 20 : 23;
     const hl = {}; if (v.h > 0) hl.H = '#7c3aed'; if (v.w > 0) hl.H2O = '#0ea5e9'; if (v.e > 0) hl.e = rg[3] ? GOODC2 : '#f59e0b';
-    const lay = drawEq(tm.L, tm.R, cx, MAIN.y + 50, fs, MAIN.w - 30, { pk: 'ac' + a.ex, hl });
-    if (rg[3]) { T(cx, MAIN.y + 50 + fs * 1.3 + 14, '✅ 원자 수와 전하가 모두 같아요', 14, '#166534', 'center', 800); }
+    const lay = drawEq(tm.L, tm.R, cx, MAIN.y + 50, fs, MAIN.w - 30, { pk: 'ac' + a.ex, hl, stack: PHONE });
+    if (rg[3]) { T(cx, lay.bottom + 14, '✅ 원자 수와 전하가 모두 같아요', 14, '#166534', 'center', 800); }
     // 사다리
     const labels = ['① 산소 · 수소 이외의 원자 수 맞추기', '② 산소 원자 수 맞추기 : H₂O 더하기', '③ 수소 원자 수 맞추기 : H⁺ 더하기', '④ 전하 맞추기 : e⁻ 더하기', '⑤ 산화수 변화로 전자 수 확인'];
     const subs = [x.metal + ' 원자 : ' + x.nL + '개 | ' + v.rM + '개', 'O 원자 : ' + x.oO + '개 | ' + v.w + '개', 'H 원자 : ' + v.h + '개 | ' + 2 * v.w + '개', '전하 : ' + qs(sideTot(tm.L.filter((q) => q.n > 0)).q) + ' | ' + qs(sideTot(tm.R.filter((q) => q.n > 0)).q), x.metal + ' ' + oxs2(x.ox[0]) + ' → ' + oxs2(x.ox[1]) + ' : ' + (isNaN(v.chk) ? '?' : v.chk) + '개'];
@@ -541,10 +550,10 @@
     panel(MAIN.x, MAIN.y, MAIN.w, MAIN.h, 14);
     const cx = MAIN.x + MAIN.w / 2, fs = PHONE ? 18 : 21;
     const hl = {}; [].concat(p.L, p.R).forEach((key) => { hl[key] = ok ? GOODC2 : null; });
-    const lay = drawEq(tm.L, tm.R, cx, MAIN.y + 52, fs, MAIN.w - 24, { pk: 'cp' + k, hl });
-    T(cx, MAIN.y + 52 + fs * 1.3 + 14, ok ? '✅ 원자 수와 전하가 모두 같은 반응식이에요' : bal ? '균형은 맞았어요. 계수를 가장 작은 정수로 줄여요' : '아래 검사기가 모두 초록색이 되도록 계수를 바꿔요', 14, ok ? '#166534' : bal ? '#9a3412' : MUTED, 'center', 800);
+    const lay = drawEq(tm.L, tm.R, cx, MAIN.y + 40, fs, MAIN.w - 24, { pk: 'cp' + k, hl, stack: PHONE });
+    T(cx, lay.bottom + 16, ok ? '✅ 원자 수와 전하가 모두 같은 반응식이에요' : bal ? '균형은 맞았어요. 계수를 가장 작은 정수로 줄여요' : '아래 검사기가 모두 초록색이 되도록 계수를 바꿔요', 14, ok ? '#166534' : bal ? '#9a3412' : MUTED, 'center', 800);
     // 산화수 변화 + 비커
-    const vz = p.viz, bw = PHONE ? 100 : 112, bh = PHONE ? 130 : 150, bx = MAIN.x + (PHONE ? 30 : 60), by = MAIN.y + (PHONE ? 130 : 128);
+    const vz = p.viz, bw = PHONE ? 100 : 112, bh = PHONE ? 130 : 150, bx = MAIN.x + (PHONE ? 30 : 60), by = MAIN.y + (PHONE ? 190 : 128);
     const e = sm(c.rx), col = C.mix(vz.c0, vz.c1, e), al = vz.a0 + (vz.a1 - vz.a0) * e;
     const bk = beaker(bx, by, bw, bh, { level: 0.62, color: col, alpha: al, inside: (g) => {
       if (vz.fx === 'silver') { const n = Math.round(14 * e); for (let q = 0; q < n; q++) { const q2 = ballPos(g, q + 11, 3, 1.5, t); ctx.fillStyle = 'rgba(203,213,225,.95)'; ctx.beginPath(); ctx.arc(q2[0], q2[1], 3.4, 0, TAU); ctx.fill(); } }
