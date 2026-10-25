@@ -728,7 +728,8 @@
     // 아래 안내
     const bt = BOT;
     panel(bt.x, bt.y, bt.w, bt.h, 14);
-    textBlock(bt.x + 14, bt.y + 28, bt.w - 28, '슬릿 간격 d = 100 nm(나노 격자)로 가정해요. λ가 d의 10' + supOf(-6) + '배보다 작으면 무늬 사이의 각도가 너무 작아 관찰할 수 없어요(모형 기준). 일상 물체의 파동성이 느껴지지 않는 까닭이에요.', 15, '#26324a', 22, 700);
+    T(bt.x + 16, bt.y + 26, '입자도 파동처럼, 파동도 입자처럼', 16, '#d6452f', 'left', 800);
+    textBlock(bt.x + 16, bt.y + 50, bt.w - 32, '전자와 광자는 한 점씩 도착하지만(입자성) 도착 확률은 파동의 간섭으로 정해져요. 슬릿 간격 d = 100 nm에 비해 λ가 너무 짧으면(λ/d < 10' + supOf(-6) + ') 무늬를 볼 수 없어요(모형 기준).', PHONE ? 13.5 : 15, '#26324a', PHONE ? 19 : 22, 700);
   }
 
   /* ---------- 장면 그리기 · 설명 · 읽음 칸 ---------- */
@@ -1004,7 +1005,7 @@
         {
           title: '드브로이 파장 계산하기', manual: true,
           goal: '전자(50 V, 속력 × 1)의 운동량은 p = 3.8×10⁻²⁴ kg·m/s예요. <b>λ = h/p</b>를 계산해 nm로 입력하고, 속력이 2배일 때도 고르세요.',
-          hint: 'λ = 6.63×10⁻³⁴ ÷ 3.8×10⁻²⁴ ≈ 1.7×10⁻¹⁰ m예요. 1 nm = 10⁻⁹ m이므로 0.17 nm! 표에서 전자 줄을 누르고 × 2를 눌러 확인해도 좋아요.',
+          hint: 'λ = h/p = 6.63×10⁻³⁴ / 3.8×10⁻²⁴ ≈ 1.7×10⁻¹⁰ m예요. 1 nm = 10⁻⁹ m이므로 0.17 nm! 표에서 전자 줄을 누르고 × 2를 눌러 확인해도 좋아요.',
           setup() { S.show.dblPick = false; S.show.dblIn = true; SEL_D.reset(); $('#nLam').value = ''; $('#nLam').classList.remove('ok', 'bad'); numKey = ''; S.d.sel = 'e'; S.d.f.e = 1; updateCtl(); setScene('dbl'); },
           check() { const n = gradeNum(); if (n !== true) return n; return SEL_D.grade(); },
           status: () => mark($('#nLam').value.trim() !== '') + ' 파장 입력 &nbsp; · 고른 문장 ' + SEL_D.count() + ' / 1',

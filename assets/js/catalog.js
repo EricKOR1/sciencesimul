@@ -6776,8 +6776,7 @@ window.SCI_CATALOG = {
                 "무늬 쌓기",
                 "어느 틈?",
                 "드브로이 파장"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hq-superposition",
@@ -6798,8 +6797,7 @@ window.SCI_CATALOG = {
                 "측정",
                 "다시 측정",
                 "큐비트 여러 개"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hq-quantum-tech",
@@ -6820,8 +6818,7 @@ window.SCI_CATALOG = {
                 "양자 암호",
                 "다양한 기술",
                 "사회 토론"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hq-atom-model",

@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#f26b3a">
+  <title>양자 기술과 사회 | 고등 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔐</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; }
+    .stage-toolbar { min-height: 61px; }
+    .segmented button { min-height: 44px; white-space: nowrap; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    .stage-toolbar .segmented { flex-wrap: wrap; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 14px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard .btn-sm { min-height: 44px; }
+    #ctrlCard [hidden] { display: none !important; }
+    .ctrl-note { font-size: 14px; color: var(--muted); margin: 6px 0 0; }
+    .btn-row { display: flex; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
+    .btn-row .btn { flex: 1 1 40%; padding-left: 8px; padding-right: 8px; }
+    .view-seg { display: flex; width: 100%; }
+    .view-seg button { flex: 1 1 0; min-width: 0; padding-left: 4px; padding-right: 4px; font-size: 14.5px; }
+    .range-row { display: flex; align-items: center; gap: 8px; }
+    .range-row input[type=range] { flex: 1; min-width: 0; height: 44px; }
+    .nudge { flex: none; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); font-weight: 900; font-size: 20px; line-height: 1; cursor: pointer; display: grid; place-items: center; color: var(--ink); }
+    .nudge:active { transform: scale(.94); background: var(--surface-2); }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+    .chips button { min-height: 44px; padding: 6px 12px; border: 2px solid var(--line); background: #fff; border-radius: 999px; font-weight: 800; font-size: 14.5px; cursor: pointer; color: var(--ink); }
+    .chips button.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); color: color-mix(in srgb, var(--subject) 70%, black); }
+    .sel-in { width: 100%; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 8px; font: 800 14.5px var(--font); color: var(--ink); background: #fff; }
+    .sel-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .sel-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .num-in { width: 100%; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 10px; font: 800 17px ui-monospace, Menlo, Consolas, monospace; color: var(--ink); background: #fff; }
+    .num-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .num-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .sel-row { margin-top: 8px; }
+    .sel-row .q { font-weight: 800; font-size: 14px; margin-bottom: 3px; line-height: 1.25; }
+    @keyframes shakeX { 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+    .readout .value.txt { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .concept table.mini { border-collapse: collapse; margin: 6px 0; font-size: 14px; width: 100%; }
+    .concept table.mini th, .concept table.mini td { border: 1px solid var(--line); padding: 4px 6px; text-align: center; }
+    .concept table.mini th { background: var(--surface-2); font-weight: 800; }
+    .stage-canvas .stage-hint { top: 10px; bottom: auto; }
+    @media (max-width: 1100px) and (orientation: landscape) { .toolbar-label { display: none; } }
+    @media (orientation: portrait) and (min-width: 600px) {
+      .side-col:has(> #ctrlCard[hidden]) > #game { grid-column: 1 / -1; }
+    }
+    @media (max-width: 599px) {
+      .readout .value.txt { font-size: 15px; }
+      .stage-toolbar { gap: 6px; padding: 8px; }
+      .stage-toolbar .spacer, .toolbar-label { display: none; }
+      .segmented button { padding-left: 10px; padding-right: 10px; font-size: 14px; }
+      .stage-hint { font-size: 13px; padding: 5px 12px; }
+    }
+    #modeSeg button { font-size: 13.5px; padding-left: 8px; padding-right: 8px; }
+    .tog { width: 100%; min-height: 44px; border: 2px solid var(--line); background: #fff; border-radius: 12px; font-weight: 800; font-size: 14.5px; cursor: pointer; color: var(--ink); padding: 6px 10px; text-align: left; }
+    .tog.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); color: color-mix(in srgb, var(--subject) 70%, black); }
+    .sel-inline .sel-row { display: flex; gap: 8px; align-items: center; margin-top: 6px; }
+    .sel-inline .sel-row .q { flex: 1 1 0; margin: 0; font-size: 13.5px; }
+    .sel-inline .sel-row select { flex: 0 0 46%; width: 46%; font-size: 13.5px; }
+    .soc-block { margin-top: 6px; }
+    .soc-block .sub { font-weight: 800; font-size: 14px; margin: 10px 0 2px; color: var(--muted); }
+    .unit-in { display: flex; align-items: center; gap: 6px; }
+    .unit-in .u { font-weight: 800; color: var(--muted); white-space: nowrap; }
+  </style>
+</head>
+<body class="sim-page" data-subject="phy">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#hq">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">전자기와 양자 · Ⅲ. 양자와 미시세계</div>
+      <h1>양자 기술과 사회</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🔐 양자 기술과 사회</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="tablist" aria-label="화면 고르기" data-feature="qc">
+            <button type="button" data-mode="qc" data-feature="qc">💻 양자 컴퓨터</button><button type="button" data-mode="qkd" data-feature="qkd">🔐 양자 암호</button><button type="button" data-mode="tech" data-feature="tech">🧭 다양한 기술</button><button type="button" data-mode="soc" data-feature="soc">🗣️ 사회 토론</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="문제 크기에 따라 고전 컴퓨터와 양자 컴퓨터가 걸리는 시간 그래프와 양자 컴퓨터의 한계 카드, 앨리스와 밥 사이 광자 키 분배와 도청자 이브, 양자 기술과 응용 분야 연결, 사회 시나리오의 이익 위험 대비 분류"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">-</span><span class="value txt" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">-</span><span class="value txt" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">-</span><span class="value txt" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" data-modes="qc">
+          <div class="control-head"><label for="sB">🔢 풀어야 할 수의 크기</label><output id="oB">512비트</output></div>
+          <div class="range-row"><button class="nudge" type="button" data-for="sB" data-d="-1" aria-label="수의 크기 줄이기">−</button><input type="range" id="sB" min="64" max="2048" step="64" value="512" aria-label="소인수분해할 수의 크기 (64비트부터 2048비트)"><button class="nudge" type="button" data-for="sB" data-d="1" aria-label="수의 크기 늘리기">+</button></div>
+          <div class="chips" id="bChips" role="group" aria-label="자주 쓰는 크기"><button type="button" data-b="64">64</button><button type="button" data-b="512">512</button><button type="button" data-b="1024">1024</button><button type="button" data-b="2048">2048 (RSA)</button></div>
+        </div>
+        <div class="control sel-inline" data-modes="qc" data-match="selQ"><div class="control-head"><span>✍️ 양자 컴퓨터가 이득일까?</span></div><div id="selQ"></div></div>
+        <div class="control" data-modes="qkd">
+          <button class="tog" id="bEve" type="button" aria-pressed="false">🕵️ 도청자 Eve 켜기 (지금: 꺼짐)</button>
+        </div>
+        <div class="control" data-modes="qkd">
+          <div class="control-head"><span>📨 광자 보내기 (Alice → Bob)</span></div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bSend" type="button">광자 20개 보내기</button><button class="btn btn-sm btn-primary" id="bFast" type="button">200개 더 (빠르게)</button></div>
+          <div class="btn-row"><button class="btn btn-sm" id="bKReset" type="button">🧹 기록 지우기</button></div>
+        </div>
+        <div class="control" data-modes="qkd" data-match="selK"><div class="control-head"><span>✍️ 도청 탐지 정리하기</span></div><div id="selK"></div></div>
+        <div class="control" data-modes="tech">
+          <div class="control-head"><span>🧭 기술 카드를 분야에 연결해요</span></div>
+          <p class="ctrl-note">왼쪽(세로 화면은 아래쪽) 기술 카드를 끌어서 알맞은 분야 칸에 놓아요. 카드를 누른 뒤 분야 칸을 눌러도 돼요.</p>
+        </div>
+        <div class="control sel-inline" data-modes="tech" data-match="selT"><div class="control-head"><span>✍️ 개념 연결하기</span></div><div id="selT"></div></div>
+        <div class="control" data-modes="soc">
+          <div class="control-head"><span>🗂️ 시나리오 고르기</span></div>
+          <div class="chips" id="scChips" role="group" aria-label="시나리오"><button type="button" data-s="0">① 암호가 풀릴 날</button><button type="button" data-s="1">② 신약 · 격차</button><button type="button" data-s="2">③ 독점</button><button type="button" data-s="3">④ 새 직업</button></div>
+        </div>
+        <div class="control" data-modes="soc" data-match="socCls"><div class="control-head"><span>✍️ 이익 · 위험 · 대비로 나누기</span></div><div id="socCls"></div></div>
+        <div class="control" data-modes="soc" data-match="socStance"><div class="control-head"><span>✍️ 나의 입장 정하기</span></div><div id="socStance"></div></div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

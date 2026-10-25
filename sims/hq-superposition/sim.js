@@ -187,7 +187,7 @@
   const MODE_LABEL = { bit: '🪙 비트와 큐비트', measure: '📏 측정', again: '🔁 다시 측정', multi: '🧮 큐비트 여러 개' };
 
   function setScene(mode) {
-    if (S.mode !== mode) { S.fade = 1; parts.clear(); }
+    if (S.mode !== mode) { S.fade = 1; parts.clear(); if (S.mode === 'measure') { const M = S.ms; M.q = 0; M.fast = false; M.acc = 0; M.anim = null; M.pred = null; M.predRes = null; predSeg.set(''); } if (S.mode === 'again') S.st.anim = null; }
     S.mode = mode;
     $('#tbLabel').textContent = MODE_LABEL[mode];
     if (mode === 'bit' || mode === 'measure') aSp.target = S.th; else if (mode === 'again') aSp.target = S.st.ang;
