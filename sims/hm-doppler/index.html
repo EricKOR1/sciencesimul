@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#f26b3a">
+  <title>도플러 효과 | 고등 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚑</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+<style>
+    .stage-toolbar { min-height: 61px; }
+    .segmented button { min-height: 44px; }
+    .segmented button.on { background: var(--phy); color: #fff; }
+    #modeSeg { width: 100%; flex-wrap: wrap; }
+    #modeSeg button { flex: 1 1 auto; min-width: 0; padding-left: 8px; padding-right: 8px; font-size: 14.5px; }
+    #modeSeg button[hidden] { display: none !important; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard .btn-sm { min-height: 44px; }
+    #ctrlCard [hidden] { display: none !important; }
+    .ctrl-note { font-size: 14px; color: var(--muted); margin: 6px 0 0; line-height: 1.4; }
+    .btn-row { display: flex; gap: 8px; margin-top: 6px; }
+    .btn-row .btn { flex: 1; padding-left: 8px; padding-right: 8px; }
+    .seg-wrap { border-radius: 20px; display: flex; flex-wrap: wrap; width: 100%; }
+    .seg-wrap button { flex: 1 1 auto; min-width: 0; padding-left: 6px; padding-right: 6px; font-size: 14px; }
+    .range-row { display: flex; align-items: center; gap: 8px; }
+    .range-row input[type=range] { flex: 1; min-width: 0; height: 44px; }
+    .sel-in { width: 100%; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 8px; font: 800 14.5px var(--font); color: var(--ink); background: #fff; }
+    .sel-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .sel-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .num-in { width: 100%; min-width: 0; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 10px; font: 800 16px var(--font); color: var(--ink); background: #fff; }
+    .num-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .num-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .in-grid { display: grid; grid-template-columns: 96px 1fr; gap: 6px 8px; align-items: center; margin-top: 6px; }
+    .in-grid .lab { font-weight: 800; font-size: 14px; line-height: 1.25; }
+    .in-grid .sel-in { min-height: 44px; padding: 2px 6px; font-size: 14px; }
+    .sel-row { margin-top: 8px; }
+    .sel-row .q { font-weight: 800; font-size: 14px; margin-bottom: 3px; line-height: 1.25; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+    .chips button { min-height: 44px; padding: 6px 12px; border: 2px solid var(--line); background: #fff; border-radius: 999px; font-weight: 800; font-size: 14.5px; cursor: pointer; color: var(--ink); font-family: inherit; }
+    .chips button.on { border-color: var(--phy); background: color-mix(in srgb, var(--phy) 14%, white); color: #9a3412; }
+    @keyframes shakeX { 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+    .readout .value.txt { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .concept table.mini, table.mini { border-collapse: collapse; margin: 6px 0; font-size: 14px; width: 100%; }
+    .concept table.mini th, .concept table.mini td, table.mini th, table.mini td { border: 1px solid var(--line); padding: 4px 6px; text-align: center; }
+    .concept table.mini th, table.mini th { background: var(--surface-2); font-weight: 800; }
+    .stage-canvas .stage-hint { top: 10px; bottom: auto; }
+    @media (orientation: portrait) and (min-width: 600px) {
+      .side-col:has(> #ctrlCard[hidden]) > #game { grid-column: 1 / -1; }
+    }
+    @media (max-width: 599px) {
+      .readout .value.txt { font-size: 15px; }
+      .stage-toolbar { gap: 6px; padding: 8px; }
+      .stage-toolbar .spacer { display: none; }
+      #modeSeg button { font-size: 13.5px; padding-left: 6px; padding-right: 6px; }
+      .stage-hint { font-size: 13px; padding: 5px 12px; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="phy">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#hm">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">역학과 에너지 · Ⅲ. 탄성파와 소리</div>
+      <h1>도플러 효과</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <div class="segmented" id="modeSeg" role="tablist" aria-label="화면 고르기">
+            <button type="button" data-mode="amb">🚑 소리 높이</button>
+            <button type="button" data-mode="wf">🌀 파면 모형</button>
+            <button type="button" data-mode="calc">🧮 식 계산</button>
+            <button type="button" data-mode="phone">📱 스마트폰</button>
+            <button type="button" data-mode="gun">🚓 스피드건</button>
+            <button type="button" data-mode="blood">🩺 혈류</button>
+            <button type="button" data-mode="radar">🌧️ 기상 레이더</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="구급차 사이렌 소리 높이의 변화를 관찰하고, 파원과 관측자가 움직일 때의 파면 모형, 도플러 식과 스마트폰 측정, 스피드건과 초음파 혈류 측정과 기상 레이더의 속도 측정 원리를 탐구하는 화면"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">—</span><span class="value txt" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">—</span><span class="value txt" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">—</span><span class="value txt" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <!-- ① 소리 높이 -->
+        <div class="control" data-modes="amb">
+          <div class="control-head"><label for="sVs">🚑 구급차 속력</label><output id="oVs">20 m/s</output></div>
+          <div class="range-row"><input type="range" id="sVs" min="0" max="3" step="1" value="1" aria-label="구급차 속력 (10, 20, 30, 40 미터 매 초)"></div>
+          <div class="control-head" style="margin-top:6px"><span>👂 듣는 위치</span></div>
+          <div class="segmented seg-wrap" id="lisSeg" role="group" aria-label="듣는 위치">
+            <button type="button" data-l="road">🧍 길가</button><button type="button" data-l="inside">🚑 구급차 안</button></div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bAmbGo" type="button">▶ 다시 지나가기</button><button class="btn btn-sm" id="bFast" type="button">⏩ 빨리 감기</button></div>
+          <p class="ctrl-note" id="nAmb"></p>
+        </div>
+        <div class="control" data-modes="amb" data-calc="read">
+          <div class="control-head"><span>📝 스펙트럼에서 읽은 진동수 (Hz)</span></div>
+          <div class="in-grid">
+            <span class="lab">다가올 때</span><input class="num-in" id="iFa" type="number" inputmode="decimal" step="any" aria-label="구급차가 다가올 때 들리는 진동수 (헤르츠)">
+            <span class="lab">멀어질 때</span><input class="num-in" id="iFr" type="number" inputmode="decimal" step="any" aria-label="구급차가 멀어질 때 들리는 진동수 (헤르츠)">
+          </div>
+        </div>
+        <!-- ② 파면 모형 -->
+        <div class="control" data-modes="wf">
+          <div class="control-head"><label for="sWv">🏃 움직이는 속력 (v_s = v_o)</label><output id="oWv">20 m/s</output></div>
+          <div class="range-row"><input type="range" id="sWv" min="0" max="30" step="1" value="10" aria-label="파원과 관측자의 속력 (0부터 300 미터 매 초까지)"></div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bMeas" type="button">📏 앞·뒤 파장 재기</button><button class="btn btn-sm" id="bClrW" type="button">🗑 지우기</button></div>
+          <p class="ctrl-note" id="nWf"></p>
+        </div>
+        <div class="control" data-modes="wf" data-calc="lam">
+          <div class="control-head"><span>📝 v_s = 20 m/s일 때 앞쪽 파장 λ′ (m)</span></div>
+          <input class="num-in" id="iLamF" type="number" inputmode="decimal" step="any" aria-label="파원 속력 20미터 매 초일 때 앞쪽 파장 (미터)">
+        </div>
+        <!-- ③ 식 계산 -->
+        <div class="control" data-modes="calc">
+          <div class="control-head"><span>🔀 움직이는 것</span></div>
+          <div class="segmented seg-wrap" id="clType" role="group" aria-label="움직이는 것">
+            <button type="button" data-t="src">🔊 파원</button><button type="button" data-t="obs">👂 관측자</button></div>
+          <div class="segmented seg-wrap" id="clDir" role="group" aria-label="움직이는 방향" style="margin-top:6px">
+            <button type="button" data-d="app">다가옴</button><button type="button" data-d="rec">멀어짐</button></div>
+          <div class="control-head" style="margin-top:8px"><label for="sClU">🏃 속력</label><output id="oClU">20 m/s</output></div>
+          <div class="range-row"><input type="range" id="sClU" min="0" max="8" step="1" value="4" aria-label="속력 (0부터 40미터 매 초까지)"></div>
+          <div class="control-head" style="margin-top:6px"><span>🎵 소리의 진동수 f</span></div>
+          <div class="segmented seg-wrap" id="clF" role="group" aria-label="소리의 진동수">
+            <button type="button" data-f="0">680 Hz</button><button type="button" data-f="1">700 Hz</button><button type="button" data-f="2">1000 Hz</button></div>
+          <p class="ctrl-note" id="nCl"></p>
+        </div>
+        <div class="control" data-modes="calc" data-calc="calc">
+          <div class="control-head"><span>📝 구급차 700 Hz, 20 m/s (Hz)</span></div>
+          <div class="in-grid">
+            <span class="lab">다가올 때</span><input class="num-in" id="iF1" type="number" inputmode="decimal" step="any" aria-label="구급차가 다가올 때 진동수 (헤르츠)">
+            <span class="lab">멀어질 때</span><input class="num-in" id="iF2" type="number" inputmode="decimal" step="any" aria-label="구급차가 멀어질 때 진동수 (헤르츠)">
+          </div>
+        </div>
+        <!-- ③ 스마트폰 -->
+        <div class="control" data-modes="phone">
+          <div class="btn-row"><button class="btn btn-sm slow-btn" type="button">🐢 느리게 보기</button></div>
+          <p class="ctrl-note" id="nPh"></p>
+        </div>
+        <div class="control" data-modes="phone" data-free="1">
+          <div class="control-head"><span>🎚️ 원판 끝의 속력 u</span></div>
+          <div class="segmented seg-wrap" id="phU" role="group" aria-label="원판 끝의 속력">
+            <button type="button" data-u="1">1.0 m/s</button><button type="button" data-u="2">2.0 m/s</button><button type="button" data-u="3">3.0 m/s</button></div>
+        </div>
+        <div class="control" data-modes="phone" data-calc="phone">
+          <div class="control-head"><span>📝 앱 그래프에서 읽고 구하기</span></div>
+          <div class="in-grid">
+            <span class="lab">최댓값 f_max (Hz)</span><input class="num-in" id="iPmax" type="number" inputmode="decimal" step="any" aria-label="그래프의 최댓값 (헤르츠)">
+            <span class="lab">최솟값 f_min (Hz)</span><input class="num-in" id="iPmin" type="number" inputmode="decimal" step="any" aria-label="그래프의 최솟값 (헤르츠)">
+            <span class="lab">속력 u (m/s)</span><input class="num-in" id="iPu" type="number" inputmode="decimal" step="any" aria-label="구한 원판 끝의 속력 (미터 매 초)">
+          </div>
+        </div>
+        <!-- ④ 속도 측정 -->
+        <div class="control" data-modes="gun">
+          <div class="control-head"><label for="sGun">🚗 자동차 속력 u</label><output id="oGun">30 m/s</output></div>
+          <div class="range-row"><input type="range" id="sGun" min="0" max="6" step="1" value="4" aria-label="자동차 속력 (10부터 40미터 매 초까지)"></div>
+          <p class="ctrl-note" id="nGun"></p>
+        </div>
+        <div class="control" data-modes="gun" data-calc="gunOK">
+          <div class="control-head"><span>📝 Δf = 4800 Hz일 때 자동차 속력</span></div>
+          <div class="in-grid">
+            <span class="lab">속력 (m/s)</span><input class="num-in" id="iGu" type="number" inputmode="decimal" step="any" aria-label="자동차 속력 (미터 매 초)">
+            <span class="lab">속력 (km/h)</span><input class="num-in" id="iGk" type="number" inputmode="decimal" step="any" aria-label="자동차 속력 (킬로미터 매 시)">
+          </div>
+        </div>
+        <div class="control" data-modes="blood">
+          <div class="control-head"><label for="sBl">🩸 혈류 속도 u</label><output id="oBl">0.5 m/s</output></div>
+          <div class="range-row"><input type="range" id="sBl" min="0" max="9" step="1" value="4" aria-label="혈류 속도 (0.1부터 1.0미터 매 초까지)"></div>
+          <p class="ctrl-note" id="nBl"></p>
+        </div>
+        <div class="control" data-modes="blood" data-calc="bloodOK">
+          <div class="control-head"><span>📝 Δf ≈ 3.2 kHz일 때 혈류 속도 (m/s)</span></div>
+          <input class="num-in" id="iBu" type="number" inputmode="decimal" step="any" aria-label="혈류 속도 (미터 매 초)">
+        </div>
+        <div class="control" data-modes="radar">
+          <div class="control-head"><span>🌬️ 바람의 방향</span></div>
+          <div class="segmented seg-wrap" id="rdSeg" role="group" aria-label="바람의 방향">
+            <button type="button" data-w="0">→</button><button type="button" data-w="1">←</button><button type="button" data-w="2">↑</button><button type="button" data-w="3">↓</button></div>
+          <div class="control-head" style="margin-top:8px"><label for="sRu">💨 바람 세기</label><output id="oRu">10 m/s</output></div>
+          <div class="range-row"><input type="range" id="sRu" min="0" max="6" step="1" value="2" aria-label="바람의 세기 (0부터 30미터 매 초까지)"></div>
+          <p class="ctrl-note" id="nRd"></p>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#8b5cf6">
+  <title>반응 속도식 | 고등 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧾</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; }
+    .stage-toolbar { min-height: 61px; }
+    .segmented button { min-height: 44px; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    #resetBtn { font-size: 20px; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 14px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard .btn-sm { min-height: 44px; }
+    #ctrlCard [hidden], .stage-toolbar [hidden] { display: none !important; }
+    .ctrl-note { font-size: 14px; color: var(--muted); margin: 6px 0 0; line-height: 1.4; }
+    .btn-row { display: flex; gap: 8px; margin-top: 6px; }
+    .btn-row .btn { flex: 1; min-width: 0; padding-left: 8px; padding-right: 8px; min-height: 46px; }
+    .view-seg { display: flex; width: 100%; }
+    .view-seg button { flex: 1 1 0; min-width: 0; padding-left: 4px; padding-right: 4px; font-size: 14.5px; }
+    .range-row { display: flex; align-items: center; gap: 8px; }
+    .range-row input[type=range] { flex: 1; min-width: 0; height: 44px; }
+    .nudge { flex: none; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); font-weight: 900; font-size: 16px; line-height: 1; cursor: pointer; display: grid; place-items: center; color: var(--ink); font-family: inherit; }
+    .nudge:active { transform: scale(.94); background: var(--surface-2); }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+    .chips button { min-height: 44px; padding: 6px 12px; border: 2px solid var(--line); background: #fff; border-radius: 999px; font-weight: 800; font-size: 14.5px; cursor: pointer; color: var(--ink); font-family: inherit; }
+    .chips button.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); color: color-mix(in srgb, var(--subject) 70%, black); }
+    .chips button.done { border-color: var(--good); background: var(--good-soft); }
+    .num-in { width: 100%; min-width: 0; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 10px; font: 800 16px var(--font); color: var(--ink); background: #fff; }
+    .num-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .num-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .in-grid { display: grid; grid-template-columns: 1fr 104px; gap: 6px 8px; align-items: center; margin-top: 6px; }
+    .in-grid .lab { font-weight: 800; font-size: 14px; line-height: 1.25; }
+    .in-grid .num-in { min-height: 42px; padding: 2px 8px; font-size: 15px; }
+    @keyframes shakeX { 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+    .readout .value.txt { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    sup, sub { font-size: .7em; line-height: 0; }
+    .stage-canvas .stage-hint { top: 10px; bottom: auto; white-space: normal; width: max-content; max-width: 92%; text-align: center; }
+    .tog { display: flex; gap: 8px; margin-top: 6px; }
+    .tog .btn { flex: 1; min-width: 0; min-height: 46px; padding: 4px 8px; }
+    .tog .btn[aria-pressed=true] { background: color-mix(in srgb, var(--subject) 16%, white); border-color: var(--subject); }
+    .qrow { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+    .qrow button { flex: 1 1 0; min-width: 44px; min-height: 44px; border: 2px solid var(--line); background: #fff; border-radius: 12px; font: 800 15px var(--font); cursor: pointer; color: var(--ink); }
+    .qrow button.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); }
+    .qrow button.ok { border-color: var(--good); background: var(--good-soft); }
+    .qrow button.no { border-color: var(--bad); background: var(--bad-soft); }
+    @media (max-width: 1100px) and (orientation: landscape) { .toolbar-label { display: none; } }
+    @media (max-width: 599px) {
+      .readout .value.txt { font-size: 15px; }
+      .stage-toolbar { gap: 6px; padding: 8px; }
+      .stage-toolbar .spacer, .toolbar-label { display: none; }
+      .segmented button { padding-left: 8px; padding-right: 8px; font-size: 14px; }
+      .stage-toolbar:has(> .segmented[hidden]) { display: none; }
+      .stage-hint { font-size: 13px; padding: 5px 12px; }
+    }
+  
+    .rowin { display: grid; grid-template-columns: 1fr 96px; gap: 6px 8px; align-items: center; margin-top: 6px; }
+    .rowin .lab { font-weight: 800; font-size: 14px; line-height: 1.25; cursor: pointer; padding: 2px 0; }
+    .rowin .lab.on { color: var(--subject); }
+    .rowin .num-in { min-height: 42px; padding: 2px 8px; font-size: 15px; }
+    .chips.tight button { padding: 6px 10px; font-size: 14px; }
+    .chips button.no { border-color: var(--bad); background: var(--bad-soft); }
+    .chips button[disabled] { opacity: .45; cursor: not-allowed; }
+    .rowin2 { display: grid; grid-template-columns: 100px 1fr; gap: 8px 8px; align-items: center; margin-top: 6px; }
+    .rowin2 .lab { font-weight: 800; font-size: 14px; line-height: 1.25; }
+    .rowin2 .chips { margin-top: 0; }
+  </style>
+</head>
+<body class="sim-page" data-subject="chem">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#hx">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">물질과 에너지 · Ⅳ. 반응 속도</div>
+      <h1>반응 속도식</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🧫 농도를 바꾸면 속도는 어떻게 변할까요?</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="tablist" aria-label="화면 고르기">
+            <button type="button" data-mode="obs" data-feature="obs">🧫 농도의 영향</button>
+            <button type="button" data-mode="pair" data-feature="pair">🔎 초기 속도법</button>
+            <button type="button" data-mode="law" data-feature="law">🧾 속도식 완성</button>
+            <button type="button" data-mode="chk" data-feature="chk">🔍 차수의 의미</button>
+          </div>
+          <button class="icon-btn" id="resetBtn" type="button" title="이 화면 처음으로" aria-label="이 화면 처음으로">↺</button>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="반응물 농도에 따른 초기 속도 반응기, 초기 속도법 자료 표, 속도식과 속도 상수 계산, 반응 차수와 계수 비교"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">—</span><span class="value txt" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">—</span><span class="value txt" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">—</span><span class="value txt" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <!-- ① 농도의 영향 -->
+        <div class="control" data-show="obs">
+          <div class="control-head"><span>🧫 반응물 농도 (처음 농도의 몇 배?)</span></div>
+          <div class="rowin2" id="obsRows"></div>
+          <p class="ctrl-note" id="obsNote">반응기마다 농도를 ×1, ×2, ×3 으로 바꿔 처음 속도를 비교해요.</p>
+        </div>
+        <!-- ② 초기 속도법 -->
+        <div class="control" data-show="pair">
+          <div class="control-head"><span>🔎 비교할 두 실험 고르기</span></div>
+          <div class="chips tight" id="pairChips" role="group" aria-label="비교할 두 실험"></div>
+        </div>
+        <div class="control" data-show="pair">
+          <div class="control-head"><span>🧮 구한 반응 차수</span></div>
+          <div class="rowin2">
+            <span class="lab">NO 의 차수 m</span><div class="chips tight" id="pm"></div>
+            <span class="lab">H₂ 의 차수 n</span><div class="chips tight" id="pn"></div>
+          </div>
+          <p class="ctrl-note">변인 하나만 바뀐 두 실험에서 「농도 몇 배 → 속도 몇 배」를 읽어요.</p>
+        </div>
+        <!-- ③ 속도식 완성 -->
+        <div class="control" data-show="law">
+          <div class="control-head"><span>🧾 자료</span></div>
+          <div class="chips tight" id="dsChips" role="group" aria-label="자료 고르기"></div>
+        </div>
+        <div class="control" data-show="law">
+          <div class="control-head"><span>🔢 반응 차수</span></div>
+          <div class="rowin2">
+            <span class="lab" id="lwL0">NO</span><div class="chips tight" id="lm"></div>
+            <span class="lab" id="lwL1">H₂</span><div class="chips tight" id="ln"></div>
+          </div>
+        </div>
+        <div class="control" data-show="law">
+          <div class="control-head"><span>🔑 속도 상수 k</span></div>
+          <div class="rowin"><span class="lab">k 의 값</span><input class="num-in" id="lk" type="text" inputmode="decimal" autocomplete="off" aria-label="속도 상수 k"></div>
+          <div class="chips tight" id="lu" role="group" aria-label="k 의 단위" style="margin-top:8px"></div>
+          <p class="ctrl-note" id="lkNote">실험 1 의 값을 속도식에 넣어 k 를 구해요.</p>
+        </div>
+        <div class="control" data-show="law" id="predBox">
+          <div class="control-head"><span>🎯 예측: [NO] 0.30 M, [H₂] 0.10 M 일 때</span></div>
+          <div class="rowin"><span class="lab">v₀ (×10⁻² M/s)</span><input class="num-in" id="lp" type="text" inputmode="decimal" autocomplete="off" aria-label="예측한 속도"></div>
+        </div>
+        <!-- ④ 차수의 의미 -->
+        <div class="control" data-show="chk">
+          <div class="control-head"><span>📚 반응 고르기</span></div>
+          <div class="chips tight" id="ckChips" role="group" aria-label="반응 고르기"></div>
+        </div>
+        <div class="control" data-show="chk">
+          <div class="control-head"><span>✖ 농도를 몇 배로?</span></div>
+          <div class="chips tight" id="ckMul" role="group" aria-label="농도 배수"></div>
+          <p class="ctrl-note">표에서 차수에 따라 속도가 몇 배가 되는지 읽어요.</p>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

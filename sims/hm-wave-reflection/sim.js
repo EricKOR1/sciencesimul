@@ -277,16 +277,16 @@
     ctx.fillStyle = '#94a3b8'; ctx.fillRect(x - 2.5, y - 56, 5, 112);
     ctx.strokeStyle = '#475569'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(x, y, 8, 0, TAU); ctx.stroke();
     ctx.fillStyle = '#475569'; ctx.fillRect(x - 12, y - 60, 24, 5); ctx.fillRect(x - 12, y + 55, 24, 5);
-    T(x + 4, y + 82, '막대에 걸린 고리 (자유단)', 13, MUTED, 'center', 800);
+    T(x + 4, y + 82, '고리 (자유단)', 13, MUTED, 'center', 800);
   }
   /* 줄 그래프. o: {boundary, kind} */
   function stringFrame(c, sc, o) {
     const rc = { x: c.x + 8, y: c.y + 40, w: c.w - 16, h: c.h - 50 };
-    const M = frame(rc, { x0: 0, x1: 12, y0: -8, y1: 8, xt: [0, 2, 4, 6, 8, 10, 12], xminor: [1, 3, 5, 7, 9, 11], yt: [-6, 0, 6], yf: (v) => (v > 0 ? '+' : v < 0 ? MINUS : '') + Math.abs(v), ml: PHONE ? 44 : 52, mr: 62, mt: 14, mb: 28 });
+    const M = frame(rc, { x0: 0, x1: 12, y0: -9, y1: 9, xt: [0, 2, 4, 6, 8, 10, 12], xminor: [1, 3, 5, 7, 9, 11], yt: [-6, 0, 6], yf: (v) => (v > 0 ? '+' : v < 0 ? MINUS : '') + Math.abs(v), ml: PHONE ? 44 : 52, mr: 62, mt: 14, mb: 28 });
     T(M.ix + M.iw + 10, M.iy + M.ih + 20, 'x (m)', 13, MUTED, 'left', 700); T(rc.x + 8, rc.y + 14, 'y (cm)', 13, MUTED, 'left', 700);
     const ch = sc.ch;
     ctx.save(); ctx.beginPath(); ctx.rect(M.ix, M.iy - 2, M.iw, M.ih + 4); ctx.clip();
-    const seg = (i0, i1, col, lw) => { ctx.strokeStyle = col; ctx.lineWidth = lw; ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.beginPath(); for (let i = i0; i <= i1; i++) { const x = M.gx(i * ch.a), y = M.gy(cm(clamp(ch.y[i], -0.078, 0.078))); i === i0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); } ctx.stroke(); };
+    const seg = (i0, i1, col, lw) => { ctx.strokeStyle = col; ctx.lineWidth = lw; ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.beginPath(); for (let i = i0; i <= i1; i++) { const x = M.gx(i * ch.a), y = M.gy(cm(clamp(ch.y[i], -0.088, 0.088))); i === i0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); } ctx.stroke(); };
     if (o.boundary) {
       const nb = Math.round(XB / ch.a), lh = sc.kind === 'LH';
       ctx.fillStyle = 'rgba(37,99,235,.06)'; ctx.fillRect(M.gx(0), M.iy, M.gx(XB) - M.gx(0), M.ih); ctx.fillStyle = 'rgba(245,158,11,.10)'; ctx.fillRect(M.gx(XB), M.iy, M.gx(12) - M.gx(XB), M.ih);
@@ -296,7 +296,7 @@
     return { M, rc };
   }
   function sensorMark(M, sc, p, label, col) {
-    const x = M.gx(p.x), y = M.gy(cm(clamp(sc.ch.y[p.idx], -0.078, 0.078)));
+    const x = M.gx(p.x), y = M.gy(cm(clamp(sc.ch.y[p.idx], -0.088, 0.088)));
     ctx.save(); ctx.setLineDash([3, 4]); ctx.strokeStyle = col; ctx.globalAlpha = 0.6; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(x, M.iy + 20); ctx.lineTo(x, M.iy + M.ih); ctx.stroke(); ctx.restore();
     D.sphere(x, y, 6.5, col, { gloss: true });
     D.label(x, M.iy + 12, label, { bg: col, size: 13 });
@@ -304,13 +304,12 @@
   /* 시간 그래프 (센서) */
   function scope(rc, p, col, label, twin, showT) {
     const xt = []; for (let s = 0; s <= twin + 1e-9; s += twin > 1 ? 0.5 : 0.25) xt.push(+s.toFixed(2));
-    const M = frame(rc, { x0: 0, x1: twin, y0: -8, y1: 8, xt, yt: [-6, 0, 6], yf: (v) => (v > 0 ? '+' : v < 0 ? MINUS : '') + Math.abs(v), xf: (v) => v.toFixed(1), xl: showT, mt: 8, mb: showT ? 24 : 6, ml: PHONE ? 46 : 50, mr: 8 });
+    const M = frame(rc, { x0: 0, x1: twin, y0: -9, y1: 9, xt, yt: [-6, 0, 6], yf: (v) => (v > 0 ? '+' : v < 0 ? MINUS : '') + Math.abs(v), xf: (v) => v.toFixed(1), xl: showT, mt: 8, mb: showT ? 24 : 6, ml: PHONE ? 46 : 50, mr: 8 });
     ctx.save(); ctx.beginPath(); ctx.rect(M.ix, M.iy - 2, M.iw, M.ih + 4);
     ctx.clip(); ctx.strokeStyle = col; ctx.lineWidth = 3; ctx.lineJoin = 'round'; ctx.beginPath(); let st = false;
-    p.series.forEach((q) => { const x = M.gx(q[0]), y = M.gy(cm(clamp(q[1], -0.078, 0.078))); st ? ctx.lineTo(x, y) : ctx.moveTo(x, y); st = true; });
+    p.series.forEach((q) => { const x = M.gx(q[0]), y = M.gy(cm(clamp(q[1], -0.088, 0.088))); st ? ctx.lineTo(x, y) : ctx.moveTo(x, y); st = true; });
     ctx.stroke(); ctx.restore();
     T(M.ix + 6, rc.y + 17, label, 13, col, 'left', 800);
-    if (showT) T(rc.x + rc.w - 8, rc.y + 17, 't (s)', 13, MUTED, 'right', 700);
     return M;
   }
 
@@ -319,19 +318,19 @@
     const c = topCard(), sc = S.sc, fixed = S.end.kind === 'fixed'; cardBegin(c);
     T(c.x + 14, c.y + 24, fixed ? '줄의 오른쪽 끝이 벽에 고정되어 있어요 (고정단)' : '줄의 오른쪽 끝이 막대에 걸린 고리예요 (자유단)', PHONE ? 13.5 : 15, fixed ? '#1d4ed8' : '#c2410c', 'left', 800);
     const { M } = stringFrame(c, sc, {});
-    const yEnd = M.gy(cm(clamp(sc.ch.y[sc.ch.n], -0.078, 0.078)));
+    const yEnd = M.gy(cm(clamp(sc.ch.y[sc.ch.n], -0.088, 0.088)));
     drawHand(M.ix + 18, M.gy(cm(sc.ch.y[0])));
     if (fixed) drawWall(M.ix + M.iw - 2, M.gy(0)); else drawFreeEnd(M.ix + M.iw + 6, yEnd);
     sensorMark(M, sc, sc.pA, '센서 A', TEAL);
-    const d = sc.drv; if (d.kind === 'wave') T(c.x + c.w - 14, c.y + 24, '〰 연속파 5 Hz: 입사파와 반사파가 겹쳐요', 13, TEAL, 'right', 800);
-    D.label(c.x + 14, c.y + c.h - 14, '🐢 슬로 모션 ×' + (S.ts === 0.25 ? '1/4' : '1/10') + ' · t = ' + fx(sc.ch.t, 2) + ' s', { bg: '#475569', size: 13, align: 'left' });
+    const bxl = D.label(c.x + c.w - 14, c.y + 24, '🐢 ×' + (S.ts === 0.25 ? '1/4' : '1/10') + ' · t = ' + fx(sc.ch.t, 2) + ' s', { bg: '#475569', size: 13, align: 'right' });
+    if (sc.drv.kind === 'wave') D.label(bxl.x - 8, c.y + 24, '〰 연속파 5 Hz: 입사파와 반사파가 겹쳐요', { bg: TEAL, size: 13, align: 'right' });
     ctx.restore();
     panel(PX, PY, PW, PH, 16);
     const x1 = PX + 12, gw = PHONE ? PW - 24 : 470;
-    T(x1, PY + 24, '📈 센서 A의 변위–시간 그래프 (입사 후 반사)', 14, INK, 'left', 800);
+    T(x1, PY + 24, '📈 센서 A의 변위(cm)–시간(s) 그래프', 14, INK, 'left', 800);
     const M2 = scope({ x: x1, y: PY + 34, w: gw, h: PHONE ? 150 : 150 }, sc.pA, TEAL, 'A: x = ' + XA + ' m', 1.4, true);
     const inc = sc.pA.segs[0], rf = sc.pA.segs[1];
-    [inc, rf].forEach((sg, i) => { if (sg) { D.sphere(M2.gx(sg.t), M2.gy(cm(sg.peak)), 5.5, i ? ORANGE : TEAL, { gloss: false }); D.label(M2.gx(sg.t), M2.gy(cm(sg.peak)) + (sg.peak > 0 ? -16 : 18), (i ? '반사 ' : '입사 ') + sgn(sg.peak) + ' cm', { bg: i ? ORANGE : TEAL, size: 13 }); } });
+    [inc, rf].forEach((sg, i) => { if (sg) { D.sphere(M2.gx(sg.t), M2.gy(cm(sg.peak)), 5.5, i ? ORANGE : TEAL, { gloss: false }); D.label(M2.gx(sg.t) + 64, M2.gy(cm(sg.peak)) + (sg.peak > 0 ? 8 : -2), (i ? '반사 ' : '입사 ') + sgn(sg.peak) + ' cm', { bg: i ? ORANGE : TEAL, size: 13 }); } });
     const bx = PHONE ? x1 : x1 + gw + 14, by = PHONE ? PY + 34 + 160 : PY + 14, bw = PHONE ? PW - 24 : PW - gw - 38, bh = PHONE ? PH - 34 - 170 : PH - 28;
     D.roundRect(bx, by, bw, bh, 12); ctx.fillStyle = '#f4f7fd'; ctx.fill();
     T(bx + 12, by + 26, '🔎 반사된 펄스', 14, INK, 'left', 800);
@@ -350,18 +349,18 @@
     const c = topCard(), sc = S.sc, lh = sc.kind === 'LH'; cardBegin(c);
     T(c.x + 14, c.y + 24, lh ? '가벼운 줄 → 무거운 줄' : '무거운 줄 → 가벼운 줄', PHONE ? 13.5 : 15, INK, 'left', 800);
     const { M } = stringFrame(c, sc, { boundary: true });
-    drawHand(M.ix + 18, M.gy(cm(sc.ch.y[0]))); drawDamper(M.ix + M.iw + 4, M.gy(cm(clamp(sc.ch.y[sc.ch.n], -0.078, 0.078))));
+    drawHand(M.ix + 18, M.gy(cm(sc.ch.y[0]))); drawDamper(M.ix + M.iw + 4, M.gy(cm(clamp(sc.ch.y[sc.ch.n], -0.088, 0.088))));
     ctx.save(); ctx.strokeStyle = '#16a34a'; ctx.lineWidth = 3; ctx.setLineDash([6, 4]); ctx.beginPath(); ctx.moveTo(M.gx(XB), M.iy + 24); ctx.lineTo(M.gx(XB), M.iy + M.ih); ctx.stroke(); ctx.restore();
     D.label(M.gx(XB), M.iy + 12, '경계', { bg: '#16a34a', size: 13 });
-    T(M.gx(3), M.iy + M.ih - 10, (lh ? '가벼운 줄' : '무거운 줄') + ': v₁ = ' + (lh ? v1 : v2) + ' m/s', 13.5, lh ? '#1d4ed8' : '#b45309', 'center', 800);
-    T(M.gx(9), M.iy + M.ih - 10, (lh ? '무거운 줄' : '가벼운 줄') + ': v₂ = ' + (lh ? v2 : v1) + ' m/s', 13.5, lh ? '#b45309' : '#1d4ed8', 'center', 800);
+    D.label(M.gx(3.6), M.iy + 38, (lh ? '가벼운 줄' : '무거운 줄') + ': v₁ = ' + (lh ? v1 : v2) + ' m/s', { bg: lh ? '#1d4ed8' : '#b45309', size: 13 });
+    D.label(M.gx(9.0), M.iy + 38, (lh ? '무거운 줄' : '가벼운 줄') + ': v₂ = ' + (lh ? v2 : v1) + ' m/s', { bg: lh ? '#b45309' : '#1d4ed8', size: 13 });
     sensorMark(M, sc, sc.pA, '센서 A', TEAL); sensorMark(M, sc, sc.pB, '센서 B', PURPLE);
-    const d = sc.drv; if (d.kind === 'wave') T(c.x + c.w - 14, c.y + 24, '〰 연속파 f = 20 Hz', 13, TEAL, 'right', 800);
-    D.label(c.x + 14, c.y + c.h - 14, '🐢 슬로 모션 ×' + (S.ts === 0.25 ? '1/4' : '1/10') + ' · t = ' + fx(sc.ch.t, 2) + ' s', { bg: '#475569', size: 13, align: 'left' });
+    const bxl = D.label(c.x + c.w - 14, c.y + 24, '🐢 ×' + (S.ts === 0.25 ? '1/4' : '1/10') + ' · t = ' + fx(sc.ch.t, 2) + ' s', { bg: '#475569', size: 13, align: 'right' });
+    if (sc.drv.kind === 'wave') D.label(bxl.x - 8, c.y + 24, '〰 주기파 f = 20 Hz', { bg: TEAL, size: 13, align: 'right' });
     ctx.restore();
     panel(PX, PY, PW, PH, 16);
-    const x1 = PX + 12, gw = PHONE ? PW - 24 : 400, gh = PHONE ? 62 : 70;
-    T(x1, PY + 22, '📈 센서의 변위–시간 그래프', 14, INK, 'left', 800);
+    const x1 = PX + 12, gw = PHONE ? PW - 24 : 400, gh = PHONE ? 84 : 70;
+    T(x1, PY + 22, '📈 센서의 변위(cm)–시간(s) 그래프', 14, INK, 'left', 800);
     const twin = 1.6;
     const MA = scope({ x: x1, y: PY + 30, w: gw, h: gh }, sc.pA, TEAL, 'A: x = ' + XA + ' m (경계 왼쪽)', twin, false);
     const MB = scope({ x: x1, y: PY + 30 + gh + 6, w: gw, h: gh }, sc.pB, PURPLE, 'B: x = ' + XBP + ' m (경계 오른쪽)', twin, true);
@@ -455,7 +454,7 @@
     }
     // 스톱워치
     const sw = bat ? fx(tt * 1000, 1) + ' ms' : fx(tt, 2) + ' s';
-    const bx = c.x + (PHONE ? c.w - 130 : c.w - 150), by = c.y + 38;
+    const bx = bat ? c.x + c.w / 2 - 59 : c.x + (PHONE ? c.w - 130 : c.w - 150), by = c.y + 38;
     D.roundRect(bx, by, 118, 50, 12); ctx.fillStyle = '#1e293b'; ctx.fill();
     T(bx + 59, by + 20, '⏱ 경과 시간', 13, '#94a3b8', 'center', 800); T(bx + 59, by + 42, sw, 19, run && run.done ? '#4ade80' : '#fff', 'center', 800);
     if (bat) D.label(c.x + 14, c.y + c.h - 14, '시간을 100배 느리게 보여 줘요', { bg: '#475569', size: 13, align: 'left' });
@@ -463,10 +462,9 @@
     // 아래 칸: 에코 그래프
     panel(PX, PY, PW, PH, 16);
     const x1 = PX + 12, gw = PHONE ? PW - 24 : 470, gh = PHONE ? 150 : 158;
-    T(x1, PY + 24, '📡 신호와 에코 (센서에 받은 소리의 세기)', 14, INK, 'left', 800);
+    T(x1, PY + 24, '📡 신호와 에코 (가로축: 시간 ' + (bat ? 'ms' : 's') + ')', 14, INK, 'left', 800);
     const tmaxd = bat ? 40 : sc.tmax, xt = []; for (let s = 0; s <= tmaxd + 1e-9; s += bat ? 10 : 1) xt.push(s);
     const M = frame({ x: x1, y: PY + 34, w: gw, h: gh }, { x0: 0, x1: tmaxd, y0: 0, y1: 1.25, xt, yt: [0, 1], xf: (v) => String(v), yf: (v) => (v ? '세기' : '0'), mt: 22, mb: 26, ml: PHONE ? 44 : 50, mr: 12 });
-    T(M.ix + M.iw, M.iy + M.ih + 22, bat ? 't (ms)' : 't (s)', 13, MUTED, 'right', 700);
     const spike = (tv, a, col, lab) => { const px = M.gx(tv), top = M.gy(a); ctx.strokeStyle = col; ctx.lineWidth = 5; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(px, M.gy(0)); ctx.lineTo(px, top); ctx.stroke(); D.label(px + (px > M.ix + M.iw - 50 ? -34 : 30), top + 4, lab, { bg: col, size: 13 }); };
     spike(0, 1.0, BLUE, '신호');
     sc.lay.forEach((ly, i) => { const te = echoT(sc, i); if (run && tt >= te - 1e-9) spike(bat ? te * 1000 : te, ly.s, ORANGE, '에코 ' + (bat ? fx(te * 1000, 1) + ' ms' : fx(te, 2) + ' s')); });
@@ -532,9 +530,9 @@
   function aScan(rc, echoes, tmax, tick, colr, cur, runT, label, unit) {
     const xt = []; for (let s = 0; s <= tmax + 1e-9; s += tick) xt.push(s);
     const M = frame(rc, { x0: 0, x1: tmax, y0: 0, y1: 1.2, xt, yt: [0], yf: () => '0', xf: (v) => String(v), mt: 22, mb: 26, ml: PHONE ? 30 : 36, mr: 12 });
-    T(rc.x + 8, rc.y + 17, label, 13.5, INK, 'left', 800); T(M.ix + M.iw, M.iy + M.ih + 22, 't (' + unit + ')', 13, MUTED, 'right', 700);
+    T(rc.x + 8, rc.y + 17, label + ' (가로: 시간 ' + unit + ')', 13.5, INK, 'left', 800);
     const sp = (t2, a, col) => { ctx.strokeStyle = col; ctx.lineWidth = 5; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(M.gx(t2), M.gy(0)); ctx.lineTo(M.gx(t2), M.gy(a)); ctx.stroke(); };
-    sp(0, 1.0, BLUE); D.label(M.gx(0) + 30, M.gy(1.0) + 2, '송신', { bg: BLUE, size: 13 });
+    sp(0, 1.0, BLUE); D.label(M.gx(0) + 30, M.iy + 12, '송신', { bg: BLUE, size: 13 });
     echoes.forEach((e) => { if (runT != null && e.t > runT) return; sp(e.t, e.a, colr); });
     if (cur != null) { ctx.save(); ctx.setLineDash([5, 4]); ctx.strokeStyle = '#7c3aed'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(M.gx(cur), M.iy); ctx.lineTo(M.gx(cur), M.gy(0)); ctx.stroke(); ctx.restore(); }
     return M;
@@ -542,7 +540,7 @@
   function drawImgScene() {
     const c = topCard(), u = S.us, f = FQ[u.fi], x = u.pos * 0.2; cardBegin(c);
     T(c.x + 14, c.y + 24, '🩺 초음파 영상: 탐촉자가 보낸 소리의 에코로 몸속을 봐요', PHONE ? 13 : 15, INK, 'left', 800);
-    const W = 8 * PPC, H = 10 * PPC, ox = c.x + (PHONE ? 12 : 20), oy = c.y + 82, bx = ox + W + 38;
+    const W = 8 * PPC, H = 10 * PPC, ox = c.x + (PHONE ? 30 : 44), oy = c.y + 82, bx = ox + W + (PHONE ? 22 : 30);
     // 몸 단면
     ctx.save(); ctx.beginPath(); ctx.rect(ox, oy, W, H); ctx.clip();
     ctx.fillStyle = '#f2c4a0'; ctx.fillRect(ox, oy, W, 0.6 * PPC); ctx.fillStyle = '#f7de9c'; ctx.fillRect(ox, oy + 0.6 * PPC, W, 0.9 * PPC);
@@ -560,8 +558,8 @@
     const ping = u.ping, echoes = usEchoes(x);
     if (ping) { ctx.save(); ctx.beginPath(); ctx.rect(ox, oy, W, H); ctx.clip(); pingDots(px, oy, PPC, echoes, V_TIS, ping.t * 1e-6, 10); ctx.restore(); }
     // 깊이 눈금
-    [0, 2, 4, 6, 8, 10].forEach((z) => { T(ox + W + 6, oy + z * PPC + 5, z + '', 13, '#3a465c', 'left', 800); });
-    T(ox + W + 6, oy - 6, 'cm', 13, MUTED, 'left', 700);
+    [0, 2, 4, 6, 8, 10].forEach((z) => { T(ox - 8, oy + z * PPC + 5, z + '', 13, '#3a465c', 'right', 800); });
+    T(ox - 8, oy - 24, '깊이 cm', 13, MUTED, 'right', 700);
     // B-모드 화면
     if (usDirty) renderUs();
     ctx.save(); D.roundRect(bx, oy, W, H, 6); ctx.clip(); ctx.imageSmoothingEnabled = true; ctx.drawImage(usCv, 0, 0, IMGN, IMGH, bx, oy, W, H); ctx.restore();
@@ -583,7 +581,7 @@
     const x1 = PX + 12, gw = PHONE ? PW - 24 : 470, gh = PHONE ? 140 : PH - 24;
     const runT = ping ? ping.t : null;
     const M = aScan({ x: x1, y: PY + 10, w: gw, h: gh }, echoes, 130, 20, ORANGE, null, runT, '📈 에코 그래프 (탐촉자 아래 한 줄)', 'μs');
-    echoes.forEach((e) => { if (runT != null && e.t > runT) return; if (e.a > 0.12 && e.z > 0.2) D.label(M.gx(e.t) + (M.gx(e.t) > M.ix + M.iw - 60 ? -34 : 30), M.gy(e.a) + 2, fx(e.t, 0) + ' μs', { bg: '#c2410c', size: 13 }); });
+    echoes.filter((e) => e.a > 0.12 && e.z > 0.2 && (runT == null || e.t <= runT)).forEach((e, i) => D.label(M.gx(e.t) + (M.gx(e.t) > M.ix + M.iw - 70 ? -36 : 36), M.iy + 34 + (i % 3) * 20, fx(e.t, 0) + ' μs', { bg: '#c2410c', size: 13 }));
     const tx = PHONE ? x1 : x1 + gw + 12, ty = PHONE ? PY + 10 + gh + 8 : PY + 12, tw = PHONE ? PW - 24 : PW - gw - 34;
     D.roundRect(tx, ty, tw, PHONE ? PH - gh - 28 : PH - 24, 12); ctx.fillStyle = '#f4f7fd'; ctx.fill();
     T(tx + 12, ty + 24, '🔊 되돌아온 에코', 14, INK, 'left', 800);
@@ -629,9 +627,9 @@
     ctx.restore();
     panel(PX, PY, PW, PH, 16);
     const x1 = PX + 12, gw = PHONE ? PW - 24 : 500, gh = PHONE ? 150 : PH - 24;
-    const runT = u.ping ? u.ping.t : null;
+    const runT = null;
     const M = aScan({ x: x1, y: PY + 10, w: gw, h: gh }, ec, 20, 5, ORANGE, u.cursor, runT, '📈 에코 그래프 (탐촉자 아래 한 줄)', 'μs');
-    ec.forEach((e) => { if (runT != null && e.t > runT) return; if (e.a > 0.1) D.label(M.gx(e.t) + (M.gx(e.t) > M.ix + M.iw - 60 ? -34 : 34), M.gy(e.a) + 2, fx(e.t, 1) + ' μs', { bg: '#c2410c', size: 13 }); });
+    ec.forEach((e, i) => { if (e.a > 0.1) D.label(M.gx(e.t) + (M.gx(e.t) > M.ix + M.iw - 70 ? -36 : 36), M.iy + 34 + i * 20, fx(e.t, 1) + ' μs', { bg: '#c2410c', size: 13 }); });
     const tx = PHONE ? x1 : x1 + gw + 12, ty = PHONE ? PY + 10 + gh + 8 : PY + 12, tw = PHONE ? PW - 24 : PW - gw - 34;
     D.roundRect(tx, ty, tw, PHONE ? PH - gh - 28 : PH - 24, 12); ctx.fillStyle = '#f4f7fd'; ctx.fill();
     T(tx + 12, ty + 24, '📍 깊이 읽기 (보라색 줄)', 14, INK, 'left', 800);
@@ -983,7 +981,7 @@
     if (S.mode === 'img') {
       const u = S.us;
       if (u.ping) { u.ping.t += dt * 37; if (u.ping.t >= 136) u.ping = null; }
-      if (u.auto) { u.auto.acc += dt; while (u.auto.acc > 0.1) { u.auto.acc -= 0.1; if (u.pos < 40) { u.pos++; usMark(u.pos * 0.2); updateCtl(); } else { u.auto = null; updateCtl(); } } }
+      if (u.auto) { u.auto.acc += dt; while (u.auto && u.auto.acc > 0.1) { u.auto.acc -= 0.1; if (u.pos < 40) { u.pos++; usMark(u.pos * 0.2); updateCtl(); } else { u.auto = null; updateCtl(); } } }
     }
     if (S.mode === 'ndt') { const n = S.nd; if (!n.ping) n.ping = { t: 0 }; n.ping.t += dt * 4.2; if (n.ping.t > 24) n.ping.t = 0; }
     ctx.fillStyle = BG; ctx.fillRect(0, 0, VW, VH); S.hit = null;
