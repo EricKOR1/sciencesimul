@@ -6193,8 +6193,7 @@ window.SCI_CATALOG = {
                 "열과 일",
                 "효율 높이기",
                 "영향 평가"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hm-entropy",
@@ -6215,8 +6214,7 @@ window.SCI_CATALOG = {
                 "경우의 수",
                 "엔트로피",
                 "적용"
-              ],
-              "soon": true
+              ]
             }
           ]
         },
@@ -6244,8 +6242,7 @@ window.SCI_CATALOG = {
                 "복원력",
                 "주기",
                 "에너지·위상"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hm-wave-propagation",
