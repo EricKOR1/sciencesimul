@@ -152,7 +152,7 @@
   const MA = PHONE ? { x: 8, y: 8, w: 464, h: 520 } : { x: 12, y: 12, w: 776, h: 414 };
   const BOT = PHONE ? { x: 8, y: 536, w: 464, h: 136 } : { x: 12, y: 436, w: 776, h: 112 };
   const VR = 190;                    // 스크린의 반 길이(칸)
-  const SLV = 30, SLW = 14;          // 틈 A(−30), 틈 B(+30)의 위치와 틈 하나의 폭
+  const SLV = 50, SLW = 30;          // 틈 A(−50), 틈 B(+50)의 위치와 틈 하나의 폭
   const LL = 240;                    // 이중 슬릿 ~ 스크린 거리
   const GE = PHONE ? { ug: 48, ub: 92, fv0: 348, fvL: 60, h0: 420, hL: 80 } : { ug: 84, ub: 196, fv0: 456, fvL: 106, h0: 584, hL: 176 };
   GE.us = GE.ub + LL;
@@ -171,7 +171,7 @@
   const lamNm = (V) => H_P / Math.sqrt(2 * M_E * Q_E * V) * 1e9;       // 전자의 드브로이 파장(nm) = h / p, p = √(2meV)
   const lamTxt = (nm) => (nm >= 0.1 ? nm.toFixed(2) : nm.toFixed(3)) + ' nm';
   const PH_NM = 633;                                                    // 광자 버전: 붉은 레이저의 파장
-  const lamVis = (cfg) => (cfg.kind === 'ph' ? 9.5 : 57.7 * lamNm(cfg.V));   // 화면 규모에서의 파장(칸)
+  const lamVis = (cfg) => (cfg.kind === 'ph' ? 8.8 : 72 * lamNm(cfg.V));   // 화면 규모에서의 파장(칸)
   const openSlits = (cfg) => (cfg.slits === 'A' ? [-SLV] : [-SLV, SLV]);
   function ampAt(sv, u, v, lam) {               // 틈 하나가 (u, v)에 만드는 확률 파동의 진폭(틈 폭에 의한 퍼짐)
     const dy = v - sv, r = Math.hypot(u, dy);
@@ -264,6 +264,7 @@
     d: { sel: 'e', f: { e: 1, n: 1, c: 1, b: 1 }, pick: {}, revealed: false, seen: {} },
   };
   let game = null;
+  let predDrag = false;
   const v1 = $('#v1'), v2 = $('#v2'), v3 = $('#v3'), l1 = $('#l1'), l2 = $('#l2'), l3 = $('#l3');
   const MODE_LABEL = { shoot: '🎯 한 알씩', pattern: '📊 무늬 쌓기', which: '🔍 어느 틈?', dbl: '📐 드브로이 파장' };
   const kindName = () => (S.cfg.kind === 'ph' ? '광자' : '전자');
@@ -274,7 +275,7 @@
     return { N: 0, bins: new Uint32Array(NB), slit: { A: 0, B: 0 }, cv, c: cv.getContext('2d'), last: [], maxBin: 0 };
   }
   function resetData() {
-    S.queue = 0; S.acc = 0; S.fly = []; S.flash = []; parts.clear(); S.data = newData(); S.predNote = null;
+    S.queue = 0; S.acc = 0; S.rate = 0; S.fly = []; S.flash = []; parts.clear(); S.data = newData(); S.predNote = null;
   }
   function setCfg(patch) {
     const before = cfgKey(effCfg(S.cfg)) + '|' + S.cfg.det;
@@ -286,10 +287,10 @@
   function normalizeFor(mode) {
     if (mode === 'shoot') setCfg({ kind: 'e', slits: 'both', det: false });
     else if (mode === 'pattern') setCfg({ kind: 'e', det: false });
-    else if (mode === 'which') setCfg({ slits: 'both' });
+    else if (mode === 'which') setCfg({ slits: 'both', V: 100 });
   }
   function setScene(mode) {
-    if (S.mode !== mode) { S.fade = 1; parts.clear(); S.fly = []; }
+    if (S.mode !== mode) { S.fade = 1; parts.clear(); S.fly = []; S.queue = 0; S.acc = 0; S.rate = 0; predDrag = false; }
     S.mode = mode;
     if (mode !== 'dbl') normalizeFor(mode);
     $('#tbLabel').textContent = MODE_LABEL[mode];
@@ -319,7 +320,7 @@
   const slSeg = bindSeg('slSeg', (v) => { setCfg({ slits: v }); });
   const kSeg = bindSeg('kSeg', (v) => { setCfg({ kind: v }); });
   const fSeg = bindSeg('fSeg', (v) => { S.d.f[S.d.sel] = +v; if (+v === 2 && S.d.sel === 'e') S.seen.f2 = true; updateCtl(); });
-  const fire = (n) => { S.queue += n; };
+  const fire = (n) => { S.queue += n; S.rate = Math.max(S.rate || 0, n <= 12 ? 2.4 : Math.min(9000, n / (n > 2000 ? 3 : 2))); };
   $('#bS1').addEventListener('click', () => { Sound.click(); fire(1); });
   $('#bS10').addEventListener('click', () => { Sound.click(); fire(10); });
   $$('#addChips button').forEach((b) => b.addEventListener('click', () => { Sound.click(); fire(+b.dataset.n); }));
@@ -378,8 +379,8 @@
     D0.last.push(v); if (D0.last.length > 10) D0.last.shift();
     const x = rnd(3, GE.fvL - 3) * 2, y = (v + VR) * 2;
     c.save(); c.globalCompositeOperation = 'lighter';
-    if (D0.N <= 300) { c.fillStyle = ph ? 'rgba(255,120,90,.85)' : 'rgba(90,255,170,.85)'; c.beginPath(); c.arc(x, y, D0.N <= 60 ? 2.6 : 1.8, 0, TAU); c.fill(); }
-    else { c.fillStyle = ph ? 'rgba(255,120,90,.5)' : 'rgba(90,255,170,.5)'; c.fillRect(x - 1.1, y - 1.1, 2.2, 2.2); }
+    if (D0.N <= 300) { c.fillStyle = ph ? 'rgba(255,120,90,.85)' : 'rgba(90,255,170,.85)'; c.beginPath(); c.arc(x, y, D0.N <= 60 ? 4.4 : 3, 0, TAU); c.fill(); }
+    else { c.fillStyle = ph ? 'rgba(255,120,90,.5)' : 'rgba(90,255,170,.5)'; c.fillRect(x - 1.3, y - 1.3, 2.6, 2.6); }
     c.restore();
     // 기록(미션용): 설정별 가장 많이 쌓은 개수
     const cf = cur(), n = D0.N, M = S.mx;
@@ -405,11 +406,10 @@
   function stepShots(dt) {
     const cf = cur();
     if (S.queue > 0) {
-      const slow = S.queue <= 12;
-      const rate = slow ? 2.4 : Math.min(9000, S.queue / (S.queue > 2000 ? 3.2 : 2.2));
+      const rate = S.rate || 2.4;
       S.acc += rate * dt;
       let k = Math.min(Math.floor(S.acc), S.queue); S.acc -= Math.floor(S.acc);
-      S.queue -= k;
+      S.queue -= k; if (S.queue <= 0) { S.queue = 0; S.rate = 0; }
       for (let i = 0; i < k; i++) {
         const s = pickOne(cf);
         if (rate <= 16 && S.fly.length < 24) {
@@ -456,7 +456,7 @@
       if (ph) { ctx.fillStyle = 'rgba(160,170,200,.55)'; ctx.fillRect(u1 + 14, -24, 5, 48); ctx.fillRect(u1 + 24, -24, 5, 48); }
     });
     const lab = ph ? '레이저 + 감쇠 필터' : '전자총';
-    if (PHONE) tip(lab, GE.ug - 18, 82); else tip(lab, GE.ug - 30, -50);
+    if (PHONE) tip(lab, GE.ug - 18, 82); else tip(lab, GE.ug - (ph ? 2 : 22), -50);
   }
   function drawWall(cf) {
     UV(() => {
@@ -475,10 +475,10 @@
       D.label(p.x + (PHONE ? 0 : -22), p.y + (PHONE ? -22 : 0), closed ? '틈 B 닫힘' : '틈 ' + nm, { size: 13, bg: closed ? 'rgba(226,70,75,.85)' : 'rgba(255,255,255,.16)', color: closed ? '#fff' : LIGHT, pad: 6 });
     });
     const tp = pt(GE.ub, PHONE ? -VR - 8 : -VR - 14);
-    if (PHONE) D.label(OR.x + 138, pt(GE.ub, 0).y, '이중 슬릿', { size: 13, bg: 'rgba(255,255,255,.14)', color: LIGHT, pad: 7 });
+    if (PHONE) { const q = pt(GE.ub + 26, 140); D.label(q.x, q.y, '이중 슬릿', { size: 13, bg: 'rgba(255,255,255,.14)', color: LIGHT, pad: 7 }); }
     else D.label(tp.x, tp.y, '이중 슬릿', { size: 13, bg: 'rgba(255,255,255,.14)', color: LIGHT, pad: 7 });
-    if (!PHONE) { const gp = pt(GE.us + 6, -VR - 14); D.label(gp.x, gp.y, '형광 스크린(옆에서 본 모습)', { size: 13, bg: 'rgba(255,255,255,.14)', color: LIGHT, pad: 7 }); }
-    else { const gp = pt(GE.us + 6, 0); D.label(OR.x + 134, gp.y, '스크린(옆모습)', { size: 13, bg: 'rgba(255,255,255,.14)', color: LIGHT, pad: 7 }); }
+    if (!PHONE) { const gp = pt(GE.us + 6, -VR - 14); D.label(gp.x - 22, gp.y, '스크린(옆모습)', { size: 13, bg: 'rgba(255,255,255,.14)', color: LIGHT, pad: 7 }); }
+    else { const gp = pt(GE.us - 18, 132); D.label(gp.x, gp.y, '스크린(옆모습)', { size: 13, bg: 'rgba(255,255,255,.14)', color: LIGHT, pad: 7 }); }
   }
   function drawScreenStrip(ph) {
     UV(() => {
@@ -528,7 +528,7 @@
     S.flash.forEach((fl) => {
       if (fl.slitDet) {
         const p = pt(GE.ub, fl.slitDet === 'A' ? -SLV : SLV), k = 1 - fl.t / 0.7;
-        D.label(p.x + (PHONE ? 46 : 40), p.y + (PHONE ? 0 : 0) , '감지!', { size: 13, bg: 'rgba(255,209,102,' + (0.9 * k) + ')', color: '#3a2a00', pad: 6 });
+        const q = pt(GE.ub + 18, (fl.slitDet === 'A' ? -SLV - 30 : SLV + 30)); D.label(q.x, q.y, '감지!', { size: 13, bg: 'rgba(255,209,102,' + (0.9 * k) + ')', color: '#3a2a00', pad: 6 });
         return;
       }
       const p = pt(GE.us + 6, fl.v), k = 1 - fl.t / 0.8;
@@ -624,8 +624,8 @@
     const tk = (f) => { const val = Math.round(target * f), uu = GE.h0 + (val / H) * GE.hL; return { val, uu }; };
     [0.5, 1].forEach((f) => {
       const t = tk(f); if (t.uu > GE.h0 + GE.hL + 1) return;
-      if (PHONE) { const p = pt(t.uu, VR + 6); T(p.x, p.y + 4, String(t.val), 13, '#5d6879', 'left', 800); }
-      else { const p = pt(t.uu, -VR - 6); T(p.x, p.y, String(t.val), 13, '#5d6879', 'center', 800); }
+      if (PHONE) { const p = pt(t.uu, VR - 3); T(p.x, p.y + 4, String(t.val), 13, '#5d6879', 'right', 800, { stroke: '#fbfcff', strokeWidth: 4 }); }
+      else { const p = pt(t.uu, -VR + 16); T(p.x, p.y, String(t.val), 13, '#5d6879', t.uu > GE.h0 + GE.hL - 14 ? 'right' : 'center', 800, { stroke: '#fbfcff', strokeWidth: 4 }); }
     });
     if (PHONE) {
       ctx.save(); const p = pt(GE.h0 + GE.hL / 2, -VR - 22); ctx.translate(p.x, p.y); ctx.rotate(-Math.PI / 2); T(0, 0, '도착 횟수 →', 13, LIGHT, 'center', 800); ctx.restore();
@@ -674,7 +674,7 @@
     // 표
     if (!PHONE) {
       const hy = MA.y + 28;
-      [['입자', 28], ['질량 m', 188], ['속력 v', 292], ['운동량 p = mv', 386], ['파장 λ = h/p', 508], ['λ / d', 628], ['무늬', 722]].forEach(([s, x]) => T(MA.x + x, hy, s, 13, DIM, x === 28 ? 'left' : 'left', 800));
+      [['입자', 28], ['질량 m', 188], ['속력 v', 292], ['운동량 p = mv', 386], ['파장 λ = h/p', 508], ['λ / d', 610], ['무늬', 684]].forEach(([s, x]) => T(MA.x + x, hy, s, 13, DIM, x === 28 ? 'left' : 'left', 800));
     }
     PART.forEach((p, i) => {
       const r = dblRow(i), on = p.id === sel;
@@ -689,8 +689,8 @@
         T(r.x + 284, r.y + 30, fmtV(pv(p)), 14, LIGHT, 'left', 700);
         T(r.x + 378, r.y + 30, sci(pMom(p), 1) + ' kg·m/s', 14, LIGHT, 'left', 700);
         T(r.x + 500, r.y + 30, fmtLam(pLam(p)), 15, '#ffb48a', 'left', 800);
-        T(r.x + 620, r.y + 30, sci(pRatio(p), 1), 14, LIGHT, 'left', 700);
-        T(r.x + 714, r.y + 30, verdict, 14, rev ? (ok ? '#7dffb0' : '#ff9aa0') : DIM, 'left', 800);
+        T(r.x + 598, r.y + 30, sci(pRatio(p), 1), 14, LIGHT, 'left', 700);
+        T(r.x + 664, r.y + 30, verdict, 14, rev ? (ok ? '#7dffb0' : '#ff9aa0') : DIM, 'left', 800);
       } else {
         partIcon(p, r.x + 30, r.y + r.h / 2, t);
         T(r.x + 62, r.y + 20, p.name, 15, LIGHT, 'left', 800); T(r.x + 62 + (p.id === 'c' ? 92 : p.id === 'b' ? 56 : p.id === 'n' ? 64 : 40), r.y + 20, '(' + p.sub + ')', 12.5, DIM, 'left', 700);
@@ -703,30 +703,27 @@
     });
     // 로그 눈금 막대
     const gx0 = PHONE ? MA.x + 24 : MA.x + 34, gx1 = PHONE ? MA.x + MA.w - 24 : MA.x + MA.w - 34;
-    const gy = PHONE ? MA.y + 478 : MA.y + 370;
+    const gy = PHONE ? MA.y + 468 : MA.y + 370;
     const X = (l) => gx0 + (clamp(lx(l), -35, -7) + 35) / 28 * (gx1 - gx0);
     const thrL = PTH * PD;                // 무늬 한계 파장 = 10⁻¹³ m
-    const top = gy - (PHONE ? 130 : 78);
+    const top = gy - (PHONE ? 150 : 100);
     D.roundRect(gx0, top, X(thrL) - gx0, gy - top, 6); ctx.fillStyle = 'rgba(226,70,75,.2)'; ctx.fill();
     D.roundRect(X(thrL), top, gx1 - X(thrL), gy - top, 6); ctx.fillStyle = 'rgba(80,220,140,.2)'; ctx.fill();
     ctx.strokeStyle = '#ffd166'; ctx.lineWidth = 2.2; ctx.setLineDash([6, 4]); ctx.beginPath(); ctx.moveTo(X(thrL), top - 4); ctx.lineTo(X(thrL), gy + 6); ctx.stroke(); ctx.setLineDash([]);
     ctx.strokeStyle = '#8e9bc9'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(gx0, gy); ctx.lineTo(gx1, gy); ctx.stroke();
     [-35, -28, -21, -14, -7].forEach((e) => { const x = X(Math.pow(10, e)); ctx.beginPath(); ctx.moveTo(x, gy); ctx.lineTo(x, gy + 6); ctx.stroke(); T(x, gy + 22, '10' + supOf(e), 13, DIM, e === -35 ? 'left' : e === -7 ? 'right' : 'center', 800); });
     T((gx0 + gx1) / 2, gy + 40, '드브로이 파장 λ (m, 로그 눈금)', 13, LIGHT, 'center', 800);
-    T(X(thrL) - 8, top + 20, '무늬를 볼 수 없어요', 13, '#ff9aa0', 'right', 800);
-    T(X(thrL) + 8, top + 20, '무늬를 볼 수 있어요', 13, '#7dffb0', 'left', 800);
-    T(X(thrL) - 8, top + 38, 'λ / d < 10' + supOf(-6), 12.5, DIM, 'right', 700);
-    T(X(thrL) + 8, top + 38, 'λ / d ≥ 10' + supOf(-6), 12.5, DIM, 'left', 700);
+    T(gx0 + 4, top - (PHONE ? 26 : 8), '◀ 무늬를 볼 수 없어요 (λ/d < 10' + supOf(-6) + ')', 13, '#ff9aa0', 'left', 800);
+    T(gx1 - 4, top - 8, '무늬를 볼 수 있어요 (λ/d ≥ 10' + supOf(-6) + ') ▶', 13, '#7dffb0', 'right', 800);
     // 핀
-    const ypin = { e: 0, n: 1, c: 0, b: 0 };
+    const pinH = PHONE ? { e: 64, n: 102, c: 26, b: 26 } : { e: 26, n: 26, c: 26, b: 26 };
+    const pinDx = PHONE ? { e: 0, n: 0, c: 0, b: 0 } : { e: -9, n: 33, c: 0, b: 0 };
     PART.forEach((p) => {
-      const x = X(pLam(p)), h = 26 + ypin[p.id] * 24, on = p.id === sel;
+      const x = X(pLam(p)), h = pinH[p.id], on = p.id === sel;
       ctx.strokeStyle = p.col; ctx.lineWidth = on ? 3 : 2; ctx.beginPath(); ctx.moveTo(x, gy); ctx.lineTo(x, gy - h); ctx.stroke();
       D.sphere(x, gy - h - 5, on ? 7 : 5.5, p.col, { gloss: false });
       const name = p.id === 'e' ? '전자' : p.id === 'n' ? '중성자' : p.id === 'c' ? 'C₆₀' : '야구공';
-      const lab = pLam(p) < 1e-20 ? name : name;
-      const dx = p.id === 'e' ? -6 : p.id === 'n' ? 6 : 0;
-      D.label(x + dx, gy - h - 22, lab, { size: 13, bg: p.col, color: '#1b2333', pad: 6 });
+      D.label(x + pinDx[p.id], gy - h - 22, name, { size: 13, bg: p.col, color: '#1b2333', pad: 6, border: on ? '#fff' : null });
     });
     // 아래 안내
     const bt = BOT;
@@ -748,7 +745,7 @@
     const cf = cur(), N = S.data.N, nm = kindName();
     if (S.mode === 'shoot') {
       const b = S.show.bullet ? '총알(고전 입자)이라면 틈 바로 뒤의 두 줄에만 도착할 거예요. ' : '';
-      if (N === 0) return ['전자 한 알씩 쏘아 보기', b + '왼쪽 버튼으로 전자를 쏘면 스크린에 어떤 모양이 생길까요? 먼저 “1개 쏘기”를 눌러 봐요.'];
+      if (N === 0) return ['전자 한 알씩 쏘아 보기', b + '전자를 쏘면 스크린에 어떤 모양이 생길까요? 먼저 “1개 쏘기” 버튼을 눌러 봐요.'];
       if (N < 10) return ['점 하나로 도착해요', b + '전자 한 개는 스크린에 작은 점 하나로 도착해요(입자성). 다음 점이 어디에 찍힐지 예측해 보세요.'];
       return ['위치는 매번 달라요', b + '점이 찍히는 위치가 매번 달라요. 점이 10개 정도로는 어떤 규칙이 있는지 알기 어려워요. 총알 모형의 예상과 비교해 보세요.'];
     }
@@ -788,8 +785,8 @@
     // 검출기 표시
     if (cf.det) {
       [-SLV, SLV].forEach((sv) => {
-        const p = pt(GE.ub - 22, sv); const q = pt(GE.ub - 10, sv);
-        D.sphere(p.x + (PHONE ? 0 : 0), p.y + (PHONE ? 0 : 0), 6.5, '#ffd166', { gloss: false });
+        const p = pt(GE.ub + 16, sv);
+        D.sphere(p.x, p.y, 6.5, '#ffd166', { gloss: false });
         ctx.save(); ctx.strokeStyle = '#ffd166'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(p.x, p.y, 10 + 2 * Math.sin(t * 5), 0, TAU); ctx.globalAlpha = 0.5; ctx.stroke(); ctx.restore();
       });
     }
@@ -821,7 +818,6 @@
   /* ---------- 포인터: 스크린을 눌러 도착 위치 예측하기 · 표에서 입자 고르기 ---------- */
   const inPredZone = (p) => { if (S.mode !== 'shoot') return false; const q = toUV(p); return q.u > GE.us - 16 && q.u < GE.fv0 + GE.fvL + 4 && Math.abs(q.v) <= VR + 4; };
   const setPred = (p) => { const q = toUV(p); S.pred = { v: Math.round(clamp(q.v, -VR, VR)) }; };
-  let predDrag = false;
   SciSim.pointer(view, {
     down(p) {
       if (S.mode === 'dbl') {
@@ -948,7 +944,7 @@
       intro: '<div class="si-link">🔗 <b>앞 단계에서</b> 한 알씩 쏘아도 점이 쌓이면 간섭무늬가 생긴다는 것을 알았어요. 간섭이 생기려면 전자가 두 틈을 <b>모두</b> 지난 것처럼 행동해야 해요. 그럼 “이 전자가 어느 틈을 지났는지” 알아내려고 하면 어떻게 될까요?</div>' +
         '<p><b>👁️ 틈 검출기</b>를 켜면 각 전자가 지나간 틈이 기록돼요. 검출기를 켠 채로, 그리고 끈 채로 점을 쌓아 스크린을 비교해 보세요. 확률(틈마다의 확률의 합)과 확률 파동(두 틈의 진폭의 합의 제곱)을 비교해 보면 그 까닭이 보여요. 광자(레이저 빛을 아주 약하게 해서 한 개씩)로도 해 봐요.</p>',
       features: ['which'],
-      setup() { enter('which', {}, { wave: true }); },
+      setup() { enter('which', { V: 100 }, { wave: true }); },
       recap: '어느 틈을 지났는지 검출하면 스크린에서 간섭무늬가 사라지고 두 덩어리(틈마다의 확률의 합)만 남아요. 알아보려는 순간 결과가 바뀌어요. 광자도 마찬가지예요.',
       summary: '<ul><li>검출기를 <b>끄면</b>: 전자는 두 틈을 모두 지난 것처럼 행동해요 → <b>진폭을 더한 뒤 제곱</b> → 간섭무늬.</li><li>검출기를 <b>켜면</b>: 어느 틈을 지났는지 알 수 있어요 → 틈마다의 <b>확률을 더함</b> → 두 덩어리(총알 모형과 같은 결과).</li><li>측정(관찰)이 결과를 바꿔요. 전자가 검출기에 맞아서 튕겨 나가기 때문이 아니라, 경로를 알면 두 경로의 파동이 하나의 확률로 겹쳐지지 않기 때문이에요(정성적 설명).</li><li>광자를 한 개씩 쏘아도 결과는 같아요. 입자-파동 이중성은 빛과 전자 모두의 성질이에요.</li></ul>',
       missions: [
@@ -956,7 +952,7 @@
           title: '검출기를 켜고 꺼서 비교하기',
           goal: '틈 검출기를 <b>끈 채로 300개</b>, <b>켠 채로 300개</b> 이상 쏘아서 스크린의 모양을 비교하세요.',
           hint: '“+100”을 3번씩 눌러요. 검출기를 켜거나 끄면 스크린이 지워지고 새로 쌓여요. 파란 막대가 어떻게 달라지나요?',
-          setup() { S.mx.detOn = 0; S.mx.detOff = 0; S.show.wave = true; S.show.selW = false; setCfg({ kind: 'e', slits: 'both', det: false }); setScene('which'); },
+          setup() { S.mx.detOn = 0; S.mx.detOff = 0; S.show.wave = true; S.show.selW = false; setCfg({ kind: 'e', slits: 'both', V: 100, det: false }); setScene('which'); },
           check: () => S.mx.detOff >= 300 && S.mx.detOn >= 300,
           hold: 0.6,
           status: () => mark(S.mx.detOff >= 300) + ' 검출기 끔 ' + Math.min(S.mx.detOff, 300) + ' / 300 &nbsp; ' + mark(S.mx.detOn >= 300) + ' 검출기 켬 ' + Math.min(S.mx.detOn, 300) + ' / 300',

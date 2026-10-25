@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#16a34a">
+  <title>상염색체와 성염색체 유전 | 고등 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👫</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; }
+    .stage-toolbar { min-height: 58px; }
+    .stage-toolbar .segmented { flex-wrap: wrap; }
+    .stage-toolbar .segmented button { min-height: 40px; padding: 5px 10px; font-size: 14px; white-space: nowrap; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard [hidden] { display: none !important; }
+    .btn-sm { min-height: 44px; }
+    .btn-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+    .btn-row .btn { flex: 1; padding-left: 8px; padding-right: 8px; }
+    .ctrl-note { margin: 6px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    .ctrl-note b { color: var(--ink); }
+    .range-row { display: flex; align-items: center; gap: 8px; }
+    .range-row input[type=range] { flex: 1; min-width: 0; height: 44px; }
+    .seg-full { display: flex; width: 100%; }
+    .seg-full button { flex: 1 1 0; min-width: 0; min-height: 44px; font-size: 14.5px; }
+    .chip-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px; }
+    .chip-grid.three { grid-template-columns: 1fr 1fr 1fr; }
+    .chip-grid button { min-height: 44px; padding: 6px 8px; border: 2px solid var(--line); background: #fff; border-radius: 12px; font-weight: 800; font-size: 14px; cursor: pointer; color: var(--ink); text-align: center; }
+    .chip-grid button.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); }
+    .chip-grid button.seen:not(.on) { border-color: color-mix(in srgb, var(--subject) 45%, white); }
+    .chip-grid button:disabled { opacity: .45; cursor: not-allowed; }
+    .chip-grid button:active { transform: scale(.98); }
+    .sel-in { width: 100%; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 8px; font: 800 14px var(--font); color: var(--ink); background: #fff; }
+    .sel-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .sel-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .num-in { width: 100%; min-width: 0; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 8px; font: 800 16px ui-monospace, Menlo, Consolas, monospace; color: var(--ink); background: #fff; text-align: right; }
+    .num-in:focus { outline: none; border-color: var(--subject); }
+    .num-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .num-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .in-unit { font-size: 12.5px; color: var(--muted); font-weight: 700; }
+    .in-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 10px; align-items: end; margin-top: 8px; }
+    .in-row .lab { font-weight: 800; font-size: 13.5px; margin-bottom: 3px; line-height: 1.25; }
+    @keyframes shakeX { 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+    .readout .value { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .stage-canvas .stage-hint { top: 10px; bottom: auto; }
+    .pk-pool { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+    .pk-item { min-height: 44px; padding: 6px 12px; border: 2px solid var(--line); background: #fff; border-radius: 12px; font-weight: 800; font-size: 14px; cursor: pointer; color: var(--ink); }
+    .pk-item:disabled { opacity: .35; cursor: default; }
+    .pk-seq { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; min-height: 46px; border: 2px dashed var(--line); border-radius: 12px; padding: 6px; }
+    .pk-chip { min-height: 34px; padding: 3px 10px; border: 2px solid var(--subject); background: color-mix(in srgb, var(--subject) 12%, white); border-radius: 999px; font-weight: 800; font-size: 13.5px; cursor: pointer; color: var(--ink); }
+    .pk-chip b { color: var(--subject); margin-right: 2px; }
+    .pk-reset { margin-top: 8px; width: 100%; }
+    .tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; margin-top: 6px; }
+    .tbl th, .tbl td { border: 1px solid var(--line); padding: 4px 4px; text-align: center; }
+    .tbl th { background: var(--surface-2); font-weight: 800; }
+    .tbl td.rowh { font-weight: 800; text-align: left; background: var(--surface-2); }
+    .tbl select { width: 100%; min-height: 40px; border: 2px solid var(--line); border-radius: 8px; font: 800 13.5px var(--font); background: #fff; color: var(--ink); }
+    .tbl select.ok { border-color: var(--good); background: var(--good-soft); }
+    .tbl select.bad { border-color: var(--bad); background: var(--bad-soft); }
+    .check-list { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 4px; font-size: 13.5px; font-weight: 700; }
+    .check-list li { display: flex; gap: 6px; align-items: baseline; }
+    .check-list li.on { color: var(--good); }
+    .btn-col { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+    #modeSeg button.lv-off { display: none; }
+    @media (max-width: 1100px) and (orientation: landscape) { .toolbar-label { display: none; } }
+    @media (max-width: 599px) {
+      .readout .value { font-size: 15px; }
+      .stage-toolbar { gap: 6px; padding: 8px; }
+      .stage-toolbar .spacer, .toolbar-label { display: none; }
+      .stage-toolbar .segmented button { padding: 5px 8px; font-size: 13.5px; }
+      .stage-hint { font-size: 13px; padding: 5px 12px; }
+    }
+    .stage-toolbar .segmented button.lv-off { display: none; }
+    .tag-pill { display: inline-block; padding: 2px 9px; border-radius: 999px; font-weight: 800; font-size: 12.5px; background: color-mix(in srgb, var(--subject) 14%, white); color: var(--ink); }
+    .tbl-in { width: 100%; }
+
+    .frac-in { width: 100%; min-width: 0; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 8px; font: 800 16px ui-monospace, Menlo, Consolas, monospace; color: var(--ink); background: #fff; text-align: center; }
+    .frac-in:focus { outline: none; border-color: var(--subject); }
+    .frac-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .frac-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .chip-grid.one { grid-template-columns: 1fr; }
+    .chip-grid button.mc { text-align: left; font-size: 13.5px; line-height: 1.3; }
+    .tbl.left td { text-align: left; }
+    .sec-t { font-weight: 800; font-size: 13.5px; margin: 8px 0 2px; color: var(--ink); }
+
+  </style>
+</head>
+<body class="sim-page" data-subject="bio">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#hg">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">생물의 유전 · Ⅰ. 유전자와 유전물질</div>
+      <h1>상염색체와 성염색체 유전</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">👫 유전 양상</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="tablist" aria-label="화면 고르기">
+            <button type="button" data-mode="chain" data-lv="0" data-feature="chain">🔗 유전자 → 형질</button>
+            <button type="button" data-mode="locate" data-lv="0" data-feature="locate">🗺 염색체 지도</button>
+            <button type="button" data-mode="auto" data-lv="1" data-feature="auto">🧬 상염색체 교배</button>
+            <button type="button" data-mode="xl" data-lv="2" data-feature="xl">🎀 X 연관 교배</button>
+            <button type="button" data-mode="recip" data-lv="3" data-feature="recip">🔄 정반대 교배</button>
+            <button type="button" data-mode="freq" data-lv="3" data-feature="freq">📊 남녀 빈도</button>
+
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="유전자에서 형질로 이어지는 사슬, 염색체 지도, 상염색체와 X 연관 유전의 교배 모의, 정반대 교배 비교"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">—</span><span class="value" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">—</span><span class="value" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">—</span><span class="value" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" data-modes="chain">
+          <div class="control-head"><span>🔗 사례 고르기</span></div>
+          <div class="chip-grid three" id="caseSel"><button type="button" data-v="pea">완두</button><button type="button" data-v="alb">알비니즘</button><button type="button" data-v="cb">색맹</button></div>
+          <div id="alleleBox">
+            <div class="sec-t">대립유전자 바꾸기</div>
+            <div class="chip-grid one" id="alleleSel"><button type="button" data-v="0" class="mc">정상</button><button type="button" data-v="1" class="mc">열성</button></div>
+          </div>
+          <p class="ctrl-note" id="chainNote"></p>
+          <div class="btn-row"><button class="btn btn-sm" id="chainReset" type="button">↺ 이 사례 카드 다시 놓기</button></div>
+        </div>
+        <div class="control" data-modes="locate">
+          <div class="control-head"><span>🗺 유전자 위치로 분류</span></div>
+          <p class="ctrl-note">염색체 지도를 보고 <b>유전자 카드</b>를 상염색체 상자와 X 염색체 상자에 끌어 넣은 뒤 <b>✔ 확인하기</b>를 눌러요. 카드를 누르기만 해도 놓을 수 있어요.</p>
+          <div class="btn-row"><button class="btn btn-sm" id="locReset" type="button">↺ 카드 모으기</button></div>
+        </div>
+        <div class="control" data-modes="auto">
+          <div class="control-head"><span>🧬 Aa × Aa 부부의 자녀</span></div>
+          <div class="chip-grid" id="autoBtns"><button type="button" data-n="1">+1명 (과정 보기)</button><button type="button" data-n="10">+10명</button><button type="button" data-n="100">+100명</button><button type="button" data-n="1000">+1000명</button></div>
+          <div class="chip-grid one" style="margin-top:8px"><button type="button" id="autoTh">이론값(점선) 보기</button></div>
+          <p class="ctrl-note">상동 염색체 쌍이 갈라져 배우자 <b>A : a = 1 : 1</b>이 되고, 성별은 따로 정해져요. 자녀를 많이 만들수록 어떻게 달라지는지 봐요.</p>
+          <div class="btn-row"><button class="btn btn-sm" id="autoReset" type="button">↺ 자녀 지우기</button></div>
+        </div>
+        <div class="control" data-modes="xl">
+          <div class="control-head"><span>🎀 부모의 유전자형 고르기</span></div>
+          <div id="xlTbl">
+            <div class="sec-t">XX' × XY 의 자녀가 색맹일 확률</div>
+            <table class="tbl"><tr><th>대상</th><th>확률</th></tr>
+              <tr><td class="rowh">전체 자녀</td><td><select id="tAll"></select></td></tr>
+              <tr><td class="rowh">아들 중</td><td><select id="tSon"></select></td></tr>
+              <tr><td class="rowh">딸 중</td><td><select id="tDau"></select></td></tr></table>
+          </div>
+          <div class="sec-t">어머니</div>
+          <div class="chip-grid three" id="momSel"><button type="button" data-v="NN">XX<br><small>정상</small></button><button type="button" data-v="NM">XX'<br><small>보인자</small></button><button type="button" data-v="MM">X'X'<br><small>색맹</small></button></div>
+          <div class="sec-t">아버지</div>
+          <div class="chip-grid" id="dadSel"><button type="button" data-v="N">XY<br><small>정상</small></button><button type="button" data-v="M">X'Y<br><small>색맹</small></button></div>
+          <div class="chip-grid" id="xlBtns" style="margin-top:8px"><button type="button" data-n="1">+1명 (과정 보기)</button><button type="button" data-n="10">+10명</button><button type="button" data-n="100">+100명</button><button type="button" data-n="1000">+1000명</button></div>
+          <div class="chip-grid one" style="margin-top:8px"><button type="button" id="xlTh">이론값(점선) 보기</button></div>
+          <div class="btn-row"><button class="btn btn-sm" id="xlReset" type="button">↺ 자녀 지우기</button></div>
+        </div>
+        <div class="control" data-modes="recip">
+          <div class="control-head"><span>🔄 정반대 교배 비교</span></div>
+          <div class="chip-grid" id="trSel"><button type="button" data-v="alb">알비니즘<br><small>상염색체 열성</small></button><button type="button" data-v="cb">적록 색맹<br><small>X 연관 열성</small></button></div>
+          <div class="btn-col"><button class="btn btn-sm" id="rcA" type="button">(가) 교배 실행</button><button class="btn btn-sm" id="rcB" type="button">(나) 교배 실행</button></div>
+          <div id="ruleBox">
+            <div class="sec-t">판정 규칙 카드</div>
+            <table class="tbl left"><tr><td>정반대 교배 결과가 <b>같으면</b></td><td><select id="ruleSame"></select></td></tr>
+              <tr><td>결과가 <b>성별에 따라 다르면</b></td><td><select id="ruleDiff"></select></td></tr></table>
+          </div>
+        </div>
+        <div class="control" data-modes="freq">
+          <div class="control-head"><span>📊 여자의 발현 빈도</span></div>
+          <div class="in-row" style="grid-template-columns:1fr"><div><div class="lab"><label for="fqIn">여자 중 색맹인 사람의 비율 (%)</label></div><input class="num-in" id="fqIn" type="text" inputmode="decimal" maxlength="8" aria-label="여자의 발현 빈도 퍼센트"></div></div>
+          <p class="ctrl-note">남자는 <b>6 %</b>예요. 여자는 두 X가 <b>모두</b> X'이어야 해요. 확률을 곱해서 계산하고 퍼센트로 써요. (소수 둘째 자리까지)</p>
+        </div>
+
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

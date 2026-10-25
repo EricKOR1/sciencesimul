@@ -510,7 +510,7 @@
         T(cx0 + (cw - 8) / 2, cy0 + (rh - 8) / 2 + 5, v === 'ok' ? '분해 ✅' : v === 'no' ? '반응 없음 ✕' : '아직', L(14, 12.5), v === 'ok' ? '#166534' : v === 'no' ? '#b91c1c' : '#94a3b8', 'center', 800);
       });
     });
-    const bx = PHONE ? B.x + 16 : B.x + 400, by0 = PHONE ? B.y + 160 : B.y + 30;
+    const bx = PHONE ? B.x + 16 : B.x + 400, by0 = PHONE ? B.y + 176 : B.y + 30;
     T(bx, by0, '효소의 특성', L(16, 14), '#1f2d44', 'left', 800);
     ['기질 특이성: 맞는 기질에만 작용', '반응 전후에 변하지 않아 재사용', '소량으로도 많은 기질을 처리', '반응 속도만 빠르게 (생성물 양은 그대로)'].forEach((s, i) => TF(bx, by0 + 28 + i * (PHONE ? 25 : 28), '• ' + s, B.w - (bx - B.x) - 14, L(14.5, 13), 11.5, '#475569', 'left', 700));
   }
@@ -524,7 +524,7 @@
   function evalDesign() {
     const d = S.ds, ivs = ivList(), out = [];
     if (ivs.length === 0) out.push({ k: 'iv0', m: '바꿀 요인(독립 변인)을 하나 골라요.' });
-    if (ivs.length >= 2) out.push({ k: 'iv2', m: '독립 변인이 ' + ivs.length + '개예요. ' + ivs.map((k) => IVS[k].name).join('과 ') + '을 함께 바꾸면 결과가 어떤 요인 때문인지 알 수 없어요. 하나만 남겨요.' });
+    if (ivs.length >= 2) out.push({ k: 'iv2', m: '독립 변인이 ' + ivs.length + '개예요(' + ivs.map((k) => IVS[k].name).join(', ') + '). 함께 바꾸면 결과가 어떤 요인 때문인지 알 수 없어요. 하나만 남겨요.' });
     if (ivs.length === 1) {
       const iv = ivs[0], need = Object.keys(CTL).filter((k) => k !== iv);
       const miss = need.filter((k) => !d.ctl[k]);
@@ -640,8 +640,8 @@
   function rnKeys() {
     const r = S.rn, out = [];
     if (r.iv) IVS[r.iv].vals.forEach((v) => out.push({ key: String(v), val: v, lab: valTxt(r.iv, v) }));
-    if (S.ds.grp.water) out.push({ key: 'ctlW', val: null, lab: '대조군: 효소 대신 물', ctl: true });
-    if (S.ds.grp.boil) out.push({ key: 'ctlB', val: null, lab: '대조군: 삶은 간', ctl: true });
+    if (S.ds.grp.water) out.push({ key: 'ctlW', val: null, lab: '물 대조군', ctl: true });
+    if (S.ds.grp.boil) out.push({ key: 'ctlB', val: null, lab: '삶은 간 대조군', ctl: true });
     return out;
   }
   function rnTrueOf(key) { const r = S.rn; if (key === 'ctlW' || key === 'ctlB' || !r.iv) return 0; const i = IVS[r.iv].vals.findIndex((v) => String(v) === key); return i < 0 ? 0 : IVS[r.iv].data[i]; }
@@ -715,9 +715,9 @@
     const A = rnGeo().A, s = Math.min(A.w / 420, A.h / 330), ox = A.x + (A.w - 420 * s) / 2, oy = A.y;
     return { s, ox, oy, pt: (lx, ly) => ({ x: ox + lx * s, y: oy + ly * s }) };
   }
-  const rnPlot = () => { const G = rnGeo().G, iv = S.rn.iv || 'temp', I = IVS[iv]; return mkPlot(G, { x0: I.x0, x1: I.x1, y0: 0, y1: 12, xt: I.xt, yt: [0, 4, 8, 12], xl: I.name + (I.unit ? ' (' + I.unit + ')' : ''), yl: 'O₂ (mL/30초)', m: PHONE ? { l: 38, t: 18, r: 14, b: 34 } : { l: 52, t: 30, r: 18, b: 40 } }); };
+  const rnPlot = () => { const G = rnGeo().G, iv = S.rn.iv || 'temp', I = IVS[iv]; return mkPlot(G, { x0: I.x0, x1: I.x1, y0: 0, y1: 12, xt: I.xt, yt: [0, 4, 8, 12], xl: PHONE ? '' : I.name + (I.unit ? ' (' + I.unit + ')' : ''), yl: PHONE ? '' : 'O₂ (mL/30초)', m: PHONE ? { l: 38, t: 24, r: 14, b: 26 } : { l: 52, t: 30, r: 18, b: 40 } }); };
   function rnRowPos(i) {
-    const Tb = rnGeo().Tb, n = rnKeys().length, rh = Math.min(PHONE ? 20 : 28, (Tb.h - (PHONE ? 62 : 74)) / Math.max(n, 1));
+    const Tb = rnGeo().Tb, n = rnKeys().length, rh = Math.min(PHONE ? 20 : 28, (Tb.h - (PHONE ? 70 : 92)) / Math.max(n, 1));
     return { x: Tb.x + 12 + 0.85 * (Tb.w - 24), y: Tb.y + (PHONE ? 48 : 58) + rh * i + rh / 2, rh };
   }
   function rnCond() {
@@ -757,7 +757,7 @@
     T(cx0 + cw / 2, ct - 8, '모인 기체', 12.5, '#475569', 'center', 800);
     D.label(352, 160, 'O₂ ' + fv(r.gas) + ' mL', { bg: '#0ea5e9', size: 14 });
     T(76, 312, '간 즙 + H₂O₂', 13, '#475569', 'center', 800);
-    T(302, 338, '물 위 치환', 12.5, '#64748b', 'center', 700);
+    T(356, 312, '수조', 12.5, '#64748b', 'center', 700);
     ctx.restore();
     // ---- 표 ----
     const Tb = G.Tb; panel(Tb.x, Tb.y, Tb.w, Tb.h, 18, '#fff');
@@ -784,6 +784,7 @@
     // ---- 그래프 ----
     panel(G.G.x, G.G.y, G.G.w, G.G.h, 18, '#fff');
     const pl = rnPlot(); drawAxes(pl);
+    if (PHONE) T(G.G.x + 12, G.G.y + 18, 'O₂ (mL/30초) · ' + IVS[iv || 'temp'].name + (iv && IVS[iv].unit ? ' (' + IVS[iv].unit + ')' : ''), 13, '#334155', 'left', 800);
     if (!iv) T(G.G.x + G.G.w / 2, G.G.y + G.G.h / 2, '측정한 평균이 여기에 점으로 모여요', 14, '#94a3b8', 'center', 700);
     else {
       const shown = r.pts.filter((p) => p.shown).sort((u, v) => u.val - v.val);
@@ -809,13 +810,13 @@
   S.an = { prog: 0, sel: null };
   const AN_KEYS = ['temp', 'ph', 'enz', 'sub'];
   const anGeo = (i) => (PHONE ? { x: 10, y: 6 + i * 157, w: 460, h: 151 } : { x: 14 + (i % 2) * 388, y: 14 + Math.floor(i / 2) * 270, w: 384, h: 262 });
-  const anPlot = (i) => { const k = AN_KEYS[i], I = IVS[k]; return mkPlot(anGeo(i), { x0: I.x0, x1: I.x1, y0: 0, y1: 12, xt: I.xt, yt: PHONE ? [0, 6, 12] : [0, 4, 8, 12], xl: PHONE ? '' : I.name + (I.unit ? ' (' + I.unit + ')' : ''), yl: PHONE ? '' : 'O₂ (mL/30초)', m: PHONE ? { l: 34, t: 28, r: 12, b: 24 } : { l: 46, t: 40, r: 16, b: 44 } }); };
+  const anPlot = (i) => { const k = AN_KEYS[i], I = IVS[k]; return mkPlot(anGeo(i), { x0: I.x0, x1: I.x1, y0: 0, y1: 12, xt: I.xt, yt: PHONE ? [0, 6, 12] : [0, 4, 8, 12], xl: PHONE ? '' : I.name + (I.unit ? ' (' + I.unit + ')' : ''), m: PHONE ? { l: 34, t: 28, r: 12, b: 24 } : { l: 46, t: 40, r: 16, b: 44 } }); };
   function anEnter() { S.an.prog = 0; if (RM) S.an.prog = 1; else SciSim.tween(S.an, { prog: 1 }, { duration: 1.3, ease: 'inOutCubic' }); }
   function anDraw(dt, t) {
     AN_KEYS.forEach((k, i) => {
       const I = IVS[k], g = anGeo(i), pl = anPlot(i);
       panel(g.x, g.y, g.w, g.h, 16, '#fff');
-      T(g.x + 14, g.y + 24, IV_ICON[k] + ' ' + I.name + '에 따른 산소 발생량', L(15.5, 13), '#1f2d44', 'left', 800);
+      T(g.x + 14, g.y + 24, IV_ICON[k] + ' ' + I.name + ' → 산소 (mL/30초)', L(15.5, 13), '#1f2d44', 'left', 800);
       drawAxes(pl);
       // 참고 자료 곡선 (그려지는 중)
       const n = I.vals.length, tot = (n - 1) * clamp(S.an.prog, 0, 1);
