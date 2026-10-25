@@ -487,21 +487,21 @@
     const c = pointClass();
     if (!c) {
       T(P.x + 16, P.y + 30, '결과', 16, '#334155', 'left', 800);
-      textBlock(P.x + 16, P.y + 62, P.w - (SEQ.key === 'hbb' && !PHONE ? 250 : 32), '변한 mRNA에서 염기 하나를 눌러 고르고 새 염기를 골라 보세요. 아미노산 사슬이 어떻게 달라지는지 살펴봐요.', PHONE ? 14 : 15, '#475569', PHONE ? 20 : 22, 700);
+      textBlock(P.x + 16, P.y + 62, P.w - (SEQ.key === 'hbb' ? (PHONE ? 118 : 250) : 32), '변한 mRNA에서 염기 하나를 눌러 고르고 새 염기를 골라 보세요. 아미노산 사슬이 어떻게 달라지는지 살펴봐요.', PHONE ? 14 : 15, '#475569', PHONE ? 20 : 22, 700);
     } else {
       const lab = PT_LAB[c.kind];
       D.label(P.x + 16, P.y + 30, lab[0], { bg: lab[1], size: PHONE ? 15 : 17, align: 'left' });
-      let y = P.y + 66; const lh = PHONE ? 21 : 24, fs = PHONE ? 13.5 : 15, w = P.w - (SEQ.key === 'hbb' && !PHONE ? 250 : 32);
+      let y = P.y + 66; const lh = PHONE ? 21 : 24, fs = PHONE ? 13.5 : 15, w = P.w - (SEQ.key === 'hbb' ? (PHONE ? 118 : 250) : 32);
       if (c.oc) { T(P.x + 16, y, '코돈  ' + c.oc + ' → ' + c.mc, fs + 1, '#26324a', 'left', 800); y += lh; T(P.x + 16, y, '아미노산  ' + AA3[c.aO] + ' → ' + AA3[c.aM] + (c.aO !== '*' && c.aM !== '*' ? '  (' + AAKO[c.aO] + ' → ' + AAKO[c.aM] + ')' : ''), fs, '#26324a', 'left', 800); y += lh + 4; }
       const ex = { silent: '코돈은 달라졌지만 같은 아미노산을 지정해서 단백질은 그대로예요.', missense: '아미노산 하나가 다른 아미노산으로 바뀌었어요. 단백질의 기능이 달라질 수 있어요.', nonsense: '아미노산 자리에 종결 코돈이 생겨서 단백질이 ' + strip(SEQ.mChain).length + '개 아미노산에서 짧게 끝나요.', stoploss: '종결 코돈이 사라져서 번역이 계속돼요.', left: '코돈을 이루지 못하는 남은 염기라 아미노산에 영향이 없어요.', after: '종결 코돈 뒤쪽은 번역되지 않아 단백질이 그대로예요.' };
       textBlock(P.x + 16, y, w, ex[c.kind], fs, '#475569', lh, 700);
     }
     // 낫 모양 적혈구
     if (SEQ.key === 'hbb') {
-      const rx = P.x + P.w - (PHONE ? 62 : 110), ry = P.y + (PHONE ? 70 : 100) + (PHONE ? 0 : 6), R = PHONE ? 36 : 56;
+      const rx = P.x + P.w - (PHONE ? 54 : 110), ry = P.y + (PHONE ? 62 : 106), R = PHONE ? 32 : 56;
       drawRBC(rx, ry, R, SEQ.rbc);
-      TF(rx, P.y + P.h - (PHONE ? 46 : 70), SEQ.rbc > 0.5 ? '낫 모양 적혈구' : '둥근 적혈구', PHONE ? 140 : 190, PHONE ? 14 : 16, 11, SEQ.rbc > 0.5 ? '#b91c1c' : '#475569', 'center', 800);
-      if (SEQ.rbc > 0.5) TF(rx, P.y + P.h - (PHONE ? 26 : 46), 'Glu → Val (6번)', PHONE ? 140 : 190, 13.5, 10.5, '#7f1d1d', 'center', 700);
+      TF(rx, P.y + P.h - (PHONE ? 52 : 70), SEQ.rbc > 0.5 ? '낫 모양 적혈구' : '둥근 적혈구', PHONE ? 104 : 190, PHONE ? 14 : 16, 11, SEQ.rbc > 0.5 ? '#b91c1c' : '#475569', 'center', 800);
+      if (SEQ.rbc > 0.5) TF(rx, P.y + P.h - (PHONE ? 32 : 46), 'Glu → Val (6번)', PHONE ? 104 : 190, 13.5, 10.5, '#7f1d1d', 'center', 700);
     }
     // 만든 유형 칩
     const mk = [['silent', '침묵'], ['missense', '과오'], ['nonsense', '넌센스']].concat(SEQ.key === 'hbb' || SEQ.made.sickle ? [['sickle', '낫 모양']] : []);
@@ -695,7 +695,7 @@
       if (k === 0) {
         // 정상 체세포 → 돌연변이 체세포 → 일부 조직
         cellDraw(cx1, cy, 36 * sc, mutOn, 1);
-        T(cx1, cy + 62 * sc, mutOn ? '돌연변이가 생긴 체세포' : '체세포', 13, mutOn ? '#b91c1c' : '#16a34a', 'center', 800);
+        T(cx1, cy + 62 * sc, mutOn ? '돌연변이 체세포' : '체세포', 13, mutOn ? '#b91c1c' : '#16a34a', 'center', 800);
         D.arrow(cx1 + 48 * sc, cy, cx2 - 66 * sc, cy, { color: '#94a3b8', width: 3 });
         const n = Math.round(clamp((pr - 0.25) / 0.7, 0, 1) * 9);
         const pos = [[0, 0], [-1, 0], [1, 0], [-0.5, -0.9], [0.5, -0.9], [-0.5, 0.9], [0.5, 0.9], [-1.5, -0.9], [1.5, 0.9]];
@@ -709,7 +709,7 @@
       } else {
         // 생식세포 → 돌연변이 배우자 → 수정 → 자손의 모든 세포
         cellDraw(cx1, cy - 6, 36 * sc, mutOn, 1);
-        T(cx1, cy + 56 * sc, mutOn ? '돌연변이가 생긴 생식세포' : '생식세포', 13, mutOn ? '#b91c1c' : '#6d28d9', 'center', 800);
+        T(cx1, cy + 56 * sc, mutOn ? '돌연변이 생식세포' : '생식세포', 13, mutOn ? '#b91c1c' : '#6d28d9', 'center', 800);
         const fg = clamp((pr - 0.3) / 0.25, 0, 1), fz = clamp((pr - 0.55) / 0.25, 0, 1);
         D.arrow(cx1 + 48 * sc, cy - 6, cx2 - 70 * sc, cy - 6, { color: '#94a3b8', width: 3 });
         ctx.save(); ctx.globalAlpha = fg;
@@ -791,7 +791,7 @@
     PL.card = true; PL.cardT = 0; Sound.success(); const R = PLG.card; parts.burst(R.x + R.w / 2, R.y + 30, { count: 22, speed: 190, life: 0.9 }); updateCtl();
   }
   const PLG = PHONE
-    ? { rows: { x: 8, y: 8, w: 464, h: 318 }, chk: { x: 8, y: 334, w: 464, h: 168 }, card: { x: 8, y: 510, w: 464, h: 122 }, rh: 40 }
+    ? { rows: { x: 8, y: 8, w: 464, h: 328 }, chk: { x: 8, y: 344, w: 464, h: 158 }, card: { x: 8, y: 510, w: 464, h: 122 }, rh: 40 }
     : { rows: { x: 14, y: 8, w: 462, h: 540 }, chk: { x: 484, y: 8, w: 302, h: 224 }, card: { x: 484, y: 240, w: 302, h: 308 }, rh: 68 };
   function planDraw(dt, t) {
     PL.cardT = RM ? 1 : approach(PL.cardT, PL.card ? 1 : 0, dt, 3);
@@ -801,8 +801,8 @@
       const y = R.y + 42 + i * PLG.rh, on = PL.slot === i, v = plVal(i), h = PLG.rh - 6;
       D.roundRect(R.x + 10, y, R.w - 20, h, 12); ctx.fillStyle = on ? 'rgba(22,163,74,.12)' : '#f8fafc'; ctx.fill(); ctx.strokeStyle = on ? '#16a34a' : '#e2e8f0'; ctx.lineWidth = on ? 3 : 1.5; ctx.stroke();
       D.label(R.x + 20, y + 17, (i + 1) + '. ' + nm, { bg: v ? '#0f766e' : '#94a3b8', size: 12.5, align: 'left' });
-      if (v) { if (PHONE) TF(R.x + 22, y + 35, v, R.w - 44, 12.5, 9.5, '#26324a', 'left', 700); else textBlock(R.x + 22, y + 40, R.w - 44, v, 13.5, '#26324a', 17, 700); }
-      else T(R.x + 22, y + (PHONE ? 35 : 44), on ? '← 선택 도구에서 골라요' : '아직 비어 있어요', 12.5, '#94a3b8', 'left', 700);
+      if (v) { if (PHONE) TF(R.x + 112, y + 22, v, R.w - 132, 12.5, 9.5, '#26324a', 'left', 700); else textBlock(R.x + 22, y + 40, R.w - 44, v, 13.5, '#26324a', 17, 700); }
+      else T(R.x + (PHONE ? 112 : 22), y + (PHONE ? 22 : 44), on ? (PHONE ? '↓ 아래 도구에서 골라요' : '← 오른쪽 도구에서 골라요') : '아직 비어 있어요', 12.5, '#94a3b8', 'left', 700);
     });
     const K = PLG.chk; panel(K.x, K.y, K.w, K.h, 16, '#fff'); T(K.x + 16, K.y + 28, '✅ 점검표', 16, '#1f2d44', 'left', 800);
     plChecks().forEach((c, i) => { const y = K.y + 52 + i * (PHONE ? 20 : 28); T(K.x + 16, y, (c[1] ? '✔ ' : '▢ ') + c[0], PHONE ? 13 : 14, c[1] ? '#15803d' : '#64748b', 'left', 800); });
@@ -810,7 +810,7 @@
     if (!PL.card) { TF(C0.x + C0.w / 2, C0.y + C0.h / 2 + 5, plAllOk() ? '📄 [요약 카드 받기]를 눌러요' : '점검표를 모두 채우면 요약 카드를 받아요', C0.w - 24, 14, 11, '#94a3b8', 'center', 800); return; }
     const d = DIS[PL.dis], a = clamp(PL.cardT, 0, 1);
     ctx.save(); ctx.globalAlpha = a; ctx.translate(0, (1 - a) * 18);
-    T(C0.x + 14, C0.y + 26, '📄 ' + d.name + ' 요약 카드 (교육용 가상 자료)', PHONE ? 13.5 : 14.5, '#065f46', 'left', 800);
+    TF(C0.x + 14, C0.y + 26, '📄 ' + d.name + ' 요약 카드 (교육용 가상 자료)', C0.w - 24, PHONE ? 13.5 : 14.5, 10.5, '#065f46', 'left', 800);
     let y = C0.y + 50;
     d.sum.forEach((s, i) => { if (PHONE && i > 1) return; const h = textBlock(C0.x + 14, y, C0.w - 28, '• ' + s, PHONE ? 12.5 : 13.5, '#334155', PHONE ? 17 : 19, 700); y += h + 6; });
     const same = PL.cause === d.cause;
