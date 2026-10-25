@@ -10,7 +10,7 @@
 (function () {
   'use strict';
   const PH0 = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches);
-  const VW = PH0 ? 480 : 800, VH = PH0 ? 640 : 560;
+  const VW = PH0 ? 480 : 800, VH = PH0 ? 584 : 560;
   const BG = '#eef2fa';
   /* ===== 공통 도우미 (모든 차시 공통) ===== */
   const { $, $$, clamp, Sound } = SciSim;
@@ -183,7 +183,7 @@
 
   /* ---------- 장면 배치 ---------- */
   const MA = PHONE ? { x: 8, y: 8, w: 464, h: 388 } : { x: 12, y: 12, w: 776, h: 414 };
-  const BOT = PHONE ? { x: 8, y: 404, w: 464, h: 228 } : { x: 12, y: 436, w: 776, h: 112 };
+  const BOT = PHONE ? { x: 8, y: 404, w: 464, h: 170 } : { x: 12, y: 436, w: 776, h: 112 };
 
   /* ---------- 상태 ---------- */
   const S = {
@@ -266,7 +266,7 @@
   const phLay = () => PHONE
     ? { a: { x: MA.x, y: MA.y, w: MA.w, h: 148 }, b: { x: MA.x, y: MA.y + 156, w: MA.w, h: MA.h - 156 } }
     : { a: { x: MA.x, y: MA.y, w: 380, h: MA.h }, b: { x: MA.x + 392, y: MA.y, w: 384, h: MA.h } };
-  const RP = { amp: 40, sig: 24, v: 150 };
+  const RP = { amp: 54, sig: 24, v: 150 };
   function ropePulse(u) { return RP.amp * (PHONE ? 0.72 : 1) * Math.exp(-(u * u) / (RP.sig * RP.sig)); }
   function ropeL() { const a = phLay().a; return a.w - (PHONE ? 70 : 96); }
   function ropeCycle() { return (2 * ropeL() + 200) / RP.v; }
@@ -348,21 +348,21 @@
       }
       ctx.stroke(); ctx.restore();
     };
-    const kk = (n) => TAU * n / 36;
-    ray(Ox, yI, sinT, cosT, cosT, -sinT, -Lr, 0, 8, kk(P.n1), 0, '#2f6bff', 1);
+    const kk = (n) => TAU * n / 44;
+    ray(Ox, yI, sinT, cosT, cosT, -sinT, -Lr, 0, 6, kk(P.n1), 0, '#2f6bff', 1);
     // 줄이 위로 가는 쪽에 입사 화살표
     const ax = Ox - sinT * Lr * 0.55, ay = yI - cosT * Lr * 0.55;
     D.arrow(ax - sinT * 6, ay - cosT * 6, ax + sinT * 10, ay + cosT * 10, { color: '#2f6bff', width: 3, head: 11 });
     const rr = st === 'none' ? 0 : Math.min(1, 2.6 * Math.abs(P.n1 - P.n2) / (P.n1 + P.n2));
     const flipPh = st === 'flip' ? Math.PI : 0;
     if (rr > 0) {
-      ray(Ox, yI, sinT, -cosT, cosT, sinT, 0, Lr, 8 * rr, kk(P.n1), flipPh, '#f26b3a', 1);
+      ray(Ox, yI, sinT, -cosT, cosT, sinT, 0, Lr, 6 * rr, kk(P.n1), flipPh, '#f26b3a', 1);
       const bx = Ox + sinT * Lr * 0.55, by = yI - cosT * Lr * 0.55;
       D.arrow(bx - sinT * 6, by + cosT * 6, bx + sinT * 10, by - cosT * 10, { color: '#f26b3a', width: 3, head: 11 });
     }
     // 투과 (스넬 법칙)
     const sT2 = Math.min(0.999, P.n1 * sinT / P.n2), cT2 = Math.sqrt(1 - sT2 * sT2), Lt = (loH - 8) / cT2;
-    ray(Ox, yI, sT2, cT2, cT2, -sT2, 0, Lt, 7 * (1 - 0.35 * rr), kk(P.n2), 0, '#2f6bff', 0.55);
+    ray(Ox, yI, sT2, cT2, cT2, -sT2, 0, Lt, 5.5 * (1 - 0.35 * rr), kk(P.n2), 0, '#2f6bff', 0.55);
     // 배지
     const bw = b.w - 24, by0 = b.y + 38 + upH + loH + 12;
     const txt = st === 'flip' ? '반사 위상 변화: π (반 파장) — 뒤집혀요' : st === 'same' ? '반사 위상 변화: 없음 — 그대로예요' : '굴절률이 같아서 반사가 거의 없어요';
@@ -423,7 +423,7 @@
     const yOf = (cm) => L.FY + cm * ppc;
     // 틀 뒤 판
     panel(MA.x, MA.y, MA.w, MA.h, 14);
-    T(MA.x + 14, MA.y + 24, '🫧 세워 둔 비누막 (옆에서 본 단면은 오른쪽)', PHONE ? 13.5 : 15, '#26324a', 'left', 800);
+    T(MA.x + 14, MA.y + 24, PHONE ? '🫧 세워 둔 비누막' : '🫧 세워 둔 비누막 (옆에서 본 단면은 오른쪽)', PHONE ? 13.5 : 15, '#26324a', 'left', 800);
     // 눈금자
     ctx.save(); ctx.strokeStyle = '#5d6879'; ctx.fillStyle = '#5d6879'; ctx.lineWidth = 1.4;
     ctx.beginPath(); ctx.moveTo(L.FX - 12, L.FY); ctx.lineTo(L.FX - 12, L.FY + L.FH); ctx.stroke();
@@ -445,7 +445,7 @@
     ctx.strokeStyle = '#6d7686'; ctx.lineWidth = 2.5; D.roundRect(L.FX - 6, L.FY - 6, L.FW + 12, L.FH + 12, 8); ctx.stroke();
     // 단면 (쐐기)
     const wx = L.WX;
-    T(wx, MA.y + 24, '단면 (두께를 크게 그렸어요)', PHONE ? 12.5 : 13.5, '#5d6879', 'left', 800);
+    T(wx, MA.y + 24, PHONE ? '단면 (크게 그림)' : '단면 (두께를 크게 그렸어요)', PHONE ? 12.5 : 13.5, '#5d6879', 'left', 800);
     ctx.save();
     const wg = ctx.createLinearGradient(wx, 0, wx + L.WW, 0); wg.addColorStop(0, '#bfe3ff'); wg.addColorStop(1, '#8cc6f2');
     ctx.fillStyle = wg; ctx.strokeStyle = '#4e86b3'; ctx.lineWidth = 2;
@@ -506,7 +506,7 @@
 
   /* ================= ③ 간섭 조건 ================= */
   const cdLay = () => PHONE
-    ? { sv: { x: MA.x, y: MA.y, w: MA.w, h: 142 }, osc: { x: MA.x, y: MA.y + 148, w: MA.w, h: 106 }, gr: { x: MA.x + 44, y: MA.y + 282, w: MA.w - 62, h: 62 }, cb: { x: MA.x + 6, y: MA.y + 368, w: MA.w - 70, h: 12 } }
+    ? { sv: { x: MA.x, y: MA.y, w: MA.w, h: 142 }, osc: { x: MA.x, y: MA.y + 148, w: MA.w, h: 106 }, gr: { x: MA.x + 44, y: MA.y + 286, w: MA.w - 62, h: 58 }, cb: { x: MA.x + 6, y: MA.y + 368, w: MA.w - 70, h: 12 } }
     : { sv: { x: MA.x, y: MA.y, w: 436, h: 236 }, osc: { x: MA.x, y: MA.y + 244, w: 436, h: 170 }, gr: { x: MA.x + 506, y: MA.y + 34, w: 250, h: 190 }, cb: { x: MA.x + 450, y: MA.y + 322, w: 250, h: 22 } };
   function cdState() {
     const C2 = S.cd, a = sinA(N_SOAP, C2.t, C2.lam);
@@ -603,7 +603,7 @@
     const cur = 2 * sinA(N_SOAP, tD, lam);
     ctx.save(); ctx.setLineDash([4, 4]); ctx.strokeStyle = '#e8501b'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(ax2.X(tD), gr.y); ctx.lineTo(ax2.X(tD), gr.y + gr.h); ctx.stroke(); ctx.restore();
     D.sphere(ax2.X(tD), ax2.Y(cur), 7, '#e8501b', { shadow: true });
-    if (PHONE) T(gr.x - 8, gr.y - 8, '합성 진폭 (A의 배수) — 노란 띠: 보강 두께', 12, '#26324a', 'left', 800);
+    if (PHONE) T(gr.x - 8, gr.y - 12, '합성 진폭 (A의 배수) — 노란 띠: 보강 두께', 12, '#26324a', 'left', 800);
     /* --- 흰빛 색 막대 --- */
     const cb = L.cb;
     if (!PHONE) T(cb.x, cb.y - 10, '백색광에서 막이 보이는 색 (두께에 따라)', 13, '#26324a', 'left', 800);
@@ -626,7 +626,7 @@
   /* ================= ④ 박막 기술 ================= */
   function coatR(lam, t) { return 1 - sinI(N_MG, t, lam); }          // 상대 반사 세기 (두 반사광의 세기를 같다고 단순화): cos²(2πnt/λ)
   const apLay = () => PHONE
-    ? { sv: { x: MA.x, y: MA.y, w: MA.w, h: 176 }, sp: { x: MA.x + 44, y: MA.y + 208, w: MA.w - 64, h: 68 }, lens: { x: MA.x + 60, y: MA.y + 342 } }
+    ? { sv: { x: MA.x, y: MA.y, w: MA.w, h: 200 }, sp: { x: MA.x + 44, y: MA.y + 226, w: MA.w - 64, h: 52 }, lens: { x: MA.x + 60, y: MA.y + 344 } }
     : { sv: { x: MA.x, y: MA.y, w: 400, h: MA.h }, sp: { x: MA.x + 480, y: MA.y + 60, w: 280, h: 118 }, lens: { x: MA.x + 500, y: MA.y + 296 } };
   function stepApp(dt) {
     const A = S.ap; A.tD = SciSim.approach(A.tD, A.t, dt, 12);
@@ -637,8 +637,8 @@
     if (A.sub === 'ex') return drawExamples();
     const sv = L.sv; panel(sv.x, sv.y, sv.w, sv.h, 14);
     T(sv.x + 14, sv.y + 22, '렌즈 위의 무반사 코팅', PHONE ? 13 : 14.5, '#26324a', 'left', 800);
-    const kPx = PHONE ? 0.22 : 0.62, tp = Math.max(2, A.tD * kPx);
-    const yA = sv.y + (PHONE ? 74 : 158), sx = sv.x + 12, sw = sv.w - 24;
+    const kPx = PHONE ? 0.2 : 0.62, tp = Math.max(2, A.tD * kPx);
+    const yA = sv.y + (PHONE ? 108 : 158), sx = sv.x + 12, sw = sv.w - 24;
     const yG = yA + tp;
     ctx.fillStyle = '#eef6ff'; ctx.fillRect(sx, sv.y + 34, sw, yA - sv.y - 34);
     ctx.fillStyle = '#d6ecff'; ctx.fillRect(sx, yA, sw, tp);
@@ -650,7 +650,7 @@
     if (tp > 18) T(sx + 8, yA + tp / 2 + 5, 'MgF₂ n = ' + N_MG.toFixed(2), 12.5, '#2e6a9a', 'left', 800);
     else D.label(sx + 74, yA + 8, 'MgF₂ n = ' + N_MG.toFixed(2), { size: 11.5, bg: '#2e6a9a', align: 'left' });
     // 광선 (수직 입사에 가깝게, 구분을 위해 조금 기울여 그려요)
-    const th = 14 * rad, tt = Math.asin(Math.sin(th) / N_MG), ax = sx + sw * 0.36, Lr = (yA - sv.y - (PHONE ? 50 : 66));
+    const th = 14 * rad, tt = Math.asin(Math.sin(th) / N_MG), ax = sx + sw * 0.36, Lr = (yA - sv.y - (PHONE ? 52 : 66));
     const Bx = ax + tp * Math.tan(tt), Cx = ax + 2 * tp * Math.tan(tt);
     ctx.lineCap = 'round';
     ctx.strokeStyle = '#8a6d00'; ctx.lineWidth = 3;
@@ -664,7 +664,7 @@
     // 스펙트럼
     const sp = L.sp;
     if (!PHONE) { panel(MA.x + 412, MA.y, MA.w - 412, 238, 14); T(sp.x - 44, sp.y - 20, '반사되는 빛의 세기 (파장마다)', 13.5, '#26324a', 'left', 800); }
-    else T(sp.x - 36, sp.y - 8, '반사되는 빛의 세기 (파장마다)', 12.5, '#26324a', 'left', 800);
+    else T(sp.x - 36, sp.y - 10, '반사되는 빛의 세기 (파장마다)', 12.5, '#26324a', 'left', 800);
     const ax2 = axes(sp.x, sp.y, sp.w, sp.h, { xmin: 400, xmax: 700, ymin: 0, ymax: 1, xt: [[400, '400'], [450, '450'], [500, '500'], [550, '550'], [600, '600'], [650, '650'], [700, '700']], yt: [[0, '0'], [0.5, '0.5'], [1, '1']], xl: PHONE ? null : '파장 λ (nm)', fs: 12 });
     for (let l = 400; l < 700; l += 4) {
       const r = coatR(l, A.tD), c = wlRGB(l + 2);
@@ -682,7 +682,7 @@
     const lx = L.lens.x, ly = L.lens.y;
     const reflCol = lensColor(A.tD);
     const rr = PHONE ? 24 : 34;
-    T(lx - (PHONE ? 30 : 20), ly - rr - 8, '렌즈 표면에서 반사된 빛', PHONE ? 12 : 13, '#26324a', 'left', 800);
+    T(lx - (PHONE ? 30 : 20), ly - rr - (PHONE ? 12 : 8), '렌즈 표면에서 반사된 빛', PHONE ? 12 : 13, '#26324a', 'left', 800);
     D.sphere(lx + rr, ly + 6, rr, '#a8b3c4', { shadow: true });
     ctx.fillStyle = rgbCss(lensColorNo()); ctx.beginPath(); ctx.arc(lx + rr, ly + 6, rr - 4, 0, TAU); ctx.fill();
     T(lx + rr, ly + rr + 24, '코팅 없음', 12.5, '#5d6879', 'center', 800);
@@ -701,7 +701,7 @@
     return [0, 1, 2].map((k) => Math.round(255 * Math.pow(clamp(s[k] / ref[k], 0, 1), 1 / 3.2) * 0.92 + 8));
   }
   function drawTable() {
-    const A = S.ap, x = BOT.x + 12, w = BOT.w - 24, rh = PHONE ? 34 : 22, y0 = BOT.y + 8;
+    const A = S.ap, x = BOT.x + 12, w = BOT.w - 24, rh = PHONE ? 30 : 22, y0 = BOT.y + 8;
     const cols = PHONE ? [0.30, 0.35, 0.35] : [0.26, 0.37, 0.37];
     const hd = ['', '비누막 (공기→비눗물→공기)', '코팅 (공기→MgF₂→유리)'];
     const rowsT = [['앞면 반사', 'π 변화', 'π 변화'], ['뒷면 반사', '변화 없음', 'π 변화'], ['약해지는 조건', '2nt = mλ', '2nt = (m + ½)λ']];
@@ -725,42 +725,54 @@
     const msg = A.tblOpen ? '코팅은 두 반사가 모두 π 바뀌어 위상 변화가 서로 상쇄돼요. 그래서 광로차만 따지면 돼요.' : '코팅 칸의 ?는 위 장면에서 두 반사의 위상 변화를 확인한 뒤 ✍️ 비교하기를 풀면 채워져요.';
     if (BOT.h - rh * 4 - 12 > 30) textBlock(x, ty, w, msg, PHONE ? 13 : 13, '#5d6879', 18, 700);
   }
-  function drawExamples() {
-    const m = MA; panel(m.x, m.y, m.w, m.h, 14);
-    T(m.x + 14, m.y + 24, '🌈 두께가 곳곳에서 다른 얇은 막들', PHONE ? 13.5 : 15, '#26324a', 'left', 800);
-    // 기름막이 뜬 물웅덩이
-    const cx = m.x + (PHONE ? 118 : 200), cy = m.y + (PHONE ? 110 : 150), rx = PHONE ? 100 : 170, ry = PHONE ? 56 : 82;
-    ctx.save();
-    ctx.fillStyle = '#3a4455'; ctx.beginPath(); ctx.ellipse(cx, cy, rx + 14, ry + 10, 0, 0, TAU); ctx.fill();
-    ctx.beginPath(); ctx.ellipse(cx, cy, rx, ry, 0, 0, TAU); ctx.clip();
+  const EX = { p: null, b: null };
+  function paintCache(w, h, fn) {
+    const c = document.createElement('canvas'); c.width = Math.ceil(w); c.height = Math.ceil(h);
+    fn(c.getContext('2d'), c.width, c.height); return c;
+  }
+  function paintPuddle(g, cx, cy, rx, ry, sw) {
+    g.fillStyle = '#3a4455'; g.beginPath(); g.ellipse(cx, cy, rx + 14, ry + 10, 0, 0, TAU); g.fill();
+    g.save(); g.beginPath(); g.ellipse(cx, cy, rx, ry, 0, 0, TAU); g.clip();
     for (let r = rx; r > 0; r -= 2) {          // 바깥쪽부터 칠하고 안쪽 원판으로 덮어요
       const f = r / rx;
-      // 가운데가 두껍고 가장자리가 얇은 기름막 + 약간 비틀림
-      for (let a0 = 0; a0 < 12; a0++) {
-        const a = a0 / 12 * TAU, t = 80 + 640 * Math.pow(1 - f, 1.1) + 60 * Math.sin(a * 2 + S.t * 0.4) * (1 - f);
-        ctx.fillStyle = rgbCss(whiteColor(t, 1.47, 'film'));
-        ctx.beginPath(); ctx.moveTo(cx, cy);
-        ctx.ellipse(cx, cy, r + 2.5, (r + 2.5) * ry / rx, 0, a - 0.02, a + TAU / 12 + 0.02); ctx.lineTo(cx, cy); ctx.fill();
+      for (let a0 = 0; a0 < 16; a0++) {
+        const a = a0 / 16 * TAU, t = 80 + 640 * Math.pow(1 - f, 1.1) + 60 * Math.sin(a * 2 + sw) * (1 - f);
+        g.fillStyle = rgbCss(whiteColor(t, 1.47, 'film'));
+        g.beginPath(); g.moveTo(cx, cy);
+        g.ellipse(cx, cy, r + 2.5, (r + 2.5) * ry / rx, 0, a - 0.02, a + TAU / 16 + 0.02); g.lineTo(cx, cy); g.fill();
       }
     }
-    ctx.restore();
-    ctx.strokeStyle = 'rgba(255,255,255,.45)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(cx, cy, rx - 4, ry - 3, 0, Math.PI * 1.05, Math.PI * 1.55); ctx.stroke();
-    T(cx, cy + ry + 34, '기름막이 뜬 물웅덩이', 13.5, '#26324a', 'center', 800);
-    // 비눗방울
-    const bx = m.x + (PHONE ? 366 : 540), by = m.y + (PHONE ? 106 : 138), br = PHONE ? 54 : 78;
-    ctx.save(); ctx.beginPath(); ctx.arc(bx, by, br, 0, TAU); ctx.clip();
-    ctx.fillStyle = '#f4f8ff'; ctx.fillRect(bx - br, by - br, br * 2, br * 2);
+    g.restore();
+    g.strokeStyle = 'rgba(255,255,255,.45)'; g.lineWidth = 3; g.beginPath(); g.ellipse(cx, cy, rx - 4, ry - 3, 0, Math.PI * 1.05, Math.PI * 1.55); g.stroke();
+  }
+  function paintBubble(g, bx, by, br, sw) {
+    g.save(); g.beginPath(); g.arc(bx, by, br, 0, TAU); g.clip();
+    g.fillStyle = '#f4f8ff'; g.fillRect(bx - br, by - br, br * 2, br * 2);
     for (let y = -br; y < br; y += 2) {
       const f = (y + br) / (2 * br);
       for (let x = -br; x < br; x += 6) {
-        const t = 120 + 520 * f * f + 38 * Math.sin(x * 0.05 + y * 0.03 + S.t * 0.5);
-        ctx.fillStyle = rgbCss(whiteColor(t, N_SOAP, 'film')); ctx.globalAlpha = 0.9;
-        ctx.fillRect(bx + x, by + y, 6.6, 2.6);
+        const t = 120 + 520 * f * f + 38 * Math.sin(x * 0.05 + y * 0.03 + sw);
+        g.fillStyle = rgbCss(whiteColor(t, N_SOAP, 'film')); g.fillRect(bx + x, by + y, 6.6, 2.6);
       }
     }
-    ctx.globalAlpha = 1; ctx.restore();
-    ctx.strokeStyle = 'rgba(120,150,190,.7)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(bx, by, br, 0, TAU); ctx.stroke();
-    ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.beginPath(); ctx.ellipse(bx - br * 0.4, by - br * 0.45, br * 0.22, br * 0.1, -0.7, 0, TAU); ctx.fill();
+    g.restore();
+    g.strokeStyle = 'rgba(120,150,190,.7)'; g.lineWidth = 2; g.beginPath(); g.arc(bx, by, br, 0, TAU); g.stroke();
+    g.fillStyle = 'rgba(255,255,255,.7)'; g.beginPath(); g.ellipse(bx - br * 0.4, by - br * 0.45, br * 0.22, br * 0.1, -0.7, 0, TAU); g.fill();
+  }
+  function drawExamples() {
+    const m = MA; panel(m.x, m.y, m.w, m.h, 14);
+    T(m.x + 14, m.y + 24, '🌈 두께가 곳곳에서 다른 얇은 막들', PHONE ? 13.5 : 15, '#26324a', 'left', 800);
+    // 기름막이 뜬 물웅덩이, 비눗방울 (미리 그려 둔 그림 두 장을 서서히 섞어 반짝이게 해요)
+    const cx = m.x + (PHONE ? 118 : 200), cy = m.y + (PHONE ? 110 : 150), rx = PHONE ? 100 : 170, ry = PHONE ? 56 : 82;
+    const bx = m.x + (PHONE ? 366 : 540), by = m.y + (PHONE ? 106 : 138), br = PHONE ? 54 : 78;
+    if (!EX.p) {
+      EX.p = [0, 2.2].map((sw) => paintCache(2 * (rx + 16), 2 * (ry + 12), (g, w, h) => paintPuddle(g, w / 2, h / 2, rx, ry, sw)));
+      EX.b = [0, 2.2].map((sw) => paintCache(2 * br + 6, 2 * br + 6, (g, w, h) => paintBubble(g, w / 2, h / 2, br, sw)));
+    }
+    const mixA = RM ? 0 : 0.5 + 0.5 * Math.sin(S.t * 0.9);
+    ctx.drawImage(EX.p[0], cx - rx - 16, cy - ry - 12); ctx.globalAlpha = mixA; ctx.drawImage(EX.p[1], cx - rx - 16, cy - ry - 12); ctx.globalAlpha = 1;
+    ctx.drawImage(EX.b[0], bx - br - 3, by - br - 3); ctx.globalAlpha = mixA; ctx.drawImage(EX.b[1], bx - br - 3, by - br - 3); ctx.globalAlpha = 1;
+    T(cx, cy + ry + 34, '기름막이 뜬 물웅덩이', 13.5, '#26324a', 'center', 800);
     T(bx, by + br + 22, '비눗방울', 13.5, '#26324a', 'center', 800);
     // 카드
     const cy2 = m.y + (PHONE ? 214 : 288), cw = (m.w - 36) / 2, ch = m.h - (cy2 - m.y) - 12;
@@ -825,7 +837,7 @@
       const r = coatR(550, S.ap.t);
       L1 = '코팅 두께 t'; a = Math.round(S.ap.t) + ' nm';
       L2 = '550 nm 반사 세기'; b = Math.round(r * 100) + ' %';
-      L3 = '상쇄 조건 2nt = (m+½)λ'; c = r <= 0.01 ? '만족해요' : '아직이에요';
+      L3 = '상쇄 조건 2nt = (m+½)λ'; c = r <= 0.004 ? '만족해요' : '아직이에요';
     } else { L1 = '막 두께'; a = '곳곳이 달라요'; L2 = '보강되는 색'; b = '위치마다 달라요'; L3 = '무늬'; c = '무지갯빛'; }
     const key = [L1, a, L2, b, L3, c].join('|');
     if (key === rlast) return; rlast = key;
@@ -1048,6 +1060,8 @@
   /* ---------- 디버그 (Playwright) ---------- */
   window.__sim = {
     S, VW, VH, MA, BOT, SEL_A, SEL_B, SEL_C, slN1, slN2, slT, slTc, thickAt, slopeAt, sinI, sinA, coatR, cdState, phState, brightIdx, markLines, filmRGB, whiteColor, setScene, updateCtl, flLay, cdLay, phLay, lgSeg, lamSeg, apSeg, ropeSeg, setT,
+    setSub(sub) { S.ap.sub = sub; updateCtl(); },
+    perfPrep(m) { if (m === 'film') { S.fl.play = true; S.fl.tau = 1; } },
     get game() { return game; },
   };
 

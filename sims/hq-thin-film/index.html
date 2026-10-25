@@ -67,6 +67,7 @@
     .seg-4 button { flex: 1 1 0; min-width: 0; padding-left: 6px; padding-right: 6px; font-size: 14px; }
     .tray-note { font-weight: 800; }
     .sub-hl { color: var(--subject); font-weight: 900; }
+    #lgSeg button, #lamSeg button { font-size: 13.5px; padding-left: 3px; padding-right: 3px; }
   </style>
 </head>
 <body class="sim-page" data-subject="phy">
@@ -121,7 +122,7 @@
           <div class="control-head"><span>✍️ 문장 완성하기</span></div><div id="selA"></div>
         </div>
         <div class="control" data-modes="film">
-          <div class="control-head"><span>💡 비추는 빛</span></div><div class="segmented view-seg" id="lgSeg" role="group" aria-label="비추는 빛 고르기"><button type="button" data-v="white">백색광</button><button type="button" data-v="650">빨강 650 nm</button><button type="button" data-v="532">초록 532 nm</button><button type="button" data-v="450">파랑 450 nm</button></div>
+          <div class="control-head"><span>💡 비추는 빛</span></div><div class="segmented view-seg" id="lgSeg" role="group" aria-label="비추는 빛 고르기"><button type="button" data-v="white">⚪ 백색광</button><button type="button" data-v="650">🔴 650 nm</button><button type="button" data-v="532">🟢 532 nm</button><button type="button" data-v="450">🔵 450 nm</button></div>
         </div>
         <div class="control" data-modes="film">
           <div class="control-head"><span>⏳ 시간 흐름</span><output id="oTau">0 초</output></div><div class="btn-row"><button class="btn btn-sm btn-primary" id="bPlay" type="button">▶ 시간 흐르게</button><button class="btn btn-sm" id="bNew" type="button">↺ 새 막 만들기</button></div><p class="ctrl-note">막대를 끌거나 막을 눌러 탐침 위치를 옮겨 보세요. 시간이 흐르면 막이 아래로 흘러내려 얇아져요.</p>
