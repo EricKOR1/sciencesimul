@@ -7711,8 +7711,7 @@ window.SCI_CATALOG = {
                 "전지 구성",
                 "변화 분석",
                 "전극 조합"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hr-practical-cell",
@@ -7733,8 +7732,7 @@ window.SCI_CATALOG = {
                 "구조 비교",
                 "효율 탐색",
                 "전지 분류"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hr-standard-potential",

@@ -358,7 +358,7 @@
     if (PHONE) { /* 폰: 온도계 아래 */ }
     drawInset(ix, iy, iw, ih, t);
     // 안내
-    if (!b.go) pill(PHONE ? cx : MAIN.x + MAIN.w * 0.3, MAIN.y + MAIN.h - 20, '“Zn판 담그기” 단추를 눌러요', { bg: '#f1f5f9', color: MUTED, border: '#cbd5e1', size: 14 });
+    if (!b.go) pill(PHONE ? cx : MAIN.x + MAIN.w * 0.72, MAIN.y + MAIN.h - 20, '“Zn판 담그기” 단추를 눌러요', { bg: '#f1f5f9', color: MUTED, border: '#cbd5e1', size: 14 });
     // INFO
     panel(INFO.x, INFO.y, INFO.w, INFO.h, 14);
     T(INFO.x + 16, INFO.y + 26, 'Zn + Cu²⁺ → Zn²⁺ + Cu  (Zn은 전자를 잃고, Cu²⁺는 전자를 얻어요)', PHONE ? 13.5 : 15, WARN, 'left', 800);
