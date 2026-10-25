@@ -9062,8 +9062,7 @@ window.SCI_CATALOG = {
                 "응축",
                 "집적",
                 "분화"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hs-early-earth",
@@ -9084,8 +9083,7 @@ window.SCI_CATALOG = {
                 "원시 대기",
                 "원시 바다",
                 "행성 비교"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hs-oxygen-bif",
@@ -9106,8 +9104,7 @@ window.SCI_CATALOG = {
                 "호상철광층",
                 "산소 증가",
                 "오존층"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hs-carbon-snowball",
