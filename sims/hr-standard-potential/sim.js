@@ -360,7 +360,7 @@
   }
   function stepShe(dt) {
     const s = S.sh; s.conn = ap(s.conn, s.connGo ? 1 : 0, dt, 2.6); if (Math.abs(s.conn - (s.connGo ? 1 : 0)) < 0.004) s.conn = s.connGo ? 1 : 0;
-    if (s.connGo && s.conn >= 0.99 && !s.tested[s.metal]) { s.tested[s.metal] = true; flash(MAIN.x + MAIN.w / 2, MAIN.y + 40, ['#fbbf24', '#8b5cf6', '#14a058']); updateCtl(); }
+    if (s.connGo && s.conn >= 0.95 && !s.tested[s.metal]) { s.tested[s.metal] = true; flash(MAIN.x + MAIN.w / 2, MAIN.y + 40, ['#fbbf24', '#8b5cf6', '#14a058']); updateCtl(); }
   }
   function sheMetal(m) { const s = S.sh; s.metal = m; s.connGo = false; s.conn = 0; updateCtl(); }
   function sheConn() { const s = S.sh; if (s.connGo) return; s.connGo = true; Sound.click(); updateCtl(); }
@@ -527,7 +527,7 @@
   function pdScene(r, d, t) {
     const done = !!d.done[r.k], sp = rxE(r) > 0, p = (done && sp) ? sm(d.p) : 0;
     const bw = PHONE ? 150 : 190, bh = PHONE ? 170 : 200;
-    const bx = PHONE ? MAIN.x + MAIN.w / 2 - bw / 2 : MAIN.x + 60, by = MAIN.y + (PHONE ? 70 : 54);
+    const bx = PHONE ? MAIN.x + MAIN.w / 2 - bw / 2 : MAIN.x + 60, by = MAIN.y + (PHONE ? 78 : 70);
     const sc = r.scene;
     let solc = '#dbeafe', sola = 0.3, solLab = '';
     if (sc === 'zncu' || sc === 'fecu') { solc = C.mix('#3b9be0', sc === 'fecu' ? '#cfe3d4' : '#cfe4f3', p * 0.8); sola = 0.6 - 0.3 * p; solLab = '0.1 M CuSO₄ 수용액'; }
@@ -626,7 +626,7 @@
   function uiExtra() {
     const sh = S.sh, tb = S.tb, cc = S.cc, pd = S.pd;
     markChips($('#shSel'), sh.metal, sh.tested);
-    $('#bShConn').disabled = !!(sh.connGo && sh.conn >= 0.99); $('#bShConn').textContent = sh.connGo ? '✔ 연결했어요' : '🔌 표준 수소 전극과 연결';
+    $('#bShConn').disabled = !!(sh.connGo && sh.conn >= 0.95); $('#bShConn').textContent = sh.connGo ? '✔ 연결했어요' : '🔌 표준 수소 전극과 연결';
     const A = tb.a >= 0 ? HC[tb.a] : null, B = tb.b >= 0 ? HC[tb.b] : null;
     $('#tbJa').textContent = A ? A.name + ' 이(가) 환원극' : '(첫째 카드)'; $('#tbJb').textContent = B ? B.name + ' 이(가) 환원극' : '(둘째 카드)';
     $('#tbJa').disabled = !(A && B); $('#tbJb').disabled = !(A && B);

@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#8b5cf6">
+  <title>헤스 법칙 | 고등 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🪜</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; }
+    .stage-toolbar { min-height: 61px; }
+    .segmented button { min-height: 44px; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    #resetBtn { font-size: 20px; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 14px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard .btn-sm { min-height: 44px; }
+    #ctrlCard [hidden], .stage-toolbar [hidden] { display: none !important; }
+    .ctrl-note { font-size: 14px; color: var(--muted); margin: 6px 0 0; line-height: 1.4; }
+    .btn-row { display: flex; gap: 8px; margin-top: 6px; }
+    .btn-row .btn { flex: 1; min-width: 0; padding-left: 8px; padding-right: 8px; min-height: 46px; }
+    .view-seg { display: flex; width: 100%; }
+    .view-seg button { flex: 1 1 0; min-width: 0; padding-left: 4px; padding-right: 4px; font-size: 14.5px; }
+    .range-row { display: flex; align-items: center; gap: 8px; }
+    .range-row input[type=range] { flex: 1; min-width: 0; height: 44px; }
+    .nudge { flex: none; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); font-weight: 900; font-size: 16px; line-height: 1; cursor: pointer; display: grid; place-items: center; color: var(--ink); font-family: inherit; }
+    .nudge:active { transform: scale(.94); background: var(--surface-2); }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+    .chips button { min-height: 44px; padding: 6px 12px; border: 2px solid var(--line); background: #fff; border-radius: 999px; font-weight: 800; font-size: 14.5px; cursor: pointer; color: var(--ink); font-family: inherit; }
+    .chips button.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); color: color-mix(in srgb, var(--subject) 70%, black); }
+    .chips button.done { border-color: var(--good); background: var(--good-soft); }
+    .num-in { width: 100%; min-width: 0; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 10px; font: 800 16px var(--font); color: var(--ink); background: #fff; }
+    .num-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .num-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .in-grid { display: grid; grid-template-columns: 1fr 104px; gap: 6px 8px; align-items: center; margin-top: 6px; }
+    .in-grid .lab { font-weight: 800; font-size: 14px; line-height: 1.25; }
+    .in-grid .num-in { min-height: 42px; padding: 2px 8px; font-size: 15px; }
+    @keyframes shakeX { 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+    .readout .value.txt { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    sup, sub { font-size: .7em; line-height: 0; }
+    .stage-canvas .stage-hint { top: 10px; bottom: auto; white-space: normal; width: max-content; max-width: 92%; text-align: center; }
+    .tog { display: flex; gap: 8px; margin-top: 6px; }
+    .tog .btn { flex: 1; min-width: 0; min-height: 46px; padding: 4px 8px; }
+    .tog .btn[aria-pressed=true] { background: color-mix(in srgb, var(--subject) 16%, white); border-color: var(--subject); }
+    .qrow { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+    .qrow button { flex: 1 1 0; min-width: 44px; min-height: 44px; border: 2px solid var(--line); background: #fff; border-radius: 12px; font: 800 15px var(--font); cursor: pointer; color: var(--ink); }
+    .qrow button.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); }
+    .qrow button.ok { border-color: var(--good); background: var(--good-soft); }
+    .qrow button.no { border-color: var(--bad); background: var(--bad-soft); }
+    @media (max-width: 1100px) and (orientation: landscape) { .toolbar-label { display: none; } }
+    @media (max-width: 599px) {
+      .readout .value.txt { font-size: 15px; }
+      .stage-toolbar { gap: 6px; padding: 8px; }
+      .stage-toolbar .spacer, .toolbar-label { display: none; }
+      .segmented button { padding-left: 8px; padding-right: 8px; font-size: 14px; }
+      .stage-toolbar:has(> .segmented[hidden]) { display: none; }
+      .stage-hint { font-size: 13px; padding: 5px 12px; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="chem">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#hx">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">물질과 에너지 · Ⅲ. 화학 변화의 자발성</div>
+      <h1>헤스 법칙</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🪜 경로가 달라도 ΔH 의 합은 같아요</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="tablist" aria-label="화면 고르기">
+            <button type="button" data-mode="path" data-feature="path">🪜 경로와 ΔH</button>
+            <button type="button" data-mode="rule" data-feature="rule">🔧 식 조작</button>
+            <button type="button" data-mode="co" data-feature="co">🧮 CO의 ΔH</button>
+            <button type="button" data-mode="puzzle" data-feature="puzzle">🧩 퍼즐 풀기</button>
+          </div>
+          <button class="icon-btn" id="resetBtn" type="button" title="이 화면 처음으로" aria-label="이 화면 처음으로">↺</button>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="엔탈피 도표의 계단과 두 경로, 반응식 뒤집기와 곱하기와 더하기 카드, 일산화 탄소 생성 반응의 ΔH 구하기, 반응식 퍼즐"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">—</span><span class="value txt" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">—</span><span class="value txt" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">—</span><span class="value txt" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <!-- ① 경로와 ΔH -->
+        <div class="control" data-show="path">
+          <div class="control-head"><span>🏔️ 보기</span></div>
+          <div class="chips" id="paChips" role="group" aria-label="보기 고르기"></div>
+          <div class="btn-row"><button class="btn btn-primary" id="bDirect" type="button">▶ 직접 내려가기</button><button class="btn btn-primary" id="bVia" type="button">▶ 거쳐 내려가기</button></div>
+        </div>
+        <div class="control" data-show="path" id="paIn">
+          <div class="in-grid">
+            <span class="lab">① 직접 경로의 ΔH (kJ)</span><input class="num-in" id="pa1" type="text" inputmode="decimal" autocomplete="off" aria-label="직접 경로의 ΔH">
+            <span class="lab">② C → CO 단계의 ΔH (kJ)</span><input class="num-in" id="pa2" type="text" inputmode="decimal" autocomplete="off" aria-label="C에서 CO 단계의 ΔH">
+            <span class="lab">③ CO → CO₂ 단계의 ΔH (kJ)</span><input class="num-in" id="pa3" type="text" inputmode="decimal" autocomplete="off" aria-label="CO에서 CO2 단계의 ΔH">
+          </div>
+          <p class="ctrl-note">눈금(100 kJ 간격)을 읽어 눈금 사이도 어림해서 적어요(±20 kJ 이내). 부호도 함께 적어요. 두 경로를 모두 내려가 본 뒤 적어도 돼요.</p>
+        </div>
+        <!-- ② 식 조작 -->
+        <div class="control" data-show="rule">
+          <div class="segmented view-seg" id="ruSub" role="group" aria-label="화면 고르기"><button type="button" data-v="flip">🔄 뒤집기·곱하기</button><button type="button" data-v="add">➕ 더하기</button></div>
+        </div>
+        <div class="control" data-show="rule:flip">
+          <div class="control-head"><span>🃏 반응식 카드</span></div>
+          <div class="chips" id="ruCards" role="group" aria-label="반응식 카드"></div>
+          <div class="tog"><button class="btn" id="bFlip" type="button" aria-pressed="false">🔄 거꾸로 쓰기</button></div>
+          <div class="control-head" style="margin-top:10px"><span>✖️ 계수를 몇 배?</span></div>
+          <div class="chips" id="ruMul" role="group" aria-label="계수 곱하기"></div>
+        </div>
+        <div class="control" data-show="rule:add">
+          <div class="btn-row"><button class="btn btn-primary" id="bAdd" type="button">➕ 두 식 더하기</button><button class="btn" id="bAddReset" type="button">↺ 다시</button></div>
+          <p class="ctrl-note">두 식의 양쪽에 같은 물질이 있으면 소거돼요. ΔH 는 어떻게 될까요?</p>
+        </div>
+        <div class="control" data-show="rule">
+          <div class="control-head"><span>📏 규칙 완성하기</span></div>
+          <div id="ruleRows"></div>
+        </div>
+        <!-- ③ CO의 ΔH -->
+        <div class="control" data-show="co">
+          <div class="control-head"><span>🎯 구할 반응</span></div>
+          <div class="chips" id="coChips" role="group" aria-label="구할 반응"></div>
+        </div>
+        <div class="control" data-show="co">
+          <div class="control-head"><span>🔄 식을 거꾸로 쓸까요?</span></div>
+          <div id="coRows"></div>
+        </div>
+        <div class="control" data-show="co">
+          <div class="in-grid"><span class="lab">목표 반응의 ΔH (kJ)</span><input class="num-in" id="hco" type="text" inputmode="decimal" autocomplete="off" aria-label="목표 반응의 ΔH"></div>
+          <p class="ctrl-note">식을 알맞게 골라 목표 반응식이 되면 ΔH 를 더해서 적어요. 부호에 주의해요.</p>
+        </div>
+        <!-- ④ 퍼즐 -->
+        <div class="control" data-show="puzzle">
+          <div class="control-head"><span>🧩 퍼즐</span></div>
+          <div class="chips" id="pzChips" role="group" aria-label="퍼즐 고르기"></div>
+        </div>
+        <div class="control" data-show="puzzle">
+          <div class="control-head"><span>🔧 재료 식 다루기 (거꾸로 · 몇 배)</span></div>
+          <div id="pzRows"></div>
+        </div>
+        <div class="control" data-show="puzzle">
+          <div class="in-grid"><span class="lab">목표 반응의 ΔH (kJ)</span><input class="num-in" id="hpz" type="text" inputmode="decimal" autocomplete="off" aria-label="목표 반응의 ΔH"></div>
+          <p class="ctrl-note">0 은 그 식을 쓰지 않는다는 뜻이에요. 목표 반응식이 되면 ΔH 를 구해 적어요.</p>
+        </div>
+
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

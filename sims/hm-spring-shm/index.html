@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#f26b3a">
+  <title>용수철 진자와 단진동 | 고등 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌀</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+<style>
+    .stage-toolbar { min-height: 61px; }
+    .segmented button { min-height: 44px; }
+    .segmented button.on { background: var(--phy); color: #fff; }
+    #modeSeg { width: 100%; flex-wrap: wrap; }
+    #modeSeg button { flex: 1 1 auto; min-width: 0; padding-left: 8px; padding-right: 8px; font-size: 14.5px; }
+    #modeSeg button[hidden] { display: none !important; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard .btn-sm { min-height: 44px; }
+    #ctrlCard [hidden] { display: none !important; }
+    .ctrl-note { font-size: 14px; color: var(--muted); margin: 6px 0 0; line-height: 1.4; }
+    .btn-row { display: flex; gap: 8px; margin-top: 6px; }
+    .btn-row .btn { flex: 1; padding-left: 8px; padding-right: 8px; }
+    .seg-wrap { border-radius: 20px; display: flex; flex-wrap: wrap; width: 100%; }
+    .seg-wrap button { flex: 1 1 auto; min-width: 0; padding-left: 6px; padding-right: 6px; font-size: 14px; }
+    .range-row { display: flex; align-items: center; gap: 8px; }
+    .range-row input[type=range] { flex: 1; min-width: 0; height: 44px; }
+    .sel-in { width: 100%; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 8px; font: 800 14.5px var(--font); color: var(--ink); background: #fff; }
+    .sel-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .sel-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .num-in { width: 100%; min-width: 0; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 10px; font: 800 16px var(--font); color: var(--ink); background: #fff; }
+    .num-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .num-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .in-grid { display: grid; grid-template-columns: 96px 1fr; gap: 6px 8px; align-items: center; margin-top: 6px; }
+    .in-grid .lab { font-weight: 800; font-size: 14px; line-height: 1.25; }
+    .in-grid .sel-in { min-height: 44px; padding: 2px 6px; font-size: 14px; }
+    .sel-row { margin-top: 8px; }
+    .sel-row .q { font-weight: 800; font-size: 14px; margin-bottom: 3px; line-height: 1.25; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+    .chips button { min-height: 44px; padding: 6px 12px; border: 2px solid var(--line); background: #fff; border-radius: 999px; font-weight: 800; font-size: 14.5px; cursor: pointer; color: var(--ink); font-family: inherit; }
+    .chips button.on { border-color: var(--phy); background: color-mix(in srgb, var(--phy) 14%, white); color: #9a3412; }
+    @keyframes shakeX { 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+    .readout .value.txt { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .concept table.mini, table.mini { border-collapse: collapse; margin: 6px 0; font-size: 14px; width: 100%; }
+    .concept table.mini th, .concept table.mini td, table.mini th, table.mini td { border: 1px solid var(--line); padding: 4px 6px; text-align: center; }
+    .concept table.mini th, table.mini th { background: var(--surface-2); font-weight: 800; }
+    .stage-canvas .stage-hint { top: 10px; bottom: auto; }
+    @media (orientation: portrait) and (min-width: 600px) {
+      .side-col:has(> #ctrlCard[hidden]) > #game { grid-column: 1 / -1; }
+    }
+    @media (max-width: 599px) {
+      .readout .value.txt { font-size: 15px; }
+      .stage-toolbar { gap: 6px; padding: 8px; }
+      .stage-toolbar .spacer { display: none; }
+      #modeSeg button { font-size: 13.5px; padding-left: 6px; padding-right: 6px; }
+      .stage-hint { font-size: 13px; padding: 5px 12px; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="phy">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#hm">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">역학과 에너지 · Ⅲ. 탄성파와 소리</div>
+      <h1>용수철 진자와 단진동</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <div class="segmented" id="modeSeg" role="tablist" aria-label="화면 고르기">
+            <button type="button" data-mode="obs">🌀 진자 관찰</button>
+            <button type="button" data-mode="force">🧲 복원력</button>
+            <button type="button" data-mode="period">⏱️ 주기</button>
+            <button type="button" data-mode="energy">📊 에너지·위상</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="용수철 진자의 단진동을 탐구하는 화면. 용수철에 매달린 물체의 왕복 운동과 위치 시간 그래프를 보고, 복원력과 가속도의 관계, 주기를 정하는 요인, 위치와 속도와 가속도의 위상과 에너지를 알아봐요."></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">—</span><span class="value txt" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">—</span><span class="value txt" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">—</span><span class="value txt" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <!-- 진자 관찰 -->
+        <div class="control" data-modes="obs">
+          <div class="control-head"><span>🧭 용수철을 놓는 방향</span></div>
+          <div class="segmented seg-wrap" id="oriSeg" role="group" aria-label="용수철 진자의 방향">
+            <button type="button" data-o="h">↔ 수평 (마찰 없는 트랙)</button><button type="button" data-o="v">↕ 수직 (매달기)</button></div>
+          <div class="control-head" style="margin-top:8px"><label for="sA1">📏 진폭 A</label><output id="oA1">0.10 m</output></div>
+          <div class="range-row"><input type="range" id="sA1" min="2" max="12" step="1" value="10" aria-label="진폭 (0.02미터부터 0.12미터까지)"></div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bRel" type="button">↺ 다시 놓기</button><button class="btn btn-sm" id="bSw" type="button">⏱ 10번 왕복 재기</button></div>
+          <div class="btn-row"><button class="btn btn-sm slow-btn" type="button">🐢 느리게 보기</button></div>
+          <p class="ctrl-note" id="nObs"></p>
+        </div>
+        <div class="control" data-modes="obs" data-calc="read">
+          <div class="control-head"><span>📝 그래프에서 읽기</span></div>
+          <div class="in-grid">
+            <span class="lab">주기 T (s)</span><input class="num-in" id="iT1" type="number" inputmode="decimal" step="any" aria-label="그래프에서 읽은 주기 (초)">
+            <span class="lab">진폭 A (m)</span><input class="num-in" id="iA1" type="number" inputmode="decimal" step="any" aria-label="그래프에서 읽은 진폭 (미터)">
+          </div>
+        </div>
+        <!-- 복원력 -->
+        <div class="control" data-modes="force">
+          <div class="control-head"><span>🧲 물체 다루기</span></div>
+          <div class="segmented seg-wrap" id="fMode" role="group" aria-label="물체 다루는 방법">
+            <button type="button" data-f="hold">✋ 위치 정하기</button><button type="button" data-f="go">🌀 진동 보기</button></div>
+          <div class="control-head" style="margin-top:8px"><label for="sX">↔ 변위 x</label><output id="oX">+0.10 m</output></div>
+          <div class="range-row"><input type="range" id="sX" min="-12" max="12" step="1" value="10" aria-label="평형점에서의 변위 (미터)"></div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bRec" type="button">📍 a 기록하기</button><button class="btn btn-sm" id="bRecR" type="button">🗑 지우기</button></div>
+          <div class="btn-row"><button class="btn btn-sm slow-btn" type="button">🐢 느리게 보기</button></div>
+          <p class="ctrl-note" id="nFo"></p>
+        </div>
+        <div class="control" data-modes="force" data-calc="slope">
+          <div class="control-head"><span>📝 직선의 기울기와 k</span></div>
+          <div class="in-grid">
+            <span class="lab">기울기 (s⁻²)</span><input class="num-in" id="iSl" type="number" inputmode="decimal" step="any" aria-label="a–x 그래프의 기울기 (초의 마이너스 제곱)">
+            <span class="lab">k (N/m)</span><input class="num-in" id="iKk" type="number" inputmode="decimal" step="any" aria-label="용수철 상수 (뉴턴 매 미터)">
+          </div>
+        </div>
+        <!-- 주기 -->
+        <div class="control" data-modes="period">
+          <div class="control-head"><span>🧭 환경</span></div>
+          <div class="segmented seg-wrap" id="envSeg" role="group" aria-label="실험 환경">
+            <button type="button" data-e="h">↔ 수평</button><button type="button" data-e="e">↕ 지구</button><button type="button" data-e="m">🌙 달</button></div>
+          <div class="control-head" style="margin-top:8px"><label for="sM">⚖️ 질량 m</label><output id="oM">0.50 kg</output></div>
+          <div class="range-row"><input type="range" id="sM" min="1" max="16" step="1" value="4" aria-label="질량 (0.125킬로그램부터 2킬로그램까지)"></div>
+          <div class="control-head"><label for="sK">🔩 용수철 상수 k</label><output id="oK">50 N/m</output></div>
+          <div class="range-row"><input type="range" id="sK" min="1" max="8" step="1" value="2" aria-label="용수철 상수 (25뉴턴 매 미터부터 200뉴턴 매 미터까지)"></div>
+          <div class="control-head"><label for="sA3">📏 진폭 A</label><output id="oA3">0.10 m</output></div>
+          <div class="range-row"><input type="range" id="sA3" min="2" max="12" step="1" value="10" aria-label="진폭 (0.02미터부터 0.12미터까지)"></div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bRec3" type="button">📍 주기 기록하기</button><button class="btn btn-sm" id="bClr3" type="button">🗑 표 지우기</button></div>
+        </div>
+        <div class="control" data-modes="period" data-calc="pred">
+          <div class="control-head"><span>📝 m = 2.0 kg일 때 주기 예측</span></div>
+          <input class="num-in" id="iPr" type="number" inputmode="decimal" step="any" aria-label="질량 2킬로그램, 용수철 상수 50뉴턴 매 미터일 때 예측한 주기 (초)">
+          <p class="ctrl-note">k = 50 N/m, 지구 수평 트랙이에요. 실험하지 않고 예측해 보세요.</p>
+        </div>
+        <!-- 에너지·위상 -->
+        <div class="control" data-modes="energy">
+          <div class="control-head"><span>📊 운동 보기</span></div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bGo4" type="button">▶ 진동시키기</button><button class="btn btn-sm" id="bX06" type="button">📏 x = 0.06 m에서 멈추기</button></div>
+          <div class="btn-row"><button class="btn btn-sm slow-btn" type="button">🐢 느리게 보기</button></div>
+          <p class="ctrl-note" id="nEn"></p>
+        </div>
+        <div class="control" data-modes="energy" data-calc="lab">
+          <div class="control-head"><span>🏷️ 그래프 이름 붙이기</span></div>
+          <div class="in-grid" id="labGrid"></div>
+        </div>
+        <div class="control" data-modes="energy" data-calc="en">
+          <div class="control-head"><span>📝 x = 0.06 m에서의 에너지 (J)</span></div>
+          <div class="in-grid">
+            <span class="lab">탄성 위치 E_p</span><input class="num-in" id="iEp" type="number" inputmode="decimal" step="any" aria-label="탄성 위치 에너지 (줄)">
+            <span class="lab">운동 E_k</span><input class="num-in" id="iEk" type="number" inputmode="decimal" step="any" aria-label="운동 에너지 (줄)">
+          </div>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>
