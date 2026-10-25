@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#f26b3a">
+  <title>열기관의 순환 | 고등 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚙️</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+<style>
+    .stage-toolbar { min-height: 61px; }
+    .segmented button { min-height: 44px; }
+    .segmented button.on { background: var(--phy); color: #fff; }
+    #modeSeg { width: 100%; flex-wrap: wrap; }
+    #modeSeg button { flex: 1 1 auto; min-width: 0; padding-left: 8px; padding-right: 8px; font-size: 14.5px; }
+    #modeSeg button[hidden] { display: none !important; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard .btn-sm { min-height: 44px; }
+    #ctrlCard [hidden] { display: none !important; }
+    .ctrl-note { font-size: 14px; color: var(--muted); margin: 6px 0 0; line-height: 1.4; }
+    .btn-row { display: flex; gap: 8px; margin-top: 6px; }
+    .btn-row .btn { flex: 1; padding-left: 8px; padding-right: 8px; }
+    .seg-wrap { border-radius: 20px; display: flex; flex-wrap: wrap; width: 100%; }
+    .seg-wrap button { flex: 1 1 auto; min-width: 0; padding-left: 6px; padding-right: 6px; font-size: 14px; }
+    .range-row { display: flex; align-items: center; gap: 8px; }
+    .range-row input[type=range] { flex: 1; min-width: 0; height: 44px; }
+    .sel-in { width: 100%; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 8px; font: 800 14.5px var(--font); color: var(--ink); background: #fff; }
+    .sel-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .sel-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .num-in { width: 100%; min-width: 0; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 10px; font: 800 16px var(--font); color: var(--ink); background: #fff; }
+    .num-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .num-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .in-grid { display: grid; grid-template-columns: 74px 1fr; gap: 6px 8px; align-items: center; margin-top: 6px; }
+    .in-grid .lab { font-weight: 800; font-size: 14px; line-height: 1.25; }
+    .in-grid .sel-in { min-height: 44px; padding: 2px 6px; font-size: 14px; }
+    .sel-row { margin-top: 8px; }
+    .sel-row .q { font-weight: 800; font-size: 14px; margin-bottom: 3px; line-height: 1.25; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+    .chips button { min-height: 44px; padding: 6px 12px; border: 2px solid var(--line); background: #fff; border-radius: 999px; font-weight: 800; font-size: 14.5px; cursor: pointer; color: var(--ink); font-family: inherit; }
+    .chips button.on { border-color: var(--phy); background: color-mix(in srgb, var(--phy) 14%, white); color: #9a3412; }
+    @keyframes shakeX { 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+    .readout .value.txt { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .concept table.mini, table.mini { border-collapse: collapse; margin: 6px 0; font-size: 14px; width: 100%; }
+    .concept table.mini th, .concept table.mini td, table.mini th, table.mini td { border: 1px solid var(--line); padding: 4px 6px; text-align: center; }
+    .concept table.mini th, table.mini th { background: var(--surface-2); font-weight: 800; }
+    .stage-canvas .stage-hint { top: 10px; bottom: auto; }
+    @media (orientation: portrait) and (min-width: 600px) {
+      .side-col:has(> #ctrlCard[hidden]) > #game { grid-column: 1 / -1; }
+    }
+    @media (max-width: 599px) {
+      .readout .value.txt { font-size: 15px; }
+      .stage-toolbar { gap: 6px; padding: 8px; }
+      .stage-toolbar .spacer { display: none; }
+      #modeSeg button { font-size: 13.5px; padding-left: 6px; padding-right: 6px; }
+      .stage-hint { font-size: 13px; padding: 5px 12px; }
+    }
+  </style>
+</head>
+<body class="sim-page" data-subject="phy">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#hm">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">역학과 에너지 · Ⅱ. 열과 에너지</div>
+      <h1>열기관의 순환</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <div class="segmented" id="modeSeg" role="tablist" aria-label="화면 고르기">
+            <button type="button" data-mode="engine">⚙️ 순환 과정</button>
+            <button type="button" data-mode="energy">⚖️ 열과 일</button>
+            <button type="button" data-mode="history">📈 효율 높이기</button>
+            <button type="button" data-mode="impact">🌍 영향 평가</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="열기관의 순환 과정을 탐구하는 화면. 엔진의 피스톤 운동과 P–V 그래프의 닫힌 경로를 함께 보고, 경로로 둘러싸인 넓이로 일과 열효율을 읽고, 열기관의 역사와 효율을 비교하고, 산업과 환경에 준 영향을 평가해요."></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">—</span><span class="value txt" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">—</span><span class="value txt" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">—</span><span class="value txt" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <!-- 순환 과정 -->
+        <div class="control" data-modes="engine">
+          <div class="control-head"><span>⚙️ 엔진 돌리기</span></div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bRun" type="button">▶ 계속 돌리기</button><button class="btn btn-sm" id="bStep" type="button">⏭ 구간 하나씩</button></div>
+          <div class="btn-row"><button class="btn btn-sm" id="bOnce" type="button">1️⃣ 한 번만 팽창</button><button class="btn btn-sm" id="bCyR" type="button">↺ 처음으로</button></div>
+          <p class="ctrl-note" id="nCy">엔진을 돌려 피스톤과 P–V 그래프의 점이 함께 움직이는 모습을 보세요.</p>
+        </div>
+        <div class="control" data-modes="engine" data-calc="seg">
+          <div class="control-head"><span>🏷️ 구간 이름 붙이기</span></div>
+          <div class="in-grid" id="segGrid"></div>
+        </div>
+        <div class="control" data-modes="engine" data-calc="dir">
+          <div class="control-head"><span>🧭 순환 방향 확인</span></div>
+          <div class="sel-row"><div class="q">A→B→C→D→A로 한 바퀴 도는 방향은?</div>
+            <select class="sel-in" id="sDir" aria-label="순환 방향"><option value="">고르세요</option><option value="cw">시계 방향</option><option value="ccw">반시계 방향</option></select></div>
+          <div class="sel-row"><div class="q">이 방향으로 도는 순환은?</div>
+            <select class="sel-in" id="sKind" aria-label="순환의 종류"><option value="">고르세요</option><option value="eng">열기관 (일을 밖으로 내보내요)</option><option value="fri">냉장고 (일을 받아 열을 퍼내요)</option></select></div>
+        </div>
+        <!-- 열과 일 -->
+        <div class="control" data-modes="energy">
+          <div class="control-head"><span>🧭 순환 방향</span></div>
+          <div class="segmented seg-wrap" id="dirSeg" role="group" aria-label="순환 방향 고르기">
+            <button type="button" data-d="cw">🔃 시계 방향</button><button type="button" data-d="ccw">🔄 반시계 방향</button></div>
+          <div class="btn-row"><button class="btn btn-sm" id="bGrid" type="button">🔢 칸 세기 켜기</button></div>
+          <p class="ctrl-note" id="nEn"></p>
+        </div>
+        <div class="control" data-modes="energy" data-calc="w">
+          <div class="control-head"><span>📝 알짜 일 W (J)</span></div>
+          <input class="num-in" id="iW" type="number" inputmode="decimal" step="any" aria-label="순환 경로로 둘러싸인 넓이가 나타내는 알짜 일 (줄)">
+        </div>
+        <div class="control" data-modes="energy" data-calc="e">
+          <div class="control-head"><span>📝 열효율 e (%)</span></div>
+          <input class="num-in" id="iE" type="number" inputmode="decimal" step="any" aria-label="열효율 (퍼센트)">
+        </div>
+        <!-- 효율 높이기 -->
+        <div class="control" data-modes="history">
+          <div class="control-head"><span>🔢 기관 순서 정하기</span></div>
+          <div class="btn-row"><button class="btn btn-sm" id="bOrdR" type="button">↺ 순서 다시 하기</button></div>
+          <p class="ctrl-note" id="nHi">나온 순서대로 기관을 눌러 보세요.</p>
+        </div>
+        <div class="control" data-modes="history" data-calc="match">
+          <div class="control-head"><span>🔧 방법은 어디에 효과가 있을까?</span></div>
+          <div class="in-grid" id="matchGrid" style="grid-template-columns: 1fr"></div>
+        </div>
+        <!-- 영향 평가 -->
+        <div class="control" data-modes="impact">
+          <div class="control-head"><label for="sWt">⚖️ 우리 모둠의 평가 기준</label><output id="oWt">산업 50 : 환경 50</output></div>
+          <div class="range-row"><input type="range" id="sWt" min="0" max="100" step="10" value="50" aria-label="산업발전과 환경 중 무엇을 더 중요하게 볼까 (환경 가중치 퍼센트)"></div>
+          <p class="ctrl-note" id="nIm">카드를 눌러 산업발전/환경, 긍정/부정으로 분류해요.</p>
+        </div>
+        <div class="control" data-modes="impact" data-calc="src">
+          <div class="control-head"><span>🔌 발전 방식 고르기</span></div>
+          <div class="chips" id="srcChips"></div>
+          <div class="sel-row"><div class="q">이유는?</div>
+            <select class="sel-in" id="sRs" aria-label="발전 방식을 고른 이유"><option value="">이유를 고르세요</option>
+              <option value="a">효율이 높아 같은 전기에 연료와 CO₂가 적어요</option>
+              <option value="b">연소 과정이 없어 발전할 때 CO₂를 내지 않아요</option>
+              <option value="c">연료가 싸고 지금도 가장 많이 써서 좋아요</option></select></div>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

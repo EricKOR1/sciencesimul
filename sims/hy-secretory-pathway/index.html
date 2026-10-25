@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#16a34a">
+  <title>단백질의 합성과 분비 | 고등 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📦</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; }
+    .stage-toolbar { min-height: 58px; }
+    .stage-toolbar .segmented { flex-wrap: wrap; }
+    .stage-toolbar .segmented button { min-height: 40px; padding: 5px 10px; font-size: 14px; white-space: nowrap; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard [hidden] { display: none !important; }
+    .btn-sm { min-height: 44px; }
+    .btn-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+    .btn-row .btn { flex: 1; padding-left: 8px; padding-right: 8px; }
+    .ctrl-note { margin: 6px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    .ctrl-note b { color: var(--ink); }
+    .range-row { display: flex; align-items: center; gap: 8px; }
+    .range-row input[type=range] { flex: 1; min-width: 0; height: 44px; }
+    .seg-full { display: flex; width: 100%; }
+    .seg-full button { flex: 1 1 0; min-width: 0; min-height: 44px; font-size: 14.5px; }
+    .chip-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px; }
+    .chip-grid.three { grid-template-columns: 1fr 1fr 1fr; }
+    .chip-grid button { min-height: 44px; padding: 6px 8px; border: 2px solid var(--line); background: #fff; border-radius: 12px; font-weight: 800; font-size: 14px; cursor: pointer; color: var(--ink); text-align: center; }
+    .chip-grid button.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); }
+    .chip-grid button.seen:not(.on) { border-color: color-mix(in srgb, var(--subject) 45%, white); }
+    .chip-grid button:disabled { opacity: .45; cursor: not-allowed; }
+    .chip-grid button:active { transform: scale(.98); }
+    .sel-in { width: 100%; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 8px; font: 800 14px var(--font); color: var(--ink); background: #fff; }
+    .sel-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .sel-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .num-in { width: 100%; min-width: 0; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 8px; font: 800 16px ui-monospace, Menlo, Consolas, monospace; color: var(--ink); background: #fff; text-align: right; }
+    .num-in:focus { outline: none; border-color: var(--subject); }
+    .num-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .num-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .in-unit { font-size: 12.5px; color: var(--muted); font-weight: 700; }
+    .in-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 10px; align-items: end; margin-top: 8px; }
+    .in-row .lab { font-weight: 800; font-size: 13.5px; margin-bottom: 3px; line-height: 1.25; }
+    @keyframes shakeX { 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+    .readout .value { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .stage-canvas .stage-hint { top: 10px; bottom: auto; }
+    .pk-pool { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+    .pk-item { min-height: 44px; padding: 6px 12px; border: 2px solid var(--line); background: #fff; border-radius: 12px; font-weight: 800; font-size: 14px; cursor: pointer; color: var(--ink); }
+    .pk-item:disabled { opacity: .35; cursor: default; }
+    .pk-seq { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; min-height: 46px; border: 2px dashed var(--line); border-radius: 12px; padding: 6px; }
+    .pk-chip { min-height: 34px; padding: 3px 10px; border: 2px solid var(--subject); background: color-mix(in srgb, var(--subject) 12%, white); border-radius: 999px; font-weight: 800; font-size: 13.5px; cursor: pointer; color: var(--ink); }
+    .pk-chip b { color: var(--subject); margin-right: 2px; }
+    .pk-reset { margin-top: 8px; width: 100%; }
+    .tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; margin-top: 6px; }
+    .tbl th, .tbl td { border: 1px solid var(--line); padding: 4px 4px; text-align: center; }
+    .tbl th { background: var(--surface-2); font-weight: 800; }
+    .tbl td.rowh { font-weight: 800; text-align: left; background: var(--surface-2); }
+    .tbl select { width: 100%; min-height: 40px; border: 2px solid var(--line); border-radius: 8px; font: 800 13.5px var(--font); background: #fff; color: var(--ink); }
+    .tbl select.ok { border-color: var(--good); background: var(--good-soft); }
+    .tbl select.bad { border-color: var(--bad); background: var(--bad-soft); }
+    .check-list { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 4px; font-size: 13.5px; font-weight: 700; }
+    .check-list li { display: flex; gap: 6px; align-items: baseline; }
+    .check-list li.on { color: var(--good); }
+    .btn-col { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+    #modeSeg button.lv-off { display: none; }
+    @media (max-width: 1100px) and (orientation: landscape) { .toolbar-label { display: none; } }
+    @media (max-width: 599px) {
+      .readout .value { font-size: 15px; }
+      .stage-toolbar { gap: 6px; padding: 8px; }
+      .stage-toolbar .spacer, .toolbar-label { display: none; }
+      .stage-toolbar .segmented button { padding: 5px 8px; font-size: 13.5px; }
+      .stage-hint { font-size: 13px; padding: 5px 12px; }
+    }
+    .stage-toolbar .segmented button.lv-off { display: none; }
+    .tag-pill { display: inline-block; padding: 2px 9px; border-radius: 999px; font-weight: 800; font-size: 12.5px; background: color-mix(in srgb, var(--subject) 14%, white); color: var(--ink); }
+    .tbl-in { width: 100%; }
+
+    .chip-grid button { font-size: 13px; }
+    #stgSeg button { padding: 4px 2px; font-size: 12.5px; }
+  </style>
+</head>
+<body class="sim-page" data-subject="bio">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#hy">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">세포와 물질대사 · Ⅰ. 세포</div>
+      <h1>단백질의 합성과 분비</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">📦 분비</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="tablist" aria-label="화면 고르기">
+            <button type="button" data-mode="path" data-lv="0" data-feature="path">🛤 분비의 길</button>
+            <button type="button" data-mode="order" data-lv="0" data-feature="order">🔢 순서 맞추기</button>
+            <button type="button" data-mode="rad" data-lv="1" data-feature="rad">☢ 자기방사법</button>
+            <button type="button" data-mode="predict" data-lv="2" data-feature="predict">🎯 예측하기</button>
+            <button type="button" data-mode="defect" data-lv="2" data-feature="defect">🔧 고장 실험</button>
+            <button type="button" data-mode="relay" data-lv="2" data-feature="relay">🏃 릴레이 카드</button>
+            <button type="button" data-mode="profile" data-lv="3" data-feature="profile">📊 세포의 특징</button>
+
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="이자 세포 단면에서 단백질이 핵, 소포체, 골지체, 분비 소낭을 거쳐 세포 밖으로 나가는 길, 자기방사법 결과, 소기관 고장 실험, 세포 비교"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">—</span><span class="value" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">—</span><span class="value" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">—</span><span class="value" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" data-modes="path">
+          <div class="control-head"><span>🛤 단백질이 가는 길</span></div>
+          <div class="chip-grid" id="stgSeg" style="grid-template-columns:1fr 1fr 1fr 1fr"><button type="button" data-v="0">① DNA</button><button type="button" data-v="1">② mRNA</button><button type="button" data-v="2">③ 리보솜</button><button type="button" data-v="3">④ 소포체</button><button type="button" data-v="4">⑤ 소낭</button><button type="button" data-v="5">⑥ 골지체</button><button type="button" data-v="6">⑦ 분비 소낭</button><button type="button" data-v="7">⑧ 세포 밖</button></div>
+          <div class="btn-row"><button class="btn btn-sm" id="stgPrev" type="button">◀ 이전</button><button class="btn btn-sm" id="stgNext" type="button">다음 ▶</button></div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="stgSend" type="button">🚀 한 번에 보내기</button><button class="btn btn-sm" id="stgReset" type="button">↺ 처음으로</button></div>
+          <p class="ctrl-note" id="stgNote"></p>
+        </div>
+        <div class="control" data-modes="order">
+          <div class="control-head"><span>🔢 분비 순서 맞추기</span></div>
+          <p class="ctrl-note">단계 설명을 <b>순서대로</b> 눌러요. 잘못 놓은 칸은 다시 눌러 빼요.</p>
+          <div class="pk-pool" id="ordPool"></div>
+          <div class="pk-seq" id="ordSeq"></div>
+          <button class="btn btn-sm pk-reset" id="ordReset" type="button">↺ 다시 놓기</button>
+        </div>
+        <div class="control" data-modes="rad">
+          <div class="control-head"><span>⏱ 관찰 시각 (³H 아미노산 공급 후)</span></div>
+          <div class="chip-grid" id="timeSeg" style="grid-template-columns:1fr 1fr 1fr 1fr"><button type="button" data-v="3">3분</button><button type="button" data-v="20">20분</button><button type="button" data-v="40">40분</button><button type="button" data-v="120">120분</button></div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="radPlay" type="button">▶ 자동 재생</button></div>
+          <div class="control-head" style="margin-top:10px"><span>📝 은 알갱이가 가장 많은 곳</span></div>
+          <table class="tbl"><tbody><tr><td class="rowh">3분</td><td><select id="rd0" aria-label="3분 에서 가장 많은 곳"><option value="">고르기</option><option value="rer">거친 소포체</option><option value="gol">골지체</option><option value="ves">분비 소낭</option><option value="out">세포 밖</option></select></td></tr><tr><td class="rowh">20분</td><td><select id="rd1" aria-label="20분 에서 가장 많은 곳"><option value="">고르기</option><option value="rer">거친 소포체</option><option value="gol">골지체</option><option value="ves">분비 소낭</option><option value="out">세포 밖</option></select></td></tr><tr><td class="rowh">40분</td><td><select id="rd2" aria-label="40분 에서 가장 많은 곳"><option value="">고르기</option><option value="rer">거친 소포체</option><option value="gol">골지체</option><option value="ves">분비 소낭</option><option value="out">세포 밖</option></select></td></tr><tr><td class="rowh">120분</td><td><select id="rd3" aria-label="120분 에서 가장 많은 곳"><option value="">고르기</option><option value="rer">거친 소포체</option><option value="gol">골지체</option><option value="ves">분비 소낭</option><option value="out">세포 밖</option></select></td></tr></tbody></table>
+          <p class="ctrl-note" id="radNote"></p>
+        </div>
+        <div class="control" data-modes="predict">
+          <div class="control-head"><span>🎯 이렇게 되면 단백질은 어디에 쌓일까?</span></div>
+          <table class="tbl"><tbody><tr><td class="rowh">미토콘드리아 억제</td><td><select id="pr0" aria-label="미토콘드리아 억제"><option value="">고르기</option><option value="er">소포체</option><option value="tv">소포체와 골지체 사이(수송 소낭)</option><option value="slow">어디에도 안 쌓이고 전체가 느려짐</option><option value="less">쌓이지 않고 만들어지는 양이 줄어듦</option></select></td></tr><tr><td class="rowh">소포체 이동 차단</td><td><select id="pr1" aria-label="소포체 이동 차단"><option value="">고르기</option><option value="er">소포체</option><option value="tv">소포체와 골지체 사이(수송 소낭)</option><option value="slow">어디에도 안 쌓이고 전체가 느려짐</option><option value="less">쌓이지 않고 만들어지는 양이 줄어듦</option></select></td></tr><tr><td class="rowh">골지체 기능 정지</td><td><select id="pr2" aria-label="골지체 기능 정지"><option value="">고르기</option><option value="er">소포체</option><option value="tv">소포체와 골지체 사이(수송 소낭)</option><option value="slow">어디에도 안 쌓이고 전체가 느려짐</option><option value="less">쌓이지 않고 만들어지는 양이 줄어듦</option></select></td></tr><tr><td class="rowh">핵 기능 정지</td><td><select id="pr3" aria-label="핵 기능 정지"><option value="">고르기</option><option value="er">소포체</option><option value="tv">소포체와 골지체 사이(수송 소낭)</option><option value="slow">어디에도 안 쌓이고 전체가 느려짐</option><option value="less">쌓이지 않고 만들어지는 양이 줄어듦</option></select></td></tr></tbody></table>
+          <p class="ctrl-note" id="prNote"></p>
+        </div>
+        <div class="control" data-modes="defect">
+          <div class="control-head"><span>🔧 고장 낼 소기관</span></div>
+          <div class="chip-grid" id="dfSeg"><button type="button" data-v="none">정상</button><button type="button" data-v="mito">🔋 미토콘드리아 억제</button><button type="button" data-v="er">🚧 소포체 이동 차단</button><button type="button" data-v="gol">⛔ 골지체 기능 정지</button><button type="button" data-v="nuc">🧬 핵 기능 정지</button></div>
+          <div class="btn-row"><button class="btn btn-sm" id="dfReset" type="button">↺ 다시 시작</button></div>
+          <p class="ctrl-note" id="dfNote"></p>
+        </div>
+        <div class="control" data-modes="relay">
+          <div class="control-head"><span>🏃 릴레이 카드 순서</span></div>
+          <p class="ctrl-note">카드를 <b>끌어서(또는 눌러서)</b> 1번 주자부터 5번 주자까지 놓고, 에너지를 대는 소기관도 골라요. 다 놓으면 <b>✔ 확인하기</b>!</p>
+          <div class="btn-row"><button class="btn btn-sm" id="rlReset" type="button">↺ 카드 모으기</button></div>
+        </div>
+        <div class="control" data-modes="profile">
+          <div class="control-head"><span>📊 세포의 특징 분류</span></div>
+          <p class="ctrl-note">세포 카드를 <b>끌어서(또는 눌러서)</b> 그 세포에서 가장 발달한 소기관 상자에 넣고 <b>✔ 확인하기</b>를 눌러요.</p>
+          <div class="btn-row"><button class="btn btn-sm" id="pfReset" type="button">↺ 카드 모으기</button></div>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>
