@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#f26b3a">
+  <title>회절과 홀로그램 | 고등 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔦</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; }
+    .stage-toolbar { min-height: 61px; }
+    .segmented button { min-height: 44px; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 14px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard .btn-sm { min-height: 44px; }
+    #ctrlCard [hidden] { display: none !important; }
+    .ctrl-note { font-size: 14px; color: var(--muted); margin: 6px 0 0; }
+    .btn-row { display: flex; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
+    .btn-row .btn { flex: 1; padding-left: 8px; padding-right: 8px; }
+    .view-seg { display: flex; width: 100%; }
+    .view-seg button { flex: 1 1 0; min-width: 0; padding-left: 4px; padding-right: 4px; font-size: 14.5px; }
+    .range-row { display: flex; align-items: center; gap: 8px; }
+    .range-row input[type=range] { flex: 1; min-width: 0; height: 44px; }
+    .nudge { flex: none; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); font-weight: 900; font-size: 20px; line-height: 1; cursor: pointer; display: grid; place-items: center; color: var(--ink); }
+    .nudge:active { transform: scale(.94); background: var(--surface-2); }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+    .chips button { min-height: 44px; padding: 6px 12px; border: 2px solid var(--line); background: #fff; border-radius: 999px; font-weight: 800; font-size: 14.5px; cursor: pointer; color: var(--ink); }
+    .chips button.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); color: color-mix(in srgb, var(--subject) 70%, black); }
+    .chips button.done { border-color: var(--good); background: var(--good-soft); }
+    .chips button:disabled { opacity: .45; }
+    .sel-in { width: 100%; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 8px; font: 800 14.5px var(--font); color: var(--ink); background: #fff; }
+    .sel-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .sel-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .num-in { width: 100%; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 10px; font: 800 17px ui-monospace, Menlo, Consolas, monospace; color: var(--ink); background: #fff; }
+    .num-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .num-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .sel-row { margin-top: 8px; }
+    .sel-row .q { font-weight: 800; font-size: 14px; margin-bottom: 3px; line-height: 1.25; }
+    .sel-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    @keyframes shakeX { 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+    .readout .value.txt { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .concept table.mini { border-collapse: collapse; margin: 6px 0; font-size: 14px; width: 100%; }
+    .concept table.mini th, .concept table.mini td { border: 1px solid var(--line); padding: 4px 6px; text-align: center; }
+    .concept table.mini th { background: var(--surface-2); font-weight: 800; }
+    .stage-canvas .stage-hint { top: 10px; bottom: auto; }
+    @media (max-width: 1100px) and (orientation: landscape) { .toolbar-label { display: none; } }
+    @media (orientation: portrait) and (min-width: 600px) {
+      .side-col:has(> #ctrlCard[hidden]) > #game { grid-column: 1 / -1; }
+    }
+    @media (max-width: 599px) {
+      .readout .value.txt { font-size: 15px; }
+      .stage-toolbar { gap: 6px; padding: 8px; }
+      .stage-toolbar .spacer, .toolbar-label { display: none; }
+      .segmented button { padding-left: 10px; padding-right: 10px; font-size: 14px; }
+      .stage-hint { font-size: 13px; padding: 5px 12px; }
+    }
+  
+    .stage-toolbar .segmented { flex-wrap: wrap; }
+    .segmented button { white-space: nowrap; }
+    .seg-4 button { flex: 1 1 0; min-width: 0; padding-left: 6px; padding-right: 6px; font-size: 14px; }
+    .tray-note { font-weight: 800; }
+    .sub-hl { color: var(--subject); font-weight: 900; }
+    #lgSeg button, #lamSeg button { font-size: 13.5px; padding-left: 3px; padding-right: 3px; }
+  </style>
+</head>
+<body class="sim-page" data-subject="phy">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#hq">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">전자기와 양자 · Ⅱ. 빛과 정보 통신</div>
+      <h1>회절과 홀로그램</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🔦 회절과 홀로그램</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="tablist" aria-label="화면 고르기" data-feature="diff">
+            <button type="button" data-mode="diff" data-feature="diff">🌊 회절</button><button type="button" data-mode="res" data-feature="res">🔍 분해능</button><button type="button" data-mode="holo" data-feature="holo">🧪 홀로그램 기록</button><button type="button" data-mode="play" data-feature="play">🎞️ 재생과 활용</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="틈을 지나 퍼지는 물결과 레이저 회절 무늬, 두 점광원의 회절 원반과 분해능, 레이저 빛을 둘로 나눠 필름에 간섭무늬를 기록하는 광학대, 기준광으로 입체상을 재생하는 필름"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">-</span><span class="value txt" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">-</span><span class="value txt" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">-</span><span class="value txt" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" data-modes="diff">
+          <div class="segmented view-seg" id="dfSeg" role="group" aria-label="회절을 보는 장면 고르기"><button type="button" data-v="tank">🌊 물결 탱크</button><button type="button" data-v="laser">🔦 레이저</button><button type="button" data-v="door">🚪 소리와 빛</button></div>
+        </div>
+        <div class="control" data-modes="diff" data-sub="tank">
+          <div class="control-head"><label for="sA">↔️ 틈의 폭 a</label><output id="oA">8.0 cm</output></div>
+          <div class="range-row"><button class="nudge" type="button" data-for="sA" data-d="-1" aria-label="틈의 폭 (0.5부터 12 센티미터) 줄이기">−</button><input type="range" id="sA" min="5" max="120" step="5" value="80" aria-label="틈의 폭 (0.5부터 12 센티미터)"><button class="nudge" type="button" data-for="sA" data-d="1" aria-label="틈의 폭 (0.5부터 12 센티미터) 늘리기">+</button></div><p class="ctrl-note">틈을 좁혀 보세요. 점선은 직진할 때 물결이 닿는 범위예요.</p>
+        </div>
+        <div class="control" data-modes="diff" data-sub="tank">
+          <div class="control-head"><label for="sL">🌊 물결의 파장 λ</label><output id="oL">2.0 cm</output></div>
+          <div class="range-row"><button class="nudge" type="button" data-for="sL" data-d="-1" aria-label="물결의 파장 (1.5부터 4.0 센티미터) 줄이기">−</button><input type="range" id="sL" min="15" max="40" step="1" value="20" aria-label="물결의 파장 (1.5부터 4.0 센티미터)"><button class="nudge" type="button" data-for="sL" data-d="1" aria-label="물결의 파장 (1.5부터 4.0 센티미터) 늘리기">+</button></div>
+        </div>
+        <div class="control" data-modes="diff" data-sub="laser">
+          <div class="control-head"><span>🔦 틈의 폭 (레이저 633 nm)</span></div><div class="chips" id="slSeg" role="group" aria-label="틈의 폭 고르기"><button type="button" data-v="0.5">0.5 mm</button><button type="button" data-v="0.1">0.1 mm</button><button type="button" data-v="0.02">0.02 mm</button></div><p class="ctrl-note">스크린은 2 m 떨어져 있어요. 눈금은 mm예요.</p>
+        </div>
+        <div class="control" data-modes="diff" data-sub="door">
+          <div class="control-head"><span>🌐 어떤 파동?</span></div><div class="segmented view-seg" id="drSeg" role="group" aria-label="소리와 빛 고르기"><button type="button" data-v="sound">🔊 소리 (파장 약 0.5 m)</button><button type="button" data-v="light">💡 빛 (파장 약 500 nm)</button></div><p class="ctrl-note">문의 폭은 1 m예요. 모퉁이 너머의 귀(🎧)에 닿는지 보세요.</p>
+        </div>
+        <div class="control" data-modes="diff" data-match="selD">
+          <div class="control-head"><span>✍️ 문장 완성하기</span></div><div id="selD"></div>
+        </div>
+        <div class="control" data-modes="res">
+          <div class="control-head"><label for="sS">↔️ 두 점 사이의 간격</label><output id="oS">8.0</output></div>
+          <div class="range-row"><button class="nudge" type="button" data-for="sS" data-d="-1" aria-label="두 점광원 사이의 간격 (1.0부터 10.0 눈금) 줄이기">−</button><input type="range" id="sS" min="10" max="100" step="1" value="80" aria-label="두 점광원 사이의 간격 (1.0부터 10.0 눈금)"><button class="nudge" type="button" data-for="sS" data-d="1" aria-label="두 점광원 사이의 간격 (1.0부터 10.0 눈금) 늘리기">+</button></div>
+        </div>
+        <div class="control" data-modes="res">
+          <div class="control-head"><span>🔍 렌즈의 구경</span></div><div class="segmented view-seg" id="apSeg2" role="group" aria-label="렌즈 구경 고르기"><button type="button" data-v="small">작은 구경</button><button type="button" data-v="large">큰 구경</button></div>
+        </div>
+        <div class="control" data-modes="res">
+          <div class="control-head"><span>🎨 빛의 색</span></div><div class="segmented view-seg" id="colSeg" role="group" aria-label="빛의 색 고르기"><button type="button" data-v="650">🔴 빨강 650 nm</button><button type="button" data-v="450">🔵 파랑 450 nm</button></div>
+        </div>
+        <div class="control" data-modes="res" data-match="selR">
+          <div class="control-head"><span>✍️ 문장 완성하기</span></div><div id="selR"></div>
+        </div>
+        <div class="control" data-modes="holo">
+          <div class="control-head"><span>🔎 보고 싶은 장면</span></div><div class="segmented view-seg" id="hvSeg" role="group" aria-label="보고 싶은 장면 고르기"><button type="button" data-v="rec">🧪 홀로그램 기록</button><button type="button" data-v="photo">📷 사진과 비교</button></div>
+        </div>
+        <div class="control" data-modes="holo" data-match="rec">
+          <div class="control-head"><span>🧱 방진대 (진동 막이 책상)</span></div><div class="btn-row"><button class="btn btn-sm" id="bTable" type="button">방진대 끄기</button></div>
+        </div>
+        <div class="control" data-modes="holo" data-match="rec">
+          <div class="control-head"><label for="sV">〰️ 바닥 진동의 크기</label><output id="oV">0.00 λ</output></div>
+          <div class="range-row"><button class="nudge" type="button" data-for="sV" data-d="-1" aria-label="바닥 진동의 크기 (0부터 0.50 파장) 줄이기">−</button><input type="range" id="sV" min="0" max="50" step="1" value="0" aria-label="바닥 진동의 크기 (0부터 0.50 파장)"><button class="nudge" type="button" data-for="sV" data-d="1" aria-label="바닥 진동의 크기 (0부터 0.50 파장) 늘리기">+</button></div><p class="ctrl-note">부품은 아래 상자에서 광학대의 점선 자리로 끌어다 놓아요.</p>
+        </div>
+        <div class="control" data-modes="holo" data-match="selH">
+          <div class="control-head"><span>✍️ 문장 완성하기</span></div><div id="selH"></div>
+        </div>
+        <div class="control" data-modes="play">
+          <div class="control-head"><label for="sE">👁️ 눈의 위치 (위 ↔ 아래)</label><output id="oE">0</output></div>
+          <div class="range-row"><button class="nudge" type="button" data-for="sE" data-d="-1" aria-label="눈의 위치 (위 120부터 아래 120 눈금) 줄이기">−</button><input type="range" id="sE" min="-120" max="120" step="2" value="0" aria-label="눈의 위치 (위 120부터 아래 120 눈금)"><button class="nudge" type="button" data-for="sE" data-d="1" aria-label="눈의 위치 (위 120부터 아래 120 눈금) 늘리기">+</button></div>
+        </div>
+        <div class="control" data-modes="play">
+          <div class="control-head"><span>🎞️ 필름</span></div><div class="segmented view-seg" id="cutSeg" role="group" aria-label="필름 전체 또는 한 조각"><button type="button" data-v="full">🎞 필름 전체</button><button type="button" data-v="piece">✂ 한 조각만</button></div>
+        </div>
+        <div class="control" data-modes="play">
+          <div class="control-head"><span>🔦 기준광</span></div><div class="btn-row"><button class="btn btn-sm" id="bRef" type="button">기준광 끄기</button></div>
+        </div>
+        <div class="control" data-modes="play" data-match="selP">
+          <div class="control-head"><span>✍️ 연결해서 완성하기</span></div><div id="selP"></div>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

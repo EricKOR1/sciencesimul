@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#8b5cf6">
+  <title>엔트로피 | 고등 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎲</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; }
+    .stage-toolbar { min-height: 61px; }
+    .segmented button { min-height: 44px; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    #resetBtn { font-size: 20px; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 14px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard .btn-sm { min-height: 44px; }
+    #ctrlCard [hidden], .stage-toolbar [hidden] { display: none !important; }
+    .ctrl-note { font-size: 14px; color: var(--muted); margin: 6px 0 0; line-height: 1.4; }
+    .btn-row { display: flex; gap: 8px; margin-top: 6px; }
+    .btn-row .btn { flex: 1; min-width: 0; padding-left: 8px; padding-right: 8px; min-height: 46px; }
+    .view-seg { display: flex; width: 100%; }
+    .view-seg button { flex: 1 1 0; min-width: 0; padding-left: 4px; padding-right: 4px; font-size: 14.5px; }
+    .range-row { display: flex; align-items: center; gap: 8px; }
+    .range-row input[type=range] { flex: 1; min-width: 0; height: 44px; }
+    .nudge { flex: none; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); font-weight: 900; font-size: 16px; line-height: 1; cursor: pointer; display: grid; place-items: center; color: var(--ink); font-family: inherit; }
+    .nudge:active { transform: scale(.94); background: var(--surface-2); }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+    .chips button { min-height: 44px; padding: 6px 12px; border: 2px solid var(--line); background: #fff; border-radius: 999px; font-weight: 800; font-size: 14.5px; cursor: pointer; color: var(--ink); font-family: inherit; }
+    .chips button.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); color: color-mix(in srgb, var(--subject) 70%, black); }
+    .chips button.done { border-color: var(--good); background: var(--good-soft); }
+    .num-in { width: 100%; min-width: 0; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 10px; font: 800 16px var(--font); color: var(--ink); background: #fff; }
+    .num-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .num-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .in-grid { display: grid; grid-template-columns: 1fr 104px; gap: 6px 8px; align-items: center; margin-top: 6px; }
+    .in-grid .lab { font-weight: 800; font-size: 14px; line-height: 1.25; }
+    .in-grid .num-in { min-height: 42px; padding: 2px 8px; font-size: 15px; }
+    @keyframes shakeX { 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+    .readout .value.txt { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    sup, sub { font-size: .7em; line-height: 0; }
+    .stage-canvas .stage-hint { top: 10px; bottom: auto; white-space: normal; width: max-content; max-width: 92%; text-align: center; }
+    .tog { display: flex; gap: 8px; margin-top: 6px; }
+    .tog .btn { flex: 1; min-width: 0; min-height: 46px; padding: 4px 8px; }
+    .tog .btn[aria-pressed=true] { background: color-mix(in srgb, var(--subject) 16%, white); border-color: var(--subject); }
+    .qrow { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+    .qrow button { flex: 1 1 0; min-width: 44px; min-height: 44px; border: 2px solid var(--line); background: #fff; border-radius: 12px; font: 800 15px var(--font); cursor: pointer; color: var(--ink); }
+    .qrow button.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); }
+    .qrow button.ok { border-color: var(--good); background: var(--good-soft); }
+    .qrow button.no { border-color: var(--bad); background: var(--bad-soft); }
+    @media (max-width: 1100px) and (orientation: landscape) { .toolbar-label { display: none; } }
+    @media (max-width: 599px) {
+      .readout .value.txt { font-size: 15px; }
+      .stage-toolbar { gap: 6px; padding: 8px; }
+      .stage-toolbar .spacer, .toolbar-label { display: none; }
+      .segmented button { padding-left: 8px; padding-right: 8px; font-size: 14px; }
+      .stage-toolbar:has(> .segmented[hidden]) { display: none; }
+      .stage-hint { font-size: 13px; padding: 5px 12px; }
+    }
+  
+    .opt { display: block; width: 100%; text-align: left; min-height: 44px; padding: 8px 12px; margin-top: 6px; border: 2px solid var(--line); background: #fff; border-radius: 12px; font: 800 14px/1.35 var(--font); color: var(--ink); cursor: pointer; }
+    .opt.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); }
+    .opt.ok { border-color: var(--good); background: var(--good-soft); }
+    .opt.no { border-color: var(--bad); background: var(--bad-soft); }
+    .opt-note { font-size: 13px; color: var(--muted); margin: 8px 0 0; line-height: 1.4; }
+    .in5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-top: 6px; }
+    .in5 label { display: flex; flex-direction: column; gap: 4px; font-weight: 800; font-size: 13px; align-items: center; text-align: center; }
+    .in5 .num-in { text-align: center; padding: 4px 2px; }
+    .sentence { font-weight: 800; font-size: 15px; line-height: 1.5; margin: 0 0 4px; }
+  </style>
+</head>
+<body class="sim-page" data-subject="chem">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#hx">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">물질과 에너지 · Ⅲ. 화학 변화의 자발성</div>
+      <h1>엔트로피</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">👀 저절로 일어나는 일들을 관찰해요</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="tablist" aria-label="화면 고르기">
+            <button type="button" data-mode="obs" data-feature="obs">👀 저절로</button>
+            <button type="button" data-mode="model" data-feature="model">🎲 배열의 수</button>
+            <button type="button" data-mode="cond" data-feature="cond">🔬 증가 조건</button>
+            <button type="button" data-mode="pred" data-feature="pred">🎯 부호 예측</button>
+          </div>
+          <button class="icon-btn" id="resetBtn" type="button" title="이 화면 처음으로" aria-label="이 화면 처음으로">↺</button>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="잉크 확산, 기체 팽창, 어질러진 방, 열의 섞임 장면과 되감기, 두 칸 용기의 배열 수 히스토그램, 조건에 따른 입자 배열, 엔트로피 변화 부호 분류"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">—</span><span class="value txt" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">—</span><span class="value txt" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">—</span><span class="value txt" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" data-show="obs">
+          <div class="control-head"><span>🎬 장면 고르기</span></div>
+          <div class="chips" id="obChips" role="group" aria-label="장면 고르기"></div>
+          <div class="btn-row"><button class="btn btn-primary" id="bOb" type="button">▶ 재생</button><button class="btn" id="bObRev" type="button">⏪ 거꾸로 재생</button></div>
+        </div>
+        <div class="control" data-show="obs">
+          <div class="control-head"><span>🤔 거꾸로 된 영상이 실제로 일어날까요?</span></div>
+          <button class="opt" id="bObYes" type="button">저절로 일어나는 일이에요</button>
+          <button class="opt" id="bObNo" type="button">저절로는 일어나지 않아요</button>
+          <p class="opt-note" id="obNote"></p>
+        </div>
+        <div class="control" data-show="model" data-sub="trial">
+          <div class="control-head"><span>🎲 입자 수 N</span></div>
+          <div class="chips" id="nChips" role="group" aria-label="입자 수"></div>
+          <div class="btn-row"><button class="btn btn-primary" id="bTr1" type="button">🔁 한 번 섞기</button><button class="btn" id="bTr100" type="button">⏩ 100번 섞기</button></div>
+          <p class="ctrl-note" id="trNote"></p>
+        </div>
+        <div class="control" data-show="model" data-sub="count">
+          <div class="control-head"><span>🧮 N = 4 일 때 왼쪽 칸의 입자 수별 배열의 수</span></div>
+          <div class="in5" id="in5"></div>
+          <p class="ctrl-note">입자 A, B, C, D 가 왼쪽·오른쪽에 놓이는 서로 다른 경우를 세어요. 합이 전체 배열의 수예요.</p>
+        </div>
+        <div class="control" data-show="cond">
+          <div class="control-head"><span>🔬 조건 고르기</span></div>
+          <div class="chips" id="cdChips" role="group" aria-label="조건 고르기"></div>
+        </div>
+        <div class="control" data-show="cond">
+          <div class="control-head"><span id="cdSlideLab">변화</span></div>
+          <div class="range-row"><button class="nudge" id="cdMinus" type="button" aria-label="되돌리기">−</button><input type="range" id="cdSlide" min="0" max="100" step="1" value="0" aria-label="변화 정도"><button class="nudge" id="cdPlus" type="button" aria-label="진행하기">+</button></div>
+          <p class="ctrl-note" id="cdNote"></p>
+        </div>
+        <div class="control" data-show="pred">
+          <div class="control-head"><span>🎯 카드 분류</span></div>
+          <p class="ctrl-note" id="prSel">카드를 끌어서 놓거나, 카드를 누른 뒤 아래 버튼을 눌러요.</p>
+          <div class="btn-row"><button class="btn" id="bPlus" type="button">⬆ 엔트로피 증가 (ΔS &gt; 0)</button><button class="btn" id="bMinus" type="button">⬇ 감소 (ΔS &lt; 0)</button></div>
+          <p class="ctrl-note" id="prNote"></p>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

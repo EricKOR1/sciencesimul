@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#16a34a">
+  <title>세포막의 유동 모자이크 | 고등 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧈</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; }
+    .stage-toolbar { min-height: 58px; }
+    .stage-toolbar .segmented { flex-wrap: wrap; }
+    .stage-toolbar .segmented button { min-height: 40px; padding: 5px 10px; font-size: 14px; white-space: nowrap; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard [hidden] { display: none !important; }
+    .btn-sm { min-height: 44px; }
+    .btn-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+    .btn-row .btn { flex: 1; padding-left: 8px; padding-right: 8px; }
+    .ctrl-note { margin: 6px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    .ctrl-note b { color: var(--ink); }
+    .range-row { display: flex; align-items: center; gap: 8px; }
+    .range-row input[type=range] { flex: 1; min-width: 0; height: 44px; }
+    .seg-full { display: flex; width: 100%; }
+    .seg-full button { flex: 1 1 0; min-width: 0; min-height: 44px; font-size: 14.5px; }
+    .chip-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px; }
+    .chip-grid.three { grid-template-columns: 1fr 1fr 1fr; }
+    .chip-grid button { min-height: 44px; padding: 6px 8px; border: 2px solid var(--line); background: #fff; border-radius: 12px; font-weight: 800; font-size: 14px; cursor: pointer; color: var(--ink); text-align: center; }
+    .chip-grid button.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); }
+    .chip-grid button.seen:not(.on) { border-color: color-mix(in srgb, var(--subject) 45%, white); }
+    .chip-grid button:disabled { opacity: .45; cursor: not-allowed; }
+    .chip-grid button:active { transform: scale(.98); }
+    .sel-in { width: 100%; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 8px; font: 800 14px var(--font); color: var(--ink); background: #fff; }
+    .sel-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .sel-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .num-in { width: 100%; min-width: 0; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 8px; font: 800 16px ui-monospace, Menlo, Consolas, monospace; color: var(--ink); background: #fff; text-align: right; }
+    .num-in:focus { outline: none; border-color: var(--subject); }
+    .num-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .num-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .in-unit { font-size: 12.5px; color: var(--muted); font-weight: 700; }
+    .in-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 10px; align-items: end; margin-top: 8px; }
+    .in-row .lab { font-weight: 800; font-size: 13.5px; margin-bottom: 3px; line-height: 1.25; }
+    @keyframes shakeX { 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+    .readout .value { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .stage-canvas .stage-hint { top: 10px; bottom: auto; }
+    .pk-pool { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+    .pk-item { min-height: 44px; padding: 6px 12px; border: 2px solid var(--line); background: #fff; border-radius: 12px; font-weight: 800; font-size: 14px; cursor: pointer; color: var(--ink); }
+    .pk-item:disabled { opacity: .35; cursor: default; }
+    .pk-seq { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; min-height: 46px; border: 2px dashed var(--line); border-radius: 12px; padding: 6px; }
+    .pk-chip { min-height: 34px; padding: 3px 10px; border: 2px solid var(--subject); background: color-mix(in srgb, var(--subject) 12%, white); border-radius: 999px; font-weight: 800; font-size: 13.5px; cursor: pointer; color: var(--ink); }
+    .pk-chip b { color: var(--subject); margin-right: 2px; }
+    .pk-reset { margin-top: 8px; width: 100%; }
+    .tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; margin-top: 6px; }
+    .tbl th, .tbl td { border: 1px solid var(--line); padding: 4px 4px; text-align: center; }
+    .tbl th { background: var(--surface-2); font-weight: 800; }
+    .tbl td.rowh { font-weight: 800; text-align: left; background: var(--surface-2); }
+    .tbl select { width: 100%; min-height: 40px; border: 2px solid var(--line); border-radius: 8px; font: 800 13.5px var(--font); background: #fff; color: var(--ink); }
+    .tbl select.ok { border-color: var(--good); background: var(--good-soft); }
+    .tbl select.bad { border-color: var(--bad); background: var(--bad-soft); }
+    .check-list { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 4px; font-size: 13.5px; font-weight: 700; }
+    .check-list li { display: flex; gap: 6px; align-items: baseline; }
+    .check-list li.on { color: var(--good); }
+    .btn-col { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+    #modeSeg button.lv-off { display: none; }
+    @media (max-width: 1100px) and (orientation: landscape) { .toolbar-label { display: none; } }
+    @media (max-width: 599px) {
+      .readout .value { font-size: 15px; }
+      .stage-toolbar { gap: 6px; padding: 8px; }
+      .stage-toolbar .spacer, .toolbar-label { display: none; }
+      .stage-toolbar .segmented button { padding: 5px 8px; font-size: 13.5px; }
+      .stage-hint { font-size: 13px; padding: 5px 12px; }
+    }
+    .stage-toolbar .segmented button.lv-off { display: none; }
+    .tag-pill { display: inline-block; padding: 2px 9px; border-radius: 999px; font-weight: 800; font-size: 12.5px; background: color-mix(in srgb, var(--subject) 14%, white); color: var(--ink); }
+    .tbl-in { width: 100%; }
+    .stage-hint { white-space: normal; border-radius: 16px; text-align: center; line-height: 1.35; max-width: 94%; }
+
+  </style>
+</head>
+<body class="sim-page" data-subject="bio">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#hy">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">세포와 물질대사 · Ⅰ. 세포</div>
+      <h1>세포막의 유동 모자이크</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🧈 세포막</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="tablist" aria-label="화면 고르기">
+            <button type="button" data-mode="assem" data-lv="0" data-feature="assem">🧲 조립</button>
+            <button type="button" data-mode="flip" data-lv="0" data-feature="flip">🔀 이중층 배열</button>
+            <button type="button" data-mode="prot" data-lv="1" data-feature="prot">🧩 막 단백질</button>
+            <button type="button" data-mode="match" data-lv="1" data-feature="match">🗂 기능 연결</button>
+            <button type="button" data-mode="fluid" data-lv="2" data-feature="fluid">🌡 유동성</button>
+            <button type="button" data-mode="send" data-lv="3" data-feature="send">🧪 통과 시험</button>
+            <button type="button" data-mode="sortm" data-lv="3" data-feature="sortm">🗂 분류</button>
+
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="인지질 자기 조립과 이중층 배열, 막 단백질과 콜레스테롤, 형광 단백질의 유동성 실험, 분자 투과 시험과 분류"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">—</span><span class="value" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">—</span><span class="value" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">—</span><span class="value" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" data-modes="assem">
+          <div class="control-head"><span>🧲 인지질 자기 조립</span></div>
+          <p class="ctrl-note" id="asNote"></p>
+          <div class="btn-row"><button class="btn btn-sm" id="asScatter" type="button">💧 흩뿌리기</button><button class="btn btn-sm btn-primary" id="asNext" type="button">🧲 조립</button></div>
+        </div>
+        <div class="control" data-modes="flip">
+          <div class="control-head"><span>🔀 이중층 배열 시험</span></div>
+          <p class="ctrl-note" id="flNote"></p>
+          <div class="btn-row"><button class="btn btn-sm" id="flShuffle" type="button">🔀 다시 섞기</button></div>
+        </div>
+        <div class="control" data-modes="prot">
+          <div class="control-head"><span>🧩 막 단백질 · 콜레스테롤</span></div>
+          <div class="chip-grid" id="viewSel"><button type="button" data-v="0">단면 (옆)</button><button type="button" data-v="1">위에서 본 모양</button></div>
+          <p class="ctrl-note" id="prNote"></p>
+          <div class="btn-row"><button class="btn btn-sm" id="prChol" type="button">🧈 콜레스테롤 넣기</button><button class="btn btn-sm" id="prReset" type="button">↺ 모두 빼기</button></div>
+        </div>
+        <div class="control" data-modes="match">
+          <div class="control-head"><span>🗂 단백질 기능 연결</span></div>
+          <p class="ctrl-note">카드를 알맞은 기능 상자에 끌어 넣은 뒤 <b>✔ 확인하기</b>를 눌러요.</p>
+          <div class="btn-row"><button class="btn btn-sm" id="matchReset" type="button">↺ 카드 모으기</button></div>
+        </div>
+        <div class="control" data-modes="fluid">
+          <div class="control-head"><label for="sFT">🌡 온도</label><output id="oFT">37 °C</output></div>
+          <div class="range-row"><input type="range" id="sFT" min="1" max="37" step="1" value="37" aria-label="온도 (1에서 37도)"></div>
+          <div class="control-head" style="margin-top:6px"><label for="sFU">🧪 불포화 지방산 비율</label><output id="oFU">40 %</output></div>
+          <div class="range-row"><input type="range" id="sFU" min="0" max="100" step="10" value="40" aria-label="불포화 지방산 비율 (0에서 100퍼센트)"></div>
+          <div class="btn-row"><button class="btn btn-sm" id="fxChol" type="button">🧈 콜레스테롤 없음</button></div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="fxPlay" type="button">▶ 재생</button><button class="btn btn-sm" id="fxReset" type="button">↺ 처음부터</button></div>
+          <p class="ctrl-note">조건을 바꾸면 처음부터 다시 시작해요. 재생하면 1초에 약 2.5분씩 지나가요.</p>
+        </div>
+        <div class="control" data-modes="send">
+          <div class="control-head"><span>🧪 분자 고르기</span></div>
+          <div class="chip-grid three" id="molSel">
+            <button type="button" data-v="o2">O₂</button><button type="button" data-v="co2">CO₂</button><button type="button" data-v="eth">에탄올</button>
+            <button type="button" data-v="h2o">물</button><button type="button" data-v="glc">포도당</button><button type="button" data-v="aa">아미노산</button>
+            <button type="button" data-v="na">Na⁺</button><button type="button" data-v="k">K⁺</button><button type="button" data-v="pro">단백질</button>
+          </div>
+          <div class="chip-grid" id="pmSeg" style="margin-top:8px"><button type="button" data-v="0">이중층만</button><button type="button" data-v="1">막 단백질 있음</button></div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="pmSend" type="button">▶ 보내기</button></div>
+        </div>
+        <div class="control" data-modes="sortm">
+          <div class="control-head"><span>🗂 투과성 분류</span></div>
+          <p class="ctrl-note">분자 카드를 세 상자 중 하나에 끌어 넣은 뒤 <b>✔ 확인하기</b>를 눌러요. 물은 어느 쪽 상자도 괜찮아요(설명 참고).</p>
+          <div class="btn-row"><button class="btn btn-sm" id="sortmReset" type="button">↺ 카드 모으기</button></div>
+        </div>
+
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>
