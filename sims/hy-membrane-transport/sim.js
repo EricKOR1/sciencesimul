@@ -742,11 +742,11 @@
       D.label(P.x + P.w / 2, P.y + 24, side ? '능동 수송 (펌프)' : '촉진 확산 (운반체)', { bg: side ? '#0f766e' : '#0d9488', size: 14 });
       T(P.x + P.w - 12, P.y + P.h - 12, side ? 'ATP 필요: 낮은 → 높은 쪽' : '에너지 불필요: 높은 → 낮은 쪽', 12.5, '#475569', 'right', 800);
     });
-    if (Y.cn) { D.label(CYR.x + CYR.w / 2, CYR.y + 60, 'ATP가 없어 펌프가 멈췄어요', { bg: Y.atp < 0.1 ? '#dc2626' : '#f59e0b', size: 13.5 }); }
+    if (Y.cn) { const stopped = r.act === 0; D.label(CYR.x + CYR.w / 2, CYR.y + 60, stopped ? 'ATP가 없어 펌프가 멈췄어요' : 'ATP가 줄어 펌프가 느려져요', { bg: stopped ? '#dc2626' : '#f59e0b', size: 13.5 }); }
     // 아래 : 속도 막대와 ATP
     panel(CYB.x, CYB.y, CYB.w, CYB.h, 16, '#ffffff');
     const B = CYB, bx = B.x + 16, bw = B.w - 32;
-    const rowY = (i) => B.y + 12 + i * (PHONE ? 52 : 36);
+    const rowY = (i) => B.y + 12 + i * (PHONE ? 48 : 36);
     [['촉진 확산 속도', r.fac, '#0d9488'], ['능동 수송 속도', r.act, '#0f766e']].forEach((q, i) => {
       const y = rowY(i); T(bx, y + 14, q[0] + ': ' + q[1], 15, '#1f2d44', 'left', 800);
       D.roundRect(bx + (PHONE ? 0 : 190), y + (PHONE ? 22 : 0), bw - (PHONE ? 0 : 190), 18, 9); ctx.fillStyle = '#e5e7eb'; ctx.fill();
@@ -756,7 +756,7 @@
     T(bx, ay + 14, '세포호흡으로 만든 ATP: ' + Math.round(Y.atp * 100) + ' %', 15, Y.atp > 0.5 ? '#15803d' : '#b91c1c', 'left', 800);
     D.roundRect(bx + (PHONE ? 0 : 250), ay + (PHONE ? 22 : 0), bw - (PHONE ? 0 : 250), 18, 9); ctx.fillStyle = '#e5e7eb'; ctx.fill();
     if (Y.atp > 0.01) { D.roundRect(bx + (PHONE ? 0 : 250), ay + (PHONE ? 22 : 0), Math.max(18, (bw - (PHONE ? 0 : 250)) * Y.atp), 18, 9); ctx.fillStyle = Y.atp > 0.5 ? '#22c55e' : '#f59e0b'; ctx.fill(); }
-    textBlock(bx, B.y + B.h - (PHONE ? 50 : 30), bw, Y.cn ? (Y.atp < 0.1 ? '시안화물이 세포호흡을 막아 ATP가 사라졌어요. 능동 수송은 멈췄지만 촉진 확산은 그대로예요.' : '시안화물이 세포호흡을 막고 있어요. ATP가 줄어들고 있어요…') : '바깥 농도 ' + CONC[Y.ci] + ' 에서 두 수송의 속도가 같아요. [🧪 시안화물 넣기]를 눌러 비교해요.', L(14, 13), '#475569', L(19, 18), 800);
+    textBlock(bx, B.y + B.h - (PHONE ? 38 : 30), bw, Y.cn ? (Y.atp < 0.1 ? '시안화물이 세포호흡을 막아 ATP가 사라졌어요. 능동 수송은 멈췄지만 촉진 확산은 그대로예요.' : '시안화물이 세포호흡을 막고 있어요. ATP가 줄어들고 있어요…') : '바깥 농도 ' + CONC[Y.ci] + ' 에서 두 수송의 속도가 같아요. [🧪 시안화물 넣기]를 눌러 비교해요.', L(14, 13), '#475569', L(19, 18), 800);
   }
 
   /* ----- 뿌리털 이온 흡수 ----- */

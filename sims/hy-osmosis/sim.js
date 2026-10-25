@@ -265,11 +265,11 @@
     const P = UTP, aw = PHONE ? 100 : 110, x0 = P.x + (PHONE ? 40 : 70), x1 = P.x + P.w - (PHONE ? 40 : 70);
     return { x0, x1, cx: (x0 + x1) / 2, aw, top: P.y + (PHONE ? 62 : 64), yc: P.y + (PHONE ? 220 : 236), yb: P.y + (PHONE ? 340 : 366), base: P.y + (PHONE ? 140 : 150) };
   }
-  S.ut = { cL: 0.3, cR: 0, perm: false, d: 0, ps: [], seen: { left: false, right: false, same: false, perm: false }, same: 0, permT: 0, acc: 0, freeze: false, shake: 0 };
-  const utDStar = () => (S.ut.perm ? 0 : KDELTA * (S.ut.cL - S.ut.cR));
+  S.ut = { cL: 0.3, cR: 0, eL: 0.3, eR: 0, perm: false, d: 0, ps: [], seen: { left: false, right: false, same: false, perm: false }, same: 0, permT: 0, acc: 0, freeze: false, shake: 0 };
+  const utDStar = () => (S.ut.perm ? 0 : KDELTA * (S.ut.eL - S.ut.eR));
   const utB = () => (S.ut.freeze ? 0 : clamp((utDStar() - S.ut.d) / DMAX, -1, 1));
   const utDcm = () => Math.round(S.ut.d / CM * 10) / 10;
-  function utSolCount(side) { return Math.round((side < 0 ? S.ut.cL : S.ut.cR) * 40); }
+  function utSolCount(side) { return Math.round((side < 0 ? S.ut.eL : S.ut.eR) * 40); }
   function utSpawn(type, side, fade) {
     const g = utG(), rr = Math.random, sp = 40 + rr() * 40, a = rr() * TAU, xa = side < 0 ? g.x0 + 8 : g.cx + 8, xb = side < 0 ? g.cx - 8 : g.x1 - 8;
     return { type, side, x: xa + rr() * (xb - xa), y: g.yc + 10 + rr() * (g.yb - g.yc - 20), vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, a: fade ? 0 : 1, cd: 0 };
@@ -286,11 +286,12 @@
       else if (have.length > want) have[0].dying = true;
     });
   }
-  function utReset() { S.ut.d = 0; S.ut.same = 0; S.ut.permT = 0; utRebuild(); updateCtl(); }
+  function utReset() { S.ut.eL = S.ut.cL; S.ut.eR = S.ut.cR; S.ut.d = 0; S.ut.same = 0; S.ut.permT = 0; utRebuild(); updateCtl(); }
   function utUpdate(dt) {
     const U = S.ut, g = utG(), b = utB(), PB = 0.5, beta = 0.7;
     const prl = U.perm ? PB : clamp(PB * (1 + beta * b), 0.02, 0.95), plr = U.perm ? PB : clamp(PB * (1 - beta * b), 0.02, 0.95);
     U.prl = prl; U.plr = plr;
+    if (U.perm) { const m = (U.eL + U.eR) / 2; U.eL = approach(U.eL, m, dt, 0.45); U.eR = approach(U.eR, m, dt, 0.45); } else { U.eL = approach(U.eL, U.cL, dt, 4); U.eR = approach(U.eR, U.cR, dt, 4); }
     U.d = approach(U.d, utDStar() * (U.freeze ? 0 : 1), dt, U.freeze ? 99 : 0.7);
     utSync();
     U.ps.forEach((p) => {
@@ -323,7 +324,7 @@
     // 관찰 기록
     if (!U.perm) {
       if (U.d >= 20) U.seen.left = true; if (U.d <= -20) U.seen.right = true;
-      if (Math.abs(U.cL - U.cR) < 0.01 && U.cL > 0 && Math.abs(U.d) < 2) U.same += dt; else U.same = 0;
+      if (Math.abs(U.eL - U.eR) < 0.01 && U.eL > 0.005 && Math.abs(U.d) < 2) U.same += dt; else U.same = 0;
       if (U.same > 1.5) U.seen.same = true; U.permT = 0;
     } else { U.same = 0; if (Math.abs(U.cL - U.cR) >= 0.01 && Math.abs(U.d) < 2) U.permT += dt; else U.permT = 0; if (U.permT > 1.5) U.seen.perm = true; }
     U.shake = Math.max(0, U.shake - dt * 3);
@@ -339,13 +340,13 @@
     utPath(g); ctx.fillStyle = 'rgba(255,255,255,.75)'; ctx.fill();
     const yL = g.base - U.d / 2, yR = g.base + U.d / 2;
     ctx.save(); utPath(g); ctx.clip();
-    const lg = ctx.createLinearGradient(0, g.top, 0, g.yb), sc = C.mix('#fde68a', '#f59e0b', clamp(U.cL / 0.5, 0, 1) * 0.8);
-    lg.addColorStop(0, C.rgba(sc, U.cL > 0 ? 0.55 : 0.0)); lg.addColorStop(1, C.rgba(sc, U.cL > 0 ? 0.8 : 0.0));
-    ctx.fillStyle = U.cL > 0 ? lg : 'rgba(186,223,248,.75)'; ctx.fillRect(g.x0, yL, g.cx - g.x0, g.yb - yL);
+    const lg = ctx.createLinearGradient(0, g.top, 0, g.yb), sc = C.mix('#fde68a', '#f59e0b', clamp(U.eL / 0.5, 0, 1) * 0.8);
+    lg.addColorStop(0, C.rgba(sc, 0.55)); lg.addColorStop(1, C.rgba(sc, 0.8));
+    ctx.fillStyle = U.eL > 0.03 ? lg : 'rgba(186,223,248,.75)'; ctx.fillRect(g.x0, yL, g.cx - g.x0, g.yb - yL);
     if (U.cL > 0) { ctx.fillStyle = 'rgba(186,223,248,.0)'; }
-    const rg = ctx.createLinearGradient(0, g.top, 0, g.yb), sc2 = C.mix('#fde68a', '#f59e0b', clamp(U.cR / 0.5, 0, 1) * 0.8);
+    const rg = ctx.createLinearGradient(0, g.top, 0, g.yb), sc2 = C.mix('#fde68a', '#f59e0b', clamp(U.eR / 0.5, 0, 1) * 0.8);
     rg.addColorStop(0, C.rgba(sc2, 0.55)); rg.addColorStop(1, C.rgba(sc2, 0.8));
-    ctx.fillStyle = U.cR > 0 ? rg : 'rgba(186,223,248,.75)'; ctx.fillRect(g.cx, yR, g.x1 - g.cx, g.yb - yR);
+    ctx.fillStyle = U.eR > 0.03 ? rg : 'rgba(186,223,248,.75)'; ctx.fillRect(g.cx, yR, g.x1 - g.cx, g.yb - yR);
     // 물결
     ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.lineWidth = 2.4;
     [[g.x0, g.x0 + g.aw, yL], [g.x1 - g.aw, g.x1, yR]].forEach((s) => { ctx.beginPath(); for (let x = s[0]; x <= s[1]; x += 4) { const yy = s[2] + Math.sin(t * 2.4 + x * 0.12) * 1.6; if (x === s[0]) ctx.moveTo(x, yy); else ctx.lineTo(x, yy); } ctx.stroke(); });
@@ -362,15 +363,15 @@
     ctx.save(); ctx.strokeStyle = U.perm ? 'rgba(120,53,15,.55)' : '#78350f'; ctx.lineWidth = 5; ctx.setLineDash(U.perm ? [20, 22] : [6, 5]); ctx.beginPath(); ctx.moveTo(g.cx, g.yc - 4); ctx.lineTo(g.cx, g.yb); ctx.stroke(); ctx.restore();
     T(g.cx, g.yb + 22, U.perm ? '용질도 통과하는 막' : '반투과성 막', 13.5, '#78350f', 'center', 800);
     // 처음 수면 · 수면 높이 차
-    D.dashedLine(g.x0 - 18, g.base, g.x1 + 18, g.base, { color: '#94a3b8', width: 1.4, dash: [5, 5] }); T(g.x0 - 20, g.base - 6, '처음 수면', 11.5, '#64748b', 'right', 700);
+    D.dashedLine(g.x0 - 18, g.base, g.x1 + 18, g.base, { color: '#94a3b8', width: 1.4, dash: [5, 5] }); if (!PHONE) T(g.x0 - 20, g.base - 6, '처음 수면', 11.5, '#64748b', 'right', 700);
     if (Math.abs(U.d) > 2) {
       const hi = U.d > 0 ? yL : yR, lo = U.d > 0 ? yR : yL, bx = U.d > 0 ? g.x0 + g.aw + 14 : g.x1 - g.aw - 14;
       ctx.strokeStyle = '#dc2626'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(g.cx - 40, hi); ctx.lineTo(g.cx + 40, hi); ctx.moveTo(g.cx - 40, lo); ctx.lineTo(g.cx + 40, lo); ctx.stroke();
       D.arrow(g.cx, lo, g.cx, hi, { color: '#dc2626', width: 2.4 }); D.label(g.cx + (PHONE ? 46 : 50), (hi + lo) / 2, 'Δh ' + Math.abs(utDcm()).toFixed(1) + ' cm', { bg: '#dc2626', size: 13 });
     }
     // 이름표
-    D.label(g.x0 + g.aw / 2, g.top - 14, '왼쪽 ' + (U.cL > 0 ? '설탕 용액 ' + fmtM(U.cL) : '물 0.0 M'), { bg: '#b45309', size: PHONE ? 12.5 : 13.5 });
-    D.label(g.x1 - g.aw / 2, g.top - 14, '오른쪽 ' + (U.cR > 0 ? '설탕 용액 ' + fmtM(U.cR) : '물 0.0 M'), { bg: '#0369a1', size: PHONE ? 12.5 : 13.5 });
+    D.label(g.x0 + g.aw / 2, g.top - 14, '왼쪽 ' + (U.eL > 0.04 ? '설탕 용액 ' + fmtM(U.eL) : '물 0.0 M'), { bg: '#b45309', size: PHONE ? 12.5 : 13.5 });
+    D.label(g.x1 - g.aw / 2, g.top - 14, '오른쪽 ' + (U.eR > 0.04 ? '설탕 용액 ' + fmtM(U.eR) : '물 0.0 M'), { bg: '#0369a1', size: PHONE ? 12.5 : 13.5 });
     // 물 이동 화살표 (막 위쪽)
     if (!U.freeze) {
       const ay = g.yc + 24 - 0, rl = U.perm ? 0.5 : U.prl, lr = U.perm ? 0.5 : U.plr, ww = (v) => 2 + 11 * v;
@@ -382,17 +383,17 @@
     }
     // 정보 패널
     panel(UTI.x, UTI.y, UTI.w, UTI.h, 18, '#ffffff');
-    const I = UTI, msg = U.freeze ? '물은 어느 쪽으로 이동할까요?' : (U.perm ? (Math.abs(U.cL - U.cR) < 0.01 ? '양쪽 농도가 같아요. 오가는 수가 같아요.' : '용질도 막을 지나가서 양쪽 농도가 같아지고 수면도 같아져요.') : (Math.abs(b) < 0.04 ? (Math.abs(U.cL - U.cR) < 0.01 ? '양쪽 농도가 같아요. 순 이동이 없어요.' : '수면 차이가 삼투압과 맞서서 순 이동이 멈췄어요. (분자는 계속 오가요)') : (b > 0 ? '물이 오른쪽 → 왼쪽으로 더 많이 이동해요.' : '물이 왼쪽 → 오른쪽으로 더 많이 이동해요.')));
+    const I = UTI, msg = U.freeze ? '물은 어느 쪽으로 이동할까요?' : (U.perm ? (Math.abs(U.eL - U.eR) < 0.01 ? '양쪽 농도가 같아요. 오가는 수가 같아요.' : '용질도 막을 지나가서 양쪽 농도가 같아지고 수면도 같아져요.') : (Math.abs(b) < 0.04 ? (Math.abs(U.eL - U.eR) < 0.01 ? '양쪽 농도가 같아요. 순 이동이 없어요.' : '수면 차이가 삼투압과 맞서서 순 이동이 멈췄어요. (분자는 계속 오가요)') : (b > 0 ? '물이 오른쪽 → 왼쪽으로 더 많이 이동해요.' : '물이 왼쪽 → 오른쪽으로 더 많이 이동해요.')));
     if (!PHONE) {
       T(I.x + 16, I.y + 32, '삼투 관찰', 17, '#334155', 'left', 800);
-      T(I.x + 16, I.y + 66, '왼쪽 ' + fmtM(U.cL), 15, '#b45309', 'left', 800); T(I.x + 16, I.y + 90, '오른쪽 ' + fmtM(U.cR), 15, '#0369a1', 'left', 800);
+      T(I.x + 16, I.y + 66, '왼쪽 ' + fmtM(U.eL), 15, '#b45309', 'left', 800); T(I.x + 16, I.y + 90, '오른쪽 ' + fmtM(U.eR), 15, '#0369a1', 'left', 800);
       T(I.x + 16, I.y + 128, '수면 높이 차', 14, '#475569', 'left', 800);
       T(I.x + 16, I.y + 164, Math.abs(utDcm()).toFixed(1) + ' cm', 28, '#dc2626', 'left', 800);
       T(I.x + 16, I.y + 188, Math.abs(U.d) < 2 ? '두 수면의 높이가 같아요' : (U.d > 0 ? '왼쪽 수면이 더 높아요' : '오른쪽 수면이 더 높아요'), 13.5, '#475569', 'left', 800);
       textBlock(I.x + 16, I.y + 224, I.w - 32, msg, 14, '#15803d', 20, 800);
       textBlock(I.x + 16, I.y + 330, I.w - 32, '삼투 = 물의 확산. 물은 용질이 적은 쪽 → 많은 쪽으로 순 이동해요. 용질(주황)은 막을 지나지 못해요.', 12.5, '#64748b', 17.5, 700);
     } else {
-      TF(I.x + 14, I.y + 26, '왼쪽 ' + fmtM(U.cL) + ' · 오른쪽 ' + fmtM(U.cR) + ' · 수면 차 ' + Math.abs(utDcm()).toFixed(1) + ' cm', I.w - 28, 14.5, 12, '#334155', 'left', 800);
+      TF(I.x + 14, I.y + 26, '왼쪽 ' + fmtM(U.eL) + ' · 오른쪽 ' + fmtM(U.eR) + ' · 수면 차 ' + Math.abs(utDcm()).toFixed(1) + ' cm', I.w - 28, 14.5, 12, '#334155', 'left', 800);
       textBlock(I.x + 14, I.y + 58, I.w - 28, msg, 14, '#15803d', 20, 800);
     }
     panel(UTC.x, UTC.y, UTC.w, UTC.h, 16, '#ffffff');
@@ -415,7 +416,7 @@
   S.uq = { i: 0, state: 'ask', solved: [false, false, false], msg: '', bad: false, timer: 0 };
   function uqLoad(i) {
     const q = S.uq, Q = UQS[i]; q.i = i; q.state = 'ask'; q.msg = ''; q.bad = false;
-    S.ut.cL = Q.cL; S.ut.cR = Q.cR; S.ut.perm = false; S.ut.freeze = true; S.ut.d = 0; utRebuild(); updateCtl();
+    S.ut.cL = Q.cL; S.ut.cR = Q.cR; S.ut.eL = Q.cL; S.ut.eR = Q.cR; S.ut.perm = false; S.ut.freeze = true; S.ut.d = 0; utRebuild(); updateCtl();
   }
   function uqReset() { S.uq.solved = [false, false, false]; uqLoad(0); }
   function uqAnswer(a) {
@@ -454,7 +455,7 @@
     const R = SC_R, sw = PHONE ? 300 : 320, sx = R.x + (R.w - sw) / 2, sy = R.y + (PHONE ? 40 : 80), sh = PHONE ? 56 : 80, cw = PHONE ? 100 : 116;
     return { sx, sy, sw, sh, cx: sx + (sw - cw) / 2, cw, cy: sy + 10, ch: sh - 20, dz: { x: sx, y: sy, w: (sw - cw) / 2, h: sh }, pz: { x: sx + (sw + cw) / 2, y: sy, w: (sw - cw) / 2, h: sh } };
   }
-  const TOOLP = () => { const R = SC_R, y = R.y + (PHONE ? 148 : 252); return { dropper: { x: R.x + R.w * 0.28, y }, paper: { x: R.x + R.w * 0.72, y } }; };
+  const TOOLP = () => { const R = SC_R, y = R.y + (PHONE ? 160 : 252); return { dropper: { x: R.x + R.w * 0.28, y }, paper: { x: R.x + R.w * 0.72, y } }; };
   S.sc = { spec: 'rbc', sol: 1, phase: 'idle', flow: 0, settle: 0, cells: [], obs: { rbc: [false, false, false], onion: [false, false, false] }, tools: { dropper: { x: 0, y: 0, lift: 0 }, paper: { x: 0, y: 0, lift: 0 } }, drag: null, drop: 0, msg: '' };
   const ONION_T = [0.35, 0.25, 0.35, 0.15, 0.25, 0.35, 0.25, 0.45, 0.25, 0.35, 0.25, 0.35];   // 0.2 M: 1개, 0.3 M: 6개, 0.4 M: 11개, 0.5 M: 12개가 원형질 분리
   function scBuild() {
@@ -584,7 +585,7 @@
         ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 1; for (let i = -4; i <= 4; i++) { ctx.beginPath(); ctx.moveTo(-30, i * 4.4); ctx.lineTo(30, i * 4.4 + 2); ctx.stroke(); }
       }
       ctx.restore();
-      if (!dragging) T(tp[k].x, tp[k].y + (PHONE ? 34 : 54), k === 'dropper' ? '스포이트 (용액)' : '거름종이', 12.5, '#475569', 'center', 800);
+      if (!dragging) T(tp[k].x, tp[k].y + (PHONE ? 30 : 54), k === 'dropper' ? '스포이트 (용액)' : '거름종이', 12.5, '#475569', 'center', 800);
     });
     if (!PHONE) T(R.x + R.w / 2, R.y + R.h - 12, '끌어서 놓거나, 눌러서 해도 돼요', 12, '#94a3b8', 'center', 700);
     if (!PHONE) {
@@ -671,7 +672,7 @@
         TF(x + w / 2, y + (TBH - 8) / 2 + 5, label, w - 16, L(15, 13.5), 11, sel >= 0 ? '#14532d' : '#94a3b8', 'center', 800);
       });
     });
-    T(TBP.x + 16, TBP.y + TBP.h - 14, '적혈구는 0.9 % NaCl, 양파 표피 세포는 세포액과 농도가 비슷한 설탕 용액을 보며 생각해 봐요.', L(13, 12), '#64748b', 'left', 700);
+    TF(TBP.x + 16, TBP.y + TBP.h - 14, '적혈구는 0.9 % NaCl, 양파 표피 세포는 세포액과 농도가 비슷한 설탕 용액을 보며 생각해 봐요.', TBP.w - 32, L(13, 12), 10.5, '#64748b', 'left', 700);
   }
   function tbHit(p) {
     for (let i = 0; i < TB_ROWS.length; i++) {
@@ -707,7 +708,7 @@
   function lmEstimate() {
     const q = S.lm;
     if (lmRecCount() < 5) { q.msg = '먼저 5가지 농도에서 모두 세어 기록해요. (' + lmRecCount() + ' / 5)'; showHint(q.msg, 3600); return; }
-    if (Math.abs(q.cur - 0.3) <= 0.0201) { q.est = Math.round(q.cur * 100) / 100; q.msg = '세포액 농도를 약 ' + q.est.toFixed(2) + ' M로 추정했어요.'; Sound.success(); parts.burst(LGR.x + LGR.w / 2, LGR.y + LGR.h / 2, { count: 16, speed: 170 }); }
+    if (Math.abs(q.cur - 0.3) <= 0.0101) { q.est = Math.round(q.cur * 100) / 100; q.msg = '세포액 농도를 약 ' + q.est.toFixed(2) + ' M로 추정했어요.'; Sound.success(); parts.burst(LGR.x + LGR.w / 2, LGR.y + LGR.h / 2, { count: 16, speed: 170 }); }
     else { q.est = null; q.shake = 1; Sound.fail(); q.msg = '커서 위치(' + q.cur.toFixed(2) + ' M)에서는 세포의 ' + lmPctAt(q.cur) + ' %가 원형질 분리를 했어요. 50 %가 되는 농도를 찾아요.'; showHint(q.msg, 4200); }
     updateCtl();
   }
@@ -805,7 +806,7 @@
   function ptAt(x) { for (let i = 0; i < PT_X.length - 1; i++) if (x >= PT_X[i] && x <= PT_X[i + 1]) return lerp(PT_Y[i], PT_Y[i + 1], (x - PT_X[i]) / (PT_X[i + 1] - PT_X[i])); return x < 0 ? PT_Y[0] : PT_Y[PT_Y.length - 1]; }
   function ptEstimate() {
     const q = S.pt;
-    if (q.cur >= 0.2 && q.cur <= 0.25) { q.est = Math.round(q.cur * 100) / 100; q.msg = '질량 변화가 0에 가까운 농도, 약 0.22 M로 추정했어요.'; Sound.success(); parts.burst(PTG.x + PTG.w / 2, PTG.y + PTG.h / 2, { count: 16, speed: 170 }); }
+    if (Math.abs(ptAt(q.cur)) <= 1.6) { q.est = Math.round(q.cur * 100) / 100; q.msg = '질량 변화가 0에 가까운 농도, 약 0.23 M로 추정했어요.'; Sound.success(); parts.burst(PTG.x + PTG.w / 2, PTG.y + PTG.h / 2, { count: 16, speed: 170 }); }
     else { q.est = null; q.shake = 1; Sound.fail(); const v = ptAt(q.cur); q.msg = '커서 위치(' + q.cur.toFixed(2) + ' M)에서는 질량이 ' + (v >= 0 ? '+' : '') + v.toFixed(1) + ' % 변해요. 질량 변화가 0이 되는 농도를 찾아요.'; showHint(q.msg, 4200); }
     updateCtl();
   }
@@ -823,10 +824,10 @@
     D.sphere(cx, gf.Y(0), 8, '#f97316', { gloss: true, shadow: true });
     const v = ptAt(q.cur);
     D.label(clamp(cx, gf.x0 + 90, gf.x1 - 90), gf.y1 + 34, '커서 ' + q.cur.toFixed(2) + ' M · 질량 ' + (v >= 0 ? '+' : '') + v.toFixed(1) + ' %', { bg: '#f97316', size: 12.5 });
-    if (q.est != null) D.label(clamp(cx, gf.x0 + 100, gf.x1 - 100), gf.Y(0) + 38, '추정: 감자 세포액 ≈ 0.22 M', { bg: '#16a34a', size: 13.5 });
+    if (q.est != null) D.label(clamp(cx, gf.x0 + 100, gf.x1 - 100), gf.Y(0) + 38, '추정: 감자 세포액 ≈ 0.23 M', { bg: '#16a34a', size: 13.5 });
     panel(PTC.x, PTC.y, PTC.w, PTC.h, 16, '#ffffff');
     const dn = S.lm.est != null;
-    textBlock(PTC.x + 16, PTC.y + 30, PTC.w - 32, q.est != null ? '질량 변화가 0이 되는 농도는 0.2 M와 0.3 M 사이, 약 0.22 M이에요. 이 농도의 용액이 감자 세포액과 등장이에요.' + (dn ? ' 양파(약 0.30 M)와 감자(약 0.22 M)는 세포액의 농도가 서로 달라요.' : '') : '질량이 늘다가 줄어드는 그래프가 x축(변화 0)과 만나는 곳으로 커서를 끌어서 놓고 [✔ 0이 되는 농도로 정하기]를 눌러요.', L(15, 14), q.est != null ? '#15803d' : '#475569', L(21, 20), 800);
+    textBlock(PTC.x + 16, PTC.y + 30, PTC.w - 32, q.est != null ? '질량 변화가 0이 되는 농도는 0.2 M와 0.3 M 사이, 약 0.23 M이에요. 이 농도의 용액이 감자 세포액과 등장이에요.' + (dn ? ' 양파(약 0.30 M)와 감자(약 0.23 M)는 세포액의 농도가 서로 달라요.' : '') : '질량이 늘다가 줄어드는 그래프가 x축(변화 0)과 만나는 곳으로 커서를 끌어서 놓고 [✔ 0이 되는 농도로 정하기]를 눌러요.', L(15, 14), q.est != null ? '#15803d' : '#475569', L(21, 20), 800);
     if (q.est != null) textBlock(PTC.x + 16, PTC.y + L(106, 126), PTC.w - 32, '0.3 M 용액에서 질량이 4 % 줄어든 것은 감자 세포액이 0.3 M 용액보다 묽어서 물이 세포 밖으로 빠져나갔기 때문이에요.', L(14, 13.5), '#475569', L(20, 19), 700);
   }
   const ptCursorFromPt = (p) => clamp(Math.round((p.x - (PTG.x + 52)) / ((PTG.x + PTG.w - 20) - (PTG.x + 52)) * 0.55 * 100) / 100, 0, 0.5);
@@ -926,7 +927,7 @@
     const fr = game ? game.free : false, lvNow = game ? game.level : 0;
     ctlNodes.forEach((n) => { n.hidden = (n.dataset.modes || '').split(' ').indexOf(S.mode) < 0; });
     modeButtons(S.mode, lvNow, fr);
-    $('#sUL').value = S.ut.cL; $('#sUR').value = S.ut.cR; $('#oUL').textContent = fmtM(S.ut.cL); $('#oUR').textContent = fmtM(S.ut.cR); chipSet($('#memSel'), S.ut.perm ? 1 : 0);
+    $('#sUL').value = S.ut.cL; $('#sUR').value = S.ut.cR; $('#oUL').textContent = fmtM(S.ut.cL); $('#oUR').textContent = fmtM(S.ut.cR); chipSet($('#memSel'), S.ut.perm ? 1 : 0); $('#sUL').disabled = S.ut.perm; $('#sUR').disabled = S.ut.perm;
     const q = S.uq; $('#uqNote').innerHTML = q.state === 'done' ? '세 문제를 모두 맞혔어요! 🎉' : '문제 <b>' + (q.i + 1) + ' / 3</b> · 맞힌 문제 <b>' + q.solved.filter(Boolean).length + '개</b><br>왼쪽 <b>' + fmtM(S.ut.cL) + '</b> · 오른쪽 <b>' + fmtM(S.ut.cR) + '</b> (반투과성 막)';
     ['#uqL', '#uqR', '#uq0'].forEach((id) => { $(id).disabled = q.state !== 'ask'; });
     $$('#scSpec button').forEach((b) => b.classList.toggle('on', b.dataset.v === S.sc.spec));
@@ -941,7 +942,7 @@
   bindModeSeg(setMode);
   $('#sUL').addEventListener('input', (e) => { if (S.mode === 'utq') return; S.ut.cL = +e.target.value; updateCtl(); });
   $('#sUR').addEventListener('input', (e) => { if (S.mode === 'utq') return; S.ut.cR = +e.target.value; updateCtl(); });
-  $$('#memSel button').forEach((b) => b.addEventListener('click', () => { S.ut.perm = b.dataset.v === '1'; Sound.click(); updateCtl(); }));
+  $$('#memSel button').forEach((b) => b.addEventListener('click', () => { const nv = b.dataset.v === '1'; if (S.ut.perm && !nv) { S.ut.cL = Math.round(S.ut.eL * 10) / 10; S.ut.cR = Math.round(S.ut.eR * 10) / 10; } S.ut.perm = nv; Sound.click(); updateCtl(); }));
   $('#utReset').addEventListener('click', () => { Sound.click(); utReset(); });
   $('#uqL').addEventListener('click', () => uqAnswer('L')); $('#uqR').addEventListener('click', () => uqAnswer('R')); $('#uq0').addEventListener('click', () => uqAnswer('0'));
   $('#uqReset').addEventListener('click', () => { Sound.click(); uqReset(); });
@@ -972,7 +973,7 @@
           id: 'levels', title: '농도를 바꾸며 수면 변화 관찰',
           goal: '🧪 화면의 슬라이더를 바꿔서 <b>왼쪽 수면 상승 · 오른쪽 수면 상승 · 농도가 같을 때 변화 없음 · 용질이 통과하는 막</b> 네 장면을 모두 관찰하세요.',
           hint: '왼쪽 0.3 M, 오른쪽 0.0 M이면 왼쪽 수면이 올라가요. 두 슬라이더를 반대로 바꾸면 오른쪽이 올라가요. 둘 다 0.3 M으로 같게 하면 수면이 그대로이고, [용질도 통과하는 막]으로 바꾸면 수면이 같아져요.',
-          setup() { setMode('utube'); S.ut.cL = 0.3; S.ut.cR = 0; S.ut.perm = false; S.ut.seen = { left: false, right: false, same: false, perm: false }; S.ut.same = 0; S.ut.permT = 0; utReset(); },
+          setup() { setMode('utube'); S.ut.cL = 0.3; S.ut.cR = 0; S.ut.eL = 0.3; S.ut.eR = 0; S.ut.perm = false; S.ut.seen = { left: false, right: false, same: false, perm: false }; S.ut.same = 0; S.ut.permT = 0; utReset(); },
           check: () => S.ut.seen.left && S.ut.seen.right && S.ut.seen.same && S.ut.seen.perm, hold: 0.5,
           status: () => ['left', 'right', 'same', 'perm'].map((k) => mark(S.ut.seen[k]) + ' ' + { left: '왼쪽 수면 상승', right: '오른쪽 수면 상승', same: '농도 같음 · 변화 없음', perm: '용질이 통과하는 막' }[k]).join(' &nbsp; '),
           explain: '진한 쪽으로 물이 이동해서 <b>그쪽 수면이 올라가요</b>. 두 용액의 농도가 같으면 순 이동이 없어 수면이 그대로예요. 용질도 통과하는 막에서는 용질이 이동해 양쪽 농도가 같아지므로 수면도 같아져요. 삼투가 일어나려면 <b>용질이 통과하지 못하는 반투과성 막</b>이 필요해요.',
@@ -1042,8 +1043,8 @@
       intro: '<div class="si-link">🔗 <b>앞 단계에서</b> 양파 세포가 0.3 M 설탕 용액에서 약 절반만 원형질 분리를 하는 것을 봤어요.</div><p>세포의 <b>50 %가 원형질 분리를 일으키는 농도</b>를 <b>한계 원형질 분리 농도</b>라고 해요. 이 농도의 용액은 세포액과 <b>등장</b>이라서, 세포액의 농도를 알아낼 수 있어요.</p><p>양파 표피를 설탕 용액 0.1 ~ 0.5 M 5가지에 넣고 세포 100개를 세어 비율 그래프를 그리고, 감자 막대의 질량 변화 자료로도 같은 방법을 써 봐요. 실험의 오차를 줄이는 방법도 생각해 봐요.</p>',
       features: ['limit', 'potato', 'err'],
       setup() { setMode('limit'); },
-      recap: '한계 원형질 분리 농도(세포의 50 %가 원형질 분리)는 세포액과 농도가 거의 같으므로 세포액의 농도를 추정할 수 있어요. 양파는 약 0.3 M, 감자는 질량 변화가 0이 되는 약 0.22 M이고, 세포 수를 늘리고 조건을 같게 하면 오차가 줄어요.',
-      summary: '<ul><li>양파 표피(설탕 용액, 세포 100개): 0.1 M 0 % · 0.2 M 8 % · 0.3 M 50 % · 0.4 M 92 % · 0.5 M 100 % → <b>한계 원형질 분리 농도 = 0.3 M</b> → 양파 세포액 ≈ 0.3 M(설탕 용액 기준).</li><li>감자 막대 질량 변화: 0 M +12 % · 0.1 M +7 % · 0.2 M +2 % · 0.3 M −4 % · 0.4 M −10 % · 0.5 M −15 % → 그래프가 x축과 만나는 곳 ≈ <b>0.22 M</b>. 0.3 M에서 질량이 줄어든 것은 감자 세포액이 그 용액보다 묽기 때문이에요.</li><li>오차를 줄이는 방법: <b>관찰 세포 수 늘리기</b>, <b>같은 시간 담그기</b>, 같은 조건으로 반복해 평균 내기, 농도 간격 촘촘히 하기.</li></ul>',
+      recap: '한계 원형질 분리 농도(세포의 50 %가 원형질 분리)는 세포액과 농도가 거의 같으므로 세포액의 농도를 추정할 수 있어요. 양파는 약 0.3 M, 감자는 질량 변화가 0이 되는 약 0.23 M이고, 세포 수를 늘리고 조건을 같게 하면 오차가 줄어요.',
+      summary: '<ul><li>양파 표피(설탕 용액, 세포 100개): 0.1 M 0 % · 0.2 M 8 % · 0.3 M 50 % · 0.4 M 92 % · 0.5 M 100 % → <b>한계 원형질 분리 농도 = 0.3 M</b> → 양파 세포액 ≈ 0.3 M(설탕 용액 기준).</li><li>감자 막대 질량 변화: 0 M +12 % · 0.1 M +7 % · 0.2 M +2 % · 0.3 M −4 % · 0.4 M −10 % · 0.5 M −15 % → 그래프가 x축과 만나는 곳 ≈ <b>0.23 M</b>. 0.3 M에서 질량이 줄어든 것은 감자 세포액이 그 용액보다 묽기 때문이에요.</li><li>오차를 줄이는 방법: <b>관찰 세포 수 늘리기</b>, <b>같은 시간 담그기</b>, 같은 조건으로 반복해 평균 내기, 농도 간격 촘촘히 하기.</li></ul>',
       missions: [
         {
           id: 'onion', title: '양파 세포액 농도 추정',
@@ -1061,7 +1062,7 @@
           setup() { S.pt.est = null; S.pt.cur = 0.1; setMode('potato'); },
           check: () => S.pt.est != null, hold: 0.6,
           status: () => mark(S.pt.est != null) + ' 질량 변화 0인 농도 ' + (S.pt.est != null ? S.pt.est.toFixed(2) + ' M' : '—'),
-          explain: '감자 막대는 0.2 M에서 +2 %, 0.3 M에서 −4 %이므로 질량 변화가 0이 되는 곳은 <b>0.2 ~ 0.25 M 사이, 약 0.22 M</b>예요. 이 농도가 감자 세포액과 등장인 농도예요. 양파(약 0.3 M)와 감자(약 0.22 M)의 세포액 농도는 서로 달라요. 0.3 M 용액에서 질량이 줄어든 감자는 <b>세포액이 용액보다 묽어서</b> 물이 빠져나간 거예요.',
+          explain: '감자 막대는 0.2 M에서 +2 %, 0.3 M에서 −4 %이므로 질량 변화가 0이 되는 곳은 <b>0.2 ~ 0.25 M 사이, 약 0.23 M</b>예요. 이 농도가 감자 세포액과 등장인 농도예요. 양파(약 0.3 M)와 감자(약 0.23 M)의 세포액 농도는 서로 달라요. 0.3 M 용액에서 질량이 줄어든 감자는 <b>세포액이 용액보다 묽어서</b> 물이 빠져나간 거예요.',
         },
         {
           id: 'err', title: '오차를 줄이는 방법', manual: true,
@@ -1120,7 +1121,7 @@
   /* ---------- 읽음 칸 ---------- */
   function readouts() {
     const m = S.mode;
-    if (m === 'utube') setReads(['왼쪽 · 오른쪽 농도', fmtM(S.ut.cL) + ' · ' + fmtM(S.ut.cR), '수면 높이 차', Math.abs(utDcm()).toFixed(1) + ' cm', '물의 순 이동', netDir()]);
+    if (m === 'utube') setReads(['왼쪽 · 오른쪽 농도', fmtM(S.ut.eL) + ' · ' + fmtM(S.ut.eR), '수면 높이 차', Math.abs(utDcm()).toFixed(1) + ' cm', '물의 순 이동', netDir()]);
     else if (m === 'utq') setReads(['문제', (S.uq.i + 1) + ' / 3', '맞힌 문제', S.uq.solved.filter(Boolean).length + '개', '물의 순 이동', S.uq.state === 'ask' ? '맞혀 보세요' : netDir()]);
     else if (m === 'scope') setReads(['시료', S.sc.spec === 'rbc' ? '적혈구' : '양파 표피', '용액', S.sc.phase === 'idle' ? '처음 상태' : SOLS[S.sc.spec][S.sc.sol].name, '관찰한 조건', scObsCount() + ' / 6']);
     else if (m === 'tbl') setReads(['채운 칸', S.tb.sel.reduce((a, s) => a + (s[0] >= 0 ? 1 : 0) + (s[1] >= 0 ? 1 : 0), 0) + ' / 12', '조건', '6가지', '용액 종류', '3가지']);
@@ -1131,7 +1132,7 @@
   }
 
   /* ---------- 시작 ---------- */
-  utRebuild(); scBuild(); uqLoad(0); S.ut.freeze = false; S.ut.cL = 0.3; S.ut.cR = 0; utRebuild();
+  utRebuild(); scBuild(); uqLoad(0); S.ut.freeze = false; S.ut.cL = 0.3; S.ut.cR = 0; S.ut.eL = 0.3; S.ut.eR = 0; utRebuild();
   setMode('utube');
   let lastFree = false, lastLv = -1;
   SciSim.loop((dt, t) => {

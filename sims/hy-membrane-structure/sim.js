@@ -856,7 +856,7 @@
   }
   /* 한 번 보내기의 시간표: {x, y, a(투명도), msg, path 길이} */
   function sdPlan(run) {
-    const m = MOL[run.m], mid = sdMid(), y0 = SDP.y + 70, yTop = mid - 56, yBot = mid + 56, yEnd = SDP.y + SDP.h - 56;
+    const m = MOL[run.m], mid = sdMid(), y0 = SDP.y + 70, yTop = mid - 46, yBot = mid + 46, yEnd = SDP.y + SDP.h - 56;
     const xm = sdX('mol'), t = run.t, seg = [];
     const ch = sdX('ch'), ca = sdX('ca');
     const pos = (x, y, extra) => Object.assign({ x, y, a: 1 }, extra || {});
@@ -890,7 +890,7 @@
     // 통과하지 못하고 튕겨 나감
     const tA = 1.3, tB = 1.0, tot = tA + tB;
     let y, a = 1;
-    if (t < tA) y = lerp(y0, yTop - 6, smooth(t / tA)); else { const q = clamp((t - tA) / tB, 0, 1); y = lerp(yTop - 6, yTop - 90, smooth(q)); a = 1 - q * 0.6; }
+    if (t < tA) y = lerp(y0, yTop - 2, smooth(t / tA)); else { const q = clamp((t - tA) / tB, 0, 1); y = lerp(yTop - 2, yTop - 90, smooth(q)); a = 1 - q * 0.6; }
     return { total: tot + 0.3, bounce: t >= tA, p: pos(xm + Math.sin(t * 4) * 5, y, { a }), verdict: m.kind === 'no' ? '단백질은 너무 커서 통로도 운반체도 지나갈 수 없어요. (큰 물질은 다음 차시에서 만나요.)' : m.name + '는 크기와 극성(전하) 때문에 이중층만으로는 지나갈 수 없어요. 막 단백질이 필요해요.' };
   }
   function sdUpdate(dt) {

@@ -8082,8 +8082,7 @@ window.SCI_CATALOG = {
                 "막 단백질",
                 "유동성",
                 "투과성 추론"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hy-membrane-transport",
@@ -8104,8 +8103,7 @@ window.SCI_CATALOG = {
                 "운반 단백질",
                 "능동 수송",
                 "큰 물질"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hy-osmosis",
@@ -8126,8 +8124,7 @@ window.SCI_CATALOG = {
                 "세포 관찰",
                 "농도 추정",
                 "삼투 적용"
-              ],
-              "soon": true
+              ]
             }
           ]
         },
