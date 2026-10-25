@@ -569,7 +569,7 @@
       T(c.x + 12, y + 5, row[0], 14.5, INK, 'left', 800);
       D.shadow(() => { D.roundRect(lx, y - 14, lw, 28, 14); ctx.fillStyle = '#e6edf8'; ctx.fill(); }, { blur: 4, y: 1 });
       const p = r ? clamp(r.t * RACE_K * v / 100, 0, 1) : 0;
-      if (p > 0) { D.roundRect(lx, y - 14, Math.max(28, lw * p), 28, 14); ctx.fillStyle = 'rgba(' + (i === 0 ? '14,165,233' : i === 1 ? '37,99,235' : '100,116,139') + ',.35)'; ctx.fill(); }
+      if (p > 0) { D.roundRect(lx, y - 14, lw * p, 28, 14); ctx.fillStyle = 'rgba(' + (i === 0 ? '14,165,233' : i === 1 ? '37,99,235' : '100,116,139') + ',.35)'; ctx.fill(); }
       ctx.fillStyle = '#16a34a'; ctx.fillRect(lx + 4, y - 18, 3, 36); ctx.fillStyle = '#dc2626'; ctx.fillRect(lx + lw - 7, y - 18, 3, 36);
       D.sphere(lx + 14 + (lw - 28) * p, y, 11, row[2], { gloss: true, shadow: true });
       const tt = 100 / v;

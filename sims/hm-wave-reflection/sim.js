@@ -937,9 +937,9 @@
           goal: '강철 판 위에서 <b>탐촉자를 옮기며</b> 아랫면 에코보다 <b>일찍 오는 에코</b>를 찾아요. 그 에코에 <b>보라색 줄</b>을 맞춰 균열의 깊이를 읽어요.',
           hint: '탐촉자를 좌우로 옮기면 어느 위치에서 아랫면(17 μs) 에코 말고 더 일찍 오는 에코가 생겨요. 슬라이더로 보라색 줄을 그 에코에 맞추면 깊이가 표시돼요.',
           setup() { resetFlags(); S.nd = { pos: 4, cursor: 12.0, found: false, ping: { t: 0 } }; setScene('ndt'); enterScene('ndt'); S.nd.ping = { t: 0 }; updateCtl(); },
-          check() { const ec = ndEchoes(ndX()).find((e) => e.crack && e.a >= 0.4); if (!ec) return false; const d = V_STL * S.nd.cursor * 1e-6 / 2 * 100; return Math.abs(d - 3.0) <= 0.1; },
+          check() { const ec = ndEchoes(ndX()).find((e) => e.crack && e.a >= 0.4); if (!ec) return false; const d = V_STL * S.nd.cursor * 1e-6 / 2 * 100; return fx(d, 1) === '3.0'; },
           hold: 0.6,
-          status() { const ec = ndEchoes(ndX()).find((e) => e.crack && e.a >= 0.4); const d = V_STL * S.nd.cursor * 1e-6 / 2 * 100; return mark(!!ec) + ' 균열 에코 찾기 &nbsp; ' + mark(!!ec && Math.abs(d - 3.0) <= 0.1) + ' 읽은 깊이 ' + fx(d, 1) + ' cm'; },
+          status() { const ec = ndEchoes(ndX()).find((e) => e.crack && e.a >= 0.4); const d = V_STL * S.nd.cursor * 1e-6 / 2 * 100; return mark(!!ec) + ' 균열 에코 찾기 &nbsp; ' + mark(!!ec && fx(d, 1) === '3.0') + ' 읽은 깊이 ' + fx(d, 1) + ' cm'; },
           explain: '균열이 있는 곳에서는 아랫면(약 17 μs)보다 <b>일찍(약 10 μs)</b> 에코가 돌아와요. 깊이 = 5900 × (10.2×10⁻⁶) / 2 ≈ <b>3.0 cm</b>이므로 균열은 표면에서 3.0 cm 깊이에 있어요. 판을 부수지 않고 알아냈어요.',
         },
         {

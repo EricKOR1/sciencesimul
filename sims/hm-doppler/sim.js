@@ -193,8 +193,10 @@
     // 구급차
     const x = AX0 + vs * a.t, ax = px(clamp(x, AX0, AXE));
     ctx.save(); ctx.translate(ax, roadY - 10); ctx.scale(-1, 1); T(0, 16, '🚑', 54, '#000', 'center', 700); ctx.restore();
-    D.arrow(ax - 6, roadY - 66, ax + 52, roadY - 66, { color: '#16a34a', width: 4, head: 11 });
-    D.label(ax + 20, roadY - 84, 'v_s = ' + vs + ' m/s', { bg: '#16a34a', size: 13 });
+    const ax2 = clamp(ax, c.x + 50, c.x + c.w - 90);
+    D.arrow(ax2 - 6, roadY - 54, ax2 + 46, roadY - 54, { color: '#16a34a', width: 4, head: 11 });
+    D.label(ax2 + 18, roadY - 70, 'v_s = ' + vs + ' m/s', { bg: '#16a34a', size: 13 });
+    T(c.x + 14, c.y + 46, PHONE ? '🔴 다가올 때: 더 높게' : '🔴 다가올 때: 사이렌(700 Hz)보다 높게 들려요', 13.5, '#b91c1c', 'left', 800); T(c.x + 14, c.y + 66, PHONE ? '🔵 멀어질 때: 더 낮게' : '🔵 멀어질 때: 사이렌(700 Hz)보다 낮게 들려요', 13.5, '#1d4ed8', 'left', 800);
     // 듣는 사람
     const lx = px(0), ly = roadY + 34;
     if (!inside) { T(lx, ly + 14, '🧍', 40, '#000', 'center', 700); D.label(lx, ly + 44, '길가에서 듣는 사람', { bg: '#475569', size: 13 }); }
@@ -223,9 +225,9 @@
     const tx = PHONE ? x1p : x1p + gw + 12, ty = PHONE ? PY + 10 + gh + 8 : PY + 12, tw = PHONE ? PW - 24 : PW - gw - 34;
     D.roundRect(tx, ty, tw, PHONE ? PH - gh - 28 : PH - 24, 12); ctx.fillStyle = '#f4f7fd'; ctx.fill();
     T(tx + 10, ty + 24, '📋 지나간 구급차 기록 (Hz)', 14, INK, 'left', 800);
-    const cx = [tx + 10, tx + 56, tx + 116, tx + 176];
+    const cx = [tx + 10, tx + 80, tx + 134, tx + 188];
     ['속력', '높음', '낮음', '폭'].forEach((h, i) => T(cx[i], ty + 48, h, 13, MUTED, 'left', 800));
-    a.rec.slice().sort((p, q) => p.vs - q.vs).forEach((r, i) => { const yy = ty + 72 + i * 22; T(cx[0], yy, r.vs + ' m/s', 13, INK, 'left', 800); T(cx[1], yy, fR(r.hi), 13.5, RED, 'left', 800); T(cx[2], yy, fR(r.lo), 13.5, BLUE, 'left', 800); T(cx[3], yy, fR(r.hi - r.lo), 13.5, '#c2410c', 'left', 800); });
+    a.rec.slice().sort((p, q) => p.vs - q.vs).forEach((r, i) => { const yy = ty + 72 + i * 22; T(cx[0], yy, r.vs + ' m/s', 13, INK, 'left', 800); T(cx[1], yy, fR(r.hi), 13.5, RED, 'left', 800); T(cx[2], yy, fR(r.lo), 13.5, BLUE, 'left', 800); T(cx[3], yy, String(r0(r.hi) - r0(r.lo)), 13.5, '#c2410c', 'left', 800); });
     if (!a.rec.length) T(cx[0], ty + 72, '길가에서 한 번 지나가면 기록돼요', 13, '#9aa6bd', 'left', 700);
     if (!PHONE) para(tx + 10, ty + 72 + 5 * 22 + 4, '구급차가 빠를수록 높음과 낮음의 차이(폭)가 커져요.', tw - 20, 13.5, '#14532d', 19, 700);
   }
@@ -268,9 +270,9 @@
     if (lf) {
       const bx0 = rcA.x + lf.e(lf.kmax, 1) * 0 + (A.xs(lf.kmax * A.T0) + V * (A.P - lf.kmax * A.T0)) * ppm, bx1 = rcA.x + (A.xs((lf.kmax - 1) * A.T0) + V * (A.P - (lf.kmax - 1) * A.T0)) * ppm;
       const cx0 = rcA.x + (A.xs(lf.kmax * A.T0) - V * (A.P - lf.kmax * A.T0)) * ppm, cx1 = rcA.x + (A.xs((lf.kmax - 1) * A.T0) - V * (A.P - (lf.kmax - 1) * A.T0)) * ppm;
-      const br = (xa, xb, yy, col, txt) => { ctx.strokeStyle = col; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(xa, yy); ctx.lineTo(xb, yy); ctx.moveTo(xa, yy - 6); ctx.lineTo(xa, yy + 6); ctx.moveTo(xb, yy - 6); ctx.lineTo(xb, yy + 6); ctx.stroke(); if (txt) D.label((xa + xb) / 2, yy - 18, txt, { bg: col, size: 13 }); };
-      if (bx1 < rcA.x + rcA.w - 4) br(bx0, bx1, cy - 52, '#e2464b', '앞 ' + fx(lf.front, 2) + ' m');
-      if (cx1 > rcA.x + 4) br(cx0, cx1, cy - 52, '#2563eb', '뒤 ' + fx(lf.back, 2) + ' m');
+      const br = (xa, xb, yy, col, txt, ly) => { ctx.strokeStyle = col; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(xa, yy); ctx.lineTo(xb, yy); ctx.moveTo(xa, yy - 6); ctx.lineTo(xa, yy + 6); ctx.moveTo(xb, yy - 6); ctx.lineTo(xb, yy + 6); ctx.stroke(); if (txt) D.label((xa + xb) / 2, yy - ly, txt, { bg: col, size: 13 }); };
+      if (bx1 < rcA.x + rcA.w - 4) br(bx0, bx1, cy - 52, '#e2464b', '앞 ' + fx(lf.front, 2) + ' m', 40);
+      if (cx1 > rcA.x + 4) br(cx0, cx1, cy - 52, '#2563eb', '뒤 ' + fx(lf.back, 2) + ' m', 18);
     }
     // 오른쪽 패널: 파원은 가만히, 관측자가 움직임
     const sx2 = rcB.x + B.xs(B.P) * ppm; SPK(sx2, cy, 13);
@@ -406,7 +408,7 @@
     ctx.fillStyle = '#5b6678'; ctx.fillRect(c.x, roadY, c.w, 46); ctx.strokeStyle = '#f8fafc'; ctx.lineWidth = 3; ctx.setLineDash([16, 12]); ctx.beginPath(); ctx.moveTo(c.x, roadY + 23); ctx.lineTo(c.x + c.w, roadY + 23); ctx.stroke(); ctx.setLineDash([]);
     const carX = x1 - ((g.t * 60) % (x1 - x0 - 40));
     const gunY = roadY + 3;
-    T(x0 - 56, roadY + 16, '📡', 40, '#000', 'center', 700); T(x0 - 56, roadY + 50, '스피드건', 13, MUTED, 'center', 800);
+    T(x0 - 56, roadY + 18, '📡', 40, '#000', 'center', 700); T(x0 - 56, roadY + 66, '스피드건', 13, MUTED, 'center', 800);
     ctx.save(); ctx.translate(carX, roadY + 8); T(0, 18, '🚗', 46, '#000', 'center', 700); ctx.restore();
     D.arrow(carX + 30, roadY - 18, carX - 40, roadY - 18, { color: '#16a34a', width: 4, head: 11 }); D.label(carX - 6, roadY - 38, 'u = ' + u + ' m/s', { bg: '#16a34a', size: 13 });
     const dev = 0.38 * (u / 40), lam0 = 26, lamR = lam0 * (1 - dev), ph = -g.t * 6;
@@ -469,7 +471,7 @@
     const pxs = rx + (PHONE ? 100 : 190), pys = c.y + 62 + gy * 1, up = radarU(rx, ry, pxs, pys, di, U);
     ctx.save(); ctx.setLineDash([5, 5]); ctx.strokeStyle = '#334155'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(rx, ry); ctx.lineTo(pxs, pys); ctx.stroke(); ctx.restore();
     ctx.strokeStyle = '#111827'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(pxs, pys, Math.min(gx, gy) * 0.55, 0, TAU); ctx.stroke();
-    const sw = 14; [['#2563eb', '레이더 쪽으로 (Δf > 0)'], ['#e2464b', '레이더에서 멀어짐 (Δf < 0)']].forEach(([col, tx], i) => { ctx.fillStyle = col; ctx.beginPath(); ctx.arc(c.x + c.w - (PHONE ? 150 : 196), c.y + 46 + i * 22, sw / 2, 0, TAU); ctx.fill(); T(c.x + c.w - (PHONE ? 138 : 184), c.y + 51 + i * 22, tx, 13, INK, 'left', 800); });
+    const sw = 14; [['#2563eb', '레이더 쪽으로 (Δf > 0)'], ['#e2464b', '레이더에서 멀어짐 (Δf < 0)']].forEach(([col, tx], i) => { ctx.fillStyle = col; ctx.beginPath(); ctx.arc(c.x + 20, c.y + c.h - 40 + i * 22, sw / 2, 0, TAU); ctx.fill(); T(c.x + 34, c.y + c.h - 35 + i * 22, tx, 13, INK, 'left', 800); });
     ctx.restore();
     panel(PX, PY, PW, PH, 16);
     const x1p = PX + 14, df = 2 * F_RAD * up / C_LIGHT;
@@ -557,9 +559,9 @@
     const m = S.mode;
     if (m === 'amb') {
       const q = S.amb.trace.length ? S.amb.trace[S.amb.trace.length - 1][1] : AF;
-      L1 = '구급차 속력'; a = VSA[S.amb.vi] + ' m/s'; L2 = '사이렌이 내는 소리'; b = AF + ' Hz'; L3 = S.amb.listener === 'road' ? '길가에서 듣는 소리' : '운전자가 듣는 소리'; c = fR(q) + ' Hz';
+      L1 = '구급차 속력'; a = VSA[S.amb.vi] + ' m/s'; L2 = '사이렌 소리'; b = AF + ' Hz'; L3 = S.amb.listener === 'road' ? '길가에서 듣는 소리' : '운전자가 듣는 소리'; c = fR(q) + ' Hz';
     } else if (m === 'wf') {
-      const lf = S.wf.A.lamFB(); L1 = '파원 속력 v_s'; a = S.wf.vi * 10 + ' m/s'; L2 = '앞 / 뒤 파장'; b = fx(lf.front, 2) + ' / ' + fx(lf.back, 2) + ' m'; L3 = '원래 파장 λ = v/f'; c = '0.50 m';
+      const lf = S.wf.A.lamFB(); L1 = '파원 속력 v_s'; a = S.wf.vi * 10 + ' m/s'; L2 = '앞 / 뒤 파장'; b = fx(lf.front, 2) + ' / ' + fx(lf.back, 2) + ' m'; L3 = '원래 파장 λ'; c = '0.50 m';
     } else if (m === 'calc') {
       const f = clFormula(), fm = S.cl.rs.fMeas(0); L1 = '움직이는 것'; a = (S.cl.type === 'src' ? '파원' : '관측자') + ' ' + (S.cl.dir === 'app' ? '다가옴' : '멀어짐'); L2 = '식으로 계산한 f′'; b = fR(f.val) + ' Hz'; L3 = '파면 센서 f′'; c = fm ? fR(fm) + ' Hz' : '—';
     } else if (m === 'phone') {
@@ -599,7 +601,7 @@
           check: () => S.amb.rec.length >= 3,
           hold: 0.5,
           status: () => mark(S.amb.rec.length >= 3) + ' 기록한 속력 ' + S.amb.rec.length + ' / 3 ' + (S.amb.rec.length ? '(' + S.amb.rec.slice().sort((a, b) => a.vs - b.vs).map((r) => r.vs + ' m/s').join(', ') + ')' : ''),
-          explain: '속력이 10 → 20 → 30 → 40 m/s로 커질수록 높은 소리와 낮은 소리의 차이(변화 폭)가 약 41 → 83 → 124 → 167 Hz로 커졌어요. 구급차가 빠를수록 도플러 효과가 커져요.',
+          explain: '속력이 10 → 20 → 30 → 40 m/s로 커질수록 높은 소리와 낮은 소리의 차이(변화 폭)가 약 41 → 83 → 125 → 167 Hz로 커졌어요. 구급차가 빠를수록 도플러 효과가 커져요.',
         },
         {
           title: '스펙트럼에서 높낮이 읽기', manual: true,

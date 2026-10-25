@@ -56,6 +56,8 @@
   const SUBD = '₀₁₂₃₄₅₆₇₈₉';
   const subs = (n) => String(n).split('').map((c) => SUBD[+c]).join('');
   const lerp = (a, b, t) => a + (b - a) * t;
+  const hasBatchim = (s) => { const c = String(s).charCodeAt(String(s).length - 1) - 0xAC00; return c >= 0 && c <= 11171 && c % 28 !== 0; };
+  const josa = (s, withB, noB) => s + (hasBatchim(s) ? withB : noB);
   const MAIN = PHONE ? { x: 8, y: 52, w: 464, h: 424 } : { x: 12, y: 52, w: 776, h: 342 };
   const INFO = PHONE ? { x: 8, y: 484, w: 464, h: 270 } : { x: 12, y: 402, w: 776, h: 148 };
   const S = { mode: '', gate: '', fade: 0, t: 0 };
@@ -583,7 +585,7 @@
       });
       const done = (!r && L3.res[k].water) || (r && tProg > 0.95);
       const rx = bx + bw + (PHONE ? 10 : 30);
-      if (!PHONE) { textBlock(rx, by + 20, ap2.x + ap2.w - rx - 10, done ? m.name + '은 물과 고르게 섞여 맑은 용액이 돼요. 극성이 커서 물 분자와 잘 어울려요.' : '시료를 물에 넣으면 어떻게 될까요?', 14, done ? '#166534' : MUTED, 19, 800); }
+      if (!PHONE) { textBlock(rx, by + 20, ap2.x + ap2.w - rx - 10, done ? josa(m.name, '은', '는') + ' 물과 고르게 섞여 맑은 용액이 돼요. 극성이 커서 물 분자와 잘 어울려요.' : '시료를 물에 넣으면 어떻게 될까요?', 14, done ? '#166534' : MUTED, 19, 800); }
       else if (done) textBlock(bx + bw + 8, by + 24, 130, '물과 고르게 섞여요', 13.5, '#166534', 18, 800);
     } else if (showTest === 'ph') {
       const tb = tubeShape(cxA - (PHONE ? 100 : 120), apTop + 16, 48, PHONE ? 170 : 196);

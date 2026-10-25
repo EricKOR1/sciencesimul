@@ -6263,8 +6263,7 @@ window.SCI_CATALOG = {
                 "종파·횡파",
                 "v = fλ",
                 "속력 요인"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hm-wave-reflection",
@@ -6285,8 +6284,7 @@ window.SCI_CATALOG = {
                 "경계 통과",
                 "에코 거리",
                 "초음파 활용"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hm-doppler",
@@ -6307,8 +6305,7 @@ window.SCI_CATALOG = {
                 "파면 모형",
                 "도플러 식",
                 "속도 측정"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hm-noise-control",
@@ -7830,8 +7827,7 @@ window.SCI_CATALOG = {
                 "화학식 표현",
                 "성질 탐구",
                 "분류하기"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hr-alcohol-oxidation",
@@ -7852,8 +7848,7 @@ window.SCI_CATALOG = {
                 "산화수 추적",
                 "음주 측정기",
                 "몸속 분해"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hr-silver-mirror",
@@ -7874,8 +7869,7 @@ window.SCI_CATALOG = {
                 "시료 시험",
                 "전자 장부",
                 "구별하기"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hr-polymerization",

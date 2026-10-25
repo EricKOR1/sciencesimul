@@ -56,6 +56,8 @@
   const SUBD = '₀₁₂₃₄₅₆₇₈₉';
   const subs = (n) => String(n).split('').map((c) => SUBD[+c]).join('');
   const lerp = (a, b, t) => a + (b - a) * t;
+  const hasBatchim = (s) => { const c = String(s).charCodeAt(String(s).length - 1) - 0xAC00; return c >= 0 && c <= 11171 && c % 28 !== 0; };
+  const josa = (s, withB, noB) => s + (hasBatchim(s) ? withB : noB);
   const MAIN = PHONE ? { x: 8, y: 52, w: 464, h: 424 } : { x: 12, y: 52, w: 776, h: 342 };
   const INFO = PHONE ? { x: 8, y: 484, w: 464, h: 270 } : { x: 12, y: 402, w: 776, h: 148 };
   const S = { mode: '', gate: '', fade: 0, t: 0 };
@@ -432,7 +434,7 @@
     }
     const ty = R.y + R.h - (PHONE ? 62 : 12);
     T(lx, ty, '잃는 전자 : 2 × ' + n + ' = ' + lost + '개', PHONE ? 13.5 : 15, GC.OH, 'left', 800);
-    T(PHONE ? lx : rx, PHONE ? ty + 22 : ty, '얻는 전자 : 6 × ' + k + ' = ' + gain + '개 (Cr ' + MINUS + '1개당 3개)', PHONE ? 13.5 : 15, CRO, 'left', 800);
+    T(PHONE ? lx : rx, PHONE ? ty + 22 : ty, '얻는 전자 : 6 × ' + k + ' = ' + gain + '개 (Cr 1개당 3개)', PHONE ? 13.5 : 15, CRO, 'left', 800);
     // 저울 표시
     const sx = PHONE ? R.x + R.w - 70 : midX - 8, sy = R.y + (PHONE ? 150 : 72);
     const ang = clamp((lost - gain) / Math.max(lost, gain, 1), -1, 1) * 0.28;
@@ -547,8 +549,8 @@
 
   /* ============ ④ 몸속 분해 ============ */
   const SUBS = {
-    ethanol: { names: ['에탄올', '아세트알데하이드', '아세트산'], cols: [GC.OH, GC.CHO, GC.COOH], V1: 3, K1: 2, V2: { normal: 8, weak: 1.5 }, k3: 1.2, tox: 1, thr: 1.5, label: '아세트알데하이드', sc: [48, 12, 12] },
-    methanol: { names: ['메탄올', '폼알데하이드', '폼산'], cols: [GC.OH, GC.CHO, GC.COOH], V1: 2.5, K1: 2, V2: { normal: 10, weak: 10 }, k3: 0.12, tox: 2, thr: 3, label: '폼산', sc: [48, 12, 12] },
+    ethanol: { names: ['에탄올', '아세트알데하이드', '아세트산'], cols: [GC.OH, GC.CHO, GC.COOH], V1: 3, K1: 2, V2: { normal: 8, weak: 1.5 }, k3: 1.2, tox: 1, thr: 1.5, label: '아세트알데하이드', sc: [48, 16, 16] },
+    methanol: { names: ['메탄올', '폼알데하이드', '폼산'], cols: [GC.OH, GC.CHO, GC.COOH], V1: 2.5, K1: 2, V2: { normal: 10, weak: 10 }, k3: 0.12, tox: 2, thr: 3, label: '폼산', sc: [48, 16, 16] },
   };
   const L4 = { sub: 'ethanol', enz: 'normal', amt: 3, pred: '', p: [0, 0, 0], t: 0, running: false, done: false, peak: 0, hist: [], runs: [], flush: 0, flowAcc: [0, 0, 0], fl: [], result: '', lastFlux: [0, 0, 0] };
   const l4Sub = () => SUBS[L4.sub];
@@ -588,7 +590,7 @@
     : { pipe: { x: MAIN.x + 8, y: MAIN.y + 8, w: MAIN.w - 16, h: 156 }, chart: { x: MAIN.x + 8, y: MAIN.y + 172, w: 520, h: 162 }, face: { x: MAIN.x + 536, y: MAIN.y + 172, w: 232, h: 162 } };
   function drawLiver(t) {
     const G = l4G(), S4 = l4Sub(), thr = S4.thr, methanol = L4.sub === 'methanol';
-    T(14, 26, '🫀 간에서 ' + S4.names[0] + '이(가) 단계적으로 산화돼요', PHONE ? 14 : 17, INK, 'left', 800);
+    T(14, 26, '🫀 간에서 ' + josa(S4.names[0], '이', '가') + ' 단계적으로 산화돼요', PHONE ? 14 : 17, INK, 'left', 800);
     panel(MAIN.x, MAIN.y, MAIN.w, MAIN.h, 14);
     // 간세포 단면
     const P = G.pipe;
@@ -617,11 +619,11 @@
     }
     // 그래프
     const Ch = G.chart; D.roundRect(Ch.x, Ch.y, Ch.w, Ch.h, 12); ctx.fillStyle = '#f8fafc'; ctx.fill(); ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1.4; ctx.stroke();
-    const px0 = Ch.x + 46, px1 = Ch.x + Ch.w - 14, py0 = Ch.y + 28, py1 = Ch.y + Ch.h - 30, ymax = 12;
+    const px0 = Ch.x + 46, px1 = Ch.x + Ch.w - 14, py0 = Ch.y + 28, py1 = Ch.y + Ch.h - 30, ymax = 16;
     T(Ch.x + 12, Ch.y + 20, S4.label + ' 양의 변화 (단위)', 13.5, WARN, 'left', 800);
     const gx = (h) => px0 + h / 8 * (px1 - px0), gy = (v) => py1 - clamp(v, 0, ymax) / ymax * (py1 - py0);
     ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(px0, py0); ctx.lineTo(px0, py1); ctx.lineTo(px1, py1); ctx.stroke();
-    [0, 6, 12].forEach((v) => T(px0 - 6, gy(v) + 5, String(v), 13, MUTED, 'right', 700));
+    [0, 8, 16].forEach((v) => T(px0 - 6, gy(v) + 5, String(v), 13, MUTED, 'right', 700));
     [0, 2, 4, 6, 8].forEach((h) => T(gx(h), py1 + 18, h + 'h', 13, MUTED, 'center', 700));
     D.dashedLine(px0, gy(thr), px1, gy(thr), { color: '#dc2626', width: 2, dash: [6, 4] });
     T(px1 - 4, gy(thr) - 6, methanol ? '위험 기준 ' + thr : '얼굴이 붉어지는 기준 ' + thr, 12.5, '#b91c1c', 'right', 800);
@@ -823,7 +825,7 @@
         '<p>산성 다이크로뮴산 칼륨이 든 관에 날숨을 불어 넣으면 <b>주황색(Cr₂O₇²⁻) → 녹색(Cr³⁺)</b>으로 변한 길이가 날숨의 에탄올 농도에 비례해요. 단속 기준은 혈중 알코올 농도 0.03 %로, 날숨 에탄올 약 <b>0.15 mg/L</b>예요.</p>' +
         '<p>⚠️ <b>안전</b> : 크로뮴(Ⅵ)은 독성이 있어서 실제로는 <b>교사 시연</b>으로만 하고, 보안경 · 장갑을 착용해요. 사용한 관과 폐액은 일반 쓰레기가 아니라 <b>별도로 수거</b>해서 처리해요. 여기서는 모의실험으로 안전하게 해 봐요.</p>',
       features: ['tube'],
-      setup() { T3.front = 0; T3.read = null; T3.person = ''; T3.c = 0.15; T3.meas = [false, false, false]; T3.judge = { A: '', B: '', C: '' }; ['A', 'B', 'C'].forEach((p) => { T3['sel' + p].value = ''; T3['sel' + p].className = 'sel-in'; }); go('tube', 'meas'); },
+      setup() { T3.blowing = false; T3.blow = 0; T3.vap.length = 0; T3.front = 0; T3.read = null; T3.person = ''; T3.c = 0.15; T3.meas = [false, false, false]; T3.judge = { A: '', B: '', C: '' }; ['A', 'B', 'C'].forEach((p) => { T3['sel' + p].value = ''; T3['sel' + p].className = 'sel-in'; }); go('tube', 'meas'); },
       recap: '날숨의 에탄올이 산성 Cr₂O₇²⁻(주황)을 Cr³⁺(녹색)으로 환원시키며 자기는 산화돼요. 녹색으로 변한 길이가 에탄올 농도에 비례하고, 3 : 2의 비(에탄올 : Cr₂O₇²⁻)로 반응해요.',
       summary: '<ul><li>음주 측정기 : 날숨의 에탄올이 산성 Cr₂O₇²⁻이 든 관을 지나며 <b>주황색 → 녹색</b>(Cr³⁺)으로 변한 길이로 농도를 알아요.</li><li>단속 기준 혈중 0.03 % ≈ 날숨 에탄올 <b>0.15 mg/L</b></li><li>계산 : 0.15 mg / 46 g/mol = 3.3 μmol → Cr₂O₇²⁻ 소모 = 3.3 × 2/3 = <b>2.2 μmol</b> (3 : 2)</li><li>3CH₃CH₂OH + 2Cr₂O₇²⁻ + 16H⁺ → 3CH₃COOH + 4Cr³⁺ + 11H₂O</li><li>안전 : 크로뮴(Ⅵ)은 독성 → 교사 시연 · 모의실험, 폐액은 별도 수거. 현대 측정기의 연료 전지식 센서는 에탄올이 산화될 때 나오는 전자를 전류로 읽어요.</li></ul>',
       missions: [
