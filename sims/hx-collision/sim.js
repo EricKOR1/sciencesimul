@@ -510,14 +510,15 @@
     T(px, yT - 26, '활성화물 (전이 상태)', 12.5, '#b45309', 'center', 800, HALO);
     // 화살표: Eₐ(정), ΔH, Eₐ(역)
     const lab = (k, txt, okv) => (okv ? txt : '?');
-    const axA = px - 34, axH = x1 - 26 - (PHONE ? 0 : 0), axR = px + 34;
+    const axA = px - 34, axR = g.x + g.w - 16;
     const ok = E.ok[E.ds];
+    dash(px, yT, axR, yT, 'rgba(100,116,139,.55)', 1.4);
     D.arrow(axA, yR, axA, yT + 2, { color: PUR, width: 3.4, head: 10 });
     D.label(axA - 6, (yR + yT) / 2, 'Eₐ(정) = ' + (ok[0] ? d.ea + ' kJ' : '?'), { size: 12.5, bg: PUR, align: 'right' });
     D.arrow(x1 - 14, yR, x1 - 14, yP + (yP > yR ? -2 : 2), { color: d.dh < 0 ? '#e0692f' : '#0ea5e9', width: 3.4, head: 10 });
     D.label(x1 - 20, (yR + yP) / 2 + (d.dh < 0 ? 0 : 0), 'ΔH = ' + (ok[1] ? sg(d.dh, f0) + ' kJ' : '?'), { size: 12.5, bg: d.dh < 0 ? '#e0692f' : '#0ea5e9', align: 'right' });
     D.arrow(axR, yP, axR, yT + 2, { color: TEAL, width: 3.4, head: 10 });
-    D.label(axR + 6, (yP + yT) / 2 + 10, 'Eₐ(역) = ' + (ok[2] ? (d.ea - d.dh) + ' kJ' : '?'), { size: 12.5, bg: TEAL, align: 'left' });
+    D.label(axR - 6, (yP + yT) / 2, 'Eₐ(역) = ' + (ok[2] ? (d.ea - d.dh) + ' kJ' : '?'), { size: 12.5, bg: TEAL, align: 'right' });
     // 충돌 에너지 선과 공
     const yE = eY(g, E.E);
     dash(g.x + 4, yE, g.x + g.w - 4, yE, '#14a058', 1.8); D.label(g.x + g.w - 6, yE - 12, 'E = ' + E.E + ' kJ', { size: 12, bg: GOOD, align: 'right' });

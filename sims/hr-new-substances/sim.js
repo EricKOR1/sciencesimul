@@ -258,3 +258,331 @@
     IMB.forEach((b, i) => { pill(xs[i], I.y + 56, b.t.split(' ')[0] + ' ' + b.t.split(' ')[1], { bg: SCOL[b.g], color: '#fff', border: null, size: 13.5, align: 'left' }); if (i < 2) T(xs[i] + (PHONE ? 112 : 118), I.y + 61, '→', 17, '#94a3b8', 'center', 900); });
     textBlock(I.x + 16, I.y + 88, I.w - 32, IM.solved ? '원리를 알아내면(과학) 공장에서 대량으로 만들 수 있고(기술), 그 물질이 생활을 바꿔요(사회). 사회의 변화에는 이로움과 함께 새로운 문제도 따라와요.' : '새 물질은 원리를 알아내는 과학, 대량으로 만드는 기술, 생활을 바꾸는 사회의 영향이 이어져 나타나요.', 13.5, INK, 18, 700);
   }
+
+  /* ============ ② 인공 향 ============ */
+  const AMT = [0.10, 0.15, 0.20, 0.25, 0.30], K_EQ = 4, N_ACID = 0.10;
+  const ACIDS = { ace: { name: '아세트산', lab: ['아세트산'], f: 'CH₃COOH', M: 60, nm: '아세트산' }, but: { name: '뷰티르산', lab: ['뷰티르산'], f: 'CH₃CH₂CH₂COOH', M: 88 } };
+  const ALCS = { eth: { name: '에탄올', lab: ['에탄올'], f: 'CH₃CH₂OH', M: 46 }, iso: { name: '아이소아밀 알코올', lab: ['아이소아밀', '알코올'], f: '(CH₃)₂CHCH₂CH₂OH', M: 88 } };
+  const FRU = {
+    'ace-eth': { name: '아세트산 에틸', ico: '🍐', smell: '배 같은 과일 향 (접착제 용제에도 쓰여요)', f: 'CH₃COOCH₂CH₃' },
+    'ace-iso': { name: '아세트산 아이소아밀', ico: '🍌', smell: '바나나 향', f: 'CH₃COOCH₂CH₂CH(CH₃)₂' },
+    'but-eth': { name: '뷰티르산 에틸', ico: '🍍', smell: '파인애플 향', f: 'CH₃CH₂CH₂COOCH₂CH₃' },
+    'but-iso': { name: '뷰티르산 아이소아밀', ico: '🍑', smell: '살구 · 배 같은 과일 향', f: 'CH₃CH₂CH₂COOCH₂CH₂CH(CH₃)₂' },
+  };
+  /* 평형 상수 K = x² / ((0.10 − x)(a − x)) = 4 를 만족하는 생성물의 양 x (mol) */
+  function eqX(a) {
+    const A = 1 - K_EQ, B = K_EQ * (N_ACID + a), Cc = -K_EQ * N_ACID * a; // (1 − K) x² + K (n + a) x − K n a = 0 형태로 정리
+    const aa = K_EQ - 1, bb = -K_EQ * (N_ACID + a), cc = K_EQ * N_ACID * a;
+    void A; void B; void Cc;
+    return (-bb - Math.sqrt(bb * bb - 4 * aa * cc)) / (2 * aa);
+  }
+  const AR = { acid: 'ace', alc: 'eth', ai: 0, run: null, res: null, done: {}, yAt: {}, bar: { a: 0.10, b: 0.10, p: 0, w: 0 }, flame: 0, emit: 0, pop: 0 };
+  const arKey = () => AR.acid + '-' + AR.alc;
+  const arAmt = () => AMT[AR.ai];
+  const arPct = (ai) => Math.round(100 * eqX(AMT[ai]) / N_ACID);
+  const arG = () => PHONE
+    ? { panel: { x: 8, y: 56, w: 464, h: 150 }, bt: { ace: { x: 56, y: 108 }, but: { x: 148, y: 108 }, eth: { x: 298, y: 108 }, iso: { x: 398, y: 108 } }, hdr: { acid: 18, alc: 262 }, flask: { x: 120, by: 408, w: 130, h: 150 }, chart: { x: 232, y: 214, w: 240, h: 262 }, plot: { x: 250, y: 268, w: 210, h: 140 } }
+    : { panel: { x: 24, y: 62, w: 192, h: 322 }, bt: { ace: { x: 72, y: 132 }, but: { x: 168, y: 132 }, eth: { x: 72, y: 250 }, iso: { x: 168, y: 250 } }, hdr: { acid: 84, alc: 220 }, flask: { x: 360, by: 322, w: 150, h: 170 }, chart: { x: 500, y: 62, w: 264, h: 322 }, plot: { x: 522, y: 116, w: 226, h: 180 } };
+  const arBottleHit = (p) => { const G = arG(); for (const k of ['ace', 'but']) { const q = G.bt[k]; if (Math.abs(p.x - q.x) < 36 && p.y > q.y - 40 && p.y < q.y + 70) return ['acid', k]; } for (const k of ['eth', 'iso']) { const q = G.bt[k]; if (Math.abs(p.x - q.x) < 36 && p.y > q.y - 40 && p.y < q.y + 70) return ['alc', k]; } return null; };
+  function arSet(kind, key) {
+    if (AR.run) return;
+    if (kind === 'acid') AR.acid = key; else if (kind === 'alc') AR.alc = key; else if (kind === 'amt') AR.ai = clamp(key, 0, 4);
+    AR.res = null; Sound.click(); updateCtl();
+  }
+  function arRun() {
+    if (AR.run) return;
+    AR.res = null; AR.run = { t: 0, key: arKey(), ai: AR.ai }; Sound.click(); updateCtl();
+  }
+  function arReset() { AR.run = null; AR.res = null; AR.done = {}; AR.yAt = {}; AR.acid = 'ace'; AR.alc = 'eth'; AR.ai = 0; AR.bar = { a: 0.10, b: 0.10, p: 0, w: 0 }; updateCtl(); }
+  const arDoneN = () => Object.keys(AR.done).length;
+  function stepAr(dt) {
+    const G = arG();
+    if (AR.run) {
+      AR.run.t += dt / (RM ? 0.3 : 3.6);
+      const pr = sm(AR.run.t);
+      if (!RM && Math.random() < dt * 14 * pr) parts.emit({ x: G.flask.x + (Math.random() - 0.5) * 10, y: G.flask.by - G.flask.h - 4, vx: (Math.random() - 0.5) * 20, vy: -50 - Math.random() * 20, life: 1.8, size: 5 + Math.random() * 4, color: 'rgba(253,224,71,0.8)', shape: 'smoke', gravity: -10 });
+      if (!RM && Math.random() < dt * 9) parts.emit({ x: G.flask.x + (Math.random() - 0.5) * G.flask.w * 0.5, y: G.flask.by - 10, vx: 0, vy: -45 - Math.random() * 25, life: 1.0, size: 2.5 + Math.random() * 2, color: '#e0f2fe', shape: 'bubble', gravity: 0 });
+      if (AR.run.t >= 1) {
+        const key = AR.run.key, ai = AR.run.ai, x = eqX(AMT[ai]);
+        AR.res = { key, ai, x }; AR.done[key] = true; AR.yAt[ai] = Math.round(100 * x / N_ACID); AR.run = null; AR.pop = 1;
+        Sound.success(); flash(G.flask.x, G.flask.by - G.flask.h - 20, ['#fde047', '#fb923c', '#ffffff']); updateCtl();
+      }
+    }
+    AR.pop = ap(AR.pop, 0, dt, 2);
+    const live = AR.run ? sm(AR.run.t) : AR.res ? 1 : 0, a = arAmt(), x = eqX(a);
+    const tg = { a: N_ACID - x * live, b: a - x * live, p: x * live, w: x * live };
+    ['a', 'b', 'p', 'w'].forEach((k) => { AR.bar[k] = RM ? tg[k] : ap(AR.bar[k], tg[k], dt, 9); });
+    AR.flame = ap(AR.flame, AR.run ? 1 : 0, dt, 5);
+  }
+  function drawBottle(x, y, label, col, on, name) {
+    ctx.save();
+    if (on) D.glow(x, y + 18, 54, col, 0.45);
+    D.shadow(() => { D.roundRect(x - 26, y - 16, 52, 60, 10); ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.fill(); }, { blur: on ? 10 : 4, y: 2 });
+    D.roundRect(x - 22, y + 8, 44, 32, 6); ctx.fillStyle = C.rgba(col, 0.55); ctx.fill();
+    D.roundRect(x - 26, y - 16, 52, 60, 10); ctx.strokeStyle = on ? col : '#94a3b8'; ctx.lineWidth = on ? 3.4 : 1.8; ctx.stroke();
+    D.roundRect(x - 10, y - 28, 20, 14, 4); ctx.fillStyle = on ? col : '#94a3b8'; ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.fillRect(x - 18, y - 8, 4, 40);
+    label.forEach((s, i) => T(x, y + 62 + i * 15, s, 13, on ? INK : MUTED, 'center', 800));
+    ctx.restore();
+  }
+  function drawAroma(t) {
+    const G = arG(), fk = FRU[arKey()], ac = ACIDS[AR.acid], al = ALCS[AR.alc], a = arAmt();
+    T(14, 26, '🍌 카복실산과 알코올을 가열해 인공 향을 만들어요', PHONE ? 13.5 : 17, INK, 'left', 800);
+    panel(G.panel.x, G.panel.y, G.panel.w, G.panel.h, 14, '#faf8ff');
+    if (PHONE) { T(G.panel.x + 14, G.panel.y + 22, '카복실산 (–COOH)', 14, '#dc2626', 'left', 800); T(G.panel.x + 252, G.panel.y + 22, '알코올 (–OH)', 14, '#2563eb', 'left', 800); }
+    else { T(G.panel.x + G.panel.w / 2, G.hdr.acid, '카복실산 (–COOH)', 14.5, '#dc2626', 'center', 800); T(G.panel.x + G.panel.w / 2, G.hdr.alc, '알코올 (–OH)', 14.5, '#2563eb', 'center', 800); }
+    ['ace', 'but'].forEach((k) => drawBottle(G.bt[k].x, G.bt[k].y + (PHONE ? 8 : 0), ACIDS[k].lab, '#ef4444', AR.acid === k, k));
+    ['eth', 'iso'].forEach((k) => drawBottle(G.bt[k].x, G.bt[k].y + (PHONE ? 8 : 0), ALCS[k].lab, '#3b82f6', AR.alc === k, k));
+    // 플라스크 + 가열
+    const F = G.flask, run = AR.run, prog = run ? sm(run.t) : AR.res ? 1 : 0;
+    D.shadow(() => { D.roundRect(F.x - 62, F.by + 22, 124, 14, 5); ctx.fillStyle = '#64748b'; ctx.fill(); }, { blur: 5, y: 2 });
+    D.roundRect(F.x - 40, F.by + 8, 80, 14, 4); ctx.fillStyle = '#94a3b8'; ctx.fill();
+    D.flame(F.x, F.by + 8, 42 * AR.flame, t);
+    const lvl = 0.3 + 0.35 * (N_ACID + a) / 0.40;
+    D.flask(F.x, F.by, F.w, F.h, { level: lvl, liquid: C.mix('#bfdbfe', '#fcd34d', prog), t });
+    if (!RM && run) { for (let i = 0; i < 4; i++) { const ph = ((t * 0.5 + i * 0.27) % 1); const wy = F.by - F.h + 10 + ph * (F.h * 0.38); ctx.beginPath(); ctx.arc(F.x - F.w * 0.14 - ph * 6, wy, 3, 0, TAU); ctx.fillStyle = 'rgba(96,165,250,.8)'; ctx.fill(); } }
+    if (prog > 0.55) {
+      const al2 = sm((prog - 0.55) / 0.3), by2 = F.by - F.h - 44 - (RM ? 0 : Math.sin(t * 2.4) * 4);
+      ctx.save(); ctx.globalAlpha = al2; T(F.x, by2, fk.ico, 40 + 8 * AR.pop, INK, 'center', 700); ctx.restore();
+      ctx.save(); ctx.globalAlpha = al2; pill(F.x, by2 - 36, fk.name, { bg: '#fff7ed', color: '#9a3412', border: '#fdba74', size: 14 }); ctx.restore();
+    }
+    // 평형 조성 막대
+    const Cc = G.chart; panel(Cc.x, Cc.y, Cc.w, Cc.h, 14);
+    T(Cc.x + 14, Cc.y + 24, '반응 후 조성 (mol)', 14.5, WARN, 'left', 800);
+    const P = G.plot, MAXV = 0.30;
+    for (let v = 0; v <= 3; v++) { const yy = P.y + P.h - P.h * (v / 3); line(P.x, yy, P.x + P.w, yy, 1, '#e2e8f0'); T(P.x - 4, yy + 4, (v * 0.1).toFixed(2), 12.5, MUTED, 'right', 700); }
+    const names = ['카복실산', '알코올', '향 물질', '물'], cols = ['#ef4444', '#3b82f6', '#f59e0b', '#38bdf8'], keys = ['a', 'b', 'p', 'w'];
+    const bw = Math.min(40, P.w / 5.5), gap = (P.w - 4 * bw) / 5;
+    keys.forEach((k, i) => {
+      const bx = P.x + gap * (i + 1) + bw * i, h = clamp(AR.bar[k] / MAXV, 0, 1) * P.h;
+      const g = ctx.createLinearGradient(0, P.y + P.h - h, 0, P.y + P.h); g.addColorStop(0, C.shade ? C.shade(cols[i], 0.2) : cols[i]); g.addColorStop(1, cols[i]);
+      if (h > 0.5) { D.roundRect(bx, P.y + P.h - h, bw, h, Math.min(6, h / 2)); ctx.fillStyle = g; ctx.fill(); }
+      T(bx + bw / 2, P.y + P.h - h - 6, AR.bar[k].toFixed(3), 12.5, INK, 'center', 800);
+      T(bx + bw / 2, P.y + P.h + 18, names[i], 13, MUTED, 'center', 800);
+    });
+    if (AR.res) pill(Cc.x + Cc.w / 2, Cc.y + Cc.h - 22, '수득률 ' + Math.round(100 * AR.res.x / N_ACID) + ' %', { bg: '#dcfce7', color: '#166534', border: '#86efac', size: 16 });
+    else T(Cc.x + Cc.w / 2, Cc.y + Cc.h - 18, run ? '평형에 가까워지는 중…' : '“가열하기”를 눌러요', 13.5, MUTED, 'center', 800);
+    // 하단 설명
+    if (!PHONE) arInfo(INFO);
+    else arInfo({ x: 8, y: 484, w: 464, h: 270 });
+  }
+  function arInfo(I) {
+    const ac = ACIDS[AR.acid], al = ALCS[AR.alc], fk = FRU[arKey()], a = arAmt();
+    panel(I.x, I.y, I.w, I.h, 14);
+    T(I.x + 16, I.y + 24, '카복실산 + 알코올 ⇌ 향기 나는 물질 + 물   (진한 황산 촉매, 가열)', PHONE ? 13.5 : 14.5, WARN, 'left', 800);
+    const fl = ac.f + ' + ' + al.f + ' ⇌ ' + fk.f + ' + H₂O';
+    const h1 = textBlock(I.x + 16, I.y + 52, I.w - 32, fl, PHONE ? 14 : 15, INK, 19, 800);
+    let y = I.y + 52 + h1 + 4;
+    y += textBlock(I.x + 16, y, I.w - 32, '넣은 양 : ' + ac.name + ' ' + N_ACID.toFixed(2) + ' mol (' + (N_ACID * ac.M).toFixed(1) + ' g) + ' + al.name + ' ' + a.toFixed(2) + ' mol (' + (a * al.M).toFixed(1) + ' g)', 13.5, MUTED, 18, 700);
+    y += 2;
+    if (AR.res && AR.res.key === arKey() && AR.res.ai === AR.ai) {
+      const x = AR.res.x;
+      textBlock(I.x + 16, y, I.w - 32, '향 물질 ' + x.toFixed(3) + ' mol (' + fk.name + ', ' + fk.smell + ')  →  수득률 = ' + x.toFixed(3) + ' / ' + N_ACID.toFixed(2) + ' × 100 = ' + Math.round(100 * x / N_ACID) + ' %', 14, '#166534', 19, 800);
+    } else textBlock(I.x + 16, y, I.w - 32, '가열하면 조합에 따라 다른 과일 향이 나요. 이 모형에서는 모든 조합의 평형 상수를 K ≈ 4로 단순화했어요.', 13.5, INK, 18, 700);
+    if (PHONE) textBlock(I.x + 16, I.y + I.h - 40, I.w - 32, '⚠️ 실제 실험은 보안경 · 환기, 진한 황산은 교사 시연으로 해요.', 13, '#9a3412', 17, 700);
+    else T(I.x + 16, I.y + I.h - 12, '⚠️ 실제 실험은 보안경 · 장갑 · 환기, 진한 황산은 교사 시연. 남은 용액은 폐액통에 모아요.', 13, '#9a3412', 'left', 700);
+  }
+
+  /* ============ ③ 의약품 합성 ============ */
+  const DR = { p: 0, run: false, done: false, replays: 0, gauge: 0.85, theo: NaN, pct: NaN, tOk: false, pOk: false };
+  const drG = () => PHONE ? { RX: 372, RY: 252, card: { x: 8, y: 366, w: 464, h: 110 }, byP: { x: 78, y: 340 } } : { RX: 400, RY: 214, card: { x: 520, y: 62, w: 256, h: 322 }, byP: { x: 120, y: 340 } };
+  function drRun() { if (DR.run) return; DR.p = 0; DR.run = true; DR.done = false; DR.replays++; Sound.click(); updateCtl(); }
+  function drReset() { DR.p = 0; DR.run = false; DR.done = false; DR.replays = 0; DR.theo = NaN; DR.pct = NaN; updateCtl(); }
+  function stepDr(dt) {
+    if (DR.run) { DR.p += dt / (RM ? 0.4 : 5.2); if (DR.p >= 1) { DR.p = 1; DR.run = false; DR.done = true; Sound.success(); const G = drG(); flash(G.RX, G.RY, ['#fb923c', '#fde047', '#ffffff']); updateCtl(); } }
+    DR.gauge = 0.85 + (0.45 - 0.85) * sm((DR.p - 0.55) / 0.4);
+  }
+  function piece(x, y, w, text, col) {
+    D.shadow(() => { D.roundRect(x - w / 2, y - 16, w, 32, 9); ctx.fillStyle = col; ctx.fill(); }, { blur: 4, y: 2 });
+    T(x, y + 5, text, 14, '#fff', 'center', 900);
+  }
+  function drawDrug(t) {
+    const G = drG(), p = DR.p, RX = G.RX, RY = G.RY, r = 40;
+    T(14, 26, '💊 살리실산의 –OH가 바뀌어 아스피린이 돼요', PHONE ? 13.5 : 17, INK, 'left', 800);
+    if (!PHONE) panel(MAIN.x, MAIN.y, 500 + 0, MAIN.h, 14); else panel(MAIN.x, MAIN.y, MAIN.w, 306, 14);
+    const e1 = sm(p / 0.28), e2 = sm((p - 0.28) / 0.22), eH = sm((p - 0.38) / 0.18), e4 = sm((p - 0.62) / 0.38);
+    const siteO = { x: RX - 64, y: RY - 37 }, Afin = siteO.x - 46, Apre = Afin - 40, Ahome = Apre - 70;
+    const Ab = lerp(Ahome, Apre, e1), Ax = lerp(Ab, Afin, e2), Oy = siteO.y;
+    // 고리
+    const topV = { x: RX, y: RY - r }, ulV = { x: RX + r * Math.cos(Math.PI * 7 / 6), y: RY + r * Math.sin(Math.PI * 7 / 6) };
+    hexPath(RX, RY, r, -Math.PI / 2); ctx.fillStyle = '#fffbeb'; ctx.fill(); ctx.strokeStyle = '#475569'; ctx.lineWidth = 3; ctx.stroke();
+    ctx.beginPath(); ctx.arc(RX, RY, r * 0.58, 0, TAU); ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 2; ctx.stroke();
+    line(topV.x, topV.y, topV.x, topV.y - 30, 3);
+    pill(topV.x, topV.y - 44, '–COOH', { bg: '#dc2626', color: '#fff', border: null, size: 14 });
+    line(ulV.x, ulV.y, siteO.x, siteO.y, 3);
+    // 반응 자리 (O 원자)
+    D.sphere(siteO.x, siteO.y, 10, '#ef4444', { text: 'O', textScale: 1.1 });
+    const bonded = e2 > 0.98;
+    if (bonded) { line(siteO.x - 10, siteO.y, Afin + 31, Oy, 3, '#7c3aed'); }
+    if (p < 0.38) D.sphere(siteO.x - 12, siteO.y - 13, 6, '#f8fafc', { text: 'H', textColor: '#334155', outline: '#94a3b8', gloss: false });
+    // 무수물 조각
+    const Ox2 = Ab - 49, Bx = Ab - 90;
+    const lefty = lerp(Oy, G.byP.y, e4), leftx = lerp(0, 1, e4);
+    const acidPos = { x: lerp(Bx + 46, G.byP.x, e4), y: lerp(Oy, G.byP.y, e4) };
+    if (p < 0.56) {
+      if (e2 < 0.98) line(Ox2 + 9, Oy, Ax - 31, Oy, 3, '#9ca3af');
+      line(Bx + 31, Oy, Ox2 - 9, Oy, 3, '#9ca3af');
+      piece(Bx, Oy, 62, 'COCH₃', '#64748b');
+      D.sphere(Ox2, Oy, 10, '#ef4444', { text: 'O', textScale: 1.1 });
+      if (eH > 0 && eH < 1) { const hx = lerp(siteO.x - 12, Ox2, eH), hy = lerp(siteO.y - 13, Oy - 14, eH) - Math.sin(Math.PI * eH) * 26; D.sphere(hx, hy, 6, '#f8fafc', { text: 'H', textColor: '#334155', outline: '#94a3b8', gloss: false }); }
+    } else {
+      pill(acidPos.x, acidPos.y, 'CH₃COOH', { bg: '#78716c', color: '#fff', border: null, size: 14 });
+    }
+    // 아세틸기 조각(CH3CO)
+    piece(Ax, Oy, 62, 'CH₃CO', '#ea580c');
+    if (e4 > 0.2) T(G.byP.x, G.byP.y + 30, '부산물 : 아세트산', 13.5, '#78716c', 'center', 800, { alpha: sm((e4 - 0.2) / 0.5) });
+    // 이름표
+    const nameA = sm((p - 0.62) / 0.3);
+    T(RX, RY + r + 34, '살리실산 C₇H₆O₃', 15, INK, 'center', 900, { alpha: 1 - nameA });
+    T(RX, RY + r + 34, '아세틸살리실산(아스피린) C₉H₈O₄', PHONE ? 13.5 : 15, '#9a3412', 'center', 900, { alpha: nameA });
+    pill(Ahome + 0, RY - 78 + (PHONE ? -4 : 0), '아세트산 무수물 C₄H₆O₃', { bg: '#fff7ed', color: '#9a3412', border: '#fdba74', size: 13, alpha: 1 - e4, align: 'left' });
+    // 카드 (위 자극)
+    const K = G.card; panel(K.x, K.y, K.w, K.h, 14);
+    if (!PHONE) {
+      T(K.x + 16, K.y + 28, '구조 일부가 바뀌었어요', 15.5, '#5b21b6', 'left', 900);
+      textBlock(K.x + 16, K.y + 54, K.w - 32, p < 0.6 ? '살리실산(138 g/mol) : 버드나무 껍질의 진통 성분이에요. 위를 크게 자극해요.' : '아스피린(180 g/mol) : –OH가 –O–CO–CH₃로 바뀌어 살리실산보다 위 자극이 줄어든 진통제가 됐어요.', 14, INK, 19, 700);
+    } else textBlock(K.x + 14, K.y + 24, K.w - 28, p < 0.6 ? '살리실산(138 g/mol) : 버드나무 껍질의 진통 성분. 위를 크게 자극해요.' : '아스피린(180 g/mol) : –OH가 –O–CO–CH₃로 바뀌어 위 자극이 줄었어요.', 13.5, INK, 18, 700);
+    const gx = K.x + 16, gy = PHONE ? K.y + 76 : K.y + 168, gw = K.w - 32;
+    T(gx, gy - 8, '위 자극 (질적 비교)', 13.5, MUTED, 'left', 800);
+    D.roundRect(gx, gy, gw, 16, 8); ctx.fillStyle = '#e5e7eb'; ctx.fill();
+    const gg = ctx.createLinearGradient(gx, 0, gx + gw, 0); gg.addColorStop(0, '#fde68a'); gg.addColorStop(1, '#ef4444');
+    D.roundRect(gx, gy, Math.max(16, gw * DR.gauge), 16, 8); ctx.fillStyle = gg; ctx.fill();
+    T(gx + gw, gy - 8, DR.gauge > 0.7 ? '큼' : '줄어듦', 13.5, DR.gauge > 0.7 ? BADC : '#166534', 'right', 900);
+    if (!PHONE) {
+      textBlock(K.x + 16, K.y + 218, K.w - 32, '그래도 아스피린은 위 자극이 완전히 없는 약이 아니에요. 부작용이 있어서 의사 · 약사의 안내를 따라 먹어야 해요.', 13.5, MUTED, 18, 700);
+      T(K.x + 16, K.y + 300, '질량 변화 : 138 + 102 → 180 + 60', 13, MUTED, 'left', 700);
+    }
+    if (!PHONE) { T(K.x + 16, K.y + 280, '분자식 : C₇H₆O₃ + C₄H₆O₃ → C₉H₈O₄ + C₂H₄O₂', 13, INK, 'left', 800); }
+    // 하단 정보
+    const I = PHONE ? { x: 8, y: 484, w: 464, h: 270 } : INFO; panel(I.x, I.y, I.w, I.h, 14);
+    T(I.x + 16, I.y + 26, '살리실산 + 아세트산 무수물 → 아세틸살리실산(아스피린) + 아세트산  (몰비 1 : 1)', PHONE ? 13.5 : 14.5, WARN, 'left', 800);
+    let y = I.y + 56;
+    y += textBlock(I.x + 16, y, I.w - 32, '넣은 살리실산 2.0 g (몰질량 138 g/mol)', 14.5, INK, 19, 800);
+    y += textBlock(I.x + 16, y, I.w - 32, DR.done ? '반응 · 거르기 · 건조 후 얻은 아스피린 2.0 g (몰질량 180 g/mol)' : '반응 후 얻은 아스피린 ? g (“반응 재생”을 끝까지 보세요)', 14.5, DR.done ? '#166534' : MUTED, 19, 800);
+    y += 4;
+    textBlock(I.x + 16, y, I.w - 32, '수득률 = 실제 얻은 양 / 이론상 얻을 수 있는 양 × 100.  이론상 얻을 수 있는 양은 살리실산의 몰수와 같은 몰수의 아스피린이 모두 생길 때의 질량이에요.', 13.5, MUTED, 18, 700);
+  }
+
+  /* ============ ④ 영향 평가 ============ */
+  const ESUB = [
+    { id: 'asp', ico: '💊', name: '아스피린', rx: '살리실산 + 아세트산 무수물 → 아세틸살리실산(아스피린) + 아세트산' },
+    { id: 'pol', ico: '🧴', name: '고분자 (나일론 · PET)', rx: '단위체의 반복 결합 (예: 테레프탈산 + 에틸렌 글라이콜 → PET + 물)' },
+    { id: 'flv', ico: '🍌', name: '인공 향료', rx: '카복실산 + 알코올 → 향기 나는 물질 + 물' },
+  ];
+  const ECARD = {
+    asp: [
+      ['B', 3, '열과 통증을 줄여 주는 진통 · 해열제'], ['B', 2, '혈액이 굳는 것을 막는 데도 쓰임'], ['B', 2, '공장에서 대량 합성해 값싸게 공급'],
+      ['R', 3, '위 자극과 위 출혈 같은 부작용'], ['R', 2, '많이 먹는 오남용의 위험'], ['R', 1, '알레르기를 일으키는 사람도 있음'],
+      ['I', 0, '의사 · 약사 안내에 따라 복용하기'], ['I', 0, '위 자극을 줄인 새 제형 연구하기'],
+    ],
+    pol: [
+      ['B', 3, '가볍고 튼튼한 소재를 값싸게 대량 생산'], ['B', 2, '포장 · 병으로 식품을 위생적으로 보관'], ['B', 2, '옷감 · 낙하산 등 다양한 섬유 소재'],
+      ['R', 3, '자연에서 거의 분해되지 않는 폐기물'], ['R', 3, '미세 플라스틱이 환경에 퍼짐'], ['R', 2, '원료를 석유에서 얻고 태우면 CO₂ 발생'],
+      ['I', 0, '분리배출하고 재활용하기'], ['I', 0, '생분해되는 새 소재 개발하기'],
+    ],
+    flv: [
+      ['B', 2, '식품 · 화장품에 향을 값싸게 넣음'], ['B', 2, '천연 재료를 덜 써서 자원을 아낌'], ['B', 2, '언제나 같은 품질의 향을 공급'],
+      ['R', 2, '안전성을 확인하지 않으면 건강 위험'], ['R', 2, '알레르기를 일으키는 사람도 있음'], ['R', 2, '용매와 폐수가 환경에 부담'],
+      ['I', 0, '성분 표시와 안전성 검사 강화하기'], ['I', 0, '용매 · 폐수를 정화하고 재사용하기'],
+    ],
+  };
+  const TRAYPOS = [3, 6, 0, 1, 4, 7, 2, 5];
+  const EV = { sub: 'asp', cards: {}, drag: null, sel: null, star: { asp: [0, 0, 0], pol: [0, 0, 0], flv: [0, 0, 0] }, pres: { asp: { rx: '', ben: '', imp: '' }, pol: { rx: '', ben: '', imp: '' }, flv: { rx: '', ben: '', imp: '' } }, spring: new SciSim.Spring(0, { stiffness: 55, damping: 6 }), seq: 0, wrong: 0 };
+  Object.keys(ECARD).forEach((sk) => { EV.cards[sk] = ECARD[sk].map((q, i) => ({ id: sk + '-' + i, sub: sk, i, k: q[0], w: q[1], t: q[2], loc: '', ord: 0, x: 0, y: 0, lift: 0, shake: 0, bad: false })); });
+  const evCards = () => EV.cards[EV.sub];
+  const evZone = (z) => evCards().filter((c) => c.loc === z).sort((a, b) => a.ord - b.ord);
+  const evCap = { B: 3, R: 3, I: 2 };
+  const evGeo = () => PHONE
+    ? { cw: 144, ch: 62, zone: { B: { x: 12, y: 136, w: 456, h: 100 }, R: { x: 12, y: 242, w: 456, h: 100 }, I: { x: 12, y: 348, w: 456, h: 100 } },
+        slot: (z, n) => { const Z = evGeo().zone[z]; return { x: Z.x + 6 + n * 150, y: Z.y + 30 }; },
+        tray: (i) => ({ x: 12 + (i % 2) * 236, y: 488 + Math.floor(i / 2) * 56, w: 228, h: 52 }), trayLab: 478, pivot: { x: 240, y: 88 }, half: 84, prev: { x: 8, y: 704, w: 464, h: 52 } }
+    : { cw: 232, ch: 54, zone: { B: { x: 24, y: 62, w: 244, h: 222 }, R: { x: 532, y: 62, w: 244, h: 222 }, I: { x: 276, y: 150, w: 248, h: 140 } },
+        slot: (z, n) => { const Z = evGeo().zone[z]; return z === 'I' ? { x: Z.x + 8, y: Z.y + 26 + n * 58 } : { x: Z.x + 6, y: Z.y + 30 + n * 64 }; },
+        tray: (i) => ({ x: 24 + (i % 4) * 194, y: 326 + Math.floor(i / 4) * 58, w: 184, h: 54 }), trayLab: 314, pivot: { x: 400, y: 88 }, half: 90, prev: { x: 12, y: 446, w: 776, h: 106 } };
+  const evTarget = (c) => { const G = evGeo(); if (!c.loc) { const r = G.tray(TRAYPOS[c.i]); return { x: r.x, y: r.y, w: r.w, h: r.h }; } const n = evZone(c.loc).indexOf(c); const s = G.slot(c.loc, n); return { x: s.x, y: s.y, w: c.loc === 'I' && !PHONE ? 232 : G.cw, h: G.ch }; };
+  function evInit() { Object.keys(EV.cards).forEach((sk) => EV.cards[sk].forEach((c) => { const t = evTarget0(c); c.x = t.x; c.y = t.y; })); }
+  function evTarget0(c) { const G = evGeo(), r = G.tray(TRAYPOS[c.i]); return { x: r.x, y: r.y }; }
+  evInit();
+  const evSum = (sk, k) => EV.cards[sk].filter((c) => c.loc === k).reduce((a, c) => a + c.w, 0);
+  const evPlacedN = (sk) => EV.cards[sk].filter((c) => c.loc === 'B' || c.loc === 'R').length;
+  const evComplete = (sk) => EV.cards[sk].filter((c) => c.loc === 'B').length === 3 && EV.cards[sk].filter((c) => c.loc === 'R').length === 3;
+  const evStarsSet = (sk) => EV.star[sk].every((v) => v > 0);
+  const evDoneSub = (sk) => evComplete(sk) && evStarsSet(sk);
+  const evDoneN = () => ESUB.filter((s) => evDoneSub(s.id)).length;
+  const ZNAME = { B: '편익 접시', R: '위험 접시', I: '개선 상자' };
+  function evPlace(c, z) {
+    if (c.loc === z) return true;
+    if (c.k !== z) { c.shake = 0.4; EV.wrong++; Sound.fail(); showHint(z === 'I' ? '이 카드는 개선 아이디어가 아니에요. 이로운 점인지 위험인지 생각해 봐요.' : z === 'B' && c.k === 'R' ? '이 카드는 편익이 아니라 위험(문제점)이에요.' : c.k === 'I' ? '이 카드는 위험이 아니라 개선 아이디어예요.' : '이 카드는 위험이 아니라 이로운 점이에요.', 3000); return false; }
+    if (evZone(z).filter((q) => q !== c).length >= evCap[z]) { c.shake = 0.4; Sound.fail(); showHint(ZNAME[z] + '에는 카드를 ' + evCap[z] + '장까지 올릴 수 있어요.', 2600); return false; }
+    c.loc = z; c.ord = ++EV.seq; EV.sel = null; Sound.tick(); updateCtl(); return true;
+  }
+  function evBack(c) { c.loc = ''; updateCtl(); }
+  function evSetSub(sk) { if (EV.sub === sk) return; EV.sub = sk; EV.drag = null; EV.sel = null; S.fade = 0.7; evSyncControls(); updateCtl(); }
+  function evResetAll() { Object.keys(EV.cards).forEach((sk) => EV.cards[sk].forEach((c) => { c.loc = ''; c.bad = false; })); Object.keys(EV.star).forEach((k) => { EV.star[k] = [0, 0, 0]; EV.pres[k] = { rx: '', ben: '', imp: '' }; }); EV.drag = null; EV.sel = null; EV.wrong = 0; evSyncControls(); updateCtl(); }
+  function stepEv(dt) {
+    Object.keys(EV.cards).forEach((sk) => EV.cards[sk].forEach((c) => {
+      const t = evTarget(c), dragging = EV.drag && EV.drag.c === c;
+      if (!dragging) { c.x = ap(c.x, t.x, dt, RM ? 60 : 12); c.y = ap(c.y, t.y, dt, RM ? 60 : 12); }
+      c.lift = ap(c.lift, dragging ? 1 : 0, dt, 12); c.shake = Math.max(0, c.shake - dt);
+    }));
+    const diff = evSum(EV.sub, 'R') - evSum(EV.sub, 'B');
+    EV.spring.target = clamp(diff / 8, -1, 1) * 0.22; EV.spring.update(dt);
+  }
+  function drawEvCard(c) {
+    const G = evGeo(), t = evTarget(c), inZone = !!c.loc;
+    const w = inZone ? t.w : G.tray(TRAYPOS[c.i]).w, h = t.h;
+    const sx = c.shake > 0 ? Math.sin(c.shake * 70) * 4 : 0, sel = EV.sel === c;
+    const col = c.k === 'B' ? '#16a34a' : c.k === 'R' ? '#dc2626' : '#2563eb';
+    cardBox(c.x + sx, c.y, w, h, { lift: c.lift, stroke: inZone ? col : sel ? PUR : '#cbd5e1', lw: inZone || sel ? 2.6 : 1.6, fill: inZone ? C.rgba(col, 0.08) : '#fff', r: 9 });
+    const tw = inZone && c.k !== 'I' ? w - 54 : w - 14;
+    textBlock(c.x + sx + 8, c.y + (h > 50 ? 20 : 17), tw, c.t, 13, INK, 16, 800);
+    if (inZone && c.k !== 'I') for (let i = 0; i < c.w; i++) { ctx.beginPath(); ctx.arc(c.x + sx + w - 16, c.y + h / 2 - 14 + i * 14 + (3 - c.w) * 7, 5, 0, TAU); ctx.fillStyle = col; ctx.fill(); }
+  }
+  function drawBalance(t) {
+    const G = evGeo(), P = G.pivot, ang = EV.spring.value, hl = G.half, sk = EV.sub;
+    // 받침대
+    D.shadow(() => { ctx.beginPath(); ctx.moveTo(P.x, P.y); ctx.lineTo(P.x - 14, P.y + 56); ctx.lineTo(P.x + 14, P.y + 56); ctx.closePath(); ctx.fillStyle = '#94a3b8'; ctx.fill(); }, { blur: 4, y: 2 });
+    const L = { x: P.x - Math.cos(ang) * hl, y: P.y - Math.sin(ang) * hl }, R = { x: P.x + Math.cos(ang) * hl, y: P.y + Math.sin(ang) * hl };
+    line(L.x, L.y, R.x, R.y, 6, '#64748b');
+    ctx.beginPath(); ctx.arc(P.x, P.y, 7, 0, TAU); ctx.fillStyle = '#334155'; ctx.fill();
+    [[L, '#16a34a', 'B'], [R, '#dc2626', 'R']].forEach(([E, col, z]) => {
+      const py = E.y + 36;
+      line(E.x, E.y, E.x - 30, py, 1.6, '#94a3b8'); line(E.x, E.y, E.x + 30, py, 1.6, '#94a3b8');
+      D.roundRect(E.x - 36, py, 72, 8, 4); ctx.fillStyle = col; ctx.fill();
+      let by = py;
+      evZone(z).forEach((c, i) => { const bh = 3 * c.w + 2; by -= bh + 1; D.roundRect(E.x - 14 + (i % 2) * 2, by, 28, bh, 2); ctx.fillStyle = C.rgba(col, 0.75); ctx.fill(); });
+    });
+    T(P.x - hl - (PHONE ? 6 : 24), P.y - 24, '편익 ' + evSum(sk, 'B'), 14, '#166534', 'right', 900);
+    T(P.x + hl + (PHONE ? 6 : 24), P.y - 24, '위험 ' + evSum(sk, 'R'), 14, '#a3262b', 'left', 900);
+  }
+  function drawEval(t) {
+    const G = evGeo(), sk = EV.sub, sub = ESUB.find((s) => s.id === sk);
+    T(14, 26, '⚖️ ' + sub.ico + ' ' + sub.name + ' : 이로운 점과 위험을 저울에 올려요', PHONE ? 13 : 17, INK, 'left', 800);
+    if (!PHONE) panel(12, 52, 776, 242, 14); else panel(8, 40, 464, 436, 14);
+    ['B', 'R', 'I'].forEach((z) => {
+      const Z = G.zone[z], col = z === 'B' ? '#16a34a' : z === 'R' ? '#dc2626' : '#2563eb', over = EV.drag && EV.drag.over === z;
+      D.roundRect(Z.x, Z.y, Z.w, Z.h, 12); ctx.fillStyle = over ? C.rgba(col, 0.18) : C.rgba(col, 0.06); ctx.fill(); ctx.strokeStyle = col; ctx.lineWidth = over ? 3.4 : 1.8; ctx.setLineDash(over ? [] : [8, 6]); ctx.stroke(); ctx.setLineDash([]);
+      T(Z.x + 12, Z.y + 20, z === 'B' ? '👍 편익 (이로운 점) ' + evZone('B').length + '/3' : z === 'R' ? '⚠️ 위험 (문제점) ' + evZone('R').length + '/3' : '💡 개선 아이디어 ' + evZone('I').length + '/2', 14, col, 'left', 900);
+    });
+    drawBalance(t);
+    panel(PHONE ? 8 : 12, G.trayLab - (PHONE ? 8 : 14) - 6 + (PHONE ? -2 : 0), PHONE ? 464 : 776, PHONE ? 226 : 138, 14, '#faf8ff');
+    const left = evCards().filter((c) => !c.loc).length;
+    T(PHONE ? 20 : 24, G.trayLab + (PHONE ? 0 : 4), left ? '카드 ' + left + '장 (끌어서 접시나 상자에 놓아요)' : '모든 카드를 놓았어요', 14.5, WARN, 'left', 800);
+    evCards().filter((c) => !(EV.drag && EV.drag.c === c)).forEach(drawEvCard);
+    if (EV.drag) drawEvCard(EV.drag.c);
+    // 발표 카드 미리보기
+    const Pv = G.prev, pr = EV.pres[sk], st = EV.star[sk];
+    panel(Pv.x, Pv.y, Pv.w, Pv.h, 14);
+    const stars = (v) => (v ? '★'.repeat(v) + '☆'.repeat(5 - v) : '—');
+    T(Pv.x + 14, Pv.y + 24, '🎤 발표 카드 · ' + sub.ico + ' ' + sub.name, 14.5, '#5b21b6', 'left', 900);
+    if (!PHONE) {
+      T(Pv.x + Pv.w - 14, Pv.y + 24, '개인 ' + stars(st[0]) + '  사회 ' + stars(st[1]) + '  환경 ' + stars(st[2]), 13.5, '#92400e', 'right', 800);
+      const ben = pr.ben ? ecardOf(pr.ben).t : '—', imp = pr.imp ? ecardOf(pr.imp).t : '—', rx = pr.rx ? ESUB.find((q) => q.id === pr.rx).rx : '—';
+      textBlock(Pv.x + 14, Pv.y + 50, Pv.w - 28, '반응 : ' + rx, 13.5, INK, 17, 700);
+      textBlock(Pv.x + 14, Pv.y + 72, Pv.w - 28, '편익 : ' + ben, 13.5, '#166534', 17, 700);
+      textBlock(Pv.x + 14, Pv.y + 92, Pv.w - 28, '개선 : ' + imp, 13.5, '#1d4ed8', 17, 700);
+    } else T(Pv.x + 14, Pv.y + 44, '개인 ' + stars(st[0]) + ' 사회 ' + stars(st[1]) + ' 환경 ' + stars(st[2]), 13, '#92400e', 'left', 800);
+  }
+  const ecardOf = (id) => { const [sk, i] = id.split('-'); return EV.cards[sk][+i]; };
+  const evHit = (p) => { const list = evCards().slice().reverse(); return list.find((c) => { const t = { x: c.x, y: c.y }, w = c.loc ? evTarget(c).w : evGeo().tray(TRAYPOS[c.i]).w, h = evGeo().ch; return pointInRect(p, { x: t.x, y: t.y, w, h }); }); };
+  const evZoneAt = (p) => { const G = evGeo(); for (const z of ['B', 'R', 'I']) if (pointInRect(p, G.zone[z])) return z; return ''; };
