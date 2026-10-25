@@ -7201,8 +7201,7 @@ window.SCI_CATALOG = {
                 "π = CRT",
                 "계산 연습",
                 "역삼투"
-              ],
-              "soon": true
+              ]
             }
           ]
         },
