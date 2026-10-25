@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#8b5cf6">
+  <title>표준 환원 전위 | 고등 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; }
+    .stage-toolbar { min-height: 61px; }
+    .segmented button { min-height: 44px; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 14px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard .btn-sm { min-height: 44px; }
+    #ctrlCard [hidden] { display: none !important; }
+    .ctrl-note { font-size: 14px; color: var(--muted); margin: 6px 0 0; line-height: 1.4; }
+    .btn-row { display: flex; gap: 8px; margin-top: 6px; }
+    .btn-row .btn { flex: 1; padding-left: 8px; padding-right: 8px; }
+    .view-seg { display: flex; width: 100%; }
+    .view-seg button { flex: 1 1 0; min-width: 0; padding-left: 4px; padding-right: 4px; font-size: 14.5px; }
+    .seg-wrap { display: flex; flex-wrap: wrap; width: 100%; }
+    .seg-wrap button { flex: 1 1 30%; min-width: 0; padding-left: 6px; padding-right: 6px; font-size: 14.5px; }
+    .seg-wrap.two button { flex-basis: 44%; }
+    .range-row { display: flex; align-items: center; gap: 8px; }
+    .range-row input[type=range] { flex: 1; min-width: 0; height: 44px; }
+    .nudge { flex: none; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); font-weight: 900; font-size: 16px; line-height: 1; cursor: pointer; display: grid; place-items: center; color: var(--ink); font-family: inherit; }
+    .nudge:active { transform: scale(.94); background: var(--surface-2); }
+    .nudge:disabled { opacity: .4; }
+    .opt-col { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+    .opt { min-height: 46px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 12px; font-weight: 800; font-size: 14px; cursor: pointer; padding: 6px 10px; font-family: inherit; line-height: 1.3; text-align: left; }
+    .opt.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); color: color-mix(in srgb, var(--subject) 70%, black); }
+    .opt.ok { border-color: var(--good); background: var(--good-soft); color: #0b6b39; }
+    .opt.bad { border-color: var(--bad); background: var(--bad-soft); color: #a3262b; }
+    .opt:disabled { opacity: .55; cursor: default; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+    .chips button { min-height: 44px; padding: 6px 12px; border: 2px solid var(--line); background: #fff; border-radius: 999px; font-weight: 800; font-size: 14.5px; cursor: pointer; color: var(--ink); font-family: inherit; }
+    .chips button.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); color: color-mix(in srgb, var(--subject) 70%, black); }
+    .chips button.done { border-color: var(--good); background: var(--good-soft); }
+    .num-in { width: 100%; min-width: 0; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 10px; font: 800 16px var(--font); color: var(--ink); background: #fff; }
+    .num-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .num-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .in-grid { display: grid; grid-template-columns: 1fr 104px; gap: 6px 8px; align-items: center; margin-top: 6px; }
+    .in-grid .lab { font-weight: 800; font-size: 14px; line-height: 1.25; }
+    .in-grid .num-in { min-height: 42px; padding: 2px 8px; font-size: 15px; }
+    .sel-in { width: 100%; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 8px; font: 800 14.5px var(--font); color: var(--ink); background: #fff; }
+    .sel-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .sel-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    @keyframes shakeX { 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+    .readout .value.txt { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .readout .value sup { font-size: .62em; line-height: 0; }
+    .concept table.mini { border-collapse: collapse; margin: 6px 0; font-size: 14px; width: 100%; }
+    .concept table.mini th, .concept table.mini td { border: 1px solid var(--line); padding: 4px 6px; text-align: center; }
+    .concept table.mini th { background: var(--surface-2); font-weight: 800; }
+    sup { font-size: .7em; line-height: 0; }
+    sub { font-size: .7em; line-height: 0; }
+    .stage-canvas .stage-hint { top: 10px; bottom: auto; white-space: normal; width: max-content; text-align: center; }
+    @media (max-width: 1100px) and (orientation: landscape) { .toolbar-label { display: none; } }
+    @media (orientation: portrait) and (min-width: 600px) {
+      .side-col:has(> #ctrlCard[hidden]) > #game { grid-column: 1 / -1; }
+    }
+    @media (max-width: 599px) {
+      .readout .value.txt { font-size: 15px; }
+      .stage-toolbar { gap: 6px; padding: 8px; }
+      .stage-toolbar .spacer, .toolbar-label { display: none; }
+      .stage-toolbar:has(> .segmented[hidden]) { display: none; }
+      .segmented button { padding-left: 10px; padding-right: 10px; font-size: 14px; }
+      .stage-hint { font-size: 13px; padding: 5px 12px; }
+    }
+
+    .sci-line { margin-top: 8px; }
+    .sci-line .lab { display: block; font-weight: 800; font-size: 14px; line-height: 1.25; margin-bottom: 3px; }
+    .sci-in { display: flex; align-items: center; gap: 6px; }
+    .sci-in .num-in { min-height: 42px; padding: 2px 8px; font-size: 15px; }
+    .sci-in .num-in.c { flex: 1 1 0; }
+    .sci-in .num-in.e { flex: 0 0 72px; width: 72px; }
+    .sci-in .x { font-weight: 800; font-size: 14px; white-space: nowrap; }
+    .row-line { margin-top: 8px; }
+    .row-line .lab { display: block; font-weight: 800; font-size: 14px; line-height: 1.25; margin-bottom: 3px; }
+    .row-line .in-wrap { display: flex; align-items: center; gap: 6px; }
+    .row-line .in-wrap .unit { font-weight: 800; font-size: 14px; color: var(--muted); white-space: nowrap; }
+    .row-line .num-in { min-height: 42px; padding: 2px 8px; font-size: 15px; }
+    .ord-list { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+    .ord-list .opt { position: relative; padding-left: 40px; }
+    .ord-list .opt .no { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); width: 24px; height: 24px; border-radius: 50%; background: var(--line); color: #fff; font-weight: 900; font-size: 14px; display: grid; place-items: center; }
+    .ord-list .opt.on .no { background: var(--subject); }
+    .tbl-in { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 14px; }
+    .chips button.bad { border-color: var(--bad); background: var(--bad-soft); color: #a3262b; }
+  
+    .in-grid select.sel-in { min-height: 42px; }
+  
+    .sel-row { margin-top: 8px; }
+    .sel-row .lab { display: block; font-weight: 800; font-size: 14px; line-height: 1.25; margin-bottom: 3px; }
+    .sel-row select.sel-in { min-height: 44px; }
+    .big-range { width: 100%; }
+    .pred-row { display: flex; gap: 6px; margin-top: 6px; }
+    .pred-row button { flex: 1; }
+  
+  .pred-row .btn { flex: 1; min-height: 44px; }
+  
+  </style>
+
+</head>
+<body class="sim-page" data-subject="chem">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#hr">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">화학 반응의 세계 · Ⅱ. 산화⋅환원 반응</div>
+      <h1>표준 환원 전위</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🧩 기준 전극</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="tablist" aria-label="화면 고르기" data-feature="she">
+            <button type="button" data-mode="she" data-feature="she">🧩 기준 전극</button>
+            <button type="button" data-mode="table" data-feature="table">📏 전위 표</button>
+            <button type="button" data-mode="calc" data-feature="calc">🧮 전위차</button>
+            <button type="button" data-mode="predict" data-feature="predict">🎯 예측</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="표준 수소 전극과 Zn 또는 Cu 반쪽 전지를 연결해 전압을 재는 장면, 표준 환원 전위를 세로 눈금으로 나타낸 표에서 두 반쪽 전지를 고르는 장면, 전지의 전위차 계산 장면, 여섯 가지 반응이 자발적으로 일어나는지 예측하는 장면"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">—</span><span class="value txt" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">—</span><span class="value txt" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">—</span><span class="value txt" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" data-modes="she">
+          <div class="control-head"><span>🔩 표준 수소 전극과 이을 금속판</span></div>
+          <div class="chips seg-wrap two" id="shSel" role="group" aria-label="금속판 고르기"></div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bShConn" type="button">🔌 표준 수소 전극과 연결</button></div>
+          <p class="ctrl-note">반쪽 전지 하나만으로는 전압을 잴 수 없어서, 기준인 표준 수소 전극(SHE)과 염다리 · 도선으로 이어요. 연결할 때는 보안경을 쓰고 폐액은 따로 모아요.</p>
+        </div>
+        <div class="control" data-modes="table">
+          <p class="ctrl-note" id="tbSel" style="margin:0;font-weight:800;color:var(--ink)"></p>
+          <div class="opt-col" id="tbJudge">
+            <button class="opt" id="tbJa" type="button">(첫째 카드)</button>
+            <button class="opt" id="tbJb" type="button">(둘째 카드)</button>
+          </div>
+          <div class="btn-row"><button class="btn btn-sm" id="tbClear" type="button">↺ 선택 지우기</button></div>
+          <p class="ctrl-note">E°가 큰 쪽이 환원극((+)극)이에요. 어느 쪽이 환원극인지 단추로 답해요.</p>
+        </div>
+        <div class="control" data-modes="calc">
+          <div class="control-head"><span>🔋 전지 고르기 (산화극–환원극)</span></div>
+          <div class="chips seg-wrap" id="ccSel" role="group" aria-label="전지 고르기"></div>
+          <div class="row-line"><span class="lab">E°(환원극)</span><div class="in-wrap"><input class="num-in" id="ccRed" type="text" inputmode="decimal" autocomplete="off" placeholder="0.00" aria-label="환원극의 표준 환원 전위"><span class="unit">V</span></div></div>
+          <div class="row-line"><span class="lab">E°(산화극)</span><div class="in-wrap"><input class="num-in" id="ccOx" type="text" inputmode="decimal" autocomplete="off" placeholder="0.00" aria-label="산화극의 표준 환원 전위"><span class="unit">V</span></div></div>
+          <div class="row-line"><span class="lab">E°cell = E°(환원극) − E°(산화극)</span><div class="in-wrap"><input class="num-in" id="ccCell" type="text" inputmode="decimal" autocomplete="off" placeholder="0.00" aria-label="전위차"><span class="unit">V</span></div></div>
+          <div class="btn-row"><button class="btn btn-sm" id="bCcMis" type="button" hidden>🧮 계수 2를 곱하면?</button></div>
+          <p class="ctrl-note" id="ccCnt"></p>
+        </div>
+        <div class="control" data-modes="predict">
+          <div class="control-head"><span>⚗️ 반응 고르기</span></div>
+          <div class="chips seg-wrap" id="pdSel" role="group" aria-label="반응 고르기"></div>
+          <div class="control-head" style="margin-top:6px"><span>❓ 자발적으로 일어날까요?</span></div>
+          <div class="pred-row"><button class="btn btn-sm" id="bPdYes" type="button">○ 일어나요</button><button class="btn btn-sm" id="bPdNo" type="button">× 안 일어나요</button></div>
+          <p class="ctrl-note">E°cell &gt; 0 이면 ○ , &lt; 0 이면 × 예요. 염산 실험은 보안경과 장갑을 착용해요.</p>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

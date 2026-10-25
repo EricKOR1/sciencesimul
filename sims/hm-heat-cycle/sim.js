@@ -100,15 +100,17 @@
     return c;
   }
   const XMAX = 7, YMAX = 8;
+  /* 격자 세기: 칸마다 경로 안쪽에 들어온 부분(0.1칸 단위로 반올림)을 보여 줘요 */
   function cellCover() {
-    const full = [], part = []; let area = 0; const NS = 8;
+    const cells = []; let area = 0, shown = 0; const NS = 20;
     for (let i = 0; i < XMAX; i++) for (let j = 0; j < YMAX; j++) {
       let cnt = 0;
       for (let a = 0; a < NS; a++) for (let b = 0; b < NS; b++) if (inLoop(i + (a + 0.5) / NS, j + (b + 0.5) / NS)) cnt++;
-      if (cnt === NS * NS) full.push([i, j]); else if (cnt > 0) part.push([i, j, cnt / (NS * NS)]);
-      area += cnt / (NS * NS);
+      const f = cnt / (NS * NS); area += f;
+      const r = Math.round(f * 10) / 10;
+      if (r > 0) { cells.push({ i, j, f, r }); shown += r; }
     }
-    return { full, part, area };
+    return { cells, area, shown };
   }
   const CELLS = cellCover();
 
@@ -123,7 +125,7 @@
   ];
   const DISP = [3, 0, 5, 2, 4, 1];        // 화면에 놓이는 순서 (섞어 둠)
   const IMP = [
-    { ic: '🏭', n: '산업혁명', d: '공장·철도·증기선으로 생산성과 이동 속도가 늘었어요', ans: [1] },
+    { ic: '🏭', n: '산업혁명', d: '공장·철도·증기선으로 생산과 이동이 빨라졌어요', ans: [1] },
     { ic: '✈️', n: '자동차·항공기', d: '사람과 물건의 이동 거리가 크게 늘었어요', ans: [1] },
     { ic: '💡', n: '전기의 대량 공급', d: '발전소가 만든 전기가 생활과 산업을 바꿨어요', ans: [1] },
     { ic: '🛢️', n: '화석 연료 고갈', d: '석탄·석유·가스는 쓸수록 줄어드는 자원이에요', ans: [2, 4] },
@@ -282,7 +284,7 @@
     c.s = 2; c.acc = 0; c.once = true; c.onceDone = false; c.stepTo = 3; c.run = true; GM = []; updateCtl();
   }
   function drawEngine(c, dt, q) {
-    const W = PHONE ? 84 : 112, ex = c.x + (PHONE ? 20 : 52), ey = c.y + 112, k = PHONE ? 26 : 28;
+    const W = PHONE ? 80 : 112, ex = c.x + (PHONE ? 32 : 52), ey = c.y + 112, k = PHONE ? 26 : 28;
     const hmax = VA * k, hg = q.V * k, yb = ey + hmax + 26;
     const seg = SEG[q.k], rel = relT(q);
     const x1 = ex + W * 0.27, x2 = ex + W * 0.73, xp = ex + W / 2;
@@ -334,7 +336,7 @@
   function drawEngineScene(dt) {
     const c = topCard(), cy = S.cy, q = pos(cy.s);
     cardBegin(c);
-    const ew = PHONE ? 178 : 262;
+    const ew = PHONE ? 188 : 262;
     drawEngine(c, dt, q);
     const rc = { x: c.x + ew, y: c.y + 4, w: c.w - ew - 4, h: c.h - 8 };
     const M = pvFrame(rc);
@@ -419,17 +421,20 @@
     const M = pvFrame(rc);
     ctx.save(); ctx.beginPath(); ctx.rect(M.ix, M.iy, M.iw, M.ih); ctx.clip();
     if (e.grid) {
-      CELLS.full.forEach(([i, j]) => { ctx.fillStyle = 'rgba(20,160,88,.38)'; ctx.fillRect(M.gx(i) + 1, M.gy(j + 1) + 1, M.gx(1) - M.gx(0) - 2, M.gy(0) - M.gy(1) - 2); });
-      CELLS.part.forEach(([i, j]) => { ctx.fillStyle = 'rgba(245,158,11,.38)'; ctx.fillRect(M.gx(i) + 1, M.gy(j + 1) + 1, M.gx(1) - M.gx(0) - 2, M.gy(0) - M.gy(1) - 2); });
+      CELLS.cells.forEach((q) => {
+        ctx.fillStyle = q.r >= 1 ? 'rgba(20,160,88,.38)' : 'rgba(245,158,11,' + (0.2 + 0.3 * q.r) + ')';
+        ctx.fillRect(M.gx(q.i) + 1, M.gy(q.j + 1) + 1, M.gx(1) - M.gx(0) - 2, M.gy(0) - M.gy(1) - 2);
+      });
     }
     ctx.restore();
     drawLoop(M, { fill: rev ? 'rgba(124,58,237,' + (e.grid ? 0.06 : 0.16) + ')' : 'rgba(37,99,235,' + (e.grid ? 0.06 : 0.16) + ')', alpha: 0.9, w: 3.5 });
     loopArrows(M, rev); loopPoints(M, false);
+    if (e.grid) CELLS.cells.forEach((q) => T(M.gx(q.i + 0.74), M.gy(q.j + 0.3), q.r >= 1 ? '1' : q.r.toFixed(1), 13, q.r >= 1 ? '#0f5132' : '#92400e', 'center', 800, { stroke: 'rgba(255,255,255,.92)', strokeWidth: 3.5 }));
     const q = pos(e.s);
     stateDot(M, q, SEG[q.k].col);
     // 둘러싸인 넓이 문구
-    const cxm = M.gx(4.3), cym = M.gy(2.5);
-    D.label(cxm, cym - 4, rev ? '반시계 방향' : '시계 방향', { bg: rev ? '#6d28d9' : '#1d4ed8', size: 13 });
+    const cxm = M.gx(5.4), cym = M.gy(7.2);
+    D.label(cxm, cym, rev ? '반시계 방향' : '시계 방향', { bg: rev ? '#6d28d9' : '#1d4ed8', size: 13 });
     if (!PHONE) {
       const rx = c.x + 470, rw = c.w - 470 - 10;
       T(rx + rw / 2, c.y + 26, rev ? '❄️ 냉장고 (일을 받아 열을 퍼냄)' : '⚙️ 열기관 (열을 일로 바꿈)', 14.5, INK, 'center', 800);
@@ -489,7 +494,7 @@
   function drawHistoryScene(dt) {
     const c = topCard(), h = S.hi;
     cardBegin(c);
-    T(c.x + 14, c.y + 24, '1단계: 기관이 세상에 나온 순서대로 눌러 보세요 (' + h.placed.length + ' / 6)', PHONE ? 13.5 : 15, INK, 'left', 800);
+    T(c.x + 14, c.y + 24, '기관이 세상에 나온 순서대로 눌러 보세요 (' + h.placed.length + ' / 6)', PHONE ? 13.5 : 15, INK, 'left', 800);
     const rowH = PHONE ? 46 : 47, y0 = c.y + (PHONE ? 38 : 40);
     const bx0 = PHONE ? c.x + 20 : c.x + 400, bw = PHONE ? c.w - 40 - 0 : 300;
     h.shakeT += dt;
@@ -532,7 +537,7 @@
       xx += w;
     });
     D.roundRect(x1, by, w1, bh, 4); ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 1.5; ctx.stroke();
-    T(x1, by + bh + 17, '일 30 % 중 바퀴에 전해지는 것은 약 20 % (변속기·마찰·보조 장치에서 약 10 % 손실)', 13, MUTED, 'left', 700);
+    para(x1, by + bh + 17, '일 30 % 중 바퀴에 전해지는 것은 약 20 % (변속기·마찰·보조 장치에서 약 10 % 손실)', w1, 13, MUTED, 16, 700);
     // 개선할 곳 ①~④
     const dy = PY + 110, dh = PH - 118;
     D.roundRect(x1, dy, w1, dh, 12); ctx.fillStyle = '#f4f7fd'; ctx.fill();
@@ -623,7 +628,7 @@
     ctx.strokeStyle = '#8a95a8'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(gx0, gy0 - 2); ctx.lineTo(gx0, gy1); ctx.lineTo(gx1, gy1); ctx.stroke();
     const pts = [[1750, 280], [1960, 317], [2023, 420]];
     ctx.strokeStyle = RED; ctx.lineWidth = 3.5; ctx.lineJoin = 'round'; ctx.beginPath(); pts.forEach(([yr, v], i) => { i ? ctx.lineTo(gxy(yr), gyy(v)) : ctx.moveTo(gxy(yr), gyy(v)); }); ctx.stroke();
-    pts.forEach(([yr, v], i) => { D.sphere(gxy(yr), gyy(v), 5.5, RED, { gloss: false }); T(gxy(yr) + (i === 2 ? -8 : 0), gyy(v) - 10, (i === 0 ? '약 ' : i === 2 ? '2020년대 약 ' : '') + v, 13, '#b91c1c', i === 2 ? 'right' : 'center', 800); });
+    pts.forEach(([yr, v], i) => { D.sphere(gxy(yr), gyy(v), 5.5, RED, { gloss: false }); T(gxy(yr) + (i === 2 ? -8 : i === 0 ? 8 : 0), gyy(v) - 10, (i === 0 ? '약 ' : i === 2 ? '2020년대 약 ' : '') + v, 13, '#b91c1c', i === 2 ? 'right' : i === 0 ? 'left' : 'center', 800); });
     const rx = PHONE ? x1 : x1 + cw + 24, rw = PHONE ? PW - 28 : PW - cw - 52, ry = PHONE ? PY + 40 + chh + 22 : PY + 24;
     T(rx, ry, '발전 1 kWh당 CO₂ (kg)', 14.5, INK, 'left', 800);
     SRC.forEach((s, i) => {
@@ -679,7 +684,7 @@
     $('#nCy').textContent = cy.once && cy.onceDone ? '한 번 팽창하면 끝이에요. ▶ 로 계속 돌려 처음 상태로 돌아가 봐요.' : cy.once ? '1번만 팽창시켜요. 어떻게 될까요?' : '엔진을 돌려 피스톤과 P–V 그래프의 점이 함께 움직이는 모습을 보세요.';
     $$('#dirSeg button').forEach((b) => b.classList.toggle('on', b.dataset.d === S.en.dir));
     $('#bGrid').textContent = S.en.grid ? '🔢 칸 세기 끄기' : '🔢 칸 세기 켜기'; $('#bGrid').classList.toggle('btn-primary', S.en.grid);
-    $('#nEn').textContent = S.en.grid ? '초록 칸은 완전히 덮인 칸(1칸), 주황 칸은 일부만 덮인 칸(반칸 정도)으로 세요. 한 칸 = 100 J' : '경로로 둘러싸인 넓이를 세어 알짜 일을 구해요. 한 칸 = 100 J';
+    $('#nEn').textContent = S.en.grid ? '칸 안의 숫자는 경로 안쪽에 들어온 부분이에요(1 = 한 칸 전부). 모두 더하면 몇 칸일까요? 한 칸 = 100 J' : '경로로 둘러싸인 넓이를 세어 알짜 일을 구해요. 한 칸 = 100 J';
     $('#nHi').textContent = S.hi.ok ? '순서를 모두 맞췄어요! 효율 막대를 비교해 보세요.' : (S.hi.placed.length + ' / 6 놓았어요. 가장 먼저 나온 기관부터 눌러요.');
     $('#oWt').textContent = '산업 ' + (100 - S.im.w) + ' : 환경 ' + S.im.w; setSl('sWt', S.im.w, 0, 100);
     $$('#srcChips button').forEach((b) => b.classList.toggle('on', b.dataset.src === S.im.src));
@@ -804,7 +809,7 @@
         {
           title: '둘러싸인 넓이로 알짜 일 읽기', manual: true,
           goal: '<b>🔃 시계 방향</b>에서 <b>🔢 칸 세기</b>를 켜고, 경로로 둘러싸인 넓이를 세어 알짜 일 <b>W</b>를 J 단위로 입력한 뒤 ✔ 확인하기를 누르세요.',
-          hint: '초록 칸(완전히 덮임)은 1칸, 주황 칸(일부 덮임)은 반칸으로 보고 (초록 + 주황/2)를 세요. 한 칸이 100 J이에요.',
+          hint: '칸 안의 숫자를 모두 더하면 둘러싸인 넓이(칸 수)예요. 한 칸이 100 J이므로 칸 수 × 100 J이 알짜 일이에요.',
           setup() { resetFlags(); S.en.dir = 'cw'; S.en.grid = true; clr('iW', 'iE'); setFlag('w', true); setScene('energy'); },
           check() {
             if (S.en.dir !== 'cw') return '시계 방향 순환(열기관)에서 읽어 주세요.';
@@ -813,7 +818,7 @@
             if (ok) { S.flags.wOK = true; return true; }
             if (v > 0 && v < 20) return '단위를 확인해요. 칸 수가 아니라 J 단위로, 한 칸이 100 J이에요 (6칸이면 600 J).';
             if (v < 0) return '시계 방향 순환에서는 기체가 일을 밖으로 내보내요. W는 양수예요.';
-            return '(초록 칸 + 주황 칸/2) × 100 J을 계산해 보세요.';
+            return '칸 안의 숫자를 모두 더한 값(약 6)에 100 J을 곱해 보세요.';
           },
           status: () => '입력 ' + ($('#iW').value.trim() || '—') + ' J',
           explain: '경로로 둘러싸인 넓이는 약 6칸이고 한 칸이 100 J이므로 <b>W ≈ 600 J</b>이에요. 팽창 때 한 일(C→D, +1 254 J)에서 압축 때 받은 일(A→B, ' + MINUS + '654 J)을 뺀 값과 같아요. 제1법칙에서 W = Q_h − Q_c이므로 버리는 열은 Q_c = 2 000 − 600 = 1 400 J이에요.',
