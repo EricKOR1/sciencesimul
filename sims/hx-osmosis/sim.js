@@ -84,6 +84,7 @@
   const DH_K = 24, R_U = 0.5;                               // 평형 수위 차 = 24 cm × (농도 차 M), 수위는 지수적으로 평형에 다가가요
   const dhEq = () => DH_K * (cOf(S.iR) - cOf(S.iL));
   const hL = () => 15 - S.u.dh / 2, hR = () => 15 + S.u.dh / 2;
+  const dhTxt = () => Math.abs(r1(hR()) - r1(hL())).toFixed(1);   // 표시된 두 수위의 차와 같게 반올림
   const netFlow = () => R_U * (dhEq() - S.u.dh);             // 오른쪽으로 가는 물의 순 이동 속도 (수위 차 cm/s)
   const UG = () => {
     const L = RC.L, aw = 60, lx = L.x + 70, rx = L.x + L.w - 70 - aw, yb1 = L.y + 388, yb0 = yb1 - 54, pc = 7;
@@ -151,7 +152,7 @@
     ctx.beginPath(); ctx.moveTo(g.lx - 2, y15); ctx.lineTo(g.lx + g.aw + 2, y15); ctx.moveTo(g.rx - 2, y15); ctx.lineTo(g.rx + g.aw + 2, y15); ctx.stroke();
     ctx.strokeStyle = 'rgba(60,70,100,.6)'; ctx.beginPath(); ctx.moveTo(g.lx + g.aw + 6, yA); ctx.lineTo(g.xm + 10, yA); ctx.moveTo(g.rx - 6, yB); ctx.lineTo(g.xm - 10, yB); ctx.stroke(); ctx.setLineDash([]);
     if (Math.abs(yA - yB) > 5) D.arrow(g.xm, yA < yB ? yA : yB, g.xm, yA < yB ? yB : yA, { color: BAD, width: 2.6, head: 9 });
-    D.label(g.xm, (yA + yB) / 2 + (Math.abs(yA - yB) > 5 ? 0 : 0) - 0, 'Δh = ' + Math.abs(U.dh).toFixed(1) + ' cm', { size: 13, bg: BAD, align: 'center' });
+    D.label(g.xm, (yA + yB) / 2 + (Math.abs(yA - yB) > 5 ? 0 : 0) - 0, 'Δh = ' + dhTxt() + ' cm', { size: 13, bg: BAD, align: 'center' });
     D.label(g.lx + g.aw / 2, yA - 16, f1(a) + ' cm', { size: 13, bg: '#475569', align: 'center' });
     D.label(g.rx + g.aw / 2, yB - 16, f1(b) + ' cm', { size: 13, bg: '#475569', align: 'center' });
     T(g.xm, g.yTop + 18, '- - 처음 수위 15 cm', 12.5, MUTED, 'center', 700);
@@ -280,7 +281,7 @@
     T(R.x + 14, R.y + 24, '🔍 반투막을 확대해서 봐요', 14.5, INK, 'left', 800);
     const w = Math.min(R.w - 24, 290), h = drawMZ(R.x + (R.w - w) / 2, R.y + 56, w, false);
     let y = R.y + 56 + h + 36;
-    const rows = [['왼쪽 수위', f1(hL()) + ' cm', INK], ['오른쪽 수위', f1(hR()) + ' cm', INK], ['수위 차 Δh', Math.abs(U.dh).toFixed(1) + ' cm', BAD]];
+    const rows = [['왼쪽 수위', f1(hL()) + ' cm', INK], ['오른쪽 수위', f1(hR()) + ' cm', INK], ['수위 차 Δh', dhTxt() + ' cm', BAD]];
     rows.forEach((r, i) => { T(R.x + 14, y + i * 24, r[0], 13.5, r[2], 'left', 800); T(R.x + R.w - 14, y + i * 24, r[1], 14.5, r[2], 'right', 800); });
     y += 3 * 24 + 8;
     if (!PHONE || y + 30 < R.y + R.h) textBlock(R.x + 14, y, R.w - 28, '설탕 분자(분홍)는 막을 지나지 못하고, 물 분자(파랑)만 지나가요.', 13, MUTED, 18, 700);
@@ -692,7 +693,7 @@
   const l1 = $('#l1'), l2 = $('#l2'), l3 = $('#l3'), v1 = $('#v1'), v2 = $('#v2'), v3 = $('#v3');
   function readouts() {
     let L1, a, L2, b, L3, c;
-    if (S.mode === 'u') { L1 = '왼쪽 수위'; a = f1(hL()) + ' cm'; L2 = '오른쪽 수위'; b = f1(hR()) + ' cm'; L3 = '수위 차 Δh'; c = Math.abs(S.u.dh).toFixed(1) + ' cm'; }
+    if (S.mode === 'u') { L1 = '왼쪽 수위'; a = f1(hL()) + ' cm'; L2 = '오른쪽 수위'; b = f1(hR()) + ' cm'; L3 = '수위 차 Δh'; c = dhTxt() + ' cm'; }
     else if (S.mode === 'mol') { L1 = '왼쪽 → 오른쪽'; a = mz.cnt.lr + '번'; L2 = '오른쪽 → 왼쪽'; b = mz.cnt.rl + '번'; L3 = '순 이동'; c = Math.abs(mz.cnt.lr - mz.cnt.rl) + '번 ' + (mz.cnt.lr >= mz.cnt.rl ? '(→)' : '(←)'); }
     else if (S.mode === 'pot') {
       if (S.sub.pot === 'vars') { const B = S.pot.bd; L1 = '상자에 넣은 카드'; a = boardPlaced(B) + ' / ' + B.cards.length; L2 = '선택한 카드'; b = B.sel >= 0 ? B.cards[B.sel].t.slice(0, 11) + '…' : '—'; L3 = '변인'; c = '독립 · 종속 · 통제'; }
@@ -724,7 +725,7 @@
           hint: '① 처음 설정 그대로 두고 오른쪽 수위가 올라가길 기다려요. ② 그다음 왼쪽 농도를 오른쪽과 같게 맞추고 수위 차가 0으로 돌아올 때까지 기다려요.',
           setup() { S.lock = true; S.iL = 0; S.iR = 10; S.u.dh = 0; S.u.tSame = 0; S.u.seen = { diff: false, same: false }; mzCountReset(); setMode('u'); },
           check: () => S.u.seen.diff && S.u.seen.same, hold: 0.3,
-          status: () => '① 농도가 다를 때 수위 차 4 cm 이상 ' + mark(S.u.seen.diff) + ' &nbsp; ② 농도를 같게 한 뒤 수위 차 0 ' + mark(S.u.seen.same) + ' &nbsp; (Δh ' + Math.abs(S.u.dh).toFixed(1) + ' cm)',
+          status: () => '① 농도가 다를 때 수위 차 4 cm 이상 ' + mark(S.u.seen.diff) + ' &nbsp; ② 농도를 같게 한 뒤 수위 차 0 ' + mark(S.u.seen.same) + ' &nbsp; (Δh ' + dhTxt() + ' cm)',
           explain: '농도가 다르면 물이 <b>농도가 낮은 쪽 → 높은 쪽</b>으로 이동해서 농도가 높은 쪽의 수위가 올라가요. 농도가 같으면 한쪽으로 가는 물의 순 이동이 없어서 수위 차가 <b>0</b>이에요.',
         },
         {

@@ -6130,8 +6130,7 @@ window.SCI_CATALOG = {
                 "잠열",
                 "열량 계산",
                 "열평형"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hm-ideal-gas",
@@ -6152,8 +6151,7 @@ window.SCI_CATALOG = {
                 "센서 실험",
                 "PV=nRT",
                 "생활 적용"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hm-first-law",
@@ -7162,8 +7160,7 @@ window.SCI_CATALOG = {
                 "어는점 내림",
                 "K 값 찾기",
                 "활용"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hx-osmosis",
@@ -7184,8 +7181,7 @@ window.SCI_CATALOG = {
                 "입자 모형",
                 "실험 설계",
                 "생활 속 삼투"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hx-osmotic-pressure",
@@ -7675,8 +7671,7 @@ window.SCI_CATALOG = {
                 "산화수 규칙",
                 "변화로 판별",
                 "산화제의 역할"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hr-redox-equation",
@@ -7697,8 +7692,7 @@ window.SCI_CATALOG = {
                 "전자 맞추기",
                 "산성 용액",
                 "완성하기"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hr-galvanic-cell",
