@@ -6649,8 +6649,7 @@ window.SCI_CATALOG = {
                 "비누막 관찰",
                 "간섭 조건",
                 "적용"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hq-diffraction",
@@ -6671,8 +6670,7 @@ window.SCI_CATALOG = {
                 "분해능",
                 "홀로그램 기록",
                 "재생과 활용"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hq-optical-instruments",
@@ -6693,8 +6691,7 @@ window.SCI_CATALOG = {
                 "카메라",
                 "망원경·현미경",
                 "상이 흐려질 때"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hq-polarization",

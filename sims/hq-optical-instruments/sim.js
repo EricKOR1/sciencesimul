@@ -572,7 +572,7 @@
   }
 
   /* ================= ③ 망원경 · 현미경 ================= */
-  const SCP = PHONE ? { kx: 0.27, ky: 0.8, xo: MA.x + 22, yc: MA.y + 120 } : { kx: 0.40, ky: 1.2, xo: MA.x + 56, yc: MA.y + 214 };
+  const SCP = PHONE ? { kx: 0.26, ky: 1.3, xo: MA.x + 42, yc: MA.y + 128 } : { kx: 0.40, ky: 1.2, xo: MA.x + 56, yc: MA.y + 214 };
   const tubeDev = () => Math.abs(S.sc.tubeD - (F_O + F_E));
   function scopeEye() {                                  // 눈에 보이는 별 두 개: 번진 정도와 간격 (화면 눈금)
     const dev = tubeDev(), s2 = 6, blobR = EYE_LIM * s2 + 3.0 * dev, sep = M_TEL * STAR_SEP * s2;
