@@ -438,7 +438,7 @@
     // 전자 흐름 : 양극(+) → 전원 → 음극(−)
     if (go && p.flow > 0.1) { const wp = [[g.xR, g.yTop + 8], [g.xR, g.sy], [g.xL, g.sy], [g.xL, g.yTop + 8]]; for (let i = 0; i < 7; i++) { const q = ptAlong(wp, ((i / 7) + t * 0.2) % 1); ctx.save(); ctx.globalAlpha = Math.min(1, p.flow * 1.4); eBall(q.x, q.y, 4.8); ctx.restore(); } }
     // 그림 라벨
-    if (solK > 0.3) T(g.bx + g.bw / 2, g.by + g.bh + 22, '0.5 M CuSO₄ 수용액', PHONE ? 13 : 14, INK, 'center', 800);
+    if (solK > 0.3) T(g.bx + g.bw / 2, g.by + g.bh + 22, 'CuSO₄ 수용액', PHONE ? 13 : 14, INK, 'center', 800);
     if (go && md === 'good') {
       T(g.xR, g.by + g.bh + 40, '산화 : Cu → Cu²⁺ + 2e⁻', 12.5, '#1d4ed8', 'center', 800);
       T(g.xL, g.by + g.bh + 40, '환원 : Cu²⁺ + 2e⁻ → Cu', 12.5, '#b91c1c', 'center', 800);
@@ -840,7 +840,7 @@
       features: ['analysis'],
       setup() { S.an.pts = {}; S.an.t = 0; S.an.ts = 0; S.an.I = 0.5; setScene('analysis'); },
       recap: '석출되는 구리의 질량은 시간에 비례하고 전류에 비례해요. 구리 1 mol(63.5 g)이 석출될 때 전자 2 mol이 이동하므로, 석출된 구리의 몰수에 2를 곱하면 전자의 몰수예요.',
-      summary: '<ul><li>0.50 A : 5 · 10 · 15 · 20분 → 석출 구리 <b>0.05 · 0.10 · 0.15 · 0.20 g</b> (시간에 비례, 원점을 지나는 직선)</li><li>전류를 0.25 A로 줄이면 같은 시간에 석출량이 <b>절반</b>, 전류를 두 배로 하면 석출량도 <b>두 배</b></li><li>구리 0.20 g = 0.20 g ÷ 63.5 g/mol ≈ <b>3.1×10⁻³ mol</b> → 전자는 2배인 <b>약 6.3×10⁻³ mol</b></li><li>Cu²⁺ + 2e⁻ → Cu : 전자 2 mol당 Cu 1 mol</li></ul>',
+      summary: '<ul><li>0.50 A : 5 · 10 · 15 · 20분 → 석출 구리 <b>0.05 · 0.10 · 0.15 · 0.20 g</b> (시간에 비례, 원점을 지나는 직선)</li><li>전류를 0.25 A로 줄이면 같은 시간에 석출량이 <b>절반</b>, 전류를 두 배로 하면 석출량도 <b>두 배</b></li><li>구리 0.20 g은 63.5 g/mol로 나눈 값 <b>약 3.1×10⁻³ mol</b> → 전자는 2배인 <b>약 6.3×10⁻³ mol</b></li><li>Cu²⁺ + 2e⁻ → Cu : 전자 2 mol당 Cu 1 mol</li></ul>',
       missions: [
         {
           title: '그래프 그리고 비례 확인하기',
@@ -854,11 +854,11 @@
         {
           title: '전자의 몰수 계산하기',
           goal: '0.50 A로 20분 동안 석출된 구리 <b>0.20 g</b>은 몇 mol일까요? 이때 이동한 <b>전자</b>는 몇 mol일까요? (Cu의 몰 질량 63.5 g/mol)',
-          hint: '몰수 = 질량 ÷ 몰 질량 이에요. Cu²⁺ + 2e⁻ → Cu 이므로 전자의 몰수는 Cu의 몰수의 2배예요. 단위는 ×10⁻³ mol 로 써요.',
+          hint: '몰수는 질량을 몰 질량으로 나눈 값이에요. Cu²⁺ + 2e⁻ → Cu 이므로 전자의 몰수는 Cu의 몰수의 2배예요. 단위는 ×10⁻³ mol 로 써요.',
           setup() { S.gate = 'anB'; S.an.mc = NaN; S.an.me = NaN; clearNum(['anMc', 'anMe']); setScene('analysis'); updateCtl(); },
           check: () => near(S.an.mc, 3.15, 0.15) && near(S.an.me, 6.3, 0.3), hold: 0.6,
           status: () => 'Cu ' + (isNaN(S.an.mc) ? '—' : S.an.mc + '×10⁻³ mol') + ' ' + mark(near(S.an.mc, 3.15, 0.15)) + ' &nbsp; 전자 ' + (isNaN(S.an.me) ? '—' : S.an.me + '×10⁻³ mol') + ' ' + mark(near(S.an.me, 6.3, 0.3)),
-          explain: 'Cu 0.20 g ÷ 63.5 g/mol ≈ <b>3.1×10⁻³ mol</b>. Cu²⁺ + 2e⁻ → Cu 이므로 전자는 그 2배인 <b>약 6.3×10⁻³ mol</b>이에요.',
+          explain: 'Cu 0.20 g을 63.5 g/mol로 나누면 <b>3.1×10⁻³ mol</b>. Cu²⁺ + 2e⁻ → Cu 이므로 전자는 그 2배인 <b>약 6.3×10⁻³ mol</b>이에요.',
         },
         {
           type: 'quiz', title: '전류를 두 배로 하면',

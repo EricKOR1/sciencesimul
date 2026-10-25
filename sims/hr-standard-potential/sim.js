@@ -166,14 +166,16 @@
     D.roundRect(x - 7, y + 10, 14, 8, 2); ctx.fillStyle = '#64748b'; ctx.fill();
     ctx.restore();
   }
-  /* 전원 장치 : (+) 단자는 왼쪽 */
-  function supplyDraw(x, y, V, on) {
+  /* 전원 장치 (폭 96) : plusRight 이면 (+) 단자가 오른쪽 */
+  function supplyDraw(x, y, label, on, plusRight) {
     ctx.save();
-    D.shadow(() => { D.roundRect(x - 40, y - 17, 80, 34, 8); ctx.fillStyle = '#334155'; ctx.fill(); }, { blur: 5, y: 2 });
-    D.roundRect(x - 36, y - 12, 44, 24, 5); ctx.fillStyle = on ? '#052e16' : '#0f172a'; ctx.fill();
-    T(x - 14, y + 5, V.toFixed(2) + 'V', 13, on ? '#4ade80' : '#64748b', 'center', 900);
-    ctx.fillStyle = '#ef4444'; ctx.beginPath(); ctx.arc(x + 16, y, 5, 0, TAU); ctx.fill();
-    ctx.fillStyle = '#3b82f6'; ctx.beginPath(); ctx.arc(x + 31, y, 5, 0, TAU); ctx.fill();
+    D.shadow(() => { D.roundRect(x - 48, y - 17, 96, 34, 8); ctx.fillStyle = '#334155'; ctx.fill(); }, { blur: 5, y: 2 });
+    D.roundRect(x - 26, y - 12, 52, 24, 5); ctx.fillStyle = on ? '#052e16' : '#0f172a'; ctx.fill();
+    T(x, y + 5, label, 13, on ? '#4ade80' : '#64748b', 'center', 900);
+    [[x - 38, plusRight ? '−' : '+'], [x + 38, plusRight ? '+' : '−']].forEach(([cx, sg]) => {
+      ctx.fillStyle = sg === '+' ? '#ef4444' : '#3b82f6'; ctx.beginPath(); ctx.arc(cx, y, 8, 0, TAU); ctx.fill();
+      T(cx, y + 5, sg, 14, '#fff', 'center', 900);
+    });
     ctx.restore();
   }
   function bubbleUp(list, x, y0, y1, n, t, speed, size, col) {
@@ -445,7 +447,7 @@
     else if (!B) { msg = A.name + ' (' + sgn2(A.E) + ' V) 를 골랐어요. 비교할 카드를 하나 더 골라요.'; }
     else if (s.last && s.last.ok) { const r = HC[s.last.red], o = HC[s.last.ox]; msg = '✅ 환원극 ' + r.name + ' (' + sgn2(r.E) + ' V) , 산화극 ' + o.name + ' (' + sgn2(o.E) + ' V)  →  E°cell = ' + sgn2(r.E) + ' − (' + sgn2(o.E) + ') = ' + sgn2(r.E - o.E) + ' V'; col = '#166534'; }
     else if (s.last && !s.last.ok) { msg = '아니에요. E°가 더 큰 쪽이 전자를 받는 환원극이에요. 눈금에서 더 아래에 있는 쪽이에요.'; col = '#b91c1c'; }
-    else { msg = A.name + ' 와 ' + B.name + ' 중 어느 쪽이 환원극((+)극)일까요? 아래 단추로 답해요.'; }
+    else { msg = A.name + ' , ' + B.name + ' 중 어느 쪽이 환원극((+)극)일까요? 아래 단추로 답해요.'; }
     textBlock(INFO.x + 16, INFO.y + 54, INFO.w - 32, msg, PHONE ? 14 : 15, col, 21, 800);
     textBlock(INFO.x + 16, INFO.y + INFO.h - (PHONE ? 52 : 40), INFO.w - 32, '판정한 짝 : ' + tbNJ() + ' / 3 (서로 다른 짝 3개를 맞혀요)', 14, tbNJ() >= 3 ? '#166534' : MUTED, 19, 800);
   }
@@ -530,10 +532,10 @@
     const bx = PHONE ? MAIN.x + MAIN.w / 2 - bw / 2 : MAIN.x + 60, by = MAIN.y + (PHONE ? 78 : 70);
     const sc = r.scene;
     let solc = '#dbeafe', sola = 0.3, solLab = '';
-    if (sc === 'zncu' || sc === 'fecu') { solc = C.mix('#3b9be0', sc === 'fecu' ? '#cfe3d4' : '#cfe4f3', p * 0.8); sola = 0.6 - 0.3 * p; solLab = '0.1 M CuSO₄ 수용액'; }
-    else if (sc === 'cuzn') { solLab = 'ZnSO₄ 수용액'; }
-    else if (sc === 'znh' || sc === 'cuh') { solLab = '묽은 염산 (H⁺)'; solc = '#fde2e2'; sola = 0.25; }
-    else if (sc === 'cuag') { solLab = 'AgNO₃ 수용액'; solc = C.mix('#dbeafe', '#9ecbf0', p * 0.9); sola = 0.3 + 0.1 * p; }
+    if (sc === 'zncu' || sc === 'fecu') { solc = C.mix('#3b9be0', sc === 'fecu' ? '#cfe3d4' : '#cfe4f3', p * 0.8); sola = 0.6 - 0.3 * p; solLab = 'CuSO₄ 수용액 (1 M)'; }
+    else if (sc === 'cuzn') { solLab = 'ZnSO₄ 수용액 (1 M)'; }
+    else if (sc === 'znh' || sc === 'cuh') { solLab = '묽은 염산 (H⁺ 1 M)'; solc = '#fde2e2'; sola = 0.25; }
+    else if (sc === 'cuag') { solLab = 'AgNO₃ 수용액 (1 M)'; solc = C.mix('#dbeafe', '#9ecbf0', p * 0.9); sola = 0.3 + 0.1 * p; }
     const bk = beaker(bx, by, bw, bh, { level: 0.68, color: solc, alpha: sola, inside: (g) => {
       for (let i = 0; i < 6; i++) { const q = ballPos(g, i + 40, 5, 2, t); D.sphere(q[0], q[1], 4.4, ANC, { gloss: false }); }
       const ionc = sc === 'zncu' || sc === 'fecu' ? '#3b82c4' : sc === 'cuzn' ? '#94a3b8' : sc === 'cuag' ? '#a8b3c4' : '#ef6b6b';

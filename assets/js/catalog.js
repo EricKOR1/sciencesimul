@@ -7745,8 +7745,7 @@ window.SCI_CATALOG = {
                 "전위 표 읽기",
                 "전위차 계산",
                 "반응 예측"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hr-electrolysis",
@@ -7767,8 +7766,7 @@ window.SCI_CATALOG = {
                 "용융 NaCl",
                 "수용액 경쟁",
                 "전자 계산"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hr-electroplating",
@@ -7789,8 +7787,7 @@ window.SCI_CATALOG = {
                 "석출 분석",
                 "산업 조사",
                 "발표·평가"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hr-redox-life",
@@ -7811,8 +7808,7 @@ window.SCI_CATALOG = {
                 "광합성·항산화",
                 "전지 속 물질",
                 "미래 전지"
-              ],
-              "soon": true
+              ]
             }
           ]
         },

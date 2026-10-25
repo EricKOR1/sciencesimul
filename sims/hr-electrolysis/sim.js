@@ -531,7 +531,7 @@
     });
     // 전자 흐름 (전선)
     if (on) { const wp = [[g.cxA, g.rodTop], [g.cxA, sy], [g.cxC, sy], [g.cxC, g.rodTop]]; for (let i = 0; i < 6; i++) { const p = ptAlong(wp, ((i / 6) + t * 0.22) % 1); eBall(p.x, p.y, 4.6); } }
-    T(g.bx + g.bw / 2, g.by + g.bh + 20, '진한 NaCl 수용액 (페놀프탈레인 + 전해질)', PHONE ? 13 : 14, INK, 'center', 800);
+    T(g.bx + g.bw / 2, g.by + g.bh + 20, '진한 NaCl 수용액 (페놀프탈레인 넣음)', PHONE ? 13 : 14, INK, 'center', 800);
     // 녹말-KI 종이
     const pp = a.paper;
     if (pp.target) {
