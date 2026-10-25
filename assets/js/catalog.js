@@ -7286,8 +7286,7 @@ window.SCI_CATALOG = {
                 "온도 측정",
                 "ΔH 계산",
                 "결론·오차"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hx-entropy",
@@ -7308,8 +7307,7 @@ window.SCI_CATALOG = {
                 "배열의 수",
                 "증가 조건",
                 "부호 예측"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hx-spontaneity",
@@ -7330,8 +7328,7 @@ window.SCI_CATALOG = {
                 "두 가지 요인",
                 "네 가지 경우",
                 "사례 판정"
-              ],
-              "soon": true
+              ]
             }
           ]
         },
