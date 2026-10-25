@@ -308,7 +308,7 @@
   })();
   const ktOf = (Tk) => KT0 * (1 + 0.019 * (Tk - 298));              // 모식도: 변화를 보기 쉽게 곡선 변화를 크게 그렸어요
   const fE = (e, kt) => Math.sqrt(e) * Math.exp(-e / kt);
-  const normOf = (kt) => { let b = 0; for (let e = 0.0005; e < 80; e += 0.001) b += fE(e, kt); return b * 0.001; };
+  const normOf = (kt) => Math.sqrt(Math.PI) / 2 * Math.pow(kt, 1.5);                  // ∫ √E e^(−E/kT) dE
   const areaCache = {};
   function areaOf(Tk) {
     if (areaCache[Tk] != null) return areaCache[Tk];

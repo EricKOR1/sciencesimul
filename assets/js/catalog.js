@@ -7407,8 +7407,7 @@ window.SCI_CATALOG = {
                 "유효 충돌",
                 "에너지 장벽",
                 "반응 조건"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hx-rate-factors",
@@ -7429,8 +7428,7 @@ window.SCI_CATALOG = {
                 "온도 효과",
                 "충돌로 설명",
                 "생활 속 예"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hx-catalyst",
@@ -7451,8 +7449,7 @@ window.SCI_CATALOG = {
                 "에너지 도표",
                 "효소",
                 "환경과 촉매"
-              ],
-              "soon": true
+              ]
             }
           ]
         }
