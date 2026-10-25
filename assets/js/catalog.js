@@ -8192,8 +8192,7 @@ window.SCI_CATALOG = {
                 "실험 설계",
                 "실험 수행",
                 "결과 분석"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hy-enzyme-mechanism",
@@ -8214,8 +8213,7 @@ window.SCI_CATALOG = {
                 "복합체 형성",
                 "속도와 포화",
                 "예측하기"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hy-enzyme-regulation",
@@ -8236,8 +8234,7 @@ window.SCI_CATALOG = {
                 "저해 모형",
                 "되먹임 조절",
                 "효소의 중요성"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hy-enzyme-industry",
@@ -8258,8 +8255,7 @@ window.SCI_CATALOG = {
                 "원리 연결",
                 "고정화 실험",
                 "조사 발표"
-              ],
-              "soon": true
+              ]
             }
           ]
         },
@@ -8523,8 +8519,7 @@ window.SCI_CATALOG = {
                 "상염색체",
                 "X 연관",
                 "정반대 교배"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hg-pedigree",
@@ -8545,8 +8540,7 @@ window.SCI_CATALOG = {
                 "쌍둥이·집단",
                 "유전 양상",
                 "가계도 추론"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hg-polygenic",
@@ -8567,8 +8561,7 @@ window.SCI_CATALOG = {
                 "다유전자",
                 "환경과 유전",
                 "사례 소통"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hg-chrom-abnormal",

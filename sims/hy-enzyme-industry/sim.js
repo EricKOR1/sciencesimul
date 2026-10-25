@@ -843,8 +843,8 @@
           goal: '비드를 <b>20번</b> 쓸 때의 <b>1회당 비용</b>을 계산하고, 활성이 처음(4.0)의 <b>50 %(2.0) 이하</b>가 되기 전까지 몇 회 쓸 수 있는지 그래프에서 읽어 쓰세요.',
           hint: '⏩ 20회까지 한꺼번에를 누르면 자료가 채워져요. 1500원 / 20회를 계산해요. 그래프의 점을 눌러 점수를 확인하고, 2.0(빨간 점선) 이상인 마지막 횟수를 찾아요.',
           setup() { S.grp = 'calc'; setMode('immo'); },
-          check: () => S.im.n >= 17 && near(numIn('inCost'), 75, 0.5) && near(numIn('inMax'), 16, 0) && !S.im.auto, hold: 0.5,
-          status: () => mark(S.im.n >= 17) + ' 자료 ' + S.im.n + ' / 17회 이상 &nbsp; ' + mark(near(numIn('inCost'), 75, 0.5)) + ' 1회당 비용 &nbsp; ' + mark(near(numIn('inMax'), 16, 0)) + ' 재사용 한도',
+          check: () => S.im.kind === 'imm' && S.im.n >= 17 && near(numIn('inCost'), 75, 0.5) && near(numIn('inMax'), 16, 0) && !S.im.auto, hold: 0.5,
+          status: () => mark(S.im.kind === 'imm' && S.im.n >= 17) + ' 비드 자료 ' + (S.im.kind === 'imm' ? S.im.n : 0) + ' / 17회 이상 &nbsp; ' + mark(near(numIn('inCost'), 75, 0.5)) + ' 1회당 비용 &nbsp; ' + mark(near(numIn('inMax'), 16, 0)) + ' 재사용 한도',
           explain: '1500원 / 20회 = <b>75원</b>이에요. 활성이 처음의 50 %인 점수 2.0 이상을 유지하는 마지막 횟수는 <b>16회</b>(약 2.1)이고 17회에는 약 1.96이 돼요. 한도를 넘으면 효소를 새로 바꾸는 것이 좋아요.',
         },
         {
