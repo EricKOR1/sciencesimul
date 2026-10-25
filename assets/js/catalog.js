@@ -7227,8 +7227,7 @@ window.SCI_CATALOG = {
                 "열량계",
                 "반응식 쓰기",
                 "ΔH 다루기"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hx-fuel-enthalpy",
@@ -7249,8 +7248,7 @@ window.SCI_CATALOG = {
                 "부피당 열량",
                 "연소 실험",
                 "연료 선택"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hx-hess-law",
@@ -7270,8 +7268,7 @@ window.SCI_CATALOG = {
                 "식 조작",
                 "CO의 ΔH",
                 "퍼즐 풀기"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hx-hess-experiment",
