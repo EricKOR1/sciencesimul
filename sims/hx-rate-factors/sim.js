@@ -320,11 +320,11 @@
   const effOf = (Tk, mul) => collOf(Tk, mul) * areaOf(Tk);
   const TKS = [298, 308, 318, 328];
   const YMAX_E = 2 * fE(0.5 * ktOf(298), ktOf(298)) / normOf(ktOf(298)) * 1.1;
-  function wySet(Tk) { const W = WY(); if (W.Tk !== Tk) { W.Tk = Tk; Sound.tick(); } W.seen[Tk] = true; updateCtl(); }
+  function wySet(Tk) { const W = WY(); if (W.Tk !== Tk) { W.Tk = Tk; Sound.tick(); } W.seen[Tk] = true; wyCheck(); updateCtl(); }
   function wyMul(m) { const W = WY(); if (W.mul !== m) { W.mul = m; Sound.tick(); } updateCtl(); }
   function wyCheck() {
     const W = WY(), a = W.ok.slice();
-    W.ok[0] = W.in[0] !== '' && near(parseNum(W.in[0]), pctOf(298), 0.5); W.ok[1] = W.in[1] !== '' && near(parseNum(W.in[1]), pctOf(308), 0.5);
+    W.ok[0] = W.in[0] !== '' && near(parseNum(W.in[0]), pctOf(298), 0.5); W.ok[1] = !!W.seen[308] && W.in[1] !== '' && near(parseNum(W.in[1]), pctOf(308), 0.5);
     W.ok.forEach((o, i) => { if (o && !a[i]) Sound.success(); });
   }
   const wyDone = () => WY().ok[0] && WY().ok[1];
