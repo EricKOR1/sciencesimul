@@ -374,27 +374,29 @@
     // KOH 용액 컵
     const cw = PHONE ? 24 : 32, cx0 = jx - cw / 2 - (PHONE ? 10 : 14), cy0 = jy + jh - (PHONE ? 38 : 52);
     D.roundRect(cx0 - 2, cy0 + 4, cw + 4, PHONE ? 22 : 28, 5); ctx.fillStyle = 'rgba(167,139,250,.7)'; ctx.fill(); ctx.strokeStyle = '#7c3aed'; ctx.lineWidth = 1.5; ctx.stroke();
-    // 관: 용기 뚜껑 → 오른쪽 눈금 관
-    const tx = r.x + PW * (PHONE ? 0.8 : 0.78), ty = r.y + (PHONE ? 84 : 116), th = PHONE ? 130 : 150;
-    ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(jx, jy - 8); ctx.lineTo(jx, ty + th + 14); ctx.lineTo(tx, ty + th + 14); ctx.lineTo(tx, ty + th); ctx.stroke();
+    // 관: 용기 뚜껑 → 눈금 관 꼭대기, 눈금 관 아래는 붉은 물 그릇
+    const tx = r.x + PW * (PHONE ? 0.8 : 0.78), ty = r.y + (PHONE ? 84 : 112), th = PHONE ? 108 : 130;
+    ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 3; ctx.lineJoin = 'round'; ctx.beginPath(); ctx.moveTo(jx, jy - 8); ctx.lineTo(jx, ty - 16); ctx.lineTo(tx, ty - 16); ctx.lineTo(tx, ty + 2); ctx.stroke();
+    // 붉은 물 그릇
+    D.roundRect(tx - 17, ty + th + 2, 34, 18, 6); ctx.fillStyle = '#ef476f'; ctx.fill(); ctx.strokeStyle = '#be123c'; ctx.lineWidth = 1.6; ctx.stroke();
     // 눈금 관
-    D.roundRect(tx - 8, ty, 16, th, 8); ctx.fillStyle = '#f8fbff'; ctx.fill(); ctx.strokeStyle = '#8fa3bd'; ctx.lineWidth = 2; ctx.stroke();
+    D.roundRect(tx - 8, ty, 16, th + 6, 8); ctx.fillStyle = '#f8fbff'; ctx.fill(); ctx.strokeStyle = '#8fa3bd'; ctx.lineWidth = 2; ctx.stroke();
     const lvl = clamp(o2v / 8, 0, 1) * (th - 14);
-    if (lvl > 0.5) { ctx.save(); D.roundRect(tx - 8, ty, 16, th, 8); ctx.clip(); ctx.fillStyle = '#ef476f'; ctx.fillRect(tx - 8, ty + th - lvl, 16, lvl + 2); ctx.restore(); }
+    if (lvl > 0.5) { ctx.save(); D.roundRect(tx - 8, ty, 16, th + 6, 8); ctx.clip(); ctx.fillStyle = '#ef476f'; ctx.fillRect(tx - 8, ty + th - lvl + 4, 16, lvl + 4); ctx.restore(); }
     for (let v = 0; v <= 8; v += 2) { const yy = ty + th - 3 - (v / 8) * (th - 14); ctx.fillStyle = '#64748b'; ctx.fillRect(tx + 9, yy, 6, 1.6); T(tx + 18, yy + 4, String(v), 13, '#64748b', 'left', 700); }
-    T(tx, ty - 8, 'mL', 13, '#64748b', 'center', 800);
+    T(tx + 24, ty - 8, 'mL', 13, '#64748b', 'left', 800);
     T(r.x + r.w / 2, r.y + r.h - 8, 'O₂ 소비 ' + fix1(o2v) + ' mL', PHONE ? 14 : 16, o2v > 0.3 ? '#be123c' : '#475569', 'center', 800);
     if (!PHONE) T(cx0 + cw / 2, cy0 - 3, 'KOH', 13, '#6d28d9', 'center', 800);
   }
   /* 이산화 탄소 확인 장치: 용기 → 석회수 · BTB */
   function co2Rig(r, key, cloud, t) {
-    const PW = r.w, jx = r.x + PW * 0.2, jw = PHONE ? 50 : 72, jh = PHONE ? 86 : 118, jy = r.y + r.h - jh - (PHONE ? 30 : 34);
+    const PW = r.w, jx = r.x + PW * 0.2, jw = PHONE ? 50 : 72, jh = PHONE ? 86 : 118, jy = r.y + r.h - jh - (PHONE ? 46 : 54);
     D.shadow(() => { D.roundRect(jx - jw / 2, jy, jw, jh, 10); ctx.fillStyle = 'rgba(214,236,250,.55)'; ctx.fill(); }, { blur: 6, y: 2 });
     ctx.strokeStyle = '#8fb3d0'; ctx.lineWidth = 2.5; D.roundRect(jx - jw / 2, jy, jw, jh, 10); ctx.stroke();
     D.roundRect(jx - jw / 2 - 3, jy - 8, jw + 6, 12, 5); ctx.fillStyle = '#475569'; ctx.fill();
     beansGroup(key, jx, jy + jh - 18, PHONE ? 0.55 : 0.72, bnGerm());
     // 시험관 두 개 (석회수 · BTB)
-    const tw = PHONE ? 24 : 34, th = PHONE ? 112 : 142, ty = r.y + r.h - th - (PHONE ? 30 : 34);
+    const tw = PHONE ? 24 : 34, th = PHONE ? 112 : 142, ty = r.y + r.h - th - (PHONE ? 46 : 54);
     const tubes = [{ x: r.x + PW * (PHONE ? 0.52 : 0.52), nm: '석회수' }, { x: r.x + PW * (PHONE ? 0.84 : 0.82), nm: 'BTB' }];
     ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(jx, jy - 8); ctx.lineTo(jx, ty - 12); ctx.lineTo(tubes[1].x, ty - 12); ctx.stroke();
     tubes.forEach((tb, i) => {
@@ -402,7 +404,7 @@
       ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(tb.x, ty - 12); ctx.lineTo(tb.x, ty + th * 0.6); ctx.stroke();
       D.testTube(tb.x, ty, tw, th, { level: 0.62, liquid: liq });
       if (i === 0 && cloud > 0.05) { ctx.save(); const path = () => { ctx.beginPath(); ctx.moveTo(tb.x - tw / 2, ty + th * 0.38); ctx.lineTo(tb.x - tw / 2, ty + th - tw / 2); ctx.arc(tb.x, ty + th - tw / 2, tw / 2, Math.PI, 0, true); ctx.lineTo(tb.x + tw / 2, ty + th * 0.38); }; path(); ctx.closePath(); ctx.clip(); for (let k = 0; k < 22; k++) { ctx.fillStyle = 'rgba(255,255,255,' + (0.55 * cloud) + ')'; ctx.beginPath(); ctx.arc(tb.x - tw / 2 + 4 + ((k * 37) % 100) / 100 * (tw - 8), ty + th * 0.4 + ((k * 61) % 100) / 100 * th * 0.58, 2.2 + (k % 3), 0, TAU); ctx.fill(); } ctx.restore(); }
-      T(tb.x, ty + th + (PHONE ? 20 : 22), tb.nm, 13, '#334155', 'center', 800);
+      T(tb.x, ty + th + (PHONE ? 16 : 18), tb.nm, 13, '#334155', 'center', 800);
     });
     // 방울
     const bl = S.bn.bub[key];
@@ -454,7 +456,7 @@
       if (b.day > nd + 1e-6) ctx.lineTo(p.X(b.day), p.Y(interp(arr, b.day)));
       ctx.stroke(); ctx.setLineDash([]);
       for (let d = 0; d <= nd; d++) D.sphere(p.X(d), p.Y(arr[d]), k === 'germ' ? 5.5 : 4.5, col, { gloss: false });
-      const ly = p.Y(interp(arr, b.day)) + (k === 'dry' ? -15 : k === 'boil' ? 15 : 0);
+      const ly = p.Y(interp(arr, b.day)) + (isT ? (k === 'dry' ? -15 : k === 'boil' ? 15 : 0) : (k === 'dry' ? -13 : k === 'boil' ? -27 : 0));
       if (nd >= 0) T(p.X(b.day) + 9, ly + 4, SAMP[k].name.replace('발아 중인 ', '발아 ') , 13, col, 'left', 800);
       ctx.restore();
     });
@@ -521,7 +523,7 @@
     m.bar.set(ok ? msKcal() : 0); m.bar.update(dt, 4);
     // 그래프
     panel(MS_G.x, MS_G.y, MS_G.w, MS_G.h, 18, '#fff');
-    const p = mkPlot(MS_G, { x0: 0, x1: 6, y0: 0, y1: 12, xt: [0, 2, 4, 6], yt: [0, 2, 4, 6, 8, 10, 12], xfmt: (v) => v + '일', xl: '발아 후 시간(일, 어두운 곳)', yl: '건조 질량 (g)', m: PHONE ? { l: 42, t: 30, r: 16, b: 38 } : { l: 50, t: 36, r: 24, b: 40 } });
+    const p = mkPlot(MS_G, { x0: 0, x1: 6, y0: 0, y1: 12, xt: [0, 2, 4, 6], yt: [0, 2, 4, 6, 8, 10, 12], xfmt: (v) => v + '일', xl: '발아 후 시간(일, 어두운 곳)', yl: '건조 질량 (g)', m: PHONE ? { l: 42, t: 30, r: 16, b: 48 } : { l: 50, t: 36, r: 24, b: 40 } });
     drawAxes(p);
     const days = [0, 2, 4, 6];
     ctx.save(); ctx.strokeStyle = '#94a3b8'; ctx.setLineDash([5, 5]); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(p.x, p.Y(10)); ctx.lineTo(p.x + p.w, p.Y(10)); ctx.stroke(); ctx.setLineDash([]); ctx.restore();
@@ -554,7 +556,7 @@
     panel(MS_E.x, MS_E.y, MS_E.w, MS_E.h, 18, '#fff');
     T(MS_E.x + 16, MS_E.y + 28, '⚡ 줄어든 질량이 방출한 에너지 (녹말 1 g = 4 kcal 가정)', L(16.5, 13.5), '#1f2d44', 'left', 800);
     const lossT = $('#inLoss').value.trim(), kT = $('#inKcal').value.trim();
-    const bw = PHONE ? 104 : 150, bh = PHONE ? 48 : 56, by2 = MS_E.y + 56, opw = PHONE ? 92 : 130, eqw = PHONE ? 24 : 34;
+    const bw = PHONE ? 104 : 150, bh = PHONE ? 44 : 50, by2 = MS_E.y + 50, opw = PHONE ? 92 : 130, eqw = PHONE ? 24 : 34;
     let cxp = MS_E.x + (PHONE ? 12 : 24);
     const okL = near(numIn('inLoss'), msLoss(), 0.06) && msLoss() > 0, okK = near(numIn('inKcal'), msKcal(), 0.06) && msLoss() > 0;
     const box = (txt, lab, ok) => {
@@ -567,7 +569,7 @@
     T(cxp + eqw / 2, by2 + bh * 0.62, '=', L(22, 18), '#475569', 'center', 800); cxp += eqw;
     box(kT ? kT + ' kcal' : '? kcal', '방출 에너지', okK);
     // 에너지 흐름 막대 (6.4 kcal = 막대 전체)
-    const fy = MS_E.y + (PHONE ? 140 : 140), fx = MS_E.x + 16, fw = MS_E.w - 32, fh = 36, full = DRYM[0] - DRYM[6];
+    const fy = MS_E.y + 128, fx = MS_E.x + 16, fw = MS_E.w - 32, fh = 34, full = DRYM[0] - DRYM[6];
     const maxE = full * KCAL_G;
     T(fx, fy - 8, '방출된 화학 에너지 → ATP에 저장 + 열로 방출', L(15, 13.5), '#334155', 'left', 800);
     D.roundRect(fx, fy, fw, fh, 10); ctx.fillStyle = '#eef2f7'; ctx.fill();
@@ -578,14 +580,13 @@
       if (ok && m.bar.v > msKcal() * 0.97) {
         if (wa > 54) T(fx + wa / 2, fy + 24, 'ATP', 14, '#fff', 'center', 800);
         if (w1 - wa > 40) T(fx + wa + (w1 - wa) / 2, fy + 24, '열', 14, '#fff', 'center', 800);
-        T(fx, fy + fh + 22, 'ATP 약 1/3 (≈ ' + fix1(msKcal() * ATP_FR) + ' kcal) · 열 약 2/3 (≈ ' + fix1(msKcal() - Math.round(msKcal() * ATP_FR * 10) / 10) + ' kcal)', L(15, 13.5), '#15803d', 'left', 800);
+        T(fx, fy + fh + 20, 'ATP 약 1/3 (≈ ' + fix1(msKcal() * ATP_FR) + ' kcal) · 열 약 2/3 (≈ ' + fix1(msKcal() - Math.round(msKcal() * ATP_FR * 10) / 10) + ' kcal)', L(15, 13.5), '#15803d', 'left', 800);
       }
     } else {
       T(fx + fw / 2, fy + 24, '위 계산을 맞추면 에너지 흐름이 나타나요', 14, '#94a3b8', 'center', 800);
     }
-    T(fx, MS_E.y + MS_E.h - (PHONE ? 38 : 22), '열의 일부는 보온병 온도를 높여요(앞 실험: 3일 동안 +1.8 °C).', L(14, 13), '#64748b', 'left', 700);
-    if (PHONE) T(fx, MS_E.y + MS_E.h - 14, '단순 계산이며 저장 물질이 지방이면 1 g당 약 9 kcal로 더 커요.', 13, '#64748b', 'left', 700);
-    else T(fx, MS_E.y + MS_E.h - 4, '단순 계산이며 저장 물질이 지방이면 1 g당 약 9 kcal로 더 커요.', 13, '#94a3b8', 'left', 700);
+    if (PHONE) { T(fx, MS_E.y + MS_E.h - 38, '열의 일부는 보온병 온도를 높여요(앞 실험 +1.8 °C).', 13, '#64748b', 'left', 700); T(fx, MS_E.y + MS_E.h - 16, '단순 계산이며 지방이면 1 g당 약 9 kcal로 더 커요.', 13, '#64748b', 'left', 700); }
+    else T(fx, MS_E.y + MS_E.h - 12, '열의 일부는 보온병 온도를 높여요(앞 실험 +1.8 °C). 단순 계산이며 저장 물질이 지방이면 1 g당 약 9 kcal로 더 커요.', 13.5, '#64748b', 'left', 700);
   }
 
   /* 아밀레이스 활성 */
@@ -690,7 +691,7 @@
     // --- 연소 ---
     panel(ST_C.x, ST_C.y, ST_C.w, ST_C.h, 18, '#fff7ed');
     T(ST_C.x + 14, ST_C.y + 28, '🔥 연소: 한꺼번에', L(18, 15.5), '#9a3412', 'left', 800);
-    const cx = ST_C.x + 112, by = ST_C.y + (PHONE ? 158 : 250);
+    const cx = ST_C.x + (PHONE ? 236 : 112), by = ST_C.y + (PHONE ? 158 : 250);
     // 도가니와 포도당
     ctx.save(); ctx.beginPath(); ctx.moveTo(cx - 44, by - 26); ctx.lineTo(cx + 44, by - 26); ctx.lineTo(cx + 30, by + 4); ctx.lineTo(cx - 30, by + 4); ctx.closePath(); ctx.fillStyle = '#9ca3af'; ctx.fill(); ctx.strokeStyle = '#6b7280'; ctx.lineWidth = 2; ctx.stroke(); ctx.restore();
     const gl = 1 - c.p * 0.85; for (let q = 0; q < 8; q++) { ctx.fillStyle = '#fff'; ctx.strokeStyle = '#cbd5e1'; ctx.beginPath(); ctx.arc(cx - 28 + (q % 4) * 19 + (q > 3 ? 8 : 0), by - 30 - (q > 3 ? 8 : 0) * gl, 6 * gl + 0.5, 0, TAU); ctx.fill(); ctx.stroke(); }
@@ -704,7 +705,7 @@
     // 세포가 연소한다면
     if (!PHONE) { drawCellBlob(ST_C.x + 44, ST_C.y + 322, 20, c.p); }
     if (!PHONE) T(ST_C.x + 80, ST_C.y + 328, c.p > 0.5 ? '세포가 타 버려요!' : '세포 안에서 연소하면…', 13.5, c.p > 0.5 ? '#b91c1c' : '#64748b', 'left', 800);
-    else { drawCellBlob(ST_C.x + 40, ST_C.y + 70, 18, c.p); T(ST_C.x + 14, ST_C.y + 116, c.p > 0.5 ? '세포가 타 버려요!' : '세포 안이라면…', 13, c.p > 0.5 ? '#b91c1c' : '#64748b', 'left', 800); }
+    else { drawCellBlob(ST_C.x + 48, ST_C.y + 76, 20, c.p); T(ST_C.x + 14, ST_C.y + 116, c.p > 0.5 ? '세포가 타 버려요!' : '세포 안이라면…', 13, c.p > 0.5 ? '#b91c1c' : '#64748b', 'left', 800); }
     // --- 세포 ---
     panel(ST_S.x, ST_S.y, ST_S.w, ST_S.h, 18, '#f0fdf4');
     T(ST_S.x + 14, ST_S.y + 28, '🧫 세포: 효소로 20여 단계', L(18, 15.5), '#166534', 'left', 800);
@@ -742,7 +743,7 @@
       D.roundRect(x - 8, y - 5, 16, 10, 3); ctx.fillStyle = '#22c55e'; ctx.fill(); ctx.strokeStyle = '#166534'; ctx.lineWidth = 1.2; ctx.stroke();
     });
     // 세포 온도계 (같은 눈금)
-    const sx2 = ST_S.x + (PHONE ? 40 : 66), sy2 = PHONE ? ST_S.y + ST_S.h - 88 : ST_S.y + 238, sh2 = PHONE ? 48 : 86;
+    const sx2 = ST_S.x + (PHONE ? 72 : 66), sy2 = PHONE ? ST_S.y + ST_S.h - 88 : ST_S.y + 238, sh2 = PHONE ? 48 : 86;
     D.thermometer(sx2, sy2, sh2, 37, 0, 700, { step: 100, unit: '', ticks: false, color: '#16a34a' });
     T(sx2 + 24, sy2 + (PHONE ? 30 : 24), '세포 37 °C', L(15, 14), '#166534', 'left', 800);
     T(sx2 + 24, sy2 + (PHONE ? 50 : 44), '(눈금은 연소와 같아요)', 13, '#64748b', 'left', 700);
@@ -781,22 +782,22 @@
     { id: 'bear', icon: '🐻', label: '겨울잠 자는 곰의 지방 분해', short: '곰의 지방 분해', box: 'cat', why: '효소로 저장 지방을 분해해 ATP와 열을 얻어요. 이화(에너지 방출)예요.' },
   ];
   const JBOX = { cat: { label: '이화 (분해)', col: '#f97316' }, ana: { label: '동화 (합성)', col: '#3b82f6' }, non: { label: '물질대사 아님', col: '#64748b' } };
-  const JB = PHONE ? { y: 10, h: 236 } : { y: 14, h: 270 };
+  const JB = PHONE ? { y: 10, h: 236 } : { y: 14, h: 296 };
   const jsorter = new Sorter({
     cards: JC.map((c) => ({ id: c.id, label: c.label, short: c.short, icon: c.icon, col: '#16a34a' })),
     boxes: ['cat', 'ana', 'non'].map((k, i) => { const gap = PHONE ? 8 : 10, bw = ((PHONE ? 460 : 772) - gap * 2) / 3; return { id: k, label: JBOX[k].label, col: JBOX[k].col, x: (PHONE ? 10 : 14) + i * (bw + gap), y: JB.y, w: bw, h: JB.h, cols: 1, hdr: 32 }; }),
-    cw: PHONE ? 226 : 186, ch: PHONE ? 50 : 62, kh: PHONE ? 34 : 34,
-    tray: (i) => (PHONE ? { x: 10 + (i % 2) * 238, y: 316 + Math.floor(i / 2) * 58 } : { x: 14 + (i % 4) * 194, y: 352 + Math.floor(i / 4) * 78 }),
+    cw: PHONE ? 226 : 186, ch: PHONE ? 50 : 62, kh: 34,
+    tray: (i) => (PHONE ? { x: 10 + (i % 2) * 238, y: 324 + Math.floor(i / 2) * 58 } : { x: 14 + (i % 4) * 194, y: 382 + Math.floor(i / 4) * 74 }),
     onChange() { updateCtl(); },
   });
   const jWrong = () => jsorter.cards.filter((c) => c.zone && c.zone !== JC.find((q) => q.id === c.id).box);
   const jPT = { down: (p) => jsorter.down(p), move: (p) => jsorter.move(p), up: (p) => jsorter.up(p), hover: (p) => jsorter.hover(p) };
   function jDraw(dt, t) {
     jsorter.update(dt); jsorter.drawBoxes();
-    const py = PHONE ? 258 : 296, ph = PHONE ? 372 : 250, px = PHONE ? 10 : 14, pw = PHONE ? 460 : 772;
+    const py = PHONE ? 258 : 322, ph = PHONE ? 372 : 224, px = PHONE ? 10 : 14, pw = PHONE ? 460 : 772;
     panel(px, py, pw, ph, 16, '#ffffff');
     T(px + 16, py + 26, '상황 카드 8장을 알맞은 상자에 끌어 넣어요', L(16, 14), '#334155', 'left', 800);
-    T(px + 16, py + 46, '물질대사 = ① 생명체 안에서 ② 효소가 관여하는 ③ 에너지 출입이 있는 화학 반응', L(13.5, 12.5), '#64748b', 'left', 700);
+    if (PHONE) textBlock(px + 16, py + 44, pw - 32, '물질대사 = ① 생명체 안에서 ② 효소가 관여하는 ③ 에너지 출입이 있는 화학 반응', 13, '#64748b', 16, 700); else T(px + 16, py + 46, '물질대사 = ① 생명체 안에서 ② 효소가 관여하는 ③ 에너지 출입이 있는 화학 반응', 13.5, '#64748b', 'left', 700);
     jsorter.drawCards();
     // 에너지 출입 표시 (학생이 고른 값)
     [['cat', 'selCat'], ['ana', 'selAna']].forEach((q) => {
