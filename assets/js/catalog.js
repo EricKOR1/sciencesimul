@@ -9111,8 +9111,7 @@ window.SCI_CATALOG = {
                 "탄소 되먹임",
                 "얼음덩어리",
                 "물과 지형"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hs-plate-history",
@@ -9133,8 +9132,7 @@ window.SCI_CATALOG = {
                 "해양저 확장",
                 "판구조론",
                 "관측 기기"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hs-plate-plume",
@@ -9155,8 +9153,7 @@ window.SCI_CATALOG = {
                 "섭입의 힘",
                 "맨틀 플룸",
                 "열점 추적"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hs-volcano-rocks",
