@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0ea5e9">
+  <title>제3법칙과 모든 천체 | 고등 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔭</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-hint { bottom: auto; top: 12px; }
+    .stage-toolbar { min-height: 58px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; }
+    .stage-toolbar .segmented button { min-height: 40px; padding: 5px 10px; font-size: 14px; white-space: nowrap; }
+    .stage-toolbar .segmented { flex-wrap: wrap; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard [hidden] { display: none !important; }
+    .opt-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin-top: 4px; }
+    .opt-grid.c3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .opt-grid.c4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .opt-grid.c5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+    .opt {
+      min-height: 46px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 12px;
+      font-weight: 800; font-size: 14.5px; cursor: pointer; padding: 4px 4px; font-family: inherit; line-height: 1.2;
+    }
+    .opt.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); color: color-mix(in srgb, var(--subject) 70%, black); }
+    .opt.done { border-color: var(--good); background: var(--good-soft); color: #0b6b39; }
+    .opt:disabled { opacity: .5; cursor: not-allowed; }
+    .ctrl-note { margin: 6px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    .btn-sm { min-height: 44px; }
+    .btn-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+    .btn-row .btn { flex: 1; padding-left: 8px; padding-right: 8px; }
+    .readout .value.txt { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .concept table.mini, table.mini { border-collapse: collapse; margin: 6px 0; font-size: 13px; width: 100%; }
+    .concept table.mini th, .concept table.mini td, table.mini th, table.mini td { border: 1px solid var(--line); padding: 4px 5px; text-align: center; }
+    .concept table.mini th, table.mini th { background: var(--surface-2); font-weight: 800; }
+    .num-in { width: 100%; min-height: 46px; border: 2px solid var(--line); border-radius: 10px; font: inherit; font-weight: 800; font-size: 17px; padding: 0 10px; background: var(--surface); color: var(--ink); text-align: center; }
+    .num-in:focus { outline: none; border-color: var(--subject); }
+    .num-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .num-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .in-row { display: grid; grid-template-columns: 1fr 104px; gap: 8px; align-items: center; margin-top: 6px; font-weight: 800; font-size: 14.5px; line-height: 1.25; }
+    .in-row .num-in { min-height: 42px; font-size: 16px; }
+    @keyframes shakeX { 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+    .src-note { margin: 4px 0 0; font-size: 12.5px; color: #a16207; background: #fff7e0; border: 1px solid #f2d38a; border-radius: 10px; padding: 6px 9px; line-height: 1.4; }
+    @media (max-width: 599px) {
+      .readout { min-width: 0; }
+      .readout .value.txt { font-size: 15px; }
+      .stage-toolbar .spacer { display: none; }
+      .stage-toolbar .segmented button { padding: 5px 7px; font-size: 13px; }
+    }
+    input[type=range] { height: 40px; }
+    .ticks { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--muted); font-weight: 700; margin-top: -6px; padding: 0 2px; }
+  </style>
+</head>
+<body class="sim-page" data-subject="earth">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#hu">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">행성우주과학 · Ⅰ. 우주탐사와 행성계</div>
+      <h1>제3법칙과 모든 천체</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🔭 제3법칙과 모든 천체</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="group" aria-label="장면 고르기" hidden>
+            <button type="button" data-view="scope">🔭 망원경</button>
+            <button type="button" data-view="log">📈 관측 일지</button>
+            <button type="button" data-view="meaning">⚖ 법칙의 의미</button>
+            <button type="button" data-view="all">🌌 모든 천체</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="가상 천체 망원경으로 본 목성과 갈릴레이 위성, 위성의 관측 일지 그래프, 중심 천체 질량과 a³/T² 비교, 태양 둘레 천체의 T²-a³ 그래프가 있어요."></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">—</span><span class="value txt" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">—</span><span class="value txt" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">—</span><span class="value txt" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" data-modes="scope">
+          <div class="control-head"><span>🪐 관측할 행성</span></div>
+          <div class="opt-grid c4" id="grpPl">
+            <button class="opt" type="button" data-k="0">금성</button><button class="opt" type="button" data-k="1">화성</button><button class="opt" type="button" data-k="2">목성</button><button class="opt" type="button" data-k="3">토성</button>
+          </div>
+        </div>
+        <div class="control" data-modes="scope">
+          <div class="control-head"><span>🔭 접안렌즈 f_e (대물 f_o = 1000 mm)</span></div>
+          <div class="opt-grid c3" id="grpFe">
+            <button class="opt" type="button" data-k="0">40 mm<br>(25배)</button><button class="opt" type="button" data-k="1">20 mm<br>(50배)</button><button class="opt" type="button" data-k="2">10 mm<br>(100배)</button>
+          </div>
+        </div>
+        <div class="control" data-modes="scope" id="ctlSky" hidden>
+          <div class="control-head"><label for="sSky">📅 관측 시기</label><output id="oSky">위치 63°</output></div>
+          <input type="range" id="sSky" min="0" max="100" step="1" value="35" aria-label="관측 시기 (행성의 위치)">
+        </div>
+
+        <div class="control" data-modes="log">
+          <div class="control-head"><span>📈 시간 가속 관측 (6시간마다 기록)</span></div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bRec" type="button">▶ 관측 일지 기록</button><button class="btn btn-sm" id="bRecAll" type="button">⏭ 끝까지</button></div>
+          <p class="ctrl-note">그래프를 눌러(끌어도 돼요) 그 날짜의 위성 위치를 읽어요.</p>
+        </div>
+        <div class="control" data-modes="log" id="calcRead" hidden>
+          <div class="control-head"><span>🧮 곡선에서 읽은 값</span></div>
+          <div class="in-row"><span>이오 T (일)</span><input class="num-in" id="inTIo" type="text" inputmode="decimal" placeholder="예: 2" aria-label="이오의 공전 주기 (일)" autocomplete="off"></div>
+          <div class="in-row"><span>이오 a (D_J)</span><input class="num-in" id="inAIo" type="text" inputmode="decimal" placeholder="예: 3" aria-label="이오의 최대 이각 (목성 지름 단위)" autocomplete="off"></div>
+          <div class="in-row"><span>칼리스토 T (일)</span><input class="num-in" id="inTCa" type="text" inputmode="decimal" placeholder="예: 17" aria-label="칼리스토의 공전 주기 (일)" autocomplete="off"></div>
+          <div class="in-row"><span>칼리스토 a (D_J)</span><input class="num-in" id="inACa" type="text" inputmode="decimal" placeholder="예: 13" aria-label="칼리스토의 최대 이각 (목성 지름 단위)" autocomplete="off"></div>
+        </div>
+        <div class="control" data-modes="log" id="calcK" hidden>
+          <div class="control-head"><span>🧮 a³ / T² (10⁵ km³/일²)</span></div>
+          <div class="in-row"><span>이오</span><input class="num-in" id="inK0" type="text" inputmode="decimal" placeholder="예: 20" aria-label="이오의 a 세제곱 나누기 T 제곱" autocomplete="off"></div>
+          <div class="in-row"><span>에우로파</span><input class="num-in" id="inK1" type="text" inputmode="decimal" placeholder="예: 20" aria-label="에우로파의 a 세제곱 나누기 T 제곱" autocomplete="off"></div>
+          <div class="in-row"><span>가니메데</span><input class="num-in" id="inK2" type="text" inputmode="decimal" placeholder="예: 20" aria-label="가니메데의 a 세제곱 나누기 T 제곱" autocomplete="off"></div>
+          <div class="in-row"><span>칼리스토</span><input class="num-in" id="inK3" type="text" inputmode="decimal" placeholder="예: 20" aria-label="칼리스토의 a 세제곱 나누기 T 제곱" autocomplete="off"></div>
+        </div>
+
+        <div class="control" data-modes="meaning">
+          <div class="control-head"><label for="sM">⭐ 중심 천체의 질량 M</label><output id="oM">1.0 M☉</output></div>
+          <input type="range" id="sM" min="0.5" max="2" step="0.1" value="1" aria-label="중심 천체의 질량 (태양 질량 단위)">
+        </div>
+        <div class="control" data-modes="meaning">
+          <div class="control-head"><span>🌍 도는 천체의 질량 m (지구 = 1)</span></div>
+          <div class="opt-grid c4" id="grpM">
+            <button class="opt" type="button" data-m="1">지구<br>1</button><button class="opt" type="button" data-m="17.1">해왕성<br>17</button><button class="opt" type="button" data-m="95.2">토성<br>95</button><button class="opt" type="button" data-m="317.8">목성<br>318</button>
+          </div>
+          <p class="ctrl-note">m을 바꿔도 T는 그대로예요. M만 T를 바꿔요.</p>
+        </div>
+        <div class="control" data-modes="meaning" id="calcMass" hidden>
+          <div class="control-head"><span>🧮 M목성 / M태양</span></div>
+          <div class="in-row"><span>비 (×10⁻⁴)</span><input class="num-in" id="inMass" type="text" inputmode="decimal" placeholder="예: 5" aria-label="목성 질량 대 태양 질량의 비 (10의 마이너스 4제곱 단위)" autocomplete="off"></div>
+        </div>
+        <div class="control" data-modes="meaning">
+          <p class="ctrl-note">아래 카드를 눌러(또는 끌어서) a³ / T² 값이 같은 상자에 넣어요.</p>
+        </div>
+
+        <div class="control" data-modes="all">
+          <div class="control-head"><span>📍 T²–a³ 그래프에 찍기</span></div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bPlot" type="button">📍 다음 천체 점 찍기</button></div>
+        </div>
+        <div class="control" data-modes="all" id="calcPred" hidden>
+          <div class="control-head"><span>🧮 T² = a³ 으로 예측하기</span></div>
+          <div class="in-row"><span>① a = 39.5 AU의 T (년)</span><input class="num-in" id="inP0" type="text" inputmode="decimal" placeholder="예: 100" aria-label="a가 39.5 AU인 천체의 공전 주기 (년)" autocomplete="off"></div>
+          <div class="in-row"><span>② T = 76년의 a (AU)</span><input class="num-in" id="inP1" type="text" inputmode="decimal" placeholder="예: 10" aria-label="공전 주기가 76년인 혜성의 긴반지름 (AU)" autocomplete="off"></div>
+          <div class="in-row"><span>③ a = 100 AU의 T (년)</span><input class="num-in" id="inP2" type="text" inputmode="decimal" placeholder="예: 500" aria-label="a가 100 AU인 천체의 공전 주기 (년)" autocomplete="off"></div>
+        </div>
+
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

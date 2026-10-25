@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#16a34a">
+  <title>돌연변이와 유전병 조사 | 고등 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧪</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; }
+    .stage-toolbar { min-height: 58px; }
+    .stage-toolbar .segmented { flex-wrap: wrap; }
+    .stage-toolbar .segmented button { min-height: 40px; padding: 5px 10px; font-size: 14px; white-space: nowrap; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard [hidden] { display: none !important; }
+    .btn-sm { min-height: 44px; }
+    .btn-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+    .btn-row .btn { flex: 1; padding-left: 8px; padding-right: 8px; }
+    .ctrl-note { margin: 6px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    .ctrl-note b { color: var(--ink); }
+    .range-row { display: flex; align-items: center; gap: 8px; }
+    .range-row input[type=range] { flex: 1; min-width: 0; height: 44px; }
+    .seg-full { display: flex; width: 100%; }
+    .seg-full button { flex: 1 1 0; min-width: 0; min-height: 44px; font-size: 14.5px; }
+    .chip-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px; }
+    .chip-grid.three { grid-template-columns: 1fr 1fr 1fr; }
+    .chip-grid button { min-height: 44px; padding: 6px 8px; border: 2px solid var(--line); background: #fff; border-radius: 12px; font-weight: 800; font-size: 14px; cursor: pointer; color: var(--ink); text-align: center; }
+    .chip-grid button.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); }
+    .chip-grid button.seen:not(.on) { border-color: color-mix(in srgb, var(--subject) 45%, white); }
+    .chip-grid button:disabled { opacity: .45; cursor: not-allowed; }
+    .chip-grid button:active { transform: scale(.98); }
+    .sel-in { width: 100%; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 8px; font: 800 14px var(--font); color: var(--ink); background: #fff; }
+    .sel-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .sel-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .num-in { width: 100%; min-width: 0; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 8px; font: 800 16px ui-monospace, Menlo, Consolas, monospace; color: var(--ink); background: #fff; text-align: right; }
+    .num-in:focus { outline: none; border-color: var(--subject); }
+    .num-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .num-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .in-unit { font-size: 12.5px; color: var(--muted); font-weight: 700; }
+    .in-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 10px; align-items: end; margin-top: 8px; }
+    .in-row .lab { font-weight: 800; font-size: 13.5px; margin-bottom: 3px; line-height: 1.25; }
+    @keyframes shakeX { 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+    .readout .value { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .stage-canvas .stage-hint { top: 10px; bottom: auto; }
+    .pk-pool { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+    .pk-item { min-height: 44px; padding: 6px 12px; border: 2px solid var(--line); background: #fff; border-radius: 12px; font-weight: 800; font-size: 14px; cursor: pointer; color: var(--ink); }
+    .pk-item:disabled { opacity: .35; cursor: default; }
+    .pk-seq { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; min-height: 46px; border: 2px dashed var(--line); border-radius: 12px; padding: 6px; }
+    .pk-chip { min-height: 34px; padding: 3px 10px; border: 2px solid var(--subject); background: color-mix(in srgb, var(--subject) 12%, white); border-radius: 999px; font-weight: 800; font-size: 13.5px; cursor: pointer; color: var(--ink); }
+    .pk-chip b { color: var(--subject); margin-right: 2px; }
+    .pk-reset { margin-top: 8px; width: 100%; }
+    .tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; margin-top: 6px; }
+    .tbl th, .tbl td { border: 1px solid var(--line); padding: 4px 4px; text-align: center; }
+    .tbl th { background: var(--surface-2); font-weight: 800; }
+    .tbl td.rowh { font-weight: 800; text-align: left; background: var(--surface-2); }
+    .tbl select { width: 100%; min-height: 40px; border: 2px solid var(--line); border-radius: 8px; font: 800 13.5px var(--font); background: #fff; color: var(--ink); }
+    .tbl select.ok { border-color: var(--good); background: var(--good-soft); }
+    .tbl select.bad { border-color: var(--bad); background: var(--bad-soft); }
+    .check-list { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 4px; font-size: 13.5px; font-weight: 700; }
+    .check-list li { display: flex; gap: 6px; align-items: baseline; }
+    .check-list li.on { color: var(--good); }
+    .btn-col { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+    #modeSeg button.lv-off { display: none; }
+    @media (max-width: 1100px) and (orientation: landscape) { .toolbar-label { display: none; } }
+    @media (max-width: 599px) {
+      .readout .value { font-size: 15px; }
+      .stage-toolbar { gap: 6px; padding: 8px; }
+      .stage-toolbar .spacer, .toolbar-label { display: none; }
+      .stage-toolbar .segmented button { padding: 5px 8px; font-size: 13.5px; }
+      .stage-hint { font-size: 13px; padding: 5px 12px; }
+    }
+    .stage-toolbar .segmented button.lv-off { display: none; }
+    .tag-pill { display: inline-block; padding: 2px 9px; border-radius: 999px; font-weight: 800; font-size: 12.5px; background: color-mix(in srgb, var(--subject) 14%, white); color: var(--ink); }
+    .tbl-in { width: 100%; }
+
+    .frac-in { width: 100%; min-width: 0; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 8px; font: 800 16px ui-monospace, Menlo, Consolas, monospace; color: var(--ink); background: #fff; text-align: center; }
+    .frac-in:focus { outline: none; border-color: var(--subject); }
+    .frac-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .frac-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .chip-grid.one { grid-template-columns: 1fr; }
+    .chip-grid button.mc { text-align: left; font-size: 13.5px; line-height: 1.3; }
+    .tbl.left td { text-align: left; }
+    .sec-t { font-weight: 800; font-size: 13.5px; margin: 8px 0 2px; color: var(--ink); }
+
+  </style>
+</head>
+<body class="sim-page" data-subject="bio">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#hg">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">생물의 유전 · Ⅰ. 유전자와 유전물질</div>
+      <h1>돌연변이와 유전병 조사</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🧪 돌연변이와 유전병</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="tablist" aria-label="화면 고르기">
+            <button type="button" data-mode="point" data-lv="0" data-feature="point">🔤 점 돌연변이</button>
+            <button type="button" data-mode="frame" data-lv="1" data-feature="frame">📏 틀 이동</button>
+            <button type="button" data-mode="cause" data-lv="2" data-feature="cause">🗂 원인 분류</button>
+            <button type="button" data-mode="soma" data-lv="2" data-feature="soma">🧫 체세포 · 생식세포</button>
+            <button type="button" data-mode="plan" data-lv="3" data-feature="plan">📋 조사 계획서</button>
+            <button type="button" data-mode="source" data-lv="3" data-feature="source">🔍 자료 신뢰성</button>
+
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="염기 하나가 바뀐 mRNA와 단백질, 틀 이동, 유전병 원인 분류, 조사 계획서"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">—</span><span class="value" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">—</span><span class="value" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">—</span><span class="value" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" data-modes="point">
+          <div class="control-head"><span>🔤 mRNA 고르기</span></div>
+          <div class="chip-grid one" id="smpSel">
+            <button type="button" data-v="prac">연습용 mRNA</button>
+            <button type="button" data-v="hbb">HBB 유전자 일부 (헤모글로빈 β 사슬)</button>
+          </div>
+          <div class="sec-t">바꿀 염기 고르기 <span class="in-unit" id="selInfo"></span></div>
+          <div class="chip-grid" id="palSel" style="grid-template-columns:repeat(4,1fr)">
+            <button type="button" data-v="A">A</button><button type="button" data-v="U">U</button><button type="button" data-v="G">G</button><button type="button" data-v="C">C</button>
+          </div>
+          <div class="btn-row"><button class="btn btn-sm" id="ptReset" type="button">↺ 원래대로</button></div>
+          <ul class="check-list" id="ptMade"></ul>
+          <p class="ctrl-note">위쪽 <b>변한 mRNA</b>에서 바꿀 염기를 눌러 고른 뒤, 새 염기를 골라요. 한 번에 염기 하나만 바꿀 수 있어요.</p>
+        </div>
+        <div class="control" data-modes="frame">
+          <div class="control-head"><span>📏 염기 서열 바꾸기</span></div>
+          <div class="chip-grid three" id="opSel">
+            <button type="button" data-v="ins">삽입 1개</button><button type="button" data-v="del1">결실 1개</button><button type="button" data-v="del3">3염기 결실</button>
+          </div>
+          <div class="control-head" style="margin-top:8px"><label for="sPos" id="posLab">삽입 위치</label><output id="oPos">3</output></div>
+          <div class="range-row"><input type="range" id="sPos" min="0" max="21" step="1" value="3" aria-label="염기 서열에서의 위치"></div>
+          <div id="baseBox"><div class="sec-t">넣을 염기</div>
+            <div class="chip-grid" id="insBase" style="grid-template-columns:repeat(4,1fr)"><button type="button" data-v="A">A</button><button type="button" data-v="U">U</button><button type="button" data-v="G">G</button><button type="button" data-v="C">C</button></div></div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="fsApply" type="button">▶ 적용하기</button><button class="btn btn-sm" id="fsReset" type="button">↺ 처음 mRNA로</button></div>
+          <ul class="check-list" id="fsMade"></ul>
+          <p class="ctrl-note" id="fsNote">삽입은 <b>AUG 바로 뒤(3)</b>에서 시작해 보세요. 읽기틀은 3염기씩 묶어 읽는 틀이에요.</p>
+        </div>
+        <div class="control" data-modes="cause">
+          <div class="control-head"><span>🗂 원인별 특징 표</span></div>
+          <table class="tbl left">
+            <tr><th>원인</th><th>무엇이 달라졌나</th><th>확인 방법</th></tr>
+            <tr><td class="rowh">단일 유전자 이상</td><td><select id="tc0a" aria-label="단일 유전자 이상에서 달라진 것"></select></td><td><select id="tc0b" aria-label="단일 유전자 이상의 확인 방법"></select></td></tr>
+            <tr><td class="rowh">염색체 이상</td><td><select id="tc1a" aria-label="염색체 이상에서 달라진 것"></select></td><td><select id="tc1b" aria-label="염색체 이상의 확인 방법"></select></td></tr>
+            <tr><td class="rowh">다인자</td><td><select id="tc2a" aria-label="다인자 질환에서 달라진 것"></select></td><td><select id="tc2b" aria-label="다인자 질환의 확인 방법"></select></td></tr>
+          </table>
+          <div class="btn-row"><button class="btn btn-sm" id="cauReset" type="button">↺ 카드 모으기</button></div>
+          <p class="ctrl-note">카드 12장을 <b>상자에 넣은 뒤</b> 표를 채우고 <b>✔ 확인하기</b>를 눌러요. 모든 유전병 카드는 <b>교육용 요약</b>이에요.</p>
+        </div>
+        <div class="control" data-modes="soma">
+          <div class="control-head"><span>🧫 어디에 생긴 돌연변이일까?</span></div>
+          <div class="btn-col"><button class="btn btn-sm" id="somaA" type="button">🧫 체세포에 생긴 돌연변이 보기</button><button class="btn btn-sm" id="somaB" type="button">🥚 생식세포에 생긴 돌연변이 보기</button></div>
+          <div class="sec-t">돌연변이를 일으키는 요인 (돌연변이원)</div>
+          <div class="chip-grid" id="mutSel"><button type="button" data-v="uv">☀ 자외선</button><button type="button" data-v="xr">☢ X선 · 방사선</button><button type="button" data-v="chem">⚗ 화학 물질</button><button type="button" data-v="rep">🧬 복제 오류</button></div>
+          <p class="ctrl-note" id="mutNote">요인을 눌러 DNA에 어떤 일이 생기는지 보세요. 복제 오류는 요인이 없어도 <b>자연스럽게</b> 생겨요.</p>
+        </div>
+        <div class="control" data-modes="plan">
+          <div class="control-head"><span>📋 계획서 칸 고르기</span></div>
+          <div class="chip-grid" id="slotSel" style="grid-template-columns:1fr 1fr 1fr 1fr">
+            <button type="button" data-v="0">유전병</button><button type="button" data-v="1">질문</button><button type="button" data-v="2">원인</button><button type="button" data-v="3">자료</button>
+            <button type="button" data-v="4">방법</button><button type="button" data-v="5">정리</button><button type="button" data-v="6">윤리</button>
+          </div>
+          <div class="sec-t" id="optTitle">유전병 고르기</div>
+          <div class="chip-grid one" id="optBox"></div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="planCard" type="button">📄 요약 카드 받기</button><button class="btn btn-sm" id="planReset" type="button">↺ 비우기</button></div>
+          <p class="ctrl-note">칸을 하나씩 채워요. 오른쪽 <b>점검표</b>가 모두 ✔가 되면 요약 카드를 받을 수 있어요. 모든 자료는 <b>교육용 가상 자료</b>예요.</p>
+        </div>
+        <div class="control" data-modes="source">
+          <div class="control-head"><span>🔍 믿을 만한 자료일까?</span></div>
+          <p class="ctrl-note">자료 카드 6장을 <b>믿을 만해요</b> / <b>믿기 어려워요</b> 상자에 넣고 <b>✔ 확인하기</b>를 눌러요. 출처, 검증 가능성, 개인 정보 보호를 생각해 봐요.</p>
+          <div class="btn-row"><button class="btn btn-sm" id="srcReset" type="button">↺ 카드 모으기</button></div>
+        </div>
+
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

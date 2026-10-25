@@ -290,7 +290,7 @@
   }
 
 
-  initStage('#e8eef8', 800, 620, 480, 820, 1.25);
+  initStage('#e8eef8', 800, 620, 480, 860, 1.25);
   if (PHONE) view.canvas.style.touchAction = 'pan-y';
 
   /* ================= 자료 ================= */
@@ -355,7 +355,7 @@
 
   /* ---------- ① 태양의 중력 ---------- */
   function LG() {
-    if (PHONE) return { A: { x: 8, y: 8, w: 464, h: 340 }, B: { x: 8, y: 356, w: 464, h: 182 }, C: { x: 8, y: 546, w: 464, h: 266 } };
+    if (PHONE) return { A: { x: 8, y: 8, w: 464, h: 330 }, B: { x: 8, y: 346, w: 464, h: 196 }, C: { x: 8, y: 550, w: 464, h: 302 } };
     return { A: { x: 10, y: 8, w: 520, h: 414 }, B: { x: 540, y: 8, w: 250, h: 414 }, C: { x: 10, y: 432, w: 780, h: 178 } };
   }
   function gStep(dt) {
@@ -409,7 +409,7 @@
     T(B.x + 12, B.y + 54 * FS, '태양 중력  ' + (g.on ? '있음' : '없음'), 14, g.on ? '#15803d' : '#b91c1c', 'left', 800);
     T(B.x + 12, B.y + 80 * FS, '접선 속도  ' + f2(g.vk) + ' × (원 궤도 속력)', 13.5, '#334155', 'left', 800);
     T(B.x + 12, B.y + 106 * FS, '태양까지 거리 r  ' + f2(g.dist / R0) + ' R', 13.5, '#1d4ed8', 'left', 800);
-    drawWrap(B.x + 12, B.y + 134 * FS, '중력이 있으면 접선 속도 때문에 행성은 계속 "떨어지면서 옆으로" 움직여 태양 둘레를 돌아요. 중력을 끄면 곧장 날아가요.', B.w - 24, 13, { color: '#475569' });
+    drawWrap(B.x + 12, B.y + 134 * FS, PHONE ? '중력이 있으면 "떨어지며 옆으로" 움직여 태양 둘레를 돌고, 끄면 곧장 날아가요.' : '중력이 있으면 접선 속도 때문에 행성은 계속 "떨어지면서 옆으로" 움직여 태양 둘레를 돌아요. 중력을 끄면 곧장 날아가요.', B.w - 24, 13, { color: '#475569' });
     // 질량 비교 막대 (축척대로)
     const C = L.C; panel(C.x, C.y, C.w, C.h, { fill: 'rgba(255,255,255,.97)' });
     const bx = C.x + 14, bw = C.w - 28;
@@ -429,15 +429,15 @@
     const ly = y2 + 22 + 18 * FS;
     T(bx, ly, '토성 ' + f0(MASS[1].v / MTOT * 100) + ' % · 해왕성 ' + f1(MASS[2].v / MTOT * 100) + ' % · 천왕성 ' + f1(MASS[3].v / MTOT * 100) + ' % · 지구형 행성 ' + f1(MASS[4].v / MTOT * 100) + ' %', 12.5, '#475569', 'left', 700);
     // 계산 정보
-    const cy2 = ly + 22 * FS;
-    T(bx, cy2, '목성의 질량은 태양의 1/1047 (0.095 %). 지구에서 목성까지 가장 가까울 때 d = 4.2 AU', PHONE ? 12.5 : 13.5, '#1d4ed8', 'left', 800);
-    if (!S.flags.hideAns || (game && game.free)) T(bx, cy2 + 22 * FS, '지구가 받는 힘의 비: F목성 / F태양 = (1/1047) ÷ 4.2² = ' + sci5(RATIO) + ' (약 0.005 %)', PHONE ? 12.5 : 13.5, '#b45309', 'left', 800);
-    else T(bx, cy2 + 22 * FS, '지구가 받는 힘의 비 F목성 / F태양 은? (F는 M / d²에 비례, 지구–태양 거리 1 AU)', PHONE ? 12.5 : 13.5, '#b45309', 'left', 800);
+    let cy2 = ly + 22 * FS;
+    cy2 = drawWrap(bx, cy2, '목성의 질량은 태양의 1/1047 (0.095 %). 지구에서 목성까지 가장 가까울 때 d = 4.2 AU', C.w - 28, PHONE ? 12.5 : 13.5, { color: '#1d4ed8', weight: 800 });
+    const showAns = !S.flags.hideAns || (game && game.free);
+    drawWrap(bx, cy2 + 24 * FS, showAns ? '지구가 받는 힘의 비: F목성 / F태양 = (1/1047) ÷ 4.2² = ' + sci5(RATIO) + ' (약 0.005 %)' : '지구가 받는 힘의 비 F목성 / F태양 은? (F는 M / d²에 비례, 지구–태양 거리는 1 AU)', C.w - 28, PHONE ? 12.5 : 13.5, { color: '#b45309', weight: 800 });
   }
 
   /* ---------- ② 타원 궤도 ---------- */
   function LE() {
-    if (PHONE) return { A: { x: 8, y: 8, w: 464, h: 330 }, T: { x: 8, y: 346, w: 464, h: 262 }, B: { x: 8, y: 616, w: 464, h: 196 } };
+    if (PHONE) return { A: { x: 8, y: 8, w: 464, h: 300 }, T: { x: 8, y: 316, w: 464, h: 322 }, B: { x: 8, y: 646, w: 464, h: 206 } };
     return { A: { x: 10, y: 8, w: 520, h: 400 }, T: { x: 540, y: 8, w: 250, h: 400 }, B: { x: 10, y: 416, w: 780, h: 194 } };
   }
   function dimLine(x1, x2, y, color, label) {
@@ -507,7 +507,7 @@
     if (Q * ks > 60) T(bx + Q * ks / 2, by + 15, 'Q', 13, '#fff', 'center', 800);
     if (q * ks > 40) T(bx + Q * ks + q * ks / 2, by + 15, 'q', 13, '#fff', 'center', 800);
     T(bx, by + 38 * FS, '눈금 0 ~ 6.4 AU: Q + q = 2a = ' + f2(2 * S.a) + ' AU (주황 + 파랑)', 12.5, '#64748b', 'left', 700);
-    drawWrap(B.x + 14, by + 60 * FS, 'e가 0이면 원, 클수록 길쭉해요. 태양은 타원의 한 초점에 있어요(중심이 아니에요).', B.w - 28, 12.5, { color: '#475569' });
+    drawWrap(B.x + 14, by + 60 * FS, PHONE ? 'e가 0이면 원, 클수록 길쭉해요. 태양은 한 초점에 있어요.' : 'e가 0이면 원, 클수록 길쭉해요. 태양은 타원의 한 초점에 있어요(중심이 아니에요).', B.w - 28, 12.5, { color: '#475569' });
   }
   function tableClick(p) {
     const L = LE(), Tb = L.T, rh = PHONE ? 28 : 38, y0 = Tb.y + 42 * FS;
@@ -521,7 +521,7 @@
 
   /* ---------- ③ 면적 속도 ---------- */
   function LA3() {
-    if (PHONE) return { A: { x: 8, y: 8, w: 464, h: 360 }, P: { x: 8, y: 376, w: 464, h: 190 }, B: { x: 8, y: 574, w: 464, h: 238 } };
+    if (PHONE) return { A: { x: 8, y: 8, w: 464, h: 400 }, P: { x: 8, y: 416, w: 464, h: 150 }, B: { x: 8, y: 574, w: 464, h: 278 } };
     return { A: { x: 10, y: 8, w: 520, h: 414 }, P: { x: 540, y: 8, w: 250, h: 414 }, B: { x: 10, y: 432, w: 780, h: 178 } };
   }
   const SEC_COL = ['rgba(248,113,113,.62)', 'rgba(96,165,250,.62)', 'rgba(74,222,128,.62)', 'rgba(251,191,36,.62)', 'rgba(192,132,252,.62)', 'rgba(45,212,191,.62)'];
@@ -607,7 +607,7 @@
 
   /* ---------- ④ 혜성 ---------- */
   function L4() {
-    if (PHONE) return { A: { x: 8, y: 8, w: 464, h: 330 }, B: { x: 8, y: 346, w: 464, h: 466 } };
+    if (PHONE) return { A: { x: 8, y: 8, w: 464, h: 400 }, B: { x: 8, y: 416, w: 464, h: 436 } };
     return { A: { x: 10, y: 8, w: 780, h: 370 }, B: { x: 10, y: 388, w: 780, h: 222 } };
   }
   function cometStep(dt) {
@@ -638,7 +638,7 @@
     // 근일점 · 원일점
     const pq = [X(q), Y(0)], pQ = [X(-Q), Y(0)];
     D.sphere(pq[0], pq[1], 3.5, '#60a5fa', { gloss: false }); D.sphere(pQ[0], pQ[1], 3.5, '#fb923c', { gloss: false });
-    if (pq[0] > A.x && pq[0] < A.x + A.w) outlineT(Math.min(pq[0] + 8, A.x + A.w - 100) , pq[1] + 24, '근일점 ' + f2(q) + ' AU', 13, '#93c5fd', 'left');
+    if (pq[0] > A.x && pq[0] < A.x + A.w) { if (pq[0] > A.x + A.w - 130) outlineT(pq[0] - 6, pq[1] + 24, '근일점 ' + f2(q) + ' AU', 13, '#93c5fd', 'right'); else outlineT(pq[0] + 8, pq[1] + 24, '근일점 ' + f2(q) + ' AU', 13, '#93c5fd', 'left'); }
     if (pQ[0] > A.x + 60 && pQ[0] < A.x + A.w) outlineT(pQ[0] + (PHONE ? 4 : 8), pQ[1] + 22, '원일점 ' + f1(Q) + ' AU', 13, '#fdba74', 'left');
     // 혜성
     const cp = kpos(S.M4, e, a), r = Math.hypot(cp.x, cp.y), sx = X(cp.x), sy = Y(cp.y);
@@ -934,6 +934,7 @@
     if (game && game.free !== lastFree) { lastFree = game.free; updateCtl(); }
     if (S.view === 'grav') gStep(dt);
     view.apply();
+    ctx.fillStyle = '#e8eef8'; ctx.fillRect(0, 0, VW, VH);
     switch (S.view) {
       case 'grav': drawGrav(dt, t); break;
       case 'ellipse': drawEllipse(dt, t); break;

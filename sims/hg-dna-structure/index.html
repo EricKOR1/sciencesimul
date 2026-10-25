@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#16a34a">
+  <title>DNA 구조의 규명 | 고등 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🪢</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; }
+    .stage-toolbar { min-height: 58px; }
+    .stage-toolbar .segmented { flex-wrap: wrap; }
+    .stage-toolbar .segmented button { min-height: 40px; padding: 5px 10px; font-size: 14px; white-space: nowrap; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard [hidden] { display: none !important; }
+    .btn-sm { min-height: 44px; }
+    .btn-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+    .btn-row .btn { flex: 1; padding-left: 8px; padding-right: 8px; }
+    .ctrl-note { margin: 6px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    .ctrl-note b { color: var(--ink); }
+    .range-row { display: flex; align-items: center; gap: 8px; }
+    .range-row input[type=range] { flex: 1; min-width: 0; height: 44px; }
+    .seg-full { display: flex; width: 100%; }
+    .seg-full button { flex: 1 1 0; min-width: 0; min-height: 44px; font-size: 14.5px; }
+    .chip-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px; }
+    .chip-grid.three { grid-template-columns: 1fr 1fr 1fr; }
+    .chip-grid button { min-height: 44px; padding: 6px 8px; border: 2px solid var(--line); background: #fff; border-radius: 12px; font-weight: 800; font-size: 14px; cursor: pointer; color: var(--ink); text-align: center; }
+    .chip-grid button.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); }
+    .chip-grid button.seen:not(.on) { border-color: color-mix(in srgb, var(--subject) 45%, white); }
+    .chip-grid button:disabled { opacity: .45; cursor: not-allowed; }
+    .chip-grid button:active { transform: scale(.98); }
+    .sel-in { width: 100%; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 8px; font: 800 14px var(--font); color: var(--ink); background: #fff; }
+    .sel-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .sel-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .num-in { width: 100%; min-width: 0; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 8px; font: 800 16px ui-monospace, Menlo, Consolas, monospace; color: var(--ink); background: #fff; text-align: right; }
+    .num-in:focus { outline: none; border-color: var(--subject); }
+    .num-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .num-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .in-unit { font-size: 12.5px; color: var(--muted); font-weight: 700; }
+    .in-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 10px; align-items: end; margin-top: 8px; }
+    .in-row .lab { font-weight: 800; font-size: 13.5px; margin-bottom: 3px; line-height: 1.25; }
+    @keyframes shakeX { 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+    .readout .value { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .stage-canvas .stage-hint { top: 10px; bottom: auto; }
+    .pk-pool { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+    .pk-item { min-height: 44px; padding: 6px 12px; border: 2px solid var(--line); background: #fff; border-radius: 12px; font-weight: 800; font-size: 14px; cursor: pointer; color: var(--ink); }
+    .pk-item:disabled { opacity: .35; cursor: default; }
+    .pk-seq { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; min-height: 46px; border: 2px dashed var(--line); border-radius: 12px; padding: 6px; }
+    .pk-chip { min-height: 34px; padding: 3px 10px; border: 2px solid var(--subject); background: color-mix(in srgb, var(--subject) 12%, white); border-radius: 999px; font-weight: 800; font-size: 13.5px; cursor: pointer; color: var(--ink); }
+    .pk-chip b { color: var(--subject); margin-right: 2px; }
+    .pk-reset { margin-top: 8px; width: 100%; }
+    .tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; margin-top: 6px; }
+    .tbl th, .tbl td { border: 1px solid var(--line); padding: 4px 4px; text-align: center; }
+    .tbl th { background: var(--surface-2); font-weight: 800; }
+    .tbl td.rowh { font-weight: 800; text-align: left; background: var(--surface-2); }
+    .tbl select { width: 100%; min-height: 40px; border: 2px solid var(--line); border-radius: 8px; font: 800 13.5px var(--font); background: #fff; color: var(--ink); }
+    .tbl select.ok { border-color: var(--good); background: var(--good-soft); }
+    .tbl select.bad { border-color: var(--bad); background: var(--bad-soft); }
+    .check-list { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 4px; font-size: 13.5px; font-weight: 700; }
+    .check-list li { display: flex; gap: 6px; align-items: baseline; }
+    .check-list li.on { color: var(--good); }
+    .btn-col { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+    #modeSeg button.lv-off { display: none; }
+    @media (max-width: 1100px) and (orientation: landscape) { .toolbar-label { display: none; } }
+    @media (max-width: 599px) {
+      .readout .value { font-size: 15px; }
+      .stage-toolbar { gap: 6px; padding: 8px; }
+      .stage-toolbar .spacer, .toolbar-label { display: none; }
+      .stage-toolbar .segmented button { padding: 5px 8px; font-size: 13.5px; }
+      .stage-hint { font-size: 13px; padding: 5px 12px; }
+    }
+    .stage-toolbar .segmented button.lv-off { display: none; }
+    .tag-pill { display: inline-block; padding: 2px 9px; border-radius: 999px; font-weight: 800; font-size: 12.5px; background: color-mix(in srgb, var(--subject) 14%, white); color: var(--ink); }
+    .tbl-in { width: 100%; }
+
+    .frac-in { width: 100%; min-width: 0; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 8px; font: 800 16px ui-monospace, Menlo, Consolas, monospace; color: var(--ink); background: #fff; text-align: center; }
+    .frac-in:focus { outline: none; border-color: var(--subject); }
+    .frac-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .frac-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .chip-grid.one { grid-template-columns: 1fr; }
+    .chip-grid button.mc { text-align: left; font-size: 13.5px; line-height: 1.3; }
+    .tbl.left td { text-align: left; }
+    .sec-t { font-weight: 800; font-size: 13.5px; margin: 8px 0 2px; color: var(--ink); }
+
+
+  </style>
+</head>
+<body class="sim-page" data-subject="bio">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#hg">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">생물의 유전 · Ⅰ. 유전자와 유전물질</div>
+      <h1>DNA 구조의 규명</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🪢 DNA 구조의 증거</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="tablist" aria-label="화면 고르기">
+            <button type="button" data-mode="chg" data-lv="0" data-feature="chg">📊 샤가프 자료</button>
+            <button type="button" data-mode="xrd" data-lv="1" data-feature="xrd">📷 X선 회절</button>
+            <button type="button" data-mode="fit" data-lv="2" data-feature="fit">🧩 염기쌍 맞추기</button>
+            <button type="button" data-mode="helix" data-lv="2" data-feature="helix">🌀 이중 나선</button>
+            <button type="button" data-mode="talk" data-lv="3" data-feature="talk">🎞️ 발표 자료</button>
+
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="샤가프 자료, X선 회절 사진, 염기쌍 맞추기, 이중 나선 모형, 발표 자료 보드"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">—</span><span class="value" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">—</span><span class="value" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">—</span><span class="value" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" data-modes="chg">
+          <div class="control-head"><span>🧫 생물 종 고르기</span></div>
+          <div class="chip-grid" id="spSel"></div>
+          <div class="sec-t">보는 방법</div>
+          <div class="chip-grid three" id="chView"><button type="button" data-v="0">막대</button><button type="button" data-v="1">짝 묶기</button><button type="button" data-v="2">합 비교</button></div>
+          <p class="ctrl-note">표의 줄을 눌러도 종을 고를 수 있어요. 수치는 <b>근사 예시 값</b>이에요.</p>
+          <div id="ruleBox">
+            <div class="sec-t">찾은 규칙</div>
+            <div class="in-row">
+              <div><div class="lab"><label for="ruleA">A의 양과 비슷한 것</label></div><select class="sel-in" id="ruleA"></select></div>
+              <div><div class="lab"><label for="ruleG">G의 양과 비슷한 것</label></div><select class="sel-in" id="ruleG"></select></div>
+            </div>
+          </div>
+          <div id="calcBox">
+            <div class="sec-t">어떤 생물(가상)의 DNA에서 A = 31 %일 때</div>
+            <div class="in-row" style="grid-template-columns:1fr 1fr 1fr">
+              <div><div class="lab"><label for="inT">T (%)</label></div><input class="num-in" id="inT" type="text" inputmode="decimal" maxlength="5" aria-label="T 비율 퍼센트"></div>
+              <div><div class="lab"><label for="inG">G (%)</label></div><input class="num-in" id="inG" type="text" inputmode="decimal" maxlength="5" aria-label="G 비율 퍼센트"></div>
+              <div><div class="lab"><label for="inC">C (%)</label></div><input class="num-in" id="inC" type="text" inputmode="decimal" maxlength="5" aria-label="C 비율 퍼센트"></div>
+            </div>
+            <p class="ctrl-note">A + T + G + C = 100 %. 샤가프 규칙(A와 T, G와 C가 같은 양)으로 예측해요.</p>
+          </div>
+        </div>
+        <div class="control" data-modes="xrd">
+          <div class="control-head"><span>📏 눈금자 두 개</span></div>
+          <p class="ctrl-note">사진 오른쪽 <b>동그란 손잡이</b>를 위아래로 끌어 선을 층선(점이 늘어선 가로줄)에 맞춰요. 놓으면 가까운 줄에 붙어요.</p>
+          <div class="btn-row"><button class="btn btn-sm" id="xShow" type="button">✖ X자 무늬 표시</button><button class="btn btn-sm" id="xReset" type="button">↺ 눈금자 처음으로</button></div>
+          <div id="recBox">
+            <div class="sec-t">측정 기록</div>
+            <ul class="check-list" id="recList"></ul>
+          </div>
+          <div id="bpBox">
+            <div class="sec-t">한 바퀴(3.4 nm)에 염기쌍은 몇 개?</div>
+            <div class="in-row" style="grid-template-columns:1fr"><div><input class="num-in" id="inBp" type="text" inputmode="numeric" maxlength="4" aria-label="한 바퀴당 염기쌍 수"></div></div>
+            <p class="ctrl-note">반복 거리를 서로 나눠 봐요: 3.4 nm 와 0.34 nm.</p>
+          </div>
+        </div>
+        <div class="control" data-modes="fit">
+          <div class="control-head"><span>🧩 틈 폭 2 nm에 맞는 짝은?</span></div>
+          <p class="ctrl-note">아래 <b>염기 블록</b>을 끌어서(또는 눌러서 고른 뒤 틈을 눌러) <b>왼쪽·오른쪽 자리</b>에 놓아요. 두 줄에서 짝을 찾아봐요. 블록을 누르면 치워져요.</p>
+          <div class="btn-row"><button class="btn btn-sm" id="fitClear" type="button">↺ 모두 치우기</button></div>
+        </div>
+        <div class="control" data-modes="helix">
+          <div class="control-head"><span>🌀 이중 나선 만들기</span></div>
+          <div class="btn-col">
+            <button class="btn btn-sm" id="hxBuild" type="button">① 규칙으로 사다리 만들기</button>
+            <button class="btn btn-sm" id="hxDir" type="button">② 두 가닥 방향 보기</button>
+            <button class="btn btn-sm" id="hxTwist" type="button">③ 🌀 나선으로 꼬기</button>
+            <button class="btn btn-sm" id="hxReset" type="button">↺ 처음부터</button>
+          </div>
+          <p class="ctrl-note" id="hxNote"></p>
+        </div>
+        <div class="control" data-modes="talk">
+          <div class="control-head"><span>🎞️ 발표 자료 만들기</span></div>
+          <p class="ctrl-note">카드를 누르면 <b>내용</b>이 보여요. 4~6장을 <b>시간 순서</b>대로 보드에 끌어 놓아요. (내용이 틀린 카드가 섞여 있어요)</p>
+          <div class="sec-t">① 형식</div>
+          <div class="chip-grid three" id="fmtSel"><button type="button" data-v="tl">연표</button><button type="button" data-v="cn">카드뉴스</button><button type="button" data-v="st">영상 콘티</button></div>
+          <div class="sec-t">② 시각 요소 (여러 개 가능)</div>
+          <div class="chip-grid three" id="visSel"><button type="button" data-v="icon">그림</button><button type="button" data-v="num">핵심 숫자</button><button type="button" data-v="color">색 구분</button></div>
+          <div class="sec-t">③ 기여자 인정 한 줄</div>
+          <select class="sel-in" id="credit"></select>
+          <div class="sec-t">점검표</div>
+          <ul class="check-list" id="chkList"></ul>
+          <div class="btn-row"><button class="btn btn-sm" id="talkClear" type="button">↺ 보드 비우기</button></div>
+        </div>
+
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>
