@@ -6603,8 +6603,7 @@ window.SCI_CATALOG = {
                 "브리지",
                 "전원 장치",
                 "LED·논리"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hq-transistor",
@@ -6625,8 +6624,7 @@ window.SCI_CATALOG = {
                 "증폭",
                 "소리 증폭",
                 "논리회로"
-              ],
-              "soon": true
+              ]
             }
           ]
         },

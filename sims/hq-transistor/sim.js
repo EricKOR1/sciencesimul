@@ -259,7 +259,7 @@
   }
   // NPN 트랜지스터 기호. 단자: B(왼쪽) C(위) E(아래)
   const NPN = (cx, cy) => ({ B: [cx - 46, cy], C: [cx + 12, cy - 44], E: [cx + 12, cy + 44] });
-  function npn(cx, cy, st) {                                 // st: 'off' | 'act' | 'sat'
+  function npn(cx, cy, st, noLab) {                                 // st: 'off' | 'act' | 'sat'
     const col = st === 'off' ? '#64748b' : st === 'act' ? '#16a34a' : '#d97706';
     if (st !== 'off') D.glow(cx, cy, 46, st === 'act' ? '#4ade80' : '#fbbf24', 0.38);
     ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(cx, cy, 26, 0, TAU); ctx.fill(); ctx.strokeStyle = '#334155'; ctx.lineWidth = 2.4; ctx.stroke();
@@ -269,7 +269,7 @@
     ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(cx - 10, cy - 8); ctx.lineTo(cx + 12, cy - 24); ctx.lineTo(cx + 12, cy - 44); ctx.moveTo(cx - 10, cy + 8); ctx.lineTo(cx + 12, cy + 24); ctx.lineTo(cx + 12, cy + 44); ctx.stroke();
     const ax = cx + 12, ay = cy + 24, ux = 22 / 27.2, uy = 16 / 27.2;       // 이미터 화살표 (전류가 나가는 방향)
     ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(ax - ux * 2 + 0, ay - uy * 2); ctx.lineTo(ax - ux * 10 + uy * 5, ay - uy * 10 - ux * 5); ctx.lineTo(ax - ux * 10 - uy * 5, ay - uy * 10 + ux * 5); ctx.closePath(); ctx.fill();
-    T(cx - 17, cy - 3 + 14, 'B', 11, '#64748b', 'right', 800); T(cx + 22, cy - 30, 'C', 11, '#64748b', 'left', 800); T(cx + 22, cy + 40, 'E', 11, '#64748b', 'left', 800);
+    if (!noLab) { T(cx - 17, cy + 11, 'B', 11, '#64748b', 'right', 800); T(cx + 22, cy - 30, 'C', 11, '#64748b', 'left', 800); T(cx + 22, cy + 40, 'E', 11, '#64748b', 'left', 800); }
   }
   function flowBox(x, y, w, h, title, sub, fill, ink, hot) {
     D.shadow(() => { D.roundRect(x, y, w, h, 10); ctx.fillStyle = fill; ctx.fill(); }, { blur: hot ? 9 : 4, y: 2 });
@@ -407,7 +407,7 @@
     wp.moveTo(60, 145); wp.lineTo(60, cy); wp.lineTo(190, cy); wp.moveTo(206, cy); wp.lineTo(P.B[0], P.B[1]);
     wp.moveTo(150, 10); wp.lineTo(cx + 12, 10);
     wireStroke(wp, 2.8, cur.ic > 0.3 ? 0.2 : 0);
-    gndSym(P.E[0], 196); T(144, 16, '+9.0 V', 12.5, '#dc2626', 'right', 800);
+    gndSym(P.E[0], 190); T(144, 16, '+9.0 V', 12.5, '#dc2626', 'right', 800);
     zig(cx + 12, 16, cx + 12, 46, 5, 8, '#475569', 3.2); T(cx - 6, 34, 'R_C 2.0 kΩ', 12, '#334155', 'right', 800);
     ammeter(cx + 12, 58, 8, '#ea580c');
     npn(cx, cy, cur.ic <= 0.001 ? 'off' : cur.ic >= ICSAT - 0.01 ? 'sat' : 'act');
@@ -425,7 +425,7 @@
     if (cur.ib > 0.05) pathDots([[60, 145], [60, cy], [P.B[0], P.B[1]]], a.phb, 22, 2.6, '#a78bfa');
     if (cur.ic > 0.02) pathDots([[cx + 12, 10], [cx + 12, 66], [P.C[0], P.C[1]], [P.E[0], P.E[1]], [P.E[0], 190]], a.phc, 22, 2.8, '#f59e0b');
     const note = m.clipLo ? '왜곡: 입력의 아래쪽에서 I_C = 0 (차단) → 출력 위쪽이 잘려요' : m.clipHi ? '왜곡: I_C 가 포화 한계 4.4 mA → 출력 아래쪽이 잘려요' : '왜곡 없음: 입력과 같은 모양으로 커졌어요';
-    lbl(CXs, 214 - 6, note, { size: 12, bg: m.clipLo || m.clipHi ? '#dc2626' : '#16a34a', pad: 9, minX: 0, maxX: SC.w });
+    lbl(CXs, 213, note, { size: 12, bg: m.clipLo || m.clipHi ? '#dc2626' : '#16a34a', pad: 9, minX: 0, maxX: SC.w });
     // 스코프
     D.shadow(() => { D.roundRect(10, 226, 452, 168, 12); ctx.fillStyle = '#fff'; ctx.fill(); }, { blur: 6, y: 2 });
     const gx0 = 50, gx1 = 424, gy0 = 252, gy1 = 366, Y1 = (v) => gy1 - (clamp(v, -20, 60) + 20) / 80 * (gy1 - gy0), Y2 = (v) => gy1 - clamp(v, 0, 9) / 9 * (gy1 - gy0), X = (i) => gx0 + i / NS * (gx1 - gx0);
@@ -627,7 +627,7 @@
   const NETS = {
     not: { in: [['A', 14, 100]], gates: [{ id: 'n', a: 'A', b: 'A', x: 170, y: 100 }], out: [['n', 'Y = A 아님 (NOT)']] },
     and: { in: [['A', 14, 70], ['B', 14, 130]], gates: [{ id: 'g1', a: 'A', b: 'B', x: 120, y: 100 }, { id: 'g2', a: 'g1', b: 'g1', x: 270, y: 100 }], out: [['g2', 'Y = A AND B']] },
-    half: { in: [['A', 14, 60], ['B', 14, 168]], gates: [{ id: 'n1', a: 'A', b: 'B', x: 100, y: 112 }, { id: 'n2', a: 'A', b: 'n1', x: 206, y: 50 }, { id: 'n3', a: 'B', b: 'n1', x: 206, y: 172 }, { id: 'S', a: 'n2', b: 'n3', x: 316, y: 112 }, { id: 'C', a: 'n1', b: 'n1', x: 316, y: 210 }], out: [['S', 'S (합)'], ['C', 'C (올림)']] },
+    half: { in: [['A', 14, 58], ['B', 14, 160]], gates: [{ id: 'n1', a: 'A', b: 'B', x: 100, y: 108 }, { id: 'n2', a: 'A', b: 'n1', x: 206, y: 52 }, { id: 'n3', a: 'B', b: 'n1', x: 206, y: 162 }, { id: 'S', a: 'n2', b: 'n3', x: 316, y: 108 }, { id: 'C', a: 'n1', b: 'n1', x: 316, y: 196 }], out: [['S', 'S (합)'], ['C', 'C (올림)']] },
   };
   function netEval(net, A, B) {
     const v = { A, B };
@@ -663,7 +663,6 @@
     net.gates.forEach((g) => {
       nandSym(g.x, g.y, v[g.id]);
       const o = pinOut(g); ctx.strokeStyle = col(v[g.id]); ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(g.x + GW + 9, g.y); ctx.lineTo(g.x + GW + 14, g.y); ctx.stroke();
-      if (!net.out.some((q) => q[0] === g.id)) { /* 중간 신호 */ T(o[0] + 2, g.y - 24, g.id, 11, '#64748b', 'left', 700); }
       D.roundRect(g.x + GW - 4, g.y - 40, 22, 17, 8); ctx.fillStyle = col(v[g.id]); ctx.fill(); T(g.x + GW + 7, g.y - 27, String(v[g.id]), 12, '#fff', 'center', 800);
     });
     net.out.forEach((q, i) => {
@@ -675,7 +674,8 @@
   }
   // 트랜지스터 게이트 (NOT · NAND · NOR)
   function npnM(cx, cy, st) {                                      // 좌우 반전 NPN (베이스가 오른쪽)
-    ctx.save(); ctx.translate(cx * 2, 0); ctx.scale(-1, 1); npn(cx, cy, st); ctx.restore();
+    ctx.save(); ctx.translate(cx * 2, 0); ctx.scale(-1, 1); npn(cx, cy, st, true); ctx.restore();
+    T(cx + 17, cy + 11, 'B', 11, '#64748b', 'left', 800); T(cx - 22, cy - 30, 'C', 11, '#64748b', 'right', 800); T(cx - 22, cy + 40, 'E', 11, '#64748b', 'right', 800);
   }
   function inBox(k, y, val, x) {
     const w = 56;
@@ -784,7 +784,7 @@
       const txt = g.nbk === 'not' ? ['NAND 의 두 입력을 하나(A)로 묶으면', 'A 가 1 이면 1·1 → 0, A 가 0 이면 0·0 → 1', '그래서 입력과 반대가 되는 NOT 이 돼요.'] : ['첫 NAND: A, B 가 모두 1 일 때만 0', '둘째 NAND(입력을 묶음)가 그 값을 뒤집어요', '그래서 A, B 가 모두 1 일 때만 1 인 AND 예요.'];
       txt.forEach((t, i) => T(14, 172 + i * 20, t, 12, '#516079', 'left', 800));
       tableCard(256);
-    } else { drawNet('half', g.A, g.B, g.ph2); tableCard(244); }
+    } else { drawNet('half', g.A, g.B, g.ph2); tableCard(250); }
     sceneEnd();
     panel(STP.x, STP.y, STP.w, STP.h, 14);
     const bx = STP.x + 12, F = (x) => (x ? 1 : 0);

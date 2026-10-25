@@ -250,7 +250,7 @@
     ctx.strokeStyle = '#0f172a'; ctx.lineCap = 'round'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(x - 15, pl); ctx.lineTo(x + 15, pl); ctx.stroke();
     ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(x - 8, mi); ctx.lineTo(x + 8, mi); ctx.stroke();
     T(x - 23, pl + 5, '+', 14, '#dc2626', 'center', 800); T(x - 23, mi + 5, '−', 14, '#2563eb', 'center', 800);
-    if (label) T(x + 24, y + 5, label, 13, '#334155', 'left', 800);
+    if (label) T(x + 24, y + 16, label, 13, '#334155', 'left', 800);
   }
   function diodeSym(x, y, ang, L, st, glow) {                // 다이오드 기호: 삼각형이 향하는 쪽이 순방향
     const h = L * 0.36;
@@ -359,7 +359,7 @@
       const x = slotX(G, 0, 0), lead = '#0d9488';
       ctx.strokeStyle = lead; ctx.lineWidth = 1.8; ctx.setLineDash([4, 3]); ctx.beginPath(); ctx.moveTo(x - 22, G.y0); ctx.lineTo(x - 22, G.y0 - 34); ctx.lineTo(x - 15, G.y0 - 34); ctx.moveTo(x + 22, G.y0); ctx.lineTo(x + 22, G.y0 - 34); ctx.lineTo(x + 15, G.y0 - 34); ctx.stroke(); ctx.setLineDash([]);
       meterV(x, G.y0 - 34, '', ev.on ? '#0d9488' : '#dc2626');
-      lbl(x + 54, G.y0 - 34, o.meterText, { size: 12.5, bg: ev.on ? '#0d9488' : '#dc2626', pad: 7, minX: -1e4, maxX: 1e4 });
+      lbl(x + 74, G.y0 - 34, o.meterText, { size: 12.5, bg: ev.on ? '#0d9488' : '#dc2626', pad: 7, minX: -1e4, maxX: 1e4 });
     }
     ctx.restore();
   }
