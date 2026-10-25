@@ -8279,8 +8279,7 @@ window.SCI_CATALOG = {
                 "구조와 기능",
                 "표면적",
                 "세포 추론"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hy-respiration-stages",
@@ -8301,8 +8300,7 @@ window.SCI_CATALOG = {
                 "산출물 계산",
                 "호흡 조절",
                 "릴레이 설명"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hy-phosphorylation",
@@ -8323,8 +8321,7 @@ window.SCI_CATALOG = {
                 "H⁺ 기울기",
                 "화학 삼투",
                 "구분하기"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hy-fermentation",
@@ -9600,8 +9597,7 @@ window.SCI_CATALOG = {
                 "탐사 성과",
                 "우주 관측",
                 "토론하기"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hu-kepler-orbit",
@@ -9622,8 +9618,7 @@ window.SCI_CATALOG = {
                 "타원 궤도",
                 "면적 속도",
                 "혜성 궤도"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hu-kepler-period",
@@ -9644,8 +9639,7 @@ window.SCI_CATALOG = {
                 "주기와 거리",
                 "법칙의 의미",
                 "모든 천체"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hu-small-bodies",

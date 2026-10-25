@@ -405,7 +405,7 @@
 
   /* ---------- ① 가상 천체 망원경 ---------- */
   function LS() {
-    if (PHONE) return { A: { x: 8, y: 8, w: 464, h: 440 }, I: { x: 8, y: 456, w: 228, h: 236 }, G: { x: 244, y: 456, w: 228, h: 236 }, C: { x: 8, y: 700, w: 464, h: 152 } };
+    if (PHONE) return { A: { x: 8, y: 8, w: 464, h: 420 }, I: { x: 8, y: 436, w: 228, h: 220 }, G: { x: 244, y: 436, w: 228, h: 220 }, C: { x: 8, y: 664, w: 464, h: 188 } };
     return { A: { x: 10, y: 8, w: 490, h: 430 }, I: { x: 510, y: 8, w: 280, h: 210 }, G: { x: 510, y: 226, w: 280, h: 212 }, C: { x: 10, y: 446, w: 780, h: 164 } };
   }
   let moonPts = [];
@@ -475,9 +475,9 @@
     T(x0, C.y + 24 * FS, '배율 M = f_o / f_e = ' + FO + ' mm / ' + FE[S.fe] + ' mm = ' + M + '배', 14.5, '#1d4ed8', 'left', 800);
     T(x0, C.y + 48 * FS, '시야(실제 하늘) = 50° / M = ' + f2(FOVAPP / M) + '°', fs, '#334155', 'left', 800);
     drawWrap(x0, C.y + 72 * FS, k === 'jup' ? '목성 각지름 ' + THJ + '″ → 접안렌즈 속 ' + THJ + '″ × ' + M + ' = ' + f0(THJ * M) + '″ ≈ ' + arcFmt(THJ * M) + (THJ * M === 2000 ? ' (보름달 각지름 약 31′와 비슷)' : '') : PLN[S.pl].n + ' 각지름 ' + f1(g.th) + '″ → 접안렌즈 속 ' + arcFmt(g.th * M) + (k === 'sat' ? '. 고리 때문에 더 넓게 보여요.' : '. 위상 ' + f0(g.k * 100) + ' %가 밝아요.'), W, fs, { color: '#334155', weight: 800 });
-    if (k === 'ven' || k === 'mar') drawWrap(x0, C.y + 118 * FS, k === 'ven' ? '금성은 지구와의 거리가 변하며 위상과 크기가 함께 바뀌어요 (거리 가까울수록 가는 초승달이고 커요).' : '화성은 충(가까울 때)에 가장 크게 보여요. 거리 0.52 AU일 때 각지름 약 18″.', W, 13, { color: '#64748b' });
-    if (k === 'jup') drawWrap(x0, C.y + 100 * FS, '갈릴레이가 1610년에 발견한 위성 4개(이오·에우로파·가니메데·칼리스토)가 일직선으로 놓여 왔다 갔다 해요. 목성 앞이나 뒤에서 가려지기도 해요.', W, 13, { color: '#64748b' });
-    if (k === 'sat') drawWrap(x0, C.y + 100 * FS, '토성은 고리가 있어요. 작은 망원경으로도 고리와 모양을 알아볼 수 있어요.', W, 13, { color: '#64748b' });
+    if ((k === 'ven' || k === 'mar') && !PHONE) drawWrap(x0, C.y + 118 * FS, k === 'ven' ? '금성은 지구와의 거리가 변하며 위상과 크기가 함께 바뀌어요 (거리 가까울수록 가는 초승달이고 커요).' : '화성은 충(가까울 때)에 가장 크게 보여요. 거리 0.52 AU일 때 각지름 약 18″.', W, 13, { color: '#64748b' });
+    if (k === 'jup') drawWrap(x0, C.y + 100 * FS, PHONE ? '갈릴레이 위성 4개가 일직선 위를 왔다 갔다 해요. 목성 앞뒤로 가려지기도 해요.' : '갈릴레이가 1610년에 발견한 위성 4개(이오·에우로파·가니메데·칼리스토)가 일직선으로 놓여 왔다 갔다 해요. 목성 앞이나 뒤에서 가려지기도 해요.', W, 13, { color: '#64748b' });
+    if (k === 'sat') drawWrap(x0, C.y + 100 * FS, '토성은 고리가 있어요. 작은 망원경으로도 고리가 보여요.', W, 13, { color: '#64748b' });
   }
   function scopeDown(p) {
     const L = LS(), A = L.A;
@@ -504,8 +504,8 @@
     const L = LL(), c = L.c, G = chartGeom(c);
     if (S.logOn) { S.logT = Math.min(LOGDAYS, S.logT + dt * 2.4); if (S.logT >= LOGDAYS) S.logOn = false; }
     panel(c.x, c.y, c.w, c.h, { fill: '#ffffff' });
-    T(c.x + 12, c.y + 22 * FS, '관측 일지: 6시간마다 한 점씩 기록한 위성의 위치', PHONE ? 13 : 14.5, '#1e293b', 'left', 800);
-    T(c.x + 12, c.y + 40 * FS, '위(+)·아래(−): 목성 중심에서 옆으로 벗어난 거리 (목성 지름 D_J 단위)', 12.5, '#64748b', 'left', 700);
+    T(c.x + 12, c.y + 22 * FS, PHONE ? '관측 일지 (6시간마다 한 점)' : '관측 일지: 6시간마다 한 점씩 기록한 위성의 위치', PHONE ? 13 : 14.5, '#1e293b', 'left', 800);
+    T(c.x + 12, c.y + 40 * FS, PHONE ? '목성 중심에서 벗어난 거리 (D_J = 목성 지름)' : '위(+)·아래(−): 목성 중심에서 옆으로 벗어난 거리 (목성 지름 D_J 단위)', 12.5, '#64748b', 'left', 700);
     for (let v = -10; v <= 10; v += 5) { ctx.strokeStyle = v === 0 ? '#64748b' : 'rgba(100,116,139,.25)'; ctx.lineWidth = v === 0 ? 2 : 1; ctx.beginPath(); ctx.moveTo(G.ix, G.Y(v)); ctx.lineTo(G.ix + G.iw, G.Y(v)); ctx.stroke(); T(G.ix - 6, G.Y(v) + 5, (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v), 12.5, '#475569', 'right', 700); }
     for (let d = 0; d <= LOGDAYS; d += 2) { ctx.strokeStyle = 'rgba(100,116,139,.2)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(G.X(d), G.iy); ctx.lineTo(G.X(d), G.iy + G.ih); ctx.stroke(); if (!PHONE || d % 4 === 0) T(G.X(d), c.y + c.h - 18, String(d), 12.5, '#475569', 'center', 700); }
     T(c.x + c.w - 12, c.y + c.h - 4, '날짜 (일)', 12.5, '#64748b', 'right', 700);
@@ -522,7 +522,7 @@
       ctx.strokeStyle = '#dc2626'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(G.X(cd), G.iy); ctx.lineTo(G.X(cd), G.iy + G.ih); ctx.stroke();
       const lab = 't = ' + f2(cd) + '일   ' + MOONS.map((m, i) => SHORT[i] + ' ' + (moonX(m, cd) >= 0 ? '+' : '−') + f2(Math.abs(moonX(m, cd)))).join('  ');
       D.label(c.x + c.w / 2, c.y + 56 * FS, lab, { bg: 'rgba(30,41,59,.92)', size: PHONE ? 12.5 : 13, pad: 8 });
-    } else T(c.x + c.w - 12, c.y + 22 * FS, '그래프를 눌러 값을 읽어요', 12.5, '#b45309', 'right', 800);
+    } else if (!PHONE) T(c.x + c.w - 12, c.y + 22 * FS, '그래프를 눌러 값을 읽어요', 12.5, '#b45309', 'right', 800);
     // 모형
     const m = L.m; panel(m.x, m.y, m.w, m.h, { fill: '#0f172a', line: '#334155' });
     T(m.x + 12, m.y + 22 * FS, '위에서 본 위성 궤도 (눈금대로)', 13.5, '#e2e8f0', 'left', 800);
@@ -565,14 +565,14 @@
   /* ---------- ③ 법칙의 의미 ---------- */
   const cvalStr = (v) => (v >= 100 ? sci(v, 2) : v >= 1 ? f1(v) : f3(v));
   function LM3() {
-    if (PHONE) return { s: { x: 8, y: 8, w: 464, h: 224 }, d: { x: 8, y: 240, w: 464, h: 214 }, grid: { x: 8, y: 462, w: 464, h: 168, cols: 2, cardH: 36, gap: 6 }, detail: { x: 8, y: 636, w: 464, h: 50 }, bins: [0, 1, 2].map((i) => ({ x: 8 + i * 157, y: 692, w: 150, h: 160 })) };
+    if (PHONE) return { s: { x: 8, y: 8, w: 464, h: 200 }, d: { x: 8, y: 216, w: 464, h: 262 }, grid: { x: 8, y: 486, w: 464, h: 148, cols: 2, cardH: 32, gap: 5 }, detail: { x: 8, y: 640, w: 464, h: 46 }, bins: [0, 1, 2].map((i) => ({ x: 8 + i * 157, y: 692, w: 150, h: 160 })) };
     return { s: { x: 10, y: 8, w: 380, h: 300 }, d: { x: 400, y: 8, w: 390, h: 300 }, grid: { x: 10, y: 316, w: 780, h: 92, cols: 4, cardH: 42, gap: 8 }, detail: { x: 10, y: 412, w: 780, h: 34 }, bins: [0, 1, 2].map((i) => ({ x: 10 + i * 264, y: 450, w: 252, h: 160 })) };
   }
   const cK = makeClassifier({
     items: CARDS3.map((c) => ({ label: c.label, chip: c.label, sub: PHONE ? '' : c.sub, a: c.a, T: c.T, bin: c.bin, open: true })),
-    bins: [{ label: '☀ 태양 둘레 ' + sci(K_SUN, 1), sub: '', color: '#f59e0b' }, { label: '🟤 목성 둘레 ' + f1(K_JUP), sub: '', color: '#b45309' }, { label: '🌍 지구 둘레 ' + f3(K_EARTH), sub: '', color: '#2563eb' }],
+    bins: [{ label: PHONE ? '☀ 태양 둘레' : '☀ 태양 둘레 ' + sci(K_SUN, 1), sub: '', color: '#f59e0b' }, { label: PHONE ? '🟤 목성 둘레' : '🟤 목성 둘레 ' + f1(K_JUP), sub: '', color: '#b45309' }, { label: PHONE ? '🌍 지구 둘레' : '🌍 지구 둘레 ' + f3(K_EARTH), sub: '', color: '#2563eb' }],
     chipCols: 1, minRows: 4, layout: LM3,
-    placeholder: '카드를 눌러 a³/T² 값을 계산해 보고, 같은 값의 상자에 넣어요.',
+    placeholder: PHONE ? '카드를 눌러 a³/T²을 확인해요. 태양 둘레 2.5×10⁴ · 목성 둘레 24 · 지구 둘레 0.076' : '카드를 눌러 a³/T² 값을 계산해 보고, 같은 값의 상자에 넣어요.',
     detailFn: (it) => ({ title: it.label + ': a = ' + (it.a >= 1e4 ? sci(it.a, 2) : it.a) + ' (10⁵ km), T = ' + it.T + '일', body: 'a³ / T² = ' + cvalStr(it.a * it.a * it.a / (it.T * it.T)) + ' (10⁵ km³/일²)' }),
     onChange() { updateCtl(); },
   });
@@ -598,13 +598,13 @@
     // 유도
     panel(d.x, d.y, d.w, d.h, { fill: '#ffffff' });
     const x0 = d.x + 14, W = d.w - 28, fs = PHONE ? 13 : 13.5;
-    T(x0, d.y + 24 * FS, '왜 a³/T²이 일정할까? (hm 위성 운동에서 배운 식)', PHONE ? 13 : 14.5, '#1e293b', 'left', 800);
+    T(x0, d.y + 24 * FS, PHONE ? '왜 a³/T²이 일정할까?' : '왜 a³/T²이 일정할까? (위성 운동에서 배운 식)', PHONE ? 13 : 14.5, '#1e293b', 'left', 800);
     let y = d.y + 52 * FS;
     y = drawWrap(x0, y, '① 중력이 구심력: G M m / a² = m (2π/T)² a', W, fs, { color: '#334155', weight: 800 }) + 24 * FS;
     y = drawWrap(x0, y, '② 정리하면: a³ / T² = G M / (4π²)', W, fs, { color: '#1d4ed8', weight: 800 }) + 24 * FS;
-    y = drawWrap(x0, y, '③ 오른쪽은 중심 천체의 질량 M으로만 정해져요. 도는 천체의 m은 약분돼 사라져요.', W, fs, { color: '#334155', weight: 800 }) + 24 * FS;
+    y = drawWrap(x0, y, PHONE ? '③ 오른쪽에는 M만 있고 m은 사라져요.' : '③ 오른쪽은 중심 천체의 질량 M으로만 정해져요. 도는 천체의 m은 약분돼 사라져요.', W, fs, { color: '#334155', weight: 800 }) + 24 * FS;
     y = drawWrap(x0, y, '④ AU · 년 · M☉ 단위에서는 T² = a³ / M', W, fs, { color: '#15803d', weight: 800 }) + 28 * FS;
-    T(x0, y, '태양 둘레: a³/T² = ' + sci(K_SUN, 2) + ' (10⁵ km³/일²)', fs, '#b45309', 'left', 800);
+    T(x0, y, '태양 둘레: a³/T² = ' + sci(K_SUN, 2) + ' (10⁵ km³/일²)', PHONE ? 12.5 : fs, '#b45309', 'left', 800);
     T(x0, y + 22 * FS, '목성 둘레(위성): a³/T² = ' + f1(K_JUP), fs, '#92400e', 'left', 800);
     const solved = S.massOk || (game && game.free);
     if (solved) T(x0, y + 44 * FS, 'M목성 / M태양 = ' + f1(K_JUP) + ' / ' + sci(K_SUN, 2) + ' = ' + sci(MJ_MS, 1) + ' (약 1/' + f0(1 / MJ_MS / 10) + '0)', fs, '#15803d', 'left', 800);
@@ -617,7 +617,7 @@
     return { g: { x: 10, y: 8, w: 500, h: 424 }, t: { x: 520, y: 8, w: 270, h: 424 }, p: { x: 10, y: 440, w: 780, h: 170 } };
   }
   const gGeom = (g) => { const ix = g.x + (PHONE ? 46 : 52), iy = g.y + 36, iw = g.w - (ix - g.x) - 14, ih = g.h - 36 - 40; return { ix, iy, iw, ih, X: (v) => ix + iw * (v + 1) / 7, Y: (v) => iy + ih - ih * (v + 1) / 7 }; };
-  const rowGeom = (L, i) => { const rh = PHONE ? 40 : 42; return { x: L.t.x, y: L.t.y + 62 * FS + i * rh, w: L.t.w, h: rh - 2 }; };
+  const rowGeom = (L, i) => { const rh = PHONE ? 36 : 42; return { x: L.t.x, y: L.t.y + (PHONE ? 52 : 62) * FS + i * rh, w: L.t.w, h: rh - 2 }; };
   const plotDone = () => S.plot.filter(Boolean).length;
   function plotBody(i) { if (i == null) i = S.plot.indexOf(false); if (i < 0 || S.plot[i]) return; S.plot[i] = true; S.fly.push({ i, t: 0 }); Sound.click(); updateCtl(); }
   const pw = (n) => ['10⁻¹', '1', '10', '10²', '10³', '10⁴', '10⁵', '10⁶'][n + 1];
@@ -648,7 +648,7 @@
     // 표
     const tb = L.t; panel(tb.x, tb.y, tb.w, tb.h, { fill: '#ffffff' });
     T(tb.x + 12, tb.y + 24 * FS, '🪐 태양 둘레 천체 7개', 14.5, '#1e293b', 'left', 800);
-    const hy = tb.y + 50 * FS;
+    const hy = tb.y + (PHONE ? 44 : 50) * FS;
     T(tb.x + 40, hy, '천체', 12.5, '#64748b', 'left', 800); T(tb.x + tb.w * 0.55, hy, 'a (AU)', 12.5, '#64748b', 'center', 800); T(tb.x + tb.w * 0.76, hy, 'T (년)', 12.5, '#64748b', 'center', 800); T(tb.x + tb.w - 8, hy, 'T²/a³', 12.5, '#64748b', 'right', 800);
     BODIES.forEach((b, i) => {
       const r = rowGeom(L, i), on = S.plot[i];
@@ -658,7 +658,7 @@
       T(r.x + r.w * 0.55, r.y + r.h / 2 + 5, String(b.a), 13, '#475569', 'center', 700); T(r.x + r.w * 0.76, r.y + r.h / 2 + 5, String(b.T), 13, '#475569', 'center', 700);
       T(r.x + r.w - 10, r.y + r.h / 2 + 5, on ? f3(b.T * b.T / (b.a * b.a * b.a)) : '?', 13.5, on ? '#15803d' : '#cbd5e1', 'right', 800);
     });
-    if (plotDone() < 7) T(tb.x + 12, tb.y + tb.h - 12, '행을 누르면 점이 찍혀요', 12.5, '#64748b', 'left', 700);
+    if (plotDone() < 7 && !PHONE) T(tb.x + 12, tb.y + tb.h - 12, '행을 누르면 점이 찍혀요', 12.5, '#64748b', 'left', 700);
     const p = L.p; panel(p.x, p.y, p.w, p.h, { fill: '#ffffff' });
     const done = plotDone() === 7;
     T(p.x + 14, p.y + 24 * FS, done ? '✔ 모든 점이 직선 T² = a³ 위에 있어요 (T²/a³ = 1.00)' : '점 ' + plotDone() + ' / 7', 14.5, done ? '#15803d' : '#1e293b', 'left', 800);
