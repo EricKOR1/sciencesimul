@@ -6326,8 +6326,7 @@ window.SCI_CATALOG = {
                 "스피커 간섭",
                 "소음 상쇄",
                 "공간 설계"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hm-string-wave",
@@ -6709,8 +6708,7 @@ window.SCI_CATALOG = {
                 "편광 만들기",
                 "디스플레이 조사",
                 "정보 기술"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hq-photoelectric",
@@ -6731,8 +6729,7 @@ window.SCI_CATALOG = {
                 "그래프 분석",
                 "광자와 전류",
                 "광전 기술"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hq-laser",
@@ -6753,8 +6750,7 @@ window.SCI_CATALOG = {
                 "밀도 반전",
                 "공진기",
                 "특징과 활용"
-              ],
-              "soon": true
+              ]
             }
           ]
         },
@@ -7887,8 +7883,7 @@ window.SCI_CATALOG = {
                 "중합도",
                 "물이 빠짐",
                 "고분자 설계"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hr-new-substances",
@@ -8143,8 +8138,7 @@ window.SCI_CATALOG = {
                 "에너지 계산",
                 "단계적 반응",
                 "대사 판별"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hy-energy-balance",
@@ -8165,8 +8159,7 @@ window.SCI_CATALOG = {
                 "하루 섭취",
                 "하루 소비",
                 "에너지 균형"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hy-atp-energy",
@@ -8187,8 +8180,7 @@ window.SCI_CATALOG = {
                 "에너지 흐름",
                 "에너지 연결",
                 "생명 활동"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hy-enzyme-factors",
