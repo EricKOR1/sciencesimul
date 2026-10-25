@@ -313,17 +313,16 @@
     // 속도식 조립
     const yb = y0 + rh * 4 + 10, e = sm(W.stamp);
     D.roundRect(L.x + 12, yb, L.w - 24, 76, 12); ctx.fillStyle = lwOrdOk() ? 'rgba(20,160,88,.08)' : '#f6f7fb'; ctx.fill(); ctx.strokeStyle = lwOrdOk() ? GOOD : '#dbe3f3'; ctx.lineWidth = 1.6; ctx.stroke();
-    const shown = ords.map((o, j) => (o < 0 ? '□' : String(o)));
-    const form = 'v = k' + d.sp.map((s, j) => '[' + s + ']' + (ords[j] < 0 ? '□' : sup(ords[j]))).join('');
+        const form = 'v = k' + d.sp.map((s, j) => '[' + s + ']' + (ords[j] < 0 ? '□' : sup(ords[j]))).join('');
     T(L.x + L.w / 2, yb + 34, form, PHONE ? 19 : 22, lwOrdOk() ? '#0f6b3c' : INK, 'center', 800);
-    T(L.x + L.w / 2, yb + 60, lwOrdOk() ? '= ' + lawStr(d, ords) + ' (차수 0 인 반응물은 속도식에서 빠져요)' : '조작판에서 각 반응물의 차수를 골라요', 12.5, MUTED, 'center', 700);
+    T(L.x + L.w / 2, yb + 60, lwOrdOk() ? '→ ' + lawStr(d, ords) + (ords.indexOf(0) >= 0 ? '  (차수 0 인 반응물은 빠져요)' : '') : '조작판에서 각 반응물의 차수를 골라요', 12.5, MUTED, 'center', 700);
     // k 계산 안내
     const yk = yb + 90;
     D.roundRect(L.x + 12, yk, L.w - 24, 74, 12); ctx.fillStyle = lwKOk() && lwOrdOk() ? 'rgba(20,160,88,.08)' : '#f6f7fb'; ctx.fill(); ctx.strokeStyle = lwKOk() && lwOrdOk() ? GOOD : '#dbe3f3'; ctx.lineWidth = 1.6; ctx.stroke();
-    T(L.x + 26, yk + 24, 'k = v₀ / (' + d.sp.map((s, j) => '[' + s + ']' + (ords[j] < 0 ? '□' : sup(ords[j]))).join('') + ')  ← 실험 1 의 값을 넣어요', 13.5, INK, 'left', 800);
+    T(L.x + 26, yk + 24, 'k = v₀ / (' + d.sp.map((s, j) => '[' + s + ']' + (ords[j] < 0 ? '□' : ords[j] === 1 ? '' : sup(ords[j]))).join('') + ')  ← 실험 1 의 값을 넣어요', 13.5, INK, 'left', 800);
     const tot = ords.every((o) => o >= 0) ? ords.reduce((a, b) => a + b, 0) : -1;
     T(L.x + 26, yk + 50, '전체 반응 차수 = ' + (tot >= 0 ? ords.join(' + ') + ' = ' + tot + '차' : '?'), 13.5, tot >= 0 ? PUR : MUTED, 'left', 800);
-    T(L.x + L.w - 26, yk + 50, 'k 의 단위: ' + (lwOrdOk() ? UNITS[kUnitIdx(d)] : '?'), 13.5, lwOrdOk() ? PUR : MUTED, 'right', 800);
+    T(L.x + L.w - 26, yk + 50, 'k 의 단위: ' + (lwOrdOk() && lwUOk() ? UNITS[kUnitIdx(d)] : '?'), 13.5, lwOrdOk() && lwUOk() ? PUR : MUTED, 'right', 800);
     // 예측 (자료 A)
     const yp = yk + 86;
     if (W.ds === 'A' && yp + 60 < L.y + L.h) {
@@ -344,7 +343,7 @@
     y += 4;
     D.roundRect(R.x + 10, y, R.w - 20, PHONE ? 100 : 150, 10); ctx.fillStyle = '#f6f7fb'; ctx.fill(); ctx.strokeStyle = '#dbe3f3'; ctx.lineWidth = 1.4; ctx.stroke();
     T(R.x + 20, y + 20, 'k 의 단위 (전체 차수에 따라)', 12.5, PUR, 'left', 800);
-    [['0차', 'M/s'], ['1차', 's⁻¹'], ['2차', 'M⁻¹s⁻¹'], ['3차', 'M⁻²s⁻¹']].forEach((q, i) => { const yy = y + 44 + i * (PHONE ? 15 : 24), on = lwOrdOk() && kUnitIdx(d) === i; T(R.x + 26, yy, q[0], 13, on ? '#0f6b3c' : INK, 'left', 800); T(R.x + R.w - 26, yy, q[1], 13.5, on ? '#0f6b3c' : INK, 'right', 800); });
+    [['0차', 'M/s'], ['1차', 's⁻¹'], ['2차', 'M⁻¹s⁻¹'], ['3차', 'M⁻²s⁻¹']].forEach((q, i) => { const yy = y + 44 + i * (PHONE ? 15 : 24), on = lwOrdOk() && lwUOk() && kUnitIdx(d) === i; T(R.x + 26, yy, q[0], 13, on ? '#0f6b3c' : INK, 'left', 800); T(R.x + R.w - 26, yy, q[1], 13.5, on ? '#0f6b3c' : INK, 'right', 800); });
     y += (PHONE ? 112 : 162);
     if (y + 40 < R.y + R.h) textBlock(R.x + 14, y + 8, R.w - 28, 'k 는 온도와 촉매가 같으면 농도가 달라져도 변하지 않아요.', 12.5, MUTED, 17, 700);
   }
@@ -433,7 +432,6 @@
     $$('#lu button').forEach((b, k) => { const on = W.u[W.ds] === k; b.classList.toggle('on', on && (!lwOrdOk() || lwUOk())); b.classList.toggle('no', on && lwOrdOk() && !lwUOk()); });
     $('#predBox').hidden = S.mode !== 'law' || W.ds !== 'A';
     const lp = $('#lp'); if (document.activeElement !== lp && lp.value !== W.pred) lp.value = W.pred; lp.classList.toggle('ok', predOk());
-    $('#lkNote').textContent = '실험 1 의 값을 속도식에 넣어 k 를 구해요. 숫자만 적고 단위는 아래에서 골라요.';
     $$('#ckChips button').forEach((b, k) => b.classList.toggle('on', K.rx === 'ABC'[k]));
     $$('#ckMul button').forEach((b, k) => b.classList.toggle('on', K.mul === [2, 3, 4][k]));
     $('#tbLabel').textContent = MODE_LABEL[S.mode];
@@ -541,9 +539,9 @@
           type: 'quiz', title: '실험 2·3 은 왜 안 될까?',
           goal: '실험 2 와 3 을 비교해서는 차수를 바로 구하기 어려워요. 그 까닭은?',
           setup() { S.lock = true; PR().pair = 2; PR().seen[2] = true; setMode('pair'); },
-          choices: ['두 실험 모두 속도가 같기 때문이에요', '두 농도가 한꺼번에 바뀌어서 속도 변화가 어느 농도 때문인지 알 수 없기 때문이에요', '실험 2·3 은 온도가 달라서 비교할 수 없기 때문이에요', 'H₂ 의 농도는 속도와 관계가 없기 때문이에요'],
-          answer: 1,
-          feedback: ['실험 2 와 3 의 속도는 4.8×10⁻³ 과 2.4×10⁻³ 으로 서로 달라요.', '', '온도는 모든 실험에서 일정해요. 달라지는 것은 농도예요.', 'H₂ 의 농도를 2배로 하면 속도가 2배가 되는 것이 실험 1·3 에서 확인돼요.'],
+          choices: ['두 실험 모두 속도가 같기 때문이에요', '실험 2·3 은 온도가 달라서 비교할 수 없기 때문이에요', 'H₂ 의 농도는 속도와 관계가 없기 때문이에요', '두 농도가 한꺼번에 바뀌어서 속도 변화가 어느 농도 때문인지 알 수 없기 때문이에요'],
+          answer: 3,
+          feedback: ['실험 2 와 3 의 속도는 4.8×10⁻³ 과 2.4×10⁻³ 으로 서로 달라요.', '온도는 모든 실험에서 일정해요. 달라지는 것은 농도예요.', 'H₂ 의 농도를 2배로 하면 속도가 2배가 되는 것이 실험 1·3 에서 확인돼요.', ''],
           explain: '실험 2·3 에서는 [NO] 와 [H₂] 가 <b>동시에</b> 바뀌어요. 한 가지만 바뀐 짝을 골라야 속도 변화의 원인이 그 농도라고 말할 수 있어요.',
         },
       ],
@@ -579,9 +577,9 @@
           type: 'quiz', title: 'k 는 농도에 따라 변할까?',
           goal: '“반응물의 농도가 바뀌면 속도 상수 k 도 달라진다.” 이 말은?',
           setup() { S.lock = true; ALLOW = { A: true, B: true, C: false }; setMode('law'); },
-          choices: ['맞아요. 농도가 클수록 k 도 커져요', '틀려요. 같은 온도에서는 농도가 달라져도 k 는 일정해요 (k 는 온도와 촉매에 따라 변해요)', '맞아요. 반응이 진행되면 k 가 점점 작아져요', '틀려요. k 는 어떤 경우에도 변하지 않아요'],
-          answer: 1,
-          feedback: ['농도가 커지면 속도 v 가 커질 뿐 k 는 일정해요. 자료 A 의 세 실험 모두 같은 k = 1.2 가 나와요.', '', '반응이 진행되며 농도가 줄어 v 가 작아지는 것이지 k 가 작아지는 것은 아니에요.', 'k 는 온도나 촉매가 달라지면 변해요 (다음 차시들에서 배워요).'],
+          choices: ['맞아요. 농도가 클수록 k 도 커져요', '맞아요. 반응이 진행되면 k 가 점점 작아져요', '틀려요. 같은 온도에서는 농도가 달라져도 k 는 일정해요 (k 는 온도와 촉매에 따라 변해요)', '틀려요. k 는 어떤 경우에도 변하지 않아요'],
+          answer: 2,
+          feedback: ['농도가 커지면 속도 v 가 커질 뿐 k 는 일정해요. 자료 A 의 세 실험 모두 같은 k = 1.2 가 나와요.', '반응이 진행되며 농도가 줄어 v 가 작아지는 것이지 k 가 작아지는 것은 아니에요.', '', 'k 는 온도나 촉매가 달라지면 변해요 (다음 차시들에서 배워요).'],
           explain: '속도 v 는 농도에 따라 변하지만 비례 상수 <b>k 는 온도가 같으면 일정</b>해요. 온도가 오르거나 촉매를 쓰면 k 가 변해요.',
         },
       ],
@@ -608,33 +606,34 @@
           type: 'quiz', title: '계수와 차수',
           goal: '2NO + 2H₂ → N₂ + 2H₂O 에서 H₂ 의 계수는 2 이지만 속도식은 v = k[NO]²[H₂] 예요. H₂ 의 차수가 1 인 까닭은?',
           setup() { S.lock = true; ALLOW = { A: true, B: true, C: true }; CK().rx = 'A'; setMode('chk'); },
-          choices: ['반응 차수는 반응식의 계수를 그대로 쓰므로 H₂ 는 2차예요', '반응 차수는 반응식의 계수가 아니라 실험으로 정하기 때문이에요', '계수가 큰 물질은 차수가 항상 1 이기 때문이에요', 'H₂ 의 농도는 0.10 M 로 일정하기 때문이에요'],
-          answer: 1,
-          feedback: ['계수를 차수로 쓰는 것은 흔한 오개념이에요. 자료 A 에서 H₂ 를 2배로 하면 속도는 2배(1차)였어요.', '', '계수와 차수 사이에 그런 규칙은 없어요.', '실험 1·3 에서 H₂ 의 농도를 바꾸었을 때 속도가 변했어요.'],
+          choices: ['반응 차수는 반응식의 계수를 그대로 쓰므로 H₂ 는 2차예요', '계수가 큰 물질은 차수가 항상 1 이기 때문이에요', 'H₂ 의 농도는 0.10 M 로 일정하기 때문이에요', '반응 차수는 반응식의 계수가 아니라 실험으로 정하기 때문이에요'],
+          answer: 3,
+          feedback: ['계수를 차수로 쓰는 것은 흔한 오개념이에요. 자료 A 에서 H₂ 를 2배로 하면 속도는 2배(1차)였어요.', '계수와 차수 사이에 그런 규칙은 없어요.', '실험 1·3 에서 H₂ 의 농도를 바꾸었을 때 속도가 변했어요.', ''],
           explain: '반응 차수는 <b>실험 자료</b>로만 구해요. 자료 A 에서 [H₂] 가 2배일 때 속도가 2배이므로 H₂ 는 1차예요. 자료 B 의 B 는 계수가 1 이지만 0차예요.',
         },
         {
           type: 'quiz', title: '전체 반응 차수',
           goal: 'v = k[NO]²[H₂] 인 반응의 <b>전체 반응 차수</b>는?',
           setup() { S.lock = true; ALLOW = { A: true, B: true, C: true }; CK().rx = 'A'; setMode('chk'); },
-          choices: ['2차 (NO 의 차수만)', '3차 (2 + 1)', '4차 (반응물의 계수 2 + 2)', '1차 (H₂ 의 차수만)'],
-          answer: 1,
-          feedback: ['H₂ 의 차수도 더해야 해요.', '', '계수의 합이 아니라 속도식의 차수(지수)를 더해요.', 'NO 의 차수 2 도 더해야 해요.'],
+          choices: ['2차 (NO 의 차수만)', '4차 (반응물의 계수 2 + 2)', '3차 (2 + 1)', '1차 (H₂ 의 차수만)'],
+          answer: 2,
+          feedback: ['H₂ 의 차수도 더해야 해요.', '계수의 합이 아니라 속도식의 차수(지수)를 더해요.', '', 'NO 의 차수 2 도 더해야 해요.'],
           explain: '전체 반응 차수 = 각 반응물의 차수의 합 = 2 + 1 = <b>3차</b> 예요. 그래서 k 의 단위가 M⁻²s⁻¹ 이에요.',
         },
         {
           type: 'quiz', title: '농도를 3배로 늘리면',
           goal: '반응물의 농도를 3배로 늘렸을 때, 이 반응물이 1차이면 속도는 몇 배, 2차이면 몇 배가 될까요?',
           setup() { S.lock = true; ALLOW = { A: true, B: true, C: true }; CK().mul = 3; CK().seenMul[3] = true; setMode('chk'); },
-          choices: ['1차 3배, 2차 6배', '1차 3배, 2차 9배', '1차 2배, 2차 4배', '1차 3배, 2차 3배'],
-          answer: 1,
-          feedback: ['2차는 3²= 9배예요. 3 × 2 = 6 이 아니에요.', '', '2배, 4배는 농도를 2배로 할 때의 값이에요.', '2차이면 농도의 제곱에 비례해서 9배가 돼요.'],
+          choices: ['1차 3배, 2차 6배', '1차 2배, 2차 4배', '1차 3배, 2차 3배', '1차 3배, 2차 9배'],
+          answer: 3,
+          feedback: ['2차는 3²= 9배예요. 3 × 2 = 6 이 아니에요.', '2배, 4배는 농도를 2배로 할 때의 값이에요.', '2차이면 농도의 제곱에 비례해서 9배가 돼요.', ''],
           explain: 'n차 반응물은 농도를 a배로 하면 속도가 aⁿ배가 돼요. 3배일 때 1차는 3¹ = <b>3배</b>, 2차는 3² = <b>9배</b>예요.',
         },
       ],
     },
   ];
 
+  build(); obInit();
   game = SciSim.game({
     simId: 'hx-rate-law', mount: '#game', badge: '속도식 해석가', homeHref: '../../index.html#hx',
     featureLabels: { obs: '🧫 농도의 영향', pair: '🔎 초기 속도법', law: '🧾 속도식 완성', chk: '🔍 차수의 의미' },
@@ -643,7 +642,7 @@
   });
 
   /* ---------- 시작 ---------- */
-  build(); obInit(); setMode('obs');
+  setMode('obs');
   function stepAll1(dt) { S.t += dt; stepOb(dt); const P = PR(); if (P.flash > 0) P.flash = Math.max(0, P.flash - dt * 1.5); S.lw.stamp = ap2(S.lw.stamp, 1, dt, 4); if (S.lw.stamp > 0.995) S.lw.stamp = 1; }
   let lastFree = false;
   SciSim.loop((dt, t) => {

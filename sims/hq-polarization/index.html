@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#f26b3a">
+  <title>편광과 디스플레이 | 고등 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🕶️</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; }
+    .stage-toolbar { min-height: 61px; }
+    .segmented button { min-height: 44px; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 14px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard .btn-sm { min-height: 44px; }
+    #ctrlCard [hidden] { display: none !important; }
+    .ctrl-note { font-size: 14px; color: var(--muted); margin: 6px 0 0; }
+    .btn-row { display: flex; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
+    .btn-row .btn { flex: 1; padding-left: 8px; padding-right: 8px; }
+    .view-seg { display: flex; width: 100%; }
+    .view-seg button { flex: 1 1 0; min-width: 0; padding-left: 4px; padding-right: 4px; font-size: 14.5px; }
+    .range-row { display: flex; align-items: center; gap: 8px; }
+    .range-row input[type=range] { flex: 1; min-width: 0; height: 44px; }
+    .nudge { flex: none; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); font-weight: 900; font-size: 20px; line-height: 1; cursor: pointer; display: grid; place-items: center; color: var(--ink); }
+    .nudge:active { transform: scale(.94); background: var(--surface-2); }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+    .chips button { min-height: 44px; padding: 6px 12px; border: 2px solid var(--line); background: #fff; border-radius: 999px; font-weight: 800; font-size: 14.5px; cursor: pointer; color: var(--ink); }
+    .chips button.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); color: color-mix(in srgb, var(--subject) 70%, black); }
+    .chips button.done { border-color: var(--good); background: var(--good-soft); }
+    .chips button:disabled { opacity: .45; }
+    .sel-in { width: 100%; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 8px; font: 800 14.5px var(--font); color: var(--ink); background: #fff; }
+    .sel-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .sel-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .num-in { width: 100%; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 10px; font: 800 17px ui-monospace, Menlo, Consolas, monospace; color: var(--ink); background: #fff; }
+    .num-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .num-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .sel-row { margin-top: 8px; }
+    .sel-row .q { font-weight: 800; font-size: 14px; margin-bottom: 3px; line-height: 1.25; }
+    .sel-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    @keyframes shakeX { 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+    .readout .value.txt { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .concept table.mini { border-collapse: collapse; margin: 6px 0; font-size: 14px; width: 100%; }
+    .concept table.mini th, .concept table.mini td { border: 1px solid var(--line); padding: 4px 6px; text-align: center; }
+    .concept table.mini th { background: var(--surface-2); font-weight: 800; }
+    .stage-canvas .stage-hint { top: 10px; bottom: auto; }
+    @media (max-width: 1100px) and (orientation: landscape) { .toolbar-label { display: none; } }
+    @media (orientation: portrait) and (min-width: 600px) {
+      .side-col:has(> #ctrlCard[hidden]) > #game { grid-column: 1 / -1; }
+    }
+    @media (max-width: 599px) {
+      .readout .value.txt { font-size: 15px; }
+      .stage-toolbar { gap: 6px; padding: 8px; }
+      .stage-toolbar .spacer, .toolbar-label { display: none; }
+      .segmented button { padding-left: 10px; padding-right: 10px; font-size: 14px; }
+      .stage-hint { font-size: 13px; padding: 5px 12px; }
+    }
+  
+    .stage-toolbar .segmented { flex-wrap: wrap; }
+    .segmented button { white-space: nowrap; }
+    .seg-4 button { flex: 1 1 0; min-width: 0; padding-left: 6px; padding-right: 6px; font-size: 14px; }
+    .tray-note { font-weight: 800; }
+    .sub-hl { color: var(--subject); font-weight: 900; }
+    #lgSeg button, #lamSeg button { font-size: 13.5px; padding-left: 3px; padding-right: 3px; }
+
+    .chips button small { font-weight: 700; opacity: .8; }
+    .chips.tight button { padding: 4px 9px; font-size: 13.5px; }
+    .btn-row.one .btn { flex: 1 1 100%; }
+    .tick-note { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+  </style>
+</head>
+<body class="sim-page" data-subject="phy">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#hq">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">전자기와 양자 · Ⅱ. 빛과 정보 통신</div>
+      <h1>편광과 디스플레이</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🕶️ 편광과 디스플레이</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="tablist" aria-label="화면 고르기" data-feature="pol">
+            <button type="button" data-mode="pol" data-feature="pol">🕶️ 편광판</button><button type="button" data-mode="make" data-feature="make">🚗 편광 만들기</button><button type="button" data-mode="survey" data-feature="survey">🔬 디스플레이 조사</button><button type="button" data-mode="tech" data-feature="tech">📱 정보 기술</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="편광판 두 장과 줄 파동 비유, 반사와 산란이 만드는 편광, 모의 디스플레이의 편광 측정 그래프와 표, LCD 픽셀과 3D 극장 안경"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">-</span><span class="value txt" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">-</span><span class="value txt" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">-</span><span class="value txt" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" data-modes="pol">
+          <div class="control-head"><label for="sA">🔄 돌리는 판의 투과축 각도</label><output id="oA">0°</output></div>
+          <div class="range-row"><button class="nudge" type="button" data-for="sA" data-d="-1" aria-label="돌리는 편광판의 투과축 각도 (0도부터 180도) 줄이기">−</button><input type="range" id="sA" min="0" max="180" step="1" value="0" aria-label="돌리는 편광판의 투과축 각도 (0도부터 180도)"><button class="nudge" type="button" data-for="sA" data-d="1" aria-label="돌리는 편광판의 투과축 각도 (0도부터 180도) 늘리기">+</button></div>
+        </div>
+        <div class="control" data-modes="pol" data-match="mid">
+          <div class="control-head"><span>📄 겹치는 편광판</span></div><div class="segmented view-seg" id="sheetSeg" role="group" aria-label="겹치는 편광판"><button type="button" data-v="1">한 장</button><button type="button" data-v="2">두 장</button><button type="button" data-v="3">세 장</button></div><p class="ctrl-note">세 장이면 P₁(0°)과 P₃(90°) 사이의 가운데 판이 돌아가요.</p>
+        </div>
+        <div class="control" data-modes="pol" data-match="selA">
+          <div id="selA"></div>
+        </div>
+        <div class="control" data-modes="make">
+          <div class="control-head"><span>🔎 장면 고르기</span></div><div class="segmented view-seg" id="mkSeg" role="group" aria-label="장면 고르기"><button type="button" data-v="refl">🚗 도로 반사</button><button type="button" data-v="sky">🌤️ 하늘 산란</button></div>
+        </div>
+        <div class="control" data-modes="make" data-sub="refl">
+          <div class="control-head"><label for="sI">☀️ 햇빛이 들어오는 각 (입사각)</label><output id="oI">30°</output></div>
+          <div class="range-row"><button class="nudge" type="button" data-for="sI" data-d="-1" aria-label="입사각 (10도부터 80도) 줄이기">−</button><input type="range" id="sI" min="10" max="80" step="1" value="30" aria-label="입사각 (10도부터 80도)"><button class="nudge" type="button" data-for="sI" data-d="1" aria-label="입사각 (10도부터 80도) 늘리기">+</button></div>
+        </div>
+        <div class="control" data-modes="make" data-sub="refl">
+          <div class="control-head"><span>😎 편광 선글라스</span></div><div class="segmented view-seg" id="glSeg" role="group" aria-label="편광 선글라스"><button type="button" data-v="n">없음</button><button type="button" data-v="v">투과축 세로</button><button type="button" data-v="h">투과축 가로</button></div>
+        </div>
+        <div class="control" data-modes="make" data-sub="sky">
+          <div class="control-head"><span>🧭 바라보는 방향 (태양과 이루는 각)</span></div><div class="segmented view-seg" id="dirSeg" role="group" aria-label="바라보는 방향 (태양과 이루는 각)"><button type="button" data-v="30">30°</button><button type="button" data-v="90">90°</button><button type="button" data-v="150">150°</button></div>
+        </div>
+        <div class="control" data-modes="make" data-sub="sky">
+          <div class="control-head"><label for="sF">📷 사진 필터의 투과축 각도</label><output id="oF">0°</output></div>
+          <div class="range-row"><button class="nudge" type="button" data-for="sF" data-d="-1" aria-label="사진 필터의 투과축 각도 (0도부터 180도) 줄이기">−</button><input type="range" id="sF" min="0" max="180" step="1" value="0" aria-label="사진 필터의 투과축 각도 (0도부터 180도)"><button class="nudge" type="button" data-for="sF" data-d="1" aria-label="사진 필터의 투과축 각도 (0도부터 180도) 늘리기">+</button></div>
+        </div>
+        <div class="control" data-modes="make" data-match="selB">
+          <div class="control-head"><span>✍️ 문장 완성하기</span></div><div id="selB"></div>
+        </div>
+        <div class="control" data-modes="survey">
+          <div class="control-head"><span>🔌 측정할 기기</span></div><div class="chips" id="devSeg" role="group" aria-label="측정할 기기"><button type="button" data-v="A">🖥️ 모니터 A</button><button type="button" data-v="B">💻 노트북 B</button><button type="button" data-v="C">📱 스마트폰 C</button><button type="button" data-v="D">💡 백열등</button><button type="button" data-v="E">🌤️ 맑은 하늘</button></div>
+        </div>
+        <div class="control" data-modes="survey">
+          <div class="control-head"><label for="sM">🔄 편광판 각도</label><output id="oM">0°</output></div>
+          <div class="range-row"><button class="nudge" type="button" data-for="sM" data-d="-1" aria-label="센서 앞 편광판의 각도 (0도부터 180도) 줄이기">−</button><input type="range" id="sM" min="0" max="180" step="1" value="0" aria-label="센서 앞 편광판의 각도 (0도부터 180도)"><button class="nudge" type="button" data-for="sM" data-d="1" aria-label="센서 앞 편광판의 각도 (0도부터 180도) 늘리기">+</button></div>
+        </div>
+        <div class="control" data-modes="survey">
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bSweep" type="button">▶ 자동으로 돌리며 측정</button><button class="btn btn-sm" id="bTilt" type="button">📱 눕혀 놓기 (90° 돌리기)</button></div><p class="ctrl-note" id="measureNote"></p>
+        </div>
+        <div class="control" data-modes="survey" data-match="selC">
+          <div class="control-head"><span>✍️ 판정하기</span></div><div id="selC"></div>
+        </div>
+        <div class="control" data-modes="tech">
+          <div class="control-head"><span>🖼️ 장면 고르기</span></div><div class="segmented view-seg" id="teSeg" role="group" aria-label="장면 고르기"><button type="button" data-v="lcd">📱 LCD 픽셀</button><button type="button" data-v="cine">🎬 3D 극장</button><button type="button" data-v="fiber">🌐 광통신</button></div>
+        </div>
+        <div class="control" data-modes="tech" data-sub="lcd">
+          <div class="control-head"><label for="sV">⚡ 액정에 거는 전압</label><output id="oV">0.00 V</output></div>
+          <div class="range-row"><button class="nudge" type="button" data-for="sV" data-d="-1" aria-label="액정에 거는 전압 (0볼트부터 5볼트) 줄이기">−</button><input type="range" id="sV" min="0" max="500" step="1" value="0" aria-label="액정에 거는 전압 (0볼트부터 5볼트)"><button class="nudge" type="button" data-for="sV" data-d="1" aria-label="액정에 거는 전압 (0볼트부터 5볼트) 늘리기">+</button></div>
+        </div>
+        <div class="control" data-modes="tech" data-sub="cine">
+          <div class="control-head"><span>😎 3D 안경</span></div><div class="btn-row"><button class="btn btn-sm" id="bGlass" type="button">😎 안경 쓰기</button><button class="btn btn-sm" id="bAxL" type="button">왼쪽 렌즈 ↕</button><button class="btn btn-sm" id="bAxR" type="button">오른쪽 렌즈 ↕</button></div>
+        </div>
+        <div class="control" data-modes="tech" data-match="selD">
+          <div class="control-head"><span>✍️ 문장 완성하기</span></div><div id="selD"></div>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>
