@@ -513,7 +513,7 @@
       const y = y0 + i * (rowH + 4), d = coDelta(type), rate = d / 10;
       D.roundRect(R.x + 10, y, R.w - 20, rowH, 10); ctx.fillStyle = '#fbfaff'; ctx.fill(); ctx.strokeStyle = '#d9d0f5'; ctx.lineWidth = 1.4; ctx.stroke();
       T(R.x + 22, y + 22, CSPEC[type].name + '  (계수 ' + CSPEC[type].co + ')', 13.5, INK, 'left', 800);
-      T(R.x + R.w - 22, y + 22, 'Δ[' + CSPEC[type].name + '] = ' + (done ? sg(d, f4) + ' M' : '—'), 12.5, MUTED, 'right', 800);
+      T(R.x + R.w - 22, y + 22, 'Δ[' + CSPEC[type].name + '] = ' + (done ? sg(d, f3) + ' M' : '—'), 12.5, MUTED, 'right', 800);
       T(R.x + 22, y + 44, 'Δ[' + CSPEC[type].name + ']/Δt', 13, MUTED, 'left', 800);
       T(R.x + R.w - 22, y + 44, done ? sg(rate, f4) + ' M/s' : '—', 15, done ? (rate < 0 ? BLU : AMB) : '#aab3c4', 'right', 800);
     });

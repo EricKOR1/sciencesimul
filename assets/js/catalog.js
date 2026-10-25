@@ -7350,8 +7350,7 @@ window.SCI_CATALOG = {
                 "평균·순간",
                 "계수와 속도",
                 "측정 설계"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hx-rate-law",
@@ -7372,8 +7371,7 @@ window.SCI_CATALOG = {
                 "초기 속도법",
                 "속도식 완성",
                 "차수의 의미"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hx-half-life",
@@ -7394,8 +7392,7 @@ window.SCI_CATALOG = {
                 "농도와 반감기",
                 "남는 양",
                 "사례 발표"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hx-collision",
