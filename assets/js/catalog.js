@@ -7904,8 +7904,7 @@ window.SCI_CATALOG = {
                 "인공 향",
                 "의약품 합성",
                 "영향 평가"
-              ],
-              "soon": true
+              ]
             }
           ]
         }

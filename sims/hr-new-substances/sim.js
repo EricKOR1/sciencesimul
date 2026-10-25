@@ -281,8 +281,8 @@
   const arAmt = () => AMT[AR.ai];
   const arPct = (ai) => Math.round(100 * eqX(AMT[ai]) / N_ACID);
   const arG = () => PHONE
-    ? { panel: { x: 8, y: 56, w: 464, h: 150 }, bt: { ace: { x: 56, y: 108 }, but: { x: 148, y: 108 }, eth: { x: 298, y: 108 }, iso: { x: 398, y: 108 } }, hdr: { acid: 18, alc: 262 }, flask: { x: 120, by: 408, w: 130, h: 150 }, chart: { x: 232, y: 214, w: 240, h: 262 }, plot: { x: 250, y: 268, w: 210, h: 140 } }
-    : { panel: { x: 24, y: 62, w: 192, h: 322 }, bt: { ace: { x: 72, y: 132 }, but: { x: 168, y: 132 }, eth: { x: 72, y: 250 }, iso: { x: 168, y: 250 } }, hdr: { acid: 84, alc: 220 }, flask: { x: 360, by: 322, w: 150, h: 170 }, chart: { x: 500, y: 62, w: 264, h: 322 }, plot: { x: 522, y: 116, w: 226, h: 180 } };
+    ? { panel: { x: 8, y: 56, w: 464, h: 150 }, bt: { ace: { x: 56, y: 108 }, but: { x: 148, y: 108 }, eth: { x: 298, y: 108 }, iso: { x: 398, y: 108 } }, hdr: { acid: 18, alc: 262 }, flask: { x: 120, by: 448, w: 124, h: 130 }, chart: { x: 232, y: 214, w: 240, h: 262 }, plot: { x: 250, y: 268, w: 210, h: 140 } }
+    : { panel: { x: 24, y: 62, w: 192, h: 322 }, bt: { ace: { x: 72, y: 132 }, but: { x: 168, y: 132 }, eth: { x: 72, y: 266 }, iso: { x: 168, y: 266 } }, hdr: { acid: 84, alc: 226 }, flask: { x: 360, by: 322, w: 150, h: 170 }, chart: { x: 500, y: 62, w: 264, h: 322 }, plot: { x: 522, y: 116, w: 226, h: 180 } };
   const arBottleHit = (p) => { const G = arG(); for (const k of ['ace', 'but']) { const q = G.bt[k]; if (Math.abs(p.x - q.x) < 36 && p.y > q.y - 40 && p.y < q.y + 70) return ['acid', k]; } for (const k of ['eth', 'iso']) { const q = G.bt[k]; if (Math.abs(p.x - q.x) < 36 && p.y > q.y - 40 && p.y < q.y + 70) return ['alc', k]; } return null; };
   function arSet(kind, key) {
     if (AR.run) return;
@@ -385,7 +385,7 @@
 
   /* ============ ③ 의약품 합성 ============ */
   const DR = { p: 0, run: false, done: false, replays: 0, gauge: 0.85, theo: NaN, pct: NaN, tOk: false, pOk: false };
-  const drG = () => PHONE ? { RX: 372, RY: 252, card: { x: 8, y: 366, w: 464, h: 110 }, byP: { x: 78, y: 340 } } : { RX: 400, RY: 214, card: { x: 520, y: 62, w: 256, h: 322 }, byP: { x: 120, y: 340 } };
+  const drG = () => PHONE ? { RX: 372, RY: 252, card: { x: 8, y: 366, w: 464, h: 110 }, byP: { x: 78, y: 340 } } : { RX: 370, RY: 214, card: { x: 520, y: 62, w: 256, h: 322 }, byP: { x: 120, y: 340 } };
   function drRun() { if (DR.run) return; DR.p = 0; DR.run = true; DR.done = false; DR.replays++; Sound.click(); updateCtl(); }
   function drReset() { DR.p = 0; DR.run = false; DR.done = false; DR.replays = 0; DR.theo = NaN; DR.pct = NaN; updateCtl(); }
   function stepDr(dt) {
@@ -433,8 +433,10 @@
     if (e4 > 0.2) T(G.byP.x, G.byP.y + 30, '부산물 : 아세트산', 13.5, '#78716c', 'center', 800, { alpha: sm((e4 - 0.2) / 0.5) });
     // 이름표
     const nameA = sm((p - 0.62) / 0.3);
-    T(RX, RY + r + 34, '살리실산 C₇H₆O₃', 15, INK, 'center', 900, { alpha: 1 - nameA });
-    T(RX, RY + r + 34, '아세틸살리실산(아스피린) C₉H₈O₄', PHONE ? 13.5 : 15, '#9a3412', 'center', 900, { alpha: nameA });
+    T(RX, RY + r + 32, '살리실산', 15.5, INK, 'center', 900, { alpha: 1 - nameA });
+    T(RX, RY + r + 52, 'C₇H₆O₃ · 138 g/mol', 13.5, MUTED, 'center', 800, { alpha: 1 - nameA });
+    T(RX, RY + r + 32, '아세틸살리실산 (아스피린)', 15.5, '#9a3412', 'center', 900, { alpha: nameA });
+    T(RX, RY + r + 52, 'C₉H₈O₄ · 180 g/mol', 13.5, MUTED, 'center', 800, { alpha: nameA });
     pill(Ahome + 0, RY - 78 + (PHONE ? -4 : 0), '아세트산 무수물 C₄H₆O₃', { bg: '#fff7ed', color: '#9a3412', border: '#fdba74', size: 13, alpha: 1 - e4, align: 'left' });
     // 카드 (위 자극)
     const K = G.card; panel(K.x, K.y, K.w, K.h, 14);
@@ -449,14 +451,13 @@
     D.roundRect(gx, gy, Math.max(16, gw * DR.gauge), 16, 8); ctx.fillStyle = gg; ctx.fill();
     T(gx + gw, gy - 8, DR.gauge > 0.7 ? '큼' : '줄어듦', 13.5, DR.gauge > 0.7 ? BADC : '#166534', 'right', 900);
     if (!PHONE) {
-      textBlock(K.x + 16, K.y + 218, K.w - 32, '그래도 아스피린은 위 자극이 완전히 없는 약이 아니에요. 부작용이 있어서 의사 · 약사의 안내를 따라 먹어야 해요.', 13.5, MUTED, 18, 700);
-      T(K.x + 16, K.y + 300, '질량 변화 : 138 + 102 → 180 + 60', 13, MUTED, 'left', 700);
+      textBlock(K.x + 16, K.y + 208, K.w - 32, '그래도 아스피린은 위 자극이 완전히 없는 약이 아니에요. 부작용이 있어서 의사 · 약사의 안내를 따라 먹어야 해요.', 13.5, MUTED, 18, 700);
+      textBlock(K.x + 16, K.y + 286, K.w - 32, '분자식 : C₇H₆O₃ + C₄H₆O₃ → C₉H₈O₄ + C₂H₄O₂', 13.5, INK, 18, 800);
     }
-    if (!PHONE) { T(K.x + 16, K.y + 280, '분자식 : C₇H₆O₃ + C₄H₆O₃ → C₉H₈O₄ + C₂H₄O₂', 13, INK, 'left', 800); }
     // 하단 정보
     const I = PHONE ? { x: 8, y: 484, w: 464, h: 270 } : INFO; panel(I.x, I.y, I.w, I.h, 14);
-    T(I.x + 16, I.y + 26, '살리실산 + 아세트산 무수물 → 아세틸살리실산(아스피린) + 아세트산  (몰비 1 : 1)', PHONE ? 13.5 : 14.5, WARN, 'left', 800);
-    let y = I.y + 56;
+    const hh = textBlock(I.x + 16, I.y + 26, I.w - 32, '살리실산 + 아세트산 무수물 → 아세틸살리실산(아스피린) + 아세트산  (몰비 1 : 1)', PHONE ? 13.5 : 14.5, WARN, 18, 800);
+    let y = I.y + 26 + hh + 12;
     y += textBlock(I.x + 16, y, I.w - 32, '넣은 살리실산 2.0 g (몰질량 138 g/mol)', 14.5, INK, 19, 800);
     y += textBlock(I.x + 16, y, I.w - 32, DR.done ? '반응 · 거르기 · 건조 후 얻은 아스피린 2.0 g (몰질량 180 g/mol)' : '반응 후 얻은 아스피린 ? g (“반응 재생”을 끝까지 보세요)', 14.5, DR.done ? '#166534' : MUTED, 19, 800);
     y += 4;
@@ -465,9 +466,9 @@
 
   /* ============ ④ 영향 평가 ============ */
   const ESUB = [
-    { id: 'asp', ico: '💊', name: '아스피린', rx: '살리실산 + 아세트산 무수물 → 아세틸살리실산(아스피린) + 아세트산' },
-    { id: 'pol', ico: '🧴', name: '고분자 (나일론 · PET)', rx: '단위체의 반복 결합 (예: 테레프탈산 + 에틸렌 글라이콜 → PET + 물)' },
-    { id: 'flv', ico: '🍌', name: '인공 향료', rx: '카복실산 + 알코올 → 향기 나는 물질 + 물' },
+    { id: 'asp', ico: '💊', short: '아스피린', name: '아스피린', rx: '살리실산 + 아세트산 무수물 → 아세틸살리실산(아스피린) + 아세트산' },
+    { id: 'pol', ico: '🧴', short: '고분자', name: '고분자 (나일론 · PET)', rx: '단위체의 반복 결합 (예: 테레프탈산 + 에틸렌 글라이콜 → PET + 물)' },
+    { id: 'flv', ico: '🍌', short: '인공 향료', name: '인공 향료', rx: '카복실산 + 알코올 → 향기 나는 물질 + 물' },
   ];
   const ECARD = {
     asp: [
@@ -552,8 +553,9 @@
       let by = py;
       evZone(z).forEach((c, i) => { const bh = 3 * c.w + 2; by -= bh + 1; D.roundRect(E.x - 14 + (i % 2) * 2, by, 28, bh, 2); ctx.fillStyle = C.rgba(col, 0.75); ctx.fill(); });
     });
-    T(P.x - hl - (PHONE ? 6 : 24), P.y - 24, '편익 ' + evSum(sk, 'B'), 14, '#166534', 'right', 900);
-    T(P.x + hl + (PHONE ? 6 : 24), P.y - 24, '위험 ' + evSum(sk, 'R'), 14, '#a3262b', 'left', 900);
+    T(P.x - 8, P.y - 22, '편익 ' + evSum(sk, 'B'), 14, '#166534', 'right', 900);
+    T(P.x, P.y - 22, ':', 14, MUTED, 'center', 900);
+    T(P.x + 8, P.y - 22, '위험 ' + evSum(sk, 'R'), 14, '#a3262b', 'left', 900);
   }
   function drawEval(t) {
     const G = evGeo(), sk = EV.sub, sub = ESUB.find((s) => s.id === sk);
@@ -565,7 +567,7 @@
       T(Z.x + 12, Z.y + 20, z === 'B' ? '👍 편익 (이로운 점) ' + evZone('B').length + '/3' : z === 'R' ? '⚠️ 위험 (문제점) ' + evZone('R').length + '/3' : '💡 개선 아이디어 ' + evZone('I').length + '/2', 14, col, 'left', 900);
     });
     drawBalance(t);
-    panel(PHONE ? 8 : 12, G.trayLab - (PHONE ? 8 : 14) - 6 + (PHONE ? -2 : 0), PHONE ? 464 : 776, PHONE ? 226 : 138, 14, '#faf8ff');
+    panel(PHONE ? 8 : 12, G.trayLab - 14, PHONE ? 464 : 776, PHONE ? 226 : 138, 14, '#faf8ff');
     const left = evCards().filter((c) => !c.loc).length;
     T(PHONE ? 20 : 24, G.trayLab + (PHONE ? 0 : 4), left ? '카드 ' + left + '장 (끌어서 접시나 상자에 놓아요)' : '모든 카드를 놓았어요', 14.5, WARN, 'left', 800);
     evCards().filter((c) => !(EV.drag && EV.drag.c === c)).forEach(drawEvCard);
@@ -584,5 +586,333 @@
     } else T(Pv.x + 14, Pv.y + 44, '개인 ' + stars(st[0]) + ' 사회 ' + stars(st[1]) + ' 환경 ' + stars(st[2]), 13, '#92400e', 'left', 800);
   }
   const ecardOf = (id) => { const [sk, i] = id.split('-'); return EV.cards[sk][+i]; };
-  const evHit = (p) => { const list = evCards().slice().reverse(); return list.find((c) => { const t = { x: c.x, y: c.y }, w = c.loc ? evTarget(c).w : evGeo().tray(TRAYPOS[c.i]).w, h = evGeo().ch; return pointInRect(p, { x: t.x, y: t.y, w, h }); }); };
+  const evHit = (p) => { const list = evCards().slice().reverse(); return list.find((c) => { const tg = evTarget(c); return pointInRect(p, { x: c.x, y: c.y, w: c.loc ? tg.w : evGeo().tray(TRAYPOS[c.i]).w, h: tg.h }); }); };
   const evZoneAt = (p) => { const G = evGeo(); for (const z of ['B', 'R', 'I']) if (pointInRect(p, G.zone[z])) return z; return ''; };
+
+  /* ---------- 입력 ---------- */
+  function onLeave() { TL.drag = null; IM.drag = null; EV.drag = null; }
+  const tlSlotAt = (p) => { const G = tlGeo(); for (let i = 0; i < 5; i++) if (pointInRect(p, { x: G.sx(i), y: G.sy, w: G.w, h: G.h })) return i; return -1; };
+  const imBoxAt = (p) => { const G = imGeo(); for (let i = 0; i < 3; i++) if (pointInRect(p, G.box(i))) return i; return -1; };
+  SciSim.pointer(view, {
+    down(p) {
+      if (S.mode === 'tl') {
+        const G = tlGeo();
+        for (let i = TLC.length - 1; i >= 0; i--) { const c = TLC[i], q = TL.pos[c.id]; if (pointInRect(p, { x: q.x, y: q.y, w: G.w, h: G.h })) { TL.drag = { id: c.id, ox: p.x - q.x, oy: p.y - q.y, sx: p.x, sy: p.y, moved: false, over: null }; return true; } }
+        const si = tlSlotAt(p); if (si >= 0 && TL.sel) tlPlace(TL.sel, si);
+      } else if (S.mode === 'impact') {
+        const G = imGeo();
+        for (let i = IMC.length - 1; i >= 0; i--) { const c = IMC[i], q = IM.pos[c.id]; if (pointInRect(p, { x: q.x, y: q.y, w: G.cw, h: G.ch })) { IM.drag = { id: c.id, ox: p.x - q.x, oy: p.y - q.y, sx: p.x, sy: p.y, moved: false, over: null }; return true; } }
+        const b = imBoxAt(p); if (b >= 0 && IM.sel) imPlace(IM.sel, b);
+      } else if (S.mode === 'aroma') {
+        const h = arBottleHit(p); if (h) arSet(h[0], h[1]);
+      } else if (S.mode === 'eval') {
+        const c = evHit(p);
+        if (c) { EV.drag = { c, ox: p.x - c.x, oy: p.y - c.y, sx: p.x, sy: p.y, moved: false, over: '' }; return true; }
+        const z = evZoneAt(p); if (z && EV.sel) evPlace(EV.sel, z);
+      }
+      return false;
+    },
+    move(p) {
+      if (TL.drag) { const d = TL.drag, q = TL.pos[d.id], G = tlGeo(); q.x = clamp(p.x - d.ox, 0, VW - G.w); q.y = clamp(p.y - d.oy, 0, VH - G.h); if (Math.hypot(p.x - d.sx, p.y - d.sy) > 8) d.moved = true; d.over = tlSlotAt(p); }
+      if (IM.drag) { const d = IM.drag, q = IM.pos[d.id], G = imGeo(); q.x = clamp(p.x - d.ox, 0, VW - G.cw); q.y = clamp(p.y - d.oy, 0, VH - G.ch); if (Math.hypot(p.x - d.sx, p.y - d.sy) > 8) d.moved = true; d.over = imBoxAt(p); }
+      if (EV.drag) { const d = EV.drag, c = d.c; c.x = clamp(p.x - d.ox, 0, VW - 100); c.y = clamp(p.y - d.oy, 0, VH - 40); if (Math.hypot(p.x - d.sx, p.y - d.sy) > 8) d.moved = true; d.over = evZoneAt(p); }
+    },
+    up(p) {
+      if (TL.drag) {
+        const d = TL.drag; TL.drag = null; const G = tlGeo();
+        if (!d.moved) { TL.focus = d.id; TL.sel = TL.sel === d.id ? null : d.id; Sound.click(); }
+        else { const si = tlSlotAt(p); if (si >= 0) tlPlace(d.id, si); else if (p.y > G.tlab - 14) tlPlace(d.id, -1); TL.focus = d.id; }
+      }
+      if (IM.drag) {
+        const d = IM.drag; IM.drag = null; const G = imGeo();
+        if (!d.moved) { IM.sel = IM.sel === d.id ? null : d.id; Sound.click(); }
+        else { const b = imBoxAt(p); if (b >= 0) imPlace(d.id, b); else if (p.y > G.trayLab - 14) imPlace(d.id, -1); }
+      }
+      if (EV.drag) {
+        const d = EV.drag; EV.drag = null; const c = d.c, G = evGeo();
+        if (!d.moved) { EV.sel = EV.sel === c ? null : c; Sound.click(); }
+        else { const z = evZoneAt(p); if (z) evPlace(c, z); else if (p.y > G.trayLab - 14 && c.loc) evBack(c); }
+      }
+    },
+    hover(p) {
+      if (S.mode === 'tl' && TLC.some((c) => pointInRect(p, { x: TL.pos[c.id].x, y: TL.pos[c.id].y, w: tlGeo().w, h: tlGeo().h }))) return 'grab';
+      if (S.mode === 'impact' && IMC.some((c) => pointInRect(p, { x: IM.pos[c.id].x, y: IM.pos[c.id].y, w: imGeo().cw, h: imGeo().ch }))) return 'grab';
+      if (S.mode === 'aroma' && arBottleHit(p)) return 'pointer';
+      if (S.mode === 'eval' && evHit(p)) return 'grab';
+      return '';
+    },
+  });
+
+  /* ---------- 조작 장치 ---------- */
+  $('#tlReset').addEventListener('click', () => { Sound.click(); tlReset(); });
+  $('#imReset').addEventListener('click', () => { Sound.click(); imReset(); });
+  makeChips($('#arAcid'), Object.keys(ACIDS).map((k) => [k, ACIDS[k].name]), (k) => arSet('acid', k));
+  makeChips($('#arAlc'), Object.keys(ALCS).map((k) => [k, ALCS[k].name]), (k) => arSet('alc', k));
+  $('#arRun').addEventListener('click', arRun);
+  const amtRange = $('#amtRange');
+  amtRange.addEventListener('input', () => arSet('amt', +amtRange.value));
+  $('#amtMinus').addEventListener('click', () => arSet('amt', AR.ai - 1));
+  $('#amtPlus').addEventListener('click', () => arSet('amt', AR.ai + 1));
+  $('#drRun').addEventListener('click', drRun);
+  const yTheo = $('#yTheo'), yPct = $('#yPct');
+  const parseNum = (s) => { const t = String(s).replace(',', '.').replace(/[^0-9.]/g, ''); return t === '' || isNaN(+t) ? NaN : +t; };
+  yTheo.addEventListener('input', () => { DR.theo = parseNum(yTheo.value); yTheo.classList.remove('ok', 'bad'); });
+  yPct.addEventListener('input', () => { DR.pct = parseNum(yPct.value); yPct.classList.remove('ok', 'bad'); });
+  makeChips($('#evSub'), ESUB.map((q) => [q.id, q.ico + ' ' + q.short]), (k) => evSetSub(k));
+  [['rgP', 0, 'stP'], ['rgS', 1, 'stS'], ['rgE', 2, 'stE']].forEach(([id, i]) => { $('#' + id).addEventListener('input', () => { EV.star[EV.sub][i] = +$('#' + id).value; updateCtl(); }); });
+  const selRefs = {};
+  function evSyncControls() {
+    const host = $('#cardBox'), sk = EV.sub, idx = ESUB.findIndex((q) => q.id === sk), other = ESUB[(idx + 1) % 3].id;
+    host.innerHTML = '';
+    const mk = (label, key, opts) => {
+      const row = document.createElement('div'); row.className = 'sel-row';
+      const lab = document.createElement('span'); lab.className = 'lab'; lab.textContent = label; row.appendChild(lab);
+      const sel = document.createElement('select'); sel.className = 'sel-in'; sel.setAttribute('aria-label', label);
+      [['', '고르기']].concat(opts).forEach(([v, t]) => { const o = document.createElement('option'); o.value = v; o.textContent = t; sel.appendChild(o); });
+      sel.value = EV.pres[sk][key];
+      sel.addEventListener('change', () => { Sound.click(); EV.pres[sk][key] = sel.value; sel.classList.remove('bad', 'ok'); updateCtl(); });
+      row.appendChild(sel); host.appendChild(row); selRefs[key] = sel;
+    };
+    mk('① 이 물질은 어떤 반응으로 만들어요?', 'rx', ESUB.map((q) => [q.id, q.rx]));
+    mk('② 가장 중요한 편익은?', 'ben', [0, 1, 2].map((i) => EV.cards[sk][i]).concat([EV.cards[other][0]]).map((c) => [c.id, c.t]));
+    mk('③ 문제를 줄이는 개선 아이디어는?', 'imp', [6, 7].map((i) => EV.cards[sk][i]).concat([EV.cards[other][6]]).map((c) => [c.id, c.t]));
+  }
+
+  function uiExtra() {
+    $('#tlNote').textContent = TL.solved ? '연대순이 맞아요! 카드를 눌러 어떤 반응인지 다시 볼 수 있어요.' : '카드를 끌어서 시간 순서 칸에 놓아요. 카드를 누른 뒤 칸을 눌러도 돼요.';
+    $('#imNote').textContent = '남은 카드 ' + IMC.filter((c) => IM.loc[c.id] < 0).length + '장 · 한 상자에 3장까지 넣을 수 있어요. 카드를 누른 뒤 상자를 눌러도 돼요.';
+    markChips($('#arAcid'), AR.acid, (function () { const o = {}; Object.keys(ACIDS).forEach((k) => { o[k] = false; }); return o; })());
+    markChips($('#arAlc'), AR.alc, {});
+    $$('#arAcid button, #arAlc button, #amtMinus, #amtPlus').forEach((b) => { b.disabled = !!AR.run; });
+    amtRange.disabled = !!AR.run; amtRange.value = String(AR.ai); amtRange.style.setProperty('--pct', (AR.ai / 4 * 100) + '%');
+    $('#amtMinus').disabled = !!AR.run || AR.ai <= 0; $('#amtPlus').disabled = !!AR.run || AR.ai >= 4;
+    $('#amtOut').textContent = arAmt().toFixed(2) + ' mol';
+    $('#arRun').disabled = !!AR.run; $('#arRun').textContent = AR.run ? '가열 중…' : AR.res ? '🔥 다시 가열하기' : '🔥 가열하기';
+    $('#drRun').disabled = DR.run; $('#drRun').textContent = DR.run ? '반응 중…' : DR.done ? '↺ 다시 재생' : '▶ 반응 재생';
+    markChips($('#evSub'), EV.sub, (function () { const o = {}; ESUB.forEach((q) => { o[q.id] = evDoneSub(q.id); }); return o; })());
+    const st = EV.star[EV.sub];
+    [['rgP', 'stP', 0], ['rgS', 'stS', 1], ['rgE', 'stE', 2]].forEach(([id, out, i]) => { $('#' + id).value = String(st[i]); $('#' + id).style.setProperty('--pct', (st[i] / 5 * 100) + '%'); $('#' + out).textContent = st[i] ? '★'.repeat(st[i]) + '☆'.repeat(5 - st[i]) : '—'; });
+    $('#evNote').textContent = evComplete(EV.sub) ? '편익과 위험을 모두 올렸어요. 이제 관점별 별점을 골라요.' : '카드를 끌어서 편익 접시(왼쪽), 위험 접시(오른쪽), 개선 상자(가운데)에 놓아요. 카드 ' + evPlacedN(EV.sub) + ' / 6장 올렸어요.';
+  }
+
+  function readouts() {
+    const m = S.mode;
+    if (m === 'tl') setRead('올린 카드', tlPlaced() + ' / 5', '연대순', TL.solved ? '맞아요' : '확인 전', '고른 카드', TL.focus ? tlC(TL.focus).name : '—');
+    else if (m === 'impact') setRead('넣은 카드', imPlaced() + ' / 6', '맞게 넣음', imRight() + ' / 6', '분류', IM.solved ? '완료' : '확인 전');
+    else if (m === 'aroma') { const fk = FRU[arKey()]; setRead('조합', ACIDS[AR.acid].name + ' + ' + ALCS[AR.alc].name, '알코올의 양', arAmt().toFixed(2) + ' mol', '수득률', AR.res && AR.res.key === arKey() && AR.res.ai === AR.ai ? Math.round(100 * AR.res.x / N_ACID) + ' %' : '—'); void fk; }
+    else if (m === 'drug') setRead('넣은 살리실산', '2.0 g', '얻은 아스피린', DR.done ? '2.0 g' : '?', '수득률', DR.done && DR.pct === DR.pct && DR.pOk ? Math.round(DR.pct) + ' %' : '—');
+    else { const sk = EV.sub; setRead('편익 / 위험 점수', evSum(sk, 'B') + ' / ' + evSum(sk, 'R'), '올린 카드', evPlacedN(sk) + ' / 6', '평가를 마친 물질', evDoneN() + ' / 3'); }
+  }
+
+  /* ================= 미션 ================= */
+  const levels = [
+    {
+      title: '물질 개발 연표와 영향', short: '개발 연표', icon: '🕰️', phase: '관찰',
+      intro: '<p class="si-q">❓ 탐구 질문: 화학 반응으로 만든 물질은 우리 삶을 어떻게 바꾸었을까? 좋은 점만 있었을까?</p>' +
+        '<div class="si-link">🔗 <b>앞 차시들에서</b> 작용기(–OH, –COOH)의 변화와 단위체의 반복 결합으로 고분자가 만들어지는 것을 배웠어요. 이런 탄소 화합물의 반응으로 만든 <b>새로운 물질</b>들이 언제 등장했고 세상을 어떻게 바꾸었는지 조사해 봐요.</div>' +
+        '<p>인공 향료, 아스피린, 나일론, PET, 비닐봉지 카드를 <b>개발된 순서</b>대로 놓고, 각 물질이 어떤 반응(원료 → 생성물)으로 만들어졌는지 확인해요. 그다음 영향을 나타낸 문장을 <b>과학(원리 발견) · 기술(대량 생산) · 사회(생활 변화)</b>로 나눠 봐요.</p>',
+      features: ['tl', 'impact'],
+      setup() { tlReset(); imReset(); S.gate = ''; setScene('tl'); },
+      recap: '새로운 물질은 반응의 원리를 알아내는 과학, 대량으로 만드는 기술, 생활을 바꾸는 사회의 영향이 이어져 나타나요. 인공 향료 · 아스피린 · 나일론 · PET · 폴리에틸렌은 모두 탄소 화합물의 반응으로 만들었어요.',
+      summary: '<table class="mini"><tr><th>시기</th><th>물질</th><th>반응 (원료 → 생성물)</th></tr><tr><td>19세기 중반</td><td>인공 향료</td><td>카복실산 + 알코올 → 향 물질 + 물</td></tr><tr><td>1897</td><td>아스피린</td><td>살리실산 + 아세트산 무수물 → 아스피린 + 아세트산</td></tr><tr><td>1935</td><td>나일론</td><td>단위체의 반복 결합(물이 빠짐)</td></tr><tr><td>1941</td><td>PET</td><td>테레프탈산 + 에틸렌 글라이콜 → PET + 물</td></tr><tr><td>1960년대</td><td>비닐봉지</td><td>n 에틸렌 → 폴리에틸렌 (1933년 합성)</td></tr></table><ul><li><b>과학</b> : 원리를 알아냄 → <b>기술</b> : 대량 생산 → <b>사회</b> : 생활 변화. 사회의 변화에는 이로움과 새로운 문제가 함께 따라와요.</li></ul>',
+      missions: [
+        {
+          title: '개발 연도 순서대로', manual: true,
+          goal: '물질 카드 5장을 <b>개발된 순서</b>(옛날 → 최근)대로 칸에 놓고 <b>✔ 확인하기</b>를 누르세요.',
+          hint: '카드에 적힌 연도를 비교해요. 카드를 누르면 아래에 어떤 반응으로 만든 물질인지 나와요.',
+          setup() { S.gate = ''; setScene('tl'); },
+          check() {
+            const n = tlPlaced(); if (n < 5) return '아직 올리지 않은 카드가 ' + (5 - n) + '장 있어요.';
+            const wr = TL.slots.map((id, i) => id !== TLC[i].id);
+            const cnt = wr.filter(Boolean).length;
+            if (cnt === 0) { TL.solved = true; return true; }
+            wr.forEach((w, i) => { if (w && !TL.bad[i]) TL.bad[i] = true; });
+            return '순서가 맞지 않는 칸이 ' + cnt + '곳 있어요. 빨간 카드의 연도를 다시 비교해 보세요.';
+          },
+          explain: '19세기 중반 인공 향료 → 1897년 아스피린 → 1935년 나일론 → 1941년 PET → 1960년대 비닐봉지(폴리에틸렌은 1933년 합성) 순서예요. 모두 탄소 화합물의 반응으로 만든 물질이에요.',
+        },
+        {
+          title: '영향 문장 분류하기', manual: true,
+          goal: '영향 문장 6장을 <b>과학 · 기술 · 사회</b> 상자에 알맞게 넣고 <b>✔ 확인하기</b>를 누르세요.',
+          hint: '원리나 구조를 알아낸 것은 과학, 공장에서 대량으로 만드는 것은 기술, 생활이 달라진 것은 사회예요. 상자마다 2장씩 들어가요.',
+          setup() { S.gate = ''; setScene('impact'); },
+          check() {
+            const n = imPlaced(); if (n < 6) return '아직 상자에 넣지 않은 카드가 ' + (6 - n) + '장 있어요.';
+            const bad = IMC.filter((c) => IMB[IM.loc[c.id]].g !== c.g);
+            if (bad.length === 0) { IM.solved = true; return true; }
+            bad.forEach((c) => { if (!IM.bad[c.id]) IM.bad[c.id] = true; });
+            return '잘못 들어간 카드가 ' + bad.length + '장 있어요. 빨간 카드를 다시 생각해 보세요.';
+          },
+          explain: '<b>과학</b> : 살리실산의 구조 개선, 단위체의 반복 결합 원리 / <b>기술</b> : 아스피린과 나일론 · PET의 대량 생산 / <b>사회</b> : 섬유 소재의 확대와 포장재 · 쓰레기 문제. 한 물질의 영향은 이 세 가지가 이어져 나타나요.',
+        },
+        {
+          type: 'quiz', title: '나일론이 사회에 미친 영향',
+          goal: '1935년에 개발된 <b>나일론</b>이 사회에 미친 영향으로 가장 알맞은 것은?',
+          setup() { S.gate = ''; setScene('impact'); },
+          choices: ['천연 섬유가 모두 사라지고 의류 산업이 없어졌어요', '스타킹 · 낙하산 · 옷감 같은 섬유 소재가 대량으로 공급되었어요', '질병을 치료하는 새로운 의약품이 되었어요', '음식에 향을 내는 첨가물로 쓰이게 되었어요'],
+          answer: 1,
+          feedback: ['나일론은 천연 섬유를 대신하기도 했지만 면 · 모 · 비단은 지금도 쓰여요. 사라진 것은 아니에요.', '', '의약품은 아스피린 같은 물질이에요. 나일론은 섬유 소재예요.', '향을 내는 첨가물은 인공 향료예요. 나일론은 단위체가 반복 결합한 고분자 섬유예요.'],
+          explain: '나일론은 최초의 합성 섬유로, 스타킹 · 낙하산 · 옷감 등 <b>섬유 소재를 대량으로 공급</b>해 생활과 산업을 바꿨어요. 이처럼 새로운 물질은 사회에 큰 영향을 줘요.',
+        },
+      ],
+    },
+    {
+      title: '인공 향 만들기', short: '인공 향', icon: '🍌', phase: '실험',
+      intro: '<div class="si-link">🔗 <b>앞 단계에서</b> 인공 향료가 카복실산과 알코올의 반응으로 만들어진다고 봤어요. 이 단계에서 단원 앞에서 배운 <b>–COOH(카복실산)</b>와 <b>–OH(알코올)</b>를 직접 짝지어 과일 향 물질을 만들어 봐요.</div>' +
+        '<p>카복실산 + 알코올 ⇌ <b>향기 나는 물질</b> + 물. 이 반응은 가열하면 <b>평형</b>에 이르러 반응물이 일부 남아요. 그래서 <b>수득률</b>(이론상 얻을 수 있는 양 중 실제 얻은 양의 비율)이 100 %보다 낮아요. 알코올의 양을 늘리면 수득률이 어떻게 달라지는지 <b>르샤틀리에 원리</b>로 확인해요.</p>' +
+        '<p>⚠️ <b>안전</b> : 실제 실험은 보안경 · 장갑을 끼고 환기하며, 진한 황산(촉매)은 교사 시연으로 해요. 남은 용액은 폐액 처리 기준에 따라 모아요.</p>',
+      features: ['aroma'],
+      setup() { arReset(); S.gate = ''; setScene('aroma'); },
+      recap: '카복실산 + 알코올 ⇌ 향기 나는 물질 + 물은 평형 반응이에요. 반응물인 알코올을 0.10 mol에서 0.30 mol로 늘리면 평형이 생성물 쪽으로 이동해 수득률이 67 %에서 90 %로 높아져요.',
+      summary: '<table class="mini"><tr><th>카복실산</th><th>알코올</th><th>향 물질</th><th>향</th></tr><tr><td>아세트산</td><td>에탄올</td><td>아세트산 에틸</td><td>배</td></tr><tr><td>아세트산</td><td>아이소아밀 알코올</td><td>아세트산 아이소아밀</td><td>바나나</td></tr><tr><td>뷰티르산</td><td>에탄올</td><td>뷰티르산 에틸</td><td>파인애플</td></tr></table><ul><li>카복실산 + 알코올 ⇌ 향기 나는 물질 + 물 (진한 황산 촉매, 가열)</li><li>K ≈ 4 (25 °C 부근, 아세트산 + 에탄올). 각 0.10 mol이면 향 물질 0.067 mol → 수득률 <b>67 %</b>.</li><li>알코올 0.30 mol로 늘리면 향 물질 0.090 mol → 수득률 <b>90 %</b> (르샤틀리에 원리).</li></ul>',
+      missions: [
+        {
+          title: '서로 다른 향 3가지 만들기',
+          goal: '카복실산과 알코올을 짝지어 가열해 <b>서로 다른 조합 3가지</b>의 향 물질을 만드세요.',
+          hint: '병을 누르거나 오른쪽 단추로 카복실산과 알코올을 고르고 “가열하기”를 눌러요. 끝나면 다른 조합을 골라 또 가열해요.',
+          setup() { S.gate = ''; setScene('aroma'); },
+          check: () => arDoneN() >= 3, hold: 0.8,
+          status: () => '만든 향 ' + arDoneN() + ' / 3 ' + mark(arDoneN() >= 3),
+          explain: '–COOH와 –OH가 만나 물이 빠지며 향기 나는 물질이 만들어져요. 아세트산 + 에탄올은 배, 아세트산 + 아이소아밀 알코올은 바나나, 뷰티르산 + 에탄올은 파인애플 향이에요. 어떤 짝을 고르느냐에 따라 향이 달라져요.',
+        },
+        {
+          title: '알코올 양과 수득률 비교',
+          goal: '알코올을 <b>0.10 mol</b>일 때와 <b>0.30 mol</b>일 때 각각 가열해 수득률을 비교하세요.',
+          hint: '“알코올의 양” 슬라이더로 0.10 mol과 0.30 mol을 고르고, 양을 바꿀 때마다 다시 “가열하기”를 눌러요.',
+          setup() { S.gate = 'amt'; setScene('aroma'); updateCtl(); },
+          check: () => AR.yAt[0] != null && AR.yAt[4] != null, hold: 0.8,
+          status: () => '0.10 mol : ' + (AR.yAt[0] != null ? AR.yAt[0] + ' %' : '—') + ' &nbsp;0.30 mol : ' + (AR.yAt[4] != null ? AR.yAt[4] + ' %' : '—') + ' ' + mark(AR.yAt[0] != null && AR.yAt[4] != null),
+          explain: '각 0.10 mol일 때 수득률은 <b>67 %</b>, 알코올을 0.30 mol로 늘리면 <b>90 %</b>예요. K = x² / ((0.10 − x)(a − x)) = 4를 풀면 x = 0.067 mol과 0.090 mol이 나와요.',
+        },
+        {
+          type: 'quiz', title: '알코올을 많이 넣는 까닭',
+          goal: '알코올을 과량 넣으면 향 물질의 수득률이 높아지는 까닭은?',
+          setup() { S.gate = 'amt'; setScene('aroma'); updateCtl(); },
+          choices: ['촉매인 진한 황산이 더 많이 생기기 때문이에요', '반응물의 양이 늘어 평형이 생성물 쪽으로 이동하기 때문이에요', '반응이 평형 없이 끝까지 진행되기 때문이에요', '알코올이 물을 모두 없애 버리기 때문이에요'],
+          answer: 1,
+          feedback: ['촉매는 반응 속도를 바꿀 뿐 만들어지지 않아요. 평형의 위치도 바꾸지 못해요.', '', '이 반응은 평형 반응이에요. 알코올을 아무리 늘려도 100 %가 되지는 않아요(90 %).', '알코올이 물을 없애는 것이 아니에요. 반응물이 늘면 정반응이 더 일어나 물도 함께 늘어나요.'],
+          explain: '반응물(알코올)의 양을 늘리면 그 영향을 줄이는 방향, 즉 <b>생성물이 늘어나는 쪽</b>으로 평형이 이동해요(르샤틀리에 원리). 그래서 수득률이 67 %에서 90 %로 높아져요. 반응 중 생기는 물을 제거해도 같은 효과가 있어요.',
+        },
+      ],
+    },
+    {
+      title: '아스피린 합성과 수득률', short: '의약품 합성', icon: '💊', phase: '탐구',
+      intro: '<div class="si-link">🔗 <b>앞 단계에서</b> 반응물의 양에 따라 수득률이 달라지는 것을 봤어요. 이번에는 실제 의약품인 <b>아스피린</b>의 합성에서 수득률을 계산해 봐요.</div>' +
+        '<p>버드나무 껍질의 진통 성분인 <b>살리실산</b>은 위를 크게 자극해요. 살리실산의 <b>–OH</b>를 아세트산 무수물과 반응시켜 <b>–O–CO–CH₃</b>로 바꾸면 위 자극이 줄어든 <b>아스피린</b>(1897년 합성)이 돼요. 구조의 일부가 바뀌어 성질이 개선되는 과정을 분자 모형으로 보고, 살리실산 2.0 g에서 얻은 아스피린 2.0 g의 수득률을 계산해요.</p>' +
+        '<p>⚠️ <b>안전</b> : 아세트산 무수물은 피부와 눈에 해로워요. 실제 합성은 보안경 · 장갑 · 환기 후 교사 시연으로 하고, 폐액은 분리해 모아요.</p>',
+      features: ['drug'],
+      setup() { drReset(); yTheo.value = ''; yPct.value = ''; yTheo.className = 'num-in'; yPct.className = 'num-in'; S.gate = ''; setScene('drug'); },
+      recap: '살리실산의 –OH가 –O–CO–CH₃로 바뀌어 아스피린이 돼요(몰비 1 : 1). 이론 수득량은 0.0145 mol × 180 g/mol = 2.61 g이고, 실제로 2.0 g을 얻었다면 수득률은 77 %예요.',
+      summary: '<ul><li><b>살리실산(C₇H₆O₃, 138) + 아세트산 무수물(C₄H₆O₃) → 아스피린(C₉H₈O₄, 180) + 아세트산</b> (몰비 1 : 1)</li><li>살리실산 2.0 g = 2.0 / 138 = <b>0.0145 mol</b> → 이론 수득량 0.0145 × 180 = <b>2.61 g</b></li><li>수득률 = 2.0 / 2.61 × 100 ≈ <b>77 %</b></li><li>수득률이 100 %가 되지 않는 까닭 : 반응이 완전히 끝나지 않고, 거르고 씻는 동안 결정 일부가 손실돼요.</li><li>구조의 일부(–OH → –O–CO–CH₃)를 바꾸어 위 자극을 줄인 약이에요. 그래도 부작용이 있어 의사 · 약사의 안내가 필요해요.</li></ul>',
+      missions: [
+        {
+          title: '반응을 보고 수득률 계산', manual: true,
+          goal: '“반응 재생”을 끝까지 본 뒤, 살리실산 2.0 g에서 얻은 아스피린 2.0 g의 <b>이론 수득량(g)</b>과 <b>수득률(%)</b>을 계산해 쓰고 <b>✔ 확인하기</b>를 누르세요.',
+          hint: '① 살리실산의 몰수 = 2.0 / 138 ≈ 0.0145 mol ② 몰비 1 : 1이므로 아스피린도 0.0145 mol → 질량 = 0.0145 × 180 ③ 수득률 = 2.0 / (이론 수득량) × 100',
+          setup() { S.gate = 'yield'; setScene('drug'); updateCtl(); },
+          check() {
+            if (!DR.done) return '먼저 “반응 재생”을 눌러 반응이 끝나는 것까지 보고 아스피린을 얻어요.';
+            const t = DR.theo, p = DR.pct;
+            if (isNaN(t) || isNaN(p)) return '이론 수득량과 수득률 두 칸을 모두 채워 주세요.';
+            const tOk = t >= 2.58 && t <= 2.64, pOk = p >= 76 && p <= 78;
+            yTheo.classList.toggle('ok', tOk); yTheo.classList.toggle('bad', !tOk); yPct.classList.toggle('ok', pOk); yPct.classList.toggle('bad', !pOk);
+            DR.tOk = tOk; DR.pOk = pOk;
+            if (tOk && pOk) return true;
+            if (!tOk) return '이론 수득량을 다시 계산해 보세요. 살리실산의 몰수(2.0 / 138)에 아스피린의 몰질량 180을 곱해요.';
+            return '수득률 = 실제 얻은 양(2.0 g) / 이론 수득량 × 100 이에요. 다시 계산해 보세요.';
+          },
+          explain: '살리실산 2.0 g = 0.0145 mol → 이론 수득량 0.0145 × 180 = <b>2.61 g</b>. 실제 얻은 양이 2.0 g이므로 수득률 = 2.0 / 2.61 × 100 ≈ <b>77 %</b>예요.',
+        },
+        {
+          type: 'quiz', title: '수득률이 100 %가 안 되는 까닭',
+          goal: '실제 실험에서 수득률이 100 %가 되지 않는 까닭으로 알맞은 것은?',
+          setup() { S.gate = 'yield'; setScene('drug'); updateCtl(); },
+          choices: ['질량 보존 법칙이 깨졌기 때문이에요', '반응이 완전히 진행되지 않고, 결정 일부가 거름종이와 용기에 남아 손실되기 때문이에요', '아스피린의 몰질량이 계산할 때마다 달라지기 때문이에요', '살리실산이 아세트산으로 모두 변하기 때문이에요'],
+          answer: 1,
+          feedback: ['질량 보존 법칙은 항상 성립해요. 얻은 양이 적은 것은 일부가 다른 곳에 남거나 반응하지 않았기 때문이에요.', '', '몰질량은 물질마다 정해진 값이에요. 계산할 때마다 달라지지 않아요.', '살리실산은 대부분 아스피린으로 바뀌어요. 아세트산은 부산물로 조금 생길 뿐이에요.'],
+          explain: '반응이 완전히 끝나지 않거나 <b>결정 일부가 거름종이 · 용기에 남아 손실</b>되면 실제 수득량이 이론 수득량보다 적어요. 그래서 수득률은 보통 100 % 미만이에요.',
+        },
+      ],
+    },
+    {
+      title: '영향 평가와 발표', short: '영향 평가', icon: '⚖️', phase: '분석',
+      intro: '<div class="si-link">🔗 <b>앞 단계에서</b> 아스피린과 인공 향이 어떻게 만들어지는지 알아봤어요. 이제 새로운 물질이 <b>삶에 준 이로움과 위험</b>을 함께 따져 <b>균형 있게 평가</b>해요.</div>' +
+        '<p>아스피린, 고분자(나일론 · PET), 인공 향료 중 하나를 골라 <b>편익</b> 카드는 왼쪽 접시, <b>위험</b> 카드는 오른쪽 접시, <b>개선 아이디어</b> 카드는 가운데 상자에 올려요. 저울은 카드의 중요도(●)를 더한 값으로 기울어요. 그다음 <b>개인 · 사회 · 환경</b> 관점에서 별점을 매기고 발표 카드를 만들어요.</p>',
+      features: ['eval'],
+      setup() { evResetAll(); S.gate = ''; setScene('eval'); },
+      recap: '새로운 물질은 삶을 윤택하게 하지만 부작용 · 오남용 · 환경 문제 같은 위험도 함께 가져와요. 문제를 해결하는 방법(안전한 사용, 재활용, 생분해 소재 등)을 찾는 것도 화학의 역할이에요.',
+      summary: '<ul><li><b>아스피린</b> : 진통 · 해열(편익) / 위 자극 · 오남용(위험) → 올바른 복용, 새 제형.</li><li><b>고분자(나일론 · PET · 폴리에틸렌)</b> : 가볍고 튼튼하며 값싼 소재(편익) / 분해되지 않는 폐기물 · 미세 플라스틱(위험) → 재활용, 생분해 소재.</li><li><b>인공 향료</b> : 향을 값싸고 안정적으로 공급(편익) / 안전성 · 폐수 문제(위험) → 성분 표시와 안전성 검사, 폐수 정화.</li><li>영향은 <b>개인 · 사회 · 환경</b> 관점에서 이로움과 위험을 함께 평가해요.</li></ul>',
+      missions: [
+        {
+          title: '저울로 평가하기',
+          goal: '물질 하나를 골라 <b>편익 3장, 위험 3장</b>을 저울에 올리고, <b>개인 · 사회 · 환경</b> 별점을 모두 매기세요.',
+          hint: '카드를 끌어서 이로운 점은 왼쪽 접시, 문제점은 오른쪽 접시에 놓아요. 카드를 모두 올리면 별점 슬라이더가 나타나요.',
+          setup() { S.gate = ''; setScene('eval'); updateCtl(); },
+          check: () => evDoneN() >= 1, hold: 0.8,
+          status: () => ESUB.map((q) => q.ico + ' ' + (evDoneSub(q.id) ? '✅' : evComplete(q.id) ? '별점' : evPlacedN(q.id) + '/6')).join(' &nbsp;'),
+          explain: '같은 물질도 관점에 따라 평가가 달라요. 이로움과 위험을 모두 따져 보고 <b>균형 있게</b> 판단하는 것이 중요해요. 저울이 한쪽으로 기울어도 개선 아이디어로 위험을 줄일 수 있어요.',
+        },
+        {
+          title: '발표 카드 완성', manual: true,
+          goal: '평가를 마친 물질의 <b>반응 · 편익 · 개선 아이디어</b>를 골라 발표 카드를 완성하고 <b>✔ 확인하기</b>를 누르세요.',
+          hint: '화면 아래(오른쪽)의 세 칸을 모두 골라요. 지금 고른 물질의 반응과, 그 물질의 편익 · 개선 카드를 찾아요.',
+          setup() { S.gate = 'card'; setScene('eval'); updateCtl(); },
+          check() {
+            const sk = EV.sub;
+            if (!evDoneSub(sk)) return '먼저 이 물질의 카드 6장을 저울에 올리고 별점을 모두 매겨 주세요.';
+            const pr = EV.pres[sk];
+            if (!pr.rx || !pr.ben || !pr.imp) return '세 칸을 모두 골라 주세요.';
+            const bad = [];
+            if (pr.rx !== sk) bad.push('rx'); if (!(pr.ben.indexOf(sk + '-') === 0 && ecardOf(pr.ben).k === 'B')) bad.push('ben'); if (!(pr.imp.indexOf(sk + '-') === 0 && ecardOf(pr.imp).k === 'I')) bad.push('imp');
+            ['rx', 'ben', 'imp'].forEach((k) => { selRefs[k].classList.toggle('bad', bad.indexOf(k) >= 0); selRefs[k].classList.toggle('ok', bad.indexOf(k) < 0); });
+            if (!bad.length) return true;
+            return (bad.indexOf('rx') >= 0 ? '반응이 이 물질과 달라요. ' : '') + (bad.indexOf('ben') >= 0 ? '고른 편익은 다른 물질의 이로운 점이에요. ' : '') + (bad.indexOf('imp') >= 0 ? '고른 개선 아이디어는 다른 물질에 대한 것이에요.' : '');
+          },
+          explain: '발표 카드에는 <b>어떤 반응으로 만든 물질인지, 어떤 편익이 있는지, 위험을 줄이는 개선 아이디어는 무엇인지</b>가 들어가요. 이로움만 말하지 않고 문제와 해결 방법까지 함께 말하는 것이 균형 잡힌 평가예요.',
+        },
+        {
+          type: 'quiz', title: '문제를 해결하는 것도 화학의 역할',
+          goal: '새로운 물질이 가져온 문제(폐기물, 부작용 등)를 해결하는 것도 <b>화학의 역할</b>인 까닭은?',
+          setup() { S.gate = ''; setScene('eval'); },
+          choices: ['문제는 화학과 관계없이 저절로 해결되기 때문이에요', '물질의 구조와 반응을 아는 화학이 더 안전한 물질 · 재활용 · 정화 방법도 만들 수 있기 때문이에요', '이미 만든 물질은 성질을 바꿀 수 없기 때문이에요', '위험이 있는 물질은 모두 사용을 금지해야 하기 때문이에요'],
+          answer: 1,
+          feedback: ['문제는 저절로 해결되지 않아요. 원인을 알고 해결 방법을 연구하는 노력이 필요해요.', '', '물질의 구조를 바꾸면 성질을 개선할 수 있어요. 살리실산이 아스피린으로 개선된 것처럼요.', '위험이 있어도 이로움이 크면 안전하게 쓰는 방법을 찾아야 해요. 무조건 금지하는 것만이 답은 아니에요.'],
+          explain: '새 물질을 만든 <b>원리(구조와 반응)를 아는 화학</b>이 더 안전한 의약품, 재활용 · 생분해 소재, 폐수 정화 방법을 개발할 수 있어요. 그래서 문제를 해결하는 것도 화학의 중요한 역할이에요.',
+        },
+      ],
+    },
+  ];
+
+  game = SciSim.game({
+    simId: 'hr-new-substances', mount: '#game', badge: '신물질 평가단', homeHref: '../../index.html#hr',
+    featureLabels: { tl: '🕰️ 개발 연표 · 카드', impact: '🧭 영향 문장 분류', aroma: '🍌 인공 향 만들기 · 수득률', drug: '💊 아스피린 반응 모형 · 수득률 계산', eval: '⚖️ 편익 · 위험 저울 · 발표 카드' },
+    onFeatures() { updateCtl(); },
+    levels,
+  });
+
+  /* ---------- 시작 ---------- */
+  evSyncControls();
+  setScene('tl');
+  function stepAll1(dt) { stepTl(dt); stepIm(dt); stepAr(dt); stepDr(dt); stepEv(dt); }
+  let lastFree = false, lastMode = '';
+  SciSim.loop((dt, t) => {
+    S.t = t;
+    if (game && game.free !== lastFree) { lastFree = game.free; updateCtl(); }
+    if (S.mode !== lastMode) { lastMode = S.mode; updateCtl(); }
+    if (S.gate && game && game.phase !== 'active') { S.gate = ''; updateCtl(); }
+    view.apply();
+    stepAll1(dt);
+    ctx.fillStyle = BG; ctx.fillRect(0, 0, VW, VH);
+    if (S.mode === 'tl') drawTl(t); else if (S.mode === 'impact') drawIm(t); else if (S.mode === 'aroma') drawAroma(t); else if (S.mode === 'drug') drawDrug(t); else drawEval(t);
+    parts.update(dt); parts.draw(ctx);
+    if (S.fade > 0.005) { ctx.fillStyle = 'rgba(243,240,251,' + S.fade * 0.8 + ')'; ctx.fillRect(0, 0, VW, VH); S.fade = RM ? 0 : ap(S.fade, 0, dt, 9); }
+    readouts();
+  });
+
+  window.__sim = {
+    S, TL, IM, AR, DR, EV, TLC, IMC, ESUB, ECARD, AMT, VW, VH, PHONE, MAIN, INFO,
+    tlPlace, tlReset, tlGeo, tlPlaced, imPlace, imReset, imGeo, imPlaced, arSet, arRun, arReset, arDoneN, eqX, arG, arBottleHit, drRun, drReset, drG, evPlace, evSetSub, evResetAll, evGeo, evTarget, evComplete, evDoneN, evZone, evHit,
+    get game() { return game; }, setScene, uiExtra,
+    stepAll(sec) { const n = Math.ceil(sec / 0.02); for (let i = 0; i < n; i++) { S.t += 0.02; stepAll1(0.02); parts.update(0.02); } },
+  };
+})();
