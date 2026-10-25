@@ -341,30 +341,30 @@
   /* 시간 그래프 (한 점의 변위–시간) */
   function traceGraph(rc, hs, col, label, A, tnow, win, showT, ruleT) {
     const t0 = tnow - win, xt = [];
-    for (let s = Math.ceil(t0); s <= tnow; s++) xt.push(s);
+    for (let s = Math.max(0, Math.ceil(t0)); s <= tnow; s++) xt.push(s);
     const M = frame(rc, { x0: t0, x1: tnow, y0: -A * 1.3, y1: A * 1.3, xt, yt: [-A, 0, A], yf: (v) => fx(v, 2, true).replace('+0.00', '0'), xl: showT, mt: 8, mb: showT ? 24 : 6, ml: PHONE ? 46 : 50, mr: 8 });
     ctx.save(); ctx.beginPath(); ctx.rect(M.ix, M.iy - 2, M.iw, M.ih + 4); ctx.clip();
     ctx.strokeStyle = col; ctx.lineWidth = 3; ctx.lineJoin = 'round'; ctx.beginPath(); let st = false;
     hs.forEach((p) => { if (p[0] < t0) return; const x = M.gx(p[0]), y = M.gy(clamp(p[1], -A * 1.3, A * 1.3)); st ? ctx.lineTo(x, y) : ctx.moveTo(x, y); st = true; });
     ctx.stroke(); ctx.restore();
     T(M.ix + 6, rc.y + 17, label, 13, col, 'left', 800);
-    if (showT) T(M.ix + M.iw, M.iy + M.ih + 20, 't (s)', 13, MUTED, 'right', 700);
+    if (showT) T(rc.x + rc.w - 8, rc.y + 17, 't (s)', 13, MUTED, 'right', 700);
     if (hs.length) { const p = hs[hs.length - 1]; D.sphere(M.gx(p[0]), M.gy(clamp(p[1], -A * 1.3, A * 1.3)), 5.5, col, { gloss: false }); }
     return M;
   }
   /* 사슬 모형의 확대 보기 (이웃 질량이 용수철로 이어져 있어요) */
   function drawMagnifier(cx, cy, R, sc, idx) {
-    const ch = sc.ch, ppm = chainGeom(topCard()).ppm, sp = 30, ys = ppm * 1.25;
+    const ch = sc.ch, ppm = chainGeom(topCard()).ppm, sp = 33, ys = ppm * 1.25;
     ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, R, 0, TAU); ctx.clip();
     ctx.fillStyle = '#fff'; ctx.fillRect(cx - R, cy - R, 2 * R, 2 * R);
     const pts = [];
     for (let d = -2; d <= 2; d++) pts.push([cx + d * sp, cy - ch.y[idx + d] * ys * 0.8]);
-    for (let d = 0; d < 4; d++) spring(pts[d][0], pts[d][1], pts[d + 1][0], pts[d + 1][1], 3, 5, '#64748b', 2.6);
-    for (let d = 0; d < 5; d++) { const mid = d === 2; D.sphere(pts[d][0], pts[d][1], mid ? 9 : 7.5, mid ? MARKC[1] : '#fb923c', { gloss: true, shadow: true }); }
+    for (let d = 0; d < 4; d++) spring(pts[d][0], pts[d][1], pts[d + 1][0], pts[d + 1][1], 3, 6, '#64748b', 2.8);
+    for (let d = 0; d < 5; d++) { const mid = d === 2; D.sphere(pts[d][0], pts[d][1], mid ? 10 : 8.5, mid ? MARKC[1] : '#fb923c', { gloss: true, shadow: true }); }
     ctx.restore();
     ctx.strokeStyle = '#475569'; ctx.lineWidth = 3.5; ctx.beginPath(); ctx.arc(cx, cy, R, 0, TAU); ctx.stroke();
     ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 5; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(cx - R * 0.7, cy + R * 0.7); ctx.lineTo(cx - R * 1.0, cy + R * 1.0); ctx.stroke(); ctx.lineCap = 'butt';
-    T(cx, cy + R + 17, '🔍 질량이 용수철로 이어져 있어요', 13, MUTED, 'center', 800);
+    T(Math.min(cx, VW - 12 - 78), cy + R + 17, '🔍 확대: 용수철로 연결', 13, MUTED, 'center', 800);
   }
   const markDirTxt = (hs, k) => '';
 
@@ -376,8 +376,9 @@
     const g = drawChainT(c, sc, { Yc, marks: sc.gates });
     drawMagnifier(c.x + c.w - (PHONE ? 78 : 96), c.y + (PHONE ? 112 : 96), PHONE ? 58 : 64, sc, sc.gates[1]);
     const d = sc.drv;
-    if (d.kind === 'wave') T(c.x + 14, c.y + 46, '〰 계속 흔드는 중 (진동수 1 Hz)', 13, TEAL, 'left', 800);
-    if (S.ts < 1) D.label(c.x + 14, c.y + c.h - 16, '🐢 슬로 모션', { bg: '#475569', size: 13, align: 'left' });
+    [0, 1, 2].forEach((i) => T(c.x + 14, c.y + 52 + i * 21, '①②③'[i] + ' 위아래 ' + fx(sc.ch.y[sc.gates[i]], 2, true) + ' m · 좌우 이동 0.00 m', 13.5, MARKC[i], 'left', 800));
+    if (d.kind === 'wave') T(c.x + 14, c.y + 124, '〰 계속 흔드는 중 (진동수 1 Hz)', 13, TEAL, 'left', 800);
+    if (S.ts < 1) D.label(c.x + c.w - 14, c.y + 24, '🐢 슬로 모션', { bg: '#475569', size: 13, align: 'right' });
     ctx.restore();
     // 아래 칸
     panel(PX, PY, PW, PH, 16);
@@ -415,12 +416,10 @@
     T(swx + 56, swy + 46, fx(run, 2) + ' s', 20, t2 != null ? '#4ade80' : '#fff', 'center', 800);
     if (S.ts < 1) D.label(c.x + 14, c.y + c.h - 16, '🐢 슬로 모션 (스톱워치는 실제 시간)', { bg: '#475569', size: 13, align: 'left' });
     // 방향 설명
-    const bx = c.x + 14, by = c.y + 40;
-    if (!PHONE) {
-      D.arrow(bx + 4, by + 22, bx + 60, by + 22, { color: MUTED, width: 3, head: 9 }); T(bx + 66, by + 27, '진행 방향', 13, MUTED, 'left', 800);
-      if (L) D.arrow(bx + 4, by + 46, bx + 60, by + 46, { color: '#e2464b', width: 3, head: 9 }); else D.arrow(bx + 32, by + 66, bx + 32, by + 38, { color: '#e2464b', width: 3, head: 9 });
-      T(bx + 66, by + 51, '고리의 진동 방향', 13, '#e2464b', 'left', 800);
-    }
+    const bx = c.x + 14, by = c.y + 50;
+    D.arrow(bx, by, bx + 40, by, { color: MUTED, width: 3, head: 9 }); T(bx + 46, by + 5, '진행 방향', 13, MUTED, 'left', 800);
+    if (L) D.arrow(bx + 140, by, bx + 180, by, { color: '#e2464b', width: 3, head: 9 }); else D.arrow(bx + 160, by + 10, bx + 160, by - 12, { color: '#e2464b', width: 3, head: 9 });
+    T(bx + 190, by + 5, '고리의 진동 방향', 13, '#e2464b', 'left', 800);
     ctx.restore();
     panel(PX, PY, PW, PH, 16);
     const x1 = PX + 14, sp = revealed('speedsOK') || (game && game.free);
@@ -480,7 +479,7 @@
       D.label((M.gx(lm.x1) + M.gx(lm.x2)) / 2, yy + 16, 'λ = ' + fx(lm.lam, 2) + ' m', { bg: ORANGE, size: 13 });
     }
     // 손과 흡수 끝
-    drawHand(M.ix + 2, M.gy(ch.y[0])); drawDamper(M.ix + M.iw + 4, M.gy(ch.y[ch.n]), '흡수 끝');
+    drawHand(M.ix + 18, M.gy(ch.y[0])); drawDamper(M.ix + M.iw + 4, M.gy(ch.y[ch.n]), '흡수 끝');
     D.label(M.gx(3.0), M.iy + M.ih - 12, '▼ 시간 그래프의 점 (x = 3.0 m)', { bg: '#475569', size: 13 });
     ctx.fillStyle = TEAL; D.sphere(M.gx(3.0), M.gy(ch.y[sc.gates[0]]), 6, TEAL, { gloss: true });
     if (S.paused) D.label(c.x + c.w - 70, c.y + 24, '⏸ 멈춤', { bg: '#475569', size: 13 });
@@ -521,13 +520,13 @@
     ctx.clip(); ctx.strokeStyle = MUC[S.sp.mv]; ctx.lineWidth = 2.2 + mu * 9; ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.beginPath();
     for (let i = 0; i <= ch.n; i++) { const x = M.gx(i * ch.a), y = M.gy(ch.y[i]); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
     ctx.stroke(); ctx.restore();
-    drawHand(M.ix + 2, M.gy(ch.y[0])); drawDamper(M.ix + M.iw + 4, M.gy(ch.y[ch.n]), '흡수 끝');
+    drawHand(M.ix + 18, M.gy(ch.y[0])); drawDamper(M.ix + M.iw + 4, M.gy(ch.y[ch.n]), '흡수 끝');
     const t1 = sc.pk[0], t2 = sc.pk[1], run = t1 != null && t2 == null ? ch.t - t1 : t1 != null ? t2 - t1 : 0;
-    const swx = c.x + c.w - 128, swy = M.iy + 24;
+    const swx = M.gx(5.4), swy = M.gy(-0.035);
     D.roundRect(swx, swy, 114, 52, 12); ctx.fillStyle = '#1e293b'; ctx.fill();
     T(swx + 57, swy + 20, '⏱ 8.0 m 통과', 13, '#94a3b8', 'center', 800);
     T(swx + 57, swy + 43, fx(t2 != null ? r2(t2 - t1) : run, 2) + ' s', 19, t2 != null ? '#4ade80' : '#fff', 'center', 800);
-    if (S.ts < 1) D.label(c.x + 14, c.y + c.h - 16, '🐢 슬로 모션 (스톱워치는 실제 시간)', { bg: '#475569', size: 13, align: 'left' });
+    if (S.ts < 1) D.label(M.ix + 12, M.iy + M.ih - 16, '🐢 슬로 모션 (스톱워치는 실제 시간)', { bg: '#475569', size: 13, align: 'left' });
     ctx.restore();
     panel(PX, PY, PW, PH, 16);
     const x1 = PX + 12, tw = PHONE ? PW - 24 : 372;
