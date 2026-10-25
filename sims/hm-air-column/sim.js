@@ -204,8 +204,8 @@
       T(bx, PY + 50, tp === 'open' ? '열린 관: 1 : 2 : 3' : '닫힌 관: 1 : 3 : 5', 14, tp === 'open' ? '#1d4ed8' : '#b45309', 'left', 800);
       [1, 2, 3].forEach((k, i) => {
         const yy = PY + 62 + i * rowH, cur = tp === type && k === n;
-        miniTube(bx, yy + 6, cw - (PHONE ? 4 : 44), rowH - 24, tp, k, { fill: cur ? '#fff4e0' : '#f1f5fb', stroke: cur ? ORANGE : '#94a3b8', marks: revealed('env') });
-        if (revealed('env')) T(bx + cw - (PHONE ? 0 : 40), yy + 6 + (rowH - 24) / 2 + 5, tp === 'open' ? k + 'f₁' : (2 * k - 1) + 'f₁', 13.5, cur ? '#b45309' : INK, PHONE ? 'right' : 'left', 800);
+        miniTube(bx, yy + 6, cw - 44, rowH - 24, tp, k, { fill: cur ? '#fff4e0' : '#f1f5fb', stroke: cur ? ORANGE : '#94a3b8', marks: revealed('env') });
+        if (revealed('env')) T(bx + cw - 38, yy + 6 + (rowH - 24) / 2 + 5, tp === 'open' ? k + 'f₁' : (2 * k - 1) + 'f₁', 13.5, cur ? '#b45309' : INK, 'left', 800);
       });
     });
     }
@@ -256,7 +256,7 @@
     ctx.save(); D.roundRect(ix, c.y + 148, Math.min(iw, 250), 18, 9); ctx.clip(); ctx.fillStyle = A >= 0.9 ? GREEN : ORANGE; ctx.fillRect(ix, c.y + 148, Math.min(iw, 250) * A, 18); ctx.restore();
     if (!PHONE) para(ix, c.y + 196, A >= 0.9 ? '소리가 가장 커졌어요! 이 위치가 공명 위치예요.' : '수면을 움직이며 소리가 가장 커지는 곳(공명)을 찾아요.', iw, 14, A >= 0.9 ? GREEN_D : MUTED, 20, 700);
     else para(ix, c.y + 196, A >= 0.9 ? '소리가 가장 커졌어요!' : '소리가 가장 커지는 곳을 찾아요.', iw, 13.5, A >= 0.9 ? GREEN_D : MUTED, 19, 700);
-    T(ix, c.y + c.h - 10, '관의 폭은 넓혀 그렸어요 (안지름 5.0 cm)', 12.5, MUTED, 'left', 700);
+    T(ix, c.y + c.h - 10, PHONE ? '관의 폭은 넓혀 그렸어요' : '관의 폭은 넓혀 그렸어요 (안지름 5.0 cm)', 12.5, MUTED, 'left', 700);
     ctx.restore();
     panel(PX, PY, PW, PH, 16);
     const x1 = PX + 12, gw = PHONE ? PW - 24 : 500, gh = PHONE ? 150 : PH - 50;
@@ -375,7 +375,7 @@
   function drawBottleScene() {
     const c = topCard(), h = S.bt.h / 100, L = BOT_L - h, f = botF(); cardBegin(c);
     T(c.x + 14, c.y + 24, '🍾 병 불기: 병 입구를 닫힌 관으로 생각해요 (병 속 깊이 0.20 m)', PHONE ? 12.5 : 15, INK, 'left', 800);
-    const bx = c.x + (PHONE ? 130 : 230), top = c.y + 84, ppm = (c.h - 84 - 30) / BOT_L, bw = 76, Y = (z) => top + z * ppm, wt = TAU * 0.9 * S.clock, ph = Math.cos(wt);
+    const bx = c.x + (PHONE ? 176 : 230), top = c.y + 84, ppm = (c.h - 84 - 30) / BOT_L, bw = 76, Y = (z) => top + z * ppm, wt = TAU * 0.9 * S.clock, ph = Math.cos(wt);
     ctx.fillStyle = 'rgba(96,165,250,.75)'; ctx.fillRect(bx - bw / 2, Y(L), bw, Y(BOT_L) - Y(L));
     ctx.strokeStyle = '#7b8aa5'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(bx - bw / 2 + 12, top - 18); ctx.lineTo(bx - bw / 2 + 12, top); ctx.lineTo(bx - bw / 2, top + 12); ctx.lineTo(bx - bw / 2, Y(BOT_L)); ctx.lineTo(bx + bw / 2, Y(BOT_L)); ctx.lineTo(bx + bw / 2, top + 12); ctx.lineTo(bx + bw / 2 - 12, top); ctx.lineTo(bx + bw / 2 - 12, top - 18); ctx.stroke();
     // 공기 기둥의 정상파: 입구가 배, 수면이 마디
@@ -383,10 +383,11 @@
     const amp = bw / 2 - 8; ctx.strokeStyle = 'rgba(37,99,235,.3)'; ctx.lineWidth = 2; ctx.setLineDash([4, 4]); [1, -1].forEach((sg) => { ctx.beginPath(); for (let z = 0; z <= L + 1e-9; z += L / 60) { const xx = bx + sg * amp * Math.cos(Math.PI * z / (2 * L)); z === 0 ? ctx.moveTo(xx, Y(z)) : ctx.lineTo(xx, Y(z)); } ctx.stroke(); }); ctx.setLineDash([]);
     ctx.strokeStyle = GREEN; ctx.lineWidth = 3.6; ctx.beginPath(); for (let z = 0; z <= L + 1e-9; z += L / 60) { const xx = bx + amp * ph * Math.cos(Math.PI * z / (2 * L)); z === 0 ? ctx.moveTo(xx, Y(z)) : ctx.lineTo(xx, Y(z)); } ctx.stroke(); ctx.restore();
     D.arrow(bx - 70, top - 26, bx - 8, top - 26, { color: '#0ea5e9', width: 3, head: 9 }); T(bx - 74, top - 32, '입김', 13, '#0369a1', 'right', 800);
-    D.arrow(bx + bw / 2 + 28, top, bx + bw / 2 + 28, Y(L), { color: '#7c3aed', width: 2.5, head: 9 }); D.arrow(bx + bw / 2 + 28, Y(L), bx + bw / 2 + 28, top, { color: '#7c3aed', width: 2.5, head: 9 });
-    D.label(bx + bw / 2 + 36, (top + Y(L)) / 2, 'L = ' + fx(L, 2) + ' m', { bg: '#7c3aed', size: 13, align: 'left' });
+    const ax = PHONE ? bx - bw / 2 - 26 : bx + bw / 2 + 28;
+    D.arrow(ax, top, ax, Y(L), { color: '#7c3aed', width: 2.5, head: 9 }); D.arrow(ax, Y(L), ax, top, { color: '#7c3aed', width: 2.5, head: 9 });
+    D.label(PHONE ? ax - 8 : ax + 8, (top + Y(L)) / 2, 'L = ' + fx(L, 2) + ' m', { bg: '#7c3aed', size: 13, align: PHONE ? 'right' : 'left' });
     T(bx, Y(BOT_L) + 18, '물 ' + S.bt.h + ' cm', 13.5, '#1d4ed8', 'center', 800);
-    const ix = bx + (PHONE ? 100 : 170);
+    const ix = bx + (PHONE ? 70 : 170);
     T(ix, c.y + 80, '소리 센서', 14, MUTED, 'left', 800); T(ix, c.y + 118, fx(f, 0) + ' Hz', 30, '#0f766e', 'left', 800);
     T(ix, c.y + 146, 'f₁ = v/(4L)', 15, '#1d4ed8', 'left', 800);
     para(ix, c.y + 176, '물을 넣으면 공기 기둥이 짧아져요.', c.x + c.w - 12 - ix, 13.5, MUTED, 19, 700);

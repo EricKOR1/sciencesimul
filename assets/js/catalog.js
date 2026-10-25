@@ -6347,8 +6347,7 @@ window.SCI_CATALOG = {
                 "파장 조건",
                 "진동수",
                 "현악기"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hm-air-column",
@@ -6369,8 +6368,7 @@ window.SCI_CATALOG = {
                 "공명 실험",
                 "음속 측정",
                 "관악기"
-              ],
-              "soon": true
+              ]
             }
           ]
         }
