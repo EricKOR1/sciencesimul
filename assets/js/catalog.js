@@ -9801,8 +9801,7 @@ window.SCI_CATALOG = {
                 "총질량",
                 "개별 질량",
                 "자료표"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hu-mass-luminosity",
@@ -9823,8 +9822,7 @@ window.SCI_CATALOG = {
                 "관계 찾기",
                 "질량 구하기",
                 "별의 수명"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hu-variable-stars",
@@ -9845,8 +9843,7 @@ window.SCI_CATALOG = {
                 "분류하기",
                 "주기 읽기",
                 "초신성"
-              ],
-              "soon": true
+              ]
             }
           ]
         },
