@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#16a34a">
+  <title>발효 실험과 사례 조사 | 고등 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧫</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; }
+    .stage-toolbar { min-height: 58px; }
+    .stage-toolbar .segmented { flex-wrap: wrap; }
+    .stage-toolbar .segmented button { min-height: 40px; padding: 5px 10px; font-size: 14px; white-space: nowrap; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard [hidden] { display: none !important; }
+    .btn-sm { min-height: 44px; }
+    .btn-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+    .btn-row .btn { flex: 1; padding-left: 8px; padding-right: 8px; }
+    .ctrl-note { margin: 6px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    .ctrl-note b { color: var(--ink); }
+    .range-row { display: flex; align-items: center; gap: 8px; }
+    .range-row input[type=range] { flex: 1; min-width: 0; height: 44px; }
+    .seg-full { display: flex; width: 100%; }
+    .seg-full button { flex: 1 1 0; min-width: 0; min-height: 44px; font-size: 14.5px; }
+    .chip-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px; }
+    .chip-grid.three { grid-template-columns: 1fr 1fr 1fr; }
+    .chip-grid button { min-height: 44px; padding: 6px 8px; border: 2px solid var(--line); background: #fff; border-radius: 12px; font-weight: 800; font-size: 14px; cursor: pointer; color: var(--ink); text-align: center; }
+    .chip-grid button.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); }
+    .chip-grid button.seen:not(.on) { border-color: color-mix(in srgb, var(--subject) 45%, white); }
+    .chip-grid button:disabled { opacity: .45; cursor: not-allowed; }
+    .chip-grid button:active { transform: scale(.98); }
+    .sel-in { width: 100%; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 8px; font: 800 14px var(--font); color: var(--ink); background: #fff; }
+    .sel-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .sel-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .num-in { width: 100%; min-width: 0; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 8px; font: 800 16px ui-monospace, Menlo, Consolas, monospace; color: var(--ink); background: #fff; text-align: right; }
+    .num-in:focus { outline: none; border-color: var(--subject); }
+    .num-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .num-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .in-unit { font-size: 12.5px; color: var(--muted); font-weight: 700; }
+    .in-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 10px; align-items: end; margin-top: 8px; }
+    .in-row .lab { font-weight: 800; font-size: 13.5px; margin-bottom: 3px; line-height: 1.25; }
+    @keyframes shakeX { 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+    .readout .value { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .stage-canvas .stage-hint { top: 10px; bottom: auto; }
+    .pk-pool { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+    .pk-item { min-height: 44px; padding: 6px 12px; border: 2px solid var(--line); background: #fff; border-radius: 12px; font-weight: 800; font-size: 14px; cursor: pointer; color: var(--ink); }
+    .pk-item:disabled { opacity: .35; cursor: default; }
+    .pk-seq { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; min-height: 46px; border: 2px dashed var(--line); border-radius: 12px; padding: 6px; }
+    .pk-chip { min-height: 34px; padding: 3px 10px; border: 2px solid var(--subject); background: color-mix(in srgb, var(--subject) 12%, white); border-radius: 999px; font-weight: 800; font-size: 13.5px; cursor: pointer; color: var(--ink); }
+    .pk-chip b { color: var(--subject); margin-right: 2px; }
+    .pk-reset { margin-top: 8px; width: 100%; }
+    .tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; margin-top: 6px; }
+    .tbl th, .tbl td { border: 1px solid var(--line); padding: 4px 4px; text-align: center; }
+    .tbl th { background: var(--surface-2); font-weight: 800; }
+    .tbl td.rowh { font-weight: 800; text-align: left; background: var(--surface-2); }
+    .tbl select { width: 100%; min-height: 40px; border: 2px solid var(--line); border-radius: 8px; font: 800 13.5px var(--font); background: #fff; color: var(--ink); }
+    .tbl select.ok { border-color: var(--good); background: var(--good-soft); }
+    .tbl select.bad { border-color: var(--bad); background: var(--bad-soft); }
+    .check-list { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 4px; font-size: 13.5px; font-weight: 700; }
+    .check-list li { display: flex; gap: 6px; align-items: baseline; }
+    .check-list li.on { color: var(--good); }
+    .btn-col { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+    #modeSeg button.lv-off { display: none; }
+    @media (max-width: 1100px) and (orientation: landscape) { .toolbar-label { display: none; } }
+    @media (max-width: 599px) {
+      .readout .value { font-size: 15px; }
+      .stage-toolbar { gap: 6px; padding: 8px; }
+      .stage-toolbar .spacer, .toolbar-label { display: none; }
+      .stage-toolbar .segmented button { padding: 5px 8px; font-size: 13.5px; }
+      .stage-hint { font-size: 13px; padding: 5px 12px; }
+    }
+    .stage-toolbar .segmented button.lv-off { display: none; }
+    .tag-pill { display: inline-block; padding: 2px 9px; border-radius: 999px; font-weight: 800; font-size: 12.5px; background: color-mix(in srgb, var(--subject) 14%, white); color: var(--ink); }
+    .tbl-in { width: 100%; }
+
+    .org-list { display: grid; gap: 8px; margin-top: 6px; }
+    .org-row { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 6px; padding: 6px; border: 2px solid var(--line); border-radius: 12px; }
+    .org-row .lab { grid-column: 1 / -1; font-weight: 800; font-size: 13.5px; }
+    .org-row .sel-in { font-size: 13px; padding: 4px 4px; }
+      .lab-s { font-weight: 800; font-size: 13.5px; color: var(--muted); margin: 8px 0 2px; }
+    .chip-grid.four { grid-template-columns: 1fr 1fr 1fr 1fr; }
+    .tf-list { display: grid; gap: 6px; margin-top: 6px; }
+    .tf-row { display: grid; gap: 3px; }
+    .tf-row .lab { font-weight: 800; font-size: 13.5px; line-height: 1.3; }
+    .sent { font-size: 13.5px; font-weight: 700; line-height: 1.75; margin-top: 6px; }
+    .sent .sel-in { width: auto; display: inline-block; min-width: 120px; max-width: 100%; margin: 2px 0; font-size: 13px; padding: 4px 6px; vertical-align: middle; }
+    [data-sub][hidden], [data-asub][hidden] { display: none !important; }
+    [data-grp][hidden] { display: none !important; }
+    #ctrlCard .control > .control-head { margin-top: 4px; }
+    .in-row.three { grid-template-columns: 1fr 1fr 1fr; }
+    .srch-list { display: grid; gap: 4px; margin-top: 6px; }
+    .srch-list button { text-align: left; min-height: 44px; border: 2px solid var(--line); background: #fff; border-radius: 12px; padding: 4px 10px; font: 800 13.5px var(--font); color: var(--ink); cursor: pointer; }
+    .srch-list button.on { border-color: var(--good); background: var(--good-soft); }
+    .srch-list .sub { display: block; font-weight: 700; font-size: 12px; color: var(--muted); }
+    .num-in.tl { text-align: left; font: 700 14px var(--font); margin-bottom: 4px; }
+    [hidden] { display: none !important; }
+  
+    .fac-row { display: grid; grid-template-columns: 1fr 74px 74px; gap: 6px; align-items: center; margin-top: 6px; }
+    .fac-row > span { font-weight: 800; font-size: 14.5px; }
+    .fac-row button { min-height: 44px; border: 2px solid var(--line); background: #fff; border-radius: 12px; font-weight: 800; font-size: 14px; cursor: pointer; color: var(--ink); }
+    .fac-row button.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); }
+    .chip-grid.three button { font-size: 13.5px; }
+    .chk-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+</style>
+
+</head>
+<body class="sim-page" data-subject="bio">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#hy">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">세포와 물질대사 · Ⅲ. 세포호흡과 광합성</div>
+      <h1>발효 실험과 사례 조사</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🧫 발효 실험</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="tablist" aria-label="화면 고르기">
+            <button type="button" data-mode="obs" data-lv="0" data-feature="obs">🎈 발효 관찰</button>
+            <button type="button" data-mode="design" data-lv="1" data-feature="design">🧪 실험 설계</button>
+            <button type="button" data-mode="data" data-lv="2" data-feature="data">📈 결과 분석</button>
+            <button type="button" data-mode="plan" data-lv="3" data-feature="plan">📝 조사 계획</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="효모 발효관 4개와 석회수 검사, 변인 통제 실험 설계 카드, 5조건 세 번 측정 결과표와 그래프, 발효 사례 조사 계획서와 시각화 도구"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">—</span><span class="value" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">—</span><span class="value" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">—</span><span class="value" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+
+        <div class="control" data-modes="obs">
+          <div class="control-head"><span>🎈 발효관 4개를 관찰해요</span></div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="obRun" type="button">▶ 20분 가속 실행</button><button class="btn btn-sm" id="obReset" type="button">↺ 다시</button></div>
+          <div class="btn-row"><button class="btn btn-sm" id="obLime" type="button">🧪 석회수 검사</button></div>
+          <p class="ctrl-note" id="obNote"></p>
+          <p class="ctrl-note">⚠ <b>안전</b>: 알코올 냄새가 나도 마시지 않아요. 물중탕 가열은 어른과 함께 해요.</p>
+          <div data-grp="ctl">
+            <div class="lab-s">풍선이 부풀지 않은 까닭</div>
+            <div class="tf-list">
+              <div class="tf-row"><div class="lab">대조군 B (포도당 없음)</div><select class="sel-in" id="cg_B" aria-label="대조군 B가 부풀지 않은 까닭"><option value="">까닭 고르기</option><option value="den">효소가 변성되어서</option><option value="no">먹이(포도당)가 없어서</option><option value="noy">발효할 효모가 없어서</option></select></div>
+              <div class="tf-row"><div class="lab">대조군 C (끓인 효모)</div><select class="sel-in" id="cg_C" aria-label="대조군 C가 부풀지 않은 까닭"><option value="">까닭 고르기</option><option value="den">효소가 변성되어서</option><option value="no">먹이(포도당)가 없어서</option><option value="noy">발효할 효모가 없어서</option></select></div>
+              <div class="tf-row"><div class="lab">대조군 D (효모 없음)</div><select class="sel-in" id="cg_D" aria-label="대조군 D가 부풀지 않은 까닭"><option value="">까닭 고르기</option><option value="den">효소가 변성되어서</option><option value="no">먹이(포도당)가 없어서</option><option value="noy">발효할 효모가 없어서</option></select></div>
+            </div>
+          </div>
+        </div>
+        <div class="control" data-modes="design">
+          <div class="control-head"><span>🧪 실험을 설계해요</span></div>
+          <div class="lab-s">바꿀 요인은 하나만</div>
+          <div id="dzFac">
+            <div class="fac-row" data-f="temp"><span>🌡 온도</span><button type="button" data-s="fix">고정</button><button type="button" data-s="chg">바꿈</button></div>
+            <div class="fac-row" data-f="glu"><span>🍬 포도당 농도</span><button type="button" data-s="fix">고정</button><button type="button" data-s="chg">바꿈</button></div>
+            <div class="fac-row" data-f="yeast"><span>🍞 효모 양</span><button type="button" data-s="fix">고정</button><button type="button" data-s="chg">바꿈</button></div>
+            <div class="fac-row" data-f="o2"><span>💨 산소 유무</span><button type="button" data-s="fix">고정</button><button type="button" data-s="chg">바꿈</button></div>
+          </div>
+          <div class="lab-s">대조군 (여러 개 가능)</div>
+          <div class="chip-grid three" id="dzCtl"><button type="button" data-v="boil">끓인 효모</button><button type="button" data-v="noGlu">포도당 없음</button><button type="button" data-v="noYeast">효모 없음</button></div>
+          <div class="lab-s">반복 횟수</div>
+          <div class="chip-grid" id="dzRep"><button type="button" data-v="1">1회</button><button type="button" data-v="3">3회 (평균)</button></div>
+          <div class="lab-s">가설</div>
+          <div class="sent"><span id="dzName">바꾸는 요인</span><span id="dzJosa">이</span> 높아질수록 발효 속도는 <select class="sel-in" id="dzHyp" aria-label="가설의 결과 예상"><option value="">고르기</option><option value="계속 빨라질">계속 빨라질</option><option value="빨라지다가 느려질">빨라지다가 느려질</option><option value="빨라지다가 일정해질">빨라지다가 일정해질</option><option value="변하지 않을">변하지 않을</option><option value="느려질">느려질</option></select> 것이다.</div>
+          <p class="ctrl-note" id="dzNote"></p>
+        </div>
+        <div class="control" data-modes="data">
+          <div class="control-head"><span id="daTitle">측정</span></div>
+          <div class="chip-grid three" id="daLv"><button type="button">-</button><button type="button">-</button><button type="button">-</button><button type="button">-</button><button type="button">-</button></div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="daRun" type="button">▶ 3회 측정</button></div>
+          <div class="lab-s">보기</div>
+          <div class="chip-grid" id="daView"><button type="button" data-v="res">📊 조건별 결과</button><button type="button" data-v="time">⏱ 시간 곡선</button></div>
+          <p class="ctrl-note" id="daNote"></p>
+          <div data-grp="read">
+            <div class="lab-s">그래프에서 읽어요</div>
+            <div class="tf-list">
+              <div class="tf-row"><div class="lab">CO₂가 가장 많은 조건</div><select class="sel-in" id="daOpt" aria-label="CO₂가 가장 많은 조건"></select></div>
+            </div>
+            <div class="tf-list" id="daRows">
+              <div class="tf-row"><div class="lab">…</div><select class="sel-in" aria-label="결과의 원인 1"></select></div>
+              <div class="tf-row"><div class="lab">…</div><select class="sel-in" aria-label="결과의 원인 2"></select></div>
+              <div class="tf-row"><div class="lab">…</div><select class="sel-in" aria-label="결과의 원인 3"></select></div>
+            </div>
+          </div>
+        </div>
+        <div class="control" data-modes="plan">
+          <div class="control-head"><span>📝 조사 계획서 칸 채우기</span></div>
+          <div class="tf-list">
+            <div class="tf-row"><div class="lab">조사 주제</div><select class="sel-in" id="plTopic" aria-label="조사 주제"><option value="">주제 고르기</option><option value="김치의 젖산 발효">김치의 젖산 발효</option><option value="요구르트">요구르트</option><option value="막걸리">막걸리</option><option value="빵 만들기">빵 만들기</option><option value="와인">와인</option><option value="바이오 에탄올">바이오 에탄올</option><option value="치즈">치즈</option></select></div>
+            <div class="tf-row"><div class="lab"><label for="plQ">조사 질문</label></div><input class="num-in tl" id="plQ" type="text" maxlength="60" placeholder="예: 김치는 왜 시간이 지나면 시어질까?" aria-label="조사 질문"></div>
+          </div>
+          <div class="lab-s">알아낼 내용 (2개 이상)</div>
+          <div class="chip-grid" id="plKnow"><button type="button" data-v="mic">어떤 미생물</button><button type="button" data-v="kind">발효의 종류</button><button type="button" data-v="prod">만들어지는 산물</button><button type="button" data-v="why">이용하는 까닭</button><button type="button" data-v="cond">만드는 조건</button></div>
+          <div class="lab-s">조사 방법</div>
+          <div class="chip-grid" id="plMeth"><button type="button" data-v="doc">문헌 · 영상</button><button type="button" data-v="int">인터뷰</button><button type="button" data-v="make">직접 만들어 관찰</button><button type="button" data-v="lab">제품 라벨 조사</button></div>
+          <div class="tf-list"><div class="tf-row"><div class="lab">조사 기간</div><select class="sel-in" id="plWhen" aria-label="조사 기간"><option value="">기간 고르기</option><option value="3일">3일</option><option value="1주">1주</option><option value="2주">2주</option><option value="4주">4주</option></select></div></div>
+          <div class="lab-s">정리 · 시각화 도구</div>
+          <div class="chip-grid" id="plVis"><button type="button" data-v="time">🕰 연표</button><button type="button" data-v="flow">🔀 순서도</button><button type="button" data-v="info">📊 인포그래픽</button><button type="button" data-v="video">🎬 영상 구성안</button></div>
+          <div class="lab-s">안전 · 출처 확인 (2개 이상)</div>
+          <div class="chip-grid" id="plSafe" style="grid-template-columns:1fr"><button type="button" data-v="hyg">식품 위생 · 알레르기 확인</button><button type="button" data-v="src">출처 2곳 이상 비교</button><button type="button" data-v="adult">가열 · 알코올은 어른과 함께, 음용 금지</button></div>
+        </div>
+
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

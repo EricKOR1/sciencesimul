@@ -1030,7 +1030,7 @@
     outlineT(V.x + 14, V.y + 24 * FS, '🔥 분화: 녹으면 무거운 철이 가라앉아요', 14, '#e2e8f0', 'left');
     outlineT(cx, V.y + V.h - 12, big ? '베스타급 (지름 523 km)' : '작은 소행성 (지름 1 km) · 그림은 크기를 맞추지 않았어요', PHONE ? 10.5 : 12, '#93a4c3', 'center');
     // 온도계
-    const tx = V.x + 30, ty0 = V.y + 50 * FS, th = V.h - 100 * FS, Tmax = 1600;
+    const tx = V.x + 30, ty0 = V.y + (PHONE ? 50 : 50 * FS), th = V.h - (PHONE ? 50 + 40 : 100 * FS), Tmax = 1600;
     ctx.fillStyle = 'rgba(255,255,255,.14)'; rr(tx - 7, ty0, 14, th, 7).fill();
     const fh = clamp(MT.temp / Tmax, 0, 1) * th;
     const tg = ctx.createLinearGradient(0, ty0 + th, 0, ty0); tg.addColorStop(0, '#38bdf8'); tg.addColorStop(0.55, '#fbbf24'); tg.addColorStop(1, '#ef4444');

@@ -355,7 +355,7 @@
   function sshGeom() {
     const { A, B } = rcOf('ssh');
     const U = Math.min(A.w, A.h) / 2 - 6, cx = A.x + A.w / 2, cy = A.y + A.h / 2 + 8;
-    const P = { x: B.x + 52, y: B.y + 48, w: B.w - 70, h: B.h - 120 };    // 단면 그래프
+    const P = { x: B.x + 52, y: B.y + 48, w: B.w - 70, h: B.h - 146 };    // 단면 그래프
     return { A, B, U, cx, cy, P };
   }
   const profX = (g, xn) => g.P.x + ((xn + 1) / 2) * g.P.w;
@@ -382,15 +382,15 @@
       D.text(cx, cy - r - 4, lab, { size: 11.5, weight: 800, color: '#1e293b', stroke: 'rgba(255,255,255,.8)', strokeWidth: 3 });
     });
     D.text(cx, cy + 6, 'H', { size: 22, weight: 900, color: '#7f1d1d', stroke: 'rgba(255,255,255,.7)', strokeWidth: 4 });
-    D.text(A.x + 20, A.y + A.h - 14, 'L', { size: 20, weight: 900, color: '#1e3a8a', stroke: 'rgba(255,255,255,.7)', strokeWidth: 4 });
+    D.text(A.x + 24, A.y + 62, 'L', { size: 20, weight: 900, color: '#1e3a8a', stroke: 'rgba(255,255,255,.7)', strokeWidth: 4 });
     // 단면선
     ctx.strokeStyle = '#111827'; ctx.lineWidth = 2; ctx.setLineDash([8, 5]); ctx.beginPath(); ctx.moveTo(cx - U, cy); ctx.lineTo(cx + U, cy); ctx.stroke(); ctx.setLineDash([]);
     ctx.restore();
     // 색 막대
-    const kx = A.x + 14, ky = A.y + A.h - 26, kw = 110;
+    const kx = A.x + 14, ky = A.y + A.h - 22, kw = 150;
     const kg = ctx.createLinearGradient(kx, 0, kx + kw, 0); kg.addColorStop(0, '#2563eb'); kg.addColorStop(0.5, '#f1f5f9'); kg.addColorStop(1, '#dc2626');
     ctx.fillStyle = kg; rr(kx, ky, kw, 10, 5).fill(); ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1; rr(kx, ky, kw, 10, 5).stroke();
-    D.text(kx, ky - 4, '낮음 −0.5 m', { size: 11, weight: 800, color: '#1e3a8a', align: 'left' }); D.text(kx + kw, ky - 4, '+0.5 m 높음', { size: 11, weight: 800, color: '#991b1b', align: 'right' });
+    D.text(kx, ky - 4, '낮음 −0.5', { size: 11, weight: 800, color: '#1e3a8a', align: 'left' }); D.text(kx + kw, ky - 4, '+0.5 m 높음', { size: 11, weight: 800, color: '#991b1b', align: 'right' });
     // 탐침 A·B (지도)
     ['a', 'b'].forEach((k) => {
       const p = probePos(g, k, 'map'), col = k === 'a' ? '#dc2626' : '#2563eb';
@@ -420,8 +420,8 @@
       D.sphere(p.x, p.y, 10, col, { gloss: false, outline: '#fff', outlineWidth: 2.5, shadow: true, text: k.toUpperCase(), textScale: 1.0 });
     });
     const ea = etaX(S.pa), eb = etaX(S.pb);
-    D.label(B.x + B.w * 0.27, B.y + B.h - 44 * FS, 'A  ' + (ea >= 0 ? '+' : '−') + Math.abs(ea).toFixed(2) + ' m', { bg: '#dc2626', size: 13.5 });
-    D.label(B.x + B.w * 0.73, B.y + B.h - 44 * FS, 'B  ' + (eb >= 0 ? '+' : '−') + Math.abs(eb).toFixed(2) + ' m', { bg: '#2563eb', size: 13.5 });
+    D.label(B.x + B.w * 0.27, B.y + B.h - 52 * FS, 'A  ' + (ea >= 0 ? '+' : '−') + Math.abs(ea).toFixed(2) + ' m', { bg: '#dc2626', size: 13.5 });
+    D.label(B.x + B.w * 0.73, B.y + B.h - 52 * FS, 'B  ' + (eb >= 0 ? '+' : '−') + Math.abs(eb).toFixed(2) + ' m', { bg: '#2563eb', size: 13.5 });
     D.text(B.x + B.w / 2, B.y + B.h - 14, 'A와 B의 높이 차 Δη를 구해요 (A − B)', { size: 12.5, weight: 800, color: '#334155' });
     // ----- C: 원인 사슬 카드
     const C = rcOf('ssh').C;
@@ -506,8 +506,8 @@
     ctx.restore();
     // 평균 해수면, 깊이 눈금
     D.dashedLine(g.tx0 - 6, g.ym, g.tx1 + 6, g.ym, { color: '#475569', width: 1.5, dash: [5, 5] });
-    D.text(g.tx0 - 10, g.ym - 4, '평균 해수면 0 m', { size: 11.5, weight: 800, color: '#475569', align: 'left', stroke: 'rgba(255,255,255,.85)', strokeWidth: 3 });
-    [0, 50, 100, 150, 200].forEach((z) => { D.text(g.tx0 + 6, g.ym + z * g.kz + 15, z + ' m', { size: 11, weight: 700, color: z === 0 ? 'rgba(0,0,0,0)' : '#e0f2fe', align: 'left' }); });
+    D.text(g.tx1 - 8, g.ym - 5, '평균 해수면 0 m', { size: 11.5, weight: 800, color: '#475569', align: 'right', stroke: 'rgba(255,255,255,.85)', strokeWidth: 3 });
+    [0, 50, 100, 150, 200].forEach((z) => { D.text(g.tx0 + 6, g.ym + z * g.kz - 4, z + ' m', { size: 11, weight: 700, color: z === 0 ? 'rgba(0,0,0,0)' : '#e0f2fe', align: 'left' }); });
     // 칸막이
     const lift = S.barrier * 78;
     if (S.barrier < 0.98) {
@@ -629,22 +629,24 @@
       });
     });
     S.parcels.forEach((p) => ball(p.x, p.y, 8, '#0ea5e9', true));
-    // 힘 화살표 (가운데 물덩이)
+    // 힘 화살표 (가운데 물덩이의 현재 값을 고정된 그림 상자에 그려요)
     const L = S.parcels[2], pg = pgfOf(), f = S.rot ? fOf(S.lat2V) : 0, cor = [f * L.v, -f * L.u];     // (동, 북) 성분
-    const sc = ACC_PX / 1e-5;
-    arrowS(L.x + 10, L.y, L.x + 10 + pg * sc, L.y, { color: '#dc2626', width: 6, head: 14 });
-    if (S.rot) arrowS(L.x - 10, L.y, L.x - 10 + cor[0] * sc, L.y - cor[1] * sc, { color: '#f97316', width: 6, head: 14 });
-    const Vm = Math.hypot(L.u, L.v);
-    if (Vm > 0.003) arrowS(L.x, L.y, L.x + L.u * 220, L.y - L.v * 220, { color: '#15803d', width: 4.5, head: 11 });
+    const Vm = Math.hypot(L.u, L.v), sc = 50 / 1e-5;
     ctx.restore();
-    // 라벨 (패널 밖으로 나가지 않게 가장자리 안으로)
-    const lx = clamp(L.x + 10 + pg * sc + 8, P.x + 60, P.x + P.w - 70);
-    D.label(lx, clamp(L.y - 18, P.y + 14, P.y + P.h - 20), '압력 경도력', { bg: '#dc2626', size: 12.5, pad: 6, align: lx > P.x + P.w - 120 ? 'right' : 'left' });
-    if (S.rot) D.label(clamp(L.x - 12 + cor[0] * sc - 6, P.x + 70, P.x + P.w - 20), clamp(L.y - cor[1] * sc + 22, P.y + 14, P.y + P.h - 20), '전향력', { bg: '#c2410c', size: 12.5, pad: 6, align: 'right' });
-    if (Vm > 0.003) D.label(clamp(L.x + L.u * 220 + 6, P.x + 30, P.x + P.w - 70), clamp(L.y - L.v * 220 + 16, P.y + 14, P.y + P.h - 20), '해류 V', { bg: '#15803d', size: 12.5, pad: 6, align: 'left' });
+    const DB = { x: P.x + 10, y: P.y + 40, w: 190, h: 160 };
+    D.shadow(() => { ctx.fillStyle = 'rgba(255,255,255,.93)'; rr(DB.x, DB.y, DB.w, DB.h, 12).fill(); }, { blur: 5, y: 2 });
+    D.text(DB.x + DB.w / 2, DB.y + 18, '가운데 물덩이의 힘 (북반구)', { size: 12, weight: 800, color: '#334155' });
+    const ox = DB.x + DB.w / 2, oy = DB.y + 70;
+    D.sphere(ox, oy, 6, '#0ea5e9', { gloss: true });
+    arrowS(ox + 7, oy, ox + 7 + pg * sc, oy, { color: '#dc2626', width: 6, head: 13 });
+    if (S.rot) arrowS(ox - 7, oy, ox - 7 + cor[0] * sc, oy - cor[1] * sc, { color: '#f97316', width: 6, head: 13 });
+    if (Vm > 0.003) arrowS(ox, oy + 8, ox + L.u * 170, oy + 8 - L.v * 170, { color: '#15803d', width: 4.5, head: 11 });
+    D.text(DB.x + DB.w - 8, oy - 10, '압력 경도력', { size: 11.5, weight: 900, color: '#b91c1c', align: 'right' });
+    if (S.rot) D.text(DB.x + 8, oy - 10, '전향력', { size: 11.5, weight: 900, color: '#c2410c', align: 'left' });
+    if (Vm > 0.003) D.text(DB.x + DB.w - 8, DB.y + DB.h - 12, '해류 V (초록)', { size: 11.5, weight: 900, color: '#15803d', align: 'right' });
+    if (S.geo) { D.check(DB.x + 20, DB.y + DB.h - 22, 12, 1); D.text(DB.x + 38, DB.y + DB.h - 17, '균형!', { size: 13, weight: 900, color: '#15803d', align: 'left' }); }
     D.label(P.x + 30, P.y + 18, 'H 높음(서)', { bg: '#dc2626', size: 12, pad: 6, align: 'left' });
     D.label(P.x + P.w - 30, P.y + 18, '낮음(동) L', { bg: '#2563eb', size: 12, pad: 6, align: 'right' });
-    if (S.geo) { D.check(L.x + 22, L.y - 40, 13, 1); D.label(L.x + 40, L.y - 40, '균형!', { bg: '#15803d', size: 13, pad: 7, align: 'left' }); }
     D.text(A.x + A.w / 2, A.y + A.h - 22 * FS, S.rot ? '회전하는 바다: 물이 오른쪽으로 휘며 등수위선과 나란히 흘러요' : '회전하지 않는 바다: 물이 높은 쪽에서 낮은 쪽으로 곧바로 흘러요', { size: 13, weight: 800, color: '#334155' });
     // ----- B 패널
     card(B, '⚖️ 힘과 유속');
@@ -699,13 +701,13 @@
     D.text(cx, cy + 8, 'H', { size: 24, weight: 900, color: '#7f1d1d', stroke: 'rgba(255,255,255,.7)', strokeWidth: 4 });
     D.text(cx + Rr * 0.92, cy - Rr * 0.86, 'L', { size: 20, weight: 900, color: '#1e3a8a', stroke: 'rgba(255,255,255,.7)', strokeWidth: 4 });
     // 균형 화살표 (동쪽 지점)
-    const px = cx + Rr * 0.66, py = cy;
-    arrowS(px, py, px + 46, py, { color: '#dc2626', width: 6, head: 13 });
-    arrowS(px, py, px - 46, py, { color: '#f97316', width: 6, head: 13 });
-    arrowS(px, py, px, py + 40, { color: '#15803d', width: 5, head: 12 });
-    D.label(px + 52, py - 16, '압력 경도력', { bg: '#dc2626', size: 12, pad: 6, align: 'left' });
-    D.label(px - 52, py + 22, '전향력', { bg: '#c2410c', size: 12, pad: 6, align: 'right' });
-    D.label(px + 6, py + 58, '해류', { bg: '#15803d', size: 12, pad: 6, align: 'left' });
+    const px = cx + Rr * 0.56, py = cy;
+    arrowS(px, py, px + 38, py, { color: '#dc2626', width: 6, head: 12 });
+    arrowS(px, py, px - 38, py, { color: '#f97316', width: 6, head: 12 });
+    arrowS(px, py, px, py + 36, { color: '#15803d', width: 5, head: 11 });
+    D.label(clamp(px + 24, A.x + 60, A.x + A.w - 60), py - 20, '압력 경도력', { bg: '#dc2626', size: 12, pad: 6 });
+    D.label(clamp(px - 24, A.x + 60, A.x + A.w - 60), py + 30, '전향력', { bg: '#c2410c', size: 12, pad: 6, align: 'right' });
+    D.label(px + 8, py + 52, '해류', { bg: '#15803d', size: 12, pad: 6, align: 'left' });
     D.label(cx, A.y + A.h - 22 * FS, '시계 방향으로 흘러요 (높은 곳이 오른쪽)', { bg: '#334155', size: 13 });
     // ----- B
     card(B, '🧮 지형류 속도 계산');
@@ -745,7 +747,7 @@
   }
   function readCalc() {
     const show = S.showV || (game && game.free);
-    setReadouts(['해수면 경사 Δη/Δx', fN(S.eta4, 1) + ' m / ' + S.dx4 + ' km', '위도 · f', S.lat4 + '°N · ' + sci(fOf(S.lat4), 2), '지형류 유속 v', show ? fmtV(curV()) + ' m/s' : '직접 계산해요']);
+    setReadouts(['해수면 경사 Δη/Δx', fN(S.eta4, 1) + ' m / ' + S.dx4 + ' km', '위도 · f (s⁻¹)', S.lat4 + '°N · ' + sci(fOf(S.lat4), 2), '지형류 유속 v', show ? fmtV(curV()) + ' m/s' : '직접 계산해요']);
   }
 
   /* ======================================================

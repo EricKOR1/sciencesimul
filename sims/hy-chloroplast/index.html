@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#16a34a">
+  <title>엽록체와 광합성 색소 | 고등 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍃</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; }
+    .stage-toolbar { min-height: 58px; }
+    .stage-toolbar .segmented { flex-wrap: wrap; }
+    .stage-toolbar .segmented button { min-height: 40px; padding: 5px 10px; font-size: 14px; white-space: nowrap; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard [hidden] { display: none !important; }
+    .btn-sm { min-height: 44px; }
+    .btn-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+    .btn-row .btn { flex: 1; padding-left: 8px; padding-right: 8px; }
+    .ctrl-note { margin: 6px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    .ctrl-note b { color: var(--ink); }
+    .range-row { display: flex; align-items: center; gap: 8px; }
+    .range-row input[type=range] { flex: 1; min-width: 0; height: 44px; }
+    .seg-full { display: flex; width: 100%; }
+    .seg-full button { flex: 1 1 0; min-width: 0; min-height: 44px; font-size: 14.5px; }
+    .chip-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px; }
+    .chip-grid.three { grid-template-columns: 1fr 1fr 1fr; }
+    .chip-grid button { min-height: 44px; padding: 6px 8px; border: 2px solid var(--line); background: #fff; border-radius: 12px; font-weight: 800; font-size: 14px; cursor: pointer; color: var(--ink); text-align: center; }
+    .chip-grid button.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); }
+    .chip-grid button.seen:not(.on) { border-color: color-mix(in srgb, var(--subject) 45%, white); }
+    .chip-grid button:disabled { opacity: .45; cursor: not-allowed; }
+    .chip-grid button:active { transform: scale(.98); }
+    .sel-in { width: 100%; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 8px; font: 800 14px var(--font); color: var(--ink); background: #fff; }
+    .sel-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .sel-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .num-in { width: 100%; min-width: 0; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 8px; font: 800 16px ui-monospace, Menlo, Consolas, monospace; color: var(--ink); background: #fff; text-align: right; }
+    .num-in:focus { outline: none; border-color: var(--subject); }
+    .num-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .num-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .in-unit { font-size: 12.5px; color: var(--muted); font-weight: 700; }
+    .in-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 10px; align-items: end; margin-top: 8px; }
+    .in-row .lab { font-weight: 800; font-size: 13.5px; margin-bottom: 3px; line-height: 1.25; }
+    @keyframes shakeX { 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+    .readout .value { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .stage-canvas .stage-hint { top: 10px; bottom: auto; }
+    .pk-pool { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+    .pk-item { min-height: 44px; padding: 6px 12px; border: 2px solid var(--line); background: #fff; border-radius: 12px; font-weight: 800; font-size: 14px; cursor: pointer; color: var(--ink); }
+    .pk-item:disabled { opacity: .35; cursor: default; }
+    .pk-seq { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; min-height: 46px; border: 2px dashed var(--line); border-radius: 12px; padding: 6px; }
+    .pk-chip { min-height: 34px; padding: 3px 10px; border: 2px solid var(--subject); background: color-mix(in srgb, var(--subject) 12%, white); border-radius: 999px; font-weight: 800; font-size: 13.5px; cursor: pointer; color: var(--ink); }
+    .pk-chip b { color: var(--subject); margin-right: 2px; }
+    .pk-reset { margin-top: 8px; width: 100%; }
+    .tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; margin-top: 6px; }
+    .tbl th, .tbl td { border: 1px solid var(--line); padding: 4px 4px; text-align: center; }
+    .tbl th { background: var(--surface-2); font-weight: 800; }
+    .tbl td.rowh { font-weight: 800; text-align: left; background: var(--surface-2); }
+    .tbl select { width: 100%; min-height: 40px; border: 2px solid var(--line); border-radius: 8px; font: 800 13.5px var(--font); background: #fff; color: var(--ink); }
+    .tbl select.ok { border-color: var(--good); background: var(--good-soft); }
+    .tbl select.bad { border-color: var(--bad); background: var(--bad-soft); }
+    .check-list { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 4px; font-size: 13.5px; font-weight: 700; }
+    .check-list li { display: flex; gap: 6px; align-items: baseline; }
+    .check-list li.on { color: var(--good); }
+    .btn-col { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+    #modeSeg button.lv-off { display: none; }
+    @media (max-width: 1100px) and (orientation: landscape) { .toolbar-label { display: none; } }
+    @media (max-width: 599px) {
+      .readout .value { font-size: 15px; }
+      .stage-toolbar { gap: 6px; padding: 8px; }
+      .stage-toolbar .spacer, .toolbar-label { display: none; }
+      .stage-toolbar .segmented button { padding: 5px 8px; font-size: 13.5px; }
+      .stage-hint { font-size: 13px; padding: 5px 12px; }
+    }
+    .stage-toolbar .segmented button.lv-off { display: none; }
+    .tag-pill { display: inline-block; padding: 2px 9px; border-radius: 999px; font-weight: 800; font-size: 12.5px; background: color-mix(in srgb, var(--subject) 14%, white); color: var(--ink); }
+    .tbl-in { width: 100%; }
+
+    .org-list { display: grid; gap: 8px; margin-top: 6px; }
+    .org-row { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 6px; padding: 6px; border: 2px solid var(--line); border-radius: 12px; }
+    .org-row .lab { grid-column: 1 / -1; font-weight: 800; font-size: 13.5px; }
+    .org-row .sel-in { font-size: 13px; padding: 4px 4px; }
+      .lab-s { font-weight: 800; font-size: 13.5px; color: var(--muted); margin: 8px 0 2px; }
+    .chip-grid.four { grid-template-columns: 1fr 1fr 1fr 1fr; }
+    .tf-list { display: grid; gap: 6px; margin-top: 6px; }
+    .tf-row { display: grid; gap: 3px; }
+    .tf-row .lab { font-weight: 800; font-size: 13.5px; line-height: 1.3; }
+    .sent { font-size: 13.5px; font-weight: 700; line-height: 1.75; margin-top: 6px; }
+    .sent .sel-in { width: auto; display: inline-block; min-width: 120px; max-width: 100%; margin: 2px 0; font-size: 13px; padding: 4px 6px; vertical-align: middle; }
+    [data-sub][hidden], [data-asub][hidden] { display: none !important; }
+    [data-grp][hidden] { display: none !important; }
+    #ctrlCard .control > .control-head { margin-top: 4px; }
+    .in-row.three { grid-template-columns: 1fr 1fr 1fr; }
+    .srch-list { display: grid; gap: 4px; margin-top: 6px; }
+    .srch-list button { text-align: left; min-height: 44px; border: 2px solid var(--line); background: #fff; border-radius: 12px; padding: 4px 10px; font: 800 13.5px var(--font); color: var(--ink); cursor: pointer; }
+    .srch-list button.on { border-color: var(--good); background: var(--good-soft); }
+    .srch-list .sub { display: block; font-weight: 700; font-size: 12px; color: var(--muted); }
+    .num-in.tl { text-align: left; font: 700 14px var(--font); margin-bottom: 4px; }
+    [hidden] { display: none !important; }
+  
+    .btn.on { background: color-mix(in srgb, var(--subject) 16%, white); border-color: var(--subject); }
+    .org-row .num-in { min-height: 44px; }
+</style>
+
+</head>
+<body class="sim-page" data-subject="bio">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#hy">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">세포와 물질대사 · Ⅲ. 세포호흡과 광합성</div>
+      <h1>엽록체와 광합성 색소</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🍃 엽록체</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="tablist" aria-label="화면 고르기">
+            <button type="button" data-mode="build" data-lv="0" data-feature="build">🧩 3D 모형</button>
+            <button type="button" data-mode="chrom" data-lv="1" data-feature="chrom">🧪 색소 분리</button>
+            <button type="button" data-mode="func" data-lv="2" data-feature="func">🔗 구조와 기능</button>
+            <button type="button" data-mode="spec" data-lv="2" data-feature="spec">📈 흡수 스펙트럼</button>
+            <button type="button" data-mode="infer" data-lv="3" data-feature="infer">🔎 추론하기</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="엽록체의 3D 단면 모형 조립, 종이 크로마토그래피로 광합성 색소 분리와 Rf 값 계산, 구조와 기능 연결과 흡수 스펙트럼, 단풍 그늘 어둠 붉은 해조류 추론"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">—</span><span class="value" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">—</span><span class="value" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">—</span><span class="value" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+
+        <div class="control" data-modes="build">
+          <div class="control-head"><span>🧩 3D 단면 모형</span></div>
+          <div class="control-head"><label for="sCut">단면 (절개)</label><output id="oCut">0 %</output></div>
+          <div class="range-row"><input type="range" id="sCut" min="0" max="100" step="1" value="0" aria-label="단면 절개 정도 (0에서 100퍼센트)"></div>
+          <div class="btn-row"><button class="btn btn-sm" id="bSpin" type="button">🔄 한 바퀴</button><button class="btn btn-sm" id="bFront" type="button">↺ 정면</button><button class="btn btn-sm" id="bReset" type="button">⟲ 다시 조립</button></div>
+          <div class="btn-row"><button class="btn btn-sm" id="bCmp" type="button">⚙️ 미토콘드리아와 비교</button></div>
+          <p class="ctrl-note" id="bNote"></p>
+          <div data-grp="name">
+            <div class="lab-s">단면의 핀 5개에 이름을 붙여요</div>
+            <div class="tf-list"><div class="tf-row"><div class="lab">핀 ①</div><select class="sel-in" id="nm0" aria-label="핀 1번의 이름"><option value="">이름 고르기</option><option value="outer">외막</option><option value="inner">내막</option><option value="stroma">스트로마</option><option value="granum">그라나</option><option value="lumen">틸라코이드 내부</option></select></div><div class="tf-row"><div class="lab">핀 ②</div><select class="sel-in" id="nm1" aria-label="핀 2번의 이름"><option value="">이름 고르기</option><option value="outer">외막</option><option value="inner">내막</option><option value="stroma">스트로마</option><option value="granum">그라나</option><option value="lumen">틸라코이드 내부</option></select></div><div class="tf-row"><div class="lab">핀 ③</div><select class="sel-in" id="nm2" aria-label="핀 3번의 이름"><option value="">이름 고르기</option><option value="outer">외막</option><option value="inner">내막</option><option value="stroma">스트로마</option><option value="granum">그라나</option><option value="lumen">틸라코이드 내부</option></select></div><div class="tf-row"><div class="lab">핀 ④</div><select class="sel-in" id="nm3" aria-label="핀 4번의 이름"><option value="">이름 고르기</option><option value="outer">외막</option><option value="inner">내막</option><option value="stroma">스트로마</option><option value="granum">그라나</option><option value="lumen">틸라코이드 내부</option></select></div><div class="tf-row"><div class="lab">핀 ⑤</div><select class="sel-in" id="nm4" aria-label="핀 5번의 이름"><option value="">이름 고르기</option><option value="outer">외막</option><option value="inner">내막</option><option value="stroma">스트로마</option><option value="granum">그라나</option><option value="lumen">틸라코이드 내부</option></select></div></div>
+          </div>
+        </div>
+        <div class="control" data-modes="chrom">
+          <div class="control-head"><span>🧪 색소 분리 실험</span></div>
+          <div class="btn-col"><button class="btn btn-sm" id="chExt" type="button">🍃 잎을 에탄올에 갈아 추출</button><button class="btn btn-sm" id="chSpot" type="button">✏️ 점 찍기</button></div>
+          <div class="lab-s">용매 높이 (종이 아래 끝에서)</div>
+          <div class="chip-grid" id="chDepth"><button type="button" data-v="1">1 cm</button><button type="button" data-v="3">3 cm</button></div>
+          <div class="btn-row"><button class="btn btn-sm" id="chDip" type="button">🧴 용매에 담그기</button><button class="btn btn-sm" id="chNew" type="button">↺ 새 종이로</button></div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="chDev" type="button">⏩ 전개 (시간 가속)</button><button class="btn btn-sm" id="chMark" type="button">✏️ 용매 전선 표시</button></div>
+          <p class="ctrl-note" id="chNote"></p>
+          <div data-grp="rf">
+            <div class="lab-s">Rf = 색소 이동 거리 / 용매 이동 거리 (10.0 cm)</div>
+            <div class="org-list" id="rfRows"><div class="org-row"><div class="lab">🟠 주황 띠</div><select class="sel-in" id="rn0" aria-label="주황 띠의 색소 이름"><option value="">색소 이름</option><option value="car">카로틴</option><option value="xan">잔토필</option><option value="cha">엽록소 a</option><option value="chb">엽록소 b</option></select><input class="num-in" id="rf0" type="text" inputmode="decimal" maxlength="5" placeholder="Rf" aria-label="주황 띠의 Rf 값"></div><div class="org-row"><div class="lab">🟡 노랑 띠</div><select class="sel-in" id="rn1" aria-label="노랑 띠의 색소 이름"><option value="">색소 이름</option><option value="car">카로틴</option><option value="xan">잔토필</option><option value="cha">엽록소 a</option><option value="chb">엽록소 b</option></select><input class="num-in" id="rf1" type="text" inputmode="decimal" maxlength="5" placeholder="Rf" aria-label="노랑 띠의 Rf 값"></div><div class="org-row"><div class="lab">🟢 청록 띠</div><select class="sel-in" id="rn2" aria-label="청록 띠의 색소 이름"><option value="">색소 이름</option><option value="car">카로틴</option><option value="xan">잔토필</option><option value="cha">엽록소 a</option><option value="chb">엽록소 b</option></select><input class="num-in" id="rf2" type="text" inputmode="decimal" maxlength="5" placeholder="Rf" aria-label="청록 띠의 Rf 값"></div><div class="org-row"><div class="lab">🟢 황록 띠</div><select class="sel-in" id="rn3" aria-label="황록 띠의 색소 이름"><option value="">색소 이름</option><option value="car">카로틴</option><option value="xan">잔토필</option><option value="cha">엽록소 a</option><option value="chb">엽록소 b</option></select><input class="num-in" id="rf3" type="text" inputmode="decimal" maxlength="5" placeholder="Rf" aria-label="황록 띠의 Rf 값"></div></div>
+          </div>
+        </div>
+        <div class="control" data-modes="func">
+          <div class="control-head"><span>🔗 구조와 기능을 연결해요</span></div>
+          <div class="tf-list"><div class="tf-row"><div class="lab">핀 ① 외막 · 내막</div><select class="sel-in" id="fn0" aria-label="핀 1번 외막 · 내막의 기능"><option value="">기능 고르기</option><option value="a">A 물질 출입 조절</option><option value="b">B 빛 흡수 · 전자 전달 · ATP 합성</option><option value="c">C 막 표면적↑ 빛 흡수 효율↑</option><option value="d">D 효소로 CO₂에서 포도당 합성</option><option value="e">E 양분을 녹말로 임시 저장</option></select></div><div class="tf-row"><div class="lab">핀 ② 틸라코이드 막</div><select class="sel-in" id="fn1" aria-label="핀 2번 틸라코이드 막의 기능"><option value="">기능 고르기</option><option value="a">A 물질 출입 조절</option><option value="b">B 빛 흡수 · 전자 전달 · ATP 합성</option><option value="c">C 막 표면적↑ 빛 흡수 효율↑</option><option value="d">D 효소로 CO₂에서 포도당 합성</option><option value="e">E 양분을 녹말로 임시 저장</option></select></div><div class="tf-row"><div class="lab">핀 ③ 그라나</div><select class="sel-in" id="fn2" aria-label="핀 3번 그라나의 기능"><option value="">기능 고르기</option><option value="a">A 물질 출입 조절</option><option value="b">B 빛 흡수 · 전자 전달 · ATP 합성</option><option value="c">C 막 표면적↑ 빛 흡수 효율↑</option><option value="d">D 효소로 CO₂에서 포도당 합성</option><option value="e">E 양분을 녹말로 임시 저장</option></select></div><div class="tf-row"><div class="lab">핀 ④ 스트로마</div><select class="sel-in" id="fn3" aria-label="핀 4번 스트로마의 기능"><option value="">기능 고르기</option><option value="a">A 물질 출입 조절</option><option value="b">B 빛 흡수 · 전자 전달 · ATP 합성</option><option value="c">C 막 표면적↑ 빛 흡수 효율↑</option><option value="d">D 효소로 CO₂에서 포도당 합성</option><option value="e">E 양분을 녹말로 임시 저장</option></select></div><div class="tf-row"><div class="lab">핀 ⑤ 녹말 알갱이</div><select class="sel-in" id="fn4" aria-label="핀 5번 녹말 알갱이의 기능"><option value="">기능 고르기</option><option value="a">A 물질 출입 조절</option><option value="b">B 빛 흡수 · 전자 전달 · ATP 합성</option><option value="c">C 막 표면적↑ 빛 흡수 효율↑</option><option value="d">D 효소로 CO₂에서 포도당 합성</option><option value="e">E 양분을 녹말로 임시 저장</option></select></div></div>
+          <p class="ctrl-note" id="fnNote"></p>
+        </div>
+        <div class="control" data-modes="spec">
+          <div class="control-head"><label for="spL">빛의 파장</label><output id="oL">480 nm</output></div>
+          <div class="range-row"><input type="range" id="spL" min="400" max="700" step="1" value="480" aria-label="빛의 파장 (400에서 700 나노미터)"></div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="spMark" type="button">📌 이 파장을 봉우리로 표시</button><button class="btn btn-sm" id="spClr" type="button">↺ 지우기</button></div>
+          <p class="ctrl-note" id="spNote"></p>
+          <div class="lab-s">식물 생장 조명 (그래프에 분포가 겹쳐 보여요)</div>
+          <div class="chip-grid" id="spLamp" style="grid-template-columns:1fr"><button type="button" data-v="sun">☀️ 햇빛(백색)</button><button type="button" data-v="rb">🔴🔵 적색 + 청색 LED</button><button type="button" data-v="g">🟢 녹색 LED</button></div>
+        </div>
+        <div class="control" data-modes="infer">
+          <div class="control-head"><span>🔎 상황을 추론해요</span></div>
+          <div class="chip-grid" id="fiSit"><button type="button" data-v="0">🍁 가을 단풍</button><button type="button" data-v="1">🌿 그늘 잎</button><button type="button" data-v="2">🌑 어둠</button><button type="button" data-v="3">🌊 붉은 해조류</button></div>
+          <div data-sit="0"><div class="lab-s">가을 잎에서 <b>옅어지는</b> 색소를 모두 눌러요 (캔버스의 띠를 눌러도 돼요)</div><div class="chip-grid" id="fiAut"><button type="button" data-v="car">카로틴</button><button type="button" data-v="xan">잔토필</button><button type="button" data-v="cha">엽록소 a</button><button type="button" data-v="chb">엽록소 b</button></div></div>
+          <div data-sit="1"><div class="tf-list"><div class="tf-row"><div class="lab">그늘 잎의 그라나 (햇빛 잎과 비교)</div><select class="sel-in" id="fiGr" aria-label="그늘 잎의 그라나 (햇빛 잎과 비교)"><option value="">고르기</option><option value="more">더 많다</option><option value="same">같다</option><option value="less">더 적다</option></select></div><div class="tf-row"><div class="lab">엽록소 b 의 비율</div><select class="sel-in" id="fiB" aria-label="엽록소 b 의 비율"><option value="">고르기</option><option value="more">더 높다</option><option value="same">같다</option><option value="less">더 낮다</option></select></div></div></div>
+          <div data-sit="2"><div class="tf-list"><div class="tf-row"><div class="lab">어둠에 오래 둔 엽록체의 녹말 알갱이</div><select class="sel-in" id="fiSt" aria-label="어둠에 오래 둔 엽록체의 녹말 알갱이"><option value="">고르기</option><option value="more">늘어난다</option><option value="same">그대로다</option><option value="less">줄어든다</option></select></div></div></div>
+          <div data-sit="3"><div class="tf-list"><div class="tf-row"><div class="lab">깊은 바다에 가장 잘 닿는 빛</div><select class="sel-in" id="fiL" aria-label="깊은 바다에 가장 잘 닿는 빛"><option value="">고르기</option><option value="red">적색 빛</option><option value="gb">녹색 ~ 청색 빛</option><option value="uv">자외선</option></select></div><div class="tf-row"><div class="lab">붉은 해조류가 광합성하는 방법</div><select class="sel-in" id="fiP" aria-label="붉은 해조류가 광합성하는 방법"><option value="">고르기</option><option value="chl">엽록소 a 만으로 적색 빛을 흡수한다</option><option value="aux">보조 색소가 녹색 ~ 청색 빛을 흡수해 전달한다</option><option value="no">깊어서 광합성을 하지 못한다</option></select></div></div></div>
+          <p class="ctrl-note" id="fiNote"></p>
+        </div>
+
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

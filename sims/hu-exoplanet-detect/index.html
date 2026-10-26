@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0ea5e9">
+  <title>외계 행성 찾기 | 고등 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔍</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-hint { bottom: auto; top: 12px; }
+    .stage-toolbar { min-height: 58px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; }
+    .stage-toolbar .segmented button { min-height: 40px; padding: 5px 10px; font-size: 14px; white-space: nowrap; }
+    .stage-toolbar .segmented { flex-wrap: wrap; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard [hidden] { display: none !important; }
+    .opt-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin-top: 4px; }
+    .opt-grid.c3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .opt-grid.c4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .opt-grid.c5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+    .opt {
+      min-height: 46px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 12px;
+      font-weight: 800; font-size: 14.5px; cursor: pointer; padding: 4px 4px; font-family: inherit; line-height: 1.2;
+    }
+    .opt.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); color: color-mix(in srgb, var(--subject) 70%, black); }
+    .opt.done { border-color: var(--good); background: var(--good-soft); color: #0b6b39; }
+    .opt:disabled { opacity: .5; cursor: not-allowed; }
+    .ctrl-note { margin: 6px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    .btn-sm { min-height: 44px; }
+    .btn-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+    .btn-row .btn { flex: 1; padding-left: 8px; padding-right: 8px; }
+    .readout .value.txt { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .concept table.mini, table.mini { border-collapse: collapse; margin: 6px 0; font-size: 13px; width: 100%; }
+    .concept table.mini th, .concept table.mini td, table.mini th, table.mini td { border: 1px solid var(--line); padding: 4px 5px; text-align: center; }
+    .concept table.mini th, table.mini th { background: var(--surface-2); font-weight: 800; }
+    .num-in { width: 100%; min-height: 46px; border: 2px solid var(--line); border-radius: 10px; font: inherit; font-weight: 800; font-size: 17px; padding: 0 10px; background: var(--surface); color: var(--ink); text-align: center; }
+    .num-in:focus { outline: none; border-color: var(--subject); }
+    .num-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .num-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .in-row { display: grid; grid-template-columns: 1fr 104px; gap: 8px; align-items: center; margin-top: 6px; font-weight: 800; font-size: 14.5px; line-height: 1.25; }
+    .in-row .num-in { min-height: 42px; font-size: 16px; }
+    @keyframes shakeX { 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+    .src-note { margin: 4px 0 0; font-size: 12.5px; color: #a16207; background: #fff7e0; border: 1px solid #f2d38a; border-radius: 10px; padding: 6px 9px; line-height: 1.4; }
+    @media (max-width: 599px) {
+      .readout { min-width: 0; }
+      .readout .value.txt { font-size: 15px; }
+      .stage-toolbar .spacer { display: none; }
+      .stage-toolbar .segmented button { padding: 5px 7px; font-size: 13px; }
+    }
+    input[type=range] { height: 40px; }
+    .ticks { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--muted); font-weight: 700; margin-top: -6px; padding: 0 2px; }
+  </style>
+</head>
+<body class="sim-page" data-subject="earth">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#hu">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">행성우주과학 · Ⅰ. 우주탐사와 행성계</div>
+      <h1>외계 행성 찾기</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🔍 외계 행성 찾기</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="group" aria-label="장면 고르기" hidden>
+            <button type="button" data-view="rv">🌀 별의 흔들림</button>
+            <button type="button" data-view="peg">📈 51 Peg b</button>
+            <button type="button" data-view="transit">🌑 통과 관측</button>
+            <button type="button" data-view="density">🧮 밀도</button>
+            <button type="button" data-view="lens">🔎 미세 렌즈</button>
+            <button type="button" data-view="lens2">❓ 미지의 행성</button>
+            <button type="button" data-view="table">📋 얻는 정보</button>
+            <button type="button" data-view="match">🎯 알맞은 방법</button>
+            <button type="button" data-view="scatter">🔵 발견 분포</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="질량 중심 둘레를 도는 별과 행성과 스펙트럼선의 이동, 51 페가수스자리 b의 시선 속도 곡선, 행성이 별 앞을 지날 때의 밝기 곡선, 밀도 계산 카드, 미세 중력 렌즈의 밝기 곡선과 행성 봉우리, 방법별 정보 표와 발견 분포가 있어요."></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">—</span><span class="value txt" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">—</span><span class="value txt" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">—</span><span class="value txt" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+
+        <div class="control" data-modes="rv">
+          <div class="control-head"><span>🪐 태양 둘레를 도는 행성</span></div>
+          <div class="opt-grid c4" id="grpPl"></div>
+        </div>
+        <div class="control" data-modes="rv" id="calcK" hidden>
+          <div class="in-row"><span>태양이 받는 속도 진폭<br>K = v_행성 × (M_행성 / M_태양)<br>(m/s)</span><input class="num-in" id="inK" type="text" inputmode="decimal" placeholder="예: 5" aria-label="별의 속도 진폭 K (m/s)" autocomplete="off"></div>
+        </div>
+
+        <div class="control" data-modes="peg" id="calcPeg" hidden>
+          <div class="control-head"><span>🧮 51 Peg b 단계별 계산</span></div>
+          <div class="in-row"><span>① 궤도 반지름 a (AU)</span><input class="num-in" id="inA" type="text" inputmode="decimal" placeholder="예: 0.5" aria-label="행성의 궤도 반지름 (AU)" autocomplete="off"></div>
+          <div class="in-row"><span>② 행성 속력 v (km/s)</span><input class="num-in" id="inVp" type="text" inputmode="decimal" placeholder="예: 100" aria-label="행성의 궤도 속력 (km/s)" autocomplete="off"></div>
+          <div class="in-row"><span>③ 행성 질량 (M_J)</span><input class="num-in" id="inMp" type="text" inputmode="decimal" placeholder="예: 1" aria-label="행성의 질량 (목성 질량 단위)" autocomplete="off"></div>
+        </div>
+        <div class="control" data-modes="peg" id="pegNote">
+          <p class="ctrl-note">곡선을 눌러(끌어도 돼요) 값을 읽어요. 단계별 계산은 미션에서 열려요.</p>
+        </div>
+
+        <div class="control" data-modes="transit">
+          <div class="control-head"><label for="sRp">🌑 행성 반지름 R_p</label><output id="oRp">11.2 R⊕</output></div>
+          <input type="range" id="sRp" min="1" max="14" step="0.1" value="3" aria-label="행성 반지름 (지구 반지름 단위)">
+          <div class="ticks"><span>지구 1</span><span>해왕성 3.9</span><span>목성 11.2</span><span>14</span></div>
+        </div>
+        <div class="control" data-modes="transit">
+          <div class="control-head"><span>↔ 궤도 반지름 a</span></div>
+          <div class="opt-grid c4" id="grpA"><button class="opt" type="button" data-k="0">0.05<br>AU</button><button class="opt" type="button" data-k="1">0.4<br>AU</button><button class="opt" type="button" data-k="2">1<br>AU</button><button class="opt" type="button" data-k="3">5.2<br>AU</button></div>
+        </div>
+        <div class="control" data-modes="transit" id="ctlInc" hidden>
+          <div class="control-head"><label for="sInc">📐 궤도면 기울기 i</label><output id="oInc">90.0°</output></div>
+          <input type="range" id="sInc" min="80" max="90" step="0.1" value="90" aria-label="궤도면과 시선 방향이 이루는 각 i (90도면 시선과 나란함)">
+          <p class="ctrl-note">i = 90°이면 궤도면이 시선과 나란해요.</p>
+        </div>
+        <div class="control" data-modes="transit" id="calcRatio" hidden>
+          <div class="in-row"><span>깊이가 1.0 %일 때<br>R_p / R_s</span><input class="num-in" id="inRatio" type="text" inputmode="decimal" placeholder="예: 0.5" aria-label="행성 반지름 대 별 반지름의 비" autocomplete="off"></div>
+        </div>
+
+        <div class="control" data-modes="density" id="calcDen" hidden>
+          <div class="control-head"><span>🧮 밀도 ρ (g/cm³)</span></div>
+          <div class="in-row"><span>HD 209458 b</span><input class="num-in" id="inD1" type="text" inputmode="decimal" placeholder="예: 1" aria-label="HD 209458 b의 밀도 (g/cm³)" autocomplete="off"></div>
+          <div class="in-row"><span>케플러-10b</span><input class="num-in" id="inD2" type="text" inputmode="decimal" placeholder="예: 5" aria-label="케플러-10b의 밀도 (g/cm³)" autocomplete="off"></div>
+          <p class="ctrl-note">ρ = ρ_기준 × (M / M_기준) / (R / R_기준)³</p>
+        </div>
+
+        <div class="control" data-modes="lens">
+          <div class="control-head"><span>🪐 렌즈 별 곁의 행성</span></div>
+          <div class="btn-row"><button class="btn btn-sm" id="bPl" type="button">행성 있음</button></div>
+          <div class="opt-grid c4" id="grpMs"><button class="opt" type="button" data-k="0">지구형<br>1 M⊕</button><button class="opt" type="button" data-k="1">해왕성형<br>17 M⊕</button><button class="opt" type="button" data-k="2">토성형<br>95 M⊕</button><button class="opt" type="button" data-k="3">목성형<br>318 M⊕</button></div>
+        </div>
+        <div class="control" data-modes="lens">
+          <div class="control-head"><label for="sCur">🔍 확대해 볼 날 (t)</label><output id="oCur">0일</output></div>
+          <input type="range" id="sCur" min="-60" max="60" step="0.5" value="0" aria-label="확대해 볼 날짜 (일)">
+          <p class="ctrl-note">곡선을 눌러 끌어도 돼요. 아래 확대 그래프는 그 날의 ±3일이에요.</p>
+        </div>
+
+        <div class="control" data-modes="lens2">
+          <div class="control-head"><span>❓ 행성 X는?</span></div>
+          <div class="opt-grid" id="grpX"><button class="opt" type="button" data-k="0">지구형<br>(몇 시간)</button><button class="opt" type="button" data-k="1">목성형<br>(며칠)</button></div>
+        </div>
+        <div class="control" data-modes="lens2">
+          <div class="control-head"><span>❓ 행성 Y는?</span></div>
+          <div class="opt-grid" id="grpY"><button class="opt" type="button" data-k="0">지구형<br>(몇 시간)</button><button class="opt" type="button" data-k="1">목성형<br>(며칠)</button></div>
+        </div>
+
+        <div class="control" data-modes="table">
+          <div class="control-head"><span>📋 표 채우기</span></div>
+          <p class="ctrl-note">칸을 누를 때마다 ? → ○(알 수 있어요) → ×(알 수 없어요) 순서로 바뀌어요.</p>
+        </div>
+        <div class="control" data-modes="match">
+          <div class="control-head"><span>🎯 행성 카드 4장</span></div>
+          <p class="ctrl-note">카드를 눌러 고른 뒤 알맞은 방법 상자를 눌러요(끌어 넣어도 돼요). 뜨거운 목성은 두 방법이 모두 알맞아요.</p>
+        </div>
+        <div class="control" data-modes="scatter">
+          <div class="control-head"><span>🔎 보이는 방법</span></div>
+          <div class="opt-grid c4" id="grpMeth"><button class="opt" type="button" data-k="0">전체</button><button class="opt" type="button" data-k="1">시선<br>속도</button><button class="opt" type="button" data-k="2">통과</button><button class="opt" type="button" data-k="3">미세<br>렌즈</button></div>
+          <div class="btn-row"><button class="btn btn-sm" id="bAllPl" type="button">회색 점: 못 찾은 행성 보이기</button></div>
+        </div>
+
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>
