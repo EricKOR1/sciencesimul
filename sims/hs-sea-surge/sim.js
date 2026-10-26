@@ -384,7 +384,7 @@
     stormStep(dt);
     const g = stormGeom(), { A, B, C, xl, xr, y0 } = g;
     // ---- A: 해안 단면
-    card(A, '🌪️ 폭풍 해일: 태풍이 다가온 해안의 단면 (높이는 과장)');
+    card(A, '🌪️ 폭풍 해일: 태풍이 다가온 해안 (높이 과장)');
     ctx.save(); rr(A.x, A.y, A.w, A.h, 14).clip();
     D.sky(A.x, A.y + 30, A.w, A.h - 30, '#cfe5f4', '#eaf4fb');
     // 바다 바닥(모래)과 땅
@@ -394,13 +394,14 @@
     ctx.lineTo(xr, g.landTop + 14); ctx.lineTo(A.x + A.w, g.landTop + 14); ctx.lineTo(A.x + A.w, A.y + A.h); ctx.closePath(); ctx.fill();
     // 바닷물
     const wg = ctx.createLinearGradient(0, y0 - 150, 0, y0 + 110); wg.addColorStop(0, 'rgba(56,189,248,.82)'); wg.addColorStop(1, 'rgba(3,105,161,.78)');
+    const sp = [], rip = 1.2 + S.UV * 0.07, rph = t * (2.2 + S.UV * 0.12);
+    for (let x = A.x; x <= xr; x += 8) sp.push([x, surfY(g, x) + Math.sin(x * 0.045 - rph) * rip]);
     ctx.fillStyle = wg; ctx.beginPath(); ctx.moveTo(A.x, floorY(0));
-    ctx.lineTo(A.x, surfY(g, A.x));
-    for (let x = A.x; x <= xr; x += 6) ctx.lineTo(x, surfY(g, x) + Math.sin(x * 0.045 - t * (2.2 + S.UV * 0.12)) * (1.2 + S.UV * 0.07));
+    sp.forEach((p) => ctx.lineTo(p[0], p[1]));
     for (let i = 20; i >= 0; i--) { const u = i / 20; ctx.lineTo(xl + g.lw * u, floorY(u)); }
     ctx.closePath(); ctx.fill();
     ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = 2; ctx.beginPath();
-    for (let x = A.x; x <= xr; x += 6) { const y = surfY(g, x) + Math.sin(x * 0.045 - t * (2.2 + S.UV * 0.12)) * (1.2 + S.UV * 0.07); x === A.x ? ctx.moveTo(x, y) : ctx.lineTo(x, y); }
+    sp.forEach((p, i) => (i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])));
     ctx.stroke();
     // 땅 윗면
     const lg = ctx.createLinearGradient(0, g.landTop, 0, g.landTop + 30); lg.addColorStop(0, '#86c07e'); lg.addColorStop(1, '#6aa764');
@@ -420,15 +421,15 @@
     ctx.fillStyle = '#dc2626'; ctx.beginPath(); ctx.moveTo(rx - 2, cy); ctx.lineTo(rx - 12, cy - 6); ctx.lineTo(rx - 12, cy + 6); ctx.closePath(); ctx.fill();
     D.label(xr - 14, cy - 17, '해안 수위 +' + fN(r2(S.ibV) + r2(S.dwV), 2) + ' m', { bg: '#dc2626', size: 12.5, pad: 7, align: 'right' });
     // 태풍과 기압 화살표
-    const k = clamp((1010 - S.pV) / 60, 0, 1), ccx = xr - 34, ccy = A.y + 64;
+    const k = clamp((1010 - S.pV) / 60, 0, 1), ccx = xr - 34, ccy = A.y + (PHONE ? 74 : 64);
     drawCloud(ccx, ccy, k, t);
     for (let i = 0; i < 7; i++) {
       const x = xl + 26 + (i * (xr - xl - 60)) / 6, pi = 1010 - (1010 - S.pV) * bumpAt(g, x), len = 8 + (pi - 940) * 0.55, yb = surfY(g, x) - 40;
       arrowS(x, yb - len, x, yb, { color: '#475569', width: 4, head: 9, alpha: 0.85 });
     }
     D.label(xl + 4, A.y + 50, '주변 기압 1010 hPa', { bg: '#475569', size: 12.5, pad: 7, align: 'left' });
-    if (k > 0.02) D.label(ccx - 78, A.y + 78, '중심 기압 ' + Math.round(S.pV) + ' hPa', { bg: '#b91c1c', size: 12.5, pad: 7, align: 'right' });
-    D.text(xl + 4, A.y + 72 + (PHONE ? 6 : 0), '↓ 화살표가 길수록 공기가 누르는 압력이 커요', { size: 11.5, weight: 700, color: '#64748b', align: 'left' });
+    if (k > 0.02) { if (PHONE) D.label(xl + 4, A.y + 80, '중심 기압 ' + Math.round(S.pV) + ' hPa', { bg: '#b91c1c', size: 12.5, pad: 7, align: 'left' }); else D.label(ccx - 100, ccy, '중심 기압 ' + Math.round(S.pV) + ' hPa', { bg: '#b91c1c', size: 12.5, pad: 7, align: 'right' }); }
+    if (!PHONE) D.text(xl + 4, A.y + 72, '↓ 화살표가 길수록 공기가 누르는 압력이 커요', { size: 11.5, weight: 700, color: '#64748b', align: 'left' });
     // 바람 줄기
     ctx.strokeStyle = 'rgba(30,41,59,.55)'; ctx.lineCap = 'round';
     S.wind.forEach((w) => { const y = surfY(g, w.x) - 12 - w.k * 22; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(w.x, y); ctx.lineTo(w.x + 12 + S.UV * 0.6, y); ctx.stroke(); });
@@ -527,7 +528,7 @@
   function drawTsOpen(t, dt) {
     const g = tsGeom(), { A, y0, pxh, kx, xl, xr, xsrc } = g, { B, C } = g.R;
     const H0 = H0of(), ct = c0km * S.tsT;                      // 파봉 위치(진원에서 km)
-    card(A, '🌋 지진 해일: 해저 단층 → 바다 전체가 솟아 퍼져요 (높이는 크게 과장)');
+    card(A, '🌋 지진 해일: 바다 전체가 솟아 퍼져요 (높이 과장)');
     ctx.save(); rr(A.x, A.y, A.w, A.h, 14).clip();
     D.sky(A.x, A.y + 30, A.w, A.h - 30, '#d9ecf8', '#f0f8fd');
     const floorBase = y0 + (PHONE ? 110 : 100);
@@ -557,13 +558,13 @@
       const px = xsrc + ct * kx, py = y0 - pxh * H0 - 2; D.sphere(px, py, 5, '#f59e0b', { gloss: false, outline: '#fff', outlineWidth: 2 });
       D.label(clamp(px, xl + 60, xr - 70), Math.max(A.y + 48, py - 20), '파고 ' + fN(H0, 1) + ' m', { bg: '#0369a1', size: 12.5, pad: 7 });
     } else if (S.D > 0 && ct < LAM) {
-      D.label(xsrc, Math.max(A.y + 46, y0 - pxh * S.D - 18), '바다 전체가 ' + fN(S.D, 1) + ' m 솟아요', { bg: '#7c2d12', size: 12.5, pad: 7 });
+      D.label(Math.max(xsrc, xl + 90), Math.max(A.y + 46, y0 - pxh * S.D - 18), '바다 전체가 ' + fN(S.D, 1) + ' m 솟아요', { bg: '#7c2d12', size: 12.5, pad: 7 });
     }
     // 단층 · 거리 눈금
     D.text(xsrc, floorBase + 17, '진원(단층)', { size: 12.5, weight: 800, color: '#7c2d12' });
     D.text(xr - 8, floorBase + 17, '해안', { size: 12.5, weight: 800, color: '#14532d', align: 'right' });
     arrowS(xsrc + 52, floorBase + 13, xr - 52, floorBase + 13, { color: '#475569', width: 2, head: 8 });
-    D.text(xl + 4, A.y + A.h - 8, '평균 수심 ' + H_DEEP + ' m · 진원에서 해안까지 ' + DIST + ' km (바다 깊이는 줄여서 그렸어요)', { size: 12, weight: 700, color: '#475569', align: 'left' });
+    D.text(xl + 4, A.y + A.h - 8, PHONE ? '수심 ' + H_DEEP + ' m · 진원–해안 ' + DIST + ' km (깊이는 줄여 그림)' : '평균 수심 ' + H_DEEP + ' m · 진원에서 해안까지 ' + DIST + ' km (바다 깊이는 줄여서 그렸어요)', { size: 12, weight: 700, color: '#475569', align: 'left' });
     ctx.restore();
     // ---- B: 위에서 본 모습
     card(B, '🛰️ 위에서 본 모습: 동심원으로 퍼져요');
@@ -603,7 +604,7 @@
   function drawTsShore(t, dt) {
     const g = tsGeom(), { A, xs, xe, y0, pxh } = g, { C } = g.R;
     const H0 = S.D > 0 ? H0of() : 0, s = S.zoomS || 0, running = S.zoomT >= 0;
-    card(A, '🔍 해안으로 다가오면: 속도↓ 파장↓ 파고↑ (높이는 과장, 깊이는 로그 눈금)');
+    card(A, '🔍 해안 접근: 속도↓ 파장↓ 파고↑ (높이 과장)');
     ctx.save(); rr(A.x, A.y, A.w, A.h, 14).clip();
     D.sky(A.x, A.y + 30, A.w, A.h - 30, '#d9ecf8', '#f0f8fd');
     const floorY = (x) => y0 + dpxOf(hOfS((x - xs) / (xe - xs)));
@@ -687,7 +688,7 @@
     riskStep(dt);
     const g = riskGeom(), { A, B, C, px, y0, xl, xw } = g, tot = S.totV, ex = Math.max(0, tot - WALL), showT = S.showTot || (game && game.free);
     const Y = (m) => y0 - m * px;
-    card(A, '🏖️ 같은 태풍, 다른 해안: 총 수위와 방파제 (높이는 과장)');
+    card(A, '🏖️ 같은 태풍, 다른 해안 (높이 과장)');
     ctx.save(); rr(A.x, A.y, A.w, A.h, 14).clip();
     D.sky(A.x, A.y + 30, A.w, A.h - 30, '#cfe5f4', '#eaf4fb');
     // 바다 바닥 (지형에 따라 모양이 달라요)
@@ -719,7 +720,7 @@
     // 기준선
     D.dashedLine(A.x, y0, xw, y0, { color: 'rgba(30,64,100,.5)', width: 1.4, dash: [6, 5] });
     D.dashedLine(A.x + 30, g.wallTop, A.x + A.w - 10, g.wallTop, { color: '#b91c1c', width: 2, dash: [8, 5] });
-    D.label(A.x + 76, g.wallTop - 15, '방파제 높이 ' + fN(WALL, 1) + ' m', { bg: '#b91c1c', size: 12.5, pad: 7, align: 'left' });
+    D.label(xw + g.ww + 8, g.landTop + 26, (PHONE ? '방파제 ' : '방파제 높이 ') + fN(WALL, 1) + ' m', { bg: '#b91c1c', size: 12.5, pad: 7, align: 'left' });
     // 눈금
     for (let m = -2; m <= 4; m++) { ctx.strokeStyle = '#334155'; ctx.lineWidth = 1.3; ctx.beginPath(); ctx.moveTo(A.x + 6, Y(m)); ctx.lineTo(A.x + 16, Y(m)); ctx.stroke(); D.text(A.x + 20, Y(m) + 4.5, (m < 0 ? '−' : m > 0 ? '+' : '') + Math.abs(m) + ' m', { size: 11.5, weight: 800, color: '#334155', align: 'left', stroke: 'rgba(255,255,255,.85)', strokeWidth: 3 }); }
     // 수위 표시
@@ -1083,7 +1084,7 @@
         {
           title: '속도와 도달 시간',
           goal: '<b>단층 변위 2 m</b>로 단층을 일으켜 파가 해안(800 km)에 닿는 것을 보고, 수심 4000 m의 <b>파속</b>(m/s)과 걸린 <b>시간</b>(분)을 계산해 입력해요.',
-          hint: 'c = √(9.8 × 4000) ≈ 198 m/s예요. t = 800,000 m ÷ 198 m/s ≈ 4040 초이고, 60으로 나누면 약 67분이에요.',
+          hint: 'c = √(9.8 × 4000) ≈ 198 m/s예요. t = 800,000 m / 198 m/s ≈ 4040 초이고, 60으로 나누면 약 67분이에요.',
           setup() { S.showTs = false; resetTs(); setD(0); numC.reset(); numT.reset(); setMode('tsu'); setCtl(['sD', 'bFault', 'calcTs']); },
           check: () => S.D === 2 && S.arrived >= 0 && numC.near(Math.round(C0), 2) && numT.near(67, 1), hold: 0.8,
           status: () => mark2(S.D === 2 && S.arrived >= 0) + ' 단층 2 m · 해안 도착 확인 · ' + mark2(numC.near(Math.round(C0), 2)) + ' 파속 ' + (numC.has() ? numC.value + ' m/s' : '?') + ' · ' + mark2(numT.near(67, 1)) + ' 시간 ' + (numT.has() ? numT.value + '분' : '?'),
@@ -1152,11 +1153,11 @@
         {
           title: '67분 안에 대피할 수 있을까?',
           goal: '<b>일반 보행</b>과 <b>노약자</b> 모두 대피 시뮬레이션을 해 보고, 쓰나미 도착 <b>67분 안에</b> 대피소에 닿는지 각각 판정해요.',
-          hint: '걷는 속도를 바꿔 ‘대피 시작’을 두 번 눌러요. 걸리는 시간 = 10 + 5 + 이동 시간(1800 m ÷ 속도)이에요. 67분보다 짧아야 가능해요.',
+          hint: '걷는 속도를 바꿔 ‘대피 시작’을 두 번 눌러요. 걸리는 시간 = 10 + 5 + 이동 시간(1800 m / 속도)이에요. 67분보다 짧아야 가능해요.',
           setup() { resetEv(); S.ran1 = false; S.ran05 = false; selJ.reset(); setDest('far'); setSpd(1); setPlan('evac'); setMode('plan'); setCtl(['spdCh', 'bEv', 'selJ']); },
           check: () => S.ran1 && S.ran05 && selJ.ok(), hold: 0.6,
           status: () => mark2(S.ran1) + ' 일반 보행 시뮬레이션 · ' + mark2(S.ran05) + ' 노약자 시뮬레이션 · ' + mark2(selJ.ok()) + ' 판정 ' + selJ.count() + ' / 2',
-          explain: '일반 보행: 1800 m ÷ 1.0 m/s = 1800 초 = 30분 → 10 + 5 + 30 = <b>45분 &lt; 67분</b>이라 <b>가능</b>. 노약자: 1800 ÷ 0.5 = 3600 초 = 60분 → 10 + 5 + 60 = <b>75분 &gt; 67분</b>이라 <b>불가능</b>이에요. 먼 대피소는 모두에게 안전하지 않아요.',
+          explain: '일반 보행: 1800 m / 1.0 m/s = 1800 초 = 30분 → 10 + 5 + 30 = <b>45분 &lt; 67분</b>이라 <b>가능</b>. 노약자: 1800 / 0.5 = 3600 초 = 60분 → 10 + 5 + 60 = <b>75분 &gt; 67분</b>이라 <b>불가능</b>이에요. 먼 대피소는 모두에게 안전하지 않아요.',
         },
         {
           title: '발표 카드 만들기', manual: true,
@@ -1178,7 +1179,7 @@
           choices: ['가까운 곳에 수직 대피 건물을 미리 정해 두어요. 150 m는 노약자도 약 5분이면 가요', '경보를 더 늦게 내려서 불안을 줄여요', '쓰나미는 외해에서 느리니 대피하지 않아요', '모두가 더 빨리 걷도록 훈련만 해요'],
           answer: 0,
           feedback: ['', '경보가 늦으면 대피 시간이 줄어요. 시간표에서 경보 시간을 늘리면 어떻게 되는지 생각해 봐요.', '쓰나미는 수심 4000 m에서 약 198 m/s(713 km/h)로 빨라요. 외해에서 느리지 않아요.', '훈련도 필요하지만 노약자의 걷는 속도에는 한계가 있어요. 거리 자체를 줄이는 대안이 더 확실해요.'],
-          explain: '수직 대피 건물까지 150 m ÷ 0.5 m/s = 300 초 = 5분 → 10 + 5 + 5 = <b>20분</b>으로 67분보다 훨씬 짧아요. <b>해안림</b>은 파의 에너지와 흐름을 일부 줄이고 표류물을 걸러 피해를 줄이는 보완책이에요.',
+          explain: '수직 대피 건물까지 150 m / 0.5 m/s = 300 초 = 5분 → 10 + 5 + 5 = <b>20분</b>으로 67분보다 훨씬 짧아요. <b>해안림</b>은 파의 에너지와 흐름을 일부 줄이고 표류물을 걸러 피해를 줄이는 보완책이에요.',
         },
       ],
     },

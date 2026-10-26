@@ -518,7 +518,7 @@
   const daLv = () => FAC[ivOf()];
   const daN = () => S.da.m[ivOf()].filter((x) => x).length;
   function daG() {
-    if (PHONE) return { Bp: { x: 10, y: 10, w: 460, h: 168 }, Tp: { x: 10, y: 186, w: 460, h: 148 }, Gp: { x: 10, y: 342, w: 460, h: 288 }, fw: 74, fh: 88, cx: (i) => 90 + i * 150, base: 150 };
+    if (PHONE) return { Bp: { x: 10, y: 10, w: 460, h: 168 }, Tp: { x: 10, y: 186, w: 460, h: 148 }, Gp: { x: 10, y: 342, w: 460, h: 288 }, fw: 66, fh: 76, cx: (i) => 90 + i * 150, base: 134 };
     return { Bp: { x: 14, y: 14, w: 372, h: 206 }, Tp: { x: 396, y: 14, w: 390, h: 206 }, Gp: { x: 14, y: 230, w: 772, h: 316 }, fw: 80, fh: 96, cx: (i) => 78 + i * 112, base: 178 };
   }
   function daMeasure() {
@@ -538,8 +538,8 @@
     d.sp.forEach((s) => s.update(dt));
     // 물중탕과 세 플라스크
     const Bp = g.Bp; panel(Bp.x, Bp.y, Bp.w, Bp.h, 16, '#fff');
-    T(Bp.x + 14, Bp.y + 24, '반복 3회 · ' + f.name + ' ' + f.fmt(f.levels[d.sel]), PHONE ? 13.5 : 15, '#1f2d44', 'left', 800);
-    const fb = Bp.y + g.base - (PHONE ? 20 : 4) - (PHONE ? 0 : 0);
+    T(Bp.x + 14, PHONE ? Bp.y + Bp.h - 10 : Bp.y + 24, '반복 3회 · ' + f.name + ' ' + f.fmt(f.levels[d.sel]), PHONE ? 13.5 : 15, '#1f2d44', 'left', 800);
+    const fb = Bp.y + g.base - (PHONE ? 8 : 4);
     [0, 1, 2].forEach((j) => {
       const cx = Bp.x + g.cx(j) - (PHONE ? 20 : 0), top = fb - g.fh;
       flaskDraw(cx, fb, g.fw, g.fh, '#f1d99a', 0.9); balloonDraw(cx, top, d.sp[j].value, ['#ef4444', '#f59e0b', '#a855f7'][j], g.fw * 0.17);

@@ -314,21 +314,6 @@
   /* 방향 표기 5′ 3′ */
   const P5 = '5′', P3 = '3′';
 
-  /* =========================================================
-     고등학교 생물의 유전 · Ⅱ. 유전자의 발현 - 유전자 발현의 중심원리 (단원 60, 1차시)
-     성취기준 [12유전02-01] 전사와 번역 과정을 거쳐 유전자가 발현되는 중심원리를 이해하고, 모형을 이용하여 유전자 발현 과정을 설명할 수 있다.
-     ① 모형: 중심원리  ② 모형: 전사와 RNA 가공  ③ 모형: 번역  ④ 탐구: 단백질 합성 모의실험
-     (염기 수 · 번역 속도 등은 교육용 예시 값이에요)
-     ========================================================= */
-  const S = { mode: 'flow', fade: 0, t: 0 };
-  let game = null;
-  const ctlNodes = $$('#ctrlCard .control');
-  const GENE = 'ATGGAACCATGGTTTAAATAA';            // 암호화(비주형) 가닥 5′→3′
-  const TEMPL = GENE.split('').map((c) => CMP[c]).join('');   // 주형 가닥 3′→5′ (왼쪽부터)
-  const MRNA = rnaOfT(GENE);
-  const MRNA_SP = 'AUG GAA CCA UGG UUU AAA UAA';
-  const mrnaCodons = (s) => s.match(/.{1,3}/g) || [];
-
   /* ---------- 공통 그림: 이중 나선, 리보솜, 구슬 사슬 ---------- */
   function helix(x1, x2, y, amp, t, c1, c2, o) {
     o = o || {};
@@ -380,6 +365,22 @@
     ctx.restore();
   }
   function pill(x, y, text, o) { return D.label(x, y, text, o); }
+
+
+  /* =========================================================
+     고등학교 생물의 유전 · Ⅱ. 유전자의 발현 - 유전자 발현의 중심원리 (단원 60, 1차시)
+     성취기준 [12유전02-01] 전사와 번역 과정을 거쳐 유전자가 발현되는 중심원리를 이해하고, 모형을 이용하여 유전자 발현 과정을 설명할 수 있다.
+     ① 모형: 중심원리  ② 모형: 전사와 RNA 가공  ③ 모형: 번역  ④ 탐구: 단백질 합성 모의실험
+     (염기 수 · 번역 속도 등은 교육용 예시 값이에요)
+     ========================================================= */
+  const S = { mode: 'flow', fade: 0, t: 0 };
+  let game = null;
+  const ctlNodes = $$('#ctrlCard .control');
+  const GENE = 'ATGGAACCATGGTTTAAATAA';            // 암호화(비주형) 가닥 5′→3′
+  const TEMPL = GENE.split('').map((c) => CMP[c]).join('');   // 주형 가닥 3′→5′ (왼쪽부터)
+  const MRNA = rnaOfT(GENE);
+  const MRNA_SP = 'AUG GAA CCA UGG UUU AAA UAA';
+  const mrnaCodons = (s) => s.match(/.{1,3}/g) || [];
 
   /* =========================================================
      ① 중심원리: 정보의 흐름 도표 + 세포 단면 (원핵 / 진핵)
@@ -862,7 +863,7 @@
       segs.forEach((g, k) => {
         const lab = g.s[0] === 'e' ? '엑손 ' + g.s[1] : '인트론 ' + g.s[1];
         const cx = g.x + g.w / 2;
-        if (g.s[0] === 'e') T(cx, yBar - 10 - (PHONE && g.i % 4 === 0 ? 0 : 0), PHONE ? String(g.s[1]) : lab, 13, '#1f7a52', 'center', 800);
+        if (g.s[0] === 'e') T(cx, yBar - 10 - (sp > 0.5 && (g.i / 2) % 2 === 1 ? 17 : 0), PHONE ? String(g.s[1]) : lab, 13, '#1f7a52', 'center', 800);
         else if (g.w > 40) T(cx, yBar + bh + 22 + (g.i === 3 ? 0 : 0), PHONE ? '인트론 ' + g.s[1] : lab, 13, '#64748b', 'center', 800);
       });
       if (sp > 0.02 && sp < 0.999) {

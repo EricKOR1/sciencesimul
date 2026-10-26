@@ -461,7 +461,7 @@
     });
     if (!PHONE) { D.arrow(rx1 + 6, hiY - 11, rx1 + 56, hiY - 11, { color: '#d97706', width: 3, head: 11 }); T(rx1 + 6, hiY - 24, '전자 전달계로', 12.5, '#b45309', 'left', 800); }
     else T(L.x + L.w - 10, hiY - 24, '→ 전달계로', 11.5, '#b45309', 'right', 800);
-    T(L.x + L.w / 2, L.y + L.h - 12, PHONE ? '나간 자리는 곧 채워져요' : '나간 전자의 자리는 곧 채워져요 (다음 단계)', PHONE ? 11 : 12.5, '#64748b', 'center', 700);
+    T(L.x + L.w / 2, L.y + L.h - 12, PHONE ? '나간 자리는 곧 채워져요' : '나간 전자의 자리는 곧 채워져요 (다음 단계)', PHONE ? 12 : 12.5, '#64748b', 'center', 700);
     // 파장별 기록 그래프
     const sp = g.sp; panel(sp.x, sp.y, sp.w, sp.h, 16, '#fff');
     const x0 = sp.x + 40, x1 = sp.x + sp.w - 16, X = (w) => x0 + (w - 400) / 300 * (x1 - x0);
@@ -471,9 +471,9 @@
     ctx.strokeStyle = 'rgba(15,23,42,.3)'; ctx.lineWidth = 1; ctx.strokeRect(x0, by, x1 - x0, bh);
     const cy0 = by + bh + (PHONE ? 8 : 12), cy1 = sp.y + sp.h - (PHONE ? 22 : 24), Y = (n) => cy1 - clamp(n / 20, 0, 1) * (cy1 - cy0);
     [0, 10, 20].forEach((n) => { ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x0, Y(n)); ctx.lineTo(x1, Y(n)); ctx.stroke(); T(x0 - 6, Y(n) + 4, String(n), 12, '#64748b', 'right', 700); });
-    [400, 500, 600, 700].forEach((w) => T(X(w), sp.y + sp.h - 6, w + ' nm', PHONE ? 11 : 12.5, '#64748b', 'center', 700));
+    [400, 500, 600, 700].forEach((w) => T(X(w), sp.y + sp.h - 6, w + ' nm', PHONE ? 12 : 12.5, '#64748b', 'center', 700));
     const cls = abClasses(), all3 = cls.blue && cls.green && cls.red;
-    if (all3) { ctx.save(); ctx.setLineDash([5, 4]); ctx.strokeStyle = '#16a34a'; ctx.lineWidth = 2; ctx.beginPath(); for (let w = 400; w <= 700; w += 5) { const x = X(w), y = Y(20 * ABSF(w)); if (w === 400) ctx.moveTo(x, y); else ctx.lineTo(x, y); } ctx.stroke(); ctx.restore(); T(X(555), cy0 + 12, '점선: 광계 색소의 흡수 경향', PHONE ? 11 : 12.5, '#166534', 'center', 800); }
+    if (all3) { ctx.save(); ctx.setLineDash([5, 4]); ctx.strokeStyle = '#16a34a'; ctx.lineWidth = 2; ctx.beginPath(); for (let w = 400; w <= 700; w += 5) { const x = X(w), y = Y(20 * ABSF(w)); if (w === 400) ctx.moveTo(x, y); else ctx.lineTo(x, y); } ctx.stroke(); ctx.restore(); T(X(555), cy0 + 12, '점선: 광계 색소의 흡수 경향', PHONE ? 12 : 12.5, '#166534', 'center', 800); }
     a.rec.forEach((q) => { const x = X(q.wl), y = Y(q.n); D.sphere(x, y, PHONE ? 6 : 7, wl2rgb(q.wl), { gloss: false, outline: '#1f2937', outlineWidth: 1.5 }); });
     const mk = X(wl); ctx.fillStyle = '#1f2937'; ctx.beginPath(); ctx.moveTo(mk, by - 1); ctx.lineTo(mk - 6, by - 9); ctx.lineTo(mk + 6, by - 9); ctx.closePath(); ctx.fill();
     // 기록표
@@ -488,9 +488,10 @@
      ② ~ ④ 틸라코이드 막: 전자 전달 · 물 분해 · H⁺ 기울기 · ATP 합성
      ========================================================= */
   function thG() {
-    const E = PHONE ? { x: 10, y: 10, w: 460, h: 138 } : { x: 14, y: 12, w: 772, h: 136 };
-    const M = PHONE ? { x: 10, y: 154, w: 460, h: 286 } : { x: 14, y: 154, w: 772, h: 288 };
-    const B = PHONE ? { x: 10, y: 446, w: 460, h: 184 } : { x: 14, y: 450, w: 772, h: 98 };
+    const cd = S.mode === 'cond';
+    const E = PHONE ? { x: 10, y: 10, w: 460, h: 138 } : cd ? { x: 14, y: 12, w: 772, h: 122 } : { x: 14, y: 12, w: 772, h: 136 };
+    const M = PHONE ? { x: 10, y: 154, w: 460, h: 286 } : cd ? { x: 14, y: 142, w: 772, h: 252 } : { x: 14, y: 154, w: 772, h: 288 };
+    const B = PHONE ? { x: 10, y: 446, w: 460, h: 184 } : cd ? { x: 14, y: 402, w: 772, h: 146 } : { x: 14, y: 450, w: 772, h: 98 };
     const memY = M.y + M.h * 0.5, th = PHONE ? 22 : 24;
     const fr = { p2: 0.12, car: 0.31, p1: 0.5, red: 0.65, syn: 0.84 }, x = {};
     Object.keys(fr).forEach((k) => { x[k] = M.x + M.w * fr[k]; });
@@ -629,7 +630,7 @@
     D.sphere(0, th / 2 + 44 * sc, 24 * sc, '#fbbf24', { gloss: true, outline: '#a16207', outlineWidth: 1.5 });
     ctx.save(); ctx.translate(0, th / 2 + 44 * sc); ctx.rotate(spin * 0.7); ctx.fillStyle = '#b45309'; ctx.fillRect(-2.5, -14 * sc, 5, 14 * sc); ctx.restore();
     ctx.restore();
-    T(sx, my + th / 2 + 44 * sc + 38 * sc, label || 'ATP 합성 효소', PHONE ? 12 : 13.5, '#92400e', 'center', 800);
+    T(sx, my + th / 2 + 44 * sc + 46, label || 'ATP 합성 효소', PHONE ? 12 : 13.5, '#92400e', 'center', 800);
   }
   function thMembrane(G, th) {
     const M = G.M, my = G.memY, t = G.th;
@@ -647,20 +648,20 @@
       SH(() => { D.roundRect(cx - pw / 2, top, pw, ph, 14); ctx.fillStyle = fill; ctx.fill(); }, { blur: 5, y: 2 }); D.roundRect(cx - pw / 2, top, pw, ph, 14); ctx.strokeStyle = stroke; ctx.lineWidth = 2.5; ctx.stroke();
     };
     blob(G.x.p2, '#86efac', '#15803d', th.g2); blob(G.x.p1, '#86efac', '#15803d', th.g1);
-    const lab = (cx, s) => T(cx, my + t / 2 + 28, s, PHONE ? 11.5 : 13, '#14532d', 'center', 800);
+    const lab = (cx, s) => T(cx, my + t / 2 + 28, s, PHONE ? 12 : 13, '#14532d', 'center', 800);
     lab(G.x.p2, '광계 Ⅱ'); lab(G.x.p1, '광계 Ⅰ');
     // 전자 전달 단백질
     const cw = PHONE ? 50 : 62; SH(() => { D.roundRect(G.x.car - cw / 2, my - t / 2 - 8, cw, t + 16, 14); ctx.fillStyle = th.pumpFx > 0.05 ? C.mix('#c4b5fd', '#fdba74', th.pumpFx) : '#c4b5fd'; ctx.fill(); }, { blur: 5, y: 2 });
     D.roundRect(G.x.car - cw / 2, my - t / 2 - 8, cw, t + 16, 14); ctx.strokeStyle = '#6d28d9'; ctx.lineWidth = 2.5; ctx.stroke();
     ctx.beginPath(); ctx.ellipse(G.x.car - cw / 2 - (PHONE ? 16 : 22), my, PHONE ? 9 : 12, 6, 0, 0, TAU); ctx.fillStyle = '#ddd6fe'; ctx.fill(); ctx.stroke();
     ctx.beginPath(); ctx.ellipse(G.x.car + cw / 2 + (PHONE ? 16 : 22), my, PHONE ? 9 : 12, 6, 0, 0, TAU); ctx.fillStyle = '#ddd6fe'; ctx.fill(); ctx.stroke();
-    T(G.x.car, my + t / 2 + 28, '전자 전달 단백질', PHONE ? 11.5 : 13, '#4c1d95', 'center', 800);
+    T(G.x.car, my + t / 2 + 28, '전자 전달 단백질', PHONE ? 12 : 13, '#4c1d95', 'center', 800);
     if (th.pumpFx > 0.05) D.arrow(G.x.car, my - t / 2 - 10, G.x.car, my - t / 2 - 34, { color: '#ea580c', width: 3, head: 9, alpha: th.pumpFx });
     // NADP⁺ 환원 효소 (스트로마 쪽)
     const rw = PHONE ? 40 : 52; SH(() => { D.roundRect(G.x.red - rw / 2, my + t / 2 - 6, rw, 30, 10); ctx.fillStyle = '#fbcfe8'; ctx.fill(); }, { blur: 4, y: 2 }); D.roundRect(G.x.red - rw / 2, my + t / 2 - 6, rw, 30, 10); ctx.strokeStyle = '#be185d'; ctx.lineWidth = 2.5; ctx.stroke();
-    T(G.x.red, my + t / 2 + 50, PHONE ? 'NADP⁺ 환원 효소' : 'NADP⁺ 환원 효소', PHONE ? 11 : 13, '#9d174d', 'center', 800);
+    T(G.x.red, my + t / 2 + 62, 'NADP⁺ 환원 효소', PHONE ? 12 : 13, '#9d174d', 'center', 800);
     if (th.e2 > 0) D.sphere(G.x.red, my + t / 2 + 9, 6.5, '#fde047', { gloss: false, text: 'e⁻', textColor: '#713f12', textScale: 0.95 });
-    else T(G.x.red, my + t / 2 + 14, 'NADP⁺', PHONE ? 10.5 : 12, '#9d174d', 'center', 800);
+    else T(G.x.red, my + t / 2 + 14, 'NADP⁺', PHONE ? 12 : 12, '#9d174d', 'center', 800);
   }
   function thEnergy(G, th, P, t, showGauge) {
     const E = G.E; panel(E.x, E.y, E.w, E.h, 16, '#fff');
@@ -677,7 +678,7 @@
     // 점
     const dot = (p, col) => { D.sphere(p.x, p.y, 4.5, col, { gloss: false }); };
     dot(P.W, '#38bdf8'); dot(P.G2, '#94a3b8'); dot(P.X2, '#f59e0b'); dot(P.C, '#8b5cf6'); dot(P.G1, '#94a3b8'); dot(P.X1, '#f59e0b'); dot(P.R, '#ec4899');
-    const fs = PHONE ? 11 : 13;
+    const fs = PHONE ? 12 : 13;
     T(P.W.x, P.W.y + 20, '물(H₂O)', fs, '#0369a1', 'center', 800);
     T(P.X2.x + 8, P.X2.y - 11, '광계 Ⅱ 들뜸', fs, '#b45309', 'left', 800);
     T(P.C.x + 6, P.C.y - 12, '에너지 방출 · H⁺ 펌프', fs, '#6d28d9', 'left', 800);
@@ -688,7 +689,7 @@
       const p = f.w === 'X2' ? P.X2 : P.X1, lo = f.w === 'X2' ? P.G2 : P.G1, e = f.t, y = lo.y + (p.y - lo.y) * Math.min(1, e * 1.8);
       ctx.save(); ctx.globalAlpha = 1 - e * e; ctx.strokeStyle = '#facc15'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(p.x - 44 + e * 20, lo.y - 30 + e * 10); ctx.lineTo(p.x - 6, y); ctx.stroke();
       D.glow(p.x, y, 20 + e * 16, '#fde047', 0.7 * (1 - e)); ctx.restore();
-      if (e < 0.7) T(p.x - 48, lo.y - 34, '광자', 12, '#a16207', 'left', 800, { alpha: 1 - e });
+      if (e < 0.7 && S.mode === 'water') T(p.x - 48, lo.y - 34, '광자', 12, '#a16207', 'left', 800, { alpha: 1 - e });
     });
     // 전자
     let newest = null;
@@ -708,11 +709,11 @@
     // 물 분해 부위: 물 2분자
     const wx = G.x.p2, wy = my - t2 / 2 - 36, f = 1 - th.wq * 0.2;
     ctx.save(); ctx.globalAlpha = th.treat === 'dry' ? 0.18 : 1;
-    [-1, 1].forEach((s) => { const cx = wx + s * (PHONE ? 11 : 15), cy = wy; ctx.save(); ctx.translate(cx, cy); ctx.scale(f, f); D.sphere(0, 0, PHONE ? 6 : 7, '#ef4444', { gloss: false }); D.sphere(-6.5, 5, 3.6, '#fff', { gloss: false, outline: '#94a3b8', outlineWidth: 1 }); D.sphere(6.5, 5, 3.6, '#fff', { gloss: false, outline: '#94a3b8', outlineWidth: 1 }); ctx.restore(); });
+    [-1, 1].forEach((s) => { const cx = wx + s * (PHONE ? 12 : 15), cy = wy; ctx.save(); ctx.translate(cx, cy); ctx.scale(f, f); D.sphere(0, 0, PHONE ? 6 : 7, '#ef4444', { gloss: false }); D.sphere(-6.5, 5, 3.6, '#fff', { gloss: false, outline: '#94a3b8', outlineWidth: 1 }); D.sphere(6.5, 5, 3.6, '#fff', { gloss: false, outline: '#94a3b8', outlineWidth: 1 }); ctx.restore(); });
     ctx.restore();
     if (th.treat === 'dry') T(wx, wy - 14, '물 부족', 12, '#b91c1c', 'center', 800, { stroke: 'rgba(255,253,247,.9)', strokeWidth: 3 });
-    else T(wx, wy - (PHONE ? 15 : 17), 'H₂O ×2', PHONE ? 11 : 12, '#0369a1', 'center', 800, { stroke: 'rgba(255,253,247,.9)', strokeWidth: 3 });
-    if (th.treat === 'dcmu') { D.sphere(G.x.p2 + G.pw / 2 - 2, my - t2 / 2 + 6, 13, '#dc2626', { gloss: false, text: '✖', textScale: 1 }); T(G.x.p2 + G.pw / 2 + 4, my + t2 / 2 + 46, '전달 차단', PHONE ? 11 : 12.5, '#b91c1c', 'left', 800); }
+    else T(wx, wy - (PHONE ? 15 : 17), 'H₂O ×2', PHONE ? 12 : 12, '#0369a1', 'center', 800, { stroke: 'rgba(255,253,247,.9)', strokeWidth: 3 });
+    if (th.treat === 'dcmu') { D.sphere(G.x.p2 + G.pw / 2 - 2, my - t2 / 2 + 6, 13, '#dc2626', { gloss: false, text: '✖', textScale: 1 }); T(G.x.p2 + G.pw / 2 + 4, my + t2 / 2 + 46, '전달 차단', PHONE ? 12 : 12.5, '#b91c1c', 'left', 800); }
     // 시냅스 아닌 ATP 합성 효소
     synthDraw(G, th.spin, 'ATP 합성 효소');
     // H⁺ 점
@@ -722,11 +723,11 @@
     th.strH.forEach((q) => blit(sH, q.x, q.y, 0.7));
     // O₂ 기포
     th.bubbles.forEach((b) => { if (b.t < 0) return; ctx.save(); ctx.globalAlpha = clamp((b.y - (G.M.y + 16)) / 24, 0, 1); D.sphere(b.x - 4, b.y, 5.5, '#38bdf8', { gloss: true }); D.sphere(b.x + 4, b.y, 5.5, '#38bdf8', { gloss: true }); T(b.x, b.y - 11, 'O₂', 11.5, '#0369a1', 'center', 800, { stroke: '#fff', strokeWidth: 3 }); ctx.restore(); });
-    T(G.x.p2 + 14, G.M.y + 24, 'O₂는 기체로 방출 ↑', PHONE ? 11 : 12.5, '#0369a1', 'left', 800, { alpha: th.o2 > 0 ? 1 : 0.55 });
+    T(G.x.p2 + 14, G.M.y + 24, 'O₂는 기체로 방출 ↑', PHONE ? 12 : 12.5, '#0369a1', 'left', 800, { alpha: th.o2 > 0 ? 1 : 0.55 });
     // ATP · NADPH 생성물
-    th.atpFly.forEach((q) => { const e = q.t, y0 = my + t2 / 2 + 44 * sc + 4, x = G.x.syn + 10 - e * (PHONE ? 100 : 150), y = y0 + e * (22 + q.lane * 17); ctx.save(); ctx.globalAlpha = 1 - e * e * e; pill(x, y, 40, 18, 'ATP', '#facc15', '#713f12'); ctx.restore(); });
-    th.npFly.forEach((q) => { const e = q.t, x = G.x.red + 14 + e * (PHONE ? 60 : 90), y = my + t2 / 2 + 18 + e * (20 + q.lane * 17); ctx.save(); ctx.globalAlpha = 1 - e * e * e; pill(x, y, 54, 18, 'NADPH', '#f472b6', '#fff'); ctx.restore(); });
-    T(G.str.x + G.str.w - 10, G.str.y + G.str.h - 10, 'ATP · NADPH → 탄소 고정 반응(다음 차시)', PHONE ? 11 : 12.5, '#3f6212', 'right', 800);
+    th.atpFly.forEach((q) => { const e = q.t, y0 = my + t2 / 2 + 44 * sc - 2, x = G.x.syn - 14 - e * (PHONE ? 100 : 150), y = y0 + q.lane * 12 + e * 8; ctx.save(); ctx.globalAlpha = 1 - e * e * e; pill(x, y, 40, 18, 'ATP', '#facc15', '#713f12'); ctx.restore(); });
+    th.npFly.forEach((q) => { const e = q.t, x = G.x.red + 14 + e * (PHONE ? 60 : 90), y = my + t2 / 2 + 16 + q.lane * 13 + e * 8; ctx.save(); ctx.globalAlpha = 1 - e * e * e; pill(x, y, 54, 18, 'NADPH', '#f472b6', '#fff'); ctx.restore(); });
+    T(G.str.x + G.str.w - 10, G.str.y + G.str.h - 10, 'ATP · NADPH → 탄소 고정 반응(다음 차시)', PHONE ? 12 : 12.5, '#3f6212', 'right', 800);
     // 칸 이름표 (맨 위에 그려요)
     const stk = { stroke: 'rgba(255,253,247,.92)', strokeWidth: 4 };
     T(G.lum.x + 12, G.lum.y + 17, '틸라코이드 내부 (pH ' + fx1(phL()) + ')', PHONE ? 12.5 : 14.5, '#9a5b12', 'left', 800, stk);
@@ -736,7 +737,7 @@
   /* ----- 아래 칸 ----- */
   function tile(x, y, w, h, label, val, col, big) {
     D.roundRect(x, y, w, h, 10); ctx.fillStyle = C.rgba(col, 0.1); ctx.fill(); ctx.strokeStyle = C.rgba(col, 0.55); ctx.lineWidth = 1.5; ctx.stroke();
-    T(x + w / 2, y + 16, label, PHONE ? 11.5 : 12.5, '#475569', 'center', 800);
+    T(x + w / 2, y + 16, label, PHONE ? 12 : 12.5, '#475569', 'center', 800);
     T(x + w / 2, y + h - 10, val, big || (PHONE ? 20 : 22), C.shade(col, -0.4), 'center', 800);
   }
   function waterPanel(G, th, t) {
@@ -744,7 +745,7 @@
     T(B.x + 14, B.y + 22, '물 분해: 2H₂O → O₂ + 4H⁺ + 4e⁻', PHONE ? 13 : 15, '#1f2d44', 'left', 800);
     // 전자 4개 칸
     const sx = B.x + 28, sy = B.y + (PHONE ? 66 : 66);
-    T(B.x + 14, sy - 20, '물에서 보충한 전자', PHONE ? 11.5 : 12.5, '#475569', 'left', 800);
+    T(B.x + 14, sy - 20, '물에서 보충한 전자', PHONE ? 12 : 12.5, '#475569', 'left', 800);
     for (let i = 0; i < 4; i++) { const x = sx + i * 40, on = i < th.wq; ctx.beginPath(); ctx.arc(x, sy, 15, 0, TAU); ctx.fillStyle = on ? '#fef08a' : '#f1f5f9'; ctx.fill(); ctx.strokeStyle = on ? '#ca8a04' : '#cbd5e1'; ctx.lineWidth = 2; ctx.setLineDash(on ? [] : [4, 3]); ctx.stroke(); ctx.setLineDash([]); if (on) T(x, sy + 5, 'e⁻', 13, '#713f12', 'center', 800); }
     T(sx + 4 * 40 + 6, sy + 5, th.wq + ' / 4', PHONE ? 16 : 18, '#1f2d44', 'left', 800);
     const r = B.x + (PHONE ? 14 : 296), ry = B.y + (PHONE ? 112 : 28), tw = PHONE ? 100 : 108, gap = 8, th2 = PHONE ? 56 : 62;
@@ -760,7 +761,7 @@
     const by2 = by + (PHONE ? 46 : 34);
     T(bx, by2 - 2, '스트로마 [H⁺]', PHONE ? 12.5 : 14, '#334155', 'left', 800); T(bx + bw, by2 - 2, 'pH 8.0', PHONE ? 14 : 16, '#1f2d44', 'right', 800);
     D.roundRect(bx, by2 + 6, bw, 16, 8); ctx.fillStyle = '#eef2f7'; ctx.fill(); D.roundRect(bx, by2 + 6, 8, 16, 8); ctx.fillStyle = '#eab308'; ctx.fill();
-    T(bx, by2 + (PHONE ? 42 : 40), '막대 = (8 − pH) / 3 · 농도비 약 ' + ratioTxt() + '배', PHONE ? 11 : 12, '#94a3b8', 'left', 700);
+    T(bx, by2 + (PHONE ? 42 : 40), '막대 = (8 − pH) / 3 · 농도비 약 ' + ratioTxt() + '배', PHONE ? 12 : 12, '#94a3b8', 'left', 700);
     const tw = PHONE ? 104 : 108, gap = 8, th2 = PHONE ? 50 : 52, r = PHONE ? B.x + 240 : B.x + 296, ry = B.y + 12;
     const tl = [['분해된 물', fi(th.o2 * 2) + '분자', '#0ea5e9'], ['O₂ 방출', th.o2 + '분자', '#38bdf8'], ['NADPH', th.nadph + '개', '#ec4899'], ['ATP', th.atp + '개', '#f59e0b']];
     tl.forEach((q, k) => { if (PHONE) tile(r + (k % 2) * (tw + gap), ry + Math.floor(k / 2) * (th2 + 8), tw, th2, q[0], q[1], q[2]); else tile(r + k * (tw + gap), ry, tw, th2, q[0], q[1], q[2]); });
