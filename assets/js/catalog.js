@@ -8405,8 +8405,7 @@ window.SCI_CATALOG = {
                 "물 분해",
                 "ATP 생성",
                 "조건 변화"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hy-carbon-fixation",
@@ -8427,8 +8426,7 @@ window.SCI_CATALOG = {
                 "필요량 계산",
                 "두 반응 연결",
                 "조건 예측"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hy-electron-transport",
@@ -8449,8 +8447,7 @@ window.SCI_CATALOG = {
                 "나란히 보기",
                 "비교표",
                 "인포그래픽"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hy-photo-history",
@@ -8471,8 +8468,7 @@ window.SCI_CATALOG = {
                 "산소의 출처",
                 "캘빈의 추적",
                 "시각화 제작"
-              ],
-              "soon": true
+              ]
             }
           ]
         }

@@ -468,7 +468,8 @@
     ctx.save(); ctx.rotate(m.spin); for (let k = 0; k < 6; k++) { ctx.rotate(TAU / 6); ctx.fillStyle = k % 2 ? '#f59e0b' : '#d97706'; ctx.fillRect(4 * sc, -2.5 * sc, 20 * sc, 5 * sc); } ctx.restore();
     ctx.fillStyle = '#d97706'; ctx.fillRect(-5 * sc, th / 2, 10 * sc, 20 * sc); ctx.restore();
     D.sphere(sx, my + th / 2 + 44 * sc, 22 * sc, '#fbbf24', { gloss: true, outline: '#a16207', outlineWidth: 1.5 });
-    T(sx, my + th / 2 + 44 * sc + 60, 'ATP 합성 효소', PHONE ? 12 : 12.5, '#92400e', 'center', 800, { stroke: 'rgba(255,253,247,.9)', strokeWidth: 3 });
+    if (my + th / 2 + 44 * sc + 60 < G.y1 - 4) T(sx, my + th / 2 + 44 * sc + 60, 'ATP 합성 효소', PHONE ? 12 : 12.5, '#92400e', 'center', 800, { stroke: 'rgba(255,253,247,.9)', strokeWidth: 3 });
+    else T(sx - 30 * sc - 4, my + th / 2 + 44 * sc + 4, 'ATP 합성 효소', PHONE ? 11.5 : 12, '#92400e', 'right', 800, { stroke: 'rgba(255,253,247,.9)', strokeWidth: 3 });
     // H⁺ 점
     const sp = sH(); m.hs.forEach((q) => blit(sp, q.x, q.y, Math.max(0, q.a)));
     m.fl.forEach((f) => { const y = my - th / 2 - 22 * sc + f.t * (th + 30 * sc); blit(txtSprite('H2', 'H⁺', 12, '#ea580c', 800, 'rgba(255,253,247,.85)'), sx, y, Math.sin(Math.min(1, f.t * 1.1) * Math.PI * 0.95)); });
