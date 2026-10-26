@@ -8575,8 +8575,7 @@ window.SCI_CATALOG = {
                 "수 이상",
                 "구조 이상",
                 "발생 빈도"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hg-mutation-disease",
@@ -8597,8 +8596,7 @@ window.SCI_CATALOG = {
                 "틀 이동",
                 "발병 원인",
                 "조사 계획"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hg-genetic-material",
@@ -8619,8 +8617,7 @@ window.SCI_CATALOG = {
                 "허시·체이스",
                 "DNA 추출",
                 "증거 종합"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hg-dna-structure",
@@ -8641,8 +8638,7 @@ window.SCI_CATALOG = {
                 "X선 회절",
                 "이중 나선",
                 "발표 자료"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hg-gene-structure",
@@ -9171,8 +9167,7 @@ window.SCI_CATALOG = {
                 "분출물",
                 "박편 관찰",
                 "암석 순환"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hs-seismic-waves",
