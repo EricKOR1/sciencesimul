@@ -3,7 +3,9 @@
   'use strict';
   const { el, Store, starsHTML } = SciSim;
   const CAT = window.SCI_CATALOG;
-  const tabsEl = document.getElementById('gradeTabs');
+  const levelEl = document.getElementById('levelRow');
+  const gradeEl = document.getElementById('gradeRow');
+  const unitEl = document.getElementById('unitRow');
   const listEl = document.getElementById('unitList');
   const searchEl = document.getElementById('search');
   const onlyReadyEl = document.getElementById('onlyReady');
@@ -11,6 +13,16 @@
 
   let current = (location.hash || '').replace('#', '') || Store.get('hubGrade', 'g1');
   if (!CAT.grades.some((g) => g.id === current)) current = 'g1';
+  // 학교급: 중학교(ms) / 고등학교(그 밖의 모든 묶음)
+  const LEVELS = [
+    { id: 'ms', icon: '🏫', name: '중학생', sub: '중1 · 중2 · 중3' },
+    { id: 'hs', icon: '🎓', name: '고등학생', sub: '통합과학 · 일반선택 · 진로선택' },
+  ];
+  const levelOf = (g) => ((g.group || 'ms') === 'ms' ? 'ms' : 'hs');
+  const gradeById = (id) => CAT.grades.find((g) => g.id === id);
+  // 학년(과목)마다 마지막으로 고른 단원 번호(없으면 전체)
+  const unitPick = () => Store.get('hubUnit', {}) || {};
+  const curUnit = () => { const v = unitPick()[current]; return typeof v === 'number' && v < gradeById(current).units.length ? v : -1; };
   onlyReadyEl.checked = !!Store.get('hubOnlyReady', false);
 
   function simsOf(grade) { return grade.units.flatMap((u) => u.sims).filter((s) => !s.soon); }
@@ -32,30 +44,113 @@
     );
   }
 
+  // 화면을 내리면 위에 나타나는 얇은 메뉴 바 (지금 선택 + 바꾸기)
+  const crumbEl = el('div', { class: 'crumb-bar', 'aria-hidden': 'true' });
+  document.body.appendChild(crumbEl);
+  function renderCrumb() {
+    const g = gradeById(current), cu = curUnit();
+    const L = LEVELS.find((x) => x.id === levelOf(g));
+    crumbEl.innerHTML = '';
+    const parts = [L.icon + ' ' + L.name, g.group === 'ms' ? g.short : g.name];
+    if (cu >= 0) parts.push(g.units[cu].no + '. ' + g.units[cu].title);
+    crumbEl.append(
+      el('span', { class: 'crumb-path', text: parts.join('  ›  ') }),
+      el('button', { class: 'crumb-btn', text: '바꾸기 ▲', onclick: () => window.scrollTo({ top: Math.max(0, document.getElementById('picker').getBoundingClientRect().top + window.scrollY - 12), behavior: 'smooth' }) }),
+    );
+  }
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver((es) => es.forEach((e) => {
+      const show = !e.isIntersecting && e.boundingClientRect.top < 0;
+      crumbEl.classList.toggle('show', show); crumbEl.setAttribute('aria-hidden', show ? 'false' : 'true');
+    }), { threshold: 0 }).observe(document.getElementById('picker'));
+  }
+
+  function pickGrade(id) {
+    current = id;
+    Store.set('hubGrade', current);
+    Store.set('hubGrade_' + levelOf(gradeById(id)), current);
+    Store.set('hubGrade_g_' + (gradeById(id).group || 'ms'), current);
+    history.replaceState(null, '', '#' + current);
+    searchEl.value = '';
+    renderTabs();
+    renderList();
+  }
+
   function renderTabs() {
-    tabsEl.innerHTML = '';
-    const GROUP_LABEL = { ms: '중학교', hcommon: '고등학교 공통 과목', hgeneral: '고등학교 일반선택', hcareer: '고등학교 진로선택', hfusion: '고등학교 융합선택' };
-    let lastGroup = null;
-    CAT.grades.forEach((g, i) => {
-      const sims = simsOf(g), group = g.group || 'ms';
-      if (group !== lastGroup) {                              // 과목 묶음이 바뀌면 작은 제목을 넣어요
-        tabsEl.appendChild(el('div', { class: 'grade-group', text: GROUP_LABEL[group] || '' }));
-        lastGroup = group;
-      }
-      const b = el('button', { class: 'grade-tab g-' + group + (g.id === current ? ' on' : ''), role: 'tab', 'aria-selected': g.id === current ? 'true' : 'false' }, [
-        el('span', { class: 'gnum' + ((g.short || '').length > 2 ? ' long' : ''), text: g.short || String(i + 1) }),
-        el('span', { class: 'gtext' }, [el('b', { text: g.name }), el('span', { text: (/^h(general|career|fusion)$/.test(g.group) ? '' : g.book + ' · ') + g.units.length + '개 단원' })]),
-        el('span', { class: 'gprog', html: sims.length + '차시<br><span class="st">★</span> ' + starsOf(sims) + '/' + sims.length * 3 }),
+    const g = gradeById(current), lv = levelOf(g);
+    // ① 학교급
+    levelEl.innerHTML = '';
+    LEVELS.forEach((L) => {
+      const grades = CAT.grades.filter((x) => levelOf(x) === L.id);
+      const n = grades.reduce((k, x) => k + simsOf(x).length, 0);
+      const b = el('button', { class: 'lv-btn' + (L.id === lv ? ' on' : ''), role: 'tab', 'aria-selected': L.id === lv ? 'true' : 'false' }, [
+        el('span', { class: 'lv-icon', text: L.icon }),
+        el('span', { class: 'lv-text' }, [el('b', { text: L.name }), el('span', { text: L.sub })]),
+        el('span', { class: 'lv-count', text: n + '차시' }),
       ]);
       b.addEventListener('click', () => {
-        current = g.id;
-        Store.set('hubGrade', current);
-        history.replaceState(null, '', '#' + current);
-        searchEl.value = '';
-        renderTabs();
-        renderList();
+        if (L.id === lv) return;
+        const last = Store.get('hubGrade_' + L.id, null);
+        pickGrade(last && gradeById(last) && levelOf(gradeById(last)) === L.id ? last : grades[0].id);
       });
-      tabsEl.appendChild(b);
+      levelEl.appendChild(b);
+    });
+    // ② 학년(중학교) / 과목 구분 → 과목(고등학교)
+    gradeEl.innerHTML = '';
+    const GROUP_LABEL = { ms: '학년', hcommon: '공통 과목', hgeneral: '일반선택', hcareer: '진로선택', hfusion: '융합선택' };
+    const GROUP_SUB = { hcommon: '고1 통합과학', hgeneral: '고2 물리·화학·생명·지구', hcareer: '고2–3 심화 과목', hfusion: '융합 과목' };
+    const progTxt = (x) => { const r = simsOf(x).length, t = x.units.reduce((k, u) => k + u.sims.length, 0); return (r < t ? r + '/' + t : r) + '차시'; };
+    const chip = (x, label) => {
+      const sims = simsOf(x), on = x.id === current;
+      const b = el('button', { class: 'gr-chip' + (on ? ' on' : ''), role: 'tab', 'aria-selected': on ? 'true' : 'false', title: x.name }, [
+        el('b', { text: label }),
+        el('span', { class: 'gr-meta', html: progTxt(x) + ' · <span class="st">★</span>' + starsOf(sims) }),
+      ]);
+      b.addEventListener('click', () => { if (!on) pickGrade(x.id); });
+      return b;
+    };
+    const curGroup = g.group || 'ms';
+    if (lv === 'ms') {
+      gradeEl.appendChild(el('div', { class: 'gr-group' }, [el('span', { class: 'gr-label', text: '학년' }),
+        el('div', { class: 'gr-chips' }, CAT.grades.filter((x) => levelOf(x) === 'ms').map((x) => chip(x, x.short)))]));
+    } else {
+      const keys = [];
+      CAT.grades.forEach((x) => { const k = x.group || 'ms'; if (k !== 'ms' && !keys.includes(k)) keys.push(k); });
+      gradeEl.appendChild(el('div', { class: 'gr-group' }, [el('span', { class: 'gr-label', text: '과목 구분' }),
+        el('div', { class: 'gr-chips' }, keys.map((k) => {
+          const on = k === curGroup, list = CAT.grades.filter((x) => (x.group || 'ms') === k);
+          const b = el('button', { class: 'cat-chip' + (on ? ' on' : ''), role: 'tab', 'aria-selected': on ? 'true' : 'false' }, [
+            el('b', { text: GROUP_LABEL[k] }), el('span', { text: GROUP_SUB[k] + ' · ' + list.length + '과목' }),
+          ]);
+          b.addEventListener('click', () => {
+            if (on) return;
+            const last = Store.get('hubGrade_g_' + k, null);
+            pickGrade(last && gradeById(last) && gradeById(last).group === k ? last : list[0].id);
+          });
+          return b;
+        }))]));
+      gradeEl.appendChild(el('div', { class: 'gr-group' }, [el('span', { class: 'gr-label', text: '과목' }),
+        el('div', { class: 'gr-chips' }, CAT.grades.filter((x) => (x.group || 'ms') === curGroup).map((x) => chip(x, x.name)))]));
+    }
+    renderCrumb();
+    // ③ 단원
+    unitEl.innerHTML = '';
+    const cu = curUnit();
+    const unitBtn = (idx, label, title) => {
+      const on = idx === cu;
+      const b = el('button', { class: 'un-chip' + (on ? ' on' : ''), role: 'tab', 'aria-selected': on ? 'true' : 'false', title: title || label }, label);
+      b.addEventListener('click', () => {
+        const m = Object.assign({}, unitPick()); m[current] = idx; Store.set('hubUnit', m);
+        searchEl.value = '';
+        renderTabs(); renderList();
+      });
+      return b;
+    };
+    unitEl.appendChild(el('span', { class: 'gr-label', text: '단원' }));
+    unitEl.appendChild(unitBtn(-1, [el('b', { text: '전체' })], '모든 단원 보기'));
+    g.units.forEach((u, i) => {
+      const ready = readyOf(u).length;
+      unitEl.appendChild(unitBtn(i, [el('span', { class: 'un-no', text: u.no }), el('span', { class: 'un-title', text: u.title }), el('span', { class: 'un-n', text: ready + (ready < u.sims.length ? '/' + u.sims.length : '') })], u.no + '. ' + u.title));
     });
   }
 
@@ -157,8 +252,10 @@
       return;
     }
     const g = CAT.grades.find((x) => x.id === current);
+    const cu = curUnit();
     let i = 0;
-    g.units.forEach((u) => {
+    g.units.forEach((u, ui) => {
+      if (cu >= 0 && ui !== cu) return;
       if (onlyReadyEl.checked && !readyOf(u).length) return;
       listEl.appendChild(unitBlock(u, g, null, i++ * 40));
     });
