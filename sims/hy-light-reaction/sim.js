@@ -61,7 +61,26 @@
     ls.forEach((l, i) => T(x, y + i * lh, l, size, color, align || 'left', weight || 700));
     return ls.length * lh;
   }
-  function panel(x, y, w, h, r, fill) { D.shadow(() => { D.roundRect(x, y, w, h, r || 14); ctx.fillStyle = fill || '#fff'; ctx.fill(); }, { blur: 8, y: 2 }); }
+  /* 부드러운 그림자는 매 프레임 비싸서(소프트웨어 렌더링) 겹쳐 그린 반투명 테두리로 대신해요 */
+  const SH = (fn) => fn();
+  /* 자주 그리는 작은 그림은 한 번만 만들어 두고 복사해서 써요 */
+  const SPR = {};
+  function sprite(key, w, h, fn) {
+    if (!SPR[key]) {
+      const c = document.createElement('canvas'); c.width = Math.ceil(w * 2); c.height = Math.ceil(h * 2);
+      const cx = c.getContext('2d'); cx.scale(2, 2); fn(cx, SciSim.draw(cx), w, h); SPR[key] = { c, w, h };
+    }
+    return SPR[key];
+  }
+  function blit(s, x, y, a) { if (a != null && a !== 1) { ctx.save(); ctx.globalAlpha = a; ctx.drawImage(s.c, x - s.w / 2, y - s.h / 2, s.w, s.h); ctx.restore(); } else ctx.drawImage(s.c, x - s.w / 2, y - s.h / 2, s.w, s.h); }
+  function txtSprite(key, str, size, color, weight, stroke) {
+    return sprite(key, Math.ceil(str.length * size * 0.9 + 10), Math.ceil(size * 1.5 + 6), (cx, D2, w, h) => {
+      cx.font = D2.font(size, weight || 800); cx.textAlign = 'center'; cx.textBaseline = 'middle';
+      if (stroke) { cx.lineJoin = 'round'; cx.strokeStyle = stroke; cx.lineWidth = 4; cx.strokeText(str, w / 2, h / 2 + 1); }
+      cx.fillStyle = color; cx.fillText(str, w / 2, h / 2 + 1);
+    });
+  }
+  function panel(x, y, w, h, r, fill) { D.roundRect(x, y + 3, w, h, r || 14); ctx.fillStyle = 'rgba(15,23,42,.06)'; ctx.fill(); D.roundRect(x, y, w, h, r || 14); ctx.fillStyle = fill || '#fff'; ctx.fill(); ctx.strokeStyle = 'rgba(100,116,139,.22)'; ctx.lineWidth = 1; ctx.stroke(); }
   function bgFill(top, bottom) { const g = ctx.createLinearGradient(0, 0, 0, VH); g.addColorStop(0, top); g.addColorStop(1, bottom); ctx.fillStyle = g; ctx.fillRect(0, 0, VW, VH); }
   let hintTimer = 0;
   function showHint(msg, ms) {
@@ -625,20 +644,20 @@
     const pw = G.pw, top = my - t / 2 - 18, ph = t + 34;
     const blob = (cx, fill, stroke, glow) => {
       if (glow > 0.02) D.glow(cx, my, 62, '#fde047', glow * 0.8);
-      D.shadow(() => { D.roundRect(cx - pw / 2, top, pw, ph, 14); ctx.fillStyle = fill; ctx.fill(); }, { blur: 5, y: 2 }); D.roundRect(cx - pw / 2, top, pw, ph, 14); ctx.strokeStyle = stroke; ctx.lineWidth = 2.5; ctx.stroke();
+      SH(() => { D.roundRect(cx - pw / 2, top, pw, ph, 14); ctx.fillStyle = fill; ctx.fill(); }, { blur: 5, y: 2 }); D.roundRect(cx - pw / 2, top, pw, ph, 14); ctx.strokeStyle = stroke; ctx.lineWidth = 2.5; ctx.stroke();
     };
     blob(G.x.p2, '#86efac', '#15803d', th.g2); blob(G.x.p1, '#86efac', '#15803d', th.g1);
     const lab = (cx, s) => T(cx, my + t / 2 + 28, s, PHONE ? 11.5 : 13, '#14532d', 'center', 800);
     lab(G.x.p2, '광계 Ⅱ'); lab(G.x.p1, '광계 Ⅰ');
     // 전자 전달 단백질
-    const cw = PHONE ? 50 : 62; D.shadow(() => { D.roundRect(G.x.car - cw / 2, my - t / 2 - 8, cw, t + 16, 14); ctx.fillStyle = th.pumpFx > 0.05 ? C.mix('#c4b5fd', '#fdba74', th.pumpFx) : '#c4b5fd'; ctx.fill(); }, { blur: 5, y: 2 });
+    const cw = PHONE ? 50 : 62; SH(() => { D.roundRect(G.x.car - cw / 2, my - t / 2 - 8, cw, t + 16, 14); ctx.fillStyle = th.pumpFx > 0.05 ? C.mix('#c4b5fd', '#fdba74', th.pumpFx) : '#c4b5fd'; ctx.fill(); }, { blur: 5, y: 2 });
     D.roundRect(G.x.car - cw / 2, my - t / 2 - 8, cw, t + 16, 14); ctx.strokeStyle = '#6d28d9'; ctx.lineWidth = 2.5; ctx.stroke();
     ctx.beginPath(); ctx.ellipse(G.x.car - cw / 2 - (PHONE ? 16 : 22), my, PHONE ? 9 : 12, 6, 0, 0, TAU); ctx.fillStyle = '#ddd6fe'; ctx.fill(); ctx.stroke();
     ctx.beginPath(); ctx.ellipse(G.x.car + cw / 2 + (PHONE ? 16 : 22), my, PHONE ? 9 : 12, 6, 0, 0, TAU); ctx.fillStyle = '#ddd6fe'; ctx.fill(); ctx.stroke();
     T(G.x.car, my + t / 2 + 28, '전자 전달 단백질', PHONE ? 11.5 : 13, '#4c1d95', 'center', 800);
     if (th.pumpFx > 0.05) D.arrow(G.x.car, my - t / 2 - 10, G.x.car, my - t / 2 - 34, { color: '#ea580c', width: 3, head: 9, alpha: th.pumpFx });
     // NADP⁺ 환원 효소 (스트로마 쪽)
-    const rw = PHONE ? 40 : 52; D.shadow(() => { D.roundRect(G.x.red - rw / 2, my + t / 2 - 6, rw, 30, 10); ctx.fillStyle = '#fbcfe8'; ctx.fill(); }, { blur: 4, y: 2 }); D.roundRect(G.x.red - rw / 2, my + t / 2 - 6, rw, 30, 10); ctx.strokeStyle = '#be185d'; ctx.lineWidth = 2.5; ctx.stroke();
+    const rw = PHONE ? 40 : 52; SH(() => { D.roundRect(G.x.red - rw / 2, my + t / 2 - 6, rw, 30, 10); ctx.fillStyle = '#fbcfe8'; ctx.fill(); }, { blur: 4, y: 2 }); D.roundRect(G.x.red - rw / 2, my + t / 2 - 6, rw, 30, 10); ctx.strokeStyle = '#be185d'; ctx.lineWidth = 2.5; ctx.stroke();
     T(G.x.red, my + t / 2 + 50, PHONE ? 'NADP⁺ 환원 효소' : 'NADP⁺ 환원 효소', PHONE ? 11 : 13, '#9d174d', 'center', 800);
     if (th.e2 > 0) D.sphere(G.x.red, my + t / 2 + 9, 6.5, '#fde047', { gloss: false, text: 'e⁻', textColor: '#713f12', textScale: 0.95 });
     else T(G.x.red, my + t / 2 + 14, 'NADP⁺', PHONE ? 10.5 : 12, '#9d174d', 'center', 800);
@@ -675,7 +694,7 @@
     let newest = null;
     th.toks.forEach((tk) => {
       const q = tokPos(tk, P); tk.px = q.x; tk.py = q.y; newest = tk;
-      const cyc = tk.k === 'cy'; D.glow(q.x, q.y, 14, cyc ? '#c084fc' : '#facc15', 0.6); D.sphere(q.x, q.y, 7.5, cyc ? '#e9d5ff' : '#fde047', { gloss: false, text: 'e⁻', textColor: cyc ? '#581c87' : '#713f12', textScale: 0.95 });
+      const cyc = tk.k === 'cy'; blit(sprite(cyc ? 'ec' : 'en', 32, 32, (cx, D2) => { cx.translate(16, 16); D2.glow(0, 0, 14, cyc ? '#c084fc' : '#facc15', 0.6); D2.sphere(0, 0, 7.5, cyc ? '#e9d5ff' : '#fde047', { gloss: false, text: 'e⁻', textColor: cyc ? '#581c87' : '#713f12', textScale: 0.95 }); }), q.x, q.y);
     });
     if (showGauge) {
       const gx = E.x + E.w - 30, gy0 = P.top, gy1 = P.bot; D.roundRect(gx - 8, gy0, 16, gy1 - gy0, 8); ctx.fillStyle = '#eef2f7'; ctx.fill();
@@ -697,9 +716,10 @@
     // 시냅스 아닌 ATP 합성 효소
     synthDraw(G, th.spin, 'ATP 합성 효소');
     // H⁺ 점
-    th.dots.forEach((q) => { ctx.save(); ctx.globalAlpha = Math.max(0, q.a); T(q.x, q.y + 4, 'H⁺', 11.5, '#c2410c', 'center', 800); ctx.restore(); });
-    th.flows.forEach((q) => { ctx.save(); ctx.globalAlpha = q.stage === 2 ? 1 - q.t : 1; T(q.x, q.y + 4, 'H⁺', 12, '#ea580c', 'center', 800, { stroke: 'rgba(255,253,247,.85)', strokeWidth: 3 }); ctx.restore(); });
-    th.strH.forEach((q) => T(q.x, q.y + 4, 'H⁺', 11.5, '#c2410c', 'center', 800, { alpha: 0.7 }));
+    const sH = txtSprite('H1', 'H⁺', 11.5, '#c2410c', 800), sH2 = txtSprite('H2', 'H⁺', 12, '#ea580c', 800, 'rgba(255,253,247,.85)');
+    th.dots.forEach((q) => blit(sH, q.x, q.y, Math.max(0, q.a)));
+    th.flows.forEach((q) => blit(sH2, q.x, q.y, q.stage === 2 ? 1 - q.t : 1));
+    th.strH.forEach((q) => blit(sH, q.x, q.y, 0.7));
     // O₂ 기포
     th.bubbles.forEach((b) => { if (b.t < 0) return; ctx.save(); ctx.globalAlpha = clamp((b.y - (G.M.y + 16)) / 24, 0, 1); D.sphere(b.x - 4, b.y, 5.5, '#38bdf8', { gloss: true }); D.sphere(b.x + 4, b.y, 5.5, '#38bdf8', { gloss: true }); T(b.x, b.y - 11, 'O₂', 11.5, '#0369a1', 'center', 800, { stroke: '#fff', strokeWidth: 3 }); ctx.restore(); });
     T(G.x.p2 + 14, G.M.y + 24, 'O₂는 기체로 방출 ↑', PHONE ? 11 : 12.5, '#0369a1', 'left', 800, { alpha: th.o2 > 0 ? 1 : 0.55 });
@@ -776,7 +796,7 @@
     T(tx0 + 10, topY + 20, mito ? '막 사이 공간 (H⁺ 많음, pH 약 7)' : '틸라코이드 내부 (H⁺ 많음, pH 약 5)', fs, '#9a5b12', 'left', 800);
     T(tx0 + 10, botY + 20, mito ? '기질 (pH 약 8)' : '스트로마 (pH 약 8)', fs, mito ? '#8a6410' : '#3f6212', 'left', 800);
     // 단백질 두 개와 H⁺ 펌프 화살표
-    [0.2, 0.46].forEach((f) => { const cx = tx0 + tw * f; D.shadow(() => { D.roundRect(cx - 24, my - th / 2 - 8, 48, th + 16, 12); ctx.fillStyle = '#a5b4fc'; ctx.fill(); }, { blur: 4, y: 2 }); D.roundRect(cx - 24, my - th / 2 - 8, 48, th + 16, 12); ctx.strokeStyle = '#4f46e5'; ctx.lineWidth = 2; ctx.stroke(); D.arrow(cx, my - th / 2 - 12, cx, my - th / 2 - 38, { color: '#ea580c', width: 3, head: 9 }); });
+    [0.2, 0.46].forEach((f) => { const cx = tx0 + tw * f; SH(() => { D.roundRect(cx - 24, my - th / 2 - 8, 48, th + 16, 12); ctx.fillStyle = '#a5b4fc'; ctx.fill(); }, { blur: 4, y: 2 }); D.roundRect(cx - 24, my - th / 2 - 8, 48, th + 16, 12); ctx.strokeStyle = '#4f46e5'; ctx.lineWidth = 2; ctx.stroke(); D.arrow(cx, my - th / 2 - 12, cx, my - th / 2 - 38, { color: '#ea580c', width: 3, head: 9 }); });
     T(tx0 + tw * 0.2 + 10, my - th / 2 - 30, 'H⁺ 펌프', fs, '#c2410c', 'left', 800);
     // ATP 합성 효소 + H⁺ 흐름 ↓
     const sx = tx0 + tw * 0.8, sc = PHONE ? 0.62 : 0.74;

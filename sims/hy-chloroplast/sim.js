@@ -343,7 +343,7 @@
   const bPlaced = () => S.b.placed.filter(Boolean).length;
   function bLay() {
     return PHONE
-      ? { cx: 240, cy: 186, sc: 1.0, topY: 40, botY: [326, 352], topX: [-175, -60, 55, 170], botX: [-165, -78, 6, 90, 178], tx: 10, ty: 376, tcw: 228, tch: 40, tgx: 4, tgy: 4, cols: 2, hintY: 624 }
+      ? { cx: 240, cy: 186, sc: 1.25, topY: 40, botY: [326, 352], topX: [-175, -60, 55, 170], botX: [-165, -78, 6, 90, 178], tx: 10, ty: 376, tcw: 228, tch: 40, tgx: 4, tgy: 4, cols: 2, hintY: 624 }
       : { cx: 400, cy: 200, sc: 1.5, topY: 40, botY: [354, 354], topX: [-300, -95, 105, 300], botX: [-300, -160, -45, 60, 185], tx: 14, ty: 394, tcw: 148, tch: 54, tgx: 8, tgy: 8, cols: 5, hintY: 538 };
   }
   function bTokInit() {
@@ -544,7 +544,7 @@
     T(g.cx, g.hintY, b.nameMode ? '핀 ①~⑤가 가리키는 구조의 이름을 오른쪽 목록에서 골라요' : all ? '조립 완료! 화면을 끌어 돌려 보고 단면 슬라이더로 열어 보세요' : '부품 카드를 모형의 물음표(?)로 끌어다 놓아요', PHONE ? 12.5 : 13.5, '#64748b', 'center', 800);
     if (!b.nameMode && !all) { b.tok.forEach((k) => { if (!(b.drag && b.drag.t === k)) bTokDraw(k); }); if (b.drag) bTokDraw(b.drag.t); }
     else if (!b.nameMode) b.tok.forEach(bTokDraw);
-    T(g.cx, PHONE ? 366 : 380, '길이 약 5~10 μm · 지름 약 2~3 μm', 12.5, '#7b8aa0', 'center', 700);
+    if (!PHONE) T(g.cx, 380, '길이 약 5~10 μm · 지름 약 2~3 μm', 12.5, '#7b8aa0', 'center', 700);
     if (b.cmp) bCompare(g);
   }
   function bFindMarker(p, rad) {

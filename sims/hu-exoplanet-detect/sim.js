@@ -361,10 +361,10 @@
   const POP = (function () {
     const r = rng(4242), out = [];
     for (let i = 0; i < 900; i++) {
-      const la = -2 + r() * 3.5, lm = -2.5 + r() * 3.68, a = Math.pow(10, la), mj = Math.pow(10, lm), me = mj * 317.8, P = Math.pow(a, 1.5);
+      const la = -2 + r() * 3.5, lm = -2.5 + Math.pow(r(), 1.8) * 3.68, a = Math.pow(10, la), mj = Math.pow(10, lm), me = mj * 317.8, P = Math.pow(a, 1.5);
       const Re = me < 130 ? Math.pow(me, 0.28) : 11.2, k = Re / REARTH_PER_RSUN;
       const K = 28.4 * mj * Math.pow(P, -1 / 3), ru = r(), rl = r();
-      const det = [K >= 4 && P < 10, ru < 1 / (a * RSUN_PER_AU) && k * k >= 5e-5 && P < 3, a >= 0.7 && a <= 8 && rl < 0.12];
+      const det = [K >= 8 && P < 8, ru < 1 / (a * RSUN_PER_AU) && k * k >= 5e-5 && P < 3, a >= 0.7 && a <= 8 && rl < 0.12];
       out.push({ la, lm, det, show: 0 });
     }
     return out;
@@ -385,7 +385,7 @@
     de: { ok: [false, false] },
     ln: { pl: true, mi: 3, cur: 0, ok: false, x: 0, hid: [1, 0], pick: [-1, -1], ok2: false, t: 0 },
     tb: { cell: [[-1, -1, -1], [-1, -1, -1], [-1, -1, -1]], wrong: [[false, false, false], [false, false, false], [false, false, false]], pop: [[0, 0, 0], [0, 0, 0], [0, 0, 0]] },
-    sc: { m: 0, all: false, fade: 0 },
+    sc: { m: 0, all: true, fade: 0 },
     flags: { calcK: false, calcPeg: false, calcRatio: false, calcDen: false, inc: false },
   };
   let game = null;
@@ -711,7 +711,7 @@
       const P = hs[i], type = LN.hid[i], dur = type === 1 ? lensDur(318) : lensDur(1);
       panel(P.x, P.y, P.w, P.h, { r: 14 });
       T(P.x + 14, P.y + 24 * FS, '❓ 미지의 행성 ' + nm_ + '의 추가 봉우리', 14.5, '#1e293b', 'left', 800);
-      const ix = P.x + 46, iw = P.w - 46 - 16, top = P.y + 40 * FS, ph = P.h - 40 * FS - 40, X = (d) => ix + (d + 3) / 6 * iw;
+      const ix = P.x + 46, iw = P.w - 46 - 16, top = P.y + 40 * FS, ph = P.h - 40 * FS - 52, X = (d) => ix + (d + 3) / 6 * iw;
       const rn = rng(900 + i), w = dur / 2.355;
       const val = (d) => 1 + 0.32 * Math.exp(-0.5 * (d / w) * (d / w));
       const Y = (a) => top + (1 - (a - 0.95) / (1.42 - 0.95)) * ph;
@@ -811,7 +811,7 @@
 
   /* ---- 방법별 발견 분포 ---- */
   function LSc() { return PHONE ? { P: { x: 8, y: 8, w: 464, h: 500 }, I: { x: 8, y: 516, w: 464, h: 336 } } : { P: { x: 10, y: 8, w: 780, h: 420 }, I: { x: 10, y: 436, w: 780, h: 176 } }; }
-  function scGeom() { const { P } = LSc(), ix = P.x + 88, iw = P.w - 88 - 16, top = P.y + 40 * FS, ph = P.h - 40 * FS - 48; return { P, ix, iw, top, ph, X: (la) => ix + (la + 2) / 3.5 * iw, Y: (lm) => top + (1 - (lm + 2.7) / 4.0) * ph }; }
+  function scGeom() { const { P } = LSc(), lm_ = PHONE ? 100 : 112, ix = P.x + lm_, iw = P.w - lm_ - 16, top = P.y + 40 * FS, ph = P.h - 40 * FS - 48; return { P, ix, iw, top, ph, X: (la) => ix + (la + 2) / 3.5 * iw, Y: (lm) => top + (1 - (lm + 2.7) / 4.0) * ph }; }
   const scCount = (m) => POP.filter((p) => p.det[m]).length;
   function drawScatterEx(dt, t) {
     const { P, ix, iw, top, ph, X, Y } = scGeom(), I = LSc().I, SC = S.sc;

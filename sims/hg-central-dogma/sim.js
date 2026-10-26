@@ -978,7 +978,7 @@
       if (TL.t >= 0.55) {
         TL.state = 'bond'; TL.t = 0; Sound.success();
         TL.trna.push({ codon: f.codon, aa: f.aa, anti: f.anti, alpha: 1, drop: 0, gone: false });
-        TL.flying = null; TL.cand = [];
+        TL.flying = null; TL.cand = []; TL.pick = -1;
       }
     } else if (S0 === 'bond') {
       if (TL.t >= 0.75) {
