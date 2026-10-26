@@ -303,7 +303,7 @@
      ========================================================= */
   const MP = { so: null };
   function mpGeom() {
-    const w = PHONE ? 228 : 384, h = 58, gap = 8, x0 = PHONE ? 8 : 10, y0 = 40, ch = PHONE ? 38 : 40;
+    const w = PHONE ? 228 : 384, h = 58, gap = 8, x0 = PHONE ? 8 : 10, y0 = 40, ch = PHONE ? 46 : 40;
     return { w, h, gap, x0, y0, ch, ty: y0 + 4 * (h + 6) + 26 };
   }
   function mpBuild() {
@@ -434,7 +434,7 @@
   const curP = () => (S.mode === 'sel' ? 'N' : 'T');
   const triedN = () => Object.keys(DK.best).length;
   function dkGeom() {
-    if (PHONE) return { s: 0.74, px: 240, py: 180, score: { x: 8, y: 296, w: 464, h: 82 }, rank: { x: 8, y: 386, w: 464, h: 166 }, tray: { y: 560, h: 76 } };
+    if (PHONE) return { s: 0.74, px: 240, py: 180, score: { x: 8, y: 296, w: 464, h: 82 }, rank: { x: 8, y: 384, w: 464, h: 164 }, tray: { y: 560, h: 76 } };
     return { s: 1, px: 205, py: 238, score: { x: 372, y: 40, w: 418, h: 120 }, rank: { x: 372, y: 166, w: 418, h: 250 }, tray: { y: 448, h: 104 } };
   }
   function trayRects(ids) {
@@ -490,12 +490,12 @@
     }
     ctx.strokeStyle = C.shade(c.col, -0.1); ctx.lineWidth = 5;
     for (let j = 0; j < 5; j++) { const a = -Math.PI / 2 + j * STEP; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(Math.cos(a) * 56, Math.sin(a) * 56); ctx.stroke(); }
-    D.sphere(0, 0, 22, c.col, { shadow: true });
+    D.sphere(0, 0, 22, c.col, { shadow: !o.flat });
     ctx.save(); ctx.rotate(-ang); T(0, 7, id, 20, '#fff', 'center', 800); ctx.restore();
     for (let j = 0; j < 5; j++) {
       const a = -Math.PI / 2 + j * STEP, gx = Math.cos(a) * 56, gy = Math.sin(a) * 56, g = c.grp[j];
       if (!g) { ctx.beginPath(); ctx.arc(gx, gy, 5, 0, TAU); ctx.fillStyle = '#e2e8f0'; ctx.fill(); continue; }
-      D.sphere(gx, gy, 13, GRP[g].col, { shadow: true });
+      D.sphere(gx, gy, 13, GRP[g].col, { shadow: !o.flat });
       ctx.save(); ctx.translate(gx, gy); ctx.rotate(-ang); T(0, 5, GRP[g].ch, 14, '#fff', 'center', 800); ctx.restore();
     }
     ctx.restore();
@@ -546,7 +546,7 @@
     T(r.x + 14, r.y + 22, '후보별 최고 점수 (내가 찾은 자세)', PHONE ? 13 : 14, '#475569', 'left', 800);
     const lx = r.x + 14, bx = r.x + (PHONE ? 70 : 82), bw = r.w - (PHONE ? 70 : 82) - (PHONE ? 62 : 70);
     const z = bx + bw * 6 / 8;                      // 점수 0 의 위치 (범위 −6 ~ +2)
-    const hy = r.y + (PHONE ? 38 : 44), rowH = (r.h - (hy - r.y) - 8) / 6;
+    const hy = r.y + (PHONE ? 46 : 44), rowH = (r.h - (hy - r.y) - 6) / 6;
     [-6, -4, -2, 0, 2].forEach((tk) => { const x = bx + bw * (tk + 6) / 8; ctx.strokeStyle = tk === 0 ? '#64748b' : '#e2e8f0'; ctx.lineWidth = tk === 0 ? 2 : 1; ctx.beginPath(); ctx.moveTo(x, hy - 4); ctx.lineTo(x, r.y + r.h - 6); ctx.stroke(); T(x, hy - 8, tk > 0 ? '+' + tk : tk < 0 ? MINUS + Math.abs(tk) : '0', 12, '#94a3b8', 'center', 700); });
     IDS_T.forEach((id, i) => {
       const y = hy + i * rowH, v = DK.best[id], c = CMPD[id];
@@ -557,13 +557,13 @@
       const vv = DK._bar[id], xx = bx + bw * (clamp(vv, -6, 2) + 6) / 8;
       D.roundRect(Math.min(z, xx), y + (rowH - h) / 2, Math.max(1, Math.abs(xx - z)), h, 5); ctx.fillStyle = v <= 0 ? C.rgba(c.col, 0.85) : '#ef4444'; ctx.fill();
       T(r.x + r.w - 10, y + rowH * 0.62, fmtS(v), PHONE ? 13 : 14.5, v < 0 ? '#15803d' : '#dc2626', 'right', 800);
-      if (DK.chosen === id) T(r.x + (PHONE ? 52 : 60), y + rowH * 0.62, '★', 15, '#f59e0b', 'center', 800);
+      if (DK.chosen === id) T(lx + (PHONE ? 52 : 56), y + rowH * 0.62, '★', 15, '#f59e0b', 'center', 800);
     });
   }
   function drawSelTable(r) {
     panel(r.x, r.y, r.w, r.h, 14);
     T(r.x + 14, r.y + 22, '선택성 비교 (같은 자세로 T 와 N 에 넣은 점수)', PHONE ? 12.5 : 14, '#475569', 'left', 800);
-    const hy = r.y + (PHONE ? 38 : 44), rowH = (r.h - (hy - r.y) - 10) / 3;
+    const hy = r.y + (PHONE ? 48 : 44), rowH = (r.h - (hy - r.y) - 8) / 3;
     const lx = r.x + 14, bx = r.x + (PHONE ? 66 : 82), bw = r.w - (PHONE ? 66 : 82) - (PHONE ? 126 : 150);
     [-6, -4, -2, 0].forEach((tk) => { const x = bx + bw * (tk + 6) / 6; ctx.strokeStyle = tk === 0 ? '#64748b' : '#e2e8f0'; ctx.lineWidth = tk === 0 ? 2 : 1; ctx.beginPath(); ctx.moveTo(x, hy - 4); ctx.lineTo(x, r.y + r.h - 8); ctx.stroke(); T(x, hy - 8, tk === 0 ? '0' : MINUS + Math.abs(tk), 12, '#94a3b8', 'center', 700); });
     IDS_N.forEach((id, i) => {
@@ -591,7 +591,7 @@
     D.shadow(() => { D.roundRect(r.x, r.y, r.w, r.h, 12); ctx.fillStyle = o.locked ? '#f1f5f9' : docked ? '#eef2ff' : '#fff'; ctx.fill(); }, { blur: 5, y: 2 });
     ctx.strokeStyle = docked ? '#6366f1' : o.locked ? '#cbd5e1' : C.shade(c.col, 0.1); ctx.lineWidth = docked ? 3 : 2; D.roundRect(r.x, r.y, r.w, r.h, 12); ctx.stroke();
     const sc = Math.min((r.h - (PHONE ? 22 : 34)) / 190, (r.w - 8) / 180);
-    drawCompound(r.x + r.w / 2, r.y + (r.h - (PHONE ? 20 : 30)) / 2 + 2, sc, 0, id, { alpha: o.locked ? 0.35 : docked ? 0.35 : 1 });
+    drawCompound(r.x + r.w / 2, r.y + (r.h - (PHONE ? 20 : 30)) / 2 + 2, sc, 0, id, { alpha: o.locked ? 0.35 : docked ? 0.35 : 1, flat: true });
     const v = DK.best[id];
     TF(r.x + r.w / 2, r.y + r.h - (PHONE ? 6 : 10), o.locked ? '🔒 T 먼저' : '후보 ' + id + (v != null ? '  ' + fmtS(v) : ''), r.w - 6, PHONE ? 12.5 : 14, 10.5, '#334155', 'center', 800);
   }
@@ -668,7 +668,7 @@
   const IC_S = { idx: 4, prog: 0 };
   const inhib = (ic, c) => 100 / (1 + ic / c);
   function icGeom() {
-    if (PHONE) return { plot: { x: 58, y: 70, w: 408, h: 240 }, side: { x: 8, y: 372, w: 464, h: 190 } };
+    if (PHONE) return { plot: { x: 58, y: 70, w: 408, h: 240 }, side: { x: 8, y: 372, w: 464, h: 232 } };
     return { plot: { x: 82, y: 62, w: 450, h: 300 }, side: { x: 566, y: 46, w: 226, h: 360 } };
   }
   function icScene(dt, t) {
@@ -705,7 +705,7 @@
     const q = g.side; panel(q.x, q.y, q.w, q.h, 14);
     T(q.x + 14, q.y + 26, '농도 ' + c + ' µM 에서', 15, '#334155', 'left', 800);
     IC_IDS.forEach((id, i) => {
-      const y = q.y + 44 + i * (PHONE ? 46 : 70), v = Math.round(inhib(IC[id], c));
+      const y = q.y + 44 + i * (PHONE ? 62 : 70), v = Math.round(inhib(IC[id], c));
       T(q.x + 14, y + 16, '후보 ' + id, 14.5, C.shade(CMPD[id].col, -0.2), 'left', 800);
       T(q.x + q.w - 14, y + 16, '억제율 ' + v + ' %', 14.5, '#334155', 'right', 800);
       D.roundRect(q.x + 14, y + 24, q.w - 28, 12, 6); ctx.fillStyle = '#e2e8f0'; ctx.fill();
@@ -996,7 +996,7 @@
           setup() { setMode('dock'); },
           check: () => triedN() >= 3 && DK.chosen === 'B' && DK.best.B === -5.5, hold: 0.7,
           status: () => mark(triedN() >= 3) + ' 맞춰 본 후보 ' + triedN() + ' / 3종 이상 &nbsp; ' + mark(DK.chosen === 'B' && DK.best.B === -5.5) + ' 최고 점수 후보를 결정' + (DK.chosen && DK.chosen !== 'B' ? ' (다른 후보가 더 낮을 수 있어요)' : ''),
-          explain: '후보 B는 + · ' + MINUS + ' · 소 · 주 · 받 다섯 기가 모두 알맞은 자리에 짝을 이뤄 <b>' + MINUS + '1.5 ' + MINUS + '1.5 ' + MINUS + '0.5 ' + MINUS + '1.0 ' + MINUS + '1.0 = ' + MINUS + '5.5</b>로 점수가 가장 낮아요. 후보 E는 큰 고리가 포켓에 부딪혀 입체 충돌 +3.0이 더해져 <b>+1.0</b>으로 오히려 결합하지 못해요.',
+          explain: '후보 B는 + · ' + MINUS + ' · 소 · 주 · 받 다섯 기가 모두 알맞은 자리에 짝을 이뤄 <b>(' + MINUS + '1.5) + (' + MINUS + '1.5) + (' + MINUS + '0.5) + (' + MINUS + '1.0) + (' + MINUS + '1.0) = ' + MINUS + '5.5</b>로 점수가 가장 낮아요. 후보 E는 큰 고리가 포켓에 부딪혀 입체 충돌 +3.0이 더해져 <b>+1.0</b>으로 오히려 결합하지 못해요.',
         },
         {
           id: 'sel', title: '선택성과 IC50 읽기', manual: true,
@@ -1043,7 +1043,7 @@
             if (n < 7) return '아직 분야와 직업을 모두 고르지 않은 사례가 있어요. (' + n + ' / 7)';
             const bad = CASES.map((c, i) => (csGood(i) ? -1 : i)).filter((i) => i >= 0);
             CASES.forEach((c, i) => { const r = csGood(i) ? 'ok' : 'bad'; if (r === 'bad' && CS.res[i] !== 'bad') CS.shake[i] = 1; CS.res[i] = r; });
-            if (bad.length) { const c = CASES[bad[0]], p = CS.pick[bad[0]]; return '\'' + c.sec + '\' 사례를 다시 확인해 보세요. ' + (p.f !== c.field ? '(분야가 달라요)' : '(직업이 달라요)') + ' 달라진 사례: ' + bad.length + '개'; }
+            if (bad.length) { const c = CASES[bad[0]], p = CS.pick[bad[0]]; return '\'' + c.sec + '\' 사례를 다시 확인해 보세요. ' + (p.f !== c.field ? '(분야가 달라요)' : '(직업이 달라요)') + ' 다시 볼 사례: ' + bad.length + '개'; }
             return true;
           },
           status: () => mark(csDone() === 7) + ' 연결한 사례 ' + csDone() + ' / 7',

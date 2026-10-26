@@ -816,7 +816,7 @@
     chipCols: 1, minRows: 1,
     layout() {
       return PHONE
-        ? { grid: { x: 8, y: 8, w: 464, h: 160, cols: 3, cardH: 70, gap: 8 }, bins: [0, 1, 2, 3, 4, 5].map((i) => ({ x: 8 + (i % 2) * 235, y: 176 + Math.floor(i / 2) * 226, w: 229, h: 216 })), detail: null }
+        ? { grid: { x: 8, y: 8, w: 464, h: 160, cols: 3, cardH: 70, gap: 8 }, bins: [0, 1, 2, 3, 4, 5].map((i) => ({ x: 8, y: 176 + i * 112, w: 464, h: 104 })), detail: null }
         : { grid: { x: 10, y: 10, w: 780, h: 120, cols: 3, cardH: 54, gap: 10 }, bins: [0, 1, 2, 3, 4, 5].map((i) => ({ x: 10 + (i % 3) * 263, y: 150 + Math.floor(i / 3) * 232, w: 254, h: 222 })), detail: null };
     },
   });
@@ -825,7 +825,7 @@
   /* ================= ④ 영상 합성 ================= */
   function LRg() {
     return PHONE
-      ? { St: { x: 8, y: 8, w: 464, h: 148 }, Co: { x: 8, y: 164, w: 464, h: 396, cx: 240, cy: 362, R: 150 }, Lg: { x: 8, y: 568, w: 464, h: 284 } }
+      ? { St: { x: 8, y: 8, w: 464, h: 166 }, Co: { x: 8, y: 182, w: 464, h: 384, cx: 240, cy: 374, R: 148 }, Lg: { x: 8, y: 574, w: 464, h: 278 } }
       : { St: { x: 10, y: 8, w: 780, h: 168 }, Co: { x: 10, y: 184, w: 520, h: 428, cx: 270, cy: 398, R: 170 }, Lg: { x: 538, y: 184, w: 252, h: 428 } };
   }
   const CHN = [{ n: '빨강', c: '#ef4444' }, { n: '초록', c: '#22c55e' }, { n: '파랑', c: '#3b82f6' }];
@@ -844,7 +844,7 @@
     panel(St.x, St.y, St.w, St.h, { r: 14, title: '위성 영상 3장 (같은 날, 파장만 달라요)', tsize: PHONE ? 12 : 14 });
     const tw = St.w / 3, rad = PHONE ? 44 : 52;
     WLC.forEach((q, i) => {
-      const cx = St.x + tw * (i + 0.5) - (PHONE ? 0 : 74), cy = St.y + St.h / 2 + (PHONE ? 6 : 12) + (PHONE ? 4 : 0);
+      const cx = St.x + tw * (i + 0.5) - (PHONE ? 0 : 74), cy = PHONE ? St.y + 78 : St.y + St.h / 2 + 12;
       ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, rad, 0, TAU); ctx.clip(); ctx.fillStyle = '#04060f'; ctx.fillRect(cx - rad, cy - rad, rad * 2, rad * 2); if (rd[i]) drawImg(rd[i], cx, cy, rad / 1.35, 1, false); ctx.restore();
       ctx.strokeStyle = CHN[G.as[i]].c; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(cx, cy, rad + 2, 0, TAU); ctx.stroke();
       const lx = PHONE ? cx : cx + rad + 8;
