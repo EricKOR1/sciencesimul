@@ -366,13 +366,17 @@
       GAL.push(Object.assign(feat(), { th, d, u: R() * 1.9 - 0.95, kind, eps: gauss() })); return true;
     };
     const fill = (n, kind, fn) => { let c = 0, tries = 0; while (c < n && tries++ < 20000) if (add(kind, ...fn())) c++; };
-    fill(40, 'cl1', () => [-6.3 + 1.5 * gauss(), 59.7 + 1.5 * gauss()]);
+    const inC3 = (x, y) => x >= 64 && x < 80 && y >= 256 && y < 272;      // 먼 은하단의 가운데 셀(분석에서 쓰는 16 Mpc 칸)
+    const addX = (kind, x, y) => (inC3(x, y) ? false : add(kind, x, y));
+    const fillX = (n, kind, fn) => { let c = 0, tries = 0; while (c < n && tries++ < 20000) if (addX(kind, ...fn())) c++; };
+    fill(40, 'cl1', () => [-8 + 1.5 * gauss(), 72 + 1.5 * gauss()]);
     const P1 = [-33, 97], P2 = [58, 166], ux = (P2[0] - P1[0]) / Math.hypot(P2[0] - P1[0], P2[1] - P1[1]), uy = (P2[1] - P1[1]) / Math.hypot(P2[0] - P1[0], P2[1] - P1[1]);
-    fill(90, 'band', () => { const t = R(), o = 2.5 * gauss(); return [P1[0] + t * (P2[0] - P1[0]) - uy * o, P1[1] + t * (P2[1] - P1[1]) + ux * o]; });
-    fill(35, 'cl2', () => [-45 + 2.5 * gauss(), 215 + 2.5 * gauss()]);
-    fill(30, 'cl3', () => [70 + 2.5 * gauss(), 262 + 2.5 * gauss()]);
-    fill(25, 'fil', () => { const t = R(), o = 3 * gauss(); return [-45 + t * 115 - 0.378 * o, 215 + t * 47 + 0.926 * o]; });
-    fill(400 - GAL.length, 'bg', () => { const r = RMAX * Math.sqrt(R()), a = (R() * 2 - 1) * THMAX * DEG; return [r * Math.sin(a), r * Math.cos(a)]; });
+    fillX(90, 'band', () => { const t = R(), o = 2.5 * gauss(); return [P1[0] + t * (P2[0] - P1[0]) - uy * o, P1[1] + t * (P2[1] - P1[1]) + ux * o]; });
+    fill(35, 'cl2', () => [-40 + 2.5 * gauss(), 216 + 2.5 * gauss()]);
+    { let c = 0, tries = 0; while (c < 24 && tries++ < 20000) { const x = 72 + 3 * gauss(), y = 264 + 3 * gauss(); if (inC3(x, y) && add('cl3', x, y)) c++; } }
+    { let c = 0, tries = 0; while (c < 6 && tries++ < 20000) { const x = 72 + 4.5 * gauss(), y = 264 + 4.5 * gauss(); if (!inC3(x, y) && Math.abs(x - 72) < 24 && Math.abs(y - 264) < 24 && add('cl3', x, y)) c++; } }
+    fillX(25, 'fil', () => { const t = 0.04 + 0.92 * R(), o = 3 * gauss(); return [-40 + t * 90 - 0.316 * o, 216 + t * 30 + 0.949 * o]; });
+    fillX(400 - GAL.length, 'bg', () => { const r = RMAX * Math.sqrt(R()), a = (R() * 2 - 1) * THMAX * DEG; return [r * Math.sin(a), r * Math.cos(a)]; });
   })();
   /* 쐐기에 찍는 차례 (G1~G6은 처음부터) */
   const ORDER = (function () { const R = rng(5), a = []; for (let i = 6; i < GAL.length; i++) a.push(i); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(R() * (i + 1)); const t = a[i]; a[i] = a[j]; a[j] = t; } return a; })();
