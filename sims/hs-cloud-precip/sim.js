@@ -530,7 +530,7 @@
       ctx.fillStyle = '#f8fafc'; rr(pb.x, pb.y, pb.w, pb.h, 4).fill(); ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1;
       [5, 8, 11, 14, 17].forEach((v) => { ctx.beginPath(); ctx.moveTo(pb.x, Y(v)); ctx.lineTo(pb.x + pb.w, Y(v)); ctx.stroke(); D.text(pb.x - 6, Y(v) + 4.5, String(v), { size: 12, weight: 700, color: '#64748b', align: 'right' }); });
       [0, 3, 6, 9, 12].forEach((hh) => { ctx.beginPath(); ctx.moveTo(X(hh), pb.y); ctx.lineTo(X(hh), pb.y + pb.h); ctx.stroke(); D.text(X(hh), pb.y + pb.h + 15 * FS, hourTxt(hh).replace('시', ''), { size: 12, weight: 700, color: '#64748b' }); });
-      D.text(pb.x + pb.w / 2, pb.y + pb.h + 31 * FS, '시각 (시)', { size: 12, weight: 700, color: '#64748b' }); D.text(pb.x - 6, pb.y - 10, '기온 (°C)', { size: 12, weight: 800, color: '#64748b', align: 'right' });
+      D.text(pb.x + pb.w / 2, pb.y + pb.h + 31 * FS, '시각 (시)', { size: 12, weight: 700, color: '#64748b' }); D.text(pb.x, pb.y - 10, '기온 (°C)', { size: 12, weight: 800, color: '#64748b', align: 'left' });
       ctx.save(); ctx.beginPath(); ctx.rect(pb.x, pb.y, pb.w, pb.h); ctx.clip();
       // 안개 구간 색칠
       for (let hh = 0; hh < 13; hh += 0.25) { const i1 = fogInfo(hh); if (i1.ex > 0 && S.wind < 5) { ctx.fillStyle = 'rgba(148,163,184,.3)'; ctx.fillRect(X(hh), pb.y, X(hh + 0.25) - X(hh) + 0.5, pb.h); } else if (i1.ex > 0) { ctx.fillStyle = 'rgba(56,189,248,.22)'; ctx.fillRect(X(hh), pb.y, X(hh + 0.25) - X(hh) + 0.5, pb.h); } }

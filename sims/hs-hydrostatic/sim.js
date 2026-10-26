@@ -359,18 +359,18 @@
     [0, 4, 8, 12, 16].forEach((k) => D.text(c.x + 4, c.Y(k) - 3, k + ' km', { size: 11.5, weight: 800, color: '#e0f2fe', align: 'left', stroke: 'rgba(15,23,42,.5)', strokeWidth: 3, alpha: 0 }));
     // 관측선과 기압계
     const yz = c.Y(z); ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(colX - 6, yz); ctx.lineTo(colX + colW + 6, yz); ctx.stroke();
-    D.label(colX + colW / 2, Math.max(c.y + 16, yz - 14), z.toFixed(1) + ' km', { bg: '#dc2626', size: 12.5, pad: 8 });
+    D.label(colX + colW / 2, Math.min(c.gy - 50, Math.max(c.y + 16, yz - 14)), z.toFixed(1) + ' km', { bg: '#dc2626', size: 12.5, pad: 8 });
     const dx = PHONE ? c.x + c.w * 0.72 : c.x + c.w * 0.5, dr = PHONE ? 52 : 40;
     if (PHONE) miniDial(dx, c.y + 80, dr, dialV.value);
     const fm = Math.round(massOf(p)).toLocaleString('ko-KR');
     const tx = PHONE ? c.x + c.w * 0.5 : c.x + 8, ty = PHONE ? c.y + 156 : c.y + 20;
     if (!PHONE) { D.text(c.x + c.w - 8, c.y + 28, '기압', { size: 12, weight: 800, color: '#e0f2fe', align: 'right', stroke: 'rgba(15,23,42,.5)', strokeWidth: 3 }); miniDial(c.x + c.w - 54, c.y + 92, 46, dialV.value); }
     D.label(c.x + c.w / 2, c.gy - 4, '이 위의 공기 질량 = p/g ≈ ' + fm + ' kg', { bg: 'rgba(15,23,42,.75)', size: PHONE ? 12 : 12, pad: 8 });
-    D.text(c.x + c.w - 8, yz + 14, 'p = ' + Math.round(p) + ' hPa', { size: 13, weight: 800, color: '#fff', align: 'right', stroke: 'rgba(15,23,42,.6)', strokeWidth: 3 });
+    D.text(c.x + c.w - 8, Math.min(yz + 14, c.gy - 30), 'p = ' + Math.round(p) + ' hPa', { size: 13, weight: 800, color: '#fff', align: 'right', stroke: 'rgba(15,23,42,.6)', strokeWidth: 3 });
 
     // 그래프
     card(G, '📈 고도에 따른 기압 (표준 대기, 예시)');
-    const pb = { x: G.x + 52, y: G.y + 52, w: G.w - 52 - 20, h: G.h - 52 - (PHONE ? 70 : 52) };
+    const pb = { x: G.x + 52, y: G.y + 52, w: G.w - 52 - 20, h: G.h - 52 - (PHONE ? 70 : 64) };
     const X = (pp) => pb.x + (pb.w * pp) / 1100, Y = (zz) => pb.y + pb.h - (pb.h * zz) / ZH;
     ctx.fillStyle = '#f8fafc'; rr(pb.x, pb.y, pb.w, pb.h, 4).fill(); ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1;
     [0, 200, 400, 600, 800, 1000].forEach((v) => { ctx.beginPath(); ctx.moveTo(X(v), pb.y); ctx.lineTo(X(v), pb.y + pb.h); ctx.stroke(); D.text(X(v), pb.y + pb.h + 15 * FS, String(v), { size: 12, weight: 700, color: '#64748b' }); });

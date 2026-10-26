@@ -9354,8 +9354,7 @@ window.SCI_CATALOG = {
                 "온실 효과",
                 "자외선 차단",
                 "물과 생명"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hs-heat-budget",
@@ -9376,8 +9375,7 @@ window.SCI_CATALOG = {
                 "열수지 채우기",
                 "잠열",
                 "온난화 모의"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hs-stability",
@@ -9398,8 +9396,7 @@ window.SCI_CATALOG = {
                 "안정도 판정",
                 "단열선도",
                 "안정도 변화"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hs-cloud-precip",
@@ -9420,8 +9417,7 @@ window.SCI_CATALOG = {
                 "푄 현상",
                 "안개",
                 "강수 과정"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hs-hydrostatic",
@@ -9442,8 +9438,7 @@ window.SCI_CATALOG = {
                 "정역학 균형",
                 "기온과 층후",
                 "연직 운동"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hs-geostrophic-wind",

@@ -477,7 +477,7 @@
   function drawSkew(t, dt) {
     const P = RC3.P, B = skGeo();
     if (S.building) { S.pp = Math.min(ZT, S.pp + 0.75 * dt); if (S.pp >= ZT) { S.building = false; } }
-    card(P, '📐 단열선도 (예시 사운딩: 지표 25 °C, 이슬점 17 °C, 환경 감률 0.7 °C/100 m)');
+    card(P, PHONE ? '📐 단열선도 (예시 사운딩)' : '📐 단열선도 (예시 사운딩: 지표 25 °C, 이슬점 17 °C, 환경 감률 0.7 °C/100 m)');
     ctx.fillStyle = '#fbfdff'; rr(B.x, B.y, B.w, B.h, 4).fill();
     ctx.save(); ctx.beginPath(); ctx.rect(B.x, B.y, B.w, B.h); ctx.clip(); ctx.lineJoin = 'round';
     // 등온선
