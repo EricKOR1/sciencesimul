@@ -9188,8 +9188,7 @@ window.SCI_CATALOG = {
                 "P파·S파",
                 "주시 곡선",
                 "한반도 지진"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hs-earth-interior",
@@ -9210,8 +9209,7 @@ window.SCI_CATALOG = {
                 "속도 불연속",
                 "암영대",
                 "단층 촬영"
-              ],
-              "soon": true
+              ]
             }
           ]
         },

@@ -1084,10 +1084,12 @@
     parts.update(dt);
     ctx.setTransform(view.scale * view.dpr, 0, 0, view.scale * view.dpr, 0, 0);
     ctx.fillStyle = '#eaf1f7'; ctx.fillRect(0, 0, VW, VH);
+    const T0 = performance.now();
     if (S.mode === 'rec') drawRec(t, dt);
     else if (S.mode === 'wave') drawWave(t, dt);
     else if (S.mode === 'tt') drawTT(t, dt);
     else drawKor(t, dt);
+    S.dbgMs = performance.now() - T0;
     parts.draw(ctx);
     drawFlash(dt, 14);
     if (S.fade > 0.005) { ctx.fillStyle = 'rgba(255,255,255,' + S.fade * 0.85 + ')'; ctx.fillRect(0, 0, VW, VH); S.fade = RM ? 0 : approach(S.fade, 0, dt, 9); }
