@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0ea5e9">
+  <title>변광성과 초신성 | 고등 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💥</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-hint { bottom: auto; top: 12px; }
+    .stage-toolbar { min-height: 58px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; }
+    .stage-toolbar .segmented button { min-height: 40px; padding: 5px 10px; font-size: 14px; white-space: nowrap; }
+    .stage-toolbar .segmented { flex-wrap: wrap; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard [hidden] { display: none !important; }
+    .opt-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin-top: 4px; }
+    .opt-grid.c3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .opt-grid.c4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .opt-grid.c5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+    .opt {
+      min-height: 46px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 12px;
+      font-weight: 800; font-size: 14.5px; cursor: pointer; padding: 4px 4px; font-family: inherit; line-height: 1.2;
+    }
+    .opt.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); color: color-mix(in srgb, var(--subject) 70%, black); }
+    .opt.done { border-color: var(--good); background: var(--good-soft); color: #0b6b39; }
+    .opt:disabled { opacity: .5; cursor: not-allowed; }
+    .ctrl-note { margin: 6px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    .btn-sm { min-height: 44px; }
+    .btn-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+    .btn-row .btn { flex: 1; padding-left: 8px; padding-right: 8px; }
+    .readout .value.txt { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .concept table.mini, table.mini { border-collapse: collapse; margin: 6px 0; font-size: 13px; width: 100%; }
+    .concept table.mini th, .concept table.mini td, table.mini th, table.mini td { border: 1px solid var(--line); padding: 4px 5px; text-align: center; }
+    .concept table.mini th, table.mini th { background: var(--surface-2); font-weight: 800; }
+    .num-in { width: 100%; min-height: 46px; border: 2px solid var(--line); border-radius: 10px; font: inherit; font-weight: 800; font-size: 17px; padding: 0 10px; background: var(--surface); color: var(--ink); text-align: center; }
+    .num-in:focus { outline: none; border-color: var(--subject); }
+    .num-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .num-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .in-row { display: grid; grid-template-columns: 1fr 104px; gap: 8px; align-items: center; margin-top: 6px; font-weight: 800; font-size: 14.5px; line-height: 1.25; }
+    .in-row .num-in { min-height: 42px; font-size: 16px; }
+    @keyframes shakeX { 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+    .src-note { margin: 4px 0 0; font-size: 12.5px; color: #a16207; background: #fff7e0; border: 1px solid #f2d38a; border-radius: 10px; padding: 6px 9px; line-height: 1.4; }
+    @media (max-width: 599px) {
+      .readout { min-width: 0; }
+      .readout .value.txt { font-size: 15px; }
+      .stage-toolbar .spacer { display: none; }
+      .stage-toolbar .segmented button { padding: 5px 7px; font-size: 13px; }
+    }
+    input[type=range] { height: 40px; }
+    .ticks { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--muted); font-weight: 700; margin-top: -6px; padding: 0 2px; }
+    </style>
+</head>
+<body class="sim-page" data-subject="earth">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#hu">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">행성우주과학 · Ⅱ. 태양과 별의 관측</div>
+      <h1>변광성과 초신성</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">💥 변광성과 초신성</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="group" aria-label="장면 고르기" hidden>
+            <button type="button" data-view="curves">📈 광도 곡선</button>
+            <button type="button" data-view="classify">🗂 분류하기</button>
+            <button type="button" data-view="periods">⏱ 주기 읽기</button>
+            <button type="button" data-view="sn">💥 초신성</button>
+          </div>
+
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="별의 밝기가 시간에 따라 변하는 광도 곡선 8개, 별 모양 애니메이션, 곡선 분류 상자, 세 맥동 변광성의 주기 비교와 초신성 광도 계산 화면이 있어요."></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">—</span><span class="value txt" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">—</span><span class="value txt" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">—</span><span class="value txt" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" data-modes="curves">
+          <div class="control-head"><span>📏 재는 도구</span></div>
+          <div class="opt-grid" id="grpTool"><button class="opt" type="button" data-k="0">↔ 시간 재기<br>(세로 선 2개)</button><button class="opt" type="button" data-k="1">↕ 등급 재기<br>(가로 선 2개)</button></div>
+          <p class="ctrl-note">그래프를 눌러(끌어도 돼요) 가까운 선을 옮겨요. 아래 카드를 눌러 다른 별의 곡선을 볼 수 있어요.</p>
+        </div>
+        <div class="control" data-modes="curves" id="calcPer" hidden>
+          <div class="in-row"><span>δ Cep의 주기 P (일)</span><input class="num-in" id="inPer" type="text" inputmode="decimal" placeholder="예: 5" aria-label="델타 세페우스 별의 주기 (일)" autocomplete="off"></div>
+        </div>
+        <div class="control" data-modes="curves" id="calcAmp" hidden>
+          <div class="in-row"><span>δ Cep의 진폭<br>(최대−최소 등급 차)</span><input class="num-in" id="inAmp" type="text" inputmode="decimal" placeholder="예: 1" aria-label="델타 세페우스 별의 진폭 (등급)" autocomplete="off"></div>
+        </div>
+
+        <div class="control" data-modes="classify" id="noteCls">
+          <div class="control-head"><span>🗂 곡선 카드 8장</span></div>
+          <p class="ctrl-note">카드를 눌러 고른 뒤 알맞은 상자를 눌러요(끌어 넣어도 돼요). 상자 속 카드를 누르면 다시 꺼내요.</p>
+        </div>
+        <div class="control" data-modes="classify" id="critBox" hidden>
+          <div class="control-head"><span>🔎 판별 기준 2개 고르기</span></div>
+          <div class="opt-grid" id="grpCrit"><button class="opt" type="button" data-k="0">같은 모양이 규칙적으로 반복되는가</button><button class="opt" type="button" data-k="1">별의 이름이 긴가</button><button class="opt" type="button" data-k="2">갑자기 밝아진 뒤 어두워지기만 하는가</button><button class="opt" type="button" data-k="3">곡선의 가로 길이가 긴가</button></div>
+        </div>
+
+        <div class="control" data-modes="periods">
+          <div class="control-head"><span>🔭 시간 눈금 (가로 길이)</span></div>
+          <div class="opt-grid c3" id="grpScale"><button class="opt" type="button" data-k="0">2일</button><button class="opt" type="button" data-k="1">20일</button><button class="opt" type="button" data-k="2">1000일</button></div>
+        </div>
+        <div class="control" data-modes="periods" id="ordBox" hidden>
+          <div class="control-head"><span>🔢 주기가 짧은 순서로 누르기</span></div>
+          <div class="opt-grid c3" id="grpOrd"><button class="opt" type="button" data-k="0">δ Cep</button><button class="opt" type="button" data-k="1">RR Lyr</button><button class="opt" type="button" data-k="2">미라</button></div>
+          <div class="btn-row"><button class="btn btn-sm" id="bOrdReset" type="button">↺ 다시 고르기</button></div>
+        </div>
+        <div class="control" data-modes="periods" id="calcRR" hidden>
+          <div class="in-row"><span>RR Lyr가 하루에<br>밝아졌다 어두워지는 횟수</span><input class="num-in" id="inRR" type="text" inputmode="decimal" placeholder="예: 2" aria-label="거문고자리 RR가 하루 동안 밝아졌다 어두워지는 횟수" autocomplete="off"></div>
+        </div>
+
+        <div class="control" data-modes="sn">
+          <div class="control-head"><span>💥 초신성 고르기</span></div>
+          <div class="opt-grid" id="grpSN"><button class="opt" type="button" data-k="0">SN 2011fe<br>(M101)</button><button class="opt" type="button" data-k="1">SN 1987A<br>(대마젤란 은하)</button></div>
+        </div>
+        <div class="control" data-modes="sn" id="calcSN" hidden>
+          <div class="in-row"><span>SN 2011fe의<br>절대 등급 M</span><input class="num-in" id="inSNM" type="text" inputmode="decimal" placeholder="예: −19" aria-label="초신성 2011fe의 절대 등급" autocomplete="off"></div>
+        </div>
+        <div class="control" data-modes="sn" id="calcSNL" hidden>
+          <div class="in-row"><span>SN 2011fe의 광도<br>(10⁹ L☉)</span><input class="num-in" id="inSNL" type="text" inputmode="decimal" placeholder="예: 5" aria-label="초신성 2011fe의 광도 (10의 9제곱 태양 광도)" autocomplete="off"></div>
+        </div>
+        <div class="control" data-modes="sn" id="factBox" hidden>
+          <div class="control-head"><span>🃏 초신성이 알려 주는 사실 4개</span></div>
+          <div class="opt-grid" id="grpFact"></div>
+        </div>
+
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

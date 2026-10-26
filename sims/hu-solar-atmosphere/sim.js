@@ -424,22 +424,28 @@
     return clamp(0.07 * Math.exp(-(r - 1) / 0.07) * (1 + 0.8 * streamer) * (1 - 0.9 * polar) + 0.3 * ars(0.06) * Math.exp(-(r - 1) / 0.06), 0, 1);
   }
   /* 지도 → 캔버스: 회색 값 배열과 색 입힌 영상 (처음 필요할 때 계산하고, 그 전에도 조금씩 미리 계산해 둬요) */
-  const GRAY = [], IMG = [];
-  function getImg(k) {
-    if (IMG[k]) return IMG[k];
-    const g = new Float32Array(NPX * NPX);
-    for (let y = 0; y < NPX; y++) for (let x = 0; x < NPX; x++) g[y * NPX + x] = intensity(k, (x - NPX / 2 + 0.5) / PXR, -(y - NPX / 2 + 0.5) / PXR);
-    GRAY[k] = g;
-    const col = k === 6 ? [240, 110, 120] : WL[k].col;
-    const c = document.createElement('canvas'); c.width = c.height = NPX; const cg = c.getContext('2d'), id = cg.createImageData(NPX, NPX);
-    for (let i = 0; i < NPX * NPX; i++) { const v = Math.pow(g[i], 0.62); id.data[i * 4] = Math.min(255, col[0] * v * 1.15); id.data[i * 4 + 1] = Math.min(255, col[1] * v * 1.15); id.data[i * 4 + 2] = Math.min(255, col[2] * v * 1.15); id.data[i * 4 + 3] = 255; }
-    cg.putImageData(id, 0, 0); IMG[k] = c; return c;
+  const GRAY = [], IMG = [], ROWS = [0, 0, 0, 0, 0, 0, 0], CROW = [0, 0, 0, 0, 0, 0, 0], IDAT = [];
+  function prep(k, n) {                                           // 지도 k를 n줄씩 계산하고, 끝나면 색을 입혀요 (프레임이 끊기지 않게 조금씩)
+    if (IMG[k]) return;
+    if (!GRAY[k]) GRAY[k] = new Float32Array(NPX * NPX);
+    const g = GRAY[k];
+    if (ROWS[k] < NPX) {
+      const y1 = Math.min(NPX, ROWS[k] + n);
+      for (let y = ROWS[k]; y < y1; y++) for (let x = 0; x < NPX; x++) g[y * NPX + x] = intensity(k, (x - NPX / 2 + 0.5) / PXR, -(y - NPX / 2 + 0.5) / PXR);
+      ROWS[k] = y1; return;
+    }
+    if (!IDAT[k]) IDAT[k] = new ImageData(NPX, NPX);
+    const col = k === 6 ? [240, 110, 120] : WL[k].col, id = IDAT[k], y1 = Math.min(NPX, CROW[k] + n * 3);
+    for (let i = CROW[k] * NPX; i < y1 * NPX; i++) { const v = Math.pow(g[i], 0.62); id.data[i * 4] = Math.min(255, col[0] * v * 1.15); id.data[i * 4 + 1] = Math.min(255, col[1] * v * 1.15); id.data[i * 4 + 2] = Math.min(255, col[2] * v * 1.15); id.data[i * 4 + 3] = 255; }
+    CROW[k] = y1;
+    if (y1 >= NPX) { const c = document.createElement('canvas'); c.width = c.height = NPX; c.getContext('2d').putImageData(id, 0, 0); IMG[k] = c; IDAT[k] = null; }
   }
-  (function warm(k) { if (k > 6) return; setTimeout(() => { getImg(k); warm(k + 1); }, 350); })(0);
+  function getImg(k) { while (!IMG[k]) prep(k, NPX); return IMG[k]; }
+  const ready = (k) => { if (!IMG[k]) prep(k, 36); return IMG[k] || null; };               // 아직 안 만들어졌으면 프레임마다 조금씩 만들고 null
+  (function warm() { const k = [1, 4, 3, 6, 0, 2, 5].find((q) => !IMG[q]); if (k == null) return; setTimeout(() => { prep(k, 8); warm(); }, 40); })();
   /* 합성: assign[i] = 0:빨강 1:초록 2:파랑 (i = 21.1, 19.3, 17.1) */
   const COMP = document.createElement('canvas'); COMP.width = COMP.height = NPX;
   function composite(assign) {
-    getImg(6); getImg(4); getImg(3);
     const g = COMP.getContext('2d'), id = g.createImageData(NPX, NPX), srcs = [GRAY[6], GRAY[4], GRAY[3]];
     for (let i = 0; i < NPX * NPX; i++) {
       const ch = [0, 0, 0]; for (let s = 0; s < 3; s++) ch[assign[s]] += Math.pow(srcs[s][i], 0.62);
@@ -511,7 +517,7 @@
       T(B.x + B.w / 2, ym + 5, cap, sz, i === 3 ? '#f1f5f9' : '#fff', 'center', 800, { stroke: 'rgba(15,23,42,.65)', strokeWidth: 3.5 });
       if (i < 3) { ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.setLineDash([4, 4]); ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(B.x, yy(BAND[i + 1])); ctx.lineTo(B.x + B.w, yy(BAND[i + 1])); ctx.stroke(); ctx.setLineDash([]); }
     }
-    T(B.x + B.w / 2, B.y + B.h - 6, '▲ 위로 올라갈수록 태양에서 멀어져요', PHONE ? 10.5 : 11.5, 'rgba(255,255,255,.9)', 'center', 800, { stroke: 'rgba(15,23,42,.6)', strokeWidth: 3 });
+    T(B.x + B.w / 2, B.y + B.h - 6, PHONE ? '▲ 위쪽이 더 높아요' : '▲ 위로 올라갈수록 태양에서 멀어져요', PHONE ? 10.5 : 11.5, 'rgba(255,255,255,.9)', 'center', 800, { stroke: 'rgba(15,23,42,.6)', strokeWidth: 3 });
     return { B, yy };
   }
   function drawGraphView(dt, t) {
@@ -531,7 +537,7 @@
     [1e4, 1e5, 1e6].forEach((v) => { ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(gx0, Y(v)); ctx.lineTo(gx1, Y(v)); ctx.stroke(); T(gx0 - 6, Y(v) + 4, sup2(lg(v)) + ' K', 12, '#64748b', 'right', 700); });
     ctx.setLineDash([5, 5]); line([[gx0, Y(5800)], [gx1, Y(5800)]], '#f59e0b', 1.8); ctx.setLineDash([]);
     T(gx1 - 2, Y(5800) + 15, '광구 표면 5800 K', 12, '#b45309', 'right', 800);
-    const ticks = P.zoom ? [1900, 2000, 2100, 2200, 2300] : [0, 2000, 4000, 6000, 8000, 10000];
+    const ticks = P.zoom ? (PHONE ? [1900, 2100, 2300] : [1900, 2000, 2100, 2200, 2300]) : (PHONE ? [0, 5000, 10000] : [0, 2000, 4000, 6000, 8000, 10000]);
     ticks.forEach((h) => { ctx.strokeStyle = '#eef2f7'; ctx.beginPath(); ctx.moveTo(X(h), gy0); ctx.lineTo(X(h), gy1); ctx.stroke(); T(X(h), gy1 + 17, comma(h), 11.5, '#64748b', 'center', 700); });
     T((gx0 + gx1) / 2, gy1 + 36, '광구 표면에서의 높이 h (km)' + (P.zoom ? ' — 천이층 확대' : ''), 12.5, '#475569', 'center', 800);
     // 층 경계 + 이름
@@ -752,8 +758,9 @@
     W.fade = approach(W.fade, 1, dt, 6); W.bad = Math.max(0, W.bad - dt);
     D.shadow(() => { ctx.fillStyle = '#04060f'; rr(Im.x, Im.y, Im.w, Im.h, 14).fill(); }, { blur: 6, y: 2 });
     ctx.save(); rr(Im.x, Im.y, Im.w, Im.h, 14); ctx.clip();
-    if (W.fade < 0.999 && W.prev !== W.sel) drawImg(getImg(WL[W.prev].k), Im.cx, Im.cy, Im.R, 1, false);
-    drawImg(getImg(w.k), Im.cx, Im.cy, Im.R, W.prev === W.sel ? 1 : W.fade, false);
+    const imA = ready(w.k), imB = ready(WL[W.prev].k);
+    if (imA && imB) { if (W.fade < 0.999 && W.prev !== W.sel) drawImg(imB, Im.cx, Im.cy, Im.R, 1, false); drawImg(imA, Im.cx, Im.cy, Im.R, W.prev === W.sel ? 1 : W.fade, false); }
+    else T(Im.cx, Im.cy, '영상을 만드는 중이에요…', 15, '#94a3b8', 'center', 800);
     // 태양 가장자리 가이드 (희미한 원)
     ctx.strokeStyle = 'rgba(255,255,255,.14)'; ctx.setLineDash([3, 5]); ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(Im.cx, Im.cy, Im.R, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
     ctx.restore();
@@ -831,12 +838,14 @@
   }
   function drawRgb(dt, t) {
     const L = LRg(), St = L.St, Co = L.Co, Lg = L.Lg, G = S.rg;
-    ensureComp(); G.fade = approach(G.fade, 0, dt, 5); G.ringT += dt;
+    const rd = [6, 4, 3].map(ready), allRd = rd.every(Boolean);
+    if (allRd) ensureComp();
+    G.fade = approach(G.fade, 0, dt, 5); G.ringT += dt;
     panel(St.x, St.y, St.w, St.h, { r: 14, title: '위성 영상 3장 (같은 날, 파장만 달라요)', tsize: PHONE ? 12 : 14 });
     const tw = St.w / 3, rad = PHONE ? 44 : 52;
     WLC.forEach((q, i) => {
       const cx = St.x + tw * (i + 0.5) - (PHONE ? 0 : 74), cy = St.y + St.h / 2 + (PHONE ? 6 : 12) + (PHONE ? 4 : 0);
-      ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, rad, 0, TAU); ctx.clip(); ctx.fillStyle = '#04060f'; ctx.fillRect(cx - rad, cy - rad, rad * 2, rad * 2); drawImg(getImg([6, 4, 3][i]), cx, cy, rad / 1.35, 1, false); ctx.restore();
+      ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, rad, 0, TAU); ctx.clip(); ctx.fillStyle = '#04060f'; ctx.fillRect(cx - rad, cy - rad, rad * 2, rad * 2); if (rd[i]) drawImg(rd[i], cx, cy, rad / 1.35, 1, false); ctx.restore();
       ctx.strokeStyle = CHN[G.as[i]].c; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(cx, cy, rad + 2, 0, TAU); ctx.stroke();
       const lx = PHONE ? cx : cx + rad + 8;
       if (PHONE) { T(cx, cy + rad + 17, q.nm, 12, '#334155', 'center', 800); T(cx, cy + rad + 31, CHN[G.as[i]].n + ' 채널', 12, CHN[G.as[i]].c, 'center', 800); }
@@ -845,8 +854,8 @@
     // 합성
     D.shadow(() => { ctx.fillStyle = '#04060f'; rr(Co.x, Co.y, Co.w, Co.h, 14).fill(); }, { blur: 6, y: 2 });
     ctx.save(); rr(Co.x, Co.y, Co.w, Co.h, 14); ctx.clip();
-    drawImg(COMP, Co.cx, Co.cy, Co.R, 1, false);
-    if (G.fade > 0.01) { ctx.globalAlpha = G.fade; ctx.drawImage(COMPOLD, Co.cx - NPX / 2 * Co.R / PXR, Co.cy - NPX / 2 * Co.R / PXR, NPX * Co.R / PXR, NPX * Co.R / PXR); ctx.globalAlpha = 1; }
+    if (allRd) drawImg(COMP, Co.cx, Co.cy, Co.R, 1, false); else T(Co.cx, Co.cy, '영상을 만드는 중이에요…', 15, '#94a3b8', 'center', 800);
+    if (allRd && G.fade > 0.01) { ctx.globalAlpha = G.fade; ctx.drawImage(COMPOLD, Co.cx - NPX / 2 * Co.R / PXR, Co.cy - NPX / 2 * Co.R / PXR, NPX * Co.R / PXR, NPX * Co.R / PXR); ctx.globalAlpha = 1; }
     ctx.restore();
     T(Co.x + 14, Co.y + 26, '🎨 합성 영상' + (rgOK() ? '' : ' (채널을 바꿔 보세요)'), PHONE ? 13 : 15, '#fff', 'left', 800, { stroke: 'rgba(0,0,0,.7)', strokeWidth: 4 });
     const mk = (pt, col, txt) => { if (!pt) return; const x = Co.cx + pt.u * Co.R, y = Co.cy - pt.v * Co.R; ctx.strokeStyle = col; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(x, y, 18, 0, TAU); ctx.stroke(); D.label(x, y - 28, txt, { bg: col, size: 12 }); };

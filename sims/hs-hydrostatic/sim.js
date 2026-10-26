@@ -370,7 +370,7 @@
 
     // 그래프
     card(G, '📈 고도에 따른 기압 (표준 대기, 예시)');
-    const pb = { x: G.x + 52, y: G.y + 52, w: G.w - 52 - 20, h: G.h - 52 - 52 };
+    const pb = { x: G.x + 52, y: G.y + 52, w: G.w - 52 - 20, h: G.h - 52 - (PHONE ? 70 : 52) };
     const X = (pp) => pb.x + (pb.w * pp) / 1100, Y = (zz) => pb.y + pb.h - (pb.h * zz) / ZH;
     ctx.fillStyle = '#f8fafc'; rr(pb.x, pb.y, pb.w, pb.h, 4).fill(); ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1;
     [0, 200, 400, 600, 800, 1000].forEach((v) => { ctx.beginPath(); ctx.moveTo(X(v), pb.y); ctx.lineTo(X(v), pb.y + pb.h); ctx.stroke(); D.text(X(v), pb.y + pb.h + 15 * FS, String(v), { size: 12, weight: 700, color: '#64748b' }); });
@@ -469,7 +469,7 @@
         D.text(x0 + w / 2, I.Y(0.4), '1000 hPa', { size: 11.5, weight: 800, color: '#0f172a' });
       });
       ctx.strokeStyle = '#7c3aed'; ctx.lineWidth = 2; ctx.setLineDash([7, 5]); ctx.beginPath(); ctx.moveTo(I.x, I.Y(5.5)); ctx.lineTo(I.x + I.w, I.Y(5.5)); ctx.stroke(); ctx.setLineDash([]);
-      D.text(I.x + 8, I.Y(5.5) - 6, '같은 높이 5.5 km (기압은 오른쪽 표)', { size: 12, weight: 800, color: '#6d28d9', align: 'left' });
+      D.text(I.x + I.w - 6, I.Y(5.5) + 16, '5.5 km', { size: 12, weight: 800, color: '#6d28d9', align: 'right' });
     } else {
       const Tm = 270, TS = Tm + S.dTns / 2, TN = Tm - S.dTns / 2;
       NSsp.z.target = thickM(TS) / 1000; NSsp.zn.target = thickM(TN) / 1000; NSsp.z.update(dt); NSsp.zn.update(dt);
@@ -701,7 +701,7 @@
           title: '100 m당 기압 감소량', manual: true,
           goal: '층의 두께 Δz = <b>100 m</b>일 때, <b>지표 부근(ρ = 1.2)</b>과 <b>5 km 부근(ρ = 0.74)</b>에서 100 m당 기압 감소량 Δp = ρgΔz를 hPa로 계산해 입력해요.',
           hint: '지표: 1.2 × 9.8 × 100 = 1176 Pa = 약 11.8 hPa, 5 km: 0.74 × 9.8 × 100 = 725 Pa = 약 7.3 hPa예요. (1 hPa = 100 Pa) 밀도 단추와 두께 슬라이더로 확인해도 돼요.',
-          setup() { $('#iDp0').value = ''; $('#iDp5').value = ''; setRho(1.2); setDz(100); setMode('hydro'); setCtl(['rho', 'dzS', 'dpIn']); },
+          setup() { $('#iDp0').value = ''; $('#iDp5').value = ''; setRho(1.2); setDz(100); setMode('hydro'); setCtl(['rho', 'grav', 'dpIn']); },
           status: () => mark(near($in('#iDp0'), 11.76, 0.7)) + ' 지표 ' + ($in('#iDp0') == null ? '—' : $in('#iDp0')) + ' · ' + mark(near($in('#iDp5'), 7.25, 0.7)) + ' 5 km ' + ($in('#iDp5') == null ? '—' : $in('#iDp5')) + ' (hPa)',
           check() {
             const a = $in('#iDp0'), b = $in('#iDp5'); if (a == null || b == null) return '두 칸에 모두 값을 입력해 주세요.';
@@ -714,7 +714,7 @@
         {
           type: 'quiz', title: '공기가 떨어지지도 달아나지도 않는 까닭',
           goal: '대기의 공기가 지표로 떨어지지도, 우주로 달아나지도 않는 까닭으로 알맞은 것은?',
-          setup() { setMode('hydro'); setCtl(['rho', 'dzS', 'grav']); },
+          setup() { setMode('hydro'); setCtl(['rho', 'grav']); },
           choices: ['공기는 가벼워서 중력을 받지 않기 때문이에요.', '위쪽으로의 압력 경도력과 아래쪽 중력이 균형을 이루기 때문이에요.', '공기가 너무 가벼워 바람이 계속 받쳐 주기 때문이에요.', '지구의 자전 때문에 공기가 제자리에 붙어 있어요.'],
           answer: 1,
           feedback: ['공기도 질량이 있어서 중력을 받아요. 가볍다는 것과 중력을 안 받는다는 것은 달라요.', '', '바람이 받쳐 주는 것이 아니라 압력 차의 힘이 위로 받쳐 줘요.', '자전이 아니라 압력 경도력과 중력의 균형이 핵심이에요.'],
