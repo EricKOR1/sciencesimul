@@ -9295,8 +9295,7 @@ window.SCI_CATALOG = {
                 "지진 해일",
                 "피해 요인",
                 "대처 방안"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hs-tidal-force",
@@ -9317,8 +9316,7 @@ window.SCI_CATALOG = {
                 "달과 태양",
                 "평형 조석",
                 "조석 주기"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hs-tide-pattern",
@@ -9339,8 +9337,7 @@ window.SCI_CATALOG = {
                 "조석 유형",
                 "조차와 지형",
                 "자료 분석"
-              ],
-              "soon": true
+              ]
             }
           ]
         },
