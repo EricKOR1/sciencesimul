@@ -424,7 +424,7 @@
     if (o.run && !RM && Math.random() < 0.55) { const cx = g.cx(0); parts.emit({ x: cx + (Math.random() - 0.5) * fw * 0.6, y: g.base - 12, vx: (Math.random() - 0.5) * 10, vy: -(40 + Math.random() * 40), life: 0.9, size: 2 + Math.random() * 2.5, color: 'rgba(255,255,255,.9)', shape: 'bubble' }); }
     // 그래프 (시간 – CO₂ 부피)
     const Gp = g.Gp; panel(Gp.x, Gp.y, Gp.w, Gp.h, 16, '#fff');
-    const pl = mkPlot(Gp, { x0: 0, x1: 20, y0: 0, y1: 20, xt: [0, 5, 10, 15, 20], yt: [0, 10, 20], xl: '시간 (분)', yl: 'CO₂ 부피 (mL)', m: { l: 44, t: 26, r: 14, b: 36 } });
+    const pl = mkPlot(Gp, { x0: 0, x1: 20, y0: 0, y1: 20, xt: [0, 5, 10, 15, 20], yt: [0, 10, 20], xl: '시간 (분)', yl: 'CO₂ 부피 (mL)', m: { l: 44, t: 36, r: 14, b: 46 } });
     drawAxes(pl);
     FL.forEach((f, i) => {
       ctx.save(); ctx.strokeStyle = f.bal; ctx.lineWidth = i === 0 ? 3.5 : 2.5; ctx.lineCap = 'round'; if (i) ctx.setLineDash([i * 3 + 3, 5]);
@@ -624,7 +624,7 @@
   function plSave() { const p = S.pl; try { localStorage.setItem('hyFermLabPlan', JSON.stringify({ topic: p.topic, q: p.q, know: p.know, meth: p.meth, when: p.when, vis: p.vis, safe: p.safe })); } catch (e) { /* 저장소를 쓸 수 없어요 */ } }
   const plCount = (o) => Object.keys(o).filter((k) => o[k]).length;
   function plG() {
-    if (PHONE) return { Cp: { x: 10, y: 10, w: 460, h: 306 }, Vp: { x: 10, y: 324, w: 460, h: 132 }, ex: [{ x: 10, y: 464, w: 226, h: 166 }, { x: 244, y: 464, w: 226, h: 166 }], fs: 12.5 };
+    if (PHONE) return { Cp: { x: 10, y: 10, w: 460, h: 330 }, Vp: { x: 10, y: 346, w: 460, h: 118 }, ex: [{ x: 10, y: 470, w: 226, h: 160 }, { x: 244, y: 470, w: 226, h: 160 }], fs: 12 };
     return { Cp: { x: 14, y: 14, w: 436, h: 532 }, Vp: { x: 460, y: 14, w: 326, h: 236 }, ex: [{ x: 460, y: 260, w: 158, h: 286 }, { x: 628, y: 260, w: 158, h: 286 }], fs: 14.5 };
   }
   function plDraw(dt, t) {
@@ -638,24 +638,24 @@
     ];
     let y = g.Cp.y + 52; const lw = PHONE ? 86 : 100;
     rows.forEach((r) => {
-      const ls = wrap(r[1] || '아직 안 썼어요', g.Cp.w - lw - 52, fs - 0.5, 700).slice(0, PHONE ? 2 : 3), hh = Math.max(PHONE ? 34 : 44, ls.length * (fs + 3) + 16);
+      const ls = wrap(r[1] || '아직 안 썼어요', g.Cp.w - lw - 52, fs - 0.5, 700).slice(0, PHONE ? 2 : 3), hh = Math.max(PHONE ? 30 : 44, ls.length * (fs + 3) + (PHONE ? 12 : 16));
       D.roundRect(g.Cp.x + 12, y, g.Cp.w - 24, hh, 10); ctx.fillStyle = r[2] ? '#ecfdf3' : '#f6f7fa'; ctx.fill(); ctx.strokeStyle = r[2] ? '#86efac' : '#e2e8f0'; ctx.lineWidth = 1.5; ctx.stroke();
       T(g.Cp.x + 22, y + hh / 2 + 5, r[0], fs - 0.5, r[2] ? '#15803d' : '#64748b', 'left', 800);
       ls.forEach((l, k) => T(g.Cp.x + 22 + lw, y + hh / 2 + 5 - (ls.length - 1) * (fs + 3) / 2 + k * (fs + 3), l, fs - 0.5, r[1] ? '#1f2d44' : '#b0b8c6', 'left', 700));
       T(g.Cp.x + g.Cp.w - 26, y + hh / 2 + 6, r[2] ? '✅' : '⬜', 15, '#000', 'center', 700);
-      y += hh + (PHONE ? 6 : 9);
+      y += hh + (PHONE ? 4 : 9);
     });
-    if (!PHONE) T(g.Cp.x + 16, g.Cp.y + g.Cp.h - 16, '입력한 내용은 이 기기에만 저장돼요.', 12.5, '#94a3b8', 'left', 700); else T(g.Cp.x + 16, g.Cp.y + g.Cp.h - 8, '입력한 내용은 이 기기에만 저장돼요.', 11.5, '#94a3b8', 'left', 700);
+    if (!PHONE) T(g.Cp.x + 16, g.Cp.y + g.Cp.h - 16, '입력한 내용은 이 기기에만 저장돼요.', 12.5, '#94a3b8', 'left', 700);
     // 시각화 도구 고르기
     panel(g.Vp.x, g.Vp.y, g.Vp.w, g.Vp.h, 16, '#fff');
     T(g.Vp.x + 14, g.Vp.y + 24, '무엇으로 보여 줄까요?', PHONE ? 13.5 : 15, '#1f2d44', 'left', 800);
-    const cols = 2, tw = (g.Vp.w - 14 * 2 - 10) / 2, th = PHONE ? 44 : 84;
+    const cols = 2, tw = (g.Vp.w - 14 * 2 - 10) / 2, th = PHONE ? 38 : 84;
     VIS.forEach((v, i) => {
       const tx = g.Vp.x + 14 + (i % cols) * (tw + 10), ty = g.Vp.y + 36 + Math.floor(i / cols) * (th + 8), on = p.vis === v[0];
       D.roundRect(tx, ty, tw, th, 12); ctx.fillStyle = on ? '#e0f2fe' : '#f6f7fa'; ctx.fill(); ctx.strokeStyle = on ? '#0284c7' : '#d6dce6'; ctx.lineWidth = on ? 3 : 1.5; ctx.stroke();
-      E(v[2], tx + 22, ty + (PHONE ? th / 2 : 26), PHONE ? 20 : 24);
-      T(tx + 42, ty + (PHONE ? 19 : 22), v[1], PHONE ? 13 : 15, '#1f2d44', 'left', 800);
-      if (PHONE) T(tx + 42, ty + 36, v[3], 10.5, '#64748b', 'left', 700); else { const ls = wrap(v[3], tw - 16, 12.5, 700); ls.forEach((l, k) => T(tx + 10, ty + 52 + k * 16, l, 12.5, '#64748b', 'left', 700)); }
+      E(v[2], tx + 22, ty + (PHONE ? th / 2 : 26), PHONE ? 18 : 24);
+      T(tx + 42, ty + (PHONE ? 16 : 22), v[1], PHONE ? 13 : 15, '#1f2d44', 'left', 800);
+      if (PHONE) T(tx + 42, ty + 31, v[3], 10.5, '#64748b', 'left', 700); else { const ls = wrap(v[3], tw - 16, 12.5, 700); ls.forEach((l, k) => T(tx + 10, ty + 52 + k * 16, l, 12.5, '#64748b', 'left', 700)); }
     });
     // 예시 인포그래픽 (눌러서 뒤집기)
     const EX = [
@@ -686,7 +686,7 @@
     down(p) {
       const s = S.pl, g = plG();
       g.ex.forEach((r, i) => { if (inRect(p.x, p.y, r)) { s.flipT[i] = s.flipT[i] ? 0 : 1; Sound.click(); } });
-      const cols = 2, tw = (g.Vp.w - 14 * 2 - 10) / 2, th = PHONE ? 44 : 84;
+      const cols = 2, tw = (g.Vp.w - 14 * 2 - 10) / 2, th = PHONE ? 38 : 84;
       VIS.forEach((v, i) => { const tx = g.Vp.x + 14 + (i % cols) * (tw + 10), ty = g.Vp.y + 36 + Math.floor(i / cols) * (th + 8); if (inRect(p.x, p.y, { x: tx, y: ty, w: tw, h: th })) { s.vis = v[0]; plSave(); Sound.click(); updateCtl(); } });
       return false;
     },

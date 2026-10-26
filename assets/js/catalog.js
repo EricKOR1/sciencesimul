@@ -8342,8 +8342,7 @@ window.SCI_CATALOG = {
                 "두 가지 발효",
                 "호흡과 비교",
                 "사례 판별"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hy-fermentation-lab",
@@ -8364,8 +8363,7 @@ window.SCI_CATALOG = {
                 "실험 설계",
                 "결과 분석",
                 "조사 계획"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hy-chloroplast",
@@ -8386,8 +8384,7 @@ window.SCI_CATALOG = {
                 "색소 분리",
                 "구조와 기능",
                 "추론하기"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hy-light-reaction",
