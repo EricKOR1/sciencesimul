@@ -682,13 +682,13 @@
      ====================================================== */
   function highStep(dt) {
     const hx = S.hx == null ? XT0 - 1425 : S.hx; S.hxV = approach(S.hxV, hx, dt, 8);
-    const s = hx - XT0, T = Thigh(s), pt = 1020 + (T * S.tH) / 6;
+    const s = hx - XT0, T = S.hx == null ? 0 : Thigh(s), pt = 1020 + (T * S.tH) / 6;
     S.pHV = approach(S.pHV, pt, dt, 6); if (Math.abs(S.pHV - pt) < 0.005) S.pHV = pt;
   }
   function drawHigh(t, dt) {
     const { A, M, X, Y } = upGeo('high'), { C, B } = rcOf('high');
     highStep(dt);
-    const hx = S.hx == null ? XT0 - 1425 : S.hx, s = hx - XT0, T = Thigh(s);
+    const placed = S.hx != null, hx = placed ? S.hx : XT0 - 1425, s = hx - XT0, T = placed ? Thigh(s) : 0;
     card(A, null);
     D.text(A.x + 14, A.y + 24 * FS, PHONE ? '☀️ 고기압 놓기' : '☀️ 지도를 눌러 지상 고기압(H)을 놓아 봐요', { size: 13, weight: 800, color: '#1e3a8a', align: 'left' });
     D.label(A.x + A.w - 14, A.y + 22 * FS, S.tH === 0 ? '지금' : '+' + S.tH + '시간', { bg: '#0f172a', size: 12.5, pad: 8, align: 'right' });
@@ -705,13 +705,14 @@
     ctx.fillStyle = '#a3a380'; ctx.fillRect(gx, bot, gw, 10); ctx.fillStyle = '#86a35c'; ctx.fillRect(gx, bot, gw, 4);
     ctx.strokeStyle = '#64748b'; ctx.lineWidth = 1.5; ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.moveTo(gx, top + 20); ctx.lineTo(gx + gw, top + 20); ctx.stroke(); ctx.setLineDash([]); D.text(gx + 6, top + 16, '500 hPa', { size: 11.5, weight: 800, color: '#475569', align: 'left' });
     const conv = Math.max(0, -Math.sin((TAU * s) / LW)) > 0.02;
-    if (conv) { [-1, 1].forEach((sd) => arrowS(mid + sd * (gw * 0.36), top + 36, mid + sd * 14, top + 36, { color: '#16a34a', width: 4.5, head: 10 })); D.text(mid, top + 30, '상층 수렴', { size: 11.5, weight: 900, color: '#15803d' }); }
+    const conv0 = placed && conv;
+    if (conv0) { [-1, 1].forEach((sd) => arrowS(mid + sd * (gw * 0.36), top + 36, mid + sd * 14, top + 36, { color: '#16a34a', width: 4.5, head: 10 })); D.text(mid, top + 30, '상층 수렴', { size: 11.5, weight: 900, color: '#15803d' }); }
     ctx.save(); ctx.globalAlpha = 0.9 * (1 - sunny); [[0, 0, 22], [-22, 6, 17], [22, 6, 19]].forEach(([dx, dy, r]) => D.sphere(mid + dx, top + 90 + dy, r, '#94a3b8', { gloss: false })); ctx.restore();
     if (sunny > 0.05) { ctx.globalAlpha = sunny; D.sphere(gx + gw - 40, top + 62, 20, '#fbbf24', { gloss: false }); D.glow(gx + gw - 40, top + 62, 44, '#fde68a', 0.5); ctx.globalAlpha = 1; }
     if (T > 0.05) arrowS(mid, top + 50, mid, bot - 30, { color: '#d97706', width: 5, head: 12, alpha: 0.5 + 0.4 * sunny });
-    [-1, 1].forEach((sd) => arrowS(mid + sd * 20, bot - 10, mid + sd * (26 + 60 * sunny), bot - 10, { color: '#15803d', width: 4, head: 9 }));
-    D.text(mid, bot - 24, T > 0.05 ? '하강 · 단열 압축 · 지상에서 발산' : '하강이 약해요', { size: 11.5, weight: 800, color: '#334155' });
-    D.text(C.x + C.w / 2, C.y + C.h - 8, 'H의 위치: 골 축의 ' + (s > 0 ? '동쪽' : '서쪽') + ' ' + Math.abs(Math.round(s)) + ' km', { size: 12.5, weight: 800, color: '#334155' });
+    if (placed) [-1, 1].forEach((sd) => arrowS(mid + sd * 20, bot - 10, mid + sd * (26 + 60 * sunny), bot - 10, { color: '#15803d', width: 4, head: 9 }));
+    D.text(mid, bot - 24, !placed ? '지도에 H를 먼저 놓아요' : T > 0.05 ? '하강 · 단열 압축 · 지상에서 발산' : '하강이 약해요', { size: 11.5, weight: 800, color: '#334155' });
+    D.text(C.x + C.w / 2, C.y + C.h - 8, placed ? 'H의 위치: 골 축의 ' + (s > 0 ? '동쪽' : '서쪽') + ' ' + Math.abs(Math.round(s)) + ' km' : 'H의 위치: 아직 놓지 않았어요', { size: 12.5, weight: 800, color: '#334155' });
     // ----- B
     card(B, '⏱️ 고기압의 중심 기압');
     const gcx = B.x + B.w / 2, gcy = B.y + (PHONE ? 140 : 132), gr = PHONE ? 88 : 80;
@@ -720,8 +721,8 @@
     D.text(gcx - gr, gcy + 20, '1000', { size: 11.5, weight: 700, color: '#64748b' }); D.text(gcx + gr, gcy + 20, '1040', { size: 11.5, weight: 700, color: '#64748b' });
     D.text(gcx, gcy - 14, fix(S.pHV, 1), { size: 30, weight: 900, color: '#b91c1c' }); D.text(gcx, gcy + 10, 'hPa', { size: 13, weight: 800, color: '#64748b' });
     const fl = makeFlow(B, 1, 40); fl.y = gcy + 36 * FS;
-    fl.put('기압 경향 T = ' + sg(T, 1) + ' hPa/6h', { size: 14, color: T > 0.05 ? '#b91c1c' : '#1d4ed8', dy: 22 });
-    fl.put(T >= 1.5 ? '상층 수렴으로 고기압이 강해져요' : T > 0.05 ? '조금 강해져요' : '약해져요(기압 하강)', { size: 12.5, color: '#475569', dy: 22 });
+    fl.put('기압 경향 T = ' + (placed ? sg(T, 1) + ' hPa/6h' : '—'), { size: 14, color: T > 0.05 ? '#b91c1c' : '#1d4ed8', dy: 22 });
+    fl.put(!placed ? '지도를 눌러 H를 놓아요' : T >= 1.5 ? '상층 수렴으로 고기압이 강해져요' : T > 0.05 ? '조금 강해져요' : '약해져요(기압 하강)', { size: 12.5, color: '#475569', dy: 22 });
     fl.put('p = 1020 + T × (' + S.tH + ' h / 6 h)', { size: 12.5, color: '#64748b', dy: 20 });
   }
   function readHigh() { const hx = S.hx == null ? null : S.hx; setReadouts(['H의 위치', hx == null ? '아직 안 놓았어요' : (hx - XT0 > 0 ? '골의 동쪽 ' : '골의 서쪽 ') + Math.abs(Math.round(hx - XT0)) + ' km', '기압 경향 T', hx == null ? '—' : sg(Thigh(hx - XT0), 1) + ' hPa/6h', '중심 기압', hx == null ? '—' : fix(1020 + (Thigh(hx - XT0) * S.tH) / 6, 1) + ' hPa']); }
@@ -898,7 +899,7 @@
     {
       title: '저기압 발달: 골의 동쪽에서 커져요', short: '저기압 발달', icon: '🌀', phase: '모형', features: ['low'],
       intro: '<div class="si-link">🔗 <b>앞 단계에서</b> 골의 동쪽(앞)이 상층 발산 구역이라서 그 아래 지상 기압이 내려간다고 했어요. 지상 저기압이 골에 대해 어디에 있느냐가 중요해요.</div>' +
-        '<p>상층 발산은 골 앞쪽에서 가장 커요. 이 모형에서 지상 기압 경향은 <b>T = 2.5 − 4.5 sin(2πs/L)</b> (hPa/6h, s: 골 축에서 저기압까지 동쪽 거리, L = 5700 km)이에요. s ≈ 1400 km(≈ L/4)에서 T = −2.0이라 24시간에 8 hPa이 내려가요. 골 축이 저기압 <b>바로 위</b>에 오면 발산이 0이 되어 저기압은 더 이상 발달하지 않고, 지상 수렴이 채워서 약해져요. (전선도 폐색돼요.)</p>',
+        '<p>상층 발산은 골 앞쪽에서 가장 커요. 이 모형에서 지상 기압 경향은 <b>T = 2.5 − 4.5 sin(2πs/L)</b> (hPa/6h, s: 골 축에서 저기압까지 동쪽 거리, L = 5700 km, sin이 음수이면 4.5 sin 항은 0)이에요. s ≈ 1400 km(≈ L/4)에서 T = −2.0이라 24시간에 8 hPa이 내려가요. 골 축이 저기압 <b>바로 위</b>에 오면 발산이 0이 되어 저기압은 더 이상 발달하지 않고, 지상 수렴이 채워서 약해져요. (전선도 폐색돼요.)</p>',
       setup() { resetStep(1); },
       recap: '지상 저기압은 상층 골의 동쪽(앞)에 있을 때 발달하고, 골 축이 바로 위로 오면 더 이상 발달하지 못하고 약해져요.',
       summary: '<ul><li>지상 저기압이 상층 <b>골의 동쪽</b>(발산 구역)에 있으면 중심 기압이 내려가며 <b>발달</b>해요. 예: 골에서 동쪽으로 약 1400 km에서 T = −2.0 hPa/6h → 12시간 1004, 24시간 <b>1000 hPa</b> (처음 1008).</li><li>골 축이 지상 저기압 <b>바로 위</b>에 오면 상층 발산이 사라지고 지상 수렴이 채워서 <b>쇠퇴</b>해요(전선 폐색).</li><li>골 축은 <b>높이에 따라 서쪽으로 기울어요</b>. 그래서 지상 저기압은 상층 골 축의 동쪽 아래에 놓여요.</li><li>파동은 한랭 전선 뒤로 한기를 남하시키고 온난 전선 앞으로 난기를 북상시켜 중위도 저기압의 에너지원이 돼요.</li></ul>',

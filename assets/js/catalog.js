@@ -9468,8 +9468,7 @@ window.SCI_CATALOG = {
                 "압력 경도력",
                 "힘의 균형",
                 "지균풍 계산"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hs-gradient-wind",
@@ -9490,8 +9489,7 @@ window.SCI_CATALOG = {
                 "경도풍",
                 "마찰력",
                 "지상풍"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hs-planetary-wave",
@@ -9512,8 +9510,7 @@ window.SCI_CATALOG = {
                 "행성파",
                 "편서풍 파동",
                 "상층 일기도"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hs-pressure-systems",
@@ -9534,8 +9531,7 @@ window.SCI_CATALOG = {
                 "저기압 발달",
                 "고기압 발달",
                 "일기 예측"
-              ],
-              "soon": true
+              ]
             }
           ]
         }

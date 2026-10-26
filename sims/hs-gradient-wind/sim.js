@@ -396,10 +396,10 @@
     ctx.save(); ctx.font = D.font(11.5, 800);
     let tot = 0; const ws = items.map((it) => { const t = ctx.measureText(it[1]).width + 18; tot += t; return t; });
     ctx.restore();
+    if (w && tot > w && items.length > 1) { const h = Math.ceil(items.length / 2); legend(x, y, items.slice(0, h), w); legend(x, y + 17 * FS, items.slice(h), w); return; }
     let cx = x - tot / 2;
     items.forEach((it, i) => { ctx.fillStyle = it[0]; ctx.beginPath(); ctx.arc(cx + 5, y - 4, 4.5, 0, TAU); ctx.fill(); D.text(cx + 14, y, it[1], { size: 11.5, weight: 800, color: '#334155', align: 'left' }); cx += ws[i]; });
   }
-
 
   /* ======================================================
      경도풍과 지상풍 (곡선 흐름 → 경도풍 → 마찰력 → 지상풍)

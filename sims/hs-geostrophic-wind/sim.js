@@ -374,6 +374,32 @@
     f.bar = (frac, col, h) => { h = h || 13; ctx.fillStyle = '#e2e8f0'; rr(f.x0, f.y, f.cw, h, h / 2).fill(); if (frac > 0.0005) { ctx.fillStyle = col; rr(f.x0, f.y, Math.max(h * 0.6, f.cw * clamp(frac, 0, 1)), h, h / 2).fill(); } f.y += (h + 10) * FS; };
     return f;
   }
+  /* 숫자 조절(− −− + ++): big 단위와 step 단위 단추 */
+  function makeStepper2(root, o) {
+    const st = { value: o.value != null ? o.value : o.min, o };
+    root.innerHTML = ''; root.classList.add('stp');
+    const dec = o.dec || 0;
+    const b = (txt, lab) => { const e = mk('button', 'btn btn-sm stp-b', txt); e.type = 'button'; e.setAttribute('aria-label', lab); e.style.minWidth = '44px'; e.style.width = '44px'; e.style.fontSize = '15px'; return e; };
+    const mm = b('−' + o.big, o.big + ' 줄이기'), mi = b('−' + o.step, o.step + ' 줄이기'), pl = b('+' + o.step, o.step + ' 늘리기'), pp = b('+' + o.big, o.big + ' 늘리기');
+    const out = mk('output', 'stp-v'); out.style.minWidth = '58px';
+    const un = mk('span', 'stp-u', o.unit || '');
+    root.append(mm, mi, out, un, pl, pp);
+    const show = () => { out.textContent = (st.value < 0 ? '−' : '') + Math.abs(st.value).toFixed(dec); };
+    const set = (v, silent) => { st.value = clamp(Math.round(v / o.step) * o.step, o.min, o.max); st.value = +st.value.toFixed(dec + 1); show(); if (!silent && o.onChange) o.onChange(st.value); };
+    [[mm, -o.big], [mi, -o.step], [pl, o.step], [pp, o.big]].forEach(([e, d]) => e.addEventListener('click', () => { Sound.click(); set(st.value + d); }));
+    st.set = set; st.reset = () => set(o.value != null ? o.value : o.min, true);
+    show();
+    return st;
+  }
+
+  function legend(x, y, items, w) {
+    ctx.save(); ctx.font = D.font(11.5, 800);
+    let tot = 0; const ws = items.map((it) => { const t = ctx.measureText(it[1]).width + 18; tot += t; return t; });
+    ctx.restore();
+    if (w && tot > w && items.length > 1) { const h = Math.ceil(items.length / 2); legend(x, y, items.slice(0, h), w); legend(x, y + 17 * FS, items.slice(h), w); return; }
+    let cx = x - tot / 2;
+    items.forEach((it, i) => { ctx.fillStyle = it[0]; ctx.beginPath(); ctx.arc(cx + 5, y - 4, 4.5, 0, TAU); ctx.fill(); D.text(cx + 14, y, it[1], { size: 11.5, weight: 800, color: '#334155', align: 'left' }); cx += ws[i]; });
+  }
 
   /* ======================================================
      전향력과 지균풍 (회전원판 → 압력 경도력 → 힘의 균형 → 지균풍 계산)
