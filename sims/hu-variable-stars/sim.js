@@ -429,8 +429,8 @@
     niceTicks(g.t0, g.t1, PHONE ? 4 : 6).forEach((v) => { const x = g.X(v); ctx.strokeStyle = 'rgba(148,163,184,.35)'; ctx.beginPath(); ctx.moveTo(x, g.top); ctx.lineTo(x, g.top + g.ph); ctx.stroke(); if (!o.noTime) T(x, g.top + g.ph + 15 * FS, fTick(v), 11.5, '#64748b', 'center', 700); });
     if (!o.noTitle) {
       T(g.ix + g.iw / 2, g.top + g.ph + 32 * FS, '시간 (' + c.unit + ')', 12, '#475569', 'center', 800);
-      ctx.save(); ctx.translate(g.ix - (PHONE ? 46 : 50), g.top + g.ph / 2); ctx.rotate(-Math.PI / 2); T(0, 0, '겉보기 등급 (클수록 어두움)', 11.5, '#475569', 'center', 800); ctx.restore();
-      T(g.ix - 8, g.top - 6, '어두움 ↑', 11, '#334155', 'right', 800); T(g.ix - 8, g.top + g.ph + 14, '밝음 ↓', 11, '#b45309', 'right', 800);
+      ctx.save(); ctx.translate(g.ix - (PHONE ? 60 : 50), g.top + g.ph / 2); ctx.rotate(-Math.PI / 2); T(0, 0, g.ph < 170 ? '등급' : '겉보기 등급 (클수록 어두움)', 11.5, '#475569', 'center', 800); ctx.restore();
+      T(g.ix - 8, g.top - 12, '어두움 ↑', 11, '#334155', 'right', 800); T(g.ix - 8, g.top + g.ph + 14, '밝음 ↓', 11, '#b45309', 'right', 800);
     }
   }
 
@@ -477,7 +477,7 @@
     return PHONE ? { P: { x: 8, y: 8, w: 464, h: 320 }, St: { x: 8, y: 336, w: 464, h: 124 }, Th: { x: 8, y: 468, w: 464, h: 384 } }
       : { P: { x: 208, y: 8, w: 582, h: 336 }, St: { x: 10, y: 8, w: 190, h: 336 }, Th: { x: 10, y: 352, w: 780, h: 260 } };
   }
-  const PO = () => ({ l: PHONE ? 60 : 66, r: 16, t: 48 * FS, b: 46 * FS });
+  const PO = () => ({ l: PHONE ? 76 : 66, r: 16, t: 48 * FS, b: 46 * FS });
   const thumbRect = (i) => {
     const { Th } = LCu();
     if (PHONE) { const cw = (Th.w - 8) / 2, ch = 90; return { x: Th.x + (i % 2) * (cw + 8), y: Th.y + Math.floor(i / 2) * (ch + 6), w: cw, h: ch }; }
@@ -555,7 +555,7 @@
   }
   const cCl = makeClassifier({
     items: CLS_ORDER.map((id) => { const c = CURVES[id]; return { label: c.name, chip: c.name, bin: c.kind, thumb: (x, y, w, h) => { ctx.fillStyle = '#f8fafc'; rr(x, y, w, h, 7).fill(); const g = cGeom(c, { x, y, w, h }, { l: 5, r: 5, t: 5, b: 5 }); line(curvePts(c, g, Math.max(30, Math.round(g.iw))), '#475569', 2.2); } }; }),
-    bins: KIND.map((k) => ({ label: k.n, sub: k.sub, color: k.c })),
+    bins: KIND.map((k) => ({ label: k.n, sub: PHONE ? null : k.sub, color: k.c })),
     chipCols: 1, minRows: 4, layout: LCl, onChange() { updateCtl(); },
   });
   const clsRight = () => cCl.counts().right === 8;
@@ -572,11 +572,11 @@
     panel(P.x, P.y, P.w, P.h, { r: 14 });
     const win = SCALES[PE.sc];
     T(P.x + 14, P.y + 24 * FS, '⏱ 세 맥동 변광성을 같은 시간 눈금(' + win + '일)으로', PHONE ? 13 : 14.5, '#1e293b', 'left', 800);
-    const sh = PHONE ? 244 : 160, top0 = P.y + 42 * FS, l = PHONE ? 52 : 148;
+    const sh = PHONE ? 226 : 160, top0 = P.y + 42 * FS, l = PHONE ? 52 : 148;
     PER.forEach((id, i) => {
       const c = CURVES[id], y0 = top0 + i * (sh + (PHONE ? 6 : 10)), R = { x: P.x + 8, y: y0, w: P.w - 16, h: sh };
       ctx.fillStyle = '#f8fafc'; rr(R.x, R.y, R.w, R.h, 10).fill(); ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1.5; rr(R.x, R.y, R.w, R.h, 10).stroke();
-      const g = cGeom(c, R, { l: l + 12, r: 14, t: PHONE ? 52 : 14, b: i === 2 ? 34 : 14, t0: 0, t1: win });
+      const g = cGeom(c, R, { l: l + 12, r: 14, t: PHONE ? 52 : 14, b: i === 2 ? (PHONE ? 46 : 34) : 14, t0: 0, t1: win });
       const ordIdx = PE.ord.indexOf(i === 0 ? 0 : i === 1 ? 1 : 2);
       // 이름 · 진폭 · (주기)
       const showP = PE.ordOk || FREE();
@@ -593,14 +593,14 @@
       ctx.restore();
       if (i === 2) T(g.ix + g.iw / 2, g.top + g.ph + 30, '시간 (일)', 12, '#475569', 'center', 800);
     });
-    if (PE.ordOk || FREE()) drawWrap(P.x + 14, P.y + P.h - 22 * FS, '주기: RR Lyr 0.567일 < δ Cep 5.366일 < 미라 332일. 주기가 가장 긴 미라의 진폭(8.1등급)이 가장 크지만, RR Lyr(1.0)와 δ Cep(0.9)는 주기가 10배 가까이 달라도 진폭이 비슷해요.', P.w - 28, PHONE ? 11.5 : 12.5, { color: '#0369a1', weight: 800 });
+    if (PE.ordOk || FREE()) drawWrap(P.x + 14, PHONE ? P.y + P.h - 84 : P.y + P.h - 22 * FS, '주기: RR Lyr 0.567일 < δ Cep 5.366일 < 미라 332일. 주기가 가장 긴 미라의 진폭(8.1등급)이 가장 크지만, RR Lyr(1.0)와 δ Cep(0.9)는 주기가 10배 가까이 달라도 진폭이 비슷해요.', P.w - 28, PHONE ? 11.5 : 12.5, { color: '#0369a1', weight: 800 });
   }
 
   /* =========================================================
      ④ 초신성
      ========================================================= */
   function LSn() {
-    return PHONE ? { I: { x: 8, y: 8, w: 464, h: 170 }, C: { x: 8, y: 186, w: 464, h: 290 }, A: { x: 8, y: 484, w: 464, h: 190 }, V: { x: 8, y: 682, w: 464, h: 170 } }
+    return PHONE ? { I: { x: 8, y: 8, w: 464, h: 128 }, C: { x: 8, y: 144, w: 464, h: 240 }, A: { x: 8, y: 392, w: 464, h: 216 }, V: { x: 8, y: 616, w: 464, h: 228 } }
       : { I: { x: 10, y: 8, w: 440, h: 190 }, C: { x: 10, y: 206, w: 440, h: 406 }, A: { x: 458, y: 8, w: 332, h: 300 }, V: { x: 458, y: 316, w: 332, h: 296 } };
   }
   function drawSn(dt, t) {
@@ -612,7 +612,7 @@
     // ---- 곡선
     panel(Cc.x, Cc.y, Cc.w, Cc.h, { r: 14 });
     T(Cc.x + 14, Cc.y + 24 * FS, '📈 ' + c.name + ' 광도 곡선', PHONE ? 13 : 14.5, '#1e293b', 'left', 800);
-    const g = cGeom(c, Cc, { l: PHONE ? 58 : 62, r: 16, t: 40 * FS, b: 46 * FS });
+    const g = cGeom(c, Cc, PO());
     drawAxes(c, g); line(curvePts(c, g, Math.round(g.iw)), '#2563eb', 3);
     const px = g.X(c.tp), py = g.Y(c.m);
     ctx.strokeStyle = 'rgba(37,99,235,.5)'; ctx.setLineDash([4, 4]); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px, g.top + g.ph); ctx.moveTo(g.ix, py); ctx.lineTo(px, py); ctx.stroke(); ctx.setLineDash([]);
@@ -634,9 +634,10 @@
     const sz = PHONE ? 12 : 13;
     const rowsA = [['최대 겉보기 등급 m', f1(c.m), true], ['거리 d', c.dTxt, true], ['M = m + 5 − 5 log d', shownM ? sg(Mabs, 1) : '?', shownM], ['L = 10^(0.4 × (4.83 − M))', shownL ? (L >= 1e9 ? f1(L / 1e9) + '×10⁹ L☉' : f1(L / 1e8) + '×10⁸ L☉') : '?', shownL]];
     let yy = A.y + 52 * FS;
-    rowsA.forEach((r) => { T(A.x + 14, yy, r[0], sz, '#475569', 'left', 800); T(A.x + A.w - 14, yy, r[1], sz + 2, r[2] ? (r[0][0] === 'M' || r[0][0] === 'L' ? '#15803d' : '#1e293b') : '#94a3b8', 'right', 800); yy += 28 * FS; });
-    if (is11 && shownL) drawWrap(A.x + 14, yy + 2, '약 30일 동안 낸 빛 에너지 ≈ ' + sci(L * SNE * SN_DAYS30, 1) + ' J (태양이 약 ' + f1(L * SN_DAYS30 / 3.156e7 / 1e8) + '억 년 동안 내는 에너지)', A.w - 28, PHONE ? 11.5 : 12.5, { color: '#b45309', weight: 800 });
-    else if (!is11) drawWrap(A.x + 14, yy + 2, 'SN 2011fe보다 ' + f1(Math.abs(snAbs(CURVES.sn11fe) - Mabs)) + '등급 어두워요(약 ' + f0(Math.pow(10, 0.4 * Math.abs(snAbs(CURVES.sn11fe) - Mabs))) + '분의 1). 초신성마다 최대 광도가 달라요.', A.w - 28, PHONE ? 11.5 : 12.5, { color: '#b45309', weight: 800 });
+    rowsA.forEach((r) => { T(A.x + 14, yy, r[0], sz, '#475569', 'left', 800); T(A.x + A.w - 14, yy, r[1], sz + 2, r[2] ? (r[0][0] === 'M' || r[0][0] === 'L' ? '#15803d' : '#1e293b') : '#94a3b8', 'right', 800); yy += (PHONE ? 25 : 28) * FS; });
+    if (is11 && shownL && PHONE) drawWrap(A.x + 14, yy + 2, '약 30일 동안 낸 빛 에너지 ≈ ' + sci(L * SNE * SN_DAYS30, 1) + ' J', A.w - 28, 11.5, { color: '#b45309', weight: 800 });
+    else if (is11 && shownL) drawWrap(A.x + 14, yy + 2, '약 30일 동안 낸 빛 에너지 ≈ ' + sci(L * SNE * SN_DAYS30, 1) + ' J (태양이 약 ' + f1(L * SN_DAYS30 / 3.156e7 / 1e8) + '억 년 동안 내는 에너지)', A.w - 28, PHONE ? 11.5 : 12.5, { color: '#b45309', weight: 800 });
+    else if (!is11) drawWrap(A.x + 14, yy + 2, PHONE ? 'SN 2011fe보다 약 ' + f0(Math.pow(10, 0.4 * Math.abs(snAbs(CURVES.sn11fe) - Mabs))) + '배 어두워요' : 'SN 2011fe보다 ' + f1(Math.abs(snAbs(CURVES.sn11fe) - Mabs)) + '등급 어두워요(약 ' + f0(Math.pow(10, 0.4 * Math.abs(snAbs(CURVES.sn11fe) - Mabs))) + '분의 1). 초신성마다 최대 광도가 달라요.', A.w - 28, PHONE ? 11.5 : 12.5, { color: '#b45309', weight: 800 });
     // ---- 스펙트럼선
     panel(V.x, V.y, V.w, V.h, { r: 14 });
     T(V.x + 14, V.y + 24 * FS, '🌈 스펙트럼선 이동으로 속도 재기 (SN 2011fe)', PHONE ? 12 : 13.5, '#1e293b', 'left', 800);

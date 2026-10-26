@@ -378,13 +378,13 @@
   const ORDER = (function () { const R = rng(5), a = []; for (let i = 6; i < GAL.length; i++) a.push(i); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(R() * (i + 1)); const t = a[i]; a[i] = a[j]; a[j] = t; } return a; })();
   const STARS_FG = (function () { const R = rng(31), a = []; for (let i = 0; i < 130; i++) a.push([R(), R(), 0.5 + R() * 0.9, R() * 6]); return a; })();
   const LADDER = [
-    { label: '연주시차', sub: '지구 공전으로 생긴 시차각', chip: '시차', bin: 0, t: '별을 6개월 간격으로 보면 위치가 조금 달라 보이는 시차각 p로 d = 1/p를 구해요. 먼 별은 시차각이 너무 작아서 우주 망원경(가이아)으로 재도 수 kpc까지예요.' },
-    { label: '주계열 맞추기', sub: '성단의 C-M도 겹치기', chip: '맞추기', bin: 1, t: '성단의 C-M도를 표준 주계열에 겹쳐 m − M을 구해요. 성단의 별 하나하나가 구별되는 수십 kpc 이내의 성단까지 쓸 수 있어요.' },
+    { label: '연주시차', sub: '시차각 p, d = 1/p', chip: '시차', bin: 0, t: '별을 6개월 간격으로 보면 위치가 조금 달라 보이는 시차각 p로 d = 1/p를 구해요. 먼 별은 시차각이 너무 작아서 우주 망원경(가이아)으로 재도 수 kpc까지예요.' },
+    { label: '주계열 맞추기', sub: 'C-M도 겹치기', chip: '맞추기', bin: 1, t: '성단의 C-M도를 표준 주계열에 겹쳐 m − M을 구해요. 성단의 별 하나하나가 구별되는 수십 kpc 이내의 성단까지 쓸 수 있어요.' },
     { label: '세페이드 변광성', sub: '주기-광도 관계', chip: '세페이드', bin: 2, t: '주기로 절대 등급을 알고 m − M으로 거리를 구해요. 다른 은하 속의 세페이드도 하나씩 보이는 수십 Mpc까지 쓸 수 있어요.' },
-    { label: '초신성', sub: '최대 광도가 거의 같아요', chip: '초신성', bin: 3, t: '최대 광도가 거의 같은 초신성의 겉보기 밝기로 거리를 재요. 아주 밝아서 수 Gpc 떨어진 은하에서도 보여요. 세페이드로 먼저 보정해야 해요.' },
-    { label: '허블-르메트르 법칙', sub: 'z → v = cz → d = v / H₀', chip: '허블 법칙', bin: 4, t: 'z를 재서 v = cz, d = v / H₀로 거리를 구해요. 가장 먼 은하까지 쓰지만 H₀를 아래 단계(세페이드·초신성)로 보정해야 해서 가장 위 단이에요.' },
+    { label: '초신성', sub: '최대 광도가 같아요', chip: '초신성', bin: 3, t: '최대 광도가 거의 같은 초신성의 겉보기 밝기로 거리를 재요. 아주 밝아서 수 Gpc 떨어진 은하에서도 보여요. 세페이드로 먼저 보정해야 해요.' },
+    { label: '허블-르메트르 법칙', sub: 'z → v → d', chip: '허블 법칙', bin: 4, t: 'z를 재서 v = cz, d = v / H₀로 거리를 구해요. 가장 먼 은하까지 쓰지만 H₀를 아래 단계(세페이드·초신성)로 보정해야 해서 가장 위 단이에요.' },
   ];
-  const RUNG = [{ label: '1단', sub: '수 kpc까지', color: '#0ea5e9' }, { label: '2단', sub: '수십 kpc', color: '#14b8a6' }, { label: '3단', sub: '수십 Mpc', color: '#22c55e' }, { label: '4단', sub: '수 Gpc', color: '#f59e0b' }, { label: '5단', sub: '수천 Mpc 이상', color: '#ef4444' }];
+  const RUNG = [{ label: '1단', sub: '수 kpc까지', color: '#0ea5e9' }, { label: '2단', sub: '수십 kpc', color: '#14b8a6' }, { label: '3단', sub: '수십 Mpc', color: '#22c55e' }, { label: '4단', sub: '수 Gpc', color: '#f59e0b' }, { label: '5단', sub: '수천 Mpc ~', color: '#ef4444' }];
   const SURV = [
     { n: 'CfA', yr: '1980년대', v: 1.1e3, txt: '약 1,100개', c: '#38bdf8' },
     { n: '2dF', yr: '1997~2002', v: 2.2e5, txt: '약 22만 개', c: '#22c55e' },
@@ -539,8 +539,8 @@
       T(p.x, ly, q.id + (tk ? ' ✓' : ''), PHONE ? 11 : 12.5, col, 'center', 800, { stroke: 'rgba(0,0,0,.7)', strokeWidth: 3 });
       S.hit2.push({ x: p.x, y: p.y, r: Math.max(24, r + 10), i });
     });
-    T(P.x + 14, P.y + 24 * FS, '🔭 하늘 한 부분의 사진: 40° × ' + (PHONE ? '30' : '15') + '° 쯤 (은하 400개)', PHONE ? 12 : 14.5, '#e2e8f0', 'left', 800);
-    T(P.x + P.w - 14, P.y + 24 * FS, '표시된 은하를 눌러요', PHONE ? 11 : 12.5, '#fde68a', 'right', 800);
+    T(P.x + 14, P.y + 24 * FS, '🔭 하늘 한 부분의 사진 (은하 400개)', PHONE ? 12 : 14.5, '#e2e8f0', 'left', 800);
+    if (!PHONE) T(P.x + P.w - 14, P.y + 24 * FS, '표시된 은하를 눌러요', 12.5, '#fde68a', 'right', 800);
     drawSpecPanel(L.SP, true);
   }
 
@@ -560,17 +560,17 @@
       ['② 후퇴 속도  v = c z   (c = 3.0×10⁵ km/s)', g ? '= 3.0×10⁵ × ' + (calcShown('z', i) ? dZ(g) : 'z') + ' = ' + (calcShown('v', i) ? fmtV(g.v) + ' km/s' : '?') : '', calcShown('v', i), '#8b5cf6'],
       ['③ 거리  d = v / H₀   (H₀ = 70 km/s/Mpc)', g ? '= ' + (calcShown('v', i) ? fmtV(g.v) : 'v') + ' / 70 = ' + (calcShown('d', i) ? g.d + ' Mpc' : '?') : '', calcShown('d', i), '#16a34a'],
     ];
-    const sh = PHONE ? 100 : 92;
+    const sh = PHONE ? 72 : 92;
     steps.forEach((s_, k) => {
       const y = ly + k * (sh + 8), done = s_[2];
       D.shadow(() => { ctx.fillStyle = done ? '#f0fdf4' : '#fff'; rr(CA.x + 12, y, lw, sh, 12).fill(); }, { blur: 4, y: 2 });
       ctx.strokeStyle = done ? '#16a34a' : s_[3]; ctx.lineWidth = done ? 2.5 : 1.8; rr(CA.x + 12, y, lw, sh, 12).stroke();
-      T(CA.x + 24, y + 26 * Math.min(FS, 1.12), s_[0], PHONE ? 12 : 13.5, '#1e293b', 'left', 800);
-      T(CA.x + 24, y + 58 * Math.min(FS, 1.12), s_[1] || '—', PHONE ? 12 : 14, done ? '#15803d' : '#64748b', 'left', 800);
+      T(CA.x + 24, y + (PHONE ? 25 : 26), s_[0], PHONE ? 12 : 13.5, '#1e293b', 'left', 800);
+      T(CA.x + 24, y + (PHONE ? 54 : 58), s_[1] || '—', PHONE ? 12 : 14, done ? '#15803d' : '#64748b', 'left', 800);
       if (done) D.check(CA.x + 12 + lw - 22, y + 22, 11, 1);
     });
     // 표
-    const tx = PHONE ? CA.x + 12 : CA.x + 12 + lw + 14, tw = PHONE ? CA.w - 24 : CA.w - lw - 38, ty = PHONE ? ly + 3 * (sh + 8) + 8 : ly, rh = PHONE ? 38 : 38;
+    const tx = PHONE ? CA.x + 12 : CA.x + 12 + lw + 14, tw = PHONE ? CA.w - 24 : CA.w - lw - 38, ty = PHONE ? ly + 3 * (sh + 8) + 8 : ly, rh = PHONE ? 33 : 38;
     const cols = [0.15, 0.24, 0.17, 0.22, 0.22];
     const heads = ['은하', 'λ (nm)', 'z', 'v (km/s)', 'd (Mpc)'];
     ctx.fillStyle = '#eef2f7'; rr(tx, ty, tw, rh - 4, 8).fill();
@@ -582,7 +582,7 @@
       const vals = [q.id, q.lam.toFixed(1), calcShown('z', r) ? dZ(q) : '—', calcShown('v', r) ? fmtV(q.v) : '—', calcShown('d', r) ? String(q.d) : '—'];
       let xx = tx; vals.forEach((v, k) => { T(xx + tw * cols[k] / 2, y + 22, v, PHONE ? 11.5 : 13, k >= 2 && v !== '—' ? '#15803d' : '#1e293b', 'center', 800); xx += tw * cols[k]; });
     });
-    const ny = ty + 7 * rh + 14;
+    const ny = ty + 7 * rh + 18;
     drawWrap(tx, ny, 'Δλ가 클수록 z가 크고 d도 커요. 같은 방법으로 사진 속 모든 은하의 거리를 잴 수 있어요.', tw, PHONE ? 12 : 12.5, { color: '#64748b' });
   }
 
@@ -596,7 +596,8 @@
   }
   function wdBatch(n) {
     let c = 0;
-    while (c < n && WD.next < ORDER.length) { if (wdPlot(ORDER[WD.next++], c * 0.014)) c++; }
+    const st = Math.min(0.014, 1.4 / Math.max(1, n));
+    while (c < n && WD.next < ORDER.length) { if (wdPlot(ORDER[WD.next++], c * st)) c++; }
     if (c) Sound.click();
     return c;
   }
@@ -636,15 +637,15 @@
     });
     // 안내 패널
     panel(I.x, I.y, I.w, I.h, { r: 14 });
-    T(I.x + 14, I.y + 24 * FS, '🖼 하늘 사진 (2차원): 거리를 몰라요', PHONE ? 12 : 14, '#1e293b', 'left', 800);
+    T(I.x + 14, I.y + 24 * FS, PHONE ? '🖼 하늘 사진 (2차원)' : '🖼 하늘 사진 (2차원): 거리를 몰라요', PHONE ? 12 : 14, '#1e293b', 'left', 800);
     ctx.fillStyle = '#0a1226'; rr(MP.x, MP.y, MP.w, MP.h, 8).fill();
     GAL.forEach((g, i) => { const pp = ppos(g, MP), on = WD.set.has(i); ctx.fillStyle = on ? '#fde68a' : 'rgba(148,163,184,.55)'; ctx.beginPath(); ctx.arc(pp.x, pp.y, on ? 2 : 1.5, 0, TAU); ctx.fill(); });
     ctx.strokeStyle = '#334155'; ctx.lineWidth = 1.6; rr(MP.x, MP.y, MP.w, MP.h, 8).stroke();
     const n = WD.list.length;
     const tx = PHONE ? I.x + 250 : I.x + 14, ty0 = PHONE ? I.y + 40 : MP.y + MP.h + 28, tw = PHONE ? I.w - 262 : I.w - 28;
     let yy = ty0;
-    if (PHONE) { yy = drawWrap(tx, yy, '노란 점 = 분광 관측을 마친 은하. 사진에서는 거리를 알 수 없어요.', tw, 11.5, { color: '#64748b' }) + 26 * FS; }
-    else { T(tx, yy, '노란 점은 분광 관측을 마친 은하예요. 사진에는 방향만 있고 거리는 없어요.', 12.5, '#64748b', 'left', 700); yy += 26 * FS; }
+    if (PHONE) { yy = drawWrap(tx, yy, '노란 점: 분광 관측을 마친 은하', tw, 11, { color: '#64748b' }) + 14 * FS; }
+    else { yy = drawWrap(tx, yy, '노란 점은 분광 관측을 마친 은하예요. 사진에는 방향만 있고 거리는 없어요.', I.w - 28, 12.5, { color: '#64748b' }) + 16 * FS; }
     // 오차 카드 두 장
     const cw = PHONE ? tw : (I.w - 36) / 2, ch = PHONE ? 62 : 78;
     const cards = [
@@ -655,9 +656,9 @@
       const x = PHONE ? tx : I.x + 12 + j * (cw + 12), y = PHONE ? yy + j * (ch + 6) : yy, on = WD.mode === c.k;
       D.shadow(() => { ctx.fillStyle = on ? mixc('#ffffff', c.c, 0.14) : '#fff'; rr(x, y, cw, ch, 12).fill(); }, { blur: 4, y: 2 });
       ctx.strokeStyle = on ? c.c : '#cbd5e1'; ctx.lineWidth = on ? 3 : 1.5; rr(x, y, cw, ch, 12).stroke();
-      T(x + 10, y + 22 * Math.min(FS, 1.1), c.title, PHONE ? 12 : 13.5, '#1e293b', 'left', 800);
-      T(x + 10, y + 42 * Math.min(FS, 1.1), c.a, PHONE ? 11 : 12.5, '#475569', 'left', 700);
-      T(x + 10, y + 61 * Math.min(FS, 1.1), c.b, PHONE ? 11 : 12.5, c.c, 'left', 800);
+      T(x + 10, y + (PHONE ? 19 : 22), c.title, PHONE ? 12 : 13.5, '#1e293b', 'left', 800);
+      T(x + 10, y + (PHONE ? 37 : 42), c.a, PHONE ? 11 : 12.5, '#475569', 'left', 700);
+      T(x + 10, y + (PHONE ? 55 : 61), c.b, PHONE ? 11 : 12.5, c.c, 'left', 800);
     });
     if (!PHONE) {
       yy += ch + 18;
@@ -672,7 +673,7 @@
       yy += 78;
       T(I.x + 14, yy, '지도에 찍힌 은하 ' + n + ' / 400', 14, '#0369a1', 'left', 800);
     } else {
-      T(I.x + 14, I.y + I.h - 12, '찍힌 은하 ' + n + ' / 400', 13, '#0369a1', 'left', 800);
+      T(MP.x, MP.y + MP.h + 24 * FS, '찍힌 은하 ' + n + ' / 400', 13, '#0369a1', 'left', 800);
     }
   }
 

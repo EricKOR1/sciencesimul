@@ -472,7 +472,7 @@
       const g = ABG[ag];
       blob(g.x, g.y, g.r, col, { ph: ag === 'A' ? 0 : 2 });
       SITES[ag].forEach(([k, deg]) => { const a = deg * Math.PI / 180; ctx.save(); ctx.strokeStyle = C.shade(col, -0.35); ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(g.x + Math.cos(a) * g.r * 0.95, g.y + Math.sin(a) * g.r * 0.95); ctx.lineTo(g.x + Math.cos(a) * (g.r + 7), g.y + Math.sin(a) * (g.r + 7)); ctx.stroke(); ctx.restore(); epiShape(k, g.x + Math.cos(a) * (g.r + 12), g.y + Math.sin(a) * (g.r + 12), 7, a + Math.PI / 2); });
-      T(g.x, g.y - 2, name, PHONE ? 14 : 17, '#fff', 'center', 800, { stroke: C.shade(col, -0.35), strokeWidth: 3 }); T(g.x, g.y + (PHONE ? 15 : 18), sub, PHONE ? 11 : 12.5, '#fff', 'center', 800, { stroke: C.shade(col, -0.35), strokeWidth: 3 });
+      TF(g.x, g.y - 2, name, g.r * 1.6, PHONE ? 14 : 17, 11, '#fff', 'center', 800, { stroke: C.shade(col, -0.35), strokeWidth: 3 }); TF(g.x, g.y + (PHONE ? 15 : 18), sub, g.r * 1.6, PHONE ? 11 : 12.5, 9, '#fff', 'center', 800, { stroke: C.shade(col, -0.35), strokeWidth: 3 });
     });
     /* 시험관 */
     const tb = ABG.tube;
@@ -624,7 +624,7 @@
   function hbNext() {
     if (HB.stage >= 5) return;
     if (HB.stage === 3 && !HB.pred) { showHint('먼저 "선택 배지에서 살아남아 증식할 세포"를 예측해서 골라요.'); Sound.fail(); return; }
-    Sound.click(); HB.stage++; HB.tS = 0; HB.merged = false; HB.grown = false;
+    Sound.click(); HB.stage++; HB.tS = 0; if (HB.stage === 3) HB.merged = false; HB.grown = false;
     if (HB.stage === 4) { HB.cells.forEach((c) => { c.dieAt = 0.5 + rnd() * 1.4; c.dyT = 0; c.dead = false; }); }
     hbTargets(false); updateCtl();
   }
@@ -707,7 +707,7 @@
       if (st === 4 && HB.tS < 0.6) T(G.fd.x, G.fd.y + G.fd.r + 22, '선택 배지를 넣어요', 14, '#b45309', 'center', 800);
     }
     /* 범례와 숫자 */
-    if (st >= 3) {
+    if (st >= 3 && st <= 4) {
       const cnt = hbCount(), hybN = cnt.h * (HB.grown && HB.tS > 3.2 ? 4 : 1);
       const items = [['B 세포', cnt.b, 'b'], ['골수종 세포', cnt.m, 'm'], ['하이브리도마', hybN, 'h'], ['융합 실패 세포', cnt.f, 'f']];
       const ly = PHONE ? VH - 62 : VH - 54, lw = (VW - 24 - 18) / 4;
@@ -729,7 +729,7 @@
     const g = plateGeom(), reveal = Math.floor(HB.plate * 96);
     const posShown = POS8.filter((i) => i < reveal).length;
     drawPlate(g, { reveal, pick: HB.plate >= 1 ? POS8[0] : -1 });
-    TF(g.x0 + 5.5 * g.pitch, g.y0 + 8 * g.pitch + 22, '96칸 중 양성 ' + posShown + '칸 (원하는 항체가 있어요)' + (HB.plate >= 1 ? ' → 한 칸을 골라 단일 클론으로' : ''), PHONE ? 440 : 420, PHONE ? 12.5 : 14, 10, '#b91c1c', 'center', 800);
+    TF(g.x0 + 5.5 * g.pitch, g.y0 + 8 * g.pitch + 34, '96칸 중 양성 ' + posShown + '칸 (원하는 항체가 있어요)' + (HB.plate >= 1 ? ' → 한 칸을 골라 단일 클론으로' : ''), PHONE ? 440 : 420, PHONE ? 12.5 : 14, 10, '#b91c1c', 'center', 800);
     /* 플라스크: 같은 항체가 쌓여요 */
     const fx = PHONE ? VW / 2 : VW - 150, fy = PHONE ? VH - 90 : VH - 92;
     if (HB.plate >= 1 || HB.flask > 0) {
