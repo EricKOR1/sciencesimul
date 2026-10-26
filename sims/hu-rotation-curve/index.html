@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0ea5e9">
+  <title>은하 회전 곡선 | 고등 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎡</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-hint { bottom: auto; top: 12px; }
+    .stage-toolbar { min-height: 58px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; }
+    .stage-toolbar .segmented button { min-height: 40px; padding: 5px 10px; font-size: 14px; white-space: nowrap; }
+    .stage-toolbar .segmented { flex-wrap: wrap; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard [hidden] { display: none !important; }
+    .opt-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin-top: 4px; }
+    .opt-grid.c3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .opt-grid.c4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .opt-grid.c5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+    .opt {
+      min-height: 46px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 12px;
+      font-weight: 800; font-size: 14.5px; cursor: pointer; padding: 4px 4px; font-family: inherit; line-height: 1.2;
+    }
+    .opt.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); color: color-mix(in srgb, var(--subject) 70%, black); }
+    .opt.done { border-color: var(--good); background: var(--good-soft); color: #0b6b39; }
+    .opt:disabled { opacity: .5; cursor: not-allowed; }
+    .ctrl-note { margin: 6px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    .btn-sm { min-height: 44px; }
+    .btn-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+    .btn-row .btn { flex: 1; padding-left: 8px; padding-right: 8px; }
+    .readout .value.txt { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .concept table.mini, table.mini { border-collapse: collapse; margin: 6px 0; font-size: 13px; width: 100%; }
+    .concept table.mini th, .concept table.mini td, table.mini th, table.mini td { border: 1px solid var(--line); padding: 4px 5px; text-align: center; }
+    .concept table.mini th, table.mini th { background: var(--surface-2); font-weight: 800; }
+    .num-in { width: 100%; min-height: 46px; border: 2px solid var(--line); border-radius: 10px; font: inherit; font-weight: 800; font-size: 17px; padding: 0 10px; background: var(--surface); color: var(--ink); text-align: center; }
+    .num-in:focus { outline: none; border-color: var(--subject); }
+    .num-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .num-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .in-row { display: grid; grid-template-columns: 1fr 104px; gap: 8px; align-items: center; margin-top: 6px; font-weight: 800; font-size: 14.5px; line-height: 1.25; }
+    .in-row .num-in { min-height: 42px; font-size: 16px; }
+    @keyframes shakeX { 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+    .src-note { margin: 4px 0 0; font-size: 12.5px; color: #a16207; background: #fff7e0; border: 1px solid #f2d38a; border-radius: 10px; padding: 6px 9px; line-height: 1.4; }
+    @media (max-width: 599px) {
+      .readout { min-width: 0; }
+      .readout .value.txt { font-size: 15px; }
+      .stage-toolbar .spacer { display: none; }
+      .stage-toolbar .segmented button { padding: 5px 7px; font-size: 13px; }
+    }
+    input[type=range] { height: 40px; }
+    .ticks { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--muted); font-weight: 700; margin-top: -6px; padding: 0 2px; }
+      .opt-grid.c6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+    .opt.sm { min-height: 40px; font-size: 13.5px; }
+    .opt.left { text-align: left; padding: 6px 10px; }
+    .in-row.three { grid-template-columns: 1fr 96px 52px; }
+    .unit-tag { font-size: 13px; color: var(--muted); font-weight: 800; }
+  </style>
+</head>
+<body class="sim-page" data-subject="earth">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#hu">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">행성우주과학 · Ⅲ. 은하와 우주</div>
+      <h1>은하 회전 곡선</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🎡 은하 회전 곡선</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="group" aria-label="장면 고르기" hidden>
+            <button type="button" data-view="solar">🪐 태양계</button>
+            <button type="button" data-view="rot">🎡 은하 회전</button>
+            <button type="button" data-view="mass">⚖ 안쪽 질량</button>
+            <button type="button" data-view="light">💡 빛의 질량</button>
+            <button type="button" data-view="halo">🌫 헤일로</button>
+          </div>
+
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="태양계 행성의 로그 속도 그래프, 우리은하의 회전과 케플러 비교, 안쪽 질량 계산, 빛으로 센 질량과의 비교, 암흑 물질 헤일로로 곡선 맞추기가 있어요."></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">—</span><span class="value txt" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">—</span><span class="value txt" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">—</span><span class="value txt" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" data-modes="solar" id="slNote">
+          <p class="ctrl-note">왼쪽 목록의 (r, v)에 맞는 자리를 그래프에서 눌러 점을 찍어요. 눈금은 로그예요.</p>
+        </div>
+        <div class="control" data-modes="solar" id="calcSl" hidden>
+          <div class="in-row"><span>점들의 기울기<br>(log v 대 log r)</span><input class="num-in" id="inSl" type="text" inputmode="decimal" placeholder="예: −1" aria-label="로그 그래프에서 점들의 기울기" autocomplete="off"></div>
+          <p class="ctrl-note">기울기 = (log v₂ − log v₁) / (log r₂ − log r₁)</p>
+        </div>
+        <div class="control" data-modes="rot">
+          <div class="control-head"><span>🎡 어떤 회전을 볼까?</span></div>
+          <div class="opt-grid" id="grpKep"><button class="opt sm" type="button" data-k="0">🔭 관측한 회전</button><button class="opt sm" type="button" data-k="1">🍎 케플러라면</button></div>
+          <p class="ctrl-note">질량이 중심에 모여 있을 때(케플러)는 바깥 별이 훨씬 느려요.</p>
+        </div>
+        <div class="control" data-modes="mass">
+          <div class="control-head"><label for="sRi">📏 반지름 r</label><output id="oRi0">8 kpc</output></div>
+          <input type="range" id="sRi" min="0" max="8" step="1" value="3" aria-label="우리은하 중심에서의 거리 r (표의 9개 값 중 하나)">
+          <div class="ticks"><span>2</span><span>6</span><span>12</span><span>20</span><span>30 kpc</span></div>
+          <p class="ctrl-note" id="oRi">r = 8 kpc, v = 220 km/s</p>
+        </div>
+        <div class="control" data-modes="mass" id="calcMd" hidden>
+          <div class="in-row"><span>안쪽 질량 M(&lt;r)<br>(×10¹⁰ M☉ 단위)</span><input class="num-in" id="inMd" type="text" inputmode="decimal" placeholder="예: 5" aria-label="안쪽 질량 (10의 10제곱 태양 질량 단위)" autocomplete="off"></div>
+          <p class="ctrl-note">M = r v² / G, G = 4.30×10⁻⁶ kpc (km/s)² / M☉</p>
+        </div>
+        <div class="control" data-modes="light" id="lightNote">
+          <p class="ctrl-note">오른쪽 그래프를 누르면 그 반지름(초록 점선)의 값이 아래 정보에 나와요. 노랑: 빛으로 센 질량, 파랑: 속도로 센 질량이에요.</p>
+        </div>
+        <div class="control" data-modes="light" id="calcPc" hidden>
+          <div class="in-row"><span>보이지 않는 질량의 비율<br>(%, r = 30 kpc)</span><input class="num-in" id="inPc" type="text" inputmode="decimal" placeholder="예: 50" aria-label="30 kpc에서 보이지 않는 질량의 비율 (퍼센트)" autocomplete="off"></div>
+        </div>
+        <div class="control" data-modes="halo">
+          <div class="control-head"><span>🌌 은하 고르기</span></div>
+          <div class="opt-grid c3" id="grpGal"><button class="opt sm" type="button" data-k="0">우리은하</button><button class="opt sm" type="button" data-k="1">안드로메다</button><button class="opt sm" type="button" data-k="2">NGC 3198</button></div>
+        </div>
+        <div class="control" data-modes="halo" id="haloBox">
+          <div class="control-head"><label for="sMh">🌫 헤일로 질량 (30 kpc 안쪽)</label><output id="oMh">0.0×10¹¹ M☉</output></div>
+          <input type="range" id="sMh" min="0" max="4" step="0.1" value="0" aria-label="암흑 물질 헤일로의 질량 (10의 11제곱 태양 질량 단위, 30 킬로파섹 안쪽)">
+        </div>
+        <div class="control" data-modes="halo" id="commonBox" hidden>
+          <div class="control-head"><span>🎯 세 은하의 공통 특징</span></div>
+          <div class="opt-grid" id="grpCommon"></div>
+        </div>
+
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

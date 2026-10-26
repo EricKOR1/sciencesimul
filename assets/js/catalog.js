@@ -8855,8 +8855,7 @@ window.SCI_CATALOG = {
                 "핵심 기술",
                 "생활 속 성과",
                 "발표"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hg-monoclonal",
@@ -8877,8 +8876,7 @@ window.SCI_CATALOG = {
                 "하이브리도마",
                 "치료 사례",
                 "전망"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hg-stem-cell",
@@ -8899,8 +8897,7 @@ window.SCI_CATALOG = {
                 "종류",
                 "분화 유도",
                 "치료와 전망"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hg-gene-editing",
@@ -8921,8 +8918,7 @@ window.SCI_CATALOG = {
                 "절단과 수리",
                 "치료 사례",
                 "한계와 전망"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hg-biotech-fields",
@@ -8943,8 +8939,7 @@ window.SCI_CATALOG = {
                 "가상 실험",
                 "활용 사례",
                 "설명 자료"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hg-lmo",
@@ -8965,8 +8960,7 @@ window.SCI_CATALOG = {
                 "인간 영향",
                 "생태계 영향",
                 "종합 추론"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hg-bioethics",
@@ -8987,8 +8981,7 @@ window.SCI_CATALOG = {
                 "이해관계",
                 "의사 결정",
                 "제도와 책임"
-              ],
-              "soon": true
+              ]
             }
           ]
         }
@@ -9867,8 +9860,7 @@ window.SCI_CATALOG = {
                 "맞추기",
                 "성단 나이",
                 "성단 비교"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hu-cepheid-galaxy",
@@ -9889,8 +9881,7 @@ window.SCI_CATALOG = {
                 "거리 계산",
                 "성단 지도",
                 "은하 규모"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hu-extinction",
@@ -9911,8 +9902,7 @@ window.SCI_CATALOG = {
                 "적색화",
                 "거리 보정",
                 "성간 물질"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hu-rotation-curve",
@@ -9933,8 +9923,7 @@ window.SCI_CATALOG = {
                 "안쪽 질량",
                 "빛의 질량",
                 "암흑 물질"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hu-redshift-survey",

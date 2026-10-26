@@ -435,7 +435,7 @@
     /* 서열 */
     const ty = G.ty, by = ty + 34;
     D.roundRect(4, ty - 30, VW - 8, 190, 14); ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.fill();
-    T(12, ty - 10, "5′", 14, '#64748b', 'left', 800); T(12, by + 5, "3′", 14, '#64748b', 'left', 800);
+    T(1, ty - 10, "5′", 12, '#64748b', 'left', 800); T(1, by + 5, "3′", 12, '#64748b', 'left', 800);
     for (let i = 0; i < GENOME.length; i++) {
       const x = tgX(i); if (x < -G.slot || x > VW) continue;
       const cx = x + G.slot / 2, inGuide = i >= q && i < q + 20, inPam = i >= q + 20 && i < q + 23;
@@ -455,12 +455,12 @@
     ctx.save(); const bound = TG.bound, pulse = 1 + (bound ? TG.snap * 0.04 : 0);
     D.roundRect(gx0 - 8, by + 18, gw + 16, 52, 18); ctx.fillStyle = bound ? 'rgba(34,197,94,.20)' : 'rgba(168,85,247,.16)'; ctx.fill(); ctx.strokeStyle = bound ? '#16a34a' : '#a855f7'; ctx.lineWidth = bound ? 3.4 : 2.4; ctx.stroke();
     ctx.restore();
-    T(gx0 + gw / 2, by + 100, '가이드 RNA (20염기) + Cas9', PHONE ? 13 : 14.5, bound ? '#15803d' : '#7e22ce', 'center', 800);
+    T(gx0 + gw / 2, by + 96, '가이드 RNA (20염기) + Cas9', PHONE ? 13 : 14.5, bound ? '#15803d' : '#7e22ce', 'center', 800);
     const pamX = tgX(q + 20);
     ctx.strokeStyle = '#ca8a04'; ctx.lineWidth = 2.2; D.roundRect(pamX - 2, ty - 24, 3 * G.slot + 4, 34, 6); ctx.stroke();
     T(pamX + 1.5 * G.slot, ty - 32, 'PAM', 13.5, '#a16207', 'center', 800);
     ctx.strokeStyle = '#7c3aed'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(gx0, ty - 26); ctx.lineTo(gx0 + gw, ty - 26); ctx.stroke(); T(gx0 + gw / 2, ty - 32, '표적 서열 20염기', 13.5, '#6d28d9', 'center', 800);
-    if (bound) { const mx = tgX(q + 10) + G.slot / 2; D.glow(mx, by + 40, 120, '#22c55e', 0.25 + 0.2 * TG.snap); D.check(mx, ty + 128 + (PHONE ? 0 : 2), 11, 1); }
+    if (bound) { const mx = tgX(q + 10) + G.slot / 2; D.glow(mx, by + 40, 120, '#22c55e', 0.25 + 0.2 * TG.snap); D.check(gx0 + gw + 30, by + 44, 11, 1); }
     /* 안내 */
     const iy = G.info.y;
     const w = VW - 24;
@@ -632,7 +632,7 @@
     else {
       const msgs = [];
       if (info.mode === 'hdr') { msgs.push('주형 DNA를 이용해 GTG(Val)가 GAG(Glu)로 정확히 교정됐어요.'); msgs.push('나머지 서열은 그대로예요: 정확한 교정이 가능해요.'); }
-      else if (info.frame) { msgs.push(info.t + ' → 읽기틀이 밀려요. 8번째 아미노산부터 모두 달라져요.'); msgs.push(info.stop >= 0 ? (info.stop + 1) + '번째에서 정지 코돈(■)이 나타나 단백질이 짧아져요 → 유전자 불활성화(녹아웃).' : '정지 코돈이 아직 안 보여요.'); }
+      else if (info.frame) { msgs.push(info.t + ' → 읽기틀이 밀려요. 8번째 아미노산부터 모두 달라져요.'); msgs.push(info.stop >= 0 ? (info.stop + 1) + '번째에서 정지 코돈이 나타나 단백질이 짧아져요 → 유전자 불활성화(녹아웃).' : '정지 코돈이 아직 안 보여요.'); }
       else { msgs.push(info.t + ' → 3의 배수라 읽기틀이 유지돼요. 8번째 아미노산(Lys) 하나만 없어져요.'); msgs.push('유전자가 거의 그대로 작동해요. 다시 시도해 읽기틀이 밀리는 결과를 찾아요.'); }
       const hh = bubble(12, ry, VW - 24, msgs[0], { size: PHONE ? 13 : 14.5, fill: info.dead ? '#fef2f2' : info.fixed ? '#f0fdf4' : '#fff', line: info.dead ? '#fca5a5' : info.fixed ? '#86efac' : '#cbd5e1' });
       if (ry + hh + 4 < VH - 30) bubble(12, ry + hh + 6, VW - 24, msgs[1], { size: PHONE ? 13 : 14.5 });
@@ -778,7 +778,7 @@
     { id: 'cost', label: '매우 높은 비용과 접근성', short: '비용 · 접근성', icon: '💰', col: '#7c3aed' },
     { id: 'long', label: '장기 안전성을 아직 다 알지 못해요', short: '장기 안전성', icon: '⏳', col: '#2563eb' },
   ];
-  const LIM_BOX = { off: '더 정밀한 Cas9 · 가이드 설계, 편집 뒤 전체 유전체 검사', mosaic: '편집 효율을 높이고 편집된 세포의 비율을 확인', deliver: '체외 편집이나 더 안전한 전달체 개선', cost: '제도적 지원과 생산 기술 발전으로 비용 낮추기', long: '오랜 기간 추적 관찰' };
+  const LIM_BOX = { off: '더 정밀한 Cas9 · 가이드 설계와 편집 뒤 유전체 검사', mosaic: '편집 효율을 높이고 편집된 세포의 비율을 확인하는 일', deliver: '체외 편집이나 더 안전한 전달체 개선', cost: '제도적 지원과 생산 기술 발전으로 비용을 낮추는 일', long: '오랜 기간 추적 관찰' };
   const LIM_ORDER = ['cost', 'off', 'long', 'deliver', 'mosaic'];
   function pairSorter(items, boxMap, order, cardH) {
     const n = items.length, bh = PHONE ? 0 : Math.floor((VH - 74 - 12 - (n - 1) * 8) / n);
@@ -804,7 +804,7 @@
   const olOK = () => !!(olGet(OPT_A, OL.a) && olGet(OPT_A, OL.a)[2] && OL.b && OL.c && OL.b === OL.c);
   function olSentence() {
     const a = olGet(OPT_A, OL.a), b = olGet(OPT_B, OL.b), c = olGet(OPT_C, OL.c);
-    return 'CRISPR 치료는 ' + (a ? a[1] : '( … )') + ' 것으로 기대되지만, ' + (b ? '"' + b[3] + '" 한계' : '( … )') + ' 때문에 ' + (c ? c[1] : '( … )') + '이(가) 필요해요.';
+    return 'CRISPR 치료는 ' + (a ? a[1] : '( … )') + ' 것으로 기대되지만, ' + (b ? '"' + b[3] + '" 한계' : '( … )') + ' 때문에 ' + (c ? c[1] + josa(c[1], '이', '가') : '( … )') + ' 필요해요.';
   }
   function olDraw(dt, t) {
     TF(VW / 2, 28, '모둠이 한계를 근거로 들어 전망 문장을 완성해요', VW - 24, PHONE ? 14 : 16, 11.5, INK, 'center', 800);
