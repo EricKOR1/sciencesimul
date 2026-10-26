@@ -392,6 +392,15 @@
     return st;
   }
 
+  function legend(x, y, items, w) {
+    ctx.save(); ctx.font = D.font(11.5, 800);
+    let tot = 0; const ws = items.map((it) => { const t = ctx.measureText(it[1]).width + 18; tot += t; return t; });
+    ctx.restore();
+    let cx = x - tot / 2;
+    items.forEach((it, i) => { ctx.fillStyle = it[0]; ctx.beginPath(); ctx.arc(cx + 5, y - 4, 4.5, 0, TAU); ctx.fill(); D.text(cx + 14, y, it[1], { size: 11.5, weight: 800, color: '#334155', align: 'left' }); cx += ws[i]; });
+  }
+
+
   /* ======================================================
      경도풍과 지상풍 (곡선 흐름 → 경도풍 → 마찰력 → 지상풍)
      ====================================================== */
@@ -490,14 +499,6 @@
     if (o.showNet !== false && kind !== 'straight' && Math.abs(net) > 1e-6) arrowS(pos.x + inU.x * 2 + tn.x * 18, pos.y + inU.y * 2 + tn.y * 18, pos.x + tn.x * 18 + inU.x * Math.max(0, net) * SCF * 1e3 * mag, pos.y + tn.y * 18 + inU.y * Math.max(0, net) * SCF * 1e3 * mag, { color: C_NET, width: 5, head: 10 });
     return { M, cx, cy, Rp, pos, outU, inU, net, needed, cor };
   }
-  function legend(x, y, items, w) {
-    ctx.save(); ctx.font = D.font(11.5, 800);
-    let tot = 0; const ws = items.map((it) => { const t = ctx.measureText(it[1]).width + 18; tot += t; return t; });
-    ctx.restore();
-    let cx = x - tot / 2;
-    items.forEach((it, i) => { ctx.fillStyle = it[0]; ctx.beginPath(); ctx.arc(cx + 5, y - 4, 4.5, 0, TAU); ctx.fill(); D.text(cx + 14, y, it[1], { size: 11.5, weight: 800, color: '#334155', align: 'left' }); cx += ws[i]; });
-  }
-
   /* ======================================================
      장면 1: 곡선 흐름
      ====================================================== */

@@ -639,8 +639,7 @@
     D.roundRect(G.lum.x, G.lum.y - 4, G.lum.w, G.lum.h + 4, 16); ctx.fillStyle = 'rgba(251,208,150,.5)'; ctx.fill(); ctx.strokeStyle = 'rgba(244,114,182,.75)'; ctx.lineWidth = 3; ctx.stroke();
     D.roundRect(G.str.x, G.str.y, G.str.w, G.str.h, 12); const sg = ctx.createLinearGradient(0, G.str.y, 0, G.str.y + G.str.h); sg.addColorStop(0, '#effae3'); sg.addColorStop(1, '#d4efc5'); ctx.fillStyle = sg; ctx.fill();
     T(M.x + M.w - 14, M.y + 22, '틸라코이드 막 단면 (확대)', PHONE ? 12.5 : 14, '#be185d', 'right', 800);
-    const x0 = M.x + 10, x1 = M.x + M.w - 10; ctx.fillStyle = 'rgba(244,114,182,.3)'; ctx.fillRect(x0, my - t / 2, x1 - x0, t);
-    for (let x = x0 + 6; x < x1 - 4; x += 12) { D.sphere(x, my - t / 2 + 2, 4.2, '#f472b6', { gloss: false }); D.sphere(x, my + t / 2 - 2, 4.2, '#f472b6', { gloss: false }); }
+    { const x0 = M.x + 10, bw = M.w - 20; blit(sprite('thband' + Math.round(bw) + '_' + t, bw, t, (cx, D2) => { cx.fillStyle = 'rgba(244,114,182,.3)'; cx.fillRect(0, 0, bw, t); for (let x = 6; x < bw - 4; x += 12) { D2.sphere(x, 2, 4.2, '#f472b6', { gloss: false }); D2.sphere(x, t - 2, 4.2, '#f472b6', { gloss: false }); } }), x0 + bw / 2, my); }
     // 광계 Ⅱ · 전달 단백질 · 광계 Ⅰ · 환원 효소
     const pw = G.pw, top = my - t / 2 - 18, ph = t + 34;
     const blob = (cx, fill, stroke, glow) => {

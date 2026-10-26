@@ -450,8 +450,7 @@
     D.label(P.x + P.w / 2, P.y + 20, mito ? '세포호흡 · 미토콘드리아 내막' : '광합성 · 틸라코이드 막', { bg: mito ? '#be185d' : '#15803d', color: '#fff', size: PHONE ? 14 : 15.5 });
     D.roundRect(G.topR.x, G.topR.y, G.topR.w, G.topR.h, 12); ctx.fillStyle = 'rgba(251,208,150,.5)'; ctx.fill();
     D.roundRect(G.botR.x, G.botR.y, G.botR.w, G.botR.h, 12); ctx.fillStyle = mito ? '#fbeab0' : '#d9f0cb'; ctx.fill();
-    ctx.fillStyle = 'rgba(244,114,182,.3)'; ctx.fillRect(P.x + 8, my - th / 2, P.w - 16, th);
-    for (let x = P.x + 14; x < P.x + P.w - 10; x += 12) { D.sphere(x, my - th / 2 + 2, 4, '#f472b6', { gloss: false }); D.sphere(x, my + th / 2 - 2, 4, '#f472b6', { gloss: false }); }
+    { const bw = P.w - 16; blit(sprite('mband' + Math.round(bw) + '_' + th, bw, th, (cx, D2) => { cx.fillStyle = 'rgba(244,114,182,.3)'; cx.fillRect(0, 0, bw, th); for (let x = 6; x < bw - 2; x += 12) { D2.sphere(x, 2, 4, '#f472b6', { gloss: false }); D2.sphere(x, th - 2, 4, '#f472b6', { gloss: false }); } }), P.x + 8 + bw / 2, my); }
     // 복합체
     const names = mito ? ['전달계', '전달계', '전달계'] : ['광계 Ⅱ', '전달계', '광계 Ⅰ'], cols = mito ? ['#a5b4fc', '#a5b4fc', '#a5b4fc'] : ['#86efac', '#c4b5fd', '#86efac'], bcols = mito ? ['#4f46e5', '#4f46e5', '#4f46e5'] : ['#15803d', '#6d28d9', '#15803d'];
     const cw = PHONE ? 50 : 60;

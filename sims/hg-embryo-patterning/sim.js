@@ -491,7 +491,7 @@
     epUpdate(dt, t);
     const e = S.ep, top = EG.top, cy = EG.cy, hh = EG.hh;
     panel(top.x, top.y, top.w, top.h, 16, '#fff');
-    TF(top.x + 16, top.y + 26, e.g >= 1 ? '수정 후 : Bicoid 단백질의 농도 기울기가 생겼어요' : e.run ? '수정 후 : Bicoid 단백질이 앞에서 뒤로 퍼지는 중이에요…' : e.mother ? 'bicoid 결함 어미의 알 : bicoid mRNA가 없어요' : '수정 전 난자 : 정보가 한쪽에 치우쳐 있어요', top.w - 32, L(16, 13.5), 11, '#14532d', 'left', 800);
+    TF(top.x + 16, top.y + 26, e.g >= 1 ? (e.mother ? '수정 후에도 Bicoid 단백질이 없어서 기울기가 생기지 않았어요' : '수정 후 : Bicoid 단백질의 농도 기울기가 생겼어요') : e.run ? '수정 후 : Bicoid 단백질이 앞에서 뒤로 퍼지는 중이에요…' : e.mother ? 'bicoid 결함 어미의 알 : bicoid mRNA가 없어요' : '수정 전 난자 : 정보가 한쪽에 치우쳐 있어요', top.w - 32, L(16, 13.5), 11, '#14532d', 'left', 800);
     drawEmbryoBody({ conc: shownC });
     // mRNA: 앞끝 bicoid(초록), 뒤끝 nanos(보라)
     const my = cy;
@@ -530,7 +530,7 @@
       T(q.x + 12, q.y + 56, '위치 x = ' + e.probe + ' µm', 15, '#26324a', 'left', 800);
       T(q.x + 12, q.y + 84, '농도 C = ' + fC(pv), 17, '#2563eb', 'left', 800);
       textBlock(q.x + 12, q.y + 118, q.w - 24, '앞끝(x = 0)에서 C = ' + fC(shownC(0)) + ', 뒤로 갈수록 줄어요.', 13.5, '#475569', 18, 700);
-      textBlock(q.x + 12, q.y + 172, q.w - 24, e.g >= 1 ? '모든 핵은 같은 유전체를 가져요. 받은 Bicoid 양만 달라요.' : '▶ 수정 단추를 눌러 단백질을 만들어요.', 13.5, e.g >= 1 ? '#15803d' : '#94a3b8', 18, 800);
+      textBlock(q.x + 12, q.y + 172, q.w - 24, e.g >= 1 ? (e.mother ? '단백질이 없으니 모든 핵이 Bicoid를 받지 못해요.' : '모든 핵은 같은 유전체를 가져요. 받은 Bicoid 양만 달라요.') : '▶ 수정 단추를 눌러 단백질을 만들어요.', 13.5, e.g >= 1 ? '#15803d' : '#94a3b8', 18, 800);
     } else {
       const lv = EG.lv; panel(lv.x, lv.y, lv.w, lv.h, 16, '#fff');
       T(lv.x + 16, lv.y + 26, '알에서 자란 유충', 15, '#14532d', 'left', 800);
@@ -755,7 +755,7 @@
 
   /* ---------- 연결하기 (유전자 카드 → 몸 부위 칸) ---------- */
   const MTG = PHONE
-    ? { boxes: HOX.map((g, k) => ({ id: 'z' + k, x: 8 + (k % 4) * 117, y: 118 + Math.floor(k / 4) * 128, w: 111, h: 120 })), slotY: 54, slotH: 44, tray: { x0: 8, y0: 410, dx: 117, dy: 54, per: 4 }, cw: 111, ch: 44, kh: 42 }
+    ? { boxes: HOX.map((g, k) => ({ id: 'z' + k, x: 8 + (k % 4) * 117, y: 118 + Math.floor(k / 4) * 128, w: 111, h: 118 })), slotY: 34, slotH: 44, tray: { x0: 8, y0: 410, dx: 117, dy: 54, per: 4 }, cw: 111, ch: 44, kh: 42 }
     : { boxes: HOX.map((g, k) => ({ id: 'z' + k, x: 20 + k * 95, y: 150, w: 89, h: 126 })), slotY: 56, slotH: 50, tray: { x0: 40, y0: 336, dx: 184, dy: 66, per: 4 }, cw: 160, ch: 50, kh: 48 };
   let mtS = null;
   function mtInit() {
@@ -792,8 +792,8 @@
       D.roundRect(b.x, b.y, b.w, b.h, 12); ctx.fillStyle = hot ? 'rgba(22,163,74,.22)' : (k < 3 ? 'rgba(56,189,248,.12)' : k < 6 ? 'rgba(251,191,36,.14)' : 'rgba(167,139,250,.14)'); ctx.fill();
       ctx.setLineDash([6, 4]); ctx.strokeStyle = hot ? '#16a34a' : '#94a3b8'; ctx.lineWidth = hot ? 3 : 2; ctx.stroke(); ctx.setLineDash([]);
       T(b.x + b.w / 2, b.y + 22, String(k + 1), L(17, 15), '#64748b', 'center', 800);
-      TF(b.x + b.w / 2, b.y + G.slotY + G.slotH + 22, HOX[k].region, b.w - 6, L(14, 12.5), 10.5, '#26324a', 'center', 800);
-      if (!PHONE || true) T(b.x + b.w / 2, b.y + G.slotY + G.slotH + 42, k < 3 ? '머리' : k < 6 ? '가슴' : '배', L(12.5, 11.5), '#94a3b8', 'center', 700);
+      TF(b.x + b.w / 2, b.y + G.slotY + G.slotH + L(22, 20), HOX[k].region, b.w - 6, L(14, 13), 10.5, '#26324a', 'center', 800);
+      if (!PHONE) T(b.x + b.w / 2, b.y + G.slotY + G.slotH + 42, k < 3 ? '머리' : k < 6 ? '가슴' : '배', L(12.5, 11.5), '#94a3b8', 'center', 700);
     });
     mtS.drawCards();
     T(VW / 2, VH - 12, '카드 8장 : 염색체 위 순서와 몸의 앞 → 뒤 순서를 떠올려 봐요', 13, '#94a3b8', 'center', 700);
@@ -818,9 +818,9 @@
     ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(cx0, fy); ctx.lineTo(cx0 + cw * 13, fy); ctx.stroke();
     HOX.forEach((g, k) => { const x = cx0 + k * (cw * 13 / 8); D.roundRect(x + 2, fy - 12, cw * 13 / 8 - 4, 24, 6); ctx.fillStyle = g.col; ctx.fill(); TF(x + cw * 13 / 16, fy + 4, g.n, cw * 13 / 8 - 6, L(12.5, 10.5), 8.5, '#fff', 'center', 800); });
     // 사람
-    const hy0 = P.y + L(136, 134), rowH = L(56, 58);
-    T(P.x + 18, hy0 - 24, '사람', L(15, 13.5), '#475569', 'left', 800);
-    for (let j = 1; j <= 13; j++) { T(cx0 + (j - 0.5) * cw, hy0 - 8, String(j), L(13, 11), '#64748b', 'center', 800); }
+    const hy0 = P.y + L(136, 152), rowH = L(56, 58);
+    T(P.x + 18, hy0 - L(24, 8), '사람', L(15, 13.5), '#475569', 'left', 800);
+    for (let j = 1; j <= 13; j++) { T(cx0 + (j - 0.5) * cw, hy0 - 6, String(j), L(13, 11), '#64748b', 'center', 800); }
     HUM.forEach((c, r) => {
       const y = hy0 + 18 + r * rowH;
       T(P.x + 18, y + 6, c.n, L(15, 13), '#26324a', 'left', 800); T(P.x + 18, y + 26, c.set.length + '개', L(13, 11.5), '#64748b', 'left', 700);
@@ -1005,10 +1005,11 @@
     const fr = game ? game.free : false, lvNow = game ? game.level : 0;
     ctlNodes.forEach((n) => { n.hidden = (n.dataset.modes || '').split(' ').indexOf(S.mode) < 0; });
     modeButtons(S.mode, lvNow, fr);
+    $('#modeSeg button[data-mode="human"]').classList.toggle('lv-off', !fr && lvNow < 2);
     const e = S.ep;
     chipSet($('#epMother'), e.mother);
     $('#epProbeOut').textContent = 'x = ' + e.probe + ' µm';
-    $('#epFert').textContent = e.g >= 1 ? '✔ 단백질 기울기 완성' : e.run ? '진행 중…' : '▶ 수정 : Bicoid 단백질 만들기';
+    $('#epFert').textContent = e.g >= 1 ? (e.mother ? '✔ 수정 완료 (단백질 없음)' : '✔ 단백질 기울기 완성') : e.run ? '진행 중…' : '▶ 수정 : Bicoid 단백질 만들기';
     $('#epFert').disabled = e.run || e.g >= 1;
     $('#epRead').hidden = e.g < 1 || e.mother === 1;
     $('#epList').innerHTML = '<li class="' + (e.gradDone ? 'on' : '') + '">' + mark(!!e.gradDone) + ' 기울기 만들기</li><li class="' + (e.viewedMutant ? 'on' : '') + '">' + mark(e.viewedMutant) + ' bicoid 결함 어미 보기</li><li class="' + (e.ok100 && e.ok200 ? 'on' : '') + '">' + mark(e.ok100 && e.ok200) + ' 농도 2곳 읽기</li>';

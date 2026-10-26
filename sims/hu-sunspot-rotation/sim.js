@@ -354,16 +354,16 @@
   const YR0 = 1996, YR1 = 2026, SSN = [];
   (function () {
     const r = rng(777);
-    const shape = (u, pk) => { if (u <= 0 || u >= 1) return 0; const a = 2.2, b = a * (1 - pk) / pk, m = Math.pow(pk, a) * Math.pow(1 - pk, b); return Math.pow(u, a) * Math.pow(1 - u, b) / m; };
+    const shape = (u, pk) => { if (u <= 0 || u >= 1) return 0; const a = 3, b = a * (1 - pk) / pk, m = Math.pow(pk, a) * Math.pow(1 - pk, b); return Math.pow(u, a) * Math.pow(1 - u, b) / m; };
     for (let k = 0; k <= (YR1 - YR0) * 12; k++) {
       const y = YR0 + k / 12; let v = 6 + 4 * Math.sin(k * 0.9);
       CYC.forEach((c) => { v += c.amp * shape((y - c.s) / (c.e - c.s), c.pk); });
-      v += (r() - 0.5) * (v * 0.22 + 6);
+      v += (r() - 0.5) * (v * 0.12 + 6);
       SSN.push(Math.max(0, Math.round(v)));
     }
   })();
   /* 극대(진짜) 위치: 각 주기 구간의 최댓값 (5개월 이동 평균 기준) */
-  const smoothSSN = (k) => { let s = 0, n = 0; for (let j = -3; j <= 3; j++) { const i = k + j; if (i >= 0 && i < SSN.length) { s += SSN[i]; n++; } } return s / n; };
+  const smoothSSN = (k) => { let s = 0, n = 0; for (let j = -6; j <= 6; j++) { const i = k + j; if (i >= 0 && i < SSN.length) { s += SSN[i]; n++; } } return s / n; };
   const PEAKS = CYC.map((c) => {
     let best = -1, bk = 0;
     for (let k = 0; k < SSN.length; k++) { const y = YR0 + k / 12; if (y >= c.s && y < c.e && smoothSSN(k) > best) { best = smoothSSN(k); bk = k; } }
@@ -415,11 +415,14 @@
     const c = document.createElement('canvas'); c.width = c.height = sz; const g = c.getContext('2d'), r = rng(seed);
     g.fillStyle = 'rgba(90,30,0,.55)'; g.fillRect(0, 0, sz, sz);
     const cell = sz / n;
-    for (let i = -1; i <= n; i++) for (let j = -1; j <= n; j++) {
-      const x = (i + 0.5 + (r() - 0.5) * 0.7) * cell, y = (j + 0.5 + (r() - 0.5) * 0.7) * cell, rad = cell * (0.62 + r() * 0.22);
-      const gr = g.createRadialGradient(x, y, 0, x, y, rad); const b = 0.55 + r() * 0.4;
-      gr.addColorStop(0, 'rgba(255,240,190,' + b + ')'); gr.addColorStop(0.55, 'rgba(255,205,110,' + b * 0.7 + ')'); gr.addColorStop(1, 'rgba(255,170,60,0)');
-      g.fillStyle = gr; g.beginPath(); g.arc(x, y, rad, 0, TAU); g.fill();
+    for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) {
+      const x0 = (i + 0.5 + (r() - 0.5) * 0.7) * cell, y0 = (j + 0.5 + (r() - 0.5) * 0.7) * cell, rad = cell * (0.62 + r() * 0.22), b = 0.55 + r() * 0.4;
+      for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) {
+        const x = x0 + dx * sz, y = y0 + dy * sz; if (x < -rad || x > sz + rad || y < -rad || y > sz + rad) continue;
+        const gr = g.createRadialGradient(x, y, 0, x, y, rad);
+        gr.addColorStop(0, 'rgba(255,240,190,' + b + ')'); gr.addColorStop(0.55, 'rgba(255,205,110,' + b * 0.7 + ')'); gr.addColorStop(1, 'rgba(255,170,60,0)');
+        g.fillStyle = gr; g.beginPath(); g.arc(x, y, rad, 0, TAU); g.fill();
+      }
     }
     return c;
   }
@@ -433,9 +436,10 @@
   }
   function granules(cx, cy, R, t, a, scale) {
     ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, R, 0, TAU); ctx.clip();
-    const w = RM ? 0.5 : 0.5 + 0.5 * Math.sin(t * 1.1), sc = (scale || 1.4) * R * 2 / 256;
-    ctx.globalAlpha = a * (1 - 0.55 * w); ctx.drawImage(TEX[0], cx - R, cy - R, 256 * sc, 256 * sc);
-    ctx.globalAlpha = a * (0.45 + 0.55 * w); ctx.drawImage(TEX[1], cx - R + R * 0.37, cy - R + R * 0.21, 256 * sc, 256 * sc);
+    const w = RM ? 0.5 : 0.5 + 0.5 * Math.sin(t * 1.1), ts = 256 * (scale || 1.4) * R * 2 / 256;
+    const tile = (tex, ox, oy) => { for (let x = cx - R - ((ox % ts) + ts) % ts; x < cx + R; x += ts) for (let y = cy - R - ((oy % ts) + ts) % ts; y < cy + R; y += ts) ctx.drawImage(tex, x, y, ts, ts); };
+    ctx.globalAlpha = a * (1 - 0.55 * w); tile(TEX[0], 0, 0);
+    ctx.globalAlpha = a * (0.45 + 0.55 * w); tile(TEX[1], R * 0.37, R * 0.21);
     ctx.restore();
   }
   function limbShade(cx, cy, R) {
@@ -469,7 +473,7 @@
   const SPOTS3 = [{ phi: 10, lon0: -80, ru: 7 }, { phi: -18, lon0: -20, ru: 5 }, { phi: 24, lon0: 40, ru: 4.5 }];
   function LPh() {
     return PHONE
-      ? { E: { x: 8, y: 8, w: 464, h: 440, cx: 240, cy: 228, er: 212, R: 178 }, G: { x: 8, y: 456, w: 464, h: 250 }, B: { x: 8, y: 714, w: 464, h: 138 } }
+      ? { E: { x: 8, y: 8, w: 464, h: 410, cx: 240, cy: 213, er: 196, R: 166 }, G: { x: 8, y: 426, w: 464, h: 236 }, B: { x: 8, y: 670, w: 464, h: 182 } }
       : { E: { x: 10, y: 8, w: 430, h: 470, cx: 225, cy: 243, er: 208, R: 176 }, G: { x: 450, y: 8, w: 340, h: 470 }, B: { x: 10, y: 486, w: 780, h: 126 } };
   }
   /* 밝기 곡선 그래프: 가로 r(0~1), 세로 I(r)/I(0) (30~100 %) */
@@ -587,7 +591,7 @@
     // 단면: 대류
     const C = L.C;
     panel(C.x, C.y, C.w, C.h, { r: 14, title: '쌀알 무늬의 단면: 대류' });
-    const bx = C.x + 14, bw = C.w - 28, top = C.y + 38 * FS, bot = C.y + C.h - 16, nc = 3, cw = (bw - 120) / nc;
+    const bx = C.x + 14, bw = C.w - 28, top = C.y + 38 * FS, bot = C.y + C.h - 50, nc = 3, cw = (bw - 120) / nc;
     ctx.save(); rr(bx, top, bw, bot - top, 10); ctx.clip();
     const bg = ctx.createLinearGradient(0, top, 0, bot); bg.addColorStop(0, '#fde68a'); bg.addColorStop(0.35, '#f59e0b'); bg.addColorStop(1, '#b45309'); ctx.fillStyle = bg; ctx.fillRect(bx, top, bw, bot - top);
     ctx.fillStyle = 'rgba(15,23,42,.55)'; ctx.fillRect(bx, top, bw, 18);
@@ -603,8 +607,8 @@
     });
     for (let c = 0; c < nc; c++) D.arrow(bx + 10 + cw * (c + 0.5), top + 76 * FS, bx + 10 + cw * (c + 0.5), top + 30 * FS, { color: '#dc2626', width: 4, head: 11 });
     for (let c = 0; c <= nc; c++) D.arrow(bx + 10 + cw * c, top + 30 * FS, bx + 10 + cw * c, top + 76 * FS, { color: '#1d4ed8', width: 4, head: 11 });
-    T(bx + 10 + cw * 0.5, bot - 26, '밝은 중심: 뜨거운 가스 상승', 12, '#fff', 'center', 800, { stroke: 'rgba(120,53,15,.8)', strokeWidth: 3 });
-    T(bx + 10 + cw * 1.5, bot - 8, '어두운 경계: 식은 가스 하강', 12, '#dbeafe', 'center', 800, { stroke: 'rgba(30,58,138,.7)', strokeWidth: 3 });
+    T(bx, bot + 20, '↑ 밝은 중심: 뜨거운 가스가 상승', 12.5, '#b91c1c', 'left', 800);
+    T(bx, bot + 20 + 19 * Math.min(FS, 1.15), '↓ 어두운 경계: 식은 가스가 하강', 12.5, '#1d4ed8', 'left', 800);
     // 흑점 아래: 자기장
     const mx0 = bx + bw - 108;
     ctx.fillStyle = 'rgba(15,23,42,.35)'; rr(mx0, top + 20, 100, bot - top - 20, 8).fill();
@@ -632,7 +636,7 @@
   /* ================= ② 흑점 이동 기록 ================= */
   function LTr() {
     return PHONE
-      ? { Dk: { x: 8, y: 8, w: 464, h: 366, cx: 240, cy: 172, R: 150 }, Tb: { x: 8, y: 382, w: 464, h: 286 }, In: { x: 8, y: 676, w: 464, h: 176 } }
+      ? { Dk: { x: 8, y: 8, w: 464, h: 340, cx: 240, cy: 164, R: 138 }, Tb: { x: 8, y: 356, w: 464, h: 304 }, In: { x: 8, y: 668, w: 464, h: 184 } }
       : { Dk: { x: 10, y: 8, w: 380, h: 380, cx: 200, cy: 176, R: 150 }, Tb: { x: 400, y: 8, w: 390, h: 336 }, In: { x: 10, y: 396, w: 380, h: 216 }, No: { x: 400, y: 352, w: 390, h: 260 } };
   }
   function trStats() {
@@ -673,7 +677,7 @@
       D.label(clamp(Tr.hov.x, K.x + 60, K.x + K.w - 60), K.y + 50, 'x/R = ' + f2((Tr.hov.x - K.cx) / K.R).replace('-', '−'), { bg: '#0369a1', size: 12.5 });
     }
     if (Tr.bad > 0) { Tr.bad -= dt; D.label(K.cx, K.cy - K.R - 0, '흑점 A를 눌러 위치를 기록해요', { bg: '#dc2626', size: 13 }); }
-    if (trN() === 0) T(K.cx, K.y + K.h - 8 - (PHONE ? 4 : 0), '흑점 A의 중심을 눌러 x/R을 기록해요', 13, '#fde68a', 'center', 800);
+    if (trN() === 0) T(K.cx, K.y + 48, '흑점 A의 중심을 눌러 x/R을 기록해요', 13, '#fde68a', 'center', 800);
   }
   function trTable(L) {
     const B = L.Tb, Tr = S.tr, st = trStats();
@@ -752,7 +756,7 @@
   function drawDiff(dt, t) {
     const L = LDf(), Tb = L.Tb;
     SP4.forEach((s) => { s.show = approach(s.show, s.ok ? 1 : 0, dt, 6); });
-    panel(Tb.x, Tb.y, Tb.w, Tb.h, { r: 14, title: '📋 스프레드시트: 7일 간격 영상 두 장(0일, 6일)에서 읽은 흑점 4개', tsize: PHONE ? 12.5 : 14 });
+    panel(Tb.x, Tb.y, Tb.w, Tb.h, { r: 14, title: PHONE ? '📋 스프레드시트: 흑점 4개 (0일, 6일 영상)' : '📋 스프레드시트: 영상 두 장(0일, 6일)에서 읽은 흑점 4개', tsize: PHONE ? 12 : 14 });
     const heads = ['흑점', '위도 φ', 'x/R (0일)', 'x/R (6일)', 'λ (0일)', 'λ (6일)', '하루 이동', 'T회합(일)'];
     const ws = PHONE ? [0.1, 0.1, 0.13, 0.13, 0.12, 0.12, 0.14, 0.16] : [0.08, 0.1, 0.13, 0.13, 0.12, 0.12, 0.15, 0.17];
     const x0 = Tb.x + 10, wAll = Tb.w - 20, hy = Tb.y + 34 * FS; let cx_ = x0;
@@ -761,7 +765,7 @@
     heads.forEach((h, i) => {
       if (PHONE && h.indexOf(' (') > 0) { const a = h.split(' ('); T(cxs[i], hy + 12, a[0], 11, '#334155', 'center', 800); T(cxs[i], hy + 25, '(' + a[1], 11, '#334155', 'center', 800); } else T(cxs[i], hy + (PHONE ? 19 : 16), h, PHONE ? 11 : 12, '#334155', 'center', 800);
     });
-    const rh = PHONE ? 32 : 34;
+    const rh = PHONE ? 31 : 30;
     SP4.forEach((s, i) => {
       const y = hy + (PHONE ? 34 : 28) + i * rh;
       ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x0, y + rh - 1); ctx.lineTo(x0 + wAll, y + rh - 1); ctx.stroke();
@@ -773,11 +777,11 @@
       tc(cxs[6], cy_, f2(s.om) + '°', sz, '#0369a1', 800);
       if (s.ok) tc(cxs[7], cy_, f1(s.T), sz, '#15803d', 800); else tc(cxs[7], cy_, '?', sz + 2, '#f59e0b', 800);
     });
-    T(x0, Tb.y + Tb.h - 8, '경도 λ = arcsin( x/R / cos φ ), 하루 이동 = (λ(6일) − λ(0일)) / 6, T회합 = 360° / (하루 이동)', PHONE ? 11 : 12.5, '#0369a1', 'left', 800);
+    T(x0, Tb.y + Tb.h - 8, PHONE ? 'λ = arcsin( x/R / cos φ ), T = 360° / 하루 이동' : '경도 λ = arcsin( x/R / cos φ ), 하루 이동 = (λ(6일) − λ(0일)) / 6, T회합 = 360° / (하루 이동)', PHONE ? 11 : 12.5, '#0369a1', 'left', 800);
     // 그래프
     const G = L.Gr;
     panel(G.x, G.y, G.w, G.h, { r: 14, title: '위도 – 회합 주기 그래프', tsize: 14 });
-    const gx0 = G.x + 54, gx1 = G.x + G.w - 22, gy0 = G.y + 52, gy1 = G.y + G.h - 56;
+    const gx0 = G.x + 54, gx1 = G.x + G.w - 22, gy0 = G.y + (PHONE ? 64 : 52), gy1 = G.y + G.h - 56;
     const X = (p) => gx0 + p / 50 * (gx1 - gx0), Y = (v) => gy1 - (v - 26) / 5 * (gy1 - gy0);
     for (let v = 26; v <= 31; v++) { ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(gx0, Y(v)); ctx.lineTo(gx1, Y(v)); ctx.stroke(); T(gx0 - 8, Y(v) + 4, String(v), 12, '#64748b', 'right', 700); }
     for (let p = 0; p <= 50; p += 10) { ctx.strokeStyle = '#e2e8f0'; ctx.beginPath(); ctx.moveTo(X(p), gy0); ctx.lineTo(X(p), gy1); ctx.stroke(); T(X(p), gy1 + 17, p + '°', 12, '#64748b', 'center', 700); }
@@ -831,7 +835,7 @@
   function LCm() {
     return PHONE
       ? { M: { x: 8, y: 8, w: 464, h: 470, cx: 240, cy: 250, R: 205 }, Th: { x: 8, y: 486, w: 464, h: 190 }, No: { x: 8, y: 684, w: 464, h: 168 } }
-      : { M: { x: 10, y: 8, w: 500, h: 604, cx: 260, cy: 310, R: 218 }, Th: { x: 518, y: 8, w: 272, h: 360 }, No: { x: 518, y: 376, w: 272, h: 236 } };
+      : { M: { x: 10, y: 8, w: 500, h: 604, cx: 260, cy: 310, R: 218 }, Th: { x: 518, y: 8, w: 272, h: 388 }, No: { x: 518, y: 404, w: 272, h: 208 } };
   }
   function drawCompose(dt, t) {
     const L = LCm(), M = L.M, Df = S.df;
@@ -852,7 +856,7 @@
     D.label(M.x + M.w - 14, M.y + 52, '빨강 점선: 굳은 공이라면', { bg: '#dc2626', size: 12.5, align: 'right' });
     D.label(M.cx, M.y + M.h - 22, '처음에는 경도 −50°의 세로선(투영돼서 휘어 보여요)에서 출발해요', { bg: 'rgba(15,23,42,.85)', size: 12.5 });
     // 썸네일: 0~7일 영상 8장
-    const Th = L.Th, cols = PHONE ? 4 : 2, rows = 8 / cols, rad = PHONE ? 36 : 40;
+    const Th = L.Th, cols = PHONE ? 4 : 2, rows = 8 / cols, rad = PHONE ? 34 : 33;
     panel(Th.x, Th.y, Th.w, Th.h, { r: 14, title: '7일 동안의 영상 8장', tsize: 13.5 });
     for (let d = 0; d <= 7; d++) {
       const gx = Th.x + (Th.w / cols) * ((d % cols) + 0.5), gy = Th.y + 44 * FS + ((Th.h - 44 * FS) / rows) * (Math.floor(d / cols) + 0.5) - 4;
@@ -892,10 +896,10 @@
     const L = LCy(), Ch = L.Ch, Bf = L.Bf, Bt = L.Bt, C = S.cy, g = cyGeom(Ch);
     // 위: 월평균 흑점 수
     panel(Ch.x, Ch.y, Ch.w, Ch.h, { r: 14, title: '월평균 흑점 수 (교육용 합성 자료)', tsize: PHONE ? 12.5 : 14 });
-    const cy0 = Ch.y + 46, cy1 = Ch.y + Ch.h - 34, Y = (v) => cy1 - v / 220 * (cy1 - cy0);
+    const cy0 = Ch.y + (PHONE ? 60 : 46), cy1 = Ch.y + Ch.h - 34, Y = (v) => cy1 - v / 220 * (cy1 - cy0);
     for (let v = 0; v <= 200; v += 50) { ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(g.x0, Y(v)); ctx.lineTo(g.x1, Y(v)); ctx.stroke(); T(g.x0 - 8, Y(v) + 4, String(v), 12, '#64748b', 'right', 700); }
     for (let y = 2000; y <= 2025; y += 5) { ctx.strokeStyle = '#eef2f7'; ctx.beginPath(); ctx.moveTo(g.X(y), cy0); ctx.lineTo(g.X(y), cy1); ctx.stroke(); }
-    for (let y = 1996; y <= 2026; y += 5) T(g.X(y === 1996 ? 1996.4 : y), cy1 + 18, String(y), 12, '#64748b', 'center', 700);
+    for (let y = 2000; y <= 2025; y += 5) T(g.X(y), cy1 + 18, String(y), 12, '#64748b', 'center', 700);
     const pts = SSN.map((v, k) => [g.X(YR0 + k / 12), Y(v)]);
     ctx.save(); ctx.beginPath(); ctx.rect(g.x0, cy0 - 4, g.x1 - g.x0, cy1 - cy0 + 4); ctx.clip();
     const fg = ctx.createLinearGradient(0, cy0, 0, cy1); fg.addColorStop(0, 'rgba(245,158,11,.35)'); fg.addColorStop(1, 'rgba(245,158,11,.04)');
@@ -924,7 +928,7 @@
 
     // 아래: 나비 도표
     panel(Bf.x, Bf.y, Bf.w, Bf.h, { r: 14, title: '나비 도표: 흑점이 나타나는 위도', tsize: PHONE ? 12.5 : 14 });
-    const by0 = Bf.y + 44, by1 = Bf.y + Bf.h - 30, YL = (lat) => (by0 + by1) / 2 - lat / 40 * ((by1 - by0) / 2);
+    const by0 = Bf.y + (PHONE ? 60 : 44), by1 = Bf.y + Bf.h - 30, YL = (lat) => (by0 + by1) / 2 - lat / 40 * ((by1 - by0) / 2);
     [-30, -10, 0, 10, 30].forEach((la) => { ctx.strokeStyle = la === 0 ? '#94a3b8' : '#e2e8f0'; ctx.lineWidth = la === 0 ? 1.6 : 1; ctx.beginPath(); ctx.moveTo(g.x0, YL(la)); ctx.lineTo(g.x1, YL(la)); ctx.stroke(); T(g.x0 - 8, YL(la) + 4, (la > 0 ? '+' : la < 0 ? '−' : '') + Math.abs(la) + '°', 12, '#64748b', 'right', 700); });
     for (let y = 2000; y <= 2025; y += 5) { ctx.strokeStyle = '#eef2f7'; ctx.beginPath(); ctx.moveTo(g.X(y), by0); ctx.lineTo(g.X(y), by1); ctx.stroke(); }
     ctx.save(); ctx.beginPath(); ctx.rect(g.x0, by0 - 2, g.x1 - g.x0, by1 - by0 + 4); ctx.clip();
@@ -1191,12 +1195,12 @@
         {
           title: '극대 세 개로 활동 주기 구하기',
           goal: '흑점 수 곡선의 <b>극대(봉우리) 세 곳</b>을 눌러 표시하고, <b>평균 주기 = (세 번째 극대 − 첫 번째 극대) ÷ 2</b>를 입력하세요 (년).',
-          hint: '곡선에서 높은 봉우리 세 개를 차례로 눌러요(약 2002년, 2014년, 2025년 근처). 표시된 연도의 차를 2로 나눠요.',
+          hint: '곡선에서 높은 봉우리 세 개를 차례로 눌러요(약 2002년, 2014년, 2025년 근처). 표시된 연도에서 (세 번째 − 첫 번째)를 구해 2로 나눠요.',
           setup() { S.cy.marks = []; S.cy.pOk = false; S.flags.calcP = true; clrIn('inP'); setView('cycle'); },
           check: () => markOK() && S.cy.pOk,
           hold: 0.6,
           status: () => mark(markOK()) + ' 극대 표시 ' + S.cy.marks.length + ' / 3 &nbsp; ' + mark(S.cy.pOk) + ' 평균 주기 ' + ($('#inP').value.trim() || '—') + ' 년',
-          explain: '극대는 2001.9 · 2014.3 · 2024.6년경이고 평균 주기는 (2024.6 − 2001.9) ÷ 2 ≈ <b>11.3년</b>이에요. 태양 활동은 약 11년 주기로 변해요.',
+          explain: '극대는 ' + PEAKS.map((p) => f1(p.y)).join(' · ') + '년경이고 평균 주기는 (' + f1(PEAKS[2].y) + ' − ' + f1(PEAKS[0].y) + ') ÷ 2 ≈ <b>' + f1((PEAKS[2].y - PEAKS[0].y) / 2) + '년</b>이에요. 태양 활동은 약 11년 주기로 변해요.',
         },
         {
           title: '나비 도표 읽기', manual: true,
