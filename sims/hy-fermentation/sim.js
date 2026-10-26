@@ -711,7 +711,7 @@
       const row = cm.rows[i], y = y0 + g.hh + i * g.rh, bad = cm.bad[i], ok = cm.tried && !bad && !row.sw && cm.bad.all;
       row.pos = RM ? (row.sw ? 1 : 0) : approach(row.pos, row.sw ? 1 : 0, dt, 9);
       if (i % 2 === 0) { D.roundRect(x0, y - 2, Tt.w - 20, g.rh - 2, 8); ctx.fillStyle = '#f6f8fb'; ctx.fill(); }
-      TF(x0 + 8, y + g.rh / 2 + 5, r.row, g.lw - 14, g.fs, 11.5, '#334155', 'left', 800);
+      if (PHONE) { const rl = wrap(r.row, g.lw - 12, 12.5, 800).slice(0, 3); rl.forEach((l, j) => T(x0 + 6, y + g.rh / 2 + 5 - (rl.length - 1) * 8 + j * 16, l, 12.5, '#334155', 'left', 800)); } else TF(x0 + 8, y + g.rh / 2 + 5, r.row, g.lw - 14, g.fs, 11.5, '#334155', 'left', 800);
       // 두 칸 (a: 산소호흡의 것, b: 발효의 것). pos 0 → a 가 왼쪽
       [['a', 0], ['b', 1]].forEach(([k, base]) => {
         const p = base === 0 ? row.pos : 1 - row.pos, cx = lerp(xa, xb, p) + 4, w = cw - 8;

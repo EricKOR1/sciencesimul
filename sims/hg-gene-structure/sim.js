@@ -159,6 +159,7 @@
       SciSim.tween(c, { x, y, w, h }, { duration: 0.35, ease: 'outBack' });
     }
     place(c, zoneId) {
+      if (zoneId) { const bx = this.boxes.find((q) => q.id === zoneId); if (bx && bx.single) this.cards.forEach((o) => { if (o !== c && o.zone === zoneId) { o.zone = null; o.bad = false; } }); }
       const was = c.zone; c.zone = zoneId || null; c.bad = false; if (zoneId) c.seq = ++this.seq; c.lift = 0;
       this.layout(); if (was !== c.zone) { Sound.click(); this.o.onChange && this.o.onChange(); }
     }
@@ -407,7 +408,7 @@
       const yy = ny + L(50, 44);
       if (z.ok.C) D.label(q.x + 14, yy, '대장균 약 1100 염기쌍', { bg: COLS.ec, size: L(14, 13), align: 'left' });
       if (z.ok.D) D.label(q.x + 14, yy + 32, '사람 약 15만 염기쌍', { bg: COLS.hu, size: L(14, 13), align: 'left' });
-    } else textBlock(q.x + 14, ny + L(40, 36), q.w - 28, '계산한 값은 오른쪽 아래 입력칸에 써요.', L(13, 12), '#94a3b8', 17, 700);
+    } else if (!PHONE) textBlock(q.x + 14, ny + L(40, 36), q.w - 28, '계산한 값은 오른쪽 아래 입력칸에 써요.', L(13, 12), '#94a3b8', 17, 700);
     if (!PHONE && z.ok.A && z.ok.B) textBlock(q.x + 14, q.y + q.h - 78, q.w - 28, '유전체는 약 670배, 유전자 수는 약 5배 → 유전체가 클수록 유전자가 비례해 많은 것은 아니에요.', 13.5, '#15803d', 18, 800);
   }
 
@@ -441,9 +442,9 @@
   ];
   function pkBoxes() {
     const R = PKG.ring, P = PKG.pls, b = [];
-    b.push({ id: 'ring', x: R.x - R.r - 8, y: R.y - R.r - 8, w: 2 * R.r + 16, h: 2 * R.r + 16, cols: 1, hdr: 2, col: '#7c3aed', slot: { x: R.x - 46, y: R.y - 15, w: 92, h: 30 } });
-    b.push({ id: 'plasmid', x: P.x - P.r - 20, y: P.y - P.r - 8, w: 2 * P.r + 40, h: 2 * P.r + 46, cols: 1, hdr: 2, col: '#7c3aed', slot: { x: P.x - 48, y: P.y + P.r + 6, w: 96, h: 28 } });
-    OPG.forEach((g) => { const x = ox(g.a), w = (g.b - g.a) * PKG.sw; b.push({ id: g.id, x, y: PKG.sy - 24, w, h: 48, cols: 1, hdr: 2, col: g.col, slot: { x: x + 2, y: PKG.sy - 14, w: w - 4, h: 28 } }); });
+    b.push({ id: 'ring', x: R.x - R.r - 8, y: R.y - R.r - 8, w: 2 * R.r + 16, h: 2 * R.r + 16, cols: 1, hdr: 2, single: true, col: '#7c3aed', slot: { x: R.x - 46, y: R.y - 15, w: 92, h: 30 } });
+    b.push({ id: 'plasmid', x: P.x - P.r - 20, y: P.y - P.r - 8, w: 2 * P.r + 40, h: 2 * P.r + 46, cols: 1, hdr: 2, single: true, col: '#7c3aed', slot: { x: P.x - 48, y: P.y + P.r + 6, w: 96, h: 28 } });
+    OPG.forEach((g) => { const x = ox(g.a), w = (g.b - g.a) * PKG.sw; b.push({ id: g.id, x, y: PKG.sy - 24, w, h: 48, cols: 1, hdr: 2, single: true, col: g.col, slot: { x: x + 2, y: PKG.sy - 14, w: w - 4, h: 28 } }); });
     return b;
   }
   function pkInit() {
@@ -519,7 +520,7 @@
     TF(I.x + 14, I.y + 26, '원핵생물 유전체의 특징', I.w - 28, L(15.5, 13.5), 11, '#14532d', 'left', 800);
     const lines = ['· 고리 모양 DNA 1개가 세포질에 있어요', '· 작은 고리 DNA(플라스미드)가 따로 있기도 해요', '· 유전자 사이가 짧고 암호 부분이 대부분이에요', '· 인트론이 거의 없어요'];
     if (!PHONE) lines.forEach((s, i) => T(I.x + 16, I.y + 56 + i * 24, s, 14, '#334155', 'left', 700));
-    else textBlock(I.x + 12, I.y + 50, I.w - 22, lines.slice(0, 3).join('\n'), 12.5, '#334155', 18, 700);
+    else textBlock(I.x + 12, I.y + 50, I.w - 22, lines[0] + '\n' + lines[2], 12.5, '#334155', 18, 700);
     // 이름표 보관함
     const T0 = G.tray, trayRows = Math.ceil(PK_TAGS.length / T0.per);
     ctx.fillStyle = 'rgba(124,58,237,.07)'; rr(T0.x0 - 8, T0.y0 - 6, T0.per * T0.dx + 2, trayRows * (T0.ch + 6) + 6 + (trayRows - 1) * 0, 12); ctx.fill();
@@ -599,8 +600,8 @@
   /* =========================================================
      ③ 진핵 유전자: 엑손, 인트론, 스플라이싱
      ========================================================= */
-  const EK = PHONE ? 394 / 2700 : 680 / 2700;
-  const EX0 = PHONE ? 62 : 80;
+  const EK = PHONE ? 386 / 2700 : 680 / 2700;
+  const EX0 = PHONE ? 72 : 80;
   const EUG = PHONE
     ? { nuc: { x: 8, y: 8, w: 464, h: 500 }, chr: { y: 76 }, gy: 170, py: 306, my: 440, lab: 170 }
     : { nuc: { x: 14, y: 14, w: 772, h: 520 }, chr: { y: 78 }, gy: 170, py: 306, my: 440, lab: 178 };
@@ -642,7 +643,7 @@
     ctx.fillStyle = '#f59e0b'; ctx.fillRect(gx - 5, cy - 12, 10, 24);
     ctx.save(); ctx.setLineDash([6, 6]); ctx.strokeStyle = 'rgba(245,158,11,.8)'; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(gx - 5, cy + 12); ctx.lineTo(EX0 - 40, G.gy - 24); ctx.moveTo(gx + 5, cy + 12); ctx.lineTo(EX0 + 2700 * EK, G.gy - 20); ctx.stroke(); ctx.restore();
-    D.label(gx + 14, cy + 34, '🔍 유전자 하나 확대 (숫자는 염기 수)', { bg: '#b45309', size: 12.5, align: 'left', pad: 6 });
+    D.label(PHONE ? gx - 70 : gx + 14, cy + 34, PHONE ? '🔍 유전자 확대 (염기 수)' : '🔍 유전자 하나 확대 (숫자는 염기 수)', { bg: '#b45309', size: 12.5, align: 'left', pad: 6 });
     // 유전자 띠
     const gy = G.gy, bh = 34;
     const pw0 = PHONE ? 38 : 44;
@@ -1079,7 +1080,7 @@
       else setReads(['전구 mRNA', Math.round(S.eu.tip * 2700) + ' 염기', '제거한 인트론', euRemoved() + ' / 2', '성숙 mRNA', euMatLen() ? euMatLen() + ' 염기' : '—']);
     }
     else if (m === 'cmp') setReads(['비교 항목', '7줄', '원핵', '고리 DNA · 오페론', '진핵', '엑손 · 인트론']);
-    else { const p = vennS.cards.filter((c) => c.zone).length; setReads(['놓은 카드', p + ' / 8', '상자', '원핵 · 공통 · 진핵', '공통점', 'DNA · 4종 염기 · 3염기 암호']); }
+    else { const p = vennS.cards.filter((c) => c.zone).length; setReads(['놓은 카드', p + ' / 8', '상자', '원핵 · 공통 · 진핵', '공통점', PHONE ? 'DNA · 암호' : 'DNA · 4종 염기 · 3염기 암호']); }
   }
 
   /* ---------- 시작 ---------- */

@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0ea5e9">
+  <title>지형류와 해수면 경사 | 고등 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌊</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-hint { bottom: auto; top: 12px; }
+    .stage-toolbar { min-height: 58px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; }
+    .stage-toolbar .segmented button { min-height: 40px; padding: 5px 12px; font-size: 14.5px; white-space: nowrap; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard [hidden] { display: none !important; }
+    .opt-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin-top: 4px; }
+    .opt-grid.c3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .opt {
+      min-height: 46px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 12px;
+      font-weight: 800; font-size: 14.5px; cursor: pointer; padding: 4px 6px; font-family: inherit; line-height: 1.2;
+    }
+    .opt.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); color: color-mix(in srgb, var(--subject) 70%, black); }
+    .opt.bad { border-color: #e2464b; background: #fff1f1; }
+    .ctrl-note { margin: 6px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    .src-note { margin: 0; font-size: 12.5px; color: var(--muted); line-height: 1.4; border-top: 1px dashed var(--line); padding-top: 8px; }
+    .btn-sm { min-height: 44px; }
+    .btn-row { display: flex; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
+    .btn-row .btn { flex: 1; padding-left: 8px; padding-right: 8px; }
+    .readout .value.txt { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .concept table.mini, table.mini { border-collapse: collapse; margin: 6px 0; font-size: 13px; width: 100%; }
+    .concept table.mini th, .concept table.mini td, table.mini th, table.mini td { border: 1px solid var(--line); padding: 4px 5px; text-align: center; }
+    .concept table.mini th, table.mini th { background: var(--surface-2); font-weight: 800; }
+    .mission-figure svg, .note-fig svg { border-radius: 12px; max-width: 100%; height: auto; }
+    .note-fig { margin: 6px 0; text-align: center; }
+    input[type=range] { height: 40px; }
+    .ticks { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--muted); font-weight: 700; margin-top: -6px; padding: 0 2px; }
+    .seg-label { display: block; font-weight: 800; font-size: 14px; color: var(--muted); margin-bottom: 4px; }
+    .segmented.dense { display: flex; width: 100%; }
+    .segmented.dense button { flex: 1 1 auto; min-height: 44px; padding: 6px 4px; font-size: 14px; white-space: nowrap; }
+    .ex-badge { font-size: 12.5px; font-weight: 800; color: #475569; background: var(--surface-2); border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; white-space: nowrap; }
+    .act-list { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+    .act-list .opt { text-align: left; padding: 8px 10px; font-size: 14px; min-height: 46px; font-weight: 700; }
+    .stp { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
+    .stp-l { flex: 1; font-weight: 800; font-size: 14px; line-height: 1.25; min-width: 0; }
+    .stp-b { flex: none; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); font-weight: 900; font-size: 22px; line-height: 1; cursor: pointer; color: var(--ink); }
+    .stp-b:active { transform: scale(.94); background: var(--surface-2); }
+    .stp-v { flex: none; min-width: 74px; text-align: center; font-family: ui-monospace, Menlo, Consolas, monospace; font-weight: 800; font-size: 17px; color: color-mix(in srgb, var(--subject) 85%, black); }
+    .row-q { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+    .row-q .lab { flex: 1; font-weight: 800; font-size: 13.5px; line-height: 1.3; min-width: 0; }
+    .row-q .segmented { flex: none; }
+    .row-q .segmented button { min-height: 40px; padding: 4px 8px; font-size: 13px; }
+    .row-q.bad .lab { color: #a3262b; }
+    .play-row { display: flex; gap: 8px; align-items: center; }
+    .play-row .btn { flex: none; min-width: 84px; }
+    .play-row input[type=range] { flex: 1; min-width: 0; }
+    @media (max-width: 599px) {
+      .readout { min-width: 0; }
+      .readout .value.txt { font-size: 15px; }
+      .stage-toolbar .spacer { display: none; }
+      .stage-toolbar .segmented button { padding: 5px 8px; font-size: 13.5px; }
+    }
+
+    .cls-row.compact { display:flex; align-items:center; gap:6px; }
+    .ord.grid2 { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); }
+    .ord.grid2 .ord-item { min-height: 44px; padding: 4px 6px; font-size: 13.5px; }
+    .sels { display:flex; flex-direction:column; gap:6px; margin-top:6px; }
+    .sel-row { border: 2px solid var(--line); border-radius: 12px; padding: 6px 8px; background: var(--surface); display:flex; align-items:center; gap:8px; flex-wrap: wrap; }
+    .sel-row.bad { border-color:#e2464b; background:#fff1f1; }
+    .sel-lab { flex: 1 1 120px; font-weight: 800; font-size: 13.5px; line-height: 1.3; min-width: 0; }
+    .sel { flex: 1 1 140px; min-height: 44px; border: 2px solid var(--line); border-radius: 10px; background: #fff; font: inherit; font-weight: 700; font-size: 14px; padding: 4px 6px; min-width: 0; }
+    .cls, .ord { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+    .cls-row { border: 2px solid var(--line); border-radius: 12px; padding: 6px 8px; background: var(--surface); }
+    .cls-row.bad { border-color: #e2464b; background: #fff1f1; }
+    .cls-lab { font-weight: 800; font-size: 14px; line-height: 1.3; margin-bottom: 5px; }
+    .cls-bins { display: flex; gap: 6px; flex-wrap: wrap; }
+    .cls-bins .opt { flex: 1 1 0; min-width: 64px; min-height: 42px; font-size: 13.5px; }
+    .ord-item, .pair-item { display: flex; align-items: center; gap: 8px; text-align: left; padding: 6px 8px; font-size: 13.5px; font-weight: 700; min-height: 46px; }
+    .ord-n { flex: none; min-width: 24px; height: 24px; border-radius: 50%; background: var(--surface-2); border: 2px solid var(--line); display: inline-grid; place-items: center; font-size: 13px; font-weight: 800; }
+    .opt.on .ord-n { background: var(--subject); border-color: var(--subject); color: #fff; }
+    .opt.bad .ord-n { background: #e2464b; border-color: #e2464b; color: #fff; }
+    .ord-t { flex: 1; }
+    .pair { display: flex; gap: 8px; margin-top: 6px; }
+    .pair-col { flex: 1; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+    .stp-b { min-width: 52px; }
+      .opt-grid.c4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .opt-grid.c4 .opt { font-size: 13.5px; padding: 4px 2px; }
+    .opt-grid.c5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+    .opt-grid.c5 .opt { font-size: 13px; padding: 4px 2px; }
+
+
+    .wd-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin-top: 4px; }
+    .sel-lab svg { flex: none; }
+    .sel-lab { display: flex; align-items: center; }
+    .ord.ord-wide .ord-item { font-size: 13px; }
+
+  </style>
+</head>
+<body class="sim-page" data-subject="earth">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#hs">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">지구시스템과학 · Ⅱ. 해수의 운동</div>
+      <h1>지형류와 해수면 경사</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🌊 지형류와 해수면 경사</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="group" aria-label="장면 고르기" hidden>
+            <button type="button" data-mode="ssh">🛰️ 해수면 경사</button><button type="button" data-mode="tank">🧪 압력 경도력</button><button type="button" data-mode="rot">⚖️ 힘의 균형</button><button type="button" data-mode="calc">🧮 유속 계산</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="해수면 높이 지도와 단면, 수조의 압력 차, 회전 수조에서 압력 경도력과 전향력이 균형을 이루는 모습, 지형류 유속 계산 패널을 보여 주는 모의실험 화면"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">—</span><span class="value txt" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">—</span><span class="value txt" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">—</span><span class="value txt" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+
+        <div class="control" data-k="stpD">
+          <div class="control-head"><span>🔢 높이 차 Δη = A − B</span></div>
+          <div class="stp" id="stpD"></div>
+          <p class="ctrl-note">지도나 그래프에서 <b>A, B 표시</b>를 끌어 위치를 바꿔요.</p>
+        </div>
+        <div class="control" data-k="sZ">
+          <div class="control-head"><span>📏 기준 깊이 z</span><output id="oZ">0 m</output></div>
+          <input type="range" id="sZ" min="0" max="200" step="10" value="0" aria-label="기준 깊이, 미터">
+          <div class="ticks"><span>0 m</span><span>100 m</span><span>200 m</span></div>
+        </div>
+        <div class="control" data-k="sEta">
+          <div class="control-head"><span>↕️ 해수면 높이 차 Δη</span><output id="oEta">0.00 m</output></div>
+          <input type="range" id="sEta" min="0" max="2" step="0.25" value="0" aria-label="두 수조의 해수면 높이 차, 미터">
+          <div class="ticks"><span>0</span><span>1 m</span><span>2 m</span></div>
+        </div>
+        <div class="control" data-k="stpP">
+          <div class="control-head"><span>🔢 계산한 압력 p</span></div>
+          <div class="stp" id="stpP"></div>
+        </div>
+        <div class="control" data-k="stpDp">
+          <div class="control-head"><span>🔢 계산한 압력 차 Δp</span></div>
+          <div class="stp" id="stpDp"></div>
+        </div>
+        <div class="control" data-k="bRel">
+          <div class="btn-row"><button class="btn btn-sm" id="bRel" type="button">🧱 칸막이 빼기</button></div>
+        </div>
+        <div class="control" data-k="rotSw">
+          <div class="control-head"><span>🌀 수조</span></div>
+          <div class="wd-grid" id="rotSw" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+            <button class="opt" type="button" data-r="0">회전 없음</button><button class="opt" type="button" data-r="1">회전 수조 (북반구)</button>
+          </div>
+        </div>
+        <div class="control" data-k="sEta2">
+          <div class="control-head"><span>↕️ 해수면 높이 차 (1000 km당)</span><output id="oEta2">0.8 m</output></div>
+          <input type="range" id="sEta2" min="0.2" max="1.5" step="0.1" value="0.8" aria-label="1000킬로미터당 해수면 높이 차, 미터">
+          <div class="ticks"><span>0.2</span><span>0.8</span><span>1.5 m</span></div>
+        </div>
+        <div class="control" data-k="sLat2">
+          <div class="control-head"><span>🌐 위도</span><output id="oLat2">30°N</output></div>
+          <input type="range" id="sLat2" min="15" max="60" step="5" value="30" aria-label="위도, 15도에서 60도">
+          <div class="ticks"><span>15°N</span><span>40°N</span><span>60°N</span></div>
+        </div>
+        <div class="control" data-k="bDrop">
+          <div class="btn-row"><button class="btn btn-sm" id="bDrop" type="button">💧 물덩이 다시 놓기</button></div>
+        </div>
+        <div class="control" data-k="selDir">
+          <div class="control-head"><span>🧭 해류는 어느 쪽으로 흐를까요?</span></div>
+          <div id="selDir"></div>
+        </div>
+        <div class="control" data-k="scSeg">
+          <div class="control-head"><span>🌊 해역</span></div>
+          <div class="wd-grid" id="scSeg" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+            <button class="opt" type="button" data-sc="kuro">쿠로시오형</button><button class="opt" type="button" data-sc="gyre">아열대 내부</button><button class="opt" type="button" data-sc="free">직접 설정</button>
+          </div>
+        </div>
+        <div class="control" data-k="sEtaC">
+          <div class="control-head"><span>↕️ 해수면 높이 차 Δη</span><output id="oEtaC">0.8 m</output></div>
+          <input type="range" id="sEtaC" min="0.1" max="2" step="0.1" value="0.8" aria-label="해수면 높이 차, 미터">
+          <div class="ticks"><span>0.1</span><span>1 m</span><span>2 m</span></div>
+        </div>
+        <div class="control" data-k="sDxC">
+          <div class="control-head"><span>↔️ 거리 Δx</span><output id="oDxC">100 km</output></div>
+          <input type="range" id="sDxC" min="50" max="2000" step="50" value="100" aria-label="거리, 킬로미터">
+          <div class="ticks"><span>50 km</span><span>1000 km</span><span>2000 km</span></div>
+        </div>
+        <div class="control" data-k="sLatC">
+          <div class="control-head"><span>🌐 위도</span><output id="oLatC">33°N</output></div>
+          <input type="range" id="sLatC" min="10" max="60" step="1" value="33" aria-label="위도, 10도에서 60도">
+          <div class="ticks"><span>10°N</span><span>35°N</span><span>60°N</span></div>
+        </div>
+        <div class="control" data-k="stpV">
+          <div class="control-head"><span>🔢 계산한 유속 v</span></div>
+          <div class="stp" id="stpV"></div>
+        </div>
+        <div class="control" data-k="ordSpeed">
+          <div class="control-head"><span>🏁 빠른 순서대로 눌러요</span></div>
+          <div id="ordSpeed"></div>
+        </div>
+        <div class="control" data-k="ordChain">
+          <div class="control-head"><span>🔗 원인 사슬 순서대로 눌러요</span></div>
+          <div id="ordChain"></div>
+        </div>
+
+        <p class="src-note">※ 이 화면의 수치와 그림은 학습용 <b>예시 자료</b>인 단순화 모형이에요. 실제 해수면 높이 자료는 국립해양조사원 누리집에서 확인해 보세요.</p>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

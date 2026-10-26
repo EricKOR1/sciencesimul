@@ -428,9 +428,9 @@
      ========================================================= */
   function LJ() {
     if (PHONE) {
-      const bw = 228, bh = 148;
-      return { grid: { x: 8, y: 8, w: 464, cols: 2, cardH: 44, gap: 6 }, P: { x: 8, y: 210, w: 464, h: 200 },
-        bins: [{ x: 8, y: 418, w: bw, h: bh }, { x: 244, y: 418, w: bw, h: bh }, { x: 8, y: 574, w: bw, h: bh }, { x: 244, y: 574, w: bw, h: bh }], R: { x: 8, y: 730, w: 464, h: 122 } };
+      const bw = 228, bh = 142;
+      return { grid: { x: 8, y: 8, w: 464, cols: 2, cardH: 44, gap: 6 }, P: { x: 8, y: 210, w: 464, h: 186 },
+        bins: [{ x: 8, y: 404, w: bw, h: bh }, { x: 244, y: 404, w: bw, h: bh }, { x: 8, y: 552, w: bw, h: bh }, { x: 244, y: 552, w: bw, h: bh }], R: { x: 8, y: 702, w: 464, h: 150 } };
     }
     const bw = 189;
     return { grid: { x: 10, y: 8, w: 780, cols: 4, cardH: 50, gap: 8 }, P: { x: 10, y: 124, w: 780, h: 168 },
@@ -517,7 +517,7 @@
     if (S.mu.fl === 0 && muEnterT < 0) muEnterT = 0;
     S.mu.fly = clamp(S.mu.fly + dt / (RM ? 0.01 : 1.3), 0, 1);
     panel(C.x, C.y, C.w, C.h, { r: 14 });
-    T(C.x + 14, C.y + 24 * FS, '📈 궤도 지배 정도 μ (로그 눈금: 한 칸 = 10배)', 14.5, '#1e293b', 'left', 800);
+    T(C.x + 14, C.y + 24 * FS, PHONE ? '📈 궤도 지배 정도 μ' : '📈 궤도 지배 정도 μ (로그 눈금: 한 칸 = 10배)', 14.5, '#1e293b', 'left', 800);
     // 영역 색
     const bx = X(S.mu.c);
     ctx.save(); rr(ix, top, iw, ay - top, 8); ctx.clip();
@@ -606,9 +606,9 @@
     [1, 2, 3, 5, 10, 20, 30, 50, 100].forEach((a) => { const x = X(a); ctx.strokeStyle = '#e2e8f0'; ctx.beginPath(); ctx.moveTo(x, top); ctx.lineTo(x, top + ph); ctx.stroke(); if ([1, 10, 100].includes(a) || (!PHONE && [3, 30].includes(a))) T(x, top + ph + 20 * Math.min(FS, 1.15), String(a), 13, '#64748b', 'center', 800); });
     ctx.strokeStyle = '#64748b'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(ix, top); ctx.lineTo(ix, top + ph); ctx.lineTo(ix + iw, top + ph); ctx.stroke();
     T(ix + iw / 2, top + ph + 44 * Math.min(FS, 1.15), '긴반지름 a (AU, 로그 눈금)', 13, '#475569', 'center', 800);
-    T(P.x + 16, top - 8, 'e', 13.5, '#475569', 'left', 800);
+    T(ix - 8, top - 10, 'e', 13.5, '#475569', 'right', 800);
     // 행성 궤도 표시
-    [[1, '지구'], [5.2, '목성'], [30.1, '해왕성']].forEach(([a, n]) => { const x = X(a); D.dashedLine(x, top + 4, x, top + ph, { color: 'rgba(30,41,59,.45)', width: 1.5, dash: [3, 5] }); T(x, top + 12 + 2, n + ' 궤도', 11.5, '#475569', 'center', 800); });
+    [[1, '지구'], [5.2, '목성'], [30.1, '해왕성']].forEach(([a, n]) => { const x = X(a); D.dashedLine(x, top + 4, x, top + ph, { color: 'rgba(30,41,59,.45)', width: 1.5, dash: [3, 5] }); T(x + 4, top + 16, n + ' 궤도', 11.5, '#475569', 'left', 800); });
     // 점
     const sel = S.sc.sel;
     SC.forEach((o, i) => {
@@ -725,18 +725,18 @@
     spaceBg(Sc.x, Sc.y, Sc.w, Sc.h, t, '#0b1230', '#16224a');
     // 지구 궤도 · 활동 경계
     ctx.strokeStyle = 'rgba(96,165,250,.7)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(sx, sy, 1 * k, 0, TAU); ctx.stroke();
-    outlineT(sx - 1 * k + 4, sy - 6, '지구 궤도 1 AU', PHONE ? 10.5 : 11.5, '#93c5fd', 'left');
+    outlineT(sx, sy + k + 15, '지구 궤도 1 AU', PHONE ? 10.5 : 11.5, '#93c5fd', 'center');
     ctx.strokeStyle = 'rgba(250,204,21,.4)'; ctx.setLineDash([6, 6]); ctx.beginPath(); ctx.arc(sx, sy, 3 * k, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
     // 혜성 궤도
     ctx.strokeStyle = 'rgba(226,232,240,.55)'; ctx.lineWidth = 2; ctx.beginPath();
-    for (let i = 0; i <= 120; i++) { const q = cmPos(i / 120 * TAU); i ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y); } ctx.stroke();
+    for (let i = 0; i <= 200; i++) { const E = i / 200 * TAU, q = { x: sx + CM.a * (Math.cos(E) - CM.e) * k, y: sy - CM.a * Math.sqrt(1 - CM.e * CM.e) * Math.sin(E) * k }; i ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y); } ctx.stroke();
     // 방향 화살표 (공전 방향)
     { const q1 = cmPos(-1.0), q2 = cmPos(-0.9); D.arrow(q1.x, q1.y, q2.x, q2.y, { color: '#e2e8f0', width: 2, head: 9 }); }
     sunDraw(sx, sy, PHONE ? 11 : 13);
     // 근일점 · 원일점 표시
     const pq = cmPos(0), pQ = cmPos(Math.PI);
     ctx.fillStyle = '#fbbf24'; ctx.beginPath(); ctx.arc(pq.x, pq.y, 3.5, 0, TAU); ctx.fill(); outlineT(pq.x + 2, pq.y + 22, '근일점 ' + f1(g.q) + ' AU', PHONE ? 10.5 : 11.5, '#fde68a', 'center');
-    ctx.fillStyle = '#94a3b8'; ctx.beginPath(); ctx.arc(pQ.x, pQ.y, 3.5, 0, TAU); ctx.fill(); outlineT(pQ.x, pQ.y + 20, '원일점 ' + f1(g.Q) + ' AU', PHONE ? 10.5 : 11.5, '#cbd5e1', 'center');
+    ctx.fillStyle = '#94a3b8'; ctx.beginPath(); ctx.arc(pQ.x, pQ.y, 3.5, 0, TAU); ctx.fill(); outlineT(PHONE ? pQ.x - 6 : pQ.x, pQ.y + 20, '원일점 ' + f1(g.Q) + ' AU', PHONE ? 10.5 : 11.5, '#cbd5e1', PHONE ? 'left' : 'center');
     // 꼬리 + 혜성
     const len = cmTailLen(p.r), coma = 5 + 15 * Math.max(0, 1 - p.r / 3) * (k / 100 + 0.2);
     const q2 = cmPos(CM.M + 0.02), moveAng = Math.atan2(q2.y - p.y, q2.x - p.x);
@@ -781,7 +781,7 @@
     ch.forEach((c, i) => {
       const x = cx0 + i * cwid, on = CM.term === c[2];
       D.label(x + 4, yy, (i + 1) + ' ' + c[0], { bg: on ? '#0ea5e9' : '#64748b', size: 12.5, align: 'left', pad: 8 });
-      T(x + 4 + (PHONE ? 76 : 70), yy + 4, c[1], PHONE ? 10.5 : 12, on ? '#0369a1' : '#64748b', 'left', 700);
+      if (!PHONE) T(x + 4 + 70, yy + 4, c[1], 12, on ? '#0369a1' : '#64748b', 'left', 700);
       if (i < 2) D.arrow(x + cwid - 22, yy, x + cwid - 4, yy, { color: '#94a3b8', width: 2, head: 7 });
     });
   }
@@ -804,7 +804,7 @@
   function LDT() {
     if (PHONE) {
       const cw = 150, ch = 86;
-      return { cards: DB.map((_, i) => ({ x: 8 + (i % 3) * (cw + 7), y: 8 + Math.floor(i / 3) * (ch + 6), w: cw, h: ch })), Pp: { x: 8, y: 194, w: 464, h: 232 }, Cp: { x: 8, y: 434, w: 464, h: 214 }, Bp: { x: 8, y: 656, w: 464, h: 196 } };
+      return { cards: DB.map((_, i) => ({ x: 8 + (i % 3) * (cw + 7), y: 8 + Math.floor(i / 3) * (ch + 6), w: cw, h: ch })), Pp: { x: 8, y: 194, w: 464, h: 214 }, Cp: { x: 8, y: 416, w: 464, h: 232 }, Bp: { x: 8, y: 656, w: 464, h: 196 } };
     }
     const cw = (780 - 5 * 8) / 6;
     return { cards: DB.map((_, i) => ({ x: 10 + i * (cw + 8), y: 8, w: cw, h: 98 })), Pp: { x: 10, y: 114, w: 336, h: 262 }, Cp: { x: 354, y: 114, w: 436, h: 262 }, Bp: { x: 10, y: 384, w: 780, h: 228 } };
@@ -834,9 +834,10 @@
   function shapePath(id, cx, cy, R) {
     ctx.beginPath();
     if (id === 'ryugu' || id === 'bennu') {
+      const nn = id === 'ryugu' ? 1.55 : 2.4, ky = id === 'ryugu' ? 0.92 : 0.95;
       for (let i = 0; i <= 72; i++) {
-        const a = i / 72 * TAU, c = Math.abs(Math.cos(a)), rr_ = id === 'ryugu' ? R * (0.62 + 0.38 * Math.pow(c, 1.3)) : R * (0.86 + 0.14 * c * c);
-        const x = cx + Math.cos(a) * rr_, y = cy + Math.sin(a) * rr_ * (id === 'ryugu' ? 1.0 : 0.96);
+        const a = i / 72 * TAU, cs = Math.cos(a), sn = Math.sin(a);
+        const x = cx + R * Math.sign(cs) * Math.pow(Math.abs(cs), 2 / nn), y = cy + R * ky * Math.sign(sn) * Math.pow(Math.abs(sn), 2 / nn);
         i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
       }
       ctx.closePath();
@@ -949,7 +950,7 @@
      ========================================================= */
   const MT = S.mt;
   function LMT() {
-    if (PHONE) return { grid: { x: 8, y: 8, w: 464, cols: 2, cardH: 44, gap: 6 }, bins: [{ x: 8, y: 210, w: 464, h: 150 }, { x: 8, y: 366, w: 464, h: 150 }], V: { x: 8, y: 524, w: 464, h: 206 }, R: { x: 8, y: 738, w: 464, h: 114 } };
+    if (PHONE) return { grid: { x: 8, y: 8, w: 464, cols: 2, cardH: 44, gap: 6 }, bins: [{ x: 8, y: 210, w: 464, h: 136 }, { x: 8, y: 352, w: 464, h: 136 }], V: { x: 8, y: 496, w: 464, h: 150 }, R: { x: 8, y: 654, w: 464, h: 198 } };
     return { grid: { x: 10, y: 8, w: 780, cols: 4, cardH: 50, gap: 8 }, bins: [{ x: 10, y: 124, w: 386, h: 170 }, { x: 404, y: 124, w: 386, h: 170 }], V: { x: 10, y: 302, w: 430, h: 310 }, R: { x: 448, y: 302, w: 342, h: 310 } };
   }
   const cM = makeClassifier({
