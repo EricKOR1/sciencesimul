@@ -960,7 +960,7 @@
           setup() { setMode('atp'); S.at.calcOn = false; thReset({ I: 5, treat: 'none', cyc: false }); setLight('#sL3', 5); updateCtl(); },
           check: () => +fx1(phL()) <= 6.0 && S.th.atp >= 6, hold: 1.0,
           status: () => mark(+fx1(phL()) <= 6.0) + ' 내부 pH ' + fx1(phL()) + ' (6.0 이하) &nbsp; ' + mark(S.th.atp >= 6) + ' ATP ' + S.th.atp + ' / 6',
-          explain: '빛이 세지면 전자 흐름이 빨라져 H⁺가 틸라코이드 내부에 더 많이 쌓여요. 이 <b>H⁺ 농도 기울기</b>가 ATP 합성 효소를 돌려 ATP를 만들어요. 모형에서는 H⁺ 4개가 지나갈 때 ATP 1개가 만들어져요.',
+          explain: '빛이 세지면 전자 흐름이 빨라져 H⁺가 틸라코이드 내부에 더 많이 쌓여요. 이 <b>H⁺ 농도 기울기</b>가 ATP 합성 효소를 돌려 ATP를 만들어요. 모형에서는 H⁺ 4개가 지나갈 때 ATP 1개가 만들어지는 것으로 단순화했어요.',
         },
         {
           id: 'calc', title: '물 12분자에서 얻는 것', manual: true,

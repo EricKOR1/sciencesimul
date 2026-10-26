@@ -903,7 +903,7 @@
           check() {
             const n = tbDone() * 2; if (n >= 20) return true;
             const bad = TBL.findIndex((r, i) => (S.tb.sel[i].l && !tbOK(i, 'l')) || (S.tb.sel[i].r && !tbOK(i, 'r')));
-            if (bad >= 0) return '빨간 칸이 있어요. ' + (bad + 1) + '번 ' + TBL[bad].k + '을(를) 다시 확인해 보세요.';
+            if (bad >= 0) return '빨간 칸이 있어요. ' + (bad + 1) + '번 ' + TBL[bad].k + josa(TBL[bad].k, '을', '를') + ' 다시 확인해 보세요.';
             return '아직 비어 있는 칸이 있어요. (' + n + ' / 20)';
           },
           explain: '비교표 20칸을 모두 맞혔어요! 두 전자 전달계는 <b>에너지 · 효소 · 산화 환원</b> 면에서 닮았지만, 에너지 입력과 전자의 출발 · 도착, 산물이 서로 달라요. 호흡은 에너지를 <b>방출</b>하고 광합성은 에너지를 <b>저장</b>해요.',
@@ -931,7 +931,7 @@
             const ack = {}; let first = null;
             ['cn', 'db', 'un'].forEach((k) => ['L', 'R'].forEach((s) => { if (ihVal(k, s) !== IHANS[k][s]) { ack[k + s] = true; if (!first) first = [k, s]; } else ack[k + s + 'seen'] = true; }));
             if (JSON.stringify(ack) !== JSON.stringify(S.ih.ack)) { S.ih.ack = ack; updateCtl(); }
-            if (first) return '빨간 칸이 아직 달라요. ' + IHP[first[0]].name + '이(가) ' + (first[1] === 'L' ? '세포호흡' : '광합성') + '의 ATP 합성에 주는 영향을 결과표와 비교해 보세요.';
+            if (first) return '빨간 칸이 아직 달라요. ' + IHP[first[0]].name + josa(IHP[first[0]].name, '이', '가') + ' ' + (first[1] === 'L' ? '세포호흡' : '광합성') + '의 ATP 합성에 주는 영향을 결과표와 비교해 보세요.';
             return true;
           },
           explain: '<b>시안화물</b>: 호흡의 ATP 합성은 0, 광합성은 정상. <b>DCMU</b>: 호흡은 정상, 광합성은 거의 없음. <b>짝풀림제</b>: 두 막 모두 H⁺ 기울기가 사라져 ATP 합성이 줄어요(둘 다 20). 짝풀림제가 둘 다 줄이는 까닭은 두 막의 ATP 합성이 모두 H⁺ 기울기에 의존하기 때문이에요.',

@@ -523,7 +523,7 @@
       D.label(I.x + 10, I.gy + 14, info.nm, { bg: info.st === 'fog' ? '#475569' : info.st === 'stratus' ? '#0369a1' : '#15803d', size: 12.5, pad: 9, align: 'left' });
     }
     // 아래 판
-    card(IP, f === 'rad' ? '📈 밤새 기온과 이슬점 (예시: 저녁 7시 기온 15 °C, 이슬점 11 °C)' : '📋 이 안개가 생기는 까닭');
+    card(IP, f === 'rad' ? (PHONE ? '📈 밤새 기온과 이슬점 (7시 15 °C, 이슬점 11 °C)' : '📈 밤새 기온과 이슬점 (예시: 저녁 7시 기온 15 °C, 이슬점 11 °C)') : '📋 이 안개가 생기는 까닭');
     if (f === 'rad') {
       const pb = { x: IP.x + 48, y: IP.y + 56, w: PHONE ? IP.w - 48 - 18 : IP.w * 0.6 - 48, h: PHONE ? 150 : IP.h - 56 - 40 };
       const X = (hh) => pb.x + (pb.w * hh) / 13, Y = (T) => pb.y + pb.h - (pb.h * (T - 5)) / 12;
@@ -542,8 +542,7 @@
       const tx = PHONE ? IP.x + 16 : pb.x + pb.w + 24, ty = PHONE ? pb.y + pb.h + 66 : IP.y + 54, tw = PHONE ? IP.w - 32 : IP.x + IP.w - tx - 14;
       const lines = [['기온', fx(info.T, 1) + ' °C'], ['이슬점', FTD + ' °C'], ['가시거리', info.st === 'fog' || info.st === 'mist' ? fx(info.V, 2) + ' km' : '10 km 이상'], ['상태', info.st === 'fog' ? '안개' : info.st === 'stratus' ? '층운' : info.st === 'mist' ? '엷은 안개' : '맑음']];
       lines.forEach((q, i) => { const x = tx + (PHONE ? (i % 2) * (tw / 2) : 0), y = ty + (PHONE ? Math.floor(i / 2) * 34 : i * 34); D.text(x, y, q[0], { size: 12.5, weight: 800, color: '#64748b', align: 'left' }); D.text(x + (PHONE ? 66 : 62), y, q[1], { size: 14, weight: 800, color: i === 3 && info.st === 'fog' ? '#b91c1c' : '#0f172a', align: 'left' }); });
-      if (PHONE) drawWrap(IP.x + IP.w / 2, IP.y + IP.h - 52, '맑고(구름양 적음) 바람이 약하면(5 m/s 미만) 복사 냉각으로 기온이 이슬점까지 떨어져 안개가 끼요. 바람이 5 m/s 이상이면 섞여서 안개 대신 층운이 되고, 해가 뜨면 기온이 올라 안개가 사라져요.', IP.w - 28, 12, { color: '#475569', weight: 800 });
-      else drawWrap(tx + tw / 2, IP.y + IP.h - 40, '바람이 5 m/s 이상이면 섞여 층운, 해가 뜨면 소멸', tw, 12, { color: '#475569', weight: 800 });
+      if (!PHONE) drawWrap(tx + tw / 2, IP.y + IP.h - 40, '바람이 5 m/s 이상이면 섞여 층운, 해가 뜨면 소멸', tw, 12, { color: '#475569', weight: 800 });
     } else {
       const txt = { adv: ['따뜻하고 습한 공기가 찬 해면·지면 위로 이동하며 냉각돼요.', '예: 서해·남해의 봄·여름 해무'], steam: ['찬 공기가 따뜻한 수면 위를 지날 때 증발한 수증기가 응결해요.', '예: 겨울 아침의 강·호수 (김)'], up: ['공기가 산비탈을 오르며 단열 팽창으로 냉각돼요.', '구름이 산 사면에 걸린 것과 같은 원리예요.'] }[f];
       drawWrap(IP.x + IP.w / 2, IP.y + 60, txt[0], IP.w - 40, 15, { color: '#0f172a', weight: 800 });

@@ -120,7 +120,7 @@
     ctx.translate(cx, cy); const s = 1 + c.lift * 0.06; ctx.scale(s, s);
     const sh = c.shake > 0 && !RM ? Math.sin(clock * 60) * 3 * c.shake : 0; ctx.translate(sh, 0);
     const r = Math.min(12, h / 2.4);
-    D.shadow(() => { D.roundRect(-w / 2, -h / 2, w, h, r); ctx.fillStyle = c.bad ? '#fdeceb' : (c.sel ? '#fff8dc' : (c.fill || '#fff')); ctx.fill(); }, { blur: 5 + c.lift * 10, y: 2 + c.lift * 4 });
+    flatCard(-w / 2, -h / 2, w, h, r, c.bad ? '#fdeceb' : (c.sel ? '#fff8dc' : (c.fill || '#fff')), c.lift);
     ctx.strokeStyle = c.bad ? '#e2464b' : c.sel ? '#f59e0b' : C.shade(c.col || '#16a34a', 0.15); ctx.lineWidth = c.bad || c.sel ? 3 : 2; D.roundRect(-w / 2, -h / 2, w, h, r); ctx.stroke();
     const chip = h < 36;
     if (chip) {
@@ -358,6 +358,12 @@
     ls.forEach((l, i) => T(x + 9, y + 9 + size + i * lh - 2, l, size, o.color || '#26324a', 'left', 700));
     return h;
   }
+  /* 그림자 번짐 없이 가볍게 그리는 상자 (카드가 많을 때) */
+  function flatCard(x, y, w, h, r, fill, lift) {
+    if (lift > 0.05) { D.shadow(() => { D.roundRect(x, y, w, h, r); ctx.fillStyle = fill; ctx.fill(); }, { blur: 5 + lift * 10, y: 2 + lift * 4 }); return; }
+    D.roundRect(x, y + 2.5, w, h, r); ctx.fillStyle = 'rgba(30,50,90,.13)'; ctx.fill();
+    D.roundRect(x, y, w, h, r); ctx.fillStyle = fill; ctx.fill();
+  }
 
 
   /* =========================================================
@@ -378,21 +384,21 @@
   ];
   /* 연표 카드 15장 (시간순). year는 카드에 쓰는 글, life가 true인 사건은 생활 사례와 바로 이어져요 */
   const EV = [
-    { id: 'ferm', year: '수천 년 전~', label: '발효와 선발 육종', icon: '🍞', era: 0, life: true, tech: '미생물의 발효 작용 이용, 좋은 형질을 고르는 교배', lifeTxt: '빵 · 술 · 장 · 치즈 · 김치', todo: '품질을 일정하게 유지하기' },
-    { id: 'peni', year: '1928', label: '페니실린 발견', icon: '💊', era: 0, life: true, tech: '곰팡이가 만든 항생 물질, 이후 미생물 발효로 대량 생산', lifeTxt: '세균 감염병 치료', todo: '항생제 내성 세균이 늘어나는 문제' },
-    { id: 'dna', year: '1953', label: 'DNA 이중 나선', icon: '🧬', era: 0, life: false, tech: 'DNA 구조 규명 (유전 정보가 저장되는 방식 이해)', lifeTxt: '유전자 연구의 바탕', todo: '구조에서 기능으로, 유전자가 하는 일 밝히기' },
-    { id: 'rdna', year: '1973', label: '재조합 DNA', icon: '🔗', era: 1, life: false, tech: '제한 효소로 자르고 연결 효소로 이어 플라스미드에 넣어 대장균에 도입', lifeTxt: '유전자 의약품 생산의 길을 엶', todo: '안전한 사용 기준 마련' },
-    { id: 'mab', year: '1975', label: '단일클론항체', icon: '🎯', era: 1, life: true, tech: '항체를 만드는 B 세포와 골수종 세포 융합', lifeTxt: '진단 키트 · 표적 치료', todo: '비용과 면역 반응' },
-    { id: 'seq', year: '1977', label: 'DNA 염기 서열 분석법', icon: '🔤', era: 1, life: false, tech: 'DNA의 염기 순서를 읽는 방법', lifeTxt: '유전 질환 · 병원체 분석의 바탕', todo: '읽은 정보를 해석하기' },
-    { id: 'ins', year: '1982', label: '재조합 사람 인슐린 상용화', icon: '💉', era: 1, life: true, tech: '사람 인슐린 유전자를 넣은 대장균으로 생산', lifeTxt: '당뇨병 치료제 인슐린', todo: '비용과 접근성' },
-    { id: 'pcr', year: '1983~85', label: 'PCR (DNA 증폭)', icon: '🔁', era: 1, life: true, tech: '적은 양의 DNA를 짧은 시간에 수없이 복제(증폭)', lifeTxt: 'DNA 지문(수사 · 친자 확인), 감염병 진단', todo: '오염 없이 정확하게 검사하기' },
-    { id: 'gmt', year: '1994', label: '최초의 상업용 GM 작물(토마토)', icon: '🍅', era: 1, life: true, tech: '재조합 DNA 기술을 식물에 응용', lifeTxt: '유전자 변형 작물 재배 · 이용', todo: '인체와 생태계에 미치는 영향 평가' },
-    { id: 'dolly', year: '1996', label: '복제 양 돌리', icon: '🐑', era: 1, life: false, tech: '체세포 핵 이식으로 동물 복제', lifeTxt: '체세포로도 새 개체를 만들 수 있음을 보임', todo: '윤리 문제와 낮은 성공률' },
-    { id: 'hesc', year: '1998', label: '사람 배아줄기세포 확립', icon: '🌱', era: 1, life: false, tech: '초기 배아의 세포를 배양해 줄기세포주 확립', lifeTxt: '재생 의학 연구의 출발', todo: '배아를 이용하는 윤리 문제' },
-    { id: 'hgp', year: '1990~2003', label: '인간 유전체 사업', icon: '🗺️', era: 2, life: true, tech: '사람 DNA 약 31억 염기쌍의 염기 서열 읽기', lifeTxt: '맞춤형 암 치료 · 유전 질환 연구', todo: '서열의 기능 해석, 개인정보 보호' },
-    { id: 'ips', year: '2006', label: '유도만능줄기세포 (iPS)', icon: '🔄', era: 2, life: false, tech: '체세포에 초기화 인자를 넣어 줄기세포로 되돌림', lifeTxt: '환자 맞춤 재생 의학 연구', todo: '종양 위험과 낮은 효율' },
-    { id: 'crispr', year: '2012', label: 'CRISPR-Cas9 유전자 편집', icon: '✂️', era: 2, life: false, tech: '가이드 RNA와 Cas9으로 원하는 자리의 DNA를 자름 (2020 노벨 화학상)', lifeTxt: '유전 질환 치료 연구', todo: '오프타깃과 윤리 문제' },
-    { id: 'mrna', year: '2020', label: 'mRNA 백신 상용화', icon: '🛡️', era: 2, life: true, tech: 'mRNA로 항원 단백질을 만들게 해 면역을 만듦', lifeTxt: '감염병 백신', todo: '보관 조건과 장기 효과 추적' },
+    { id: 'ferm', short: '발효·육종', year: '수천 년 전~', label: '발효와 선발 육종', icon: '🍞', era: 0, life: true, tech: '미생물의 발효 작용 이용, 좋은 형질을 고르는 교배', lifeTxt: '빵 · 술 · 장 · 치즈 · 김치', todo: '품질을 일정하게 유지하기' },
+    { id: 'peni', short: '페니실린', year: '1928', label: '페니실린 발견', icon: '💊', era: 0, life: true, tech: '곰팡이가 만든 항생 물질, 이후 미생물 발효로 대량 생산', lifeTxt: '세균 감염병 치료', todo: '항생제 내성 세균이 늘어나는 문제' },
+    { id: 'dna', short: 'DNA 구조', year: '1953', label: 'DNA 이중 나선', icon: '🧬', era: 0, life: false, tech: 'DNA 구조 규명 (유전 정보가 저장되는 방식 이해)', lifeTxt: '유전자 연구의 바탕', todo: '구조에서 기능으로, 유전자가 하는 일 밝히기' },
+    { id: 'rdna', short: '재조합 DNA', year: '1973', label: '재조합 DNA', icon: '🔗', era: 1, life: false, tech: '제한 효소로 자르고 연결 효소로 이어 플라스미드에 넣어 대장균에 도입', lifeTxt: '유전자 의약품 생산의 길을 엶', todo: '안전한 사용 기준 마련' },
+    { id: 'mab', short: '단일클론항체', year: '1975', label: '단일클론항체', icon: '🎯', era: 1, life: true, tech: '항체를 만드는 B 세포와 골수종 세포 융합', lifeTxt: '진단 키트 · 표적 치료', todo: '비용과 면역 반응' },
+    { id: 'seq', short: '서열 분석', year: '1977', label: 'DNA 염기 서열 분석법', icon: '🔤', era: 1, life: false, tech: 'DNA의 염기 순서를 읽는 방법', lifeTxt: '유전 질환 · 병원체 분석의 바탕', todo: '읽은 정보를 해석하기' },
+    { id: 'ins', short: '재조합 인슐린', year: '1982', label: '재조합 사람 인슐린 상용화', icon: '💉', era: 1, life: true, tech: '사람 인슐린 유전자를 넣은 대장균으로 생산', lifeTxt: '당뇨병 치료제 인슐린', todo: '비용과 접근성' },
+    { id: 'pcr', short: 'PCR', year: '1983~85', label: 'PCR (DNA 증폭)', icon: '🔁', era: 1, life: true, tech: '적은 양의 DNA를 짧은 시간에 수없이 복제(증폭)', lifeTxt: 'DNA 지문(수사 · 친자 확인), 감염병 진단', todo: '오염 없이 정확하게 검사하기' },
+    { id: 'gmt', short: 'GM 토마토', year: '1994', label: '최초의 상업용 GM 작물(토마토)', icon: '🍅', era: 1, life: true, tech: '재조합 DNA 기술을 식물에 응용', lifeTxt: '유전자 변형 작물 재배 · 이용', todo: '인체와 생태계에 미치는 영향 평가' },
+    { id: 'dolly', short: '복제 양 돌리', year: '1996', label: '복제 양 돌리', icon: '🐑', era: 1, life: false, tech: '체세포 핵 이식으로 동물 복제', lifeTxt: '체세포로도 새 개체를 만들 수 있음을 보임', todo: '윤리 문제와 낮은 성공률' },
+    { id: 'hesc', short: '배아줄기세포', year: '1998', label: '사람 배아줄기세포 확립', icon: '🌱', era: 1, life: false, tech: '초기 배아의 세포를 배양해 줄기세포주 확립', lifeTxt: '재생 의학 연구의 출발', todo: '배아를 이용하는 윤리 문제' },
+    { id: 'hgp', short: '유전체 사업', year: '1990~2003', label: '인간 유전체 사업', icon: '🗺️', era: 2, life: true, tech: '사람 DNA 약 31억 염기쌍의 염기 서열 읽기', lifeTxt: '맞춤형 암 치료 · 유전 질환 연구', todo: '서열의 기능 해석, 개인정보 보호' },
+    { id: 'ips', short: 'iPS 세포', year: '2006', label: '유도만능줄기세포 (iPS)', icon: '🔄', era: 2, life: false, tech: '체세포에 초기화 인자를 넣어 줄기세포로 되돌림', lifeTxt: '환자 맞춤 재생 의학 연구', todo: '종양 위험과 낮은 효율' },
+    { id: 'crispr', short: 'CRISPR', year: '2012', label: 'CRISPR-Cas9 유전자 편집', icon: '✂️', era: 2, life: false, tech: '가이드 RNA와 Cas9으로 원하는 자리의 DNA를 자름 (2020 노벨 화학상)', lifeTxt: '유전 질환 치료 연구', todo: '오프타깃과 윤리 문제' },
+    { id: 'mrna', short: 'mRNA 백신', year: '2020', label: 'mRNA 백신 상용화', icon: '🛡️', era: 2, life: true, tech: 'mRNA로 항원 단백질을 만들게 해 면역을 만듦', lifeTxt: '감염병 백신', todo: '보관 조건과 장기 효과 추적' },
   ];
   const EVI = {};
   EV.forEach((e, i) => { e.i = i; EVI[e.id] = i; });
@@ -457,7 +463,7 @@
     const sc = 1 + c.lift * 0.07; ctx.scale(sc, sc);
     if (c.shake > 0 && !RM) ctx.translate(Math.sin(clock * 60) * 3 * c.shake, 0);
     const sel = TL.sel === c, eraCol = ERA[ev.era].col, gr = TL.grow;
-    D.shadow(() => { D.roundRect(-w / 2, -h / 2, w, h, 12); ctx.fillStyle = sel ? '#fff8dc' : '#fff'; ctx.fill(); }, { blur: 5 + c.lift * 10, y: 2 + c.lift * 4 });
+    flatCard(-w / 2, -h / 2, w, h, 12, sel ? '#fff8dc' : '#fff', c.lift);
     ctx.strokeStyle = sel ? '#f59e0b' : gr > 0.05 ? C.mix('#cbd5e1', eraCol, gr) : '#cbd5e1'; ctx.lineWidth = sel ? 3 : 2; D.roundRect(-w / 2, -h / 2, w, h, 12); ctx.stroke();
     if (gr > 0.02) { ctx.save(); D.roundRect(-w / 2, -h / 2, w, h, 12); ctx.clip(); ctx.fillStyle = C.rgba(eraCol, gr); ctx.fillRect(-w / 2, -h / 2, w, 7); ctx.restore(); }
     TF(-w / 2 + 10, -h / 2 + 27, ev.year, w - 52, PHONE ? 15 : 16, 11, INK, 'left', 800);
@@ -521,7 +527,7 @@
   const HW = 0.22, A_TOP = -Math.PI / 2, A_BAM = 0.96;
   const NB = 12, NPL = 4, INS_MAX = 60;
   const BCOL = { A: '#ef6a5a', T: '#4f8ef0', G: '#f5a623', C: '#22b573' };
-  const DISH = { x: RG.px + 14, y: RG.py + 46, w: RG.pw - 28, h: RG.ph - 46 - 64 };
+  const DISH = { x: RG.px + 14, y: RG.py + 46, w: RG.pw - 28, h: RG.ph - 46 - 90 };
   function rcNew() {
     const bact = [];
     for (let i = 0; i < NB; i++) {
@@ -667,7 +673,7 @@
     /* 알아보는 자리 표시 (고른 효소는 반짝여요) */
     const pre = R.stage === 0 || (R.stage === 1 && R.cutT < 0.45);
     [[RG.gx1, 'eco'], [RG.gx2, 'eco'], [RG.hx, 'hind']].forEach(([x, k]) => {
-      if (fragGone && k === 'eco') return;
+      if (fragGone && (k === 'eco' || k === 'hind')) return;
       const xx = (k === 'eco' && R.stage >= 1 && ec) ? x + (x === RG.gx1 ? -flankOff : flankOff) : x;
       if (k === 'hind' && R.stage >= 1 && R.enz === 'hind') return;
       rcSiteTick(xx, sy, ENZ[k].col, pre && R.enz === k);
@@ -840,8 +846,8 @@
     });
     /* 숫자 */
     const alive = rcAlive();
-    if (R.stage === 4) TF(px + pw / 2, DISH.y + DISH.h + 22, '플라스미드를 받은 대장균 ' + rcPlasmids() + ' / ' + NB + '마리 (초록 고리)', pw - 20, PHONE ? 13 : 14.5, 10.5, '#15803d', 'center', 800);
-    if (R.stage >= 5) TF(px + pw / 2, DISH.y + DISH.h + 22, '살아남은 대장균 ' + alive + '마리, 죽은 대장균 ' + (NB - alive) + '마리', pw - 20, PHONE ? 13 : 14.5, 10.5, '#15803d', 'center', 800);
+    if (R.stage === 4) TF(px + pw / 2, DISH.y + DISH.h + 20, '플라스미드를 받은 대장균 ' + rcPlasmids() + ' / ' + NB + '마리 (초록 고리)', pw - 20, PHONE ? 13 : 14.5, 10.5, '#15803d', 'center', 800);
+    if (R.stage >= 5) TF(px + pw / 2, DISH.y + DISH.h + 20, '살아남은 대장균 ' + alive + '마리, 죽은 대장균 ' + (NB - alive) + '마리', pw - 20, PHONE ? 13 : 14.5, 10.5, '#15803d', 'center', 800);
     /* 인슐린 생산 막대 */
     const by = py + ph - 30, bw = pw - 28;
     D.roundRect(px + 14, by, bw, 14, 7); ctx.fillStyle = '#fee2e2'; ctx.fill();
@@ -956,17 +962,19 @@
       const x = csX(c.y), y = csY(clamp(CS.n[c.y], 0, 1)), sel = CS.sel === c.y;
       if (sel) D.glow(x, y, 26, '#7c3aed', 0.35);
       D.sphere(x, y, sel ? 9 : 7, '#7c3aed', { shadow: true });
-      const lab = c.y + '년 ' + c.lab, left = x > g.px + g.pw - 130;
-      const ly = y < g.py + 40 ? y + 26 : y - 22;
-      D.label(left ? x + 6 : x - 6, ly, lab, { bg: '#fff', color: '#4c1d95', border: '#c4b5fd', size: PHONE ? 12 : 13.5, align: left ? 'right' : 'left' });
+      const lab = c.y + '년 ' + c.lab, last = c.y === 2022;
+      if (last) D.label(x - 10, y + 24, lab, { bg: '#fff', color: '#4c1d95', border: '#c4b5fd', size: PHONE ? 12 : 13.5, align: 'right' });
+      else D.label(x + 12, y + (c.y === 2001 ? 26 : 0), lab, { bg: '#fff', color: '#4c1d95', border: '#c4b5fd', size: PHONE ? 12 : 13.5, align: 'left' });
     });
     if (!pts.length) TF(g.px + g.pw / 2, g.py + g.ph / 2, '오른쪽 아래에서 해를 눌러 값을 읽어요', g.pw - 30, 16, 12, '#94a3b8', 'center', 800);
     /* 감소 배율 화살표 */
     CS.br = RM ? (CS.solved ? 1 : 0) : approach(CS.br, CS.solved ? 1 : 0, dt, 4);
     if (CS.br > 0.02 && CS.shown[2001] && CS.shown[2022]) {
-      const x1 = csX(2001), y1 = csY(clamp(CS.n[2001], 0, 1)), x2 = csX(2022), y2 = csY(clamp(CS.n[2022], 0, 1));
+      const y1 = csY(clamp(CS.n[2001], 0, 1)), y2 = csY(clamp(CS.n[2022], 0, 1)), xr = g.px + g.pw - 22;
       ctx.save(); ctx.globalAlpha = CS.br;
-      D.arrow(x1 + 14, y1 + 18, x2 - 14, y2 - 20, { color: '#dc2626', width: 3, dash: [8, 6], label: '약 17만 배 감소', labelSize: 15, labelOffset: -26 });
+      D.dashedLine(csX(2001), y1, xr, y1, { color: '#dc2626', width: 1.6, dash: [4, 4] }); D.dashedLine(csX(2022), y2, xr, y2, { color: '#dc2626', width: 1.6, dash: [4, 4] });
+      D.arrow(xr, y1 + 2, xr, y2 - 2, { color: '#dc2626', width: 3 });
+      D.label(xr - 12, (y1 + y2) / 2, '약 17만 배 감소', { bg: '#fff', color: '#b91c1c', border: '#fca5a5', size: PHONE ? 13 : 15, align: 'right' });
       ctx.restore();
     }
   }
@@ -1012,11 +1020,11 @@
       const r = prChip(i), k = PR.sel.indexOf(e.id), on = k >= 0;
       PR.anim[e.id] = approach(PR.anim[e.id] == null ? (on ? 1 : 0) : PR.anim[e.id], on ? 1 : 0, dt, 12);
       const a = PR.anim[e.id];
-      D.shadow(() => { D.roundRect(r.x, r.y, r.w, r.h, 10); ctx.fillStyle = on ? C.mix('#ffffff', ERA[e.era].col, 0.14 * a + 0.0) : '#fff'; ctx.fill(); }, { blur: 3, y: 1 });
+      flatCard(r.x, r.y, r.w, r.h, 10, on ? C.mix('#ffffff', ERA[e.era].col, 0.14 * a) : '#fff', 0);
       ctx.strokeStyle = on ? ERA[e.era].col : '#cbd5e1'; ctx.lineWidth = on ? 2.6 : 1.6; D.roundRect(r.x, r.y, r.w, r.h, 10); ctx.stroke();
       E(e.icon, r.x + 16, r.y + r.h / 2 + 1, PHONE ? 16 : 19);
-      TF(r.x + 32, r.y + r.h / 2 - (PHONE ? 1 : 3), e.year, r.w - 62, PHONE ? 11 : 12, 9, '#64748b', 'left', 800);
-      TF(r.x + 32, r.y + r.h / 2 + (PHONE ? 11 : 13), e.label, r.w - 38, PHONE ? 11 : 12, 8.5, INK, 'left', 800);
+      TF(r.x + 32, r.y + r.h / 2 - (PHONE ? 2 : 4), e.year, r.w - 62, 11.5, 9.5, '#64748b', 'left', 800);
+      TF(r.x + 32, r.y + r.h / 2 + (PHONE ? 11 : 13), e.short, r.w - 38, 13, 10.5, INK, 'left', 800);
       if (on) { ctx.fillStyle = ERA[e.era].col; ctx.beginPath(); ctx.arc(r.x + r.w - 14, r.y + 14, 10, 0, TAU); ctx.fill(); T(r.x + r.w - 14, r.y + 19, String(k + 1), 13, '#fff', 'center', 800); }
     });
     /* 자료 본문 */
