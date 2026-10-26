@@ -853,12 +853,12 @@
     MU.m = approach(MU.m, MU.anim >= 0 ? tgtM : 0, dt, 1.6); MU.x = approach(MU.x, MU.anim >= 0 ? tgtX : 0, dt, 1.0); MU.a = approach(MU.a, MU.anim >= 0 || MU.results[key][MU.lac ? 'yes' : 'no'] != null ? aT : 0, dt, 3);
     const occ = STRAINS[key].I && STRAINS[key].O && !(MU.lac && STRAINS[key].indB) ? 1 : 0;
     TF(14, 24, STRAINS[key].name + ' · ' + (MU.lac ? '젖당 있음' : '젖당 없음') + (STRAINS[key].why ? '  —  ' + STRAINS[key].why : ''), VW - 28, PHONE ? 13 : 15, 11, '#334155', 'left', 800);
-    const oy = PHONE ? 146 : 138, W = VW - (PHONE ? 24 : 60), ox = PHONE ? 12 : 30;
+    const oy = PHONE ? 160 : 138, W = VW - (PHONE ? 24 : 60), ox = PHONE ? 12 : 30;
     drawOperon(ox, oy, W, { strain: key, occ: MU.anim >= 0 || MU.results[key][MU.lac ? 'yes' : 'no'] != null ? occ : (STRAINS[key].I && STRAINS[key].O ? 1 : 0), a: MU.a, u: MU.m, m: MU.m, x: MU.x, label: false, showEnz: true, noMake: !STRAINS[key].I }, dt, t);
-    drawTable2(PHONE ? 252 : 244, PHONE ? 56 : 44, 'mut');
+    drawTable2(PHONE ? 262 : 244, PHONE ? 56 : 44, 'mut');
   }
   const mutPT = {
-    down(p) { const g = tblLayout(PHONE ? 252 : 244, PHONE ? 56 : 44); STR_KEYS.forEach((k, i) => { const y = g.top + 30 + i * g.rowH; if (p.y >= y && p.y < y + g.rowH && MU.anim < 0) { MU.strain = k; Sound.tick(); updateCtl(); } }); return false; },
+    down(p) { const g = tblLayout(PHONE ? 262 : 244, PHONE ? 56 : 44); STR_KEYS.forEach((k, i) => { const y = g.top + 30 + i * g.rowH; if (p.y >= y && p.y < y + g.rowH && MU.anim < 0) { MU.strain = k; Sound.tick(); updateCtl(); } }); return false; },
     hover(p) { return 'pointer'; },
   };
 

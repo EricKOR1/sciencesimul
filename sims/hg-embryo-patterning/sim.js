@@ -322,9 +322,11 @@
 
   /* ---------- 화면 배치 ---------- */
   const EG = PHONE
-    ? { x0: 44, w: 400, cy: 98, hh: 34, top: { x: 8, y: 8, w: 464, h: 192 }, gr: { x: 8, y: 208, w: 464, h: 238 }, plot: { y: 238, h: 150 }, lv: { x: 8, y: 454, w: 464, h: 178 } }
+    ? { x0: 44, w: 400, cy: 106, hh: 34, top: { x: 8, y: 8, w: 464, h: 200 }, gr: { x: 8, y: 216, w: 464, h: 232 }, plot: { y: 246, h: 140 }, lv: { x: 8, y: 456, w: 464, h: 176 } }
     : { x0: 60, w: 500, cy: 128, hh: 46, top: { x: 14, y: 14, w: 772, h: 246 }, gr: { x: 14, y: 268, w: 772, h: 278 }, plot: { y: 312, h: 180 }, lv: { x: 590, y: 24, w: 190, h: 226 } };
   const X = (um) => EG.x0 + um / EMB_LEN * EG.w;
+  const plotHeight = () => (PHONE && S.mode === 'thr' ? 190 : EG.plot.h);
+  const grHeight = () => (PHONE && S.mode === 'thr' ? 396 : EG.gr.h);
   const UM = (px) => clamp((px - EG.x0) / EG.w * EMB_LEN, 0, EMB_LEN);
 
   /* ---------- 상태 ---------- */
@@ -410,7 +412,7 @@
   }
   /* ---------- 공통 그리기: 농도 그래프 ---------- */
   function drawGraph(o) {
-    const gr = EG.gr, pl = EG.plot, ymax = o.ymax || 100, py = (v) => pl.y + pl.h - clamp(v / ymax, 0, 1) * pl.h;
+    const gr = Object.assign({}, EG.gr, { h: grHeight() }), pl = { y: EG.plot.y, h: plotHeight() }, ymax = o.ymax || 100, py = (v) => pl.y + pl.h - clamp(v / ymax, 0, 1) * pl.h;
     panel(gr.x, gr.y, gr.w, gr.h, 16, '#fff');
     TF(gr.x + 16, gr.y + 26, o.title || 'Bicoid 농도 C(x)  (앞끝에서의 거리 x)', EG.w + 20, L(16, 13.5), 11, '#14532d', 'left', 800);
     // 축
@@ -419,7 +421,7 @@
     yt.forEach((v) => { ctx.beginPath(); ctx.moveTo(X(0), py(v)); ctx.lineTo(X(EMB_LEN), py(v)); ctx.stroke(); T(X(0) - 8, py(v) + 4, String(v), L(13, 12), '#64748b', 'right', 700); });
     ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(X(0), pl.y); ctx.lineTo(X(0), pl.y + pl.h); ctx.lineTo(X(EMB_LEN), pl.y + pl.h); ctx.stroke();
     for (let u = 0; u <= 500; u += 100) T(X(u), pl.y + pl.h + 20, String(u), L(13, 12), '#64748b', 'center', 700);
-    T(X(EMB_LEN) + 8, pl.y + pl.h + 20, 'x (µm)', L(13, 12), '#64748b', 'left', 700);
+    if (!o.noCaption) T(X(250), pl.y + pl.h + L(42, 40), '앞끝에서의 거리 x (µm)', L(13, 12), '#64748b', 'center', 700);
     // 문턱선
     if (o.thr) {
       ctx.save(); ctx.strokeStyle = '#dc2626'; ctx.lineWidth = 2; ctx.setLineDash([6, 4]); ctx.beginPath(); ctx.moveTo(X(0), py(THR)); ctx.lineTo(X(EMB_LEN), py(THR)); ctx.stroke(); ctx.restore();
@@ -432,7 +434,7 @@
       if (c.fill) { ctx.lineTo(X(500), py(0)); ctx.lineTo(X(0), py(0)); ctx.closePath(); ctx.fillStyle = col(c.color, 0.14); ctx.fill(); ctx.beginPath(); for (let x = 0; x <= 500; x += 4) { const v = c.f(x); if (x === 0) ctx.moveTo(X(x), py(v)); else ctx.lineTo(X(x), py(v)); } }
       ctx.strokeStyle = c.color; ctx.lineWidth = c.w || 3.4; ctx.setLineDash(c.dash || []); ctx.stroke(); ctx.restore();
     });
-    return { py };
+    return { py, pl, gr };
   }
 
   /* =========================================================
@@ -489,38 +491,38 @@
     epUpdate(dt, t);
     const e = S.ep, top = EG.top, cy = EG.cy, hh = EG.hh;
     panel(top.x, top.y, top.w, top.h, 16, '#fff');
-    TF(top.x + 16, top.y + 26, e.g >= 1 ? '수정 후 : Bicoid 단백질의 농도 기울기가 생겼어요' : e.mother ? 'bicoid 결함 어미의 알 : bicoid mRNA가 없어요' : '수정 전 난자 : 정보가 한쪽에 치우쳐 있어요', top.w - 32, L(16, 13.5), 11, '#14532d', 'left', 800);
+    TF(top.x + 16, top.y + 26, e.g >= 1 ? '수정 후 : Bicoid 단백질의 농도 기울기가 생겼어요' : e.run ? '수정 후 : Bicoid 단백질이 앞에서 뒤로 퍼지는 중이에요…' : e.mother ? 'bicoid 결함 어미의 알 : bicoid mRNA가 없어요' : '수정 전 난자 : 정보가 한쪽에 치우쳐 있어요', top.w - 32, L(16, 13.5), 11, '#14532d', 'left', 800);
     drawEmbryoBody({ conc: shownC });
     // mRNA: 앞끝 bicoid(초록), 뒤끝 nanos(보라)
     const my = cy;
     if (!e.mother) {
       for (let k = 0; k < 7; k++) { const yy = my - hh + 14 + k * ((hh * 2 - 28) / 6), xx = X(8) + (k % 2) * 6; ctx.strokeStyle = '#16a34a'; ctx.lineWidth = 3; ctx.beginPath(); for (let q = 0; q <= 10; q++) { const px = xx + q * 1.8, py = yy + Math.sin(q * 1.2 + k + t * 4) * 2.2; if (q === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py); } ctx.stroke(); }
-      D.label(X(0) + L(54, 48), cy - hh - 18, 'bicoid mRNA (앞)', { bg: '#16a34a', size: L(13, 12) });
+      D.label(X(0) + L(54, 48), cy - hh - 16, 'bicoid mRNA (앞)', { bg: '#16a34a', size: L(13, 12) });
     } else {
       T(X(0) + L(54, 46), cy - hh - 14, 'bicoid mRNA 없음', L(13.5, 12), '#94a3b8', 'center', 800);
     }
     for (let k = 0; k < 7; k++) { const yy = my - hh + 14 + k * ((hh * 2 - 28) / 6), xx = X(EMB_LEN) - 26 + (k % 2) * 6; ctx.strokeStyle = '#7c3aed'; ctx.lineWidth = 3; ctx.beginPath(); for (let q = 0; q <= 10; q++) { const px = xx + q * 1.8, py = yy + Math.sin(q * 1.2 + k + t * 4) * 2.2; if (q === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py); } ctx.stroke(); }
-    D.label(X(EMB_LEN) - L(50, 40), cy - hh - 18, 'nanos mRNA (뒤)', { bg: '#7c3aed', size: L(13, 12) });
+    D.label(X(EMB_LEN) - L(50, 40), cy - hh - 16, 'nanos mRNA (뒤)', { bg: '#7c3aed', size: L(13, 12) });
     drawParticles(cy, hh);
-    T(X(0) - 4, cy + hh + L(52, 46), '← 앞 (머리 쪽)', L(13.5, 12), '#475569', 'left', 800);
-    T(X(EMB_LEN) + 4, cy + hh + L(52, 46), '뒤 (꼬리 쪽) →', L(13.5, 12), '#475569', 'right', 800);
-    drawRuler(cy + hh + L(18, 16));
-    drawProbeLine(X(e.probe), cy - hh - 4, cy + hh + L(18, 16), null);
+    T(X(0) - 4, cy + hh + L(52, 56), '← 앞 (머리 쪽)', L(13.5, 12), '#475569', 'left', 800);
+    T(X(EMB_LEN) + 4, cy + hh + L(52, 56), '뒤 (꼬리 쪽) →', L(13.5, 12), '#475569', 'right', 800);
+    drawRuler(cy + hh + L(18, 14));
+    drawProbeLine(X(e.probe), cy - hh - 4, cy + hh + L(18, 14), null);
     // 그래프
     const ymax = 100;
     const G = drawGraph({ ymax, curves: [{ f: (x) => shownC(x), color: '#2563eb', fill: true }] });
     const pv = shownC(e.probe), pxx = X(e.probe);
-    drawProbeLine(pxx, EG.plot.y - 4, EG.plot.y + EG.plot.h, null);
+    drawProbeLine(pxx, G.pl.y - 4, G.pl.y + G.pl.h, null);
     D.sphere(pxx, G.py(pv), 6, '#e11d48', { outline: '#fff', outlineWidth: 2 });
     D.label(clamp(pxx + 6, X(0) + 70, X(EMB_LEN) - 70), G.py(pv) - 18, 'x = ' + e.probe + ' µm → C = ' + fC(pv), { bg: '#e11d48', size: L(13.5, 12) });
     // 오른쪽: 어미별 유충
     if (!PHONE) {
       const lv = EG.lv, hx = lv.x + 14;
       T(lv.x + lv.w / 2, lv.y + 8, '알에서 자란 유충', 14, '#14532d', 'center', 800);
-      drawLarva(lv.x + 56, lv.y + 26, 140, 44, 'n', true, e.mother === 0);
-      drawLarva(lv.x + 134, lv.y + 26, 140, 44, 'b', true, e.mother === 1);
-      T(lv.x + 56, lv.y + 188, '정상 어미', 13, '#475569', 'center', 800); T(lv.x + 134, lv.y + 188, 'bicoid 결함', 13, '#475569', 'center', 800);
-      T(lv.x + 56, lv.y + 206, '머리·가슴·배', 12.5, '#0369a1', 'center', 700); T(lv.x + 134, lv.y + 206, '머리·가슴 없음', 12.5, '#7c3aed', 'center', 700);
+      drawLarva(lv.x + 48, lv.y + 26, 140, 40, 'n', true, e.mother === 0);
+      drawLarva(lv.x + 142, lv.y + 26, 140, 40, 'b', true, e.mother === 1);
+      T(lv.x + 48, lv.y + 188, '정상 어미', 13, '#475569', 'center', 800); T(lv.x + 142, lv.y + 188, 'bicoid 결함', 13, '#475569', 'center', 800);
+      T(lv.x + 48, lv.y + 206, '머리·가슴·배', 12, '#0369a1', 'center', 700); T(lv.x + 142, lv.y + 206, '머리·가슴 없음', 12, '#7c3aed', 'center', 700);
       // 오른쪽 아래 : 측정 카드
       const q = { x: 590, y: EG.gr.y + 40, w: 190, h: 220 };
       D.roundRect(q.x, q.y, q.w, q.h, 12); ctx.fillStyle = '#f8fafc'; ctx.fill(); ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1.5; ctx.stroke();
@@ -559,19 +561,19 @@
     ctx.strokeStyle = '#be123c'; ctx.lineWidth = 2.6; ctx.beginPath(); ctx.moveTo(fx, cy + hh + 6); ctx.lineTo(fx, cy - hh - 22); ctx.stroke();
     ctx.fillStyle = okNow ? '#16a34a' : '#e11d48'; ctx.beginPath(); ctx.moveTo(fx, cy - hh - 22); ctx.lineTo(fx + 30, cy - hh - 14); ctx.lineTo(fx, cy - hh - 6); ctx.closePath(); ctx.fill();
     if (okNow) { D.label(clamp(fx + 38, X(0) + 60, X(EMB_LEN) - 40), cy - hh - 14, '경계 ' + bDisp(c0) + ' µm', { bg: '#16a34a', size: L(13.5, 12), align: 'left' }); }
-    T(X(0) - 4, cy + hh + L(52, 46), '← 앞 (머리 쪽)', L(13.5, 12), '#475569', 'left', 800);
-    T(X(EMB_LEN) + 4, cy + hh + L(52, 46), '뒤 (꼬리 쪽) →', L(13.5, 12), '#475569', 'right', 800);
-    drawRuler(cy + hh + L(18, 16));
+    T(X(0) - 4, cy + hh + L(52, 56), '← 앞 (머리 쪽)', L(13.5, 12), '#475569', 'left', 800);
+    T(X(EMB_LEN) + 4, cy + hh + L(52, 56), '뒤 (꼬리 쪽) →', L(13.5, 12), '#475569', 'right', 800);
+    drawRuler(cy + hh + L(18, 14));
     // 그래프 (세로 눈금 0~200으로 1배와 2배를 함께 비교)
     const curves = [];
     if (c0 === 200 || e.twiceSeen) curves.push({ f: (x) => concAt(x, 100), color: '#94a3b8', dash: [6, 5], w: 2.4, alpha: c0 === 200 ? 0.9 : 0 });
     curves.push({ f: (x) => concAt(x, c0), color: c0 === 200 ? '#7c3aed' : '#2563eb', fill: true });
-    const G = drawGraph({ ymax: 200, thr: true, curves, title: 'Bicoid 농도 C(x) · Bicoid 양 ' + (c0 === 200 ? '2배 (C0 = 200)' : '1배 (C0 = 100)') });
+    const G = drawGraph({ ymax: 200, thr: true, noCaption: PHONE, curves, title: 'Bicoid 농도 C(x) · Bicoid 양 ' + (c0 === 200 ? '2배 (C0 = 200)' : '1배 (C0 = 100)') });
     const cv = concAt(mk, c0), mx = X(mk);
-    drawProbeLine(mx, EG.plot.y - 4, EG.plot.y + EG.plot.h, null);
+    drawProbeLine(mx, G.pl.y - 4, G.pl.y + G.pl.h, null);
     D.sphere(mx, G.py(cv), 6, okNow ? '#16a34a' : '#e11d48', { outline: '#fff', outlineWidth: 2 });
     D.label(clamp(mx + 8, X(0) + 80, X(EMB_LEN) - 80), G.py(cv) - 20, 'x = ' + mk + ' µm → C = ' + fC(cv), { bg: okNow ? '#16a34a' : '#e11d48', size: L(13.5, 12) });
-    if (c0 === 200) { T(X(450), G.py(concAt(450, 100)) - 22, '1배', L(13, 12), '#64748b', 'center', 800); }
+    if (c0 === 200) { T(X(150), G.py(concAt(150, 100)) + 20, '1배', L(13, 12), '#64748b', 'center', 800); }
     // 설명 카드 (오른쪽)
     if (!PHONE) {
       const lv = EG.lv;
@@ -589,14 +591,17 @@
       T(q.x + 12, q.y + 172, '깃발 C = ' + fC(cv), 15, okNow ? '#15803d' : '#e11d48', 'left', 800);
       T(q.x + 12, q.y + 198, '(ln 5 ≈ 1.61 · ln 10 ≈ 2.30)', 12.5, '#94a3b8', 'left', 700);
     } else {
-      const gr = EG.gr;
-      TF(gr.x + 16, gr.y + gr.h - 38, 'C(x) = C0 × e^(−x/100 µm) · C = 20 이 되는 x = 100 × ln(C0 / 20)', gr.w - 28, 13, 10.5, '#475569', 'left', 700);
-      TF(gr.x + 16, gr.y + gr.h - 16, okNow ? '경계 ' + bDisp(c0) + ' µm ✔' : '깃발을 C = 20 이 되는 곳에 놓아요. (ln 5 ≈ 1.61, ln 10 ≈ 2.30)', gr.w - 28, 13, 10.5, okNow ? '#15803d' : '#94a3b8', 'left', 800);
+      const gy = G.pl.y + G.pl.h + 52;
+      T(G.gr.x + 16, gy, '모형 식', 14.5, '#14532d', 'left', 800);
+      TF(G.gr.x + 16, gy + 24, 'C(x) = C0 × e^(−x/100 µm)', G.gr.w - 28, 14, 11, '#26324a', 'left', 800);
+      TF(G.gr.x + 16, gy + 48, 'C = 20 이 되는 x = 100 × ln(C0 / 20) µm', G.gr.w - 28, 14, 11, '#475569', 'left', 800);
+      TF(G.gr.x + 16, gy + 72, '(ln 5 ≈ 1.61 · ln 10 ≈ 2.30)', G.gr.w - 28, 13, 10.5, '#94a3b8', 'left', 700);
+      TF(G.gr.x + 16, gy + 100, okNow ? '경계 ' + bDisp(c0) + ' µm ✔ (hunchback 켜짐 구역의 끝)' : '깃발을 C = 20 이 되는 곳에 놓아요.', G.gr.w - 28, 14, 11, okNow ? '#15803d' : '#94a3b8', 'left', 800);
     }
   }
   function thrPT() {
     let drag = false;
-    const inPlot = (p) => p.x >= X(0) - 16 && p.x <= X(EMB_LEN) + 16 && ((p.y >= EG.top.y + 40 && p.y <= EG.cy + EG.hh + 30) || (p.y >= EG.plot.y - 10 && p.y <= EG.plot.y + EG.plot.h + 10));
+    const inPlot = (p) => p.x >= X(0) - 16 && p.x <= X(EMB_LEN) + 16 && ((p.y >= EG.top.y + 40 && p.y <= EG.cy + EG.hh + 30) || (p.y >= EG.plot.y - 10 && p.y <= EG.plot.y + plotHeight() + 10));
     return {
       down(p) { if (!inPlot(p)) return false; drag = true; setMark(UM(p.x)); return true; },
       move(p) { if (drag) setMark(UM(p.x)); }, up() { drag = false; },
@@ -605,7 +610,7 @@
   }
   function eggPT() {
     let drag = false;
-    const inPlot = (p) => p.x >= X(0) - 16 && p.x <= X(EMB_LEN) + 16 && ((p.y >= EG.top.y + 40 && p.y <= EG.cy + EG.hh + 30) || (p.y >= EG.plot.y - 10 && p.y <= EG.plot.y + EG.plot.h + 10));
+    const inPlot = (p) => p.x >= X(0) - 16 && p.x <= X(EMB_LEN) + 16 && ((p.y >= EG.top.y + 40 && p.y <= EG.cy + EG.hh + 30) || (p.y >= EG.plot.y - 10 && p.y <= EG.plot.y + plotHeight() + 10));
     return {
       down(p) { if (!inPlot(p)) return false; drag = true; setProbe(UM(p.x)); return true; },
       move(p) { if (drag) setProbe(UM(p.x)); }, up() { drag = false; },
@@ -639,7 +644,7 @@
       if (HRG.labOn === 'left') { T(HRG.lx, y + 17, n.t, 16, i < h.level ? n.col : '#94a3b8', 'left', 800); TF(HRG.lx, y + 38, n.s, 170, 13, 10.5, '#64748b', 'left', 700); }
       else { T(HRG.lx, y - 10, n.t, 14.5, i < h.level ? n.col : '#94a3b8', 'left', 800); T(HRG.lx + 142, y - 10, n.s, 13, '#64748b', 'left', 700); }
       // 배아 띠
-      const x1 = hrX(0) - 8, x2 = hrX(EMB_LEN) + 8;
+      const x1 = hrX(0), x2 = hrX(EMB_LEN);
       rr(x1, y, x2 - x1, HRG.h, HRG.h / 2); ctx.fillStyle = '#f8fafc'; ctx.fill();
       ctx.save(); rr(x1, y, x2 - x1, HRG.h, HRG.h / 2); ctx.clip();
       if (i === 0 && s > 0) {
@@ -660,7 +665,6 @@
       }
       ctx.restore();
       ctx.strokeStyle = i < h.level ? n.col : '#cbd5e1'; ctx.lineWidth = 2.2; if (i >= h.level) ctx.setLineDash([6, 5]); rr(x1, y, x2 - x1, HRG.h, HRG.h / 2); ctx.stroke(); ctx.setLineDash([]);
-      if (i === 3 && s > 0.9) T(hrX(EMB_LEN) - 10, y - 6, '체절 14개 단위', L(13, 12), '#166534', 'right', 800);
       // 화살표
       if (i < 4) {
         const ay = y + HRG.h + 6, ay2 = y + HRG.dy - (HRG.labOn === 'above' ? 22 : 8), on = h.level > i + 1 && h.sw[i + 1] > 0.05;
@@ -676,7 +680,7 @@
      ========================================================= */
   const HXG = PHONE
     ? { panel: { x: 8, y: 8, w: 464, h: 624 }, bx0: 12, bw: 50, bgap: 6, by: 110, bh: 40, ex0: 24, ew: 432, ey: 292, eh: 50, info: { x: 20, y: 396, w: 440, h: 214 } }
-    : { panel: { x: 14, y: 14, w: 772, h: 532 }, bx0: 60, bw: 78, bgap: 8, by: 104, bh: 44, ex0: 60, ew: 680, ey: 272, eh: 62, info: { x: 40, y: 394, w: 720, h: 128 } };
+    : { panel: { x: 14, y: 14, w: 772, h: 532 }, bx0: 60, bw: 78, bgap: 8, by: 104, bh: 44, ex0: 60, ew: 680, ey: 272, eh: 62, info: { x: 40, y: 388, w: 720, h: 146 } };
   const hxBox = (k) => ({ x: HXG.bx0 + k * (HXG.bw + HXG.bgap), y: HXG.by, w: HXG.bw, h: HXG.bh });
   const hxX = (um) => HXG.ex0 + um / EMB_LEN * HXG.ew;
   function hxPick(k) {
@@ -738,9 +742,10 @@
     D.roundRect(I.x, I.y, I.w, I.h, 14); ctx.fillStyle = col(g.col, 0.1); ctx.fill(); ctx.strokeStyle = col(g.col, 0.6); ctx.lineWidth = 2; ctx.stroke();
     D.label(I.x + 14, I.y + 26, g.n, { bg: g.col, size: L(16, 14), align: 'left' });
     T(I.x + 14 + (PHONE ? 78 : 88), I.y + 31, '→ ' + g.region + ' 체절에서 켜져요', L(16, 14.5), '#26324a', 'left', 800);
-    textBlock(I.x + 14, I.y + 60, I.w - 28, '염색체 위에서 ' + (h.sel + 1) + '번째 유전자는 몸에서도 앞에서부터 ' + (h.sel + 1) + '번째 부위에서 켜져요.', L(15, 13.5), '#334155', L(21, 19), 800);
-    textBlock(I.x + 14, I.y + L(112, 112), I.w - 28, '혹스 유전자는 전사 인자를 만드는 유전자예요. 체절마다 켜진 혹스 유전자가 달라서 체절의 정체성이 정해져요.', L(14, 13), '#475569', L(20, 18), 700);
-    if (hxSeenN() === 8) textBlock(I.x + 14, I.y + L(172, 172), I.w - 28, '8개를 모두 봤어요: 염색체 위의 배열 순서와 몸의 앞 → 뒤 발현 순서가 같아요 (공선성).', L(14, 13), '#15803d', L(20, 18), 800);
+    let yy = I.y + 54;
+    yy += textBlock(I.x + 14, yy, I.w - 28, '염색체 위에서 ' + (h.sel + 1) + '번째 유전자는 몸에서도 앞에서부터 ' + (h.sel + 1) + '번째 부위에서 켜져요.', L(15, 13.5), '#334155', L(21, 19), 800) + 8;
+    yy += textBlock(I.x + 14, yy, I.w - 28, '혹스 유전자는 전사 인자를 만드는 유전자예요. 체절마다 켜진 혹스 유전자가 달라서 체절의 정체성이 정해져요.', L(14, 13), '#475569', L(20, 18), 700) + 8;
+    if (hxSeenN() === 8) textBlock(I.x + 14, yy, I.w - 28, '8개를 모두 봤어요: 염색체 위의 배열 순서와 몸의 앞 → 뒤 발현 순서가 같아요 (공선성).', L(14, 13), '#15803d', L(20, 18), 800);
     else T(I.x + 14, I.y + I.h - 14, '살펴본 유전자 ' + hxSeenN() + ' / 8', L(14, 13), '#94a3b8', 'left', 800);
   }
   const hxPT = {
@@ -813,7 +818,7 @@
     ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(cx0, fy); ctx.lineTo(cx0 + cw * 13, fy); ctx.stroke();
     HOX.forEach((g, k) => { const x = cx0 + k * (cw * 13 / 8); D.roundRect(x + 2, fy - 12, cw * 13 / 8 - 4, 24, 6); ctx.fillStyle = g.col; ctx.fill(); TF(x + cw * 13 / 16, fy + 4, g.n, cw * 13 / 8 - 6, L(12.5, 10.5), 8.5, '#fff', 'center', 800); });
     // 사람
-    const hy0 = P.y + L(150, 140), rowH = L(76, 70);
+    const hy0 = P.y + L(136, 134), rowH = L(56, 58);
     T(P.x + 18, hy0 - 24, '사람', L(15, 13.5), '#475569', 'left', 800);
     for (let j = 1; j <= 13; j++) { T(cx0 + (j - 0.5) * cw, hy0 - 8, String(j), L(13, 11), '#64748b', 'center', 800); }
     HUM.forEach((c, r) => {
@@ -830,8 +835,9 @@
     });
     const by = hy0 + 18 + 4 * rowH + 6;
     T(cx0, by + 4, '← 앞쪽 (머리 쪽)', L(13.5, 12), '#475569', 'left', 800); T(cx0 + cw * 13, by + 4, '뒤쪽 (꼬리 쪽) →', L(13.5, 12), '#475569', 'right', 800);
-    textBlock(P.x + 18, by + 34, P.w - 36, '번호가 클수록 몸의 뒤쪽에서 켜져요. 4개의 클러스터 모두 배열 순서와 발현 순서가 같아요. 초파리 8개와 사람 39개는 서로 닮은 혹스 유전자 집합이에요.', L(14.5, 13), '#334155', L(21, 19), 800);
-    textBlock(P.x + 18, by + L(120, 130), P.w - 36, '붉은 고리 : HOXD13. 이 유전자에 이상이 생기면 손가락 · 발가락 기형이 생긴 사례가 있어요.', L(14, 12.5), '#be123c', L(20, 18), 800);
+    let yy = by + 32;
+    yy += textBlock(P.x + 18, yy, P.w - 36, '번호가 클수록 몸의 뒤쪽에서 켜져요. 4개의 클러스터 모두 배열 순서와 발현 순서가 대응해요. 초파리 8개와 사람 39개는 서로 닮은 혹스 유전자 집합이에요.', L(14.5, 13), '#334155', L(21, 19), 800) + 10;
+    textBlock(P.x + 18, yy, P.w - 36, '붉은 고리 : HOXD13. 이 유전자에 이상이 생기면 손가락 · 발가락 기형이 생긴 사례가 있어요.', L(14, 12.5), '#be123c', L(20, 18), 800);
     const tot = HUM.reduce((a, c) => a + c.set.length, 0);
     D.label(P.x + P.w - 18, P.y + L(52, 54), '합계 ' + tot + '개', { bg: '#15803d', size: L(14, 13), align: 'right' });
   }
@@ -979,9 +985,9 @@
       T((zx(u1) + zx(u2)) / 2, zy + zh * 0.5 - 6, 'Antp', L(12, 10), '#fff', 'center', 800, { stroke: a.col, strokeWidth: 3 });
       D.label(zx(u1) + 6, zy + zh + 20, 'Antp가 머리에서 잘못 켜졌어요', { bg: '#be123c', size: L(13, 12), align: 'left' });
     }
-    if (m.view === 2) D.label(zx(zoneUm(5)[0]) - 120, zy + zh + 40, '셋째 가슴이 둘째 가슴(날개)처럼 발달', { bg: '#be123c', size: L(13, 12), align: 'left' });
-    if (m.view === 0) T(H.x + H.w / 2, H.y + H.h - 20, '각 체절에서 켜진 혹스 유전자에 따라 만들어지는 기관이 정해져요.', L(14, 12.5), '#64748b', 'center', 700);
-    if (m.view !== 0) T(H.x + H.w / 2, H.y + H.h - 20, '기관의 구조는 정상이에요. 바뀐 것은 기관이 만들어지는 위치예요.', L(14, 12.5), '#be123c', 'center', 800);
+    if (m.view === 2) D.label(zx(zoneUm(5)[0]) - 120, zy + zh + 38, '셋째 가슴이 둘째 가슴(날개)처럼 발달', { bg: '#be123c', size: L(13, 12), align: 'left' });
+    if (m.view === 0) T(H.x + H.w / 2, H.y + H.h - 12, '각 체절에서 켜진 혹스 유전자에 따라 만들어지는 기관이 정해져요.', L(14, 12.5), '#64748b', 'center', 700);
+    if (m.view !== 0) T(H.x + H.w / 2, H.y + H.h - 12, '기관의 구조는 정상이에요. 바뀐 것은 기관이 만들어지는 위치예요.', L(14, 12.5), '#be123c', 'center', 800);
   }
 
   /* =========================================================
@@ -1218,7 +1224,7 @@
   function readouts() {
     const m = S.mode, e = S.ep;
     if (m === 'egg') setReads(['위치 x', e.probe + ' µm', '농도 C', fC(shownC(e.probe)), '어미', e.mother ? 'bicoid 결함' : '정상']);
-    else if (m === 'thr') setReads(['Bicoid 양 (C0)', e.c0 + ' (' + (e.c0 === 100 ? '1배' : '2배') + ')', '깃발 x · C', e.mark + ' µm · ' + fC(concAt(e.mark, e.c0)), 'hunchback 경계', Math.abs(e.mark - boundaryOf(e.c0)) <= 4 ? bDisp(e.c0) + ' µm' : '?']);
+    else if (m === 'thr') setReads(['Bicoid 양 (C0)', e.c0 + ' (' + (e.c0 === 100 ? '1배' : '2배') + ')', '깃발 x · C', e.mark + ' µm · ' + fC(concAt(e.mark, e.c0)), '경계 위치', Math.abs(e.mark - boundaryOf(e.c0)) <= 4 ? bDisp(e.c0) + ' µm' : '?']);
     else if (m === 'hier') setReads(['켠 단계', S.hr.level + ' / 5', '줄무늬', S.hr.level >= 3 ? '7개' : '—', '체절', S.hr.level >= 4 ? '14개 단위' : '—']);
     else if (m === 'hox') setReads(['고른 유전자', HOX[S.hx.sel].n, '켜지는 부위', HOX[S.hx.sel].region, '살펴본 유전자', hxSeenN() + ' / 8']);
     else if (m === 'match') setReads(['놓은 카드', mtS.cards.filter((c) => c.zone).length + ' / 8', '유전자', '8개', '부위', '8곳']);

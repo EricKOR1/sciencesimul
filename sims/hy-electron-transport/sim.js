@@ -387,10 +387,10 @@
       const u = ((r.t * 0.45 + i * 0.19) % 1);
       for (let k = 0; k < 2; k++) {
         const d = clamp(u * 1.25 - k * 0.14, 0, 1); if (d <= 0 || d >= 1) continue;
-        if (q.ans === 'lose') { const x = lx + 6 + (c.w - 40) * d * 0.9 * 0.8, y = my - 24 - Math.sin(d * Math.PI) * 28 - d * 12; ebead(x, y, 7.5, Math.sin(d * Math.PI)); }
-        else { const x = c.x + 18 + (lx - c.x - 18 + 6) * d, y = my - 52 + (52 - 26) * d - Math.sin(d * Math.PI) * 6; ebead(x, y, 7.5, Math.sin(d * Math.PI)); }
+        if (q.ans === 'lose') { const x = lx + 6 + (c.w - 40) * d * 0.9 * 0.8, y = my - 24 - Math.sin(d * Math.PI) * 28 - d * 12; ebead(x, y, 8, Math.min(1, Math.min(d, 1 - d) * 5)); }
+        else { const x = c.x + 18 + (lx - c.x - 18 + 6) * d, y = my - 52 + (52 - 26) * d - Math.sin(d * Math.PI) * 6; ebead(x, y, 8, Math.min(1, Math.min(d, 1 - d) * 5)); }
       }
-      if (ok) pill(c.x + c.w / 2, c.y + c.h - (PHONE ? 20 : 26), 110, 26, q.ans === 'lose' ? '산화 (전자 잃음)' : '환원 (전자 얻음)', q.ans === 'lose' ? '#e11d48' : '#2563eb', '#fff');
+      if (ok) D.label(c.x + c.w / 2, c.y + c.h - (PHONE ? 20 : 26), q.ans === 'lose' ? '산화 (전자 잃음)' : '환원 (전자 얻음)', { bg: q.ans === 'lose' ? '#e11d48' : '#2563eb', color: '#fff', size: PHONE ? 13 : 14.5 });
       else if (bad) T(c.x + c.w / 2, c.y + c.h - (PHONE ? 14 : 20), '구슬이 어디로 가는지 봐요', PHONE ? 12 : 13, '#dc2626', 'center', 800);
       else T(c.x + c.w / 2, c.y + c.h - (PHONE ? 14 : 20), '전자 구슬의 움직임을 봐요', PHONE ? 12 : 13, '#64748b', 'center', 700);
     });
@@ -403,11 +403,11 @@
   function memNew() { return { toks: [], hs: [], fl: [], ap: [], lk: [], pf: [0, 0, 0], spin: 0, spinV: 0, acc: 0, fAcc: 0, aAcc: 0, lAcc: 0, e: 1, g: 0.8, atp: 100 }; }
   function mG(P, kind) {
     const th = 24, y0 = P.y + 38, y1 = P.y + P.h - (PHONE ? 40 : 46), my = (y0 + y1) / 2;
-    const cx = [0.2, 0.4, 0.6].map((f) => P.x + P.w * f), mito = kind === 'mito';
+    const cx = [0.17, 0.33, 0.49].map((f) => P.x + P.w * f), mito = kind === 'mito';
     const topR = { x: P.x + 8, y: y0, w: P.w - 16, h: my - th / 2 - 3 - y0 }, botR = { x: P.x + 8, y: my + th / 2 + 3, w: P.w - 16, h: y1 - (my + th / 2 + 3) };
     const start = mito ? { id: 'nadh', x: P.x + P.w * 0.1, y: my + th / 2 + 34, label: 'NADH' } : { id: 'h2o', x: P.x + P.w * 0.1, y: my - th / 2 - 34, label: 'H₂O' };
-    const end = mito ? { id: 'o2', x: P.x + P.w * 0.68, y: my + th / 2 + 34, label: 'O₂' } : { id: 'nadp', x: P.x + P.w * 0.7, y: my + th / 2 + 34, label: 'NADP⁺' };
-    return { P, kind, mito, th, my, cx, topR, botR, start, end, syn: P.x + P.w * 0.87, sc: PHONE ? 0.62 : 0.74, y0, y1 };
+    const end = mito ? { id: 'o2', x: P.x + P.w * 0.62, y: my + th / 2 + 34, label: 'O₂' } : { id: 'nadp', x: P.x + P.w * 0.62, y: my + th / 2 + 34, label: 'NADP⁺' };
+    return { P, kind, mito, th, my, cx, topR, botR, start, end, syn: P.x + P.w * 0.86, sc: PHONE ? 0.62 : 0.74, y0, y1 };
   }
   const inR = (p, r) => p.x >= r.x && p.x <= r.x + r.w && p.y >= r.y && p.y <= r.y + r.h;
   function memUpdate(m, G, dt, prm) {
@@ -447,7 +447,7 @@
   function memDraw(m, G, t, o) {
     o = o || {}; const P = G.P, th = G.th, my = G.my, sc = G.sc, mito = G.mito, fs = PHONE ? 12 : 13.5;
     panel(P.x, P.y, P.w, P.h, 18, '#fffdf7');
-    pill(P.x + P.w / 2, P.y + 20, PHONE ? 180 : 210, 26, mito ? '세포호흡 · 미토콘드리아 내막' : '광합성 · 틸라코이드 막', mito ? '#be185d' : '#15803d', '#fff');
+    D.label(P.x + P.w / 2, P.y + 20, mito ? '세포호흡 · 미토콘드리아 내막' : '광합성 · 틸라코이드 막', { bg: mito ? '#be185d' : '#15803d', color: '#fff', size: PHONE ? 14 : 15.5 });
     D.roundRect(G.topR.x, G.topR.y, G.topR.w, G.topR.h, 12); ctx.fillStyle = 'rgba(251,208,150,.5)'; ctx.fill();
     D.roundRect(G.botR.x, G.botR.y, G.botR.w, G.botR.h, 12); ctx.fillStyle = mito ? '#fbeab0' : '#d9f0cb'; ctx.fill();
     ctx.fillStyle = 'rgba(244,114,182,.3)'; ctx.fillRect(P.x + 8, my - th / 2, P.w - 16, th);
@@ -469,15 +469,15 @@
     ctx.save(); ctx.rotate(m.spin); for (let k = 0; k < 6; k++) { ctx.rotate(TAU / 6); ctx.fillStyle = k % 2 ? '#f59e0b' : '#d97706'; ctx.fillRect(4 * sc, -2.5 * sc, 20 * sc, 5 * sc); } ctx.restore();
     ctx.fillStyle = '#d97706'; ctx.fillRect(-5 * sc, th / 2, 10 * sc, 20 * sc); ctx.restore();
     D.sphere(sx, my + th / 2 + 44 * sc, 22 * sc, '#fbbf24', { gloss: true, outline: '#a16207', outlineWidth: 1.5 });
-    T(sx, my + th / 2 + 44 * sc + 38 * sc + 6, 'ATP 합성 효소', PHONE ? 11.5 : 12.5, '#92400e', 'center', 800);
+    T(sx, my + th / 2 + 44 * sc + 60, 'ATP 합성 효소', PHONE ? 11.5 : 12.5, '#92400e', 'center', 800, { stroke: 'rgba(255,253,247,.9)', strokeWidth: 3 });
     // H⁺ 점
     const sp = sH(); m.hs.forEach((q) => blit(sp, q.x, q.y, Math.max(0, q.a)));
     m.fl.forEach((f) => { const y = my - th / 2 - 22 * sc + f.t * (th + 30 * sc); blit(txtSprite('H2', 'H⁺', 12, '#ea580c', 800, 'rgba(255,253,247,.85)'), sx, y, Math.sin(Math.min(1, f.t * 1.1) * Math.PI * 0.95)); });
-    m.ap.forEach((f) => { const e = f.t, x = sx + 8 - e * (PHONE ? 60 : 90), y = my + th / 2 + 44 * sc + 8 + e * 16; ctx.save(); ctx.globalAlpha = 1 - e * e; pill(x, y, 40, 18, 'ATP', '#facc15', '#713f12'); ctx.restore(); });
+    m.ap.forEach((f) => { const e = f.t, x = sx - 6 - e * 10, y = my + th / 2 + 44 * sc + 6 + e * 26; ctx.save(); ctx.globalAlpha = 1 - e * e; pill(x, y, 40, 18, 'ATP', '#facc15', '#713f12'); ctx.restore(); });
     m.lk.forEach((f) => { const y = my - th / 2 - 30 + f.t * (th + 70); ctx.save(); ctx.globalAlpha = Math.sin(f.t * Math.PI); T(f.x, y, 'H⁺', 12, '#c2410c', 'center', 800); ctx.restore(); });
     // 칸 이름
     const stk = { stroke: 'rgba(255,253,247,.9)', strokeWidth: 4 };
-    T(G.topR.x + 10, G.topR.y + G.topR.h - 8, mito ? '막 사이 공간' : '틸라코이드 내부', fs, '#9a5b12', 'left', 800, stk);
+    T(G.topR.x + 10, G.topR.y + 18, mito ? '막 사이 공간' : '틸라코이드 내부', fs, '#9a5b12', 'left', 800, stk);
     T(G.botR.x + 10, G.botR.y + G.botR.h - 8, mito ? '기질' : '스트로마', fs, mito ? '#8a6410' : '#3f6212', 'left', 800, stk);
     // 시작 · 끝 분자
     [G.start, G.end].forEach((e2) => {
@@ -533,19 +533,18 @@
     const hotC = sd.tool === 'h' ? '#f97316' : sd.tool === 'a' ? '#eab308' : '#6366f1';
     [['L', GL], ['R', GR]].forEach(([s, G]) => {
       const hmk = sd.hm[s], amk = sd.am[s];
-      if (hmk) { const r = hmk === 'top' ? G.topR : G.botR; D.roundRect(r.x + 2, r.y + 2, r.w - 4, r.h - 4, 10); ctx.strokeStyle = '#f97316'; ctx.lineWidth = 3.5; ctx.stroke(); tagPill(r.x + r.w - 60, r.y + 20, 'H⁺ 많음', '#f97316', '#fff'); }
-      if (amk) { const r = amk === 'top' ? G.topR : G.botR; D.roundRect(r.x + 5, r.y + 5, r.w - 10, r.h - 10, 10); ctx.strokeStyle = '#eab308'; ctx.lineWidth = 3.5; ctx.setLineDash([8, 5]); ctx.stroke(); ctx.setLineDash([]); tagPill(r.x + r.w - 62, r.y + r.h - 22, 'ATP 합성', '#facc15', '#713f12'); }
+      if (hmk) { const r = hmk === 'top' ? G.topR : G.botR; D.roundRect(r.x + 2, r.y + 2, r.w - 4, r.h - 4, 10); ctx.strokeStyle = '#f97316'; ctx.lineWidth = 3.5; ctx.stroke(); tagPill(s === 'L' ? r.x + r.w - 52 : r.x + 52, r.y + (hmk === 'top' ? 22 : 22), 'H⁺ 많음', '#f97316', '#fff'); }
+      if (amk) { const r = amk === 'top' ? G.topR : G.botR; D.roundRect(r.x + 5, r.y + 5, r.w - 10, r.h - 10, 10); ctx.strokeStyle = '#eab308'; ctx.lineWidth = 3.5; ctx.setLineDash([8, 5]); ctx.stroke(); ctx.setLineDash([]); tagPill(s === 'L' ? r.x + r.w - 56 : r.x + 56, r.y + r.h - 22, 'ATP 합성', '#facc15', '#713f12'); }
       [G.start, G.end].forEach((e2) => { const v = sd.em[e2.id]; if (v) { const ok = (e2.id === 'nadh' || e2.id === 'h2o') ? v === 1 : v === 2; D.roundRect(e2.x - 38, e2.y - 25, 76, 50, 12); ctx.strokeStyle = v === 1 ? '#2563eb' : '#dc2626'; ctx.lineWidth = 3; ctx.stroke(); tagPill(e2.x, e2.y - (e2.y < G.my ? 36 : -38), EM_NAME[v], v === 1 ? '#2563eb' : '#dc2626', '#fff'); } });
       if (sd.tool === 'e') [G.start, G.end].forEach((e2) => { if (!sd.em[e2.id]) { ctx.save(); ctx.globalAlpha = 0.5 + 0.4 * Math.sin(t * 5); D.roundRect(e2.x - 38, e2.y - 25, 76, 50, 12); ctx.strokeStyle = '#6366f1'; ctx.lineWidth = 2.5; ctx.setLineDash([5, 4]); ctx.stroke(); ctx.restore(); } });
       else { const rs = [G.topR, G.botR]; ctx.save(); ctx.globalAlpha = 0.5 + 0.4 * Math.sin(t * 4); rs.forEach((r) => { const used = (sd.tool === 'h' ? hmk : amk); if (!used) { D.roundRect(r.x + 3, r.y + 3, r.w - 6, r.h - 6, 10); ctx.strokeStyle = hotC; ctx.lineWidth = 2; ctx.setLineDash([5, 5]); ctx.stroke(); } }); ctx.restore(); }
     });
     // 같은 색 선 (짝이 맞으면)
     const ok = sdOK();
-    const link = (a, b, col, wd) => { ctx.save(); ctx.strokeStyle = col; ctx.globalAlpha = 0.85; ctx.lineWidth = wd; ctx.setLineDash([2, 7]); ctx.lineCap = 'round'; ctx.lineDashOffset = -t * 20; ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.quadraticCurveTo((a.x + b.x) / 2, Math.min(a.y, b.y) - 38, b.x, b.y); ctx.stroke(); ctx.restore(); };
+    const link = (a, b, col, wd) => { ctx.save(); ctx.strokeStyle = col; ctx.globalAlpha = 0.95; ctx.lineWidth = wd; ctx.setLineDash([3, 6]); ctx.lineCap = 'round'; ctx.lineDashOffset = -t * 20; ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); ctx.restore(); };
     if (!PHONE) {
-      if (ok.h) link({ x: GL.topR.x + GL.topR.w - 8, y: GL.topR.y + 30 }, { x: GR.topR.x + 8, y: GR.topR.y + 30 }, '#f97316', 4);
-      if (ok.a) link({ x: GL.botR.x + GL.botR.w - 8, y: GL.botR.y + GL.botR.h - 24 }, { x: GR.botR.x + 8, y: GR.botR.y + GR.botR.h - 24 }, '#eab308', 4);
-      if (ok.e) { link({ x: GL.start.x + 30, y: GL.start.y - 14 }, { x: GR.start.x - 30, y: GR.start.y }, '#2563eb', 4); link({ x: GL.end.x + 24, y: GL.end.y - 12 }, { x: GR.end.x - 20, y: GR.end.y - 12 }, '#dc2626', 4); }
+      if (ok.h) link({ x: GL.topR.x + GL.topR.w - 52 + 40, y: GL.topR.y + 22 }, { x: GR.topR.x + 52 - 40, y: GR.topR.y + 22 }, '#f97316', 4.5);
+      if (ok.a) link({ x: GL.botR.x + GL.botR.w - 56 + 46, y: GL.botR.y + GL.botR.h - 22 }, { x: GR.botR.x + 56 - 46, y: GR.botR.y + GR.botR.h - 22 }, '#eab308', 4.5);
       const B = g.B; panel(B.x, B.y, B.w, B.h, 16, '#fff');
       const rows = [[ok.h, '#f97316', '💧 H⁺가 많이 쌓이는 쪽', '막 사이 공간  =  틸라코이드 내부'], [ok.a, '#eab308', '🟡 ATP가 만들어지는 쪽', '기질  =  스트로마'], [ok.e, '#6366f1', '⚡ 전자의 출발 → 도착', 'NADH · 물에서 출발  →  O₂ · NADP⁺에 도착']];
       rows.forEach((r, i) => { const y = B.y + 30 + i * 30; D.roundRect(B.x + 12, y - 15, B.w - 24, 26, 8); ctx.fillStyle = r[0] ? C.rgba(r[1], 0.15) : 'rgba(148,163,184,.10)'; ctx.fill(); D.sphere(B.x + 28, y - 2, 6, r[0] ? r[1] : '#cbd5e1', { gloss: false }); T(B.x + 44, y + 3, r[2], 14, r[0] ? '#1f2d44' : '#94a3b8', 'left', 800); T(B.x + 270, y + 3, r[0] ? r[3] : '?  표시하면 짝이 이어져요', 14, r[0] ? '#1f2d44' : '#94a3b8', 'left', 800); });
@@ -622,14 +621,14 @@
     if (w76 > 6) { D.roundRect(bx, by, w76, bh, 12); ctx.fillStyle = '#facc15'; ctx.fill(); ctx.strokeStyle = '#a16207'; ctx.lineWidth = 2; ctx.stroke(); }
     T(bx + bw / 2 + w76 / 2, by + bh * 0.64, '열 등으로 나가는 에너지 ' + (220 - 76) + ' kJ', PHONE ? 13 : 16, '#9a3412', 'center', 800);
     if (w76 > 40) T(bx + w76 / 2, by + bh * 0.64, '76', PHONE ? 15 : 18, '#713f12', 'center', 800);
-    T(bx, by - 8, '220 kJ (전체)', PHONE ? 12.5 : 13.5, '#9a3412', 'left', 800); T(bx + w76 + 6, by + bh + 22, 'ATP로 저장 76 kJ (ATP 약 2.5개 × 약 30.5 kJ)', PHONE ? 12.5 : 14, '#a16207', 'left', 800);
-    for (let k = 0; k < 3; k++) { const w = k < 2 ? 1 : 0.5; if (S.tb.fx > 0.3) pill(bx + 24 + k * 56, by + bh + (PHONE ? 52 : 52), 46 * w + (k < 2 ? 0 : 6), 20, k < 2 ? 'ATP' : '½', '#facc15', '#713f12'); }
+    T(bx, by - 8, '220 kJ (전체)', PHONE ? 12.5 : 13.5, '#9a3412', 'left', 800); T(bx, by + bh + 24, PHONE ? 'ATP로 저장: 약 76 kJ (ATP 약 2.5개)' : 'ATP로 저장: 약 76 kJ (ATP 약 2.5개 × 약 30.5 kJ)', PHONE ? 13 : 14.5, '#a16207', 'left', 800);
+    for (let k = 0; k < 3; k++) { if (S.tb.fx > 0.3) pill(bx + (PHONE ? 270 : 400) + k * 52, by + bh + 19, k < 2 ? 44 : 30, 20, k < 2 ? 'ATP' : '½', '#facc15', '#713f12'); }
     T(bx, T1.y + T1.h - 14, '효율(%) = ATP로 저장된 에너지 / 방출된 에너지 × 100', PHONE ? 12.5 : 14, '#475569', 'left', 800);
     panel(T2.x, T2.y, T2.w, T2.h, 18, '#fff'); T(T2.x + 14, T2.y + 26, '광합성(비순환 전자 흐름): 전자 4개(물 2분자 → O₂ 1분자)마다', PHONE ? 13 : 15, '#166534', 'left', 800);
     const ty = T2.y + (PHONE ? 64 : 62); for (let k = 0; k < 8; k++) { const x = T2.x + 24 + k * (PHONE ? 22 : 30); D.glow(x, ty, 14, '#fde047', 0.7); D.sphere(x, ty, PHONE ? 6 : 8, '#facc15', { gloss: true }); }
     T(T2.x + 24, ty + 28, '광자 8개', PHONE ? 13 : 14.5, '#a16207', 'left', 800);
-    D.arrow(T2.x + (PHONE ? 214 : 276), ty, T2.x + (PHONE ? 256 : 330), ty, { color: '#64748b', width: 3.5, head: 10 });
-    pill(T2.x + (PHONE ? 312 : 410), ty, 100, 28, 'NADPH 2개', '#f472b6', '#fff'); pill(T2.x + (PHONE ? 312 : 410) + (PHONE ? 106 : 124), ty, 90, 28, 'ATP 약 3개', '#facc15', '#713f12');
+    D.arrow(T2.x + (PHONE ? 206 : 276), ty, T2.x + (PHONE ? 262 : 330), ty, { color: '#64748b', width: 3.5, head: 10 });
+    D.label(T2.x + (PHONE ? 330 : 400), ty, 'NADPH 2개', { bg: '#f472b6', color: '#fff', size: PHONE ? 14 : 16 }); D.label(T2.x + (PHONE ? 330 : 400) + (PHONE ? 0 : 140), ty + (PHONE ? 30 : 0), 'ATP 약 3개', { bg: '#facc15', color: '#713f12', size: PHONE ? 14 : 16 });
     T(T2.x + 14, T2.y + T2.h - 14, '두 과정 모두 전자가 에너지 준위를 내려가며 방출한 에너지로 ATP를 만들어요.', PHONE ? 12 : 13.5, '#475569', 'left', 700);
     panel(T3.x, T3.y, T3.w, T3.h, 18, '#fff'); T(T3.x + 14, T3.y + 26, '계산해 봐요', PHONE ? 14 : 15.5, '#1f2d44', 'left', 800);
     T(T3.x + 14, T3.y + 56, '76 / 220 × 100 =', PHONE ? 17 : 20, '#334155', 'left', 800);
@@ -681,11 +680,11 @@
     { id: 'k3', label: '단계적 에너지 방출', short: '단계적 에너지 방출', icon: '⬇', col: '#f97316', ans: 'com', txt: '전자가 내려가며 단계적으로 에너지를 방출해요' },
     { id: 'k4', label: 'H⁺ 농도 기울기 형성', short: 'H⁺ 기울기 형성', icon: '🔋', col: '#ea580c', ans: 'com', txt: '방출된 에너지로 H⁺ 농도 기울기를 만들어요' },
     { id: 'k5', label: 'H⁺ 이동으로 ATP 합성', short: 'H⁺ 이동 → ATP 합성', icon: '🌀', col: '#ca8a04', ans: 'com', txt: 'ATP 합성 효소로 H⁺가 이동하며 ATP를 합성해요(화학 삼투)' },
-    { id: 'd1', label: '장소: 내막 ↔ 틸라코이드 막', short: '장소: 내막 ↔ 틸라코이드', icon: '📍', col: '#be185d', ans: 'dif', n: '장소', L: '미토콘드리아 내막', R: '틸라코이드 막' },
-    { id: 'd2', label: '에너지: 화학 에너지 ↔ 빛', short: '에너지: 화학 ↔ 빛', icon: '⚡', col: '#d97706', ans: 'dif', n: '에너지 입력', L: '유기물의 화학 에너지', R: '빛에너지' },
-    { id: 'd3', label: '전자 출발: NADH ↔ 물', short: '전자 출발: NADH ↔ 물', icon: '🚩', col: '#0d9488', ans: 'dif', n: '전자의 출발', L: 'NADH · FADH₂', R: '물 (광분해)' },
-    { id: 'd4', label: '최종 수용체: O₂ ↔ NADP⁺', short: '수용체: O₂ ↔ NADP⁺', icon: '🏁', col: '#dc2626', ans: 'dif', n: '최종 전자 수용체', L: 'O₂ (→ H₂O)', R: 'NADP⁺ (→ NADPH)' },
-    { id: 'd5', label: '산물: ATP, H₂O ↔ ATP, NADPH, O₂', short: '산물: H₂O ↔ NADPH·O₂', icon: '📦', col: '#16a34a', ans: 'dif', n: '산물', L: 'ATP, H₂O', R: 'ATP, NADPH, O₂' },
+    { id: 'd1', label: '장소: 내막 ↔ 틸라코이드 막', short: '장소: 내막 ↔ 틸라코이드', icon: '📍', col: '#be185d', ans: 'dif', n: '장소', nn: '장소', L: '미토콘드리아 내막', R: '틸라코이드 막' },
+    { id: 'd2', label: '에너지: 화학 에너지 ↔ 빛', short: '에너지: 화학 ↔ 빛', icon: '⚡', col: '#d97706', ans: 'dif', n: '에너지 입력', nn: '에너지', L: '유기물의 화학 에너지', R: '빛에너지' },
+    { id: 'd3', label: '전자 출발: NADH ↔ 물', short: '전자 출발: NADH ↔ 물', icon: '🚩', col: '#0d9488', ans: 'dif', n: '전자의 출발', nn: '전자 출발', L: 'NADH · FADH₂', R: '물 (광분해)' },
+    { id: 'd4', label: '최종 수용체: O₂ ↔ NADP⁺', short: '수용체: O₂ ↔ NADP⁺', icon: '🏁', col: '#dc2626', ans: 'dif', n: '최종 전자 수용체', nn: '수용체', L: 'O₂ (→ H₂O)', R: 'NADP⁺ (→ NADPH)' },
+    { id: 'd5', label: '산물: H₂O ↔ NADPH, O₂', short: '산물: H₂O ↔ NADPH·O₂', icon: '📦', col: '#16a34a', ans: 'dif', n: '산물', nn: '산물', L: 'ATP, H₂O', R: 'ATP, NADPH, O₂' },
   ];
   S.in = { so: null, pick: null, view: 'build', media: '', title: '', sum: '' };
   const LSK = 'hy-electron-transport:infographic';
@@ -740,7 +739,7 @@
       D.roundRect(cxm + 46, top, P.w / 2 - 70, 28, 8); ctx.fillStyle = thm[2]; ctx.fill(); T(cxm + 46 + (P.w / 2 - 70) / 2, top + 20, '광합성 (엽록체)', 14, '#fff', 'center', 800);
       ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 2; ctx.setLineDash([6, 5]); ctx.beginPath(); ctx.moveTo(cxm, top + 36); ctx.lineTo(cxm, bot - 66); ctx.stroke(); ctx.setLineDash([]);
       if (!lst.dif.length) none(cxm, top + 80);
-      lst.dif.forEach((q, i) => { const y = top + 40 + i * 52; D.roundRect(P.x + 24, y, P.w / 2 - 70, 44, 8); ctx.fillStyle = 'rgba(190,24,93,.12)'; ctx.fill(); wrapT(P.x + 24 + (P.w / 2 - 70) / 2, y + 24, P.w / 2 - 90, q.L, 13, thm[1], 15, 800, 2); D.roundRect(cxm + 46, y, P.w / 2 - 70, 44, 8); ctx.fillStyle = 'rgba(22,163,74,.14)'; ctx.fill(); wrapT(cxm + 46 + (P.w / 2 - 70) / 2, y + 24, P.w / 2 - 90, q.R, 13, thm[2], 15, 800, 2); pill(cxm, y + 22, 82, 24, q.n.length > 6 ? q.n.slice(0, 6) : q.n, '#475569', '#fff'); });
+      lst.dif.forEach((q, i) => { const y = top + 40 + i * 52; D.roundRect(P.x + 24, y, P.w / 2 - 70, 44, 8); ctx.fillStyle = 'rgba(190,24,93,.12)'; ctx.fill(); wrapT(P.x + 24 + (P.w / 2 - 70) / 2, y + 24, P.w / 2 - 90, q.L, 13, thm[1], 15, 800, 2); D.roundRect(cxm + 46, y, P.w / 2 - 70, 44, 8); ctx.fillStyle = 'rgba(22,163,74,.14)'; ctx.fill(); wrapT(cxm + 46 + (P.w / 2 - 70) / 2, y + 24, P.w / 2 - 90, q.R, 13, thm[2], 15, 800, 2); D.label(cxm, y + 22, q.nn, { bg: '#475569', color: '#fff', size: 13 }); });
       T(cxm, bot - 46, '↔ 거울처럼 반대 방향 · 같은 원리', 13, '#64748b', 'center', 800);
       const n = lst.com.length || 1; lst.com.forEach((q, i) => { const w = (P.w - 44) / 5; D.roundRect(P.x + 22 + i * w, bot - 36, w - 6, 38, 8); ctx.fillStyle = 'rgba(99,102,241,.14)'; ctx.fill(); wrapT(P.x + 22 + i * w + (w - 6) / 2, bot - 16, w - 16, q.short, 11.5, '#312e81', 13, 800, 2); }); if (!lst.com.length) none(cxm, bot - 16);
     } else if (media === 'flow') {
@@ -750,12 +749,12 @@
       T(P.x + 16, top + 128, '■ 차이점', 14.5, thm[1], 'left', 800);
       D.roundRect(P.x + 130, top + 138, (P.w - 150) / 2 - 4, 26, 8); ctx.fillStyle = thm[1]; ctx.fill(); T(P.x + 130 + ((P.w - 150) / 2 - 4) / 2, top + 156, '세포호흡', 14, '#fff', 'center', 800); D.roundRect(P.x + 130 + (P.w - 150) / 2 + 4, top + 138, (P.w - 150) / 2 - 4, 26, 8); ctx.fillStyle = thm[2]; ctx.fill(); T(P.x + 130 + (P.w - 150) * 0.75 + 4, top + 156, '광합성', 14, '#fff', 'center', 800);
       if (!lst.dif.length) none(P.x + P.w / 2, top + 210);
-      lst.dif.forEach((q, i) => { const y = top + 170 + i * 40; pill(P.x + 66, y + 18, 108, 26, q.n, '#475569', '#fff'); D.roundRect(P.x + 130, y + 2, (P.w - 150) / 2 - 4, 34, 8); ctx.fillStyle = 'rgba(190,24,93,.12)'; ctx.fill(); wrapT(P.x + 130 + ((P.w - 150) / 2 - 4) / 2, y + 20, (P.w - 150) / 2 - 20, q.L, 12.5, thm[1], 14, 800, 2); D.roundRect(P.x + 130 + (P.w - 150) / 2 + 4, y + 2, (P.w - 150) / 2 - 4, 34, 8); ctx.fillStyle = 'rgba(22,163,74,.14)'; ctx.fill(); wrapT(P.x + 130 + (P.w - 150) * 0.75 + 4, y + 20, (P.w - 150) / 2 - 20, q.R, 12.5, thm[2], 14, 800, 2); });
+      lst.dif.forEach((q, i) => { const y = top + 170 + i * 40; D.label(P.x + 72, y + 18, q.nn, { bg: '#475569', color: '#fff', size: 13 }); D.roundRect(P.x + 130, y + 2, (P.w - 150) / 2 - 4, 34, 8); ctx.fillStyle = 'rgba(190,24,93,.12)'; ctx.fill(); wrapT(P.x + 130 + ((P.w - 150) / 2 - 4) / 2, y + 20, (P.w - 150) / 2 - 20, q.L, 12.5, thm[1], 14, 800, 2); D.roundRect(P.x + 130 + (P.w - 150) / 2 + 4, y + 2, (P.w - 150) / 2 - 4, 34, 8); ctx.fillStyle = 'rgba(22,163,74,.14)'; ctx.fill(); wrapT(P.x + 130 + (P.w - 150) * 0.75 + 4, y + 20, (P.w - 150) / 2 - 20, q.R, 12.5, thm[2], 14, 800, 2); });
     } else {
       const cw = (P.w - 20 - 24) / 3, cx = (i) => P.x + 10 + i * (cw + 12), cy0 = top, ch = bot - top;
       [['1', '공통점', thm[0]], ['2', '차이점', thm[1]], ['3', '이렇게 달라요', thm[2]]].forEach(([n, nm, col], i) => { D.roundRect(cx(i), cy0, cw, ch, 14); ctx.fillStyle = C.rgba(col, 0.08); ctx.fill(); ctx.strokeStyle = col; ctx.lineWidth = 2.5; ctx.stroke(); pill(cx(i) + 28, cy0 + 24, 34, 28, n, col, '#fff'); T(cx(i) + 52, cy0 + 30, i < 2 ? nm : '한눈에 보기', 15.5, col, 'left', 800); });
       if (!lst.com.length) none(cx(0) + cw / 2, cy0 + ch / 2); lst.com.forEach((q, i) => { textBlock(cx(0) + 14, cy0 + 66 + i * 46, cw - 26, '· ' + q.txt, 12.5, '#1f2d44', 16, 700); });
-      if (!lst.dif.length) none(cx(1) + cw / 2, cy0 + ch / 2); lst.dif.forEach((q, i) => { T(cx(1) + 14, cy0 + 64 + i * 46, q.n, 12.5, '#475569', 'left', 800); T(cx(1) + 14, cy0 + 82 + i * 46, '호흡: ' + q.L, 12, thm[1], 'left', 800); T(cx(1) + 14, cy0 + 97 + i * 46, '광합성: ' + q.R, 12, thm[2], 'left', 800); });
+      if (!lst.dif.length) none(cx(1) + cw / 2, cy0 + ch / 2); lst.dif.forEach((q, i) => { T(cx(1) + 14, cy0 + 66 + i * 56, q.n, 12.5, '#475569', 'left', 800); T(cx(1) + 14, cy0 + 84 + i * 56, '호흡: ' + q.L, 12, thm[1], 'left', 800); T(cx(1) + 14, cy0 + 100 + i * 56, '광합성: ' + q.R, 12, thm[2], 'left', 800); });
       textBlock(cx(2) + 14, cy0 + 66, cw - 26, '세포호흡은 유기물의 화학 에너지가 전자를 내려보내며 ATP를 만들고, 광합성은 빛이 전자를 올려 준 뒤 내려보내며 ATP와 NADPH를 만들어요.', 13, '#1f2d44', 18, 700);
     }
   }
@@ -854,7 +853,7 @@
     },
     {
       title: '나란히 보기', short: '나란히 보기', icon: '🪞', phase: '모형',
-      intro: '<div class="si-link">🔗 <b>앞 단계에서</b> 호흡과 광합성의 전자가 모두 에너지 계단을 내려가며 에너지를 내놓는 것을 봤어요. 이제 두 <b>막 단면</b>을 나란히 놓고 닮은 점과 다른 점을 직접 표시해 봐요.</div><p>왼쪽은 미토콘드리아 내막, 오른쪽은 틸라코이드 막이에요. 두 막 모두 H⁺가 많이 쌓이는 쪽을 그림의 <b>위쪽</b>에 그렸어요. 위쪽 칸의 이름이 서로 달라요: 막 사이 공간과 틸라코이드 내부. 아래쪽은 기질과 스트로마예요.</p><p>하단 도구에서 <b>💧 H⁺ 많은 곳</b>, <b>🟡 ATP 합성 쪽</b>, <b>⚡ 전자 출발 · 도착</b>을 차례로 고르고 그림의 칸이나 분자를 눌러 표시해요. 맞으면 두 막이 <b>같은 색 선</b>으로 이어져요.</p>',
+      intro: '<div class="si-link">🔗 <b>앞 단계에서</b> 호흡과 광합성의 전자가 모두 에너지 계단을 내려가며 에너지를 내놓는 것을 봤어요. 이제 두 <b>막 단면</b>을 나란히 놓고 닮은 점과 다른 점을 직접 표시해 봐요.</div><p>왼쪽은 미토콘드리아 내막, 오른쪽은 틸라코이드 막이에요. 두 막 모두 H⁺가 많이 쌓이는 쪽을 그림의 <b>위쪽</b>에 그렸어요. 위쪽 칸의 이름이 서로 달라요: 막 사이 공간과 틸라코이드 내부. 아래쪽은 기질과 스트로마예요.</p><p>오른쪽 도구에서 <b>💧 H⁺ 많은 곳</b>, <b>🟡 ATP 합성 쪽</b>, <b>⚡ 전자 출발 · 도착</b>을 차례로 고르고 그림의 칸이나 분자를 눌러 표시해요. H⁺와 ATP 표시가 맞으면 두 막이 <b>같은 색 선</b>으로 이어지고, 그림 아래 표에 정리돼요.</p>',
       features: ['side'],
       setup() { setMode('side'); },
       recap: '두 막 모두 H⁺는 위쪽(막 사이 공간 · 틸라코이드 내부)에 쌓이고, ATP는 아래쪽(기질 · 스트로마) 쪽에 만들어져요. 전자는 NADH · 물에서 출발해 O₂ · NADP⁺에 도착해요.',

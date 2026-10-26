@@ -503,7 +503,7 @@
      장면 2: 전 지구 평균 열수지 채우기 (W/m²)
      ====================================================== */
   const RC2 = PHONE
-    ? { D: { x: 8, y: 8, w: 504, h: 456 }, P: { x: 8, y: 472, w: 504, h: 240 } }
+    ? { D: { x: 8, y: 8, w: 504, h: 430 }, P: { x: 8, y: 446, w: 504, h: 266 } }
     : { D: { x: 12, y: 12, w: 776, h: 388 }, P: { x: 12, y: 408, w: 776, h: 140 } };
   const BL = ['ref', 'atm', 'srf', 'emit', 'back', 'lat', 'sen', 'space'];
   const BANS = { ref: 100, atm: 80, srf: 160, emit: 400, back: 340, lat: 80, sen: 20, space: 240 };
@@ -531,18 +531,16 @@
     };
   }
   const blankRect = (d, A, id) => {
-    const w = 52, h = 28;
-    if (id === 'space') return { x: d.X(0.57) - w / 2 - 2, y: d.y + 28, w: w + 10, h };
-    const a = A[id], x = d.X(a.fx);
-    let y;
-    if (id === 'ref') y = (d.toa + d.y + 8) / 2 - 2;
-    else if (id === 'srf') y = d.toa + 48;
-    else if (id === 'atm') y = d.toa + 12;
-    else if (id === 'emit') y = d.bb + 40;
-    else if (id === 'back') y = d.bb + 44;
-    else if (id === 'lat') y = d.bb + 78;
-    else y = d.bb + 40;
-    return { x: x + 5, y, w, h };
+    const w = PHONE ? 44 : 52, h = 28;
+    if (id === 'space') return { x: d.X(0.57) - (w + 10) / 2 - 2, y: d.y + 28, w: w + 10, h };
+    const x = d.X(A[id].fx);
+    if (id === 'ref') return { x: x + (PHONE ? 10 : 5), y: d.y + 8, w, h };
+    if (id === 'srf') return { x: x + 5, y: d.toa + (PHONE ? 54 : 48), w, h };
+    if (id === 'atm') return { x: x + 5, y: d.toa + 12, w, h };
+    if (id === 'emit') return { x: x - 5 - w, y: d.bb + 40, w, h };
+    if (id === 'back') return { x: x + 5, y: d.bb + 44, w, h };
+    if (id === 'lat') return { x: x - w / 2, y: d.bb - 44, w, h };
+    return { x: x - w / 2 + 2, y: d.bb - 44, w, h };      // sen
   };
   const valOf = (id) => (S.fill[id] != null ? BANK[S.fill[id]].v : null);
   const firstEmpty = () => BL.find((id) => S.fill[id] == null);
@@ -593,30 +591,42 @@
     if (!RM) Object.keys(A).forEach((k, i) => { const a = A[k], x = d.X(a.fx), u = (t * 0.35 + i * 0.13) % 1; D.sphere(x, a.y0 + (a.y1 - a.y0) * u, 2.8, '#fff', { gloss: false }); });
     ctx.restore();
     // 이름표 · 주어진 값 · 빈칸
-    const NM = { inc: ['입사', '태양'], ref: ['반사'], srf: ['지표', '흡수'], atm: ['대기', '흡수'], emit: ['지표', '복사'], win: ['대기창'], out: ['대기', '방출'], back: ['대기', '역복사'], lat: ['잠열'], sen: ['현열'] };
+    const NM = { inc: ['입사', '태양'], ref: ['반사', '(77+23)'], srf: ['지표', '흡수'], atm: ['대기', '흡수'], emit: ['지표', '복사'], win: ['대기창'], out: ['대기', '방출'], back: ['대기', '역복사'], lat: ['잠열'], sen: ['현열'] };
     Object.keys(A).forEach((k) => {
       const a = A[k], x = d.X(a.fx);
       if (a.given) {
         const y = k === 'inc' ? (a.y0 + a.y1) / 2 + 2 : k === 'win' ? d.toa + 4 : d.toa + 6;
-        const rx = k === 'inc' ? x + 10 : x + 8;
-        D.label(rx, y, a.v + '', { bg: '#0f172a', size: 13, pad: 7, align: 'left' });
-        NM[k].forEach((s, i) => D.text(rx + 3, y + 22 + i * 14 * FS * 0.85, s, { size: 11.5, weight: 800, color: '#fff', align: 'left', stroke: 'rgba(15,23,42,.55)', strokeWidth: 3 }));
+        const left = k === 'win', rx = k === 'inc' ? x + 10 : left ? x - 8 : x + 8;
+        D.label(rx, y, a.v + '', { bg: '#0f172a', size: 13, pad: 7, align: left ? 'right' : 'left' });
+        NM[k].forEach((s, i) => D.text(left ? rx - 3 : rx + 3, y + 22 + i * 14 * FS * 0.85, s, { size: 11.5, weight: 800, color: '#fff', align: left ? 'right' : 'left', stroke: 'rgba(15,23,42,.55)', strokeWidth: 3 }));
       }
     });
-    D.label(d.X(0.14) + 28, d.toa + 14, '77 + 23', { bg: 'rgba(15,23,42,.72)', size: 11.5, pad: 6 });
-    D.text(d.X(0.14) + 28, d.toa + 34, '구름·대기 + 지표', { size: 10.5, weight: 800, color: '#0f172a', stroke: 'rgba(255,255,255,.9)', strokeWidth: 3 });
-
+    BL.forEach((id) => {
+      const R = blankRect(d, A, id), v = valOf(id), sel = S.sel === id, pp = S.pop[id] = approach(S.pop[id] || 0, 0, dt, 7);
+      const sc = 1 + 0.22 * pp, cx = R.x + R.w / 2, cy = R.y + R.h / 2;
+      ctx.save(); ctx.translate(cx, cy); ctx.scale(sc, sc); ctx.translate(-cx, -cy);
+      D.shadow(() => { ctx.fillStyle = v != null ? '#ffffff' : 'rgba(255,255,255,.92)'; rr(R.x, R.y, R.w, R.h, 8).fill(); }, { blur: 5, y: 2 });
+      const bad = S.wrongIds.includes(id);
+      ctx.lineWidth = sel || bad ? 3 : 1.8; ctx.strokeStyle = bad ? '#dc2626' : sel ? '#2563eb' : v != null ? '#16a34a' : '#64748b'; if (v == null) ctx.setLineDash([5, 4]); rr(R.x, R.y, R.w, R.h, 8).stroke(); ctx.setLineDash([]);
+      D.text(cx, cy + 5.5, v != null ? String(v) : '❔', { size: 15.5, weight: 800, color: bad ? '#b91c1c' : v != null ? '#0f172a' : '#94a3b8' });
+      ctx.restore();
+      if (sel) D.ring(cx, cy, 34, t, { color: '#2563eb', width: 2.4 });
+      const nm = NM[id] || [BNAME[id]];
+      if (id === 'space') D.text(R.x + R.w / 2, R.y - 5, '우주로 나가는 복사 (200 + 40)', { size: 12, weight: 800, color: '#e0f2fe', stroke: 'rgba(15,23,42,.6)', strokeWidth: 3 });
+      else if (id === 'lat' || id === 'sen') D.text(R.x + R.w / 2, R.y - 4, nm[0], { size: 11.5, weight: 800, color: '#0f172a', stroke: 'rgba(255,255,255,.85)', strokeWidth: 3 });
+      else nm.forEach((s, i) => D.text(R.x + R.w / 2, R.y + R.h + 13 + i * 13 * FS * 0.85, s, { size: i && id === 'ref' ? 10.5 : 11.5, weight: 800, color: '#0f172a', stroke: 'rgba(255,255,255,.85)', strokeWidth: 3 }));
+    });
     // 합계 확인
     card(P, '⚖️ 합계 확인: 들어오는 에너지 = 나가는 에너지');
     const rows = bdSums();
-    const cw = PHONE ? P.w - 28 : (P.w - 44) / 3, chh = PHONE ? 62 : 84;
+    const cw = PHONE ? P.w - 28 : (P.w - 44) / 3, chh = PHONE ? 68 : 84;
     rows.forEach((r, i) => {
       const x = P.x + 14 + (PHONE ? 0 : i * (cw + 8)), y = P.y + 38 + (PHONE ? i * (chh + 6) : 0);
       ctx.fillStyle = r.ok ? 'rgba(34,197,94,.14)' : r.bad ? 'rgba(220,38,38,.1)' : '#f1f5f9'; rr(x, y, cw, chh, 10).fill();
       ctx.strokeStyle = r.ok ? '#16a34a' : r.bad ? '#dc2626' : '#cbd5e1'; ctx.lineWidth = 2; rr(x, y, cw, chh, 10).stroke();
       D.text(x + 10, y + 18, r.t + '  ' + (r.ok ? '✅ 균형' : r.bad ? '❌ 맞지 않아요' : '⬜'), { size: 12.5, weight: 800, color: r.ok ? '#15803d' : r.bad ? '#b91c1c' : '#475569', align: 'left' });
-      D.text(x + 10, y + 18 + 20 * FS * 0.9, '들어옴 ' + r.innS.join(' + ') + ' = ' + fq(r.a), { size: 12.5, weight: 700, color: '#334155', align: 'left' });
-      D.text(x + 10, y + 18 + 40 * FS * 0.9, '나감 ' + r.outS.join(' + ') + ' = ' + fq(r.b), { size: 12.5, weight: 700, color: '#334155', align: 'left' });
+      D.text(x + 10, y + 18 + 19 * FS, '들어옴 ' + r.innS.join(' + ') + ' = ' + fq(r.a), { size: 12.5, weight: 700, color: '#334155', align: 'left' });
+      D.text(x + 10, y + 18 + 38 * FS, '나감 ' + r.outS.join(' + ') + ' = ' + fq(r.b), { size: 12.5, weight: 700, color: '#334155', align: 'left' });
     });
   }
   SciSim.pointer(view, {

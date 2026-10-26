@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0ea5e9">
+  <title>흑점과 태양의 자전 | 고등 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌞</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-hint { bottom: auto; top: 12px; }
+    .stage-toolbar { min-height: 58px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; }
+    .stage-toolbar .segmented button { min-height: 40px; padding: 5px 10px; font-size: 14px; white-space: nowrap; }
+    .stage-toolbar .segmented { flex-wrap: wrap; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard [hidden] { display: none !important; }
+    .opt-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin-top: 4px; }
+    .opt-grid.c3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .opt-grid.c4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .opt-grid.c5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+    .opt {
+      min-height: 46px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 12px;
+      font-weight: 800; font-size: 14.5px; cursor: pointer; padding: 4px 4px; font-family: inherit; line-height: 1.2;
+    }
+    .opt.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); color: color-mix(in srgb, var(--subject) 70%, black); }
+    .opt.done { border-color: var(--good); background: var(--good-soft); color: #0b6b39; }
+    .opt:disabled { opacity: .5; cursor: not-allowed; }
+    .ctrl-note { margin: 6px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    .btn-sm { min-height: 44px; }
+    .btn-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+    .btn-row .btn { flex: 1; padding-left: 8px; padding-right: 8px; }
+    .readout .value.txt { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .concept table.mini, table.mini { border-collapse: collapse; margin: 6px 0; font-size: 13px; width: 100%; }
+    .concept table.mini th, .concept table.mini td, table.mini th, table.mini td { border: 1px solid var(--line); padding: 4px 5px; text-align: center; }
+    .concept table.mini th, table.mini th { background: var(--surface-2); font-weight: 800; }
+    .num-in { width: 100%; min-height: 46px; border: 2px solid var(--line); border-radius: 10px; font: inherit; font-weight: 800; font-size: 17px; padding: 0 10px; background: var(--surface); color: var(--ink); text-align: center; }
+    .num-in:focus { outline: none; border-color: var(--subject); }
+    .num-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .num-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .in-row { display: grid; grid-template-columns: 1fr 104px; gap: 8px; align-items: center; margin-top: 6px; font-weight: 800; font-size: 14.5px; line-height: 1.25; }
+    .in-row .num-in { min-height: 42px; font-size: 16px; }
+    @keyframes shakeX { 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+    .src-note { margin: 4px 0 0; font-size: 12.5px; color: #a16207; background: #fff7e0; border: 1px solid #f2d38a; border-radius: 10px; padding: 6px 9px; line-height: 1.4; }
+    @media (max-width: 599px) {
+      .readout { min-width: 0; }
+      .readout .value.txt { font-size: 15px; }
+      .stage-toolbar .spacer { display: none; }
+      .stage-toolbar .segmented button { padding: 5px 7px; font-size: 13px; }
+    }
+    input[type=range] { height: 40px; }
+    .ticks { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--muted); font-weight: 700; margin-top: -6px; padding: 0 2px; }
+    </style>
+</head>
+<body class="sim-page" data-subject="earth">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#hu">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">행성우주과학 · Ⅱ. 태양과 별의 관측</div>
+      <h1>흑점과 태양의 자전</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🔭 필터를 낀 망원경으로 본 광구</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="group" aria-label="장면 고르기" hidden></div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="필터를 끼운 망원경으로 본 태양 광구와 쌀알 무늬 확대, 흑점의 10일 이동 기록 표, 위도별 주기 그래프와 영상 합성, 월평균 흑점 수 곡선과 나비 도표가 있어요."></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">—</span><span class="value txt" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">—</span><span class="value txt" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">—</span><span class="value txt" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+
+        <div class="control" data-modes="photo">
+          <div class="btn-row"><button class="btn btn-sm" id="bFilter" type="button">🕶 태양 필터 끼우기</button><button class="btn btn-sm" id="bScope" type="button">🔭 망원경으로 태양 보기</button></div>
+          <p class="ctrl-note">태양은 반드시 필터를 끼우고 봐요. 필터 없이 보면 눈을 크게 다쳐요.</p>
+        </div>
+        <div class="control" data-modes="photo" id="rBox" hidden>
+          <div class="control-head"><label for="sR">📏 중심에서 거리 r (R = 1)</label><output id="oR">0.50</output></div>
+          <input type="range" id="sR" min="0" max="0.99" step="0.01" value="0.5" aria-label="원반 중심에서 가장자리 방향으로 잰 거리 r">
+        </div>
+        <div class="control" data-modes="photo" id="calcI" hidden>
+          <div class="in-row"><span>r에서의 밝기<br>(중심 = 100 %)</span><input class="num-in" id="inI" type="text" inputmode="decimal" placeholder="예: 80" aria-label="r에서의 밝기 (중심 100 퍼센트 기준)" autocomplete="off"></div>
+        </div>
+
+        <div class="control" data-modes="zoom">
+          <p class="ctrl-note">쌀알 무늬(대류)와 흑점의 온도를 살펴봐요. 흑점은 구멍이 아니에요: 주위보다 차가워서 어두워요.</p>
+        </div>
+
+        <div class="control" data-modes="track">
+          <div class="control-head"><label for="sDay">📅 날짜</label><output id="oDay">0일</output></div>
+          <input type="range" id="sDay" min="0" max="9" step="1" value="0" aria-label="영상 날짜 (일)">
+          <div class="btn-row"><button class="btn btn-sm" id="bPlay" type="button">▶ 10일 재생</button><button class="btn btn-sm" id="bClr" type="button">↺ 기록 지우기</button></div>
+          <p class="ctrl-note">그림에서 흑점 A의 중심을 눌러 그날의 x/R을 기록해요.</p>
+        </div>
+        <div class="control" data-modes="track" id="calcT" hidden>
+          <div class="in-row"><span>하루 이동 각도<br>(°/일)</span><input class="num-in" id="inAng" type="text" inputmode="decimal" placeholder="예: 13" aria-label="하루 이동 각도 (도 매 일)" autocomplete="off"></div>
+          <div class="in-row"><span>회합 주기 T<br>(일)</span><input class="num-in" id="inTs" type="text" inputmode="decimal" placeholder="예: 27" aria-label="회합 주기 (일)" autocomplete="off"></div>
+        </div>
+
+        <div class="control" data-modes="diff">
+          <div class="in-row"><span>① 위도 5° T회합(일)</span><input class="num-in" id="inT0" type="text" inputmode="decimal" placeholder="예: 27.0" aria-label="위도 5도 흑점의 회합 주기 (일)" autocomplete="off"></div>
+          <div class="in-row"><span>② 위도 20° T회합(일)</span><input class="num-in" id="inT1" type="text" inputmode="decimal" placeholder="예: 27.0" aria-label="위도 20도 흑점의 회합 주기 (일)" autocomplete="off"></div>
+          <div class="in-row"><span>③ 위도 35° T회합(일)</span><input class="num-in" id="inT2" type="text" inputmode="decimal" placeholder="예: 27.0" aria-label="위도 35도 흑점의 회합 주기 (일)" autocomplete="off"></div>
+          <div class="in-row"><span>④ 위도 45° T회합(일)</span><input class="num-in" id="inT3" type="text" inputmode="decimal" placeholder="예: 27.0" aria-label="위도 45도 흑점의 회합 주기 (일)" autocomplete="off"></div>
+        </div>
+        <div class="control" data-modes="diff" id="trendBox" hidden>
+          <div class="control-head"><span>📈 그래프의 경향</span></div>
+          <div class="opt-grid" id="grpTrend" style="grid-template-columns:1fr"><button class="opt" type="button" data-k="0">적도가 빠르고 고위도가 느려요</button><button class="opt" type="button" data-k="1">고위도가 빠르고 적도가 느려요</button><button class="opt" type="button" data-k="2">위도와 관계없이 같아요</button></div>
+        </div>
+
+        <div class="control" data-modes="compose">
+          <div class="control-head"><label for="sCd">📆 경과일</label><output id="oCd">0.0일</output></div>
+          <input type="range" id="sCd" min="0" max="7" step="0.1" value="0" aria-label="영상 합성의 경과일 (일)">
+          <div class="btn-row"><button class="btn btn-sm" id="bPlayC" type="button">▶ 재생</button></div>
+        </div>
+
+        <div class="control" data-modes="cycle">
+          <div class="control-head"><label for="sYr">📅 커서 연도</label><output id="oYr">2001.9년</output></div>
+          <input type="range" id="sYr" min="1996" max="2026" step="0.1" value="2001.9" aria-label="커서 연도">
+          <div class="btn-row"><button class="btn btn-sm" id="bClrM" type="button">↺ 극대 표시 지우기</button></div>
+        </div>
+        <div class="control" data-modes="cycle" id="calcP" hidden>
+          <div class="in-row"><span>평균 주기<br>(년)</span><input class="num-in" id="inP" type="text" inputmode="decimal" placeholder="예: 11" aria-label="활동 주기 평균 (년)" autocomplete="off"></div>
+        </div>
+        <div class="control" data-modes="cycle" id="bfBox" hidden>
+          <div class="control-head"><span>🦋 나비 도표 읽기</span></div>
+          <div class="opt-grid" id="grpBf" style="grid-template-columns:1fr"><button class="opt" type="button" data-k="0">주기 초에는 ±30° 부근, 말기에는 ±5° 적도 쪽으로 이동해요</button><button class="opt" type="button" data-k="1">주기 초에는 적도 쪽, 말기에는 ±30° 쪽으로 이동해요</button><button class="opt" type="button" data-k="2">위도는 변하지 않고 항상 같아요</button></div>
+        </div>
+
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

@@ -774,7 +774,7 @@
     columnPanel(B1, 'low'); columnPanel(B2, 'high');
   }
   function readSfc() {
-    setReadouts(['지표 · 풍향 기울기', SURF_NAME[S.surfS] + ' ' + alS() + '°', '안쪽 성분 u', fix(uIn(), 1) + ' m/s', '연직 속도 w', S.showW || (game && game.free) ? fix(wOf() * 100, 1) + ' cm/s' : '직접 계산해요']);
+    setReadouts(['지표 · α', SURF_NAME[S.surfS] + ' ' + alS() + '°', '안쪽 성분 u', fix(uIn(), 1) + ' m/s', '연직 속도 w', S.showW || (game && game.free) ? fix(wOf() * 100, 1) + ' cm/s' : '직접 계산해요']);
   }
 
   /* ======================================================
