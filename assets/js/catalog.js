@@ -8789,8 +8789,7 @@ window.SCI_CATALOG = {
                 "선택 발현",
                 "핵의 능력",
                 "분화 유도"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hg-embryo-patterning",
@@ -8811,8 +8810,7 @@ window.SCI_CATALOG = {
                 "분절 유전자",
                 "혹스 유전자",
                 "돌연변이"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hg-expression-benefit",
@@ -8833,8 +8831,7 @@ window.SCI_CATALOG = {
                 "조사 계획",
                 "AI 활용",
                 "공유하기"
-              ],
-              "soon": true
+              ]
             }
           ]
         },

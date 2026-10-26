@@ -894,7 +894,7 @@
     panel(c.x, c.y, c.w, c.h, 16, '#fff');
     ctx.save(); D.roundRect(c.x + 8, c.y + 40, c.w - 16, c.h - 48, 14); ctx.fillStyle = '#eef6fb'; ctx.fill(); ctx.restore();
     const showMuscle = m.m > 0.6;
-    TF(c.x + 16, c.y + 26, showMuscle ? '근관(근육 섬유)' : m.grp === 0 ? '대조군 : MyoD를 넣지 않고 관찰하는 중' : m.grp === 1 ? 'MyoD 유전자를 넣은 섬유아세포' : m.view === 0 ? '대조군 : MyoD를 넣지 않은 섬유아세포' : '실험군 : MyoD 유전자를 넣을 섬유아세포', c.w - 32, L(16, 13.5), 11, showMuscle ? '#b91c1c' : '#14532d', 'left', 800);
+    TF(c.x + 16, c.y + 26, showMuscle ? '근육 세포' : m.grp === 0 ? '대조군 : MyoD를 넣지 않고 관찰하는 중' : m.grp === 1 ? 'MyoD 유전자를 넣은 섬유아세포' : m.view === 0 ? '대조군 : MyoD를 넣지 않은 섬유아세포' : '실험군 : MyoD 유전자를 넣을 섬유아세포', c.w - 32, L(16, 13.5), 11, showMuscle ? '#b91c1c' : '#14532d', 'left', 800);
     const hl = lerp(MG.hl0, MG.hl1, ease.inOutCubic(m.m)), hw = lerp(MG.hw0, MG.hw1, m.m), e = lerp(1, 0.4, ease.inOutCubic(m.m));
     ctx.save();
     D.shadow(() => {
@@ -924,7 +924,7 @@
     if (m.grp === 0) T(MG.cx, c.y + c.h - 22, '⏳ ' + Math.min(4, m.t).toFixed(1) + ' / 4.0 초 관찰', L(14, 13), '#475569', 'center', 800);
     if (m.grp < 0 && m.view === 0 && m.ctrlDone) T(MG.cx, c.y + c.h - 22, '시간이 지나도 섬유아세포 그대로 : 근육 유전자 mRNA 없음', L(14, 12.5), '#475569', 'center', 800);
     if (m.grp < 0 && m.view === 1 && !m.expDone) T(MG.cx, c.y + c.h - 22, '▶ 실험 시작을 눌러 MyoD 유전자를 넣어요', L(14, 12.5), '#475569', 'center', 800);
-    if (m.expDone && m.view === 1) T(MG.cx, c.y + c.h - 22, '세포 모양이 길쭉한 근관으로 바뀌었어요', L(14, 12.5), '#b91c1c', 'center', 800);
+    if (m.expDone && m.view === 1) T(MG.cx, c.y + c.h - 22, '세포 모양이 길쭉한 근육 세포로 바뀌었어요', L(14, 12.5), '#b91c1c', 'center', 800);
     // --- 핵 속 유전자 ---
     panel(ins.x, ins.y, ins.w, ins.h, 16, '#fff');
     TF(ins.x + 16, ins.y + 26, '핵 속 DNA 확대 : 유전자 스위치', ins.w - 32, L(16, 13.5), 11, '#14532d', 'left', 800);
@@ -1180,7 +1180,7 @@
       features: ['myod'],
       setup() { mdReset(); setMode('myod'); },
       recap: '전사 인자 MyoD가 근육 액틴과 미오신 같은 근육 특이적 유전자를 켜서 섬유아세포가 근육 세포로 바뀌었어요. 세포의 분화는 전사 인자가 어떤 유전자를 켜느냐에 따라 일어나는 유전자 발현 조절의 결과예요.',
-      summary: '<ul><li><b>MyoD</b>는 전사 인자예요. 섬유아세포에 MyoD 유전자를 넣으면 MyoD 단백질이 근육 액틴 · 미오신 같은 <b>근육 세포 특이적 유전자</b>의 조절 서열에 붙어 그 유전자들을 켜요.</li><li>그 결과 mRNA와 단백질이 만들어지고 세포가 <b>근관(근육 섬유)</b>으로 바뀌어요. 세포호흡 효소처럼 모든 세포에서 켜진 유전자는 그대로 켜져 있어요.</li><li><b>대조군</b>(MyoD를 넣지 않음)은 변하지 않았어요 → 변화의 원인은 MyoD예요.</li><li>정리: 같은 유전체를 가진 세포가 서로 다른 세포가 되려면 <b>서로 다른 유전자가 발현</b>돼야 하고, 이는 <b>전사 인자 조합</b>이 달라서 일어나요. 세포 분화는 유전자 발현 조절 과정을 통해 일어나요.</li></ul>',
+      summary: '<ul><li><b>MyoD</b>는 전사 인자예요. 섬유아세포에 MyoD 유전자를 넣으면 MyoD 단백질이 근육 액틴 · 미오신 같은 <b>근육 세포 특이적 유전자</b>의 조절 서열에 붙어 그 유전자들을 켜요.</li><li>그 결과 mRNA와 단백질이 만들어지고 세포가 <b>근육 세포</b>으로 바뀌어요. 세포호흡 효소처럼 모든 세포에서 켜진 유전자는 그대로 켜져 있어요.</li><li><b>대조군</b>(MyoD를 넣지 않음)은 변하지 않았어요 → 변화의 원인은 MyoD예요.</li><li>정리: 같은 유전체를 가진 세포가 서로 다른 세포가 되려면 <b>서로 다른 유전자가 발현</b>돼야 하고, 이는 <b>전사 인자 조합</b>이 달라서 일어나요. 세포 분화는 유전자 발현 조절 과정을 통해 일어나요.</li></ul>',
       missions: [
         {
           id: 'myod', title: '대조군과 MyoD 실험군 비교',
@@ -1189,7 +1189,7 @@
           setup() { mdReset(); setMode('myod'); },
           check: () => S.md.ctrlDone && S.md.expDone && S.md.on[1] === 1 && S.md.on[2] === 1, hold: 0.8,
           status: () => mark(S.md.ctrlDone) + ' 대조군 &nbsp; ' + mark(S.md.expDone) + ' 실험군 &nbsp; ' + mark(S.md.on[1] === 1 && S.md.on[2] === 1) + ' 근육 mRNA',
-          explain: '대조군은 근육 액틴 · 미오신 mRNA가 계속 <b>없었고</b> 모양도 그대로였어요. MyoD를 넣은 실험군은 두 유전자가 <b>켜져</b> mRNA가 생기고 세포가 근관으로 바뀌었어요. 달라진 조건은 MyoD 하나뿐이니 MyoD가 원인이에요.',
+          explain: '대조군은 근육 액틴 · 미오신 mRNA가 계속 <b>없었고</b> 모양도 그대로였어요. MyoD를 넣은 실험군은 두 유전자가 <b>켜져</b> mRNA가 생기고 세포가 근육 세포로 바뀌었어요. 달라진 조건은 MyoD 하나뿐이니 MyoD가 원인이에요.',
         },
         {
           type: 'quiz', title: '분화를 일으킨 직접 원인',
@@ -1231,7 +1231,7 @@
       setReads(['핵 이식 단계', n.done + ' / 4', '분화한 세포', m === 'frog' ? '장 상피 세포' : '유선 세포', m === 'frog' ? '결과' : '성공률', m === 'frog' ? (n.done >= 4 ? '올챙이까지 발생' : '—') : (S.rate.ok ? '1 / 277 ≈ 0.4 %' : '? %')]);
     } else {
       const q = S.md;
-      setReads(['대조군', q.ctrlDone ? '근육 mRNA 없음' : '—', '실험군', q.expDone ? 'MyoD → 근육 mRNA 생김' : '—', '세포 모양', q.m > 0.6 ? '근관(근육 섬유)' : '섬유아세포']);
+      setReads(['대조군', q.ctrlDone ? '근육 mRNA 없음' : '—', '실험군', q.expDone ? 'MyoD → 근육 mRNA 생김' : '—', '세포 모양', q.m > 0.6 ? '근육 세포' : '섬유아세포']);
     }
   }
 

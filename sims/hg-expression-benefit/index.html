@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#16a34a">
+  <title>발현·발생 연구와 복지 | 고등 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌍</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; }
+    .stage-toolbar { min-height: 58px; }
+    .stage-toolbar .segmented { flex-wrap: wrap; }
+    .stage-toolbar .segmented button { min-height: 40px; padding: 5px 10px; font-size: 14px; white-space: nowrap; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard [hidden] { display: none !important; }
+    .btn-sm { min-height: 44px; }
+    .btn-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+    .btn-row .btn { flex: 1; padding-left: 8px; padding-right: 8px; }
+    .ctrl-note { margin: 6px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    .ctrl-note b { color: var(--ink); }
+    .range-row { display: flex; align-items: center; gap: 8px; }
+    .range-row input[type=range] { flex: 1; min-width: 0; height: 44px; }
+    .seg-full { display: flex; width: 100%; }
+    .seg-full button { flex: 1 1 0; min-width: 0; min-height: 44px; font-size: 14.5px; }
+    .chip-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px; }
+    .chip-grid.three { grid-template-columns: 1fr 1fr 1fr; }
+    .chip-grid button { min-height: 44px; padding: 6px 8px; border: 2px solid var(--line); background: #fff; border-radius: 12px; font-weight: 800; font-size: 14px; cursor: pointer; color: var(--ink); text-align: center; }
+    .chip-grid button.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); }
+    .chip-grid button.seen:not(.on) { border-color: color-mix(in srgb, var(--subject) 45%, white); }
+    .chip-grid button:disabled { opacity: .45; cursor: not-allowed; }
+    .chip-grid button:active { transform: scale(.98); }
+    .sel-in { width: 100%; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 8px; font: 800 14px var(--font); color: var(--ink); background: #fff; }
+    .sel-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .sel-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .num-in { width: 100%; min-width: 0; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 8px; font: 800 16px ui-monospace, Menlo, Consolas, monospace; color: var(--ink); background: #fff; text-align: right; }
+    .num-in:focus { outline: none; border-color: var(--subject); }
+    .num-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .num-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .in-unit { font-size: 12.5px; color: var(--muted); font-weight: 700; }
+    .in-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 10px; align-items: end; margin-top: 8px; }
+    .in-row .lab { font-weight: 800; font-size: 13.5px; margin-bottom: 3px; line-height: 1.25; }
+    @keyframes shakeX { 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+    .readout .value { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .stage-canvas .stage-hint { top: 10px; bottom: auto; }
+    .pk-pool { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+    .pk-item { min-height: 44px; padding: 6px 12px; border: 2px solid var(--line); background: #fff; border-radius: 12px; font-weight: 800; font-size: 14px; cursor: pointer; color: var(--ink); }
+    .pk-item:disabled { opacity: .35; cursor: default; }
+    .pk-seq { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; min-height: 46px; border: 2px dashed var(--line); border-radius: 12px; padding: 6px; }
+    .pk-chip { min-height: 34px; padding: 3px 10px; border: 2px solid var(--subject); background: color-mix(in srgb, var(--subject) 12%, white); border-radius: 999px; font-weight: 800; font-size: 13.5px; cursor: pointer; color: var(--ink); }
+    .pk-chip b { color: var(--subject); margin-right: 2px; }
+    .pk-reset { margin-top: 8px; width: 100%; }
+    .tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; margin-top: 6px; }
+    .tbl th, .tbl td { border: 1px solid var(--line); padding: 4px 4px; text-align: center; }
+    .tbl th { background: var(--surface-2); font-weight: 800; }
+    .tbl td.rowh { font-weight: 800; text-align: left; background: var(--surface-2); }
+    .tbl select { width: 100%; min-height: 40px; border: 2px solid var(--line); border-radius: 8px; font: 800 13.5px var(--font); background: #fff; color: var(--ink); }
+    .tbl select.ok { border-color: var(--good); background: var(--good-soft); }
+    .tbl select.bad { border-color: var(--bad); background: var(--bad-soft); }
+    .check-list { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 4px; font-size: 13.5px; font-weight: 700; }
+    .check-list li { display: flex; gap: 6px; align-items: baseline; }
+    .check-list li.on { color: var(--good); }
+    .btn-col { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+    #modeSeg button.lv-off { display: none; }
+    @media (max-width: 1100px) and (orientation: landscape) { .toolbar-label { display: none; } }
+    @media (max-width: 599px) {
+      .readout .value { font-size: 15px; }
+      .stage-toolbar { gap: 6px; padding: 8px; }
+      .stage-toolbar .spacer, .toolbar-label { display: none; }
+      .stage-toolbar .segmented button { padding: 5px 8px; font-size: 13.5px; }
+      .stage-hint { font-size: 13px; padding: 5px 12px; }
+    }
+    .stage-toolbar .segmented button.lv-off { display: none; }
+    .tag-pill { display: inline-block; padding: 2px 9px; border-radius: 999px; font-weight: 800; font-size: 12.5px; background: color-mix(in srgb, var(--subject) 14%, white); color: var(--ink); }
+    .tbl-in { width: 100%; }
+
+    .frac-in { width: 100%; min-width: 0; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 8px; font: 800 16px ui-monospace, Menlo, Consolas, monospace; color: var(--ink); background: #fff; text-align: center; }
+    .frac-in:focus { outline: none; border-color: var(--subject); }
+    .frac-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .frac-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .chip-grid.one { grid-template-columns: 1fr; }
+    .chip-grid button.mc { text-align: left; font-size: 13.5px; line-height: 1.3; }
+    .tbl.left td { text-align: left; }
+    .sec-t { font-weight: 800; font-size: 13.5px; margin: 8px 0 2px; color: var(--ink); }
+
+
+    .src-list { display: grid; gap: 6px; margin-top: 6px; }
+    .src-row { display: grid; grid-template-columns: 28px 1fr 44px 44px; gap: 6px; align-items: center; min-height: 46px; border: 2px solid var(--line); border-radius: 12px; padding: 2px 6px; background: #fff; font-weight: 800; font-size: 14px; }
+    .src-row .rk { color: var(--subject); font-size: 16px; text-align: center; }
+    .src-row button { min-height: 40px; min-width: 40px; border: 2px solid var(--line); background: var(--surface-2); border-radius: 10px; font-weight: 800; cursor: pointer; color: var(--ink); }
+    .src-row button:disabled { opacity: .35; cursor: default; }
+    .src-row.ok { border-color: var(--good); background: var(--good-soft); }
+    .src-row.bad { border-color: var(--bad); background: var(--bad-soft); }
+    .sel-in { font-size: 13px; }
+    #ctrlCard .in-row .lab { font-size: 13px; }
+
+  </style>
+</head>
+<body class="sim-page" data-subject="bio">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#hg">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">생물의 유전 · Ⅱ. 유전자의 발현</div>
+      <h1>발현·발생 연구와 복지</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🌍 연구와 복지</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="tablist" aria-label="화면 고르기">
+            <button type="button" data-mode="cases" data-lv="0" data-feature="cases">🗺️ 사례 지도</button>
+            <button type="button" data-mode="plan" data-lv="1" data-feature="plan">📝 조사 계획</button>
+            <button type="button" data-mode="src" data-lv="1" data-feature="plan">⚖️ 출처 신뢰도</button>
+            <button type="button" data-mode="ai" data-lv="2" data-feature="ai">🤖 AI 쓰임</button>
+            <button type="button" data-mode="chat" data-lv="2" data-feature="ai">💬 AI 답 검증</button>
+            <button type="button" data-mode="board" data-lv="3" data-feature="board">👥 모둠 보드</button>
+
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="유전자 발현과 발생 연구 사례 지도, 조사 계획, AI 활용, 모둠 공유"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">—</span><span class="value" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">—</span><span class="value" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">—</span><span class="value" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" data-modes="cases">
+          <div class="control-head"><span>🗺️ 사례 읽고 연결하기</span><output id="csOut">1 / 6</output></div>
+          <p class="ctrl-note">캔버스의 <b>사례 카드를 눌러</b> 읽고, 고른 사례의 <b>연구 분야</b>와 <b>바탕 원리</b>를 정해요. (교육용 요약이며 의료 조언이 아니에요)</p>
+          <div class="sec-t">연구 분야</div>
+          <div class="chip-grid" id="csField"></div>
+          <div class="sec-t">바탕 원리 (앞 차시)</div>
+          <div class="chip-grid" id="csPrin"></div>
+          <ul class="check-list" id="csList"></ul>
+        </div>
+        <div class="control" data-modes="plan">
+          <div class="control-head"><span>📝 조사 계획 5칸</span></div>
+          <div class="chip-grid three" id="plCase"></div>
+          <p class="ctrl-note">사례를 고르고, 5칸에 알맞은 문장을 골라요.</p>
+          <div class="in-row" style="grid-template-columns:1fr" id="plSels"></div>
+        </div>
+        <div class="control" data-modes="src">
+          <div class="control-head"><span>⚖️ 출처 신뢰도 순서</span></div>
+          <p class="ctrl-note"><b>▲ ▼</b> 단추로 순서를 바꿔요. 위쪽일수록 믿을 만한 출처예요.</p>
+          <div id="srcList" class="src-list"></div>
+        </div>
+        <div class="control" data-modes="ai">
+          <div class="control-head"><span>🤖 AI는 어디에 쓰일까</span></div>
+          <p class="ctrl-note">AI 활용 사례 카드 4장을 알맞은 <b>쓰임</b> 칸에 끌어 놓아요. (카드를 눌러 고른 뒤 칸을 눌러도 돼요)</p>
+          <div class="btn-row"><button class="btn btn-sm" id="aiClear" type="button">↺ 카드 모두 치우기</button></div>
+        </div>
+        <div class="control" data-modes="chat">
+          <div class="control-head"><span>💬 AI 도우미의 답 검증</span></div>
+          <p class="ctrl-note">앞 차시 지식으로 따져 보고, <b>틀렸다고 생각하는 답을 눌러</b> 표시해요. 표시한 답은 아래에서 바르게 고쳐요.</p>
+          <div class="in-row" style="grid-template-columns:1fr" id="chFix"></div>
+          <ul class="check-list" id="chList"></ul>
+        </div>
+        <div class="control" data-modes="board">
+          <div class="control-head"><span>👥 모둠 보드</span></div>
+          <p class="ctrl-note">세 역할이 서로 <b>다른 사례</b>를 올려요. 각 요약에서 <b>빠진 내용</b>을 묻는 질문 카드를 골라요.</p>
+          <div class="in-row" style="grid-template-columns:1fr" id="bdSels"></div>
+          <ul class="check-list" id="bdList"></ul>
+        </div>
+
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>
