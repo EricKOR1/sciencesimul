@@ -589,7 +589,7 @@
   const TAGS = [['A', 'lacA 유전자'], ['I', '조절 유전자 (lacI)'], ['Z', 'lacZ 유전자'], ['O', '작동 부위 (O)'], ['Y', 'lacY 유전자'], ['P', '프로모터 (P)']];
   const FUNCS = [['cG', '효소의 정보 (젖당 분해 · 수송)', 'fG'], ['cO', '억제자가 결합하는 곳', 'fO'], ['cI', '억제자 단백질을 만들어요', 'fI'], ['cP', 'RNA 중합 효소가 결합하는 곳', 'fP']];
   function stGrid() {
-    return PHONE ? { bx: 8, bw: 224, bh: 56, by: 296, cols: 2, gapX: 8, gapY: 6, tx: 8, tw: 224, th: 36, ty: 490, tcols: 2 } : { bx: 16, bw: 249, bh: 60, by: 300, cols: 3, gapX: 10, gapY: 8, tx: 16, tw: 249, th: 44, ty: 446, tcols: 3 };
+    return PHONE ? { bx: 8, bw: 224, bh: 56, by: 310, cols: 2, gapX: 8, gapY: 6, tx: 8, tw: 224, th: 36, ty: 498, tcols: 2 } : { bx: 16, bw: 249, bh: 60, by: 300, cols: 3, gapX: 10, gapY: 8, tx: 16, tw: 249, th: 44, ty: 446, tcols: 3 };
   }
   function stBuild() {
     const g = stGrid();
@@ -625,7 +625,7 @@
     so.update(dt);
     const dm = ST.demo ? ST.demoT : 0;
     const placedOK = (k) => ST.s1.cards.some((c) => c.id === k && c.zone === 'b' + k);
-    const oy = PHONE ? 150 : 160, W = VW - (PHONE ? 24 : 60), ox = PHONE ? 12 : 30;
+    const oy = PHONE ? 166 : 160, W = VW - (PHONE ? 24 : 60), ox = PHONE ? 12 : 30;
     TF(14, 24, ST.phase === 1 ? '① 이름표 붙이기: 번호 구간에 알맞은 이름표를 끌어 놓거나, 이름표를 누른 뒤 칸을 눌러요' : '② 기능 카드 연결: 구성 요소마다 알맞은 기능을 연결해요', VW - 28, PHONE ? 13.5 : 15.5, 11.5, '#334155', 'left', 800);
     if (ST.phase === 1 && PHONE) { /* 폰: 지도 아래 간격 */ }
     const stt = { strain: 'wt', hideNames: (k) => !placedOK(k), occ: dm > 0 ? 0 : 0, a: 0, u: dm > 0 ? 1 : 0, m: clamp((dm - 0.8) / 2.4, 0, 1), x: clamp((dm - 3.2) / 2.5, 0, 1), label: false, showEnz: dm > 0, noMake: false };
@@ -740,7 +740,7 @@
   function growthScene(dt, t) {
     if (GR.run) { GR.t += dt * 0.9; if (GR.t >= 7.5) { GR.t = 7.5; GR.run = false; GR.done = true; Sound.success(); updateCtl(); } }
     T(14, 28, '포도당 + 젖당 배지에서 대장균 배양', 16.5, '#334155', 'left', 800);
-    const x = PHONE ? 52 : 70, w = VW - x - (PHONE ? 20 : 40), y1 = PHONE ? 62 : 70, h1 = PHONE ? 230 : 210, y2 = y1 + h1 + (PHONE ? 70 : 74), h2 = PHONE ? 130 : 110;
+    const x = PHONE ? 52 : 70, w = VW - x - (PHONE ? 20 : 40), y1 = PHONE ? 84 : 70, h1 = PHONE ? 214 : 210, y2 = y1 + h1 + (PHONE ? 70 : 74), h2 = PHONE ? 130 : 110;
     const px = (hh) => x + w * hh / 7.5;
     // 단계 띠
     [[0, 2.5, '① 포도당 소비', '#fb923c'], [2.5, 3.5, '② 정체기', '#94a3b8'], [3.5, 6.5, '③ 젖당 소비', '#4ade80'], [6.5, 7.5, '', '#cbd5e1']].forEach((b) => {
@@ -771,7 +771,7 @@
     });
     const cur = GR.t < 2.5 ? '포도당을 먼저 쓰고 있어요. 젖당 오페론은 거의 꺼져 있어요.' : GR.t < 3.5 ? '포도당이 바닥나 성장이 잠시 멈췄어요. 젖당 오페론이 켜지는 중이에요.' : GR.t < 6.5 ? '젖당 분해 효소가 만들어져 젖당으로 다시 자라요.' : '젖당도 소진되어 성장이 멈췄어요.';
     if (GR.run || GR.done) TF(14, VH - 10, cur, VW - 28, 14.5, 11.5, '#1f2d44', 'left', 800); else T(14, VH - 10, '[▶ 배양 시작]을 눌러 성장 곡선이 그려지는 모습을 봐요', 14.5, '#64748b', 'left', 800);
-    if (PHONE) T(14, 48, '포도당이 있으면 젖당 오페론 발현이 낮아져요 (CAP · cAMP)', 12.5, '#64748b', 'left', 700); else T(VW - 14, 28, '포도당이 있으면 젖당이 있어도 발현이 낮아져요 (CAP · cAMP)', 13, '#64748b', 'right', 700);
+    if (PHONE) T(14, 46, '포도당이 있으면 젖당 오페론 발현이 낮아져요 (CAP · cAMP)', 12.5, '#64748b', 'left', 700); else T(VW - 14, 28, '포도당이 있으면 젖당이 있어도 발현이 낮아져요 (CAP · cAMP)', 13, '#64748b', 'right', 700);
   }
 
   /* =========================================================
@@ -824,7 +824,7 @@
       });
       if (mode === 'predict') { MU.rowRect = MU.rowRect || {}; }
     });
-    if (mode === 'predict') T(14, top + 30 + 6 * rowH + 16, '야생형은 예시예요. 아래 선택 칸에서 나머지 5종의 효소 활성이 높을지 낮을지 예측해요.', PHONE ? 12.5 : 14, '#475569', 'left', 800);
+    if (mode === 'predict') textBlock(14, top + 30 + 6 * rowH + 18, VW - 28, '야생형은 예시예요. 오른쪽(또는 아래) 선택 칸에서 나머지 5종의 효소 활성이 높을지 낮을지 예측해요.', PHONE ? 13 : 14, '#475569', 18, 800);
   }
   function predictScene(dt, t) {
     T(14, 30, '예측: 돌연변이 대장균의 효소 활성 (높음 / 낮음)', PHONE ? 14 : 16.5, '#334155', 'left', 800);
@@ -852,13 +852,13 @@
     const tgtM = st.trans ? 1 : 0, tgtX = st.trans ? 1 : 0, aT = MU.lac ? 1 : 0;
     MU.m = approach(MU.m, MU.anim >= 0 ? tgtM : 0, dt, 1.6); MU.x = approach(MU.x, MU.anim >= 0 ? tgtX : 0, dt, 1.0); MU.a = approach(MU.a, MU.anim >= 0 || MU.results[key][MU.lac ? 'yes' : 'no'] != null ? aT : 0, dt, 3);
     const occ = STRAINS[key].I && STRAINS[key].O && !(MU.lac && STRAINS[key].indB) ? 1 : 0;
-    T(14, 26, STRAINS[key].name + ' · ' + (MU.lac ? '젖당 있음' : '젖당 없음') + (STRAINS[key].why ? '  —  ' + STRAINS[key].why : ''), PHONE ? 13 : 15, '#334155', 'left', 800);
-    const oy = PHONE ? 104 : 112, W = VW - (PHONE ? 24 : 60), ox = PHONE ? 12 : 30;
+    TF(14, 24, STRAINS[key].name + ' · ' + (MU.lac ? '젖당 있음' : '젖당 없음') + (STRAINS[key].why ? '  —  ' + STRAINS[key].why : ''), VW - 28, PHONE ? 13 : 15, 11, '#334155', 'left', 800);
+    const oy = PHONE ? 146 : 138, W = VW - (PHONE ? 24 : 60), ox = PHONE ? 12 : 30;
     drawOperon(ox, oy, W, { strain: key, occ: MU.anim >= 0 || MU.results[key][MU.lac ? 'yes' : 'no'] != null ? occ : (STRAINS[key].I && STRAINS[key].O ? 1 : 0), a: MU.a, u: MU.m, m: MU.m, x: MU.x, label: false, showEnz: true, noMake: !STRAINS[key].I }, dt, t);
-    drawTable2(PHONE ? 224 : 226, PHONE ? 56 : 46, 'mut');
+    drawTable2(PHONE ? 252 : 244, PHONE ? 56 : 44, 'mut');
   }
   const mutPT = {
-    down(p) { const g = tblLayout(PHONE ? 224 : 226, PHONE ? 56 : 46); STR_KEYS.forEach((k, i) => { const y = g.top + 30 + i * g.rowH; if (p.y >= y && p.y < y + g.rowH && MU.anim < 0) { MU.strain = k; Sound.tick(); updateCtl(); } }); return false; },
+    down(p) { const g = tblLayout(PHONE ? 252 : 244, PHONE ? 56 : 44); STR_KEYS.forEach((k, i) => { const y = g.top + 30 + i * g.rowH; if (p.y >= y && p.y < y + g.rowH && MU.anim < 0) { MU.strain = k; Sound.tick(); updateCtl(); } }); return false; },
     hover(p) { return 'pointer'; },
   };
 
