@@ -8705,8 +8705,7 @@ window.SCI_CATALOG = {
                 "전사",
                 "번역",
                 "합성 모의"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hg-genetic-code",
@@ -8727,8 +8726,7 @@ window.SCI_CATALOG = {
                 "코돈표",
                 "해독 연습",
                 "부호의 특징"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hg-lac-operon",
@@ -8749,8 +8747,7 @@ window.SCI_CATALOG = {
                 "젖당 없음",
                 "젖당 있음",
                 "돌연변이"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hg-eukaryote-regulation",
@@ -8771,8 +8768,7 @@ window.SCI_CATALOG = {
                 "전사 인자",
                 "여러 단계",
                 "설명 자료"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hg-cell-differentiation",
