@@ -682,7 +682,7 @@
   function trTable(L) {
     const B = L.Tb, Tr = S.tr, st = trStats();
     panel(B.x, B.y, B.w, B.h, { r: 14, title: '📋 스프레드시트: 흑점 A (위도 10°)', tsize: PHONE ? 13 : 14 });
-    const cols = [0.17, 0.25, 0.30, 0.28], x0 = B.x + 10, wAll = B.w - 20, hy = B.y + 34 * FS, rh = PHONE ? 20.5 : 21.5;
+    const cols = [0.17, 0.25, 0.30, 0.28], x0 = B.x + 10, wAll = B.w - 20, hy = B.y + 34 * FS, rh = PHONE ? 19.5 : 21.5;
     let cx_ = x0; const cxs = cols.map((c) => { const o = cx_; cx_ += c * wAll; return [o, c * wAll]; });
     const heads = ['날짜(일)', 'x/R', '경도 λ (°)', '하루 이동 (°)'];
     ctx.fillStyle = '#e2e8f0'; rr(x0, hy, wAll, 22, 6).fill();
@@ -749,7 +749,7 @@
   /* ================= ③ 차등 자전: 위도별 주기 표 · 그래프 ================= */
   function LDf() {
     return PHONE
-      ? { Tb: { x: 8, y: 8, w: 464, h: 214 }, Gr: { x: 8, y: 230, w: 464, h: 350 }, No: { x: 8, y: 588, w: 464, h: 264 } }
+      ? { Tb: { x: 8, y: 8, w: 464, h: 224 }, Gr: { x: 8, y: 240, w: 464, h: 340 }, No: { x: 8, y: 588, w: 464, h: 264 } }
       : { Tb: { x: 10, y: 8, w: 780, h: 204 }, Gr: { x: 10, y: 220, w: 500, h: 392 }, No: { x: 518, y: 220, w: 272, h: 392 } };
   }
   const dfAll = () => SP4.every((s) => s.ok);

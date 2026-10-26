@@ -396,10 +396,10 @@
     ctx.save(); ctx.font = D.font(11.5, 800);
     let tot = 0; const ws = items.map((it) => { const t = ctx.measureText(it[1]).width + 18; tot += t; return t; });
     ctx.restore();
+    if (w && tot > w && items.length > 1) { const h = Math.ceil(items.length / 2); legend(x, y, items.slice(0, h), w); legend(x, y + 17 * FS, items.slice(h), w); return; }
     let cx = x - tot / 2;
     items.forEach((it, i) => { ctx.fillStyle = it[0]; ctx.beginPath(); ctx.arc(cx + 5, y - 4, 4.5, 0, TAU); ctx.fill(); D.text(cx + 14, y, it[1], { size: 11.5, weight: 800, color: '#334155', align: 'left' }); cx += ws[i]; });
   }
-
 
   /* ======================================================
      500 hPa 상층 일기도(예시) 공통: 등고선 · 골과 능 · 한반도
@@ -418,34 +418,38 @@
   }
   const vgeo = (x, y, xt) => ((9.8 / F40) * gradZ(x, y, xt)) / 1000;
   const spac60 = (x, y, xt) => 60 / gradZ(x, y, xt);
-  function mapXY(M) { return { X: (x) => M.x + (x / KMW) * M.w, Y: (y) => M.y + M.h - (y / KMH) * M.h, ix: (px) => ((px - M.x) / M.w) * KMW, iy: (py) => ((M.y + M.h - py) / M.h) * KMH }; }
+  const FULLV = { x0: 0, x1: KMW, y0: 0, y1: KMH };
+  function mapXY(M, v) {
+    v = v || FULLV; const sx = M.w / (v.x1 - v.x0), sy = M.h / (v.y1 - v.y0);
+    return { X: (x) => M.x + (x - v.x0) * sx, Y: (y) => M.y + M.h - (y - v.y0) * sy, ix: (px) => v.x0 + (px - M.x) / sx, iy: (py) => v.y0 + (M.y + M.h - py) / sy };
+  }
   /* 지도 한 장 그리기. o: { xt, zones(발산·수렴), jet } */
   function drawUpperMap(M, xt, o) {
     o = o || {};
-    const { X, Y } = mapXY(M);
+    const v = o.view || FULLV, { X, Y } = mapXY(M, v), vw = v.x1 - v.x0;
     ctx.save(); rr(M.x, M.y, M.w, M.h, 10).clip();
     const gr = ctx.createLinearGradient(0, M.y, 0, M.y + M.h); gr.addColorStop(0, '#e0f2fe'); gr.addColorStop(1, '#fef3c7'); ctx.fillStyle = gr; ctx.fillRect(M.x, M.y, M.w, M.h);
     // 위·경도 격자
     ctx.strokeStyle = 'rgba(100,116,139,.35)'; ctx.lineWidth = 1; ctx.setLineDash([3, 4]);
-    for (let i = 0; i <= 3; i++) { const y = Y((i * KMH) / 3); ctx.beginPath(); ctx.moveTo(M.x, y); ctx.lineTo(M.x + M.w, y); ctx.stroke(); }
-    for (let lon = 80; lon <= 150; lon += 10) { const x = X((lon - 70) * 85); ctx.beginPath(); ctx.moveTo(x, M.y); ctx.lineTo(x, M.y + M.h); ctx.stroke(); }
+    for (let i = 0; i <= 3; i++) { const yk = (i * KMH) / 3; if (yk < v.y0 || yk > v.y1) continue; const y = Y(yk); ctx.beginPath(); ctx.moveTo(M.x, y); ctx.lineTo(M.x + M.w, y); ctx.stroke(); }
+    for (let lon = 80; lon <= 150; lon += 10) { const xk = (lon - 70) * 85; if (xk < v.x0 || xk > v.x1) continue; const x = X(xk); ctx.beginPath(); ctx.moveTo(x, M.y); ctx.lineTo(x, M.y + M.h); ctx.stroke(); }
     ctx.setLineDash([]);
     // 한랭(5400 m 아래)과 온난(5700 m 위) 구역
-    const stepPx = 4, nx = Math.ceil(M.w / stepPx);
+    const stepPx = 4, nx = Math.ceil(M.w / stepPx), xAt = (i) => v.x0 + (i / nx) * vw;
     const band = (c, upper, col) => {
       ctx.beginPath();
-      for (let i = 0; i <= nx; i++) { const x = (i / nx) * KMW, y = clamp(contY(c, x, xt), 0, KMH); const px = X(x), py = Y(y); i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); }
-      ctx.lineTo(M.x + M.w, upper ? M.y : M.y + M.h); ctx.lineTo(M.x, upper ? M.y : M.y + M.h); ctx.closePath(); ctx.fillStyle = col; ctx.fill();
+      for (let i = 0; i <= nx; i++) { const x = xAt(i), y = clamp(contY(c, x, xt), v.y0 - 200, v.y1 + 200); const px = X(x), py = Y(y); i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); }
+      ctx.lineTo(M.x + M.w, upper ? M.y - 20 : M.y + M.h + 20); ctx.lineTo(M.x, upper ? M.y - 20 : M.y + M.h + 20); ctx.closePath(); ctx.fillStyle = col; ctx.fill();
     };
     band(5400, true, 'rgba(59,130,246,.20)'); band(5700, false, 'rgba(244,114,60,.20)');
     // 발산·수렴 구역 (골의 동쪽은 발산, 서쪽은 수렴)
     if (o.zones) {
       const zs = o.zones;
-      for (let m = -2; m <= 2; m++) {
+      for (let m = -3; m <= 3; m++) {
         const x0 = xt + m * WV.L;       // 골
         [[x0, x0 + WV.L / 2, 'D'], [x0 + WV.L / 2, x0 + WV.L, 'C']].forEach(([xa, xb, kind]) => {
-          const a = clamp(xa, 0, KMW), b = clamp(xb, 0, KMW); if (b - a < 20) return;
-          ctx.fillStyle = kind === 'D' ? 'rgba(249,115,22,' + (0.22 * zs.a) + ')' : 'rgba(34,197,94,' + (0.22 * zs.a) + ')';
+          const a = clamp(xa, v.x0, v.x1), b = clamp(xb, v.x0, v.x1); if (b - a < 20) return;
+          ctx.fillStyle = kind === 'D' ? 'rgba(249,115,22,' + (0.24 * zs.a) + ')' : 'rgba(34,197,94,' + (0.24 * zs.a) + ')';
           ctx.fillRect(X(a), M.y, X(b) - X(a), M.h);
         });
       }
@@ -454,19 +458,47 @@
     for (let c = 5280; c <= 5880; c += 60) {
       const major = c % 120 === 0, jet = c === 5520;
       ctx.beginPath(); let started = false;
-      for (let i = 0; i <= nx; i++) { const x = (i / nx) * KMW, y = contY(c, x, xt); if (y < -50 || y > KMH + 50) { started = false; continue; } const px = X(x), py = Y(y); started ? ctx.lineTo(px, py) : ctx.moveTo(px, py); started = true; }
+      for (let i = 0; i <= nx; i++) { const x = xAt(i), y = contY(c, x, xt); if (y < v.y0 - 600 || y > v.y1 + 600) { started = false; continue; } const px = X(x), py = Y(y); started ? ctx.lineTo(px, py) : ctx.moveTo(px, py); started = true; }
       ctx.strokeStyle = jet && o.jet ? 'rgba(234,88,12,.95)' : major ? '#1e293b' : 'rgba(30,41,59,.55)'; ctx.lineWidth = jet && o.jet ? 4 : major ? 2 : 1.2; ctx.stroke();
     }
     ctx.restore();
     ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.5; rr(M.x, M.y, M.w, M.h, 10).stroke();
     // 등고선 숫자 (왼쪽 가장자리, 큰 선만)
-    [5400, 5520, 5640, 5760].forEach((c) => { const y = contY(c, 40, xt); if (y > 30 && y < KMH - 30) D.text(M.x + 6, Y(y) - 3, String(c), { size: 11.5, weight: 800, color: '#1e293b', align: 'left', stroke: 'rgba(255,255,255,.85)', strokeWidth: 3 }); });
+    [5400, 5520, 5640, 5760].forEach((c) => { const y = contY(c, v.x0 + 40, xt); if (y > v.y0 + 60 && y < v.y1 - 60) D.text(M.x + 6, Y(y) - 3, String(c), { size: 11.5, weight: 800, color: '#1e293b', align: 'left', stroke: 'rgba(255,255,255,.85)', strokeWidth: 3 }); });
     // 위·경도 이름
-    ['30°N', '40°N', '50°N', '60°N'].forEach((t, i) => D.text(M.x + M.w - 5, Y((i * KMH) / 3) - (i === 0 ? 18 : -13), t, { size: 11, weight: 700, color: '#64748b', align: 'right' }));
-    [80, 100, 120, 140].forEach((lon) => D.text(X((lon - 70) * 85), M.y + M.h - 5, lon + '°E', { size: 11, weight: 700, color: '#64748b' }));
+    ['30°N', '40°N', '50°N', '60°N'].forEach((t, i) => { const yk = (i * KMH) / 3; if (yk < v.y0 + 150 || yk > v.y1 - 100) return; D.text(M.x + M.w - 5, Y(yk) - 4, t, { size: 11, weight: 700, color: '#64748b', align: 'right' }); });
+    [80, 100, 120, 140].forEach((lon) => { const xk = (lon - 70) * 85; if (xk < v.x0 + 100 || xk > v.x1 - 100) return; D.text(X(xk), M.y + M.h - 5, lon + '°E', { size: 11, weight: 700, color: '#64748b' }); });
     // 한반도
-    { const kx = X(WV.xk), ky = Y(WV.yk); D.glow(kx, ky, 22, '#fde68a', 0.7); D.sphere(kx, ky, 7, '#f59e0b', { gloss: false, outline: '#fff', outlineWidth: 2 }); D.label(kx + 12, ky + 14, '한반도', { bg: '#92400e', size: 11.5, pad: 6, align: 'left' }); }
+    if (WV.xk > v.x0 && WV.xk < v.x1 && WV.yk > v.y0 && WV.yk < v.y1) { const kx = X(WV.xk), ky = Y(WV.yk); D.glow(kx, ky, 22, '#fde68a', 0.7); D.sphere(kx, ky, 7, '#f59e0b', { gloss: false, outline: '#fff', outlineWidth: 2 }); D.label(kx + 12, ky + 14, '한반도', { bg: '#92400e', size: 11.5, pad: 6, align: 'left' }); }
     return { X, Y };
+  }
+
+  /* 위성 영상 (대체 활동): 골 앞쪽(동쪽)에 구름이 많고 뒤쪽은 맑아요 */
+  const cloudRnd = seeded(7);
+  const CL = []; for (let i = 0; i < 900; i++) CL.push([cloudRnd(), cloudRnd(), cloudRnd()]);
+  function drawSat(M, xt, mp) {
+    const { X, Y } = mp;
+    ctx.save(); rr(M.x, M.y, M.w, M.h, 10).clip();
+    const gr = ctx.createLinearGradient(0, M.y, 0, M.y + M.h); gr.addColorStop(0, '#1e293b'); gr.addColorStop(1, '#334155'); ctx.fillStyle = gr; ctx.fillRect(M.x, M.y, M.w, M.h);
+    CL.forEach(([a, b, c]) => {
+      const x = a * KMW, y = b * KMH, ph = Math.sin(KW * (x - xt)), dens = clamp(ph * 1.15, 0, 1) * (0.5 + 0.5 * c) * clamp(1.2 - Math.abs(y - (1500 + 500 * Math.cos(KW * (x - xt)))) / 1300, 0, 1);
+      if (dens < 0.08) return;
+      ctx.globalAlpha = clamp(dens * 0.75, 0, 0.7); ctx.fillStyle = '#f8fafc'; ctx.beginPath(); ctx.arc(X(x), Y(y), 4 + 10 * c * M.w / 760, 0, TAU); ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+    // 구름대 머리 쪽(골 앞쪽)과 지상 저기압
+    const lx = xt + 1000, ly = 1750;
+    ctx.restore();
+    ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.5; rr(M.x, M.y, M.w, M.h, 10).stroke();
+    D.text(X(lx), Y(ly) + 6, 'L', { size: 22, weight: 900, color: '#93c5fd', stroke: 'rgba(15,23,42,.8)', strokeWidth: 4 });
+    // 전선 기호: 한랭 전선(파랑), 온난 전선(빨강)
+    ctx.save(); rr(M.x, M.y, M.w, M.h, 10).clip();
+    ctx.lineWidth = 3; ctx.strokeStyle = '#60a5fa'; ctx.beginPath(); ctx.moveTo(X(lx - 40), Y(ly - 80)); ctx.quadraticCurveTo(X(lx - 250), Y(ly - 600), X(lx - 520), Y(ly - 1050)); ctx.stroke();
+    ctx.strokeStyle = '#f87171'; ctx.beginPath(); ctx.moveTo(X(lx + 40), Y(ly - 40)); ctx.quadraticCurveTo(X(lx + 600), Y(ly - 80), X(lx + 1000), Y(ly + 200)); ctx.stroke();
+    ctx.restore();
+    const kx = X(WV.xk), ky = Y(WV.yk); D.glow(kx, ky, 22, '#fde68a', 0.7); D.sphere(kx, ky, 7, '#f59e0b', { gloss: false, outline: '#fff', outlineWidth: 2 }); D.label(kx + 12, ky + 14, '한반도', { bg: '#92400e', size: 11.5, pad: 6, align: 'left' });
+    D.label(M.x + 8, M.y + 16, '🛰️ 적외 위성 영상 + 지상 일기도 (예시)', { bg: 'rgba(15,23,42,.85)', size: 12, pad: 7, align: 'left' });
+    D.text(M.x + M.w - 8, M.y + M.h - 8, '구름이 많은 쪽(골 앞쪽)이 동쪽으로 움직여요', { size: 11.5, weight: 800, color: '#e2e8f0', align: 'right', stroke: 'rgba(15,23,42,.8)', strokeWidth: 3 });
   }
 
   /* ======================================================
@@ -488,7 +520,7 @@
     if (mode === 'jet') return phoneRC({ A: { x: 8, y: 8, w: 504, h: 430 }, B: { x: 8, y: 446, w: 504, h: 446 } }, { A: { x: 12, y: 12, w: 776, h: 372 }, B: { x: 12, y: 392, w: 776, h: 156 } });
     if (mode === 'rossby') return phoneRC({ A: { x: 8, y: 8, w: 504, h: 360 }, B: { x: 8, y: 376, w: 504, h: 516 } }, { A: { x: 12, y: 12, w: 776, h: 308 }, B: { x: 12, y: 328, w: 776, h: 220 } });
     if (mode === 'wave') return phoneRC({ A: { x: 8, y: 8, w: 504, h: 520 }, B: { x: 8, y: 536, w: 504, h: 356 } }, { A: { x: 12, y: 12, w: 520, h: 536 }, B: { x: 540, y: 12, w: 248, h: 536 } });
-    return phoneRC({ A: { x: 8, y: 8, w: 504, h: 316 }, B: { x: 8, y: 332, w: 504, h: 560 } }, { A: { x: 12, y: 12, w: 776, h: 372 }, B: { x: 12, y: 392, w: 776, h: 156 } });
+    return phoneRC({ A: { x: 8, y: 8, w: 504, h: 270 }, B: { x: 8, y: 286, w: 504, h: 606 } }, { A: { x: 12, y: 12, w: 776, h: 372 }, B: { x: 12, y: 392, w: 776, h: 156 } });
   }
 
   const S = {
@@ -555,8 +587,8 @@
     card(B, null);
     const horiz = B.w > 600;
     const x0 = B.x + 16;
-    D.text(x0, B.y + 26 * FS, '남북 기온 경도 G = ' + fix(S.G, 1) + ' K/100 km  →  제트 최대 풍속 약 ' + Math.round(UJ(S.G)) + ' m/s', { size: 14.5, weight: 900, color: '#6d28d9', align: 'left' });
-    const bw = B.w - 32, by = B.y + 44 * FS;
+    const yh = para(x0, B.y + 26 * FS, B.w - 32, '남북 기온 경도 G = ' + fix(S.G, 1) + ' K/100 km → 제트 최대 풍속 약 ' + Math.round(UJ(S.G)) + ' m/s', 14.5, '#6d28d9', 900);
+    const bw = B.w - 32, by = yh + 8 * FS;
     ctx.fillStyle = '#e2e8f0'; rr(x0, by, bw, 18, 9).fill();
     const gg = ctx.createLinearGradient(x0, 0, x0 + bw, 0); gg.addColorStop(0, '#c4b5fd'); gg.addColorStop(1, '#6d28d9'); ctx.fillStyle = gg; rr(x0, by, Math.max(10, bw * clamp(S.uV / 60, 0, 1)), 18, 9).fill();
     [0, 20, 40, 60].forEach((v) => D.text(x0 + (bw * v) / 60, by + 34, v + (v === 60 ? ' m/s' : ''), { size: 11.5, weight: 700, color: '#64748b', align: v === 60 ? 'right' : 'center' }));
@@ -747,7 +779,7 @@
      장면 4: 상층 일기도 — 골과 능 찾기, 하루 뒤의 이동
      ====================================================== */
   const mapGeo = () => {
-    const A = rcOf('map').A, w = A.w - 20, h = (w * KMH) / KMW, M = { x: A.x + 10, y: A.y + 34, w, h };
+    const A = rcOf('map').A, w = A.w - 20, h = (w * KMH) / KMW, M = { x: A.x + 10, y: A.y + (PHONE ? 44 : 34), w, h };
     return { A, M, ...mapXY(M) };
   };
   const nearTrough = (x, xt) => Math.abs(x - xt) <= 350;
@@ -756,33 +788,6 @@
   function mapStep(dt) {
     S.dayV = approach(S.dayV, S.day, dt, 2.2);
     if (Math.abs(S.dayV - S.day) < 0.002) S.dayV = S.day;
-  }
-  /* 위성 영상 (대체 활동): 골 앞쪽(동쪽)에 구름이 많고 뒤쪽은 맑아요 */
-  const cloudRnd = seeded(7);
-  const CL = []; for (let i = 0; i < 900; i++) CL.push([cloudRnd(), cloudRnd(), cloudRnd()]);
-  function drawSat(M, xt, mp) {
-    const { X, Y } = mp;
-    ctx.save(); rr(M.x, M.y, M.w, M.h, 10).clip();
-    const gr = ctx.createLinearGradient(0, M.y, 0, M.y + M.h); gr.addColorStop(0, '#1e293b'); gr.addColorStop(1, '#334155'); ctx.fillStyle = gr; ctx.fillRect(M.x, M.y, M.w, M.h);
-    CL.forEach(([a, b, c]) => {
-      const x = a * KMW, y = b * KMH, ph = Math.sin(KW * (x - xt)), dens = clamp(ph * 1.15, 0, 1) * (0.5 + 0.5 * c) * clamp(1.2 - Math.abs(y - (1500 + 500 * Math.cos(KW * (x - xt)))) / 1300, 0, 1);
-      if (dens < 0.08) return;
-      ctx.globalAlpha = clamp(dens * 0.75, 0, 0.7); ctx.fillStyle = '#f8fafc'; ctx.beginPath(); ctx.arc(X(x), Y(y), 4 + 10 * c * M.w / 760, 0, TAU); ctx.fill();
-    });
-    ctx.globalAlpha = 1;
-    // 구름대 머리 쪽(골 앞쪽)과 지상 저기압
-    const lx = xt + 1000, ly = 1750;
-    ctx.restore();
-    ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.5; rr(M.x, M.y, M.w, M.h, 10).stroke();
-    D.text(X(lx), Y(ly) + 6, 'L', { size: 22, weight: 900, color: '#93c5fd', stroke: 'rgba(15,23,42,.8)', strokeWidth: 4 });
-    // 전선 기호: 한랭 전선(파랑), 온난 전선(빨강)
-    ctx.save(); rr(M.x, M.y, M.w, M.h, 10).clip();
-    ctx.lineWidth = 3; ctx.strokeStyle = '#60a5fa'; ctx.beginPath(); ctx.moveTo(X(lx - 40), Y(ly - 80)); ctx.quadraticCurveTo(X(lx - 250), Y(ly - 600), X(lx - 520), Y(ly - 1050)); ctx.stroke();
-    ctx.strokeStyle = '#f87171'; ctx.beginPath(); ctx.moveTo(X(lx + 40), Y(ly - 40)); ctx.quadraticCurveTo(X(lx + 600), Y(ly - 80), X(lx + 1000), Y(ly + 200)); ctx.stroke();
-    ctx.restore();
-    const kx = X(WV.xk), ky = Y(WV.yk); D.glow(kx, ky, 22, '#fde68a', 0.7); D.sphere(kx, ky, 7, '#f59e0b', { gloss: false, outline: '#fff', outlineWidth: 2 }); D.label(kx + 12, ky + 14, '한반도', { bg: '#92400e', size: 11.5, pad: 6, align: 'left' });
-    D.label(M.x + 8, M.y + 16, '🛰️ 적외 위성 영상 + 지상 일기도 (예시)', { bg: 'rgba(15,23,42,.85)', size: 12, pad: 7, align: 'left' });
-    D.text(M.x + M.w - 8, M.y + M.h - 8, '구름이 많은 쪽(골 앞쪽)이 동쪽으로 움직여요', { size: 11.5, weight: 800, color: '#e2e8f0', align: 'right', stroke: 'rgba(15,23,42,.8)', strokeWidth: 3 });
   }
   function drawMap(t, dt) {
     const { A, M, X, Y, ix, iy } = mapGeo(), B = rcOf('map').B;
@@ -821,16 +826,26 @@
     if (!sat && S.pickHelp) D.text(A.x + A.w / 2, A.y + A.h - 10, S.pick === 'probe' ? '지도를 눌러 그곳의 풍속을 재어 봐요' : '지도에서 ' + (S.pick === 'trough' ? '골' : '능') + '의 축(등고선이 가장 많이 휜 곳)을 눌러요', { size: 12.5, weight: 800, color: '#475569' });
     // ----- B 패널
     card(B, null);
-    legend(B.x + B.w / 2, B.y + 22 * FS, [['#1e293b', '500 hPa 등고선(m)'], ['#ea580c', '제트축(5520 m)'], ['#3b82f6', '한랭(5400 m 아래)'], ['#f4723c', '온난(5700 m 위)']]);
+    legend(B.x + B.w / 2, B.y + 22 * FS, [['#1e293b', '500 hPa 등고선(m)'], ['#ea580c', '제트축(5520 m)'], ['#3b82f6', '한랭(5400 m 아래)'], ['#f4723c', '온난(5700 m 위)']], B.w - 24);
     const x0 = B.x + 16;
     const kz = zOf(WV.xk, WV.yk, xt), kv = vgeo(WV.xk, WV.yk, xt), ks = spac60(WV.xk, WV.yk, xt);
-    let y = B.y + 48 * FS;
+    let y = B.y + (PHONE ? 66 : 48) * FS;
     y = para(x0, y, B.w - 32, '한반도(별): 500 hPa 고도 ' + Math.round(kz / 10) * 10 + ' m · 등고선 간격 약 ' + Math.round(ks / 10) * 10 + ' km → 지균풍 약 ' + Math.round(kv) + ' m/s', 13.5, '#334155', 800) + 4;
     if (S.probe) {
       const p = S.probe, z = zOf(p.x, p.y, xt), v = vgeo(p.x, p.y, xt), s = spac60(p.x, p.y, xt);
       y = para(x0, y, B.w - 32, '🎯 잰 곳: 고도 ' + Math.round(z / 10) * 10 + ' m · 등고선 간격 약 ' + Math.round(s / 10) * 10 + ' km → 풍속 약 ' + Math.round(v) + ' m/s', 13.5, '#7c3aed', 800) + 4;
     }
     y = para(x0, y, B.w - 32, '등고선 간격이 좁을수록 풍속이 커요(V = (g/f)(Δz/Δn)). 골은 남쪽으로, 능은 북쪽으로 휘어요. 파동은 평균 약 10 m/s로 동쪽으로 움직여요.', 12.5, '#475569', 700) + 4;
+    if (B.h > 300) {
+      y += 10 * FS; D.text(x0, y, '등고선 간격(60 m당)과 지균풍 (위도 40°)', { size: 13, weight: 800, color: '#0f172a', align: 'left' }); y += 8 * FS;
+      [[150, '#dc2626'], [250, '#f97316'], [400, '#2563eb']].forEach(([d, col]) => {
+        const v = ((9.8 / F40) * 60) / (d * 1000), bw = (B.w - 150) * clamp(v / 45, 0, 1);
+        D.text(x0, y + 18 * FS, '간격 ' + d + ' km', { size: 12.5, weight: 800, color: '#334155', align: 'left' });
+        ctx.fillStyle = '#e2e8f0'; rr(x0 + 92, y + 4 * FS, B.w - 150, 16, 8).fill(); ctx.fillStyle = col; rr(x0 + 92, y + 4 * FS, Math.max(8, bw), 16, 8).fill();
+        D.text(x0 + 92 + B.w - 150 + 6, y + 18 * FS, Math.round(v) + ' m/s', { size: 12.5, weight: 900, color: col, align: 'left' }); y += 30 * FS;
+      });
+      y += 4 * FS;
+    }
     para(x0, y, B.w - 32, '※ 예시 자료예요. 오늘 상층 일기도는 기상청 날씨누리에서 확인해 보세요. 상층 일기도가 없으면 지상 일기도와 위성 영상으로 1~2일 뒤를 예측해요.', 11.5, '#64748b', 700);
   }
   function readMap() {

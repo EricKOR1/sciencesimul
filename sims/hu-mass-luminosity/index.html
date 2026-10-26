@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0ea5e9">
+  <title>질량과 광도의 관계 | 고등 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📈</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-hint { bottom: auto; top: 12px; }
+    .stage-toolbar { min-height: 58px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; }
+    .stage-toolbar .segmented button { min-height: 40px; padding: 5px 10px; font-size: 14px; white-space: nowrap; }
+    .stage-toolbar .segmented { flex-wrap: wrap; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard [hidden] { display: none !important; }
+    .opt-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin-top: 4px; }
+    .opt-grid.c3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .opt-grid.c4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .opt-grid.c5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+    .opt {
+      min-height: 46px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 12px;
+      font-weight: 800; font-size: 14.5px; cursor: pointer; padding: 4px 4px; font-family: inherit; line-height: 1.2;
+    }
+    .opt.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); color: color-mix(in srgb, var(--subject) 70%, black); }
+    .opt.done { border-color: var(--good); background: var(--good-soft); color: #0b6b39; }
+    .opt:disabled { opacity: .5; cursor: not-allowed; }
+    .ctrl-note { margin: 6px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    .btn-sm { min-height: 44px; }
+    .btn-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+    .btn-row .btn { flex: 1; padding-left: 8px; padding-right: 8px; }
+    .readout .value.txt { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .concept table.mini, table.mini { border-collapse: collapse; margin: 6px 0; font-size: 13px; width: 100%; }
+    .concept table.mini th, .concept table.mini td, table.mini th, table.mini td { border: 1px solid var(--line); padding: 4px 5px; text-align: center; }
+    .concept table.mini th, table.mini th { background: var(--surface-2); font-weight: 800; }
+    .num-in { width: 100%; min-height: 46px; border: 2px solid var(--line); border-radius: 10px; font: inherit; font-weight: 800; font-size: 17px; padding: 0 10px; background: var(--surface); color: var(--ink); text-align: center; }
+    .num-in:focus { outline: none; border-color: var(--subject); }
+    .num-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .num-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .in-row { display: grid; grid-template-columns: 1fr 104px; gap: 8px; align-items: center; margin-top: 6px; font-weight: 800; font-size: 14.5px; line-height: 1.25; }
+    .in-row .num-in { min-height: 42px; font-size: 16px; }
+    @keyframes shakeX { 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+    .src-note { margin: 4px 0 0; font-size: 12.5px; color: #a16207; background: #fff7e0; border: 1px solid #f2d38a; border-radius: 10px; padding: 6px 9px; line-height: 1.4; }
+    @media (max-width: 599px) {
+      .readout { min-width: 0; }
+      .readout .value.txt { font-size: 15px; }
+      .stage-toolbar .spacer { display: none; }
+      .stage-toolbar .segmented button { padding: 5px 7px; font-size: 13px; }
+    }
+    input[type=range] { height: 40px; }
+    .ticks { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--muted); font-weight: 700; margin-top: -6px; padding: 0 2px; }
+    </style>
+</head>
+<body class="sim-page" data-subject="earth">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#hu">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">행성우주과학 · Ⅱ. 태양과 별의 관측</div>
+      <h1>질량과 광도의 관계</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">📈 질량과 광도의 관계</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="group" aria-label="장면 고르기" hidden>
+            <button type="button" data-view="calc">🔢 광도 계산</button>
+            <button type="button" data-view="plot">📈 관계 찾기</button>
+            <button type="button" data-view="apply">🎯 질량 구하기</button>
+            <button type="button" data-view="life">⏳ 별의 수명</button>
+          </div>
+
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="쌍성 주계열성 8개의 절대 등급에서 광도를 구하는 표, 로그 눈금 질량-광도 그래프와 기울기 삼각형, 단독 별의 질량을 읽는 안내선, 질량에 따른 별의 크기와 H-R도 위치와 수명 막대가 있어요."></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">—</span><span class="value txt" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">—</span><span class="value txt" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">—</span><span class="value txt" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" data-modes="calc" id="noteCalc">
+          <div class="control-head"><span>📋 별 8개의 자료표</span></div>
+          <p class="ctrl-note">표의 줄을 눌러 그 별의 광도 계산 과정을 확인해요. 계산 결과는 눌러야 나타나요.</p>
+        </div>
+        <div class="control" data-modes="calc" id="calcL" hidden>
+          <div class="in-row"><span>M_V = 1.2인 별의 광도<br>L (L☉)</span><input class="num-in" id="inL" type="text" inputmode="decimal" placeholder="예: 30" aria-label="절대 등급 1.2인 별의 광도 (태양 광도)" autocomplete="off"></div>
+        </div>
+
+        <div class="control" data-modes="plot" id="notePlot">
+          <div class="control-head"><span>📍 점 찍기</span></div>
+          <p class="ctrl-note" id="plotNote">오른쪽 목록에서 별을 고르고, 그래프에서 (log M, log L)에 해당하는 자리를 눌러요.</p>
+        </div>
+        <div class="control" data-modes="plot" id="plotTools" hidden>
+          <div class="control-head"><span>🔧 그래프 도구</span></div>
+          <div class="opt-grid" id="grpScale"><button class="opt" type="button" data-k="0">로그 눈금</button><button class="opt" type="button" data-k="1">선형 눈금</button></div>
+          <div class="btn-row"><button class="btn btn-sm" id="bFit" type="button">📏 직선 긋기</button></div>
+        </div>
+        <div class="control" data-modes="plot" id="calcSlope" hidden>
+          <div class="in-row"><span>기울기 = Δlog L / Δlog M</span><input class="num-in" id="inSlope" type="text" inputmode="decimal" placeholder="예: 3" aria-label="직선의 기울기" autocomplete="off"></div>
+          <p class="ctrl-note">그래프에서 점 두 개를 눌러 기울기 삼각형을 만들어요.</p>
+        </div>
+
+        <div class="control" data-modes="apply">
+          <div class="control-head"><span>🎯 단독 별 고르기</span></div>
+          <div class="opt-grid" id="grpYZ"><button class="opt" type="button" data-k="0">별 Y<br>(M_V = −0.2)</button><button class="opt" type="button" data-k="1">별 Z<br>(m, p 관측)</button></div>
+        </div>
+        <div class="control" data-modes="apply" id="calcY">
+          <div class="in-row"><span>① 광도 L (L☉)</span><input class="num-in" id="inLY" type="text" inputmode="decimal" placeholder="예: 100" aria-label="별 Y의 광도 (태양 광도)" autocomplete="off"></div>
+          <div class="in-row"><span>② 질량 M (M☉)</span><input class="num-in" id="inMY" type="text" inputmode="decimal" placeholder="예: 4" aria-label="별 Y의 질량 (태양 질량)" autocomplete="off"></div>
+        </div>
+        <div class="control" data-modes="apply" id="calcZ" hidden>
+          <div class="in-row"><span>① 거리 d (pc)</span><input class="num-in" id="inDZ" type="text" inputmode="decimal" placeholder="예: 10" aria-label="별 Z의 거리 (파섹)" autocomplete="off"></div>
+          <div class="in-row"><span>② 절대 등급 M_V</span><input class="num-in" id="inVZ" type="text" inputmode="decimal" placeholder="예: 1" aria-label="별 Z의 절대 등급" autocomplete="off"></div>
+          <div class="in-row"><span>③ 광도 L (L☉)</span><input class="num-in" id="inLZ" type="text" inputmode="decimal" placeholder="예: 50" aria-label="별 Z의 광도 (태양 광도)" autocomplete="off"></div>
+          <div class="in-row"><span>④ 질량 M (M☉)</span><input class="num-in" id="inMZ" type="text" inputmode="decimal" placeholder="예: 3" aria-label="별 Z의 질량 (태양 질량)" autocomplete="off"></div>
+        </div>
+
+        <div class="control" data-modes="life">
+          <div class="control-head"><label for="sM">⭐ 별의 질량 M</label><output id="oM">1.0 M☉</output></div>
+          <input type="range" id="sM" min="0.5" max="20" step="0.1" value="1" aria-label="주계열성의 질량 (태양 질량)">
+          <div class="ticks"><span>0.5</span><span>5</span><span>10</span><span>15</span><span>20 M☉</span></div>
+        </div>
+        <div class="control" data-modes="life" id="calcT" hidden>
+          <div class="in-row"><span>10 M☉ 별의 수명<br>(백만 년)</span><input class="num-in" id="inT" type="text" inputmode="decimal" placeholder="예: 30" aria-label="질량 10 태양 질량인 별의 수명 (백만 년)" autocomplete="off"></div>
+        </div>
+
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

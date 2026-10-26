@@ -506,10 +506,10 @@
     pl.forEach(([lab, deg, k, off]) => { const p = ang(g.c, g.R + off * (PHONE ? 0.85 : 1) + (k === 'G' ? 0 : 0), deg); T(p.x, p.y + 4, lab, PHONE ? 12.5 : 14, '#475569', 'center', 800); });
     // 명반응 공급원 · 출구 · CO₂ 입구
     D.roundRect(P.x + 6, g.S0.y - 40, PHONE ? 54 : 70, 88, 12); ctx.fillStyle = 'rgba(134,239,172,.35)'; ctx.fill(); ctx.strokeStyle = '#16a34a'; ctx.lineWidth = 2; ctx.stroke();
-    T(P.x + 6 + (PHONE ? 27 : 35), g.S0.y - 22, PHONE ? '명반응' : '명반응', PHONE ? 11.5 : 13, '#166534', 'center', 800); T(P.x + 6 + (PHONE ? 27 : 35), g.S0.y - 6, '공급', PHONE ? 11.5 : 13, '#166534', 'center', 800);
+    T(P.x + 6 + (PHONE ? 27 : 35), g.S0.y - 22, PHONE ? '명반응' : '명반응', PHONE ? 12 : 13, '#166534', 'center', 800); T(P.x + 6 + (PHONE ? 27 : 35), g.S0.y - 6, '공급', PHONE ? 12 : 13, '#166534', 'center', 800);
     T(P.x + 6 + (PHONE ? 27 : 35), g.S0.y + 40, 'ATP·NADPH', PHONE ? 9.5 : 10.5, '#166534', 'center', 800);
     D.arrow(g.CO0.x + 22, g.CO0.y, g.CO0.x + 52, g.CO0.y, { color: '#0f766e', width: 2.5, head: 8 }); T(g.CO0.x - 22, g.CO0.y + 5, 'CO₂ 입구', PHONE ? 12 : 13, '#0f766e', 'left', 800);
-    T(g.OUT.x, g.OUT.y + 40, PHONE ? '포도당 등' : '포도당·녹말·설탕', PHONE ? 11.5 : 12.5, '#9d174d', 'center', 800); T(g.OUT.x, g.OUT.y + 56, '합성(동화)', PHONE ? 11.5 : 12.5, '#9d174d', 'center', 800);
+    T(g.OUT.x, g.OUT.y + 40, PHONE ? '포도당 등' : '포도당·녹말·설탕', PHONE ? 12 : 12.5, '#9d174d', 'center', 800); T(g.OUT.x, g.OUT.y + 56, '합성(동화)', PHONE ? 12 : 12.5, '#9d174d', 'center', 800);
     D.roundRect(g.OUT.x - 28, g.OUT.y - 26, 56, 52, 12); ctx.strokeStyle = 'rgba(190,24,93,.5)'; ctx.lineWidth = 2; ctx.setLineDash([5, 4]); ctx.stroke(); ctx.setLineDash([]);
     // 분자와 알갱이
     cv.mols.forEach((m) => { drawMol(m, g.sc); });
@@ -559,7 +559,7 @@
       ctx.strokeStyle = '#64748b'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - 60, y + 56); ctx.moveTo(x, y); ctx.lineTo(x + 60, y + 56); ctx.stroke();
       D.roundRect(x - 66, y + 54, 132, 8, 4); ctx.fillStyle = '#94a3b8'; ctx.fill();
       blocks(x - 54, y + 46, 108, nA, nN, 10);
-      T(x, y - 52, label, PHONE ? 13.5 : 14.5, col, 'center', 800); T(x, y - 34, sub, PHONE ? 11.5 : 13, '#475569', 'center', 700);
+      T(x, y - 52, label, PHONE ? 13.5 : 14.5, col, 'center', 800); T(x, y - 34, sub, PHONE ? 12 : 13, '#475569', 'center', 700);
     };
     if (PHONE) { pan(lx, ly, '명반응이 공급', '물 12분자: ATP 18 · NADPH 12', SUP.atp, SUP.nadph, '#166534'); pan(rx, ry, '탄소 고정이 써요', 'CO₂ ' + nd.n + ': ATP ' + row.atp + ' · NADPH ' + row.nadph, row.atp, row.nadph, '#9d174d'); }
     else { pan(lx, ly, '명반응이 공급해요', '물 12분자 → ATP 18 · NADPH 12', SUP.atp, SUP.nadph, '#166534'); pan(rx, ry, '탄소 고정 반응이 써요', 'CO₂ ' + nd.n + '분자 → ATP ' + row.atp + ' · NADPH ' + row.nadph, row.atp, row.nadph, '#9d174d'); }
@@ -649,7 +649,7 @@
     // 캘빈 회로 아이콘
     const cc = g.CV, rr = g.rr; ctx.save(); ctx.strokeStyle = 'rgba(100,116,139,.5)'; ctx.lineWidth = 3; ctx.setLineDash([7, 6]); ctx.lineDashOffset = -lk.spin * 6; ctx.beginPath(); ctx.arc(cc.x, cc.y, rr, 0, TAU); ctx.stroke(); ctx.setLineDash([]); ctx.restore();
     for (let k = 0; k < 3; k++) { const a = lk.spin * 0.8 + k * TAU / 3, p = { x: cc.x + Math.cos(a) * rr, y: cc.y + Math.sin(a) * rr }; ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(a + Math.PI / 2); ctx.fillStyle = 'rgba(71,85,105,.8)'; ctx.beginPath(); ctx.moveTo(0, -7); ctx.lineTo(8, 6); ctx.lineTo(-8, 6); ctx.closePath(); ctx.fill(); ctx.restore(); }
-    T(cc.x, cc.y - 2, '캘빈 회로', PHONE ? 13 : 15, '#334155', 'center', 800); T(cc.x, cc.y + 17, '(탄소 고정 반응)', PHONE ? 11.5 : 12.5, '#475569', 'center', 700);
+    T(cc.x, cc.y - 2, '캘빈 회로', PHONE ? 13 : 15, '#334155', 'center', 800); T(cc.x, cc.y + 17, '(탄소 고정 반응)', PHONE ? 12 : 12.5, '#475569', 'center', 700);
     // 화살표 (A: 틸라코이드 → 캘빈 회로, B: 반대)
     const arr = (y, x1, x2, col) => D.arrow(x1, y, x2, y, { color: col, width: 3.5, head: 12, alpha: 0.5 });
     arr(g.ay[0], g.ax[0], g.ax[1], '#16a34a'); arr(g.ay[1], g.ax[1], g.ax[0], '#2563eb');
@@ -671,8 +671,9 @@
     const st = lk.st, bars = [['ATP 저장량', st.A, '#f59e0b'], ['NADPH 저장량', st.N, '#ec4899'], ['NADP⁺ 남은 양 (명반응 재료)', 1 - st.N, '#2563eb']];
     const bx = G.x + 16, bw = PHONE ? G.w - 32 - 70 : 420;
     bars.forEach((b, i) => { const y = G.y + (PHONE ? 22 : 24) + i * (PHONE ? 38 : 26); TF(bx, y, b[0], PHONE ? 170 : 220, PHONE ? 13 : 14, 11, '#334155', 'left', 800); const x0 = bx + (PHONE ? 176 : 232), w = bw - (PHONE ? 176 : 232) - 4; D.roundRect(x0, y - 11, w, 14, 7); ctx.fillStyle = '#eef2f7'; ctx.fill(); if (b[1] > 0.004) { D.roundRect(x0, y - 11, Math.max(10, w * b[1]), 14, 7); ctx.fillStyle = b[2]; ctx.fill(); } T(x0 + w + 8, y, fi(b[1] * 100) + ' %', PHONE ? 13 : 14, '#1f2d44', 'left', 800); });
-    if (!PHONE) { const rx = G.x + 500; T(rx, G.y + 28, '명반응 (NADPH 만드는 속도)', 13.5, '#166534', 'left', 800); T(rx + 250, G.y + 28, fx1(lk.rate.pn * 20) + ' /초', 15, '#1f2d44', 'right', 800); T(rx, G.y + 56, '탄소 고정 (NADPH 쓰는 속도)', 13.5, '#9d174d', 'left', 800); T(rx + 250, G.y + 56, fx1(lk.rate.q * 2 * PM.k * 20) + ' /초', 15, '#1f2d44', 'right', 800); T(rx, G.y + 86, '둘은 서로 이어져 있어요', 12.5, '#64748b', 'left', 700); }
-    else { const y = G.y + 22 + 3 * 38; T(G.x + 16, y, '명반응 ' + fx1(lk.rate.pn * 20) + ' /초 · 탄소 고정 ' + fx1(lk.rate.q * 2 * PM.k * 20) + ' /초', 13, '#334155', 'left', 800); }
+    const sp1 = fi(clamp(lk.rate.pn / PM.pN, 0, 1) * 100), sp2 = fi(clamp(lk.rate.q * 2 * PM.k / PM.pN, 0, 1) * 100);
+    if (!PHONE) { const rx = G.x + 480; T(rx, G.y + 26, '명반응: NADPH 만드는 속도', 13.5, '#166534', 'left', 800); T(rx + 270, G.y + 26, sp1 + ' %', 16, '#1f2d44', 'right', 800); T(rx, G.y + 54, '탄소 고정: NADPH 쓰는 속도', 13.5, '#9d174d', 'left', 800); T(rx + 270, G.y + 54, sp2 + ' %', 16, '#1f2d44', 'right', 800); T(rx, G.y + 84, '(최대 속도에 대한 %) 둘은 서로 이어져 있어요', 12.5, '#64748b', 'left', 700); }
+    else { const y = G.y + 22 + 3 * 38; T(G.x + 16, y, '명반응 ' + sp1 + ' % · 탄소 고정 ' + sp2 + ' % (NADPH 속도, 최대 대비)', 13, '#334155', 'left', 800); }
   }
 
   /* =========================================================

@@ -362,7 +362,7 @@
     D.arrow(P.x + 18, bot + 6, P.x + 18, top - 10, { color: '#94a3b8', width: 2.5, head: 9 }); T(P.x + 24, top - 12, '높음', 12, '#b45309', 'left', 800); T(P.x + 24, bot + 22, '낮음', 12, '#475569', 'left', 800);
     // 길
     ctx.save(); ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = resp ? 'rgba(236,72,153,.28)' : 'rgba(34,197,94,.3)'; ctx.lineWidth = 8; ctx.beginPath(); nodes.forEach((q, i) => { if (i) ctx.lineTo(xs(i), Y(q.lv)); else ctx.moveTo(xs(i), Y(q.lv)); }); ctx.stroke(); ctx.restore();
-    nodes.forEach((q, i) => { D.sphere(xs(i), Y(q.lv), 5, q.up ? '#f59e0b' : (resp ? '#ec4899' : '#22c55e'), { gloss: false }); const fs = PHONE ? 11.5 : 12.5; T(xs(i), Y(q.lv) + (i === 0 || (i === n - 1 && resp) ? 19 : (q.up ? -12 : 19)), q.l, fs, '#334155', 'center', 800, { stroke: 'rgba(255,255,255,.85)', strokeWidth: 3 }); });
+    nodes.forEach((q, i) => { D.sphere(xs(i), Y(q.lv), 5, q.up ? '#f59e0b' : (resp ? '#ec4899' : '#22c55e'), { gloss: false }); const fs = PHONE ? 12 : 12.5; T(xs(i), Y(q.lv) + (i === 0 || (i === n - 1 && resp) ? 19 : (q.up ? -12 : 19)), q.l, fs, '#334155', 'center', 800, { stroke: 'rgba(255,255,255,.85)', strokeWidth: 3 }); });
     // 광자 화살표 (광합성)
     if (!resp) [1, 4].forEach((k) => { const a = nodes[k - 1], b = nodes[k], xx = xs(k); D.arrow(xx - 36, Y(b.lv) - 22, xx - 6, Y(b.lv) - 4, { color: '#f59e0b', width: 3, head: 9 }); T(xx - 40, Y(b.lv) - 26, '빛', 12.5, '#b45309', 'right', 800); });
     // 에너지 방출 표시와 전자
@@ -370,7 +370,7 @@
     const a = nodes[si], b = nodes[si + 1], jump = b.up, e = jump ? SciSim.ease.outBack(clamp(lp, 0, 1)) : SciSim.ease.inOutSine(clamp(lp, 0, 1));
     const ex = xs(si) + (xs(si + 1) - xs(si)) * e, ey = Y(a.lv) + (Y(b.lv) - Y(a.lv)) * e;
     ebead(ex, ey, 8.5);
-    if (!jump && lp > 0.15 && lp < 0.9) { for (let k = 0; k < 3; k++) { const off = k * 9 - 9; ctx.save(); ctx.globalAlpha = 0.85 * Math.sin(lp * Math.PI); ctx.strokeStyle = '#f97316'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(ex + 12, ey + off - 4); ctx.lineTo(ex + 18, ey + off); ctx.lineTo(ex + 24, ey + off - 4); ctx.lineTo(ex + 30, ey + off); ctx.stroke(); ctx.restore(); } T(ex + 36, ey + 4, '에너지 방출', PHONE ? 11.5 : 12.5, '#c2410c', 'left', 800, { alpha: Math.sin(lp * Math.PI), stroke: 'rgba(255,255,255,.9)', strokeWidth: 3 }); }
+    if (!jump && lp > 0.15 && lp < 0.9) { for (let k = 0; k < 3; k++) { const off = k * 9 - 9; ctx.save(); ctx.globalAlpha = 0.85 * Math.sin(lp * Math.PI); ctx.strokeStyle = '#f97316'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(ex + 12, ey + off - 4); ctx.lineTo(ex + 18, ey + off); ctx.lineTo(ex + 24, ey + off - 4); ctx.lineTo(ex + 30, ey + off); ctx.stroke(); ctx.restore(); } T(ex + 36, ey + 4, '에너지 방출', PHONE ? 12 : 12.5, '#c2410c', 'left', 800, { alpha: Math.sin(lp * Math.PI), stroke: 'rgba(255,255,255,.9)', strokeWidth: 3 }); }
   }
   function redoxDraw(dt, t) {
     const g = rxG(), r = S.rx; r.t += dt;
@@ -457,7 +457,7 @@
     G.cx.forEach((cx, k) => {
       if (m.pf[k] > 0.05) D.glow(cx, my, 42, '#fb923c', m.pf[k] * 0.6);
       D.roundRect(cx - cw / 2, my - th / 2 - 9, cw, th + 18, 14); ctx.fillStyle = cols[k]; ctx.fill(); ctx.strokeStyle = bcols[k]; ctx.lineWidth = 2.5; ctx.stroke();
-      T(cx, my + 4.5, names[k], PHONE ? 11 : 12, '#1f2d44', 'center', 800);
+      T(cx, my + 4.5, names[k], PHONE ? 12 : 12, '#1f2d44', 'center', 800);
       if (!mito && k !== 1) E('☀', cx - cw / 2 + 4, my - th / 2 - 22, PHONE ? 16 : 19);
       if ((mito ? true : k === 1) && m.pf[k] > 0.05) D.arrow(cx, my - th / 2 - 11, cx, my - th / 2 - 36, { color: '#ea580c', width: 3, head: 9, alpha: m.pf[k] });
     });
@@ -468,7 +468,7 @@
     ctx.save(); ctx.rotate(m.spin); for (let k = 0; k < 6; k++) { ctx.rotate(TAU / 6); ctx.fillStyle = k % 2 ? '#f59e0b' : '#d97706'; ctx.fillRect(4 * sc, -2.5 * sc, 20 * sc, 5 * sc); } ctx.restore();
     ctx.fillStyle = '#d97706'; ctx.fillRect(-5 * sc, th / 2, 10 * sc, 20 * sc); ctx.restore();
     D.sphere(sx, my + th / 2 + 44 * sc, 22 * sc, '#fbbf24', { gloss: true, outline: '#a16207', outlineWidth: 1.5 });
-    T(sx, my + th / 2 + 44 * sc + 60, 'ATP 합성 효소', PHONE ? 11.5 : 12.5, '#92400e', 'center', 800, { stroke: 'rgba(255,253,247,.9)', strokeWidth: 3 });
+    T(sx, my + th / 2 + 44 * sc + 60, 'ATP 합성 효소', PHONE ? 12 : 12.5, '#92400e', 'center', 800, { stroke: 'rgba(255,253,247,.9)', strokeWidth: 3 });
     // H⁺ 점
     const sp = sH(); m.hs.forEach((q) => blit(sp, q.x, q.y, Math.max(0, q.a)));
     m.fl.forEach((f) => { const y = my - th / 2 - 22 * sc + f.t * (th + 30 * sc); blit(txtSprite('H2', 'H⁺', 12, '#ea580c', 800, 'rgba(255,253,247,.85)'), sx, y, Math.sin(Math.min(1, f.t * 1.1) * Math.PI * 0.95)); });
@@ -523,7 +523,7 @@
     else if (sd.tool === 'a') { const ok = sdOK().a; if (sd.am.L && sd.am.R && !ok) showHint('ATP 합성 효소의 머리는 H⁺가 흘러나오는 아래쪽 칸에 있어요.', 3600); else if (ok) showHint('두 막 모두 ATP는 아래쪽(기질 · 스트로마) 쪽에 만들어져요.', 3600); }
     else { const n = Object.keys(S.sd.em).filter((k) => S.sd.em[k]).length; if (n >= 4 && !sdOK().e) showHint('전자는 물질에서 시작해(출발) 마지막 수용체에 도착해요.', 3600); }
   }
-  function tagPill(x, y, text, bg, fg, a) { pill(x, y, text.length * (PHONE ? 11 : 12) + 22, PHONE ? 22 : 24, text, bg, fg, a); }
+  function tagPill(x, y, text, bg, fg, a) { pill(x, y, text.length * (PHONE ? 12 : 12) + 22, PHONE ? 22 : 24, text, bg, fg, a); }
   function sdDraw(dt, t) {
     const g = sdG(), sd = S.sd, GL = mG(g.L, 'mito'), GR = mG(g.R, 'chl');
     memUpdate(sd.mL, GL, dt, { e: 1, g: 0.8, atp: 100 }); memUpdate(sd.mR, GR, dt, { e: 1, g: 0.8, atp: 100 });
@@ -604,7 +604,7 @@
       ['l', 'r'].forEach((s, k) => {
         const val = S.tb.sel[i][s], ok = tbOK(i, s), cx = x0 + cw0 + k * cw + (cw - 3) / 2;
         if (!val) { T(cx, y + rh / 2 + 6, '?', 20, '#cbd5e1', 'center', 800); return; }
-        const fs = PHONE ? 11.5 : 12.5; D.roundRect(x0 + cw0 + k * cw + 2, y + 2, cw - 7, rh - 8, 7); ctx.fillStyle = ok ? 'rgba(34,197,94,.16)' : 'rgba(239,68,68,.14)'; ctx.fill();
+        const fs = PHONE ? 12 : 12.5; D.roundRect(x0 + cw0 + k * cw + 2, y + 2, cw - 7, rh - 8, 7); ctx.fillStyle = ok ? 'rgba(34,197,94,.16)' : 'rgba(239,68,68,.14)'; ctx.fill();
         wrapT(cx, y + rh / 2 + 3, cw - 16, val, fs, ok ? '#14532d' : '#b91c1c', fs + 3, 800, 2);
       });
     });
