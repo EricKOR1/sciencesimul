@@ -8659,8 +8659,7 @@ window.SCI_CATALOG = {
                 "원핵 유전자",
                 "진핵 유전자",
                 "비교하기"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hg-dna-replication",
@@ -8681,8 +8680,7 @@ window.SCI_CATALOG = {
                 "밀도 띠",
                 "복제 모의",
                 "복제의 의미"
-              ],
-              "soon": true
+              ]
             }
           ]
         },
@@ -9237,8 +9235,7 @@ window.SCI_CATALOG = {
                 "에크만 나선",
                 "에크만 수송",
                 "용승·침강"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hs-geostrophic-current",
@@ -9259,8 +9256,7 @@ window.SCI_CATALOG = {
                 "압력 경도력",
                 "힘의 균형",
                 "유속 계산"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hs-ocean-waves",
@@ -9281,8 +9277,7 @@ window.SCI_CATALOG = {
                 "심해파",
                 "천해파",
                 "전이파"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hs-sea-surge",
