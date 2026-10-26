@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0ea5e9">
+  <title>별의 공간 운동 | 고등 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧭</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-hint { bottom: auto; top: 12px; }
+    .stage-toolbar { min-height: 58px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; }
+    .stage-toolbar .segmented button { min-height: 40px; padding: 5px 10px; font-size: 14px; white-space: nowrap; }
+    .stage-toolbar .segmented { flex-wrap: wrap; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard [hidden] { display: none !important; }
+    .opt-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin-top: 4px; }
+    .opt-grid.c3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .opt-grid.c4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .opt-grid.c5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+    .opt {
+      min-height: 46px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 12px;
+      font-weight: 800; font-size: 14.5px; cursor: pointer; padding: 4px 4px; font-family: inherit; line-height: 1.2;
+    }
+    .opt.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); color: color-mix(in srgb, var(--subject) 70%, black); }
+    .opt.done { border-color: var(--good); background: var(--good-soft); color: #0b6b39; }
+    .opt:disabled { opacity: .5; cursor: not-allowed; }
+    .ctrl-note { margin: 6px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    .btn-sm { min-height: 44px; }
+    .btn-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+    .btn-row .btn { flex: 1; padding-left: 8px; padding-right: 8px; }
+    .readout .value.txt { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .concept table.mini, table.mini { border-collapse: collapse; margin: 6px 0; font-size: 13px; width: 100%; }
+    .concept table.mini th, .concept table.mini td, table.mini th, table.mini td { border: 1px solid var(--line); padding: 4px 5px; text-align: center; }
+    .concept table.mini th, table.mini th { background: var(--surface-2); font-weight: 800; }
+    .num-in { width: 100%; min-height: 46px; border: 2px solid var(--line); border-radius: 10px; font: inherit; font-weight: 800; font-size: 17px; padding: 0 10px; background: var(--surface); color: var(--ink); text-align: center; }
+    .num-in:focus { outline: none; border-color: var(--subject); }
+    .num-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .num-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .in-row { display: grid; grid-template-columns: 1fr 104px; gap: 8px; align-items: center; margin-top: 6px; font-weight: 800; font-size: 14.5px; line-height: 1.25; }
+    .in-row .num-in { min-height: 42px; font-size: 16px; }
+    @keyframes shakeX { 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+    .src-note { margin: 4px 0 0; font-size: 12.5px; color: #a16207; background: #fff7e0; border: 1px solid #f2d38a; border-radius: 10px; padding: 6px 9px; line-height: 1.4; }
+    @media (max-width: 599px) {
+      .readout { min-width: 0; }
+      .readout .value.txt { font-size: 15px; }
+      .stage-toolbar .spacer { display: none; }
+      .stage-toolbar .segmented button { padding: 5px 7px; font-size: 13px; }
+    }
+    input[type=range] { height: 40px; }
+    .ticks { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--muted); font-weight: 700; margin-top: -6px; padding: 0 2px; }
+    </style>
+</head>
+<body class="sim-page" data-subject="earth">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#hu">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">행성우주과학 · Ⅱ. 태양과 별의 관측</div>
+      <h1>별의 공간 운동</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🌈 스펙트럼선의 이동</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="group" aria-label="장면 고르기" hidden></div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="Hα 스펙트럼선의 이동으로 시선 속도를, 두 해의 하늘 사진으로 접선 속도를 구하고, 속도 합성과 바너드별의 최근접 거리, 북두칠성 별 7개의 회전하는 3차원 점 도표와 시간에 따른 모양 변화를 보는 장면이 있어요."></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">—</span><span class="value txt" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">—</span><span class="value txt" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">—</span><span class="value txt" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+
+        <div class="control" data-modes="rad">
+          <div class="control-head"><span>⭐ 별 고르기</span></div>
+          <div class="opt-grid c3" id="grpRd"><button class="opt" type="button" data-k="0">바너드별</button><button class="opt" type="button" data-k="1">시리우스</button><button class="opt" type="button" data-k="2">아르크투루스</button><button class="opt" type="button" data-k="3">베가</button><button class="opt" type="button" data-k="4">가상의 별</button></div>
+        </div>
+        <div class="control" data-modes="rad" id="vcusBox" hidden>
+          <div class="control-head"><label for="sVc">🌈 가상의 별의 시선 속도</label><output id="oVc">−60 km/s</output></div>
+          <input type="range" id="sVc" min="-200" max="200" step="5" value="-60" aria-label="가상의 별의 시선 속도 (km/s)">
+        </div>
+        <div class="control" data-modes="rad" id="calcVr" hidden>
+          <div class="in-row"><span>시선 속도 v_r<br>(km/s)</span><input class="num-in" id="inVr" type="text" inputmode="decimal" placeholder="예: -100" aria-label="시선 속도 (km/s)" autocomplete="off"></div>
+        </div>
+
+        <div class="control" data-modes="tan">
+          <div class="control-head"><span>⭐ 별 고르기</span></div>
+          <div class="opt-grid c2" id="grpTn"><button class="opt" type="button" data-k="0">바너드별</button><button class="opt" type="button" data-k="1">시리우스</button><button class="opt" type="button" data-k="2">아르크투루스</button><button class="opt" type="button" data-k="3">베가</button></div>
+          <div class="control-head" style="margin-top:8px"><label for="sDt">⏳ 두 사진의 시간 간격 Δt</label><output id="oDt">5년</output></div>
+          <input type="range" id="sDt" min="1" max="10" step="1" value="5" aria-label="두 사진의 시간 간격 (년)">
+          <div class="btn-row"><button class="btn btn-sm" id="bBlink" type="button">👁 두 사진 깜박이기</button></div>
+        </div>
+        <div class="control" data-modes="tan" id="calcVt" hidden>
+          <div class="in-row"><span>접선 속도 v_t<br>(km/s)</span><input class="num-in" id="inVt" type="text" inputmode="decimal" placeholder="예: 50" aria-label="접선 속도 (km/s)" autocomplete="off"></div>
+        </div>
+
+        <div class="control" data-modes="vec">
+          <div class="control-head"><label for="sTv">⏳ 지금부터 흐른 시간</label><output id="oTv">0년</output></div>
+          <input type="range" id="sTv" min="0" max="20000" step="250" value="0" aria-label="지금부터 흐른 시간 (년)">
+        </div>
+        <div class="control" data-modes="vec" id="calcV" hidden>
+          <div class="in-row"><span>공간 속도 v<br>(km/s)</span><input class="num-in" id="inV" type="text" inputmode="decimal" placeholder="예: 150" aria-label="공간 속도 (km/s)" autocomplete="off"></div>
+        </div>
+        <div class="control" data-modes="vec" id="calcDm" hidden>
+          <div class="in-row"><span>최근접 거리<br>d_min (pc)</span><input class="num-in" id="inDm" type="text" inputmode="decimal" placeholder="예: 1.2" aria-label="최근접 거리 (파섹)" autocomplete="off"></div>
+        </div>
+
+        <div class="control" data-modes="con">
+          <div class="control-head"><span>🌌 자료</span></div>
+          <div class="opt-grid" id="grpDs"><button class="opt" type="button" data-k="dip">북두칠성</button><button class="opt" type="button" data-k="ori">오리온</button></div>
+          <div class="control-head" style="margin-top:8px"><label for="sYaw">🔄 시점 (0° 하늘 → 90° 옆)</label><output id="oYaw">0°</output></div>
+          <input type="range" id="sYaw" min="0" max="90" step="1" value="0" aria-label="시점 회전 각도">
+          <div class="btn-row"><button class="btn btn-sm" id="bSky" type="button">🌌 하늘에서 보기</button><button class="btn btn-sm" id="bSide" type="button">↔ 옆에서 보기</button></div>
+          <div class="control-head" style="margin-top:8px"><label for="sTm">⏳ 시간 (±10만 년)</label><output id="oTm">0년</output></div>
+          <input type="range" id="sTm" min="-100000" max="100000" step="5000" value="0" aria-label="현재로부터의 시간 (년)">
+          <div class="btn-row"><button class="btn btn-sm" id="bArrow" type="button">➡ 운동 화살표 켜기</button></div>
+        </div>
+
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

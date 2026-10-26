@@ -9713,8 +9713,7 @@ window.SCI_CATALOG = {
                 "흑점 이동",
                 "차등 자전",
                 "활동 주기"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hu-solar-atmosphere",
@@ -9735,8 +9734,7 @@ window.SCI_CATALOG = {
                 "대기 현상",
                 "다파장",
                 "영상 합성"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hu-stellar-distance",
@@ -9757,8 +9755,7 @@ window.SCI_CATALOG = {
                 "거리 지수",
                 "방법 비교",
                 "방법 평가"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hu-space-motion",
@@ -9779,8 +9776,7 @@ window.SCI_CATALOG = {
                 "접선 속도",
                 "공간 운동",
                 "별자리"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hu-binary-mass",
