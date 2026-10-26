@@ -621,7 +621,7 @@
   }
   const cSt = makeClassifier({
     items: STRU.map((s) => ({ label: s.n, sub: s.sub, chip: s.n, bin: s.bin, open: true })),
-    bins: STRU.map((s) => ({ label: PHONE ? s.pl : s.size, sub: PHONE ? 'Mpc' : '', color: ['#0ea5e9', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444'][s.bin] })),
+    bins: STRU.map((s) => ({ label: PHONE ? s.pl : s.size, color: ['#0ea5e9', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444'][s.bin] })),
     chipCols: 1, minRows: 1,
     layout: () => { const L = LStrCls(); return { grid: L.grid, bins: L.bins }; },
     onPlace(it, b) {
@@ -637,7 +637,7 @@
     const L = LStr(), A = L.A, P = L.P, ST = S.st;
     ST.fog = approach(ST.fog, ST.fogT, dt, 2.2); if (Math.abs(ST.fog - ST.fogT) < 0.003) ST.fog = ST.fogT;
     panel(A.x, A.y, A.w, A.h, { r: 14 });
-    T(A.x + 14, A.y + 24 * FS, '🏗️ 구조의 이름과 크기를 연결해요', PHONE ? 12.5 : 14.5, '#1e293b', 'left', 800);
+    T(A.x + 14, A.y + 24 * FS, (PHONE ? '🏗️ 이름과 크기(Mpc)를 연결해요' : '🏗️ 구조의 이름과 크기를 연결해요'), PHONE ? 12.5 : 14.5, '#1e293b', 'left', 800);
     cSt.draw(dt, {});
     darkP(P.x, P.y, P.w, P.h);
     ctx.save(); rr(P.x, P.y, P.w, P.h, 14); ctx.clip();
@@ -730,7 +730,7 @@
         px[q] = (((px[q] + vx[q] * drift) % 1) + 1) % 1; py[q] = (((py[q] + vy[q] * drift) % 1) + 1) % 1;
       }
       a += da; snap();
-      if (st % 6 === 5) yield;
+      if (st % 2 === 1) yield;
     }
     return { frames, eps };
   }
@@ -739,7 +739,7 @@
   function queueSim(eps) { const k = simKey(eps); if (SIMC.has(k) || SIMJOBS.some((j) => j.k === k)) return; SIMJOBS.push({ k, g: simGen(eps) }); }
   function pumpSim(ms) { const t0 = performance.now(); while (SIMJOBS.length && performance.now() - t0 < ms) { const j = SIMJOBS[0], r = j.g.next(); if (r.done) { SIMC.set(j.k, r.value); SIMJOBS.shift(); } } return SIMJOBS.length > 0; }
   function runSim(eps) { queueSim(eps); const k = simKey(eps); while (!SIMC.has(k)) pumpSim(1000); return SIMC.get(k); }
-  (function pumpLoop() { if (pumpSim(7)) setTimeout(pumpLoop, 12); else setTimeout(pumpLoop, 400); })();
+  (function pumpLoop() { if (pumpSim(4)) setTimeout(pumpLoop, 14); else setTimeout(pumpLoop, 400); })();
   [5, 0, 1, 2, 3, 4].forEach((e) => queueSim(e / 100));
   const ageOfA = (a) => 138 * Math.pow(a, 1.5);
   const aOfAge = (t) => clamp(Math.pow(t / 138, 2 / 3), A_I, A_F);
@@ -867,7 +867,7 @@
           check: () => markersOK().filter((m) => m.kind === 'c').length === 3 && markersOK().filter((m) => m.kind === 'v').length === 3,
           hold: 0.8,
           status: () => mark(markersOK().filter((m) => m.kind === 'c').length === 3) + ' 은하단 ' + markersOK().filter((m) => m.kind === 'c').length + ' / 3 &nbsp; ' + mark(markersOK().filter((m) => m.kind === 'v').length === 3) + ' 보이드 ' + markersOK().filter((m) => m.kind === 'v').length + ' / 3',
-          explain: '은하단은 가까운 곳(약 72 Mpc)과 먼 곳 2곳(약 216 · 264 Mpc)에서, 보이드는 지름 약 32~50 Mpc의 넓은 빈 곳 3곳에서 찾았어요. 은하는 뭉치거나 비어 있는 곳이 뚜렷해요.',
+          explain: '은하단은 가까운 곳(약 72 Mpc)과 먼 곳 2곳(약 220 · 274 Mpc)에서, 보이드는 지름 약 32~50 Mpc의 넓은 빈 곳 3곳에서 찾았어요. 은하는 뭉치거나 비어 있는 곳이 뚜렷해요.',
         },
         {
           type: 'quiz', title: '무작위 분포와 실제 분포 비교',
@@ -1024,7 +1024,7 @@
   function readouts() {
     const v = S.view;
     if (v === 'map') { const nc = markersOK().filter((m) => m.kind === 'c').length, nv = markersOK().filter((m) => m.kind === 'v').length; setReadouts(['표시한 은하단', nc + ' / 3', '표시한 보이드', nv + ' / 3', '확대', '×' + f1(S.mp.z)]); }
-    else if (v === 'grid') { const G = gridInfo(S.gr.s), c = S.gr.sel && G.cells.get(S.gr.sel); setReadouts(['셀 한 칸', S.gr.s + ' Mpc', '전체 평균 n̄', f1(G.nbar), '고른 셀의 n', c && !cellHidden(c) ? String(c.n) : '—']); }
+    else if (v === 'grid') { const G = gridInfo(S.gr.s), c = S.gr.sel && G.cells.get(S.gr.sel); setReadouts(['셀 한 칸', S.gr.s + ' Mpc', '전체 평균 n̄', f1(G.nbar), '고른 셀의 n', c && (!cellHidden(c) || S.gr.nOK) ? String(c.n) : '—']); }
     else if (v === 'struct') { const c = cSt.counts(); setReadouts(['연결한 카드', c.placed + ' / 5', '알맞게 연결', c.right + ' / 5', '신의 손가락', S.st.fogT ? '± ' + f0(FOG_MPC) + ' Mpc' : '꺼짐']); }
     else { const st = orbStats(S.or.eps, S.or.ageD); setReadouts(['초기 요동', '±' + S.or.eps + ' %', '우주 나이', f0(S.or.ageD) + '억 년', '빈 곳 칸', st.voids + ' / 64']); }
   }

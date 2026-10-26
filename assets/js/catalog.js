@@ -9944,8 +9944,7 @@ window.SCI_CATALOG = {
                 "분광 거리",
                 "쐐기 도표",
                 "거리 사다리"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hu-galaxy-groups",
@@ -9966,8 +9965,7 @@ window.SCI_CATALOG = {
                 "은하단",
                 "군집 찾기",
                 "구조 규모"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hu-cosmic-web",
@@ -9988,8 +9986,7 @@ window.SCI_CATALOG = {
                 "밀도 분석",
                 "큰 구조",
                 "구조 기원"
-              ],
-              "soon": true
+              ]
             }
           ]
         }
