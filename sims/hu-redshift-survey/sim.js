@@ -493,8 +493,7 @@
       const lx = gx(sp.lam), arrowOn = Math.abs(sp.lam - LAM0) > 0.25;
       ctx.fillStyle = '#fbbf24'; ctx.beginPath(); ctx.moveTo(lx, sy + sh + 1); ctx.lineTo(lx - 7, sy + sh + 14); ctx.lineTo(lx + 7, sy + sh + 14); ctx.closePath(); ctx.fill();
       if (arrowOn) D.arrow(rx + 4, sy - 40, lx, sy - 40, { color: '#fbbf24', width: 3, head: 10 });
-      D.label(clamp((rx + lx) / 2, x0 + 80, x1 - 90), sy - 56, '적색 편이 Δλ = ' + ((sp.lam - LAM0) < 0.05 ? '0.0' : (g.dl * clamp((sp.lam - LAM0) / g.dl, 0, 1)).toFixed(1)) + ' nm', { bg: '#b45309', size: PHONE ? 10.5 : 12 });
-      D.label(clamp(lx, x0 + 70, x1 - 70), sy + sh + 52, specNote(g).replace(g.id + ' · ', '관측 '), { bg: '#78350f', color: '#fde68a', size: PHONE ? 10.5 : 12 });
+      D.label(clamp((rx + lx) / 2, x0 + 130, x1 - 130), sy - 56, '적색 편이 Δλ = ' + ((sp.lam - LAM0) < 0.05 ? '0.0' : (g.dl * clamp((sp.lam - LAM0) / g.dl, 0, 1)).toFixed(1)) + ' nm  →  관측 ' + g.lam.toFixed(1) + ' nm', { bg: '#b45309', size: PHONE ? 10.5 : 12 });
     }
     return { gx, sy, sh };
   }
@@ -502,7 +501,7 @@
     darkPanel(R.x, R.y, R.w, R.h);
     const g = S.sp.gi >= 0 ? TG[S.sp.gi] : null;
     T(R.x + 14, R.y + 24 * FS, '🌈 ' + (g ? g.id + '의 스펙트럼: Ca II K선' : title || '스펙트럼 촬영기'), PHONE ? 12.5 : 14.5, '#e2e8f0', 'left', 800);
-    drawSpecStrip(R, { sy: PHONE ? 100 : 82, sh: PHONE ? 54 : 56 });
+    drawSpecStrip(R, { sy: PHONE ? 100 : 102, sh: PHONE ? 54 : 52 });
     if (withChips) {
       S.hit = [];
       const cols = PHONE ? 3 : 6, gap = 8, cw = (R.w - 24 - gap * (cols - 1)) / cols, ch = PHONE ? 62 : 54, y0 = R.y + R.h - (PHONE ? 2 * ch + gap + 12 : ch + 12);
@@ -975,7 +974,7 @@
     // 스펙트럼 촬영 애니메이션
     if (S.sp.gi >= 0) {
       const g = TG[S.sp.gi];
-      S.sp.reveal = approach(S.sp.reveal, 1, dt, 2.2); if (S.sp.reveal > 0.995) S.sp.reveal = 1;
+      S.sp.reveal = approach(S.sp.reveal, 1, dt, 3.2); if (S.sp.reveal > 0.995) S.sp.reveal = 1;
       if (S.sp.reveal >= 1) S.sp.lam = approach(S.sp.lam, g.lam, dt, 3.2);
       if (Math.abs(S.sp.lam - g.lam) < 0.01) S.sp.lam = g.lam;
     }
