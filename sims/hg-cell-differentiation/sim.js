@@ -1239,7 +1239,7 @@
   srInit(); srPT = sorterPT(() => srS);
   setMode('cells');
   let lastFree = false, lastLv = -1;
-  SciSim.loop((dt, t) => {
+  function frameFn(dt, t) {
     clock = t; S.t = t;
     if (game && game.free !== lastFree) { lastFree = game.free; updateCtl(); }
     if (game && game.level !== lastLv) { lastLv = game.level; updateCtl(); }
@@ -1257,11 +1257,12 @@
     parts.update(dt); parts.draw(ctx);
     if (S.fade > 0.005) { ctx.fillStyle = 'rgba(241,246,243,' + S.fade * 0.8 + ')'; ctx.fillRect(0, 0, VW, VH); S.fade = RM ? 0 : approach(S.fade, 0, dt, 9); }
     readouts();
-  });
+  }
+  SciSim.loop(frameFn);
 
   /* ---------- 디버그 (Playwright) ---------- */
   window.__sim = {
-    S, VW, VH, PHONE, get game() { return game; }, levels, setMode, updateCtl, cBox, dnaStart, dnaAll, dnaDone, gelRun, gelRunAll, gelTap, gelCheck, gelX, GL, PRES,
+    frameFn, S, VW, VH, PHONE, get game() { return game; }, levels, setMode, updateCtl, cBox, dnaStart, dnaAll, dnaDone, gelRun, gelRunAll, gelTap, gelCheck, gelX, GL, PRES,
     get srS() { return srS; }, srState, SRG, ntNext, ntReset, NTG, NT_DUR, mdGo, mdView, mdReset, MG, rateReset, ntDoneBoth,
   };
 })();

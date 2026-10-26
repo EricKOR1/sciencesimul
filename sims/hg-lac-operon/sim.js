@@ -453,9 +453,10 @@
     // 구간 상자
     ['I', 'P', 'O', 'Z', 'Y', 'A'].forEach((k) => {
       const r = L[k]; let col = SEGCOL[k], bad = false;
-      if (st.strain && sk.defect === k) bad = true;
+      const alt = st.strain === 'Is' && k === 'I';
+      if (st.strain && sk.defect === k && !alt) bad = true;
       D.shadow(() => { D.roundRect(r.x, ly - hh / 2, r.w, hh, 6); ctx.fillStyle = bad ? '#e5e7eb' : C.mix('#ffffff', col, 0.78); ctx.fill(); }, { blur: 4, y: 2 });
-      ctx.strokeStyle = bad ? '#e2464b' : C.shade(col, -0.2); ctx.lineWidth = bad ? 3 : 2; D.roundRect(r.x, ly - hh / 2, r.w, hh, 6); ctx.stroke();
+      ctx.strokeStyle = bad ? '#e2464b' : alt ? '#f59e0b' : C.shade(col, -0.2); ctx.lineWidth = bad || alt ? 3 : 2; if (alt) ctx.setLineDash([5, 3]); D.roundRect(r.x, ly - hh / 2, r.w, hh, 6); ctx.stroke(); ctx.setLineDash([]);
       let nm = (st.nameMap && st.nameMap[k]) || SEGNAME[k];
       if (st.strain === 'Im' && k === 'I') nm = 'lacI⁻'; if (st.strain === 'Is' && k === 'I') nm = 'lacIˢ'; if (st.strain === 'Oc' && k === 'O') nm = 'Oᶜ'; if (st.strain === 'Zm' && k === 'Z') nm = 'lacZ⁻'; if (st.strain === 'Pm' && k === 'P') nm = 'P⁻';
       const hn = typeof st.hideNames === 'function' ? st.hideNames(k) : st.hideNames;
@@ -711,8 +712,8 @@
     // 학생이 표시한 시각
     if (LAC.mark > 0) { ctx.strokeStyle = '#7c3aed'; ctx.lineWidth = 2.5; ctx.setLineDash([6, 4]); ctx.beginPath(); ctx.moveTo(px(LAC.mark), y - 6); ctx.lineTo(px(LAC.mark), y + h); ctx.stroke(); ctx.setLineDash([]); pill(px(LAC.mark), y - 12, LAC.mark + '분', { bg: '#7c3aed', color: '#fff', size: 12.5 }); }
     // 범례
-    const lx = x + 8, ly = y + 12;
-    [['젖당 양', '#2563eb', true], ['mRNA 양', '#f59e0b'], ['효소 활성(로그)', '#16a34a']].forEach((l, i) => { ctx.strokeStyle = l[1]; ctx.lineWidth = 4; if (l[2]) ctx.setLineDash([6, 4]); ctx.beginPath(); ctx.moveTo(lx + i * (PHONE ? 112 : 150), ly); ctx.lineTo(lx + i * (PHONE ? 112 : 150) + 22, ly); ctx.stroke(); ctx.setLineDash([]); T(lx + i * (PHONE ? 112 : 150) + 28, ly + 4.5, l[0], 12.5, '#334155', 'left', 800); });
+    const lx = PHONE ? x + 56 : x + w * 0.46, ly = PHONE ? y - 8 : y + 14;
+    [['젖당 양', '#2563eb', true], ['mRNA 양', '#f59e0b'], ['효소 활성(로그)', '#16a34a']].forEach((l, i) => { ctx.strokeStyle = l[1]; ctx.lineWidth = 4; if (l[2]) ctx.setLineDash([6, 4]); ctx.beginPath(); ctx.moveTo(lx + i * (PHONE ? 98 : 132), ly); ctx.lineTo(lx + i * (PHONE ? 98 : 132) + 22, ly); ctx.stroke(); ctx.setLineDash([]); T(lx + i * (PHONE ? 98 : 132) + 28, ly + 4.5, l[0], 12.5, '#334155', 'left', 800); });
   }
   LAC.mark = 0;
   function lacScene(dt, t) {
@@ -726,7 +727,7 @@
     const gy = PHONE ? 352 : 316, gh = PHONE ? 180 : 168;
     drawLacGraph(PHONE ? 58 : 70, gy, VW - (PHONE ? 58 + 46 : 70 + 62), gh);
     if (!LAC.added) T(VW / 2, gy + gh / 2 + 6, '젖당 양을 정하고 [젖당 넣기]를 누르면 그래프가 그려져요', PHONE ? 13 : 15, '#94a3b8', 'center', 800);
-    T(VW - 16, PHONE ? 570 : 560, '지금 ' + fmtN(LAC.t, 1) + '분 · 활성 ' + fmtN(actOf(LAC.x), 0) + ' · 젖당 ' + fmtN(LAC.L, 0), 13.5, '#475569', 'right', 800);
+    T(VW - 16, PHONE ? 626 : 550, '지금 ' + fmtN(LAC.t, 1) + '분 · 활성 ' + fmtN(actOf(LAC.x), 0) + ' · 젖당 ' + fmtN(LAC.L, 0), 13.5, '#475569', 'right', 800);
   }
 
   /* ---------- 포도당 + 젖당 이중 성장 곡선 ---------- */
@@ -782,11 +783,11 @@
     const L = opLayout(x, w), sk = STRAINS[key], h = 22;
     ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x - 2, y); ctx.lineTo(x + w + 2, y); ctx.stroke();
     ['I', 'P', 'O', 'Z', 'Y', 'A'].forEach((k) => {
-      const r = L[k], bad = sk.defect === k;
+      const r = L[k], alt = key === 'Is' && k === 'I', bad = sk.defect === k && !alt;
       D.roundRect(r.x, y - h / 2, r.w, h, 5); ctx.fillStyle = bad ? '#e5e7eb' : C.mix('#ffffff', SEGCOL[k], 0.75); ctx.fill();
-      ctx.strokeStyle = bad ? '#e2464b' : C.shade(SEGCOL[k], -0.2); ctx.lineWidth = bad ? 2.5 : 1.5; ctx.stroke();
+      ctx.strokeStyle = bad ? '#e2464b' : alt ? '#f59e0b' : C.shade(SEGCOL[k], -0.2); ctx.lineWidth = bad || alt ? 2.5 : 1.5; if (alt) ctx.setLineDash([4, 3]); ctx.stroke(); ctx.setLineDash([]);
       if (bad) { ctx.strokeStyle = '#e2464b'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(r.x + 3, y - h / 2 + 3); ctx.lineTo(r.x + r.w - 3, y + h / 2 - 3); ctx.moveTo(r.x + r.w - 3, y - h / 2 + 3); ctx.lineTo(r.x + 3, y + h / 2 - 3); ctx.stroke(); }
-      if (!bad && r.w >= 26) T(r.x + r.w / 2, y + 4.5, SEGNAME[k].replace('lac', ''), 11.5, '#fff', 'center', 800, { stroke: C.shade(SEGCOL[k], -0.3), strokeWidth: 3 });
+      if (!bad && r.w >= 26) T(r.x + r.w / 2, y + 4.5, alt ? 'Iˢ' : SEGNAME[k].replace('lac', ''), 12, '#fff', 'center', 800, { stroke: C.shade(SEGCOL[k], -0.3), strokeWidth: 3 });
     });
   }
   function tblLayout(top, rowH) {

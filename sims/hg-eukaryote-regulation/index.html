@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#16a34a">
+  <title>진핵생물의 발현 조절 | 고등 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎛️</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; }
+    .stage-toolbar { min-height: 58px; }
+    .stage-toolbar .segmented { flex-wrap: wrap; }
+    .stage-toolbar .segmented button { min-height: 40px; padding: 5px 10px; font-size: 14px; white-space: nowrap; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard [hidden] { display: none !important; }
+    .btn-sm { min-height: 44px; }
+    .btn-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+    .btn-row .btn { flex: 1; padding-left: 8px; padding-right: 8px; }
+    .ctrl-note { margin: 6px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    .ctrl-note b { color: var(--ink); }
+    .range-row { display: flex; align-items: center; gap: 8px; }
+    .range-row input[type=range] { flex: 1; min-width: 0; height: 44px; }
+    .seg-full { display: flex; width: 100%; }
+    .seg-full button { flex: 1 1 0; min-width: 0; min-height: 44px; font-size: 14.5px; }
+    .chip-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px; }
+    .chip-grid.three { grid-template-columns: 1fr 1fr 1fr; }
+    .chip-grid button { min-height: 44px; padding: 6px 8px; border: 2px solid var(--line); background: #fff; border-radius: 12px; font-weight: 800; font-size: 14px; cursor: pointer; color: var(--ink); text-align: center; }
+    .chip-grid button.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); }
+    .chip-grid button.seen:not(.on) { border-color: color-mix(in srgb, var(--subject) 45%, white); }
+    .chip-grid button:disabled { opacity: .45; cursor: not-allowed; }
+    .chip-grid button:active { transform: scale(.98); }
+    .sel-in { width: 100%; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 8px; font: 800 14px var(--font); color: var(--ink); background: #fff; }
+    .sel-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .sel-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .num-in { width: 100%; min-width: 0; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 8px; font: 800 16px ui-monospace, Menlo, Consolas, monospace; color: var(--ink); background: #fff; text-align: right; }
+    .num-in:focus { outline: none; border-color: var(--subject); }
+    .num-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .num-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .in-unit { font-size: 12.5px; color: var(--muted); font-weight: 700; }
+    .in-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 10px; align-items: end; margin-top: 8px; }
+    .in-row .lab { font-weight: 800; font-size: 13.5px; margin-bottom: 3px; line-height: 1.25; }
+    @keyframes shakeX { 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+    .readout .value { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .stage-canvas .stage-hint { top: 10px; bottom: auto; }
+    .pk-pool { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+    .pk-item { min-height: 44px; padding: 6px 12px; border: 2px solid var(--line); background: #fff; border-radius: 12px; font-weight: 800; font-size: 14px; cursor: pointer; color: var(--ink); }
+    .pk-item:disabled { opacity: .35; cursor: default; }
+    .pk-seq { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; min-height: 46px; border: 2px dashed var(--line); border-radius: 12px; padding: 6px; }
+    .pk-chip { min-height: 34px; padding: 3px 10px; border: 2px solid var(--subject); background: color-mix(in srgb, var(--subject) 12%, white); border-radius: 999px; font-weight: 800; font-size: 13.5px; cursor: pointer; color: var(--ink); }
+    .pk-chip b { color: var(--subject); margin-right: 2px; }
+    .pk-reset { margin-top: 8px; width: 100%; }
+    .tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; margin-top: 6px; }
+    .tbl th, .tbl td { border: 1px solid var(--line); padding: 4px 4px; text-align: center; }
+    .tbl th { background: var(--surface-2); font-weight: 800; }
+    .tbl td.rowh { font-weight: 800; text-align: left; background: var(--surface-2); }
+    .tbl select { width: 100%; min-height: 40px; border: 2px solid var(--line); border-radius: 8px; font: 800 13.5px var(--font); background: #fff; color: var(--ink); }
+    .tbl select.ok { border-color: var(--good); background: var(--good-soft); }
+    .tbl select.bad { border-color: var(--bad); background: var(--bad-soft); }
+    .check-list { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 4px; font-size: 13.5px; font-weight: 700; }
+    .check-list li { display: flex; gap: 6px; align-items: baseline; }
+    .check-list li.on { color: var(--good); }
+    .btn-col { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+    #modeSeg button.lv-off { display: none; }
+    @media (max-width: 1100px) and (orientation: landscape) { .toolbar-label { display: none; } }
+    @media (max-width: 599px) {
+      .readout .value { font-size: 15px; }
+      .stage-toolbar { gap: 6px; padding: 8px; }
+      .stage-toolbar .spacer, .toolbar-label { display: none; }
+      .stage-toolbar .segmented button { padding: 5px 8px; font-size: 13.5px; }
+      .stage-hint { font-size: 13px; padding: 5px 12px; }
+    }
+    .stage-toolbar .segmented button.lv-off { display: none; }
+    .tag-pill { display: inline-block; padding: 2px 9px; border-radius: 999px; font-weight: 800; font-size: 12.5px; background: color-mix(in srgb, var(--subject) 14%, white); color: var(--ink); }
+    .tbl-in { width: 100%; }
+
+    .frac-in { width: 100%; min-width: 0; min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 8px; font: 800 16px ui-monospace, Menlo, Consolas, monospace; color: var(--ink); background: #fff; text-align: center; }
+    .frac-in:focus { outline: none; border-color: var(--subject); }
+    .frac-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .frac-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .chip-grid.one { grid-template-columns: 1fr; }
+    .chip-grid button.mc { text-align: left; font-size: 13.5px; line-height: 1.3; }
+    .tbl.left td { text-align: left; }
+    .sec-t { font-weight: 800; font-size: 13.5px; margin: 8px 0 2px; color: var(--ink); }
+
+  
+    .ctrl-note.warn { color: #b45309; }
+    .tag-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+    .pk-seq .in-unit { align-self: center; }
+    .btn-wide { width: 100%; }
+    .tbl select { min-width: 0; }
+    .seg-full button.on { background: var(--subject); color: #fff; }
+    .sel-note { min-height: 20px; }
+  </style>
+</head>
+<body class="sim-page" data-subject="bio">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#hg">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">생물의 유전 · Ⅱ. 유전자의 발현</div>
+      <h1>진핵생물의 발현 조절</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🎛️ 진핵생물의 발현 조절</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="tablist" aria-label="화면 고르기">
+            <button type="button" data-mode="compare" data-lv="0" data-feature="compare">⚖️ 원핵 · 진핵</button>
+            <button type="button" data-mode="tf" data-lv="1" data-feature="tf">🎛️ 전사 인자</button>
+            <button type="button" data-mode="stages" data-lv="2" data-feature="stages">🎚️ 슬라이더</button>
+            <button type="button" data-mode="link" data-lv="2" data-feature="link">🔗 단계–사례</button>
+            <button type="button" data-mode="media" data-lv="3" data-feature="media">📝 설명 자료</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="원핵과 진핵의 발현 조절 비교, 전사 인자와 인핸서, 여러 조절 단계, 설명 자료 만들기"></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">—</span><span class="value" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">—</span><span class="value" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">—</span><span class="value" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+        <div class="control" data-modes="compare">
+          <div class="control-head"><span>⚖️ 찾은 다른 점</span></div>
+          <ul class="check-list" id="cmpMade"></ul>
+          <p class="ctrl-note">그림 속 <b>번호</b>를 눌러 원핵생물과 진핵생물을 비교해요. 원핵은 앞 차시의 젖당 오페론이 대표예요.</p>
+        </div>
+        <div class="control" data-modes="tf">
+          <div class="control-head"><span>🎛️ 세포 고르기</span></div>
+          <div class="chip-grid three" id="tfCell"><button type="button" data-v="A">세포 A<br>X Y Z</button><button type="button" data-v="B">세포 B<br>X Y</button><button type="button" data-v="C">세포 C<br>Y Z</button></div>
+          <div class="sec-t">붙이기 (캔버스를 눌러도 돼요)</div>
+          <div class="chip-grid" id="tfTok" style="grid-template-columns:repeat(3,1fr)"><button type="button" data-v="X">X</button><button type="button" data-v="Y">Y</button><button type="button" data-v="Z">Z</button><button type="button" data-v="B" style="grid-column:1/-1">기본 전사 인자 + RNA 중합 효소</button></div>
+          <div class="btn-row"><button class="btn btn-sm" id="tfReset" type="button">↺ 인자 떼기</button></div>
+          <ul class="check-list" id="tfMade"></ul>
+        </div>
+        <div class="control" data-modes="stages">
+          <div class="control-head"><span>🎚️ 유전자 X의 발현 조절</span></div>
+          <div class="control-head" style="margin-top:6px"><label for="sRate">① 전사 속도 (개/시간)</label><output id="oRate">10</output></div>
+          <div class="range-row"><input type="range" id="sRate" min="2" max="20" step="1" value="10" aria-label="① 전사 속도 (개/시간)"></div>
+          <div class="control-head" style="margin-top:6px"><label for="sLife">② mRNA 평균 수명 (시간)</label><output id="oLife">5</output></div>
+          <div class="range-row"><input type="range" id="sLife" min="1" max="10" step="1" value="5" aria-label="② mRNA 평균 수명 (시간)"></div>
+          <div class="control-head" style="margin-top:6px"><label for="sTr">③ 번역 효율 (배)</label><output id="oTr">1</output></div>
+          <div class="range-row"><input type="range" id="sTr" min="0.5" max="2" step="0.25" value="1" aria-label="③ 번역 효율 (배)"></div>
+          <div class="control-head" style="margin-top:6px"><label for="sDg">④ 단백질 분해 속도 (배)</label><output id="oDg">1</output></div>
+          <div class="range-row"><input type="range" id="sDg" min="0.5" max="2" step="0.25" value="1" aria-label="④ 단백질 분해 속도 (배)"></div>
+          <div class="btn-row"><button class="btn btn-sm" id="gxReset" type="button">↺ 기준 상태로</button></div>
+          <p class="ctrl-note" id="gxRes"></p>
+        </div>
+        <div class="control" data-modes="link">
+          <div class="control-head"><span>🔗 단계–사례 연결</span></div>
+          <ul class="check-list" id="lkMade"></ul>
+          <div class="btn-row"><button class="btn btn-sm" id="lkReset" type="button">↺ 카드 모으기</button></div>
+          <p class="ctrl-note">카드를 <b>끌어서</b> 알맞은 단계 칸에 놓거나, 카드를 누른 뒤 칸을 눌러요. 다 놓으면 <b>✔ 확인하기</b>!</p>
+        </div>
+        <div class="control" data-modes="media">
+          <div class="control-head"><span>📝 매체 고르기</span></div>
+          <div class="chip-grid" id="mdSel"><button type="button" data-v="diagram">비교 도식</button><button type="button" data-v="poster">포스터</button><button type="button" data-v="cards">카드뉴스</button><button type="button" data-v="storyboard">영상 콘티</button><button type="button" data-v="slides" style="grid-column:1/-1">디지털 슬라이드</button></div>
+          <div class="sec-t">칸 고르기</div>
+          <div class="chip-grid" id="mdSlots" style="grid-template-columns:repeat(6,1fr)"><button type="button" data-v="0">1</button><button type="button" data-v="1">2</button><button type="button" data-v="2">3</button><button type="button" data-v="3">4</button><button type="button" data-v="4">5</button><button type="button" data-v="5">6</button></div>
+          <div class="sec-t" id="mdSlotT"></div>
+          <div class="chip-grid one" id="mdOpts"></div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="mdCheck" type="button">🔍 체크리스트 점검</button><button class="btn btn-sm" id="mdReset" type="button">↺ 비우기</button></div>
+        </div>
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

@@ -715,7 +715,7 @@
     // 힘 상자 (가운데 공기 덩어리의 힘)
     const L = S.parcels[2], f = S.rot ? fOf(S.latV) : 0, ug = G0 / fOf(S.latV);
     const Vm = Math.hypot(L.u, L.v), sc = 62 / G0;
-    const DB = { x: M.x + 8, y: M.y + 8 + (PHONE ? 22 : 0), w: PHONE ? 214 : 196, h: 176 };
+    const DB = { x: M.x + 8, y: M.y + 30, w: PHONE ? 214 : 196, h: 176 };
     D.shadow(() => { ctx.fillStyle = 'rgba(255,255,255,.95)'; rr(DB.x, DB.y, DB.w, DB.h, 12).fill(); }, { blur: 5, y: 2 });
     D.text(DB.x + DB.w / 2, DB.y + 18 * FS, '가운데 공기 덩어리의 힘', { size: 12, weight: 800, color: '#334155' });
     const ox = DB.x + DB.w / 2 + 6, oy = DB.y + 100;
@@ -797,7 +797,7 @@
     ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.5; rr(M.x, M.y, M.w, M.h, 10).stroke();
     LH(M.x + 18, M.y + 26, 'L'); LH(M.x + 18, M.y + M.h - 10, 'H');
     D.label(M.x + M.w - 8, M.y + M.h - 20, '4 hPa당 ' + c.spc + ' km', { bg: '#334155', size: 12.5, pad: 7, align: 'right' });
-    D.text(M.x + 42, M.y + 25 * FS, c.lat > 0 ? '저기압(L)을 왼쪽에 두고 → 동쪽으로' : 'f = 0: 이 식을 쓸 수 없어요', { size: 12.5, weight: 800, color: '#1e293b', align: 'left', stroke: 'rgba(255,255,255,.85)', strokeWidth: 3.5 });
+    D.label(M.x + 40, M.y + 24 * FS, c.lat > 0 ? '저기압(L)을 왼쪽에 두고 → 동쪽으로' : 'f = 0: 이 식을 쓸 수 없어요', { bg: 'rgba(255,255,255,.92)', color: '#1e293b', size: 12.5, pad: 7, align: 'left', border: '#cbd5e1' });
     // ----- B: 계산 패널
     card(B, '🧮 V = Δp / (ρ f Δn)');
     const f = fOf(c.lat), pg = 400 / (c.spc * 1000);
