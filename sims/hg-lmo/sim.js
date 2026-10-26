@@ -421,18 +421,19 @@
     T(L0.x + L0.w / 2, oy + (PHONE ? 90 : 128), '같은 종 안에서 유전자가 통째로 섞여요', PHONE ? 13 : 14.5, '#92400e', 'center', 800);
     textBlock(L0.x + 18, oy + (PHONE ? 108 : 150), L0.w - 36, '⭐ 원하는 형질이 든 개체를 골라(선발) 여러 세대 교배를 반복해요.', PHONE ? 13 : 14.5, '#475569', PHONE ? 19 : 22, 700);
     // LMO
+    const byR = R0.y + (PHONE ? 52 : 62);
     panel(R0.x, R0.y, R0.w, R0.h, 14);
     pill(R0.x + 14, R0.y + 20, 'LMO: 유전자 재조합', { bg: '#16a34a', color: '#fff', size: 14, align: 'left' });
-    for (let i = 0; i < seg; i++) { D.roundRect(bx(R0) + i * sw, by, sw - 2, 16, 3); ctx.fillStyle = '#86efac'; ctx.fill(); }
-    T(bx(R0) - 4, by + 13, '옥수수', 12.5, '#166534', 'right', 800);
+    for (let i = 0; i < seg; i++) { D.roundRect(bx(R0) + i * sw, byR, sw - 2, 16, 3); ctx.fillStyle = '#86efac'; ctx.fill(); }
+    T(bx(R0) - 4, byR + 13, '옥수수', 12.5, '#166534', 'right', 800);
     const gp = smooth((u % 4) / 1.6);   // 도입 장면 반복
-    const gx = bx(R0) + 5 * sw, gy0 = by + 70, gy1 = by;
-    D.roundRect(bx(R0) + 5 * sw, by + 22, sw * 2 - 2, 16, 3); ctx.fillStyle = '#d1d5db'; ctx.fill(); ctx.setLineDash([3, 3]); ctx.strokeStyle = '#9ca3af'; ctx.stroke(); ctx.setLineDash([]);
+    const gx = bx(R0) + 5 * sw, gy0 = byR + 70, gy1 = byR;
+    D.roundRect(bx(R0) + 5 * sw, byR + 22, sw * 2 - 2, 16, 3); ctx.fillStyle = '#d1d5db'; ctx.fill(); ctx.setLineDash([3, 3]); ctx.strokeStyle = '#9ca3af'; ctx.stroke(); ctx.setLineDash([]);
     const yy = lerp(gy0, gy1, gp);
     D.roundRect(gx, yy, sw * 2 - 2, 16, 3); ctx.fillStyle = '#ef4444'; ctx.fill();
-    TF(bx(R0) + seg * sw / 2, by + 56 + (PHONE ? 0 : 6), 'Bt 독소 유전자 (세균)', 200, 12.5, 11, '#b91c1c', 'center', 800, { alpha: 1 - gp });
+    TF(bx(R0) + seg * sw / 2, byR + 56 + (PHONE ? 0 : 6), 'Bt 독소 유전자 (세균)', 200, 12.5, 11, '#b91c1c', 'center', 800, { alpha: 1 - gp });
     D.arrow(gx + sw, gy0 + 22, gx + sw, gy1 + 24, { color: '#ef4444', width: 3, alpha: 1 - gp * 0.6 });
-    const oyR = by + 86;
+    const oyR = byR + 86;
     for (let i = 0; i < seg; i++) { D.roundRect(bx(R0) + i * sw, oyR, sw - 2, 16, 3); ctx.fillStyle = (i === 5 || i === 6) ? '#ef4444' : '#86efac'; ctx.fill(); }
     T(bx(R0) - 4, oyR + 13, 'LMO', 12.5, '#166534', 'right', 800);
     T(R0.x + R0.w / 2, oyR + (PHONE ? 46 : 52), '나머지 유전자는 그대로, 목적 유전자만 추가돼요', PHONE ? 13 : 14.5, '#166534', 'center', 800);
@@ -484,7 +485,7 @@
     }
     ctx.lineCap = 'butt';
     if (u > 4.2) { T(cx, cy + r + 40, '재조합 플라스미드 완성: Bt 독소 유전자 + 선택 마커', PHONE ? 13 : 15, '#334155', 'center', 800); }
-    callout2(PHONE ? 20 : 60, PHONE ? 370 : 330, '선택 마커 = 제초제를 견디게 하는 유전자 (선별에 써요)', '#b45309');
+    callout2(PHONE ? 14 : 24, PHONE ? 490 : 430, '선택 마커 = 제초제를 견디게 하는 유전자 (선별에 써요)', '#b45309');
   }
   function callout2(x, y, text, col) { T(x, y, text, PHONE ? 13 : 14.5, col, 'left', 800); }
   /* 3: 식물 세포에 도입 */
@@ -509,7 +510,7 @@
       D.sphere(x, y, 4.5, '#fbbf24', { gloss: false });
       if (q > 0.98 && !MKP['b' + ci]) { MKP['b' + ci] = 1; if (!RM) parts.burst(e.x, e.y, { count: 6, speed: 60, life: 0.4, size: 2.5 }); }
     });
-    if (u > shotT + 1.2) T(g.dish.x + g.dish.w / 2, g.dish.y + g.dish.h + 24, '금 입자가 들어간 세포 중 일부에서만 유전자가 염색체에 끼어 들어가요 (모형)', PHONE ? 12.5 : 14, '#475569', 'center', 800);
+    if (u > shotT + 1.2) T(g.dish.x + g.dish.w / 2, g.dish.y + g.dish.h + 20, '금 입자가 들어간 세포 중 일부에서만 유전자가 염색체에 끼어 들어가요 (모형)', PHONE ? 12.5 : 14, '#475569', 'center', 800);
   }
   /* 4: 선택 배지 */
   function mkDish(u, t, dt) {
@@ -556,7 +557,7 @@
         ctx.globalAlpha = a; const wig = crawl < 1 && !RM ? Math.sin(t * 14) * 2 : 0; E('🐛', 0, wig, 26); ctx.restore();
         if (dead) T(lar.x, lar.y - 22, '✕', 20, '#b91c1c', 'center', 800);
         if (!isBt && eat > 0.4) T(x + 90, ground - hgt * 0.7, '잎이 갉아 먹혀요', 13, '#92400e', 'left', 800, { alpha: clamp((eat - 0.4) * 3, 0, 1) });
-        if (isBt && eat > 0.5) T(x + 90, ground - hgt * 0.7, '해충이 죽어요', 13, '#166534', 'left', 800, { alpha: clamp((eat - 0.5) * 3, 0, 1) });
+        if (isBt && eat > 0.8) T(x + 90, ground - hgt * 0.7, '해충이 죽어요', 13, '#166534', 'left', 800, { alpha: clamp((eat - 0.8) * 5, 0, 1) });
       }
     });
     if (grow >= 1) TF(VW / 2, PHONE ? 28 + 22 : 54, 'Bt 독소는 곤충 장 세포의 수용체에 결합해요. 사람 장에는 이 수용체가 없어요.', VW - 28, 14.5, 11.5, '#166534', 'center', 800);
@@ -725,7 +726,7 @@
     T(d.x + 14, d.y + d.h - 8, '● 저항성 ' + nRes + '마리  ● 감수성 ' + (1000 - nRes) + '마리   R = ' + R.toFixed(3), PHONE ? 12.5 : 13.5, '#475569', 'left', 800);
     // 그래프
     const q = g.graph; panel(q.x, q.y, q.w, q.h, 14);
-    const pl = { x: q.x + 46, y: q.y + 34, w: q.w - 66, h: q.h - 84 };
+    const pl = { x: q.x + 46, y: q.y + 34, w: q.w - 66, h: q.h - (PHONE ? 100 : 98) };
     T(q.x + 14, q.y + 22, '저항성 개체 비율 R 의 변화', 14, '#334155', 'left', 800);
     const xo = (n) => pl.x + pl.w * n / NGEN, yo = (v) => pl.y + pl.h * (1 - v);
     [0, 0.25, 0.5, 0.75, 1].forEach((v) => { ctx.strokeStyle = v === 0.5 ? '#f87171' : '#e2e8f0'; ctx.lineWidth = v === 0.5 ? 2 : 1; if (v === 0.5) ctx.setLineDash([6, 4]); ctx.beginPath(); ctx.moveTo(pl.x, yo(v)); ctx.lineTo(pl.x + pl.w, yo(v)); ctx.stroke(); ctx.setLineDash([]); T(pl.x - 6, yo(v) + 4.5, v === 0 ? '0' : v === 1 ? '1' : String(v), 12.5, '#64748b', 'right', 700); });
@@ -740,7 +741,7 @@
       if (RF.cross[ff] != null) { const n = RF.cross[ff]; pill(xo(n), yo(hh[n]) + (ff === 20 ? 22 : ff === 50 ? 0 : -18) + (ff === 50 ? 22 : 0), n + '세대', { bg: FCOL[ff], color: '#fff', size: 12, pad: 5 }); }
     });
     pill(pl.x + 8, pl.y + 10, 'R = 0.5', { bg: '#fee2e2', color: '#b91c1c', size: 12, pad: 5, align: 'left' });
-    FS.forEach((ff, i) => { const lx = q.x + 14 + i * 100; ctx.fillStyle = FCOL[ff]; ctx.fillRect(lx, q.y + q.h - 22, 18, 5); T(lx + 24, q.y + q.h - 15, '은신처 ' + ff + ' %', 12.5, '#475569', 'left', 800); });
+    FS.forEach((ff, i) => { const lx = q.x + 14 + i * 100; ctx.fillStyle = FCOL[ff]; ctx.fillRect(lx, q.y + q.h - 17, 18, 5); T(lx + 24, q.y + q.h - 10, '은신처 ' + ff + ' %', 12.5, '#475569', 'left', 800); });
     // 계산 정보
     const w = rfW(f), inf = g.info; panel(inf.x, inf.y, inf.w, inf.h, 14);
     T(inf.x + 14, inf.y + 24, '은신처 ' + f + ' %: 평균 생존 상대값', 14.5, '#334155', 'left', 800);
@@ -781,12 +782,12 @@
     const g = plGeom(), s = g.scene; panel(s.x, s.y, s.w, s.h, 14);
     T(s.x + 14, s.y + 24, '🌬️ 바람 → ', 14.5, '#334155', 'left', 800);
     const fx = s.x + 24, fw = 90, nx0 = fx + fw + 24, mpm = (s.w - 24 - fw - 24 - 110) / 120;   // 1 m 당 픽셀
-    const nx = nx0 + PL.d * mpm, gy = s.y + s.h - 40;
+    const nx = nx0 + PL.d * mpm, gy = s.y + s.h - 58;
     ctx.fillStyle = '#e8d8b8'; ctx.fillRect(s.x + 10, gy + 6, s.w - 20, 22);
     // 두 밭
     [[fx, fw, '#16a34a', 'LMO 밭'], [nx, 110, '#84cc16', '이웃 일반 밭']].forEach(([x, w, col, lab], k) => {
       for (let i = 0; i < 5; i++) { const px = x + 10 + i * (w - 20) / 4; ctx.strokeStyle = C.shade(col, -0.3); ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(px, gy + 6); ctx.lineTo(px, gy - 58 - (i % 2) * 10); ctx.stroke(); ctx.fillStyle = col; ctx.beginPath(); ctx.ellipse(px + 8, gy - 30, 14, 5, -0.5, 0, TAU); ctx.fill(); ctx.beginPath(); ctx.ellipse(px - 8, gy - 44, 14, 5, 0.5, 0, TAU); ctx.fill(); }
-      pill(x + w / 2, gy + 46 - (PHONE ? 0 : 6), lab, { bg: col, color: '#fff', size: 12.5, pad: 7 });
+      pill(x + w / 2, gy + 44, lab, { bg: col, color: '#fff', size: 12.5, pad: 7 });
     });
     // 거리 표시
     D.arrow(fx + fw, gy - 80, nx, gy - 80, { color: '#334155', width: 2.5, head: 9 });
@@ -797,7 +798,7 @@
     PL.parts.forEach((p) => { const dm = Math.max(0, (p.x - (fx + fw)) / mpm); ctx.globalAlpha = clamp(Math.exp(-dm / 20) * 0.95, 0.04, 0.95); D.sphere(p.x, p.y, 3.4, '#f59e0b', { gloss: false }); ctx.globalAlpha = 1; });
     // 그래프
     const q = g.graph; panel(q.x, q.y, q.w, q.h, 14);
-    const pl = { x: q.x + 56, y: q.y + 40, w: q.w - (PHONE ? 90 : 250), h: q.h - 92 };
+    const pl = { x: q.x + 56, y: q.y + 40, w: q.w - (PHONE ? 90 : 250), h: q.h - (PHONE ? 124 : 92) };
     T(q.x + 14, q.y + 24, '꽃가루 교잡률(%) = 5 × e^(−d / 20 m)', PHONE ? 13 : 14.5, '#334155', 'left', 800);
     const xo = (d) => pl.x + pl.w * d / 120, yo = (v) => pl.y + pl.h * (1 - v / 5);
     [0, 1, 2, 3, 4, 5].forEach((v) => { ctx.strokeStyle = v === 0.5 ? '#f87171' : '#eef2f7'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(pl.x, yo(v)); ctx.lineTo(pl.x + pl.w, yo(v)); ctx.stroke(); T(pl.x - 6, yo(v) + 4.5, String(v), 12.5, '#64748b', 'right', 700); });
@@ -811,7 +812,7 @@
     ctx.setLineDash([4, 4]); ctx.strokeStyle = '#334155'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(cx, pl.y + pl.h); ctx.lineTo(cx, cy); ctx.lineTo(pl.x, cy); ctx.stroke(); ctx.setLineDash([]);
     D.sphere(cx, cy, 8, '#16a34a', { outline: '#fff', outlineWidth: 2 });
     // 읽는 값
-    const rx = PHONE ? q.x + 14 : q.x + q.w - 214, ry = PHONE ? q.y + q.h - 38 : q.y + 56;
+    const rx = PHONE ? q.x + 14 : q.x + q.w - 214, ry = PHONE ? q.y + q.h - 14 : q.y + 56;
     if (PHONE) T(rx, ry, 'd = ' + PL.d + ' m → 교잡률 ' + fmtRate(polRate(PL.d)) + ' %', 15, '#334155', 'left', 800);
     else {
       T(rx, ry, '이웃 밭까지 ' + PL.d + ' m', 15, '#334155', 'left', 800);
@@ -1173,14 +1174,15 @@
           check() {
             const n = tbFilled(); const res = tbCheckAll(); TB.res = res;
             if (n < 13) return '아직 비어 있는 칸이 있어요. (' + n + ' / 13)';
-            const bad = [];
-            TROWS.forEach((_, r) => TCOLS.forEach((__, c) => { if (res[r][c] === 'bad') bad.push([r, c]); }));
-            if (res[3] === 'bad') bad.push([3, 0]);
-            // 근거 표시가 안 된 칸
-            const miss = [];
-            TROWS.forEach((_, r) => [1, 2].forEach((c) => { if (TB.stat[r][c] == null) miss.push([r, c]); }));
-            if (miss.length && !bad.length) return '인간 건강 · 생태계 칸의 근거 표시(사실 / 불확실)를 모두 해 주세요. (' + miss.length + '칸 남음)';
-            if (bad.length) { const [r, c] = bad[0]; if (r === 3) return '한 문장 추론을 다시 생각해 보세요. 사실과 불확실한 부분을 모두 반영했는지 살펴봐요.'; return '\'' + TROWS[r].name + '\'의 \'' + TCOLS[c] + '\' 칸을 다시 확인해 보세요. (' + bad.length + '칸이 달라요)'; }
+            const badPick = [], badStat = [], miss = [];
+            TROWS.forEach((_, r) => TCOLS.forEach((__, c) => {
+              if (TB.pick[r][c] !== tbOptions(r, c).ans) badPick.push([r, c]);
+              else if (TS[r][c].st != null) { if (TB.stat[r][c] == null) miss.push([r, c]); else if (TB.stat[r][c] !== TS[r][c].st) badStat.push([r, c]); }
+            }));
+            if (badPick.length) { const [r, c] = badPick[0]; return '\'' + TROWS[r].name + '\'의 \'' + TCOLS[c] + '\' 칸을 다시 확인해 보세요. (' + badPick.length + '칸이 달라요)'; }
+            if (miss.length) return '인간 건강 · 생태계 칸의 근거 표시(확인된 사실 / 아직 불확실)를 모두 해 주세요. (' + miss.length + '칸 남음)';
+            if (badStat.length) { const [r, c] = badStat[0]; return '\'' + TROWS[r].name + '\'의 \'' + TCOLS[c] + '\' 칸 근거 표시를 다시 생각해 보세요. 실험이나 평가로 확인된 내용인지, 아직 연구가 더 필요한 내용인지 구분해 봐요. (' + badStat.length + '칸)'; }
+            if (res[3] !== 'ok') return '한 문장 추론을 다시 생각해 보세요. 사실과 불확실한 부분을 모두 반영했는지 살펴봐요.';
             return true;
           },
           status: () => mark(tbFilled() === 13) + ' 채운 칸 ' + tbFilled() + ' / 13 &nbsp; ' + mark(TROWS.every((_, r) => [1, 2].every((c) => TB.stat[r][c] != null))) + ' 근거 표시',
