@@ -418,7 +418,7 @@
     { n: '초은하단', sub: '군·단 수십 개', d: 50, sig: 300, c: '#ef4444', pos: 3 },
   ];
   SC.forEach((s) => { s.h = hub(s.d); s.exp = s.h > s.sig; });
-  const SCBIN = [{ label: '① 가장 작아요', color: '#0ea5e9' }, { label: '②', color: '#14b8a6' }, { label: '③', color: '#f59e0b' }, { label: '④ 가장 커요', color: '#ef4444' }];
+  const SCBIN = [{ label: PHONE ? '① 작음' : '① 가장 작아요', color: '#0ea5e9' }, { label: '②', color: '#14b8a6' }, { label: '③', color: '#f59e0b' }, { label: PHONE ? '④ 큼' : '④ 가장 커요', color: '#ef4444' }];
 
   /* ================= 상태 ================= */
   const S = {
@@ -443,7 +443,7 @@
       : { P: { x: 10, y: 8, w: 780, h: 440 }, I: { x: 10, y: 456, w: 780, h: 156 }, cx: 300, cy: 236, R: 194, ins: { x: 652, y: 318, r: 86 } };
   }
   const LCl = () => PHONE
-    ? { A: { x: 8, y: 8, w: 464, h: 346 }, PIC: { x: 18, y: 40, w: 444, h: 168 }, B: { x: 8, y: 362, w: 464, h: 490 } }
+    ? { A: { x: 8, y: 8, w: 464, h: 346 }, PIC: { x: 18, y: 40, w: 444, h: 150 }, B: { x: 8, y: 362, w: 464, h: 490 } }
     : { A: { x: 10, y: 8, w: 780, h: 226 }, PIC: { x: 20, y: 40, w: 376, h: 178 }, B: { x: 10, y: 242, w: 780, h: 370 } };
   const LFof = () => PHONE
     ? { M: { x: 8, y: 8, w: 464, h: 480 }, G: { x: 8, y: 496, w: 464, h: 356 } }
@@ -574,7 +574,7 @@
     ctx.strokeStyle = '#334155'; ctx.lineWidth = 2; rr(PIC.x, PIC.y, PIC.w, PIC.h, 10).stroke();
     T(PIC.x + 10, PIC.y + PIC.h - 10, '붉은 노랑: 타원·렌즈형 · 푸른빛: 나선 · 보라 안개: X선 가스', PHONE ? 9.5 : 11, '#cbd5e1', 'left', 700, { stroke: 'rgba(5,10,30,.8)', strokeWidth: 3 });
     // 표
-    const tx = PHONE ? A.x + 14 : PIC.x + PIC.w + 16, tw = PHONE ? A.w - 28 : A.x + A.w - tx - 14, ty = PHONE ? PIC.y + PIC.h + 26 : A.y + 44, rh = PHONE ? 25 : 28;
+    const tx = PHONE ? A.x + 14 : PIC.x + PIC.w + 16, tw = PHONE ? A.w - 28 : A.x + A.w - tx - 14, ty = PHONE ? PIC.y + PIC.h + 26 : A.y + 44, rh = PHONE ? 24 : 28;
     const rows = [['거리', k === 1 ? (czShown() ? '약 ' + f0(cl.d) + ' Mpc' : 'cz = 6900 → ?') : '약 16.5 Mpc'], ['은하 수', cl.num], ['속도 분산 σ', cl.sig], ['X선 가스 온도', cl.gas], ['중심', k === 0 ? 'M87 (cz = 1280 km/s)' : cl.center]];
     rows.forEach((r, i) => { ctx.fillStyle = i % 2 ? 'rgba(255,255,255,.04)' : 'rgba(255,255,255,.09)'; rr(tx, ty + i * rh - 14, tw, rh - 2, 7).fill(); T(tx + 10, ty + i * rh + 4, r[0], PHONE ? 11.5 : 12.5, '#94a3b8', 'left', 800); const hl = k === 1 && i === 0 && !czShown(); T(tx + tw - 10, ty + i * rh + 4, r[1], PHONE ? 11.5 : 12.5, hl ? '#fde68a' : '#e2e8f0', 'right', 800); });
     if (k === 0) T(tx + 2, ty + 5 * rh + 10, 'M87: H₀d = 70 × 16.5 = ' + hub(16.5) + ' km/s', PHONE ? 11 : 12, '#93c5fd', 'left', 700);
@@ -620,12 +620,12 @@
     // 그래프
     panel(G.x, G.y, G.w, G.h, { r: 14 });
     const charts = PHONE
-      ? [{ k: 'nClump', y: G.y + 52, h: 110, ymax: 40, title: '연결된 덩어리의 수 (2개 이상)', col: '#2563eb', x: G.x + 14, w: (G.w - 40) / 2 }, { k: 'largest', y: G.y + 52, h: 110, ymax: 150, title: '가장 큰 덩어리의 은하 수', col: '#dc2626', x: G.x + G.w / 2 + 6, w: (G.w - 40) / 2 }]
+      ? [{ k: 'nClump', y: G.y + 52, h: 110, ymax: 40, title: '덩어리 수 (2개 이상)', col: '#2563eb', x: G.x + 34, w: (G.w - 92) / 2 }, { k: 'largest', y: G.y + 52, h: 110, ymax: 150, title: '가장 큰 덩어리', col: '#dc2626', x: G.x + G.w / 2 + 22, w: (G.w - 92) / 2 }]
       : [{ k: 'nClump', y: G.y + 52, h: 150, ymax: 40, title: '연결된 덩어리의 수 (2개 이상)', col: '#2563eb', x: G.x + 40, w: G.w - 62 }, { k: 'largest', y: G.y + 52 + 215, h: 150, ymax: 150, title: '가장 큰 덩어리의 은하 수', col: '#dc2626', x: G.x + 40, w: G.w - 62 }];
     T(G.x + 14, G.y + 24 * FS, '📈 b에 따라 달라지는 집단', 14, '#1e293b', 'left', 800);
     charts.forEach((c) => {
       const x0 = c.x, w = c.w, y0 = c.y, h = c.h, gx = (b) => x0 + (b - 0.5) / 9.5 * w, gy = (v) => y0 + h - clamp(v / c.ymax, 0, 1) * h;
-      T(PHONE ? x0 : G.x + 14, y0 - 10, c.title, PHONE ? 10.5 : 12, '#475569', 'left', 800);
+      T(PHONE ? x0 - 20 : G.x + 14, y0 - 10, c.title, PHONE ? 10.5 : 12, '#475569', 'left', 800);
       ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x0, y0 + h); ctx.lineTo(x0 + w, y0 + h); ctx.stroke();
       [0, c.ymax / 2, c.ymax].forEach((v) => { T(x0 - 5, gy(v) + 4, String(f0(v)), 10.5, '#64748b', 'right', 700); });
       [0.5, 2, 4, 6, 8, 10].forEach((b) => { T(gx(b), y0 + h + 15 * Math.min(FS, 1.1), String(b), 10.5, '#64748b', 'center', 700); });
@@ -670,11 +670,11 @@
     panel(Q.x, Q.y, Q.w, Q.h, { r: 14 });
     const open = S.sc.ordered || FREE();
     S.sc.rise = approach(S.sc.rise, open ? 1 : 0, dt, 2);
-    T(Q.x + 14, Q.y + 24 * FS, '⚖ 중력으로 묶임 vs 우주 팽창 (H₀d와 무작위 속도 σ 비교)', PHONE ? 11.5 : 14, '#1e293b', 'left', 800);
+    T(Q.x + 14, Q.y + 24 * FS, PHONE ? '⚖ 중력으로 묶임 vs 우주 팽창' : '⚖ 중력으로 묶임 vs 우주 팽창 (H₀d와 무작위 속도 σ 비교)', PHONE ? 12 : 14, '#1e293b', 'left', 800);
     if (S.sc.rise < 0.02) { drawWrap(Q.x + 14, Q.y + 60 * FS, '구조 4개를 크기순으로 배열하면 각 규모에서 허블 흐름 속도 H₀d와 은하의 무작위 속도 σ를 비교할 수 있어요.', Q.w - 28, 13.5, { color: '#64748b' }); return; }
     const rise = smooth(S.sc.rise);
     // 위쪽: 로그 크기 눈금
-    const ax = Q.x + 40, aw = Q.w - 70, ay = Q.y + 88 * Math.min(FS, 1.05);
+    const ax = Q.x + 40, aw = Q.w - 70, ay = Q.y + (PHONE ? 122 : 88);
     const Xs = (d) => ax + (Math.log10(d) + 2) / 4 * aw;       // 0.01 ~ 100 Mpc
     ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(ax + aw, ay); ctx.stroke();
     [-2, -1, 0, 1, 2].forEach((e) => { const x = ax + (e + 2) / 4 * aw; ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x, ay - 5); ctx.lineTo(x, ay + 5); ctx.stroke(); T(x, ay + 20, (e === -2 ? '0.01' : e === -1 ? '0.1' : String(Math.pow(10, e))) + (e === 2 ? ' Mpc' : ''), PHONE ? 10.5 : 11.5, '#64748b', 'center', 700); });
@@ -696,8 +696,9 @@
       const vd = ok ? '팽창이 지배' : '중력으로 묶임';
       if (grow > 0.95) D.label(cx, base + 40 * Math.min(FS, 1.05), vd, { bg: ok ? '#dc2626' : '#16a34a', size: PHONE ? 9.5 : 11, pad: 6 });
     });
-    ctx.fillStyle = '#3b82f6'; ctx.fillRect(Q.x + Q.w - (PHONE ? 196 : 250), Q.y + 12, 12, 12); T(Q.x + Q.w - (PHONE ? 180 : 232), Q.y + 22, 'H₀d (지름 기준)', PHONE ? 10.5 : 12, '#1d4ed8', 'left', 800);
-    ctx.fillStyle = '#f59e0b'; ctx.fillRect(Q.x + Q.w - (PHONE ? 86 : 108), Q.y + 12, 12, 12); T(Q.x + Q.w - (PHONE ? 70 : 90), Q.y + 22, 'σ (무작위)', PHONE ? 10.5 : 12, '#b45309', 'left', 800);
+    const lgy = PHONE ? Q.y + 40 : Q.y + 12, lg1 = PHONE ? Q.x + 14 : Q.x + Q.w - 250, lg2 = PHONE ? Q.x + 190 : Q.x + Q.w - 108;
+    ctx.fillStyle = '#3b82f6'; ctx.fillRect(lg1, lgy, 12, 12); T(lg1 + 16, lgy + 10, 'H₀d (지름 기준)', PHONE ? 10.5 : 12, '#1d4ed8', 'left', 800);
+    ctx.fillStyle = '#f59e0b'; ctx.fillRect(lg2, lgy, 12, 12); T(lg2 + 16, lgy + 10, 'σ (무작위)', PHONE ? 10.5 : 12, '#b45309', 'left', 800);
     if (hdShown()) T(Q.x + 14, Q.y + Q.h - 7, '허블 흐름 H₀d: 1 Mpc 70 · 10 Mpc 700 · 100 Mpc 7000 km/s', PHONE ? 10.5 : 12, '#0369a1', 'left', 800);
   }
 

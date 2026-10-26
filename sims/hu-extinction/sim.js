@@ -241,8 +241,8 @@
 
   /* ================= 레이아웃 ================= */
   const LYcount = () => (PHONE ? { sky: { x: 8, y: 8, w: 464, h: 470 }, tb: { x: 8, y: 486, w: 464, h: 262 }, info: { x: 8, y: 756, w: 464, h: 196 } } : { sky: { x: 10, y: 8, w: 520, h: 462 }, tb: { x: 538, y: 8, w: 252, h: 462 }, info: { x: 10, y: 478, w: 780, h: 134 } });
-  const LYred = () => (PHONE ? { sc: { x: 8, y: 8, w: 464, h: 320 }, gr: { x: 8, y: 336, w: 464, h: 330 }, cd: { x: 8, y: 674, w: 464, h: 150 }, info: { x: 8, y: 832, w: 464, h: 120 } } : { sc: { x: 10, y: 8, w: 470, h: 300 }, gr: { x: 488, y: 8, w: 302, h: 300 }, cd: { x: 10, y: 316, w: 780, h: 154 }, info: { x: 10, y: 478, w: 780, h: 134 } });
-  const LYdist = () => (PHONE ? { P: { x: 8, y: 8, w: 464, h: 440 }, cd: { x: 8, y: 456, w: 464, h: 250 }, info: { x: 8, y: 714, w: 464, h: 238 } } : { P: { x: 10, y: 8, w: 780, h: 290 }, cd: { x: 10, y: 306, w: 780, h: 164 }, info: { x: 10, y: 478, w: 780, h: 134 } });
+  const LYred = () => (PHONE ? { sc: { x: 8, y: 8, w: 464, h: 320 }, gr: { x: 8, y: 336, w: 464, h: 330 }, cd: { x: 8, y: 674, w: 464, h: 126 }, info: { x: 8, y: 808, w: 464, h: 146 } } : { sc: { x: 10, y: 8, w: 470, h: 300 }, gr: { x: 488, y: 8, w: 302, h: 300 }, cd: { x: 10, y: 316, w: 780, h: 154 }, info: { x: 10, y: 478, w: 780, h: 134 } });
+  const LYdist = () => (PHONE ? { P: { x: 8, y: 8, w: 464, h: 384 }, cd: { x: 8, y: 400, w: 464, h: 290 }, info: { x: 8, y: 698, w: 464, h: 256 } } : { P: { x: 10, y: 8, w: 780, h: 290 }, cd: { x: 10, y: 306, w: 780, h: 164 }, info: { x: 10, y: 478, w: 780, h: 134 } });
   const LYism = () => (PHONE ? { R: { x: 8, y: 8, w: 464, h: 340 }, C: { x: 8, y: 356, w: 464, h: 330 }, info: { x: 8, y: 694, w: 464, h: 258 } } : { R: { x: 10, y: 8, w: 780, h: 296 }, C: { x: 10, y: 312, w: 780, h: 158 }, info: { x: 10, y: 478, w: 780, h: 134 } });
   function infoBox(I, title, text, text2, ts) {
     panel(I.x, I.y, I.w, I.h, { r: 14 });
@@ -471,7 +471,7 @@
       ['② 소광 A_V', avOK() || FREE() ? 'A_V = 3.1 × ' + f2(EBV0) + ' = ' + f2(AV0) + ' 등급 → 밝기 ' + f2(Math.pow(10, -0.4 * AV0)) + '배' : 'A_V = 3.1 × E(B − V) = ?', avOK() || FREE() ? '#15803d' : '#94a3b8'],
       ['③ 보정', dcOK() || FREE() ? 'd = 10^((m − M − A_V + 5)/5) = ' + f0(dCorr) + ' pc  (d′는 ' + f2(dNoCorr / dCorr) + '배 과대평가)' : 'd = 10^((m − M − A_V + 5)/5) = ?', dcOK() || FREE() ? '#15803d' : '#94a3b8'],
     ];
-    rows.forEach((r, i) => { const y = cd.y + 26 * FS + i * (PHONE ? 52 : 34); T(cd.x + 14, y, r[0], PHONE ? 12 : 12.5, '#64748b', 'left', 800); if (PHONE) drawWrap(cd.x + 14, y + 20, r[1], cd.w - 28, 12.5, { color: r[2], weight: 800 }); else T(cd.x + 112, y, r[1], 13.5, r[2], 'left', 800); });
+    rows.forEach((r, i) => { const y = cd.y + 26 * FS + i * (PHONE ? 66 : 34); T(cd.x + 14, y, r[0], PHONE ? 12 : 12.5, '#64748b', 'left', 800); if (PHONE) drawWrap(cd.x + 14, y + 20, r[1], cd.w - 28, 12.5, { color: r[2], weight: 800 }); else T(cd.x + 112, y, r[1], 13.5, r[2], 'left', 800); });
     infoBox(L.info, '💡 소광을 무시하면 거리를 크게 재요', '먼지가 별빛을 가려 별이 더 어둡게 보이니, 소광을 무시하면 "어두우니 더 멀다"고 착각해요. 거리 지수는 m − M = 5 log d − 5 + A_V이므로 A_V만큼 빼고 계산해야 해요.', '은하 원반의 평균 소광은 약 1 mag/kpc예요. 3 kpc 거리에서 A_V ≈ 3이면 밝기가 1/16로 줄어요(2.512³ ≈ 16).');
   }
 
@@ -484,7 +484,7 @@
     T(R.x + 14, R.y + 24 * FS, '🌌 성간 기체의 상태 5가지: 카드를 눌러 알맞은 줄에 넣어요', PHONE ? 12 : 14, '#1e293b', 'left', 800);
     HIT.rows = [];
     ismRows(R).forEach((r, i) => {
-      const st = STATES[i], ci = S.slots[i], w0 = PHONE ? 150 : 230;
+      const st = STATES[i], ci = S.slots[i], w0 = PHONE ? 176 : 230;
       if (S.wrongRow[i] > 0) S.wrongRow[i] = Math.max(0, S.wrongRow[i] - dt * 1.2);
       ctx.fillStyle = rgba(st.c, 0.12); rr(r.x, r.y, r.w, r.h, 10).fill(); ctx.strokeStyle = st.c; ctx.lineWidth = 2; rr(r.x, r.y, r.w, r.h, 10).stroke();
       ctx.fillStyle = st.c; rr(r.x, r.y, w0, r.h, 10).fill();
