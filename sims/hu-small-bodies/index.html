@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0ea5e9">
+  <title>행성과 소천체 | 고등 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>☄️</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-hint { bottom: auto; top: 12px; }
+    .stage-toolbar { min-height: 58px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; }
+    .stage-toolbar .segmented button { min-height: 40px; padding: 5px 10px; font-size: 14px; white-space: nowrap; }
+    .stage-toolbar .segmented { flex-wrap: wrap; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard [hidden] { display: none !important; }
+    .opt-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin-top: 4px; }
+    .opt-grid.c3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .opt-grid.c4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .opt-grid.c5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+    .opt {
+      min-height: 46px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 12px;
+      font-weight: 800; font-size: 14.5px; cursor: pointer; padding: 4px 4px; font-family: inherit; line-height: 1.2;
+    }
+    .opt.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); color: color-mix(in srgb, var(--subject) 70%, black); }
+    .opt.done { border-color: var(--good); background: var(--good-soft); color: #0b6b39; }
+    .opt:disabled { opacity: .5; cursor: not-allowed; }
+    .ctrl-note { margin: 6px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    .btn-sm { min-height: 44px; }
+    .btn-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+    .btn-row .btn { flex: 1; padding-left: 8px; padding-right: 8px; }
+    .readout .value.txt { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .concept table.mini, table.mini { border-collapse: collapse; margin: 6px 0; font-size: 13px; width: 100%; }
+    .concept table.mini th, .concept table.mini td, table.mini th, table.mini td { border: 1px solid var(--line); padding: 4px 5px; text-align: center; }
+    .concept table.mini th, table.mini th { background: var(--surface-2); font-weight: 800; }
+    .num-in { width: 100%; min-height: 46px; border: 2px solid var(--line); border-radius: 10px; font: inherit; font-weight: 800; font-size: 17px; padding: 0 10px; background: var(--surface); color: var(--ink); text-align: center; }
+    .num-in:focus { outline: none; border-color: var(--subject); }
+    .num-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .num-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .in-row { display: grid; grid-template-columns: 1fr 104px; gap: 8px; align-items: center; margin-top: 6px; font-weight: 800; font-size: 14.5px; line-height: 1.25; }
+    .in-row .num-in { min-height: 42px; font-size: 16px; }
+    @keyframes shakeX { 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+    .src-note { margin: 4px 0 0; font-size: 12.5px; color: #a16207; background: #fff7e0; border: 1px solid #f2d38a; border-radius: 10px; padding: 6px 9px; line-height: 1.4; }
+    @media (max-width: 599px) {
+      .readout { min-width: 0; }
+      .readout .value.txt { font-size: 15px; }
+      .stage-toolbar .spacer { display: none; }
+      .stage-toolbar .segmented button { padding: 5px 7px; font-size: 13px; }
+    }
+    input[type=range] { height: 40px; }
+    .ticks { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--muted); font-weight: 700; margin-top: -6px; padding: 0 2px; }
+  </style>
+</head>
+<body class="sim-page" data-subject="earth">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#hu">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">행성우주과학 · Ⅰ. 우주탐사와 행성계</div>
+      <h1>행성과 소천체</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">☄️ 행성과 소천체</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="group" aria-label="장면 고르기" hidden>
+            <button type="button" data-view="judge">✅ 행성의 조건</button>
+            <button type="button" data-view="mu">📈 궤도 지배</button>
+            <button type="button" data-view="scatter">🔵 a–e 산점도</button>
+            <button type="button" data-view="comet">☄️ 혜성 꼬리</button>
+            <button type="button" data-view="data">🧮 탐사 자료</button>
+            <button type="button" data-view="meteor">🪨 운석과 분화</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="행성의 세 조건으로 천체 카드를 판정하는 장면, 궤도 지배 정도 그래프, 소행성과 카이퍼 벨트와 혜성의 a–e 산점도, 혜성 꼬리 방향 모형, 탐사 천체의 밀도 계산 보드, 운석 분류와 베스타 분화 단면이 있어요."></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">—</span><span class="value txt" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">—</span><span class="value txt" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">—</span><span class="value txt" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+
+        <div class="control" data-modes="judge">
+          <div class="control-head"><span>📥 선택한 카드를 넣을 상자</span></div>
+          <div class="opt-grid c2" id="grpCls">
+            <button class="opt" type="button" data-k="0">🪐 행성</button><button class="opt" type="button" data-k="1">🔹 왜소행성</button><button class="opt" type="button" data-k="2">☄️ 소천체</button><button class="opt" type="button" data-k="3">🌙 위성</button>
+          </div>
+          <p class="ctrl-note">카드를 누르면 판정 도장이 찍혀요. 상자로 끌어 넣어도 돼요.</p>
+        </div>
+
+        <div class="control" data-modes="mu">
+          <div class="control-head"><label for="sMu">📏 경계선 μ_c</label><output id="oMu">1</output></div>
+          <input type="range" id="sMu" min="-2" max="7" step="0.05" value="3" aria-label="행성과 왜소행성을 가르는 경계선 μ_c (로그 눈금)">
+          <div class="ticks"><span>0.01</span><span>10</span><span>10⁴</span><span>10⁷</span></div>
+          <p class="ctrl-note">경계선의 왼쪽은 왜소행성, 오른쪽은 행성으로 칠해져요.</p>
+        </div>
+
+        <div class="control" data-modes="scatter">
+          <div class="control-head"><span id="scSel">🔵 점을 눌러 고르세요</span></div>
+          <div class="opt-grid c3" id="grpGrp">
+            <button class="opt" type="button" data-k="0">소행성대<br>천체</button><button class="opt" type="button" data-k="1">카이퍼 벨트<br>천체</button><button class="opt" type="button" data-k="2">혜성</button>
+          </div>
+          <p class="ctrl-note">a는 긴반지름, e는 이심률이에요. 위치(a)와 모양(e)을 보고 세 무리로 나눠요.</p>
+        </div>
+
+        <div class="control" data-modes="comet">
+          <div class="control-head"><label for="sMean">🕒 궤도 위치 (근일점 = 0°)</label><output id="oMean">0°</output></div>
+          <input type="range" id="sMean" min="-180" max="180" step="1" value="0" aria-label="혜성의 궤도 위치 (평균 근점 이각, 도)">
+          <div class="btn-row"><button class="btn btn-sm" id="bPlay" type="button">⏸ 멈추기</button><button class="btn btn-sm btn-primary" id="bPredict" type="button">🎯 꼬리 방향 예측</button></div>
+          <p class="ctrl-note" id="cmNote"></p>
+        </div>
+
+        <div class="control" data-modes="data">
+          <div class="control-head"><span>🛰️ 탐사 천체 고르기</span></div>
+          <div class="opt-grid c3" id="grpBody"></div>
+        </div>
+        <div class="control" data-modes="data">
+          <div class="btn-row"><button class="btn btn-sm" id="bVol" type="button">① 부피 계산</button><button class="btn btn-sm" id="bAuto" type="button">② 밀도 자동 계산</button></div>
+          <div class="in-row"><span>밀도 ρ = M / V (g/cm³)</span><input class="num-in" id="inRho" type="text" inputmode="decimal" placeholder="예: 2.5" aria-label="선택한 천체의 밀도 (g/cm³)" autocomplete="off"></div>
+        </div>
+        <div class="control" data-modes="data" id="calcPor" hidden>
+          <div class="in-row"><span>류구의 공극률 (%)<br>(구성 암석 2.4 g/cm³)</span><input class="num-in" id="inPor" type="text" inputmode="decimal" placeholder="예: 30" aria-label="류구의 공극률 (퍼센트)" autocomplete="off"></div>
+        </div>
+
+        <div class="control" data-modes="meteor">
+          <div class="control-head"><span>🌑 천체의 크기</span></div>
+          <div class="opt-grid c2" id="grpSize">
+            <button class="opt" type="button" data-k="0">베스타급<br>지름 523 km</button><button class="opt" type="button" data-k="1">작은 소행성<br>지름 1 km</button>
+          </div>
+          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bHeat" type="button">🔥 가열하기</button><button class="btn btn-sm" id="bCool" type="button">↺ 처음으로</button></div>
+        </div>
+        <div class="control" data-modes="meteor" id="evBox" hidden>
+          <div class="control-head"><span>🔎 베스타가 분화됐다는 증거 고르기</span></div>
+          <div class="opt-grid" id="grpEv"></div>
+        </div>
+
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

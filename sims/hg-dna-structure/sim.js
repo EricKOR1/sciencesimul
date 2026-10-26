@@ -141,7 +141,7 @@
     }
     boxAt(p) { for (const b of this.boxes) if (inRect(p.x, p.y, b)) return b; return null; }
     chipRect(box, k, n) {
-      const cols = box.cols || 2, gap = 6, rows = Math.max(1, Math.ceil(n / cols));
+      const cols = box.cols || 2, gap = box.gap || 6, rows = Math.max(1, Math.ceil(n / cols));
       const kw = (box.w - gap * (cols + 1)) / cols, hdr = box.hdr || 26, avail = box.h - hdr - 6;
       const sp = Math.min(this.o.kh + 4, avail / rows), col = k % cols, row = Math.floor(k / cols);
       return { x: box.x + gap + col * (kw + gap), y: box.y + hdr + 1 + row * sp, w: kw, h: Math.max(18, Math.min(this.o.kh, sp - 3)) };
@@ -346,7 +346,7 @@
     // 막대 그래프 카드
     panel(CG.cx, CG.cy, CG.cw, CG.ch, 16, '#fff');
     TF(CG.cx + 16, CG.cy + 30, s.n + ' DNA의 염기 조성 (전체 염기 중 %)', CG.cw - 32, L(18, 15), 12, '#14532d', 'left', 800);
-    const px = CG.cx + 52, pw = CG.cw - 72, baseY = CG.cy + CG.ch - (PHONE ? 62 : 84), topY = CG.cy + (PHONE ? 100 : 92), ph = baseY - topY;
+    const px = CG.cx + 52, pw = CG.cw - 72, baseY = CG.cy + CG.ch - (PHONE ? 72 : 84), topY = CG.cy + (PHONE ? 100 : 92), ph = baseY - topY;
     const yOf = (v) => baseY - (v / c.ymax) * ph;
     // 눈금선
     const step = c.ymax > 45 ? 20 : 10;
@@ -411,7 +411,7 @@
       ctx.restore();
     }
     // 아래 요약 줄
-    const ry = CG.cy + CG.ch - 14;
+    const ry = CG.cy + CG.ch - (PHONE ? 10 : 14);
     if (c.view === 2) T(CG.cx + CG.cw / 2, ry, '(A + T) / (G + C) = ' + (s.A + s.T) + ' / ' + (s.G + s.C) + ' = ' + ratioStr(s), L(15.5, 14), '#14532d', 'center', 800);
     else T(CG.cx + CG.cw / 2, ry, c.view === 1 ? 'A와 T, G와 C의 양을 짝지어 비교해요' : '막대를 비교해 보세요', 13.5, '#64748b', 'center', 700);
 
@@ -477,7 +477,7 @@
     const x = S.xr;
     x.m.forEach((m) => { if (!m.drag) m.mm = RM ? m.tg : approach(m.mm, m.tg, dt, 14); });
     x.show = approach(x.show, x.showOn ? 1 : 0, dt, 6);
-    x.appear = RM ? 1 : approach(x.appear, 1, dt, 1.4);
+    x.appear = RM ? 1 : approach(x.appear, 1, dt, 3.2);
     const st = xrState();
     if (st.rest) {
       const k = xrKind(st);
@@ -486,52 +486,63 @@
     }
     x.pop.A = approach(x.pop.A, 0, dt, 2); x.pop.B = approach(x.pop.B, 0, dt, 2);
   }
-  function spot(x, y, rx, ry, a) {
-    ctx.save(); ctx.translate(x, y); ctx.scale(1, ry / rx);
-    const g = ctx.createRadialGradient(0, 0, 0, 0, 0, rx);
+  function rrPath(c, x, y, w, h, r) { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
+  function spotC(c, x, y, rx, ry, a) {
+    c.save(); c.translate(x, y); c.scale(1, ry / rx);
+    const g = c.createRadialGradient(0, 0, 0, 0, 0, rx);
     g.addColorStop(0, 'rgba(235,245,255,' + (0.95 * a) + ')'); g.addColorStop(0.45, 'rgba(160,200,255,' + (0.45 * a) + ')'); g.addColorStop(1, 'rgba(120,160,230,0)');
-    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, rx, 0, TAU); ctx.fill(); ctx.restore();
+    c.fillStyle = g; c.beginPath(); c.arc(0, 0, rx, 0, TAU); c.fill(); c.restore();
   }
-  function drawPhoto(t) {
-    const x = S.xr, ap = ease.outCubic(clamp(x.appear, 0, 1));
-    ctx.save();
-    rr(XB.x, XB.y, XB.w, XB.h, 16); ctx.clip();
-    const bg = ctx.createLinearGradient(0, XB.y, 0, XB.y + XB.h); bg.addColorStop(0, '#0a1018'); bg.addColorStop(1, '#05080d');
-    ctx.fillStyle = bg; ctx.fillRect(XB.x, XB.y, XB.w, XB.h);
-    ctx.globalCompositeOperation = 'lighter';
-    const k = XS / 2.2;
-    // 가운데 빛무리
-    const hg = ctx.createRadialGradient(XC.x, XC.y, 0, XC.x, XC.y, 190 * k);
+  /* 사진 한 장을 그려요 (c: 그릴 곳, ox/oy: 사진 왼쪽 위의 위치) */
+  function paintPhoto(c, ox, oy, ap) {
+    const k = XS / 2.2, X0 = XC.x - XB.x + ox, Y0 = XC.y - XB.y + oy, yy = (mm) => Y0 + mm * XS;
+    c.save();
+    rrPath(c, ox, oy, XB.w, XB.h, 16); c.clip();
+    const bg = c.createLinearGradient(0, oy, 0, oy + XB.h); bg.addColorStop(0, '#0a1018'); bg.addColorStop(1, '#05080d');
+    c.fillStyle = bg; c.fillRect(ox, oy, XB.w, XB.h);
+    c.globalCompositeOperation = 'lighter';
+    const hg = c.createRadialGradient(X0, Y0, 0, X0, Y0, 190 * k);
     hg.addColorStop(0, 'rgba(70,95,140,' + (0.5 * ap) + ')'); hg.addColorStop(1, 'rgba(40,60,100,0)');
-    ctx.fillStyle = hg; ctx.fillRect(XB.x, XB.y, XB.w, XB.h);
-    // 층선마다 X자 모양으로 늘어선 점
+    c.fillStyle = hg; c.fillRect(ox, oy, XB.w, XB.h);
     for (let n = -5; n <= 5; n++) {
-      const y = xrY(n * 10), an = Math.abs(n);
+      const y = yy(n * 10), an = Math.abs(n);
       const inten = (an === 0 ? 0.55 : clamp(1 - 0.13 * (an - 1), 0.35, 1)) * ap;
       const xo = an === 0 ? 46 * k : (an * 17 + 6) * k;
       [-1, 1].forEach((sg) => {
-        spot(XC.x + sg * xo, y, 17 * k, 7 * k, Math.min(1, inten * 1.25));
-        if (an > 0) spot(XC.x + sg * (xo + 38 * k), y, 13 * k, 6 * k, inten * 0.5);
+        spotC(c, X0 + sg * xo, y, 17 * k, 7 * k, Math.min(1, inten * 1.25));
+        if (an > 0) spotC(c, X0 + sg * (xo + 38 * k), y, 13 * k, 6 * k, inten * 0.5);
       });
-      if (an === 1 || an === 2) spot(XC.x, y, 12 * k, 5 * k, inten * 0.35);
-      if (an > 0 && an < 5) { const sg2 = ctx.createLinearGradient(XC.x - 120 * k, 0, XC.x + 120 * k, 0); sg2.addColorStop(0, 'rgba(150,190,255,0)'); sg2.addColorStop(0.5, 'rgba(150,190,255,' + (0.16 * ap) + ')'); sg2.addColorStop(1, 'rgba(150,190,255,0)'); ctx.fillStyle = sg2; ctx.fillRect(XC.x - 120 * k, y - 1.2, 240 * k, 2.4); }
+      if (an === 1 || an === 2) spotC(c, X0, y, 12 * k, 5 * k, inten * 0.35);
+      if (an > 0 && an < 5) { const sg2 = c.createLinearGradient(X0 - 120 * k, 0, X0 + 120 * k, 0); sg2.addColorStop(0, 'rgba(150,190,255,0)'); sg2.addColorStop(0.5, 'rgba(150,190,255,' + (0.16 * ap) + ')'); sg2.addColorStop(1, 'rgba(150,190,255,0)'); c.fillStyle = sg2; c.fillRect(X0 - 120 * k, y - 1.2, 240 * k, 2.4); }
     }
-    // 짙은 호 (중심에서 100 mm)
     [-1, 1].forEach((sg) => {
-      ctx.save(); ctx.strokeStyle = 'rgba(190,220,255,' + (0.85 * ap) + ')'; ctx.lineWidth = 9 * k; ctx.lineCap = 'round';
-      ctx.shadowColor = '#9cc7ff'; ctx.shadowBlur = 14;
-      ctx.beginPath(); ctx.arc(XC.x, XC.y, 100 * XS, sg * Math.PI / 2 - 0.2, sg * Math.PI / 2 + 0.2); ctx.stroke(); ctx.restore();
+      c.save(); c.strokeStyle = 'rgba(190,220,255,' + (0.85 * ap) + ')'; c.lineWidth = 9 * k; c.lineCap = 'round';
+      c.shadowColor = '#9cc7ff'; c.shadowBlur = 14;
+      c.beginPath(); c.arc(X0, Y0, 100 * XS, sg * Math.PI / 2 - 0.2, sg * Math.PI / 2 + 0.2); c.stroke(); c.restore();
     });
-    ctx.globalCompositeOperation = 'source-over';
-    // 눈금 (왼쪽)
+    c.globalCompositeOperation = 'source-over';
     for (let mm = -100; mm <= 100; mm += 10) {
-      const y = xrY(mm), big = mm % 50 === 0;
-      ctx.strokeStyle = big ? 'rgba(200,215,235,.9)' : 'rgba(200,215,235,.5)'; ctx.lineWidth = big ? 2 : 1.3;
-      ctx.beginPath(); ctx.moveTo(XB.x + 6, y); ctx.lineTo(XB.x + (big ? 24 : 15), y); ctx.stroke();
-      if (big) T(XB.x + 28, y + 5, Math.abs(mm) + (mm === 0 ? '' : ''), 13, 'rgba(210,225,245,.9)', 'left', 700);
+      const y = yy(mm), big = mm % 50 === 0;
+      c.strokeStyle = big ? 'rgba(200,215,235,.9)' : 'rgba(200,215,235,.5)'; c.lineWidth = big ? 2 : 1.3;
+      c.beginPath(); c.moveTo(ox + 6, y); c.lineTo(ox + (big ? 24 : 15), y); c.stroke();
+      if (big) { c.font = D.font(13, 700); c.textAlign = 'left'; c.fillStyle = 'rgba(210,225,245,.9)'; c.fillText(String(Math.abs(mm)), ox + 28, y + 5); }
     }
-    T(XB.x + 8, XB.y + 22, 'mm', 13, 'rgba(210,225,245,.9)', 'left', 800);
-    // X자 무늬 표시
+    c.font = D.font(13, 800); c.textAlign = 'left'; c.fillStyle = 'rgba(210,225,245,.9)'; c.fillText('mm', ox + 8, oy + 22);
+    c.restore();
+  }
+  let photoCache = null;
+  function drawPhoto(t) {
+    const x = S.xr, ap = ease.outCubic(clamp(x.appear, 0, 1));
+    if (x.appear >= 0.985) {
+      const sc = clamp(view.scale * view.dpr, 0.6, 2);
+      if (!photoCache || Math.abs(photoCache.sc - sc) > 0.04) {
+        photoCache = document.createElement('canvas'); photoCache.width = Math.ceil(XB.w * sc); photoCache.height = Math.ceil(XB.h * sc); photoCache.sc = sc;
+        const c2 = photoCache.getContext('2d'); c2.scale(sc, sc); paintPhoto(c2, 0, 0, 1);
+      }
+      ctx.drawImage(photoCache, XB.x, XB.y, XB.w, XB.h);
+    } else paintPhoto(ctx, XB.x, XB.y, ap);
+    ctx.save(); rr(XB.x, XB.y, XB.w, XB.h, 16); ctx.clip();
+    const k = XS / 2.2;
     if (x.show > 0.01) {
       ctx.save(); ctx.globalAlpha = x.show; ctx.strokeStyle = '#fde047'; ctx.lineWidth = 3; ctx.setLineDash([9, 7]); ctx.lineDashOffset = -t * 18;
       const ext = 6;
@@ -582,15 +593,17 @@
     });
     // 측정 카드
     const st = xrState();
-    const PX = PHONE ? 8 : 474, PY = PHONE ? 392 : 14, PW = PHONE ? 464 : 314, PH = PHONE ? 240 : 532;
+    const PX = PHONE ? 8 : 474, PY = PHONE ? 388 : 14, PW = PHONE ? 464 : 314, PH = PHONE ? 244 : 532;
     panel(PX, PY, PW, PH, 16, '#fff');
     TF(PX + 14, PY + 28, '층선 간격 → 반복 거리', PW - 28, L(17, 15), 12, '#14532d', 'left', 800);
-    textBlock(PX + 14, PY + 50, PW - 28, '반복 거리(nm) = 34 / 간격(mm)  (간격이 좁을수록 반복 거리가 길어요)', 13, '#64748b', 17, 700);
+    if (PHONE) T(PX + 14, PY + 46, '반복 거리(nm) = 34 / 간격(mm) (역비례)', 13, '#64748b', 'left', 700);
+    else textBlock(PX + 14, PY + 50, PW - 28, '반복 거리(nm) = 34 / 간격(mm)  (간격이 좁을수록 반복 거리가 길어요)', 13, '#64748b', 17, 700);
     const kind = xrKind(st);
     const live = st.gap === 0 ? '두 선이 같은 줄에 있어요' : '간격 ' + st.gap + ' mm → 34 / ' + st.gap + ' = ' + fmt1(34 / st.gap) + ' nm';
     const lc = !st.rest ? '#94a3b8' : (kind === 'A' || kind === 'B') ? '#15803d' : '#475569';
-    ctx.fillStyle = '#f8fafc'; rr(PX + 12, PY + 88, PW - 24, 44, 10); ctx.fill();
-    TF(PX + PW / 2, PY + 116, st.rest ? live : '선을 놓으면 가까운 줄에 붙어요', PW - 40, L(16, 14.5), 11, lc, 'center', 800);
+    const LY = L(88, 56), LH = L(44, 38);
+    ctx.fillStyle = '#f8fafc'; rr(PX + 12, PY + LY, PW - 24, LH, 10); ctx.fill();
+    TF(PX + PW / 2, PY + LY + LH / 2 + 6, st.rest ? live : '선을 놓으면 가까운 줄에 붙어요', PW - 40, L(16, 14.5), 11, lc, 'center', 800);
     let hint = '';
     if (st.rest) {
       if (kind === 'A') hint = '이웃한 층선 사이 간격이에요 → 나선 한 바퀴의 길이';
@@ -598,9 +611,9 @@
       else if (kind === 'other' && st.gap === 200) hint = '위아래 호 사이예요. 중심에서 한쪽 호까지만 재요';
       else if (kind === 'other') hint = '이웃한 층선 한 칸(10 mm) 또는 중심~호(100 mm)를 재 보세요';
     }
-    if (hint) textBlock(PX + 14, PY + 154, PW - 28, hint, 13, '#475569', 17, 700);
+    if (hint) textBlock(PX + 14, PY + L(154, 112), PW - 28, hint, 13, '#475569', 17, 700);
     // 기록
-    const ry = PY + 196;
+    const ry = PY + L(196, 146);
     const recs = [
       [x.recA, 'A', '층선 한 칸 10 mm → 3.4 nm', '나선 한 바퀴의 길이'],
       [x.recB, 'B', '중심~호 100 mm → 0.34 nm', '염기쌍 사이 간격'],
@@ -617,7 +630,7 @@
     if (!PHONE) {
       const sy = PY + 322;
       T(PX + 14, sy, '이 자료로 그린 DNA', 14, '#334155', 'left', 800);
-      const kk = 30, hx = PX + 96, hy = sy + 30, nb = x.recA ? 10 : 6;
+      const kk = 30, hx = PX + 140, hy = sy + 30, nb = x.recA ? 10 : 6;
       ctx.save(); ctx.globalAlpha = x.recA ? 1 : 0.35;
       helixSketch(hx, hy, kk, nb, { rungs: x.recB ? nb : (x.recA ? 0 : 0) });
       ctx.restore();
@@ -628,7 +641,7 @@
       }
       if (x.recB) {
         const y1 = hy, y2 = hy + 0.34 * kk;
-        T(hx - 76, hy + 36, '염기쌍 사이', 13, '#0e7490', 'right', 800); T(hx - 76, hy + 52, '0.34 nm', 13.5, '#0e7490', 'right', 800);
+        T(hx - 76, hy + 34, '염기쌍 사이', 13, '#0e7490', 'right', 800); T(hx - 76, hy + 50, '0.34 nm', 13.5, '#0e7490', 'right', 800);
         ctx.strokeStyle = '#0e7490'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(hx - 70, y1); ctx.lineTo(hx - 70, y2); ctx.moveTo(hx - 76, y1); ctx.lineTo(hx - 64, y1); ctx.moveTo(hx - 76, y2); ctx.lineTo(hx - 64, y2); ctx.stroke();
       }
       if (x.recA && x.recB) D.label(PX + PW / 2, PY + PH - 22, '3.4 / 0.34 = 10 → 한 바퀴에 염기쌍 10개', { bg: '#15803d', size: 13.5 });
@@ -661,7 +674,7 @@
   const BW = { pur: 108, pyr: 72 };            // 1 nm = 90 px, 퓨린 1.2 nm / 피리미딘 0.8 nm
   const bw = (b) => (PUR[b] ? BW.pur : BW.pyr);
   const FG = PHONE
-    ? { rl: 62, rr: 242, rows: [196, 318], bh: 60, panel: { x: 8, y: 410, w: 464, h: 160 }, resX: 272, resW: 196, tray: { A: [78, 486], G: [208, 486], T: [320, 486], C: [414, 486] }, head: [[143, 'pur'], [367, 'pyr']], headY: 446 }
+    ? { rl: 62, rr: 242, rows: [182, 298], bh: 60, panel: { x: 8, y: 410, w: 464, h: 160 }, resX: 272, resW: 196, tray: { A: [78, 486], G: [208, 486], T: [320, 486], C: [414, 486] }, head: [[143, 'pur'], [367, 'pyr']], headY: 446 }
     : { rl: 112, rr: 292, rows: [216, 346], bh: 60, panel: { x: 500, y: 74, w: 290, h: 300 }, resX: 346, resW: 146, tray: { A: [575, 170], G: [575, 280], T: [715, 170], C: [715, 280] }, head: [[575, 'pur'], [715, 'pyr']], headY: 124 };
   S.fit = { slots: [[null, null], [null, null]], sel: null, drag: null, found: { AT: false, GC: false }, tried: { wide: false, narrow: false }, shake: [0, 0], flash: [0, 0] };
   const slotXY = (r, side) => ({ x: side === 0 ? FG.rl : FG.rr, y: FG.rows[r] });
@@ -966,9 +979,9 @@
   function talkInit() {
     talk = selectable({
       cards: TLC.map((c) => ({ id: c.id, label: c.label, sub: c.sub, icon: c.icon, col: c.col })),
-      boxes: [{ id: 'board', label: '발표 자료 보드: 시간 순서대로 4~6장', col: '#16a34a', x: TKB.x, y: TKB.y, w: TKB.w, h: TKB.h, cols: 2, hdr: 30 }],
+      boxes: [{ id: 'board', label: '발표 자료 보드: 시간 순서대로 4~6장', col: '#16a34a', x: TKB.x, y: TKB.y, w: TKB.w, h: TKB.h, cols: 2, hdr: 32, gap: PHONE ? 22 : 30 }],
       tray: (i) => ({ x: TKW.x0 + (i % TKW.per) * TKW.dx, y: TKW.y0 + Math.floor(i / TKW.per) * TKW.dy }),
-      cw: TKW.cw, ch: TKW.ch, kh: PHONE ? 38 : 40,
+      cw: TKW.cw, ch: TKW.ch, kh: PHONE ? 42 : 48,
       afterTap: (c) => { S.talk.sel = c.id; },
       onChange: () => { updateCtl(); },
     });
@@ -999,7 +1012,8 @@
     if (tk.vis.arrow) {
       for (let i = 0; i + 1 < mem.length; i++) {
         const a = mem[i], b = mem[i + 1], ok = TL_LINK[TL_BY[a.id].base].indexOf(TL_BY[b.id].base) >= 0;
-        D.arrow(a.x + a.w / 2, a.y + a.h, b.x + b.w / 2, b.y, { color: ok ? '#16a34a' : '#dc2626', width: 3, head: 11, alpha: 0.85, dash: ok ? null : [6, 5] });
+        const same = Math.abs(a.y - b.y) < 6, o = { color: ok ? '#16a34a' : '#dc2626', width: 3, head: 11, alpha: 0.9, dash: ok ? null : [6, 5] };
+        if (same) D.arrow(a.x + a.w + 1, a.y + a.h / 2, b.x - 1, b.y + b.h / 2, o); else D.arrow(a.x + a.w / 2, a.y + a.h + 1, b.x + b.w / 2, b.y - 1, o);
       }
     }
     talk.drawCards();
@@ -1007,7 +1021,7 @@
     mem.forEach((c, i) => {
       const d = TL_BY[c.id];
       if (tk.vis.color) { ctx.fillStyle = d.col; rr(c.x, c.y + 4, 7, c.h - 8, 3); ctx.fill(); }
-      if (tk.vis.num && c.h >= 34) D.label(c.x + c.w - 6, c.y + c.h - 2, d.num, { bg: '#fff', color: '#14532d', border: '#86efac', size: 12.5, align: 'right', pad: 6 });
+      if (tk.vis.num && c.h >= 34) D.label(c.x + c.w - 8, c.y + c.h / 2, d.num, { bg: '#fff', color: '#14532d', border: '#86efac', size: 12.5, align: 'right', pad: 6 });
       if (tk.fmt === 'cn') { D.sphere(c.x + 2, c.y + 2, 11, '#16a34a', { gloss: false, text: String(i + 1), textScale: 1 }); }
       if (tk.fmt === 'st') { D.label(c.x + 4, c.y - 2, 'S#' + (i + 1) + ' 🎬', { bg: '#0f766e', size: 12.5, align: 'left', pad: 6 }); }
       if (tk.fmt === 'tl') { ctx.fillStyle = '#fff'; ctx.strokeStyle = '#16a34a'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(c.x + 1, c.y + c.h / 2, 6, 0, TAU); ctx.fill(); ctx.stroke(); }
@@ -1187,7 +1201,7 @@
       features: ['fit', 'helix'],
       setup() { fitReset(); setMode('fit'); },
       recap: '틈 폭이 일정하려면 퓨린 하나와 피리미딘 하나가 짝을 이뤄야 하고, 샤가프 규칙으로 A–T(수소 결합 2개), G–C(3개)가 정해져요. 당–인산 뼈대는 바깥, 염기쌍은 안쪽이고 두 가닥은 반대 방향인 이중 나선이에요.',
-      summary: '<ul><li><b>왓슨 · 크릭(1953)</b>: 샤가프 자료와 X선 자료를 모두 설명하는 이중 나선 모형.</li><li>염기쌍의 폭이 일정(약 2 nm)하려면 <b>퓨린(A, G; 고리 2개) + 피리미딘(T, C; 고리 1개)</b>이어야 해요. 퓨린 + 퓨린은 너무 넓고, 피리미딘 + 피리미딘은 너무 좁아요.</li><li>샤가프 규칙으로 <b>A–T(수소 결합 2개)</b>, <b>G–C(수소 결합 3개)</b>.</li><li><b>당–인산 뼈대는 바깥</b>, 염기쌍은 안쪽에 있어요. 두 가닥은 서로 <b>반대 방향(역평행)</b>이에요.</li><li>한 바퀴 3.4 nm = 염기쌍 10개(사이 간격 0.34 nm), 지름 약 2 nm.</li></ul>',
+      summary: '<ul><li><b>왓슨 · 크릭(1953)</b>: 샤가프 자료와 X선 자료를 모두 설명하는 이중 나선 모형.</li><li>염기쌍의 폭이 일정(약 2 nm)하려면 <b>퓨린(A, G; 고리 2개) + 피리미딘(T, C; 고리 1개)</b>이어야 해요. 퓨린 + 퓨린은 너무 넓고, 피리미딘 + 피리미딘은 너무 좁아요.</li><li>샤가프 규칙으로 <b>A–T(수소 결합 2개)</b>, <b>G–C(수소 결합 3개)</b>.</li><li><b>당–인산 뼈대는 바깥</b>, 염기쌍은 안쪽에 있어요. 두 가닥은 서로 <b>반대 방향(역평행)</b>이에요.</li><li>한 바퀴 3.4 nm = 염기쌍 10개(사이 간격 0.34 nm), 지름 약 2 nm.</li><li>사람 염기쌍 약 31억 개 × 0.34 nm ≈ 약 1.05 m (근사 예시): 아주 긴 분자가 세포 안에 들어 있어요.</li></ul>',
       missions: [
         {
           id: 'pairs', title: '맞는 염기쌍 찾기',
