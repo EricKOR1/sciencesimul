@@ -9648,8 +9648,7 @@ window.SCI_CATALOG = {
                 "소천체",
                 "탐사 자료",
                 "원시와 분화"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hu-space-hazard",
@@ -9670,8 +9669,7 @@ window.SCI_CATALOG = {
                 "감시와 대응",
                 "충돌 위험",
                 "우주 쓰레기"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hu-exoplanet-detect",
@@ -9692,8 +9690,7 @@ window.SCI_CATALOG = {
                 "통과 관측",
                 "미세 렌즈",
                 "방법 비교"
-              ],
-              "soon": true
+              ]
             },
             {
               "id": "hu-habitable-zone",
@@ -9714,8 +9711,7 @@ window.SCI_CATALOG = {
                 "별의 온도",
                 "행성 판정",
                 "외계 생명"
-              ],
-              "soon": true
+              ]
             }
           ]
         },

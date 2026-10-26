@@ -41,7 +41,15 @@
   const T = (x, y, s, size, color, align, weight, extra) => D.text(x, y, s, Object.assign({ size: size || 14, color: color || '#26324a', align: align || 'left', weight: weight || 800 }, extra));
 
   /* 글자 줄바꿈 (한국어: 공백 단위, 너무 긴 단어는 글자 단위) */
+  const WRAPC = new Map();
   function wrapLines(text, maxW, size, weight) {
+    const ck = text + '|' + Math.round(maxW) + '|' + size + '|' + (weight || 700) + '|' + FS;
+    const hit = WRAPC.get(ck); if (hit) return hit;
+    const res = wrapLines0(text, maxW, size, weight);
+    if (WRAPC.size > 600) WRAPC.clear();
+    WRAPC.set(ck, res); return res;
+  }
+  function wrapLines0(text, maxW, size, weight) {
     ctx.save(); ctx.font = D.font(size, weight || 700);
     const out = []; let line = '';
     String(text).split('\n').forEach((para, pi) => {

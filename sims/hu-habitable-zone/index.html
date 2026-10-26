@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0ea5e9">
+  <title>생명가능지대 | 고등 과학 시뮬레이션</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌱</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .stage-hint { bottom: auto; top: 12px; }
+    .stage-toolbar { min-height: 58px; }
+    .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; }
+    .stage-toolbar .segmented button { min-height: 40px; padding: 5px 10px; font-size: 14px; white-space: nowrap; }
+    .stage-toolbar .segmented { flex-wrap: wrap; }
+    .segmented button.on { background: var(--subject); color: #fff; }
+    #ctrlCard { display: flex; flex-direction: column; gap: 12px; }
+    #ctrlCard .control { margin: 0; }
+    #ctrlCard [hidden] { display: none !important; }
+    .opt-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin-top: 4px; }
+    .opt-grid.c3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .opt-grid.c4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .opt-grid.c5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+    .opt {
+      min-height: 46px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 12px;
+      font-weight: 800; font-size: 14.5px; cursor: pointer; padding: 4px 4px; font-family: inherit; line-height: 1.2;
+    }
+    .opt.on { border-color: var(--subject); background: color-mix(in srgb, var(--subject) 14%, white); color: color-mix(in srgb, var(--subject) 70%, black); }
+    .opt.done { border-color: var(--good); background: var(--good-soft); color: #0b6b39; }
+    .opt:disabled { opacity: .5; cursor: not-allowed; }
+    .ctrl-note { margin: 6px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+    .btn-sm { min-height: 44px; }
+    .btn-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+    .btn-row .btn { flex: 1; padding-left: 8px; padding-right: 8px; }
+    .readout .value.txt { font-family: var(--font); font-size: 17px; white-space: normal; line-height: 1.25; }
+    .concept table.mini, table.mini { border-collapse: collapse; margin: 6px 0; font-size: 13px; width: 100%; }
+    .concept table.mini th, .concept table.mini td, table.mini th, table.mini td { border: 1px solid var(--line); padding: 4px 5px; text-align: center; }
+    .concept table.mini th, table.mini th { background: var(--surface-2); font-weight: 800; }
+    .num-in { width: 100%; min-height: 46px; border: 2px solid var(--line); border-radius: 10px; font: inherit; font-weight: 800; font-size: 17px; padding: 0 10px; background: var(--surface); color: var(--ink); text-align: center; }
+    .num-in:focus { outline: none; border-color: var(--subject); }
+    .num-in.ok { border-color: var(--good); background: var(--good-soft); }
+    .num-in.bad { border-color: var(--bad); background: var(--bad-soft); animation: shakeX .38s; }
+    .in-row { display: grid; grid-template-columns: 1fr 104px; gap: 8px; align-items: center; margin-top: 6px; font-weight: 800; font-size: 14.5px; line-height: 1.25; }
+    .in-row .num-in { min-height: 42px; font-size: 16px; }
+    @keyframes shakeX { 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+    .src-note { margin: 4px 0 0; font-size: 12.5px; color: #a16207; background: #fff7e0; border: 1px solid #f2d38a; border-radius: 10px; padding: 6px 9px; line-height: 1.4; }
+    @media (max-width: 599px) {
+      .readout { min-width: 0; }
+      .readout .value.txt { font-size: 15px; }
+      .stage-toolbar .spacer { display: none; }
+      .stage-toolbar .segmented button { padding: 5px 7px; font-size: 13px; }
+    }
+    input[type=range] { height: 40px; }
+    .ticks { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--muted); font-weight: 700; margin-top: -6px; padding: 0 2px; }
+  </style>
+</head>
+<body class="sim-page" data-subject="earth">
+  <header class="sim-header">
+    <a class="btn btn-sm btn-back" href="../../index.html#hu">←<span> 목록</span></a>
+    <div class="sim-title">
+      <div class="sim-unit">행성우주과학 · Ⅰ. 우주탐사와 행성계</div>
+      <h1>생명가능지대</h1>
+    </div>
+    <div class="sim-header-right">
+      <div class="star-meter" id="starMeter" title="획득한 별"></div>
+      <button class="icon-btn" id="soundBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <div class="stage-col">
+      <section class="card stage-card">
+        <div class="stage-toolbar">
+          <span class="toolbar-label" id="tbLabel">🌱 생명가능지대</span>
+          <span class="spacer"></span>
+          <div class="segmented" id="modeSeg" role="group" aria-label="장면 고르기" hidden>
+            <button type="button" data-view="zone">🌞 별과 지대</button>
+            <button type="button" data-view="compare">🌡 별의 온도</button>
+            <button type="button" data-view="planets">🪐 행성 판정</button>
+            <button type="button" data-view="evidence">⚖ 증거 저울</button>
+            <button type="button" data-view="drake">🔢 간이 추정</button>
+          </div>
+        </div>
+        <div class="stage-canvas">
+          <canvas id="cv" aria-label="별의 온도와 반지름으로 생명가능지대 띠가 이동하는 장면, 네 종류 별의 생명가능지대 비교, 외계 행성 다섯 개의 받는 복사와 판정, 외계 생명 증거 카드와 저울, 생명가능지대 지구형 행성 수의 간이 추정이 있어요."></canvas>
+          <div class="stage-hint hide" id="stageHint"></div>
+        </div>
+      </section>
+      <div class="readouts">
+        <div class="readout"><span class="label" id="l1">—</span><span class="value txt" id="v1">—</span></div>
+        <div class="readout"><span class="label" id="l2">—</span><span class="value txt" id="v2">—</span></div>
+        <div class="readout"><span class="label" id="l3">—</span><span class="value txt" id="v3">—</span></div>
+      </div>
+    </div>
+
+    <aside class="side-col">
+      <section class="card card-pad" id="ctrlCard">
+
+        <div class="control" data-modes="zone">
+          <div class="control-head"><span>⭐ 중심별 고르기</span></div>
+          <div class="opt-grid c4" id="grpStar"><button class="opt" type="button" data-k="0">M형</button><button class="opt" type="button" data-k="1">K형</button><button class="opt" type="button" data-k="2">G형<br>(태양)</button><button class="opt" type="button" data-k="3">F형</button></div>
+        </div>
+        <div class="control" data-modes="zone">
+          <div class="control-head"><label for="sT">🌡 표면 온도 T</label><output id="oT">5800 K</output></div>
+          <input type="range" id="sT" min="2500" max="7500" step="50" value="5800" aria-label="중심별의 표면 온도 (K)">
+          <div class="control-head" style="margin-top:8px"><label for="sR">📏 반지름 R</label><output id="oR">1.00 R☉</output></div>
+          <input type="range" id="sR" min="0.1" max="1.6" step="0.05" value="1" aria-label="중심별의 반지름 (태양 반지름 단위)">
+        </div>
+        <div class="control" data-modes="zone" id="calcHz" hidden>
+          <div class="in-row"><span>HZ 안쪽 경계 (AU)</span><input class="num-in" id="inHi" type="text" inputmode="decimal" placeholder="예: 0.5" aria-label="생명가능지대 안쪽 경계 (AU)" autocomplete="off"></div>
+          <div class="in-row"><span>HZ 바깥쪽 경계 (AU)</span><input class="num-in" id="inHo" type="text" inputmode="decimal" placeholder="예: 1.0" aria-label="생명가능지대 바깥쪽 경계 (AU)" autocomplete="off"></div>
+          <p class="ctrl-note">안쪽 0.95√L, 바깥쪽 1.4√L (단위 AU, L은 태양 광도 단위)</p>
+        </div>
+
+        <div class="control" data-modes="compare">
+          <div class="control-head"><label for="sTc">🌡 내가 만든 별의 온도 (R = 1 R☉)</label><output id="oTc">5800 K</output></div>
+          <input type="range" id="sTc" min="2500" max="7500" step="50" value="5800" aria-label="내가 만든 별의 표면 온도 (K)">
+        </div>
+        <div class="control" data-modes="compare" id="calcCmp" hidden>
+          <div class="control-head"><span>🧮 HZ 안쪽 경계 거리 (AU)</span></div>
+          <div class="in-row"><span>M형 (L = 0.0016)</span><input class="num-in" id="inC0" type="text" inputmode="decimal" placeholder="예: 0.1" aria-label="M형 별의 HZ 안쪽 경계 (AU)" autocomplete="off"></div>
+          <div class="in-row"><span>K형 (L = 0.18)</span><input class="num-in" id="inC1" type="text" inputmode="decimal" placeholder="예: 0.5" aria-label="K형 별의 HZ 안쪽 경계 (AU)" autocomplete="off"></div>
+          <div class="in-row"><span>G형 (L = 1)</span><input class="num-in" id="inC2" type="text" inputmode="decimal" placeholder="예: 1" aria-label="G형 별의 HZ 안쪽 경계 (AU)" autocomplete="off"></div>
+          <div class="in-row"><span>F형 (L = 2.7)</span><input class="num-in" id="inC3" type="text" inputmode="decimal" placeholder="예: 1.5" aria-label="F형 별의 HZ 안쪽 경계 (AU)" autocomplete="off"></div>
+        </div>
+        <div class="control" data-modes="compare" id="pickCmp" hidden>
+          <div class="control-head"><span>🎯 별에 가장 가까운 HZ를 가진 별</span></div>
+          <div class="opt-grid c4" id="grpPick"><button class="opt" type="button" data-k="0">M형</button><button class="opt" type="button" data-k="1">K형</button><button class="opt" type="button" data-k="2">G형</button><button class="opt" type="button" data-k="3">F형</button></div>
+        </div>
+
+        <div class="control" data-modes="planets" id="calcS" hidden>
+          <div class="in-row"><span>프록시마 b의 S<br>(받는 복사, 지구 = 1)</span><input class="num-in" id="inS" type="text" inputmode="decimal" placeholder="예: 1" aria-label="프록시마 b가 받는 복사 S" autocomplete="off"></div>
+        </div>
+        <div class="control" data-modes="planets">
+          <div class="btn-row"><button class="btn btn-sm" id="bCalc" type="button">🧮 선택한 행성의 S · T_eq 보기</button></div>
+          <p class="ctrl-note">S = L / a² (a: AU, L: 태양 = 1), T_eq = 255 K × S^¼. 카드를 눌러 고른 뒤 HZ 안 / 밖 상자에 넣어요.</p>
+        </div>
+
+        <div class="control" data-modes="evidence" id="claimBox" hidden>
+          <div class="control-head"><span>✍ 주장 – 근거 – 한계로 문장 만들기</span></div>
+          <div class="opt-grid" id="grpClaim"></div>
+          <div class="opt-grid" id="grpFor"></div>
+          <div class="opt-grid" id="grpAgainst"></div>
+        </div>
+        <div class="control" data-modes="evidence" id="evNote">
+          <p class="ctrl-note">증거 카드를 눌러 고른 뒤 알맞은 상자를 눌러요(끌어 넣어도 돼요). 먼저 8장을 분류해요.</p>
+        </div>
+
+        <div class="control" data-modes="drake">
+          <div class="control-head"><label for="sNs">⭐ 우리은하의 별 수</label><output id="oNs">1.0×10¹¹ 개</output></div>
+          <input type="range" id="sNs" min="0.5" max="4" step="0.5" value="1" aria-label="우리은하의 별 수 (10의 11제곱 개 단위)">
+          <div class="control-head" style="margin-top:8px"><label for="sFr">🌍 HZ 지구형 행성이 있는 별의 비율</label><output id="oFr">0.10</output></div>
+          <input type="range" id="sFr" min="0.05" max="0.3" step="0.05" value="0.1" aria-label="생명가능지대에 지구형 행성이 있는 별의 비율">
+        </div>
+        <div class="control" data-modes="drake" id="calcN" hidden>
+          <div class="in-row"><span>N = 별 수 × 비율<br>(×10¹⁰ 개)</span><input class="num-in" id="inN" type="text" inputmode="decimal" placeholder="예: 1" aria-label="HZ 지구형 행성의 수 (10의 10제곱 개 단위)" autocomplete="off"></div>
+        </div>
+        <div class="control" data-modes="drake">
+          <div class="control-head"><label for="sP">🧬 생명이 생길 확률 p (아무도 몰라요)</label><output id="oP">10⁻⁶</output></div>
+          <input type="range" id="sP" min="-12" max="0" step="1" value="-6" aria-label="행성에서 생명이 생길 확률 p (10의 거듭제곱, 알려지지 않은 값)">
+        </div>
+
+      </section>
+      <section class="card" id="game"></section>
+    </aside>
+  </main>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/anim.js"></script>
+  <script src="../../assets/js/catalog.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>

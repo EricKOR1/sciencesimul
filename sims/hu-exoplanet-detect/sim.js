@@ -41,7 +41,15 @@
   const T = (x, y, s, size, color, align, weight, extra) => D.text(x, y, s, Object.assign({ size: size || 14, color: color || '#26324a', align: align || 'left', weight: weight || 800 }, extra));
 
   /* 글자 줄바꿈 (한국어: 공백 단위, 너무 긴 단어는 글자 단위) */
+  const WRAPC = new Map();
   function wrapLines(text, maxW, size, weight) {
+    const ck = text + '|' + Math.round(maxW) + '|' + size + '|' + (weight || 700) + '|' + FS;
+    const hit = WRAPC.get(ck); if (hit) return hit;
+    const res = wrapLines0(text, maxW, size, weight);
+    if (WRAPC.size > 600) WRAPC.clear();
+    WRAPC.set(ck, res); return res;
+  }
+  function wrapLines0(text, maxW, size, weight) {
     ctx.save(); ctx.font = D.font(size, weight || 700);
     const out = []; let line = '';
     String(text).split('\n').forEach((para, pi) => {
@@ -802,7 +810,7 @@
     let yy = I.y + 50 * FS;
     if (it) yy = drawWrap(I.x + 14, yy, it.info, I.w - 28, 13.5, { color: '#334155' }) + 24 * FS;
     else yy = drawWrap(I.x + 14, yy, '행성의 질량·거리·별과의 거리에 따라 알맞은 탐사 방법이 달라요.', I.w - 28, 13.5, { color: '#64748b' }) + 24 * FS;
-    [['시선 속도법', '질량이 크고 별에 가까울수록 별이 크게 흔들려요 (K ∝ 질량, 가까울수록 커요)'], ['통과법', '궤도면이 시선과 나란하고, 크기가 클수록 깊이 (R_p/R_s)²가 커요. 가까울수록 확률이 높아요'], ['미세 렌즈법', '먼 별이나 별 없는 행성도 가능해요. 한 번 지나가면 다시 못 봐요']].forEach((r, i) => {
+    if (!PHONE) [['시선 속도법', '질량이 크고 별에 가까울수록 별이 크게 흔들려요 (K ∝ 질량, 가까울수록 커요)'], ['통과법', '궤도면이 시선과 나란하고, 크기가 클수록 깊이 (R_p/R_s)²가 커요. 가까울수록 확률이 높아요'], ['미세 렌즈법', '먼 별이나 별 없는 행성도 가능해요. 한 번 지나가면 다시 못 봐요']].forEach((r, i) => {
       D.label(I.x + 14, yy - 5, r[0], { bg: METH[i].c, size: 12, align: 'left' });
       yy = drawWrap(I.x + 14, yy + 20 * FS, r[1], I.w - 28, 12.5, { color: '#475569' }) + 30 * FS;
     });
@@ -829,7 +837,7 @@
       POP.forEach((p) => { if (p.det[m]) { ctx.beginPath(); ctx.arc(X(p.la) + (m - 1) * 0.0, Y(p.lm), 3.3, 0, TAU); ctx.fill(); ctx.stroke(); } });
     });
     // 범례
-    [0, 1, 2].forEach((m, i) => { const lx = ix + 8 + i * (PHONE ? 100 : 150), ly = top + 14; ctx.fillStyle = METH[m].c; ctx.beginPath(); ctx.arc(lx, ly, 5, 0, TAU); ctx.fill(); T(lx + 10, ly + 4, METH[m].n + ' ' + scCount(m), PHONE ? 10.5 : 12.5, '#1e293b', 'left', 800); });
+    [0, 1, 2].forEach((m, i) => { const lx = ix + 8 + i * (PHONE ? 112 : 150), ly = top + 14; ctx.fillStyle = METH[m].c; ctx.beginPath(); ctx.arc(lx, ly, 5, 0, TAU); ctx.fill(); T(lx + 10, ly + 4, (PHONE ? ['시선속도', '통과', '렌즈'][m] : METH[m].n) + ' ' + scCount(m), PHONE ? 10.5 : 12.5, '#1e293b', 'left', 800); });
     panel(I.x, I.y, I.w, I.h, { r: 14 });
     T(I.x + 14, I.y + 24 * FS, '⚠ 선택 효과: 찾기 쉬운 행성이 먼저 발견돼요', 14.5, '#1e293b', 'left', 800);
     let yy = drawWrap(I.x + 14, I.y + 50 * FS, '회색 점(못 찾은 행성)까지 합치면 행성은 모든 거리·질량에 고르게 있어요. 하지만 찾아낸 행성은 방법마다 한쪽에 몰려 있어요.', I.w - 28, 13.5, { color: '#334155' });
