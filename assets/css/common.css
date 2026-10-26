@@ -174,6 +174,26 @@ h1, h2, h3, h4 { margin: 0; line-height: 1.25; }
   display: block; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
 }
 
+/* 실험 잠금: 단계 설명을 읽는 동안(▶ 단계 시작하기 전) */
+.stage-lock {
+  position: absolute; inset: 0; z-index: 30; display: flex; align-items: center; justify-content: center; padding: 12px;
+  background: rgba(244, 246, 252, .62); -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px);
+  animation: fadeIn .25s ease; touch-action: auto;
+}
+.stage-lock[hidden] { display: none; }
+.stage-lock .sl-box {
+  max-width: min(420px, 92%); background: #fff; border: 2px solid color-mix(in srgb, var(--subject) 40%, white); border-radius: 18px;
+  box-shadow: 0 10px 30px rgba(20, 30, 60, .16); padding: 16px 18px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px;
+}
+.stage-lock .sl-ico { font-size: 34px; line-height: 1; }
+.stage-lock .sl-t { font-size: 18px; color: var(--ink); }
+.stage-lock p { word-break: keep-all; margin: 0 0 4px; font-size: 14.5px; line-height: 1.5; color: var(--muted); }
+.stage-lock p b { color: var(--subject); }
+.stage-lock .sl-dir::before { content: '오른쪽'; }
+.sim-locked .stage-toolbar, .sim-locked .side-col > .card:not(#game):not(.game) { pointer-events: none; opacity: .45; filter: grayscale(.5); }
+.sim-locked .stage-col button, .sim-locked .stage-col input, .sim-locked .stage-col select { pointer-events: none; }
+.sim-locked .stage-lock button { pointer-events: auto; }
+
 /* 상단 도구 막대 */
 .stage-toolbar { flex: none; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding: 8px 10px; border-bottom: 1px solid var(--line); background: var(--surface); }
 .stage-toolbar .spacer { flex: 1; }
@@ -481,6 +501,7 @@ input[type=range]:disabled { opacity: .45; cursor: not-allowed; }
   /* 아래쪽 2단: 왼쪽 = 조작 카드들, 오른쪽 = 미션 (각각 따로 스크롤) */
   .side-col { display: flex; flex-direction: column; flex-wrap: wrap; align-content: stretch; gap: 12px; overflow: hidden; }
   .side-col > .card { width: calc(44% - 6px); flex: 0 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+  .stage-lock .sl-dir::before { content: '아래'; }
   .side-col > .game, .side-col > #game { order: 99; width: calc(56% - 6px); flex: 0 0 100%; height: 100%; }
   /* 조작 카드가 모두 숨겨진 단계에서는 미션 패널이 가로 전체를 사용 */
   .side-col:not(:has(> .card:not(.game):not(#game):not([hidden]))) > #game { width: 100%; }
@@ -498,6 +519,11 @@ input[type=range]:disabled { opacity: .45; cursor: not-allowed; }
   .stage-card { flex: none; }
   .stage-canvas { flex: none; aspect-ratio: var(--stage-ar, 1.6); height: auto; }
   .side-col { overflow: visible; }
+  .stage-lock .sl-dir::before { content: '아래'; }
+  .stage-lock .sl-box { padding: 10px 12px; gap: 3px; }
+  .stage-lock .sl-ico { font-size: 24px; }
+  .stage-lock .sl-t { font-size: 15.5px; }
+  .stage-lock p { font-size: 13px; }
   .readout .value { font-size: 18px; }
   #fsBtn { display: none; }
 }

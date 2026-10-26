@@ -205,6 +205,7 @@
       canvas.width = Math.round(cw * dpr);
       canvas.height = Math.round(ch * dpr);
       view.apply();
+      markDirty();
       opts.onResize && opts.onResize(view);
     }
     view.apply = function () { ctx.setTransform(view.scale * view.dpr, 0, 0, view.scale * view.dpr, 0, 0); };
@@ -251,8 +252,14 @@
     c.addEventListener('pointerleave', (e) => { if (!active && h.hover) c.style.cursor = 'default'; });
   }
 
+  /* 실험 잠금: 단계 설명을 읽는 동안(▶ 단계 시작하기 전) 애니메이션을 멈추고 조작을 막아요.
+     잠긴 동안 loop는 dirty 프레임에서만 dt=0으로 한 번 그려 화면은 유지하되 시간은 흐르지 않아요. */
+  const lock = { on: false, dirty: 0 };
+  function markDirty(n) { lock.dirty = Math.max(lock.dirty, n || 3); }
+
   /* 애니메이션 루프: SciSim.loop((dt, t) => {...}) dt는 초 단위 (최대 0.05) */
-  function loop(fn) {
+  function loop(fn, opt) {
+    const always = opt && opt.always;
     let last = performance.now();
     let running = true;
     let lastErr = null;
@@ -261,6 +268,13 @@
       // 첫 프레임의 t가 last보다 앞설 수 있어 음수가 되지 않도록 0~0.05초로 제한
       const dt = Math.max(0, Math.min(0.05, (t - last) / 1000));
       last = t;
+      if (lock.on && !always) {
+        if (lock.dirty <= 0) { requestAnimationFrame(frame); return; }
+        lock.dirty--;
+        try { fn(0, t / 1000); } catch (e) { if (e && e.message !== lastErr) { lastErr = e && e.message; console.error(e); } }
+        requestAnimationFrame(frame);
+        return;
+      }
       // 한 프레임의 오류로 애니메이션 전체가 멈추지 않도록 (같은 오류는 한 번만 기록)
       try { fn(dt, t / 1000); } catch (e) { if (e && e.message !== lastErr) { lastErr = e && e.message; console.error(e); } }
       requestAnimationFrame(frame);
@@ -441,6 +455,34 @@
       if (sc && sc.scrollTop) sc.scrollTop = 0;
       if (mount.scrollTop) mount.scrollTop = 0;
     }
+    /* ---- 실험 잠금: 단계 설명을 읽는 동안 애니메이션 정지 + 조작 막기 ---- */
+    let lockEls = null;
+    function setLock(on, li, goBtn) {
+      lock.on = on;
+      markDirty(on ? 30 : 3);
+      document.body.classList.toggle('sim-locked', on);
+      if (!lockEls) lockEls = $$('.stage-canvas').map((sc) => { const d = el('div', { class: 'stage-lock', hidden: true }); sc.appendChild(d); return d; });
+      lockEls.forEach((d) => {
+        d.hidden = !on;
+        d.innerHTML = '';
+        if (!on) return;
+        const btn = el('button', { class: 'btn btn-subject btn-sm', type: 'button', html: '👉 설명 보러 가기' });
+        btn.addEventListener('click', () => {
+          Sound.click();
+          showTab('mission');
+          if (!goBtn) return;
+          goBtn.scrollIntoView({ block: 'center', behavior: 'smooth' });
+          goBtn.classList.remove('feature-new'); void goBtn.offsetWidth; goBtn.classList.add('feature-new');
+          setTimeout(() => goBtn.classList.remove('feature-new'), 4600);
+        });
+        d.appendChild(el('div', { class: 'sl-box' }, [
+          el('div', { class: 'sl-ico', text: '📖' }),
+          el('b', { class: 'sl-t', text: (li + 1) + '단계 설명을 먼저 읽어요' }),
+          el('p', { html: '<span class="sl-dir"></span> 설명을 읽고 <b>▶ ' + (li + 1) + '단계 시작하기</b>를 누르면 실험이 움직여요.' }),
+          btn,
+        ]));
+      });
+    }
     tabMission.addEventListener('click', () => { Sound.click(); showTab('mission'); });
     tabConcept.addEventListener('click', () => { Sound.click(); showTab('concept'); });
 
@@ -552,6 +594,7 @@
       const go = el('button', { class: 'btn btn-subject btn-block', type: 'button', html: '▶ ' + (li + 1) + '단계 시작하기' });
       go.addEventListener('click', () => { Sound.click(); renderMission(); });
       card.appendChild(go);
+      setLock(true, li, go);
       bodyMission.append(stepper(li), card, footer());
       persist();
       if (!bodyConcept.hidden) renderNotes();
@@ -562,6 +605,7 @@
       const m = flat[idx];
       const lv = levels[m._level];
       if (!free) applyFeatures(featuresUpTo(m._level), false);
+      setLock(false);
       wrong = 0; hintUsed = false; holdStart = 0; lastStatus = null; phase = 'active';
       bodyMission.innerHTML = '';
       resetPanelScroll();
@@ -733,6 +777,7 @@
     function complete() {
       phase = 'complete';
       free = true;
+      setLock(false);
       applyFeatures(allFeatures, false);
       idx = 0; score = 0;
       Sound.level();
@@ -832,7 +877,7 @@
         holdStart = 0;
         refs.hold.classList.remove('show');
       }
-    });
+    }, { always: true });
 
     const api = {
       has, isNew,
