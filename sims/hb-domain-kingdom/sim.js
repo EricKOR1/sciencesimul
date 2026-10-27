@@ -229,7 +229,7 @@
   const DM = SEQ.map((a) => SEQ.map((b) => ham(a, b)));
   const DSTAT = (function () { let wMax = 0, bMin = 99, bMax = 0; for (let i = 0; i < 16; i++) for (let j = i + 1; j < 16; j++) { if (DOMOF[i] === DOMOF[j]) wMax = Math.max(wMax, DM[i][j]); else { bMin = Math.min(bMin, DM[i][j]); bMax = Math.max(bMax, DM[i][j]); } } return { wMax, bMin, bMax }; })();
   const GRPC = ['#cbd5e1', '#f97316', '#0ea5e9', '#22c55e'];
-  const RM_ = L({ x: 122, y: 100, c: 20 }, { x: 34, y: 84, c: 17 });
+  const RM_ = L({ x: 122, y: 100, c: 20 }, { x: 34, y: 79, c: 17 });
   const RLIST = L({ x: 478, y: 46, w: 308, h: 394 }, { x: 6, y: 420, w: 468, h: 274 });
   const RCMP = L({ x: 14, y: 450, w: 772, h: 98 }, { x: 6, y: 356, w: 468, h: 56 });
   const RN_SHUF = [4, 0, 9, 2, 12, 5, 15, 1, 7, 10, 3, 13, 6, 11, 8, 14];
@@ -524,11 +524,11 @@
     bgFill('#f1f3f9', '#eaf2ee');
     T(L(14, 8), L(30, 22), '🔎 단서를 읽고 역과 계를 정해요', L(17, 15), '#334155', 'left', 800);
     // 단서 카드
-    const cx = L(14, 6), cy = L(44, 36), cw = L(380, 468), ch = L(250, 190);
+    const cx = L(14, 6), cy = L(44, 36), cw = L(380, 468), ch = L(250, 226);
     panel(cx, cy, cw, ch, 18, '#fffefa');
     E(u.e, cx + 40, cy + 44, 40);
     T(cx + 76, cy + 38, u.n, L(18, 16), '#26324a', 'left', 800); T(cx + 76, cy + 60, '현미경과 조사로 알아낸 특징', L(13.5, 12.5), '#64748b', 'left', 700);
-    u.clue.forEach((c, i) => { const y = cy + 92 + i * L(34, 28); D.sphere(cx + 24, y - 4, 6, '#7c3aed', { gloss: false }); textBlock(cx + 40, y, cw - 56, c, L(15, 13.5), '#1f2d44', 20, 800); });
+    let cyy = cy + 92; u.clue.forEach((c) => { D.sphere(cx + 24, cyy - 4, 6, '#7c3aed', { gloss: false }); const hh = textBlock(cx + 40, cyy, cw - 56, c, L(15, 13.5), '#1f2d44', 20, 800); cyy += Math.max(hh, 20) + L(14, 8); });
     // 결과 표시
     const dk = q.dom[q.cs], kn = q.kin[q.cs];
     D.label(cx + 14, cy + ch - 24, dk == null ? '역: 고르기' : DN[dk], { bg: dk == null ? '#94a3b8' : DCOL[dk], size: L(14, 13), align: 'left' });
