@@ -480,7 +480,7 @@
       if (nearC) { ctx.fillStyle = 'rgba(56,189,248,.2)'; rr(cxp - cw / 2 + 3, C.y + 6, cw - 6, C.h - 12, 10).fill(); }
       litSphere(cxp, cyp, Rr, (east2 ? 1 : -1) * Math.sin(alp * DEG), 0, Math.cos(alp * DEG), '#26324f', mixc(p.col, '#ffffff', 0.35));
       D.text(cxp, C.y + 98, f0(dia) + '″', { size: 13, weight: 700, color: '#cbd5e1' });
-      if (names[i]) D.text(cxp, C.y + 118, names[i], { size: 13, weight: 800, color: '#fde68a' });
+      if (names[i]) { if (PHONE) names[i].split(' ').forEach((w, wi) => D.text(cxp, C.y + 118 + wi * 17, w, { size: 13, weight: 800, color: '#fde68a' })); else D.text(cxp, C.y + 118, names[i], { size: 13, weight: 800, color: '#fde68a' }); }
     });
     D.text(C.x + 12, C.y + 20, '한 바퀴(회합 주기) 동안 모양과 크기 변화', { size: 13, weight: 800, color: '#e2e8f0', align: 'left' });
   }
@@ -506,7 +506,7 @@
     // 배치 이름표
     const a = Math.abs(e);
     const nm = a < 6 ? '합' : a > 174 ? '충' : Math.abs(a - 90) < 4 ? (e > 0 ? '동구' : '서구') : '';
-    if (nm) D.label(L.A.x + L.A.w / 2, L.A.y + 46, nm, { bg: nm === '충' ? '#dc2626' : nm === '합' ? '#475569' : '#0369a1', size: 16, pad: 14 });
+    if (nm) D.label(L.A.x + L.A.w - 44, L.A.y + 44, nm, { bg: nm === '충' ? '#dc2626' : nm === '합' ? '#475569' : '#0369a1', size: 16, pad: 14 });
     // 오른쪽: 원반 + 남중 시계
     const B = L.B;
     panel(B.x, B.y, B.w, B.h, { fill: 'rgba(255,255,255,.95)' });
@@ -540,7 +540,8 @@
     const C = L.C;
     panel(C.x, C.y, C.w, C.h, { fill: 'rgba(8,15,40,.86)', line: 'rgba(148,163,184,.4)', r: 12 });
     const ax = C.x + 40, aw = C.w - 80, ay = C.y + 62;
-    const marks = [[-1, '합'], [-0.5, '서구'], [0, '충'], [0.5, '동구'], [1, '합']];
+    const dq = Math.acos(1 / p.a) / DEG / 180;   // 구(이각 90°)는 충에서 이만큼(반 회합 주기 대비) 떨어져 있어요
+    const marks = [[-1, '합'], [-dq, '서구'], [0, '충'], [dq, '동구'], [1, '합']];
     line([[ax, ay], [ax + aw, ay]], 'rgba(148,163,184,.7)', 4);
     const Sd = synodicD(id);
     marks.forEach(([u, nmx]) => { const px = ax + (u + 1) / 2 * aw; ctx.fillStyle = nmx === '충' ? '#ef4444' : '#38bdf8'; ctx.beginPath(); ctx.arc(px, ay, 8, 0, TAU); ctx.fill(); D.text(px, ay + 30, nmx, { size: 14, weight: 800, color: '#e2e8f0' }); });
@@ -590,7 +591,8 @@
     const nm = constName(L0), lc = (b) => b;
     D.text(C.x + C.w - 14, C.y + 22, '별자리 배경: ' + (nm || ''), { size: 13, weight: 700, color: '#a5b4fc', align: 'right' });
     // 눈금(경도)
-    for (let dl = Math.ceil((mid - span / 2) / 5) * 5; dl <= mid + span / 2; dl += 5) { const xx = X(dl); line([[xx, y1 + 2], [xx, y1 + 8]], 'rgba(148,163,184,.7)', 1.4); D.text(xx, y1 + 20, (dl >= 0 ? '+' : '−') + Math.abs(dl) + '°', { size: 12, weight: 700, color: '#94a3b8' }); }
+    const tk = [5, 10, 20, 30, 45, 60, 90].find((q) => q * kx >= 38) || 90;   // 눈금 글자가 겹치지 않게 간격 고르기
+    for (let dl = Math.ceil((mid - span / 2) / tk) * tk; dl <= mid + span / 2; dl += tk) { const xx = X(dl); line([[xx, y1 + 2], [xx, y1 + 8]], 'rgba(148,163,184,.7)', 1.4); D.text(xx, y1 + 20, (dl >= 0 ? '+' : '−') + Math.abs(dl) + '°', { size: 12, weight: 700, color: '#94a3b8' }); }
     // 경로
     const seg = (a, b, col, w, dash) => { ctx.strokeStyle = col; ctx.lineWidth = w; ctx.setLineDash(dash || []); ctx.beginPath(); let st = false; bd.pts.forEach((q) => { if (q.u < a || q.u > b) return; const x = X(q.lam), y = Y(q.beta); st ? ctx.lineTo(x, y) : ctx.moveTo(x, y); st = true; }); ctx.stroke(); ctx.setLineDash([]); };
     seg(-E.W, E.W, 'rgba(148,163,184,.35)', 2, [3, 5]);
@@ -832,13 +834,13 @@
     const v = parseFloat(($('#inRetro').value || '').replace(/[−–]/g, '-').replace(/,(?=\d{3}(?!\d))/g, '').replace(',', '.').replace('°', ''));
     if (!isFinite(v)) { say('°/일 단위 숫자를 입력해 주세요.', true, 2); return; }
     const want = Math.abs(dlam('mars', findEvent('mars', 'inf', 5)));
-    if (Math.abs(Math.abs(v) - 0.36) <= 0.04) { S.retroOk = true; say('좋아요! 충일 때 화성은 하루 약 0.36°씩 뒤로 가요.', false, 3); } else say('상대 속력 (29.8 − 24.1) km/s를 거리 7800만 km로 나눈 값(rad/s)을 °/일로 바꿔 봐요.', true, 3.8);
+    if (Math.abs(Math.abs(v) - 0.36) <= 0.0401) { S.retroOk = true; say('좋아요! 충일 때 화성은 하루 약 0.36°씩 뒤로 가요.', false, 3); } else say('상대 속력 (29.8 − 24.1) km/s를 거리 7800만 km로 나눈 값(rad/s)을 °/일로 바꿔 봐요.', true, 3.8);
   });
   $$('#tabSeg4 .opt').forEach((b) => clickable(b, () => { S.tab4 = b.dataset.k; updateCtl(); }));
 
   /* ---- 장면 진입 ---- */
   function enterScene(v) {
-    if (v === 'orbit') { showHint('행성을 눌러 고르고 ▶ 재생을 눌러 봐요', 5000); }
+    if (v === 'orbit') { S.t = S.tOrb || 0; showHint('행성을 눌러 고르고 ▶ 재생을 눌러 봐요', 5000); }
     if (v === 'inner') { setBase2(); setU2(S.u2); showHint('슬라이더나 버튼으로 금성의 위치를 바꿔 봐요', 5000); }
     if (v === 'outer') { setBase3(); setU3(S.u3); showHint('버튼으로 서구·충·동구·합 배치를 만들어 봐요', 5000); }
     if (v === 'retro') { setBase4(); setU4(S.u4); showHint('▶ 재생을 눌러 점의 움직임을 봐요', 5000); }

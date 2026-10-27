@@ -143,7 +143,7 @@
   }
   function obLaunch() {
     const o = S.ob; if (o.st === 'run') return;
-    obReady(); const r = o.r0, GM = GMb(bodyNow());
+    obReady(); o.scale = 0.3 * (SH - 12) / r0Now(); const r = o.r0, GM = GMb(bodyNow());
     const Tc = TAU * r / vcirc(GM, r); o.tscale = Tc / 6; o.st = 'run'; o.last = 0; Sound.click(); updateCtl();
   }
   function obRelaunch() { obReady(); obLaunch(); }
@@ -267,7 +267,7 @@
       ['GMm / r² = m v² / r  →  v꜀ = √(GM / r) = ' + vc.toFixed(2) + ' km/s', '#1d4ed8'],
       ['내가 정한 속력 v = ' + v.toFixed(2) + ' km/s  (v꜀의 ' + (v / vc * 100).toFixed(0) + ' %)', '#c2410c'],
     ].slice(0, 3));
-    const by = PY + 28 + lh * 4 + 6, bw = PHONE ? PW - 150 : 380;
+    const by = PY + 28 + lh * 4 - 6, bw = PHONE ? PW - 150 : 380;
     T(x0, by, '중력 가속도 GM/r²', 13.5, '#5a6679', 'left', 800); hbar(x0, by + 8, bw, 14, gA, Math.max(gA, nA, 1) * 1.1, RED); T(x0 + bw + 10, by + 21, gA.toFixed(2) + ' m/s²', 14, RED, 'left', 800);
     T(x0, by + 46, '필요한 구심 가속도 v²/r', 13.5, '#5a6679', 'left', 800); hbar(x0, by + 54, bw, 14, nA, Math.max(gA, nA, 1) * 1.1, GREEN); T(x0 + bw + 10, by + 67, nA.toFixed(2) + ' m/s²', 14, '#14753f', 'left', 800);
     const vd = verdict();

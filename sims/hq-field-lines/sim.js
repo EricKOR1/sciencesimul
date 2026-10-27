@@ -476,7 +476,7 @@
 
   /* ================= ③ 균일한 장 ================= */
   const E_CH = 1.6e-19, M_E = 9.11e-31, M_P = 1.67e-27;
-  const PL = PHONE ? { x0: 40, x1: 360, cy: 232, px: 30 } : { x0: 44, x1: 400, cy: 300, px: 46 };
+  const PL = PHONE ? { x0: 40, x1: 360, cy: 232, px: 30 } : { x0: 44, x1: 384, cy: 300, px: 46 };
   const lineStep = (V) => Math.ceil(V / 6);
   function plGeom() { const l = S.l3, g = l.d * PL.px; return { top: PL.cy - g / 2, bot: PL.cy + g / 2, g }; }
   const Eof3 = () => S.l3.V / (S.l3.d / 100);
@@ -523,9 +523,9 @@
       T(PL.x1 + 8, y + 4, v + ' V', 12.5, '#8b3a1d', 'left', 800);
     }
     // 간격 표시 (첫 등전위선 ~ 둘째)
-    { const y1 = g.bot - step / V * g.g, y0 = g.bot - (step * 2 <= V - 1e-9 ? step * 2 : V) / V * g.g, bx = PL.x1 + 46;
+    { const y1 = g.bot - step / V * g.g, y0 = g.bot - (step * 2 <= V - 1e-9 ? step * 2 : V) / V * g.g, bx = PL.x1 + 44;
       if (bx + 34 < wPan + AR.x0) { ctx.strokeStyle = '#16a34a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(bx, y0); ctx.lineTo(bx, y1); ctx.moveTo(bx - 5, y0); ctx.lineTo(bx + 5, y0); ctx.moveTo(bx - 5, y1); ctx.lineTo(bx + 5, y1); ctx.stroke();
-        T(bx + 8, (y0 + y1) / 2 + 4, g3((y1 - y0) / PL.px) + ' cm', 12.5, '#0b7a41', 'left', 800); } }
+        T(bx + 8, (y0 + y1) / 2 + 4, g3((y1 - y0) / PL.px) + ' cm', PHONE ? 11.5 : 12.5, '#0b7a41', 'left', 800); } }
     // 전기력선 (아래로, 균일)
     const nL = 7;
     for (let i = 0; i < nL; i++) {

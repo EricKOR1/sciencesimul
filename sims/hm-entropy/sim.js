@@ -436,12 +436,13 @@
       T(o.x + bw / 2, y0 + bh / 2 + 18, o.T + ' K', 15, '#fff', 'center', 800, { stroke: 'rgba(0,0,0,.25)', strokeWidth: 3 });
     });
     // 열 화살표
-    const donX = cc.don === 1 ? xa + bw : xb, recX = cc.don === 1 ? xb : xa + bw, ay = y0 + bh / 2, ok = verdict(cc.tot) >= 0;
+    const donX = cc.don === 1 ? xa + bw : xb, recX = cc.don === 1 ? xb : xa + bw, ay = y0 + bh / 2, vd0 = verdict(cc.tot), ok = vd0 > 0, eq = vd0 === 0;
     const sgn = cc.don === 1 ? 1 : -1;
+    // 같은 온도(합 = 0)이면 열이 이동하지 않아요: 화살표 대신 점선으로만 '가정'을 보여 줘요
     D.arrow(donX + sgn * 6, ay, recX - sgn * 6, ay, { color: ok ? 'rgba(239,68,68,.9)' : 'rgba(148,163,184,.9)', width: 6, head: 14, dash: ok ? null : [8, 6] });
-    D.label((xa + bw + xb) / 2, ay - 22, 'Q = ' + QJ + ' J', { bg: ok ? RED : '#64748b', size: 13 });
-    if (!ok) { T((xa + bw + xb) / 2, ay + 36, '🚫', 26, INK, 'center', 700); }
-    else if (!RM) { h.flow = (h.flow + dt * 0.9) % 1; for (let i = 0; i < 4; i++) { const f = (h.flow + i / 4) % 1; const px = lerp(donX + sgn * 10, recX - sgn * 10, f); ctx.fillStyle = 'rgba(255,255,255,.95)'; ctx.beginPath(); ctx.arc(px, ay, 3.5, 0, TAU); ctx.fill(); } }
+    D.label((xa + bw + xb) / 2, ay - 22, eq ? '열 이동 없음' : 'Q = ' + QJ + ' J', { bg: ok ? RED : '#64748b', size: 13 });
+    if (!ok && !eq) { T((xa + bw + xb) / 2, ay + 36, '🚫', 26, INK, 'center', 700); }
+    else if (ok && !RM) { h.flow = (h.flow + dt * 0.9) % 1; for (let i = 0; i < 4; i++) { const f = (h.flow + i / 4) % 1; const px = lerp(donX + sgn * 10, recX - sgn * 10, f); ctx.fillStyle = 'rgba(255,255,255,.95)'; ctx.beginPath(); ctx.arc(px, ay, 3.5, 0, TAU); ctx.fill(); } }
     // ΔS 막대
     const by = y0 + bh + (PHONE ? 38 : 46), bww = bw + 20;
     [[xa - 10, cc.d1, 1], [xb - 10, cc.d2, 2]].forEach(([bx, v, n]) => {
@@ -576,7 +577,7 @@
     const v = S.vid;
     $$('#vDir button').forEach((b) => b.classList.toggle('on', b.dataset.d === (v.rev ? 'r' : 'f')));
     $('#nVd').textContent = '지금 보는 영상: ' + VID[v.sel].n + ' (거꾸로 본 영상 ' + seenCount() + ' / 6)';
-    $('#jHead').textContent = '🧐 "' + VID[v.sel].n + '"을(를) 판정해요';
+    $('#jHead').textContent = '🧐 "' + VID[v.sel].n + '" 영상 판정하기';
     $('#bJ1').classList.toggle('btn-primary', v.j[v.sel] === 1); $('#bJ2').classList.toggle('btn-primary', v.j[v.sel] === 2);
     if ($('#sCom').value !== v.com) $('#sCom').value = v.com;
     const b = S.bx;
@@ -619,7 +620,7 @@
     let L1, a, L2, b, L3, c;
     const m = S.mode;
     if (m === 'video') { L1 = '고른 영상'; a = VID[S.vid.sel].n; L2 = '거꾸로 본 영상'; b = seenCount() + ' / 6'; L3 = '판정한 영상'; c = judgedCount() + ' / 6'; }
-    else if (m === 'box') { const bx = S.bx, hide = showCalc('prob'); L1 = '왼쪽 / 오른쪽'; a = bx.k + '개 / ' + (bx.N - bx.k) + '개'; L2 = '이 상태의 경우의 수'; b = fW(binRow(bx.N)[bx.k]); L3 = '모두 왼쪽일 확률'; c = hide ? '?' : probTxt(bx.N); }
+    else if (m === 'box') { const bx = S.bx, hide = showCalc('prob'); L1 = '왼쪽 / 오른쪽'; a = bx.k + '개 / ' + (bx.N - bx.k) + '개'; L2 = '경우의 수 W'; b = fW(binRow(bx.N)[bx.k]); L3 = '모두 왼쪽일 확률'; c = hide ? '?' : probTxt(bx.N); }
     else if (m === 'heat') { const cc = htCalc(), hide = showCalc('ds'); L1 = 'ΔS (물체 1)'; a = hide ? '?' : fd(cc.d1, true) + ' J/K'; L2 = 'ΔS (물체 2)'; b = hide ? '?' : fd(cc.d2, true) + ' J/K'; L3 = 'ΔS 합'; c = hide ? '?' : fd(cc.tot, true) + ' J/K'; }
     else { L1 = '판정한 카드'; a = S.ap.v.filter((v) => v > 0).length + ' / 6'; L2 = '제2법칙'; b = '엔트로피 증가'; L3 = '에너지 총량'; c = '보존'; }
     const key = [L1, a, L2, b, L3, c].join('|');
@@ -658,7 +659,7 @@
             const bad = VID.map((d, i) => i).filter((i) => S.vid.j[i] !== VID[i].rev);
             if (!bad.length) return true;
             const i = bad[0];
-            return '"' + VID[i].n + '"을(를) 다시 생각해 보세요. ' + (VID[i].rev === 1 ? '거꾸로 틀어도 물리적으로 자연스러운 움직임이에요.' : '거꾸로 틀면 자연에서는 저절로 일어나지 않는 일이에요.');
+            return '"' + VID[i].n + '" 영상을 다시 생각해 보세요. ' + (VID[i].rev === 1 ? '거꾸로 틀어도 물리적으로 자연스러운 움직임이에요.' : '거꾸로 틀면 자연에서는 저절로 일어나지 않는 일이에요.');
           },
           status: () => mark(seenCount() === 6) + ' 거꾸로 본 영상 ' + seenCount() + ' / 6 &nbsp; ' + mark(judgedCount() === 6) + ' 판정 ' + judgedCount() + ' / 6',
           explain: '<b>가역</b>: 진자의 진동, 당구공 충돌 한 번(거꾸로 틀어도 어색하지 않아요). <b>비가역</b>: 잉크가 퍼짐, 커피가 식음, 컵이 깨짐, 기체가 퍼짐(거꾸로면 어색해요). 모두 에너지는 정방향·역방향에서 같아요.',
@@ -820,7 +821,7 @@
             const bad = SCN.map((d, i) => i).filter((i) => !apOK(i));
             if (!bad.length) { S.flags.apOK = true; return true; }
             const i = bad[0];
-            return '"' + SCN[i].n + '"를 다시 생각해 보세요. ' + (SCN[i].ans === 1 ? '전체로 보면 엔트로피가 늘어나는 방향이에요.' : '엔트로피가 줄어드는 방향이라 저절로는 일어나지 않아요.');
+            return '"' + SCN[i].n + '" 카드를 다시 생각해 보세요. ' + (SCN[i].ans === 1 ? '전체로 보면 엔트로피가 늘어나는 방향이에요.' : '엔트로피가 줄어드는 방향이라 저절로는 일어나지 않아요.');
           },
           status: () => '판정 ' + S.ap.v.filter((v) => v > 0).length + ' / 6',
           explain: '향수 퍼짐·마찰열·냉장고(전체)는 <b>엔트로피 증가</b>라 일어나요. 퍼진 냄새가 저절로 병으로 돌아가기, 열이 저절로 모여 상자가 움직이기, 열기관이 열을 100 % 일로 바꾸기는 엔트로피가 <b>줄어서</b> 저절로 일어나지 않아요.',

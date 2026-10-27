@@ -391,7 +391,7 @@
     T(bx + 12, by + 26, '⏱ 속력 센서 (① → ③, 4.0 m)', 14, INK, 'left', 800);
     const m = S.meas, ok = m.v != null && m.k === S.kv && m.m === S.mv;
     if (ok) {
-      T(bx + 12, by + 52, '도착 시각  ① ' + fx(m.t[0], 2) + ' s · ② ' + fx(m.t[1], 2) + ' s · ③ ' + fx(m.t[2], 2) + ' s', 13.5, MUTED, 'left', 700);
+      T(bx + 12, by + 52, '도착 ① ' + fx(m.t[0], 2) + ' · ② ' + fx(m.t[1], 2) + ' · ③ ' + fx(m.t[2], 2) + ' s', 13.5, MUTED, 'left', 700);
       T(bx + 12, by + 78, 'Δt = ' + fx(m.dt, 2) + ' s', 15, INK, 'left', 800);
       T(bx + 12, by + 104, 'v = 4.0 m / ' + fx(m.dt, 2) + ' s = ' + fx(m.vr, 1) + ' m/s', 16, '#1d4ed8', 'left', 800);
     } else T(bx + 12, by + 56, S.sc.busy ? '펄스가 달리는 중…' : '👆 펄스를 보내면 속력을 재요', 14, MUTED, 'left', 800);
@@ -407,7 +407,7 @@
     if (L) drawChainL(c, sc, { Yc, mark: 30 }); else drawChainT(c, sc, { Yc, marks: [30], markCol: ['#e2464b'], markName: ['표시한 고리'] });
     const xs = (m) => X0 + m * ppm;
     flag(xs(1.0), Yc - 74, Yc + 56, '#16a34a', '출발선'); flag(xs(5.0), Yc - 74, Yc + 56, '#dc2626', '도착선');
-    D.label((xs(1.0) + xs(5.0)) / 2, Yc + 106, '↔ 측정 구간 4.0 m', { bg: '#475569', size: 13 });
+    D.label((xs(1.0) + xs(5.0)) / 2, Yc + 124, '↔ 측정 구간 4.0 m', { bg: '#475569', size: 13 });
     // 스톱워치
     const t1 = sc.pk[0], t2 = sc.pk[2], run = t1 != null && t2 == null ? sc.ch.t - t1 : t1 != null ? t2 - t1 : 0;
     const swx = c.x + c.w - 124, swy = c.y + 34;

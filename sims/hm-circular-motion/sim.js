@@ -230,7 +230,7 @@
   /* ================= ② 구심 가속도 (Δv 작도) ================= */
   function dvL() {
     return PHONE
-      ? { pic: { x: 6, y: 6, w: 468, h: 322 }, dia: { x: 6, y: 334, w: 468, h: 198 }, fo: { x: 6, y: 538, w: 468, h: 172 }, sc: 24, vk: 5, V: 76, ox: 300, oy: 506 }
+      ? { pic: { x: 6, y: 6, w: 468, h: 322 }, dia: { x: 6, y: 334, w: 468, h: 198 }, fo: { x: 6, y: 538, w: 468, h: 172 }, sc: 24, vk: 5, V: 76, ox: 346, oy: 506 }
       : { pic: { x: 6, y: 6, w: 424, h: 468 }, dia: { x: 436, y: 6, w: 358, h: 468 }, fo: { x: 6, y: 480, w: 788, h: 132 }, sc: 36, vk: 6, V: 120, ox: 668, oy: 360 };
   }
   const dvCalc = () => {
@@ -394,7 +394,7 @@
       D.arrow(bx + ux * (rb + 2), by + uy * (rb + 2), bx + ux * (rb + 2 + al), by + uy * (rb + 2 + al), { color: RED, width: wdt, head: Math.max(12, wdt * 2.2) });
       D.label(clamp(bx + ux * (rb + al + 26), L.sx + 40, L.gx - 40), clamp(by + uy * (rb + al + 26), L.sy + 16, L.sy + L.sh - 16), '장력 = 구심력', { bg: RED, size: 13, pad: 7 });
     } else {
-      D.label((L.sx + L.gx) / 2, L.sy + 24, b.msg, { bg: 'rgba(30,41,59,.85)', size: 14 });
+      D.label((L.sx + L.gx) / 2, L.sy + 52, b.msg, { bg: 'rgba(30,41,59,.85)', size: 14 });
     }
     T(L.sx + 12, L.sy + 22, '위에서 본 줄에 매단 공 (마찰 없는 판)', 14, '#26324a', 'left', 800);
     parts.update(dt); parts.draw(ctx);
@@ -501,7 +501,7 @@
       D.label(clamp(r.x + ux * (12 + len + 40), L.sx + 50, L.gx - 40), clamp(r.y + uy * (12 + len + 40) - 4, L.sy + 18, L.sy + L.sh - 14), '마찰력 = 구심력', { bg: GREEN, size: 13, pad: 7 });
     } else {
       carShape(r.x, r.y, heading, '#9aa3b2');
-      D.label((L.sx + L.gx) / 2 - 4, L.sy + L.sh - 22, r.stop ? '길을 벗어나 멈췄어요 (접선 방향으로 직진)' : '미끄러져요! 접선 방향으로 직진', { bg: 'rgba(185,28,28,.9)', size: 14 });
+      D.label((L.sx + L.gx) / 2 - 4, L.sy + 52, r.stop ? '길을 벗어나 멈췄어요 (접선 방향으로 직진)' : '미끄러져요! 접선 방향으로 직진', { bg: 'rgba(185,28,28,.9)', size: 14 });
     }
     T(L.sx + 12, L.sy + 22, '위에서 본 커브 도로 (자동차는 크게 그렸어요)', 13.5, '#1f3a18', 'left', 800);
     ctx.restore();
@@ -760,7 +760,7 @@
       T(ix, yy, b[0], 13, '#5a6679', 'left', 800); hbar(ix, yy + 8, bw, 14, b[1], 3600, b[2]); T(ix, yy + 40, Math.round(b[1]) + ' N', 15, '#26324a', 'left', 800);
     });
     const wmin = roMinW(r.mu);
-    lines(ix, B.y + 34 + 3 * 62 + 4, 20, 13, [['떨어지지 않으려면 μN ≥ mg', '#26324a'], ['→ ω ≥ √(g/μr) = ' + wmin.toFixed(1) + ' rad/s', r.w >= wmin - 1e-9 ? '#14753f' : '#b91c1c']]);
+    lines(ix, B.y + 34 + 3 * 62 + 4, 20, 13, [['떨어지지 않으려면 μN ≥ mg', '#26324a'], ['→ ω ≥ √(g/μr) = ' + wmin.toFixed(2) + ' rad/s', r.w >= wmin - 1e-9 ? '#14753f' : '#b91c1c']]);
     ctx.restore();
     // 아래: 위에서 본 모습과 설명
     panel(PX, PY, PW, PH, 16);

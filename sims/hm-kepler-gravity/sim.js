@@ -373,7 +373,7 @@
     PL.forEach((p, i) => drawPt(i, a, 0, 0, 5.5));
     if (g.ast) { D.sphere(a.gx(64), a.gy(64), 6, '#8b5cf6', { gloss: false, outline: '#fff', outlineWidth: 1.5 }); }
     ctx.restore();
-    if (g.ast) T(a.gx(64) + 8, a.gy(64) + 20, '소행성 (4 AU, 8년)', 13, '#6d28d9', 'left', 800);
+    if (g.ast) T(a.gx(64) + 10, a.gy(64) + 5, '소행성 8년', 13, '#6d28d9', 'left', 800);
     // 확대 그림 (안쪽 행성)
     const ins = { x: gg.x + gg.w - (PHONE ? 150 : 150) - 8, y: gg.y + gg.h - (PHONE ? 176 : 180) - 24, w: PHONE ? 150 : 150, h: PHONE ? 150 : 150 };
     ctx.fillStyle = '#f7f9fd'; D.roundRect(ins.x - 4, ins.y - 20, ins.w + 8, ins.h + 26, 8); ctx.fill(); ctx.strokeStyle = '#d4dbe8'; ctx.lineWidth = 1.5; ctx.stroke();
@@ -460,7 +460,7 @@
     const tx = -Math.sin(m.ang), ty = -Math.cos(m.ang), ux = (ex - mx) / Ro, uy = (ey - my) / Ro;
     D.dashedLine(mx, my, mx + tx * 40, my + ty * 40, { color: '#ffe58a', width: 2.5, dash: [4, 4] });
     D.arrow(mx, my, mx + ux * 50, my + uy * 50, { color: GREEN, width: 4, head: 11 });
-    D.label(clamp(mx - ux * 44, 56, (PHONE ? 180 : 400)), clamp(my - uy * 30 - 6, 40, 330), '달: a × 3600', { bg: GREEN, size: 13, pad: 7 });
+    D.label(clamp(mx - ux * 44, 56, (PHONE ? 128 : 400)), clamp(my - uy * 30 - 6, 40, 330), '달: a × 3600', { bg: GREEN, size: 13, pad: 7 });
     // 사과
     const ax = ex, ay = ey - Re - 12;
     D.sphere(ax, ay, 8, '#e2464b', { gloss: true });

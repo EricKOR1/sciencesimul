@@ -158,7 +158,7 @@
   function setScene(mode) {
     if (S.mode !== mode) {
       S.fade = 1; parts.clear();
-      if (S.f2.tw) { S.f2.tw.cancel(); S.f2.tw = null; }
+      if (S.f2.tw) { S.f2.tw.cancel(); S.f2.tw = null; S.f2.fly = 1; }   // 날아오는 도중에 화면을 바꿔도 시험 전하가 제자리에 있게 해요
       if (S.f4.tw) { S.f4.tw.cancel(); S.f4.tw = null; }
       S.f1.drag = false; S.f2.drag = false; S.f4.drag = false;
       S.f4.ink.drops.length = 0;
@@ -412,7 +412,7 @@
         D.arrow(sx1, sy1, sx1 + g.sF * g.ux * f.lf, sy1 + g.sF * g.uy * f.lf, { color: COL_F, width: 5, head: 13 });
         const full = Math.abs(g.qp * 1e9) * g.E / 1e5 * E_LPX;
         if (g.sF > 0 && full > E_LMAX + 0.5) T(sx1 + g.ux * (f.lf + 12), sy1 + g.uy * (f.lf + 12) + 5, '≫', 16, COL_F, 'center', 800);
-        lbl(sx1 + g.sF * g.ux * f.lf / 2 + nx * 20, sy1 + g.sF * g.uy * f.lf / 2 + ny * 20, 'F = ' + (masked2() ? '?' : sci(g.F) + ' N'), { color: '#9a3412', border: '#f6b08a' });
+        lbl(sx1 + g.sF * g.ux * f.lf / 2 + nx * 30, sy1 + g.sF * g.uy * f.lf / 2 + ny * 30, 'F = ' + (masked2() ? '?' : sci(g.F) + ' N'), { color: '#9a3412', border: '#f6b08a' });
       }
       probeSphere(px, py, 1);
       if (!inFlight) T(f.px, f.py + PR2 + (PHONE ? 14 : 16), "q′ = " + (f.qp > 0 ? '+' : '−') + Math.abs(f.qp) + ' nC', PHONE ? 11.5 : 13, '#26324a', 'center', 800);

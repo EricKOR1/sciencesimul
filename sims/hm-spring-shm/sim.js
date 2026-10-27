@@ -177,7 +177,7 @@
       }
       hit = { x: mx - hw, y: cy - 26, w: hw * 2, h: 52, axis: 'h', xO, sPx };
     } else {
-      const ceilY = rc.y + 14, cx = rc.x + rc.w * 0.45, yO = rc.y + rc.h * 0.56, hh = 24, hw = Math.min(30, rc.w * 0.2);
+      const ceilY = rc.y + 14, cx = rc.x + rc.w * (PHONE ? 0.45 : 0.5), yO = rc.y + rc.h * 0.56, hh = 24, hw = Math.min(36, rc.w * 0.2);
       sPx = Math.min(620, (yO - ceilY - 66) / 0.15, (rc.y + rc.h - yO - hh - 14) / 0.15);
       ctx.fillStyle = '#64748b'; ctx.fillRect(cx - 40, ceilY - 8, 80, 8);
       for (let v = -0.1; v <= 0.1001; v += 0.05) {
