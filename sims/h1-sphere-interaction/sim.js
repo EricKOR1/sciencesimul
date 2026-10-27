@@ -644,7 +644,7 @@
     TX(gx + gw / 2, gy + 17, '지구 평균 기온 변화', { size: 13, color: '#1e293b', weight: 800 });
     const yr = 3 * u, py = (v) => gy + 20 + gh * 0.28 - v / 0.6 * gh * 0.5, pxx = (y) => gx + 12 + y / 3 * (gw - 22);
     ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(gx + 8, py(0)); ctx.lineTo(gx + gw - 6, py(0)); ctx.stroke();
-    TX(gx + 10, py(0) - 4, '0', { size: 12, color: '#64748b', weight: 700, align: 'left' }); TX(gx + gw - 6, gy + 20 + gh - 6, '년 (0~3)', { size: 12, color: '#64748b', weight: 700, align: 'right' });
+    TX(gx + 10, py(0) - 4, '0', { size: 12, color: '#64748b', weight: 700, align: 'left' }); TX(gx + gw - 6, py(0) - 4, '년 (0~3)', { size: 12, color: '#64748b', weight: 700, align: 'right' });
     ctx.strokeStyle = '#2563eb'; ctx.lineWidth = 3; ctx.beginPath(); for (let k = 0; k <= 60; k++) { const y = 3 * k / 60; if (y > yr) break; const v = -0.5 * (y / 0.9) * Math.exp(1 - y / 0.9); k ? ctx.lineTo(pxx(y), py(v)) : ctx.moveTo(pxx(y), py(v)); } ctx.stroke();
     if (u > 0.3) TX(pxx(0.9) + 8, py(-0.5) + 16, '약 −0.5 °C', { size: 13, color: '#1d4ed8', weight: 800, align: 'left' });
     ctx.restore();
@@ -665,8 +665,7 @@
     // 땅
     ctx.fillStyle = '#7a5c3a'; ctx.beginPath(); ctx.moveTo(r.x, Y(0.94)); ctx.lineTo(X(0.06), Y(0.7)); ctx.lineTo(X(0.06), wTop); ctx.lineTo(r.x, wTop); ctx.fill();
     ctx.beginPath(); ctx.moveTo(r.x + r.w, Y(1)); ctx.lineTo(X(0.93), Y(0.62)); ctx.lineTo(X(0.93), wTop - 12); ctx.lineTo(r.x + r.w, wTop - 30); ctx.fill();
-    TX(X(0.05), Y(0.97), '서', { size: 13, color: '#fff', weight: 800 }); TX(X(0.96), Y(0.97), '동', { size: 13, color: '#fff', weight: 800 });
-    TX(X(0.5), wTop - 8, '← 적도 태평양 →', { size: 13, color: '#1e3a8a', weight: 800 });
+        TX(X(0.5), wTop - 8, '서 ← 적도 태평양 → 동', { size: 13, color: '#1e3a8a', weight: 800 });
     // 무역풍
     const L = (1 - b * 0.82) * 130 * s + 22, wy = Y(0.2);
     for (let i = 0; i < 3; i++) { const xx = X(0.72 - i * 0.2); D.arrow(xx, wy + i * 12 - 10, xx - L * 0.8, wy + i * 12 - 10, { color: '#1d4ed8', width: 4 * s + 1, head: 11, alpha: 0.95 }); }
@@ -756,6 +755,7 @@
     TX(G.vg.x + 12, G.vg.y + G.vg.h - 10, '▶ ' + CASES[S.cs].name + (CASES[S.cs].year ? ' (' + CASES[S.cs].year + ')' : ''), { size: 13, color: '#334155', weight: 800, align: 'left', stroke: 'rgba(255,255,255,.85)', strokeWidth: 4 });
     // 연쇄 노드
     const cs = CASES[S.cs];
+    const flowTags = [];
     G.nodes.forEach((n, i) => {
       const lit = u >= (i === 0 ? 0.02 : i === 1 ? 0.34 : 0.62), col = SPH[cs.nodes[i].s].col;
       ctx.save(); ctx.globalAlpha = lit ? 1 : 0.4;
@@ -770,9 +770,10 @@
         const lit2 = u >= (i === 0 ? 0.2 : 0.5);
         D.arrow(a[0], a[1], b[0], b[1], { color: lit2 ? '#ea580c' : '#cbd5e1', width: 4, head: 9 });
         const ans = S.csAns[S.cs][i];
-        if (ans) { const ok = ans === cs.ans[i]; ctx.globalAlpha = 1; D.label(PHONE ? b[0] + 56 : n.x + n.w / 2 + 54, PHONE ? n.y + n.h + 6 : n.y + n.h + 9, FLOWN[ans], { bg: ans === 1 ? '#6d28d9' : '#ea580c', size: 12.5 }); }
+        if (ans) flowTags.push([PHONE ? b[0] + 56 : n.x + n.w / 2 + 54, PHONE ? n.y + n.h + 6 : n.y + n.h + 9, FLOWN[ans], ans]);
       }
     });
+    flowTags.forEach(([fx, fy, ft, fa]) => D.label(fx, fy, ft, { bg: fa === 1 ? '#6d28d9' : '#ea580c', size: 12.5 }));
     // 분석표
     const T = G.tab; let x = T.x;
     const heads = ['사례', '연결 ① (첫째 화살표)', '연결 ② (둘째 화살표)'];
@@ -785,7 +786,7 @@
       TX(T.x + 10, y + T.rh / 2 + 6, c.name, { size: 14.5, color: '#0f172a', weight: 800, align: 'left' });
       for (let j = 0; j < 2; j++) {
         const cx0 = T.x + T.cw[0] + (j ? T.cw[1] : 0), a = SPH[c.nodes[j].s].name, b = SPH[c.nodes[j + 1].s].name;
-        TX(cx0 + 10, y + T.rh / 2 + 6, a + ' → ' + b, { size: 14, color: '#334155', weight: 700, align: 'left' });
+        TX(cx0 + 10, y + T.rh / 2 + 6, a + ' → ' + b, { size: PHONE ? 13 : 14, color: '#334155', weight: 700, align: 'left' });
         const ans = S.csAns[i][j], bw = PHONE ? 84 : 92, bh = PHONE ? 38 : 26, bx = cx0 + T.cw[1 + j] - bw - 8, by = y + T.rh / 2 - bh / 2;
         const fill = ans === 0 ? '#fff' : ans === 1 ? '#ede9fe' : '#ffedd5', stroke = ans === 0 ? '#94a3b8' : ans === 1 ? '#7c3aed' : '#ea580c';
         const bad = S.csBad && S.csBad[i] && S.csBad[i][j] > t;
