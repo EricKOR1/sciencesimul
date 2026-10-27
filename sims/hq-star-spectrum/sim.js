@@ -24,7 +24,12 @@
     for (const ch of str) {
       if (ch === '\n') { out.push(line); line = ''; continue; }
       const t = line + ch;
-      if (ctx.measureText(t).width > maxW && line) { out.push(line); line = ch.trim() === '' ? '' : ch; } else line = t;
+      if (ctx.measureText(t).width > maxW && line) {
+        if (/[.,;:!?)%]/.test(ch)) { line = t; continue; }                       // 문장부호가 줄 맨 앞에 오지 않게
+        const m = /[A-Za-z0-9_.(]+$/.exec(line);                                  // 숫자·영문 덩어리(예: 5.0)는 쪼개지 않기
+        if (m && m.index > 0 && /[A-Za-z0-9_]/.test(ch)) { out.push(line.slice(0, m.index)); line = m[0] + ch; }
+        else { out.push(line); line = ch.trim() === '' ? '' : ch; }
+      } else line = t;
     }
     if (line) out.push(line);
     ctx.restore(); return out;
@@ -274,7 +279,7 @@
   const stSeg = bindSeg('stSeg', (v) => { S.sa.star = v; S.sa.seenS[v] = true; });
   $$('#elSeg button').forEach((b) => b.addEventListener('click', () => { Sound.click(); S.sa.el[b.dataset.v] = !S.sa.el[b.dataset.v]; updateCtl(); }));
   const vwSeg = bindSeg('vwSeg', (v) => { S.nf.view = v; if (v === 'D') S.nf.seenD = true; else S.nf.seenT = true; updateCtl(); });
-  const slTm = bindSlider('sTm', (v) => (v * 100).toLocaleString('ko-KR') + ' K', (v) => { const N = S.nf; N.T = v * 100; if (N.T >= 25000) N.hot = true; if (N.T <= 3600) N.cool = true; });
+  const slTm = bindSlider('sTm', (v) => (v * 100).toLocaleString('ko-KR') + ' K', (v) => { const N = S.nf; N.T = v * 100; N.moved = true; if (N.T >= 25000) N.hot = true; if (N.T <= 3600) N.cool = true; });
 
   const NUM_A = mkNum('numA', XL.map((l, i) => ({ q: l + ' nm 선의 광자 에너지', unit: 'eV', ans: XE[i], tol: 0.03, hint: 'E(eV) = 1240 / λ(nm)예요. 예) 653 nm → 1240 / 653 ≈ 1.90 eV. 소수 둘째 자리까지 구해 보세요.' })));
   const OPT_EL = ['수소', '헬륨', '헬륨과 수소', '나트륨과 칼슘', '마그네슘'];
@@ -575,7 +580,7 @@
     rows.forEach((r) => {
       const R2 = REF[r.k], on = !!Sa.el[r.k];
       ctx.fillStyle = on ? C.rgba(R2.col, 0.14) : 'rgba(0,0,0,0)'; if (on) ctx.fillRect(Cc.x + 8, r.y - 6, Cc.w - 16, r.h + 12);
-      T(Cc.x + 14, r.y + r.h / 2 + 5, R2.name, PHONE ? 12 : 13.5, on ? R2.col : '#26324a', 'left', 800);
+      T(Cc.x + 14, r.y + r.h / 2 + 5, R2.name, PHONE ? 11 : 13.5, on ? R2.col : '#26324a', 'left', 800);
       drawBar(r, 'dark', R2.lines.map((l) => ({ lam: l, s: 1 })));
       const txt = R2.lines.map((l) => l.toFixed(1)).join(' · ');
       T(r.x, r.y + r.h + 13, txt, PHONE ? 10 : 11.5, '#5d6879', 'left', 700);
@@ -611,7 +616,7 @@
       REF.H.lines.forEach((l) => { const x1 = lamX(obs, l + D_SHIFT), x2 = lamX(ref, l); ctx.strokeStyle = 'rgba(226,70,75,.55)'; ctx.setLineDash([3, 3]); ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(x1, obs.y + obs.h); ctx.lineTo(x2, ref.y); ctx.stroke(); ctx.setLineDash([]); });
       barTicks(ref, PHONE ? 10.5 : 11.5);
       // 확대 창: Hα 부근
-      const z = { x: PHONE ? A.x + 120 : A.x + 520, y: PHONE ? ref.y + ref.h + 48 : A.y + 96, w: PHONE ? 330 : 236, h: PHONE ? 30 : 36 }, z0 = 645, z1 = 670;
+      const z = { x: PHONE ? A.x + 120 : A.x + 520, y: PHONE ? ref.y + ref.h + 60 : A.y + 96, w: PHONE ? 330 : 236, h: PHONE ? 30 : 36 }, z0 = 645, z1 = 670;
       T(z.x, z.y - 22, '🔍 656 nm 부근 확대 (645~670 nm)', fs - 0.5, '#26324a', 'left', 800);
       const ZX = (l) => z.x + (l - z0) / (z1 - z0) * z.w;
       ctx.fillStyle = '#10151f'; ctx.fillRect(z.x, z.y, z.w, z.h);
@@ -622,7 +627,7 @@
       T(ZX(656.3) - 4, z.y + z.h + 32, '기준 656.3', 11.5, '#5d6879', 'right', 800); T(ZX(656.3 + D_SHIFT) + 6, z.y + z.h + 32, '별 D 657.0 nm', 11.5, '#c0353b', 'left', 800); T(z.x + z.w, z.y - 8, '(+0.7 nm)', 11.5, '#c0353b', 'right', 800);
       // B: 멀어지는 별
       T(Bp.x + 14, Bp.y + 24, '선이 모두 같은 쪽으로 이동하면', PHONE ? 12.5 : 14.5, '#26324a', 'left', 800);
-      const ex = Bp.x + 40, ey = Bp.y + (PHONE ? 100 : 130), sx = Bp.x + Bp.w - 70 - (RM ? 0 : (S.t * 8) % 24);
+      const ex = Bp.x + 40, ey = Bp.y + (PHONE ? 84 : 130), sx = Bp.x + Bp.w - 70 - (RM ? 0 : (S.t * 8) % 24);
       D.sphere(ex, ey, 18, '#3867f4', { shadow: true }); T(ex, ey + 38, '지구', 12, '#26324a', 'center', 800);
       D.sphere(sx, ey, 24, '#ffd54a', { shadow: true }); T(sx, ey + 44, '별 D', 12, '#26324a', 'center', 800);
       D.arrow(sx + 30, ey, sx + 62, ey, { color: '#e2464b', width: 3, head: 9 }); T(sx + 46, ey - 12, '멀어져요', 11.5, '#c0353b', 'center', 800);
@@ -663,7 +668,7 @@
   /* ---------- 포인터 ---------- */
   function lvPointer(p) {
     const L = S.lv, bar = lvBar();
-    for (let i = 0; i < 3; i++) { const r = tokRect(i); if (p.x >= r.x - 4 && p.x <= r.x + r.w + 4 && p.y >= r.y - 6 && p.y <= r.y + r.h + 6) { L.drag = i; L.dragX = p.x; L.dragY = p.y; L.E[i] = L.E[i]; Sound.click(); return 'tok'; } }
+    for (let i = 2; i >= 0; i--) { const r = tokRect(i); if (p.x >= r.x - 4 && p.x <= r.x + r.w + 4 && p.y >= r.y - 6 && p.y <= r.y + r.h + 6) { L.drag = i; L.dragX = p.x; L.dragY = p.y; L.E[i] = L.E[i]; Sound.click(); return 'tok'; } }
     if (p.x >= bar.x - 6 && p.x <= bar.x + bar.w + 6 && p.y >= bar.y - 30 && p.y <= bar.y + bar.h + 14) { setCur(LAM0 + (p.x - bar.x) / bar.w * (LAM1 - LAM0)); return 'bar'; }
     return null;
   }
@@ -858,9 +863,9 @@
           title: '선의 세기와 함량의 관계', manual: true,
           goal: '“온도와 선의 세기” 화면에서 슬라이더를 움직여 보고, 선의 세기와 원소의 양에 대한 문장 2개를 완성하세요.',
           hint: '수소의 양은 모든 온도에서 같다고 가정한 모형이에요. 그래도 수소선의 세기는 온도에 따라 크게 달라져요. 가장 강한 곳은 오른쪽 그래프에서 볼 수 있어요.',
-          setup() { S.show.selI = false; S.show.selM = true; SEL_M.reset(); S.nf.view = 'T'; S.nf.seenT = true; vwSeg.set('T'); updateCtl(); setScene('infer'); },
-          check() { if (!S.nf.seenT) return '“온도와 선의 세기” 화면을 열어 슬라이더를 움직여 보세요.'; return SEL_M.grade(); },
-          status: () => mark(S.nf.seenT) + ' 온도 슬라이더 확인 &nbsp; · 고른 문장 ' + SEL_M.count() + ' / 2',
+          setup() { S.show.selI = false; S.show.selM = true; SEL_M.reset(); S.nf.view = 'T'; S.nf.seenT = true; S.nf.moved = false; vwSeg.set('T'); updateCtl(); setScene('infer'); },
+          check() { if (!S.nf.seenT || !S.nf.moved) return '“온도와 선의 세기” 화면에서 온도 슬라이더를 움직여 보세요.'; return SEL_M.grade(); },
+          status: () => mark(S.nf.seenT && S.nf.moved) + ' 온도 슬라이더 확인 &nbsp; · 고른 문장 ' + SEL_M.count() + ' / 2',
           explain: '이 모형에서 수소의 양은 같지만 수소 흡수선은 표면 온도 약 <b>10,000 K</b>에서 가장 강하고, 온도가 더 낮거나 높으면 약해져요. 그러므로 <b>선의 세기만으로 함량을 단정하면 안 돼요.</b> 선의 세기는 원소의 양과 별의 표면 온도(들뜸 · 이온화 상태)에 함께 달려 있어요.',
         },
         {

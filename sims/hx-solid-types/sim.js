@@ -206,7 +206,7 @@
   /* ================= ① 결정과 비결정 ================= */
   const hGeo = () => {
     const L = RC.heat.L;
-    return PHONE ? { cx: L.x + L.w / 2, cy: L.y + 168, R: 118 } : { cx: L.x + L.w / 2, cy: L.y + 168, R: 124 };
+    return PHONE ? { cx: L.x + L.w / 2, cy: L.y + 148, R: 96 } : { cx: L.x + L.w / 2, cy: L.y + 168, R: 124 };
   };
   const cellRC = (i) => {
     const Rr = RC.heat.R, w = (Rr.w - 30) / 2, h = PHONE ? 152 : 144;

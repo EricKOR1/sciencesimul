@@ -781,7 +781,7 @@
         },
         {
           title: 'P–T 점 3개 기록하기',
-          goal: '이번에는 <b>부피 12.3 L를 고정</b>하고 온도를 바꿔 압력이 달라지는 점 <b>3개</b>를 기록해요.',
+          goal: '이번에는 <b>부피 12.3 L을 고정</b>하고 온도를 바꿔 압력이 달라지는 점 <b>3개</b>를 기록해요.',
           hint: '온도 단추(27, 177, 327 °C)를 눌러 300 K, 450 K, 600 K에서 기록해요. 압력이 어떻게 변하는지 바늘을 지켜봐요.',
           setup() { S.lock = true; S.gate = ''; S.sub.temp = 'gay'; S.gl.C = 27; clearRec('gay'); setMode('temp'); },
           check: () => recDone('gay', 3), hold: 0.5,

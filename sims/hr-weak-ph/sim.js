@@ -422,7 +422,7 @@
       ['③ pOH = −log[OH⁻] = ' + val(st >= 2, r2d(px).toFixed(2)), st >= 2],
       ['④ pH = 14 − pOH = ' + val(st >= 3, r2d(14 - r2d(px)).toFixed(2)), st >= 3],
     ];
-    lines.forEach((l, i) => { const y = cd.y + 56 + i * (PHONE ? 25 : 34); T(cd.x + 14, y, l[0], PHONE ? 13 : 15.5, l[1] ? (i >= 3 || l[0].indexOf('?') >= 0 ? '#5b21b6' : INK) : '#9a8ec0', 'left', 800); });
+    lines.forEach((l, i) => { const y = cd.y + 56 + i * (PHONE ? 25 : 34); T(cd.x + 14, y, l[0], PHONE ? 13 : 14.5, l[1] ? (i >= 3 || l[0].indexOf('?') >= 0 ? '#5b21b6' : INK) : '#9a8ec0', 'left', 800); });
     if (!PHONE) { textBlock(cd.x + 14, cd.y + 56 + 5 * 34 + 8, cd.w - 28, acid ? '약염기는 [OH⁻] ≈ √(Kb·C)로 같은 방법을 써요.' : '먼저 구하는 것은 [OH⁻]이고, 마지막에 pH = 14 − pOH를 해요.', 14, MUTED, 20, 700); }
     // 이론값 vs 측정값
     const tb = g.tb; D.roundRect(tb.x, tb.y, tb.w, tb.h, 12); ctx.fillStyle = '#fff'; ctx.fill(); ctx.strokeStyle = '#e3def5'; ctx.lineWidth = 2; ctx.stroke();
@@ -454,7 +454,7 @@
 
   /* ============ ④ 농도와 pH ============ */
   S.cc = { ci: 0, rec: [false, false, false], nd: 13, pop: [0, 0, 0], pv: 0 };
-  const ccG = () => (PHONE ? { bx: { x: MAIN.x + 12, y: MAIN.y + 52, w: 440, h: 106 }, gr: { x: MAIN.x + 12, y: MAIN.y + 176, w: 224, h: 128 }, ga: { x: MAIN.x + 244, y: MAIN.y + 176, w: 208, h: 128 }, tb: { x: MAIN.x + 12, y: MAIN.y + 312, w: 440, h: 106 } }
+  const ccG = () => (PHONE ? { bx: { x: MAIN.x + 12, y: MAIN.y + 48, w: 440, h: 98 }, gr: { x: MAIN.x + 12, y: MAIN.y + 176, w: 224, h: 126 }, ga: { x: MAIN.x + 244, y: MAIN.y + 176, w: 208, h: 126 }, tb: { x: MAIN.x + 12, y: MAIN.y + 310, w: 440, h: 106 } }
     : { bx: { x: MAIN.x + 14, y: MAIN.y + 52, w: 252, h: 156 }, gr: { x: MAIN.x + 280, y: MAIN.y + 40, w: 296, h: 178 }, ga: { x: MAIN.x + 588, y: MAIN.y + 40, w: 174, h: 178 }, tb: { x: MAIN.x + 14, y: MAIN.y + 232, w: 748, h: 100 } });
   const ccCount = () => S.cc.rec.filter(Boolean).length;
   function ccSet(i) { S.cc.ci = clamp(i, 0, 2); updateCtl(); }
@@ -470,13 +470,26 @@
     panel(MAIN.x, MAIN.y, MAIN.w, MAIN.h, 14);
     // 입자 상자
     unitBox(g.bx, nIon, 'CH₃COOH ' + CONC3_TXT[i] + '  (HA 1000개 기준)');
-    const by2 = g.bx.y + g.bx.h + 18;
-    T(g.bx.x + g.bx.w / 2, by2, '이온화된 HA ' + nIon + '개 / ' + NU + '개  →  α = ' + (nIon / NU * 100).toFixed(1) + ' %', PHONE ? 13.5 : 14, '#b45309', 'center', 800);
+    const by2 = g.bx.y + g.bx.h + (PHONE ? 20 : 18);
+    T(g.bx.x + g.bx.w / 2, by2, '이온화된 HA ' + nIon + '/' + NU + '개 → α = ' + (nIon / NU * 100).toFixed(1) + ' %', PHONE ? 13.5 : 13.5, '#b45309', 'center', 800);
     if (!PHONE) { T(g.bx.x + g.bx.w / 2, by2 + 22, 'H⁺ ' + nIon + '개 = A⁻ ' + nIon + '개', 13, MUTED, 'center', 700); T(g.bx.x + g.bx.w / 2, by2 + 42, '묽혀도 HA의 수는 같게 비교해요', 12.5, MUTED, 'center', 700); }
     // pH 그래프 (가로: −log C, 세로: pH)
     const gr = g.gr; D.roundRect(gr.x, gr.y, gr.w, gr.h, 12); ctx.fillStyle = '#fff'; ctx.fill(); ctx.strokeStyle = '#e3def5'; ctx.lineWidth = 2; ctx.stroke();
     const px0 = gr.x + 34, px1 = gr.x + gr.w - 14, py0 = gr.y + 28, py1 = gr.y + gr.h - 32, X = (v) => px0 + (v - 0.5) / 3 * (px1 - px0), Y = (v) => py1 - v / 5 * (py1 - py0);
-    T(gr.x + 10, gr.y + 18, PHONE ? 'pH 그래프 (● HCl ● 정확)' : 'pH 그래프', PHONE ? 12.5 : 13.5, INK, 'left', 800);
+    T(gr.x + 10, gr.y + 18, 'pH 그래프', PHONE ? 12.5 : 13.5, INK, 'left', 800);
+    { // 범례 (색 점과 함께)
+      const items = PHONE ? [['HCl', '#dc2626', 0], ['정확', '#d97706', 0]] : [['HCl', '#dc2626', 0], ['CH₃COOH(정확)', '#d97706', 0], ['근사', '#d97706', 1]], fs = PHONE ? 11.5 : 11.5;
+      ctx.save(); ctx.font = D.font(fs, 700);
+      let lx = gr.x + gr.w - 10;
+      for (let n = items.length - 1; n >= 0; n--) {
+        const it = items[n], w = ctx.measureText(it[0]).width; lx -= w;
+        T(lx, gr.y + 18, it[0], fs, MUTED, 'left', 700); lx -= 8;
+        ctx.beginPath(); ctx.arc(lx, gr.y + 14, 4, 0, TAU);
+        if (it[2]) { ctx.strokeStyle = it[1]; ctx.lineWidth = 1.8; ctx.stroke(); } else { ctx.fillStyle = it[1]; ctx.fill(); }
+        lx -= 12;
+      }
+      ctx.restore();
+    }
     ctx.strokeStyle = '#e5e9f2'; ctx.lineWidth = 1.2;
     for (let y = 0; y <= 5; y++) { ctx.beginPath(); ctx.moveTo(px0, Y(y)); ctx.lineTo(px1, Y(y)); ctx.stroke(); T(px0 - 6, Y(y) + 4.5, String(y), 12.5, MUTED, 'right', 700); }
     for (let x = 1; x <= 3; x++) { ctx.beginPath(); ctx.moveTo(X(x), py0); ctx.lineTo(X(x), py1); ctx.stroke(); T(X(x), py1 + 16, String(x), 12.5, MUTED, 'center', 700); }
@@ -491,7 +504,6 @@
       pts.forEach((q) => { const r = 6 * SPL.outBack(clamp(c.pop[q[2]] || 1, 0, 1)); D.sphere(q[0], q[1], Math.max(0.1, r), sr.col, { gloss: false, outline: '#fff', outlineWidth: 1.5 }); });
     });
     for (let k = 0; k < 3; k++) if (c.rec[k]) { const r = 5.5 * SPL.outBack(clamp(c.pop[k] || 1, 0, 1)); ctx.strokeStyle = '#d97706'; ctx.lineWidth = 2; ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(X(k + 1), Y(ccApprox[k]), Math.max(0.1, r + 4), 0, TAU); ctx.stroke(); }
-    if (!PHONE) T(px1 - 2, gr.y + 18, '● HCl  ● CH₃COOH(정확)  ○ 근사', 11.5, MUTED, 'right', 700);
     // 근사 조건 게이지 (x/C와 5 % 선)
     const ga = g.ga; D.roundRect(ga.x, ga.y, ga.w, ga.h, 12); ctx.fillStyle = '#faf8ff'; ctx.fill(); ctx.strokeStyle = '#e3def5'; ctx.lineWidth = 2; ctx.stroke();
     T(ga.x + 10, ga.y + 18, '근사 조건 x/C', 13.5, INK, 'left', 800);
@@ -543,13 +555,13 @@
   const TO = [['', '고르기'], ['−x', '−x'], ['+x', '+x'], ['x', 'x'], ['0.10 − x', '0.10 − x'], ['0.10 + x', '0.10 + x'], ['0.10', '0.10'], ['0', '0']];
   const tblSel = ['변화 · CH₃COOH', '변화 · H⁺', '변화 · CH₃COO⁻', '평형 · CH₃COOH', '평형 · H⁺', '평형 · CH₃COO⁻'].map((l, i) => mkSel($('#tblSel'), l, TO, ICE_ANS[i]));
   const apAcidRows = [
-    mkRow($('#apAcid'), { label: '[H⁺] = √(Ka·C) (M)', sci: true, ans: xApprox(C0), rel: 0.03 }, () => updateCtl()),
-    mkRow($('#apAcid'), { label: 'pH (소수 둘째 자리)', ans: 2.87, tol: 0.015, ph: '0.00' }, () => updateCtl()),
+    mkRow($('#apAcid'), { label: '[H⁺] = √(Ka·C) (M)', sci: true, ans: xApprox(C0), rel: 0.04 }, () => updateCtl()),
+    mkRow($('#apAcid'), { label: 'pH (소수 둘째 자리)', ans: 2.87, tol: 0.025, ph: '0.00' }, () => updateCtl()),
   ];
   const apBaseRows = [
-    mkRow($('#apBase'), { label: '[OH⁻] = √(Kb·C) (M)', sci: true, ans: xApprox(C0), rel: 0.03 }, () => updateCtl()),
-    mkRow($('#apBase'), { label: 'pOH', ans: 2.87, tol: 0.015, ph: '0.00' }, () => updateCtl()),
-    mkRow($('#apBase'), { label: 'pH = 14 − pOH', ans: 11.13, tol: 0.015, ph: '0.00' }, () => updateCtl()),
+    mkRow($('#apBase'), { label: '[OH⁻] = √(Kb·C) (M)', sci: true, ans: xApprox(C0), rel: 0.04 }, () => updateCtl()),
+    mkRow($('#apBase'), { label: 'pOH', ans: 2.87, tol: 0.025, ph: '0.00' }, () => updateCtl()),
+    mkRow($('#apBase'), { label: 'pH = 14 − pOH', ans: 11.13, tol: 0.025, ph: '0.00' }, () => updateCtl()),
   ];
   const selBrk = $('#selBrk');
   selBrk.addEventListener('change', () => { Sound.click(); updateCtl(); });
@@ -588,7 +600,7 @@
     if (m === 'meas') { const k = S.ws.cur, rd = S.ws.state === 'read'; setRead('선택한 용액', k ? '0.10 M ' + SOL[k].f : '—', '예측 → 측정', k ? (S.ws.pred[k] != null ? S.ws.pred[k].toFixed(1) : '—') + ' → ' + (S.ws.done[k] ? SOL[k].meas.toFixed(2) : '—') : '—', '측정한 용액', wsCount() + ' / 4'); }
     else if (m === 'ice') { const ic = S.ic; setRead('x (이온화한 양)', ic.xmM <= 0 ? '0 M' : ic.xmM.toFixed(2) + '×10⁻³ M', 'x²/(0.10 − x)', icTbl() || (game && game.free) ? (ic.xmM <= 0 ? '0' : sci(icVal(icX()), 2)) : '?', 'Ka', sci(KA, 2)); }
     else if (m === 'approx') { const k = S.ap.k, st = apStep(k); setRead(k === 'ch3' ? '[H⁺] ≈ √(Ka·C)' : '[OH⁻] ≈ √(Kb·C)', st >= 1 ? sci(xApprox(C0), 3) + ' M' : '?', k === 'ch3' ? 'pH' : 'pOH', st >= 2 ? r2d(pHof(xApprox(C0))).toFixed(2) : '?', k === 'ch3' ? '이온화도 x/C' : 'pH', k === 'ch3' ? (st >= 1 ? (xApprox(C0) / C0 * 100).toFixed(1) + ' %' : '?') : (st >= 3 ? '11.13' : '?')); }
-    else { const i = S.cc.ci; setRead('농도', CONC3_TXT[i], '정확한 pH (근사 pH)', ccExact[i].toFixed(2) + ' (' + ccApprox[i].toFixed(2) + ')', '이온화도 α', (ccAlpha[i] * 100).toFixed(1) + ' %'); }
+    else { const i = S.cc.ci; setRead('농도', CONC3_TXT[i], '정확 pH (근사)', ccExact[i].toFixed(2) + ' (' + ccApprox[i].toFixed(2) + ')', '이온화도 α', (ccAlpha[i] * 100).toFixed(1) + ' %'); }
   }
 
   /* ================= 미션 ================= */
@@ -649,7 +661,7 @@
           title: '평형이 되는 x 찾기',
           goal: 'x 슬라이더를 움직여 <b>x²/(0.10 − x)가 Ka(1.8×10⁻⁵)와 같아지는</b> x를 찾으세요. (±5 % 이내)',
           hint: 'x가 너무 작으면 값이 Ka보다 작고, 너무 크면 커요. x = 1.3×10⁻³ M 근처(슬라이더 1.3 근처)예요. − + 단추는 0.01씩 움직여요.',
-          setup() { S.gate = ''; icSetX(0); setScene('ice'); },
+          setup() { S.gate = ''; if (!icTbl()) tblSel.forEach((q) => { q.value = q.ans; q.classList.add('ok'); q.classList.remove('bad'); }); icSetX(0); setScene('ice'); updateCtl(); },
           check: () => icOk(), hold: 0.8,
           status: () => 'x = ' + S.ic.xmM.toFixed(2) + '×10⁻³ M , 값 ' + (S.ic.xmM <= 0 ? '0' : sci(icVal(icX()), 2)) + ' ' + mark(icOk()),
           explain: 'x ≈ 1.33×10⁻³ M에서 x²/(0.10 − x) = 1.8×10⁻⁵ 로 Ka와 같아요. 이때 HA 1000개 중 약 13개가 이온화해 있어요(이온화도 약 1.3 %).',

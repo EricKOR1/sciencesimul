@@ -245,7 +245,7 @@
     T(px, tk.y + 106, '탱크에 실린 열량', 12.5, MUTED, 'left', 800);
     T(px, tk.y + 138, fmj(E) + ' MJ', 24, '#0f6b3c', 'left', 800);
     // 열량 눈금 막대 (축척: 옥탄 1687 MJ)
-    const gx = L.x + 28, gy = L.y + 330, gw = L.w - 56;
+    const gx = L.x + 28, gy = L.y + 344, gw = L.w - 56;
     T(gx, gy - 12, '탱크에 실린 열량 (눈금 끝 = 옥탄 ' + f0(MJ_MAX) + ' MJ)', 12.5, INK, 'left', 800);
     ctx.fillStyle = '#e9edf5'; D.roundRect(gx, gy, gw, 22, 11); ctx.fill();
     const w = gw * E / MJ_MAX * sm(V.pulse);
@@ -625,7 +625,7 @@
           title: '에탄올의 열 이용률 구하기',
           goal: '에탄올 실험에서 물이 얻은 열 q (kJ)와 <b>열 이용률(%)</b>을 구해 적어요.',
           hint: '에탄올 ΔT = 14.2 °C. q = 4.18 × 200 × 14.2 (J) 를 kJ 로 바꿔요. 이용률 = q / 29.7 × 100.',
-          setup() { S.lock = true; BS().sel = 0; bnStop(); bnClear(); setMode('burn'); bnCheck(); },
+          setup() { S.lock = true; BS().sel = 0; BS().solved[0] = false; bnStop(); bnClear(); setMode('burn'); bnCheck(); },
           check: () => BS().solved[0], hold: 0.4,
           status: () => '에탄올 ' + mark(BS().sel === 0 && bnDone()) + ' &nbsp; q ' + mark(BS().sel === 0 && BS().okq) + ' &nbsp; 이용률 ' + mark(BS().sel === 0 && BS().oke),
           explain: 'q = 4.18 × 200 × 14.2 ≈ 11870 J ≈ <b>11.9 kJ</b>, 이용률 = 11.9 / 29.7 × 100 ≈ <b>40 %</b> (이론 ΔT 35.5 °C 의 40 % 가 14.2 °C 예요).',

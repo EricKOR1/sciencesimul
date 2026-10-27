@@ -160,8 +160,8 @@
     // 온도계
     const tx = rc.x + rc.w * 0.78;
     D.thermometer(tx, rc.y + 26, 110, obT(i), c.lo, c.hi, { ticks: false, color: p > 0.02 ? col : '#8a95a8' });
-    T(tx, rc.y + rc.h - 62, f1(obT(i)) + ' °C', 17, INK, 'center', 800, HALO);
-    T(tx, rc.y + rc.h - 42, c.sense, 12, MUTED, 'center', 700, HALO);
+    T(tx, rc.y + rc.h - 52, f1(obT(i)) + ' °C', 17, INK, 'center', 800, HALO);
+    T(tx, rc.y + rc.h - 33, c.sense, 12, MUTED, 'center', 700, HALO);
     D.roundRect(rc.x, rc.y, rc.w, rc.h, 12); ctx.strokeStyle = '#dbe3f3'; ctx.lineWidth = 1.5; ctx.stroke();
   }
   function drawObs(t) {
@@ -220,7 +220,7 @@
     return { wH, wS, hFav, sFav, left, right, diff: left - right };
   }
   const blBalanced = () => Math.abs(blW(BL().sel, blT()).diff) < 0.005;
-  function blSyncSlide() { const r = blSel(); const s = $('#tSlide'); s.min = r.lo; s.max = r.hi; s.step = r.step; s.value = blT(); }
+  function blSyncSlide() { const r = blSel(); const s = $('#tSlide'); s.min = r.lo; s.max = r.hi; s.step = r.step; s.value = blT(); s.style.setProperty('--pct', ((blT() - r.lo) / (r.hi - r.lo) * 100) + '%'); }
   function setBl(i) { BL().sel = i; Sound.tick(); blSyncSlide(); updateCtl(); }
   function setT(v) {
     const r = blSel(), B = BL(); v = clamp(Math.round(v / r.step) * r.step, r.lo, r.hi); B.T[B.sel] = v;
@@ -528,7 +528,7 @@
     $('#oNote').textContent = O.bin[i] >= 0 ? '✅ 분류했어요. 분류한 변화 ' + O.bin.filter((b) => b >= 0).length + ' / 6' : obRan(i) ? '온도가 어떻게 변했나요? 발열인지 흡열인지 골라요.' : '먼저 온도를 재요. (분류한 변화 ' + O.bin.filter((b) => b >= 0).length + ' / 6)';
     const B = BL();
     $$('#bChips button').forEach((b, k) => b.classList.toggle('on', k === B.sel));
-    $('#tSlide').value = blT(); $('#tLab').textContent = '🌡️ 온도: ' + sgn(blT(), 1) + ' °C';
+    $('#tSlide').value = blT(); $('#tSlide').style.setProperty('--pct', ((blT() - blSel().lo) / (blSel().hi - blSel().lo) * 100) + '%'); $('#tLab').textContent = '🌡️ 온도: ' + sgn(blT(), 1) + ' °C';
     $('#tNote').textContent = blSel().Tc && (B.sel === 0 || B.sel === 1) ? '저울이 수평이 되는 온도를 찾아봐요. (' + blSel().lo + ' ~ ' + blSel().hi + ' °C)' : '온도를 바꾸며 저울이 어느 쪽으로 기우는지 봐요. (' + blSel().lo + ' ~ ' + blSel().hi + ' °C)';
     const P = TB();
     $$('#cOpts .opt').forEach((b, k) => { b.disabled = P.cell < 0; b.classList.toggle('on', P.cell >= 0 && P.cond[P.cell] === k); });

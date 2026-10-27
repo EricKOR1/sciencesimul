@@ -677,7 +677,7 @@
           title: '외삽으로 ΔT 보정하기',
           goal: '세 측정 모두 <b>외삽선</b>을 그려 열 손실을 보정한 ΔT 를 확인해요.',
           hint: '반응을 고르고 「외삽선 그리기」를 눌러요. 측정을 아직 안 한 반응은 먼저 측정을 해요.',
-          setup() { S.lock = true; setMode('measure'); },
+          setup() { S.lock = true; const K = ME(); K.exOn = [false, false, false]; K.ex = [0, 0, 0]; setMode('measure'); },
           check: () => ME().exOn.every((v) => v) && ME().ex.every((v) => v > 0.9), hold: 0.4,
           status: () => '측정 ' + ME().done.map(mark).join('') + ' &nbsp; 외삽 ' + ME().exOn.map((v, i) => mark(v && ME().ex[i] > 0.9)).join(''),
           explain: '외삽한 ΔT 는 ① 4.9 °C ② 11.4 °C ③ 6.5 °C 로, 읽은 값보다 각각 0.2 °C 커요. 이 값이 열 손실이 없을 때의 온도 변화에 더 가까워요.',

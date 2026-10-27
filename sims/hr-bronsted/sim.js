@@ -639,11 +639,11 @@
     } else D.arrow(ax0, ay, ax1, ay, { color: fAct ? PUR : '#94a3b8', width: fAct ? 4.5 : 3.4, head: 12 });
     T(mid(G.xs[1] + G.bw, G.arW + 16), G.y - 8, rx.rev ? '평형' : '한 방향', 13, MUTED, 'center', 800, { alpha: PHONE ? 0 : 1 });
     // ---- H⁺ 이동 무대
-    const sx = MAIN.x + 14, sw = MAIN.w - 28, sy = G.sy, sh2 = MAIN.y + MAIN.h - 12 - sy;
+    const sx = MAIN.x + 14, sw = MAIN.w - 28, sy = G.sy, sh2 = MAIN.y + MAIN.h - (PHONE ? 12 : 6) - sy;
     D.roundRect(sx, sy, sw, sh2, 12); ctx.fillStyle = '#faf8ff'; ctx.fill(); ctx.strokeStyle = '#e3def5'; ctx.lineWidth = 2; ctx.stroke();
     const dirShown = s.dirShown, hi = hopInfo(k, dirShown);
     T(sx + 12, sy + 20, dirShown === 'f' ? '정반응 (→): 반응물끼리 H⁺를 주고받아요' : '역반응 (←): 생성물끼리 H⁺를 주고받아요', 13.5, '#5b21b6', 'left', 800);
-    const R = PHONE ? 33 : 36, cy = sy + sh2 / 2 + 12, dxC = MAIN.x + MAIN.w / 2 - (PHONE ? 92 : 140), axC = MAIN.x + MAIN.w / 2 + (PHONE ? 92 : 140);
+    const R = PHONE ? 33 : 30, cy = PHONE ? sy + sh2 / 2 + 12 : sy + 84, BH = R + 12, dxC = MAIN.x + MAIN.w / 2 - (PHONE ? 92 : 140), axC = MAIN.x + MAIN.w / 2 + (PHONE ? 92 : 140);
     const h = s.hop, hp = h ? h.t : 0;
     const blob = (cx, idxB, idxA, role0, role1, who) => {
       const mixv = s.mix, sc = 1 + (s.pop > 0 ? 0.12 * Math.sin(clamp(s.pop / 0.5, 0, 1) * Math.PI) : 0);
@@ -655,19 +655,19 @@
       T(0, 6, f1, fs(f1), '#fff', 'center', 800, { alpha: mixv, stroke: 'rgba(30,41,80,.45)', strokeWidth: 3 });
       ctx.restore();
       const lab0 = who === 'd' ? '산 (H⁺ 주개)' : '염기 (H⁺ 받개)', lab1 = who === 'd' ? '짝염기' : '짝산';
-      T(cx, cy + R + 20, lab0, 13.5, who === 'd' ? '#c2410c' : '#1d4ed8', 'center', 800, { alpha: 1 - mixv });
-      T(cx, cy + R + 20, lab1, 13.5, who === 'd' ? '#1d4ed8' : '#c2410c', 'center', 800, { alpha: mixv });
+      T(cx, cy + R + 17, lab0, 13.5, who === 'd' ? '#c2410c' : '#1d4ed8', 'center', 800, { alpha: 1 - mixv });
+      T(cx, cy + R + 17, lab1, 13.5, who === 'd' ? '#1d4ed8' : '#c2410c', 'center', 800, { alpha: mixv });
     };
     blob(dxC, hi.dI, hi.dA, 'acid', 'cbase', 'd'); blob(axC, hi.aI, hi.aA, 'base', 'cacid', 'a');
     // H⁺ 구슬
     const from = { x: dxC + R + 4, y: cy }, to = { x: axC - R - 4, y: cy };
     let bp = null;
     if (h) {
-      if (hp < 0.12) bp = { x: dxC, y: cy - R - 14 * sm(hp / 0.12) };
-      else if (hp < 0.62) { const u = SPL.inOutCubic((hp - 0.12) / 0.5); bp = arcAt({ x: dxC, y: cy - R - 14 }, { x: axC, y: cy - R - 14 }, u, 58); if (!RM && S.mode === 'pairs') parts.emit({ x: bp.x, y: bp.y, vx: (Math.random() - 0.5) * 20, vy: (Math.random() - 0.5) * 20, life: 0.4, size: 3.4, color: 'rgba(139,92,246,.75)' }); }
+      if (hp < 0.12) bp = { x: dxC, y: cy - BH };
+      else if (hp < 0.62) { const u = SPL.inOutCubic((hp - 0.12) / 0.5); bp = arcAt({ x: dxC, y: cy - BH }, { x: axC, y: cy - BH }, u, 58); if (!RM && S.mode === 'pairs') parts.emit({ x: bp.x, y: bp.y, vx: (Math.random() - 0.5) * 20, vy: (Math.random() - 0.5) * 20, life: 0.4, size: 3.4, color: 'rgba(139,92,246,.75)' }); }
     }
     if (bp) bead(bp.x, bp.y, true, t, false);
-    else if (!s.after) bead(dxC, cy - R - 14, false, t, false);
+    else if (!s.after) bead(dxC, cy - BH, false, t, false);
     // 설명 · 계수
     panel(INFO.x, INFO.y, INFO.w, INFO.h, 14);
     T(INFO.x + 16, INFO.y + 26, '짝산–짝염기: H⁺ 하나 차이인 산 · 염기 쌍', 15, '#b45309', 'left', 800);

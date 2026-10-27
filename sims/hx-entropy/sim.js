@@ -363,7 +363,7 @@
     const C0 = CDS(), k = C0.sel; v = clamp(Math.round(v), 0, 100);
     C0.p[k] = v / 100; if (v >= 95) C0.seen[k] = true; cdSyncSlide(); updateCtl();
   }
-  function cdSyncSlide() { const k = CDS().sel; $('#cdSlide').value = Math.round(CDS().p[k] * 100); }
+  function cdSyncSlide() { const k = CDS().sel; $('#cdSlide').value = Math.round(CDS().p[k] * 100); $('#cdSlide').style.setProperty('--pct', Math.round(CDS().p[k] * 100) + '%'); }
   function stepCd(dt) { const C0 = CDS(); for (let k = 0; k < CDN; k++) { C0.pd[k] = ap2(C0.pd[k], C0.p[k], dt, 6); if (Math.abs(C0.pd[k] - C0.p[k]) < 0.002) C0.pd[k] = C0.p[k]; } }
   const cdCont = () => { const L = RC.L; return { x: L.x + 20, y: L.y + 66, w: L.w - 40, h: 316 }; };
   const CDR = rng(4242);
@@ -525,9 +525,10 @@
     rules.forEach((s) => { D.sphere(R.x + 18, y - 4, 4, PUR, { gloss: false }); y += textBlock(R.x + 30, y, R.w - 44, s, 12.5, INK, 17, 700) + 6; });
     const by = Math.max(y + 8, R.y + R.h - 138);
     D.roundRect(R.x + 10, by, R.w - 20, R.y + R.h - by - 10, 12); ctx.fillStyle = '#f6f7fb'; ctx.fill(); ctx.strokeStyle = '#dbe3f3'; ctx.lineWidth = 1.5; ctx.stroke();
-    if (P.sel >= 0) { const cd = PC[P.cards[P.sel].id]; T(R.x + 20, by + 22, '고른 카드', 12, MUTED, 'left', 800); const h = textBlock(R.x + 20, by + 42, R.w - 40, cd.t, 13.5, INK, 18, 800); textBlock(R.x + 20, by + 46 + h, R.w - 40, '배열의 수가 어떻게 변할까요?', 12.5, MUTED, 16, 700); }
+    const allOk = prPlaced() === NP && prWrong().length === 0 && game && game.phase !== 'active';
+    if (allOk) textBlock(R.x + 20, by + 26, R.w - 40, '엔트로피가 감소하는데도 저절로 일어나는 변화(물이 얼음이 됨)가 있어요. 왜일까요? 다음 차시에서 주위까지 함께 살펴봐요.', 12.5, PUR, 17, 800);
+    else if (P.sel >= 0) { const cd = PC[P.cards[P.sel].id]; T(R.x + 20, by + 22, '고른 카드', 12, MUTED, 'left', 800); const h = textBlock(R.x + 20, by + 42, R.w - 40, cd.t, 13.5, INK, 18, 800); textBlock(R.x + 20, by + 46 + h, R.w - 40, '배열의 수가 어떻게 변할까요?', 12.5, MUTED, 16, 700); }
     else textBlock(R.x + 20, by + 28, R.w - 40, prPlaced() === NP ? '모두 놓았어요. 「확인하기」를 눌러요.' : '카드를 누르거나 끌어 보세요.', 13, MUTED, 18, 700);
-    if (prPlaced() === NP && prWrong().length === 0) textBlock(R.x + 20, by + 70, R.w - 40, '엔트로피가 감소하는데도 저절로 일어나는 변화(물이 얼음이 됨)가 있어요. 왜일까요? 다음 차시에서 주위까지 함께 살펴봐요.', 12, PUR, 16, 800);
   }
 
   /* ---------- 상태 ---------- */
@@ -578,7 +579,7 @@
     void ok;
     const C0 = CDS(), ck = C0.sel;
     $$('#cdChips button').forEach((b, k) => { b.classList.toggle('on', k === ck); b.classList.toggle('done', C0.seen[k]); });
-    $('#cdSlideLab').textContent = CD[ck].lab; $('#cdSlide').value = Math.round(C0.p[ck] * 100);
+    $('#cdSlideLab').textContent = CD[ck].lab; $('#cdSlide').value = Math.round(C0.p[ck] * 100); $('#cdSlide').style.setProperty('--pct', Math.round(C0.p[ck] * 100) + '%');
     $('#cdNote').textContent = '살펴본 조건 ' + C0.seen.filter((v) => v).length + ' / ' + CDN + ' (슬라이더를 끝까지 움직이면 살펴본 거예요)';
     const P = S.pr;
     $('#bPlus').disabled = P.sel < 0; $('#bMinus').disabled = P.sel < 0;

@@ -769,7 +769,7 @@
     // ②
     for (let i = 0; i < 5; i++) { const inp = $('#av' + i); inp.classList.toggle('ok', A.ok[i]); if (document.activeElement !== inp && inp.value !== A.inp[i]) inp.value = A.inp[i]; $('#avLab' + i).classList.toggle('on', A.sel === i); }
     $$('#t0Chips button').forEach((b, k) => b.classList.toggle('on', [0, 60][k] === Z.t0));
-    $('#dtRange').value = String(Z.di); $('#dtOut').textContent = DT[Z.di] + ' s';
+    $('#dtRange').value = String(Z.di); $('#dtRange').style.setProperty('--pct', (Z.di / (DT.length - 1) * 100) + '%'); $('#dtOut').textContent = DT[Z.di] + ' s';
     $('#dtMinus').disabled = Z.di === 0; $('#dtPlus').disabled = Z.di === DT.length - 1;
     $('#bTan').setAttribute('aria-pressed', Z.tan ? 'true' : 'false'); $('#bTan').textContent = Z.tan ? '📐 접선 숨기기' : '📐 접선 보이기';
     ['tn0', 'tn60'].forEach((id, k) => { const inp = $('#' + id), ok = k === 0 ? Z.ok0 : Z.ok60, v = k === 0 ? Z.in0 : Z.in60; inp.classList.toggle('ok', ok); if (document.activeElement !== inp && inp.value !== v) inp.value = v; });
@@ -864,7 +864,7 @@
           title: '표 채우기: 부피를 [H₂O₂] 로',
           goal: '표의 부피 V 로 <b>40~100 s 의 [H₂O₂]</b> 를 구해 조작판에 적어요.',
           hint: '[H₂O₂] = 0.80 − (2 × V(L) / 24.5) / 0.100. 예: 40 s 는 V = 355 mL = 0.355 L 이므로 n(O₂) = 0.0145 mol → 0.0290 mol / 0.100 L = 0.29 M 감소 → 0.51 M.',
-          setup() { S.lock = true; setMode('sense'); const E = SE(); if (!E.done) { E.phase = 'done'; E.t = 100; E.done = true; E.rows = 6; } },
+          setup() { S.lock = true; setMode('sense'); const E = SE(); if (!E.done) { E.phase = 'done'; E.t = 100; E.done = true; E.rows = 6; } E.inp = ['', '', '', '']; E.ok = [false, false, false, false]; clearConv(); },
           check: () => SE().ok.every(Boolean), hold: 0.4,
           status: () => TS.slice(2).map((t, i) => t + ' s ' + mark(SE().ok[i])).join(' &nbsp; '),
           explain: '40 s: 0.51 M, 60 s: 0.41 M, 80 s: 0.33 M, 100 s: 0.26 M 이에요. O₂ 1 mol 이 생길 때 H₂O₂ 2 mol 이 분해되므로 O₂ 몰수에 2를 곱하고 용액의 부피 0.100 L 로 나누어 줄어든 농도를 구해요.',

@@ -110,7 +110,7 @@
   /* ================= 자료 ================= */
   const SUB = {
     A: { id: 'A', name: '물질 A', desc: '인력 약함', eps: 0.5, ttr: 160, c: '#0ea5a4' },
-    B: { id: 'B', name: '물질 B', desc: '인력 중간', eps: 1.0, ttr: 270, c: '#8b5cf6' },
+    B: { id: 'B', name: '물질 B', desc: '인력 중간', eps: 1.0, ttr: 290, c: '#8b5cf6' },
     C: { id: 'C', name: '물질 C', desc: '인력 강함', eps: 1.8, ttr: 480, c: '#e2464b' },
   };
   const SK = ['A', 'B', 'C'];
@@ -303,7 +303,7 @@
     const zy = PHONE ? Rr.y + 238 : Rr.y + 288, zh = Rr.h - (zy - Rr.y) - 12;
     D.roundRect(Rr.x + 12, zy, Rr.w - 24, zh, 12); ctx.fillStyle = '#f7f3ff'; ctx.fill(); ctx.strokeStyle = '#d6c9f5'; ctx.lineWidth = 1.6; ctx.stroke();
     T(Rr.x + 22, zy + 22, '🔍 분자 두 개를 확대', 13.5, PUR, 'left', 800);
-    const zcx = Rr.x + Rr.w / 2, zcy = zy + zh * 0.5 - 4, dd = lerp(66, Math.min(150, (Rr.w - 24) * 0.72), sm(h.z));
+    const zcx = Rr.x + Rr.w / 2, zcy = PHONE ? zy + 62 : zy + zh * 0.5 - 4, dd = lerp(66, Math.min(150, (Rr.w - 24) * 0.72), sm(h.z));
     const sw = Math.sin(t * 1.4) * 0.12;
     const m1 = [zcx - dd / 2, zcy + Math.sin(t * 2) * 1.5], m2 = [zcx + dd / 2, zcy + Math.cos(t * 2.2) * 1.5];
     const a1 = Math.PI + sw, a2 = 0 - sw;
@@ -316,7 +316,7 @@
       ctx.beginPath(); ctx.moveTo(m1[0] + 22, m1[1]); ctx.lineTo(m2[0] - 22, m2[1]); ctx.stroke(); ctx.restore();
       if (attr > 0.5) T(zcx, zcy - 30, '분자 사이 인력', 12.5, PUR, 'center', 800);
     }
-    textBlock(Rr.x + 22, zy + zh - (PHONE ? 46 : 52), Rr.w - 44, h.z > 0.5 ? '분자 사이 거리만 멀어졌어요. 분자 안의 결합(실선)은 그대로예요.' : '분자 사이 거리가 가까워서 인력이 작용해요. 분자 안의 결합(실선)은 그대로예요.', 12.5, INK, 17, 800);
+    textBlock(Rr.x + 22, zy + zh - (PHONE ? 20 : 52), Rr.w - 44, h.z > 0.5 ? '분자 사이 거리만 멀어졌어요. 분자 안의 결합(실선)은 그대로예요.' : '분자 사이 거리가 가까워서 인력이 작용해요. 분자 안의 결합(실선)은 그대로예요.', 12.5, INK, 17, 800);
   }
 
   /* ---------- ① 컨트롤 ---------- */

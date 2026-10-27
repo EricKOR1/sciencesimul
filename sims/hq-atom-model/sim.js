@@ -24,7 +24,12 @@
     for (const ch of str) {
       if (ch === '\n') { out.push(line); line = ''; continue; }
       const t = line + ch;
-      if (ctx.measureText(t).width > maxW && line) { out.push(line); line = ch.trim() === '' ? '' : ch; } else line = t;
+      if (ctx.measureText(t).width > maxW && line) {
+        if (/[.,;:!?)%]/.test(ch)) { line = t; continue; }                       // 문장부호가 줄 맨 앞에 오지 않게
+        const m = /[A-Za-z0-9_.(]+$/.exec(line);                                  // 숫자·영문 덩어리(예: 5.0)는 쪼개지 않기
+        if (m && m.index > 0 && /[A-Za-z0-9_]/.test(ch)) { out.push(line.slice(0, m.index)); line = m[0] + ch; }
+        else { out.push(line); line = ch.trim() === '' ? '' : ch; }
+      } else line = t;
     }
     if (line) out.push(line);
     ctx.restore(); return out;

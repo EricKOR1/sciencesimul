@@ -24,7 +24,12 @@
     for (const ch of str) {
       if (ch === '\n') { out.push(line); line = ''; continue; }
       const t = line + ch;
-      if (ctx.measureText(t).width > maxW && line) { out.push(line); line = ch.trim() === '' ? '' : ch; } else line = t;
+      if (ctx.measureText(t).width > maxW && line) {
+        if (/[.,;:!?)%]/.test(ch)) { line = t; continue; }                       // 문장부호가 줄 맨 앞에 오지 않게
+        const m = /[A-Za-z0-9_.(]+$/.exec(line);                                  // 숫자·영문 덩어리(예: 5.0)는 쪼개지 않기
+        if (m && m.index > 0 && /[A-Za-z0-9_]/.test(ch)) { out.push(line.slice(0, m.index)); line = m[0] + ch; }
+        else { out.push(line); line = ch.trim() === '' ? '' : ch; }
+      } else line = t;
     }
     if (line) out.push(line);
     ctx.restore(); return out;
@@ -277,7 +282,7 @@
   $$('#modeSeg button').forEach((b) => b.addEventListener('click', () => { Sound.click(); setScene(b.dataset.mode); }));
 
   /* ---------- 컨트롤 ---------- */
-  function markT(v) { const C = S.cd; if (v <= 400) C.seen.low = true; if (Math.abs(v - 718) <= 3) C.seen.sun = true; if (v >= 990) C.seen.high = true; }
+  function markT(v) { const C = S.cd; if (v <= 400) C.seen.low = true; if (Math.abs(v - 718) <= 3) C.seen.sun = true; if (v >= 993) C.seen.high = true; /* 993부터 kT가 장벽 0.72 MeV 이상 */ }
   const slT = bindSlider('sT', (v) => fmtT(tOf(v)), (v) => { S.cd.lv = +v; markT(+v); S.cd.an.ph = 'wait'; S.cd.an.t = 0; tSeg.set(String(+v)); });
   const tSeg = bindSeg('tSeg', (v) => { S.cd.lv = +v; slT.set(+v); markT(+v); S.cd.an.ph = 'wait'; S.cd.an.t = 0; });
   const tnSeg = bindSeg('tnSeg', (v) => { S.cd.tn = v; });
@@ -541,13 +546,13 @@
     const keys = ['0.5', '1', '10'], LX = (y) => ax0 + clamp((Math.log10(y) - 6) / 6, 0, 1) * aw;
     [6, 7, 8, 9, 10, 11, 12].forEach((e) => { ctx.strokeStyle = '#e3e8f2'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(LX(Math.pow(10, e)), top); ctx.lineTo(LX(Math.pow(10, e)), top + chH); ctx.stroke(); T(LX(Math.pow(10, e)), top + chH + 14, e === 6 ? '100만' : e === 7 ? '1천만' : e === 8 ? '1억' : e === 9 ? '10억' : e === 10 ? '100억' : e === 11 ? '1000억' : '1조', PHONE ? 9.5 : 10.5, '#5d6879', 'center', 700); });
     T(ax0 + aw / 2, top + chH + 30, '수명 (년)', 11.5, '#26324a', 'center', 800);
+    ctx.strokeStyle = '#14a058'; ctx.setLineDash([4, 3]); ctx.lineWidth = 1.8; ctx.beginPath(); ctx.moveTo(LX(4.6e9), top - 4); ctx.lineTo(LX(4.6e9), top + chH); ctx.stroke(); ctx.setLineDash([]);
     keys.forEach((k, i) => {
       const st = STARS[k], Lw = k === '1' ? snL() : st.L * L_SUN, yrs = lifeSec(N.f, st.m * M_SUN, Lw) / YR, y = top + 4 + i * rowH, on = N.star === k;
       T(Bp.x + 14, y + (rowH - 12) / 2 + 5, st.name, PHONE ? 12 : 13.5, on ? '#c47a00' : '#26324a', 'left', 800);
       ctx.fillStyle = on ? '#f26b3a' : '#9aa5b8'; ctx.fillRect(ax0, y, Math.max(0, LX(yrs) - ax0), rowH - 12);
       T(clamp(LX(yrs) + 4, ax0 + 4, Bp.x + Bp.w - 8), y + (rowH - 12) / 2 + 5, sci(yrs, 1) + ' 년', PHONE ? 11.5 : 12.5, on ? '#c47a00' : '#26324a', LX(yrs) + 90 > Bp.x + Bp.w ? 'right' : 'left', 800, LX(yrs) + 90 > Bp.x + Bp.w ? { stroke: '#fff', strokeWidth: 3 } : null);
     });
-    ctx.strokeStyle = '#14a058'; ctx.setLineDash([4, 3]); ctx.lineWidth = 1.8; ctx.beginPath(); ctx.moveTo(LX(4.6e9), top - 4); ctx.lineTo(LX(4.6e9), top + chH); ctx.stroke(); ctx.setLineDash([]);
     T(LX(4.6e9), top - 8, '태양의 지금 나이 약 46억 년', PHONE ? 10.5 : 11.5, '#0f7a42', 'center', 800);
     // 선택한 별의 계산 과정
     const st = snStar(), Lw = N.star === '1' ? snL() : st.L * L_SUN, E = (N.f / 100) * st.m * M_SUN * EPS * C2, sec = E / Lw;
@@ -710,9 +715,9 @@
           title: '장벽과 열에너지 비교하기', manual: true,
           goal: '<b>태양 중심(1.5×10⁷ K)</b>으로 온도를 맞춘 뒤, 읽은 값으로 두 문제를 풀어요.',
           hint: '0.72 MeV = 720 keV예요. 열에너지 약 1.3 keV와 나누어 몇 배인지 어림해요. 고전적으로 장벽을 넘으려면 어느 온도에서 열에너지가 0.72 MeV에 이르는지 그래프에서 확인해요.',
-          setup() { S.show.selA = true; SEL_A.reset(); setScene('cond'); },
-          check() { if (!S.cd.seen.sun) return '먼저 온도를 태양 중심(1.5×10⁷ K)에 맞춰 열에너지를 읽어 보세요.'; return SEL_A.grade(); },
-          status: () => mark(!!S.cd.seen.sun) + ' 태양 중심 온도 맞춤 &nbsp; · 고른 문제 ' + SEL_A.count() + ' / 2',
+          setup() { S.show.selA = true; SEL_A.reset(); S.cd.lv = 600; slT.set(600); tSeg.set('600'); S.cd.an.ph = 'wait'; S.cd.an.t = 0; setScene('cond'); },
+          check() { if (Math.abs(S.cd.lv - 718) > 3) return '먼저 온도를 태양 중심(1.5×10⁷ K)에 맞춰 열에너지를 읽어 보세요.'; return SEL_A.grade(); },
+          status: () => mark(Math.abs(S.cd.lv - 718) <= 3) + ' 태양 중심 온도 맞춤 &nbsp; · 고른 문제 ' + SEL_A.count() + ' / 2',
           explain: '장벽 약 720 keV를 태양 중심의 열에너지 약 1.3 keV로 나누면 약 <b>500배</b>예요. 열에너지가 장벽(0.72 MeV)과 비슷해지려면 T = E/k ≈ (7.2×10⁵ eV) / (8.6×10⁻⁵ eV/K) ≈ 8×10⁹ ~ 10¹⁰ K가 필요해요. 그래서 터널 효과가 없다면 태양은 핵융합을 못 해요.',
         },
         {
@@ -748,7 +753,7 @@
           title: '질량을 에너지로 환산하기',
           goal: '“질량 → 에너지 변환” 버튼으로 <b>E = Δm × 931.5 MeV/u</b>를 계산하고, 방출 에너지를 확인하세요.',
           hint: '먼저 핵융합이 끝나야 변환 버튼이 켜져요. 변환하면 25.7 MeV가 나타나고 화학 반응과 비교하는 막대가 그려져요.',
-          setup() { S.show.numB = false; if (!S.ms.fused) { S.ms.conv = false; } setScene('mass'); },
+          setup() { S.show.numB = false; S.ms.conv = false; S.ms.convT = 0; setScene('mass'); },
           check: () => S.ms.fused && S.ms.conv && S.ms.convT >= 1,
           hold: 0.5,
           status: () => mark(S.ms.fused) + ' 핵융합 관찰 &nbsp; ' + mark(S.ms.conv && S.ms.convT >= 1) + ' 변환: ' + (S.ms.conv && S.ms.convT >= 1 ? E_FUS.toFixed(1) + ' MeV' : '아직'),

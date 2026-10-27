@@ -287,7 +287,7 @@
       T(x + 12, cy + 24, q[0], 14.5, PUR, 'left', 800); textBlock(x + 12, cy + 44, cw - 24, q[1], 13.5, INK, 17, 700);
     });
     T(c.x + cw + 12, cy + 40, '→', 22, PUR, 'center', 800);
-    textBlock(c.x, cy + (PHONE ? 98 : 90), c.w, '다른 방법: 각 기체가 8.0 L를 혼자 채울 때의 압력을 구해도 돼요. P(He) = 3.0 × 2.0 / 8.0 = 0.75 atm, P(N₂) = 1.0 × 6.0 / 8.0 = 0.75 atm.', 13.5, MUTED, 18, 700);
+    textBlock(c.x, cy + (PHONE ? 98 : 90), c.w, '다른 방법: 각 기체가 8.0 L을 혼자 채울 때의 압력을 구해도 돼요. P(He) = 3.0 × 2.0 / 8.0 = 0.75 atm, P(N₂) = 1.0 × 6.0 / 8.0 = 0.75 atm.', 13.5, MUTED, 18, 700);
     void t;
   }
   const vpBub = [];
@@ -297,7 +297,7 @@
     // 수조와 포집병
     const tw = PHONE ? 220 : 280, th = 120, tx = x0, ty = y0 + 240, cxm = tx + tw / 2 - 30;
     ctx.fillStyle = 'rgba(120,190,255,.5)'; D.roundRect(tx, ty, tw, th, 8); ctx.fill(); ctx.strokeStyle = '#7d8da6'; ctx.lineWidth = 3; D.roundRect(tx, ty, tw, th, 8); ctx.stroke();
-    T(tx + 12, ty + 22, '수조 (20 °C)', 13, '#0e4f86', 'left', 800);
+    T(tx + 12, ty + th - 10, '수조 (20 °C)', 13, '#0e4f86', 'left', 800);
     const cw = 76, ch = 230, cy = ty - ch + 60;
     ctx.fillStyle = 'rgba(210,230,255,.45)'; ctx.fillRect(cxm - cw / 2, cy, cw, ch); ctx.strokeStyle = '#7d8da6'; ctx.lineWidth = 3; ctx.strokeRect(cxm - cw / 2, cy, cw, ch);
     ctx.fillStyle = 'rgba(120,190,255,.5)'; ctx.fillRect(cxm - cw / 2 + 1.5, ty, cw - 3, ch - (ty - cy));
@@ -311,8 +311,8 @@
     ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(tx + tw - 20, ty + th - 6); ctx.quadraticCurveTo(tx + tw - 60, ty + th - 22, cxm + 10, ty + th - 18); ctx.stroke();
     T(tx + tw - 22, ty + th + 18, 'O₂ 발생', 13, MUTED, 'right', 700);
     // 계산 패널
-    const px = PHONE ? L.x + 16 : L.x + 340, py = PHONE ? L.y + 410 : L.y + 60, pw = PHONE ? L.w - 32 : 420;
-    D.roundRect(px, py, pw, PHONE ? 330 : 420, 12); ctx.fillStyle = '#f8f9fc'; ctx.fill();
+    const px = PHONE ? L.x + 16 : L.x + 340, py = PHONE ? L.y + 450 : L.y + 60, pw = PHONE ? L.w - 32 : 420;
+    D.roundRect(px, py, pw, PHONE ? 324 : 420, 12); ctx.fillStyle = '#f8f9fc'; ctx.fill();
     T(px + 14, py + 26, '대기압 = P(O₂) + P(수증기)', 14.5, INK, 'left', 800);
     const bx = px + 14, bw = pw - 28, by = py + 40;
     D.roundRect(bx, by, bw, 30, 9); ctx.fillStyle = '#eef1f7'; ctx.fill();
@@ -367,7 +367,7 @@
     void t;
   }
   function drawCalc(t) {
-    const sub = S.sub.calc, L = Object.assign({}, RC.calc.L, PHONE ? { h: { conn: 540, vap: 760, air: 680 }[sub] } : {});
+    const sub = S.sub.calc, L = Object.assign({}, RC.calc.L, PHONE ? { h: { conn: 540, vap: 786, air: 680 }[sub] } : {});
     T(14, 26, MODE_LABEL.calc, PHONE ? 15 : 17, INK, 'left', 800);
     panel(L.x, L.y, L.w, L.h, 14);
     if (sub === 'conn') drawConn(L, t); else if (sub === 'vap') drawVap(L, t); else drawAir(L, t);
@@ -376,7 +376,7 @@
     const v = parseNum($('#inC' + k).value), inp = $('#inC' + k), ans = [CONN_P.he, CONN_P.n2, 1.5][i];
     inp.classList.remove('ok', 'bad'); S.cn.ok[i] = near(v, ans, 0.015); if (S.cn.ok[i]) { inp.classList.add('ok'); } else if (!isNaN(v) && inp.value.length >= 3) inp.classList.add('bad');
   }));
-  [['1', VAP_PO2, 0.003, 0], ['2', VAP_W, 0.008, 1]].forEach(([k, ans, tol, i]) => $('#inV' + k).addEventListener('input', () => {
+  [['1', VAP_PO2, 0.0035, 0], ['2', VAP_W, 0.008, 1]].forEach(([k, ans, tol, i]) => $('#inV' + k).addEventListener('input', () => {
     const v = parseNum($('#inV' + k).value), inp = $('#inV' + k); inp.classList.remove('ok', 'bad'); S.vp.ok[i] = near(v, ans, tol); if (S.vp.ok[i]) inp.classList.add('ok'); else if (!isNaN(v) && inp.value.length >= 3) inp.classList.add('bad');
   }));
   $('#bValve').addEventListener('click', () => { Sound.click(); S.cn.open = true; updateCtl(); });
@@ -578,7 +578,7 @@
           title: 'X(O₂) = 0.50일 때 O₂ 분압 읽기', manual: true,
           goal: '<b>X(O₂) = 0.50</b>으로 맞추고, O₂의 분압을 atm 단위로 써서 <b>✔ 확인하기</b>를 눌러요.',
           hint: '몰 분율 단추 X = 0.5를 눌러요. P(O₂) = X × P(전체) = 0.50 × 2.00이에요.',
-          setup() { S.lock = true; S.gate = 'fracin'; $('#inXP').value = ''; $('#inXP').classList.remove('ok', 'bad'); S.frac.ok = false; setMode('frac'); },
+          setup() { S.lock = true; S.gate = 'fracin'; $('#inXP').value = ''; $('#inXP').classList.remove('ok', 'bad'); S.frac.ok = false; setMode('frac'); setNO(4); S.frac.seen = {}; },
           check() {
             if (S.frac.nO !== 10) return '먼저 O₂의 몰 분율을 0.50으로 맞춰 주세요. (입자 10개)';
             if (isNaN(parseNum($('#inXP').value))) return 'O₂의 분압을 숫자로 써 주세요. (단위 atm)';
@@ -659,7 +659,7 @@
           setup() { S.lock = true; S.gate = ''; S.dv.depth = 40; S.dv.o2 = 40; S.dv.dil = 'n2'; setMode('dive'); },
           check: () => S.dv.depth === 40 && dvSafe(), hold: 0.7,
           status: () => '깊이 ' + S.dv.depth + ' m ' + mark(S.dv.depth === 40) + ' &nbsp; P(O₂) ' + f2(dvO2()) + ' atm ' + mark(dvSafe()),
-          explain: '40 m는 전체 압력 5.0 atm이에요. 공기(O₂ 21 %)는 P(O₂) = 0.21 × 5.0 = <b>1.05 atm</b>으로 안전해요. 산소 비율이 28 %를 넘으면 1.4 atm를 넘어 위험해요.',
+          explain: '40 m는 전체 압력 5.0 atm이에요. 공기(O₂ 21 %)는 P(O₂) = 0.21 × 5.0 = <b>1.05 atm</b>으로 안전해요. 산소 비율이 28 %를 넘으면 1.4 atm을 넘어 위험해요.',
         },
         {
           title: '60 m에서 안전한 혼합 기체',

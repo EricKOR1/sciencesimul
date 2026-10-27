@@ -587,7 +587,7 @@
   function readouts() {
     let L1, a, L2, b, L3, c;
     if (S.mode === 'path') { const P = S.pa, Pt = PS(); L1 = '직접 경로 ΔH'; a = paRevealed('dir') ? sd(Pt.dir) + ' kJ' : '?'; L2 = '두 단계 ΔH 합'; b = (P.sc === 0 ? P.ok[1] && P.ok[2] : P.seen[1].via) ? sd(Pt.st[0] + Pt.st[1]) + ' kJ' : '?'; L3 = '내려가 본 경로'; c = (P.seen[P.sc].direct ? 1 : 0) + (P.seen[P.sc].via ? 1 : 0) + ' / 2'; }
-    else if (S.mode === 'rule') { const U = S.ru, p = procEq(ruE(), U.flip, U.k); L1 = '고른 카드'; a = RUC[U.card][1]; L2 = '지금 ΔH'; b = S.sub.rule === 'add' ? sv(EQ.hg.dH + EQ.hl.dH) + ' kJ' : sv(p.dH) + ' kJ'; L3 = '완성한 규칙'; c = U.rule.filter((v, i) => v === RULES[i].ans).length + ' / 3'; }
+    else if (S.mode === 'rule') { const U = S.ru, p = procEq(ruE(), U.flip, U.k); L1 = '고른 카드'; a = RUC[U.card][1]; L2 = '지금 ΔH'; b = S.sub.rule === 'add' ? (U.add.done ? sv(EQ.hg.dH + EQ.hl.dH) + ' kJ' : '?') : sv(p.dH) + ' kJ'; L3 = '완성한 규칙'; c = U.rule.filter((v, i) => v === RULES[i].ans).length + ' / 3'; }
     else if (S.mode === 'co') { const Q = S.co; L1 = '구할 반응'; a = coCase().name; L2 = '목표 반응식'; b = coMatch(Q.cs) ? '완성' : '아직'; L3 = '구한 반응'; c = Q.solved.filter((x) => x).length + ' / 2'; }
     else { const Q = S.pz; L1 = '퍼즐'; a = pzCase().name; L2 = '목표 반응식'; b = pzMatch(Q.cs) ? '완성' : '아직'; L3 = '푼 퍼즐'; c = Q.solved.filter((x) => x).length + ' / 3'; }
     const k = [L1, a, L2, b, L3, c].join('|'); if (k === rlast) return; rlast = k;
@@ -689,7 +689,7 @@
           title: 'NO₂ 생성 반응의 ΔH 구하기',
           goal: '구할 반응을 <b>N₂ + 2O₂ → 2NO₂</b> 로 바꾸고, 두 식을 더해 ΔH 를 구해 적어요.',
           hint: '이번에는 두 식을 그대로 더하면 NO 가 소거돼요. ΔH = +181 + (−115).',
-          setup() { S.lock = true; S.co.cs = 1; buildCo(); coCheck(); setMode('co'); },
+          setup() { S.lock = true; const Q = S.co; Q.cs = 1; Q.flip[1] = [false, false]; Q.q[1] = ''; Q.ok[1] = false; Q.solved[1] = false; buildCo(); coCheck(); setMode('co'); },
           check: () => S.co.solved[1], hold: 0.4,
           status: () => '식 만들기 ' + mark(S.co.cs === 1 && coMatch(1)) + ' &nbsp; ΔH ' + mark(S.co.solved[1]),
           explain: '두 식을 그대로 더하면 2NO 가 양쪽에서 소거되어 N₂ + 2O₂ → 2NO₂, ΔH = +181 + (−115) = <b>+66 kJ</b> (흡열)이에요.',

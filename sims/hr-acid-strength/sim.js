@@ -546,8 +546,9 @@
       const sl = PHONE ? 66 : 82, py = P.y + sl;
       ctx.strokeStyle = '#64748b'; ctx.lineWidth = 1.8; ctx.beginPath(); ctx.moveTo(P.x, P.y); ctx.lineTo(P.x - 54, py); ctx.moveTo(P.x, P.y); ctx.lineTo(P.x + 54, py); ctx.stroke();
       D.roundRect(P.x - 62, py, 124, 9, 4); ctx.fillStyle = '#64748b'; ctx.fill();
-      D.shadow(() => { D.sphere(P.x, py - 24, 24, col, { gloss: true }); }, { blur: 6, y: 3 });
-      T(P.x, py - 18, form, form.length > 6 ? 12.5 : 15, '#fff', 'center', 800, { stroke: 'rgba(30,41,80,.5)', strokeWidth: 3 });
+      const rb = form.length > 6 ? (PHONE ? 27 : 30) : 24;
+      D.shadow(() => { D.sphere(P.x, py - rb, rb, col, { gloss: true }); }, { blur: 6, y: 3 });
+      T(P.x, py - rb + 6, form, form.length > 6 ? 12.5 : 15, '#fff', 'center', 800, { stroke: 'rgba(30,41,80,.5)', strokeWidth: 3 });
       T(P.x, py + 28, role, 13.5, role === '산' ? '#c2410c' : '#1d4ed8', 'center', 800);
       T(P.x, py + 48, kText, PHONE ? 13.5 : 15, INK, 'center', 800);
     };
@@ -638,7 +639,7 @@
 
   function readouts() {
     const m = S.mode;
-    if (m === 'meas') { const k = S.ms.cur, rd = S.ms.state === 'read'; setRead('선택한 용액', k ? '0.10 M ' + AC[k].f : '—', 'pH', rd ? AC[k].ph.toFixed(2) : '—', '상대 전류 (HCl = 100)', rd ? fmtRel(relCur(AC[k].ph)) : '—'); }
+    if (m === 'meas') { const k = S.ms.cur, rd = S.ms.state === 'read'; setRead('선택한 용액', k ? '0.10 M ' + AC[k].f : '—', 'pH', rd ? AC[k].ph.toFixed(2) : '—', '상대 전류', rd ? fmtRel(relCur(AC[k].ph)) : '—'); }
     else if (m === 'model') { const a = AC[S.md.k]; setRead('이온화된 HA', S.md.n + '개 / ' + NP + '개', '평균 α', (a.strong ? '≈ 100' : S.md.lo === 0 && NP * mdAlpha() < 0.1 ? '≈ 0' : mdAvg().toFixed(1)) + ' %', 'Ka', a.strong ? '쓰지 않음' : sci(a.Ka, 2)); }
     else if (m === 'rank') { const a = AC[S.rk.k]; setRead('선택한 산', a.f, 'Ka', sci(a.Ka, 2), 'pKa', a.pKa.toFixed(2)); }
     else { const q = pqOf(S.pq.k); setRead(q.acid + ' / ' + q.base, '짝산–짝염기', 'Ka (산)', pqMask(q.k, 'Ka') ? '?' : sci(q.Ka, 2), 'Kb (짝염기)', pqMask(q.k, 'Kb') ? '?' : sci(q.Kb, 2)); }
@@ -669,7 +670,7 @@
           title: '측정 결과로 순서 매기기', manual: true,
           goal: '측정한 결과를 보고, <b>이온이 많은(전류가 센)</b> 용액부터 순서대로 눌러요.',
           hint: 'pH가 작을수록 [H⁺]가 커요. 가장 작은 pH부터 차례로 눌러요.',
-          setup() { S.gate = 'ord'; msOrd.clear(); setScene('meas'); updateCtl(); },
+          setup() { S.gate = 'ord'; msOrd.clear(); if (msCount() < 4) { MSK.forEach((k) => { S.ms.done[k] = true; S.ms.liq[k] = 1; }); if (!S.ms.pred) S.ms.pred = MSK.slice(); } setScene('meas'); updateCtl(); },
           check() {
             const o = msOrd.order; if (o.length < 4) return '네 용액을 모두 눌러 주세요. (' + o.length + ' / 4)';
             const t = measuredOrder(); for (let i = 0; i < 4; i++) if (o[i] !== t[i]) return (i + 1) + '번째가 달라요. pH 값을 비교해 보세요. pH가 작을수록 H⁺가 많아서 이온이 많아요.';

@@ -217,7 +217,7 @@
     } else T(L.x + 26, ry + 82, '값을 모두 넣으면 결과가 나와요', 14, '#9aa5b6', 'left', 700);
     // 자주 하는 실수
     const my = ry + 114, mw = (L.w - 36) / 2;
-    [['T', '⚠️ °C를 그대로 쓰면', '27 °C를 27로 쓰면 27 K로 계산돼요. 켈빈은 °C + 273이에요.', 'T'], ['V', '⚠️ mL를 그대로 쓰면', '6150 mL를 6150으로 쓰면 6150 L예요. 1 L = 1000 mL!', 'V']].forEach((q, i) => {
+    [['T', '⚠️ °C를 그대로 쓰면', '27 °C를 27로 쓰면 27 K로 계산돼요. 켈빈은 °C + 273이에요.', 'T'], ['V', '⚠️ mL을 그대로 쓰면', '6150 mL을 6150으로 쓰면 6150 L예요. 1 L = 1000 mL!', 'V']].forEach((q, i) => {
       const x = L.x + 14 + i * (mw + 8), hit = c.st[q[3]] === 'mist';
       D.roundRect(x, my, mw, PHONE ? 126 : 120, 12); ctx.fillStyle = hit ? '#fff0f0' : '#faf8ff'; ctx.fill(); ctx.strokeStyle = hit ? BAD : '#d6c9f5'; ctx.lineWidth = hit ? 3 : 1.6; ctx.stroke();
       T(x + 12, my + 24, q[1], 14.5, hit ? BAD : INK, 'left', 800);
@@ -682,7 +682,7 @@
       features: ['calc'],
       setup() { S.lock = false; S.gate = ''; calcSetProb(0); setMode('calc'); },
       recap: '세 값을 알면 PV = nRT로 나머지 하나를 구해요. 계산할 때는 T를 켈빈(°C + 273), V를 L, P를 atm으로 바꿔서 넣어요.',
-      summary: '<ul><li><b>PV = nRT</b>, R = 0.082 atm·L/(mol·K), T(K) = t(°C) + 273</li><li>변형: n = PV / RT, P = nRT / V, V = nRT / P</li><li>예) 2.0 atm, 6.15 L, 300 K → n = <b>0.50 mol</b> / 2.0 mol, 12.3 L, 300 K → P = <b>4.0 atm</b> / 0.50 mol, 1.0 atm, 127 °C(400 K) → V = <b>16.4 L</b></li><li>자주 하는 실수: °C를 그대로 대입, mL를 그대로 대입 → 결과가 크게 틀려요.</li></ul>',
+      summary: '<ul><li><b>PV = nRT</b>, R = 0.082 atm·L/(mol·K), T(K) = t(°C) + 273</li><li>변형: n = PV / RT, P = nRT / V, V = nRT / P</li><li>예) 2.0 atm, 6.15 L, 300 K → n = <b>0.50 mol</b> / 2.0 mol, 12.3 L, 300 K → P = <b>4.0 atm</b> / 0.50 mol, 1.0 atm, 127 °C(400 K) → V = <b>16.4 L</b></li><li>자주 하는 실수: °C를 그대로 대입, mL을 그대로 대입 → 결과가 크게 틀려요.</li></ul>',
       missions: [
         {
           title: '몰수 n과 압력 P 구하기',
@@ -738,7 +738,7 @@
           setup() { S.lock = true; S.gate = ''; setMode('design'); },
           choices: ['M = d / (RT)', 'M = dRT / P', 'M = dP / (RT)', 'M = d × T × P'],
           answer: 1,
-          feedback: ['단위를 확인해 봐요. M = wRT/(PV)에서 w/V = d를 넣으면 어떤 식이 되나요?', '', 'P가 분모에 와야 해요. M = (w/V) × RT/P이에요.', 'R가 빠졌고 P는 분모에 있어야 해요.'],
+          feedback: ['단위를 확인해 봐요. M = wRT/(PV)에서 w/V = d를 넣으면 어떤 식이 되나요?', '', 'P가 분모에 와야 해요. M = (w/V) × RT/P이에요.', 'R이 빠졌고 P는 분모에 있어야 해요.'],
           explain: 'M = wRT/(PV)에서 w/V = d이므로 <b>M = dRT / P</b>예요. 부피를 몰라도 밀도 d를 알면 몰질량을 구할 수 있어요. (예: CO₂ 밀도 1.80 g/L → M = 1.80 × 0.082 × 300 / 1.0 = 44)',
         },
       ],

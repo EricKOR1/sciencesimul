@@ -390,11 +390,11 @@
     // 곡선
     LK.forEach((k) => {
       const q = LIQ[k], ap = c.ap[k]; if (ap < 0.02) return;
-      const tEnd = q.Tmin + (q.tmax - q.Tmin) * sm(ap);
+      const tmaxD = Math.min(q.tmax, CXM), tEnd = q.Tmin + (tmaxD - q.Tmin) * sm(ap);
       ctx.save(); ctx.globalAlpha = Math.min(1, ap * 1.2); ctx.strokeStyle = q.c; ctx.lineWidth = 3.4; ctx.lineJoin = 'round'; ctx.beginPath();
       for (let tt = q.Tmin; tt <= tEnd + 1e-6; tt += 1) { const x = cX(P, tt), y = cY(P, q.P(tt)); if (tt === q.Tmin) ctx.moveTo(x, y); else ctx.lineTo(x, y); }
       ctx.stroke(); ctx.restore();
-      if (ap > 0.9) T(cX(P, q.tmax) - 4, cY(P, q.P(q.tmax)) - 10, q.short, 13.5, q.c, 'right', 800, { stroke: 'rgba(255,255,255,.9)', strokeWidth: 3.5 });
+      if (ap > 0.9) T(cX(P, tmaxD) - 4, cY(P, q.P(tmaxD)) - 10, q.short, 13.5, q.c, 'right', 800, { stroke: 'rgba(255,255,255,.9)', strokeWidth: 3.5 });
     });
     // 찾은 끓는점
     LK.forEach((k) => {
