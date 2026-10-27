@@ -263,7 +263,7 @@
     for (let k = 0; k < 3; k++) { D.roundRect(fx - CAR_L + 12 + k * (CAR_L - 24) / 3, cy - 42, (CAR_L - 24) / 3 - 8, 22, 4); ctx.fillStyle = 'rgba(255,255,255,.75)'; ctx.fill(); }
     personDraw(fx - 24, cy - 24, 0.8, '#e2552a');
     [fx - CAR_L + 24, fx - 24].forEach((x) => D.sphere(x, g.ty + 8, 8, '#394258', { gloss: false }));
-    T(fx - CAR_L / 2, cy + 28, '기차 ' + f1(v) + ' c', PHONE ? 11 : 12.5, '#26324a', 'center', 800);
+    T(fx - CAR_L / 2 - 6, cy - 6, '기차 ' + f1(v) + ' c', PHONE ? 11 : 12.5, '#fff', 'center', 800);
     if (v > 0) D.arrow(fx - CAR_L / 2, cy - 64, fx - CAR_L / 2 + v * (PHONE ? 150 : 190), cy - 64, { color: '#2f6df6', width: 3.4, head: 10 });
     // 공 · 빛
     if (r) {
@@ -346,7 +346,7 @@
       T(cx, g.yt + g.H + 52, '우주선의 시계 B  (' + f2(b) + ' c)', PHONE ? 12.5 : 14, '#ffe9a8', 'center', 800);
       if (b > 0) { D.arrow(cx - 60, g.yt - 38, cx + 60 * Math.max(0.3, b), g.yt - 38, { color: '#8bd0ff', width: 3, head: 9 }); }
       T(g.ax, g.yt + g.H + 56, '(빛이 위아래로 오가요)', 12, '#bfe0ff', 'center', 700);
-      if (!PHONE) T(cx + 70, g.yt - 38, b > 0 ? '빛은 비스듬히 더 긴 길을 가요' : '', 12, '#ffe9a8', 'left', 700); else if (b > 0) T(cx, g.yt - 42, '빛이 비스듬히 더 긴 길을 가요', 11.5, '#ffe9a8', 'center', 700);
+      if (!PHONE) T(cx + 70, g.yt - 38, b > 0 ? '빛은 비스듬히 더 긴 길을 가요' : '', 12, '#ffe9a8', 'left', 700); else if (b > 0) T(cx, g.yt - 52, '빛이 비스듬히 더 긴 길을 가요', 11.5, '#ffe9a8', 'center', 700);
     } else {
       const cx = w[0] + w[2] / 2;
       D.shadow(() => { D.roundRect(cx - 120, g.yt - 30, 240, g.H + 60, 26); ctx.fillStyle = 'rgba(150,170,220,.4)'; ctx.fill(); }, { blur: 8, y: 3, color: 'rgba(0,0,0,.35)' });
@@ -428,9 +428,9 @@
       D.roundRect(rx, rodY - 5, rodL, 10, 4); ctx.fillStyle = '#c9d3e6'; ctx.fill(); for (let i = 0; i <= 10; i++) { ctx.fillStyle = '#c9d3e6'; ctx.fillRect(rx + i * rodL / 10 - 1, rodY - 12, 2, 8); }
       T(rx + rodL / 2, rodY + 24, '지면의 막대 (길이 L)', 12.5, '#bfe0ff', 'center', 700);
       // 정지했을 때의 모양(점선)
-      const gy = g.cy - g.Hs / 2 - 62;
+      const gy = g.cy - g.Hs / 2 - (PHONE ? 60 : 62);
       ctx.save(); ctx.globalAlpha = 0.28; shipDraw(w[0] + w[2] / 2, gy + g.Hs / 2, g.Ls, g.Hs, 1, {}); ctx.restore(); ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.setLineDash([6, 5]); ctx.lineWidth = 2; D.roundRect(w[0] + w[2] / 2 - g.Ls / 2, gy, g.Ls, g.Hs, g.Hs / 2.4); ctx.stroke(); ctx.setLineDash([]);
-      T(w[0] + w[2] / 2, gy - 8, '정지했을 때의 우주선 (기준)', 12, '#fff', 'center', 700);
+      T(w[0] + w[2] / 2, gy - (PHONE ? 5 : 8), '정지했을 때의 우주선 (기준)', 12, '#fff', 'center', 700);
       // 움직이는 우주선
       const span = w[2] + g.Ls + 40; const x = b > 0 ? w[0] - g.Ls / 2 - 10 + l.off : w[0] + w[2] / 2;
       const sx = r; shipDraw(x, g.cy, g.Ls, g.Hs, sx, {});
@@ -565,8 +565,8 @@
       const k = S.k; readouts('우주선 속력', f2(k.b) + ' c', 'A · B 똑딱', k.A.ticks + ' · ' + k.B.ticks, 'B 시계의 빠르기', f2(rate(k.b)) + ' (A = 1)');
     } else if (S.mode === 'len') {
       const l = S.l;
-      if (l.view === 'ship') readouts('우주선 속력', f2(l.b) + ' c', '길이 (정지 = 100 %)', f0(100 * rate(l.b)) + ' %', '높이', '100 %');
-      else readouts('내려보낸 뮤온', l.mu ? N_MU + '개' : '—', '지표 도착', l.mu && l.mu.done ? l.mu.arrived + '개' : '—', '대기의 두께(뮤온 기준)', '약 ' + f0(H_THIN_KM) + ' km');
+      if (l.view === 'ship') readouts('우주선 속력', f2(l.b) + ' c', '운동 방향 길이', f0(100 * rate(l.b)) + ' %', '높이', '100 %');
+      else readouts('내려보낸 뮤온', l.mu ? N_MU + '개' : '—', '지표 도착', l.mu && l.mu.done ? l.mu.arrived + '개' : '—', '대기 두께(뮤온)', '약 ' + f0(H_THIN_KM) + ' km');
     } else {
       const c = S.c; readouts('시계 보정', c.gps === 'on' ? '켬' : '끔', '경과', f1(c.day) + ' 일', '위치 오차', f0(c.gps === 'off' ? ERR_KM_DAY * c.day : 0) + ' km');
     }

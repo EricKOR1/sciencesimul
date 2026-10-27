@@ -339,7 +339,7 @@
     const da = (dis - rel) * dt; SD.a = Math.max(0, SD.a + da); SD.g = Math.max(0, SD.g - da - out * dt);
     if (SD.open) {
       SD.openT += dt; SD.hacc += dt;
-      if (SD.hacc >= 0.2) { SD.hacc = 0; SD.cur.push([SD.openT, sdPct()]); SD.curves[SD.T] = SD.cur; }
+      if (SD.hacc >= 0.2) { SD.hacc = 0; SD.cur.push([SD.openT, sdPct()]); if (!SD.openInvalid) SD.curves[SD.openTemp] = SD.cur; }
       if (SD.openT >= 4 && !SD.recDone) { SD.recDone = true; if (!SD.openInvalid) { SD.rec[SD.openTemp] = Math.round(sdPct()); updateCtl(); } }
     }
     SD.cap.update(dt);
@@ -704,7 +704,7 @@
   [[5, '🧊 냉장고 5 °C'], [25, '🏠 실온 25 °C'], [35, '☀️ 뜨거운 곳 35 °C']].forEach(([v, s]) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = s; b.dataset.v = v; b.addEventListener('click', () => { Sound.click(); SD.T = v; sodaFresh(); showHint(TNAME[v] + '에 보관한 새 병이에요. 닫힌 병은 평형 상태예요.', 3200); }); $('#tChips').appendChild(b); });
   $('#bCap').addEventListener('click', () => {
     Sound.click(); SD.open = !SD.open;
-    if (SD.open) { SD.openT = 0; SD.cur = []; SD.hacc = 0; SD.recDone = false; SD.openInvalid = false; SD.openTemp = SD.T; SD.curves[SD.T] = SD.cur; SD.cap.target = 1; for (let i = 0; i < 14; i++) parts.emit({ x: sodaGeom().cx + rnd(-10, 10), y: sodaGeom().ntop, vx: rnd(-40, 40), vy: -rnd(60, 150), life: 0.8, size: rnd(2.5, 4.5), color: 'rgba(150,170,210,.8)', gravity: -10, drag: 1 }); }
+    if (SD.open) { SD.openT = 0; SD.cur = []; SD.hacc = 0; SD.recDone = false; SD.openInvalid = sdPct() < 97; SD.openTemp = SD.T; if (SD.openInvalid) showHint('이미 열었던 병이에요. 비교 기록은 🍾 새 병(닫힘)으로 다시 해요.', 4200); else SD.curves[SD.T] = SD.cur; SD.cap.target = 1; for (let i = 0; i < 14; i++) parts.emit({ x: sodaGeom().cx + rnd(-10, 10), y: sodaGeom().ntop, vx: rnd(-40, 40), vy: -rnd(60, 150), life: 0.8, size: rnd(2.5, 4.5), color: 'rgba(150,170,210,.8)', gravity: -10, drag: 1 }); }
     else SD.cap.target = 0;
     updateCtl();
   });
@@ -775,7 +775,7 @@
         {
           type: 'quiz', title: '차가운 음료는 왜 김이 덜 빠질까?',
           goal: '같은 시간 동안 차가운 탄산음료가 따뜻한 음료보다 CO₂가 덜 빠지는 까닭은?',
-          setup() { S.gate = ''; updateCtl(); },
+          setup() { S.gate = ''; setScene('soda'); },
           choices: ['차가우면 기체가 더 빨리 날아가서 거품이 많이 생겨요', '온도가 낮을수록 CO₂의 용해도가 커서 더 많이 녹아 있고, 같은 시간에 덜 빠져나와요', '차가운 음료는 병 속 압력이 낮아서 CO₂가 안 빠져요', '온도는 CO₂의 용해와 관계가 없어요'],
           answer: 1,
           feedback: ['오히려 반대예요. 따뜻할수록 기체의 용해도가 작아져 거품이 많이 생겨요.', '', '병 속 압력은 따뜻할수록 커져요(기체 쪽 평형). 차가운 음료는 녹은 양이 많은 거예요.', '기체의 용해도는 온도에 크게 영향을 받아요. 모의 실험의 곡선을 비교해 보세요.'],
@@ -796,7 +796,7 @@
           title: '폐 · 높은 산 · 조직에서 결합 비율 읽기',
           goal: '산소 분압을 폐(100), 높은 산 위(60), 조직(40)에 맞추고 Hb 100개 중 O₂와 결합한 개수를 읽어요. 그림이 자리 잡을 때까지 기다려요.',
           hint: '장소 단추를 누르거나 슬라이더를 100, 60, 40 mmHg에 맞춰요. 격자의 빨간 공이 O₂와 결합한 Hb예요.',
-          setup() { S.gate = ''; setScene('blood'); BL.seen = {}; setP(BL.P, false); updateCtl(); },
+          setup() { S.gate = ''; setScene('blood'); BL.seen = {}; BL.calm = 0; setP(80, true); },
           check: () => !!(BL.seen.lung && BL.seen.tissue && BL.seen.high), hold: 0.5,
           status: () => mark(BL.seen.lung) + ' 폐 100 → ' + satN(100) + ' % &nbsp; ' + mark(BL.seen.high) + ' 높은 산 60 → ' + satN(60) + ' % &nbsp; ' + mark(BL.seen.tissue) + ' 조직 40 → ' + satN(40) + ' %',
           explain: '폐(100 mmHg)에서는 Hb 100개 중 <b>' + satN(100) + '개</b>, 높은 산 위(60 mmHg)에서는 <b>' + satN(60) + '개</b>, 조직(40 mmHg)에서는 <b>' + satN(40) + '개</b>가 결합해 있어요. 폐에서 조직으로 가면 ' + (satN(100) - satN(40)) + '개가 O₂를 내놓아요.',
@@ -804,7 +804,7 @@
         {
           type: 'quiz', title: '조직에서 산소가 방출되는 까닭',
           goal: '혈액이 조직에 도착하면 HbO₂에서 O₂가 떨어져 나가는 까닭은?',
-          setup() { S.gate = ''; updateCtl(); },
+          setup() { S.gate = ''; setScene('blood'); },
           choices: ['조직의 온도가 낮아서 O₂가 얼어붙기 때문이에요', '조직은 O₂ 분압(농도)이 낮아 Q가 K보다 커지고, 역반응이 일어나 HbO₂에서 O₂가 떨어져 나와요', 'Hb는 O₂를 영원히 붙잡고 있고, 조직이 알아서 가져가요', '조직에서는 정반응이 일어나기 때문이에요'],
           answer: 1,
           feedback: ['온도가 아니라 O₂ 분압(농도)이 달라서예요.', '', 'Hb + O₂ ⇌ HbO₂는 가역 반응이라 조건에 따라 O₂를 붙였다 내놓았다 해요.', '정반응이면 O₂가 더 결합해요. 조직에서는 O₂가 방출되니 역반응이에요.'],
@@ -848,7 +848,7 @@
         {
           type: 'quiz', title: '생성된 NH₃를 계속 빼내는 까닭',
           goal: '액화 분리 장치로 생성된 NH₃를 계속 빼내면 수득률이 오르는 까닭은?',
-          setup() { S.gate = ''; updateCtl(); },
+          setup() { S.gate = ''; setScene('haber'); },
           choices: ['NH₃가 줄면 K가 커지기 때문이에요', 'NH₃ 농도가 줄어 Q가 K보다 작아지므로, 줄어든 NH₃를 보충하는 정반응이 계속 일어나기 때문이에요', '촉매가 더 잘 작동하기 때문이에요', 'NH₃를 빼내면 역반응이 일어나기 때문이에요'],
           answer: 1,
           feedback: ['농도를 바꿔도 K는 변하지 않아요. K를 바꾸는 것은 온도예요.', '', '촉매는 속도만 바꿔요. 이동 방향은 Q와 K의 비교로 정해져요.', 'NH₃(생성물)가 줄면 Q가 작아져요. Q < K이면 정반응이에요.'],
@@ -890,7 +890,7 @@
         {
           type: 'quiz', title: '촉매를 쓰는 목적은?',
           goal: '하버–보슈 공정이나 접촉법 황산 제조에서 촉매를 쓰는 목적으로 옳은 것은?',
-          setup() { S.gate = ''; updateCtl(); },
+          setup() { S.gate = ''; setScene('cases'); },
           choices: ['평형에서 생성물의 양(수득률)을 높이기 위해서예요', '정반응과 역반응 속도를 모두 높여 평형에 빨리 도달하게 하기 위해서예요', '평형 상수 K를 크게 하기 위해서예요', '반응열을 없애기 위해서예요'],
           answer: 1,
           feedback: ['촉매는 평형의 위치를 바꾸지 못해요. 수득률은 온도 · 압력 · 농도로 조절해요.', '', 'K는 온도만 바꿔요. 촉매는 K도 바꾸지 않아요.', '촉매는 열의 출입과 관계가 없어요.'],
@@ -900,6 +900,7 @@
     },
   ];
 
+  sodaFresh(); bloodSyncHard(); setScene('soda');       // 이어하기(새로고침)에서 단계의 장면이 덮어써지지 않도록 game 만들기 전에 초기화
   game = SciSim.game({
     simId: 'hc-eq-life', mount: '#game', badge: '평형 응용가', homeHref: '../../index.html#hc',
     featureLabels: { soda: '🍾 탄산음료 병 · 용해/방출 속도', blood: '🩸 헤모글로빈 100개 · 분압 슬라이더', haber: '🏭 암모니아 공장 · 수득률 표', cases: '🃏 사례 카드 · 진로' },
@@ -909,7 +910,6 @@
 
   /* ---------- 시작 ---------- */
   $('#cv').style.touchAction = 'pan-y';
-  sodaFresh(); bloodSyncHard(); setScene('soda');
   let lastFree = false;
   SciSim.loop((dt, t) => {
     S.t = t;
