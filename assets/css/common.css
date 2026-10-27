@@ -137,7 +137,7 @@ h1, h2, h3, h4 { margin: 0; line-height: 1.25; }
 .sim-header::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 4px; background: var(--subject); }
 .btn-back { flex: none; }
 .sim-title { flex: 1; min-width: 0; }
-.sim-unit { font-size: 13px; font-weight: 700; color: color-mix(in srgb, var(--subject) 85%, black); line-height: 1.2; }
+.sim-unit { font-size: 13px; font-weight: 700; color: color-mix(in srgb, var(--subject) 85%, black); line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .sim-title h1 { font-family: var(--font-display); font-weight: 400; font-size: 23px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .sim-header-right { display: flex; align-items: center; gap: 8px; flex: none; }
 

@@ -255,7 +255,7 @@
       if (u.arr) {
         const ph = RM ? 1 : 0.6 + 0.4 * Math.sin(t * 3);
         D.roundRect(u.x - P * 0.5 + 1, u.y - P * 0.68, P - 2, P * 1.36, 10); ctx.strokeStyle = C.rgba('#f59e0b', 0.5 + 0.35 * ph); ctx.lineWidth = 2.2; ctx.setLineDash([5, 4]); ctx.stroke(); ctx.setLineDash([]);
-        pill(clamp(u.x, A.x + 62, A.x + A.w - 62), u.y - P * 0.68 - 14, '반복 단위 –CH₂CH₂–', { bg: '#fef3c7', color: '#92400e', border: '#f59e0b', size: 13 });
+        pill(clamp(u.x, A.x + 72, A.x + A.w - 142), u.y - P * 0.68 - 14, '반복 단위 –CH₂CH₂–', { bg: '#fef3c7', color: '#92400e', border: '#f59e0b', size: 13 });
       }
     }
     // 끌고 있는 단위체
@@ -601,7 +601,7 @@
       const capL = i > 0 ? 1 - sm(it.j * 1.25) : 1, capR = (i < ch.length - 1) ? 1 - sm(ch[i + 1].j * 1.25) : 1;
       const sh = BD.shake > 0 && i === ch.length - 1 ? Math.sin(BD.shake * 70) * 3 : 0;
       drawTile(kd, it.x + sh, it.y, k, { capL, capR, sc: it.sc });
-      if (it.arr) drawTileLabel(kd, it.x, it.y, k, true);
+      if (it.arr) drawTileLabel(kd, it.x, it.y, k, PHONE && k < 0.8 ? !kd.up : true);
       if (prev && it.j > 0.15) {
         const jx = it.x - lerp(GAP0, GAP1, sm(it.j)) / 2, a = sm((it.j - 0.15) / 0.6);
         ctx.save(); ctx.globalAlpha = a; D.roundRect(jx - 5, cy - 12 * k, 10, 24 * k, 4); ctx.fillStyle = '#7c3aed'; ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke(); ctx.restore();
@@ -735,7 +735,7 @@
     if (!PHONE) T(276, MAIN.y + 28, '고분자의 용도 (카드를 끌어다 놓아요)', 14.5, WARN, 'left', 800);
     else T(MAIN.x + 250, MAIN.y + 28, '↓ 아래 용도 칸에 놓아요', 13, MUTED, 'left', 800);
     // 빈 카드 자리
-    DS.cards.forEach((c, i) => { const h = dHome(i); D.roundRect(h.x, h.y, h.w, h.h, 10); ctx.setLineDash([5, 5]); ctx.strokeStyle = '#d6dbe6'; ctx.lineWidth = 1.4; ctx.stroke(); ctx.setLineDash([]); if (c.loc >= 0) T(h.x + 14, h.y + h.h / 2 + 5, '✓ ' + DCARD[i].name + ' 연결됨', 13, '#86a393', 'left', 800, { alpha: c.fade }); });
+    DS.cards.forEach((c, i) => { const h = dHome(i); D.roundRect(h.x, h.y, h.w, h.h, 10); ctx.setLineDash([5, 5]); ctx.strokeStyle = '#d6dbe6'; ctx.lineWidth = 1.4; ctx.stroke(); ctx.setLineDash([]); if (c.loc >= 0) { const gt = '✓ ' + DCARD[i].name + ' 연결됨'; let gf = 13; while (textW(gt, gf, 800) > h.w - 20 && gf > 10) gf -= 0.5; T(h.x + 14, h.y + h.h / 2 + 5, gt, gf, '#86a393', 'left', 800, { alpha: c.fade }); } });
     // 용도 칸
     DSLOT.forEach((sl, j) => {
       const r = dSlotR(j), s = DS.slots[j], filled = s.card >= 0, over = DS.drag && DS.drag.over === j, selS = DS.selSlot === j && filled;

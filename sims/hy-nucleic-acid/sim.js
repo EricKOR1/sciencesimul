@@ -255,7 +255,7 @@
   };
   const CMP_DNA = { A: 'T', T: 'A', G: 'C', C: 'G' };
   const CMP_RNA = { A: 'U', T: 'A', G: 'C', C: 'G' };   // 주형 DNA 염기 -> RNA 염기
-  const SUG = { deoxy: { name: '디옥시리보스', col: '#4f9bf0', note: '산소 없음' }, ribo: { name: '리보스', col: '#19b9a6', note: '산소 있음' } };
+  const SUG = { deoxy: { name: '디옥시리보스', col: '#4f9bf0', note: '산소 한 개 적음' }, ribo: { name: '리보스', col: '#19b9a6', note: '산소 한 개 더 있음' } };
   const PHOS_COL = '#f59e0b';
   const BS = { w: L(60, 44), nw: L(44, 34), h: L(44, 34) };    // 염기 블록 크기 (퓨린 / 피리미딘)
   const baseW = (b) => (BASES[b].pur ? BS.w : BS.nw);
@@ -305,7 +305,7 @@
     : { p: { x: ASM.x + 92, y: ASM.y + 170 }, s: { x: ASM.x + 226, y: ASM.y + 170 }, b: { x: ASM.x + 226, y: ASM.y + 268 } };
   const PR = L(27, 21), SR = L(38, 30);
   const TRAY_IT = [{ k: 'p', id: 'p', nm: '인산' }, { k: 's', id: 'deoxy', nm: '디옥시리보스' }, { k: 's', id: 'ribo', nm: '리보스' }, { k: 'b', id: 'A', nm: '아데닌' }, { k: 'b', id: 'T', nm: '타이민' }, { k: 'b', id: 'G', nm: '구아닌' }, { k: 'b', id: 'C', nm: '사이토신' }, { k: 'b', id: 'U', nm: '유라실' }];
-  TRAY_IT.forEach((t, i) => { t.x = PHONE ? TRP.x + 58 + (i % 4) * 114 : TRP.x + 54 + i * 95; t.y = PHONE ? TRP.y + 48 + Math.floor(i / 4) * 90 : TRP.y + 82; });
+  TRAY_IT.forEach((t, i) => { t.x = PHONE ? TRP.x + 58 + (i % 4) * 114 : TRP.x + 54 + i * 95; t.y = PHONE ? TRP.y + 62 + Math.floor(i / 4) * 94 : TRP.y + 82; });
   const NUC_IDS = ['deoxy-A', 'deoxy-T', 'deoxy-G', 'deoxy-C', 'ribo-A', 'ribo-U', 'ribo-G', 'ribo-C'];
   NUC_IDS.forEach((id, i) => { /* 위치는 아래 colRect에서 */ });
   function colRect(i, panel, h0) {   // 수집 카드 위치 (패널 안)
@@ -498,7 +498,7 @@
       D.label(strX(0) + L(46, 32), yb - L(66, 48), '당', { bg: '#e8f2ff', color: '#1e40af', border: '#93c5fd', size: 13 });
     }
     if (st.seq.length >= 2) {
-      callout(strX(1) - L(26, 16), yb + 2, strX(1) - L(26, 16), yb - L(84, 76), '당–인산 결합 (물이 빠져요)', { line: '#c2410c', border: '#fdba74' });
+      callout(strX(1) - L(26, 16), yb + 2, strX(1) - L(26, 16), yb - L(114, 100), '당–인산 결합 (물이 빠져요)', { line: '#c2410c', border: '#fdba74' });
       D.label(STR.x + STR.w / 2, STR.y + STR.h - 20, '당–인산 뼈대는 길게, 염기는 곁으로 튀어나와요', { bg: '#15803d', size: 14 });
     }
     // 팔레트
@@ -659,7 +659,7 @@
   const RTR = PHONE ? { x: 10, y: 460, w: 460, h: 170 } : { x: 14, y: 384, w: 772, h: 162 };
   const rcw = (NUCP.w - 40) / 8;
   const rX = (i) => NUCP.x + 20 + (i + 0.5) * rcw;
-  const R_YC = [L(140, 112), L(100, 86)], R_YT = [L(182, 148), L(214, 182)];   // [닫힘, 열림]
+  const R_YC = [L(140, 112), L(100, 86)], R_YT = [L(182, 148), L(200, 176)];   // [닫힘, 열림]
   const R_YR = L(280, 252);
   const RBW = L(46, 36), RBH = L(36, 30);
   const R_CX = NUCP.x + NUCP.w / 2;
@@ -705,7 +705,7 @@
     ctx.restore();
     T(NUCP.x + NUCP.w - 18, NUCP.y + 30, '핵 속 (전사)', L(18, 16), '#6d28d9', 'right', 800);
     T(PHONE ? CYTP.x + 18 : CYTP.x + CYTP.w / 2, CYTP.y + (PHONE ? 26 : 30), '세포질', L(18, 16), '#a16207', PHONE ? 'left' : 'center', 800);
-    D.label(PHONE ? PORE.x + 70 : PORE.x + 60, PHONE ? PORE.y - 14 : PORE.y - 92, '핵공', { bg: '#ede9fe', color: '#6d28d9', border: '#c4b5fd', size: 13 });
+    D.label(PHONE ? PORE.x + 70 : PORE.x - 36, PHONE ? PORE.y - 14 : PORE.y - 50, '핵공', { bg: '#ede9fe', color: '#6d28d9', border: '#c4b5fd', size: 13 });
     // DNA 두 가닥
     const yC = lerp(R_YC[0], R_YC[1], zp), yT = lerp(R_YT[0], R_YT[1], zp);
     const bb = (y, col) => { ctx.lineCap = 'round'; ctx.strokeStyle = C.shade(col, -0.3); ctx.lineWidth = 11; ctx.beginPath(); ctx.moveTo(NUCP.x + 22, y); ctx.lineTo(NUCP.x + NUCP.w - 22, y); ctx.stroke(); ctx.strokeStyle = col; ctx.lineWidth = 7; ctx.stroke(); };
@@ -721,16 +721,16 @@
       }
       if (zp > 0.9 && r.stage === 0 && r.slots[i]) { ctx.fillStyle = '#fff'; const n = (TEMPL[i] === 'A' || TEMPL[i] === 'T') ? 2 : 3; for (let k = 0; k < n; k++) { ctx.beginPath(); ctx.arc(x - (n - 1) * 3.5 + k * 7, (yT + RBH / 2 + R_YR - RBH / 2) / 2, 2, 0, TAU); ctx.fill(); } }
     }
-    D.label(NUCP.x + 52, yC - RBH / 2 - 28, 'DNA 코딩 가닥', { bg: '#dbeafe', color: '#1e40af', border: '#93c5fd', size: 13 });
-    D.label(NUCP.x + 52, yT + RBH / 2 + 30, 'DNA 주형 가닥', { bg: '#e8f0fe', color: '#3b5db8', border: '#b6c9f2', size: 13 });
-    if (zp > 0.9 && r.stage === 0) D.label(NUCP.x + 52, R_YR + RBH / 2 + 24, 'mRNA (만드는 중)', { bg: '#f3e8ff', color: '#6b21a8', border: '#d8b4fe', size: 13 });
+    D.label(NUCP.x + 20, yC - RBH / 2 - 28, 'DNA 코딩 가닥', { bg: '#dbeafe', color: '#1e40af', border: '#93c5fd', size: 13, align: 'left' });
+    D.label(NUCP.x + 20, yT + RBH / 2 + 30, 'DNA 주형 가닥', { bg: '#e8f0fe', color: '#3b5db8', border: '#b6c9f2', size: 13, align: 'left' });
+    if (zp > 0.9 && r.stage === 0) D.label(NUCP.x + 20, R_YR + RBH / 2 + 24, 'mRNA (만드는 중)', { bg: '#f3e8ff', color: '#6b21a8', border: '#d8b4fe', size: 13, align: 'left' });
     // 리보솜 (세포질)
     const ribA = r.stage >= 2 ? smooth(r.u) : 0;
     ctx.save(); ctx.globalAlpha = 0.55 + 0.45 * ribA;
     const rb = RIB, rs = L(1, 0.9);
     D.sphere(rb.x, rb.y - 34 * rs, 40 * rs, '#f0b44c', { gloss: true, shadow: true }); ctx.save(); ctx.translate(rb.x, rb.y + 28 * rs); ctx.scale(1.15, 0.7); D.sphere(0, 0, 36 * rs, '#e89a2e', { gloss: true, shadow: true }); ctx.restore();
     ctx.restore();
-    T(rb.x, rb.y + (PHONE ? 70 : 90), '리보솜', 14, '#a16207', 'center', 800);
+    if (PHONE) T(rb.x + 52, rb.y + 4, '리보솜', 14, '#a16207', 'left', 800); else T(rb.x, rb.y - 84, '리보솜', 14, '#a16207', 'center', 800);
     // mRNA 가닥 (RNA 슬롯의 염기들)
     const k0 = r.stage >= 1 ? 1 : 0;
     let gx = R_CX, gy = R_YR, gs = 1;
@@ -947,7 +947,7 @@
     const th = S.thr; th.f = approach(th.f, th.km / 20, dt, 6);
     panel(THP.x, THP.y, THP.w, THP.h, 18, '#fbf9ff');
     T(THP.x + 22, THP.y + 36, '핵 속에 DNA가 어떻게 들어갈까?', L(21, 17), '#4c1d95', 'left', 800);
-    textBlock(THP.x + 22, THP.y + 62, THP.w - 44, '사람 세포 하나의 DNA는 펴면 약 2 m, 핵의 지름은 약 6 µm예요. 길이 비율은 약 3.3 × 10⁵ : 1이에요. 크기를 100만 배쯤 맞바꿔 실에 비유해 볼게요.', L(15, 13.5), '#475569', L(21, 19), 700);
+    textBlock(THP.x + 22, THP.y + 62, THP.w - 44, '사람 세포 하나의 DNA는 펴면 약 2 m, 핵의 지름은 약 6 µm예요. 길이 비율은 약 3.3 × 10⁵ : 1이에요. 크기를 1만 배로 키워 실에 비유해 볼게요. (6 µm → 6 cm, 2 m → 20 km)', L(15, 13.5), '#475569', L(21, 19), 700);
     // 공 (핵) 과 실뭉치
     const b = BALL; const by = b.y + (PHONE ? 70 : 20);
     const bgd = ctx.createRadialGradient(b.x - b.r * 0.3, by - b.r * 0.35, 8, b.x, by, b.r); bgd.addColorStop(0, '#efe7fb'); bgd.addColorStop(1, '#d6c4f2');

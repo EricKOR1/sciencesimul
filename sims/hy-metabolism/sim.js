@@ -424,7 +424,7 @@
     TF(r.x + r.w / 2, r.y + L(28, 24), sp.name, r.w - 16, L(18, 14.5), 12.5, '#1f2d44', 'center', 800);
     T(r.x + r.w / 2, r.y + L(48, 42), sp.sub, L(13.5, 13), key === 'boil' ? '#b45309' : '#64748b', 'center', 800);
     beansGroup(key, r.x + r.w / 2, r.y + L(88, 76), L(1.15, 0.95), bnGerm());
-    if (key === 'boil') D.label(r.x + r.w - L(46, 40), r.y + L(88, 76), '대조군', { bg: '#b45309', size: 13 });
+    if (key === 'boil' && b.view === 'temp') D.label(r.x + r.w - L(46, 40), r.y + L(88, 76), '대조군', { bg: '#b45309', size: 13 });
     const d = b.day;
     if (b.view === 'temp') {
       const tv = interp(TEMP[key], d), cx = r.x + r.w * (PHONE ? 0.3 : 0.36), top = r.y + L(118, 90), h = L(150, 120), w = L(90, 62);
@@ -439,7 +439,7 @@
       const ck = key === 'germ' ? clamp(interp(O2V.germ, d) / 6.8, 0, 1) : 0;
       const rig = co2Rig(r, key, ck, t);
       bnBubbles(dt, r, key, rig);
-      T(r.x + r.w / 2, r.y + r.h - 8, ck > 0.45 ? '석회수 뿌옇게, BTB 노랑' : ck > 0.08 ? '변하는 중…' : '변화 없음', L(15, 13.5), ck > 0.45 ? '#b45309' : '#64748b', 'center', 800);
+      T(r.x + r.w / 2, r.y + r.h - 8, ck > 0.45 ? L('석회수 뿌옇게, BTB 노랑', '뿌옇게 · 노랑') : ck > 0.08 ? '변하는 중…' : '변화 없음', L(15, 13.5), ck > 0.45 ? '#b45309' : '#64748b', 'center', 800);
     }
   }
   function bnGraph(t) {
@@ -527,7 +527,7 @@
     drawAxes(p);
     const days = [0, 2, 4, 6];
     ctx.save(); ctx.strokeStyle = '#94a3b8'; ctx.setLineDash([5, 5]); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(p.x, p.Y(10)); ctx.lineTo(p.x + p.w, p.Y(10)); ctx.stroke(); ctx.setLineDash([]); ctx.restore();
-    T(p.x + p.w - 4, p.Y(10) - 6, '처음 10.0 g', 13, '#64748b', 'right', 700);
+    if (d >= 6) T(p.x + p.w * 0.5, p.Y(10) - 6, '처음 10.0 g', 13, '#64748b', 'center', 700); else T(p.x + p.w - 4, p.Y(10) - 6, '처음 10.0 g', 13, '#64748b', 'right', 700);
     // 줄어든 부분(음영)
     if (d > 0) {
       ctx.save(); ctx.beginPath(); ctx.moveTo(p.X(0), p.Y(10));
@@ -601,7 +601,7 @@
     if (a.run) { a.p = Math.min(1, a.p + dt / 3.2); if (a.p >= 1) { a.run = false; S.ms.seenAmy = true; updateCtl(); } }
     const rem = (k) => 100 - (100 - REMAIN[k]) * smooth(a.p);
     panel(AM_T.x, AM_T.y, AM_T.w, AM_T.h, 18, '#fff');
-    T(AM_T.x + 16, AM_T.y + 28, '🧪 같은 녹말 용액 + 콩 추출액 → 10분 뒤 아이오딘 검사', L(17, 14), '#1f2d44', 'left', 800);
+    T(AM_T.x + 16, AM_T.y + 28, L('🧪 같은 녹말 용액 + 콩 추출액 → 10분 뒤 아이오딘 검사', '🧪 녹말 + 콩 추출액 → 아이오딘 검사'), L(17, 14), '#1f2d44', 'left', 800);
     const n = 3, colw = AM_T.w / n;
     AM_K.forEach((k, i) => {
       const cx = AM_T.x + colw * (i + 0.5), th = PHONE ? 118 : 148, ty = AM_T.y + (PHONE ? 62 : 74), tw = PHONE ? 38 : 50;
@@ -748,7 +748,7 @@
     T(sx2 + 24, sy2 + (PHONE ? 30 : 24), '세포 37 °C', L(15, 14), '#166534', 'left', 800);
     T(sx2 + 24, sy2 + (PHONE ? 50 : 44), '(눈금은 연소와 같아요)', 13, '#64748b', 'left', 700);
     if (!st.enz && (s.run || s.u > 0 || st.offT > 0)) {
-      const tx2 = PHONE ? ST_S.x + ST_S.w / 2 : ST_S.x + ST_S.w / 2 + 6, ty2 = PHONE ? ST_S.y + ST_S.h - 12 : ST_S.y + ST_S.h - 12;
+      const tx2 = PHONE ? ST_S.x + ST_S.w / 2 + 14 : ST_S.x + ST_S.w / 2 + 50, ty2 = PHONE ? ST_S.y + ST_S.h - 12 : ST_S.y + ST_S.h - 12;
       D.label(tx2, ty2, '효소가 없으면 37 °C에서 반응이 거의 일어나지 않아요', { bg: '#dc2626', size: PHONE ? 13 : 14 });
     }
     // --- 에너지 계산 ---

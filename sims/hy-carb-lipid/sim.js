@@ -284,7 +284,7 @@
       let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
       out.forEach((p) => { x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x); y0 = Math.min(y0, p.y); y1 = Math.max(y1, p.y); });
       const mx = (x0 + x1) / 2, my = (y0 + y1) / 2;
-      out.forEach((p) => { p.x += CCX - mx; p.y += CCY - my + (shape === 'bundle' ? 0 : 6); });
+      out.forEach((p) => { p.x += CCX - mx; p.y += CCY - my + (shape === 'bundle' ? 0 : shape === 'branch' ? -4 : 6); });
     }
     return out;
   }
@@ -506,7 +506,7 @@
       T(wx, wy0 + 56, Math.max(0, n - 1) + '분자', 14, '#2a6fbf', 'right', 800);
     }
     // 작업대 바닥선
-    if (S.carb.shape !== 'bundle' && !PHONE) D.dashedLine(WS.x + 20, WS.y + WS.h - 28, WS.x + WS.w - 20, WS.y + WS.h - 28, { color: '#e7d9b0', width: 2 });
+    if (S.carb.shape !== 'bundle' && S.carb.shape !== 'branch' && !PHONE) D.dashedLine(WS.x + 20, WS.y + WS.h - 28, WS.x + WS.w - 20, WS.y + WS.h - 28, { color: '#e7d9b0', width: 2 });
     if (n === 0) {
       ctx.save(); ctx.globalAlpha = 0.5 + 0.2 * Math.sin(t * 3);
       D.roundRect(CCX - RAD * 1.4, CCY - RAD * 1.4, RAD * 2.8, RAD * 2.8, 18); ctx.setLineDash([7, 6]); ctx.strokeStyle = '#d97706'; ctx.lineWidth = 2.5; ctx.stroke(); ctx.setLineDash([]);
@@ -617,7 +617,7 @@
       T(WS.x + WS.w / 2, cy - S.lip.bilOff - 34, '물 (바깥)', 14, '#2a6fbf', 'center', 800);
       T(WS.x + WS.w / 2, cy + S.lip.bilOff + 40, '물 (바깥)', 14, '#2a6fbf', 'center', 800);
       D.label(WS.x + WS.w / 2, cy + 5, '꼬리끼리 안쪽에 숨어요', { bg: 'rgba(255,247,224,.95)', color: '#9a3412', border: '#fdba74', size: 13 });
-      callout(WS.x + WS.w * 0.5, cy - S.lip.bilOff - 4, WS.x + WS.w * 0.5, cy - S.lip.bilOff - 66, '머리: 물을 좋아해요', { line: '#2f7fe0', border: '#93c5fd' });
+      callout(WS.x + WS.w * 0.5 + L(120, 70), cy - S.lip.bilOff - 4, WS.x + WS.w * 0.5 + L(200, 100), cy - S.lip.bilOff - 44, '머리: 물을 좋아해요', { line: '#2f7fe0', border: '#93c5fd' });
       ctx.restore();
     }
     const mainA = ty === 'pl' ? 1 - smooth(w * 1.6) : 1;
@@ -892,6 +892,11 @@
     S.lab.bath.on = true; S.lab.bath.timer = 6; Sound.click(); updateCtl();
   }
   const labCount = (r) => S.lab.t[r].filter((t) => t.added && t.prog > 0.95 && (r !== 1 || t.heat > 0.99)).length;
+  /* 새로 고침 뒤 이어 하기: 앞 미션에서 끝낸 검사를 한꺼번에 채워 줘요 */
+  function labFinishAll() {
+    S.lab.t.forEach((arr) => arr.forEach((t) => { t.added = true; t.dropT = 3; t.prog = 1; t.heat = 1; }));
+    updateCtl();
+  }
   const labAdded = (r) => S.lab.t[r].filter((t) => t.added).length;
 
   /* 시험관 안 모습 계산 */
@@ -1149,13 +1154,13 @@
         const x = cx + Math.cos(th) * d, y = cy + Math.sin(th) * d;
         if (items.every((o) => Math.hypot(o.x - x, o.y - y) > (o.a + a) * 0.92)) { items.push({ k: items.length, x, y, a, b, ang, hx: (rr() - 0.5) * 0.5 }); }
       }
-      c = { cx, cy, R: 64, items }; c.hex = true;
+      c = { cx, cy, R: 130 / Math.sqrt(3), items }; c.hex = true;
     } else if (spec === 'peanut') {
       const cx = ix * 38 + (iy & 1) * 19 + (rr() - 0.5) * 5, cy = iy * 33 + (rr() - 0.5) * 5;
       const items = [], n = 12 + Math.floor(rr() * 6), bodies = [];
       for (let k = 0; k < n; k++) { const th = rr() * TAU, d = Math.sqrt(rr()) * 14; items.push({ k, x: cx + Math.cos(th) * d, y: cy + Math.sin(th) * d, r: 0.55 + rr() * 2.0 }); }
       for (let k = 0; k < 5; k++) { const th = rr() * TAU, d = Math.sqrt(rr()) * 13; bodies.push({ x: cx + Math.cos(th) * d, y: cy + Math.sin(th) * d, r: 1.7 + rr() * 1.4 }); }
-      c = { cx, cy, R: 18.5, items, bodies }; c.hex = true;
+      c = { cx, cy, R: 38 / Math.sqrt(3), items, bodies }; c.hex = true;
     } else {
       const cx = ix * 250 + (iy & 1) * 125, cy = iy * 90;
       c = { cx, cy, items: [], nuc: { x: cx + (rr() - 0.5) * 120, y: cy + (rr() - 0.5) * 24, a: 15, b: 10 }, rect: true };
@@ -1184,7 +1189,7 @@
     g.strokeStyle = 'rgba(150,128,84,.8)'; g.lineWidth = Math.max(1.2, 1.2 / sc); g.lineJoin = 'round';
     for (let iy = -1; iy <= 3; iy++) for (let ix = -1; ix <= 2; ix++) {
       const x = ix * 38 + (iy & 1) * 19, y = iy * 33;
-      g.beginPath(); for (let k = 0; k < 6; k++) { const ang = Math.PI / 6 + k * TAU / 6, px = x + Math.cos(ang) * 18.5, py = y + Math.sin(ang) * 18.5; if (k) g.lineTo(px, py); else g.moveTo(px, py); } g.closePath(); g.stroke();
+      g.beginPath(); for (let k = 0; k < 6; k++) { const ang = Math.PI / 6 + k * TAU / 6, px = x + Math.cos(ang) * (38 / Math.sqrt(3)), py = y + Math.sin(ang) * (38 / Math.sqrt(3)); if (k) g.lineTo(px, py); else g.moveTo(px, py); } g.closePath(); g.stroke();
     }
     const pat = ctx.createPattern(c, 'repeat');
     if (pat.setTransform && typeof DOMMatrix !== 'undefined') pat.setTransform(new DOMMatrix([38 * sc / W, 0, 0, 66 * sc / H, 0, 0]));
@@ -1295,7 +1300,8 @@
     y = P.y + P.h - (PHONE ? 42 : 112);
     if (sp !== 'onion') {
       const need = 3, fc = m.found[sp].size;
-      T(x, y, (sp === 'potato' ? '찾은 녹말 알갱이 ' : '찾은 지방 방울 ') + Math.min(fc, need) + ' / ' + need, PHONE ? 15 : 16, fc >= need ? '#15803d' : '#1f2d44', 'left', 800);
+      if (PHONE) T(P.x + P.w - 16, P.y + 30, (sp === 'potato' ? '녹말 알갱이 ' : '지방 방울 ') + Math.min(fc, need) + ' / ' + need, 14, fc >= need ? '#15803d' : '#1f2d44', 'right', 800);
+      else T(x, y, (sp === 'potato' ? '찾은 녹말 알갱이 ' : '찾은 지방 방울 ') + Math.min(fc, need) + ' / ' + need, 16, fc >= need ? '#15803d' : '#1f2d44', 'left', 800);
       if (!PHONE) { y += 26; for (let k = 0; k < need; k++) { ctx.fillStyle = k < fc ? '#16a34a' : '#e2e8f0'; ctx.beginPath(); ctx.arc(x + 12 + k * 30, y, 11, 0, TAU); ctx.fill(); if (k < fc) D.check(x + 12 + k * 30, y, 8, 1); } }
     }
     if (m.sel && !PHONE) { y = P.y + P.h - 56; textBlock(x, y, w, m.sel, 13.5, '#7c2d12', 18, 800); }
@@ -1531,7 +1537,7 @@
           id: 'table', title: '들어 있는 물질 판정', manual: true,
           goal: '결과표를 보고, 시료마다 들어 있는 물질(<b>녹말 · 환원당 · 지질</b>)을 표시한 뒤 확인하세요.',
           hint: '청람색이면 녹말, 베네딕트 가열 후 색이 변하면 환원당, 수단 Ⅲ에 붉게 염색되면 지질이에요. 변하지 않으면 비워 둬요.',
-          setup() { setMode('table'); },
+          setup() { setMode('table'); if ([0, 1, 2].some((r) => labCount(r) < 9)) labFinishAll(); },
           check() {
             for (let r = 0; r < 3; r++) if (labCount(r) < 9) return '먼저 실험대에서 ' + REAG[r].short + ' 검사를 시료 9개에 모두 해 주세요.';
             const bad = tblCheck();

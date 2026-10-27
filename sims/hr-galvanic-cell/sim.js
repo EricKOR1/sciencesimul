@@ -247,7 +247,7 @@
       ctx.strokeStyle = '#eef2f7'; ctx.lineWidth = 10; ctx.beginPath(); pts.forEach((p, i) => (i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]))); ctx.stroke();
       if (st.bridgeOn !== false && st.flow > 0.05) {
         const n = 4; for (let i = 0; i < n; i++) {
-          const u = ((i / n) + t * 0.18 * st.flow) % 1, p1 = ptAlong(pts, u), p2 = ptAlong(pts, 1 - u);
+          const u = ((i / n) + t * 0.18 * st.flow) % 1, fw = st.neg !== 'R', p1 = ptAlong(pts, fw ? u : 1 - u), p2 = ptAlong(pts, fw ? 1 - u : u);
           D.sphere(p1.x, p1.y, 4.4, '#a855f7', { gloss: false }); D.sphere(p2.x, p2.y, 4.4, ANC, { gloss: false });
         }
       }
@@ -820,7 +820,7 @@
         {
           type: 'quiz', title: '염다리의 역할',
           goal: '다니엘 전지에서 <b>염다리</b>가 하는 일로 알맞은 것은?',
-          setup() { S.gate = ''; setScene('cell'); },
+          setup() { S.gate = ''; if (clPlaced() < 6 || !S.cl.bridgeOn) { PARTS.forEach((p) => { if (!clOn(p.id)) clPlace(p.id); }); S.cl.bridgeOn = true; } setScene('cell'); },
           choices: ['전자가 지나가는 길이에요', '이온이 이동해 두 용액의 전하 균형을 유지해요', '두 용액을 섞어 반응을 더 빠르게 해요', '전지의 전압을 2배로 높여 줘요'],
           answer: 1,
           feedback: ['전자는 염다리가 아니라 금속 도선을 지나가요. 염다리 속에서는 이온이 움직여요.', '', '두 용액이 섞이지 않게 하면서도 이온만 지나가게 해요. 반응을 빠르게 하는 장치가 아니에요.', '염다리를 꽂으면 전압이 유지될 뿐, 1.10 V보다 높아지지는 않아요.'],

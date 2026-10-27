@@ -511,7 +511,7 @@
   }
   function bottle(R, k, sel, t) {
     const m = MOLS[k], col = GC[m.g];
-    const x = R.x, y = R.y, w = R.w, h = R.h, bw = w * 0.82, bx = x + (w - bw) / 2;
+    const x = R.x, y = R.y, w = R.w, h = R.h, bw = w * 0.94, bx = x + (w - bw) / 2;
     ctx.save();
     if (sel) { ctx.translate(0, -4 + Math.sin(t * 3) * (RM ? 0 : 1.2)); D.glow(x + w / 2, y + h * 0.6, w, col, 0.35); }
     D.shadow(() => { D.roundRect(bx, y + h * 0.28, bw, h * 0.72, 12); ctx.fillStyle = 'rgba(224,242,254,.9)'; ctx.fill(); }, { blur: 7, y: 3 });
@@ -524,7 +524,7 @@
     ctx.restore();
     const name = m.name.length > 6 ? m.name.replace('아세트알데하이드', '아세트\n알데하이드') : m.name;
     const ls = name.split('\n');
-    ls.forEach((l, i) => T(x + w / 2 + 2, y + h * 0.69 + i * 13 - (ls.length - 1) * 6, l, ls.length > 1 ? 12.5 : 13.5, INK, 'center', 800));
+    ls.forEach((l, i) => { let fs = ls.length > 1 ? 12.5 : 13.5; while (textW(l, fs, 800) > bw - 14 && fs > 9.5) fs -= 0.5; T(x + w / 2 + 2, y + h * 0.69 + i * 13 - (ls.length - 1) * 6, l, fs, INK, 'center', 800); });
     T(x + w / 2, y + h + 18, GROUPTXT[m.g][0], 14, col, 'center', 800);
   }
   function tubeShape(cx, top, w, h) { return { cx, top, w, h, bot: top + h, x0: cx - w / 2, x1: cx + w / 2 }; }
@@ -630,7 +630,7 @@
       }
     } else {
       // 끓는점 막대그래프
-      const px = (PHONE ? MAIN.x + 40 : ap2.x + 50), pw = (PHONE ? MAIN.w - 60 : ap2.w - 70), py = apTop + 12, ph = PHONE ? 180 : 176;
+      const px = (PHONE ? MAIN.x + 40 : ap2.x + 50), pw = (PHONE ? MAIN.w - 60 : ap2.w - 70), py = apTop + (PHONE ? 30 : 12), ph = PHONE ? 170 : 176;
       const vmin = -100, vmax = 140, Y = (v) => py + ph * (1 - (v - vmin) / (vmax - vmin));
       T(px - 40, py - 16, '끓는점 (°C)', 14, WARN, 'left', 800);
       D.roundRect(px, py, pw, ph, 8); ctx.fillStyle = '#f8fafc'; ctx.fill(); ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1.4; ctx.stroke();

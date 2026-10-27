@@ -331,7 +331,7 @@
       u.st = st;
       let tx, ty;
       const wide = g.mode === 'wide', wx = I.x + 40, wy = I.y + 34, ww = I.w - 80, wh = I.h - 64;
-      if (st === 'clump') { tx = wide ? I.x + I.w / 2 - 64 + (i % 4) * 22 : I.x + I.w / 2 - 33 + (i % 3) * 22; ty = wide ? I.y + I.h - 46 + Math.floor(i / 4) * 18 : I.y + I.h - 90 + Math.floor(i / 3) * 20; }
+      if (st === 'clump') { tx = wide ? I.x + I.w / 2 - 64 + (i % 4) * 22 : I.x + I.w / 2 - 33 + (i % 3) * 22; ty = wide ? I.y + I.h - 46 + Math.floor(i / 4) * 18 : I.y + I.h - 138 + Math.floor(i / 3) * 20; }
       else if (st === 'complex') { const cols = wide ? 4 : 2; const cx2 = wx + ww * ((i % cols) + 0.5) / cols, cy2 = wide ? wy + wh * (Math.floor(i / cols) + 0.5) / 2 : wy + wh * 0.62 * (Math.floor(i / cols) + 0.5) / 4; tx = cx2 + Math.sin(S.t * 1.2 + u.ph) * (RM ? 0 : 6); ty = cy2 + Math.cos(S.t * 1.0 + u.ph) * (RM ? 0 : 5); }
       else { const cols = wide ? 4 : 2; tx = (wide ? wx + ww * ((i % cols) + 0.5) / cols : wx + ww * ((i % cols) + 0.5) / cols) + Math.sin(S.t * 0.9 + u.ph * 1.3) * (RM ? 0 : 12); ty = (wide ? wy + wh * (Math.floor(i / cols) + 0.5) / 2 : wy + wh * 0.62 * (Math.floor(i / cols) + 0.5) / 4) + Math.cos(S.t * 0.8 + u.ph) * (RM ? 0 : 10); }
       if (u.x === 0 && u.y === 0) { u.x = tx; u.y = ty; }

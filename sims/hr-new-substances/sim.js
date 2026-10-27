@@ -779,7 +779,7 @@
           title: '알코올 양과 수득률 비교',
           goal: '알코올을 <b>0.10 mol</b>일 때와 <b>0.30 mol</b>일 때 각각 가열해 수득률을 비교하세요.',
           hint: '“알코올의 양” 슬라이더로 0.10 mol과 0.30 mol을 고르고, 양을 바꿀 때마다 다시 “가열하기”를 눌러요.',
-          setup() { S.gate = 'amt'; setScene('aroma'); updateCtl(); },
+          setup() { S.gate = 'amt'; AR.yAt = {}; AR.res = null; AR.ai = 0; setScene('aroma'); updateCtl(); },
           check: () => AR.yAt[0] != null && AR.yAt[4] != null, hold: 0.8,
           status: () => '0.10 mol : ' + (AR.yAt[0] != null ? AR.yAt[0] + ' %' : '—') + ' &nbsp;0.30 mol : ' + (AR.yAt[4] != null ? AR.yAt[4] + ' %' : '—') + ' ' + mark(AR.yAt[0] != null && AR.yAt[4] != null),
           explain: '각 0.10 mol일 때 수득률은 <b>67 %</b>, 알코올을 0.30 mol로 늘리면 <b>90 %</b>예요. K = x² / ((0.10 − x)(a − x)) = 4를 풀면 x = 0.067 mol과 0.090 mol이 나와요.',

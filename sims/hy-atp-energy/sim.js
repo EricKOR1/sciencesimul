@@ -610,7 +610,7 @@
     ctx.save(); ctx.translate(tk.x + TOKW / 2 + (tk.shake > 0 && !RM ? Math.sin(clock * 60) * 4 * tk.shake : 0), tk.y + TOKH / 2 - lift * 4); ctx.scale(1 + lift * 0.07, 1 + lift * 0.07);
     D.shadow(() => { D.roundRect(-TOKW / 2, -TOKH / 2, TOKW, TOKH, 12); ctx.fillStyle = atp ? '#22c55e' : '#e2e8f0'; ctx.fill(); }, { blur: 5 + lift * 8, y: 2 + lift * 3 });
     D.roundRect(-TOKW / 2, -TOKH / 2, TOKW, TOKH, 12); ctx.strokeStyle = sel ? '#f59e0b' : atp ? '#15803d' : '#94a3b8'; ctx.lineWidth = sel ? 4 : 2.2; ctx.stroke();
-    if (atp) { T(-TOKW / 2 + 28, 6, 'ATP', PHONE ? 14.5 : 16, '#fff', 'center', 800); drawPi(TOKW / 2 - 15, 0, 9, { flat: true }); }
+    if (atp) { T(-TOKW / 2 + (PHONE ? 23 : 28), 6, 'ATP', PHONE ? 13.5 : 16, '#fff', 'center', 800); drawPi(TOKW / 2 - 15, 0, 9, { flat: true }); }
     else { T(-TOKW / 2 + (PHONE ? 20 : 22), 5, 'ADP', PHONE ? 13 : 14.5, '#475569', 'center', 800); drawPi(TOKW / 2 - 12, 0, 8, { flat: true, alpha: 0.9 }); T(TOKW / 2 - 24, 4, '+', 13, '#64748b', 'center', 800); }
     ctx.restore();
   }
@@ -729,7 +729,7 @@
   const PTS = { atp: atPT, flow: null, couple: cpPT, life: lfPT };
   function setMode(m) { if (S.mode !== m) S.fade = 1; S.mode = m; PT = PTS[m] || null; hideHint(); updateCtl(); }
   const ctlNodes = $$('#ctrlCard .control');
-  const flOk = () => near(numIn('inPct'), 32, 1.2) && S.fl.mol > 0;
+  const flOk = () => near(numIn('inPct'), 32, 0.6) && S.fl.mol > 0;
   function updateCtl() {
     const fr = game ? game.free : false, lvNow = game ? game.level : 0;
     ctlNodes.forEach((n) => { n.hidden = (n.dataset.modes || '').split(' ').indexOf(S.mode) < 0; });

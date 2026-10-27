@@ -403,7 +403,7 @@
       if (!(o2Ok(i) && o2Ok(i + 1))) continue;
       const x1 = axX(OXN[i]), x2 = axX(OXN[i + 1]);
       D.arrow(x1 + 14, ay - 46, x2 - 14, ay - 46, { color: '#dc2626', width: 3, head: 9 });
-      pill((x1 + x2) / 2, ay - 66, '전자 2개 잃음 (산화)', { bg: '#fee2e2', color: '#b91c1c', border: '#fca5a5', size: 13 });
+      pill((x1 + x2) / 2, ay - 66, PHONE ? '전자 2개 잃음' : '전자 2개 잃음 (산화)', { bg: '#fee2e2', color: '#b91c1c', border: '#fca5a5', size: PHONE ? 12.5 : 13 });
     }
     // INFO : 전자 저울
     panel(INFO.x, INFO.y, INFO.w, INFO.h, 14);
@@ -596,7 +596,7 @@
     const P = G.pipe;
     D.roundRect(P.x, P.y, P.w, P.h, 20); ctx.fillStyle = '#fff1f2'; ctx.fill(); ctx.strokeStyle = '#fda4af'; ctx.lineWidth = 2.4; ctx.setLineDash([10, 6]); ctx.stroke(); ctx.setLineDash([]);
     T(P.x + 14, P.y + 22, '간세포 단면 (효소가 산화를 도와요)', 13.5, '#9f1239', 'left', 800);
-    const n = 4, bw = PHONE ? 82 : 112, mg = PHONE ? 12 : 20, step = (P.w - 2 * mg - bw) / (n - 1);
+    const n = 4, bw = PHONE ? 74 : 112, mg = PHONE ? 12 : 20, step = (P.w - 2 * mg - bw) / (n - 1);
     for (let i = 0; i < n; i++) {
       const x = P.x + mg + i * step, y = P.y + (PHONE ? 62 : 52), h = PHONE ? 84 : 74;
       const lab = i < 3 ? S4.names[i] : 'CO₂ + H₂O', col = i < 3 ? S4.cols[i] : '#64748b';

@@ -346,7 +346,7 @@
     T(cx, MAIN.y + 62 + fs * 1.3 + 14, '(전자의 이동은 아직 쓰지 않았어요)', 13.5, MUTED, 'center', 700);
     if (e < 0.02) {
       [0, 1].forEach((i) => { const g = laneG(i); D.roundRect(g.x, g.y, g.w, g.h, 14); ctx.setLineDash([7, 6]); ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 2; ctx.stroke(); ctx.setLineDash([]); });
-      T(cx, laneG(0).y + laneG(0).h + 5, '✂️ “반쪽으로 나누기”를 눌러요', 15, PUR, 'center', 800);
+      T(cx, laneG(0).y + laneG(0).h / 2 + 5, '✂️ “반쪽으로 나누기”를 눌러요', 15, PUR, 'center', 800);
       return;
     }
     [0, 1].forEach((i) => {

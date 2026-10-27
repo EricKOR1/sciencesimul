@@ -552,13 +552,13 @@
     const sy = BN_T.y + CELL.top + (PHONE ? 3 : 2) * CELL.rowH + 4;
     T(BN_T.x + 14, sy + 14, '활동 대사량 = (MET − 1) × 체중 × 시간', L(15, 13.5), '#334155', 'left', 800);
     rows.forEach((k, i) => {
-      const a = ACTS[k], y = sy + 36 + i * (PHONE ? 20 : 22), kc = (a.met - 1) * b.kg * bnHours(k);
+      const a = ACTS[k], y = sy + (PHONE ? 33 : 36) + i * (PHONE ? 19 : 22), kc = (a.met - 1) * b.kg * bnHours(k);
       D.roundRect(BN_T.x + 14, y - 12, 12, 12, 3); ctx.fillStyle = a.col; ctx.fill(); ctx.strokeStyle = a.tc; ctx.lineWidth = 1; ctx.stroke();
       T(BN_T.x + 32, y, a.name + ': (' + a.met + ' − 1) × ' + b.kg + ' × ' + bnHours(k) + ' h = ' + comma(kc) + ' kcal', L(14.5, 13), '#334155', 'left', 700);
     });
     if (!rows.length) T(BN_T.x + 14, sy + 38, '아직 활동을 칠하지 않았어요 (수면·휴식은 MET 1.0이라 추가 에너지 0)', L(14, 13), '#94a3b8', 'left', 700);
     T(BN_T.x + BN_T.w - 14, sy + 14, '활동 대사량 합계 ' + comma(b.nums.act.v) + ' kcal', L(16, 14), '#b45309', 'right', 800);
-    disc(BN_T.x + 14, BN_T.y + BN_T.h - 10, 'left');
+    disc(BN_T.x + 14, BN_T.y + BN_T.h - L(10, 5), 'left');
   }
   const bnPT = {
     down(p) { if (bnPaintAt(p)) { S.bn.paint = true; return true; } return false; },
@@ -724,7 +724,7 @@
           id: 'ratio', title: '탄수화물 비율 맞추기',
           goal: '섭취가 <b>2200 ± 100 kcal</b>인 채로 <b>탄수화물 비율을 55~65 %</b> 안에 두세요.',
           hint: '탄수화물 비율이 낮으면 밥 · 식빵 · 바나나를 늘리고, 높으면 달걀 · 우유 · 닭가슴살을 섞어요. 예: 밥 4 · 우유 1 · 식빵 1 · 닭가슴살 2 · 햄버거 1(약 2206 kcal, 탄수화물 64 %).',
-          setup() { setMode('meal'); },
+          setup() { mlClear(); setMode('meal'); },
           check: () => mlKcal() >= 2100 && mlKcal() <= 2300 && mlPct().C >= 55 && mlPct().C <= 65, hold: 0.8,
           status: () => mark(mlKcal() >= 2100 && mlKcal() <= 2300) + ' 섭취 ' + comma(mlKcal()) + ' kcal &nbsp; ' + mark(mlPct().C >= 55 && mlPct().C <= 65) + ' 탄수화물 ' + mlPct().C + ' %',
           explain: '탄수화물이 에너지의 55~65 %를 차지하도록 곡류 · 과일을 중심으로 하고, 단백질(7~20 %)과 지방(15~30 %)도 적정 범위에 두는 것이 균형 잡힌 식단의 기준이에요.',
@@ -761,7 +761,7 @@
           id: 'total', title: '하루 총 소비 완성',
           goal: '기초 대사량 1440 + 활동 대사량 540 + 식이 열 효과 220을 더해 <b>총 소비</b>를 입력하세요.',
           hint: '1440 + 540 + 220 = ? 오른쪽 위 도넛에 각 값이 적혀 있어요.',
-          setup() { setMode('burn'); },
+          setup() { $('#inTot').value = ''; setMode('burn'); },
           check: () => near(numIn('inTot'), 2200, 0.5) && bnExample(), hold: 0.6,
           status: () => mark(bnExample()) + ' 예시 하루 시간표 &nbsp; ' + mark(near(numIn('inTot'), 2200, 0.5)) + ' 총 소비 입력',
           explain: '1440 + 540 + 220 = <b>2200 kcal</b>예요. 기초 대사량이 약 65 %, 활동 대사량이 약 25 %, 식이 열 효과가 약 10 %를 차지해요. 앞에서 만든 2200 kcal 식단과 같은 값이라 균형이 0이 돼요.',
