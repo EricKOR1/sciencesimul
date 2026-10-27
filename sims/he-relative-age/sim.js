@@ -441,7 +441,8 @@
   function boxPour(k) {
     const B = S.box;
     if (B.pour || B.layers.length >= MAXL || B.def > 0.5) return false;
-    if (!B.layers.length) { B.th0 = rad(B.tilt); B.depTilt = B.tilt; B.tiltT = B.tilt; }
+    if (!B.layers.length && Math.abs(B.tilt - B.tiltT) > 0.3) { say('상자가 다 기울어진 뒤에 흘려 넣어요.', true, 1.6); return false; }
+    if (!B.layers.length) { B.tilt = B.tiltT; B.th0 = rad(B.tilt); B.depTilt = B.tilt; }
     const sd = SED[k], layer = { k, h: 0, landed: 0, N: sd.n, seed: 11 + B.layers.length * 7 };
     B.layers.push(layer); B.kinds[k] = true;
     B.pour = { layer, emitted: 0, T: 0, sd };
@@ -588,7 +589,7 @@
     const surf = B.def >= 0.5 ? Math.round(B.def) : 0;
     const dep = B.depTilt != null ? Math.round(B.depTilt) : Math.round(B.tilt);
     const rows = [['상자 기울기', (B.layers.length ? dep : Math.round(B.tilt)) + '°'], ['지층면 (수평면 기준)', B.layers.length ? (surf ? surf + '° 기울어짐' : '0° 수평') : '—'], ['상자 바닥 기준', B.layers.length ? (surf ? '—' : dep + '° 어긋남') : '—']];
-    rows.forEach((r) => { tx(INFO.x + 14, yy, r[0], 14, gcl.mute, 'left', 700); tx(INFO.x + INFO.w - 14, yy, r[1], 15, gcl.ink, 'right', 800); yy += PHONE ? 22 : 26; });
+    rows.forEach((r) => { tx(INFO.x + 14, yy, r[0], 14, gcl.mute, 'left', 700); tx(INFO.x + INFO.w - 14, yy, r[1], 15, gcl.ink, 'right', 800); yy += PHONE ? 20 : 26; });
     let msg;
     if (!B.layers.length) msg = '상자를 기울인 뒤 자갈·모래·점토를 흘려 넣어 보세요. 가라앉은 알갱이는 어떤 모양으로 쌓일까요?';
     else if (B.def >= 0.5) msg = '쌓일 때는 수평이던 지층면이 지금은 ' + surf + '° 기울어 있어요. 기울어진 지층은 쌓인 뒤에 땅이 변형된 거예요.';
@@ -597,7 +598,7 @@
     else msg = '퇴적물은 중력 때문에 수평하게 쌓이고, 아래층이 위층보다 먼저 쌓였어요(지층누중의 법칙).';
     note(INFO.x + 10, yy + 4, INFO.w - 20, msg, 13.5, { bg: '#f0f9ff', border: '#bae6fd' });
     // 쌓인 순서 목록 (위가 나중)
-    const ly = INFO.y + (PHONE ? 168 : 250), rh = PHONE ? 25 : 30;
+    const ly = INFO.y + (PHONE ? 196 : 250), rh = PHONE ? 23 : 30;
     tx(INFO.x + 14, ly, '쌓인 순서 (위가 가장 나중)', 13.5, gcl.mute, 'left', 800);
     for (let i = 0; i < MAXL; i++) {
       const idx = B.layers.length - 1 - i, yb = ly + 12 + i * rh;
@@ -626,8 +627,8 @@
     if (Math.abs(v - exp) <= Math.max(0.01, exp * 0.01)) {
       R.rec[R.env] = { thick: R.thick, val: exp }; R.stamp[R.env] = 1; inp.value = ''; Sound.success();
       parts.burst(R.env === 'deep' ? RT.x1 + RT.w / 2 : RT.x2 + RT.w / 2, RT.base - R.thick * RT.per - 20, { count: 16, speed: 150, colors: [RATES[R.env].col, '#fff', '#fde68a'] });
-      say(RATES[R.env].name + ' ' + R.thick + ' m: ' + fmtMan(exp) + ' 이 걸려요.', false, 2.6);
-    } else { Sound.fail(); say(R.thick + ' m = ' + R.thick * 1000 + ' mm 이고, 속도는 ' + RATES[R.env].label + ' 예요. (두께 ÷ 속도) 다시 계산해 봐요.', true, 3.4); }
+      say(RATES[R.env].name + ' ' + R.thick + ' m: ' + fmtMan(exp) + '이 걸려요.', false, 2.6);
+    } else { Sound.fail(); say(R.thick + ' m = ' + R.thick * 1000 + ' mm 이고, 속도는 ' + RATES[R.env].label + ' 예요. 두께를 속도로 나눠서 다시 계산해 봐요.', true, 3.4); }
     updateCtl();
   }
   function drawRate(t, dt) {
@@ -674,7 +675,7 @@
       lines.forEach((l, i) => { const y = IR.y + 148 + i * 52; tx(IR.x + 14, y, l[0], 13.5, gcl.mute, 'left', 700); tx(IR.x + 14, y + 24, l[1], 18, gcl.ink, 'left', 800); });
       note(IR.x + 10, IR.y + 330, IR.w - 20, '퇴적 속도는 환경마다 달라요. 또 같은 곳에서도 홍수나 가뭄에 따라 일정하지 않아서, 이렇게 구한 시간은 어림값이에요.', 13, { bg: '#fff7e0', border: '#f2d38a' });
     }
-    dataTag(RT.x1 + 2, RT.base + 26, '예시 자료', 'left');
+    dataTag(RT.x1 + 2, RT.base + (PHONE ? 20 : 26), '예시 자료', 'left');
   }
 
 
@@ -770,9 +771,9 @@
     else m1 = '마그마가 식어 굳어 화성암 D가 됐어요. D는 세 지층을 가로질러 뚫었으니 지층이 먼저 있었던 거예요.';
     note(IR.x + 10, IR.y + 36, IR.w - 20, m1, 13.5, { bg: '#f0f9ff', border: '#bae6fd' });
     if (I.done) {
-      const y0 = IR.y + (PHONE ? 130 : 150);
+      const y0 = IR.y + (PHONE ? 124 : 150);
       const items = [['관입의 법칙', '관입한 암석(D)이 관입당한 암석(지층)보다 나중이에요.'], ['접촉부', '뜨거운 마그마에 닿은 지층만 구운 듯 변해요. → 접촉한 부분만 변했으니 지층이 먼저예요.'], ['포획암', '마그마 속에 들어 있는 모암 조각은 마그마보다 먼저 있던 암석이에요.']];
-      items.forEach((it, i) => { const h = note(IR.x + 10, y0 + i * (PHONE ? 52 : 84), IR.w - 20, it[0] + ': ' + it[1], 13, { bg: '#fffbeb', border: '#fde68a' }); });
+      items.forEach((it, i) => { const h = note(IR.x + 10, y0 + i * (PHONE ? 58 : 84), IR.w - 20, it[0] + ': ' + it[1], 13, { bg: '#fffbeb', border: '#fde68a' }); });
     }
     const ord = !I.done ? '' : '순서: 셰일 → 사암 → 석회암 → (지층이 기울어짐) → D 관입'.replace('(지층이 기울어짐) → ', '');
     if (I.done && !PHONE) tx(IR.x + 14, IR.y + IR.h - 16, '오래됨 → 젊음: 셰일 < 사암 < 석회암 < D', 13, '#6d28d9', 'left', 800);
@@ -839,7 +840,7 @@
       if (i === 0) { D.label(r.x + r.w * 0.5, r.y + r.h - 62 - (PHONE ? -8 : 0), '화성암', { bg: '#7f1d1d', color: '#fff', size: 12.5, pad: 6 }); D.label(r.x + 66, r.y + r.h - 22, '사암(모암)', { bg: '#fff', color: '#334155', size: 12.5, pad: 6, border: '#94a3b8' }); }
       if (i === 1) { D.label(r.x + r.w * 0.5, r.y + r.h - 22, '암맥', { bg: '#5b4a6b', color: '#fff', size: 12.5, pad: 6 }); }
       if (i === 2) { D.label(r.x + r.w - 62, r.y + r.h - 22, '분홍 무늬 = 화성암 자갈', { bg: '#fff', color: '#7f1d1d', size: 12, pad: 6, border: '#e3a9a0', align: 'right' }); }
-      if (ans != null) D.label(r.x + r.w - 12, r.y + 22, ok ? '✓ 맞았어요' : '다시 생각', { bg: ok ? '#15803d' : '#b91c1c', color: '#fff', size: 12.5, pad: 7, align: 'right' });
+      if (ans != null) D.label(r.x + r.w - 18, r.y + 54, ok ? '✓ 맞았어요' : '다시 생각', { bg: ok ? '#15803d' : '#b91c1c', color: '#fff', size: 12.5, pad: 7, align: 'right' });
     });
     if (C.shake > 0) C.shake = Math.max(0, C.shake - 0.016);
     const P = PHONE ? { x: 12, y: 696, w: 576, h: 132 } : { x: 12, y: 342, w: 776, h: 206 };
@@ -988,8 +989,8 @@
       ctx.translate(x + w / 2, y + h / 2); ctx.rotate(def.lower === 'tilted' ? -0.5 : 0);
       const ks = ['shale', 'sand', 'lime', 'shale', 'sand', 'lime', 'shale', 'sand', 'lime', 'shale', 'sand', 'lime', 'shale', 'sand', 'lime', 'shale', 'sand', 'lime'];
       const bt = h * 0.12;
-      for (let k = -8; k < 9; k++) {
-        const kd = ks[k + 9]; ctx.beginPath(); ctx.rect(-w, k * bt, w * 2, bt); ctx.fillStyle = LITH_BASE[kd]; ctx.fill(); fillLith(kd);
+      for (let k = -14; k < 15; k++) {
+        const kd = ks[((k % 18) + 27) % 18]; ctx.beginPath(); ctx.rect(-w, k * bt, w * 2, bt); ctx.fillStyle = LITH_BASE[kd]; ctx.fill(); fillLith(kd);
         ctx.strokeStyle = 'rgba(30,25,20,.45)'; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(-w, k * bt); ctx.lineTo(w, k * bt); ctx.stroke();
       }
     }
@@ -1164,9 +1165,11 @@
         const b = layerBox(ci, cd.unc), yy = b.y + b.h;
         if (p.x >= b.x - 6 && p.x <= b.x + b.w + 6 && Math.abs(p.y - yy) <= 16) { C.gapFound = true; Sound.success(); parts.burst(b.x + b.w / 2, yy, { count: 18, speed: 150, colors: ['#be123c', '#fff', '#fde68a'] }); updateCtl(); return true; }
       }
+      // 얇은 층(응회암 1 m)은 누르기 쉽게 위아래로 조금 넓혀 먼저 살펴요
+      const thin = cd.layers.findIndex((L, li) => { const b = layerBox(ci, li); return b.h < 22 && p.x >= b.x && p.x <= b.x + b.w && Math.abs(p.y - b.ymid) <= 11; });
       for (let li = 0; li < cd.layers.length; li++) {
         const b = layerBox(ci, li);
-        if (p.x >= b.x && p.x <= b.x + b.w && p.y >= b.y - 2 && p.y <= b.y + b.h + 2) {
+        if (thin >= 0 ? li === thin : (p.x >= b.x && p.x <= b.x + b.w && p.y >= b.y - 2 && p.y <= b.y + b.h + 2)) {
           const tg = C.target, tag = cd.layers[li][2];
           if (C.picked[tg][ci] != null) { return false; }
           if (tag === tg) {
@@ -1248,7 +1251,7 @@
     ctx.strokeStyle = '#475569'; ctx.lineWidth = 3; ctx.strokeRect(0, T, W, Bm - T);
     // 이름표
     const L = (x, y, text, bg, col, al) => D.label(x, y, text, { bg: bg || 'rgba(255,255,255,.93)', color: col || '#334155', size: 13, pad: 7, border: bg ? null : '#94a3b8', align: al || 'left' });
-    L(8, 36, 'F 이암 (암모나이트)'); L(8, 138, 'E 역암 (D 자갈 포함)');
+    L(8, 36, 'F 이암 (암모나이트)'); L(8, 172, 'E 역암 (D 자갈 포함)');
     L(380, AU(380) + 30, '석회암'); L(8, 244, '사암'); L(8, 420, '셰일'); L(318, 330, '화성암 D', '#5b4a6b', '#fff');
     L(W - 6, AU(W - 100) - 2 + 0, '부정합면', '#be123c', '#fff', 'right');
     // 번호 배지: 담은 순서대로 해당 부분에 표시
@@ -1408,7 +1411,7 @@
           title: '퇴적 속도로 걸린 시간 구하기',
           goal: '두께가 <b>30 m</b>일 때, 심해 점토와 삼각주 모래가 쌓이는 데 걸린 시간을 각각 <b>만 년</b> 단위로 구해 📝 기록해요.',
           hint: '30 m = 30000 mm 예요. 심해 점토는 1 mm가 쌓이는 데 1000년, 삼각주 모래는 1년이 걸려요. (심해: 30000 × 1000년 = 3천만 년 = 3000만 년)',
-          hold: 0.4, setup() { setView('rate'); S.rate.thick = 30; S.rate.thickD = 30; S.rate.env = 'deep'; $('#inYr').value = ''; },
+          hold: 0.4, setup() { setView('rate'); S.rate.thick = 30; S.rate.thickD = 30; S.rate.env = 'deep'; S.rate.rec = { deep: null, delta: null }; S.rate.stamp = { deep: 0, delta: 0 }; $('#inYr').value = ''; updateCtl(); },
           status: () => { const r = S.rate.rec; return '심해 점토 ' + mark(r.deep && r.deep.thick === 30) + ' · 삼각주 모래 ' + mark(r.delta && r.delta.thick === 30); },
           check: () => { const r = S.rate.rec; return !!(r.deep && r.deep.thick === 30 && r.delta && r.delta.thick === 30); },
           explain: '30 m = 30000 mm 예요. 심해 점토(1 mm/천 년)는 30000 × 1000년 = <b>3천만 년(3000만 년)</b>, 삼각주 모래(1 mm/년)는 30000년 = <b>3만 년</b>이 걸려요. 같은 두께라도 환경에 따라 걸린 시간이 1000배나 달라요.',

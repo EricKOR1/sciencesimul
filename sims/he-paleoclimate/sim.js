@@ -697,7 +697,7 @@
     [-8, -4, 0].forEach((v) => D.text(x1 + 5, yDT(v) + 4.5, (v < 0 ? '−' : '') + Math.abs(v), { size: 12.5, weight: 800, color: '#2563c9', align: 'left' }));
     [3.2, 4.0, 4.8].forEach((v) => { ctx.strokeStyle = '#e2e8f0'; ctx.beginPath(); ctx.moveTo(x0, yD18(v)); ctx.lineTo(x1, yD18(v)); ctx.stroke(); D.text(x0 - 5, yD18(v) + 4.5, v.toFixed(1), { size: 12.5, weight: 800, color: '#6d4a1c', align: 'right' }); });
     D.text(x0, A.y - 5, 'CO₂ (ppm)', { size: 13, weight: 800, color: '#c2501d', align: 'left' }); D.text(x1, A.y - 5, '기온 편차 (°C)', { size: 13, weight: 800, color: '#2563c9', align: 'right' });
-    D.text(x0, B.y - 5, '해양 유공충 껍질의 δ¹⁸O (‰) · 위쪽이 값이 작은 따뜻한 시기', { size: 13, weight: 800, color: '#6d4a1c', align: 'left' });
+    D.text(x0, B.y - 5, (PHONE ? '유공충 δ¹⁸O (‰) · 위쪽 = 따뜻한 시기' : '해양 유공충 껍질의 δ¹⁸O (‰) · 위쪽이 값이 작은 따뜻한 시기'), { size: 13, weight: 800, color: '#6d4a1c', align: 'left' });
     ctx.save(); ctx.beginPath(); ctx.rect(x0, A.y - 2, (x1 - x0) * Math.min(1, S.curveRev), A.h + B.y + B.h - A.y - A.h + 4); ctx.clip();
     const line = (key, fy, col, w2) => { ctx.strokeStyle = col; ctx.lineWidth = w2; ctx.lineJoin = 'round'; ctx.beginPath(); CURVE.forEach((c, i) => (i ? ctx.lineTo(gxA(c.t), fy(c[key])) : ctx.moveTo(gxA(c.t), fy(c[key])))); ctx.stroke(); };
     line('co2', yCO2, '#d9662b', 2.6); line('dt', yDT, '#2d6fd6', 2.2); line('d18', yD18, '#8a5a1f', 2.6);
@@ -777,7 +777,7 @@
   }
   function setCtl(k) { ctlKeys = k; updateCtl(); }
   function setMode(m) { if (S.mode !== m) { S.fade = 1; parts.clear(); if (m === 'tree') S.grow = 0; if (m === 'ice') S.curveRev = 0; if (m === 'eval') S.evalRev = 0; } S.mode = m; updateCtl(); }
-  $$('#modeSeg button').forEach((b) => b.addEventListener('click', () => { Sound.click(); setMode(b.dataset.mode); if (b.dataset.mode === 'ice') { S.winShow = true; } updateCtl(); }));
+  $$('#modeSeg button').forEach((b) => b.addEventListener('click', () => { Sound.click(); hideHint(); setMode(b.dataset.mode); if (b.dataset.mode === 'ice') { S.winShow = true; } updateCtl(); }));
   SciSim.bindRange($('#sDrift'), $('#oDrift'), (v) => (v >= DR.t0 ? '석탄기 (3.2억 년 전)' : v <= 0 ? '현재' : (v / 100).toFixed(1) + '억 년 전'), (v) => { S.drift = v; if (v <= 10) S.seenNow = true; });
   SciSim.bindRange($('#sDrill'), $('#oDrill'), (v) => v + ' m', (v) => { S.depth = v; });
   $('#bRingReset').addEventListener('click', () => { Sound.click(); stpAge.reset(); S.nCount = 0; S.selYear = null; S.grow = 0; });

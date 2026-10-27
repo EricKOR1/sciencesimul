@@ -150,7 +150,7 @@
     const prev = S.sim;
     const type = prev && !full ? prev.type : 'var', delta = prev ? prev.delta : 0.4;
     const ghost = prev && prev.hist.length > 1 ? prev.hist.slice() : prev ? prev.ghost : null;
-    S.sim = { type, delta, p: type === 'none' ? 1 : 0.5, g: 0, hist: [type === 'none' ? 1 : 0.5], ghost, phase: 'idle', t: 0, good: prev ? 0 : 0, seenNone: prev ? prev.seenNone : false, seenNoInh: prev ? prev.seenNoInh : false, plan: null, hawk: -1, slots: [] };
+    S.sim = { type, delta, p: type === 'none' ? 1 : 0.5, g: 0, hist: [type === 'none' ? 1 : 0.5], ghost, phase: 'idle', t: 0, good: prev ? 0 : 0, good4: 0, seenNone: prev ? prev.seenNone : false, seenNoInh: prev ? prev.seenNoInh : false, plan: null, hawk: -1, slots: [] };
     layoutSlots(); updateCtl && updateCtl();
   }
   function simStep() {
@@ -173,6 +173,7 @@
     if (q.type === 'none' && q.delta >= 0.2) q.seenNone = true;
     if (q.type === 'noinh' && q.delta >= 0.2) q.seenNoInh = true;
     q.good = q.type === 'var' && q.delta > 0 ? q.good + 1 : 0;
+    q.good4 = q.type === 'var' && Math.abs(q.delta - 0.4) < 0.05 ? q.good4 + 1 : 0;
     updateCtl();
   }
   function stepSim(dt) {
@@ -785,9 +786,9 @@
           id: 'gen5', title: '5세대 진행하기',
           goal: '선택압 <b>0.4</b>(A 0.80, B 0.40)에서 <b>변이 있음</b> 집단을 <b>5세대</b> 진행해 A 비율의 변화를 그래프로 그리세요.',
           hint: '▶ 다음 세대를 5번 눌러요. 새가 지나가면 B가 더 많이 사라지고, 살아남은 개체가 번식해 빈자리를 채워요.',
-          setup() { setMode('sim'); },
-          check: () => S.sim.type === 'var' && S.sim.good >= 5 && S.sim.g >= 5 && S.sim.phase === 'idle', hold: 0.6,
-          status: () => '세대 ' + S.sim.g + ' · A 비율 ' + f2(S.sim.p) + ' · 선택압 ' + S.sim.delta.toFixed(1) + (S.sim.type !== 'var' ? ' (변이 있음을 골라요)' : ''),
+          setup() { setMode('sim'); S.sim.good4 = 0; },
+          check: () => S.sim.type === 'var' && S.sim.good4 >= 5 && S.sim.g >= 5 && S.sim.phase === 'idle', hold: 0.6,
+          status: () => '세대 ' + S.sim.g + ' · A 비율 ' + f2(S.sim.p) + ' · 선택압 ' + S.sim.delta.toFixed(1) + (S.sim.type !== 'var' ? ' (변이 있음을 골라요)' : Math.abs(S.sim.delta - 0.4) >= 0.05 ? ' (선택압을 0.4로 맞춰요)' : ''),
           explain: '생존율이 높은 A가 해마다 더 많이 남아 번식하므로 A의 비율이 <b>0.50 → 0.67 → 0.80 → 0.89 → 0.94 → 0.97</b>로 늘었어요. 개체가 변한 것이 아니라 <b>집단 안의 비율</b>이 달라진 거예요.',
         },
         {

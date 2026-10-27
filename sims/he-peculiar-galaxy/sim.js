@@ -763,7 +763,7 @@
           title: '파장별로 보이는 구조',
           goal: '<b>네 파장을 모두 보고</b>, 파장마다 보이는 구조를 짝지어요.',
           hint: '파장 버튼을 눌러 은하를 바꿔 봐요. 각각 0.5초 이상 보여야 "살펴봄"으로 쳐요. 짝짓기 칸은 네 파장을 모두 본 뒤 열려요.',
-          hold: 0.5, setup() { S.matchOn = false; setView('v1'); updateCtl(); },
+          hold: 0.5, setup() { S.seen = {}; S.bandT = -99; S.match = { radio: '', ir: '', vis: '', xray: '' }; $$('#bandRows select').forEach((q) => { q.value = ''; }); S.matchOn = false; setView('v1'); updateCtl(); },
           status: () => '살펴봄 ' + BAND_ORDER.map((b) => BANDS[b].nm + mark(!!S.seen[b])).join(' ') + ' · 짝짓기 ' + bandsOK().filter(Boolean).length + '/4',
           check: () => BAND_ORDER.every((b) => S.seen[b]) && bandsOK().every(Boolean),
           explain: '<b>전파</b>: 제트와 로브, <b>적외선</b>: 따뜻한 먼지 띠, <b>가시광선</b>: 별빛과 어두운 먼지 띠, <b>X선</b>: 고온 가스와 제트예요.',
@@ -799,7 +799,7 @@
           title: '넓은 방출선이 보이는 각도 찾기',
           goal: '<b>시선 각도 θ</b> 슬라이더를 움직여 넓은 방출선이 <b>보이는 때</b>와 <b>안 보이는 때</b>를 모두 확인해요.',
           hint: 'θ는 제트 축에서 잰 각도예요. 작은 각도(위에서 봄)에서는 넓은 선이 보이고, 큰 각도(옆에서 봄)에서는 먼지 고리가 가려요.',
-          hold: 0.4, setup() { S.seenAng = { vis: false, hid: false }; S.angT = 0; setView('v2'); updateCtl(); },
+          hold: 0.4, setup() { S.seenAng = { vis: false, hid: false }; S.angT = 0; S.angKey = null; setAng(TORUS_ANGLE); S.angD = TORUS_ANGLE; setView('v2'); updateCtl(); },
           status: () => '보이는 각도 ' + mark(S.seenAng.vis) + ' · 안 보이는 각도 ' + mark(S.seenAng.hid) + ' · θ = ' + f0(S.ang) + '°',
           check: () => S.seenAng.vis && S.seenAng.hid,
           explain: 'θ가 <b>약 60° 이하</b>이면 먼지 고리에 가리지 않고 핵 근처에서 빠르게 도는 가스를 볼 수 있어 <b>넓은 방출선</b>이 보여요. θ가 60°보다 크면 먼지 고리가 가려서 좁은 선만 보여요.',
@@ -902,7 +902,7 @@
     if (game && game.free !== lastFree) { lastFree = game.free; updateCtl(); }
     // 1단계: 파장 전환
     BAND_ORDER.forEach((b) => { S.bw[b] = approach(S.bw[b], S.band === b ? 1 : 0, dt, 7); });
-    if (S.view === 'v1') { S.bandT += dt; if (S.bandT > 0.5 && !S.seen[S.band]) { S.seen[S.band] = true; Sound.tick(); updateCtl(); } }
+    if (S.view === 'v1') { S.bandT += dt; if (S.bandT > 0.5 && !S.seen[S.band]) { S.seen[S.band] = true; Sound.tick(); if (BAND_ORDER.every((b) => S.seen[b])) S.matchOn = true; updateCtl(); } }
     // 2단계
     S.angD = approach(S.angD, S.ang, dt, 12);
     S.bl = approach(S.bl, S.ang <= TORUS_ANGLE ? 1 : 0, dt, 7);

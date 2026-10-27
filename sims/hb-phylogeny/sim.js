@@ -442,7 +442,7 @@
     });
     // 안내
     const ty = L(512, 566);
-    if (Tn.lca) T(VW / 2, ty - L(26, 30), '⭐ 마지막 공통 조상: ' + SP5[Tn.pick[0]] + '과(와) ' + SP5[Tn.pick[1]] + '이(가) 갈라진 분기점', L(15, 13.5), '#b45309', 'center', 800);
+    if (Tn.lca) T(VW / 2, ty - L(26, 30), '⭐ 마지막 공통 조상: ' + withJosa(SP5[Tn.pick[0]], '과/와') + ' ' + withJosa(SP5[Tn.pick[1]], '이/가') + ' 갈라진 분기점', L(15, 13.5), '#b45309', 'center', 800);
     else T(VW / 2, ty - L(26, 30), Tn.pick.length === 1 ? '다른 종도 눌러 보세요' : '종 카드를 두 개 누르면 마지막 공통 조상이 나타나요', L(14.5, 13.5), '#64748b', 'center', 700);
     const r = trCheck();
     if (r.miss === 0 && r.wrong === 0) T(VW / 2, ty, '✅ 가지의 형질이 5종의 형질 행렬과 모두 일치해요', L(16, 14), '#0b6b39', 'center', 800);
@@ -530,6 +530,8 @@
     S.pg = { ds: 'plant', order: { plant: PSETS.plant.init.slice(), animal: PSETS.animal.init.slice() }, tree: { plant: null, animal: null }, ran: { plant: false, animal: false }, stale: { plant: false, animal: false }, grow: 0, tapped: { fwd: false, back: false }, rects: [], msg: '' };
   }
   const pgP = () => PSETS[S.pg.ds];
+  /* 미션이 시작될 때 그 자료의 실행 결과와 순서를 처음 상태로 되돌려요 (미리 채워진 채 열리지 않게) */
+  function pgFresh(ds) { const g = S.pg; g.order[ds] = PSETS[ds].init.slice(); g.tree[ds] = null; g.ran[ds] = false; g.stale[ds] = false; g.tapped = { fwd: false, back: false }; }
   const pgNames = (idxs) => idxs.map((i) => short(pgP().sp[i])).join('·');
   function runPg() {
     const g = S.pg, P = pgP();
@@ -608,11 +610,15 @@
         D.sphere(n.px, n.py, 6.5, '#2f6b3a', { gloss: false });
         const lab = P.tr[n.trait];
         chip(n.px + 6, n.py - 19, lab, { align: 'center', size: 13, bg: TRCOL[n.trait % 4], color: '#fff', pad: 7, h: 22 });
-        n.kids.forEach((k, ki) => { if (k.reveal > 0.9) T(lerp(n.px, k.px, 0.55), k.py + (ki === 1 ? -6 : 16), ki === 1 ? '있음' : '없음', 12.5, ki === 1 ? '#2f6b3a' : '#9a6a3a', 'center', 800); });
+        n.kids.forEach((k, ki) => { if (k.reveal > 0.9) T(lerp(n.px, k.px, 0.55), k.py + (ki === 1 ? L(-6, -8) : L(16, 12)), ki === 1 ? '있음' : '없음', 12.5, ki === 1 ? '#2f6b3a' : '#9a6a3a', 'center', 800); });
         n.kids.forEach(nodes);
       } else {
         const r = { x: n.px + 6, y: n.py - L(20, 18), w: n.reveal > 0.9 ? L(124, 112) : 0, h: L(40, 36) };
-        if (n.reveal > 0.9) { D.roundRect(r.x, r.y, r.w, r.h, 10); ctx.fillStyle = '#fff'; ctx.fill(); ctx.strokeStyle = '#2f6b3a'; ctx.lineWidth = 2; ctx.stroke(); textBlock(r.x + 6, r.y + 16, r.w - 10, pgNames(n.group), 13, '#1b2333', 15, 800); }
+        if (n.reveal > 0.9) {
+          const nm = pgNames(n.group), nl = wrap(nm, r.w - 10, 13, 800).length;   // 이름이 길면 상자를 키워요
+          r.h = PHONE ? nl * 15 + 9 : Math.max(r.h, nl * 15 + 9); r.y = n.py - r.h / 2;
+          D.roundRect(r.x, r.y, r.w, r.h, 10); ctx.fillStyle = '#fff'; ctx.fill(); ctx.strokeStyle = '#2f6b3a'; ctx.lineWidth = 2; ctx.stroke(); textBlock(r.x + 6, r.y + 16, r.w - 10, nm, 13, '#1b2333', 15, 800);
+        }
       }
     })(tree);
     // 큰 분기 이름표 (동물: 후구 형질) - 패널 머리줄의 두 칩을 눌러 이름을 확인
@@ -636,10 +642,13 @@
     const ky = msgY + msgH + 10;
     const nodesList = []; (function bfs(q) { const nq = []; q.forEach((n) => { if (n.kids) { nodesList.push(n); nq.push(...n.kids); } }); if (nq.length) bfs(nq); })([tree]);
     T(OA.x + 2, ky, '🔑 자동으로 만든 이분 검색표', 14, '#1d4a2a', 'left', 800);
+    let yy = ky + 22;
     nodesList.forEach((n, i) => {
       const tg = (k) => (k.kids ? (nodesList.indexOf(k) + 1) + '번' : pgNames(k.group));
       const line = (i + 1) + '. ' + withJosa(P.tr[n.trait], '이/가') + ' 있나? 있다→' + tg(n.kids[1]) + ' / 없다→' + tg(n.kids[0]);
-      const yy = ky + 22 + i * L(21, 20); if (yy < VH - 6) T(OA.x + 6, yy, line, fitText(line, OA.w - 10, L(14, 13), 700, 12.5), '#1b2333', 'left', 700);
+      const sz = fitText(line, OA.w - 10, L(14, 13), 700, 12.5), nl = wrap(line, OA.w - 10, sz, 700).length;   // 한 줄에 안 들어가면 줄바꿈
+      if (yy < VH - 6) { if (nl > 1) textBlock(OA.x + 6, yy, OA.w - 10, line, sz, '#1b2333', 15, 700); else T(OA.x + 6, yy, line, sz, '#1b2333', 'left', 700); }
+      yy += nl > 1 ? nl * 15 + 6 : L(21, 20);
     });
   }
   function pgDown(p) {
@@ -705,7 +714,7 @@
     if (m === 'matrix') { a1 = '채운 칸'; b1 = mxFilled() + ' / 20'; a2 = '맞은 칸'; b2 = mxRight() + ' / 20'; a3 = '종 · 형질'; b3 = '5종 · 4형질'; }
     else if (m === 'sets') { a1 = '놓은 카드'; b1 = setsPlaced() + ' / 5'; a2 = '맞는 영역'; b2 = setsRight() + ' / 5'; a3 = '가장 바깥 집합'; b3 = '턱'; }
     else if (m === 'tree') { const r = trCheck(); a1 = '빈 칸'; b1 = r.miss + '개'; a2 = '맞지 않는 칸'; b2 = r.wrong + '개'; a3 = '가지 뒤집은 횟수'; b3 = S.tr.flips + '번'; }
-    else if (m === 'mol') { const M = S.mo.M; a1 = '자료'; b1 = DSETS[M.set].title; a2 = '합친 횟수'; b2 = M.joins.length + ' / ' + (DSETS[M.set].names.length - 1); a3 = '방금 합친 차이 수'; b3 = M.joins.length ? String(Math.round(M.joins[M.joins.length - 1].v * 10) / 10) : '—'; }
+    else if (m === 'mol') { const M = S.mo.M; a1 = '자료'; b1 = DSETS[M.set].title; a2 = '합친 횟수'; b2 = M.joins.length + ' / ' + (DSETS[M.set].names.length - 1); a3 = '방금 합친 값'; b3 = M.joins.length ? String(Math.round(M.joins[M.joins.length - 1].v * 10) / 10) : '—'; }
     else { const g = S.pg, chk = pgCheck(); a1 = '자료'; b1 = pgP().title; a2 = '실행'; b2 = g.ran[g.ds] ? (g.stale[g.ds] ? '다시 실행' : '완료') : '아직'; a3 = '순서 점검'; b3 = !g.ran[g.ds] || g.stale[g.ds] ? '—' : chk.ok ? '올바름 ✔' : '다시 ✘'; }
     const kS = [a1, b1, a2, b2, a3, b3].join('|');
     if (kS === rlast) return; rlast = kS;
@@ -715,6 +724,19 @@
   /* =========================================================
      미션
      ========================================================= */
+  /* 퀴즈 미션이 열릴 때(이어하기 포함) 문제가 가리키는 그림이 완성되어 있도록 채워 줘요 */
+  function fillMxAll() { S.mx.v = M5.map((r) => r.slice()); S.mx.bad.forEach((r) => r.fill(false)); updateCtl(); }
+  function fillTreeAll() {
+    const sl = trSlots();
+    sl.traits.forEach((s) => { const it = S.trTok.items.find((x) => x.kind === 'tr' && x.id === s.trait); it.slotId = s.id; it.at = { x: s.r.x + s.r.w / 2, y: s.r.y + s.r.h / 2 }; S.tr.traitAt[s.id] = s.trait; it.x = it.at.x; it.y = it.at.y; });
+    sl.tips.forEach((s) => { const it = S.trTok.items.find((x) => x.kind === 'sp' && x.id === s.sp); it.slotId = s.id; it.at = { x: s.r.x + s.r.w / 2, y: s.r.y + s.r.h / 2 }; S.tr.spAt[s.id] = s.sp; it.x = it.at.x; it.y = it.at.y; });
+    updateCtl();
+  }
+  function fillMolAll(set) {
+    resetMol(set); const o = S.mo, M = o.M;
+    while (M.cl.length > 1) { const mn = molMin(M), A = M.cl[mn.i], B = M.cl[mn.j]; const node = { a: A.node, b: B.node, h: mn.v, k: 1 }; const nc = { id: 100 + M.joins.length, mem: A.mem.concat(B.mem), node }; M.cl.splice(mn.j, 1); M.cl.splice(mn.i, 1, nc); M.joins.push({ mem: nc.mem.slice(), v: mn.v }); }
+    updateCtl();
+  }
   const levels = [
     {
       title: '형질 행렬과 포함 관계', short: '형질 행렬', icon: '📋', phase: '관찰',
@@ -753,7 +775,7 @@
         },
         {
           type: 'quiz', title: '칠성장어에게만 없는 형질은?', goal: '5종 가운데 칠성장어에게만 없고 나머지 4종은 모두 가진 형질을 골라요.',
-          setup() { setMode('matrix'); },
+          setup() { fillMxAll(); setMode('matrix'); },
           choices: ['턱', '네 다리', '양막', '털·젖'],
           answer: 0,
           feedback: ['', '연어도 네 다리가 없어요.', '연어와 개구리도 양막이 없어요.', '고양이만 털과 젖이 있어요. 나머지 4종에는 없어요.'],
@@ -785,7 +807,7 @@
         },
         {
           type: 'quiz', title: '계통수 읽기', goal: '완성한 계통수를 보고 옳은 설명을 골라요. 카드를 두 장 눌러 마지막 공통 조상을 확인해도 좋아요.',
-          setup() { setMode('tree'); },
+          setup() { fillTreeAll(); setMode('tree'); },
           choices: ['도마뱀과 고양이의 마지막 공통 조상이 더 최근이고, 가지를 좌우로 뒤집어도 같은 나무이다', '개구리와 도마뱀이 더 가깝고, 가지를 뒤집으면 다른 나무가 된다', '도마뱀과 고양이가 더 가깝지만, 가지를 뒤집으면 유연관계가 달라진다', '개구리와 도마뱀이 더 가깝지만, 가지를 뒤집어도 같은 나무이다'],
           answer: 0,
           feedback: ['', '도마뱀과 고양이가 양막을 공유하며 더 나중에 갈라졌어요. 또 가지를 뒤집어도 갈라진 순서는 그대로예요.', '가지를 뒤집어도 분기점의 순서는 변하지 않아서 유연관계는 달라지지 않아요.', '도마뱀과 고양이의 공통 조상이 개구리와 도마뱀의 공통 조상보다 더 최근이에요.'],
@@ -807,7 +829,7 @@
           check: () => S.mo.dsDone.ae, hold: 0.4,
           status: () => '🧬 합친 횟수 ' + (S.mo.set === 'ae' ? S.mo.M.joins.length : S.mo.dsDone.ae ? 4 : 0) + ' / 4 · 틀린 선택 ' + (S.mo.set === 'ae' ? S.mo.M.miss : 0) + '번',
           hint: '표에서 가장 작은 숫자를 찾아요. 합치면 표가 줄어들고, 합친 묶음의 차이 수는 평균으로 바뀌어요.',
-          setup() { if (S.mo.set !== 'ae') resetMol('ae'); setMode('mol'); },
+          setup() { resetMol('ae'); S.mo.dsDone.ae = false; setMode('mol'); },
           explain: 'A–B(2)가 가장 가까워 먼저 묶이고, 다음으로 D–E(4), 그다음 (A, B)–C(6), 마지막으로 두 묶음(8)이 합쳐져요. <b>C는 A, B와 가깝지만 A와 B가 서로 가까운 것보다는 멀어서</b> 더 늦게 합류해요.',
         },
         {
@@ -815,12 +837,12 @@
           check: () => S.mo.dsDone.vt && S.mo.set === 'vt' && molCanon(molTree(S.mo.M)) === canon(REF), hold: 0.4,
           status: () => '🧬 ' + (S.mo.set === 'vt' ? '합친 횟수 ' + S.mo.M.joins.length + ' / 4' : '아래 패널에서 척추동물 5종 자료를 골라요'),
           hint: '조작 패널에서 "척추동물 5종" 자료를 고르고, 가장 작은 차이 수부터 묶어 봐요.',
-          setup() { resetMol('vt'); setMode('mol'); },
+          setup() { resetMol('vt'); S.mo.dsDone.vt = false; setMode('mol'); },
           explain: '도마뱀–고양이(2) → 개구리와 그 묶음(4) → 연어(6) → 칠성장어(8) 순서로 묶여요. 이것은 형질로 만든 계통수(칠성장어가 가장 먼저 갈라지고 연어, 개구리, 도마뱀·고양이 순)와 <b>같은 결론</b>이에요.',
         },
         {
           type: 'quiz', title: 'C가 늦게 합류하는 까닭은?', goal: 'A~E 계통수에서 C는 (A, B) 묶음에 차이 수 6에서 합류했어요. 이것이 뜻하는 것은?',
-          setup() { setMode('mol'); },
+          setup() { fillMolAll('ae'); setMode('mol'); },
           choices: ['C는 A, B와 공통 조상을 갖지만, A와 B의 공통 조상보다 더 오래전에 갈라졌다', 'C는 A와 B의 조상이다', 'C는 D, E와 더 가까운 친척이다', 'C는 A, B보다 더 진화한 생물이다'],
           answer: 0,
           feedback: ['', '계통수에서 현생 생물끼리는 서로의 조상이 아니에요. 공통 조상에서 각각 갈라진 후손이에요.', 'C와 D, E 사이의 차이 수는 8로 가장 커요. A, B와 훨씬 가까워요.', '합류 시점이 늦다고 더 진화한 것이 아니에요. 갈라진 순서와 거리를 나타낼 뿐이에요.'],
@@ -842,7 +864,7 @@
           check: () => { const g = S.pg; if (!g.ran.plant || g.stale.plant) return false; const t = g.tree.plant; return !!t && checkProgram('plant', t).ok; }, hold: 0.5,
           status: () => { const g = S.pg; const c = g.tree.plant && !g.stale.plant ? checkProgram('plant', g.tree.plant) : null; return '💻 실행 ' + mark(g.ran.plant && !g.stale.plant) + ' · 규칙 점검 ' + mark(!!(c && c.ok)); },
           hint: '관다발, 종자, 씨방 중 가장 많은 종이 가진 형질부터 차례로 쓰면 돼요. 점검 메시지가 어느 형질이 문제인지 알려 줘요.',
-          setup() { S.pg.ds = 'plant'; setMode('code'); updateCtl(); },
+          setup() { pgFresh('plant'); S.pg.ds = 'plant'; setMode('code'); updateCtl(); },
           explain: '관다발 → 종자 → 씨방 순서로 쓰면 각 형질을 가진 종이 한 가지로 묶여요. 다른 순서는 검색표로는 쓸 수 있어도 <b>공유 파생 형질이 쌓인 순서</b>와 달라 계통수로는 알맞지 않아요.',
         },
         {
@@ -850,7 +872,7 @@
           check: () => { const g = S.pg; if (!g.ran.animal || g.stale.animal) return false; const t = g.tree.animal; return !!t && checkProgram('animal', t).ok && g.tapped.fwd && g.tapped.back; }, hold: 0.5,
           status: () => { const g = S.pg; const c = g.tree.animal && !g.stale.animal ? checkProgram('animal', g.tree.animal) : null; return '💻 실행 ' + mark(g.ran.animal && !g.stale.animal) + ' · 규칙 점검 ' + mark(!!(c && c.ok)) + ' · 큰 가지 이름 ' + mark(g.tapped.fwd && g.tapped.back); },
           hint: '동물 9문 자료에서 형질 순서를 조직 → 3배엽 → 후구 → 탈피(또는 후구와 탈피를 서로 바꾼 순서)로 정하고 실행해요.',
-          setup() { S.pg.ds = 'animal'; setMode('code'); updateCtl(); },
+          setup() { pgFresh('animal'); S.pg.ds = 'animal'; setMode('code'); updateCtl(); },
           explain: '입(원구)이 항문이 되는 <b>후구동물</b>(극피동물, 척삭동물)과 입이 먼저 생기는 <b>선구동물</b>이 큰 가지로 갈라져요. 선구동물 안에서는 허물을 벗는 무리(선형동물, 절지동물)가 한 가지로 묶여요.',
         },
         {
@@ -895,7 +917,7 @@
 
   window.__sim = {
     S, VW, VH, PHONE, get game() { return game; }, setMode, levels, SP5, TR4, M5, REF, SC, SLOTS, SPTRAY, TKW, TKH, regionOf, slotInside, trSlots, trCheck, mismatchOf, flipNode, pathTo, DSETS, molJoin, molMin, mtCell, molCanon, canon, PSETS, runProgram, checkProgram, runPg, setPgOrder, pgPickRect, mxCell, TRL,
-    fillMx() { S.mx.v = M5.map((r) => r.slice()); S.mx.bad.forEach((r) => r.fill(false)); updateCtl(); },
+    fillMx: fillMxAll,
     placeAll() { const sl = trSlots(); sl.traits.forEach((s) => { const it = S.trTok.items.find((x) => x.kind === 'tr' && x.id === s.trait); it.slotId = s.id; S.tr.traitAt[s.id] = s.trait; it.x = s.r.x + s.r.w / 2; it.y = s.r.y + s.r.h / 2; }); sl.tips.forEach((s) => { const it = S.trTok.items.find((x) => x.kind === 'sp' && x.id === s.sp); it.slotId = s.id; S.tr.spAt[s.id] = s.sp; it.x = s.r.x + s.r.w / 2; it.y = s.r.y + s.r.h / 2; }); updateCtl(); },
   };
 })();

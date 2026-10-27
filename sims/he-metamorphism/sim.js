@@ -809,7 +809,7 @@
     D.ring(px, py0, 14, t, { color: '#0369a1', speed: 0.8, width: 2 });
     const txt = d.toFixed(1) + ' km · 변성도 ' + aurPct(d) + ' %';
     const bx = Math.min(P.x + P.w - 190, Math.max(xc + 20, px + 16));
-    D.label(bx + 90, py0 > ys + hL * 2 ? py0 - hL * 0.9 : py0 + hL * 0.9, txt, { bg: '#0369a1', size: 14, pad: 10 });
+    if (A.done) D.label(bx + 90, py0 > ys + hL * 2 ? py0 - hL * 0.9 : py0 + hL * 0.9, txt, { bg: '#0369a1', size: 14, pad: 10 });
     // 층 이름
     AUR_ROWS.forEach((k, r) => { if (r < 3) tx(P.x + P.w - 10, ys + r * hL + hL / 2 + 5, AUR_META[k][2], 13, 'rgba(30,30,40,.75)', 'right', 800); });
     if (S.aur.rise < 0.02) { note(P.x + P.w / 2 - 150, P.y + P.h / 2 - 20, 300, '▶ 마그마 관입을 눌러 보세요', 15); }
@@ -1097,8 +1097,6 @@
     D.sky(C.x, C.y, C.w, C.h * 0.22, '#cfe9ff', '#eaf6ff');
     // 맨틀
     ctx.fillStyle = lithFill('mantle'); ctx.fillRect(C.x, cyp(zv(30)), C.w, C.h);
-    // 바다(두 대륙 사이)
-    if (tt < 0.55) { const a = 1 - smooth((tt - 0.4) / 0.15); ctx.fillStyle = 'rgba(74,152,201,' + 0.9 * a + ')'; ctx.fillRect(cxp(0.4), cyp(zv(0)), cxp(Math.max(0.4, uB)) - cxp(0.4), cyp(zv(3)) - cyp(zv(0))); }
     // 지각
     ctx.beginPath(); ctx.moveTo(cxp(0), cyp(zv(0))); for (let i = 0; i <= 60; i++) { const u = i / 60; ctx.lineTo(cxp(u), cyp(zv(surfZ(u)))); } ctx.lineTo(cxp(1), cyp(zv(0))); for (let i = 60; i >= 0; i--) { const u = i / 60; ctx.lineTo(cxp(u), cyp(zv(mohoZ(u)))); } ctx.closePath();
     ctx.fillStyle = lithFill('crust'); ctx.fill(); ctx.save(); ctx.clip();
@@ -1106,6 +1104,16 @@
     const bz = 26 * (1 - up), bamp = smooth((tt - 0.5) / 0.2);
     if (bamp > 0.01) { ctx.globalAlpha = bamp; ctx.beginPath(); ctx.ellipse(cxp(BELT_CX), cyp(zv(bz)), C.w * 0.11, (cyp(zv(10)) - cyp(zv(0))), 0, 0, TAU); ctx.fillStyle = lithFill('gneiss'); ctx.fill(); ctx.strokeStyle = '#6d28d9'; ctx.lineWidth = 3; ctx.stroke(); ctx.globalAlpha = 1; }
     ctx.restore();
+    // 바다(두 대륙 사이): 지도와 같이 대륙 A의 끝(0.44)에서 대륙 B의 왼쪽 끝까지, 얇은 해양 지각 위의 바닷물
+    if (tt < 0.55 && uB > 0.44) {
+      const a = 1 - smooth((tt - 0.4) / 0.15), x0s = cxp(0.44), x1s = cxp(uB);
+      ctx.save(); ctx.globalAlpha = a; ctx.beginPath(); ctx.rect(x0s, cyp(zv(0)), x1s - x0s, cyp(zv(40)) - cyp(zv(0))); ctx.clip();
+      ctx.fillStyle = lithFill('mantle'); ctx.fillRect(x0s, cyp(zv(0)), x1s - x0s, cyp(zv(40)) - cyp(zv(0)));
+      ctx.fillStyle = lithFill('basalt'); ctx.fillRect(x0s, cyp(zv(4)), x1s - x0s, cyp(zv(11)) - cyp(zv(4)));
+      ctx.fillStyle = 'rgba(74,152,201,.95)'; ctx.fillRect(x0s, cyp(zv(0)), x1s - x0s, cyp(zv(4)) - cyp(zv(0)));
+      ctx.restore();
+      if (a > 0.6) tx((x0s + x1s) / 2, cyp(zv(2.6)), '바다', 13, '#eaf6ff', 'center', 800);
+    }
     // 지표선과 침식
     ctx.beginPath(); for (let i = 0; i <= 60; i++) { const u = i / 60; i ? ctx.lineTo(cxp(u), cyp(zv(surfZ(u)))) : ctx.moveTo(cxp(u), cyp(zv(surfZ(u)))); } ctx.strokeStyle = '#3f2d1d'; ctx.lineWidth = 3; ctx.stroke();
     ctx.restore();
@@ -1207,8 +1215,8 @@
   $('#bTimePlay').addEventListener('click', mapPlay);
   function mapReset() { const M = S.map; SciSim.tween(M, { t: 0 }, { duration: 0.001 }); Object.assign(M, { t: 0, play: false, marked: false, mark: 0 }); updateCtl(); }
   $('#bTimeReset').addEventListener('click', () => { Sound.click(); mapReset(); });
-  bindSlider(sTime, oTime, () => '…', (v) => { const M = S.map; if (M.play) { M.play = false; SciSim.tween(M, { t: M.t }, { duration: 0.001 }); } M.t = v / 100; updateCtl(); });
-  $$('#modeSeg button').forEach((b) => b.addEventListener('click', () => { Sound.click(); setView(b.dataset.view); }));
+  bindSlider(sTime, oTime, () => '…', (v) => { const M = S.map; M.t = v / 100; if (M.play) { M.play = false; SciSim.tween(M, { t: M.t }, { duration: 0.001 }); } updateCtl(); });
+  $$('#modeSeg button').forEach((b) => b.addEventListener('click', () => { Sound.click(); clearTimeout(hintTimer); const h = $('#stageHint'); if (h) h.classList.add('hide'); setView(b.dataset.view); }));
 
   /* ---------- 포인터 ---------- */
   SciSim.pointer(view, {

@@ -270,7 +270,7 @@
   const forceCo2 = (c) => 5.35 * Math.log(Math.max(c, 1) / K.C0);                // ΔF = 5.35 ln(C / 280)
   const teq = (c) => K.SENS * forceCo2(c);
   const ANTHRO = K.F.reduce((s, f) => s + f[1], 0);                                // 인위적 요인의 합 (예시: 약 +2.7)
-  const fmtAge = (a) => (a === 0 ? '현재' : fix(a / 10, 1) + '만 년 전');
+  const fmtAge = (a) => (a === 0 ? '산업화 직전' : fix(a / 10, 1) + '만 년 전');
 
   /* ---------- 최근 80만 년 CO₂와 기온 (예시 자료: 빙하 코어 모양을 단순화) ---------- */
   const TERM = [0, 11, 128, 245, 335, 430, 535, 625, 715, 810];
@@ -415,7 +415,7 @@
     const Ro = PHONE ? { x: MR.x, y: MR.y, w: MR.w, h: 200 } : { x: MR.x, y: MR.y, w: MR.w * 0.46, h: MR.h };
     const Rq = PHONE ? { x: MR.x, y: MR.y + 208, w: MR.w, h: 192 } : { x: MR.x + MR.w * 0.46 + 8, y: MR.y, w: MR.w * 0.54 - 8, h: MR.h };
     card(Ro, '지구의 공전 궤도 (위에서 본 모습)');
-    const ed = Math.min(S.eS * 8, 0.5), a = Math.min(Ro.w * 0.34, Ro.h * 0.30), cx0 = Ro.x + Ro.w * 0.47, cy0 = Ro.y + Ro.h * (PHONE ? 0.56 : 0.5), b = a * Math.sqrt(1 - ed * ed), sx = cx0 + a * ed;
+    const ed = Math.min(S.eS * 8, 0.5), a = Math.min(Ro.w * 0.34, Ro.h * (PHONE ? 0.25 : 0.30)), cx0 = Ro.x + Ro.w * 0.47, cy0 = Ro.y + Ro.h * (PHONE ? 0.52 : 0.5), b = a * Math.sqrt(1 - ed * ed), sx = cx0 + a * ed;
     ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.ellipse(cx0, cy0, a, b, 0, 0, TAU); ctx.stroke();
     D.glow(sx, cy0, 36 * U, '#fbbf24', 0.5); D.sphere(sx, cy0, 15 * U, '#fbbf24', { gloss: true });
     D.text(cx0 + a + 4, cy0 + 4, '근일점', { size: 11.5, weight: 800, color: '#64748b', align: 'left' }); D.text(cx0 - a - 4, cy0 + 4, '원일점', { size: 11.5, weight: 800, color: '#64748b', align: 'right' });
@@ -448,7 +448,9 @@
     const q = Qsun(S.eS, S.epsS, S.phiS), base0 = K.Q0 + K.K_EPS * (S.epsS - K.EPS0);
     D.text(R.x + 16, R.y + 54 * FS, '기울기 효과: ' + K.Q0 + ' + ' + K.K_EPS + ' × (' + fix(S.epsS, 1) + ' − ' + K.EPS0 + ') = ' + fix(base0, 1) + ' W/m²', { size: 14, weight: 800, color: '#334155', align: 'left' });
     D.text(R.x + 16, R.y + 84 * FS, '거리 효과: × (태양 거리)⁻² = × ' + fix(q / base0, 3), { size: 14, weight: 800, color: '#334155', align: 'left' });
-    D.text(R.x + 16, R.y + 118 * FS, '일사량 = ' + fix(q, 1) + ' W/m²  (원 궤도·기울기 ' + K.EPS0 + '°일 때 ' + K.Q0 + ' 대비 ' + sgn(q - K.Q0, 1) + ')', { size: 15.5, weight: 800, color: '#6d28d9', align: 'left' });
+    const cmp = '(원 궤도·기울기 ' + K.EPS0 + '°일 때 ' + K.Q0 + ' 대비 ' + sgn(q - K.Q0, 1) + ')';
+    if (PHONE) { D.text(R.x + 16, R.y + 118 * FS, '일사량 = ' + fix(q, 1) + ' W/m²', { size: 15.5, weight: 800, color: '#6d28d9', align: 'left' }); D.text(R.x + 16, R.y + 142 * FS, cmp, { size: 13.5, weight: 800, color: '#6d28d9', align: 'left' }); }
+    else D.text(R.x + 16, R.y + 118 * FS, '일사량 = ' + fix(q, 1) + ' W/m²  ' + cmp, { size: 15.5, weight: 800, color: '#6d28d9', align: 'left' });
     drawWrap(R.x + R.w / 2, R.y + R.h - 24 * FS, '이 변화는 수만~10만 년에 걸쳐 천천히 일어나요.', R.w - 30, 13, { color: '#64748b' });
   }
   /* 화산 */
@@ -486,7 +488,7 @@
     const Rb = PHONE ? { x: MR.x, y: MR.y + 198, w: MR.w, h: 236 } : { x: MR.x + MR.w * 0.5 + 8, y: MR.y, w: MR.w * 0.5 - 8, h: MR.h };
     const f = S.iceS / 100, alb = albOf(f);
     card(Rg, '');
-    const cx = Rg.x + Rg.w * 0.6, cy = Rg.y + Rg.h * 0.54, r = Math.min(Rg.w * 0.3, Rg.h * 0.34);
+    const cx = Rg.x + Rg.w * 0.6, cy = Rg.y + Rg.h * (PHONE ? 0.56 : 0.54), r = Math.min(Rg.w * 0.3, Rg.h * (PHONE ? 0.28 : 0.34));
     [-0.55, 0, 0.55].forEach((k) => { const y = cy + k * r * 1.3; D.arrow(Rg.x + 14, y, cx - r - 8, y, { color: 'rgba(245,158,11,.9)', width: 5, head: 12 }); });
     ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, r, 0, TAU); ctx.clip();
     const g = ctx.createRadialGradient(cx - r * 0.3, cy - r * 0.35, r * 0.1, cx, cy, r); g.addColorStop(0, '#6bb0e6'); g.addColorStop(1, '#2d67ad'); ctx.fillStyle = g; ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
@@ -496,19 +498,20 @@
     ctx.restore(); ctx.strokeStyle = 'rgba(30,64,120,.5)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(cx, cy, r, 0, TAU); ctx.stroke();
     // 반사 화살표: 얼음 쪽에서 굵게
     [[-0.78, -1], [0.78, 1]].forEach(([k, s]) => { if (f > 0.02) { const x0 = cx - r * 0.55, y0 = cy + k * r * 0.95; D.arrow(x0, y0, x0 - 46 * U, y0 + s * 46 * U, { color: 'rgba(250,204,21,.95)', width: 1.5 + f * 9, head: 10 }); } });
-    D.text(cx, cy - r - 10 * FS, '북극', { size: 12, weight: 800, color: '#475569' }); D.text(cx, cy + r + 20 * FS, '남극', { size: 12, weight: 800, color: '#475569' });
-    D.text(Rg.x + Rg.w / 2, Rg.y + 24 * FS, '얼음이 줄면 → 반사율↓ → 흡수↑ → 기온↑ → 더 녹아요', { size: PHONE ? 12.5 : 13.5, weight: 800, color: '#334155' });
+    D.text(cx, cy - r - 10 * FS, '북극', { size: 12, weight: 800, color: '#475569' }); D.text(cx, cy + r + (PHONE ? 16 : 20) * FS, '남극', { size: 12, weight: 800, color: '#475569' });
+    D.text(Rg.x + Rg.w / 2, Rg.y + (PHONE ? 16 : 24) * FS, '얼음이 줄면 → 반사율↓ → 흡수↑ → 기온↑ → 더 녹아요', { size: PHONE ? 12.5 : 13.5, weight: 800, color: '#334155' });
     if (S.pulse > 0.02) D.ring(cx, cy - r * 0.9, 24 * U * (1 + (1 - S.pulse)), t, { color: '#dc2626', speed: 1.5 });
     // 오른쪽: 반사율 표와 막대
     card(Rb, '표면의 반사율 (예시)');
+    const RF = PHONE ? 0.88 : FS;
     const items = [['눈·얼음', 0.8, '#bfe3fb'], ['구름', 0.5, '#d7dee8'], ['숲', 0.15, '#4ea35f'], ['바다', 0.06, '#2d67ad']];
-    items.forEach((it, i) => { const y = Rb.y + 40 * FS + i * 24 * FS; D.text(Rb.x + 14, y + 14, it[0], { size: 13.5, weight: 800, color: '#334155', align: 'left' }); ctx.fillStyle = '#eef2f7'; rr(Rb.x + 78 * U + 20, y, Rb.w - 78 * U - 70, 17, 5).fill(); ctx.fillStyle = it[2]; rr(Rb.x + 78 * U + 20, y, (Rb.w - 78 * U - 70) * it[1], 17, 5).fill(); D.text(Rb.x + Rb.w - 12, y + 14, String(it[1]), { size: 13, weight: 800, color: '#0f172a', align: 'right' }); });
-    const y0 = Rb.y + 40 * FS + 4 * 24 * FS + 12;
+    items.forEach((it, i) => { const y = Rb.y + 40 * RF + i * 24 * RF; D.text(Rb.x + 14, y + 14, it[0], { size: 13.5, weight: 800, color: '#334155', align: 'left' }); ctx.fillStyle = '#eef2f7'; rr(Rb.x + 78 * U + 20, y, Rb.w - 78 * U - 70, 17, 5).fill(); ctx.fillStyle = it[2]; rr(Rb.x + 78 * U + 20, y, (Rb.w - 78 * U - 70) * it[1], 17, 5).fill(); D.text(Rb.x + Rb.w - 12, y + 14, String(it[1]), { size: 13, weight: 800, color: '#0f172a', align: 'right' }); });
+    const y0 = Rb.y + 40 * RF + 4 * 24 * RF + 12;
     D.text(Rb.x + 14, y0 + 14, '지표 평균 반사율 = ' + K.ALB_ICE + ' × ' + fix(f, 2) + ' + ' + K.ALB_REST + ' × ' + fix(1 - f, 2) + ' = ' + fix(alb, 2), { size: 13.5, weight: 800, color: '#334155', align: 'left' });
-    D.text(Rb.x + 14, y0 + 14 + 26 * FS, '흡수하는 태양 에너지 = 1 − ' + fix(alb, 2) + ' = ' + fix(1 - alb, 2), { size: 15, weight: 800, color: '#b45309', align: 'left' });
-    const bx = Rb.x + 14, bw = Rb.w - 28, by = y0 + 14 + 44 * FS;
+    D.text(Rb.x + 14, y0 + 14 + 26 * RF, '흡수하는 태양 에너지 = 1 − ' + fix(alb, 2) + ' = ' + fix(1 - alb, 2), { size: 15, weight: 800, color: '#b45309', align: 'left' });
+    const bx = Rb.x + 14, bw = Rb.w - 28, by = y0 + 14 + 44 * RF;
     ctx.fillStyle = '#eef2f7'; rr(bx, by, bw, 18, 6).fill(); ctx.fillStyle = '#f59e0b'; rr(bx, by, bw * clamp(1 - alb, 0, 1), 18, 6).fill();
-    D.text(bx + bw, by + 34 * FS, '← 흡수 (0 ~ 1)', { size: 12, weight: 700, color: '#64748b', align: 'right' });
+    D.text(bx + bw, by + 34 * RF, '← 흡수 (0 ~ 1)', { size: 12, weight: 700, color: '#64748b', align: 'right' });
   }
   function drawIcePanel(t) {
     const R = PHONE ? { x: LR.x, y: LR.y + 28, w: LR.w, h: LR.h - 28 } : LR; card(R, '양의 되먹임: 처음의 변화를 더 키워요');

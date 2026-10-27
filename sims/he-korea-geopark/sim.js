@@ -869,7 +869,7 @@
   pinBtns.forEach((b, i) => b.addEventListener('click', () => { Sound.click(); S.map.sel = i; updateCtl(); }));
   selRock.addEventListener('change', () => { Sound.click(); S.map.ans[S.map.sel].rock = selRock.value; updateCtl(); });
   selAge.addEventListener('change', () => { Sound.click(); S.map.ans[S.map.sel].age = selAge.value; updateCtl(); });
-  bindSlider(sHT, oHT, () => '…', (v) => { const H = S.hantan; if (H.play) { H.play = false; SciSim.tween(H, { t: H.t }, { duration: 0.001 }); } H.t = v / 100; H.max = Math.max(H.max || 0, H.t); updateCtl(); });
+  bindSlider(sHT, oHT, () => '…', (v) => { const H = S.hantan; H.t = v / 100; if (H.play) { H.play = false; SciSim.tween(H, { t: H.t }, { duration: 0.001 }); } H.max = Math.max(H.max || 0, H.t); updateCtl(); });
   function htPlay() {
     const H = S.hantan; Sound.click();
     if (H.play) { H.play = false; SciSim.tween(H, { t: H.t }, { duration: 0.001 }); updateCtl(); return; }
@@ -894,7 +894,7 @@
   ssels.forEach((s) => s.addEventListener('change', () => { Sound.click(); S.sed.ans[+s.dataset.i] = s.value; updateCtl(); }));
   whySels.forEach((s, i) => s.addEventListener('change', () => { Sound.click(); S.plan.why[i] = s.value; updateCtl(); }));
   $('#bPlanReset').addEventListener('click', () => { Sound.click(); S.plan.sel = []; S.plan.why = ['', '', '', '']; updateCtl(); });
-  $$('#modeSeg button').forEach((b) => b.addEventListener('click', () => { Sound.click(); setView(b.dataset.view); }));
+  $$('#modeSeg button').forEach((b) => b.addEventListener('click', () => { Sound.click(); clearTimeout(hintTimer); const h = $('#stageHint'); if (h) h.classList.add('hide'); setView(b.dataset.view); }));
 
   /* ---------- 포인터 ---------- */
   SciSim.pointer(view, {
@@ -1003,7 +1003,7 @@
           title: '침식률 계산과 관찰 포인트 찾기',
           goal: '한탄강 협곡이 깊이 <b>30 m</b>까지 파이는 데 <b>50만 년</b>이 걸렸다면 침식률은 몇 <b>mm/년</b>일까요? 기록하고, 체크리스트 관찰 포인트를 <b>3개 이상</b> 찾아요.',
           hint: '30 m = 30 000 mm. 침식률 = 30 000 mm / 500 000년. 장면의 ? 표시(용암 대지, 주상절리, 협곡)를 눌러 찾아요. 슬라이더를 오른쪽으로 옮겨야 나타나요.',
-          hold: 0.4, setup() { S.ero.rec = null; $('#inEro').value = ''; setView('hantan'); },
+          hold: 0.4, setup() { S.ero.rec = null; $('#inEro').value = ''; S.found = {}; info.id = null; setView('hantan'); },
           status: () => '침식률 기록 ' + mark(eroOk()) + ' · 관찰 포인트 ' + chkCount() + ' / 3개 이상 ' + mark(chkCount() >= 3),
           check: () => eroOk() && chkCount() >= 3,
           explain: '침식률 = 깊이 / 시간 = 30 000 mm / 500 000년 = <b>0.06 mm/년</b>이에요. 1년에 머리카락 굵기보다 훨씬 얇게 깎이지만, 오랜 시간이 쌓이면 깊은 협곡이 돼요. (수치는 예시 자료이므로 실제 값은 안내판·누리집에서 확인해요.)',

@@ -377,7 +377,7 @@
     const msg = hit >= 0 ? '✅ 거울상이 겹쳐요! 이 방향은 대칭이에요' : '자르는 방향: ' + Math.round(q.ang) + '°  (거울상이 겹치는 방향을 찾아봐요)';
     T(VW / 2, L(520, 548), msg, L(17, 14.5), hit >= 0 ? '#0b6b39' : '#475569', 'center', 800);
     T(VW / 2, L(546, 574), '찾은 거울상 방향: ' + nf + '개' + (nf ? ' (초록 점)' : ' · 칼을 0°에서 180°까지 돌려 보세요'), L(14.5, 13.5), '#64748b', 'center', 700);
-    if (q.cls[q.i] != null) { chip(VW / 2, L(80, 98), (q.i === 0 ? '비대칭' : SYM_N[sp.cls]) + ' · ' + sp.note, { align: 'center', size: L(14, 13), bg: '#dcfce7', color: '#0b6b39', border: '#16a34a', pad: 12, h: 28 }); }
+    if (q.cls[q.i] != null) { chip(VW / 2, L(106, 98), (q.i === 0 ? '비대칭' : SYM_N[sp.cls]) + ' · ' + sp.note, { align: 'center', size: L(14, 13), bg: '#dcfce7', color: '#0b6b39', border: '#16a34a', pad: 12, h: 28 }); }
   }
   function symDown(p) {
     for (let i = 0; i < SPEC.length; i++) { const w = L(100, 84), x = L(20, 12) + i * (w + L(8, 6)); if (inRect(p, { x, y: 46, w, h: 34 })) { selSpec(i); return false; } }

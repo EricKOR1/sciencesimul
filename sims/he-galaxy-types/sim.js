@@ -788,7 +788,7 @@
     const v = parseNum(inN.value);
     if (!isFinite(v)) { Sound.fail(); say('n을 숫자로 써요. 예: 4', true, 2.2); return; }
     const calc = 10 * (1 - S.hb / S.ha);
-    if (Math.abs(v - calc) > 0.4) { Sound.fail(); say('다시 계산해 봐요. b/a = ' + f1(S.hb) + '/' + f1(S.ha) + ' 이므로 n = 10 × (1 - b/a) 예요.', true, 3.6); return; }
+    if (Math.abs(v - calc) > 0.4 && Math.abs(v - e.n) > 0.01) { Sound.fail(); say('다시 계산해 봐요. b/a = ' + f1(S.hb) + '/' + f1(S.ha) + ' 이므로 n = 10 × (1 - b/a) 예요.', true, 3.6); return; }
     S.recE[S.gi] = true; Sound.success(); say(e.nm + '는 타원 은하 E' + e.n + '예요! (b/a = ' + (e.b / 10).toFixed(1) + ')', false, 2.8);
     const c = mc(); parts.burst(c.cx, c.cy, { count: 20, speed: 160, colors: ['#fbbf24', '#fff', '#fb923c'] });
     updateCtl();
@@ -976,7 +976,7 @@
         {
           title: '소리굽쇠 도표에 나선 은하 놓기',
           goal: '나선 은하 6장을 <b>알맞은 칸</b>(Sa·Sb·Sc·SBa·SBb·SBc)에 놓고 <b>✔ 확인하기</b>를 눌러요.', manual: true,
-          setup() { dn2.reset(); setView('v2f'); },
+          setup() { dn2.reset(); setView('v2f'); showHint('사진을 알맞은 칸에 끌어 놓아요', 5000); },
           hint: '먼저 중심에 막대가 있는지로 S와 SB를 나누고, 팽대부 크기와 나선팔이 감긴 정도로 a·b·c를 정해요.',
           check: () => {
             if (placed2() < 6) return '6장을 모두 칸에 놓아요. (' + placed2() + ' / 6)';

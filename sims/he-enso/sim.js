@@ -624,8 +624,8 @@
     land([[0, 0.05], [0.14, 0.02], [0.2, 0.25], [0.12, 0.45], [0, 0.4]], '#a9c58f');                  // 동아시아
     land([[0.02, 0.58], [0.2, 0.5], [0.3, 0.62], [0.24, 0.9], [0.05, 0.92]], '#bfc98f');                 // 인도네시아·호주
     land([[0.9, 0.3], [1, 0.25], [1, 0.95], [0.9, 0.9], [0.86, 0.6]], '#a9c58f');                         // 남아메리카
-    D.text(mx + mw * 0.08, my + mh * 0.22, '동아시아', { size: 12, weight: 800, color: '#3a5a22' }); D.text(mx + mw * 0.15, my + mh * 0.77, '인도네시아·호주', { size: 12, weight: 800, color: '#5a5a22' });
-    D.text(mx + mw * 0.94, my + mh * 0.6, '남미', { size: 12, weight: 800, color: '#3a5a22' });
+    D.text(mx + mw * 0.07, my + mh * 0.40, '동아시아', { size: 12, weight: 800, color: '#3a5a22' }); D.text(mx + mw * 0.15, my + mh * 0.95, '인도네시아·호주', { size: 12, weight: 800, color: '#5a5a22' });
+    D.text(mx + mw * 0.94, my + mh * 0.85, '남미', { size: 12, weight: 800, color: '#3a5a22' });
     ctx.restore();
     const pts = [['pe', 0.86, 0.5, '페루 연안'], ['in', 0.2, 0.7, '인도네시아·호주 동부'], ['kr', 0.12, 0.2, '우리나라']];
     pts.forEach(([id, fx, fy, name]) => { const x = mx + mw * fx, y = my + mh * fy, sel = clsImp.sel[id]; D.sphere(x, y, 11 * U, sel === 'rain' ? '#2563eb' : sel === 'dry' ? '#d97706' : sel === 'warm' ? '#dc2626' : '#64748b', { gloss: false, outline: '#fff', outlineWidth: 2 }); D.label(x, y - 24 * U, name, { bg: '#334155', size: 12, pad: 6 }); if (clsImp.sel[id]) D.text(x, y + 28 * U, { rain: '많은 비', dry: '가뭄', warm: '기온 높음' }[sel], { size: 12.5, weight: 800, color: '#0f172a', stroke: '#ffffff' }); });

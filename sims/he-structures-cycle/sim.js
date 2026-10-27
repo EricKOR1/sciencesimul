@@ -783,9 +783,10 @@
     }
     ctx.restore(); ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.5; rr(x, y, w, h, 10).stroke();
   };
+  const bdOnReject = (c, z, m) => { if (m) say(m, true, 2.2); };
   const bdBoard = new Board(PHONE
-    ? { zones: BD.map((b, i) => ({ id: b.id, x: 10, y: 48 + i * 168, w: 580, h: 160, head: 92, label: b.name, color: b.color, fill: 'rgba(255,255,255,.8)', lsize: 15, draw: (z, t) => bdIcon(b.id, z.x + z.w - 150, z.y + 8, 138, 70, t) })), tray: { x: 10, y: 560, w: 580, cols: 3 }, cw: 184, ch: 66, gap: 8 }
-    : { zones: BD.map((b, i) => ({ id: b.id, x: 20 + i * 254, y: 46, w: 244, h: 236, head: 100, label: b.name, color: b.color, fill: 'rgba(255,255,255,.8)', lsize: 14, draw: (z, t) => bdIcon(b.id, z.x + 10, z.y + 30, z.w - 20, 62, t) })), tray: { x: 20, y: 304, w: 760, cols: 3 }, cw: 232, ch: 54, gap: 8 });
+    ? { zones: BD.map((b, i) => ({ id: b.id, x: 10, y: 48 + i * 168, w: 580, h: 160, head: 92, cap: 2, label: b.name, color: b.color, fill: 'rgba(255,255,255,.8)', lsize: 15, draw: (z, t) => bdIcon(b.id, z.x + z.w - 150, z.y + 8, 138, 70, t) })), tray: { x: 10, y: 560, w: 580, cols: 3 }, cw: 184, ch: 66, gap: 8, onReject: bdOnReject }
+    : { zones: BD.map((b, i) => ({ id: b.id, x: 20 + i * 254, y: 46, w: 244, h: 236, head: 100, cap: 2, label: b.name, color: b.color, fill: 'rgba(255,255,255,.8)', lsize: 14, draw: (z, t) => bdIcon(b.id, z.x + 10, z.y + 30, z.w - 20, 62, t) })), tray: { x: 20, y: 304, w: 760, cols: 3 }, cw: 232, ch: 54, gap: 8, onReject: bdOnReject });
   BD_CARDS.forEach((c) => bdBoard.add({ id: c.id, label: c.label, def: c, color: '#1e293b' }));
   const bdPlaced = () => bdBoard.cards.filter((c) => c.zone).length;
   const bdOk = () => bdBoard.cards.every((c) => c.zone === c.def.z);
@@ -1101,7 +1102,7 @@
   $('#bSubReset').addEventListener('click', () => { Sound.click(); subdReset(); updateCtl(); });
   SEG(condBtns, (b) => { const i = +b.dataset.k; S.cond = [false, false, false, false]; S.cond[i] = true; updateCtl(); });
   bindSlider(sAge, oAge, (v) => comma(v) + ' km', (v) => { S.age.d = v; });
-  $$('#modeSeg button').forEach((b) => b.addEventListener('click', () => { Sound.click(); setView(b.dataset.view); }));
+  $$('#modeSeg button').forEach((b) => b.addEventListener('click', () => { Sound.click(); clearTimeout(hintTimer); const h = $('#stageHint'); if (h) h.classList.add('hide'); setView(b.dataset.view); }));
 
   /* ---------- 포인터 ---------- */
   SciSim.pointer(view, {

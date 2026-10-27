@@ -720,7 +720,7 @@
      장면 3: 마그마의 분화 (보웬 반응 계열)
      ====================================================== */
   const TKC = PHONE ? { x: 8, y: 8, w: 584, h: 300 } : { x: 10, y: 10, w: 262, h: 540 };
-  const TNK = PHONE ? { x: 46, y: 62, w: 210, h: 224 } : { x: 56, y: 84, w: 170, h: 400 };
+  const TNK = PHONE ? { x: 46, y: 84, w: 210, h: 204 } : { x: 56, y: 84, w: 170, h: 400 };
   const BWC = PHONE ? { x: 8, y: 316, w: 584, h: 424 } : { x: 280, y: 10, w: 510, h: 410 };
   const BIC = PHONE ? { x: 8, y: 748, w: 584, h: 124 } : { x: 280, y: 428, w: 510, h: 122 };
   const PILE_ORDER = ['ol', 'px', 'pl', 'am', 'bi'];
@@ -730,7 +730,7 @@
   let prevR = 0;
   const activeMin = (T) => WIN.filter((w) => T < w.a && T > w.b).map((w) => MIN[w.id].n);
   function drawBowen(t, dt) {
-    if (S.playing) { S.tc = Math.max(700, S.tc - 52 * dt); setSlider($('#sCool'), $('#oCool'), 1300 - S.tc, (v) => (1300 - v) + ' °C'); if (S.tc <= 700) S.playing = false; }
+    if (S.playing) { S.tc = Math.max(700, S.tc - 52 * dt); setSlider($('#sCool'), $('#oCool'), Math.round(1300 - S.tc), (v) => Math.round(1300 - v) + ' °C'); if (S.tc <= 700) S.playing = false; }
     S.tv = approach(S.tv, S.tc, dt, 6);
     const T = S.tv, B = bowenAt(T), tk = TNK;
     // 탱크
@@ -813,9 +813,9 @@
     TEX[kind] = c; return c;
   }
   const TBL = PHONE ? { x: 8, y: 8, w: 584, h: 300 } : { x: 10, y: 10, w: 500, h: 394 };
-  const CDM = PHONE ? { x: 8, y: 436, w: 584, h: 132 } : { x: 520, y: 10, w: 270, h: 196 };
-  const SMP = PHONE ? { x: 8, y: 316, w: 584, h: 112 } : { x: 520, y: 214, w: 270, h: 190 };
-  const TRY = PHONE ? { x: 8, y: 576, w: 584, h: 296 } : { x: 10, y: 412, w: 780, h: 138 };
+  const CDM = PHONE ? { x: 8, y: 452, w: 584, h: 132 } : { x: 520, y: 10, w: 270, h: 196 };
+  const SMP = PHONE ? { x: 8, y: 316, w: 584, h: 128 } : { x: 520, y: 214, w: 270, h: 190 };
+  const TRY = PHONE ? { x: 8, y: 592, w: 584, h: 280 } : { x: 10, y: 412, w: 780, h: 138 };
   const CARD = PHONE ? { w: 140, h: 104 } : { w: 112, h: 96 };
   const COLW = (TBL.w - (PHONE ? 120 : 100) - 16) / 3, HDR = PHONE ? 58 : 62, ROWH = (TBL.h - HDR - 14) / 2;
   const cellRect = (row, col) => ({ x: TBL.x + (PHONE ? 120 : 100) + 8 + col * COLW, y: TBL.y + HDR + 6 + row * ROWH, w: COLW - 6, h: ROWH - 6 });
@@ -837,7 +837,7 @@
     card(TBL);
     const cols = [['염기성', 'SiO₂ 45~52 %', '#3b4252'], ['중성', 'SiO₂ 52~63 %', '#8a8780'], ['산성', 'SiO₂ 63 % 초과', '#d9a893']];
     cols.forEach((c, i) => { const r0 = cellRect(0, i); ctx.fillStyle = c[2]; rr(r0.x, TBL.y + 8, r0.w, HDR - 8, 8).fill(); D.text(r0.x + r0.w / 2, TBL.y + 28, c[0], { size: 15, weight: 800, color: i === 2 ? '#3a2018' : '#fff' }); D.text(r0.x + r0.w / 2, TBL.y + 28 + 18, c[1], { size: 12.5, weight: 700, color: i === 2 ? '#3a2018' : 'rgba(255,255,255,.9)' }); });
-    [['화산암', '지표 부근에서 빨리 식음', '세립질'], ['심성암', '땅속 깊은 곳에서 천천히 식음', '조립질']].forEach((r, i) => {
+    [['화산암', PHONE ? '지표 부근에서 빨리 식음' : '지표 부근에서 빨리 식음', '세립질'], ['심성암', PHONE ? '땅속에서 천천히 식음' : '땅속 깊은 곳에서 천천히 식음', '조립질']].forEach((r, i) => {
       const c0 = cellRect(i, 0), x = TBL.x + 8, w = (PHONE ? 112 : 92);
       ctx.fillStyle = i === 0 ? '#fde7d4' : '#dbe8f7'; rr(x, c0.y, w, c0.h, 8).fill(); D.text(x + w / 2, c0.y + 26, r[0], { size: 15, weight: 800, color: '#1b2333' }); drawWrap(x + w / 2, c0.y + 50, r[1], w - 12, 12.5, { weight: 700, color: '#475569', lh: 1.25 }); D.text(x + w / 2, c0.y + c0.h - 14, r[2], { size: 13, weight: 800, color: '#7c2d12' });
     });
@@ -855,8 +855,8 @@
     });
     // 시료
     card(SMP, '🔍 시료 (확대한 모습)');
-    const sr = PHONE ? 34 : 36, gap2 = (SMP.w - 28) / 3;
-    SAMPLES.forEach((sm, i) => { const cx2 = SMP.x + 14 + gap2 * i + gap2 / 2, cy2 = SMP.y + 54 + sr; ctx.save(); ctx.beginPath(); ctx.arc(cx2, cy2, sr, 0, TAU); ctx.clip(); ctx.drawImage(texCanvas(sm.kind), cx2 - sr, cy2 - sr, sr * 2, sr * 2); ctx.restore(); ctx.strokeStyle = '#475569'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(cx2, cy2, sr, 0, TAU); ctx.stroke(); D.label(cx2, cy2 + sr + 16, sm.id === 'sa' ? 'A' : sm.id === 'sb' ? 'B' : 'C', { bg: '#334155', size: 13.5, pad: 9 }); });
+    const sr = PHONE ? 28 : 36, gap2 = (SMP.w - 28) / 3;
+    SAMPLES.forEach((sm, i) => { const cx2 = SMP.x + 14 + gap2 * i + gap2 / 2, cy2 = SMP.y + (PHONE ? 42 : 54) + sr; ctx.save(); ctx.beginPath(); ctx.arc(cx2, cy2, sr, 0, TAU); ctx.clip(); ctx.drawImage(texCanvas(sm.kind), cx2 - sr, cy2 - sr, sr * 2, sr * 2); ctx.restore(); ctx.strokeStyle = '#475569'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(cx2, cy2, sr, 0, TAU); ctx.stroke(); D.label(cx2, cy2 + sr + 16, sm.id === 'sa' ? 'A' : sm.id === 'sb' ? 'B' : 'C', { bg: '#334155', size: 13.5, pad: 9 }); });
     // 카드: 표 위 · 보관함
     card(TRY, PHONE ? '🪨 암석 카드를 끌어서 표에 놓아요' : '🪨 암석 카드를 끌어서 표의 알맞은 칸에 놓아요');
     S.cardObjs.forEach((c) => {
@@ -888,7 +888,7 @@
   function setCtl(k) { ctlKeys = k; updateCtl(); }
   function setMode(m) { if (S.mode !== m) { S.fade = 1; parts.clear(); S.playing = false; S.crystals = []; if (m === 'visc') S.flowT = 0; } S.mode = m; updateCtl(); }
   function setPlace(p) { S.place = p; parts.clear(); updateCtl(); }
-  $$('#modeSeg button').forEach((b) => b.addEventListener('click', () => { Sound.click(); setMode(b.dataset.mode); updateCtl(); }));
+  $$('#modeSeg button').forEach((b) => b.addEventListener('click', () => { Sound.click(); hideHint(); setMode(b.dataset.mode); updateCtl(); }));
   $$('#sceneBtns .opt').forEach((b) => b.addEventListener('click', () => { Sound.click(); setPlace(b.dataset.p); }));
   SciSim.bindRange($('#sDepth'), $('#oDepth'), (v) => v + ' km', (v) => { S.depth = v; });
   SciSim.bindRange($('#sWater'), $('#oWater'), (v) => v + ' %', (v) => { S.water = v; });

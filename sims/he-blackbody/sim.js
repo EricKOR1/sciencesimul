@@ -193,6 +193,7 @@
   function parseNum(str) {
     let s = String(str).trim().replace(/,/g, '').replace(/\s+/g, '');
     s = s.replace(/[⁻]/g, '-').replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹]/g, (d) => '⁰¹²³⁴⁵⁶⁷⁸⁹'.indexOf(d));
+    s = s.replace(/(켈빈|배|K|R☉|R⊙|R)$/i, '');
     s = s.replace(/[×xX*]10\^?\(?(-?\d+)\)?/, 'e$1').replace('−', '-');
     if (/^-?[\d.]+\/[\d.]+$/.test(s)) { const p = s.split('/'); return +p[0] / +p[1]; }
     const m = /^-?(\d+\.?\d*|\.\d+)(e-?\d+)?$/i.exec(s);
@@ -297,10 +298,15 @@
     ctx.save(); ctx.translate(P.x + 14, (y0 + y1) / 2); ctx.rotate(-Math.PI / 2); TXD(0, 0, o.ylabel, 12.5, '#475569', 'center', 800); ctx.restore();
     // 자외선 | 가시광선 | 적외선
     const sz = 12.5, uvx = (x0 + ax) / 2;
-    if (ax - x0 > 44) TXD(uvx, y0 - 8, '자외선', sz, '#7c3aed', 'center', 800);
-    else TXD(x0 + 2, y0 - 8, '자외선', sz, '#7c3aed', 'left', 800);
-    TXD((ax + bx) / 2, y0 - 8, '가시광선', sz, '#15803d', 'center', 800);
-    TXD(Math.max(bx + 4, (bx + x1) / 2 - 22), y0 - 8, '적외선', sz, '#dc2626', 'left', 800);
+    if (bx - ax < 60) {          // 가시광선 띠가 아주 좁을 때: 이름표 겹침 방지
+      TXD(x0 + 2, y0 - 8, '자외선 · 가시광선', sz, '#15803d', 'left', 800);
+      TXD((x0 + x1) / 2, y0 - 8, '적외선', sz, '#dc2626', 'center', 800);
+    } else {
+      if (ax - x0 > 44) TXD(uvx, y0 - 8, '자외선', sz, '#7c3aed', 'center', 800);
+      else TXD(x0 + 2, y0 - 8, '자외선', sz, '#7c3aed', 'left', 800);
+      TXD((ax + bx) / 2, y0 - 8, '가시광선', sz, '#15803d', 'center', 800);
+      TXD(Math.max(bx + 4, (bx + x1) / 2 - 22), y0 - 8, '적외선', sz, '#dc2626', 'left', 800);
+    }
     return { gx, gy, x0, x1, y0, y1 };
   }
 
@@ -726,7 +732,7 @@
           title: '온도에 따른 곡선의 변화',
           goal: '온도를 <b>3500 K → 5800 K → 9900 K</b>로 맞추며 굵은 곡선의 <b>꼭짓점</b>이 어디로 움직이는지 살펴봐요.',
           hint: '온도 버튼(3500·5800·9900 K)을 눌러 보세요. 공의 빛깔과 곡선의 꼭짓점이 함께 움직여요.',
-          hold: 0.3, setup() { S.visit = {}; S.visT = {}; setView('v1'); },
+          hold: 0.3, setup() { S.visit = {}; S.visT = {}; S.T1 = 2500; S.Td = 2500; setSlider(sT1, oT1, 2500, kfmt); setView('v1'); },
           status: () => REF_T.map((t) => comma(t) + ' K ' + mark(S.visit[t])).join(' · '),
           check: () => REF_T.every((t) => S.visit[t]),
           explain: '온도가 높아질수록 <b>① 곡선 전체가 위로 올라가요</b>(모든 파장에서 복사가 세져요). <b>② 꼭짓점이 짧은 파장 쪽으로 이동해요</b>. 그래서 공의 빛깔이 붉은색에서 청백색으로 변해요.',
@@ -754,7 +760,7 @@
           title: '별 3개의 표면 온도 구하기',
           goal: '<b>태양, 시리우스 A, 베텔게우스</b>의 곡선에서 눈금을 꼭짓점에 맞춰 λmax를 읽고, <b>T = 2.9×10⁻³ ÷ λmax</b>로 계산해 기록해요.',
           hint: '파장을 m로 바꿔요: 500 nm = 5.0×10⁻⁷ m. 파장이 짧은 별일수록 더 뜨거워요.',
-          hold: 0.3, setup() { S.manOn = false; setView('v2'); },
+          hold: 0.3, setup() { S.manOn = false; S.rec = {}; inT.value = ''; setView('v2'); setObj('sun'); },
           status: () => ['sun', 'sirA', 'bet'].map((k) => STARS[k].name + ' ' + mark(!!S.rec[k])).join(' · '),
           check: () => ['sun', 'sirA', 'bet'].every((k) => S.rec[k]),
           explain: '태양 λmax ≈ 500 nm → T ≈ 5800 K, 시리우스 A λmax ≈ 293 nm → T ≈ 9900 K, 베텔게우스 λmax ≈ 829 nm → T ≈ 3500 K예요. 시리우스 A의 꼭짓점은 자외선 영역에 있고, 베텔게우스의 꼭짓점은 적외선 영역에 있어요.',
@@ -828,7 +834,7 @@
           title: '별 3개의 반지름 계산',
           goal: '시리우스 A, 베텔게우스, 시리우스 B의 <b>반지름(R☉ 단위)</b>을 계산해서 기록해요.',
           hint: '💡 풀이 보기를 누르면 단계별 계산이 나와요. 아주 작거나 큰 값은 8.5×10^-3 처럼 써도 돼요.',
-          hold: 0.3, setup() { S.ordOn = false; setView('v4'); },
+          hold: 0.3, setup() { S.ordOn = false; S.rec4 = {}; ORDER4.forEach((k) => { S.disc[k].v = 0; }); S.solveOpen = false; inR.value = ''; setView('v4'); },
           status: () => ORDER4.map((k) => STARS[k].name + ' ' + mark(S.rec4[k] != null)).join(' · '),
           check: () => allRec4(),
           explain: '시리우스 A: √25 ÷ (9900/5800)² ≈ <b>1.7 R☉</b>, 베텔게우스: √(1.0×10⁵) ÷ (3500/5800)² ≈ <b>870 R☉</b>, 시리우스 B: √0.025 ÷ (25000/5800)² ≈ <b>0.0085 R☉</b>(지구와 비슷한 크기)예요.',
@@ -836,7 +842,7 @@
         {
           title: '크기 순서 정렬',
           goal: '세 별을 <b>반지름이 작은 별부터</b> 차례로 눌러요. 그리고 <b>✔ 확인하기</b>를 눌러요.', manual: true,
-          setup() { S.ordOn = true; S.ord = []; setView('v4'); },
+          setup() { ORDER4.forEach((k) => { if (S.rec4[k] == null) { S.rec4[k] = radiusOf(STARS[k]); S.disc[k].v = 1; } }); S.ordOn = true; S.ord = []; setView('v4'); },
           hint: '시리우스 B가 가장 작고, 베텔게우스가 가장 커요.',
           check: () => (S.ord.length < 3 ? '세 별을 모두 눌러요.' : S.ord[0] === 'sirB' && S.ord[1] === 'sirA' && S.ord[2] === 'bet' ? true : '순서가 달라요. 계산한 반지름 값을 비교해 봐요.'),
           explain: '작은 순서는 <b>시리우스 B(0.0085 R☉) &lt; 시리우스 A(1.7 R☉) &lt; 베텔게우스(870 R☉)</b>예요. 베텔게우스는 시리우스 B보다 약 10만 배 커요.',

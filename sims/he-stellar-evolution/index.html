@@ -155,9 +155,9 @@
         </div>
 
         <div class="control" data-modes="v4">
-          <div class="control-head"><span>⏱️ 경과 시간 (같은 시각의 세 별)</span><output id="oT4">—</output></div>
+          <div class="control-head"><span>⏱️ 주계열 도달 후 경과 시간</span><output id="oT4">—</output></div>
           <input type="range" id="sT4" min="60" max="103" step="1" value="63" aria-label="경과 시간 (로그 눈금)">
-          <div class="ticks"><span>100만 년</span><span>1억 년</span><span>100억 년</span></div>
+          <div class="ticks" style="position:relative;height:18px"><span style="position:absolute;left:0">100만 년</span><span style="position:absolute;left:46.5%;transform:translateX(-50%)">1억 년</span><span style="position:absolute;left:93%;transform:translateX(-50%)">100억 년</span></div>
           <div class="btn-row"><button class="btn btn-sm btn-primary" id="bPlay4" type="button">▶ 시간 흐르게 하기</button></div>
         </div>
         <div class="control" data-modes="v4" id="pairBox" hidden>

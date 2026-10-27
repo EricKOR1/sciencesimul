@@ -353,9 +353,10 @@
     // 선 이름표
     const labs = LINES.filter((ln) => lineDepth(ln[1], T) * ln[3] > 0.28 && (ln[2] !== 'Fe I' || false)).sort((a, b) => lineDepth(b[1], T) * b[3] - lineDepth(a[1], T) * a[3]).slice(0, PHONE ? 5 : 8).sort((a, b) => a[0] - b[0]);
     const xs = (nm) => x + (nm - NM0) / (NM1 - NM0) * w;
-    let lastX = -99, row = 0, lastName = '', lastNm = -99;
+    let lastX = -99, row = 0, lastName = '', lastNm = -99, lastW = 0; ctx.save(); ctx.font = D.font(12, 800);
     labs.forEach((ln) => {
-      if (ln[2] === lastName && ln[0] - lastNm < 14) return; lastName = ln[2]; lastNm = ln[0]; const xx = xs(ln[0]); row = xx - lastX < 40 ? 1 - row : 0; lastX = xx; D.text(clamp(xx, x + 24, x + w - 24), sy - 8 - row * 15, ln[2], { size: 12, weight: 800, color: '#334155' }); line([[xx, sy - 6 - row * 15 + 2], [xx, sy]], 'rgba(51,65,85,.5)', 1); });
+      if (ln[2] === lastName && ln[0] - lastNm < 14) return; lastName = ln[2]; lastNm = ln[0]; const xx = xs(ln[0]), lw2 = ctx.measureText(ln[2]).width; row = xx - lastX < (lastW + lw2) / 2 + 6 ? 1 - row : 0; lastX = xx; lastW = lw2; D.text(clamp(xx, x + 24, x + w - 24), sy - 8 - row * 15, ln[2], { size: 12, weight: 800, color: '#334155' }); line([[xx, sy - 6 - row * 15 + 2], [xx, sy]], 'rgba(51,65,85,.5)', 1); });
+    ctx.restore();
     if (STR.TiO(T) > 0.25) { const xx = xs(616); D.text(xx, sy - 8, 'TiO 띠', { size: 12, weight: 800, color: '#92400e' }); }
     const cv = drawSpec(T, lum, x, sy, w, sh, rev);
     axisTicks(x, sy + sh, w, NM0, NM1, 50, true);
@@ -683,7 +684,7 @@
         const idx = Math.floor((p.y - L.y0) / L.rh), id = S.order[clamp(idx, 0, 6)];
         if (S.pickOn) {
           S.pick[S.pick.mode] = id; Sound.click(); updateCtl();
-          const want = S.pick.mode; if (id !== want) say('이 카드는 ' + want + '형이 아니에요. ' + (want === 'B' ? '헬륨선이 보이는 뜨거운 별을 찾아요.' : '금속선이 강하고 붉은 영역이 어두운 별을 찾아요.'), true, 2.6); else say(want + '형 카드를 찾았어요!', false, 1.6);
+          const want = S.pick.mode; if (id !== want) say('이 카드는 ' + want + '형이 아니에요. ' + (want === 'B' ? '헬륨선이 보이는 뜨거운 별을 찾아요.' : '금속선이 강하고 푸른 쪽이 어두운 주황색 별을 찾아요.'), true, 2.6); else say(want + '형 카드를 찾았어요!', false, 1.6);
           return false;
         }
         S.drag = { id, dy: p.y - S.rowY[id] }; Sound.tick(); return true;
@@ -795,7 +796,7 @@
         },
         {
           title: 'B형과 K형 카드 찾기',
-          goal: '카드가 다시 섞이고 분광형 글자가 가려졌어요. <b>B형</b>(헬륨선이 보이는 뜨거운 별)과 <b>K형</b>(금속선이 강하고 붉은 쪽이 어두운 별)을 찾아 눌러요.',
+          goal: '카드가 다시 섞이고 분광형 글자가 가려졌어요. <b>B형</b>(헬륨선이 보이는 뜨거운 별)과 <b>K형</b>(금속선이 강하고 푸른 쪽이 어두운 주황색 별)을 찾아 눌러요.',
           hint: 'B형은 He I 선(447, 588 nm 등)이 강하고 푸른색이 밝아요. K형은 Ca II·금속선이 강하고 붉은 쪽에 TiO 띠가 막 나타나기 시작해요. 표를 참고해요.',
           hold: 0.4, setup() { initSort(true); S.pickOn = true; S.pick = { mode: 'B', B: null, K: null }; setView('sort'); updateCtl(); },
           status: () => 'B형 ' + mark(S.pick.B === 'B') + ' · K형 ' + mark(S.pick.K === 'K'),
@@ -824,8 +825,8 @@
           title: '발머선이 가장 강한 온도 찾기',
           goal: '온도 슬라이더로 <b>수소 발머선의 세기가 90 % 이상</b>이 되는 온도를 찾아요. (그래프를 직접 끌어도 돼요.)',
           hint: '그래프에서 빨간 곡선(수소 발머선)의 꼭대기를 찾아요. 약 10000 K 근처예요.',
-          hold: 0.7, setup() { S.showUnk = false; setView('temp'); updateCtl(); },
-          status: () => '발머선 세기 ' + f0(STR.H(S.T) * 100) + ' % ' + mark(STR.H(S.T) >= 0.9),
+          hold: 0.7, setup() { S.showUnk = false; S.T = 4000; S.Tv = 4000; setSlider($sT, $oT, Math.round(vFromT(4000)), (v) => comma(Math.round(tFromV(v) / 10) * 10) + ' K'); setView('temp'); updateCtl(); },
+          status: () => '발머선 세기 ' + Math.floor(STR.H(S.T) * 100) + ' % ' + mark(STR.H(S.T) >= 0.9),
           check: () => STR.H(S.T) >= 0.9,
           explain: '수소 발머선은 약 <b>10000 K</b>(A형)에서 가장 강해요. 이보다 차가우면 둘째 준위의 수소 원자가 부족하고, 이보다 뜨거우면 수소가 이온화되어 발머선 흡수가 약해져요.',
         },
