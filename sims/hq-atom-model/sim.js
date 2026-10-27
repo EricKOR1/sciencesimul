@@ -524,6 +524,7 @@
       if (n >= 2) T(cx + R * Math.cos(-0.95) + 3, cy + R * Math.sin(-0.95) - 2, 'n=' + n, 12, '#5d6879', 'left', 800, { stroke: '#fff', strokeWidth: 3 });
     }
     T(cx, cy + ORB[1] * kk + 16, 'n=1', 12, '#5d6879', 'center', 800, { stroke: '#fff', strokeWidth: 3 });
+    T(A.x + A.w - 14, A.y + 40, '(궤도 간격은 줄여서 그렸어요)', PHONE ? 11 : 11.5, '#7b8798', 'right', 700);
     D.glow(cx, cy, 20, '#ff7a45', 0.5); D.sphere(cx, cy, 5.5, '#e2464b', { shadow: true });
     // 전자 (반지름이 n에 따라 부드럽게 이동)
     const Rn = (nn) => { const i = clamp(nn, 1, 5), lo = Math.floor(i), hi = Math.min(5, lo + 1); return (ORB[lo] + (ORB[hi] - ORB[lo]) * (i - lo)) * kk; };

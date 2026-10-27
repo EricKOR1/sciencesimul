@@ -226,7 +226,7 @@
       // 고체 알갱이 (녹으면서 사라져요)
       if (R.k !== 'neut') { const n = 9; for (let k = 0; k < n; k++) { const a = 1 - clamp(p * 1.6 - k * 0.04, 0, 1); if (a <= 0.01) continue; ctx.globalAlpha = a; D.sphere(g.bx + 12 + hash(k, i) * (g.bw - 24), g.by + g.bh - 10 - hash(k + 9, i) * 8, 4.2, R.k === 'cao' ? '#e8e2d6' : '#f4f6fa', { gloss: false, outline: '#b5bccb', outlineWidth: 0.8 }); ctx.globalAlpha = 1; } }
       // 온도계
-      D.thermometer(g.bx + g.bw / 2, g.by - 36, 104, heatT(i), 14, 34, { ticks: false, color: exo ? HOT : COLD });
+      D.thermometer(g.bx + g.bw / 2, g.by - 36, 104, heatT(i), 14, 34, { ticks: false, color: !H.run[i] ? '#6b7a90' : exo ? HOT : COLD });
       const Tn = heatT(i), dTn = Tn - R.T0;
       T(g.sx + g.sw / 2, g.by + g.bh + 30, f1(Tn) + ' °C', 17, INK, 'center', 800);
       const lbl = H.run[i] ? 'ΔT ' + sgn(dTn, 1) + ' °C' : '처음 22.0 °C';
@@ -594,7 +594,7 @@
     T(L.x + L.w / 2, L.y + 122, 'ΔH = ' + sgn(dH, 0) + ' kJ', 18, dH < 0 ? HOT : COLD, 'center', 800);
     // 도표
     const r = { x: L.x + 50, y: L.y + 140, w: L.w - 62, h: L.h - 156 };
-    const top = r.y + 70, bot = r.y + r.h - 24, VM = -858, Y = (v) => top + (v / VM) * (bot - top);
+    const top = r.y + 70, bot = r.y + r.h - 44, VM = -858, Y = (v) => top + (v / VM) * (bot - top);
     axisH(r);
     ctx.strokeStyle = '#eef1f7'; ctx.lineWidth = 1;
     for (let v = 0; v >= VM; v -= 200) { ctx.beginPath(); ctx.moveTo(r.x + 4, Y(v)); ctx.lineTo(r.x + r.w, Y(v)); ctx.stroke(); T(r.x - 8, Y(v) + 4, sgn(v, 0), 12, MUTED, 'right', 700); }
