@@ -526,7 +526,7 @@
       ctx.globalAlpha = k; ctx.fillStyle = C.mix(C0, C1, (i / Math.max(1, total - 1)));
       D.roundRect(cx - r, cy - r, r * 2, r * 2, Math.min(4, r * 0.4)); ctx.fill(); ctx.globalAlpha = 1;
     }
-    T(PG.x + PG.w / 2, ay + ah + 20, '칸 하나 = 큐비트가 가질 수 있는 값 하나   →   2' + supOf(n) + ' = ' + nValTxt(n) + '가지', PHONE ? 13.5 : 14.5, INK, 'center', 800);
+    T(PG.x + PG.w / 2, ay + ah + 20, '칸 하나 = 가질 수 있는 값 하나   →   2' + supOf(n) + ' = ' + nValTxt(n) + '가지', PHONE ? 13.5 : 14, INK, 'center', 800);
     // 표
     const rowsT = [1, 3, 10, 50, 300];
     const ty = PG.y + (PHONE ? 206 : 262), rh = PHONE ? 0 : 26;
@@ -644,14 +644,14 @@
   const numKeys = { n3: '', n10: '' };
   ['n3', 'n10'].forEach((id) => $('#' + id).addEventListener('input', () => { $('#' + id).classList.remove('ok', 'bad'); numKeys[id] = ''; }));
   function gradeNums() {
-    const rd = (id) => { const raw = $('#' + id).value.replace(/[,\s]/g, ''); return raw === '' ? NaN : parseInt(raw, 10); };
+    const rd = (id) => { const raw = $('#' + id).value.replace(/[,\s]/g, ''); const v = raw === '' ? NaN : Number(raw); return Number.isInteger(v) ? v : NaN; };
     const a = rd('n3'), b = rd('n10'), okA = a === 8, okB = b === 1024;
     [['n3', okA, a], ['n10', okB, b]].forEach(([id, ok, v]) => {
       const el = $('#' + id), key = el.value + (ok ? '1' : '0');
       if (isNaN(v)) return;
       if (numKeys[id] !== key) { numKeys[id] = key; el.classList.remove('ok', 'bad'); void el.offsetWidth; el.classList.add(ok ? 'ok' : 'bad'); }
     });
-    if (isNaN(a) || isNaN(b)) return '두 칸을 모두 채워 보세요.';
+    if (isNaN(a) || isNaN(b)) return ($('#n3').value.trim() === '' || $('#n10').value.trim() === '') ? '두 칸을 모두 채워 보세요.' : '값의 수는 정수예요. 숫자만 써 보세요.';
     if (!okA) return '큐비트 3개는 2 × 2 × 2 = 8가지예요. 000부터 111까지 세어 보세요.';
     if (!okB) return '큐비트가 하나 늘 때마다 값의 수가 2배가 돼요. 2를 10번 곱하면 얼마일까요? (2¹⁰)';
     return true;
@@ -742,7 +742,7 @@
           setup() { S.show.selB = false; setScene('measure'); },
           choices: ['이상하지 않아요. 확률이 50 %여도 10번 중에는 3번쯤 나올 수 있는 통계적 변동이에요', '이상해요. 50 %이면 반드시 5번씩 나와야 해요', '이상해요. 큐비트가 고장 난 거예요', '이상하지 않아요. 앞의 측정 결과가 다음 결과에 영향을 주기 때문이에요'],
           answer: 0,
-          feedback: ['', '확률이 50 %라는 것은 횟수가 아주 많을 때의 비율이 50 %에 가까워진다는 뜻이에요. 10번만으로는 5번이 꼭 나오지 않아요.', '10번 중 3번(약 17 %의 확률로 나오는 정도)은 정상 범위예요. 횟수를 늘려 비율을 확인해 보세요.', '매번 같은 상태를 새로 준비해서 측정하므로 각 결과는 서로 영향을 주지 않아요.'],
+          feedback: ['', '확률이 50 %라는 것은 횟수가 아주 많을 때의 비율이 50 %에 가까워진다는 뜻이에요. 10번만으로는 5번이 꼭 나오지 않아요.', '10번 중 0이 3번 이하로 나오는 일은 약 17 %의 확률로 일어나므로 정상 범위예요. 횟수를 늘려 비율을 확인해 보세요.', '매번 같은 상태를 새로 준비해서 측정하므로 각 결과는 서로 영향을 주지 않아요.'],
           explain: '각 측정은 독립이고 P₀ = 0.50이에요. 10번 중 0이 3번 이하로 나올 확률은 약 17 %로 흔히 일어나는 일이에요. 횟수를 100번, 1000번으로 늘리면 비율이 50 %에 가까워져요.',
         },
       ],

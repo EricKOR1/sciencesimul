@@ -407,7 +407,7 @@
       T(TB.x + 12, y, rw[0], 13, MUTED, 'left', 800);
       for (let j = 0; j < 6; j++) {
         const q = rec[j], x = TB.x + lw + 6 + cw * (j + 0.5);
-        if (q) { const pa = RM ? 1 : clamp((S.t - q.born - 0.55) / 0.25, 0, 1); T(x, y, rw[1](q), 13, i === rows.length - 1 ? '#b91c1c' : INK, 'center', 800, { alpha: pa }); }
+        if (q) { const pa = RM ? 1 : clamp((S.t - q.born - 0.55) / 0.25, 0, 1); const tx = rw[1](q); T(x, y, tx, tx.length > 5 ? 11.5 : 13, i === rows.length - 1 ? '#b91c1c' : INK, 'center', 800, { alpha: pa }); }
         else T(x, y, '·', 13, '#c3ccd9', 'center', 700);
       }
     });
@@ -491,7 +491,7 @@
       drawCard(c, false);
     });
     if (un.drag) drawCard(un.drag.card, true);
-    const msg = un.msg || (un.placed === 4 ? '모두 맞췄어요! 세 법칙(과 게이뤼삭)은 PV = nRT에서 일정한 값만 다른 것이에요.' : '일정하게 두는 양을 보고, 그 조건에서 일정한 식을 찾아요.');
+    const msg = un.msg || (un.placed === 4 ? '모두 맞췄어요! 네 법칙은 PV = nRT에서 일정하게 두는 양만 다른 것이에요.' : '일정하게 두는 양을 보고, 그 조건에서 일정한 식을 찾아요.');
     textBlock(UC.x + 16, UC.y + UC.h - 14 - (wrap(msg, UC.w - 32, 13.5, 800).length - 1) * 18, UC.w - 32, msg, 13.5, un.placed === 4 ? '#14803f' : un.msg ? BAD : MUTED, 18, 800);
     void t;
   }
@@ -519,7 +519,7 @@
       return true;
     }
     c.tx = home.x; c.ty = home.y; c.shake = 0.35; Sound.fail();
-    un.msg = LAWS[i].name + '은 ' + LAWS[i].fix + '로 둔 실험이에요. 이 식은 그 조건에서 일정한 식이 아니에요. 다시 생각해 봐요.';
+    un.msg = LAWS[i].name + '은 ' + LAWS[i].fix + '으로 둔 실험이에요. 이 식은 그 조건에서 일정한 식이 아니에요. 다시 생각해 봐요.';
     return false;
   }
   function stepUnify(dt) {
@@ -803,7 +803,7 @@
       title: '몰수: 분자를 넣어 부피 바꾸기', short: '몰수', icon: '➕', phase: '탐구',
       intro: '<div class="si-link">🔗 <b>앞 단계에서</b> 압력과 온도가 부피와 압력에 어떤 영향을 주는지 알았어요. 이제 마지막 변수인 <b>몰수</b>를 바꿔요. 온도(300 K)와 압력(1.00 atm)은 고정이에요.</div>' +
         '<p>분자를 넣으면 피스톤이 올라가요. <b>부피 ÷ 몰수</b>가 어떻게 되는지 보고, 기체의 <b>종류(He, N₂, CO₂)</b>를 바꿔도 같은지 확인해요. (입자 한 개 = 0.05 mol)</p>' +
-        '<p>중학교에서 배운 <b>아보가드로 법칙</b>(같은 온도·압력에서 같은 부피에는 같은 수의 분자)을 정량으로 확인하는 거예요.</p>',
+        '<p>앞서 배운 <b>아보가드로 법칙</b>(같은 온도·압력에서 같은 부피에는 같은 수의 분자)을 정량으로 확인하는 거예요.</p>',
       features: ['mole'],
       setup() { S.lock = false; S.gate = ''; S.mo.n = 0.5; S.mo.kind = 'n2'; S.mo.kinds = {}; clearRec('mole'); setMode('mole'); },
       recap: '온도와 압력이 일정할 때 기체의 부피는 몰수에 비례해요(V/n = 24.6 L/mol). 기체의 종류가 달라도 같은 몰수는 같은 부피를 차지해요.',

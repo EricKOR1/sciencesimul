@@ -675,8 +675,8 @@
             const v = num('iZ'); if (v == null) return '온도를 숫자로 입력해 주세요 (°C).';
             const ok = v >= -290 && v <= -255; fb([[$('#iZ'), ok]]);
             if (ok) { setFlag('zero', false); return true; }
+            if (v === 273) return '부호를 확인해요. 0 °C보다 낮은 온도라 음수예요.';
             if (v > -20) return '연장선이 x축과 만나는 곳은 0 °C보다 훨씬 낮은 곳이에요. −300 ~ −200 사이를 봐요.';
-            if (v === 273 || v === 0) return '부호를 확인해요. 0 °C보다 낮은 온도라 음수예요.';
             return '그래프에서 점선이 x축과 만나는 눈금을 읽어 보세요 (약 −270 °C 근처).';
           },
           status: () => '입력 ' + ($('#iZ').value.trim() || '—') + ' °C',
@@ -685,7 +685,7 @@
         {
           type: 'quiz', title: 'V–t 그래프는 직선인데 왜 비례가 아닐까?',
           goal: '정압 실험의 V–t(°C) 그래프는 직선이지만 V가 t에 비례하지는 않아요. 올바른 설명은?',
-          setup() { S.kel = true; S.sx.exp = 'isob'; setFlag('zero', false); setScene('sensor'); },
+          setup() { sxFill(); S.kel = true; S.sx.exp = 'isob'; setFlag('zero', false); setScene('sensor'); },
           choices: ['0 °C일 때 기체의 부피가 0이기 때문이에요', '직선을 연장하면 V = 0이 되는 온도가 −273 °C(0 K)라서, V는 절대 온도 T(K)에 비례하고 t(°C)에는 비례하지 않아요', '기체는 −100 °C에서 액체가 되기 때문이에요', '섭씨 온도는 틀린 온도라서 쓰면 안 돼요'],
           answer: 1,
           feedback: ['0 °C(273 K)에서 부피는 18.2 mL로 0이 아니에요. V = 0은 −273 °C에서 일어나요.', '', '이 실험의 범위에서는 기체 상태가 유지돼요. 직선은 이상 기체를 가정한 연장이에요.', '섭씨 온도도 맞는 온도예요. 다만 비례 관계를 쓸 때는 0점이 절대 영도인 켈빈 온도가 편해요.'],
