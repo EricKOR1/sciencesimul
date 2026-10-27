@@ -1039,7 +1039,7 @@
   /* ---------- 단계 · 미션 ---------- */
   function enterLevel(li) {
     if (li === 0) { S.tr = null; S.trLoops = 0; S.trSeen = new Set(); S.trDone = false; S.E = 0.5; sEnergy.value = 50; oEnergy.textContent = '50 %'; sEnergy.style.setProperty('--pct', '50%'); initWaterBoard(); setMode('water', 'flow'); showHint('💧 물방울 하나를 따라가 봐요', 5000); }
-    else if (li === 1) { initCarbonBoard(); resetCarbon(); S.run = true; setMode('carbon', 'model'); showHint('화석 연료 슬라이더를 움직여 봐요', 5000); }
+    else if (li === 1) { initCarbonBoard(); resetCarbon(); S.run = true; setMode('carbon', 'model'); showHint('경로 이름표를 놓아 탄소의 이동을 알아봐요', 5000); }
     else if (li === 2) { S.cs = 0; S.csT = 0; S.csAns = [[0, 0], [0, 0], [0, 0], [0, 0]]; S.csViewed = new Set([0]); S.csOK = 0; S.csBad = null; setMode('chain'); showHint('사례 카드를 눌러 연쇄 현상을 봐요', 5000); }
     else { S.runs = []; S.simRun = null; S.runN = 0; S.ev = new Set(); S.simOK = 0; setMode('sim'); showHint('배출량을 정하고 실행해 봐요', 5000); }
   }

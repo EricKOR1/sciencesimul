@@ -963,7 +963,7 @@
         '<div class="si-link">🔗 <b>중학교(복사 평형과 온실 효과)에서</b> 태양 복사 에너지 ' + K.IN + ' 중 약 ' + K.REFL + '이 반사되고 약 ' + (K.IN - K.REFL) + '이 흡수되며, 지구는 흡수한 만큼을 우주로 내보내 <b>복사 평형</b>을 이룬다고 배웠어요. 온실 효과 덕분에 평균 기온이 약 −' + Math.abs(K.NOGH) + ' °C에서 약 ' + K.NOW_T + ' °C가 되었어요.</div>' +
         '<p>이번에는 에너지의 출입을 숫자로 나눈 <b>지구 열수지</b> 그림을 완성해요. 태양 복사 에너지를 ' + K.IN + '으로 두고 반사·흡수, 지표 복사, 대기가 돌려보내는 복사, 증발, 대류를 따라가요. (교육용으로 단순화한 예시 값이에요.)</p>',
       setup() { enterLevel(0); },
-      recap: '입사 ' + K.IN + ' = 반사 ' + K.REFL + ' + 우주로 방출 ' + K.OUT + ' (복사 평형). 지표는 태양에서 ' + K.SABS + '만 받지만, 대기가 돌려보내는 복사 ' + K.BACK + ' 덕분에 ' + K.RS + '을 복사할 수 있어요.',
+      recap: '입사 ' + K.IN + ' = 반사 ' + K.REFL + ' + 우주로 방출 ' + K.OUT + ' (복사 평형). 지표는 태양에서 ' + K.SABS + '만 받지만, 대기가 돌려보내는 복사 ' + K.BACK + ' 덕분에 ' + K.RS + '를 복사할 수 있어요.',
       summary: '<table class="mini"><tr><th>화살표</th><th>크기(입사 ' + K.IN + ')</th></tr><tr><td>반사</td><td>' + K.REFL + '</td></tr><tr><td>대기 흡수</td><td>' + K.AABS + '</td></tr><tr><td>지표 흡수</td><td>' + K.SABS + '</td></tr><tr><td>지표 복사</td><td>' + K.RS + '</td></tr><tr><td>대기가 되돌려 보내는 복사</td><td>' + K.BACK + '</td></tr><tr><td>증발 / 대류·전도</td><td>' + K.EVAP + ' / ' + K.CONV + '</td></tr><tr><td>우주로 방출</td><td>' + K.OUT + '</td></tr></table>' +
         '<ul><li><b>우주 쪽</b>: 입사 ' + K.IN + ' = 반사 ' + K.REFL + ' + 우주로 방출 ' + K.OUT + ' → <b>복사 평형</b></li><li><b>지표</b>: ' + K.SABS + ' + ' + K.BACK + ' = ' + K.RS + ' + ' + K.EVAP + ' + ' + K.CONV + ' (들어오는 양 = 나가는 양)</li></ul>',
       missions: [
@@ -975,11 +975,11 @@
           setup() { setMode('budget'); },
           status: () => mark(SLOT_IDS.every((id) => slotVal(id) != null)) + ' 칸 ' + SLOT_IDS.filter((id) => slotVal(id) != null).length + ' / 6 · ' + mark(EQS.every((e) => evalEq(e).ok)) + ' 합계 식 ' + EQS.filter((e) => evalEq(e).ok).length + ' / 4',
           check: checkBudgetBoard,
-          explain: '입사 ' + K.IN + '은 <b>반사 ' + K.REFL + '</b>, <b>대기 흡수 ' + K.AABS + '</b>, <b>지표 흡수 ' + K.SABS + '</b>로 나뉘어요. 지표는 ' + K.RS + '을 복사하고, 그중 일부를 대기가 흡수했다가 <b>' + K.BACK + '</b>을 다시 지표로 돌려보내요. 우주로는 <b>' + K.OUT + '</b>이 나가서 입사 ' + K.IN + ' = 출사 ' + K.IN + '(반사 ' + K.REFL + ' + 방출 ' + K.OUT + ')이에요.',
+          explain: '입사 ' + K.IN + '은 <b>반사 ' + K.REFL + '</b>, <b>대기 흡수 ' + K.AABS + '</b>, <b>지표 흡수 ' + K.SABS + '</b>으로 나뉘어요. 지표는 ' + K.RS + '를 복사하고, 그중 일부를 대기가 흡수했다가 <b>' + K.BACK + '</b>를 다시 지표로 돌려보내요. 우주로는 <b>' + K.OUT + '</b>이 나가서 입사 ' + K.IN + ' = 출사 ' + K.IN + '(반사 ' + K.REFL + ' + 방출 ' + K.OUT + ')이에요.',
         },
         {
           type: 'quiz', title: '지표 복사가 지표 흡수보다 큰 까닭',
-          goal: '지표가 태양에서 흡수한 에너지는 ' + K.SABS + '인데, 지표가 복사하는 에너지는 <b>' + K.RS + '</b>이에요. 왜 더 클까요?',
+          goal: '지표가 태양에서 흡수한 에너지는 ' + K.SABS + '인데, 지표가 복사하는 에너지는 <b>' + K.RS + '</b>예요. 왜 더 클까요?',
           setup() { setMode('budget'); },
           choices: ['지표가 태양 빛을 반사하기 때문이에요', '지표가 태양 에너지뿐 아니라 대기가 돌려보내는 복사(' + K.BACK + ')도 받기 때문이에요', '지표가 스스로 에너지를 새로 만들어 내기 때문이에요', '증발이 열에너지를 만들어 내기 때문이에요'],
           answer: 1,
