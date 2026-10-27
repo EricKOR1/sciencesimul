@@ -758,7 +758,7 @@
           title: '충격량 2.0 N·s 만들기',
           goal: '충격량(넓이)이 <b>2.0 N·s</b>가 되는 조합을 <b>두 가지</b> 찾아 측정하세요.',
           hint: 'mΔv = 2.0이 되는 조합을 계산해 보세요. 1.0 kg이면 몇 m/s? 0.5 kg이면 몇 m/s일까요?',
-          setup() { setScene('cart'); },
+          setup() { resetCart(false); setScene('cart'); },
           check: () => cartHas(1, 2) && cartHas(0.5, 4),
           hold: 0.6,
           status: () => mark(cartHas(1, 2)) + ' 1.0 kg · 2 m/s &nbsp; ' + mark(cartHas(0.5, 4)) + ' 0.5 kg · 4 m/s',

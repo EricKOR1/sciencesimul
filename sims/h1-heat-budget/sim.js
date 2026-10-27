@@ -883,9 +883,10 @@
   $('#bRecord').addEventListener('click', () => {
     if (!(S.c === K.C2X && settled() && nDisp() <= 0.1)) { Sound.fail(); say('아직 새 평형이 아니에요. 불균형이 0.0~0.1이 될 때까지 기다린 뒤 기록해요.', true); return; }
     Sound.success();
-    const bi = budgetI(S.dT, S.N, S.iceS), key = '' + S.vap + S.ice;
-    S.rows[key] = { dT: n1(S.dT), Rs: bi.Rs, E: bi.E, B: bi.B, R: bi.R };
-    renderTable(); say('기록했어요! 되먹임 ' + (key === '00' ? '모두 끔' : key === '11' ? '모두 켬' : key === '10' ? '수증기만 켬' : '빙하만 켬') + ' → 평형 ' + sg1(S.dT) + ' °C', false, 2.2);
+    // 표에는 '평형 값'을 적어요(불균형이 0.1 남은 지금 값이 아니라 불균형 0일 때의 기온·열수지)
+    const dEq = nowEq(), bi = budgetI(dEq, 0, S.iceS), key = '' + S.vap + S.ice;
+    S.rows[key] = { dT: n1(dEq), Rs: bi.Rs, E: bi.E, B: bi.B, R: bi.R };
+    renderTable(); say('기록했어요! 되먹임 ' + (key === '00' ? '모두 끔' : key === '11' ? '모두 켬' : key === '10' ? '수증기만 켬' : '빙하만 켬') + ' → 평형 ' + sg1(dEq) + ' °C', false, 2.2);
   });
   $('#bReplay').addEventListener('click', () => { Sound.click(); replayEmit(); });
 

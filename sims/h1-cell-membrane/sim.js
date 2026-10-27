@@ -636,7 +636,7 @@
     S.rb = { c: c != null ? c : (prev ? prev.c : 0.9), s: 1, burst: false, bt: 0, seen: prev ? prev.seen : {}, settle: 0, salts: [], frags: [], alpha: 1, flowT: 0 };
     updateCtl();
   }
-  function setConc(c) { c = clamp(Math.round(c * 10) / 10, 0, 3); const r = S.rb; if (r.c === c) return; r.c = c; if (r.burst && c >= 0.4) { r.burst = false; r.s = 1; r.frags = []; r.alpha = 0; } updateCtl(); }
+  function setConc(c) { c = clamp(Math.round(c * 10) / 10, 0, 3); const r = S.rb; if (Math.abs(c - 0.9) < 0.05) r.pick = true; if (r.c === c) return; r.c = c; if (r.burst && c >= 0.4) { r.burst = false; r.s = 1; r.frags = []; r.alpha = 0; } updateCtl(); }
   function rbState(r) { return r.burst ? '터졌어요' : r.s > 1.08 ? '부풀어 올라요' : r.s < 0.92 ? '쭈그러들어요' : '정상이에요'; }
   function rbWater(c) { return c < 0.85 ? 'in' : c > 0.95 ? 'out' : 'none'; }
   function stepRbc(dt) {
@@ -652,7 +652,7 @@
     // 감시: 각 상태를 충분히 보았는지
     const settled = r.burst || Math.abs(r.s - tg) < 0.03;
     r.settle = settled ? r.settle + dt : 0;
-    if (r.settle > 0.8) { if (r.c <= 0.3) r.seen.hypo = true; if (Math.abs(r.c - 0.9) < 0.05) r.seen.iso = true; if (r.c >= 2.0) r.seen.hyper = true; }
+    if (r.settle > 0.8) { if (r.c <= 0.3) r.seen.hypo = true; if (Math.abs(r.c - 0.9) < 0.05 && r.pick) r.seen.iso = true; if (r.c >= 2.0) r.seen.hyper = true; }
     // 소금 입자 (세포 안으로 들어가지 못해요)
     const want = Math.round(r.c * 14);
     while (r.salts.length < want) r.salts.push({ x: rnd(RB_BOX.x + 10, RB_BOX.x + RB_BOX.w - 10), y: rnd(RB_BOX.y + 10, RB_BOX.y + RB_BOX.h - 10), vx: rnd(-40, 40), vy: rnd(-40, 40), a: 0, die: false });

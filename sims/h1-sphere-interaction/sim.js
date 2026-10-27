@@ -337,7 +337,7 @@
     if (E > 0.03) { D.arrow(112, 100, 205, 248, { color: 'rgba(255,190,30,' + (0.4 + 0.5 * E) + ')', width: 3 + 9 * E, head: 12 + 10 * E }); }
     // 추적 물방울
     const tp = S.tr;
-    if (tp && (tp.tr || (S.clock - (tp.trDoneAt || -9)) < 2.5)) {
+    if (!label && tp && (tp.tr || (S.clock - (tp.trDoneAt || -9)) < 2.5)) {
       ctx.strokeStyle = 'rgba(253,224,71,.8)'; ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.beginPath(); tp.trail.forEach((q, i) => (i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]))); ctx.stroke();
       if (tp.st !== 'sea' || tp.tr || true) {
         D.glow(tp.x, tp.y, 20, '#fde047', 0.9); ctx.fillStyle = '#2563eb'; ctx.strokeStyle = '#fde047'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(tp.x, tp.y, 6.5, 0, 6.3); ctx.fill(); ctx.stroke();
@@ -445,7 +445,7 @@
   function initCarbonBoard() {
     const B = boards.carbon; B.reset(); S.cOK = 0;
     for (let i = 0; i < 4; i++) {
-      const sp = PHONE ? { x: 150 + (i % 2) * 300, y: 664 + Math.floor(i / 2) * 78 } : { x: 680, y: 54 + i * 74 };
+      const sp = PHONE ? { x: 150 + (i % 2) * 300, y: 664 + Math.floor(i / 2) * 78 } : { x: 680, y: 84 + i * 72 };
       B.addSlot({ x: sp.x, y: sp.y, w: PHONE ? 286 : 208, h: PHONE ? 70 : 66, idx: i, ix: PHONE ? -50 : 28, iy: -10 });
     }
     [3, 1, 0, 2].forEach((ti, j) => {
@@ -497,8 +497,8 @@
     const val = k === 'A' ? S.A : k === 'V' ? S.V : k === 'S' ? S.Sg : k === 'O' ? S.O : null;
     if (val != null) {
       const d = val - C0[k], num = Math.round(val).toLocaleString('ko-KR');
-      cText(b.x, b.y + (k === 'A' ? 24 : k === 'O' ? 20 : 32), num + ' GtC', { size: 16, color: dark ? '#fff' : '#0f172a', weight: 800, stroke: dark ? 'rgba(0,0,0,.4)' : 'rgba(255,255,255,.8)', strokeWidth: 3 });
-      if (Math.abs(d) >= 0.5) cText(b.x, b.y + (k === 'A' ? 24 : k === 'O' ? 20 : 32) + 20, (d > 0 ? '+' : '−') + Math.abs(Math.round(d)), { size: 14, color: d > 0 ? '#fca5a5' : '#86efac', weight: 800, stroke: 'rgba(0,0,0,.45)', strokeWidth: 3 });
+      cText(b.x, b.y + (k === 'A' ? 14 : k === 'O' ? 20 : k === 'V' ? 26 : 32), num + ' GtC', { size: 16, color: dark ? '#fff' : '#0f172a', weight: 800, stroke: dark ? 'rgba(0,0,0,.4)' : 'rgba(255,255,255,.8)', strokeWidth: 3 });
+      if (Math.abs(d) >= 0.5) cText(b.x, b.y + (k === 'A' ? 14 : k === 'O' ? 20 : k === 'V' ? 26 : 32) + 19, (d > 0 ? '+' : '−') + Math.abs(Math.round(d)), { size: 14, color: d > 0 ? '#fca5a5' : '#86efac', weight: 800, stroke: 'rgba(0,0,0,.45)', strokeWidth: 3 });
     } else cText(b.x, b.y + 10, S.fossil.toFixed(1) + ' GtC/년 사용', { size: 15, color: '#fde68a', weight: 800 });
   }
   function drawCarbonArrow(k, label, o) {
@@ -509,7 +509,10 @@
     ctx.beginPath(); ctx.moveTo(p.b[0] + ux * 3, p.b[1] + uy * 3); ctx.lineTo(p.b[0] - ux * hs - uy * hs * 0.55, p.b[1] - uy * hs + ux * hs * 0.55); ctx.lineTo(p.b[0] - ux * hs + uy * hs * 0.55, p.b[1] - uy * hs - ux * hs * 0.55); ctx.closePath(); ctx.fill();
     ctx.restore();
     p.ps.forEach((q) => { const c = bez(p, q.u); D.sphere(c.x, c.y, 4.2 + (k === 'fossil' ? 1 : 0), k === 'fossil' ? '#111827' : '#4b5563', { gloss: false, outline: '#fff', outlineWidth: 1 }); });
-    if (label) D.label(p.lab[0], p.lab[1], label, { bg: o && o.bg || '#fff', color: o && o.color || '#334155', size: 13 / KC, border: p.col });
+  }
+  function drawCarbonTag(k, label) {
+    const p = CPATH[k];
+    if (label) D.label(p.lab[0] + (k === 'fossil' ? -20 : 0), p.lab[1], label, { bg: '#fff', color: '#334155', size: 13 / KC, border: p.col });
   }
   function drawCarbon(t, dt) {
     const label = S.csub === 'label';
@@ -517,14 +520,16 @@
     ctx.save(); ctx.scale(KC, KC);
     const FW = 560, FHh = 540;
     ctx.fillStyle = '#f3f8fd'; ctx.fillRect(0, 0, FW, FHh);
+    const tags = [];
     Object.keys(CPATH).forEach((k) => {
       let lab = null, o = null;
       if (!label) lab = { photo: '광합성 ' + Math.round(S.flux.photo || 0), resp: '호흡 ' + Math.round(S.flux.resp || 0), litter: '낙엽 60', decomp: '분해 60', fossil: '연소 ' + S.fossil.toFixed(1), a2o: '해수 용해 ' + Math.round(S.flux.a2o || 0), o2a: '방출 90' }[k];
       else lab = { litter: '낙엽', decomp: '분해', o2a: '방출' }[k];
       if (label && k === 'fossil') lab = '화석 연료 사용';
-      drawCarbonArrow(k, lab, o);
+      drawCarbonArrow(k, lab, o); tags.push([k, lab]);
     });
     Object.keys(CBOX).forEach(drawCarbonBox);
+    tags.forEach(([k, lab]) => drawCarbonTag(k, lab));
     // 대기 쌓임
     D.label(CBOX.A.x, 12, '대기에 쌓이는 양 ' + (S.dA >= 0 ? '+' : '−') + Math.abs(S.dA).toFixed(1) + ' GtC/년', { bg: S.dA > 0.2 ? '#dc2626' : S.dA < -0.2 ? '#16a34a' : '#64748b', size: 13.5 / KC });
     cText(280, 530, '※ 숫자는 저장량(GtC)과 이동량(GtC/년)이에요. 그림의 크기는 실제 비율이 아니에요', { size: 12.5, color: '#64748b', weight: 700 });
@@ -661,7 +666,7 @@
     ctx.fillStyle = '#7a5c3a'; ctx.beginPath(); ctx.moveTo(r.x, Y(0.94)); ctx.lineTo(X(0.06), Y(0.7)); ctx.lineTo(X(0.06), wTop); ctx.lineTo(r.x, wTop); ctx.fill();
     ctx.beginPath(); ctx.moveTo(r.x + r.w, Y(1)); ctx.lineTo(X(0.93), Y(0.62)); ctx.lineTo(X(0.93), wTop - 12); ctx.lineTo(r.x + r.w, wTop - 30); ctx.fill();
     TX(X(0.05), Y(0.97), '서', { size: 13, color: '#fff', weight: 800 }); TX(X(0.96), Y(0.97), '동', { size: 13, color: '#fff', weight: 800 });
-    TX(X(0.5), wTop - 6 - 40, '← 적도 태평양 →', { size: 13, color: '#1e3a8a', weight: 800 });
+    TX(X(0.5), wTop - 8, '← 적도 태평양 →', { size: 13, color: '#1e3a8a', weight: 800 });
     // 무역풍
     const L = (1 - b * 0.82) * 130 * s + 22, wy = Y(0.2);
     for (let i = 0; i < 3; i++) { const xx = X(0.72 - i * 0.2); D.arrow(xx, wy + i * 12 - 10, xx - L * 0.8, wy + i * 12 - 10, { color: '#1d4ed8', width: 4 * s + 1, head: 11, alpha: 0.95 }); }
@@ -867,7 +872,7 @@
       [1, 2, 3, 4].forEach((v) => { const y = y0 + h * (1 - f(v)); ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(x + 12, y); ctx.lineTo(x + 20, y); ctx.stroke(); TX(x + 24, y + 4, '+' + v, { size: 12, color: '#64748b', weight: 700, align: 'left' }); });
       if (gh) { const y = y0 + h * (1 - f(gh.T)); ctx.strokeStyle = RUNCOL[S.simRun ? (S.runs.length ? S.runs[S.runs.length - 1].col : 0) : S.runs[S.runs.length - 2].col]; ctx.lineWidth = 3; ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.moveTo(x - 16, y); ctx.lineTo(x + 14, y); ctx.stroke(); ctx.setLineDash([]); }
       TX(gx(g1) + 28, g1.y + g1.h - 14, '+' + cur.T.toFixed(1) + ' °C', { size: 19, color: '#0f172a', weight: 800 });
-      TX(gx(g1) + 34, g1.y + 70, '산업화 이전보다', { size: 12.5, color: '#64748b', weight: 700 });
+      TX(gx(g1) + 42, g1.y + 70, '산업화 이전보다', { size: 12.5, color: '#64748b', weight: 700 });
     }
     // 해수면
     gaugeCard(g2, '해수면 (2025년 대비)', '🌊');
@@ -896,7 +901,7 @@
     const chart = (R, title, key, ymin, ymax, fmt, unit) => {
       ctx.fillStyle = '#fff'; rr(R.x, R.y, R.w, R.h, 14).fill();
       TX(R.x + 14, R.y + 24, title, { size: 14.5, color: '#1e293b', weight: 800, align: 'left' });
-      const px = (y) => R.x + 52 + (y - 2025) / 75 * (R.w - 70), py = (v) => R.y + R.h - 26 - (clamp(v, ymin, ymax) - ymin) / (ymax - ymin) * (R.h - 58);
+      const px = (y) => R.x + 52 + (y - 2025) / 75 * (R.w - 70), py = (v) => R.y + R.h - 26 - (clamp(v, ymin, ymax) - ymin) / (ymax - ymin) * (R.h - 64);
       ctx.lineWidth = 1; ctx.strokeStyle = '#e2e8f0';
       for (let k = 0; k <= 3; k++) { const v = ymin + (ymax - ymin) * k / 3; ctx.beginPath(); ctx.moveTo(px(2025), py(v)); ctx.lineTo(px(2100), py(v)); ctx.stroke(); TX(R.x + 46, py(v) + 4, fmt(v), { size: 12, color: '#64748b', weight: 700, align: 'right' }); }
       [2025, 2050, 2075, 2100].forEach((y) => TX(px(y), R.y + R.h - 8, String(y), { size: 12, color: '#64748b', weight: 700 }));
@@ -975,7 +980,7 @@
   $('#bResetC').addEventListener('click', () => { Sound.click(); resetCarbon(); S.run = true; updateCtl(); });
   $('#bResetChain').addEventListener('click', () => { Sound.click(); S.csAns = [[0, 0], [0, 0], [0, 0], [0, 0]]; S.csOK = 0; S.csBad = null; });
   $('#bRunS').addEventListener('click', () => { startSimRun(); updateCtl(); });
-  $('#bClearS').addEventListener('click', () => { Sound.click(); S.runs = []; S.simRun = null; S.ev = new Set(); S.simOK = 0; updateCtl(); });
+  $('#bClearS').addEventListener('click', () => { Sound.click(); S.runs = []; S.simRun = null; S.runN = 0; S.ev = new Set(); S.simOK = 0; updateCtl(); });
 
   let hintTimer = null;
   function showHint(msg, ms) {
