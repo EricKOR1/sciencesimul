@@ -68,6 +68,8 @@
     return a === 0 ? '#e7f1b8' : a === 1 ? '#f7c680' : '#d9b27d';  // 반응 없음: 원래 할로젠 색 (묽게)
   }
   const reactsAB = (a, b) => HAL[a].power > HAL[b].power;
+  const hasJong = (w) => { const c = w.charCodeAt(w.length - 1) - 0xAC00; return c >= 0 && c < 11172 && c % 28 !== 0; };
+  const josaI = (w) => w + (hasJong(w) ? '이' : '가'), josaN = (w) => w + (hasJong(w) ? '은' : '는');
 
   /* ---------- 상태 ---------- */
   const S = {
@@ -124,10 +126,10 @@
   function slotPos(i) {
     if (!PHONE) return { x: 400 + (i - 9.5) * 39, y: 128 };
     const r = Math.floor(i / 10), c = i % 10;
-    return { x: 240 + (c - 4.5) * 46, y: r ? 238 : 82 };
+    return { x: 240 + (c - 4.5) * 46, y: r ? 238 : 76 };
   }
-  function barBase(i) { return !PHONE ? 336 : (i < 10 ? 190 : 346); }
-  const BSCALE = PHONE ? 10 : 17;
+  function barBase(i) { return !PHONE ? 336 : (i < 10 ? 192 : 352); }
+  const BSCALE = PHONE ? 9 : 17;
   function trayPos(k) {
     const r = Math.floor(k / 10), c = k % 10;
     return !PHONE ? { x: 400 + (c - 4.5) * 74, y: 454 + r * 66 } : { x: 240 + (c - 4.5) * 46, y: 450 + r * 66 };
@@ -484,7 +486,7 @@
           T((xa + xb) / 2, y + 17, p[2], 13, '#6b6490', 'center', 800);
         });
       } else {
-        T(240, 380, '가로줄 하나 = 한 주기 (1주기: H·He, 2주기: Li~Ne, …)', 13, '#6b6490', 'center', 700);
+        T(240, 392, '가로줄 하나 = 한 주기 (1주기: H·He, 2주기: Li~Ne, …)', 13, '#6b6490', 'center', 700);
       }
       ctx.restore();
     }
@@ -498,7 +500,7 @@
         const v = g === 18 ? 8 : g >= 13 ? g - 10 : g;
         D.roundRect(x - (PHONE ? 25 : 40), PHONE ? 46 : 52, PHONE ? 50 : 80, PHONE ? 52 : 56, 10); ctx.fillStyle = C.rgba(GCOL[g], 0.16); ctx.fill();
         T(x, PHONE ? 66 : 74, g + '족', PHONE ? 14 : 16, '#2b2150', 'center', 800);
-        T(x, PHONE ? 88 : 96, (PHONE ? 'e⁻ ' : '전자 ') + v, 13, '#4c1d95', 'center', 800);
+        T(x, PHONE ? 88 : 96, g === 18 ? (PHONE ? '8(He 2)' : '전자 8(He 2)') : (PHONE ? 'e⁻ ' : '전자 ') + v, g === 18 ? 11.5 : 13, '#4c1d95', 'center', 800);
         // 열 강조: 1족
         if (g === 1 && S.marks.size >= 3) { ctx.strokeStyle = '#14a058'; ctx.lineWidth = 3; D.roundRect(x - (PHONE ? 26 : 42), PHONE ? 44 : 50, PHONE ? 52 : 84, PHONE ? 270 : 334, 12); ctx.stroke(); }
       });
@@ -797,7 +799,7 @@
       const lab = m.r ? HAL[m.a].sym + ' + 2' + HAL[m.b].salt + ' → 2' + HAL[m.a].salt + ' + ' + HAL[m.b].sym : HAL[m.a].sym + ' + ' + HAL[m.b].salt + ' → 반응 없음';
       const ex = (PHONE ? 10 : 20) + (PHONE ? 230 : 225);
       T(ex, ey + (PHONE ? 28 : 34), done ? lab : '섞는 중…', fitSize(lab, PHONE ? 430 : 420, 19), done && m.r ? '#0b6b39' : '#4c1d95', 'center', 800);
-      if (done) wrap(m.r ? HAL[m.b].name + '이(가) 유리되어 용액 색이 변했어요. ' + HAL[m.a].name + '이(가) 더 반응성이 커서 ' + HAL[m.b].name + ' 자리를 차지했어요.' : HAL[m.a].name + '은(는) ' + HAL[m.b].name + '보다 반응성이 크지 않아서(또는 같은 원소라서) 반응하지 않아요.', PHONE ? 430 : 420, 14, 700).forEach((ln, i) => T(ex, ey + (PHONE ? 52 : 60) + i * 19, ln, 14, '#3a4456', 'center', 700));
+      if (done) wrap(m.r ? josaI(HAL[m.b].name) + ' 유리되어 용액 색이 변했어요. ' + josaI(HAL[m.a].name) + ' 더 반응성이 커서 ' + HAL[m.b].name + ' 자리를 차지했어요.' : josaN(HAL[m.a].name) + ' ' + HAL[m.b].name + '보다 반응성이 크지 않아서(또는 같은 원소라서) 반응하지 않아요.', PHONE ? 430 : 420, 14, 700).forEach((ln, i) => T(ex, ey + (PHONE ? 52 : 60) + i * 19, ln, 14, '#3a4456', 'center', 700));
     }
     // 입자 모형 + 결과표
     const mx = PHONE ? 10 : 490, my = PHONE ? ey + 82 : 56, mw = PHONE ? 460 : 296, mh = PHONE ? 160 : 230;

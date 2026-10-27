@@ -335,6 +335,8 @@
     BU.anyBond = true;
   }
   function restLen(a, b, order) { return (EL[a.el].r + EL[b.el].r) * 0.9 + 12 - (order - 1) * 5; }
+  // 같은 분자 안에서 결합한 두 원자가 실제로 머무는 거리: 결합 스프링(70)과 반발력(30, 한계 거리 rr+56)이 균형을 이루는 곳
+  function eqLen(a, b, order) { const rr = EL[a.el].r + EL[b.el].r; return ((rr + 56) * 30 + restLen(a, b, order) * 70) / 100; }
   function stepBuild(dt) {
     const atoms = BU.atoms.filter((a) => !a.dead);
     // 힘 계산
@@ -368,12 +370,17 @@
       const nb = Object.keys(a.bonds).map((id) => atomById(+id)).filter(Boolean);
       if (nb.length === 2) {
         const n1 = nb[0], n2 = nb[1];
-        const L1 = restLen(a, n1, a.bonds[n1.id]), L2 = restLen(a, n2, a.bonds[n2.id]);
+        // 결합각 목표는 '평형 결합 길이'(스프링과 같은 분자 안 반발력이 균형을 이루는 길이)를 기준으로 계산해요
+        const L1 = eqLen(a, n1, a.bonds[n1.id]), L2 = eqLen(a, n2, a.bonds[n2.id]);
         const th = a.el === 'O' || a.el === 'N' ? (105 * Math.PI) / 180 : Math.PI;
         const tgt = Math.sqrt(L1 * L1 + L2 * L2 - 2 * L1 * L2 * Math.cos(th));
-        const dx = n2.x - n1.x, dy = n2.y - n1.y, d = Math.hypot(dx, dy) || 0.01, f = (d - tgt) * 55;
+        const dx = n2.x - n1.x, dy = n2.y - n1.y, d = Math.hypot(dx, dy) || 0.01, f = (d - tgt) * 90;
         const ux = dx / d, uy = dy / d;
         n1.fx += ux * f; n1.fy += uy * f; n2.fx -= ux * f; n2.fy -= uy * f;
+        if (th === Math.PI) { // 곧은 모양: 거리 힘은 180° 근처에서 약해서, 가운데 원자를 두 이웃의 중점 쪽으로 당겨 줘요
+          const gx = ((n1.x + n2.x) / 2 - a.x) * 70, gy = ((n1.y + n2.y) / 2 - a.y) * 70;
+          a.fx += gx; a.fy += gy; n1.fx -= gx / 2; n1.fy -= gy / 2; n2.fx -= gx / 2; n2.fy -= gy / 2;
+        }
       }
     }
     atoms.forEach((a) => {
@@ -741,7 +748,7 @@
       ctx.beginPath(); ctx.moveTo(x + Math.cos(a) * (r - 7), y + Math.sin(a) * (r - 7)); ctx.lineTo(x + Math.cos(a) * (r - (major ? 16 : 12)), y + Math.sin(a) * (r - (major ? 16 : 12))); ctx.stroke();
       if (major) D.text(x + Math.cos(a) * (r - 27), y + Math.sin(a) * (r - 27) + 4, String(v), { size: 11, weight: 700, color: '#3a4456' });
     }
-    D.text(x, y + 22, 'mA', { size: 12, weight: 800, color: MUTED });
+    D.text(x, y + 33, 'mA', { size: 12, weight: 800, color: MUTED });
     const a = ang(Math.min(I, 200));
     ctx.strokeStyle = '#e2464b'; ctx.lineWidth = 3.2; ctx.lineCap = 'round';
     ctx.beginPath(); ctx.moveTo(x - Math.cos(a) * 7, y - Math.sin(a) * 7); ctx.lineTo(x + Math.cos(a) * (r - 12), y + Math.sin(a) * (r - 12)); ctx.stroke();
@@ -1035,7 +1042,7 @@
     const inb = CL.cards.filter((c) => c.bin && c !== (CL.drag && CL.drag.card)), outb = CL.cards.filter((c) => !c.bin && c !== (CL.drag && CL.drag.card));
     outb.forEach((c) => drawCard(c, t)); inb.forEach((c) => drawCard(c, t));
     if (CL.drag) drawCard(CL.drag.card, t);
-    const ty = PHONE ? 370 : 346;
+    const ty = PHONE ? 380 : 346;
     if (CL.verified) { /* 설명 칸이 아래에 나타나요 */ }
     const left = CL.cards.filter((c) => !c.bin).length;
     D.text(VW / 2, ty, left ? '물질 카드 ' + left + '장 · 끌어서 상자에 넣어요' : '모든 카드를 상자에 넣었어요 ✔', { size: fs(14), weight: 800, color: left ? MUTED : '#0b6b39' });
@@ -1057,11 +1064,11 @@
         drawWaterMol(x, y, t * 0.3 + i, 1.5, 1);
       }
       if (PHONE) {
-        lines(bi.x + pw / 2, by + 98, ['이온이 움직여 전류를 나르니', '전기가 통해요'], { size: fs(12), color: '#5b21b6', weight: 800, lh: fs(18) });
-        lines(bc.x + pw / 2, by + 98, ['전하가 없는 분자라', '전기가 안 통해요'], { size: fs(12), color: '#0f766e', weight: 800, lh: fs(18) });
+        lines(bi.x + pw / 2, by + 114, ['이온이 움직여 전류를 나르니', '전기가 통해요'], { size: fs(12), color: '#5b21b6', weight: 800, lh: fs(18) });
+        lines(bc.x + pw / 2, by + 114, ['전하가 없는 분자라', '전기가 안 통해요'], { size: fs(12), color: '#0f766e', weight: 800, lh: fs(18) });
       } else {
-        D.text(bi.x + pw / 2, by + 90, '이온이 움직여 전류를 나르니 전기가 통해요', { size: fs(13), weight: 800, color: '#5b21b6' });
-        D.text(bc.x + pw / 2, by + 90, '전하가 없는 분자라 전기가 안 통해요', { size: fs(13), weight: 800, color: '#0f766e' });
+        D.text(bi.x + pw / 2, by + 104, '이온이 움직여 전류를 나르니 전기가 통해요', { size: fs(13), weight: 800, color: '#5b21b6' });
+        D.text(bc.x + pw / 2, by + 104, '전하가 없는 분자라 전기가 안 통해요', { size: fs(13), weight: 800, color: '#0f766e' });
       }
       ctx.restore();
     }
@@ -1178,7 +1185,7 @@
       '<g fill="#ffb400" stroke="#8a5200" stroke-width="1.2"><circle cx="150" cy="44" r="6"/><circle cx="150" cy="58" r="6"/><circle cx="150" cy="72" r="6"/><circle cx="150" cy="86" r="6"/></g>' +
       '<g fill="#ffb400" stroke="#8a5200" stroke-width="1.2"><circle cx="70" cy="40" r="5"/><circle cx="64" cy="54" r="5"/><circle cx="64" cy="72" r="5"/><circle cx="70" cy="86" r="5"/><circle cx="230" cy="40" r="5"/><circle cx="236" cy="54" r="5"/><circle cx="236" cy="72" r="5"/><circle cx="230" cy="86" r="5"/></g>' +
       '<text x="110" y="66" text-anchor="middle" font-size="20" font-weight="800" fill="#1b2333">O</text><text x="190" y="66" text-anchor="middle" font-size="20" font-weight="800" fill="#1b2333">O</text>' +
-      '<text x="150" y="122" text-anchor="middle" font-size="13" font-weight="700" fill="#5d6879">가운데에서 공유하는 전자는 모두 몇 개일까요?</text></svg>';
+      '<text x="150" y="122" text-anchor="middle" font-size="13" font-weight="700" fill="#5d6879">가운데에서 공유하는 전자 4개는 몇 쌍일까요?</text></svg>';
   }
 
   /* ---------- 미션 ---------- */
@@ -1287,7 +1294,7 @@
           choices: ['설탕은 전하가 없는 분자로 흩어져 있어서, 전류를 나를 이온이 없기 때문이에요', '설탕은 고체라서 물에 녹아도 전기가 통하지 않기 때문이에요', '설탕물에는 물이 많아서 이온이 모두 사라지기 때문이에요', '설탕이 물과 반응해 기체가 되기 때문이에요'],
           answer: 0,
           feedback: ['', '소금도 고체지만 물에 녹으면 전기가 통했어요. 중요한 것은 이온이 생기는지예요.', '설탕은 처음부터 이온이 없는 분자로 이루어져 있어요.', '설탕을 녹여도 기체가 생기지 않아요. 설탕 분자가 물속에 흩어질 뿐이에요.'],
-          explain: '설탕은 공유 결합으로 이루어진 <b>분자</b>예요. 물에 녹아도 분자 그대로 흩어질 뿐 전하를 띠지 않아서, <b>전류를 나르는 입자(이온)가 없어요</b>. 소금물은 Na⁺와 Cl⁻ 이온이 움직여 전기가 통해요.',
+          explain: '설탕은 공유 결합으로 이루어진 <b>분자</b>예요. 물에 녹아도 분자 그대로 흩어질 뿐 전하를 띠지 않아서, <b>전류를 나르는 입자(이온)가 없어요</b>. 소금물은 Na⁺과 Cl⁻ 이온이 움직여 전기가 통해요.',
         },
       ],
     },
@@ -1316,7 +1323,7 @@
           choices: ['염화 칼슘(CaCl₂) 수용액', '설탕물', '에탄올', '증류수'],
           answer: 0,
           feedback: ['', '설탕은 공유 결합 분자 물질이라 물에 녹아도 이온이 생기지 않아요.', '에탄올은 공유 결합 분자 물질이라 이온이 없어요.', '물 분자는 공유 결합으로 이루어져 이온이 거의 없어요.'],
-          explain: '염화 칼슘은 <b>이온 결합 물질</b>이라 물에 녹으면 Ca²⁺와 Cl⁻로 나뉘어 전기가 통해요. 나머지는 공유 결합 분자 물질이라 전류를 나르는 이온이 없어요.',
+          explain: '염화 칼슘은 <b>이온 결합 물질</b>이라 물에 녹으면 Ca²⁺과 Cl⁻로 나뉘어 전기가 통해요. 나머지는 공유 결합 분자 물질이라 전류를 나르는 이온이 없어요.',
         },
         {
           type: 'quiz', title: '물과 소금의 차이',

@@ -134,7 +134,7 @@
     } else {
       const other = ['P', 'S', 'B'].find((kk) => kk !== k && near(kk));
       const sc = scatterOf(k);
-      if (other) { N.msg = NAMEK[k] + '은(는) ' + NAMEK[other] + ' 자리가 아니에요'; N.msgT = 2.4; Sound.fail(); part.shake = 0.4; SciSim.tween(part, { x: sc.x, y: sc.y, lift: 0 }, { duration: 0.5, ease: 'outBack' }); }
+      if (other) { N.msg = NAMEK[k] + (k === 'B' ? '는 ' : '은 ') + NAMEK[other] + ' 자리가 아니에요'; N.msgT = 2.4; Sound.fail(); part.shake = 0.4; SciSim.tween(part, { x: sc.x, y: sc.y, lift: 0 }, { duration: 0.5, ease: 'outBack' }); }
       else { part.inSlot = false; SciSim.tween(part, { lift: 0 }, { duration: 0.2 }); }
     }
     updateCtl();
@@ -279,8 +279,9 @@
     if (n > 0) {
       const settled = Math.abs(st.dl - n * Math.log10(4)) < 0.004;
       const val = settled ? Math.pow(4, n) : Math.pow(10, st.dl);
-      D.text(VW / 2, cy + (PHONE ? 74 : 68), comma(val), { size: PHONE ? 32 : 36, weight: 800, color: '#15803d' });
-      let eq = n === 1 ? '4가지' : n <= 4 ? Array(n).fill(4).join(' × ') + ' = 4' + sup(n) : '4 × 4 × … × 4 (' + n + '번) = 4' + sup(n);
+      const hideAns = S.sub === 'calc' && n === 3 && !S.strand.solved;   // 계산 미션: 3개일 때는 정답을 가려요
+      D.text(VW / 2, cy + (PHONE ? 74 : 68), hideAns ? '?' : comma(val), { size: PHONE ? 32 : 36, weight: 800, color: '#15803d' });
+      let eq = n === 1 ? '4가지' : n <= 4 ? Array(n).fill(4).join(' × ') + ' = ' + (hideAns ? '?' : '4' + sup(n)) : '4 × 4 × … × 4 (' + n + '번) = 4' + sup(n);
       if (n === 10) eq += '  ≈ 약 100만';
       D.text(VW / 2, cy + (PHONE ? 106 : 98), eq, { size: PHONE ? 13.5 : 14.5, weight: 700, color: '#475569' });
     } else D.text(VW / 2, cy + 72, '4 × 4 × 4 × …', { size: PHONE ? 26 : 30, weight: 800, color: '#cbd5e1' });
@@ -360,7 +361,7 @@
       // 튕겨 나감
       SciSim.tween(r, { x: from.x + (Math.random() < 0.5 ? -1 : 1) * 70, y: from.y - 40, rot: 3 }, { duration: 0.35, ease: 'outCubic', onDone: () => SciSim.tween(r, { x: tp.x, y: tp.y, rot: 6, a: 0 }, { duration: 0.45, ease: 'inCubic', onDone: () => { const i = M.rej.indexOf(r); if (i >= 0) M.rej.splice(i, 1); } }) });
       M.flash[k] = -1;
-      M.msg = M.wrong >= 3 ? '힌트: ' + M.top[k] + '과(와) 짝을 이루는 염기는 ' + COMP[M.top[k]] + ' 하나뿐이에요 (A–T, G–C)' : L + ' 블록은 ' + M.top[k] + '와(과) 맞지 않아요. 돌기와 홈이 맞는 블록을 찾아봐요.';
+      M.msg = M.wrong >= 3 ? '힌트: ' + M.top[k] + '와 짝을 이루는 염기는 ' + COMP[M.top[k]] + ' 하나뿐이에요 (A–T, G–C)' : L + ' 블록은 ' + M.top[k] + '와 맞지 않아요. 돌기와 홈이 맞는 블록을 찾아봐요.';
       M.msgT = 3.2;
     }
     updateCtl();
@@ -709,7 +710,7 @@
     } else if (S.mode === 'strand') {
       const n = S.strand.list.length;
       L1 = '염기 서열'; a = n ? strandStr().split('').join(' ') : '—';
-      L2 = '가능한 서열 수'; b = n ? '4' + sup(n) + ' = ' + comma(Math.pow(4, n)) : '—'; L3 = '염기 종류'; c = '4종 (A T G C)';
+      L2 = '가능한 서열 수'; b = n ? '4' + sup(n) + ' = ' + (S.sub === 'calc' && n === 3 && !S.strand.solved ? '?' : comma(Math.pow(4, n))) : '—'; L3 = '염기 종류'; c = '4종 (A T G C)';
     } else if (S.mode === 'model' && S.sub === 'ratio') {
       L1 = 'A · G'; a = '30 % · 20 %'; L2 = 'T · C'; b = S.dna.ratioOK ? '30 % · 20 %' : '? · ?'; L3 = '규칙'; c = 'A=T, G=C';
     } else if (S.mode === 'model') {

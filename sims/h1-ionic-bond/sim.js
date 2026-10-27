@@ -187,8 +187,8 @@
     tween(A, { s3: 0 }, { duration: 0.7, ease: 'outCubic' });
     A.d.target = D_ION;
     const sl = $('#sDist'); sl.disabled = true; syncDist();
-    $('#atomNote').textContent = 'Na는 전자 1개를 잃어 Na⁺, Cl는 전자 1개를 얻어 Cl⁻가 됐어요. 반대 전하는 서로 끌어당겨요.';
-    showHint('Na⁺와 Cl⁻가 정전기적 인력으로 결합했어요 (이온 결합)', 5200);
+    $('#atomNote').textContent = 'Na는 전자 1개를 잃어 Na⁺, Cl은 전자 1개를 얻어 Cl⁻이 됐어요. 반대 전하는 서로 끌어당겨요.';
+    showHint('Na⁺과 Cl⁻이 정전기적 인력으로 결합했어요 (이온 결합)', 5200);
   }
   function drawAtom(isNa, x, t) {
     const y = AY;
@@ -395,7 +395,7 @@
     });
     ion.shake = 1;
     Sound.fail();
-    showHint(type === 'Na' ? 'Na⁺ 옆에는 Cl⁻가 와야 해요. 같은 (+)전하끼리는 밀어내요!' : 'Cl⁻ 옆에는 Na⁺가 와야 해요. 같은 (−)전하끼리는 밀어내요!', 4200);
+    showHint(type === 'Na' ? 'Na⁺ 옆에는 Cl⁻이 와야 해요. 같은 (+)전하끼리는 밀어내요!' : 'Cl⁻ 옆에는 Na⁺이 와야 해요. 같은 (−)전하끼리는 밀어내요!', 4200);
     setTimeout(() => returnIon(ion, dp), RM ? 0 : 380);
   }
   function returnIon(ion, dp) {
@@ -603,8 +603,8 @@
     const R1 = { x: px + Math.cos(a) * half, y: py - Math.sin(a) * half };
     const bal = fmBalanced(), okAll = bal && fmSimplest();
     // 받침대
-    D.shadow(() => { D.roundRect(px - 8, py, 16, PHONE ? 300 : 262, 6); ctx.fillStyle = '#8b95a8'; ctx.fill(); }, { blur: 8, y: 3 });
-    D.roundRect(px - 70, py + (PHONE ? 300 : 262), 140, 16, 8); ctx.fillStyle = '#6a7899'; ctx.fill();
+    D.shadow(() => { D.roundRect(px - 8, py, 16, PHONE ? 300 : 244, 6); ctx.fillStyle = '#8b95a8'; ctx.fill(); }, { blur: 8, y: 3 });
+    D.roundRect(px - 70, py + (PHONE ? 300 : 244), 140, 16, 8); ctx.fillStyle = '#6a7899'; ctx.fill();
     // 저울대
     ctx.save();
     ctx.lineCap = 'round'; ctx.strokeStyle = '#4b5873'; ctx.lineWidth = 9;
@@ -642,8 +642,8 @@
     pan(L1, catIons, fmQp(), { r: PHONE ? 22 : 28, q: c.cat[1], sym: c.cat[0], label: '(+) 전하 합' }, POS);
     pan(R1, anIons, -fmQm(), { r: PHONE ? 22 : 30, q: -c.an[1], sym: c.an[0], label: '(−) 전하 합' }, NEG);
     // 위 표지
-    D.text(L1.x, py - (PHONE ? 22 : 24), '양이온 ' + c.cat[0] + '  ×' + FM.nc, { size: fs(15), weight: 800, color: shade(POS, -0.2) });
-    D.text(R1.x, py - (PHONE ? 22 : 24), '음이온 ' + c.an[0] + '  ×' + FM.na, { size: fs(15), weight: 800, color: shade(NEG, -0.2) });
+    D.text(L1.x, L1.y - (PHONE ? 22 : 24), '양이온 ' + c.cat[0] + '  ×' + FM.nc, { size: fs(15), weight: 800, color: shade(POS, -0.2) });
+    D.text(R1.x, R1.y - (PHONE ? 22 : 24), '음이온 ' + c.an[0] + '  ×' + FM.na, { size: fs(15), weight: 800, color: shade(NEG, -0.2) });
     // 화학식
     const fy = PHONE ? 620 : 510;
     ctx.save();
@@ -803,7 +803,7 @@
       ctx.beginPath(); ctx.moveTo(x + Math.cos(a) * (r - 7), y + Math.sin(a) * (r - 7)); ctx.lineTo(x + Math.cos(a) * (r - (major ? 16 : 12)), y + Math.sin(a) * (r - (major ? 16 : 12))); ctx.stroke();
       if (major) D.text(x + Math.cos(a) * (r - 27), y + Math.sin(a) * (r - 27) + 4, String(v), { size: 11, weight: 700, color: '#3a4456' });
     }
-    D.text(x, y + 22, 'mA', { size: 12, weight: 800, color: MUTED });
+    D.text(x, y + 33, 'mA', { size: 12, weight: 800, color: MUTED });
     const a = ang(Math.min(I, 200));
     ctx.strokeStyle = '#e2464b'; ctx.lineWidth = 3.2; ctx.lineCap = 'round';
     ctx.beginPath(); ctx.moveTo(x - Math.cos(a) * 7, y - Math.sin(a) * 7); ctx.lineTo(x + Math.cos(a) * (r - 12), y + Math.sin(a) * (r - 12)); ctx.stroke();
@@ -1402,14 +1402,14 @@
           check: () => merged(),
           hold: 0.6,
           status: () => mark(A.slider >= 0.8 || A.phase !== 'idle') + ' 가까이 · ' + mark(A.phase === 'done') + ' 전자 이동 · ' + mark(merged()) + ' 이온 결합',
-          explain: 'Na는 바깥 전자가 1개뿐이라 이 전자를 잃으면 <b>2-8(네온과 같은 배치)</b>이 되어 안정해요. Cl는 바깥 전자가 7개라 1개를 얻으면 <b>2-8-8(아르곤과 같은 배치)</b>이 돼요. 전자를 잃은 Na는 <b>Na⁺</b>, 전자를 얻은 Cl는 <b>Cl⁻</b>가 되어 서로 끌어당겨요.',
+          explain: 'Na는 바깥 전자가 1개뿐이라 이 전자를 잃으면 <b>2-8(네온과 같은 배치)</b>이 되어 안정해요. Cl은 바깥 전자가 7개라 1개를 얻으면 <b>2-8-8(아르곤과 같은 배치)</b>이 돼요. 전자를 잃은 Na는 <b>Na⁺</b>, 전자를 얻은 Cl은 <b>Cl⁻</b>가 되어 서로 끌어당겨요.',
         },
         {
           type: 'quiz', title: '양이온이 되는 쪽',
-          goal: 'Na와 Cl가 이온 결합을 할 때, <b>양이온이 되는 쪽</b>과 그 까닭으로 옳은 것은?',
+          goal: 'Na와 Cl이 이온 결합을 할 때, <b>양이온이 되는 쪽</b>과 그 까닭으로 옳은 것은?',
           choices: ['Na — 금속 원소는 전자를 잃고 18족(Ne)과 같은 전자 배치가 되기 쉬워요', 'Cl — 비금속 원소라서 전자를 잃어요', 'Na와 Cl 모두 — 전자를 하나씩 내놓아 함께 써요', 'Cl — 전자가 7개로 Na보다 많아서 전자를 잃어요'],
           answer: 0,
-          feedback: ['', 'Cl는 전자를 1개 얻으면 2-8-8로 안정해져요. 전자를 얻으면 음이온이 돼요.', '전자를 함께 쓰는 것은 공유 결합이에요(다음 차시). 이온 결합은 전자가 한쪽에서 다른 쪽으로 옮겨 가요.', '전자를 1개 잃어 안정해지는 쪽은 바깥 전자가 1개뿐인 Na예요. Cl는 1개를 얻는 쪽이 쉬워요.'],
+          feedback: ['', 'Cl은 전자를 1개 얻으면 2-8-8로 안정해져요. 전자를 얻으면 음이온이 돼요.', '전자를 함께 쓰는 것은 공유 결합이에요(다음 차시). 이온 결합은 전자가 한쪽에서 다른 쪽으로 옮겨 가요.', '전자를 1개 잃어 안정해지는 쪽은 바깥 전자가 1개뿐인 Na예요. Cl은 1개를 얻는 쪽이 쉬워요.'],
           explain: '<b>금속 원소(Na)</b>는 전자를 잃어 <b>양이온</b>이 되고, <b>비금속 원소(Cl)</b>는 전자를 얻어 <b>음이온</b>이 돼요. 두 이온은 반대 전하를 띠어 정전기적 인력으로 결합해요.',
         },
       ],
@@ -1418,7 +1418,7 @@
     {
       title: '이온이 쌓여 결정이 돼요', short: '이온 결정', icon: '🧊', phase: '탐구',
       features: ['lattice'],
-      intro: '<div class="si-link">🔗 <b>앞 단계에서</b> Na⁺와 Cl⁻ 한 쌍이 정전기적 인력으로 결합했어요.</div>' +
+      intro: '<div class="si-link">🔗 <b>앞 단계에서</b> Na⁺과 Cl⁻ 한 쌍이 정전기적 인력으로 결합했어요.</div>' +
         '<p>소금 한 알에는 이온이 셀 수 없이 많아요. 이온들은 어떻게 배열되어 있을까요? <b>이온을 하나씩 쌓아</b> 이온 결정을 만들고, 다른 이온 결합 물질의 <b>화학식</b>도 완성해 봐요.</p>',
       setup() { setScene('lattice', 'lattice'); resetLattice(); fmSync(); showHint('이온 통에서 이온을 끌어 격자의 빈칸에 놓아요', 4500); },
       recap: '이온 결합 물질은 양이온과 음이온이 <b>번갈아 규칙적으로 쌓인 이온 결정</b>이고, 전체 전하의 합이 0이 되도록 이온 수의 비로 화학식을 나타내요.',
@@ -1429,8 +1429,8 @@
       missions: [
         {
           title: '이온 결정 한 층 쌓기',
-          goal: 'Na⁺와 Cl⁻를 끌어 격자의 빈칸 <b>10칸</b>을 모두 채워 보세요. 같은 전하끼리는 밀어내요!',
-          hint: '이미 놓인 이온을 보세요. Na⁺ 옆에는 Cl⁻, Cl⁻ 옆에는 Na⁺가 와야 해요.',
+          goal: 'Na⁺과 Cl⁻을 끌어 격자의 빈칸 <b>10칸</b>을 모두 채워 보세요. 같은 전하끼리는 밀어내요!',
+          hint: '이미 놓인 이온을 보세요. Na⁺ 옆에는 Cl⁻, Cl⁻ 옆에는 Na⁺이 와야 해요.',
           setup() { S.latView = 'lattice'; setScene('lattice'); },
           check: () => LAT.done,
           hold: 0.5,
@@ -1447,9 +1447,9 @@
           explain: 'Mg²⁺는 +2, O²⁻는 −2라서 <b>1 : 1</b> → MgO. Ca²⁺는 +2, Cl⁻는 −1이라서 전하의 합을 0으로 맞추려면 Ca²⁺ 1개에 Cl⁻ <b>2개</b>가 필요해요 → CaCl₂. 이온 결합 물질의 화학식은 <b>이온 수의 가장 간단한 정수비</b>로 나타내요.',
         },
         {
-          type: 'quiz', title: 'CaCl₂에서 Cl⁻가 2개인 까닭',
-          goal: '염화 칼슘(CaCl₂)에는 Ca²⁺ 1개당 Cl⁻가 <b>2개</b> 들어 있어요. 그 까닭은?',
-          choices: ['Ca²⁺의 (+)전하 2와 Cl⁻ 2개의 (−)전하 2를 맞춰 전체 전하가 0이 되기 때문이에요', 'Cl 원자가 Ca 원자보다 커서 더 많이 필요하기 때문이에요', 'Ca와 Cl가 전자를 2개씩 함께 쓰기 때문이에요', 'Cl⁻가 Ca²⁺보다 전자를 2개 더 갖고 있기 때문이에요'],
+          type: 'quiz', title: 'CaCl₂에서 Cl⁻이 2개인 까닭',
+          goal: '염화 칼슘(CaCl₂)에는 Ca²⁺ 1개당 Cl⁻이 <b>2개</b> 들어 있어요. 그 까닭은?',
+          choices: ['Ca²⁺의 (+)전하 2와 Cl⁻ 2개의 (−)전하 2를 맞춰 전체 전하가 0이 되기 때문이에요', 'Cl 원자가 Ca 원자보다 커서 더 많이 필요하기 때문이에요', 'Ca와 Cl이 전자를 2개씩 함께 쓰기 때문이에요', 'Cl⁻이 Ca²⁺보다 전자를 2개 더 갖고 있기 때문이에요'],
           answer: 0,
           feedback: ['', '원자의 크기는 개수비와 관계없어요. 전하의 합이 0이 되도록 개수가 정해져요.', '전자를 함께 쓰는 것은 공유 결합이에요. 이온 결합에서는 전자가 옮겨 가서 이온이 돼요.', 'Ca²⁺는 전자를 2개 잃은 이온이고 Cl⁻는 전자를 1개 얻은 이온이에요. 이온 개수는 전하의 합으로 정해져요.'],
           explain: '이온 결합 물질은 전기적으로 중성이므로 <b>(+)전하의 합 = (−)전하의 합</b>이에요. Ca²⁺ 1개(+2)와 Cl⁻ 2개(−1×2)가 만나야 전하의 합이 0이 돼요.',
@@ -1460,7 +1460,7 @@
     {
       title: '전기가 통할까요?', short: '전기 전도성', icon: '💡', phase: '실험',
       features: ['conduct'],
-      intro: '<div class="si-link">🔗 <b>앞 단계에서</b> 소금은 Na⁺와 Cl⁻가 규칙적으로 쌓인 이온 결정이라는 것을 알았어요.</div>' +
+      intro: '<div class="si-link">🔗 <b>앞 단계에서</b> 소금은 Na⁺과 Cl⁻이 규칙적으로 쌓인 이온 결정이라는 것을 알았어요.</div>' +
         '<p>그렇다면 소금은 전기가 통할까요? <b>전지와 전구</b>를 이은 회로에 전극을 꽂고, 소금이 <b>고체 · 녹은 액체 · 수용액</b>일 때 전구가 켜지는지 실험해요. 그리고 입자 모형으로 까닭을 찾아봐요.</p>' +
         '<p class="note">값은 설명을 위한 예시예요. 실제 소금은 약 801 °C에서 녹아요.</p>',
       setup() { setScene('conduct'); resetCond(); showHint('시료를 고르고 ⚡ 스위치를 켜 보세요', 4500); },
@@ -1482,14 +1482,14 @@
           goal: '실험 결과를 <b>표</b>로 정리해요. 전구와 이온의 움직임을 골라 보세요.',
           hint: '입자 모형을 떠올려요. 고체에서는 이온이 격자에 고정돼 있었고, 녹이면 자유롭게 움직였어요.',
           check: () => tableCheck(),
-          explain: '전류가 흐르려면 <b>전하를 띤 입자가 움직일 수 있어야</b> 해요. 녹인 소금과 소금물에서는 Na⁺와 Cl⁻가 자유롭게 움직여 전류를 나르지만, 고체에서는 이온이 제자리에 고정돼 있어요.',
+          explain: '전류가 흐르려면 <b>전하를 띤 입자가 움직일 수 있어야</b> 해요. 녹인 소금과 소금물에서는 Na⁺과 Cl⁻이 자유롭게 움직여 전류를 나르지만, 고체에서는 이온이 제자리에 고정돼 있어요.',
         },
         {
           type: 'quiz', title: '고체 NaCl이 전기가 안 통하는 까닭',
           goal: '고체 NaCl에 전류가 흐르지 않는 까닭으로 옳은 것은?',
           choices: ['이온은 있지만 제자리에 고정되어 있어 움직일 수 없기 때문이에요', '고체 소금에는 이온이 없기 때문이에요', '고체는 원래 전기가 통하지 않는 물질이기 때문이에요', '(+)이온과 (−)이온이 서로 전하를 없애 버렸기 때문이에요'],
           answer: 0,
-          feedback: ['', '고체 소금도 Na⁺와 Cl⁻ 이온으로 이루어져 있어요. 이온이 움직이지 못할 뿐이에요.', '구리 같은 금속은 고체여도 전기가 통해요. 소금이 안 통하는 까닭은 이온이 고정돼 있기 때문이에요.', '전체 전하의 합은 0이지만 각 이온은 전하를 그대로 띠고 있어요. 다만 움직일 수 없어요.'],
+          feedback: ['', '고체 소금도 Na⁺과 Cl⁻ 이온으로 이루어져 있어요. 이온이 움직이지 못할 뿐이에요.', '구리 같은 금속은 고체여도 전기가 통해요. 소금이 안 통하는 까닭은 이온이 고정돼 있기 때문이에요.', '전체 전하의 합은 0이지만 각 이온은 전하를 그대로 띠고 있어요. 다만 움직일 수 없어요.'],
           explain: '고체 NaCl에는 이온이 <b>있지만</b> 격자에 고정되어 있어 전류를 나르지 못해요. 녹이거나 물에 녹이면 이온이 자유롭게 움직여 전기가 통해요.',
         },
       ],
@@ -1502,7 +1502,7 @@
         '<p>소금 알갱이가 물에 녹을 때 이온은 어떻게 될까요? 물 분자가 이온을 <b>둘러싸서 떼어 내는</b> 모습을 보고, <b>바닷물과 우리 몸</b>에서 이온이 하는 일도 살펴봐요.</p>',
       setup() { setScene('dissolve', 'dissolve'); resetDissolve(); $('#disNote').textContent = '소금 알갱이를 끌어 물속에 넣어 봐요.'; showHint('🧂 소금 알갱이를 끌어 비커의 물에 넣어 봐요', 4500); },
       recap: '소금이 물에 녹으면 <b>이온이 물 분자에 둘러싸여 떨어져 나가</b> 자유롭게 움직여요. 그래서 소금물은 전기가 통하고, 몸속의 Na⁺, Cl⁻ 이온은 신경 신호 전달 등에 꼭 필요해요.',
-      summary: '<ul><li>소금이 물에 녹으면 Na⁺와 Cl⁻가 <b>물 분자에 둘러싸여</b> 떨어져 나가요.</li><li>이온이 많을수록 전류가 잘 흘러요 (바닷물).</li><li>체액에 녹아 있는 Na⁺, Cl⁻ 같은 이온은 신경·근육의 신호 전달에 필요해요. 소금은 우리 몸에 꼭 필요하지만, 소금물을 많이 마시면 몸에 해로워요.</li></ul>' +
+      summary: '<ul><li>소금이 물에 녹으면 Na⁺과 Cl⁻이 <b>물 분자에 둘러싸여</b> 떨어져 나가요.</li><li>이온이 많을수록 전류가 잘 흘러요 (바닷물).</li><li>체액에 녹아 있는 Na⁺, Cl⁻ 같은 이온은 신경·근육의 신호 전달에 필요해요. 소금은 우리 몸에 꼭 필요하지만, 소금물을 많이 마시면 몸에 해로워요.</li></ul>' +
         '<p><b>이온 결합 물질의 공통 특징</b>: 고체에서는 전기가 안 통하지만, 액체나 수용액에서는 이온이 움직여 전기가 통해요.</p>',
       missions: [
         {

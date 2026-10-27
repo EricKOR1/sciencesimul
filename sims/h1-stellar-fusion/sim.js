@@ -506,10 +506,11 @@
   $('#bBirth').addEventListener('click', () => { Sound.click(); restartBirth(); });
   const bTemp = SciSim.bindRange(sTemp, oTemp, (v) => (+v * 100).toLocaleString('ko-KR') + '만 K', (v) => { S.T = v; });
   $('#bBalance').addEventListener('click', () => { Sound.click(); S.balPressed = true; updateCtl(); });
-  function setM3(m) { S.m3 = m; Sound.tick(); updateCtl(); }
+  const stMax = () => (S.m3 === 1 ? 2 : 5);   // 태양 정도의 별은 ③(탄소 연소)에 이르기 전에 진화가 끝나요
+  function setM3(m) { S.m3 = m; S.st = Math.min(S.st, stMax()); Sound.tick(); updateCtl(); }
   ctl.m3.forEach((b) => b.addEventListener('click', () => setM3(+b.dataset.m)));
-  function setSt(v) { S.st = clamp(Math.round(v), 0, 5); sSt.value = S.st; updateCtl(); }
-  const bSt = SciSim.bindRange(sSt, oSt, (v) => STN[+v], (v) => { S.st = +v; Sound.tick(); updateCtl(); });
+  function setSt(v) { S.st = clamp(Math.round(v), 0, stMax()); sSt.value = S.st; updateCtl(); }
+  const bSt = SciSim.bindRange(sSt, oSt, (v) => (S.m3 === 1 && +v >= 2 ? '진화의 끝' : STN[+v]), (v) => { S.st = Math.min(+v, stMax()); Sound.tick(); updateCtl(); });
   $('#bPrev').addEventListener('click', () => { Sound.tick(); setSt(S.st - 1); });
   $('#bNext').addEventListener('click', () => { Sound.tick(); setSt(S.st + 1); });
   ctl.ans.forEach((b) => b.addEventListener('click', () => { Sound.tick(); const k = +b.dataset.ans; S.ans[k] = (S.ans[k] + 1) % ANS_OPT.length; S.ansBad[k] = false; b.classList.remove('shake', 'ok'); updateCtl(); }));
@@ -542,7 +543,7 @@
     ctl.scene.forEach((b) => b.classList.toggle('on', b.dataset.scene === S.mode));
     ctl.ans.forEach((b) => { const k = +b.dataset.ans, v = S.ans[k]; b.textContent = k + '배: ' + ANS_OPT[v]; b.classList.toggle('on', v > 0 && !S.ansOK); b.classList.toggle('ok', !!S.ansOK); });
     sSt.value = S.st; bSt.refresh();
-    $('#bPrev').disabled = S.st <= 0; $('#bNext').disabled = S.st >= 5;
+    $('#bPrev').disabled = S.st <= 0; $('#bNext').disabled = S.st >= stMax();
     $('#bBalance').classList.toggle('on', S.balPressed);
   }
 

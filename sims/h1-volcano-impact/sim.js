@@ -335,7 +335,7 @@
     const strat = VEI[S.vei].h > TROPO;
     if (S.plumeH > 3) {
       const pulse = RM ? 1 : 0.85 + 0.15 * Math.sin(t * 5);
-      const bx = Math.min(VW - 150, E.cx + 90 + (strat ? 40 : 0)), by = Math.min(E.ventY - 24, topY + 8);
+      const bx = Math.min(VW - 150, E.cx + 90 + (strat ? 40 : 0)), by = strat ? Math.min(E.ventY - 24, topY + 8) : Math.min(E.ventY - 24, topY - 22);
       D.label(bx, by, strat ? '성층권까지 올라가요!' : '대류권에 머물러요', { bg: strat ? 'rgba(124,58,237,' + pulse + ')' : 'rgba(14,116,144,.92)', size: 13.5, pad: 9 });
     }
     // 이름표 (분출물)
@@ -363,7 +363,6 @@
       const u = p.a / p.life;
       const rise = 1 - Math.pow(1 - Math.min(1, u * 1.15), 2.2);
       const h = H * p.rf * rise;
-      const y = E.ventY - h;
       const colW = (5 + h * 0.07) * (PHONE ? 1.2 : 1);
       const frac = H > 0 ? h / H : 0;
       let umb = 0;
@@ -371,6 +370,7 @@
       const wind = smooth(frac, 0.45, 1) * (S.plumeH > TROPO ? 14 : 34) * E.PS * (0.6 + 0.4 * p.sd);
       const x = E.cx + p.dx * (colW + umb) + wind;
       const size = (10 + 25 * smooth(u, 0, 0.8) + 4 * (S.vei - 3)) * (PHONE ? 1.25 : 1);
+      const y = E.ventY - Math.max(0, h - size * 0.55 * frac);   // 구름의 윗부분이 표시선(기둥 높이)을 넘지 않게
       const a = smooth(u, 0, 0.12) * (1 - smooth(u, 0.8, 1)) * 0.72;
       if (a < 0.01) return;
       ctx.globalAlpha = a;
@@ -567,6 +567,8 @@
   function shuffled(arr, seed) { const a = arr.slice(); let s = seed; for (let i = a.length - 1; i > 0; i--) { s = (s * 16807) % 2147483647; const j = s % (i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; }
   BOARD.sort.chips = shuffled(CARDS, 11).map((c) => mkChip(c.id, c.t, { bin: c.bin }));
   BOARD.cases.chips = shuffled(CHIPS_CASE, 7).map((c) => mkChip(c.id, c.t, { cs: c.cs, kind: c.kind }));
+  // 카드를 집으면 배열 순서가 바뀌므로, 트레이 자리는 처음 순서로 고정해요(남은 카드가 뒤섞여 움직이지 않게)
+  BOARD.sort.chips.forEach((c, i) => { c.hi = i; }); BOARD.cases.chips.forEach((c, i) => { c.hi = i; });
 
   function layoutSort() {
     const B = BOARD.sort;
@@ -574,11 +576,11 @@
     if (!PHONE) {
       const bw = (VW - 24 - 4 * 8) / 5;
       BINS.forEach((b, i) => zones.push({ id: b.id, x: 12 + i * (bw + 8), y: 58, w: bw, h: 276 }));
-      B.chips.forEach((c, i) => { const col = i % 4, row = Math.floor(i / 4); c.home = { x: 27 + 88 + col * 190, y: 364 + 24 + row * 57, w: 176, h: 48 }; });
+      B.chips.forEach((c) => { const i = c.hi, col = i % 4, row = Math.floor(i / 4); c.home = { x: 27 + 88 + col * 190, y: 364 + 24 + row * 57, w: 176, h: 48 }; });
     } else {
       const bw = (VW - 24 - 16) / 3;
       BINS.forEach((b, i) => zones.push({ id: b.id, x: 12 + (i % 3) * (bw + 8), y: 66 + Math.floor(i / 3) * 208, w: bw, h: 198 }));
-      B.chips.forEach((c, i) => { const col = i % 2, row = Math.floor(i / 2); c.home = { x: 12 + 140 + col * 296, y: 496 + 25 + row * 58, w: 280, h: 50 }; });
+      B.chips.forEach((c) => { const i = c.hi, col = i % 2, row = Math.floor(i / 2); c.home = { x: 12 + 140 + col * 296, y: 496 + 25 + row * 58, w: 280, h: 50 }; });
     }
     B.zones = zones;
     zones.forEach((z) => {
@@ -595,12 +597,12 @@
     const T = caseGeo();
     CASES.forEach((cs, r) => ['env', 'soc'].forEach((k, cI) => zones.push({ id: cs.id + '-' + k, cs: cs.id, kind: k, x: T.cx[cI], y: T.ry[r], w: T.cw, h: T.rh })));
     B.zones = zones;
-    B.chips.forEach((c, i) => {
+    B.chips.forEach((c) => {
       if (c.zone) {
         const z = zones.find((q) => q.id === c.zone);
         c.tx = z.x + z.w / 2; c.ty = z.y + z.h / 2; c.tw = z.w - 8; c.th = z.h - 8; c.fs = 12.5;
       } else {
-        const g = T.tray(i);
+        const g = T.tray(c.hi);
         c.home = g; c.tx = g.x; c.ty = g.y; c.tw = g.w; c.th = g.h; c.fs = 13;
       }
     });

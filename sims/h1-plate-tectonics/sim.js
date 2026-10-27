@@ -299,7 +299,7 @@
     const cw = PHONE ? 186 : 250, gap = PHONE ? 10 : 14, ch = PHONE ? 118 : 82;
     card(R.x, py0, cw, ch, '● 지진 (진앙)', nq.toLocaleString('ko-KR') + '개', '교육용으로 단순화한 자료', '#f97316');
     card(R.x + cw + gap, py0, cw, ch, '▲ 화산', nv + '개', '활화산·휴화산 포함', '#b91c1c');
-    card(R.x + 2 * (cw + gap), py0, cw, ch, '━ 판 경계 근처', S.layA.eq > 0.5 ? '약 ' + NEARQ + ' %' : '—', PHONE ? '지진이 경계 약 400 km 이내' : '지진이 판 경계 약 400 km 안에서 일어난 비율', '#eab308');
+    card(R.x + 2 * (cw + gap), py0, cw, ch, '━ 판 경계 근처', S.layA.eq > 0.5 ? '약 ' + NEARQ + ' %' : '—', PHONE ? '지진이 경계 약 400 km 이내' : '경계 400 km 안의 지진 비율', '#eab308');
     const by = py0 + ch + 10;
     D.shadow(() => { ctx.fillStyle = '#fff'; rr(R.x, by, R.w, PHONE ? 140 : VH - by - 8, 14).fill(); }, { blur: 6, y: 2, color: 'rgba(30,45,80,.2)' });
     if (S.pick) {
@@ -374,7 +374,7 @@
     if (h > 0.05) {
       const arrows = [[0.5, 0.5, 0, -1], [0.0, 0.5, 0, 1], [1.0, 0.5, 0, 1], [0.25, 0.88, -1, 0], [0.75, 0.88, 1, 0], [0.25, 0.12, 1, 0], [0.75, 0.12, -1, 0]];
       arrows.forEach(([fx, fy, dx, dy]) => { const x = CV.x0 + fx * CV.W + (fx === 0 ? 34 : fx === 1 ? -34 : 0), y = CV.y1 - fy * CV.H, L = 28 + 34 * h; D.arrow(x - dx * L / 2, y - dy * L / 2, x + dx * L / 2, y + dy * L / 2, { color: 'rgba(255,255,255,.95)', width: 5, head: 14 }); });
-      if (!PHONE) F(400, CV.y0 + 128, '뜨거운 맨틀은 올라가요', { size: 14, color: '#fff', weight: 800, stroke: 'rgba(120,40,0,.6)', strokeWidth: 4 });
+      if (!PHONE) F(420, CV.y0 + 128, '뜨거운 맨틀은 올라가요', { size: 14, color: '#fff', weight: 800, align: 'left', stroke: 'rgba(120,40,0,.6)', strokeWidth: 4 });
       if (!PHONE) { F(158, CV.y0 + 102, '식은 맨틀은', { size: 13.5, color: '#fff', weight: 800, stroke: 'rgba(0,40,100,.6)', strokeWidth: 4 }); F(158, CV.y0 + 120, '가라앉아요', { size: 13.5, color: '#fff', weight: 800, stroke: 'rgba(0,40,100,.6)', strokeWidth: 4 }); }
       // 열 화살표 (핵 → 맨틀)
       ctx.strokeStyle = 'rgba(255,240,170,' + (0.4 + 0.5 * h) + ')'; ctx.lineWidth = 3;
@@ -401,7 +401,7 @@
     if (!PHONE) { F(250, 122, '해양판(판 = 암석권)', { size: 13.5, color: '#fff', weight: 800, stroke: 'rgba(0,0,0,.45)', strokeWidth: 3 }); F(552, 122, '해양판(판 = 암석권)', { size: 13.5, color: '#fff', weight: 800, stroke: 'rgba(0,0,0,.45)', strokeWidth: 3 }); }
     F(400, 292, '맨틀', { size: 18, color: 'rgba(255,255,255,.55)', weight: 800 });
     // 내 예상 화살표
-    [['L', 250], ['R', 550]].forEach(([k, x]) => { const d = S.pred[k]; if (!d) return; const ok = S.predOK > 0.5; D.arrow(x - d * 40, 70, x + d * 40, 70, { color: ok ? '#16a34a' : '#7c3aed', width: 6, head: 14, dash: ok ? null : [8, 6] }); F(x, 52, (k === 'L' ? '왼쪽' : '오른쪽') + ' 판 예상', { size: 13.5, color: ok ? '#166534' : '#5b21b6', weight: 800 }); });
+    [['L', 250], ['R', 550]].forEach(([k, x]) => { const d = S.pred[k]; if (!d) return; const ok = S.predOK > 0.5 && d === (k === 'L' ? -1 : 1); D.arrow(x - d * 40, 70, x + d * 40, 70, { color: ok ? '#16a34a' : '#7c3aed', width: 6, head: 14, dash: ok ? null : [8, 6] }); F(x, 52, (k === 'L' ? '왼쪽' : '오른쪽') + ' 판 예상', { size: 13.5, color: ok ? '#166534' : '#5b21b6', weight: 800 }); });
     figEnd();
     // 위쪽 에너지 흐름 칩
     const chips = ['지구 내부 열', '맨틀 대류', '판 이동', '지진·화산·산맥'], lv = [h > 0.03, h > 0.1, h > 0.1, h > 0.25];
@@ -626,7 +626,7 @@
     ctx.restore();
     ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 2; rr(R.x, R.y, R.w, R.h, 12).stroke();
     FLs(cx, R.y + 20, '해령 (거리 0)', '#7f1d1d');
-    TX(R.x + 14, R.y + R.h - 12, '← 서쪽(대서양)', { size: 12.5, color: '#fff', weight: 800, align: 'left', stroke: 'rgba(0,0,0,.4)', strokeWidth: 3 }); TX(R.x + R.w - 14, R.y + R.h - 12, '동쪽 →', { size: 12.5, color: '#fff', weight: 800, align: 'right', stroke: 'rgba(0,0,0,.4)', strokeWidth: 3 });
+    TX(R.x + 14, R.y + 22, '← 서쪽(대서양)', { size: 12.5, color: '#fff', weight: 800, align: 'left', stroke: 'rgba(0,0,0,.4)', strokeWidth: 3 }); TX(R.x + R.w - 14, R.y + 22, '동쪽 →', { size: 12.5, color: '#fff', weight: 800, align: 'right', stroke: 'rgba(0,0,0,.4)', strokeWidth: 3 });
     // 시추 지점
     SITES.forEach((s, i) => {
       const x = siteX(s.d), dr = S.drilled.has(i), an = S.dAnim[i] != null ? S.dAnim[i] : 0, y0 = seaY - 8, yb = topY(x - cx) + 8;
@@ -635,8 +635,8 @@
       if (dr || an > 0) { ctx.strokeStyle = '#334155'; ctx.lineWidth = 2.4; ctx.beginPath(); ctx.moveTo(x, y0 + 3 + bob); ctx.lineTo(x, y0 + 3 + (yb - y0 - 3) * Math.min(1, an * 2)); ctx.stroke(); }
       // 번호와 상태
       ctx.save(); D.shadow(() => { ctx.fillStyle = dr ? '#16a34a' : '#fff'; ctx.beginPath(); ctx.arc(x, R.y + R.h - 30, 12, 0, 6.3); ctx.fill(); }, { blur: 3, y: 1, color: 'rgba(0,0,0,.4)' }); ctx.strokeStyle = '#0f172a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, R.y + R.h - 30, 12, 0, 6.3); ctx.stroke(); TX(x, R.y + R.h - 24.5, String(i + 1), { size: 14, color: dr ? '#fff' : '#0f172a', weight: 800 }); ctx.restore();
-      if (dr && an >= 0.6 && S.lastSite === i) D.label(x, y0 - 28 + 4, '거리 ' + s.d + ' km · 나이 ' + s.a + ' 백만 년', { bg: '#0f766e', size: 11.5, pad: 6 });
-      else if (!dr) TX(x, R.y + 46, '클릭: 시추', { size: 12, color: '#1e3a8a', weight: 800 });
+      if (dr && an >= 0.6 && S.lastSite === i) D.label(clamp(x, R.x + 100, R.x + R.w - 100), y0 - 28 + 4, '거리 ' + s.d + ' km · 나이 ' + s.a + ' 백만 년', { bg: '#0f766e', size: 11.5, pad: 6 });
+      else if (!dr) TX(x, R.y + 46, '시추', { size: 12, color: '#1e3a8a', weight: 800 });
       S.siteHit = S.siteHit || []; S.siteHit[i] = { x, y: R.y + 24, w: 44, h: R.h - 24 };
     });
     // 그래프
@@ -695,16 +695,16 @@
     const pg = ctx.createRadialGradient(hx, hy, 2, hx, hy, 60); pg.addColorStop(0, 'rgba(255,100,30,.95)'); pg.addColorStop(1, 'rgba(255,100,30,0)'); ctx.fillStyle = pg; ctx.beginPath(); ctx.arc(hx, hy, 60 + 5 * Math.sin(t * 3), 0, 6.3); ctx.fill();
     // 섬
     HI.forEach((isl, i) => {
-      const p = hawPos(i, tm); if (!p) return; const born = clamp((tm + isl.age) / 0.6, 0, 1), s = born * (HG.sc / 0.6);
+      const p = hawPos(i, tm); if (!p) { if (S.islHit) S.islHit[i] = null; return; } const born = clamp((tm + isl.age) / 0.6, 0, 1), s = born * (HG.sc / 0.6);
       const meas = S.hawMeasured.has(i);
       ctx.fillStyle = '#6b8e4e'; ctx.strokeStyle = '#d9c28a'; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(p.x, p.y, isl.rx * s, isl.ry * s, -0.5, 0, 6.3); ctx.fill(); ctx.stroke();
       ctx.fillStyle = '#4d6f35'; ctx.beginPath(); ctx.ellipse(p.x, p.y, isl.rx * s * 0.5, isl.ry * s * 0.5, -0.5, 0, 6.3); ctx.fill();
       if (i === 0 && tm > -0.5) { const e = 0.5 + 0.5 * Math.sin(t * 8); ctx.fillStyle = 'rgba(255,90,20,' + (0.6 + 0.4 * e) + ')'; ctx.beginPath(); ctx.arc(p.x, p.y, 5 * s, 0, 6.3); ctx.fill(); }
-      if (meas && tm >= -0.01) { ctx.strokeStyle = '#fde047'; ctx.lineWidth = 3; ctx.setLineDash([6, 4]); ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(p.x, p.y); ctx.stroke(); ctx.setLineDash([]); D.label(p.x + 40, p.y + 24, Math.round(isl.dist) + ' km', { bg: '#a16207', size: 13 }); }
+      if (meas && i > 0 && tm >= -0.01) { ctx.strokeStyle = '#fde047'; ctx.lineWidth = 3; ctx.setLineDash([6, 4]); ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(p.x, p.y); ctx.stroke(); ctx.setLineDash([]); D.label(p.x - 52, p.y + 24, Math.round(isl.dist) + ' km', { bg: '#a16207', size: 13 }); }
       S.islHit = S.islHit || []; S.islHit[i] = { x: p.x, y: p.y, r: Math.max(26, isl.rx * s + 8) };
-      D.label(p.x, p.y - isl.ry * s - 16, isl.n + (meas && !PHONE ? ' · ' + (i ? isl.age + ' 백만 년' : '현재 활동') : ''), { bg: meas ? '#0f766e' : '#1e293b', size: 12.5 });
+      D.label(p.x, i === 0 ? p.y + isl.ry * s + 18 : p.y - isl.ry * s - 16, isl.n + (meas && !PHONE ? ' · ' + (i ? isl.age + ' 백만 년' : '현재 활동') : ''), { bg: meas ? '#0f766e' : '#1e293b', size: 12.5 });
     });
-    D.label(hx + 70, hy - 44, '열점 (고정된 마그마 공급처)', { bg: '#7f1d1d', size: 13 });
+    D.label(Math.min(hx + 170, R.x + R.w - 8), hy - 44, '열점 (고정된 마그마 공급처)', { bg: '#7f1d1d', size: 13, align: 'right' });
     // 나침반·시간
     TX(R.x + 36, R.y + 38, '북', { size: 14, color: '#fff', weight: 800 }); D.arrow(R.x + 36, R.y + 90, R.x + 36, R.y + 46, { color: '#fff', width: 4, head: 12 });
     D.label(R.x + R.w - 90, R.y + R.h - 20, tm >= -0.01 ? '현재' : (-tm).toFixed(1) + ' 백만 년 전', { bg: '#0f172a', size: 15 });

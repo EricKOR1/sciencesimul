@@ -372,7 +372,7 @@
       lines(PX + PW / 2, PY + PH / 2 - 8, ['광물 카드를 눌러', '이루는 원소를 확인해요'], { size: fs(16), color: MUTED, lh: fs(26) });
     } else {
       const m = MIN5[ROCK.sel];
-      D.text(PX + 18, PY + fs(30), m.n + '을(를) 이루는 원소', { size: fs(17), weight: 800, color: SKYD, align: 'left' });
+      D.text(PX + 18, PY + fs(30), m.n + (/[가-힣]/.test(m.n) && (m.n.charCodeAt(m.n.length - 1) - 0xAC00) % 28 !== 0 ? '을' : '를') + ' 이루는 원소', { size: fs(17), weight: 800, color: SKYD, align: 'left' });
       const k = m.els.length, step = Math.min(PHONE ? 84 : 112, (PW - 40) / k);
       const x0 = PX + PW / 2 - (step * (k - 1)) / 2;
       m.els.forEach((e, i) => {
@@ -704,7 +704,7 @@
       }
     } else if (id === 'biot') {
       for (let i = 0; i < 8; i++) {
-        const lift = i >= 5 ? p : 0, oy = 38 - i * 10 - lift * (i - 4) * 14, ox = lift * (i - 4) * 12, rot = lift * (i - 4) * 0.12;
+        const lift = i >= 5 ? p : 0, oy = 38 - i * 10 - lift * (i - 4) * 9, ox = lift * (i - 4) * 12, rot = lift * (i - 4) * 0.12;
         ctx.save(); ctx.translate(ox, oy); ctx.rotate(rot);
         D.roundRect(-42, -5, 84, 10, 4); const g = ctx.createLinearGradient(0, -5, 0, 5); g.addColorStop(0, '#6b5249'); g.addColorStop(1, '#2b1f1c'); ctx.fillStyle = g; ctx.fill(); ctx.strokeStyle = '#1b1210'; ctx.lineWidth = 1.5; ctx.stroke();
         ctx.fillStyle = 'rgba(255,255,255,.22)'; ctx.fillRect(-36, -3, 40, 2);
@@ -738,9 +738,9 @@
       ctx.strokeStyle = tested ? '#16a34a' : '#cfd8e3'; ctx.lineWidth = tested ? 3 : 2; D.roundRect(P.x - P.w / 2, P.y - P.h / 2, P.w, P.h, 18); ctx.stroke();
       D.text(P.x, P.y - P.h / 2 + fs(30), s.n, { size: fs(20), weight: 800, color: INK });
       ctx.save(); D.roundRect(P.x - P.w / 2 + 2, P.y - P.h / 2 + 2, P.w - 4, P.h - 4, 16); ctx.clip();
-      drawSpecimen(s.id, P.x, P.y - P.h / 2 + (PHONE ? 112 : 124), o.p, t);
+      if (PHONE) { ctx.save(); ctx.translate(P.x, P.y - P.h / 2 + 106); ctx.scale(0.78, 0.78); drawSpecimen(s.id, 0, 0, o.p, t); ctx.restore(); } else drawSpecimen(s.id, P.x, P.y - P.h / 2 + 124, o.p, t);
       ctx.restore();
-      const by = P.y - P.h / 2 + (PHONE ? 224 : 266);
+      const by = P.y - P.h / 2 + (PHONE ? 198 : 266);
       if (!tested) {
         pill(P.x, by, '🔨 눌러서 쪼개 보기', { bg: SKY, color: '#fff', size: fs(13) });
         D.text(P.x, by + fs(34), '(어떻게 부서질까요?)', { size: fs(12), weight: 700, color: MUTED });
@@ -752,9 +752,9 @@
         lines(P.x, by - fs(6), [l1, l2], { size: fs(12), weight: 800, color: '#0b6b39', lh: fs(17) });
         // 미니 구조
         const mb = structBlocks(s.type).map((b) => Object.assign({ a: 1 }, b));
-        const msc = (PHONE ? 15 : 13) * (s.type === 'sheet' ? 1.15 : 1);
-        drawBlocks(mb, P.x, by + (PHONE ? 66 : 86), msc, { mono: true, faceA: 0.22 });
-        pill(P.x, by + (PHONE ? 118 : 148), STRUCT_INFO[s.type].name + ' 배열', { bg: '#fff', color: SKYD, border: SKY, size: fs(13) });
+        const msc = (PHONE ? 13 : 13) * (s.type === 'sheet' ? 1.15 : 1);
+        drawBlocks(mb, P.x, by + (PHONE ? 56 : 86), msc, { mono: true, faceA: 0.22 });
+        pill(P.x, by + (PHONE ? 98 : 148), STRUCT_INFO[s.type].name + ' 배열', { bg: '#fff', color: SKYD, border: SKY, size: fs(13) });
         ctx.restore();
       }
     });

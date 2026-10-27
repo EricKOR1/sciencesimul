@@ -802,7 +802,7 @@
     [0, 10, 20, 30, 40].forEach((n) => { ctx.beginPath(); ctx.moveTo(px0, Y(n)); ctx.lineTo(px0 + pw, Y(n)); ctx.stroke(); D.text(px0 - 6, Y(n) + 4, String(n), { size: 12, weight: 700, color: '#64748b', align: 'right' }); });
     [0, 20, 40, 60, 80, 100].forEach((v) => D.text(X(v), py0 + ph + 16, String(v), { size: 12, weight: 700, color: '#475569' }));
     
-    D.text(px0 - 6, py0 - 16, '종 수', { size: 12, weight: 700, color: '#64748b', align: 'right' });
+    D.text(px0 - 6, py0 - 5, '종 수', { size: 12, weight: 700, color: '#64748b', align: 'right' });
     RF.forEach((f) => {
       ctx.strokeStyle = f.c; ctx.lineWidth = 2.6; ctx.beginPath();
       for (let v = 0; v <= 100; v += 10) { const n = f.k === 'h' ? spCount(v, 0, 0) : f.k === 'a' ? spCount(0, v, 0) : spCount(0, 0, v); v ? ctx.lineTo(X(v), Y(n)) : ctx.moveTo(X(v), Y(n)); }
@@ -816,7 +816,7 @@
     const B = L.bars;
     D.shadow(() => { ctx.fillStyle = '#fff'; rr(B.x, B.y, B.w, B.h, 12).fill(); }, { blur: 5, y: 2 });
     D.text(B.x + 14, B.y + 22, '요인별로 사라진 종 수 (지금 슬라이더 값, 한 가지씩만 작용할 때)', { size: 13, weight: 800, color: '#14532d', align: 'left' });
-    const lw = PHONE ? 120 : 150, bx = B.x + 14 + lw, bw = B.w - 28 - lw - 62;
+    const lw = PHONE ? 158 : 150, bx = B.x + 14 + lw, bw = B.w - 28 - lw - 62;
     const loss = { h: S0 - spCount(RK.h, 0, 0), a: S0 - spCount(0, RK.a, 0), p: S0 - spCount(0, 0, RK.p), all: S0 - cnt };
     RK.dbar = RK.dbar || { h: 0, a: 0, p: 0, all: 0 };
     [...RF, { k: 'all', n: '세 요인이 함께', c: '#0f172a' }].forEach((f, i) => {

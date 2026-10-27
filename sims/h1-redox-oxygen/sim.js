@@ -769,7 +769,7 @@
           hint: '시료를 고른 뒤 🔥 가열하기를 눌러요. 반응이 끝나면 다른 시료도 골라 가열해요.',
           setup() { ensure('oxid'); },
           check: () => RS.cu.done && RS.mg.done, hold: 0.4,
-          status: () => mark(RS.cu.done) + ' 구리 가열 · ' + mark(RS.mg.done) + ' 마그네슘 가열' + (RS.cu.run ? ' (' + pct('cu') + ' %)' : RS.mg.run ? ' (' + pct('mg') + ' %)' : ''),
+          status: () => mark(RS.cu.done) + ' 구리 가열' + (RS.cu.run ? ' (' + pct('cu') + ' %)' : '') + ' · ' + mark(RS.mg.done) + ' 마그네슘 가열' + (RS.mg.run ? ' (' + pct('mg') + ' %)' : ''),
           explain: '두 금속 모두 <b>산소 원자(빨강)</b>가 금속 쪽으로 옮겨 가 결합했어요. 구리는 붉은색에서 <b>검은색 산화 구리(Ⅱ)</b>로, 마그네슘은 <b>흰색 산화 마그네슘</b>으로 변했어요.',
         },
         {
@@ -807,7 +807,7 @@
           hint: '위쪽 단추로 수소와 탄소를 바꿔 가며 가열해요. 검은색이 붉은색으로 변하는지 봐요.',
           setup() { ensure('reduc'); },
           check: () => RS.h2.done && RS.c.done, hold: 0.4,
-          status: () => mark(RS.h2.done) + ' 수소와 반응 · ' + mark(RS.c.done) + ' 탄소와 반응' + (RS.h2.run ? ' (' + pct('h2') + ' %)' : RS.c.run ? ' (' + pct('c') + ' %)' : ''),
+          status: () => mark(RS.h2.done) + ' 수소와 반응' + (RS.h2.run ? ' (' + pct('h2') + ' %)' : '') + ' · ' + mark(RS.c.done) + ' 탄소와 반응' + (RS.c.run ? ' (' + pct('c') + ' %)' : ''),
           explain: '두 경우 모두 산화 구리(Ⅱ)의 <b>산소 원자가 떠나</b> 수소 또는 탄소 쪽으로 옮겨 갔어요. 수소는 물(H₂O)이 되고, 탄소는 이산화 탄소(CO₂)가 되어 석회수를 뿌옇게 만들어요.',
         },
         {
@@ -921,7 +921,7 @@
     ctx.setTransform(view.scale * view.dpr, 0, 0, view.scale * view.dpr, 0, 0);
     ctx.fillStyle = '#f5f3ff'; ctx.fillRect(0, 0, VW, VH);
     const pk = curKey();
-    if (MODE === 'oxid') { drawOxidBench(ST.metal, t, dt); drawParticlePanel(pk, t, { badge: [[0.5, 0.06, MASS[ST.metal].pf + '는 산소를 얻었어요 → 산화', '#7c3aed']] }); }
+    if (MODE === 'oxid') { drawOxidBench(ST.metal, t, dt); drawParticlePanel(pk, t, { badge: [[0.5, 0.06, (ST.metal === 'cu' ? '구리(Cu)는' : '마그네슘(Mg)은') + ' 산소를 얻었어요 → 산화', '#7c3aed']] }); }
     else if (MODE === 'reduc') { drawReducBench(ST.red, t, dt); drawParticlePanel(pk, t, {}); }
     else if (MODE === 'blast') { drawBlastBench(t, dt); drawParticlePanel('fe', t, {}); }
     else { drawCompareBench(ST.cmp, t, dt); drawParticlePanel(pk, t, { heat: ST.cmp === 'ch4' }); }

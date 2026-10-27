@@ -521,7 +521,7 @@
   const SEQS = { 1: seqsOf(1), 2: seqsOf(2), 3: seqsOf(3) };
   const AA = 20;
   const CDG = () => (PHONE
-    ? { gx: 20, gy: 66, gw: 480, gh: 380, pill: { 1: [100, 60, 112, 20], 2: [88, 56, 112, 66], 3: [58, 38, 60, 44] }, cols: { 1: 4, 2: 4, 3: 8 }, bx: [92, 258, 424], bw: 80, base: 722, scale: 4.2, cy: 462 }
+    ? { gx: 20, gy: 66, gw: 480, gh: 360, pill: { 1: [100, 60, 112, 20], 2: [88, 56, 112, 66], 3: [58, 38, 60, 44] }, cols: { 1: 4, 2: 4, 3: 8 }, bx: [92, 258, 424], bw: 80, base: 722, scale: 2.7, cy: 462 }
     : { gx: 14, gy: 56, gw: 456, gh: 440, pill: { 1: [100, 64, 112, 0], 2: [90, 60, 112, 84], 3: [56, 40, 56, 48] }, cols: { 1: 4, 2: 4, 3: 8 }, bx: [548, 628, 708], bw: 60, base: 470, scale: 4.5, cy: 0 });
   function pillPos(i, n) {
     const g = CDG(), p = g.pill[n], cols = g.cols[n], c = i % cols, r = Math.floor(i / cols), rows = Math.ceil(SEQS[n].length / cols);
@@ -574,8 +574,8 @@
     // 세는 숫자
     const cnt = n === 1 ? 4 : n === 2 ? 16 : 64;
     const cx2 = g.gx + g.gw - 10;
-    D.label(g.gx + g.gw - 70, g.gy + g.gh + (PHONE ? 22 : 30), d.counted[n] ? '모두 ' + tot + '가지' : sl > 0 ? sl + ' / ' + tot : '0가지', { bg: d.counted[n] ? '#15803d' : '#475569', size: PHONE ? 13 : 15, pad: 12 });
-    if (n === 3 && d.counted[3]) D.text(g.gx + 16, g.gy + g.gh + (PHONE ? 26 : 34), '○ = AUG : 염기 3개 묶음 한 개', { size: PHONE ? 11.5 : 13, weight: 800, color: '#a16207', align: 'left' });
+    D.label(g.gx + g.gw - 70, g.gy + g.gh + (PHONE ? 24 : 30), d.counted[n] ? '모두 ' + tot + '가지' : sl > 0 ? sl + ' / ' + tot : '0가지', { bg: d.counted[n] ? '#15803d' : '#475569', size: PHONE ? 13 : 15, pad: 12 });
+    if (n === 3 && d.counted[3]) D.text(g.gx + 16, g.gy + g.gh + (PHONE ? 28 : 34), '○ = AUG : 염기 3개 묶음 한 개', { size: PHONE ? 11.5 : 13, weight: 800, color: '#a16207', align: 'left' });
     // 막대 그래프
     const bx0 = PHONE ? 20 : 490, bw0 = PHONE ? 480 : 296, by0 = PHONE ? 466 : 56, bh0 = PHONE ? 300 : 484;
     D.shadow(() => { ctx.fillStyle = '#fff'; rr(bx0, by0, bw0, bh0, 16).fill(); }, { blur: 6, y: 2 });
@@ -584,7 +584,7 @@
     ctx.save(); ctx.strokeStyle = '#334155'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(bx0 + 20, base); ctx.lineTo(bx0 + bw0 - 16, base); ctx.stroke(); ctx.restore();
     const y20 = base - AA * sc2;
     ctx.save(); ctx.strokeStyle = '#ca8a04'; ctx.lineWidth = 2.5; ctx.setLineDash([8, 5]); ctx.beginPath(); ctx.moveTo(bx0 + 16, y20); ctx.lineTo(bx0 + bw0 - 12, y20); ctx.stroke(); ctx.restore();
-    D.label(bx0 + bw0 - 74, y20 - 14, '아미노산 20종', { bg: '#ca8a04', size: PHONE ? 11.5 : 12.5 });
+    D.label(bx0 + 84, y20 - 14, '아미노산 20종', { bg: '#ca8a04', size: PHONE ? 11.5 : 12.5 });
     [1, 2, 3].forEach((k, i) => {
       const x = g.bx[i], hh = d.bar[k] * sc2, on = d.filled[k], full = Math.pow(4, k);
       if (hh > 0.5) {
@@ -641,12 +641,12 @@
       D.text(PHONE ? L.x + 210 : ex, PHONE ? L.y + 70 : ey + ery + 28, (i ? '💪 ' : '🧪 ') + cell.name, { size: PHONE ? 17 : 19, weight: 800, color: '#14532d', align: PHONE ? 'left' : 'center' });
       D.text(PHONE ? L.x + 210 : ex, PHONE ? L.y + 94 : ey + ery + 50, cell.hint, { size: PHONE ? 12 : 13, weight: 700, color: '#64748b', align: PHONE ? 'left' : 'center' });
       // 유전자 목록
-      const gy0 = L.y + (PHONE ? 140 : 262), rowH = PHONE ? 62 : 72, bx = L.x + 18, bw = L.w - 36;
+      const gy0 = L.y + (PHONE ? 152 : 262), rowH = PHONE ? 62 : 72, bx = L.x + 18, bw = L.w - 36;
       GENES.forEach((gn, k) => {
         const y = gy0 + k * rowH, on = gn.on[cell.id];
         D.text(bx, y + 4, gn.name, { size: PHONE ? 13 : 14.5, weight: 800, color: '#334155', align: 'left' });
-        ctx.save(); ctx.fillStyle = seen ? (on ? '#22c55e' : '#d1d5db') : '#e2e8f0'; rr(bx, y + 14, bw - (PHONE ? 90 : 110), 22, 11).fill(); ctx.restore();
-        if (seen && on) { ctx.save(); ctx.fillStyle = 'rgba(255,255,255,.4)'; rr(bx + 6, y + 18, bw - (PHONE ? 102 : 122), 6, 3).fill(); ctx.restore(); }
+        ctx.save(); ctx.fillStyle = seen ? (on ? '#22c55e' : '#d1d5db') : '#e2e8f0'; rr(bx, y + 14, bw - (PHONE ? 112 : 110), 22, 11).fill(); ctx.restore();
+        if (seen && on) { ctx.save(); ctx.fillStyle = 'rgba(255,255,255,.4)'; rr(bx + 6, y + 18, bw - (PHONE ? 124 : 122), 6, 3).fill(); ctx.restore(); }
         D.label(bx + bw - (PHONE ? 44 : 53), y + 25, seen ? (on ? 'mRNA 만드는 중' : '꺼져 있음') : '? 눌러서 보기', { bg: seen ? (on ? '#15803d' : '#9ca3af') : '#94a3b8', size: PHONE ? 11 : 12 });
         if (seen && on && !RM && Math.random() < 0.05) parts.emit({ x: bx + bw - (PHONE ? 100 : 118), y: y + 25, vx: rnd(30, 60), vy: rnd(-25, 25), life: 0.9, size: 3.4, color: '#ec4899', shape: 'circle', gravity: 0 });
       });

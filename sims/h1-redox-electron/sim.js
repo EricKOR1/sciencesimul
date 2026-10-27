@@ -563,8 +563,8 @@
         else { const v = VIS['Ag,1']; D.sphere(cx2, cy2, 15, v.c, { text: 'Ag⁺', textColor: '#334155', textScale: 0.78 }); ctx.save(); ctx.setLineDash([3, 3]); ctx.strokeStyle = '#a16207'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(cx2, cy2 - 19, 6.5, 0, TAU); ctx.stroke(); ctx.restore(); }
       }
     };
-    pan(lx, ly, '#c2410c', '구리 ' + LG.cu + '개: 각각 전자 2개 내놓음', LG.cu, 'cu');
-    pan(rx, ry, '#4f46e5', '은 이온 ' + LG.ag + '개: 각각 전자 1개 필요', LG.ag, 'ag');
+    pan(lx, ly, '#c2410c', PHONE ? '구리 ' + LG.cu + '개 (전자 2개씩)' : '구리 ' + LG.cu + '개: 각각 전자 2개 내놓음', LG.cu, 'cu');
+    pan(rx, ry, '#4f46e5', PHONE ? '은 이온 ' + LG.ag + '개 (전자 1개씩)' : '은 이온 ' + LG.ag + '개: 각각 전자 1개 필요', LG.ag, 'ag');
     // 균형일 때 전자 흐름
     const bal = lgBalanced();
     if (bal) {
@@ -872,7 +872,7 @@
           manual: true,
           setup() { ensure('life'); },
           check: () => boardCheck(lBoard, (c) => c.t),
-          explain: '연료·포도당·철·비타민 C·은은 전자를 <b>잃어</b> 산화되고, 산소·이산화 탄소·철광석은 전자를 <b>얻어</b> 환원돼요. 같은 반응에서 산화되는 물질과 환원되는 물질이 짝으로 있어요.',
+          explain: '광합성의 물, 포도당, 철, 사과 속 물질, 비타민 C, 은(Ag)은 전자를 <b>잃어</b> 산화되고, 이산화 탄소, 산소, 철광석은 전자를 <b>얻어</b> 환원돼요. 같은 반응에서 산화되는 물질과 환원되는 물질이 짝으로 있어요.',
         },
         {
           type: 'quiz', title: '광합성과 세포 호흡',

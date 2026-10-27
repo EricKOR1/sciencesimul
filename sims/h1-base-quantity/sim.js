@@ -23,7 +23,7 @@
   const smooth = (x, a, b) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
   function rng(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
   const comma = (n) => String(Math.round(n)).replace(/(\d)(?=(\d{3})+$)/g, '$1,');
-  const num = (s) => { const v = parseFloat(String(s).replace(/,/g, '.').replace(/[^0-9eE+\-.]/g, '')); return isFinite(v) ? v : NaN; };
+  const num = (s) => { let t = String(s).trim(); t = /^\d{1,3}(,\d{3})+(\.\d+)?$/.test(t) ? t.replace(/,/g, '') : t.replace(/,/g, '.'); const v = parseFloat(t.replace(/[^0-9eE+\-.]/g, '')); return isFinite(v) ? v : NaN; };
 
   const FS = PHONE ? 1.2 : 1;
   const view = SciSim.stage($('#cv'), { width: VW, height: VH, background: '#f4f8fd' });
@@ -178,7 +178,7 @@
         ctx.fillStyle = '#e2e8f0'; rr(-12, -7, 24, 14, 3).fill(); ctx.fillStyle = '#3b82f6'; rr(-30, -4, 15, 8, 2).fill(); rr(15, -4, 15, 8, 2).fill(); ctx.restore();
       }
       if (burn && U.marsT < 0.6) { D.glow(p.x, p.y, 40 + 40 * Math.sin(t * 20) * 0.2, '#fb923c', 0.9); if (!RM) for (let k = 0; k < 2; k++) parts.emit({ x: p.x, y: p.y, vx: (Math.random() - 0.5) * 120, vy: (Math.random() - 0.5) * 120, life: 0.6, size: 3 + Math.random() * 3, color: ['#fde047', '#fb923c', '#ef4444'][k % 3], gravity: 0, drag: 2 }); }
-      if (U.marsT >= 0.3) D.label(VW / 2 - (PHONE ? 0 : 60), PHONE ? 420 : 250, '📡 신호가 끊겼어요… 궤도선을 잃었어요', { bg: '#dc2626', size: 17 });
+      if (U.marsT >= 0.3) D.label(PHONE ? VW / 2 : 470, PHONE ? 480 : 140, '📡 신호가 끊겼어요… 궤도선을 잃었어요', { bg: '#dc2626', size: 17 });
     } else D.text(VW / 2 - (PHONE ? 0 : 60), 200, '▶ 사고 장면 다시 보기를 눌러요', { size: 15, color: '#94a3b8', weight: 700 });
     // 팀 상자
     const bx = PHONE ? 14 : 14, bw = PHONE ? 400 : 290;
@@ -373,7 +373,7 @@
       if (!A[k].length) D.text(R.x + R.w / 2, R.y + R.h / 2 + 5, k === 'top' ? '위 칸 (분자) — 곱하는 양' : '아래 칸 (분모) — 나누는 양', { size: 14, color: '#94a3b8', weight: 700 });
     });
     const bar = botR().y - 11; ctx.strokeStyle = '#1b2333'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(BL.fx + 20, bar); ctx.lineTo(BL.fx + BL.fw - 20, bar); ctx.stroke();
-    D.text(BL.fx + 4, bar - 8, '÷', { size: 18, color: '#1b2333', weight: 800, align: 'left' });
+    D.text(BL.fx + 4, bar - 8, '나누기', { size: 13, color: '#1b2333', weight: 800, align: 'left' });
     // 결과 카드
     const rx = BL.resX, ry = BL.resY, rw = BL.resW, rh = BL.resH;
     D.shadow(() => { ctx.fillStyle = '#fff'; rr(rx, ry, rw, rh, 16).fill(); }, { blur: 10, y: 4 });
@@ -412,7 +412,7 @@
       ctx.fillStyle = '#86efac'; ctx.fillRect(x, gy, w, 14); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; for (let k = 0; k <= 4; k++) { const px = tx0 + (tx1 - tx0) * k / 4; ctx.beginPath(); ctx.moveTo(px, gy); ctx.lineTo(px, gy + 14); ctx.stroke(); D.text(px, gy + 34, (k * 25) + ' m', { size: 13, color: '#166534', weight: 800 }); }
       const px = tx0 + (tx1 - tx0) * cyc; D.sphere(px, gy - 16, 14, '#f26b3a', { shadow: true }); for (let k = 1; k < 4; k++) { ctx.fillStyle = 'rgba(242,107,58,' + 0.3 / k + ')'; ctx.beginPath(); ctx.arc(px - k * 14, gy - 16, 10 - k * 2, 0, 6.3); ctx.fill(); }
       D.label(x + w / 2, y + 36, '시간 ' + (cyc * 12.5).toFixed(1) + ' s  ·  거리 ' + d.toFixed(0) + ' m', { bg: '#1b2333', size: 15 });
-      D.text(x + w / 2, y + 74, '속력 = 100 m ÷ 12.5 s = 8 m/s', { size: 17, color: '#14a058', weight: 800 });
+      D.text(x + w / 2, y + 74, '속력 = 100 m / 12.5 s = 8 m/s', { size: 17, color: '#14a058', weight: 800 });
     } else if (A.target === 'area') {
       const gw = 4, gh = 3, c = Math.min((w - 80) / gw, (h - 110) / gh), gx = x + w / 2 - c * gw / 2, gy = y + 54;
       for (let i = 0; i < gw; i++) for (let j = 0; j < gh; j++) { const on = (i + j * gw) < ((t * 5) % 14); ctx.fillStyle = on ? '#bfdbfe' : '#eff6ff'; ctx.strokeStyle = '#3b82f6'; ctx.lineWidth = 1.5; ctx.fillRect(gx + i * c, gy + j * c, c, c); ctx.strokeRect(gx + i * c, gy + j * c, c, c); }
@@ -428,7 +428,7 @@
       ctx.fillStyle = 'rgba(96,165,250,.75)'; ctx.strokeStyle = '#2563eb'; ctx.lineWidth = 2.5; rr(cx - 36, by - 66 + Math.sin(t * 2) * 1.5, 72, 66, 6).fill(); rr(cx - 36, by - 66 + Math.sin(t * 2) * 1.5, 72, 66, 6).stroke();
       D.text(cx, by - 30, '물', { size: 16, color: '#fff', weight: 800 }); D.text(cx, by - 80, '200 cm³', { size: 14, color: '#1d4ed8', weight: 800 });
       ctx.fillStyle = '#0f172a'; rr(cx + 60, by - 60, 84, 34, 8).fill(); D.text(cx + 102, by - 36, '200 g', { size: 16, color: '#86efac', weight: 800 });
-      D.text(x + w / 2, y + 34, '1 cm³마다 물 1 g', { size: 14, color: '#1d4ed8', weight: 800 }); D.text(x + w / 2, y + h - 20, '밀도 = 0.2 kg ÷ 2×10⁻⁴ m³ = 1000 kg/m³', { size: PHONE ? 15 : 16, color: '#14a058', weight: 800 });
+      D.text(x + w / 2, y + 34, '1 cm³마다 물 1 g', { size: 14, color: '#1d4ed8', weight: 800 }); D.text(x + w / 2, y + h - 20, '밀도 = 0.2 kg / 2×10⁻⁴ m³ = 1000 kg/m³', { size: PHONE ? 15 : 16, color: '#14a058', weight: 800 });
     }
     ctx.restore();
   }
@@ -444,7 +444,7 @@
   /* ======================================================
      화면 4: 스마트 측정
      ====================================================== */
-  const PHN = PHONE ? { x: 150, y: 400, w: 300, h: 330 } : { x: 490, y: 8, w: 300, h: 544 };
+  const PHN = PHONE ? { x: 150, y: 346, w: 300, h: 330 } : { x: 490, y: 8, w: 300, h: 544 };
   const PENDS = [10.1, 10.3, 9.9, 10.2, 10.0, 10.1];
   function periodNow() { return 1.01; }
   function initPhone() {
@@ -470,14 +470,14 @@
   }
   function drawPhoneScene(t) {
     ctx.fillStyle = '#f4f8fd'; ctx.fillRect(0, 0, VW, VH);
-    const P = S.ph, ex = 8, ey = 8, ew = PHONE ? 584 : 470, eh = PHONE ? 380 : 340;
+    const P = S.ph, ex = 8, ey = 8, ew = PHONE ? 584 : 470, eh = PHONE ? 330 : 340;
     // 실험 장면
     D.shadow(() => { ctx.fillStyle = '#fff'; rr(ex, ey, ew, eh, 16).fill(); }, { blur: 8, y: 3 });
     ctx.save(); rr(ex, ey, ew, eh, 16).clip();
     if (S.sub === 'pend') {
       const g = ctx.createLinearGradient(0, ey, 0, ey + eh); g.addColorStop(0, '#f8fafc'); g.addColorStop(1, '#e2e8f0'); ctx.fillStyle = g; ctx.fillRect(ex, ey, ew, eh);
       const px = ex + ew / 2, py = ey + 36, len = PHONE ? 230 : 226, th = P.pend.state === 'run' ? 0.36 * Math.cos(P.pend.ph * 2 * Math.PI / 1.01) : 0.0;
-      ctx.fillStyle = '#78350f'; rr(px - 70, py - 14, 140, 14, 5).fill(); ctx.fillStyle = '#92400e'; rr(px - 6, py - 14, 12, ey + eh - py + 10, 3).fill();
+      ctx.fillStyle = '#78350f'; rr(px - 42, py - 14, 176, 14, 5).fill(); ctx.fillStyle = '#92400e'; rr(px + 128, py - 14, 12, ey + eh - py + 10, 3).fill();
       const bx = px + Math.sin(th) * len, by = py + Math.cos(th) * len; ctx.strokeStyle = '#475569'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(bx, by); ctx.stroke(); D.sphere(bx, by, 20, '#f59e0b', { shadow: true });
       ctx.strokeStyle = 'rgba(148,163,184,.6)'; ctx.setLineDash([4, 5]); ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px, py + len + 30); ctx.stroke(); ctx.setLineDash([]);
       D.text(ex + 18, ey + 30, '⏱ 진자 10번 왕복', { size: 17, color: '#1b2333', weight: 800, align: 'left' });
@@ -504,7 +504,7 @@
     }
     ctx.restore();
     // 기록표
-    const ty = ey + eh + 8, th = VH - ty - 8, tw = ew;
+    const ty = PHONE ? PHN.y + PHN.h + 10 : ey + eh + 8, th = VH - ty - 8, tw = ew;
     D.shadow(() => { ctx.fillStyle = '#fff'; rr(ex, ty, tw, th, 14).fill(); }, { blur: 8, y: 3 });
     D.text(ex + 14, ty + 26, '📋 기록표', { size: 16, color: '#1b2333', weight: 800, align: 'left' });
     const rows = P.rec.slice(-8);
@@ -523,7 +523,7 @@
       D.text(cxm, sy + 130, showV == null ? '0.0' : showV.toFixed(1), { size: PHONE ? 44 : 52, color: '#0f172a', weight: 800 }); D.text(cxm, sy + 158, 's', { size: 18, color: '#64748b', weight: 800 });
       D.text(cxm, sy + 196, P.pend.state === 'run' ? '재는 중… ' + P.pend.n + ' / 10 왕복' : P.pend.state === 'done' ? '정지! (아직 기록 전)' : '대기 중', { size: 14, color: '#3867f4', weight: 800 });
       D.text(cxm, sy + 232, '기록한 값', { size: 14, color: '#64748b', weight: 800 });
-      P.rec.filter((r) => r.kind === 'pend').slice(-4).forEach((r, i) => D.text(cxm, sy + 258 + i * 24, (i + 1) + '회  ' + r.val.toFixed(1) + ' s', { size: 15, color: '#1b2333', weight: 800 }));
+      P.rec.filter((r) => r.kind === 'pend').slice(PHONE ? -3 : -4).forEach((r, i) => D.text(cxm, sy + 258 + i * 24, (i + 1) + '회  ' + r.val.toFixed(1) + ' s', { size: 15, color: '#1b2333', weight: 800 }));
     } else if (S.sub === 'ball') {
       D.text(cxm, sy + 62, 'AR 줄자 + 스톱워치', { size: 16, color: '#475569', weight: 800 });
       const dist = 2.0 * (1 - Math.pow(1 - P.ball.t / 1.6, 2));
@@ -534,7 +534,7 @@
       D.text(cxm, sy + 62, '온도 센서', { size: 16, color: '#475569', weight: 800 });
       D.text(cxm, sy + 124, P.temp.T.toFixed(1), { size: PHONE ? 44 : 52, color: SciSim.color.mix('#2563eb', '#dc2626', clamp((P.temp.T - 8) / 40, 0, 1)), weight: 800 }); D.text(cxm, sy + 150, '°C', { size: 18, color: '#64748b', weight: 800 });
       // 그래프
-      const gx = sx + 38, gy = sy + 180, gw = sw - 56, gh = PHONE ? 120 : 190;
+      const gx = sx + 38, gy = sy + 180, gw = sw - 56, gh = PHONE ? 96 : 190;
       ctx.fillStyle = '#fff'; ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 1.5; ctx.fillRect(gx, gy, gw, gh); ctx.strokeRect(gx, gy, gw, gh);
       ctx.strokeStyle = '#e2e8f0'; for (let k = 1; k < 5; k++) { ctx.beginPath(); ctx.moveTo(gx, gy + gh * k / 5); ctx.lineTo(gx + gw, gy + gh * k / 5); ctx.stroke(); }
       [0, 25, 50].forEach((v) => D.text(gx - 6, gy + gh - gh * v / 50 + 4, String(v), { size: 12, color: '#64748b', weight: 800, align: 'right' }));

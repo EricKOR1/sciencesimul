@@ -159,7 +159,7 @@
     bulb(bx, G.y0, G.br, T.glowv);
     D.text(bx, G.y0 + G.br + 26, '전구', { size: 13, color: '#64748b', weight: 800 });
     D.dial(G.x1, mid, G.ar, T.needle, 0, 1, { label: 'A', color: '#e2464b', ticks: 2 });
-    D.text(G.x1, mid - G.ar - 10, '전류계', { size: 13, color: '#64748b', weight: 800 });
+    D.text(G.x1, mid - G.ar - 20, '전류계', { size: 13, color: '#64748b', weight: 800 });
     // 시료 칸
     ctx.fillStyle = '#334155'; ctx.beginPath(); ctx.arc(G.g0, G.y1, 8, 0, 6.283); ctx.fill(); ctx.beginPath(); ctx.arc(G.g1, G.y1, 8, 0, 6.283); ctx.fill();
     D.sphere(G.g0, G.y1, 7, '#94a3b8', { gloss: false }); D.sphere(G.g1, G.y1, 7, '#94a3b8', { gloss: false });

@@ -657,7 +657,7 @@
     if (L.cx && (L.cx.phase === 'hold' || L.cx.phase === 'split')) { D.glow(pk.x, pk.y, 70, '#fde047', 0.35 + 0.15 * Math.sin(t * 10)); }
     // 기질 놓는 자리
     D.shadow(() => { ctx.fillStyle = 'rgba(255,255,255,.75)'; rr(g.tray[0], g.tray[1], g.tray[2], g.tray[3], 16).fill(); }, { blur: 6, y: 2 });
-    D.text(g.tray[0] + 76, g.tray[1] + 22, '기질 (끌어다 대 보세요)', { size: 13, weight: 800, color: '#14532d' });
+    D.text(g.tray[0] + 8, g.tray[1] - 8, '기질 (끌어다 활성 부위에 대 보세요)', { size: 13, weight: 800, color: '#14532d', align: 'left' });
     L.items.forEach((it) => {
       if (it.state === 'drag' || it === (L.cx && L.cx.it)) return;
       const hv = S.hover === it.id;

@@ -857,7 +857,7 @@
           title: '성운에서 태양계까지',
           goal: '시간 슬라이더나 <b>①~⑤</b> 버튼으로 <b>다섯 장면</b>을 모두 살펴보세요.',
           hint: '버튼 ①~⑤를 차례로 눌러 보세요. 별의 물질이 어떻게 이동하는지 따라가요.',
-          setup() { setScene('sn', ''); },
+          setup() { setScene('sn', ''); S.playing = false; S.t = S.tShown = 0; S.stages = new Set(); },   // 앞 미션에서 이미 본 장면은 세지 않아요
           check: () => S.stages.size >= 5,
           hold: 0.5,
           status: () => '본 장면 ' + S.stages.size + ' / 5 ' + [0, 1, 2, 3, 4].map((i) => mark(S.stages.has(i))).join(''),

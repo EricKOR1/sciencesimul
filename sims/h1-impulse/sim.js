@@ -183,7 +183,7 @@
       const sx = EFX, sy = top - 3 + (e.floor === 'concrete' ? 0 : dent * 0);
       ctx.fillStyle = 'rgba(255,255,255,.92)'; ctx.beginPath(); ctx.ellipse(sx, sy - 2, 46 * e.splat, 7, 0, 0, TAU); ctx.fill();
       ctx.fillStyle = '#ffc533'; ctx.beginPath(); ctx.ellipse(sx - 6, sy - 6, 15 * e.splat, 6, 0, 0, TAU); ctx.fill();
-      T(sx, sy - 40, '💥 깨졌어요!', 16, '#c0392b', 'center', 800);
+      T(sx - (PHONE ? 56 : 84), sy - 40, '💥 깨졌어요!', 16, '#c0392b', 'center', 800);
     } else {
       const sq = e.st === 'contact' ? 1 - 0.08 * Math.sin(Math.PI * e.p) : 1;
       drawEgg(EFX, cy, ew, eh, { sy: sq, sx: 1 + (1 - sq) * 0.6 });

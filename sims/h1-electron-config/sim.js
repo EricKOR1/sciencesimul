@@ -55,6 +55,10 @@
   const cfgStr = (c) => c.filter((x) => x > 0).join('-');
   const outerOf = (c) => { let o = -1; c.forEach((n, i) => { if (n > 0) o = i; }); return o; };
   const SLOT_ORDER = [0, 2, 4, 6, 1, 3, 5, 7];
+  /* 조사: 한글 단어는 받침, 원소 기호는 읽는 소리의 받침(Cl 씨엘, Al 에이엘, Ar 에이알, F 에프, N 엔)으로 판단 */
+  const SYM_JONG = { Cl: 1, Al: 1, Ar: 1, F: 1, N: 1 };
+  const hasJong = (w) => { if (SYM_JONG[w]) return true; const c = w.charCodeAt(w.length - 1) - 0xAC00; return c >= 0 && c < 11172 && c % 28 !== 0; };
+  const eunNeun = (w) => w + (hasJong(w) ? '은' : '는'), iGa = (w) => w + (hasJong(w) ? '이' : '가'), eulReul = (w) => w + (hasJong(w) ? '을' : '를');
 
   /* ---------- 상태 ---------- */
   const S = {
@@ -354,7 +358,7 @@
     else { S.shareP = it.done ? 1 : 0; S.shareT = 0; }
     S.bondMsg = it.done ? '' : '';
     if (!quiet) Sound.tick();
-    $('#bondNote').textContent = it.done ? '이미 해결했어요! 다른 원자를 골라 보세요.' : '이 원자는 ' + it.partner + '와(과) 만나요. 안정한 18족 배치가 되려면 어떻게 해야 할까요?';
+    $('#bondNote').textContent = it.done ? '이미 해결했어요! 다른 원자를 골라 보세요.' : '이 원자는 ' + it.sub + ' 만나요. 안정한 18족 배치가 되려면 어떻게 해야 할까요?';
     updateCtl();
   }
   function bondAct(a) {
@@ -363,12 +367,12 @@
     const bad = (m) => { Sound.fail(); S.bondMsg = m; showHint(m, 6000); $('#bondNote').textContent = m; const c = $('#ctrlCard'); c.classList.remove('shakeCard'); };
     if (a !== it.expect) {
       let m = '';
-      if (a === 'lose') m = it.expect === 'gain' ? it.e.sym + '은(는) 전자를 ' + v + '개나 잃어야 해서 어려워요. 전자를 ' + (8 - v) + '개 얻는 쪽이 훨씬 쉬워요.' : it.e.sym + '이(가) 전자를 잃으면 전자가 하나도 없어서 안정한 배치가 아니에요. 상대와 나눠 가져 보세요.';
-      else if (a === 'gain') m = it.expect === 'lose' ? it.e.sym + '은(는) 전자를 ' + (it.e.sym === 'Na' ? 7 : 6) + '개나 얻어야 해서 어려워요. 전자 ' + v + '개를 내놓는 쪽이 쉬워요.' : '수소와 염소는 서로 전자를 쉽게 내놓지 않아요. 한 개씩 내놓아 함께 쓰는 ‘공유’를 골라 보세요.';
-      else m = '금속 원소는 전자를 내놓고 양이온이 되기 쉬워요. 이 원자는 ‘전자 공유’가 아니라 ' + (it.expect === 'lose' ? '‘전자 잃기’' : '‘전자 얻기’') + '가 알맞아요.';
+      if (a === 'lose') m = it.expect === 'gain' ? eunNeun(it.e.sym) + ' 전자를 ' + v + '개나 잃어야 해서 어려워요. 전자를 ' + (8 - v) + '개 얻는 쪽이 훨씬 쉬워요.' : it.e.sym === 'H' ? '수소가 전자를 잃으면 전자가 하나도 없어서 안정한 배치가 아니에요. 상대와 나눠 가져 보세요.' : eunNeun(it.e.sym) + ' 전자를 ' + v + '개나 잃어야 해서 어려워요. 수소와 전자를 1개씩 내놓아 나눠 가지는 쪽이 쉬워요.';
+      else if (a === 'gain') m = it.expect === 'lose' ? eunNeun(it.e.sym) + ' 전자를 ' + (8 - v) + '개나 얻어야 해서 어려워요. 전자 ' + v + '개를 내놓는 쪽이 쉬워요.' : '수소와 염소는 서로 전자를 쉽게 내놓지 않아요. 한 개씩 내놓아 함께 쓰는 ‘공유’를 골라 보세요.';
+      else m = it.expect === 'lose' ? '금속 원소는 전자를 내놓고 양이온이 되기 쉬워요. 이 원자는 ‘전자 공유’가 아니라 ‘전자 잃기’가 알맞아요.' : '이 원자는 금속 원소(' + it.partner + ')가 내놓는 전자를 받는 쪽이에요. ‘전자 공유’가 아니라 ‘전자 얻기’가 알맞아요.';
       bad(m); return;
     }
-    it.act = a;
+    it.act = a; S.bondMsg = '';
     if (a === 'lose') { atomB.setCounts(it.after, { stagger: 0.18 }); }
     else if (a === 'gain') { atomB.setCounts(it.after, { stagger: 0.2, fromA: 0 }); }
     else { S.shareT = 0; }
@@ -382,7 +386,7 @@
     it.done = true; it.pending = false;
     Sound.success(); atomB.glow = 1;
     parts.burst(BA.cx, BA.cy, { count: 16, speed: 170, size: 3.6, colors: ['#14a058', '#ffd76a', '#fff'], gravity: 60 });
-    $('#bondNote').textContent = '성공! ' + (it.expect === 'share' ? it.e.sym + '도 ' + it.noble + '과 같은 전자 배치가 됐어요.' : it.ion + '은(는) ' + it.noble + '과 같은 전자 배치예요.');
+    $('#bondNote').textContent = '성공! ' + (it.expect === 'share' ? it.e.sym + '도 ' + it.noble + '과 같은 전자 배치가 됐어요.' : it.ion + '은 ' + it.noble + '과 같은 전자 배치예요.');
     updateCtl();
   }
 
@@ -402,7 +406,7 @@
   $('#bHm').addEventListener('click', () => { Sound.click(); if (S.hCount > 0) { S.hCount--; const h = S.hAtoms.pop(); void h; S.molSettled = false; } updateCtl(); });
   $('#bHp').addEventListener('click', () => {
     const need = NEED[S.center];
-    if (S.hCount >= need) { Sound.fail(); showHint('빈자리가 없어요! ' + BYSYM[S.center].name + '은(는) 수소 ' + need + '개면 가득 차요.'); S.hShake = 1; return; }
+    if (S.hCount >= need) { Sound.fail(); showHint('빈자리가 없어요! ' + eunNeun(BYSYM[S.center].name) + ' 수소 ' + need + '개면 가득 차요.'); S.hShake = 1; return; }
     Sound.tick(); S.hCount++;
     S.hAtoms.push({ slot: S.hCount - 1, p: 0, t: 0 });
     updateCtl();
@@ -414,7 +418,7 @@
   SciSim.pointer(view, {
     down(p) {
       if (S.mode === 'noble') {
-        for (let i = 0; i < 6; i++) { const r = tileRect(i); if (p.x > r.x && p.x < r.x + r.w && p.y > r.y && p.y < r.y + r.h) { if (!(S.test && !S.test.done)) { S.tsel = i; Sound.tick(); updateCtl(); } return false; } }
+        for (let i = 0; i < 6; i++) { const r = tileRect(i); if (p.x > r.x && p.x < r.x + r.w && p.y > r.y && p.y < r.y + r.h) { if (!(S.test && !S.test.done)) { S.tsel = i; if (S.test && S.test.i !== i) S.test = null; Sound.tick(); updateCtl(); } return false; } }
         return false;
       }
       if (S.mode === 'bond') {
@@ -465,7 +469,7 @@
     ctx.restore();
     if (sel) { D.roundRect(r.x, r.y, r.w, r.h, 14); ctx.strokeStyle = '#8b5cf6'; ctx.lineWidth = 3.5; ctx.stroke(); }
     ctx.save(); if (dim) ctx.globalAlpha = 0.9;
-    miniAtom(r.x + r.w / 2, r.y + r.h * (PHONE ? 0.42 : 0.44), s, counts);
+    miniAtom(r.x + r.w / 2, r.y + r.h * (PHONE ? 0.38 : 0.40), s, counts);
     ctx.restore();
     T(r.x + r.w / 2, r.y + r.h - (PHONE ? 22 : 24), label, 16, '#2b2150', 'center', 800);
     T(r.x + r.w / 2, r.y + r.h - 6, sub, 13, '#6b6490', 'center', 700);
@@ -529,7 +533,7 @@
     bg();
     S.tiles.forEach((t, i) => {
       const r = tileRect(i);
-      drawTileBox(r, S.tsel === i, S.tested[i], t.e.name + ' ' + t.sym, '전자 배치 ' + cfgStr(config(t.e.z)), config(t.e.z), PHONE ? 0.32 : 0.37);
+      drawTileBox(r, S.tsel === i, S.tested[i], t.e.name + ' ' + t.sym, '전자 배치 ' + cfgStr(config(t.e.z)), config(t.e.z), PHONE ? 0.28 : 0.325);
     });
     // 플라스크
     const fy0 = FL.by - FL.h - 28;
@@ -575,7 +579,7 @@
       T(tx + tw - 16, yy + rh / 2 + 5, st === 'none' ? '반응 없음' : st === 'react' ? '반응함' : '시험 전', 14, st === 'none' ? '#0b6b39' : st === 'react' ? '#b86f00' : '#a3a0bd', 'right', 800);
     });
     parts.update(dt); parts.draw(ctx);
-    $('#testNote').textContent = S.tsel < 0 ? '위쪽 시료를 눌러 고른 뒤 시험해요. (가상 실험)' : (S.test && !S.test.done ? '시험하는 중이에요…' : S.tiles[S.tsel].e.name + '(' + S.tiles[S.tsel].sym + ')를 시험해요.');
+    $('#testNote').textContent = S.tsel < 0 ? '위쪽 시료를 눌러 고른 뒤 시험해요. (가상 실험)' : (S.test && !S.test.done ? '시험하는 중이에요…' : (function (t) { return t.e.name + '(' + t.sym + ')' + (hasJong(t.e.name) ? '을' : '를') + ' 시험해요.'; })(S.tiles[S.tsel]));
   }
 
   /* ---- ③ ---- */
@@ -636,7 +640,7 @@
     S.items.forEach((it, i) => {
       const r = itemTile(i);
       const counts = it.done ? it.after : config(it.e.z);
-      drawTileBox(r, S.bsel === i, it.done ? 'done' : null, it.sym + (it.done && it.expect !== 'share' ? ' → ' + it.ion : ''), '(' + it.sub + ')', counts, PHONE ? 0.32 : 0.37);
+      drawTileBox(r, S.bsel === i, it.done ? 'done' : null, it.sym + (it.done && it.expect !== 'share' ? ' → ' + it.ion : ''), '(' + it.sub + ')', counts, PHONE ? 0.28 : 0.325);
     });
     const it = S.items[S.bsel];
     if (!it) {
@@ -659,7 +663,7 @@
       if (!PHONE) {
         D.sphere(px + 24, py, 24, ACOL[it.partner] || '#8b5cf6', { shadow: true, text: it.partner, textScale: 0.85 });
         T(px + 24, py + 44, '만나는 원소', 13, '#6b6490', 'center', 700);
-        if (it.pending || it.done) D.arrow(px - 4, py, px - 46, py, { color: '#ffab2e', width: 4, label: '', dash: [6, 6] });
+        if (it.pending || it.done) { if (it.expect === 'lose') D.arrow(px - 46, py, px - 4, py, { color: '#ffab2e', width: 4, label: '', dash: [6, 6] }); else D.arrow(px - 4, py, px - 46, py, { color: '#ffab2e', width: 4, label: '', dash: [6, 6] }); }
       }
       if (it.done) { T(BA.cx, BA.cy + RAD[2] * BA.k + 36, it.ion + '  ' + cfgStr(it.after) + '  =  ' + it.noble + ' 배치', 17, '#0b6b39', 'center', 800); }
     }
@@ -671,7 +675,7 @@
       T(bx + 16, by + 58, '전자 배치  ' + cfgStr(config(it.e.z)), 15, '#4c1d95', 'left', 800);
       T(bx + 16, by + 82, '최외각 전자 ' + it.e.v + '개', 15, '#b86f00', 'left', 800);
       let yy = by + 112;
-      const lines = it.done ? [it.expect === 'lose' ? it.e.sym + '이(가) 전자 ' + it.e.v + '개를 잃으면 ' + it.ion + '! 최외각 껍질이 가득 찬 ' + it.noble + ' 배치가 돼요.' : it.expect === 'gain' ? it.e.sym + '이(가) 전자 ' + (8 - it.e.v) + '개를 얻으면 ' + it.ion + '! 최외각 껍질이 가득 찬 ' + it.noble + ' 배치가 돼요.' : '전자를 1개씩 내놓아 한 쌍을 함께 쓰면, 서로 최외각 껍질이 가득 차요 (' + it.noble + ' 배치).']
+      const lines = it.done ? [it.expect === 'lose' ? iGa(it.e.sym) + ' 전자 ' + it.e.v + '개를 잃으면 ' + it.ion + '! 최외각 껍질이 가득 찬 ' + it.noble + ' 배치가 돼요.' : it.expect === 'gain' ? iGa(it.e.sym) + ' 전자 ' + (8 - it.e.v) + '개를 얻으면 ' + it.ion + '! 최외각 껍질이 가득 찬 ' + it.noble + ' 배치가 돼요.' : '전자를 1개씩 내놓아 한 쌍을 함께 쓰면, 서로 최외각 껍질이 가득 차요 (' + it.noble + ' 배치).']
         : ['목표: 최외각 껍질을 가득 채운 18족 배치.', '전자를 잃을까, 얻을까, 나눠 가질까요?'];
       lines.forEach((ln) => wrap(ln, bw - 32, 14, 700).forEach((w2) => { T(bx + 16, yy, w2, 14, '#3a4456', 'left', 700); yy += 20; }));
       if (S.bondMsg && !it.done) { yy += 6; D.roundRect(bx + 12, yy - 14, bw - 24, 78, 10); ctx.fillStyle = '#fde9e9'; ctx.fill(); wrap(S.bondMsg, bw - 44, 13.5, 700).slice(0, 4).forEach((w2, j) => T(bx + 22, yy + 6 + j * 18, w2, 13.5, '#a3262b', 'left', 700)); }
@@ -743,7 +747,16 @@
     D.sphere(cx, cy, 20, '#ef5a4a', { shadow: true, text: '+' + e.z, textScale: 0.8 });
     for (let j = 0; j < 2; j++) { const a = S.clock * 1.2 + j * Math.PI; D.sphere(cx + Math.cos(a) * RAD[0] * s, cy + Math.sin(a) * RAD[0] * s, 7.5, '#4f9dff', { gloss: true }); }
     // 바깥 전자 (원래 가진 것)
-    for (let j = 0; j < filledN; j++) { const a = slotAngle(SLOT_ORDER[j]); D.sphere(cx + Math.cos(a) * R, cy + Math.sin(a) * R, 8, '#ffab2e', { gloss: true }); }
+    // 수소가 붙으면 중심 원자의 전자 1개가 빈자리로 옮겨 가 수소의 전자와 공유 전자쌍을 이룸 (전자 수 보존)
+    for (let j = 0; j < filledN; j++) {
+      const a = slotAngle(SLOT_ORDER[j]); let ex0 = cx + Math.cos(a) * R, ey0 = cy + Math.sin(a) * R;
+      const k = filledN - 1 - j, hk = k < S.hAtoms.length ? S.hAtoms[k] : null;
+      if (hk) {
+        const a2 = empties[hk.slot], q = clamp(hk.p, 0, 1), sx2 = cx + Math.cos(a2) * R + Math.cos(a2 + Math.PI / 2) * 7 * q, sy2 = cy + Math.sin(a2) * R + Math.sin(a2 + Math.PI / 2) * 7 * q;
+        ex0 += (sx2 - ex0) * q; ey0 += (sy2 - ey0) * q;
+      }
+      D.sphere(ex0, ey0, 8, '#ffab2e', { gloss: true });
+    }
     // 빈자리 + 수소
     empties.forEach((a, j) => {
       const x = cx + Math.cos(a) * R, y = cy + Math.sin(a) * R;
@@ -760,7 +773,7 @@
       D.sphere(px, py, 11, '#4aa3ff', { shadow: true, text: 'H', textScale: 1.0 });
       const slx = cx + Math.cos(a) * R, sly = cy + Math.sin(a) * R;
       const ex = slx + (px - slx) * 0.02, ey = sly + (py - sly) * 0.02;
-      if (h.p > 0.95) { D.glow(slx, sly, 22, '#ffd76a', 0.7); D.sphere(slx + Math.cos(a + Math.PI / 2) * 7, sly + Math.sin(a + Math.PI / 2) * 7, 7, '#ffab2e', { gloss: true }); D.sphere(ex - Math.cos(a + Math.PI / 2) * 7, ey - Math.sin(a + Math.PI / 2) * 7, 7, '#ffab2e', { gloss: true }); }
+      if (h.p > 0.95) { D.glow(slx, sly, 22, '#ffd76a', 0.7); D.sphere(ex - Math.cos(a + Math.PI / 2) * 7, ey - Math.sin(a + Math.PI / 2) * 7, 8, '#ffab2e', { gloss: true }); }
       else D.sphere(px + Math.cos(a + 1) * 22, py + Math.sin(a + 1) * 22, 6, '#ffab2e', { gloss: true });
     });
     if (done && !S.molSettled) { S.molSettled = true; S.molDone.add(sym); Sound.success(); parts.burst(cx, cy, { count: 18, speed: 180, size: 3.6, colors: ['#14a058', '#ffd76a', '#fff'], gravity: 60 }); }
@@ -774,7 +787,7 @@
     T(ix + iw / 2, iy + 70, '빈자리 ' + need + '개  ·  붙인 수소 ' + S.hCount + '개', 15, '#4c1d95', 'center', 800);
     T(ix + iw / 2, iy + 90, done ? m[0] + ' ' + m[1] + ' 완성!' : '수소 ' + (need - S.hCount) + '개가 더 필요해요', 15, done ? '#0b6b39' : '#6b6490', 'center', 800);
     let yy = iy + 126;
-    wrap(done ? '수소 1개는 전자 1개를 내놓고 ' + e.name + '과 한 쌍을 함께 써요. 이렇게 공유하면 ' + e.name + '도 최외각 껍질이 가득 차고, 수소도 헬륨(2개)처럼 안정해져요.' : '수소 원자 1개가 전자 1개를 내놓아 점선 자리 하나를 채워요. 빈자리 수와 같은 수의 수소가 필요해요.', iw - 32, 14, 700).forEach((w2) => { T(ix + 16, yy, w2, 14, '#3a4456', 'left', 700); yy += 20; });
+    wrap(done ? '수소 1개는 전자 1개를 내놓고 ' + e.name + '와 한 쌍을 함께 써요. 이렇게 공유하면 ' + e.name + '도 최외각 껍질이 가득 차고, 수소도 헬륨(2개)처럼 안정해져요.' : '수소 원자 1개가 전자 1개를 내놓아 점선 자리 하나를 채워요. 빈자리 수와 같은 수의 수소가 필요해요.', iw - 32, 14, 700).forEach((w2) => { T(ix + 16, yy, w2, 14, '#3a4456', 'left', 700); yy += 20; });
     yy += 8;
     ['O', 'N', 'C'].forEach((c, i) => { const ok = S.molDone.has(c); T(ix + 16 + i * (iw - 20) / 3, yy + 16, (ok ? '✅ ' : '⬜ ') + MOL[c][0], 14, ok ? '#0b6b39' : '#6b6490', 'left', 800); });
     parts.update(dt); parts.draw(ctx);
@@ -822,7 +835,7 @@
           title: '전자 배치 살펴보기',
           goal: '원자번호 슬라이더로 <b>3 · 9 · 11 · 17 · 18</b>번 원소를 차례로 만들어 전자 배치를 확인하세요.',
           hint: '+ − 버튼을 누르거나 슬라이더를 움직여요. 각 원소에서 잠깐 멈춰 전자 배치를 읽어 보세요.',
-          setup() { setScene('atom', 'view'); },
+          setup() { setScene('atom', 'view'); S.seen.clear(); S.lastZ = 0; S.zHold = 0; setZ(1); },
           check: () => [3, 9, 11, 17, 18].every((z) => S.seen.has(z)),
           hold: 0.4,
           status: () => [3, 9, 11, 17, 18].map((z) => mark(S.seen.has(z)) + z + '번').join(' &nbsp; '),

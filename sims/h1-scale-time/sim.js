@@ -35,8 +35,9 @@
 
   function koNum(v) {
     const r = (x) => String(+x.toPrecision(2));
-    if (v >= 1e8) return r(v / 1e8) + '억';
-    if (v >= 1e4) return r(v / 1e4) + '만';
+    const w = +v.toPrecision(2);   // 반올림한 값으로 단위를 정해요 (9980 → 1만)
+    if (w >= 1e8) return r(v / 1e8) + '억';
+    if (w >= 1e4) return r(v / 1e4) + '만';
     const q = r(v); return /^\d+$/.test(q) ? q.replace(/(\d)(?=(\d{3})+$)/g, '$1,') : q;
   }
   function eqT(e) {
@@ -530,7 +531,7 @@
     }
   }
   const HALF = 45; // 억 년
-  function initAtoms() { const r = rng(21); S.radio.atoms = Array.from({ length: 100 }, () => ({ u: r(), on: 1, flip: 0 })); S.radio.atoms.forEach((a, i) => { a.x = (i % 10); a.y = Math.floor(i / 10); }); }
+  function initAtoms() { const r = rng(21); const us = Array.from({ length: 100 }, (_, i) => (i + 0.5) / 100); for (let i = 99; i > 0; i--) { const j = Math.floor(r() * (i + 1)); const tmp = us[i]; us[i] = us[j]; us[j] = tmp; } S.radio.atoms = us.map((u) => ({ u, on: 1, flip: 0 })); S.radio.atoms.forEach((a, i) => { a.x = (i % 10); a.y = Math.floor(i / 10); }); }
   function drawRadio(t) {
     ctx.fillStyle = '#f6f4ff'; ctx.fillRect(0, 0, VW, VH);
     D.text(VW / 2, 32, '암석 속 방사성 원소는 시간이 지나면 다른 원소로 변해요', { size: PHONE ? 16 : 18, color: '#3b0764', weight: 800 });
@@ -545,7 +546,7 @@
       D.sphere(px, py, cell * 0.36, col);
       if (a.flip > 0) { ctx.strokeStyle = 'rgba(253,224,71,' + a.flip + ')'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(px, py, cell * (0.4 + (1 - a.flip) * 0.6), 0, 6.3); ctx.stroke(); }
     });
-    D.text(gx + cell * 5, gy + cell * 10 + 40, '🔬 암석 속 원자 100개를 확대한 모습', { size: 14, color: '#4c1d95', weight: 800 });
+    D.text(gx + cell * 5, gy + cell * 10 + (PHONE ? 32 : 40), '🔬 암석 속 원자 100개를 확대한 모습', { size: 14, color: '#4c1d95', weight: 800 });
     // 막대
     const bx = PHONE ? 20 : 440, bw = PHONE ? 560 : 330, by = PHONE ? 560 : 96;
     const row = (y, label, v, col, meas) => {
@@ -560,7 +561,7 @@
     row(by + 96, '자원소 (붕괴 생성물)', 1 - frac, '#f59e0b', 0.5);
     D.text(bx, by + 180, '초록 선 = 분석한 암석의 비율 (50 : 50)', { size: 14, color: '#14a058', weight: 800, align: 'left' });
     D.text(bx, by + 206, '흐른 시간 ' + R.t.toFixed(1) + '억 년  ·  반감기 ' + HALF + '억 년', { size: 15, color: '#4c1d95', weight: 800, align: 'left' });
-    if (Math.abs(frac - 0.5) < 0.04) D.label(gx + cell * 5, gy + cell * 10 + 72, '비율이 같아졌어요! ≈ 45억 년', { bg: '#14a058', size: 16 });
+    if (Math.abs(frac - 0.5) < 0.04) D.label(gx + cell * 5, gy + cell * 10 + (PHONE ? 56 : 72), '비율이 같아졌어요! ≈ 45억 년', { bg: '#14a058', size: PHONE ? 14 : 16 });
   }
 
   /* ======================================================
@@ -585,7 +586,7 @@
     D.glow(sx, sy, 50, '#fde68a', 0.5);
     D.shadow(() => { ctx.fillStyle = '#e2e8f0'; rr(sx - 18, sy - 12, 36, 24, 4).fill(); ctx.fillStyle = '#3b82f6'; rr(sx - 56, sy - 8, 34, 16, 2).fill(); rr(sx + 22, sy - 8, 34, 16, 2).fill(); }, { blur: 8, y: 3 });
     D.text(sx, sy + 40, '🛰️ GPS 위성 (원자시계)', { size: 14, color: '#fef3c7', weight: 800 });
-    D.text(rx, ry + 34, '📱 내 스마트폰', { size: 14, color: '#fff', weight: 800 });
+    D.text(rx, ry - 20, '📱 내 스마트폰', { size: 14, color: '#fff', weight: 800 });
     D.sphere(rx, ry, 8, '#f26b3a');
     D.label(L.x + L.w / 2, L.y + L.h - 18, '위치 오차 = 3×10⁸ m/s × ' + G.us.toFixed(2) + ' µs', { bg: 'rgba(255,255,255,.95)', color: '#1b2333', size: PHONE ? 14 : 14 });
     // 지도
@@ -725,6 +726,7 @@
 
   /* ---------- 단계 · 미션 ---------- */
   function enterLevel(li) {
+    if (li > 0) { const h = $('#stageHint'); if (h) h.classList.add('hide'); }
     if (li === 0) { S.minV = S.maxV = false; S.seen = new Set(); setMode('trip'); setT(0, true); }
     else if (li === 1) { S.pend.L = 0.6; sL.value = 0.6; $('#sL').dispatchEvent(new Event('input')); S.run.state = 'idle'; S.run.res = null; S.run.count = 0; setMode('clock'); }
     else if (li === 2) { resetOld(); setMode('old', 'tree'); }
@@ -780,7 +782,7 @@
           setup() { ensure('clock'); },
           check: () => Math.abs(periodOf(S.pend.L) - 1) <= 0.02, hold: 0.8,
           status: () => '주기 <b>' + periodOf(S.pend.L).toFixed(2) + ' s</b> (목표 1.00 s) · 길이 ' + S.pend.L.toFixed(2) + ' m',
-          explain: '진자의 주기는 길이에 따라 정해져요. 길이 <b>0.25 m</b>일 때 주기가 약 <b>1.0 s</b>예요. 그래서 오래전에는 길이 0.25 m쯤 되는 진자를 시계에 썼어요.',
+          explain: '진자의 주기는 길이에 따라 정해져요. 길이 <b>0.25 m</b>일 때 주기가 약 <b>1.0 s</b>예요. 진자시계는 이렇게 일정한 주기로 왔다 갔다 하는 진동을 이용해요.',
         },
         {
           title: '세 시계로 1분 재기',
@@ -854,7 +856,7 @@
           goal: '<b>위성 시계 오차</b>를 줄여서 내비게이션 <b>위치 오차가 30 m 이하</b>가 되게 하세요.',
           hint: '위치 오차 = 3×10⁸ m/s × 시계 오차예요. 30 m ÷ (3×10⁸ m/s) = 1×10⁻⁷ s = 0.1 µs 이하로!',
           setup() { ensure('apply', 'gps'); },
-          check: () => 3e8 * S.gps.us * 1e-6 <= 30.5 && S.gps.us > 0, hold: 0.8,
+          check: () => 3e8 * S.gps.us * 1e-6 <= 30.5, hold: 0.8,
           status: () => '시계 오차 <b>' + S.gps.us.toFixed(2) + ' µs</b> → 위치 오차 <b>' + (3e8 * S.gps.us * 1e-6 >= 1000 ? (3e8 * S.gps.us * 1e-6 / 1000).toFixed(1) + ' km' : Math.round(3e8 * S.gps.us * 1e-6) + ' m') + '</b>',
           explain: '1 µs(10⁻⁶ s)의 시계 오차만 있어도 빛은 300 m를 가요. 그래서 위치 오차가 <b>300 m</b>가 돼요. 30 m 이하로 맞추려면 시계 오차를 <b>0.1 µs 이하</b>로 줄여야 하죠. 위성에 정밀한 원자시계를 싣는 이유예요.',
         },

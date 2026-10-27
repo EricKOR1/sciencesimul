@@ -414,8 +414,8 @@
     // 공
     const c0 = kind === 'compare' && st.state !== 'ready' ? CLIFF_COL[v - 1] : COL.thr;
     ball(g.sx, py(tn), r, COL.drop); ball(px(tn), py(tn), r, c0);
-    D.text(g.sx - 4, g.oy - r - 10, '● 놓은 공', { size: 12, weight: 800, color: theme.stars ? '#9cc7ff' : '#1d5fc4', align: 'left' });
-    D.text(g.sx + 70 * FS, g.oy - r - 10, '● 던진 공', { size: 12, weight: 800, color: theme.stars ? '#ffb185' : '#c2410c', align: 'left' });
+    D.text(g.sx - 4, g.oy - r - 6, '● 놓은 공', { size: 12, weight: 800, color: theme.stars ? '#9cc7ff' : '#1d5fc4', align: 'left' });
+    D.text(g.sx + 70 * FS, g.oy - r - 6, '● 던진 공', { size: 12, weight: 800, color: theme.stars ? '#ffb185' : '#c2410c', align: 'left' });
     // 속도 성분 화살표 (비교 장면)
     if (kind === 'compare' && st.state !== 'ready' && st.state === 'run') {
       const bx = px(tn), by = py(tn), sc = 3.2, vy = G * tn;
@@ -424,7 +424,7 @@
     }
     ctx.restore();
     D.label(P.x + P.w - 14 - 4, P.y + 24, theme.name + ' · g = ' + theme.g + ' m/s²', { bg: 'rgba(15,23,42,.78)', size: 13.5, pad: 9, align: 'right' });
-    D.text(P.x + 14, P.y + 24, kind === 'compare' ? '절벽 높이 ' + H_CLIFF + ' m' : '절벽 높이 ' + H_CLIFF + ' m · 수평 속력 ' + V_PLANET + ' m/s', { size: 14, weight: 800, color: theme.stars ? '#f3f4f6' : '#1b2333', align: 'left', baseline: 'middle' });
+    D.text(P.x + 14, P.y + 20, kind === 'compare' ? '절벽 높이 ' + H_CLIFF + ' m' : '절벽 높이 ' + H_CLIFF + ' m · 수평 속력 ' + V_PLANET + ' m/s', { size: 14, weight: 800, color: theme.stars ? '#f3f4f6' : '#1b2333', align: 'left', baseline: 'middle' });
     // 지구 중심 방향 안내
     const ax = P.x + P.w - 30, ay = g.ground - 96;
     D.arrow(ax, ay, ax, ay + 78, { color: '#ef4444', width: 3.5, head: 10 });
@@ -567,12 +567,12 @@
       if (tt >= apexT && J.state !== 'idle') {
         const ya = gnd - hmax * k - 1.8 * k;
         ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 2; ctx.setLineDash([6, 5]); ctx.beginPath(); ctx.moveTo(P.x + 8, gnd - hmax * k); ctx.lineTo(P.x + P.w - 8, gnd - hmax * k); ctx.stroke(); ctx.setLineDash([]);
-        D.label(P.x + P.w - 10, gnd - hmax * k + 14, '최고 ' + f1(hmax) + ' m', { bg: '#ef4444', size: 13, pad: 8, align: 'right' });
       }
       // 그림자 · 우주인
       ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.beginPath(); ctx.ellipse(cx, gnd + 8, 0.28 * k * (1 - Math.min(0.5, hnow / 4)), 4, 0, 0, Math.PI * 2); ctx.fill();
       const sq = !air && J.state === 'run' && tt < 0.05 ? 0.9 : !air && J.state === 'run' ? 1 : 1;
       drawAstronaut(cx, fy, k, sq, air ? 1 : 0);
+      if (tt >= apexT && J.state !== 'idle') D.label(P.x + P.w - 10, gnd - hmax * k + 14, '최고 ' + f1(hmax) + ' m', { bg: '#ef4444', size: 13, pad: 8, align: 'right' });   // 우주인 위에 보이도록 마지막에 그려요
       ctx.restore();
       D.label(P.x + P.w / 2, P.y + 20, b.name + ' · g = ' + b.g + ' m/s²', { bg: 'rgba(15,23,42,.8)', size: 13.5, pad: 9 });
     });

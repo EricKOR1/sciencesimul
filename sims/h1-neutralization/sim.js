@@ -269,9 +269,11 @@
   const veq = (c) => V_A * CONC_A / c;                // 완전 중화에 필요한 NaOH 수용액의 부피 (mL)
   const fmtV = (n) => (n / 10).toFixed(1);
   const YEL = '#f2cf1d', GRN = '#43b95a', BLU = '#2d66dc', PINK = '#ff3f93', CLEAR = '#eef6ff';
-  // 0.5 M은 1.0 M 자료를 (넣은 양 × 0.5)에서 읽어 만든 예시 (소수 첫째 자리로 반올림)
+  // 0.5 M: 1.0 M 자료와 같은 원리(반응한 H⁺ 양에 비례해 열이 나고, 전체 용액이 늘어나면 오르는 온도가 줄어요)로 만든 예시.
+  // 1.0 M 자료는 오른 온도 = 13.5 × (반응한 양 mmol) / (전체 부피 mL)에 거의 맞아요. (소수 첫째 자리로 반올림)
+  const T_K = 13.5;
   function interp(v) { const x = clamp(v / STEP_ML, 0, DATA.length - 1), i = Math.min(DATA.length - 2, Math.floor(x)); return DATA[i] + (DATA[i + 1] - DATA[i]) * (x - i); }
-  const tempAt = (c, v) => Math.round((c === 1 ? DATA[Math.round(v / STEP_ML)] : interp(v * 0.5)) * 10) / 10;
+  const tempAt = (c, v) => (c === 1 ? DATA[Math.round(v / STEP_ML)] : Math.round((T0 + T_K * Math.min(V_A * CONC_A, c * v) / (V_A + v)) * 10) / 10);
 
   const S = { scene: 'buret', sceneA: 1 };
   const TB = { buret: '🧴 지시약의 색 변화', graph: '🌡️ 온도 변화와 그래프', ions: '🔬 중화 모형: H⁺ + OH⁻ → H₂O', stomach: '🏥 위장과 제산제', cases: '🏠 생활 속 중화' };
@@ -1125,7 +1127,7 @@
       summary: '<ul><li>중화 반응은 열을 내보내는 <b>발열 반응</b>이에요.</li>' +
         '<li>온도 그래프의 <b>꼭짓점</b>(' + V_A + ' mL, ' + Math.max.apply(null, DATA).toFixed(1) + ' °C)은 산과 염기가 <b>모두 반응한 지점</b>(완전 중화)이고, BTB 용액은 초록색이에요.</li>' +
         '<li>꼭짓점 이후에는 더 이상 열이 나오지 않고, 같은 온도의 용액을 계속 넣는 만큼 온도가 내려가요.</li></ul>' +
-        '<p class="note">염기의 농도를 0.5 M로 바꾸면 같은 양의 수산화 나트륨을 넣으려면 부피가 두 배 필요해서 꼭짓점이 ' + (V_A * 2) + ' mL로 옮겨 가요.</p>',
+        '<p class="note">염기의 농도를 0.5 M로 바꾸면 같은 양의 수산화 나트륨을 넣으려면 부피가 두 배 필요해서 꼭짓점이 ' + (V_A * 2) + ' mL로 옮겨 가요. 전체 용액이 더 많아져서 꼭짓점의 온도는 더 낮아요.</p>',
       missions: [
         {
           title: '점 찍고 꼭짓점 찾기',

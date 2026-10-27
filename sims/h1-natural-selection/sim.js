@@ -277,6 +277,14 @@
       while (j < w.length - 1 && r > w[j]) { r -= w[j]; j++; }
       caughtIdx.push(pool[j]); pool.splice(j, 1);
     }
+    // 처음 있던 색(초록·갈색)은 한 마리도 남지 않고 모두 사라지는 일이 없도록, 가장 눈에 안 띄는 한 마리는 숨어서 살아남는다고 해요
+    ['g', 'b'].forEach((k) => {
+      if (pop[k] > 0 && caughtIdx.filter((i) => inds[i] === k).length === pop[k]) {
+        const freed = caughtIdx.splice(caughtIdx.findIndex((i) => inds[i] === k), 1)[0];
+        const alt = pool.find((i) => inds[i] !== k && pool.filter((j) => inds[j] === inds[i]).length > 1);
+        if (alt != null) { pool.splice(pool.indexOf(alt), 1); caughtIdx.push(alt); pool.push(freed); } else caughtIdx.push(freed);
+      }
+    });
     const caught = cnt(caughtIdx.map((i) => inds[i])), surv = { g: pop.g - caught.g, b: pop.b - caught.b, y: pop.y - caught.y, o: pop.o - caught.o };
     return { caught, surv, next: breed(surv) };
   }
@@ -288,6 +296,10 @@
       const s = src[Math.floor(Math.random() * src.length)], tg = KEYS.filter((k) => k !== s), t2 = tg[Math.floor(Math.random() * tg.length)];
       next[s]--; next[t2]++; muts.push(t2);
     }
+    // 처음 있던 색이 완전히 사라졌다면, 새로 태어난 개체 중 한 마리에 그 색의 돌연변이가 생긴 것으로 해요
+    ['g', 'b'].forEach((k) => {
+      if (next[k] === 0) { const src2 = KEYS.filter((x) => next[x] > surv[x] && next[x] > 0); if (src2.length) { const s2 = src2[Math.floor(Math.random() * src2.length)]; next[s2]--; next[k]++; muts.push(k); } }
+    });
     next.muts = muts; return next;
   }
   const SM = {
@@ -441,15 +453,16 @@
         const body = ['#dc2626', '#ea580c', '#eab308', '#be123c'][Math.floor(ra * 4)], spots = Math.floor(rb * 8);
         ctx.save(); ctx.translate(cx, cy + 2); ctx.fillStyle = '#111827'; ctx.beginPath(); ctx.arc(0, -sz * 0.42, sz * 0.18, 0, TAU); ctx.fill();
         D.sphere(0, 0, sz * 0.46, body, { gloss: true }); ctx.strokeStyle = '#111827'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0, -sz * 0.44); ctx.lineTo(0, sz * 0.44); ctx.stroke();
-        ctx.fillStyle = '#111827'; for (let k = 0; k < spots; k++) { const a = (k / Math.max(1, spots)) * TAU + ra * 3, rd = sz * (0.16 + 0.12 * ((k * 7) % 3) / 2); ctx.beginPath(); ctx.arc(Math.cos(a) * rd * (k % 2 ? 1 : -1) * 1.2, Math.sin(a) * rd * 1.4, sz * 0.055, 0, TAU); ctx.fill(); }
-        ctx.restore(); D.text(cx, cy + ch / 2 - 10, '점 ' + spots + '개', { size: 12.5, weight: 700, color: '#64748b' });
+        const SPOT = [[-0.2, -0.15], [0.2, -0.12], [-0.22, 0.1], [0.22, 0.12], [-0.12, 0.3], [0.12, 0.3], [0.3, -0.02]]; // 서로 겹치지 않고 가운데 선을 피하는 자리
+        ctx.fillStyle = '#111827'; for (let k = 0; k < spots; k++) { ctx.beginPath(); ctx.arc(SPOT[k][0] * sz, SPOT[k][1] * sz, sz * 0.055, 0, TAU); ctx.fill(); }
+        ctx.restore(); D.text(cx, cy + ch / 2 - 10, spots ? '점 ' + spots + '개' : '점 없음', { size: 12.5, weight: 700, color: '#64748b' });
       } else {
         const sh = ['#d9a441', '#b45f2c', '#e8a0b4', '#8f9a3a', '#c9b88a'][Math.floor(ra * 5)], stripes = Math.floor(rb * 4);
         ctx.save(); ctx.translate(cx, cy);
         ctx.fillStyle = '#c9b49a'; rr(-sz * 0.6, sz * 0.18, sz * 1.2, sz * 0.22, sz * 0.11).fill(); ctx.beginPath(); ctx.ellipse(sz * 0.6, sz * 0.28, sz * 0.14, sz * 0.12, 0, 0, TAU); ctx.fill(); ctx.strokeStyle = '#c9b49a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(sz * 0.64, sz * 0.2); ctx.lineTo(sz * 0.7, -sz * 0.04); ctx.moveTo(sz * 0.7, sz * 0.22); ctx.lineTo(sz * 0.8, 0); ctx.stroke();
         D.sphere(-sz * 0.06, -sz * 0.08, sz * 0.42, sh, { gloss: true }); ctx.strokeStyle = rgba(shade(sh, -0.5), 0.8); ctx.lineWidth = 2;
-        for (let k = 0; k < stripes + 1; k++) { ctx.beginPath(); ctx.arc(-sz * 0.06, -sz * 0.08, sz * (0.12 + k * 0.1), 0, TAU); ctx.stroke(); }
-        ctx.restore(); D.text(cx, cy + ch / 2 - 10, '줄무늬 ' + stripes + '줄' + '', { size: 12.5, weight: 700, color: '#64748b' });
+        for (let k = 0; k < stripes; k++) { ctx.beginPath(); ctx.arc(-sz * 0.06, -sz * 0.08, sz * (0.12 + k * 0.1), 0, TAU); ctx.stroke(); }
+        ctx.restore(); D.text(cx, cy + ch / 2 - 10, stripes ? '줄무늬 ' + stripes + '줄' : '줄무늬 없음', { size: 12.5, weight: 700, color: '#64748b' });
       }
     }
   }
@@ -680,8 +693,8 @@
     [0, 25, 50, 75, 100].forEach((v) => { ctx.strokeStyle = '#e8efe6'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(px0, Y(v)); ctx.lineTo(px1, Y(v)); ctx.stroke(); D.text(px0 - 8, Y(v) + 4.5, String(v), { size: 12.5, weight: 700, color: '#64748b', align: 'right' }); });
     for (let i = 1; i <= G; i++) { D.text(X(i), py1 + 17, String(i), { size: 12.5, weight: 700, color: '#64748b' }); const h = SM.hist[i - 1]; if (h) { ctx.fillStyle = h.hab === 'grass' ? '#6cb85a' : '#8a6a3a'; rr(X(i) - 9, py1 + 24, 18, 9, 3).fill(); } }
     D.text(px0 - 8, py1 + 31, '서식지', { size: 12, weight: 700, color: '#64748b', align: 'right' });
-    D.text((px0 + px1) / 2, py1 + 54, '세대 (아래 색 칸 = 그 세대의 서식지: 초록 풀밭 / 갈색 낙엽층)', { size: 12.5, weight: 700, color: '#64748b' });
-    const series = [['g', '초록', COL.g, (c) => pct(c, 'g')], ['b', '갈색', COL.b, (c) => pct(c, 'b')], ['n', '새 색(노랑·주황)', '#f59e0b', (c) => ((c.y + c.o) / POP) * 100]];
+    if (!PHONE) D.text((px0 + px1) / 2, py1 + 54, '세대 (아래 색 칸 = 그 세대의 서식지: 초록 풀밭 / 갈색 낙엽층)', { size: 12.5, weight: 700, color: '#64748b' });
+    const series = [['g', '초록', COL.g, (c) => pct(c, 'g')], ['b', '갈색', COL.b, (c) => pct(c, 'b')], ['n', '새 색', '#f59e0b', (c) => ((c.y + c.o) / POP) * 100]];
     const lastC = SM.hist[SM.hist.length - 1].c, labY = {}; { const arr = series.map(([k, , , f]) => ({ k, y: Y(f(lastC)) })).sort((a, b) => a.y - b.y); for (let i = 1; i < arr.length; i++) if (arr[i].y - arr[i - 1].y < 20) arr[i].y = arr[i - 1].y + 20; arr.forEach((a) => (labY[a.k] = a.y)); }
     series.forEach(([k, name, col, f]) => {
       const hs = SM.hist; ctx.save(); ctx.strokeStyle = col; ctx.lineWidth = 3.5; ctx.lineJoin = 'round'; ctx.beginPath();
@@ -690,7 +703,7 @@
       hs.forEach((h, i) => { const last = i === hs.length - 1, e = last ? GN.cp : 1, px = i ? lerp(X(hs[i - 1].gen), X(h.gen), e) : X(h.gen), py = i ? lerp(Y(f(hs[i - 1].c)), Y(f(h.c)), e) : Y(f(h.c)); D.sphere(px, py, 5.5, col, { gloss: false }); });
       const lh = SM.hist[SM.hist.length - 1]; if (lh && !PHONE) { D.text(px1 + 12, labY[k] + 4, name + ' ' + Math.round(f(lh.c)) + ' %', { size: 13, weight: 800, color: shade(col, -0.25), align: 'left' }); }
     });
-    if (PHONE) { let lx = r.x + 16; series.forEach(([k, name, col]) => { D.sphere(lx + 6, r.y + r.h - 12, 6, col, { gloss: false }); D.text(lx + 16, r.y + r.h - 7, name, { size: 12, weight: 700, color: '#475569', align: 'left' }); lx += k === 'n' ? 150 : 70; }); }
+    if (PHONE) { let lx = r.x + 16; series.forEach(([k, name, col]) => { D.sphere(lx + 6, r.y + r.h - 12, 6, col, { gloss: false }); D.text(lx + 16, r.y + r.h - 7, k === 'n' ? '새 색(노랑·주황)' : name, { size: 12, weight: 700, color: '#475569', align: 'left' }); lx += k === 'n' ? 150 : 70; }); }
     // 집단 점
     const dp = g.dp, anim = GN.anim;
     D.shadow(() => { ctx.fillStyle = SM.hab === 'grass' ? '#eaf6e4' : '#f1e6d2'; rr(dp.x, dp.y, dp.w, dp.h, 14).fill(); }, { blur: 5, y: 2 }); ctx.strokeStyle = '#cfd8c7'; ctx.lineWidth = 2; rr(dp.x, dp.y, dp.w, dp.h, 14).stroke();
@@ -698,7 +711,7 @@
     const dots = GN.dots.length ? GN.dots : sortedDots(SM.pop);
     dots.forEach((d, i) => { const q = g.dot(i); ctx.save(); ctx.globalAlpha = d.alpha; ctx.translate(q.x, q.y); ctx.scale(Math.max(0.01, d.sc), Math.max(0.01, d.sc)); D.sphere(0, 0, g.dr, COL[d.k], { shadow: true }); if (d.dead && d.alpha < 0.9) { ctx.strokeStyle = '#dc2626'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(-g.dr * 0.6, -g.dr * 0.6); ctx.lineTo(g.dr * 0.6, g.dr * 0.6); ctx.moveTo(g.dr * 0.6, -g.dr * 0.6); ctx.lineTo(-g.dr * 0.6, g.dr * 0.6); ctx.stroke(); } ctx.restore(); if (d.spark > 0 && d.sc > 0.8) D.spark(q.x + g.dr, q.y - g.dr, 9, t, '#fff6c2'); });
     if (anim && anim.stage === 0) { const f = clamp(anim.t, 0, 1), bx = lerp(dp.x + dp.w * 0.15, dp.x + dp.w * 0.7, f), by = dp.y + 52 + Math.sin(f * Math.PI * 4) * 6; birdShape(bx, by - 26, PHONE ? 26 : 28, 0.5 + 0.5 * Math.sin(t * 20), false); }
-    const cc = SM.hist[SM.hist.length - 1].c; const sy = PHONE ? dp.y + dp.h - 54 : dp.y + 30;
+    const cc = SM.hist[SM.hist.length - 1].c; const sy = PHONE ? dp.y + dp.h - 11 : dp.y + 30;
     if (!PHONE) { let yy = dp.y + 62; KEYS.forEach((k) => { if (k !== 'g' && k !== 'b' && cc[k] === 0) return; D.sphere(dp.x + dp.w - 150, yy, 8, COL[k], { gloss: true }); D.text(dp.x + dp.w - 134, yy + 5, CNAME[k] + ' ' + cc[k] + '마리 (' + pctTxt(cc, k) + ')', { size: 14, weight: 800, color: '#1e293b', align: 'left' }); yy += 30; }); drawWrap(dp.x + dp.w - 76, yy + 8, anim ? '새가 잡아먹고, 살아남은 개체가 번식해요…' : '다음 세대로 넘어가면 새가 20마리를 잡아먹어요.', 140, 12.5, { weight: 700, color: '#64748b' }); }
     else { let xx = dp.x + 16; KEYS.forEach((k) => { if (k !== 'g' && k !== 'b' && cc[k] === 0) return; D.sphere(xx + 8, sy, 7, COL[k], { gloss: true }); D.text(xx + 20, sy + 5, CNAME[k] + ' ' + pctTxt(cc, k), { size: 13, weight: 800, color: '#1e293b', align: 'left' }); xx += 118; }); }
   }
@@ -850,6 +863,10 @@
     const s = sub != null ? sub : DEFSUB[m];
     if (MODE !== m || SUB !== s) fade = 1;
     MODE = m; SUB = s; if (tBoard) { tBoard.drag = null; tBoard.hoverZone = null; }
+    // 사냥 도중 다른 화면으로 나가면 사냥을 취소해요 (버튼이 잠긴 채로 남지 않도록)
+    if (SM.phase === 'hunt' && m !== 'sim') { SM.phase = 'ready'; SM.birds = []; SM.caught = 0; SM.targeted = 0; SM.inds.forEach((d) => { d.alive = true; d.target = false; d.alpha = 1; }); }
+    // 다른 화면에서 세대가 바뀌었다면 모의실험 화면의 애벌레도 지금 집단과 같게 다시 놓아요
+    if (m === 'sim' && SM.phase === 'ready') { const c = cnt(SM.inds.filter((d) => d.alive).map((d) => d.k)); if (KEYS.some((k) => c[k] !== SM.pop[k])) SM.inds = placeInds(listFromCounts(SM.pop)); }
     if (m === 'gen') syncDots();
     updateCtl();
   }
@@ -917,7 +934,7 @@
     else if (MODE === 'var') setReadouts(['돌연변이 체험', VR.muts + '번', '유전자 조합 체험', VR.mixes + '번', '유전되는 변이', '돌연변이 · 조합']);
     else if (MODE === 'sim') { const a = aliveCounts(); setReadouts(['세대', SM.gen + '세대', '잡은 애벌레', SM.caught + ' / ' + EAT + '마리', '남은 초록 · 갈색', a.g + ' · ' + a.b]); }
     else if (MODE === 'gen' && SUB === 'auto') { const c = SM.pop; setReadouts(['세대 · 서식지', SM.gen + '세대 · ' + HABN[SM.hab], '초록 비율', pctTxt(c, 'g'), '갈색 비율', pctTxt(c, 'b')]); }
-    else if (MODE === 'gen') setReadouts(['연도', GN.yr + '년', '어두운 색 나방', '약 ' + Math.round(mothPct(GN.yr)) + ' %', '나방 20마리 중', mothDark(GN.yr) + '마리']);
+    else if (MODE === 'gen') setReadouts(['연도', GN.yr + '년', '어두운 색 나방', mothPct(GN.yr) < 1 ? '1 % 미만' : '약 ' + Math.round(mothPct(GN.yr)) + ' %', '나방 20마리 중', mothDark(GN.yr) + '마리']);
     else if (SUB === 'order') setReadouts(['놓은 카드', tBoard.cards.filter((c) => c.zone).length + ' / 5', '핵심', '변이 + 선택 + 유전', '결과', '진화']);
     else setReadouts(['내성 세균', baRes() + ' / ' + baAll() + '마리', '내성 비율', baPct() + ' %', '반복 횟수', BA.cycles + '번']);
   }

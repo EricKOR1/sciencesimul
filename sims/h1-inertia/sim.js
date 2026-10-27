@@ -245,7 +245,9 @@
     else if (F.st === 'move' && F.floor === 'air') T(bx, by - BOXH - 52, '마찰력 0 N → 속력 그대로', PHONE ? 12 : 14, '#0b6b39', 'center', 800);
     if (F.st === 'done') {
       const tone = F.rec[F.floor].thru ? '#14a058' : '#e2464b';
-      D.label(clamp(bx, 90, VW - 90), FYS - BOXH - 60, F.msg, { bg: tone, size: PHONE ? 12 : 14 });
+      const msz = PHONE ? 12 : 14;
+      ctx.save(); ctx.font = D.font(msz, 800); const mw = ctx.measureText(F.msg).width + 16; ctx.restore();
+      D.label(clamp(bx, mw / 2 + 8, VW - mw / 2 - 8), FYS - BOXH - 86, F.msg, { bg: tone, size: msz });
     }
     parts.update(dt); parts.draw(ctx);
     drawFloorTable(ry + 46);

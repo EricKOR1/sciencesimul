@@ -619,7 +619,7 @@
       ctx.beginPath(); ctx.moveTo(cx + Math.cos(a) * (R + 12), cy + Math.sin(a) * (R + 12)); ctx.lineTo(cx + Math.cos(a) * (R + (major ? 1 : 5)), cy + Math.sin(a) * (R + (major ? 1 : 5))); ctx.stroke();
       if (major) D.text(cx + Math.cos(a) * (R - bw - 14), cy + Math.sin(a) * (R - bw - 14) + 5, h === 0 ? '0시' : String(h), { size: PHONE ? 13 : 14.5, weight: 800, color: '#334155' });
     }
-    D.text(cx, cy + R + (PHONE ? 36 : 40), '맨 위 0시 = 지구가 생긴 때, 시계 방향으로 24시 = 지금', { size: PHONE ? 12.5 : 13.5, weight: 700, color: '#64748b' });
+    D.text(cx, cy + R + (PHONE ? 29 : 40), '맨 위 0시 = 지구가 생긴 때, 시계 방향으로 24시 = 지금', { size: PHONE ? 12.5 : 13.5, weight: 700, color: '#64748b' });
     // 놓은 경계 핀 (번호 표시)
     BDS.forEach((b, k) => {
       if (!CK.placed[k]) return;
@@ -659,7 +659,7 @@
   }
   function drawTokens(t) {
     const g = ckG();
-    D.text(g.tx + (PHONE ? 4 : 2), g.ty - 12, '🧭 경계를 시계의 알맞은 시각에 끌어다 놓아요', { size: PHONE ? 13 : 14.5, weight: 800, color: '#075985', align: 'left' });
+    D.text(g.tx + (PHONE ? 4 : 2), g.ty - 12, '🧭 경계를 알맞은 시각에 끌어다 놓아요', { size: PHONE ? 13 : 14.5, weight: 800, color: '#075985', align: 'left' });
     BDS.forEach((b, k) => {
       const r = tokRect(k), dragging = CK.drag && CK.drag.k === k;
       if (CK.placed[k] || dragging) {
@@ -689,7 +689,7 @@
       if (on) { ctx.fillStyle = rgba(ERAS[e].col, 0.18); rr(x0 - 4, y - g.rh * 0.62, w + 8, g.rh - 2, 8).fill(); }
       ctx.fillStyle = ERAS[e].col; rr(x0, y - 11, 14, 14, 4).fill();
       D.text(x0 + 22, y + 1, ERAS[e].name, { size: PHONE ? 13 : 14, weight: 800, color: '#1e293b', align: 'left' });
-      D.text(x0 + w, y + 1, known ? (ERAS[e].dur + ' · ' + ERAS[e].pct) : '길이는? (시계를 완성하면 보여요)', { size: PHONE ? 12 : 13, weight: 700, color: '#475569', align: 'right' });
+      D.text(x0 + w, y + 1, known ? (ERAS[e].dur + ' · ' + ERAS[e].pct) : '길이는? (시계 완성 후)', { size: PHONE ? 12 : 13, weight: 700, color: '#475569', align: 'right' });
       ctx.restore();
     }
     if (done) D.text(PHONE ? 12 : 506, g.ly + 4 * g.rh + 2, '현생 인류: 하루의 마지막 약 5~6초', { size: PHONE ? 12.5 : 13, weight: 800, color: '#dc2626', align: 'left' });
@@ -803,11 +803,11 @@
     { k: 'fish', from: 480, to: 0, zone: 'sea', x: 0.42, y: 0.68, s: 38, c: '#2563eb' },
     { k: 'nummulite', from: 56, to: 34, zone: 'floor', x: 0.5, y: 0.0, s: 26, c: '#a8a29e' },
     { k: 'fern', from: 470, to: 0, zone: 'land', x: 0.62, y: 0, s: 40, c: '#16a34a' },
-    { k: 'tree', from: 360, to: 300, zone: 'land', x: 0.74, y: 0, s: 92, c: '#15803d' }, { k: 'tree', from: 360, to: 300, zone: 'land', x: 0.9, y: 0, s: 80, c: '#166534' },
+    { k: 'tree', from: 360, to: 280, zone: 'land', x: 0.74, y: 0, s: 92, c: '#15803d' }, { k: 'tree', from: 360, to: 280, zone: 'land', x: 0.9, y: 0, s: 80, c: '#166534' },
     { k: 'conifer', from: 250, to: 66, zone: 'land', x: 0.9, y: 0, s: 66, c: '#166534' },
     { k: 'dino', from: 230, to: 66, zone: 'land', x: 0.76, y: 0, s: 78, c: '#3f6212' },
     { k: 'shrew', from: 66, to: 0, zone: 'land', x: 0.6, y: 0.04, s: 34, c: '#78350f' },
-    { k: 'mammoth', from: 5, to: 0, zone: 'land', x: 0.8, y: 0, s: 78, c: '#6b4423' },
+    { k: 'mammoth', from: 5, to: 0, gone: 0.9, zone: 'land', x: 0.8, y: 0, s: 78, c: '#6b4423' },
   ];
   const bump = (a, hi, lo, fh, fl) => clamp((hi - a) / fh, 0, 1) * clamp((a - lo) / fl, 0, 1);
   function sceneCaption(a) {
@@ -816,7 +816,7 @@
     if (a > 630) return '산소가 바다와 대기에 서서히 쌓여 가요.';
     if (a > 470) return '산소 농도가 10 %를 넘고 오존층이 만들어지기 시작해요.';
     if (a > 360) return '오존층이 자외선을 막아 주어 생물이 육지로 올라와요.';
-    if (a > 300) return '석탄기: 거대한 숲이 생기고 산소 농도가 약 30 %까지 올라가요.';
+    if (a >= 300) return '석탄기: 거대한 숲이 생기고 산소 농도가 약 30 %까지 올라가요.';
     if (a > 250) return '산소가 줄고 대륙이 한데 모여 판게아가 만들어져요.';
     if (a > 66) return '판게아가 갈라지고 온난 습윤한 기후가 이어져요. 공룡이 번성해요.';
     return '포유류가 번성하고, 후기에는 빙하기와 간빙기가 반복돼요.';
@@ -858,7 +858,7 @@
     if (bb > 0.3) D.label(r.x + r.w * 0.2, seaTop + 18, 'O₂ 방울', { bg: rgba('#0369a1', 0.9), size: 12.5 });
     // 생물
     ORGS.forEach((o) => {
-      const aIn = o.to === 0 ? 1 : clamp((ago - o.to) / (0.04 * o.to + 4), 0, 1), aOut = clamp((o.from - ago) / (0.04 * o.from + 5), 0, 1), al = aIn * aOut;
+      const aIn = o.to === 0 ? 1 : clamp((ago - o.to) / (0.04 * o.to + 4), 0, 1), aOut = clamp((o.from - ago) / (0.04 * o.from + 5), 0, 1), al = aIn * aOut * (o.gone ? clamp((ago - 0.3) / (o.gone - 0.3), 0, 1) : 1);
       if (al < 0.03) return;
       const sz = o.s * (r.h / 224), x = r.x + o.x * r.w;
       let y;
@@ -925,7 +925,7 @@
     const cur = pts.filter((p) => p[2] >= ago - 1e-6); if (cur.length > 1) { ctx.beginPath(); cur.forEach((p, i) => (i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]))); ctx.strokeStyle = gr; ctx.lineWidth = 3.5; ctx.stroke(); }
     ctx.restore();
     [[445, '빙하기'], [320, '빙하기']].forEach(([a, l]) => D.text(X(a), Y(tAt(a)) + 17, l, { size: 12.5, weight: 800, color: '#2563eb' }));
-    D.text(px1 - 4, py0 + 8, '빙하기·간빙기 반복', { size: 12.5, weight: 800, color: '#2563eb', align: 'right' });
+    D.text(px1 - 4, py0 + 8, '빙하기·간빙기 반복', { size: 12.5, weight: 800, color: '#2563eb', align: 'right', stroke: 'rgba(255,255,255,.9)', strokeWidth: 4 });
     const mx = X(ago); ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(mx, py0 - 6); ctx.lineTo(mx, py1 + 4); ctx.stroke();
     const tv = tAt(ago); if (tv != null) D.sphere(mx, Y(tv), 6, '#ef4444', { shadow: true });
   }

@@ -902,11 +902,11 @@
       ctx.restore();
       if (X.running || X.t > 0) {
         const msg = sm.kind === 'acid' || sm.id === 'naoh' ? '이온이 있고 움직여요 → 전류가 흘러요' : sm.id === 'sugar' ? '설탕 분자는 이온이 아니에요 → 전류 없음' : '이온이 거의 없어요 → 전류 없음';
-        pill(wx(260), wy(440), msg, { bg: '#fff', color: INK, border: '#c9b6f5', size: fs(13) });
+        pill(wx(260), PHONE ? wy(414) : wy(440), msg, { bg: '#fff', color: INK, border: '#c9b6f5', size: fs(13) });
       }
     }
     ctx.restore();
-    if (e === 'pro') pill(wx(260), wy(440), '🧤 실제 실험에서는 보안경과 장갑을 껴요', { bg: '#fff4dc', color: '#7a4a00', border: '#f3d38a', size: fs(13) });
+    if (e === 'pro') pill(wx(260), PHONE ? wy(414) : wy(440), '🧤 실제 실험에서는 보안경과 장갑을 껴요', { bg: '#fff4dc', color: '#7a4a00', border: '#f3d38a', size: fs(13) });
     drawObsPanel();
   }
   function drawObsPanel() {
@@ -1020,7 +1020,7 @@
     if (!c) {
       wrapText(r.x + 14, r.y + fs(54), '물질 카드를 물에 넣으면 물속에서 어떤 입자가 되는지 볼 수 있어요.', r.w - 28, fs(13.5), fs(19), { weight: 700, color: MUTED, align: 'left' });
     } else {
-      D.text(r.x + 14, r.y + fs(54), c.f + ' 을(를) 물에 넣었어요', { size: fs(14), weight: 800, color: INK, align: 'left' });
+      D.text(r.x + 14, r.y + fs(54), c.f + ' 카드를 물에 넣었어요', { size: fs(14), weight: 800, color: INK, align: 'left' });
       const done = IO.t > 3.4;
       let line = c.res;
       if (c.ions) {

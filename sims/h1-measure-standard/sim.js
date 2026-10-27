@@ -627,7 +627,7 @@
   function estLayoutFor(qs) {
     const E = EC(), q = qs.q, n = q.slots.length, pad = PHONE ? 14 : 24;
     const items = [];
-    q.slots.forEach((s, i) => { if (i) items.push({ t: 'op', txt: q.op === 'div' ? '÷' : '×', w: 24 }); items.push({ t: 'slot', i, w: qs.slots[i].w }); });
+    q.slots.forEach((s, i) => { if (i) items.push({ t: 'op', txt: q.op === 'div' ? '/' : '×', w: 24 }); items.push({ t: 'slot', i, w: qs.slots[i].w }); });
     items.push({ t: 'op', txt: '=', w: 24 }); items.push({ t: 'res', w: 136 });
     const rows = [[]]; let cur = 0; const maxW = VW - pad * 2;
     items.forEach((it) => { if (cur + it.w > maxW && rows[rows.length - 1].length) { rows.push([]); cur = 0; } rows[rows.length - 1].push(it); cur += it.w; });
@@ -679,7 +679,7 @@
       }
       const other = s.card && s.card !== c ? s.card : null;
       leave();
-      if (other) { other.slot = null; other.w = E.cw; other.h = E.ch; flyTo(other, other.hx, other.hy); }
+      if (other) { other.slot = null; other.bad = false; other.w = E.cw; other.h = E.ch; flyTo(other, other.hx, other.hy); }
       s.card = c; c.slot = s; c.bad = false; c.w = s.w - 10; c.h = 46; Sound.tick(); flyTo(c, s.x, s.y + 10);
       parts.burst(s.x, s.y, { count: 5, speed: 60, size: 2.5, life: 0.4, gravity: 0, colors: ['#93c5fd', '#fff'] });
     } else { leave(); c.w = E.cw; c.h = E.ch; c.bad = false; flyTo(c, c.hx, c.hy); }
@@ -884,7 +884,7 @@
         D.text(0, PHONE ? 34 : 42, c.c.t, { size: PHONE ? 14.5 : 17, weight: 800, color: '#1b2333' });
         D.text(0, c.h / 2 - 12, '눌러서 뒤집기', { size: 12, weight: 700, color: '#94a3b8' });
       } else {
-        { D.text(0, -c.h / 2 + 24, c.c.ico + ' ' + c.c.t, { size: 13.5, weight: 800, color: '#3867f4' });
+        { D.text(0, -c.h / 2 + 24, c.c.ico + ' ' + c.c.t, { size: PHONE ? 10.5 : 13.5, weight: 800, color: '#3867f4' });
         paraText(-c.w / 2 + 12, -c.h / 2 + 46, '표준: ' + c.c.std, c.w - 24, PHONE ? 11.5 : 13.5, { weight: 700, color: '#1b2333' }); }
       }
       ctx.restore();
@@ -1073,7 +1073,7 @@
             if (!isFinite(v)) return '숫자로 적어 주세요.';
             if (v > 70 && v < 80) return '단위를 확인해요. 입력칸은 <b>cm</b> 단위예요. (예: 74.3 mm → 7.43 cm)';
             if (Math.abs(v - 7.4) < 0.0001 || Math.abs(v - 7.5) < 0.0001) return '눈금 사이를 한 자리 더 <b>어림</b>해서 소수 둘째 자리까지 적어 보세요.';
-            if (v >= 7.415 && v <= 7.445) { S.ruler.readOK = true; return true; }
+            if (v >= 7.415 && v <= 7.455) { S.ruler.readOK = true; return true; }
             if (v > 7.3 && v < 7.6) return '연필 끝 위치를 다시 보세요. 7.4와 7.5 눈금 사이에서 어느 쪽에 더 가까운가요?';
             return '연필 끝이 가리키는 눈금을 다시 확인해 보세요.';
           },

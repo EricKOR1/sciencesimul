@@ -404,8 +404,8 @@
       D.roundRect(-w / 2, -h / 2, w, h, 10); ctx.fillStyle = '#fff'; ctx.fill();
       ctx.strokeStyle = it.mark === 'bad' ? '#e2464b' : st.sel ? '#8b5cf6' : '#cdbff1'; ctx.lineWidth = it.mark === 'bad' || st.sel ? 3 : 1.6; ctx.stroke();
       ctx.font = D.font(fs(19), 700); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = INK; ctx.fillText(c.e, -w / 2 + fs(18), 2); ctx.textBaseline = 'alphabetic';
-      fitText(-w / 2 + fs(34), 5, c.n, w - fs(34) - (SO.kind ? 34 : 8), fs(13), { weight: 800, color: INK, align: 'left' });
-      if (SO.kind) { D.roundRect(w / 2 - 34, -h / 2 + 4, 30, 16, 8); ctx.fillStyle = c.k === 'phys' ? '#2f7de1' : '#f26b3a'; ctx.fill(); D.text(w / 2 - 19, -h / 2 + 16, c.k === 'phys' ? '물리' : '화학', { size: 10.5, weight: 800, color: '#fff' }); }
+      fitText(-w / 2 + fs(34), SO.kind && PHONE ? 11 : 5, c.n, w - fs(34) - (SO.kind && !PHONE ? 34 : 8), fs(13), { weight: 800, color: INK, align: 'left' });
+      if (SO.kind) { D.roundRect(w / 2 - 34, -h / 2 + (PHONE ? 2 : 4), 30, 16, 8); ctx.fillStyle = c.k === 'phys' ? '#2f7de1' : '#f26b3a'; ctx.fill(); D.text(w / 2 - 19, -h / 2 + (PHONE ? 14 : 16), c.k === 'phys' ? '물리' : '화학', { size: 10.5, weight: 800, color: '#fff' }); }
       if (it.mark === 'bad') D.text(w / 2 - 4, h / 2 - 5, '✕', { size: 13, weight: 800, color: '#e2464b', align: 'right' });
     },
     drawBin(b, r, st) {
@@ -437,7 +437,7 @@
     leaf: { view: 'leaf', want: 'in', name: '광합성', pos: () => ({ x: VW * 0.5, y: PHONE ? 340 : 300 }), v: { x: -0.75, y: -0.66 }, why: '빛에너지가 포도당에 저장돼요' },
     body: { view: 'body', want: 'out', name: '세포 호흡', pos: () => ({ x: VW * 0.5, y: PHONE ? 330 : 290 }), v: { x: 1, y: 0 }, why: '포도당의 에너지가 나와 체온을 유지해요' },
     evap: { view: 'water', want: 'in', name: '바닷물의 증발', pos: () => ({ x: PHONE ? 150 : 200, y: PHONE ? 520 : 440 }), v: { x: 0, y: -1 }, why: '물이 수증기가 되며 주위의 열을 흡수해요' },
-    cond: { view: 'water', want: 'out', name: '수증기의 응결', pos: () => ({ x: PHONE ? 330 : 520, y: PHONE ? 170 : 150 }), v: { x: 1, y: 0.1 }, why: '수증기가 물방울이 되며 열을 내보내요' },
+    cond: { view: 'water', want: 'out', name: '수증기의 응결', pos: () => ({ x: PHONE ? 270 : 520, y: PHONE ? 170 : 150 }), v: { x: 1, y: 0.1 }, why: '수증기가 물방울이 되며 열을 내보내요' },
   };
   const HKEYS = Object.keys(HS);
   const NS = { view: 'leaf', set: { leaf: null, body: null, evap: null, cond: null }, mark: {}, shake: {}, vap: [] };
@@ -642,7 +642,7 @@
       const wUse = 3 + 6 * ETA[CK.ins], nLeak = ins ? 2 : 4;
       [-1, 0, 1].forEach((i) => D.arrow(L.pile.x + i * 34, L.pile.y - 20, L.pile.x + i * 34, c.y + c.h / 2 + 4, { color: HOT, width: wUse, head: 12, alpha: 0.9 * a }));
       for (let i = 0; i < nLeak; i++) { const y = b.y + 30 + i * (b.h - 60) / Math.max(1, nLeak - 1); D.arrow(b.x - 6, y, b.x - th - 40 + (ins ? 16 : 0), y, { color: '#e2464b', width: ins ? 3 : 5, head: 10, alpha: 0.8 * a, dash: [7, 5] }); }
-      pill(b.x + b.w / 2, b.y + b.h + th + 16, ins ? '새는 열이 적어요 (빨간 점선 화살표)' : '새는 열이 많아요 (빨간 점선 화살표)', { bg: '#fff', color: '#b3262b', border: '#e2464b', size: fs(12.5) });
+      pill(b.x + b.w / 2, b.y + b.h + th + (PHONE ? 16 : 32), ins ? '새는 열이 적어요 (빨간 점선 화살표)' : '새는 열이 많아요 (빨간 점선 화살표)', { bg: '#fff', color: '#b3262b', border: '#e2464b', size: fs(12.5) });
     }
     // 온도 표시
     const tshow = Math.round(CK.T);
@@ -667,9 +667,9 @@
     panel(f.x, f.y, f.w, f.h, { r: 12, stroke: '#d9cffa' });
     const q = qKJ(CK.amt), u = usedKJ(CK.amt, CK.ins), dT = dTraw(CK.amt, CK.ins), raw = T_START + dT;
     const lh = PHONE ? fs(19) : 21;
-    D.text(f.x + 14, f.y + fs(20), '① 방출한 열 ≈ ' + KJ56 + ' kJ × (' + CK.amt + ' ÷ 56) = ' + q.toFixed(1) + ' kJ', { size: fs(12.5), weight: 800, color: INK, align: 'left' });
+    D.text(f.x + 14, f.y + fs(20), '① 방출한 열 ≈ ' + KJ56 + ' kJ × (' + CK.amt + ' g / 56 g) = ' + q.toFixed(1) + ' kJ', { size: fs(12.5), weight: 800, color: INK, align: 'left' });
     D.text(f.x + 14, f.y + fs(20) + lh, '② 이용한 열 = ' + q.toFixed(1) + ' × ' + Math.round(ETA[CK.ins] * 100) + ' % = ' + u.toFixed(1) + ' kJ', { size: fs(12.5), weight: 800, color: INK, align: 'left' });
-    D.text(f.x + 14, f.y + fs(20) + lh * 2, '③ 온도 변화 = ' + u.toFixed(1) + ' kJ ÷ (' + G_WATER + ' g × ' + C_W + ' J/g·°C) = ' + dT.toFixed(1) + ' °C', { size: fs(12.5), weight: 800, color: INK, align: 'left' });
+    D.text(f.x + 14, f.y + fs(20) + lh * 2, '③ 온도 변화 = ' + Math.round(u * 1000).toLocaleString('ko-KR') + ' J / (' + G_WATER + ' g × ' + C_W + ' J/g·°C) = ' + dT.toFixed(1) + ' °C', { size: fs(12.5), weight: 800, color: INK, align: 'left' });
     const ft = finalShown(CK.amt, CK.ins);
     D.text(f.x + 14, f.y + fs(20) + lh * 3, '④ ' + T_START + ' + ' + dT.toFixed(1) + ' = ' + raw.toFixed(1) + ' → ' + (raw > T_BOIL ? '끓는점 ' + T_BOIL + ' °C에서 멈춰요' : '약 ' + ft + ' °C') + (ft >= GOAL ? '  ✔ 목표 달성' : '  ✘ ' + GOAL + ' °C에 못 미쳐요'), { size: fs(12.5), weight: 800, color: ft >= GOAL ? '#0b6b39' : '#b3262b', align: 'left' });
     if (!PHONE) D.text(f.x + f.w - 12, f.y + f.h - 8, '※ 이용률 단열재 없음 약 ' + Math.round(ETA.no * 100) + ' %, 있음 약 ' + Math.round(ETA.yes * 100) + ' %는 크기 감각용 예시 값이에요', { size: 11, weight: 700, color: MUTED, align: 'right' });

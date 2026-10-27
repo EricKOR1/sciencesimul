@@ -318,6 +318,7 @@
     ctx.restore();
     // 표본점
     ds.forEach((d, i) => {
+      if (i === ds.length - 1) return;   // t = 4 s는 다음 주기의 시작점이라 표본 수에 세지 않아요 (표본 수 = 4 / 간격)
       const x = X(d.t), a = clamp(d.born, 0, 1), big = (m.focus && Math.abs(d.t - 1) < 1e-6);
       ctx.save(); ctx.globalAlpha = a;
       ctx.strokeStyle = 'rgba(100,116,139,.5)'; ctx.lineWidth = 1.5; ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.moveTo(x, gy + gh); ctx.lineTo(x, Yv(d.v)); ctx.stroke(); ctx.setLineDash([]);
@@ -680,11 +681,11 @@
         {
           title: '원래 파형에 가깝게 만들기',
           goal: '표본 간격과 비트 수를 조절해서 <b>오차를 3 % 이하</b>로 줄여 보세요.',
-          hint: '표본 간격을 0.5 s 또는 0.25 s로, 비트 수를 3비트 이상으로 하면 오차가 작아져요.',
+          hint: '표본 간격을 0.25 s로 하고 3비트 이상으로 하거나, 0.5 s로 하고 4비트로 하면 오차가 3 % 아래가 돼요.',
           setup() { ensure('sample'); smpSub = ['int', 'bit']; updateCtl(); setInt(1); setBits(2); },
           check: () => S.smp.err <= 3.0, hold: 0.8,
           status: () => '오차 <b>' + S.smp.err.toFixed(1) + ' %</b> (목표 3 % 이하) · ' + S.smp.dt + ' s · ' + S.smp.bits + '비트',
-          explain: '표본 간격이 짧으면 시간 방향으로 더 자세히 뽑고, 비트 수가 많으면 값을 더 잘게 나눠 반올림 오차가 줄어요. <b>0.5 s 이하 · 3비트 이상</b>이면 오차가 3 % 안팎까지 줄어요. 대신 데이터의 양은 늘어요.',
+          explain: '표본 간격이 짧으면 시간 방향으로 더 자세히 뽑고, 비트 수가 많으면 값을 더 잘게 나눠 반올림 오차가 줄어요. <b>0.25 s · 3비트 이상</b>이거나 <b>0.5 s · 4비트</b>이면 오차가 3 % 아래로 줄어요. 대신 데이터의 양은 늘어요.',
         },
         {
           title: '3비트 양자화 표 읽기',

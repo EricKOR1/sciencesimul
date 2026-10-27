@@ -216,6 +216,7 @@
   const CX = PHONE ? 240 : 270, CY = PHONE ? 150 : 205, CRX = PHONE ? 205 : 190, CRY = PHONE ? 96 : 128;
   const CW = PHONE ? 100 : 116, CH = PHONE ? 38 : 44;
   const OZ = PHONE ? { x: 10, y: 270, w: 460, h: 100 } : { x: 526, y: 50, w: 266, h: 330 };
+  const SHORT = { o2: '산소', glu: '포도당', aa: '아미노산', co2: '이산화 탄소', urea: '요소', nh3: '암모니아' };
   const ITEMS = [
     ['o2', '산소 O₂', 'in', '#ef4444', 'O₂'], ['glu', '포도당', 'in', '#f59e0b', 'C'], ['aa', '아미노산', 'in', '#22c55e', 'A'],
     ['co2', '이산화 탄소', 'out', '#6b7280', 'CO₂'], ['urea', '요소', 'out', '#fb923c', 'U'], ['nh3', '암모니아', 'out', '#a855f7', 'N'],
@@ -324,7 +325,7 @@
     // 이름표
     if (m > 0.6) D.label(CX, CY - CRY - 14, '세포막', { bg: '#f59e0b', size: PHONE ? 12 : 13.5 });
     else if (m < 0.35) D.label(CX, CY - CRY - 14, '세포막이 없어졌어요!', { bg: '#e2464b', size: PHONE ? 12 : 13.5 });
-    T(CX, CY + CRY + (PHONE ? 20 : 26), '⬇ 세포 안으로 들어오는 물질을 이 세포에 놓아요', PHONE ? 12.5 : 14.5, '#166534', 'center', 800);
+    T(CX, CY + CRY + (PHONE ? 14 : 26), '⬇ 세포 안으로 들어오는 물질을 이 세포에 놓아요', PHONE ? 12.5 : 14.5, '#166534', 'center', 800);
     if (m < 0.35) { const ls = wrap('세포 내용물이 흩어져 세포가 생명을 유지할 수 없어요.', PHONE ? 300 : 340, PHONE ? 13 : 14.5, 800); ls.forEach((l, i) => T(CX, CY - 6 + i * 20, l, PHONE ? 13 : 14.5, '#7f1d1d', 'center', 800, { stroke: 'rgba(255,255,255,.9)', strokeWidth: 4 })); }
     // 흐름 (정답을 맞춘 뒤)
     if (c.flow || (game && game.free)) drawFlows(c);
@@ -350,7 +351,7 @@
         D.sphere(gx + ux * pos, gy + uy * pos, 6, it.col, { gloss: false });
       }
       ctx.globalAlpha = 1;
-      T(gx + ux * (L + 12), gy + uy * (L + 12) + 4, it.name.split(' ')[0], PHONE ? 10.5 : 11.5, it.dir === 'in' ? '#166534' : '#1e4f8a', 'center', 800, { stroke: 'rgba(255,255,255,.9)', strokeWidth: 3.5 });
+      T(clamp(gx + ux * (L + 12), 44, VW - 44), gy + uy * (L + 12) + 4, SHORT[it.id], PHONE ? 10.5 : 11.5, it.dir === 'in' ? '#166534' : '#1e4f8a', 'center', 800, { stroke: 'rgba(255,255,255,.9)', strokeWidth: 3.5 });
     });
   }
   $('#bMem').addEventListener('click', toggleMem);
@@ -455,7 +456,7 @@
   const SKEYS = ['dw', 'ns', 'hs'];
   const potMass = (k, t) => 10 + SOLS[k].dm * smooth(t / LAB_MIN);
   const IOD_TYPES = { iodine: { name: '아이오딘', r: 5, speed: 100, pass: 'free', color: '#b8741a' }, starch: { name: '녹말', r: 12, speed: 55, pass: 'none', color: '#d1d5db', shape: 'chain' } };
-  const POT_TYPES = { water: { name: '물', r: 4.5, speed: 115, pass: 'free', color: '#3b9eff' }, salt: { name: '소금', r: 6, speed: 75, pass: 'none', color: '#f59e0b' } };
+  const POT_TYPES = { water: { name: '물', r: 4.5, speed: 115, pass: 'free', color: '#3b9eff' }, salt: { name: '소금', r: 6, speed: 75, pass: 'none', color: '#7c3aed' } };
   const IB = PHONE ? { x: 168, y: 64, w: 302, h: 270 } : { x: 346, y: 66, w: 436, h: 330 };
   const PB = PHONE ? { x: 10, y: 238, w: 460, h: 158 } : { x: 584, y: 62, w: 200, h: 300 };
   function newIodBox() {
@@ -577,7 +578,7 @@
       ctx.fillStyle = 'rgba(160,110,40,.35)'; for (let j = 0; j < 5; j++) { ctx.beginPath(); ctx.arc(x + bw / 2 - pw / 2 + 10 + (j * 17) % (pw - 16), by + bh - ph + 2 + (j * 11) % (ph - 12), 2.2, 0, TAU); ctx.fill(); }
       T(x + bw / 2, by + bh + 20, SOLS[s].name, PHONE ? 11.5 : 13.5, '#26324a', 'center', 800);
       T(x + bw / 2, by + bh + 40, r.st === 'idle' ? '10.0 g' : cur.toFixed(1) + ' g', PHONE ? 14 : 16, r.st === 'done' ? (SOLS[s].dm > 0 ? '#0b6b39' : SOLS[s].dm < 0 ? '#c0392b' : '#26324a') : '#26324a', 'center', 800);
-      if (r.st === 'run') T(x + bw / 2, by + bh + (PHONE ? 58 : 62), Math.round(r.t) + '분', PHONE ? 11.5 : 12.5, '#5a6679', 'center', 800);
+      if (r.st === 'run') T(x + bw / 2, by - 6, Math.round(r.t) + '분', PHONE ? 11.5 : 12.5, '#5a6679', 'center', 800);
     });
     // 확대 상자 (선택한 용액)
     ctx.save(); D.roundRect(b.x, b.y, b.w, b.h, 14); ctx.clip();
@@ -590,6 +591,8 @@
     D.label(b.x + 10, b.y + 18, SOLS[k].name, { bg: '#3b6fb0', size: PHONE ? 11 : 12.5, align: 'left' });
     D.label(b.x + 10, b.y + b.h - 18, '감자 세포 안', { bg: '#a9791f', size: PHONE ? 11 : 12.5, align: 'left' });
     if (PHONE) D.label(b.x + b.w - 8, b.y + b.h - 18, '🔍 감자 세포막 확대', { bg: '#7a5a1a', size: 11, align: 'right' }); else D.label(b.x + b.w / 2, b.y - 12, '🔍 감자 세포막 확대', { bg: '#7a5a1a', size: 12 });
+    // 입자 범례 (물 / 소금)
+    { const lgx = b.x + b.w - (PHONE ? 8 : 4), lgy = PHONE ? b.y + 18 : b.y + b.h + 22; D.sphere(lgx - (PHONE ? 118 : 108), lgy, 5, '#3b9eff', { gloss: false }); T(lgx - (PHONE ? 110 : 100), lgy + 4, '물', PHONE ? 11 : 12, '#26324a', 'left', 800); D.sphere(lgx - (PHONE ? 70 : 62), lgy, 5, '#7c3aed', { gloss: false }); T(lgx - (PHONE ? 62 : 54), lgy + 4, '소금', PHONE ? 11 : 12, '#26324a', 'left', 800); }
     const ax = b.x + b.w - (PHONE ? 40 : 34);
     if (Math.abs(diff) >= 3) {
       const down = diff > 0;
@@ -797,7 +800,7 @@
             if (miss.length) return '아직 놓지 않은 카드가 ' + miss.length + '장 있어요. 세포 안이나 세포 밖 칸에 놓아 보세요.';
             const wrong = c.items.filter((it) => it.zone !== it.dir);
             c.items.forEach((it) => { const bad = it.zone !== it.dir; if (bad && !it.bad) { it.bad = true; it.shake = 1; } if (!bad) it.bad = false; });
-            if (wrong.length) return '빨간 카드는 반대쪽이에요: ' + wrong.map((it) => it.name.split(' ')[0]).join(', ') + '. 세포가 필요로 하는 물질은 받아들이고, 노폐물은 내보내요.';
+            if (wrong.length) return '빨간 카드는 반대쪽이에요: ' + wrong.map((it) => SHORT[it.id]).join(', ') + '. 세포가 필요로 하는 물질은 받아들이고, 노폐물은 내보내요.';
             c.flow = true; return true;
           },
           status: () => '놓은 카드 ' + S.cell.items.filter((it) => it.zone).length + ' / 6',

@@ -367,6 +367,7 @@
   function drawCell(t) {
     const v = S.cell.v;
     if (v < 0.02) return;
+    if (!(S.mode === 'absorb' && S.sub === 'lab')) return;   // 기체 관은 실험실 장면에서만 빛을 가로막아요
     const cx = L.cx + (1 - smooth(v)) * 170, y = L.cellY, w = 96, h = 44;
     ctx.save(); ctx.globalAlpha = clamp(v * 1.6, 0, 1);
     D.shadow(() => { ctx.fillStyle = 'rgba(232,121,249,.20)'; rr(cx - w / 2, y - h / 2, w, h, 10).fill(); }, { blur: 10, y: 3, color: 'rgba(0,0,0,.45)' });
@@ -599,7 +600,7 @@
     let l1 = '', l2 = '', col = '#e6ecff';
     const x = b.x + 16;
     if (S.mode === 'sources') {
-      l1 = 'slit(틈)을 좁히고 초점을 맞출수록 선이 또렷해져요. 대신 들어오는 빛이 줄어 조금 어두워져요.';
+      l1 = '슬릿(틈)을 좁히고 초점을 맞출수록 선이 또렷해져요. 대신 들어오는 빛이 줄어 조금 어두워져요.';
       l2 = spec.lines.length ? '지금 광원에서는 밝은 선이 ' + spec.lines.length + '개 있어요. 슬릿 폭과 초점을 바꾸며 선이 흐려졌다 또렷해지는 것을 살펴봐요.' : '이 광원은 선이 아니라 색이 이어진 스펙트럼이라서, 초점이 흐려도 색의 이어짐은 그대로예요.';
     } else if (S.mode === 'tubes') {
       const nl = nearLine(S.tube, S.cur, 3.2);

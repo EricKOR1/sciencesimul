@@ -50,8 +50,9 @@
   /* 눈금 막대 길이를 알기 쉬운 말로 */
   function koNum(v) {
     const r = (x) => { const s = +x.toPrecision(2); return String(s); };
-    if (v >= 1e8) return r(v / 1e8) + '억';
-    if (v >= 1e4) return r(v / 1e4) + '만';
+    const w = +v.toPrecision(2);   // 반올림한 값으로 단위를 정해요
+    if (w >= 1e8) return r(v / 1e8) + '억';
+    if (w >= 1e4) return r(v / 1e4) + '만';
     const q = r(v); return /^\d+$/.test(q) ? q.replace(/(\d)(?=(\d{3})+$)/g, '$1,') : q;
   }
   function eq(e) {
@@ -421,9 +422,10 @@
       let l = 0; for (; ; l++) { if (!lanes[l]) lanes[l] = []; if (lanes[l].every((r) => r0 <= r[0] || l0 >= r[1])) break; }
       lanes[l].push([l0, r0]);
       c.w = CW; c.h = CH; c.lane = l;
-      const ty = RL.y - 26 - CH / 2 - l * (CH + 6);
-      c.tx = cx; c.ty = ty;
     });
+    // 카드가 한곳에 많이 쌓여도 화면 밖으로 나가지 않게 줄 간격을 줄여요
+    const step = Math.min(CH + 6, (RL.y - 26 - CH / 2 - 78) / Math.max(1, lanes.length - 1));
+    placed.forEach((c) => { c.tx = clamp(exX(c.k), CW / 2 + 4, VW - CW / 2 - 4); c.ty = RL.y - 26 - CH / 2 - c.lane * step; });
   }
   function cardDrop(c, p) {
     S.drag = null;
@@ -605,7 +607,7 @@
     { id: 'em', name: '전자 현미경', ico: '⚛️', lo: -10, hi: -7, col: '#7c3aed' },
     { id: 'om', name: '광학 현미경', ico: '🔬', lo: -7, hi: -3, col: '#2563eb' },
     { id: 'ruler', name: '자·줄자', ico: '📏', lo: -3, hi: 1, col: '#0d9488' },
-    { id: 'radar', name: '레이더', ico: '📡', lo: 1, hi: 11, col: '#ea580c' },
+    { id: 'radar', name: '레이더', ico: '📡', lo: 1, hi: 5, col: '#ea580c' },
     { id: 'laser', name: '레이저', ico: '🔦', lo: 6, hi: 9.5, col: '#dc2626' },
     { id: 'para', name: '연주시차', ico: '⭐', lo: 15, hi: 19, col: '#ca8a04' },
   ];
@@ -732,7 +734,7 @@
     D.text(cx + cw / 2, cy + 58, L.t.toFixed(2) + ' s', { size: 32, color: L.state === 'done' ? '#14a058' : '#1b2333', weight: 800 });
     D.text(VW / 2, cy + 104, '빛의 속력  c = 3.0×10⁸ m/s', { size: 17, color: '#fde68a', weight: 800 });
     if (L.shown) {
-      D.label(VW / 2, cy + 140, '거리 = c × 시간 ÷ 2 = 3.0×10⁸ × 2.56 ÷ 2', { bg: 'rgba(255,255,255,.95)', color: '#1b2333', size: 15 });
+      D.label(VW / 2, cy + 140, '거리 = c × 시간 / 2 = 3.0×10⁸ × 2.56 / 2', { bg: 'rgba(255,255,255,.95)', color: '#1b2333', size: 15 });
       D.text(VW / 2, cy + 172, '(왕복이라서 2로 나눠요)', { size: 14, color: '#cbd5e1', weight: 700 });
     } else D.text(VW / 2, cy + 134, S.laser.state === 'idle' ? '🔦 레이저를 쏘아 왕복 시간을 재 보세요' : '⏱ 측정 중…', { size: 16, color: '#bfdbfe', weight: 800 });
   }
@@ -841,6 +843,7 @@
 
   /* ---------- 단계 · 미션 ---------- */
   function enterLevel(li) {
+    if (li > 0) { const h = $('#stageHint'); if (h) h.classList.add('hide'); }
     if (li === 0) { setMode('zoom'); S.minV = S.maxV = false; S.seen = new Set(); setExp(0, true); }
     else if (li === 1) { initCards(); setMode('cards'); layoutChips(); }
     else if (li === 2) { initTable(); setMode('table'); }
@@ -925,7 +928,7 @@
           choices: ['약 10⁴분의 1 (1만분의 1)', '약 10⁷분의 1 (1000만분의 1)', '약 10¹⁰분의 1 (100억분의 1)', '약 10²⁰분의 1'],
           answer: 2,
           feedback: ['1만 배 차이는 머리카락 굵기(10⁻⁴ m)와 사람 키 정도의 차이예요.', '지수가 7만큼 차이 나는 것은 바이러스(10⁻⁷ m)와 사람 키 정도예요.', '', '지수 차이는 10 정도예요. 20이면 양성자보다도 훨씬 작은 규모가 돼요.'],
-          explain: '10⁻¹⁰ m ÷ 1.7 m ≈ 6×10⁻¹¹, 즉 지수로 약 10 작아서 사람 키의 약 <b>100억분의 1</b>이에요. 사람이 원자 하나라면 지구 둘레보다도 훨씬 긴 거리 비율이에요.',
+          explain: '10⁻¹⁰ m ÷ 1.7 m ≈ 6×10⁻¹¹, 즉 지수로 약 10 작아서 사람 키의 약 <b>100억분의 1</b>이에요. 원자를 한 줄로 약 170억 개 늘어놓아야 사람 키(1.7 m)가 돼요.',
         },
         {
           type: 'quiz', title: '지구와 태양',

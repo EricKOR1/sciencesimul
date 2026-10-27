@@ -17,6 +17,7 @@
   const RM = SciSim.reduceMotion;
   const NM0 = 400, NM1 = 750;
   const ZT = 0.08;                                   // 먼 은하의 적색 편이(모의 자료)
+  const ZTOL = 0.0045;                               // 기준 선 막이 '모두 일치'로 보이는 허용 오차(슬라이더 한 칸 0.005보다 작게)
   const mark = (b) => (b ? '✅' : '⬜');
   const smooth = (x) => { const t = clamp(x, 0, 1); return t * t * (3 - 2 * t); };
   const gs = (l, c, s) => Math.exp(-0.5 * ((l - c) / s) * ((l - c) / s));
@@ -352,9 +353,9 @@
     if (!PHONE) {
       const ty = by0 + 3 * 26 + 18;
       let msg;
-      if (S.obj === 'gal') msg = '적색 편이: 기준 선 막을 ' + (zEff * 100).toFixed(1) + ' % 밀었어요. ' + (Math.abs(zEff - ZT) <= 0.008 ? '선이 모두 맞아요! ✅' : '선이 맞을 때까지 밀어 봐요.');
+      if (S.obj === 'gal') msg = '적색 편이: 기준 선 막을 ' + (zEff * 100).toFixed(1) + ' % 밀었어요. ' + (Math.abs(zEff - ZT) <= ZTOL ? '선이 모두 맞아요! ✅' : '선이 맞을 때까지 밀어 봐요.');
       else msg = '선이 짙고 밝을수록 그 원소가 더 많이 있다고 볼 수 있어요.';
-      paragraph(msg, R.x + 14, ty, R.w - 28, 13.5, Math.abs(zEff - ZT) <= 0.008 && S.obj === 'gal' ? '#86efac' : '#cbd5e1', 19, 700);
+      paragraph(msg, R.x + 14, ty, R.w - 28, 13.5, Math.abs(zEff - ZT) <= ZTOL && S.obj === 'gal' ? '#86efac' : '#cbd5e1', 19, 700);
     }
   }
 
@@ -538,7 +539,7 @@
      장면 4: 우주 구성 (원 그래프 + 값 카드)
      ====================================================== */
   const PIES = [
-    { title: '원자 수 비 (개수)', vals: [92, 8, 0.12] }, { title: '질량비 (무게)', vals: [74.9, 23.8, 1.3] },
+    { title: '원자 수 비 (개수)', vals: [92, 8, 0.08] }, { title: '질량비 (무게)', vals: [74.9, 23.8, 1.3] },
   ];
   const PCOL = ['#60a5fa', '#fbbf24', '#a78bfa'], PNAME = ['수소', '헬륨', '그 밖의 원소'];
   const CARD_DEF = [
@@ -851,8 +852,8 @@
           goal: '<b>먼 은하</b>를 고르고 <b>수소</b> 기준 선 막을 겹친 뒤, 슬라이더로 막을 밀어 선 4개가 모두 맞게 해 보세요.',
           hint: '수소 막을 켜고 슬라이더를 오른쪽(붉은 쪽)으로 조금씩 밀어요. 위쪽의 "일치" 칩이 4/4가 되면 돼요.',
           setup() { ensureObs(); S.obj = 'gal'; S.rev = 0; updateCtl(); },
-          check: () => S.obj === 'gal' && S.tmpl.H && Math.abs(S.z - ZT) <= 0.008, hold: 0.8,
-          status: () => mark(S.obj === 'gal') + ' 먼 은하 · ' + mark(S.tmpl.H) + ' 수소 막 · ' + (Math.abs(S.z - ZT) <= 0.008 ? '✅' : '⬜') + ' 막을 ' + (S.z * 100).toFixed(1) + ' % 밀었어요',
+          check: () => S.obj === 'gal' && S.tmpl.H && Math.abs(S.z - ZT) <= ZTOL, hold: 0.8,
+          status: () => mark(S.obj === 'gal') + ' 먼 은하 · ' + mark(S.tmpl.H) + ' 수소 막 · ' + (Math.abs(S.z - ZT) <= ZTOL ? '✅' : '⬜') + ' 막을 ' + (S.z * 100).toFixed(1) + ' % 밀었어요',
           explain: '먼 은하의 수소 선 4개는 막을 약 <b>8 %</b> 밀었을 때 모두 맞아요. 656 nm 선은 약 709 nm로, 486 nm 선은 약 525 nm로 가는 것처럼 <b>모든 선이 같은 비율</b>로 파장이 길어져요. 패턴은 그대로이므로 같은 원소예요.',
         },
         {

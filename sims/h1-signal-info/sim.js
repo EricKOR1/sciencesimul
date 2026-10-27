@@ -445,7 +445,7 @@
   function tempReading(m) { const i = clamp(Math.round(m.x * 10), 0, AN_N - 1); return V2T(smoothAt(i, Math.round(S.an.wDisp))); }
   function evalAn(id) {
     const M = S.an.marks[id];
-    if (id === 'temp') { const a = tempReading(M[0]), b = tempReading(M[1]); return { ok: Math.abs(a - 26) <= 1 && Math.abs(b - 10) <= 1, a, b }; }
+    if (id === 'temp') { const a = tempReading(M[0]), b = tempReading(M[1]); return { ok: Math.abs(a - 26) <= 1 && Math.abs(b - 10) <= 1, a, b, xa: M[0].x, xb: M[1].x }; }
     if (id === 'heart' || id === 'sound') {
       const pk = id === 'heart' ? HEART_PEAKS : SOUND_PEAKS, tol = id === 'heart' ? 0.03 : 0.12;
       const i1 = pk.findIndex((p) => Math.abs(p - M[0].x) < tol), i2 = pk.findIndex((p) => Math.abs(p - M[1].x) < tol);
@@ -456,9 +456,9 @@
     return { ok: Math.abs(P - 12) <= 1.5 && Math.abs(Sx - 22) <= 1.5 && P < Sx, P, S: Sx, dt: Sx - P };
   }
   function infoText(id, e) {
-    if (id === 'temp') return e.ok ? ['📌 최고 기온 ' + Math.round(e.a) + ' °C (14시) · 최저 기온 ' + Math.round(e.b) + ' °C (4시)', '→ 일교차 = ' + Math.round(e.a) + ' − ' + Math.round(e.b) + ' = ' + (Math.round(e.a) - Math.round(e.b)) + ' °C'] : ['깃발이 가리키는 기온: 최고 ' + e.a.toFixed(1) + ' °C · 최저 ' + e.b.toFixed(1) + ' °C', '값이 흔들리면 이동 평균으로 다듬고, 꼭대기·바닥에 깃발을 놓아요.'];
-    if (id === 'heart') return e.ok ? ['📌 R봉우리 간격 ' + e.dt.toFixed(2) + ' s', '→ 심박수 = 60 ÷ ' + e.dt.toFixed(2) + ' ≈ 70회/분'] : ['두 깃발을 이웃한 R봉우리 위에 놓으면', '봉우리 사이 시간으로 심박수를 구할 수 있어요.'];
-    if (id === 'sound') return e.ok ? ['📌 한 번 진동하는 시간(주기) ' + e.dt.toFixed(2) + ' ms', '→ 진동수 = 1 ÷ 0.00227 s ≈ 440 Hz (음높이 "라")'] : ['두 깃발을 이웃한 마루(맨 위) 위에 놓으면', '한 번 진동하는 시간(주기)을 구할 수 있어요.'];
+    if (id === 'temp') return e.ok ? ['📌 최고 기온 ' + Math.round(e.a) + ' °C (' + Math.round(e.xa) + '시경) · 최저 기온 ' + Math.round(e.b) + ' °C (' + Math.round(e.xb) + '시경)', '→ 일교차 = ' + Math.round(e.a) + ' − ' + Math.round(e.b) + ' = ' + (Math.round(e.a) - Math.round(e.b)) + ' °C'] : ['깃발이 가리키는 기온: 최고 ' + e.a.toFixed(1) + ' °C · 최저 ' + e.b.toFixed(1) + ' °C', '값이 흔들리면 이동 평균으로 다듬고, 꼭대기·바닥에 깃발을 놓아요.'];
+    if (id === 'heart') return e.ok ? ['📌 R봉우리 간격 ' + e.dt.toFixed(2) + ' s', '→ 심박수 = 60 / ' + e.dt.toFixed(2) + ' ≈ 70회/분'] : ['두 깃발을 이웃한 R봉우리 위에 놓으면', '봉우리 사이 시간으로 심박수를 구할 수 있어요.'];
+    if (id === 'sound') return e.ok ? ['📌 한 번 진동하는 시간(주기) ' + e.dt.toFixed(2) + ' ms', '→ 진동수 = 1 / 0.00227 s ≈ 440 Hz (음높이 "라")'] : ['두 깃발을 이웃한 마루(맨 위) 위에 놓으면', '한 번 진동하는 시간(주기)을 구할 수 있어요.'];
     return e.ok ? ['📌 P파 ' + Math.round(e.P) + ' s, S파 ' + Math.round(e.S) + ' s 도착 → 시간차 ' + Math.round(e.dt) + ' s', '→ 진원까지의 거리 ≈ 8 × ' + Math.round(e.dt) + ' = 약 ' + Math.round(e.dt) * 8 + ' km'] : ['P파: ' + e.P.toFixed(0) + ' s · S파: ' + e.S.toFixed(0) + ' s (시간차 ' + Math.max(0, e.dt).toFixed(0) + ' s)', '두 파가 처음 도착한 곳에 깃발을 놓아 보세요.'];
   }
   function anFn(id) {

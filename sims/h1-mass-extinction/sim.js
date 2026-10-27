@@ -102,10 +102,10 @@
       }
       this.zones.forEach((z) => {
         const zc = this.inZone(z.id), head = z.head == null ? 28 : z.head;
-        const cols = z.cols || Math.max(1, Math.floor((z.w - 8 + this.gap) / (this.cw + this.gap)));
+        const cols = z.cols || Math.max(1, Math.floor(((z.lw || z.w) - 8 + this.gap) / (this.cw + this.gap)));
         zc.forEach((c, i) => {
           const col = i % cols, row = Math.floor(i / cols);
-          c.tx = z.x + (z.w - (cols * this.cw + (cols - 1) * this.gap)) / 2 + this.cw / 2 + col * (this.cw + this.gap);
+          c.tx = z.x + ((z.lw || z.w) - (cols * this.cw + (cols - 1) * this.gap)) / 2 + this.cw / 2 + col * (this.cw + this.gap);
           c.ty = z.center ? z.y + z.h / 2 : z.y + head + 4 + this.ch / 2 + row * (this.ch + this.gap);
         });
       });
@@ -586,9 +586,10 @@
       ctx.fillStyle = '#3d2f24'; ctx.beginPath(); ctx.moveTo(vx - 26, vy - R.h * 0.34); ctx.lineTo(vx, vy - R.h * 0.31); ctx.lineTo(vx + 26, vy - R.h * 0.34); ctx.closePath(); ctx.fill();
       smokeLayer(R, ph * 0.55, T, '#7a6a5a');
       if (T > 0.8) { D.glow(vx, vy - R.h * 0.34, 60, '#fb923c', 0.8); const n = RM ? 0 : 3; for (let q = 0; q < n; q++) { parts.emit({ x: vx + rnd(-14, 14), y: vy - R.h * 0.34, vx: rnd(-70, 70), vy: rnd(-260, -150), life: 1.1, size: rnd(3, 6), color: ['#f97316', '#fbbf24', '#ef4444'][q], gravity: 330, shape: 'circle' }); parts.emit({ x: vx + rnd(-10, 10), y: vy - R.h * 0.36, vx: rnd(10, 70), vy: rnd(-90, -50), life: 2.2, size: rnd(16, 30), color: '#6b6258', shape: 'smoke', gravity: -10, grow: 12 }); } }
-      meter(R.x + R.w * 0.6 - 10, R.y + 34, 120, 18, ph, '#64748b', '대기의 이산화 탄소');
-      meter(R.x + R.w * 0.6 - 10, R.y + 76, 120, 18, ph, '#ef4444', '지구의 기온');
-      meter(R.x + R.w * 0.6 - 10, R.y + 118, 120, 18, acid, '#a3a82d', '바닷물의 산성 정도');
+      const my = PHONE ? 30 : 0;
+      meter(R.x + R.w * 0.6 - 10, R.y + 34 + my, 120, 18, ph, '#64748b', '대기의 이산화 탄소');
+      meter(R.x + R.w * 0.6 - 10, R.y + 76 + my, 120, 18, ph, '#ef4444', '지구의 기온');
+      meter(R.x + R.w * 0.6 - 10, R.y + 118 + my, 120, 18, acid, '#a3a82d', '바닷물의 산성 정도');
     } else {
       const lvl = 1 - 0.95 * smooth((T - 1) / 6), temp = 0.5 + 0.35 * Math.sin(T * 1.1) - 0.15 * smooth(T / 8);
       const shelf = clamp((lvl - 0.43) / 0.57, 0, 1);
@@ -606,7 +607,7 @@
     D.text(C.x + 14, C.y + 22, '일어나는 환경 변화 (원인 → 결과)', { size: PHONE ? 13 : 14.5, weight: 800, color: '#0c4a6e', align: 'left' });
     if (!PHONE) {
       const bw = (C.w - 40 - 48) / 3;
-      ch.forEach((c, i) => { const on = HY.t >= c[1], x = C.x + 20 + i * (bw + 24), a = on ? 1 : 0.25; ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = rgba(HYP[h].col, 0.1); rr(x, C.y + 34, bw, C.h - 46, 10).fill(); ctx.strokeStyle = rgba(HYP[h].col, 0.5); ctx.lineWidth = 2; rr(x, C.y + 34, bw, C.h - 46, 10).stroke(); D.text(x + 14, C.y + 58, '①②③'[i], { size: 15, weight: 800, color: HYP[h].col, align: 'left' }); drawWrap(x + bw / 2 + 6, C.y + 58, c[0], bw - 44, 13.5, { weight: 700, color: '#1e293b', lh: 1.25 }); ctx.restore(); if (i < 2) D.arrow(x + bw + 3, C.y + C.h / 2 + 12, x + bw + 21, C.y + C.h / 2 + 12, { color: '#94a3b8', width: 3, head: 9, alpha: HY.t >= ch[i + 1][1] ? 1 : 0.3 }); });
+      ch.forEach((c, i) => { const on = HY.t >= c[1], x = C.x + 20 + i * (bw + 24), a = on ? 1 : 0.25; ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = rgba(HYP[h].col, 0.1); rr(x, C.y + 34, bw, C.h - 46, 10).fill(); ctx.strokeStyle = rgba(HYP[h].col, 0.5); ctx.lineWidth = 2; rr(x, C.y + 34, bw, C.h - 46, 10).stroke(); D.text(x + 14, C.y + 58, '①②③'[i], { size: 15, weight: 800, color: HYP[h].col, align: 'left' }); drawWrap(x + bw / 2 + 12, C.y + 58, c[0], bw - 56, 13.5, { weight: 700, color: '#1e293b', lh: 1.25 }); ctx.restore(); if (i < 2) D.arrow(x + bw + 3, C.y + C.h / 2 + 12, x + bw + 21, C.y + C.h / 2 + 12, { color: '#94a3b8', width: 3, head: 9, alpha: HY.t >= ch[i + 1][1] ? 1 : 0.3 }); });
     } else {
       ch.forEach((c, i) => { const on = HY.t >= c[1], y = C.y + 34 + i * 62; ctx.save(); ctx.globalAlpha = on ? 1 : 0.25; ctx.fillStyle = rgba(HYP[h].col, 0.1); rr(C.x + 12, y, C.w - 24, 54, 10).fill(); ctx.strokeStyle = rgba(HYP[h].col, 0.5); ctx.lineWidth = 2; rr(C.x + 12, y, C.w - 24, 54, 10).stroke(); D.text(C.x + 26, y + 33, '①②③'[i], { size: 15, weight: 800, color: HYP[h].col, align: 'left' }); drawWrap(C.x + C.w / 2 + 12, y + 24, c[0], C.w - 90, 13.5, { weight: 700, color: '#1e293b', lh: 1.2 }); ctx.restore(); });
     }
@@ -617,7 +618,7 @@
       ctx.strokeStyle = sel ? hp.col : '#cfd8e6'; ctx.lineWidth = sel ? 4 : 2; rr(c.x, c.y, c.w, c.h, 12).stroke();
       ctx.fillStyle = rgba(hp.col, 0.14); rr(c.x + 5, c.y + 5, 8, c.h - 10, 4).fill();
       D.text(c.x + 22, c.y + 24, '가설 ' + '㉠㉡㉢'[i], { size: 12.5, weight: 800, color: hp.col, align: 'left' });
-      drawWrap(c.x + 22 + (c.w - 54) / 2, c.y + 45, hp.name, c.w - 54, PHONE ? 13 : 14.5, { weight: 800, color: '#1e293b', lh: 1.1 });
+      drawWrap(c.x + 22 + (c.w - (PHONE ? 42 : 54)) / 2, c.y + 45, hp.name, c.w - (PHONE ? 42 : 54), PHONE ? 13 : 14.5, { weight: 800, color: '#1e293b', lh: 1.1 });
       if (HY.opened[i]) D.text(c.x + c.w - 14, c.y + 22, '✔', { size: 15, weight: 800, color: '#16a34a' });
     });
   }
@@ -709,7 +710,7 @@
   ];
   const AF = { ev: 0, x: [5, 5], pin: [null, null], ok: [false, false], dsp: 5 };
   const afD = (e, x) => { const d = AFD[e], r0 = 100 - d.pct; return x < 0 ? 100 : x >= d.T ? 100 : r0 + (100 - r0) * x / d.T; };
-  const afG = () => (PHONE ? { ch: { x: 8, y: 8, w: 504, h: 300 }, tab: (i) => ({ x: 14 + i * 150, y: 36, w: 142, h: 30 }), ic: { x: 8, y: 318, w: 504, h: 150 } }
+  const afG = () => (PHONE ? { ch: { x: 8, y: 8, w: 504, h: 300 }, tab: (i) => ({ x: 14 + i * 150, y: 36, w: 142, h: 30 }), ic: { x: 8, y: 318, w: 504, h: 178 } }
     : { ch: { x: 14, y: 10, w: 772, h: 300 }, tab: (i) => ({ x: 24 + i * 170, y: 36, w: 162, h: 30 }), ic: { x: 14, y: 322, w: 772, h: 226 } });
   const afPlot = () => { const r = afG().ch; return { px0: r.x + 56, px1: r.x + r.w - 24, py0: r.y + 84, py1: r.y + r.h - 44 }; };
   const afX = (m) => { const q = afPlot(); return q.px0 + (m + 2) / 18 * (q.px1 - q.px0); };
@@ -736,8 +737,8 @@
     // 눈금선 · 표시
     const mx = afX(x); ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(mx, q.py0 - 14); ctx.lineTo(mx, q.py1); ctx.stroke();
     const v = afD(e, AF.x[e]); D.sphere(mx, afY(afD(e, x)), 7, '#ef4444', { shadow: true });
-    D.label(clamp(mx, q.px0 + 70, q.px1 - 70), q.py0 - 20, '경과 ' + AF.x[e] + '백만 년 · 다양성 ' + Math.round(v) + ' %', { bg: '#0f172a', size: 12.5 });
-    if (AF.pin[e] != null) { const px = afX(AF.pin[e]); ctx.strokeStyle = AF.ok[e] ? '#16a34a' : '#f59e0b'; ctx.lineWidth = 2.5; ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.moveTo(px, q.py1); ctx.lineTo(px, afY(100)); ctx.stroke(); ctx.setLineDash([]); D.label(px, afY(100) - 22, (AF.ok[e] ? '✔ ' : '') + '표시: ' + AF.pin[e] + '백만 년', { bg: AF.ok[e] ? '#16a34a' : '#d97706', size: 12.5 }); }
+    D.label(clamp(mx, q.px0 + 70, q.px1 - 70), q.py0 - 6, '경과 ' + AF.x[e] + '백만 년 · 다양성 ' + Math.round(v) + ' %', { bg: '#0f172a', size: 12.5 });
+    if (AF.pin[e] != null) { const px = afX(AF.pin[e]); ctx.strokeStyle = AF.ok[e] ? '#16a34a' : '#f59e0b'; ctx.lineWidth = 2.5; ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.moveTo(px, q.py1); ctx.lineTo(px, afY(100)); ctx.stroke(); ctx.setLineDash([]); D.label(px, q.py1 - 12, (AF.ok[e] ? '✔ ' : '') + '표시: ' + AF.pin[e] + '백만 년', { bg: AF.ok[e] ? '#16a34a' : '#d97706', size: 12.5 }); }
     // 아이콘 (20칸 = 대멸종 직전)
     const I = g.ic, n = Math.round(v / 5), cols = PHONE ? 10 : 10, rows = 2, cw = (I.w - 40) / cols, ch = PHONE ? 52 : 70;
     D.shadow(() => { ctx.fillStyle = '#fff'; rr(I.x, I.y, I.w, I.h, 14).fill(); }, { blur: 5, y: 2 }); ctx.strokeStyle = '#cfd8e6'; ctx.lineWidth = 2; rr(I.x, I.y, I.w, I.h, 14).stroke();
@@ -759,7 +760,7 @@
   function buildNiche() {
     const tw = PHONE ? 118 : 184, th = PHONE ? 76 : 56, gap = PHONE ? 6 : 8, zw = PHONE ? 504 : 772, zh = PHONE ? 206 : 196;
     const zones = [['n0', '페름기 말 대멸종 이후', 'n0'], ['n1', '백악기 말 대멸종 이후', 'n1']].map((z, i) => ({
-      id: z[0], x: PHONE ? 8 : 14, y: PHONE ? 52 + i * 216 : 54 + i * 206, w: zw, h: zh, label: z[1], lsize: 15, color: i ? '#2563eb' : '#ea580c', fill: i ? 'rgba(219,234,254,.5)' : 'rgba(255,237,213,.55)', cols: 2, cap: 4, head: 30,
+      id: z[0], x: PHONE ? 8 : 14, y: PHONE ? 52 + i * 216 : 54 + i * 206, w: zw, h: zh, label: z[1], lw: PHONE ? 256 : 392, lsize: 15, color: i ? '#2563eb' : '#ea580c', fill: i ? 'rgba(219,234,254,.5)' : 'rgba(255,237,213,.55)', cols: 2, cap: 4, head: 30,
       draw: (zz, t) => {
         const bx = zz.x + (PHONE ? 262 : 400), bw = (zz.x + zz.w - 12 - bx - 2 * 8) / 3, bh = PHONE ? 76 : 70, by = zz.y + 40, cards = nBoard.inZone(zz.id);
         D.text(bx, zz.y + 24, '생태적 지위 (환경 조건과 먹이 자리)', { size: PHONE ? 12.5 : 13.5, weight: 800, color: '#64748b', align: 'left' });
@@ -847,10 +848,11 @@
   $('#rAf').addEventListener('input', () => { AF.x[AF.ev] = +$('#rAf').value; updateCtl(); });
   SciSim.bindRange($('#rAf'), null, null, null);
   $$('#afSeg button').forEach((b) => b.addEventListener('click', () => { Sound.click(); afSwitch(+b.dataset.ev); updateCtl(); }));
+  const sg = (n) => (n > 0 ? '+' : '') + n;
   const PICKMSG = {
-    imp: () => '충돌 가설은 증거 점수가 가장 높아요(+' + evScore(0) + '). 하지만 화산 활동(+' + evScore(1) + ')도 시기가 겹쳐요.',
-    vol: () => '화산 활동 가설(+' + evScore(1) + ')도 증거가 있지만 충돌 가설(+' + evScore(0) + ')보다 낮아요.',
-    cli: () => '기후·해수면 가설은 증거가 가장 적어요(+' + evScore(2) + '). 막대를 다시 비교해 봐요.',
+    imp: () => (evScore(0) > Math.max(evScore(1), evScore(2)) ? '충돌 가설은 증거 점수가 가장 높아요(' + sg(evScore(0)) + '). 하지만 화산 활동(' + sg(evScore(1)) + ')도 시기가 겹쳐요.' : '증거 카드를 먼저 모두 분류한 뒤 막대를 비교해 봐요.'),
+    vol: () => '화산 활동 가설(' + sg(evScore(1)) + ')도 증거가 있지만 충돌 가설(' + sg(evScore(0)) + ')보다 낮아요. 막대를 다시 비교해 봐요.',
+    cli: () => '기후·해수면 가설은 증거가 가장 적어요(' + sg(evScore(2)) + '). 막대를 다시 비교해 봐요.',
     combo: () => '충돌과 화산이 겹쳐 작용했을 가능성도 널리 논의되고 있어요. 두 가설 모두 시기가 맞아요.',
   };
   $$('#pickSeg button').forEach((b) => b.addEventListener('click', () => { Sound.click(); EVS.pick = b.dataset.pick; EVS.pickMsg = PICKMSG[EVS.pick](); updateCtl(); }));

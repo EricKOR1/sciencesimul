@@ -243,11 +243,15 @@
       if (cur && sh.state !== 'wait') { const p = posAt(sh, sh.t), [px, py] = w2s(p.x, p.y); ctx.lineTo(px, py); }
       ctx.stroke();
     });
+    const lbPlaced = [];   // 낙하 지점이 가까우면 이름표가 겹치지 않게 아래로 내려요
     S.landings.forEach((l) => {
       const [sx, sy] = w2s(l.x, l.y);
       if (sx < -30 || sx > VW + 30 || sy < -30 || sy > VH + 30) return;
       ctx.strokeStyle = '#ff5d5d'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(sx - 6, sy - 6); ctx.lineTo(sx + 6, sy + 6); ctx.moveTo(sx + 6, sy - 6); ctx.lineTo(sx - 6, sy + 6); ctx.stroke();
-      D.label(sx, sy + 20 * FS, f1(l.v) + ' km/s · ' + fmtN(l.range) + ' km', { bg: 'rgba(15,23,42,.82)', size: 12.5, pad: 7 });
+      let ly = sy + 20 * FS;
+      for (let k = 0; k < 6; k++) { const hit = lbPlaced.some((q) => Math.abs(q[0] - sx) < 150 * FS && Math.abs(q[1] - ly) < 22 * FS); if (!hit) break; ly += 24 * FS; }
+      lbPlaced.push([sx, ly]);
+      D.label(sx, ly, f1(l.v) + ' km/s · ' + fmtN(l.range) + ' km', { bg: 'rgba(15,23,42,.82)', size: 12.5, pad: 7 });
     });
     // 대포
     ctx.save(); ctx.translate(ax, ay);
@@ -530,7 +534,7 @@
   function scaleIcon(x, y, w, reading, ok) {
     D.shadow(() => { ctx.fillStyle = '#f1f5f9'; rr(x - w / 2, y, w, 22 * FS, 8).fill(); }, { blur: 4, y: 2 });
     ctx.fillStyle = '#0f172a'; rr(x - w * 0.22, y + 4 * FS, w * 0.44, 14 * FS, 3).fill();
-    D.text(x, y + 11.5 * FS, reading + ' N', { size: 11.5, weight: 800, color: ok ? '#86efac' : '#fca5a5', baseline: 'middle' });
+    D.text(x, y + 11.5 * FS, (typeof reading === 'number' ? reading + ' N' : reading), { size: 11.5, weight: 800, color: ok ? '#86efac' : '#fca5a5', baseline: 'middle' });
   }
   function drawStation(t) {
     spaceBg(t, { stars: 60 });
@@ -572,10 +576,10 @@
     const row = (label, val, max, col) => {
       D.text(lx, y, label, { size: 12.5, weight: 800, color: '#475569', align: 'left', baseline: 'middle' }); y += 20 * FS;
       ctx.fillStyle = '#eef2f8'; rr(lx, y, tw, 14, 5).fill(); if (val > 0) { ctx.fillStyle = col; rr(lx, y, Math.max(2, tw * val / max), 14, 5).fill(); }
-      y += 26 * FS; D.text(lx, y - 6 * FS, val + ' N', { size: 14, weight: 800, color: col === '#94a3b8' ? '#475569' : col, align: 'left', baseline: 'middle' }); y += 14 * FS;
+      y += 28 * FS; D.text(lx, y - 5 * FS, val + ' N', { size: 14, weight: 800, color: col === '#94a3b8' ? '#475569' : col, align: 'left', baseline: 'middle' }); y += 14 * FS;
     };
     row('지표에서의 중력', MG_SURF, 600, '#f26b3a');
-    row('정거장에서의 중력 (8.7 m/s²)', MG_ISS, 600, '#e2464b');
+    row('정거장 중력 (8.7 m/s²)', MG_ISS, 600, '#e2464b');
     row('저울 눈금 (정거장 안)', 0, 600, '#94a3b8');
     if (!PHONE || y < py + 290) textBlock('중력이 약해진 게 아니에요! 우주인과 정거장이 함께 지구로 떨어지는(자유 낙하) 중이라 무중량이에요.', lx, y + 4, tw, { size: 12.5, weight: 800, color: '#9a3412' });
     // 지구 중심 방향 화살표

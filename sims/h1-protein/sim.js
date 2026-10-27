@@ -336,10 +336,11 @@
     if (n > 0) {
       const settled = Math.abs(CH.dl - n * Math.log10(20)) < 0.004;
       const val = settled ? Math.pow(20, n) : Math.pow(10, CH.dl);
-      D.text(VW / 2, cy + (PHONE ? 80 : 76), comma(val), { size: PHONE ? 31 : 38, weight: 800, color: '#15803d' });
+      const hideAns = S.sub === 'calc' && n === 3 && !S.chain.solved;   // 계산 미션: 3개일 때는 정답을 가려요
+      D.text(VW / 2, cy + (PHONE ? 80 : 76), hideAns ? '?' : comma(val), { size: PHONE ? 31 : 38, weight: 800, color: '#15803d' });
       let eq = '';
       if (n === 1) eq = '20가지';
-      else if (n <= 4) eq = Array(n).fill(20).join(' × ') + ' = 20' + sup(n);
+      else if (n <= 4) eq = Array(n).fill(20).join(' × ') + ' = ' + (hideAns ? '?' : '20' + sup(n));
       else eq = '20 × 20 × … × 20 (' + n + '번) = 20' + sup(n);
       if (n >= 6) eq += '  ≈ ' + (n === 10 ? '약 10조' : koNum(Math.pow(20, n)));
       D.text(VW / 2, cy + (PHONE ? 114 : 108), eq, { size: PHONE ? 13.5 : 15, weight: 700, color: '#475569' });
@@ -507,9 +508,9 @@
     // 상태 메시지
     let msg = '', bg = '#14532d';
     if (F.ph === 'fold') msg = '🧶 사슬이 서열에 따라 접히는 중…';
-    else if (F.ph === 'try') msg = '🔑 ' + PROT[F.prot].keyName + '이(가) 홈에 들어가 볼게요…';
+    else if (F.ph === 'try') msg = '🔑 ' + PROT[F.prot].keyName + '가 홈에 들어가 볼게요…';
     else if (F.fit) { msg = '✅ ' + PROT[F.prot].ok; bg = '#15803d'; }
-    else { msg = '⚠ 모양이 달라 ' + PROT[F.prot].keyName + '이(가) 맞물리지 않아요 → 기능 저하'; bg = '#b91c1c'; }
+    else { msg = '⚠ 모양이 달라 ' + PROT[F.prot].keyName + '가 맞물리지 않아요 → 기능 저하'; bg = '#b91c1c'; }
     D.label(PHONE ? VW / 2 : g.cx + 40, TR.top - (PHONE ? 66 : 64), msg, { bg, size: PHONE ? 12.5 : 14 });
     if (F.ph === 'done' && F.fit) D.check(g.cx + 60, g.cy - 70, 17, smooth(F.msgT / 0.5));
     // 안내
@@ -685,7 +686,7 @@
     CATALOG.forEach((c, i) => {
       const row = document.createElement('div'); row.className = 'match-row';
       row.innerHTML = '<b>' + c.n + '</b>';
-      const sel = document.createElement('select'); sel.setAttribute('aria-label', c.n + '이(가) 하는 일');
+      const sel = document.createElement('select'); sel.setAttribute('aria-label', c.n + ' 하는 일');
       FNS.forEach((f, k) => { const o = document.createElement('option'); o.value = k; o.textContent = f; sel.appendChild(o); });
       sel.addEventListener('change', () => { sel.classList.remove('bad', 'good'); S.fold.matchBad[i] = false; Sound.click(); });
       row.appendChild(sel); box.appendChild(row);
@@ -790,7 +791,7 @@
     } else if (S.mode === 'chain') {
       const n = CH.beads.length;
       L1 = '이어 붙인 구슬'; a = n + ' / 10개';
-      L2 = '가능한 서열 수'; b = n ? '20' + sup(n) + (n >= 6 ? '' : ' = ' + comma(Math.pow(20, n))) : '—';
+      L2 = '가능한 서열 수'; b = n ? '20' + sup(n) + (n >= 6 ? '' : ' = ' + (S.sub === 'calc' && n === 3 && !S.chain.solved ? '?' : comma(Math.pow(20, n)))) : '—';
       L3 = '아미노산 종류'; c = '20종';
     } else if (S.mode === 'fold' && S.sub === 'match') {
       L1 = '짝지은 단백질'; a = $$('#matchRows select').filter((s) => +s.value > 0).length + ' / 5';
