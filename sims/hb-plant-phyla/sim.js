@@ -980,6 +980,7 @@
     if (B) {
       const c = B.cards[B.sel];
       $('#bkName').textContent = '📖 ' + PL[B.sel].n + ' 도감 카드';
+      if ($('#selHab').dataset.for !== String(B.sel)) refreshHab();
       $('#selHab').value = c.hab; $('#selPh').value = c.ph == null ? '' : String(c.ph);
       $$('#evGrid button').forEach((b) => b.classList.toggle('on', c.ev.indexOf(b.dataset.id) >= 0));
       $('#bSave').disabled = c.saved; $('#bSave').textContent = c.saved ? '✅ 저장했어요' : '📖 도감에 저장';
@@ -1009,6 +1010,7 @@
   function refreshHab() {
     const B = S.book, i = B.sel, s = $('#selHab');
     s.innerHTML = '<option value="">— 서식지 고르기 —</option>' + HAB_OPTS[i].map((h) => '<option value="' + h + '">' + h + '</option>').join('');
+    s.dataset.for = String(i);
   }
   $('#selHab').addEventListener('change', (e) => { const c = S.book.cards[S.book.sel]; if (!c.saved) c.hab = e.target.value; else e.target.value = c.hab; S.book.msg = ''; Sound.click(); updateCtl(); });
   $('#selPh').addEventListener('change', (e) => { const c = S.book.cards[S.book.sel]; if (!c.saved) c.ph = e.target.value === '' ? null : +e.target.value; else e.target.value = String(c.ph); S.book.msg = ''; Sound.click(); updateCtl(); });

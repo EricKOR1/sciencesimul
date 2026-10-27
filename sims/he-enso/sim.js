@@ -484,7 +484,7 @@
     // 육지
     ctx.fillStyle = '#9cb582'; ctx.fillRect(R.x, seaY - 12 * U, xL - R.x, R.h); ctx.fillRect(xR, seaY - 12 * U, R.x + R.w - xR, R.h);
     ctx.fillStyle = '#6b4f30'; ctx.fillRect(R.x, R.y + R.h - 26 * FS, R.w, 26 * FS);
-    D.text(R.x + (xL - R.x) / 2 + 2, seaY + 16 * FS, '인도네시아', { size: 11.5, weight: 800, color: '#2f4a1f' }); D.text(xR + (R.x + R.w - xR) / 2, seaY + 16 * FS, '페루', { size: 12.5, weight: 800, color: '#2f4a1f' });
+    D.text(R.x + 4, seaY + 16 * FS, '인도네시아', { size: 11.5, weight: 800, color: '#2f4a1f', align: 'left', stroke: 'rgba(255,255,255,.85)', strokeWidth: 3 }); D.text(xR + (R.x + R.w - xR) / 2, seaY + 16 * FS, '페루', { size: 12.5, weight: 800, color: '#2f4a1f' });
     D.text(R.x + 10, R.y + R.h - 9, PHONE ? '서 ' + fix(m.sstW, 1) + ' °C · 약층 ' + Math.round(m.thW) + ' m' : '서태평양 · 표층 ' + fix(m.sstW, 1) + ' °C · 약층 ' + Math.round(m.thW) + ' m', { size: 12.5, weight: 800, color: '#ffffff', align: 'left' });
     D.text(R.x + R.w - 10, R.y + R.h - 9, PHONE ? '동 ' + fix(m.sstE, 1) + ' °C · 약층 ' + Math.round(m.thE) + ' m' : '동태평양 · 표층 ' + fix(m.sstE, 1) + ' °C · 약층 ' + Math.round(m.thE) + ' m', { size: 12.5, weight: 800, color: '#ffffff', align: 'right' });
     D.text((xL + xR) / 2, seaY + 250 * mPx, '수온 약층 (점선): 따뜻한 물 / 찬 물의 경계', { size: 12.5, weight: 800, color: '#ffffff', stroke: 'rgba(10,40,90,.55)', strokeWidth: 3 });

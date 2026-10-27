@@ -415,6 +415,7 @@
   };
   const fSm = (t) => { let s = 0; for (let k = -2; k <= 2; k++) s += fGl(clamp(t + k * 2, 0, 900)); return s / 5; };
   const CO2 = (t) => 180 + 100 * fGl(t), DT = (t) => -9 + 9 * fGl(Math.max(0, t - 1.5)), D18 = (t) => 5.0 - 1.8 * fSm(clamp(t + 3, 0, 900));
+  const fmtAgo = (a) => (a < 0.05 ? '현재' : fmtKa(a) + ' 전');
   const fmtKa = (a) => (a < 10 ? '약 ' + (Math.round(a * 10) / 10) + '천 년' : '약 ' + (Math.round(a) / 10) + '만 년');
   const DEPTH_AGE = [[0, 0], [500, 20], [1000, 70], [2000, 300], [3000, 630], [3270, 800]];
   const ageAtDepth = (d) => { for (let i = 0; i < DEPTH_AGE.length - 1; i++) { const a = DEPTH_AGE[i], b = DEPTH_AGE[i + 1]; if (d <= b[0]) return lerp(a[1], b[1], (d - a[0]) / (b[0] - a[0])); } return 800; };
@@ -614,7 +615,7 @@
     // 1810~1820년 평균 선
     const my = BPL.y + BPL.h - barH(2.0);
     D.dashedLine(barX(10), my, barX(21), my, { color: '#1d4ed8', width: 2.2 });
-    D.text(barX(10), my - 6, '1810~1820년 평균 2.0 mm', { size: 12.5, weight: 800, color: '#1d4ed8', align: 'left' });
+    D.label(barX(10), my - 14, '1810~1820년 평균 2.0 mm', { bg: '#1d4ed8', size: 12.5, pad: 6, align: 'left' });
     const IB = { x: BAR.x + 14, y: BPL.y + BPL.h + 30, w: BAR.w - 28 };
     drawWrap(BAR.x + BAR.w / 2, IB.y + 14, S.selYear == null ? '막대나 나이테를 눌러 한 해를 골라 봐요. 폭이 좁으면 그해의 생장 조건이 나빴다는 뜻이에요.' : S.selYear + '년의 나이테 폭은 ' + RW[S.selYear - Y0].toFixed(1) + ' mm예요. 평균보다 ' + (RW[S.selYear - Y0] < 2 ? '좁아요(그해 생장 조건이 좋지 않았어요).' : '넓거나 비슷해요(생장 조건이 좋은 편이에요).'), IB.w, PHONE ? 13 : 13.5, { weight: 700, lh: 1.4, color: '#334155' });
   }
@@ -711,7 +712,7 @@
     const cxp = gxA(age);
     ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 2.6; ctx.beginPath(); ctx.moveTo(cxp, A.y); ctx.lineTo(cxp, A.y + A.h); ctx.moveTo(cxp, B.y); ctx.lineTo(cxp, B.y + B.h); ctx.stroke();
     [[cxp, yCO2(CO2(age)), '#d9662b'], [cxp, yDT(DT(age)), '#2d6fd6'], [cxp, yD18(D18(age)), '#8a5a1f']].forEach((d) => { ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(d[0], d[1], 6, 0, TAU); ctx.fill(); ctx.fillStyle = d[2]; ctx.beginPath(); ctx.arc(d[0], d[1], 4, 0, TAU); ctx.fill(); });
-    D.label(clamp(cxp, x0 + 40, x1 - 40), A.y + A.h + 11, fmtKa(age) + ' 전', { bg: '#f59e0b', size: 12.5, pad: 6 });
+    D.label(clamp(cxp, x0 + 40, x1 - 40), A.y + 11, fmtAgo(age), { bg: '#f59e0b', size: 12.5, pad: 6 });
     // 연층 확대
     const I = IC.inset; D.text(I.x, I.y - 6, '🔍 이 깊이의 연층', { size: 13, weight: 800, color: '#334155', align: 'left' });
     ctx.save(); rr(I.x, I.y, I.w, I.h, 8).clip(); const mm = layerMm(S.depthV), pitch = mm * 3.2;
@@ -900,7 +901,7 @@
           hint: '깊이를 바꾸면 위의 노란 선이 나이를 가리켜요. 약 2만 년 전은 깊이 500 m 근처예요. 그 위치에서 주황색 CO₂ 곡선의 값을 읽어요. (5 ppm 단위)',
           setup() { setDepth(1500); S.depthV = 1500; stpCo2.reset(); S.co2Val = 250; S.showCo2 = true; S.winShow = false; setMode('ice'); setCtl(['drill', 'co2']); },
           check: () => S.depth >= 480 && S.depth <= 520 && stpCo2.value === 180, hold: 0.6,
-          status: () => mark(S.depth >= 480 && S.depth <= 520) + ' 깊이 ' + S.depth + ' m (' + fmtKa(ageAtDepth(S.depth)) + ' 전) · ' + mark(stpCo2.value === 180) + ' CO₂ ' + stpCo2.value + ' ppm',
+          status: () => mark(S.depth >= 480 && S.depth <= 520) + ' 깊이 ' + S.depth + ' m (' + fmtAgo(ageAtDepth(S.depth)) + ') · ' + mark(stpCo2.value === 180) + ' CO₂ ' + stpCo2.value + ' ppm',
           explain: '깊이 약 500 m의 얼음이 <b>약 2만 년 전</b>이고, 이때는 마지막 빙기여서 CO₂가 <b>약 180 ppm</b>으로 가장 낮은 수준이었어요. 간빙기에는 약 280 ppm까지 올라가요. 깊이와 나이의 관계는 예시 자료예요.',
         },
         {
@@ -990,7 +991,7 @@
     if (m === 'clues') { const la = S.driftV; setReadouts(['시간', S.drift >= DR.t0 ? '석탄기 (3.2억 년 전)' : S.drift <= 0 ? '현재' : (Math.round(S.drift) / 100).toFixed(1) + '억 년 전', '위도', '북위 ' + Math.round(la) + '°', '기후대', zoneOf(la).n]); }
     else if (m === 'tree') setReadouts(['센 나이테', stpAge.value + '겹', '고른 해', S.selYear == null ? '—' : S.selYear + '년', '나이테 폭', S.selYear == null ? '—' : RW[S.selYear - Y0].toFixed(1) + ' mm']);
     else if (m === 'pollen') setReadouts(['분류한 시기', clsPol.count() + ' / 4', '가장 오래된 시기', '약 2만 년 전', '자료', '예시 자료']);
-    else if (m === 'ice') { const a = ageAtDepth(S.depth); setReadouts(['깊이', S.depth + ' m', '나이', fmtKa(a) + ' 전', 'CO₂', Math.round(CO2(a) / 5) * 5 + ' ppm']); }
+    else if (m === 'ice') { const a = ageAtDepth(S.depth); setReadouts(['깊이', S.depth + ' m', '나이', fmtAgo(a), 'CO₂', Math.round(CO2(a) / 5) * 5 + ' ppm']); }
     else setReadouts(['방법', '7가지', '고른 상황', selScen.count() + ' / 4', '짝지은 한계', pairLim.count() + ' / 4']);
   }
 
