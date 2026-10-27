@@ -930,7 +930,7 @@
             const bad = IMP.map((d, i) => i).filter((i) => !impOK(i));
             if (!bad.length) { S.flags.impOK = true; return true; }
             const i = bad[0];
-            return '"' + IMP[i].n + '"를 다시 생각해 보세요. ' + IMP[i].d + '.';
+            return '"' + IMP[i].n + '" 카드를 다시 생각해 보세요. ' + IMP[i].d + '.';
           },
           status: () => '분류 ' + S.im.cat.filter((v) => v > 0).length + ' / 8, 맞은 것 ' + IMP.filter((d, i) => impOK(i) && S.im.cat[i] > 0).length + '장',
           explain: '산업혁명·자동차와 항공기·전기 공급은 <b>산업발전 👍</b>, 대기오염·CO₂ 증가와 온난화·열섬은 <b>환경 👎</b>, 화석 연료 고갈은 산업과 환경 모두에 부담(👎)이에요. 열효율 향상은 같은 일에 연료와 CO₂를 줄이는 <b>환경 👍</b>(연료 절약으로 산업에도 도움)이에요.',

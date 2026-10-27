@@ -313,22 +313,27 @@
   function boxInit(N) {
     const b = S.bx, g = boxGeom(); b.N = N != null ? N : b.N; b.W = g.w; b.H = g.h; b.P = [];
     for (let i = 0; i < b.N; i++) { const th = Math.random() * TAU, sp = 0.75 + 0.5 * Math.random(); b.P.push({ x: RB + 3 + Math.random() * (g.w / 2 - 2 * RB - 8), y: RB + Math.random() * (g.h - 2 * RB), ux: Math.cos(th) * sp, uy: Math.sin(th) * sp, side: 0 }); }
-    b.open = false; b.openT = 0; b.door = 0; b.hist = []; b.histT = 0; b.k = b.N; parts.clear();
+    b.open = false; b.openT = 0; b.door = 0; b.sealed = true; b.hist = []; b.histT = 0; b.k = b.N; parts.clear();
   }
   function boxSetOpen(open) {
-    const b = S.bx, mid = b.W / 2;
-    if (!open) b.P.forEach((p) => { p.side = p.x < mid ? 0 : 1; if (p.side === 0 && p.x > mid - RB - 2) p.x = mid - RB - 2; if (p.side === 1 && p.x < mid + RB + 2) p.x = mid + RB + 2; });
+    const b = S.bx;
     b.open = open; if (open) b.openT = 0; Sound.click(); updateCtl();
   }
+  /* 칸막이는 그려진 대로 막아요: 위에서 dh까지 내려와 있는 동안은 그 높이 안의 분자만 못 지나가고,
+     완전히 닫히면(door ≈ 0) 양쪽으로 갈라요. 열거나 닫는 중에는 아래쪽이 먼저 트여요. */
   function boxStep(dt) {
     const b = S.bx; const mult = b.fast ? 4 : 1, g = b.W, h = b.H, mid = g / 2, spd = (PHONE ? 75 : 95);
     const n = Math.max(1, Math.ceil(dt * mult / 0.02)), d = dt * mult / n;
     for (let s = 0; s < n; s++) {
+      const closed = !b.open && b.door < 0.02, dh = h * (1 - b.door);
+      if (closed && !b.sealed) { b.sealed = true; b.P.forEach((p) => { p.side = p.x < mid ? 0 : 1; }); }
+      else if (!closed) b.sealed = false;
       b.P.forEach((p) => {
         p.x += p.ux * spd * d; p.y += p.uy * spd * d;
         if (p.y < RB) { p.y = RB; p.uy = Math.abs(p.uy); } else if (p.y > h - RB) { p.y = h - RB; p.uy = -Math.abs(p.uy); }
         let lo = RB, hi = g - RB;
-        if (!b.open) { if (p.side === 0) hi = mid - RB - 2; else lo = mid + RB + 2; }
+        const blocked = closed || (b.door < 0.98 && p.y - RB < dh);        // 칸막이가 이 분자 높이에 아직 있는가
+        if (blocked) { if (p.side === 0) hi = mid - RB - 2; else lo = mid + RB + 2; } else p.side = p.x < mid ? 0 : 1;
         if (p.x < lo) { p.x = lo; p.ux = Math.abs(p.ux); } else if (p.x > hi) { p.x = hi; p.ux = -Math.abs(p.ux); }
       });
       if (b.open) b.openT += d;
