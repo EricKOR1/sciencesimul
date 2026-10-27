@@ -233,7 +233,7 @@
       T(g.x + 30, g.y + g.h - 22, '소리', 13, '#2f6df6', 'left', 800);
       T(g.x + g.w - 14, g.y + g.h - 12, '진동판 진폭 ' + f2(micA(s)) + ' mm (1 mm = 30 px로 확대)', PHONE ? 10.5 : 11.5, '#5a6679', 'right', 700);
     } else if (s.kind === 'wheel') {
-      const R = PHONE ? 66 : 84, wx = cx - 20, wy = cy + 20;
+      const R = PHONE ? 56 : 84, wx = cx - 20, wy = cy + (PHONE ? 6 : 20);
       ctx.save(); ctx.translate(wx, wy); ctx.rotate(s.th);
       D.shadow(() => { ctx.beginPath(); ctx.arc(0, 0, R * 0.78, 0, TAU); ctx.fillStyle = '#8a95a8'; ctx.fill(); }, { blur: 6, y: 2 });
       for (let i = 0; i < TEETH; i++) { ctx.save(); ctx.rotate(i * TAU / TEETH); D.roundRect(-R * 0.13, -R, R * 0.26, R * 0.3, 3); ctx.fillStyle = '#6b7488'; ctx.fill(); ctx.strokeStyle = '#4a5568'; ctx.lineWidth = 1.2; ctx.stroke(); ctx.restore(); }

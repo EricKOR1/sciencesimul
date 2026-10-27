@@ -620,7 +620,7 @@
     } else {
       const on = r.st !== 'ready';
       const pL = on ? -r.Q : 0, pR = on ? r.Q : 0;
-      const pm = sc === 'gun' ? 5 : sc === 'space' ? 7 : 80;
+      const pm = sc === 'gun' ? 5 : sc === 'space' ? 7 : 100;
       drawPBars(RL, '운동량 p = mv (처음엔 모두 0)', [
         { label: sc === 'skate' ? '왼쪽' : RSCN[sc].L.n, color: '#3867f4', now: pL },
         { label: sc === 'skate' ? '오른쪽' : RSCN[sc].R.n, color: '#f2873a', now: pR },
@@ -647,10 +647,10 @@
       textBlock(r0.x + 14, y + 6, r0.w - 28, '질량이 큰 선수일수록 속력이 작아요. (v ∝ 1/m)', 13.5, '#5a6679', 19, 700);
     } else if (r.scene === 'gun') {
       y += textBlock(r0.x + 14, y, r0.w - 28, '탄환의 운동량 ' + GUN.m.toFixed(3) + ' × ' + GUN.v + ' = ' + f1(r.Q) + ' kg·m/s → 총은 반대로 ' + f1(r.Q) + ' kg·m/s', 13.5, '#26324a', 19, 800);
-      textBlock(r0.x + 14, y + 6, r0.w - 28, '총의 반동 속력 = ' + f1(r.Q) + ' ÷ ' + f1(GUN.M) + ' = ' + Math.abs(r.vL).toFixed(1) + ' m/s', 13.5, '#c2410c', 19, 800);
+      textBlock(r0.x + 14, y + 6, r0.w - 28, '총의 반동 속력 = ' + f1(r.Q) + ' / ' + f1(GUN.M) + ' = ' + Math.abs(r.vL).toFixed(1) + ' m/s', 13.5, '#c2410c', 19, 800);
     } else if (r.scene === 'space') {
       y += textBlock(r0.x + 14, y, r0.w - 28, '공구의 운동량 ' + SPACE.m + ' × ' + SPACE.v + ' = ' + r.Q + ' kg·m/s → 우주인은 반대로 ' + r.Q + ' kg·m/s', 13.5, '#26324a', 19, 800);
-      textBlock(r0.x + 14, y + 6, r0.w - 28, '우주인의 반동 속력 = ' + r.Q + ' ÷ ' + SPACE.M + ' = ' + Math.abs(r.vL).toFixed(3) + ' m/s (공기가 없어도 돼요)', 13.5, '#c2410c', 19, 800);
+      textBlock(r0.x + 14, y + 6, r0.w - 28, '우주인의 반동 속력 = ' + r.Q + ' / ' + SPACE.M + ' = ' + Math.abs(r.vL).toFixed(3) + ' m/s (공기가 없어도 돼요)', 13.5, '#c2410c', 19, 800);
     } else {
       y += textBlock(r0.x + 14, y, r0.w - 28, '가스를 밀어내는 힘 F = (' + ROCKET.mdot + ' kg/s × ' + ROCKET.u + ' m/s) = ' + sci5(ROCKET_F) + ' N', 13.5, '#26324a', 19, 800);
       textBlock(r0.x + 14, y + 6, r0.w - 28, '가스가 로켓을 미는 반작용으로 나아가요. 대기 중이든 우주 공간이든 같아요.', 13.5, '#c2410c', 19, 800);
@@ -855,7 +855,7 @@
       const c = a.run, done = c.rec;
       put('총 운동량 = ' + CAR.mA + ' × ' + CAR.vA + ' + ' + CAR.mB + ' × (' + sg(CAR.vB, 0) + ') = ' + sg(CAR.mA * CAR.vA + CAR.mB * CAR.vB, 0) + ' kg·m/s');
       if (done) {
-        put('합체 후 속도 v = ' + sg(CAR.mA * CAR.vA + CAR.mB * CAR.vB, 0) + ' ÷ ' + (CAR.mA + CAR.mB) + ' = ' + sg(c.v2A, 1) + ' m/s (SUV 방향)', '#0b6b39');
+        put('합체 후 속도 v = ' + sg(CAR.mA * CAR.vA + CAR.mB * CAR.vB, 0) + ' / ' + (CAR.mA + CAR.mB) + ' = ' + sg(c.v2A, 1) + ' m/s (SUV 방향)', '#0b6b39');
         put('속도 변화: 승용차 ' + Math.abs(c.v2A - c.vA) + ' m/s, SUV ' + Math.abs(c.v2B - c.vB) + ' m/s → 가벼운 승용차가 더 크게 변해요.', '#c2410c');
       } else put('▶ 충돌 시키기를 눌러 결과를 확인해요.', '#5a6679', 700);
     } else if (sel === 'ball') {
@@ -1231,6 +1231,9 @@
     },
   ];
 
+  /* 이어 하기(새로고침)로 중간 미션에서 열려도 미션 setup()이 만든 장면을 덮어쓰지 않도록, 장면 상태를 게임보다 먼저 만들어요 */
+  resetPair(false); resetCol(false); resetRc('skate', 40, 'air'); resetAp('car');
+  setScene('pair');
   game = SciSim.game({
     simId: 'hp-momentum', mount: '#game', badge: '운동량 박사', homeHref: '../../index.html#hp',
     featureLabels: { pair: '🤝 힘 센서 두 개 · 줄 당기기', collide: '🎱 일차원 충돌 트랙 · 운동량 막대', recoil: '🚀 스케이트 · 총 · 우주 공구 · 로켓', apply: '🏟️ 장면 카드 · 식 고르기 · 뉴턴의 요람' },
@@ -1246,8 +1249,6 @@
   });
 
   /* ---------- 시작 ---------- */
-  resetPair(false); resetCol(false); resetRc('skate', 40, 'air'); resetAp('car');
-  setScene('pair');
   let lastFree = false, lastMode = '';
   SciSim.loop((dt, t) => {
     S.clock = t;

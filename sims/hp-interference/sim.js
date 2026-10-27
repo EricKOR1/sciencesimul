@@ -368,7 +368,7 @@
     const py = RF.y + RF.h + 10, ph = VH - py - 10;
     panel(RF.x, py, RF.w, ph, 14);
     const lam = lamOf(r.fT);
-    T(RF.x + 14, py + 24, '파장 λ = ' + lam.toFixed(1) + ' cm  (파동 속력 ' + WV + ' cm/s ÷ 진동수 ' + r.fT.toFixed(2) + ' Hz)', PHONE ? 13 : 14.5, '#26324a', 'left', 800);
+    T(RF.x + 14, py + 24, '파장 λ = ' + lam.toFixed(1) + ' cm  (파동 속력 ' + WV + ' cm/s / 진동수 ' + r.fT.toFixed(2) + ' Hz)', PHONE ? 13 : 14.5, '#26324a', 'left', 800);
     const g = ctx.createLinearGradient(RF.x + 14, 0, RF.x + 14 + 150, 0); g.addColorStop(0, '#07224a'); g.addColorStop(0.5, '#3f86c0'); g.addColorStop(1, '#eaf8ff');
     ctx.fillStyle = g; D.roundRect(RF.x + 14, py + 40, 150, 14, 7); ctx.fill();
     T(RF.x + 14, py + 72, '골', 13, '#5d6879', 'left', 700); T(RF.x + 164, py + 72, '마루', 13, '#5d6879', 'right', 700);
@@ -729,7 +729,7 @@
     const tx = x + 16, tw = w - 32, fs = PHONE ? 13 : 14.5;
     T(tx, y + 24, '표지 A·B 사이 거리 = ' + dist.toFixed(1) + ' mm', fs, '#26324a', 'left', 800);
     if (n >= 1) {
-      T(tx, y + 24 + 24, '밝은 줄 사이 ' + n + '칸 → 한 칸(무늬 간격) Δx = ' + dist.toFixed(1) + ' ÷ ' + n + ' = ' + (dist / n).toFixed(1) + ' mm', fs, '#b57a00', 'left', 800);
+      T(tx, y + 24 + 24, '밝은 줄 사이 ' + n + '칸 → 한 칸(무늬 간격) Δx = ' + dist.toFixed(1) + ' / ' + n + ' = ' + (dist / n).toFixed(1) + ' mm', fs, '#b57a00', 'left', 800);
     } else T(tx, y + 24 + 24, '두 표지를 서로 다른 밝은 줄에 맞춰 보세요 (표지는 밝은 줄에 자석처럼 붙어요).', fs, '#5d6879', 'left', 700);
     textBlock(tx, y + 24 + 48, tw, '구한 Δx와 d = 0.20 mm, L = 3.0 m로 파장을 구해 오른쪽 칸에 nm 단위로 써요.', PHONE ? 12.5 : 14, '#5d6879', 19, 700);
   }
@@ -1317,8 +1317,7 @@
   });
 
   /* ---------- 시작 ---------- */
-  setScene('wave', 'ripple');
-  updateCtl();
+  updateCtl();   // 화면(scene)은 단계 설정(setup)이 이미 맞춰 놓았어요 (이어하기 포함)
   let lastFree = false, lastMode = '';
   SciSim.loop((dt, t) => {
     S.t = t; S.dt = dt;
