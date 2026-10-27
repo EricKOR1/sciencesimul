@@ -401,10 +401,10 @@
     const left = sbN() - sbD() - (sb.tok ? 1 : 0);
     if (left > 0) { T(P1.x + 70, P1.y + P1.h * 0.58 + 78, '대기', 12.5, '#64748b', 'center', 800); for (let j = 0; j < left; j++) { beads(P1.x + 40 + j * 36, P1.y + P1.h * 0.58 + 108, glyc ? 3 : 4, 4.4, '#64748b'); } }
     // ADP 창고 + ATP 만든 것
-    const wx = P1.x + P1.w - (PHONE ? 150 : 236), wy = P1.y + 14, ww = PHONE ? 136 : 222, wh = 74;
+    const wx = P1.x + P1.w - (PHONE ? 150 : 236), wy = P1.y + 14, ww = PHONE ? 136 : 222, wh = PHONE ? 84 : 74;
     D.roundRect(wx, wy, ww, wh, 12); ctx.fillStyle = 'rgba(254,243,199,.75)'; ctx.fill(); ctx.strokeStyle = '#fcd34d'; ctx.lineWidth = 1.5; ctx.stroke();
     T(wx + 10, wy + 20, '새로 만든 ATP ' + sbD() + ' / ' + sbN(), 13.5, '#92400e', 'left', 800);
-    sb.atps[v].forEach((q, i) => pill(wx + 32 + (i % 3) * 62 * (PHONE ? 0.74 : 1) + (i >= 3 ? 0 : 0), wy + 46 + Math.floor(i / 3) * 0, 52, 22, 'ATP', '#facc15', '#713f12', q.a));
+    sb.atps[v].forEach((q, i) => { const per = PHONE ? 2 : 4; pill(wx + 36 + (i % per) * (PHONE ? 60 : 52), wy + 46 + Math.floor(i / per) * 24, 48, 22, 'ATP', '#facc15', '#713f12', q.a); });
     // 기질 · ADP
     if (sb.tok) {
       const tk = sb.tok; ctx.save(); ctx.globalAlpha = tk.a; beads(tk.x, tk.y, tk.n, g.br, '#475569');
@@ -418,7 +418,7 @@
     if (sb.drag && sb.drag.moved) D.ring(g.aR.x, g.aR.y - 8, 40, t, { color: '#f59e0b', width: 2.5 });
     // 합계판
     panel(P2.x, P2.y, P2.w, P2.h, 18, '#fff');
-    const gk = sbD('glyc'), tk2 = sbD('tca'), net = gk - 2, xs = P2.x + 18;
+    const gk = sbD('glyc'), tk2 = sbD('tca'), cons = sb.invest.glyc > 0.9 ? 2 : 0, net = gk - cons, xs = P2.x + 18;
     T(xs, P2.y + 26, 'ATP 수지 (포도당 1분자)', PHONE ? 14 : 15.5, '#1f2d44', 'left', 800);
     const rowY = (i) => P2.y + (PHONE ? 66 : 54) + i * (PHONE ? 56 : 34);
     const SW = PHONE ? 38 : 46, ST2 = PHONE ? 43 : 52;
@@ -429,13 +429,13 @@
     for (let j = 0; j < 4; j++) slot(sx + j * ST2, rowY(0), j < gk, '#facc15', '생성');
     for (let j = 0; j < 2; j++) slot(sx + 4 * ST2 + 10 + j * ST2, rowY(0), sb.invest.glyc > 0.9, '#fca5a5', '소비');
     T(sx + 6 * ST2 + 24, rowY(0) + 6, '순 ' + net, PHONE ? 16 : 18, net > 0 ? '#16a34a' : '#64748b', 'left', 800);
-    if (PHONE) T(xs, rowY(0) + 26, '생성 ' + gk + ' − 소비 2 = ' + net, 12.5, '#64748b', 'left', 700); else T(sx + 6 * ST2 + 70, rowY(0) + 5, '= 생성 ' + gk + ' − 소비 2', 13, '#64748b', 'left', 700);
+    if (PHONE) T(xs, rowY(0) + 26, '생성 ' + gk + ' − 소비 ' + cons + ' = ' + net, 12.5, '#64748b', 'left', 700); else T(sx + 6 * ST2 + 70, rowY(0) + 5, '= 생성 ' + gk + ' − 소비 ' + cons, 13, '#64748b', 'left', 700);
     // TCA 회로
     T(xs, rowY(1) + 5, 'TCA 회로', 14, '#6d28d9', 'left', 800);
     for (let j = 0; j < 2; j++) slot(sx + j * ST2, rowY(1), j < tk2, '#facc15', '생성');
     T(sx + 2 * ST2 + 14, rowY(1) + 6, '순 ' + tk2, PHONE ? 16 : 18, tk2 > 0 ? '#16a34a' : '#64748b', 'left', 800);
     if (PHONE) T(xs, rowY(1) + 26, '회전 1번에 1개 × 2회전', 12.5, '#64748b', 'left', 700); else T(sx + 2 * ST2 + 70, rowY(1) + 5, '= 회로 1번에 1개 × 2회전', 13, '#64748b', 'left', 700);
-    const sum = (gk >= 0 ? net : 0) + tk2, done = gk === 4 && tk2 === 2;
+    const sum = (gk >= 0 ? gk - 2 : 0) + tk2, done = gk === 4 && tk2 === 2;
     T(xs, rowY(2) + (PHONE ? 8 : 10), '기질 수준 합계', 14.5, '#1f2d44', 'left', 800);
     T(sx + (PHONE ? 70 : 60), rowY(2) + (PHONE ? 10 : 12), done ? '(해당 순 ' + net + ') + (TCA ' + tk2 + ') = ' + sum : (gk === 4 ? '해당 순 ' + net : '두 단계를 모두 해 보면 알 수 있어요'), PHONE ? 13.5 : 15.5, done ? '#be185d' : '#94a3b8', 'left', 800);
   }

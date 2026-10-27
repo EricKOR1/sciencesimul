@@ -746,15 +746,15 @@
   const ECX = ENZ.x + ENZ.w * 0.44, ECY = ENZ.y + ENZ.h * 0.52 + L(8, 0), ERR = L(98, 68), ECR = L(13.5, 9.5);
   const FOLDP = SEQ16.map((k, i) => { const a = (38 + i * (284 / 15)) * Math.PI / 180; return { x: ECX + Math.cos(a) * ERR, y: ECY + Math.sin(a) * ERR }; });
   const UNFOLDP = (() => { const rr = mulberry(41); return SEQ16.map((k, i) => ({ x: ENZ.x + 34 + i * (ENZ.w - 68) / 15, y: ECY + Math.sin(i * 1.9) * L(34, 26) + (rr() - 0.5) * L(40, 26) })); })();
-  S.dn = { T: 25, acid: false, alc: false, f: 1, fmin: 1, bu: 0, buOn: false, buDen: false, bub: [] };
-  function dnReset() { Object.assign(S.dn, { T: 25, acid: false, alc: false, f: 1, fmin: 1, bu: 0, buOn: false, buDen: false, bub: [] }); const e = $('#sTemp'); if (e) e.value = 25; updateCtl(); }
+  S.dn = { T: 25, acid: false, alc: false, f: 1, fmin: 1, bu: 0, buOn: false, buAfter: false, buDen: false, bub: [] };
+  function dnReset() { Object.assign(S.dn, { T: 25, acid: false, alc: false, f: 1, fmin: 1, bu: 0, buOn: false, buAfter: false, buDen: false, bub: [] }); const e = $('#sTemp'); if (e) e.value = 25; updateCtl(); }
   const fHeat = (T) => 1 - smooth((T - 45) / 25);
   function dnUpdate(dt) {
     const d = S.dn, tgt = Math.min(fHeat(d.T), d.acid ? 0 : 1, d.alc ? 0 : 1);
     d.fmin = Math.min(d.fmin, tgt);                       // 변성은 되돌아오지 않아요
     d.f = RM ? d.fmin : approach(d.f, d.fmin, dt, 2.0);
     if (d.buOn) d.bu = approach(d.bu, 1, dt, RM ? 60 : 0.9);
-    if (d.buOn && d.bu > 0.9 && d.fmin < 0.02) d.buDen = true;
+    if (d.buOn && d.buAfter && d.bu > 0.9 && d.fmin < 0.02) d.buDen = true;
     if (d.T > 52 && !RM && Math.random() < dt * (d.T - 50) * 0.5) parts.emit({ x: TUBEP.x + TUBEP.w / 2 + (Math.random() - 0.5) * 30, y: TUBEP.y + L(300, 120), vx: 0, vy: -40 - Math.random() * 30, life: 1.0, size: 2.5 + Math.random() * 2, color: 'rgba(255,255,255,.85)', shape: 'bubble' });
   }
   function drawEnzyme(f, t) {
@@ -853,7 +853,7 @@
   $('#sTemp').addEventListener('input', (e) => { S.dn.T = +e.target.value; updateCtl(); });
   $('#btnAcid').addEventListener('click', () => { S.dn.acid = !S.dn.acid; Sound.click(); updateCtl(); });
   $('#btnAlc').addEventListener('click', () => { S.dn.alc = !S.dn.alc; Sound.click(); updateCtl(); });
-  $('#btnBiu').addEventListener('click', () => { S.dn.buOn = true; Sound.click(); updateCtl(); });
+  $('#btnBiu').addEventListener('click', () => { S.dn.buOn = true; S.dn.buAfter = S.dn.fmin < 0.02; if (!S.dn.buAfter) showHint('아직 변성되지 않았어요. 변성된 뒤에도 보라색인지 보려면 ↺ 처음부터 한 뒤, 먼저 변성시키고 시약을 넣어요.', 5200); Sound.click(); updateCtl(); });
   $('#dnReset').addEventListener('click', () => { Sound.click(); dnReset(); });
 
   /* =========================================================

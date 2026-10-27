@@ -615,7 +615,7 @@
     const items = [];
     if (iv) IVS[iv].vals.forEach((v) => items.push({ lab: IVS[iv].name === 'pH' ? 'pH ' + v : v + IVS[iv].unit, bits: iv === 'enz' ? Math.round(v / 100 * 6) : 6, liq: '#bfe3f7' }));
     else if (ivs.length === 0) items.push({ lab: '?', bits: 6, liq: '#e2e8f0', dim: true });
-    else ivs.forEach((k) => items.push({ lab: IVS[k].name, bits: 6, liq: '#fecaca' }));
+    else ivs.forEach((k) => items.push({ lab: IVS[k].name.replace('효소(간 즙) 농도', '효소 농도').replace('기질(H₂O₂) 농도', '기질 농도'), bits: 6, liq: '#fecaca' }));
     if (d.grp.water) items.push({ lab: '대조군: 물', bits: 0, liq: '#e5eef5', ctl: true });
     if (d.grp.boil) items.push({ lab: '대조군: 삶은 간', bits: 6, liq: '#e9e2d8', ctl: true, boil: true });
     const n = items.length, areaW = g.P2.w - 40, step = Math.min(PHONE ? 52 : 82, areaW / Math.max(1, n));
@@ -891,7 +891,7 @@
     $('#rnNote').innerHTML = r.iv ? '측정한 점 <b>' + rnDonePts() + ' / ' + IVS[r.iv].vals.length + '</b> · 한 값마다 <b>3회</b> 반복하고 평균을 내요.' : '설계 하나만 선택되어 있어야 측정할 수 있어요.';
     // 분석
     const sh = chosenShapes(); AN_KEYS.forEach((k) => { const e = $('#sh_' + k); e.classList.toggle('ok', sh[k] === SHAPE[k]); e.classList.toggle('bad', sh[k] !== '' && sh[k] !== SHAPE[k]); });
-    $('#inT').classList.toggle('ok', near(numIn('inT'), 37, 3)); $('#inP').classList.toggle('ok', near(numIn('inP'), 7, 0.6));
+    $('#inT').classList.toggle('ok', near(numIn('inT'), 37, 1)); $('#inP').classList.toggle('ok', near(numIn('inP'), 7, 0.6));
     $('#anNote').innerHTML = S.aSub === 'shape' ? '그래프를 눌러 값을 읽을 수 있어요. 내가 측정한 평균은 <b style="color:#d97706">주황 점</b>이에요.' : '그래프의 가장 높은 점의 값을 읽어 적어요.';
   }
   const SHAPE = { temp: 'bell', ph: 'bell', enz: 'line', sub: 'sat' };
@@ -1059,7 +1059,7 @@
           check() {
             const t = numIn('inT'), p = numIn('inP');
             if (!isFinite(t) || !isFinite(p)) return '최적 온도와 최적 pH를 모두 써 주세요.';
-            if (!near(t, 37, 3)) return '온도 그래프에서 산소 발생량이 가장 많은 점의 온도를 다시 읽어 보세요.';
+            if (!near(t, 37, 1)) return '온도 그래프에서 산소 발생량이 가장 많은 점의 온도를 다시 읽어 보세요.';
             if (!near(p, 7, 0.6)) return 'pH 그래프에서 산소 발생량이 가장 많은 점의 pH를 다시 읽어 보세요.';
             if (!selVal('cc1') || !selVal('cc2') || !selVal('cc3') || !selVal('cc4')) return '결론 문장의 빈칸을 모두 골라 주세요.';
             if (!ccAns()) return '결론 문장을 다시 읽어 보세요. 결과(무엇이 어떻게 변하는가)와 이유가 어울리는지 살펴요.';
