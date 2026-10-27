@@ -624,6 +624,7 @@
   }
 
   /* ================= ④ 박막 기술 ================= */
+  const pct = (r) => (r < 0.1 ? (r * 100).toFixed(1) : String(Math.round(r * 100)));      // 0에 가까울 때는 소수 첫째 자리까지 (0.5 % 를 0 % 로 보이지 않게)
   function coatR(lam, t) { return 1 - sinI(N_MG, t, lam); }          // 상대 반사 세기 (두 반사광의 세기를 같다고 단순화): cos²(2πnt/λ)
   const apLay = () => PHONE
     ? { sv: { x: MA.x, y: MA.y, w: MA.w, h: 200 }, sp: { x: MA.x + 44, y: MA.y + 226, w: MA.w - 64, h: 52 }, lens: { x: MA.x + 60, y: MA.y + 344 } }
@@ -836,7 +837,7 @@
     } else if (S.ap.sub === 'coat') {
       const r = coatR(550, S.ap.t);
       L1 = '코팅 두께 t'; a = Math.round(S.ap.t) + ' nm';
-      L2 = '550 nm 반사 세기'; b = Math.round(r * 100) + ' %';
+      L2 = '550 nm 반사 세기'; b = pct(r) + ' %';
       L3 = '상쇄 조건 2nt = (m+½)λ'; c = r <= 0.004 ? '만족해요' : '아직이에요';
     } else { L1 = '막 두께'; a = '곳곳이 달라요'; L2 = '보강되는 색'; b = '위치마다 달라요'; L3 = '무늬'; c = '무지갯빛'; }
     const key = [L1, a, L2, b, L3, c].join('|');
@@ -993,7 +994,7 @@
           setup() { S.ap.sub = 'coat'; S.show.selC = false; S.ap.found = false; S.ap.t = 40; S.ap.tD = 40; slTc.set(40); setScene('app'); },
           check: () => S.ap.sub === 'coat' && Math.abs(S.ap.t - 99.6) <= 4,
           hold: 0.6,
-          status: () => mark(Math.abs(S.ap.t - 99.6) <= 4) + ' 550 nm 반사 ' + Math.round(coatR(550, S.ap.t) * 100) + ' % (지금 t = ' + Math.round(S.ap.t) + ' nm)',
+          status: () => mark(Math.abs(S.ap.t - 99.6) <= 4) + ' 550 nm 반사 ' + pct(coatR(550, S.ap.t)) + ' % (지금 t = ' + Math.round(S.ap.t) + ' nm)',
           explain: '앞뒤 반사가 모두 π 바뀌므로 상쇄 조건은 2nt = (m + ½)λ예요. m = 0일 때 <b>t = λ/(4n) = 550/(4 × 1.38) ≈ 100 nm</b>예요. 이때 550 nm의 반사가 거의 없어져요. 양끝의 파랑과 빨강은 조금 남아서 렌즈가 푸른 보랏빛으로 보여요.',
         },
         {
