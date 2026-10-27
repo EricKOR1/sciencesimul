@@ -594,8 +594,8 @@
     const ang = PC.ang / 2 * RAD, Lr = PHONE ? 170 : 230;
     // 견인선 + 예인선
     [-1, 1].forEach((sg) => {
-      const tx = cx + Lr * Math.cos(ang), ty = cy - sg * Lr * Math.sin(ang);
-      ctx.strokeStyle = '#4b5563'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(cx + 36, cy); ctx.lineTo(tx, ty); ctx.stroke();
+      const tx = cx + 62 + Lr * Math.cos(ang), ty = cy - sg * Lr * Math.sin(ang);
+      ctx.strokeStyle = '#4b5563'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(cx + 62, cy); ctx.lineTo(tx, ty); ctx.stroke();
       D.roundRect(tx - 6, ty - 12, 44, 24, 8); ctx.fillStyle = '#f59e0b'; ctx.fill(); ctx.strokeStyle = '#a15c06'; ctx.lineWidth = 2; ctx.stroke();
     });
     // 보트
@@ -874,7 +874,7 @@
           title: '경사면에서 N과 a 예측하고 확인하기', manual: true,
           goal: 'θ = <b>37°</b>, μ = <b>0.5</b>인 경사면에서 5.0 kg 상자의 <b>수직항력 N</b>과 <b>가속도 a</b>를 예측해 입력하고, <b>▶ 놓기</b>로 확인한 뒤 ✔ 확인하기를 누르세요.',
           hint: 'N = mg cosθ = 50 × 0.8, a = g(sinθ − μcosθ) = 10 × (0.6 − 0.5 × 0.8)이에요. 입력한 뒤 ▶ 놓기를 눌러 측정한 a와 비교해요.',
-          setup() { S.sl.th = 37; S.sl.mu = 0.5; slReset(); $('#pN').value = ''; $('#pA').value = ''; $('#pN').classList.remove('ok', 'bad'); $('#pA').classList.remove('ok', 'bad'); setFlag('spred', true); setFlag('lock', true); setScene('slope'); },
+          setup() { S.sl.th = 37; S.sl.mu = 0.5; S.sl.last = null; slReset(); $('#pN').value = ''; $('#pA').value = ''; $('#pN').classList.remove('ok', 'bad'); $('#pA').classList.remove('ok', 'bad'); setFlag('spred', true); setFlag('lock', true); setScene('slope'); },
           check() {
             const nv = $('#pN').value.trim(), av = $('#pA').value.trim();
             if (nv === '' || av === '' || !isFinite(+nv) || !isFinite(+av)) return 'N과 a를 모두 숫자로 입력해 주세요.';
@@ -942,7 +942,7 @@
           title: '예측과 시뮬레이션 비교하기',
           goal: '세 시나리오를 모두 <b>▶ 시뮬레이션</b>으로 실행해 내 예측(점선)과 실제 운동을 비교하세요.',
           hint: '시나리오를 하나씩 고르고 ▶ 시뮬레이션을 눌러요. 내 예측이 맞으면 점선이 실제 위치와 겹쳐요.',
-          setup() { const p = S.pr; p.sc = 'A'; prReset(); gridFor = ''; setFlag('ppred', false); setScene('predict'); updateCtl(); },
+          setup() { const p = S.pr; p.sc = 'A'; p.done = { A: false, B: false, C: false }; prReset(); gridFor = ''; setFlag('ppred', false); setScene('predict'); updateCtl(); },
           check: () => S.pr.done.A && S.pr.done.B && S.pr.done.C,
           hold: 0.6,
           status: () => mark(S.pr.done.A) + ' 퍽 &nbsp; ' + mark(S.pr.done.B) + ' 경사면 &nbsp; ' + mark(S.pr.done.C) + ' 보트',

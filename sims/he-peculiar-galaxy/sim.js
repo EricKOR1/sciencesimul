@@ -519,7 +519,7 @@
   function specPlot(ty, zoom) {
     const P = PL3, x0 = P.x + 54, x1 = P.x + P.w - 16, y0 = P.y + 50, y1 = P.y + P.h - (PHONE ? 54 : 50);
     const lo = zoom ? 646 : 400, hi = zoom ? 666 : 800, gx = (l) => x0 + (x1 - x0) * (l - lo) / (hi - lo);
-    const ymax = zoom ? 1.95 : ty === 'quasar' ? 1.15 : 1.9, gy = (v) => y1 - (y1 - y0) * clamp(v / ymax, 0, 1);
+    const ymax = zoom ? 1.95 : ty === 'quasar' ? 1.7 : 1.9, gy = (v) => y1 - (y1 - y0) * clamp(v / ymax, 0, 1);
     panel(P.x, P.y, P.w, P.h, { title: SPEC[ty].nm + (zoom ? ' - Hα 선 확대' : ' - 스펙트럼') + '  (예시)', tsize: PHONE ? 14 : 14.5 });
     ctx.save(); ctx.fillStyle = '#0b1226'; ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
     ctx.strokeStyle = 'rgba(148,163,184,.18)'; ctx.lineWidth = 1;
@@ -545,9 +545,10 @@
       else if (ty === 'quasar') {
         [[HG, 'Hγ'], [HB, 'Hβ'], [HA, 'Hα']].forEach(([l, nm]) => {
           const ob = QOBS(l), cur = l + (ob - l) * S.qShift;
-          ctx.save(); ctx.setLineDash([3, 4]); ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 1.3; ctx.beginPath(); ctx.moveTo(gx(l), y0 + 22); ctx.lineTo(gx(l), y1); ctx.stroke(); ctx.restore();
-          D.arrow(gx(l), y0 + 36 + (nm === 'Hα' ? 14 : 0), gx(cur), y0 + 36 + (nm === 'Hα' ? 14 : 0), { color: '#fbbf24', width: 2.2, head: 8 });
-          TX(gx(l), y0 + 16, nm + ' 실험실 ' + sig(l, 4) + ' nm', 11.5, '#e2e8f0', 'center', 700);
+          const row = nm === 'Hβ' ? 30 : 0;          // 이름표가 겹치지 않게 Hβ만 한 줄 아래에 써요
+          ctx.save(); ctx.setLineDash([3, 4]); ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 1.3; ctx.beginPath(); ctx.moveTo(gx(l), y0 + 22 + row); ctx.lineTo(gx(l), y1); ctx.stroke(); ctx.restore();
+          D.arrow(gx(l), y0 + 36 + row, gx(cur), y0 + 36 + row, { color: '#fbbf24', width: 2.2, head: 8 });
+          TX(gx(l), y0 + 16 + row, nm + ' 실험실 ' + sig(l, 4) + ' nm', 11.5, '#e2e8f0', 'center', 700);
         });
         TX(gx(QOBS(HB)), y1 - 14 - 10, '관측 562.9 nm', 12.5, '#fde68a', 'center', 800);
       } else {

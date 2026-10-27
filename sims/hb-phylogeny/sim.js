@@ -531,6 +531,12 @@
   }
   const pgP = () => PSETS[S.pg.ds];
   /* 미션이 시작될 때 그 자료의 실행 결과와 순서를 처음 상태로 되돌려요 (미리 채워진 채 열리지 않게) */
+  /* 후구 가지의 '없음' 쪽에 선구동물(선형·절지 포함)이 모두 들어 있는지: 후구를 탈피보다 먼저 써야 해요 */
+  function pgProtoOk(tree) {
+    let h = null; (function f(n) { if (n.kids) { if (n.trait === 2) h = n; n.kids.forEach(f); } })(tree);
+    if (!h) return false;
+    const lv = leavesOf(h.kids[0]); return lv.indexOf(3) >= 0 && lv.indexOf(6) >= 0;
+  }
   function pgFresh(ds) { const g = S.pg; g.order[ds] = PSETS[ds].init.slice(); g.tree[ds] = null; g.ran[ds] = false; g.stale[ds] = false; g.tapped = { fwd: false, back: false }; }
   const pgNames = (idxs) => idxs.map((i) => short(pgP().sp[i])).join('·');
   function runPg() {
@@ -636,7 +642,9 @@
     if (g.stale[g.ds]) T(OA.x + OA.w / 2, OA.y + OA.h - 10, '코드가 바뀌었어요. ▶ 실행을 다시 눌러요', 13.5, '#b45309', 'center', 800);
     const msgY = PHONE ? OA.y + OA.h + 22 : OA.y + OA.h + 28;
     let msgH;
-    if (chk.ok) msgH = textBlock(OA.x, msgY, OA.w, '✅ 모든 형질을 가진 종이 한 가지로 묶였어요. 공유 파생 형질의 순서가 올바른 계통수예요.', L(15, 13.5), '#0b6b39', 20, 800);
+    const protoBad = chk.ok && g.ds === 'animal' && !pgProtoOk(tree);
+    if (protoBad) msgH = textBlock(OA.x, msgY, OA.w, '⚠️ 선형동물·절지동물이 "후구 없는 가지"(선구동물) 안에 함께 있지 않아요. 후구를 탈피보다 먼저 써 봐요.', L(15, 13.5), '#b45309', 20, 800);
+    else if (chk.ok) msgH = textBlock(OA.x, msgY, OA.w, '✅ 모든 형질을 가진 종이 한 가지로 묶였어요. 공유 파생 형질의 순서가 올바른 계통수예요.', L(15, 13.5), '#0b6b39', 20, 800);
     else msgH = textBlock(OA.x, msgY, OA.w, '⚠️ "' + P.tr[chk.trait] + '"' + josa(P.tr[chk.trait], '을/를') + ' 가진 ' + pgNames(chk.have) + josa(pgNames(chk.have), '이/가') + ' 한 가지로 묶이지 않았어요. 형질을 쓰는 순서를 다시 생각해 봐요.', L(15, 13.5), '#b91c1c', 20, 800);
     // 자동 검색표
     const ky = msgY + msgH + 10;
@@ -681,7 +689,7 @@
       const P = pgP(); $$('#pgSet button').forEach((b) => b.classList.toggle('on', b.dataset.s === g.ds));
       for (let k = 0; k < 4; k++) { const sel = $('#selPg' + k), row = sel.closest('.pg-row'); row.hidden = k >= P.tr.length; if (k < P.tr.length) { if (sel.dataset.ds !== g.ds) { sel.innerHTML = P.tr.map((n, i) => '<option value="' + i + '">' + n + '</option>').join(''); sel.dataset.ds = g.ds; } sel.value = String(g.order[g.ds][k]); } }
       const chk = pgCheck();
-      $('#pgNote').innerHTML = g.ran[g.ds] ? (g.stale[g.ds] ? '코드가 바뀌었어요. <b>▶ 실행</b>을 다시 눌러요.' : chk && chk.ok ? '✅ 공유 파생 형질 규칙을 만족해요.' : '⚠️ 형질 순서를 바꿔 다시 실행해 봐요.') : '형질 순서를 정하고 <b>▶ 실행</b>을 눌러요.';
+      $('#pgNote').innerHTML = g.ran[g.ds] ? (g.stale[g.ds] ? '코드가 바뀌었어요. <b>▶ 실행</b>을 다시 눌러요.' : chk && chk.ok && (g.ds !== 'animal' || pgProtoOk(g.tree.animal)) ? '✅ 공유 파생 형질 규칙을 만족해요.' : '⚠️ 형질 순서를 바꿔 다시 실행해 봐요.') : '형질 순서를 정하고 <b>▶ 실행</b>을 눌러요.';
     }
   }
   $$('#modeSeg button').forEach((b) => b.addEventListener('click', () => { Sound.click(); setMode(b.dataset.mode); }));
@@ -715,7 +723,7 @@
     else if (m === 'sets') { a1 = '놓은 카드'; b1 = setsPlaced() + ' / 5'; a2 = '맞는 영역'; b2 = setsRight() + ' / 5'; a3 = '가장 바깥 집합'; b3 = '턱'; }
     else if (m === 'tree') { const r = trCheck(); a1 = '빈 칸'; b1 = r.miss + '개'; a2 = '맞지 않는 칸'; b2 = r.wrong + '개'; a3 = '가지 뒤집은 횟수'; b3 = S.tr.flips + '번'; }
     else if (m === 'mol') { const M = S.mo.M; a1 = '자료'; b1 = DSETS[M.set].title; a2 = '합친 횟수'; b2 = M.joins.length + ' / ' + (DSETS[M.set].names.length - 1); a3 = '방금 합친 값'; b3 = M.joins.length ? String(Math.round(M.joins[M.joins.length - 1].v * 10) / 10) : '—'; }
-    else { const g = S.pg, chk = pgCheck(); a1 = '자료'; b1 = pgP().title; a2 = '실행'; b2 = g.ran[g.ds] ? (g.stale[g.ds] ? '다시 실행' : '완료') : '아직'; a3 = '순서 점검'; b3 = !g.ran[g.ds] || g.stale[g.ds] ? '—' : chk.ok ? '올바름 ✔' : '다시 ✘'; }
+    else { const g = S.pg, chk = pgCheck(); a1 = '자료'; b1 = pgP().title; a2 = '실행'; b2 = g.ran[g.ds] ? (g.stale[g.ds] ? '다시 실행' : '완료') : '아직'; a3 = '순서 점검'; b3 = !g.ran[g.ds] || g.stale[g.ds] ? '—' : chk.ok && (g.ds !== 'animal' || pgProtoOk(g.tree.animal)) ? '올바름 ✔' : '다시 ✘'; }
     const kS = [a1, b1, a2, b2, a3, b3].join('|');
     if (kS === rlast) return; rlast = kS;
     l1.textContent = a1; v1.textContent = b1; l2.textContent = a2; v2.textContent = b2; l3.textContent = a3; v3.textContent = b3;
@@ -869,9 +877,9 @@
         },
         {
           title: '동물 9개 문의 큰 분기 찾기', goal: '동물 자료로 바꿔 실행하고, 규칙을 만족하는 계통수에서 두 큰 가지(? 이름표)를 눌러 이름을 확인해요.',
-          check: () => { const g = S.pg; if (!g.ran.animal || g.stale.animal) return false; const t = g.tree.animal; return !!t && checkProgram('animal', t).ok && g.tapped.fwd && g.tapped.back; }, hold: 0.5,
-          status: () => { const g = S.pg; const c = g.tree.animal && !g.stale.animal ? checkProgram('animal', g.tree.animal) : null; return '💻 실행 ' + mark(g.ran.animal && !g.stale.animal) + ' · 규칙 점검 ' + mark(!!(c && c.ok)) + ' · 큰 가지 이름 ' + mark(g.tapped.fwd && g.tapped.back); },
-          hint: '동물 9문 자료에서 형질 순서를 조직 → 3배엽 → 후구 → 탈피(또는 후구와 탈피를 서로 바꾼 순서)로 정하고 실행해요.',
+          check: () => { const g = S.pg; if (!g.ran.animal || g.stale.animal) return false; const t = g.tree.animal; return !!t && checkProgram('animal', t).ok && pgProtoOk(t) && g.tapped.fwd && g.tapped.back; }, hold: 0.5,
+          status: () => { const g = S.pg; const c = g.tree.animal && !g.stale.animal ? checkProgram('animal', g.tree.animal) : null; return '💻 실행 ' + mark(g.ran.animal && !g.stale.animal) + ' · 규칙 점검 ' + mark(!!(c && c.ok && pgProtoOk(g.tree.animal))) + ' · 큰 가지 이름 ' + mark(g.tapped.fwd && g.tapped.back); },
+          hint: '동물 9문 자료에서 형질 순서를 조직 → 3배엽 → 후구 → 탈피 순서로 정하고 실행해요. 후구를 탈피보다 먼저 써야 선구동물 가지가 한 덩어리로 묶여요.',
           setup() { pgFresh('animal'); S.pg.ds = 'animal'; setMode('code'); updateCtl(); },
           explain: '입(원구)이 항문이 되는 <b>후구동물</b>(극피동물, 척삭동물)과 입이 먼저 생기는 <b>선구동물</b>이 큰 가지로 갈라져요. 선구동물 안에서는 허물을 벗는 무리(선형동물, 절지동물)가 한 가지로 묶여요.',
         },
