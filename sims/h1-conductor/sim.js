@@ -381,10 +381,12 @@
   }
   function syncSemi() {
     const E = S.semi, W = SW(); E.rel = semiRel();
-    const imp = E.d, total = clamp(Math.round(1 + 3 * Math.log10(E.rel)), 1, 36), n = Math.max(total, imp);
+    // 자유전자 수는 전류 배율(로그)에 맞추고, 초록(불순물이 내놓은 전자)과 파랑(열·빛으로 생긴 전자)은 실제 기여 비율대로 나눠요
+    const total = clamp(Math.round(1 + 3 * Math.log10(E.rel)), 1, 36), n = total;
+    const nd = DLV[E.d] * 5e22 / 1.5e10, green = nd > 0 ? clamp(Math.round(total * nd / E.rel), 1, total) : 0;
     while (E.e.length < n) E.e.push({ x: W.x + 10 + rand() * (W.w - 20), y: W.y + 10 + rand() * (W.h - 20), vx: 0, vy: 0, imp: false });
     while (E.e.length > n) E.e.pop();
-    E.e.forEach((e, i) => { e.imp = i < imp; });
+    E.e.forEach((e, i) => { e.imp = i < green; });
     // 기준 : 불순물 · 빛
     if (E.d >= 1 && E.rel >= 100 && E.T <= 40 && E.L <= 10) E.doped100 = true;
     if (E.d === 0 && E.rel >= 10 && (E.T > 20 || E.L > 0)) E.env10 = true;

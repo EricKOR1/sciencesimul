@@ -267,8 +267,8 @@
     ctx.fillStyle = '#d6e7c9'; ctx.fillRect(0, gy, VW, 6);
     ctx.fillStyle = '#c4dab5'; ctx.fillRect(0, gy + 6, VW, 16);
     ctx.fillStyle = '#9ab38a';
-    const off = (t * S.wSpeed * g.rw * 0.6) % 70;
-    for (let x = -70 + off; x < VW + 70; x += 70) ctx.fillRect(x, gy + 12, 34, 4);
+    const off = ((S.gx || 0) * g.rw) % 70;   // 자전거가 오른쪽으로 가면 땅의 무늬는 왼쪽으로 흘러가요 (바퀴가 구른 거리만큼)
+    for (let x = -70 - off; x < VW + 70; x += 70) ctx.fillRect(x, gy + 12, 34, 4);
     // 프레임
     const fr = (a, b, w, col) => { ctx.strokeStyle = col || '#2563eb'; ctx.lineWidth = w * u; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); };
     // 체인
@@ -341,7 +341,7 @@
 
   /* --- 태양계 --- */
   function planetPos(p, t) {
-    const a = p.a0 + t * 6.283 / p.T;
+    const a = p.a0 - t * 6.283 / p.T;   // 북극 위에서 보면 행성은 시계 반대 방향으로 공전해요
     return { x: SOL.cx + SOL.rx * p.f * Math.cos(a), y: SOL.cy + SOL.rx * SOL.flat * p.f * Math.sin(a), a };
   }
   function drawSolar(t, labels) {
@@ -360,7 +360,7 @@
       if (p.ring) { ctx.strokeStyle = 'rgba(233,210,140,.85)'; ctx.lineWidth = 2.4; ctx.beginPath(); ctx.ellipse(q.x, q.y, p.r * 1.9, p.r * 0.6, -0.3, 0, 6.3); ctx.stroke(); }
       D.sphere(q.x, q.y, p.r, p.c, { shadow: true });
       if (p.earth) {
-        const ma = t * 3.2; D.sphere(q.x + Math.cos(ma) * 14, q.y + Math.sin(ma) * 14, 2.2, '#e2e8f0', { gloss: false });
+        const ma = -t * 3.2; D.sphere(q.x + Math.cos(ma) * 14, q.y + Math.sin(ma) * 14, 2.2, '#e2e8f0', { gloss: false });
         const pul = 1 + 0.18 * Math.sin(t * 4);
         ctx.strokeStyle = 'rgba(125,211,252,.9)'; ctx.lineWidth = 2.4; ctx.beginPath(); ctx.arc(q.x, q.y, 20 * pul, 0, 6.3); ctx.stroke();
       }
@@ -399,7 +399,7 @@
     });
     ctx.globalAlpha = 1;
     if (act) D.glow(cx, cy, R * 1.55, SPH[act].col, 0.35);
-    drawGlobe(cx, cy, R, -40 + t * 7, EA, t);
+    drawGlobe(cx, cy, R, -40 - t * 7, EA, t);   // 지구는 서쪽에서 동쪽으로 자전해요 (화면에서 표면이 왼쪽 → 오른쪽으로 움직임)
     // 선택한 권역 이름
     if (act) {
       const lx = cx - R * 1.0, ly = cy - R * 1.25;
@@ -540,7 +540,7 @@
     ctx.beginPath(); ctx.rect(0, 0, VW, VH);
     if (a > 0.001) { ctx.moveTo(cx, cy); ctx.lineTo(cx + 3 * R * Math.cos(a), cy - 3 * R * Math.sin(a)); ctx.lineTo(cx + 3 * R * Math.cos(a), cy + 3 * R * Math.sin(a)); ctx.closePath(); }
     ctx.clip('evenodd');
-    drawGlobe(cx, cy, R, 20 + t * 4, { atm: 0, bio: 0 }, t);
+    drawGlobe(cx, cy, R, 20 - t * 4, { atm: 0, bio: 0 }, t);
     ctx.restore();
     // 단면(쐐기 안)
     if (a > 0.001) {
@@ -881,7 +881,7 @@
     }
     // 관측자와 밀물·썰물 표시
     if (A.moon > 0.5 || tide > 0.5) {
-      const th = t * 0.5 % 6.2832, rO = seaR(th, tide);
+      const th = (((-t * 0.5) % 6.2832) + 6.2832) % 6.2832, rO = seaR(th, tide);   // 자전 방향(시계 반대)
       const ox = cx + Math.cos(th) * rO, oy = cy + Math.sin(th) * rO;
       D.sphere(ox, oy, 5.5, '#f8fafc', { gloss: false, outline: '#0f172a' });
       const hi = Math.cos(2 * th) > 0.35;
@@ -1335,7 +1335,7 @@
     const wTarget = S.chainOff ? 0 : 2.1 * 1.7;
     S.thC += 1.7 * dt * (S.pedalOn ? 1 : 0);
     S.wSpeed = SciSim.approach(S.wSpeed, wTarget, dt, S.chainOff ? 1.7 : 3.5);
-    S.thW += S.wSpeed * dt;
+    S.thW += S.wSpeed * dt; S.gx = (S.gx || 0) + S.wSpeed * dt;
     S.chainFall = RM ? (S.chainOff ? 1 : 0) : SciSim.approach(S.chainFall, S.chainOff ? 1 : 0, dt, 4);
     if (S.chainOff && S.wSpeed < 0.35 && S.z < 0.2) S.chainTest += dt;
     // 에너지

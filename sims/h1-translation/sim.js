@@ -252,8 +252,8 @@
       ctx.fillStyle = hot ? 'rgba(250,204,21,' + (0.35 + 0.25 * Math.sin(t * 10)) + ')' : i % 2 ? '#f8fafc' : '#fff'; rr(g.tx + 8, y, g.tw - 16, g.rowH - 4, 8).fill();
       if (hot) { ctx.strokeStyle = '#eab308'; ctx.lineWidth = 3; rr(g.tx + 8, y, g.tw - 16, g.rowH - 4, 8).stroke(); }
       D.text(g.tx + 18, y + g.rowH / 2 + 4, r.join(' · '), { size: PHONE ? 13.5 : 15.5, weight: 800, color: '#334155', align: 'left' });
-      const ax = g.tx + g.tw - (PHONE ? 126 : 112);
-      D.sphere(ax - 14, y + (g.rowH - 4) / 2, PHONE ? 7 : 9, a.col, { gloss: false });
+      const ax = g.tx + g.tw - (PHONE ? 126 : 122);
+      D.sphere(ax - (PHONE ? 14 : 12), y + (g.rowH - 4) / 2, PHONE ? 7 : 8, a.col, { gloss: false });
       D.text(ax, y + g.rowH / 2 + 4, (key === 'STOP' ? '종결' : a.ko) + (i === 0 ? ' (시작)' : ''), { size: PHONE ? 12.5 : 14, weight: 800, color: key === 'STOP' ? '#111827' : '#334155', align: 'left' });
     });
     // mRNA 글자
@@ -304,8 +304,8 @@
       D.sphere(p.x - g.pcw / 2 + 22, p.y, PHONE ? 10 : 11, a.col, { gloss: true });
       D.text(p.x + 12, p.y + 5, k === 'STOP' ? '종결' : a.ko, { size: PHONE ? 13.5 : 15, weight: 800, color: '#1f2937', alpha: active ? 1 : 0.5 });
     });
-    if (T.msgT > 0) D.label(g.cx, PHONE ? 360 : 58, T.msg, { bg: T.msg.includes('아니') || T.msg.includes('않') && !T.msg.includes('정하지') ? '#b45309' : '#15803d', size: PHONE ? 11 : 13 });
-    if (T.done[q]) D.label(g.cx, g.ry + g.ch / 2 + (PHONE ? 20 : 26), '서열 ' + (q + 1) + ' 번역 완료! ' + (T.done[1 - q] ? '두 서열 모두 끝났어요' : '다른 서열도 해 봐요'), { bg: '#15803d', size: PHONE ? 12 : 13.5 });
+    if (T.msgT > 0) D.label(g.cx, PHONE ? 538 : 58, T.msg, { bg: T.msg.includes('아니') || T.msg.includes('않') && !T.msg.includes('정하지') ? '#b45309' : '#15803d', size: PHONE ? 11 : 13 });
+    if (T.done[q] && !(PHONE && T.msgT > 0)) D.label(g.cx, g.ry + g.ch / 2 + (PHONE ? 20 : 26), '서열 ' + (q + 1) + ' 번역 완료! ' + (T.done[1 - q] ? '두 서열 모두 끝났어요' : '다른 서열도 해 봐요'), { bg: '#15803d', size: PHONE ? 12 : 13.5 });
   }
 
   /* ======================================================
@@ -348,7 +348,7 @@
     } else {
       Y.wrong++; Sound.fail(); Y.ghosts.push({ aa: tok.aa, anti: tok.anti, sx: fx, sy: fy, t: 0 });
       let i = 0; while (i < 3 && COMP[tok.anti[i]] === cod[i]) i++;
-      Y.msg = '안티코돈 ' + tok.anti + '의 ' + (i + 1) + '번째 염기 ' + tok.anti[i] + '는 코돈 ' + cod + '의 ' + (i + 1) + '번째 염기 ' + cod[i] + '와 짝이 아니에요 (' + cod[i] + '의 짝은 ' + COMP[cod[i]] + ')'; Y.msgT = 4.5;
+      Y.msg = '안티코돈 ' + tok.anti + '의 ' + (i + 1) + '번째 염기 ' + tok.anti[i] + '는 코돈 ' + cod + '의 ' + (i + 1) + '번째 ' + cod[i] + '와 짝이 아니에요 (' + cod[i] + '의 짝은 ' + COMP[cod[i]] + ')'; Y.msgT = 4.5;
     }
     updateCtl();
   }
@@ -521,7 +521,7 @@
     D.text(VW / 2, PHONE ? 26 : 28, '염기 하나를 바꾸면 단백질은 어떻게 될까요?', { size: PHONE ? 15 : 19, weight: 800, color: INK });
     D.shadow(() => { ctx.fillStyle = '#fff'; rr(10, 44, VW - 20, VH - 56, 18).fill(); }, { blur: 6, y: 2 });
     D.text(PHONE ? 20 : 24, g.cy - 34, 'mRNA 코돈', { size: PHONE ? 13 : 14.5, weight: 800, color: '#334155', align: 'left' });
-    D.text(PHONE ? 20 : 24, g.ay - 22, '아미노산', { size: PHONE ? 11.5 : 12.5, weight: 700, color: '#94a3b8', align: 'left' });
+    D.text(PHONE ? 20 : 24, g.ay - 28, '아미노산', { size: PHONE ? 11.5 : 12.5, weight: 700, color: '#94a3b8', align: 'left' });
     const origAA = translate(e.cods), mutCods = e.cods.map((c, i) => (i === e.ci ? mutCod(e) : c)), mutAA = translate(mutCods);
     let stopped = false;
     e.cods.forEach((cod0, ci) => {
@@ -584,7 +584,7 @@
   const FL_SHUF = ['tl', 'prot', 'dna', 'fold', 'mrna', 'tr', 'aaseq'];
   const FLG = () => (PHONE
     ? { sx: 128, sw: 236, sh: 56, sy0: 64, sdy: 98, tx: 392, tw: 226, th: 56, ty0: 64, tdy: 98 }
-    : { sx: 220, sw: 380, sh: 50, sy0: 70, sdy: 68, tx: 608, tw: 300, th: 50, ty0: 70, tdy: 68 });
+    : { sx: 220, sw: 380, sh: 50, sy0: 62, sdy: 66, tx: 608, tw: 300, th: 50, ty0: 62, tdy: 66 });
   function resetFl() { S.fl.slots = new Array(7).fill(null); S.fl.order = FL_SHUF.slice(); }
   function flCheck() {
     const sl = S.fl.slots;

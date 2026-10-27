@@ -450,11 +450,9 @@
     // 층 이름
     if (t < 0.15) {
       const a = 1 - smooth(t, 0.1, 0.15);
-      const lx = PHONE ? 20 : cx + sr + 34;
+      const lx = cx + sr + (PHONE ? 22 : 34);
       LAYERS.forEach((l, i) => {
-        const ly = PHONE ? 112 + i * 0 : cy - 88 + i * 34;
-        const yy = PHONE ? 0 : ly;
-        if (PHONE) return;
+        const yy = cy - 88 + i * 34;
         ctx.save(); ctx.globalAlpha = a;
         D.dashedLine(cx + sr * l.r * 0.72, cy - sr * l.r * 0.69 * 0 + (-sr * l.r * 0.5), lx - 6, yy, { color: 'rgba(255,255,255,.35)', width: 1.2, dash: [3, 4] });
         ctx.fillStyle = l.c; ctx.beginPath(); ctx.arc(lx + 6, yy, 6, 0, Math.PI * 2); ctx.fill();
@@ -687,9 +685,11 @@
         T(hx + 38, hy + 6, b.title, 18, '#1b2333', 'left', 800);
         T(hx + 38, hy + 24, b.sub, 13, '#5d6879', 'left', 700);
       } else {
-        mapIcon(b.id, hx + 16, hy, 16);
-        T(hx + 40, hy + 6, b.title.length > 6 ? '별 속 핵융합' : b.title, 15, '#1b2333', 'left', 800);
-        T(hx + 40, hy + 24, b.sub.length > 8 ? '철보다 무거움' : b.sub, 13, '#5d6879', 'left', 700);
+        // 카드가 놓이는 오른쪽 자리를 가리지 않도록 왼쪽 좁은 칸에 세로로 쌓아요
+        const lx = b.x + 48, sub = b.sub.length > 8 ? '철보다 무거움' : b.sub;
+        mapIcon(b.id, lx, b.y + 30, 15);
+        T(lx, b.y + 70, b.title, fitSize(b.title, 82, 15), '#1b2333', 'center', 800);
+        T(lx, b.y + 92, sub, fitSize(sub, 82, 13), '#5d6879', 'center', 700);
       }
     });
     // 카드 틀 (놓을 자리)
