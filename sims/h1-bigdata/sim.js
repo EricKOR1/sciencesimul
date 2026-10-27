@@ -237,7 +237,7 @@
     cls: serStats(WKD, 'class'), brk: serStats(WKD, 'break'), wkd: serStats(WKD, 'all'), wke: serStats(WKE, 'all'),
   };
   const fAvg = (v) => (v == null ? '–' : String(Math.round(v)));
-  const fSlope = (v) => (v == null ? '–' : (v >= 0 ? '+' : '−') + Math.abs(v).toFixed(1));
+  const fSlope = (v) => { if (v == null) return '–'; const r = Math.round(v * 10) / 10; return r === 0 ? '0.0' : (r > 0 ? '+' : '−') + Math.abs(r).toFixed(1); };
 
   // 아이스크림 판매량과 물놀이 사고 (가상 해안 도시, 월별)
   const ICE = { months: ['3월', '4월', '5월', '6월', '7월', '8월', '9월'], temp: [8, 12, 17, 22, 26, 29, 25], sales: [10, 23, 39, 55, 68, 78, 64], acc: [1, 3, 5, 7, 9, 10, 9] };
@@ -699,7 +699,7 @@
     [0, 10, 20, 30].forEach((n) => { ctx.strokeStyle = '#eef2f7'; ctx.beginPath(); ctx.moveTo(X(n), py); ctx.lineTo(X(n), py + ph); ctx.stroke(); D.text(X(n), py + ph + 18, String(n), { size: 12, weight: 700, color: '#64748b' }); });
     ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px, py + ph); ctx.lineTo(px + pw, py + ph); ctx.stroke();
     D.text(px + pw / 2, py + ph + 40, '학생 수 (명)', { size: 12.5, weight: 800, color: '#475569' });
-    D.text(px - 6, py - 6, 'ppm', { size: 12, weight: 800, color: '#475569', align: 'right' });
+    D.text(px + 6, py + 14, 'ppm', { size: 12, weight: 800, color: '#475569', align: 'left' });
     // 추세선
     ctx.strokeStyle = 'rgba(27,35,51,.75)'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(X(0), Y(trendAt(0))); ctx.lineTo(X(30), Y(trendAt(30))); ctx.stroke();
     D.text(X(30) - 4, Y(trendAt(30)) - 12, '추세선', { size: 12.5, weight: 800, color: '#1b2333', align: 'right' });

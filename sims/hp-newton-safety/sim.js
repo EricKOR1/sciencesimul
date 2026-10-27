@@ -560,7 +560,7 @@
 
   /* ---------- 컨트롤 연결 ---------- */
   function updateCtl() {
-    const fl = S.flags;
+    const fl = game && game.free ? {} : S.flags;   // 자유 탐구에서는 미션용 입력 칸 대신 실험 도구를 보여 줘요
     $$('#ctrlCard [data-modes]').forEach((n) => {
       let on = n.getAttribute('data-modes').split(' ').indexOf(S.mode) >= 0;
       if (on) {

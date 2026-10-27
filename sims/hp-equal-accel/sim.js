@@ -591,7 +591,7 @@
 
   /* ---------- 컨트롤 연결 ---------- */
   function updateCtl() {
-    const fl = S.flags;
+    const fl = game && game.free ? {} : S.flags;   // 자유 탐구에서는 미션용 입력 칸 대신 실험 도구를 보여 줘요
     $$('#ctrlCard [data-modes]').forEach((n) => {
       let on = n.getAttribute('data-modes').split(' ').indexOf(S.mode) >= 0;
       if (on) {
@@ -796,7 +796,7 @@
       intro: '<div class="si-link">🔗 <b>앞 단계에서</b> 구간 평균 속도 ' + vtList() + ' m/s를 구했어요. 중학교에서 시간–속력 그래프의 기울기는 1초당 속력 변화라고 배웠죠. 이제 <b>방향이 있는 속도</b>로 그래프를 그려 가속도를 구해요.</div>' +
         '<p>구간 평균 속도는 그 <b>구간 한가운데 시각</b>의 속도로 보고 점을 찍어요. 점들이 놓인 직선의 <b>기울기가 가속도 a</b>(단위 m/s²)예요. 위로 던진 공 영상도 같은 방법으로 분석해요.</p>',
       features: ['graph'],
-      setup() { resetGraph(false); setFlag('area', false); setScene('graph'); },
+      setup() { resetGraph(false); setFlag('vt', false); setFlag('area', false); setScene('graph'); },
       recap: '속도–시간 그래프의 기울기가 가속도예요. 그래프 아래 넓이는 이동 거리이고, 속도가 0인 순간에도 가속도는 0이 아닐 수 있어요.',
       summary: '<ul><li>구간 평균 속도를 구간 <b>가운데 시각</b>에 점으로 찍으면 점들이 한 직선 둘레에 놓여요.</li><li><b>기울기 = 가속도</b> a = Δv ÷ Δt (단위 m/s²). 수레: v = 1.0 + 2.0t → a = 2.0 m/s², 던진 공: v = 10 − 10t → a = −10 m/s².</li><li>측정값은 오차가 있어서 점이 직선에서 조금 벗어나요. 오차의 합이 가장 작은 직선을 <b>최적 직선</b>으로 골라요.</li><li><b>그래프 아래 넓이 = 이동 거리</b>. 수레를 t = 2.0 s까지: (1.0 + 5.0) ÷ 2 × 2.0 = 6.0 m.</li><li>속도가 0이 된 최고점에서도 a = −10 m/s²는 그대로예요. 속도가 0이라고 가속도도 0은 아니에요.</li></ul>',
       missions: [
@@ -842,7 +842,7 @@
       intro: '<div class="si-link">🔗 <b>앞 단계에서</b> 그래프의 기울기가 가속도이고, 넓이가 이동 거리라는 것을 확인했어요. 이 두 가지 읽기에서 <b>세 가지 운동 식</b>이 바로 나와요.</div>' +
         '<p>그래프에서 식을 하나씩 이끌고, 수레 영상의 위치와 비교해서 식이 맞는지 확인해요. 가속도가 일정한 직선 운동에서만 쓸 수 있는 식이에요.</p>',
       features: ['model'],
-      setup() { resetModel(); resetOrder(); setFlag('order', false); setScene('model'); },
+      setup() { resetModel(); resetOrder(); setFlag('vt', false); setFlag('order', false); setScene('model'); },
       recap: '기울기에서 v = v₀ + at, 넓이에서 s = v₀t + ½at², t를 없애면 2as = v² − v₀²가 나와요. 식으로 예측한 위치는 영상과 오차 범위 안에서 맞아요.',
       summary: '<ul><li>① 기울기 = 가속도 → <b>v = v₀ + at</b></li><li>② 그래프 아래 넓이 = 이동 거리 → <b>s = v₀t + ½at²</b> (직사각형 v₀t + 삼각형 ½·t·at)</li><li>①에서 t = (v − v₀) ÷ a를 ②에 넣어 t를 없애면 → <b>2as = v² − v₀²</b> (시간을 모를 때 편해요)</li><li>수레 v₀ = 1.0 m/s, a = 2.0 m/s²: t = 2.0 s에서 v = 5.0 m/s, s = 6.0 m.</li><li>감속하면 a의 부호가 <b>−</b>예요. 속도와 가속도의 방향이 반대라는 뜻이에요.</li><li>식과 영상의 차이가 눈금 읽기 오차(±0.01 m) 정도이면 식이 맞다고 볼 수 있어요.</li></ul>',
       missions: [
@@ -889,7 +889,7 @@
       intro: '<div class="si-link">🔗 <b>앞 단계에서</b> 영상과 맞는 세 가지 운동 식을 이끌었어요. 이제 <b>영상을 보기 전에 식으로 먼저 예측</b>하고, 영상을 재생해 예측과 비교해 봐요.</div>' +
         '<p>급제동하는 자동차는 얼마 만에, 얼마나 가서 멈출까요? 위로 던진 공은 언제, 얼마나 높이 올라갈까요? 위쪽(또는 앞쪽)을 +로 정하고 식을 써서 계산해 봐요. 가속도의 원인(힘)은 다음 차시에서 다뤄요.</p>',
       features: ['apply'],
-      setup() { resetApply(); setScene('apply'); },
+      setup() { resetApply(); setFlag('vt', false); setScene('apply'); },
       recap: '운동 식으로 시간과 거리를 미리 예측하고, 영상과 비교해 확인했어요. 예측과 실제가 조금 다르다면 마찰, 공기 저항, 측정 오차를 따져 봐요.',
       summary: '<ul><li><b>급제동</b>: v₀ = 20 m/s, a = −5 m/s² → 정지 시간 t = (0 − 20) ÷ (−5) = 4 s, 정지 거리 2as = v² − v₀² → s = 400 ÷ 10 = 40 m.</li><li><b>위로 던진 공</b>(위쪽 +): v₀ = +10 m/s, a = −10 m/s² → 최고점(v = 0)까지 t = 1.0 s, 높이 H = 100 ÷ 20 = 5 m, 2.0 s에 출발점으로 돌아오고 속도는 −10 m/s.</li><li>모르는 값이 시간이면 v = v₀ + at와 s = v₀t + ½at², 시간이 없으면 2as = v² − v₀²를 골라 써요.</li><li>예상과 측정이 다른 까닭: 마찰, 공기 저항, 프레임 간격, 눈금 읽기 오차.</li></ul>',
       missions: [
