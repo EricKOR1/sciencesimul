@@ -514,7 +514,7 @@
   }
   function drawPA(t) {
     T(16, 28, PHONE ? '🏒 옆바람을 받는 퍽 (0.20 kg)' : '🏒 에어 하키 퍽(0.20 kg)이 +x 방향으로 2.0 m/s로 미끄러지는데 옆바람(+y, 0.40 N)이 불어요', PHONE ? 14 : 16, '#26324a', 'left', 800);
-    const sc = PHONE ? 52 : 100, ox = PHONE ? 40 : 60, oy = SH - 40;
+    const sc = PHONE ? 52 : 80, ox = PHONE ? 40 : 60, oy = SH - 40;
     D.roundRect(8, 44, VW - 16, SH - 56, 14); ctx.fillStyle = '#f7f9fe'; ctx.fill(); ctx.strokeStyle = '#d6deec'; ctx.lineWidth = 1.5; ctx.stroke();
     ctx.save(); ctx.beginPath(); ctx.rect(8, 44, VW - 16, SH - 56); ctx.clip();
     ctx.strokeStyle = 'rgba(120,135,160,.22)'; ctx.lineWidth = 1;
@@ -542,10 +542,10 @@
     if (t >= 1) { ctx.strokeStyle = '#14a058'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(ox + 2 * sc, oy - 1 * sc, 13, 0, TAU); ctx.stroke(); labIn(ox + 2 * sc - 20, oy - 1 * sc - 4, '실제 t = 1 s: (2.0, 1.0) m', { bg: '#14a058', size: 13, align: 'right' }, 12, VW - 12); }
     D.sphere(px, py, 11, '#7c8aa5', { shadow: true, outline: '#4a5670' });
     const vx = PA.v0, vy = AA * t;
-    D.arrow(px, py, px + vx * (PHONE ? 16 : 24), py, { color: '#3867f4', width: 4, head: 10 });
-    if (vy > 0.05) D.arrow(px, py, px, py - vy * (PHONE ? 16 : 24), { color: '#3867f4', width: 4, head: 10, dash: [6, 4] });
-    D.arrow(px - 6, py, px - 6, py - 0.4 * (PHONE ? 70 : 100), { color: '#e2464b', width: 5, head: 11 });
-    D.label(px - 14, py - 0.4 * (PHONE ? 70 : 100) - 14, '바람 0.40 N', { bg: '#e2464b', size: 13, align: 'right' });
+    D.arrow(px, py, px + vx * (PHONE ? 16 : 20), py, { color: '#3867f4', width: 4, head: 10 });
+    if (vy > 0.05) D.arrow(px, py, px, py - vy * (PHONE ? 16 : 20), { color: '#3867f4', width: 4, head: 10, dash: [6, 4] });
+    D.arrow(px - 6, py, px - 6, py - 0.4 * (PHONE ? 70 : 80), { color: '#e2464b', width: 5, head: 11 });
+    D.label(px - 14, py - 0.4 * (PHONE ? 70 : 80) - 14, '바람 0.40 N', { bg: '#e2464b', size: 13, align: 'right' });
     D.label(VW - 16, 60, 't = ' + t.toFixed(1) + ' s', { bg: '#26324a', size: 13.5, align: 'right' });
     if (!PHONE) {
       const cx0 = VW - 226, cy0 = 84;

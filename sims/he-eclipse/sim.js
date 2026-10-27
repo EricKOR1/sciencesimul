@@ -1180,7 +1180,7 @@
         {
           title: '지점마다 다르게 보이는 일식', goal: '지점 <b>A·B·C</b>를 눌러 시간을 흘려 보며 <b>개기 일식</b>이 보이는 곳, <b>부분 일식</b>이 보이는 곳, <b>식이 없는</b> 곳을 찾아요.',
           hint: '▶ 재생을 누르고 지점을 바꿔 보세요. A는 그림자 중심선 위, B는 북쪽으로 멀리, C는 반영 바깥이에요. 부분 일식은 가려진 정도가 30 % 이상일 때 세요.',
-          hold: 0.4, setup() { S.fl3 = { total: false, partial: false, none: false }; S.showCalc = false; setView('globe'); },
+          hold: 0.4, setup() { S.fl3 = { total: false, partial: false, none: false }; S.showCalc = false; S.play3 = false; S.t = G.tMin; syncT(); setView('globe'); },
           status: () => '개기 ' + mark(S.fl3.total) + ' · 부분 ' + mark(S.fl3.partial) + ' · 식 없음 ' + mark(S.fl3.none),
           check: () => S.fl3.total && S.fl3.partial && S.fl3.none,
           explain: '달 그림자의 <b>본영</b>이 지나가는 좁은 띠(A)에서만 개기 일식이 보여요. <b>반영</b>이 덮는 넓은 지역(B)에서는 가려진 정도만 다른 부분 일식이고, 반영 바깥(C)에서는 일식이 보이지 않아요.',
@@ -1255,7 +1255,8 @@
     if (S.sweep) { S.eY += dt * 2800; if (S.eY > 10400) { S.eY = -10400; } S.eYv = S.eY; } else S.eYv = approach(S.eYv, S.eY, dt, 10);
     if (S.play3) {
       const inf = siteInfo(curSite()), inEcl = inf.c1 != null && S.t > inf.c1 - 240 && S.t < inf.c4 + 240;
-      S.spd = approach(S.spd || 900, inEcl ? 70 : 900, dt, 4);
+      const inTot = inf.c2 != null && S.t > inf.c2 - 300 && S.t < inf.c3 + 300;   // 개기·금환 근처만 천천히
+      S.spd = approach(S.spd || 900, inTot ? 70 : inEcl ? 260 : 900, dt, 4);
       S.t += dt * S.spd; if (S.t >= G.tMax) { S.t = G.tMax; S.play3 = false; updateCtl(); } syncT();
     }
     if (S.play4) { S.lp += dt * 28; if (S.lp >= LT_MAX) { S.lp = LT_MAX; S.play4 = false; updateCtl(); } syncL(); }

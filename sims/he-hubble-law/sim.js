@@ -327,6 +327,8 @@
     if (!S.placed.some((p) => p.on)) TXD((G.x0 + G.x1) / 2, (G.y0 + G.y1) / 2, '그래프에서 이 은하의 자리를 눌러 점을 찍어요', 14, '#94a3b8', 'center', 800);
   }
   const placedN = () => S.placed.filter((p) => p.on).length;
+  /* 점 8개가 아직 없으면(이어서 하기 등) 제자리에 바로 놓아 둬요 */
+  function fillPoints() { const G = sctGeo(); DV.forEach((g, i) => { const p = S.placed[i]; if (!p.on) { p.on = true; p.x = G.gx(g.d); p.y = G.gy(g.v); } }); }
   function placePoint(i, x, y) {
     const G = sctGeo(), g = DV[i], tx = G.gx(g.d), ty = G.gy(g.v), p = S.placed[i];
     p.on = true; p.x = x; p.y = y; p.fly = 0;
@@ -424,7 +426,7 @@
     DV.forEach((g, i) => {
       const dNow = g.d, dPast = dNow * (1 - f), xN = G.gx(dNow), xP = G.gx(dPast), ypos = y - (i % 2 ? 0 : 0);
       ctx.save(); ctx.globalAlpha = 0.35; ctx.strokeStyle = '#fbbf24'; ctx.setLineDash([3, 4]); ctx.beginPath(); ctx.moveTo(xN, y); ctx.lineTo(xP, y); ctx.stroke(); ctx.setLineDash([]); ctx.fillStyle = '#fde68a'; ctx.beginPath(); ctx.arc(xN, y, 4, 0, TAU); ctx.fill(); ctx.restore();
-      D.arrow(xP, y - 26, xP + 0.28 * (xP - G.x0) + 18, y - 26, { color: '#fbbf24', width: 2.6, head: 8 });
+      D.arrow(xP, y - 26, xP + 0.28 * (xN - G.x0) + 18, y - 26, { color: '#fbbf24', width: 2.6, head: 8 });   // 화살표 길이 = 후퇴 속도(되감아도 변하지 않아요)
       D.sphere(xP, y, 9.5, '#fde68a', { shadow: true }); TX(xP, y - 36, g.k, 12.5, '#fde68a', 'center', 800);
     });
     const tt = f * T;
@@ -540,7 +542,7 @@
   sRew.addEventListener('input', () => { S.rew = +sRew.value / 1000; sRew.style.setProperty('--pct', (+sRew.value / 10) + '%'); oRew.textContent = rewOut(+sRew.value); });
   function setRew(v) { S.rew = clamp(v, 0, 1); setSlider(sRew, oRew, Math.round(S.rew * 1000), rewOut); }
   $$('#pickSeg .opt').forEach((b) => b.addEventListener('click', () => { Sound.click(); S.pickH = +b.dataset.k; updateCtl(); }));
-  const okAge = () => { const v = parseNum(inAge.value); return isFinite(v) && Math.abs(v - AGE[70]) / AGE[70] <= 0.05; };
+  const okAge = () => { let v = parseNum(inAge.value); if (isFinite(v) && v >= 1e6) v /= 1e8; return isFinite(v) && Math.abs(v - AGE[70]) / AGE[70] <= 0.05; };   // 1.4×10^10 년 처럼 써도 억 년으로 바꿔 줘요
 
   /* ---------- 포인터 ---------- */
   SciSim.pointer(view, {
@@ -640,7 +642,7 @@
         {
           title: '직선의 기울기 읽기', manual: true,
           goal: '<b>기울기 슬라이더</b>로 직선을 점들에 맞추고, 기울기(허블 상수)를 읽어요. 맞춘 뒤 <b>✔ 확인하기</b>를 눌러요.',
-          setup() { setView('v2'); S.hLine = true; updateCtl(); },
+          setup() { fillPoints(); setView('v2'); S.hLine = true; updateCtl(); },
           hint: '점들이 직선 양쪽에 고르게 놓이도록 맞춰요. 점 C(50 Mpc, 3600 km/s)를 지나면 기울기는 약 70이에요.',
           check: () => (Math.abs(S.H - 70) <= 4 ? true : S.H < 66 ? '직선이 점들보다 아래에 있어요. 기울기를 더 키워 봐요.' : '직선이 점들보다 위에 있어요. 기울기를 줄여 봐요.'),
           explain: '점들을 가장 잘 지나는 직선의 기울기는 약 <b>70 km/s/Mpc</b>예요. 이 값이 <b>허블 상수 H₀</b>예요.',
