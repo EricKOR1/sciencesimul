@@ -312,7 +312,10 @@
     const slAlpha = 0.9;
     line([[sp.X, sp.Y], [o0.X, o0.Y]], 'rgba(253,224,71,' + slAlpha + ')', 2, { dash: [9, 6] });
     line([[o0.X, o0.Y], [ant.X, ant.Y]], 'rgba(148,163,184,.8)', 2, { dash: [3, 6] });
-    { const left = ant.X < L.cx; D.text(clamp(ant.X + (left ? -10 : 10), 12, VW - 12), clamp(ant.Y + 22, 20, L.tlY - 14), '지구 그림자 쪽', { size: 13, weight: 800, color: '#cbd5e1', stroke: 'rgba(11,18,48,.8)', align: left ? 'right' : 'left' }); }
+    { const left = ant.X < L.cx, slx = clamp(ant.X + (left ? -10 : 10), left ? 112 : 12, left ? VW - 12 : VW - 112); let sly = clamp(ant.Y + 22, 20, L.tlY - 14);
+      const elx = clamp(fr.X, 80, VW - 80), ely = Math.min(fr.Y + 20 * FS, L.tlY - 10);
+      if (Math.abs(sly - ely) < 17 && Math.abs((slx + (left ? -50 : 50)) - elx) < 140) sly = clamp(ant.Y - 12, 20, L.tlY - 14);
+      D.text(slx, sly, '지구 그림자 쪽', { size: 13, weight: 800, color: '#cbd5e1', stroke: 'rgba(11,18,48,.8)', align: left ? 'right' : 'left' }); }
     drawArc(false);
     if (sp.dep < 0) drawSun();
     const near = nearSyz(day), atSyz = Math.abs(near.dd) <= 0.11 && near.s;
@@ -354,7 +357,7 @@
     D.label(mp.X + (PHONE ? 22 : 26), mp.Y - 14, '달', { bg: 'rgba(15,23,42,.8)', size: 13, pad: 7 });
     if (hasF('nodes')) {
       const hs = (hKm >= 0 ? '황도면 위 ' : '황도면 아래 ') + comma(Math.abs(hKm)) + ' km';
-      D.text(clamp(mfoot.X, 70, VW - 70), mfoot.Y + (mv[2] >= 0 ? 18 : -10), Math.abs(hKm) < 5 ? '황도면 위' : hs, { size: 12.5, weight: 800, color: mv[2] >= 0 ? '#7dd3fc' : '#fcd34d', stroke: 'rgba(11,18,48,.85)' });
+      D.text(clamp(mfoot.X, 70, VW - 70), mv[2] >= 0 ? mfoot.Y + 18 : Math.max(mfoot.Y, mp.Y) + moonR + 14, Math.abs(hKm) < 5 ? '황도면 위' : hs, { size: 12.5, weight: 800, color: mv[2] >= 0 ? '#7dd3fc' : '#fcd34d', stroke: 'rgba(11,18,48,.85)' });
     }
     // 식 계절 배지
     if (hasF('nodes') && seasonOn(day)) {
@@ -612,11 +615,11 @@
       if (st.night) continue;
       if (st.obsc > 0) { if (c1 == null) c1 = t; c4 = t; }
       if (st.type === '개기' || st.type === '금환') { if (c2 == null) c2 = t; c3 = t; if (st.type === '개기') anyTot = true; else anyAnn = true; }
-      if (st.obsc > best.obsc) best = { obsc: st.obsc, t };
+      if (st.obsc > best.obsc + 1e-9) best = { obsc: st.obsc, t, t2: t }; else if (st.obsc > 0 && st.obsc >= best.obsc - 1e-9) best.t2 = t;   // 가려진 정도가 최대로 이어지면 그 가운데
     }
     const kind = anyTot ? '개기' : anyAnn ? '금환' : c1 != null ? '부분' : '없음';
     // 중심 지점에서의 본영 지름과 그림자 속력
-    const tm = best.t, stm = siteState(site, tm), th = site.lon * DEG + G.w * tm;
+    const tm = best.t2 != null ? Math.round((best.t + best.t2) / 2) : best.t, stm = siteState(site, tm), th = site.lon * DEG + G.w * tm;
     let dia = null;
     if (stm.d != null && (kind === '개기' || kind === '금환')) dia = 2 * KM.Rm * Math.abs(1 - stm.d / G.Lu);
     const vrel = G.vm - G.vg * Math.cos(site.lat * DEG) * Math.cos(th);

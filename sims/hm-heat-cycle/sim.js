@@ -286,9 +286,10 @@
   function drawEngine(c, dt, q) {
     const W = PHONE ? 80 : 112, ex = c.x + (PHONE ? 32 : 52), ey = c.y + 112, k = PHONE ? 26 : 28;
     const hmax = VA * k, hg = q.V * k, yb = ey + hmax + 26;
-    const seg = SEG[q.k], rel = relT(q);
+    const stuck = S.cy.once && S.cy.onceDone;      // 한 번 팽창하고 멈춘 상태: 배기·방열 없이 그대로 서 있어요
+    const seg = SEG[stuck ? 2 : q.k], rel = relT(q);
     const x1 = ex + W * 0.27, x2 = ex + W * 0.73, xp = ex + W / 2;
-    const open = q.k === 3 ? 1 : 0;
+    const open = q.k === 3 && !stuck ? 1 : 0;
     // 크랭크 케이스
     D.roundRect(ex - 14, yb, W + 28, 22, 6); ctx.fillStyle = '#6b7a90'; ctx.fill();
     // 실린더 + 기체
@@ -315,7 +316,7 @@
     // 점화 불꽃
     if (q.k === 1 && q.f < 0.6) { D.spark(xp, ey - 4, 15, S.clock * 1.4, '#fff3b0'); if (!RM && Math.random() < 0.5) parts.emit({ x: xp + (Math.random() - 0.5) * 14, y: ey + 4, vx: (Math.random() - 0.5) * 120, vy: 30 + Math.random() * 90, life: 0.4, size: 2.6, color: 'rgba(255,200,60,.95)', fade: true }); }
     // 배기(연기)와 흡입(새 공기)
-    if (q.k === 3 && !RM) {
+    if (q.k === 3 && !stuck && !RM) {
       if (Math.random() < 0.35) parts.emit({ x: ex + W + 22, y: ey - 48, vx: 22 + Math.random() * 20, vy: -14 - Math.random() * 20, life: 1.0, size: 7, grow: 12, color: 'rgba(110,100,110,.55)', shape: 'smoke', fade: true });
       if (Math.random() < 0.25) parts.emit({ x: ex - 22, y: ey - 46, vx: 40, vy: 4, life: 0.5, size: 3.2, color: 'rgba(59,130,246,.8)', fade: true });
     }
@@ -326,7 +327,7 @@
     // 열·일 표시
     const bx = ex + W + 14;
     if (q.k === 1) D.label(xp, c.y + 46, '🔥 Q_h 흡수', { bg: RED, size: 13 });
-    if (q.k === 3) D.label(xp, c.y + 46, 'Q_c 방출', { bg: PURPLE, size: 13 });
+    if (q.k === 3 && !stuck) D.label(xp, c.y + 46, 'Q_c 방출', { bg: PURPLE, size: 13 });
     if (q.k === 2) { D.arrow(bx, py + 6, bx, py + 6 + 40, { color: 'rgba(37,99,235,.9)', width: 5, head: 11 }); D.label(bx + 10, py + 26, 'W 나감', { bg: BLUE, size: 13, align: 'left', pad: 6 }); }
     if (q.k === 0) { D.arrow(bx, py + 46, bx, py + 6, { color: 'rgba(124,58,237,.9)', width: 5, head: 11 }); D.label(bx + 10, py + 26, 'W 받음', { bg: '#6d28d9', size: 13, align: 'left', pad: 6 }); }
     // 구간 이름
@@ -352,7 +353,7 @@
     T(x1, PY + 26, '🔁 한 사이클 = 네 구간을 돌고 처음 상태 A로 돌아와요', PHONE ? 13.5 : 15, INK, 'left', 800);
     const cols = PHONE ? 2 : 4, gw = (PW - 28 - (cols - 1) * 8) / cols, gh = PHONE ? 92 : 96;
     SEG.forEach((sg, i) => {
-      const gx0 = x1 + (i % cols) * (gw + 8), gy0 = PY + 40 + Math.floor(i / cols) * (gh + 8), cur = q.k === i && (cy.run || cy.s > 0);
+      const gx0 = x1 + (i % cols) * (gw + 8), gy0 = PY + 40 + Math.floor(i / cols) * (gh + 8), cur = (cy.once && cy.onceDone ? 2 : q.k) === i && (cy.run || cy.s > 0);
       D.roundRect(gx0, gy0, gw, gh, 12); ctx.fillStyle = cur ? SciSim.color.rgba(sg.col, 0.14) : '#f4f7fd'; ctx.fill(); ctx.strokeStyle = cur ? sg.col : '#dde4f0'; ctx.lineWidth = cur ? 3 : 1.5; ctx.stroke();
       ctx.fillStyle = sg.col; ctx.beginPath(); ctx.arc(gx0 + 17, gy0 + 20, 11, 0, TAU); ctx.fill();
       T(gx0 + 17, gy0 + 25, String(i + 1), 13, '#fff', 'center', 800);
@@ -453,13 +454,16 @@
     T(x1, ty, '📋 구간별 열 Q · 일 W · 내부 에너지 변화 ΔU (J)', PHONE ? 13.5 : 14.5, INK, 'left', 800);
     const tab = revealed('wOK'), cx = PHONE ? [x1, x1 + 110, x1 + 200, x1 + 290] : [x1, x1 + 130, x1 + 220, x1 + 310];
     ['구간', 'Q', 'W', 'ΔU'].forEach((h, i) => T(cx[i], ty + 24, h, 13.5, MUTED, 'left', 800));
-    const rows = SEG.map((sg) => [sg.ab + ' ' + sg.tag, fS(sg.Q).replace('+', ''), fS(sg.W).replace('+', ''), fS(sg.dU).replace('+', '')]);
-    rows.push(['한 바퀴 합', fS(QH - QC).replace('+', ''), fS(WNET).replace('+', ''), '0']);
+    // 반시계 방향이면 같은 경로를 거꾸로 도는 것이라 구간 순서와 Q, W, ΔU의 부호가 모두 바뀌어요
+    const REVTAG = ['팽창', '냉각', '압축', '가열'];
+    const rows = rev ? [3, 2, 1, 0].map((k) => [SEG[k].to + '→' + SEG[k].from + ' ' + REVTAG[k], fS(-SEG[k].Q).replace('+', ''), fS(-SEG[k].W).replace('+', ''), fS(-SEG[k].dU).replace('+', '')])
+      : SEG.map((sg) => [sg.ab + ' ' + sg.tag, fS(sg.Q).replace('+', ''), fS(sg.W).replace('+', ''), fS(sg.dU).replace('+', '')]);
+    rows.push(['한 바퀴 합', fS((rev ? -1 : 1) * (QH - QC)).replace('+', ''), fS((rev ? -1 : 1) * WNET).replace('+', ''), '0']);
     const rh = PHONE ? 21 : 26;
     rows.forEach((r, i) => {
       const yy = ty + 24 + (i + 1) * rh;
       if (i === 4) { ctx.fillStyle = 'rgba(20,160,88,.12)'; D.roundRect(PX + 6, yy - 18, (PHONE ? 330 : 410), rh, 6); ctx.fill(); }
-      T(cx[0], yy, r[0], 13.5, i < 4 ? SEG[i].col : INK, 'left', 800);
+      T(cx[0], yy, r[0], 13.5, i < 4 ? SEG[rev ? 3 - i : i].col : INK, 'left', 800);
       for (let j = 1; j < 4; j++) T(cx[j], yy, tab ? r[j] : '?', 14, tab ? INK : ORANGE, 'left', 800);
     });
     if (!PHONE) {
@@ -467,11 +471,12 @@
       T(tx, ty, '🧮 열효율', 14.5, INK, 'left', 800);
       T(tx, ty + 30, 'e = W / Q_h', 17, '#1d4ed8', 'left', 800);
       const eRev = revealed('eOK');
-      T(tx, ty + 62, hidW ? 'W를 먼저 찾아요' : 'e = ' + fN(WNET) + ' / ' + fN(QH) + (eRev ? ' = ' + EFF + ' %' : ' = ?'), 15, hidW ? MUTED : eRev ? '#14753f' : ORANGE, 'left', 800);
-      para(tx, ty + 94, rev ? '반대로 돌리면 일을 받아 열을 퍼내는 냉장고예요. 뒤로 내보내는 열 Q_h가 더 커요.' : '버리는 열 Q_c가 있어서 e는 100 %보다 작아요 (e < 1).', tw, 13.5, MUTED, 19, 700);
+      if (rev) T(tx, ty + 62, '열기관(시계 방향)의 열효율이에요', 14, MUTED, 'left', 800);
+      else T(tx, ty + 62, hidW ? 'W를 먼저 찾아요' : 'e = ' + fN(WNET) + ' / ' + fN(QH) + (eRev ? ' = ' + EFF + ' %' : ' = ?'), 15, hidW ? MUTED : eRev ? '#14753f' : ORANGE, 'left', 800);
+      para(tx, ty + 94, rev ? '반대로 돌리면 일 W를 받아 열 Q_c를 퍼내는 냉장고예요. 뒤로 내보내는 열 Q_h = Q_c + W가 더 커요.' : '버리는 열 Q_c가 있어서 e는 100 %보다 작아요 (e < 1).', tw, 13.5, MUTED, 19, 700);
     } else {
       const eRev = revealed('eOK');
-      T(PX + PW - 14, PY + 24, 'e = W / Q_h' + (hidW ? '' : ' = ' + fN(WNET) + ' / ' + fN(QH) + (eRev ? ' = ' + EFF + ' %' : ' = ?')), 14.5, eRev ? '#14753f' : '#1d4ed8', 'right', 800);
+      T(PX + PW - 14, PY + 24, rev ? 'Q_h = Q_c + W' : 'e = W / Q_h' + (hidW ? '' : ' = ' + fN(WNET) + ' / ' + fN(QH) + (eRev ? ' = ' + EFF + ' %' : ' = ?')), 14.5, eRev && !rev ? '#14753f' : '#1d4ed8', 'right', 800);
     }
   }
 
@@ -720,7 +725,7 @@
   function readouts() {
     let L1, a, L2, b, L3, c;
     const m = S.mode;
-    if (m === 'engine') { const q = pos(S.cy.s), sg = SEG[q.k]; L1 = '지금 구간'; a = sg.ab + ' ' + sg.tag; L2 = '돈 바퀴 수'; b = S.cy.cycles + '바퀴'; L3 = '한 바퀴 후 ΔU'; c = S.cy.cycles > 0 ? '0 J' : '—'; }
+    if (m === 'engine') { const q = pos(S.cy.s), sg = SEG[S.cy.once && S.cy.onceDone ? 2 : q.k]; L1 = '지금 구간'; a = sg.ab + ' ' + sg.tag; L2 = '돈 바퀴 수'; b = S.cy.cycles + '바퀴'; L3 = '한 바퀴 후 ΔU'; c = S.cy.cycles > 0 ? '0 J' : '—'; }
     else if (m === 'energy') { const rev = S.en.dir === 'ccw'; L1 = rev ? 'Q_h (방출)' : 'Q_h (흡수)'; a = fN(QH) + ' J'; L2 = 'W (알짜 일)'; b = revealed('wOK') ? (rev ? MINUS : '') + fN(WNET) + ' J' : '?'; L3 = '열효율 e'; c = rev ? '—' : revealed('eOK') ? EFF + ' %' : '?'; }
     else if (m === 'history') { L1 = '순서를 놓은 기관'; a = S.hi.placed.length + ' / 6'; L2 = '짝지은 방법'; b = S.match.filter((v) => v !== '').length + ' / 4'; L3 = '열효율 100 %'; c = '불가능'; }
     else { const s = SRC.filter((x) => x.id === S.im.src)[0]; L1 = '분류한 카드'; a = S.im.cat.filter((v) => v > 0).length + ' / 8'; L2 = '고른 발전'; b = s ? s.n : '—'; L3 = '그 발전의 CO₂'; c = s ? (s.co2 > 0 ? '약 ' + s.co2.toFixed(1) + ' kg/kWh' : '≈ 0') : '—'; }

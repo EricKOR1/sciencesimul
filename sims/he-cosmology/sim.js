@@ -496,7 +496,7 @@
     drawWrap(GRF.x + 14, by, '예시: 적색 편이 0.5인 초신성이 예상보다 ' + MAG_DIM.toFixed(2) + '등급 어두워 보여요 → 밝기 비 10^(−0.4×' + MAG_DIM.toFixed(2) + ') = ?, 거리는 몇 배 멀까요?', GRF.w - 28, PHONE ? 12 : 12.5, { align: 'left', color: '#475569', weight: 700 });
     // 관측 가능한 우주
     panel(UNI.x, UNI.y, UNI.w, UNI.h, { fill: 'rgba(12,20,48,.92)', title: '관측 가능한 우주', tcolor: '#e2e8f0', tsize: PHONE ? 14 : 14.5 });
-    const ux = UNI.x + UNI.w / 2, uy = UNI.y + (PHONE ? 190 : 250), R = PHONE ? 140 : 112, r = R * OBS_R.age / OBS_R.now, pulse = 1 + 0.02 * Math.sin(t * 1.6), grow = smoothS(S.uni);
+    const ux = UNI.x + UNI.w / 2, uy = UNI.y + (PHONE ? 160 : 250), R = PHONE ? 108 : 112, r = R * OBS_R.age / OBS_R.now, pulse = 1 + 0.02 * Math.sin(t * 1.6), grow = smoothS(S.uni);
     const rO = R * (0.35 + 0.65 * grow);
     D.glow(ux, uy, rO * 1.3, '#6366f1', 0.28);
     ctx.save(); ctx.strokeStyle = '#a5b4fc'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(ux, uy, rO * pulse, 0, TAU); ctx.stroke(); ctx.fillStyle = 'rgba(99,102,241,.14)'; ctx.fill(); ctx.restore();
@@ -528,7 +528,7 @@
 
   function setView(v) { if (S.view !== v) { S.view = v; S.fade = 1; parts.clear(); S.over = null; dn1.drag = null; } updateCtl(); }
   const okBr = () => { const v = parseNum(inBr.value); return isFinite(v) && Math.abs(v - BR_RATIO) <= 0.02; };
-  const okDist = () => { const v = parseNum(inDist.value); return isFinite(v) && Math.abs(v - DIST_RATIO) <= 0.02; };
+  const okDist = () => { const v = parseNum(inDist.value); return isFinite(v) && Math.abs(v - DIST_RATIO) <= 0.025; };
   function updateCtl() {
     $('#tbLabel').textContent = VIEW_LABEL[S.view];
     $$('#ctrlCard .control').forEach((c) => { c.hidden = !c.dataset.modes.split(' ').includes(S.view); });

@@ -415,7 +415,7 @@
     T(x1, PY + PH - 16, '빠른 변화는 열이 드나들 시간이 없어 Q ≈ 0 (단열)으로 볼 수 있어요.', PHONE ? 13 : 14, '#c2410c', 'left', 800);
   }
   /* 펌프 */
-  const pumpCalc = () => { const f = S.pu.f / 100, Qo = f * W_EXT, dU = W_EXT - Qo; return { Win: W_EXT, Qout: Qo, dU, dT: dU / CV, f }; };
+  const pumpCalc = () => { const f = S.pu.f / 100, Qo = f * W_EXT, dU = W_EXT - Qo; return { Win: W_EXT, Qout: Qo, dU, dT: dU / 12.5, f }; };   // 화면에 쓴 식(ΔU / 12.5)과 같게: 50 %이면 정확히 20 K
   function puRun() { const p = S.pu; if (p.run) return; p.u = 0; p.run = true; p.done = false; Sound.click(); updateCtl(); }
   function puReset() { const p = S.pu; p.run = false; p.u = 0; p.done = false; parts.clear(); updateCtl(); }
   function puStep(dt) {
@@ -429,12 +429,13 @@
     bgGrad(c);
     const k = PHONE ? 4.0 : 4.4, W = PHONE ? 96 : 120, x0 = c.x + (PHONE ? 22 : 40), yb = c.y + c.h - 74, hmax = PHONE ? 180 : 190;
     // 공기 부피: 처음 V0 → 눌러서 단열처럼 줄어요 (손 위치만 부드럽게)
-    const Vn = lerp(V0, V0 * Math.pow(T0 / (T0 + pc.dU / CV), 1.5), e), hp = Vn * k;
+    const Vad = V0 * Math.pow(T0 / (T0 + W_EXT / CV), 1.5), Viso = V0 * Math.exp(-W_EXT / (NMOL * R * T0));   // 같은 500 J: 단열 20.7 L ~ 등온 20.4 L (열이 빠질수록 조금 더 줄어요)
+    const Vn = lerp(V0, lerp(Vad, Viso, pc.f), e), hp = Vn * k;
     const Tn = T0 + pc.dT * e;
     gasSync(20, W, hp); gasStep(dt, W, hp, Tn, hitSpark(x0, yb - hp));
     const cy = gasCyl({ x0, yb, W, hp, hmax, TK: Tn, mode: 'hand', flame: 0 });
     // 열이 빠져나가는 화살표
-    const nA = 4; for (let i = 0; i < nA; i++) { const yy = yb - hp + 30 + i * (hp - 36) / nA; if (pc.f > 0 && e > 0.02) { D.arrow(x0 + W + 4, yy, x0 + W + 4 + clamp(pc.f * 38, 6, 38), yy, { color: 'rgba(37,99,235,.8)', width: 2 + pc.f * 4, head: 9 }); D.arrow(x0 - 4, yy, x0 - 4 - clamp(pc.f * 28, 6, 28), yy, { color: 'rgba(37,99,235,.8)', width: 2 + pc.f * 4, head: 9 }); } }
+    const nA = 4; for (let i = 0; i < nA; i++) { const yy = yb - hp + 30 + i * (hp - 36) / nA; if (pc.f > 0 && e > 0.02) { D.arrow(x0 + W + 4, yy, x0 + W + 4 + clamp(pc.f * (PHONE ? 26 : 38), 6, PHONE ? 26 : 38), yy, { color: 'rgba(37,99,235,.8)', width: 2 + pc.f * 4, head: 9 }); D.arrow(x0 - 4, yy, x0 - 4 - clamp(pc.f * 28, 6, 28), yy, { color: 'rgba(37,99,235,.8)', width: 2 + pc.f * 4, head: 9 }); } }
     if (p.run || p.u > 0) D.arrow(x0 + W / 2 + 22, cy.top - 8, x0 + W / 2 + 22, cy.top + 16, { color: '#2563eb', width: 5, head: 11 });
     if (PHONE) T(c.x + 10, yb + 70, '펌프 속 공기 (1 mol)', 13, INK, 'left', 800); else T(x0 + W / 2, yb + 70, '펌프 속 공기 (1 mol로 이상화)', 14, INK, 'center', 800);
     // 노즐 온도계

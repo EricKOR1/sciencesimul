@@ -437,7 +437,7 @@
     const gr = ctx.createLinearGradient(0, gy, 0, SH); gr.addColorStop(0, def === 'b' ? '#d9b48a' : '#9fd08a'); gr.addColorStop(1, def === 'b' ? '#c19a6b' : '#7fb46a'); ctx.fillStyle = gr; ctx.fillRect(0, gy, VW, SH - gy);
     ctx.fillStyle = def === 'b' ? '#a67c52' : '#5f9a4e'; ctx.fillRect(0, gy, VW, 3);
     const stp = def === 'a' ? 2 : 1;
-    for (let m = 0; X(m) < VW - 10; m += stp) { ctx.strokeStyle = '#2d4a24'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(X(m), gy); ctx.lineTo(X(m), gy + 7); ctx.stroke(); T(X(m), gy + 25, String(m), 13, '#1f3a18', 'center', 800); }
+    for (let m = 0; X(m) < VW - 30; m += stp) { ctx.strokeStyle = '#2d4a24'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(X(m), gy); ctx.lineTo(X(m), gy + 7); ctx.stroke(); T(X(m), gy + 25, String(m), 13, '#1f3a18', 'center', 800); }
     T(VW - 10, gy + 25, 'm', 13, '#1f3a18', 'right', 800);
     T(14, 28, PHONE ? (def === 'a' ? '🏠 옥상(5 m)에서 v₀ = 10 m/s' : '🏀 자유투 (v₀ = 7.5 m/s)') : (def === 'a' ? '🏠 옥상(5 m)에서 세 방향으로 같은 속력 10 m/s로 던져요' : '🏀 높이 2.0 m에서 7.5 m/s로 던진 자유투가 림(3.05 m)을 지나요'), PHONE ? 14 : 17, '#26324a', 'left', 800);
     const flights = a.st === 'idle' ? apFlights() : a.balls;

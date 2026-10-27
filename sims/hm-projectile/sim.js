@@ -190,7 +190,7 @@
     ctx.fillStyle = '#5f9a4e'; ctx.fillRect(0, gy, VW, 3);
     // 눈금자 (m)
     const stepList = [1, 2, 5, 10, 20, 50], step = stepList.find((n) => n * s >= (PHONE ? 44 : 52)) || 50;
-    for (let m = 0; X(m) < VW - 10; m += step) { ctx.strokeStyle = '#2d4a24'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(X(m), gy); ctx.lineTo(X(m), gy + 7); ctx.stroke(); T(X(m), gy + 25, m + (m + step * 2 >= (VW - ox) / s ? '' : ''), 13, '#1f3a18', 'center', 800); }
+    for (let m = 0; X(m) < VW - 30; m += step) { ctx.strokeStyle = '#2d4a24'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(X(m), gy); ctx.lineTo(X(m), gy + 7); ctx.stroke(); T(X(m), gy + 25, m + (m + step * 2 >= (VW - ox) / s ? '' : ''), 13, '#1f3a18', 'center', 800); }
     T(VW - 10, gy + 25, 'm', 13, '#1f3a18', 'right', 800);
     // 옥상 건물
     if (P.h0 > 0) {
@@ -580,7 +580,7 @@
           title: '가장 멀리 날아가는 각도 찾기',
           goal: '기록을 지우고 <b>사거리가 가장 큰 각도</b>를 찾아 그 각도로 던지세요. 세 번 이상 비교해요.',
           hint: '30°와 60°는 사거리가 같았어요. 그 사이에 더 큰 값이 있겠죠? 기록 표에서 R이 가장 큰 각도를 찾아요.',
-          setup() { S.sh.rec = []; S.sh.last = null; shotReset(S.sh); setFlag('lockV', true); setScene('throw'); },
+          setup() { S.sh.rec = []; S.sh.last = null; S.sh.th = 20; shotReset(S.sh); setFlag('lockV', true); setScene('throw'); },
           check: () => S.sh.rec.length >= 3 && hasRec(45),
           hold: 0.6,
           status: () => '던진 횟수 ' + Math.min(3, S.sh.rec.length) + ' / 3 &nbsp; ' + mark(hasRec(45)) + ' 최대 사거리 각도',
@@ -694,7 +694,7 @@
       intro: '<div class="si-link">🔗 <b>앞 단계에서</b> 성분별 식으로 T, H, R을 예측했어요. 이제 이 식을 거꾸로 써서 <b>원하는 곳에 공을 보내는 조건</b>을 계산해 봐요.</div>' +
         '<p>세 장면: 🎯 지면 표적(30 m)을 v₀ = 20 m/s로 맞히기 · 🏢 옥상(45 m)에서 수평으로 던져 지면 표적(30 m) 맞히기 · 🧱 높이 3 m, 8 m 앞 담장 넘기기. 점선은 식으로 예측한 궤적이에요. 먼저 계산하고 발사해요.</p>',
       features: ['target'],
-      setup() { S.tg.hit = { a: false, b: false, c: false }; S.tg.sc = 'a'; Object.values(S.tg.shots).forEach(shotReset); S.tg.shots.a.th = 45; S.tg.shots.b.v0 = 15; S.tg.shots.c.v0 = 15; S.tg.shots.c.th = 45; setScene('target'); },
+      setup() { S.tg.hit = { a: false, b: false, c: false }; S.tg.sc = 'a'; Object.values(S.tg.shots).forEach(shotReset); S.tg.shots.a.th = 45; S.tg.shots.b.v0 = 15; S.tg.shots.c.v0 = 10; S.tg.shots.c.th = 30; setScene('target'); },
       recap: '목표 지점이 정해지면 R = v₀² sin2θ ÷ g, t = √(2h ÷ g), x = v₀t 같은 식을 거꾸로 풀어 v₀와 θ를 정할 수 있어요.',
       summary: '<ul><li><b>지면 표적</b> 30 m, v₀ = 20 m/s: sin2θ = Rg ÷ v₀² = 30 × 10 ÷ 400 = 0.75 → 2θ = 48.6° 또는 131.4° → <b>θ ≈ 24°(낮은 각) 또는 66°(높은 각)</b> 두 가지 답이 있어요.</li><li><b>옥상 수평 발사</b>(h = 45 m): t = √(2h ÷ g) = 3.0 s, x = v₀t = 30 m이면 <b>v₀ = 10 m/s</b>. 착지할 때 vy = gt = 30 m/s.</li><li><b>담장 넘기기</b>: 담장 위치에서 y = x tanθ − g x² ÷ (2v₀²cos²θ) &gt; 담장 높이. 같은 v₀이면 각도·속력을 알맞게 골라야 해요.</li><li>같은 v₀에서 20°와 70°처럼 합이 90°인 두 각도는 사거리가 같고, 높은 각도로 던진 공이 더 오래 날아요. 공의 질량은 궤적에 영향을 주지 않아요.</li></ul>',
       missions: [
@@ -712,7 +712,7 @@
           title: '담장 넘기기',
           goal: '🧱 <b>높이 3 m, 8 m 앞 담장</b>을 넘어가도록 v₀와 θ를 정해 던지세요. 담장에 닿기 전에 떨어지거나 부딪히면 실패예요.',
           hint: '점선 궤적이 담장 위로 지나가는지 먼저 확인해요. 속력을 키우거나 각도를 높이면 담장 위 높이 y가 커져요. 예: v₀ = 15 m/s, θ = 45°.',
-          setup() { S.tg.sc = 'c'; S.tg.hit.c = false; shotReset(S.tg.shots.c); setScene('target'); },
+          setup() { S.tg.sc = 'c'; S.tg.hit.c = false; S.tg.shots.c.v0 = 10; S.tg.shots.c.th = 30; shotReset(S.tg.shots.c); setScene('target'); },
           check: () => S.tg.hit.c,
           hold: 0.6,
           status: () => mark(S.tg.hit.c) + ' 담장 넘기기',

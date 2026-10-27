@@ -367,7 +367,7 @@
     }
     const by = PRB.y + PRB.h - (PHONE ? 78 : 110);
     drawWrap(PRB.x + 14, by, P.q + (S.pi < 2 ? ' 일 때' : ' 로 관측된 은하의 ') + (S.pi < 2 ? '' : '거리를 구해요'), PRB.w - 28, PHONE ? 13.5 : 14, { align: 'left', color: '#0f172a', weight: 800 });
-    if (S.solveOpen) drawWrap(PRB.x + 14, by + 30, P.solve.replace(/<\/?b>/g, ''), PRB.w - 28, PHONE ? 12.5 : 13, { align: 'left', color: '#15803d', weight: 800 });
+    if (S.solveOpen) drawWrap(PRB.x + 14, by + 30, P.solve.replace(/<\/?b>/g, '').replace(/÷/g, '/'), PRB.w - 28, PHONE ? 12.5 : 13, { align: 'left', color: '#15803d', weight: 800 });
     else drawWrap(PRB.x + 14, by + 30, S.pi < 2 ? '값을 계산해서 오른쪽 입력창에 써요' : 'z → v = cz → d = v/H₀ 순서로 계산해요', PRB.w - 28, PHONE ? 12.5 : 13, { align: 'left', color: '#64748b', weight: 700 });
   }
   function drawModel(t, dt) {
@@ -497,7 +497,7 @@
     if (Math.abs(S.lamC - g.lam) > 0.3) { Sound.fail(); say('먼저 측정 눈금을 흡수선의 가운데에 맞춰요.', true, 2.6); return; }
     const z = parseNum(inZ.value), v = parseNum(inV.value);
     if (!isFinite(z) || !isFinite(v)) { Sound.fail(); say('z와 v를 숫자로 써요. 예: z = 0.0081, v = 2440', true, 2.8); return; }
-    if (Math.abs(z - g.z) > 0.0008) { Sound.fail(); say('z를 다시 계산해 봐요. z = (λ관측 − 393.4) ÷ 393.4 예요.', true, 3.4); return; }
+    if (Math.abs(z - g.z) > 0.0008) { Sound.fail(); say('z를 다시 계산해 봐요. z = (λ관측 − 393.4) / 393.4 예요.', true, 3.4); return; }
     if (Math.abs(v - g.v) > Math.max(0.05 * g.v, 150)) { Sound.fail(); say('v = c z 에서 c = 3.0×10⁵ km/s 예요. 다시 계산해 봐요.', true, 3.4); return; }
     S.rec1[S.gi] = true; Sound.success(); say(g.nm + ': z = ' + sig(g.z, 2) + ', v = cz ≈ ' + f0(Math.round(g.v / 10) * 10) + ' km/s', false, 3);
     const G = spGeo(); parts.burst(G.gx(g.lam), G.mainY0 + 30, { count: 18, speed: 150, colors: ['#fb7185', '#fde68a', '#fff'] });
@@ -523,7 +523,7 @@
       Sound.fail();
       say(S.pi === 1 ? '다시 계산해 봐요. 속도를 H₀로 나누면 거리가 돼요: d = v / H₀' : S.pi === 0 ? '다시 계산해 봐요. v = H₀ × d 예요.' : '먼저 z = (λ관측 − λ₀) / λ₀, 다음 v = cz, 마지막으로 d = v / H₀ 를 계산해요.', true, 3.8); return;
     }
-    S.rec3[S.pi] = true; Sound.success(); say('정답! ' + P.solve.replace(/<\/?b>/g, ''), false, 4);
+    S.rec3[S.pi] = true; Sound.success(); say('정답! ' + P.solve.replace(/<\/?b>/g, '').replace(/÷/g, '/'), false, 4);
     updateCtl();
   }
   $('#bRec3').addEventListener('click', recordP);
