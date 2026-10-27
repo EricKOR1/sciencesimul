@@ -491,7 +491,7 @@
     F.f = { t: 0, burst: false }; Sound.click(); updateCtl();
   }
   function resetFert() { S.ct.f = null; S.ct.done = false; }
-  const predVals = () => S.ct.pred.map((v) => (v === '' || isNaN(+v) ? null : +v));
+  const predVals = () => S.ct.pred.map((v) => (/^\d{1,4}$/.test(v) ? +v : null));
   const predRight = (i) => predVals()[i] === GEN[i + 1];
   function rodsGrid(cx, cy, n, col, w, h, cols) {
     const rows = Math.ceil(n / cols), gw = w * 1.7, gh = h * 1.35;
@@ -852,7 +852,7 @@
   $('#bRun10').addEventListener('click', () => runQuick(10));
   $('#bClr').addEventListener('click', () => { S.cb.found = Array(8).fill(false); S.cb.runs = 0; S.cb.last = null; S.cb.lastNew = []; Sound.click(); updateCtl(); });
   $('#sN').addEventListener('input', (e) => { S.lg.tn = +e.target.value; if (S.lg.tn === 23) S.lg.seen23 = true; Sound.tick(); updateCtl(); });
-  $('#calcIn').addEventListener('input', (e) => { S.lg.calc = e.target.value.trim().replace(/[−–]/g, '-').replace(/,(?=\d{3}(?!\d))/g, '').replace(',', '.'); S.lg.calcOk = S.lg.calc === '8.4'; if (S.lg.calcOk) Sound.success(); updateCtl(); });
+  $('#calcIn').addEventListener('input', (e) => { S.lg.calc = e.target.value.trim().replace(/[−–]/g, '-').replace(/,(?=\d{3}(?!\d))/g, '').replace(',', '.'); S.lg.calcOk = /^8\.40?$/.test(S.lg.calc); if (S.lg.calcOk) Sound.success(); updateCtl(); });
   $('#bGam').addEventListener('click', makeGametes);
   $('#bCrReset').addEventListener('click', resetCross);
   $('#cmSeg').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { Sound.click(); S.ct.hypo = b.dataset.h === '1'; resetFert(); updateCtl(); }));
@@ -931,7 +931,7 @@
           id: 'calc', title: '2ⁿ 계산하기',
           goal: '슬라이더를 <b>n = 23</b>(사람)으로 맞추고, 생식세포 종류 2²³ ≈ □ × 10⁶ 가지에서 <b>□</b>를 소수 첫째 자리까지 쓰세요.',
           hint: '2²³ = 8,388,608이에요. 10⁶로 나누면 8.388…이고, 소수 첫째 자리까지 쓰면 8.4예요.',
-          setup() { setMode('log'); S.lg.seen23 = false; S.lg.tn = 3; updateCtl(); },
+          setup() { setMode('log'); S.lg.seen23 = false; S.lg.tn = 3; S.lg.calc = ''; S.lg.calcOk = false; $('#calcIn').value = ''; updateCtl(); },
           check: () => S.lg.seen23 && S.lg.calcOk, hold: 0.4,
           status: () => mark(S.lg.seen23) + ' n = 23 확인 &nbsp; ' + mark(S.lg.calcOk) + ' 값 입력',
           explain: '염색체 쌍이 1쌍 늘 때마다 종류가 <b>2배</b>가 돼요. 2²³ = 8,388,608 ≈ <b>8.4 × 10⁶</b>가지(약 840만)예요. 한 사람이 만들 수 있는 정자의 염색체 조합만 이만큼 많아요.',

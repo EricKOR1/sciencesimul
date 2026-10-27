@@ -293,7 +293,7 @@
     S.fp = RM ? S.f : approach(S.fp, S.f, dt, 4.5);
     if (Math.abs(S.fp - S.f) < 0.004) S.fp = S.f;
     // 감수 1분열 후기: 두 상동 염색체 쌍을 모두 분리하면 자동으로 세포질 분열
-    if (S.proc === 'mei' && S.f === 4 && S.sep.done[0] && S.sep.done[1] && !S.sep.drag) {
+    if (S.proc === 'mei' && S.f === 4 && S.sep.done[0] && S.sep.done[1] && !S.sep.drag && S.sep.armed) {
       S.sep.allT += dt;
       if (S.sep.allT > 0.9 && S.f === 4 && S.hi >= 5) { setFrame(5); }
     } else S.sep.allT = 0;
@@ -302,6 +302,7 @@
   function setFrame(f, snap) {
     const P = procOf();
     f = clamp(f, S.lo, Math.min(S.hi, P.n - 1));
+    S.sep.armed = false;
     if (S.proc === 'mei' && f >= 5 && !(S.sep.done[0] && S.sep.done[1])) {
       if (S.f < 5 && S.f === 4 && !snap) { showHint('먼저 두 쌍의 상동 염색체를 양극으로 끌어서 분리해 보세요.'); return; }
       fakeDone();
@@ -406,7 +407,8 @@
     if (S.mode === 'nondis') {
       if (f < 5) return null;
       const side = i < 2 ? -1 : 1, n = cellMembers(side).length;
-      return f === 8 ? [n === 3 ? 'n + 1' : 'n − 1', '염색체 ' + n + '개'] : [(n === 3 ? 'n + 1 : ' : 'n − 1 : ') + '염색체 ' + n + '개'];
+      const nm = n === 3 ? 'n + 1' : n === 1 ? 'n − 1' : 'n';
+      return f === 8 ? [nm, '염색체 ' + n + '개'] : [nm + ' : 염색체 ' + n + '개'];
     }
     if (!mei) { if (f === 4) return ['2n = 4', 'DNA 상대량 2']; return null; }
     if (f === 5) return ['n = 2', 'DNA 상대량 2'];
@@ -424,7 +426,7 @@
   function sceneCaption() {
     const P = procOf(), name = P.names[S.f];
     T(SC.x + 8, SC.y + 22, name, PHONE ? 15 : 18, '#14532d', 'left', 800);
-    const lab = S.proc === 'mit' ? '체세포분열' : S.mode === 'nondis' ? '감수 분열 (염색체 비분리)' : '감수 분열';
+    const lab = S.proc === 'mit' ? '체세포분열' : S.mode === 'nondis' ? (S.sep.nd ? '감수 분열 (염색체 비분리)' : '감수 분열 (정상 분리)') : '감수 분열';
     D.label(SC.x + SC.w - 8, SC.y + 20, lab, { bg: S.proc === 'mit' ? COL_MIT : COL_MEI, color: '#fff', size: PHONE ? 13 : 14, align: 'right' });
   }
   function drawHints() {
@@ -570,7 +572,7 @@
     cards.forEach((cd, ci) => {
       panel(cd.x, cd.y, cd.w, cd.h, 16, '#ffffff');
       D.label(cd.x + 12, cd.y + 22, cd.title, { bg: cd.col, color: '#fff', size: PHONE ? 14 : 15, align: 'left' });
-      const r = Math.min(cd.w / cd.n / 2 * 0.86, cd.h * (PHONE ? 0.22 : 0.3)), cy = cd.y + cd.h * (PHONE ? 0.47 : 0.46);
+      const r = Math.min(cd.w / cd.n / 2 * 0.86, cd.h * (PHONE ? 0.19 : 0.3)), cy = cd.y + cd.h * (PHONE ? 0.43 : 0.46);
       for (let i = 0; i < cd.n; i++) {
         const cx = cd.x + cd.w * (i + 0.5) / cd.n, pop = smooth((S.clock - 0.1 * i - (S.cmpT || 0)) * 3);
         ctx.save(); ctx.translate(cx, cy); ctx.scale(0.5 + 0.5 * pop, 0.5 + 0.5 * pop); ctx.globalAlpha = pop;
@@ -738,6 +740,8 @@
       } else if (Math.abs(sp.off[pp]) > RPOLE() * 0.55) { sp.off[pp] = Math.sign(sp.off[pp]) * RPOLE(); sp.done[pp] = true; Sound.success(); }
       else { sp.off[pp] = -HSEP / 2; sp.done[pp] = false; Sound.fail(); }
       if (sp.nd && pp === 0 && sp.done[0]) sp.off[0] = -RPOLE();
+      if (sp.done[pp]) sp.armed = true;
+      else sp.armed = false;
       if (sp.done[pp]) { const x = CX0 - RPOLE(); parts.burst(CX0, CY0 + (pp ? 0.5 : -0.5) * U, { count: 12, colors: [PAT, MAT, '#fde047'], speed: 110, size: 3, life: 0.6 }); }
       updateCtl();
     },
@@ -760,8 +764,8 @@
       L1 = '단계'; a = (S.f + 1) + ' / ' + P.n + ' · ' + P.names[S.f].split(':')[0];
       const hide = m === 'mit' && !(plotOK() || FREE());
       L2 = '세포 1개당 DNA 상대량'; b = hide ? '? (그래프에 찍어요)' : (m === 'nondis' ? '—' : String(P.dna[S.f]));
-      L3 = '세포 1개당 염색체 수'; c = m === 'nondis' ? (S.f >= 5 ? '왼쪽 3개 · 오른쪽 1개' : '2n = 4') : String(P.chr[S.f]) + (P.chr[S.f] === 8 || (S.proc === 'mei' && S.f === 7) ? ' (분리 중)' : '');
-      if (m === 'nondis') { L2 = '비분리가 일어난 쌍'; b = '긴 상동 염색체 쌍'; }
+      L3 = '세포 1개당 염색체 수'; c = m === 'nondis' ? (S.f >= 5 ? '왼쪽 ' + cellMembers(-1).length + '개 · 오른쪽 ' + cellMembers(1).length + '개' : '2n = 4') : String(P.chr[S.f]) + (P.chr[S.f] === 8 || (S.proc === 'mei' && S.f === 7) ? ' (분리 중)' : '');
+      if (m === 'nondis') { L2 = '비분리가 일어난 쌍'; b = S.sep.nd ? '긴 상동 염색체 쌍' : '없음 (정상 분리)'; }
     }
     const keyS = [L1, a, L2, b, L3, c].join('|');
     if (keyS === rlast) return; rlast = keyS;
@@ -960,6 +964,6 @@
   /* ---------- 디버그 (Playwright) ---------- */
   window.__sim = {
     S, VW, VH, PHONE, get game() { return game; }, setMode, setFrame, setProc, levels, CHR, ct, cells, PROC, SC, GP, gxOf, gyOf, bivRect, RPOLE, HSEP, CX0, CY0, U, TBL, tblSels, resetSep, layout, mitVal,
-    pull(p, d) { S.sep.off[p] = d * RPOLE(); S.sep.done[p] = true; }, updateCtl,
+    pull(p, d) { S.sep.off[p] = d * RPOLE(); S.sep.done[p] = true; S.sep.armed = true; }, updateCtl,
   };
 })();

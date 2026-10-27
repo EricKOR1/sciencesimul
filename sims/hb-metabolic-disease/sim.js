@@ -460,7 +460,7 @@
     T(cx, jy0 + jh + 24, isFinite(days) ? '경과 ' + Math.min(Math.round(h.day), Math.round(days)) + '일' : '경과 —', P(15, 14), INK, 'center', 800);
     const tx = PHONE ? 270 : 572, ty = PHONE ? 548 : 392;
     const tw = PHONE ? 228 : 210;
-    if (isFinite(days)) { let yy = ty; yy += 18 * block(tx, yy, tw, '하루 ' + d + ' kcal 초과', 14, '#b91c1c', 18, 800) + 4; yy += 18 * block(tx, yy, tw, '7700 ÷ ' + d + ' = ' + (Math.round(days * 100) / 100), 14, INK, 18, 800); yy += 18 * block(tx, yy, tw, '→ 약 ' + Math.round(days) + '일', 15, '#b91c1c', 18, 800) + 6; block(tx, yy, tw, '체지방 1 kg에 해당하는 에너지가 쌓여요.', 12.5, MUTED, 17, 700); }
+    if (isFinite(days)) { let yy = ty; yy += 18 * block(tx, yy, tw, '하루 ' + d + ' kcal 초과', 14, '#b91c1c', 18, 800) + 4; yy += 18 * block(tx, yy, tw, '7700 / ' + d + ' = ' + (Math.round(days * 100) / 100), 14, INK, 18, 800); yy += 18 * block(tx, yy, tw, '→ 약 ' + Math.round(days) + '일', 15, '#b91c1c', 18, 800) + 6; block(tx, yy, tw, '체지방 1 kg에 해당하는 에너지가 쌓여요.', 12.5, MUTED, 17, 700); }
     else block(tx, ty, tw, d === 0 ? '섭취 = 소비 → 에너지 균형이에요. (쌓이지 않아요)' : '소비가 더 많아요. (초과 에너지가 없어요)', 14, '#166534', 18, 800);
     T(VW / 2, VH - 6, DISC + ' · 가상 인물의 수치예요', 11.5, WARN, 'center', 800);
     if (S.msgT > 0) { ctx.save(); ctx.globalAlpha = Math.min(1, S.msgT * 2); D.label(VW / 2, P(520, 450), S.msg, { bg: '#1b2333', color: '#fff', size: 13 }); ctx.restore(); }
@@ -604,7 +604,7 @@
     if (d !== 400) { h.answer = '이 경우는 섭취 2400 kcal, 소비 2000 kcal(하루 400 kcal 초과)로 맞춘 뒤 확인해요.'; Sound.fail(); say(h.answer); updateCtl(); return; }
     if (!isFinite(v)) { h.answer = '날수를 숫자로 써 주세요.'; Sound.fail(); updateCtl(); return; }
     if (v >= 18.5 && v <= 19.5) { h.ok = true; h.answer = ''; Sound.success(); if (!RM) parts.burst(VW * 0.7, VH * 0.5, { count: 18, speed: 150, size: 3.4, life: 0.9, shape: 'star' }); }
-    else { h.answer = '7700 ÷ 400 을 다시 계산해 봐요. (소수 첫째 자리까지 구한 뒤 가까운 날수로 어림해요.)'; Sound.fail(); say(h.answer); }
+    else { h.answer = '7700 / 400 을 다시 계산해 봐요. (소수 첫째 자리까지 구한 뒤 가까운 날수로 어림해요.)'; Sound.fail(); say(h.answer); }
     updateCtl();
   });
   [['#hS1', 0], ['#hS2', 1], ['#hS3', 2]].forEach(([id, i]) => $(id).addEventListener('change', () => { S.hab.reason[i] = +$(id).value; Sound.tick(); updateCtl(); }));
@@ -786,7 +786,7 @@
           goal: '오른쪽 문장 중 이 자료만으로 <b>말할 수 있는 것</b>을 모두 고르고 <b>✔ 확인하기</b>를 누르세요.',
           hint: '“경향이 보인다”와 “원인이다 · 반드시 그렇다”는 달라요. 그래프에서 직접 읽을 수 있는 것만 골라요.',
           manual: true,
-          setup() { ensure('data'); },
+          setup() { ensure('data'); S.data.stm.clear(); updateCtl(); },
           check: stmFeedback,
           explain: '그래프에서 읽을 수 있는 것은 <b>경향(관련)</b>이에요: 단 음료를 자주 마시는 군의 평균 혈당이 더 높고(88 → 94 → 103), 걸음 수가 많을수록 BMI가 대체로 낮아요. 하지만 <b>“단 음료가 혈당을 높였다”</b>나 <b>“반드시 낮아진다”</b>처럼 원인이나 모두에게 적용된다고 단정하는 문장은 이 자료만으로 말할 수 없어요.',
         },
@@ -824,7 +824,7 @@
           goal: '🗂 습관 카드 <b>3개</b>를 고르고, 카드마다 <b>알맞은 이유(근거)</b>를 골라 토의 문장을 완성한 뒤 <b>✔ 확인하기</b>를 누르세요.',
           hint: '카드를 눌러 3개를 고르면 오른쪽(아래)에 이유 목록이 나타나요. 에너지 균형이나 앞에서 읽은 자료를 근거로 한 이유가 알맞아요.',
           manual: true,
-          setup() { ensure('habit', 'cards'); },
+          setup() { ensure('habit', 'cards'); S.hab.picks = []; S.hab.reason = [-1, -1, -1]; updateCtl(); },
           check: habFeedback,
           explain: '좋은 토의 문장은 <b>“무엇을 하겠다 + 근거”</b>를 함께 말해요. 예: “신체 활동을 늘리겠다. 에너지 소비가 늘어 균형을 맞추는 데 도움이 되고, 걸음 수가 많은 학생의 BMI가 대체로 낮은 경향이 있기 때문이다.” 그러나 이 자료가 원인을 증명한 것은 아니라는 점도 함께 말해야 해요.',
         },

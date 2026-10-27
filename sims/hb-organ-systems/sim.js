@@ -134,7 +134,7 @@
      ① 운동 중 몸
      ====================================================== */
   const RG = () => (PHONE
-    ? { sceneY: 40, ground: 214, rx: 120, dials: [{ x: 86, y: 290, r: 58 }, { x: 222, y: 290, r: 58 }], therm: { x: 330, y: 244, h: 90 }, bars: { x: 14, y: 392, w: 496 }, inner: { x: 330, y: 84 } }
+    ? { sceneY: 40, ground: 214, rx: 120, dials: [{ x: 86, y: 302, r: 52 }, { x: 222, y: 302, r: 52 }], therm: { x: 330, y: 258, h: 80 }, bars: { x: 14, y: 392, w: 496 }, inner: { x: 330, y: 84 } }
     : { sceneY: 12, ground: 280, rx: 175, dials: [{ x: 452, y: 124, r: 64 }, { x: 590, y: 124, r: 64 }], therm: { x: 728, y: 40, h: 140 }, bars: { x: 400, y: 240, w: 290 }, inner: { x: 318, y: 92 } });
   const TG = () => (PHONE
     ? { x: 10, y: 452, hdr: 34, rh: 44, cols: [124, 108, 108, 160], w: 500 }
@@ -333,11 +333,11 @@
     // 식 카드
     const f = g.form; card(f.x, f.y, f.w, f.h, '#fff', '#d1fae5');
     T(f.x + 12, f.y + 24, '📐 계산식', 14.5, INK, 'left', 800);
-    block(f.x + 12, f.y + 48, f.w - 24, '① 심박출량(L/분) = 심박수 × 1회 박출량(mL) ÷ 1000', P(13.5, 12.5), '#334155', 17, 800);
-    block(f.x + 12, f.y + 48 + P(26, 30), f.w - 24, '② 산소 소비량(L/분) = 심박출량 × 산소 함량 차 ÷ 100', P(13.5, 12.5), '#334155', 17, 800);
+    block(f.x + 12, f.y + 48, f.w - 24, '① 심박출량(L/분) = 심박수 × 1회 박출량(mL) / 1000', P(13.5, 12.5), '#334155', 17, 800);
+    block(f.x + 12, f.y + 48 + P(26, 30), f.w - 24, '② 산소 소비량(L/분) = 심박출량 × 산소 함량 차 / 100', P(13.5, 12.5), '#334155', 17, 800);
     if (o.ok[o.c]) {
-      T(f.x + 12, f.y + f.h - P(36, 36), '① ' + C.hr + ' × ' + C.sv + ' ÷ 1000 = ' + fmtCO(C.co) + ' ≈ ' + C.coR + ' L/분', P(14, 13), '#166534', 'left', 800);
-      T(f.x + 12, f.y + f.h - 14, '② ' + C.coR + ' × ' + C.avd + ' ÷ 100 = ' + (C.vo === 3 ? '3.0' : C.vo) + ' L/분', P(14, 13), '#166534', 'left', 800);
+      T(f.x + 12, f.y + f.h - P(36, 36), '① ' + C.hr + ' × ' + C.sv + ' / 1000 = ' + fmtCO(C.co) + ' ≈ ' + C.coR + ' L/분', P(14, 13), '#166534', 'left', 800);
+      T(f.x + 12, f.y + f.h - 14, '② ' + C.coR + ' × ' + C.avd + ' / 100 = ' + (C.vo === 3 ? '3.0' : C.vo) + ' L/분', P(14, 13), '#166534', 'left', 800);
     } else T(f.x + 12, f.y + f.h - 16, '오른쪽 칸에 계산 결과를 써 보세요.', 13, MUTED, 'left', 700);
     // 순환 모형
     const L = g.L, H = g.H, M = g.M, pts = loopPts();
@@ -393,7 +393,7 @@
     const okCO = closeTo(co, [C.co, C.coR], 0.051);
     const okVO = o.c === 'rest' ? (vo >= 0.24 && vo <= 0.26) : (vo >= 2.9 && vo <= 3.05);
     if (okCO && okVO) { o.ok[o.c] = true; o.note = '정답이에요! 산소 소비량은 ' + (C.vo === 3 ? '3.0' : C.vo) + ' L/분이에요.'; Sound.success(); if (!RM) parts.burst(OG().gauge.x, OG().gauge.y - 20, { count: 16, speed: 150, size: 3.4, life: 0.8, shape: 'star' }); updateCtl(); return true; }
-    o.note = !okCO ? '① 심박출량: ' + C.hr + ' × ' + C.sv + ' ÷ 1000 을 다시 계산해 봐요.' : '② 산소 소비량: 심박출량(' + C.coR + ' L/분) × ' + C.avd + ' ÷ 100 을 다시 계산해 봐요.';
+    o.note = !okCO ? '① 심박출량: ' + C.hr + ' × ' + C.sv + ' / 1000 을 다시 계산해 봐요.' : '② 산소 소비량: 심박출량(' + C.coR + ' L/분) × ' + C.avd + ' / 100 을 다시 계산해 봐요.';
     Sound.fail(); say(o.note); updateCtl(); return false;
   }
 

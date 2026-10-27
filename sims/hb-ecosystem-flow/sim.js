@@ -805,7 +805,9 @@
     // 원인 표시
     const cp = bnPos(sc.cause);
     D.ring(cp[0], cp[1], BR + 10, t, { color: '#dc2626', width: 3 });
-    D.label(cp[0], cp[1] - BR - (PHONE ? 22 : 24), '원인: ' + sc.n, { bg: '#dc2626', size: PHONE ? 13 : 13 });
+    { const lt = '원인: ' + sc.n; ctx.save(); ctx.font = D.font(13, 800); const lw2 = ctx.measureText(lt).width + 22; ctx.restore();
+      const lx = clamp(cp[0], lw2 / 2 + 8, (PHONE ? VW - 6 : 592) - lw2 / 2);
+      D.label(lx, cp[1] - BR - (PHONE ? 22 : 24), lt, { bg: '#dc2626', size: PHONE ? 13 : 13 }); }
     // 설명 카드
     const cx = PHONE ? 8 : 600, cy = PHONE ? 452 : 20, cw = PHONE ? 464 : 192, chh = PHONE ? 180 : 520;
     panel(cx, cy, cw, chh, 16, '#fff');

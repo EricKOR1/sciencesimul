@@ -820,7 +820,7 @@
           id: 'bd', title: 'S자 곡선과 J자 곡선, 출생과 사망',
           goal: '<b>먹이·공간 무한(이론)</b>을 눌러 J자 곡선을 본 뒤, 날짜를 바꿔 <b>출생수와 사망수가 같아지는 날</b>을 찾으세요. (한정 조건으로 돌아와 확인해요)',
           hint: '아래 슬라이더나 점을 눌러 날짜를 바꾸면 출생과 사망 막대가 달라져요. 개체 수가 가장 많고 더 늘지 않는 때를 찾아요.',
-          setup() { setMode('growth'); },
+          setup() { setMode('growth'); S.gr.jSeen = false; S.gr.env = 'S'; S.gr.day = 8; updateCtl(); },
           check: () => S.gr.jSeen && grCount() === 10 && S.gr.day >= 16,
           hold: 0.6,
           status: () => mark(S.gr.jSeen) + ' J자 곡선 보기 &nbsp; ' + mark(S.gr.day >= 16) + ' 출생 = 사망인 날 (지금 ' + S.gr.day + '일)',

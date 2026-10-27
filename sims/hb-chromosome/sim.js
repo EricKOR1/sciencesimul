@@ -921,7 +921,7 @@
     const curLv = game ? game.level + 1 : 1, showAll = FREE();
     $$('#modeSeg button').forEach((b) => { b.classList.toggle('on', b.dataset.mode === S.mode); b.classList.toggle('lv-off', !showAll && +b.dataset.lv !== curLv && b.dataset.mode !== S.mode); });
     $('#orderWrap').hidden = !(S.ui.order && S.mode === 'struct');
-    $('#nestWrap').hidden = !(S.ui.nest && (S.mode === 'gene' || S.mode === 'nest'));
+    $('#nestWrap').hidden = !((S.ui.nest && (S.mode === 'gene' || S.mode === 'nest')) || (showAll && S.mode === 'nest'));
     const z = S.z;
     $('#sZoom').value = Math.round(z.target * 100); $('#sZoom').style.setProperty('--pct', (z.target / 3 * 100) + '%');
     $('#oZoom').textContent = STAGE_NAMES[clamp(Math.round(z.target), 0, 3)];

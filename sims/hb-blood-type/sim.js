@@ -827,9 +827,10 @@
     const comp = clumpComps();
     Object.keys(comp.size).forEach((rt) => {
       if (comp.size[rt] < 3) return; const mem = K.cells.filter((c, i) => comp.id[i] === +rt); let sx = 0, sy = 0; mem.forEach((c) => { sx += c.x; sy += c.y; }); sx /= mem.length; sy /= mem.length;
-      let rad = 0; mem.forEach((c) => { rad = Math.max(rad, Math.hypot(c.x - sx, c.y - sy) + r + 10); });
-      ctx.save(); ctx.setLineDash([8, 6]); ctx.strokeStyle = '#be123c'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(sx, sy, rad, 0, TAU); ctx.stroke(); ctx.restore();
-      D.label(sx, sy - rad - 12, '응집 덩어리 ' + comp.size[rt] + '개', { bg: '#be123c', size: PHONE ? 12 : 13, pad: 7 });
+      // 덩어리에 속한 세포마다 점선 테두리 (길게 이어진 덩어리도 화면 밖으로 커지지 않아요)
+      let top = 1e9; mem.forEach((c) => { top = Math.min(top, c.y); });
+      ctx.save(); ctx.setLineDash([6, 5]); ctx.strokeStyle = '#be123c'; ctx.lineWidth = 2.4; mem.forEach((c) => { ctx.beginPath(); ctx.arc(c.x, c.y, r + 8, 0, TAU); ctx.stroke(); }); ctx.restore();
+      D.label(clamp(sx, C0.x + 90, C0.x + C0.w - 90), Math.max(C0.y + 54, top - r - 22), '응집 덩어리 ' + comp.size[rt] + '개', { bg: '#be123c', size: PHONE ? 12 : 13, pad: 7 });
     });
     // 항체 다리
     K.links.forEach((l) => {
@@ -1002,7 +1003,7 @@
 
   /* ================= ③ 혈액형 검사 (모의 키트) ================= */
   const TL = PHONE
-    ? { rack: { x: 8, y: 8, w: 464, h: 100 }, tx: (i) => 56 + i * 92, ty: 30, sl: { x: 8, y: 116, w: 464, h: 172 }, wx: [96, 240, 384], wy: 214, wr: 42, zm: { x: 8, y: 296, w: 464, h: 118 }, zx: 96, zy: 356, zr: 46, tab: { x: 8, y: 422, w: 464 } }
+    ? { rack: { x: 8, y: 8, w: 464, h: 100 }, tx: (i) => 56 + i * 92, ty: 30, sl: { x: 8, y: 116, w: 464, h: 172 }, wx: [96, 240, 384], wy: 224, wr: 42, zm: { x: 8, y: 296, w: 464, h: 118 }, zx: 96, zy: 356, zr: 46, tab: { x: 8, y: 422, w: 464 } }
     : { rack: { x: 16, y: 14, w: 768, h: 120 }, tx: (i) => 110 + i * 140, ty: 34, sl: { x: 16, y: 142, w: 500, h: 206 }, wx: [126, 266, 406], wy: 256, wr: 50, zm: { x: 524, y: 142, w: 260, h: 206 }, zx: 654, zy: 246, zr: 62, tab: { x: 16, y: 356, w: 768 } };
   function makeTest() {
     S.TS = { loaded: null, phase: 'idle', t: 0, tested: SAMPLES.map(() => false), zoom: 0, ins: new Inset(), shakeN: 0 };
@@ -1068,7 +1069,7 @@
     const ags = T0.loaded != null ? antigensOf(SAMPLES[T0.loaded]) : [];
     if (T0.phase === 'read' && T0.loaded != null) { T0.ins.draw(TL.zx, TL.zy, TL.zr, ags, SERUM[T0.zoom].k); }
     else { ctx.save(); ctx.globalAlpha = 0.5; T0.ins.draw(TL.zx, TL.zy, TL.zr, [], 'tri', '#eef2f5'); ctx.restore(); }
-    T(zm.x + (PHONE ? 14 : zm.w / 2), zm.y + 22, '🔍 현미경 확대', PHONE ? 13 : 14, '#26324a', PHONE ? 'left' : 'center', 900);
+    T(PHONE ? TL.zx + TL.zr + 22 : zm.x + zm.w / 2, zm.y + 22, '🔍 현미경 확대', PHONE ? 13 : 14, '#26324a', PHONE ? 'left' : 'center', 900);
     const tx = PHONE ? TL.zx + TL.zr + 22 : zm.x + zm.w / 2, tw = PHONE ? zm.w - (TL.zx + TL.zr + 22 - zm.x) - 12 : zm.w - 20;
     if (T0.phase === 'read' && T0.loaded != null) { const w = SERUM[T0.zoom]; const msg = w.name + ': ' + (aggl(ags, w.k) ? '적혈구가 항체에 이어 붙어 덩어리가 됐어요' : '적혈구가 흩어져 있어요 (응집 없음)'); if (PHONE) textBlock(tx, zm.y + 48, tw, msg + ' (칸을 눌러 바꿔요)', 12.5, '#374151', 17, 700); else textBlock(zm.x + 12, zm.y + zm.h - 16 - 18, zm.w - 24, msg, 12.5, '#374151', 17, 700); }
     else if (PHONE) textBlock(tx, zm.y + 48, tw, '흔들어서 결과를 보면 여기에 확대 모습이 나와요.', 12.5, '#6b7280', 17, 700);

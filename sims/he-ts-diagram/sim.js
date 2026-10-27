@@ -802,7 +802,7 @@
   const coolSinks = () => r2(coolRho()) >= RHO_DEEP;
   const tMin = (s) => Math.ceil(FREEZE(s) * 10 - 1e-9) / 10;
   function coolSet(T, Sx) {
-    const c = S.cool; c.S = r1(Sx); c.T = r1(Math.max(T, tMin(c.S))); c.X = r1(8 - c.T);
+    const c = S.cool; c.S = r1(Math.min(36, Sx)); c.T = r1(Math.max(T, tMin(c.S))); c.X = r1(8 - c.T);
     const last = c.path[c.path.length - 1]; if (!last || last[0] !== c.S || last[1] !== c.T) c.path.push([c.S, c.T]);
     if (c.path.length > 400) c.path.shift();
   }
@@ -935,7 +935,7 @@
       else b.textContent = i === 0 ? '① 점을 2개 골라요' : '② 점을 2개 골라요';
     });
     const sinkable = S.cool.T <= tMin(S.cool.S) + 0.1;
-    $('#bFreeze').disabled = !sinkable; $('#bEvap').disabled = S.cool.S >= 36 - 1e-9;
+    $('#bFreeze').disabled = !sinkable || S.cool.S >= 36 - 1e-9; $('#bEvap').disabled = S.cool.S >= 36 - 1e-9;
     $$('#colRows select').forEach((s) => { s.value = S.colPick[s.dataset.i] || ''; });
   }
   $$('#modeSeg button').forEach((b) => b.addEventListener('click', () => { Sound.click(); setView(b.dataset.view); }));

@@ -695,7 +695,7 @@
   /* =========================================================
      2단계: 위도별 표층 수온·염분 (점 찍기), 깊이별 수온 곡선 짝짓기, 증발−강수와 염분
      ========================================================= */
-  const LATBOX = (R, kind) => ({ l: PHONE ? 72 : 58, r: 18, t: 34, b: 38, noDraw: false, xmin: -6, xmax: 90, ymin: kind === 't' ? -4 : 32.5, ymax: kind === 't' ? 32 : 36.5,
+  const LATBOX = (R, kind) => ({ l: PHONE ? 72 : 58, r: 18, t: 34, b: 38, noDraw: false, xmin: -6, xmax: 90, ymin: kind === 't' ? -10 : 32, ymax: kind === 't' ? 32 : 36.5,
     xticks: LATS, xfmt: (v) => v + '°', yticks: kind === 't' ? [0, 10, 20, 30] : [33, 34, 35, 36], yfmt: (v) => v, size: 12, xlabel: '위도 (°)', ylabel: kind === 't' ? '수온 (°C)' : '염분 (psu)' });
   const GEO = {
     t: plotFrame(LY.sst, Object.assign(LATBOX(LY.sst, 't'), { noDraw: true })),
@@ -704,7 +704,7 @@
   const HCOL = { t: '#f97316', s: '#0d9488' };
   const LATVAL = { t: SST, s: SSS };
   const TOL = { t: 1.5, s: 0.25 };
-  const valAtY = (kind, y) => { const P = GEO[kind], lo = kind === 't' ? -4 : 32.5, hi = kind === 't' ? 32 : 36.5; return lo + ((P.y1 - y) / (P.y1 - P.y0)) * (hi - lo); };
+  const valAtY = (kind, y) => { const P = GEO[kind], lo = kind === 't' ? -10 : 32, hi = kind === 't' ? 32 : 36.5; return lo + ((P.y1 - y) / (P.y1 - P.y0)) * (hi - lo); };
   const yAtVal = (kind, v) => GEO[kind].gy(v);
   function initHandles() {
     S.handles = [];
@@ -749,7 +749,7 @@
           if (kind === 's' && S.flag === h.lat) D.ring(h.x, h.y, 17, t, { color: '#dc2626', speed: 1, width: 3 });
         }
       });
-      if (kind === 's' && placedCount('s') === 5 && S.flag == null) D.text((P.x0 + P.x1) / 2, P.y0 + 18, '염분이 가장 높은 점을 눌러 보세요', { size: 14, weight: 800, color: '#dc2626' });
+      if (kind === 's' && placedCount('s') === 5 && S.flag == null) D.text((P.x0 + P.x1) / 2, P.y1 - 12, '염분이 가장 높은 점을 눌러 보세요', { size: 14, weight: 800, color: '#dc2626' });
     });
     // 오른쪽 표
     const R = LY.latInfo; panel(R.x, R.y, R.w, R.h);
@@ -834,7 +834,7 @@
       D.label(P.gx(la), P.gy(SSS[i]) - 16, f1(SSS[i]), { bg: '#0d9488', size: 12.5, pad: 6 });
     });
     if (S.evK > 0.5) {
-      D.text(P.gx(20), Math.max(P.y0 + 34, epY(EP[1] * S.evK, P) - 8), '증발 > 강수', { size: 12.5, weight: 800, color: '#9a3412', stroke: 'rgba(255,255,255,.85)', strokeWidth: 3.5 });
+      D.text(P.gx(20), epY(0, P) + 17, '증발 > 강수', { size: 12.5, weight: 800, color: '#9a3412', stroke: 'rgba(255,255,255,.85)', strokeWidth: 3.5 });
       D.text(P.gx(0), epY(EP[0] * S.evK, P) + 16, '강수 > 증발', { size: 12.5, weight: 800, color: '#1d4ed8', stroke: 'rgba(255,255,255,.85)', strokeWidth: 3.5 });
     }
     // 아래 표
