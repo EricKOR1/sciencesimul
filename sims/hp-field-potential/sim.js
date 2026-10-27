@@ -369,6 +369,7 @@
     updateCtl();
   }
   function tokBack() { const t = S.fl.tok; if (t.st === 'tray') return; t.st = 'returning'; t.trail = []; updateCtl(); }
+  const FLY_MIN = 70;                                   // 시험 전하가 이만큼(px) 이상 움직여야 '관찰했다'고 세요
   const inMap = (x, y, m) => x >= MX0 + (m || 0) && x <= MX1 - (m || 0) && y >= MY0 + (m || 0) && y <= MY1 - (m || 0);
   const nearCharge = (x, y, r) => S.fl.ch.some((c) => Math.hypot(x - c.x, y - c.y) < r);
   let dragCh = null;
@@ -445,10 +446,11 @@
         const sp = clamp(20 + 60 * Math.sqrt(f.e), 30, 190);
         t.x += f.ux * sp * h; t.y += f.uy * sp * h; t.path += sp * h;
         if (Math.hypot(t.x - t.lastTx, t.y - t.lastTy) > 7) { t.trail.push({ x: t.x, y: t.y }); t.lastTx = t.x; t.lastTy = t.y; if (t.trail.length > 160) t.trail.shift(); }
-        if (t.path >= 140 && t.pre === 'p1') fl.done.plus = true;
+        if (t.path >= FLY_MIN && t.pre === 'p1') fl.done.plus = true;
         const hit = fl.ch.find((c) => c.s < 0 && Math.hypot(t.x - c.x, t.y - c.y) < QR + 4);
         if (hit) {
-          if (t.path >= 140) { if (t.pre === 'n1') fl.done.minus = true; if (t.pre === 'pn') fl.done.pair = true; }
+          if (t.path >= FLY_MIN) { if (t.pre === 'n1') fl.done.minus = true; if (t.pre === 'pn') fl.done.pair = true; }
+          else if (t.pre === 'n1' || t.pre === 'pn') showHint('너무 가까이에서 출발해서 기록하지 않았어요. 전하에서 더 멀리 놓고 다시 해 보세요.', 3800);
           parts.burst(t.x, t.y, { count: 12, speed: 110, size: 3, colors: ['#ffb400', '#2f6df6', '#ffffff'], gravity: 0 });
           Sound.success(); t.st = 'absorbed'; t.wait = 0.8; ended = true; updateCtl();
         } else if (!inMap(t.x, t.y, -4)) { t.st = 'returning'; ended = true; updateCtl(); }
@@ -1086,7 +1088,7 @@
     '<ellipse cx="150" cy="56" rx="26" ry="17" fill="#8a6a44"/><circle cx="174" cy="42" r="10" fill="#8a6a44"/><polygon points="183,42 194,45 183,48" fill="#f2b630"/><circle cx="177" cy="40" r="2" fill="#fff"/>' +
     '<line x1="144" y1="70" x2="144" y2="78" stroke="#f2873a" stroke-width="3"/><line x1="158" y1="70" x2="158" y2="78" stroke="#f2873a" stroke-width="3"/>' +
     '<text x="144" y="100" font-size="12" font-weight="800" text-anchor="middle" fill="#26324a">발 1</text><text x="158" y="114" font-size="12" font-weight="800" text-anchor="middle" fill="#26324a">발 2</text>' +
-    '<text x="40" y="66" font-size="13" font-weight="800" fill="#b4231f">고압선 (매우 높은 전위)</text></svg>';
+    '<text x="150" y="24" font-size="13" font-weight="800" fill="#b4231f" text-anchor="middle">고압선 (매우 높은 전위)</text></svg>';
   const levels = [
     {
       title: '전기력: 전하끼리 주고받는 힘', short: '전기력', icon: '⚡', phase: '관찰',
@@ -1238,6 +1240,11 @@
     },
   ];
 
+  /* 이어 하기(새로고침)로 중간 미션에서 열려도 미션 setup()이 만든 장면을 덮어쓰지 않도록, 장면 상태를 게임보다 먼저 만들어요 */
+  loadPreset('p1', true);
+  plReset(true);
+  setScene('force');
+  updateCtl();
   game = SciSim.game({
     simId: 'hp-field-potential', mount: '#game', badge: '전기장 박사', homeHref: '../../index.html#hp',
     featureLabels: { force: '⚡ 두 점전하와 전기력 화살표', field: '🧭 전기장 화살표 지도 · 시험 전하', plates: '🔋 평행판 · 전위 그래프 · 전자총', apply: '🏠 회로 전위 · 집진기 · 번개' },
@@ -1246,10 +1253,6 @@
   });
 
   /* ---------- 시작 ---------- */
-  loadPreset('p1', true);
-  plReset(true);
-  setScene('force');
-  updateCtl();
   function stepAll1(dt) {
     if (S.mode === 'force') stepForce(dt);
     else if (S.mode === 'field') stepField(dt);
@@ -1263,6 +1266,7 @@
     if (S.mode !== lastMode) { lastMode = S.mode; updateCtl(); }
     if (S.gate && game && game.phase !== 'active') { S.gate = ''; updateCtl(); }
     view.apply();
+    ctx.fillStyle = '#eef2fa'; ctx.fillRect(0, 0, VW, VH);   // 매 프레임 전체를 다시 칠해요 (아래 자료 영역의 그림자가 겹쳐 쌓여 어두워지지 않게)
     stepAll1(dt);
     if (S.mode === 'force') drawForce(); else if (S.mode === 'field') drawField(); else if (S.mode === 'plates') drawPlates(); else drawApply();
     parts.update(dt); parts.draw(ctx);

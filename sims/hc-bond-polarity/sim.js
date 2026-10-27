@@ -388,8 +388,8 @@
     if (!sel) { T(pv.x + pv.w / 2, pv.y + pv.h / 2, '카드를 누르거나 끌면 입자 모형이 나와요', 14, '#a2abb9', 'center', 800); return; }
     const ion = S.sc.ion;
     T(pv.x + 14, pv.y + 24, '🔬 ' + sel.label + ' 입자 모형', 14, PURD, 'left', 900);
-    drawBondModel({ x: pv.x + pv.w / 2, y: pv.y + (PHONE ? 76 : 86), sep: PHONE ? 150 : 170, r: PHONE ? 24 : 28, A: { s: sel.a, e: sel.ea }, B: { s: sel.b, e: sel.eb }, order: 1, pos: posOf(sel.ea, sel.eb), q: qOf(sel.d10), ion, arrow: 1 - ion, d10: sel.d10, U: PHONE ? 40 : 46, delta: sel.pol, ao: 24, dy: 8 });
-    if (ion > 0.5) { const x0 = pv.x + pv.w / 2 - (PHONE ? 75 : 85), x1 = pv.x + pv.w / 2 + (PHONE ? 75 : 85); T(x0, pv.y + (PHONE ? 116 : 130), sel.a + '⁺', 14, '#c0392b', 'center', 900); T(x1, pv.y + (PHONE ? 116 : 130), sel.b + '⁻', 14, '#2457d6', 'center', 900); }
+    drawBondModel({ x: pv.x + pv.w / 2, y: pv.y + (PHONE ? 90 : 94), sep: PHONE ? 150 : 170, r: PHONE ? 24 : 28, A: { s: sel.a, e: sel.ea }, B: { s: sel.b, e: sel.eb }, order: 1, pos: posOf(sel.ea, sel.eb), q: qOf(sel.d10), ion, arrow: 1 - ion, d10: sel.d10, U: PHONE ? 40 : 46, delta: sel.pol, ao: 20, dy: 3 });
+    if (ion > 0.5) { const x0 = pv.x + pv.w / 2 - (PHONE ? 75 : 85), x1 = pv.x + pv.w / 2 + (PHONE ? 75 : 85); T(x0, pv.y + (PHONE ? 130 : 138), sel.a + '⁺', 14, '#c0392b', 'center', 900); T(x1, pv.y + (PHONE ? 130 : 138), sel.b + '⁻', 14, '#2457d6', 'center', 900); }
     const txt = sel.ionic ? '금속 + 비금속: 전자가 거의 완전히 이동해 ' + sel.a + '⁺, ' + sel.b + '⁻ 이온이 돼요 → 이온 결합 (극성의 끝)' : sel.pol ? '비금속끼리: 전자쌍을 공유하지만 ' + head(sel) + ' 쪽으로 치우쳐요 → 극성 공유 결합 (Δχ ' + f1(sel.d10) + ')' : '같은 원자끼리: 전자쌍이 가운데 → 무극성 공유 결합';
     textBlock(pv.x + 14, pv.y + pv.h - (PHONE ? 26 : 34), pv.w - 28, txt, 12.5, INK, 17, 800);
   }

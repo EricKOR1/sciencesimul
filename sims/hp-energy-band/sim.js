@@ -328,7 +328,7 @@
     // 전지
     const bx = g.p[0] + g.p[2] - (PHONE ? 70 : 62), by = g.vbY - (PHONE ? 150 : 210);
     D.shadow(() => { D.roundRect(bx - 20, by - 24, 40, 70, 8); ctx.fillStyle = '#394258'; ctx.fill(); }, { blur: 6, y: 2 });
-    T(bx, by - 6, '전지', 12, '#fff', 'center', 800); T(bx, by + 12, '+  −', 14, '#ffd447', 'center', 800);
+    T(bx, by - 6, '전지', 12, '#fff', 'center', 800); T(bx, by + 12, '−  +', 14, '#ffd447', 'center', 800);
     D.arrow(bx + 18, by + 74, bx - 28, by + 74, { color: '#e2552a', width: 3, head: 9 }); T(bx + 22, by + 96, '전기장 방향', 11.5, '#c2410c', 'right', 700);
     textBlock(g.p[0] + 14, g.p[1] + 84, (PHONE ? 250 : 340), '전류가 흐르려면 전자가 움직일 수 있는 빈 준위가 필요해요. 가득 찬 띠의 전자는 갈 곳이 없고, 전도띠로 올라간 전자만 전류를 나를 수 있어요.', PHONE ? 12 : 13.5, '#3a465c', PHONE ? 16 : 19, 700);
     if (eg === 0) {
@@ -424,6 +424,9 @@
       h.p = SciSim.approach(h.p, h.s, dt, 16);
       if (on) { h.hopT += dt * 1.6; if (h.hopT >= 1) { h.hopT = 0; const to = h.s - 1; if (to < 0) { c.H.splice(i, 1); parts.burst(g.x0, g.vbY + g.vbH / 2, { count: 4, speed: 50, size: 2.2, colors: ['#e2552a', '#fff'], gravity: 0, life: 0.35 }); continue; } if (!c.H.some((o) => o.s === to)) { h.hopFrom = h.s; h.s = to; } } }
     }
+    // 전극에서 전자와 양공은 하나씩 짝을 이루어 사라져요: 전자가 +극으로 나가면 −극에서 전자가 들어와 양공 하나를 메우고, 양공이 −극으로 나가면 전도띠 전자도 하나 나가요 (쌍의 수가 늘 같아요)
+    while (c.H.length > c.E.length) { let bi = 0; c.H.forEach((h, j) => { if (h.s < c.H[bi].s) bi = j; }); parts.burst(slotX(c.H[bi].s), g.vbY + g.vbH / 2, { count: 4, speed: 50, size: 2.2, colors: ['#e2552a', '#fff'], gravity: 0, life: 0.35 }); c.H.splice(bi, 1); }
+    while (c.E.length > c.H.length) { let bi = 0; c.E.forEach((e, j) => { if (e.x > c.E[bi].x) bi = j; }); parts.burst(c.E[bi].x, g.cbY + g.cbH / 2, { count: 4, speed: 50, size: 2.2, colors: ['#2f6df6', '#fff'], gravity: 0, life: 0.35 }); c.E.splice(bi, 1); }
     c.flash.forEach((f) => { f.t += dt; }); c.flash = c.flash.filter((f) => f.t < 0.5);
     // 미션 기록
     const cnt = c.E.length;
@@ -520,7 +523,7 @@
     if (kind !== 'none') {
       ctx.strokeStyle = kind === 'P' ? '#e2552a' : '#7c5cff'; ctx.lineWidth = 3; ctx.setLineDash([7, 4]); ctx.beginPath(); ctx.moveTo(x + w * 0.3, dy); ctx.lineTo(x + w * 0.9, dy); ctx.stroke(); ctx.setLineDash([]);
       T(x + w * 0.3 - 6, dy + (kind === 'P' ? 15 : -7), (kind === 'P' ? '도너 준위' : '억셉터 준위'), 11.5, kind === 'P' ? '#c2410c' : '#5b3fd0', 'right', 800);
-      if (!o.nodepth) T(x + w * 0.5, dy + (kind === 'P' ? -6 : 15), '준위 깊이 ' + E_DON + ' eV', 10.5, '#5a6679', 'center', 700);
+      if (!o.nodepth) T(x + w * 0.5, dy + (kind === 'P' ? 32 : -24), '준위 깊이 ' + E_DON + ' eV', 10.5, '#5a6679', 'center', 700);
       const tt = (o.t || 0) % 1.6;
       if (kind === 'P') { eDot(x + w * 0.6, dy, 5.5); if (tt < 0.8) { const q = SciSim.ease.outCubic(tt / 0.8); eDot(x + w * 0.6 + 14, lerp(dy, cbB - 14, q), 5.5); D.arrow(x + w * 0.6 + 26, dy - 4, x + w * 0.6 + 26, cbB - 6, { color: 'rgba(226,85,42,.5)', width: 2, head: 7 }); } }
       else { if (tt < 0.8) { const q = SciSim.ease.outCubic(tt / 0.8); eDot(x + w * 0.6, lerp(vbT + 10, dy, q), 5.5); } hDot(x + w * 0.45, vbT + 14, 5.5); }
@@ -781,7 +784,6 @@
   });
 
   /* ---------- 시작 ---------- */
-  setScene('band');
   let lastLvl = -1, lastFree = false;
   SciSim.loop((dt, t) => {
     S.t = t;

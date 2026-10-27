@@ -252,7 +252,7 @@
     const tags = [['중3', '계수 맞추기'], ['새로', '몰질량'], ['중3', '계수비'], ['새로', p.unit === 'g' ? '× 몰질량' : '× 22.4 L/mol']];
     const lines = [
       ['계수비의 두 항', g + ' : ' + a, '= ' + p.cg + ' : ' + p.ca],
-      ['n = w ÷ M', p.gwTxt + ' g ÷ ' + fT(p.Mg) + ' g/mol', '= ' + (s.stage >= 1 ? fT(p.n1) : '?') + ' mol'],
+      ['n = w / M', p.gwTxt + ' g / ' + fT(p.Mg) + ' g/mol', '= ' + (s.stage >= 1 ? fT(p.n1) : '?') + ' mol'],
       ['몰수 × 계수비', (s.stage >= 1 ? fT(p.n1) + ' mol' : 'n') + ' × ' + p.ca + '/' + p.cg, '= ' + (s.stage >= 2 ? fT(p.n2) : '?') + ' mol'],
       [p.unit === 'g' ? 'w = n × M' : 'V = n × 22.4', (s.stage >= 2 ? fT(p.n2) + ' mol' : 'n') + ' × ' + (p.unit === 'g' ? fT(p.Ma) + ' g/mol' : '22.4 L/mol'), '= ' + (s.stage >= 3 ? fT(p.ans) : '?') + ' ' + unitTxt(p)],
     ];
@@ -298,7 +298,7 @@
   /* ---- 계산 틀: 순서 카드 ---- */
   const ORD = [
     { t: '반응식을 쓰고 계수를 맞춘다', tag: '중3에서 배운 것', col: '#8b5cf6' },
-    { t: '아는 물질의 질량을 몰로 바꾼다 (÷ 몰질량)', tag: '새로 배우는 것', col: '#f59e0b' },
+    { t: '아는 물질의 질량을 몰로 바꾼다 (몰질량으로 나눈다)', tag: '새로 배우는 것', col: '#f59e0b' },
     { t: '계수비로 구하는 물질의 몰수를 구한다', tag: '중3의 계수비 → 몰수비', col: '#3b82f6' },
     { t: '몰을 질량 · 부피 · 입자 수로 바꾼다', tag: '새로 배우는 것', col: '#ec7a52' },
   ];
@@ -614,7 +614,7 @@
           title: '예제: 수소 6 g이 연소하면?',
           goal: '2H₂ + O₂ → 2H₂O에서 H₂ <b>6 g</b>이 모두 연소할 때 생기는 <b>물의 질량</b>을 ②→③→④ 단계로 구하세요.',
           hint: '② 6 g ÷ 2 g/mol = 3 mol, ③ H₂ : H₂O = 2 : 2이므로 H₂O도 3 mol, ④ 3 mol × 18 g/mol이에요.',
-          setup() { S.gate = ''; setScene('frame'); updateCtl(); },
+          setup() { S.gate = ''; resetProbs([P.h2o]); setScene('frame'); updateCtl(); },
           check: () => solved(P.h2o),
           hold: 0.5,
           status: () => { const s = stOf(P.h2o); return mark(s.stage >= 1) + ' ② 몰로 바꾸기 &nbsp; ' + mark(s.stage >= 2) + ' ③ 몰수비 &nbsp; ' + mark(s.stage >= 3) + ' ④ 질량'; },
@@ -654,7 +654,7 @@
           title: '메테인 8.0 g을 태우려면 산소는?',
           goal: 'CH₄ <b>8.0 g</b>이 완전히 연소할 때 필요한 <b>O₂의 질량</b>을 구한 뒤, <b>⚖️ 질량 보존 검산</b>까지 해 보세요.',
           hint: 'CH₄ 8.0 g ÷ 16 g/mol = 0.5 mol, 계수비 CH₄ : O₂ = 1 : 2이므로 O₂는 1.0 mol이에요. 질량은 몰질량 32 g/mol을 곱해요.',
-          setup() { S.gate = ''; S.sel.mass = 1; setScene('mass'); updateCtl(); },
+          setup() { S.gate = ''; resetProbs([P.ch4]); S.sel.mass = 1; setScene('mass'); updateCtl(); },
           check: () => solved(P.ch4) && stOf(P.ch4).ver,
           hold: 0.8,
           status: () => { const s = stOf(P.ch4); return mark(s.stage >= 1) + ' ② 몰 &nbsp; ' + mark(s.stage >= 2) + ' ③ 몰수비 &nbsp; ' + mark(s.stage >= 3) + ' ④ 질량 &nbsp; ' + mark(s.ver) + ' 검산'; },
@@ -694,7 +694,7 @@
           title: '알루미늄 5.4 g과 염산',
           goal: '2Al + 6HCl → 2AlCl₃ + 3H₂에서 Al <b>5.4 g</b>이 모두 반응할 때 생기는 <b>H₂의 부피</b>(0 °C, 1기압)를 구하세요.',
           hint: 'Al의 몰질량은 27 g/mol이에요. 계수비 Al : H₂ = 2 : 3이므로 H₂의 몰수는 Al의 1.5배예요.',
-          setup() { S.gate = ''; S.sel.vol = 1; setScene('vol'); updateCtl(); },
+          setup() { S.gate = ''; resetProbs([P.al]); S.sel.vol = 1; setScene('vol'); updateCtl(); },
           check: () => solved(P.al),
           hold: 0.5,
           status: () => { const s = stOf(P.al); return mark(s.stage >= 1) + ' ② 몰 &nbsp; ' + mark(s.stage >= 2) + ' ③ 몰수비 &nbsp; ' + mark(s.stage >= 3) + ' ④ 부피'; },

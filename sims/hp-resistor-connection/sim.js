@@ -354,7 +354,7 @@
     const th = (f) => Math.PI * (1.12 + 0.76 * f);
     ctx.strokeStyle = '#516079'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(cxg, cyg, r, th(0), th(1)); ctx.stroke();
     for (let i = 0; i <= 10; i++) { const a = th(i / 10), big = i % 5 === 0; ctx.lineWidth = big ? 2.5 : 1.2; ctx.beginPath(); ctx.moveTo(cxg + Math.cos(a) * r, cyg + Math.sin(a) * r); ctx.lineTo(cxg + Math.cos(a) * (r - (big ? 13 : 8)), cyg + Math.sin(a) * (r - (big ? 13 : 8))); ctx.stroke(); }
-    [0, 5, 10].forEach((i) => { const a = th(i / 10); T(cxg + Math.cos(a) * (r - 26), cyg + Math.sin(a) * (r - 26) + 4, hasV ? String(fmtN(full * i / 10, d.type === 'A' ? (full < 1 ? 2 : 1) : 0)) : '', 12, '#3a465c', 'center', 800); });
+    [0, 5, 10].forEach((i) => { const a = th(i / 10); T(cxg + Math.cos(a) * (r - 26), cyg + Math.sin(a) * (r - 26) + 4, hasV ? String(+(full * i / 10).toFixed(2)) : '', 12, '#3a465c', 'center', 800); });
     // 바늘
     const a = th(clamp(d.needle.value, 0, 1.05));
     ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.25)'; ctx.shadowBlur = 4; ctx.shadowOffsetY = 2;
@@ -509,9 +509,9 @@
     T(cx0 + 14, cy0 + 24, (m.conn === 'series' ? '직렬' : '병렬') + ' · 합성 저항', 13.5, '#26324a', 'left', 800);
     T(cx0 + 14, cy0 + 52, '식으로 구한 R', 12.5, '#5a6679', 'left', 700);
     textBlock(cx0 + 14, cy0 + 72, cw - 28, mdFormula(m.conn, m.n3), PHONE ? 13.5 : 14.5, '#5a4fcf', 18, 800);
-    T(cx0 + 14, cy0 + 118 - (PHONE ? 8 : 0), '재서 구한 R = V ÷ I', 12.5, '#5a6679', 'left', 700);
+    T(cx0 + 14, cy0 + 118 - (PHONE ? 8 : 0), '재서 구한 R = V / I', 12.5, '#5a6679', 'left', 700);
     if (rec) {
-      T(cx0 + 14, cy0 + 142 - (PHONE ? 8 : 0), fV(rec.V) + ' ÷ ' + fA(rec.I), 13.5, '#26324a', 'left', 800);
+      T(cx0 + 14, cy0 + 142 - (PHONE ? 8 : 0), fV(rec.V) + ' / ' + fA(rec.I), 13.5, '#26324a', 'left', 800);
       T(cx0 + 14, cy0 + 170 - (PHONE ? 10 : 0), '= ' + fR(rec.R), PHONE ? 18 : 20, '#14803f', 'left', 800);
       T(cx0 + 14, cy0 + 194 - (PHONE ? 6 : 0), '오차 ' + (rec.err >= 0 ? '+' : '−') + fmtN(Math.abs(rec.err), 1) + ' %', 13, '#5a6679', 'left', 800);
     } else T(cx0 + 14, cy0 + 142 - (PHONE ? 8 : 0), '📏 단추를 눌러 재 봐요', 13.5, '#98a2b3', 'left', 800);
@@ -525,9 +525,9 @@
   }
   function drawModelTable(x, y, w, h) {
     panel(x, y, w, h, 14);
-    T(x + 14, y + 24, '합성 저항 기록 (R = V ÷ I로 구한 값과 식의 값 비교)', 13.5, '#26324a', 'left', 800);
+    T(x + 14, y + 24, '합성 저항 기록 (R = V / I로 구한 값과 식의 값 비교)', 13.5, '#26324a', 'left', 800);
     const cols = PHONE ? [0, 0.40, 0.58, 0.76] : [0, 0.31, 0.45, 0.60, 0.76, 0.90];
-    const heads = PHONE ? ['연결', 'V ÷ I', '식', '오차'] : ['연결', '전체 전압', '전체 전류', 'R = V ÷ I', '식으로 구한 R', '오차'];
+    const heads = PHONE ? ['연결', 'V / I', '식', '오차'] : ['연결', '전체 전압', '전체 전류', 'R = V / I', '식으로 구한 R', '오차'];
     const hy = y + 52, rh = PHONE ? 30 : 32, ww = w - 28;
     heads.forEach((hd, i) => T(x + 14 + ww * cols[i], hy, hd, 12.5, '#5a6679', 'left', 800));
     ctx.strokeStyle = '#e1e6ef'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(x + 10, hy + 7); ctx.lineTo(x + w - 10, hy + 7); ctx.stroke();
@@ -570,7 +570,7 @@
     if (!S.pred) {
       panel(x, y, w, h, 14);
       T(x + 14, y + 24, '풀이 순서 카드 (이 순서대로 풀어 보세요)', 13.5, '#26324a', 'left', 800);
-      const cards = [['① 병렬부 합성', 'R₂와 R₃이 나란히 연결된 부분을 저항 한 개로 바꿔요'], ['② 전체 저항', '직렬로 이어진 R₁과 병렬부의 합성 저항을 더해요'], ['③ 전체 전류', '전원 전압 ÷ 전체 저항 (옴의 법칙)'], ['④ 전압과 전류 나누기', 'R₁ 전압 = 전류 × R₁, 병렬부 전압 = 나머지, 가지 전류 = 병렬부 전압 ÷ 저항']];
+      const cards = [['① 병렬부 합성', 'R₂와 R₃이 나란히 연결된 부분을 저항 한 개로 바꿔요'], ['② 전체 저항', '직렬로 이어진 R₁과 병렬부의 합성 저항을 더해요'], ['③ 전체 전류', '전원 전압 / 전체 저항 (옴의 법칙)'], ['④ 전압과 전류 나누기', 'R₁ 전압 = 전류 × R₁, 병렬부 전압 = 나머지, 가지 전류 = 병렬부 전압 / 저항']];
       const cols = PHONE ? 2 : 4, cw = (w - 28 - (cols - 1) * 8) / cols, chh = PHONE ? (h - 50 - 8) / 2 : h - 50;
       cards.forEach((c, i) => {
         const cx0 = x + 14 + (i % cols) * (cw + 8), cy0 = y + 40 + Math.floor(i / cols) * (chh + 8);
@@ -621,7 +621,7 @@
     } else if (S.mode === 'model') {
       const m = S.md, r = mdRec(), L = mdLanes();
       L1 = '연결 방법'; a = (m.conn === 'series' ? '직렬' : '병렬') + (m.n3 ? ' · 저항 3개' : ' · 저항 2개');
-      L2 = '재서 구한 R = V ÷ I'; b = r ? fR(r.R) : '—'; L3 = '식으로 구한 R'; c = fR(L.tot);
+      L2 = '재서 구한 R = V / I'; b = r ? fR(r.R) : '—'; L3 = '식으로 구한 R'; c = fR(L.tot);
     } else {
       const got = ['A0', 'VS', 'V1', 'A2'].filter((id) => curRecs('mixed')[id]).length;
       L1 = '전원 전압'; a = VS + ' V'; L2 = '측정한 곳 (예측 확인용)'; b = got + ' / 4'; L3 = '마지막 측정'; c = lastMeasured();
@@ -789,6 +789,9 @@
     },
   ];
 
+  /* 이어 하기(새로고침)로 중간 미션에서 열려도 미션 setup()이 만든 장면을 덮어쓰지 않도록, 장면을 게임보다 먼저 만들어요 */
+  setScene('series');
+  updateCtl();
   game = SciSim.game({
     simId: 'hp-resistor-connection', mount: '#game', badge: '회로 분석가', homeHref: '../../index.html#hp',
     featureLabels: { series: '🔌 직렬 회로 · 전류계 · 전압계', parallel: '🔀 병렬 회로 · 가지 스위치', model: '🧩 도선 통로 모형 · 합성 저항', mixed: '🎯 혼합 회로 · 예측 비교표' },
@@ -797,8 +800,6 @@
   });
 
   /* ---------- 시작 ---------- */
-  setScene('series');
-  updateCtl();
   function stepAll1(dt) {
     S.dial.needle.update(dt);
     if (S.mode === 'model') stepFlow(mdSegs(mdLanes()), dt);
@@ -811,6 +812,7 @@
     if (S.mode !== lastMode) { lastMode = S.mode; updateCtl(); }
     if (S.gate && game && game.phase !== 'active') { S.gate = ''; updateCtl(); }
     view.apply();
+    ctx.fillStyle = '#eef2fa'; ctx.fillRect(0, 0, VW, VH);   // 매 프레임 전체를 다시 칠해요 (아래 자료 영역의 그림자가 겹쳐 쌓여 어두워지지 않게)
     stepAll1(dt);
     if (S.mode === 'model') drawModel(); else drawCircuitMode(S.mode);
     parts.update(dt); parts.draw(ctx);

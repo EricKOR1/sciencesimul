@@ -359,11 +359,11 @@
     T(g.pa[0] + g.pa[2] - 14, g.pa[1] + 26, '관찰은 (B)를 닮았어요', PHONE ? 12 : 13.5, '#14653b', 'right', 800);
     // B: 계산표
     panel(g.pb[0], g.pb[1], g.pb[2], g.pb[3]);
-    T(g.pb[0] + 14, g.pb[1] + 26, '파장 → 광자 에너지 (E = 1240 ÷ λ)', PHONE ? 13 : 14.5, '#26324a', 'left', 800);
+    T(g.pb[0] + 14, g.pb[1] + 26, '파장 → 광자 에너지 (E = 1240 / λ)', PHONE ? 13 : 14.5, '#26324a', 'left', 800);
     const cols = PHONE ? [g.pb[0] + 14, g.pb[0] + 130, g.pb[0] + 270, g.pb[0] + 380] : [g.pb[0] + 18, g.pb[0] + 150, g.pb[0] + 300, g.pb[0] + 420];
     ['선', '파장 λ', '내가 계산한 E', '결과'].forEach((h, i) => T(cols[i], g.pb[1] + 52, h, 12.5, '#5a6679', 'left', 800));
     ctx.strokeStyle = '#e1e6ef'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(g.pb[0] + 10, g.pb[1] + 60); ctx.lineTo(g.pb[0] + g.pb[2] - 10, g.pb[1] + 60); ctx.stroke();
-    const rh = PHONE ? 36 : 46;
+    const rh = PHONE ? 32 : 46;
     H_LINES.forEach((ln, i) => {
       const y = g.pb[1] + 62 + i * rh + rh / 2 + 6;
       D.sphere(cols[0] + 10, y - 6, 8, wlSolid(ln.nm), { gloss: true }); T(cols[0] + 26, y, wlName(ln.nm), 13.5, '#26324a', 'left', 800);
@@ -519,7 +519,7 @@
     // 사다리
     const ld = g.lad;
     panel(ld[0], ld[1], ld[2], ld[3]);
-    T(ld[0] + 14, ld[1] + 26, '에너지 준위 E = −13.6 ÷ n² (eV)', PHONE ? 12.5 : 14, '#26324a', 'left', 800);
+    T(ld[0] + 14, ld[1] + 26, '에너지 준위 E = −13.6 / n² (eV)', PHONE ? 12.5 : 14, '#26324a', 'left', 800);
     const lx0 = ld[0] + 18, lx1 = ld[0] + (PHONE ? 130 : 130), cx0 = ld[0] + (PHONE ? 196 : 190), cw = PHONE ? 244 : 176;
     const y0line = ld[1] + 64;
     ctx.strokeStyle = '#8a95a8'; ctx.lineWidth = 2; ctx.setLineDash([6, 5]); ctx.beginPath(); ctx.moveTo(lx0, y0line); ctx.lineTo(lx1, y0line); ctx.stroke(); ctx.setLineDash([]);
@@ -875,7 +875,6 @@
   });
 
   /* ---------- 시작 ---------- */
-  setScene('spec');
   let lastLvl = -1, lastFree = false;
   SciSim.loop((dt, t) => {
     S.t = t;

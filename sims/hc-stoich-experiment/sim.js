@@ -437,9 +437,9 @@
       { on: !g.plotted, t: '자료를 그래프에 찍어 봐요.', c: MUTED },
       { on: g.plotted && !g.ok, t: 'CaCO₃가 늘어도 감소한 질량이 더 늘지 않는 곳, 직선이 꺾이는 점을 찾아요.', c: MUTED },
       { on: g.ok, t: '꺾이는 점: CaCO₃ ' + f2(KNEE_CA) + ' g, 감소 ' + f2(y5) + ' g' },
-      { on: g.ok, t: '기울기 = ' + f2(y5) + ' ÷ ' + f2(KNEE_CA) + ' = ' + fT(r6(y5 / KNEE_CA)) + ' g/g = 44 ÷ 100 (CO₂와 CaCO₃의 몰질량비)', c: '#0b7a41' },
+      { on: g.ok, t: '기울기 = ' + f2(y5) + ' / ' + f2(KNEE_CA) + ' = ' + fT(r6(y5 / KNEE_CA)) + ' g/g = 44 / 100 (CO₂와 CaCO₃의 몰질량비)', c: '#0b7a41' },
       { on: g.ok, t: 'n(HCl) = 2.0 M × 0.050 L = ' + fm(HCL_N) + ' mol (일정)' },
-      { on: g.ratioOK, t: 'n(CaCO₃) = ' + f2(KNEE_CA) + ' ÷ ' + M_CACO3 + ' = ' + fm(r6(KNEE_CA / M_CACO3)) + ' mol' },
+      { on: g.ratioOK, t: 'n(CaCO₃) = ' + f2(KNEE_CA) + ' / ' + M_CACO3 + ' = ' + fm(r6(KNEE_CA / M_CACO3)) + ' mol' },
       { on: g.ratioOK, t: 'HCl : CaCO₃ = ' + fm(HCL_N) + ' : ' + fm(r6(KNEE_CA / M_CACO3)) + ' = 2 : 1', c: VIO },
       { on: g.ratioOK, t: '= 반응식의 계수비 (CaCO₃ + 2HCl → …)', c: '#0b7a41' },
     ]);
@@ -462,9 +462,9 @@
       { on: !g.plotted, t: '보조 계 자료를 그래프에 찍어 봐요.', c: MUTED },
       { on: g.plotted && !g.ok, t: 'CaCO₃ 계와 같은 방법으로 꺾이는 점을 찾아 표시해요.', c: MUTED },
       { on: g.ok, t: '꺾이는 점: Mg ' + f2(KNEE_MG) + ' g, H₂ ' + fT(y24) + ' mL' },
-      { on: g.ok, t: 'H₂ ' + fT(y24) + ' mL ÷ 24500 mL/mol = ' + fm(r6(y24 / (VM25 * 1000))) + ' mol (25 °C, 1 mol = 24.5 L)' },
+      { on: g.ok, t: 'H₂ ' + fT(y24) + ' mL / 24500 mL/mol = ' + fm(r6(y24 / (VM25 * 1000))) + ' mol (25 °C, 1 mol = 24.5 L)' },
       { on: g.ok, t: 'n(HCl) = ' + fm(MG_HCL) + ' mol (일정)' },
-      { on: g.ratioOK, t: 'n(Mg) = ' + f2(KNEE_MG) + ' ÷ ' + M_MG + ' = ' + fm(r6(KNEE_MG / M_MG)) + ' mol' },
+      { on: g.ratioOK, t: 'n(Mg) = ' + f2(KNEE_MG) + ' / ' + M_MG + ' = ' + fm(r6(KNEE_MG / M_MG)) + ' mol' },
       { on: g.ratioOK, t: 'HCl : Mg = ' + fm(MG_HCL) + ' : ' + fm(r6(KNEE_MG / M_MG)) + ' = 2 : 1', c: VIO },
     ] : [
       { on: !c.ok, t: '결론 문장을 완성하고, 오차의 원인을 골라 보세요.', c: MUTED },
@@ -603,7 +603,7 @@
           title: '측정 방법과 이유 정하기', manual: true,
           goal: '<b>⚖️ 측정 방법</b>에서 이 실험에 쓸 방법과 그 이유를 골라 <b>✔ 확인하기</b>를 누르세요.',
           hint: '두 방법의 장단점 카드를 읽어 보세요. 이 실험실에는 전자저울이 준비되어 있어요.',
-          setup() { S.sub1 = 'meth'; setScene('plan'); updateCtl(); },
+          setup() { S.sub1 = 'meth'; S.plan.meth = ''; S.plan.rea = ''; $('#reaSel').value = ''; setScene('plan'); updateCtl(); },
           check() {
             const p = S.plan;
             if (!p.meth) return '측정 방법을 골라 주세요.';
@@ -678,7 +678,7 @@
           title: '꺾이는 점에서 몰수비 구하기',
           goal: '꺾이는 점에서 <b>CaCO₃의 몰수</b>와, HCl(0.100 mol)에 대한 <b>HCl : CaCO₃</b> 비를 구해 <b>✔ 계산 확인</b>을 누르세요.',
           hint: 'CaCO₃ 5.00 g ÷ 100 g/mol = 0.0500 mol이에요. HCl 0.100 mol ÷ 0.0500 mol이 비의 앞쪽 수예요.',
-          setup() { setScene('graph'); refreshGraphUI(); updateCtl(); },
+          setup() { S.gr.ca.ratioOK = false; ['gN', 'gR'].forEach((id) => $('#' + id).classList.remove('ok', 'bad')); setScene('graph'); refreshGraphUI(); updateCtl(); },
           check: () => S.gr.ca.ratioOK,
           hold: 0.5,
           status: () => mark(S.gr.ca.ok) + ' 꺾이는 점 &nbsp; ' + mark(S.gr.ca.ratioOK) + ' 몰수비 계산',
@@ -752,7 +752,7 @@
   });
 
   /* ---------- 시작 ---------- */
-  setScene('plan');
+  setScene(S.mode);
   let lastFree = false, lastMode = '';
   SciSim.loop((dt, t) => {
     S.t = t;
