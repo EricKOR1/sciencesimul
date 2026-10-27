@@ -320,7 +320,7 @@
     const d = S.des, y0 = Rr.y + (PHONE ? 148 : 236);
     const bxc = Rr.x + (PHONE ? 235 : 205), gxc = Rr.x + (PHONE ? 56 : 46), sxc = Rr.x + (PHONE ? 130 : 118), txc = Rr.x + Rr.w - (PHONE ? 62 : 50);
     D.roundRect(Rr.x + 14, y0, Rr.w - 28, 12, 5); ctx.fillStyle = '#b8a07a'; ctx.fill();
-    ctx.fillStyle = '#9c8662'; ctx.fillRect(Rr.x + 26, y0 + 12, 8, 14); ctx.fillRect(Rr.x + Rr.w - 34, y0 + 12, 8, 14);
+    ctx.fillStyle = '#9c8662'; ctx.fillRect(Rr.x + (PHONE ? 100 : 86), y0 + 12, 8, 14); ctx.fillRect(Rr.x + Rr.w - (PHONE ? 108 : 94), y0 + 12, 8, 14);
     const A = (id) => d.anim[id] || 0;
     const sc = PHONE ? 0.72 : 1;
     if (A('bal') > 0.02) { const a = sm(A('bal')); ctx.save(); ctx.globalAlpha = a; ctx.translate(bxc, y0); ctx.scale(sc, sc * (0.8 + 0.2 * a));
@@ -366,10 +366,10 @@
   const gasList = ['A', 'B', 'C'];
   const flaskGas = gasList.map(() => mkGas(10));
   const nearestM = (g) => { const ex = mExact(g, 300); return CAND.reduce((a, c) => (Math.abs(c.M - ex) < Math.abs(a.M - ex) ? c : a)).M; };
-  const idHL = (g) => { const v = S.id.mTyped[g]; if (v == null) return () => false; return (M) => Math.abs(M - v) <= 1.5; };
+  const idHL = (g) => { const v = S.id.mTyped[g]; if (v == null) return () => false; const ex = mExact(g, 300); return (M) => Math.abs(M - ex) <= 1.5; };
   function drawFlask(i, t) {
     const g = gasList[i], gi = GASES[g], q = flaskPos(i), sel = S.id.gas === g, R0 = 46;
-    if (sel) { ctx.fillStyle = 'rgba(124,58,237,.08)'; D.roundRect(q.cx - 70, q.cy - 112, 140, 270, 14); ctx.fill(); ctx.strokeStyle = PUR; ctx.lineWidth = 2.4; ctx.setLineDash([6, 5]); D.roundRect(q.cx - 70, q.cy - 112, 140, 270, 14); ctx.stroke(); ctx.setLineDash([]); }
+    if (sel) { ctx.fillStyle = 'rgba(124,58,237,.08)'; D.roundRect(q.cx - 70, q.cy - 112, 140, 234, 14); ctx.fill(); ctx.strokeStyle = PUR; ctx.lineWidth = 2.4; ctx.setLineDash([6, 5]); D.roundRect(q.cx - 70, q.cy - 112, 140, 234, 14); ctx.stroke(); ctx.setLineDash([]); }
     T(q.cx, q.cy - 86, '기체 ' + g, 17, INK, 'center', 800);
     // 병
     ctx.fillStyle = 'rgba(190,215,255,.32)'; ctx.strokeStyle = '#7d8da6'; ctx.lineWidth = 3;
@@ -697,7 +697,7 @@
           title: '가열한 뒤의 부피 구하기',
           goal: '문제 <b>③</b>: 압력이 일정할 때 27 °C에서 <b>127 °C</b>로 가열한 뒤의 부피를 구하세요.',
           hint: '온도는 켈빈으로 바꿔요: 127 + 273 = 400 K. 몰수 0.5, 압력 1.0을 넣고 V 칸은 비워요.',
-          setup() { S.lock = true; S.gate = ''; calcSetProb(2); setMode('calc'); },
+          setup() { S.lock = true; S.gate = ''; S.calc.solved[2] = false; calcSetProb(2); setMode('calc'); },
           check: () => S.calc.solved[2], hold: 0.5,
           status: () => '③ V ' + mark(S.calc.solved[2]),
           explain: 'V = nRT/P = (0.50 × 0.082 × 400) / 1.0 = <b>16.4 L</b>예요. 27 °C(300 K)에서는 12.3 L였고, 온도가 400 K/300 K ≈ 1.33배가 되어 부피도 약 1.33배가 됐어요.',

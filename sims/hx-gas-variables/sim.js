@@ -738,7 +738,7 @@
           title: 'P × V의 값 읽기', manual: true,
           goal: '표에서 기록한 점마다 <b>P × V</b>를 계산한 값이 모두 같아요. 그 값을 <b>atm·L</b> 단위로 쓰고 <b>✔ 확인하기</b>를 눌러요.',
           hint: '표의 맨 아랫줄이 P × V예요. 소수 첫째 자리까지 읽어요. 모든 점에서 같은 값이어야 해요.',
-          setup() { S.lock = true; S.gate = 'pv'; $('#inPV').value = ''; $('#inPV').classList.remove('ok', 'bad'); updateCtl(); },
+          setup() { S.lock = true; S.gate = 'pv'; if (S.rec.boyle.length < 2) { S.rec.boyle = [12.3, 6.15, 4.1, 2.05].map((V) => ({ V, P: NRT0 / V, born: S.t - 5, ox: 0, oy: 0 })); S.fit.boyle = 1; } $('#inPV').value = ''; $('#inPV').classList.remove('ok', 'bad'); updateCtl(); },
           check() {
             const v = parseNum($('#inPV').value);
             if (isNaN(v)) return 'P × V의 값을 숫자로 써 주세요. (단위 atm·L)';
