@@ -285,7 +285,7 @@
     if (p.t >= PUL.T_RUN) { p.st = 'done'; p.done = true; Sound.success(); updateCtl(); }
   }
   function drawPulley(dt) {
-    const p = S.pu, sc = PHONE ? 0.85 : 1.3, ppm = PHONE ? 70 : 100;
+    const p = S.pu, sc = PHONE ? 0.85 : 1.3, ppm = PHONE ? 70 : 80;   // 1 m당 화소 (추가 내려와도 mg 화살표가 아래 자료 패널에 가려지지 않게)
     bgFill('#e9f0fb', '#f6f9fe');
     T(16, 28, '🧵 수레(' + PUL.M.toFixed(1) + ' kg)와 추(' + PUL.m.toFixed(1) + ' kg)를 줄로 연결해요', PHONE ? 14 : 17, '#26324a', 'left', 800);
     const tabY = PHONE ? 100 : 96, x0 = PHONE ? 40 : 70, edge = PHONE ? 330 : 470, t = p.t, run = p.st !== 'idle';

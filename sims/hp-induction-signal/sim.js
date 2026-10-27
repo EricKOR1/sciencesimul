@@ -671,7 +671,7 @@
   });
 
   /* ---------- 컨트롤 연결 ---------- */
-  $$('#snSeg button').forEach((b) => b.addEventListener('click', () => { Sound.click(); S.sn.kind = b.dataset.v; S.sn.hist.length = 0; S.sn.plT = 0; updateCtl(); }));
+  $$('#snSeg button').forEach((b) => b.addEventListener('click', () => { Sound.click(); S.sn.kind = b.dataset.v; S.sn.hist.length = 0; S.sn.plT = 99; updateCtl(); }));
   $('#sLvl').addEventListener('input', (e) => { S.sn.lvl = +e.target.value / 100; Sound.tick(); updateCtl(); });
   $('#sPit').addEventListener('input', (e) => { S.sn.pit = +e.target.value; Sound.tick(); updateCtl(); });
   $('#sRev').addEventListener('input', (e) => { S.sn.rev = +e.target.value; Sound.tick(); updateCtl(); });
