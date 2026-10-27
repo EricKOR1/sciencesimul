@@ -200,7 +200,7 @@
     if (!f.par) { for (let x = fx + gx / 2; x < fx + g.fw; x += gx) for (let y = g.ym - fh / 2 + gy / 2; y < g.ym + fh / 2; y += gy) dotSym(x, y, 4.6); }
     else { for (let x = fx + gx / 2; x < fx + g.fw; x += gx) for (let y = g.ym - fh / 2 + gy / 2; y < g.ym + fh / 2; y += gy) D.arrow(x, y + 9, x, y - 9, { color: '#7c5cff', width: 2, head: 7 }); }
     ctx.restore();
-    T(fx, g.ym - fh / 2 - 8, f.par ? '자기장 B ↑ (도선과 나란한 방향)' : '자기장 B ⊙ (화면 밖으로)', PHONE ? 12 : 13.5, '#5b3fd0', 'left', 800);
+    T(fx, g.y1 - 14, f.par ? '자기장 B ↑ (도선과 나란한 방향)' : '자기장 B ⊙ (화면 밖으로)', PHONE ? 12 : 13.5, '#5b3fd0', 'left', 800);
     T(fx + g.fw + 6, g.ym - fh / 2 + 14, 'L = ' + f2(f.L) + ' m', PHONE ? 12 : 13.5, '#26324a', 'left', 800);
     // 레일 + 전원
     ctx.strokeStyle = '#8a95a8'; ctx.lineWidth = 6; ctx.lineCap = 'round';
@@ -549,10 +549,10 @@
     const wA = 2 + 14 * clamp(Pel / (PMAX / 2 + 1e-9), 0, 1);
     D.arrow(xs[0] + bw + 3, y + bh / 2, xs[1] - 3, y + bh / 2, { color: '#2f6df6', width: wA, head: 8 + wA * 0.5 });
     D.arrow(xs[1] + bw + 3, y + bh / 2, xs[2] - 3, y + bh / 2, { color: '#f2873a', width: Math.max(1.5, wA * SOUND_EFF * 8), head: 9 });
-    D.arrow(xs[1] + bw / 2, y + bh + 3, xs[1] + bw / 2, y + bh + 26, { color: '#e2464b', width: Math.max(2, wA * (1 - SOUND_EFF) * 0.6), head: 9 });
-    T(xs[1] + bw / 2 + 12, y + bh + 22, '대부분은 열', PHONE ? 11.5 : 12.5, '#c0392b', 'left', 800);
-    T(px + 14, py + ph - (PHONE ? 38 : 26), (s.kind === 'ac' ? '평균 전력 ' : '전력 ') + f2(Pel) + ' mW (코일 저항 R = ' + f1(R3) + ' Ω)', PHONE ? 12 : 13.5, '#26324a', 'left', 800);
-    T(px + 14, py + ph - (PHONE ? 16 : 6), '소리 에너지는 전기 에너지의 ' + Math.round(SOUND_EFF * 100) + ' %로 그렸어요 (실제 스피커는 수 % 이하)', PHONE ? 11 : 12.5, '#5a6679', 'left', 700);
+    D.arrow(xs[1] + bw / 2, y + bh + 3, xs[1] + bw / 2, y + bh + (PHONE ? 15 : 26), { color: '#e2464b', width: Math.max(2, wA * (1 - SOUND_EFF) * 0.6), head: 9 });
+    T(xs[1] + bw / 2 + 12, y + bh + (PHONE ? 14 : 22), '대부분은 열', PHONE ? 11.5 : 12.5, '#c0392b', 'left', 800);
+    T(px + 14, py + ph - (PHONE ? 30 : 26), (s.kind === 'ac' ? '평균 전력 ' : '전력 ') + f2(Pel) + ' mW (코일 저항 R = ' + f1(R3) + ' Ω)', PHONE ? 12 : 13.5, '#26324a', 'left', 800);
+    T(px + 14, py + ph - (PHONE ? 10 : 6), '소리 에너지는 전기 에너지의 ' + Math.round(SOUND_EFF * 100) + ' %로 그렸어요 (실제 스피커는 수 % 이하)', PHONE ? 11 : 12.5, '#5a6679', 'left', 700);
   }
 
   /* ================= ④ 설계 ================= */
@@ -562,7 +562,7 @@
     if (d.sweep >= 0) {
       d.sweep += dt / 4.5;
       d.sweepF = F_LO + (F_HI - F_LO) * Math.min(1, d.sweep);
-      if (d.sweep >= 1) { d.sweep = -1; d.tested = sigOf(d); Sound.success(); const ev = designOf(d); showHint('시험 완료! 1 kHz 소리 크기 ' + f2(ev.l1) + ' · 3 kHz ' + f2(ev.l3) + ' · 최대 진폭 ' + f2(ev.xmax) + ' mm', 4200); }
+      if (d.sweep >= 1) { d.sweep = -1; d.tested = sigOf(d); Sound.success(); const ev = designOf(d); showHint(PHONE ? '시험 완료! 1 kHz ' + f2(ev.l1) + ' · 3 kHz ' + f2(ev.l3) : '시험 완료! 1 kHz 소리 크기 ' + f2(ev.l1) + ' · 3 kHz ' + f2(ev.l3) + ' · 최대 진폭 ' + f2(ev.xmax) + ' mm', 4200); }
     }
   }
   const specChecks = (ev) => [
@@ -714,7 +714,7 @@
       L1 = '전류 I'; a = f1(m.I) + ' A'; L2 = '회전 속도'; b = f1(m.w / TAU) + ' 회/초'; L3 = '코일 온도'; c = Math.round(m.T) + ' °C' + (m.burnt ? ' (소손)' : '');
     } else if (S.mode === 'speaker') {
       const s = S.sp;
-      L1 = '진동판 진폭'; a = f2(xAmp3(s.A)) + ' mm'; L2 = '음의 높이'; b = s.kind === 'ac' ? s.f + ' Hz' : '소리 없음 (직류)'; L3 = '신호'; c = (s.kind === 'ac' ? '교류 ' : '직류 ') + f2(s.A) + ' A';
+      L1 = s.kind === 'ac' ? '진동판 진폭' : '진동판이 밀린 거리'; a = f2(xAmp3(s.A)) + ' mm'; L2 = '음의 높이'; b = s.kind === 'ac' ? s.f + ' Hz' : '소리 없음 (직류)'; L3 = '신호'; c = (s.kind === 'ac' ? '교류 ' : '직류 ') + f2(s.A) + ' A';
     } else {
       const ev = designOf(S.ds);
       L1 = '1 kHz 소리 크기'; a = f2(ev.l1); L2 = '3 kHz 소리 크기'; b = f2(ev.l3); L3 = '최대 진폭'; c = f2(ev.xmax) + ' mm';
@@ -882,7 +882,7 @@
             return true;
           },
           status: () => { const ev = designOf(S.ds), ch = specChecks(ev); return ch.map((c) => mark(c.ok)).join(' ') + ' 사양 ' + nSpec() + ' / 3 &nbsp; ' + mark(S.ds.tested === sigOf(S.ds)) + ' 시험함'; },
-          explain: '이 설계는 1 kHz에서 <b>' + f2(designOf({ N: 70, B: 0.6, cup: 'large', mat: 'thin', wire: 'thin' }).l1) + '</b>, 3 kHz에서 <b>' + f2(designOf({ N: 70, B: 0.6, cup: 'large', mat: 'thin', wire: 'thin' }).l3) + '</b>, 최대 진폭 <b>' + f2(designOf({ N: 70, B: 0.6, cup: 'large', mat: 'thin', wire: 'thin' }).xmax) + ' mm</b>인 설계(예: 70회 · 강한 자석 · 큰 컵 · 얇은 종이)처럼 세 사양을 함께 만족해야 해요. 소리 크기 · 음역 · 왜곡 사이에서 균형을 찾는 것이 공학 설계예요.',
+          explain: '예를 들어 70회 · 강한 자석 · 큰 컵 · 얇은 종이로 설계하면 1 kHz에서 <b>' + f2(designOf({ N: 70, B: 0.6, cup: 'large', mat: 'thin', wire: 'thin' }).l1) + '</b>, 3 kHz에서 <b>' + f2(designOf({ N: 70, B: 0.6, cup: 'large', mat: 'thin', wire: 'thin' }).l3) + '</b>, 최대 진폭 <b>' + f2(designOf({ N: 70, B: 0.6, cup: 'large', mat: 'thin', wire: 'thin' }).xmax) + ' mm</b>로 세 사양을 함께 만족해요. 설계는 이처럼 세 사양을 함께 만족해야 해요. 소리 크기 · 음역 · 왜곡 사이에서 균형을 찾는 것이 공학 설계예요.',
         },
         {
           title: '설계 근거 고르기', manual: true,
@@ -926,7 +926,7 @@
   });
 
   /* ---------- 시작 ---------- */
-  setScene('force');
+  setScene(VIEWS[Math.min(game.level, VIEWS.length - 1)].id);   // 이어하기: 저장된 단계의 화면으로
   updateCtl();
   let lastFree = false, lastLvl = -1, lastMode = '';
   SciSim.loop((dt, t) => {

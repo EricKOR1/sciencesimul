@@ -738,8 +738,8 @@
     if (r) { const fx = sxOf(r.front); const g = ctx.createLinearGradient(0, y0, 0, y0 + h); g.addColorStop(0, 'rgba(96,165,250,.45)'); g.addColorStop(1, 'rgba(59,130,246,.35)'); ctx.fillStyle = g; ctx.fillRect(RL.stripX0, y0, fx - RL.stripX0, h); ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.fillRect(fx - 3, y0, 3, h); }
     ctx.restore();
     ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 2; rr(RL.stripX0, y0, RL.stripX1 - RL.stripX0, h, 6).stroke();
-    TX((sxOf(0) + sxOf(SU.pad1)) / 2, y0 + h + 17, '검체 패드', { size: 12.5, weight: 700, color: '#64748b' });
-    TX((sxOf(SU.pad1) + sxOf(SU.pad2)) / 2, y0 + h + 17, '항체-금 입자', { size: 12.5, weight: 700, color: '#b45309' });
+    TX((sxOf(0) + sxOf(SU.pad1)) / 2, y0 + h + 17, '검체 패드', { size: PHONE ? 10.5 : 12.5, weight: 700, color: '#64748b' });
+    TX((sxOf(SU.pad1) + sxOf(SU.pad2)) / 2 + (PHONE ? 8 : 0), y0 + h + 17, '항체-금 입자', { size: PHONE ? 10.5 : 12.5, weight: 700, color: '#b45309' });
     TX((sxOf(SU.pad2) + sxOf(SU.memEnd)) / 2 - 40, y0 + h + 17, '막 (모세관 현상으로 액체가 이동)', { size: 12.5, weight: 700, color: '#64748b' });
     TX((sxOf(SU.memEnd) + sxOf(1)) / 2, y0 + h + 17, PHONE ? '흡수' : '흡수 패드', { size: 12.5, weight: 700, color: '#64748b' });
     // 시험선 자리 · 선
@@ -906,7 +906,7 @@
     if (CM.sub === 'table') {
       TX(TL.labX, TL.hy, '비교 항목', { size: 14, weight: 800, color: '#64748b' });
       [['pcr', '🧬 핵산 진단 (PCR)'], ['ag', '🧪 항원 검사']].forEach((c) => { D.label(TL.colX[c[0]], TL.hy - 6, c[1], { size: 14.5, bg: TCOL[c[0]], color: '#fff', pad: 12 }); });
-      TBL_ROWS.forEach((r, i) => { D.label(TL.labX, TL.rowY[i], r[1], { size: 14, bg: '#fff', color: '#334155', border: '#cbd5e1', pad: 12 }); });
+      TBL_ROWS.forEach((r, i) => { D.label(TL.labX, TL.rowY[i], r[1], { size: PHONE ? 11.5 : 14, bg: '#fff', color: '#334155', border: '#cbd5e1', pad: PHONE ? 8 : 12 }); });
       TX(PHONE ? 300 : 400, PHONE ? 458 : 390, '카드를 끌어 알맞은 칸에 놓아요', { size: 13.5, weight: 800, color: '#64748b' });
     } else {
       TX(PHONE ? 300 : 400, PHONE ? 76 : 70, '환자 사례 카드를 끌어 더 알맞은 검사 칸에 놓아요', { size: 14, weight: 800, color: '#334155' });
@@ -951,7 +951,7 @@
     S.mode = m; S.fade = 1; $('#tbLabel').textContent = MODE_LABEL[m]; showHint(MODE_HINT[m], 4200); ctlUpdate();
   }
   function ensure(m, sub) {
-    if (m !== S.mode) { S.mode = m; S.fade = 1; $('#tbLabel').textContent = MODE_LABEL[m]; }
+    if (m !== S.mode) { hideHint(); S.mode = m; S.fade = 1; $('#tbLabel').textContent = MODE_LABEL[m]; }
     if (sub) CM.sub = sub;
     ctlUpdate();
   }

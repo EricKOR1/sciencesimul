@@ -293,7 +293,7 @@
   const R0_BASE = 3.0;
   const GENS = 9;                                              // 0~8일
   const Ngen = (R, g) => Math.pow(R, g);
-  const fmtN = (v) => (v >= 100 ? comma(v) : v.toFixed(1));
+  const fmtN = (v) => (v >= 100 ? comma(v) : v > 0 && v < 0.095 ? (v < 0.005 ? '0' : v.toFixed(2)) : v.toFixed(1));
   const FACT = { m: 0.7, d: 0.6, i: [0.5, 0.6, 0.75], t: 0.8 };
   const COSTS = { m: 5, d: 40, i: 20, t: 15 };
   const COST_MAX = COSTS.m + COSTS.d + COSTS.i + COSTS.t;
@@ -392,7 +392,7 @@
     // 계통 선: 서열이 한 글자만 다르고 접촉한 확진자끼리
     if (TR.varOn) {
       EDGES.forEach((e) => {
-        if (!isCase(e.a) || !isCase(e.b)) return;
+        if (!isRedAt(e.a) || !isRedAt(e.b)) return;
         if (diffN(CASE[e.a].seq, CASE[e.b].seq) !== 1) return;
         const a = POS[e.a], b = POS[e.b];
         ctx.save(); ctx.strokeStyle = '#7c3aed'; ctx.lineWidth = 4; ctx.globalAlpha = 0.85; ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); ctx.restore();
@@ -429,7 +429,7 @@
       drawWrap(I.x + I.w / 2, I.y + I.h / 2 + 14, '확진자를 누르면 접촉 기록과 바이러스의 염기 서열이 나와요.', I.w - 30, 13, { color: '#94a3b8', weight: 700 });
       return;
     }
-    const cs = CASE[id];
+    const cs = isRedAt(id) ? CASE[id] : null;
     let y = I.y + 28;
     TX(I.x + 14, y, id + '번 ' + (cs ? '확진자' : '접촉자'), { size: 18, align: 'left', weight: 800, color: cs ? '#b91c1c' : '#334155' });
     y += 24;
@@ -439,7 +439,7 @@
     } else { TX(I.x + 14, y, '검사 결과: 음성 또는 검사 전', { size: 13.5, align: 'left', weight: 700, color: '#475569' }); y += 24; }
     TX(I.x + 14, y, '📋 최근 접촉 기록', { size: 14, align: 'left', weight: 800, color: '#0f172a' }); y += 8;
     const list = NEIGH[id].slice().sort((a, b) => a.day - b.day).slice(0, PHONE ? 4 : 6);
-    list.forEach((q) => { y += 19; const red = isCase(q.id); TX(I.x + 18, y, (red ? '🔴 ' : '⚪ ') + q.id + '번 · ' + q.kind + ' · ' + q.day + '일 전', { size: 12.5, align: 'left', weight: 700, color: red ? '#b91c1c' : '#475569' }); });
+    list.forEach((q) => { y += 19; const red = isRedAt(q.id); TX(I.x + 18, y, (red ? '🔴 ' : '⚪ ') + q.id + '번 · ' + q.kind + ' · ' + q.day + '일 전', { size: 12.5, align: 'left', weight: 700, color: red ? '#b91c1c' : '#475569' }); });
     y += 28;
     if (cs) {
       const bx = PHONE ? I.x + 300 : I.x + 14;
@@ -723,7 +723,7 @@
     if (m === S.mode) { ctlUpdate(); return; }
     S.mode = m; S.fade = 1; $('#tbLabel').textContent = MODE_LABEL[m]; showHint(MODE_HINT[m], 4200); ctlUpdate();
   }
-  function ensure(m) { if (m !== S.mode) { S.mode = m; S.fade = 1; $('#tbLabel').textContent = MODE_LABEL[m]; } ctlUpdate(); }
+  function ensure(m) { if (m !== S.mode) { hideHint(); S.mode = m; S.fade = 1; $('#tbLabel').textContent = MODE_LABEL[m]; } ctlUpdate(); }
   function setR(v) { SP.R = Math.round(clamp(v, 0.5, 3) * 10) / 10; ctlUpdate(); }
   let rSlider = null;
   function ctlUpdate() {
@@ -765,7 +765,7 @@
   function doReadouts() {
     const m = S.mode;
     if (m === 'trace') {
-      const id = TR.sel, cs = id && CASE[id];
+      const id = TR.sel, cs = id && isRedAt(id) ? CASE[id] : null;
       readouts([['확진자', Object.keys(CASE).length + '명 / 50명'], ['선택한 사람', id ? id + '번' + (cs ? ' (확진)' : '') : '—'], ['기준 서열과 다른 글자', cs ? diffN(cs.seq, REF) + '개' : '—']]);
     } else if (m === 'spread') {
       let cum = 0; for (let g = 0; g < GENS; g++) cum += Ngen(SP.R, g);

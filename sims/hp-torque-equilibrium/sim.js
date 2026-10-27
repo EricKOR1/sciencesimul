@@ -162,8 +162,8 @@
   const spEll = (s) => Math.round(s.r * SINT[s.th] * 100) / 100;
   const SPO = { x: PHONE ? 96 : 176, y: PHONE ? 190 : 186 }, SPPM = PHONE ? 560 : 780;
   const BOLT_TURN = 1.05;                           // 볼트가 한 번에 돌아가는 각 (rad, 약 60°)
-  function resetSpanner() {
-    const p = S.sp;
+  function resetSpanner(fresh) {   // fresh: 힘·위치·방향도 처음 값(50 N, 0.2 m, 90°)으로
+    const p = fresh ? null : S.sp;
     S.sp = { F: p ? p.F : 50, r: p ? p.r : 0.2, th: p ? p.th : 90, st: 'idle', t: 0, ang: 0, bolt: 0, lift: 0, loose: false, freed: null, run: null, fail: null, seen8: false, seen0: false, log: [] };
     updateCtl();
   }
@@ -271,7 +271,7 @@
     const bx = PX + 20, bw = PW - 40;
     T(bx, PY + 30, '🧮 돌림힘 τ = 힘 F × 수직 거리 ℓ', PHONE ? 14.5 : 16, '#26324a', 'left', 800);
     T(bx, PY + 58, 'τ = ' + F + ' N × ' + ell.toFixed(2) + ' m = ' + tau.toFixed(1) + ' N·m', PHONE ? 17 : 22, '#c2410c', 'left', 800);
-    T(bx, PY + 82, '계기 (N·m) · 반시계 방향 +', 13, '#5a6679', 'left', 800);
+    T(bx, PY + 82, PHONE ? '계기 (N·m)' : '계기 (N·m) · 반시계 방향 +', 13, '#5a6679', 'left', 800);
     const by = PY + 94, bh = 26;
     bar(bx, by, bw, bh, tau, 40, tau >= NEED ? '#14a058' : '#f59e0b');
     for (let v = 0; v <= 40; v += 10) { const x = bx + bw * v / 40; ctx.strokeStyle = 'rgba(40,50,70,.4)'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(x, by + bh); ctx.lineTo(x, by + bh + 6); ctx.stroke(); T(x, by + bh + 21, String(v), 12.5, '#3a465c', v === 0 ? 'left' : v === 40 ? 'right' : 'center', 800); }
@@ -319,7 +319,7 @@
     const level = net === 0 && Math.abs(s.beta) < 0.01 && Math.abs(s.omega) < 0.06;
     s.levelT = level ? s.levelT + dt : 0;
     if (s.levelT >= 0.5 && !s.drag) {
-      const key = s.mA + '|' + s.mB;
+      const key = Math.min(s.mA, s.mB) + '|' + Math.max(s.mA, s.mB);
       if (!s.bal[key]) {
         s.bal[key] = { mA: s.mA, mB: s.mB, xA: s.xA, xB: s.xB };
         Sound.success(); parts.burst(SCX, SCY - 14, { count: 14, speed: 130, size: 3.2, colors: ['#14a058', '#ffd447', '#fff'], gravity: 120, life: 0.8 });
@@ -679,8 +679,8 @@
   function drawTiltPanel(t, tc) {
     panel(PX, PY, PW, PH, 16);
     const bx = PX + 20, bw = PW - 40, tcr = r1(tc);
-    T(bx, PY + 28, '🧮 tan θ한계 = (w ÷ 2) ÷ h', PHONE ? 14.5 : 16, '#26324a', 'left', 800);
-    T(bx, PY + 54, 'tan θ한계 = ' + (t.w / 2).toFixed(2) + ' ÷ ' + t.h.toFixed(2) + ' = ' + (t.w / 2 / t.h).toFixed(2) + ' → θ한계 = ' + tcr.toFixed(1) + '°', PHONE ? 13.5 : 16, '#c2410c', 'left', 800);
+    T(bx, PY + 28, '🧮 tan θ한계 = (w / 2) / h', PHONE ? 14.5 : 16, '#26324a', 'left', 800);
+    T(bx, PY + 54, 'tan θ한계 = ' + (t.w / 2).toFixed(2) + ' / ' + t.h.toFixed(2) + ' = ' + (t.w / 2 / t.h).toFixed(2) + ' → θ한계 = ' + tcr.toFixed(1) + '°', PHONE ? 13.5 : 16, '#c2410c', 'left', 800);
     // 각도 막대 0~60도
     const by = PY + 82, bh = 24, MAXA = 60;
     D.roundRect(bx, by, bw, bh, 8); ctx.fillStyle = '#eef1f7'; ctx.fill();
@@ -755,8 +755,8 @@
     panel(PX, PY, PW, PH, 16);
     const bx = PX + 20, bw = PW - 40, tcr = r1(tc);
     T(bx, PY + 28, '🧮 책장(' + SHELF.MS + ' kg) + 무거운 책(' + SHELF.MB + ' kg)의 무게중심', PHONE ? 13.5 : 16, '#26324a', 'left', 800);
-    T(bx, PY + 52, 'h = (' + SHELF.MS + ' × ' + (SHELF.H / 2).toFixed(2) + ' + ' + SHELF.MB + ' × ' + SHELF.LV[l.pos].toFixed(2) + ') ÷ ' + (SHELF.MS + SHELF.MB) + ' = ' + h.toFixed(3) + ' m', PHONE ? 12.5 : 14.5, '#26324a', 'left', 800);
-    T(bx, PY + 76, 'tan θ한계 = ' + (SHELF.W / 2).toFixed(2) + ' ÷ ' + h.toFixed(3) + ' → θ한계 = ' + tcr.toFixed(1) + '°', PHONE ? 13.5 : 16, '#c2410c', 'left', 800);
+    T(bx, PY + 52, 'h = (' + SHELF.MS + ' × ' + (SHELF.H / 2).toFixed(2) + ' + ' + SHELF.MB + ' × ' + SHELF.LV[l.pos].toFixed(2) + ') / ' + (SHELF.MS + SHELF.MB) + ' = ' + h.toFixed(3) + ' m', PHONE ? 12.5 : 14.5, '#26324a', 'left', 800);
+    T(bx, PY + 76, 'tan θ한계 = ' + (SHELF.W / 2).toFixed(2) + ' / ' + h.toFixed(3) + ' → θ한계 = ' + tcr.toFixed(1) + '°', PHONE ? 13.5 : 16, '#c2410c', 'left', 800);
     const ty = PY + 100;
     T(bx, ty + 8, '📋 칸마다 넘어지는 한계 각', PHONE ? 12.5 : 13.5, '#26324a', 'left', 800);
     ['top', 'mid', 'bottom'].forEach((k, i) => {
@@ -991,7 +991,7 @@
           title: '녹슨 볼트 풀기',
           goal: '볼트는 돌림힘이 <b>' + NEED + ' N·m 이상</b>이어야 풀려요. 힘을 <b>' + F_LOOSE + ' N 이하</b>로 하면서도 볼트를 풀어 보세요.',
           hint: '손으로 미는 위치를 손잡이 맨 끝(' + R_MAX.toFixed(1) + ' m)으로 하고, 힘의 방향을 손잡이와 수직(90°)으로 한 뒤 🔧 돌려 보기를 눌러요.',
-          setup() { resetSpanner(); setScene('spanner'); },
+          setup() { resetSpanner(true); setScene('spanner'); },
           check: () => !!(S.sp.freed && S.sp.freed.F <= F_LOOSE),
           hold: 0.6,
           status: () => mark(!!(S.sp.freed && S.sp.freed.F <= F_LOOSE)) + ' 볼트 풀림 · 지금 τ = ' + spTau(S.sp).toFixed(1) + ' N·m (필요 ' + NEED + ')' + (S.sp.freed && S.sp.freed.F > F_LOOSE ? ' · 힘이 ' + F_LOOSE + ' N보다 컸어요, 다시 조여서 도전!' : ''),
@@ -1001,7 +1001,7 @@
           title: '돌림힘 계기 읽기',
           goal: '돌림힘 계기가 정확히 <b>8.0 N·m</b>를 가리키게 만들고, 힘을 주는데도 계기가 <b>0</b>이 되는 방향도 찾아 보세요.',
           hint: '예) 40 N · 0.2 m · 수직이면 8.0 N·m예요. 계기가 0이 되려면 힘의 방향을 손잡이와 나란히(0°) 해 보세요.',
-          setup() { resetSpanner(); setScene('spanner'); },
+          setup() { resetSpanner(true); setScene('spanner'); },
           check: () => S.sp.seen8 && S.sp.seen0,
           hold: 0.6,
           status: () => mark(S.sp.seen8) + ' 8.0 N·m 만들기 &nbsp; ' + mark(S.sp.seen0) + ' 힘이 있는데 0 N·m 만들기 &nbsp; (지금 ' + spTau(S.sp).toFixed(1) + ' N·m)',
@@ -1151,6 +1151,9 @@
     },
   ];
 
+  /* 이어 하기(새로고침)로 중간 미션에서 열려도 미션 setup()이 먼저 만든 장면을 덮어쓰지 않도록, 장면 상태를 게임보다 먼저 만들어요 */
+  resetSpanner(); resetSeesaw(true); resetCouple(); resetPlank(1); resetTilt(); resetCrane(); resetLoad(); resetRule();
+  setScene('spanner');
   game = SciSim.game({
     simId: 'hp-torque-equilibrium', mount: '#game', badge: '평형 박사', homeHref: '../../index.html#hp',
     featureLabels: { spanner: '🔧 스패너 · 돌림힘 계기', seesaw: '⚖️ 시소 · 시계/반시계 돌림힘 막대', couple: '🌀 우력 · 얼음 위 막대', plank: '🌉 널빤지 다리 · 받침 힘 센서', tilt: '📦 기울어지는 직육면체 · 각도 센서', crane: '🏗️ 크레인 · 평형추', load: '📚 책장 · 짐 쌓기' },
@@ -1159,8 +1162,6 @@
   });
 
   /* ---------- 시작 ---------- */
-  resetSpanner(); resetSeesaw(true); resetCouple(); resetPlank(1); resetTilt(); resetCrane(); resetLoad(); resetRule();
-  setScene('spanner');
   let lastFree = false, lastMode = '';
   SciSim.loop((dt, t) => {
     S.clock = t;

@@ -81,7 +81,7 @@
   const SCN = PHONE ? { x: 12, y: 12, w: 456, h: 250 } : { x: 14, y: 14, w: 430, h: 300 };
   const PA = PHONE ? { x: 12, y: 272, w: 456, h: 214 } : { x: 456, y: 14, w: 330, h: 300 };
   const PB = PHONE ? { x: 12, y: 496, w: 456, h: 212 } : { x: 14, y: 326, w: 772, h: 220 };
-  const PXMM = PHONE ? 4.2 : 7, PADW = PHONE ? 220 : 250, BODYW = PHONE ? 140 : 160, COILW = PHONE ? 104 : 124;
+  const PXMM = PHONE ? 3.6 : 5.5, PADW = PHONE ? 220 : 250, BODYW = PHONE ? 140 : 160, COILW = PHONE ? 104 : 124;
   const GROUND = SCN.y + SCN.h - 26, PADTOP = GROUND - 40, TXY = GROUND - 27, CX = SCN.x + SCN.w / 2 + (PHONE ? 10 : 20);
   const rxYof = (gap) => PADTOP - 18 - gap * PXMM;
 
@@ -285,7 +285,7 @@
     const msg = w.src === 'ac' ? (w.on ? '자기장의 세기가 계속 변해요 → 수신 코일에 전류가 유도돼요 (LED ' + (w.bT > 0.02 ? '켜짐' : '꺼짐') + ')' : '스위치가 꺼져 있어요. 스위치를 켜 보세요.')
       : (w.on ? (w.tSw < 1.2 ? '스위치를 켠 순간: 자기장이 0에서 늘어나는 중 → 잠깐 유도돼요' : '자기장이 일정해졌어요 → 변하지 않아서 유도되지 않아요 (LED 꺼짐)') : (w.tSw < 1.2 && w.everOn ? '스위치를 끈 순간: 자기장이 줄어드는 중 → 반대 방향으로 잠깐 유도돼요' : '스위치가 꺼져 있어요. 스위치를 켜 보세요.'));
     textBlock(PB.x + 14, y + bh + 36, PB.w - 28, msg, PHONE ? 13 : 15, '#26324a', PHONE ? 19 : 22, 800);
-    textBlock(PB.x + 14, y + bh + 36 + (PHONE ? 60 : 56), PB.w - 28, '수신 코일의 최대 전압 = 송신 전압 ' + f1(V_TX) + ' V × (수신 감은 수 ÷ 송신 감은 수 ' + NT1 + '회) × ' + f1(C1) + ' = ' + f1(vPeak1()) + ' V  (LED는 ' + f1(V_TH) + ' V부터 켜져요)', PHONE ? 11.5 : 12.5, '#5a6679', PHONE ? 17 : 18, 700);
+    textBlock(PB.x + 14, y + bh + 36 + (PHONE ? 60 : 56), PB.w - 28, '수신 코일의 최대 전압 = 송신 전압 ' + f1(V_TX) + ' V × (수신 감은 수 / 송신 감은 수 ' + NT1 + '회) × ' + f1(C1) + ' = ' + f1(vPeak1()) + ' V  (LED는 ' + f1(V_TH) + ' V부터 켜져요)', PHONE ? 11.5 : 12.5, '#5a6679', PHONE ? 17 : 18, 700);
     parts.update(dt); parts.draw(ctx);
   }
 
@@ -315,7 +315,7 @@
     const d = S.d, ev = d.ev || evalCh(curD());
     ctx.fillStyle = '#eef2fa'; ctx.fillRect(0, 0, VW, VH);
     panel(SCN.x, SCN.y, SCN.w, SCN.h, 14);
-    T(SCN.x + 14, SCN.y + 26, '내가 만든 무선 충전기 (휴대폰을 끌어서 옮겨 보세요)', PHONE ? 12 : 13.5, '#26324a', 'left', 800);
+    T(SCN.x + 14, SCN.y + 26, PHONE ? '휴대폰을 끌어서 옮겨 보세요' : '내가 만든 무선 충전기 (휴대폰을 끌어서 옮겨 보세요)', PHONE ? 12 : 13.5, '#26324a', 'left', 800);
     ctx.save(); D.roundRect(SCN.x, SCN.y, SCN.w, SCN.h, 14); ctx.clip();
     const fieldAmp = clamp(ev.eta * 1.3, 0, 1) * (H_F[d.f] > 0.05 ? 1 : 0.15);
     lastBody = drawCharger({ Nt: d.Nt, Nr: d.Nr, gap: d.gap, offS: d.offS, field: Math.sin(d.ph) * fieldAmp, moving: true, led: null, batt: d.batt, charging: ev.P >= 0.05, stopped: false, srcOn: true, srcLabel: fHz(d.f), dim: true });
@@ -377,7 +377,7 @@
     const g = S.g, ev = g.ev || coinEv(g);
     ctx.fillStyle = '#eef2fa'; ctx.fillRect(0, 0, VW, VH);
     panel(SCN.x, SCN.y, SCN.w, SCN.h, 14);
-    T(SCN.x + 14, SCN.y + 26, '기준 충전기 (' + REF.Nt + '회 · ' + REF.Nr + '회 · ' + fHz(REF.f) + ' · 정렬)', PHONE ? 12 : 13.5, '#26324a', 'left', 800);
+    T(SCN.x + 14, SCN.y + 26, PHONE ? '기준 충전기 (정렬)' : '기준 충전기 (' + REF.Nt + '회 · ' + REF.Nr + '회 · ' + fHz(REF.f) + ' · 정렬)', PHONE ? 12 : 13.5, '#26324a', 'left', 800);
     ctx.save(); D.roundRect(SCN.x, SCN.y, SCN.w, SCN.h, 14); ctx.clip();
     lastBody = drawCharger({ Nt: REF.Nt, Nr: REF.Nr, gap: g.gap, offS: 0, field: g.cut ? 0 : Math.sin(g.ph) * clamp(ev.etaRef / 80, 0, 1), moving: !g.cut, led: null, batt: g.batt || 0, charging: ev.prx > 0.01, stopped: g.cut, srcOn: !g.cut, srcLabel: g.cut ? '차단' : fHz(REF.f), coin: g.coin ? { T: g.tc } : null, dim: true });
     ctx.restore();
@@ -420,10 +420,10 @@
   /* ================= ④ 기술과 영향 ================= */
   const TECH = [
     ['📱', '스마트폰 패드', '5 W · 효율 약 ' + Math.round(PH_EFF * 100) + ' % (간격 5 mm)', '선 없이 올려 놓기만 해요'],
-    ['🚗', '전기차 충전 패드', '3.3 ~ 11 kW · 효율 약 ' + Math.round(EV_EFF * 100) + ' %', '주차만 하면 충전돼요'],
-    ['🪥', '전동 칫솔·스마트워치', '적은 전력', '접점이 없어 방수가 쉬워요'],
-    ['🫀', '의료용 임플란트', '아주 적은 전력', '피부를 뚫지 않고 충전해요'],
-    ['🚌', '교통카드 (NFC)', '정보를 읽는 데 쓰는 소량', '배터리 없이 가까이 대면 작동해요'],
+    ['🚗', '전기차\n충전 패드', '3.3 ~ 11 kW · 효율 약 ' + Math.round(EV_EFF * 100) + ' %', '주차만 하면 충전돼요'],
+    ['🪥', '전동 칫솔·\n스마트워치', '적은 전력', '접점이 없어 방수가 쉬워요'],
+    ['🫀', '의료용\n임플란트', '아주 적은 전력', '피부를 뚫지 않고 충전해요'],
+    ['🚌', '교통카드\n(NFC)', '정보를 읽는 데 쓰는 소량', '배터리 없이 가까이 대면 작동해요'],
   ];
   const STMT = [
     ['선으로 충전할 때보다 에너지 손실이 큰 편이에요', 'con'],
@@ -460,7 +460,7 @@
       const col = Math.floor(i / (STMT.length / cols2)), row = i % (STMT.length / cols2);
       const x = 12 + col * (rw + 12), y = y0 + 28 + row * rh;
       D.roundRect(x, y, rw, rh - 6, 10); ctx.fillStyle = '#fff'; ctx.fill(); ctx.strokeStyle = '#e1e6ef'; ctx.lineWidth = 1.6; ctx.stroke();
-      textBlock(x + 12, y + (PHONE ? 20 : 24), rw - 122, s[0], PHONE ? 12 : 13, '#26324a', PHONE ? 15 : 17, 800);
+      textBlock(x + 12, y + (PHONE ? 19 : 24), rw - 122, s[0], PHONE ? 13.5 : 13, '#26324a', PHONE ? 16 : 17, 800);
       const k = c.cls[i], bad = c.bad[i], sh = c.shake[i] ? Math.sin((S.t - c.shake[i]) * 50) * 4 * Math.max(0, 1 - (S.t - c.shake[i]) / 0.4) : 0;
       const px = x + rw - 100 + sh, pw = 90, ph = 34, py = y + (rh - 6 - ph) / 2;
       D.roundRect(px, py, pw, ph, 17); ctx.fillStyle = k ? C.rgba(KCOL[k], 0.14) : '#fff'; ctx.fill(); ctx.lineWidth = 2.4; ctx.strokeStyle = bad ? '#e2464b' : k ? KCOL[k] : '#b9c1d0'; if (!k) ctx.setLineDash([4, 4]); ctx.stroke(); ctx.setLineDash([]);
@@ -636,7 +636,7 @@
           title: '이물질이 끼었을 때', manual: true,
           goal: '코일 사이에 <b>동전</b>을 올려 동전이 <b>' + T_HOT + ' °C 이상</b> 뜨거워지는 것을 관찰한 뒤, 충전기가 어떻게 대처해야 하는지 고르고 ✔ 확인하기를 누르세요.',
           hint: '동전 올려 놓기를 누르고 몇 초 기다리면 동전 온도가 올라가요. 이물질 감지 기능을 켜 보면 충전기가 어떻게 되는지 볼 수 있어요.',
-          setup() { need = 'coin'; S.g.seen = {}; S.g.choice = ''; $('#coinSel').value = ''; $('#coinSel').classList.remove('ok', 'bad'); updateCtl(); setScene('eff'); },
+          setup() { need = 'coin'; S.g.seen = {}; S.g.choice = ''; S.g.coin = false; S.g.detect = false; S.g.cut = false; S.g.gap = TARGET_GAP; $('#coinSel').value = ''; $('#coinSel').classList.remove('ok', 'bad'); updateCtl(); setScene('eff'); },
           check() {
             const sel = $('#coinSel');
             if (!S.g.seen.hot) { return '먼저 동전을 올려 동전이 ' + T_HOT + ' °C 이상 뜨거워지는 것을 관찰해요.'; }
@@ -713,7 +713,7 @@
   });
 
   /* ---------- 시작 ---------- */
-  setScene('obs');
+  setScene(VIEWS[Math.min(game.level, VIEWS.length - 1)].id);   // 이어하기: 저장된 단계의 화면으로
   updateCtl();
   let lastFree = false, lastLvl = -1, lastMode = '';
   SciSim.loop((dt, t) => {

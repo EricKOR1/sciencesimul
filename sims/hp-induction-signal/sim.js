@@ -179,16 +179,22 @@
       s.ph += TAU * (s.pit / SLOW_S) * dt; if (s.ph > 1e4) s.ph -= 1e4 - (1e4 % TAU);
       s.x = micA(s) * Math.sin(s.ph); v = micV(s) * Math.cos(s.ph); s.vpk = micV(s);
     } else if (s.kind === 'wheel') {
-      s.th += TAU * s.rev * dt; if (s.th > 1e4) s.th -= 1e4 - (1e4 % TAU);
-      const pitch = TAU / TEETH, sigma = pitch * 0.12, x = (((s.th % pitch) + pitch) % pitch - pitch / 2) / sigma;
-      v = wheelV(s) * x * Math.exp(0.5 - x * x / 2); s.vpk = wheelV(s);
+      // 펄스가 매우 좁아서(수 ms) 2 ms 간격으로 잘게 계산해야 파형이 실제 값과 같아요
+      const pitch = TAU / TEETH, sigma = pitch * 0.12, n = Math.max(1, Math.ceil(dt / 0.002)), h = dt / n;
+      for (let i = 1; i <= n; i++) {
+        s.th += TAU * s.rev * h; if (s.th > 1e4) s.th -= 1e4 - (1e4 % TAU);
+        const u = ((s.th % pitch) + pitch) % pitch, x = (u > pitch / 2 ? u - pitch : u) / sigma;   // x = 0: 톱니의 한가운데가 센서 아래
+        v = wheelV(s) * x * Math.exp(0.5 - x * x / 2);
+        s.hist.push({ t: S.t - dt + i * h, v });
+      }
+      s.vpk = wheelV(s);
     } else {
       s.ph += TAU * (s.str / SLOW_S) * dt; if (s.ph > 1e4) s.ph -= 1e4 - (1e4 % TAU);
       const dec = Math.exp(-s.plT / TAU_G); s.a = gtrA(s) * dec;
       s.x = s.a * Math.sin(s.ph); v = K_G * s.a * s.str * Math.cos(s.ph); s.vpk = K_G * s.a * s.str;
     }
     s.sig = v;
-    s.hAcc += dt; while (s.hAcc >= 0.02) { s.hAcc -= 0.02; s.hist.push({ t: S.t, v }); }
+    if (s.kind !== 'wheel') { s.hAcc += dt; while (s.hAcc >= 0.02) { s.hAcc -= 0.02; s.hist.push({ t: S.t, v }); } }
     while (s.hist.length && S.t - s.hist[0].t > 2.05) s.hist.shift();
     // 미션 기록
     const ax = KIND_INFO[s.kind].ax, big = s.kind !== 'guitar' && Math.abs(s.vpk) >= SEEN_FR * ax;

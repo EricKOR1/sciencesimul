@@ -238,7 +238,7 @@
     if (force) drawFA(pc.law, S0, keys);
     else drawAM(pc.law, S0, keys);
     // 표
-    const tb = pc.tb, hdr = force ? ['F (N)', 'a (m/s²)', 'a ÷ F (kg⁻¹)'] : ['m (kg)', 'a (m/s²)', 'm × a (N)'];
+    const tb = pc.tb, hdr = force ? ['F (N)', 'a (m/s²)', 'a / F (kg⁻¹)'] : ['m (kg)', 'a (m/s²)', 'm × a (N)'];
     if (!PHONE) { D.roundRect(tb.x, tb.y, tb.w, tb.h, 10); ctx.fillStyle = '#fff'; ctx.fill(); }
     T(tb.x + 10, tb.y + (PHONE ? 16 : 21), '📋 측정 기록', 13.5, '#26324a', 'left', 800);
     const c0 = tb.x + 12, cw = (tb.w - 20) / 3, rh = PHONE ? 21 : 25, hy = tb.y + (PHONE ? 36 : 46);
@@ -335,7 +335,7 @@
     const Ls = [
       ['① 전체 질량 = ' + PUL.M.toFixed(1) + ' + ' + PUL.m.toFixed(1) + ' = ' + (PUL.M + PUL.m).toFixed(1) + ' kg', '#26324a'],
       ['② 알짜힘 = 추의 무게 mg = ' + PUL.m.toFixed(1) + ' × ' + G + ' = ' + PUL_W.toFixed(1) + ' N', '#26324a'],
-      ['③ a = ' + PUL_W.toFixed(1) + ' ÷ ' + (PUL.M + PUL.m).toFixed(1) + ' = ' + PUL_A.toFixed(1) + ' m/s²', '#c2410c'],
+      ['③ a = ' + PUL_W.toFixed(1) + ' / ' + (PUL.M + PUL.m).toFixed(1) + ' = ' + PUL_A.toFixed(1) + ' m/s²', '#c2410c'],
       ['④ 수레: T = Ma = ' + PUL.M.toFixed(1) + ' × ' + PUL_A.toFixed(1) + ' = ' + PUL_T.toFixed(2) + ' N', '#0b6b39'],
       ['⑤ 추: mg − T = ' + PUL_W.toFixed(1) + ' − ' + PUL_T.toFixed(2) + ' = ' + (PUL_W - PUL_T).toFixed(2) + ' N = ma', '#0b6b39'],
     ];
@@ -466,8 +466,8 @@
     // 식 + 표
     const tx = PHONE ? PX + 14 : rc.x + rc.w + 14, tw = PHONE ? PW - 28 : PW - (rc.w + 30), ty = PHONE ? PY + 146 : PY + 24, fs = PHONE ? 13 : 14.5;
     T(tx, ty, '제동력 f = μmg = ' + mu + ' × ' + vehKg(veh) + ' × ' + G + ' = ' + String(Math.round(mu * vehKg(veh) * G)) + ' N', fs, '#26324a', 'left', 800);
-    T(tx, ty + 22, 'a = f ÷ m = μg = ' + mu + ' × ' + G + ' = ' + (mu * G).toFixed(1) + ' m/s²', fs, '#c2410c', 'left', 800);
-    T(tx, ty + 44, 's = v² ÷ 2a = ' + fm(c.v * c.v) + ' ÷ ' + (2 * mu * G).toFixed(1) + ' = ' + fm(c.b) + ' m', fs, '#0b6b39', 'left', 800);
+    T(tx, ty + 22, 'a = f / m = μg = ' + mu + ' × ' + G + ' = ' + (mu * G).toFixed(1) + ' m/s²', fs, '#c2410c', 'left', 800);
+    T(tx, ty + 44, 's = v² / (2a) = ' + fm(c.v * c.v) + ' / ' + (2 * mu * G).toFixed(1) + ' = ' + fm(c.b) + ' m', fs, '#0b6b39', 'left', 800);
     const hy = ty + 70, cols = [tx, tx + tw * 0.2, tx + tw * 0.42, tx + tw * 0.6, tx + tw * 0.8], rh = PHONE ? 21 : 23;
     ['차·도로', '속력', '반응', '제동', '합계'].forEach((h, i) => T(cols[i], hy, h, 13, '#5a6679', 'left', 800));
     const rows = b.rec.slice(PHONE ? -3 : -5);
@@ -549,7 +549,7 @@
     const x0 = PX + 16, w = PW - 32, fs = PHONE ? 13.5 : 15, lh = PHONE ? 26 : 28, c = res.c;
     T(x0, PY + 26, '🧮 속력 ' + kmh + ' km/h = ' + fm(c.v) + ' m/s · 반응 시간 ' + c.tr.toFixed(1) + ' s' + (drv === 'sleepy' ? ' (졸음)' : ''), fs, '#26324a', 'left', 800);
     T(x0, PY + 26 + lh, '반응 거리 = v × t = ' + fm(c.v) + ' × ' + c.tr.toFixed(1) + ' = ' + fm(c.r) + ' m', fs, '#d97706', 'left', 800);
-    T(x0, PY + 26 + 2 * lh, '제동 거리 = v² ÷ 2μg = ' + fm(c.v * c.v) + ' ÷ ' + (2 * c.mu * G).toFixed(1) + ' = ' + fm(c.b) + ' m', fs, '#c0392b', 'left', 800);
+    T(x0, PY + 26 + 2 * lh, '제동 거리 = v² / (2μg) = ' + fm(c.v * c.v) + ' / ' + (2 * c.mu * G).toFixed(1) + ' = ' + fm(c.b) + ' m', fs, '#c0392b', 'left', 800);
     T(x0, PY + 26 + 3 * lh, '정지 거리 = ' + fm(c.total) + ' m   (장애물까지 ' + sc.d + ' m)', fs, '#26324a', 'left', 800);
     const ok = !res.hit, y4 = PY + 26 + 4 * lh + 4;
     D.roundRect(x0, y4 - 18, w, 32, 10); ctx.fillStyle = ok ? '#e7f7ee' : '#fdeceb'; ctx.fill();
@@ -877,6 +877,9 @@
     },
   ];
 
+  /* 이어 하기(새로고침)로 중간 미션에서 열려도 미션 setup()이 상태를 쓸 수 있고 그 장면이 덮어써지지 않도록, 장면 상태를 게임보다 먼저 만들어요 */
+  resetForce(false); resetMass(false); resetPulley(false); resetBrake(false); resetSafety(); resetRule(); resetCards();
+  setScene('force');
   game = SciSim.game({
     simId: 'hp-newton-safety', mount: '#game', badge: '교통안전 박사', homeHref: '../../index.html#hp',
     featureLabels: { force: '🧪 힘 센서 · 속도 센서 · F–a 그래프', mass: '⚖️ 질량 바꾸기 · a–m 그래프', pulley: '🧵 도르래 · 장력 센서', brake: '🛑 급제동 · 제동 거리–속력 그래프', safety: '🛡️ 안전 시나리오 · 충돌 판정' },
@@ -885,8 +888,6 @@
   });
 
   /* ---------- 시작 ---------- */
-  resetForce(false); resetMass(false); resetPulley(false); resetBrake(false); resetSafety(); resetRule(); resetCards();
-  setScene('force');
   let lastFree = false, lastMode = '';
   SciSim.loop((dt, t) => {
     S.clock = t;

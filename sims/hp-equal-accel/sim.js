@@ -308,7 +308,7 @@
       T(gx(AREA_T) - 8, gy(vEnd) - 8, 'v = ' + vEnd.toFixed(1), 13, '#0b6b39', 'right', 800);
       D.label((gx(0) + gx(AREA_T)) / 2, gy(1.2), '넓이 = ? m (밑변 ' + AREA_T.toFixed(1) + ' s)', { bg: '#14a058', size: 13 });
     }
-    if (g.latch[vid] && !lock) D.label(gx(0) + 10, o.y0 + 16, '✅ 최적 직선!', { bg: '#14a058', size: 14, align: 'left' });
+    if (g.latch[vid] && !lock) { if (ball) D.label(o.x1 - 10, o.y0 + 16, '✅ 최적 직선!', { bg: '#14a058', size: 14, align: 'right' }); else D.label(gx(0) + 10, o.y0 + 16, '✅ 최적 직선!', { bg: '#14a058', size: 14, align: 'left' }); }
     // 오른쪽 카드 (태블릿)
     if (!PHONE) {
       const cx = o.x1 + 24, cw = VW - cx - 12, cy = o.y0 - 8;
@@ -338,12 +338,12 @@
     });
     const ty = y1 + 84;
     if (S.flags.area && !ball) {
-      T(bx, ty, '사다리꼴 넓이 = (윗변 + 아랫변) × 높이 ÷ 2', PHONE ? 13.5 : 15, '#26324a', 'left', 800);
+      T(bx, ty, '사다리꼴 넓이 = (윗변 + 아랫변) × 높이 / 2', PHONE ? 13.5 : 15, '#26324a', 'left', 800);
       T(bx, ty + 26, '윗변 v₀ = ' + V0.toFixed(1) + ' m/s, 아랫변 v = ' + AREA_V.toFixed(1) + ' m/s, 높이(시간) = ' + AREA_T.toFixed(1) + ' s', PHONE ? 13 : 14.5, '#0b6b39', 'left', 800);
       textBlock(bx, ty + 52, bw, '넓이의 단위는 (m/s) × s = m, 곧 이동 거리예요. 밑변이 시간이고 높이가 속도이니까요.', 13.5, '#3a465c', 18, 700);
     } else {
       T(bx, ty, '직선: v = ' + fnum(lf.v0, 1) + ' ' + (lf.a < 0 ? MINUS : '+') + ' ' + Math.abs(lf.a).toFixed(1) + ' t', PHONE ? 16 : 18, '#c2410c', 'left', 800);
-      T(bx, ty + 26, '기울기 a = Δv ÷ Δt = ' + (lf.a * 1.0).toFixed(1).replace('-', MINUS) + ' m/s ÷ 1.0 s = ' + fnum(lf.a, 1) + ' m/s²', PHONE ? 13 : 14.5, '#26324a', 'left', 800);
+      T(bx, ty + 26, '기울기 a = Δv / Δt = ' + (lf.a * 1.0).toFixed(1).replace('-', MINUS) + ' m/s / 1.0 s = ' + fnum(lf.a, 1) + ' m/s²', PHONE ? 13 : 14.5, '#26324a', 'left', 800);
       textBlock(bx, ty + 52, bw, g.latch[vid] ? (ball ? '속도가 일정하게 줄어요 → 기울기가 음수(−10 m/s²)예요.' : '속도가 1초에 2.0 m/s씩 늘어나요 → 가속도 a = 2.0 m/s².') : '점들은 직선 둘레에 조금씩 흩어져 있어요. 오차의 합이 가장 작은 직선이 최적 직선이에요.', 13.5, '#3a465c', 18, 700);
     }
   }
@@ -426,7 +426,7 @@
     const L = (i, str, col, size) => T(bx, PY + 28 + i * (PHONE ? 29 : 31), str, size || fs, col || '#26324a', 'left', 800);
     const as = sc.a * t;
     if (m.stage === 1) {
-      L(0, '그래프의 기울기 = (v − v₀) ÷ t = a');
+      L(0, '그래프의 기울기 = (v − v₀) / t = a');
       L(1, '→ v − v₀ = a·t   ∴  v = v₀ + at', '#c2410c', PHONE ? 15 : 18);
       L(2, 'v = ' + fnum(sc.v0, 1) + ' ' + (sc.a < 0 ? MINUS : '+') + ' ' + Math.abs(sc.a).toFixed(1) + ' × ' + t.toFixed(1) + ' = ' + fnum(v, 1) + ' m/s');
       textBlock(bx, PY + 28 + 3 * (PHONE ? 29 : 31) + 4, bw, sc.a < 0 ? 'a가 음수(−)이면 시간이 지날수록 속도가 줄어요. 속도와 가속도의 방향이 반대예요.' : '시간 t가 1초 늘 때마다 속도가 a만큼 늘어요.', 13.5, '#3a465c', 18, 700);
@@ -436,7 +436,7 @@
       L(2, 'v₀t = ' + fnum(sc.v0 * t, 2) + ' m   ½at² = ' + fnum(0.5 * sc.a * t * t, 2) + ' m');
       L(3, 's = ' + fnum(sc.v0 * t, 2) + ' ' + (sc.a < 0 ? MINUS : '+') + ' ' + Math.abs(0.5 * sc.a * t * t).toFixed(2) + ' = ' + fnum(s, 2) + ' m', '#0b6b39');
     } else {
-      L(0, '① t = (v − v₀) ÷ a 를 ② s = v₀t + ½at²에 넣으면');
+      L(0, '① t = (v − v₀) / a 를 ② s = v₀t + ½at²에 넣으면');
       L(1, '2as = v² − v₀²', '#c2410c', PHONE ? 17 : 20);
       L(2, '왼쪽 2as = 2 × ' + fnum(sc.a, 1) + ' × ' + fnum(s, 2) + ' = ' + fnum(2 * sc.a * s, 2));
       L(3, '오른쪽 v² − v₀² = ' + fnum(v, 1) + '² − ' + fnum(sc.v0, 1) + '² = ' + fnum(v * v - sc.v0 * sc.v0, 2), '#0b6b39');
@@ -542,7 +542,7 @@
     } else {
       // 공 (세로 운동)
       const bx = PHONE ? VW * 0.42 : VW * 0.36;
-      ctx.fillStyle = '#c3ccd8'; ctx.fillRect(0, BGY, VW, SH - BGY); ctx.fillStyle = '#97a3b5'; ctx.fillRect(0, BGY, VW, 3);
+      ctx.fillStyle = '#c3ccd8'; ctx.fillRect(0, BGY + 12, VW, SH - BGY - 12); ctx.fillStyle = '#97a3b5'; ctx.fillRect(0, BGY + 12, VW, 3);   // 공이 바닥(0 m) 위에 놓일 때 공의 중심이 0 m 눈금에 와요
       for (let m = 0; m <= 6; m++) { const y = BGY - m * BPPM; ctx.strokeStyle = m === 0 ? '#516079' : 'rgba(120,135,160,.3)'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(bx - 80, y); ctx.lineTo(bx + 80, y); ctx.stroke(); T(bx - 88, y + 5, m + ' m', 13, '#3a465c', 'right', 800); }
       const pH = numIn('bH');
       if (pH != null && pH >= 0 && pH <= 7) {
@@ -550,8 +550,8 @@
         D.label(bx + 120, y - 14, '내 예측 ' + fnum(pH, 1) + ' m', { bg: '#7c5cff', size: 13, align: 'right' });
       }
       // 지난 자리 (0.2 s마다 고스트)
-      for (let k = 0; k <= 10; k++) { const tk = 0.2 * k; if (tk > t + 1e-9) break; D.sphere(bx, BGY - ballY(tk) * BPPM - 10, 7, 'rgba(242,107,58,.35)', { gloss: false }); }
-      const y = BGY - ballY(t) * BPPM - 10;
+      for (let k = 0; k <= 10; k++) { const tk = 0.2 * k; if (tk > t + 1e-9) break; D.sphere(bx, BGY - ballY(tk) * BPPM, 7, 'rgba(242,107,58,.35)', { gloss: false }); }
+      const y = BGY - ballY(t) * BPPM;
       D.sphere(bx, y, 12, '#f26b3a', { shadow: true });
       D.arrow(bx + 40, y, bx + 40, y - clamp(ballV(t) * 3.6, -45, 45), { color: '#14a058', width: 4, head: 9, label: fsg(ballV(t), 1) + ' m/s', labelOffset: -50 });
       if (Math.abs(t - BAL_T) < 0.06) D.label(bx - 52, y, '최고점', { bg: '#e2464b', size: 13 });
@@ -944,6 +944,9 @@
     },
   ];
 
+  /* 이어 하기(새로고침)로 중간 미션에서 열려도 미션 setup()이 상태를 쓸 수 있고 그 장면이 덮어써지지 않도록, 장면 상태를 게임보다 먼저 만들어요 */
+  resetVideo(); resetGraph(false); resetModel(); resetApply();
+  setScene('video');
   game = SciSim.game({
     simId: 'hp-equal-accel', mount: '#game', badge: '영상 분석가', homeHref: '../../index.html#hp',
     featureLabels: { video: '🎞️ 동영상 · 마커 · 위치–시간 표', graph: '📈 속도–시간 그래프 · 최적 직선', model: '🧮 운동 식 유도 · 영상과 비교', apply: '🚗 급제동 · 공 던지기 예측' },
@@ -952,8 +955,6 @@
   });
 
   /* ---------- 시작 ---------- */
-  resetVideo(); resetGraph(false); resetModel(); resetApply();
-  setScene('video');
   let lastFree = false, lastMode = '';
   SciSim.loop((dt, t) => {
     S.clock = t;

@@ -791,7 +791,7 @@
         const fill = ans === 0 ? '#fff' : ans === 1 ? '#ede9fe' : '#ffedd5', stroke = ans === 0 ? '#94a3b8' : ans === 1 ? '#7c3aed' : '#ea580c';
         const bad = S.csBad && S.csBad[i] && S.csBad[i][j] > t;
         ctx.fillStyle = fill; ctx.strokeStyle = bad ? '#e2464b' : stroke; ctx.lineWidth = bad ? 3 : 2; ctx.setLineDash(ans === 0 ? [5, 4] : []); rr(bx, by, bw, bh, 9).fill(); rr(bx, by, bw, bh, 9).stroke(); ctx.setLineDash([]);
-        TX(bx + bw / 2, by + bh / 2 + 5.5, ans === 0 ? '눌러서 고르기' : FLOWN[ans], { size: ans === 0 ? 12 : 14, color: ans === 0 ? '#94a3b8' : ans === 1 ? '#5b21b6' : '#c2410c', weight: 800 });
+        TX(bx + bw / 2, by + bh / 2 + 5.5, ans === 0 ? '눌러서 고르기' : FLOWN[ans], { size: ans === 0 ? (PHONE ? 11 : 12) : 14, color: ans === 0 ? '#94a3b8' : ans === 1 ? '#5b21b6' : '#c2410c', weight: 800 });
         S.chipRects.push({ i, j, x: bx, y: by, w: bw, h: bh });
       }
     });
@@ -974,6 +974,7 @@
   SciSim.bindRange(sEmit, oEmit, (v) => (+v).toFixed(1) + ' GtC/년', (v) => { S.emit = v; });
   $$('#wBtns .opt').forEach((b) => b.addEventListener('click', () => { Sound.click(); setMode('water', b.dataset.w); }));
   $$('#cBtns .opt').forEach((b) => b.addEventListener('click', () => { Sound.click(); setMode('carbon', b.dataset.c); }));
+  $$('#modeSeg button').forEach((b) => b.addEventListener('click', () => { if (!(game && game.free)) return; Sound.click(); setMode(b.dataset.mode); }));
   $('#bTracer').addEventListener('click', launchTracer);
   $('#bResetW').addEventListener('click', () => { Sound.click(); initWaterBoard(); });
   $('#bResetCT').addEventListener('click', () => { Sound.click(); initCarbonBoard(); });

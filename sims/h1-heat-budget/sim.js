@@ -366,7 +366,7 @@
   const FIXED = {
     IN:   { x: 117, y: 78, name: '입사', val: () => K.IN, col: '#92700c' },
     E:    { x: G.xE, y: 322, name: '증발', col: '#0369a1' },
-    C:    { x: G.xC, y: 366, name: '대류·전도', col: '#c2410c' },
+    C:    { x: G.xC - 10, y: 372, name: '대류·전도', col: '#c2410c' },
   };
 
   /* ======================================================
@@ -736,7 +736,7 @@
      ====================================================== */
   const EM = PHONE
     ? { sch: { x: 6, y: 6, w: 588, h: 246 }, g1: { x: 8, y: 262, w: 584, h: 274 }, g2: { x: 8, y: 546, w: 584, h: 284 },
-        fac: { x: 20, y: 104 }, cloud: { x: 300, y: 92, w: 230, h: 112 }, sinks: [{ x: 110, y: 212 }, { x: 300, y: 212 }, { x: 490, y: 212 }] }
+        fac: { x: 20, y: 104 }, cloud: { x: 300, y: 92, w: 230, h: 112 }, sinks: [{ x: 142, y: 212 }, { x: 310, y: 212 }, { x: 490, y: 212 }] }
     : { sch: { x: 8, y: 8, w: 784, h: 196 }, g1: { x: 10, y: 214, w: 386, h: 336 }, g2: { x: 404, y: 214, w: 386, h: 336 },
         fac: { x: 28, y: 44 }, cloud: { x: 330, y: 62, w: 230, h: 92 }, sinks: [{ x: 220, y: 166 }, { x: 330, y: 166 }, { x: 440, y: 166 }] };
   const EV = { c: new Array(K.Y1 - K.Y0 + 1).fill(K.CNOW), T: new Array(K.Y1 - K.Y0 + 1).fill(K.OBS), init: false };
@@ -764,7 +764,7 @@
       D.text(x0 - 8, yy + 4.5, String(Math.round(v * 10) / 10), { size: 13, color: '#64748b', align: 'right', weight: 700 });
     }
     [2025, 2050, 2075, 2100].forEach((yr) => { const xx = gx(yr); ctx.strokeStyle = '#e8edf3'; ctx.beginPath(); ctx.moveTo(xx, y0); ctx.lineTo(xx, y1); ctx.stroke(); D.text(xx, y1 + 18 * FS * 0.9, String(yr), { size: 13, color: '#64748b', weight: 700 }); });
-    (o.refs || []).forEach((r) => { const yy = gy(r.v); ctx.strokeStyle = r.col; ctx.lineWidth = 2; ctx.setLineDash([7, 5]); ctx.beginPath(); ctx.moveTo(x0, yy); ctx.lineTo(x1, yy); ctx.stroke(); ctx.setLineDash([]); D.text(x1 - 4, yy - 6, r.label, { size: 13, color: r.col, align: 'right', weight: 800 }); });
+    (o.refs || []).forEach((r) => { const yy = gy(r.v); ctx.strokeStyle = r.col; ctx.lineWidth = 2; ctx.setLineDash([7, 5]); ctx.beginPath(); ctx.moveTo(x0, yy); ctx.lineTo(x1, yy); ctx.stroke(); ctx.setLineDash([]); D.text(r.left ? x0 + 6 : x1 - 4, yy - 6, r.label, { size: 13, color: r.col, align: r.left ? 'left' : 'right', weight: 800 }); });
     ctx.save(); ctx.beginPath(); ctx.rect(x0 - 2, y0 - 8, x1 - x0 + 4, y1 - y0 + 12); ctx.clip();
     // 지금까지 지나온 해는 진하게, 앞으로 갈 해는 연하게
     const yrI = clamp(Math.round(S.yr - K.Y0), 0, o.data.length - 1);
@@ -842,7 +842,7 @@
     if (S.forest >= 0.05) [-16, 16].forEach((dx) => { ctx.fillStyle = '#7a5230'; ctx.fillRect(rc.x + dx - 2, oc.y + (PHONE ? 22 : 16), 4, 12); D.sphere(rc.x + dx, oc.y + (PHONE ? 14 : 8), 11, '#16a34a', { gloss: true }); });
     // 그래프 두 개
     lineGraph(EM.g1, { title: '대기 CO₂ 농도', unit: 'ppm', min: 250, max: 700, step: 150, data: EV.c, col: '#475569', endLabel: finalC() + ' ppm', refs: [{ v: K.CNOW, col: '#16a34a', label: '현재 ' + K.CNOW }] });
-    lineGraph(EM.g2, { title: '산업화 이전 대비 기온 상승', unit: '°C', min: 0, max: 5, step: 1, data: EV.T, col: '#dc2626', endLabel: sg1(finalT()) + ' °C', refs: [{ v: K.TARGET, col: '#2563eb', label: '목표 ' + K.TARGET.toFixed(0) + ' °C' }] });
+    lineGraph(EM.g2, { title: '산업화 이전 대비 기온 상승', unit: '°C', min: 0, max: 5, step: 1, data: EV.T, col: '#dc2626', endLabel: sg1(finalT()) + ' °C', refs: [{ v: K.TARGET, col: '#2563eb', label: '목표 ' + K.TARGET.toFixed(0) + ' °C', left: true }] });
   }
 
   /* ======================================================

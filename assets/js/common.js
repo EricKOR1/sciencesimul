@@ -380,6 +380,13 @@
     }
     return null;
   }
+  /* 받침에 맞는 조사 고르기: 마지막 글자가 한글이 아니면 '을(를)' */
+  function eulReul(html) {
+    const t = String(html).replace(/<[^>]*>/g, '').replace(/[\s)\]'"’”!?.:·]+$/, '');
+    const c = t.charCodeAt(t.length - 1);
+    if (!(c >= 0xac00 && c <= 0xd7a3)) return '을(를)';
+    return (c - 0xac00) % 28 ? '을' : '를';
+  }
   const PHASE_ICON = { '관찰': '👀', '실험': '🧪', '탐구': '🔎', '모형': '🧩', '설명': '💡', '확인': '✅', '적용': '🏠', '예측': '🎯', '기록': '📋', '분석': '📊', '복습': '🔁', '정리': '📝', '소통': '💬' };
 
   function game(opts) {
@@ -630,9 +637,12 @@
 
       refs = { card };
       if (m.type === 'quiz') {
+        // 보기 순서를 매번 섞어서 정답 위치를 외우지 못하게 해요 (테스트용: window.SCISIM_NO_SHUFFLE = true)
+        const order = m.choices.map((_, i) => i);
+        if (!global.SCISIM_NO_SHUFFLE) for (let i = order.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); const t = order[i]; order[i] = order[j]; order[j] = t; }
         const ch = el('div', { class: 'choices' });
-        refs.choices = m.choices.map((c, i) => {
-          const b = el('button', { class: 'choice', type: 'button' }, [el('span', { class: 'key', text: String(i + 1) }), el('span', { html: c })]);
+        refs.choices = order.map((i, pos) => {
+          const b = el('button', { class: 'choice', type: 'button', 'data-i': String(i) }, [el('span', { class: 'key', text: String(pos + 1) }), el('span', { html: m.choices[i] })]);
           b.addEventListener('click', () => answer(i, b));
           ch.appendChild(b);
           return b;
@@ -765,7 +775,7 @@
         icon: lv.icon || '🎊',
         stars: rec.stars,
         title: (li + 1) + '단계 완료!',
-        html: '<b>' + lv.title + '</b>을(를) 마쳤어요. 현재 점수 <b>' + score + '점</b>' +
+        html: '<b>' + lv.title + '</b>' + eulReul(lv.title) + ' 마쳤어요. 현재 점수 <b>' + score + '점</b>' +
           (lv.recap ? '<div class="learned"><b class="k">✏️ 이번 단계에서 배운 것</b>' + lv.recap + '</div>' : '') +
           '<div class="next-step">➡️ <b>다음: ' + (li + 2) + '단계 · ' + nx.title + '</b>' +
           (tools.length ? '<div style="margin-top:6px">' + tools.map((f) => '<span class="tool-chip">' + labels[f] + '</span>').join('') + '</div>' : '') + '</div>',

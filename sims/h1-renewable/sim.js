@@ -488,7 +488,7 @@
          { id: 're', x: 300, y: 650, w: 560, h: 240, cols: 3, label: '♻️ 재생 에너지', sub: '자연에서 다시 얻을 수 있는 에너지', color: '#16a34a' }]
       : [{ id: 'new', x: 162, y: 400, w: 300, h: 280, cols: 2, label: '🔋 신에너지', sub: '새로운 방식으로 얻는 에너지', color: '#8b5cf6' },
          { id: 're', x: 555, y: 400, w: 466, h: 280, cols: 3, label: '♻️ 재생 에너지', sub: '자연에서 다시 얻을 수 있는 에너지', color: '#16a34a' }];
-    slots.forEach((s) => { const gw = (s.w - 16) / s.cols; sortBoard.addSlot(Object.assign({ cap: 7, top: 52, gh: PHONE ? 58 : 62, isc: Math.min(0.9, (gw - 6) / SORT_W), pad: 8 }, s)); });
+    slots.forEach((s) => { const gw = (s.w - 16) / s.cols; sortBoard.addSlot(Object.assign({ cap: 7, top: 52, gh: PHONE ? 58 : 54, isc: Math.min(0.9, (gw - 6) / SORT_W), pad: 8 }, s)); });
     // 카드를 섞어서 홈 위치에 놓기
     const order = SRC.map((s, i) => i);
     const rd = rng(7 + Math.floor(Math.random() * 1000)); order.sort(() => rd() - 0.5);
@@ -660,8 +660,8 @@
     if (P > 0) flowDots(wire, t, Math.max(2, Math.round(P * 5)), '#facc15', 50 + P * 70, 3.6);
     ctx.fillStyle = '#fca5a5'; rr(hxh - 24, gy - 40, 48, 30, 3).fill(); ctx.fillStyle = '#b91c1c'; ctx.beginPath(); ctx.moveTo(hxh - 30, gy - 40); ctx.lineTo(hxh, gy - 62); ctx.lineTo(hxh + 30, gy - 40); ctx.fill();
     ctx.fillStyle = P > 0 ? '#fde047' : '#475569'; rr(hxh - 8, gy - 32, 16, 14, 2).fill(); if (P > 0) D.glow(hxh, gy - 25, 30, '#fde047', 0.5);
-    if (v < 3) pill(hx, hy - Lb - 18, '풍속이 3 m/s보다 약하면 발전을 시작하지 못해요', { size: 13, bg: 'rgba(30,41,59,.85)', color: '#fff', border: null, pad: 10 });
-    else if (v >= 12) pill(hx, hy - Lb - 18, '풍속 12 m/s 이상: 정격 출력 2.00 MW', { size: 13, bg: '#16a34a', color: '#fff', border: null, pad: 10 });
+    if (v < 3) pill(VW - 14, gy - 84, '풍속이 3 m/s보다 약하면 발전을 시작하지 못해요', { size: 13, bg: 'rgba(30,41,59,.85)', color: '#fff', border: null, pad: 10, align: 'right' });
+    else if (v >= 12) pill(VW - 14, gy - 84, '풍속 12 m/s 이상: 정격 출력 2.00 MW', { size: 13, bg: '#16a34a', color: '#fff', border: null, pad: 10, align: 'right' });
     // 아래 패널: 출력 곡선
     const bY = DL.by;
     ctx.save(); D.shadow(() => { ctx.fillStyle = '#fff'; rr(10, bY, VW - 20, DL.bh, 14).fill(); }, { blur: 8, y: 2, color: 'rgba(15,23,42,.15)' }); ctx.restore();
@@ -676,12 +676,12 @@
     ctx.strokeStyle = SUBJ; ctx.lineWidth = 4; ctx.lineJoin = 'round'; ctx.beginPath();
     for (let vv = 0; vv <= 20; vv += 0.25) { const pp = windModel(vv), x = X(vv), y = Y(pp); if (vv === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); }
     ctx.stroke();
-    [6, 12].forEach((vv) => { ctx.fillStyle = '#94a3b8'; ctx.beginPath(); ctx.arc(X(vv), Y(windModel(vv)), 4.5, 0, TAU); ctx.fill(); TX(X(vv) + (vv === 12 ? -8 : 8), Y(windModel(vv)) - 9, vv + ' m/s → ' + windModel(vv).toFixed(2) + ' MW', { size: 12.5, color: '#475569', align: vv === 12 ? 'right' : 'left', weight: 800 }); });
+    [6, 12].forEach((vv) => { ctx.fillStyle = '#94a3b8'; ctx.beginPath(); ctx.arc(X(vv), Y(windModel(vv)), 4.5, 0, TAU); ctx.fill(); if (Math.abs(v - vv) < 2.5) return; TX(X(vv) + (vv === 12 ? -8 : 8), Y(windModel(vv)) - 9, vv + ' m/s → ' + windModel(vv).toFixed(2) + ' MW', { size: 12.5, color: '#475569', align: vv === 12 ? 'right' : 'left', weight: 800 }); });
     const cx = X(v), cy = Y(P);
     ctx.save(); ctx.setLineDash([5, 4]); ctx.strokeStyle = 'rgba(15,23,42,.45)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(cx, gy0); ctx.lineTo(cx, cy); ctx.lineTo(gx0, cy); ctx.stroke(); ctx.restore();
     D.sphere(cx, cy, 8, '#e2464b', { shadow: true });
     TX(Math.min(cx + 14, gx1 - 60), Math.max(cy - 14, gy1 + 6), P.toFixed(2) + ' MW', { size: 15, weight: 800, color: '#b91c1c', align: 'left', stroke: '#fff', strokeWidth: 4 });
-    TX(gx1, gy1 - (PHONE ? 6 : 4), '풍속이 2배(6→12 m/s)가 되면 출력은 ' + Math.round(windModel(12) / windModel(6)) + '배', { size: 12.5, align: 'right', color: '#9a3412', weight: 800 });
+    TX(gx0, gy0 + 32, '풍속이 2배(6→12 m/s)가 되면 출력은 ' + Math.round(windModel(12) / windModel(6)) + '배', { size: 12.5, align: 'left', color: '#9a3412', weight: 800 });
   }
 
   /* --- 연료 전지 --- */
@@ -796,7 +796,7 @@
     ctx.fillStyle = 'rgba(180,83,9,.25)'; for (let y = g.y0 + 8; y < g.y1; y += 12) ctx.fillRect(g.mem[0] + 3, y, g.mem[1] - g.mem[0] - 6, 2);
     ctx.fillStyle = '#374151'; ctx.fillRect(g.anode[0], g.y0, g.anode[1] - g.anode[0], g.y1 - g.y0); ctx.fillRect(g.cath[0], g.y0, g.cath[1] - g.cath[0], g.y1 - g.y0);
     TX((g.chL[0] + g.chL[1]) / 2, g.y1 + 20, '연료극 (−)', { size: 14, weight: 800, color: '#1d4ed8' });
-    TX((g.chR[0] + g.chR[1]) / 2, g.y1 + 20, '공기극 (+)', { size: 14, weight: 800, color: '#b91c1c' });
+    TX(PHONE ? g.chR[0] + FCL.ch * 0.36 : (g.chR[0] + g.chR[1]) / 2, g.y1 + 20, '공기극 (+)', { size: 14, weight: 800, color: '#b91c1c' });
     TX((g.mem[0] + g.mem[1]) / 2, g.y1 + 20, '전해질막', { size: 13, weight: 800, color: '#92400e' });
     // 외부 회로 · 전구
     ctx.strokeStyle = '#475569'; ctx.lineWidth = 3; ctx.beginPath(); g.wire.forEach((q, i) => (i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]))); ctx.stroke();
@@ -836,8 +836,8 @@
      ③④ 하루 전기 · 마을 설계
      ========================================================= */
   const GL = PHONE
-    ? { town: 140, panelY: 146, panelH: 336, leg: [164, 186], ch: { x: 46, y: 204, w: 540, h: 232 }, lab: 456, soc: { y: 490, h: 54 }, bot: { y: 556, h: 276 } }
-    : { town: 100, panelY: 106, panelH: 266, leg: [124], ch: { x: 52, y: 140, w: 722, h: 196 }, lab: 354, soc: { y: 378, h: 38 }, bot: { y: 424, h: 130 } };
+    ? { town: 140, panelY: 146, panelH: 336, leg: [160, 180], ch: { x: 46, y: 204, w: 540, h: 232 }, lab: 456, soc: { y: 490, h: 54 }, bot: { y: 556, h: 276 } }
+    : { town: 100, panelY: 106, panelH: 266, leg: [118], ch: { x: 52, y: 140, w: 722, h: 196 }, lab: 354, soc: { y: 378, h: 38 }, bot: { y: 424, h: 130 } };
   const CW24 = GL.ch.w / 24;
   const GA = { ymax: 150, h: [], soc: [] };
   for (let h = 0; h < 24; h++) { GA.h.push({ s: 0, w: 0, dis: 0, gas: 0, un: 0, ch: 0, waste: 0, d: DEM[h] }); GA.soc.push(0); }
@@ -1072,7 +1072,7 @@
     $('#tbLabel').textContent = MODE_LABEL[m];
     showHint(MODE_HINT[m], 4200); ctlUpdate();
   }
-  function ensure(m, sub) { if (sub) DV.sub = sub; if (m !== S.mode) { S.mode = m; S.fade = 1; if (m === 'sort' && !sortBoard) buildSort(); $('#tbLabel').textContent = MODE_LABEL[m]; } G.paint = null; ctlUpdate(); }
+  function ensure(m, sub) { if (sub) DV.sub = sub; if (m !== S.mode) { hideHint(); S.mode = m; S.fade = 1; if (m === 'sort' && !sortBoard) buildSort(); $('#tbLabel').textContent = MODE_LABEL[m]; } G.paint = null; ctlUpdate(); }
   function setWeather(w) { G.wx = w; ctlUpdate(); }
   function setDev(d) { DV.sub = d; ctlUpdate(); }
   const SLIDERS = {};
