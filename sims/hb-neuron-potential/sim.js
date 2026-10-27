@@ -569,7 +569,7 @@ function drawTypesScene(dt) {
   bgFill('#eaf6f1', '#f7fbf9');
   T(PHONE ? 12 : 20, PHONE ? 24 : 28, '🧠 뉴런 3종의 세포체 위치', PHONE ? 15 : 18, '#26324a', 'left', 800);
   // 중추 신경계 상자
-  const cb = TXY(284, -78), cw = 200 * TK, ch = 156 * TK;
+  const cb = TXY(284, -78), cw = 262 * TK, ch = 156 * TK;      // 운동 뉴런의 세포체도 중추(척수) 안에 있어요
   D.roundRect(cb.x, cb.y, cw, ch, 14); ctx.fillStyle = 'rgba(148,163,184,.18)'; ctx.fill(); ctx.setLineDash([6, 5]); ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 2; ctx.stroke(); ctx.setLineDash([]);
   T(cb.x + cw / 2, cb.y + ch - 10, '중추 (뇌·척수)', PHONE ? 12 : 13.5, '#64748b', 'center', 800);
   // 자극 · 근육
@@ -939,7 +939,7 @@ function drawAPGraph(a) {
       ctx.lineTo(A.X(a.t), y + h); ctx.closePath(); ctx.fill(); ctx.restore();
     }
     ctx.strokeStyle = '#b7c3d6'; ctx.lineWidth = 1.2; D.roundRect(pl.x, y, pl.w, h, 4); ctx.stroke();
-    { const tw = IONT(pl.x - 8 - 36, y + 13, r[1], '+', 13, r[2], 'right'); T(pl.x - 8, y + 13, '통로', 13, r[2], 'right', 800); }
+    { if (PHONE) IONT(pl.x - 8, y + 13, r[1], '+', 13, r[2], 'right'); else { IONT(pl.x - 8 - 36, y + 13, r[1], '+', 13, r[2], 'right'); T(pl.x - 8, y + 13, '통로', 13, r[2], 'right', 800); } }
   });
   if (a.kind === 'ap') { ctx.save(); ctx.strokeStyle = 'rgba(255,180,0,.8)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(A.X(a.t), pl.y); ctx.lineTo(A.X(a.t), AG.rows[1] + 15); ctx.stroke(); ctx.restore(); }
   // 구간 이름표 칸

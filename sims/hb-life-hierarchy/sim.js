@@ -540,7 +540,7 @@
     // 묶음 테두리
     const box = (list, pad) => { const xs = list.map((o) => orgXY(o).x), ys = list.map((o) => orgXY(o).y); const r = list.map(orgR); let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9; list.forEach((o, i) => { const p = orgXY(o); const up = o.sp === 'oak' ? r[i] * 2.3 : r[i]; x0 = Math.min(x0, p.x - r[i]); x1 = Math.max(x1, p.x + r[i]); y0 = Math.min(y0, p.y - up); y1 = Math.max(y1, p.y + (o.sp === 'oak' ? 6 : r[i] * 0.6)); }); return { x: Math.max(FV.x + 4, x0 - pad), y: Math.max(FV.y + 4, y0 - pad), w: Math.min(FV.x + FV.w - 4, x1 + pad) - Math.max(FV.x + 4, x0 - pad), h: Math.min(FV.y + FV.h - 4, y1 + pad) - Math.max(FV.y + 4, y0 - pad) }; };
     const outline = (b, col, a, label) => { if (a < 0.02) return; ctx.save(); ctx.globalAlpha = a; D.roundRect(b.x, b.y, b.w, b.h, 14); ctx.fillStyle = C.rgba(col, 0.1); ctx.fill(); ctx.setLineDash([9, 6]); ctx.strokeStyle = col; ctx.lineWidth = 3; ctx.stroke(); ctx.setLineDash([]); D.label(b.x + 10, b.y + 4, label, { bg: col, size: PHONE ? 12.5 : 14, align: 'left' }); ctx.restore(); };
-    outline(box(ORG.filter((o) => o.id === G.sel), 12), '#f59e0b', G.a[0], '개체 · ' + SPN[sp] + ' 1' + (sp === 'oak' ? '그루' : '마리'));
+    outline(box(ORG.filter((o) => o.id === G.sel), 12), '#f59e0b', G.a[0], '개체 · ' + SPN[sp] + ' 1' + (sp === 'oak' ? '그루' : sp === 'mushroom' ? '개' : '마리'));
     outline(box(ORG.filter((o) => o.sp === sp), 10), '#16a34a', G.a[1], '개체군 · 모든 ' + SPN[sp] + ' (한 종)');
     outline(box(ORG, 8), '#2563eb', G.a[2], '군집 · 모든 생물 (여러 종)');
     if (G.fa > 0.02) {

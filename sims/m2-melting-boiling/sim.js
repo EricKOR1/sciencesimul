@@ -1341,6 +1341,7 @@
       v.classList.toggle('word', !!word);
     };
     const R = RUN, a = R.samples[0], b = R.samples[1];
+    if (!a || !b) return;   // 실험 준비(단계 setup) 전에는 아직 시료가 없어요
     const T = (s) => tStr(s.st.T) + '<small>°C</small>';
     const flat = (s) => { const g = s.cv.segs.find((q) => q.flat); return g && R.t >= g.t0 + 0.3 ? tStr(g.T0) + '<small>°C</small>' : '–'; };
     if (S.scene === 'melt') {

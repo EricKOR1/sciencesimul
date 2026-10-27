@@ -495,6 +495,7 @@ function stepCD(dt) {
     if (capCond()) { if (cd.capPending) doCapture(); }
     if (activeSegs() === 0) break;
   }
+  if (cd.capPending && activeSegs() === 0) { cd.capPending = false; showHint('신호가 끝나 버렸어요. 다시 ⚡ 자극을 준 뒤 📸 순간 포착을 눌러요.'); updateCtl(); }
 }
 function capCond() { const st = S.cd.seg.map(segState); return st.indexOf('dep') >= 0 && st.indexOf('rep') >= 0 && st.indexOf('pol') >= 0; }
 function startCapture() {
@@ -605,7 +606,7 @@ $('#bResume').addEventListener('click', resumeCD);
 
 /* ================= ② 말이집 전도 (경주) ================= */
 const MG = PHONE
-  ? { x0: 24, x1: 450, y1: 66, y2: 152, hh: 18, BR: { x: 8, y: 214, w: 464, h: 418 } }
+  ? { x0: 24, x1: 450, y1: 84, y2: 162, hh: 18, BR: { x: 8, y: 230, w: 464, h: 402 } }
   : { x0: 70, x1: 730, y1: 108, y2: 238, hh: 24, BR: { x: 14, y: 312, w: 772, h: 236 } };
 const NS = 19, NODES = [0, 6, 12, 18];
 const mxs = (k) => MG.x0 + k * (MG.x1 - MG.x0) / (NS - 1);
@@ -640,7 +641,7 @@ function drawRaceScene(dt) {
   const mc = S.mc, t = mc.run || mc.starts ? mc.t : 0, st = mc.starts || raceStarts(mc.dmg);
   bgFill('#eef3fb', '#f7f9fd');
   T(PHONE ? 12 : 20, PHONE ? 22 : 28, '💨 같은 길이를 지나는 두 축삭의 경주', PHONE ? 14 : 17, '#26324a', 'left', 800);
-  T(PHONE ? 12 : 20, PHONE ? 40 : 50, '(1 ms를 0.22초로 느리게 보여 줘요 · 속도 차는 모형에서 줄여 보여 줘요)', PHONE ? 11.5 : 13, '#7b8aa3', 'left', 700);
+  if (!PHONE) T(20, 50, '(1 ms를 0.22초로 느리게 보여 줘요 · 속도 차는 모형에서 줄여 보여 줘요)', 13, '#7b8aa3', 'left', 700);
   const cw = (MG.x1 - MG.x0) / (NS - 1), hh = MG.hh;
   // ---- 무말이집
   const y1 = MG.y1;
@@ -696,6 +697,7 @@ function drawRaceScene(dt) {
   const X = (v) => bx + v / 30 * bw;
   ctx.strokeStyle = '#e3e8f0'; ctx.lineWidth = 1; [0, 10, 20, 30].forEach((v) => { ctx.beginPath(); ctx.moveTo(X(v), by0 - 4); ctx.lineTo(X(v), by0 + rh * 4 - 8); ctx.stroke(); T(X(v), by0 + rh * 4 + 8, String(v), 12.5, '#5a6679', 'center', 700); });
   T(bx + bw / 2, by0 + rh * 4 + 26, '시간 (ms)', 13, '#26324a', 'center', 800);
+  if (PHONE) textBlock(B.x + 14, by0 + rh * 4 + 56, B.w - 28, '(1 ms를 0.22초로 느리게 보여 줘요 · 속도 차는 모형에서 줄여 보여 줘요)', 12, '#7b8aa3', 16, 700);
   rows.forEach((r, i) => {
     const y = by0 + i * rh, v = mc.rec[r[0]];
     TF(lx, y + rh / 2 + 1, r[1], bx - lx - 8, PHONE ? 12.5 : 14, 11, '#26324a', 'left', 800);

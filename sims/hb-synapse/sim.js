@@ -460,7 +460,7 @@ class SynFlow {
       if (this.drug === 'nicotine') for (let i = 0; i < 3; i++) this.mim.push({ x: rnd(g.cl + 40, g.cr - 40), y: rnd(g.yc + 8, g.ys - 8), vx: rnd(-20, 20), vy: rnd(-10, 10), state: 'free', r: -1 });
       if (this.drug === 'curare') for (let i = 0; i < 3; i++) this.blk.push({ x: g.site[i], y: g.yc + 14, vx: 0, vy: 0, state: 'free', r: i, tx: g.site[i] });
     }
-    if (k === 6) { this.nt.forEach((p) => { if (p.state === 'free' || p.state === 'bound') p.fate = Math.random() < 0.55 ? 'break' : 'take'; p.wait = rnd(0.2, 1.4); }); }
+    if (k === 6) { this.nt.forEach((p) => { if (p.state === 'free' || p.state === 'bound') p.fate = this.drug === 'organo' ? 'break' : this.drug === 'ssri' ? 'take' : (Math.random() < 0.55 ? 'break' : 'take'); p.wait = rnd(0.2, 1.4); }); }
   }
   next() { if (this.stage < 6 && !this.revActive()) { this.enter(this.stage + 1); return true; } return false; }
   revActive() { return this.revT >= 0 && this.revT < 3.2; }

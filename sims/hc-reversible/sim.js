@@ -777,7 +777,7 @@
   /* ================= ④ 멈춘 걸까? ================= */
   const wtNow = () => wtNO2(S.wt.ts);
   function wtStart() { if (S.wt.run || S.wt.done) return; Sound.click(); S.wt.run = true; updateCtl(); }
-  function wtReset() { Object.assign(S.wt, { run: false, ts: 0, done: false, pts: [] }); S.wt.pts.push([0, 0]); updateCtl(); }
+  function wtReset() { Object.assign(S.wt, { run: false, ts: 0, done: false, pts: [], pred: '' }); S.wt.pts.push([0, 0]); const pe = $('#selPred'); if (pe) { pe.value = ''; mark2(pe, ''); } updateCtl(); }
   $('#bStart').addEventListener('click', wtStart); $('#bAgain').addEventListener('click', () => { Sound.click(); wtReset(); });
   function stepWt(dt) {
     const w = S.wt; if (!w.run) return;

@@ -372,7 +372,7 @@
     }
     if (S.mode === 'dil') {
       if (d.stage === 0 && !d.act) return { lab: '🧪 피펫으로 취할 부피', unit: 'mL', min: 0, max: 25, step: 0.5, dec: 1, big: 1, small: 0.1, get: () => d.Vp, set: (v) => { d.Vp = v; }, note: '목표: ' + (d.round === 0 ? '1.00 M → 0.100 M' : '0.100 M → 0.0100 M') + ', 100 mL 부피 플라스크에 만들어요.' };
-      if (d.stage === 2 && !d.act) return { lab: '💧 플라스크 속 액체의 부피', unit: 'mL', min: 0, max: 110, step: 1, dec: 1, big: 1, small: 0.1, get: () => d.L, set: (v) => { d.L = v; }, note: '표선은 100 mL예요. 확대창으로 표선에 맞춰요.' };
+      if (d.stage === 2 && !d.act) return { lab: '💧 플라스크 속 액체의 부피', unit: 'mL', min: d.Vfix, max: 110, step: 1, dec: 1, big: 1, small: 0.1, get: () => d.L, set: (v) => { d.L = v; }, note: '표선은 100 mL예요. 확대창으로 표선에 맞춰요.' };
     }
     return null;
   }
@@ -425,7 +425,7 @@
     chainBox(ch.x, ys[0], ch.w, bh, q.name + ' 용액', vals[0], true, 1, INK);
     chainBox(ch.x, ys[1], ch.w, bh, '필요한 몰수 n', vals[1], rows[0].ok, pop(0), INK);
     chainBox(ch.x, ys[2], ch.w, bh, '필요한 질량', vals[2], rows[1].ok, pop(1), '#5b21b6');
-    ['× 부피 0.250 L (250 mL ÷ 1000)', '× 몰질량 ' + q.MM + ' g/mol'].forEach((txt, i) => {
+    ['× 부피 0.250 L (250 mL = 0.250 L)', '× 몰질량 ' + q.MM + ' g/mol'].forEach((txt, i) => {
       const y1 = ys[i] + bh + 4, y2 = ys[i + 1] - 4, ax = ch.x + 34;
       D.arrow(ax, y1, ax, y2, { color: '#b45309', width: 4 }); T(ax + 18, (y1 + y2) / 2 + 5, txt, 14, '#b45309', 'left', 800);
     });
@@ -572,7 +572,7 @@
       '② 달아 놓은 NaCl이 비커에 들어 있어요. 소량의 물에 유리 막대로 저어 완전히 녹여요.',
       '③ 녹인 용액을 깔때기로 부피 플라스크에 옮기고, 비커와 깔때기를 증류수로 헹궈 그 물도 넣어요.',
       '④ 표선 가까이 증류수를 붓고, 스포이트로 눈높이에서 오목한 면의 아랫부분이 표선에 닿게 맞춰요. 그다음 ⑤ 마개를 닫고 섞어요.',
-      k.c == null ? '' : '완성! 만든 용액의 몰 농도 = ' + k.m0.toFixed(2) + ' g ÷ 58.5 g/mol ÷ ' + (k.Lfix / 1000).toFixed(4).replace(/0+$/, '').replace(/\.$/, '') + ' L = ' + k.c.toFixed(4) + ' M',
+      k.c == null ? '' : '완성! 만든 용액의 몰 농도 = (' + k.m0.toFixed(2) + ' g / 58.5 g/mol) / ' + (k.Lfix / 1000).toFixed(4).replace(/0+$/, '').replace(/\.$/, '') + ' L = ' + k.c.toFixed(4) + ' M',
     ];
     T(INFO.x + 16, INFO.y + 26, k.stage === 4 ? (mkOK() ? '✅ 표준 용액 완성' : '⚠️ 목표와 조금 달라요') : '지금 할 일', 15, k.stage === 4 && !mkOK() ? '#b4231f' : '#5b21b6', 'left', 800);
     textBlock(INFO.x + 16, INFO.y + 52, INFO.w - 32, tips[k.stage], 14.5, INK, 21, 700);
@@ -627,7 +627,7 @@
     T(xOf(0.1), ty + 13, '목표 0.100 M', 13.5, '#6d28d9', 'center', 800);
     if (S.er.shake > 0) { ctx.fillStyle = 'rgba(226,70,75,' + S.er.shake * 0.2 + ')'; D.roundRect(MAIN.x, MAIN.y, MAIN.w, MAIN.h, 14); ctx.fill(); }
     panel(INFO.x, INFO.y, INFO.w, INFO.h, 14);
-    T(INFO.x + 16, INFO.y + 26, '실제 농도 = 용질의 몰수 ÷ 용액의 부피(L)', 15, '#5b21b6', 'left', 800);
+    T(INFO.x + 16, INFO.y + 26, '실제 농도 = 용질의 몰수 / 용액의 부피(L)', 15, '#5b21b6', 'left', 800);
     textBlock(INFO.x + 16, INFO.y + 52, INFO.w - 32, '올바르게 만들면 n = 0.0250 mol, V = 0.250 L → 0.100 M이에요.' + (ran ? '\n' + e.why : '\n실수를 해 보면 n과 V 중 무엇이 바뀌는지 볼 수 있어요.'), 14.5, INK, 21, 700);
     if (ran && errShown(k)) textBlock(INFO.x + 16, INFO.y + INFO.h - (PHONE ? 70 : 42), INFO.w - 32, k === 'wet' ? '→ n = 0.0250 mol, V = 0.250 L 그대로 → 0.100 M (영향 없음)' : '→ n = ' + e.n.toFixed(4) + ' mol, V = ' + e.V.toFixed(3) + ' L → ' + e.c.toFixed(4) + ' M (' + (e.c < 0.0999 ? '낮아져요' : '같아요') + ')', 14.5, '#14803f', 20, 800);
   }
@@ -643,7 +643,7 @@
   const dlStock = () => (S.dl.round === 0 ? 1.00 : (S.dl.M[0] != null ? S.dl.M[0] : 0.100));
   const dlResult = () => dlStock() * S.dl.Vfix / S.dl.Lfix;
   const dlRoundOK = (r) => S.dl.done[r];
-  function dlReset() { const d = S.dl; Object.assign(d, { round: 0, stage: 0, Vp: 0, L: 0, Ld: 0, act: null, mixA: 0, mixT: 0 }); d.p = { pip: 0, x: dlRest().x, y: dlRest().y, fill: 0 }; parts.clear(); updateCtl(); }
+  function dlReset() { const d = S.dl; Object.assign(d, { round: 0, stage: 0, Vp: 0, Vfix: 0, L: 0, Ld: 0, act: null, mixA: 0, mixT: 0 }); d.p = { pip: 0, x: dlRest().x, y: dlRest().y, fill: 0 }; parts.clear(); updateCtl(); }
   function dlAct() {
     const d = S.dl; if (d.act) return;
     if (d.stage === 0) { if (d.Vp < 0.5) { showHint('피펫으로 취할 부피를 먼저 정해요.'); return; } d.Vfix = d.Vp; d.act = { n: 'pip', t: 0, d: 3.2 }; }
@@ -671,8 +671,8 @@
         else {
           d.stage = 3; d.mixA = 1; d.mixT = 1;
           const M = dlResult(); d.M[d.round] = M;
-          const ok = Math.abs(d.Vfix - 10) <= 0.05 && Math.abs(d.Lfix - 100) <= 0.1;
-          if (ok) { d.done[d.round] = true; flash(DB.fx, DB.base - 90 * s); Sound.success(); } else showHint('목표 농도와 달라요. 피펫 부피 10.0 mL와 표선 100 mL를 확인하고 다시 해 보세요.', 5200);
+          const ok = Math.abs(d.Vfix - 10) <= 0.05 && Math.abs(d.Lfix - 100) <= 0.1 && (d.round === 0 || d.done[0]);
+          if (ok) { d.done[d.round] = true; flash(DB.fx, DB.base - 90 * s); Sound.success(); } else showHint(d.round === 1 && !d.done[0] ? '1회차 용액이 0.100 M가 아니었어요. 처음부터 다시 해 보세요.' : '목표 농도와 달라요. 피펫 부피 10.0 mL와 표선 100 mL를 확인하고 다시 해 보세요.', 5200);
         }
         updateCtl();
       }
@@ -775,7 +775,7 @@
           title: '필요한 몰수와 질량 구하기',
           goal: '두 목표 용액마다 <b>필요한 몰수</b>와 <b>질량(g)</b>을 구해 쓰세요.',
           hint: 'n = 0.100 × 0.250 = 0.0250 mol이에요. 질량 = 0.0250 × 몰질량 (NaCl 58.5, NaOH 40)이에요. 질량은 소수 둘째 자리까지 써요.',
-          setup() { S.gate = ''; S.pl.k = 'nacl'; setScene('plan'); },
+          setup() { S.gate = ''; S.pl.k = 'nacl'; Object.keys(planRows).forEach((k) => planRows[k].forEach((r) => r.clear())); S.pl.popBox = {}; setScene('plan'); },
           check: () => planDone('nacl') && planDone('naoh'), hold: 0.5,
           status: () => 'NaCl ' + mark(planDone('nacl')) + ' NaOH ' + mark(planDone('naoh')),
           explain: '두 용액 모두 n = 0.100 mol/L × 0.250 L = <b>0.0250 mol</b>이에요. 질량은 NaCl 0.0250 × 58.5 = 1.4625 ≈ <b>1.46 g</b>, NaOH 0.0250 × 40 = <b>1.00 g</b>이에요.',
@@ -864,7 +864,7 @@
           title: '두 가지 실수의 실제 농도',
           goal: '<b>표선을 넘긴 경우</b>(255 mL)와 <b>비커를 헹구지 않은 경우</b>(용질 5 % 손실)의 실제 몰 농도를 구하세요.',
           hint: '표선 초과: 몰수 0.0250 mol 그대로, 부피 0.255 L. 헹구지 않음: 몰수가 0.0250 × 0.95로 줄고, 부피는 0.250 L예요. 소수 넷째 자리까지 써요.',
-          setup() { S.gate = ''; S.er.k = 'over'; setScene('err'); },
+          setup() { S.gate = ''; S.er.k = 'over'; errRows.over.clear(); errRows.rinse.clear(); setScene('err'); },
           check: () => errRows.over.ok && errRows.rinse.ok, hold: 0.5,
           status: () => '표선 초과 ' + mark(errRows.over.ok) + ' 헹구지 않음 ' + mark(errRows.rinse.ok),
           explain: '표선 초과: 0.0250 mol ÷ 0.255 L = <b>0.0980 M</b>. 헹구지 않음: 0.02375 mol ÷ 0.250 L = <b>0.0950 M</b>. 둘 다 목표 0.100 M보다 낮아요. 플라스크가 젖어 있어도 마지막에 표선에 맞추므로 농도는 바뀌지 않아요.',
@@ -893,7 +893,7 @@
           title: '두 단계로 묽히기',
           goal: '피펫으로 <b>10.0 mL</b>(±0.05)를 취해 100 mL 플라스크를 <b>표선</b>(±0.1)까지 채우고 섞어 <b>0.100 M</b>을, 이어서 같은 방법으로 <b>0.0100 M</b>을 만드세요.',
           hint: '① 피펫 부피를 10.0 mL로 맞춰 옮기기 → ② 물을 채워 확대창에서 표선에 맞추기 → ③ 섞기. 1회차가 끝나면 “이 용액으로 한 번 더”를 눌러요.',
-          setup() { S.gate = ''; dlReset(); setScene('dil'); },
+          setup() { S.gate = ''; dlReset(); S.dl.done = [false, false]; S.dl.M = [null, null]; setScene('dil'); },
           check: () => S.dl.done[0] && S.dl.done[1], hold: 0.6,
           status: () => '1회차(0.100 M) ' + mark(S.dl.done[0]) + ' &nbsp; 2회차(0.0100 M) ' + mark(S.dl.done[1]),
           explain: '1회차: 1.00 M × 10.0 mL = M₂ × 100 mL → <b>0.100 M</b>. 2회차: 0.100 M × 10.0 mL = M₂ × 100 mL → <b>0.0100 M</b>. 10배씩 두 번 묽혀 100배 묽은 용액이 되었어요.',
@@ -902,7 +902,7 @@
           title: '표준 용액 라벨 쓰기', manual: true,
           goal: '방금 만든 <b>0.0100 M 용액</b>의 라벨을 완성하세요. 용질, 농도, 안전 표시를 고르거나 써요.',
           hint: '용액은 NaOH 수용액이고 농도는 0.0100 M이에요. NaOH는 염기성 · 부식성이라서 보안경과 장갑이 필요해요.',
-          setup() { S.gate = 'label'; setScene('dil'); },
+          setup() { S.gate = 'label'; S.dl.label = { sol: '', safe: '' }; $('#selSol').value = ''; $('#selSafe').value = ''; lblRow.clear(); setScene('dil'); },
           check() {
             const l = S.dl.label;
             if (!l.sol || !l.safe) return '용질과 안전 표시를 모두 골라 주세요.';
@@ -927,6 +927,8 @@
     },
   ];
 
+  setScene('plan');
+  dlReset();
   game = SciSim.game({
     simId: 'hc-standard-solution', mount: '#game', badge: '표준 용액 장인', homeHref: '../../index.html#hc',
     featureLabels: { plan: '📋 필요량 계산 · 도구 상자', make: '🧪 용액 제조 실험대', err: '🔎 오차 시뮬레이터', dil: '💧 희석 제조 (피펫 · 라벨)' },
@@ -935,8 +937,6 @@
   });
 
   /* ---------- 시작 ---------- */
-  setScene('plan');
-  dlReset();
   function stepAll1(dt) { stepPlan(dt); stepMake(dt); stepErr(dt); stepDil(dt); }
   let lastFree = false, lastMode = '';
   SciSim.loop((dt, t) => {

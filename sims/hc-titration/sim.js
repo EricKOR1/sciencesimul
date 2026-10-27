@@ -704,8 +704,8 @@
     T(Ch.x + Ch.w / 2, Ch.y + 52, aTxt + ' × ' + mTxt + ' × ' + p.Vs + ' mL  =  1 × 0.100 × ' + vTxt + ' mL', PHONE ? 15 : 19, VIO, 'center', 800);
     const titles = C.pi === 0 ? ['① 평균 NaOH 부피', '② 몰수 비교 식', '③ HCl 농도 M'] : ['① H⁺ 수 a', '② 몰수 비교 식', '③ H₂SO₄ 농도 M'];
     const lines = C.pi === 0
-      ? [['(14.90 + 15.10 + 15.00) ÷ 3', '= ' + (st >= 1 ? fx(p.mean, 1) : '?') + ' mL'], ['1 × M × 20.00 = 1 × 0.100 × V′', 'V′ = ' + (st >= 1 ? fx(p.mean, 1) : '?') + ' mL'], ['M = 0.100 × ' + (st >= 1 ? fx(p.mean, 1) : '15.0') + ' ÷ 20.00', '= ' + (st >= 2 ? fx(p.M, 4) : '?') + ' M']]
-      : [['H₂SO₄ 1개가 내놓는 H⁺', '= ' + (st >= 1 ? '2' : '?') + '개'], ['a × M × 10.0 = 1 × 0.100 × 24.0', (st >= 1 ? '2' : 'a') + ' × M × 10.0 = 2.40'], ['M = 0.100 × 24.0 ÷ (' + (st >= 1 ? '2' : 'a') + ' × 10.0)', '= ' + (st >= 2 ? fx(p.M, 3) : '?') + ' M']];
+      ? [['(14.90 + 15.10 + 15.00) / 3', '= ' + (st >= 1 ? fx(p.mean, 1) : '?') + ' mL'], ['1 × M × 20.00 = 1 × 0.100 × V′', 'V′ = ' + (st >= 1 ? fx(p.mean, 1) : '?') + ' mL'], ['M = 0.100 × ' + (st >= 1 ? fx(p.mean, 1) : '15.0') + ' / 20.00', '= ' + (st >= 2 ? fx(p.M, 4) : '?') + ' M']]
+      : [['H₂SO₄ 1개가 내놓는 H⁺', '= ' + (st >= 1 ? '2' : '?') + '개'], ['a × M × 10.0 = 1 × 0.100 × 24.0', (st >= 1 ? '2' : 'a') + ' × M × 10.0 = 2.40'], ['M = 0.100 × 24.0 / (' + (st >= 1 ? '2' : 'a') + ' × 10.0)', '= ' + (st >= 2 ? fx(p.M, 3) : '?') + ' M']];
     for (let i = 0; i < 3; i++) {
       const r = LC.card(i), done = i < st || (i === 1 && st >= 1) && false, filled = i === 0 ? st >= 1 : i === 1 ? st >= 1 : st >= 2, act = !filled && (i === 0 ? st === 0 : i === 2 ? st === 1 : false);
       if (i < 2) { const r2_ = LC.card(i + 1); if (PHONE) D.arrow(r.x + r.w / 2, r.y + r.h + 1, r2_.x + r2_.w / 2, r2_.y - 1, { color: '#b7bdd0', width: 3, head: 9 }); else D.arrow(r.x + r.w + 2, r.y + r.h / 2, r2_.x - 2, r.y + r.h / 2, { color: '#b7bdd0', width: 3, head: 9 }); }
@@ -809,7 +809,7 @@
       if (i === 0 || ok) { const grow = i === 1 ? S.err.bar.v : 1; if (w * grow > 0.5) { D.roundRect(bx, y, w * grow, 24, 6); ctx.fillStyle = b[2]; ctx.fill(); } }
       T(bx + (i === 0 || ok ? b[1] / sc * bw : 0) + 8, y + 18, i === 0 || ok ? b[1].toFixed(4) + ' M' : '?', 13.5, i === 1 ? BAD : INK, 'left', 800);
     });
-    textBlock(R.x + 14, R.y + (PHONE ? 176 : 126), R.w - 28, ok ? '높게 나왔어요 (0.0770 > 0.0750). 3회 반복해 평균을 내고 종말점을 지나친 회는 빼야 해요.' : '가운데 조작판의 칸에 M = 0.100 × 15.4 ÷ 20.00 의 값을 써 보세요.', PHONE ? 12.5 : 13.5, ok ? '#0b6b39' : MUTED, 18, 700);
+    textBlock(R.x + 14, R.y + (PHONE ? 176 : 126), R.w - 28, ok ? '높게 나왔어요 (0.0770 > 0.0750). 3회 반복해 평균을 내고 종말점을 지나친 회는 빼야 해요.' : '가운데 조작판의 칸에 M = 0.100 × 15.4 / 20.00 의 값을 써 보세요.', PHONE ? 12.5 : 13.5, ok ? '#0b6b39' : MUTED, 18, 700);
   }
 
   /* ---------- 컨트롤 · 장면 전환 ---------- */
@@ -1028,6 +1028,7 @@
     },
   ];
 
+  setScene(S.mode);
   game = SciSim.game({
     simId: 'hc-titration', mount: '#game', badge: '적정 박사', homeHref: '../../index.html#hc',
     featureLabels: { tools: '🔧 도구 짝짓기', order: '🃏 실험 순서 카드', titr: '🧪 가상 뷰렛 · 눈금 확대 · 입자 모형', calc: '🧮 계산 카드', err: '⚠️ 오차 사례 카드' },
@@ -1036,7 +1037,6 @@
   });
 
   /* ---------- 시작 ---------- */
-  setScene(S.mode);
   let lastFree = false, lastMode = '';
   SciSim.loop((dt, t) => {
     S.t = t;

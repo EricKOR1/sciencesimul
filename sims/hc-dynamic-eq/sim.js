@@ -548,7 +548,7 @@
     T(P.px + P.pw - 4, P.py + 14, '[N₂O₄]', 12.5, '#1d3fb8', 'right', 800); T(P.px + P.pw - 4, P.py + 30, '[NO₂]', 12.5, BRN, 'right', 800);
     const ts = tStar();
     if (ts != null && !S.rt.openRun) { const x = P.X(ts); ctx.save(); ctx.strokeStyle = 'rgba(124,58,237,.6)'; ctx.setLineDash([5, 4]); ctx.lineWidth = 1.8; ctx.beginPath(); ctx.moveTo(x, P.py); ctx.lineTo(x, P.py + P.ph); ctx.stroke(); ctx.restore(); T(x + 5, P.py + P.ph - 8, '속도가 같아진 때', 12.5, '#5b21b6', 'left', 800); }
-    const msg = S.rt.openRun && (S.rt.done || BX.rt > 3) ? '뚜껑을 열었더니 NO₂가 새어 나가 농도가 계속 변하고, 두 속도도 같아지지 못해요.' : ts != null ? '두 속도가 같아진 뒤부터 농도가 일정해요.' : S.rt.run ? '정반응은 줄고 역반응은 늘어요…' : '▶ 반응 시작으로 기록해요.';
+    const msg = S.rt.openRun && (S.rt.done || BX.rt > 3) ? '뚜껑을 열었더니 NO₂가 새어 나가 농도가 계속 줄어요. 두 속도도 일정하게 유지되지 못하고 계속 변해요.' : ts != null ? '두 속도가 같아진 뒤부터 농도가 일정해요.' : S.rt.run ? '정반응은 줄고 역반응은 늘어요…' : '▶ 반응 시작으로 기록해요.';
     textBlock(r.x + 14, r.y + r.h - 82, r.w - 28, msg, 13.5, INK, 17, 800);
   }
 
@@ -717,7 +717,7 @@
           title: '평형이 되는 조건 고르기', manual: true,
           goal: '<b>↺ 다시</b> → <b>🔓 뚜껑 열기</b> → <b>▶ 반응 시작</b>으로 열린 용기도 실험해 보고, 평형이 되는 <b>용기와 온도 조건</b>을 골라요.',
           hint: '열린 용기에서는 NO₂가 새어 나가 농도가 계속 변해요. 뚜껑을 연 채로 6초 이상 지켜보세요.',
-          setup() { S.gate = 'cond'; $('#selCl').value = ''; $('#selTe').value = ''; S.cond = { cl: '', te: '' }; setScene('rate'); updateCtl(); },
+          setup() { S.gate = 'cond'; S.rt.triedOpen = false; $('#selCl').value = ''; $('#selTe').value = ''; S.cond = { cl: '', te: '' }; setScene('rate'); updateCtl(); },
           check() {
             if (!S.rt.triedOpen) return '먼저 ↺ 다시 → 🔓 뚜껑 열기 → ▶ 반응 시작으로 열린 용기를 6초 이상 실험해 보세요.';
             if (!S.cond.cl || !S.cond.te) return '두 곳을 모두 골라 주세요.';
@@ -726,7 +726,7 @@
             return a && b ? true : (!a ? '열린 용기에서는 NO₂가 빠져나가 평형이 되지 못했어요.' : '온도가 변하면 평형 농도도 달라질 수 있어요.');
           },
           status: () => mark(S.rt.triedOpen) + ' 열린 용기 실험 &nbsp; 용기: ' + (S.cond.cl === 'closed' ? '닫힘' : S.cond.cl === 'open' ? '열림' : '?') + ' · 온도: ' + (S.cond.te === 'const' ? '일정' : S.cond.te === 'vary' ? '변함' : '?'),
-          explain: '평형은 <b>닫힌 용기</b>에서 <b>일정한 온도</b>일 때 이루어져요. 열린 용기에서는 NO₂가 새어 나가 농도가 계속 달라지고 두 속도도 같아지지 못해요. 온도를 바꾸면 평형 농도가 달라질 수 있다는 것은 뒤에서 살펴봐요.',
+          explain: '평형은 <b>닫힌 용기</b>에서 <b>일정한 온도</b>일 때 이루어져요. 열린 용기에서는 NO₂가 새어 나가 농도가 계속 달라지고 두 속도도 일정하게 유지되지 못해요. 잠깐 가까워져도 평형이 아니에요. 온도를 바꾸면 평형 농도가 달라질 수 있다는 것은 뒤에서 살펴봐요.',
         },
         {
           type: 'quiz', title: '평형에서 정반응 속도는 0일까?',

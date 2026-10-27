@@ -217,7 +217,7 @@
   function drawCircuit(i, t) {
     const g = circGeom(i), P = circuitPath(g, i), liq = LIQ[S.ob.liq], cur = S.ob.cur[i];
     panel(g.x, g.y, g.w, g.h, 14);
-    T(g.x + 12, g.y + 24, i === 0 ? '① 일반 전구 회로' : '② 초민감 전도도 측정기 회로', 14.5, INK, 'left', 800);
+    T(g.x + 12, g.y + 24, i === 0 ? '① 일반 전구 회로' : PHONE ? '② 초민감 측정기 회로' : '② 초민감 전도도 측정기 회로', 14.5, INK, 'left', 800);
     // 전선 + 전류 점
     const path = P.path;
     ctx.strokeStyle = '#64748b'; ctx.lineWidth = 3.4; ctx.lineJoin = 'round'; ctx.beginPath(); path.forEach((q, k) => (k ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]))); ctx.stroke();
@@ -225,7 +225,7 @@
     const bx = P.cx - P.xo, by2 = (P.ty + P.wy) / 2;
     ctx.fillStyle = '#f8fafc'; D.roundRect(bx - 14, by2 - 8, 28, 16, 3); ctx.fill();
     ctx.strokeStyle = '#334155'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(bx - 12, by2 - 4); ctx.lineTo(bx + 12, by2 - 4); ctx.stroke(); ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(bx - 7, by2 + 5); ctx.lineTo(bx + 7, by2 + 5); ctx.stroke();
-    T(bx - 24, by2 + 4, '+', 14, '#dc2626', 'center', 800); T(bx + 24, by2 + 4, '−', 14, '#2563eb', 'center', 800);
+    T(bx - 22, by2 + 1, '+', 14, '#dc2626', 'center', 800); T(bx + 22, by2 + 10, '−', 14, '#2563eb', 'center', 800);   // + 는 긴 극판(위), − 는 짧은 극판(아래) 옆
     // 전류 점
     if (cur > 0.001) {
       let len = 0; const seg = []; for (let k = 0; k < path.length - 1; k++) { const l = Math.hypot(path[k + 1][0] - path[k][0], path[k + 1][1] - path[k][1]); seg.push(l); len += l; }
@@ -256,7 +256,7 @@
     }
     // 비커 · 전극 · 이온
     const bk = beaker(P.cx - P.bw / 2, P.by, P.bw, P.bh, { level: 0.64, color: liq.color, alpha: 0.7 });
-    ['x1', 'x2'].forEach((k, n) => { ctx.fillStyle = '#475569'; D.roundRect(P[k] - 5, P.rt, 10, bk.bottom - 6 - P.rt, 3); ctx.fill(); T(P[k], P.rt - 6, n ? '(−)' : '(+)', 13, n ? '#2563eb' : '#dc2626', 'center', 800); });
+    ['x1', 'x2'].forEach((k, n) => { ctx.fillStyle = '#475569'; D.roundRect(P[k] - 5, P.rt, 10, bk.bottom - 6 - P.rt, 3); ctx.fill(); if (!(PHONE && i === 1)) T(P[k], P.rt - 6, n ? '(−)' : '(+)', 13, n ? '#2563eb' : '#dc2626', 'center', 800); });
     if (S.ob.liq === 'salt') {
       for (let q = 0; q < 5; q++) {
         const u = r2(q + 3), wob = RM ? 0 : Math.sin(t * 1.4 + q) * 2;
@@ -387,7 +387,7 @@
     T(pr.x + 12, y, '다시 합쳐진 횟수  ' + m.rec + '번', 14.5, INK, 'left', 800); y += lh - 4;
     T(pr.x + 12, y, '지금: H₃O⁺ ' + pairs + '개 · OH⁻ ' + pairs + '개 (항상 같아요)', 14, '#5b21b6', 'left', 800); y += lh;
     if (S.md.ratioShown || (game && game.free)) {
-      textBlock(pr.x + 12, y, pr.w - 24, '물 1 L = 1000 g ÷ 18 g/mol = ' + W_MOL.toFixed(1) + ' mol\n이온화: 1.0×10⁻⁷ ÷ ' + W_MOL.toFixed(1) + ' ≈ ' + sciTxt(IONFRAC) + '\n= 약 5.6억 개 중 1개', 13.5, '#14803f', 18, 800);
+      textBlock(pr.x + 12, y, pr.w - 24, '물 1 L = 1000 g / 18 g/mol = ' + W_MOL.toFixed(1) + ' mol\n이온화: 1.0×10⁻⁷ / ' + W_MOL.toFixed(1) + ' ≈ ' + sciTxt(IONFRAC) + '\n= 약 5.6억 개 중 1개', 13.5, '#14803f', 18, 800);
     } else textBlock(pr.x + 12, y, pr.w - 24, '실제로는 물 분자 약 몇 개 중 1개만 이온화할까요? 미션에서 계산해 봐요.', 13.5, MUTED, 18, 700);
     panel(INFO.x, INFO.y, INFO.w, INFO.h, 14);
     T(INFO.x + 16, INFO.y + 26, '동적 평형: 이온화(정반응) 속도 = 재결합(역반응) 속도', 15, '#5b21b6', 'left', 800);
@@ -627,7 +627,7 @@
           title: '이온화한 물의 비율 계산', manual: true,
           goal: '1 L의 물(55.6 mol) 중 <b>1.0×10⁻⁷ mol</b>이 이온화해요. 비율 1.0×10⁻⁷ ÷ 55.6을 계산해 쓰고 <b>✔ 확인하기</b>를 누르세요.',
           hint: '1.0×10⁻⁷ ÷ 55.6 ≈ 1.8×10⁻⁹이에요. 앞의 칸에 1.8, 뒤의 지수 칸에 −9를 써요.',
-          setup() { S.gate = 'ratio'; setScene('model'); },
+          setup() { S.gate = 'ratio'; ratioRow.clear(); S.md.ratioShown = false; setScene('model'); },
           check() { if (ratioRow.ok) return true; const v = ratioRow.read(); return isNaN(v) ? '비율을 과학적 표기(예: 1.8 × 10 ^ −9)로 써 주세요.' : '다시 계산해 보세요. 1.0×10⁻⁷ ÷ 55.6 이에요.'; },
           status: () => '비율 계산 ' + mark(ratioRow.ok),
           explain: '1.0×10⁻⁷ ÷ 55.6 ≈ <b>1.8×10⁻⁹</b>, 즉 약 <b>5.6억 개</b>(1 ÷ 1.8×10⁻⁹ ≈ 5.6×10⁸) 중 1개의 물 분자만 이온화해 있어요. 화면의 모형은 눈에 보이도록 크게 과장한 거예요.',
@@ -694,7 +694,7 @@
           title: '카드 4장의 농도 구하고 분류하기',
           goal: '카드마다 <b>나머지 이온의 농도</b>를 쓰고 <b>산성 · 중성 · 염기성</b>을 골라 4장을 모두 완성하세요.',
           hint: 'Kw ÷ (주어진 농도)로 나머지를 구해요. 카드 1: 1.0×10⁻¹⁴ ÷ 0.040 = 2.5×10⁻¹³. 시소가 기운 쪽의 이온이 더 많아요.',
-          setup() { S.gate = ''; S.sub.cls = 'card'; S.cl.k = 0; setScene('cls'); },
+          setup() { S.gate = ''; S.sub.cls = 'card'; S.cl.k = 0; S.cl.pick = {}; clsRows.forEach((r) => r.clear()); setScene('cls'); },
           check: () => CARDS.every((c, i) => cardDone(i)), hold: 0.6,
           status: () => CARDS.map((c, i) => (i + 1) + '번 ' + mark(cardDone(i))).join(' '),
           explain: '카드 1: [H⁺] = 2.5×10⁻¹³ M &lt; [OH⁻] 0.040 M → 염기성. 카드 2: [OH⁻] = 1.0×10⁻⁷ M = [H⁺] → 중성. 카드 3: [OH⁻] = 1.0×10⁻¹² M &lt; [H⁺] → 산성. 카드 4: [OH⁻] = 2.5×10⁻⁶ M &gt; [H⁺] = 4.0×10⁻⁹ M → 염기성이에요.',
@@ -712,6 +712,7 @@
     },
   ];
 
+  mdInit(); setScene('obs');
   game = SciSim.game({
     simId: 'hc-water-ionization', mount: '#game', badge: '이온화 탐험가', homeHref: '../../index.html#hc',
     featureLabels: { obs: '🔌 전구 회로 · 초민감 측정기', model: '🔬 물 분자 충돌 모형', kw: '⚖️ 로그 막대 (Kw 규칙)', cls: '🧭 액성 판단 카드 · 온도' },
@@ -720,7 +721,6 @@
   });
 
   /* ---------- 시작 ---------- */
-  mdInit(); setScene('obs');
   function stepAll1(dt) { stepObs(dt); stepModel(dt); stepKw(dt); stepCls(dt); }
   let lastFree = false, lastMode = '';
   SciSim.loop((dt, t) => {

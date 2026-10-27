@@ -657,10 +657,10 @@
     else {
       drawHost(dt);
       const g = VLAMP_HOST, on = V.hp >= 1.95;
-      T(PHONE ? VW / 2 : g.x + g.w / 2, g.y - (PHONE ? 10 : 20), '🔬 바이러스 검사판 · ' + (on ? '숙주 세포 안' : '숙주 세포 밖'), PHONE ? 13.5 : 14.5, '#3b2d77', 'center', 800);
+      T(PHONE ? VW / 2 : g.x + g.w / 2, g.y - (PHONE ? 10 : 20), '🔬 바이러스 검사판 · ' + (on ? '숙주 세포 안' : V.hp >= 0.95 ? '숙주 세포 안 · 증식 전' : '숙주 세포 밖'), PHONE ? 13.5 : 14.5, '#3b2d77', 'center', 800);
       drawLampBoard(g, on ? 'XXXXOO' : 'XXXXXX', V.hostLit, { short: PHONE || true });
       if (!PHONE) {
-        textBlock(g.x, g.y + g.h + 24, g.w, on ? '숙주 안에서만 증식·변이해요. 생물과 비생물의 특성을 모두 가져요.' : '숙주 밖에서는 아무 특성도 나타나지 않아요.', 13, '#46407a', 18, 700);
+        textBlock(g.x, g.y + g.h + 24, g.w, on ? '숙주 안에서만 증식·변이해요. 생물과 비생물의 특성을 모두 가져요.' : V.hp >= 0.95 ? '핵산이 들어왔지만 아직 복제하기 전이라 특성이 나타나지 않아요.' : '숙주 밖에서는 아무 특성도 나타나지 않아요.', 13, '#46407a', 18, 700);
       }
       // 현재 단계 설명
       const k = clamp(Math.round(V.hs), 0, 4), cy = PHONE ? 330 : 405;
@@ -863,9 +863,24 @@
   function fuCardOk(i) { const a = ACH[i], L = S.fu.links[a.id]; return L.length === a.tags.length && a.tags.every((t) => L.indexOf(t) >= 0); }
   function fuVerify() {
     const F = S.fu; F.verified = true;
+    const cw = PHONE ? 100 : 106, chh = PHONE ? 26 : 30;
+    const pos = ACH.map((a) => centroid(a, FM, cw, chh));
+    // 칩끼리, 그리고 가운데 '생명과학' 원과 겹치지 않게 밀어내요
+    for (let it = 0; it < 80; it++) {
+      for (let i = 0; i < pos.length; i++) {
+        for (let j = i + 1; j < pos.length; j++) {
+          const dx = pos[j].x - pos[i].x, dy = pos[j].y - pos[i].y, ox = cw + 6 - Math.abs(dx), oy = chh + 6 - Math.abs(dy);
+          if (ox > 0 && oy > 0) { if (oy < ox) { const m = (dy >= 0 ? 1 : -1) * oy / 2; pos[i].y -= m; pos[j].y += m; } else { const m = (dx >= 0 ? 1 : -1) * ox / 2; pos[i].x -= m; pos[j].x += m; } }
+        }
+        const qx = pos[i].x + cw / 2 - FM.cx, qy = pos[i].y + chh / 2 - FM.cy, ex = cw / 2 + FM.cr + 4 - Math.abs(qx), ey = chh / 2 + FM.cr + 4 - Math.abs(qy);
+        if (Math.hypot(Math.max(Math.abs(qx) - cw / 2, 0), Math.max(Math.abs(qy) - chh / 2, 0)) < FM.cr + 4 && ex > 0 && ey > 0) {
+          if (ey < ex) pos[i].y += (qy >= 0 ? 1 : -1) * ey; else pos[i].x += (qx >= 0 ? 1 : -1) * ex;
+        }
+      }
+    }
     F.cards.forEach((c, i) => {
-      const a = ACH[i], p = centroid(a, FM, PHONE ? 100 : 106, PHONE ? 26 : 30);
-      SciSim.tween(c, { x: p.x, y: p.y, w: PHONE ? 100 : 106, h: PHONE ? 26 : 30 }, { duration: 0.7, delay: i * 0.1, ease: 'outBack' });
+      const p = pos[i];
+      SciSim.tween(c, { x: p.x, y: p.y, w: cw, h: chh }, { duration: 0.7, delay: i * 0.1, ease: 'outBack' });
     });
     Sound.success(); parts.burst(FM.cx, FM.cy, { count: 22, speed: 160, size: 3.4, colors: ['#22c55e', '#fbbf24', '#8b5cf6', '#fff'], life: 0.9 });
   }
@@ -1102,7 +1117,7 @@
           title: '생물 / 비생물 분류하기', manual: true,
           goal: '카드 8장을 끌어서 <b>🌱 생물</b> 상자와 <b>⚙️ 비생물</b> 상자에 나누고 <b>✔ 확인하기</b>를 누르세요.',
           hint: '6칸에 모두 불이 켜진 카드만 생물이에요. 카드를 누르면 다시 검사판을 볼 수 있어요.',
-          setup() { setScene('inspect'); },
+          setup() { setScene('inspect'); S.sorter.reset(); },
           check() {
             const sd = S.sorter, miss = sd.cards.filter((c) => !c.zone);
             if (miss.length) return '아직 상자에 넣지 않은 카드가 ' + miss.length + '장 있어요.';

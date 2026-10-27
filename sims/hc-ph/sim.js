@@ -308,6 +308,7 @@
   function dpSwitch(sub) { const d = S.dp; if (d.act) return; d.sub = sub; d.meterT = dilPH(sub, d.step[sub]); d.bottleT = concA(d.step[sub]); }
   function dpDilute() {
     const d = S.dp, sub = d.sub; if (d.act || d.step[sub] >= 7) return;
+    if (d.rec[sub][d.step[sub]] == null) { d.shake = 0.4; Sound.fail(); showHint('먼저 📋 기록하기로 지금 용액의 pH를 표에 적어요.', 3200); return; }
     d.act = { t: 0, d: 2.6, sub, from: d.step[sub] }; Sound.click(); updateCtl();
   }
   function dpRecord() {
@@ -501,7 +502,7 @@
       T(INFO.x + 16, y + 26, '레몬즙(pH 2)과 순수한 물(pH 7)의 [H⁺] 비교', 15, '#b45309', 'left', 800);
       T(INFO.x + 16, y + 56, '🍋 pH 2 → [H⁺] = ' + sciTxt(e10(-2)) + ' M', 14.5, INK, 'left', 800);
       T(INFO.x + 16, y + 82, '💧 pH 7 → [H⁺] = ' + sciTxt(e10(-7)) + ' M', 14.5, INK, 'left', 800);
-      T(INFO.x + 16, y + 112, ok ? '레몬즙의 [H⁺] ÷ 물의 [H⁺] = ' + sciTxt(e10(-2) / e10(-7)) + ' = 10⁵배' : 'pH가 5 차이 나면 [H⁺]는 몇 배 차이일까요?', 14.5, ok ? '#14803f' : MUTED, 'left', 800);
+      T(INFO.x + 16, y + 112, ok ? '레몬즙의 [H⁺] / 물의 [H⁺] = ' + sciTxt(e10(-2) / e10(-7)) + ' = 10⁵배' : 'pH가 5 차이 나면 [H⁺]는 몇 배 차이일까요?', 14.5, ok ? '#14803f' : MUTED, 'left', 800);
     } else {
       T(INFO.x + 16, INFO.y + 26, 'pH가 1 작을수록 [H⁺]는 10배 커요', 15, '#5b21b6', 'left', 800);
       textBlock(INFO.x + 16, INFO.y + 52, INFO.w - 32, 'BTB 용액은 pH 6.0 이하에서 노란색, 6.0~7.6에서 초록색, 7.6 이상에서 파란색이에요. 페놀프탈레인은 pH 8.3 정도부터 붉어져요. 물질을 pH 눈금에 놓으면 지시약 색과 연결해 볼 수 있어요.', 14, INK, 20, 700);
@@ -621,7 +622,7 @@
           title: '강산 HCl의 pH 3문제',
           goal: '0.010 M, 0.0020 M, 0.050 M <b>HCl</b>의 pH를 구해 소수 둘째 자리까지 쓰세요.',
           hint: '[H⁺] = 산의 농도예요. 0.0020 M = 2.0×10⁻³ → pH = 3 − log 2 = 3 − 0.30. 0.050 M = 5.0×10⁻² → pH = 2 − log 5 = 2 − 0.70이에요.',
-          setup() { S.gate = ''; S.pc.k = 'h1'; setScene('calc'); },
+          setup() { S.gate = ''; S.pc.k = 'h1'; ['h1', 'h2', 'h3'].forEach((k) => pcRows[k].forEach((r) => r.clear())); setScene('calc'); },
           check: () => ['h1', 'h2', 'h3'].every(pcDone), hold: 0.5,
           status: () => '0.010 M ' + mark(pcDone('h1')) + ' 0.0020 M ' + mark(pcDone('h2')) + ' 0.050 M ' + mark(pcDone('h3')),
           explain: '0.010 M HCl: [H⁺] = 10⁻² → pH <b>2.00</b>. 0.0020 M: [H⁺] = 2.0×10⁻³ → pH = 3 − log 2 = 3 − 0.30 = <b>2.70</b>. 0.050 M: [H⁺] = 5.0×10⁻² → pH = 2 − log 5 = 2 − 0.70 = <b>1.30</b>이에요.',
@@ -630,7 +631,7 @@
           title: '강염기의 pOH와 pH',
           goal: '<b>0.0010 M NaOH</b>와 <b>0.020 M Ca(OH)₂</b>의 pOH와 pH를 구하세요.',
           hint: 'NaOH는 [OH⁻] = 10⁻³ → pOH 3, pH = 14 − 3. Ca(OH)₂는 OH⁻가 2개라서 [OH⁻] = 2 × 0.020 = 0.040 M, pOH = 2 − log 4 = 2 − 0.60이에요.',
-          setup() { S.gate = ''; S.pc.k = 'n1'; setScene('calc'); },
+          setup() { S.gate = ''; S.pc.k = 'n1'; ['n1', 'ca'].forEach((k) => pcRows[k].forEach((r) => r.clear())); setScene('calc'); },
           check: () => pcDone('n1') && pcDone('ca'), hold: 0.5,
           status: () => 'NaOH ' + mark(pcDone('n1')) + ' Ca(OH)₂ ' + mark(pcDone('ca')),
           explain: 'NaOH: pOH = 3, pH = 14 − 3 = <b>11</b>. Ca(OH)₂: [OH⁻] = 0.040 M, pOH = 2 − log 4 = 1.40, pH = 14 − 1.40 = <b>12.60</b>이에요. 이온 농도는 몰 농도 차시에서 배운 방법으로 구했어요.',
@@ -735,6 +736,7 @@
     },
   ];
 
+  setScene('exp');
   game = SciSim.game({
     simId: 'hc-ph', mount: '#game', badge: 'pH 박사', homeHref: '../../index.html#hc',
     featureLabels: { exp: '📏 지수 → 로그 눈금', calc: '🧮 pH 계산기', dil: '📈 희석 · 기록 · 그래프', life: '🍋 생활 속 pH 눈금' },
@@ -743,7 +745,6 @@
   });
 
   /* ---------- 시작 ---------- */
-  setScene('exp');
   S.lf.items.forEach((it) => { it.init = false; });
   function stepAll1(dt) { stepExp(dt); stepCalc(dt); stepDp(dt); stepLife(dt); }
   let lastFree = false, lastMode = '';

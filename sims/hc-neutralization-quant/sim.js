@@ -654,7 +654,7 @@
     T(L.x + L.w / 2, L.y + L.h - 11, '● 1개 ≈ ' + unit + ' mmol', 11.5, MUTED, 'center', 800);
     // 표
     const Tb = LR.tab; panel(Tb.x, Tb.y, Tb.w, Tb.h, 14);
-    T(Tb.x + 14, Tb.y + 24, '이온의 몰수와 농도 (농도 = 몰수 ÷ 총 부피)', PHONE ? 13 : 14.5, INK, 'left', 800);
+    T(Tb.x + 14, Tb.y + 24, '이온의 몰수와 농도 (농도 = 몰수 / 총 부피)', PHONE ? 13 : 14.5, INK, 'left', 800);
     const reveal = restConcOK(R.si);
     const cols = [Tb.x + 16, Tb.x + Tb.w * 0.4, Tb.x + Tb.w * 0.72];
     ['이온', '몰수(mmol)', '농도(M)'].forEach((s, i) => T(cols[i], Tb.y + 52, s, 13, MUTED, 'left', 800));
@@ -779,7 +779,7 @@
       T(Tb.x + 16, y + 44, W.ach[i] ? '✅ 중화 완료 (pH 7)' : '', 13, '#0b6b39', 'left', 800);
       y += 82;
     });
-    T(Tb.x + 14, Tb.y + Tb.h - 30, '지금 ' + AG[W.ag].nm + ' ' + W.dose + ' g → OH⁻ ' + fx(c.OH, 2) + ' mol 넣음', 13.5, INK, 'left', 800);
+    T(Tb.x + 14, Tb.y + Tb.h - 30, AG[W.ag].nm + ' ' + W.dose + ' g → OH⁻ ' + fx(c.OH, 2) + ' mol', 13.5, INK, 'left', 800);
     T(Tb.x + 14, Tb.y + Tb.h - 10, '남은 H⁺ ' + fx(c.H, 2) + ' mol' + (c.OHleft > 1e-6 ? ' · 남은 OH⁻ ' + fx(c.OHleft, 2) + ' mol' : ''), 13.5, c.neutral ? '#0b6b39' : INK, 'left', 800);
   }
 
@@ -1100,6 +1100,8 @@
   WCHK.forEach((s, i) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'chk'; b.dataset.i = i; b.textContent = s; b.addEventListener('click', () => { Sound.click(); b.classList.toggle('on'); b.classList.remove('bad', 'good'); }); wcBox.appendChild(b); });
   const wasteChecks = () => Array.from(wcBox.children).map((b, i) => (b.classList.contains('on') ? i : -1)).filter((i) => i >= 0);
 
+  resetIon(6, 6);
+  setScene(S.mode);
   game = SciSim.game({
     simId: 'hc-neutralization-quant', mount: '#game', badge: '중화 양적 관계 박사', homeHref: '../../index.html#hc',
     featureLabels: { ion: '🧩 이온 입자 모형 · 반응식', mol: '⚖️ 뷰렛 · 몰수 막대 · 저울', rest: '🔬 남은 이온 · 농도 · pH', waste: '🏭 폐수 탱크 · pH 센서' },
@@ -1109,8 +1111,6 @@
   });
 
   /* ---------- 시작 ---------- */
-  resetIon(6, 6);
-  setScene(S.mode);
   let lastFree = false, lastMode = '';
   SciSim.loop((dt, t) => {
     S.t = t;

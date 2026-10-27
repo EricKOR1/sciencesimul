@@ -375,7 +375,7 @@
     if (!s.rev) {
       ttl = ['용질의 질량', '몰수 n', '몰 농도 M'];
       vals = [fm(s.mass, 1) + ' g', rows[0].ok ? fm(s.n, 3) + ' mol' : '? mol', rows[2].ok ? fm(s.M, 3) + ' mol/L' : '? mol/L'];
-      arrows = ['몰질량 ' + s.MM + ' g/mol로 나눠요', '용액의 부피 ' + s.Vl.toFixed(3) + ' L로 나눠요' + (rows[1].ok ? '' : '  (mL → L 주의!)')];
+      arrows = ['몰질량 ' + s.MM + ' g/mol로 나눠요', '용액의 부피 ' + s.Vl.toFixed(3) + ' L로 나눠요' + (rows[1].ok || PHONE ? '' : '  (mL → L 주의!)')];
     } else {
       ttl = ['몰 농도 M', '몰수 n', '질량'];
       vals = [fm(s.Mc, 1) + ' mol/L', rows[0].ok ? fm(s.n, 2) + ' mol' : '? mol', rows[1].ok ? fm(s.mass, 2) + ' g' : '? g'];

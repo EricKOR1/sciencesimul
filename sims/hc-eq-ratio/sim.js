@@ -341,7 +341,7 @@
       const nu = [], de = [];
       d.forEach((c, j) => { if (e[j] > 0) (s.role[j] === 'P' ? nu : de).push(fx(c, s.dec) + (e[j] > 1 ? SUP(e[j]) : '')); });
       const v = ruleVals(sk, e)[i];
-      out.push('' + s.lab + ' ' + (i + 1) + ': ' + (nu.length ? nu.join(' × ') : '1') + (de.length ? ' ÷ ' + (de.length > 1 ? '(' + de.join(' × ') + ')' : de[0]) : '') + ' = ' + fV(v));
+      out.push('' + s.lab + ' ' + (i + 1) + ': ' + (nu.length ? nu.join(' × ') : '1') + (de.length ? ' / ' + (de.length > 1 ? '(' + de.join(' × ') + ')' : de[0]) : '') + ' = ' + fV(v));
     });
     return out;
   }
@@ -470,7 +470,7 @@
     T(r.x + 24, r.y + 126, 'K =', 22, MUTED, 'left', 800);
     drawFrac(r.x + r.w / 2 + 16, r.y + 116, [{ t: '[C]', e: 'c', col: '#7c3aed' }, { t: '[D]', e: 'd', col: '#7c3aed' }], [{ t: '[A]', e: 'a', col: '#d97706' }, { t: '[B]', e: 'b', col: '#d97706' }], 22);
     let y = r.y + 188;
-    y += textBlock(r.x + 14, y, r.w - 28, '• 생성물의 농도(분자) ÷ 반응물의 농도(분모)', 13.5, INK, 17, 800) + 4;
+    y += textBlock(r.x + 14, y, r.w - 28, '• 생성물의 농도(분자) / 반응물의 농도(분모)', 13.5, INK, 17, 800) + 4;
     y += textBlock(r.x + 14, y, r.w - 28, '• 각 농도에 계수를 지수로 써요', 13.5, INK, 17, 800) + 4;
     y += textBlock(r.x + 14, y, r.w - 28, '• 기체도 몰 농도로 나타내요 (압력 평형 상수는 다루지 않아요)', 13.5, INK, 17, 800) + 4;
     textBlock(r.x + 14, y, r.w - 28, '• 반응식을 거꾸로 쓰면 분자와 분모가 바뀌어요 (역수)', 13.5, INK, 17, 800);
@@ -640,7 +640,7 @@
           setup() { S.gate = ''; S.ot = { sys: 'nh3', e: { no2: [1, 1], nh3: [1, 1, 1] }, wrongSeen: false, rightSeen: { no2: false, nh3: false } }; setScene('other'); updateCtl(); },
           check: () => S.ot.wrongSeen && S.ot.rightSeen.nh3, hold: 0.4,
           status: () => mark(S.ot.wrongSeen) + ' [H₂]를 2제곱으로 써 봄 &nbsp; ' + mark(S.ot.rightSeen.nh3) + ' 계수와 같게 씀',
-          explain: '[H₂]를 2제곱으로 쓰면 [NH₃]²÷([N₂][H₂]²)의 값이 1.0 · 0.50 · 2.0 · 1.0 …처럼 자료마다 달라져요. <b>3제곱</b>으로 써야 모든 자료에서 0.50으로 같아요.',
+          explain: '[H₂]를 2제곱으로 쓰면 [NH₃]²÷([N₂][H₂]²)의 값이 1.0 · 0.50 · 2.0 · 2.0처럼 자료마다 달라져요. <b>3제곱</b>으로 써야 모든 자료에서 0.50으로 같아요.',
         },
         {
           title: '두 반응의 K 구하기', manual: true,

@@ -1008,8 +1008,8 @@
     } else drawSoap(t, ver);
     if (ver) {
       const ok1 = a.q1 === q.a1, ok2 = a.q2 === q.a2;
-      D.label(VW / 2, VH - fs(44), '예측 ' + (ok1 ? '✅' : '❌') + ' · ' + (ok2 ? '✅' : '❌') + '   ' + (ok1 && ok2 ? '모두 맞았어요!' : '결과를 비교해 봐요'), { size: fs(14), bg: ok1 && ok2 ? '#dcfce7' : '#fff7e0', color: ok1 && ok2 ? '#0b6b39' : '#92400e', border: ok1 && ok2 ? '#14a058' : '#f59e0b', pad: 12 });
-      if (PR.t > 1.0) wrapText(P.why, VW / 2, VH - fs(PHONE ? 112 : 90), PHONE ? 500 : 720, fs(13.5), fs(19), '#334155');
+      D.label(VW / 2, PHONE ? VH - 24 : VH - fs(44), '예측 ' + (ok1 ? '✅' : '❌') + ' · ' + (ok2 ? '✅' : '❌') + '   ' + (ok1 && ok2 ? '모두 맞았어요!' : '결과를 비교해 봐요'), { size: fs(14), bg: ok1 && ok2 ? '#dcfce7' : '#fff7e0', color: ok1 && ok2 ? '#0b6b39' : '#92400e', border: ok1 && ok2 ? '#14a058' : '#f59e0b', pad: 12 });
+      if (PR.t > 1.0) wrapText(P.why, VW / 2, PHONE ? VH - 112 : VH - 90, PHONE ? 520 : 720, PHONE ? 16 : 13.5, PHONE ? 20 : 19, '#334155');
     } else D.text(VW / 2, VH - fs(40), '구조를 보고 예측을 고른 뒤 🔬 확인하기를 눌러요', { size: fs(13), weight: 800, color: '#7c3aed' });
   }
   function wrapText(text, x, y, maxW, size, lh, color) {
