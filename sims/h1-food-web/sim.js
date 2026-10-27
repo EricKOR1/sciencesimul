@@ -606,7 +606,7 @@
           setup() { setMode('pyr'); },
           check: () => pyrBuiltN() === PYR_NEED.length,
           hold: 0.5,
-          status: () => PYR_NEED.map((k) => { const [e, ty] = k.split(':'); return mark(!!S.pyr.built[k]) + PYR[e].name.slice(0, 2) + ' ' + PTYPE[ty]; }).join(' &nbsp; '),
+          status: () => PYR_NEED.map((k) => { const [e, ty] = k.split(':'); return mark(!!S.pyr.built[k]) + (e === 'oak' ? '참나무' : PYR[e].name) + ' ' + PTYPE[ty]; }).join(' &nbsp; '),
           explain: '초원의 세 피라미드는 모두 위로 갈수록 줄어드는 모양이에요. 그런데 참나무 숲의 <b>개체 수</b> 피라미드는 참나무 ' + PYR.oak.num.v[0] + '그루 위에 벌레 ' + PYR.oak.num.v[1] + '마리가 있어서 <b>뒤집힌 모양</b>이에요. 하지만 <b>에너지량</b> 피라미드는 참나무 숲에서도 위로 갈수록 줄어요.',
         },
         {
