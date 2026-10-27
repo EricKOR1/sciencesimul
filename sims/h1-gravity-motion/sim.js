@@ -219,9 +219,9 @@
     let yy = yb + 16 * FS;
     yy += textBlock('s = ½ g t²  (g = 9.8 m/s²)', lx, yy, tw, { size: 13.5, weight: 800, color: '#9a3412' });
     yy += 4;
-    yy += textBlock('1 kg 공: 9.8 N ÷ 1 kg = 9.8 m/s²', lx, yy + 4, tw, { size: 13, weight: 700, color: COL.b1 === '#5aa7ff' ? '#1d5fc4' : '#1d5fc4' });
-    yy += textBlock('5 kg 공: 49 N ÷ 5 kg = 9.8 m/s²', lx, yy + 6, tw, { size: 13, weight: 700, color: '#a8620a' });
-    if (!PHONE || yy < T.y + T.h - 30) textBlock('가속도 = 중력 ÷ 질량 → 질량이 달라도 같아요.', lx, yy + 10, tw, { size: 13, weight: 800, color: '#1b2333' });
+    yy += textBlock('1 kg 공: 9.8 N / 1 kg = 9.8 m/s²', lx, yy + 4, tw, { size: 13, weight: 700, color: COL.b1 === '#5aa7ff' ? '#1d5fc4' : '#1d5fc4' });
+    yy += textBlock('5 kg 공: 49 N / 5 kg = 9.8 m/s²', lx, yy + 6, tw, { size: 13, weight: 700, color: '#a8620a' });
+    if (!PHONE || yy < T.y + T.h - 30) textBlock('가속도 = 중력 / 질량 → 질량이 달라도 같아요.', lx, yy + 10, tw, { size: 13, weight: 800, color: '#1b2333' });
   }
   function fallClick(p) {
     const g = fallGeo(), F = S.F;
@@ -499,8 +499,8 @@
     const lx = R.x + 14, w = R.w - 28;
     ctx.fillStyle = '#f8fafc'; rr(R.x + 10, y, R.w - 20, R.y + R.h - y - 10, 10).fill();
     y += 18 * FS;
-    y += textBlock('t = √(2h ÷ g)', lx + 4, y, w, { size: 14, weight: 800, color: '#9a3412' }) + 2;
-    y += textBlock('= √(2 × ' + H_CLIFF + ' ÷ ' + b.g + ') = ' + f1(tFall(b.g)) + ' s', lx + 4, y, w, { size: 13.5, weight: 800, color: '#1b2333' }) + 6;
+    y += textBlock('t = √(2h / g)', lx + 4, y, w, { size: 14, weight: 800, color: '#9a3412' }) + 2;
+    y += textBlock('= √(2 × ' + H_CLIFF + ' / ' + b.g + ') = ' + f1(tFall(b.g)) + ' s', lx + 4, y, w, { size: 13.5, weight: 800, color: '#1b2333' }) + 6;
     y += textBlock('던진 공 거리 ≈ ' + V_PLANET + ' m/s × ' + f1(tFall(b.g)) + ' s ≈ ' + Math.round(V_PLANET * tFall(b.g)) + ' m', lx + 4, y, w, { size: 13, weight: 700, color: '#2b3445' }) + 6;
     if (!PHONE || y < R.y + R.h - 40) textBlock(b.id === 'jup' ? '※ 목성은 단단한 땅이 없어요. 같은 중력 값의 가상 바닥으로 가정했어요.' : '두 공은 항상 같은 시각에 땅에 닿아요.', lx + 4, y, w, { size: 12.5, weight: 700, color: '#64748b' });
   }
@@ -642,8 +642,8 @@
       L[2] = '낙하 시간(예상)'; V[2] = f1(tFall(b.g)) + ' s';
     } else {
       L[0] = '처음 속력(모두 같음)'; V[0] = JUMP_V.toFixed(1) + ' m/s';
-      L[1] = '높이 공식'; V[1] = 'h = v² ÷ (2g)';
-      L[2] = '달 ÷ 지구 (최고 높이)'; V[2] = '약 ' + Math.round(jumpH(1.6) / jumpH(9.8)) + '배';
+      L[1] = '높이 공식'; V[1] = 'h = v² / (2g)';
+      L[2] = '달 / 지구 (최고 높이)'; V[2] = '약 ' + Math.round(jumpH(1.6) / jumpH(9.8)) + '배';
     }
     for (let i = 0; i < 3; i++) { const a = $('#l' + (i + 1)), b = $('#v' + (i + 1)); if (a.textContent !== L[i]) a.textContent = L[i]; if (b.textContent !== V[i]) b.textContent = V[i]; }
   }

@@ -676,7 +676,7 @@
     rows.forEach((i, r) => { const yy = y + 66 + r * 26; TX(hx[0], yy + 17, String(i + 1), { size: 14, color: '#0f172a', weight: 800 }); TX(hx[1], yy + 17, String(SITES[i].d), { size: 14, color: '#0f172a', weight: 800 }); TX(hx[2], yy + 17, String(SITES[i].a), { size: 14, color: '#0f172a', weight: 800 }); });
     if (!rows.length) TX(T.x + T.w / 2, y + 100, '아직 시추하지 않았어요', { size: 13.5, color: '#94a3b8', weight: 700 });
     const fy = y + 66 + 6 * 26 + 6;
-    para(T.x + 16, fy + 14, '속도 = 거리 ÷ 나이  (예: 600 km ÷ 20 백만 년 = 30 km/백만 년 = 30 mm/년 = 3 cm/년)', T.w - 32, 12.5, { color: '#0f766e', weight: 800, align: 'left' });
+    para(T.x + 16, fy + 14, '속도 = 거리 / 나이  (예: 600 km / 20 백만 년 = 30 km/백만 년 = 30 mm/년 = 3 cm/년)', T.w - 32, 12.5, { color: '#0f766e', weight: 800, align: 'left' });
   }
   const NWD = 'NW';
   function hawPos(i, tm) { const isl = HI[i]; if (tm < -isl.age) return null; const dd = HV * (tm + isl.age); const u = DIRV[NWD]; return { x: HG.H0[0] + u[0] * dd * HG.sc, y: HG.H0[1] + u[1] * dd * HG.sc, d: dd }; }

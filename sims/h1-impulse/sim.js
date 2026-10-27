@@ -658,7 +658,7 @@
     T(bx + bw, y + 28, '합계 ' + ms + ' ms', PHONE ? 13 : 15.5, '#26324a', 'right', 800);
     // 힘 막대
     const fy = by + bh + (PHONE ? 54 : 50), FM = 30000;
-    T(x + 16, fy - 8, '💥 평균 힘 F = 900 000 ÷ ' + ms + ' = ' + nf(F) + ' N', PHONE ? 13 : 15.5, '#26324a', 'left', 800);
+    T(x + 16, fy - 8, '💥 평균 힘 F = 900 000 / ' + ms + ' = ' + nf(F) + ' N', PHONE ? 13 : 15.5, '#26324a', 'left', 800);
     D.roundRect(bx, fy, bw, bh, 8); ctx.fillStyle = '#eef1f7'; ctx.fill();
     const fw = bw * clamp(F / FM, 0, 1);
     D.roundRect(bx, fy, Math.max(fw, 6), bh, 8); ctx.fillStyle = pass ? '#14a058' : '#e2464b'; ctx.fill();
