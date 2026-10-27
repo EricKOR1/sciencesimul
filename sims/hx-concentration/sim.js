@@ -595,7 +595,7 @@
           setup() { S.lock = true; S.sol.id = 'sug'; S.sol.k = 10; S.sol.w = 100; S.sol.T = 20; S.sol.Td = 20; setMode('molal'); },
           check: () => S.sol.T === 80 && S.sol.Td > 79.5, hold: 0.6,
           status: () => '온도 ' + Math.round(S.sol.Td) + ' °C ' + mark(S.sol.T === 80 && S.sol.Td > 79.5) + ' &nbsp; M ' + f3(cur().M) + ' · m ' + f2(cur().m),
-          explain: '20 °C에서 80 °C로 가열하면 용액의 부피가 약 2 % 늘어 <b>몰 농도는 0.824 → 0.805 mol/L로 약 2 % 줄어요</b>(1.00 M이었다면 약 0.98 M). 하지만 설탕의 몰수와 물의 질량은 그대로이므로 <b>몰랄 농도는 1.00 mol/kg 그대로</b>예요.',
+          explain: '20 °C에서 80 °C로 가열하면 용액의 부피가 약 2 % 늘어 <b>몰 농도는 0.824 → 0.806 mol/L로 약 2 % 줄어요</b>(1.00 M이었다면 약 0.98 M). 하지만 설탕의 몰수와 물의 질량은 그대로이므로 <b>몰랄 농도는 1.00 mol/kg 그대로</b>예요.',
         },
         {
           type: 'quiz', title: '온도가 변해도 변하지 않는 농도',

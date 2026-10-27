@@ -372,6 +372,7 @@
 
   /* ================= ② 순간 속도 ================= */
   const ZM = () => S.zm;
+  const insKnown = () => { const Z = ZM(); return Z.tan && (Z.t0 === 0 ? Z.ok0 : Z.ok60); };      // 접선의 기울기 값은 학생이 읽어 맞힌 뒤에 보여 줘요
   function checkTan() {
     const Z = ZM(), a = Z.ok0, b = Z.ok60;
     Z.ok0 = Z.in0 !== '' && near(rateIn(Z.in0), rateAt(0) * 1000, 0.4);
@@ -394,8 +395,8 @@
     const y0 = L.y + 416;
     D.roundRect(L.x + 12, y0 - 20, L.w - 24, 84, 12); ctx.fillStyle = '#f6f7fb'; ctx.fill(); ctx.strokeStyle = '#dbe3f3'; ctx.lineWidth = 1.6; ctx.stroke();
     T(L.x + 24, y0 + 2, '평균 속도 (시컨트 기울기) = ' + f4(avg) + ' M/s', 14, AMB, 'left', 800);
-    T(L.x + 24, y0 + 28, Z.tan ? '순간 속도 (접선 기울기) = ' + f4(ins) + ' M/s' : '순간 속도 (접선 기울기): 「접선 보이기」를 눌러요', 14, Z.tan ? TEAL : MUTED, 'left', 800);
-    T(L.x + 24, y0 + 52, Z.tan ? '차이 = ' + f2(Math.abs(avg - ins) * 1000) + ' × 10⁻³ M/s' + (Math.abs(avg - ins) < 0.00015 ? '  (거의 같아요)' : '') : '', 13, MUTED, 'left', 800);
+    T(L.x + 24, y0 + 28, insKnown() ? '순간 속도 (접선 기울기) = ' + f4(ins) + ' M/s' : Z.tan ? '순간 속도 (접선 기울기) = ?  (삼각형에서 읽어요)' : '순간 속도 (접선 기울기): 「접선 보이기」를 눌러요', 14, Z.tan ? TEAL : MUTED, 'left', 800);
+    T(L.x + 24, y0 + 52, insKnown() ? '차이 = ' + f2(Math.abs(avg - ins) * 1000) + ' × 10⁻³ M/s' + (Math.abs(avg - ins) < 0.00015 ? '  (거의 같아요)' : '') : '', 13, MUTED, 'left', 800);
   }
   function drawZoomInfo(t) {
     const R = RC.R, Z = ZM(), t0 = Z.t0;
@@ -413,7 +414,7 @@
     const y = y0 + rh * (DT.length + 1) + 6;
     D.roundRect(R.x + 10, y, R.w - 20, rh - 2, 8); ctx.fillStyle = Z.tan ? 'rgba(13,148,136,.14)' : '#f6f7fb'; ctx.fill(); ctx.strokeStyle = Z.tan ? TEAL : '#e1dcf3'; ctx.lineWidth = Z.tan ? 2 : 1.2; ctx.stroke();
     T(R.x + 24, y + rh / 2, 'Δt → 0 (접선)', 13.5, Z.tan ? TEAL : '#aab3c4', 'left', 800);
-    T(R.x + R.w - 24, y + rh / 2, Z.tan ? f4(rateAt(t0)) : '—', 14, Z.tan ? TEAL : '#aab3c4', 'right', 800);
+    T(R.x + R.w - 24, y + rh / 2, insKnown() ? f4(rateAt(t0)) : Z.tan ? '?' : '—', 14, Z.tan ? TEAL : '#aab3c4', 'right', 800);
     if (R.y + R.h - (y + rh + 14) > 50) textBlock(R.x + 14, y + rh + 22, R.w - 28, '간격이 짧아질수록 평균 속도가 접선의 기울기(순간 속도)에 가까워져요.', 12.5, MUTED, 17, 700);
   }
 
@@ -829,9 +830,9 @@
   const l1 = $('#l1'), l2 = $('#l2'), l3 = $('#l3'), v1 = $('#v1'), v2 = $('#v2'), v3 = $('#v3');
   function readouts() {
     let L1, a, L2, b, L3, c;
-    if (S.mode === 'sense') { const E = SE(), tt = seT(); L1 = '시간 t'; a = f0(tt) + ' s'; L2 = 'O₂ 부피 V'; b = f0(volAt(tt)) + ' mL'; L3 = '[H₂O₂]'; c = f2(cAt(tt)) + ' M'; }
+    if (S.mode === 'sense') { const E = SE(), tt = seT(); L1 = '시간 t'; a = f0(tt) + ' s'; L2 = 'O₂ 부피 V'; b = f0(volAt(tt)) + ' mL'; L3 = '[H₂O₂]'; c = E.ok.every(Boolean) || tt <= 20 ? f2(cAt(tt)) + ' M' : '? (V 로 계산)'; }
     else if (S.mode === 'avg') { const A = AV(), i = A.sel; L1 = '고른 구간'; a = TS[i] + '~' + TS[i + 1] + ' s'; L2 = 'Δ[H₂O₂]'; b = MINUS + f2(CT[i] - CT[i + 1]) + ' M'; L3 = '평균 속도'; c = A.ok[i] ? f4(AVG[i]) + ' M/s' : '?'; }
-    else if (S.mode === 'zoom') { const Z = ZM(), d = Z.dk; L1 = '시간 간격 Δt'; a = fdt(d) + ' s'; L2 = '평균 속도'; b = f4(avgRate(Z.t0, Z.t0 + d)) + ' M/s'; L3 = '순간 속도'; c = Z.tan ? f4(rateAt(Z.t0)) + ' M/s' : '?'; }
+    else if (S.mode === 'zoom') { const Z = ZM(), d = Z.dk; L1 = '시간 간격 Δt'; a = fdt(d) + ' s'; L2 = '평균 속도'; b = f4(avgRate(Z.t0, Z.t0 + d)) + ' M/s'; L3 = '순간 속도'; c = insKnown() ? f4(rateAt(Z.t0)) + ' M/s' : '?'; }
     else if (S.mode === 'coef') { const Q = CO(); L1 = '관찰 시간'; a = f1(Q.t) + ' s'; L2 = '개수 (N₂ : H₂ : NH₃)'; b = coCount('N2') + ' : ' + coCount('H2') + ' : ' + coCount('NH3'); L3 = '반응 속도 v'; c = Q.phase === 'done' ? f4(Math.abs(coDelta('N2')) / 10) + ' M/s' : '?'; }
     else { const Dd = DS(), cc = dsCh(); L1 = '고른 반응'; a = RXN[Dd.sel].name; L2 = '센서'; b = cc.s >= 0 ? SENS[cc.s].name : '—'; L3 = '완성한 설계'; c = dsDoneN() + ' / 5'; }
     const k = [L1, a, L2, b, L3, c].join('|'); if (k === rlast) return; rlast = k;

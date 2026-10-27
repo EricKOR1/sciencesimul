@@ -173,7 +173,7 @@
     D.roundRect(x - 26, y - 12, 52, 24, 5); ctx.fillStyle = on ? '#052e16' : '#0f172a'; ctx.fill();
     T(x, y + 5, label, 13, on ? '#4ade80' : '#64748b', 'center', 900);
     [[x - 38, plusRight ? '−' : '+'], [x + 38, plusRight ? '+' : '−']].forEach(([cx, sg]) => {
-      ctx.fillStyle = sg === '+' ? '#ef4444' : '#3b82f6'; ctx.beginPath(); ctx.arc(cx, y, 8, 0, TAU); ctx.fill();
+      ctx.fillStyle = sg === '+' ? POSC : NEGC; ctx.beginPath(); ctx.arc(cx, y, 8, 0, TAU); ctx.fill();
       T(cx, y + 5, sg, 14, '#fff', 'center', 900);
     });
     ctx.restore();
@@ -313,7 +313,7 @@
     const st = {
       L: { plate: { c1: MT_ZN[0], c2: MT_ZN[1], thick: 1 - 0.45 * qs }, sol: true, solc: '#dbeafe', sola: 0.3, catc: ZNC, cat: 6 + Math.round(3 * qs), an: 6, name: 'Zn판 · ZnSO₄', name2: Lr },
       R: { plate: { c1: MT_CU[0], c2: MT_CU[1], thick: 1 + 0.45 * qs }, sol: true, solc: '#3b9be0', sola: 0.18 + 0.44 * clamp(1 - 0.5 * qs, 0, 1.5), catc: '#3b82c4', cat: 6 - Math.round(3 * qs), an: 6, name: 'Cu판 · CuSO₄', name2: Rr },
-      bridge: 1, wire: 1, flow: Math.abs(I), dir: I >= 0 ? 1 : -1, showDir: Math.abs(I) > 0.1, signs: { L: '−', R: '+' }, deviceHalf: 48, bridgeLabel: '염다리',
+      bridge: 1, bridgeA: I >= 0 ? '#a855f7' : ANC, bridgeB: I >= 0 ? ANC : '#a855f7', wire: 1, flow: Math.abs(I), dir: I >= 0 ? 1 : -1, showDir: Math.abs(I) > 0.1, signs: { L: '−', R: '+' }, deviceHalf: 48, bridgeLabel: '염다리',
       device: (x, y) => supplyDraw(x, y, c.V < 0.005 ? 'OFF' : c.V.toFixed(2) + 'V', c.V > 0.005, true),
       gaugeFn: (g) => gaugeDial(g.gx, g.gy, g.gr, 0.5 + 0.5 * clamp(I, -1, 1), (Math.abs(I) < 0.005 ? '0.00' : (I > 0 ? '+' : MINUS) + Math.abs(I).toFixed(2)), { needle: I < -0.02 ? '#2563eb' : '#dc2626' }),
     };
@@ -498,8 +498,7 @@
     ctx.restore();
     ctx.beginPath(); ctx.moveTo(x0, y1); ctx.lineTo(x0, y0 + 12); ctx.quadraticCurveTo(x0, y0, x0 + 12, y0); ctx.lineTo(x0 + w - 12, y0); ctx.quadraticCurveTo(x0 + w, y0, x0 + w, y0 + 12); ctx.lineTo(x0 + w, y1);
     ctx.strokeStyle = 'rgba(70,100,140,.75)'; ctx.lineWidth = 2.4; ctx.stroke();
-    if (frac > 0.06) T(cx, y0 + Math.min(26, (gy - y0) / 2 + 5), label, 14, '#334155', 'center', 800);
-    return { x0, y0, w, gy };
+    return { x0, y0, w, gy, cx, label, frac };
   }
   function drawAq(t) {
     const a = S.aq, g = aqG(), on = a.on;
@@ -529,6 +528,7 @@
       D.roundRect(xr - 5, g.rodTop, 10, g.rodBot - g.rodTop, 3); ctx.fillStyle = gr; ctx.fill();
       pill(xr + (xr === g.cxC ? -38 : 38), g.rodTop + 10, lab, { bg: col, color: '#fff', border: null, size: 13, pad: 6 });
     });
+    [th, tc].forEach((q) => { if (q.frac > 0.06) pill(q.cx + 17, q.y0 + Math.min(26, (q.gy - q.y0) / 2 + 5) - 2, q.label, { bg: 'rgba(255,255,255,.88)', color: '#334155', border: null, size: 13, pad: 3 }); });
     // 전자 흐름 (전선)
     if (on) { const wp = [[g.cxA, g.rodTop], [g.cxA, sy], [g.cxC, sy], [g.cxC, g.rodTop]]; for (let i = 0; i < 6; i++) { const p = ptAlong(wp, ((i / 6) + t * 0.22) % 1); eBall(p.x, p.y, 4.6); } }
     T(g.bx + g.bw / 2, g.by + g.bh + 20, '진한 NaCl 수용액 (페놀프탈레인 넣음)', PHONE ? 13 : 14, INK, 'center', 800);
@@ -557,13 +557,13 @@
   }
   function aqInset(t) {
     const a = S.aq, on = a.on;
-    const w = PHONE ? MAIN.w - 24 : 312, h = PHONE ? 112 : 196, x = PHONE ? MAIN.x + 12 : MAIN.x + MAIN.w - w - 12, y = PHONE ? MAIN.y + MAIN.h - h - 10 : MAIN.y + 14;
+    const w = PHONE ? MAIN.w - 24 : 312, h = PHONE ? 120 : 196, x = PHONE ? MAIN.x + 12 : MAIN.x + MAIN.w - w - 12, y = PHONE ? MAIN.y + MAIN.h - h - 8 : MAIN.y + 14;
     D.roundRect(x, y, w, h, 14); ctx.fillStyle = '#f8fafc'; ctx.fill(); ctx.strokeStyle = '#a78bfa'; ctx.lineWidth = 2.4; ctx.stroke();
     T(x + 12, y + 22, '🔍 (−)극 표면의 입자 모형', 13.5, '#5b21b6', 'left', 800);
     const ex = x + 40;
     ctx.save(); D.roundRect(x + 2, y + 32, 38, h - 34, 12); ctx.clip(); ctx.fillStyle = '#4b5563'; ctx.fillRect(x, y + 30, 40, h); ctx.restore();
     T(x + 21, y + h - 8, '탄소', 12.5, '#fff', 'center', 800);
-    const lanes = PHONE ? [y + 66, y + 92] : [y + 76, y + 112, y + 148];
+    const lanes = PHONE ? [y + 72, y + 94] : [y + 76, y + 112, y + 148];
     lanes.forEach((ly, i) => {
       const u = on ? ((t * 0.3 + i / lanes.length) % 1) : 0.15 + i * 0.06;
       if (u < 0.45) { const px = ex + 96 - (u / 0.45) * 52; waterMol(px, ly); if (u > 0.3) { const k = (u - 0.3) / 0.15; eBall(ex + 4 + (px - ex - 4) * k, ly - 9, 5.4); } }

@@ -632,7 +632,7 @@
         D.roundRect(bx, yy, bw, 17, 6); ctx.fillStyle = '#eef1f7'; ctx.fill();
         if (v > 0) { ctx.save(); D.roundRect(bx, yy, bw, 17, 6); ctx.clip(); ctx.fillStyle = colr; ctx.fillRect(bx, yy, bw * clamp(v / vmax, 0, 1), 17); ctx.restore(); }
         T(bx + bw * clamp(v / vmax, 0, 1) + 5, yy + 13, v.toFixed(2), 12, INK, 'left', 800, HALO);
-        if (PHONE) T(bx + 4, yy + 13, q ? 'ΔTf' : 'ΔTb', 10.5, '#fff', 'left', 800);
+        if (PHONE && bw * clamp(v / vmax, 0, 1) > 44) T(bx + 4, yy + 13, q ? 'ΔTf' : 'ΔTb', 10.5, '#fff', 'left', 800);
       });
     });
     [['ΔTb', HOT], ['ΔTf', '#2f9ae8']].forEach(([lab, colr], q) => { const lx = L.x + L.w - 112 + q * 54; D.roundRect(lx, L.y + 17, 12, 12, 3); ctx.fillStyle = colr; ctx.fill(); T(lx + 17, L.y + 28, lab, 12.5, INK, 'left', 800); });
@@ -743,7 +743,7 @@
       let yy = y + 22; yy += textBlock(L.x + 28, yy, L.w - 56, cd.t, PHONE ? 13 : 13.5, INK, 19, 800) + 6;
       T(L.x + 28, yy + 4, cd.q, 13.5, PUR, 'left', 800); yy += 28;
       if (done) { cd.steps.forEach((s, k) => { yy += textBlock(L.x + 28, yy, L.w - 56, s, 13.5, k === 2 ? GOOD : INK, 19, 800) + 4; }); T(L.x + L.w - 28, y + 20, '✅ 정답', 13.5, GOOD, 'right', 800); }
-      else { T(L.x + 28, yy + 4, cd.tip, 13, MUTED, 'left', 700); T(L.x + 28, yy + 34, '답을 오른쪽 입력칸에 소수로 적어요', 13, PUR, 'left', 800); }
+      else { T(L.x + 28, yy + 4, cd.tip, 13, MUTED, 'left', 700); T(L.x + 28, yy + 34, (PHONE ? '답을 아래 입력칸에 소수로 적어요' : '답을 오른쪽 입력칸에 소수로 적어요'), 13, PUR, 'left', 800); }
     });
   }
   function drawCalcInfo(t) {

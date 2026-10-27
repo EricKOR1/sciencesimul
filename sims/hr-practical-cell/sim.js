@@ -328,7 +328,8 @@
       const negX = g.x + g.w * CM[k].negX, posX = g.x + g.w * CM[k].posX;
       for (let i = 0; i < 7; i++) {
         const u = ((i / 7) + t * 0.12) % 1, y = g.y + g.h * (0.18 + 0.64 * ((i * 0.37) % 1));
-        const xa = k === 'mn' ? q.x + 6 : Math.min(negX, posX) + 4, xb = k === 'mn' ? q.x + q.w - 6 : Math.max(negX, posX) - 4;
+        const nq = cmRect(regs.find((r) => r.role === 'neg'), g), pq = cmRect(regs.find((r) => r.role === 'pos'), g);
+        const xa = k === 'mn' ? q.x + 6 : nq.x + nq.w + 6, xb = k === 'mn' ? q.x + q.w - 6 : pq.x - 6;
         ctx.globalAlpha = fl; D.sphere(xa + (xb - xa) * u, y, 5, '#a855f7', { gloss: false });
         D.sphere(xb - (xb - xa) * u, y + 7, 5, '#f59e0b', { gloss: false }); ctx.globalAlpha = 1;
       }
@@ -467,7 +468,7 @@
     const lit = clamp(Math.sqrt(e.I * e.I * R_LOAD / 0.1), 0, 1);
     if (lit > 0.02) D.glow(cx, wy, 22 + 34 * lit, '#fde047', 0.75 * lit);
     ctx.beginPath(); ctx.arc(cx, wy - 2, 14, 0, TAU); ctx.fillStyle = C.mix('#e5e7eb', '#fde68a', lit); ctx.fill(); ctx.strokeStyle = lit > 0.3 ? '#f59e0b' : '#94a3b8'; ctx.lineWidth = 2; ctx.stroke();
-    T(cx, wy + 28, '전구 R = 10 Ω', 13, MUTED, 'center', 800);
+    T(cx, wy - 26, '전구 R = 10 Ω', 13, MUTED, 'center', 800);
     if (e.flow > 0.03) { const path = wp.concat([[cx + 40, wy]], wq.slice(1)); const n = Math.round(6 + 8 * Math.min(1, e.flow)); for (let i = 0; i < n; i++) { const u = ((i / n) + t * 0.2 * e.flow) % 1, pt = ptAlongS(path, u); eBall(pt.x, pt.y, 4.8); } }
     T(cx, by + bh + 22, El.name + ' · 극 사이 ' + e.d + ' cm · 판 ' + SIZES[e.size].name, 13.5, INK, 'center', 800);
     // 계기판

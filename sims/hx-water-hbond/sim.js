@@ -395,7 +395,7 @@
     ctx.restore();
   }
   function heatLayout() {
-    const L = RC.L, bs = PHONE ? 1.2 : 1.0, bw = BXW * bs, bh = BXH * bs;
+    const L = RC.L, bs = PHONE ? 1.12 : 1.0, bw = BXW * bs, bh = BXH * bs;
     const cw = L.w / 2;
     return [0, 1].map((i) => ({ i, bx: L.x + i * cw + (cw - bw) / 2 - 12, by: L.y + 74, bs, bw, bh, tx: L.x + i * cw + (cw - bw) / 2 - 12 + bw + 22 }));
   }

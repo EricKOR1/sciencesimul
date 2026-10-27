@@ -236,7 +236,7 @@
 
   /* ============ ① 물과 비교 ============ */
   const bkG = () => (PHONE
-    ? { bw: 104, bh: 116, by: MAIN.y + 124, xs: [MAIN.x + 76, MAIN.x + 254], gx: [MAIN.x + 140, MAIN.x + 318], gy: MAIN.y + 100, gh: 170, tb: rect(MAIN.x + 8, MAIN.y + 288, 448, 130), rest: MAIN.x + 232, tipY: MAIN.y + 112 }
+    ? { bw: 104, bh: 116, by: MAIN.y + 124, xs: [MAIN.x + 76, MAIN.x + 254], gx: [MAIN.x + 140, MAIN.x + 318], gy: MAIN.y + 100, gh: 170, tb: rect(MAIN.x + 8, MAIN.y + 296, 448, 122), rest: MAIN.x + 232, tipY: MAIN.y + 112 }
     : { bw: 126, bh: 128, by: MAIN.y + 146, xs: [MAIN.x + 100, MAIN.x + 330], gx: [MAIN.x + 180, MAIN.x + 410], gy: MAIN.y + 112, gh: 190, tb: rect(MAIN.x + 450, MAIN.y + 8, 318, 326), rest: MAIN.x + 215, tipY: MAIN.y + 128 });
   const BK_LEVEL = 0.6;
   const bkCount = () => BKS.reduce((n, b) => n + RGS.filter((r) => S.bk.trial[b][r]).length, 0);
@@ -577,29 +577,29 @@
     T(eq.x + 12, ey, PHONE ? 'CO₂ + H₂O ⇌ H₂CO₃ ⇌ H⁺ + HCO₃⁻' : 'CO₂ + H₂O ⇌ H₂CO₃ ⇌ H⁺ + HCO₃⁻', PHONE ? 14.5 : 14, INK, 'left', 800);
     T(eq.x + 12, ey + 22, left ? '← 왼쪽으로 이동: HCO₃⁻가 H⁺를 받아요' : right ? '→ 오른쪽으로 이동: H₂CO₃가 H⁺를 내놓아요' : '평형 상태', PHONE ? 12.5 : 13, left ? '#b91c1c' : right ? '#1d4ed8' : MUTED, 'left', 800);
     // 막대 (mM): HCO₃⁻ 24, CO₂ 1.2 (0~30 mM 눈금)
-    const bx = eq.x + (PHONE ? 62 : 92), bw = eq.w - (PHONE ? 150 : 150), by0 = eq.y + (PHONE ? 90 : 106);
+    const bx = eq.x + (PHONE ? 62 : 92), bw = eq.w - (PHONE ? 150 : 150), by0 = eq.y + (PHONE ? 82 : 106);
     [['HCO₃⁻', bl.hcoD, '#8b5cf6'], [PHONE ? 'CO₂' : 'CO₂ (H₂CO₃)', bl.co2D, '#64748b']].forEach(([lab, v, col], i) => {
-      const yy = by0 + i * (PHONE ? 30 : 34);
+      const yy = by0 + i * (PHONE ? 28 : 34);
       T(eq.x + 12, yy + 4, lab, PHONE ? 12 : 12.5, INK, 'left', 800);
       D.roundRect(bx, yy - 8, bw, 14, 6); ctx.fillStyle = '#e9e5f5'; ctx.fill();
       const w = bw * clamp(v / 30, 0, 1); if (w > 0.5) { D.roundRect(bx, yy - 8, Math.max(3, w), 14, 6); ctx.fillStyle = col; ctx.fill(); }
       const nrm = i === 0 ? 24 : 1.2, calm = bl.phase === 'idle', dtxt = Math.abs(v - nrm) < 0.05 ? mmm(v) + ' mM' : (v > nrm ? '↑ 늘어요' : '↓ 줄어요');
       T(bx + bw + 6, yy + 4, calm ? mmm(v) + ' mM' : dtxt, 12.5, calm || Math.abs(v - nrm) < 0.05 ? MUTED : (v > nrm ? '#dc2626' : '#2563eb'), 'left', 800);
     });
-    T(eq.x + eq.w / 2, by0 + (PHONE ? 62 : 70), 'HCO₃⁻가 훨씬 많지만(약 20 : 1) 두 물질이 함께 있어요', PHONE ? 11.5 : 12, MUTED, 'center', 700);
+    if (!PHONE) T(eq.x + eq.w / 2, by0 + 70, 'HCO₃⁻가 훨씬 많지만(약 20 : 1) 두 물질이 함께 있어요', 12, MUTED, 'center', 700);
     // pH 눈금 (7.0 ~ 7.8)
-    const sx = eq.x + 16, sw = eq.w - 32, sy = eq.y + eq.h - (PHONE ? 40 : 52), pxv = (p) => sx + sw * (p - 7.0) / 0.8;
+    const sx = eq.x + 16, sw = eq.w - 32, sy = eq.y + eq.h - (PHONE ? 48 : 60), pxv = (p) => sx + sw * (p - 7.0) / 0.8;
     D.roundRect(sx, sy, sw, 14, 7); ctx.fillStyle = '#fecaca'; ctx.fill();
     D.roundRect(pxv(7.35), sy, pxv(7.45) - pxv(7.35), 14, 3); ctx.fillStyle = '#4ade80'; ctx.fill();
-    for (let p = 7.0; p <= 7.801; p += 0.2) { T(pxv(p), sy + 30, p.toFixed(1), 12, MUTED, 'center', 700); }
-    if (!(regul && bl.phase[0] === 'r')) T(pxv(7.4), sy - 6, '정상 7.35 ~ 7.45', 12, '#15803d', 'center', 800); else T(pxv(7.4), sy + 46, '정상 7.35 ~ 7.45', 11.5, '#15803d', 'center', 800);
+    for (let p = 7.0; p <= 7.801; p += 0.2) { T(pxv(p), sy + 40, p.toFixed(1), 12, MUTED, 'center', 700); }
+    if (PHONE || !(regul && bl.phase[0] === 'r')) T(pxv(7.4), sy - 6, '정상 7.35 ~ 7.45', 12, '#15803d', 'center', 800); else T(pxv(7.4), sy + 52, '정상 7.35 ~ 7.45', 11.5, '#15803d', 'center', 800);
     const nx = pxv(clamp(bl.nd, 7.0, 7.8)), outR = regul && bl.phase[0] === 'r' && (bl.needle < 7.35 || bl.needle > 7.45);
     if (regul && bl.phase[0] === 'r') { D.label(PHONE ? eq.x + eq.w - 78 : clamp(nx, eq.x + 50, eq.x + eq.w - 50), PHONE ? eq.y + 20 : sy - 30, 'pH ' + S.rg.shown.toFixed(2) + (outR ? '  ⚠ 위험' : ''), { size: 13, bg: outR ? '#dc2626' : '#16a34a', color: '#fff' }); }
     ctx.fillStyle = outR ? '#dc2626' : '#26324a'; ctx.beginPath(); ctx.moveTo(nx, sy + 16); ctx.lineTo(nx - 6, sy + 28); ctx.lineTo(nx + 6, sy + 28); ctx.closePath(); ctx.fill();
     panel(INFO.x, INFO.y, INFO.w, INFO.h, 14);
     if (regul) return drawRegulInfo(sc, run);
     T(INFO.x + 16, INFO.y + 26, '혈액 pH 7.4는 평형 이동으로 지켜져요', 15, '#b45309', 'left', 800);
-    let body = '세포가 만든 CO₂가 혈액에 녹아 H₂CO₃가 되고, H₂CO₃ ⇌ H⁺ + HCO₃⁻ 평형을 이뤄요. “산(H⁺) 늘리기”와 “염기(OH⁻) 늘리기”를 눌러 평형이 어느 쪽으로 이동하는지 보세요.';
+    let body = '세포가 만든 CO₂가 혈액에 녹아 H₂CO₃가 되고, H₂CO₃ ⇌ H⁺ + HCO₃⁻ 평형을 이뤄요. “산(H⁺) 늘리기”와 “염기(OH⁻) 늘리기”를 눌러 평형이 어느 쪽으로 이동하는지 보세요.' + (PHONE ? ' (HCO₃⁻가 훨씬 많지만 약 20 : 1, 두 물질이 함께 있어요.)' : '');
     if (bl.phase === 'react' || bl.phase === 'breath') body = bl.kind === 'H' ? 'H⁺가 늘면 평형이 왼쪽으로 이동해 HCO₃⁻가 H⁺를 받아 소모되고 CO₂가 늘어요. 늘어난 CO₂는 폐로 가서 숨으로 내보내요. 그래서 혈액 pH는 7.4 근처로 유지돼요.' : 'OH⁻가 늘면 H₂CO₃가 H⁺를 내놓아 OH⁻를 중화해요(평형이 오른쪽으로). 줄어든 CO₂는 호흡으로 다시 맞춰져 pH가 7.4 근처로 유지돼요.';
     textBlock(INFO.x + 16, INFO.y + 54, INFO.w - 32, body, 14.5, INK, 21, 700);
   }
@@ -754,7 +754,7 @@
           title: 'pH 변화량 비교하기', manual: true,
           goal: '기록표에서 넣기 전과 넣은 뒤의 pH 차이(<b>변화량</b>)를 네 경우 모두 구해 입력하고 <b>✔ 확인하기</b>를 누르세요.',
           hint: '변화량은 큰 값에서 작은 값을 뺀 크기예요. 물 + HCl: 7.00과 3.00의 차는 4.00. 완충 용액 + HCl: 4.74와 4.73의 차는 0.01이에요.',
-          setup() { S.gate = 'dl'; setScene('beak'); updateCtl(); },
+          setup() { S.gate = 'dl'; if (bkCount() < 4) BKS.forEach((b) => RGS.forEach((r) => { if (!S.bk.trial[b][r]) S.bk.trial[b][r] = { before: BK[b].base, after: BK[b][r] }; })); setScene('beak'); updateCtl(); },
           check() { if (dlRows.some((r) => isNaN(r.read()))) return '네 칸을 모두 입력하세요.'; const n = dlRows.filter((r) => r.ok).length; return n === 4 ? true : (4 - n) + '칸이 달라요. 기록표의 넣기 전과 넣은 뒤 값의 차이를 다시 구해 보세요.'; },
           status: () => '맞은 칸 ' + dlRows.filter((r) => r.ok).length + ' / 4',
           explain: '변화량: 물 + HCl 4.00, 물 + NaOH 4.00, 완충 용액 + HCl 0.01, 완충 용액 + NaOH 0.01. 완충 용액의 변화량은 물의 약 400분의 1이에요.',

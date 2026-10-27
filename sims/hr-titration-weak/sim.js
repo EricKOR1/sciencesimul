@@ -489,7 +489,7 @@
     const nh = sysCount(hf.sys, 'HA'), na = sysCount(hf.sys, 'A');
     T(INFO.x + 16, INFO.y + 26, 'NaOH ' + V + ' mL:  ' + ACIDS[ac].f + ' ' + (V <= 20 ? 20 - V : 0) + '개 · ' + ACIDS[ac].a + ' ' + Math.min(V, 20) + '개', 15, '#b45309', 'left', 800);
     let body = 'Ka = [H⁺][A⁻] / [HA]  이에요. 점을 끌어 ' + ACIDS[ac].f + '와 ' + ACIDS[ac].a + '의 개수를 비교해 보세요.';
-    if (V === 10) body = '반당량점(10 mL)에서는 ' + ACIDS[ac].f + '와 ' + ACIDS[ac].a + '가 10개씩 같아요. [HA] = [A⁻] 이면 Ka = [H⁺] 이므로  pH = pKa = ' + ACIDS[ac].pKa.toFixed(2) + '  (Ka = ' + sci(ACIDS[ac].Ka, 2) + ').';
+    if (V === 10) body = '반당량점(10 mL)에서는 ' + ACIDS[ac].f + '와 ' + ACIDS[ac].a + '가 10개씩 같아요. [HA] = [A⁻] 이면 Ka = [H⁺] 이므로  pH ≈ pKa = ' + ACIDS[ac].pKa.toFixed(2) + '  (Ka = ' + sci(ACIDS[ac].Ka, 2) + ').';
     else if (V === 0) body = '처음에는 ' + ACIDS[ac].f + '만 있고 ' + ACIDS[ac].a + '는 거의 없어요. [A⁻]가 아주 작아서 pH가 낮아요 (' + ph.toFixed(2) + ').';
     else if (V < 20) body = '[HA]와 [A⁻]의 비가 ' + nh + ' : ' + na + ' 이에요. [A⁻]가 [HA]보다 ' + (na > nh ? '많아서 [H⁺] = Ka × [HA]/[A⁻] 가 작아져 pH가 pKa보다 커요.' : '적어서 [H⁺] = Ka × [HA]/[A⁻] 가 커져 pH가 pKa보다 작아요.');
     else if (V === 20) body = '당량점에서는 ' + ACIDS[ac].f + '가 모두 ' + ACIDS[ac].a + '로 바뀌었어요. pH는 ' + ph.toFixed(2) + ' (7보다 커요).';
@@ -611,15 +611,15 @@
       if (n.pulse > 0.02) D.ring(cx0, cy0, 14 + 20 * (1 - n.pulse), t, { color: '#14a058', width: 2.6, speed: 0 });
     } else {
       // 식초 적정 장치
-      const bx = PHONE ? 70 : 110, by0 = MAIN.y + 40, bh = PHONE ? 190 : 112;
+      const bx = PHONE ? 76 : 110, by0 = MAIN.y + 40, bh = PHONE ? 190 : 112;
       const stBase = MAIN.y + MAIN.h - 14;
       const bu = drawBurette(bx, by0 + 20, bh, VIN_V, { max: 50, w: PHONE ? 22 : 26 });
       T(bx, by0 + 2, '0.100 M NaOH', 13, '#1d4ed8', 'center', 800);
-      D.roundRect(bx - 70, stBase, 140, 10, 5); ctx.fillStyle = '#6b7280'; ctx.fill();
+      D.roundRect(bx - (PHONE ? 66 : 70), stBase, PHONE ? 132 : 140, 10, 5); ctx.fillStyle = '#6b7280'; ctx.fill();
       const fby = stBase - 2, fh = PHONE ? 100 : 104;
       D.flask(bx, fby, 124, fh, { level: 0.5, liquid: indColor('pp', 11), t });
-      T(bx + (PHONE ? 62 : 98), bu.yOf(VIN_V) + 4, '23.5 mL', PHONE ? 12.5 : 13.5, '#dc2626', 'left', 800);
-      ctx.strokeStyle = '#dc2626'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(bx + (PHONE ? 36 : 44), bu.yOf(VIN_V)); ctx.lineTo(bx + (PHONE ? 58 : 94), bu.yOf(VIN_V)); ctx.stroke();
+      T(bx + (PHONE ? 50 : 98), bu.yOf(VIN_V) + 4, '23.5 mL', PHONE ? 12.5 : 13.5, '#dc2626', 'left', 800);
+      ctx.strokeStyle = '#dc2626'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(bx + (PHONE ? 30 : 44), bu.yOf(VIN_V)); ctx.lineTo(bx + (PHONE ? 46 : 94), bu.yOf(VIN_V)); ctx.stroke();
       void P;
     }
     // 플라스크 카드 (지시약 비교) / 문제 카드 (식초)
@@ -706,7 +706,7 @@
     mkRow($('#eqHost'), { label: '[OH⁻] = √(Kh·C) (M)', sci: true, ans: eqX, rel: 0.05 }, () => updateCtl()),
     mkRow($('#eqHost'), { label: 'pH = 14 − pOH', ans: eqPhTheory, tol: 0.015, ph: '0.00' }, () => updateCtl()),
   ];
-  const vinRow = mkRow($('#vinHost'), { label: '아세트산의 농도 M', ans: VIN_M, tol: 0.0025, ph: '0.000', unit: 'M' }, () => updateCtl());
+  const vinRow = mkRow($('#vinHost'), { label: '아세트산의 농도 M', ans: VIN_M, tol: 0.0026, ph: '0.000', unit: 'M' }, () => updateCtl());
   $('#bLoad').addEventListener('click', cmLoad);
   $$('#viewSeg button').forEach((b) => b.addEventListener('click', () => { Sound.click(); S.cm.view = b.dataset.v; updateCtl(); }));
   $$('#ovSeg button').forEach((b) => b.addEventListener('click', () => { Sound.click(); S.cm.ov = b.dataset.v === 'on'; updateCtl(); }));
@@ -737,7 +737,7 @@
   function readouts() {
     const m = S.mode;
     if (m === 'cmp') { const pts = cmPts(); setRead('찍은 점', pts.length + '개', '표시한 차이점', cmMarkN() + ' / 4', '강산 곡선', S.cm.ov ? '겹침' : '끔'); }
-    else if (m === 'half') { const h = S.hf, tc = pbTargets(h.V); setRead(ACIDS[h.acid].f + ' · NaOH', h.V + ' mL', 'pH', hfPh().toFixed(2), 'HA : A⁻ (개)', tc.HA + ' : ' + tc.A); }
+    else if (m === 'half') { const h = S.hf, tc = pbTargets(h.V); setRead('넣은 NaOH', h.V + ' mL', 'pH', hfPh().toFixed(2), 'HA : A⁻ (개)', tc.HA + ' : ' + tc.A); }
     else if (m === 'eq') { const e = S.eq, tc = pbTargets(e.V); setRead('넣은 NaOH', e.V + ' mL', 'pH', pHr('ac', e.V).toFixed(2), 'HA · A⁻ · OH⁻ (개)', tc.HA + ' · ' + tc.A + ' · ' + tc.OH); }
     else { const n = S.ind; if (n.mode === 'vin') setRead('식초 20.0 mL', '0.100 M NaOH', '변색 부피', '23.5 mL', '아세트산 농도', vinRow.ok || (game && game.free) ? VIN_M.toFixed(3) + ' M' : '?'); else { const r = n.res[n.k]; setRead('지시약', IND[n.k].name, '종말점', r ? r.v.toFixed(2) + ' mL' : '—', '오차 · 변색 폭', r ? sgn(r.err) + ' · ' + r.sp.toFixed(2) + ' mL' : '—'); } }
   }
@@ -769,7 +769,7 @@
           title: '강산 곡선과 다른 점 표시하기', manual: true,
           goal: '두 곡선을 비교해 <b>다른 점을 3개 이상</b> 눌러 곡선 위에 표시하고 <b>✔ 확인하기</b>를 누르세요.',
           hint: '시작 pH, 곡선의 모양, 당량점의 pH, 급변하는 폭을 살펴보세요. 두 곡선이 같은 부분(당량점의 부피, 끝부분의 pH)은 다른 점이 아니에요.',
-          setup() { S.gate = 'mk'; setScene('cmp'); updateCtl(); },
+          setup() { S.gate = 'mk'; if (cmPts().length < 12) cmLoad(); S.cm.view = 'line'; S.cm.ov = true; setScene('cmp'); updateCtl(); },
           check() { const n = cmMarkN(); return n >= 3 ? true : (n ? n + '개 표시했어요. ' : '') + '다른 점을 3개 이상 눌러 표시해 주세요. (강산 곡선 겹치기를 켜야 해요)'; },
           status: () => '표시한 차이점 ' + cmMarkN() + ' / 3',
           explain: '다른 점: ① 시작 pH 2.87(강산 1.00) ② 초반에 빨리 오른 뒤 완만한 구간 ③ 당량점 pH 8.72(강산 7.00) ④ 급변 폭 3.36(강산 6.80). 이 중 ②의 완만한 구간이 다음 단계의 반당량점과 연결돼요.',

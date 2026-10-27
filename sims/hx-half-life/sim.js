@@ -488,12 +488,12 @@
     $$('#modeSeg button').forEach((b) => b.classList.toggle('on', b.dataset.mode === S.mode));
     const R = RD(), C = CM(), Q = ST(), M = RMX(), q = CS();
     $$('#rdChips button').forEach((b, k) => { b.classList.toggle('on', R.sel === k); b.classList.toggle('done', R.seen[k] && R.sel !== k); });
-    $('#rdRange').value = String(R.tt); $('#rdOut').textContent = R.tt + ' s'; $('#rdMinus').disabled = R.tt <= 0; $('#rdPlus').disabled = R.tt >= 160;
+    $('#rdRange').value = String(R.tt); $('#rdRange').style.setProperty('--pct', (R.tt / 160 * 100) + '%'); $('#rdOut').textContent = R.tt + ' s'; $('#rdMinus').disabled = R.tt <= 0; $('#rdPlus').disabled = R.tt >= 160;
     ['rd1', 'rd2'].forEach((id, k) => { const inp = $('#' + id); inp.classList.toggle('ok', R.ok[k]); if (document.activeElement !== inp && inp.value !== R.in[k]) inp.value = R.in[k]; });
     $$('#cmChips button').forEach((b, k) => { b.classList.toggle('on', C.sel === k); b.classList.toggle('done', C.meas[k]); });
     SORTC.forEach((c, i) => { $('#stL' + i).classList.toggle('on', Q.sel === i); $$('#stC' + i + ' button').forEach((b, k) => { const on = Q.ans[i] === k; b.classList.toggle('on', on && !Q.wrong[i]); b.classList.toggle('no', on && Q.wrong[i]); }); });
     $$('#rmChips button').forEach((b, k) => b.classList.toggle('on', M.rx === k));
-    $('#rmRange').value = String(M.tt); $('#rmOut').textContent = M.tt + ' s'; $('#rmMinus').disabled = M.tt <= 0; $('#rmPlus').disabled = M.tt >= 240;
+    $('#rmRange').value = String(M.tt); $('#rmRange').style.setProperty('--pct', (M.tt / 240 * 100) + '%'); $('#rmOut').textContent = M.tt + ' s'; $('#rmMinus').disabled = M.tt <= 0; $('#rmPlus').disabled = M.tt >= 240;
     ['rq1', 'rq2', 'rq3'].forEach((id, k) => { const inp = $('#' + id); inp.classList.toggle('ok', M.ok[k]); if (document.activeElement !== inp && inp.value !== M.q[k]) inp.value = M.q[k]; });
     $$('#csChips button').forEach((b, k) => { b.classList.toggle('on', q.sel === k); b.classList.toggle('done', csDone(k)); });
     if ($('#csUse').dataset.k !== String(q.sel)) buildCase();

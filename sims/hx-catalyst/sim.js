@@ -485,7 +485,7 @@
     T(g.X(37 - 10) + 8, g.Y(5.0) + 16, '효소', 12.5, PUR, 'left', 800, HALO);
     const mx = g.X(Z.T - 10), my = g.Y(act);
     dash(mx, g.y0, mx, g.y0 + g.h, SKY, 1.5); D.sphere(mx, my, 6.4, Z.latched ? BAD : SKY, { gloss: true });
-    D.label(clamp(mx, g.x0 + 56, g.x0 + g.w - 56), g.y0 + g.h + 40, Z.T + ' °C · 상대 속도 ' + f1(act) + (Z.latched ? ' (변성)' : ''), { size: 12.5, bg: Z.latched ? BAD : SKY, align: 'center' });
+    D.label(clamp(mx, g.x0 + 56, g.x0 + g.w - 56), g.y0 + g.h + 58, Z.T + ' °C · 상대 속도 ' + f1(act) + (Z.latched ? ' (변성)' : ''), { size: 12.5, bg: Z.latched ? BAD : SKY, align: 'center' });
   }
   function drawEnzInfo(t) {
     const R = RC.R, Z = EZ(), big = R.h > 440, rh = big ? 31 : 25, y0 = R.y + 36;
@@ -661,7 +661,7 @@
     $$('#eqChips button').forEach((b, k) => { b.classList.toggle('on', Q.mode === k); b.disabled = Q.ph === 'run'; }); $('#eqRun').disabled = Q.ph === 'run'; $('#eqRun').textContent = Q.ph === 'run' ? '재생 중…' : '▶ 재생';
     const idle = Z.ph === 'idle';
     $$('#ezSub button').forEach((b) => { b.disabled = !idle; });
-    $('#ezRange').value = String(Z.T); $('#ezOut').textContent = Z.T + ' °C'; $('#ezMinus').disabled = Z.T <= 10; $('#ezPlus').disabled = Z.T >= 65;
+    $('#ezRange').value = String(Z.T); $('#ezRange').style.setProperty('--pct', ((Z.T - 10) / 55 * 100) + '%'); $('#ezOut').textContent = Z.T + ' °C'; $('#ezMinus').disabled = Z.T <= 10; $('#ezPlus').disabled = Z.T >= 65;
     const oi = $('#ezOpt'); oi.classList.toggle('ok', Z.ok); if (document.activeElement !== oi && oi.value !== Z.in) oi.value = Z.in;
     $$('#evPick button').forEach((b, k) => { b.classList.toggle('on', V.sel === k); b.classList.toggle('done', evOk(k) && V.sel !== k); });
     $$('#evMeth button').forEach((b, j) => { const k = PM[j], on = V.meth[V.sel] === k; b.classList.toggle('on', on && k === V.sel); b.classList.toggle('no', on && k !== V.sel); });
@@ -722,7 +722,7 @@
   function readouts() {
     let L1, a, L2, b, L3, c;
     if (S.mode === 'exp') { const E = EX(); L1 = '촉매'; a = CATS[E.sel].short; L2 = 'O₂ 부피'; b = f0(exVol()) + ' mL'; L3 = '실험한 조건'; c = E.done.filter(Boolean).length + ' / 4'; }
-    else if (S.mode === 'en') { const N = EN(); L1 = 'Eₐ(정반응)'; a = N.cat ? '50 kJ' : '75 kJ'; L2 = 'ΔH'; b = '−196 kJ'; L3 = 'Eₐ(역반응)'; c = N.cat ? '246 kJ' : '271 kJ'; }
+    else if (S.mode === 'en') { const N = EN(), eaOk = N.cat ? N.ok[1] : N.ok[0], dhOk = N.ok[2]; L1 = 'Eₐ(정반응)'; a = eaOk ? (N.cat ? '50 kJ' : '75 kJ') : '?'; L2 = 'ΔH'; b = dhOk ? '−196 kJ' : '?'; L3 = 'Eₐ(역반응)'; c = eaOk && dhOk ? (N.cat ? '246 kJ' : '271 kJ') : '?'; }
     else if (S.mode === 'eq') { const Q = EQ(); L1 = '평형 [A]'; a = '0.40 M'; L2 = '평형 도달'; b = Q.mode === 2 ? '약 ' + f0(tEq(0)) + ' s / ' + f0(tEq(1)) + ' s' : '약 ' + f0(tEq(Q.mode)) + ' s'; L3 = '재생한 곡선'; c = Q.seen.filter(Boolean).length + ' / 2'; }
     else if (S.mode === 'enz') { const Z = EZ(); L1 = '온도'; a = Z.T + ' °C'; L2 = '상대 속도'; b = f1(ezAct()) + (Z.latched ? ' (변성)' : ''); L3 = '효소 상태'; c = Z.latched ? '변성됨' : Z.u > 0.3 ? '모양이 변하는 중' : '정상'; }
     else if (S.mode === 'env') { const V = EV(); L1 = '고른 문제'; a = PROB[V.sel].name; L2 = '연결 완료'; b = evN() + ' / 5'; L3 = '무해 / 오염 배출'; c = V.outS + ' / ' + V.outH; }
@@ -756,7 +756,7 @@
           title: '반응 뒤 MnO₂ 질량 확인',
           goal: '<b>MnO₂</b> 실험 뒤 「걸러서 질량 재기」로 저울의 값을 읽어 <b>반응 후 MnO₂ 의 질량(g)</b>을 입력해요.',
           hint: 'MnO₂ 실험을 마쳐야 버튼이 켜져요. 저울에 0.50 g 이 나타나면 그 값을 적어요. 처음 질량과 비교해요.',
-          setup() { S.lock = true; if (!EX().done[2]) { EX().sel = 2; EX().ph = 'idle'; } setMode('exp'); },
+          setup() { S.lock = true; const E = EX(); E.filt = false; E.filtP = 0; E.in = ''; E.ok = false; $('#exIn').value = ''; $('#exIn').classList.remove('ok', 'bad'); if (!E.done[2]) { E.sel = 2; E.ph = 'idle'; } setMode('exp'); },
           check: () => EX().ok, hold: 0.5,
           status: () => 'MnO₂ 실험 ' + mark(EX().done[2]) + ' &nbsp; 질량 ' + mark(EX().ok),
           explain: '걸러 낸 MnO₂ 는 <b>0.50 g → 0.50 g</b> 으로 질량이 그대로예요. 촉매는 반응하는 동안 <b>소모되지 않아요</b> (반응 전후에 변하지 않아요).',

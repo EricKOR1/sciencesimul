@@ -171,7 +171,7 @@
     a.om = (a.om < 0 ? -1 : 1) * rnd(1.2, 3); b.om = (b.om < 0 ? -1 : 1) * rnd(1.2, 3);
     B.nCol++;
     const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
-    if (verdict === 'react') { B.nRx++; addFx(mx, my, 'react', '반응!'); Sound.success(); if (!RM) parts.burst(mx, my, { count: 14, speed: 120, life: 0.7, size: 3.4, colors: ['#14a058', '#7ddba0', '#ffd23f'] }); }
+    if (verdict === 'react') { B.nRx++; addFx(mx, my, 'react', '반응!'); if (S.mode === 'box') Sound.success(); if (!RM && S.mode === 'box') parts.burst(mx, my, { count: 14, speed: 120, life: 0.7, size: 3.4, colors: ['#14a058', '#7ddba0', '#ffd23f'] }); }
     else if (verdict === 'same') { B.nBounce++; addFx(mx, my, 'same', ''); }
     else { B.nBounce++; addFx(mx, my, 'bounce', verdict === 'ori' ? '방향 ✗' : '에너지 ✗'); }
   }
@@ -483,6 +483,7 @@
       else { E.s = 0; E.ph = 'done'; E.res = 'bounce'; E.seenBounce = true; Sound.fail(); updateCtl(); }
     }
   }
+  function enClear(ks) { const E = EN(); [0, 1].forEach((i) => ks.forEach((k) => { E.in[i][k] = ''; E.ok[i][k] = false; })); }
   function enReset() { const E = EN(); E.ph = 'idle'; E.s = 0; E.tm = 0; E.res = null; E.crossed = false; E.glow = 0; }
   function enSetDs(i) { const E = EN(); if (E.ds !== i) { E.ds = i; E.seenDs[i] = true; enReset(); Sound.tick(); } updateCtl(); }
   function drawEn(t) {
@@ -706,7 +707,7 @@
     ['en1', 'en2', 'en3'].forEach((id, k) => { const inp = $('#' + id); inp.classList.toggle('ok', E.ok[E.ds][k]); if (document.activeElement !== inp && inp.value !== E.in[E.ds][k]) inp.value = E.in[E.ds][k]; });
     $$('#cdOpts button').forEach((b, k) => { const on = C2.pick[C2.sel] === k, ok = k === CARDS[C2.sel].ans; b.classList.toggle('on', on && ok); b.classList.toggle('no', on && !ok); });
     $$('#cdPick button').forEach((b, k) => { b.classList.toggle('on', C2.sel === k); b.classList.toggle('done', C2.pick[k] === CARDS[k].ans); });
-    $('#eaRange').value = String(Q.ea); $('#eaOut').textContent = Q.ea + ' kJ/mol'; $('#eaMinus').disabled = Q.ea <= 20; $('#eaPlus').disabled = Q.ea >= 120;
+    $('#eaRange').value = String(Q.ea); $('#eaRange').style.setProperty('--pct', ((Q.ea - 20) / 100 * 100) + '%'); $('#enRange').style.setProperty('--pct', ((E.E - 10) / 100 * 100) + '%'); $('#lbRange').style.setProperty('--pct', ((Z.lv - 1) / 4 * 100) + '%'); $('#eaOut').textContent = Q.ea + ' kJ/mol'; $('#eaMinus').disabled = Q.ea <= 20; $('#eaPlus').disabled = Q.ea >= 120;
     $('#tbLabel').textContent = MODE_LABEL[S.mode];
   }
   function setMode(m) { if (S.mode !== m) { S.fade = 1; parts.clear(); } S.mode = m; updateCtl(); }
@@ -834,7 +835,7 @@
           title: '4가지 조합 모두 충돌시키기',
           goal: '방향(맞음·틀림)과 속력(빠름·느림)을 바꿔 <b>4가지 조합</b>을 모두 충돌시켜 결과를 표에 채워요.',
           hint: '방향 칩이나 분자를 눌러 CO 와 NO₂ 의 앞쪽 원자를 바꾸고, 속력 단계를 2 이하(느림)와 3 이상(빠름)으로 나눠 「충돌시키기」를 눌러요.',
-          setup() { S.lock = true; lbReset(true); setMode('lab'); },
+          setup() { S.lock = true; lbReset(false); setMode('lab'); },
           check: () => lbAll(), hold: 0.5,
           status: () => LBK.map((k) => k[1].replace('방향 ', '') + '·' + k[2] + ' ' + mark(!!LB().tried[k[0]])).join(' &nbsp; '),
           explain: '<b>방향 맞음 + 빠름</b> 한 가지만 반응했어요. 방향이 틀리면 빨라도 튕기고, 방향이 맞아도 느리면(충돌 에너지 &lt; Eₐ) 튕겨요. 유효 충돌은 두 조건이 모두 필요해요.',
@@ -863,7 +864,7 @@
           title: '공을 굴려 장벽 넘기',
           goal: '충돌 에너지 E 를 Eₐ 보다 <b>작게</b>도, <b>크게</b>도 바꿔 공을 굴려서 두 결과(튕김·넘음)를 모두 확인해요.',
           hint: '언덕 꼭대기 높이가 Eₐ 예요. E 를 30 kJ 로 굴려 보고, 60 kJ 로도 굴려 봐요.',
-          setup() { S.lock = true; enReset(); setMode('en'); },
+          setup() { S.lock = true; enReset(); EN().seenPass = false; EN().seenBounce = false; setMode('en'); },
           check: () => EN().seenPass && EN().seenBounce, hold: 0.4,
           status: () => '튕김 ' + mark(EN().seenBounce) + ' &nbsp; 넘음 ' + mark(EN().seenPass),
           explain: 'E ≥ Eₐ 이면 공이 꼭대기(활성화물)를 지나 생성물 수준으로 내려가 <b>반응</b>이 일어나고, E &lt; Eₐ 이면 도중에 되돌아와 <b>튕겨요</b>.',
@@ -872,7 +873,7 @@
           title: '도표에서 Eₐ 와 ΔH 읽기',
           goal: '<b>발열·흡열</b> 두 도표에서 Eₐ(정)과 ΔH(kJ)를 읽어 입력해요. 흡열 반응은 도표 칩으로 바꿔요.',
           hint: 'Eₐ(정)은 반응물 수준(0)에서 꼭대기까지의 높이, ΔH 는 생성물 수준 − 반응물 수준이에요. 눈금 한 칸이 10 kJ 예요. 생성물이 아래에 있으면 ΔH 는 음수예요.',
-          setup() { S.lock = true; enReset(); setMode('en'); },
+          setup() { S.lock = true; enReset(); enClear([0, 1]); setMode('en'); },
           check: () => enReadDone(), hold: 0.5,
           status: () => DG.map((d, i) => d.name.slice(0, 2) + ' Eₐ ' + mark(EN().ok[i][0]) + ' ΔH ' + mark(EN().ok[i][1])).join(' &nbsp; '),
           explain: '발열 반응: Eₐ = <b>50 kJ</b>, ΔH = <b>−30 kJ</b> (생성물이 더 낮음). 흡열 반응: Eₐ = <b>90 kJ</b>, ΔH = <b>+40 kJ</b> (생성물이 더 높음).',
@@ -881,7 +882,7 @@
           title: '역반응의 Eₐ 구하기',
           goal: '두 도표에서 <b>역반응의 활성화 에너지</b> Eₐ(역)을 입력해요. 생성물 수준에서 꼭대기까지의 높이예요.',
           hint: 'Eₐ(역) = Eₐ(정) − ΔH. 발열: 50 − (−30), 흡열: 90 − 40 을 계산해요.',
-          setup() { S.lock = true; enReset(); setMode('en'); },
+          setup() { S.lock = true; enReset(); enClear([2]); setMode('en'); },
           check: () => enRevDone(), hold: 0.5,
           status: () => DG.map((d, i) => d.name.slice(0, 2) + ' Eₐ(역) ' + mark(EN().ok[i][2])).join(' &nbsp; '),
           explain: '발열 반응: Eₐ(역) = 50 − (−30) = <b>80 kJ</b>. 흡열 반응: Eₐ(역) = 90 − 40 = <b>50 kJ</b>. 발열 반응은 되돌아가는 장벽이 더 높고, 흡열 반응은 더 낮아요.',

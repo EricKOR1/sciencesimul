@@ -551,7 +551,7 @@
     panel(MAIN.x, MAIN.y, MAIN.w, MAIN.h, 14);
     const tb = g.tb;
     D.roundRect(tb.x, tb.y, tb.w, tb.h, 12); ctx.fillStyle = '#fff'; ctx.fill(); ctx.strokeStyle = '#e3def5'; ctx.lineWidth = 2; ctx.stroke();
-    const cx = PHONE ? [8, 72, 190, 288, 378] : [12, 90, 204, 306, 410], rh = PHONE ? 29 : 36, ry0 = tb.y + (PHONE ? 38 : 44);
+    const cx = PHONE ? [8, 80, 192, 290, 380] : [12, 90, 204, 306, 410], rh = PHONE ? 29 : 36, ry0 = tb.y + (PHONE ? 38 : 44);
     ['이온', '짝이 된 산·염기', '짝의 K', '이온의 K', '판정'].forEach((h, i) => T(tb.x + cx[i], tb.y + 22, h, PHONE ? 12.5 : 13.5, MUTED, 'left', 800));
     D.roundRect(tb.x + 4, tb.y + 30, tb.w - 8, 2, 1); ctx.fillStyle = '#e3def5'; ctx.fill();
     const sel = JION[j.k];
@@ -629,8 +629,8 @@
       ['③ [H⁺] = √(Ka·C) = ' + val(1, sci(x, 2) + ' M'), shown(1)],
       ['④ pH = −log[H⁺] = ' + val(2, ccTheory(k, c).toFixed(2)), shown(2)],
     ];
-    lines.forEach((l, i) => { const y = cd.y + 62 + i * (PHONE ? 28 : 40); T(cd.x + 14, y, l[0], PHONE ? 13 : 15, l[1] ? (l[0].indexOf('?') >= 0 ? '#5b21b6' : INK) : '#9a8ec0', 'left', 800); });
-    if (!PHONE) textBlock(cd.x + 14, cd.y + 62 + lines.length * 40 + 2, cd.w - 28, acid ? '양이온 NH₄⁺가 산 역할을 해서 H₃O⁺가 생기므로 [H⁺]를 구하고 pH = −log[H⁺]예요. Cl⁻는 구경꾼이에요.' : '음이온 CH₃COO⁻가 염기 역할을 해서 OH⁻가 생기므로 [OH⁻] → pOH → pH 순서예요. Na⁺는 구경꾼이에요.', 14, MUTED, 20, 700);
+    lines.forEach((l, i) => { const y = cd.y + 62 + i * (PHONE ? 28 : 36); T(cd.x + 14, y, l[0], PHONE ? 13 : 15, l[1] ? (l[0].indexOf('?') >= 0 ? '#5b21b6' : INK) : '#9a8ec0', 'left', 800); });
+    if (!PHONE) textBlock(cd.x + 14, cd.y + 62 + lines.length * 36 + 2, cd.w - 28, acid ? '양이온 NH₄⁺가 산 역할을 해서 H₃O⁺가 생기므로 [H⁺]를 구하고 pH = −log[H⁺]예요. Cl⁻는 구경꾼이에요.' : '음이온 CH₃COO⁻가 염기 역할을 해서 OH⁻가 생기므로 [OH⁻] → pOH → pH 순서예요. Na⁺는 구경꾼이에요.', 14, MUTED, 20, 700);
     // 이론값 vs 측정값
     const tb = g.tb; D.roundRect(tb.x, tb.y, tb.w, tb.h, 12); ctx.fillStyle = '#fff'; ctx.fill(); ctx.strokeStyle = '#e3def5'; ctx.lineWidth = 2; ctx.stroke();
     const cA = tb.x + 12, cB = tb.x + (PHONE ? 190 : 140), cC = tb.x + (PHONE ? 272 : 214), cD = tb.x + tb.w - 12;
@@ -654,7 +654,7 @@
       else dn(pxv(cc.m1), '0.10 M', '#7c3aed', 'center');
       D.sphere(pxv(SALT[k].meas), sy + sh / 2, 6, '#14a058', { gloss: false, outline: '#fff', outlineWidth: 2 });
       if (!PHONE) textBlock(gg.x + 12, gg.y + sy - gg.y + sh + 34, gg.w - 24, c === 'c01' ? '10배 묽히면 [' + (acid ? 'H⁺' : 'OH⁻') + ']가 √10 분의 1이 되어 pH가 약 0.5만큼 ' + (acid ? '올라요' : '내려가요') + '. (' + ccTheory(k, 'c10').toFixed(2) + ' → ' + ccTheory(k, 'c01').toFixed(2) + ')' : '▼ 이론값, ● 측정값이에요. 농도를 0.010 M로 바꿔 보세요.', 13, MUTED, 18, 700);
-    } else T(gg.x + gg.w / 2, gg.y + gg.h - (PHONE ? 6 : 40), '계산을 마치면 이론값이 표시돼요', 13.5, MUTED, 'center', 800);
+    } else T(gg.x + gg.w / 2, gg.y + gg.h - (PHONE ? 3 : 40), '계산을 마치면 이론값이 표시돼요', PHONE ? 12.5 : 13.5, MUTED, 'center', 800);
     panel(INFO.x, INFO.y, INFO.w, INFO.h, 14);
     T(INFO.x + 16, INFO.y + 26, '[OH⁻] ≈ √(Kh·C),  [H⁺] ≈ √(Ka·C)', 15, '#b45309', 'left', 800);
     textBlock(INFO.x + 16, INFO.y + 54, INFO.w - 32, '염 수용액의 pH도 약산 · 약염기와 같은 근사식으로 구해요. 짝염기(또는 짝산)가 물과 반응하는 정도를 Kh = Kw / K로 나타내고, 반응하는 양은 처음 농도에 비해 아주 작아서(0.0075 %) 근사식을 써도 돼요.', 14.5, INK, 21, 700);
@@ -827,7 +827,7 @@
           title: '염 6종의 액성 판정하기', manual: true,
           goal: '여섯 염의 <b>액성</b>을 판정표를 보고 고른 뒤 <b>✔ 확인하기</b>를 누르세요.',
           hint: '염을 눌러 이온과 저울을 보세요. NH₄F는 Ka(NH₄⁺) = 5.6×10⁻¹⁰과 Kb(F⁻) = 1.5×10⁻¹¹을, NH₄CN은 Ka(NH₄⁺)와 Kb(CN⁻) = 1.6×10⁻⁵을 비교해요.',
-          setup() { S.gate = 'jdg'; setScene('judge'); updateCtl(); },
+          setup() { S.gate = 'jdg'; if (!kbRow.ok) kbRow.setAns(); setScene('judge'); updateCtl(); },
           check() { if (jdgSels.some((s) => !s.value)) return '여섯 칸을 모두 골라 주세요.'; const n = jdgOkN(); return n === 6 ? true : (6 - n) + '칸이 달라요. 이온이 구경꾼인지, 산 · 염기인지 확인하고 둘 다 반응하면 Ka와 Kb를 비교하세요.'; },
           status: () => '맞은 칸 ' + jdgOkN() + ' / 6',
           explain: 'NaCl 중성, CH₃COONa 염기성, NH₄Cl 산성, CH₃COONH₄ 중성(Ka = Kb), NH₄F 약한 산성(Ka > Kb), NH₄CN 염기성(Ka < Kb)이에요.',

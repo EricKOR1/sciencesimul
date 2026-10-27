@@ -312,6 +312,7 @@
   ];
   const rxnOf = (k) => RXN.find((r) => r.k === k);
   const rxE = (r) => ecell(r.red, r.ox);
+  const iga = (x) => (x === 'Cu' ? 'Cu가' : x + '이');
 
   Object.assign(S, {
     mode: 'she', sub: {},
@@ -342,7 +343,7 @@
     const st = {
       L: { plate: { c1: m.c1, c2: m.c2 }, sol: true, solc: m.solc, sola: m.sola, catc: m.icol, cat: 6, an: 6, name: s.metal + '판 · 1 M ' + m.ion, name2: '(1 M ' + m.sol + ')' },
       R: { plate: { c1: '#7b8794', c2: '#3b4452' }, sol: true, solc: '#fde2e2', sola: 0.28, catc: '#ef6b6b', cat: 8, an: 6, name: '표준 수소 전극', name2: 'Pt · H₂ 1기압 · 1 M H⁺', after: sheAfter },
-      bridge: k, wire: k, V: V * k, vmax: 1.0, gaugeLabel: s.conn < 0.05 ? '— V' : (V * k).toFixed(2) + ' V', lit: 0, flow: k > 0.9 ? 1 : 0, dir: isZn ? 1 : -1, showDir: true,
+      bridge: k, bridgeA: isZn ? '#a855f7' : ANC, bridgeB: isZn ? ANC : '#a855f7', wire: k, V: V * k, vmax: 1.0, gaugeLabel: s.conn < 0.05 ? '— V' : (V * k).toFixed(2) + ' V', lit: 0, flow: k > 0.9 ? 1 : 0, dir: isZn ? 1 : -1, showDir: true,
       signs: k > 0.9 ? (isZn ? { L: '−', R: '+' } : { L: '+', R: '−' }) : null, device: (x, y) => bulbDraw(x, y, 0.15 * k),
     };
     st.device = (x, y) => bulbDraw(x, y, k > 0.9 ? 0.55 : 0);
@@ -506,7 +507,7 @@
     const fy = INFO.y + 10 + hh + 20;
     const f = ok ? 'E°cell = E°(환원극) − E°(산화극) = (' + sgn2(T0.red) + ') − (' + sgn2(T0.ox) + ') = ' + sgn2(T0.cell) + ' V' : 'E°cell = E°(환원극) − E°(산화극) = ( ? ) − ( ? ) = ?';
     textBlock(INFO.x + 16, fy, INFO.w - 32, f, PHONE ? 14 : 15.5, ok ? '#166534' : INK, 21, 800);
-    textBlock(INFO.x + 16, fy + (PHONE ? 46 : 26), INFO.w - 32, ok ? '전자를 내놓는 ' + p.ox + '이 환원제, 전자를 받는 ' + mr.ion + '이 산화제예요. 전압계 눈금도 ' + f2(T0.cell) + ' V예요.' : '전지 ' + pairName(p) + ' : ' + p.ox + '판이 (−)극(산화), ' + p.red + '판이 (+)극(환원)이에요. 값을 읽어 적어요.', PHONE ? 13 : 14, ok ? '#166534' : MUTED, 19, 700);
+    textBlock(INFO.x + 16, fy + (PHONE ? 46 : 26), INFO.w - 32, ok ? '전자를 내놓는 ' + iga(p.ox) + ' 환원제, 전자를 받는 ' + mr.ion + '이 산화제예요. 전압계 눈금도 ' + f2(T0.cell) + ' V예요.' : '전지 ' + pairName(p) + ' : ' + p.ox + '판이 (−)극(산화), ' + p.red + '판이 (+)극(환원)이에요. 값을 읽어 적어요.', PHONE ? 13 : 14, ok ? '#166534' : MUTED, 19, 700);
   }
 
   /* ============ ④ 반응 예측 ============ */
@@ -570,7 +571,7 @@
     if (sc === 'znh' && done && sp && p > 0.02) { ctx.save(); ctx.globalAlpha = Math.min(1, p * 4); ctx.beginPath(); ctx.rect(bk.ix, bk.ly - 30, bk.iw, bk.bottom - bk.ly + 30); ctx.clip(); bubbleUp(null, cx, yEnd - 8, bk.ly - 24, 7, t, 0.5, 4.2); ctx.restore(); }
     T(cx, by + bh + 22, solLab, PHONE ? 13 : 14, INK, 'center', 800);
     T(cx, topY - 10, r.note, PHONE ? 13 : 14, MUTED, 'center', 700);
-    if (done && !sp) pill(cx, by + bh * 0.4, '변화 없음', { bg: '#f1f5f9', color: MUTED, border: '#94a3b8', size: 14 });
+    if (done && !sp) pill(cx, by + 2, '변화 없음', { bg: '#f1f5f9', color: MUTED, border: '#94a3b8', size: 14 });
     return { bx, by, bw, bh, cx };
   }
   function drawPredict(t) {
@@ -592,7 +593,7 @@
     const ry = PHONE ? MAIN.y + MAIN.h - 130 : bys + 80;
     if (done) {
       if (sp) { T(bxs, ry, '자발적으로 일어나요 ○', 16, '#166534', 'left', 900); T(bxs, ry + 24, r.rdn + ' : 환원제 (산화돼요) , ' + r.oxn + ' : 산화제 (환원돼요)', PHONE ? 13 : 14, INK, 'left', 800); }
-      else { T(bxs, ry, '자발적으로 일어나지 않아요 ×', 16, '#b91c1c', 'left', 900); T(bxs, ry + 24, '이 짝에서는 ' + r.rdn + '이 전자를 내놓지 못해요', PHONE ? 13 : 14, INK, 'left', 800); }
+      else { T(bxs, ry, '자발적으로 일어나지 않아요 ×', 16, '#b91c1c', 'left', 900); T(bxs, ry + 24, '이 짝에서는 ' + iga(r.rdn) + ' 전자를 내놓지 못해요', PHONE ? 13 : 14, INK, 'left', 800); }
     } else T(bxs, ry, '아래 단추로 ○ / × 를 골라요', 15, MUTED, 'left', 800);
     // INFO
     panel(INFO.x, INFO.y, INFO.w, INFO.h, 14);
@@ -663,7 +664,7 @@
           title: 'Zn · Cu 를 SHE 와 이어 보기',
           goal: 'Zn판과 Cu판을 각각 <b>표준 수소 전극과 연결</b>해 전압과 (−)극 · (+)극 방향을 확인하세요.',
           hint: '금속판 단추를 골라 “표준 수소 전극과 연결”을 눌러요. 금속을 바꾼 뒤에도 한 번 더 연결해요. 전자 알갱이가 가는 방향과 극 표시를 보세요.',
-          setup() { setScene('she'); },
+          setup() { const s = S.sh; s.tested = {}; s.connGo = false; s.conn = 0; s.metal = 'Zn'; setScene('she'); updateCtl(); },
           check: () => !!(S.sh.tested.Zn && S.sh.tested.Cu), hold: 0.6,
           status: () => 'Zn–SHE ' + mark(S.sh.tested.Zn) + ' &nbsp; Cu–SHE ' + mark(S.sh.tested.Cu),
           explain: 'Zn–SHE 전지에서는 Zn이 (−)극(산화), SHE가 (+)극이고 전압은 0.76 V예요. Cu–SHE 전지에서는 Cu가 (+)극(환원), SHE가 (−)극이고 전압은 0.34 V예요. SHE를 0 V로 놓았으니 E°(Zn²⁺/Zn) = −0.76 V, E°(Cu²⁺/Cu) = +0.34 V예요.',
@@ -721,7 +722,7 @@
           title: '전위차 세 개 계산하기',
           goal: '전지를 고르고 <b>E°(환원극), E°(산화극), E°cell</b>을 모두 맞게 적으세요. 서로 다른 전지 <b>3개</b>를 계산해요.',
           hint: '아래쪽 표에서 값을 읽어요. 환원극은 E°가 큰 쪽 금속, 산화극은 작은 쪽 금속이에요. 음수는 −를 붙여 적어요. 예 : −0.76',
-          setup() { S.gate = 'cc'; setScene('calc'); updateCtl(); },
+          setup() { S.gate = 'cc'; ccReset(); S.cc.pair = 'ZnCu'; setScene('calc'); updateCtl(); },
           check: () => ccNDone() >= 3, hold: 0.6,
           status: () => '맞게 계산한 전지 ' + ccNDone() + ' / 3 ' + mark(ccNDone() >= 3) + ' &nbsp; 지금 : ' + (S.cc.done[S.cc.pair] ? '✅' : '⬜') + ' ' + pairName(ccP()),
           explain: 'E°cell = E°(환원극) − E°(산화극). Zn–Cu = 0.34 − (−0.76) = 1.10 V, Cu–Ag = 0.80 − 0.34 = 0.46 V, Zn–Ag = 1.56 V, Mg–Cu = 2.71 V, Fe–Cu = 0.78 V. 앞 차시의 측정값과 같아요.',
@@ -759,7 +760,7 @@
           title: '반응 여섯 개 판정하기', manual: true,
           goal: '여섯 반응을 모두 골라 E°cell 로 <b>○ (자발적) / × (비자발적)</b>를 판정하세요. 다 끝나면 <b>✔ 확인하기</b>를 눌러요.',
           hint: '반응 단추를 고른 뒤 환원되는 쪽(E° 큰 쪽)과 산화되는 쪽을 찾아 E°cell을 계산해요. 양수이면 ○, 음수이면 ×예요. 맞히면 실제 변화가 나타나요.',
-          setup() { S.gate = 'pd'; setScene('predict'); updateCtl(); },
+          setup() { S.gate = 'pd'; S.pd = { k: 'r1', done: {}, p: 0, shake: 0, bar: 0, wrong: 0 }; setScene('predict'); updateCtl(); },
           check() { const n = pdNDone(); return n >= 6 ? true : '아직 판정하지 않은 반응이 ' + (6 - n) + '개 있어요. 반응 단추를 눌러 이어서 판정해요.'; },
           status: () => '판정한 반응 ' + pdNDone() + ' / 6 ' + mark(pdNDone() >= 6),
           explain: '○ : Zn + Cu²⁺ (+1.10 V), Zn + 2H⁺ (+0.76 V), Fe + Cu²⁺ (+0.78 V), Cu + 2Ag⁺ (+0.46 V) / × : Cu + Zn²⁺ (−1.10 V), Cu + 2H⁺ (−0.34 V). 같은 짝에서 순서를 바꾸면 E°cell의 부호가 반대가 돼요.',

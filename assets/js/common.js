@@ -283,6 +283,19 @@
     return { stop() { running = false; } };
   }
 
+  /* 모든 슬라이더의 진행 색(--pct)을 값에 맞춰 자동으로 맞춰요
+     (실험 코드가 따로 맞추지 않거나 코드에서 값을 바꿔도 막대 색이 따라가요) */
+  function syncRangeFill(input) {
+    const min = input.min === '' ? 0 : +input.min, max = input.max === '' ? 100 : +input.max, v = +input.value;
+    const pct = max > min ? Math.max(0, Math.min(100, ((v - min) / (max - min)) * 100)) : 0;
+    const s = pct + '%';
+    if (input._pct !== s) { input._pct = s; input.style.setProperty('--pct', s); }
+  }
+  if (global.document) {
+    global.document.addEventListener('input', (e) => { if (e.target && e.target.type === 'range') syncRangeFill(e.target); }, true);
+    global.setInterval(() => { global.document.querySelectorAll('input[type=range]').forEach(syncRangeFill); }, 250);
+  }
+
   /* 슬라이더 연결 도우미: 값 표시 + 진행 색 */
   function bindRange(input, output, format, onInput) {
     const upd = () => {

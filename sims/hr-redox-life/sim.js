@@ -173,7 +173,7 @@
     D.roundRect(x - 26, y - 12, 52, 24, 5); ctx.fillStyle = on ? '#052e16' : '#0f172a'; ctx.fill();
     T(x, y + 5, label, 13, on ? '#4ade80' : '#64748b', 'center', 900);
     [[x - 38, plusRight ? '−' : '+'], [x + 38, plusRight ? '+' : '−']].forEach(([cx, sg]) => {
-      ctx.fillStyle = sg === '+' ? '#ef4444' : '#3b82f6'; ctx.beginPath(); ctx.arc(cx, y, 8, 0, TAU); ctx.fill();
+      ctx.fillStyle = sg === '+' ? POSC : NEGC; ctx.beginPath(); ctx.arc(cx, y, 8, 0, TAU); ctx.fill();
       T(cx, y + 5, sg, 14, '#fff', 'center', 900);
     });
     ctx.restore();
@@ -482,7 +482,7 @@
       const nO = p.play || p.t > 0 ? 6 : 0;
       for (let i = 0; i < nO; i++) { [cxL, cxR].forEach((cx, k) => { const u = RM ? 0.3 : ((t * 0.35 + i / nO + k * 0.17) % 1); const ang = i / nO * TAU; const rr = r + 46 - 40 * u; ctx.save(); ctx.globalAlpha = 0.9 * (1 - u * 0.7); D.sphere(cx + Math.cos(ang) * rr, cy - 4 + Math.sin(ang) * rr * 0.9, 5, '#38bdf8', { gloss: false }); ctx.restore(); }); }
       // 막대 : 갈변 · 비타민 C
-      const bxs = PHONE ? MAIN.x + 24 : MAIN.x + MAIN.w * 0.58, bw = PHONE ? MAIN.w - 48 : MAIN.w * 0.4 - 16, by0 = PHONE ? MAIN.y + MAIN.h - 130 : MAIN.y + 50;
+      const bxs = PHONE ? MAIN.x + 24 : MAIN.x + MAIN.w * 0.58, bw = PHONE ? MAIN.w - 48 : MAIN.w * 0.4 - 16, by0 = PHONE ? MAIN.y + MAIN.h - 150 : MAIN.y + 50;
       const bar = (y, lab, val, col, txt) => { T(bxs, y - 6, lab, 13.5, INK, 'left', 800); D.roundRect(bxs, y, bw, 18, 7); ctx.fillStyle = '#eef2f7'; ctx.fill(); if (val > 0.004) { ctx.save(); D.roundRect(bxs, y, bw, 18, 7); ctx.clip(); ctx.fillStyle = col; ctx.fillRect(bxs, y, bw * clamp(val, 0, 1), 18); ctx.restore(); } T(bxs + bw, y - 6, txt, 13, MUTED, 'right', 800); };
       bar(by0 + 14, '갈변 (그냥 둔 사과)', bU, '#92400e', Math.round(bU * 100) + ' %');
       bar(by0 + 14 + 44, '갈변 (비타민 C 바른 사과)', bT, '#92400e', Math.round(bT * 100) + ' %');

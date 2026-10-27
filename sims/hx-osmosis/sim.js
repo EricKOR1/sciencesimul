@@ -35,7 +35,7 @@
       for (const tk of toks) {
         if (tk.trim() === '') { if (line) line += tk; continue; }
         const t = line + tk;
-        if (ctx.measureText(t).width > maxW && line.trim()) { out.push(line.trimEnd()); line = tk; } else line = t;
+        if (ctx.measureText(t).width > maxW && line.trim() && !/^[)\]}.,!?;:·…%]+$/.test(tk) && !/[(\[{]$/.test(line)) { out.push(line.trimEnd()); line = tk; } else line = t;
       }
     });
     if (line) out.push(line.trimEnd());
@@ -171,7 +171,7 @@
   }
 
   /* ================= ② 입자 모형: 막 구멍을 지나는 물 분자 ================= */
-  const MZW = 360, MZH = 200, XM = 180, HM = 5, NT = 60, RW = 3.6, RSG = 7.6, PORE_H = 8.5, PORE_OK = 6.8, PSPD = { w: 130, s: 70 };
+  const MZW = 360, MZH = 200, XM = 180, HM = 5, NT = 60, RW = 3.6, RSG = 9.2, PORE_H = 8.5, PORE_OK = 6.8, PSPD = { w: 130, s: 70 };
   const PORES = [0, 1, 2, 3, 4, 5].map((k) => 22 + k * 31.2);
   const mz = { P: [], G: [], F: [], ev: [], cnt: { lr: 0, rl: 0 } };
   const nSug = (side) => Math.round(cOf(side ? S.iR : S.iL) * 50), nWat = (side) => NT - nSug(side);
@@ -763,7 +763,7 @@
           hint: '두 슬라이더를 같은 값으로 맞춰요. 두 방향의 막대 길이가 비슷해질 때까지 기다려요.',
           setup() { S.lock = true; setMode('mol'); mzCountReset(); },
           check: () => S.iL === S.iR && mz.cnt.lr + mz.cnt.rl >= 60 && Math.abs(mz.cnt.lr - mz.cnt.rl) <= 0.2 * (mz.cnt.lr + mz.cnt.rl), hold: 0.3,
-          status: () => '농도 같음 ' + mark(S.iL === S.iR) + ' &nbsp; 합계 ' + (mz.cnt.lr + mz.cnt.rl) + '번 ' + mark(mz.cnt.lr + mz.cnt.rl >= 60) + ' &nbsp; 두 방향 ' + mz.cnt.lr + ' · ' + mz.cnt.rl + ' ' + mark(mz.cnt.lr + mz.cnt.rl >= 1 && Math.abs(mz.cnt.lr - mz.cnt.rl) <= 0.2 * (mz.cnt.lr + mz.cnt.rl)),
+          status: () => '농도 같음 ' + mark(S.iL === S.iR) + ' &nbsp; 합계 ' + (mz.cnt.lr + mz.cnt.rl) + '번 ' + mark(mz.cnt.lr + mz.cnt.rl >= 60) + ' &nbsp; 두 방향 ' + mz.cnt.lr + ' · ' + mz.cnt.rl + ' ' + mark(S.iL === S.iR && mz.cnt.lr + mz.cnt.rl >= 1 && Math.abs(mz.cnt.lr - mz.cnt.rl) <= 0.2 * (mz.cnt.lr + mz.cnt.rl)),
           explain: '양쪽 농도가 같으면 막 표면의 물 분자 비율이 같아서 두 방향의 이동 횟수가 <b>거의 같아요</b>. 물은 계속 왔다 갔다 하지만 <b>순 이동은 0</b>이라 수위가 변하지 않아요.',
         },
         {

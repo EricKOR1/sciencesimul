@@ -391,9 +391,9 @@
     T(mt.x + 14, mt.y + 24, 'pH 미터', 14, '#9ca3af', 'left', 800);
     const settled = Math.abs(d.pHd - dtPh()) < 0.01;
     T(mt.x + (PHONE ? 130 : 200), mt.y + mt.h - (PHONE ? 22 : 18), d.pHd.toFixed(2), PHONE ? 44 : 48, settled ? '#4ade80' : '#facc15', 'right', 800);
-    T(mt.x + mt.w - 14, mt.y + (PHONE ? 30 : 34), 'NaOH ' + d.Vd.toFixed(2) + ' mL', PHONE ? 15 : 18, '#93c5fd', 'right', 800);
-    T(mt.x + mt.w - 14, mt.y + (PHONE ? 54 : 58), '넣은 양 · 20.0 mL HCl에', PHONE ? 12.5 : 13.5, '#9ca3af', 'right', 700);
-    T(mt.x + mt.w - 14, mt.y + (PHONE ? 76 : 78), d.auto ? '자동 기록 중' : '직접 기록 중', PHONE ? 12.5 : 13.5, d.auto ? '#86efac' : '#fcd34d', 'right', 800);
+    T(mt.x + mt.w - 14, mt.y + (PHONE ? 30 : 30), 'NaOH ' + d.Vd.toFixed(2) + ' mL', PHONE ? 15 : 18, '#93c5fd', 'right', 800);
+    T(mt.x + mt.w - 14, mt.y + (PHONE ? 54 : 50), PHONE ? '20.0 mL HCl에' : '넣은 양 · 20.0 mL HCl에', PHONE ? 12.5 : 13.5, '#9ca3af', 'right', 700);
+    T(mt.x + mt.w - 14, mt.y + (PHONE ? 76 : 70), d.auto ? '자동 기록 중' : '직접 기록 중', PHONE ? 12.5 : 13.5, d.auto ? '#86efac' : '#fcd34d', 'right', 800);
     // 기록표
     const tb = g.tbl;
     D.roundRect(tb.x, tb.y, tb.w, tb.h, 12); ctx.fillStyle = '#faf8ff'; ctx.fill(); ctx.strokeStyle = '#e3def5'; ctx.lineWidth = 2; ctx.stroke();
@@ -731,7 +731,7 @@
     // 결과 표
     const rs = g.res;
     D.roundRect(rs.x, rs.y, rs.w, rs.h, 12); ctx.fillStyle = '#fff'; ctx.fill(); ctx.strokeStyle = '#e3def5'; ctx.lineWidth = 2; ctx.stroke();
-    const cA = rs.x + 10, cB = rs.x + (PHONE ? 122 : 150), cC = rs.x + rs.w - 10;
+    const cA = rs.x + 10, cB = rs.x + (PHONE ? 104 : 150), cC = rs.x + rs.w - 10;
     T(cA, rs.y + 20, CONCT[n.c] + (PHONE ? '' : ' 종말점'), 13, MUTED, 'left', 800); T(cB, rs.y + 20, PHONE ? 'V(mL)' : '부피(mL)', 13, MUTED, 'left', 800); T(cC, rs.y + 20, PHONE ? '차(mL)' : '당량점과 차', 13, MUTED, 'right', 800);
     IK.forEach((k, i) => {
       const yy = rs.y + 44 + i * (PHONE ? 28 : 26), r = n.res[n.c][k];
@@ -883,7 +883,7 @@
           title: 'pH 가 급변하는 구간 찾기', manual: true,
           goal: '곡선에서 pH 가 가장 크게 변하는 <b>급변 구간</b>을 고르고 <b>✔ 확인하기</b>를 누르세요.',
           hint: '“구간 띠”와 “기울기”를 눌러 보세요. 기울기가 가장 큰 곳을 찾으면 돼요. 확대 창의 점들도 힌트예요.',
-          setup() { S.gate = 'rng'; setScene('graph'); updateCtl(); },
+          setup() { S.gate = 'rng'; if (grPts().length < 12) grLoad(); S.gr.view = 'line'; setScene('graph'); updateCtl(); },
           check() { if (!selRng.value) return '하나를 골라 주세요.'; if (selRng.value === 'c') return true; return { a: '10 ~ 15 mL 에서는 pH 가 1.48 에서 1.85 로 0.37 만 올랐어요. 기울기가 훨씬 큰 곳을 찾아 보세요.', b: '15 ~ 19 mL 에서도 pH 는 1.85 에서 2.59 로 0.74 올랐을 뿐이에요.', d: '21 ~ 25 mL 에서는 11.39 에서 12.05 로 완만해져요. 급변은 그 앞에서 일어나요.' }[selRng.value]; },
           status: () => '선택 ' + (selRng.value ? $('#selRng').selectedOptions[0].textContent : '—'),
           explain: '<b>19.9 ~ 20.1 mL</b> 에서 pH 가 3.60 → 10.40 으로 6.80 올라 기울기가 가장 커요. 이 구간의 한가운데(20.00 mL, pH 7.00)가 당량점이에요.',

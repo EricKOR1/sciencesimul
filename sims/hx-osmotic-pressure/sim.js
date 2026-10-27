@@ -35,7 +35,7 @@
       for (const tk of toks) {
         if (tk.trim() === '') { if (line) line += tk; continue; }
         const t = line + tk;
-        if (ctx.measureText(t).width > maxW && line.trim()) { out.push(line.trimEnd()); line = tk; } else line = t;
+        if (ctx.measureText(t).width > maxW && line.trim() && !/^[)\]}.,!?;:·…%]+$/.test(tk) && !/[(\[{]$/.test(line)) { out.push(line.trimEnd()); line = tk; } else line = t;
       }
     });
     if (line) out.push(line.trimEnd());
@@ -220,7 +220,7 @@
     const cx = cc ? crtC() : K.T, cp = cc ? piOf(crtC(), T25) : piOf(0.10, K.T);
     ctx.strokeStyle = 'rgba(100,116,139,.5)'; ctx.lineWidth = 1.6; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.moveTo(X(cx), g.y + g.h); ctx.lineTo(X(cx), Y(cp)); ctx.lineTo(g.x, Y(cp)); ctx.stroke(); ctx.setLineDash([]);
     D.sphere(X(cx), Y(cp), 6, '#fff', { gloss: false, outline: PUR, outlineWidth: 2.6 });
-    D.label(clamp(X(cx) + (cc ? 64 : -64), g.x + 84, g.x + g.w - 84), Y(cp) + 30, (cc ? 'C ' + crtC().toFixed(2) + ' M' : 'T ' + K.T + ' K') + ' → π ' + f2(cp) + ' atm', { size: 12.5, bg: '#475569', align: 'center' });
+    D.label(clamp(X(cx) + (cc ? 64 : -64), g.x + 84, g.x + g.w - 84), Y(cp) + (cc ? 30 : 72), (cc ? 'C ' + crtC().toFixed(2) + ' M' : 'T ' + K.T + ' K') + ' → π ' + f2(cp) + ' atm', { size: 12.5, bg: '#475569', align: 'center' });
     // 기록한 점
     const rec = cc ? K.rc : K.rt;
     Object.keys(rec).forEach((k) => { const xv = cc ? cOfCi(+k) : +k, pop = K.pop && K.pop.s === sub && K.pop.k === +k ? Math.max(0, 1 - K.pop.t * 2) : 0; D.sphere(X(xv), Y(rec[k]), 7 + pop * 4, cc ? '#d97706' : '#0e7fc0', { gloss: true, outline: '#fff', shadow: true }); T(X(xv) + 10, Y(rec[k]) - 8, f2(rec[k]), 12, INK, 'left', 800, HALO); });
@@ -313,7 +313,7 @@
       let yy = y + 20; yy += textBlock(L.x + 24, yy, L.w - 48, cd.t, 13, INK, 17, 800) + 4;
       T(L.x + 24, yy + 6, cd.q, 13, PUR, 'left', 800); yy += 28;
       if (done) { cd.steps.forEach((s, k) => { yy += textBlock(L.x + 24, yy, L.w - 48, s, 12.5, k === 1 ? GOOD : INK, 16, 800) + 2; }); T(L.x + L.w - 24, y + 18, '✅ 정답', 13, GOOD, 'right', 800); }
-      else { T(L.x + 24, yy + 2, cd.tip, 12.5, MUTED, 'left', 700); T(L.x + 24, yy + 24, '답을 오른쪽 입력칸에 적어요', 12.5, PUR, 'left', 800); }
+      else { T(L.x + 24, yy + 2, cd.tip, 12.5, MUTED, 'left', 700); T(L.x + 24, yy + 24, (PHONE ? '답을 아래 입력칸에 적어요' : '답을 오른쪽 입력칸에 적어요'), 12.5, PUR, 'left', 800); }
     });
   }
   function drawCalcInfo(t) {
@@ -322,7 +322,7 @@
     T(R.x + 14, R.y + 24, '📌 쓰는 식과 단위', 14.5, INK, 'left', 800);
     let y = R.y + 54;
     T(R.x + 14, y, 'π = C · R · T', 19, INK, 'left', 800); y += 28;
-    y += textBlock(R.x + 14, y, R.w - 28, '단위 점검: π(atm) = C(mol/L) × R(atm·L/(mol·K)) × T(K) → mol, L, K이 약분되어 atm만 남아요.', 13, INK, 18, 800) + 8;
+    y += textBlock(R.x + 14, y, R.w - 28, '단위 점검: π(atm) = C(mol/L) × R(atm·L/(mol·K)) × T(K) → mol, L, K가 약분되어 atm만 남아요.', 13, INK, 18, 800) + 8;
     y += textBlock(R.x + 14, y, R.w - 28, '같은 0.10 M이면 포도당 18 g/L 와 설탕 34.2 g/L 의 π는 같아요. 입자 수가 같기 때문이에요.', 13, MUTED, 18, 700) + 8;
     if (!PHONE || y + 50 < R.y + R.h) textBlock(R.x + 14, y, R.w - 28, '전해질은 이온으로 나뉜 입자의 총 농도로 세어요. 단백질처럼 아주 큰 분자는 π를 재면 몰질량을 구할 수 있어요.', 12.5, MUTED, 17, 700);
   }
@@ -526,7 +526,7 @@
     {
       title: 'π = CRT: 농도와 온도의 관계', short: 'π = CRT', icon: '🔎', phase: '탐구',
       intro: '<div class="si-link">🔗 <b>앞 단계와 이상 기체 방정식(PV = nRT)에서</b> 삼투를 멈추는 압력이 삼투압이라는 것과, 기체의 압력이 입자 수와 온도에 비례한다는 것을 배웠어요. 삼투압은 농도와 온도에 어떻게 달라질까요?</div>' +
-        '<p>변수를 <b>하나씩만</b> 바꿔요. 먼저 온도를 298 K로 두고 농도를 바꾸고(📈), 다음에는 농도를 0.10 M로 두고 온도를 바꿔요(🌡️). 점을 기록해 그래프의 규칙을 찾고, 식을 기체 방정식과 비교해요.</p>',
+        '<p>변수를 <b>하나씩만</b> 바꿔요. 먼저 온도를 298 K로 두고 농도를 바꾸고(📈), 다음에는 농도를 0.10 M으로 두고 온도를 바꿔요(🌡️). 점을 기록해 그래프의 규칙을 찾고, 식을 기체 방정식과 비교해요.</p>',
       features: ['crt'],
       setup() { S.lock = false; S.sub.crt = 'c'; setMode('crt'); },
       recap: '삼투압은 몰 농도와 절대 온도에 비례해요: π = CRT. 이는 기체의 P = (n/V)RT 와 같은 꼴이에요.',
@@ -584,8 +584,8 @@
           setup() { S.lock = true; setMode('calc'); },
           choices: ['atm·L/(mol·K)', 'atm·mol/(L·K)', 'J/(mol·K)', 'L/(atm·mol·K)'],
           answer: 0,
-          feedback: ['', 'atm·mol/(L·K)를 쓰면 π의 단위가 atm·mol²/L²이 되어 맞지 않아요.', '8.314 J/(mol·K)는 에너지 단위를 쓸 때의 R이에요. 압력 atm, 부피 L를 쓰면 0.082 atm·L/(mol·K)예요.', 'atm이 분모에 있으면 π의 단위가 맞지 않아요.'],
-          explain: 'C(mol/L) × R × T(K) 가 atm이 되려면 R의 단위가 <b>atm·L/(mol·K)</b>여야 해요. mol, L, K이 약분되어 atm만 남아요.',
+          feedback: ['', 'atm·mol/(L·K)를 쓰면 π의 단위가 atm·mol²/L²이 되어 맞지 않아요.', '8.314 J/(mol·K)는 에너지 단위를 쓸 때의 R이에요. 압력 atm, 부피 L을 쓰면 0.082 atm·L/(mol·K)예요.', 'atm이 분모에 있으면 π의 단위가 맞지 않아요.'],
+          explain: 'C(mol/L) × R × T(K) 가 atm이 되려면 R의 단위가 <b>atm·L/(mol·K)</b>여야 해요. mol, L, K가 약분되어 atm만 남아요.',
         },
         {
           type: 'quiz', title: '같은 몰 농도에서의 비교',

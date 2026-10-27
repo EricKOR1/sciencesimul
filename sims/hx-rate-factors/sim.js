@@ -630,7 +630,7 @@
           title: '1/t 를 구해 그래프에 점 찍기',
           goal: '측정한 시간마다 <b>속도의 척도 1/t (s⁻¹)</b> 를 계산해 입력해요. 맞으면 점이 그래프로 날아가요.',
           hint: '1/80 = 0.0125, 1/40 = 0.025, 1/27 ≈ 0.037, 1/20 = 0.050 이에요. 소수로 적어요.',
-          setup() { S.lock = true; setMode('conc'); },
+          setup() { S.lock = true; const K = CC(); K.in = ['', '', '', '']; K.ok = [false, false, false, false]; K.fly = [0, 0, 0, 0]; K.line = 0; clearInp(['#cc0', '#cc1', '#cc2', '#cc3']); setMode('conc'); },
           check: () => ccPlot(), hold: 0.6,
           status: () => CONC.map((d, i) => f2(d.c) + ' ' + mark(CC().ok[i])).join(' &nbsp; '),
           explain: '점 4개가 <b>원점을 지나는 직선</b>에 놓여요. 농도가 2배, 3배가 되면 1/t(속도)도 2배, 3배 가까이 돼요 → 속도는 농도에 비례해요.',

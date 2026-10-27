@@ -48,6 +48,7 @@
   const pointInRect = (p, r) => p.x >= r.x && p.x <= r.x + r.w && p.y >= r.y && p.y <= r.y + r.h;
   const r1 = (x) => Math.round(x * 10 + 1e-9) / 10;
   const f1 = (v) => r1(v).toFixed(1), f2 = (v) => (Math.round(v * 100 + 1e-9) / 100).toFixed(2);
+  const fm = (v) => { const r = Math.round(v * 1000 + 1e-9) / 1000; return (Math.abs(Math.round(r * 100) / 100 - r) < 1e-9 ? r.toFixed(2) : r.toFixed(3)); };
   const sgn2 = (v) => { const r = Math.round(v * 100 + 1e-9 * Math.sign(v)) / 100; return (r > 0 ? '+' : r < 0 ? MINUS : '') + Math.abs(r).toFixed(2); };
   const oxs = (n) => (n > 0 ? '+' + n : n < 0 ? MINUS + (-n) : '0');
   const MAIN = PHONE ? { x: 8, y: 52, w: 464, h: 424 } : { x: 12, y: 52, w: 776, h: 342 };
@@ -173,7 +174,7 @@
     D.roundRect(x - 26, y - 12, 52, 24, 5); ctx.fillStyle = on ? '#052e16' : '#0f172a'; ctx.fill();
     T(x, y + 5, label, 13, on ? '#4ade80' : '#64748b', 'center', 900);
     [[x - 38, plusRight ? '−' : '+'], [x + 38, plusRight ? '+' : '−']].forEach(([cx, sg]) => {
-      ctx.fillStyle = sg === '+' ? '#ef4444' : '#3b82f6'; ctx.beginPath(); ctx.arc(cx, y, 8, 0, TAU); ctx.fill();
+      ctx.fillStyle = sg === '+' ? POSC : NEGC; ctx.beginPath(); ctx.arc(cx, y, 8, 0, TAU); ctx.fill();
       T(cx, y + 5, sg, 14, '#fff', 'center', 900);
     });
     ctx.restore();
@@ -513,8 +514,8 @@
     T(xk, by + bh + 16, 'Cu²⁺ + 2e⁻ → Cu', 12.5, '#b91c1c', 'center', 800); T(xa, by + bh + 16, 'Cu → Cu²⁺ + 2e⁻', 12.5, '#1d4ed8', 'center', 800);
     // 푸른색 유지
     const sw = d.y + d.h - 56;
-    if (PHONE) T(d.x + d.w / 2, d.y + d.h - 6, '푸른색(Cu²⁺ 농도) 그대로 · 석출 구리 ' + f2(m) + ' g', 13, '#7a3410', 'center', 800);
-    if (!PHONE) { D.roundRect(d.x + 20, sw, 22, 22, 6); ctx.fillStyle = C.rgba('#3b9be0', 0.6); ctx.fill(); ctx.strokeStyle = '#7b93b3'; ctx.lineWidth = 1.4; ctx.stroke(); T(d.x + 50, sw + 16, '용액의 푸른색(Cu²⁺ 농도) : 그대로', 13.5, INK, 'left', 800); T(d.x + 20, sw + 42, '석출 구리 ' + f2(m) + ' g  (' + Math.round(a.ts) + '분 · ' + a.I.toFixed(2) + ' A)', 13.5, '#7a3410', 'left', 800); }
+    if (PHONE) T(d.x + d.w / 2, d.y + d.h - 6, '푸른색(Cu²⁺ 농도) 그대로 · 석출 구리 ' + fm(anMass()) + ' g', 13, '#7a3410', 'center', 800);
+    if (!PHONE) { D.roundRect(d.x + 20, sw, 22, 22, 6); ctx.fillStyle = C.rgba('#3b9be0', 0.6); ctx.fill(); ctx.strokeStyle = '#7b93b3'; ctx.lineWidth = 1.4; ctx.stroke(); T(d.x + 50, sw + 16, '용액의 푸른색(Cu²⁺ 농도) : 그대로', 13.5, INK, 'left', 800); T(d.x + 20, sw + 42, '석출 구리 ' + fm(anMass()) + ' g  (' + Math.round(a.ts) + '분 · ' + a.I.toFixed(2) + ' A)', 13.5, '#7a3410', 'left', 800); }
     // 그래프
     T(P.x + P.w / 2, P.y - (PHONE ? 14 : 24), '석출 구리의 질량 (g)', 14, WARN, 'center', 800);
     ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(P.x, P.y); ctx.lineTo(P.x, P.y + P.h); ctx.lineTo(P.x + P.w, P.y + P.h); ctx.stroke();
@@ -532,9 +533,9 @@
     if (a.t > 0) { const cx = gx(a.ts), cy = gy(m); ctx.save(); ctx.setLineDash([4, 4]); ctx.strokeStyle = 'rgba(139,92,246,.6)'; ctx.beginPath(); ctx.moveTo(cx, P.y + P.h); ctx.lineTo(cx, cy); ctx.lineTo(P.x, cy); ctx.stroke(); ctx.restore(); ctx.beginPath(); ctx.arc(cx, cy, 8, 0, TAU); ctx.strokeStyle = PUR; ctx.lineWidth = 2; ctx.stroke(); }
     // INFO
     panel(INFO.x, INFO.y, INFO.w, INFO.h, 14);
-    T(INFO.x + 16, INFO.y + 26, '전류 ' + a.I.toFixed(2) + ' A , 시간 ' + a.t + '분 → 석출 구리 ' + f2(m) + ' g', PHONE ? 14 : 16, INK, 'left', 900);
+    T(INFO.x + 16, INFO.y + 26, '전류 ' + a.I.toFixed(2) + ' A , 시간 ' + a.t + '분 → 석출 구리 ' + fm(anMass()) + ' g', PHONE ? 14 : 16, INK, 'left', 900);
     const lines = [];
-    [0.25, 0.5, 1.0].forEach((I) => { const arr = anPts(I); if (arr.length) lines.push(I.toFixed(2) + ' A : ' + arr.map((q) => q.t + '분 ' + f2(q.m) + ' g').join(' , ')); });
+    [0.25, 0.5, 1.0].forEach((I) => { const arr = anPts(I); if (arr.length) lines.push(I.toFixed(2) + ' A : ' + arr.map((q) => q.t + '분 ' + fm(q.m) + ' g').join(' , ')); });
     let yy = INFO.y + 52;
     lines.forEach((l) => { yy += textBlock(INFO.x + 16, yy, INFO.w - 32, l, PHONE ? 13 : 14, INK, 19, 700) + 2; });
     if (!lines.length) textBlock(INFO.x + 16, yy, INFO.w - 32, '시간을 5분 단위로 바꾸고 “📍 기록”을 눌러 그래프에 점을 찍어요. 0.50 A는 5 · 10 · 15 · 20분을 모두 기록해요.', PHONE ? 13.5 : 14.5, MUTED, 20, 700);
@@ -611,7 +612,7 @@
     T(MAIN.x + 14, MAIN.y + 26, '', 12);
     T(bx + w / 2, by + h + 40, '전해질 : ' + c.elyt, PHONE ? 13 : 13.5, INK, 'center', 800);
     if (k === 'al' && n.alWhy) {
-      const ww = Math.min(MAIN.w - 30, 420), x = MAIN.x + (MAIN.w - ww) / 2, y = MAIN.y + MAIN.h - 74;
+      const ww = Math.min(MAIN.w - 30, 420), x = MAIN.x + (MAIN.w - ww) / 2, y = by + (PHONE ? 66 : 50);
       panel(x, y - 6, ww, 66, 10, '#fff7ed'); D.roundRect(x, y - 6, ww, 66, 10); ctx.strokeStyle = '#fb923c'; ctx.lineWidth = 1.6; ctx.stroke();
       T(x + ww / 2, y + 14, '수용액에서는 물이 먼저 환원돼요', 13.5, '#9a3412', 'center', 800);
       T(x + ww / 2, y + 36, 'E°(Al³⁺/Al) = −1.66 V < E°(물) ≈ −0.83 V → 용융 상태로 분해해요', PHONE ? 12 : 13, '#9a3412', 'center', 700);
@@ -675,7 +676,7 @@
     D.roundRect(x, y, w, 40, 14); ctx.fillStyle = '#ede9fe'; ctx.fill();
     T(x + 14, y + 26, '🎤 ' + title, PHONE ? 15 : 17, '#5b21b6', 'left', 900); if (by) T(x + w - 14, y + 26, by, 13.5, MUTED, 'right', 800);
     const labs = ['원리', '반응식', '쓰임', '장단점 · 환경', '질문'];
-    let yy = y + 60; const lw = PHONE ? 70 : 96;
+    let yy = y + 60; const lw = PHONE ? 92 : 100;
     labs.forEach((lb, i) => {
       T(x + 14, yy, lb, PHONE ? 13 : 14, WARN, 'left', 900);
       const txt = fields[i];
@@ -787,7 +788,7 @@
   function readouts() {
     const m = S.mode;
     if (m === 'plate') { const p = S.pl, md = plMode(); setRead('극 연결', md === 'good' ? '올바름 · 열쇠(−)' : md === 'bad' ? '잘못됨 · 열쇠(+)' : plN() < 4 ? '조립 ' + plN() + ' / 4' : '확인 필요', '전류', p.I.toFixed(2) + ' A', '도금', md === 'bad' ? '열쇠 ' + Math.round(p.pd * 100) + ' % 녹음' : Math.round(p.pc * 100) + ' %'); }
-    else if (m === 'analysis') { const a = S.an; setRead('전류 · 시간', a.I.toFixed(2) + ' A · ' + a.t + '분', '석출 구리', f2(anMass()) + ' g', '기록한 점', Object.keys(a.pts).reduce((n, k) => n + a.pts[k].length, 0) + '개'); }
+    else if (m === 'analysis') { const a = S.an; setRead('전류 · 시간', a.I.toFixed(2) + ' A · ' + a.t + '분', '석출 구리', fm(anMass()) + ' g', '기록한 점', Object.keys(a.pts).reduce((n, k) => n + a.pts[k].length, 0) + '개'); }
     else if (m === 'industry') { const n = S.ind; setRead('사례', IND[n.k].name, '읽은 사례', indNView() + ' / 4', '진행', Math.round(n.p * 100) + ' %'); }
     else { const r = S.pr; setRead('발표 카드', r.ownOk ? '완성' : r.k ? PRC[r.k].name + ' 작성 중' : '사례 선택 전', '동료 평가', peN() + ' / 12', '보고 있는 카드', S.sub.present === 'own' ? '내 카드' : PEER[r.cur].title); }
   }
@@ -932,7 +933,7 @@
           title: '내 발표 카드 완성하기', manual: true,
           goal: '사례를 하나 고르고 <b>원리 · 반응식 · 쓰임 · 장단점(환경) · 질문</b> 다섯 칸을 채워 발표 카드를 완성한 뒤 <b>✔ 확인하기</b>를 누르세요.',
           hint: '사례 단추를 누르고 다섯 칸을 차례로 골라요. 반응식은 그 사례의 (−)극 또는 (+)극에서 실제로 일어나는 반응이에요. 질문은 마음에 드는 것을 고르면 돼요.',
-          setup() { S.sub.present = 'own'; S.pr.ownOk = false; setScene('present'); updateCtl(); },
+          setup() { S.sub.present = 'own'; S.pr.ownOk = false; S.pr.k = ''; S.pr.f = {}; prFillOpts(); setScene('present'); updateCtl(); },
           check() { const r = prCheck(); if (r === true) { S.pr.ownOk = true; } return r; },
           status: () => (S.pr.k ? PRC[S.pr.k].name : '사례 선택 전') + ' ' + mark(!!S.pr.k) + ' &nbsp; 채운 칸 ' + [0, 1, 2, 3, 4].filter((i) => S.pr.f[i] != null && S.pr.f[i] !== '').length + ' / 5',
           explain: '좋은 발표 카드는 <b>원리를 한 문장</b>으로 말하고, 맞는 <b>반응식</b>과 <b>쓰임</b>, 장단점(환경), 친구들과 생각을 나눌 <b>질문</b>을 담아요.',
@@ -941,7 +942,7 @@
           title: '동료 카드 평가하기',
           goal: '샘플 카드 <b>3장</b>을 네 가지 기준(정확성 · 이해하기 쉬움 · 근거 · 창의)으로 모두 평가하세요. 정확성은 내용이 맞는지 따져서 매겨요.',
           hint: '동료 평가 탭에서 카드를 하나씩 읽고 별을 눌러요. 2번 카드의 원리 문장을 조심해서 읽어 보세요. 알루미늄을 얻는 조건이 맞을까요?',
-          setup() { S.gate = ''; S.sub.present = 'peer'; S.pr.cur = 0; setScene('present'); updateCtl(); },
+          setup() { S.gate = ''; S.sub.present = 'peer'; S.pr.cur = 0; S.pr.r = [{}, {}, {}]; setScene('present'); updateCtl(); },
           check: () => peN() === 12 && peAccOk(), hold: 0.6,
           status: () => '평가 ' + peN() + ' / 12 ' + mark(peN() === 12) + ' &nbsp; 정확성 판단 ' + mark(peN() === 12 && peAccOk()),
           explain: '1번(구리 정련)과 3번(도금)은 반응식과 조건이 맞아요. 2번은 “알루미늄 이온 수용액”을 전기 분해한다고 했는데, 수용액에서는 물이 먼저 환원되어 알루미늄이 얻어지지 않아요. <b>용융 Al₂O₃</b>라고 고쳐야 해요. 이렇게 근거로 정확성을 따지는 것이 동료 평가예요.',
