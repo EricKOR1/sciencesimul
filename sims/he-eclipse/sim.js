@@ -756,7 +756,7 @@
     D.text(x + 12, yy, '시작 ' + tm(inf.c1) + ' · 끝 ' + tm(inf.c4), { size: sz, weight: 700, color: '#334155', align: 'left' }); yy += lh;
     D.text(x + 12, yy, '최대 ' + tm(inf.tmax) + ' · 최대 ' + Math.round(inf.omax * 100) + ' % 가려져요', { size: sz, weight: 700, color: '#334155', align: 'left' }); yy += lh;
     if (inf.kind === '개기' || inf.kind === '금환') {
-      D.text(x + 12, yy, inf.kind + ' 지속 약 ' + Math.floor(inf.dur / 60) + '분 ' + (inf.dur % 60) + '초 (' + inf.dur + '초)', { size: sz, weight: 800, color: ECL_COLOR[inf.kind], align: 'left' }); yy += lh;
+      D.text(x + 12, yy, S.showCalc && !S.calcOk ? inf.kind + ' 지속 시간: 아래 두 값으로 직접 구해 봐요' : inf.kind + ' 지속 약 ' + Math.floor(inf.dur / 60) + '분 ' + (inf.dur % 60) + '초 (' + inf.dur + '초)', { size: sz, weight: 800, color: ECL_COLOR[inf.kind], align: 'left' }); yy += lh;
       if (hasF('calc')) D.text(x + 12, yy, '본영 지름 약 ' + Math.round(inf.dia / 10) * 10 + ' km · 그림자 속력 약 ' + f2(inf.vrel) + ' km/s', { size: sz, weight: 800, color: '#0f172a', align: 'left' });
     }
   }
@@ -859,7 +859,7 @@
       D.text(L.tx + L.tw - 12, y + 9, fmtMin(r[1]).replace('+0:00', '0:00').replace('−0:00', '0:00'), { size: 13.5, weight: 800, color: done ? r[2] : '#94a3b8', align: 'right' });
     });
     const dur = cn.t != null ? 2 * cn.t : null;
-    D.text(L.tx + 12, L.ty + L.th - 12, dur != null ? '개기 식 지속 ' + f0(dur) + '분' : cn.u != null ? '개기 식은 일어나지 않아요' : '본영에는 들어가지 않아요', { size: 14, weight: 800, color: dur != null ? '#b91c1c' : '#64748b', align: 'left' });
+    D.text(L.tx + 12, L.ty + L.th - 12, dur != null ? (S.showLcalc && !S.minOk ? '개기 식 지속 시간은 직접 구해 봐요' : '개기 식 지속 ' + f0(dur) + '분') : cn.u != null ? '개기 식은 일어나지 않아요' : '본영에는 들어가지 않아요', { size: 14, weight: 800, color: dur != null ? '#b91c1c' : '#64748b', align: 'left' });
     // 진행 막대
     panel(L.bx, L.by, L.bw, L.bh, { fill: 'rgba(8,15,40,.86)', line: 'rgba(148,163,184,.4)', r: 12 });
     const ax = L.bx + 24, aw = L.bw - 48, ay = L.by + L.bh * 0.45, tx = (m) => ax + (m + LT_MAX) / (2 * LT_MAX) * aw;
@@ -935,8 +935,8 @@
   }
 
   /* ---- ① 날짜·기울기 ---- */
-  bindSlider(sDay, oDay, (v) => f1(v) + '일', (v) => { stopMove(); S.day = v; });
-  function stopMove() { S.playing = false; if (S.jumpT) { S.jumpT.cancel(); S.jumpT = null; } SciSim.tween(S, { day: S.day }, { duration: 0.0001 }); updateCtl(); }
+  bindSlider(sDay, oDay, (v) => f1(v) + '일', (v) => { stopMove(v); });
+  function stopMove(v) { S.playing = false; if (S.jumpT) { S.jumpT.cancel(); S.jumpT = null; } if (v != null) S.day = v; SciSim.tween(S, { day: S.day }, { duration: 0.0001 }); updateCtl(); }
   function syncDay() { setSlider(sDay, oDay, clamp(S.day, 0, DAYMAX), (v) => f1(v) + '일'); }
   function jumpTo(d) {
     stopMove(); d = clamp(d, 0, DAYMAX);
@@ -1082,7 +1082,7 @@
   function enterLevel(li) {
     stopAll(); clearTimeout(hintTimer);
     S.showCards = false; S.showCalc = false; S.showLcalc = false; S.showTab = false;
-    if (li === 0) { S.tilt = 5.1; setSlider(sTilt, oTilt, 5.1, (v) => f1(v) + '°'); S.day = 8; syncDay(); S.az = 0.2; S.el = 0.5; setView('orbit'); if (!RM) SciSim.tween(S, { az: 0.95 }, { duration: 1.6, ease: 'inOutCubic' }); showHint('화면을 끌어서 돌려 봐요 · 날짜 줄의 점을 눌러요', 6000); }
+    if (li === 0) { S.tilt = 5.1; setSlider(sTilt, oTilt, 5.1, (v) => f1(v) + '°'); S.day = 8; SciSim.tween(S, { day: 8 }, { duration: 0.0001 }); syncDay(); S.az = 0.2; S.el = 0.5; setView('orbit'); if (!RM) SciSim.tween(S, { az: 0.95 }, { duration: 1.6, ease: 'inOutCubic' }); showHint('화면을 끌어서 돌려 봐요 · 날짜 줄의 점을 눌러요', 6000); }
     else if (li === 1) { S.coneR = 384400; S.coneRv = 384400; S.eY = 4500; S.eYv = 4500; setSlider(sDist, oDist, 384400, (v) => f1(v / 10000) + '만 km'); setView('cone'); showHint('거리 슬라이더로 본영의 끝을 지구에 닿게 해 봐요', 6000); }
     else if (li === 2) { S.site = 'A'; S.t = G.tMin; syncT(); setView('globe'); S.play3 = false; showHint('▶ 재생을 눌러 그림자가 훑는 모습을 봐요', 6000); }
     else { S.path = 'mid'; S.lp = -LT_MAX; syncL(); setView('lunar'); showHint('경로 ①②③을 눌러 달을 지나가게 해 봐요', 6000); }
