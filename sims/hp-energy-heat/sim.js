@@ -309,7 +309,7 @@
       { h: '장면', w: 1.5, get: (x) => name(x.scene) }, { h: '생긴 열 Q (J)', w: 1.2, get: (x) => eJ(x.Q), color: '#c2410c' },
       { h: '열용량 (J/°C)', w: 1.1, get: (x) => x.C }, { h: '온도 상승 ΔT', w: 1.2, get: (x) => tC(x.dT) + ' °C', color: '#c0392b' },
     ], p.rows, PHONE ? 4 : 5, '장면을 실행하면 기록이 쌓여요');
-    T(RR.x + 12, RR.y + RR.h - 12, 'ΔT = Q ÷ 열용량 (Q = c m ΔT)', 12.5, '#5a6679', 'left', 800);
+    T(RR.x + 12, RR.y + RR.h - 12, 'ΔT = Q / 열용량 (Q = c m ΔT)', 12.5, '#5a6679', 'left', 800);
   }
   function drawStop(dt) {
     const th = S.sp.cam;
@@ -371,7 +371,7 @@
   const SLPPM = PHONE ? 20 : 26, SLX0 = PHONE ? 30 : 70, SLGY = MH - 60;
   const CRPPM = PHONE ? 50 : 100, CRX0 = 40;
   const CRX = (m) => CRX0 + m * CRPPM;
-  function ledgerBars(rr, items, hi, title) { drawEBars(rr, title, items, 0, hi, 'J', { labW: 74 }); }
+  function ledgerBars(rr, items, hi, title) { drawEBars(rr, title, items, 0, hi, 'J', { labW: 100 }); }
   function drawSlopeScene(dt) {
     const o = S.lg.sl, e = slopeEval(o.st === 'ready' ? 0 : o.t);
     T(16, PHONE ? 24 : 30, '🏔️ 마찰 있는 비탈: ' + f1(SLOPE.m) + ' kg 상자가 ' + SLOPE.h + ' m 높이에서 미끄러져요', PHONE ? 12.5 : 17, '#26324a', 'left', 800);
@@ -481,7 +481,7 @@
     T(RR.x + 12, RR.y + 22, '열량 계산 (Q = c m ΔT)', PHONE ? 13.5 : 14.5, '#26324a', 'left', 800);
     let y = RR.y + 46; const bw = RR.w - 28;
     y += textBlock(RR.x + 14, y, bw, '추 1번: mgh = ' + JOULE.M + ' × ' + G + ' × ' + f1(JOULE.h) + ' = ' + JOULE.E1 + ' J', 13.5, '#c2410c', 19, 800) + 2;
-    y += textBlock(RR.x + 14, y, bw, '물의 온도 상승(1번) = ' + JOULE.E1 + ' ÷ (' + JOULE.c + ' × ' + f1(JOULE.mw) + ') = ' + t3(JOULE.dT1) + ' °C', 13.5, '#26324a', 19, 800) + 2;
+    y += textBlock(RR.x + 14, y, bw, '물의 온도 상승(1번) = ' + JOULE.E1 + ' / (' + JOULE.c + ' × ' + f1(JOULE.mw) + ') = ' + t3(JOULE.dT1) + ' °C', 13.5, '#26324a', 19, 800) + 2;
     y += textBlock(RR.x + 14, y, bw, j.n + '번 낙하 → 열 ' + eJ(lost) + ' J → 온도 ' + t3(dT) + ' °C 상승', 13.5, '#c0392b', 19, 800) + 4;
     textBlock(RR.x + 14, y, bw, '추가 잃은 위치 에너지가 모두 물의 열이 돼요. (비열 ' + JOULE.c + ' J/kg·°C)', 13, '#5a6679', 18, 700);
   }
@@ -497,9 +497,9 @@
   const CONC = { A: { t: '열의 이동', s: '전도·대류·복사', color: '#3867f4' }, B: { t: '비열과 온도 변화', s: 'Q = cmΔT', color: '#e2552a' }, C: { t: '상태 변화와 열', s: '온도가 일정한 구간', color: '#14a058' }, D: { t: '기상 현상', s: '열 → 바람', color: '#8b5cf6' } };
   const CARDS = [
     { icon: '🖐️', title: '문지른 손바닥의 열이 책상과 공기로 퍼져요', became: '손바닥 마찰로 생긴 열', fact: '시간이 지나면 열이 주변으로 흩어져 다시 모으기 어려워요.', ans: 'A' },
-    { icon: '🚗', title: '브레이크 디스크가 뜨거워져요', became: '자동차의 운동 에너지', fact: 'E_k ' + eJ(CAR.E0 / 1000) + ' kJ ÷ (' + CAR.mdisc + ' kg × ' + CAR.cdisc + ' J/kg·°C) = ' + eJ(CAR.dT) + ' °C 상승', ans: 'B' },
+    { icon: '🚗', title: '브레이크 디스크가 뜨거워져요', became: '자동차의 운동 에너지', fact: 'E_k ' + eJ(CAR.E0 / 1000) + ' kJ / (' + CAR.mdisc + ' kg × ' + CAR.cdisc + ' J/kg·°C) = ' + eJ(CAR.dT) + ' °C 상승', ans: 'B' },
     { icon: '🧊', title: '마찰열로 얼음 조각이 녹아요', became: '미끄러진 얼음의 운동 에너지', fact: '얼음이 녹는 동안 열을 받아도 온도는 0 °C로 일정해요.', ans: 'C' },
-    { icon: '🌊', title: '폭포 아래 물의 온도가 올라가요', became: '떨어진 물의 위치 에너지', fact: '낙차 ' + FALLS.h + ' m → ΔT = gh ÷ c = ' + G + ' × ' + FALLS.h + ' ÷ ' + FALLS.c + ' = ' + tC(FALLS.dT) + ' °C', ans: 'B' },
+    { icon: '🌊', title: '폭포 아래 물의 온도가 올라가요', became: '떨어진 물의 위치 에너지', fact: '낙차 ' + FALLS.h + ' m → ΔT = gh / c = ' + G + ' × ' + FALLS.h + ' / ' + FALLS.c + ' = ' + tC(FALLS.dT) + ' °C', ans: 'B' },
     { icon: '☄️', title: '유성이 대기와 마찰해 밝게 빛나요', became: '유성의 운동 에너지', fact: '열과 빛으로 에너지가 사방으로 퍼져 나가요(복사).', ans: 'A' },
     { icon: '🌀', title: '태풍이 강한 바람을 만들어요', became: '바다의 열에너지(수증기의 응결열)', fact: '수증기가 물방울로 변하며 내놓는 열이 공기를 움직이는 에너지가 돼요.', ans: 'D' },
   ];
@@ -656,7 +656,7 @@
       { label: '지금 역학적 에너지', color: '#3867f4', val: (show ? e.Em : A.E0) / A.k },
       { label: '장부의 열 Q (내가 입력)', color: '#e2464b', val: q != null && isFinite(q) ? clamp(q, 0, E0u * 1.2) : 0 },
       { label: '합', color: '#14a058', val: (show ? e.Em : A.E0) / A.k + (q != null && isFinite(q) ? clamp(q, 0, E0u * 1.2) : 0), ghost: E0u },
-    ], 0, E0u * 1.25, A.unit, { labW: 78 });
+    ], 0, E0u * 1.25, A.unit, { labW: 108 });
     panel(RR.x, RR.y, RR.w, RR.h, 14);
     T(RR.x + 12, RR.y + 22, '장부 맞추기', PHONE ? 13.5 : 14.5, '#26324a', 'left', 800);
     let y = RR.y + 46; const bw = RR.w - 28;
@@ -767,7 +767,7 @@
         '<div class="si-link">🔗 <b>통합과학에서</b> 에너지가 전환될 때 일부가 열로 흩어진다고 배웠고, 앞 차시에서는 마찰이 없을 때 역학적 에너지가 보존된다는 것을 확인했어요. 이번에는 <b>마찰이 있을 때</b> 역학적 에너지가 어디로 가는지 찾아봐요.</div>' +
         '<p><b>미끄러지는 상자</b>, <b>손바닥 비비기</b>, <b>못 두드리기</b>를 실행하고, <b>열화상 카메라</b>로 온도가 올라가는 곳을 찾아보세요. 속력 그래프는 줄고 온도 그래프는 늘어나요.</p>',
       features: ['stop'],
-      setup() { resetStop('box'); setScene('stop'); },
+      setup() { resetStop('box'); S.sp.rows = []; setScene('stop'); },
       recap: '마찰이 있으면 물체는 멈추고, 마찰이 생긴 곳의 온도가 올라가요. 줄어든 역학적 에너지는 열로 바뀌어요.',
       summary: '<ul><li>마찰이 있으면 움직이던 물체의 <b>속력이 줄어 멈추고</b>, 마찰이 생긴 곳의 <b>온도는 올라가요</b>.</li><li>열의 양은 Q = cmΔT, 즉 <b>ΔT = Q ÷ (열용량 cm)</b>로 계산해요.</li><li>예) ' + BOXS.m + ' kg 상자(' + BOXS.v0 + ' m/s)가 멈추면 ' + eJ(BOXS.Q) + ' J의 운동 에너지가 마찰열이 돼요. 열용량 ' + BOXS.C + ' J/°C인 접촉면은 ' + tC(BOXS.Q / BOXS.C) + ' °C 올라가요.</li><li>손바닥을 비빌 때와 못을 두드릴 때도 마찰·충돌로 역학적 에너지가 열로 바뀌어 온도가 올라가요.</li></ul>',
       missions: [
@@ -931,6 +931,9 @@
     },
   ];
 
+  /* 이어 하기(새로고침)로 중간 미션에서 열려도 미션 setup()이 만든 장면을 덮어쓰지 않도록, 장면 상태를 게임보다 먼저 만들어요 */
+  resetStop('box'); resetLedger(false); resetPh(); resetAr();
+  setScene('stop');
   game = SciSim.game({
     simId: 'hp-energy-heat', mount: '#game', badge: '에너지 탐정', homeHref: '../../index.html#hp',
     featureLabels: { stop: '🧱 마찰 장면 3가지 · 열화상 카메라', ledger: '📒 에너지 장부 · 줄의 실험', phenom: '🌡️ 열 현상 카드 6장', argue: '⚖️ 사라진 에너지 찾기' },
@@ -946,8 +949,6 @@
   });
 
   /* ---------- 시작 ---------- */
-  resetStop('box'); resetLedger(false); resetPh(); resetAr();
-  setScene('stop');
   let lastFree = false, lastMode = '', lastKey = '';
   SciSim.loop((dt, t) => {
     S.clock = t;

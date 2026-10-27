@@ -436,7 +436,7 @@
       D.sphere(X(B[0]), Y(B[1]), R, '#e2464b', { text: 'O', textScale: 0.9 }); D.sphere(X(Cc[0]), Y(Cc[1]), R, '#e2464b', { text: 'O', textScale: 0.9 });
       D.sphere(X(A[0]), Y(A[1]), R, '#e2464b', { text: 'O', textScale: 0.9 });
       D.sphere(X(Cl[0]), Y(Cl[1]), R * 1.35, '#14a058', { text: 'Cl', textScale: 0.8 });
-      T(x + w / 2, y + 20, PHONE ? 'Cl이 오존(O₃)을 분해해요' : 'CFC에서 떨어진 염소(Cl)가 오존(O₃)을 분해해요', 13, INK, 'center', 800);
+      T(x + w / 2, y + 20, PHONE ? 'Cl이 오존(O₃)을 분해해요' : '염소(Cl)가 오존(O₃)을 분해해요', 13, INK, 'center', 800);
       T(x + w / 2, y + h - 10, 'Cl + O₃ → ClO + O₂', 13, '#0e7490', 'center', 800);
     } else {
       const bob = RM ? 0 : Math.sin(t * 2) * 3;
@@ -626,8 +626,8 @@
   $('#bTrayReset').addEventListener('click', () => { Sound.click(); if (S.cs.sel >= 0) S.cs.fill[S.cs.sel] = [-1, -1, -1, -1]; updateCtl(); });
 
   /* ================= ④ 왜 배울까 ================= */
-  const WP = PHONE ? { x: 12, w: 170, h: 58, y0: 62, gap: 22 } : { x: 40, w: 230, h: 54, y0: 66, gap: 16 };
-  const WC = PHONE ? { x: 298, w: 170, h: 64, y0: 66, gap: 40 } : { x: 530, w: 230, h: 62, y0: 72, gap: 28 };
+  const WP = PHONE ? { x: 12, w: 158, h: 58, y0: 62, gap: 22 } : { x: 40, w: 230, h: 54, y0: 66, gap: 16 };
+  const WC = PHONE ? { x: 264, w: 204, h: 64, y0: 66, gap: 40 } : { x: 530, w: 230, h: 62, y0: 72, gap: 28 };
   const pRect = (i) => ({ x: WP.x, y: WP.y0 + i * (WP.h + WP.gap), w: WP.w, h: WP.h });
   const cRect = (i) => ({ x: WC.x, y: WC.y0 + i * (WC.h + WC.gap), w: WC.w, h: WC.h });
   const WBY = PHONE ? 470 : 418;
@@ -919,8 +919,7 @@
   });
 
   /* ---------- 시작 ---------- */
-  setScene('day');
-  updateCtl();
+  setScene(S.mode);
   function stepAll1(dt) {
     S.ps.shake = Math.max(0, S.ps.shake - dt); S.wy.shake = Math.max(0, S.wy.shake - dt);
     if (S.mode === 'day') stepDay(dt); else if (S.mode === 'cases') stepCases(dt);

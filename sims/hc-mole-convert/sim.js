@@ -196,7 +196,7 @@
     if (bw.shake > 0) { ctx.fillStyle = 'rgba(226,70,75,' + bw.shake * 0.25 + ')'; D.roundRect(BA.x, BA.y, BA.w, BA.h, 14); ctx.fill(); }
     // 분자 수 비교
     panel(BB.x, BB.y, BB.w, BB.h, 14);
-    T(BB.x + 16, BB.y + 26, '🔢 기체 분자 수 N = (V ÷ 22.4) × 6.02×10²³', 14.5, INK, 'left', 800);
+    T(BB.x + 16, BB.y + 26, '🔢 기체 분자 수 N = (V / 22.4) × 6.02×10²³', 14.5, INK, 'left', 800);
     const eq = bwEqual();
     BKEYS.forEach((k, i) => {
       const g = GAS[k], v = bw.v[k], n = v / V0, N = n * NA;
@@ -216,15 +216,15 @@
     T(bx, BA.y + 34, Math.round(Td) + ' °C', 16, '#b4231f', 'center', 800);
     const cx = BA.x + (PHONE ? BA.w / 2 + 26 : BA.w * 0.46), cy = BA.y + H * 0.46;
     const k = PHONE ? 33 : 34, r = k * Math.cbrt(vm), r0 = k * Math.cbrt(V0);
-    drawBalloon(cx, cy, r0, '#f87171', '', t, true);
     const bob = RM ? 0 : Math.sin(t * 1.4) * 2;
     drawBalloon(cx, cy + bob, r, '#f87171', '', t);
     const sp = (PHONE ? 25 : 30) * Math.cbrt(vm / V0);
     ctx.save(); ctx.beginPath(); ctx.ellipse(cx, cy + bob, r - 3, r * 1.05 - 3, 0, 0, TAU); ctx.clip();
     HEX.slice(0, 19).forEach((p, j) => molecule('o2', cx + p[0] * sp, cy + bob + p[1] * sp, 1.1, rotOf(j) + (RM ? 0 : Math.sin(t * 0.8 + j) * 0.15)));
     ctx.restore();
+    drawBalloon(cx, cy, r0, '#f87171', '', t, true);          // 0 °C일 때 크기 (점선) - 풍선 위에 그려서 항상 보이게
     T(cx, BA.y + 34, '1 mol 기체: 분자 ' + sci(NA, 3) + '개', 14.5, INK, 'center', 800);
-    T(cx + r0 + 6, cy - 4, '0 °C 크기', 13, MUTED, 'left', 700);
+    T(cx + r0 + 6, cy - 4, '0 °C 크기', 13, '#394258', 'left', 800, { stroke: '#fff', strokeWidth: 4 });
     // 부피 막대
     const vx = BA.x + (PHONE ? 24 : BA.w - 190), vw = PHONE ? BA.w - 48 : 170, vy = BA.y + (PHONE ? H - 54 : 100), maxV = 30;
     T(vx, vy - 20, '1 mol의 부피 (막대 끝 = 30 L)', 13.5, INK, 'left', 800);
@@ -266,7 +266,7 @@
   const OK_OP = [OPSET[0], OPSET[3], OPSET[5]];
   const baseOf = (b) => (b === 'M' ? GAS[S.hb.gas].M : b === 'Vm' ? V0 : NA);
   const baseTxt = (b) => (b === 'M' ? fm(GAS[S.hb.gas].M) : b === 'Vm' ? '22.4' : '6.02×10²³');
-  const opTxt = (o) => (o ? (o.dir === 'div' ? '÷ ' : '× ') + baseTxt(o.b) : '?');
+  const opTxt = (o) => (o ? (o.dir === 'div' ? '/ ' : '× ') + baseTxt(o.b) : '?');
   const opSame = (a, b) => !!a && !!b && a.dir === b.dir && a.b === b.b;
   const EDGE_NAME = ['① 질량 → 몰', '② 몰 → 기체 부피', '③ 몰 → 입자 수'];
   const applyOp = (o, x) => (o ? (o.dir === 'div' ? x / baseOf(o.b) : x * baseOf(o.b)) : NaN);
@@ -381,8 +381,8 @@
       molecule(k, r.x + r.w - (PHONE ? 40 : 46), r.y + (PHONE ? 35 : 34), PHONE ? 1.6 : 2.1, 0.3);
       T(r.x + 50, r.y + (PHONE ? 30 : 36), g.name + ' ' + g.f, 15.5, INK, 'left', 800);
       const z = Q8.find((a) => a.k === k);
-      T(r.x + 50, r.y + (PHONE ? 54 : 62), q.revealed && PHONE ? 'n = 8 ÷ ' + g.M + ' = ' + fm(z.n, 2) + ' mol' : '8 g · M = ' + g.M + ' g/mol', 13.5, q.revealed && PHONE ? '#5b21b6' : '#b45309', 'left', 800);
-      if (q.revealed && !PHONE) T(r.x + 16, r.y + r.h - 14, 'n = 8 ÷ ' + g.M + ' = ' + fm(z.n, 2) + ' mol', 13.5, '#5b21b6', 'left', 800);
+      T(r.x + 50, r.y + (PHONE ? 54 : 62), q.revealed && PHONE ? 'n = 8 / ' + g.M + ' = ' + fm(z.n, 2) + ' mol' : '8 g · M = ' + g.M + ' g/mol', 13.5, q.revealed && PHONE ? '#5b21b6' : '#b45309', 'left', 800);
+      if (q.revealed && !PHONE) T(r.x + 16, r.y + r.h - 14, 'n = 8 / ' + g.M + ' = ' + fm(z.n, 2) + ' mol', 13.5, '#5b21b6', 'left', 800);
     });
     // 막대 (V, 눈금 끝 90 L)
     const bx = QA.x + 24, bw = QA.w - 48, by0 = PHONE ? QA.y + 296 : QA.y + 190, rh = PHONE ? 44 : 38;
@@ -396,7 +396,7 @@
       if (q.revealed) T(Math.min(bx + 44 + (bw - 44) * clamp(q.bars[i], 0, 1) + 8, bx + bw - 80), y + 22, fm(z.V, 1) + ' L', 14, INK, 'left', 800, { alpha: 1 });
     });
     panel(QB.x, QB.y, QB.w, QB.h, 14);
-    T(QB.x + 16, QB.y + 28, '📐 부피 V = (질량 ÷ 몰질량) × 22.4 L/mol', 14.5, INK, 'left', 800);
+    T(QB.x + 16, QB.y + 28, '📐 부피 V = (질량 / 몰질량) × 22.4 L/mol', 14.5, INK, 'left', 800);
     textBlock(QB.x + 16, QB.y + 58, QB.w - 32, q.msg || '카드를 부피가 큰 순서대로 눌러 예측한 뒤, 계산으로 확인해요.', 14.5, q.revealed ? '#5b21b6' : MUTED, 20, 800);
     if (q.shake > 0) { ctx.fillStyle = 'rgba(226,70,75,' + q.shake * 0.25 + ')'; D.roundRect(QA.x, QA.y, QA.w, QA.h, 14); ctx.fill(); }
   }
@@ -458,7 +458,7 @@
     D.shadow(() => { D.roundRect(px, py, pw, ph, 16); ctx.fillStyle = '#fff'; ctx.fill(); }, { blur: 6, y: 2 });
     ctx.strokeStyle = ok ? '#14a058' : '#cdbdf5'; ctx.lineWidth = ok ? 3.4 : 2; D.roundRect(px, py, pw, ph, 16); ctx.stroke();
     T(px + pw / 2, py + 26, '분자 ' + sci(Q3N, 3) + '개', 15, '#5b21b6', 'center', 800);
-    T(px + pw / 2, py + 50, 'n = N ÷ 6.02×10²³', 13.5, MUTED, 'center', 800);
+    T(px + pw / 2, py + 50, 'n = N / 6.02×10²³', 13.5, MUTED, 'center', 800);
     T(px + pw / 2, py + 74, ok ? '= ' + fm(Q3n, 3) + ' mol' : '= ? mol', 16, ok ? INK : '#9aa5b6', 'center', 800);
     T(px + pw / 2, py + 108, 'V = n × 22.4', 13.5, MUTED, 'center', 800);
     T(px + pw / 2, py + 140, ok ? '= ' + fm(Q3V, 2) + ' L' : '= ? L', 22, ok ? '#14803f' : '#9aa5b6', 'center', 800);
@@ -466,7 +466,7 @@
     if (q.shake > 0) { ctx.fillStyle = 'rgba(226,70,75,' + q.shake * 0.25 + ')'; D.roundRect(QA.x, QA.y, QA.w, QA.h, 14); ctx.fill(); }
     panel(QB.x, QB.y, QB.w, QB.h, 14);
     T(QB.x + 16, QB.y + 28, '📐 같은 부피 → 같은 몰수 → 질량은 몰질량에 비례', 14.5, INK, 'left', 800);
-    textBlock(QB.x + 16, QB.y + 58, QB.w - 32, '부피 11.2 L는 0.5 mol이에요. 질량 w = n × M이라서 같은 부피라도 몰질량이 큰 기체가 더 무거워요. 분자 수는 n = N ÷ 6.02×10²³으로 몰수를 구한 뒤 V = n × 22.4로 부피를 구해요.', 14, MUTED, 19, 700);
+    textBlock(QB.x + 16, QB.y + 58, QB.w - 32, '부피 11.2 L는 0.5 mol이에요. 질량 w = n × M이라서 같은 부피라도 몰질량이 큰 기체가 더 무거워요. 분자 수는 n = N / 6.02×10²³으로 몰수를 구한 뒤 V = n × 22.4로 부피를 구해요.', 14, MUTED, 19, 700);
     T(QB.x + 16, QB.y + QB.h - 16, '맞힌 칸 ' + q.ok.filter(Boolean).length + ' / 4', 14.5, q.ok.every(Boolean) ? '#14803f' : INK, 'left', 800);
   }
   $('#drView').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; Sound.click(); S.sub.drill = b.dataset.v; S.fade = 0.5; updateCtl(); });
@@ -506,7 +506,7 @@
         const y = rr.y + 60 + i * 120, ok = fn.okT[tt];
         D.roundRect(rr.x + 10, y - 8, rr.w - 20, 106, 12); ctx.fillStyle = fn.T === tt ? 'rgba(139,92,246,.1)' : '#f7f8fc'; ctx.fill();
         T(rr.x + 20, y + 14, tt + ' °C: ' + vmAt(tt) + ' L/mol', 14.5, INK, 'left', 800);
-        T(rr.x + 20, y + 40, 'n = 22 ÷ 44 = ' + fm(ICE.n, 2) + ' mol', 13.5, MUTED, 'left', 800);
+        T(rr.x + 20, y + 40, 'n = 22 / 44 = ' + fm(ICE.n, 2) + ' mol', 13.5, MUTED, 'left', 800);
         T(rr.x + 20, y + 64, 'V = ' + fm(ICE.n, 2) + ' × ' + vmAt(tt), 13.5, MUTED, 'left', 800);
         T(rr.x + 20, y + 90, ok ? '= ' + fm(iceV(tt), 2) + ' L' + (tt === 25 ? ' ≈ ' + fm(iceV(tt), 1) + ' L' : '') : '= ? L', 17, ok ? '#14803f' : '#9aa5b6', 'left', 800);
       });
@@ -553,7 +553,7 @@
     // 밀도 막대
     const rx = FR.x, ry = PHONE ? FA.y + 338 : FR.y, rw = FR.w, rh = PHONE ? 168 : FR.h;
     panel(rx, ry, rw, rh, 14);
-    T(rx + 16, ry + 28, '기체의 밀도 = M ÷ 22.4 (g/L)', 14, INK, 'left', 800);
+    T(rx + 16, ry + 28, '기체의 밀도 = M / 22.4 (g/L)', 14, INK, 'left', 800);
     const items = [['H₂', 2, '#60a5fa'], ['공기', AIR_M, '#94a3b8'], ['CO₂', 44, '#a78bfa']];
     items.forEach((it, i) => {
       const y = ry + 52 + i * (PHONE ? 32 : 56), d = dens(it[1]), bw = rw - 100, bl = rx + 56;
@@ -756,7 +756,7 @@
       intro: '<div class="si-link">🔗 <b>앞 단계에서</b> 질량 · 부피 · 분자 수를 몰로 바꿨어요. 이제 <b>생활 속 기체</b>에 적용해요.</div>' +
         '<p>드라이아이스 <b>22 g</b>이 모두 기체가 되면 부피는 얼마일까요? 온도에 따라 1 mol의 부피가 달라요. 또 이산화 탄소가 공기보다 <b>무거워</b> 아래로 깔리는 까닭을 기체의 <b>밀도 = M ÷ 22.4</b>로 설명해 봐요.</p>',
       features: ['final'],
-      setup() { S.gate = ''; S.sub.final = 'dry'; S.fn.T = 25; S.fn.run = false; S.fn.p = 0; $('#fnV').value = ''; $('#fnV').classList.remove('ok', 'bad'); setScene('final'); },
+      setup() { S.gate = ''; S.sub.final = 'dry'; S.fn.T = 25; S.fn.run = false; S.fn.p = 0; S.fn.okT = { 0: false, 25: false }; $('#fnV').value = ''; $('#fnV').classList.remove('ok', 'bad'); setScene('final'); },
       recap: '드라이아이스 22 g(0.5 mol)이 기체가 되면 0 °C에서 11.2 L, 25 °C에서 12.25 L ≈ 12.3 L예요. 기체의 밀도는 몰질량에 비례해서 CO₂는 공기보다 밀도가 커요.',
       summary: '<ul><li>드라이아이스 22 g = 0.5 mol → 기체 부피: 0 °C <b>11.2 L</b>, 25 °C <b>12.25 L ≈ 12.3 L</b></li><li>기체의 밀도 = M ÷ 22.4 (g/L, 0 °C, 1기압): CO<sub>2</sub> <b>' + fd(dens(44)) + '</b>, 공기(M ≈ 29) <b>' + fd(dens(AIR_M)) + '</b>, H<sub>2</sub> <b>' + fd(dens(2)) + '</b></li><li>CO<sub>2</sub>는 공기보다 밀도가 커서 아래로 깔려요. 이산화 탄소 소화기는 불을 덮어 꺼요.</li></ul>',
       missions: [
@@ -764,7 +764,7 @@
           title: '25 °C에서 드라이아이스 22 g의 기체 부피', manual: true,
           goal: '<b>25 °C, 1기압</b>에서 드라이아이스 <b>22 g</b>이 모두 기체가 되면 부피는 몇 L일까요? 계산해서 쓰고 <b>✔ 확인하기</b>를 누르세요.',
           hint: '22 g ÷ 44 g/mol = 0.5 mol이에요. 25 °C에서 1 mol은 24.5 L이므로 0.5 × 24.5를 계산해요. 💨 승화시키기로 풍선이 부푸는 모습도 볼 수 있어요.',
-          setup() { S.gate = ''; S.sub.final = 'dry'; S.fn.T = 25; S.fn.run = false; S.fn.p = 0; $('#fnV').value = ''; $('#fnV').classList.remove('ok', 'bad'); setScene('final'); },
+          setup() { S.gate = ''; S.sub.final = 'dry'; S.fn.T = 25; S.fn.run = false; S.fn.p = 0; S.fn.okT = { 0: false, 25: false }; $('#fnV').value = ''; $('#fnV').classList.remove('ok', 'bad'); setScene('final'); },
           check() {
             if (S.fn.T !== 25) return '온도를 25 °C로 맞춰 주세요.';
             const v = parseNum($('#fnV').value);
@@ -812,8 +812,7 @@
   });
 
   /* ---------- 시작 ---------- */
-  setScene('balloon');
-  updateCtl();
+  setScene(S.mode);
   function stepAll1(dt) {
     S.dr.shake = Math.max(0, S.dr.shake - dt);
     stepBalloon(dt); stepHub(dt); stepFinal(dt);

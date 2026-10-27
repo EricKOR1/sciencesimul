@@ -254,7 +254,13 @@
     }
     if (move) {
       const nx = R.x + Math.cos(R.th) * VROB * h, ny = R.y + Math.sin(R.th) * VROB * h;
-      if (blockedAt(nx, ny)) {
+      let slid = false;
+      if (sen[2] && blockedAt(nx, ny)) { // 지도를 보고 가는 중에는 닿지 않는 방향으로 미끄러져 빠져나가요 (가구 모서리에 끼지 않게)
+        if (!blockedAt(nx, R.y)) { R.x = nx; slid = true; } else if (!blockedAt(R.x, ny)) { R.y = ny; slid = true; }
+        if (slid) R.wheel += VROB * h;
+      }
+      if (slid) { /* 이미 움직였어요 */ }
+      else if (blockedAt(nx, ny)) {
         if (sen[0]) { R.bumps++; R.flash[0] = 1; R.st = 'back'; R.tmr = 0.3; R.path = []; R.note = '쿵! 충돌을 느꼈어요'; }
         else if (R.st !== 'stuck') { R.st = 'stuck'; R.stuckT = 0; }
         if (R.st === 'stuck') { R.stuckT += h; R.note = '벽에 부딪혔는데 모르고 계속 밀어요'; }

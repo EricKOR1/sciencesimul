@@ -232,7 +232,7 @@
     const done = egPackedDone(), n = S.eg.n;
     T(P3.x + 16, P3.y + 28, '🧮 묶음으로 세면 편해요', 15, INK, 'left', 800);
     if (done) {
-      T(P3.x + 16, P3.y + 62, n + '개 ÷ 12개 = ' + (n / 12) + '다스', PHONE ? 20 : 24, '#14803f', 'left', 800);
+      T(P3.x + 16, P3.y + 62, n + '개 / 12개 = ' + (n / 12) + '다스', PHONE ? 20 : 24, '#14803f', 'left', 800);
       textBlock(P3.x + 16, P3.y + 92, P3.w - 32, '낱개로 ' + n + '번 세는 것보다 ' + (n / 12) + '다스로 세면 훨씬 간단해요. 아주 작은 원자와 분자도 이렇게 한 묶음으로 세면 어떨까요?', 14, MUTED, 19, 700);
     } else {
       textBlock(P3.x + 16, P3.y + 58, P3.w - 32, '달걀을 낱개로 세면 번거로워요. 오른쪽의 "12개씩 묶기"로 다스 상자에 담아 보세요.', 14.5, MUTED, 20, 700);
@@ -265,7 +265,7 @@
     for (let i = 0; i < 10; i++) { const a = i * 2.4 + t * 0.35, rr = Math.sqrt((i + 0.5) / 10) * 26; molH2O(Math.cos(a) * rr, 16 + Math.sin(a) * rr * 0.9, 0.62); }
     ctx.restore();
     T(PHONE ? Q1.x + 190 : Q1.x + Q1.w / 2, PHONE ? Q1.y + 56 : Q1.y + 232, '물 한 방울 ≈ ' + DROP_G + ' g', 15, INK, PHONE ? 'left' : 'center', 800);
-    T(PHONE ? Q1.x + 190 : Q1.x + Q1.w / 2, PHONE ? Q1.y + 84 : Q1.y + 260, 'n = ' + DROP_G + ' ÷ ' + M_H2O + ' = ' + sci(DROP_MOL, 3) + ' mol', 14.5, MUTED, PHONE ? 'left' : 'center', 800);
+    T(PHONE ? Q1.x + 190 : Q1.x + Q1.w / 2, PHONE ? Q1.y + 84 : Q1.y + 260, 'n = ' + DROP_G + ' / ' + M_H2O + ' = ' + sci(DROP_MOL, 3) + ' mol', 14.5, MUTED, PHONE ? 'left' : 'center', 800);
     T(PHONE ? Q1.x + 190 : Q1.x + Q1.w / 2, PHONE ? Q1.y + 112 : Q1.y + 288, 'N = n × 6.02×10²³', 14.5, MUTED, PHONE ? 'left' : 'center', 800);
     T(PHONE ? Q1.x + 190 : Q1.x + Q1.w / 2, PHONE ? Q1.y + 140 : Q1.y + 314, '≈ ' + sci(DROP_N, 2) + '개', 16, '#5b21b6', PHONE ? 'left' : 'center', 800);
     // 세는 기계
@@ -375,7 +375,7 @@
     D.label(K1.x + 14, K1.y + 22, '문제 ' + (p.id + 1), { bg: PUR, size: 13, align: 'left' });
     const q = p.dir === 'toMol' ? p.who + ' ' + sci(p.N) + '개는 몇 mol일까요?' : p.who + ' ' + p.n + ' mol은 몇 개일까요?';
     textBlock(K1.x + 16, K1.y + (PHONE ? 62 : 66), K1.w - 32, q, PHONE ? 18 : 22, INK, PHONE ? 26 : 30, 800);
-    T(K1.x + 16, K1.y + K1.h - 16, p.dir === 'toMol' ? 'n = N ÷ 6.02×10²³' : 'N = n × 6.02×10²³', 14.5, '#5b21b6', 'left', 800);
+    T(K1.x + 16, K1.y + K1.h - 16, p.dir === 'toMol' ? 'n = N / 6.02×10²³' : 'N = n × 6.02×10²³', 14.5, '#5b21b6', 'left', 800);
     // 흐름도
     panel(K2.x, K2.y, K2.w, K2.h, 14);
     const bw = PHONE ? 170 : 250, bh = PHONE ? 84 : 100;
@@ -398,8 +398,8 @@
     const bx1 = PHONE ? lx + bw / 2 + 28 : ax2, by1 = PHONE ? ry2 - 8 : ay1 + 36, bx2 = PHONE ? bx1 : ax1, by2 = PHONE ? ly + bh + 8 : by1;
     D.arrow(bx1, by1, bx2, by2, { color: p.dir === 'toN' ? '#f59e0b' : '#f5dca6', width: 5, head: 15 });
     const midx = (ax1 + ax2) / 2, midy = (ay1 + ay2) / 2;
-    if (PHONE) { T(ax1 - 12, midy + 5, '÷ 6.02×10²³', 14, p.dir === 'toMol' ? '#5b21b6' : '#9aa5b6', 'right', 800); T(bx1 + 12, midy + 5, '× 6.02×10²³', 14, p.dir === 'toN' ? '#b45309' : '#9aa5b6', 'left', 800); }
-    else { T(midx, ay1 - 12, '÷ 6.02×10²³', 15, p.dir === 'toMol' ? '#5b21b6' : '#9aa5b6', 'center', 800); T(midx, by1 + 24, '× 6.02×10²³', 15, p.dir === 'toN' ? '#b45309' : '#9aa5b6', 'center', 800); }
+    if (PHONE) { T(ax1 - 12, midy + 5, '/ 6.02×10²³', 14, p.dir === 'toMol' ? '#5b21b6' : '#9aa5b6', 'right', 800); T(bx1 + 12, midy + 5, '× 6.02×10²³', 14, p.dir === 'toN' ? '#b45309' : '#9aa5b6', 'left', 800); }
+    else { T(midx, ay1 - 12, '/ 6.02×10²³', 15, p.dir === 'toMol' ? '#5b21b6' : '#9aa5b6', 'center', 800); T(midx, by1 + 24, '× 6.02×10²³', 15, p.dir === 'toN' ? '#b45309' : '#9aa5b6', 'center', 800); }
     if (cl.shake > 0) { ctx.fillStyle = 'rgba(226,70,75,' + (cl.shake * 0.35) + ')'; D.roundRect(K2.x, K2.y, K2.w, K2.h, 14); ctx.fill(); }
     // 푼 문제 판
     panel(K3.x, K3.y, K3.w, K3.h, 14);
@@ -509,7 +509,7 @@
     T(U2.x + U2.w / 2, U2.y + U2.h - 14, k < 0.5 ? '분자 수의 비 2 : 1 : 2' : '몰수의 비 2 : 1 : 2 (분자 수의 비와 같아요)', 14.5, '#5b21b6', 'center', 800);
     panel(U3.x, U3.y, U3.w, U3.h, 14);
     T(U3.x + 16, U3.y + 28, '📏 SI 기본량 7가지 (통합과학1 기본량 표)', 14.5, INK, 'left', 800);
-    const nc = PHONE ? 4 : 7, cwid = (U3.w - 28 - (nc - 1) * 8) / nc, chh = 50;
+    const nc = PHONE ? 4 : 7, cwid = (U3.w - 28 - (nc - 1) * 8) / nc, chh = PHONE ? 44 : 50;
     SIU.forEach((q, i) => {
       const c = i % nc, r = Math.floor(i / nc), x = U3.x + 14 + c * (cwid + 8), y = U3.y + 42 + r * (chh + 8), hl = q[1] === 'mol', pulse = hl && !RM ? 1 + 0.04 * Math.sin(t * 4) : 1;
       ctx.save(); ctx.translate(x + cwid / 2, y + chh / 2); ctx.scale(pulse, pulse); ctx.translate(-(x + cwid / 2), -(y + chh / 2));
@@ -592,7 +592,7 @@
           title: '물 한 방울 속 분자 세어 보기',
           goal: '<b>💧 물 한 방울</b> 화면에서 <b>⏱️ 1초에 1억 개씩 세기</b>를 눌러 걸리는 시간을 확인하세요.',
           hint: '화면 위쪽에서 "물 한 방울"을 고르고 세기 단추를 눌러요. 숫자가 올라가고 10의 거듭제곱 눈금의 점이 움직여요.',
-          setup() { S.gate = ''; S.sub.count = 'drop'; setScene('count'); },
+          setup() { S.gate = ''; S.sub.count = 'drop'; S.dr = { run: false, t: 0, dur: 4.6, done: false, runs: 0 }; setScene('count'); },
           check: () => S.dr.done, hold: 0.4,
           status: () => '세기 완료 ' + mark(S.dr.done) + (S.dr.done ? ' &nbsp; 약 ' + timeStr(DROP_SEC) : ''),
           explain: '물 한 방울(0.05 g) 속에는 약 <b>' + sci(DROP_N, 2) + '개</b>의 물 분자가 있어요. 1초에 10<sup>8</sup>개씩 세면 ' + sci(DROP_N, 4) + ' ÷ 10<sup>8</sup> = ' + sci(DROP_SEC, 3) + '초, 약 <b>' + timeStr(DROP_SEC) + '</b>이 걸려요. 6.02×10²³개라면 약 ' + timeStr(MOL_SEC) + '이에요.',
@@ -650,7 +650,7 @@
           title: '입자 수와 몰 환산하기',
           goal: '<b>환산 계산</b>에서 문제 <b>2개 이상</b>을 풀어요. 답을 쓰고 <b>✔ 답 확인</b>을 눌러요.',
           hint: '입자 수가 주어지면 6.02×10²³으로 나누고, 몰수가 주어지면 6.02×10²³을 곱해요. 곱할 때는 지수가 정해져 있어서 앞의 수만 써요.',
-          setup() { S.gate = ''; S.sub.calc = 'convert'; setScene('calc'); },
+          setup() { S.gate = ''; S.sub.calc = 'convert'; S.cl.solved = {}; S.cl.prob = 0; $('#cvIn').value = ''; $('#cvIn').classList.remove('ok', 'bad'); $('#cvNote').textContent = '식에 알맞게 계산해서 답을 써요.'; setScene('calc'); },
           check: () => solvedN() >= 2, hold: 0.5,
           status: () => '푼 문제 ' + solvedN() + ' / 2 &nbsp; ' + PROBS.map((p) => mark(S.cl.solved[p.id])).join(''),
           explain: '물 분자 3.01×10²³개는 3.01×10²³ ÷ 6.02×10²³ = <b>0.5 mol</b>이고, 산소 0.5 mol은 0.5 × 6.02×10²³ = <b>3.01×10²³개</b>예요. 1 mol과 비교하면 쉬워요. 3.01×10²³은 6.02×10²³의 절반이에요.',
@@ -677,7 +677,7 @@
           setup() { S.gate = ''; S.sub.calc = 'parts'; S.cl.sub = 1; S.cl.amt = 0.25; setScene('calc'); },
           choices: ['0.25 mol', '0.50 mol', '0.75 mol', '1.5 mol'],
           answer: 2,
-          feedback: ['0.25 mol은 CO₂ 분자의 몰수예요. 분자 1개에는 원자가 3개 들어 있어요.', 'C 원자만 0.25 mol이고 O 원자는 그 2배예요. 원자를 모두 더해야 해요.', '', '1.5 mol은 CO₂ 1 mol 속 원자의 2배예요. CO₂ 1 mol 속에는 원자 3 mol이 있어요.'],
+          feedback: ['0.25 mol은 CO₂ 분자의 몰수예요. 분자 1개에는 원자가 3개 들어 있어요.', 'C 원자만 0.25 mol이고 O 원자는 그 2배예요. 원자를 모두 더해야 해요.', '', 'CO₂ 분자 1개에는 원자가 6개가 아니라 3개 들어 있어요. CO₂ 1 mol 속에는 원자 3 mol이 있어요.'],
           explain: 'CO₂ 분자 1개에는 C 원자 1개와 O 원자 2개, 모두 3개가 있어요. 그래서 0.25 mol × 3 = <b>0.75 mol</b>이에요. 입자 수로는 ' + sci(0.75 * NA) + '개예요.',
         },
       ],
@@ -728,8 +728,7 @@
 
   /* ---------- 시작 ---------- */
   egInit();
-  setScene('count');
-  updateCtl();
+  setScene(S.mode);
   function stepAll1(dt) {
     S.mo.disp = SciSim.approach(S.mo.disp, molN(), dt, 9);
     if (Math.abs(S.mo.disp - molN()) < 0.0005) S.mo.disp = molN();

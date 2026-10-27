@@ -275,7 +275,7 @@
     // 선반
     const shelfY = R.y + R.h - 40;
     ctx.fillStyle = '#b08968'; ctx.fillRect(R.x, shelfY, R.w, 40); ctx.fillStyle = 'rgba(0,0,0,.12)'; ctx.fillRect(R.x, shelfY, R.w, 5);
-    const cx = R.x + R.w * (o.cxf || 0.5), potW = Math.min(R.w * 0.34, 128), potH = potW * 0.8, baseY = shelfY, potTop = baseY - potH;
+    const cx = R.x + R.w * (o.cxf || 0.5), potW = Math.min(R.w * 0.34, 128, R.h * 0.4), potH = potW * 0.8, baseY = shelfY, potTop = baseY - potH;
     // 펌프 + 물탱크
     if (o.pipe) {
       const tx = R.x + 22, ty = R.y + 70;
@@ -654,7 +654,7 @@
       const n = B.cards.filter((c) => c.zone === z.id).length;
       panel(z.x, z.y, z.w, z.h, hit ? '#eef4ff' : '#fff', B.ok ? '#14a058' : hit ? z.d.col : null);
       ctx.fillStyle = z.d.col; ctx.globalAlpha = 0.14; rr(z.x, z.y, z.w, PHONE ? z.h : 62, 16).fill(); ctx.globalAlpha = 1;
-      if (PHONE) { D.text(z.x + 14, z.y + 34, z.d.ico, { size: 26, align: 'left' }); D.text(z.x + 50, z.y + 32, z.d.name, { size: 13.5, weight: 800, color: z.d.col, align: 'left' }); D.text(z.x + 50, z.y + 52, n + ' / 2', { size: 12, weight: 700, color: '#64748b', align: 'left' }); }
+      if (PHONE) { D.text(z.x + 14, z.y + 34, z.d.ico, { size: 26, align: 'left' }); const nm = z.d.name.split(' '); D.text(z.x + 50, z.y + 28, nm[0], { size: 13.5, weight: 800, color: z.d.col, align: 'left' }); if (nm.length > 1) D.text(z.x + 50, z.y + 46, nm.slice(1).join(' '), { size: 13.5, weight: 800, color: z.d.col, align: 'left' }); D.text(z.x + 50, z.y + 66, n + ' / 2', { size: 12, weight: 700, color: '#64748b', align: 'left' }); }
       else { D.text(z.x + z.w / 2, z.y + 30, z.d.ico, { size: 28 }); D.text(z.x + z.w / 2, z.y + 53, z.d.name, { size: 13, weight: 800, color: z.d.col }); }
       z.slots.forEach((s, k) => { if (k < n) return; ctx.save(); ctx.strokeStyle = '#d6dde8'; ctx.lineWidth = 2; ctx.setLineDash([5, 4]); rr(s.x - s.w / 2, s.y - s.h / 2, s.w, s.h, 10).stroke(); ctx.restore(); D.text(s.x, s.y + 4, '카드', { size: 12.5, weight: 700, color: '#d6dde8' }); });
     });

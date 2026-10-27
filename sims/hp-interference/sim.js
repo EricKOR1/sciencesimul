@@ -723,14 +723,15 @@
       cell.forEach((s, k) => { if (k < heads.length) T(x0 + tw * cols[k], yy, s, fs, k === 4 ? '#b57a00' : '#26324a', k ? 'center' : 'left', 800); });
     });
   }
+  const unkN = () => { const c = S.cd, dxT = dxMm(UNK), on = (v) => Math.abs(v - nearestBright(v, UNK)) < 0.05; return on(c.A) && on(c.B) ? Math.round(Math.abs(c.B - c.A) / dxT) : 0; };   // 두 표지가 모두 밝은 줄 위에 있을 때만 칸 수를 세요
   function drawUnkInfo(x, y, w, h, m) {
     const c = S.cd, dist = Math.abs(c.B - c.A), p = UNK, dxT = dxMm(p);
-    const n = Math.round(dist / dxT);
+    const n = unkN();
     const tx = x + 16, tw = w - 32, fs = PHONE ? 13 : 14.5;
     T(tx, y + 24, '표지 A·B 사이 거리 = ' + dist.toFixed(1) + ' mm', fs, '#26324a', 'left', 800);
     if (n >= 1) {
       T(tx, y + 24 + 24, '밝은 줄 사이 ' + n + '칸 → 한 칸(무늬 간격) Δx = ' + dist.toFixed(1) + ' / ' + n + ' = ' + (dist / n).toFixed(1) + ' mm', fs, '#b57a00', 'left', 800);
-    } else T(tx, y + 24 + 24, '두 표지를 서로 다른 밝은 줄에 맞춰 보세요 (표지는 밝은 줄에 자석처럼 붙어요).', fs, '#5d6879', 'left', 700);
+    } else T(tx, y + 24 + 24, 'A·B를 서로 다른 밝은 줄에 맞춰 보세요 (표지는 밝은 줄 가까이에서 자석처럼 붙어요).', fs, '#5d6879', 'left', 700);
     textBlock(tx, y + 24 + 48, tw, '구한 Δx와 d = 0.20 mm, L = 3.0 m로 파장을 구해 오른쪽 칸에 nm 단위로 써요.', PHONE ? 12.5 : 14, '#5d6879', 19, 700);
   }
 
@@ -839,7 +840,7 @@
     const lam = white ? LAM_GREEN : LAM_GREEN;
     const col = white ? '#ffffff' : wlColor(LAM_GREEN);
     const sc = PHONE ? 0.42 : 0.5;                       // 막 두께 1 nm = sc 픽셀
-    const y0 = TL.y + (PHONE ? 112 : 172), thp = th * sc, y1 = y0 + thp, yb = TL.y + TL.h - 8;
+    const y0 = TL.y + (PHONE ? 128 : 172), thp = th * sc, y1 = y0 + thp, yb = TL.y + TL.h - 8;
     const ax = TL.x + TL.w * 0.4;
     // 공기 / 막 / 유리
     ctx.save(); D.roundRect(TL.x, TL.y, TL.w, TL.h, 14); ctx.clip();
@@ -1112,7 +1113,7 @@
       L1 = '지금 조건'; a = S.sl.lamT + ' nm · ' + S.sl.dT.toFixed(2) + ' mm · ' + S.sl.LT.toFixed(1) + ' m'; L2 = '기록한 횟수'; b = S.cd.rows.length + '번';
       const last = S.cd.rows[S.cd.rows.length - 1]; L3 = '마지막 Δx'; c = last ? last.dx.toFixed(1) + ' mm' : '—';
     } else if (S.mode === 'cond') {
-      const dist = Math.abs(S.cd.B - S.cd.A), n = Math.round(dist / dxMm(UNK));
+      const dist = Math.abs(S.cd.B - S.cd.A), n = unkN();
       L1 = 'A–B 거리'; a = dist.toFixed(1) + ' mm'; L2 = '밝은 줄 칸 수'; b = n + '칸'; L3 = '한 칸 (Δx)'; c = n >= 1 ? (dist / n).toFixed(1) + ' mm' : '—';
     } else if (S.tc.sub === 'coat') {
       L1 = '코팅 두께'; a = Math.round(S.tc.thT) + ' nm'; L2 = '반사광 세기'; b = Math.round(coatPct(S.tc.thT)) + ' %'; L3 = '비추는 빛'; c = S.tc.cw === 'green' ? '초록 550 nm' : '흰빛';
@@ -1263,7 +1264,7 @@
             if (Math.abs(v - 650) <= 80) return '가까워요! 표지를 밝은 줄에 정확히 붙인 뒤 Δx = (거리) ÷ (칸 수)로 다시 계산해 보세요.';
             return '다시 계산해 보세요. λ = Δx × d ÷ L 이고, Δx는 밝은 줄 한 칸의 간격이에요.';
           },
-          status: () => 'A–B ' + Math.abs(S.cd.B - S.cd.A).toFixed(1) + ' mm · ' + Math.round(Math.abs(S.cd.B - S.cd.A) / dxMm(UNK)) + '칸',
+          status: () => 'A–B ' + Math.abs(S.cd.B - S.cd.A).toFixed(1) + ' mm · ' + (unkN() ? unkN() + '칸 (두 표지 모두 밝은 줄 위)' : '표지를 밝은 줄에 맞춰 보세요'),
           explain: '밝은 줄 한 칸의 간격은 <b>Δx = 9.75 mm</b>예요. λ = Δx × d ÷ L = 9.75 mm × 0.20 mm ÷ 3.0 m = 6.5 × 10⁻⁴ mm = <b>650 nm</b> (빨간빛)이에요. 파장이 너무 짧아 직접 잴 수 없어도 간섭 무늬 간격으로 알아낼 수 있어요.',
         },
       ],

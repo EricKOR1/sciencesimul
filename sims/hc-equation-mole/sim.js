@@ -827,7 +827,7 @@
           title: '수소 4 mol이 반응하면?', manual: true,
           goal: '슬라이더를 <b>4 mol</b>에 맞추고, 반응한 <b>O₂</b>와 생긴 <b>H₂O</b>의 몰수를 쓴 뒤 <b>✔ 확인하기</b>를 누르세요.',
           hint: '계수비 H₂ : O₂ : H₂O = 2 : 1 : 2예요. H₂가 4 mol이면 O₂는 그 절반이에요.',
-          setup() { S.gate = 'read'; setScene('mol'); updateCtl(); },
+          setup() { S.gate = 'read'; $('#o2In').value = ''; $('#wIn').value = ''; setScene('mol'); updateCtl(); },
           check() {
             if (S.m.x !== 4) return '슬라이더를 4 mol에 맞춰 주세요. (지금은 ' + fT(S.m.x) + ' mol)';
             const o = parseNum($('#o2In').value), w = parseNum($('#wIn').value);
@@ -901,7 +901,7 @@
           title: '질량 보존 검산하기',
           goal: '<b>2개 이상</b>의 반응에서 반응물과 생성물의 <b>질량의 합</b>(계수 × 몰질량의 합)을 구해 저울에 올려 보세요.',
           hint: '에탄올 연소: 반응물 46 + 3×32 = 142 g, 생성물 2×44 + 3×18 = 142 g이에요. 몰질량은 저울 위쪽 칸에 적혀 있어요.',
-          setup() { S.gate = ''; S.r.sub = 'chk'; setScene('read'); updateCtl(); },
+          setup() { S.gate = ''; S.r.sub = 'chk'; S.r.chk = READ.map(() => false); S.r.put.forEach((c) => { c.p = 0; }); S.r.beam.value = 0; S.r.beam.target = 0; S.r.beam.velocity = 0; setScene('read'); updateCtl(); },
           check: () => doneCount(S.r.chk) >= 2,
           hold: 0.8,
           status: () => READ.map((r, i) => mark(S.r.chk[i]) + ' ' + r.name).join(' &nbsp; '),
@@ -930,7 +930,7 @@
 
   /* ---------- 시작 ---------- */
   setX(0);
-  setScene('balance');
+  setScene(S.mode);
   buildRows(); updateCtl();
   function stepAll(dt) {
     if (S.mode === 'balance') stepBalance(dt); else if (S.mode === 'mol') stepMol(dt); else if (S.mode === 'mass') stepMass(dt); else stepRead(dt);

@@ -409,7 +409,7 @@
   function stepVoices(dt) {
     VC.popA = approach(VC.popA, VC.open >= 0 ? 1 : 0, dt, 12);
     let nL = 0, nR = 0; VC.v.forEach((r) => { if (r[0] === 0) nL++; else if (r[0] === 2) nR++; });
-    VC.tilt.target = clamp((nR - nL) * 0.13, -0.4, 0.4); VC.tilt.update(dt);
+    VC.tilt.target = clamp((nR - nL) * 0.13, -(PHONE ? 0.26 : 0.4), PHONE ? 0.26 : 0.4); VC.tilt.update(dt);
     VC.pop.forEach((r) => r.forEach((v, k) => { if (v > 0) r[k] = Math.max(0, v - dt * 4); }));
   }
   function drawVoices(t) {
@@ -418,7 +418,7 @@
     // 저울
     panel(sc.x, sc.y, sc.w, sc.h);
     D.text(sc.x + 14, sc.y + 24, '⚖️ 입장의 저울', { size: 14, weight: 800, color: '#334155', align: 'left' });
-    const px = sc.x + sc.w / 2, py = sc.y + (PHONE ? 70 : 120), half = PHONE ? 180 : 66, th = VC.tilt.value;
+    const px = sc.x + sc.w / 2, py = sc.y + (PHONE ? 52 : 120), half = PHONE ? 150 : 66, th = VC.tilt.value;
     const ex = (s) => ({ x: px + s * half * Math.cos(th), y: py + s * half * Math.sin(th) });
     ctx.fillStyle = '#94a3b8'; ctx.beginPath(); ctx.moveTo(px - 12, sc.y + sc.h - 22); ctx.lineTo(px + 12, sc.y + sc.h - 22); ctx.lineTo(px + 4, py); ctx.lineTo(px - 4, py); ctx.closePath(); ctx.fill();
     ctx.fillStyle = '#64748b'; rr(px - 34, sc.y + sc.h - 24, 68, 10, 5).fill();
@@ -426,12 +426,12 @@
     ctx.strokeStyle = '#475569'; ctx.lineWidth = 6; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(L.x, L.y); ctx.lineTo(Rr.x, Rr.y); ctx.stroke(); D.sphere(px, py, 7, '#334155', { gloss: false });
     const pans = [[L, '넓게 공개', 0], [Rr, '거의 비공개', 2]];
     pans.forEach(([E, name, claim]) => {
-      const pw = PHONE ? 150 : 80, drop = PHONE ? 48 : 46;
+      const pw = PHONE ? 130 : 80, drop = PHONE ? 36 : 46;
       ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(E.x, E.y); ctx.lineTo(E.x - pw / 2, E.y + drop); ctx.moveTo(E.x, E.y); ctx.lineTo(E.x + pw / 2, E.y + drop); ctx.stroke();
       ctx.fillStyle = '#e2e8f0'; rr(E.x - pw / 2, E.y + drop, pw, 9, 4).fill();
       const who = VOICES.map((p, i) => i).filter((i) => VC.v[i][0] === claim);
       who.forEach((i, k) => { const cx = E.x - (who.length - 1) * 13 + k * 26, cy = E.y + drop - 14; ctx.fillStyle = '#fff'; rr(cx - 13, cy - 13, 26, 26, 7).fill(); ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 1.5; rr(cx - 13, cy - 13, 26, 26, 7).stroke(); D.text(cx, cy + 5, VOICES[i].ico, { size: 15 }); });
-      D.text(E.x, E.y + drop + 28, name, { size: 12, weight: 800, color: '#475569' });
+      D.text(E.x, E.y + drop + (PHONE ? 22 : 28), name, { size: 12, weight: 800, color: '#475569' });
     });
     const mid = VOICES.map((p, i) => i).filter((i) => VC.v[i][0] === 1);
     mid.forEach((i, k) => { const cx = px - (mid.length - 1) * 15 + k * 30, cy = sc.y + sc.h - 44; ctx.fillStyle = '#fff'; rr(cx - 13, cy - 13, 26, 26, 7).fill(); ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 1.5; rr(cx - 13, cy - 13, 26, 26, 7).stroke(); D.text(cx, cy + 5, VOICES[i].ico, { size: 15 }); });
@@ -471,7 +471,7 @@
       ctx.fillStyle = '#eff6ff'; rr(116, 56 + h + 12, pp.w - 154, PHONE ? 90 : 76, 12).fill();
       D.text(130, 56 + h + 36, '👉 이 사람이 내세운 근거', { size: 12.5, weight: 800, color: '#3867f4', align: 'left' });
       paraText(130, 56 + h + 58, p.reason, pp.w - 182, 14, { color: '#1e3a8a' });
-      D.text(pp.w / 2, pp.h - 18, '화면을 누르면 닫혀요', { size: 13, weight: 800, color: '#e2e8f0' });
+      D.text(pp.w / 2, pp.h - 18, '화면을 누르면 닫혀요', { size: 13, weight: 800, color: '#fff', stroke: 'rgba(15,23,42,.75)', strokeWidth: 4 });
       ctx.restore();
     }
   }

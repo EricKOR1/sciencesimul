@@ -363,11 +363,11 @@
     parts.update(dt); parts.draw(ctx); endMain();
     // 효율 미터
     panel(RL.x, RL.y, RL.w, RL.h, 14);
-    T(RL.x + 12, RL.y + 22, '효율 e = W ÷ Q_h', PHONE ? 13.5 : 14.5, '#26324a', 'left', 800);
+    T(RL.x + 12, RL.y + 22, '효율 e = W / Q_h', PHONE ? 13.5 : 14.5, '#26324a', 'left', 800);
     const e = W / ENG.Qh * 100;
     let y = RL.y + 46; const bw = RL.w - 28;
     y += textBlock(RL.x + 14, y, bw, 'Q_h = W + Q_c → ' + ENG.Qh + ' = ' + W + ' + ' + Qc + ' (J)', 13.5, '#26324a', 19, 800) + 2;
-    y += textBlock(RL.x + 14, y, bw, 'e = ' + W + ' ÷ ' + ENG.Qh + ' = ' + eJ(e) + ' %', 15, '#0b6b39', 21, 800) + 6;
+    y += textBlock(RL.x + 14, y, bw, 'e = ' + W + ' / ' + ENG.Qh + ' = ' + eJ(e) + ' %', 15, '#0b6b39', 21, 800) + 6;
     // 막대
     const mx = RL.x + 16, mw = RL.w - 32, my = y + 6;
     D.roundRect(mx, my, mw, 22, 11); ctx.fillStyle = '#e8ecf4'; ctx.fill();
@@ -781,7 +781,7 @@
       intro: '<div class="si-link">🔗 <b>앞 단계에서</b> 열기관은 늘 열을 버리고 효율은 100 %보다 작다는 것을 확인했어요. 그렇다면 연료를 한 번만 넣거나 <b>한 번 돌려 주면 영원히 도는 기계(영구기관)</b>는 가능할까요? 발명가들의 주장을 에너지 장부로 따져 봐요.</div>' +
         '<p>자석 바퀴, 물레방아–펌프, 불균형 바퀴를 가동해 보고, 에너지 장부에서 <b>입력이 0인데 출력이 있는</b> 모순을 찾아요. 예상(영원히 돈다)과 실제 측정이 다른 까닭도 생각해 봐요.</p>',
       features: ['perp'],
-      setup() { resetPp(false); resetLgUI(); setScene('perp'); },
+      setup() { resetPp(false); S.pp.rows = []; resetLgUI(); setScene('perp'); },
       recap: '영구기관은 마찰로 에너지가 열이 되어 흩어져 멈추고, 에너지가 새로 생길 수도 없어요. 입력 없이 계속 일하는 기관은 에너지 보존에 어긋나요.',
       summary: '<ul><li><b>제1종 영구기관</b>: 에너지를 공급받지 않고 계속 일하는 기관 → 에너지가 새로 생기므로 불가능(에너지 보존 위반)</li><li>실제로 가동하면 마찰·공기 저항으로 운동 에너지가 열로 바뀌어 속력이 줄다가 멈춰요. (자석 바퀴 ' + f1(PERP.magnet.T) + ' s, 물레방아–펌프 ' + f1(PERP.mill.T) + ' s, 불균형 바퀴 ' + f1(PERP.wheel.T) + ' s 후 정지)</li><li><b>에너지 장부</b>: 입력 = 일 + 열. 입력이 0인데 출력이 있거나, 출력 합이 입력보다 크면 불가능해요.</li><li>이유 두 가지: ① 에너지는 새로 생기지 않는다 ② 마찰로 열이 되어 흩어진다</li></ul>',
       missions: [
@@ -860,6 +860,9 @@
     },
   ];
 
+  /* 이어 하기(새로고침)로 중간 미션에서 열려도 미션 setup()이 만든 장면을 덮어쓰지 않도록, 장면 상태를 게임보다 먼저 만들어요 */
+  resetEn(false); resetFl(false); resetPp(false); resetJd();
+  setScene('engine');
   game = SciSim.game({
     simId: 'hp-heat-engine', mount: '#game', badge: '특허 심사관', homeHref: '../../index.html#hp',
     featureLabels: { engine: '🔥 피스톤 · 스털링 엔진 · 증기 터빈', flow: '📊 에너지 흐름도 · 효율 · 기관 5종', perp: '♾️ 영구기관 3종 · 에너지 장부', judge: '📝 발명품 심사 카드' },
@@ -873,8 +876,6 @@
   });
 
   /* ---------- 시작 ---------- */
-  resetEn(false); resetFl(false); resetPp(false); resetJd();
-  setScene('engine');
   let lastFree = false, lastKey = '';
   SciSim.loop((dt, t) => {
     S.clock = t;

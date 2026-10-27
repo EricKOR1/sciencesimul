@@ -294,14 +294,14 @@
       } else if (c.st === 'after') {
         if (c.joined) {
           c.xA += c.cvA * h; c.xB = c.xA + c.D0;
-          if (c.xA < c.wA / 2) { c.xA = c.wA / 2; c.xB = c.xA + c.D0; c.cvA = c.cvB = 0; }
-          if (c.xB > c.len - c.wB / 2) { c.xB = c.len - c.wB / 2; c.xA = c.xB - c.D0; c.cvA = c.cvB = 0; }
+          if (c.xA < c.wA / 2) { c.xA = c.wA / 2; c.xB = c.xA + c.D0; }
+          if (c.xB > c.len - c.wB / 2) { c.xB = c.len - c.wB / 2; c.xA = c.xB - c.D0; }   // 트랙 끝에서는 위치만 멈춰요 (속도 값은 센서 값 그대로, 운동량 막대가 줄어 보이지 않게)
         } else {
           c.xA += c.cvA * h; c.xB += c.cvB * h;
-          if (c.xA < c.wA / 2) { c.xA = c.wA / 2; c.cvA = 0; }
-          if (c.xA > c.len - c.wA / 2) { c.xA = c.len - c.wA / 2; c.cvA = 0; }
-          if (c.xB > c.len - c.wB / 2) { c.xB = c.len - c.wB / 2; c.cvB = 0; }
-          if (c.xB < c.wB / 2) { c.xB = c.wB / 2; c.cvB = 0; }
+          if (c.xA < c.wA / 2) { c.xA = c.wA / 2; }
+          if (c.xA > c.len - c.wA / 2) { c.xA = c.len - c.wA / 2; }
+          if (c.xB > c.len - c.wB / 2) { c.xB = c.len - c.wB / 2; }
+          if (c.xB < c.wB / 2) { c.xB = c.wB / 2; }
           if (c.xB - c.xA < c.D0 && c.cvB < c.cvA) { c.xB = c.xA + c.D0; }
         }
         c.t2 += h; if (c.t2 >= c.TPOST) c.st = 'done';

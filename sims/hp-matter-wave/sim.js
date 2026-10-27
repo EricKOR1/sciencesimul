@@ -817,8 +817,7 @@
   });
 
   /* ---------- 시작 ---------- */
-  setScene('dbl');
-  updateCtl();
+  updateCtl();   // 화면(scene)은 단계 설정(setup)이 이미 맞춰 놓았어요 (이어하기 포함)
   let lastFree = false, lastMode = '';
   SciSim.loop((dt, t) => {
     S.t = t; S.dt = dt;

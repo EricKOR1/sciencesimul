@@ -708,7 +708,7 @@
     if (!cfg.far) objShape(ax, top + cfg.H * k + 6, cfg.H * k, 1, 1, '#ffd447');
     else { ctx.fillStyle = '#7ec4ff'; ctx.fillRect(ax - 22, top, 44, h - 36); ctx.fillStyle = '#4caf6a'; ctx.beginPath(); ctx.moveTo(ax - 22, top + h - 36); ctx.lineTo(ax - 8, top + h - 62); ctx.lineTo(ax + 4, top + h - 48); ctx.lineTo(ax + 12, top + h - 56); ctx.lineTo(ax + 22, top + h - 36); ctx.closePath(); ctx.fill(); }
     ctx.save(); ctx.beginPath(); ctx.rect(xb + 2, y + 24, w - 4, h - 28); ctx.clip();
-    if (cfg.far) blurred(bl, al, () => { const hh = 0.6 * cfg.H * k; ctx.fillStyle = '#e8c870'; ctx.fillRect(bx - hh * 0.4, top + 6 + hh * 0.35, hh * 0.8, hh * 0.65); ctx.beginPath(); ctx.moveTo(bx - hh * 0.4, top + 6 + hh * 0.35); ctx.lineTo(bx + hh * 0.4, top + 6 + hh * 0.35); ctx.lineTo(bx, top + 6); ctx.closePath(); ctx.fill(); });
+    if (cfg.far) blurred(bl, al, () => { const hh = 0.6 * cfg.H * k, y0 = top + 6; ctx.fillStyle = '#e8c870'; ctx.fillRect(bx - hh * 0.4, y0, hh * 0.8, hh * 0.65); ctx.beginPath(); ctx.moveTo(bx - hh * 0.4, y0 + hh * 0.65); ctx.lineTo(bx + hh * 0.4, y0 + hh * 0.65); ctx.lineTo(bx, y0 + hh); ctx.closePath(); ctx.fill(); });   // 거꾸로 선 상 (지붕이 아래)
     else blurred(bl, al, () => objShape(bx, top + 6, mH * k, -1, -1, '#ffe9a0'));
     ctx.restore();
     if (!cfg.far) T(xb + w / 2, y + h + 16, '크기: 물체의 ' + res.g.m.toFixed(2) + '배', 12.5, '#cfd8ee', 'center', 800);
@@ -805,9 +805,10 @@
     const by = BOT.y; panel(BOT.x, by, BOT.w, BOT.h, 14);
     const fs = PHONE ? 13 : 14.5, tx = BOT.x + 16;
     const g = res.g;
-    T(tx, by + 24, '쓰는 빛: ' + WL_NAME[l.wl] + ' → 이 모형에서는 ' + l.wl + ' nm보다 가는 선은 인쇄할 수 없어요', fs, '#26324a', 'left', 800);
-    T(tx, by + 50, '마스크의 회로는 ' + (1 / g.m).toFixed(0) + '배 크게 그려져 있고, 렌즈가 ' + (1 / g.m).toFixed(0) + '분의 1로 줄여서 웨이퍼에 맺어요 (상 크기 = 마스크의 ' + g.m.toFixed(2) + '배).', PHONE ? 12 : 13.5, '#5d6879', 'left', 700);
-    T(tx, by + 76, l.sharp ? (l.done ? '가장 가는 선(14 nm)까지 모두 인쇄됐어요!' : '선명해요. 더 가는 선을 찍으려면 더 짧은 파장을 써요.') : '웨이퍼가 상이 맺히는 곳에서 벗어나 있어요. 위치를 조절해 보세요.', fs, l.done ? '#14a058' : '#26324a', 'left', 800);
+    let yy = by + 24;
+    yy += textBlock(tx, yy, BOT.w - 32, '쓰는 빛: ' + WL_NAME[l.wl] + ' → 이 모형에서는 ' + l.wl + ' nm보다 가는 선은 인쇄할 수 없어요', fs, '#26324a', 20, 800) + 6;
+    yy += textBlock(tx, yy, BOT.w - 32, '마스크의 회로는 ' + (1 / g.m).toFixed(0) + '배 크게 그려져 있고, 렌즈가 ' + (1 / g.m).toFixed(0) + '분의 1로 줄여서 웨이퍼에 맺어요 (상 크기 = 마스크의 ' + g.m.toFixed(2) + '배).', PHONE ? 12 : 13.5, '#5d6879', 18, 700) + 6;
+    textBlock(tx, yy, BOT.w - 32, l.sharp ? (l.done ? '가장 가는 선(14 nm)까지 모두 인쇄됐어요!' : '선명해요. 더 가는 선을 찍으려면 더 짧은 파장을 써요.') : '웨이퍼가 상이 맺히는 곳에서 벗어나 있어요. 위치를 조절해 보세요.', fs, l.done ? '#14a058' : '#26324a', 20, 800);
   }
 
   /* ---- 공정 순서 ---- */
@@ -912,6 +913,7 @@
           } else showHint('세 광선을 모두 그린 뒤 광선이 만나는 곳에 놓아요. (물체 거리는 a = 30 cm)', 3200);
         }
       }
+      if (S.rf.drag && S.rf.view === 'lens' && S.rf.morph >= 1) { const f = fOf(S.rf.RT); if (Math.abs(S.rf.flag - f) <= F_TOL) S.rf.flag = Math.round(f * 10) / 10; }   // 초점 가까이에 놓으면 초점에 딱 붙어요
       S.rf.drag = false; S.tr.odrag = false; S.bn.drag = null; S.lt.wdrag = false;
     },
     hover(p) {
@@ -1054,7 +1056,7 @@
           title: '두 가지 방법으로 초점거리 구하기', manual: true,
           goal: '방법 ① <b>먼 풍경</b>의 선명한 상 거리와, 방법 ② <b>같은 크기의 상</b>이 맺히는 거리(a와 b)를 기록한 뒤, 초점거리 f를 구해 두 칸에 쓰세요.',
           hint: '① 먼 풍경 보기를 누르고 스크린을 움직여 선명한 위치를 기록해요. ② a를 조절해 “상의 크기 ÷ 물체 크기”가 1.00이 되는 선명한 상을 기록하고, f = (a + b) ÷ 4로 구해요.',
-          setup() { S.bn.cover = false; S.bn.showNum = true; setScene('bench'); $('#inFA').value = ''; $('#inFB').value = ''; ['inFA', 'inFB'].forEach((i) => $('#' + i).classList.remove('ok', 'bad')); updateCtl(); },
+          setup() { S.bn.cover = false; S.bn.far = false; S.bn.rows = []; S.bn.showNum = true; setScene('bench'); $('#inFA').value = ''; $('#inFB').value = ''; ['inFA', 'inFB'].forEach((i) => $('#' + i).classList.remove('ok', 'bad')); updateCtl(); },
           check() {
             const A = parseFloat($('#inFA').value), B = parseFloat($('#inFB').value);
             const fl = (id, ok) => { const el = $('#' + id); if (!ok && !el.classList.contains('bad')) { el.classList.remove('ok'); void el.offsetWidth; el.classList.add('bad'); } if (ok) { el.classList.remove('bad'); el.classList.add('ok'); } };
@@ -1129,8 +1131,7 @@
   });
 
   /* ---------- 시작 ---------- */
-  setScene('refract');
-  updateCtl();
+  updateCtl();   // 화면(scene)은 단계 설정(setup)이 이미 맞춰 놓았어요 (이어하기 포함)
   let lastFree = false, lastMode = '';
   SciSim.loop((dt, t) => {
     S.t = t; S.dt = dt;

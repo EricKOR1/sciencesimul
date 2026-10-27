@@ -467,7 +467,7 @@
   }
   function drawModel() {
     const m = S.md, mt = MET[S.metal], E = eph(S.lam), W = mt.W, em = E - W > 1e-9, ek = Math.max(0, E - W);
-    const col = wlColor(S.lam);
+    const col = wlColor(S.lam), eS = (v) => (Math.abs(v - W) < 0.05 ? v.toFixed(3) : v.toFixed(2));   // W에 아주 가까우면 소수 셋째 자리까지
     // 왼쪽: 광자와 전자
     D.shadow(() => { D.roundRect(MS.x, MS.y, MS.w, MS.h, 14); ctx.fillStyle = '#0f1a33'; ctx.fill(); }, { blur: 10, y: 3 });
     ctx.save(); D.roundRect(MS.x, MS.y, MS.w, MS.h, 14); ctx.clip();
@@ -506,7 +506,7 @@
     // 광자 에너지 막대
     ctx.fillStyle = col; D.roundRect(b1, Yv(E), bw, Yv(0) - Yv(E), 6); ctx.fill();
     T(b1 + bw / 2, Yv(0) + 18, '광자 hf', 13, '#26324a', 'center', 800);
-    T(b1 + bw / 2, Yv(E) - 8, E.toFixed(2), 13.5, '#26324a', 'center', 800);
+    T(b1 + bw / 2, Yv(E) - 8, eS(E), 13.5, '#26324a', 'center', 800);
     // 일함수 + 운동 에너지 막대
     ctx.fillStyle = '#9aa6bb'; D.roundRect(b2, Yv(W), bw, Yv(0) - Yv(W), 6); ctx.fill();
     T(b2 + bw / 2, Yv(W / 2) + 5, 'W', 15, '#fff', 'center', 800);
@@ -516,7 +516,7 @@
     // 계산
     const ty = PHONE ? cy0 + ch + 36 : cy0 + ch + 44, fs = PHONE ? 13 : 13.5, lh = PHONE ? 20 : 21;
     T(MC.x + 14, ty, 'f = ' + fmtF(freqOf(S.lam)), fs, '#26324a', 'left', 800);
-    T(MC.x + 14, ty + lh, 'hf = ' + EVNM + ' ÷ ' + S.lam + ' = ' + E.toFixed(2) + ' eV', fs, '#26324a', 'left', 800);
+    T(MC.x + 14, ty + lh, 'hf = ' + EVNM + ' / ' + S.lam + ' = ' + eS(E) + ' eV', fs, '#26324a', 'left', 800);
     T(MC.x + 14, ty + lh * 2, em ? 'E_k = hf − W = ' + E.toFixed(2) + ' − ' + W + ' = ' + ek.toFixed(2) + ' eV' : 'hf < W → 전자가 나오지 않아요', fs, em ? '#14a058' : '#e2464b', 'left', 800);
     if (!PHONE) textBlock(MC.x + 14, ty + lh * 3 + 6, MC.w - 28, '세기가 커지면 광자 수가 늘어 튀어나오는 전자의 수가 늘지만, 광자 1개의 에너지는 그대로예요.', 12.5, '#5d6879', 18, 700);
   }
@@ -660,7 +660,7 @@
     } else if (S.mode === 'graph') {
       L1 = '지금 빛'; a = S.lam + ' nm · 세기 ' + S.s; L2 = '찍은 점'; b = '왼쪽 ' + S.gr.A.pts.length + ' · 오른쪽 ' + (S.gr.B.Na.length + S.gr.B.Zn.length); L3 = '한계 진동수 표지'; c = S.gr.mark[S.metal].toFixed(1) + '×10¹⁴ Hz';
     } else if (S.mode === 'model') {
-      L1 = '광자 1개의 에너지 hf'; a = E.toFixed(2) + ' eV'; L2 = '일함수 W (' + mt.name + ')'; b = mt.W + ' eV'; L3 = '남는 에너지 E_k'; c = E - mt.W > 1e-9 ? (E - mt.W).toFixed(2) + ' eV' : '방출 안 돼요';
+      L1 = '광자 1개의 에너지 hf'; a = (Math.abs(E - mt.W) < 0.05 ? E.toFixed(3) : E.toFixed(2)) + ' eV'; L2 = '일함수 W (' + mt.name + ')'; b = mt.W + ' eV'; L3 = '남는 에너지 E_k'; c = E - mt.W > 1e-9 ? (E - mt.W).toFixed(2) + ' eV' : '방출 안 돼요';
     } else {
       const st = seStatus(); L1 = '노출 시간'; a = expMs() + ' ms'; L2 = '가장 밝은 화소의 값'; b = Math.min(255, Math.round(255 * muOf(3, 3) / FULL_WELL)) + (st === 'sat' ? ' (포화)' : ''); L3 = '사진의 상태'; c = S.se.prog < 1 ? '노출 중…' : st === 'ok' ? '알맞아요' : st === 'sat' ? '너무 밝아요' : '너무 어두워요';
     }
@@ -852,8 +852,7 @@
   });
 
   /* ---------- 시작 ---------- */
-  setScene('exp');
-  updateCtl();
+  updateCtl();   // 화면(scene)은 단계 설정(setup)이 이미 맞춰 놓았어요 (이어하기 포함)
   let lastFree = false, lastMode = '';
   SciSim.loop((dt, t) => {
     S.t = t; S.dt = dt;

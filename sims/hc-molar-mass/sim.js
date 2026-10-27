@@ -366,7 +366,7 @@
       else { T(bx + bw + 14, by + 16, ok ? fm(r.n, 2) + ' mol' : '? mol', 16, ok ? '#5b21b6' : '#9aa5b6', 'left', 800); if (ok) T(bx + bw + 14, by + 36, sci(r.n * NA, 4) + '개', 13, MUTED, 'left', 800); else if (!isNaN(an.val[i])) T(bx + bw + 14, by + 36, '내 값 ' + fm(an.val[i], 3) + ' ✗', 13, '#b4231f', 'left', 800); }
     });
     panel(AP2.x, AP2.y, AP2.w, AP2.h, 14);
-    T(AP2.x + 16, AP2.y + 28, '📐 몰수 n = 질량 ÷ 몰질량', 15, INK, 'left', 800);
+    T(AP2.x + 16, AP2.y + 28, '📐 몰수 n = 질량 / 몰질량', 15, INK, 'left', 800);
     textBlock(AP2.x + 16, AP2.y + 58, AP2.w - 32, '질량이 같아도 몰질량이 다르면 몰수(입자 수)가 달라요. 몰질량이 작은 물질일수록 같은 질량에 입자가 더 많아요.', 14.5, MUTED, 20, 700);
     const okN = an.ok.filter(Boolean).length;
     T(AP2.x + 16, AP2.y + AP2.h - 18, '맞힌 물질 ' + okN + ' / ' + RW.length, 14.5, okN === RW.length ? '#14803f' : INK, 'left', 800);
@@ -388,18 +388,18 @@
     box(P.Dd, '③ 산소 원자 (mol)', ch[2] ? fm(H2SO4.O, 1) + ' mol' : '?', ch[2], ch[1] && !ch[2]);
     const arr = (x1, y1, x2, y2, label, on, lx, ly, al) => { D.arrow(x1, y1, x2, y2, { color: on ? '#8b5cf6' : '#cdbdf5', width: 5, head: 14 }); T(lx, ly, label, 13.5, on ? '#5b21b6' : '#9aa5b6', al || 'center', 800); };
     if (PHONE) {
-      arr(P.A[0] + bw / 2, P.A[1] + bh + 4, P.B[0] + bw / 2, P.B[1] - 4, '÷ 98 g/mol', true, P.A[0] + bw / 2 + 14, P.A[1] + bh + 36, 'left');
+      arr(P.A[0] + bw / 2, P.A[1] + bh + 4, P.B[0] + bw / 2, P.B[1] - 4, '/ 98 g/mol', true, P.A[0] + bw / 2 + 14, P.A[1] + bh + 36, 'left');
       arr(P.B[0] + bw / 2, P.B[1] + bh + 4, P.Cc[0] + bw / 2, P.Cc[1] - 4, '× 6.02×10²³', ch[0], P.B[0] + bw / 2 + 14, P.B[1] + bh + 36, 'left');
       arr(P.B[0] + bw + 4, P.B[1] + bh / 2, P.Dd[0] - 4, P.Dd[1] + bh / 2, '', ch[0]); T(P.B[0] + bw + 20, P.B[1] + bh / 2 - 12, '× 4', 14, ch[0] ? '#5b21b6' : '#9aa5b6', 'left', 800);
     } else {
-      arr(P.A[0] + bw + 4, P.A[1] + bh / 2, P.B[0] - 4, P.B[1] + bh / 2, '÷ 98 g/mol', true, (P.A[0] + bw + P.B[0]) / 2, P.A[1] - 12);
+      arr(P.A[0] + bw + 4, P.A[1] + bh / 2, P.B[0] - 4, P.B[1] + bh / 2, '/ 98 g/mol', true, (P.A[0] + bw + P.B[0]) / 2, P.A[1] - 12);
       arr(P.B[0] + bw + 4, P.B[1] + bh / 2, P.Cc[0] - 4, P.Cc[1] + bh / 2, '× 6.02×10²³', ch[0], (P.B[0] + bw + P.Cc[0]) / 2, P.B[1] - 12);
       arr(P.B[0] + bw / 2, P.B[1] + bh + 4, P.Dd[0] + bw / 2, P.Dd[1] - 4, '× 4 (H₂SO₄ 한 분자의 O 원자 수)', ch[0], P.B[0] + bw / 2 + 14, P.B[1] + bh + 52, 'left');
     }
     if (an.shake > 0) { ctx.fillStyle = 'rgba(226,70,75,' + an.shake * 0.3 + ')'; D.roundRect(AP1.x, AP1.y, AP1.w, AP1.h, 14); ctx.fill(); }
     panel(AP2.x, AP2.y, AP2.w, AP2.h, 14);
     T(AP2.x + 16, AP2.y + 28, '황산 H₂SO₄ 몰질량 = 2×1 + 32 + 4×16 = ' + fm(H2SO4.M) + ' g/mol', 14.5, INK, 'left', 800);
-    textBlock(AP2.x + 16, AP2.y + 58, AP2.w - 32, 'n = w ÷ M, N = n × 6.02×10²³ 순서로 계산해요. 그리고 H₂SO₄ 한 분자에 O 원자가 4개 있으니 산소 원자의 몰수는 n × 4예요.', 14, MUTED, 19, 700);
+    textBlock(AP2.x + 16, AP2.y + 58, AP2.w - 32, 'n = w / M, N = n × 6.02×10²³ 순서로 계산해요. 그리고 H₂SO₄ 한 분자에 O 원자가 4개 있으니 산소 원자의 몰수는 n × 4예요.', 14, MUTED, 19, 700);
     T(AP2.x + 16, AP2.y + AP2.h - 16, '맞힌 단계 ' + ch.filter(Boolean).length + ' / 3', 14.5, ch.every(Boolean) ? '#14803f' : INK, 'left', 800);
   }
   function buildCmpInputs() {
@@ -463,18 +463,18 @@
     const opA = OPS[+$('#apOpA').value], opB = OPS[+$('#apOpB').value];
     const colA = aOK ? '#14803f' : '#5b21b6', colB = bOK ? '#14803f' : '#5b21b6';
     if (PHONE) {
-      D.arrow(P.A[0] + bw / 2, P.A[1] + bh + 4, P.B[0] + bw / 2, P.B[1] - 4, { color: aOK ? '#14a058' : '#8b5cf6', width: 5, head: 14 }); T(P.A[0] + bw / 2 + 16, P.A[1] + bh + 28, opA === OPS[0] ? '계산을 골라요' : opA, 14.5, colA, 'left', 800);
-      D.arrow(P.B[0] + bw / 2, P.B[1] + bh + 4, P.Cc[0] + bw / 2, P.Cc[1] - 4, { color: bOK ? '#14a058' : '#8b5cf6', width: 5, head: 14 }); T(P.B[0] + bw / 2 + 16, P.B[1] + bh + 28, opB === OPS[0] ? '계산을 골라요' : opB, 14.5, colB, 'left', 800);
+      D.arrow(P.A[0] + bw / 2, P.A[1] + bh + 4, P.B[0] + bw / 2, P.B[1] - 4, { color: aOK ? '#14a058' : '#8b5cf6', width: 5, head: 14 }); T(P.A[0] + bw / 2 + 16, P.A[1] + bh + 28, opA === OPS[0] ? '계산을 골라요' : opA.replace('÷', '/'), 14.5, colA, 'left', 800);
+      D.arrow(P.B[0] + bw / 2, P.B[1] + bh + 4, P.Cc[0] + bw / 2, P.Cc[1] - 4, { color: bOK ? '#14a058' : '#8b5cf6', width: 5, head: 14 }); T(P.B[0] + bw / 2 + 16, P.B[1] + bh + 28, opB === OPS[0] ? '계산을 골라요' : opB.replace('÷', '/'), 14.5, colB, 'left', 800);
     } else {
-      D.arrow(P.A[0] + bw + 6, P.A[1] + bh / 2, P.B[0] - 6, P.B[1] + bh / 2, { color: aOK ? '#14a058' : '#8b5cf6', width: 5, head: 14 }); T((P.A[0] + bw + P.B[0]) / 2, P.A[1] - 12, opA === OPS[0] ? '계산을 골라요' : opA, 14.5, colA, 'center', 800);
-      D.arrow(P.B[0] + bw + 6, P.B[1] + bh / 2, P.Cc[0] - 6, P.Cc[1] + bh / 2, { color: bOK ? '#14a058' : '#8b5cf6', width: 5, head: 14 }); T((P.B[0] + bw + P.Cc[0]) / 2, P.B[1] - 12, opB === OPS[0] ? '계산을 골라요' : opB, 14.5, colB, 'center', 800);
+      D.arrow(P.A[0] + bw + 6, P.A[1] + bh / 2, P.B[0] - 6, P.B[1] + bh / 2, { color: aOK ? '#14a058' : '#8b5cf6', width: 5, head: 14 }); T((P.A[0] + bw + P.B[0]) / 2, P.A[1] - 12, opA === OPS[0] ? '계산을 골라요' : opA.replace('÷', '/'), 14.5, colA, 'center', 800);
+      D.arrow(P.B[0] + bw + 6, P.B[1] + bh / 2, P.Cc[0] - 6, P.Cc[1] + bh / 2, { color: bOK ? '#14a058' : '#8b5cf6', width: 5, head: 14 }); T((P.B[0] + bw + P.Cc[0]) / 2, P.B[1] - 12, opB === OPS[0] ? '계산을 골라요' : opB.replace('÷', '/'), 14.5, colB, 'center', 800);
     }
     if (ap.shake > 0) { ctx.fillStyle = 'rgba(226,70,75,' + ap.shake * 0.3 + ')'; D.roundRect(AF.x, AF.y, AF.w, AF.h, 14); ctx.fill(); }
     if (solved) D.check(AF.x + AF.w - 36, AF.y + 34, 18, 1);
     panel(AR.x, AR.y, AR.w, AR.h, 14);
     T(AR.x + 16, AR.y + 30, '푼 문제 ' + apSolved() + ' / ' + PB.length, 15, INK, 'left', 800);
     PB.forEach((q, i) => D.sphere(AR.x + 130 + i * 40, AR.y + 25, 14, ap.solved[q.id] ? '#14a058' : '#d6dcea', { gloss: false, text: String(i + 1), textColor: ap.solved[q.id] ? '#fff' : '#7b8494' }));
-    textBlock(AR.x + 16, AR.y + 62, AR.w - 32, solved ? '✅ ' + p.who + ' ' + sci(p.N) + '개! 이렇게 작은 양에도 입자는 엄청 많아요.' : '질량 ÷ 몰질량 = 몰수, 몰수 × 6.02×10²³ = 입자 수예요.', 14.5, solved ? '#14803f' : MUTED, 20, 800);
+    textBlock(AR.x + 16, AR.y + 62, AR.w - 32, solved ? '✅ ' + p.who + ' ' + sci(p.N) + '개! 이렇게 작은 양에도 입자는 엄청 많아요.' : '질량 / 몰질량 = 몰수, 몰수 × 6.02×10²³ = 입자 수예요.', 14.5, solved ? '#14803f' : MUTED, 20, 800);
   }
   function apCheck() {
     const ap = S.ap, p = PB[ap.prob], note = $('#apNote');
@@ -539,6 +539,11 @@
     l1.textContent = L1; v1.textContent = a; l2.textContent = L2; v2.textContent = b; l3.textContent = L3; v3.textContent = c;
   }
 
+  /* ---- 미션 시작 때 되돌릴 상태 (이전 미션·단계에 남은 값 때문에 미션이 미리 풀려 있지 않게) ---- */
+  function resetFind() { S.fd.solved = {}; S.fd.tray = []; lastMatch = ''; }
+  function resetCmp() { S.an.val = RW.map(() => NaN); S.an.ok = RW.map(() => false); S.an.fill = RW.map(() => 0); RW.forEach((r, i) => { const el = $('#cmp' + i); if (el) { el.value = ''; el.classList.remove('ok', 'bad'); } }); }
+  function resetChain() { S.an.ch = [false, false, false]; S.an.shake = 0; ['#chA', '#chB', '#chC'].forEach((id) => { $(id).value = ''; $(id).classList.remove('ok', 'bad'); }); $('#chNote').textContent = '① 부터 차례로 맞혀요. 황산 H₂SO₄의 몰질량은 98 g/mol이에요.'; }
+  function resetApply() { S.ap.solved = {}; S.ap.a = {}; S.ap.b = {}; apFormReset(); }
   /* ================= 미션 ================= */
   const rwEx = RW.map((r) => r.f + ' ' + fm(r.n, 2) + ' mol').join(' · ');
   const levels = [
@@ -548,7 +553,7 @@
         '<div class="si-link">🔗 <b>앞 차시에서</b> 1 mol = 6.02×10²³개라는 것을 배웠어요. 그런데 입자 수는 직접 셀 수 없으니, <b>저울로 잰 질량</b>에서 몰수를 알아내야 해요. <b>통합과학</b>에서 배운 <b>원자량</b>이 열쇠예요.</div>' +
         '<p>탄소 원자 6.02×10²³개(1 mol)의 질량이 <b>12 g</b>이에요. 그래서 원자량 12인 탄소의 <b>몰질량은 12 g/mol</b>이에요. 원자 카드를 모아 분자와 화합물의 몰질량을 구해 봐요.</p>',
       features: ['find'],
-      setup() { S.gate = ''; S.fd.tray = []; lastMatch = ''; setScene('find'); },
+      setup() { S.gate = ''; resetFind(); setScene('find'); },
       recap: '몰질량(g/mol)은 물질 1 mol의 질량이에요. 원자량·분자량·화학식량의 숫자에 g/mol을 붙인 값이고, 분자와 화합물은 구성 원자의 원자량을 개수만큼 더해서 구해요.',
       summary: '<ul><li><b>몰질량</b> = 물질 1 mol의 질량 (단위 g/mol). 숫자는 원자량 · 분자량 · 화학식량과 같아요.</li><li>기준: 탄소 12 g = 1 mol (탄소 원자 6.02×10²³개)</li><li>H<sub>2</sub>O = 2×1 + 16 = <b>18</b> g/mol, CO<sub>2</sub> = 12 + 2×16 = <b>44</b> g/mol, NaCl = 23 + 35.5 = <b>58.5</b> g/mol</li><li>CaCl<sub>2</sub> = 40 + 2×35.5 = <b>111</b> g/mol (Cl이 2개이므로 2×35.5)</li></ul>',
       missions: [
@@ -556,7 +561,7 @@
           title: '물 · 이산화 탄소 · 염화 나트륨의 몰질량',
           goal: '원자 카드를 접시에 모아 <b>H₂O · CO₂ · NaCl</b>을 차례로 만들고 몰질량을 구하세요.',
           hint: '화학식의 작은 숫자가 원자 개수예요. 예) H₂O는 H 2개와 O 1개. 접시의 원자를 누르면 빠져요. 위의 물질 단추로 바꿔요.',
-          setup() { S.gate = ''; setScene('find'); },
+          setup() { S.gate = ''; resetFind(); setScene('find'); },
           check: () => ['h2o', 'co2', 'nacl'].every((id) => S.fd.solved[id]), hold: 0.6,
           status: () => ['h2o', 'co2', 'nacl'].map((id) => mark(S.fd.solved[id]) + ' ' + CMPS.find((c) => c.id === id).f + (S.fd.solved[id] ? ' = ' + fm(CMPS.find((c) => c.id === id).M) + ' g/mol' : '')).join(' &nbsp; '),
           explain: '물은 <b>2×1 + 16 = 18 g/mol</b>, 이산화 탄소는 <b>12 + 2×16 = 44 g/mol</b>, 염화 나트륨은 <b>23 + 35.5 = 58.5 g/mol</b>이에요. 원자량의 숫자에 g/mol을 붙이면 몰질량이 돼요.',
@@ -577,7 +582,7 @@
       intro: '<div class="si-link">🔗 <b>앞 단계에서</b> 몰질량은 1 mol의 질량이라는 것을 알았어요. 그러면 <b>0.5 mol</b>이나 <b>2 mol</b>은 몇 g일까요?</div>' +
         '<p>질량 <b>w = n × M</b>이에요. 물질과 몰수를 고르고 목표 질량을 <b>계산</b>해서, 약숟가락으로 덜어 저울의 눈금을 <b>±0.1 g</b> 안으로 맞춰 봐요.</p>',
       features: ['weigh'],
-      setup() { S.gate = ''; S.wg.sub = 0; S.wg.amt = 2; wgReset(); setScene('weigh'); },
+      setup() { S.gate = ''; S.wg.rec = {}; S.wg.last = ''; S.wg.sub = 0; S.wg.amt = 2; wgReset(); setScene('weigh'); },
       recap: '물질의 질량 w = 몰수 n × 몰질량 M이에요. 1 mol의 질량은 물질마다 달라요. 입자 하나의 질량이 다르기 때문이에요.',
       summary: '<ul><li><b>w = n × M</b>: 철 0.5 mol = 0.5 × 56 = 28 g, 구리 2 mol = 2 × 64 = 128 g, 탄산 칼슘 0.25 mol = 25 g</li><li>1 mol의 질량: 철 56 g, 물 18 g, 소금 58.5 g. <b>같은 1 mol, 다른 질량</b></li><li>1 mol에는 어떤 물질이든 입자가 6.02×10²³개 있어요. 입자 1개의 질량이 달라서 1 mol의 질량이 달라요.</li></ul>',
       missions: [
@@ -585,7 +590,7 @@
           title: '서로 다른 물질 3가지의 1 mol 달기',
           goal: '<b>서로 다른 물질 3가지</b>를 각각 <b>1 mol</b>씩 달아 저울의 눈금을 목표 질량 <b>±0.1 g</b>에 맞추세요.',
           hint: '물질과 1 mol을 고르고 몰질량 표의 값을 써서 w = 1 × M을 계산해요. 슬라이더로 가까이 맞추고 ±0.1, ±1 단추로 다듬어요. 눈금이 잠시 머물면 기록돼요.',
-          setup() { S.gate = ''; S.wg.amt = 2; wgReset(); setScene('weigh'); },
+          setup() { S.gate = ''; S.wg.rec = {}; S.wg.last = ''; S.wg.amt = 2; wgReset(); setScene('weigh'); },
           check: () => molDone() >= 3, hold: 0.4,
           status: () => '1 mol 달기 ' + molDone() + ' / 3 &nbsp; ' + WS.map((w) => (S.wg.rec[w.id + '-1'] ? '✅' + w.f : '⬜' + w.f)).join(' '),
           explain: '철 1 mol은 <b>56 g</b>, 구리는 <b>64 g</b>, 물은 <b>18 g</b>, 소금은 <b>58.5 g</b>, 탄산 칼슘은 <b>100 g</b>이에요. 모두 입자가 6.02×10²³개씩 들어 있지만 질량은 달라요.',
@@ -614,7 +619,7 @@
           title: '같은 18 g의 몰수 구하기', manual: true,
           goal: '물질 <b>5가지</b>를 각각 <b>18 g</b>씩 달았어요. 몰수를 구해 <b>소수 둘째 자리</b>까지 쓰고 <b>✔ 확인하기</b>를 누르세요.',
           hint: 'n = 18 ÷ M이에요. 물 18 ÷ 18 = 1.00, 마그네슘 18 ÷ 24 = 0.75예요. 몰질량은 그림 옆에 있어요. 맞으면 막대가 채워져요.',
-          setup() { S.gate = ''; S.sub.analyze = 'compare'; setScene('analyze'); },
+          setup() { S.gate = ''; S.sub.analyze = 'compare'; resetCmp(); setScene('analyze'); },
           check() {
             const bad = RW.filter((r, i) => !S.an.ok[i]);
             if (!bad.length) return true;
@@ -628,7 +633,7 @@
           title: '질량 → 몰 → 입자 수 3단 계산',
           goal: '<b>H₂SO₄ 49 g</b>에서 시작해 <b>몰수 → 분자 수 → 산소 원자의 몰수</b>를 차례로 구하세요.',
           hint: '① 49 ÷ 98 = 몰수. ② 몰수 × 6.02 (×10²³개). ③ 황산 분자 1개에 O 원자가 4개이므로 몰수 × 4예요.',
-          setup() { S.gate = ''; S.sub.analyze = 'chain'; setScene('analyze'); },
+          setup() { S.gate = ''; S.sub.analyze = 'chain'; resetChain(); setScene('analyze'); },
           check: () => S.an.ch.every(Boolean), hold: 0.6,
           status: () => '① 몰수 ' + mark(S.an.ch[0]) + ' &nbsp; ② 분자 수 ' + mark(S.an.ch[1]) + ' &nbsp; ③ 산소 원자 ' + mark(S.an.ch[2]),
           explain: 'H₂SO₄의 몰질량은 98 g/mol이라서 49 g은 <b>0.5 mol</b>이에요. 분자 수는 0.5 × 6.02×10²³ = <b>3.01×10²³개</b>, 분자 1개에 O 원자가 4개이므로 O 원자는 0.5 × 4 = <b>2.0 mol</b>이에요.',
@@ -649,7 +654,7 @@
       intro: '<div class="si-link">🔗 <b>앞 단계에서</b> 질량 → 몰 → 입자 수로 이어 가는 3단계 계산을 해 봤어요. 이제 <b>일상 속 양</b>에 적용해요.</div>' +
         '<p>설탕 한 스푼, 소금 한 꼬집에는 입자가 몇 개 들어 있을까요? 문제마다 <b>계산 방법</b>을 골라 몰수를 구하고, 입자 수까지 구해 봐요.</p>',
       features: ['apply'],
-      setup() { S.gate = ''; S.ap.prob = 0; apFormReset(); setScene('apply'); },
+      setup() { S.gate = ''; S.ap.prob = 0; resetApply(); setScene('apply'); },
       recap: '질량을 몰질량으로 나누면 몰수, 몰수에 6.02×10²³을 곱하면 입자 수예요. 작은 양에도 입자는 아주 많이 들어 있어요.',
       summary: '<ul><li>설탕 한 스푼 3.42 g (C<sub>12</sub>H<sub>22</sub>O<sub>11</sub> = 342 g/mol) → <b>0.0100 mol</b> → 분자 <b>6.02×10²¹개</b></li><li>소금 한 꼬집 0.585 g (NaCl = 58.5 g/mol) → <b>0.0100 mol</b> → Na<sup>+</sup> <b>6.02×10²¹개</b></li><li><b>몰질량</b>(g/mol)은 1 mol의 질량으로 단위가 있고, <b>화학식량</b>은 상대 질량이라 단위가 없어요. 숫자는 같아요.</li></ul>',
       missions: [
@@ -657,7 +662,7 @@
           title: '설탕 · 소금 한 스푼의 입자 수',
           goal: '<b>문제 2개 이상</b>을 풀어요. ① 질량 → 몰수 ② 몰수 → 입자 수의 <b>계산 방법을 고르고</b> 값을 써서 <b>✔ 계산 확인</b>을 눌러요.',
           hint: '① 몰질량으로 나눠요(÷ 몰질량). ② 6.02×10²³을 곱해요. ×10의 지수는 이미 정해져 있어서 앞 수만 써요. 몰질량은 위의 그림에 있어요.',
-          setup() { S.gate = ''; apFormReset(); setScene('apply'); },
+          setup() { S.gate = ''; S.ap.prob = 0; resetApply(); setScene('apply'); },
           check: () => apSolved() >= 2, hold: 0.5,
           status: () => '푼 문제 ' + apSolved() + ' / 2 &nbsp; ' + PB.map((p) => mark(S.ap.solved[p.id])).join(''),
           explain: '설탕 3.42 g ÷ 342 g/mol = <b>0.0100 mol</b>, 0.0100 × 6.02×10²³ = <b>6.02×10²¹개</b>예요. 소금 0.585 g ÷ 58.5 g/mol = 0.0100 mol이라서 Na⁺도 <b>6.02×10²¹개</b>예요.',
@@ -684,8 +689,7 @@
 
   /* ---------- 시작 ---------- */
   buildCmpInputs(); apFormReset();
-  setScene('find');
-  updateCtl();
+  setScene(S.mode);
   function stepAll1(dt) {
     S.an.shake = Math.max(0, S.an.shake - dt); S.ap.shake = Math.max(0, S.ap.shake - dt);
     stepFind(dt); stepWeigh(dt);

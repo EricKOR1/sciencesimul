@@ -75,7 +75,9 @@
       if (Math.abs(w) >= 0.6) { D.roundRect(Math.min(zx, zx + w), by, Math.abs(w), hn, 4); ctx.fillStyle = C.rgba(it.color, 0.9); ctx.fill(); }
       const txt = eJ(it.val) + (o.unit ? ' ' + o.unit : '');
       const ty = by + hn / 2 + 5;
-      if (Math.abs(w) > W * 0.55) T(zx + w - Math.sign(w) * 6, ty, txt, 12.5, '#fff', w >= 0 ? 'right' : 'left', 800);
+      ctx.save(); ctx.font = D.font(12.5, 800); const tw = ctx.measureText(txt).width; ctx.restore();
+      const outside = w >= 0 ? zx + w + 5 + tw <= x1 + 14 : zx + w - 5 - tw >= x0 - 8;   // 글자가 막대 밖(라벨 칸 쪽 포함)으로 넘치면 막대 안에 써요
+      if ((Math.abs(w) > W * 0.55 || !outside) && Math.abs(w) > tw + 12) T(zx + w - Math.sign(w) * 6, ty, txt, 12.5, '#fff', w >= 0 ? 'right' : 'left', 800);
       else if (w >= 0) T(zx + w + 5, ty, txt, 12.5, '#26324a', 'left', 800); else T(zx + w - 5, ty, txt, 12.5, '#26324a', 'right', 800);
     });
   }
@@ -144,9 +146,9 @@
      ① 일과 운동 에너지: 상자 밀기
      ===================================================== */
   const WPPM = (VW - 70) / 11, WX0 = 35, WGY = MH - 66, WBW = 0.9, FSC = PHONE ? 5 : 8;
-  function resetWork(keep) {
-    const p = S.w;
-    S.w = { F: p ? p.F : 4, s: p ? p.s : 9, fr: p ? p.fr : false, st: 'ready', x: 0, v: 0, t: 0, a: 0, kap: 1, rows: keep && p ? p.rows : [] };
+  function resetWork(keep, fresh) {   // fresh: 힘·거리·마찰도 처음 값(2 N, 5 m, 마찰 없음)으로 — 미션의 답이 미리 맞춰져 있지 않게
+    const p = fresh ? null : S.w;
+    S.w = { F: p ? p.F : 2, s: p ? p.s : 5, fr: p ? p.fr : false, st: 'ready', x: 0, v: 0, t: 0, a: 0, kap: 1, rows: keep && p ? p.rows : [] };
     updateCtl();
   }
   function workGo() {
@@ -194,8 +196,8 @@
     // 출발선과 속력 센서(도착선)
     const sx = WX0 + w.s * WPPM;
     D.dashedLine(WX0, WGY - 74, WX0, WGY + 8, { color: '#8b97ab', width: 2 }); T(WX0, WGY + 58, '출발선', 12, '#5a6679', 'left', 800);
-    ctx.fillStyle = '#26324a'; ctx.fillRect(sx - 1.5, WGY - 92, 3, 100);
-    D.roundRect(sx + 1.5, WGY - 92, 70, 20, 4); ctx.fillStyle = '#14a058'; ctx.fill(); T(sx + 36, WGY - 78, '속력 센서', 12, '#fff', 'center', 800);
+    ctx.fillStyle = '#26324a'; ctx.fillRect(sx - 1.5, WGY - 130, 3, 138);
+    D.roundRect(sx + 1.5, WGY - 130, 70, 20, 4); ctx.fillStyle = '#14a058'; ctx.fill(); T(sx + 36, WGY - 116, '속력 센서', 12, '#fff', 'center', 800);
     D.dashedLine(WX0, WGY + 44, sx, WGY + 44, { color: '#3867f4', width: 2.5, dash: [2, 0] });
     T((WX0 + sx) / 2, WGY + 58, 's = ' + w.s + ' m', 13, '#3867f4', 'center', 800);
     // 상자
@@ -205,8 +207,8 @@
     // 힘 화살표 (위)
     D.arrow(px, WGY - bh - 14, px + w.F * FSC, WGY - bh - 14, { color: '#f2873a', width: 6, label: 'F = ' + w.F + ' N', labelOffset: -17, labelSize: PHONE ? 12 : 13 });
     if (f > 0) { D.arrow(px + bw, WGY + 6, px + bw - f * FSC, WGY + 6, { color: '#e2464b', width: 5, head: 10 }); D.label(px + bw + 40, WGY + 5, '마찰 ' + f + ' N', { bg: '#e2464b', size: PHONE ? 12 : 13 }); }
-    if (w.st !== 'ready') D.label(px + bw / 2, WGY - bh - 62, 'v = ' + f2(w.v) + ' m/s', { bg: '#14a058', size: PHONE ? 12 : 13.5 });
-    if (w.st === 'done') D.label(sx + 36, WGY - 108, '측정 v = ' + f2(w.v) + ' m/s', { bg: '#26324a', size: 12.5 });
+    if (w.st === 'go') D.label(px + bw / 2, WGY - bh - 62, 'v = ' + f2(w.v) + ' m/s', { bg: '#14a058', size: PHONE ? 12 : 13.5 });
+    if (w.st === 'done') D.label(sx + 36, WGY - 146, '측정 v = ' + f2(w.v) + ' m/s', { bg: '#26324a', size: 12.5 });
     if (w.st === 'ready') T(VW / 2, PHONE ? 62 : 70, '▶ 밀기를 눌러 보세요', PHONE ? 14 : 15, '#5a6679', 'center', 800);
     if (w.kap > 1.01 && w.st === 'go') D.label(VW - (PHONE ? 70 : 90), PHONE ? 52 : 58, '⏩ ' + w.kap.toFixed(1) + '배 빠르게', { bg: '#26324a', size: 12.5 });
     parts.update(dt); parts.draw(ctx); endMain();
@@ -651,13 +653,13 @@
     const g = ctx.createLinearGradient(0, sy, 0, LOOPFY); g.addColorStop(0, '#cfd8e8'); g.addColorStop(1, '#9aa8c0'); ctx.fillStyle = g; ctx.fill();
     ctx.strokeStyle = '#6f7d97'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(ex, LOOPFY); ctx.stroke();
     // 루프 레일
-    const cy0 = LOOPFY - LRB - LOOP_R * LOOPPM, rr = LOOP_R * LOOPPM + LRB;
+    const cy0 = LOOPFY - LRB - LOOP_R * LOOPPM, rr = LOOP_R * LOOPPM + LRB + 2;   // 레일 안쪽 면이 공(반지름 LRB+2)에 닿도록
     ctx.strokeStyle = '#7a8aa6'; ctx.lineWidth = 6; ctx.beginPath(); ctx.arc(LOOPX, cy0, rr + 3, 0, TAU); ctx.stroke();
     ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(LOOPX, cy0, rr, 0, TAU); ctx.stroke();
     // 꼭대기 높이 표시와 출발 높이
-    const topH = 2 * LOOP_R, ty = LOOPFY - topH * LOOPPM;
+    const topH = 2 * LOOP_R, ty = LOOPFY - LRB - topH * LOOPPM;   // 공 중심이 꼭대기에 있을 때의 높이
     ctx.strokeStyle = '#d4a017'; ctx.lineWidth = 2; ctx.setLineDash([6, 4]); ctx.beginPath(); ctx.moveTo(Math.max(20, sx - 30), ty); ctx.lineTo(LOOPX + rr + 10, ty); ctx.stroke(); ctx.setLineDash([]);
-    T(Math.max(24, sx - 28), ty - 6, '꼭대기 높이 ' + f1(topH) + ' m', 12, '#8a6b00', 'left', 800);
+    T(LOOPX + rr + 14, ty + 4, '꼭대기 높이 ' + f1(topH) + ' m', 12, '#8a6b00', 'left', 800);
     D.arrow(sx - 14, LOOPFY - 2, sx - 14, sy + 2, { color: '#3867f4', width: 3.5, head: 9 });
     D.label(Math.max(sx - 14, 44), (LOOPFY + sy) / 2, 'h = ' + f1(L.h) + ' m', { bg: '#3867f4', size: PHONE ? 12 : 13 });
     // 공
@@ -842,7 +844,7 @@
         '<div class="si-link">🔗 <b>중학교에서</b> 일 = 힘 × 거리, 운동 에너지 ½mv²을 배웠어요. 이번에는 이 둘을 <b>식으로 이어서</b> 일을 하면 운동 에너지가 얼마나 늘어나는지 속력 센서로 확인해요.</div>' +
         '<p>마찰 없는 바닥의 <b>2.0 kg</b> 상자를 힘 F로 s만큼 밀어요. F–s 그래프의 <b>넓이</b>로 일 W를 읽고, 속력 센서로 구한 <b>운동 에너지 ½mv²</b>과 비교해요.</p>',
       features: ['work'],
-      setup() { S.showHIn = false; resetWork(false); setScene('work'); },
+      setup() { S.showHIn = false; resetWork(false, true); setScene('work'); },
       recap: '알짜힘이 한 일은 물체의 운동 에너지 변화와 같아요(W = ΔE_k). 마찰이 한 일은 음수여서 알짜 일만 운동 에너지로 바뀌어요.',
       summary: '<ul><li><b>일</b> W = Fs (힘의 방향으로 이동한 거리, 단위 J = N·m). F–s 그래프에서는 <b>그래프 아래 넓이</b>가 일이에요.</li><li><b>일–운동 에너지 정리</b>: 알짜힘이 한 일 W = ΔE_k = ½mv² − ½mv₀²</li><li>예) 2.0 kg 상자를 4 N으로 9 m 밀면 W = 36 J → ½ × 2.0 × v² = 36 → v = 6.0 m/s</li><li>마찰력 3 N이 함께 작용하면 마찰이 한 일은 −27 J(운동과 반대 방향이라 음수) → 알짜 일 9 J → v = 3.0 m/s</li><li>힘이 크다고 운동 에너지가 항상 큰 것은 아니에요. <b>알짜 일</b>이 운동 에너지의 변화를 정해요.</li></ul>',
       missions: [
@@ -860,7 +862,7 @@
           title: '마찰이 있을 때의 알짜 일',
           goal: '<b>마찰 3 N</b>을 켜고 <b>F = 4 N</b>으로 <b>s = 9 m</b>를 밀어 측정하세요. 힘이 한 일 36 J이 모두 운동 에너지가 될까요?',
           hint: '마찰 3 N 버튼을 누르고, 힘 슬라이더를 4 N, 거리 슬라이더를 9 m로 맞춘 뒤 ▶ 밀기를 눌러요.',
-          setup() { setScene('work'); },
+          setup() { resetWork(false, true); setScene('work'); },
           check: () => S.w.rows.some((r) => r.f === BOX.fr && r.F === 4 && r.s === 9),
           hold: 0.6,
           status: () => mark(S.w.fr) + ' 마찰 ' + BOX.fr + ' N &nbsp; ' + mark(S.w.F === 4) + ' F = 4 N &nbsp; ' + mark(S.w.s === 9) + ' s = 9 m',
@@ -998,6 +1000,9 @@
     },
   ];
 
+  /* 이어 하기(새로고침)로 중간 미션에서 열려도 미션 setup()이 만든 장면을 덮어쓰지 않도록, 장면 상태를 게임보다 먼저 만들어요 */
+  resetWork(false); resetPot(false); S.pt.ref = 1.1; resetCv(false); resetAp(false);
+  setScene('work');
   game = SciSim.game({
     simId: 'hp-mech-energy', mount: '#game', badge: '에너지 예측왕', homeHref: '../../index.html#hp',
     featureLabels: { work: '⚙️ 상자 밀기 · F–s 그래프 · 속력 센서', potential: '⬆️ 기준면 · 용수철 F–x 그래프', conserve: '🔁 에너지 막대그래프 · 낙하·비탈 · 용수철 발사', apply: '🎯 선반 올리기 · 루프 통과' },
@@ -1012,8 +1017,6 @@
   });
 
   /* ---------- 시작 ---------- */
-  resetWork(false); resetPot(false); S.pt.ref = 1.1; resetCv(false); resetAp(false);
-  setScene('work');
   let lastFree = false, lastKey = '';
   SciSim.loop((dt, t) => {
     S.clock = t;
