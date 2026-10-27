@@ -694,8 +694,8 @@
         const col = k === 'coli' ? '#16a34a' : '#6366f1';
         D.roundRect(x - bw / 2, top, bw, Math.max(0, base - top), 6); ctx.fillStyle = col; ctx.fill();
         T(x, top - 8, r.L + ' μm', 14, '#1f2d44', 'center', 800);
-      } else { ctx.setLineDash([5, 5]); ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 2; D.roundRect(x - bw / 2, ys(c.log ? 4 : 30), bw, ys(c.log ? vmin : 0) - ys(c.log ? 4 : 30), 6); ctx.stroke(); ctx.setLineDash([]); T(x, py0 + ph / 2, '아직 안 쟀어요', 13, '#94a3b8', 'center', 800); }
-      T(x, py0 + ph + 22, SPEC[k].nm, 13.5, '#334155', 'center', 800);
+      } else { ctx.setLineDash([5, 5]); ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 2; D.roundRect(x - bw / 2, ys(c.log ? 4 : 30), bw, ys(c.log ? vmin : 0) - ys(c.log ? 4 : 30), 6); ctx.stroke(); ctx.setLineDash([]); if (PHONE) { T(x, py0 + ph / 2 - 6, '아직', 12.5, '#94a3b8', 'center', 800); T(x, py0 + ph / 2 + 10, '안 쟀어요', 12.5, '#94a3b8', 'center', 800); } else T(x, py0 + ph / 2, '아직 안 쟀어요', 13, '#94a3b8', 'center', 800); }
+      T(x, py0 + ph + 22, SPEC[k].nm, PHONE ? 12 : 13.5, '#334155', 'center', 800);
       T(x, py0 + ph + 42, k === 'coli' ? '(원핵)' : '(진핵)', 13, k === 'coli' ? '#15803d' : '#4338ca', 'center', 800);
     });
     textBlock(CH.x + 18, CH.y + CH.h - 36, CH.w - 36, '막대는 눈금에 맞춰 그렸어요. 로그 눈금으로 바꾸면 크기가 크게 다른 세포도 한눈에 비교돼요.', 13.5, '#64748b', 19, 700);
@@ -1080,7 +1080,7 @@
     cards: [VNC[5], VNC[1], VNC[3], VNC[8], VNC[6], VNC[0], VNC[4], VNC[2], VNC[7]].map((c) => ({ id: c.id, label: c.label, short: c.short, col: '#64748b' })),
     boxes: [['p', '원핵세포만', '#15803d'], ['c', '공통점', '#7c3aed'], ['e', '진핵세포만', '#4338ca']].map((b, i) => { const gap = 8, bw = (VB.w - gap * 2) / 3; return { id: b[0], label: b[1], col: b[2], x: VB.x + i * (bw + gap), y: VB.y, w: bw, h: VB.h, cols: 1, hdr: 32 }; }),
     cw: PHONE ? 214 : 240, ch: PHONE ? 40 : 44, kh: PHONE ? 34 : 40,
-    tray: (i) => (PHONE ? { x: 12 + (i % 2) * 234, y: 296 + Math.floor(i / 2) * 48 } : { x: 28 + (i % 3) * 252, y: 300 + Math.floor(i / 3) * 56 }),
+    tray: (i) => (PHONE ? { x: 12 + (i % 2) * 234, y: 322 + Math.floor(i / 2) * 48 } : { x: 28 + (i % 3) * 252, y: 300 + Math.floor(i / 3) * 56 }),
     onChange() { updateCtl(); },
   });
   const vennWrong = () => venn.cards.filter((c) => c.zone && c.zone !== VNC.find((q) => q.id === c.id).ans);
@@ -1218,7 +1218,7 @@
           id: 'measure', title: '세포 크기 재기',
           goal: '시료 <b>2종 이상</b>을 접안 눈금으로 재어 📌 기록하고, 🖼 <b>이미지 분석</b>으로 사진 속 세포 폭도 재어 보세요.',
           hint: '시료를 끌어 왼쪽 끝을 0에 맞추고, 오른쪽 끝의 눈금을 눌러 읽어요. 양파 표피 세포는 100배, 구강 상피 세포는 400배, 효모와 대장균은 1000배가 읽기 좋아요. 이미지 분석은 ①스케일 바(50 μm)를 잡고 입력한 뒤 ②세포 폭을 재요.',
-          setup() { S.ms.rec = {}; S.ms.mark = null; S.ms.ox = 70; S.ms.fb = ''; S.ms.spec = 'onion'; S.ms.obj = 100; imReset(); setMode('measure'); updateCtl(); },
+          setup() { S.cal.v[400] = OBJ[400].c; S.ms.rec = {}; S.ms.mark = null; S.ms.ox = 70; S.ms.fb = ''; S.ms.spec = 'onion'; S.ms.obj = 100; imReset(); setMode('measure'); updateCtl(); },
           check: () => msCount() >= 2 && S.im.done, hold: 0.8,
           status: () => mark(msCount() >= 2) + ' 눈금으로 잰 시료 ' + msCount() + ' / 2 &nbsp; ' + mark(S.im.done) + ' 이미지 분석' + (S.im.meas != null ? ' (' + S.im.meas + ' μm)' : ''),
           explain: '양파 표피 세포는 약 150 μm, 구강 상피 세포는 약 50 μm, 효모는 약 8 μm, 대장균은 약 2 μm예요. 이미지 분석에서는 스케일 바(50 μm = 200 px)로 1 px = 0.25 μm를 구한 뒤, 세포 폭 160 px × 0.25 = <b>40 μm</b>를 얻어요. 눈금이 너무 적게 읽히면 오차가 커져서 배율을 높여야 해요.',

@@ -500,8 +500,8 @@
     if (SEQ.key === 'hbb') {
       const rx = P.x + P.w - (PHONE ? 54 : 110), ry = P.y + (PHONE ? 62 : 106), R = PHONE ? 32 : 56;
       drawRBC(rx, ry, R, SEQ.rbc);
-      TF(rx, P.y + P.h - (PHONE ? 52 : 70), SEQ.rbc > 0.5 ? '낫 모양 적혈구' : '둥근 적혈구', PHONE ? 104 : 190, PHONE ? 14 : 16, 11, SEQ.rbc > 0.5 ? '#b91c1c' : '#475569', 'center', 800);
-      if (SEQ.rbc > 0.5) TF(rx, P.y + P.h - (PHONE ? 32 : 46), 'Glu → Val (6번)', PHONE ? 104 : 190, 13.5, 10.5, '#7f1d1d', 'center', 700);
+      TF(rx, P.y + P.h - (PHONE ? 52 : 52), SEQ.rbc > 0.5 ? '낫 모양 적혈구' : '둥근 적혈구', PHONE ? 104 : 190, PHONE ? 14 : 16, 11, SEQ.rbc > 0.5 ? '#b91c1c' : '#475569', 'center', 800);
+      if (SEQ.rbc > 0.5) TF(rx, P.y + P.h - (PHONE ? 32 : 30), 'Glu → Val (6번)', PHONE ? 104 : 190, 13.5, 10.5, '#7f1d1d', 'center', 700);
     }
     // 만든 유형 칩
     const mk = [['silent', '침묵'], ['missense', '과오'], ['nonsense', '넌센스']].concat(SEQ.key === 'hbb' || SEQ.made.sickle ? [['sickle', '낫 모양']] : []);
@@ -583,10 +583,12 @@
     D.label(P.x + 16, P.y + 30, lab[0], { bg: lab[1], size: PHONE ? 15 : 17, align: 'left' });
     let y = P.y + 66;
     T(P.x + 16, y, '염기 수  ' + SEQ.orig.length + '개 → ' + SEQ.cur.length + '개' + (f.d === 0 ? '' : f.d % 3 === 0 ? ' (3의 배수만큼 변해요)' : ' (3의 배수가 아니에요)'), fs, '#26324a', 'left', 800); y += lh;
-    T(P.x + 16, y, '단백질  아미노산 ' + df.lenO + '개 → ' + df.lenM + '개' + (df.stopM < 0 ? ' (종결 코돈 없음)' : df.stopNew && df.lenM < df.lenO ? ' (이른 종결)' : ''), fs, '#26324a', 'left', 800); y += lh + 4;
+    T(P.x + 16, y, '단백질  아미노산 ' + df.lenO + '개 → ' + df.lenM + '개' + (df.stopM < 0 ? ' (종결 코돈 없음)' : df.stopNew && df.lenM < df.lenO ? (f.shift ? ' (이른 종결)' : ' (짧아졌어요)') : ''), fs, '#26324a', 'left', 800); y += lh + 4;
     let ex;
     if (f.same) ex = '염기를 삽입하거나 결실해 보세요. 읽기틀이 어떻게 달라지는지 살펴봐요.';
     else if (f.shift) ex = '코돈이 3염기씩 묶이는 자리가 밀려서 그 뒤의 아미노산이 모두 달라져요(원래 ' + df.om + '개 → ' + df.mm + '개).' + (df.stopM >= 0 && df.lenM < df.lenO ? ' 종결 코돈이 일찍 나타나 단백질이 짧아졌어요.' : '');
+    else if (df.mm === 0 && df.om > 0) ex = '3의 배수만큼 빠져서 뒤쪽 읽기틀은 그대로예요. 아미노산 ' + df.om + '개만 없어졌어요.';
+    else if (df.om === 0 && df.mm > 0) ex = '3의 배수만큼 끼어들어서 뒤쪽 읽기틀은 그대로예요. 아미노산 ' + df.mm + '개만 늘었어요.';
     else if (df.om > 0 || df.mm > 0) ex = '3의 배수만큼 변해서 뒤쪽 읽기틀은 그대로예요. 달라진 부분은 아미노산 ' + df.om + '개 → ' + df.mm + '개뿐이에요.';
     else ex = '읽기틀이 유지되고 아미노산도 그대로예요.';
     textBlock(P.x + 16, y, P.w - 32, ex, fs, '#475569', lh, 700);

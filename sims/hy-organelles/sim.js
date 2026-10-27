@@ -663,7 +663,7 @@
     cards: LMCARDS.map((c) => ({ id: c.id, label: c.label, col: '#64748b' })),
     boxes: [['lm', '🔬 광학 현미경으로 볼 수 있는 것', '#d97706'], ['em', '🔭 전자 현미경이 필요한 것', '#2563eb']].map((b, i) => { const gap = 10, bw = (LB.w - gap) / 2; return { id: b[0], label: b[1], col: b[2], x: LB.x + i * (bw + gap), y: LB.y, w: bw, h: LB.h, cols: 1, hdr: 36 }; }),
     cw: PHONE ? 214 : 240, ch: PHONE ? 50 : 56, kh: PHONE ? 44 : 48,
-    tray: (i) => (PHONE ? { x: 14 + (i % 2) * 236, y: 272 + Math.floor(i / 2) * 62 } : { x: 28 + (i % 3) * 252, y: 346 + Math.floor(i / 3) * 70 }),
+    tray: (i) => (PHONE ? { x: 14 + (i % 2) * 236, y: 304 + Math.floor(i / 2) * 62 } : { x: 28 + (i % 3) * 252, y: 346 + Math.floor(i / 3) * 70 }),
     onChange() { updateCtl(); },
   });
   const sortLMWrong = () => sortLM.cards.filter((c) => c.zone && c.zone !== LMCARDS.find((q) => q.id === c.id).ans);
@@ -716,8 +716,8 @@
       const gx = cu(0.17), gy = cv(0.86), gw = 0.17 * Q, gg = 0.024 * Q;
       add('gol', [gx, gy], gw * 0.62, () => OD.golgi(ctx, gx, gy, gw, 4, gg, 0.05, { th: gg * 0.62, ves: 4 }), (x, y) => Math.abs(x - gx) < gw * 0.6 && Math.abs(y - gy) < gg * 3);
       [[0.46, 0.13, 0.0], [0.70, 0.13, 0.05], [0.50, 0.89, 0.0], [0.76, 0.88, -0.05]].forEach(([u, v, rot]) => { const hx = cu(u), hy = cv(v), rx = 0.075 * Q, ry = 0.045 * Q; add('chl', [hx, hy], rx + 6, () => OD.chloro(ctx, hx, hy, rx, ry, rot), (x, y) => ((x - hx) / (rx + 3)) ** 2 + ((y - hy) / (ry + 3)) ** 2 < 1); });
-      [[0.14, 0.50, 1.3], [0.32, 0.90, 0.0]].forEach(([u, v, rot]) => { const mx = cu(u), my = cv(v), ml = 0.13 * Q, mw = 0.065 * Q, c = Math.cos(-rot), s = Math.sin(-rot); add('mit', [mx, my], ml * 0.55, () => OD.mito(ctx, mx, my, ml, mw, rot, { cs: mw * 0.28 }), (x, y) => { const dx = x - mx, dy = y - my, a = dx * c - dy * s, b = dx * s + dy * c; return Math.hypot(Math.max(0, Math.abs(a) - (ml - mw) / 2), b) < mw / 2 + 4; }); });
-      [[0.26, 0.55], [0.915, 0.5]].forEach(([u, v]) => { const rx = cu(u), ry = cv(v); add('rib', [rx, ry], 20, () => { for (let k = 0; k < 3; k++) OD.ribo2(ctx, rx + (k - 1) * 11, ry + (k % 2) * 7, 5.2, 1, 0.62); }, circ(rx, ry + 3, 20)); });
+      [[0.235, 0.53, 1.3], [0.32, 0.90, 0.0]].forEach(([u, v, rot]) => { const mx = cu(u), my = cv(v), ml = 0.13 * Q, mw = 0.065 * Q, c = Math.cos(-rot), s = Math.sin(-rot); add('mit', [mx, my], ml * 0.55, () => OD.mito(ctx, mx, my, ml, mw, rot, { cs: mw * 0.28 }), (x, y) => { const dx = x - mx, dy = y - my, a = dx * c - dy * s, b = dx * s + dy * c; return Math.hypot(Math.max(0, Math.abs(a) - (ml - mw) / 2), b) < mw / 2 + 4; }); });
+      [[0.27, 0.745], [0.915, 0.5]].forEach(([u, v]) => { const rx = cu(u), ry = cv(v); add('rib', [rx, ry], 20, () => { for (let k = 0; k < 3; k++) OD.ribo2(ctx, rx + (k - 1) * 11, ry + (k % 2) * 7, 5.2, 1, 0.62); }, circ(rx, ry + 3, 20)); });
     }
     return list;
   }
@@ -935,12 +935,12 @@ const THR = { sand: 500, clay: 3000, pig: 100000 };   // 10분 안에 모두 가
     c.disp = approach(c.disp, rcfOf(c.r, c.rpm), dt, 8); if (Math.abs(c.disp - rcfOf(c.r, c.rpm)) < 0.5) c.disp = rcfOf(c.r, c.rpm);
     if (c.run) {
       c.prog = Math.min(1, c.prog + dt / RUNT);
-      const pileTop = (kind) => TL - c.layer.sand - (kind === 'clay' ? c.layer.clay : 0);
       c.parts.forEach((p) => {
         if (p.done) return;
         const f = Math.min(c.F[p.kind], 4);
-        p.y = Math.min(p.y0 + f * TL * c.prog, pileTop(p.kind) - p.rad);
-        if (p.y >= pileTop(p.kind) - p.rad - 0.5) { p.done = true; c.settled[p.kind]++; }
+        const yf = p.y0 + f * TL * c.prog;          // 쌓인 층과 관계없이 입자가 실제로 내려간 위치
+        p.y = Math.min(yf, TL - p.rad);
+        if (yf >= TL - p.rad) { p.done = true; c.settled[p.kind]++; }
       });
       c.layer.sand = approach(c.layer.sand, c.settled.sand / c.total.sand * 36, dt, 10);
       c.layer.clay = approach(c.layer.clay, c.settled.clay / c.total.clay * 44, dt, 10);
@@ -1057,7 +1057,7 @@ const THR = { sand: 500, clay: 3000, pig: 100000 };   // 10분 안에 모두 가
   const FP = { nuc: { thr: 1000, rad: 5.5, n: 6 }, mit: { thr: 10000, rad: 4, n: 14 }, mic: { thr: 100000, rad: 1.8, n: 30 } };
   const SPDMIN = { 1000: 10, 10000: 20, 100000: 60 };
   const FT = PHONE
-    ? [0, 1, 2, 3].map((i) => ({ x: 70 + (i % 2) * 230, y: 40 + Math.floor(i / 2) * 214, w: 50, h: 150 }))
+    ? [0, 1, 2, 3].map((i) => ({ x: 70 + (i % 2) * 230, y: 40 + Math.floor(i / 2) * 226, w: 50, h: 150 }))
     : [0, 1, 2, 3].map((i) => ({ x: 120 + i * 180, y: 96, w: 62, h: 236 }));
   const FPANEL = PHONE ? { x: 10, y: 474, w: 460, h: 156 } : { x: 14, y: 410, w: 772, h: 136 };
   S.fr = { sol: 'sugar', parts: [], homog: false, burst: false, k: 0, runs: [], sel: null, busy: 0, phase: 'idle', t: 0, msg: '', tests: { dna: false, o2: false, er: false }, lbl: ['', '', ''], tv: 0 };

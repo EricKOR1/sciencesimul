@@ -755,7 +755,7 @@
       }
     });
     // 범례
-    const lgx = area.x + area.w - (PHONE ? 96 : 150), lgy = area.y + area.h - 24;
+    const lgx = PHONE ? area.x + 66 : area.x + area.w - 150, lgy = area.y + area.h - 24;
     ctx.fillStyle = '#fff'; ctx.strokeStyle = '#26324a'; ctx.lineWidth = 2; ctx.fillRect(lgx - 52, lgy - 7, 12, 12); ctx.strokeRect(lgx - 52, lgy - 7, 12, 12);
     ctx.beginPath(); ctx.arc(lgx - 30, lgy - 1, 6.5, 0, TAU); ctx.stroke();
     T(lgx - 20, lgy + 4, '정상', 12, '#475569', 'left', 700);

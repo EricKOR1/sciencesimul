@@ -885,7 +885,7 @@
     if (G.vesOn) T(x0 + 48, mid + G.cy + 5, exo ? '분비 소낭 (인슐린)' : '소낭', 13.5, exo ? '#6b21a8' : '#475569', 'left', 800, { stroke: 'rgba(255,255,255,.85)', strokeWidth: 3 });
     // ATP 표시 (큰 물질 수송은 ATP 필요)
     const act = (q > 0.2 && q < 0.9 && B.play) ? 1 : 0;
-    D.label(BKP.x + 140, BKP.y + 24, act && Math.floor(t * 4) % 2 ? '⚡ ATP 사용' : '⚡ ATP 필요', { bg: act ? '#f59e0b' : '#64748b', size: 13.5 });
+    D.label(BKP.x + (PHONE ? 70 : 140), BKP.y + (PHONE ? 58 : 24), act && Math.floor(t * 4) % 2 ? '⚡ ATP 사용' : '⚡ ATP 필요', { bg: act ? '#f59e0b' : '#64748b', size: 13.5 });
     // 정보 패널
     panel(BKI.x, BKI.y, BKI.w, BKI.h, 16, '#ffffff');
     const I = BKI, step = B.p < 0.25 ? 0 : B.p < 0.55 ? 1 : B.p < 0.8 ? 2 : 3;

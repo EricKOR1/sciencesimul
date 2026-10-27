@@ -300,7 +300,7 @@
       const dx = L(125, 100) * (k % 2 ? 1 : -1), dy = L(95, 100) * (k < 2 ? -1 : 1);
       return { x: c.x + dx + Math.cos(th) * 28, y: c.y + dy + Math.sin(th) * 28, a: th + Math.PI };
     }
-    if (i < 30) { const th = (i / 30) * TAU - Math.PI / 2; return { x: c.x + Math.cos(th) * 84, y: c.y + Math.sin(th) * 84, a: th + Math.PI }; }
+    if (i < 30) { const th = (i / 30) * TAU - Math.PI / 2; return { x: c.x + Math.cos(th) * 100, y: c.y + Math.sin(th) * 100, a: th + Math.PI }; }
     const j = i - 30, th = (j / 14) * TAU - Math.PI / 2 + 0.2;
     return { x: c.x + Math.cos(th) * 38, y: c.y + Math.sin(th) * 38, a: th };
   }
@@ -347,7 +347,7 @@
       ctx.save(); ctx.globalAlpha = 0.9; const g = ctx.createRadialGradient(c.x, c.y, 2, c.x, c.y, 40); g.addColorStop(0, '#e8f6ff'); g.addColorStop(1, '#c9e6fa'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(c.x, c.y, 31, 0, TAU); ctx.fill(); ctx.restore();
       T(c.x, c.y + 5, '안쪽 물', 13, '#1d4f91', 'center', 800);
       T(c.x + 112, c.y - 98, '바깥 물', 13, '#1d4f91', 'center', 800);
-      callout(c.x + 62, c.y - 56, c.x + 118, c.y - 128, '머리가 물과 닿는 바깥층', { line: '#2563eb', size: 12.5 });
+      callout(c.x + 74, c.y - 68, c.x + 130, c.y - 140, '머리가 물과 닿는 바깥층', { line: '#2563eb', size: 12.5 });
       callout(c.x + 24, c.y + 28, c.x + 110, c.y + 130, '머리가 안쪽 물과 닿는 안쪽층', { line: '#2563eb', size: 12.5 });
     }
     S.as.lip.map((l, i) => ({ l, i })).sort((a, b) => a.l.y - b.l.y).forEach(({ l, i }) => {
@@ -1100,7 +1100,7 @@
           hint: '온도 37 °C, 불포화 40 %, 콜레스테롤 없음 그대로 ▶ 재생을 눌러요. 그래프의 초록 점선(85 %)에 닿으면 시간이 표시돼요. 1초에 약 2.5분이 지나가요.',
           setup() { setMode('fluid'); S.fx.T = 37; S.fx.u = 40; S.fx.chol = false; $('#sFT').value = 37; $('#sFU').value = 40; fxReset(); },
           check: () => S.fx.T >= 36 && S.fx.t85 != null, hold: 0.6,
-          status: () => mark(S.fx.T >= 36) + ' 37 °C &nbsp; ' + mark(S.fx.t85 != null) + ' 섞인 정도 ' + S.fx.mix + ' % (목표 ' + FX_THR + ' %) &nbsp; ' + mark(S.fx.t85 != null) + ' 걸린 시간 ' + (S.fx.t85 != null ? S.fx.t85.toFixed(1) + '분' : '—'),
+          status: () => mark(S.fx.T >= 36) + ' 37 °C &nbsp; ' + mark(S.fx.t85 != null) + ' 섞인 정도 ' + (S.fx.t85 != null ? FX_THR + ' % 이상 도달' : S.fx.mix + ' % (목표 ' + FX_THR + ' %)') + ' &nbsp; ' + mark(S.fx.t85 != null) + ' 걸린 시간 ' + (S.fx.t85 != null ? S.fx.t85.toFixed(1) + '분' : '—'),
           explain: '37 °C에서는 막이 액체처럼 흘러 막 단백질이 옆으로 이동해서 빨강 · 초록 형광이 <b>약 40분</b> 안팎에 섞여요(원 실험에서는 약 40분 뒤 완전히 섞임). 막 단백질이 막 안에서 움직인다는 증거예요.',
         },
         {

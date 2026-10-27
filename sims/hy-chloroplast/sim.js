@@ -674,7 +674,7 @@
         });
         // 용매 전선
         const fy = yAt(2 + f); ctx.save(); ctx.globalAlpha = c.marked ? 1 : 0.85 * (1 - 0.6 * c.fade); ctx.strokeStyle = c.marked ? '#7c3aed' : '#60a5fa'; ctx.lineWidth = c.marked ? 2.4 : 3; ctx.setLineDash(c.marked ? [] : [6, 3]); ctx.beginPath(); ctx.moveTo(px - pw / 2, fy); ctx.lineTo(px + pw / 2, fy); ctx.stroke(); ctx.restore();
-        if (c.marked) T(px + pw / 2 + 8, fy + 4, '용매 전선', 12.5, '#7c3aed', 'left', 800);
+        if (c.marked) T(px, fy - 7, '용매 전선', PHONE ? 11.5 : 12.5, '#7c3aed', 'center', 800);
       }
     } else { ctx.save(); ctx.globalAlpha = 0.7; ctx.fillStyle = '#4d7c0f'; ctx.fillRect(px - pw / 2 + 1, yAt(c.depth + 0.0) - 2, pw - 2, 6); ctx.restore(); }
     // 병 (앞) · 뚜껑
@@ -852,7 +852,7 @@
     const lx = I.x + (PHONE ? 30 : 56), ly = I.y + (PHONE ? 78 : 84);
     // 잎
     ctx.save(); ctx.translate(lx + (PHONE ? 70 : 90), ly + 36); ctx.rotate(-0.1); ctx.beginPath(); ctx.ellipse(0, 0, PHONE ? 62 : 80, PHONE ? 20 : 24, 0, 0, TAU); const lg = ctx.createLinearGradient(-60, 0, 60, 0); lg.addColorStop(0, '#4ade80'); lg.addColorStop(1, '#16a34a'); ctx.fillStyle = lg; ctx.fill(); ctx.strokeStyle = '#14532d'; ctx.lineWidth = 2; ctx.stroke(); ctx.restore();
-    T(lx + (PHONE ? 70 : 90), ly + (PHONE ? 78 : 80), '잎에 ' + wlName(s.wl) + ' 빛을 비춰요', 12.5, '#475569', 'center', 800);
+    if (PHONE) T(I.x + 14, I.y + 17, '잎에 ' + wlName(s.wl) + ' 빛을 비춰요', 12.5, '#475569', 'left', 800); else T(lx + 90, ly + 80, '잎에 ' + wlName(s.wl) + ' 빛을 비춰요', 12.5, '#475569', 'center', 800);
     D.arrow(lx, ly - 40, lx + (PHONE ? 66 : 84), ly + 14, { color: wlColor(s.wl), width: 7, head: 16 });
     T(lx - 4, ly - 46, s.wl + ' nm', 13.5, '#1f2d44', 'left', 800);
     D.arrow(lx + (PHONE ? 74 : 94), ly + 12, lx + (PHONE ? 140 : 180), ly - 40, { color: wlColor(s.wl), width: Math.max(1.5, 7 * (1 - a)), head: 12, alpha: 0.35 + 0.65 * (1 - a) });
@@ -916,9 +916,10 @@
       const col = C.mix(C.mix('#f59e0b', '#dc2626', 0.35 * (1 - green)), '#16a34a', green * 0.9);
       ctx.save(); ctx.translate(sx + (PHONE ? 80 : 160), sy + 62); ctx.beginPath(); ctx.ellipse(0, 0, 36, 16, -0.3, 0, TAU); ctx.fillStyle = '#16a34a'; ctx.fill(); ctx.restore();
       ctx.save(); ctx.translate(sx + (PHONE ? 250 : 360), sy + 62); ctx.beginPath(); ctx.ellipse(0, 0, 36, 16, -0.3, 0, TAU); ctx.fillStyle = col; ctx.fill(); ctx.restore();
-      T(sx + (PHONE ? 360 : 520), sy + 110, '단풍이 드는 까닭을', 14, '#475569', 'left', 700); T(sx + (PHONE ? 360 : 520), sy + 132, '색소의 변화로 설명해요.', 14, '#475569', 'left', 700);
+      if (PHONE) T(sx + 230, sy + 414, '단풍이 드는 까닭을 색소의 변화로 설명해요.', 13, '#475569', 'center', 700);
+      else { T(sx + 520, sy + 110, '단풍이 드는 까닭을', 14, '#475569', 'left', 700); T(sx + 520, sy + 132, '색소의 변화로 설명해요.', 14, '#475569', 'left', 700); }
       if (!PHONE) { T(sx + 520, sy + 180, '띠를 눌러 “옅어짐”으로 바꾸거나', 13.5, '#64748b', 'left', 700); T(sx + 520, sy + 202, '오른쪽 목록의 버튼을 눌러요.', 13.5, '#64748b', 'left', 700); if (fiOk[0]()) { T(sx + 520, sy + 250, '엽록소가 먼저 분해되어', 14.5, '#15803d', 'left', 800); T(sx + 520, sy + 272, '카로티노이드의 노랑 · 주황이', 14.5, '#15803d', 'left', 800); T(sx + 520, sy + 294, '드러나요. (붉은 단풍의 안토사이아닌은', 14.5, '#15803d', 'left', 800); T(sx + 520, sy + 316, '새로 합성돼요)', 14.5, '#15803d', 'left', 800); } }
-      else if (fiOk[0]()) T(sx + 230, sy + 440, '엽록소가 먼저 분해되어 카로티노이드의 노랑 · 주황이 드러나요.', 12.5, '#15803d', 'center', 800);
+      else if (fiOk[0]()) T(sx + 230, sy + 446, '엽록소가 먼저 분해되어 카로티노이드의 노랑 · 주황이 드러나요.', 12.5, '#15803d', 'center', 800);
     } else if (f.sit === 1) {
       f.grM.set(f.shade.gr === 'more' && f.shade.b === 'more' ? 1 : 0); f.grM.update(dt, 4);
 const k = PHONE ? 1.3 : 1.4, y = sy + (PHONE ? 190 : 250);
@@ -938,10 +939,10 @@ const k = PHONE ? 1.3 : 1.4, y = sy + (PHONE ? 190 : 250);
       const sg = ctx.createLinearGradient(0, y0, 0, y0 + h); sg.addColorStop(0, '#bae6fd'); sg.addColorStop(1, '#0c4a6e'); D.roundRect(x0, y0, w, h, 14); ctx.fillStyle = sg; ctx.fill();
       [['적색', 0.18, '#ef4444', 80], ['녹색', 0.62, '#22c55e', 0.0], ['청색', 0.95, '#3b82f6', 0.0]].forEach(([n, pen, col], i) => { const bx = x0 + 28 + i * (w - 56) / 2.4, depth = pen * (h - 40); ctx.save(); ctx.fillStyle = col; ctx.globalAlpha = 0.85; ctx.fillRect(bx - 12, y0 + 6, 24, depth); ctx.restore(); T(bx, y0 + 6 + depth + 18, n, 12.5, '#fff', 'center', 800); });
       T(x0 + w / 2, y0 + h + 22, '깊이가 깊을수록 적색 빛은 먼저 사라져요', PHONE ? 12 : 13.5, '#475569', 'center', 800);
-      const ok = fiOk[3](); const ay = y0 + h * 0.74; ctx.save(); for (let i = 0; i < 5; i++) { ctx.fillStyle = '#b91c1c'; ctx.beginPath(); ctx.ellipse(x0 + w * 0.5 + (i - 2) * 22, ay + (i % 2) * 8, 11, 17, 0.3 * (i - 2), 0, TAU); ctx.fill(); } ctx.restore();
+      const ok = fiOk[3](); const ay = y0 + 6 + (h - 40) * 0.46; ctx.save(); for (let i = 0; i < 5; i++) { ctx.fillStyle = '#b91c1c'; ctx.beginPath(); ctx.ellipse(x0 + w * 0.5 + (i - 2) * 22, ay + (i % 2) * 8, 11, 17, 0.3 * (i - 2), 0, TAU); ctx.fill(); } ctx.restore();
       D.label(x0 + w * 0.5, ay - 34, '🌿 붉은 해조류', { bg: '#fff', color: '#991b1b', border: '#fca5a5', size: 13.5 });
       if (ok) { for (let i = 0; i < 3; i++) { const u = (t * 0.6 + i / 3) % 1; D.arrow(x0 + w * 0.5 - 40 + i * 40, ay - 90 + u * 40, x0 + w * 0.5 - 30 + i * 40, ay - 52 + u * 40, { color: '#22c55e', width: 3, head: 9, alpha: Math.sin(u * Math.PI) }); } }
-      T(x0 + w + 18, y0 + 26, '붉은색은 녹색 빛을', PHONE ? 12 : 14, '#475569', 'left', 700); T(x0 + w + 18, y0 + 48, '반사해서 보이는 색이에요.', PHONE ? 12 : 14, '#475569', 'left', 700);
+      T(x0 + w + 18, y0 + 26, '붉은색은 녹색 빛을 흡수하고', PHONE ? 12 : 14, '#475569', 'left', 700); T(x0 + w + 18, y0 + 48, '붉은 빛을 반사해서 보여요.', PHONE ? 12 : 14, '#475569', 'left', 700);
       if (ok) { T(x0 + w + 18, y0 + 100, '보조 색소(피코에리트린)가', PHONE ? 12 : 14, '#15803d', 'left', 800); T(x0 + w + 18, y0 + 122, '녹색 빛을 흡수해 엽록소 a 에', PHONE ? 12 : 14, '#15803d', 'left', 800); T(x0 + w + 18, y0 + 144, '에너지를 전달해요.', PHONE ? 12 : 14, '#15803d', 'left', 800); }
     }
   }

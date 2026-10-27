@@ -730,9 +730,9 @@
     const w2 = 14000 / 2.2e6 * bw, my = by + 118;
     T(bx, my - 14, '성숙 mRNA: 약 1.4만 염기 (같은 눈금)', L(14, 12.5), '#15803d', 'left', 800);
     ctx.fillStyle = COLS.exon; ctx.fillRect(bx, my, w2, 14);
-    ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1; ctx.setLineDash([3, 4]); ctx.beginPath(); ctx.moveTo(bx, my + 14); ctx.lineTo(bx + 50, my + 70); ctx.moveTo(bx + w2, my + 14); ctx.lineTo(bx + 50 + 230, my + 70); ctx.stroke(); ctx.setLineDash([]);
+    ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1; ctx.setLineDash([3, 4]); ctx.beginPath(); ctx.moveTo(bx, my + 14); ctx.lineTo(bx + 50, my + 70); ctx.moveTo(bx + w2, my + 14); ctx.lineTo(bx + 50 + (PHONE ? 170 : 230), my + 70); ctx.stroke(); ctx.setLineDash([]);
     // 확대
-    const zx = bx + 50, zy = my + 70, zw = 230;
+    const zx = bx + 50, zy = my + 70, zw = PHONE ? 170 : 230;
     ctx.fillStyle = '#f1f5f9'; rr(zx - 4, zy - 4, zw + 8, 48, 8); ctx.fill(); ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.5; ctx.stroke();
     for (let i = 0; i < 79; i++) { ctx.fillStyle = i % 2 ? '#16a34a' : '#15803d'; ctx.fillRect(zx + i * zw / 79, zy, zw / 79 + 0.4, 40); }
     T(zx + zw + 16, zy + 18, '약 ' + Math.round(zw / w2) + '배 확대', L(14, 12.5), '#475569', 'left', 800);
@@ -817,7 +817,7 @@
     { id: 'repeat', label: '반복 서열', g: 'e', icon: '🔁', col: '#2563eb' },
     { id: 'exon', label: '엑손', g: 'e', icon: '🟩', col: '#2563eb' },
     { id: 'promoter', label: '프로모터', g: 'c', icon: '🚦', col: '#7c3aed' },
-    { id: 'code', label: '유전 부호 (3염기 암호)', g: 'c', icon: '🔤', col: '#7c3aed' },
+    { id: 'code', label: PHONE ? '유전 부호' : '유전 부호 (3염기 암호)', g: 'c', icon: '🔤', col: '#7c3aed' },
   ];
   const VNG = PHONE
     ? { boxes: [{ id: 'p', x: 8, y: 74, w: 148, h: 300, label: '원핵생물만', col: '#16a34a' }, { id: 'c', x: 166, y: 74, w: 148, h: 300, label: '공통', col: '#7c3aed' }, { id: 'e', x: 324, y: 74, w: 148, h: 300, label: '진핵생물만', col: '#2563eb' }], cw: 148, ch: 44, per: 3, x0: 8, y0: 392, dx: 156, dy: 52, kh: 40 }

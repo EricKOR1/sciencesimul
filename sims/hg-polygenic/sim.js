@@ -581,7 +581,7 @@
     const hr = PHONE ? { x: 8, y: 386, w: 464, h: VH - 386 - 8 } : { x: 14, y: hy, w: 772, h: VH - hy - 12 };
     x.hist.draw(hr, {
       ymax: x.ymax, title: '자손의 키 분포 (자손 ' + fmtN(x.hist.total()) + '명)', sub: x.th ? '점선: 이론 비율' : '', gap: n > 5 ? 0.12 : 0.2, theory: x.theory, showTh: x.th,
-      every: n > 5 ? 2 : 0, labFn: (k) => [String(k), cmOf(k) + ' cm'], xlab: '대문자 대립유전자 수 k (키 = 160 + 2k cm)', valLab: n <= 3,
+      every: n > 5 ? (PHONE ? 4 : 2) : 0, labFn: (k) => [String(k), cmOf(k) + ' cm'], xlab: '대문자 대립유전자 수 k (키 = 160 + 2k cm)', valLab: n <= 3,
       curve: n >= 8 && x.hist.total() > 200,
     });
     void hy;
@@ -606,9 +606,14 @@
     const nb = ENV.hi - ENV.lo + 1;
     const R = PHONE ? { x: 8, y: 8, w: 464, h: 356 } : { x: 14, y: 10, w: 772, h: 350 };
     panel(R.x, R.y, R.w, R.h, 14, '#fff');
-    TF(R.x + 12, R.y + 24, '같은 유전자형 100명의 키 분포 (환경 변이 ±' + e.E + ' cm)', R.w - 24, L(16, 14), 10.5, '#334155', 'left', 800);
-    const px = R.x + 40, pw = R.w - 54, top = R.y + 62, base = R.y + R.h - 44, ph = base - top, ymax = 60;
-    [0, 20, 40, 60].forEach((v) => { const yy = base - ph * v / ymax; ctx.strokeStyle = v === 0 ? '#94a3b8' : '#e2e8f0'; ctx.lineWidth = v === 0 ? 1.6 : 1; ctx.beginPath(); ctx.moveTo(px, yy); ctx.lineTo(px + pw, yy); ctx.stroke(); T(px - 6, yy + 4, String(v), 11.5, '#64748b', 'right', 700); });
+    TF(R.x + 12, R.y + 24, '같은 유전자형 100명의 키 분포 (환경 변이 ±' + e.E + ' cm)', R.w - 24 - L(0, 150), L(16, 14), 10.5, '#334155', 'left', 800);
+    const px = R.x + 40, pw = R.w - 54, top = R.y + 62, base = R.y + R.h - 44, ph = base - top;
+    // 세로축은 가장 높은 막대에 맞춰 부드럽게 바뀌어요 (막대가 잘리지 않게)
+    let peak = 0; for (let g = 0; g < 3; g++) if (e.on[g]) peak = Math.max(peak, Math.max.apply(null, envCounts(g, e.E)));
+    const sc = [{ m: 20, s: 5 }, { m: 40, s: 10 }, { m: 60, s: 20 }, { m: 100, s: 20 }].find((q) => q.m >= peak) || { m: 100, s: 20 };
+    e.ym = e.ym == null || RM ? sc.m : approach(e.ym, sc.m, dt, 8);
+    const ymax = e.ym;
+    for (let v = 0; v <= sc.m + 0.001; v += sc.s) { if (v > ymax * 1.001) continue; const yy = base - ph * v / ymax; ctx.strokeStyle = v === 0 ? '#94a3b8' : '#e2e8f0'; ctx.lineWidth = v === 0 ? 1.6 : 1; ctx.beginPath(); ctx.moveTo(px, yy); ctx.lineTo(px + pw, yy); ctx.stroke(); T(px - 6, yy + 4, String(v), 11.5, '#64748b', 'right', 700); }
     T(R.x + R.w - 12, top - 8, '세로축: 사람 수 (명)', 11.5, '#64748b', 'right', 700);
     const slot = pw / nb;
     // 범례 (켜 둔 집단)

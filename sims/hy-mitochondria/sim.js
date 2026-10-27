@@ -333,6 +333,12 @@
       return { pi, x, y, w: g.tcw, h: g.tch, hx: x, hy: y, lift: 0, shake: 0, state: 'tray', alpha: 1 };
     });
   }
+  /* 이어 하기(새로고침) 등으로 모형이 비어 있을 때 부품을 모두 맞춰 놓아요 */
+  function bFillAll() {
+    const b = S.b; if (b.placed.every(Boolean)) return;
+    b.placed = PARTS.map(() => true); b.a = PARTS.map(() => 1); b.sel = -1; b.drag = null; b.hov = -1;
+    b.tok.forEach((t) => { t.state = 'placed'; t.x = t.hx; t.y = t.hy; });
+  }
   function bReset() {
     const b = S.b; b.placed = PARTS.map(() => false); b.a = PARTS.map(() => 0); b.sel = -1; b.drag = null; b.hov = -1; b.flash.length = 0; bTokInit(); updateCtl();
   }
@@ -1013,7 +1019,7 @@
           id: 'name', title: '단면 구조에 이름 붙이기', manual: true,
           goal: '모형을 정면에서 본 <b>세로 단면</b>이에요. 핀 ①~⑤가 가리키는 구조의 이름을 오른쪽 목록에서 고르세요.',
           hint: '가장 바깥을 감싼 막은 외막이에요. 안쪽 막이 안으로 접힌 주름이 크리스타이고, 내막 안쪽의 액체가 기질이에요.',
-          setup() { setMode('build'); S.b.nameMode = true; S.nmChk = false; [0, 1, 2, 3, 4].forEach((i) => { $('#nm' + i).value = ''; }); bCut(1); bFront(); updateCtl(); },
+          setup() { setMode('build'); bFillAll(); S.b.nameMode = true; S.nmChk = false; [0, 1, 2, 3, 4].forEach((i) => { $('#nm' + i).value = ''; }); bCut(1); bFront(); updateCtl(); },
           check() {
             const miss = [0, 1, 2, 3, 4].find((i) => !nmVal(i));
             if (miss != null) { S.nmChk = false; return '핀 5개의 이름을 모두 골라 주세요. (핀 ' + '①②③④⑤'[miss] + ' 이 비었어요)'; }
@@ -1026,7 +1032,7 @@
         {
           type: 'quiz', title: '미토콘드리아의 막',
           goal: '미토콘드리아의 막은 <b>몇 겹</b>이고, 안쪽 막은 어떤 모양일까요?',
-          setup() { setMode('build'); S.b.nameMode = false; updateCtl(); },
+          setup() { setMode('build'); bFillAll(); S.b.nameMode = false; updateCtl(); },
           choices: ['한 겹이고, 안쪽이 매끈하다', '이중막이고, 안쪽 막이 안으로 접힌 크리스타를 이룬다', '이중막이고, 바깥쪽 막이 안으로 접힌다', '세 겹이고, 가운데 막이 접힌다'],
           answer: 1,
           feedback: ['외막과 내막, 두 겹이에요.', '', '접히는 것은 안쪽 막(내막)이에요.', '막은 외막과 내막 두 겹이에요.'],

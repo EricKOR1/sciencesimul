@@ -434,7 +434,7 @@
     });
     if (o.t > 0.1) { const x = pl.X(o.t), y = pl.Y(obVol(0)); D.sphere(x, y, 6, '#ef4444', { gloss: false }); }
     // 범례
-    FL.forEach((f, i) => { const lx = Gp.x + Gp.w - (PHONE ? 118 : 138), ly = Gp.y + 30 + i * 18; ctx.strokeStyle = f.bal; ctx.lineWidth = 3; if (i) ctx.setLineDash([i * 3 + 2, 4]); ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(lx + 20, ly); ctx.stroke(); ctx.setLineDash([]); T(lx + 26, ly + 4.5, f.id + (i ? ' 대조군' : ' 실험군'), 12, '#475569', 'left', 700); });
+    FL.forEach((f, i) => { const lx = PHONE ? Gp.x + 150 + i * 76 : Gp.x + Gp.w - 138, ly = PHONE ? Gp.y + 20 : Gp.y + 30 + i * 18; ctx.strokeStyle = f.bal; ctx.lineWidth = 3; if (i) ctx.setLineDash([i * 3 + 2, 4]); ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(lx + (PHONE ? 16 : 20), ly); ctx.stroke(); ctx.setLineDash([]); T(lx + (PHONE ? 21 : 26), ly + 4.5, f.id + (i ? (PHONE ? ' 대조' : ' 대조군') : (PHONE ? ' 실험' : ' 실험군')), 12, '#475569', 'left', 700); });
     // 석회수 시험관
     const Tp = g.Tp; panel(Tp.x, Tp.y, Tp.w, Tp.h, 16, '#fff');
     T(Tp.x + 12, Tp.y + 22, '🧪 석회수 검사', PHONE ? 13.5 : 14.5, '#1f2d44', 'left', 800);
@@ -527,14 +527,16 @@
   }
   function daReset() { const d = S.da; d.m = { temp: [], glu: [], yeast: [], o2: [] }; d.anim = null; d.sp.forEach((s) => { s.target = 0; s.value = 0; }); d.read = { opt: '', rows: ['', '', ''] }; d.chk = false; updateCtl(); }
   function daSel(i) { const d = S.da; if (d.anim) return; d.sel = i; Sound.tick(); updateCtl(); }
+  /* 풍선 반지름: 부피가 커도 제목 글씨를 덮지 않게 (데스크톱 10 ~ 19) */
+  const balR = (v, g) => (PHONE ? Math.min(g.fw * 0.5, 13 + 5.6 * Math.cbrt(v)) * 0.55 : 10 + 9 * Math.cbrt(clamp(v, 0, 60) / 60));
   function daDraw(dt, t) {
     const d = S.da, g = daG(), k = ivOf(), f = FAC[k], mm = d.m[k];
     if (d.anim) {
       d.anim.p += dt / (RM ? 0.3 : 3.0);
       const tr = trials(f.mean[d.anim.i]);
-      d.sp.forEach((s, j) => { s.target = d.anim.p > 0.12 ? Math.min(g.fw * 0.5, 13 + 5.6 * Math.cbrt(tr[j])) * (PHONE ? 0.55 : 0.8) : 0; });
+      d.sp.forEach((s, j) => { s.target = d.anim.p > 0.12 ? balR(tr[j], g) : 0; });
       if (d.anim.p >= 1) { mm[d.anim.i] = trials(f.mean[d.anim.i]); d.anim = null; Sound.success(); updateCtl(); }
-    } else d.sp.forEach((s) => { const cur = mm[d.sel]; s.target = cur ? Math.min(g.fw * 0.5, 13 + 5.6 * Math.cbrt(cur[d.sp.indexOf(s)])) * (PHONE ? 0.55 : 0.8) : 0; });
+    } else d.sp.forEach((s) => { const cur = mm[d.sel]; s.target = cur ? balR(cur[d.sp.indexOf(s)], g) : 0; });
     d.sp.forEach((s) => s.update(dt));
     // 물중탕과 세 플라스크
     const Bp = g.Bp; panel(Bp.x, Bp.y, Bp.w, Bp.h, 16, '#fff');
@@ -590,17 +592,17 @@
     T(Gp.x + 14, Gp.y + 44, '큰 점 = 평균, 작은 점 = 3회 측정값', PHONE ? 11.5 : 13, '#475569', 'left', 800);
   }
   function daTime(Gp, f, d) {
-    const m = f.mean[d.sel], pl = mkPlot(Gp, { x0: 0, x1: 20, y0: 0, y1: f.ymax, xt: [0, 5, 10, 15, 20], yt: f.ymax === 60 ? [0, 15, 30, 45, 60] : [0, 5, 10, 15, 20], xl: '시간 (분)', yl: 'CO₂ 부피 (mL)', m: { l: 50, t: 36, r: 20, b: 44 } });
+    const m = f.mean[d.sel], pl = mkPlot(Gp, { x0: 0, x1: 20, y0: 0, y1: f.ymax, xt: [0, 5, 10, 15, 20], yt: f.ymax === 60 ? [0, 15, 30, 45, 60] : [0, 5, 10, 15, 20], xl: '시간 (분)', m: { l: 50, t: 36, r: 20, b: 44 } });
     drawAxes(pl);
-    T(Gp.x + 14, Gp.y + 24, f.name + ' ' + f.fmt(f.levels[d.sel]) + ' 의 시간–CO₂ 곡선', PHONE ? 12.5 : 14.5, '#1f2d44', 'left', 800);
+    T(Gp.x + 14, Gp.y + 24, f.name + ' ' + f.fmt(f.levels[d.sel]) + ' 의 시간–CO₂ 부피(mL) 곡선', PHONE ? 12.5 : 14.5, '#1f2d44', 'left', 800);
     d.tshow.set(20); d.tshow.update(dtL, 0.7);
     const tt = d.tshow.v;
     ctx.save(); ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 3.5; ctx.beginPath(); for (let i = 0; i <= 60; i++) { const x = i / 3; if (x > tt) break; const px = pl.X(x), py = pl.Y(m * fT(x)); if (i) ctx.lineTo(px, py); else ctx.moveTo(px, py); } ctx.stroke(); ctx.restore();
     // 처음 기울기(접선) 비교
     const s0 = m / (TK * f20); ctx.save(); ctx.setLineDash([6, 5]); ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(pl.X(0), pl.Y(0)); ctx.lineTo(pl.X(8), pl.Y(Math.min(f.ymax, s0 * 8))); ctx.stroke(); ctx.restore();
-    T(pl.X(8) + 8, pl.Y(Math.min(f.ymax, s0 * 8)) + 4, '처음 속도가 계속되면', PHONE ? 11.5 : 13, '#64748b', 'left', 700);
+    T(pl.X(8) + 8, pl.Y(Math.min(f.ymax, s0 * 8)) - 8, '처음 속도가 계속되면', PHONE ? 11.5 : 13, '#64748b', 'left', 700);
     const ex = pl.X(16), ey = pl.Y(m * fT(16)); D.sphere(ex, ey, 6, '#dc2626', { gloss: false });
-    D.label(ex - 10, ey + 28, '점점 느려져요', { bg: '#fff', color: '#b91c1c', border: '#fca5a5', size: 13, align: 'right' });
+    D.label(ex - 10, ey > pl.y + pl.h - 60 ? ey - 24 : ey + 28, '점점 느려져요', { bg: '#fff', color: '#b91c1c', border: '#fca5a5', size: 13, align: 'right' });
   }
   const daReadOK = () => {
     const d = S.da, f = FAC[ivOf()], mx = Math.max(...f.mean);
@@ -726,7 +728,7 @@
     $$('#dzCtl button').forEach((b) => b.classList.toggle('on', !!z.ctl[b.dataset.v]));
     chipSet($('#dzRep'), z.rep);
     const chg = dzChanged(), nm = chg.length === 1 ? FAC[chg[0]].name : '바꾸는 요인';
-    $('#dzName').textContent = nm; $('#dzJosa').textContent = josa(nm, '이', '가');
+    $('#dzHyp').value = z.hyp; $('#dzName').textContent = nm; $('#dzJosa').textContent = josa(nm, '이', '가');
     $('#dzNote').innerHTML = '바꾸는 요인 <b>' + chg.length + '개</b>' + (chg.length > 1 ? ' <b style="color:#b91c1c">→ 하나만!</b>' : '');
     // ③ 분석
     const f = FAC[ivOf()];
@@ -827,7 +829,7 @@
           id: 'design', title: '변인 설정과 가설', manual: true,
           goal: '<b>바꿀 요인 하나</b>를 고르고, 대조군 · <b>반복 3회</b> · <b>가설</b>까지 설계를 완성하세요.',
           hint: '네 요인 중 하나만 “바꿈”으로 하고, 대조군을 하나 이상 고르고, 반복을 3회로 정한 뒤 가설 문장을 완성해요.',
-          setup() { setMode('design'); S.dz.pulse = 0; },
+          setup() { setMode('design'); S.dz.pulse = 0; S.dz.ch = { temp: false, glu: false, yeast: false, o2: false }; S.dz.ctl = { boil: false, noGlu: false, noYeast: false }; S.dz.rep = 1; S.dz.hyp = ''; S.dz.iv = null; updateCtl(); },
           check() {
             const z = S.dz, c = dzChanged();
             if (c.length === 0) return '바꿀 요인(독립 변인)을 하나 골라 주세요.';
@@ -862,7 +864,7 @@
           id: 'measure', title: '5조건 × 3회 측정',
           goal: '선택한 변인의 <b>5가지 조건</b>을 모두 <b>3회씩</b> 측정하세요.',
           hint: '조건 버튼을 고르고 “▶ 3회 측정”을 눌러요. 다섯 조건을 모두 해 보세요.',
-          setup() { setMode('data'); S.da.readOn = false; S.da.view = 'res'; S.da.sel = 0; daBuildRead(); updateCtl(); },
+          setup() { setMode('data'); S.da.readOn = false; S.da.view = 'res'; S.da.sel = 0; daReset(); daBuildRead(); updateCtl(); },
           check: () => daN() === 5, hold: 0.5,
           status: () => mark(daN() === 5) + ' 측정한 조건 ' + daN() + ' / 5 (' + FAC[ivOf()].name + ')',
           explain: '같은 조건을 <b>3회</b> 측정해 평균을 내면 우연한 오차를 줄일 수 있어요. 점은 3회 측정값, 큰 점은 평균이에요.',

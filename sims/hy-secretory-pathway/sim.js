@@ -810,7 +810,7 @@
       return { id: 's' + i, label: i < 5 ? (i + 1) + '번 주자' : '에너지 공급', col: i < 5 ? '#a21caf' : '#d97706', x: RLB.x + c * (bw + gap), y: RLB.y + r * (bh + gap), w: bw, h: bh, cols: 1, hdr: 26 };
     }),
     cw: PHONE ? 214 : 240, ch: PHONE ? 52 : 56, kh: PHONE ? 50 : 54,
-    tray: (i) => (PHONE ? { x: 12 + (i % 2) * 234, y: 310 + Math.floor(i / 2) * 64 } : { x: 28 + (i % 3) * 252, y: 332 + Math.floor(i / 3) * 70 }),
+    tray: (i) => (PHONE ? { x: 12 + (i % 2) * 234, y: 334 + Math.floor(i / 2) * 64 } : { x: 28 + (i % 3) * 252, y: 332 + Math.floor(i / 3) * 70 }),
     onChange() { updateCtl(); },
   });
   const relayWrong = () => relay.cards.filter((c) => c.zone && c.zone !== 's' + RLORDER.indexOf(c.id));
@@ -851,8 +851,8 @@
       if (PHONE) { const bw = (PFB.w - gap) / 2, bh = (PFB.h - gap) / 2; return { id: b.id, label: b.label, col: b.col, x: PFB.x + (i % 2) * (bw + gap), y: PFB.y + Math.floor(i / 2) * (bh + gap), w: bw, h: bh, cols: 1, hdr: 32, draw: pfBars(b) }; }
       const bw = (PFB.w - gap * 3) / 4; return { id: b.id, label: b.label, col: b.col, x: PFB.x + i * (bw + gap), y: PFB.y, w: bw, h: PFB.h, cols: 1, hdr: 32, draw: pfBars(b) };
     }),
-    cw: PHONE ? 214 : 240, ch: PHONE ? 52 : 56, kh: PHONE ? 34 : 42,
-    tray: (i) => (PHONE ? { x: 12 + (i % 2) * 234, y: 486 + Math.floor(i / 2) * 48 } : { x: 28 + (i % 3) * 252, y: 372 + Math.floor(i / 3) * 70 }),
+    cw: PHONE ? 214 : 240, ch: PHONE ? 44 : 56, kh: PHONE ? 34 : 42,
+    tray: (i) => (PHONE ? { x: 12 + (i % 2) * 234, y: 492 + Math.floor(i / 2) * 48 } : { x: 28 + (i % 3) * 252, y: 372 + Math.floor(i / 3) * 70 }),
     onChange() { updateCtl(); },
   });
   function pfBars(b) {
@@ -872,7 +872,7 @@
     panel(xx, y0, ww, hh, 16, '#ffffff');
     if (PHONE) {   // 범례 (두 줄)
       PF_ORG.forEach((o, i) => { const lx = xx + 12 + (i % 3) * 150, ly = y0 + 22 + Math.floor(i / 3) * 22; ctx.fillStyle = o[2]; D.roundRect(lx, ly - 10, 14, 14, 3); ctx.fill(); T(lx + 20, ly + 2, o[1], 13, '#334155', 'left', 800); });
-      T(xx + 12, y0 + 70, '상자 속 막대 = 소기관이 발달한 정도', 13, '#64748b', 'left', 700);
+      T(xx + 12, y0 + 62, '상자 속 막대 = 소기관이 발달한 정도', 13, '#64748b', 'left', 700);
     } else {
       T(xx + 16, y0 + 26, '상자 속 막대: 소기관이 발달한 정도', 14, '#334155', 'left', 800);
       let lx = xx + 270; PF_ORG.forEach((o) => { const ly = y0 + 22; ctx.fillStyle = o[2]; D.roundRect(lx, ly - 10, 12, 12, 3); ctx.fill(); T(lx + 17, ly + 1, o[1], 13, '#334155', 'left', 800); ctx.font = D.font(13, 800); lx += 17 + ctx.measureText(o[1]).width + 16; });
@@ -1019,7 +1019,7 @@
           id: 'predict', title: '고장 나면 어디에 쌓일까?', manual: true,
           goal: '🎯 <b>예측하기</b> 표에서 고장 4가지의 결과를 예측하고, 🔧 <b>고장 실험</b>에서 4가지를 모두 확인한 뒤 ✔ 확인하기를 누르세요.',
           hint: '앞쪽 소기관이 막히면 그 앞에 단백질이 쌓여요. 핵이 멈추면 새로 만들어지지 않고, 미토콘드리아가 멈추면 모든 단계가 느려져요.',
-          setup() { setMode('predict'); S.df.tried = {}; $$('[id^=pr]').forEach((e) => { if (e.tagName === 'SELECT') { e.value = ''; e.className = ''; } }); updateCtl(); },
+          setup() { setMode('predict'); S.df.tried = {}; S.df.scn = 'none'; dfReset(); $$('[id^=pr]').forEach((e) => { if (e.tagName === 'SELECT') { e.value = ''; e.className = ''; } }); updateCtl(); },
           status: () => mark(prCount() === 4) + ' 맞게 예측 ' + prCount() + ' / 4 &nbsp; ' + mark(triedCount() === 4) + ' 확인한 고장 ' + triedCount() + ' / 4',
           check() {
             const e = [0, 1, 2, 3].filter((i) => !prSel(i)).length;

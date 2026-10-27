@@ -314,7 +314,7 @@
     const P = PHONE ? { x: 10, y: 10, w: 460, h: 424 } : { x: 14, y: 14, w: 772, h: 402 };
     const mx0 = P.x + P.w * (PHONE ? 0.34 : 0.38), mx1 = P.x + P.w - 10, my0 = P.y + P.h * 0.27, my1 = P.y + P.h - 58;
     const cx = (mx0 + mx1) / 2, cy = (my0 + my1) / 2, hw = (mx1 - mx0) / 2, hh = (my1 - my0) / 2, R = Math.min(hh * 0.5, 54), ihw = hw - 14, ihh = hh - 14, ir = Math.max(8, R - 14);
-    const sh = ihw - ir, u = PHONE ? 0.82 : 1, rr = Math.min(ihw * 0.3, ihh * 0.5), rc = { x: cx + ihw * 0.3, y: cy - ihh * 0.1 }, ye = cy + ihh;
+    const sh = ihw - ir, u = PHONE ? 0.82 : 1, rr = Math.min(ihw * 0.3, ihh * 0.5), rc = PHONE ? { x: cx + ihw * 0.16, y: cy - ihh * 0.2 } : { x: cx + ihw * 0.3, y: cy - ihh * 0.1 }, ye = cy + ihh;
     const ang = (a) => ({ x: rc.x + rr * Math.cos(a), y: rc.y + rr * Math.sin(a) });
     return {
       P, mx0, mx1, my0, my1, cx, cy, hw, hh, R, ihw, ihh, ir, sh, u, rr, rc, ye, br: 6.4 * u,
@@ -717,9 +717,9 @@
     const rl = S.rl, fsz = PHONE ? 12.5 : 14, lh = PHONE ? 16 : 18;
     const full = rlFilled() === 16, done = rlAllOK() && rl.med;
     if (rl.med === 'script') {
-      const x = PHONE ? 10 : 14, w = PHONE ? 460 : 772, h = PHONE ? 142 : 126;
+      const x = PHONE ? 10 : 14, w = PHONE ? 460 : 772, h = PHONE ? 142 : 118;
       ST.forEach((s, i) => {
-        const y = (PHONE ? 10 : 14) + i * (h + (PHONE ? 8 : 10)), cur = rl.role === s.id; panel(x, y, w, h, 16, '#fff');
+        const y = (PHONE ? 10 : 14) + i * (h + 8), cur = rl.role === s.id; panel(x, y, w, h, 16, '#fff');
         D.roundRect(x, y, 8, h, 4); ctx.fillStyle = s.col; ctx.fill(); if (cur) { D.roundRect(x, y, w, h, 16); ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 3; ctx.stroke(); }
         T(x + 22, y + 26, (i + 1) + '번 주자 · ' + s.n + ' 담당', fsz + 1, s.col, 'left', 800);
         const d = rl.data[s.id], line = '"나는 ' + (d.loc ? RLTXT[d.loc] : '[장소]') + '에서 ' + (d.in ? RLTXT[d.in] : '[들어온 것]') + '을(를) 받아 ' + (d.out ? RLTXT[d.out] : '[나가는 것]') + '을(를) 만들어요. 다음 주자에게 ' + (d.pass ? RLTXT[d.pass] : '[넘기는 것]') + '을(를) 넘길게요!"';
@@ -727,9 +727,9 @@
       });
     } else if (rl.med === 'table') {
       const x = PHONE ? 10 : 14, y0 = PHONE ? 10 : 14, w = PHONE ? 460 : 772, c0 = PHONE ? 76 : 120, cw = (w - c0 - 10) / 4 * 1;
-      panel(x, y0, w, PHONE ? 612 : 530, 16, '#fff');
+      panel(x, y0, w, PHONE ? 604 : 512, 16, '#fff');
       // 가로: 단계 4개 (열), 세로: 4칸 (행)
-      const colw = (w - c0 - 14) / 4, rowH = PHONE ? [40, 92, 120, 120, 120] : [46, 70, 96, 100, 92];
+      const colw = (w - c0 - 14) / 4, rowH = PHONE ? [40, 92, 120, 120, 120] : [46, 66, 92, 96, 88];
       ST.forEach((s, i) => { const cx = x + c0 + i * colw; D.roundRect(cx + 3, y0 + 8, colw - 6, rowH[0] - 6, 8); ctx.fillStyle = s.col; ctx.fill(); TF(cx + colw / 2, y0 + 8 + rowH[0] / 2 + 2, s.n, colw - 10, fsz + 1, 10.5, '#fff', 'center', 800); if (rl.role === s.id) { D.roundRect(cx + 1, y0 + 6, colw - 2, rowH[0] - 2, 9); ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 3; ctx.stroke(); } });
       let yy = y0 + 8 + rowH[0];
       RLKEYS.forEach((k, ri) => {
@@ -901,7 +901,7 @@
         {
           type: 'quiz', title: 'ATP가 가장 많이 만들어지는 단계',
           goal: '포도당 1분자에서 <b>ATP가 가장 많이 만들어지는</b> 단계는?',
-          setup() { setMode('table'); S.tb.convOn = true; },
+          setup() { setMode('table'); if (!tbConvOK()) { ['glyc', 'pyox', 'tca'].forEach(tbShow); $('#tA').value = '4'; $('#tN').value = '10'; $('#tF').value = '2'; $('#cN').value = '25'; $('#cF').value = '3'; $('#cT').value = '28'; } S.tb.convOn = true; updateCtl(); },
           choices: ['해당 과정', 'TCA 회로', '전자 전달계', '피루브산 산화'],
           answer: 2,
           feedback: ['해당 과정의 순생산은 2예요.', 'TCA 회로에서 직접 만드는 ATP는 2예요. 전자 운반체를 많이 충전하지만 ATP는 적어요.', '', '피루브산 산화에서는 ATP가 직접 만들어지지 않아요.'],

@@ -998,7 +998,7 @@
         {
           id: 'dark', title: '빛을 끄면?',
           goal: '<b>빛 세기를 0</b>으로 내리고, ATP · NADPH · O₂ 생성 속도가 모두 <b>0.0</b>이 되는 것을 확인하세요.',
-          hint: '슬라이더를 0으로 내려요. O₂와 NADPH는 먼저 멈추고, ATP는 남은 H⁺가 빠져나가는 몇 초 뒤에 멈춰요. 그래프가 바닥에 닿을 때까지 기다려요.',
+          hint: '슬라이더를 0으로 내려요. O₂와 NADPH는 먼저 멈추고, ATP는 남은 H⁺가 빠져나가는 10~20초 뒤에 멈춰요. 그래프가 바닥에 닿을 때까지 기다려요.',
           setup() { setMode('cond'); thReset({ I: 6, treat: 'none', cyc: false }); setLight('#sL4', 6); updateCtl(); },
           check: () => S.th.I === 0 && +fx1(S.th.rate.atp) === 0 && +fx1(S.th.rate.np) === 0 && +fx1(S.th.rate.o2) === 0, hold: 1.0,
           status: () => mark(S.th.I === 0) + ' 빛 ' + S.th.I + ' &nbsp; ' + mark(+fx1(S.th.rate.atp) === 0 && +fx1(S.th.rate.np) === 0 && +fx1(S.th.rate.o2) === 0) + ' ATP ' + fx1(S.th.rate.atp) + ' · NADPH ' + fx1(S.th.rate.np) + ' · O₂ ' + fx1(S.th.rate.o2) + ' (개/초)',

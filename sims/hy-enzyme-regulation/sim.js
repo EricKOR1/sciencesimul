@@ -489,7 +489,7 @@
     m.fly.forEach((f) => { if (f.kind === 'S') D.sphere(f.x, f.y, L(8, 6.5), '#34d399', { gloss: true }); else inhib(f.x, f.y, L(9, 7), f.kind === 'I' ? 'comp' : 'non', t); });
     m.prods.forEach((q) => { ctx.save(); ctx.globalAlpha = Math.max(0, 1 - q.t / 0.9); D.sphere(q.x, q.y, L(5.5, 4.5), q.c, { gloss: false }); ctx.restore(); });
     // 이름표
-    const e0 = m.enz[0]; if (e0) { const st = mdSite(e0); callout(st.x - 6, st.y - 6, st.x - (PHONE ? 54 : 100), st.y - (PHONE ? 52 : 66), '활성 부위', { size: L(13, 11.5) }); if (m.type === 'non') { const a = mdAllo(m.enz[2]); callout(a.x + 4, a.y, a.x + (PHONE ? 8 : 20), a.y + (PHONE ? 60 : 82), '조절 부위', { size: L(13, 11.5), line: '#7c3aed' }); } }
+    const e0 = m.enz[0]; if (e0) { const st = mdSite(e0); callout(st.x - 6, st.y - 6, st.x - (PHONE ? 26 : 100), st.y - (PHONE ? 52 : 66), '활성 부위', { size: L(13, 11.5) }); if (m.type === 'non') { const a = mdAllo(m.enz[2]); callout(a.x + 4, a.y, a.x + (PHONE ? -8 : 20), a.y + (PHONE ? 60 : 82), '조절 부위', { size: L(13, 11.5), line: '#7c3aed' }); } }
     // 범례
     const lx = B.x + B.w - (PHONE ? 140 : 250), ly = B.y + 26;
     D.sphere(lx, ly - 3, 6, '#34d399', { gloss: false }); T(lx + 10, ly + 1, '기질', 13, '#475569', 'left', 800);
@@ -578,7 +578,7 @@
     if (g.vert) T(tk.x, tk.y + tk.h + 22, '최종 산물 ' + fi(f.L), 13.5, '#166534', 'left', 800); else T(tk.x + tk.w / 2, tk.y - 8, '최종 산물 ' + fi(f.L), 15, '#166534', 'center', 800);
     // 넘침
     if (f.over > 0.5 && !RM) { for (let k = 0; k < 2; k++) parts.emit({ x: tk.x + tk.w + 2, y: tk.y + 4, vx: 30 + Math.random() * 20, vy: -10, life: 0.7, size: 3, color: '#4ade80', gravity: 220 }); }
-    if (f.waste > 0) { const wy = tk.y + tk.h + (g.vert ? 4 : 14); D.roundRect(tk.x - 6, wy, tk.w + 12, 8, 4); ctx.fillStyle = 'rgba(22,163,74,' + clamp(f.waste / 80, 0.15, 0.7) + ')'; ctx.fill(); if (g.vert) T(tk.x + tk.w + 6, wy + 30, '낭비 ' + fi(f.waste), 13.5, '#b45309', 'left', 800); else T(tk.x + tk.w / 2, wy + 26, '넘친 양(낭비) ' + fi(f.waste), 14.5, '#b45309', 'center', 800); }
+    if (f.waste > 0) { const wy = tk.y + tk.h + (g.vert ? 4 : 14); D.roundRect(tk.x - 6, wy, tk.w + 12, 8, 4); ctx.fillStyle = 'rgba(22,163,74,' + clamp(f.waste / 80, 0.15, 0.7) + ')'; ctx.fill(); if (g.vert) T(tk.x + tk.w + 6, wy + 14, '낭비 ' + fi(f.waste), 13.5, '#b45309', 'left', 800); else T(tk.x + tk.w / 2, wy + 26, '넘친 양(낭비) ' + fi(f.waste), 14.5, '#b45309', 'center', 800); }
     // 소비
     const cs = g.cons; D.sphere(cs.x, cs.y, L(30, 26), '#fde68a', { gloss: true, shadow: true }); T(cs.x, cs.y + 5, '🧫', L(24, 20), '#000', 'center', 700);
     T(cs.x, cs.y + L(52, 46), '세포 활동', L(14, 12.5), '#475569', 'center', 800);
@@ -690,7 +690,7 @@
     $$('#ctrlCard [data-grp]').forEach((n) => { n.hidden = !(fr || n.dataset.grp.split(' ').indexOf(S.grp) >= 0); });
     modeButtons(S.mode, lvNow, fr);
     const a = S.as; chipSet($('#asCond'), a.cond); $('#sAs').value = a.idx; $('#oAs').textContent = SL[a.idx] + ' mM';
-    $('#vN').classList.toggle('ok', near(numIn('vN'), 100, 10)); $('#vA').classList.toggle('ok', near(numIn('vA'), 100, 15)); $('#vB').classList.toggle('ok', near(numIn('vB'), 50, 6));
+    $('#vN').classList.toggle('ok', near(numIn('vN'), 100, 10)); $('#vA').classList.toggle('ok', near(numIn('vA'), 100, 20)); $('#vB').classList.toggle('ok', near(numIn('vB'), 50, 6));
     $('#asNote').innerHTML = '측정한 점: 없음 <b>' + asDone('none') + '</b> · A <b>' + asDone('A') + '</b> · B <b>' + asDone('B') + '</b> (각 6점)';
     const m = S.md; chipSet($('#mdType'), m.type); $('#sMd').value = m.idx; $('#oMd').textContent = SL[m.idx] + ' mM';
     ['jd1', 'jd2', 'jd3'].forEach((id, i) => { const v = selVal(id), e = $('#' + id); e.classList.toggle('ok', v === JANS[i]); e.classList.toggle('bad', v !== '' && v !== JANS[i]); });
@@ -749,8 +749,8 @@
           goal: '세 곡선이 <b>가까워지는 최대 속도 Vmax</b>를 각각 읽어 쓰세요. (저해제 없음, A, B)',
           hint: '곡선이 기질을 아주 많이 넣으면 어느 높이에 가까워질지 생각해요. 없음은 100, A는 같은 Vmax로 다가가고, B는 훨씬 낮은 곳에서 멈춰요. 아직 점이 없는 조건은 먼저 측정해요.',
           setup() { S.grp = 'readV'; setMode('assay'); },
-          check: () => asTotal() >= 18 && near(numIn('vN'), 100, 10) && near(numIn('vA'), 100, 15) && near(numIn('vB'), 50, 6), hold: 0.5,
-          status: () => mark(near(numIn('vN'), 100, 10)) + ' 없음 &nbsp; ' + mark(near(numIn('vA'), 100, 15)) + ' A &nbsp; ' + mark(near(numIn('vB'), 50, 6)) + ' B',
+          check: () => asTotal() >= 18 && near(numIn('vN'), 100, 10) && near(numIn('vA'), 100, 20) && near(numIn('vB'), 50, 6), hold: 0.5,
+          status: () => mark(near(numIn('vN'), 100, 10)) + ' 없음 &nbsp; ' + mark(near(numIn('vA'), 100, 20)) + ' A &nbsp; ' + mark(near(numIn('vB'), 50, 6)) + ' B',
           explain: '저해제 없음과 <b>A는 Vmax가 약 100</b>(A는 기질이 아주 많으면 100에 가까워져요), <b>B는 약 50</b>이에요. B는 기질을 아무리 늘려도 최대 속도가 낮아요.',
         },
         {

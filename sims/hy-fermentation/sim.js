@@ -339,8 +339,8 @@
     if (PHONE) {
       return { cell: { x: 10, y: 10, w: 460, h: 372 }, split: 246, GL: { x: 38, y: 92 }, M: { x: 60, y: 46, w: 104, h: 94 }, MC: { x: 112, y: 93 }, MT: [{ x: 88, y: 128 }, { x: 136, y: 128 }],
         PO: { x: 176, y: 93 }, A: { x: 176, y: 50, w: 62, h: 138 }, pyrSlot: (k) => ({ x: 192 + (k % 2) * 30, y: 70 + Math.floor(k / 2) * 22 }), pyrR: 5,
-        PB: { x: 18, y: 214, w: 222, h: 156 }, slot: (i) => ({ x: 62 + (i % 2) * 100, y: 262 + Math.floor(i / 2) * 29 }), tw: 82, th: 24,
-        Mi: { x: 258, y: 34, w: 204, h: 336 }, door: { x: 258, y: 93 }, q: (k) => ({ x: 304 + (k % 2) * 88, y: 110 + Math.floor(k / 2) * 30 }),
+        PB: { x: 18, y: 214, w: 222, h: 156 }, slot: (i) => ({ x: 62 + (i % 2) * 100, y: 262 + Math.floor(i / 2) * 29 }), tw: 62, th: 24,
+        Mi: { x: 258, y: 34, w: 204, h: 336 }, door: { x: 258, y: 93 }, q: (k) => ({ x: 302 + (k % 2) * 64, y: 110 + Math.floor(k / 2) * 30 }),
         etc: [{ x: 420, y: 112 }, { x: 420, y: 196 }, { x: 420, y: 280 }], O2: { x: 420, y: 332 }, P: { x: 10, y: 392, w: 460, h: 238 } };
     }
     return { cell: { x: 14, y: 14, w: 772, h: 372 }, split: 428, GL: { x: 58, y: 112 }, M: { x: 100, y: 56, w: 156, h: 112 }, MC: { x: 178, y: 108 }, MT: [{ x: 150, y: 146 }, { x: 206, y: 146 }],
@@ -489,21 +489,21 @@
     D.roundRect(bx, P.y + 62, bw, 18, 9); ctx.fillStyle = '#eef2f7'; ctx.fill();
     if (plus > 0) { D.roundRect(bx, P.y + 62, bw * plus / 10, 18, 9); ctx.fillStyle = COL.nad; ctx.fill(); }
     if (minus > 0) { D.roundRect(bx + bw * plus / 10, P.y + 62, bw * minus / 10, 18, minus >= 10 ? 9 : 6); ctx.fillStyle = COL.nadh; ctx.fill(); }
-    T(bx, P.y + 100, '파랑 = NAD⁺ (전자를 받을 수 있음)   초록 = NADH', 12.5, '#64748b', 'left', 700);
+    T(bx, P.y + 100, '파랑 = NAD⁺   초록 = NADH', 12.5, '#64748b', 'left', 700);
     const rx = PHONE ? P.x + 18 : P.x + 300, ry = PHONE ? P.y + 128 : P.y + 26, rw = PHONE ? P.w - 36 : 190;
     T(rx, ry, '해당 과정의 ATP 생산 속도', 14.5, '#1f2d44', 'left', 800);
     D.roundRect(rx, ry + 10, rw, 20, 10); ctx.fillStyle = '#eef2f7'; ctx.fill();
     if (o.rate.v > 1) { D.roundRect(rx, ry + 10, Math.max(14, rw * o.rate.v / 100), 20, 10); ctx.fillStyle = o.rate.v < 10 ? '#e2464b' : '#16a34a'; ctx.fill(); }
     T(rx, ry + 52, fi(o.rate.v) + ' %', 22, o.rate.v < 10 ? '#b91c1c' : '#15803d', 'left', 800);
     T(rx + 70, ry + 50, o2Stopped() ? '멈췄어요' : (o.rate.v < 10 && !oOn ? '느려져요…' : '진행 중'), 15, o2Stopped() ? '#b91c1c' : '#475569', 'left', 800);
-    T(rx, ry + 76, '지금까지 만든 ATP (순생산)  ' + o.atpTot, 13.5, '#475569', 'left', 800);
+    T(rx, ry + (PHONE ? 70 : 76), '지금까지 만든 ATP (순생산)  ' + o.atpTot, 13.5, '#475569', 'left', 800);
     if (!PHONE) {
       const tx = P.x + 520;
       T(tx, P.y + 26, '해당 과정이 계속되려면', 14.5, '#1f2d44', 'left', 800);
       T(tx, P.y + 50, 'NAD⁺ 가 있어야 해요.', 14.5, COL.nad, 'left', 800);
       T(tx, P.y + 76, '(포도당 1분자가 NAD⁺ 2개를', 13, '#64748b', 'left', 700); T(tx, P.y + 94, 'NADH 2개로 바꿔요)', 13, '#64748b', 'left', 700);
       if (o2Stopped()) { D.label(tx, P.y + 128, 'NAD⁺ 를 되살릴 방법이 없을까?', { bg: '#fef3c7', color: '#92400e', border: '#f59e0b', size: 14, align: 'left' }); }
-    } else if (o2Stopped()) D.label(P.x + P.w / 2, P.y + P.h - 22, 'NAD⁺ 를 되살릴 방법이 없을까?', { bg: '#fef3c7', color: '#92400e', border: '#f59e0b', size: 13.5 });
+    } else if (o2Stopped()) D.label(P.x + P.w / 2, P.y + P.h - 14, 'NAD⁺ 를 되살릴 방법이 없을까?', { bg: '#fef3c7', color: '#92400e', border: '#f59e0b', size: 13.5 });
   }
 
   /* =========================================================
@@ -534,7 +534,7 @@
         n = 2; col = COL.ald; name = '아세트알데하이드 (2탄소)';
         mx = lerp(g.x0, g.x1, ease.inOutQuad(seg(tl, 3.0, 4.0)));
         const p = seg(tl, 2.6, 4.6), e = ease.outQuad(p);
-        o.co2 = { x: g.x0 + e * 64, y: y - d * 0.55 - e * (PHONE ? 40 : 52), a: 1 - Math.max(0, p - 0.55) / 0.45 };
+        o.co2 = { x: g.x0 + e * (PHONE ? 40 : 64), y: y - d * 0.55 - e * (PHONE ? 40 : 52), a: 1 - Math.max(0, p - 0.55) / 0.45 };
       } else mx = lerp(g.x0, g.x1, ease.inOutQuad(seg(tl, 3.0, 4.0)));
     }
     if (tl >= 4.5) {
@@ -747,10 +747,11 @@
     cm.bar.r.set(32); cm.bar.f.set(2); cm.bar.r.update(dt, 3); cm.bar.f.update(dt, 3);
     panel(P.x, P.y, P.w, 246 + (PHONE ? 40 : 0), 16, '#fff');
     T(P.x + 16, P.y + 28, 'ATP 30개가 필요할 때, 포도당은 몇 분자가 필요할까요?', PHONE ? 13.5 : 16, '#1f2d44', 'left', 800);
-    const chips = (y, n, per, col, label) => {
+    const chips = (y, n, per, col, label, maxRows) => {
       T(P.x + 16, y, label, PHONE ? 13 : 14.5, col, 'left', 800);
-      const cols = PHONE ? 8 : 15, cwid = (P.w - 32) / cols, k = clamp(Math.round(n), 0, 30);
-      for (let i = 0; i < Math.max(k, 0); i++) {
+      const cols = PHONE ? 8 : 15, cwid = (P.w - 32) / cols, k = clamp(Math.round(n), 0, 30), cap = cols * maxRows, shown = Math.min(k, cap);
+      if (k > cap) T(P.x + 16 + (cap - 1) % cols * cwid + cwid / 2, y + 36 + Math.floor((cap - 1) / cols) * 48 + 4, '+' + (k - cap + 1), 14, col, 'center', 800);
+      for (let i = 0; i < Math.max(shown - (k > cap ? 1 : 0), 0); i++) {
         const cx = P.x + 16 + (i % cols) * cwid + cwid / 2, cy = y + 36 + Math.floor(i / cols) * 48;
         const a = RM ? 1 : clamp(cm.t - i * 0.03, 0, 1);
         ctx.save(); ctx.globalAlpha = a; mol(cx, cy - 4, 6, PHONE ? 3.4 : 4.3, COL.glu); T(cx, cy + 22, '×' + per, 11.5, '#92400e', 'center', 800); ctx.restore();
@@ -759,13 +760,13 @@
       return k;
     };
     cm.t = (cm.t || 0) + dt;
-    const kr = chips(P.y + 62, cm.gr, 30, '#15803d', '🌬 산소호흡 (포도당 1분자 = 약 30 ATP)');
-    const kf = chips(P.y + (PHONE ? 168 : 148), cm.gf, 2, '#c2410c', '🍞 발효 (포도당 1분자 = 순 2 ATP)');
+    const kr = chips(P.y + 62, cm.gr, 30, '#15803d', '🌬 산소호흡 (포도당 1분자 = 약 30 ATP)', 1);
+    const kf = chips(P.y + (PHONE ? 168 : 148), cm.gf, 2, '#c2410c', '🍞 발효 (포도당 1분자 = 순 2 ATP)', PHONE ? 2 : 1);
     T(P.x + P.w - 16, P.y + 62, 'ATP ' + (kr * 30), PHONE ? 14 : 16, kr * 30 === 30 ? '#15803d' : '#475569', 'right', 800);
     T(P.x + P.w - 16, P.y + (PHONE ? 168 : 148), 'ATP ' + (kf * 2), PHONE ? 14 : 16, kf * 2 === 30 ? '#15803d' : '#475569', 'right', 800);
     // 효율
     const E0 = P.y + (PHONE ? 300 : 260);
-    panel(P.x, E0, P.w, PHONE ? 320 : 272, 16, '#fff');
+    panel(P.x, E0, P.w, PHONE ? 320 : 264, 16, '#fff');
     T(P.x + 16, E0 + 28, '에너지 효율 (포도당 한 분자의 에너지 중 ATP 에 담긴 몫)', PHONE ? 13 : 15.5, '#1f2d44', 'left', 800);
     const bx = P.x + 120, bw = P.w - 120 - 70;
     [['산소호흡', cm.bar.r.v, '#16a34a', 0], ['발효', cm.bar.f.v, '#ea580c', 1]].forEach(([n, v, col, k]) => {
@@ -774,10 +775,10 @@
       if (v > 0.3) { D.roundRect(bx, y - 12, Math.max(8, bw * v / 40), 26, 13); ctx.fillStyle = col; ctx.fill(); }
       T(bx + bw + 8, y + 7, '약 ' + fi(v) + ' %', 15.5, '#1f2d44', 'left', 800);
     });
-    [0, 10, 20, 30, 40].forEach((v) => { const xx = bx + bw * v / 40; ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(xx, E0 + 98); ctx.lineTo(xx, E0 + 104); ctx.stroke(); T(xx, E0 + 118, v + (v === 40 ? ' %' : ''), 12, '#64748b', 'center', 700); });
-    T(P.x + 16, E0 + 158, '효율 = (ATP 수 × 30.5 kJ) / 2870 kJ  (포도당 1 mol 이 내는 에너지 2870 kJ)', PHONE ? 11.5 : 13.5, '#475569', 'left', 700);
-    T(P.x + 16, E0 + 182, '산소호흡: 30 × 30.5 / 2870 ≈ 0.32     발효: 2 × 30.5 / 2870 ≈ 0.02', PHONE ? 11.5 : 13.5, '#475569', 'left', 700);
-    T(P.x + 16, E0 + 214, '발효 산물(에탄올 · 젖산)에는 에너지가 아직 많이 남아 있어요.', PHONE ? 12 : 14, '#9a3412', 'left', 800);
+    [0, 10, 20, 30, 40].forEach((v) => { const xx = bx + bw * v / 40; ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(xx, E0 + 134); ctx.lineTo(xx, E0 + 140); ctx.stroke(); T(xx, E0 + 156, v + (v === 40 ? ' %' : ''), 12, '#64748b', 'center', 700); });
+    T(P.x + 16, E0 + 182, '효율 = (ATP 수 × 30.5 kJ) / 2870 kJ  (포도당 1 mol 이 내는 에너지 2870 kJ)', PHONE ? 11.5 : 13.5, '#475569', 'left', 700);
+    T(P.x + 16, E0 + 206, '산소호흡: 30 × 30.5 / 2870 ≈ 0.32     발효: 2 × 30.5 / 2870 ≈ 0.02', PHONE ? 11.5 : 13.5, '#475569', 'left', 700);
+    T(P.x + 16, E0 + 238, '발효 산물(에탄올 · 젖산)에는 에너지가 아직 많이 남아 있어요.', PHONE ? 12 : 14, '#9a3412', 'left', 800);
   }
   /* 효모와 산소 (파스퇴르 현상) */
   function pasDraw(dt, t) {
@@ -828,7 +829,7 @@
     { id: 'k4', label: '막걸리 · 와인', short: '막걸리 · 와인', icon: '🍶', col: '#0ea5e9', ans: 'alc', why: '효모가 당을 에탄올과 CO₂ 로 바꾸는 알코올 발효예요.' },
     { id: 'k5', label: '산소 모자란 근육', sub: '격렬한 달리기 중', short: '산소 모자란 근육', icon: '🏃', col: '#e11d74', ans: 'lac', why: '산소 공급이 부족한 근육 세포는 젖산 발효를 병행해 ATP 를 얻어요. (운동 며칠 뒤의 근육통은 다른 원인이에요)' },
     { id: 'k6', label: '바이오 에탄올', sub: '연료 만들기', short: '바이오 에탄올', icon: '⛽', col: '#475569', ans: 'alc', why: '효모가 당을 알코올 발효해 에탄올을 만들어요.' },
-    { id: 'k7', label: '적혈구의 에너지', sub: '미토콘드리아가 없어요', short: '적혈구의 에너지', icon: '🩸', col: '#b91c1c', ans: 'lac', why: '성숙한 적혈구에는 미토콘드리아가 없어서 해당 과정과 젖산 발효로만 ATP 를 얻어요.' },
+    { id: 'k7', label: '적혈구의 에너지', sub: '미토콘드리아 없음', short: '적혈구의 에너지', icon: '🩸', col: '#b91c1c', ans: 'lac', why: '성숙한 적혈구에는 미토콘드리아가 없어서 해당 과정과 젖산 발효로만 ATP 를 얻어요.' },
     { id: 'k8', label: '치즈', short: '치즈', icon: '🧀', col: '#ca8a04', ans: 'lac', why: '치즈는 젖산균이 우유를 젖산 발효시키는 과정을 거쳐 만들어요.' },
     { id: 'k9', label: '산소 충분한 효모', sub: '에너지를 얻는 방법', short: '산소 충분한 효모', icon: '🌬', col: '#16a34a', ans: 'resp', why: '산소가 있으면 효모는 산소호흡으로 포도당을 CO₂ 와 H₂O 까지 완전 분해해요.' },
     { id: 'k10', label: '천천히 걷는 근육', sub: '산소가 충분할 때', short: '천천히 걷는 근육', icon: '🚶', col: '#0d9488', ans: 'resp', why: '산소가 충분하면 근육 세포는 주로 산소호흡으로 ATP 를 얻어요.' },

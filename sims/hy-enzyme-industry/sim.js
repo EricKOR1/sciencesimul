@@ -503,6 +503,9 @@
     return 1.6;
   }
   const r1 = (v) => Math.round(v * 10) / 10;
+  const r2 = (v) => Math.round(v * 100) / 100;
+  /* 점수 표시: 표의 값은 한 자리, 사이 값(예: 17회 1.96)은 두 자리로 보여 줘요 */
+  const fvS = (v) => { const q = r2(v); return Math.abs(q * 10 - Math.round(q * 10)) < 1e-9 ? q.toFixed(1) : q.toFixed(2); };
   S.im = { kind: 'imm', n: 0, ph: 'idle', t: 0, scores: [], beads: 'bowl', fresh: true, strip: new Num(0), sieve: new Num(0), milk: new Num(1), speed: 1, pend: false, sel: -1, spent: 0, flyT: 0, auto: 0 };
   const imG = () => (PHONE
     ? { A: { x: 10, y: 10, w: 460, h: 262 }, Gr: { x: 10, y: 280, w: 460, h: 184 }, B: { x: 10, y: 472, w: 460, h: 160 } }
@@ -530,7 +533,7 @@
     if (m.ph === 'drop') { m.t += dt; if (m.t >= 0.6) { m.beads = 'milk'; m.ph = 'react'; m.t = 0; const sc = m.kind === 'free' ? 4.0 : immScore(m.n + 1); m.strip.set(sc); } }
     else if (m.ph === 'react') {
       m.t += dt;
-      if (m.t >= 1.8) { m.n++; m.scores.push(r1(m.kind === 'free' ? 4.0 : immScore(m.n))); m.ph = 'idle'; m.t = 0; m.pend = false; Sound.success(); updateCtl(); }
+      if (m.t >= 1.8) { m.n++; m.scores.push(r2(m.kind === 'free' ? 4.0 : immScore(m.n))); m.ph = 'idle'; m.t = 0; m.pend = false; Sound.success(); updateCtl(); }
     } else if (m.ph === 'lift') {
       m.t += dt; m.sieve.set(m.t < 0.5 ? 1 : 0.0);
       if (m.t >= 1.3) { m.ph = 'swap'; m.t = 0; m.beads = 'sieve'; }
@@ -596,7 +599,7 @@
     D.dashedLine(pl.x, pl.Y(2), pl.x + pl.w, pl.Y(2), { color: '#dc2626', width: 1.8 }); T(pl.x + pl.w - 2, pl.Y(2) - 5, '절반 2.0', 12.5, '#dc2626', 'right', 800);
     if (m.scores.length > 1) { ctx.save(); ctx.strokeStyle = m.kind === 'imm' ? '#f59e0b' : '#2563eb'; ctx.lineWidth = 3; ctx.lineJoin = 'round'; ctx.beginPath(); m.scores.forEach((v, i) => { const x = pl.X(i + 1), y = pl.Y(v); if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y); }); ctx.stroke(); ctx.restore(); }
     m.scores.forEach((v, i) => D.sphere(pl.X(i + 1), pl.Y(v), m.sel === i ? 7.5 : 5, m.sel === i ? '#e2464b' : (m.kind === 'imm' ? '#f59e0b' : '#2563eb'), { gloss: true }));
-    if (m.sel >= 0 && m.scores[m.sel] != null) D.label(clamp(pl.X(m.sel + 1), pl.x + 50, pl.x + pl.w - 50), pl.y + 12, (m.sel + 1) + '회 → ' + fv1(m.scores[m.sel]), { bg: '#e2464b', size: L(13, 12) });
+    if (m.sel >= 0 && m.scores[m.sel] != null) D.label(clamp(pl.X(m.sel + 1), pl.x + 50, pl.x + pl.w - 50), pl.y + 12, (m.sel + 1) + '회 → ' + fvS(m.scores[m.sel]), { bg: '#e2464b', size: L(13, 12) });
     // ---- 아래: 비용 ----
     const B = g.B; panel(B.x, B.y, B.w, B.h, 18, '#fff');
     T(B.x + 16, B.y + 28, '효소 값 비교 (1회 사용당)', L(16, 14), '#1f2d44', 'left', 800);
@@ -713,7 +716,7 @@
     $('#imRecover').textContent = m.kind === 'imm' ? '🧺 거름망으로 회수해 재사용' : '🗑 우유와 함께 버리기';
     $('#imAll').disabled = busy || m.kind !== 'imm' || m.n >= 20; $('#imReset').disabled = !!m.auto;
     $('#inCost').classList.toggle('ok', near(numIn('inCost'), 75, 0.5)); $('#inMax').classList.toggle('ok', near(numIn('inMax'), 16, 0));
-    $('#imNote').innerHTML = '사용 <b>' + m.n + ' / 20</b>회' + (m.n ? ' · 마지막 색 점수 <b>' + fv1(m.scores[m.scores.length - 1]) + '</b> (처음의 ' + fi(m.scores[m.scores.length - 1] / 4 * 100) + ' %)' : '');
+    $('#imNote').innerHTML = '사용 <b>' + m.n + ' / 20</b>회' + (m.n ? ' · 마지막 색 점수 <b>' + fvS(m.scores[m.scores.length - 1]) + '</b> (처음의 ' + fi(m.scores[m.scores.length - 1] / 4 * 100) + ' %)' : '');
     // 발표
     $('#plNote').innerHTML = S.pl.topic < 0 ? '주제를 고르면 칸마다 문장 3개가 나와요.' : S.pl.topic === 6 ? '내가 정한 주제의 4칸을 직접 써요. (이 기기에만 저장)' : '고른 칸 <b>' + [0, 1, 2, 3].filter((k) => plPick(k) != null).length + ' / 4</b> · 계획 ' + (selVal('plMethod') && selVal('plOrg') && selVal('plTool') ? '✅' : '⬜');
   }
@@ -835,17 +838,17 @@
           hint: '▶ 우유에 넣고 10분 반응을 누르고, 끝나면 🧺 거름망으로 회수해 재사용을 눌러요. 이것을 반복해 사용 횟수를 5회까지 채워요. 자유 효소도 시험해 보세요.',
           setup() { S.grp = 'none'; setMode('immo'); if (S.im.kind !== 'imm') { S.im.kind = 'imm'; imReset(); } },
           check: () => S.im.kind === 'imm' && S.im.n >= 5 && !S.im.auto, hold: 0.5,
-          status: () => mark(S.im.n >= 5) + ' 비드 사용 ' + Math.min(S.im.n, 5) + ' / 5회 &nbsp; 마지막 점수 ' + (S.im.n ? fv1(S.im.scores[S.im.n - 1]) : '—'),
+          status: () => mark(S.im.n >= 5) + ' 비드 사용 ' + Math.min(S.im.n, 5) + ' / 5회 &nbsp; 마지막 점수 ' + (S.im.n ? fvS(S.im.scores[S.im.n - 1]) : '—'),
           explain: '비드는 거름망으로 <b>회수해 새 우유에 다시</b> 쓸 수 있어요. 시험지 색 점수가 조금씩 낮아지는 것은 반복할수록 활성이 줄기 때문이에요(1회 4.0 → 5회 3.5).',
         },
         {
           id: 'calc', title: '회당 비용과 재사용 한도',
           goal: '비드를 <b>20번</b> 쓸 때의 <b>1회당 비용</b>을 계산하고, 활성이 처음(4.0)의 <b>50 %(2.0) 이하</b>가 되기 전까지 몇 회 쓸 수 있는지 그래프에서 읽어 쓰세요.',
-          hint: '⏩ 20회까지 한꺼번에를 누르면 자료가 채워져요. 1500원 / 20회를 계산해요. 그래프의 점을 눌러 점수를 확인하고, 2.0(빨간 점선) 이상인 마지막 횟수를 찾아요.',
+          hint: '⏩ 20회까지 한꺼번에를 누르면 자료가 채워져요. 1500원 / 20회를 계산해요. 그래프의 점을 눌러 점수를 확인하고, 2.0(빨간 점선)보다 높은 마지막 횟수를 찾아요.',
           setup() { S.grp = 'calc'; setMode('immo'); },
           check: () => S.im.kind === 'imm' && S.im.n >= 17 && near(numIn('inCost'), 75, 0.5) && near(numIn('inMax'), 16, 0) && !S.im.auto, hold: 0.5,
           status: () => mark(S.im.kind === 'imm' && S.im.n >= 17) + ' 비드 자료 ' + (S.im.kind === 'imm' ? S.im.n : 0) + ' / 17회 이상 &nbsp; ' + mark(near(numIn('inCost'), 75, 0.5)) + ' 1회당 비용 &nbsp; ' + mark(near(numIn('inMax'), 16, 0)) + ' 재사용 한도',
-          explain: '1500원 / 20회 = <b>75원</b>이에요. 활성이 처음의 50 %인 점수 2.0 이상을 유지하는 마지막 횟수는 <b>16회</b>(약 2.1)이고 17회에는 약 1.96이 돼요. 한도를 넘으면 효소를 새로 바꾸는 것이 좋아요.',
+          explain: '1500원 / 20회 = <b>75원</b>이에요. 점수가 2.0(처음의 50 %)보다 높게 유지되는 마지막 횟수는 <b>16회</b>(약 2.08)이고 17회에는 약 1.96으로 내려가요. 한도를 넘으면 효소를 새로 바꾸는 것이 좋아요.',
         },
         {
           type: 'quiz', title: '고정화의 장점과 한계', goal: '효소를 고정화하는 것에 대한 설명으로 <b>옳은 것</b>은?',

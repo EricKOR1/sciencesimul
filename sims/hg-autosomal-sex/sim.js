@@ -837,7 +837,7 @@
   const recipRanN = () => ['alb', 'cb'].reduce((a, tr) => a + (S.recip.ran[tr + 'a'] ? 1 : 0) + (S.recip.ran[tr + 'b'] ? 1 : 0), 0);
   function recipRun(side) {
     const key = S.recip.trait + side;
-    if (S.recip.ran[key]) { S.recip.ran[key] = 0; S.recip.pops[key] = 0; updateCtl(); return; }
+    if (S.recip.ran[key]) { S.recip.pops[key] = 0; Sound.click(); updateCtl(); return; }   // 다시 실행: 자녀가 다시 나타나요
     S.recip.ran[key] = 1; S.recip.pops[key] = 0; Sound.success(); updateCtl();
   }
   function recipPanel(x, y, w, h, side, dt, t) {
@@ -1179,7 +1179,8 @@
             if (!raw) return '여자의 발현 빈도(%)를 입력해 주세요.';
             if (fqOk()) { S.freq.solved = true; return true; }
             const v = fqVal();
-            if (isFinite(v) && Math.abs(v - 0.06) < 0.004) return '0.06은 남자의 빈도예요. 여자는 두 X가 모두 X\'이어야 하니 0.06을 한 번 더 곱해요.';
+            const rawV = parseFrac(raw);
+            if ((isFinite(v) && Math.abs(v - 0.06) < 0.004) || (isFinite(rawV) && (Math.abs(rawV - 0.06) < 0.004 || Math.abs(rawV - 6) < 0.4))) return '0.06은 남자의 빈도예요. 여자는 두 X가 모두 X\'이어야 하니 0.06을 한 번 더 곱해요.';
             return '여자는 X를 두 개 가져서 두 X가 모두 X\'이어야 해요. 0.06 × 0.06을 퍼센트로 바꿔 보세요.';
           },
           explain: '남자는 X가 하나뿐이라 X\'이면 곧 색맹이므로 빈도가 q = 0.06(<b>6 %</b>)이에요. 여자는 두 X가 모두 X\'이어야 하므로 q × q = 0.06 × 0.06 = 0.0036(<b>0.36 %</b>)이에요. 남자가 여자보다 약 <b>17배</b>(0.06 / 0.0036) 더 자주 나타나요. (예시 값)',

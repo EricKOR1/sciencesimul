@@ -119,8 +119,9 @@
         TF(lx, -2, c.label, maxW, 14.5, 12, '#26324a', 'left', 800);
         TF(lx, 16, c.sub, maxW, 12, 10.5, '#5a6679', 'left', 700);
       } else {
-        const sz = fitSize(c.label, maxW, 14.5, 12.5, 800);
+        let sz = fitSize(c.label, maxW, 14.5, 12.5, 800);
         ctx.save(); ctx.font = D.font(sz, 800);
+        if (ctx.measureText(c.label).width > maxW && h < 44 && c.short) { c = Object.assign({}, c, { label: c.short }); sz = fitSize(c.label, maxW, 14.5, 12.5, 800); ctx.font = D.font(sz, 800); }
         if (ctx.measureText(c.label).width > maxW && h >= 44) {
           const ls = wrap(c.label, maxW, 12.5, 800).slice(0, 2);
           ls.forEach((l, i) => T(lx, (ls.length === 1 ? 5 : -2 + i * 15), l, 12.5, '#26324a', 'left', 800));
@@ -451,7 +452,7 @@
     return {
       A, memY, th, cxs: f.map((q) => A.x + A.w * q), cw: PHONE ? 54 : 70, chh: PHONE ? 40 : 46, sx: syn, ssc: grad ? (PHONE ? 0.72 : 0.82) : (PHONE ? 0.95 : 1.12),
       ims: { x: A.x + 10, y: A.y + 34, w: A.w - 20, h: memY - th / 2 - 6 - (A.y + 34) }, mat: { x: A.x + 10, y: memY + th / 2 + 6, w: A.w - 20, h: A.y + A.h - 10 - (memY + th / 2 + 6) },
-      src: { x: A.x + 38, y: memY + th / 2 + 44 }, o2: { x: A.x + A.w * f[2] + (PHONE ? 4 : 10), y: memY + th / 2 + (PHONE ? 52 : 58) },
+      src: { x: A.x + 60, y: memY + th / 2 + 44 }, o2: { x: A.x + A.w * f[2] + (PHONE ? 4 : 10), y: memY + th / 2 + (PHONE ? 52 : 58) },
     };
   }
   function hLists(z) { if (!z.ims) { z.ims = []; z.mat = []; } return z; }
@@ -461,13 +462,13 @@
     hLists(z); const [ti, tm] = hTarget(g0), rects = [G.ims, G.mat], lists = [z.ims, z.mat], tg = [ti, tm];
     lists.forEach((L, k) => {
       const R = rects[k], live = L.filter((q) => !q.die).length;
-      for (let n = live; n < tg[k]; n++) { const fromMem = pumpSrc && k === 0 && z.pumpPending > 0; if (fromMem) z.pumpPending--; const sx = fromMem ? pumpSrc[Math.floor(Math.random() * pumpSrc.length)] : R.x + 14 + Math.random() * (R.w - 28); L.push({ x: fromMem ? sx : sx, y: fromMem ? G.memY + 4 : R.y + 8 + Math.random() * (R.h - 16), vx: (Math.random() - 0.5) * 30, vy: fromMem ? -90 : (Math.random() - 0.5) * 30, a: fromMem ? 0.6 : 0, die: false, born: !!fromMem }); }
+      for (let n = live; n < tg[k]; n++) { const fromMem = pumpSrc && k === 0 && z.pumpPending > 0; if (fromMem) z.pumpPending--; const sx = fromMem ? pumpSrc[Math.floor(Math.random() * pumpSrc.length)] : R.x + 14 + Math.random() * (R.w - 28); L.push({ x: fromMem ? sx : sx, y: fromMem ? G.memY + 4 : R.y + 30 + Math.random() * (R.h - 38), vx: (Math.random() - 0.5) * 30, vy: fromMem ? -90 : (Math.random() - 0.5) * 30, a: fromMem ? 0.6 : 0, die: false, born: !!fromMem }); }
       if (live > tg[k]) { let n = live - tg[k]; for (let i = 0; i < L.length && n > 0; i++) if (!L[i].die && !L[i].born) { L[i].die = true; n--; } }
       for (let i = L.length - 1; i >= 0; i--) {
         const q = L[i]; q.a = q.die ? q.a - dt * 1.6 : Math.min(1, q.a + dt * 3); if (q.a < 0) { L.splice(i, 1); continue; }
         q.vx += (Math.random() - 0.5) * 110 * dt; q.vy += (Math.random() - 0.5) * 110 * dt; const sp = Math.hypot(q.vx, q.vy); if (sp > 50 && !q.born) { q.vx *= 50 / sp; q.vy *= 50 / sp; }
         q.x += q.vx * dt; q.y += q.vy * dt; if (q.born && q.y < R.y + R.h) q.born = false;
-        if (!q.born) { if (q.x < R.x + 8) { q.x = R.x + 8; q.vx = Math.abs(q.vx); } if (q.x > R.x + R.w - 8) { q.x = R.x + R.w - 8; q.vx = -Math.abs(q.vx); } if (q.y < R.y + 6) { q.y = R.y + 6; q.vy = Math.abs(q.vy); } if (q.y > R.y + R.h - 4) { q.y = R.y + R.h - 4; q.vy = -Math.abs(q.vy); } }
+        if (!q.born) { if (q.x < R.x + 8) { q.x = R.x + 8; q.vx = Math.abs(q.vx); } if (q.x > R.x + R.w - 8) { q.x = R.x + R.w - 8; q.vx = -Math.abs(q.vx); } if (q.y < R.y + 28) { q.y = R.y + 28; q.vy = Math.abs(q.vy); } if (q.y > R.y + R.h - 4) { q.y = R.y + R.h - 4; q.vy = -Math.abs(q.vy); } }
       }
     });
   }
@@ -634,7 +635,7 @@
       if (f.leak) { const y = my - th / 2 - 30 + f.t * (th + 80); ctx.save(); ctx.globalAlpha = Math.sin(f.t * Math.PI); T(f.x, y, 'H⁺', 12, '#c2410c', 'center', 800); ctx.restore(); return; }
       const y = my - th / 2 - 40 * sc + f.t * (th + 90 * sc); ctx.save(); ctx.globalAlpha = Math.sin(Math.min(1, f.t * 1.3) * Math.PI * 0.95); T(G.sx, y, 'H⁺', 12, '#c2410c', 'center', 800); ctx.restore();
     });
-    c.atpFly.forEach((f) => { const x = G.sx + 28 * sc + f.t * 70, y = my + th / 2 + 44 * sc - f.t * 80; ctx.save(); ctx.globalAlpha = 1 - f.t * f.t; pill(x, y, 44, 20, 'ATP', '#facc15', '#713f12'); ctx.restore(); });
+    c.atpFly.forEach((f) => { const x = G.sx + 34 * sc + f.t * 80, y = my + th / 2 + 44 * sc + 4 - f.t * 12; ctx.save(); ctx.globalAlpha = 1 - f.t * f.t; pill(x, y, 44, 20, 'ATP', '#facc15', '#713f12'); ctx.restore(); });
     // 열 불꽃
     c.flames.forEach((f) => { ctx.save(); ctx.globalAlpha = Math.sin(f.t * Math.PI); E('🔥', f.x, my - th / 2 - 4 - f.t * 26, 17); ctx.restore(); });
     // NADH · 산소 · 전자

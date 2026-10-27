@@ -400,13 +400,13 @@
         D.roundRect(R.x + 12, by + 8, R.w - 24, 9, 4.5); ctx.fillStyle = '#e2e8f0'; ctx.fill(); D.roundRect(R.x + 12, by + 8, Math.max(9, (R.w - 24) * m.day / 3), 9, 4.5); ctx.fillStyle = '#16a34a'; ctx.fill();
       } else T(R.x + 12, by, m.phase === 1 ? '주사하는 중…' : (PHONE ? '쥐를 눌러 주사해요' : '[주사하기]를 눌러요'), 13.5, '#94a3b8', 'left', 800);
       if (m.phase === 3) {
-        D.label(R.x + 12, by + 34, g.dead ? '사망 ✖' : '생존 ✔', { bg: g.dead ? '#dc2626' : '#16a34a', size: 14, align: 'left' });
+        D.label(R.x + 12, by + (PHONE ? 28 : 34), g.dead ? '사망 ✖' : '생존 ✔', { bg: g.dead ? '#dc2626' : '#16a34a', size: 14, align: 'left' });
       }
       // 현미경 (혈액)
       const mr = PHONE ? 40 : 56, mcx = PHONE ? R.x + R.w - 56 : cx, mcy = PHONE ? R.y + 118 : R.y + 372;
       if (m.mic > 0.02) { microscope(mcx, mcy, mr, g.blood, m.mic, t); if (!PHONE) T(mcx, mcy + mr + 20, '🔬 혈액 속 세균', 13, '#64748b', 'center', 700); }
       else { ctx.setLineDash([5, 4]); ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(mcx, mcy, mr, 0, TAU); ctx.stroke(); ctx.setLineDash([]); T(mcx, mcy + 4, '혈액 관찰', 12.5, '#cbd5e1', 'center', 700); }
-      if (m.phase === 3) { const cy2 = PHONE ? R.y + 244 : R.y + 466; textBlock(R.x + 12, cy2, R.w - 24, g.cap, PHONE ? 12.5 : 13.5, g.dead ? '#b91c1c' : '#166534', PHONE ? 17 : 19, 800); }
+      if (m.phase === 3) { const cy2 = PHONE ? R.y + 260 : R.y + 466; textBlock(R.x + 12, cy2, R.w - 24, g.cap, PHONE ? 12.5 : 13.5, g.dead ? '#b91c1c' : '#166534', PHONE ? 17 : 19, 800); }
     });
     // 범례
     if (!PHONE) { /* 범례는 설명 아래에 이미 있어요 */ }
