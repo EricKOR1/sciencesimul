@@ -46,7 +46,7 @@
   }
   const r6 = (v) => Math.round(v * 1e6) / 1e6;
   const parseNum = (s) => {
-    let t = String(s).trim().replace(/,/g, '.').replace(/\s+/g, '');
+    let t = String(s).trim().replace(/[\u2212\u2013\u2012]/g, '-').replace(/,/g, '.').replace(/\s+/g, '');
     const fr = /^(\d+(?:\.\d+)?)\/(\d+(?:\.\d+)?)$/.exec(t); if (fr && +fr[2] !== 0) return +fr[1] / +fr[2];
     const sc = /^(\d+(?:\.\d+)?)(?:[x×*]10\^?|e)([+\-−]?\d+)$/i.exec(t.replace('−', '-')); if (sc) return +sc[1] * Math.pow(10, +sc[2].replace('−', '-'));
     t = t.replace(/[^0-9.\-+]/g, ''); return t === '' || isNaN(+t) ? NaN : +t;

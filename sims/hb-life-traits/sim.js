@@ -1023,7 +1023,7 @@
     if (b.p2 !== b.card) { errs.push('쓰인 기술'); bad.push('p2'); }
     if (b.p3 !== b.card) { errs.push('사회에 준 영향'); bad.push('p3'); }
     Object.keys(bdSel).forEach((k) => bdSel[k].classList.toggle('bad', bad.indexOf(k) >= 0));
-    if (errs.length) { showHint('「' + errs.join('」「') + '」 칸이 「' + a.label + '」과(와) 맞지 않아요. 다시 골라 보세요.', 5000); Sound.fail(); return; }
+    if (errs.length) { showHint('「' + errs.join('」「') + '」 칸이 「' + a.label + '」 내용과 맞지 않아요. 다시 골라 보세요.', 5000); Sound.fail(); return; }
     F.posted = true; F.postT = 0; F.mates = [3, 5, 0, 2, 1, 4].filter((i) => i !== b.card).slice(0, 2);
     Sound.success(); parts.burst(PHONE ? 240 : 140, PHONE ? 60 : 160, { count: 20, speed: 150, size: 3.2, colors: ['#22c55e', '#8b5cf6', '#fbbf24'], life: 0.9 });
     showHint('모둠원 카드도 도착했어요! 융합 지도가 완성돼요.', 4500); syncControls(); rlast = '';

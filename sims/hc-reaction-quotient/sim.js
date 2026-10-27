@@ -72,7 +72,12 @@
   const fc = (v) => (Math.round(v * 1e6) / 1e6 < 0 ? 0 : v).toFixed(3);          // 몰 농도 (mol/L) 소수 셋째 자리
   // 농도 표시: 소수 셋째 자리로 딱 떨어지면 3자리, 아니면 5자리 (표시한 숫자로 다시 계산해도 Q가 K와 맞도록)
   const fcx = (v) => { v = Math.max(0, v); const r = Math.round(v * 1000) / 1000; return Math.abs(v - r) < 5e-7 ? r.toFixed(3) : v.toFixed(5); };
-  const parseNum = (s) => { const t = String(s).replace(',', '.').replace(/[^0-9.\-]/g, ''); return t === '' || isNaN(+t) ? NaN : +t; };
+  const parseNum = (s) => {
+    let t = String(s).trim().replace(/[\u2212\u2013\u2012]/g, '-').replace(/,/g, '.').replace(/\s+/g, '');
+    const fr = /^(\d+(?:\.\d+)?)\/(\d+(?:\.\d+)?)$/.exec(t); if (fr && +fr[2] !== 0) return +fr[1] / +fr[2];
+    const sc = /^(\d+(?:\.\d+)?)(?:[x×*]10\^?|e)([+\-]?\d+)$/i.exec(t); if (sc) return +sc[1] * Math.pow(10, +sc[2]);
+    t = t.replace(/[^0-9.\-+]/g, ''); return t === '' || isNaN(+t) ? NaN : +t;
+  };
   const sameQK = (q, k) => Math.abs(q - k) <= 0.002 * k;                          // Q = K 판정 (같다고 표시되는 범위)
   const dirOf = (q, k) => (sameQK(q, k) ? 'eq' : q < k ? 'fwd' : 'rev');
   const DIR_TXT = { fwd: '정반응 →', rev: '← 역반응', eq: '평형 (이동 없음)' };
@@ -485,7 +490,7 @@
     const v = parseNum($('#qIn').value), qa = QM.a.q, qi = $('#qIn');
     if (isNaN(v)) { Sound.fail(); showHint('Q를 숫자로 써 주세요.', 2600); return; }
     if (matchId() !== 'a') { Sound.fail(); showHint('먼저 슬라이더나 예시 ㉠으로 [H₂] = [I₂] = 0.060, [HI] = 0.020을 맞춰요.', 4200); return; }
-    if (Math.abs(v - qa) <= 0.006) { S.qOk = true; qi.classList.remove('bad'); qi.classList.add('ok'); Sound.success(); showHint('맞아요! Q = ' + fq(qa) + ' (K = 25보다 훨씬 작아요).', 4200); }
+    if (Math.abs(v - qa) <= 0.012) { S.qOk = true; qi.classList.remove('bad'); qi.classList.add('ok'); Sound.success(); showHint('맞아요! Q = ' + fq(qa) + ' (K = 25보다 훨씬 작아요).', 4200); }
     else {
       qi.classList.remove('bad'); void qi.offsetWidth; qi.classList.add('bad'); Sound.fail();
       const ns = 0.02 / 0.06 / 0.06;
@@ -758,7 +763,7 @@
           title: '방향 문장 완성하기', manual: true,
           goal: '저울에서 알게 된 규칙으로 문장을 완성하고 <b>✔ 확인하기</b>를 눌러요.',
           hint: 'Q가 K보다 작으면 생성물이 부족해서 생성물을 만드는 정반응이 일어나요.',
-          setup() { S.gate = 'sent'; setScene('scale'); updateCtl(); },
+          setup() { S.gate = 'sent'; ['sn1', 'sn2', 'sn3'].forEach((id) => { $('#' + id).value = ''; }); setScene('scale'); updateCtl(); },
           check() {
             const v = [$('#sn1').value, $('#sn2').value, $('#sn3').value], want = ['fwd', 'eq', 'rev'];
             if (v.some((x) => !x)) return '세 문장을 모두 골라요.';

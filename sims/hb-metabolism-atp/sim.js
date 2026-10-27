@@ -341,7 +341,7 @@
   function agentsFor(kind) {
     const A = [], c = ctr();
     if (kind === 'leaf') {
-      for (let i = 0; i < 6; i++) { A.push({ k: 'co2', a: clusterPos(i, PHONE ? 0.14 : 0.2), d: i * 0.025, mode: 'in', j: i }); A.push({ k: 'h2o', a: clusterPos(i, PHONE ? 0.5 : 0.58), d: i * 0.025 + 0.012, mode: 'in', j: i + 6 }); }
+      for (let i = 0; i < 6; i++) { A.push({ k: 'co2', a: clusterPos(i, PHONE ? 0.25 : 0.2), d: i * 0.025, mode: 'in', j: i }); A.push({ k: 'h2o', a: clusterPos(i, 0.6), d: i * 0.025 + 0.012, mode: 'in', j: i + 6 }); }
       A.push({ k: 'glu', mode: 'prod' });
       for (let i = 0; i < 6; i++) A.push({ k: 'o2', mode: 'o2', b: RU(PHONE ? 0.88 : 0.9, 0.14 + i * 0.13), d: i * 0.02 });
     } else {
@@ -580,6 +580,7 @@
       } else if (k.st === 'toPool' && near) { k.st = 'adp'; }
     });
     const n = atpCount(), busy = A.tok.some((k) => ['charging', 'toStock', 'toMito', 'toWork', 'discharging'].indexOf(k.st) >= 0);
+    if (A.depleted && (A.resp || n > 0)) A.depleted = false;
     if (A.act && !A.resp && n === 0 && !busy) { A.lowT += dt; if (A.lowT > 0.8 && !A.depleted) { A.depleted = true; Sound.fail(); rlast = ''; syncControls(); } } else A.lowT = 0;
   }
   function drawBattery(x, y, f, lab, sc, a) {
@@ -703,7 +704,7 @@
   }
   function stepApply(dt) {
     if (S.sub.apply === 'sort') S.sorter2.update(dt);
-    else { const A = S.ap; A.ord.update(dt); if (A.solved) A.t += dt; A.bars = A.bars.map((b, i) => SciSim.approach(b, A.solved && A.t > i * 0.5 ? 0.35 + 0.18 * (i + 1) : 0.15, dt, 3)); }
+    else { const A = S.ap; A.ord.update(dt); if (A.solved) A.t += dt; A.bars = A.bars.map((b, i) => SciSim.approach(b, A.solved && A.t > i * 0.5 ? 0.3 + 0.17 * (i + 1) : 0.15, dt, 3)); }
   }
   function drawApply(dt) {
     bgFill('#eef7f0', '#f7fbf8');

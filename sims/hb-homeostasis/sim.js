@@ -523,7 +523,7 @@ function drawGluScene(dt) {
   ];
   lanes.forEach((ln, li) => {
     const L = GG.lane(li), a = ln.act;
-    T(GG.nodeX(0), L.y - 8, ln.t, PHONE ? 11.5 : 13, a > 0.05 ? '#9a3412' : '#a0abbb', 'left', 800);
+    T(GG.nodeX(0), L.y - 4, ln.t, PHONE ? 11.5 : 13, a > 0.05 ? '#9a3412' : '#a0abbb', 'left', 800);
     ln.nodes.forEach((nd, k) => {
       const x = GG.nodeX(k), w = GG.nodeW, kind = ln.kinds[k];
       const on = a > 0.05 || (li === 0 && v > GSET - 1 && false);

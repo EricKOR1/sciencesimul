@@ -540,7 +540,7 @@
     const L = LP.left; panel(L.x, L.y, L.w, L.h, 14);
     T(L.x + 14, L.y + 24, '식초 A 원액 20.00 mL를 바로 적정하면?', PHONE ? 13.5 : 14.5, INK, 'left', 800);
     const s1 = P.stage >= 1, s2 = P.stage >= 2;
-    const lines = [['식초 A 원액 속 아세트산', '0.900 M (= 54.0 g/L 로 가정)'], ['아세트산 몰수', '0.900 M × 20.00 mL = ' + (s1 ? fx(NMMOL, 1) + ' mmol' : '? mmol')], ['필요한 NaOH (0.100 M)', fx(NMMOL, 1) + ' mmol ÷ 0.100 M = ' + (s2 ? fx(NEED_ML, 0) + ' mL' : '? mL')]];
+    const lines = [['식초 A 원액 속 아세트산', '0.900 M (= 54.0 g/L 로 가정)'], ['아세트산 몰수', '0.900 M × 20.00 mL = ' + (s1 ? fx(NMMOL, 1) + ' mmol' : '? mmol')], ['필요한 NaOH (0.100 M)', fx(NMMOL, 1) + ' mmol / 0.100 M = ' + (s2 ? fx(NEED_ML, 0) + ' mL' : '? mL')]];
     lines.forEach((ln, i) => { const y = L.y + 56 + i * (PHONE ? 46 : 54); T(L.x + 16, y, ln[0], PHONE ? 12.5 : 13.5, MUTED, 'left', 800); T(L.x + 16, y + 22, ln[1], PHONE ? 14.5 : 16, i === 2 && s2 ? BAD : INK, 'left', 800); });
     // 뷰렛 용량 막대 (0 ~ 200 mL)
     const bx = L.x + 20, bw = L.w - 40, by = L.y + (PHONE ? 214 : L.h - 150), sc = 200;
@@ -772,7 +772,7 @@
     const I = LTI.info; panel(I.x, I.y, I.w, I.h, 14);
     T(I.x + 12, I.y + 22, '📋 이 적정의 시료', 13.5, INK, 'left', 800);
     let y = I.y + 44;
-    [sm.name + '을 10배 묽힌 식초', '20.00 mL (홀피펫)', 'CH₃COOH + NaOH', '→ CH₃COONa + H₂O (1 : 1)', '표준 용액 0.100 M NaOH'].forEach((s, i) => { T(I.x + 12, y, s, PHONE ? 12 : 13, i === 3 ? VIO : INK, 'left', 800); y += PHONE ? 20 : 24; });
+    ['10배 묽힌 ' + sm.name, '20.00 mL (홀피펫)', 'CH₃COOH + NaOH', '→ CH₃COONa + H₂O (1 : 1)', '표준 용액 0.100 M NaOH'].forEach((s, i) => { T(I.x + 12, y, s, PHONE ? 12 : 13, i === 3 ? VIO : INK, 'left', 800); y += PHONE ? 20 : 24; });
     textBlock(I.x + 12, y + 6, I.w - 24, '식초가 색을 띠어도 흰 종이 위에서 연한 붉은색을 확인해요.', PHONE ? 11.5 : 12.5, MUTED, 16, 700);
     drawRuns(LTI.runs, '📋 뷰렛 눈금 기록표 (' + sm.name.split(' ')[0] + ' ' + sm.key + ')');
   }
@@ -784,11 +784,11 @@
     ? { data: rect(6, 6, 468, 112), card: (i) => rect(6, 124 + i * 90, 468, 84), sum: rect(6, 580, 468, 174) }
     : { data: rect(8, 8, 784, 118), card: (i) => rect(8 + i * 158, 134, 150, 238), sum: rect(8, 380, 784, 172) };
   const CSTAGE = [
-    { t: '① 평균 NaOH 부피', u: 'mL', f: () => '(' + SAMP[S.sample].data.map((v) => v.toFixed(1)).join(' + ') + ') ÷ 3', v: (s) => s.mean, dec: 1, tag: '평균' },
-    { t: '② 희석 식초의 M', u: 'M', f: () => '0.100 × V′ ÷ 20.00', v: (s) => s.cDil, dec: 4, tag: '1 : 1 몰수비' },
+    { t: '① 평균 NaOH 부피', u: 'mL', f: () => '(' + SAMP[S.sample].data.map((v) => v.toFixed(1)).join(' + ') + ') / 3', v: (s) => s.mean, dec: 1, tag: '평균' },
+    { t: '② 희석 식초의 M', u: 'M', f: () => '0.100 × V′ / 20.00', v: (s) => s.cDil, dec: 4, tag: '1 : 1 몰수비' },
     { t: '③ 원액의 M', u: 'M', f: () => '× 10 (희석 배수)', v: (s) => s.cOrig, dec: 3, tag: '희석 보정' },
     { t: '④ 질량 농도', u: 'g/L', f: () => '× 60 g/mol', v: (s) => s.gL, dec: 1, tag: '몰 → 질량' },
-    { t: '⑤ 100 mL당', u: 'g/100 mL', f: () => '÷ 10 (L → 100 mL)', v: (s) => s.g100, dec: 2, tag: '단위 바꾸기' },
+    { t: '⑤ 100 mL당', u: 'g/100 mL', f: () => '10으로 나눔 (L → 100 mL)', v: (s) => s.g100, dec: 2, tag: '단위 바꾸기' },
   ];
   const cDone = (k) => S.calc.stage[k] >= 5;
   function drawCalc() {
@@ -883,7 +883,7 @@
     : { bars: rect(8, 8, 384, 238), talk: rect(400, 8, 392, 238), cause: rect(8, 254, 784, 298), row: (i) => 254 + 46 + i * 62 };
   const eCauseOK = (i) => S.eval.sel[i] === CAUSES[i].ans;
   const eConclOK = () => S.eval.more === 'A' && near(parseNum(S.eval.diff), r6(SAMP.A.g100 - SAMP.B.g100), 0.03, 0);
-  function stepEval(dt) { S.eval.bars.a.update(dt); S.eval.bars.b.update(dt); }
+  function stepEval(dt) { S.eval.bars.a.target = SAMP.A.g100; S.eval.bars.b.target = SAMP.B.g100; S.eval.bars.a.update(dt); S.eval.bars.b.update(dt); }
   function drawEval() {
     const E = S.eval, A = SAMP.A, B = SAMP.B, R0 = LEV.bars; panel(R0.x, R0.y, R0.w, R0.h, 14);
     T(R0.x + 14, R0.y + 24, '📊 100 mL당 아세트산 질량 (g/100 mL)', PHONE ? 13.5 : 14.5, INK, 'left', 800);
@@ -1135,6 +1135,7 @@
     },
   ];
 
+  setScene(S.mode);
   game = SciSim.game({
     simId: 'hc-vinegar-titration', mount: '#game', badge: '식초 적정 박사', homeHref: '../../index.html#hc',
     featureLabels: { plan: '📝 희석 계획 · 뷰렛 용량 막대', prep: '🧫 홀피펫 · 부피 플라스크 희석', titr: '🧪 가상 뷰렛 · 눈금 확대', calc: '🧮 계산 사슬 카드', eval: '📊 함량 막대 · 오차 카드' },
@@ -1143,7 +1144,6 @@
   });
 
   /* ---------- 시작 ---------- */
-  setScene(S.mode);
   let lastFree = false, lastMode = '';
   SciSim.loop((dt, t) => {
     S.t = t;

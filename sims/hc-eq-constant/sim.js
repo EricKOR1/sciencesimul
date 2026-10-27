@@ -46,7 +46,7 @@
   }
   const r6 = (v) => Math.round(v * 1e6) / 1e6;
   const parseNum = (s) => {
-    let t = String(s).trim().replace(/,/g, '.').replace(/\s+/g, '');
+    let t = String(s).trim().replace(/[\u2212\u2013\u2012]/g, '-').replace(/,/g, '.').replace(/\s+/g, '');
     const fr = /^(\d+(?:\.\d+)?)\/(\d+(?:\.\d+)?)$/.exec(t); if (fr && +fr[2] !== 0) return +fr[1] / +fr[2];
     const sc = /^(\d+(?:\.\d+)?)(?:[x×*]10\^?|e)([+\-−]?\d+)$/i.exec(t.replace('−', '-')); if (sc) return +sc[1] * Math.pow(10, +sc[2].replace('−', '-'));
     t = t.replace(/[^0-9.\-+]/g, ''); return t === '' || isNaN(+t) ? NaN : +t;
@@ -217,9 +217,9 @@
   const C0S = [{ id: 'a', lab: '0.030', c: 0.030 }, { id: 'b', lab: '0.060', c: 0.060 }, { id: 'c', lab: '0.090', c: 0.090 }, { id: 'v', lab: '0.030에서 부피 ½', c: 0.060 }];
   // K 뒤집기
   const FP = [
-    { fw: 'N₂O₄ ⇌ 2NO₂', bw: '2NO₂ ⇌ N₂O₄', K: 0.0060, fwF: '[NO₂]² ÷ [N₂O₄]', bwF: '[N₂O₄] ÷ [NO₂]²', fwT: 'N₂O₄', bwT: 'NO₂' },
-    { fw: 'H₂ + I₂ ⇌ 2HI', bw: '2HI ⇌ H₂ + I₂', K: 25, fwF: '[HI]² ÷ ([H₂][I₂])', bwF: '[H₂][I₂] ÷ [HI]²', fwT: 'HI', bwT: 'H₂·I₂' },
-    { fw: '2SO₂ + O₂ ⇌ 2SO₃', bw: '2SO₃ ⇌ 2SO₂ + O₂', K: 10, fwF: '[SO₃]² ÷ ([SO₂]²[O₂])', bwF: '([SO₂]²[O₂]) ÷ [SO₃]²', fwT: 'SO₃', bwT: 'SO₂·O₂' },
+    { fw: 'N₂O₄ ⇌ 2NO₂', bw: '2NO₂ ⇌ N₂O₄', K: 0.0060, fwF: '[NO₂]² / [N₂O₄]', bwF: '[N₂O₄] / [NO₂]²', fwT: 'N₂O₄', bwT: 'NO₂' },
+    { fw: 'H₂ + I₂ ⇌ 2HI', bw: '2HI ⇌ H₂ + I₂', K: 25, fwF: '[HI]² / ([H₂][I₂])', bwF: '[H₂][I₂] / [HI]²', fwT: 'HI', bwT: 'H₂·I₂' },
+    { fw: '2SO₂ + O₂ ⇌ 2SO₃', bw: '2SO₃ ⇌ 2SO₂ + O₂', K: 10, fwF: '[SO₃]² / ([SO₂]²[O₂])', bwF: '([SO₂]²[O₂]) / [SO₃]²', fwT: 'SO₃', bwT: 'SO₂·O₂' },
   ];
   const SPL = split(0.6, 0.5);
 
@@ -348,10 +348,10 @@
     T(r.x + 14, y, '평형 상수식', 13, MUTED, 'left', 800); y += 8;
     const tk = [], dn = []; e.sp.forEach((s, i) => { const t = { t: '[' + s + ']', e: e.coef[i] > 1 ? e.coef[i] : 0 }; (e.role[i] === 'P' ? tk : dn).push(t); });
     const frac = (arr) => arr.map((q) => q.t + (q.e ? SUP(q.e) : '')).join('');
-    y += textBlock(r.x + 14, y + 14, r.w - 28, 'K = ' + frac(tk) + ' ÷ ' + (dn.length > 1 ? '(' + frac(dn) + ')' : frac(dn)), 14.5, INK, 18, 800) + 6;
+    y += textBlock(r.x + 14, y + 14, r.w - 28, 'K = ' + frac(tk) + ' / ' + (dn.length > 1 ? '(' + frac(dn) + ')' : frac(dn)), 14.5, INK, 18, 800) + 6;
     if (allEq) {
       const num = [], den = []; e.sp.forEach((s, i) => { const t = fx(e.eq[i], e.dec) + (e.coef[i] > 1 ? SUP(e.coef[i]) : ''); (e.role[i] === 'P' ? num : den).push(t); });
-      y += textBlock(r.x + 14, y + 14, r.w - 28, '= ' + num.join(' × ') + ' ÷ ' + (den.length > 1 ? '(' + den.join(' × ') + ')' : den[0]), 13.5, INK, 17, 800) + 6;
+      y += textBlock(r.x + 14, y + 14, r.w - 28, '= ' + num.join(' × ') + ' / ' + (den.length > 1 ? '(' + den.join(' × ') + ')' : den[0]), 13.5, INK, 17, 800) + 6;
       if (kOK(ei)) textBlock(r.x + 14, y + 14, r.w - 28, '= ' + KDISP(e) + '  ✅', 18, '#0b6b39', 22, 800);
       else T(r.x + 14, y + 20, '계산해서 K를 써 보세요', 13.5, MUTED, 'left', 800);
     } else T(r.x + 14, y + 20, '표의 ? 칸을 채우면 식에 값이 들어가요', 13.5, MUTED, 'left', 800);
@@ -543,9 +543,9 @@
       const y = r.y + 42 + i * 82, sel = i === S.fl.i; D.roundRect(r.x + 8, y, r.w - 16, 74, 12); ctx.fillStyle = sel ? 'rgba(124,58,237,.08)' : '#f6f7fb'; ctx.fill(); if (sel) { ctx.strokeStyle = VIO; ctx.lineWidth = 2; D.roundRect(r.x + 8, y, r.w - 16, 74, 12); ctx.stroke(); }
       T(r.x + 18, y + 22, f.fw, 14, INK, 'left', 800); T(r.x + r.w - 18, y + 22, 'K = ' + KF(f.K), 14, '#b45309', 'right', 800);
       T(r.x + 18, y + 46, f.bw, 14, INK, 'left', 800); T(r.x + r.w - 18, y + 46, S.fl.seen[i] ? 'K′ = ' + KF(1 / f.K) : "K′ = ?", 14, S.fl.seen[i] ? '#6d28d9' : MUTED, 'right', 800);
-      T(r.x + 18, y + 66, S.fl.seen[i] ? '1 ÷ ' + KF(f.K) + ' = ' + KF(1 / f.K) : '뒤집어 보면 알 수 있어요', 12.5, MUTED, 'left', 800);
+      T(r.x + 18, y + 66, S.fl.seen[i] ? '1 / ' + KF(f.K) + ' = ' + KF(1 / f.K) : '뒤집어 보면 알 수 있어요', 12.5, MUTED, 'left', 800);
     });
-    textBlock(r.x + 14, r.y + 42 + 3 * 82 + 10, r.w - 28, '반응식을 거꾸로 쓰면 K′ = 1 ÷ K예요.', 14.5, VIO, 18, 800);
+    textBlock(r.x + 14, r.y + 42 + 3 * 82 + 10, r.w - 28, '반응식을 거꾸로 쓰면 K′ = 1 / K예요.', 14.5, VIO, 18, 800);
   }
   /* ---------- 읽음 칸 ---------- */
   let rlast = '';

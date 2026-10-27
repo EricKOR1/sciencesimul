@@ -150,7 +150,7 @@
   function pourInto(i, kind) {
     const t = S.tubes[i]; if (!t || !kind) return false;
     if (S.bath.on) { say('물중탕에 넣은 뒤에는 바꿀 수 없어요. ↺ 다시 하기를 눌러요.'); return false; }
-    if (t.add) { t.shake = 0.4; Sound.fail(); say('이 시험관에는 이미 ' + KIND[t.add].name + '이(가) 들어 있어요.'); return false; }
+    if (t.add) { t.shake = 0.4; Sound.fail(); say('이 시험관에는 이미 ' + KIND[t.add].name + (jong(KIND[t.add].name) ? '이' : '가') + ' 들어 있어요.'); return false; }
     t.add = kind; Sound.click();
     S.pours.push({ kind, i, p: 0, ep: S.epoch });
     updateCtl(); return true;
@@ -731,8 +731,8 @@
       const sel = Pt.sel === k, dn = Pt.done[k] >= 3;
       ctx.fillStyle = sel ? '#fff' : 'rgba(255,255,255,.6)'; rr(bx, by, bw, bh, 10).fill();
       ctx.strokeStyle = dn ? '#16a34a' : sel ? pr.color : '#fed7aa'; ctx.lineWidth = sel ? 3 : 1.5; rr(bx, by, bw, bh, 10).stroke();
-      for (let q = 0; q < 4; q++) { const px = bx + 14 + (q % 2) * 22 + Math.sin(t * 1.6 + q + i) * 3, py = by + 14 + Math.floor(q / 2) * 18 + Math.cos(t * 1.4 + q) * 2; D.sphere(px, py, k === 'fa' ? 5 : 6, pr.color, { gloss: false }); }
-      TF(bx + bw / 2 + 12, by + bh / 2 + 4, pr.name, bw - 52, PHONE ? 11.5 : 12.5, INK, 'center', 800);
+      for (let q = 0; q < 4; q++) { const px = bx + 16 + q * (bw - 32) / 3 + Math.sin(t * 1.6 + q + i) * 2, py = by + 13 + Math.cos(t * 1.4 + q) * 1.5; D.sphere(px, py, k === 'fa' ? 5 : 6, pr.color, { gloss: false }); }
+      TF(bx + bw / 2, by + bh - 8, pr.name, bw - 10, PHONE ? 11.5 : 12.5, INK, 'center', 800);
       if (dn) D.check(bx + bw - 12, by + 12, 9, 1);
     });
     // 융털
@@ -1029,7 +1029,7 @@
           setup() { ensure('lab', 'res'); },
           check: () => NUTS.every((n) => S.lab.seen[n]) && S.lab.bileSeen, hold: 0.4,
           status: () => NUTS.map((n) => mark(S.lab.seen[n]) + NUT[n].icon).join(' ') + ' · ' + mark(S.lab.bileSeen) + ' 쓸개즙 비교',
-          explain: '소화제 시험관에서는 <b>녹말 10 %</b>만 남고, 흰자 조각은 <b>55 %</b>로 줄고, 우유는 <b>노랑</b>으로 변했어요. 소화제의 효소가 세 영양소를 분해한 거예요. 하지만 분해 정도는 영양소마다 달랐어요. 쓸개즙을 더하면 지방 분해가 더 빨라져 BTB가 약 8분에 노랑(90 % 이상)에 이르렀어요(쓸개즙이 없을 때는 약 16분).',
+          explain: '소화제 시험관에서는 <b>녹말 10 %</b>만 남고, 흰자 조각은 <b>55 %</b>로 줄고, 우유는 <b>노랑</b>으로 변했어요. 소화제의 효소가 세 영양소를 분해한 거예요. 하지만 분해 정도는 영양소마다 달랐어요. 쓸개즙을 더하면 지방 분해가 더 빨라져 BTB가 약 8분에 노랑(90 % 이상)에 이르렀어요(쓸개즙이 없을 때는 약 13분).',
         },
         {
           title: '효소 표 완성하기',

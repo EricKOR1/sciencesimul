@@ -16,7 +16,8 @@ const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 const mv = (v) => (v < 0 ? '−' : v > 0 ? '+' : '') + Math.abs(Math.round(v));      // 막전위 표기 (부호 포함, 정수)
 let clock = 0;
 
-const view = SciSim.stage($('#cv'), { width: VW, height: VH, background: BG });
+let resizeTick = 0;   // 캔버스가 다시 만들어지면(크기 변화 · 주소창 접힘) 화면을 처음부터 다시 그려요
+const view = SciSim.stage($('#cv'), { width: VW, height: VH, background: BG, onResize() { resizeTick++; } });
 const ctx = view.ctx;
 const D = SciSim.draw(ctx);
 const parts = new SciSim.Particles();
@@ -1462,7 +1463,7 @@ SciSim.loop((dt, t) => {
   else if (key === 'map:sit') drawSitScene(dt);
   else if (key === 'cer:ex') {
     const cer = S.cer, pq = cer.sel && !RM ? Math.round((0.5 + 0.5 * Math.sin(t * 5.5)) * 5) : 0;
-    const sig = [cer.yaw.toFixed(4), cer.pitch.toFixed(4), cer.zoom.toFixed(3), cer.tzoom, cer.cutAmt.toFixed(3), cer.color, cer.sel, Object.keys(cer.seen).join(''), $('#cv').width, pq].join('|');
+    const sig = [cer.yaw.toFixed(4), cer.pitch.toFixed(4), cer.zoom.toFixed(3), cer.tzoom, cer.cutAmt.toFixed(3), cer.color, cer.sel, Object.keys(cer.seen).join(''), $('#cv').width, pq, resizeTick].join('|');
     const full = sig !== lastSig || S.fade > 0.005 || !sameView;
     if (full || cer.sel) drawCerScene(dt, full);
     lastSig = sig;
