@@ -308,7 +308,7 @@
     const sumY = TBL.y + TBL.h - 18;
     if (q.trials.length >= 3) {
       const mean = q.trials.reduce((a, b) => a + b.est, 0) / q.trials.length;
-      T(TBL.x + 16, sumY, '추정값 평균 ≈ ' + Math.round(mean) + '마리 (이번 호수의 참값 ' + MK.N + '마리) → 추정값은 참값 근처에서 흩어져요', PHONE ? 13 : 15, '#15803d', 'left', 800);
+      T(TBL.x + 16, sumY, '추정값 평균 ≈ ' + Math.round(mean) + '마리 (이번 호수의 참값 ' + MK.N + '마리) → 시행마다 추정값이 달라요', PHONE ? 13 : 15, '#15803d', 'left', 800);
     } else T(TBL.x + 16, sumY, '시행을 3번 해서 추정값이 어떻게 달라지는지 비교해요 (' + q.trials.length + ' / 3)', PHONE ? 13 : 15, '#64748b', 'left', 800);
     parts.update(dt); parts.draw(ctx);
   }
@@ -389,7 +389,7 @@
     pts.forEach((p) => { const sc = clamp(q.pop[p[2]], 0, 1.2); D.sphere(p[0], p[1], 7 * sc, '#16a34a', { gloss: false, outline: '#fff', outlineWidth: 2 }); if (q.day === G_DAYS[p[2]]) { ctx.strokeStyle = '#1f2d44'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(p[0], p[1], 12, 0, TAU); ctx.stroke(); } });
     if (q.ghost) { const g = q.ghost, a = 1 - (t - g.t0) * 1.4; if (a > 0) { T(g.x, g.y + 7, '✖', 20, 'rgba(220,38,38,' + a + ')', 'center', 800); } else q.ghost = null; }
     if (q.ok && q.env === 'S') {
-      D.label(gx(13), gy(230), 'S자 곡선', { bg: '#15803d', size: PHONE ? 15 : 18 });
+      D.label(PHONE ? gx(10.8) : gx(13), gy(230), 'S자 곡선', { bg: '#15803d', size: PHONE ? 15 : 18 });
       // 환경 저항
       const chips = ['먹이 부족', '노폐물 쌓임', '공간 부족', '포식'];
       T(GB.x + GB.w - 6, GB.y + GB.h * 0.36, '환경 저항', PHONE ? 13 : 14.5, '#b91c1c', 'right', 800);

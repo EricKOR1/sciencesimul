@@ -516,15 +516,16 @@
     const I = SYMG.ins, s = SYM[q.sel], placedOK = q.place[q.sel] === s.type;
     panel(I.x, I.y, I.w, I.h, 16);
     T(I.x + 14, I.y + 26, '🔍 확대 그림', PHONE ? 13.5 : 14.5, '#26324a', 'left', 800);
-    const ax = PHONE ? I.x + 70 : I.x + 52, bx_ = PHONE ? I.x + 400 : I.x + I.w - 52, ay = PHONE ? I.y + 56 : I.y + 90, k = clamp(q.flowK, 0, 1);
-    [[s.a, ax, 0], [s.b, bx_, 1]].forEach(([an, x, kk]) => {
+    const lx0 = PHONE ? I.x + 70 : I.x + 52, rx0 = PHONE ? I.x + 400 : I.x + I.w - 52, ay = PHONE ? I.y + 56 : I.y + 90, k = clamp(q.flowK, 0, 1);
+    // 이익을 얻는 쪽(b)을 왼쪽 '종 A +'에 두어요 (편리 공생·기생 칸의 머리글 '종 A + / 종 B 0·−'와 같게)
+    const sw = s.type !== 0, xa = sw ? rx0 : lx0, xb = sw ? lx0 : rx0;
+    [[s.a, xa, 0], [s.b, xb, 1]].forEach(([an, x, kk]) => {
       D.sphere(x, ay, PHONE ? 28 : 30, kk ? '#fde68a' : '#bbf7d0', { shadow: true });
       E(an[0], x, ay + 1, PHONE ? 30 : 34); T(x, ay + (PHONE ? 46 : 50), an[1], 13.5, '#1f2d44', 'center', 800);
       D.sphere(x + 26, ay - 24, 12, placedOK ? (kk === 0 ? (s.type === 2 ? '#dc2626' : '#16a34a') : '#16a34a') : '#94a3b8', { gloss: false, outline: '#fff', outlineWidth: 2 });
-      // 부호: 맞게 놓았을 때만 보여요 (상리 +/+, 편리 +/0, 기생 +/−) 단, a는 기생·편리에서 '줘서 손해/영향 없음' 쪽
       const sg = placedOK ? signOf(s, kk) : '?'; T(x + 26, ay - 18.5, sg, 15, '#fff', 'center', 800);
     });
-    const x1 = ax + 40, x2 = bx_ - 40;
+    const dir = xb > xa ? 1 : -1, x1 = xa + 40 * dir, x2 = xb - 40 * dir;
     if (s.ab) { ctx.save(); ctx.globalAlpha = k; D.arrow(x1, ay - 8, x1 + (x2 - x1) * k, ay - 8, { color: '#16a34a', width: 3.5, head: 11 }); ctx.restore(); }
     if (s.ba) { ctx.save(); ctx.globalAlpha = k; D.arrow(x2, ay + 12, x2 - (x2 - x1) * k, ay + 12, { color: '#0ea5e9', width: 3.5, head: 11 }); ctx.restore(); }
     if (!RM && k >= 1) { const n = 3; for (let i = 0; i < n; i++) { const f = (t * 0.45 + i / n) % 1; if (s.ab) D.sphere(x1 + (x2 - x1) * f, ay - 8, 3.4, '#16a34a', { gloss: false }); if (s.ba) D.sphere(x2 - (x2 - x1) * f, ay + 12, 3.4, '#0ea5e9', { gloss: false }); } }
@@ -824,11 +825,11 @@
           id: 'coex', title: '겹침을 줄여 공존시키기',
           goal: '② 병의 <b>자원 겹침</b>을 <b>40 % 이하</b>로 낮추고 다시 ▶ 30일 실행해 <b>P1과 P2가 함께 살아남게</b> 하세요.',
           hint: '자원 겹침 슬라이더를 왼쪽으로 옮기면 두 종이 쓰는 공간이 나뉘어요. 슬라이더를 바꾸면 ② 병만 다시 실행해요.',
-          setup() { setMode('cul'); },
+          setup() { setMode('cul'); const q = S.cul; q.s = 100; q.ran[1] = false; q.run[1] = false; q.p[1] = 0; q.sRan[1] = null; q.dots[1] = [[], []]; updateCtl(); },
           check: () => culCoexist(),
           hold: 0.6,
           status: () => '자원 겹침 ' + S.cul.s + ' % (40 % 이하) &nbsp; ' + mark(culCoexist()) + ' 공존',
-          explain: '겹침이 <b>60 % 이상</b>이면 P2가 밀려나고, <b>40 % 이하</b>로 줄이면 P1과 P2가 모두 남아요. 먹이나 서식 공간을 달리하는 <b>분서</b>가 경쟁을 줄여 줘요.',
+          explain: '겹침이 <b>약 45 % 이상</b>이면 P2가 밀려나고, <b>40 % 이하</b>로 줄이면 P1과 P2가 모두 남아요. 먹이나 서식 공간을 달리하는 <b>분서</b>가 경쟁을 줄여 줘요.',
         },
         {
           type: 'quiz', title: '경쟁과 분서',

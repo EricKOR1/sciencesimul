@@ -537,7 +537,7 @@
       const tx2 = P.gx(r.n), ty2 = P.gy(pct(r.n)), p = r.pt.p, sx = CV.x + CV.w - 30, sy = CV.y + 20;
       const k = SciSim.ease.outBack(clamp(p, 0, 1)), x = sx + (tx2 - sx) * k, y = sy + (ty2 - sy) * k;
       D.sphere(x, y, 8, C_P, { shadow: true });
-      if (p >= 1) { D.label(x + 12, y - 16, 'n=' + r.n + ' · ' + fmtPct(pct(r.n)) + '%', { bg: '#1e3a8a', size: 12.5, pad: 6, align: 'left' }); }
+      if (p >= 1) { D.label(x + 12, Math.max(y - 16, P.y0 + 12), 'n=' + r.n + ' · ' + fmtPct(pct(r.n)) + '%', { bg: '#1e3a8a', size: 12.5, pad: 6, align: 'left' }); }
     });
     // 기준선 (50, 25, 12.5)
     if (full) {
@@ -586,7 +586,7 @@
       ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(gx(lg), topY - 6); ctx.lineTo(gx(lg), axY); ctx.stroke();
       if (!PHONE || i % 2 === 1 || i === 0) D.text(gx(lg), axY + 18, LOGLAB[i], { size: PHONE ? 11.5 : 12, weight: 700, color: gcl.mute });
     });
-    ctx.strokeStyle = '#64748b'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(ax, axY); ctx.lineTo(ax + aw, axY); ctx.stroke(); D.text(ax - 8, axY + 18, '(년)', { size: 12, weight: 700, color: gcl.mute, align: 'right' });
+    ctx.strokeStyle = '#64748b'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(ax, axY); ctx.lineTo(ax + aw, axY); ctx.stroke(); D.text(ax - 20, axY + 18, '(년)', { size: 12, weight: 700, color: gcl.mute, align: 'right' });
     // 선택한 나이 표시선
     const tl = Math.log10(tgt), tlab = tgt >= 1e8 ? tgt / 1e8 + '억 년' : tgt / 1e4 + '만 년';
     ctx.save(); ctx.setLineDash([7, 5]); ctx.strokeStyle = '#be123c'; ctx.lineWidth = 2.4; ctx.beginPath(); ctx.moveTo(gx(tl), topY - 10); ctx.lineTo(gx(tl), axY); ctx.stroke(); ctx.restore();
@@ -813,6 +813,8 @@
     setSlider(sYoung, oYoung, S.sect.young, (v) => v + ' Ma'); setSlider(sOld, oOld, S.sect.old, (v) => v + ' Ma');
   }
   const parseNum = (s) => parseFloat(String(s).replace(/,/g, '').replace(/\s/g, ''));
+  /* 자유 탐구: 장면 고르기 */
+  $$('#modeSeg button').forEach((b) => b.addEventListener('click', () => { Sound.click(); S.dec.play = false; setView(b.dataset.view); }));
   /* 붕괴 모형 */
   sT.addEventListener('input', () => { S.dec.play = false; S.dec.t = +sT.value; updateCtl(); });
   $('#bPlay').addEventListener('click', () => { Sound.click(); const D2 = S.dec; if (D2.play) { D2.play = false; decaySetT(D2.t); } else { if (D2.t >= 4) D2.t = 0; D2.play = true; } updateCtl(); });

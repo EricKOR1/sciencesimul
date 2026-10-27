@@ -796,7 +796,7 @@
     }
     ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(cx, cy, R, 0, TAU); ctx.arc(cx, cy, R - TH, 0, TAU); ctx.stroke();
     // 시대 이름 (맞춘 구간에만 표시)
-    if (lk[0]) { const p = mkPos(tm[0] / 2, R - TH / 2); D.text(p[0], p[1] + 5, '선캄브리아', { size: 13.5, weight: 800, color: '#fff' }); }
+    if (lk[0]) { const p = mkPos(tm[0] / 2, R - TH / 2); D.text(p[0], p[1] + 5, '선캄브리아', { size: 13.5, weight: 800, color: '#fff', stroke: 'rgba(60,50,40,.85)', strokeWidth: 3 }); }
     if (lk[0] && lk[1]) { const p = mkPos((tm[0] + tm[1]) / 2, R + 14); D.text(p[0] - 10, p[1] + 4, '고생대', { size: 13, weight: 800, color: shade(ERA.pal.c, -0.25) }); }
     // 가운데 글자
     const mk = S.lastMk >= 0 ? S.mk[S.lastMk] : null;
@@ -1063,7 +1063,7 @@
   function setMode(m) { if (S.mode !== m) { S.fade = 1; parts.clear(); if (S.mode === 'form') resetForm(); } S.mode = m; updateCtl(); }
   const MODE_OF_BTN = { form: 'form', cards: 'cards', clock: 'clock', strata: 'strata', map: 'map' };
   $$('#modeSeg button').forEach((b) => b.addEventListener('click', () => {
-    Sound.click(); const m = MODE_OF_BTN[b.dataset.mode]; setMode(m);
+    Sound.click(); hideHint(); const m = MODE_OF_BTN[b.dataset.mode]; setMode(m);
     if (m === 'clock') { S.clockReveal = true; S.mk.forEach((k, i) => { k.t = CLK[i].tgt; k.locked = false; }); S.lastMk = -1; } if (m === 'map' && !S.pins.length) initPins(); if (m === 'strata') S.extRev = 0;
     updateCtl();
   }));

@@ -421,7 +421,7 @@
       drawRamp(L.x + 22, L.y + 42, 34, 240, true, S.band);
       const ticks = ir ? [-60, -40, -20, 0, 20] : [1, 0.5, 0];
       ticks.forEach((v) => { const f = ir ? (v + 60) / 80 : 1 - v; const y = L.y + 42 + f * 240; ctx.strokeStyle = '#64748b'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(L.x + 56, y); ctx.lineTo(L.x + 64, y); ctx.stroke(); T(L.x + 68, y + 4, ir ? (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v) + ' °C' : (v === 1 ? '반사 많음' : v === 0 ? '반사 적음' : '반사 50 %'), { size: 12.5, weight: 800, color: '#475569', align: 'left' }); });
-      drawWrap(L.x + L.w / 2, L.y + 300, ir ? '밝다 = 꼭대기가 차갑다 = 구름이 높다' : '밝다 = 햇빛을 많이 반사 = 구름이 두껍다', L.w - 30, 13.5, { color: '#0369a1', weight: 800 });
+      drawWrap(L.x + L.w / 2, L.y + 312, ir ? '밝다 = 꼭대기가 차갑다 = 구름이 높다' : '밝다 = 햇빛을 많이 반사 = 구름이 두껍다', L.w - 30, 13.5, { color: '#0369a1', weight: 800 });
       ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(L.x + 14, L.y + 346); ctx.lineTo(L.x + L.w - 14, L.y + 346); ctx.stroke();
       const [a, b] = probeText();
       T(L.x + 16, L.y + 372, a, { size: 14.5, weight: 800, color: '#0f172a', align: 'left' });
@@ -728,7 +728,7 @@
     const fx = pX(frontX(PR.seoul.y, th));
     if (L.radar || L.chart) {
       D.arrow(pX(frontX(PR.seoul.y, 0)), sy + 36 * k + 14, sx - 12, sy + 36 * k + 14, { color: '#0f172a', width: 2.6, head: 8 });
-      D.label((pX(frontX(PR.seoul.y, 0)) + sx) / 2, sy + 36 * k + 32, '서울까지 약 ' + PR.dist + ' km', { bg: '#0f172a', size: 12.5, pad: 6 });
+      D.label((pX(frontX(PR.seoul.y, 0)) + sx) / 2, sy + 36 * k + 32, (th > 0.05 ? '처음에는 서울까지 약 ' : '서울까지 약 ') + PR.dist + ' km', { bg: '#0f172a', size: 12.5, pad: 6 });
     }
     if (L.radar) { D.arrow(pX(frontX(300, 0)) + 6, pY(300) - 24, pX(frontX(300, 0)) + 56, pY(300) - 24, { color: '#7f1d1d', width: 3, head: 9 }); D.label(pX(frontX(300, 0)) + 30, pY(300) - 42, '에코 동진 ' + PR.v + ' km/h', { bg: '#7f1d1d', size: 12.5, pad: 6 }); }
     D.ring(sx, sy, 12, t, { color: '#7c3aed', speed: 0.8, width: 2 });
@@ -784,7 +784,7 @@
   function setRt(v) { S.rt = v; bR.set(v); }
   function setQt(v) { S.qt = v; bQ.set(v); }
   function setPt(v) { S.pt = v; bP.set(v); }
-  function setSize(km) { S.size = km; bS.set(Math.round(Math.log(km / 10) / Math.log(300) * 100)); }
+  function setSize(km) { S.size = km; bS.set(Math.round(Math.log(km / 10) / Math.log(300) * 100)); oSize.textContent = Math.round(km) + ' km'; }
   function updPlay() { $('#playBtnR').textContent = S.playR ? '⏸ 멈춤' : '▶ 재생'; $('#playBtnQ').textContent = S.playQ ? '⏸ 멈춤' : '▶ 재생'; $('#playBtnP').textContent = S.playP ? '⏸ 멈춤' : '▶ 재생'; }
   $('#playBtnR').addEventListener('click', () => { Sound.click(); if (!S.playR && S.rt >= 19.9) setRt(0); S.playR = !S.playR; updPlay(); });
   $('#playBtnQ').addEventListener('click', () => { Sound.click(); if (!S.playQ && S.qt >= 179) setQt(0); S.playQ = !S.playQ; updPlay(); });
@@ -906,7 +906,7 @@
           goal: '가시 영상과 적외 영상을 번갈아 보며, 영상 속 구름 <b>A·B·C</b>가 각각 <b>적란운·권운·층운(안개)</b> 중 무엇인지 짝지은 뒤 <b>✔ 확인하기</b>를 눌러요.',
           hint: '가시에서 밝고 적외에서도 아주 밝으면 두껍고 높은 구름(적란운), 가시에서 흐릿하지만 적외에서 밝으면 얇고 높은 구름(권운), 가시에서 밝고 적외에서 어두우면 두껍고 낮은 구름(층운·안개)이에요.',
           manual: true,
-          setup() { setMode('sat', 'match'); },
+          setup() { setMode('sat', 'match'); S.match = [null, null, null]; updateCtl(); },
           status: () => mark(S.match.every((v) => v != null)) + ' 짝지은 구름 ' + S.match.filter((v) => v != null).length + ' / 3',
           check() {
             if (S.match.some((v) => v == null)) return '구름 A, B, C를 모두 골라 주세요.';
@@ -920,7 +920,7 @@
           title: '적외 영상으로 구름 높이 계산',
           goal: '<b>적외 영상</b>에서 구름 <b>B</b>를 눌러 꼭대기 온도를 읽고, 지표 기온 15 °C, 기온 감률 6.5 °C/km로 <b>꼭대기 높이</b>를 구해 입력해요.',
           hint: '적외 영상 버튼을 누른 뒤 구름 B를 눌러요. 높이 = (15 − 꼭대기 온도) ÷ 6.5 (km)',
-          setup() { setMode('sat', 'height'); S.band = 'ir'; S.probe = null; S.probedB = false; updateCtl(); },
+          setup() { setMode('sat', 'height'); S.band = 'ir'; S.probe = null; S.probedB = false; S.hKm = 5; stH.set(5, true); updateCtl(); },
           check: () => S.probedB && Math.abs(S.hKm - 9.2) < 0.05, hold: 0.5,
           status: () => mark(S.probedB) + ' 적외 영상에서 B 읽기 · ' + mark(Math.abs(S.hKm - 9.2) < 0.05) + ' 높이 ' + f1(S.hKm) + ' km',
           explain: '구름 B의 꼭대기 온도는 <b>−45 °C</b>예요. 높이 = (15 − (−45)) ÷ 6.5 = 60 ÷ 6.5 ≈ <b>9.2 km</b>. 꼭대기 온도가 낮을수록 구름이 높아요. (예: −10 °C이면 25 ÷ 6.5 ≈ 3.8 km)',
@@ -958,7 +958,7 @@
           title: '에코 이동 속도와 도착 시각',
           goal: '10분 간격 영상 3장에서 에코 핵(✚)이 <b>10분 동안 이동한 거리</b>를 눈금(4 km)으로 읽어 <b>속도</b>를 구하고, 도시까지 40 km 남은 에코가 <b>몇 분 뒤</b> 도착할지 입력해요.',
           hint: '시각 슬라이더를 10:00, 10:10, 10:20으로 맞추며 ✚의 위치를 비교해요. 속도 = 거리 ÷ 시간(10분 = 1/6시간), 도착 시간 = 40 km ÷ 속도',
-          setup() { setMode('radar', 'move'); setRt(20); updateCtl(); },
+          setup() { setMode('radar', 'move'); setRt(20); S.dKm = 4; S.vKmh = 24; S.tMin = 20; stD.set(4, true); stV.set(24, true); stM.set(20, true); updateCtl(); },
           check: () => S.dKm === STEP_KM && S.vKmh === SPEED && S.tMin === 50, hold: 0.5,
           status: () => mark(S.dKm === STEP_KM) + ' 이동 거리 ' + S.dKm + ' km · ' + mark(S.vKmh === SPEED) + ' 속도 ' + S.vKmh + ' km/h · ' + mark(S.tMin === 50) + ' 도착 ' + S.tMin + '분 뒤',
           explain: '에코 핵은 10분마다 <b>8 km</b>씩 이동했어요. 속도 = 8 km ÷ (10/60 h) = <b>48 km/h</b>. 도시까지 40 km이므로 40 ÷ 48 = 5/6시간 = <b>50분 뒤</b>에 도착해요.',
@@ -987,7 +987,7 @@
           goal: '기온 그래프에서 소나기가 도착해 <b>기온이 떨어지기 시작한 관측 시각</b>을 눌러 표시하고, 오른쪽 3가지를 <b>중규모</b>와 <b>종관 규모</b>로 분류한 뒤 <b>✔ 확인하기</b>를 눌러요.',
           hint: '시각 슬라이더를 흘려 보내면 단면의 구름이 관측점에 가까워져요. 기온이 처음 31 °C보다 낮아진 관측점을 눌러요. 분류는 크기 비교 보기에서 도움을 받을 수 있어요.',
           manual: true,
-          setup() { setMode('sq', 'mark'); S.sqv = 'cell'; updateCtl(); },
+          setup() { setMode('sq', 'mark'); S.sqv = 'cell'; S.qMark = null; S.qCls = [null, null, null]; updateCtl(); },
           status: () => mark(S.qMark === Q_PASS) + ' 도착 시각 ' + (S.qMark == null ? '미표시' : clock(QT[S.qMark])) + ' · ' + mark(S.qCls.every((v) => v != null)) + ' 분류 ' + S.qCls.filter((v) => v != null).length + ' / 3',
           check() {
             if (S.qMark == null) return '기온 그래프의 관측점을 눌러 소나기가 도착한 시각을 표시해 주세요.';
@@ -1022,7 +1022,7 @@
           title: '한랭 전선이 도착하는 시각',
           goal: '일기도·적외 위성·레이더를 <b>모두 겹쳐</b> 본 뒤, 에코 선이 서울에서 얼마나 떨어져 있고 얼마의 속도로 오는지 읽어 <b>한랭 전선이 서울을 지나는 때</b>를 예측해요.',
           hint: '세 자료를 모두 켜면 서울까지의 거리(120 km)와 에코의 이동 속도(40 km/h)가 나타나요. 시간 = 거리 ÷ 속도',
-          setup() { setMode('pred', 'arrive'); S.layers = { chart: true, sat: true, radar: true }; setPt(0); S.solved4 = false; updateCtl(); },
+          setup() { setMode('pred', 'arrive'); S.layers = { chart: true, sat: false, radar: false }; S.arrH = 1; stA.set(1, true); setPt(0); S.solved4 = false; updateCtl(); },
           check: () => S.arrH === PR.hours && S.layers.chart && S.layers.sat && S.layers.radar, hold: 0.5,
           status: () => mark(S.layers.chart && S.layers.sat && S.layers.radar) + ' 세 자료 겹쳐 보기 · ' + mark(S.arrH === PR.hours) + ' 도착 ' + S.arrH + '시간 뒤',
           explain: '일기도에서 한랭 전선의 위치, 위성에서 서쪽의 두꺼운 구름 띠, 레이더에서 <b>서울 서쪽 120 km</b>의 강한 에코 선과 <b>40 km/h</b>의 이동 속도를 읽어요. 120 km ÷ 40 km/h = <b>3시간 뒤</b>에 전선(소나기)이 서울을 지나가요.',

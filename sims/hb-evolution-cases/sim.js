@@ -170,7 +170,7 @@
     for (let k = 0; k < kids.length && cntA !== nA2; k++) { if (cntA < nA2 && kids[k].nt === 'B') { kids[k].nt = 'A'; cntA++; } else if (cntA > nA2 && kids[k].nt === 'A') { kids[k].nt = 'B'; cntA--; } }
     q.plan = { p2, nA2, sAn, sBn, deadA: dieA.length, deadB: dieB.length, kids: kids.length };
     q.phase = 'select'; q.t = 0; q.hawk = 0; Sound.click();
-    if (q.type === 'none' && sA >= 0) q.seenNone = true;
+    if (q.type === 'none' && q.delta >= 0.2) q.seenNone = true;
     if (q.type === 'noinh' && q.delta >= 0.2) q.seenNoInh = true;
     q.good = q.type === 'var' && q.delta > 0 ? q.good + 1 : 0;
     updateCtl();
@@ -377,7 +377,7 @@
     // 비교 표
     T(MSTAT.x + 14, y0 + 20, '첫 사냥 비교 (처음엔 밝은색 10 : 어두운색 10)', 13.5, '#26324a', 'left', 800);
     const cols = ['나무 줄기', '잡힌 밝은색', '잡힌 어두운색', '다음 세대 어두운색'];
-    const cx = L([14, 92, 164, 236], [14, 120, 232, 340]).map((v) => MSTAT.x + v), tw = MSTAT.w;
+    const cx = L([12, 84, 154, 238], [14, 120, 232, 340]).map((v) => MSTAT.x + v), tw = MSTAT.w;
     const ty = y0 + 40; ctx.fillStyle = '#f1f5f9'; D.roundRect(MSTAT.x + 8, ty - 14, tw - 16, 26, 8); ctx.fill();
     cols.forEach((c, k) => T(cx[k], ty + 4, c, 12, '#475569', 'left', 800));
     ['light', 'soot'].forEach((e, k) => {
@@ -539,7 +539,7 @@
       T(BCNT.x + 14, y + 5, n, 14, '#334155', 'left', 800);
       D.roundRect(BCNT.x + 92, y - 8, BCNT.w - 230, 18, 9); ctx.fillStyle = '#eef2f7'; ctx.fill();
       const lg = clamp((Math.log10(Math.max(v, 1e-3)) + 3) / 9, 0, 1); D.roundRect(BCNT.x + 92, y - 8, Math.max(12, (BCNT.w - 230) * lg), 18, 9); ctx.fillStyle = col; ctx.fill();
-      T(BCNT.x + BCNT.w - 14, y + 5, v < 1 ? '1개체 미만' : fmtN(v) + '개체', 14, '#1f2d44', 'right', 800);
+      T(BCNT.x + BCNT.w - 14, y + 5, v < 0.99 ? '1개체 미만' : fmtN(v) + '개체', 14, '#1f2d44', 'right', 800);
     });
     T(BCNT.x + 14, BCNT.y + BCNT.h - 22, '내성균 비율 ' + fmtP(ratio), L(15, 14.5), '#c2410c', 'left', 800);
     T(BCNT.x + BCNT.w - 14, BCNT.y + BCNT.h - 22, '막대 길이: 개체 수(로그 눈금)', 12.5, '#64748b', 'right', 700);
@@ -794,7 +794,7 @@
           id: 'nochg', title: '선택이 일어나지 않는 경우',
           goal: '<b>변이 없음</b>(모두 A)과 <b>유전 안 됨</b> 집단에서 각각 한 세대 이상 진행해 비율이 변하는지 관찰하세요. (선택압은 0.2 이상)',
           hint: '아래 세 버튼에서 집단 종류를 바꿔요. 종류를 바꾸면 처음 집단으로 돌아가요. 선택압 슬라이더도 0.2 이상으로 두세요.',
-          setup() { setMode('sim'); },
+          setup() { setMode('sim'); S.sim.seenNone = false; S.sim.seenNoInh = false; updateCtl(); },
           check: () => S.sim.seenNone && S.sim.seenNoInh && S.sim.phase === 'idle', hold: 0.6,
           status: () => mark(S.sim.seenNone) + ' 변이 없음 관찰 &nbsp; ' + mark(S.sim.seenNoInh) + ' 유전 안 됨 관찰',
           explain: '모두 A이면 선택할 다른 형질이 없어서 비율이 <b>1.00으로 그대로</b>예요. 변이가 있어도 유전되지 않으면 자손이 다시 반반으로 태어나 <b>0.50에서 변하지 않아요</b>. 유전되는 변이만 진화의 재료가 돼요.',
@@ -873,7 +873,7 @@
           id: 'stop', title: '중단하면 어떻게 될까?',
           goal: '<b>새 감염</b>에서 3회 투여한 뒤 <b>⏹ 중단하고 세균이 늘어나길 기다리고</b>, 다시 3회 투여해 내성균 비율 <b>50 %</b>를 만드세요.',
           hint: '💊 3번 → ⏹ 기다리기 → 💊 3번 순서예요. 처음부터 6번 투여해야 하던 50 %를, 중단했다가 다시 3번 만에 만들어요.',
-          setup() { if (S.bac.doses > 0 && S.bac.phase === 'idle') resetBac(); setMode('bac'); },
+          setup() { if ((S.bac.doses > 0 || S.bac.regrows > 0) && S.bac.phase === 'idle') resetBac(); S.bac.done2 = false; setMode('bac'); },
           check: () => S.bac.done2, hold: 0.6,
           status: () => '투여 ' + S.bac.doses + '회 · 증식 ' + S.bac.regrows + '회 · 내성균 비율 ' + fmtP(bacRatio()),
           explain: '3회에서 중단하면 살아남은 세균이 다시 늘어요. 내성균도 1개체에서 약 1,000개체로 늘어 있어서, 다시 3회 투여하면 감수성균이 1,000개체로 줄어 <b>내성균이 50 %</b>가 돼요. 처음부터는 6회가 필요했던 거예요.',

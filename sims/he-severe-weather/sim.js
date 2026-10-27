@@ -709,7 +709,7 @@
     // (눈 입자는 parts)
   }
   function drawWestPanel(t) {
-    const R = LR; card(R, '눈구름 두께 = (온도차 − ' + K.DT0 + ') ÷ ' + K.DT_PER_KM + ' (km, 교육용 근사)'.replace('÷', '/'));
+    const R = LR; card(R, '눈구름 두께 = (온도차 − ' + K.DT0 + ') / ' + K.DT_PER_KM + ' (km, 교육용 근사)');
     const dT = dTof(S.sst, S.tup), th = thickOf(dT);
     // 계산식
     const y1 = R.y + 22 * FS + 22;

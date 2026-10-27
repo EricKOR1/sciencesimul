@@ -590,7 +590,7 @@
     const rx0 = sx(232), top = base - 200 * kc;
     ctx.strokeStyle = '#0f172a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(rx0, base); ctx.lineTo(rx0, top); ctx.stroke();
     for (let c = 0; c <= 200; c += 10) { const y = base - c * kc; ctx.beginPath(); ctx.moveTo(rx0 - (c % 50 === 0 ? 12 : 7), y); ctx.lineTo(rx0, y); ctx.stroke(); if (c % 50 === 0 && c > 0) T(rx0 - 16, y + 4, c + '', { size: 11.5, weight: 800, color: '#0f172a', align: 'right', stroke: 'rgba(255,255,255,.8)', strokeWidth: 3 }); }
-    T(rx0 - 16, top - 8, 'cm', { size: 11.5, weight: 800, color: '#0f172a', align: 'right' });
+    T(rx0 - 16, base + 16, 'cm', { size: 11.5, weight: 800, color: '#0f172a', align: 'right' });
     D.label(R.x + 10, R.y + 20 * FS, '태풍이 해안에 다가올 때의 해수면 (세로 확대, 예시)', { bg: 'rgba(15,23,42,.82)', size: 12.5, align: 'left' });
     D.label(R.x + R.w - 10, R.y + 112, '태풍 중심 ' + S.pres + ' hPa · 주변 1010 hPa', { bg: '#b91c1c', size: 12.5, pad: 7, align: 'right' });
     // 막대: 기압 + 바람 쏠림 + 만조
@@ -692,8 +692,8 @@
     [100, 200].forEach((r) => { ctx.strokeStyle = 'rgba(71,85,105,.35)'; ctx.lineWidth = 1.4; ctx.setLineDash([3, 5]); ctx.beginPath(); ctx.arc(iMx(0), iMy(cy), r * IK(), 0, TAU); ctx.stroke(); ctx.setLineDash([]); });
     ctx.restore();
     if (S.reveal || (game && game.free)) {
-      T(iMx(70), iMy(cy) - 150 * IK() + 4, '위험 반원', { size: 13, weight: 800, color: '#b91c1c', stroke: 'rgba(255,255,255,.85)', strokeWidth: 3 });
-      T(iMx(-70), iMy(cy) - 150 * IK() + 4, '안전 반원', { size: 13, weight: 800, color: '#1d4ed8', stroke: 'rgba(255,255,255,.85)', strokeWidth: 3 });
+      T(iMx(70), iMy(cy) + 150 * IK() + 4, '위험 반원', { size: 13, weight: 800, color: '#b91c1c', stroke: 'rgba(255,255,255,.85)', strokeWidth: 3 });
+      T(iMx(-70), iMy(cy) + 150 * IK() + 4, '안전 반원', { size: 13, weight: 800, color: '#1d4ed8', stroke: 'rgba(255,255,255,.85)', strokeWidth: 3 });
     }
     drawTy(iMx(0), iMy(cy), 36 * IK() + 14, t, 1, true);
     D.arrow(iMx(0), iMy(cy) - 44 * IK() - 8, iMx(0), iMy(cy) - 44 * IK() - 40, { color: '#7f1d1d', width: 4, head: 11 });

@@ -424,8 +424,8 @@
     ctx.strokeStyle = '#a855f7'; ctx.lineWidth = 7; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(w * 0.6, 88); ctx.lineTo(w * 0.68, 98); ctx.stroke();
     ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(w * 0.6, 88); ctx.lineTo(w * 0.55, 98); ctx.stroke();
     ctx.restore();
-    D.arrow(x + w * 0.4, y + 172, x + w * 0.6, y + 106, { color: '#a855f7', width: 3, head: 11 });
-    T(x + 6, y + 190, '뒷다리뼈(퇴화)', 14.5, '#7e22ce', 'left', 800);
+    D.arrow(x + w * 0.4, y + h - 24, x + w * 0.6, y + 106, { color: '#a855f7', width: 3, head: 11 });
+    T(x + 6, y + h - 6, '뒷다리뼈(퇴화)', 14.5, '#7e22ce', 'left', 800);
   }
   function drawClass(dt, t) {
     const q = S.cl;
@@ -535,6 +535,8 @@
         else T(MG.bx + len + 8, ry + 5, String(Math.round(q.val[s.id])), 14.5, bad ? '#dc2626' : '#64748b', 'left', 800);
       } else if (!locked) {
         T(MG.bx + 14, ry + 5, '← 눌러서 ' + s.d + ' 눈금까지 끌어요', L(13.5, 12.5), '#94a3b8', 'left', 700);
+      } else {
+        T(MG.bx + 10, ry + 5, s.d + '', 15, '#1f2d44', 'left', 800);
       }
       if (locked) D.check(MG.bx - 12 + 0, ry - 18, 7, 1, {});
     });
@@ -955,7 +957,7 @@
           id: 'sort', title: '사람과 가까운 순서로 정렬',
           goal: '<b>사람과 차이가 적은 종부터</b> 이름을 차례로 눌러요. 맞으면 막대가 줄을 서고 가지 그림이 그려져요.',
           hint: '차이가 0인 침팬지가 가장 가까워요. 막대가 짧은 종부터 눌러요.',
-          manual: true, setup() { setMode('molec'); updateCtl(); },
+          manual: true, setup() { setMode('molec'); SP.forEach((s) => { S.mol.val[s.id] = s.d; S.mol.lock[s.id] = true; }); sortPicker.reset(); updateCtl(); },
           check: () => { const sq = sortPicker.seq; if (sq.length < 7) { return '7종을 모두 골라 주세요. (' + sq.length + ' / 7)'; } for (let i = 0; i < 7; i++) if (sq[i] !== ORDER_OK[i]) { sortPicker.mark('bad'); return (i + 1) + '번째 종을 다시 생각해 봐요. 앞에 둔 종일수록 사람과 차이가 적어요.'; } sortPicker.mark('ok'); return true; },
           explain: '사람과 가까운 순서는 <b>침팬지 → 붉은털원숭이 → 개 → 닭 → 거북 → 참치 → 효모</b>예요. 차이가 클수록 가지가 왼쪽(먼 과거)에서 갈라져요. 이 그림이 나중에 배울 <b>계통수</b>의 시작이에요.',
         },

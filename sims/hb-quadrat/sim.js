@@ -317,7 +317,7 @@
   function drawZoom(dt, t) {
     drawField(dt, t, true);
     const k = clamp(S.zoomK, 0, 1), q = S.zoom.q, r0 = qRect(q);
-    ctx.fillStyle = 'rgba(234,245,228,' + (0.97 * k) + ')'; ctx.fillRect(0, 0, VW, VH);
+    ctx.fillStyle = 'rgba(234,245,228,' + k + ')'; ctx.fillRect(0, 0, VW, VH);
     // 확대 변환: 방형구 위치 → ZQ
     const sx = lerp(r0.w, ZQ.w, k) / ZQ.w, ox = lerp(r0.x, ZQ.x, k), oy = lerp(r0.y, ZQ.y, k);
     ctx.save(); ctx.globalAlpha = clamp(k * 1.4, 0, 1); ctx.translate(ox, oy); ctx.scale(sx, sx); ctx.translate(-ZQ.x, -ZQ.y);
@@ -588,7 +588,7 @@
     const lx = sx + sw + (PHONE ? 10 : 16);
     const lg = ctx.createLinearGradient(0, FPN.y + LB[0].y0, 0, FPN.y + LB[3].y1); lg.addColorStop(0, 'rgba(250,204,21,.95)'); lg.addColorStop(1, 'rgba(250,204,21,.18)');
     ctx.fillStyle = lg; D.roundRect(lx, FPN.y + LB[0].y0, 16, LB[3].y1 - LB[0].y0, 8); ctx.fill();
-    E('☀️', lx + 8, FPN.y + 40, PHONE ? 26 : 32);
+    E('☀️', lx + 8, FPN.y + 22, PHONE ? 26 : 32);
     // 이름표
     for (let i = 0; i < 4; i++) {
       const r = layTag(i), p = q.pick[i], pop = clamp(q.pop[i], 0, 1.1), bad = q.bad[i], sk = bad ? Math.sin(t * 40) * 2.5 * Math.max(0, 1 - (t - q.shakeT) * 2.2) : 0;
@@ -598,7 +598,7 @@
       ctx.restore();
       if (q.solved) T(lx + 24, FPN.y + LB[i].y0 + (LB[i].y1 - LB[i].y0) / 2 + 5, LAYERS[i].light, PHONE ? 13 : 15, '#92400e', 'left', 800);
     }
-    if (q.solved) { T(lx + 8, FPN.y + LB[0].y0 - 10, '빛의 양', 13, '#92400e', 'center', 800); D.label(FPN.x + FPN.w / 2, FPN.y + FPN.h - 24, '✅ 위쪽 층일수록 빛을 많이 받아요. 바닥에는 약 15 %만 도달해요.', { bg: '#15803d', size: PHONE ? 12.5 : 14 }); }
+    if (q.solved) { T(lx + 8, FPN.y + LB[0].y0 - 4, '빛의 양', 13, '#92400e', 'center', 800); D.label(FPN.x + FPN.w / 2, FPN.y + FPN.h - 24, '✅ 위쪽 층일수록 빛을 많이 받아요. 바닥에는 약 15 %만 도달해요.', { bg: '#15803d', size: PHONE ? 12.5 : 14 }); }
     else T(FPN.x + FPN.w / 2, FPN.y + FPN.h - 22, '왼쪽 이름표를 눌러 층 이름을 붙여요 (' + layPicked() + ' / 4)', PHONE ? 13.5 : 15, '#64748b', 'center', 800);
     parts.update(dt); parts.draw(ctx);
   }
@@ -683,7 +683,7 @@
     let L1, a, L2, b, L3, c;
     const m = S.mode;
     if (m === 'field') { L1 = '설치한 방형구'; a = S.fld.placed + ' / ' + NQ; L2 = '방형구 한 변'; b = '1 m (1 m²)'; L3 = '마음대로 고른 시도'; c = S.fld.biasN + '번'; }
-    else if (m === 'zoom') { const q = S.zoom.q; L1 = '방형구'; a = (q + 1) + '번'; L2 = '센 식물'; b = zoomCount(q) + '포기'; L3 = '면적을 읽은 종'; c = SP.filter((s, i) => S.zoom.covSeen['q' + q + '_' + i]).length + ' / ' + SP.filter((s, i) => CNT[i][q] > 0).length; }
+    else if (m === 'zoom') { const q = S.zoom.q; L1 = '방형구'; a = (q + 1) + '번'; L2 = '센 식물'; b = zoomCount(q) + '포기'; L3 = '면적을 읽은 종'; c = SP.filter((s, i) => CNT[i][q] > 0 && S.zoom.covSeen['q' + q + '_' + i]).length + ' / ' + SP.filter((s, i) => CNT[i][q] > 0).length; }
     else if (m === 'table') { L1 = '입력한 값'; a = recFilled() + ' / 12'; L2 = '맞은 값'; b = recRight() + ' / 12'; L3 = '전체 조사 면적'; c = TOTAL_AREA + ' m²'; }
     else if (m === 'iv') { L1 = '맞은 상대값'; a = ivRelRight() + ' / 12'; L2 = '맞은 중요치'; b = ivTotRight() + ' / 4'; L3 = '우점종'; c = S.iv.crown > 0.8 ? SP[DOM].n : '—'; }
     else if (m === 'area') { const q = S.ar; L1 = '방형구 수'; a = q.n + '개'; L2 = '나타난 종'; b = CUM_SP[q.n - 1] + '종'; L3 = '더 늘어난 종'; c = q.n > 1 ? (CUM_SP[q.n - 1] - CUM_SP[q.n - 2]) + '종' : '—'; }
@@ -731,10 +731,10 @@
           id: 'count', title: '방형구 하나 세기',
           goal: '설치한 방형구 하나를 눌러 열고, <b>식물을 눌러 모두 센 뒤</b> 식물 종마다 <b>덮은 면적</b>도 읽으세요.',
           hint: '초지에서 방형구를 누르면 크게 보여요. 식물 하나하나를 눌러 ✓ 표시를 해요. 오른쪽 종 칸을 누르면 그 종이 덮은 면적이 나와요.',
-          setup() { setMode('field'); },
+          setup() { S.zoom = { q: S.zoom.q, marked: {}, covSeen: {}, done: {}, pop: {} }; setMode('field'); },
           check: () => Object.keys(S.zoom.done).some((k) => S.zoom.done[k]),
           hold: 0.6,
-          status: () => { const q = S.zoom.q; return '방형구 ' + (q + 1) + '번 · 센 식물 ' + zoomCount(q) + '포기 &nbsp; 면적 읽은 종 ' + SP.filter((s, i) => S.zoom.covSeen['q' + q + '_' + i]).length + ' / ' + SP.filter((s, i) => CNT[i][q] > 0).length; },
+          status: () => { const q = S.zoom.q; return '방형구 ' + (q + 1) + '번 · 센 식물 ' + zoomCount(q) + '포기 &nbsp; 면적 읽은 종 ' + SP.filter((s, i) => CNT[i][q] > 0 && S.zoom.covSeen['q' + q + '_' + i]).length + ' / ' + SP.filter((s, i) => CNT[i][q] > 0).length; },
           explain: '방형구마다 종별 <b>개체 수</b>와 <b>덮은 면적</b>(m²)을 기록해요. 쑥처럼 개체 수가 적어도 잎이 커서 넓게 덮는 종이 있어요.',
         },
         {

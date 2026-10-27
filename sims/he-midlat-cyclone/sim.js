@@ -614,12 +614,12 @@
       const cx0 = mv.sx(c.x), cy0 = mv.sy(0);
       const p0 = [cx0 + (DW[0] * 400) * mv.k, cy0 + (DW[1] * 400) * mv.k];
       D.arrow(p0[0], p0[1], p0[0] + NW[0] * W_WARM * mv.k, p0[1] + NW[1] * W_WARM * mv.k, { color: '#075985', width: 3, head: 9, label: '폭 ' + W_WARM + ' km', labelOffset: -2 });
-      const q0 = [cx0 + DC[0] * 330 * mv.k - NC[0] * W_COLD / 2 * mv.k, cy0 + DC[1] * 330 * mv.k - NC[1] * W_COLD / 2 * mv.k];
+      const q0 = [cx0 + DC[0] * 250 * mv.k - NC[0] * W_COLD / 2 * mv.k, cy0 + DC[1] * 250 * mv.k - NC[1] * W_COLD / 2 * mv.k];
       D.arrow(q0[0], q0[1], q0[0] + NC[0] * W_COLD * mv.k, q0[1] + NC[1] * W_COLD * mv.k, { color: '#0c4a6e', width: 3, head: 9, label: '폭 ' + W_COLD + ' km', labelOffset: 14 });
       // 전선 속도 화살표
       const w1 = [cx0 + DW[0] * 220 * mv.k, cy0 + DW[1] * 220 * mv.k];
       D.arrow(w1[0], w1[1], w1[0] + NW[0] * SPD_W * 0.9, w1[1] + NW[1] * SPD_W * 0.9, { color: '#b91c1c', width: 3.5, head: 10, label: Math.round(SPD_W) + ' km/h', labelOffset: -8 });
-      const c1 = [cx0 + DC[0] * 220 * mv.k, cy0 + DC[1] * 220 * mv.k];
+      const c1 = [cx0 + DC[0] * 130 * mv.k, cy0 + DC[1] * 130 * mv.k];
       D.arrow(c1[0], c1[1], c1[0] + NC[0] * SPD_C * 0.9, c1[1] + NC[1] * SPD_C * 0.9, { color: '#1e3a8a', width: 3.5, head: 10, label: Math.round(SPD_C) + ' km/h', labelOffset: 14 });
     }
   }
@@ -628,7 +628,7 @@
   function gaOf(R) { return { x: R.x + 46, y: R.y + 84, w: R.w - 46 - 14, h: R.h - 84 - 30 }; }
   function drawSeries(R, kind, t) {
     const ser = SER[S.obs], GA = gaOf(R), isP = kind === 'p';
-    const yr = isP ? [997, 1015] : [0, 20], yticks = isP ? [1000, 1004, 1008, 1012] : [0, 5, 10, 15, 20];
+    const yr = isP ? [997, 1018] : [0, 20], yticks = isP ? [1000, 1004, 1008, 1012, 1016] : [0, 5, 10, 15, 20];
     const ax = mkAx(GA, PLOT_X, yr);
     ctx.save(); D.shadow(() => { ctx.fillStyle = 'rgba(255,255,255,.85)'; rr(R.x, R.y, R.w, R.h, 12).fill(); }, { blur: 5, y: 2 }); ctx.restore();
     T(R.x + 10, R.y + 20 * FS, isP ? '기압 (hPa) · 풍향' : '기온 (°C) · 강수', { size: 14.5, weight: 800, color: '#1e293b', align: 'left' });
@@ -930,8 +930,12 @@
     $$('#viewSeg button').forEach((b) => b.classList.toggle('on', b.dataset.v === S.dayView));
     $$('#chartSeg button').forEach((b) => b.classList.toggle('on', +b.dataset.c === S.chart));
     SCALE_ITEMS.forEach((it, i) => $$('#sc' + i + ' button').forEach((b) => b.classList.toggle('on', +b.dataset.v === S.scale[i])));
-    const pn = $('#predNote');
-    if (pn) pn.textContent = S.pred && S.maxTH >= 36 ? (S.pred === 'down' ? '그래프와 같아요! 중심이 지나가면 기압이 내려가요.' : '그래프와 달라요. 중심이 지나간 뒤 기압은 다시 내려갔어요.') : (S.pred ? '이제 시간을 36시간 이상까지 흘려 보내 확인해요.' : '');
+    updPredNote();
+  }
+  function updPredNote() {
+    const pn = $('#predNote'); if (!pn) return;
+    const txt = S.pred && S.maxTH >= 36 ? (S.pred === 'down' ? '그래프와 같아요! 중심이 지나가면 기압이 내려가요.' : '그래프와 달라요. 중심이 지나간 뒤 기압은 다시 내려갔어요.') : (S.pred ? '이제 시간을 36시간 이상까지 흘려 보내 확인해요.' : '');
+    if (pn.textContent !== txt) pn.textContent = txt;
   }
   $$('#modeSeg button').forEach((b) => b.addEventListener('click', () => { Sound.click(); enterLevel(MODE_LV[b.dataset.mode], true); }));
   function setMode(m, sub) {
@@ -1038,7 +1042,7 @@
           title: '비가 내리는 시간 계산',
           goal: '비 구역의 <b>폭 ÷ 전선의 속도</b>로, 서울에서 비가 내리는 시간을 온난 전선과 한랭 전선에 대해 각각 구해 입력해요.',
           hint: '지도의 파란 화살표가 비 구역의 폭, 붉은·푸른 화살표가 전선의 속도예요. 온난 전선: ' + W_WARM + ' ÷ ' + SPD_W + ', 한랭 전선: ' + W_COLD + ' ÷ ' + Math.round(SPD_C) + ' (km ÷ km/h = 시간)',
-          setup() { setMode('pass', 'rain'); S.obs = 'south'; updateCtl(); },
+          setup() { setMode('pass', 'rain'); S.obs = 'south'; S.rainW = S.rainC = 3; stRainW.set(3, true); stRainC.set(3, true); updateCtl(); },
           check: () => S.rainW === 6 && S.rainC === 2, hold: 0.5,
           status: () => mark(S.rainW === 6) + ' 온난 전선 ' + S.rainW + '시간 · ' + mark(S.rainC === 2) + ' 한랭 전선 ' + S.rainC + '시간',
           explain: '온난 전선은 폭 ' + W_WARM + ' km ÷ 속도 ' + SPD_W + ' km/h = <b>6시간</b> 동안 약한 비(3~9시), 한랭 전선은 폭 ' + W_COLD + ' km ÷ 속도 약 ' + Math.round(SPD_C) + ' km/h = <b>2시간</b> 동안 강한 소나기(17~19시)가 내려요. 온난 전선은 느리고 비 구역이 넓어 오래, 한랭 전선은 빠르고 좁아 짧고 강해요.',
@@ -1108,7 +1112,7 @@
           title: '중심 기압과 이동 속도 읽기',
           goal: '00시와 12시 일기도에서 <b>저기압 중심 기압</b>과 <b>12시간 동안 이동한 거리</b>를 읽고, <b>이동 속도</b>(km/h)를 구해 입력해요.',
           hint: '시각 버튼으로 두 일기도를 번갈아 보세요. 중심(저)의 가로 위치를 눈금(숫자는 km)에서 읽어 차이를 구하고, 거리 ÷ 시간으로 속도를 구해요.',
-          setup() { setMode('chart', 'speed'); S.chartTouched = true; updateCtl(); },
+          setup() { setMode('chart', 'speed'); S.chartTouched = true; S.cP = 1000; S.cDist = 300; S.cSpd = 30; stP.set(1000, true); stDist.set(300, true); stSpd.set(30, true); updateCtl(); },
           check: () => S.cP === CH.P && S.cDist === CH.speed * 12 && S.cSpd === CH.speed, hold: 0.5,
           status: () => mark(S.cP === CH.P) + ' 중심 기압 ' + S.cP + ' hPa · ' + mark(S.cDist === 600) + ' 이동 거리 ' + S.cDist + ' km · ' + mark(S.cSpd === CH.speed) + ' 속도 ' + S.cSpd + ' km/h',
           explain: '저기압 중심의 기압은 <b>996 hPa</b>이고, 00시에 동쪽으로 600 km 지점에 있던 중심이 12시에는 1200 km 지점에 있어요. 이동 거리 600 km ÷ 12시간 = <b>50 km/h</b>로 동쪽으로 이동했어요.',
@@ -1117,7 +1121,7 @@
           title: '지점 B에 한랭 전선이 도착하는 때',
           goal: '저기압과 전선이 같은 속도(' + CH.speed + ' km/h)로 같은 모양을 유지하며 이동한다고 해요. 12시 일기도에서 지점 B에 <b>한랭 전선</b>이 도착하는 때는 <b>몇 시간 뒤</b>일까요?',
           hint: '12시 일기도에서 B와 같은 위도의 한랭 전선까지의 거리를 눈금으로 읽어요. (파란 점이 한랭 전선의 위치예요.) 시간 = 거리 ÷ 속도',
-          setup() { setMode('chart', 'arrive'); S.chart = 12; S.chartTouched = true; updateCtl(); },
+          setup() { setMode('chart', 'arrive'); S.chart = 12; S.chartTouched = true; S.cArr = 4; stArr.set(4, true); updateCtl(); },
           check: () => S.cArr === CH.hours, hold: 0.5,
           status: () => mark(S.cArr === CH.hours) + ' 도착까지 ' + S.cArr + '시간',
           explain: '12시 일기도에서 한랭 전선은 지점 B의 서쪽 <b>400 km</b>에 있어요. 전선이 ' + CH.speed + ' km/h로 이동하므로 400 km ÷ 50 km/h = <b>8시간 뒤</b>(20시)에 도착해요. 도착하면 B의 바람은 남서풍에서 북서풍으로 바뀌고 기온이 내려가요.',
@@ -1150,7 +1154,7 @@
     if (S.play) { S.t = Math.min(24, S.t + dt * 1.2); sTime.value = S.t; SciSim.bindRange(sTime, oTime, (x) => (Math.round(x * 10) / 10).toFixed(1).replace('.0', '') + '시'); if (S.t >= 24) { S.play = false; updPlay(); } }
     if (S.playH) { S.th = Math.min(48, S.th + dt * 2.6); sTimeH.value = S.th; SciSim.bindRange(sTimeH, oTimeH, (x) => (Math.round(x * 10) / 10).toFixed(1).replace('.0', '') + '시간'); if (S.th >= 48) { S.playH = false; updPlay(); } }
     S.tv = approach(S.tv, S.t, dt, 12); S.thv = approach(S.thv, S.th, dt, 12); S.cv = approach(S.cv, S.chart, dt, 5);
-    S.maxTH = Math.max(S.maxTH, S.th); S.abv = approach(S.abv, S.ab, dt, 14);
+    S.maxTH = Math.max(S.maxTH, S.th); S.abv = approach(S.abv, S.ab, dt, 14); if (S.mode === 'high') updPredNote();
     const wtgt = S.obs === 'south' ? windS(S.t) : windN(S.t);
     wangA.v = angApproach(wangA.v, S.mode === 'high' ? windHN(S.th) : wtgt, dt, 7);
     if (!RM) stepDots(dt);

@@ -714,7 +714,7 @@
     if (R.done[R.mode]) {
       const cx0 = g.x0 + g.w * 0.42;
       for (let k = 0; k < 8; k++) {
-        const u0 = asym ? (cx0 - g.x0 - 8 * R.t) / g.lam : (cx0 - g.x0) / g.lam; const crestX = g.x0 + (Math.floor(u0) + (asym ? 0.72 : 0.5)) * g.lam + (asym ? 8 * R.t : 0);
+        const u0 = asym ? (cx0 - g.x0 - 8 * R.t) / g.lam : (cx0 - g.x0) / g.lam; const crestX = g.x0 + (Math.floor(u0) + k + (asym ? 0.72 : 0.5)) * g.lam + (asym ? 8 * R.t : 0);
         if (crestX > cx0 - 10) { const cy = g.yB - R.A; D.label(crestX, cy - 38, asym ? '가파른 면 → 흐름의 아래쪽' : '양쪽 경사가 비슷해요', { bg: '#7c2d12', size: 13, pad: 9 }); D.arrow(crestX, cy - 26, crestX + (asym ? 12 : 0), cy - 4, { color: '#7c2d12', width: 2.4, head: 8 }); break; }
       }
     }
@@ -891,12 +891,12 @@
     const I = S.inv, cw = PHONE ? 176 : 214, ch = PHONE ? 170 : 200;
     panel(12, 10, VW - 24, PHONE ? 492 : 380, { title: '발견한 노두 (사진 모식도)', border: '#e7d9b5' });
     INV.forEach((o, i) => {
-      const ccx = PHONE ? 300 : 140 + i * 258, ccy = PHONE ? 118 + i * 156 : 200;
+      const ccx = PHONE ? 300 : 140 + i * 258, ccy = PHONE ? 134 + i * 148 : 200;
       const base = o.up ? 0 : Math.PI, ang = base + I.flip, a = I.ans[i], ok = a === (o.up ? 'up' : 'down');
-      const w = PHONE ? 220 : cw, h = PHONE ? 130 : ch;
+      const w = PHONE ? 220 : cw, h = PHONE ? 120 : ch;
       ctx.save(); ctx.translate(ccx, ccy); ctx.rotate(ang); drawStruct(o.kind, -w / 2, -h / 2, w, h); structFrame(-w / 2, -h / 2, w, h); ctx.restore();
-      tx(ccx - w / 2, PHONE ? ccy - 72 : ccy - ch / 2 - 10, '노두 ' + ['A', 'B', 'C'][i] + ' · ' + o.name, 14, gcl.ink, 'left', 800);
-      if (a) D.label(ccx + w / 2, PHONE ? ccy - 78 : ccy - ch / 2 - 16, ok ? '✓ ' + (o.up ? '정상' : '역전') : '다시 살펴봐요', { bg: ok ? '#15803d' : '#b91c1c', size: 12.5, pad: 8, align: 'right' });
+      tx(ccx - w / 2, PHONE ? ccy - 68 : ccy - ch / 2 - 10, '노두 ' + ['A', 'B', 'C'][i] + ' · ' + o.name, 14, gcl.ink, 'left', 800);
+      if (a) D.label(ccx + w / 2, PHONE ? ccy - 74 : ccy - ch / 2 - 16, ok ? '✓ ' + (o.up ? '정상' : '역전') : '다시 살펴봐요', { bg: ok ? '#15803d' : '#b91c1c', size: 12.5, pad: 8, align: 'right' });
     });
     const P = PHONE ? { x: 12, y: 512, w: 576, h: 316 } : { x: 12, y: 400, w: 776, h: 150 };
     panel(P.x, P.y, P.w, P.h, { title: '위아래를 알려 주는 단서', border: '#e7d9b5' });
@@ -941,7 +941,7 @@
       const n = C.ans.filter((a, i) => a === SEGS[i].env).length;
       note(IP.x + 10, IP.y + 36, IP.w - 20, colOk() ? '위로 갈수록 알갱이가 작아지고(역암 → 사암 → 이암) 마지막에는 맑은 바다의 석회암이 쌓였어요. 육지에서 점점 멀어졌으니 바다가 육지 쪽으로 밀려온 해침이에요.' : '구간마다 구조와 알갱이, 화석을 단서로 퇴적 환경을 골라요. (' + n + ' / 5 맞음)', 14, { bg: colOk() ? '#f0fdf4' : '#f0f9ff', border: colOk() ? '#86efac' : '#bae6fd' });
       if (colOk()) { D.label(IP.x + 14, IP.y + 220, '위로 갈수록', { bg: '#7c3aed', size: 14, pad: 10, align: 'left' }); tx(IP.x + 14, IP.y + 262, '육지에서 멀어져요 = 해침', 15, '#6d28d9', 'left', 800); }
-      else tx(IP.x + 14, IP.y + 220, '아래층이 먼저 쌓였고 위층이 나중이에요.', 13.5, gcl.mute, 'left', 700);
+      else drawWrap(IP.x + IP.w / 2, IP.y + 214, '아래층이 먼저 쌓였고 위층이 나중이에요.', IP.w - 28, 13.5, { color: gcl.mute });
     } else {
       panel(IP.x, IP.y, IP.w, IP.h, { title: '환경 해석', border: '#e7d9b5' });
       note(IP.x + 10, IP.y + 36, IP.w - 20, colOk() ? '위로 갈수록 알갱이가 작아지고 마지막에는 맑은 바다의 석회암이 쌓였어요. 육지에서 점점 멀어졌으니 해침이에요.' : '구간마다 구조와 알갱이, 화석을 단서로 퇴적 환경을 골라요.', 14, { bg: colOk() ? '#f0fdf4' : '#f0f9ff', border: colOk() ? '#86efac' : '#bae6fd' });
@@ -1016,6 +1016,7 @@
   const goView = (v) => { Sound.click(); setView(v); };
   s1Btns.forEach((b) => b.addEventListener('click', () => goView(b.dataset.k)));
   expBtns.forEach((b) => b.addEventListener('click', () => goView(b.dataset.k)));
+  $$('#modeSeg button').forEach((b) => b.addEventListener('click', () => goView(b.dataset.view)));
   $('#bSieve').addEventListener('click', svRun); $('#bSieveReset').addEventListener('click', () => { Sound.click(); svInit(); updateCtl(); });
   bindSlider(sFlow, oFlow, (v) => String(v), (v) => { if (!S.fl.running) S.fl.v0 = v; });
   $('#bFlow').addEventListener('click', flRun); $('#bFlowReset').addEventListener('click', () => { Sound.click(); const v = S.fl.v0, runs = S.fl.runs; flInit(); S.fl.v0 = v; S.fl.runs = runs; updateCtl(); });
@@ -1074,7 +1075,7 @@
           title: '체로 가르고 센·약한 흐름 비교',
           goal: '<b>체 가르기</b>를 끝까지 해 보고, <b>흐름과 퇴적</b>에서 흐름의 세기를 <b>8 이상</b>, 그리고 <b>2 이하</b>로 각각 한 번씩 흘려보내 비교해요.',
           hint: '“살펴볼 장면”에서 장면을 바꿔요. 흐름의 세기 슬라이더를 8~10, 그다음 1~2로 해서 ▶ 흘려보내기를 눌러요.',
-          hold: 0.6, setup() { svInit(); S.fl.runs = []; setView('sieve'); },
+          hold: 0.6, setup() { svInit(); S.sv.everDone = false; S.fl.runs = []; setView('sieve'); },
           status: () => '체 가르기 ' + mark(S.sv.everDone) + ' · 센 흐름(8 이상) ' + mark(S.fl.runs.some((v) => v >= 8)) + ' · 약한 흐름(2 이하) ' + mark(S.fl.runs.some((v) => v <= 2)),
           check: () => S.sv.everDone && S.fl.runs.some((v) => v >= 8) && S.fl.runs.some((v) => v <= 2),
           explain: '구멍 크기가 다른 체로 자갈·모래·점토를 가를 수 있어요. 센 흐름에서는 큰 알갱이(자갈)만 먼저 쌓이고 고운 알갱이는 멀리 실려 가요. 흐름이 약하면 대부분의 알갱이가 입구 가까이에 쌓여요. 그래서 <b>알갱이 크기는 그곳의 흐름 에너지를 알려 줘요</b>.',
@@ -1100,7 +1101,7 @@
           title: '점이층리와 연흔 두 종류 만들기',
           goal: '<b>점이층리</b>를 만들고, <b>한 방향 흐름(비대칭 연흔)</b>과 <b>왕복 파도(대칭 연흔)</b>로 연흔을 두 종류 만들어요.',
           hint: '“실험 고르기”로 점이층리 → 연흔 장면으로 가요. 연흔은 물의 움직임을 바꿔서 두 번 만들어요. 연흔이 다 자라면 완성돼요.',
-          hold: 0.6, setup() { setView('graded'); },
+          hold: 0.6, setup() { grInit(); S.gr.ever = false; rpReset(); S.rp.mode = 'one'; setView('graded'); },
           status: () => '점이층리 ' + mark(S.gr.ever) + ' · 비대칭 연흔 ' + mark(S.rp.done.one) + ' · 대칭 연흔 ' + mark(S.rp.done.wave),
           check: () => S.gr.ever && S.rp.done.one && S.rp.done.wave,
           explain: '굵은 알갱이가 먼저 가라앉아 <b>점이층리</b>가 생겨요. 한 방향 흐름은 가파른 면이 흐름의 아래쪽인 <b>비대칭 연흔</b>, 왔다 갔다 하는 파도는 <b>대칭 연흔</b>을 만들어요.',
@@ -1109,7 +1110,7 @@
           title: '건열과 사층리 만들기',
           goal: '진흙을 말려 <b>건열</b>을 만들고, 흐르는 물로 모래 언덕을 움직여 <b>사층리</b>를 만들어요.',
           hint: '“실험 고르기”에서 건열과 사층리를 차례로 골라 각각의 실행 버튼을 눌러요.',
-          hold: 0.6, setup() { setView('crack'); },
+          hold: 0.6, setup() { ckReset(); S.ck.everDone = false; csReset(); S.cs.everDone = false; setView('crack'); },
           status: () => '건열 ' + mark(S.ck.everDone) + ' · 사층리 ' + mark(S.cs.everDone),
           check: () => S.ck.everDone && S.cs.everDone,
           explain: '젖은 진흙이 마르면 줄어들어 <b>위가 넓은 V자 틈(건열)</b>이 생겨요. 모래 언덕이 흐름 방향으로 이동하면 가파른 면에 모래가 비스듬히 쌓여 <b>사층리</b>가 돼요.',
