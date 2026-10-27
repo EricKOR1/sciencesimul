@@ -1121,6 +1121,7 @@
   a2Select('methanol');
   function stepAll1(dt) {
     mv1.update(dt); A2.mv.update(dt); F4.mv.update(dt);
+    { const G = bGeo(); B.blocks.forEach((b, i) => { if (B.drag && B.drag.b === b) return; const h = G.home(i); b.x = RM ? h.x : ap(b.x, h.x, dt, 14); b.y = RM ? h.y : ap(b.y, h.y, dt, 14); }); }
     A2.shake = Math.max(0, A2.shake - dt); F4.shake = Math.max(0, F4.shake - dt);
     stepLab(dt); stepSort(dt);
     // 끓는점 막대
