@@ -81,7 +81,7 @@
     const nodes = sel ? [inp, sel] : [inp];
     const h = {
       row, inp, sel, st: null,
-      val() { const s = inp.value.trim().replace(',', '.'); if (s === '' || isNaN(+s)) return NaN; return +s * (sel ? Math.pow(10, +sel.value) : 1); },
+      val() { const s = inp.value.trim().replace(/[−–]/g, '-').replace(/,(?=\d{3}(?!\d))/g, '').replace(',', '.'); if (s === '' || isNaN(+s)) return NaN; return +s * (sel ? Math.pow(10, +sel.value) : 1); },
       clear() { inp.value = ''; if (sel) sel.value = '0'; nodes.forEach((n) => n.classList.remove('ok', 'bad')); h.st = null; },
       mark(ok) { if (h.st === ok) return; h.st = ok; nodes.forEach((n) => { n.classList.remove('ok', 'bad'); if (ok === false) { void n.offsetWidth; n.classList.add('bad'); } else if (ok) n.classList.add('ok'); }); },
     };

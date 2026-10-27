@@ -575,7 +575,7 @@
     G.pop = G.pop.map((v, i) => approach(v, G.sel === i ? 1 : 0, dt, 9));
     panel(GR1.x, GR1.y, GR1.w, GR1.h, 16, '#fff');
     T(GR1.x + 14, GR1.y + 24, '상동 염색체 한 쌍', PHONE ? 14 : 16, '#14532d', 'left', 800);
-    if (!PHONE) T(GR1.x + GR1.w - 14, GR1.y + 24, '번호를 눌러 유전자 자리를 비교해요', 13.5, '#64748b', 'right', 700);
+    if (!PHONE) T(GR1.x + GR1.w - 14, GR1.y + 24, '번호를 눌러 비교해요', 13.5, '#64748b', 'right', 700);
     chromH(CH_X0, CH_X1, CH_YB, CH_H, PAT, 0.36);
     chromH(CH_X0, CH_X1, CH_YR, CH_H, MAT, 0.36);
     T(CH_X0 - 12, CH_YB + 5, '아버지', PHONE ? 12 : 13.5, PAT, 'right', 800);
@@ -737,8 +737,8 @@
   }
 
   const KCOLS = PHONE ? 6 : 12;
-  const KSW = PHONE ? 76 : 62, KSH = PHONE ? 76 : 92, KSG = PHONE ? 4 : 2, KSY = PHONE ? 6 : 8;
-  const KX0 = PHONE ? 6 : 16;
+  const KSW = PHONE ? 73 : 62, KSH = PHONE ? 76 : 92, KSG = PHONE ? 4 : 2, KSY = PHONE ? 6 : 8;
+  const KX0 = PHONE ? 8 : 16;
   const slotRect = (i) => { const col = i % KCOLS, row = Math.floor(i / KCOLS); return { x: KX0 + col * (KSW + KSG), y: KSY + row * (KSH + (PHONE ? 4 : 4)), w: KSW, h: KSH }; };
   const TRAY = PHONE ? { x: 6, y: 334, w: 468, h: 302 } : { x: 8, y: 204, w: 784, h: 348 };
   const TCOLS = PHONE ? 12 : 16, TCW = PHONE ? 38.5 : 48, TRH = PHONE ? 66 : 98, TROW0 = PHONE ? 392 : 262;
@@ -1038,7 +1038,7 @@
           id: 'calc', title: 'DNA는 몇 배로 압축되어 있을까?',
           goal: '사람 세포 하나의 DNA는 펴면 약 <b>2 m</b>, 핵 지름은 약 <b>6 µm</b>예요. 압축 배율 ≈ 3.3 × 10<sup>□</sup>배에서 <b>□</b>에 들어갈 정수를 입력하세요.',
           hint: '2 m ÷ (6 × 10⁻⁶ m) = 0.33 × 10⁶ = 3.3 × 10⁵ 이에요.',
-          setup() { setMode('zoom'); },
+          setup() { setMode('zoom'); S.z.calc = ''; S.z.calcOk = false; $('#calcIn').value = ''; updateCtl(); },
           check: () => S.z.calcOk, hold: 0.4,
           status: () => (S.z.calcOk ? '✅ 정답' : S.z.calc !== '' ? '❌ 다시 계산해 보세요' : '⬜ □ 입력'),
           explain: '2 m ÷ 6 µm = 2 ÷ (6 × 10⁻⁶) ≈ <b>3.3 × 10⁵</b>배예요. 지름 6 µm인 공 안에 2 m 길이의 실을 넣는 것과 같아서, DNA는 단단하게 접혀 있어야 해요.',
@@ -1154,7 +1154,7 @@
           id: 'cases', title: '핵형 사례 분석', manual: true,
           goal: '<b>사례 A, B, C</b>를 눌러 염색체 수와 성별을 판독하고, 개수가 다른 번호가 있으면 골라 보세요.',
           hint: '염색체를 눌러 표시하며 세어 보세요. 성염색체가 XX면 여성, XY면 남성이에요. 어느 칸만 3개인지도 확인해요.',
-          setup() { setMode('karyo'); S.k.view = 0; S.k.caseT = 0; updateCtl(); },
+          setup() { if (!S.k.done) { S.k.cards.forEach((c) => { c.slot = c.type; }); S.k.done = true; S.k.doneBurst = true; } S.k.ans = CASES.map(() => ({ n: '', sex: '', extra: '' })); S.k.cleared = [false, false, false]; setMode('karyo'); S.k.view = 0; S.k.caseT = 0; updateCtl(); },
           check() {
             const k = S.k;
             let bad = null;

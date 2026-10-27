@@ -740,7 +740,7 @@
   clickable($('#bPlay1'), () => { S.playing = !S.playing; if (S.playing && S.spIdx === 0) { S.spIdx = 3; setSlider($sp, $oSp, 3, spLabel); } updateCtl(); });
   clickable($('#bReset1'), () => { S.t = 0; S.align = {}; S.playing = false; updateCtl(); });
   clickable($('#bSyn'), () => {
-    const v1 = parseFloat(($('#inVenus').value || '').replace(',', '.')), v2 = parseFloat(($('#inMars').value || '').replace(',', '.'));
+    const v1 = parseFloat(($('#inVenus').value || '').replace(/[−–]/g, '-').replace(/,(?=\d{3}(?!\d))/g, '').replace(',', '.')), v2 = parseFloat(($('#inMars').value || '').replace(/[−–]/g, '-').replace(/,(?=\d{3}(?!\d))/g, '').replace(',', '.'));
     if (!isFinite(v1) || !isFinite(v2)) { say('금성과 화성 모두 일(日) 단위 숫자로 입력해 주세요.', true, 2.5); return; }
     const sv = synodicD('venus'), sm = synodicD('mars'), okV = Math.abs(v1 - sv) <= 16, okM = Math.abs(v2 - sm) <= 16;
     if (okV && okM) { S.synOk = true; say('좋아요! 금성 약 ' + f0(sv) + '일, 화성 약 ' + f0(sm) + '일', false, 3.2); }
@@ -761,7 +761,7 @@
   const set2 = { get: () => S.u2, set: (v) => setU2(v) };
   $$('#jump2 .opt').forEach((b) => clickable(b, () => jumpU(() => { const id = S.inner, k = b.dataset.k; if (k === 'inf') return 0; if (k === 'sup') return findEvent(id, 'sup', S.base2) - S.base2; return findEvent(id, k, S.base2) - S.base2; }, set2)));
   clickable($('#bTh'), () => {
-    const v = parseFloat(($('#inTh').value || '').replace(',', '.'));
+    const v = parseFloat(($('#inTh').value || '').replace(/[−–]/g, '-').replace(/,(?=\d{3}(?!\d))/g, '').replace(',', '.'));
     if (!isFinite(v)) { say('도(°) 단위 숫자를 입력해 주세요.', true, 2); return; }
     const want = Math.asin(PL.venus.a) / DEG;
     if (Math.abs(v - want) <= 2) { S.thOk = true; say('좋아요! sinθ = 0.72 → θ ≈ ' + f0(want) + '°', false, 3); } else say('sinθ = 0.72를 만족하는 θ를 다시 구해 봐요. (sin 45° ≈ 0.71, sin 50° ≈ 0.77)', true, 3.5);
@@ -829,7 +829,7 @@
     updateCtl();
   }
   clickable($('#bRetro'), () => {
-    const v = parseFloat(($('#inRetro').value || '').replace(',', '.').replace('°', ''));
+    const v = parseFloat(($('#inRetro').value || '').replace(/[−–]/g, '-').replace(/,(?=\d{3}(?!\d))/g, '').replace(',', '.').replace('°', ''));
     if (!isFinite(v)) { say('°/일 단위 숫자를 입력해 주세요.', true, 2); return; }
     const want = Math.abs(dlam('mars', findEvent('mars', 'inf', 5)));
     if (Math.abs(Math.abs(v) - 0.36) <= 0.04) { S.retroOk = true; say('좋아요! 충일 때 화성은 하루 약 0.36°씩 뒤로 가요.', false, 3); } else say('상대 속력 (29.8 − 24.1) km/s를 거리 7800만 km로 나눈 값(rad/s)을 °/일로 바꿔 봐요.', true, 3.8);

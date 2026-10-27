@@ -600,7 +600,7 @@
   const sbIn = SciSim.bindRange($('#sIn'), $('#oIn'), (v) => v + ' kcal', (v) => { S.hab.intake = v; S.hab.ok = false; S.hab.day = 0; updateCtl(); });
   const sbEx = SciSim.bindRange($('#sEx'), $('#oEx'), (v) => v + ' kcal', (v) => { S.hab.expend = v; S.hab.ok = false; S.hab.day = 0; updateCtl(); });
   $('#bDays').addEventListener('click', () => {
-    const h = S.hab, d = h.intake - h.expend, v = parseFloat(String($('#inDays').value).replace(',', '.'));
+    const h = S.hab, d = h.intake - h.expend, v = parseFloat(String($('#inDays').value).replace(/[−–]/g, '-').replace(/,(?=\d{3}(?!\d))/g, '').replace(',', '.'));
     if (d !== 400) { h.answer = '이 경우는 섭취 2400 kcal, 소비 2000 kcal(하루 400 kcal 초과)로 맞춘 뒤 확인해요.'; Sound.fail(); say(h.answer); updateCtl(); return; }
     if (!isFinite(v)) { h.answer = '날수를 숫자로 써 주세요.'; Sound.fail(); updateCtl(); return; }
     if (v >= 18.5 && v <= 19.5) { h.ok = true; h.answer = ''; Sound.success(); if (!RM) parts.burst(VW * 0.7, VH * 0.5, { count: 18, speed: 150, size: 3.4, life: 0.9, shape: 'star' }); }

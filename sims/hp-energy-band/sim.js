@@ -147,7 +147,7 @@
     });
     return { bad };
   }
-  const numOf = (s) => parseFloat(String(s).replace(',', '.'));
+  const numOf = (s) => parseFloat(String(s).replace(/[−–]/g, '-').replace(/,(?=\d{3}(?!\d))/g, '').replace(',', '.'));
 
 
   /* =========================================================

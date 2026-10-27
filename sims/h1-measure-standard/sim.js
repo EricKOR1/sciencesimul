@@ -1069,7 +1069,7 @@
           check() {
             const raw = $('#inRead').value.trim();
             if (!raw) return '읽은 값을 입력칸에 적어 주세요. (단위: cm)';
-            const v = parseFloat(raw.replace(',', '.'));
+            const v = parseFloat(raw.replace(/[−–]/g, '-').replace(/,(?=\d{3}(?!\d))/g, '').replace(',', '.'));
             if (!isFinite(v)) return '숫자로 적어 주세요.';
             if (v > 70 && v < 80) return '단위를 확인해요. 입력칸은 <b>cm</b> 단위예요. (예: 74.3 mm → 7.43 cm)';
             if (Math.abs(v - 7.4) < 0.0001 || Math.abs(v - 7.5) < 0.0001) return '눈금 사이를 한 자리 더 <b>어림</b>해서 소수 둘째 자리까지 적어 보세요.';
@@ -1092,7 +1092,7 @@
             if (R.meas.vernier.length < 5) return '버니어 캘리퍼스로도 <b>5번</b> 측정해 주세요. (지금 ' + R.meas.vernier.length + '번)';
             const raw = $('#inAvg').value.trim();
             if (!raw) return '눈금자로 잰 5회의 <b>평균</b>을 입력칸에 적어 주세요.';
-            const v = parseFloat(raw.replace(',', '.'));
+            const v = parseFloat(raw.replace(/[−–]/g, '-').replace(/,(?=\d{3}(?!\d))/g, '').replace(',', '.'));
             if (!isFinite(v)) return '숫자로 적어 주세요.';
             if (v >= 7.428 && v <= 7.440) { R.avgOK = true; return true; }
             if (Math.abs(v - 7.43 * 5) < 0.2) return '다섯 값의 <b>합</b>이에요. 평균은 합을 5로 나눠야 해요.';

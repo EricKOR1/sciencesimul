@@ -508,7 +508,7 @@
       }
       ctx.restore();
       T(x + m.w / 2, m.y + 24, bx.title, 15, INK, 'center', 800);
-      T(x + m.w / 2, m.y + m.h + 18, '온전한 ' + N.name + ' 분자 ' + intact + ' / 20', 12.5, intact < 20 ? '#166534' : '#475569', 'center', 800);
+      TF(x + m.w / 2, m.y + m.h + 18, PHONE ? '온전한 분자 ' + intact + ' / 20' : '온전한 ' + N.name + ' 분자 ' + intact + ' / 20', m.w + 6, 12.5, intact < 20 ? '#166534' : '#475569', 'center', 800);
     });
     T(VW / 2, P(34, 58), '🔍 입자 모형: ' + N.enz + '(효소) ' + (n === 'starch' ? '입이 녹말 사슬을 잘라 엿당으로' : n === 'egg' ? '입이 단백질 사슬을 잘라 아미노산으로' : '입이 지방을 잘라 지방산·모노글리세리드로'), PHONE ? 12 : 14.5, INK, 'center', 800);
     block(P(34, 18), P(470, 632), P(730, 484), '물: 효소가 없어 그대로 · 소화제: 효소가 기질을 분해 · 끓인 소화제: 변성된 효소(모양이 변해 ✕)는 분해하지 못해요. 시간을 움직이면 온전한 분자 수가 그래프의 남은 양과 같은 비율로 변해요.', PHONE ? 12 : 13, MUTED, PHONE ? 16 : 17, 700);
@@ -777,7 +777,7 @@
     // 설명 카드
     const d = g.desc, pr = PRODUCTS[Pt.sel], dn = Pt.done[Pt.sel] >= 3;
     D.shadow(() => { ctx.fillStyle = '#fff'; rr(d.x, d.y, d.w, PHONE ? 96 : 100, 14).fill(); }, { blur: 6, y: 2 });
-    T(d.x + 12, d.y + 24, pr.from + ' → ' + pr.name, PHONE ? 13 : 14.5, pr.color, 'left', 800);
+    TF(d.x + 12, d.y + 24, pr.from + ' → ' + pr.name, d.w - 24, PHONE ? 13 : 14.5, pr.color, 'left', 800);
     block(d.x + 12, d.y + 46, d.w - 24, pr.note, PHONE ? 12 : 13, '#334155', PHONE ? 16 : 18, 700);
     if (dn) T(d.x + d.w - 12, d.y + (PHONE ? 90 : 94), '세포에서 물질대사(세포호흡)에 쓰여요', PHONE ? 11.5 : 12.5, '#166534', 'right', 800);
     if (pathDoneN() === 3) D.label(VW - P(130, 100), VH - P(26, 30), '➡ 다음: 기관계의 통합적 작용', { bg: '#16a34a', size: PHONE ? 11.5 : 13 });

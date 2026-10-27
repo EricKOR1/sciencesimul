@@ -65,7 +65,7 @@
     R: PHONE ? { x: 8, y: 558, w: 464, h: 394 } : { x: 490, y: 50, w: 298, h: 498 },
   };
   const MODE_LABEL = { cmp: '🧪 같은 온도, 물과 설탕물의 증기압', surf: '🔬 액체 표면에서 일어나는 일', law: '📐 증기압과 물의 몰 분율', curve: '📈 증기압 곡선은 어디로 움직일까?' };
-  const parseNum = (s) => { const t = String(s).replace(',', '.').replace(/[−–]/g, '-').replace(/[^0-9.\-]/g, ''); return t === '' || isNaN(+t) ? NaN : +t; };
+  const parseNum = (s) => { const t = String(s).replace(/[−–]/g, '-').replace(/,(?=\d{3}(?!\d))/g, '').replace(',', '.').replace(/[−–]/g, '-').replace(/[^0-9.\-]/g, ''); return t === '' || isNaN(+t) ? NaN : +t; };
   const near = (v, a, tol) => !isNaN(v) && Math.abs(v - a) <= tol;
   const ap = SciSim.approach;
   const f2 = (v) => v.toFixed(2);

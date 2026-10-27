@@ -981,7 +981,7 @@
   clickable($('#bPlay3'), () => { if (S.play3) S.play3 = false; else { if (S.t >= G.tMax - 5) S.t = G.tMin; S.play3 = true; } updateCtl(); });
   clickable($('#bReset3'), () => { S.play3 = false; S.t = G.tMin; syncT(); updateCtl(); });
   clickable($('#bDur'), () => {
-    const v = parseFloat(($('#inDur').value || '').replace(',', '.'));
+    const v = parseFloat(($('#inDur').value || '').replace(/[−–]/g, '-').replace(/,(?=\d{3}(?!\d))/g, '').replace(',', '.'));
     if (!isFinite(v)) { say('초 단위 숫자를 입력해 주세요.', true, 2); return; }
     const inf = siteInfo(SITES.A), want = Math.round(inf.dia / 10) * 10 / Number(f2(inf.vrel));
     if (Math.abs(v - want) <= want * 0.04) { S.calcOk = true; say('좋아요! 본영 지름을 그림자 속력으로 나누면 ' + Math.round(want) + '초예요.', false, 3); } else say('다시 계산해 봐요: 본영 지름(km)을 그림자 속력(km/s)으로 나누면 몇 초일까요?', true, 3);
@@ -993,7 +993,7 @@
   function syncL() { setSlider(sL, oL, clamp(Math.round(S.lp), -LT_MAX, LT_MAX), (v) => fmtMin(v)); }
   clickable($('#bPlay4'), () => { if (S.play4) S.play4 = false; else { if (S.lp >= LT_MAX - 1) S.lp = -LT_MAX; S.play4 = true; } updateCtl(); });
   clickable($('#bMin'), () => {
-    const v = parseFloat(($('#inMin').value || '').replace(',', '.'));
+    const v = parseFloat(($('#inMin').value || '').replace(/[−–]/g, '-').replace(/,(?=\d{3}(?!\d))/g, '').replace(',', '.'));
     if (!isFinite(v)) { say('분 단위 숫자를 입력해 주세요.', true, 2); return; }
     const want = 2 * lunarContacts(0).t;
     if (Math.abs(v - want) <= 4) { S.minOk = true; say('좋아요! 개기 월식은 약 ' + f0(want) + '분 동안 이어져요.', false, 3); } else say('다시 계산해 봐요: (본영 지름 − 달 지름)을 달의 속력으로 나누면 몇 시간일까요?', true, 3);

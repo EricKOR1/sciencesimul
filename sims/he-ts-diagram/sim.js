@@ -944,7 +944,7 @@
   function recordRho() {
     if (!S.sel) { Sound.fail(); say('먼저 시료를 눌러 저울 위에 올려요.', true, 2.2); return; }
     if (!S.weighed[S.sel]) { Sound.fail(); say('저울 숫자가 멈출 때까지 기다려요.', true, 2); return; }
-    let v = parseFloat(String(inRho.value).replace(',', '.'));
+    let v = parseFloat(String(inRho.value).replace(/[−–]/g, '-').replace(/,(?=\d{3}(?!\d))/g, '').replace(',', '.'));
     if (isNaN(v)) { Sound.fail(); say('밀도 값을 숫자로 써요. 예: 1.234', true, 2); return; }
     if (v > 100) v = v / 1000;                   // kg/m³ 로 써도 인정
     const exp = SAMPLES[S.sel].rho;

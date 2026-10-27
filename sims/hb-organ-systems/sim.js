@@ -95,9 +95,9 @@
   const EDGES = [
     { a: 'dig', b: 'cir', cargo: '영양소', col: '#f59e0b', bend: 0, lt: 0.5 },
     { a: 'res', b: 'cir', cargo: '산소 (O₂)', col: '#ef4444', bend: -1, lt: 0.4 },
-    { a: 'cir', b: 'res', cargo: '이산화 탄소', col: '#3b82f6', bend: -1, lt: 0.62 },
+    { a: 'cir', b: 'res', cargo: '이산화 탄소', col: '#3b82f6', bend: -1, lt: 0.35 },
     { a: 'cir', b: 'mus', cargo: '산소 · 영양소', col: '#ef4444', bend: 1, lt: 0.3 },
-    { a: 'mus', b: 'cir', cargo: 'CO₂ · 요소 · 열', col: '#3b82f6', bend: 1, lt: 0.7 },
+    { a: 'mus', b: 'cir', cargo: 'CO₂ · 노폐물 · 열', col: '#3b82f6', bend: 1, lt: 0.3 },
     { a: 'cir', b: 'exc', cargo: '요소 · 물', col: '#a78bfa', bend: 0, lt: 0.5 },
     { a: 'cir', b: 'skin', cargo: '열 · 땀(물)', col: '#fb7185', bend: 0, lt: 0.5 },
   ];
@@ -248,6 +248,7 @@
       const w = w0 * clamp(v, 0, 1); ctx.fillStyle = col; if (w > 1) rr(bx + lw, yy, w, 18, Math.min(9, w / 2)).fill();
       T(bx + lw + w0 + 10, yy + 14, txt, 13, INK, 'left', 800);
     };
+    card(bx - 10, by - 10, bw + 24, P(60, 56), 'rgba(255,255,255,.9)', null, 12);
     bar(by, '💧 땀', R.sweat, '#38bdf8', SW(R.sweat));
     bar(by + P(32, 26), '🚽 오줌', R.urine, '#facc15', UR(R.urine));
     // 기록 표
@@ -387,7 +388,7 @@
   function closeTo(x, arr, tol) { return arr.some((a) => Math.abs(x - a) <= tol); }
   function checkCalc() {
     const o = S.o2, C = CASE[o.c], inp = o.in[o.c];
-    const co = parseFloat(String(inp.co).replace(',', '.')), vo = parseFloat(String(inp.vo).replace(',', '.'));
+    const co = parseFloat(String(inp.co).replace(/[−–]/g, '-').replace(/,(?=\d{3}(?!\d))/g, '').replace(',', '.')), vo = parseFloat(String(inp.vo).replace(/[−–]/g, '-').replace(/,(?=\d{3}(?!\d))/g, '').replace(',', '.'));
     if (!isFinite(co) || !isFinite(vo)) { o.note = '①과 ②를 모두 숫자로 써 주세요.'; Sound.fail(); return false; }
     const okCO = closeTo(co, [C.co, C.coR], 0.051);
     const okVO = o.c === 'rest' ? (vo >= 0.24 && vo <= 0.26) : (vo >= 2.9 && vo <= 3.05);
@@ -482,6 +483,7 @@
     const m = S.map, started = SYS.map((s, i) => [s, i]).filter(([s, i]) => m.roles[i] && (m.roles[i].job != null || m.roles[i].take != null || m.roles[i].give != null));
     if (!started.length) return '🎭 역할놀이 카드에서 <b>기관계를 고르고</b> 일 · 받는 것 · 주는 것을 모두 골라요. (2개 이상 완성해요)';
     const [s, i] = started.find(([ss, ii]) => !roleOK(ii)) || started[0];
+    if (roleOK(i)) return '지금까지 ' + ok + '개 완성했어요. 다른 기관계 카드도 하나 더 완성해요. (2개 이상 완성해야 해요)';
     const r = m.roles[i] || {}; const bad = [];
     if (r.job == null) bad.push('내가 맡은 일'); else if (r.job !== i) bad.push('내가 맡은 일');
     if (r.take == null) bad.push('받는 것'); else if (r.take !== i) bad.push('받는 것');
@@ -510,7 +512,7 @@
     }
     for (const k of CASE_KEYS) {
       const bad = [0, 1, 2].filter((s) => !csSlotOK(k, s));
-      if (bad.length) return '<b>' + CASES[k].title.slice(0, 1) + '</b> 사례의 ' + bad.map((s) => '①②③'[s]).join(', ') + '번을 다시 생각해 봐요. 산소가 어디서 줄거나 늘고, 그다음 어디가 달라지는지 따라가요.';
+      if (bad.length) return '<b>' + CASES[k].title.slice(0, 1) + '</b> 사례의 ' + bad.map((s) => '①②③'[s]).join(', ') + '번을 다시 생각해 봐요. 무엇이 어디서 줄거나 늘고, 그다음 어디가 달라지는지 따라가요.';
     }
     return true;
   }
@@ -730,7 +732,7 @@
           goal: '표의 두 값을 비교해 달리기 중 <b>심박수 · 호흡수 · 체온 · 땀 · 오줌 생성량</b>이 늘었는지(▲) 줄었는지(▼) 모두 고르세요.',
           hint: '표 오른쪽 칸에서 ▲ 늘어요 / ▼ 줄어요 를 눌러요. 안정 시 값과 달리기 중 값을 비교해요.',
           manual: true,
-          setup() { ensure('run'); },
+          setup() { ensure('run'); S.run.dir = {}; updateCtl(); },
           check: tableFeedback,
           explain: '심박수 70 → 150, 호흡수 14 → 35, 체온 37.0 → 38.5 °C, 땀은 늘고 <b>오줌 생성량은 줄었어요</b>. 오줌이 줄어드는 것은 혈액이 근육 쪽으로 많이 가고 땀으로 수분을 잃기 때문이에요(다음 단계에서 확인해요).',
         },
@@ -767,7 +769,7 @@
           title: '달리기 때 산소 소비량 계산',
           goal: '🏃 <b>달리기</b> 값으로 심박출량(①)과 산소 소비량(②)을 계산해 <b>✔ 계산 확인</b>을 누르세요.',
           hint: '① 150 × 130 ÷ 1000 = 19.5 (≈ 20). ② 심박출량 × 산소 함량 차(15) ÷ 100.',
-          setup() { ensure('o2'); S.o2.c = 'run'; updateCtl(); },
+          setup() { ensure('o2'); S.o2.c = 'run'; S.o2.ok.run = false; S.o2.in.run = { co: '', vo: '' }; S.o2.note = ''; updateCtl(); },
           check: () => S.o2.ok.run, hold: 0.3,
           status: () => mark(S.o2.ok.run) + ' 달리기 계산 완료',
           explain: '달리기: 심박출량 = 150 × 130 ÷ 1000 = 19.5 ≈ 20 L/분, 산소 소비량 = 20 × 15 ÷ 100 = <b>3.0 L/분</b>이에요. 안정 시의 <b>12배</b>예요. 혈액이 더 많이, 더 빨리 흐르고, 한 번에 내려놓는 산소(3칸)도 늘었어요.',
@@ -789,8 +791,8 @@
       intro: '<div class="si-link">🔗 <b>앞 단계에서</b> 산소는 폐에서 혈액에 실려 근육으로 운반되고, 소화관에서 근육으로 가는 혈액의 비율이 바뀌는 것을 확인했어요. 이제 달리는 몸 전체의 <b>물질의 흐름</b>을 한 장의 정보 그림으로 완성해요.</div>' +
         '<p>소화계 → 순환계 ← 호흡계 → 근육 세포 → 순환계 → 호흡계 · 배설계 · 피부. <b>모든 길은 순환계(혈액)를 지나요.</b> 연결선을 이어 지도를 완성하고, 기관계 한 곳을 맡아 <b>역할놀이 카드</b>를 채워 보세요.</p>',
       setup() { enterLevel(2); },
-      recap: '소화·호흡이 들여온 영양소와 산소는 순환계를 통해 근육 세포로 가고, 세포가 만든 이산화 탄소·요소·열은 순환계를 통해 호흡계·배설계·피부로 나가요.',
-      summary: '<ul><li><b>소화계</b>: 영양소를 흡수해 혈액에 줘요. <b>호흡계</b>: 산소를 혈액에 주고 이산화 탄소를 받아 내보내요.</li><li><b>순환계</b>: 영양소와 산소를 세포로, 이산화 탄소·요소·열을 호흡계·배설계·피부로 운반해요.</li><li><b>근육 세포</b>: 영양소와 산소로 세포호흡을 해 에너지를 얻고 이산화 탄소 · 요소 · 열을 내놓아요.</li><li><b>배설계</b>: 혈액 속 요소와 물을 걸러 오줌으로 내보내고, <b>피부</b>는 땀으로 열과 물을 내보내요.</li><li>기관계는 서로 <b>직접 연결</b>되기보다 <b>순환계를 중심</b>으로 협력하며, 몸의 조절은 신경계와 내분비계가 맡아요(다음 단원).</li></ul>',
+      recap: '소화·호흡이 들여온 영양소와 산소는 순환계를 통해 근육 세포로 가고, 세포가 만든 이산화 탄소·노폐물·열은 순환계를 통해 호흡계·배설계·피부로 나가요.',
+      summary: '<ul><li><b>소화계</b>: 영양소를 흡수해 혈액에 줘요. <b>호흡계</b>: 산소를 혈액에 주고 이산화 탄소를 받아 내보내요.</li><li><b>순환계</b>: 영양소와 산소를 세포로, 이산화 탄소·요소·열을 호흡계·배설계·피부로 운반해요.</li><li><b>근육 세포</b>: 영양소와 산소로 세포호흡을 해 에너지를 얻고 이산화 탄소 · 노폐물 · 열을 내놓아요.</li><li><b>배설계</b>: 혈액 속 요소와 물을 걸러 오줌으로 내보내고, <b>피부</b>는 땀으로 열과 물을 내보내요.</li><li>기관계는 서로 <b>직접 연결</b>되기보다 <b>순환계를 중심</b>으로 협력하며, 몸의 조절은 신경계와 내분비계가 맡아요(다음 단원).</li></ul>',
       missions: [
         {
           title: '정보 그림 연결하기',
@@ -799,14 +801,14 @@
           manual: true,
           setup() { ensure('map'); },
           check: mapFeedback,
-          explain: '영양소는 소화계 → 순환계, 산소는 호흡계 → 순환계로 들어가요. 순환계는 산소·영양소를 근육 세포로 운반하고, 근육 세포가 내놓은 이산화 탄소·요소·열을 받아 호흡계(이산화 탄소), 배설계(요소·물), 피부(열·땀)로 보내요.',
+          explain: '영양소는 소화계 → 순환계, 산소는 호흡계 → 순환계로 들어가요. 순환계는 산소·영양소를 근육 세포로 운반하고, 근육 세포가 내놓은 이산화 탄소·노폐물·열을 받아 호흡계(이산화 탄소), 배설계(요소·물), 피부(열·땀)로 보내요.',
         },
         {
           title: '역할놀이: 내가 맡은 기관계',
           goal: '🎭 역할놀이 카드에서 기관계 <b>2개 이상</b>을 골라 <b>맡은 일 · 받는 것 · 주는 것</b>을 모두 알맞게 채우고 <b>✔ 확인하기</b>를 누르세요.',
           hint: '오른쪽 카드에서 기관계를 고른 뒤 세 칸을 모두 골라요. 완성하면 기관계 이름 옆에 ✔가 나타나요.',
           manual: true,
-          setup() { ensure('map'); syncRole(); },
+          setup() { ensure('map'); S.map.roles = {}; syncRole(); updateCtl(); },
           check: roleFeedback,
           explain: '역할놀이 문장 예: <b>소화계</b> — 음식물을 분해해 영양소를 흡수한다 / 받는 것: 음식물 / 주는 것: 영양소를 혈액으로. <b>호흡계</b> — 산소를 받아들이고 이산화 탄소를 내보낸다 / 받는 것: 공기 / 주는 것: 산소를 혈액으로. <b>순환계</b>는 운반, <b>배설계</b>는 요소·물을 걸러 오줌으로 내보내는 일을 맡아요.',
         },

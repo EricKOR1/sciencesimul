@@ -131,7 +131,7 @@
       inp.addEventListener('input', () => { inp.classList.remove('ok', 'bad'); delete okS[i]; onChange && onChange(i, inp.value); });
       host.appendChild(row); ins.push(inp);
     });
-    const val = (i) => { const s = (ins[i].value || '').trim().replace(',', '.').replace(/\s+/g, ''); if (s === '') return null; const v = Number(s); return isFinite(v) ? v : NaN; };
+    const val = (i) => { const s = (ins[i].value || '').trim().replace(/[−–]/g, '-').replace(/,(?=\d{3}(?!\d))/g, '').replace(',', '.').replace(/\s+/g, ''); if (s === '') return null; const v = Number(s); return isFinite(v) ? v : NaN; };
     const ok = (i) => { const v = val(i); return v != null && !isNaN(v) && Math.abs(v - rows[i].ans) <= rows[i].tol + 1e-12; };
     return {
       ins, val, ok,

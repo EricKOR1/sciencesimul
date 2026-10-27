@@ -72,7 +72,7 @@
   const fc = (v) => (Math.round(v * 1e6) / 1e6 < 0 ? 0 : v).toFixed(3);          // 몰 농도 (mol/L) 소수 셋째 자리
   // 농도 표시: 소수 셋째 자리로 딱 떨어지면 3자리, 아니면 5자리 (표시한 숫자로 다시 계산해도 Q가 K와 맞도록)
   const fcx = (v) => { v = Math.max(0, v); const r = Math.round(v * 1000) / 1000; return Math.abs(v - r) < 5e-7 ? r.toFixed(3) : v.toFixed(5); };
-  const parseNum = (s) => { const t = String(s).replace(',', '.').replace(/[^0-9.\-]/g, ''); return t === '' || isNaN(+t) ? NaN : +t; };
+  const parseNum = (s) => { const t = String(s).replace(/[−–]/g, '-').replace(/,(?=\d{3}(?!\d))/g, '').replace(',', '.').replace(/[^0-9.\-]/g, ''); return t === '' || isNaN(+t) ? NaN : +t; };
   const sameQK = (q, k) => Math.abs(q - k) <= 0.002 * k;                          // Q = K 판정 (같다고 표시되는 범위)
   const dirOf = (q, k) => (sameQK(q, k) ? 'eq' : q < k ? 'fwd' : 'rev');
   const DIR_TXT = { fwd: '정반응 →', rev: '← 역반응', eq: '평형 (이동 없음)' };
@@ -803,7 +803,7 @@
           title: '색 변화를 이동 방향으로 기록하기', manual: true,
           goal: '네 시험관의 붉은색 변화를 보고 평형이 이동한 방향을 골라 <b>✔ 확인하기</b>를 눌러요.',
           hint: '붉은색(FeSCN²⁺)이 진해지면 생성물이 늘어난 정반응, 옅어지면 역반응이에요.',
-          setup() { S.gate = 'rec'; setScene('conc'); updateCtl(); },
+          setup() { S.gate = 'rec'; ['rc1', 'rc2', 'rc3', 'rc4'].forEach((id) => { $('#' + id).value = ''; }); setScene('conc'); updateCtl(); },
           check() {
             if (!allTubes()) return '먼저 시험관 4개를 모두 시험해서 새 평형에 도달하게 해요.';
             const w = ['fwd', 'fwd', 'rev', 'rev'], nm = ['Fe³⁺ 더하기', 'SCN⁻ 더하기', 'Ag⁺ 넣기', '물 더하기'];
@@ -845,7 +845,7 @@
           title: '압력을 높일 때 이동 방향 판단하기', manual: true,
           goal: '세 반응에서 압력을 높일 때 평형이 이동하는 방향을 골라 <b>✔ 확인하기</b>를 눌러요.',
           hint: '압력을 높이면 기체 분자 수(몰 수)가 줄어드는 쪽으로 이동해요. 몰 수가 같으면 이동하지 않아요.',
-          setup() { S.gate = 'pdir'; setScene('press'); updateCtl(); },
+          setup() { S.gate = 'pdir'; ['pd1', 'pd2', 'pd3'].forEach((id) => { $('#' + id).value = ''; }); S.reveal.press = false; setScene('press'); updateCtl(); },
           check() {
             const v = [$('#pd1').value, $('#pd2').value, $('#pd3').value], w = ['rev', 'none', 'fwd'];
             if (v.some((x) => !x)) return '세 반응의 방향을 모두 골라요.';
@@ -889,7 +889,7 @@
           title: '온도를 높일 때 이동 방향 예측하기', manual: true,
           goal: '흡열 반응과 발열 반응 카드에서 온도를 높일 때 평형이 이동하는 방향을 골라 <b>✔ 확인하기</b>를 눌러요.',
           hint: '흡열 반응은 열을 흡수하는 쪽(정반응)이 유리해져요. 발열 반응은 온도를 높이면 열을 내놓는 정반응이 불리해져요.',
-          setup() { S.gate = 'tdir'; setScene('temp'); updateCtl(); },
+          setup() { S.gate = 'tdir'; ['td1', 'td2'].forEach((id) => { $('#' + id).value = ''; }); S.reveal.temp = false; setScene('temp'); updateCtl(); },
           check() {
             const a = $('#td1').value, b = $('#td2').value;
             if (!a || !b) return '두 반응의 방향을 모두 골라요.';
@@ -923,7 +923,7 @@
           title: '변화별 Q · K · 이동 표 완성하기', manual: true,
           goal: '표의 칸을 눌러 답을 고르고 <b>✔ 확인하기</b>를 눌러요. 행의 이름을 누르면 Q와 K의 움직임을 다시 볼 수 있어요.',
           hint: '농도 · 압력은 Q가 변하고, 온도는 K가 변해요. 촉매와 비활성 기체(부피 일정)는 둘 다 그대로예요.',
-          setup() { S.gate = ''; S.tabShow = false; setScene('explain'); updateCtl(); },
+          setup() { S.gate = ''; S.tabShow = false; S.tab = [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]]; setScene('explain'); updateCtl(); },
           check() {
             const w = tabWrong(), blank = S.tab.some((r) => r.some((v) => v === 0));
             if (blank) { S.tabShow = false; return '빈 칸이 남아 있어요. 15칸을 모두 채워요.'; }

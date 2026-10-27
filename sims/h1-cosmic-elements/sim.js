@@ -715,11 +715,11 @@
   $('#bReset').addEventListener('click', () => { Sound.click(); initItems(); S.stFade = 0.6; updateCtl(); });
   $('#bPieReset').addEventListener('click', () => { Sound.click(); initPie(); });
   $('#bPct').addEventListener('click', () => {
-    const v = parseFloat(String($('#inPct').value).replace(',', '.'));
+    const v = parseFloat(String($('#inPct').value).replace(/[−–]/g, '-').replace(/,(?=\d{3}(?!\d))/g, '').replace(',', '.'));
     if (!isFinite(v)) { toast('숫자를 먼저 적어 주세요.', 'bad', 1400); return; }
     S.pct = clamp(v, 0, 100); Sound.tick();
   });
-  $('#inPct').addEventListener('input', () => { const v = parseFloat(String($('#inPct').value).replace(',', '.')); S.pct = isFinite(v) ? clamp(v, 0, 100) : null; });
+  $('#inPct').addEventListener('input', () => { const v = parseFloat(String($('#inPct').value).replace(/[−–]/g, '-').replace(/,(?=\d{3}(?!\d))/g, '').replace(',', '.')); S.pct = isFinite(v) ? clamp(v, 0, 100) : null; });
 
   function setScene(m) {
     if (S.mode !== m) { S.fade = 1; S.mode = m; }
@@ -911,7 +911,7 @@
           setup() { ensureBang(2); },
           check() {
             if (!S.built) return '먼저 헬륨 핵을 만들어야 해요. (3분 장면에서 조립)';
-            const raw = String($('#inPct').value).trim().replace(',', '.');
+            const raw = String($('#inPct').value).trim().replace(/[−–]/g, '-').replace(/,(?=\d{3}(?!\d))/g, '').replace(',', '.');
             if (!raw) return '수소의 질량비를 아래 입력칸에 적어 주세요.';
             const v = parseFloat(raw);
             if (!isFinite(v)) return '숫자로 적어 주세요.';

@@ -620,7 +620,7 @@
   const RT = PHONE ? { x1: 118, x2: 352, w: 128, base: 640, per: 11.2 } : { x1: 118, x2: 318, w: 116, base: 500, per: 8.4 };
   function recordRate() {
     const R = S.rate, inp = $('#inYr');
-    const v = parseFloat(String(inp.value).replace(/,/g, '').replace(',', '.'));
+    const v = parseFloat(String(inp.value).replace(/,/g, '').replace(/[−–]/g, '-').replace(/,(?=\d{3}(?!\d))/g, '').replace(',', '.'));
     if (isNaN(v)) { Sound.fail(); say('걸린 시간을 숫자(만 년)로 써요.', true, 2.2); return; }
     const exp = rateMan(R.env, R.thick);
     if (Math.abs(v - exp) <= Math.max(0.01, exp * 0.01)) {

@@ -800,7 +800,7 @@
             if (!S.rec.done) return '먼저 하루 기록을 마쳐 주세요.';
             if (Math.abs(S.rec.cur - 14) > 0.35) return '읽을 시각을 <b>14시</b>에 맞춰 주세요. (지금 ' + S.rec.cur.toFixed(1) + '시)';
             const raw = $('#inTemp').value.trim(); if (!raw) return '변환표로 구한 기온을 입력칸에 적어 주세요. (단위: °C)';
-            const v = parseFloat(raw.replace(',', '.')); if (!isFinite(v)) return '숫자로 적어 주세요.';
+            const v = parseFloat(raw.replace(/[−–]/g, '-').replace(/,(?=\d{3}(?!\d))/g, '').replace(',', '.')); if (!isFinite(v)) return '숫자로 적어 주세요.';
             if (v >= 25 && v <= 27) return true;
             if (v > 2 && v < 3.3) return '전압 값을 그대로 적은 것 같아요. <b>변환표</b>로 <b>°C</b>로 바꿔 적어 주세요.';
             if (v >= 20 && v <= 30) return '조금 더 어림해 보세요. 2.4 V는 2.64 V(30 °C)보다 낮고 1.98 V(20 °C)보다 높아요. 어느 쪽에 더 가까운가요?';

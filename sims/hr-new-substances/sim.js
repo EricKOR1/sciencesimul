@@ -655,7 +655,7 @@
   $('#amtPlus').addEventListener('click', () => arSet('amt', AR.ai + 1));
   $('#drRun').addEventListener('click', drRun);
   const yTheo = $('#yTheo'), yPct = $('#yPct');
-  const parseNum = (s) => { const t = String(s).replace(',', '.').replace(/[^0-9.]/g, ''); return t === '' || isNaN(+t) ? NaN : +t; };
+  const parseNum = (s) => { const t = String(s).replace(/[−–]/g, '-').replace(/,(?=\d{3}(?!\d))/g, '').replace(',', '.').replace(/[^0-9.]/g, ''); return t === '' || isNaN(+t) ? NaN : +t; };
   yTheo.addEventListener('input', () => { DR.theo = parseNum(yTheo.value); yTheo.classList.remove('ok', 'bad'); });
   yPct.addEventListener('input', () => { DR.pct = parseNum(yPct.value); yPct.classList.remove('ok', 'bad'); });
   makeChips($('#evSub'), ESUB.map((q) => [q.id, q.ico + ' ' + q.short]), (k) => evSetSub(k));

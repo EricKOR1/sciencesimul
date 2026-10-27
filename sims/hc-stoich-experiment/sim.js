@@ -50,7 +50,7 @@
   const fT = (v) => String(+(+v).toFixed(4));
   const f2 = (v) => (+v).toFixed(2);
   const fm = (v) => (+v).toPrecision(3);                       // 몰수: 유효숫자 3자리 (0.100, 0.0500 …)
-  const parseNum = (s) => { const fr = /^\s*(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)\s*$/.exec(String(s)); if (fr && +fr[2] !== 0) return +fr[1] / +fr[2]; const t = String(s).replace(',', '.').replace(/[^0-9.\-]/g, ''); return t === '' || isNaN(+t) ? NaN : +t; };
+  const parseNum = (s) => { const fr = /^\s*(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)\s*$/.exec(String(s)); if (fr && +fr[2] !== 0) return +fr[1] / +fr[2]; const t = String(s).replace(/[−–]/g, '-').replace(/,(?=\d{3}(?!\d))/g, '').replace(',', '.').replace(/[^0-9.\-]/g, ''); return t === '' || isNaN(+t) ? NaN : +t; };
   const tws = [];
   function tw(o, to, opts) { const h = SciSim.tween(o, to, opts); tws.push(h); if (tws.length > 80) tws.splice(0, 40); return h; }
 

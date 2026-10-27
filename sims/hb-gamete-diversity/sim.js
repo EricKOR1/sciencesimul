@@ -852,7 +852,7 @@
   $('#bRun10').addEventListener('click', () => runQuick(10));
   $('#bClr').addEventListener('click', () => { S.cb.found = Array(8).fill(false); S.cb.runs = 0; S.cb.last = null; S.cb.lastNew = []; Sound.click(); updateCtl(); });
   $('#sN').addEventListener('input', (e) => { S.lg.tn = +e.target.value; if (S.lg.tn === 23) S.lg.seen23 = true; Sound.tick(); updateCtl(); });
-  $('#calcIn').addEventListener('input', (e) => { S.lg.calc = e.target.value.trim().replace(',', '.'); S.lg.calcOk = S.lg.calc === '8.4'; if (S.lg.calcOk) Sound.success(); updateCtl(); });
+  $('#calcIn').addEventListener('input', (e) => { S.lg.calc = e.target.value.trim().replace(/[−–]/g, '-').replace(/,(?=\d{3}(?!\d))/g, '').replace(',', '.'); S.lg.calcOk = S.lg.calc === '8.4'; if (S.lg.calcOk) Sound.success(); updateCtl(); });
   $('#bGam').addEventListener('click', makeGametes);
   $('#bCrReset').addEventListener('click', resetCross);
   $('#cmSeg').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { Sound.click(); S.ct.hypo = b.dataset.h === '1'; resetFert(); updateCtl(); }));

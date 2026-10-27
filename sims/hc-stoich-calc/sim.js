@@ -47,7 +47,7 @@
   }
   const r6 = (v) => Math.round(v * 1e6) / 1e6;
   const fT = (v) => String(+(+v).toFixed(3));                    // 소수 셋째 자리까지, 끝의 0은 생략
-  const parseNum = (s) => { const fr = /^\s*(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)\s*$/.exec(String(s)); if (fr && +fr[2] !== 0) return +fr[1] / +fr[2]; const t = String(s).replace(',', '.').replace(/[^0-9.\-]/g, ''); return t === '' || isNaN(+t) ? NaN : +t; };
+  const parseNum = (s) => { const fr = /^\s*(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)\s*$/.exec(String(s)); if (fr && +fr[2] !== 0) return +fr[1] / +fr[2]; const t = String(s).replace(/[−–]/g, '-').replace(/,(?=\d{3}(?!\d))/g, '').replace(',', '.').replace(/[^0-9.\-]/g, ''); return t === '' || isNaN(+t) ? NaN : +t; };
   const SUBD = '₀₁₂₃₄₅₆₇₈₉', SUPD = '⁰¹²³⁴⁵⁶⁷⁸⁹';
   const FOR = (k) => k.replace(/\d/g, (d) => SUBD[+d]);
   const sci = (v) => { const e = Math.floor(Math.log10(v)), m = v / Math.pow(10, e); return (+m.toFixed(3)) + '×10' + String(e).split('').map((c) => SUPD[+c]).join(''); };

@@ -57,7 +57,7 @@
   const f2 = (v) => v.toFixed(2).replace('-', '−');
   const inRect = (p, r) => p.x >= r.x && p.x <= r.x + r.w && p.y >= r.y && p.y <= r.y + r.h;
   const ap = SciSim.approach;
-  const parseNum = (s) => { const t = String(s).replace(',', '.').replace(/[−–]/g, '-').replace(/[^0-9.\-]/g, ''); return t === '' || isNaN(+t) ? NaN : +t; };
+  const parseNum = (s) => { const t = String(s).replace(/[−–]/g, '-').replace(/,(?=\d{3}(?!\d))/g, '').replace(',', '.').replace(/[−–]/g, '-').replace(/[^0-9.\-]/g, ''); return t === '' || isNaN(+t) ? NaN : +t; };
   const near = (v, a, tol) => !isNaN(v) && Math.abs(v - a) <= tol;
   const ap2 = (cur, tg, dt, rate) => (RM ? tg : ap(cur, tg, dt, rate));
 

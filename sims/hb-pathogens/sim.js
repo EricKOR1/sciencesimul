@@ -1208,7 +1208,7 @@
     }
     ['A', 'B'].forEach((who) => {
       const arr = who === 'A' ? DR.ptsA : DR.ptsB, f = fieldRect(who);
-      const want = Math.round(pOf(who, DR.day) / 100 * (PHONE ? 22 : 34));
+      const pv = pOf(who, DR.day), want = pv >= 1 ? Math.max(1, Math.round(pv / 100 * (PHONE ? 22 : 34))) : 0;      // 병원체 수가 1 이상이면 최소 1개는 그려요
       const alive = arr.filter((p) => !p.die);
       while (alive.length < want) { const p = { x: f.x + 14 + Math.random() * (f.w - 28), y: f.y + 14 + Math.random() * (f.h - 28), vx: rnd(-14, 14), vy: rnd(-14, 14), s: 0, rot: Math.random() * TAU, die: 0 }; arr.push(p); alive.push(p); }
       while (alive.length > want) { const p = alive.splice(Math.floor(Math.random() * alive.length), 1)[0]; p.die = 0.001; }

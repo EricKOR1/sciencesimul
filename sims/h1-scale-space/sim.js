@@ -1016,7 +1016,7 @@
             if (S.laser.state !== 'done') return '먼저 <b>🔦 레이저 쏘기</b>로 왕복 시간을 재 보세요.';
             const raw = $('#inDist').value.trim();
             if (!raw) return '계산한 거리를 입력칸에 적어 주세요. (×10⁸ m 단위)';
-            const v = parseFloat(raw.replace(',', '.'));
+            const v = parseFloat(raw.replace(/[−–]/g, '-').replace(/,(?=\d{3}(?!\d))/g, '').replace(',', '.'));
             if (!isFinite(v)) return '숫자로 적어 주세요.';
             if (v >= 3.7 && v <= 3.95) return true;
             if (v > 7 && v < 8.3) return '왕복 시간 2.56 s는 갔다 오는 시간이에요. <b>2로 나누어야</b> 한쪽 거리가 돼요.';

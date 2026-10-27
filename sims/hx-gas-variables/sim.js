@@ -48,7 +48,7 @@
     const h = $('#stageHint'); if (!h) return;
     h.textContent = msg; h.classList.remove('hide'); clearTimeout(hintTimer); hintTimer = setTimeout(() => h.classList.add('hide'), ms || 4200);
   }
-  const parseNum = (s) => { const t = String(s).replace(',', '.').replace(/[^0-9.\-]/g, ''); return t === '' || isNaN(+t) ? NaN : +t; };
+  const parseNum = (s) => { const t = String(s).replace(/[−–]/g, '-').replace(/,(?=\d{3}(?!\d))/g, '').replace(',', '.').replace(/[^0-9.\-]/g, ''); return t === '' || isNaN(+t) ? NaN : +t; };
   const near = (v, a, tol) => !isNaN(v) && Math.abs(v - a) <= tol;
   const sm = (x) => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
   const lerp = (a, b, t) => a + (b - a) * t;

@@ -552,7 +552,7 @@
     { id: 'pV', key: 'V', name: 'R₁ 양단 전압', unit: 'V', ans: MIX.V1, dec: 2 },
     { id: 'pJ', key: 'J', name: 'R₂ 가지 전류', unit: 'A', ans: MIX.I2, dec: 3 },
   ];
-  const parseNum = (s) => { const t = String(s).replace(',', '.').replace(/[^0-9.\-]/g, ''); return t === '' || isNaN(+t) ? NaN : +t; };
+  const parseNum = (s) => { const t = String(s).replace(/[−–]/g, '-').replace(/,(?=\d{3}(?!\d))/g, '').replace(',', '.').replace(/[^0-9.\-]/g, ''); return t === '' || isNaN(+t) ? NaN : +t; };
   function checkPred() {
     const vals = PRED.map((p) => parseNum($('#' + p.id).value));
     if (vals.some((v) => isNaN(v))) { PRED.forEach((p, i) => { if (isNaN(vals[i])) $('#' + p.id).classList.add('bad'); }); return '네 칸을 모두 숫자로 써 주세요.'; }

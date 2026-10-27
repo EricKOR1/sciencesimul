@@ -272,7 +272,7 @@
   }
 
   /* ---------- 추가 도우미 ---------- */
-  const $in = (sel) => { const e = $(sel); const v = e ? parseFloat(String(e.value).replace(',', '.')) : NaN; return isFinite(v) ? v : null; };
+  const $in = (sel) => { const e = $(sel); const v = e ? parseFloat(String(e.value).replace(/[−–]/g, '-').replace(/,(?=\d{3}(?!\d))/g, '').replace(',', '.')) : NaN; return isFinite(v) ? v : null; };
   const near = (v, a, tol) => v != null && Math.abs(v - a) <= tol + 1e-9;
   function bindSeg(sel, attr, onPick) { $$(sel + ' .opt').forEach((b) => b.addEventListener('click', () => { Sound.click(); onPick(b.dataset[attr]); })); }
   function syncSeg(sel, attr, val) { $$(sel + ' .opt').forEach((b) => b.classList.toggle('on', b.dataset[attr] === String(val))); }

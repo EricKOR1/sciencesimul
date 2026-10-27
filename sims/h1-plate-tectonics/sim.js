@@ -805,7 +805,7 @@
 
   const v1 = $('#v1'), v2 = $('#v2'), v3 = $('#v3'), l1 = $('#l1'), l2 = $('#l2'), l3 = $('#l3');
   let rlast = '';
-  const num = (el) => { const v = parseFloat(String(el.value).replace(',', '.')); return isFinite(v) ? v : null; };
+  const num = (el) => { const v = parseFloat(String(el.value).replace(/[−–]/g, '-').replace(/,(?=\d{3}(?!\d))/g, '').replace(',', '.')); return isFinite(v) ? v : null; };
   function readouts() {
     let L1, a, L2, b, L3, c;
     if (S.mode === 'map') {

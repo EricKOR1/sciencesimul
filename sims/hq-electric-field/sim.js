@@ -138,7 +138,7 @@
     const inp = row.querySelector('input'), sel = row.querySelector('select');
     const h = {
       row, inp, sel, st: null,
-      val() { const s = inp.value.trim().replace(',', '.'); if (s === '' || isNaN(+s)) return NaN; return +s * Math.pow(10, +sel.value); },
+      val() { const s = inp.value.trim().replace(/[−–]/g, '-').replace(/,(?=\d{3}(?!\d))/g, '').replace(',', '.'); if (s === '' || isNaN(+s)) return NaN; return +s * Math.pow(10, +sel.value); },
       clear() { inp.value = ''; sel.value = String(defExp || 0); inp.classList.remove('ok', 'bad'); sel.classList.remove('ok', 'bad'); h.st = null; },
       mark(ok) {
         if (h.st === ok) return; h.st = ok;

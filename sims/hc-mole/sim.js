@@ -49,7 +49,7 @@
     h.textContent = msg; h.classList.remove('hide'); clearTimeout(hintTimer); hintTimer = setTimeout(() => h.classList.add('hide'), ms || 4200);
   }
   const sm = (x) => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
-  const parseNum = (s) => { const t = String(s).replace(',', '.').replace(/[^0-9.\-]/g, ''); return t === '' || isNaN(+t) ? NaN : +t; };
+  const parseNum = (s) => { const t = String(s).replace(/[−–]/g, '-').replace(/,(?=\d{3}(?!\d))/g, '').replace(',', '.').replace(/[^0-9.\-]/g, ''); return t === '' || isNaN(+t) ? NaN : +t; };
 
   /* ---------- 숫자 표기 (화면의 모든 숫자는 이 함수들을 거쳐요) ---------- */
   const NA = 6.02e23;

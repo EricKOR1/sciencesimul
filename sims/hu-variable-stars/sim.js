@@ -126,7 +126,7 @@
     ctx.beginPath(); pts.forEach((p, i) => (i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]))); ctx.stroke(); ctx.restore();
   }
   /* 숫자 입력 읽기 / 입력 칸 표시 */
-  const numOf = (id) => { const e = $('#' + id); if (!e) return null; const v = e.value.trim().replace(',', '.'); return v === '' || !isFinite(+v) ? null : +v; };
+  const numOf = (id) => { const e = $('#' + id); if (!e) return null; const v = e.value.trim().replace(/[−–]/g, '-').replace(/,(?=\d{3}(?!\d))/g, '').replace(',', '.'); return v === '' || !isFinite(+v) ? null : +v; };
   const fbIn = (id, ok) => { const e = $('#' + id); if (!e) return; if (ok) { e.classList.remove('bad'); e.classList.add('ok'); } else if (!e.classList.contains('bad')) { e.classList.remove('ok'); void e.offsetWidth; e.classList.add('bad'); } };
   const clrIn = (...ids) => ids.forEach((id) => { const e = $('#' + id); if (e) { e.value = ''; e.classList.remove('ok', 'bad'); } });
   /* 별밤 배경 (고정 별) */
@@ -400,7 +400,7 @@
   const VIEW_LABEL = { curves: '📈 광도 곡선 (세로축: 겉보기 등급)', classify: '🗂 변광성 분류하기', periods: '⏱ 같은 시간 눈금으로 비교', sn: '💥 초신성의 광도와 속도' };
   const modeBtns = $$('#modeSeg button');
   function chkIn(id, ok) { const e = $('#' + id); if (!e) return; if (ok) fbIn(id, true); else e.classList.remove('ok', 'bad'); }
-  const numM = (id) => { const e = $('#' + id); if (!e) return null; const v = e.value.trim().replace('−', '-').replace(',', '.'); return v === '' || !isFinite(+v) ? null : +v; };
+  const numM = (id) => { const e = $('#' + id); if (!e) return null; const v = e.value.trim().replace('−', '-').replace(/[−–]/g, '-').replace(/,(?=\d{3}(?!\d))/g, '').replace(',', '.'); return v === '' || !isFinite(+v) ? null : +v; };
   const ptsBurst = (x, y) => parts.burst(x, y, { count: 14, speed: 140, life: 0.7, size: 4, gravity: 200 });
   function darkBox(r, t) {
     D.shadow(() => { ctx.fillStyle = '#0b1230'; rr(r.x, r.y, r.w, r.h, 14).fill(); }, { blur: 6, y: 2 });

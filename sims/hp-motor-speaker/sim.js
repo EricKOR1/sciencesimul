@@ -753,7 +753,7 @@
           hint: '힘은 B, I, L에 각각 비례하니 세 값을 곱해요. F = B × I × L',
           setup() { need = 'pred'; S.f.pred = ''; $('#inF').value = ''; updateCtl(); setScene('force'); },
           check() {
-            const v = parseFloat(String(S.f.pred).replace(',', '.'));
+            const v = parseFloat(String(S.f.pred).replace(/[−–]/g, '-').replace(/,(?=\d{3}(?!\d))/g, '').replace(',', '.'));
             if (!isFinite(v)) { $('#inF').classList.add('bad'); return '힘 F를 숫자(N)로 입력해 주세요.'; }
             const ans = PRED.B * PRED.I * PRED.L;
             if (Math.abs(v - ans) <= 0.011) { $('#inF').classList.remove('bad'); $('#inF').classList.add('ok'); return true; }
@@ -792,7 +792,7 @@
           check() {
             const m = S.mt, inp = $('#inEta');
             if (!m.on || m.stall || m.burnt || m.load !== LOAD0 || Math.abs(m.I - I0) > 0.05) return '먼저 전원을 켜고 부하를 ' + f1(LOAD0) + ' N·m로 맞춰 안정될 때까지 기다려요.';
-            const v = parseFloat(String(m.eta).replace(',', '.'));
+            const v = parseFloat(String(m.eta).replace(/[−–]/g, '-').replace(/,(?=\d{3}(?!\d))/g, '').replace(',', '.'));
             if (!isFinite(v)) { inp.classList.add('bad'); return '효율을 숫자(%)로 입력해 주세요.'; }
             const ans = m.pout / m.pin * 100;
             if (Math.abs(v - ans) <= 1.5) { inp.classList.remove('bad'); inp.classList.add('ok'); return true; }

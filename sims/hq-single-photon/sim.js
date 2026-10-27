@@ -843,7 +843,7 @@
   let numKey = '';
   $('#nLam').addEventListener('input', () => { $('#nLam').classList.remove('ok', 'bad'); numKey = ''; });
   function gradeNum() {
-    const el = $('#nLam'), raw = el.value.trim().replace(',', '.');
+    const el = $('#nLam'), raw = el.value.trim().replace(/[−–]/g, '-').replace(/,(?=\d{3}(?!\d))/g, '').replace(',', '.');
     if (!raw) return '먼저 파장을 nm 단위로 입력해 보세요.';
     const x = parseFloat(raw), ok = isFinite(x) && x >= 0.165 && x <= 0.18, key = raw + (ok ? '1' : '0');
     if (key !== numKey) { numKey = key; el.classList.remove('ok', 'bad'); void el.offsetWidth; el.classList.add(ok ? 'ok' : 'bad'); }

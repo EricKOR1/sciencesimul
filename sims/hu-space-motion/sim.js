@@ -117,7 +117,7 @@
     ctx.beginPath(); pts.forEach((p, i) => (i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]))); ctx.stroke(); ctx.restore();
   }
   /* 숫자 입력 읽기 / 입력 칸 표시 */
-  const numOf = (id) => { const e = $('#' + id); if (!e) return null; const v = e.value.trim().replace(',', '.'); return v === '' || !isFinite(+v) ? null : +v; };
+  const numOf = (id) => { const e = $('#' + id); if (!e) return null; const v = e.value.trim().replace(/[−–]/g, '-').replace(/,(?=\d{3}(?!\d))/g, '').replace(',', '.'); return v === '' || !isFinite(+v) ? null : +v; };
   const fbIn = (id, ok) => { const e = $('#' + id); if (!e) return; if (ok) { e.classList.remove('bad'); e.classList.add('ok'); } else if (!e.classList.contains('bad')) { e.classList.remove('ok'); void e.offsetWidth; e.classList.add('bad'); } };
   const clrIn = (...ids) => ids.forEach((id) => { const e = $('#' + id); if (e) { e.value = ''; e.classList.remove('ok', 'bad'); } });
   /* 별밤 배경 (고정 별) */
@@ -658,7 +658,7 @@
   }
   function setViews(list) { viewList = list; buildSeg(); updateCtl(); }
   const sl = (id, oid, fmt, cb) => bindSlider($(id), $(oid), fmt, cb);
-  const numM = (id) => { const e = $('#' + id); if (!e) return null; const v = e.value.trim().replace('−', '-').replace(',', '.'); return v === '' || !isFinite(+v) ? null : +v; };
+  const numM = (id) => { const e = $('#' + id); if (!e) return null; const v = e.value.trim().replace('−', '-').replace(/[−–]/g, '-').replace(/,(?=\d{3}(?!\d))/g, '').replace(',', '.'); return v === '' || !isFinite(+v) ? null : +v; };
   const tFmt = (v) => (v > 0 ? '+' : v < 0 ? '−' : '') + comma(Math.abs(v)) + '년';
   function setT(v) { S.cn.t = clamp(v, -100000, 100000); const s = $('#sTm'); if (s) setSlider(s, $('#oTm'), S.cn.t, tFmt); }
   function setYaw(v) { S.cn.yaw = clamp(v, 0, 90); const s = $('#sYaw'); if (s) setSlider(s, $('#oYaw'), Math.round(S.cn.yaw), (x) => x + '°'); }

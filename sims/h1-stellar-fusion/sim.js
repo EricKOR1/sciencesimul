@@ -645,7 +645,7 @@
           setup() { ensure('core'); },
           check() {
             if (!S.balPressed) return '먼저 <b>⚖ 질량 비교하기</b>를 눌러 두 접시의 질량을 확인해요.';
-            const raw = String($('#inDiff').value).trim().replace(',', '.');
+            const raw = String($('#inDiff').value).trim().replace(/[−–]/g, '-').replace(/,(?=\d{3}(?!\d))/g, '').replace(',', '.');
             if (!raw) return '줄어든 질량을 입력칸에 적어 주세요. (단위 u)';
             const v = parseFloat(raw);
             if (!isFinite(v)) return '숫자로 적어 주세요.';

@@ -52,7 +52,7 @@
   }
   const fmtN = (v, d) => (Math.round(v * Math.pow(10, d)) / Math.pow(10, d)).toFixed(d);
   const f1 = (v) => fmtN(v, 1);
-  const parseNum = (s) => { const t = String(s).replace(',', '.').replace(/[^0-9.\-]/g, ''); return t === '' || isNaN(+t) ? NaN : +t; };
+  const parseNum = (s) => { const t = String(s).replace(/[−–]/g, '-').replace(/,(?=\d{3}(?!\d))/g, '').replace(',', '.').replace(/[^0-9.\-]/g, ''); return t === '' || isNaN(+t) ? NaN : +t; };
   const POS = '#e2464b', NEG = '#2f6df6';
 
   /* ---------- 물리 상수 (화면의 숫자와 모두 같은 값) ---------- */
