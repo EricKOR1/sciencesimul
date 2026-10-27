@@ -554,7 +554,7 @@
     const ok = !res.hit, y4 = PY + 26 + 4 * lh + 4;
     D.roundRect(x0, y4 - 18, w, 32, 10); ctx.fillStyle = ok ? '#e7f7ee' : '#fdeceb'; ctx.fill();
     T(x0 + w / 2, y4 + 4, ok ? '멈출 수 있어요 · 남는 거리 ' + fm(res.spare) + ' m' : '멈추지 못해요 · ' + fm(c.total - sc.d) + ' m 부족 → 충돌 속력 약 ' + res.kmhHit + ' km/h', fs, ok ? '#0b6b39' : '#a3262b', 'center', 800);
-    const note = s.sc === 'rain' ? '제한 속도 ' + RAIN_LIMIT + ' km/h 도로에서 비 오는 날 ' + Math.round(RAIN_CUT * 100) + ' % 감속하면 ' + RAIN_SPEED + ' km/h예요.' : s.sc === 'school' ? '어린이 보호구역에서는 속력을 낮추면 반응 거리와 제동 거리가 모두 줄어요.' : '졸음운전은 반응 시간이 ' + T_ALERT.toFixed(1) + ' s에서 ' + T_SLEEPY.toFixed(1) + ' s로 길어져 반응 거리가 늘어나요.';
+    const note = s.sc === 'rain' ? '제한 속도 ' + RAIN_LIMIT + ' km/h 도로에서 비 오는 날 ' + Math.round(RAIN_CUT * 100) + ' % 감속하면 ' + RAIN_SPEED + ' km/h예요. 그래도 장애물이 ' + SCEN.rain.d + ' m 앞이면 ' + RAIN_SPEED + ' km/h로는 멈출 수 없어요. 법으로 정한 감속은 최소 기준일 뿐이에요.' : s.sc === 'school' ? '어린이 보호구역에서는 속력을 낮추면 반응 거리와 제동 거리가 모두 줄어요.' : '졸음운전은 반응 시간이 ' + T_ALERT.toFixed(1) + ' s에서 ' + T_SLEEPY.toFixed(1) + ' s로 길어져 반응 거리가 늘어나요.';
     textBlock(x0, y4 + 30, w, note + ' ABS는 바퀴가 잠기는 것을 막아 μ를 높게 유지해 줘요.', PHONE ? 13 : 13.5, '#3a465c', 18, 700);
   }
 
@@ -839,7 +839,7 @@
       features: ['safety'],
       setup() { resetSafety(); resetCards(); setFlag('cards', false); setScene('safety'); },
       recap: '정지 거리가 장애물까지 거리보다 짧아야 사고를 막을 수 있어요. 속력을 줄이고, 젖은 도로에서는 더 조심하고, 졸지 않는 것이 반응 거리와 제동 거리를 줄여 줘요.',
-      summary: '<ul><li>사고 없이 멈추려면 <b>정지 거리 = 반응 거리 + 제동 거리 ≤ 장애물까지의 거리</b>예요.</li><li>어린이 보호구역(마른 도로, 장애물 ' + SCEN.school.d + ' m): 30 km/h는 약 ' + fm(sfResult(30, 'dry', 'alert', SCEN.school.d).c.total) + ' m라서 멈추지만 50 km/h는 ' + fm(sfResult(50, 'dry', 'alert', SCEN.school.d).c.total) + ' m라서 충돌해요.</li><li>비 오는 날(μ = 0.4, 장애물 ' + SCEN.rain.d + ' m): 60 km/h는 ' + fm(sfResult(60, 'wet', 'alert', SCEN.rain.d).c.total) + ' m로 멈추지만 70 km/h는 ' + fm(sfResult(70, 'wet', 'alert', SCEN.rain.d).c.total) + ' m라서 충돌해요. 제한 속도 ' + RAIN_LIMIT + ' km/h를 ' + Math.round(RAIN_CUT * 100) + ' % 줄이면 ' + RAIN_SPEED + ' km/h예요.</li><li>졸음운전은 반응 시간이 ' + T_ALERT.toFixed(1) + ' s → ' + T_SLEEPY.toFixed(1) + ' s로 길어져, 72 km/h에서 반응 거리가 ' + fm(bs('dry', 72).r) + ' m → ' + fm(20 * T_SLEEPY) + ' m로 늘어요.</li><li>ABS는 바퀴가 잠겨 미끄러지는 것을 막아 높은 μ를 유지해서 제동 거리를 줄여 줘요.</li></ul>',
+      summary: '<ul><li>사고 없이 멈추려면 <b>정지 거리 = 반응 거리 + 제동 거리 ≤ 장애물까지의 거리</b>예요.</li><li>어린이 보호구역(마른 도로, 장애물 ' + SCEN.school.d + ' m): 30 km/h는 약 ' + fm(sfResult(30, 'dry', 'alert', SCEN.school.d).c.total) + ' m라서 멈추지만 50 km/h는 ' + fm(sfResult(50, 'dry', 'alert', SCEN.school.d).c.total) + ' m라서 충돌해요.</li><li>비 오는 날(μ = 0.4, 장애물 ' + SCEN.rain.d + ' m): 60 km/h는 ' + fm(sfResult(60, 'wet', 'alert', SCEN.rain.d).c.total) + ' m로 멈추지만 70 km/h는 ' + fm(sfResult(70, 'wet', 'alert', SCEN.rain.d).c.total) + ' m라서 충돌해요. 제한 속도 ' + RAIN_LIMIT + ' km/h를 ' + Math.round(RAIN_CUT * 100) + ' % 줄이면 ' + RAIN_SPEED + ' km/h예요. 그래도 장애물이 ' + SCEN.rain.d + ' m 앞이면 ' + RAIN_SPEED + ' km/h로는 멈출 수 없어요. 법으로 정한 감속은 최소 기준일 뿐이에요.</li><li>졸음운전은 반응 시간이 ' + T_ALERT.toFixed(1) + ' s → ' + T_SLEEPY.toFixed(1) + ' s로 길어져, 72 km/h에서 반응 거리가 ' + fm(bs('dry', 72).r) + ' m → ' + fm(20 * T_SLEEPY) + ' m로 늘어요.</li><li>ABS는 바퀴가 잠겨 미끄러지는 것을 막아 높은 μ를 유지해서 제동 거리를 줄여 줘요.</li></ul>',
       missions: [
         {
           title: '비 오는 날 사고 없이 멈추는 속력 찾기',

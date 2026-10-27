@@ -319,7 +319,7 @@
     });
     if (S.cmp.shake > 0) { ctx.fillStyle = 'rgba(226,70,75,' + S.cmp.shake * 0.25 + ')'; D.roundRect(MAIN.x, MAIN.y, MAIN.w, MAIN.h, 14); ctx.fill(); }
     panel(INFO.x, INFO.y, INFO.w, INFO.h, 14);
-    cols2('퍼센트 농도 (중학교)', '용질의 질량 ÷ 용액의 질량 × 100\n→ 질량으로 진하기를 나타내요.', '몰 농도 M (이번 시간)', 'M = 용질의 몰수 (mol) ÷ 용액의 부피 (L)\n단위: mol/L = M', '⚠️ 기준은 용매(물)의 부피가 아니라 용액 전체의 부피예요.');
+    cols2('퍼센트 농도 (중학교)', '용질의 질량 / 용액의 질량 × 100\n→ 질량으로 진하기를 나타내요.', '몰 농도 M (이번 시간)', 'M = 용질의 몰수 (mol) / 용액의 부피 (L)\n단위: mol/L = M', '⚠️ 기준은 용매(물)의 부피가 아니라 용액 전체의 부피예요.');
   }
   function cmpTap(p) {
     const G = cmpGeom();
@@ -375,7 +375,7 @@
     if (!s.rev) {
       ttl = ['용질의 질량', '몰수 n', '몰 농도 M'];
       vals = [fm(s.mass, 1) + ' g', rows[0].ok ? fm(s.n, 3) + ' mol' : '? mol', rows[2].ok ? fm(s.M, 3) + ' mol/L' : '? mol/L'];
-      arrows = ['÷ 몰질량 ' + s.MM + ' g/mol', '÷ 용액의 부피 ' + s.Vl.toFixed(3) + ' L' + (rows[1].ok ? '' : '  (mL → L 주의!)')];
+      arrows = ['몰질량 ' + s.MM + ' g/mol로 나눠요', '용액의 부피 ' + s.Vl.toFixed(3) + ' L로 나눠요' + (rows[1].ok ? '' : '  (mL → L 주의!)')];
     } else {
       ttl = ['몰 농도 M', '몰수 n', '질량'];
       vals = [fm(s.Mc, 1) + ' mol/L', rows[0].ok ? fm(s.n, 2) + ' mol' : '? mol', rows[1].ok ? fm(s.mass, 2) + ' g' : '? g'];
@@ -391,7 +391,7 @@
     });
     if (S.calc.shake > 0) { ctx.fillStyle = 'rgba(226,70,75,' + S.calc.shake * 0.2 + ')'; D.roundRect(MAIN.x, MAIN.y, MAIN.w, MAIN.h, 14); ctx.fill(); }
     panel(INFO.x, INFO.y, INFO.w, INFO.h, 14);
-    cols2('① 몰수 구하기', s.rev ? '몰수 n = M × V(L)\n질량 = 몰수 × 몰질량' : '몰수 n = 질량 ÷ 몰질량', '② 몰 농도 구하기', s.rev ? '부피는 mL가 아니라 L로 바꿔 곱해요.' : 'M = n ÷ V(L)\nV는 L 단위로!', '⚠️ 단위 환산: 1000 mL = 1 L → ' + s.V + ' mL = ' + s.Vl.toFixed(3) + ' L');
+    cols2('① 몰수 구하기', s.rev ? '몰수 n = M × V(L)\n질량 = 몰수 × 몰질량' : '몰수 n = 질량 / 몰질량', '② 몰 농도 구하기', s.rev ? '부피는 mL가 아니라 L로 바꿔 곱해요.' : 'M = n / V(L)\nV는 L 단위로!', '⚠️ 단위 환산: 1000 mL = 1 L → ' + s.V + ' mL = ' + s.Vl.toFixed(3) + ' L');
   }
   function stepCalc(dt) { Object.keys(S.calc.pop).forEach((k) => { S.calc.pop[k] = Math.min(1, S.calc.pop[k] + dt * 4); }); S.calc.shake = Math.max(0, (S.calc.shake || 0) - dt); }
 
@@ -417,7 +417,7 @@
     textBlock(ex, MAIN.y + (PHONE ? 244 : 248), ew, '물을 더해도 용질의 몰수는 그대로예요. 부피만 늘어 농도가 낮아져요.', 14, MUTED, 19, 700);
     if (PHONE) textBlock(ex, MAIN.y + 310, ew, '안전: 진한 산은 물에 산을 천천히 넣어 묽혀요.', 13.5, '#b4231f', 18, 800);
     panel(INFO.x, INFO.y, INFO.w, INFO.h, 14);
-    cols2('희석의 규칙', '용액에 물을 더해도 용질의 몰수 n은 변하지 않아요.\nn = M × V = M′ × V′', '예) 계산해 보기', '2.0 M 50 mL → 1000 mL: M′ = 2.0 × 50 ÷ 1000 = 0.10 M', '⚠️ 안전: 진한 산을 묽힐 때는 물에 산을 천천히 넣어요. (산에 물을 붓지 않아요.)');
+    cols2('희석의 규칙', '용액에 물을 더해도 용질의 몰수 n은 변하지 않아요.\nn = M × V = M′ × V′', '예) 계산해 보기', '2.0 M 50 mL → 1000 mL: M′ = 2.0 × 50 / 1000 = 0.10 M', '⚠️ 안전: 진한 산을 묽힐 때는 물에 산을 천천히 넣어요. (산에 물을 붓지 않아요.)');
   }
   function stepDil(dt) {
     const d = S.dil; const prev = d.Vd;
@@ -578,7 +578,7 @@
           title: 'NaCl · NaOH · 포도당의 몰 농도',
           goal: '세 시료마다 <b>몰수 → 부피(L) → 몰 농도</b>를 차례로 써 넣으세요.',
           hint: '몰수 = 질량 ÷ 몰질량 (NaCl 58.5, NaOH 40, 포도당 180 g/mol). 500 mL는 0.500 L로 바꿔요.',
-          setup() { S.gate = ''; S.calc.k = 'nacl'; setScene('calc'); },
+          setup() { S.gate = ''; S.calc.k = 'nacl'; ['nacl', 'naoh', 'glu'].forEach((k) => calcRows[k].forEach((r) => r.clear())); S.calc.pop = {}; setScene('calc'); },
           check: () => ['nacl', 'naoh', 'glu'].every(calcDone), hold: 0.5,
           status: () => 'NaCl ' + mark(calcDone('nacl')) + ' NaOH ' + mark(calcDone('naoh')) + ' 포도당 ' + mark(calcDone('glu')),
           explain: 'NaCl: 11.7 ÷ 58.5 = 0.200 mol, 0.200 ÷ 0.500 = <b>0.400 M</b>. NaOH: 4.0 ÷ 40 = 0.10 mol, 0.10 ÷ 0.250 = <b>0.40 M</b>. 포도당: 9.0 ÷ 180 = 0.050 mol, 0.050 ÷ 0.100 = <b>0.50 M</b>이에요.',
@@ -587,7 +587,7 @@
           title: '2.0 M HCl 250 mL 속의 HCl',
           goal: '<b>2.0 M HCl 250 mL</b>에 들어 있는 HCl의 <b>몰수</b>와 <b>질량</b>을 구하세요. (HCl의 몰질량 36.5 g/mol)',
           hint: '몰수 = M × V(L) = 2.0 × 0.250이에요. 질량 = 몰수 × 36.5예요.',
-          setup() { S.gate = ''; S.calc.k = 'hcl'; setScene('calc'); },
+          setup() { S.gate = ''; S.calc.k = 'hcl'; calcRows.hcl.forEach((r) => r.clear()); S.calc.pop = {}; setScene('calc'); },
           check: () => calcDone('hcl'), hold: 0.5,
           status: () => '몰수 ' + mark(calcRows.hcl[0].ok) + ' 질량 ' + mark(calcRows.hcl[1].ok),
           explain: 'n = 2.0 mol/L × 0.250 L = <b>0.50 mol</b>이에요. 질량은 0.50 mol × 36.5 g/mol = <b>18.25 g</b>이에요. 몰 농도의 식을 거꾸로 쓰면 n = M × V예요.',
@@ -625,7 +625,7 @@
           title: '희석 계산하기', manual: true, 
           goal: 'M V = M′ V′로 두 문제를 계산해 쓰고 <b>✔ 확인하기</b>를 누르세요.',
           hint: '① 2.0 × 50 = M′ × 1000. ② 12 × V = 1.0 × 100 이니까 V = 100 ÷ 12예요. 소수 둘째 자리까지 써요.',
-          setup() { S.gate = 'dilcalc'; setScene('dil'); },
+          setup() { S.gate = 'dilcalc'; dilRows.forEach((r) => r.clear()); setScene('dil'); },
           check() {
             const bad = dilRows.map((r, i) => (r.ok ? -1 : i)).filter((i) => i >= 0);
             if (!bad.length) return true;
@@ -660,7 +660,7 @@
           title: '이온 농도 표 완성하기', manual: true,
           goal: '다섯 용액마다 <b>양이온과 음이온의 몰 농도</b>를 써서 표를 완성하고 <b>✔ 확인하기</b>를 누르세요.',
           hint: '입자 모형에서 이온 수를 세요. CaCl₂ 한 개는 Ca²⁺ 1개와 Cl⁻ 2개로 갈라지므로 Cl⁻의 농도는 용액 농도의 2배예요.',
-          setup() { S.gate = ''; setScene('ion'); },
+          setup() { S.gate = ''; IONS.forEach((u) => ionRows[u.k].forEach((r) => r.clear())); setScene('ion'); },
           check() {
             if (allIonDone()) return true;
             const u = IONS.find((x) => !ionDone(x.k));
@@ -682,6 +682,7 @@
     },
   ];
 
+  setScene('cmp');        // 이어하기에서 단계의 장면을 덮어쓰지 않도록 game 만들기 전에
   game = SciSim.game({
     simId: 'hc-molarity', mount: '#game', badge: '농도 박사', homeHref: '../../index.html#hc',
     featureLabels: { cmp: '🥤 비커 농도 비교', calc: '🧮 M 계산기', dil: '💧 희석 슬라이더', ion: '⚛️ 이온 입자 모형' },
@@ -690,7 +691,6 @@
   });
 
   /* ---------- 시작 ---------- */
-  setScene('cmp');
   function stepAll1(dt) { stepCmp(dt); stepCalc(dt); stepDil(dt); stepIon(dt); }
   let lastFree = false, lastMode = '';
   SciSim.loop((dt, t) => {

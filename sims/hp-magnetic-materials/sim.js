@@ -726,7 +726,7 @@
     // 퀴리 온도 표시선 (눈금과 같은 선형 눈금)
     // 상태 표지
     const attached = !c.fell;
-    D.label(CUR.sx, CUR.floor + 22, attached ? '자석에 붙어 있어요' : '떨어졌어요!', { bg: attached ? '#14a058' : '#e2464b', size: 13 });
+    D.label(PHONE ? CUR.sx + 46 : CUR.sx, CUR.floor + 22, attached ? '자석에 붙어 있어요' : '떨어졌어요!', { bg: attached ? '#14a058' : '#e2464b', size: 13 });
     // 우측: 모형 + 게이지
     const mx = PHONE ? 12 : 476, my = PHONE ? CUR.floor + 44 : 70, mw = PHONE ? 220 : 300, mh = PHONE ? 132 : 180;
     T(mx, my - 8, '🔍 ' + METAL[c.metal] + ' 속 원자 자석', 13.5, '#26324a', 'left', 800);

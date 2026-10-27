@@ -555,8 +555,8 @@
     ctx.beginPath(); ctx.moveTo(fxS, P.fy175); ctx.lineTo(R.x, P.fy175); ctx.moveTo(R.x + R.w, P.fy175); ctx.lineTo(C.x, P.fy175); ctx.moveTo(C.x + C.w / 2, C.y + C.h); ctx.lineTo(C.x + C.w / 2, Tk.y);
     if (HB.sep) { ctx.moveTo(C.x + C.w / 2, C.y); ctx.lineTo(C.x + C.w / 2, P.fy60); ctx.lineTo(R.x + R.w / 2, P.fy60); ctx.lineTo(R.x + R.w / 2, R.y); } else { ctx.moveTo(C.x + C.w, P.fy175); ctx.lineTo(P.fxExit, P.fy175); }
     ctx.stroke(); ctx.restore();
-    T(fxS, P.fy175 - 14, '원료', 12.5, MUTED, 'left', 800); T(fxS, P.fy175 + 22, 'N₂ : H₂ = 1 : 3', 12, MUTED, 'left', 800);
-    if (HB.sep) T((C.x + R.x + R.w) / 2 + 10, P.fy60 - 8, '재순환: 남은 N₂ · H₂', 12.5, GOOD, 'center', 800); else T(P.fxExit - 6, P.fy175 - 14, '그대로 배출', 12.5, MUTED, 'right', 800);
+    T(fxS, P.fy175 - 14, '원료', 12.5, MUTED, 'left', 800); T(fxS, P.fy175 + 22, PHONE ? 'N₂:H₂ = 1:3' : 'N₂ : H₂ = 1 : 3', 12, MUTED, 'left', 800);
+    if (HB.sep) T((C.x + R.x + R.w) / 2 + 10, P.fy60 - 8, '재순환: 남은 N₂ · H₂', 12.5, GOOD, 'center', 800); else T(P.fxExit + (PHONE ? 4 : -6), P.fy175 - 14, '그대로 배출', PHONE ? 11.5 : 12.5, MUTED, 'right', 800);
     // 반응기
     const hot = clamp((HB.T - 200) / 300, 0, 1);
     D.shadow(() => { D.roundRect(R.x, R.y, R.w, R.h, 14); ctx.fillStyle = mixc('#fde8d8', '#fca5a5', hot); ctx.fill(); }, { blur: 8, y: 3 });

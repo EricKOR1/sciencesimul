@@ -176,7 +176,7 @@
   function plBuild() {
     PL.g = geom(PL.mol, PL.bend); PL.dp = dipoles(PL.g);
     const dp = PL.dp, q = PNL(), O = PO();
-    const dmax = Math.max(0.1, ...dp.map((x) => x.d)), sc = (PHONE ? 84 : 92) / dmax;
+    const dmax = Math.max(0.1, ...dp.map((x) => x.d)), sc = (PHONE ? 84 : 92) * (dp.length >= 4 ? 0.75 : 1) / dmax;
     PL.sc = sc;
     PL.arrows = dp.map((x, i) => {
       const v = [x.dir[0] * x.d * sc, -x.dir[1] * x.d * sc];
@@ -213,8 +213,9 @@
     if (plDone() && !PL.chain[PL.mol + '|' + PL.bend]) {
       PL.chain[PL.mol + '|' + PL.bend] = true;
       if (PL.bend === 180) PL.chain[PL.mol] = true;
-      const O = PO(), tip = plTip(PL.arrows.length - 1);
-      const zero = Math.hypot(tip.x - O.x, tip.y - O.y) < 2;
+      // 화살표 꼬리는 아직 붙는 중일 수 있어서(움직이는 중), 화면 위치가 아니라 벡터 합으로 판정해요
+      const O = PO(), zero = plNet() === 0;
+      const tip = { x: O.x + PL.arrows.reduce((s_, a) => s_ + a.v[0], 0), y: O.y + PL.arrows.reduce((s_, a) => s_ + a.v[1], 0) };
       Sound.success();
       fx.burst(zero ? O.x : tip.x, zero ? O.y : tip.y, { count: 18, colors: zero ? ['#14a058', '#a7f3d0', '#fff'] : ['#7c3aed', '#c4b5fd', '#fff'], speed: 130, size: 3.5, gravity: 0 });
       showHint(zero ? '화살표가 제자리로 돌아왔어요: 합 = 0 → 무극성 분자' : '합이 0이 아니에요: 알짜 쌍극자 모멘트 → 극성 분자', 5500);
@@ -320,7 +321,7 @@
         D.text(mx_ + shk + (-dy_ / L_) * 20, my_ + (dx_ / L_) * 20 + 4, g.atoms[bn.from].e + '→' + g.atoms[bn.to].e + ' ' + bn.d.toFixed(1), { size: fs(11.5), weight: 800, color: INK }); }
     });
     if (done) {
-      const tip = plTip(PL.arrows.length - 1), zero = Math.hypot(tip.x - O.x, tip.y - O.y) < 2;
+      const tip = plTip(PL.arrows.length - 1), zero = plNet() === 0;
       if (zero) { D.label(O.x, O.y + 38, '합 = 0', { size: fs(15), bg: '#14a058', color: '#fff', pad: 10 }); D.check(O.x + 56, O.y + 38, 12, 1); }
       else { D.arrow(O.x, O.y, tip.x, tip.y, { color: '#7c3aed', width: 6, dash: [8, 6], head: 14 }); D.label(O.x, O.y + 38, '합 ≠ 0 (화살표 합)', { size: fs(14), bg: '#7c3aed', color: '#fff', pad: 10 }); }
     }
@@ -997,7 +998,7 @@
       if (ver) {
         const dp = dipoles(P.g), nl = vlen(netOf(dp));
         const pol = nl > 1e-6;
-        D.label(C.x, C.y + (PHONE ? 134 : 178), pol ? '결합 쌍극자의 합 ≠ 0 → 극성 분자' : (dp.length ? '결합 쌍극자가 상쇄 → 무극성 분자' : '극성 결합이 없어요 → 무극성 분자'), { size: fs(13.5), bg: pol ? '#7c3aed' : '#14a058', color: '#fff', pad: 11 });
+        D.label(C.x, C.y + (PHONE ? 134 : 172), pol ? '결합 쌍극자의 합 ≠ 0 → 극성 분자' : (dp.length ? '결합 쌍극자가 상쇄 → 무극성 분자' : '극성 결합이 없어요 → 무극성 분자'), { size: fs(13.5), bg: pol ? '#7c3aed' : '#14a058', color: '#fff', pad: 11 });
         if (pol) { const r = rot(vnorm(netOf(dp))), a0 = proj(C, S_, [0, 0, 0]); dipArrow(a0.x, a0.y, a0.x + r[0] * nl * 26 * S_, a0.y - r[1] * nl * 26 * S_, '#7c3aed', 8); }
       }
       // 물 시험
@@ -1008,7 +1009,7 @@
     if (ver) {
       const ok1 = a.q1 === q.a1, ok2 = a.q2 === q.a2;
       D.label(VW / 2, VH - fs(44), '예측 ' + (ok1 ? '✅' : '❌') + ' · ' + (ok2 ? '✅' : '❌') + '   ' + (ok1 && ok2 ? '모두 맞았어요!' : '결과를 비교해 봐요'), { size: fs(14), bg: ok1 && ok2 ? '#dcfce7' : '#fff7e0', color: ok1 && ok2 ? '#0b6b39' : '#92400e', border: ok1 && ok2 ? '#14a058' : '#f59e0b', pad: 12 });
-      if (PR.t > 1.0) wrapText(P.why, VW / 2, VH - fs(112), PHONE ? 500 : 720, fs(13.5), fs(19), '#334155');
+      if (PR.t > 1.0) wrapText(P.why, VW / 2, VH - fs(PHONE ? 112 : 90), PHONE ? 500 : 720, fs(13.5), fs(19), '#334155');
     } else D.text(VW / 2, VH - fs(40), '구조를 보고 예측을 고른 뒤 🔬 확인하기를 눌러요', { size: fs(13), weight: 800, color: '#7c3aed' });
   }
   function wrapText(text, x, y, maxW, size, lh, color) {
@@ -1234,7 +1235,7 @@
           title: '분자 6개의 극성 판정하기',
           goal: '<b>H₂O · NH₃ · CO₂ · CH₄ · BF₃ · CH₃Cl</b>의 쌍극자 화살표를 살펴보고 극성 / 무극성을 판정해요.',
           hint: '분자를 고르고 화살표를 이어 붙여 봐요 (또는 ➡️ 자동으로 잇기). 제자리로 돌아오면 합이 0이라 무극성이에요.',
-          setup() { setScene('polar'); },
+          setup() { PL.judged = {}; plSelect(PL.mol); setScene('polar'); },
           check: () => judgedCount() === 6,
           hold: 0.5,
           status: () => PKEYS.map((k) => mark(!!PL.judged[k]) + ' ' + PMOL[k].f).join(' · '),
@@ -1244,7 +1245,7 @@
           title: '화살표 합 그리기', manual: true,
           goal: '<b>H₂O · CO₂ · BF₃</b>의 결합 쌍극자 화살표를 끌어 머리와 꼬리를 이어 붙여 합을 직접 확인해요.',
           hint: '파란 점선 고리가 나타나면 다음 화살표의 꼬리를 거기로 끌어 놓아요. 세 분자 모두 해야 해요.',
-          setup() { setScene('polar'); },
+          setup() { PL.chain = {}; plSelect(PL.mol); setScene('polar'); },
           check: () => (chainCount() === 3 ? true : '아직 화살표를 모두 잇지 않은 분자가 있어요: ' + ['H2O', 'CO2', 'BF3'].filter((k) => !PL.chain[k]).map((k) => PMOL[k].f).join(', ')),
           status: () => ['H2O', 'CO2', 'BF3'].map((k) => mark(!!PL.chain[k]) + ' ' + PMOL[k].f).join(' · '),
           explain: 'H₂O는 두 O–H 화살표가 굽은 모양이라 합이 남아요. CO₂는 두 화살표가 반대 방향이라 합이 0, BF₃는 세 화살표가 120°씩 벌어져 있어 이어 붙이면 삼각형이 닫혀 합이 0이에요.',
@@ -1275,7 +1276,7 @@
           title: '물줄기 3가지 시험',
           goal: '<b>물 · 에탄올 · 헥세인</b>의 줄기에 대전된 막대를 1초쯤 가까이 해서 휘는지 시험해요.',
           hint: '액체를 고른 뒤 막대를 끌어 줄기 옆(가로 230 이내)으로 가져가요. 보라색 막대가 다 차면 시험이 기록돼요.',
-          setup() { setScene('stream'); },
+          setup() { ST.tested = {}; ST.res = {}; ST.near = 0; setScene('stream'); },
           check: () => testedCount() === 3,
           hold: 0.4,
           status: () => ['water', 'ethanol', 'hexane'].map((k) => mark(!!ST.tested[k]) + ' ' + LIQ[k].name + (ST.tested[k] ? '(' + ST.res[k] + ')' : '')).join(' · '),
@@ -1285,7 +1286,7 @@
           title: '관찰표 채우기', manual: true,
           goal: '🧪 섞기 실험과 📊 끓는점 그래프를 살펴보고 관찰표를 채워요.',
           hint: '섞기 화면에서 네 조합을 모두 해 보고, 끓는점 화면에서 막대를 눌러 값을 읽어요. 극성이 크면 끓는점이 높아요.',
-          setup() { obsShow = true; setScene('mix'); updateUI(); },
+          setup() { obsShow = true; $$('#obsBody select').forEach((q) => { q.value = ''; q.classList.remove('ok', 'bad'); }); MX.results = {}; mxReset(); setScene('mix'); updateUI(); },
           check: () => obsCheck(),
           status: () => '📋 채운 칸 ' + obsFilled() + ' / 6 · 해 본 조합 ' + mxCount() + ' / 4',
           explain: '물 + 에탄올은 섞이고(극성 + 극성), 물 + 헥세인은 층이 나뉘어요(극성 / 무극성). I₂는 물에 거의 녹지 않고 헥세인에는 잘 녹아 보라색이 돼요. 끓는점은 H₂O(100 °C)가 가장 높고, F₂(−188 °C)보다 극성인 HCl(−85 °C)이 높아요.',
@@ -1315,7 +1316,7 @@
           title: '두 구조 시험하기',
           goal: '<b>에탄올</b>과 <b>다이메틸 에터</b>에 각각 나트륨 조각을 넣어 반응하는지 확인해요.',
           hint: '분자를 고르고 🧂 나트륨 조각 넣기를 눌러요. 2초쯤 지켜보면 결과가 기록돼요.',
-          setup() { setScene('isomer'); },
+          setup() { IS.tested = {}; isSet(IS.sel); setScene('isomer'); },
           check: () => isCount() === 2,
           hold: 0.4,
           status: () => mark(!!IS.tested.eth) + ' 에탄올 · ' + mark(!!IS.tested.dme) + ' 다이메틸 에터',
@@ -1325,7 +1326,7 @@
           title: '결합 · 반응성 연결하기', manual: true,
           goal: '이성질체와 N₂ · O₂ 실험 결과를 <b>결합 · 반응성 표</b>로 정리해요.',
           hint: '⛓️ N₂·O₂ 화면에서 N≡N은 공유 전자쌍 3쌍, O=O는 2쌍이에요. 불씨를 넣어 반응성을 확인해 봐요.',
-          setup() { bondShow = true; setScene('bonds'); updateUI(); },
+          setup() { bondShow = true; $$('#bondBody select').forEach((q) => { q.value = ''; q.classList.remove('ok', 'bad'); }); setScene('bonds'); updateUI(); },
           check: () => bondCheck(),
           status: () => '📋 채운 칸 ' + bondFilled() + ' / 6',
           explain: 'O–H 결합이 있는 에탄올이 나트륨과 반응하고 끓는점도 높아요. N≡N은 삼중 결합(공유 3쌍)이라 반응성이 매우 낮아 식품 포장에 쓰고, O=O는 이중 결합(공유 2쌍)이라 불씨를 되살리는 등 연소에 참여해요.',
@@ -1355,7 +1356,7 @@
           title: '예측하고 확인하기',
           goal: '분자 카드 <b>4개 이상</b>에서 극성과 물과의 섞임을 먼저 예측한 뒤 🔬 확인해요.',
           hint: '카드를 고르고 구조를 돌려 봐요. 대칭이면 화살표가 상쇄돼 무극성, 비대칭이면 극성이에요. 두 예측을 고르면 확인 버튼이 켜져요.',
-          setup() { setScene('predict'); },
+          setup() { PR.done = {}; PR.hit = {}; PKEYS4.forEach((k) => { PR.ans[k] = { q1: '', q2: '' }; }); prSelect(PR.c); setScene('predict'); },
           check: () => prDoneCount() >= 4,
           hold: 0.6,
           status: () => PKEYS4.map((k) => (PR.done[k] ? (PR.hit[k] ? '✅' : '🔎') : '⬜') + ' ' + PRD[k].f).join(' · ') + ' (' + prDoneCount() + '/4)',

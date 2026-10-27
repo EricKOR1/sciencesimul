@@ -901,8 +901,17 @@
     };
 
     // 시작: 단계의 첫 미션이면 단계 소개부터, 중간이면 이어서
-    if (flat[idx]._index === 0) renderIntro(flat[idx]._level, false);
-    else { applyFeatures(featuresUpTo(flat[idx]._level), false); renderMission(); }
+    // - 실험 코드가 game() 다음에 하는 초기화(장면 설정 등)가 모두 끝난 뒤에 시작해요.
+    //   (그래야 이어 하기 때 단계·미션 setup이 고른 장면이 덮어써지지 않아요)
+    // - 이어 하기에서도 단계 setup을 먼저 실행해 단계 처음과 같은 상태에서 미션을 이어요.
+    function start() {
+      const lv = levels[flat[idx]._level];
+      if (flat[idx]._index === 0) { renderIntro(flat[idx]._level, false); return; }
+      applyFeatures(featuresUpTo(flat[idx]._level), false);
+      if (lv.setup) { try { lv.setup(); } catch (e) { console.error(e); } }
+      renderMission();
+    }
+    Promise.resolve().then(start);
 
     return api;
   }
