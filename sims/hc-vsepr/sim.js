@@ -302,8 +302,8 @@
   const SIDE = [[0, -1], [1, 0], [0, 1], [-1, 0]];
   const TT = { mol: 'BeCl2', sel: {}, built: {}, cl: makeCluster(), calm: 0, show: false };
   VM_KEYS.forEach((k) => { TT.sel[k] = []; });
-  const LC = () => (PHONE ? { x: 280, y: 215 } : { x: 205, y: 318 });
-  const U2 = PHONE ? 78 : 92;
+  const LC = () => (PHONE ? { x: 280, y: 232 } : { x: 205, y: 318 });
+  const U2 = PHONE ? 96 : 92;
   const TC = () => (PHONE ? { x: 280, y: 548 } : { x: 598, y: 330 });
   const T3S = PHONE ? 0.78 : 0.82;
   const ttM = () => VM[TT.mol];
@@ -361,7 +361,7 @@
   }
   function drawLewisT(t) {
     const M = ttM(), c = LC(), sel = TT.sel[TT.mol], r = PHONE ? 20 : 22;
-    D.text(c.x, c.y - (PHONE ? 150 : 205), '루이스 구조', { size: fs(15), weight: 800, color: MUTED });
+    if (PHONE) D.text(78, c.y - 104, '루이스 구조', { size: fs(15), weight: 800, color: MUTED }); else D.text(c.x, c.y - 205, '루이스 구조', { size: fs(15), weight: 800, color: MUTED });
     const need = sel.length < M.outer.length;
     M.outer.forEach((a, i) => {
       const p = ttPos(i), dx = p.x - c.x, dy = p.y - c.y, L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L, px = -uy, py = ux;
@@ -380,7 +380,7 @@
         ctx.strokeStyle = '#14a058'; ctx.lineWidth = 4; ctx.lineCap = 'round';
         ctx.beginPath(); ctx.moveTo(c.x + ux * (r + 4) + px * off, c.y + uy * (r + 4) + py * off); ctx.lineTo(p.x - ux * (r + 4) + px * off, p.y - uy * (r + 4) + py * off); ctx.stroke();
       }
-      if (on) { const vert = Math.abs(uy) > Math.abs(ux); D.label(vert ? m.x + 46 : m.x, vert ? m.y : m.y + (ph / 2 + 16), '영역 ' + (idx + 1), { size: fs(12), bg: '#7c3aed', color: '#fff', pad: 6 }); }
+      if (on) { const vert = Math.abs(uy) > Math.abs(ux), qx = -uy, qy = ux; D.label(vert ? m.x + qx * 64 : m.x, vert ? m.y : m.y + qy * (ph / 2 + (qy < 0 ? 12 : 16)), '영역 ' + (idx + 1), { size: fs(12), bg: '#7c3aed', color: '#fff', pad: 6 }); }
     });
     M.outer.forEach((a, i) => {
       const p = ttPos(i);
@@ -390,10 +390,10 @@
       free.forEach((s) => lpDots(p.x, p.y, s, r));
     });
     lewisAtom(c.x, c.y, M.c, r + 2, { ring: 4.5 });
-    D.label(c.x, c.y - r - 22, '중심 원자', { size: fs(12), bg: '#7c3aed', color: '#fff', pad: 7 });
-    if (need) D.text(c.x, c.y + (PHONE ? 112 : 168), '중심 원자 둘레의 전자 영역(보라 점선)을 눌러요', { size: fs(13.5), weight: 800, color: '#7c3aed' });
-    else D.text(c.x, c.y + (PHONE ? 112 : 168), '영역을 모두 풍선으로 바꿨어요!', { size: fs(13.5), weight: 800, color: '#0b6b39' });
-    D.text(c.x, c.y + (PHONE ? 134 : 190), '결합은 단일 · 이중 · 삼중 모두 영역 1개', { size: fs(12.5), weight: 700, color: MUTED });
+    D.label(c.x, c.y - r - (PHONE ? 30 : 22), '중심 원자', { size: fs(12), bg: '#7c3aed', color: '#fff', pad: 7 });
+    if (need) D.text(c.x, c.y + (PHONE ? 140 : 168), '중심 원자 둘레의 전자 영역(보라 점선)을 눌러요', { size: fs(13.5), weight: 800, color: '#7c3aed' });
+    else D.text(c.x, c.y + (PHONE ? 140 : 168), '영역을 모두 풍선으로 바꿨어요!', { size: fs(13.5), weight: 800, color: '#0b6b39' });
+    D.text(c.x, c.y + (PHONE ? 164 : 190), '결합은 단일 · 이중 · 삼중 모두 영역 1개', { size: fs(12.5), weight: 700, color: MUTED });
   }
   function sideTo2(a, b) { const dx = b.x - a.x, dy = b.y - a.y; return Math.abs(dx) >= Math.abs(dy) ? (dx > 0 ? 1 : 3) : (dy > 0 ? 2 : 0); }
   function drawTable(t) {
@@ -858,7 +858,7 @@
           title: '풍선 2 · 3 · 4개 묶고 각도 재기',
           goal: '풍선을 <b>2개 · 3개 · 4개</b>로 바꾸며 <b>📐 각도 재기</b>를 켜고, 정렬이 끝나 각도가 나올 때까지 기다려요.',
           hint: '풍선 수 버튼을 누르고 📐 각도 재기를 켜요. 풍선이 흔들리다 멈추면 각도가 확정돼요. 🎈 흔들기로 다시 정렬해 볼 수 있어요.',
-          setup() { setScene('balloon'); },
+          setup() { B.seen = {}; B.calmT = { 2: 0, 3: 0, 4: 0 }; setScene('balloon'); },
           check: () => !!(B.seen[2] && B.seen[3] && B.seen[4]),
           hold: 0.3,
           status: () => [[2, '2개 180°'], [3, '3개 120°'], [4, '4개 109.5°']].map(([n, l]) => mark(!!B.seen[n]) + ' ' + l).join(' · '),
@@ -889,7 +889,7 @@
           title: '6개 분자의 풍선 모형 만들기',
           goal: '<b>BeCl₂ · BF₃ · CH₄ · CO₂ · HCN · CCl₄</b> 모두 중심 원자 둘레의 영역을 눌러 풍선 모형을 완성해요.',
           hint: '분자를 고르고 루이스 구조의 보라색 점선 영역을 하나씩 눌러요. 이중 · 삼중 결합도 한 번만 누르면 영역 1개예요.',
-          setup() { setScene('table'); },
+          setup() { TT.built = {}; ttReset(); setScene('table'); },
           check: () => builtCount() === 6,
           hold: 0.5,
           status: () => VM_KEYS.map((k) => mark(!!TT.built[k]) + ' ' + VM[k].f).join(' · '),
@@ -899,7 +899,7 @@
           title: '구조 표 완성하기', manual: true,
           goal: '6개 분자의 <b>전자 영역 수</b>와 <b>분자 모양</b>을 표에 채워요.',
           hint: '앞에서 만든 풍선 모형을 떠올려요. 영역 2개 → 직선형, 3개 → 평면 삼각형, 4개 → 정사면체예요.',
-          setup() { setScene('table'); TT.show = true; updateUI(); },
+          setup() { $$('#tabBody select').forEach((q) => { q.value = ''; q.classList.remove('ok', 'bad'); }); setScene('table'); TT.show = true; updateUI(); },
           check: () => tabCheck(),
           status: () => '📋 채운 칸 ' + tabFilled() + ' / 12',
           explain: 'BeCl₂ · CO₂ · HCN은 영역 2개로 직선형, BF₃는 영역 3개로 평면 삼각형, CH₄ · CCl₄는 영역 4개로 정사면체예요. 영역 수가 같으면 모양도 같아요.',
@@ -930,7 +930,7 @@
           title: '비공유 전자쌍 0 · 1 · 2쌍 살펴보기',
           goal: '비공유 전자쌍을 <b>0쌍 · 1쌍 · 2쌍</b>으로 바꾸며 모양과 결합각이 바뀌는 것을 살펴봐요.',
           hint: '버튼을 눌러 CH₄ → NH₃ → H₂O로 바꾸고, 풍선이 멈출 때까지 잠깐 기다려요. 파란 풍선이 비공유 전자쌍이에요.',
-          setup() { setScene('lone'); },
+          setup() { LP.seen = {}; LP.hold = [0, 0, 0]; setLP(0); setScene('lone'); },
           check: () => lpSeenCount() === 3,
           hold: 0.3,
           status: () => LMOL.map((m, k) => mark(!!LP.seen[k]) + ' ' + m.f + ' ' + fa(m.ang) + '°').join(' · '),
@@ -940,7 +940,7 @@
           title: '세 분자의 모양 · 각도 매기기', manual: true,
           goal: 'CH₄ · NH₃ · H₂O의 <b>분자 모양</b>과 <b>결합각</b>을 표에 채워요.',
           hint: '비공유 전자쌍이 0쌍이면 정사면체, 1쌍이면 삼각뿔, 2쌍이면 굽은형이에요. 비공유 전자쌍이 많을수록 결합각이 작아져요.',
-          setup() { setScene('lone'); LP.show = true; updateUI(); },
+          setup() { $$('#lpBody select').forEach((q) => { q.value = ''; q.classList.remove('ok', 'bad'); }); setScene('lone'); LP.show = true; updateUI(); },
           check: () => lpCheck(),
           status: () => '📋 채운 칸 ' + lpFilled() + ' / 6',
           explain: 'CH₄ 정사면체 109.5°, NH₃ 삼각뿔 107°, H₂O 굽은형 104.5°예요. 전자 영역(4개)의 배열은 모두 정사면체인데, 비공유 전자쌍이 차지한 자리를 빼고 <b>원자의 배열</b>만 보면 모양이 달라져요.',
@@ -971,7 +971,7 @@
           title: '분자 3개 이상 조립하고 각도 기록',
           goal: '<b>BF₃ · NH₃ · H₂O · CO₂ · CH₄</b> 중 3개 이상을 조립해 최적화하고, 📐 바깥 원자 두 개를 눌러 결합각을 재요.',
           hint: '공을 모두 중심에 붙이고 ✨ 구조 최적화를 누른 뒤, 📐 각도 재기를 켜서 바깥 원자 두 개를 차례로 눌러요.',
-          setup() { setScene('model'); },
+          setup() { MD.rec = {}; setScene('model'); mdReset('NH3'); },
           check: () => MKEYS.filter((k) => MD.rec[k]).length >= 3,
           hold: 0.5,
           status: () => MKEYS.map((k) => mark(!!MD.rec[k]) + ' ' + MODEL[k].f + (MD.rec[k] ? ' ' + MD.rec[k] : '')).join(' · ') + ' (' + MKEYS.filter((k) => MD.rec[k]).length + '/3)',
@@ -981,7 +981,7 @@
           title: '미지 분자 A · B 추론하기',
           goal: '<b>미지 분자 A · B</b>를 모양을 예측한 뒤 조립 · 최적화해서 예측이 맞는지 확인해요.',
           hint: '중심 원자의 원자가 전자 중 결합에 쓰고 남은 전자로 비공유 전자쌍 수를 구해요. A: P(5개) − 3 = 2개 → 1쌍. B: 결합 영역이 2개뿐이에요.',
-          setup() { setScene('model'); mdReset('A'); },
+          setup() { MD.good = {}; MD.pred = {}; setScene('model'); mdReset('A'); },
           check: () => !!MD.good.A && !!MD.good.B,
           hold: 0.5,
           status: () => mark(!!MD.good.A) + ' 미지 A · ' + mark(!!MD.good.B) + ' 미지 B',

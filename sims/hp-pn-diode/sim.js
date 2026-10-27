@@ -298,7 +298,7 @@
     if (j.wv > 0.5) {
       const a = clamp(j.wv / DEP_MAX, 0, 1);
       for (let r = 1; r <= NR - 2; r += 1) D.arrow(g.xj + wpx - 8, cellY(r) + g.rowH * 0.5, g.xj - wpx + 8, cellY(r) + g.rowH * 0.5, { color: 'rgba(20,160,88,' + (0.35 + 0.55 * a) + ')', width: 3, head: 10 });
-      D.label(g.xj, top - 30, '전기장 E', { bg: '#14a058', size: PHONE ? 11.5 : 13 });
+      D.label(g.xj, top - (PHONE ? 38 : 30), '전기장 E', { bg: '#14a058', size: PHONE ? 11.5 : 13 });
     }
     // 전위 그래프
     const q = g.pot; panel(q[0], q[1], q[2], q[3]);
@@ -399,8 +399,8 @@
     // 숫자 패널
     const m = g.m; panel(m[0], m[1], m[2], m[3]);
     T(m[0] + 14, m[1] + 26, '측정값', PHONE ? 13 : 14.5, '#26324a', 'left', 800);
-    [['전원 전압 V_s', f2(v.vs) + ' V'], ['다이오드 전압 V_D', f2(v.vd) + ' V'], ['전류 I', fmtI(v.I) + ' mA']].forEach((r, i) => { const y = m[1] + 52 + i * 26; T(m[0] + 14, y, r[0], 13, '#5a6679', 'left', 800); T(m[0] + m[2] - 14, y, r[1], 15.5, i === 2 ? '#0f7a43' : '#26324a', 'right', 800); });
-    const ty = m[1] + 134; T(m[0] + 14, ty, '기록표', 12.5, '#5a6679', 'left', 800);
+    [['전원 전압 V_s', f2(v.vs) + ' V'], ['다이오드 전압 V_D', f2(v.vd) + ' V'], ['전류 I', fmtI(v.I) + ' mA']].forEach((r, i) => { const y = m[1] + (PHONE ? 46 : 52) + i * (PHONE ? 22 : 26); T(m[0] + 14, y, r[0], 13, '#5a6679', 'left', 800); T(m[0] + m[2] - 14, y, r[1], 15.5, i === 2 ? '#0f7a43' : '#26324a', 'right', 800); });
+    const ty = m[1] + (PHONE ? 118 : 134); T(m[0] + 14, ty, '기록표', 12.5, '#5a6679', 'left', 800);
     const nrows = Math.floor((m[1] + m[3] - ty - 14) / 22); const shown = v.rows.slice(0, 50).sort((a2, b2) => a2.vs - b2.vs).slice(-nrows);
     shown.forEach((r, i) => { const y = ty + 22 + i * 22; T(m[0] + 14, y, 'V_s ' + f2(r.vs), 12.5, '#26324a', 'left', 700); T(m[0] + m[2] * 0.5, y, 'V_D ' + f2(r.vd), 12.5, '#26324a', 'left', 700); T(m[0] + m[2] - 14, y, fmtI(r.I) + ' mA', 12.5, '#0f7a43', 'right', 800); });
     if (!shown.length) T(m[0] + m[2] / 2, ty + 36, '📏 기록하기로 점을 모아요', 12.5, '#98a2b3', 'center', 700);
@@ -523,7 +523,7 @@
     : { c: [14, 14, 430, 330], z: [452, 14, 334, 330], f: [14, 352, 772, 194] };
   function stepLed(dt) {
     const l = S.l, I = ledI(l.col, l.R, l.pol);
-    l.I = I; l.bright = SciSim.approach(l.bright || 0, l.burnt ? 0 : clamp(I / I_TGT, 0, 1.6), dt, 8);
+    l.I = l.burnt ? 0 : I; l.bright = SciSim.approach(l.bright || 0, l.burnt ? 0 : clamp(I / I_TGT, 0, 1.6), dt, 8);
     if (I > I_MAXLED && !l.burnt) { l.burnT += dt; if (l.burnT > 0.8) { l.burnt = true; Sound.fail(); parts.burst(LL.c[0] + 300, LL.c[1] + 150, { count: 14, speed: 120, size: 3, colors: ['#555b66', '#ffb400'], gravity: 80 }); } } else if (I <= I_MAXLED) l.burnT = 0;
     l.tOK = (l.col === 'red' && l.pol === 'fwd' && !l.burnt && I >= 18 && I <= 22) ? l.tOK + dt : 0;
     if (l.tOK > 0.8) l.seen.led = true;
@@ -565,7 +565,7 @@
       T(lx, ly - 40, led.name + ' LED', 13, '#26324a', 'center', 800);
       if (l.burnt) D.label(lx, ly - 64, '💥 타 버렸어요', { bg: '#e2464b', size: 14 });
       // 전류 점
-      if (I > 0.5 && !l.burnt) { const path = [[x0, y0], [x1, y0], [x1, y1], [x0, y1], [x0, y0]]; for (let k = 0; k < 10; k++) { const pp = polyPos(path, 1 - ((S.t * clamp(I / 60, 0.08, 0.5) + k / 10) % 1)); ctx.beginPath(); ctx.arc(pp[0], pp[1], 3, 0, TAU); ctx.fillStyle = '#e2552a'; ctx.fill(); } }
+      if (I > 0.5 && !l.burnt) { const path = [[x0, y0], [x1, y0], [x1, y1], [x0, y1], [x0, y0]]; for (let k = 0; k < 10; k++) { const pp = polyPos(path, (S.t * clamp(I / 60, 0.08, 0.5) + k / 10) % 1); ctx.beginPath(); ctx.arc(pp[0], pp[1], 3, 0, TAU); ctx.fillStyle = '#e2552a'; ctx.fill(); } }
       T(c[0] + c[2] / 2, c[1] + c[3] - 16, fwd ? (I > 0.5 ? 'I = ' + f1(I) + ' mA' : 'I = 0') : '전지를 반대로 연결: 전류가 거의 흐르지 않아요 (I ≈ 0)', PHONE ? 13 : 14.5, fwd ? '#0f7a43' : '#b42318', 'center', 800);
       // 접합부 확대
       const z = g.z; panel(z[0], z[1], z[2], z[3]);
@@ -582,11 +582,11 @@
         if (m === 0) hDot(hx, yy, 5.5); else eDot(ex, yy, 5);
       }
       l.ph.forEach((p) => { const q = p.t / 1.1, x = cx + q * (hw + 20) * (1) , y = cy + p.y * hh * 0.7 - q * 20; ctx.save(); ctx.globalAlpha = 1 - q; D.glow(cx, cy + p.y * hh * 0.7, 14, colHex, 0.6 * (1 - q)); ctx.strokeStyle = colHex; ctx.lineWidth = 3; ctx.beginPath(); for (let i = 0; i < 22; i++) { const xx = cx + q * hw + i, yy = cy + p.y * hh * 0.7 - q * 24 + 5 * Math.sin(i / 3 - S.t * 12); if (i === 0) ctx.moveTo(xx, yy); else ctx.lineTo(xx, yy); } ctx.stroke(); ctx.restore(); });
-      T(cx, cy + hh + 24, fwd ? (I > 0.5 ? '전자와 양공이 접합부에서 만나 빛(광자)을 내요' : '전류가 약해서 빛이 거의 없어요') : '장벽이 높아져 전자와 양공이 만나지 못해요', PHONE ? 11.5 : 12.5, '#3a465c', 'center', 800);
+      T(cx, cy + hh + 24, fwd ? (l.burnt ? 'LED가 타 버려서 전류도, 빛도 없어요' : I > 0.5 ? '전자와 양공이 접합부에서 만나 빛(광자)을 내요' : '전류가 약해서 빛이 거의 없어요') : '장벽이 높아져 전자와 양공이 만나지 못해요', PHONE ? 11.5 : 12.5, '#3a465c', 'center', 800);
       // 정보
       const f = g.f; panel(f[0], f[1], f[2], f[3]);
       T(f[0] + 14, f[1] + 26, '전류 제한 저항 계산', PHONE ? 13 : 14.5, '#26324a', 'left', 800);
-      textBlock(f[0] + 14, f[1] + 54, PHONE ? f[2] - 28 : 400, '전원 ' + V_SRC + ' V − LED ' + f1(led.vf) + ' V = 저항에 걸리는 ' + f1(V_SRC - led.vf) + ' V\nI = ' + f1(V_SRC - led.vf) + ' V ÷ ' + l.R + ' Ω = ' + f1(ledI(l.col, l.R, 'fwd')) + ' mA' + (ledI(l.col, l.R, 'fwd') > I_MAXLED ? '  (너무 커요!)' : ''), PHONE ? 13.5 : 15, '#26324a', 24, 800);
+      textBlock(f[0] + 14, f[1] + 54, PHONE ? f[2] - 28 : 400, '전원 ' + V_SRC + ' V − LED ' + f1(led.vf) + ' V = 저항에 걸리는 ' + f1(V_SRC - led.vf) + ' V\nI = ' + f1(V_SRC - led.vf) + ' V / ' + l.R + ' Ω = ' + f1(ledI(l.col, l.R, 'fwd')) + ' mA' + (ledI(l.col, l.R, 'fwd') > I_MAXLED ? '  (너무 커요!)' : ''), PHONE ? 13.5 : 15, '#26324a', 24, 800);
       textBlock(f[0] + 14, f[1] + (PHONE ? 118 : 128), PHONE ? f[2] - 28 : 400, '띠 간격 ' + f1(led.eg) + ' eV → 광자 에너지 ≈ ' + f1(led.eg) + ' eV → 파장 ≈ ' + lam + ' nm (' + led.name + '). 띠 간격이 클수록 파란 빛이에요. 목표 전류는 ' + I_TGT + ' mA, ' + I_MAXLED + ' mA를 넘으면 타요.', PHONE ? 12 : 13, '#3a465c', PHONE ? 17 : 18, 700);
       if (!PHONE) {
         const bx = f[0] + 450, by = f[1] + 36, bw = 150, bhh = 120, sc = bhh / 3.0;
@@ -612,15 +612,15 @@
       ctx.fillStyle = 'rgba(150,160,180,.35)'; ctx.fillRect(cx0, yD, cw, depH);
       D.roundRect(cx0, yP, cw, pH, 6); ctx.fillStyle = '#ffe3d1'; ctx.fill();
       ctx.strokeStyle = '#6b7488'; ctx.lineWidth = 2; ctx.strokeRect(cx0, yN, cw, nH + depH + pH);
-      T(cx0 + 10, yN + 20, 'n형 (얇은 층)', 12.5, '#1d4ed8', 'left', 800); T(cx0 + 10, yD + 25, '공핍층 · 전기장 ↑ (n → p 쪽이 높아요)', 12.5, '#26324a', 'left', 800); T(cx0 + 10, yP + 24, 'p형', 12.5, '#c2410c', 'left', 800);
+      T(cx0 + 10, yN + 20, 'n형 (얇은 층)', 12.5, '#1d4ed8', 'left', 800); T(cx0 + 10, yD + 25, '공핍층 · 전기장 ↓ (n → p)', 12.5, '#26324a', 'left', 800); T(cx0 + 10, yP + 24, 'p형', 12.5, '#c2410c', 'left', 800);
       // 전기장 표시
-      for (let k = 0; k < 3; k++) D.arrow(cx0 + cw * (0.25 + 0.25 * k), yD + depH - 4, cx0 + cw * (0.25 + 0.25 * k), yD + 4, { color: 'rgba(20,160,88,.55)', width: 2.4, head: 8 });
+      for (let k = 0; k < 3; k++) D.arrow(cx0 + cw * (0.7 + 0.12 * k), yD + 4, cx0 + cw * (0.7 + 0.12 * k), yD + depH - 4, { color: 'rgba(20,160,88,.55)', width: 2.4, head: 8 });
       // 외부 회로
       const wx = cx0 + cw + (PHONE ? 20 : 60), wy0 = yN + 8, wy1 = yP + pH - 8;
       const path = [[cx0 + cw, wy0], [wx, wy0], [wx, wy1], [cx0 + cw, wy1]];
       wire(path); resistor(wx, (wy0 + wy1) / 2, 44, 26, ''); D.sphere(wx, (wy0 + wy1) / 2, 18, '#fff', { gloss: false, outline: '#394258' }); T(wx, (wy0 + wy1) / 2 + 5, 'A', 15, '#26324a', 'center', 800);
       T(wx, wy0 - 10, fmtI(l.sI / 1000) + ' mA', 13, '#0f7a43', 'center', 800);
-      if (l.sI > 0.1) for (let k = 0; k < 8; k++) { const pp = polyPos(path, ((S.t * clamp(l.sI / 80, 0.1, 0.5) + k / 8) % 1)); ctx.beginPath(); ctx.arc(pp[0], pp[1], 3, 0, TAU); ctx.fillStyle = '#e2552a'; ctx.fill(); }
+      if (l.sI > 0.1) for (let k = 0; k < 8; k++) { const pp = polyPos(path, 1 - ((S.t * clamp(l.sI / 80, 0.1, 0.5) + k / 8) % 1)); ctx.beginPath(); ctx.arc(pp[0], pp[1], 3, 0, TAU); ctx.fillStyle = '#e2552a'; ctx.fill(); }
       // 광자
       const phc = ok ? wlSolid(NM_VIS) : '#c2410c';
       l.sph.forEach((p) => { const x = cx0 + p.x * cw, y = lerp(60, ok ? yD + depH / 2 : yP + pH + 6, Math.min(1, p.t / (ok ? 0.45 : 1))); if (ok && p.t >= 0.45) return; D.glow(x, y, 14, phc, 0.5); ctx.strokeStyle = phc; ctx.lineWidth = 3; ctx.beginPath(); for (let i = -16; i <= 16; i += 2) { const xx = x + 5 * Math.sin(i / 4 * 1.2), yy = y + i; if (i === -16) ctx.moveTo(xx, yy); else ctx.lineTo(xx, yy); } ctx.stroke(); });
@@ -847,7 +847,6 @@
   });
 
   /* ---------- 시작 ---------- */
-  setScene('junc');
   let lastLvl = -1, lastFree = false;
   SciSim.loop((dt, t) => {
     S.t = t;

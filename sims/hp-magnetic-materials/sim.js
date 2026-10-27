@@ -1130,6 +1130,10 @@
     },
   ];
 
+  /* 이어 하기(새로고침)로 중간 미션에서 열려도 미션 setup()이 만든 장면을 덮어쓰지 않도록, 장면 상태를 게임보다 먼저 만들어요 */
+  setScene('obs');
+  updateCtl();
+
   game = SciSim.game({
     simId: 'hp-magnetic-materials', mount: '#game', badge: '자성체 탐험가', homeHref: '../../index.html#hp',
     featureLabels: { obs: '🧲 전자석 · 매다는 시료 10개', model: '🧩 원자 자석 모형 (확대)', lab: '⚖️ 저울 분류 · 자화 유지 · 퀴리 온도', app: '🔗 활용 짝짓기 · 하드디스크' },
@@ -1138,8 +1142,6 @@
   });
 
   /* ---------- 시작 ---------- */
-  setScene('obs');
-  updateCtl();
   let lastFree = false, lastLvl = -1, lastMode = '';
   SciSim.loop((dt, t) => {
     S.t = t;
@@ -1148,6 +1150,7 @@
     // 상태 갱신은 보이지 않는 화면에서도 이어져요
     stepObs(dt); stepModel(dt); stepKeep(dt); stepCurie(dt);
     view.apply();
+    ctx.fillStyle = '#eef2fa'; ctx.fillRect(0, 0, VW, VH);     // 이전 화면(다른 보기)이 아래쪽에 남지 않게 매 프레임 지워요
     if (S.mode === 'obs') drawObs(dt);
     else if (S.mode === 'model') drawModel(dt);
     else if (S.mode === 'scale') drawScale(dt);

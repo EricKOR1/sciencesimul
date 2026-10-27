@@ -284,11 +284,11 @@
     NH3: { f: 'NH₃', html: 'NH<sub>3</sub>', name: '암모니아',  atoms: [at('N', 0, 0), at('H', -1, 0), at('H', 1, 0), at('H', 0, 1)], bonds: [[0, 1], [0, 2], [0, 3]], lone: [1, 0, 0, 0], central: [0] },
     CH4: { f: 'CH₄', html: 'CH<sub>4</sub>', name: '메테인',    atoms: [at('C', 0, 0), at('H', -1, 0), at('H', 1, 0), at('H', 0, -1), at('H', 0, 1)], bonds: [[0, 1], [0, 2], [0, 3], [0, 4]], lone: [0, 0, 0, 0, 0], central: [0] },
     // ③ 5단계 · ④ 예외 (lone = ④단계까지 놓은 비공유 전자쌍 수)
-    CO2:  { f: 'CO₂',  html: 'CO<sub>2</sub>',  name: '이산화 탄소', atoms: [at('O', -1, 0), at('C', 0, 0), at('O', 1, 0)], bonds: [[0, 1], [1, 2]], lone: [3, 0, 3], central: [1] },
-    N2:   { f: 'N₂',   html: 'N<sub>2</sub>',   name: '질소',       atoms: [at('N', -0.6, 0), at('N', 0.6, 0)], bonds: [[0, 1]], lone: [3, 1], central: [0, 1] },
-    O2:   { f: 'O₂',   html: 'O<sub>2</sub>',   name: '산소',       atoms: [at('O', -0.6, 0), at('O', 0.6, 0)], bonds: [[0, 1]], lone: [3, 2], central: [0, 1] },
-    HCN:  { f: 'HCN',  html: 'HCN',             name: '사이안화 수소', atoms: [at('H', -1, 0), at('C', 0, 0), at('N', 1, 0)], bonds: [[0, 1], [1, 2]], lone: [0, 0, 3], central: [1] },
-    C2H4: { f: 'C₂H₄', html: 'C<sub>2</sub>H<sub>4</sub>', name: '에텐', atoms: [at('C', -0.6, 0), at('C', 0.6, 0), at('H', -0.6, -1), at('H', -0.6, 1), at('H', 0.6, -1), at('H', 0.6, 1)], bonds: [[0, 1], [0, 2], [0, 3], [1, 4], [1, 5]], lone: [1, 0, 0, 0, 0, 0], central: [0, 1] },
+    CO2:  { f: 'CO₂',  html: 'CO<sub>2</sub>',  name: '이산화 탄소', atoms: [at('O', -1, 0), at('C', 0, 0), at('O', 1, 0)], bonds: [[0, 1], [1, 2]], lone: [3, 0, 3], central: [1], fin: [2, 2] },
+    N2:   { f: 'N₂',   html: 'N<sub>2</sub>',   name: '질소',       atoms: [at('N', -0.6, 0), at('N', 0.6, 0)], bonds: [[0, 1]], lone: [3, 1], central: [0, 1], fin: [3] },
+    O2:   { f: 'O₂',   html: 'O<sub>2</sub>',   name: '산소',       atoms: [at('O', -0.6, 0), at('O', 0.6, 0)], bonds: [[0, 1]], lone: [3, 2], central: [0, 1], fin: [2] },
+    HCN:  { f: 'HCN',  html: 'HCN',             name: '사이안화 수소', atoms: [at('H', -1, 0), at('C', 0, 0), at('N', 1, 0)], bonds: [[0, 1], [1, 2]], lone: [0, 0, 3], central: [1], fin: [1, 3] },
+    C2H4: { f: 'C₂H₄', html: 'C<sub>2</sub>H<sub>4</sub>', name: '에텐', atoms: [at('C', -0.6, 0), at('C', 0.6, 0), at('H', -0.6, -1), at('H', -0.6, 1), at('H', 0.6, -1), at('H', 0.6, 1)], bonds: [[0, 1], [0, 2], [0, 3], [1, 4], [1, 5]], lone: [1, 0, 0, 0, 0, 0], central: [0, 1], fin: [2, 1, 1, 1, 1] },
     BeCl2: { f: 'BeCl₂', html: 'BeCl<sub>2</sub>', name: '염화 베릴륨', atoms: [at('Cl', -1, 0), at('Be', 0, 0), at('Cl', 1, 0)], bonds: [[0, 1], [1, 2]], lone: [3, 0, 3], central: [1], exc: true },
     BF3:   { f: 'BF₃',   html: 'BF<sub>3</sub>',   name: '삼플루오린화 붕소', atoms: [at('F', -1, 0), at('B', 0, 0), at('F', 1, 0), at('F', 0, 1)], bonds: [[0, 1], [1, 2], [1, 3]], lone: [3, 0, 3, 3], central: [1], exc: true },
     PCl3:  { f: 'PCl₃',  html: 'PCl<sub>3</sub>',  name: '삼염화 인', atoms: [at('P', 0, 0), at('Cl', -1, 0), at('Cl', 1, 0), at('Cl', 0, 1)], bonds: [[0, 1], [0, 2], [0, 3]], lone: [1, 3, 3, 3], central: [0] },
@@ -393,6 +393,7 @@
   }
   function resetMol(key) {
     if (key) MO.key = key;
+    hintEl.classList.add('hide');
     const M = mdef();
     MO.lay = sidesOf(M, M.lone);
     MO.bonded = M.atoms.map(() => false);
@@ -530,6 +531,7 @@
   }
   function resetWiz(key) {
     if (key) W.key = key;
+    hintEl.classList.add('hide');
     const M = wdef();
     W.k = 0; W.central = -1; W.ord = M.bonds.map(() => 1); W.lone = M.lone.slice(); W.cnt = M.total; W.stampT = -9;
     $$('#wizSel .opt').forEach((b) => { b.classList.toggle('on', b.dataset.w === W.key); b.classList.toggle('done', !!W.done[b.dataset.w]); });
@@ -637,6 +639,7 @@
       const da = wDeficit(a), db = wDeficit(b);
       if (!da && !db) { wizFb('이 결합의 두 원자는 이미 옥텟(H는 2개)이에요. 전자가 모자란 원자와 이어진 결합을 눌러 봐요.'); return; }
       if (W.lone[a] <= 0 && W.lone[b] <= 0) { wizFb('이 결합에는 옮길 비공유 전자쌍이 없어요. 비공유 전자쌍을 가진 말단 원자와 이어진 결합을 눌러 봐요.'); return; }
+      if (M.fin && W.ord[bi] >= M.fin[bi]) { wizFb('이 결합은 ' + M.f + '에서 이미 충분히 바뀌었어요. 전자가 모자란 중심 원자와 이어진 다른 결합을 눌러 봐요.'); return; }
       const donor = W.lone[a] >= W.lone[b] ? a : b;
       W.lone[donor]--; W.ord[bi]++;
       Sound.tick();
@@ -730,6 +733,7 @@
   };
   function resetIon(key) {
     if (key) IO.key = key;
+    hintEl.classList.add('hide');
     const d = iondef();
     IO.tok++; IO.mleft = d.metals.map((m) => valOf(m)); IO.recv = 0; IO.resv = 0; IO.fly = []; IO.brA = 0;
     $$('#ionSeg button').forEach((b) => b.classList.toggle('on', b.dataset.i === IO.key));
@@ -990,7 +994,7 @@
           title: '6개 원소의 점 찍기',
           goal: '<b>Li · Be · B · C · N · F</b>를 하나씩 골라 원자가 전자 수만큼 점을 찍어요.',
           hint: '원소를 고르면 전자 배치(예: C는 2 · 4)가 보여요. 가장 바깥 껍질의 전자 수만큼 ➕ 점 찍기를 눌러요.',
-          setup() { setScene('atom'); },
+          setup() { A.done = {}; A.dots = 0; A.over = 0; setScene('atom'); },
           check: () => dotsDone().every(Boolean),
           hold: 0.5,
           status: () => [[3, 'Li'], [4, 'Be'], [5, 'B'], [6, 'C'], [7, 'N'], [9, 'F']].map(([z, s]) => mark(!!A.done[z]) + ' ' + s).join(' · '),
@@ -1023,7 +1027,7 @@
           title: '분자 4개 완성하기',
           goal: '<b>H₂ · HF · H₂O · NH₃ · CH₄</b> 중 <b>4개</b>를 완성해 보세요.',
           hint: '바깥 원자를 가운데 원자 쪽 점선 고리로 끌거나 눌러요. 모든 원자의 둘레 전자가 8개(H는 2개)가 되면 완성이에요.',
-          setup() { setScene('mol'); },
+          setup() { MO.made = {}; resetMol('H2'); setScene('mol'); },
           check: () => molMade() >= 4,
           hold: 0.6,
           status: () => ['H2', 'HF', 'H2O', 'NH3', 'CH4'].map((k) => mark(MO.made[k]) + ' ' + MOLDB[k].f).join(' · ') + ' (' + molMade() + '/4)',
@@ -1033,10 +1037,10 @@
           title: '전자쌍 수 세어 표 채우기', manual: true,
           goal: '<b>H₂O · NH₃ · CH₄ · HF</b>의 공유 전자쌍과 비공유 전자쌍 수를 표에 채워요.',
           hint: '분자를 완성한 뒤 초록 타원(공유 전자쌍)과 파란 점 2개(비공유 전자쌍)를 세어 봐요. 4개 분자를 각각 만들어 보세요.',
-          setup() { setScene('mol'); TBL.show = true; updateUI(); },
+          setup() { $$('#tblBody select').forEach((q) => { q.value = ''; q.classList.remove('ok', 'bad'); }); setScene('mol'); TBL.show = true; updateUI(); },
           check: () => tblCheck(),
           status: () => '📋 채운 칸 ' + tblFilled() + ' / 8',
-          explain: 'H₂O는 공유 2쌍 · 비공유 2쌍, NH₃는 공유 3쌍 · 비공유 1쌍, CH₄는 공유 4쌍 · 비공유 0쌍, HF는 공유 1쌍 · 비공유 3쌍이에요. 중심 원자의 원자가 전자 수가 같은 H₂O, NH₃, CH₄도 모두 총 전자쌍은 4쌍이에요.',
+          explain: 'H₂O는 공유 2쌍 · 비공유 2쌍, NH₃는 공유 3쌍 · 비공유 1쌍, CH₄는 공유 4쌍 · 비공유 0쌍, HF는 공유 1쌍 · 비공유 3쌍이에요. H₂O, NH₃, CH₄, HF 모두 중심 원자 둘레의 전자쌍(공유 + 비공유)은 합쳐서 4쌍(전자 8개)이에요.',
         },
         {
           type: 'quiz', title: 'NH₃의 비공유 전자쌍',
@@ -1074,7 +1078,7 @@
           title: 'N₂와 HCN 그리기',
           goal: '<b>N₂</b>(삼중 결합)와 <b>HCN</b>(H–C≡N)을 5단계로 그려요.',
           hint: 'N₂는 총 10개예요. 마지막 단계에서 결합을 두 번 눌러요. HCN에서 중심 원자는 C예요 (H는 말단).',
-          setup() { setScene('wizard'); resetWiz('N2'); },
+          setup() { delete W.done.N2; delete W.done.HCN; delete W.done.O2; setScene('wizard'); resetWiz('N2'); },
           check: () => !!W.done.N2 && !!W.done.HCN,
           hold: 0.6,
           status: () => mark(!!W.done.N2) + ' N₂ · ' + mark(!!W.done.HCN) + ' HCN' + (W.done.O2 ? ' · ✨ O₂도 해 봤어요' : ''),
@@ -1096,7 +1100,7 @@
       title: '예외와 이온 결합까지', short: '예외와 확장', icon: '🧪', phase: '적용',
       features: ['exc'],
       intro: '<div class="si-link">🔗 <b>앞 단계에서</b> 5단계 요령으로 모든 원자가 옥텟을 이루는 분자를 그렸어요. 그런데 모든 분자가 옥텟을 이루는 것은 아니에요.</div>' +
-        '<p><b>Be</b>와 <b>B</b>는 원자가 전자가 2개, 3개뿐이어서 옥텟 규칙의 <b>예외</b>가 돼요. 3주기 원소인 P가 중심인 PCl₃와 CCl₄도 그려 봐요.</p>' +
+        '<p><b>Be</b>와 <b>B</b>는 원자가 전자가 2개, 3개뿐이어서 옥텟 규칙의 <b>예외</b>가 돼요. PCl₃(중심 원자가 3주기 원소 P)와 CCl₄도 그려 봐요.</p>' +
         '<p>또 <b>이온 결합 화합물</b>은 전자를 공유하지 않고 <b>옮기는</b> 결합이라서, 금속의 점을 비금속으로 옮겨 이온의 전자점식 [ ]으로 나타내요.</p>',
       setup() { setScene('wizard'); resetWiz('BeCl2'); showHint('BeCl₂를 5단계로 그려 보세요. 마지막에 Be 둘레 전자를 세어 봐요', 4500); },
       recap: 'Be(전자 4개)와 B(전자 6개)는 <b>옥텟 규칙의 예외</b>예요. 이온 결합 화합물은 금속의 전자가 비금속으로 <b>이동</b>해 양이온은 [ ]⁺, 음이온은 점 8개의 [ ]⁻로 나타내요.',
@@ -1107,7 +1111,7 @@
           title: 'BeCl₂와 BF₃ 그리기',
           goal: '<b>BeCl₂</b>와 <b>BF₃</b>를 5단계로 그리고, 중심 원자 둘레 전자 수를 확인해요.',
           hint: '③~④ 단계 뒤에 중심 원자의 둘레 전자를 세어 보세요. Be는 4개, B는 6개라서 옥텟이 아니에요. ⑤에서 옥텟 검사를 눌러요.',
-          setup() { setScene('wizard'); resetWiz('BeCl2'); },
+          setup() { ['BeCl2', 'BF3', 'PCl3', 'CCl4'].forEach((k) => { delete W.done[k]; }); setScene('wizard'); resetWiz('BeCl2'); },
           check: () => !!W.done.BeCl2 && !!W.done.BF3,
           hold: 0.6,
           status: () => mark(!!W.done.BeCl2) + ' BeCl₂ · ' + mark(!!W.done.BF3) + ' BF₃' + (W.done.PCl3 || W.done.CCl4 ? ' · ✨ ' + [W.done.PCl3 ? 'PCl₃' : '', W.done.CCl4 ? 'CCl₄' : ''].filter(Boolean).join('·') + '도 완성' : ''),
@@ -1117,7 +1121,7 @@
           title: '이온 결합 전자점식 2개',
           goal: '<b>NaCl · MgO · Na₂O</b> 중 <b>2개</b>에서 금속의 전자를 비금속으로 옮겨 전자점식을 완성해요.',
           hint: '⚡ 이온 결합 화면에서 금속 원자의 노란 점을 눌러요. 비금속 원자의 빈자리(점선)로 전자가 날아가요. 점이 8개가 될 때까지 옮겨요.',
-          setup() { setScene('ionic'); resetIon('NaCl'); },
+          setup() { IO.done = {}; setScene('ionic'); resetIon('NaCl'); },
           check: () => Object.keys(IO.done).filter((k) => IO.done[k]).length >= 2,
           hold: 0.8,
           status: () => ['NaCl', 'MgO', 'Na2O'].map((k) => mark(!!IO.done[k]) + ' ' + IONDB[k].f).join(' · '),

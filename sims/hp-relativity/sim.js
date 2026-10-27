@@ -276,7 +276,7 @@
     } else T(w[0] + w[2] / 2, w[1] + 52, '기차 속력을 정하고 공이나 빛을 쏘아 보세요', PHONE ? 12 : 14, '#5a6679', 'center', 800);
     // 정보
     const f = g.info; panel(f[0], f[1], f[2], f[3]);
-    T(f[0] + 14, f[1] + 26, '측정 결과 · 속력 = 게이트 간격 D ÷ 걸린 시간', PHONE ? 12.5 : 14.5, '#26324a', 'left', 800);
+    T(f[0] + 14, f[1] + 26, '측정 결과 · 속력 = 게이트 간격 D / 걸린 시간', PHONE ? 12.5 : 14.5, '#26324a', 'left', 800);
     const cols = PHONE ? [f[0] + 14, f[0] + 78, f[0] + 190, f[0] + 322] : [f[0] + 18, f[0] + 130, f[0] + 330, f[0] + 540];
     ['종류 · 기차', '예상 (기차 + 대상)', '측정', '결과'].forEach((h, i) => T(PHONE ? [cols[0], cols[1] + 0, cols[2], cols[3]][i] : cols[i], f[1] + 52, PHONE ? ['종류', '기차', '예상 → 측정', '결과'][i] : h, 12.5, '#5a6679', 'left', 800));
     ctx.strokeStyle = '#e1e6ef'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(f[0] + 10, f[1] + 60); ctx.lineTo(f[0] + f[2] - 10, f[1] + 60); ctx.stroke();
@@ -471,7 +471,7 @@
     ctx.fillStyle = '#7a8f66'; ctx.fillRect(mm[0] + 10, slabBot, mm[2] - 20, mgnd + 18 - slabBot); T(mm[0] + mm[2] / 2, mgnd + 8, '지구', 12, '#fff', 'center', 800);
     T(mm[0] + 16, mtop + 12, '뮤온은 가만히 있고 지구가 올라와요', 12, '#fff', 'left', 800);
     D.arrow(mm[0] + mm[2] - 40, slabBot + 40, mm[0] + mm[2] - 40, slabBot + 6, { color: '#fff', width: 2.4, head: 8 });
-    D.label(mm[0] + mm[2] / 2, slabTop - 14 < mtop + 36 ? mtop + 36 : slabTop - 14, '대기의 두께 약 ' + f0(H_THIN_KM) + ' km (' + H_ATM_KM + ' km가 줄었어요)', { bg: '#14a058', size: PHONE ? 11 : 12.5 });
+    D.label(mm[0] + mm[2] / 2, slabTop - 14 < mtop + 36 ? mtop + 36 : slabTop - 14, '대기의 두께 약 ' + f0(H_THIN_KM) + ' km (원래 ' + H_ATM_KM + ' km)', { bg: '#14a058', size: PHONE ? 11 : 12.5 });
     // 뮤온
     if (mu) mu.list.forEach((q) => {
       const xE = m.e[0] + 22 + q.x * (m.e[2] - 44), xM = m.m[0] + 22 + q.x * (m.m[2] - 44), off = q.row * 14;
@@ -518,7 +518,7 @@
     c.err = SciSim.approach(c.err == null ? 0 : c.err, err, dt, 7);
   }
   function drawSoc(dt) {
-    const c = S.c, g = LS, mp = g.map, pxKm = PHONE ? 5.5 : 5.5;
+    const c = S.c, g = LS, mp = g.map, pxKm = PHONE ? 4.5 : 5;
     // 카드 목록
     const cl = g.cards; panel(cl[0], cl[1], cl[2], cl[3]);
     if (!PHONE) {
@@ -540,7 +540,7 @@
     panel(mp[0], mp[1], mp[2], mp[3]);
     T(mp[0] + 14, mp[1] + 26, '🛰️ GPS 위성 시계를 보정하지 않으면?', PHONE ? 13 : 14.5, '#26324a', 'left', 800);
     const mx = mp[0] + (PHONE ? 120 : 140), my = mp[1] + mp[3] / 2 + 14, half = PHONE ? 90 : 100;
-    ctx.save(); D.roundRect(mx - half, my - half, half * 2, half * 2, 12); ctx.clip(); ctx.fillStyle = '#e8f1e0'; ctx.fillRect(mx - half, my - half, half * 2, half * 2); ctx.strokeStyle = '#cfe0c4'; ctx.lineWidth = 1; for (let k = -4; k <= 4; k++) { ctx.beginPath(); ctx.moveTo(mx + k * 20 * 1, my - half); ctx.lineTo(mx + k * 20, my + half); ctx.moveTo(mx - half, my + k * 20); ctx.lineTo(mx + half, my + k * 20); ctx.stroke(); }
+    ctx.save(); D.roundRect(mx - half, my - half, half * 2, half * 2, 12); ctx.clip(); ctx.fillStyle = '#e8f1e0'; ctx.fillRect(mx - half, my - half, half * 2, half * 2); ctx.strokeStyle = '#cfe0c4'; ctx.lineWidth = 1; for (let k = -6; k <= 6; k++) { const gs4 = k * 4 * pxKm; ctx.beginPath(); ctx.moveTo(mx + gs4, my - half); ctx.lineTo(mx + gs4, my + half); ctx.moveTo(mx - half, my + gs4); ctx.lineTo(mx + half, my + gs4); ctx.stroke(); }
     ctx.fillStyle = 'rgba(120,160,200,.45)'; ctx.fillRect(mx - half, my + half * 0.35, half * 2, 24); ctx.strokeStyle = '#8a95a8'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(mx - half, my - 30); ctx.lineTo(mx + half, my - 50); ctx.stroke();
     const ang = -0.6, ex = mx + Math.cos(ang) * c.err * pxKm, ey2 = my + Math.sin(ang) * c.err * pxKm;
     if (c.err > 0.05) { ctx.beginPath(); ctx.arc(mx, my, c.err * pxKm, 0, TAU); ctx.fillStyle = 'rgba(226,70,75,.12)'; ctx.fill(); ctx.strokeStyle = 'rgba(226,70,75,.7)'; ctx.setLineDash([6, 5]); ctx.lineWidth = 2; ctx.stroke(); ctx.setLineDash([]); D.arrow(mx, my, ex, ey2, { color: '#e2464b', width: 2.4, head: 9 }); }
@@ -772,7 +772,6 @@
 
   /* ---------- 시작 ---------- */
   S.o.trainX = LO.w[0];
-  setScene('obs');
   let lastLvl = -1, lastFree = false;
   SciSim.loop((dt, t) => {
     S.t = t;

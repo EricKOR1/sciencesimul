@@ -262,7 +262,7 @@
     ctx.restore();
     ctx.strokeStyle = 'rgba(110,135,170,.95)'; ctx.lineWidth = 3; ctx.stroke();
     ctx.restore();
-    TL_(FUNX, 48, S.elec ? '전해질 수용액' : '순수한 물', 13, '#34507a', 'center', 800);
+    TL_(FUNX, PHONE ? 62 : 48, S.elec ? '전해질 수용액' : '순수한 물', PHONE ? 10.5 : 13, '#34507a', 'center', 800);
     glassTube(TLX, S.gas.h, 'L'); glassTube(TRX, S.gas.o, 'R');
     drawGasLabels();
     drawElectrode(TLX, true); drawElectrode(TRX, false);
@@ -553,16 +553,16 @@
     };
     const sH = slopeOf('h'), sO = slopeOf('o'), lastT = S.base ? S.base[S.base.length - 1].t : TMAX;
     const lastH = S.base ? S.base[S.base.length - 1].h : 0, lastO = S.base ? S.base[S.base.length - 1].o : 0;
-    card(74, 'H₂ 그래프의 기울기', (bx, by) => { T(bx, by + 6, S.gr.hd ? f1(lastH) + ' mL ÷ ' + lastT + ' 분 = ' + f1(sH) + ' mL/분' : '그래프를 그리면 나타나요', 14.5, S.gr.hd ? INK : '#a2abb9', 'left', 800); }, S.gr.hd);
-    card(74, 'O₂ 그래프의 기울기', (bx, by) => { T(bx, by + 6, S.gr.od ? f1(lastO) + ' mL ÷ ' + lastT + ' 분 = ' + f1(sO) + ' mL/분' : '그래프를 그리면 나타나요', 14.5, S.gr.od ? INK : '#a2abb9', 'left', 800); }, S.gr.od);
+    card(74, 'H₂ 그래프의 기울기', (bx, by) => { T(bx, by + 6, S.gr.hd ? f1(lastH) + ' mL / ' + lastT + ' 분 = ' + f1(sH) + ' mL/분' : '그래프를 그리면 나타나요', 14.5, S.gr.hd ? INK : '#a2abb9', 'left', 800); }, S.gr.hd);
+    card(74, 'O₂ 그래프의 기울기', (bx, by) => { T(bx, by + 6, S.gr.od ? f1(lastO) + ' mL / ' + lastT + ' 분 = ' + f1(sO) + ' mL/분' : '그래프를 그리면 나타나요', 14.5, S.gr.od ? INK : '#a2abb9', 'left', 800); }, S.gr.od);
     const okR = S.gr.pick === '2:1';
-    card(74, '기울기의 비 H₂ : O₂', (bx, by) => { T(bx, by + 6, okR ? f1(sH) + ' : ' + f1(sO) + ' = 2 : 1' : S.gr.pick ? '다시 계산해 보세요 (' + f1(sH) + ' ÷ ' + f1(sO) + ')' : '아래에서 골라요', 14.5, okR ? '#0b6b39' : S.gr.pick ? BAD : '#a2abb9', 'left', 800); }, okR);
+    card(74, '기울기의 비 H₂ : O₂', (bx, by) => { T(bx, by + 6, okR ? f1(sH) + ' : ' + f1(sO) + ' = 2 : 1' : S.gr.pick ? '다시 계산해 보세요 (' + f1(sH) + ' / ' + f1(sO) + ')' : '아래에서 골라요', 14.5, okR ? '#0b6b39' : S.gr.pick ? BAD : '#a2abb9', 'left', 800); }, okR);
     if (okR || isFree()) {
       const h = PHONE ? 150 : 148;
       panel(x, y, w, h, 14, '#f3effd', '#c9bfe8');
       T(x + 12, y + 22, '🔗 계수비 = 부피비 = 몰수비', 13.5, '#4c1d95', 'left', 900);
       T(x + w / 2, y + 52, '2H₂O → 2H₂ + O₂', 18, INK, 'center', 900);
-      textBlock(x + 12, y + 76, w - 24, '같은 온도 · 압력에서 기체의 부피비 = 몰수비 = 반응식의 계수비 예요. H₂ : O₂ = 2 : 1', 13, INK, 18, 700);
+      textBlock(x + 12, y + 76, w - 24, '같은 온도 · 압력에서 기체의 부피비 = 몰수비 = 반응식의 계수비예요. H₂ : O₂ = 2 : 1', 13, INK, 18, 700);
     }
   }
 
@@ -907,7 +907,7 @@
           title: '기체 확인 시험 2가지',
           goal: '(−)극 기체에 <b>성냥불</b>을, (+)극 기체에 <b>꺼져 가는 불씨</b>를 가까이 해서 기체의 종류를 확인하세요.',
           hint: '기체가 1 mL 이상 모여 있어야 해요. 아래 도구를 손가락으로 끌어 장치 위쪽의 꼭지(마개) 위에 놓아요. 먼저 8분 실험을 마치면 편해요.',
-          setup() { S.gate = ''; setScene('lab'); updateUI(); },
+          setup() { S.gate = ''; S.id = { L: null, R: null }; S.tests = {}; S.testMsg = ''; setScene('lab'); updateUI(); },
           check: () => S.id.L === 'h2' && S.id.R === 'o2',
           hold: 0.5,
           status: () => mark(S.id.L === 'h2') + ' (−)극: 성냥불 → 퍽! &nbsp; ' + mark(S.id.R === 'o2') + ' (+)극: 불씨 → 활활!',

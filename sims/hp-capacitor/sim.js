@@ -225,11 +225,11 @@
   function drawPlot(x, y, w, h, title, hist, cur, active, tag) {
     panel(x, y, w, h, 14);
     T(x + 14, y + 22, title, 13.5, '#26324a', 'left', 800);
-    const gx0 = x + 44, gx1 = x + w - 44, gy0 = y + 40, gy1 = y + h - 30;
+    const gx0 = x + 44, gx1 = x + w - 44, gy0 = y + 36, gy1 = y + h - 30;
     ctx.strokeStyle = 'rgba(120,135,160,.3)'; ctx.lineWidth = 1;
     [0, 0.5, 1].forEach((q) => { const yy = gy1 - (gy1 - gy0) * q; ctx.beginPath(); ctx.moveTo(gx0, yy); ctx.lineTo(gx1, yy); ctx.stroke(); T(gx0 - 6, yy + 4, String(fmtN(I_GAUGE * q, 0)), 11.5, '#b45309', 'right', 800); T(gx1 + 6, yy + 4, String(fmtN(V_GAUGE * q, 0)), 11.5, '#2f6df6', 'left', 800); });
     [0, 2, 4, 6, 8].forEach((s) => { const xx = gx0 + (gx1 - gx0) * s / T_WIN; ctx.beginPath(); ctx.moveTo(xx, gy1); ctx.lineTo(xx, gy1 + 4); ctx.stroke(); T(xx, gy1 + 17, String(s), 11.5, '#3a465c', 'center', 800); });
-    T(gx1, gy1 + 28, '시간 (s)', 11, '#5a6679', 'right', 700); T(gx0 - 6, gy0 - 8, 'mA', 11, '#b45309', 'right', 800); T(gx1 + 6, gy0 - 8, 'V', 11, '#2f6df6', 'left', 800);
+    T(gx1, gy1 + 28, '시간 (s)', 11, '#5a6679', 'right', 700); T(x + w - 34, y + 22, 'mA', 11.5, '#b45309', 'right', 800); T(x + w - 14, y + 22, 'V', 11.5, '#2f6df6', 'right', 800);   // 단위는 제목 줄 오른쪽에 (제목·눈금 글자와 겹치지 않게)
     const xs = (t) => gx0 + (gx1 - gx0) * clamp(t, 0, T_WIN) / T_WIN;
     const line = (key, full, col) => {
       if (hist.length < 2) return;
@@ -490,6 +490,7 @@
     if (lit) D.glow(k.lx, 190, 24 + 60 * c.led, '#ffd447', 0.3 + 0.5 * c.led);
     D.sphere(k.lx, 190, 18, lit ? C.mix('#fff0a0', '#ffd447', c.led) : '#c9ced8', { shadow: true });
     T(k.lx, 195, 'LED', 11.5, lit ? '#7a5b00' : '#7b8aa3', 'center', 800);
+    ctx.fillStyle = C.mix('#eaf1fb', '#f7f9fd', 240 / SH); ctx.fillRect(k.lx - 17, 231, 34, 18);      // 아래로 지나가는 도선이 글자를 가로지르지 않게 가려요
     T(k.lx, 240, lit ? '켜짐' : '꺼짐', 12.5, lit ? '#b45309' : '#98a2b3', 'center', 800);
     // 축전기와 저장 에너지 막대
     drawCapPlates(k.cx, k.topY, k.botY, 76, Math.round(5 * c.V / (c.vSel || 1)), c.V / 9);
@@ -543,9 +544,9 @@
       if (c.phase === 'discharging') D.sphere(xs(tmax), ys(I0 * Math.exp(-tmax / TAU_D)), 5, COL[sel], { gloss: false });
     }
     if (c.rec[sel]) { const to = c.rec[sel].ton; ctx.save(); ctx.setLineDash([3, 3]); ctx.strokeStyle = COL[sel]; ctx.beginPath(); ctx.moveTo(xs(to), ys(I_TH)); ctx.lineTo(xs(to), gy1); ctx.stroke(); ctx.restore(); T(xs(to) + 4, gy1 - 6, 'LED ' + f1(to) + ' s', 11.5, COL[sel], 'left', 800); }
-    T(gx0 + 8, gy0 + 14, '곡선 아래 넓이 = 방출한 전하', 11.5, '#5a6679', 'left', 700);
-    T(gx0 + 8, gy0 + 30, c.vSel + ' V 충전: 처음 ' + fmtN(I0, 0) + ' mA, 넓이 ' + f1(q0(c.vSel)) + ' mA·s', 11.5, COL[c.vSel], 'left', 800);
-    T(gx0 + 8, gy0 + 46, '점선 상자(전지): 같은 전하를 ' + f1(lvl) + ' mA로 ' + T_BAT + ' s 동안', 11.5, '#516079', 'left', 800);
+    T(gx1 - 4, gy0 + 14, '곡선 아래 넓이 = 방출한 전하', 11.5, '#5a6679', 'right', 700);      // 곡선이 왼쪽 위에서 시작하므로 설명은 오른쪽에 둬요
+    T(gx1 - 4, gy0 + 30, c.vSel + ' V 충전: 처음 ' + fmtN(I0, 0) + ' mA, 넓이 ' + f1(q0(c.vSel)) + ' mA·s', 11.5, COL[c.vSel], 'right', 800);
+    T(gx1 - 4, gy0 + 46, '점선 상자(전지): 같은 전하를 ' + f1(lvl) + ' mA로 ' + T_BAT + ' s 동안', 11.5, '#516079', 'right', 800);
   }
   function drawAED(x, y, w, h) {
     panel(x, y, w, h, 14);
@@ -553,8 +554,8 @@
     let yy = y + 46;
     yy += textBlock(x + 14, yy, w - 28, '• 카메라 플래시: 전지(수 V)로 몇 초 충전 → 약 ' + FLASH_V + ' V로 모았다가 약 ' + FLASH_MS + ' ms에 방전', PHONE ? 12 : 13, '#26324a', PHONE ? 15 : 17, 800) + 4;
     yy += textBlock(x + 14, yy, w - 28, '• AED: 배터리로 ' + AED_CH + ' 초 충전 → ' + AED_J + ' J을 ' + AED_MS + ' ms에 방출', PHONE ? 12 : 13, '#26324a', PHONE ? 15 : 17, 800) + 6;
-    T(x + 14, yy + 6, '충전할 때 평균 전력: ' + AED_J + ' J ÷ ' + AED_CH + ' s = ' + fmtN(AED_J / AED_CH, 0) + ' W', PHONE ? 12.5 : 13.5, '#14803f', 'left', 800);
-    T(x + 14, yy + 30, '방전할 때 평균 전력: ' + AED_J + ' J ÷ ' + AED_MS / 1000 + ' s = ' + (S.aedOK ? fmtN(AED_KW, 0) + ' kW (' + fmtN(AED_KW * 1000, 0) + ' W)' : '? kW'), PHONE ? 12.5 : 13.5, '#b4231f', 'left', 800);
+    T(x + 14, yy + 6, '충전할 때 평균 전력: ' + AED_J + ' J / ' + AED_CH + ' s = ' + fmtN(AED_J / AED_CH, 0) + ' W', PHONE ? 12.5 : 13.5, '#14803f', 'left', 800);
+    T(x + 14, yy + 30, '방전할 때 평균 전력: ' + AED_J + ' J / ' + AED_MS / 1000 + ' s = ' + (S.aedOK ? fmtN(AED_KW, 0) + ' kW (' + fmtN(AED_KW * 1000, 0) + ' W)' : '? kW'), PHONE ? 12.5 : 13.5, '#b4231f', 'left', 800);
     textBlock(x + 14, yy + 52, w - 28, '장면은 보기 쉽게 천천히 보여 줘요. 축전기 덕분에 전지가 낼 수 없는 큰 전력을 순간적으로 낼 수 있어요.', PHONE ? 11.5 : 12.5, '#5a6679', PHONE ? 15 : 16, 700);
   }
   function drawEnTable(x, y, w, h) {
@@ -944,6 +945,12 @@
     },
   ];
 
+  /* 이어 하기(새로고침)로 중간 미션에서 열려도 미션 setup()이 만든 장면을 덮어쓰지 않도록, 장면 상태를 게임보다 먼저 만들어요 */
+  spInit();
+  { const p = cellC(6, 4); S.sn.fx = p.x; S.sn.fy = p.y; }
+  setScene('cc');
+  updateCtl();
+
   game = SciSim.game({
     simId: 'hp-capacitor', mount: '#game', badge: '축전기 박사', homeHref: '../../index.html#hp',
     featureLabels: { cc: '🔋 전지 · 스위치 · 축전기 · 전구 회로', sp: '🔍 두 판의 단면 확대 · 전자 이동', en: '⚡ 충전 전압별 LED 방전 그래프', sn: '📲 터치 · 마이크 · 가속도 센서' },
@@ -952,10 +959,6 @@
   });
 
   /* ---------- 시작 ---------- */
-  spInit();
-  { const p = cellC(6, 4); S.sn.fx = p.x; S.sn.fy = p.y; }
-  setScene('cc');
-  updateCtl();
   function stepAll1(dt) {
     if (S.mode === 'cc') stepCC(dt); else if (S.mode === 'sp') stepSP(dt); else if (S.mode === 'en') stepEN(dt); else stepSN(dt);
   }
@@ -968,6 +971,7 @@
     if (game && game.phase === 'success') { const cm = game.current(); if (cm && cm._aed) S.aedOK = true; }
     if (game && game.free) S.aedOK = true;
     view.apply();
+    ctx.fillStyle = '#eef2fa'; ctx.fillRect(0, 0, VW, VH);     // 아래쪽 자료 패널 영역도 매 프레임 지워요(그림자 누적 방지)
     stepAll1(dt);
     if (S.mode === 'cc') drawCC(); else if (S.mode === 'sp') drawSP(); else if (S.mode === 'en') drawEN(); else drawSN();
     parts.update(dt); parts.draw(ctx);

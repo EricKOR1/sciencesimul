@@ -187,14 +187,14 @@
     sceneBg();
     const t = S.rt, p = PROD[t.sel], shown = !!t.shown[p.id];
     T(14, 26, '🔆 소비 전력과 정격 전류', PHONE ? 15 : 17, '#26324a', 'left', 800);
-    T(14, PHONE ? 46 : 50, '제품에 적힌 정격 전력 P와 전압 V로 전류 I = P ÷ V를 구해요', PHONE ? 11.5 : 13.5, '#5a6679', 'left', 700);
+    T(14, PHONE ? 46 : 50, '제품에 적힌 정격 전력 P와 전압 V로 전류 I = P / V를 구해요', PHONE ? 11.5 : 13.5, '#5a6679', 'left', 700);
     // 제품 명판
     const nx = 14, ny = 62, nw = PHONE ? 140 : 226, nh = SH - 62 - 8;
     panel(nx, ny, nw, nh, 14);
     ctx.save(); ctx.translate(nx + nw / 2, ny + (PHONE ? 52 : 70)); const sh = t.shake > 0 ? Math.sin(S.t * 60) * 4 : 0; ctx.translate(sh, 0);
     D.glow(0, 0, PHONE ? 50 : 62, '#ffd447', 0.35); T(0, PHONE ? 14 : 20, p.icon, PHONE ? 46 : 64, '#000', 'center', 700); ctx.restore();
     T(nx + nw / 2, ny + (PHONE ? 100 : 136), p.name, PHONE ? 15 : 18, '#26324a', 'center', 800);
-    D.roundRect(nx + 12, ny + (PHONE ? 112 : 150), nw - 24, PHONE ? 78 : 92, 10); ctx.fillStyle = '#26324a'; ctx.fill();
+    D.roundRect(nx + 12, ny + (PHONE ? 112 : 150), nw - 24, PHONE ? 78 : 84, 10); ctx.fillStyle = '#26324a'; ctx.fill();
     T(nx + nw / 2, ny + (PHONE ? 134 : 176), '정격 전압  ' + VOLT + ' V', PHONE ? 13 : 15, '#fff', 'center', 800);
     T(nx + nw / 2, ny + (PHONE ? 160 : 204), '정격 전력  ' + p.P + ' W', PHONE ? 13 : 15, '#ffd447', 'center', 800);
     T(nx + nw / 2, ny + nh - 12, '제품 표시', 11.5, '#98a2b3', 'center', 700);
@@ -256,7 +256,7 @@
   const CN_NAME = { 'parallel-mixed': '병렬 · 60 W + 100 W', 'series-mixed': '직렬 · 60 W + 100 W', 'parallel-same': '병렬 · 100 W + 100 W', 'series-same': '직렬 · 100 W + 100 W' };
   const CN = (() => {
     const L = PHONE ? 70 : 96, R = PHONE ? 400 : 480, TOP = PHONE ? 130 : 112, BOT = SH - 40, mid = (TOP + BOT) / 2;
-    return { L, R, TOP, BOT, mid, bx: [L + (R - L) * 0.28, L + (R - L) * 0.70], batT: mid - 30, batB: mid + 30 };
+    return { L, R, TOP, BOT, mid, bx: [L + (R - L) * 0.22, L + (R - L) * 0.72], batT: mid - 30, batB: mid + 30 };
   })();
   function cnSegs(c) {
     const o = [], { L, R, TOP, BOT, bx, batT, batB } = CN, sc = S.cn.conn;
@@ -303,6 +303,10 @@
     D.sphere(x, y, PHONE ? 20 : 24, C.mix('#dfe3ea', '#fff2a8', clamp(0.2 + 0.8 * b, 0, 1)), { shadow: true });
     ctx.strokeStyle = b > 0.05 ? '#f26b3a' : '#8a95a6'; ctx.lineWidth = 2.4; ctx.beginPath(); ctx.moveTo(x - 8, y + 10); ctx.lineTo(x - 5, y - 2); ctx.lineTo(x, y + 4); ctx.lineTo(x + 5, y - 2); ctx.lineTo(x + 8, y + 10); ctx.stroke();
     ctx.fillStyle = '#8a95a6'; ctx.fillRect(x - 9, y + 20, 18, 9);
+    if (S.cn.conn === 'parallel') {            // 병렬에서는 전구 아래로 가지 전선이 지나가므로 이름 글자 뒤를 배경색으로 가려요
+      ctx.save(); ctx.font = D.font(PHONE ? 12.5 : 14, 800); const tw = ctx.measureText(name).width + 10; ctx.restore();
+      ctx.fillStyle = C.mix('#eaf1fb', '#f7f9fd', clamp((y + 46) / SH, 0, 1)); ctx.fillRect(x - tw / 2, y + 37, tw, 18);
+    }
     T(x, y + 46, name, PHONE ? 12.5 : 14, '#26324a', 'center', 800);
   }
   function cnRecord() {
@@ -344,9 +348,9 @@
       const w = blw * clamp(r[1] / MAXW, 0, 1);
       if (w > 0.5) { ctx.save(); D.roundRect(bl, yy + 2, blw, 20, 8); ctx.clip(); ctx.fillStyle = r[2]; ctx.fillRect(bl, yy + 2, w, 20); ctx.restore(); }
       const txt = f1(r[1]) + ' W';
-      T(bl + Math.min(w, blw) - 6 > bl + 60 ? bl + w - 6 : bl + w + 6, yy + 17, txt, 12.5, w > 70 ? '#fff' : '#26324a', w > 70 ? 'right' : 'left', 800);
+      T(w > 70 ? bl + w - 6 : bl + w + 6, yy + 17, txt, 12.5, w > 70 ? '#fff' : '#26324a', w > 70 ? 'right' : 'left', 800);
     });
-    T(bxp + bw - 14, byp + 42 + 3 * rh + 10, '눈금 끝 = ' + MAXW + ' W', 11, '#7b8aa3', 'right', 700);
+    T(bxp + bw - 14, byp + 24, '눈금 끝 = ' + MAXW + ' W', 11, '#7b8aa3', 'right', 700);
     drawConnTable(12, PHONE ? PY + 140 : PY, VW - 24, PHONE ? PH - 140 : PH);
   }
   function labelBulb(x, y, i, calc, align) {
@@ -548,7 +552,7 @@
   const TRAYY = PHONE ? 90 : 96;
   const trayPos = (k) => { const sp = PHONE ? 74 : 80, x0 = (VW - (5 * sp)) / 2; return { x: x0 + k * sp, y: TRAYY }; };
   function slotPos(bay, i) {
-    const b = BAYS[bay], top = b.y + 42;
+    const b = BAYS[bay], top = b.y + 38;
     if (b.cap === 1) return { x: b.x + b.w / 2, y: top + (b.h - 44) / 2 };
     const cx = b.x + b.w / 2, dx = CARD.w / 2 + 3, dy = CARD.h / 2 + 3, r0 = top + dy + 2;
     return { x: cx + (i % 2 ? dx : -dx), y: r0 + Math.floor(i / 2) * (CARD.h + 6) };
@@ -709,7 +713,7 @@
     if (S.mode === 'rate') {
       const p = PROD[S.rt.sel], E = curE();
       L1 = '고른 제품'; a = p.name + ' ' + p.P + ' W';
-      L2 = '정격 전류 I = P ÷ V'; b = S.rt.shown[p.id] ? f1(p.I) + ' A' : '? (계산해 보세요)';
+      L2 = '정격 전류 I = P / V'; b = S.rt.shown[p.id] ? f1(p.I) + ' A' : '? (계산해 보세요)';
       L3 = '전력량계'; c = E ? fT(E.E) + ' kWh' : '0 kWh';
     } else if (S.mode === 'conn') {
       const k = S.cn, calc = bulbCalc(k.conn, k.pair);
@@ -905,6 +909,11 @@
     },
   ];
 
+  /* 이어 하기(새로고침)로 중간 미션에서 열려도 미션 setup()이 만든 장면을 덮어쓰지 않도록, 장면 상태를 게임보다 먼저 만들어요 */
+  clearRoom();
+  setScene('rate');
+  updateCtl();
+
   game = SciSim.game({
     simId: 'hp-electric-power', mount: '#game', badge: '전기 안전 박사', homeHref: '../../index.html#hp',
     featureLabels: { rate: '🔆 제품 명판 · 전류계 · 전력량계', conn: '💡 직렬·병렬 전구와 소비 전력 막대', home: '🔌 멀티탭 · 전선 발열 · 차단기', plan: '🏠 콘센트 배치 · LED 절약' },
@@ -913,9 +922,6 @@
   });
 
   /* ---------- 시작 ---------- */
-  clearRoom();
-  setScene('rate');
-  updateCtl();
   function stepAll1(dt) {
     if (S.mode === 'rate') stepRate(dt); else if (S.mode === 'conn') stepConn(dt); else if (S.mode === 'home') stepHome(dt); else stepPlan(dt);
   }
@@ -926,6 +932,7 @@
     if (S.mode !== lastMode) { lastMode = S.mode; updateCtl(); }
     if (S.gate && game && game.phase !== 'active') { S.gate = ''; updateCtl(); }
     view.apply();
+    ctx.fillStyle = '#eef2fa'; ctx.fillRect(0, 0, VW, VH);     // 아래쪽 자료 패널 영역도 매 프레임 지워요(그림자 누적 방지)
     stepAll1(dt);
     if (S.mode === 'rate') drawRate(); else if (S.mode === 'conn') drawConn(); else if (S.mode === 'home') drawHome(); else drawPlan();
     parts.update(dt); parts.draw(ctx);

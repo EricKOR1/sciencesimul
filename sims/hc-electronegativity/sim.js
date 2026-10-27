@@ -251,6 +251,7 @@
   const TGR = PHONE ? { x: 16, y: TINFO.y + TINFO.h + 10, w: VW - 32, h: 250 } : { x: 24, y: 300, w: 752, h: 248 };
   let tbReveal = 0;
   function enterTable() { S.tb.t0 = S.t; }
+  function resetDrawn(keys) { if (S.tb.tw) { S.tb.tw.cancel(); S.tb.tw = null; } keys.forEach((k) => { S.tb.drawn[k] = false; }); S.tb.prog = S.tb.drawn[S.tb.ser] ? 1 : 0; }
   function drawPT(opts) {
     opts = opts || {};
     // 족 · 주기 라벨
@@ -366,8 +367,8 @@
      ③ 핵과 전자 (같은 주기 / 같은 족)
      ========================================================= */
   const AT = PHONE ? { cx: 240, cy: 212, r0: 36, dr: 30 } : { cx: 262, cy: 282, r0: 44, dr: 42 };
-  const AINFO = PHONE ? { x: 16, y: 376, w: VW - 32, h: 120 } : { x: 520, y: 22, w: 262, h: 202 };
-  const ABAR = PHONE ? { x: 16, y: 508, w: VW - 32, h: 140 } : { x: 520, y: 236, w: 262, h: 306 };
+  const AINFO = PHONE ? { x: 16, y: 364, w: VW - 32, h: 124 } : { x: 520, y: 22, w: 262, h: 202 };
+  const ABAR = PHONE ? { x: 16, y: 496, w: VW - 32, h: 156 } : { x: 520, y: 236, w: 262, h: 306 };
   const atEl = () => SERIES[S.at.mode === 'p2' ? 'p2' : S.at.mode === 'p3' ? 'p3' : 'g17'].els[S.at.i];
   const atSeries = () => SERIES[S.at.mode === 'p2' ? 'p2' : S.at.mode === 'p3' ? 'p3' : 'g17'];
   const ringR = (k) => AT.r0 + k * AT.dr;
@@ -444,22 +445,22 @@
     const c = AINFO;
     panel(c.x, c.y, c.w, c.h, 14, '#fff', '#e3dcf5');
     const rows = [['핵전하', '+' + e.Z + ' (양성자 ' + e.Z + '개)'], ['전자껍질 수', e.p + '개'], ['최외각 전자 수', e.v + '개'], ['전기 음성도 χ', enTxt(s)]];
-    const rh = PHONE ? 26 : 38;
+    const rh = PHONE ? 24 : 38;
     T(c.x + 14, c.y + 24, '⚛️ ' + s + '의 모습', 14.5, PURD, 'left', 900);
-    rows.forEach((r, i) => { const yy = c.y + (PHONE ? 48 : 62) + i * rh; T(c.x + 14, yy, r[0], 13.5, MUTED, 'left', 700); T(c.x + c.w - 14, yy, r[1], 15, i === 3 ? PURD : INK, 'right', 900); });
+    rows.forEach((r, i) => { const yy = c.y + (PHONE ? 46 : 62) + i * rh; T(c.x + 14, yy, r[0], 13.5, MUTED, 'left', 700); T(c.x + c.w - 14, yy, r[1], 15, i === 3 ? PURD : INK, 'right', 900); });
     // 비교 막대
     const b = ABAR;
     panel(b.x, b.y, b.w, b.h, 14, '#fff', '#e3dcf5');
     T(b.x + 14, b.y + 24, '📊 ' + atSeries().label + ' 비교', 14.5, PURD, 'left', 900);
     const ser = atSeries().els, mx = Math.max.apply(null, ser.map(pullRaw)), nb = ser.length;
-    const bw = (b.w - 28) / nb, by1 = b.y + b.h - (PHONE ? 30 : 38), bh = b.h - (PHONE ? 78 : 104);
+    const bw = (b.w - 28) / nb, by1 = b.y + b.h - 38, bh = b.h - (PHONE ? 90 : 104);
     ser.forEach((q, i) => {
       const x = b.x + 14 + i * bw, h = bh * pullRaw(q) / mx, cur = q === s;
       D.roundRect(x + bw * 0.16, by1 - h, bw * 0.68, Math.max(3, h), 5); ctx.fillStyle = cur ? '#7c3aed' : '#cdbdf5'; ctx.fill();
       T(x + bw / 2, by1 + 17, q, 13.5, cur ? PURD : MUTED, 'center', cur ? 900 : 700);
       T(x + bw / 2, by1 - h - 6, enTxt(q), 12.5, cur ? PURD : MUTED, 'center', cur ? 900 : 700);
     });
-    T(b.x + 14, b.y + b.h - 8, '막대: 당기는 힘(모형) · 숫자: 전기 음성도', 12.5, '#8a95a8', 'left', 700);
+    T(b.x + 14, b.y + b.h - 7, '막대: 당기는 힘(모형) · 숫자: 전기 음성도', 12.5, '#8a95a8', 'left', 700);
   }
 
   /* =========================================================
@@ -477,7 +478,7 @@
   ];
   cmpQ.forEach((q) => { q.ans = E[q.a].e > E[q.b].e ? q.a : q.b; });
   const OD = PHONE
-    ? { sx: 18, sw: 100, sh: 84, sy: 70, sg: 10, tx: 18, ty: 214, cw: 100, ch: 78, ptx: 22, pty: 372, mtc: 50, mtr: 36 }
+    ? { sx: 18, sw: 106, sh: 84, sy: 70, sg: 6, tx: 18, ty: 214, cw: 106, ch: 78, ptx: 22, pty: 372, mtc: 50, mtr: 36 }
     : { sx: 110, sw: 134, sh: 104, sy: 62, sg: 20, tx: 110, ty: 204, cw: 134, ch: 82, ptx: 150, pty: 366, mtc: 54, mtr: 38 };
   const slotPos = (i) => ({ x: OD.sx + i * (OD.sw + OD.sg), y: OD.sy });
   const trayPos = (i) => ({ x: OD.tx + i * (OD.sw + OD.sg), y: OD.ty });
@@ -543,9 +544,10 @@
     ctx.shadowColor = 'rgba(40,20,90,' + (0.2 + 0.18 * c.lift) + ')'; ctx.shadowBlur = 8 + 12 * c.lift; ctx.shadowOffsetY = 3 + 6 * c.lift;
     D.roundRect(-w / 2, -h / 2, w, h, 14); ctx.fillStyle = '#fff'; ctx.fill(); ctx.shadowColor = 'transparent';
     ctx.strokeStyle = c.slot != null ? '#8b5cf6' : '#cdbdf5'; ctx.lineWidth = 2.5; ctx.stroke();
-    D.sphere(-w / 2 + 28, 0, 20, '#efe9fb', { gloss: true, outline: '#cdbdf5', outlineWidth: 1.5 });
-    T(-w / 2 + 28, 8, e.s, 21, INK, 'center', 900);
-    T(-w / 2 + 56, -4, e.n, 14, INK, 'left', 900); T(-w / 2 + 56, 16, e.p + '주기 ' + e.g + '족', 12.5, MUTED, 'left', 700);
+    const sx0 = PHONE ? 22 : 28, sr = PHONE ? 15 : 20, tx0 = PHONE ? 43 : 56;
+    D.sphere(-w / 2 + sx0, 0, sr, '#efe9fb', { gloss: true, outline: '#cdbdf5', outlineWidth: 1.5 });
+    T(-w / 2 + sx0, PHONE ? 6 : 8, e.s, PHONE ? 16 : 21, INK, 'center', 900);
+    T(-w / 2 + tx0, -4, e.n, PHONE ? 13 : 14, INK, 'left', 900); T(-w / 2 + tx0, 16, e.p + '주기 ' + e.g + '족', PHONE ? 11 : 12.5, MUTED, 'left', 700);
     ctx.restore();
   }
   function drawOrderScene() {
@@ -814,7 +816,7 @@
           title: '2주기와 3주기 그래프 그리기',
           goal: '<b>2주기</b>와 <b>3주기</b>를 각각 골라 <b>📈 그래프 그리기</b>를 눌러 값의 변화를 확인하세요.',
           hint: '줄 버튼(2주기, 3주기)을 고른 뒤 그래프 그리기를 눌러요. 주기율표에서 주황색 테두리가 그 줄이에요.',
-          setup() { S.gate = ''; setScene('table'); updateUI(); },
+          setup() { S.gate = ''; resetDrawn(['p2', 'p3']); setScene('table'); updateUI(); },
           check: () => S.tb.drawn.p2 && S.tb.drawn.p3,
           hold: 0.4,
           status: () => mark(S.tb.drawn.p2) + ' 2주기 (Li → F) &nbsp; ' + mark(S.tb.drawn.p3) + ' 3주기 (Na → Cl)',
@@ -824,7 +826,7 @@
           title: '17족 그래프 그리기',
           goal: '<b>17족</b>(F, Cl, Br)의 그래프를 그려 세로 방향의 변화를 확인하세요.',
           hint: '17족 버튼을 고르고 그래프 그리기를 눌러요. 위에서 아래로 값이 어떻게 변하는지 봐요.',
-          setup() { S.gate = ''; setScene('table'); updateUI(); },
+          setup() { S.gate = ''; resetDrawn(['g17']); setScene('table'); updateUI(); },
           check: () => !!S.tb.drawn.g17,
           hold: 0.4,
           status: () => mark(S.tb.drawn.g17) + ' 17족 (F → Cl → Br)',
