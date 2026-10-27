@@ -280,13 +280,16 @@
     T(x + 4, y + 82, '고리 (자유단)', 13, MUTED, 'center', 800);
   }
   /* 줄 그래프. o: {boundary, kind} */
+  let YLIM = 0.088;
   function stringFrame(c, sc, o) {
     const rc = { x: c.x + 8, y: c.y + 40, w: c.w - 16, h: c.h - 50 };
-    const M = frame(rc, { x0: 0, x1: 12, y0: -9, y1: 9, xt: [0, 2, 4, 6, 8, 10, 12], xminor: [1, 3, 5, 7, 9, 11], yt: [-6, 0, 6], yf: (v) => (v > 0 ? '+' : v < 0 ? MINUS : '') + Math.abs(v), ml: PHONE ? 44 : 52, mr: 62, mt: 14, mb: 28 });
+    // 연속파가 끝에서 되돌아오면 겹쳐서 진폭이 입사파의 2배(최대 12 cm)까지 커져요: 그때는 세로 눈금을 넓혀 잘리지 않게 그려요
+    const YM = !o.boundary && sc.drv.kind === 'wave' ? 13.5 : 9; YLIM = (YM - 0.2) / 100;
+    const M = frame(rc, { x0: 0, x1: 12, y0: -YM, y1: YM, xt: [0, 2, 4, 6, 8, 10, 12], xminor: [1, 3, 5, 7, 9, 11], yt: YM > 9 ? [-12, -6, 0, 6, 12] : [-6, 0, 6], yf: (v) => (v > 0 ? '+' : v < 0 ? MINUS : '') + Math.abs(v), ml: PHONE ? 44 : 52, mr: 62, mt: 14, mb: 28 });
     T(M.ix + M.iw + 10, M.iy + M.ih + 20, 'x (m)', 13, MUTED, 'left', 700); T(rc.x + 8, rc.y + 14, 'y (cm)', 13, MUTED, 'left', 700);
     const ch = sc.ch;
     ctx.save(); ctx.beginPath(); ctx.rect(M.ix, M.iy - 2, M.iw, M.ih + 4); ctx.clip();
-    const seg = (i0, i1, col, lw) => { ctx.strokeStyle = col; ctx.lineWidth = lw; ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.beginPath(); for (let i = i0; i <= i1; i++) { const x = M.gx(i * ch.a), y = M.gy(cm(clamp(ch.y[i], -0.088, 0.088))); i === i0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); } ctx.stroke(); };
+    const seg = (i0, i1, col, lw) => { ctx.strokeStyle = col; ctx.lineWidth = lw; ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.beginPath(); for (let i = i0; i <= i1; i++) { const x = M.gx(i * ch.a), y = M.gy(cm(clamp(ch.y[i], -YLIM, YLIM))); i === i0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); } ctx.stroke(); };
     if (o.boundary) {
       const nb = Math.round(XB / ch.a), lh = sc.kind === 'LH';
       ctx.fillStyle = 'rgba(37,99,235,.06)'; ctx.fillRect(M.gx(0), M.iy, M.gx(XB) - M.gx(0), M.ih); ctx.fillStyle = 'rgba(245,158,11,.10)'; ctx.fillRect(M.gx(XB), M.iy, M.gx(12) - M.gx(XB), M.ih);
@@ -296,7 +299,7 @@
     return { M, rc };
   }
   function sensorMark(M, sc, p, label, col) {
-    const x = M.gx(p.x), y = M.gy(cm(clamp(sc.ch.y[p.idx], -0.088, 0.088)));
+    const x = M.gx(p.x), y = M.gy(cm(clamp(sc.ch.y[p.idx], -YLIM, YLIM)));
     ctx.save(); ctx.setLineDash([3, 4]); ctx.strokeStyle = col; ctx.globalAlpha = 0.6; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(x, M.iy + 20); ctx.lineTo(x, M.iy + M.ih); ctx.stroke(); ctx.restore();
     D.sphere(x, y, 6.5, col, { gloss: true });
     D.label(x, M.iy + 12, label, { bg: col, size: 13 });
@@ -318,7 +321,7 @@
     const c = topCard(), sc = S.sc, fixed = S.end.kind === 'fixed'; cardBegin(c);
     T(c.x + 14, c.y + 24, fixed ? '줄의 오른쪽 끝이 벽에 고정되어 있어요 (고정단)' : '줄의 오른쪽 끝이 막대에 걸린 고리예요 (자유단)', PHONE ? 13.5 : 15, fixed ? '#1d4ed8' : '#c2410c', 'left', 800);
     const { M } = stringFrame(c, sc, {});
-    const yEnd = M.gy(cm(clamp(sc.ch.y[sc.ch.n], -0.088, 0.088)));
+    const yEnd = M.gy(cm(clamp(sc.ch.y[sc.ch.n], -YLIM, YLIM)));
     drawHand(M.ix + 18, M.gy(cm(sc.ch.y[0])));
     if (fixed) drawWall(M.ix + M.iw - 2, M.gy(0)); else drawFreeEnd(M.ix + M.iw + 6, yEnd);
     sensorMark(M, sc, sc.pA, '센서 A', TEAL);
@@ -349,7 +352,7 @@
     const c = topCard(), sc = S.sc, lh = sc.kind === 'LH'; cardBegin(c);
     T(c.x + 14, c.y + 24, lh ? '가벼운 줄 → 무거운 줄' : '무거운 줄 → 가벼운 줄', PHONE ? 13.5 : 15, INK, 'left', 800);
     const { M } = stringFrame(c, sc, { boundary: true });
-    drawHand(M.ix + 18, M.gy(cm(sc.ch.y[0]))); drawDamper(M.ix + M.iw + 4, M.gy(cm(clamp(sc.ch.y[sc.ch.n], -0.088, 0.088))));
+    drawHand(M.ix + 18, M.gy(cm(sc.ch.y[0]))); drawDamper(M.ix + M.iw + 4, M.gy(cm(clamp(sc.ch.y[sc.ch.n], -YLIM, YLIM))));
     ctx.save(); ctx.strokeStyle = '#16a34a'; ctx.lineWidth = 3; ctx.setLineDash([6, 4]); ctx.beginPath(); ctx.moveTo(M.gx(XB), M.iy + 24); ctx.lineTo(M.gx(XB), M.iy + M.ih); ctx.stroke(); ctx.restore();
     D.label(M.gx(XB), M.iy + 12, '경계', { bg: '#16a34a', size: 13 });
     D.label(M.gx(3.6), M.iy + 38, (lh ? '가벼운 줄' : '무거운 줄') + ': v₁ = ' + (lh ? v1 : v2) + ' m/s', { bg: lh ? '#1d4ed8' : '#b45309', size: 13 });
@@ -383,10 +386,10 @@
       const bw2 = tw - 20, bx2 = tx + 10, pr = Math.round(rc2.E.refl * 100), pt = Math.round(rc2.E.trans * 100);
       D.roundRect(bx2, yy + 8, bw2, 18, 9); ctx.fillStyle = '#e8edf6'; ctx.fill();
       ctx.save(); D.roundRect(bx2, yy + 8, bw2, 18, 9); ctx.clip(); ctx.fillStyle = ORANGE; ctx.fillRect(bx2, yy + 8, bw2 * rc2.E.refl, 18); ctx.fillStyle = PURPLE; ctx.fillRect(bx2 + bw2 * rc2.E.refl, yy + 8, bw2 * rc2.E.trans, 18); ctx.restore();
-      T(bx2, yy + 46, '반사 ' + pr + '%', 13, '#b45309', 'left', 800); T(bx2 + bw2, yy + 46, '투과 ' + pt + '%', 13, '#6d28d9', 'right', 800);
+      T(bx2, yy + 42, '반사 ' + pr + '%', 13, '#b45309', 'left', 800); T(bx2 + bw2, yy + 42, '투과 ' + pt + '%', 13, '#6d28d9', 'right', 800);
     }
     if (!PHONE && !(rc2 && rc2.E)) para(tx + 10, ty + 134, '진폭은 입사 +6.0 cm를 기준으로 비교해요.', tw - 20, 13.5, MUTED, 19, 700);
-    if (!PHONE && rc2 && rc2.E) para(tx + 10, ty + 186, '투과파 진폭이 입사파보다 커도 에너지는 늘지 않아요. 반사 + 투과 = 100 %예요.', tw - 20, 13.5, '#14532d', 19, 700);
+    if (!PHONE && rc2 && rc2.E) para(tx + 10, ty + 196, '투과파 진폭이 입사파보다 커도 에너지는 늘지 않아요. 반사 + 투과 = 100 %예요.', tw - 20, 13.5, '#14532d', 19, 700);
   }
 
   /* ================= ③ 에코 거리 ================= */
@@ -559,7 +562,7 @@
     if (ping) { ctx.save(); ctx.beginPath(); ctx.rect(ox, oy, W, H); ctx.clip(); pingDots(px, oy, PPC, echoes, V_TIS, ping.t * 1e-6, 10); ctx.restore(); }
     // 깊이 눈금
     [0, 2, 4, 6, 8, 10].forEach((z) => { T(ox - 8, oy + z * PPC + 5, z + '', 13, '#3a465c', 'right', 800); });
-    T(ox - 8, oy - 24, '깊이 cm', 13, MUTED, 'right', 700);
+    T(ox - 8, oy - 24, 'cm', 13, MUTED, 'right', 700);
     // B-모드 화면
     if (usDirty) renderUs();
     ctx.save(); D.roundRect(bx, oy, W, H, 6); ctx.clip(); ctx.imageSmoothingEnabled = true; ctx.drawImage(usCv, 0, 0, IMGN, IMGH, bx, oy, W, H); ctx.restore();

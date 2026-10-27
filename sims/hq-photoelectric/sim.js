@@ -162,7 +162,7 @@
   const LAM0 = HC / W_NA;                                              // 나트륨의 문턱 파장 (≈ 539 nm)
   const isatOf = (lam, P) => (lam > LAM0 ? 0 : ETA * P * lam / HC * 1e3);   // 포화 광전류 (μA), P: 광원 출력 (mW)
   const MINU = 0.15;                                                   // 광전자의 운동 에너지는 최대의 15 %~100 %로 분포해요
-  const currentAt = (lam, P, V) => { const ek = ekOf(lam); if (ek <= 0) return 0; return isatOf(lam, P) * clamp((1 - V / ek) / (1 - MINU), 0, 1); };
+  const currentAt = (lam, P, V) => { const ek = ekOf(lam); if (ek <= 0) return 0; if (V >= Math.round(ek * 100) / 100 - 1e-9) return 0; return isatOf(lam, P) * clamp((1 - V / ek) / (1 - MINU), 0, 1); };   // 표에 쓴 V₀(소수 둘째 자리)에서 전류가 0이 돼요
   const nPhot = (lam, P) => (P * 1e-3) / (ephOf(lam) * QE);            // 초당 광자 수
   const iPhoto = (lam, P) => (lam > LAM0 ? 0 : nPhot(lam, P) * ETA * QE * 1e6);   // 광전류 (μA)
   const WLS = [300, 350, 400, 450, 500, 550];
@@ -884,7 +884,7 @@
           setup() { S.tb.rec = []; S.show.rec = true; S.show.int = false; S.show.selA = false; setScene('tube'); },
           check: () => S.tb.rec.length >= 3,
           hold: 0.3,
-          status: () => mark(S.tb.rec.length >= 1) + ' 첫 번째 &nbsp; ' + mark(S.tb.rec.length >= 2) + ' 두 번째 &nbsp; ' + mark(S.tb.rec.length >= 3) + ' 세 번째 &nbsp; (' + S.tb.rec.slice().sort((a, b) => a.lam - b.lam).map((r) => r.lam + ' nm: ' + r.V.toFixed(2) + ' V').join(', ') + ')',
+          status: () => mark(S.tb.rec.length >= 1) + ' 첫 번째 &nbsp; ' + mark(S.tb.rec.length >= 2) + ' 두 번째 &nbsp; ' + mark(S.tb.rec.length >= 3) + ' 세 번째' + (S.tb.rec.length ? ' &nbsp; (' + S.tb.rec.slice().sort((a, b) => a.lam - b.lam).map((r) => r.lam + ' nm: ' + r.V.toFixed(2) + ' V').join(', ') + ')' : ''),
           explain: '광전자의 운동 에너지는 최대 E_k,max = hf − W예요. 역전압 V가 <b>eV = E_k,max</b>가 되면 가장 빠른 전자도 양극에 닿지 못해서 광전류가 0이 돼요. 이때의 V가 정지 전압 V₀예요. 400 nm에서는 3.10 − 2.30 = <b>0.80 V</b>, 500 nm에서는 2.48 − 2.30 = <b>0.18 V</b>예요. 파장이 짧을수록 광자 에너지가 커서 V₀도 커요.',
         },
         {
@@ -992,7 +992,7 @@
           title: '광전류 3.2 μA 만들기',
           goal: '파장과 출력 슬라이더를 조절해서 <b>광전류가 3.2 μA</b>가 되도록 해 보세요. (양자 효율 1 %)',
           hint: '400 nm에서 출력 1.0 mW이면 3.2 μA예요. 다른 조합도 있어요. 파장이 길면 광자 수가 늘지만 540 nm를 넘으면 광전류가 0이에요.',
-          setup() { S.show.inN = false; setScene('photon'); updateCtl(); },
+          setup() { S.show.inN = false; S.pn.lam = 450; S.pn.P = 1.0; slL2.set(450); slP.set(10); setScene('photon'); updateCtl(); },   // 앞 미션의 400 nm · 1.0 mW(= 3.2 μA)에서 시작하면 이미 성공이라 다른 값으로 시작해요
           check: () => S.pn.solved && pnI().toFixed(1) === '3.2',
           hold: 0.8,
           status: () => mark(pnI().toFixed(1) === '3.2') + ' 광전류 ' + pnI().toFixed(1) + ' μA / 목표 3.2 μA (' + S.pn.lam + ' nm, ' + S.pn.P.toFixed(1) + ' mW)',

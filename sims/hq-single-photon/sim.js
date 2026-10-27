@@ -807,7 +807,7 @@
       const cf = cur(), D0 = S.data;
       L1 = '도착한 ' + kindName() + ' 수'; a = D0.N.toLocaleString('ko-KR') + '개';
       if (S.mode === 'which' && cf.det) { L2 = '틈 검출 기록'; b = '틈 A ' + D0.slit.A + ' · 틈 B ' + D0.slit.B; }
-      else { L2 = '드브로이 파장 λ'; b = cf.kind === 'ph' ? PH_NM + ' nm (붉은 빛)' : lamTxt(lamNm(cf.V)) + ' (' + cf.V + ' V)'; }
+      else { L2 = cf.kind === 'ph' ? '빛의 파장 λ' : '드브로이 파장 λ'; b = cf.kind === 'ph' ? PH_NM + ' nm (붉은 빛)' : lamTxt(lamNm(cf.V)) + ' (' + cf.V + ' V)'; }
       if (S.mode === 'shoot') { L3 = '마지막 도착 위치'; c = D0.last.length ? fmtPos(D0.last[D0.last.length - 1]) : '—'; }
       else { L3 = '스크린의 모습'; c = patternName(); }
     }

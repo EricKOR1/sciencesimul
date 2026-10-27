@@ -701,7 +701,7 @@
   const O4 = { x: CXs, y: 300 };
   const TRK = {
     a: [
-      { id: 1, pts: makeTrack(O4.x, O4.y, -Math.PI / 2, 1, 125, 0, 0.52, 160), sign: 1, col: '#c2410c' },
+      { id: 1, pts: makeTrack(O4.x, O4.y, -Math.PI / 2, 1, 112, 0, 0.52, 160), sign: 1, col: '#c2410c' },
       { id: 2, pts: makeTrack(O4.x, O4.y, -Math.PI / 2, -1, 70, 0, 0.72, 160), sign: -1, col: '#1d4ed8' },
       { id: 3, pts: makeTrack(O4.x, O4.y, -Math.PI / 2, 1, 40, 0, 0.82, 160), sign: 1, col: '#15803d' },
     ],
@@ -930,7 +930,7 @@
           title: '반지름 1.1 cm 만들기',
           goal: '전자의 원운동 반지름을 <b>r ≈ 1.1 cm</b>로 만드세요. (v와 B를 바꿔요, 오차 약 6 % 이내)',
           hint: 'r = mv/(eB). v = 2.0×10⁶ m/s, B = 1.0 mT이면 r = 1.1 cm예요. v/B 비가 같으면 같은 r이에요. 입사각은 90°로 두어요.',
-          setup() { S.gate = ''; setSpecies('e'); S.o.v = 3.0; S.o.B = 1.5; S.o.th = 90; S.o.cmp = false; resetOrb(); setScene('orb'); },
+          setup() { S.gate = ''; setSpecies('e'); S.o.v = 3.0; S.o.B = 1.0; S.o.th = 90; S.o.cmp = false; resetOrb(); setScene('orb'); },
           check: radOK, hold: 0.8,
           status: () => mark(radOK()) + ' r = ' + g3(orbMain().r * 100) + ' cm (목표 1.1 cm)',
           explain: 'r = mv/(eB) = 9.11×10⁻³¹ × 2.0×10⁶ / (1.6×10⁻¹⁹ × 1.0×10⁻³) ≈ <b>1.1×10⁻² m</b>예요. v를 2배로 하면 r도 2배, B를 2배로 하면 r는 1/2이에요. 주기는 v를 바꿔도 변하지 않는 것도 확인했어요(👥 비교 입자).',

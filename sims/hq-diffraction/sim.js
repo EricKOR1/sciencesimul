@@ -681,7 +681,7 @@
     ctx.fillStyle = '#d3dae8'; D.roundRect(MA.x + 14, tb.y, tbW, 290 * hsc, 10); ctx.fill();
     ctx.strokeStyle = '#c0c9da'; ctx.lineWidth = 1;
     for (let gx = 0; gx < tbW - 12; gx += 22) for (let gy = 0; gy < 290 * hsc; gy += 22) { ctx.beginPath(); ctx.arc(MA.x + 24 + gx, tb.y + 10 + gy, 1.4, 0, TAU); ctx.stroke(); }
-    T(MA.x + 18, MA.y + 22, '🧪 홀로그램 기록 광학대 (위에서 본 모습)', PHONE ? 13 : 15, '#26324a', 'left', 800);
+    T(MA.x + 18, MA.y + 22, PHONE ? '🧪 홀로그램 광학대' : '🧪 홀로그램 기록 광학대 (위에서 본 모습)', PHONE ? 13 : 15, '#26324a', 'left', 800);
     // 방진대 표시
     if (H.table) D.label(MA.x + (PHONE ? MA.w - 62 : 560), MA.y + 22, '방진대 ON', { size: 12, bg: '#14a058' }); else D.label(MA.x + (PHONE ? MA.w - 62 : 560), MA.y + 22, '방진대 OFF', { size: 12, bg: '#e8501b' });
     // 자리(점선)와 안내
@@ -919,7 +919,7 @@
     ctx.fillStyle = '#0d1424'; D.roundRect(fcx - fhw, fcy - fhh, fhw * 2, fhh * 2, 8); ctx.fill();
     ctx.beginPath(); ctx.rect(fcx - fhw, fcy - fhh, fhw * 2, fhh * 2); ctx.clip();
     if (P.ref) {
-      const kx = L.K, px = (u) => fcx + kx * (u - vw.uC);
+      const kx = L.K, px = (u) => fcx - kx * (u - vw.uC);   // 위에서 본 그림에서 위쪽(눈이 올라간 쪽)은 왼쪽을 보는 눈에게 오른쪽이에요
       // 별 (뒤) → 공 (앞) 순서로 그려서 공이 별을 가려요
       const rt = Math.max(3, kx * vw.rT), rs2 = Math.max(4, kx * vw.rS);
       ctx.fillStyle = '#ffc928'; ctx.strokeStyle = '#a77700'; ctx.lineWidth = 1.5; starPoly(px(vw.uT), fcy, rt, S.t * 0.4); ctx.fill(); ctx.stroke();
@@ -1108,11 +1108,11 @@
         {
           title: '가려진 별 찾기',
           goal: '눈의 위치를 옮겨서 앞 물체(공) 뒤에 <b>숨은 별</b>이 보이게 하세요. (필름은 전체, 기준광은 켠 상태)',
-          hint: '눈 위치 슬라이더를 위쪽이나 아래쪽 끝 가까이(눈금 70 이상) 옮겨 보세요. 시선이 공을 비껴 지나가면 별이 보여요.',
+          hint: '눈 위치 슬라이더를 위쪽이나 아래쪽 끝 가까이(눈금 75 이상) 옮겨 보세요. 시선이 공을 비껴 지나가면 별이 보여요.',
           setup() { S.pl.e = 0; S.pl.eD = 0; slE.set(0); S.pl.cut = 'full'; S.pl.ref = true; S.pl.seenStar = false; S.pl.hold = 0; S.show.selP = false; setScene('play'); },
           check: () => plView(S.pl.e, S.pl.cut, S.pl.ref).star,
           hold: 0.6,
-          status: () => mark(Math.abs(S.pl.e) >= 60) + ' 눈 위치 ' + (S.pl.e === 0 ? '정면' : Math.abs(S.pl.e) + ' 눈금') + ' &nbsp; ' + mark(plView(S.pl.e, S.pl.cut, S.pl.ref).star) + ' 별이 보임',
+          status: () => mark(Math.abs(S.pl.e) >= 74) + ' 눈 위치 ' + (S.pl.e === 0 ? '정면' : Math.abs(S.pl.e) + ' 눈금') + ' &nbsp; ' + mark(plView(S.pl.e, S.pl.cut, S.pl.ref).star) + ' 별이 보임',
           explain: '앞 물체(공)와 뒤 물체(별)는 눈에서 거리가 달라서, 눈을 옮기면 가까운 공이 더 많이 움직여 보여요. 그래서 별이 공 뒤에서 나타나요. 홀로그램에는 빛이 오는 방향(위상) 정보까지 기록돼 있어서 사진에는 없는 이런 시차가 생겨요.',
         },
         {

@@ -688,7 +688,7 @@
       const xs = PEND.L * Math.sin(b.phi);
       const s = clamp(Math.abs(b.vxs) / (PEND.L * 2.3), 0, 1) * overlapF(xs) * (mat.k > 0 ? 1 : 0);
       b.sw = SciSim.approach(b.sw || 0, s, dt, 14);
-      b.ph += dt * (b.vxs > 0 ? 1 : -1) * (3 + 20 * b.sw);
+      b.ph += dt * (3 + 20 * b.sw);                 // 소용돌이의 방향은 swirl()에서 판의 이동 방향(sg)으로 정해요 (여기서 한 번 더 뒤집으면 되돌아올 때 방향이 틀려요)
     } else {
       const p = b.pipe;
       if (p.run) {

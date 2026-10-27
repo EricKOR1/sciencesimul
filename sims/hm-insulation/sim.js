@@ -380,7 +380,7 @@
       drawCan(x, yb, cw, ch, i, tNow, cold);
       // 김 (뜨거울 때)
       if (!cold && tNow > 55 && !RM && Math.random() < 0.12) parts.emit({ x: x + (Math.random() - 0.5) * cw * 0.5, y: yb - ch - 18 + (i === 5 ? 0 : 0), vx: (Math.random() - 0.5) * 8, vy: -22, life: 1.0, size: 6, color: 'rgba(240,240,245,.8)', gravity: 0, shape: 'smoke', fade: true, grow: 7 });
-      if (cold) { const mm = cn.run || cn.done.cold ? meltM(m, cn.t) : 0; D.sphere(x - 8, yb - ch - 8, 8, '#cfeeff', { gloss: true }); D.sphere(x + 10, yb - ch - 6, 7, '#cfeeff', { gloss: true }); }
+      if (cold) { const mm = cn.run || cn.done.cold ? meltM(m, cn.t) : 0; const fr = Math.cbrt(Math.max(0.04, 1 - mm / 100)); D.sphere(x - 8, yb - ch - 8 * fr, 8 * fr, '#cfeeff', { gloss: true }); D.sphere(x + 10, yb - ch - 7 * fr, 7 * fr, '#cfeeff', { gloss: true }); }
       // 이름과 읽음
       T(x, yb + 20, m.n, PHONE ? 13 : 14, '#26324a', 'center', 800);
       if (!cold) T(x, yb + 40, (cn.run || cn.done.hot || cn.t > 0 ? Math.round(tNow) : 80) + ' °C', PHONE ? 13 : 14.5, m.col === '#64748b' ? '#475569' : '#b91c1c', 'center', 800);
@@ -405,7 +405,7 @@
     });
     ctx.restore();
     // 범례 (순서대로 이름)
-    if (!PHONE) { mats.forEach((m, i) => { const yy = gr.y + 36 + i * 21; ctx.fillStyle = m.col; ctx.fillRect(a.ix + a.iw - 100, yy, 16, 4); T(a.ix + a.iw - 78, yy + 6, m.n, 13, '#26324a', 'left', 800); }); }
+    if (!PHONE) { mats.forEach((m, i) => { const yy = cold ? a.iy + 8 + i * 21 : a.iy + a.ih - mats.length * 21 - 4 + i * 21, lx = cold ? a.ix + 14 : a.ix + a.iw - 100; ctx.fillStyle = m.col; ctx.fillRect(lx, yy, 16, 4); T(lx + 22, yy + 6, m.n, 13, '#26324a', 'left', 800); }); }
     // 단면 확대
     const mg = PHONE ? { x: PX + 16, y: PY + 192, w: 200, h: 160 } : { x: PX + 490, y: PY + 10, w: PW - 500, h: 150 };
     drawSection(mg, cn.mag);
@@ -460,7 +460,7 @@
     layers.forEach((l) => {
       if (l[1] > 0) { ctx.fillStyle = l[2]; ctx.fillRect(xx, wy, l[1], wh); ctx.strokeStyle = '#7b869a'; ctx.lineWidth = 2; ctx.strokeRect(xx, wy, l[1], wh);
         if (l[2] === '#fdfdfd') { ctx.fillStyle = 'rgba(160,185,220,.6)'; for (let i = 0; i < Math.floor(l[1] / 9) * 9; i++) { ctx.beginPath(); ctx.arc(xx + 5 + ((i * 7) % Math.max(6, l[1] - 8)), wy + 6 + ((i * 29) % (wh - 12)), 2.2, 0, TAU); ctx.fill(); } }
-        T(xx + l[1] / 2, wy - 8 - (PHONE && l[2] === '#fdfdfd' ? 18 : 0), PHONE ? l[0].replace(' 20 cm', '').replace('스티로폼 ', '단열재 ') : l[0], PHONE ? 13 : 13.5, '#26324a', 'center', 800); }
+        T(xx + l[1] / 2, wy - 8 - (l[2] === '#fdfdfd' && l[1] < 120 ? 18 : 0), PHONE ? l[0].replace(' 20 cm', '').replace('스티로폼 ', '단열재 ') : l[0], PHONE ? 13 : 13.5, '#26324a', 'center', 800); }
       xx += l[1]; bnd.push(xx);
     });
     // 열 화살표 (굵기 = 열 손실에 비례, 같은 축척)
@@ -527,7 +527,7 @@
     for (let dd = 0; dd <= 4.001; dd += 0.1) { const rr = (Math.min(dd, 2) / 100) / 0.026, px = ox + ow * dd / 4, py = oy + oh - oh * rr / 1.0; dd === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py); } ctx.stroke();
     D.dashedLine(ox + ow * 0.5, oy, ox + ow * 0.5, oy + oh, { color: '#e2464b', width: 1.5, dash: [4, 4] });
     D.sphere(ox + ow * d / 4, oy + oh - oh * Rg / 1.0, 6, '#e2552a', { gloss: false, outline: '#fff', outlineWidth: 1.5 });
-    T(gx + 8, gy + 16, 'R', 13, '#3a465c', 'left', 800); T(ox + ow, oy + oh + 17, '공기층 d (cm)', 13, '#3a465c', 'right', 800); [0, 2, 4].forEach((v) => T(ox + ow * v / 4, oy + oh + 17, String(v), 13, '#3a465c', 'center', 800));
+    T(gx + 8, gy + 16, 'R', 13, '#3a465c', 'left', 800); T(ox + ow * 0.75, oy + oh + 17, 'd (cm)', 13, '#3a465c', 'center', 800); [0, 2, 4].forEach((v) => T(ox + ow * v / 4, oy + oh + 17, String(v), 13, '#3a465c', 'center', 800));
     T(ox + ow * 0.5 + 4, oy + 16, '2 cm', 13, '#b91c1c', 'left', 800);
     const tx = PHONE ? x0 : PX + 360;
     const yy0 = PHONE ? gy + gh + 22 : PY + 40;

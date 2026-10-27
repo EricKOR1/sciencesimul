@@ -33,7 +33,12 @@
     for (const ch of str) {
       if (ch === '\n') { out.push(line); line = ''; continue; }
       const t = line + ch;
-      if (ctx.measureText(t).width > maxW && line) { out.push(line); line = ch.trim() === '' ? '' : ch; } else line = t;
+      if (ctx.measureText(t).width > maxW && line) {
+        if (/[.,;:!?)%]/.test(ch)) { line = t; continue; }                       // 문장부호가 줄 맨 앞에 오지 않게
+        const m = /[A-Za-z0-9_.(]+$/.exec(line);                                  // 숫자·영문 덩어리(예: (5.0)는 쪼개지 않기
+        if (m && m.index > 0 && /[A-Za-z0-9_]/.test(ch)) { out.push(line.slice(0, m.index)); line = m[0] + ch; }
+        else { out.push(line); line = ch.trim() === '' ? '' : ch; }
+      } else line = t;
     }
     if (line) out.push(line);
     ctx.restore(); return out;
@@ -1120,18 +1125,18 @@
         {
           title: '리플 1 V 이하 만들기',
           goal: '부하 전류를 <b>0.20 A 이상</b>으로 둔 채, 전파 정류에서 리플 ΔV(측정)를 <b>1 V 이하</b>로 줄여 보세요.',
-          hint: 'C 가 클수록 방전하는 동안 전압이 덜 내려가요. 부하 전류 0.20 A 이상에서는 C 를 2200 μF 이상으로 해야 해요.',
+          hint: 'C 가 클수록 방전하는 동안 전압이 덜 내려가요. 부하 전류가 클수록 더 큰 C 가 필요해요 (0.20 A 면 2200 μF 이상, 0.30 A 이상이면 4700 μF 이상).',
           setup() { S.gate = ''; S.w.form = 'bridge'; S.w.ci = 1; S.w.I = 0.30; wSeed(); setScene('supply'); },
           check: () => S.w.form === 'bridge' && S.w.I >= 0.2 - 1e-9 && S.w.rip && Math.round(S.w.rip.rip * 100) / 100 <= 1.0, hold: 1.0,
           status: () => mark(S.w.form === 'bridge') + ' 전파 정류 &nbsp; ' + mark(S.w.I >= 0.2 - 1e-9) + ' I ≥ 0.20 A (지금 ' + S.w.I.toFixed(2) + ' A) &nbsp; ' + mark(!!S.w.rip && Math.round(S.w.rip.rip * 100) / 100 <= 1.0) + ' ΔV ' + (S.w.rip ? fR(S.w.rip.rip) : '') + ' ≤ 1 V',
-          explain: 'ΔV ≈ I / (f C) 이므로 I = 0.20 A, f = 100 Hz 에서 ΔV 를 1 V 이하로 하려면 C ≳ 0.20 / (100 × 1) = 2.0×10⁻³ F = 2000 μF 이상이 필요해요. 그래서 2200 μF 이상에서 조건을 만족해요. 부하가 무거울수록 큰 축전기가 필요해요.',
+          explain: 'ΔV ≈ I / (f C) 이므로 I = 0.20 A, f = 100 Hz 에서 ΔV 를 1 V 이하로 하려면 C ≳ 0.20 / (100 × 1) = 2.0×10⁻³ F = 2000 μF 이상이 필요해요. 그래서 0.20 A 에서는 2200 μF 이상에서 조건을 만족해요(0.30 A 이상이면 4700 μF 이상). 부하가 무거울수록 큰 축전기가 필요해요.',
         },
         {
           title: '리플 계산과 부하의 영향', manual: true,
           goal: 'C = 1000 μF, I = 0.10 A, 전파 정류일 때 ΔV ≈ I / (f C) 를 계산해 쓰고, 부하 전류의 영향을 고른 뒤 <b>✔ 확인하기</b>를 눌러요.',
           hint: 'f = 100 Hz, C = 1000 μF = 1.0×10⁻³ F. ΔV = 0.10 / (100 × 1.0×10⁻³) 를 계산해 보세요.',
           setup() { S.w.form = 'bridge'; S.w.ci = 3; S.w.I = 0.10; wSeed(); numR.clear(); resetSels(selSs, selS.st, selS.ok); S.gate = 'ms2'; setScene('supply'); },
-          check: () => { const a = checkNum(numR, 1.0, 0.06, 'ΔV ≈ I / (f C) = 0.10 / (100 × 1.0×10⁻³) 를 계산해 보세요.'); if (a !== true) return a; return checkSel(selSR, selS.st, selS.ok, selSs, '빨간 칸을 다시 생각해 봐요. 부하 전류가 크면 축전기에서 전하가 더 빨리 빠져나가요.'); },
+          check: () => { const a = checkNum(numR, 1.0, 0.12, 'ΔV ≈ I / (f C) = 0.10 / (100 × 1.0×10⁻³) 를 계산해 보세요.'); if (a !== true) return a; return checkSel(selSR, selS.st, selS.ok, selSs, '빨간 칸을 다시 생각해 봐요. 부하 전류가 크면 축전기에서 전하가 더 빨리 빠져나가요.'); },
           status: () => '계산값은 가려 두었어요 (측정 리플은 화면에 보여요: ' + (S.w.rip ? fR(S.w.rip.rip) : '') + ')',
           explain: 'ΔV ≈ I / (fC) = 0.10 / (100 × 1.0×10⁻³) = <b>1.0 V</b>예요. 화면의 측정값(약 0.89 V)이 조금 작은 까닭은 방전이 한 반주기 전체가 아니라 다음 충전이 시작될 때까지만 이어지기 때문이에요. 부하 전류가 커지면 방전 속도(I / C)가 커져서 리플이 커져요.',
         },

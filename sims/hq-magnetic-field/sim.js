@@ -416,7 +416,7 @@
     return (x, y) => {
       const h = 0.7; let ym = CYs - y; if (Math.abs(ym) < 0.6) ym = ym < 0 ? -0.6 : 0.6;
       const fx = (loopPsi(x + h, y, Rpx) - loopPsi(x - h, y, Rpx)) / (2 * h), fy = (loopPsi(x, y + h, Rpx) - loopPsi(x, y - h, Rpx)) / (2 * h);
-      let dx = -fy / ym, dy = fx / ym; const m = Math.hypot(dx, dy); if (m < 1e-12) return null;
+      let dx = -fy / ym, dy = fx / ym; const m = Math.hypot(dx, dy); if (m < 1e-12) return Math.abs(y - CYs) < 1 ? { x: sgn, y: 0 } : null;   // 축 위에서는 B가 축 방향(고리 면에 수직)이에요
       return { x: sgn * dx / m, y: sgn * dy / m };
     };
   }
@@ -527,7 +527,7 @@
     return (x, y) => {
       const h = 0.8; let ym = CYs - y; if (Math.abs(ym) < 0.6) ym = ym < 0 ? -0.6 : 0.6;
       const fx = (solPsiPt(x + h, y) - solPsiPt(x - h, y)) / (2 * h), fy = (solPsiPt(x, y + h) - solPsiPt(x, y - h)) / (2 * h);
-      let dx = -fy / ym, dy = fx / ym; const m = Math.hypot(dx, dy); if (m < 1e-12) return null;
+      let dx = -fy / ym, dy = fx / ym; const m = Math.hypot(dx, dy); if (m < 1e-12) return Math.abs(y - CYs) < 1 ? { x: sgn, y: 0 } : null;   // 축 위에서는 B가 축 방향이에요
       return { x: sgn * dx / m, y: sgn * dy / m };
     };
   }
@@ -583,7 +583,7 @@
     }
     solCompassPos.forEach((p, k) => drawCompass(p.x, p.y, 11, s.needles[k]));
     lbl(CXs, CYs + SOL.R + 40, '길이 0.50 m · 반지름 5.0 cm (감은 선은 일부만 그렸어요)', { size: 12.5, minX: 0, maxX: SC.w, bg: 'rgba(255,255,255,.88)', color: '#516079' });
-    if (s.clamped) T(SC.w - 10, 20, '선이 너무 많아 30개까지만 그렸어요', 12.5, '#9a3412', 'right', 800);
+    if (s.clamped) T(SC.w - 10, 20, '선이 너무 많아 일부만 그렸어요', 12.5, '#9a3412', 'right', 800);
     lbl(CXs, SC.h - 14, '내부는 균일, 외부는 약해요. 선이 많을수록 B가 세요', { size: 12.5, minX: 0, maxX: SC.w, bg: 'rgba(255,255,255,.88)', color: '#516079' });
     sceneEnd();
     panel(STP.x, STP.y, STP.w, STP.h, 14);
@@ -865,7 +865,7 @@
           title: '감은 수 효과 예측하기', manual: true,
           goal: '<b>I = 5.0 A, R = 5.0 cm</b>인 고리를 <b>N = 10번</b> 감으면 중심의 B는 얼마일까요? 계산해 입력하세요.',
           hint: '감은 수가 10배가 되면 B도 10배예요. N = 1일 때 6.3×10⁻⁵ T였어요.',
-          setup() { S.gate = 'ml2'; Object.assign(S.l, { I: 5, R: 5, N: 3, dir: 1 }); numL.clear(); setScene('loop'); },
+          setup() { S.gate = 'ml2'; Object.assign(S.l, { I: 5, R: 5, N: 1, dir: 1 }); numL.clear(); setScene('loop'); },
           check: () => checkNum(numL, 6.28e-4, 0.03, '다시 계산해 보세요. B = 4π×10⁻⁷ × 10 × 5.0 / (2 × 0.050) 이에요.'),
           status: () => 'N = 10일 때의 B는 가려 두었어요',
           explain: 'B = 4π×10⁻⁷ × 10 × 5.0 / (2 × 0.050) = <b>6.3×10⁻⁴ T</b>예요. 고리를 한 번 감을 때마다 전류가 한 번 더 중심 둘레를 돌기 때문에 B ∝ N이에요.',
@@ -902,7 +902,7 @@
         {
           title: 'N극 찾기', manual: true,
           goal: '그림에 보이는 전류 방향(위쪽 단면과 아래쪽 단면의 ⊙·⊗)에서 <b>N극</b>이 생기는 끝을 오른손 규칙으로 찾아 고르세요.',
-          hint: '오른손 손가락을 전류가 도는 방향으로 감아쥐면 엄지가 향하는 끝이 N극이에요. 위쪽 단면에서 ⊗(들어감), 아래쪽 단면에서 ⊙(나옴)이면 전류는 위에서 아래로 앞면을 돌아요.',
+          hint: '오른손 손가락을 전류가 도는 방향으로 감아쥐면 엄지가 향하는 끝이 N극이에요. 위쪽 단면에서 ⊗(들어감), 아래쪽 단면에서 ⊙(나옴)이면 전류는 앞면에서는 아래에서 위로, 뒷면에서는 위에서 아래로 돌아요.',
           setup() { S.gate = 'sl2'; Object.assign(S.s, { n: 2000, I: 1.0, iron: false, dir: -1 }); polClear(); setScene('sol'); },
           check: () => {
             if (!polSt[0]) return 'N극이라고 생각하는 끝을 골라 주세요.';

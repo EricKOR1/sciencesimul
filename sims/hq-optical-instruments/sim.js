@@ -148,11 +148,11 @@
 
   /* ---------- 상수 (화면의 숫자와 모두 같은 값) ---------- */
   const F_CM = 10;                       // 렌즈·거울의 초점거리 (cm)
-  const N_GLASS = 1.52;                  // 프리즘 유리의 굴절률 (전반사 임계각 = 약 41°)
+  const N_GLASS = 1.50;                  // 프리즘 유리의 굴절률 (전반사 임계각 = 약 42°)
   const CRIT = Math.asin(1 / N_GLASS) / rad;   // 임계각 (도)
   const CAM_F = 50, CAM_DMAX = 25, CAM_DMIN = 6.25;   // 카메라: 렌즈 초점거리, 조리개 구멍의 큰 값·작은 값 (mm)
   const CAM_A = { far: Infinity, mid: 5000, near: 500 };   // 피사체까지의 거리 (mm)
-  const C_OK = 0.05, BLUR_K = 50;        // 선명하다고 보는 번짐 지름 (mm), 사진 그림에서 번짐 지름 1 mm당 번짐 픽셀 수
+  const C_OK = 0.07, BLUR_K = 50;        // 선명하다고 보는 번짐 지름 (mm), 사진 그림에서 번짐 지름 1 mm당 번짐 픽셀 수
   const F_O = 1000, F_E = 25, D_O = 50;  // 굴절 망원경: 대물·접안 초점거리, 대물 지름 (mm)
   const TUBE_OK = 3;                     // 초점이 맞는다고 보는 간격 오차 (mm)
   const M_TEL = F_O / F_E;               // 망원경 배율 = 40
@@ -349,7 +349,7 @@
         raySeg([[xL, y], [hx, y], [hx, MA.y + 36]]);
       });
       D.label(Xm + Lm + 40, yc + Lm + 6, '평면거울 (45°로 세움)', { size: PHONE ? 11.5 : 13, bg: '#6b7280' });
-      T(Xm - 26, MA.y + 56, '위로 꺾여도 평행해요', PHONE ? 11.5 : 13, '#5d6879', 'center', 800);
+      D.label(Xm + (PHONE ? 100 : 150), MA.y + 60, '위로 꺾여도 평행해요', { size: PHONE ? 11.5 : 13, bg: '#6b7280' });
     } else {
       drawPrism(yc, xL, xR);
     }
@@ -387,7 +387,7 @@
       lams.forEach((l) => {
         const pts = tracePoly(xL, y0, ca, -sa, [poly], prN(l), 1000);
         // 마지막 점은 스크린 위치(endX)에서 자르기
-        const out = []; for (let i = 0; i < pts.length; i++) { out.push(pts[i]); if (i && pts[i][0] > endX) break; }
+        const out = []; for (let i = 1; i < pts.length; i++) { out.push(pts[i]); if (pts[i][0] > endX) break; }   // 들어오는 흰빛 구간(i = 0)은 따로 그려요
         const last = out[out.length - 1], pv = out[out.length - 2];
         if (last[0] > endX && pv) { const tt = (endX - pv[0]) / (last[0] - pv[0]); out[out.length - 1] = [endX, pv[1] + (last[1] - pv[1]) * tt]; }
         lineTo2(out, wlColor(l), 2.8, 0.95); outs.push(out[out.length - 1][1]);
@@ -646,7 +646,7 @@
     box(bx, by1, '눈으로 직접 보면', (cx, cy) => { const s1 = PHONE ? 26 : 40; const sepPx = STAR_SEP * s1; starBlob(cx - sepPx / 2, cy, EYE_LIM * s1, '#fff', 0.9); starBlob(cx + sepPx / 2, cy, EYE_LIM * s1, '#fff', 0.9); T(cx, cy + bh / 2 - 14, '한 점으로 보여요', PHONE ? 12 : 13, '#ffd24a', 'center', 800); });
     const sc2 = PHONE ? 0.7 : 1;
     box(bx2, by2, '망원경으로 보면 (' + M_TEL + '배)', (cx, cy) => { const sepPx = e.sep * sc2, br = e.blobR * sc2; starBlob(cx - sepPx / 2, cy, br, '#fff', 0.95); starBlob(cx + sepPx / 2, cy, br, '#fff', 0.95); const lab = e.focusOK ? (e.resolved ? '두 점으로 보여요!' : '흐려요') : '초점이 안 맞아 흐려요'; T(cx, cy + bh / 2 - 14, lab, PHONE ? 12 : 13, e.focusOK && e.resolved ? '#7dffb0' : '#ff9d7a', 'center', 800); });
-    D.label(X(L) + (PHONE ? 20 : 70), MA.y + 54, e.focusOK ? '초점이 맞아요' : '초점을 맞춰 보세요', { size: PHONE ? 12 : 13.5, bg: e.focusOK ? '#14a058' : '#e8501b' });
+    D.label(X(L) + (PHONE ? 20 : 70), MA.y + (PHONE ? 38 : 54), e.focusOK ? '초점이 맞아요' : '초점을 맞춰 보세요', { size: PHONE ? 12 : 13.5, bg: e.focusOK ? '#14a058' : '#e8501b' });
   }
   function drawReflector() {
     const kx = PHONE ? 0.28 : 0.42, yc = MA.y + (PHONE ? 200 : 250), xm = MA.x + (PHONE ? 380 : 500), Fp = 1000 * kx, D2 = 200;
@@ -713,12 +713,14 @@
     D.arrow(X(b), yc, X(b), Y(yi), { color: '#14a058', width: 3, head: 7 });
     D.label(X(b), Y(yi) + (yi < 0 ? 24 : -24), '확대된 실상 (' + M + '배)', { size: PHONE ? 11 : 12.5, bg: '#14a058' });
     // 렌즈
+    const yEs = [[1.4, (1.4 - h) / a], [-1.4, (-1.4 - h) / a], [0, -h / a]].map(([y0, m0]) => Math.abs(y0 + (m0 - y0 / f) * xe));   // 접안렌즈에 닿는 광선의 높이 (mm)
+    const eyeH = Math.max(22, Math.max.apply(null, yEs) * ky + 12);      // 광선이 모두 렌즈 안을 지나도록 접안렌즈를 크게 그려요
     lensShape(X(0), yc, 24, 4); T(X(0), yc + 44, '대물렌즈', PHONE ? 11.5 : 12.5, '#26324a', 'center', 800);
-    lensShape(X(xe), yc, 22, 6); T(X(xe), yc + 44, '접안렌즈', PHONE ? 11.5 : 12.5, '#26324a', 'center', 800);
+    lensShape(X(xe), yc, eyeH, 6); T(X(xe), yc - eyeH - 8, '접안렌즈', PHONE ? 11.5 : 12.5, '#26324a', 'center', 800);
     T(X(-a) - 4, yc - 30, '세포', 12.5, '#14a058', 'right', 800);
-    D.sphere(X(xe + 96 / kx), yc, 11, '#f3f6fc', { shadow: true, gloss: false }); D.sphere(X(xe + 90 / kx), yc, 5, '#26324a', { gloss: false }); T(X(xe + 96 / kx), yc + 30, '눈', 12.5, '#26324a', 'center', 800);
+    D.sphere(X(xe + 96 / kx), yc, 11, '#f3f6fc', { shadow: true, gloss: false }); D.sphere(X(xe + 90 / kx), yc, 5, '#26324a', { gloss: false }); T(X(xe + 96 / kx), yc - 20, '눈', 12.5, '#26324a', 'center', 800);
     // 시야의 세포 (배율에 따라 커져요)
-    const fx = PHONE ? MA.x + 120 : MA.x + 668, fy2 = PHONE ? MA.y + 306 : MA.y + 326, fr = PHONE ? 60 : 72, s = S.sc.micD / 100;
+    const fx = PHONE ? MA.x + 120 : MA.x + 668, fy2 = PHONE ? MA.y + 306 : MA.y + 308, fr = PHONE ? 60 : 72, s = S.sc.micD / 100;
     ctx.save(); ctx.beginPath(); ctx.arc(fx, fy2, fr, 0, TAU); ctx.clip();
     ctx.fillStyle = '#f4f8ff'; ctx.fillRect(fx - fr, fy2 - fr, fr * 2, fr * 2);
     const cr = (PHONE ? 10 : 12) * s;
@@ -730,7 +732,7 @@
     }
     ctx.restore(); ctx.strokeStyle = '#6d7686'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(fx, fy2, fr, 0, TAU); ctx.stroke();
     T(fx, fy2 - fr - 10, '눈에 보이는 시야', PHONE ? 12 : 13, '#26324a', 'center', 800);
-    D.label(PHONE ? MA.x + 330 : MA.x + 668, fy2 + (PHONE ? 6 : fr + 20), '대물 ×' + M + ' × 접안 ×' + MIC_EYE + ' = ' + (M * MIC_EYE) + '배', { size: PHONE ? 12 : 14, bg: '#8b5cf6' });
+    D.label(PHONE ? MA.x + 330 : MA.x + 668, fy2 + (PHONE ? 6 : fr + 18), '대물 ×' + M + ' × 접안 ×' + MIC_EYE + ' = ' + (M * MIC_EYE) + '배', { size: PHONE ? 12 : 14, bg: '#8b5cf6' });
   }
   function drawBino() {
     const s = PHONE ? 78 : 104, xA = MA.x + (PHONE ? 190 : 330), yA = MA.y + (PHONE ? 104 : 150), xB = xA, yB = yA + 16;

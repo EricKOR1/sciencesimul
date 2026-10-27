@@ -181,13 +181,13 @@
       const a1 = -GM / (w.r * w.r); w.v += 0.5 * (a0 + a1) * h; total -= h;
       if (pv > 0 && w.v <= 0 && !w.apex) {
         w.apex = w.r;
-        if (etot(w.v0) < 0) { wRecord(w.v0); if (w.v0 >= 11.0) w.retSeen = true; w.msg = '최고점 도달! 총 에너지가 음수라서 여기서 멈추고 되돌아가요'; Sound.click(); }
+        if (etot(w.v0) < 0) { wRecord(w.v0); if (w.v0 >= 11.0) w.retSeen = true; w.msg = PHONE ? '최고점! E합 < 0 → 되돌아가요' : '최고점 도달! 총 에너지가 음수라서 여기서 멈추고 되돌아가요'; Sound.click(); }
       }
-      if (w.r <= RE && w.v < 0) { w.r = RE; w.st = 'end'; w.rst = 2.4; w.msg = '지표로 되돌아왔어요 (최고 고도 ' + sci(hmaxOf(w.v0), 1) + ' km)'; w.burst = 1; break; }
+      if (w.r <= RE && w.v < 0) { w.r = RE; w.st = 'end'; w.rst = 2.4; w.msg = PHONE ? '지표로 되돌아왔어요' : '지표로 되돌아왔어요 (최고 고도 ' + sci(hmaxOf(w.v0), 1) + ' km)'; w.burst = 1; break; }
       if (w.r >= 100 * RE) {
         w.r = 100 * RE;
-        if (etot(w.v0) >= 0) { w.st = 'end'; w.rst = 3.2; w.esc = true; w.escSeen = w.escSeen || (w.v0 >= 11.2 && w.v0 <= 11.3); w.msg = '탈출! 총 에너지가 0 이상이라 다시 돌아오지 않아요'; w.burst = 2; }
-        else { w.st = 'end'; w.rst = 2.4; w.msg = '아주 멀리까지 갔다가 되돌아와요'; }
+        if (etot(w.v0) >= 0) { w.st = 'end'; w.rst = 3.2; w.esc = true; w.escSeen = w.escSeen || (w.v0 >= 11.2 && w.v0 <= 11.3); w.msg = PHONE ? '탈출! E합 ≥ 0 → 안 돌아와요' : '탈출! 총 에너지가 0 이상이라 다시 돌아오지 않아요'; w.burst = 2; }
+        else { w.st = 'end'; w.rst = 2.4; w.msg = PHONE ? '아주 멀리 갔다 되돌아와요' : '아주 멀리까지 갔다가 되돌아와요'; }
         break;
       }
     }
@@ -213,7 +213,7 @@
     ctx.fillStyle = 'rgba(70,170,100,.85)'; ctx.beginPath(); ctx.ellipse(c.x + lw * 0.3, yb + 24, 26, 9, 0.1, 0, TAU); ctx.fill(); ctx.beginPath(); ctx.ellipse(c.x + lw * 0.85, yb + 28, 20, 7, -0.1, 0, TAU); ctx.fill();
     // 자취
     if (w.trail.length > 1) { ctx.strokeStyle = 'rgba(255,200,90,.85)'; ctx.lineWidth = 3; ctx.setLineDash([2, 5]); ctx.beginPath(); ctx.moveTo(sx, Y(w.trail[0])); w.trail.forEach((r) => ctx.lineTo(sx, Y(r))); ctx.stroke(); ctx.setLineDash([]); }
-    if (w.apex) { const ya = Y(w.apex); D.dashedLine(ax, ya, c.x + lw - 6, ya, { color: '#ffe58a', width: 1.5, dash: [4, 4] }); D.label(sx + (PHONE ? 4 : 0), ya - 14, '최고점 ' + sci((w.apex - RE) / 1000, 1) + ' km', { bg: 'rgba(30,41,59,.88)', size: 13, pad: 6 }); }
+    if (w.apex) { const ya = Y(w.apex); D.dashedLine(ax, ya, c.x + lw - 6, ya, { color: '#ffe58a', width: 1.5, dash: [4, 4] }); D.label(sx + (PHONE ? -14 : 0), ya - 14, (PHONE ? '' : '최고점 ') + sci((w.apex - RE) / 1000, 1) + ' km', { bg: 'rgba(30,41,59,.88)', size: 13, pad: 6 }); }
     // 우주선
     const sy = Y(w.r);
     if (w.st === 'run') { const fl = w.apex ? 0 : 0; rocket(sx, sy - 18, w.v >= 0 ? 0 : Math.PI, 0.7, fl, S.clock); }
@@ -717,7 +717,7 @@
     [[0.3, 0.55, 0.3], [2.1, 0.5, 0.26], [3.9, 0.45, 0.3], [5.2, 0.6, 0.22]].forEach((q) => { const a = q[0] + S.clock * 0.05; ctx.beginPath(); ctx.arc(ecx + Math.cos(a) * EARTH_R * q[1], ecy - Math.sin(a) * EARTH_R * q[1], EARTH_R * q[2], 0, TAU); ctx.fill(); }); ctx.restore();
     // 자전 방향 (동쪽 = 왼쪽, 북극 위에서 보면 반시계)
     ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(ecx, ecy, EARTH_R * 0.55, -Math.PI * 0.95, -Math.PI * 0.05, true); ctx.stroke();
-    D.arrow(ecx + EARTH_R * 0.55 * Math.cos(-Math.PI * 0.95) + 1, ecy + EARTH_R * 0.55 * Math.sin(-Math.PI * 0.95) + 6, ecx + EARTH_R * 0.55 * Math.cos(-Math.PI * 0.95) - 2, ecy + EARTH_R * 0.55 * Math.sin(-Math.PI * 0.95) - 2, { color: '#fff', width: 2.5, head: 9 });
+    D.arrow(ecx + EARTH_R * 0.55 * Math.cos(-Math.PI * 0.05) + 1, ecy + EARTH_R * 0.55 * Math.sin(-Math.PI * 0.05) + 8, ecx + EARTH_R * 0.55 * Math.cos(-Math.PI * 0.05) - 1, ecy + EARTH_R * 0.55 * Math.sin(-Math.PI * 0.05) - 2, { color: '#fff', width: 2.5, head: 9 });
     T(ecx, ecy + 8, '자전', 13, '#fff', 'center', 800, { stroke: 'rgba(0,0,0,.4)', strokeWidth: 3 });
     // 발사 지점(적도)
     const lx = ecx, ly = ecy - EARTH_R;

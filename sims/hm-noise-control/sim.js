@@ -128,7 +128,7 @@
   const WALK = 10;                                                                     // 걷는 선까지의 거리 (m)
   function paths(x, d) { const r1 = Math.hypot(x + d / 2, WALK), r2 = Math.hypot(x - d / 2, WALK); return { r1, r2, dr: Math.abs(r1 - r2) }; }
   const ampSpk = (dr, lam) => 2 * Math.abs(Math.cos(Math.PI * dr / lam));
-  const isDarkSpot = (dr, lam) => dr > 1e-6 && Math.abs(dr - lam / 2) <= 0.03 * lam;
+  const isDarkSpot = (dr, lam) => dr > 1e-6 && Math.abs(dr - lam / 2) <= Math.max(0.01 * lam, 0.006);      // 0.1 m 칸에서 가장 가까운 자리만 인정 (680 Hz: 2.6 m, 340 Hz: 5.7~5.9 m)
   /* 능동 소음 제거: 소음 sin(ωt), 스피커 소리 B sin(ωt + ψ), ψ = 설정한 위상 − 360° f t_d (지연 때문에 늦어져요) */
   function ancCalc() {
     const a = S.anc, B = a.B / 100, psi = a.phi - 360 * a.f * a.td / 1e5;

@@ -33,7 +33,12 @@
     for (const ch of str) {
       if (ch === '\n') { out.push(line); line = ''; continue; }
       const t = line + ch;
-      if (ctx.measureText(t).width > maxW && line) { out.push(line); line = ch.trim() === '' ? '' : ch; } else line = t;
+      if (ctx.measureText(t).width > maxW && line) {
+        if (/[.,;:!?)%]/.test(ch)) { line = t; continue; }                       // 문장부호가 줄 맨 앞에 오지 않게
+        const m = /[A-Za-z0-9_.(]+$/.exec(line);                                  // 숫자·영문 덩어리(예: (5.0)는 쪼개지 않기
+        if (m && m.index > 0 && /[A-Za-z0-9_]/.test(ch)) { out.push(line.slice(0, m.index)); line = m[0] + ch; }
+        else { out.push(line); line = ch.trim() === '' ? '' : ch; }
+      } else line = t;
     }
     if (line) out.push(line);
     ctx.restore(); return out;
@@ -452,7 +457,7 @@
     infoPanel([
       { h: '트랜지스터 증폭기' },
       { p: '바이어스(직류) I_B0 가 I_C 의 중심을 정하고, 작은 신호 ± ΔI_B 가 ± β ΔI_B 의 I_C 변화를 만들어요.', c: COL_BLUE },
-      { tbl: [['I_C = β I_B', '± 10 μA → ± 1.0 mA', ''], ['v_C = 9 − R_C I_C', 'R_C 전압 ± 2.0 V', '']], c1: 0.42 },
+      { tbl: [['I_C = β I_B', '± 10 μA → ± 1.0 mA', ''], ['v_C = 9 − R_C I_C', mk ? 'R_C 전압 ± ? V' : 'R_C 전압 ± 2.0 V', '']], c1: 0.52 },
       { p: '출력 v_C 는 입력과 위상이 반대예요: i_B ↑ → I_C ↑ → R_C 의 전압 ↑ → 컬렉터 전압 ↓.', c: '#9a3412' },
       { p: '바이어스가 0이면 입력의 양(+) 반쪽만 증폭돼요. 너무 크면 I_C 가 한계(4.4 mA)에 닿아 파형이 잘려요.' },
       { p: '🏭 마이크·센서 신호 증폭, 라디오·오디오 앰프의 기본 회로예요.', c: '#0b7a41', big: 1 },

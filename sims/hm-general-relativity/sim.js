@@ -172,9 +172,9 @@
       D.space(x, y, w, h, S.clock, { stars: 40 });
       const gy = y + h - 58, yf = free ? 0 : 0.5 * G9 * t * t, fy = gy - yf * SC2;
       ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.setLineDash([5, 5]); ctx.lineWidth = 1.5; ctx.strokeRect(rx, gy - rhh, rw, rhh); ctx.setLineDash([]);
-      T(rx - 4, gy - rhh - 6, '처음 위치', 13, '#cfe0ff', 'left', 700);
-      if (!free && e.st !== 'ready') { const fl = 16 + Math.sin(S.clock * 40) * 3; D.glow(rx + rw / 2, fy + fl / 2 + 6, 28, '#ffa733', 0.45); ctx.fillStyle = '#ffa733'; ctx.beginPath(); ctx.moveTo(rx + rw / 2 - 12, fy); ctx.quadraticCurveTo(rx + rw / 2, fy + fl * 2, rx + rw / 2 + 12, fy); ctx.closePath(); ctx.fill(); }
+            if (!free && e.st !== 'ready') { const fl = 16 + Math.sin(S.clock * 40) * 3; D.glow(rx + rw / 2, fy + fl / 2 + 6, 28, '#ffa733', 0.45); ctx.fillStyle = '#ffa733'; ctx.beginPath(); ctx.moveTo(rx + rw / 2 - 12, fy); ctx.quadraticCurveTo(rx + rw / 2, fy + fl * 2, rx + rw / 2 + 12, fy); ctx.closePath(); ctx.fill(); }
       ctx.fillStyle = 'rgba(223,230,243,.95)'; ctx.fillRect(rx, fy - rhh, rw, rhh); ctx.strokeStyle = '#7b869a'; ctx.lineWidth = 3; ctx.strokeRect(rx, fy - rhh, rw, rhh);
+      D.label(rx + rw / 2, gy + 20, '점선: 처음 위치', { bg: 'rgba(255,255,255,.2)', color: '#fff', size: 13, pad: 6 });
       let byy = gy - H_REL * SC2; if (!free && yf >= H_REL) byy = fy;
       const lx = rx + rw * 0.45, hx = rx + rw * 0.7;
       D.sphere(lx, byy - 4, 5, '#ffd447', { gloss: false }); D.sphere(hx, byy - 7, 7.5, '#475569', { gloss: false });
@@ -884,7 +884,6 @@
     if (game && game.level !== lastLevel) { lastLevel = game.level; const al = allowedModes(); if (al.indexOf(S.mode) < 0) setScene(al[0]); else updateCtl(); }
     view.apply();
     eqStep(dt); lzStep(dt); shStep(dt); dlStep(dt); gpStep(dt);
-    if (S.mode === 'gps' && !showCalc('gin')) S.gp.seen[S.gp.day] = true;
     switch (S.mode) {
       case 'equiv': drawEquiv(dt); break;
       case 'laser': drawLaser(dt); break;

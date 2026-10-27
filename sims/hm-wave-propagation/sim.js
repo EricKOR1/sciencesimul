@@ -668,7 +668,7 @@
     const m = S.mode, sc = S.sc;
     if (m === 'model') {
       const ok = S.meas.v != null && S.meas.k === S.kv && S.meas.m === S.mv;
-      L1 = 'k / m'; a = KS[S.kv] + ' N/m / ' + fm3(MS[S.mv]) + ' kg'; L2 = '펄스 속력 v (측정)'; b = ok ? fx(S.meas.vr, 1) + ' m/s' : '—'; L3 = '표시점 통과'; c = S.mk.max.filter((v) => v >= 0.8 * A_T).length + ' / 3';
+      L1 = 'k / m'; a = KS[S.kv] + ' N/m / ' + fm3(MS[S.mv]) + ' kg'; L2 = '펄스 속력 v'; b = ok ? fx(S.meas.vr, 1) + ' m/s' : '—'; L3 = '표시점 통과'; c = S.mk.max.filter((v) => v >= 0.8 * A_T).length + ' / 3';
     } else if (m === 'lt') {
       const tm = S.lt.time[S.lt.dir];
       L1 = '파동'; a = S.lt.dir === 'T' ? '횡파 (↕)' : '종파 (↔)'; L2 = '4.0 m 통과 시간'; b = tm == null ? '—' : fx(tm, 2) + ' s'; L3 = '진동 방향'; c = S.lt.dir === 'T' ? '진행에 수직' : '진행과 나란함';

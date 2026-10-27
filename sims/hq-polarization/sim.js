@@ -230,7 +230,8 @@
   }
   function measureNote() {
     const k = keyOf(S.sv.dev, S.sv.lying), cov = Object.keys(S.sv.bins[k] || {}).length;
-    return S.sv.done[k] ? '✅ 이 기기 측정을 마쳤어요.' : '측정한 각도 ' + cov + ' / ' + NB + '칸 (0°~180° 모두 지나가야 해요)';
+    const tail = S.sv.lying ? ' (표에는 세워서 잰 값을 적어요)' : '';
+    return S.sv.done[k] ? '✅ 이 기기 측정을 마쳤어요.' + tail : '측정한 각도 ' + cov + ' / ' + NB + '칸 (0°~180° 모두 지나가야 해요)' + tail;
   }
   $$('#modeSeg button').forEach((b) => b.addEventListener('click', () => { Sound.click(); setScene(b.dataset.mode); }));
   const sheetSeg = bindSeg('sheetSeg', (v) => { S.pol.n = +v; if (S.pol.n === 3) { S.pol.seen3 = S.pol.seen3 || false; setAng(45); } else if (S.pol.n === 2) setAng(S.pol.ang); updateCtl(); });
@@ -247,7 +248,7 @@
   function setAng(a) { S.pol.ang = a; slA.set(a); }
   function trackFil() { S.mk.filMin = Math.min(S.mk.filMin, S.mk.fil); S.mk.filMax = Math.max(S.mk.filMax, S.mk.fil); }
   function selectDev(id) {
-    S.sv.dev = id; S.sv.auto = false; S.sv.ang = 0; S.sv.prev = 0; slM.set(0);
+    S.sv.dev = id; S.sv.lying = false; S.sv.auto = false; S.sv.ang = 0; S.sv.prev = 0; slM.set(0);   // 기기를 바꾸면 세워 놓은 상태에서 다시 시작해요 (표는 세워서 잰 값)
     const k = keyOf(id, S.sv.lying); if (!S.sv.bins[k]) S.sv.bins[k] = {}; S.sv.bins[k][0] = true; completeIf(k);
     updateCtl();
   }

@@ -250,12 +250,13 @@
     const G = airTube(c, r.L / 10, r.f, r.t, { eff: revealed('eff') });
     const A = loud(r.L / 10, r.f, r.t), ix = G.cx + (PHONE ? 130 : 178), iw = c.x + c.w - 12 - ix;
     T(ix, c.y + 70, 'L = ' + fx(r.L / 10, 1) + ' cm', 20, '#1d4ed8', 'left', 800);
-    T(ix, c.y + 96, '입구에서 수면까지 (눈금자로 읽어요)' + (revealed('eff') ? ' · 붉은 점선: 실제 배는 입구에서 0.6r 위' : ''), 13.5, MUTED, 'left', 700);
+    T(ix, c.y + 96, '입구에서 수면까지 (눈금자로 읽어요)', 13.5, MUTED, 'left', 700);
     T(ix, c.y + 136, '🔊 소리 크기 ' + Math.round(A * 100) + ' %', 16, A >= 0.9 ? GREEN_D : INK, 'left', 800);
     D.roundRect(ix, c.y + 148, Math.min(iw, 250), 18, 9); ctx.fillStyle = '#e4e9f3'; ctx.fill();
     ctx.save(); D.roundRect(ix, c.y + 148, Math.min(iw, 250), 18, 9); ctx.clip(); ctx.fillStyle = A >= 0.9 ? GREEN : ORANGE; ctx.fillRect(ix, c.y + 148, Math.min(iw, 250) * A, 18); ctx.restore();
     if (!PHONE) para(ix, c.y + 196, A >= 0.9 ? '소리가 가장 커졌어요! 이 위치가 공명 위치예요.' : '수면을 움직이며 소리가 가장 커지는 곳(공명)을 찾아요.', iw, 14, A >= 0.9 ? GREEN_D : MUTED, 20, 700);
     else para(ix, c.y + 196, A >= 0.9 ? '소리가 가장 커졌어요!' : '소리가 가장 커지는 곳을 찾아요.', iw, 13.5, A >= 0.9 ? GREEN_D : MUTED, 19, 700);
+    if (revealed('eff')) para(ix, c.y + 250, '붉은 점선: 실제 배는 입구에서 0.6r 위에 있어요.', iw, 13.5, '#b91c1c', 18, 700);
     T(ix, c.y + c.h - 10, PHONE ? '관의 폭은 넓혀 그렸어요' : '관의 폭은 넓혀 그렸어요 (안지름 5.0 cm)', 12.5, MUTED, 'left', 700);
     ctx.restore();
     panel(PX, PY, PW, PH, 16);
@@ -278,7 +279,7 @@
   function drawMeasScene() {
     const c = topCard(), m = S.ms, run = m.run; cardBegin(c);
     T(c.x + 14, c.y + 24, '📏 ΔL로 소리의 속력 재기: 소리굽쇠 ' + m.f + ' Hz, 기온 ' + m.t + ' °C', PHONE ? 12.5 : 15, INK, 'left', 800);
-    const Lc = run ? run.L : 30, G = airTube(c, Lc, m.f, m.t, { eff: revealed('eff') });
+    const Lc = run ? run.L : (m.meas[m.f] && m.meas[m.f].t === m.t ? m.meas[m.f].L2 : 30), G = airTube(c, Lc, m.f, m.t, { eff: revealed('eff') });
     // 눈금자 위에 찾은 공명 위치 표시
     const cur = m.meas[m.f] && m.meas[m.f].t === m.t ? m.meas[m.f] : null, got = run ? run.found : cur ? [cur.L1, cur.L2] : [];
     got.forEach((Lx, i) => { ctx.strokeStyle = '#dc2626'; ctx.lineWidth = 2.4; ctx.beginPath(); ctx.moveTo(G.cx - G.tw / 2 - 16, G.Y(Lx)); ctx.lineTo(G.cx + G.tw / 2 + 4, G.Y(Lx)); ctx.stroke(); D.label(G.cx + G.tw / 2 + 14, G.Y(Lx), 'L' + (i ? '₂' : '₁'), { bg: '#dc2626', size: 13, align: 'left' }); });
@@ -326,11 +327,11 @@
   const BOT_L = 0.20, botL = () => BOT_L - S.bt.h / 100, botF = () => vT(20) / (4 * botL());
   function specRow(M, y, f, kind, hl, hide) {
     const top = M.iy + y, hgt = (M.ih / 2) - 46;
-    ctx.fillStyle = hl ? 'rgba(245,158,11,.12)' : 'rgba(0,0,0,0)'; if (hl) { D.roundRect(M.ix, top - 2, M.iw, hgt + 26, 8); ctx.fill(); }
+    ctx.fillStyle = hl ? 'rgba(245,158,11,.12)' : 'rgba(0,0,0,0)'; if (hl) { D.roundRect(M.ix, top - 2, M.iw, hgt + 44, 8); ctx.fill(); }
     for (let k = 1; k <= 16; k++) {
-      const h = kind === 'open' ? k : 2 * k - 1, fr = h * f; if (fr > 2400) break;
+      const h = kind === 'open' ? k : 2 * k - 1, fr = h * f, fl = h * Math.round(f); if (fr > 2400) break;
       const x = M.gx(fr), a = 1 / h, bh = a * hgt; ctx.fillStyle = k === 1 ? ORANGE : kind === 'open' ? '#6d8fd0' : '#c08a55'; ctx.fillRect(x - 4, top + hgt - bh + 38, 8, bh);
-      if (k <= 3 && !hide) T(x, top + hgt - bh + 34, fx(fr, 0), 13, '#334155', 'center', 800);
+      if (k <= 3 && !hide) T(x, top + hgt - bh + 34, fx(fl, 0), 13, '#334155', 'center', 800);
     }
   }
   function drawWindScene() {
@@ -546,8 +547,8 @@
             const a = num('iLo'), b = num('iLc'); if (a == null || b == null) return '두 칸을 모두 입력해 주세요 (m).';
             const oks = [near(a, 1.0, 0.03), near(b, 2.0, 0.05)]; fb([[$('#iLo'), oks[0]], [$('#iLc'), oks[1]]]);
             if (oks.every(Boolean)) { S.tb.lamOK = true; return true; }
-            if (near(a, 0.5, 0.03) || near(b, 1.0, 0.03)) return '관의 길이가 한 파장이 아니에요. 열린 관은 L = λ/2, 닫힌 관은 L = λ/4예요.';
             if (oks[0] && near(b, 1.0, 0.05)) return '닫힌 관의 기본음은 L = λ/4예요. λ = 4L이에요.';
+            if (near(a, 0.5, 0.03) || near(b, 1.0, 0.03)) return '관의 길이가 한 파장이 아니에요. 열린 관은 L = λ/2, 닫힌 관은 L = λ/4예요.';
             return '열린 관의 λ = 2L, 닫힌 관의 λ = 4L이에요. L = 0.50 m를 넣어 계산해요.';
           },
           status: () => '입력 ' + ($('#iLo').value.trim() || '—') + ' m, ' + ($('#iLc').value.trim() || '—') + ' m',

@@ -180,7 +180,7 @@
   function hitSpark(x0, py) { return (x) => { if (RM) return; if (Math.random() < 0.55) parts.emit({ x: x0 + x, y: py + 2, vx: (Math.random() - 0.5) * 60, vy: 40 + Math.random() * 30, life: 0.28, size: 2.4, color: 'rgba(255,200,60,.95)', gravity: 0, fade: true }); }; }
 
   /* ================= ① 기체 모형 ================= */
-  const MV = { N: 24, kpx: PHONE ? 4.8 : 5, W: PHONE ? 112 : 150 };
+  const MV = { N: 24, kpx: PHONE ? 4.4 : 4.6, W: PHONE ? 112 : 150 };
   const Pm = () => K0 * S.m.T / S.m.V;
   function drawModel(dt) {
     const c = topCard(), m = S.m, P = Pm();
@@ -228,7 +228,7 @@
   }
 
   /* ================= ② 센서 실험 ================= */
-  const SXK = PHONE ? 7.6 : 8;
+  const SXK = PHONE ? 6.6 : 7;
   const sxCur = () => sxRead(S.sx.exp, S.sx.x[S.sx.exp]);
   function sxFit(ex) {
     const r = S.sx.rec[ex]; if (r.length < 3) return null;
@@ -395,7 +395,7 @@
     const gw = PHONE ? PW - 12 : 340, gh = PHONE ? 150 : PH - 8, gx0 = PHONE ? PX + 6 : PX + PW - gw - 4, gy0 = PHONE ? PY + PH - gh - 4 : PY + 4;
     const a = axes({ x: gx0, y: gy0, w: gw, h: gh }, { xmin: 0, xmax: 3, xstep: 0.5, ymin: 0, ymax: 30, ystep: 10, title: 'PV / T – n', xl: 'n (mol)' });
     ctx.strokeStyle = 'rgba(37,99,235,.7)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(a.gx(0), a.gy(0)); ctx.lineTo(a.gx(3), a.gy(3 * R_GAS)); ctx.stroke();
-    if (!hidden) { const pvT = o.P * o.V / o.T * 1000 / 1000; D.sphere(a.gx(clamp(o.n, 0, 3)), a.gy(clamp(pvT * 1, 0, 30)), 7, '#e2464b', { gloss: false }); T(a.gx(clamp(o.n, 0, 3)), a.gy(clamp(pvT, 0, 30)) - 12, f2(pvT) + ' J/K', 13, '#b91c1c', 'center', 800); }
+    if (!hidden) { const pvT = o.P * o.V / o.T; D.sphere(a.gx(clamp(o.n, 0, 3)), a.gy(clamp(pvT * 1, 0, 30)), 7, '#e2464b', { gloss: false }); T(Math.min(a.gx(clamp(o.n, 0, 3)), a.ix + a.iw - 30), a.gy(clamp(pvT, 0, 30)) - 12, f2(pvT) + ' J/K', 13, '#b91c1c', 'center', 800); }
     T(a.ix + a.iw - 6, a.gy(3 * R_GAS) + 20, '기울기 = R = 8.31 J/(mol·K)', 13, '#1d4ed8', 'right', 800);
     if (!PHONE) { T(x1, PY + 118, 'PV / T = n R  →  기체의 양 n에 비례해요', 14, '#1d4ed8', 'left', 800); T(x1, PY + 144, '같은 온도·압력에서 같은 부피 → 같은 분자 수', 13.5, MUTED, 'left', 800); T(x1, PY + 168, '(기체의 종류와 상관없어요)', 13.5, MUTED, 'left', 800); }
   }
@@ -674,7 +674,7 @@
           check() {
             const v = num('iZ'); if (v == null) return '온도를 숫자로 입력해 주세요 (°C).';
             const ok = v >= -290 && v <= -255; fb([[$('#iZ'), ok]]);
-            if (ok) return true;
+            if (ok) { setFlag('zero', false); return true; }
             if (v > -20) return '연장선이 x축과 만나는 곳은 0 °C보다 훨씬 낮은 곳이에요. −300 ~ −200 사이를 봐요.';
             if (v === 273 || v === 0) return '부호를 확인해요. 0 °C보다 낮은 온도라 음수예요.';
             return '그래프에서 점선이 x축과 만나는 눈금을 읽어 보세요 (약 −270 °C 근처).';
@@ -730,7 +730,7 @@
           check() {
             const v = num('iV'); if (v == null) return '부피를 숫자로 입력해 주세요 (L).';
             const ok = v >= 24 && v <= 26; fb([[$('#iV'), ok]]);
-            if (ok) return true;
+            if (ok) { setFlag('vol', false); return true; }
             if (nearRel(v, 0.0249, 0.1)) return '단위를 확인해요. 0.0249 m³는 24.9 L예요 (1 m³ = 1000 L).';
             if (nearRel(v, 24.9 * 1000, 0.1)) return 'm³를 L로 바꿀 때 1000을 곱해요. 1000으로 나누지 않아요.';
             return 'V = nRT / P = (1 × 8.31 × 300) / (1.0 × 10⁵)을 계산한 뒤 L로 바꿔 보세요.';
@@ -771,7 +771,7 @@
             if (xs.some((x) => x == null)) return '세 칸에 모두 숫자를 입력해 주세요.';
             const ans = [177.3, 12, 18], tol = [3, 0.5, 0.5], oks = xs.map((x, i) => Math.abs(x - ans[i]) <= tol[i]);
             fb(oks.map((o, i) => [$('#' + ['iTire', 'iLung', 'iBal'][i]), o]));
-            if (oks.every(Boolean)) return true;
+            if (oks.every(Boolean)) { setFlag('app', false); return true; }
             if (!oks[0] && Math.abs(xs[0] - 190.7) <= 3) return '타이어는 계기압이 아니라 절대 압력(계기압 + 100 kPa)에 비례해요. 절대 압력으로 계산한 뒤 100 kPa를 빼요.';
             if (!oks[0] && Math.abs(xs[0] - 277.3) <= 3) return '그것은 절대 압력이에요. 계기압은 절대 압력에서 대기압 100 kPa를 뺀 값이에요.';
             if (!oks[1]) return '폐: 압력이 2기압 → 1기압으로 절반이 되면 부피는 2배가 돼요 (온도 일정).';

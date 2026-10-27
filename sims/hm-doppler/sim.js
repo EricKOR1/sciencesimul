@@ -203,7 +203,7 @@
     else { D.label(ax + 6, roadY + 6, '🧑‍✈️ 운전자가 들어요', { bg: '#475569', size: 13 }); }
     // 듣는 진동수 표시
     const cur = a.trace.length ? a.trace[a.trace.length - 1][1] : (inside ? AF : ambObs(0, vs));
-    const bx = c.x + c.w - 190, by = c.y + 44;
+    const bx = c.x + c.w - 190, by = c.y + c.h - 66;      // 구급차 이름표(v_s)와 겹치지 않게 아래 칸에 둬요
     D.roundRect(bx, by, 176, 52, 12); ctx.fillStyle = '#1e293b'; ctx.fill();
     T(bx + 88, by + 20, inside ? '운전자가 듣는 소리' : '길가에서 듣는 소리', 13, '#94a3b8', 'center', 800); T(bx + 88, by + 43, fx(cur, 0) + ' Hz', 20, cur > AF + 2 ? '#fca5a5' : cur < AF - 2 ? '#93c5fd' : '#fff', 'center', 800);
     if (S.ts > 1) D.label(c.x + 14, c.y + c.h - 14, '⏩ 빨리 감기 ×' + S.ts, { bg: '#475569', size: 13, align: 'left' });
@@ -283,7 +283,7 @@
     T(rcA.x + 8, rcA.y + rcA.h - 38, 'A(앞): 파면 ' + A.obs[0].n + '개 · f′ ' + (fA ? fR(fA) : '—') + ' Hz', 13, TEAL, 'left', 800);
     T(rcA.x + 8, rcA.y + rcA.h - 14, 'B(뒤): 파면 ' + A.obs[1].n + '개 · f′ ' + (fBk ? fR(fBk) : '—') + ' Hz', 13, PURPLE, 'left', 800);
     T(rcB.x + 8, rcB.y + rcB.h - 38, 'C: 맞이한 파면 ' + B.obs[0].n + '개', 13, '#c2410c', 'left', 800);
-    T(rcB.x + 8, rcB.y + rcB.h - 14, 'f′ = ' + (fB ? fR(fB) : '—') + ' Hz · 파면 간격 0.50 m 그대로', 13, '#c2410c', 'left', 800);
+    T(rcB.x + 8, rcB.y + rcB.h - 14, 'f′ = ' + (fB ? fR(fB) : '—') + ' Hz' + (PHONE ? '' : ' · 파면 간격 0.50 m 그대로'), 13, '#c2410c', 'left', 800);
     ctx.restore();
     panel(PX, PY, PW, PH, 16);
     const x1 = PX + 14;
@@ -403,18 +403,18 @@
   }
   function drawGunScene() {
     const c = topCard(), u = gunU(), g = S.gun; cardBegin(c, '#e6f0fb', '#d8e3f2');
-    T(c.x + 14, c.y + 24, '📡 스피드건: 24 GHz 전파를 쏘고 자동차에서 반사되어 돌아온 전파를 비교해요', PHONE ? 13 : 15, INK, 'left', 800);
-    const roadY = c.y + c.h - 78, x0 = c.x + 90, x1 = c.x + c.w - 70, cy = c.y + 128;
+    T(c.x + 14, c.y + 24, PHONE ? '📡 스피드건: 반사된 전파를 비교해요 (24 GHz)' : '📡 스피드건: 24 GHz 전파를 쏘고 자동차에서 반사되어 돌아온 전파를 비교해요', PHONE ? 13 : 15, INK, 'left', 800);
+    const roadY = c.y + c.h - 78, x0 = c.x + 90, x1 = c.x + c.w - 70, cy = roadY - 60;      // 전파는 스피드건에서 자동차 쪽으로 곧장 가요
     ctx.fillStyle = '#5b6678'; ctx.fillRect(c.x, roadY, c.w, 46); ctx.strokeStyle = '#f8fafc'; ctx.lineWidth = 3; ctx.setLineDash([16, 12]); ctx.beginPath(); ctx.moveTo(c.x, roadY + 23); ctx.lineTo(c.x + c.w, roadY + 23); ctx.stroke(); ctx.setLineDash([]);
     const carX = x1 - ((g.t * 60) % (x1 - x0 - 40));
     const gunY = roadY + 3;
     T(x0 - 56, roadY + 18, '📡', 40, '#000', 'center', 700); T(x0 - 56, roadY + 66, '스피드건', 13, MUTED, 'center', 800);
     ctx.save(); ctx.translate(carX, roadY + 8); T(0, 18, '🚗', 46, '#000', 'center', 700); ctx.restore();
-    D.arrow(carX + 30, roadY - 18, carX - 40, roadY - 18, { color: '#16a34a', width: 4, head: 11 }); D.label(carX - 6, roadY - 38, 'u = ' + u + ' m/s', { bg: '#16a34a', size: 13 });
+    D.arrow(carX + 30, roadY + 54, carX - 40, roadY + 54, { color: '#16a34a', width: 4, head: 11 }); D.label(carX - 6, roadY + 66, 'u = ' + u + ' m/s', { bg: '#16a34a', size: 13 });
     const dev = 0.38 * (u / 40), lam0 = 26, lamR = lam0 * (1 - dev), ph = -g.t * 6;
-    waveTrain(x0 - 30, carX - 30, cy - 18, lam0, 10, ph, '#2563eb');
-    waveTrain(x0 - 30, carX - 30, cy + 22, lamR, 10, g.t * 6, '#f59e0b');
-    D.label(x0 + 70, cy - 46, '보낸 전파  f₀ = 24 GHz', { bg: '#2563eb', size: 13 }); D.label(x0 + 70, cy + 52, '반사된 전파  f₀ + Δf', { bg: '#d97706', size: 13 });
+    waveTrain(x0 - 30, carX - 30, cy - 26, lam0, 10, ph, '#2563eb');
+    waveTrain(x0 - 30, carX - 30, cy + 26, lamR, 10, g.t * 6, '#f59e0b');
+    D.label(x0 + 70, cy - 54, '보낸 전파  f₀ = 24 GHz', { bg: '#2563eb', size: 13 }); D.label(x0 + 70, cy, '반사된 전파  f₀ + Δf', { bg: '#d97706', size: 13 });
     T(c.x + c.w - 14, c.y + 50, '※ 실제 파장 변화는 약 10⁻⁷ 배로 아주 작아서 그림에서는 크게 과장했어요', 13, MUTED, 'right', 700);
     ctx.restore();
     panel(PX, PY, PW, PH, 16);
@@ -428,18 +428,22 @@
   function drawBloodScene() {
     const c = topCard(), u = bloodU(), b = S.bl; cardBegin(c, '#fdf0ef', '#f7dede');
     T(c.x + 14, c.y + 24, '🩺 초음파 혈류 측정: 5.0 MHz 초음파가 움직이는 혈액에서 반사돼요', PHONE ? 13 : 15, INK, 'left', 800);
-    const vy = c.y + 190, vx0 = c.x + 30, vx1 = c.x + c.w - 30;
+    const vy = c.y + 190, vx0 = c.x + 118, vx1 = c.x + c.w - 30;
     const gt = ctx.createLinearGradient(0, c.y + 40, 0, vy - 40); gt.addColorStop(0, '#f7d9c0'); gt.addColorStop(1, '#f0b8a0'); ctx.fillStyle = gt; ctx.fillRect(c.x, c.y + 40, c.w, vy - 40 - 40 + 0.1);
     ctx.fillStyle = '#e8a79a'; ctx.fillRect(c.x, vy - 40, c.w, 80);
     ctx.fillStyle = '#b53a3a'; D.roundRect(vx0, vy - 24, vx1 - vx0, 48, 24); ctx.fill();
     ctx.fillStyle = '#7f1d1d'; D.roundRect(vx0 + 3, vy - 21, vx1 - vx0 - 6, 42, 21); ctx.fill();
+    // 혈액은 탐촉자 쪽(왼쪽)으로 흘러와요. 탐촉자의 초음파는 혈관을 따라 곧장 나가서, 혈류 방향과 나란해요 (θ = 0)
     ctx.save(); D.roundRect(vx0 + 3, vy - 21, vx1 - vx0 - 6, 42, 21); ctx.clip();
-    for (let i = 0; i < 18; i++) { const sp = u * 40, xx = vx0 + ((i * 47 + b.t * sp) % (vx1 - vx0 + 30)) - 10, yy = vy + Math.sin(i * 2.3) * 12; D.sphere(xx, yy, 6.5, '#ef4444', { gloss: true }); }
+    const span = vx1 - vx0 + 30;
+    for (let i = 0; i < 14; i++) { const sp = u * 40, xx = vx1 + 10 - ((i * 47 + b.t * sp) % span), yy = vy + Math.sin(i * 2.3) * 12; D.sphere(xx, yy, 6.5, '#ef4444', { gloss: true }); }
     ctx.restore();
-    D.arrow(vx0 + 40, vy + 56, vx0 + 110, vy + 56, { color: '#16a34a', width: 4, head: 11 }); D.label(vx0 + 150, vy + 56, '혈류 u = ' + fx(u, 2) + ' m/s', { bg: '#16a34a', size: 13 });
-    const px = (vx0 + vx1) / 2; D.shadow(() => { D.roundRect(px - 28, c.y + 44, 56, 30, 8); ctx.fillStyle = '#334155'; ctx.fill(); }, { blur: 5, y: 2 }); T(px, c.y + 64, '탐촉자', 13, '#e2e8f0', 'center', 800);
-    ctx.strokeStyle = '#2563eb'; ctx.lineWidth = 3; const ph = -b.t * 6; ctx.beginPath(); for (let y = c.y + 78; y <= vy - 20; y += 2) { const xx = px - 12 + Math.sin((y - c.y) / 12 * 1 + ph) * 6; y === c.y + 78 ? ctx.moveTo(xx, y) : ctx.lineTo(xx, y); } ctx.stroke();
-    ctx.strokeStyle = '#f59e0b'; ctx.beginPath(); const dev = 0.4 * (u / 1.0), lamR = 12 * (1 - dev * 0.3); for (let y = c.y + 78; y <= vy - 20; y += 2) { const xx = px + 12 + Math.sin((y - c.y) / lamR + b.t * 6) * 6; y === c.y + 78 ? ctx.moveTo(xx, y) : ctx.lineTo(xx, y); } ctx.stroke();
+    D.arrow(vx0 + 190, vy + 56, vx0 + 120, vy + 56, { color: '#16a34a', width: 4, head: 11 }); D.label(vx0 + 260, vy + 56, '혈류 u = ' + fx(u, 2) + ' m/s', { bg: '#16a34a', size: 13 });
+    const px0 = c.x + 22, pw0 = 76; D.shadow(() => { D.roundRect(px0, vy - 28, pw0, 56, 10); ctx.fillStyle = '#334155'; ctx.fill(); }, { blur: 5, y: 2 }); T(px0 + pw0 / 2, vy + 5, '탐촉자', 13, '#e2e8f0', 'center', 800);
+    const bx0 = px0 + pw0 + 4, ph = -b.t * 6;
+    ctx.strokeStyle = '#2563eb'; ctx.lineWidth = 3; ctx.beginPath(); for (let x = bx0; x <= vx1 - 30; x += 2) { const yy = vy - 9 + Math.sin((x - c.x) / 12 + ph) * 5; x === bx0 ? ctx.moveTo(x, yy) : ctx.lineTo(x, yy); } ctx.stroke();
+    ctx.strokeStyle = '#f59e0b'; ctx.beginPath(); const dev = 0.4 * (u / 1.0), lamR = 12 * (1 - dev * 0.3); for (let x = bx0; x <= vx1 - 30; x += 2) { const yy = vy + 9 + Math.sin((x - c.x) / lamR + b.t * 6) * 5; x === bx0 ? ctx.moveTo(x, yy) : ctx.lineTo(x, yy); } ctx.stroke();
+    T(bx0 + 4, vy - 32, '보낸 초음파', 13, '#1d4ed8', 'left', 800); T(bx0 + 4, vy + 40, '반사된 초음파', 13, '#b45309', 'left', 800);
     T(c.x + c.w - 14, c.y + 50, '※ 진동수 변화는 크게 과장해 그렸어요', 13, MUTED, 'right', 700);
     ctx.restore();
     panel(PX, PY, PW, PH, 16);
@@ -448,7 +452,7 @@
     D.roundRect(x1p - 4, PY + 40, PW - 20, 64, 12); ctx.fillStyle = '#1e293b'; ctx.fill();
     T(x1p + 8, PY + 64, '측정한 진동수 변화 (소리로 들려요 🎧)', 13, '#94a3b8', 'left', 800); T(x1p + 8, PY + 92, 'Δf ≈ ' + fx(df / 1000, 1) + ' kHz', 24, '#fff', 'left', 800);
     para(x1p, PY + 126, 'Δf ≈ 2 f u / v   (f = 5.0 MHz, 혈액 속 소리 v = 1540 m/s)', PW - 28, 13.5, '#c2410c', 19, 800);
-    para(x1p, PY + 150, '혈류의 속도에 따라 Δf는 사람이 들을 수 있는 소리의 범위예요. 혈관과 탐촉자가 비스듬하면 cosθ만큼 보정하지만 여기서는 정성적으로만 알아봐요.', PW - 28, 13.5, '#14532d', 19, 700);
+    para(x1p, PY + 150, '혈류의 속도에 따라 Δf는 사람이 들을 수 있는 소리의 범위예요. 여기서는 초음파가 혈류 방향과 나란하다고 두었어요. 실제로 혈관과 탐촉자가 비스듬하면 cosθ만큼 보정해야 해요(정성적으로만 알아봐요).', PW - 28, 13.5, '#14532d', 19, 700);
   }
   const WDIR = [[1, 0, '→'], [-1, 0, '←'], [0, -1, '↑'], [0, 1, '↓']];
   function radarU(cx, cy, rx, ry, di, U) {          // 레이더 방향 성분 (+: 레이더 쪽으로 다가옴)
@@ -559,7 +563,7 @@
     const m = S.mode;
     if (m === 'amb') {
       const q = S.amb.trace.length ? S.amb.trace[S.amb.trace.length - 1][1] : AF;
-      L1 = '구급차 속력'; a = VSA[S.amb.vi] + ' m/s'; L2 = '사이렌 소리'; b = AF + ' Hz'; L3 = S.amb.listener === 'road' ? '길가에서 듣는 소리' : '운전자가 듣는 소리'; c = fR(q) + ' Hz';
+      L1 = '구급차 속력'; a = VSA[S.amb.vi] + ' m/s'; L2 = '사이렌 소리'; b = AF + ' Hz'; L3 = S.amb.listener === 'road' ? '길가 소리' : '운전자 소리'; c = fR(q) + ' Hz';
     } else if (m === 'wf') {
       const lf = S.wf.A.lamFB(); L1 = '파원 속력 v_s'; a = S.wf.vi * 10 + ' m/s'; L2 = '앞 / 뒤 파장'; b = fx(lf.front, 2) + ' / ' + fx(lf.back, 2) + ' m'; L3 = '원래 파장 λ'; c = '0.50 m';
     } else if (m === 'calc') {
