@@ -664,7 +664,7 @@
       E(r.icon, c.x + 24, c.y + L(21, 18), L(22, 19)); T(c.x + 46, c.y + L(27, 23), r.n, L(17, 15), '#fff', 'left', 800);
       if (cs) { E(cs.icon, c.x + 20, c.y + L(62, 53), L(22, 19)); TF(c.x + 40, c.y + L(68, 59), cs.n, c.w - L(52, 262), L(14.5, 13), 9.5, '#26324a', 'left', 800); }
       else T(c.x + 16, c.y + L(68, 59), '사례를 골라요 (오른쪽 / 아래)', L(14, 12.5), '#94a3b8', 'left', 700);
-      const rowH = L(56, 25), y0 = c.y + L(80, 76);
+      const rowH = L(56, 24), y0 = c.y + L(80, 70);   // 폰: 마지막 줄이 카드 아래 테두리에 걸치지 않게
       for (let k = 0; k < 3; k++) {
         const y = y0 + k * rowH;
         D.label(c.x + 12, y + L(12, 9), SUML[k], { bg: ['#2563eb', '#16a34a', '#dc2626'][k], size: L(12, 10.5), align: 'left', pad: 6 });

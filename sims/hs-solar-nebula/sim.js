@@ -417,11 +417,11 @@
     ctx.fillStyle = '#f97316'; rr(x0, y2, Math.max(0.1, bw * clamp(v, 0, 10) / 10), 16, 8).fill();
     D.text(x0 + bw + 10, y2 + 13, fv(100 / S.r) + '배', { size: 14, weight: 800, color: '#c2410c', align: 'left' });
     D.text(x0, y2 + 40, 'r × v = ' + Math.round((S.r * 100) / S.r) + ' (일정) — r이 줄어든 만큼 v가 커져요', { size: 13.5, weight: 800, color: '#334155', align: 'left' });
-    const sx = PHONE ? C.x + C.w - 100 : C.x + C.w - 150, sy = C.y + (PHONE ? 170 : 108);
-    const arm = 12 + 36 * ((S.rv - 10) / 90);
-    if (PHONE) { D.text(C.x + C.w / 2, C.y + 120, '⛸️ 스케이터 비유: 팔을 오므리면 더 빨리 돌아요', { size: 12.5, weight: 700, color: '#475569' }); }
+    const sx = PHONE ? C.x + C.w - 52 : C.x + C.w - 150, sy = C.y + (PHONE ? 78 : 108);
+    const arm = (12 + 36 * ((S.rv - 10) / 90)) * (PHONE ? 0.8 : 1);
+    if (PHONE) { D.text(C.x + C.w / 2, C.y + 190, '⛸️ 스케이터 비유: 팔을 오므리면 더 빨리 돌아요', { size: 12.5, weight: 700, color: '#475569' }); }
     else { D.text(sx, C.y + 34, '⛸️ 팔을 오므리면 더 빨리 돌아요', { size: 13, weight: 700, color: '#475569' }); }
-    drawSkater(sx, sy - (PHONE ? 10 : 0), arm, S.spin2 * 3);
+    drawSkater(sx, sy, arm, S.spin2 * 3);
   }
 
   /* ======================================================
@@ -638,7 +638,7 @@
 
     // 그래프: 가장 큰 천체의 질량
     card(G, '📈 가장 큰 천체의 질량');
-    const gx = G.x + (PHONE ? 54 : 50), gy = G.y + 40, gw = G.w - (PHONE ? 74 : 66), gh = G.h - (PHONE ? 78 : 84);
+    const gx = G.x + (PHONE ? 54 : 50), gy = G.y + 40, gw = G.w - (PHONE ? 74 : 66), gh = G.h - (PHONE ? 88 : 84);
     const X = (tt) => gx + (gw * tt) / T_END, Y = (m) => gy + gh - (gh * clamp(m, 0, 100)) / 100;
     ctx.fillStyle = '#f8fafc'; rr(gx, gy, gw, gh, 4).fill();
     [0, 25, 50, 75, 100].forEach((m) => { ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(gx, Y(m)); ctx.lineTo(gx + gw, Y(m)); ctx.stroke(); D.text(gx - 6, Y(m) + 4.5, (m / 100).toFixed(2), { size: 12.5, weight: 700, color: '#64748b', align: 'right' }); });
@@ -656,8 +656,8 @@
 
     // 충돌 실험
     card(C, '💥 충돌 에너지와 암석의 용융 (단위 질량당)');
-    const I = PHONE ? { x: C.x + 10, y: C.y + 36, w: C.w - 20, h: 112 } : { x: C.x + 10, y: C.y + 34, w: 372, h: C.h - 44 };
-    const E = PHONE ? { x: C.x + 20, y: C.y + 160, w: C.w - 40, h: 80 } : { x: C.x + 400, y: C.y + 34, w: C.w - 420, h: C.h - 44 };
+    const I = PHONE ? { x: C.x + 10, y: C.y + 36, w: C.w - 20, h: 104 } : { x: C.x + 10, y: C.y + 34, w: 372, h: C.h - 44 };
+    const E = PHONE ? { x: C.x + 20, y: C.y + 154, w: C.w - 40, h: 80 } : { x: C.x + 400, y: C.y + 34, w: C.w - 420, h: C.h - 44 };
     drawImpact(I, t, dt);
     drawEnergy(E);
   }
@@ -708,9 +708,9 @@
     ctx.fillStyle = '#e2e8f0'; rr(x0, y1, W, 22, 6).fill();
     const hot = e >= MELT_E;
     ctx.fillStyle = hot ? '#ef4444' : '#f59e0b'; rr(x0, y1, Math.max(0.1, Xe(e) - x0), 22, 6).fill();
-    D.dashedLine(Xe(MELT_E), y1 - 4, Xe(MELT_E), y1 + 52, { color: '#0f172a', width: 2.4 });
-    D.text(x0, y1 + 70, '┆ 검은 점선: 암석이 녹는 데 필요한 에너지 ' + sci(MELT_E) + ' J/kg', { size: 12.5, weight: 800, color: '#0f172a', align: 'left' });
-    [5, 6, 7, 8].forEach((p) => { D.text(Xe(Math.pow(10, p)), y1 + 40, '10' + sup(p), { size: 12, weight: 700, color: '#64748b', align: p === 5 ? 'left' : p === 8 ? 'right' : 'center' }); });
+    D.dashedLine(Xe(MELT_E), y1 - 4, Xe(MELT_E), y1 + (PHONE ? 44 : 52), { color: '#0f172a', width: 2.4 });
+    D.text(x0, y1 + (PHONE ? 58 : 70), '┆ 검은 점선: 암석이 녹는 데 필요한 에너지 ' + sci(MELT_E) + ' J/kg', { size: 12.5, weight: 800, color: '#0f172a', align: 'left' });
+    [5, 6, 7, 8].forEach((p) => { D.text(Xe(Math.pow(10, p)), y1 + (PHONE ? 36 : 40), '10' + sup(p), { size: 12, weight: 700, color: '#64748b', align: p === 5 ? 'left' : p === 8 ? 'right' : 'center' }); });
     D.text(x0 + 4, y1 + 17, sci(e) + ' J/kg', { size: 13.5, weight: 800, color: hot ? '#fff' : '#334155', align: 'left' });
   }
 

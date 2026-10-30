@@ -403,7 +403,7 @@
     // 슬롯 바탕과 번호
     for (let i = 0; i < g.n; i++) { const s = g.slot(i); D.roundRect(s.x - 3, s.y - 3, s.w + 6, s.h + 6, 16); ctx.fillStyle = 'rgba(148,163,184,.14)'; ctx.fill(); ctx.strokeStyle = 'rgba(148,163,184,.5)'; ctx.setLineDash([5, 4]); ctx.lineWidth = 1.5; ctx.stroke(); ctx.setLineDash([]); T(s.x + s.w / 2, s.y - 8, tm.okT > 0.5 ? EVI[tm.order[i]].ys : (i + 1) + '번째', PHONE ? 12 : 13.5, tm.okT > 0.5 ? '#15803d' : '#94a3b8', 'center', 800); }
     // 이어지는 선
-    if (tm.okT > 0.02) { ctx.save(); ctx.globalAlpha = tm.okT; ctx.strokeStyle = '#16a34a'; ctx.lineWidth = 5; ctx.lineCap = 'round'; for (let i = 0; i < g.n - 1; i++) { const a = g.slot(i), b = g.slot(i + 1); ctx.beginPath(); if (a.y !== b.y) { const my2 = a.y + a.h + (PHONE ? 8 : 18); ctx.moveTo(a.x + a.w / 2, a.y + a.h + 4); ctx.lineTo(a.x + a.w / 2, my2); ctx.lineTo(b.x + b.w / 2, my2); ctx.lineTo(b.x + b.w / 2, b.y - (PHONE ? 10 : 16)); } else { ctx.moveTo(a.x + a.w + 4, a.y + a.h / 2); ctx.lineTo(b.x - 4, b.y + b.h / 2); } ctx.stroke(); } ctx.restore(); }
+    if (tm.okT > 0.02) { ctx.save(); ctx.globalAlpha = tm.okT; ctx.strokeStyle = '#16a34a'; ctx.lineWidth = 5; ctx.lineCap = 'round'; for (let i = 0; i < g.n - 1; i++) { const a = g.slot(i), b = g.slot(i + 1); ctx.beginPath(); if (a.y !== b.y) { const my2 = a.y + a.h + (PHONE ? 4 : 10); ctx.moveTo(a.x + a.w / 2, a.y + a.h + 2); ctx.lineTo(a.x + a.w / 2, my2); ctx.lineTo(b.x + b.w / 2, my2); } else { ctx.moveTo(a.x + a.w + 4, a.y + a.h / 2); ctx.lineTo(b.x - 4, b.y + b.h / 2); } ctx.stroke(); } ctx.restore(); }
     // 카드
     tm.cards.forEach((c) => {
       const i = tm.order.indexOf(c.id), s = g.slot(i), dragging = tm.drag && tm.drag.c === c && tm.drag.moved;
