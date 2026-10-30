@@ -382,9 +382,9 @@
     D.dashedLine(Xd(RHO_MAG), ay - 44, Xd(RHO_MAG), ay + 6, { color: '#dc2626', width: 2.6 });
     D.label(Xd(RHO_MAG), ay - 56, '마그마 2.8', { bg: '#dc2626', size: 12.5, pad: 7 });
     ctx.fillStyle = '#f3efe6'; rr(Xd(RHO_PL) - 14, ay - 14, 28, 12, 3).fill(); ctx.strokeStyle = '#a8a29e'; ctx.lineWidth = 1.4; ctx.stroke();
-    D.text(Xd(RHO_PL), ay - 22 - (PHONE ? 22 : 0), '사장석 2.7 ↑ 떠올라요', { size: 12.5, weight: 800, color: '#57534e', align: 'right' });
+    D.text(PHONE ? B.x + 14 : Xd(RHO_PL), PHONE ? ay + 56 : ay - 22, '사장석 2.7 ↑ 떠올라요', { size: 12.5, weight: 800, color: '#57534e', align: PHONE ? 'left' : 'right' });
     ctx.fillStyle = '#7fae3f'; poly([[Xd(RHO_OL), ay - 17], [Xd(RHO_OL) + 12, ay - 8], [Xd(RHO_OL), ay + 1], [Xd(RHO_OL) - 12, ay - 8]]); ctx.fill(); ctx.strokeStyle = '#3f6212'; ctx.stroke();
-    D.text(Xd(RHO_OL), ay - 24 - (PHONE ? 22 : 0), '감람석 3.3 ↓ 가라앉아요', { size: 12.5, weight: 800, color: '#3f6212', align: 'left' });
+    D.text(PHONE ? B.x + B.w - 14 : Xd(RHO_OL), PHONE ? ay + 56 : ay - 24, '감람석 3.3 ↓ 가라앉아요', { size: 12.5, weight: 800, color: '#3f6212', align: PHONE ? 'right' : 'left' });
     D.text(B.x + B.w / 2, B.y + B.h - 12, '밀도(g/cm³)', { size: 12.5, weight: 700, color: '#64748b' });
   }
 
@@ -460,7 +460,7 @@
         } else if (S.revK > 0.9) D.text(x0 + 4, y + bh / 2 + 5, '거의 0 (눈금 밖)', { size: 13, weight: 800, color: '#b91c1c', align: 'left' });
       }
     });
-    if (S.revK <= 0.02) D.text(B.x + B.w / 2, B.y + B.h - 16, '순서를 정하고 “결과 보기”를 눌러요', { size: 14, weight: 800, color: '#64748b' });
+    if (S.revK <= 0.02) D.text(B.x + B.w / 2, PHONE ? by0 + pitch * 2 + 4 : B.y + B.h - 16, '순서를 정하고 “결과 보기”를 눌러요', { size: 14, weight: 800, color: '#64748b' });
 
     // 오늘날의 대기와 비교
     card(C, '🌍 오늘날 대기와 비교 (부피 %)');
@@ -489,7 +489,7 @@
   const psat = (T) => { if (T <= 20) return 0.023; if (T >= 374) return 218; for (let i = 1; i < PSAT.length; i++) if (T <= PSAT[i][0]) { const a = PSAT[i - 1], b = PSAT[i], f = (T - a[0]) / (b[0] - a[0]); return Math.exp(Math.log(a[1]) + f * (Math.log(b[1]) - Math.log(a[1]))); } return 218; };
   const fOcean = (T) => (T >= 374 ? 0 : clamp(1 - psat(T) / 270, 0, 1));
   const pH2O = (T) => (T >= 374 ? 270 : Math.min(270, psat(T)));
-  const pCO2 = (T, c) => 60 - (60 - 0.0004) * (c / 100) * fOcean(T);
+  const pCO2 = (T, c) => 60 - (60 - 0.0004) * (c / 100) * Math.min(1, fOcean(T) / 0.99);
   const pTot = (T, c) => pH2O(T) + pCO2(T, c) + 1;
   const pSpr = new SciSim.Spring(331, { stiffness: 90, damping: 14 });
   const CLOUD = (() => { const rnd = seeded(13), a = []; for (let i = 0; i < 16; i++) a.push({ x: rnd(), y: rnd(), s: 26 + rnd() * 26 }); return a; })();
@@ -577,7 +577,7 @@
     { id: 'me', n: '수성', R: 0.38, g: 3.7, v: 4.3, atm: '거의 0', T: '약 170', act: '활동 없음 (수축 지형)', mag: '약한 자기장', c: '#9ca3af' },
     { id: 've', n: '금성', R: 0.95, g: 8.9, v: 10.4, atm: '92', T: '460', act: '판구조 없음 (화산 지형 흔적)', mag: '자기장 없음', c: '#e5b96a' },
     { id: 'ea', n: '지구', R: 1.0, g: 9.8, v: 11.2, atm: '1', T: '15', act: '판구조, 활발한 화산', mag: '강한 자기장', c: '#3b82f6' },
-    { id: 'ma', n: '화성', R: 0.53, g: 3.7, v: 5.0, atm: '0.006', T: '평균 −60', act: '과거 활발, 현재 거의 없음', mag: '약 40억 년 전 소멸', c: '#d9674b' },
+    { id: 'ma', n: '화성', R: 0.53, g: 3.7, v: 5.0, atm: '0.006', T: '평균 −60', act: '과거 활발, 현재 거의 없음', mag: '자기장 약 40억 년 전 소멸', c: '#d9674b' },
   ];
   const COOLP = [{ n: '달', R: 0.27 }, { n: '수성', R: 0.38 }, { n: '화성', R: 0.53 }, { n: '금성', R: 0.95 }, { n: '지구', R: 1.0 }];
   const idxOf = (R) => 1 / R;
@@ -589,7 +589,7 @@
       ? [['행성', 12, 88], ['반지름', 100, 52], ['탈출 속도', 152, 62], ['대기압', 214, 64], ['표면 온도', 278, 76], ['판구조·화산', 354, 150]]
       : [['행성', 14, 124], ['반지름', 138, 60], ['중력', 198, 66], ['탈출 속도', 264, 78], ['대기압', 342, 84], ['표면 온도', 426, 104], ['판구조·화산·자기장', 530, 236]];
     const hy = A.y + 44, rowH = PHONE ? 62 : 54;
-    cols.forEach((c) => D.text(A.x + c[1] + (c[0] === '행성' || c[0].startsWith('판구조') ? 0 : c[2] / 2), hy, c[0], { size: 12.5, weight: 800, color: '#64748b', align: c[0] === '행성' || c[0].startsWith('판구조') ? 'left' : 'center' }));
+    cols.forEach((c) => D.text(A.x + c[1] + (c[0] === '행성' || c[0].startsWith('판구조') ? 0 : c[2] / 2), hy, c[0], { size: PHONE ? 11 : 12.5, weight: 800, color: '#64748b', align: c[0] === '행성' || c[0].startsWith('판구조') ? 'left' : 'center' }));
     const unit = (c) => ({ '반지름': '(지구=1)', '중력': 'm/s²', '탈출 속도': 'km/s', '대기압': '기압', '표면 온도': '°C' }[c[0]] || '');
     cols.forEach((c) => { const u = unit(c); if (u) D.text(A.x + c[1] + c[2] / 2, hy + 14 * FS, u, { size: 11, weight: 700, color: '#94a3b8' }); });
     PL.forEach((p, i) => {
@@ -598,7 +598,7 @@
       else if (i % 2 === 0) { ctx.fillStyle = 'rgba(100,116,139,.06)'; rr(A.x + 6, y, A.w - 12, rowH - 4, 10).fill(); }
       const cy = y + (rowH - 4) / 2;
       D.sphere(A.x + 30, cy, 4 + p.R * 17, p.c, { shadow: true });
-      D.text(A.x + 56 + (PHONE ? -6 : 8), cy + 5, p.n, { size: 14.5, weight: 800, color: '#1e293b', align: 'left' });
+      D.text(A.x + 56 + (PHONE ? 0 : 8), cy + 5, p.n, { size: 14.5, weight: 800, color: '#1e293b', align: 'left' });
       const num = (ci, s, col) => D.text(A.x + cols[ci][1] + cols[ci][2] / 2, cy + 5, s, { size: 14, weight: 800, color: col || '#1e293b' });
       num(1, p.R.toFixed(2));
       if (PHONE) { num(2, String(p.v)); num(3, hideAtm ? '?' : p.atm, hideAtm ? '#7c3aed' : undefined); num(4, p.T.replace('약 ', '≈').replace('평균 ', '')); }

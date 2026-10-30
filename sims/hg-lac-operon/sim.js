@@ -469,7 +469,7 @@
     OPR.morph = approach(OPR.morph, st.corep != null ? (st.corep ? 0 : 1) : (st.a > 0.35 && sk.indB ? 1 : 0), dt, 5);
     const Ocx = L.O.x + L.O.w / 2;
     if (sk.I) {
-      const fx = L.I.x + L.I.w * 0.5 + Math.sin(t * 0.9) * 10, fy = ly - 92 + Math.sin(t * 1.3) * 5;
+      const fx = L.I.x + L.I.w * 0.5 + Math.sin(t * 0.9) * 10, fy = ly - (st.floatDy || 92) + Math.sin(t * 1.3) * 5;
       const rx = lerp(fx, Ocx, ease.inOutCubic(OPR.bind)), ry = lerp(fy, ly - hh / 2 - 17, ease.inOutCubic(OPR.bind));
       drawRepressor(rx, ry, OPR.morph, sk.name === 'lacIˢ', t);
       OPR.rx = rx; OPR.ry = ry;
@@ -629,13 +629,15 @@
     TF(14, 24, ST.phase === 1 ? '① 이름표 붙이기: 번호 구간에 알맞은 이름표를 끌어 놓거나, 이름표를 누른 뒤 칸을 눌러요' : '② 기능 카드 연결: 구성 요소마다 알맞은 기능을 연결해요', VW - 28, PHONE ? 13.5 : 15.5, 11.5, '#334155', 'left', 800);
     if (ST.phase === 1 && PHONE) { /* 폰: 지도 아래 간격 */ }
     const stt = { strain: 'wt', hideNames: (k) => !placedOK(k), occ: dm > 0 ? 0 : 0, a: 0, u: dm > 0 ? 1 : 0, m: clamp((dm - 0.8) / 2.4, 0, 1), x: clamp((dm - 3.2) / 2.5, 0, 1), label: false, showEnz: dm > 0, noMake: false };
-    const Lr = drawOperon(ox, oy, W, stt, dt, t);
-    ST.segRects = SEGINFO.map((s) => ({ x: Lr[s.k].x, y: oy - 40, w: Lr[s.k].w, h: 80 }));
-    SEGINFO.forEach((s, i) => {
-      const cx = Lr[s.k].x + Lr[s.k].w / 2, sel = ST.seg === i;
-      D.sphere(cx, oy - 44, 11, SEGCOL[s.k], { text: String(i + 1), textScale: 1.0 });
-      if (sel) D.ring(cx, oy - 44, 14, t, { color: '#f59e0b', width: 2.5 });
-    });
+    if (ST.phase === 1) {   // 기능 카드 단계에서는 상자가 지도 자리를 쓰므로 지도를 그리지 않아요
+      const Lr = drawOperon(ox, oy, W, stt, dt, t);
+      ST.segRects = SEGINFO.map((s) => ({ x: Lr[s.k].x, y: oy - 40, w: Lr[s.k].w, h: 80 }));
+      SEGINFO.forEach((s, i) => {
+        const cx = Lr[s.k].x + Lr[s.k].w / 2, sel = ST.seg === i;
+        D.sphere(cx, oy - 44, 11, SEGCOL[s.k], { text: String(i + 1), textScale: 1.0 });
+        if (sel) D.ring(cx, oy - 44, 14, t, { color: '#f59e0b', width: 2.5 });
+      });
+    } else ST.segRects = null;
     if (ST.phase === 1) {
       if (dm > 0) T(VW / 2, oy + (PHONE ? 122 : 122), dm < 3 ? '전사가 일어나면 세 유전자가 한 가닥의 mRNA로 만들어져요' : '한 mRNA에서 세 가지 효소가 만들어져요', PHONE ? 13 : 14.5, '#6d28d9', 'center', 800);
       else {
@@ -683,7 +685,7 @@
     } else {
       textBlock(gx, gy + 18, VW - 2 * gx, NL.tried ? '전사 시도 결과를 확인했어요. 이제 [효소 활성 측정]으로 mRNA 양과 효소 활성을 재 보세요.' : '[전사 시도]를 눌러 RNA 중합 효소가 오페론을 지나갈 수 있는지 확인해요. 그 다음 [효소 활성 측정]을 눌러요.', 15, '#475569', 21, 700);
     }
-    if (NL.att >= 0.4 && NL.att < 0.62) T(VW / 2, oy - 100, '억제자 때문에 지나가지 못해요!', 15, '#e2464b', 'center', 800, { stroke: '#fff', strokeWidth: 4 });
+    if (NL.att >= 0.4 && NL.att < 0.62) T(VW / 2, oy - 78, '억제자 때문에 지나가지 못해요!', 15, '#e2464b', 'center', 800, { stroke: '#fff', strokeWidth: 4 });
   }
 
   /* =========================================================
@@ -719,11 +721,11 @@
   function lacScene(dt, t) {
     lacStep(dt);
     T(14, 26, '포도당 없이 젖당만 있는 배지에 대장균을 키워요', PHONE ? 13.5 : 15.5, '#334155', 'left', 800);
-    drawMedium(14, 36, VW - 28, PHONE ? 66 : 62, LAC.L, false, t, true);
+    drawMedium(14, 36, VW - 28, PHONE ? 58 : 50, LAC.L, false, t, true);
     const a = LAC.L / (LAC.L + KD);
     const occ = lacOcc(), u = 0.001 + 0.999 * (1 - occ);
     const oy = PHONE ? 196 : 168, ox = PHONE ? 12 : 30, W = VW - (PHONE ? 24 : 60);
-    drawOperon(ox, oy, W, { strain: 'wt', occ, a, u, m: LAC.m, x: LAC.x, label: !PHONE, showEnz: true, noMake: false }, dt, t);
+    drawOperon(ox, oy, W, { strain: 'wt', occ, a, u, m: LAC.m, x: LAC.x, label: !PHONE, showEnz: true, noMake: false, floatDy: PHONE ? 62 : 50 }, dt, t);
     const gy = PHONE ? 352 : 316, gh = PHONE ? 180 : 168;
     drawLacGraph(PHONE ? 58 : 70, gy, VW - (PHONE ? 58 + 46 : 70 + 62), gh);
     if (!LAC.added) T(VW / 2, gy + gh / 2 + 6, '젖당 양을 정하고 [젖당 넣기]를 누르면 그래프가 그려져요', PHONE ? 13 : 15, '#94a3b8', 'center', 800);
@@ -815,12 +817,12 @@
           const r = MU.results[k][c];
           if (r != null) { val = r; txt = levelTxt(r); sub = fmtN(r); }
           const p = MU.preds[k][c];
-          if (r != null && k !== 'wt' && p) sub += (p === 'hi') === (r >= 100) ? '  ✓ 예측과 같아요' : '  ✕ 예측과 달라요';
+          if (r != null && k !== 'wt' && p) sub += (p === 'hi') === (r >= 100) ? (PHONE ? ' ✓ 같아요' : '  ✓ 예측과 같아요') : (PHONE ? ' ✕ 달라요' : '  ✕ 예측과 달라요');
         }
         if (val != null) { const hi = val >= 100; col = hi ? '#dcfce7' : '#f1f5f9'; bd = hi ? '#16a34a' : '#94a3b8'; tc = hi ? '#166534' : '#475569'; if (val === 0 && mode !== 'predict') { col = '#f1f5f9'; } }
         D.roundRect(g.cx[j] + 6, y + 4, g.wC - 12, rowH - 12, 10); ctx.fillStyle = col; ctx.fill(); ctx.strokeStyle = bd; ctx.lineWidth = 2; ctx.stroke();
-        T(cx, cy + (sub ? 0 : 6), txt, PHONE ? 14.5 : 16.5, tc, 'center', 800);
-        if (sub) TF(cx, cy + 17, sub, g.wC - 16, PHONE ? 11.5 : 12.5, 9.5, mode === 'mut' && sub.indexOf('✕') >= 0 ? '#b91c1c' : '#64748b', 'center', 700);
+        T(cx, cy + (sub ? -3 : 6), txt, sub ? 14 : (PHONE ? 14.5 : 16.5), tc, 'center', 800);
+        if (sub) TF(cx, cy + 11, sub, g.wC - 16, PHONE ? 11.5 : 12.5, 9.5, mode === 'mut' && sub.indexOf('✕') >= 0 ? '#b91c1c' : '#64748b', 'center', 700);
       });
       if (mode === 'predict') { MU.rowRect = MU.rowRect || {}; }
     });
@@ -854,7 +856,7 @@
     const occ = STRAINS[key].I && STRAINS[key].O && !(MU.lac && STRAINS[key].indB) ? 1 : 0;
     TF(14, 24, STRAINS[key].name + ' · ' + (MU.lac ? '젖당 있음' : '젖당 없음') + (STRAINS[key].why ? '  —  ' + STRAINS[key].why : ''), VW - 28, PHONE ? 13 : 15, 11, '#334155', 'left', 800);
     const oy = PHONE ? 160 : 138, W = VW - (PHONE ? 24 : 60), ox = PHONE ? 12 : 30;
-    drawOperon(ox, oy, W, { strain: key, occ: MU.anim >= 0 || MU.results[key][MU.lac ? 'yes' : 'no'] != null ? occ : (STRAINS[key].I && STRAINS[key].O ? 1 : 0), a: MU.a, u: MU.m, m: MU.m, x: MU.x, label: false, showEnz: true, noMake: !STRAINS[key].I }, dt, t);
+    drawOperon(ox, oy, W, { strain: key, occ: MU.anim >= 0 || MU.results[key][MU.lac ? 'yes' : 'no'] != null ? occ : (STRAINS[key].I && STRAINS[key].O ? 1 : 0), a: MU.a, u: MU.m, m: MU.m, x: MU.x, label: false, showEnz: true, noMake: !STRAINS[key].I, floatDy: PHONE ? 92 : 70 }, dt, t);
     drawTable2(PHONE ? 262 : 244, PHONE ? 56 : 44, 'mut');
   }
   const mutPT = {
@@ -869,7 +871,7 @@
     const occ = TR.trp ? 1 : 0;
     drawMedium(14, 38, VW - 28, PHONE ? 58 : 56, 0, false, t);
     const oy = PHONE ? 180 : 172, W = VW - (PHONE ? 24 : 60), ox = PHONE ? 12 : 30;
-    drawOperon(ox, oy, W, { strain: 'wt', occ, a: 0, corep: TR.trp, u: TR.trp ? 0 : 1, m: TR.trp ? 0 : 1, x: TR.trp ? 0 : 1, label: false, showEnz: true, nameMap: { I: 'trpR', Z: 'trpE', Y: 'trpD · C', A: 'trpB · A' }, opName: '트립토판 오페론', mrnaLabel: '한 가닥의 mRNA', enzLabel: '트립토판 합성 효소', noMake: false }, dt, t);
+    drawOperon(ox, oy, W, { strain: 'wt', occ, a: 0, corep: TR.trp, u: TR.trp ? 0 : 1, m: TR.trp ? 0 : 1, x: TR.trp ? 0 : 1, label: false, showEnz: true, nameMap: { I: 'trpR', Z: 'trpE', Y: 'trpD · C', A: 'trpB · A' }, opName: '트립토판 오페론', mrnaLabel: '한 가닥의 mRNA', enzLabel: '트립토판 합성 효소', noMake: false, floatDy: PHONE ? 56 : 50 }, dt, t);
     // 배지 위 트립토판
     if (TR.trp) for (let i = 0; i < 6; i++) D.sphere(30 + i * ((VW - 80) / 5) + Math.sin(t + i) * 4, 76 + Math.cos(t * 0.8 + i) * 4, 5.5, '#f472b6', { gloss: false });
     pill(VW - 14, 52, TR.trp ? '트립토판 있음' : '트립토판 없음', { bg: TR.trp ? '#fce7f3' : '#fff', color: '#9d174d', border: '#f472b6', size: 13.5, align: 'right' });

@@ -718,7 +718,7 @@
   const numLM = makeNum($('#numLM'), { label: '분', unit: '분' });
   const numTH = makeNum($('#numTH'), { label: '시', unit: '시' });
   const numTM = makeNum($('#numTM'), { label: '분', unit: '분' });
-  SciSim.bindRange($('#sDm'), $('#oDm'), (v) => fN(v, 2) + '×10⁵ km', (v) => { S.dm = +v; if (+v <= 3.57 || +v >= 4.06) S.seenPA = true; });
+  SciSim.bindRange($('#sDm'), $('#oDm'), (v) => fN(v, 2) + '×10⁵ km', (v) => { S.dm = +v; if (+v <= 3.57) S.seenP = true; if (+v >= 4.06) S.seenA = true; S.seenPA = !!(S.seenP && S.seenA); });
   SciSim.bindRange($('#sDay'), $('#oDay'), (v) => fN(v, 1) + '일 · ' + phaseName(+v), (v) => { S.day = +v; });
   SciSim.bindRange($('#sRow'), $('#oRow'), (v) => (+v === 0 ? '오늘' : v + '일 뒤'), (v) => { S.dayRow = +v; });
   const setDm = (v) => { S.dm = v; S.dmV = v; setSlider($('#sDm'), $('#oDm'), v, (x) => fN(x, 2) + '×10⁵ km'); };
@@ -754,7 +754,7 @@
   function resetStep(li) {
     hideHint(); parts.clear();
     setStage(1); S.stV = [0, 0, 0]; S.bulge = 0; selDir.reset();
-    setDm(3.844); S.showCmp = false; S.cmpT = 0; numMS.reset(); numPA.reset(); S.seenPA = false;
+    setDm(3.844); S.showCmp = false; S.cmpT = 0; numMS.reset(); numPA.reset(); S.seenPA = false; S.seenP = false; S.seenA = false;
     setDay(3.5); S.dayV = 3.5; S.hr = 0; S.playing = false; S.ran24 = false; S.seenSpring = false; S.seenNeap = false; stpN.reset();
     S.c2 = 0; S.c2run = false; S.ranCyc = false; S.showAns = false; setRow(3); S.tblT = 0; numLH.reset(); numLM.reset(); numTH.reset(); numTM.reset();
     if (li === 0) { setMode('force'); setCtl(['stCh', 'selDir']); showHint('①②③ 단추를 차례로 눌러 화살표를 비교해 봐요', 5200); }
@@ -819,9 +819,9 @@
           title: '근지점과 원지점',
           goal: '달의 거리 슬라이더를 <b>근지점(3.56)</b>과 <b>원지점(4.07)</b>으로 움직여 보고, 근지점의 기조력이 원지점의 <b>몇 배</b>인지 입력해요.',
           hint: '막대 그래프의 두 값(1.26과 0.84)을 나누거나, (4.07 / 3.56)³을 계산해요. 약 1.5예요.',
-          setup() { S.showCmp = true; S.seenPA = false; setDm(3.844); numPA.reset(); setMode('compare'); setCtl(['sDm', 'numPAc']); },
+          setup() { S.showCmp = true; S.seenPA = false; S.seenP = false; S.seenA = false; setDm(3.844); numPA.reset(); setMode('compare'); setCtl(['sDm', 'numPAc']); },
           check: () => S.seenPA && numPA.near(Number(fN(RATIO_PA, 1)), 0.1), hold: 0.8,
-          status: () => mark2(S.seenPA) + ' 근지점·원지점 확인 · ' + mark2(numPA.near(Number(fN(RATIO_PA, 1)), 0.1)) + ' 입력 ' + (numPA.has() ? numPA.value + ' 배' : '?'),
+          status: () => mark2(S.seenPA) + ' 근지점·원지점 모두 확인 · ' + mark2(numPA.near(Number(fN(RATIO_PA, 1)), 0.1)) + ' 입력 ' + (numPA.has() ? numPA.value + ' 배' : '?'),
           explain: '기조력 ∝ 1/d³이므로 (4.07/3.56)³ ≈ <b>1.5</b>배예요. 근지점 부근의 보름·그믐에는 조차가 특히 커져요.',
         },
         {

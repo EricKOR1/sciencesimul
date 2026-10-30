@@ -556,7 +556,8 @@
     if (RC.stage === 4) {
       const picks = [1, 4, 7, 10]; RC.flights = picks.map((k, i) => ({ b: RC.bact[k], delay: i * 0.45, t: 0 }));
     }
-    if (RC.stage === 5) { RC.t5 = 0; RC.abx = 0; RC.bact.forEach((b) => { b.dieAt = b.plasmid ? 1e9 : 0.5 + rnd() * 1.4; }); }
+    if (RC.stage === 5) { RC.flights.forEach((f) => { f.b.plasmid = true; }); RC.flights = [];   // 아직 날아가는 중인 플라스미드도 들어간 것으로 처리해요
+      RC.t5 = 0; RC.abx = 0; RC.bact.forEach((b) => { b.dieAt = b.plasmid ? 1e9 : 0.5 + rnd() * 1.4; }); }
     updateCtl();
   }
   function rcUpdate(dt) {
@@ -764,7 +765,7 @@
     const st = R.stage, gapPx = st <= 1 ? 62 * ease.outCubic(st === 1 ? R.cutT : 0) : st === 2 ? 62 * (1 - ease.inOutCubic(R.m)) : 0;
     const titles = ['🔬 ' + en.n + '가 알아보는 자리 (' + en.seq + ')', '🔬 자른 단면: 접착 말단', '🔬 끝이 서로 맞아 붙어요', '🔬 연결 효소가 틈을 이어요'];
     TF(px + pw / 2, py + 30, titles[Math.min(st, 3)], pw - 20, 16, 12, INK, 'center', 800);
-    const ix0 = px + pw / 2 - cell * 3 - 24, ty = py + 92, by = ty + cell + 16;
+    const ix0 = px + pw / 2 - cell * 3 - 24, ty = py + (PHONE ? 78 : 92), by = ty + cell + (PHONE ? 14 : 16), msgY = by + cell + (PHONE ? 22 : 30);   // 폰: 아래 설명 글과 겹치지 않게 간격을 줄여요
     const top = 'GAATTC'.split(''), bot = 'CTTAAG'.split('');
     const lx = (k) => ix0 + k * cell, rx = (k) => ix0 + k * cell + gapPx;
     /* 뼈대 선 */
@@ -792,16 +793,16 @@
       ctx.save(); ctx.setLineDash([4, 3]); ctx.strokeStyle = '#dc2626'; ctx.lineWidth = 2.4;
       ctx.beginPath(); ctx.moveTo(lx(1), ty - 8); ctx.lineTo(lx(1), ty + cell + 4); ctx.moveTo(lx(5), by - 4); ctx.lineTo(lx(5), by + cell + 8); ctx.stroke(); ctx.restore();
       E('✂️', lx(1), ty - 16 + Math.sin(clock * 3) * 2, 18); E('✂️', lx(5), by + cell + 20 + Math.sin(clock * 3 + 1) * 2, 18);
-      T(lx(1) - 6, ty - 30, '위 가닥: G와 A 사이', 11.5, '#dc2626', 'left', 800); T(lx(5) + 4, by + cell + 40, '아래 가닥: A와 G 사이', 11.5, '#dc2626', 'center', 800);
+      T(lx(1) - 6, ty - 30, '위 가닥: G와 A 사이', 11.5, '#dc2626', 'left', 800); T(lx(5) + 4, by + cell + (PHONE ? 36 : 40), '아래 가닥: A와 G 사이', 11.5, '#dc2626', 'center', 800);
     }
-    if (st === 1 && gapPx > 30) { TF(px + pw / 2, by + cell + 30, '접착 말단 ' + en.end + ' (한쪽 가닥이 4염기 더 길어요)', pw - 24, 14, 11, '#a16207', 'center', 800, { alpha: clamp((gapPx - 30) / 20, 0, 1) }); }
+    if (st === 1 && gapPx > 30) { TF(px + pw / 2, msgY, '접착 말단 ' + en.end + ' (한쪽 가닥이 4염기 더 길어요)', pw - 24, 14, 11, '#a16207', 'center', 800, { alpha: clamp((gapPx - 30) / 20, 0, 1) }); }
     if (st === 2 && R.m >= 1) {
       ctx.fillStyle = '#dc2626'; [[lx(1), ty + cell / 2], [lx(5), by + cell / 2]].forEach(([x, y]) => { ctx.beginPath(); ctx.arc(x, y, 4.5, 0, TAU); ctx.fill(); });
-      TF(px + pw / 2, by + cell + 30, 'A-T 염기쌍으로 붙었지만 뼈대에 틈이 남았어요', pw - 24, 13.5, 10.5, '#dc2626', 'center', 800);
+      TF(px + pw / 2, msgY, 'A-T 염기쌍으로 붙었지만 뼈대에 틈이 남았어요', pw - 24, 13.5, 10.5, '#dc2626', 'center', 800);
     }
     if (st >= 3) {
       [[lx(1), ty + cell / 2], [lx(5), by + cell / 2]].forEach(([x, y]) => { if (R.seal < 1) { ctx.fillStyle = '#a855f7'; ctx.beginPath(); ctx.arc(x, y - 4 * (1 - R.seal), 5, 0, TAU); ctx.fill(); } else { ctx.fillStyle = '#16a34a'; ctx.beginPath(); ctx.arc(x, y, 5, 0, TAU); ctx.fill(); } });
-      TF(px + pw / 2, by + cell + 30, R.seal < 1 ? '연결 효소가 뼈대의 틈을 이어요' : '끊어졌던 뼈대가 하나로 이어졌어요', pw - 24, 14, 11, R.seal < 1 ? '#7e22ce' : '#15803d', 'center', 800);
+      TF(px + pw / 2, msgY, R.seal < 1 ? '연결 효소가 뼈대의 틈을 이어요' : '끊어졌던 뼈대가 하나로 이어졌어요', pw - 24, 14, 11, R.seal < 1 ? '#7e22ce' : '#15803d', 'center', 800);
     }
     /* 이름표 */
     T(px + 30, ty - 14, st >= 2 ? '플라스미드의 끝' : '플라스미드', 13, '#3b5a8f', 'left', 800);
@@ -812,7 +813,7 @@
       '사람 DNA 조각을 같은 효소로 잘랐기 때문에 끝의 ' + en.end + '가 플라스미드 끝과 서로 상보적이에요 (A-T).',
       '연결 효소가 인접한 뼈대(당-인산)의 틈을 이어서 DNA가 하나가 돼요.',
     ];
-    textBlock(px + 18, py + ph - 110, pw - 36, caps[Math.min(st, 3)], PHONE ? 13 : 14.5, '#475569', PHONE ? 18 : 21);
+    textBlock(px + 18, py + ph - (PHONE ? 58 : 110), pw - 36, caps[Math.min(st, 3)], PHONE ? 12.5 : 14.5, '#475569', PHONE ? 16 : 21);
   }
   /* ---- 대장균 접시 ---- */
   function bacterium(b, tint) {
