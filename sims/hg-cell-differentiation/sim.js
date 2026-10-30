@@ -842,7 +842,9 @@
     const m = S.md; if (m.grp >= 0) return;
     if (m.view === v) return;
     const keep = { ctrlDone: m.ctrlDone, expDone: m.expDone };
-    Object.assign(S.md, mkMD(), keep); S.md.view = v; Sound.click(); updateCtl();
+    Object.assign(S.md, mkMD(), keep); S.md.view = v;
+    if (v === 1 && S.md.expDone) { S.md.on = [1, 1, 1]; S.md.lv = [1, 1, 1]; S.md.m = 1; S.md.myod = 1; }   // 이미 끝낸 실험군은 결과 상태로 보여 줘요
+    Sound.click(); updateCtl();
   }
   function mdUpdate(dt) {
     const m = S.md;
@@ -1180,15 +1182,15 @@
       features: ['myod'],
       setup() { mdReset(); setMode('myod'); },
       recap: '전사 인자 MyoD가 근육 액틴과 미오신 같은 근육 특이적 유전자를 켜서 섬유아세포가 근육 세포로 바뀌었어요. 세포의 분화는 전사 인자가 어떤 유전자를 켜느냐에 따라 일어나는 유전자 발현 조절의 결과예요.',
-      summary: '<ul><li><b>MyoD</b>는 전사 인자예요. 섬유아세포에 MyoD 유전자를 넣으면 MyoD 단백질이 근육 액틴 · 미오신 같은 <b>근육 세포 특이적 유전자</b>의 조절 서열에 붙어 그 유전자들을 켜요.</li><li>그 결과 mRNA와 단백질이 만들어지고 세포가 <b>근육 세포</b>으로 바뀌어요. 세포호흡 효소처럼 모든 세포에서 켜진 유전자는 그대로 켜져 있어요.</li><li><b>대조군</b>(MyoD를 넣지 않음)은 변하지 않았어요 → 변화의 원인은 MyoD예요.</li><li>정리: 같은 유전체를 가진 세포가 서로 다른 세포가 되려면 <b>서로 다른 유전자가 발현</b>돼야 하고, 이는 <b>전사 인자 조합</b>이 달라서 일어나요. 세포 분화는 유전자 발현 조절 과정을 통해 일어나요.</li></ul>',
+      summary: '<ul><li><b>MyoD</b>는 전사 인자예요. 섬유아세포에 MyoD 유전자를 넣으면 MyoD 단백질이 근육 액틴 · 미오신 같은 <b>근육 세포 특이적 유전자</b>의 조절 서열에 붙어 그 유전자들을 켜요.</li><li>그 결과 mRNA와 단백질이 만들어지고 세포가 <b>근육 세포</b>로 바뀌어요. 세포호흡 효소처럼 모든 세포에서 켜진 유전자는 그대로 켜져 있어요.</li><li><b>대조군</b>(MyoD를 넣지 않음)은 변하지 않았어요 → 변화의 원인은 MyoD예요.</li><li>정리: 같은 유전체를 가진 세포가 서로 다른 세포가 되려면 <b>서로 다른 유전자가 발현</b>돼야 하고, 이는 <b>전사 인자 조합</b>이 달라서 일어나요. 세포 분화는 유전자 발현 조절 과정을 통해 일어나요.</li></ul>',
       missions: [
         {
           id: 'myod', title: '대조군과 MyoD 실험군 비교',
           goal: '<b>대조군</b>을 관찰한 뒤 <b>실험군</b>에 MyoD를 넣고, 근육 유전자 mRNA가 어떻게 변하는지 확인하세요.',
           hint: '위쪽 두 단추 중 하나를 고르고 ▶ 실험 시작을 눌러요. 두 실험을 모두 끝까지 지켜봐요. (실험군은 약 6초)',
           setup() { mdReset(); setMode('myod'); },
-          check: () => S.md.ctrlDone && S.md.expDone && S.md.on[1] === 1 && S.md.on[2] === 1, hold: 0.8,
-          status: () => mark(S.md.ctrlDone) + ' 대조군 &nbsp; ' + mark(S.md.expDone) + ' 실험군 &nbsp; ' + mark(S.md.on[1] === 1 && S.md.on[2] === 1) + ' 근육 mRNA',
+          check: () => S.md.ctrlDone && S.md.expDone, hold: 0.8,
+          status: () => mark(S.md.ctrlDone) + ' 대조군 &nbsp; ' + mark(S.md.expDone) + ' 실험군 &nbsp; ' + mark(S.md.expDone) + ' 근육 mRNA',
           explain: '대조군은 근육 액틴 · 미오신 mRNA가 계속 <b>없었고</b> 모양도 그대로였어요. MyoD를 넣은 실험군은 두 유전자가 <b>켜져</b> mRNA가 생기고 세포가 근육 세포로 바뀌었어요. 달라진 조건은 MyoD 하나뿐이니 MyoD가 원인이에요.',
         },
         {

@@ -872,12 +872,12 @@
       // 암호 부분 괄호 (스플라이싱 후)
       if (sp > 0.99) {
         const cs = segs[0].x + 30 * u, ce = segs[0].x + 573 * u;
-        ctx.strokeStyle = '#0d7a4a'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(cs, yBar + bh + 8); ctx.lineTo(cs, yBar + bh + 14); ctx.lineTo(ce, yBar + bh + 14); ctx.lineTo(ce, yBar + bh + 8); ctx.stroke();
-        T((cs + ce) / 2, yBar + bh + 36, '암호 부분 543 nt', 13.5, '#0d7a4a', 'center', 800);
+        ctx.strokeStyle = '#0d7a4a'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(cs, yBar + bh + 36); ctx.lineTo(cs, yBar + bh + 42); ctx.lineTo(ce, yBar + bh + 42); ctx.lineTo(ce, yBar + bh + 36); ctx.stroke();
+        T((cs + ce) / 2, yBar + bh + 60, '암호 부분 543 nt', 13.5, '#0d7a4a', 'center', 800);
       }
       // 길이 표시
       const lenTxt = '길이 ' + fmtN(Math.round(procLen())) + ' nt' + (PR.capT > 0.9 || PR.tailT > 0.9 ? ' + 캡' + (PR.tailT > 0.9 ? ' + 폴리 A(약 200 nt)' : '') : '');
-      TF(x0, yBar + bh + (sp > 0.99 ? 72 : 60), lenTxt, VW - 2 * x0, 16, 12, '#1f2d44', 'left', 800);
+      TF(x0, yBar + bh + (sp > 0.99 ? 86 : 60), lenTxt, VW - 2 * x0, 16, 12, '#1f2d44', 'left', 800);
       // 떨어져 나간 인트론
       if (sp > 0.6) {
         const fall = (sp - 0.6) / 0.4;

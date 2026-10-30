@@ -365,9 +365,7 @@
   }
   function setMark(v) {
     v = clamp(Math.round(v), 0, 500); S.ep.mark = v; const s = $('#epMark'); if (+s.value !== v) s.value = v;
-    const e = S.ep, c0 = e.c0, ok = Math.abs(v - boundaryOf(c0)) <= 4;
-    if (ok && c0 === 100 && !e.markOk1) { e.markOk1 = true; Sound.success(); }
-    if (ok && c0 === 200 && !e.markOk2) { e.markOk2 = true; Sound.success(); }
+    S.ep.okT = 0;   // 깃발이 경계 근처에 잠시 머물러야 '표시'로 인정해요 (epThrDraw에서 확인)
     updateCtl();
   }
   function setAmount(c0) {
@@ -549,6 +547,11 @@
     epUpdate(dt, t);
     const e = S.ep, top = EG.top, cy = EG.cy, hh = EG.hh, c0 = e.c0, mk = e.mark;
     const okNow = Math.abs(mk - boundaryOf(c0)) <= 4;
+    e.okT = okNow ? (e.okT || 0) + dt : 0;
+    if (okNow && e.okT >= 0.4) {
+      if (c0 === 100 && !e.markOk1) { e.markOk1 = true; Sound.success(); updateCtl(); }
+      if (c0 === 200 && !e.markOk2) { e.markOk2 = true; Sound.success(); updateCtl(); }
+    }
     panel(top.x, top.y, top.w, top.h, 16, '#fff');
     TF(top.x + 16, top.y + 26, 'hunchback이 켜지는 구역 : C가 20 이상인 곳', top.w - 32, L(16, 13.5), 11, '#14532d', 'left', 800);
     const conc = (um) => concAt(um, c0);

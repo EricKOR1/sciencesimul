@@ -495,7 +495,7 @@
     T(P.x + 14, P.y + 24, '스트로마의 캘빈 회로', PHONE ? 14 : 16, '#3f6212', 'left', 800);
     // 회로 길과 방향 화살표
     ctx.save(); ctx.strokeStyle = 'rgba(100,116,139,.45)'; ctx.lineWidth = 3; ctx.setLineDash([8, 7]); ctx.lineDashOffset = RM ? 0 : -t * 14; ctx.beginPath(); ctx.arc(g.c.x, g.c.y, g.R, 0, TAU); ctx.stroke(); ctx.setLineDash([]); ctx.restore();
-    [-30, 90, 210].forEach((d) => { const p = ang(g.c, g.R, d), a = (d + 90) * D2R; ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(a); ctx.fillStyle = 'rgba(71,85,105,.75)'; ctx.beginPath(); ctx.moveTo(0, -8); ctx.lineTo(9, 7); ctx.lineTo(-9, 7); ctx.closePath(); ctx.fill(); ctx.restore(); });
+    [-30, 90, 210].forEach((d) => { const p = ang(g.c, g.R, d), a = (d + 180) * D2R; ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(a); ctx.fillStyle = 'rgba(71,85,105,.75)'; ctx.beginPath(); ctx.moveTo(0, -8); ctx.lineTo(9, 7); ctx.lineTo(-9, 7); ctx.closePath(); ctx.fill(); ctx.restore(); });
     // 단계 표지
     const stn = [['fix', '① 고정', 0, -34], ['red', '② 환원', 58, 2], ['reg', '③ 재생', 0, 32]];
     stn.forEach(([k, label, ox, oy]) => { const p = g.st[k]; D.sphere(p.x, p.y, 9, k === 'fix' ? '#14b8a6' : k === 'red' ? '#ec4899' : '#22c55e', { gloss: true }); pill(p.x + ox, p.y + oy, 62, 22, label, '#1f2d44', '#fff'); });
@@ -648,7 +648,7 @@
     T(g.TH.x + g.TH.w / 2, g.TH.y + g.TH.h + 22, PHONE ? '틸라코이드 (명반응)' : '틸라코이드 막 (명반응)', PHONE ? 12.5 : 14, '#166534', 'center', 800);
     // 캘빈 회로 아이콘
     const cc = g.CV, rr = g.rr; ctx.save(); ctx.strokeStyle = 'rgba(100,116,139,.5)'; ctx.lineWidth = 3; ctx.setLineDash([7, 6]); ctx.lineDashOffset = -lk.spin * 6; ctx.beginPath(); ctx.arc(cc.x, cc.y, rr, 0, TAU); ctx.stroke(); ctx.setLineDash([]); ctx.restore();
-    for (let k = 0; k < 3; k++) { const a = lk.spin * 0.8 + k * TAU / 3, p = { x: cc.x + Math.cos(a) * rr, y: cc.y + Math.sin(a) * rr }; ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(a + Math.PI / 2); ctx.fillStyle = 'rgba(71,85,105,.8)'; ctx.beginPath(); ctx.moveTo(0, -7); ctx.lineTo(8, 6); ctx.lineTo(-8, 6); ctx.closePath(); ctx.fill(); ctx.restore(); }
+    for (let k = 0; k < 3; k++) { const a = lk.spin * 0.8 + k * TAU / 3, p = { x: cc.x + Math.cos(a) * rr, y: cc.y + Math.sin(a) * rr }; ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(a + Math.PI); ctx.fillStyle = 'rgba(71,85,105,.8)'; ctx.beginPath(); ctx.moveTo(0, -7); ctx.lineTo(8, 6); ctx.lineTo(-8, 6); ctx.closePath(); ctx.fill(); ctx.restore(); }
     T(cc.x, cc.y - 2, '캘빈 회로', PHONE ? 13 : 15, '#334155', 'center', 800); T(cc.x, cc.y + 17, '(탄소 고정 반응)', PHONE ? 12 : 12.5, '#475569', 'center', 700);
     // 화살표 (A: 틸라코이드 → 캘빈 회로, B: 반대)
     const arr = (y, x1, x2, col) => D.arrow(x1, y, x2, y, { color: col, width: 3.5, head: 12, alpha: 0.5 });
@@ -669,7 +669,7 @@
     // 게이지
     const G = g.G; panel(G.x, G.y, G.w, G.h, 16, '#fff');
     const st = lk.st, bars = [['ATP 저장량', st.A, '#f59e0b'], ['NADPH 저장량', st.N, '#ec4899'], ['NADP⁺ 남은 양 (명반응 재료)', 1 - st.N, '#2563eb']];
-    const bx = G.x + 16, bw = PHONE ? G.w - 32 - 70 : 420;
+    const bx = G.x + 16, bw = PHONE ? G.w - 32 - 70 : 396;
     bars.forEach((b, i) => { const y = G.y + (PHONE ? 22 : 24) + i * (PHONE ? 38 : 26); TF(bx, y, b[0], PHONE ? 170 : 220, PHONE ? 13 : 14, 11, '#334155', 'left', 800); const x0 = bx + (PHONE ? 176 : 232), w = bw - (PHONE ? 176 : 232) - 4; D.roundRect(x0, y - 11, w, 14, 7); ctx.fillStyle = '#eef2f7'; ctx.fill(); if (b[1] > 0.004) { D.roundRect(x0, y - 11, Math.max(10, w * b[1]), 14, 7); ctx.fillStyle = b[2]; ctx.fill(); } T(x0 + w + 8, y, fi(b[1] * 100) + ' %', PHONE ? 13 : 14, '#1f2d44', 'left', 800); });
     const sp1 = fi(clamp(lk.rate.pn / PM.pN, 0, 1) * 100), sp2 = fi(clamp(lk.rate.q * 2 * PM.k / PM.pN, 0, 1) * 100);
     if (!PHONE) { const rx = G.x + 480; T(rx, G.y + 26, '명반응: NADPH 만드는 속도', 13.5, '#166534', 'left', 800); T(rx + 270, G.y + 26, sp1 + ' %', 16, '#1f2d44', 'right', 800); T(rx, G.y + 54, '탄소 고정: NADPH 쓰는 속도', 13.5, '#9d174d', 'left', 800); T(rx + 270, G.y + 54, sp2 + ' %', 16, '#1f2d44', 'right', 800); T(rx, G.y + 84, '(최대 속도에 대한 %) 둘은 서로 이어져 있어요', 12.5, '#64748b', 'left', 700); }
@@ -947,7 +947,7 @@
           id: 'pred2', title: '빛 끄기와 CO₂ 끊기 예측', manual: true,
           goal: '<b>🌑 빛을 갑자기 끔</b>과 <b>🚫 CO₂ 공급 중단</b>에서 ATP · NADPH, 3PG, RuBP의 변화를 예측하고 실행해 <b>두 시나리오 모두 맞히세요</b>.',
           hint: '빛이 없으면 ATP · NADPH를 못 만들고, CO₂가 없으면 RuBP를 쓸 수 없어요. 3PG는 RuBP가 CO₂를 붙잡아 생기고, 환원 · 재생으로 RuBP로 되돌아가요.',
-          setup() { setMode('pred'); S.pr.sel = 'light'; S.pr.traj = null; S.pr.res = null; S.pr.running = false; S.pr.tcur = 0; prLoad(); updateCtl(); },
+          setup() { setMode('pred'); S.pr.ran = {}; S.pr.pass = {}; S.pr.p = {}; S.pr.sel = 'light'; S.pr.traj = null; S.pr.res = null; S.pr.running = false; S.pr.tcur = 0; prLoad(); updateCtl(); },
           check() {
             const pr = S.pr;
             if (!pr.ran.light || !pr.ran.co2) return '두 시나리오(빛을 갑자기 끔, CO₂ 공급 중단)를 예측하고 ▶ 실행하기를 눌러 확인해요.';

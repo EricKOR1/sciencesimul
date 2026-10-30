@@ -379,7 +379,7 @@
       D.arrow(g.cx + 52, g.yc - 34, g.cx - 52, g.yc - 34, { color: '#2563eb', width: ww(rl) });
       D.arrow(g.cx - 52, g.yc - 14, g.cx + 52, g.yc - 14, { color: '#2563eb', width: ww(lr) });
       ctx.restore();
-      T(g.cx, g.yc - 56, '물 분자 이동 (굵을수록 많아요)', 12, '#1e40af', 'center', 800, { stroke: 'rgba(255,255,255,.85)', strokeWidth: 3 });
+      T(g.cx, g.top + 16, '물 분자 이동 (굵을수록 많아요)', 12, '#1e40af', 'center', 800, { stroke: 'rgba(255,255,255,.85)', strokeWidth: 3 });
     }
     // 정보 패널
     panel(UTI.x, UTI.y, UTI.w, UTI.h, 18, '#ffffff');
@@ -737,9 +737,9 @@
     const X = (v) => lerp(x0, x1, v / xmax), Y = (v) => lerp(y0, y1, (v - ymin) / (ymax - ymin));
     ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1;
     yt.forEach((v) => { ctx.beginPath(); ctx.moveTo(x0, Y(v)); ctx.lineTo(x1, Y(v)); ctx.stroke(); T(x0 - 7, Y(v) + 4, String(v), 12, '#64748b', 'right', 700); });
-    xt.forEach((v) => { ctx.beginPath(); ctx.moveTo(X(v), y0); ctx.lineTo(X(v), y0 + 4); ctx.stroke(); T(X(v), y0 + 18, v.toFixed(1), 12, '#64748b', 'center', 700); });
+    xt.forEach((v) => { ctx.beginPath(); ctx.moveTo(X(v), y0); ctx.lineTo(X(v), y0 + 4); ctx.stroke(); T(X(v), y0 + 16, v.toFixed(1), 12, '#64748b', 'center', 700); });
     ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.8; ctx.beginPath(); ctx.moveTo(x0, y1 - 4); ctx.lineTo(x0, y0 + (ymin < 0 ? 0 : 0)); ctx.lineTo(x1, y0); ctx.stroke();
-    T((x0 + x1) / 2, R.y + R.h - 8, xl, 12.5, '#64748b', 'center', 700); T(R.x + 14, R.y + 36, yl, 12.5, '#64748b', 'left', 700);
+    T((x0 + x1) / 2, R.y + R.h - 6, xl, 12.5, '#64748b', 'center', 700); T(R.x + 8, R.y + 56, yl, 12.5, '#64748b', 'left', 700);
     return { x0, x1, y0, y1, X, Y, xOf: (px) => (px - x0) / (x1 - x0) * xmax };
   }
   function lmDraw(dt, t) {
@@ -972,7 +972,7 @@
         {
           id: 'levels', title: '농도를 바꾸며 수면 변화 관찰',
           goal: '🧪 화면의 슬라이더를 바꿔서 <b>왼쪽 수면 상승 · 오른쪽 수면 상승 · 농도가 같을 때 변화 없음 · 용질이 통과하는 막</b> 네 장면을 모두 관찰하세요.',
-          hint: '왼쪽 0.3 M, 오른쪽 0.0 M이면 왼쪽 수면이 올라가요. 두 슬라이더를 반대로 바꾸면 오른쪽이 올라가요. 둘 다 0.3 M으로 같게 하면 수면이 그대로이고, [용질도 통과하는 막]으로 바꾸면 수면이 같아져요.',
+          hint: '왼쪽 0.3 M, 오른쪽 0.0 M이면 왼쪽 수면이 올라가요. 두 슬라이더를 반대로 바꾸면 오른쪽이 올라가요. 둘 다 0.3 M으로 같게 하면 수면이 그대로예요. 농도를 다시 다르게(예: 왼쪽 0.3 M, 오른쪽 0.0 M) 한 뒤 [용질도 통과하는 막]으로 바꾸면 용질이 이동해 수면이 같아져요.',
           setup() { setMode('utube'); S.ut.cL = 0.3; S.ut.cR = 0; S.ut.eL = 0.3; S.ut.eR = 0; S.ut.perm = false; S.ut.seen = { left: false, right: false, same: false, perm: false }; S.ut.same = 0; S.ut.permT = 0; utReset(); },
           check: () => S.ut.seen.left && S.ut.seen.right && S.ut.seen.same && S.ut.seen.perm, hold: 0.5,
           status: () => ['left', 'right', 'same', 'perm'].map((k) => mark(S.ut.seen[k]) + ' ' + { left: '왼쪽 수면 상승', right: '오른쪽 수면 상승', same: '농도 같음 · 변화 없음', perm: '용질이 통과하는 막' }[k]).join(' &nbsp; '),

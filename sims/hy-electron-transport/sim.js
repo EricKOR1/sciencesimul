@@ -533,8 +533,8 @@
     const hotC = sd.tool === 'h' ? '#f97316' : sd.tool === 'a' ? '#eab308' : '#6366f1';
     [['L', GL], ['R', GR]].forEach(([s, G]) => {
       const hmk = sd.hm[s], amk = sd.am[s];
-      if (hmk) { const r = hmk === 'top' ? G.topR : G.botR; D.roundRect(r.x + 2, r.y + 2, r.w - 4, r.h - 4, 10); ctx.strokeStyle = '#f97316'; ctx.lineWidth = 3.5; ctx.stroke(); tagPill(s === 'L' ? r.x + r.w - 52 : r.x + 52, r.y + (hmk === 'top' ? 22 : 22), 'H⁺ 많음', '#f97316', '#fff'); }
-      if (amk) { const r = amk === 'top' ? G.topR : G.botR; D.roundRect(r.x + 5, r.y + 5, r.w - 10, r.h - 10, 10); ctx.strokeStyle = '#eab308'; ctx.lineWidth = 3.5; ctx.setLineDash([8, 5]); ctx.stroke(); ctx.setLineDash([]); tagPill(s === 'L' ? r.x + r.w - 56 : r.x + 56, r.y + r.h - 22, 'ATP 합성', '#facc15', '#713f12'); }
+      if (hmk) { const r = hmk === 'top' ? G.topR : G.botR; D.roundRect(r.x + 2, r.y + 2, r.w - 4, r.h - 4, 10); ctx.strokeStyle = '#f97316'; ctx.lineWidth = 3.5; ctx.stroke(); tagPill(s === 'L' || PHONE ? r.x + r.w - 52 : r.x + 52, r.y + 46, 'H⁺ 많음', '#f97316', '#fff'); }
+      if (amk) { const r = amk === 'top' ? G.topR : G.botR; D.roundRect(r.x + 5, r.y + 5, r.w - 10, r.h - 10, 10); ctx.strokeStyle = '#eab308'; ctx.lineWidth = 3.5; ctx.setLineDash([8, 5]); ctx.stroke(); ctx.setLineDash([]); tagPill(s === 'L' || PHONE ? r.x + r.w - 56 : r.x + 56, r.y + r.h - 46, 'ATP 합성', '#facc15', '#713f12'); }
       [G.start, G.end].forEach((e2) => { const v = sd.em[e2.id]; if (v) { const ok = (e2.id === 'nadh' || e2.id === 'h2o') ? v === 1 : v === 2; D.roundRect(e2.x - 38, e2.y - 25, 76, 50, 12); ctx.strokeStyle = v === 1 ? '#2563eb' : '#dc2626'; ctx.lineWidth = 3; ctx.stroke(); tagPill(e2.x, e2.y - (e2.y < G.my ? 36 : -38), EM_NAME[v], v === 1 ? '#2563eb' : '#dc2626', '#fff'); } });
       if (sd.tool === 'e') [G.start, G.end].forEach((e2) => { if (!sd.em[e2.id]) { ctx.save(); ctx.globalAlpha = 0.5 + 0.4 * Math.sin(t * 5); D.roundRect(e2.x - 38, e2.y - 25, 76, 50, 12); ctx.strokeStyle = '#6366f1'; ctx.lineWidth = 2.5; ctx.setLineDash([5, 4]); ctx.stroke(); ctx.restore(); } });
       else { const rs = [G.topR, G.botR]; ctx.save(); ctx.globalAlpha = 0.5 + 0.4 * Math.sin(t * 4); rs.forEach((r) => { const used = (sd.tool === 'h' ? hmk : amk); if (!used) { D.roundRect(r.x + 3, r.y + 3, r.w - 6, r.h - 6, 10); ctx.strokeStyle = hotC; ctx.lineWidth = 2; ctx.setLineDash([5, 5]); ctx.stroke(); } }); ctx.restore(); }
@@ -543,8 +543,8 @@
     const ok = sdOK();
     const link = (a, b, col, wd) => { ctx.save(); ctx.strokeStyle = col; ctx.globalAlpha = 0.95; ctx.lineWidth = wd; ctx.setLineDash([3, 6]); ctx.lineCap = 'round'; ctx.lineDashOffset = -t * 20; ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); ctx.restore(); };
     if (!PHONE) {
-      if (ok.h) link({ x: GL.topR.x + GL.topR.w - 52 + 40, y: GL.topR.y + 22 }, { x: GR.topR.x + 52 - 40, y: GR.topR.y + 22 }, '#f97316', 4.5);
-      if (ok.a) link({ x: GL.botR.x + GL.botR.w - 56 + 46, y: GL.botR.y + GL.botR.h - 22 }, { x: GR.botR.x + 56 - 46, y: GR.botR.y + GR.botR.h - 22 }, '#eab308', 4.5);
+      if (ok.h) link({ x: GL.topR.x + GL.topR.w - 52 + 40, y: GL.topR.y + 46 }, { x: GR.topR.x + 52 - 40, y: GR.topR.y + 46 }, '#f97316', 4.5);
+      if (ok.a) link({ x: GL.botR.x + GL.botR.w - 56 + 46, y: GL.botR.y + GL.botR.h - 46 }, { x: GR.botR.x + 56 - 46, y: GR.botR.y + GR.botR.h - 46 }, '#eab308', 4.5);
       const B = g.B; panel(B.x, B.y, B.w, B.h, 16, '#fff');
       const rows = [[ok.h, '#f97316', '💧 H⁺가 많이 쌓이는 쪽', '막 사이 공간  =  틸라코이드 내부'], [ok.a, '#eab308', '🟡 ATP가 만들어지는 쪽', '기질  =  스트로마'], [ok.e, '#6366f1', '⚡ 전자의 출발 → 도착', 'NADH · 물에서 출발  →  O₂ · NADP⁺에 도착']];
       rows.forEach((r, i) => { const y = B.y + 30 + i * 30; D.roundRect(B.x + 12, y - 15, B.w - 24, 26, 8); ctx.fillStyle = r[0] ? C.rgba(r[1], 0.15) : 'rgba(148,163,184,.10)'; ctx.fill(); D.sphere(B.x + 28, y - 2, 6, r[0] ? r[1] : '#cbd5e1', { gloss: false }); T(B.x + 44, y + 3, r[2], 14, r[0] ? '#1f2d44' : '#94a3b8', 'left', 800); T(B.x + 270, y + 3, r[0] ? r[3] : '?  표시하면 짝이 이어져요', 14, r[0] ? '#1f2d44' : '#94a3b8', 'left', 800); });
@@ -659,7 +659,7 @@
     memUpdate(ih.mL, GL, dt, p.L); memUpdate(ih.mR, GR, dt, p.R);
     memDraw(ih.mL, GL, t, { block: ih.tr === 'cn' ? 3 : 0 }); memDraw(ih.mR, GR, t, { block: ih.tr === 'db' ? 1 : 0 });
     [[g.L, ih.val.L, '세포호흡'], [g.R, ih.val.R, '광합성']].forEach(([P, v, nm]) => {
-      const y = P.y + P.h - (PHONE ? 30 : 36), x0 = P.x + 14, w = P.w - 28; T(x0, y - 4, 'ATP 합성 (상대값)', PHONE ? 12.5 : 13.5, '#334155', 'left', 800); D.roundRect(x0 + (PHONE ? 132 : 150), y - 16, w - (PHONE ? 132 : 150) - 52, 16, 8); ctx.fillStyle = '#eef2f7'; ctx.fill(); if (v.v > 0.5) { D.roundRect(x0 + (PHONE ? 132 : 150), y - 16, Math.max(12, (w - (PHONE ? 132 : 150) - 52) * clamp(v.v / 100, 0, 1)), 16, 8); ctx.fillStyle = v.v >= 90 ? '#16a34a' : '#f59e0b'; ctx.fill(); }
+      const y = P.y + P.h - (PHONE ? 22 : 28), x0 = P.x + 14, w = P.w - 28; T(x0, y - 4, 'ATP 합성 (상대값)', PHONE ? 12.5 : 13.5, '#334155', 'left', 800); D.roundRect(x0 + (PHONE ? 132 : 150), y - 16, w - (PHONE ? 132 : 150) - 52, 16, 8); ctx.fillStyle = '#eef2f7'; ctx.fill(); if (v.v > 0.5) { D.roundRect(x0 + (PHONE ? 132 : 150), y - 16, Math.max(12, (w - (PHONE ? 132 : 150) - 52) * clamp(v.v / 100, 0, 1)), 16, 8); ctx.fillStyle = v.v >= 90 ? '#16a34a' : '#f59e0b'; ctx.fill(); }
       T(x0 + w, y - 3, fi(v.v), PHONE ? 16 : 18, '#1f2d44', 'right', 800);
     });
     // 처리 이름표와 결과표
@@ -730,9 +730,9 @@
       [[cxm - d / 2, thm[1], '세포호흡'], [cxm + d / 2, thm[2], '광합성']].forEach(([cx, col, nm]) => { ctx.beginPath(); ctx.arc(cx, cy, r, 0, TAU); ctx.fillStyle = C.rgba(col, 0.13); ctx.fill(); ctx.strokeStyle = col; ctx.lineWidth = 3; ctx.stroke(); });
       T(cxm - d / 2 - r * 0.45, top + 18, '세포호흡', 17, thm[1], 'center', 800); T(cxm + d / 2 + r * 0.45, top + 18, '광합성', 17, thm[2], 'center', 800); T(cxm, top + 18, '공통점', 17, thm[0], 'center', 800);
       const lx0 = cxm - d / 2 - r + 22, lw = r - d / 2 + r * 0.0 + 0;
-      const sideW = r - d / 2 - 14; // 한쪽만 있는 영역 폭
+      const sideW = Math.max(80, d * 0.55); // 한쪽만 있는 영역 폭
       if (!lst.dif.length) { none(cxm - d / 2 - r * 0.45 + 10, cy); none(cxm + d / 2 + r * 0.45 - 10, cy); }
-      lst.dif.forEach((q, i) => { const y = top + 56 + i * ((bot - top - 64) / 5); wrapT(cxm - d / 2 - r + 22 + sideW / 2 + 6, y + 14, sideW, q.L, 12, thm[1], 14, 800, 2); wrapT(cxm + d / 2 + r - 22 - sideW / 2 - 6, y + 14, sideW, q.R, 12, thm[2], 14, 800, 2); });
+      lst.dif.forEach((q, i) => { const y = top + 56 + i * ((bot - top - 64) / 5); wrapT(cxm - r * 0.87, y + 14, sideW, q.L, 12, thm[1], 14, 800, 2); wrapT(cxm + r * 0.87, y + 14, sideW, q.R, 12, thm[2], 14, 800, 2); });
       if (!lst.com.length) none(cxm, cy); lst.com.forEach((q, i) => { const y = top + 50 + i * ((bot - top - 58) / 5); D.roundRect(cxm - (d / 2 * 0 + (2 * r - d) / 2) + 6, y, 2 * r - d - 12, 44, 8); ctx.fillStyle = 'rgba(99,102,241,.14)'; ctx.fill(); wrapT(cxm, y + 24, 2 * r - d - 28, q.short, 12, '#312e81', 14, 800, 2); });
     } else if (media === 'mirror') {
       const cxm = P.x + P.w / 2; D.roundRect(P.x + 24, top, P.w / 2 - 70, 28, 8); ctx.fillStyle = thm[1]; ctx.fill(); T(P.x + 24 + (P.w / 2 - 70) / 2, top + 20, '세포호흡 (미토콘드리아)', 14, '#fff', 'center', 800);
@@ -872,7 +872,7 @@
           id: 'ends', title: '전자의 출발과 도착',
           goal: '⚡ 도구로 <b>NADH · 물</b>을 <b>출발</b>로, <b>O₂ · NADP⁺</b>를 <b>도착</b>으로 표시하세요.',
           hint: '분자를 한 번 누르면 출발, 두 번 누르면 도착이에요. 전자는 NADH(호흡), 물(광합성)에서 나와서 마지막에 O₂(호흡), NADP⁺(광합성)에게 가요.',
-          setup() { setMode('side'); S.sd.tool = 'e'; updateCtl(); },
+          setup() { setMode('side'); S.sd.tool = 'e'; S.sd.em = { nadh: 0, o2: 0, h2o: 0, nadp: 0 }; updateCtl(); },
           check: () => sdOK().e, hold: 0.8,
           status: () => mark(S.sd.em.nadh === 1) + ' NADH 출발 &nbsp; ' + mark(S.sd.em.o2 === 2) + ' O₂ 도착 &nbsp; ' + mark(S.sd.em.h2o === 1) + ' 물 출발 &nbsp; ' + mark(S.sd.em.nadp === 2) + ' NADP⁺ 도착',
           explain: '세포호흡: <b>NADH</b>(출발) → 전달계 → <b>O₂</b>(도착, H₂O가 됨). 광합성: <b>물</b>(출발) → 광계 Ⅱ → 전달계 → 광계 Ⅰ → <b>NADP⁺</b>(도착, NADPH가 됨). 광합성의 전자는 빛으로 두 번 에너지를 올려 받아요.',
@@ -900,7 +900,7 @@
           id: 'table', title: '비교표 완성', manual: true,
           goal: '10가지 항목의 <b>세포호흡 · 광합성 값을 모두</b> 골라 비교표를 완성하세요. (20칸)',
           hint: '표의 줄을 누르면 오른쪽 아래에서 값을 고를 수 있어요. 틀린 칸은 빨갛게 보여요. 앞에서 표시한 H⁺와 전자의 방향을 떠올려 봐요.',
-          setup() { setMode('table'); S.tb.view = 'tbl'; tbLoadRow(); updateCtl(); },
+          setup() { setMode('table'); S.tb.view = 'tbl'; S.tb.sel = TBL.map(() => ({ l: '', r: '' })); S.tb.row = 0; tbLoadRow(); updateCtl(); },
           check() {
             const n = tbDone() * 2; if (n >= 20) return true;
             const bad = TBL.findIndex((r, i) => (S.tb.sel[i].l && !tbOK(i, 'l')) || (S.tb.sel[i].r && !tbOK(i, 'r')));

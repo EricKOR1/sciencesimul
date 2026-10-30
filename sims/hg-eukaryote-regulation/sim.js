@@ -389,7 +389,7 @@
   ];
   const CM = { sel: -1, seen: new Array(5).fill(false), hits: [], pr: 0 };
   function cmpGeom() {
-    if (PHONE) { const s = 1.18; return { s, w: 380 * s, h: 180 * s, p: { x: 10, y: 40 }, e: { x: 10, y: 40 + 180 * s + 8 }, card: { x: 8, y: 40 + 2 * 180 * s + 16, w: 464, h: 640 - (40 + 2 * 180 * s + 16) - 6 } }; }
+    if (PHONE) { const s = 0.95, x0 = (480 - 380 * s) / 2; return { s, w: 380 * s, h: 180 * s, p: { x: x0, y: 38 }, e: { x: x0, y: 38 + 180 * s + 6 }, card: { x: 8, y: 38 + 2 * 180 * s + 14, w: 464, h: 640 - (38 + 2 * 180 * s + 14) - 6 } }; }
     return { s: 1.0, w: 380, h: 180, p: { x: 12, y: 44 }, e: { x: 408, y: 44 }, card: { x: 10, y: 244, w: 780, h: 306 } };
   }
   function selHot(i) { CM.sel = i; CM.seen[i] = true; Sound.tick(); CM.pr = 0; updateCtl(); }
@@ -468,12 +468,12 @@
     } else {
       const h = HOT[CM.sel], colW = (c.w - 46) / 2;
       T(c.x + 18, c.y + 30, h.n + ' ' + h.name, 17, '#1f2d44', 'left', 800);
-      const cols = PHONE ? [[c.x + 12, c.y + 42, c.w - 24, 'pro'], [c.x + 12, c.y + 42 + (c.h - 48) / 2, c.w - 24, 'euk']] : [[c.x + 14, c.y + 48, colW, 'pro'], [c.x + 32 + colW, c.y + 48, colW, 'euk']];
+      const phH = (c.h - 40 - 6 - 6) / 2, cols = PHONE ? [[c.x + 12, c.y + 38, c.w - 24, 'pro'], [c.x + 12, c.y + 38 + phH + 6, c.w - 24, 'euk']] : [[c.x + 14, c.y + 48, colW, 'pro'], [c.x + 32 + colW, c.y + 48, colW, 'euk']];
       cols.forEach(([x, y, w, k]) => {
-        const col = k === 'pro' ? '#6aa84f' : '#d9a441', hh = PHONE ? (c.h - 56) / 2 : c.h - 62;
+        const col = k === 'pro' ? '#6aa84f' : '#d9a441', hh = PHONE ? phH : c.h - 62;
         D.roundRect(x, y, w, hh, 12); ctx.fillStyle = C.rgba(col, 0.12); ctx.fill(); ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.stroke();
-        T(x + 12, y + 24, k === 'pro' ? '원핵생물' : '진핵생물', 15, C.shade(col, -0.4), 'left', 800);
-        textBlock(x + 12, y + 48, w - 24, h[k], PHONE ? 13.5 : 15.5, '#334155', PHONE ? 19 : 24, 700);
+        T(x + 12, y + (PHONE ? 20 : 24), k === 'pro' ? '원핵생물' : '진핵생물', PHONE ? 14 : 15, C.shade(col, -0.4), 'left', 800);
+        textBlock(x + 12, y + (PHONE ? 40 : 48), w - 24, h[k], PHONE ? 13 : 15.5, '#334155', PHONE ? 17 : 24, 700);
       });
     }
   }
@@ -537,9 +537,9 @@
     if (TFS.loop < 0.5) T((G.eE + G.pX) / 2, dnaY + 30, '…… 멀리 떨어진 DNA ……', PHONE ? 12.5 : 14, '#94a3b8', 'center', 800);
     // 인핸서 · 프로모터 · 유전자
     D.roundRect(G.eS, dnaY - 14, G.eE - G.eS, 28, 7); ctx.fillStyle = '#fed7aa'; ctx.fill(); ctx.strokeStyle = '#ea580c'; ctx.lineWidth = 2.5; ctx.stroke();
-    T((G.eS + G.eE) / 2, dnaY + 44, '인핸서', 14, '#c2410c', 'center', 800);
+
     D.roundRect(px, dnaY - 14, G.pW, 28, 7); ctx.fillStyle = '#bae6fd'; ctx.fill(); ctx.strokeStyle = '#0284c7'; ctx.lineWidth = 2.5; ctx.stroke();
-    T(px + G.pW / 2, dnaY + 44, '프로모터', 14, '#0369a1', 'center', 800);
+
     D.roundRect(px + G.pW + 4, dnaY - 14, G.gW, 28, 7); ctx.fillStyle = tfOn() ? '#86efac' : '#d1d5db'; ctx.fill(); ctx.strokeStyle = tfOn() ? '#16a34a' : '#94a3b8'; ctx.lineWidth = 2.5; ctx.stroke();
     T(px + G.pW + 4 + G.gW / 2, dnaY + 5, '유전자', 14, tfOn() ? '#14532d' : '#6b7280', 'center', 800);
     // 염색질 구슬
@@ -548,11 +548,14 @@
       const free = (nearE || nearP) && TFS.open > 0.01;
       const inLoop = bx > G.eE + 20 && bx < G.pX - 6;
       if (inLoop && TFS.loop > 0.5) return;
+      if (TFS.loop > 0.5 && bx > px - 40 && bx < px + G.pW + 4 + G.gW + 8) return;   // 풀린 프로모터 · 유전자 구간은 구슬이 가리지 않아요
       const off = free ? TFS.open : 0;
       const yy = dnaY + (i % 2 ? -1 : 1) * (off * 44) + (free ? Math.sin(t * 2 + i) * 2 * off : 0), xx = bx + (free ? (i % 2 ? -6 : 6) * off : 0);
       if (!free && !(nearE || nearP) && TFS.open > 0.01) { /* 먼 곳은 그대로 */ }
       D.sphere(xx, yy, 10, '#fda4af', { gloss: true, outline: '#e11d48', outlineWidth: 1.5 });
     });
+    T((G.eS + G.eE) / 2, dnaY + 44, '인핸서', 14, '#c2410c', 'center', 800, { stroke: '#fff', strokeWidth: 4 });
+    T(px + G.pW / 2, dnaY + 44, '프로모터', 14, '#0369a1', 'center', 800, { stroke: '#fff', strokeWidth: 4 });
     T(PHONE ? 12 : 20, dnaY - 100, TFS.open > 0.5 ? '염색질이 풀렸어요' : '염색질이 닫혀 있어요 (히스톤에 감김)', PHONE ? 12.5 : 14, TFS.open > 0.5 ? '#16a34a' : '#be123c', 'left', 800);
     // 활성화 인자 슬롯과 결합한 인자
     const slotX = [0, 1, 2].map((i) => G.eS + (G.eE - G.eS) * (0.17 + 0.33 * i));
@@ -582,15 +585,16 @@
     if (TFS.loop > 0.6) { ctx.strokeStyle = '#7c3aed'; ctx.lineWidth = 3; ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.moveTo(slotX[1], dnaY - 48); ctx.quadraticCurveTo((slotX[1] + px) / 2, dnaY - 78, px + G.pW / 2, dnaY - 54); ctx.stroke(); ctx.setLineDash([]); T((G.eE + px) / 2 + 20, dnaY - lh * 1.0 - 32, '인핸서가 프로모터에 닿아요', 13, '#6d28d9', 'center', 800); }
     // LED 줄
     const ly = PHONE ? 330 : 322;
-    ['X', 'Y', 'Z'].forEach((k, i) => { const x = 40 + i * 70; D.sphere(x, ly, 11, TFS.bound[k] ? TFCOL[k] : '#d1d5db', { gloss: true }); if (TFS.bound[k]) D.glow(x, ly, 24, TFCOL[k], 0.4); T(x, ly + 28, k + (TFS.bound[k] ? ' 결합' : ''), 12.5, '#475569', 'center', 800); });
-    T(40 + 3 * 70 - 12, ly + 5, 'AND', 14, '#64748b', 'center', 800);
-    const gx = 40 + 3 * 70 + 40;
+    const lsp = PHONE ? 60 : 70;
+    ['X', 'Y', 'Z'].forEach((k, i) => { const x = 36 + i * lsp; D.sphere(x, ly, 11, TFS.bound[k] ? TFCOL[k] : '#d1d5db', { gloss: true }); if (TFS.bound[k]) D.glow(x, ly, 24, TFCOL[k], 0.4); T(x, ly + 28, k + (TFS.bound[k] ? ' 결합' : ''), 12.5, '#475569', 'center', 800); });
+    T(36 + 3 * lsp - 12, ly + 5, 'AND', 14, '#64748b', 'center', 800);
+    const gx = 36 + 3 * lsp + (PHONE ? 30 : 40);
     D.sphere(gx, ly, 14, tfOn() ? '#16a34a' : '#d1d5db', { gloss: true }); if (tfOn()) D.glow(gx, ly, 34, '#16a34a', 0.55);
     T(gx + 24, ly + 5, tfOn() ? '유전자 켜짐' : '꺼짐', 14.5, tfOn() ? '#166534' : '#6b7280', 'left', 800);
     // mRNA 통
     const mx = VW - (PHONE ? 100 : 150), my = ly - 14;
     D.roundRect(mx, my - 20, PHONE ? 80 : 130, 56, 12); ctx.fillStyle = '#faf5ff'; ctx.fill(); ctx.strokeStyle = '#a78bfa'; ctx.lineWidth = 2; ctx.stroke();
-    T(mx + (PHONE ? 40 : 65), my - 26, 'mRNA 수', 13, '#6d28d9', 'center', 800);
+    T(mx + (PHONE ? 40 : 65), my - 26, 'mRNA 수', 13, '#6d28d9', 'center', 800, { stroke: '#fff', strokeWidth: 4 });
     for (let i = 0; i < Math.floor(TFS.mrna / 2); i++) { const cx = mx + 10 + (i % (PHONE ? 7 : 11)) * 11, cy = my + 24 - Math.floor(i / (PHONE ? 7 : 11)) * 11; D.sphere(cx, cy, 4.2, '#8b5cf6', { gloss: false }); }
     T(mx + (PHONE ? 40 : 65), my + 52, Math.floor(TFS.mrna) + '개', 14, '#334155', 'center', 800);
     // 안내
@@ -683,18 +687,18 @@
   const CASES = [['c3', '수명이 짧은 mRNA로 빠른 반응', 'mrna'], ['c1', '호르몬 수용체가 전사 인자로 작용', 'init'], ['c5', '리보솜이 mRNA에 잘 붙어요', 'trans'], ['c2', '같은 RNA에서 인트론 제거 방식이 달라져요', 'proc'], ['c6', '세포 주기 단백질을 제때 분해', 'prot'], ['c4', '히스톤이 느슨해져 DNA가 드러나요', 'chrom']];
   const LK = { so: null };
   function lkBuild() {
-    const c = PHONE ? 1 : 2, w = PHONE ? 464 : 384, h = PHONE ? 52 : 66;
-    const boxes = STAGES.map((s, i) => ({ id: s[0], label: s[1], col: s[2], x: 8 + (i % c) * (w + 8), y: 42 + Math.floor(i / c) * (h + 8), w, h, cols: 1, hdr: 24 }));
+    const c = PHONE ? 1 : 2, w = PHONE ? 464 : 384, h = PHONE ? 52 : 66, gp = PHONE ? 4 : 8;
+    const boxes = STAGES.map((s, i) => ({ id: s[0], label: s[1], col: s[2], x: 8 + (i % c) * (w + 8), y: 42 + Math.floor(i / c) * (h + gp), w, h, cols: 1, hdr: PHONE ? 22 : 24 }));
     const cards = CASES.map((k) => ({ id: k[0], label: k[1], col: '#0ea5e9' }));
-    const ty = 42 + Math.ceil(STAGES.length / c) * (h + 8) + 32;
-    LK.so = selectable({ cards, boxes, cw: PHONE ? 464 : 384, ch: PHONE ? 40 : 44, kh: PHONE ? 26 : 34, tray: (i) => ({ x: 8 + (i % c) * (w + 8), y: ty + Math.floor(i / c) * (PHONE ? 46 : 52) }), onChange() { updateCtl(); } });
+    const ty = 42 + Math.ceil(STAGES.length / c) * (h + gp) + (PHONE ? 24 : 32);
+    LK.so = selectable({ cards, boxes, cw: PHONE ? 464 : 384, ch: PHONE ? 34 : 44, kh: PHONE ? 26 : 34, tray: (i) => ({ x: 8 + (i % c) * (w + 8), y: ty + Math.floor(i / c) * (PHONE ? 38 : 52) }), onChange() { updateCtl(); } });
   }
   const lkWrong = () => LK.so.cards.filter((c) => c.zone && c.zone !== CASES.find((k) => k[0] === c.id)[2]);
   function linkScene(dt, t) {
     LK.so.update(dt);
     T(14, 28, '단계마다 알맞은 사례 카드를 연결해요', PHONE ? 14.5 : 16.5, '#334155', 'left', 800);
     LK.so.drawBoxes();
-    const ty = 42 + Math.ceil(STAGES.length / (PHONE ? 1 : 2)) * ((PHONE ? 52 : 66) + 8) + 12;
+    const ty = 42 + Math.ceil(STAGES.length / (PHONE ? 1 : 2)) * ((PHONE ? 52 + 4 : 66 + 8)) + (PHONE ? 6 : 12);
     T(14, ty + 4, '사례 카드 (끌어서 놓거나, 카드 → 칸 순서로 눌러요)', 13.5, '#64748b', 'left', 800);
     LK.so.drawCards();
   }
