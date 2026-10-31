@@ -528,6 +528,18 @@ input[type=range]:disabled { opacity: .45; cursor: not-allowed; }
   #fsBtn { display: none; }
 }
 
+/* 가로로 돌린 휴대폰(높이가 낮은 화면): 실험 화면을 화면 높이에 맞춰 크게, 조작·미션은 아래로 스크롤 */
+@media (orientation: landscape) and (max-height: 500px) and (min-width: 600px) {
+  .sim-page { height: auto; min-height: 100dvh; overflow: visible; }
+  .sim-header { position: sticky; top: 0; height: 50px; }
+  .sim-main { display: flex; flex-direction: column; padding: 8px; gap: 8px; }
+  .stage-col { flex: none; }
+  .stage-card { flex: none; }
+  .stage-canvas { flex: none; height: calc(100dvh - 66px); min-height: 260px; }
+  .side-col { overflow: visible; }
+  .stage-lock .sl-dir::before { content: '아래'; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }

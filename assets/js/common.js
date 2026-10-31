@@ -283,6 +283,19 @@
     return { stop() { running = false; } };
   }
 
+  /* 화면 회전 등으로 휴대폰(600px 미만) ↔ 태블릿 배치가 바뀌면 새로 불러와 그 화면에 맞게 다시 그려요.
+     (실험 코드가 처음 열 때 휴대폰 여부로 그림 배치를 정하기 때문이에요. 진행 기록은 미션 단위로 저장돼 있어요) */
+  if (global.matchMedia && global.document && /\/sims\//.test(global.location.pathname)) {
+    const mqPhone = global.matchMedia('(max-width: 599px)');
+    const phone0 = mqPhone.matches;
+    let tReload = 0;
+    const onChange = () => {
+      clearTimeout(tReload);
+      tReload = setTimeout(() => { if (mqPhone.matches !== phone0) global.location.reload(); }, 400);
+    };
+    if (mqPhone.addEventListener) mqPhone.addEventListener('change', onChange); else if (mqPhone.addListener) mqPhone.addListener(onChange);
+  }
+
   /* 모든 슬라이더의 진행 색(--pct)을 값에 맞춰 자동으로 맞춰요
      (실험 코드가 따로 맞추지 않거나 코드에서 값을 바꿔도 막대 색이 따라가요) */
   function syncRangeFill(input) {
@@ -565,7 +578,7 @@
           el('span', { class: 'c', text: done && i !== cur ? '✓' : String(i + 1) }),
           el('span', { class: 'l', text: stepLabel(i) }),
         ]);
-        if (open) b.addEventListener('click', () => { Sound.click(); free = false; idx = firstOf(i); renderIntro(i, false); });
+        if (open) b.addEventListener('click', () => { Sound.click(); replayFrom(i, false); });
         else b.disabled = i !== cur;
         box.appendChild(b);
       });
@@ -815,7 +828,7 @@
         el('p', { html: '최종 점수 <b>' + finalScore + '</b> / ' + max + '점 · 최고 기록 <b>' + rec.best + '점</b>' + (opts.badge ? '<br>획득한 칭호: <b>🏅 ' + opts.badge + '</b>' : '') + '<br><br>🔓 이제 <b>모든 도구</b>가 열렸어요. 자유롭게 탐구해 보세요!<br>위 단계 번호를 누르면 원하는 단계를 다시 할 수 있어요.' }),
         el('div', { class: 'mission-actions', style: 'justify-content:center' }, [
           el('button', { class: 'btn', type: 'button', html: '📘 배운 내용', onclick: () => { Sound.click(); showTab('concept'); } }),
-          el('button', { class: 'btn', type: 'button', html: '↺ 처음부터', onclick: () => { Sound.click(); free = false; score = 0; renderIntro(0, false); } }),
+          el('button', { class: 'btn', type: 'button', html: '↺ 처음부터', onclick: () => { Sound.click(); replayFrom(0, true); } }),
           info && info.next
             ? el('a', { class: 'btn btn-primary', href: '../../' + info.next.path, html: '다음 차시: ' + info.next.icon + ' ' + info.next.title + ' →' })
             : el('a', { class: 'btn btn-primary', href: opts.homeHref || '../../index.html', html: '다른 실험 하러 가기' }),
@@ -831,10 +844,19 @@
       opts.onComplete && opts.onComplete(finalScore);
     }
 
+    /* 단계 다시 하기: 페이지를 새로 불러와 실험 상태를 처음부터 다시 시작해요.
+       (앞에서 해 둔 실험 결과가 남아 다음 미션이 저절로 통과되는 일을 막아요. 별·열린 단계는 그대로) */
+    function replayFrom(li, resetScore) {
+      rec.cursor = firstOf(li);
+      rec.score = resetScore ? 0 : score;
+      Store.saveSim(simId, rec);
+      try { global.location.reload(); } catch (e) { free = false; idx = firstOf(li); renderIntro(li, false); }
+    }
+
     function restartConfirm() {
       modal({
         icon: '↺', title: '처음부터 다시 할까요?', html: '현재 진행 중인 점수가 초기화됩니다.<br>(획득한 별과 열린 단계는 그대로 남아요)',
-        buttons: [{ label: '취소' }, { label: '처음부터', primary: true, onClick: () => { free = false; score = 0; renderIntro(0, false); } }],
+        buttons: [{ label: '취소' }, { label: '처음부터', primary: true, onClick: () => replayFrom(0, true) }],
       });
     }
 

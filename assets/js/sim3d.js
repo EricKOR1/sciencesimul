@@ -145,10 +145,14 @@
       labs.push(L); return L;
     }
     const tmp = { v: null };
+    /* 이름표 그리기: 가까운 것부터 자리를 잡고, 다른 이름표나 설명 상자와 겹치면 위아래로 비켜요 */
+    let labFrame = 0;
     function drawLabels() {
       if (!labs.length) return;
       const w = view.clientWidth, h = view.clientHeight;
       if (!tmp.v) tmp.v = new THREE.Vector3();
+      labFrame++;
+      const vis = [];
       for (const L of labs) {
         if (!L.visible || (L.obj && L.obj.visible === false)) { L.el.style.display = 'none'; continue; }
         const v = tmp.v;
@@ -156,9 +160,24 @@
         v.x += L.off[0]; v.y += L.off[1]; v.z += L.off[2];
         v.project(camera);
         if (v.z > 1 || v.z < -1) { L.el.style.display = 'none'; continue; }
-        L.el.style.display = '';
-        L.el.style.left = ((v.x + 1) / 2 * w) + 'px';
-        L.el.style.top = ((1 - v.y) / 2 * h) + 'px';
+        if (L.el.style.display === 'none') L.el.style.display = '';
+        if (!L.wh || labFrame % 30 === 0 || L.el.textContent !== L.txt) { L.wh = [L.el.offsetWidth, L.el.offsetHeight]; L.txt = L.el.textContent; }
+        vis.push({ L, x: (v.x + 1) / 2 * w, y: (1 - v.y) / 2 * h, z: v.z });
+      }
+      vis.sort((a, b) => a.z - b.z);
+      const placed = [];
+      if (info.innerHTML) { const r = info.getBoundingClientRect(), rv = view.getBoundingClientRect(); placed.push([r.left - rv.left - 2, r.top - rv.top - 2, r.right - rv.left + 2, r.bottom - rv.top + 2]); }
+      const hit = (r) => placed.some((q) => r[0] < q[2] && r[2] > q[0] && r[1] < q[3] && r[3] > q[1]);
+      for (const it of vis) {
+        const bw = it.L.wh[0], bh = it.L.wh[1], step = bh + 3;
+        let best = null;
+        for (const dy of [0, -step, step, -2 * step, 2 * step]) {
+          const cy = it.y + dy, r = [it.x - bw / 2, cy - bh / 2, it.x + bw / 2, cy + bh / 2];
+          if (!hit(r)) { best = { cy, r }; break; }
+        }
+        const s = it.L.el.style;
+        if (best) { placed.push(best.r); s.left = it.x + 'px'; s.top = best.cy + 'px'; s.opacity = ''; }
+        else { s.left = it.x + 'px'; s.top = it.y + 'px'; s.opacity = '0.35'; }
       }
     }
 
