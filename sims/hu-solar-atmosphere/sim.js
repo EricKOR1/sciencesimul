@@ -715,8 +715,8 @@
     panel(EN.x, EN.y, EN.w, EN.h, { r: 14, title: '큰 플레어의 에너지', tsize: PHONE ? 12 : 13.5 });
     const ex0 = EN.x + 12, ew = EN.w - 24, ey = EN.y + 46 * FS, EX = (e) => (lg(e) - 19) / 7;
     T(ex0, ey, '큰 플레어  10²⁵ J', 12.5, '#b45309', 'left', 800); hbar(ex0, ey + 6, ew, 16, EX(1e25), 1, '#f59e0b');
-    T(ex0, ey + 48 * Math.min(FS, 1.1), '인류의 1년 에너지 소비  6×10²⁰ J', 12.5, '#475569', 'left', 800); hbar(ex0, ey + 54 * Math.min(FS, 1.1), ew, 16, EX(6e20), 1, '#64748b');
-    T(ex0, ey + 92 * Math.min(FS, 1.1), '막대는 로그 눈금이라 길이 차보다 훨씬 커요', 11.5, '#94a3b8', 'left', 700);
+    T(ex0, ey + 48 * Math.min(FS, 1.1), PHONE ? '인류의 1년 소비 6×10²⁰ J' : '인류의 1년 에너지 소비  6×10²⁰ J', 12.5, '#475569', 'left', 800); hbar(ex0, ey + 54 * Math.min(FS, 1.1), ew, 16, EX(6e20), 1, '#64748b');
+    T(ex0, ey + 92 * Math.min(FS, 1.1), PHONE ? '로그 눈금: 실제 차이가 더 커요' : '막대는 로그 눈금이라 길이 차보다 훨씬 커요', 11.5, '#94a3b8', 'left', 700);
     // 목록
     const LG = L.LG;
     panel(LG.x, LG.y, LG.w, LG.h, { r: 14, title: '눌러서 찾아보기', tsize: PHONE ? 12 : 13.5 });
@@ -923,7 +923,7 @@
   $$('#grpWave .opt').forEach((b) => clickable(b, () => { const k = +b.dataset.k; if (k !== S.wv.sel) { S.wv.prev = S.wv.sel; S.wv.sel = k; S.wv.fade = 0; } updateCtl(); }));
   $$('#rgBox .opt').forEach((b) => clickable(b, () => { S.rg.as[+b.dataset.s] = +b.dataset.c; updateCtl(); }));
   $$('#grpTgt .opt').forEach((b) => clickable(b, () => { S.rg.tgt = +b.dataset.k; updateCtl(); }));
-  $('#inE').addEventListener('input', () => { const v = numOf('inE'); if (v != null && v >= 1.4 && v <= 2.1) { S.ph.eOk = true; fbIn('inE', true); } });
+  $('#inE').addEventListener('input', () => { const v = numOf('inE'); S.ph.eOk = v != null && v >= 1.4 && v <= 2.1; if (S.ph.eOk) fbIn('inE', true); });
 
   const CLS = { cards: cLy, pair: cPair, match: cMatch };
   SciSim.pointer(view, {
@@ -1042,7 +1042,7 @@
           goal: '큰 플레어의 에너지 <b>10²⁵ J</b>은 인류가 1년 동안 쓰는 에너지 <b>6×10²⁰ J</b>의 약 <b>몇 만 배</b>일까요? (만 배 단위, 소수 첫째 자리)',
           hint: '10²⁵ ÷ (6×10²⁰) = 10⁵ ÷ 6 ≈ 16700이에요. 만 배 단위로는 약 1.7이에요.',
           setup() { S.flags.calcE = true; S.ph.eOk = false; clrIn('inE'); setView('phen'); },
-          check: () => S.ph.eOk,
+          check: () => { const v = numOf('inE'); S.ph.eOk = v != null && v >= 1.4 && v <= 2.1; return S.ph.eOk; },
           hold: 0.6,
           status: () => mark(S.ph.eOk) + ' 약 ' + ($('#inE').value.trim() || '—') + ' 만 배',
           explain: '10²⁵ J ÷ (6×10²⁰ J) ≈ 1.7×10⁴, 즉 약 <b>2만 배</b>예요. 그림의 막대는 로그 눈금이라 실제 차이는 막대보다 훨씬 커요.',

@@ -896,9 +896,10 @@
   $$('#grpMeth .opt').forEach((b) => clickable(b, () => { S.sc.m = +b.dataset.k; S.sc.fade = 0; updateCtl(); }));
   clickable($('#bAllPl'), () => { S.sc.all = !S.sc.all; updateCtl(); });
   $('#inK').addEventListener('input', () => { if (RV.pl === 3 && near(numOf('inK'), Kof(PR[3]), 0.7)) { RV.ok = true; fbIn('inK', true); } else RV.ok = false; });
-  $('#inA').addEventListener('input', () => { if (near(numOf('inA'), PEG.a, 0.005)) { PG.a = true; fbIn('inA', true); } });
-  $('#inVp').addEventListener('input', () => { if (near(numOf('inVp'), PEG.v, 8)) { PG.v = true; fbIn('inVp', true); } });
-  $('#inMp').addEventListener('input', () => { if (near(numOf('inMp'), PEG.Mj, 0.05)) { PG.m = true; fbIn('inMp', true); } });
+  const pgUpd = () => { PG.a = near(numOf('inA'), PEG.a, 0.005); PG.v = near(numOf('inVp'), PEG.v, 8); PG.m = near(numOf('inMp'), PEG.Mj, 0.05); };
+  $('#inA').addEventListener('input', () => { pgUpd(); if (PG.a) fbIn('inA', true); });
+  $('#inVp').addEventListener('input', () => { pgUpd(); if (PG.v) fbIn('inVp', true); });
+  $('#inMp').addEventListener('input', () => { pgUpd(); if (PG.m) fbIn('inMp', true); });
   $('#inRatio').addEventListener('input', () => { TR.ratioOk = ratioNow(); if (TR.ratioOk) fbIn('inRatio', true); });
   $('#inD1').addEventListener('input', () => { if (nearRel(numOf('inD1'), DEN[0].rho, 0.12)) { S.de.ok[0] = true; fbIn('inD1', true); } });
   $('#inD2').addEventListener('input', () => { if (nearRel(numOf('inD2'), DEN[1].rho, 0.12)) { S.de.ok[1] = true; fbIn('inD2', true); } });

@@ -1011,7 +1011,7 @@
   $('#inI').addEventListener('input', () => { const v = numOf('inI'); if (v != null && near(S.ph.r, 0.9, 0.011) && near(v, limb(0.9) * 100, 2)) { S.ph.iOk = true; fbIn('inI', true); } });
   $('#inAng').addEventListener('input', () => { const st = trStats(), v = numOf('inAng'); if (st.avg != null && near(v, st.avg, 0.4)) { S.tr.angOk = true; fbIn('inAng', true); } });
   $('#inTs').addEventListener('input', () => { const st = trStats(), v = numOf('inTs'); if (st.avg != null && near(v, 360 / st.avg, 0.5)) { S.tr.tOk = true; fbIn('inTs', true); } });
-  [0, 1, 2, 3].forEach((i) => $('#inT' + i).addEventListener('input', () => { const v = numOf('inT' + i); if (near(v, SP4[i].T, 0.3)) { SP4[i].ok = true; fbIn('inT' + i, true); if (dfAll()) say('4개 모두 맞았어요! 점이 그래프에 찍혀요', false, 2.4); } }));
+  [0, 1, 2, 3].forEach((i) => $('#inT' + i).addEventListener('input', () => { const was = dfAll(); SP4[i].ok = near(numOf('inT' + i), SP4[i].T, 0.3); if (SP4[i].ok) { fbIn('inT' + i, true); if (!was && dfAll()) say('4개 모두 맞았어요! 점이 그래프에 찍혀요', false, 2.4); } }));
   $('#inP').addEventListener('input', () => { const v = numOf('inP'), m = markMean(); if (m != null && near(v, m, 0.5)) { S.cy.pOk = true; fbIn('inP', true); } });
 
   SciSim.pointer(view, {

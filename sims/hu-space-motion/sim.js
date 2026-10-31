@@ -696,10 +696,10 @@
   clickable($('#bArrow'), () => { S.cn.arrows = !S.cn.arrows; updateCtl(); });
   clickable($('#bSky'), () => setYaw(0));
   clickable($('#bSide'), () => setYaw(90));
-  $('#inVr').addEventListener('input', () => { const v = numM('inVr'); if (v != null && S.rd.sel === 0 && near(v, BAR.vr, 1.5)) { S.rd.ok = true; fbIn('inVr', true); } });
-  $('#inVt').addEventListener('input', () => { const v = numM('inVt'); if (v != null && S.tn.sel === 0 && near(v, BAR.vt, 2.5)) { S.tn.ok = true; fbIn('inVt', true); } });
-  $('#inV').addEventListener('input', () => { const v = numM('inV'); if (v != null && near(v, BAR.v, 1.5)) { S.vc.vOk = true; fbIn('inV', true); } });
-  $('#inDm').addEventListener('input', () => { const v = numM('inDm'); if (v != null && near(v, barMin, 0.05)) { S.vc.dmOk = true; fbIn('inDm', true); } });
+  $('#inVr').addEventListener('input', () => { const v = numM('inVr'); S.rd.ok = v != null && S.rd.sel === 0 && near(v, BAR.vr, 1.5); if (S.rd.ok) fbIn('inVr', true); });
+  $('#inVt').addEventListener('input', () => { const v = numM('inVt'); S.tn.ok = v != null && S.tn.sel === 0 && near(v, BAR.vt, 2.5); if (S.tn.ok) fbIn('inVt', true); });
+  $('#inV').addEventListener('input', () => { const v = numM('inV'); S.vc.vOk = v != null && near(v, BAR.v, 1.5); if (S.vc.vOk) fbIn('inV', true); });
+  $('#inDm').addEventListener('input', () => { const v = numM('inDm'); S.vc.dmOk = v != null && near(v, barMin, 0.05); if (S.vc.dmOk) fbIn('inDm', true); });
 
   SciSim.pointer(view, {
     down(p) {

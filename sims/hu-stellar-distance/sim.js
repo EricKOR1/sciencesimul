@@ -644,7 +644,7 @@
   function drawEval(dt, t) {
     const E = S.ev, A = PHONE ? { x: 8, y: 8, w: 464, h: 320 } : { x: 10, y: 8, w: 780, h: 270 };
     panel(A.x, A.y, A.w, A.h, { r: 14, title: PHONE ? '장비별 한계 거리 d_max = 0.1 / σ_p' : '시차 측정 장비별 한계 거리 (오차 10 %): d_max = 0.1 / σ_p', tsize: PHONE ? 12.5 : 14 });
-    const ax0 = A.x + (PHONE ? 112 : 150), ax1 = A.x + A.w - 20, ay = A.y + A.h - 34, X = (d) => ax0 + lg(d) / 5 * (ax1 - ax0);
+    const ax0 = A.x + (PHONE ? 112 : 150), ax1 = A.x + A.w - 20, ay = A.y + A.h - (PHONE ? 44 : 34), X = (d) => ax0 + lg(d) / 5 * (ax1 - ax0);
     const top = A.y + 46 * Math.min(FS, 1.15);
     for (let e = 0; e <= 5; e++) { const x = X(Math.pow(10, e)); ctx.strokeStyle = '#eef2f7'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x, top); ctx.lineTo(x, ay); ctx.stroke(); T(x, ay + 18, e === 0 ? '1' : e === 1 ? '10' : e === 2 ? '100' : e === 3 ? '1000' : e === 4 ? '10⁴' : '10⁵', 12, '#64748b', 'center', 700); }
     T(ax0 + (ax1 - ax0) / 2, ay + 33, '별까지의 거리 d (pc, 로그 눈금)', 12, '#475569', 'center', 800);
@@ -715,13 +715,13 @@
   $$('#grpCm .opt').forEach((b) => clickable(b, () => { S.cm.sel = +b.dataset.k; S.cm.dOk = false; S.cm.errOk = false; clrIn('inDm2', 'inErr'); updateCtl(); }));
   clickable($('#bShot'), takePhoto);
   clickable($('#bClrP'), () => { S.pr.cap = []; S.pr.pOk = false; clrIn('inP'); });
-  $('#inP').addEventListener('input', () => { const v = numOf('inP'), P = S.pr; if (v != null && capOK() && near(v, curStar().p, Math.max(0.01, curStar().p * 0.06))) { P.pOk = true; fbIn('inP', true); } });
-  $('#inD').addEventListener('input', () => { const v = numOf('inD'), P = S.pr; if (v != null && near(v, curStar().d, Math.max(0.12, curStar().d * 0.03))) { P.dOk = true; fbIn('inD', true); } });
+  $('#inP').addEventListener('input', () => { const v = numOf('inP'), P = S.pr; P.pOk = v != null && capOK() && near(v, curStar().p, Math.max(0.01, curStar().p * 0.06)); if (P.pOk) fbIn('inP', true); });
+  $('#inD').addEventListener('input', () => { const v = numOf('inD'), P = S.pr; P.dOk = v != null && near(v, curStar().d, Math.max(0.12, curStar().d * 0.03)); if (P.dOk) fbIn('inD', true); });
   $('#inBr').addEventListener('input', () => { const v = numOf('inBr'); if (v != null && near(v, 100, 5)) { S.iv.brOk = true; fbIn('inBr', true); } });
-  $('#inDc').addEventListener('input', () => { const v = numOf('inDc'); if (v != null && near(v, clDist(), Math.max(0.05, clDist() * 0.05))) { S.cl.dOk = true; fbIn('inDc', true); } });
-  $('#inDm2').addEventListener('input', () => { const v = numOf('inDm2'); if (v != null && near(v, cmDmod(), 0.15)) { S.cm.dOk = true; fbIn('inDm2', true); } });
+  $('#inDc').addEventListener('input', () => { const v = numOf('inDc'); S.cl.dOk = v != null && near(v, clDist(), Math.max(0.05, clDist() * 0.05)); if (S.cl.dOk) fbIn('inDc', true); });
+  $('#inDm2').addEventListener('input', () => { const v = numOf('inDm2'); S.cm.dOk = v != null && near(v, cmDmod(), 0.15); if (S.cm.dOk) fbIn('inDm2', true); });
   $('#inErr').addEventListener('input', () => { const v = numOf('inErr'); if (v != null && near(v, 26, 2)) { S.cm.errOk = true; fbIn('inErr', true); } });
-  $('#inG').addEventListener('input', () => { const v = numOf('inG'); if (v != null && near(v, INST[2].dmax, 250)) { S.ev.gOk = true; fbIn('inG', true); } });
+  $('#inG').addEventListener('input', () => { const v = numOf('inG'); S.ev.gOk = v != null && near(v, INST[2].dmax, 250); if (S.ev.gOk) fbIn('inG', true); });
 
   SciSim.pointer(view, {
     down(p) {

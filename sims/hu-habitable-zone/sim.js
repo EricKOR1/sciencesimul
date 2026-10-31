@@ -703,8 +703,8 @@
   $$('#grpPick .opt').forEach((b) => clickable(b, () => { CM.pick = +b.dataset.k; updateCtl(); }));
   clickable($('#bCalc'), () => { if (cPl.sel >= 0 && (cPl.sel !== 0 || PL.sOk || FREE())) { PL.show[cPl.sel] = true; updateCtl(); } });
   ['inHi', 'inHo'].forEach((id) => $('#' + id).addEventListener('input', () => { if (hzOK()) { ZN.ok = true; fbIn('inHi', true); fbIn('inHo', true); } }));
-  [0, 1, 2, 3].forEach((i) => $('#inC' + i).addEventListener('input', () => { if (nearRel(numOf('inC' + i), STAR[i].in, 0.08)) { CM.vals[i] = true; fbIn('inC' + i, true); if (cmpOK()) CM.ok = true; } }));
-  $('#inS').addEventListener('input', () => { if (near(numOf('inS'), PLN5[0].S, 0.04)) { PL.sOk = true; PL.show[0] = true; fbIn('inS', true); updateCtl(); } });
+  [0, 1, 2, 3].forEach((i) => $('#inC' + i).addEventListener('input', () => { CM.vals[i] = nearRel(numOf('inC' + i), STAR[i].in, 0.08); if (CM.vals[i]) fbIn('inC' + i, true); CM.ok = cmpOK(); }));
+  $('#inS').addEventListener('input', () => { if (near(numOf('inS'), PLN5[0].S, 0.04)) { PL.sOk = true; PL.show[0] = true; fbIn('inS', true); updateCtl(); } else if (PL.sOk) { PL.sOk = false; PL.show[0] = false; updateCtl(); } });
   $('#inN').addEventListener('input', () => { if (dkOK()) { DK.ok = true; fbIn('inN', true); } });
   ['sNs', 'sFr'].forEach((id) => $('#' + id).addEventListener('input', () => { if (DK.ok && !dkOK()) DK.ok = false; }));
 
