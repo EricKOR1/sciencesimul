@@ -344,7 +344,7 @@
   const VIEW_LABEL = { grav: '☀ 태양의 중력', ellipse: '📍 타원 궤도 (제1법칙)', area: '⏱ 같은 시간, 같은 넓이 (제2법칙)', comet: '☄️ 핼리 혜성 궤도' };
   const modeBtns = $$('#modeSeg button');
   const grBoot = () => {
-    const g = S.g; g.on = true; g.x = R0; g.y = 0; const GMv = gmOf(); g.vx = 0; g.vy = g.vk * Math.sqrt(GMv / R0); g.trail = []; g.offT = 0; g.dist = R0; g.hitSun = false;
+    const g = S.g; g.on = true; g.x = R0; g.y = 0; const GMv = gmOf(); g.vx = 0; g.vy = -g.vk * Math.sqrt(GMv / R0);       // 화면 위쪽(-y)으로 출발 → 위에서 볼 때 시계 반대 방향 (다른 장면과 같아요) g.trail = []; g.offT = 0; g.dist = R0; g.hitSun = false;
   };
   const gmOf = () => { const w = TAU / 7; return w * w * R0 * R0 * R0; };    // 원 궤도 주기 7초
   grBoot();
@@ -639,7 +639,7 @@
     const pq = [X(q), Y(0)], pQ = [X(-Q), Y(0)];
     D.sphere(pq[0], pq[1], 3.5, '#60a5fa', { gloss: false }); D.sphere(pQ[0], pQ[1], 3.5, '#fb923c', { gloss: false });
     if (pq[0] > A.x && pq[0] < A.x + A.w) { if (pq[0] > A.x + A.w - 130) outlineT(pq[0] - 6, pq[1] + 24, '근일점 ' + f2(q) + ' AU', 13, '#93c5fd', 'right'); else outlineT(pq[0] + 8, pq[1] + 24, '근일점 ' + f2(q) + ' AU', 13, '#93c5fd', 'left'); }
-    if (pQ[0] > A.x + 60 && pQ[0] < A.x + A.w) outlineT(pQ[0] + (PHONE ? 4 : 8), pQ[1] + 22, '원일점 ' + f1(Q) + ' AU', 13, '#fdba74', 'left');
+    if (pQ[0] > A.x + 6 && pQ[0] < A.x + A.w) outlineT(pQ[0] + (PHONE ? 4 : 8), pQ[1] + 22, '원일점 ' + f1(Q) + ' AU', 13, '#fdba74', 'left');
     // 혜성
     const cp = kpos(S.M4, e, a), r = Math.hypot(cp.x, cp.y), sx = X(cp.x), sy = Y(cp.y);
     if (!S.trail4.length || Math.hypot(S.trail4[S.trail4.length - 1][0] - cp.x, S.trail4[S.trail4.length - 1][1] - cp.y) > 0.01 * a) { S.trail4.push([cp.x, cp.y]); if (S.trail4.length > 60) S.trail4.shift(); }

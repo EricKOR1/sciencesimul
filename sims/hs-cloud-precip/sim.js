@@ -541,8 +541,8 @@
       D.text(pb.x + pb.w - 6, Y(FTD) - 6, '이슬점 11 °C', { size: 12, weight: 800, color: '#2563eb', align: 'right' });
       const tx = PHONE ? IP.x + 16 : pb.x + pb.w + 24, ty = PHONE ? pb.y + pb.h + 66 : IP.y + 54, tw = PHONE ? IP.w - 32 : IP.x + IP.w - tx - 14;
       const lines = [['기온', fx(info.T, 1) + ' °C'], ['이슬점', FTD + ' °C'], ['가시거리', info.st === 'fog' || info.st === 'mist' ? fx(info.V, 2) + ' km' : '10 km 이상'], ['상태', info.st === 'fog' ? '안개' : info.st === 'stratus' ? '층운' : info.st === 'mist' ? '엷은 안개' : '맑음']];
-      lines.forEach((q, i) => { const x = tx + (PHONE ? (i % 2) * (tw / 2) : 0), y = ty + (PHONE ? Math.floor(i / 2) * 34 : i * 34); D.text(x, y, q[0], { size: 12.5, weight: 800, color: '#64748b', align: 'left' }); D.text(x + (PHONE ? 66 : 62), y, q[1], { size: 14, weight: 800, color: i === 3 && info.st === 'fog' ? '#b91c1c' : '#0f172a', align: 'left' }); });
-      if (!PHONE) drawWrap(tx + tw / 2, IP.y + IP.h - 40, '바람이 5 m/s 이상이면 섞여 층운, 해가 뜨면 소멸', tw, 12, { color: '#475569', weight: 800 });
+      lines.forEach((q, i) => { const x = tx + (PHONE ? (i % 2) * (tw / 2) : 0), y = ty + (PHONE ? Math.floor(i / 2) * 34 : i * 28); D.text(x, y, q[0], { size: 12.5, weight: 800, color: '#64748b', align: 'left' }); D.text(x + (PHONE ? 66 : 62), y, q[1], { size: 14, weight: 800, color: i === 3 && info.st === 'fog' ? '#b91c1c' : '#0f172a', align: 'left' }); });
+      if (!PHONE) drawWrap(tx + tw / 2, IP.y + IP.h - 22, '바람이 5 m/s 이상이면 섞여 층운, 해가 뜨면 소멸', tw, 12, { color: '#475569', weight: 800 });
     } else {
       const txt = { adv: ['따뜻하고 습한 공기가 찬 해면·지면 위로 이동하며 냉각돼요.', '예: 서해·남해의 봄·여름 해무'], steam: ['찬 공기가 따뜻한 수면 위를 지날 때 증발한 수증기가 응결해요.', '예: 겨울 아침의 강·호수 (김)'], up: ['공기가 산비탈을 오르며 단열 팽창으로 냉각돼요.', '구름이 산 사면에 걸린 것과 같은 원리예요.'] }[f];
       drawWrap(IP.x + IP.w / 2, IP.y + 60, txt[0], IP.w - 40, 15, { color: '#0f172a', weight: 800 });
@@ -658,8 +658,8 @@
       const bw = IP.w - 40, bx = IP.x + 20; const vals = [['물 위 포화 수증기압', 2.86, '#3b82f6'], ['얼음 위 포화 수증기압', 2.60, '#0ea5e9']];
       vals.forEach((q, i) => { const y = IP.y + 56 + i * 72; D.text(bx, y, q[0], { size: 12.5, weight: 800, color: '#334155', align: 'left' }); ctx.fillStyle = '#eef2f7'; rr(bx, y + 8, bw, 24, 6).fill(); ctx.fillStyle = q[2]; rr(bx, y + 8, (bw * q[1]) / 3, 24, 6).fill(); D.text(bx + (bw * q[1]) / 3 - 6, y + 25, q[1].toFixed(2) + ' hPa', { size: 13, weight: 800, color: '#fff', align: 'right' }); });
       const yb = IP.y + 56 + 2 * 72;
-      D.text(bx, yb + 4, '얼음 위에서의 상대 습도 (물 위에서 포화일 때)', { size: 12, weight: 800, color: '#334155', align: 'left' });
-      D.text(bx, yb + 30 * FS * 0.9, '2.86 / 2.60 ≈ ' + Math.round((2.86 / 2.60) * 100) + ' %', { size: 17, weight: 800, color: '#b91c1c', align: 'left' });
+      const yl = drawWrap(bx, yb + 4, '얼음 위에서의 상대 습도 (물 위에서 포화일 때)', bw, 12, { color: '#334155', weight: 800, align: 'left' });
+      D.text(bx, yl + 26 * FS * 0.9, '2.86 / 2.60 ≈ ' + Math.round((2.86 / 2.60) * 100) + ' %', { size: 17, weight: 800, color: '#b91c1c', align: 'left' });
       drawWrap(IP.x + IP.w / 2, IP.y + IP.h - (PHONE ? 66 : 128), '수증기가 물방울에서 빙정으로 옮겨 가며 빙정이 자라요. 빙정이 커서 떨어지다 녹으면 비, 녹지 않으면 눈이에요. (과냉각 수적: 0 °C 아래에서도 얼지 않은 물방울)', IP.w - 24, 12, { color: '#475569', weight: 800 });
     }
   }

@@ -591,7 +591,7 @@
         lbl(g.ix + g.iw / 2, g.top + g.ph / 2 + 4, '너무 빨리 변해서 띠로 보여요 (' + f0(cyc) + '번 반복)', PHONE ? 11.5 : 12.5, '#92400e', 'center');
       } else line(curvePts(c, g, Math.round(g.iw * 1.5)), '#d97706', 2.6);
       ctx.restore();
-      if (i === 2) T(g.ix + g.iw / 2, g.top + g.ph + 30, '시간 (일)', 12, '#475569', 'center', 800);
+      if (i === 2) T(g.ix + g.iw / 2, g.top + g.ph + 30 * FS, '시간 (일)', 12, '#475569', 'center', 800);
     });
     if (PE.ordOk || FREE()) drawWrap(P.x + 14, PHONE ? P.y + P.h - 84 : P.y + P.h - 22 * FS, '주기: RR Lyr 0.567일 < δ Cep 5.366일 < 미라 332일. 주기가 가장 긴 미라의 진폭(8.1등급)이 가장 크지만, RR Lyr(1.0)와 δ Cep(0.9)는 주기가 10배 가까이 달라도 진폭이 비슷해요.', P.w - 28, PHONE ? 11.5 : 12.5, { color: '#0369a1', weight: 800 });
   }
@@ -642,7 +642,7 @@
     panel(V.x, V.y, V.w, V.h, { r: 14 });
     T(V.x + 14, V.y + 24 * FS, '🌈 스펙트럼선 이동으로 속도 재기 (SN 2011fe)', PHONE ? 12 : 13.5, '#1e293b', 'left', 800);
     const sx = V.x + 16, sw = V.w - 32, sy = V.y + 40 * FS, sh2 = PHONE ? 34 : 38, X = (nm) => sx + (nm - 600) / 50 * sw;
-    const gr = ctx.createLinearGradient(sx, 0, sx + sw, 0); ['#34d399', '#facc15', '#fb923c', '#ef4444'].forEach((col, i, a) => gr.addColorStop(i / (a.length - 1), col)); ctx.fillStyle = gr; rr(sx, sy, sw, sh2, 8).fill();
+    const gr = ctx.createLinearGradient(sx, 0, sx + sw, 0); ['#fbbf24', '#fb923c', '#ef4444', '#b91c1c'].forEach((col, i, a) => gr.addColorStop(i / (a.length - 1), col)); ctx.fillStyle = gr; rr(sx, sy, sw, sh2, 8).fill();
     const ph = 0.5 + 0.5 * Math.sin(t * 1.4), shown = clamp(CU.sweep * 2, 0, 1), obsX = lerpN2(X(SNd.rest), X(SNd.obs), is11 ? Math.max(shown, 0.001) : 1);
     ctx.strokeStyle = '#fff'; ctx.setLineDash([4, 3]); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(X(SNd.rest), sy - 4); ctx.lineTo(X(SNd.rest), sy + sh2 + 4); ctx.stroke(); ctx.setLineDash([]);
     ctx.fillStyle = '#0f172a'; ctx.fillRect(obsX - 3, sy, 6, sh2);

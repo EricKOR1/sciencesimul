@@ -303,10 +303,10 @@
   const FE = [40, 20, 10];                       // 접안렌즈 초점거리 (mm)
   const FOVAPP = 50;                             // 접안렌즈 겉보기 시야 (°)
   const MOONS = [
-    { n: '이오', T: 1.769, a: 4.22, c: '#facc15', ph: 40 * DEG },
-    { n: '에우로파', T: 3.551, a: 6.71, c: '#e2e8f0', ph: 130 * DEG },
-    { n: '가니메데', T: 7.155, a: 10.70, c: '#d6d3d1', ph: 220 * DEG },
-    { n: '칼리스토', T: 16.69, a: 18.83, c: '#a8a29e', ph: 310 * DEG },
+    { n: '이오', T: 1.769, a: 4.22, c: '#facc15', lc: '#ca8a04', ph: 40 * DEG },
+    { n: '에우로파', T: 3.551, a: 6.71, c: '#e2e8f0', lc: '#0ea5e9', ph: 130 * DEG },
+    { n: '가니메데', T: 7.155, a: 10.70, c: '#d6d3d1', lc: '#16a34a', ph: 220 * DEG },
+    { n: '칼리스토', T: 16.69, a: 18.83, c: '#a8a29e', lc: '#7c3aed', ph: 310 * DEG },
   ];
   MOONS.forEach((m) => { m.dj = m.a / DJ; m.k = m.a * m.a * m.a / (m.T * m.T); });
   const moonX = (m, t) => m.dj * Math.sin(TAU * t / m.T + m.ph);        // 옆에서 본 위치 (목성 지름 단위)
@@ -510,10 +510,10 @@
     for (let d = 0; d <= LOGDAYS; d += 2) { ctx.strokeStyle = 'rgba(100,116,139,.2)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(G.X(d), G.iy); ctx.lineTo(G.X(d), G.iy + G.ih); ctx.stroke(); if (!PHONE || d % 4 === 0) T(G.X(d), c.y + c.h - 18, String(d), 12.5, '#475569', 'center', 700); }
     T(c.x + c.w - 12, c.y + c.h - 4, '날짜 (일)', 12.5, '#64748b', 'right', 700);
     MOONS.forEach((m) => {
-      ctx.strokeStyle = shade(m.c, -0.35); ctx.lineWidth = 1.6; ctx.beginPath(); let first = true;
+      ctx.strokeStyle = m.lc; ctx.lineWidth = 1.6; ctx.beginPath(); let first = true;
       for (let d = 0; d <= S.logT + 1e-9; d += STEPD / 4) { const x = G.X(d), y = G.Y(moonX(m, d)); first ? ctx.moveTo(x, y) : ctx.lineTo(x, y); first = false; }
       ctx.stroke();
-      for (let d = 0; d <= S.logT + 1e-9; d += STEPD) { D.sphere(G.X(d), G.Y(moonX(m, d)), 2.3, m.c, { gloss: false, outline: shade(m.c, -0.5), outlineWidth: 0.8 }); }
+      for (let d = 0; d <= S.logT + 1e-9; d += STEPD) { D.sphere(G.X(d), G.Y(moonX(m, d)), 2.3, m.lc, { gloss: false, outline: shade(m.lc, -0.4), outlineWidth: 0.8 }); }
     });
     if (S.logT < LOGDAYS) { ctx.strokeStyle = 'rgba(37,99,235,.55)'; ctx.setLineDash([4, 4]); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(G.X(S.logT), G.iy); ctx.lineTo(G.X(S.logT), G.iy + G.ih); ctx.stroke(); ctx.setLineDash([]); }
     // 커서
@@ -526,11 +526,11 @@
     // 모형
     const m = L.m; panel(m.x, m.y, m.w, m.h, { fill: '#0f172a', line: '#334155' });
     T(m.x + 12, m.y + 22 * FS, '위에서 본 위성 궤도 (눈금대로)', 13.5, '#e2e8f0', 'left', 800);
-    const tm = S.logT >= LOGDAYS ? (S.logT + (t - (S.tEnd || (S.tEnd = t)))) * 0.6 : S.logT, mcx = m.x + m.w / 2, mcy = m.y + m.h / 2 + 4, sc = (Math.min(m.w, m.h) / 2 - 30) / MOONS[3].dj;
+    const tm = S.logT >= LOGDAYS ? LOGDAYS + (t - (S.tEnd || (S.tEnd = t))) * 1.2 : S.logT, mcx = m.x + m.w / 2, mcy = m.y + m.h / 2 + 4, sc = (Math.min(m.w, m.h) / 2 - 30) / MOONS[3].dj;
     D.sphere(mcx, mcy, Math.max(5, 0.5 * sc), '#e0a96d', { gloss: true });
     MOONS.forEach((mo) => {
       ctx.strokeStyle = 'rgba(148,163,184,.4)'; ctx.setLineDash([3, 4]); ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(mcx, mcy, mo.dj * sc, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
-      const th = TAU * tm / mo.T + mo.ph, mx = mcx + mo.dj * sc * Math.sin(th), my = mcy - mo.dj * sc * Math.cos(th);
+      const th = TAU * tm / mo.T + mo.ph, mx = mcx + mo.dj * sc * Math.sin(th), my = mcy + mo.dj * sc * Math.cos(th);     // 아래쪽 = 지구 쪽(가까운 쪽), 위에서 볼 때 시계 반대 방향
       ctx.strokeStyle = 'rgba(250,204,21,.28)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(mx, my); ctx.lineTo(mx, mcy); ctx.stroke();
       D.sphere(mx, my, 4, mo.c, { gloss: false });
     });
@@ -544,7 +544,7 @@
     const show = S.doneRead || (game && game.free), showK = S.kSolved || (game && game.free), rh = PHONE ? 34 : 40;
     MOONS.forEach((mo, i) => {
       const yy = hy + 14 + i * rh;
-      D.sphere(tb.x + tb.w * cols[0] + 6, yy + rh / 2 - 8, 5, mo.c, { gloss: false });
+      D.sphere(tb.x + tb.w * cols[0] + 6, yy + rh / 2 - 8, 5, mo.lc, { gloss: false });
       T(tb.x + tb.w * cols[0] + 16, yy + rh / 2 - 3, SHORT[i] === '이오' ? '이오' : mo.n, PHONE ? 12.5 : 13.5, '#1e293b', 'left', 800);
       T(tb.x + tb.w * cols[1], yy + rh / 2 - 3, show ? String(mo.T) : '?', 13.5, show ? '#c2410c' : '#cbd5e1', 'center', 800);
       T(tb.x + tb.w * cols[2], yy + rh / 2 - 3, show ? f2(mo.dj) : '?', 13.5, show ? '#1d4ed8' : '#cbd5e1', 'center', 800);
@@ -572,7 +572,7 @@
     items: CARDS3.map((c) => ({ label: c.label, chip: c.label, sub: PHONE ? '' : c.sub, a: c.a, T: c.T, bin: c.bin, open: true })),
     bins: [{ label: PHONE ? '☀ 태양 둘레' : '☀ 태양 둘레 ' + sci(K_SUN, 1), sub: '', color: '#f59e0b' }, { label: PHONE ? '🟤 목성 둘레' : '🟤 목성 둘레 ' + f1(K_JUP), sub: '', color: '#b45309' }, { label: PHONE ? '🌍 지구 둘레' : '🌍 지구 둘레 ' + f3(K_EARTH), sub: '', color: '#2563eb' }],
     chipCols: 1, minRows: 4, layout: LM3,
-    placeholder: PHONE ? '카드를 눌러 a³/T²을 확인해요. 태양 둘레 2.5×10⁴ · 목성 둘레 24 · 지구 둘레 0.076' : '카드를 눌러 a³/T² 값을 계산해 보고, 같은 값의 상자에 넣어요.',
+    placeholder: PHONE ? '카드를 눌러 a³/T²을 확인해요. 태양 2.5×10⁴, 목성 24, 지구 0.076' : '카드를 눌러 a³/T² 값을 계산해 보고, 같은 값의 상자에 넣어요.',
     detailFn: (it) => ({ title: it.label + ': a = ' + (it.a >= 1e4 ? sci(it.a, 2) : it.a) + ' (10⁵ km), T = ' + it.T + '일', body: 'a³ / T² = ' + cvalStr(it.a * it.a * it.a / (it.T * it.T)) + ' (10⁵ km³/일²)' }),
     onChange() { updateCtl(); },
   });
@@ -649,13 +649,13 @@
     const tb = L.t; panel(tb.x, tb.y, tb.w, tb.h, { fill: '#ffffff' });
     T(tb.x + 12, tb.y + 24 * FS, '🪐 태양 둘레 천체 7개', 14.5, '#1e293b', 'left', 800);
     const hy = tb.y + (PHONE ? 44 : 50) * FS;
-    T(tb.x + 40, hy, '천체', 12.5, '#64748b', 'left', 800); T(tb.x + tb.w * 0.55, hy, 'a (AU)', 12.5, '#64748b', 'center', 800); T(tb.x + tb.w * 0.76, hy, 'T (년)', 12.5, '#64748b', 'center', 800); T(tb.x + tb.w - 8, hy, 'T²/a³', 12.5, '#64748b', 'right', 800);
+    T(tb.x + 40, hy, '천체', 12.5, '#64748b', 'left', 800); T(tb.x + tb.w * 0.5, hy, 'a (AU)', 12.5, '#64748b', 'center', 800); T(tb.x + tb.w * 0.69, hy, 'T (년)', 12.5, '#64748b', 'center', 800); T(tb.x + tb.w - 8, hy, 'T²/a³', 12.5, '#64748b', 'right', 800);
     BODIES.forEach((b, i) => {
       const r = rowGeom(L, i), on = S.plot[i];
       if (on) { ctx.fillStyle = 'rgba(34,197,94,.1)'; rr(r.x + 6, r.y, r.w - 12, r.h, 8).fill(); } else { ctx.strokeStyle = 'rgba(100,116,139,.35)'; ctx.setLineDash([4, 4]); ctx.lineWidth = 1.2; rr(r.x + 6, r.y, r.w - 12, r.h, 8).stroke(); ctx.setLineDash([]); }
       D.sphere(r.x + 22, r.y + r.h / 2, 6, b.c, { gloss: false });
       T(r.x + 34, r.y + r.h / 2 + 5, b.n, PHONE ? 12.5 : 13.5, '#1e293b', 'left', 800);
-      T(r.x + r.w * 0.55, r.y + r.h / 2 + 5, String(b.a), 13, '#475569', 'center', 700); T(r.x + r.w * 0.76, r.y + r.h / 2 + 5, String(b.T), 13, '#475569', 'center', 700);
+      T(r.x + r.w * 0.5, r.y + r.h / 2 + 5, String(b.a), 13, '#475569', 'center', 700); T(r.x + r.w * 0.69, r.y + r.h / 2 + 5, String(b.T), 13, '#475569', 'center', 700);
       T(r.x + r.w - 10, r.y + r.h / 2 + 5, on ? f3(b.T * b.T / (b.a * b.a * b.a)) : '?', 13.5, on ? '#15803d' : '#cbd5e1', 'right', 800);
     });
     if (plotDone() < 7 && !PHONE) T(tb.x + 12, tb.y + tb.h - 12, '행을 누르면 점이 찍혀요', 12.5, '#64748b', 'left', 700);
@@ -776,7 +776,7 @@
           check() {
             const v = ['inTIo', 'inAIo', 'inTCa', 'inACa'].map(numOf);
             if (v.some((x) => x == null)) return '네 칸에 모두 숫자를 입력해 주세요.';
-            const ok = [near(v[0], MOONS[0].T, 0.12), near(v[1], MOONS[0].dj, 0.25), near(v[2], MOONS[3].T, 0.8), near(v[3], MOONS[3].dj, 0.8)];
+            const ok = [near(v[0], MOONS[0].T, 0.25), near(v[1], MOONS[0].dj, 0.25), near(v[2], MOONS[3].T, 0.8), near(v[3], MOONS[3].dj, 0.8)];
             ['inTIo', 'inAIo', 'inTCa', 'inACa'].forEach((id, i) => fbIn(id, ok[i]));
             if (ok.every(Boolean)) { S.doneRead = true; return true; }
             if (!ok[0] || !ok[2]) return 'T는 곡선이 한 번 왕복하는 데 걸린 날수예요. 이오는 약 1~2일, 칼리스토는 약 17일이에요.';

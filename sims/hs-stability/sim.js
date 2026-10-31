@@ -411,7 +411,7 @@
     const z = S.zJ, Tp = parcelT(z), Te = envT(g, z), dT = Tp - Te;
     // 오른쪽: 그래프
     card(G, '📈 주변 기온 곡선과 덩어리 곡선');
-    const pb = { x: G.x + 54, y: G.y + 44, w: G.w - 54 - 20, h: G.h - 44 - (PHONE ? 100 : 112) };
+    const pb = { x: G.x + 54, y: G.y + 44, w: G.w - 54 - 20, h: G.h - 44 - (PHONE ? 130 : 112) };
     const xmin = -12, xmax = 27, X = (T) => pb.x + (pb.w * (T - xmin)) / (xmax - xmin), Y = (zz) => pb.y + pb.h - (pb.h * zz) / ZMAX2;
     ctx.fillStyle = '#f8fafc'; rr(pb.x, pb.y, pb.w, pb.h, 4).fill(); ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1;
     [-10, -5, 0, 5, 10, 15, 20, 25].forEach((v) => { ctx.beginPath(); ctx.moveTo(X(v), pb.y); ctx.lineTo(X(v), pb.y + pb.h); ctx.stroke(); D.text(X(v), pb.y + pb.h + 15 * FS, minus(v), { size: 12.5, weight: 700, color: '#64748b' }); });
@@ -436,8 +436,13 @@
     if (z > 0) D.label(clamp((X(Tp) + X(Te)) / 2, pb.x + 70, pb.x + pb.w - 70), clamp(Y(z) - 20, pb.y + 16, pb.y + pb.h - 16), '덩어리 − 주변 = ' + (dT > 0.04 ? '+' : dT < -0.04 ? '−' : '') + fx(Math.abs(dT), 1) + ' °C', { bg: dT > 0.04 ? '#dc2626' : dT < -0.04 ? '#2563eb' : '#475569', size: 12.5, pad: 8 });
     D.label(pb.x + 8, pb.y + 16, '─ 덩어리 (파랑)   ─ 주변 (' + (g).toFixed(1) + ' °C/100 m)', { bg: 'rgba(15,23,42,.7)', size: 12, pad: 7, align: 'left' });
     const ly = G.y + G.h - (PHONE ? 22 : 26);
-    D.text(G.x + 16, ly - 18 * FS, '붉은 면: 덩어리가 주변보다 따뜻해요 (떠올라요)   푸른 면: 더 차가워요 (제자리로)', { size: 12, weight: 800, color: '#475569', align: 'left' });
-    D.text(G.x + 16, ly, '판정 기준: 환경 감률 < 습윤 0.5 → 절대 안정, 0.5 ~ 1.0 → 조건부 불안정, > 1.0(건조) → 절대 불안정', { size: 12, weight: 800, color: '#0369a1', align: 'left' });
+    if (PHONE) {
+      const y1 = drawWrap(G.x + 16, pb.y + pb.h + 56 * FS, '붉은 면: 덩어리가 더 따뜻해요(떠올라요) · 푸른 면: 더 차가워요(제자리로)', G.w - 32, 11, { color: '#475569', weight: 800, align: 'left' });
+      drawWrap(G.x + 16, y1 + 20, '판정: 환경 감률 < 0.5 절대 안정, 0.5 ~ 1.0 조건부 불안정, > 1.0 절대 불안정', G.w - 32, 11, { color: '#0369a1', weight: 800, align: 'left' });
+    } else {
+      D.text(G.x + 16, ly - 18 * FS, '붉은 면: 덩어리가 주변보다 따뜻해요 (떠올라요)   푸른 면: 더 차가워요 (제자리로)', { size: 12, weight: 800, color: '#475569', align: 'left' });
+      D.text(G.x + 16, ly, '판정 기준: 환경 감률 < 습윤 0.5 → 절대 안정, 0.5 ~ 1.0 → 조건부 불안정, > 1.0(건조) → 절대 불안정', { size: 12, weight: 800, color: '#0369a1', align: 'left' });
+    }
 
     // 왼쪽(위): 공기 기둥과 덩어리
     card(C, '🎈 덩어리의 운명');
@@ -865,7 +870,7 @@
           title: 'LFC 찾기',
           goal: '<b>LFC 표시</b>를 고르고, 덩어리 경로(습윤 단열선)가 <b>환경 곡선과 만나는 곳</b>(약 2.5 km, 7.5 °C)을 눌러요.',
           hint: 'LCL 위에서는 초록색 습윤 단열선을 따라가요. 붉은 환경 곡선과 다시 만나는 곳이 LFC예요. 그 아래에서는 덩어리가 주변보다 차가워요.',
-          setup() { S.markSel = 'lfc'; syncMark(); S.pp = ZT; setMode('skew'); setCtl(['markSel']); },
+          setup() { S.markSel = 'lfc'; S.marks.lfc = null; syncMark(); S.pp = ZT; setMode('skew'); setCtl(['markSel']); },
           check: () => okLFC(skGeo()), hold: 0.5,
           status: () => mark(okLFC(skGeo())) + ' LFC ' + (S.marks.lfc ? fx(S.marks.lfc.z, 1) + ' km, ' + minus(fx(S.marks.lfc.T, 1)) + ' °C' : '—'),
           explain: '습윤 단열선(15 − 0.5(z−1000))과 환경 곡선(25 − 0.7z)이 만나는 높이는 <b>2500 m</b>이고 기온은 <b>7.5 °C</b>예요. 이 LFC 위에서는 덩어리가 주변보다 따뜻해서 스스로 상승해요.',
@@ -896,6 +901,7 @@
           setup() { S.sit = 3; S.sst = 8; S.t850 = -12; setSlider($('#sSst'), $('#oSst'), 8, (v) => v + ' °C'); setSlider($('#sT850'), $('#oT850'), -12, (v) => minus(v) + ' °C'); $('#iGam').value = ''; S.gamPick = null; syncGam(); setMode('change'); setCtl(['sea', 'gamIn']); },
           status: () => mark(near($in('#iGam'), gamSea(), 0.03)) + ' 입력 ' + ($in('#iGam') == null ? '—' : $in('#iGam') + ' °C/100 m') + ' · ' + mark(S.gamPick === catOf(gamSea())) + ' 안정도 ' + (S.gamPick ? ({ s: '절대 안정', c: '조건부 불안정', u: '절대 불안정' })[S.gamPick] : '—'),
           check() {
+            if (S.sst !== 8 || S.t850 !== -12) return '해수면 8 °C, 1.5 km 기온 −12 °C로 슬라이더를 맞춰 주세요.';
             const v = $in('#iGam'); if (v == null) return '기온 감률을 입력해 주세요.';
             const ok = near(v, gamSea(), 0.03); markBad('#iGam', !ok);
             if (!ok) return near(v, gamSea() * 10, 0.3) ? '13.3은 1 km당 값(°C/km)이에요. 100 m당 값으로 바꿔 봐요.' : '(해수면 기온 − 1.5 km 기온) / 1.5 km를 계산한 뒤, 100 m당 값으로 바꿔 봐요.';

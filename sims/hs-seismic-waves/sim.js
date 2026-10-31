@@ -593,7 +593,7 @@
   const allMatched = () => ST_IDS.every(matched);
   const pinOk = () => !!S.pin && Math.hypot(S.pin.x, S.pin.y) <= 15;
   const mapGeo = () => {
-    const A = RC3.A, size = Math.min(A.w - 28, A.h - (PHONE ? 46 : 64)), g = { x: A.x + (A.w - size) / 2, y: A.y + 40, w: size, h: size };
+    const A = RC3.A, size = Math.min(A.w - 28, A.h - (PHONE ? 92 : 64)), g = { x: A.x + (A.w - size) / 2, y: A.y + 40, w: size, h: size };
     g.s = size / 550; return g;
   };
   const mpx = (g, x) => g.x + (x + 250) * g.s, mpy = (g, y) => g.y + (300 - y) * g.s;

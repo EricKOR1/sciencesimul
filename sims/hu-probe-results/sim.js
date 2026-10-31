@@ -393,7 +393,7 @@
     t += bump(x, -5.4, 0.55, 0.05) + bump(x, -4.95, 0.72, 0.09);       // 중적외선 창 (4 µm, 8~13 µm)
     t += 0.45 * ss(-3.05, -2.8, x) * (1 - ss(-2.1, -1.9, x));          // 밀리미터 파
     t += 0.95 * ss(-2.1, -1.9, x) * (1 - ss(0.9, 1.3, x));             // 전파의 창 (약 1 cm ~ 10 m)
-    return clamp(t, 0, 1);
+    return clamp(t, 0, 0.95);
   }
   const BANDS = [
     { n: '감마선', s: 'γ', a: -12, b: -11, col: '#a855f7', c: -11.5, lam: '0.01 nm 보다 짧음' },
@@ -405,7 +405,7 @@
   ];
   const bandOf = (x) => { for (let i = 0; i < BANDS.length; i++) if (x < BANDS[i].b) return i; return BANDS.length - 1; };
   const NEED_OK = [0, 1, 2];                        // 위성이 꼭 필요한 파장: 감마선, X선, 자외선
-  const absAlt = (x) => (x < -9 ? 'ion' : x < -6.5 ? 'ozone' : x > 1 ? 'ion' : 'trop');
+  const absAlt = (x) => (x < -6.7 ? 'ion' : x < -6.5 ? 'ozone' : x > 1 ? 'ion' : 'trop');   // 200 nm보다 짧은 빛(자외선 일부·X선·감마선)은 높은 대기(전리층 높이)에서, 200~300 nm는 오존층에서 흡수
   function lamStr(x) {
     const m = Math.pow(10, x);
     if (m < 1e-9 * 0.95) return f2(m * 1e12) + ' pm';
@@ -529,7 +529,7 @@
     const d = S.dest, m = S.meth;
     if (m < 0) { say('먼저 탐사 방식을 골라 주세요.', true, 2.2); return; }
     const D0 = DEST[d];
-    if (m !== D0.meth) { Sound.fail(); say(METH[m].n + '은(는) 어려워요. ' + (D0.wrong[m] || ''), true, 4.2); S.badT = S.clock; return; }
+    if (m !== D0.meth) { Sound.fail(); say(METH[m].n + (m === 1 ? '은' : '는') + ' 어려워요. ' + (D0.wrong[m] || ''), true, 4.2); S.badT = S.clock; return; }
     S.fl = { d, m, t: 0, dur: FLIGHT_DUR[m] };
     if (!S.conn[d]) { S.conn[d] = true; S.connM[d] = m; }
     Sound.success(); say('성공! ' + D0.probe + ' → ' + D0.n + ' (' + METH[m].n + ')', false, 3.4);

@@ -915,7 +915,7 @@
     if (S.coolShow || (game && game.free)) drawCool(C, dt);
     else {
       card(C, '⏳ 냉각 시간과 결정 크기');
-      drawWrap(C.x + C.w / 2, C.y + C.h / 2 - 8, '다음 단계에서 열려요. 박편 5종을 먼저 관찰해 봐요.', C.w - 40, 14, { color: '#64748b' });
+      drawWrap(C.x + C.w / 2, C.y + C.h / 2 - 8, '이 카드는 다음 미션에서 열려요. 박편 5종을 먼저 관찰해 봐요.', C.w - 40, 14, { color: '#64748b' });
     }
   }
   function drawCool(C, dt) {

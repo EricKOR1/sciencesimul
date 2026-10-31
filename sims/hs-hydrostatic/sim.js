@@ -544,11 +544,16 @@
       for (let q = 0; q < 3; q++) { drawCloud(I.x + I.w * (0.5 + q * 0.1), I.y + 60 + q * 8, 1.0 + 0.2 * q, 0.95); }
       D.label(I.x + 16, I.y + 24, '산비탈을 따라 강제로 올라가요 → 구름·산악 강수', { bg: '#0369a1', size: 12.5, pad: 8, align: 'left' });
     } else {
-      ctx.fillStyle = 'rgba(59,130,246,.55)'; poly([[I.x, I.gy], [I.x + I.w * 0.55, I.gy], [I.x, I.gy - 150]]); ctx.fill();
-      ctx.strokeStyle = '#1d4ed8'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(I.x + I.w * 0.55, I.gy); ctx.lineTo(I.x, I.gy - 150); ctx.stroke();
+      // 한랭 전선: 찬 공기가 쐐기 모양(앞쪽이 가파름)으로 파고들고, 따뜻한 공기는 그 비탈을 따라 밀려 올라가요
+      const nx0 = I.x + I.w * 0.36, wh = 190, onS = (x, off) => ({ x, y: I.gy - wh * clamp((nx0 - x) / (nx0 - I.x), 0, 1) - off });
+      ctx.fillStyle = 'rgba(59,130,246,.55)'; poly([[I.x, I.gy], [nx0, I.gy], [I.x, I.gy - wh]]); ctx.fill();
+      ctx.strokeStyle = '#1d4ed8'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(nx0, I.gy); ctx.lineTo(I.x, I.gy - wh); ctx.stroke();
       D.label(I.x + 14, I.gy - 40, '찬 공기 (쐐기)', { bg: '#1d4ed8', size: 12.5, pad: 8, align: 'left' });
-      for (let kk = 0; kk < 4; kk++) { const ph = ((t * 0.4 + kk * 0.25) % 1), x = I.x + I.w * (0.98 - 0.55 * ph), y = I.gy - 20 - 150 * (1 - ph) * 0 - ph * 150 + 0; D.sphere(I.x + I.w * 0.95 - ph * I.w * 0.5, I.gy - 30 - ph * 150 * (0.4 + 0.6 * ph), 8, '#fb923c', { gloss: false }); }
-      D.arrow(I.x + I.w * 0.9, I.gy - 40, I.x + I.w * 0.5, I.gy - 120, { color: '#f97316', width: 6, head: 16 });
+      D.arrow(I.x + I.w * 0.5, I.gy - 70, I.x + I.w * 0.5 + 60, I.gy - 70, { color: '#1d4ed8', width: 4, head: 11, alpha: 0.0 });
+      const path = [[I.x + I.w * 0.9, I.gy - 26], [nx0 + 6, I.gy - 26], [onS(I.x + 24, 24).x, onS(I.x + 24, 24).y]], seg = [Math.hypot(path[1][0] - path[0][0], path[1][1] - path[0][1]), Math.hypot(path[2][0] - path[1][0], path[2][1] - path[1][1])], tot = seg[0] + seg[1];
+      for (let kk = 0; kk < 4; kk++) { const ph = ((t * 0.3 + kk * 0.25) % 1) * tot; let px, py; if (ph < seg[0]) { const f = ph / seg[0]; px = lerp(path[0][0], path[1][0], f); py = lerp(path[0][1], path[1][1], f); } else { const f = (ph - seg[0]) / seg[1]; px = lerp(path[1][0], path[2][0], f); py = lerp(path[1][1], path[2][1], f); } D.sphere(px, py, 8, '#fb923c', { gloss: false }); }
+      const a0 = onS(nx0 - 40, 26), a1 = onS(I.x + 60, 26);
+      D.arrow(a0.x, a0.y, a1.x, a1.y, { color: '#f97316', width: 6, head: 16 });
       D.label(I.x + I.w - 14, I.gy - 40, '따뜻한 공기', { bg: '#c2410c', size: 12.5, pad: 8, align: 'right' });
       for (let q = 0; q < 4; q++) drawCloud(I.x + I.w * (0.28 + q * 0.12), I.y + 70 + (q % 2) * 18, 1.1 + 0.15 * q, 0.95);
       D.label(I.x + I.w * 0.5, I.y + 24, '찬 공기 위로 밀려 올라가며 적운이 생겨요', { bg: '#0369a1', size: 12.5, pad: 8 });

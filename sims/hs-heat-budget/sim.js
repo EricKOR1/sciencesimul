@@ -788,7 +788,7 @@
     [0, 1, 2, 3].forEach((v) => { const y = YT(v); ctx.beginPath(); ctx.moveTo(pb.x, y); ctx.lineTo(pb.x + pb.w, y); ctx.stroke(); D.text(pb.x - 6, y + 4.5, String(v), { size: 12, weight: 700, color: '#dc2626', align: 'right' }); });
     [0, 1, 2, 3, 4].forEach((v) => D.text(pb.x + pb.w + 6, YN(v) + 4.5, String(v), { size: 12, weight: 700, color: '#2563eb', align: 'left' }));
     for (let k = 0; k <= 4; k++) { const yy = tStart + k * 10; D.text(X(yy), pb.y + pb.h + 15 * FS, String(Math.round(yy)), { size: 12, weight: 700, color: '#64748b' }); }
-    D.text(pb.x - 4, pb.y - 8, 'ΔT (K)', { size: 12, weight: 800, color: '#dc2626', align: 'right' }); D.text(pb.x + pb.w + 4, pb.y - 8, 'N (W/m²)', { size: 12, weight: 800, color: '#2563eb', align: 'left' });
+    D.text(pb.x - 4, pb.y - 8, 'ΔT (K)', { size: 12, weight: 800, color: '#dc2626', align: 'right' }); D.text(B.x + B.w - 8, pb.y - 8, 'N (W/m²)', { size: 12, weight: 800, color: '#2563eb', align: 'right' });
     ctx.save(); ctx.beginPath(); ctx.rect(pb.x, pb.y, pb.w, pb.h); ctx.clip();
     const pts = S.hist.concat([[S.tY, S.dT, N]]);
     [[1, YT, '#dc2626'], [2, YN, '#2563eb']].forEach((q) => { ctx.beginPath(); pts.forEach((p, i) => { const x = X(p[0]), y = q[1](p[q[0]]); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }); ctx.strokeStyle = q[2]; ctx.lineWidth = 2.8; ctx.lineJoin = 'round'; ctx.stroke(); });
@@ -800,7 +800,7 @@
     // 식과 값
     card(C, '🧮 복사 강제력과 반응');
     const tx2 = C.x + 14;
-    if (PHONE) { drawWrap(tx2 + (C.w - 28) / 2, C.y + 40, 'F = 5.35 ln(C/280) = ' + fx(F, 1) + ' W/m² · 나감 = 240 − F + λΔT · N = F − λΔT, λ = ' + fx(lamEff(), 2) + ' W/m²/K' + (S.fb ? ' (수증기 되먹임)' : ''), C.w - 28, 12.5, { color: '#334155', weight: 800 }); }
+    if (PHONE) { drawWrap(tx2 + (C.w - 28) / 2, C.y + 52, 'F = 5.35 ln(C/280) = ' + fx(F, 1) + ' W/m² · 나감 = 240 − F + λΔT · N = F − λΔT, λ = ' + fx(lamEff(), 2) + ' W/m²/K' + (S.fb ? ' (수증기 되먹임)' : ''), C.w - 28, 12.5, { color: '#334155', weight: 800 }); }
     else {
       D.text(tx2, C.y + 54, 'CO₂ ' + S.co2 + ' ppm → 복사 강제력 F = 5.35 ln(C/280)', { size: 13.5, weight: 800, color: '#334155', align: 'left' });
       D.text(tx2, C.y + 54 + 26 * FS * 0.85, '= ' + fx(F, 1) + ' W/m² (대기가 지표 복사를 더 가둬 나가는 복사가 줄어요)', { size: 13, weight: 800, color: '#b91c1c', align: 'left' });

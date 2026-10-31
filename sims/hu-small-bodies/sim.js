@@ -329,6 +329,10 @@
   /* 시드 난수 */
   function rng(seed) { let s = seed >>> 0 || 1; return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296); }
 
+  /* 조사 고르기: 마지막 글자의 받침 유무 (한글이 아니면 받침 없음으로 봐요) */
+  const hasBatchim = (w) => { const c = String(w).trim().slice(-1).charCodeAt(0); return c >= 0xAC00 && c <= 0xD7A3 && (c - 0xAC00) % 28 !== 0; };
+  const eunNeun = (w) => (hasBatchim(w) ? '은' : '는');
+  const iGa = (w) => (hasBatchim(w) ? '이' : '가');
   initStage('#e8eef8', 800, 620, 480, 860, 1.25);
   if (PHONE) view.canvas.style.touchAction = 'pan-y';
 
@@ -452,7 +456,7 @@
     layout: () => { const L = LJ(); return { grid: L.grid, bins: L.bins }; },
     onPlace(it, b) {
       it.wrong = b !== it.bin;
-      if (it.wrong) { say('「' + it.label + '」은(는) ' + CLS[b].n + '이 아니에요. 도장이 ✕인 조건을 다시 보세요.', true, 3.2); Sound.fail(); }
+      if (it.wrong) { say('「' + it.label + '」' + eunNeun(it.label) + ' ' + CLS[b].n + iGa(CLS[b].n) + ' 아니에요. 도장이 ✕인 조건을 다시 보세요.', true, 3.2); Sound.fail(); }
       else { parts.burst(it.x + it.w / 2, it.y + it.h / 2, { count: 10, speed: 120, colors: [CLS[b].color, '#fbbf24'] }); }
     },
     onChange() { S.clsOk = cJ.items.every((i) => cJ.isRight(i)); updateCtl(); },
@@ -557,7 +561,7 @@
     ctx.save(); ctx.strokeStyle = '#0f172a'; ctx.lineWidth = 3; ctx.setLineDash([8, 6]); ctx.beginPath(); ctx.moveTo(bx, top - 4); ctx.lineTo(bx, ay + 2); ctx.stroke(); ctx.setLineDash([]); ctx.restore();
     D.shadow(() => { D.sphere(bx, top - 8, 11, '#0f172a', { gloss: false }); }, { blur: 5, y: 2 });
     T(bx, top - 5, '↔', 13, '#fff', 'center', 800);
-    D.label(clamp(bx, ix + 50, ix + iw - 50), top - 28, 'μ_c = ' + fMu(Math.pow(10, S.mu.c)), { bg: '#0f172a', size: 12.5 });
+    { const right = bx + 120 < ix + iw; D.label(right ? bx + 20 : bx - 20, top - 8, 'μ_c = ' + fMu(Math.pow(10, S.mu.c)), { bg: '#0f172a', size: 12.5, align: right ? 'left' : 'right' }); }
     if (muOK() && !RM) D.ring(bx, ay - 2, 12, t, { color: '#16a34a' });
     // 설명 판
     panel(I.x, I.y, I.w, I.h, { r: 14 });
@@ -605,7 +609,7 @@
       rect(2.1, 3.3, 0, 0.3, GRP[0].color, '소행성대', Y(0.3) - 6);
       rect(30, 50, 0, 0.3, GRP[1].color, '카이퍼 벨트', Y(0.3) - 6);
       const yy = Y(1) + 0, y2 = Y(0.6); ctx.fillStyle = rgba(GRP[2].color, 0.08); ctx.fillRect(ix, yy, iw, y2 - yy);
-      T(ix + iw - 8, yy + 17 * FS, '혜성: 이심률 e가 커요', 12.5, shade(GRP[2].color, -0.2), 'right', 800);
+      T(ix + iw - 8, y2 - 8, '혜성: 이심률 e가 커요', 12.5, shade(GRP[2].color, -0.2), 'right', 800);
       ctx.restore();
     }
     // 눈금
@@ -662,7 +666,7 @@
     const i = S.sc.sel; if (i < 0) return;
     S.sc.asg[i] = k; S.sc.wrong[i] = k !== SC[i].g; Sound.click();
     const { X, Y } = scGeom();
-    if (S.sc.wrong[i]) { say('이 천체는 ' + GRP[k].n + '가 아닌 것 같아요. a와 e를 다시 읽어 봐요.', true, 3); Sound.fail(); }
+    if (S.sc.wrong[i]) { say('이 천체는 ' + GRP[k].n + iGa(GRP[k].n) + ' 아닌 것 같아요. a와 e를 다시 읽어 봐요.', true, 3); Sound.fail(); }
     else parts.burst(X(SC[i].a), Y(SC[i].e), { count: 10, speed: 110, colors: [GRP[k].color, '#fbbf24'] });
     updateCtl();
   }
@@ -693,7 +697,10 @@
   function cmEnterPredict() {
     const p = cmPos(CM.M);
     if (p.r > 2.5) { say('태양에서 너무 멀어서 꼬리가 거의 없어요. 2.5 AU 안쪽으로 오면 예측해요.', true, 3.4); Sound.fail(); return false; }
-    CM.mode = 'predict'; CM.play = false; CM.guess = -Math.PI / 2; CM.rev = 0; CM.last = ''; updateCtl(); return true;
+    CM.mode = 'predict'; CM.play = false; CM.rev = 0; CM.last = '';
+    // 손잡이의 처음 방향: 무대 가운데 쪽 (화면 밖으로 나가 잡을 수 없는 일이 없도록). 정답과 가깝지 않게 해요.
+    { const g = cmGeom(), cx = g.Sc.x + g.Sc.w / 2, cy = g.Sc.y + g.Sc.h / 2; CM.guess = Math.hypot(cx - p.x, cy - p.y) > 30 ? Math.atan2(cy - p.y, cx - p.x) : -Math.PI / 2; if (angDiff(CM.guess, cmSunAngle()) < 40 * DEG) CM.guess += Math.PI; }
+    updateCtl(); return true;
   }
   function cmReveal() {
     CM.mode = 'reveal'; CM.rev = 0;
@@ -710,7 +717,7 @@
     if (len < 1 || alpha <= 0.01) return;
     ctx.save(); ctx.globalAlpha = alpha; ctx.translate(x, y);
     // 먼지 꼬리: 넓고 약간 휘어요
-    const bend = moveAng != null ? clamp(Math.sin(moveAng - ang), -1, 1) * 0.28 : 0;
+    const bend = moveAng != null ? -clamp(Math.sin(moveAng - ang), -1, 1) * 0.28 : 0;      // 먼지 꼬리는 진행 방향의 뒤쪽으로 휘어요
     ctx.save(); ctx.rotate(ang + bend); let g = ctx.createLinearGradient(0, 0, len * 0.92, 0); g.addColorStop(0, 'rgba(255,236,170,.85)'); g.addColorStop(1, 'rgba(255,236,170,0)');
     ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(0, -5); ctx.quadraticCurveTo(len * 0.5, -len * 0.1, len * 0.92, -len * 0.16); ctx.lineTo(len * 0.92, len * 0.16); ctx.quadraticCurveTo(len * 0.5, len * 0.1, 0, 5); ctx.closePath(); ctx.fill(); ctx.restore();
     // 이온(플라스마) 꼬리: 좁고 곧아요
@@ -918,7 +925,7 @@
     ctx.fillStyle = DT.rho[i0] ? 'rgba(22,163,74,.1)' : 'rgba(100,116,139,.07)'; rr(C.x + 8, y - 20 * FS, C.w - 16, 30 * FS, 8).fill();
     T(lx, y, '밀도 ρ = M / V', 14.5, '#1e293b', 'left', 800); T(vx, y, DT.rho[i0] ? f2(DT.rhoV[i0]) + ' g/cm³  (' + comma(DT.rhoV[i0] * 1000) + ' kg/m³)' : '?', 14.5, DT.rho[i0] ? '#15803d' : '#94a3b8', 'right', 800); y += 32 * FS;
     if (DT.rho[i0]) {
-      const yy = drawWrap(lx, y, '물 = 1.00 g/cm³ · ' + (b.rock ? '구성 암석 약 ' + f1(b.rock) + ' g/cm³' : b.id === 'moon' ? '달의 평균 밀도' : ''), C.w - 28, 12.5, { color: '#64748b' });
+      const yy = drawWrap(lx, y, '물 = 1.00 g/cm³' + (b.rock ? ' · 구성 암석 약 ' + f1(b.rock) + ' g/cm³' : b.id === 'moon' ? ' · 달의 평균 밀도' : ''), C.w - 28, 12.5, { color: '#64748b' });
       drawWrap(lx, yy + 20 * FS, '🔎 ' + b.inf, C.w - 28, 13, { color: '#0f172a', weight: 800 });
     } else drawWrap(lx, y, '① 부피를 구하고 ② M / V로 밀도를 계산해요. 1 g/cm³ = 1000 kg/m³', C.w - 28, 12.5, { color: '#64748b' });
     if (DT.rho[0] && (S.flags.porBox || FREE()) && i0 === 0) { const por = porPct(); T(vx, C.y + C.h - 12, DT.porOk || FREE() ? '공극률 = 1 − ρ/ρ암석 ≈ ' + f0(por) + ' %' : '공극률 = 1 − ρ/ρ암석 = ?', 13, '#b45309', 'right', 800); }
@@ -968,7 +975,7 @@
     layout: () => { const L = LMT(); return { grid: L.grid, bins: L.bins }; },
     onPlace(it, b) {
       it.wrong = b !== it.bin;
-      if (it.wrong) { say('「' + it.label + '」은(는) 그 상자가 아니에요. 콘드룰이 있으면 한 번도 녹지 않은 물질이에요.', true, 3.4); Sound.fail(); }
+      if (it.wrong) { say('「' + it.label + '」' + eunNeun(it.label) + ' 그 상자가 아니에요. 콘드룰이 있으면 한 번도 녹지 않은 물질이에요.', true, 3.4); Sound.fail(); }
       else parts.burst(it.x + it.w / 2, it.y + it.h / 2, { count: 10, speed: 120, colors: [b === 0 ? '#16a34a' : '#7c3aed', '#fbbf24'] });
     },
     onChange() { updateCtl(); },
@@ -993,6 +1000,7 @@
     const rate = MT.heat ? 330 : 700;
     if (MT.temp < tgt) MT.temp = Math.min(tgt, MT.temp + rate * dt * (RM ? 20 : 1)); else if (MT.temp > tgt) MT.temp = Math.max(tgt, MT.temp - rate * dt * (RM ? 20 : 1));
     MT.p = clamp((MT.temp - 950) / 450, 0, 1);
+    if (MT.p >= 0.85 && MT.size === 0) MT.seen = true;
     // 베스타 단면 판
     D.shadow(() => { ctx.fillStyle = '#0f172a'; rr(V.x, V.y, V.w, V.h, 14).fill(); }, { blur: 6, y: 2 });
     ctx.save(); rr(V.x, V.y, V.w, V.h, 14); ctx.clip(); spaceBg(V.x, V.y, V.w, V.h, t, '#0b1230', '#111d3d');
@@ -1266,7 +1274,6 @@
             const v = numOf('inPor'); if (v == null) return '공극률(%)을 입력해 주세요.';
             const ok = near(v, porPct(), 5); fbIn('inPor', ok);
             if (ok) { DT.porOk = true; return true; }
-            if (near(v, 100 - porPct(), 5)) return '그 값은 암석이 차지하는 비율이에요. 빈틈의 비율 = 100 % − 암석의 비율이에요.';
             return '공극률 = (1 − 1.18 / 2.4) × 100 을 계산해 보세요.';
           },
           status: () => '입력 ' + ($('#inPor').value.trim() || '—') + ' %',
@@ -1310,8 +1317,9 @@
           title: '베스타가 분화됐다는 증거 고르기', manual: true,
           goal: '🔥 가열하기로 베스타가 녹는 모습을 본 뒤, 베스타가 <b>분화된 천체</b>라는 증거를 모두 고르세요. (2개)',
           hint: '분화된 천체는 무거운 철이 가운데로 모여 평균 밀도가 크고, 겉은 용암이 굳은 현무암 같은 암석이에요.',
-          setup() { MT.size = 0; MT.heat = false; MT.ev = EVID.map(() => false); MT.evOk = false; S.flags.evBox = true; setView('meteor'); },
+          setup() { MT.size = 0; MT.heat = false; MT.temp = 20; MT.seen = false; MT.ev = EVID.map(() => false); MT.evOk = false; S.flags.evBox = true; setView('meteor'); },
           check() {
+            if (!MT.seen) return '먼저 🔥 가열하기를 눌러 베스타가 녹아 층으로 나뉘는 모습을 지켜보세요.';
             const n = MT.ev.filter(Boolean).length;
             if (n === 0) return '증거 카드를 눌러 골라 주세요.';
             if (evOK()) { MT.evOk = true; return true; }
@@ -1319,7 +1327,7 @@
             if (MT.ev[3] || MT.ev[4]) return '얼음이 많거나 밀도가 아주 작으면 가볍고 성긴 천체예요. 분화된 천체는 무거워요.';
             return '증거가 하나 더 있어요. 밀도와 표면 암석을 떠올려 보세요.';
           },
-          status: () => '고른 증거 ' + MT.ev.filter(Boolean).length + '개',
+          status: () => mark(!!MT.seen) + ' 가열해서 분화 관찰 &nbsp; ' + mark(MT.ev.filter(Boolean).length > 0) + ' 고른 증거 ' + MT.ev.filter(Boolean).length + '개',
           explain: '<b>밀도 3.46 g/cm³</b>(철 핵 때문)와 <b>현무암 지각</b>이 분화의 증거예요. 콘드룰이 가득한 암석은 원시 물질의 특징이고, 베스타 표면은 얼음으로 덮여 있지 않아요.',
         },
         {

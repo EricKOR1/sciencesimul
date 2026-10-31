@@ -447,7 +447,7 @@
     { id: 'icb', d0: 5150, d1: 5150, nm: '내핵 경계 (레만)', sh: '레만', sub: '5150 km' },
   ];
   const vGeo = () => {
-    const A = RC2.A, g = { x: A.x + 52, y: A.y + 44, w: A.w - 52 - (PHONE ? 128 : 116), h: A.h - 44 - 36 };
+    const A = RC2.A, g = { x: A.x + 52, y: A.y + 44, w: A.w - 52 - (PHONE ? 128 : 116), h: A.h - 44 - (PHONE ? 52 : 36) };
     g.X = (v) => g.x + (v / 14) * g.w; g.Y = (d) => g.y + Math.sqrt(clamp(d, 0, RE) / RE) * g.h; return g;
   };
   function vClick(p) {
@@ -702,8 +702,8 @@
       const c0 = g.cell(horiz ? (idx ? 'c' : 'a') : (idx ? 'b' : 'a')), cy0 = c0.y + c0.h / 2, cx0 = c0.x + c0.w / 2;
       const ok = !S.slow ? null : predOf(p) === p.obs;
       const col = ok == null ? colp[k] : ok ? '#16a34a' : '#dc2626';
-      if (horiz) { D.arrow(g.x - 40, cy0, g.x + g.cs * 2 + 6, cy0, { color: col, width: 3.4, head: 11 }); D.label(g.x + g.cs * 2 + 38 * (PHONE ? 0.9 : 1), cy0, '+' + p.obs + ' s', { bg: col, size: 13, pad: 7 }); D.text(g.x - 44, cy0 - 8, '경로' + (idx + 1), { size: 12.5, weight: 800, color: col, align: 'right' }); }
-      else { D.arrow(cx0, g.y - 36, cx0, g.y + g.cs * 2 + 8, { color: col, width: 3.4, head: 11 }); D.label(cx0, g.y + g.cs * 2 + 28, '+' + p.obs + ' s', { bg: col, size: 13, pad: 7 }); D.text(cx0, g.y - 42, '경로' + (idx + 3), { size: 12.5, weight: 800, color: col }); }
+      if (horiz) { D.arrow(g.x - 40, cy0, g.x + g.cs * 2 + 6, cy0, { color: col, width: 3.4, head: 11 }); D.label(g.x + g.cs * 2 + 38 * (PHONE ? 0.9 : 1), cy0, '+' + p.obs + ' s', { bg: col, size: 13, pad: 7 }); D.text(g.x - 44, cy0 - 8, '가로' + (idx + 1), { size: 12.5, weight: 800, color: col, align: 'right' }); }
+      else { D.arrow(cx0, g.y - 36, cx0, g.y + g.cs * 2 + 8, { color: col, width: 3.4, head: 11 }); D.label(cx0, g.y + g.cs * 2 + 28, '+' + p.obs + ' s', { bg: col, size: 13, pad: 7 }); D.text(cx0, g.y - 42, '세로' + (idx + 1), { size: 12.5, weight: 800, color: col }); }
     });
     ctx.globalAlpha = 1;
     // 표

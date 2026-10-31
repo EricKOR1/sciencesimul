@@ -600,7 +600,7 @@
     for (let k = -n; k <= n; k++) {
       const y = g.yc + k * spcPx; if (y < M.y - 2 || y > M.y + M.h + 2) continue;
       ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 2.2; ctx.beginPath(); ctx.moveTo(M.x, y); ctx.lineTo(M.x + M.w, y); ctx.stroke();
-      D.text(M.x + M.w - 8, y - 5, (1008 - 4 * k) + ' hPa', { size: 12.5, weight: 800, color: '#1e293b', align: 'right', stroke: 'rgba(255,255,255,.85)', strokeWidth: 3.5 });
+      D.text(M.x + M.w - 8, y - 5, (1008 + 4 * k) + ' hPa', { size: 12.5, weight: 800, color: '#1e293b', align: 'right', stroke: 'rgba(255,255,255,.85)', strokeWidth: 3.5 });
     }
     ctx.restore();
     ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.5; rr(M.x, M.y, M.w, M.h, 10).stroke();

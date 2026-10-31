@@ -566,6 +566,7 @@
       S.toDone[S.clus] = true; S.reveal[S.clus] = 0; parts.burst(tx, ty, { count: 14, speed: 120, life: 0.7, size: 3.4, colors: ['#fde047', '#fbbf24', '#ffffff'], gravity: 80 });
       say('전향점을 찾았어요! m_V = ' + f1(c.toMv), false, 2.4);
       S.flags.pickClus = S.flags.pickClus || S.clus === 0; updateCtl();
+      ['inM', 'inT'].forEach((id) => { const e = $('#' + id); if (e && e.value.trim()) e.dispatchEvent(new Event('input')); });
     } else {
       S.miss = { x: p.x, y: p.y, t: 0.6 }; say('주계열이 끝나는(위쪽 끝) 별을 찾아 보세요', true, 2.2);
     }
@@ -709,6 +710,7 @@
     $('#calcCmp').hidden = !(S.view === 'compare' && (S.flags.calcCmp || free) && S.rowSel >= 0 && !S.dOk[S.rowSel]);
     $('#cmpPick').hidden = !(S.view === 'compare' && S.rowSel < 0);
     $('#tbLabel').textContent = VIEW_LABEL[S.view];
+    $('#lbD').textContent = '성단 ' + curC().k;
     $('#cmpNote').textContent = S.flags.calcCmp || free ? '표에서 성단 칸을 눌러 고른 뒤 거리 d를 입력해요. 그림의 A·B·C·D 단추는 젊은 성단부터 눌러 나이 순서를 정할 때 써요.' : '그림의 A·B·C·D 단추를 젊은 성단부터 차례로 눌러 나이 순서를 정해요. 표의 칸을 누르면 그 성단이 강조돼요.';
     $$('#grpClus .opt').forEach((b) => b.classList.toggle('on', +b.dataset.k === S.clus));
     if (S.rowSel >= 0) { const c = CL[S.rowSel]; $('#cmpWho').textContent = c.k + '의 거리 d (pc)'; }
@@ -718,7 +720,7 @@
   const ageFmt = (v) => sci(Math.pow(10, v), 1) + ' 년';
   sl('#sAge', '#oAge', ageFmt, (v) => { S.ageLog = v; S.ageTgt = v; });
   modeBtns.forEach((b) => clickable(b, () => setView(b.dataset.view)));
-  $$('#grpClus .opt').forEach((b) => clickable(b, () => { S.clus = +b.dataset.k; if (S.view === 'fit') { S.off = Math.min(S.off, 16); } updateCtl(); }));
+  $$('#grpClus .opt').forEach((b) => clickable(b, () => { S.clus = +b.dataset.k; clrIn('inD', 'inM', 'inT'); if (S.view === 'fit') { S.off = Math.min(S.off, 16); } updateCtl(); }));
   $$('#grpAgeJump .opt').forEach((b) => clickable(b, () => { const v = Math.log10(CL[+b.dataset.k].age); S.ageTgt = v; setSlider($('#sAge'), $('#oAge'), v, ageFmt); }));
   clickable($('#bAuto'), () => { autoMeasure(10); });
   const inCheck = (id, v, rel) => { const x = numOf(id); return nearRel(x, v, rel); };
@@ -856,7 +858,7 @@
           title: '성단 A의 나이 계산하기', manual: true,
           goal: '<b>t = 10¹⁰ × M^(−2.5)</b>(년)로 성단 A의 나이를 <b>억 년</b> 단위로 입력하고 확인하세요.',
           hint: '6.4^(−2.5) = 1/6.4^2.5 ≈ 0.0097이므로 t ≈ 9.7×10⁷년 ≈ 1.0억 년이에요.',
-          setup() { S.clus = 0; S.flags.calcAge = true; setView('age'); },
+          setup() { S.clus = 0; S.flags.calcAge = true; S.tOk[0] = false; clrIn('inT'); setView('age'); },
           check: () => { if (!S.toDone[0]) return '먼저 전향점을 찾아 눌러요.'; const x = numOf('inT'); if (x == null) return '나이를 억 년 단위로 입력해 주세요.'; if (nearRel(x * 1e8, A.age, 0.12)) { S.tOk[0] = true; return true; } return x > 2 ? '너무 커요. 6.4^2.5가 약 100이라는 점을 써 보세요.' : '10¹⁰ × 6.4^(−2.5)를 다시 계산해 보세요.'; },
           explain: 't = 10¹⁰ × 6.4^(−2.5) ≈ 9.7×10⁷ ≈ <b>1.0×10⁸ 년</b>(약 1억 년)이에요. 태양(10¹⁰ 년)보다 훨씬 짧게 살아서 이 성단은 아주 젊어요.',
         },

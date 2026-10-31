@@ -426,8 +426,8 @@
   const ebvOK = () => near(numOf('inE'), EBV0, 0.02);
   function redDown(p) {
     for (const f of HIT.filt) if (inR(p, f.r)) {
-      if (S.flags.pickF && allMeas() && S.pickMode) { S.pickF = f.k; Sound.click(); return true; }
-      S.measOn[f.k] = true; Sound.click(); parts.burst(f.r.x + f.r.w / 2, f.r.y, { count: 6, speed: 70, life: 0.4, size: 2.5, colors: [FIL[f.k].col], gravity: 0 }); return true;
+      if (S.flags.pickF && allMeas() && S.pickMode) { S.pickF = f.k; Sound.click(); updateCtl(); return true; }
+      S.measOn[f.k] = true; Sound.click(); updateCtl(); parts.burst(f.r.x + f.r.w / 2, f.r.y, { count: 6, speed: 70, life: 0.4, size: 2.5, colors: [FIL[f.k].col], gravity: 0 }); return true;
     }
     return false;
   }
@@ -596,7 +596,7 @@
           title: '별이 유난히 적은 칸 찾기',
           goal: '표를 보고 별의 수가 <b>유난히 적은 칸</b>을 모두 표시하세요. (🚩 표시 도구를 쓰세요)',
           hint: '2~6개처럼 다른 칸(약 40개)에 비해 아주 적은 칸이 모두 5칸 있어요.',
-          setup() { S.wl = 0; S.flags.mark = true; S.tool = 1; setView('count'); },
+          setup() { S.wl = 0; S.flags.mark = true; S.tool = 1; CELLS.forEach((c, i) => { if (!cntDone(i, 0)) S.cnt[0][i] = { k: NV[i], done: true, delay: 0 }; }); setView('count'); },
           check: () => darkOK(), hold: 0.8,
           status: () => mark(darkOK()) + ' 표시한 칸 ' + S.marks.filter(Boolean).length + '개 (정답과 ' + (darkOK() ? '일치' : '다름') + ')',
           explain: '별의 수가 ' + NV.filter((n, i) => DARK.indexOf(i) >= 0).join('·') + '개인 5칸이 <b>암흑 성운</b> 칸이에요. 나머지 칸의 평균은 약 ' + f0(MEAN_OUT) + '개, 이 5칸의 평균은 ' + f1(MEAN_IN) + '개로 10배쯤 차이 나요.',

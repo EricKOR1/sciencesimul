@@ -505,7 +505,7 @@
     ctx.strokeStyle = 'rgba(253,230,138,.55)'; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.arc(cx, cy, 8 * sc, 0, TAU); ctx.stroke();
     S.ang += dt * (RM ? 0 : 0.55); const sa = S.ang, sx = cx + Math.cos(sa) * 8 * sc, sy = cy - Math.sin(sa) * 8 * sc;
     D.glow(sx, sy, 16, '#ffd447', 0.7); D.sphere(sx, sy, 5.5, '#ffb703', { gloss: false });
-    D.arrow(sx, sy, sx + Math.sin(sa) * 30, sy + Math.cos(sa) * 30, { color: '#fde047', width: 2.4, head: 9 });
+    D.arrow(sx, sy, sx - Math.sin(sa) * 30, sy - Math.cos(sa) * 30, { color: '#fde047', width: 2.4, head: 9 });
     // 빛 한 줄기
     S.beam = (S.beam + dt * (RM ? 0 : 0.16)) % 1.3; const bt = Math.min(1, S.beam), bx = cx - 15 * sc + 30 * sc * bt;
     D.arrow(cx - 15 * sc, cy + 15 * sc * 0.0 - 0 + 1, cx + 15 * sc, cy + 1, { color: 'rgba(125,211,252,.55)', width: 2, head: 10, dash: [4, 6] });
@@ -810,7 +810,7 @@
       case 'curve': drawCurve(dt, t); break;
       case 'smc': drawSmc(dt, t); break;
       case 'calc': drawCalc(dt, t); break;
-      case 'map': drawMap(dt, t); if (S.sel >= 0) updateCtlSoft(); break;
+      case 'map': drawMap(dt, t); updateCtlSoft(); break;
       case 'scale': drawScale(dt, t); break;
       default: drawLadder(dt, t);
     }

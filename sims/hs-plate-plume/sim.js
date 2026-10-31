@@ -401,7 +401,7 @@
   function drawSlab(t, dt) {
     const { A, B, C } = RC2;
     card(A, '⛓️ 섭입하는 판이 당겨요 (모식도)');
-    const sc = 0.4, ys = A.y + (PHONE ? 100 : 108), hp = HKM * sc, Lp = S.L * sc, xt = A.x + (PHONE ? 250 : 300), xs = A.x + 22;
+    const ys = A.y + (PHONE ? 100 : 108), xt = A.x + (PHONE ? 250 : 300), sc = Math.min(0.4, (A.y + A.h - 8 - ys - 24) / 545, (A.x + A.w - 12 - 130 - xt) / 495), hp = HKM * sc, Lp = S.L * sc, xs = A.x + 22;
     const d = Lp * Math.SQRT1_2, n = [-Math.SQRT1_2 * hp, Math.SQRT1_2 * hp];
     const T1 = [xt + d, ys + d], B1 = [T1[0] + n[0], T1[1] + n[1]];
     const box = { x: A.x + 10, y: A.y + 38, w: A.w - 20, h: A.h - 46 };
@@ -428,7 +428,7 @@
     D.label(xt - 44, ys + hp + 22 * FS, '해구', { bg: '#1e293b', size: 12, pad: 7 });
     D.text(T1[0] + 14, T1[1] - 4, '섭입하는 판', { size: 12.5, weight: 800, color: '#f8fafc', align: 'left', stroke: 'rgba(15,23,42,.5)', strokeWidth: 3 });
     D.text(T1[0] + 14, T1[1] + 15 * FS, '길이 L = ' + S.L + ' km', { size: 12.5, weight: 800, color: '#fef9c3', align: 'left', stroke: 'rgba(15,23,42,.5)', strokeWidth: 3 });
-    D.text(box.x + box.w - 8, box.y + box.h - 8, '두께 h = 70 km, 주변 맨틀보다 80 kg/m³ 무거워요 (예시)', { size: 11.5, weight: 800, color: '#7c2d12', align: 'right' });
+    D.text(box.x + 8, box.y + box.h - 8, '두께 h = 70 km, 주변 맨틀보다 80 kg/m³ 무거워요 (예시)', { size: 11.5, weight: 800, color: '#7c2d12', align: 'left' });
     D.text(box.x + box.w - 8, box.y + 16 * FS, '대륙판', { size: 12.5, weight: 800, color: '#fff7ed', align: 'right', stroke: 'rgba(15,23,42,.45)', strokeWidth: 3 });
     // 판의 속도
     card(B, '🏃 판의 속도 (예시) · 섭입대가 붙은 판일수록?');
@@ -630,7 +630,7 @@
     const ry = g.y + g.h - 30 * FS;
     ctx.strokeStyle = '#fff7ed'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(g.xh, ry); ctx.lineTo(g.xh - 520 * g.kx, ry); ctx.stroke();
     for (let d = 0; d <= 500; d += 100) { const x = g.xh - d * g.kx; ctx.beginPath(); ctx.moveTo(x, ry - 4); ctx.lineTo(x, ry + 4); ctx.stroke(); D.text(x, ry + 17 * FS, String(d), { size: 11.5, weight: 800, color: '#fff7ed', stroke: 'rgba(124,45,18,.6)', strokeWidth: 3 }); }
-    D.text(g.xh - 520 * g.kx + 4, ry - 9, '열점에서의 거리(km)', { size: 11.5, weight: 800, color: '#fff7ed', align: 'left', stroke: 'rgba(124,45,18,.6)', strokeWidth: 3 });
+    D.text(g.xh - 520 * g.kx + 4, ry - 9, (PHONE ? '거리(km)' : '열점에서의 거리(km)'), { size: 11.5, weight: 800, color: '#fff7ed', align: 'left', stroke: 'rgba(124,45,18,.6)', strokeWidth: 3 });
     const canTap = S.tau >= 0.999;
     ps.forEach(({ k, p }) => {
       if (!p) return; const top = g.yf - p.h, plotted = k.id !== 'haw' && S.plotted[k.id];
@@ -640,7 +640,7 @@
       if (canTap && k.id !== 'haw') { D.ring(p.x, top - 2, 11, t, { color: plotted ? '#16a34a' : '#f59e0b', speed: 1.3, width: 2.5 }); }
     });
     D.arrow(g.x + g.w * 0.46, g.yf + (g.yb - g.yf) * 0.5 - 9 - 0, g.x + g.w * 0.46 - 70, g.yf + (g.yb - g.yf) * 0.5 - 9, { color: '#f8fafc', width: 5, head: 13 });
-    D.text(g.x + g.w * 0.46 - 36, g.yf + (g.yb - g.yf) * 0.5 + 18 * FS, '판 이동 (북서쪽) 10 cm/년', { size: 12, weight: 800, color: '#f8fafc', stroke: 'rgba(15,23,42,.45)', strokeWidth: 3 });
+    D.text(g.x + g.w * 0.46 - 36 + (PHONE ? 40 : 0), g.yf + (g.yb - g.yf) * 0.5 + 18 * FS, '판 이동 (북서쪽) 10 cm/년', { size: 12, weight: 800, color: '#f8fafc', stroke: 'rgba(15,23,42,.45)', strokeWidth: 3 });
     D.text(px - 16, g.y + g.h - 52 * FS, '플룸 (거의 고정)', { size: 12, weight: 800, color: '#fff7ed', align: 'right', stroke: 'rgba(127,29,29,.6)', strokeWidth: 3 });
     D.text(g.x + 10, g.y + 16 * FS, S.tau >= 1 ? '지금의 모습 (섬을 눌러 점을 찍어요)' : '경과 ' + fN(S.tau * -TAU0, 1) + ' 백만 년', { size: 12, weight: 800, color: '#7c2d12', align: 'left' });
     // 그래프
@@ -681,9 +681,9 @@
     const m1 = [(H[0] + P1[0]) / 2, (H[1] + P1[1]) / 2 + 22], m2 = [(P1[0] + P2[0]) / 2 + 14, (P1[1] + P2[1]) / 2];
     D.arrow(m1[0], m1[1], m1[0] + 34 * Math.cos(160 * DEG), m1[1] - 34 * Math.sin(160 * DEG), { color: '#c2410c', width: 3, head: 8 });
     D.arrow(m2[0], m2[1], m2[0] + 34 * Math.cos(100 * DEG), m2[1] - 34 * Math.sin(100 * DEG), { color: '#6d28d9', width: 3, head: 8 });
-    D.text(m1[0], m1[1] + 16 * FS, PHONE ? '지금' : '지금: 서북서', { size: 11.5, weight: 800, color: '#c2410c' });
+    D.text(PHONE ? m1[0] - 30 : m1[0], m1[1] + 16 * FS, PHONE ? '지금' : '지금: 서북서', { size: 11.5, weight: 800, color: '#c2410c' });
     D.text(m2[0] + 8, m2[1] + 22, PHONE ? '이전' : '이전: 북북서', { size: 11.5, weight: 800, color: '#6d28d9', align: 'left' });
-    D.text(E.x + 6, E.y + E.h - 6, '길이는 단순화해서 그렸어요', { size: 11, weight: 700, color: '#64748b', align: 'left' });
+    D.text(E.x + 6, E.y + E.h - 6, (PHONE ? '단순화한 모식도' : '길이는 단순화해서 그렸어요'), { size: 11, weight: 700, color: '#64748b', align: 'left' });
   }
 
   /* ======================================================
