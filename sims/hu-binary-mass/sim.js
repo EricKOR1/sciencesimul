@@ -351,8 +351,8 @@
     TT.prog = approach(TT.prog, 1, dt, 0.9);
     // ---- 눈금자
     panel(R.x, R.y, R.w, R.h, { r: 14 });
-    T(R.x + 14, R.y + 24 * FS, '📏 하늘의 각을 AU로: 연주시차 p는 1 AU가 하늘에서 차지하는 각이에요', PHONE ? 11.5 : 13.5, '#1e293b', 'left', 800);
-    const bx = R.x + 22, bw = R.w - 44, by = R.y + 92 * FS, bh = 40, unit = bw * SIR.p / SIR.aa, nU = SIR.a;
+    T(R.x + 14, R.y + 24 * FS, PHONE ? '📏 하늘의 각을 AU로 (p = 1 AU가 차지하는 각)' : '📏 하늘의 각을 AU로: 연주시차 p는 1 AU가 하늘에서 차지하는 각이에요', PHONE ? 11 : 13.5, '#1e293b', 'left', 800);
+    const bx = R.x + 22, bw = R.w - 44, by = R.y + (PHONE ? 72 : 92) * FS, bh = 40, unit = bw * SIR.p / SIR.aa, nU = SIR.a;
     // a″ 괄호
     ctx.strokeStyle = '#0369a1'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(bx, by - 18); ctx.lineTo(bx, by - 8); ctx.moveTo(bx, by - 13); ctx.lineTo(bx + bw, by - 13); ctx.moveTo(bx + bw, by - 18); ctx.lineTo(bx + bw, by - 8); ctx.stroke();
     T(bx + bw / 2, by - 22, '하늘에서 잰 긴반지름 a″ = ' + f2(SIR.aa) + '″', PHONE ? 12.5 : 14, '#0369a1', 'center', 800);
@@ -361,7 +361,7 @@
     ctx.save(); rr(bx, by, bw, bh, 8); ctx.clip();
     ctx.fillStyle = '#e2e8f0'; ctx.fillRect(bx, by, bw, bh);
     for (let k = 0; k < Math.ceil(nU); k++) {
-      const w1 = Math.min(unit, bw - k * unit), fillw = clamp(shown - k, 0, 1) * w1;
+      const w1 = Math.min(unit, bw - k * unit), fillw = Math.min(clamp(shown - k, 0, 1) * unit, w1);
       ctx.fillStyle = k % 2 ? '#7dd3fc' : '#38bdf8'; if (k === 0) ctx.fillStyle = '#f59e0b';
       ctx.fillRect(bx + k * unit, by, fillw, bh);
     }
@@ -376,7 +376,7 @@
     const a_ok = TT.aOk || FREE();
     const fy = R.y + R.h - 36 * FS;
     T(R.x + R.w / 2, fy, 'a = a″ / p = ' + f2(SIR.aa) + ' / ' + f4(SIR.p) + ' = ' + (a_ok ? f1(SIR.a) + ' AU' : '? AU'), PHONE ? 15 : 18, a_ok ? '#15803d' : '#334155', 'center', 800);
-    T(R.x + R.w / 2, fy + 20 * FS, 'p 한 칸이 1 AU이므로, a″ 안에 p가 몇 번 들어가는지가 AU 단위의 길이예요.', PHONE ? 11 : 12.5, '#64748b', 'center', 700);
+    T(R.x + R.w / 2, fy + 20 * FS, PHONE ? 'a″ 안에 p가 몇 번 들어가는지가 AU 길이예요.' : 'p 한 칸이 1 AU이므로, a″ 안에 p가 몇 번 들어가는지가 AU 단위의 길이예요.', PHONE ? 11 : 12.5, '#64748b', 'center', 700);
     // ---- 케플러 제3법칙
     panel(F.x, F.y, F.w, F.h, { r: 14 });
     T(F.x + 14, F.y + 24 * FS, '📘 케플러 제3법칙을 쌍성에', 14.5, '#1e293b', 'left', 800);
@@ -389,23 +389,23 @@
       ['주기 P = ' + f1(SIR.P) + '년  →  P²', f0(SIR.P * SIR.P), true],
       ['M₁ + M₂ = a³ / P²', m_ok ? f2(SIR.Mk) + ' M☉' : '?', m_ok],
     ];
-    let yy = F.y + 118 * FS;
-    rows.forEach((r, i) => { T(F.x + 16, yy, r[0], PHONE ? 12.5 : 14, '#475569', 'left', 800); T(F.x + F.w - 16, yy, r[1], PHONE ? 14 : 16, r[2] ? (i === 3 ? '#15803d' : '#1e293b') : '#94a3b8', 'right', 800); yy += (PHONE ? 28 : 32) * FS; });
+    let yy = F.y + (PHONE ? 124 : 118 * FS);
+    rows.forEach((r, i) => { T(F.x + 16, yy, r[0], PHONE ? 12.5 : 14, '#475569', 'left', 800); T(F.x + F.w - 16, yy, r[1], PHONE ? 14 : 16, r[2] ? (i === 3 ? '#15803d' : '#1e293b') : '#94a3b8', 'right', 800); yy += PHONE ? 27 : 32 * FS; });
     ctx.strokeStyle = 'rgba(148,163,184,.5)'; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.moveTo(F.x + 14, yy - 14); ctx.lineTo(F.x + F.w - 14, yy - 14); ctx.stroke(); ctx.setLineDash([]);
-    drawWrap(F.x + 16, yy + 6, '확인: 지구–태양 a = 1 AU, P = 1년이면 1³ / 1² = 1 M☉ (태양 질량)이에요.', F.w - 32, 12.5, { color: '#0f766e', weight: 800 });
-    if (m_ok) { sunIcons(F.x + 26, F.y + F.h - 30 * FS, SIR.Mk, 11, 5); T(F.x + F.w - 16, F.y + F.h - 25 * FS, '태양 약 ' + f1(SIR.Mk) + '개 질량', 12.5, '#b45309', 'right', 800); }
+    drawWrap(F.x + 16, yy + 6, PHONE ? '확인: 지구–태양(a = 1, P = 1)이면 1³/1² = 1 M☉' : '확인: 지구–태양 a = 1 AU, P = 1년이면 1³ / 1² = 1 M☉ (태양 질량)이에요.', F.w - 32, 12.5, { color: '#0f766e', weight: 800 });
+    if (m_ok) { sunIcons(F.x + 26, F.y + F.h - (PHONE ? 24 : 30 * FS), SIR.Mk, PHONE ? 10 : 11, 5); T(F.x + F.w - 16, F.y + F.h - (PHONE ? 18 : 25 * FS), '태양 약 ' + f1(SIR.Mk) + '개 질량', 12.5, '#b45309', 'right', 800); }
     // ---- 슬라이더 실험
     panel(B.x, B.y, B.w, B.h, { r: 14 });
     T(B.x + 14, B.y + 24 * FS, '🎚 a와 P를 바꿔 보기', 14.5, '#1e293b', 'left', 800);
     if (S.flags.box || FREE()) {
       const sd = ttSand(), ratio = sd.M / M0S;
       const r2 = [['a', f1(TT.a) + ' AU'], ['a³', sci(Math.pow(TT.a, 3), 2)], ['P', f1(TT.P) + ' 년'], ['P²', f0(TT.P * TT.P)]];
-      let y2 = B.y + 54 * FS;
-      r2.forEach((r) => { T(B.x + 16, y2, r[0], 13.5, '#475569', 'left', 800); T(B.x + B.w - 16, y2, r[1], 14.5, '#1e293b', 'right', 800); y2 += 26 * FS; });
+      let y2 = B.y + (PHONE ? 62 : 54 * FS);
+      r2.forEach((r) => { T(B.x + 16, y2, r[0], 13.5, '#475569', 'left', 800); T(B.x + B.w - 16, y2, r[1], 14.5, '#1e293b', 'right', 800); y2 += PHONE ? 28 : 26 * FS; });
       T(B.x + 16, y2 + 6, 'M₁ + M₂', 14, '#475569', 'left', 800); T(B.x + B.w - 16, y2 + 6, f1(sd.M) + ' M☉', 18, '#15803d', 'right', 800);
-      D.label(B.x + B.w / 2, y2 + 36 * FS, '처음(시리우스 값)의 ' + f1(ratio) + '배', { bg: '#0369a1', size: PHONE ? 12.5 : 13.5 });
-      sunIcons(B.x + 26, B.y + B.h - 34 * FS, sd.M, 10, 8);
-      if (sd.M > 8) T(B.x + B.w - 14, B.y + B.h - 12 * FS, '(태양 그림은 8개까지만 그려요)', 11, '#64748b', 'right', 700);
+      D.label(B.x + B.w / 2, y2 + (PHONE ? 36 : 36 * FS), '처음(시리우스 값)의 ' + f1(ratio) + '배', { bg: '#0369a1', size: PHONE ? 12.5 : 13.5 });
+      sunIcons(B.x + 26, B.y + B.h - (PHONE ? 46 : 34 * FS), sd.M, 10, 8);
+      if (sd.M > 8) T(B.x + B.w - 14, B.y + B.h - (PHONE ? 14 : 12 * FS), '(태양 그림은 8개까지만 그려요)', 11, '#64748b', 'right', 700);
     } else drawWrap(B.x + 16, B.y + 60 * FS, 'a와 P를 바꿔 총질량이 어떻게 변하는지 알아보는 슬라이더 실험이에요. 세 번째 미션에서 열려요.', B.w - 32, 13.5, { color: '#64748b' });
   }
   const f4 = (x) => (Math.round(x * 10000) / 10000).toFixed(4);
@@ -688,7 +688,7 @@
           title: '두 별의 질량 합 구하기',
           goal: 'a ≈ 19.8 AU, P = 50.1년을 넣어 <b>M₁ + M₂ = a³ / P²</b>(M☉)을 입력하세요.',
           hint: '19.8³ ≈ 7.8×10³(7762), 50.1² ≈ 2510이에요. 7762를 2510으로 나누면 약 3.1이에요.',
-          setup() { S.flags.calcTotal = true; setView('total'); },
+          setup() { S.flags.calcTotal = true; TT.aOk = true; $('#inA').value = f1(SIR.a); fbIn('inA', true); TT.mOk = false; clrIn('inMt'); setView('total'); },
           check: () => TT.mOk,
           hold: 0.4,
           status: () => mark(TT.aOk) + ' a 구함 &nbsp; ' + mark(TT.mOk) + ' M합 = ' + ($('#inMt').value.trim() || '—') + ' M☉',

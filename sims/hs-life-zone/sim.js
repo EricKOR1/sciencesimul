@@ -819,8 +819,8 @@
       D.sphere(x, y, 9, q[2]); D.text(x, y - 14, q[0] + ' ' + q[1].toFixed(2), { size: 12, weight: 800, color: '#e2e8f0', stroke: 'rgba(15,23,42,.7)', strokeWidth: 3 });
       ctx.strokeStyle = 'rgba(203,213,225,.3)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x, y + 10); ctx.lineTo(x, g.y); ctx.stroke();
     });
-    D.text((zx0 + zx1) / 2, g.y - 62, '생명가능지대', { size: 13.5, weight: 800, color: '#bbf7d0', stroke: 'rgba(15,23,42,.6)', strokeWidth: 3 });
-    D.text((zx0 + zx1) / 2, g.y - 46 + (PHONE ? -2 : 0), '0.95~1.4 AU', { size: 12, weight: 700, color: '#bbf7d0', stroke: 'rgba(15,23,42,.6)', strokeWidth: 3 });
+    D.text((zx0 + zx1) / 2, g.y - (PHONE ? 90 : 62), '생명가능지대', { size: 13.5, weight: 800, color: '#bbf7d0', stroke: 'rgba(15,23,42,.6)', strokeWidth: 3 });
+    D.text((zx0 + zx1) / 2, g.y - (PHONE ? 74 : 46), '0.95~1.4 AU', { size: 12, weight: 700, color: '#bbf7d0', stroke: 'rgba(15,23,42,.6)', strokeWidth: 3 });
     // 내 행성 (끌 수 있어요)
     const mx = g.X(d), my = g.y + 6;
     D.ring(mx, my, 26, t, { color: '#38bdf8' });

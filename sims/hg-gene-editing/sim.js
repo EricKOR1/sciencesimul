@@ -493,7 +493,7 @@
     panel(g.x - (PHONE ? 62 : 98), g.y - 22, g.w + (PHONE ? 74 : 112), g.h + 62, 14, '#fff');
     for (let e = -3; e <= 7; e += 2) { const y = ly(Math.pow(10, e)); ctx.strokeStyle = e === -3 ? '#94a3b8' : '#e2e8f0'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(g.x, y); ctx.lineTo(g.x + g.w, y); ctx.stroke(); T(g.x - 8, y + 4.5, e === 0 ? '1' : '10' + sup(e), 12.5, '#64748b', 'right', 700); }
     for (let L = 5; L <= 20; L += 5) { T(lx(L), g.y + g.h + 20, L + '염기', 12.5, '#64748b', 'center', 700); }
-    T(g.x - (PHONE ? 58 : 94), g.y - 6, '기대 횟수(번)', 12, '#64748b', 'left', 800);
+    T(g.x - (PHONE ? 58 : 94), g.y - 14, '기대 횟수(번)', 12, '#64748b', 'left', 800);
     ctx.save(); ctx.strokeStyle = 'rgba(124,58,237,.35)'; ctx.lineWidth = 2.6; ctx.setLineDash([6, 5]); ctx.beginPath(); for (let L = 5; L <= 20; L += 0.5) { const x = lx(L), y = ly(clE(L)); if (L === 5) ctx.moveTo(x, y); else ctx.lineTo(x, y); } ctx.stroke(); ctx.restore();
     /* 지금 L 표시선 */
     const cxL = lx(CL.L); ctx.strokeStyle = '#a855f7'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(cxL, g.y); ctx.lineTo(cxL, g.y + g.h); ctx.stroke();

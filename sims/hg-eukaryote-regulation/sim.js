@@ -789,7 +789,8 @@
   $$('#tfTok button').forEach((b) => b.addEventListener('click', () => tfToggle(b.dataset.v)));
   $('#tfReset').addEventListener('click', () => { Sound.click(); tfReset(true); });
   [['sRate', 'oRate', 'rate'], ['sLife', 'oLife', 'life'], ['sTr', 'oTr', 'tr'], ['sDg', 'oDg', 'dg']].forEach(([sid, oid, key]) => SciSim.bindRange($('#' + sid), $('#' + oid), (v) => String(v), (v) => { GX[key] = v; updateCtl(); }));
-  $('#gxReset').addEventListener('click', () => { Sound.click(); GX.rate = 10; GX.life = 5; GX.tr = 1; GX.dg = 1; [['sRate', 10], ['sLife', 5], ['sTr', 1], ['sDg', 1]].forEach(([id, v]) => { const e = $('#' + id); e.value = v; e.dispatchEvent(new Event('input')); }); updateCtl(); });
+  function gxBase() { GX.rate = 10; GX.life = 5; GX.tr = 1; GX.dg = 1; [['sRate', 10], ['sLife', 5], ['sTr', 1], ['sDg', 1]].forEach(([id, v]) => { const e = $('#' + id); e.value = v; e.dispatchEvent(new Event('input')); }); updateCtl(); }
+  $('#gxReset').addEventListener('click', () => { Sound.click(); gxBase(); });
   $('#lkReset').addEventListener('click', () => { Sound.click(); LK.so.reset(); });
   $$('#mdSel button').forEach((b) => b.addEventListener('click', () => mdMedium(b.dataset.v)));
   $$('#mdSlots button').forEach((b) => b.addEventListener('click', () => { Sound.click(); MD.slot = +b.dataset.v; updateCtl(); }));
@@ -805,7 +806,7 @@
       title: '원핵생물과 달라지는 점', short: '달라지는 점', icon: '⚖️', phase: '모형',
       intro: '<p class="si-q">❓ 탐구 질문: 같은 유전자 발현인데, 핵막과 긴 DNA를 가진 진핵생물은 대장균보다 무엇이 더 복잡해질까?</p><p>🔗 <b>앞 차시</b>에서 젖당 오페론으로 원핵생물의 전사 조절(억제자 · 작동 부위)을 배웠어요. 그리고 <b>세포와 물질대사</b>에서 핵막이 있는 진핵 세포와 없는 원핵 세포의 구조 차이도 배웠어요.</p><p>이번 차시에서는 진핵생물의 발현 조절을 <b>원핵생물과 다른 점만</b> 간단히 비교해요. 그림 속 번호 <b>①~⑤</b>를 눌러 다섯 가지 차이를 찾아보세요.</p>',
       features: ['compare'],
-      setup() { CM.sel = -1; setMode('compare'); },
+      setup() { CM.sel = -1; CM.seen.fill(false); setMode('compare'); },
       recap: '진핵생물은 핵막 때문에 전사와 번역이 장소로 나뉘고, 염색질이 풀려야 전사할 수 있으며, 인핸서와 전사 인자의 조합으로 조절하고, 오페론 없이 유전자마다 개별 프로모터를 가지며, 전사 이후에도 조절돼요.',
       summary: '<ul><li><b>① 장소</b>: 진핵은 핵(전사 · RNA 가공)과 세포질(번역)이 분리, 원핵은 같은 공간에서 거의 동시에.</li><li><b>② 염색질</b>: 진핵의 DNA는 히스톤에 감겨 있어 풀려야 전사 가능(히스톤 · 메틸화의 화학은 이름만).</li><li><b>③ 조절 서열</b>: 진핵은 프로모터 + 멀리 떨어진 인핸서에 여러 전사 인자가 조합해 결합.</li><li><b>④ 유전자 단위</b>: 진핵은 오페론이 없고 유전자마다 개별 프로모터, 원핵은 오페론.</li><li><b>⑤ 전사 이후</b>: 진핵은 RNA 가공 · 수송 · mRNA 수명 · 번역 · 단백질 분해에서도 조절.</li></ul>',
       missions: [
@@ -813,7 +814,7 @@
           id: 'hot5', title: '다른 점 5곳 찾기',
           goal: '그림 속 번호 <b>①~⑤</b>를 모두 눌러 원핵생물과 진핵생물의 다른 점을 확인하세요.',
           hint: '원핵 세포와 진핵 세포 그림에 같은 번호가 있어요. 어느 쪽이든 눌러서 아래 비교 카드를 읽어요.',
-          setup() { setMode('compare'); },
+          setup() { CM.seen.fill(false); setMode('compare'); },
           check: () => CM.seen.every(Boolean), hold: 0.6,
           status: () => HOT.map((h, i) => mark(CM.seen[i]) + ' ' + h.n).join(' &nbsp; '),
           explain: '진핵생물은 ① 핵막 때문에 전사(핵)와 번역(세포질)이 장소로 나뉘고, ② 히스톤에 감긴 염색질이 풀려야 전사할 수 있고, ③ 멀리 있는 인핸서와 여러 전사 인자의 조합으로 조절하며, ④ 오페론이 없고 유전자마다 개별 프로모터를 가지고, ⑤ 전사 이후에도 조절해요.',
@@ -861,7 +862,7 @@
       title: '여러 단계의 조절', short: '여러 단계', icon: '🎚️', phase: '분석',
       intro: '<div class="si-link">🔗 <b>앞 단계에서</b> 전사 개시 단계의 조절(전사 인자 · 인핸서)을 봤어요. 진핵생물은 전사 뒤에도 <b>여러 단계</b>에서 발현을 조절해요.</div><p>조절 단계 6곳: ① 염색질 접근 → ② 전사 개시 → ③ RNA 가공 → ④ mRNA 수송 · 수명 → ⑤ 번역 → ⑥ 단백질 활성 · 분해.</p><p>유전자 X의 발현을 4개의 슬라이더(전사 속도 · mRNA 수명 · 번역 효율 · 단백질 분해)로 바꾸며 mRNA 수와 단백질 양이 어떻게 달라지는지 계산해 봐요. <b>mRNA 수 = 합성 속도 × 평균 수명</b>이에요.</p>',
       features: ['stages', 'link'],
-      setup() { GX.target = false; setMode('stages'); },
+      setup() { GX.target = false; gxBase(); setMode('stages'); },
       recap: '정상 상태의 mRNA 수는 합성 속도 × 평균 수명이에요(10 × 5 = 50개, 수명이 2배면 100개). 번역 효율이 2배면 단백질도 2배가 돼요. 진핵생물은 염색질 접근부터 단백질 분해까지 여섯 단계에서 발현을 조절해요.',
       summary: '<ul><li><b>조절 6단계</b>: 염색질 접근 → 전사 개시 → RNA 가공 → mRNA 수송 · 수명 → 번역 → 단백질 활성 · 분해.</li><li><b>mRNA 수 = 합성 속도 × 평균 수명</b>: 합성 10개/시간, 수명 5시간 → 50개. 수명이 2배(10시간)면 100개이고 단백질도 약 2배예요. 번역 효율이 2배면 단백질도 2배예요.</li><li>사례: β-글로빈 mRNA 수명은 10시간 이상, 일부 사이토카인 mRNA는 약 30분. 수명이 짧은 mRNA는 필요할 때 빨리 켜고 끌 수 있어 빠른 반응에 유리해요.</li><li>단계–사례: 호르몬 → 전사 인자(전사 개시), 인트론 제거 방식 → RNA 가공, 수명이 짧은 mRNA → 빠른 반응.</li></ul>',
       missions: [
@@ -869,7 +870,7 @@
           id: 'target', title: '단백질 양 목표치 맞추기',
           goal: '<b>전사 속도는 10으로 그대로</b> 두고 mRNA 수명 · 번역 효율 · 분해 속도를 바꿔 <b>단백질 양을 400(상대량)</b>으로 맞추세요.',
           hint: '단백질 = 100 × (mRNA 수 / 50) × 번역 효율 / 분해 속도예요. 예를 들어 수명 10시간(mRNA 100개)이면 번역 효율 ×2에서 400이 돼요. 다른 조합도 있어요.',
-          setup() { GX.target = true; setMode('stages'); },
+          setup() { GX.target = true; gxBase(); setMode('stages'); },
           check: () => GX.rate === 10 && Math.abs(gxP() - 400) < 0.5, hold: 0.8,
           status: () => mark(GX.rate === 10) + ' 전사 속도 10 유지 &nbsp; ' + mark(Math.abs(gxP() - 400) < 0.5) + ' 단백질 ' + fmtG(Math.round(gxP() * 10) / 10) + ' / 400',
           explain: '예를 들어 수명 10시간이면 mRNA 100개(= 10 × 10)이고, 번역 효율 ×2이면 단백질 = 100 × (100/50) × 2 / 1 = <b>400</b>이에요. 또는 수명 5시간(mRNA 50개)에서 번역 효율 ×2, 분해 ×0.5로도 400이 돼요. 이렇게 한 유전자의 발현량은 <b>여러 단계의 조절</b>이 곱해져서 정해져요.',
@@ -904,7 +905,7 @@
       title: '설명 자료 만들기', short: '설명 자료', icon: '📝', phase: '설명',
       intro: '<div class="si-link">🔗 <b>앞 단계들에서</b> 원핵생물(젖당 오페론)과 진핵생물의 유전자 발현 조절을 비교했어요. 이제 이 내용을 다른 사람에게 <b>설명하는 자료</b>로 만들어 봐요.</div><p>① 매체를 골라요: 비교 도식 · 포스터 · 카드뉴스 · 영상 콘티 · 디지털 슬라이드. ② 필수 요소 <b>6개</b>(오페론 vs 개별 유전자 · 장소 · 염색질 · 전사 인자와 인핸서 · 전사 후 조절 · 예시)에 알맞은 설명을 고르세요. ③ <b>🔍 체크리스트 점검</b>으로 정확한지 확인하고 부족한 곳을 보완해요.</p><p>설명 자료는 내용이 <b>정확</b>해야 해요. 비슷해 보여도 틀린 설명이 섞여 있어요!</p>',
       features: ['media'],
-      setup() { setMode('media'); },
+      setup() { mdReset(); MD.medium = null; setMode('media'); },
       recap: '설명 자료에는 오페론 vs 개별 유전자, 장소, 염색질, 전사 인자 · 인핸서, 전사 후 조절, 예시의 6가지 요소가 들어가야 하고, 만든 뒤에는 출처와 대조해 정확성을 점검해야 해요.',
       summary: '<ul><li><b>비교 자료의 필수 요소 6개</b>: ① 오페론(원핵) vs 개별 유전자(진핵) ② 장소(핵 vs 세포질, 같은 공간) ③ 염색질(히스톤) ④ 전사 인자 · 인핸서 ⑤ 전사 후 조절 ⑥ 예시(젖당 오페론, 스테로이드 호르몬).</li><li><b>한 문장 요약</b>: 원핵생물은 주로 오페론 단위로 전사를 조절하지만, 진핵생물은 염색질 · 전사 인자 · 인핸서와 전사 후 단계까지 여러 단계에서 조절해요.</li><li><b>정확성 점검</b>: 교과서 · 논문 같은 믿을 만한 출처와 대조하고, 용어와 예시가 정확한지 확인해요. 생성형 AI의 답도 항상 사실 확인이 필요해요.</li></ul>',
       missions: [
@@ -912,7 +913,7 @@
           id: 'media', title: '필수 요소 6개 배치와 체크리스트', manual: true,
           goal: '매체를 고르고 필수 요소 <b>6개</b> 칸을 모두 채운 뒤 <b>🔍 체크리스트 점검</b>을 통과하세요.',
           hint: '비슷한 설명 중 정확한 것을 골라요. 점검에서 ⚠ 가 나온 칸은 다시 골라요. 원핵은 오페론 · 같은 공간, 진핵은 개별 프로모터 · 핵과 세포질 · 염색질 · 인핸서 · 전사 후 조절이 핵심이에요.',
-          setup() { setMode('media'); },
+          setup() { mdReset(); MD.medium = null; setMode('media'); },
           check() {
             if (!MD.medium) return '먼저 위쪽 단추에서 매체를 골라 주세요.';
             const empty = MD.pick.filter((p) => p < 0).length;

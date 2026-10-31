@@ -640,7 +640,7 @@
     const phiM = -MOON_DAY_DEG * DEG * (h / 24), psi = -TAU * (h / 24);       // 달의 방향과 관측점의 방향 (별 기준)
     // 처음의 달 방향(0시)과 현재 달 방향
     D.dashedLine(cx, cy, cx + (Ro + 26) * Math.cos(0), cy, { color: 'rgba(148,163,184,.7)', width: 1.6, dash: [4, 5] });
-    D.text(cx + Ro + 30, cy + 22, '0시의 달 방향', { size: 11.5, weight: 700, color: '#cbd5e1', align: 'left' });
+    D.text(cx + Ro + 22, cy + 20, '0시의 달 방향', { size: 11.5, weight: 700, color: '#cbd5e1', align: 'right' });
     ctx.strokeStyle = 'rgba(253,230,138,.9)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(g.mx, g.my); ctx.stroke();
     // 달이 이동한 각 (호)
     if (h > 0.2) { ctx.strokeStyle = '#fde68a'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(cx, cy, Ro * 0.62, phiM, 0); ctx.stroke(); }

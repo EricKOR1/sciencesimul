@@ -223,6 +223,7 @@
     ctx.save(); rr(r.x, r.y, r.w, r.h, 14); ctx.clip(); spaceBg(r.x, r.y, r.w, r.h, t, '#0b1230', '#16224a');
   }
   const allPlaced = () => PL.placed.every(Boolean);
+  const fillPlaced = () => { DATA.forEach((d) => { if (!PL.placed[d.i]) { PL.placed[d.i] = true; PL.t[d.i] = 1; PL.sx[d.i] = 0; PL.sy[d.i] = 0; } }); PL.sel = -1; };
   const calcAllRev = () => CA.rev.every(Boolean);
   const yDone = () => AP.yL && AP.yM, zDone = () => AP.zd && AP.zv && AP.zl && AP.zm;
 
@@ -539,6 +540,7 @@
   /* ================= 화면 전환 · 조작 ================= */
   function setView(v) {
     if (S.view !== v) { S.view = v; S.fade = 1; parts.clear(); }
+    if (v === 'plot' && FREE()) fillPlaced();
     updateCtl();
   }
   function updateCtl() {
@@ -609,7 +611,7 @@
           title: '나머지 별 7개의 계산 확인하기',
           goal: '표의 나머지 줄을 눌러 별마다 계산 과정과 <b>광도</b>를 확인하세요. 8개 줄이 모두 열리면 돼요.',
           hint: '줄을 누르면 오른쪽 사다리에 별의 자리가 나타나고, 아래 칸에 ΔM → 지수 → L의 세 단계가 보여요.',
-          setup() { setView('calc'); },
+          setup() { CA.l1Ok = true; CA.rev = CA.rev.map((r, i) => i === IDX12); CA.sel = -1; setView('calc'); },
           check: () => calcAllRev(),
           hold: 0.5,
           status: () => mark(calcAllRev()) + ' 확인한 별 ' + CA.rev.filter(Boolean).length + ' / 8',
@@ -649,7 +651,7 @@
           title: '직선의 기울기 구하기',
           goal: '그래프에서 <b>점 두 개</b>를 눌러 기울기 삼각형을 만들고, <b>기울기 = Δlog L / Δlog M</b>을 입력하세요. (멀리 떨어진 두 점이 좋아요)',
           hint: '첫 점(0.5 M☉)과 끝 점(10 M☉)을 누르면 Δlog M = 1.30, Δlog L = 4.60이에요. 4.60 / 1.30 ≈ 3.5예요. "직선 긋기"로 직선을 확인할 수 있어요.',
-          setup() { S.flags.slope = true; PL.picks = []; PL.slopeOk = false; clrIn('inSlope'); setView('plot'); },
+          setup() { fillPlaced(); S.flags.slope = true; PL.picks = []; PL.slopeOk = false; clrIn('inSlope'); setView('plot'); },
           check: () => PL.picks.length === 2 && PL.slopeOk,
           hold: 0.5,
           status: () => mark(PL.picks.length === 2) + ' 점 ' + PL.picks.length + ' / 2 선택 &nbsp; ' + mark(PL.slopeOk) + ' 기울기 = ' + ($('#inSlope').value.trim() || '—'),
@@ -658,7 +660,7 @@
         {
           type: 'quiz', title: '직선이 알려 주는 것',
           goal: '로그–로그 그래프에서 점들이 <b>기울기 3.5의 직선</b>을 이루는 것은 무엇을 뜻할까요?',
-          setup() { setView('plot'); },
+          setup() { fillPlaced(); setView('plot'); },
           choices: ['L이 M의 거듭제곱 관계(L ∝ M^3.5)라는 뜻이에요', '질량이 3.5배가 되면 광도도 3.5배가 된다는 뜻이에요', '질량과 광도 사이에 아무 관계가 없다는 뜻이에요', '광도가 질량에 일차식으로 늘어난다는 뜻이에요'],
           answer: 0,
           feedback: ['', '기울기 3.5는 지수예요. 질량이 2배이면 광도는 2배가 아니라 2^3.5 ≈ 11배가 돼요.', '점들이 한 직선에 놓이는 것은 뚜렷한 관계가 있다는 뜻이에요.', '선형 눈금에서 직선이면 일차식이지만, 로그–로그 직선은 log L = 3.5 log M + 상수, 즉 거듭제곱 관계예요.'],
@@ -762,7 +764,7 @@
   let lastFree = false;
   SciSim.loop((dt, t) => {
     S.clock = t;
-    if (game && game.free !== lastFree) { lastFree = game.free; updateCtl(); }
+    if (game && game.free !== lastFree) { lastFree = game.free; if (lastFree && S.view === 'plot') fillPlaced(); updateCtl(); }
     view.apply();
     ctx.fillStyle = '#e8eef8'; ctx.fillRect(0, 0, VW, VH);
     switch (S.view) {

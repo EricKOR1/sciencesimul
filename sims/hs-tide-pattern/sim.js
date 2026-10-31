@@ -343,7 +343,8 @@
     const a = EXT[i], b = EXT[i + 1], u = (t - a[0]) / (b[0] - a[0]);
     return a[1] + (b[1] - a[1]) * (1 - Math.cos(Math.PI * u)) / 2;
   }
-  const dayOf = (t) => Math.floor(t / 24) + 1;
+  const dayOf = (t) => Math.min(3, Math.floor(t / 24) + 1);
+  const timeTxt = (t) => (t >= 71.99 ? '3일차 24:00' : dayOf(t) + '일차 ' + hhmm(t % 24));
 
   const S = {
     mode: 'curve', fade: 0, clock: 0,
@@ -369,13 +370,13 @@
   function drawCurve(t, dt) {
     S.curV = approach(S.curV, S.cur, dt, 14); S.drawT = Math.min(1, S.drawT + dt / (RM ? 0.01 : 2.4));
     const g = curveGeom(), { A, B, P, X, Y } = g, q = smooth(S.drawT);
-    card(A, PHONE ? '📈 인천의 3일 조위 (예시 자료)' : '📈 인천 관측소의 3일 조위 (예시 자료)');
+    card(A, PHONE ? '📈 인천의 3일 조위 (예시, 기준면 위)' : '📈 인천 관측소의 3일 조위 (예시 자료, 기준면 위의 높이)');
     ctx.fillStyle = '#f8fafc'; rr(P.x, P.y, P.w, P.h, 4).fill();
     ctx.lineWidth = 1;
     for (let m = 0; m <= 9; m += 3) { ctx.strokeStyle = '#e2e8f0'; ctx.beginPath(); ctx.moveTo(P.x, Y(m)); ctx.lineTo(P.x + P.w, Y(m)); ctx.stroke(); D.text(P.x - 6, Y(m) + 4.5, m + ' m', { size: 12, weight: 700, color: '#64748b', align: 'right' }); }
     for (let h = 0; h <= 72; h += 6) { ctx.strokeStyle = h % 24 === 0 ? '#94a3b8' : '#e2e8f0'; ctx.beginPath(); ctx.moveTo(X(h), P.y); ctx.lineTo(X(h), P.y + P.h); ctx.stroke(); D.text(X(h), P.y + P.h + 15 * FS, String(h % 24).padStart(2, '0'), { size: 11.5, weight: 700, color: '#64748b' }); }
     [0, 1, 2].forEach((d) => D.text(X(d * 24 + 12), P.y + P.h + 33 * FS, (d + 1) + '일차', { size: 13, weight: 800, color: '#334155' }));
-    D.text(P.x - 6, P.y - 10, '조위(기준면 위)', { size: 11.5, weight: 800, color: '#64748b', align: 'right' });
+    D.text(P.x - 6, P.y - 10, '조위', { size: 11.5, weight: 800, color: '#64748b', align: 'right' });
     ctx.save(); ctx.beginPath(); ctx.rect(P.x, P.y, P.w * q + 0.5, P.h); ctx.clip();
     ctx.beginPath(); ctx.moveTo(X(0), Y(0));
     for (let h = 0; h <= 72.001; h += 0.25) ctx.lineTo(X(h), Y(tideAt(h)));
@@ -391,7 +392,7 @@
     D.dashedLine(cx, P.y, cx, P.y + P.h, { color: '#475569', width: 1.8, dash: [5, 4] });
     D.sphere(cx, cy, 8, '#f59e0b', { gloss: false, outline: '#fff', outlineWidth: 2.5, shadow: true });
     if (!S.curSeen) D.ring(cx, cy, 15, t, { color: '#f59e0b', speed: 1.1, width: 2 });
-    D.label(clamp(cx, P.x + 70, P.x + P.w - 70), P.y - 12, dayOf(S.curV) + '일차 ' + hhmm(S.curV % 24) + ' · ' + fN(tideAt(S.curV), 2) + ' m', { bg: '#334155', size: 12.5, pad: 8 });
+    D.label(clamp(cx, P.x + 70, P.x + P.w - 70), P.y - 12, timeTxt(S.curV) + ' · ' + fN(tideAt(S.curV), 2) + ' m', { bg: '#334155', size: 12.5, pad: 8 });
     // ---- B 기록표
     card(B, PHONE ? '📋 기록표 (‘기록하기’로 채워요)' : '📋 기록표: 가까운 고조·저조에서 ‘기록하기’를 눌러요');
     const cols = 3, lw = PHONE ? 74 : 100, cw = (B.w - 28 - lw) / cols, rh = (B.h - 70) / 5, x0 = B.x + 14, y0 = B.y + 48;
@@ -411,10 +412,10 @@
     const n = nearestExt(S.cur);
     if (n.d > 0.9) { say('가까운 고조·저조가 없어요. 곡선의 꼭대기나 바닥으로 이동해요', true); return false; }
     if (S.rec.includes(n.i)) { say('이미 기록했어요', true); return false; }
-    S.rec.push(n.i); S.cur = EXT[n.i][0]; const g = curveGeom(); parts.burst(g.X(EXT[n.i][0]), g.Y(EXT[n.i][1]), { count: 12, speed: 120, life: 0.6 }); Sound.success(); return true;
+    S.rec.push(n.i); S.cur = EXT[n.i][0]; setSlider($('#sCur'), $('#oCur'), S.cur, curTxt); const g = curveGeom(); parts.burst(g.X(EXT[n.i][0]), g.Y(EXT[n.i][1]), { count: 12, speed: 120, life: 0.6 }); Sound.success(); return true;
   }
   function readCurve() {
-    setReadouts(['커서 시각', dayOf(S.cur) + '일차 ' + hhmm(S.cur % 24), '조위', fN(tideAt(S.cur), 2) + ' m', '기록한 점', S.rec.length + ' / 12']);
+    setReadouts(['커서 시각', timeTxt(S.cur), '조위', fN(tideAt(S.cur), 2) + ' m', '기록한 점', S.rec.length + ' / 12']);
   }
   SciSim.pointer(view, {
     down(p) {
@@ -428,7 +429,7 @@
     hover(p) { if (S.mode !== 'curve') return ''; const g = curveGeom(); return p.x >= g.P.x && p.x <= g.P.x + g.P.w && p.y > g.A.y + 28 && p.y < g.A.y + g.A.h ? 'ew-resize' : ''; },
   });
   function mvCur(p) { const g = curveGeom(); S.cur = clamp(Math.round(((p.x - g.P.x) / g.P.w) * 72 * 12) / 12, 0, 72); setSlider($('#sCur'), $('#oCur'), S.cur, curTxt); }
-  const curTxt = (v) => dayOf(+v) + '일차 ' + hhmm(+v % 24);
+  const curTxt = (v) => timeTxt(+v);
 
   /* ======================================================
      장면 2: 조석 유형 — 반일주조 · 일주조 · 혼합조
@@ -570,7 +571,7 @@
       ctx.save(); rr(R.x, R.y + 30, R.w, R.h - 30, 12).clip();
       D.sky(R.x, R.y + 30, R.w, R.h - 30, '#dcecf8', '#f2f9fd');
       // 조석파: 얕을수록 느리고, 만이 좁아질수록 파고가 커져요
-      const speedPx = c * 1.4, L = x1 - x0, wl = L * 0.9, amp = (u) => (isW ? 1.0 * 6.6 + (8.5 - 1.0) * 6.6 * Math.pow(u, 2.2) : 0.3 * 6.6);
+      const speedPx = c * 1.4, L = x1 - x0, wl = L * 0.9 * (c / 129), amp = (u) => (isW ? 1.0 * 6.6 + (8.5 - 1.0) * 6.6 * Math.pow(u, 2.2) : 0.3 * 6.6);
       const top = [];
       for (let x = x0; x <= x1 + 0.1; x += 4) { const u = (x - x0) / L, ph = ((x - x0 - speedPx * S.rt * 0.5) / wl) * TAU; top.push([x, y0 - amp(u) * 0.5 * (1 + Math.sin(ph)) * 1 + Math.sin(x * 0.07 - t * 2) * 0.5]); }
       ctx.fillStyle = 'rgba(56,189,248,.82)'; ctx.beginPath(); ctx.moveTo(x0, y0 + dpx); top.forEach((p) => ctx.lineTo(p[0], p[1])); ctx.lineTo(x1, y0 + dpx); ctx.closePath(); ctx.fill();

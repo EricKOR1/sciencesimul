@@ -504,7 +504,7 @@
       ['암석 속 탄소는 대기의 약 7만 배', '지표 탄소의 99.9 % 이상이 암석', '화산 방출 0.1 GtC/년'].forEach((l, i) => D.text(B.x + 14, ty + i * 19 * FS, l, { size: 12.5, weight: 800, color: i === 2 ? '#b91c1c' : '#334155', align: 'left' }));
       D.text(B.x + 14, ty + 3 * 19 * FS, '풍화·퇴적 ' + carbonRate().toFixed(2) + ' GtC/년', { size: 12.5, weight: 800, color: '#0e7490', align: 'left' });
     } else {
-      const bx0 = B.x + 92, by0 = B.y + 50, bw = B.w - 120, bh = 30, gap = 18;
+      const bx0 = B.x + 92, by0 = B.y + 50, bw = B.w - 120, bh = 26, gap = 12;
       items.forEach((it, i) => {
         const y = by0 + i * (bh + gap), ww = (bw * (Math.log10(it[1]) - LV0)) / (LV1 - LV0);
         ctx.fillStyle = '#eef2f7'; rr(bx0, y, bw, bh, 6).fill(); ctx.fillStyle = it[2]; rr(bx0, y, ww, bh, 6).fill();
@@ -513,8 +513,8 @@
       });
       const ay = by0 + 3 * (bh + gap) - 4;
       for (let k = LV0; k <= LV1; k += 1) { const x = bx0 + (bw * (k - LV0)) / (LV1 - LV0); ctx.strokeStyle = '#cbd5e1'; ctx.beginPath(); ctx.moveTo(x, ay); ctx.lineTo(x, ay + 5); ctx.stroke(); D.text(x, ay + 19, SUP[k], { size: 11.5, weight: 700, color: '#64748b' }); }
-      let ty = ay + 44;
-      ['눈금(로그)은 10에서 시작해요.', '암석 속 탄소는 대기의 약 7만 배, 지표 탄소의 99.9 % 이상이 암석이에요.', '화산 방출 0.1 GtC/년', '풍화·퇴적(CO₂ ' + S.co + ' %) ' + carbonRate().toFixed(2) + ' GtC/년'].forEach((l, i) => { ty = drawWrap(B.x + 14, ty, l, B.w - 28, 12, { weight: 800, align: 'left', color: i === 2 ? '#b91c1c' : i === 3 ? '#0e7490' : '#334155' }) + 22; });
+      let ty = ay + 36;
+      ['눈금(로그)은 10에서 시작해요.', '암석 속 탄소는 대기의 약 7만 배, 지표 탄소의 99.9 % 이상이 암석이에요.', '화산 방출 0.1 GtC/년', '풍화·퇴적(CO₂ ' + S.co + ' %) ' + carbonRate().toFixed(2) + ' GtC/년'].forEach((l, i) => { ty = drawWrap(B.x + 14, ty, l, B.w - 28, 12, { weight: 800, align: 'left', color: i === 2 ? '#b91c1c' : i === 3 ? '#0e7490' : '#334155' }) + 17; });
     }
   }
 
@@ -738,14 +738,14 @@
     const TP = [[tempOf(0.30), '#16a34a', '현재 A=0.30', 251, -1], [tempOf(0.60), '#0284c7', '전 지구 결빙 A=0.60', 218, -1]];
     TP.forEach((q) => { D.sphere(KX(q[0]), ay, 7, q[1], { gloss: false }); D.text(KX(q[0]), ay - 30 * FS, Math.round(q[0]) + ' K (' + sgnC(tC(q[0])) + ' ℃)', { size: 12.5, weight: 800, color: q[1] }); D.text(KX(q[0]), ay - 14 * FS, q[2], { size: 11.5, weight: 700, color: q[1] }); });
     D.sphere(KX(Tk), ay, 9, '#f97316', { gloss: true }); D.ring(KX(Tk), ay, 13, t, { color: '#f97316' });
-    D.label(KX(Tk), ay + 44 * FS, '지금 A=' + Aal.toFixed(2) + ' → ' + Math.round(Tk) + ' K (' + sgnC(tC(Tk)) + ' ℃)', { bg: '#ea580c', size: 12.5, pad: 8 });
+    D.label(PHONE ? B1.x + B1.w - 12 : KX(Tk), ay + 44 * FS, '지금 A=' + Aal.toFixed(2) + ' → ' + Math.round(Tk) + ' K (' + sgnC(tC(Tk)) + ' ℃)', { bg: '#ea580c', size: 12.5, pad: 8, align: PHONE ? 'right' : 'center' });
     // CO2 누적
     card(B2, '☁️ 결빙 중 화산 CO₂가 쌓여요');
     const GB = { x: B2.x, y: B2.y + (PHONE ? 22 : 26), w: B2.w, h: B2.h - (PHONE ? 22 : 26) };
     const gx = axesBox(GB, { x0: 0, x1: 3, y0: 0, y1: 120000, xt: [0, 1, 2, 3], yt: [0, 50000, 100000], xf: (v) => v + '', yf: (v) => (v === 0 ? '0' : v / 10000 + '만'), pad: { l: 44, r: 16, t: 12, b: PHONE ? 38 : 32 } });
     D.text(gx.B.x + gx.B.w / 2, gx.B.y + gx.B.h + (PHONE ? 36 : 28), '결빙 후 시간 (백만 년) · CO₂ (ppm)', { size: 11.5, weight: 700, color: '#64748b' });
     D.dashedLine(gx.B.x, gx.Y(100000), gx.B.x + gx.B.w, gx.Y(100000), { color: '#dc2626', width: 2 });
-    D.text(gx.B.x + 6, gx.Y(100000) - 5, '융해 임계 10만 ppm (약 0.1기압)', { size: 11.5, weight: 800, color: '#b91c1c', align: 'left' });
+    D.text(gx.B.x + 6, gx.Y(100000) + (PHONE ? 14 : -5), '융해 임계 10만 ppm (약 0.1기압)', { size: 11.5, weight: 800, color: '#b91c1c', align: 'left' });
     if (S.phase === 'frozen' || S.phase === 'melting' || S.phase === 'melted') {
       polyline([[0, 0], [S.tz, co2z()]], '#ea580c', 3.5, gx.X, gx.Y, gx.B);
       D.sphere(gx.X(S.tz), gx.Y(Math.min(co2z(), 120000)), 5.5, '#ea580c', { gloss: false });
