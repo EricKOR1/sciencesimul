@@ -81,11 +81,11 @@
         while (spiral.children.length) { const c = spiral.children[0]; spiral.remove(c); c.geometry.dispose(); }
         spiral.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 80, 0.03, 6, false), new THREE.MeshBasicMaterial({ color: 0xfde047 })));
         spiralShadow.geometry.dispose(); spiralShadow.geometry = new THREE.BufferGeometry().setFromPoints(sp); spiralShadow.computeLineDistances();
-        tipLabs.forEach(({ z, lab }) => { const d = dirAt(z, b), L = spV(z) * LS; lab.obj = [d[0] * (L + 0.1), -z * YS + 0.2, d[2] * (L + 0.1)]; lab.set(z + ' m · ' + spTh(z) + '°'); });
+        tipLabs.forEach(({ z, lab }) => { const d = dirAt(z, b), L = spV(z) * LS; lab.obj = [d[0] * (L + 0.1), -z * YS + (z === 0 ? -0.32 : 0.2), d[2] * (L + 0.1)]; lab.set(z + ' m · ' + spTh(z) + '°'); });
         // 평균 수송
         const [nx, nz] = netVec(b), mag = Math.hypot(nx, nz), NL = Math.max(0.5, mag * 0.045), nd = V(nx / mag, 0, nz / mag);
         netA.setDirection(nd); netA.setLength(NL, 0.5, 0.34); netA.visible = showNet; netLab.show(showNet);
-        netT.position.set(nd.x * (NL + 0.45), 0.45, nd.z * (NL + 0.45)); netLab.set('평균 수송 · 바람의 ' + side() + ' ' + netRel() + '°');
+        netT.position.set(nd.x * (NL + 0.45), 0.7, nd.z * (NL + 0.45)); netLab.set('평균 수송 · 바람의 ' + side() + ' ' + netRel() + '°');
         // 바람
         const wd = bearing(b);
         windA.forEach(([a, k]) => { a.setDirection(V(wd[0], 0, wd[2])); a.position.set(-wd[0] * 3.0 - wd[2] * k, 0.8, -wd[2] * 3.0 + wd[0] * k); });

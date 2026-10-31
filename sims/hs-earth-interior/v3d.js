@@ -122,8 +122,8 @@
       const obsRing = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.02, 8, 30), new THREE.MeshBasicMaterial({ color: 0x38bdf8 })); root.add(obsRing);
       const obsLab = label('', obs, { offset: [0.0, 0, 0.0], color: 'rgba(15,23,42,.92)' });
       let arc = null;
-      const labP = label('P파 암영대 103°~142°', [Math.sin(deg(122.5)) * ER * 1.06 * Math.cos(deg(135)), Math.cos(deg(122.5)) * ER * 1.06, Math.sin(deg(122.5)) * ER * 1.06 * Math.sin(deg(135))], { color: 'rgba(15,23,42,.92)' });
-      const labS = label('S파 암영대 103° 이후', [Math.sin(deg(160)) * ER * 1.08 * Math.cos(deg(135)), Math.cos(deg(160)) * ER * 1.08, Math.sin(deg(160)) * ER * 1.08 * Math.sin(deg(135))], { color: 'rgba(194,65,12,.94)' });
+      const labP = label('P파 암영대 103°~142°', [Math.sin(deg(122.5)) * ER * 1.06 * Math.cos(deg(105)), Math.cos(deg(122.5)) * ER * 1.06, Math.sin(deg(122.5)) * ER * 1.06 * Math.sin(deg(105))], { color: 'rgba(15,23,42,.92)' });
+      const labS = label('S파 암영대 103° 이후', [Math.sin(deg(160)) * ER * 1.08 * Math.cos(deg(105)), Math.cos(deg(160)) * ER * 1.08, Math.sin(deg(160)) * ER * 1.08 * Math.sin(deg(105))], { color: 'rgba(194,65,12,.94)' });
       const labL = label('약한 P파(내핵 반사)', [pol(0.7, deg(100))[0] * ER, pol(0.7, deg(100))[1] * ER, 0.1], { color: 'rgba(109,40,217,.9)', size: 11.5 });
       const capLabs = [
         label('맨틀 (고체)', [0, 0, 0], { color: 'rgba(12,18,34,.82)' }), label('외핵 (액체)', [0, 0, 0], { color: 'rgba(12,18,34,.82)' }), label('내핵 (고체)', [0, 0, 0], { color: 'rgba(12,18,34,.82)' }),

@@ -54,7 +54,7 @@
   }
   const mixc = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
 
-  window.SciSim3D.attach({
+  const v3 = window.SciSim3D.attach({
     host: PHONE ? '.sc-tall' : '.sc-wide',
     title: '지구계와 지권의 층 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
@@ -157,7 +157,7 @@
         ruler.forEach((lb) => { lb.P[0] = Math.cos(lb.a) * lb.r * R + (lb.r === 1 ? 0.3 : lb.r < 0.3 ? 0.18 : 0); lb.P[1] = Math.sin(lb.a) * lb.r * R + (lb.r < 0.3 ? 0.05 : 0); });
       }
       function applySel() {
-        LAYERS.forEach((L) => { capMats[L.id].color.set(sel === 'all' || sel === L.id ? L.color : '#3b4259'); });
+        LAYERS.forEach((L) => { capMats[L.id].color.set(sel === 'all' || sel === L.id ? L.color : '#1e2538'); });
         LAYERS.forEach((L) => { layerLabs[L.id].set('<b>' + L.name + '</b> · ' + L.state); });
       }
 
@@ -225,4 +225,6 @@
       };
     },
   });
+  // 휴대폰: 위쪽 안내 글이 가려지지 않도록 단추를 아래 오른쪽 여백에 둬요
+  if (v3 && PHONE) { v3.button.style.top = 'auto'; v3.button.style.bottom = '6px'; v3.button.style.right = '6px'; }
 })();

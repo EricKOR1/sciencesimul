@@ -17,7 +17,7 @@
   window.SciSim3D.attach({
     title: '세포 3D 모형 (잘라 본 모습)',
     hint: '드래그: 돌리기 · 구조를 눌러 이름 알아보기',
-    camera: { dist: narrow ? 11.5 : 8.6, theta: 0.75, phi: 1.12, min: 4, max: 18 },
+    camera: { dist: narrow ? 9.2 : 6.8, theta: 0.75, phi: 1.12, min: 4, max: 18 },
     autoRotate: 0,
     build(ctx) {
       const { THREE, root, label, info, controls, renderer, camera } = ctx;
@@ -67,6 +67,25 @@
         t.applyAxisAngle(nrm, spin); b.crossVectors(nrm, t).normalize();
         return new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(t, nrm, b));
       }
+      // 잘린 면의 테두리 (세포벽·세포막의 단면 두께)
+      function rims(grp, kd, key, a, b, c, n, cc, rad, color) {
+        const ext = [a, b, c];
+        for (let ax = 0; ax < 3; ax++) {
+          const i = (ax + 1) % 3, j = (ax + 2) % 3, k0 = 1 - Math.pow(Math.abs(cc / ext[ax]), n);
+          if (k0 <= 0) continue;
+          const pts = [];
+          for (let q = 0; q <= 120; q++) {
+            const f = Math.PI * 1.25 + (q / 120) * Math.PI * 2, ci = Math.cos(f), sj = Math.sin(f);
+            const sc = Math.pow(k0 / (Math.pow(Math.abs(ci / ext[i]), n) + Math.pow(Math.abs(sj / ext[j]), n)), 1 / n);
+            const v = [0, 0, 0]; v[ax] = cc; v[i] = sc * ci; v[j] = sc * sj;
+            if (v[i] > cc && v[j] > cc) pts.push(new Vv(v[0], v[1], v[2]));
+          }
+          if (pts.length < 4) continue;
+          // 값이 돌아 이어지는 경우를 대비해 한 줄로 이어 붙여요
+          const m = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 90, rad, 8, false), std(color, { roughness: 0.5 }));
+          m.userData.key = key; grp.add(m); pick[kd].push(m); addHi(kd, key, m.material);
+        }
+      }
       function inCut(p, c) { return p.x > c && p.y > c && p.z > c; }
 
       /* 핵 */
@@ -86,18 +105,18 @@
       }
       /* 미토콘드리아 */
       function makeMito(grp, kd, pos, quat, s) {
-        const mat = std(0xf27b4b, { roughness: 0.45 });
+        const mat = std(0xf27b4b, { roughness: 0.45, transparent: true, opacity: 0.72 });
         ellipsoid(grp, kd, 'mito', pos, quat, 0.34 * s, 0.17 * s, 0.17 * s, mat, (gr) => {
           const im = std(0xc4492a, { roughness: 0.6 });
-          for (let i = -2; i <= 2; i++) { const f = new THREE.Mesh(new THREE.TorusGeometry(0.1 * s, 0.018 * s, 6, 16), im); f.rotation.y = Math.PI / 2; f.position.x = i * 0.11 * s; f.scale.set(1, 0.75, 1); gr.add(f); }
+          for (let i = -2; i <= 2; i++) { const f = new THREE.Mesh(new THREE.TorusGeometry(0.095 * s, 0.022 * s, 6, 16), im); f.rotation.y = Math.PI / 2; f.position.x = i * 0.12 * s; f.scale.set(1, 1, 1); gr.add(f); }
         });
       }
       /* 엽록체 */
       function makeChl(grp, kd, pos, quat, s) {
         const mat = std(0x4caf50, { roughness: 0.4 });
-        ellipsoid(grp, kd, 'chl', pos, quat, 0.32 * s, 0.16 * s, 0.2 * s, mat, (gr) => {
-          const gm = std(0x2b7a31);
-          [-0.12, 0, 0.12].forEach((x) => { const st = new THREE.Mesh(new THREE.CylinderGeometry(0.05 * s, 0.05 * s, 0.05 * s, 12), gm); st.position.set(x * s, 0.145 * s, 0); gr.add(st); });
+        ellipsoid(grp, kd, 'chl', pos, quat, 0.3 * s, 0.14 * s, 0.19 * s, mat, (gr) => {
+          const gm = std(0x2b7a31, { roughness: 0.6 });
+          [-0.1, 0.1].forEach((x) => { const st = new THREE.Mesh(new THREE.SphereGeometry(0.05 * s, 12, 8), gm); st.scale.set(1.4, 0.45, 1.2); st.position.set(x * s, 0.125 * s, 0); gr.add(st); });
         });
       }
       function anchor(grp, kd, key, pos, off) {
@@ -109,20 +128,22 @@
       /* ---------- 식물 세포 ---------- */
       (function () {
         const g = groups.plant, R = rng(4242), kd = 'plant';
-        const A = 1.5, B = 1.8, C = 1.25, N = 4.4, WT = 0.17, MI = 0.24, wc = -0.25, mc = 0.2;
+        const A = 1.5, B = 1.8, C = 1.25, N = 4.4, WT = 0.17, MI = 0.24, wc = -0.45, mc = 0.1;
         clipOf.plant = { wall: wc, memb: mc };
-        const wall = shell(g, 'wall', superGeo(A, B, C, N), 0xa3b955, 0.5, wc, 3, { emissive: 0x000000 });
-        const wallIn = shell(g, 'wall', superGeo(A - WT, B - WT, C - WT, N), 0xdcebb0, 0.18, wc, 2);
+        const wall = shell(g, 'wall', superGeo(A, B, C, N), 0xa8bd5a, 0.62, wc, 3);
+        const wallIn = shell(g, 'wall', superGeo(A - WT, B - WT, C - WT, N), 0xe3efbd, 0.2, wc, 2);
         const memb = shell(g, 'memb', superGeo(A - MI, B - MI, C - MI, N), 0xe0a82e, 0.34, mc, 1, { roughness: 0.3 });
         pick.plant.push(wall, wallIn, memb);
         addHi(kd, 'wall', wall.material); addHi(kd, 'wall', wallIn.material); addHi(kd, 'memb', memb.material);
+        rims(g, kd, 'wall', A - WT / 2, B - WT / 2, C - WT / 2, N, wc, WT / 2, 0x6f8a1f);
+        rims(g, kd, 'memb', A - MI, B - MI, C - MI, N, mc, 0.03, 0xe0a82e);
         makeNucleus(g, kd, new Vv(-0.26, -0.18, -0.1), 0.45);
         // 엽록체: 세포막 안쪽 둘레(잘린 부분 제외)
         let n = 0, guard = 0;
         while (n < 16 && guard++ < 400) {
           const d = new Vv(R() * 2 - 1, R() * 2 - 1, R() * 2 - 1).normalize();
           const p = surfPt(d, A, B, C, N, 0.42 + R() * 0.12);
-          if (p.x > -0.1 && p.y > -0.1 && p.z > -0.1) continue;
+          if (p.x > wc - 0.15 && p.y > wc - 0.15 && p.z > wc - 0.15) continue;
           const nr = new Vv(p.x / (A * A), p.y / (B * B), p.z / (C * C)).normalize();
           makeChl(g, kd, p, surfQuat(nr, R() * 6.28), 0.95 + R() * 0.2); n++;
         }
@@ -135,8 +156,8 @@
         anchor(g, kd, 'memb', surfPt(new Vv(-1, -0.45, 0.45), A, B, C, N, MI), [0, 0, 0]);
         anchor(g, kd, 'nuc', new Vv(-0.26, -0.18, -0.1).add(new Vv(0, 0.5, 0.0)), [0, 0, 0]);
         // 엽록체·미토콘드리아 대표 (눈에 잘 띄는 것)
-        let cOne = null, mOne = null;
-        g.children.forEach((o) => { if (o.children && o.children[0] && o.children[0].userData.key === 'chl' && !cOne && o.position.z > -0.2 && o.position.x < 0.4) cOne = o; if (o.children && o.children[0] && o.children[0].userData.key === 'mito' && !mOne && o.position.z > 0) mOne = o; });
+        const near = (key, tgt) => { let best = null, bd = 1e9; g.children.forEach((o) => { if (o.children && o.children[0] && o.children[0].userData.key === key) { const d = o.position.distanceTo(tgt); if (d < bd) { bd = d; best = o; } } }); return best; };
+        const cOne = near('chl', new Vv(0.3, 0.5, -1.0)), mOne = near('mito', new Vv(0.9, 0.0, 0.6));
         const ca = new THREE.Object3D(); (cOne || g).add(ca); ca.position.set(0, 0.28, 0); const cl = label(ST.chl.name, ca, { color: ST.chl.color }); cl.show(false); labs.plant.chl = cl;
         const ma = new THREE.Object3D(); (mOne || g).add(ma); ma.position.set(0, 0.26, 0); const ml = label(ST.mito.name, ma, { color: ST.mito.color }); ml.show(false); labs.plant.mito = ml;
       })();
@@ -144,16 +165,17 @@
       /* ---------- 동물 세포 ---------- */
       (function () {
         const g = groups.animal, R = rng(777), kd = 'animal';
-        const A = 1.75, B = 1.55, C = 1.55, N = 2, mc = -0.1;
+        const A = 1.75, B = 1.55, C = 1.55, N = 2, mc = -0.3;
         clipOf.animal = { memb: mc };
         const memb = shell(g, 'memb', superGeo(A, B, C, N), 0xf3a6b5, 0.4, mc, 1, { roughness: 0.3 });
         const membIn = shell(g, 'memb', superGeo(A - 0.06, B - 0.06, C - 0.06, N), 0xfbd5cf, 0.2, mc, 0);
         pick.animal.push(memb, membIn); addHi(kd, 'memb', memb.material); addHi(kd, 'memb', membIn.material);
+        rims(g, kd, 'memb', A - 0.03, B - 0.03, C - 0.03, N, mc, 0.045, 0xe0718d);
         makeNucleus(g, kd, new Vv(0.08, 0.04, -0.1), 0.45);
         [[-0.92, -0.48, 0.35], [0.7, -0.86, -0.4], [0.96, 0.56, 0.5], [-0.66, 0.82, -0.5], [0.1, 1.12, 0.3], [-1.1, 0.26, -0.3], [0.3, -1.16, 0.5]].forEach((q) => {
           makeMito(g, kd, new Vv(q[0], q[1], q[2]), new THREE.Quaternion().setFromEuler(new THREE.Euler(R() * 3, R() * 3, R() * 3)), 0.92 + R() * 0.16);
         });
-        anchor(g, kd, 'memb', surfPt(new Vv(-1, -0.55, 0.6), A, B, C, N, 0.0), [0, 0, 0]);
+        anchor(g, kd, 'memb', surfPt(new Vv(-1, -0.2, 0.9), A, B, C, N, 0.0), [0, 0, 0]);
         anchor(g, kd, 'nuc', new Vv(0.08, 0.54, -0.1), [0, 0, 0]);
         let mOne = null; g.children.forEach((o) => { if (o.children && o.children[0] && o.children[0].userData.key === 'mito' && !mOne && o.position.x < -0.5 && o.position.z > 0) mOne = o; });
         const ma = new THREE.Object3D(); (mOne || g).add(ma); ma.position.set(0, 0.26, 0); const ml = label(ST.mito.name, ma, { color: ST.mito.color }); ml.show(false); labs.animal.mito = ml;
@@ -161,9 +183,9 @@
 
       /* ---------- 누르기 (이름 알아보기) ---------- */
       const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
-      const dom = renderer.domElement; let down = null;
-      dom.addEventListener('pointerdown', (e) => { down = { x: e.clientX, y: e.clientY, t: performance.now() }; });
-      dom.addEventListener('pointerup', (e) => {
+      const dom = renderer.domElement, viewEl = dom.parentElement; let down = null;
+      viewEl.addEventListener('pointerdown', (e) => { down = { x: e.clientX, y: e.clientY, t: performance.now() }; });
+      viewEl.addEventListener('pointerup', (e) => {
         if (!down) return; const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y); down = null;
         if (moved > 6) return;
         const r = dom.getBoundingClientRect();
@@ -203,7 +225,7 @@
 
       return {
         update(dt, t) {
-          const pulse = 0.35 + 0.25 * Math.sin(t * 6);
+          const pulse = 0.55 + 0.35 * Math.sin(t * 6);
           Object.keys(hi).forEach((k) => Object.keys(hi[k]).forEach((key) => {
             const on = k === kind && sel === key, col = new THREE.Color(ST[key].color);
             hi[k][key].forEach((m) => { m.emissive.copy(col).multiplyScalar(on ? pulse : 0); });
