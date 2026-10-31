@@ -650,8 +650,9 @@
     ctx.fillStyle = 'rgba(220,38,38,.12)'; ctx.fillRect(ax, ay - 14, X(1) - ax, 28); T(ax + 4, ay + 40, PHONE ? '빨간 구간: 1개 미만 (우리뿐일 수도)' : '1개 미만: 우리뿐일 수도', 11.5, '#b91c1c', 'left', 800);
     const mx = X(live); D.shadow(() => D.sphere(mx, ay, 9, '#16a34a', { gloss: true }), { blur: 5, y: 2 });
     D.label(clamp(mx, ax + 60, ax + aw - 60), ay - 34, '생명이 있는 행성 ' + (live >= 1e4 ? sci(live, 1) : live >= 10 ? comma(live) : f2(live)) + '개', { bg: '#16a34a', size: 12.5 });
-    yy = ay + 52 * FS;
-    yy = drawWrap(B.x + 14, yy, 'p = 10' + sup(DK.p) + '이면 ' + (live >= 1e4 ? sci(live, 1) : live >= 10 ? comma(live) : f2(live)) + '개예요. p가 10⁻¹²이면 0.04개(없을 수도), 1에 가까우면 수백억 개예요.', B.w - 28, 13.5, { color: '#0369a1', weight: 800 });
+    yy = ay + 66 * FS;
+    const n12 = N * 1e-12, fN = (v) => (v >= 1e4 ? sci(v, 1) : v >= 10 ? comma(v) : v >= 0.1 ? f2(v) : sci(v, 1));
+    yy = drawWrap(B.x + 14, yy, 'p = 10' + sup(DK.p) + '이면 ' + fN(live) + '개예요. p가 10⁻¹²이면 ' + fN(n12) + '개(1개보다 적으니 없을 수도), p가 1에 가까우면 ' + sci(N, 1) + '개예요.', B.w - 28, 13.5, { color: '#0369a1', weight: 800 });
     drawWrap(B.x + 14, yy + 22 * FS, '그래서 HZ 행성이 아무리 많아도 "외계 생명이 있다"고 단정할 수 없고, 반대로 "없다"고도 말할 수 없어요. 증거가 더 필요해요.', B.w - 28, 13.5, { color: '#b45309', weight: 800 });
   }
 

@@ -902,12 +902,12 @@
         {
           title: '이 셀의 밀도 대비 δ 구하기',
           goal: 'n = 24, n̄ (전체 평균, 화면에 표시)로 <b>δ = (n − n̄) / n̄</b>를 계산해 입력하세요. (소수 첫째 자리까지)',
-          hint: 'δ = (24 − 3.3) / 3.3 ≈ 6.3이에요. n̄는 오른쪽 숫자 칸에 표시돼요.',
+          hint: 'δ = (24 − 3.3) / 3.3 ≈ 6.3이에요(n̄ = 3.31로 계산하면 6.2). n̄는 오른쪽 숫자 칸에 표시돼요.',
           setup() { setView('grid'); S.gr.s = 16; setSlider($('#sS'), $('#oS'), 16, (v) => v + ' Mpc'); S.gr.lock = false; S.gr.sel = MISSION_CELL; S.gr.hide = true; S.gr.nOK = true; S.gr.dOK = false; S.flags.calcN = true; S.flags.calcD = true; clrIn('inDl'); updateCtl(); },
           check: () => S.gr.dOK,
           hold: 0.5,
           status: () => mark(S.gr.dOK) + ' δ = ' + ($('#inDl').value.trim() || '—'),
-          explain: 'δ = (24 − 3.3) / 3.3 ≈ <b>+6.3</b>이에요. 이 셀의 은하 밀도는 평균보다 약 7배 높아요(δ = +6.3은 평균의 1 + 6.3 = 7.3배).',
+          explain: 'δ = (24 − 3.3) / 3.3 ≈ <b>+6.3</b>이에요(n̄ = 3.31로 계산하면 +6.2). 이 셀의 은하 밀도는 평균보다 약 7배 높아요(δ = +6.2는 평균의 1 + 6.2 = 7.2배).',
         },
         {
           title: '셀 6개를 구조별로 분류', manual: true,
@@ -983,7 +983,7 @@
           title: '요동 5 %에서 시간을 늘려 보이드 만들기',
           goal: '요동을 <b>±5 %</b>로 두고 우주 나이를 <b>100억 년 이상</b>으로 늘려, <b>빈 곳 칸이 6칸 이상</b> 생기고 <b>밀한 칸이 생기는지</b> 확인하세요.',
           hint: '우주 나이 슬라이더를 오른쪽으로 옮기거나 ▶ 재생을 눌러요. 처음에는 거의 균일하다가 시간이 지나며 구조가 자라요.',
-          setup() { setView('origin'); S.or.eps = 5; S.or.age = 6; S.or.play = false; setSlider($('#sEps'), $('#oEps'), 5, (v) => '±' + v + ' %'); setSlider($('#sAge'), $('#oAge'), 6, (v) => v + '억 년'); updateCtl(); },
+          setup() { setView('origin'); S.or.eps = 5; S.or.age = 6; S.or.ageD = 6; S.or.epsD = 5; S.or.play = false; setSlider($('#sEps'), $('#oEps'), 5, (v) => '±' + v + ' %'); setSlider($('#sAge'), $('#oAge'), 6, (v) => v + '억 년'); updateCtl(); },
           check: () => { if (S.or.eps !== 5 || S.or.ageD < 100) return false; const st = orbStats(5, S.or.ageD); return st.voids >= 6 && st.dense >= 1; },
           hold: 0.8,
           status: () => { const st = orbStats(S.or.eps, S.or.ageD); return mark(S.or.eps === 5) + ' 요동 ±' + S.or.eps + ' % &nbsp; ' + mark(S.or.ageD >= 100) + ' 나이 ' + f0(S.or.ageD) + '억 년 &nbsp; ' + mark(st.voids >= 6) + ' 빈 곳 ' + st.voids + '칸 &nbsp; ' + mark(st.dense >= 1) + ' 밀한 칸 ' + st.dense + '칸'; },
