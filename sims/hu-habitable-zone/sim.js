@@ -329,6 +329,9 @@
   /* 시드 난수 */
   function rng(seed) { let s = seed >>> 0 || 1; return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296); }
 
+  /* 조사 고르기: 마지막 글자의 받침 유무 (한글이 아니면 받침 없음으로 봐요) */
+  const hasBatchim = (w) => { const c = String(w).trim().slice(-1).charCodeAt(0); return c >= 0xAC00 && c <= 0xD7A3 && (c - 0xAC00) % 28 !== 0; };
+  const eunNeun = (w) => (hasBatchim(w) ? '은' : '는');
   initStage('#e8eef8', 800, 620, 480, 860, 1.25);
   if (PHONE) view.canvas.style.touchAction = 'pan-y';
 
@@ -511,7 +514,7 @@
     layout: () => { const L = LPl(); return { grid: L.grid, bins: L.bins }; },
     onPlace(it, b) {
       it.wrong = b !== it.bin;
-      if (it.wrong) { say('「' + it.label + '」은(는) 그 상자가 아니에요. a가 HZ(0.95√L ~ 1.4√L) 안인지 비교해 보세요.', true, 3.4); Sound.fail(); }
+      if (it.wrong) { say('「' + it.label + '」' + eunNeun(it.label) + ' 그 상자가 아니에요. a가 HZ(0.95√L ~ 1.4√L) 안인지 비교해 보세요.', true, 3.4); Sound.fail(); }
       else parts.burst(it.x + it.w / 2, it.y + it.h / 2, { count: 10, speed: 120, colors: ['#16a34a', '#fbbf24'] });
     },
     onChange() { updateCtl(); },
@@ -571,14 +574,14 @@
     layout: () => { const L = LEv(); return { grid: L.grid, bins: L.bins }; },
     onPlace(it, b) {
       it.wrong = b !== it.bin;
-      if (it.wrong) { say('「' + it.label + '」은(는) 그 상자가 아니에요. 가능성을 높이는지, 한계인지, 앞으로 알아낼 방법인지 생각해 보세요.', true, 3.6); Sound.fail(); }
+      if (it.wrong) { say('「' + it.label + '」' + eunNeun(it.label) + ' 그 상자가 아니에요. 가능성을 높이는지, 한계인지, 앞으로 알아낼 방법인지 생각해 보세요.', true, 3.6); Sound.fail(); }
       else parts.burst(it.x + it.w / 2, it.y + it.h / 2, { count: 10, speed: 120, colors: [EVBIN[b].color, '#fbbf24'] });
     },
     onChange() { updateCtl(); },
   });
   const evClsOK = () => cEv.items.every((i) => i.loc != null && cEv.isRight(i));
   const evCount = (b) => cEv.items.filter((i) => i.loc === b).length;
-  const evSentence = () => (EVS.claim >= 0 ? '나는 "' + CLAIMS[EVS.claim] + '"고 생각해요. ' : '') + (EVS.fr >= 0 ? '왜냐하면 "' + EV[FOR_IDX[EVS.fr]].n + '"는 근거가 있기 때문이에요. ' : '') + (EVS.ag >= 0 ? '다만 "' + EV[AGAINST_IDX[EVS.ag]].n + '"는 한계라서 더 알아봐야 해요.' : '');
+  const evSentence = () => (EVS.claim >= 0 ? '나는 "' + CLAIMS[EVS.claim] + '"라고 생각해요. ' : '') + (EVS.fr >= 0 ? '왜냐하면 "' + EV[FOR_IDX[EVS.fr]].n + '"' + eunNeun(EV[FOR_IDX[EVS.fr]].n) + ' 근거가 있기 때문이에요. ' : '') + (EVS.ag >= 0 ? '다만 "' + EV[AGAINST_IDX[EVS.ag]].n + '"' + eunNeun(EV[AGAINST_IDX[EVS.ag]].n) + ' 한계라서 더 알아봐야 해요.' : '');
   function drawEvidence(dt, t) {
     const L = LEv(), E = L.E;
     panel(E.x, E.y, E.w, E.h, { r: 14 });
