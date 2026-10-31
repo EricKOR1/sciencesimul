@@ -10,7 +10,7 @@
   const TW = (r, t, h) => [t, h, -r];                              // (거리 r, 옆 t, 높이 h) → 화면 좌표: 위에서 보면 r이 위쪽
   const narrow = window.innerWidth < 600;
   const asp = narrow ? window.innerWidth / Math.max(300, window.innerHeight - 190) : 1.4;
-  const FIT = Math.max(1, 0.8 / asp), LS = narrow ? 11 : 12.5;
+  const FIT = Math.max(1, 1.05 / asp), LS = narrow ? 11 : 12.5;
   const COL = { cluster: '#ffb04a', fil: '#7fb5ff', wall: '#5eead4', field: '#a7b4d6' }, PLAIN = '#cfe0ff', SLC = '#ffe45e';
 
   function rng(seed) {
@@ -27,10 +27,10 @@
   window.SciSim3D.attach({
     title: '우주 거대 구조 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: 480 * FIT, theta: 0.55, phi: 0.95, fov: 42, target: [0, 0, -160], min: 80, max: 1400 },
-    autoRotate: 0.06,
+    camera: { dist: 480 * FIT, theta: 0.55, phi: 0.95, fov: 42, target: [0, 0, -160], min: 80, max: 1800 },
+    autoRotate: 0,
     build(ctx) {
-      const { THREE, root, camera, label, info, controls, orbit } = ctx;
+      const { THREE, root, camera, label, info, controls, orbit, renderer } = ctx;
       const sim = window.__sim, GAL = (sim && sim.GAL) || [];
       const R = rng(2025);
 
@@ -138,7 +138,7 @@
       const earth = new THREE.Mesh(new THREE.SphereGeometry(4, 16, 12), new THREE.MeshBasicMaterial({ color: 0x3b82f6 })); root.add(earth);
       const eg = new THREE.Sprite(new THREE.SpriteMaterial({ map: dot, color: 0x7fb5ff, transparent: true, opacity: 0.9, depthWrite: false, blending: THREE.AdditiveBlending })); eg.scale.set(30, 30, 1); earth.add(eg);
       const L = [];
-      L.push(label('🌌 우리은하 (관측자)', earth, { size: LS, color: 'rgba(20,60,140,.92)', offset: [0, 0, 22] }));
+      L.push(label('🌌 우리은하 (관측자)', earth, { size: LS, color: 'rgba(20,60,140,.92)', offset: [0, 10, -42] }));
       const labsR = [100, 200, 300].map((r) => label(r + ' Mpc', TW(r, -125, -75), { size: LS - 1.5, color: 'rgba(40,60,110,.85)' }));
       const labSet = (arr, vis) => arr.forEach((l) => l.show(vis));
       // 구조 이름표 (구조 색 보기를 켰을 때)
@@ -169,7 +169,10 @@
         else info('<b>우주 거대 구조 (합성 모형, 폭 약 ' + 2 * 130 + ' Mpc)</b><br>은하는 고르게 퍼져 있지 않고 <b>그물</b>처럼 이어져 있어요. 어디가 몰려 있고 어디가 비었는지 돌려 보며 찾아봐요. (1 Mpc ≈ 326만 광년)');
       }
       const view = (v) => { // 위·옆에서 볼 때는 수업의 눕힌 쐐기 도표처럼 거리 r이 오른쪽으로 가요
-        if (v === 'top') { orbit.phi = 0.06; orbit.theta = Math.PI / 2; orbit.dist = 420 * (narrow ? 1.9 : 1); } else if (v === 'side') { orbit.phi = 1.5; orbit.theta = Math.PI / 2; orbit.dist = 480 * (narrow ? 1.5 : 1); } else { orbit.phi = 0.95; orbit.theta = 0.55; orbit.dist = 480 * FIT; } };
+        if (v === 'top') { orbit.phi = 0.06; orbit.theta = Math.PI / 2; orbit.dist = 420 * (narrow ? 2.3 : 1); } else if (v === 'side') { orbit.phi = 1.5; orbit.theta = Math.PI / 2; orbit.dist = 480 * (narrow ? 1.5 : 1); } else { orbit.phi = 0.95; orbit.theta = 0.55; orbit.dist = 480 * FIT; }
+        spin = v === 'tilt'; };
+      let spin = false;
+      renderer.domElement.parentNode.addEventListener('pointerdown', () => { spin = false; });
       controls.segment('시점', [{ value: 'top', label: '⬇ 위에서' }, { value: 'side', label: '➡ 옆에서' }, { value: 'tilt', label: '↗ 비스듬히' }], 'tilt', view);
       const cB = controls.button('🎨 구조 색', () => { colored = !colored; cB.classList.toggle('on', colored); applyAll(); });
       const vB = controls.button('🫧 보이드', () => { showVoid = !showVoid; vB.classList.toggle('on', showVoid); applyAll(); });
@@ -180,7 +183,7 @@
       }
       let synced = false;
       readLesson();
-      return { sync() { synced = false; readLesson(); } };
+      return { update(dt) { if (spin) orbit.theta += 0.07 * dt; }, sync() { synced = false; readLesson(); } };
     },
   });
 })();
