@@ -1074,7 +1074,7 @@
           title: '가장자리의 밝기 읽기', manual: true,
           goal: '붉은 점을 중심에서 <b>r = 0.90</b>에 맞추고, 그래프를 읽어 <b>중심 대비 밝기(%)</b>를 입력하세요.',
           hint: 'r 슬라이더를 0.90에 맞추면 그래프의 점이 곡선 위에 놓여요. 점에서 왼쪽으로 가로선을 따라가 세로축의 눈금을 읽어요(60 %와 70 % 사이).',
-          setup() { const P = S.ph; P.filter = true; P.viewing = true; P.vis = 1; P.iOk = false; S.flags.calcI = true; clrIn('inI'); setView('photo'); },
+          setup() { const P = S.ph; P.filter = true; P.viewing = true; P.vis = 1; P.iOk = false; P.r = 0.5; setSlider($('#sR'), $('#oR'), 0.5, (v) => f2(v)); S.flags.calcI = true; clrIn('inI'); setView('photo'); },
           check() {
             if (!near(S.ph.r, 0.9, 0.011)) return 'r 슬라이더를 0.90에 맞춰 주세요.';
             const v = numOf('inI'); if (v == null) return '읽은 밝기(%)를 입력해 주세요.';
@@ -1108,7 +1108,7 @@
           title: '10일 동안 흑점 위치 기록하기',
           goal: '날짜 슬라이더를 움직이며 흑점 A의 중심을 눌러 <b>5일 이상</b> x/R을 기록하세요.',
           hint: '날짜를 바꾸고 흑점 A(어두운 점)를 누르면 표에 x/R, 경도 λ가 채워져요. 가장자리에서 가장 먼 날부터 골라도 좋아요.',
-          setup() { setView('track'); },
+          setup() { S.tr.rec = new Array(DAYS).fill(null); S.tr.angOk = false; S.tr.tOk = false; clrIn('inAng', 'inTs'); setDay(0); setView('track'); },
           check: () => trN() >= 5,
           hold: 0.6,
           status: () => mark(trN() >= 5) + ' 기록한 날 ' + trN() + ' / 10 (5일 이상)',
@@ -1118,7 +1118,7 @@
           title: '이동 각도로 회합 주기 구하기', manual: true,
           goal: '표에서 구한 <b>하루 이동 각도(°/일)</b>와 <b>T회합 = 360° ÷ 이동 각도(일)</b>를 입력하세요.',
           hint: '표 아래의 "평균 하루 이동 각도"가 약 13.3°예요. 360 ÷ 13.3 ≈ 27이에요.',
-          setup() { S.flags.calcT = true; S.tr.angOk = false; S.tr.tOk = false; clrIn('inAng', 'inTs'); setView('track'); },
+          setup() { if (trN() < 5) for (let d = 0; d < DAYS; d++) S.tr.rec[d] = xA(d); S.flags.calcT = true; S.tr.angOk = false; S.tr.tOk = false; clrIn('inAng', 'inTs'); setView('track'); },
           check() {
             const st = trStats(); if (st.avg == null) return '먼저 표에 기록을 2개 이상 채워 주세요.';
             const a = numOf('inAng'), tt = numOf('inTs'); if (a == null || tt == null) return '이동 각도와 주기를 모두 입력해 주세요.';
@@ -1163,7 +1163,7 @@
           title: '그래프의 경향 고르기', manual: true,
           goal: '"🛰 영상 합성"에서 경과일을 <b>7일</b>까지 보고, 그래프의 경향을 고르세요.',
           hint: '합성 영상에서 위도 45° 쪽 선이 적도 쪽보다 뒤처지는지 보세요. 그래프는 오른쪽 위로 올라가요.',
-          setup() { S.flags.pickTrend = true; S.df.trend = -1; setView('diff'); },
+          setup() { S.flags.pickTrend = true; S.df.trend = -1; S.df.cMax = 0; S.df.play = false; setCDay(0); setView('diff'); },
           check() {
             if (S.df.cMax < 6.9) return '"🛰 영상 합성" 장면에서 경과일을 7일까지 움직여 선이 어떻게 변하는지 먼저 확인해요.';
             if (S.df.trend < 0) return '경향을 하나 골라 주세요.';

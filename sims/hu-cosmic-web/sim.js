@@ -779,9 +779,9 @@
     const rows = [['우주 나이', f1(age) + '억 년'], ['적색 편이 z', z < 10 ? f1(z) : f0(z)], ['빈 곳 칸 (평균의 30 % 이하)', st.voids + ' / 64'], ['밀한 칸 (평균의 3배 이상)', st.dense + ' / 64']];
     rows.forEach((r, i) => { const y = I.y + 56 * Math.min(FS, 1.1) + i * (PHONE ? 32 : 34); T(I.x + 14, y, r[0], PHONE ? 11.5 : 12.5, '#475569', 'left', 800); T(I.x + I.w - 14, y + (PHONE ? 0 : 17), r[1], PHONE ? 13 : 15, '#0f172a', PHONE ? 'right' : 'right', 800); });
     // 색 범례
-    const ly = I.y + I.h - (PHONE ? 118 : 238);
+    const ly = I.y + I.h - (PHONE ? 178 : 238), lsp = PHONE ? 19 : 20;
     T(I.x + 14, ly, '점 색 = 둘레의 밀도', 12, '#475569', 'left', 800);
-    ['매우 낮음 (보이드)', '낮음', '평균 근처', '조금 높음', '높음', '매우 높음 (은하단)'].forEach((l, i) => { const y = ly + 18 + i * 20; ctx.fillStyle = DCOL[i]; ctx.fillRect(I.x + 14, y - 9, 12, 12); T(I.x + 32, y + 1, l, 11.5, '#334155', 'left', 700); });
+    ['매우 낮음 (보이드)', '낮음', '평균 근처', '조금 높음', '높음', '매우 높음 (은하단)'].forEach((l, i) => { const y = ly + 18 + i * lsp; ctx.fillStyle = DCOL[i]; ctx.fillRect(I.x + 14, y - 9, 12, 12); T(I.x + 32, y + 1, l, 11.5, '#334155', 'left', 700); });
     if (!PHONE) drawWrap(I.x + 14, I.y + I.h - 104, '실제 우주의 초기 요동은 약 10⁻⁵로 훨씬 작아요. 모형은 보기 쉽게 크게 줬어요.', I.w - 28, 11.5, { color: '#b45309', weight: 800 });
     else drawWrap(I.x + 14, I.y + I.h - 30, '실제 초기 요동은 약 10⁻⁵예요. 모형은 크게 줬어요.', I.w - 28, 11, { color: '#b45309', weight: 800 });
   }
