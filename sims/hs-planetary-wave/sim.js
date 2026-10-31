@@ -641,7 +641,7 @@
     const ppx = M.x + S.px, ppy = wy(ppx), zn = (yc - ppy) / Ay;           // 북쪽이면 +
     S.spin += 4.2 * zn * dt * (RM ? 0 : 1);
     D.sphere(ppx, ppy, 9, '#f59e0b', { gloss: true, shadow: true });
-    ctx.save(); ctx.translate(ppx, ppy - 30 * FS); ctx.rotate(S.spin);
+    ctx.save(); ctx.translate(ppx, ppy - 30 * FS); ctx.rotate(S.spin); if (zn < 0) ctx.scale(-1, 1);   // 남쪽: 반시계 방향 화살표
     ctx.strokeStyle = zn > 0 ? '#1d4ed8' : '#b91c1c'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(0, 0, 11, 0.4, TAU - 0.9); ctx.stroke();
     ctx.fillStyle = ctx.strokeStyle; ctx.beginPath(); ctx.moveTo(11 * Math.cos(TAU - 0.9) + 5, 11 * Math.sin(TAU - 0.9) - 5); ctx.lineTo(11 * Math.cos(TAU - 0.9) - 7, 11 * Math.sin(TAU - 0.9) - 3); ctx.lineTo(11 * Math.cos(TAU - 0.9) + 1, 11 * Math.sin(TAU - 0.9) + 7); ctx.closePath(); ctx.fill();
     ctx.restore();
@@ -657,7 +657,7 @@
     D.text(mid, ay2 + 26 * FS, zn > 0.1 ? '북쪽으로 가면 f가 커져요 → 시계 방향 회전(ζ < 0) → 다시 남쪽으로' : zn < -0.1 ? '남쪽으로 가면 f가 작아져요 → 반시계 방향 회전(ζ > 0) → 다시 북쪽으로' : '평균 위도에서는 회전이 0이에요', { size: 12.5, weight: 800, color: zn > 0.1 ? '#1d4ed8' : zn < -0.1 ? '#b91c1c' : '#475569' });
     // ----- B 패널
     card(B, '🔢 위상속도 c = U − β/k²');
-    const fl = makeFlow(B, COLS, 46);
+    const fl = makeFlow(B, 2, 46);
     const Lm = S.Lk * 1000, k = TAU / Lm, bk = BETA / (k * k);
     fl.put('β = 2Ω cosφ / a = ' + sci(BETA, 2) + ' m⁻¹s⁻¹ (45°N)', { size: 13, dy: 22 });
     fl.put('파장 L = ' + S.Lk + ' km → k = 2π/L = ' + sci(k, 2) + ' m⁻¹', { size: 13, dy: 22 });
@@ -823,7 +823,7 @@
     }
     ctx.restore();
     // 골 · 능 찍기 안내
-    if (!sat && S.pickHelp) D.text(A.x + A.w / 2, A.y + A.h - 10, S.pick === 'probe' ? '지도를 눌러 그곳의 풍속을 재어 봐요' : '지도에서 ' + (S.pick === 'trough' ? '골' : '능') + '의 축(등고선이 가장 많이 휜 곳)을 눌러요', { size: 12.5, weight: 800, color: '#475569' });
+    if (!sat && S.pickHelp) D.label(A.x + A.w / 2, A.y + A.h - 40, S.pick === 'probe' ? '지도를 눌러 그곳의 풍속을 재어 봐요' : '지도에서 ' + (S.pick === 'trough' ? '골' : '능') + '의 축(등고선이 가장 많이 휜 곳)을 눌러요', { bg: 'rgba(15,23,42,.78)', size: 12.5, pad: 8 });
     // ----- B 패널
     card(B, null);
     legend(B.x + B.w / 2, B.y + 22 * FS, [['#1e293b', '500 hPa 등고선(m)'], ['#ea580c', '제트축(5520 m)'], ['#3b82f6', '한랭(5400 m 아래)'], ['#f4723c', '온난(5700 m 위)']], B.w - 24);
@@ -839,10 +839,10 @@
     if (B.h > 300) {
       y += 10 * FS; D.text(x0, y, '등고선 간격(60 m당)과 지균풍 (위도 40°)', { size: 13, weight: 800, color: '#0f172a', align: 'left' }); y += 8 * FS;
       [[150, '#dc2626'], [250, '#f97316'], [400, '#2563eb']].forEach(([d, col]) => {
-        const v = ((9.8 / F40) * 60) / (d * 1000), bw = (B.w - 150) * clamp(v / 45, 0, 1);
+        const v = ((9.8 / F40) * 60) / (d * 1000), bw = (B.w - 190) * clamp(v / 45, 0, 1);
         D.text(x0, y + 18 * FS, '간격 ' + d + ' km', { size: 12.5, weight: 800, color: '#334155', align: 'left' });
-        ctx.fillStyle = '#e2e8f0'; rr(x0 + 92, y + 4 * FS, B.w - 150, 16, 8).fill(); ctx.fillStyle = col; rr(x0 + 92, y + 4 * FS, Math.max(8, bw), 16, 8).fill();
-        D.text(x0 + 92 + B.w - 150 + 6, y + 18 * FS, Math.round(v) + ' m/s', { size: 12.5, weight: 900, color: col, align: 'left' }); y += 30 * FS;
+        ctx.fillStyle = '#e2e8f0'; rr(x0 + 92, y + 4 * FS, B.w - 190, 16, 8).fill(); ctx.fillStyle = col; rr(x0 + 92, y + 4 * FS, Math.max(8, bw), 16, 8).fill();
+        D.text(x0 + 92 + B.w - 190 + 6, y + 18 * FS, Math.round(v) + ' m/s', { size: 12.5, weight: 900, color: col, align: 'left' }); y += 30 * FS;
       });
       y += 4 * FS;
     }

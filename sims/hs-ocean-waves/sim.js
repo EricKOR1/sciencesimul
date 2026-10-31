@@ -476,8 +476,8 @@
     D.label(xr - 8, g.y0 + hsPx / 2 + 22, '파고 ' + fN(hs, 1) + ' m', { bg: '#dc2626', size: 13, align: 'right' });
     // B
     const B = rcOf('wave').B; card(B, '📋 풍파가 커지는 조건');
-    D.text(B.x + 16, B.y + 56 * FS, '파고를 키우는 세 가지: 풍속 · 바람이 부는 시간 · 바람이 부는 거리(취송 거리)', { size: 13.5, weight: 800, color: '#334155', align: 'left' });
-    drawWrap(B.x + B.w / 2, B.y + 88 * FS, '셋 중 가장 모자란 조건이 파고를 제한해요. 폭풍에서 멀리 퍼져 나간 규칙적이고 긴 파도를 너울이라고 해요.', B.w - 40, 13, { color: '#475569' });
+    drawWrap(B.x + 16, B.y + 56 * FS, '파고를 키우는 세 가지: 풍속 · 바람이 부는 시간 · 바람이 부는 거리(취송 거리)', B.w - 32, 13.5, { color: '#334155', align: 'left', weight: 800 });
+    drawWrap(B.x + B.w / 2, B.y + (PHONE ? 112 : 88) * FS, '셋 중 가장 모자란 조건이 파고를 제한해요. 폭풍에서 멀리 퍼져 나간 규칙적이고 긴 파도를 너울이라고 해요.', B.w - 40, 13, { color: '#475569' });
     D.text(B.x + B.w / 2, B.y + B.h - 14, '※ 파고 값은 예시 모형으로 계산한 거예요', { size: 11.5, weight: 700, color: '#64748b' });
   }
   function readWind() { setReadouts(['풍속 · 시간 · 거리', S.U + ' m/s · ' + S.tH + ' h · ' + S.F + ' km', '파고(예시)', fN(hsOf(S.U, S.tH, S.F), 1) + ' m', '해파가 전달하는 것', '에너지와 파형']); }
@@ -640,12 +640,12 @@
     card(B, '📋 파속 기록표 (c = √(gh))');
     const nC = 4, cw = (B.w - 28) / nC, horiz = B.w > B.h * 2;
     DEPTHS3.forEach((d, i) => {
-      const bx = horiz ? B.x + 14 + i * cw : B.x + 14, by = horiz ? B.y + 42 * FS : B.y + 40 * FS + i * 62 * FS, on = S.rec[d] || (game && game.free), cc = cSh(d);
+      const bx = horiz ? B.x + 14 + i * cw : B.x + 14, rh = (B.h - 46) / 4, by = horiz ? B.y + 42 * FS : B.y + 38 + i * rh, on = S.rec[d] || (game && game.free), cc = cSh(d);
       const bw = horiz ? cw - 10 : B.w - 28;
-      D.shadow(() => { ctx.fillStyle = on ? '#ecfdf5' : '#f8fafc'; rr(bx, by, bw, horiz ? B.h - 54 * FS : 54 * FS, 10).fill(); }, { blur: 3, y: 1 });
-      ctx.strokeStyle = d === S.h3 ? '#0ea5e9' : on ? '#16a34a' : '#cbd5e1'; ctx.lineWidth = d === S.h3 ? 3 : 1.5; rr(bx, by, bw, horiz ? B.h - 54 * FS : 54 * FS, 10).stroke();
-      D.text(bx + 10, by + 22 * FS, '수심 ' + d + ' m', { size: 13.5, weight: 900, color: '#1e3a8a', align: 'left' });
-      D.text(bx + 10, by + 44 * FS, on ? fN(cc, cc >= 100 ? 0 : 1) + ' m/s' + (horiz ? '' : '  (' + fN(cc * 3.6, 0) + ' km/h)') : '— (기록 전)', { size: 14, weight: 900, color: on ? '#15803d' : '#94a3b8', align: 'left' });
+      D.shadow(() => { ctx.fillStyle = on ? '#ecfdf5' : '#f8fafc'; rr(bx, by, bw, horiz ? B.h - 54 * FS : rh - 6, 10).fill(); }, { blur: 3, y: 1 });
+      ctx.strokeStyle = d === S.h3 ? '#0ea5e9' : on ? '#16a34a' : '#cbd5e1'; ctx.lineWidth = d === S.h3 ? 3 : 1.5; rr(bx, by, bw, horiz ? B.h - 54 * FS : rh - 6, 10).stroke();
+      D.text(bx + 10, horiz ? by + 22 * FS : by + rh * 0.38, '수심 ' + d + ' m', { size: 13.5, weight: 900, color: '#1e3a8a', align: 'left' });
+      D.text(bx + 10, horiz ? by + 44 * FS : by + rh * 0.76, on ? fN(cc, cc >= 100 ? 0 : 1) + ' m/s' + (horiz ? '' : '  (' + fN(cc * 3.6, 0) + ' km/h)') : '— (기록 전)', { size: 14, weight: 900, color: on ? '#15803d' : '#94a3b8', align: 'left' });
       if (horiz && on) D.text(bx + 10, by + 64 * FS, '약 ' + fN(cc * 3.6, 0) + ' km/h', { size: 12, weight: 700, color: '#475569', align: 'left' });
     });
   }
@@ -821,7 +821,7 @@
   }
   function setCtl(k) { ctlKeys = k; updateCtl(); }
   function setMode(m) { if (S.mode !== m) { S.fade = 1; parts.clear(); } S.mode = m; updateCtl(); }
-  $$('#modeSeg button').forEach((b) => b.addEventListener('click', () => { Sound.click(); setMode(b.dataset.mode); }));
+  $$('#modeSeg button').forEach((b) => b.addEventListener('click', () => { Sound.click(); hideHint(); setMode(b.dataset.mode); }));
 
   /* ======================================================
      단계 · 미션

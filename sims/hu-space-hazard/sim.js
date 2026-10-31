@@ -329,6 +329,10 @@
   /* 시드 난수 */
   function rng(seed) { let s = seed >>> 0 || 1; return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296); }
 
+  /* 조사 고르기: 마지막 글자의 받침 유무 */
+  const hasBatchim = (w) => { const c = String(w).trim().slice(-1).charCodeAt(0); return c >= 0xAC00 && c <= 0xD7A3 && (c - 0xAC00) % 28 !== 0; };
+  const eunNeun = (w) => (hasBatchim(w) ? '은' : '는');
+  const iGa = (w) => (hasBatchim(w) ? '이' : '가');
   initStage('#e8eef8', 800, 620, 480, 860, 1.25);
   if (PHONE) view.canvas.style.touchAction = 'pan-y';
 
@@ -540,7 +544,7 @@
     layout: () => { const L = LTb(); return { grid: L.grid, bins: L.bins }; },
     onPlace(it, b) {
       it.wrong = b !== it.bin;
-      if (it.wrong) { say('「' + it.label + '」은(는) 그 분야의 ' + it.kind + '가 아니에요.', true, 3); Sound.fail(); }
+      if (it.wrong) { say('「' + it.label + '」' + eunNeun(it.label) + ' 그 분야의 ' + it.kind + iGa(it.kind) + ' 아니에요.', true, 3); Sound.fail(); }
       else parts.burst(it.x + it.w / 2, it.y + it.h / 2, { count: 8, speed: 110, colors: ['#0ea5e9', '#fbbf24'] });
     },
     onChange() { updateCtl(); },
@@ -636,7 +640,7 @@
     T(gx, (PHONE ? ty + 10 + 4 * rh + 18 : ty), '충돌 에너지 (Mt TNT, 로그 눈금)', 12.5, '#64748b', 'left', 800);
     ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(gx, gyy); ctx.lineTo(gx + gw, gyy); ctx.stroke();
     for (let e = -2; e <= 8; e += 2) { const x = GX(Math.pow(10, e)); ctx.beginPath(); ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 2; ctx.moveTo(x, gyy - 5); ctx.lineTo(x, gyy + 5); ctx.stroke(); T(x, gyy + 22, e === 0 ? '1' : '10' + sup(e), 12, '#64748b', 'center', 700); }
-    [[HIRO_MT, '히로시마 15 kt', -16, 'left'], [0.5, '첼랴빈스크', -40, 'left'], [astE(10000, 20) / MT_J, '10 km급 충돌', -16, 'right']].forEach(([mt, lab, dy, al]) => { const x = GX(mt); D.sphere(x, gyy, 5, '#94a3b8', { gloss: false }); T(x + (al === 'left' ? -4 : 4), gyy + dy, lab, PHONE ? 11 : 12, '#475569', al, 800); });
+    [[HIRO_MT, '히로시마 15 kt', 44, 'left'], [0.5, '첼랴빈스크', -40, 'left'], [astE(10000, 20) / MT_J, '10 km급 충돌', -16, 'right']].forEach(([mt, lab, dy, al]) => { const x = GX(mt); D.sphere(x, gyy, 5, '#94a3b8', { gloss: false }); T(x + (al === 'left' ? -4 : 4), gyy + dy, lab, PHONE ? 11 : 12, '#475569', al, 800); });
     if (show) { const x = GX(Mt); D.shadow(() => D.sphere(x, gyy, 9, '#dc2626', { gloss: true }), { blur: 6, y: 2 }); D.label(clamp(x, gx + 50, gx + gw - 50), gyy - 18, 'D ' + nm(D_) + ': ' + (Mt >= 100 ? sci(Mt, 1) : Mt >= 10 ? f0(Mt) : f2(Mt)) + ' Mt', { bg: '#dc2626', size: 12 }); }
   }
   const normA = (a) => { a = a % TAU; return a < 0 ? a + TAU : a; };
@@ -723,7 +727,7 @@
   let dbInited = false;
   function dbStep(dt) {
     const O = DB_.objs, n = O.length;
-    for (let i = 0; i < n; i++) { const o = O[i]; o.a += o.dir * RP * Math.pow(dbR0() * 1.3 / o.r, 1.5) * dt * 6; o.life += dt; if (o.fresh > 0) o.fresh -= dt; }
+    for (let i = 0; i < n; i++) { const o = O[i]; o.a -= o.dir * RP * Math.pow(dbR0() * 1.3 / o.r, 1.5) * dt * 6; /* dir = +1: 위에서 볼 때 시계 반대 방향(지구 자전과 같은 방향) */ o.life += dt; if (o.fresh > 0) o.fresh -= dt; }
     if (n >= 236) return;
     for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) {
       const p = O[i], q = O[j]; if (p.dir === q.dir) continue;
@@ -818,8 +822,8 @@
   sl('#sV', '#oV', (v) => v + ' km/s', (v) => { S.fl.v = v; S.fl.cme.on = false; S.fl.cme.done = false; });
   sl('#sW', '#oW', (v) => v + ' km/s', (v) => { S.mo.w = v; S.mo.on = false; S.mo.done = false; });
   sl('#sVi', '#oVi', (v) => v + ' km/s', (v) => { IM.v = v; IM.boomed = false; });
-  sl('#sDv', '#oDv', (v) => f1(v) + ' cm/s', (v) => { DA.dv = v; });
-  sl('#sTy', '#oTy', (v) => (v % 1 ? f1(v) : f0(v)) + ' 년', (v) => { DA.ty = v; });
+  sl('#sDv', '#oDv', (v) => f1(v) + ' cm/s', (v) => { DA.dv = v; if (DA.shot) daReset(); });      // 값을 바꾸면 다시 발사해야 해요
+  sl('#sTy', '#oTy', (v) => (v % 1 ? f1(v) : f0(v)) + ' 년', (v) => { DA.ty = v; if (DA.shot) daReset(); });
   sl('#sRel', '#oRel', (v) => v + ' km/s', (v) => { DB_.rel = v; });
   modeBtns.forEach((b) => clickable(b, () => setView(b.dataset.view)));
   clickable($('#bLaunch'), flLaunch);

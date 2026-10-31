@@ -560,8 +560,8 @@
     const lw = PHONE ? CA.w - 24 : 392, ly = CA.y + 40 * FS;
     const steps = [
       ['① 적색 편이  z = (λ − λ₀) / λ₀', g ? '= (' + g.lam.toFixed(1) + ' − ' + LAM0 + ') / ' + LAM0 + ' = ' + (calcShown('z', i) ? dZ(g) : '?') : '', calcShown('z', i), '#0ea5e9'],
-      ['② 후퇴 속도  v = c z   (c = 3.0×10⁵ km/s)', g ? '= 3.0×10⁵ × ' + (calcShown('z', i) ? dZ(g) : 'z') + ' = ' + (calcShown('v', i) ? fmtV(g.v) + ' km/s' : '?') : '', calcShown('v', i), '#8b5cf6'],
-      ['③ 거리  d = v / H₀   (H₀ = 70 km/s/Mpc)', g ? '= ' + (calcShown('v', i) ? fmtV(g.v) : 'v') + ' / 70 = ' + (calcShown('d', i) ? g.d + ' Mpc' : '?') : '', calcShown('d', i), '#16a34a'],
+      ['② 후퇴 속도  v = c z   (c = 3.0×10⁵ km/s)', g ? '≈ 3.0×10⁵ × ' + (calcShown('z', i) ? dZ(g) : 'z') + ' ≈ ' + (calcShown('v', i) ? fmtV(g.v) + ' km/s' : '?') : '', calcShown('v', i), '#8b5cf6'],
+      ['③ 거리  d = v / H₀   (H₀ = 70 km/s/Mpc)', g ? '≈ ' + (calcShown('v', i) ? fmtV(g.v) : 'v') + ' / 70 ≈ ' + (calcShown('d', i) ? g.d + ' Mpc' : '?') : '', calcShown('d', i), '#16a34a'],
     ];
     const sh = PHONE ? 72 : 92;
     steps.forEach((s_, k) => {

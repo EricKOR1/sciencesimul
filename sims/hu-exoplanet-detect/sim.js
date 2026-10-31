@@ -516,7 +516,7 @@
     });
     if (PG.a || FREE()) {
       // 궤도 크기 비교 (축척 맞춤)
-      const ox = B.x + B.w - (PHONE ? 64 : 90), oy = B.y + B.h - (PHONE ? 54 : 56), sc = (PHONE ? 52 : 70) / 0.387;
+      const ox = B.x + B.w - (PHONE ? 64 : 90), oy = B.y + B.h - (PHONE ? 70 : 84), sc = (PHONE ? 44 : 56) / 0.387;
       D.glow(ox, oy, 16, '#fde047', 0.6); D.sphere(ox, oy, 5, '#fbbf24', { gloss: false });
       ctx.strokeStyle = 'rgba(148,163,184,.9)'; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.arc(ox, oy, 0.387 * sc, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
       ctx.strokeStyle = '#ea580c'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(ox, oy, PEG.a * sc, 0, TAU); ctx.stroke();
@@ -859,7 +859,8 @@
   const depthNow = () => { const key = TR.rp + '|' + TR.ai + '|' + TR.inc; if (trMemo.key !== key) trMemo = { key, v: trDepth() }; return trMemo.v; };
   const depthIn = () => { const d = depthNow() * 100; return d >= 0.9 && d <= 1.1; };
   const rvOK = () => RV.ok && RV.pl === 3;
-  const trOK = () => TR.ratioOk && depthIn();
+  const ratioNow = () => { const x = numOf('inRatio'); return x != null && depthNow() > 0 && near(x, Math.sqrt(depthNow()), 0.012); };
+  const trOK = () => { TR.ratioOk = ratioNow(); return depthIn() && TR.ratioOk; };
   function updateCtl() {
     const free = FREE();
     $('#modeSeg').hidden = !free;
@@ -898,7 +899,7 @@
   $('#inA').addEventListener('input', () => { if (near(numOf('inA'), PEG.a, 0.005)) { PG.a = true; fbIn('inA', true); } });
   $('#inVp').addEventListener('input', () => { if (near(numOf('inVp'), PEG.v, 8)) { PG.v = true; fbIn('inVp', true); } });
   $('#inMp').addEventListener('input', () => { if (near(numOf('inMp'), PEG.Mj, 0.05)) { PG.m = true; fbIn('inMp', true); } });
-  $('#inRatio').addEventListener('input', () => { TR.ratioOk = near(numOf('inRatio'), Math.sqrt(depthNow()), 0.012) && depthNow() > 0; if (TR.ratioOk) fbIn('inRatio', true); });
+  $('#inRatio').addEventListener('input', () => { TR.ratioOk = ratioNow(); if (TR.ratioOk) fbIn('inRatio', true); });
   $('#inD1').addEventListener('input', () => { if (nearRel(numOf('inD1'), DEN[0].rho, 0.12)) { S.de.ok[0] = true; fbIn('inD1', true); } });
   $('#inD2').addEventListener('input', () => { if (nearRel(numOf('inD2'), DEN[1].rho, 0.12)) { S.de.ok[1] = true; fbIn('inD2', true); } });
 
@@ -982,7 +983,7 @@
           setup() { TR.rp = 3; $('#sRp').value = 3; $('#sRp').dispatchEvent(new Event('input')); TR.ai = 0; TR.inc = 90; $('#sInc').value = 90; $('#sInc').dispatchEvent(new Event('input')); TR.ratioOk = false; S.flags.calcRatio = true; clrIn('inRatio'); setView('transit'); },
           check: () => trOK(),
           hold: 0.8,
-          status: () => mark(depthIn()) + ' 관측된 깊이 ' + fPct(depthNow() * 100) + ' % (목표 1.0 %) &nbsp; ' + mark(TR.ratioOk) + ' R_p / R_s ' + ($('#inRatio').value.trim() || '—'),
+          status: () => mark(depthIn()) + ' 관측된 깊이 ' + fPct(depthNow() * 100) + ' % (목표 1.0 %) &nbsp; ' + mark(ratioNow()) + ' R_p / R_s ' + ($('#inRatio').value.trim() || '—'),
           explain: 'δ = (R_p / R_s)² = 0.010 → R_p / R_s = <b>0.10</b>이에요. 지구 크기 행성은 (1 / 109)² ≈ <b>0.0084 %</b>로 슬라이더를 가장 작게 해도 거의 보이지 않아요.',
         },
         {
@@ -1018,7 +1019,7 @@
         {
           title: '곡선에서 행성 봉우리 찾기',
           goal: '렌즈 별 곁에 <b>행성이 있는</b> 곡선(주황)과 없는 곡선(회색 점선)을 비교하세요. 그래프를 눌러 끌어 <b>확대 창이 추가 봉우리 위</b>로 오게 맞추세요.',
-          hint: '주황 곡선이 회색 점선 위로 솟은 곳이 행성 봉우리예요. 확대 그래프(아래)의 가운데에 뾰족한 봉우리가 보이도록 날짜를 옮겨요. 18일 근처를 살펴봐요.',
+          hint: '주황 곡선이 회색 점선 위로 솟은 곳이 행성 봉우리예요. 확대 그래프(아래)의 가운데에 뾰족한 봉우리가 보이도록 날짜를 옮겨요. 17일 근처를 살펴봐요.',
           setup() { LN.pl = true; LN.mi = 3; LN.cur = -30; $('#sCur').value = -30; updateCurOut(); setView('lens'); },
           check: () => lnFound(),
           hold: 0.8,

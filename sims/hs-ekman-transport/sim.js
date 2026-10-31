@@ -687,8 +687,8 @@
     ctx.restore();
     const bxs = v.sgn > 0 ? mp.x + mp.w - 34 : mp.x + 34;
     ctx.strokeStyle = '#7c3aed'; ctx.lineWidth = 3; ctx.setLineDash([7, 5]); ctx.beginPath(); ctx.moveTo(bxs, mp.y + 6); ctx.lineTo(bxs, mp.y + mp.h - 6); ctx.stroke(); ctx.setLineDash([]);
-    D.label(bxs, mp.y + mp.h / 2, '폭 1000 km', { bg: '#7c3aed', size: 12.5 });
-    D.label(mp.x + 64, mp.y + 16, '바람 ↑ 북쪽 (약 ' + Math.round(windU(S.tau)) + ' m/s)', { bg: '#1d4ed8', size: 12.5, pad: 7 });
+    D.label(PHONE ? bxs - 12 : bxs, mp.y + mp.h / 2, '폭 1000 km', { bg: '#7c3aed', size: 12.5 });
+    D.label(mp.x + (PHONE ? 100 : 64), mp.y + 16, '바람 ↑ 북쪽 (약 ' + Math.round(windU(S.tau)) + ' m/s)', { bg: '#1d4ed8', size: 12.5, pad: 7 });
     D.label(mp.x + mp.w / 2, mp.y + mp.h - 14, v.sgn > 0 ? '표층수는 동쪽(오른쪽)으로 이동' : '표층수는 서쪽(왼쪽)으로 이동', { bg: '#0f766e', size: 12.5 });
     // 수송량 막대
     const qy = mp.y + mp.h + 22, qx = B.x + 18, qw = B.w - 36;
@@ -964,7 +964,7 @@
   }
   function setCtl(k) { ctlKeys = k; updateCtl(); }
   function setMode(m) { if (S.mode !== m) { S.fade = 1; parts.clear(); } S.mode = m; if (m === 'cor') { S.auto = 3; } updateCtl(); }
-  $$('#modeSeg button').forEach((b) => b.addEventListener('click', () => { Sound.click(); setMode(b.dataset.mode); }));
+  $$('#modeSeg button').forEach((b) => b.addEventListener('click', () => { Sound.click(); hideHint(); setMode(b.dataset.mode); }));
   renderLayTable();
 
   /* ======================================================

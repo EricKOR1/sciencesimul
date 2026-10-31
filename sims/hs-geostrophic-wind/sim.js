@@ -540,7 +540,7 @@
     D.text(A.x + 14, A.y + A.h - 14, Math.abs(S.rpm) > 0 ? (S.rpm > 0 ? '↺ 반시계 방향 (북반구형) ' : '↻ 시계 방향 (남반구형) ') + Math.abs(S.rpm) + ' rpm' : '⏸️ 원판이 멈춰 있어요', { size: 13.5, weight: 800, color: S.rpm > 0 ? '#1d4ed8' : S.rpm < 0 ? '#b45309' : '#64748b', align: 'left' });
     if (S.lastRes != null) {
       const d = Math.round(Math.abs(S.lastRes));
-      D.label(A.x + A.w - 14, A.y + A.h - 16, d === 0 ? '곧게 가요' : (S.vt > 0.5 ? (S.lastRes > 0 ? '오른쪽' : '왼쪽') + '으로 ' + d + '° 휘어 보여요' : '공은 곧게 가요, 원판이 ' + d + '° 돌았어요'), { bg: '#0f766e', size: 13, align: 'right' });
+      D.label(A.x + A.w - 14, A.y + A.h - (PHONE ? 46 : 16), d === 0 ? '곧게 가요' : (S.vt > 0.5 ? (S.lastRes > 0 ? '오른쪽' : '왼쪽') + '으로 ' + d + '° 휘어 보여요' : '공은 곧게 가요, 원판이 ' + d + '° 돌았어요'), { bg: '#0f766e', size: 13, align: 'right' });
     }
     // ----- B: 수치
     const B = rcOf('disc').B;

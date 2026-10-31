@@ -815,7 +815,7 @@
   }
   function setCtl(k) { ctlKeys = k; updateCtl(); }
   function setMode(m) { if (S.mode !== m) { S.fade = 1; parts.clear(); } S.mode = m; updateCtl(); }
-  $$('#modeSeg button').forEach((b) => b.addEventListener('click', () => { Sound.click(); setMode(b.dataset.mode); }));
+  $$('#modeSeg button').forEach((b) => b.addEventListener('click', () => { Sound.click(); hideHint(); setMode(b.dataset.mode); }));
 
   /* ======================================================
      단계 · 미션

@@ -680,7 +680,7 @@
     [-2, -1, 0, 1, 2].forEach((e) => { const x = ax + (e + 2) / 4 * aw; ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x, ay - 5); ctx.lineTo(x, ay + 5); ctx.stroke(); T(x, ay + 20, (e === -2 ? '0.01' : e === -1 ? '0.1' : String(Math.pow(10, e))) + (e === 2 ? ' Mpc' : ''), PHONE ? 10.5 : 11.5, '#64748b', 'center', 700); });
     SC.forEach((s, i) => { const x = Xs(s.d), y = ay - (i % 2 ? 50 : 27) * rise - (1 - rise) * 40; ctx.globalAlpha = rise; D.shadow(() => D.sphere(x, ay, 8 + 0, s.c, { gloss: true }), { blur: 4, y: 2 }); D.label(x, y, s.n + ' ' + (s.d < 0.1 ? f2(s.d) : f0(s.d)) + ' Mpc', { bg: s.c, size: PHONE ? 10 : 11.5, pad: 7, color: '#fff' }); ctx.globalAlpha = 1; });
     // 아래쪽: H₀d vs σ 막대 (로그 눈금 1 ~ 10⁴ km/s)
-    const gy0 = ay + 46 * Math.min(FS, 1.05), gh = Q.y + Q.h - gy0 - 64 * Math.min(FS, 1.05), gx0 = Q.x + 52, gw = Q.w - 72;
+    const gy0 = ay + 46 * Math.min(FS, 1.05), gh = Q.y + Q.h - gy0 - 82 * Math.min(FS, 1.05), gx0 = Q.x + 52, gw = Q.w - 72;
     const Yv = (v) => gy0 + gh - clamp((Math.log10(Math.max(v, 1)) / 4), 0, 1) * gh;
     [0, 1, 2, 3, 4].forEach((e) => { const y = Yv(Math.pow(10, e)); ctx.strokeStyle = 'rgba(148,163,184,.4)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(gx0, y); ctx.lineTo(gx0 + gw, y); ctx.stroke(); T(gx0 - 6, y + 4, comma(Math.pow(10, e)), 10.5, '#64748b', 'right', 700); });
     T(Q.x + 12, gy0 - 8, 'km/s (로그)', 10.5, '#64748b', 'left', 700);
