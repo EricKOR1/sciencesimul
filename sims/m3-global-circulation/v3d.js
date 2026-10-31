@@ -31,7 +31,7 @@
     host: '.stage-card',
     title: '대기 대순환 3D 지구본',
     hint: '드래그: 돌리기 · 두 손가락/휠: 확대',
-    camera: { dist: narrow ? 7.4 : 4.8, theta: 0.3, phi: 1.42, target: narrow ? [0.3, 0.2, 0] : [0.4, 0.22, 0], min: 2.6, max: 11 },
+    camera: { dist: narrow ? 8.8 : 4.8, theta: 0.3, phi: 1.42, target: narrow ? [0.5, 0.25, 0] : [0.4, 0.22, 0], min: 2.6, max: 11 },
     autoRotate: 0,
     build(ctx) {
       const { THREE, root, camera, label, info, controls } = ctx;
@@ -84,7 +84,7 @@
       const markLabs = marks.map(([la, a, b, k]) => {
         const o = new THREE.Object3D(); o.position.set(1.5 * Math.cos(la * D2R), 1.5 * Math.sin(la * D2R), 0); root.add(o);
         const L = label(a + '<br><span style="font-weight:700;font-size:11px">' + b + '</span>', o, { color: k === 'up' ? 'rgba(22,101,52,.92)' : 'rgba(30,64,175,.92)', size: 12 });
-        L.off = [la === 90 ? 0.0 : 0.38, la === 90 ? 0.2 : 0, 0]; return L;
+        L.off = [la === 90 ? 0.42 : 0.38, la === 90 ? 0.12 : 0, 0]; return L;
       });
       const cellLabs = CELLS.map((c) => { const o = new THREE.Object3D(); o.position.set(1.5 * Math.cos(c.m * D2R), 1.5 * Math.sin(c.m * D2R), 0.0); root.add(o); const L = label(c.name, o, { color: c.col, size: 12 }); L.el.style.color = '#10172a'; L.off = [0.3, 0, 0]; return L; });
 
