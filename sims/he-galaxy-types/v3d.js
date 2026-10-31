@@ -34,12 +34,12 @@
 
   const narrow = window.innerWidth < 600;
   const asp = narrow ? window.innerWidth / Math.max(300, window.innerHeight - 190) : 1.4;
-  const FIT = Math.max(1, 1.0 / asp);
+  const FIT = Math.max(1, 1.4 / asp);
 
   window.SciSim3D.attach({
-    title: '은하 모양 3D · 기울기에 따라 달라져요',
+    title: '은하 모양 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: 25 * FIT, theta: 0.4, phi: 1.2, fov: 42, min: 12, max: 90 },
+    camera: { dist: 25 * FIT, theta: 0.4, phi: 1.2, fov: 42, min: 12, max: 120 },
     autoRotate: 0.18,
     build(ctx) {
       const { THREE, root, camera, label, info, controls, orbit, renderer } = ctx;

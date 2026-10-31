@@ -15,11 +15,12 @@
     title: '미토콘드리아 3D 단면',
     label: '🧊 3D 입체',
     hint: '드래그: 돌리기 · 두 손가락/휠: 확대',
-    camera: { dist: narrow ? 6.0 : 3.9, theta: 0.38, phi: 1.4, min: 2.2, max: 10 },
+    camera: { dist: narrow ? 5.9 : 3.9, target: narrow ? [0, 0.3, 0] : [0, 0, 0], theta: 0.38, phi: 1.4, min: 2.2, max: 10 },
     autoRotate: 0,
     build(ctx) {
       const { THREE, root, label, info, controls, renderer } = ctx;
       renderer.localClippingEnabled = true;
+      if (narrow) root.rotation.z = Math.PI / 2;      // 휴대폰(세로 화면)에서는 세워서 보여 줘요
       const V = THREE.Vector3;
       const plane = new THREE.Plane(new V(0, 0, -1), 0.9);       // z > c 는 잘려요
       const planes = [plane];
@@ -30,7 +31,7 @@
         const m = new THREE.MeshStandardMaterial(Object.assign({ color, roughness: 0.5, metalness: 0.02, clippingPlanes: planes }, o || {}));
         mats.push(m); return m;
       }
-      function glass(color, opa, o) { return M(color, Object.assign({ transparent: true, opacity: opa, side: THREE.DoubleSide, depthWrite: false, roughness: 0.35 }, o || {})); }
+      function glass(color, opa, o) { return M(color, Object.assign({ transparent: true, opacity: opa, side: THREE.DoubleSide, depthWrite: false, roughness: 0.8 }, o || {})); }
       function capsule(R) { const g = new THREE.CapsuleGeometry(R, MH * 2, 16, 40); g.rotateZ(Math.PI / 2); return g; }
 
       /* 막과 기질 */
@@ -76,7 +77,7 @@
       /* ATP 합성 효소 · 전자 전달 복합체 (내막에 박힘, 머리는 기질 쪽) */
       const gBase = new THREE.CylinderGeometry(0.05, 0.05, 0.03, 14), gStalk = new THREE.CylinderGeometry(0.012, 0.012, 0.075, 8), gHead = new THREE.SphereGeometry(0.052, 16, 12), gRot = new THREE.BoxGeometry(0.014, 0.05, 0.014);
       const mBase = M(0xfde68a), mHead = M(0xfbbf24, { roughness: 0.35 }), mRot = M(0xb45309), mStalk = M(0xd97706);
-      const syns = [];
+      const syns = []; let labelSynObj = null, labelCxObj = null;
       function addSyn(pos, dirIn, ph) {
         const g = new THREE.Group(); g.position.copy(pos); g.quaternion.setFromUnitVectors(new V(0, 1, 0), dirIn);
         const b = new THREE.Mesh(gBase, mBase); g.add(b);
@@ -94,6 +95,7 @@
         if (CRX.some((cx) => Math.abs(cx - x) < 0.07)) { i--; continue; }
         addSyn(dirOut.clone().multiplyScalar(RI), dirOut.clone().negate(), R() * 6.28);
       }
+      { const f = -2.6, d = new V(0, Math.cos(f), Math.sin(f)); labelSynObj = addSyn(d.clone().multiplyScalar(RI).setX(-0.55), d.clone().negate(), 0); }
       plates.forEach((p, k) => {            // 크리스타 판의 양쪽 면
         [-1, 1].forEach((sd) => { for (let j = 0; j < 1; j++) {
           const al = p.ac + (R() * 2 - 1) * span * 0.75, r = 0.26 + R() * 0.26;
@@ -108,6 +110,8 @@
         const m = new THREE.Mesh(gCx, mCx); m.position.copy(dirOut).multiplyScalar(RI - 0.02);
         m.quaternion.setFromUnitVectors(new V(0, 1, 0), dirOut.clone().negate()); root.add(m); cxs.push({ m, dirOut });
       }
+
+      { const f = -2.6, d = new V(0, Math.cos(f), Math.sin(f)), m = new THREE.Mesh(gCx, mCx); m.position.copy(d).multiplyScalar(RI - 0.02).setX(0.55); m.quaternion.setFromUnitVectors(new V(0, 1, 0), d.clone().negate()); root.add(m); labelCxObj = { m, dirOut: d }; cxs.push(labelCxObj); }
 
       /* DNA (고리 모양) · 리보솜 (70S) */
       const pts = []; for (let j = 0; j < 60; j++) { const f = (j / 60) * Math.PI * 2, r = 0.12 + 0.022 * Math.sin(3 * f); pts.push(new V(-0.54 + r * Math.cos(f), -0.08 + r * Math.sin(f), -0.1)); }
@@ -139,7 +143,7 @@
       const hs = [];
       for (let i = 0; i < 46; i++) {
         const s = new THREE.Sprite(mSpH.clone()); s.scale.set(0.11, 0.11, 1); root.add(s);
-        hs.push({ s, x: -MH + R() * 2 * MH, f: R() * 6.28, r: RI + 0.035 + R() * 0.05, vx: (R() - 0.5) * 0.2, vf: (R() - 0.5) * 1.2 });
+        hs.push({ s, x: -MH + R() * 2 * MH, f: (i % 2 ? 0 : Math.PI) + (R() - 0.5) * 0.9, r: RI + 0.035 + R() * 0.05, vx: (R() - 0.5) * 0.2, vf: (R() - 0.5) * 1.2 });
       }
       const tokens = [], atps = [];
       const spATP = () => { const s = new THREE.Sprite(spMat(tATP)); s.scale.set(0.24, 0.12, 1); root.add(s); return s; };
@@ -160,9 +164,8 @@
       function pickVisible() {
         const c = plane.constant;
         const vs = syns.filter((s) => s.pos.z < c - 0.12 && Math.abs(s.pos.x) < 0.95);
-        const front = vs.filter((s) => s.pos.x < -0.3 && s.pos.z > -0.45 && s.pos.y < -0.3 && s.dirIn.x === 0);
         const cv = cxs.filter((q) => q.dirOut.z < c - 0.12);
-        return { syns: vs, labelSyn: (front[0] || vs[0]), cx: cv, labelCx: cv.filter((q) => q.m.position.x > 0.3 && q.dirOut.y < -0.3 && q.dirOut.z > -0.5)[0] || cv[0] };
+        return { syns: vs, labelSyn: (labelSynObj.pos.z < c - 0.05 ? labelSynObj : vs[0]), cx: cv, labelCx: (labelCxObj.dirOut.z < c - 0.05 ? labelCxObj : cv[0]) };
       }
 
       function setCut(v) {
@@ -179,7 +182,7 @@
         if (!name && ref.labelCx) { cxObj.position.copy(ref.labelCx.m.position); }
         labCx.show(!name && !!ref.labelCx);
         labH.show(!name); labMat.show(!name);
-        labH.obj.position.set(-0.55, RO + 0.02, 0.0); labMat.obj.position.set(-0.1, -0.3, -0.2);
+        labH.obj.position.set(-0.55, RO + 0.02, 0.0); labMat.obj.position.set(0.9, -0.12, -0.2);
         writeInfo();
       }
       function writeInfo() {
@@ -210,7 +213,7 @@
           const c = plane.constant, flow = mode === 'flow', run = flow && !cn, slow = reduce() ? 0.2 : 1;
           // H⁺ 떠다니기 (막 사이 공간)
           hs.forEach((h, i) => {
-            h.f += h.vf * dt * slow; h.x += h.vx * dt * slow; if (Math.abs(h.x) > MH) { h.vx = -h.vx; h.x = Math.sign(h.x) * MH; }
+            h.f += h.vf * dt * slow; { const base = h.f > Math.PI / 2 && h.f < Math.PI * 1.5 ? Math.PI : (h.f > -Math.PI / 2 && h.f < Math.PI / 2 ? 0 : h.f); const d = Math.atan2(Math.sin(h.f - base), Math.cos(h.f - base)); if (Math.abs(d) > 0.5) h.vf = -Math.sign(d) * Math.abs(h.vf); } h.x += h.vx * dt * slow; if (Math.abs(h.x) > MH) { h.vx = -h.vx; h.x = Math.sign(h.x) * MH; }
             if (Math.random() < 0.02) { h.vf = (Math.random() - 0.5) * 1.2; h.vx = (Math.random() - 0.5) * 0.2; }
             const y = h.r * Math.cos(h.f), z = h.r * Math.sin(h.f);
             h.s.position.set(h.x, y, z);
