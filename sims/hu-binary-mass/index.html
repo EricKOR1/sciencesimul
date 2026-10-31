@@ -111,14 +111,14 @@
           <div class="opt-grid" id="grpFrame"><button class="opt" type="button" data-k="0">A 기준<br>(상대 궤도)</button><button class="opt" type="button" data-k="1">질량 중심<br>기준</button></div>
         </div>
         <div class="control" data-modes="sky" id="calcSky" hidden>
-          <div class="in-row"><span>① 주기 P (년)</span><input class="num-in" id="inP" type="text" inputmode="decimal" placeholder="예: 50" aria-label="쌍성의 공전 주기 (년)" autocomplete="off"></div>
-          <div class="in-row"><span>② 각거리 긴반지름 a″ (″)</span><input class="num-in" id="inAa" type="text" inputmode="decimal" placeholder="예: 7.5" aria-label="상대 궤도의 각거리 긴반지름 (각초)" autocomplete="off"></div>
+          <div class="in-row"><span>① 주기 P (년)</span><input class="num-in" id="inP" type="text" inputmode="decimal" placeholder="숫자 입력" aria-label="쌍성의 공전 주기 (년)" autocomplete="off"></div>
+          <div class="in-row"><span>② 각거리 긴반지름 a″ (″)</span><input class="num-in" id="inAa" type="text" inputmode="decimal" placeholder="숫자 입력" aria-label="상대 궤도의 각거리 긴반지름 (각초)" autocomplete="off"></div>
         </div>
 
         <div class="control" data-modes="total" id="calcTotal" hidden>
           <div class="control-head"><span>🧮 시리우스 A–B 계산</span></div>
-          <div class="in-row"><span>① 긴반지름 a (AU)<br>a = a″ / p</span><input class="num-in" id="inA" type="text" inputmode="decimal" placeholder="예: 20" aria-label="상대 궤도의 긴반지름 (AU)" autocomplete="off"></div>
-          <div class="in-row"><span>② 총질량 (M☉)<br>a³ / P²</span><input class="num-in" id="inMt" type="text" inputmode="decimal" placeholder="예: 3" aria-label="두 별의 질량 합 (태양 질량)" autocomplete="off"></div>
+          <div class="in-row"><span>① 긴반지름 a (AU)<br>a = a″ / p</span><input class="num-in" id="inA" type="text" inputmode="decimal" placeholder="숫자 입력" aria-label="상대 궤도의 긴반지름 (AU)" autocomplete="off"></div>
+          <div class="in-row"><span>② 총질량 (M☉)<br>a³ / P²</span><input class="num-in" id="inMt" type="text" inputmode="decimal" placeholder="숫자 입력" aria-label="두 별의 질량 합 (태양 질량)" autocomplete="off"></div>
         </div>
         <div class="control" data-modes="total" id="boxTotal" hidden>
           <div class="control-head"><label for="sSa">📏 긴반지름 a</label><output id="oSa">19.8 AU</output></div>
@@ -136,8 +136,8 @@
           <div class="opt-grid c3" id="grpCm"><button class="opt" type="button" data-k="0">시리우스<br>A–B</button><button class="opt" type="button" data-k="1">연습<br>쌍성 X</button><button class="opt" type="button" data-k="2" id="bExp">질량 비<br>실험</button></div>
         </div>
         <div class="control" data-modes="cm" id="calcCm" hidden>
-          <div class="in-row"><span id="lbM1">M_A (M☉)</span><input class="num-in" id="inM1" type="text" inputmode="decimal" placeholder="예: 2" aria-label="첫째 별의 질량 (태양 질량)" autocomplete="off"></div>
-          <div class="in-row"><span id="lbM2">M_B (M☉)</span><input class="num-in" id="inM2" type="text" inputmode="decimal" placeholder="예: 1" aria-label="둘째 별의 질량 (태양 질량)" autocomplete="off"></div>
+          <div class="in-row"><span id="lbM1">M_A (M☉)</span><input class="num-in" id="inM1" type="text" inputmode="decimal" placeholder="숫자 입력" aria-label="첫째 별의 질량 (태양 질량)" autocomplete="off"></div>
+          <div class="in-row"><span id="lbM2">M_B (M☉)</span><input class="num-in" id="inM2" type="text" inputmode="decimal" placeholder="숫자 입력" aria-label="둘째 별의 질량 (태양 질량)" autocomplete="off"></div>
         </div>
         <div class="control" data-modes="cm" id="expCm" hidden>
           <div class="control-head"><label for="sQ">🎚 별 A의 질량</label><output id="oQ">2.05 M☉</output></div>

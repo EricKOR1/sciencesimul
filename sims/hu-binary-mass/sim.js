@@ -578,7 +578,7 @@
     $$('#grpRow .opt').forEach((b) => { const k = +b.dataset.k; b.classList.toggle('on', k === TB.sel); b.classList.toggle('done', TB.done[k]); });
     const d = CMD[CM.sel];
     $('#lbM1').textContent = CM.sel === 1 ? 'M₁ (M☉)  별 1' : 'M_A (M☉)'; $('#lbM2').textContent = CM.sel === 1 ? 'M₂ (M☉)  별 2' : 'M_B (M☉)';
-    $('#inM1').placeholder = CM.sel === 1 ? '예: 1' : '예: 2'; $('#inM2').placeholder = '예: 1';
+    $('#inM1').placeholder = '숫자 입력'; $('#inM2').placeholder = '숫자 입력';
   }
   const sl = (id, oid, fmt, cb) => bindSlider($(id), $(oid), fmt, cb);
   sl('#sT', '#oT', (v) => f1(v) + '년', (v) => { SK.t = v; SK.play = false; updateCtl(); });
