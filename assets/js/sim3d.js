@@ -91,7 +91,15 @@
     btn.type = 'button'; btn.title = '3D 모형으로 보기'; btn.setAttribute('aria-label', btn.title);
     if (opts.feature) btn.setAttribute('data-feature', opts.feature);
     let place = opts.button === null ? null : (typeof opts.button === 'string' ? doc.querySelector(opts.button) : opts.button) || doc.querySelector('.stage-toolbar');
-    if (place) place.appendChild(btn); else { btn.classList.add('float'); host.appendChild(btn); }
+    // 버튼 자리가 화면에 보이지 않으면(예: 휴대폰에서 도구 막대가 숨겨짐) 실험 화면 오른쪽 위에 띄워요
+    function placeBtn() {
+      const visible = place && place.offsetParent !== null && getComputedStyle(place).display !== 'none';
+      if (visible) { if (btn.parentNode !== place) { btn.classList.remove('float'); place.appendChild(btn); } }
+      else if (btn.parentNode !== host) { btn.classList.add('float'); host.appendChild(btn); }
+    }
+    placeBtn();
+    global.addEventListener('resize', placeBtn);
+    setTimeout(placeBtn, 300);
 
     /* 창 */
     const wrap = el('div', 'v3-wrap'); wrap.hidden = true;

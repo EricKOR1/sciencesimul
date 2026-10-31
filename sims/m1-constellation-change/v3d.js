@@ -112,7 +112,7 @@
         });
         monLabs.forEach((l, i) => { const on = i + 1 === mi; l.el.style.background = on ? '#ffd34d' : ''; l.el.style.color = on ? '#1b2333' : ''; l.el.style.fontSize = on ? '13px' : '11px'; });
         {
-          const html = ('<b>' + mi + '월</b> 한밤중 · 지구가 태양의 반대쪽, <b>' + (mid ? mid.c.name : '') + '</b> 방향을 바라봐요.<br>' +
+          const html = ('<b>' + mi + '월</b> 한밤중 · 지구가 태양의 반대쪽, <b>' + (mid ? mid.c.name : '') + '</b> 🌙 방향을 바라봐요.<br>' +
             '<span style="color:#ffb347">☀ 태양 쪽(' + (sunC ? sunC.c.name : '') + ')</span>은 낮이라 별이 안 보여요.<br>지구가 공전하면 한밤중 방향이 달라져 <b>별자리가 계절마다 바뀌어요.</b>');
           if (html !== last) { last = html; info(html); }
         }
