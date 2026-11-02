@@ -10,6 +10,7 @@
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛟</text></svg>">
   <link rel="stylesheet" href="../../assets/fonts/pretendard/pretendardvariable-dynamic-subset.css">
   <link rel="stylesheet" href="../../assets/css/common.css">
+  <script>try{var t=localStorage.getItem("sciencesimul:theme");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
   <style>
     .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; }
     .toolbar-label small { font-weight: 700; color: #8a95a6; }
@@ -50,7 +51,7 @@
     .mini-table { border-collapse: collapse; width: 100%; font-size: 14px; margin: 6px 0; }
     .mini-table th, .mini-table td { border: 1px solid var(--line); padding: 5px 8px; text-align: center; vertical-align: middle; }
     .mini-table tr:first-child th { background: var(--surface-2); }
-    .mini-table th { font-weight: 800; background: #f8fafc; white-space: nowrap; }
+    .mini-table th { font-weight: 800; background: var(--surface-2); white-space: nowrap; }
     @media (max-width: 599px) {
       .data-card { flex-direction: column; align-items: stretch; gap: 4px; }
       .data-head { flex-direction: row; gap: 8px; align-items: baseline; }

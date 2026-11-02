@@ -2687,7 +2687,7 @@
         summary: '<table><tr><th>전극</th><th>생기는 기체</th><th>확인 방법</th></tr>' +
           '<tr><td>(−)극</td><td><b>수소</b></td><td>불을 대면 ‘퍽’ 소리</td></tr>' +
           '<tr><td>(+)극</td><td><b>산소</b></td><td>꺼져 가는 불씨가 다시 타오름</td></tr></table>' +
-          '<span class="formula">물 → 수소 + 산소<br><small style="font-weight:700;color:#5d6879">(물은 분해된다)</small></span>' +
+          '<span class="formula">물 → 수소 + 산소<br><small style="font-weight:700;color:var(--muted)">(물은 분해된다)</small></span>' +
           '<div class="note">⚠️ 수산화 나트륨은 피부에 닿지 않게!</div>',
         missions: [
           {

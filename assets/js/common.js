@@ -29,7 +29,7 @@
     sim(id) {
       return Object.assign({ stars: 0, best: 0, score: 0, cursor: 0, cleared: false }, readAll().sims[id] || {});
     },
-    saveSim(id, rec) { const d = readAll(); d.sims[id] = rec; writeAll(d); },
+    saveSim(id, rec) { rec.at = Date.now(); const d = readAll(); d.sims[id] = rec; writeAll(d); },
     allSims() { return readAll().sims; },
     get(key, def) { const v = readAll().settings[key]; return v === undefined ? def : v; },
     set(key, val) { const d = readAll(); d.settings[key] = val; writeAll(d); },
@@ -333,7 +333,32 @@
     return Number(n).toLocaleString('ko-KR', { minimumFractionDigits: d || 0, maximumFractionDigits: d || 0 });
   }
 
-  /* ---------------- 헤더 (효과음, 전체 화면, 별) ---------------- */
+  /* ---------------- 밝은 화면 / 어두운 화면 ---------------- */
+  // 처음에는 기기 설정을 따르고, 버튼을 누르면 그 선택을 기억해요. (각 페이지 <head>에서도 미리 적용)
+  const THEME_KEY = 'sciencesimul:theme';
+  const darkMQ = global.matchMedia ? global.matchMedia('(prefers-color-scheme: dark)') : null;
+  function savedTheme() { try { return localStorage.getItem(THEME_KEY); } catch (e) { return null; } }
+  function isDark() { const t = document.documentElement.dataset.theme; return t ? t === 'dark' : !!(darkMQ && darkMQ.matches); }
+  function setTheme(t) {
+    document.documentElement.dataset.theme = t;
+    try { localStorage.setItem(THEME_KEY, t); } catch (e) { /* 무시 */ }
+    global.dispatchEvent(new Event('scisim-theme'));
+  }
+  (function () { const t = savedTheme(); if (t === 'dark' || t === 'light') document.documentElement.dataset.theme = t; })();
+  function themeButton(cls) {
+    const b = el('button', { class: (cls || 'icon-btn') + ' theme-btn', type: 'button', html: '<span class="ic-light" aria-hidden="true">🌙</span><span class="ic-dark" aria-hidden="true">☀️</span>' });
+    const upd = () => { const d = isDark(); b.title = d ? '밝은 화면으로' : '어두운 화면으로'; b.setAttribute('aria-label', b.title); };
+    upd();
+    b.addEventListener('click', () => { setTheme(isDark() ? 'light' : 'dark'); upd(); });
+    if (darkMQ && darkMQ.addEventListener) darkMQ.addEventListener('change', upd);
+    return b;
+  }
+
+  /* ---------------- 헤더 (효과음, 전체 화면, 별, 화면 밝기) ---------------- */
+  function setProgress(p) {
+    const h = $('.sim-header');
+    if (h) h.style.setProperty('--prog', String(Math.max(0, Math.min(1, p))));
+  }
   function wireHeader(simId) {
     const sb = $('#soundBtn');
     if (sb) {
@@ -357,6 +382,7 @@
       });
       right.insertBefore(fb, sb || null);
     }
+    if (right && !$('.theme-btn', right)) right.insertBefore(themeButton(), $('#fsBtn') || sb || null);
     const sm = $('#starMeter');
     if (sm && simId) sm.innerHTML = starsHTML(Store.sim(simId).stars);
   }
@@ -557,6 +583,7 @@
     function persist() {
       rec.cursor = idx; rec.score = score;
       Store.saveSim(simId, rec);
+      setProgress(phase === 'complete' ? 1 : idx / flat.length);
     }
     function setStars(n) {
       if (n > rec.stars) {
@@ -754,6 +781,7 @@
         rec.cursor = idx + 1; rec.score = score;
       }
       Store.saveSim(simId, rec);
+      setProgress(isLast ? 1 : (idx + 1) / flat.length);
       setTimeout(() => { if (refs.nextBtn) { refs.nextBtn.focus({ preventScroll: true }); refs.nextBtn.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } }, 80);
     }
 
@@ -816,7 +844,7 @@
     }
 
     function complete() {
-      phase = 'complete';
+      phase = 'complete'; setProgress(1);
       free = true;
       setLock(false);
       applyFeatures(allFeatures, false);
@@ -957,7 +985,7 @@
   }
 
   global.SciSim = {
-    catalogInfo, Store, Sound, el, $, $$, toast, modal, confetti, stage, pointer, loop, bindRange,
+    catalogInfo, Store, Sound, el, $, $$, themeButton, isDark, setTheme, toast, modal, confetti, stage, pointer, loop, bindRange,
     clamp, lerp, fmt, starsHTML, game, wireHeader,
   };
 })(window);
