@@ -35,8 +35,8 @@
   --radius-sm: 10px;
   --shadow: 0 1px 2px rgba(20, 40, 80, .06), 0 6px 20px rgba(20, 40, 80, .08);
   --shadow-lg: 0 10px 40px rgba(20, 40, 80, .22);
-  --font: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", system-ui, -apple-system, sans-serif;
-  --font-display: "Jua", var(--font);
+  --font: "Pretendard Variable", "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", system-ui, -apple-system, sans-serif;
+  --font-display: var(--font);
 
   --header-h: 60px;
   --side-w: 372px;
@@ -67,7 +67,7 @@ button, input, select { font: inherit; color: inherit; }
 button, a, input, label, .choice { touch-action: manipulation; }
 a { color: var(--primary); }
 h1, h2, h3, h4 { margin: 0; line-height: 1.25; }
-.display { font-family: var(--font-display); font-weight: 400; }
+.display { font-family: var(--font-display); font-weight: 800; }
 
 /* ---------- 버튼 ---------- */
 .btn {
@@ -138,7 +138,7 @@ h1, h2, h3, h4 { margin: 0; line-height: 1.25; }
 .btn-back { flex: none; }
 .sim-title { flex: 1; min-width: 0; }
 .sim-unit { font-size: 13px; font-weight: 700; color: color-mix(in srgb, var(--subject) 85%, black); line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.sim-title h1 { font-family: var(--font-display); font-weight: 400; font-size: 23px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sim-title h1 { font-family: var(--font-display); font-weight: 800; font-size: 23px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .sim-header-right { display: flex; align-items: center; gap: 8px; flex: none; }
 
 .star-meter { display: inline-flex; gap: 2px; font-size: 22px; letter-spacing: 1px; }
@@ -288,7 +288,7 @@ input[type=range]:disabled { opacity: .45; cursor: not-allowed; }
 
 .level-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
 .level-badge {
-  font-family: var(--font-display); font-size: 14px; padding: 3px 10px; border-radius: 8px;
+  font-family: var(--font-display); font-weight: 800; font-size: 14px; padding: 3px 10px; border-radius: 8px;
   background: var(--subject); color: #fff; letter-spacing: .5px; flex: none;
 }
 .level-name { font-weight: 800; font-size: 16px; flex: 1; min-width: 0; }
@@ -322,7 +322,7 @@ input[type=range]:disabled { opacity: .45; cursor: not-allowed; }
 .step-intro .si-top { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
 .step-intro .si-icon { font-size: 34px; line-height: 1; flex: none; }
 .step-intro .si-kicker { font-size: 13px; font-weight: 800; color: color-mix(in srgb, var(--subject) 85%, black); }
-.step-intro h3 { font-family: var(--font-display); font-weight: 400; font-size: 23px; }
+.step-intro h3 { font-family: var(--font-display); font-weight: 800; font-size: 23px; }
 .step-intro .si-body { font-size: 15.5px; color: #2b3445; }
 .step-intro .si-body p { margin: 6px 0; }
 .step-intro .si-q, .si-q { font-weight: 800; color: #2b3445; background: #fff; border-radius: 12px; padding: 8px 12px; margin: 8px 0; border: 1px solid var(--line); }
@@ -432,7 +432,7 @@ input[type=range]:disabled { opacity: .45; cursor: not-allowed; }
 /* 완료 화면 */
 .game-complete { text-align: center; padding: 10px 4px; }
 .game-complete .big { font-size: 54px; line-height: 1; margin: 6px 0; }
-.game-complete h3 { font-family: var(--font-display); font-weight: 400; font-size: 24px; margin: 6px 0; }
+.game-complete h3 { font-family: var(--font-display); font-weight: 800; font-size: 24px; margin: 6px 0; }
 .game-complete p { color: var(--muted); margin: 6px 0 14px; }
 
 /* =========================================================
@@ -449,7 +449,7 @@ input[type=range]:disabled { opacity: .45; cursor: not-allowed; }
   padding: 26px 24px 20px; text-align: center; animation: popIn .35s cubic-bezier(.2, 1.4, .4, 1);
 }
 @keyframes popIn { from { transform: scale(.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-.modal h2 { font-family: var(--font-display); font-weight: 400; font-size: 28px; margin-bottom: 8px; }
+.modal h2 { font-family: var(--font-display); font-weight: 800; font-size: 28px; margin-bottom: 8px; }
 .modal .modal-body { color: #3a4456; font-size: 16px; }
 .modal .modal-stars { font-size: 42px; letter-spacing: 6px; margin: 4px 0 10px; }
 .modal .modal-stars .s { color: #d9dee7; }

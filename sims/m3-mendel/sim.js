@@ -160,7 +160,7 @@
   const genName = (gen) => (gen == null ? '' : '잡종 ' + gen + '대(F' + gen + ')');
 
   /* ---------- 캔버스 배치 ---------- */
-  const FONT = '"Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif';
+  const FONT = '"Pretendard Variable","Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif';
   const BG = '#f3f8ef';
   const SLOT_STYLE = [
     { name: '♀ 암술 쪽', col: '#e0518d', soft: '#ffe4ef' },

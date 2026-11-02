@@ -201,7 +201,7 @@
   }
 
   /* ---------------- 그리기 도구 ---------------- */
-  const FONT = '"Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif';
+  const FONT = '"Pretendard Variable","Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif';
   function draw(ctx) {
     const D = {
       font(size, weight) { return (weight || 600) + ' ' + size + 'px ' + FONT; },

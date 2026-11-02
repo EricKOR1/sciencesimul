@@ -17,7 +17,7 @@
   const PHONE = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches);
   const VW = PHONE ? 600 : 800, VH = PHONE ? 900 : 560;
   const FS = PHONE ? 1.25 : 1;
-  const FONT = '"Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif';
+  const FONT = '"Pretendard Variable","Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif';
   const font = (n, bold) => (bold ? 'bold ' : '') + Math.round(n * FS) + 'px ' + FONT;
   const ORANGE = '#f26b3a', PURPLE = '#8b5cf6';
 

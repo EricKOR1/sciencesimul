@@ -15,7 +15,7 @@
   const D = SciSim.draw(ctx);
   const rgba = SciSim.color.rgba, shade = SciSim.color.shade, mixc = SciSim.color.mix;
   const approach = SciSim.approach;
-  const FONT = '"Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif';
+  const FONT = '"Pretendard Variable","Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif';
   const sstep = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
   const mkRng = (seed) => { let s = seed; return () => ((s = (s * 16807) % 2147483647) / 2147483647); };
 

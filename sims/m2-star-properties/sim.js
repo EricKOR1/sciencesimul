@@ -11,8 +11,8 @@
   'use strict';
   const { $, Sound, clamp, lerp, approach, tween } = SciSim;
   const TAU = Math.PI * 2;
-  const FONT = '"Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif';
-  const JUA = '"Jua",' + FONT;
+  const FONT = '"Pretendard Variable","Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif';
+  const JUA = FONT;
   const RM = SciSim.reduceMotion;
   const rgba = SciSim.color.rgba;
   const easeIO = (t) => -(Math.cos(Math.PI * t) - 1) / 2;

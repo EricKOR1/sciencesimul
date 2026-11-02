@@ -14,8 +14,8 @@
   const { $, Sound, clamp } = SciSim;
   const DEG = Math.PI / 180;
   const TAU = Math.PI * 2;
-  const FONT = '"Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif';
-  const DISPLAY = '"Jua", ' + FONT;
+  const FONT = '"Pretendard Variable","Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif';
+  const DISPLAY = FONT;
 
   const R = 195, RE = 20, RM = 10;          // 궤도 반지름, 지구·달 반지름 (가상 좌표, 실제 비율과 다름)
   const SPOTS = [45, 135, 225, 315];         // 2단계: 달을 옮겨 볼 자리

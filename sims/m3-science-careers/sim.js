@@ -12,8 +12,8 @@
   const EZ = SciSim.ease;
   const RM = SciSim.reduceMotion;
   const { rgba, mix, shade } = SciSim.color;
-  const FONT = '"Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif';
-  const JUA = '"Jua",' + FONT;
+  const FONT = '"Pretendard Variable","Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif';
+  const JUA = FONT;
   const EMOJI_FONT = '"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
   const fnt = (size, w, jua) => (jua ? size + 'px ' + JUA : (w || 700) + ' ' + size + 'px ' + FONT);
   const now = () => performance.now() / 1000;

@@ -1368,13 +1368,13 @@
     d2label(c, x + w / 2, y - 9, title);
   }
   function d2label(c, x, y, str) {
-    c.save(); c.font = '800 13px ' + '"Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif';
+    c.save(); c.font = '800 13px ' + '"Pretendard Variable","Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif';
     const tw = c.measureText(str).width + 18;
     c.fillStyle = '#5b21b6'; rrPath(c, x - tw / 2, y - 11, tw, 22, 11); c.fill();
     c.fillStyle = '#fff'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(str, x, y + 1); c.restore();
   }
   function tag(c, x, y, str, col) {
-    c.save(); c.font = '800 13px "Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif';
+    c.save(); c.font = '800 13px "Pretendard Variable","Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif';
     const tw = c.measureText(str).width + 20;
     c.fillStyle = col; rrPath(c, x - tw / 2, y - 12, tw, 24, 12); c.fill();
     c.fillStyle = '#fff'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(str, x, y + 1); c.restore();

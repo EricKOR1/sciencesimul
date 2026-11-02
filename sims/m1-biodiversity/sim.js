@@ -11,7 +11,7 @@
   const TAU = Math.PI * 2;
   const RM = !!SciSim.reduceMotion;
   const EASE = SciSim.ease;
-  const FONT = '"Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif';
+  const FONT = '"Pretendard Variable","Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif';
   const EMOJI_FONT = '"Apple Color Emoji","Noto Color Emoji","Segoe UI Emoji",sans-serif';
   const now = () => performance.now() / 1000;
 

@@ -19,8 +19,8 @@
   /* =========================================================
      글꼴 · 색 · 작은 도우미
      ========================================================= */
-  const FONT = '"Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif';
-  const JUA = '"Jua",' + FONT;
+  const FONT = '"Pretendard Variable","Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif';
+  const JUA = FONT;
   const MONO = 'ui-monospace,"SF Mono",Menlo,Consolas,monospace';
   const f = (s, w) => (w || 700) + ' ' + s + 'px ' + FONT;
   const fj = (s) => '400 ' + s + 'px ' + JUA;

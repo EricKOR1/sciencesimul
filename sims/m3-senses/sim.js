@@ -11,7 +11,7 @@
   const TAU = Math.PI * 2;
   const RM = !!SciSim.reduceMotion;
   const EASE = SciSim.ease;
-  const FONT = '"Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif';
+  const FONT = '"Pretendard Variable","Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif';
   const rgba = SciSim.color.rgba, shade = SciSim.color.shade, mix = SciSim.color.mix;
   const smoothstep = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
   const W = 800, H = 560, BG = '#eef4ef';

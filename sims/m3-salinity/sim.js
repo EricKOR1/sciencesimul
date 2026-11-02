@@ -13,7 +13,7 @@
   const approach = SciSim.approach, EZ = SciSim.ease;
   const shade = SciSim.color.shade, rgba = SciSim.color.rgba, mixc = SciSim.color.mix;
   const TAU = Math.PI * 2;
-  const FONT = '"Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif';
+  const FONT = '"Pretendard Variable","Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif';
   const MONO = 'ui-monospace,"SF Mono",Menlo,Consolas,monospace';
   const VW = 800, VH = 600;
   const SS = Math.max(1.5, Math.min(2, window.devicePixelRatio || 1));

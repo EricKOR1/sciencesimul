@@ -15,7 +15,7 @@
   const VW = PHONE ? 600 : 800, VH = PHONE ? 900 : 560;
   const FS = PHONE ? 1.3 : 1;
   const CS = PHONE ? 1.3 : 1;                 // 자동차 크기 배율
-  const FONT = '"Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif';
+  const FONT = '"Pretendard Variable","Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif';
   const font = (n, bold) => (bold ? '800 ' : '600 ') + Math.round(n * FS) + 'px ' + FONT;
   const mono = (n) => '800 ' + Math.round(n * FS) + 'px ui-monospace,Menlo,Consolas,monospace';
   const COL = { A: '#3867f4', B: '#f26b3a', C: '#8b5cf6', ME: '#f59e0b' };

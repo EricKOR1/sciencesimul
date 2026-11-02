@@ -13,8 +13,8 @@
   const { $, Sound, clamp } = SciSim;
   const DEG = Math.PI / 180;
   const TAU = Math.PI * 2;
-  const FONT = '"Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif';
-  const DISPLAY = '"Jua", ' + FONT;
+  const FONT = '"Pretendard Variable","Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif';
+  const DISPLAY = FONT;
 
   /* ---------- 모형 기하 (가상 좌표) ---------- */
   const R = 185, RE = 30, RM = 11;  // 달 궤도 반지름, 지구·달 반지름

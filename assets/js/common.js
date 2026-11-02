@@ -283,6 +283,11 @@
     return { stop() { running = false; } };
   }
 
+  /* 글꼴(Pretendard)이 늦게 도착해도 캔버스 글자를 새 글꼴로 다시 그리게 해요 */
+  if (global.document && global.document.fonts && global.document.fonts.ready) {
+    global.document.fonts.ready.then(() => { markDirty(30); try { global.dispatchEvent(new Event('resize')); } catch (e) {} });
+  }
+
   /* 화면 회전 등으로 휴대폰(600px 미만) ↔ 태블릿 배치가 바뀌면 새로 불러와 그 화면에 맞게 다시 그려요.
      (실험 코드가 처음 열 때 휴대폰 여부로 그림 배치를 정하기 때문이에요. 진행 기록은 미션 단위로 저장돼 있어요) */
   if (global.matchMedia && global.document && /\/sims\//.test(global.location.pathname)) {

@@ -15,7 +15,7 @@
   const RM = !!SciSim.reduceMotion;
   const approach = SciSim.approach;
   const rgba = SciSim.color.rgba;
-  const FONT = '"Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif';
+  const FONT = '"Pretendard Variable","Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif';
   const MONO = 'ui-monospace,"SF Mono",Menlo,Consolas,monospace';
   const font = (px, w) => (w || 700) + ' ' + px.toFixed(1) + 'px ' + FONT;
   const mono = (px, w) => (w || 800) + ' ' + px.toFixed(1) + 'px ' + MONO;

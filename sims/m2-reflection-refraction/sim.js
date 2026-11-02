@@ -38,7 +38,7 @@
   /* =========================================================
      그리기 도구
      ========================================================= */
-  const FONT = '"Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif';
+  const FONT = '"Pretendard Variable","Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif';
   const font = (s, w) => (w || 800) + ' ' + Math.round(s * FS * 2) / 2 + 'px ' + FONT;
   function rr(x, y, w, h, r) {
     r = Math.max(0, Math.min(r, w / 2, h / 2));

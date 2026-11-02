@@ -61,7 +61,7 @@
 .v3-view:active { cursor: grabbing; }
 .v3-view canvas { display: block; width: 100%; height: 100%; }
 .v3-labels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
-.v3-lab { position: absolute; transform: translate(-50%, -50%); padding: 2px 7px; border-radius: 8px; background: rgba(8,12,24,.72); color: #fff; font-weight: 800; font-size: 12.5px; white-space: nowrap; }
+.v3-lab { position: absolute; transform: translate(-50%, -50%); padding: 3px 8px; border-radius: 8px; background: rgba(8,12,24,.78); border: 1px solid rgba(255,255,255,.18); box-shadow: 0 2px 8px rgba(0,0,0,.35); color: #fff; font-weight: 700; font-size: 13px; letter-spacing: -0.01em; white-space: nowrap; backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
 .v3-info { position: absolute; left: 10px; top: 10px; max-width: min(320px, 70%); padding: 8px 10px; border-radius: 12px; background: rgba(8,12,24,.7); font-size: 13px; line-height: 1.45; pointer-events: none; }
 .v3-info:empty { display: none; }
 .v3-ctl { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; padding: 8px 10px; background: rgba(8,12,24,.55); }
@@ -79,6 +79,52 @@
   }
 
   function el(tag, cls, html) { const n = doc.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  /* 스튜디오 환경광: 그라데이션 하늘 + 소프트박스 3개를 PMREM으로 굽기 (한 번만 만들어 재사용) */
+  let envCache = null;
+  function studioEnv(THREE, renderer) {
+    if (envCache) return envCache;
+    const pm = new THREE.PMREMGenerator(renderer);
+    const es = new THREE.Scene();
+    const g = new THREE.SphereGeometry(10, 48, 24);
+    const pos = g.attributes.position, cols = [];
+    for (let i = 0; i < pos.count; i++) {
+      const t = pos.getY(i) / 10 * 0.5 + 0.5; // 아래 0 → 위 1
+      const c = new THREE.Color().setRGB(0.05 + 0.16 * t, 0.06 + 0.17 * t, 0.09 + 0.20 * t);
+      cols.push(c.r, c.g, c.b);
+    }
+    g.setAttribute('color', new THREE.Float32BufferAttribute(cols, 3));
+    es.add(new THREE.Mesh(g, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.BackSide })));
+    const box = (x, y, z, w, h, k, tint) => {
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: new THREE.Color(tint || 0xffffff).multiplyScalar(k), side: THREE.DoubleSide }));
+      m.position.set(x, y, z); m.lookAt(0, 0, 0); es.add(m);
+    };
+    box(0, 8.5, 2, 9, 6, 1.25);                // 위쪽 큰 조명
+    box(7.5, 2.5, 5, 4, 7, 0.8);               // 오른쪽 앞
+    box(-8, 1.5, -2, 3.5, 6, 0.45, 0xbcd4ff);  // 왼쪽 푸른 보조광
+    const tex = pm.fromScene(es, 0.035).texture;
+    pm.dispose();
+    envCache = tex;
+    return tex;
+  }
+
+  /* 둥근 도형을 더 매끄럽게: 너무 적은 분할 수는 최소값으로 올려요 (모든 3D 화면 공통) */
+  let geoPatched = false;
+  function upgradeGeometry(THREE) {
+    if (geoPatched) return; geoPatched = true;
+    const wrap = (name, fix) => {
+      const Base = THREE[name]; if (!Base) return;
+      const Up = class extends Base { constructor(...a) { super(...fix(a)); } };
+      THREE[name] = Up;
+    };
+    const atLeast = (v, d, m) => Math.max(v === undefined ? d : v, m);
+    wrap('SphereGeometry', (a) => { a[1] = atLeast(a[1], 32, 28); a[2] = atLeast(a[2], 16, 20); return a; });
+    wrap('CylinderGeometry', (a) => { a[3] = atLeast(a[3], 32, 24); return a; });
+    wrap('ConeGeometry', (a) => { a[2] = atLeast(a[2], 32, 24); return a; });
+    wrap('TorusGeometry', (a) => { a[2] = atLeast(a[2], 12, 16); a[3] = atLeast(a[3], 48, 64); return a; });
+    wrap('CircleGeometry', (a) => { a[1] = atLeast(a[1], 32, 48); return a; });
+    wrap('RingGeometry', (a) => { a[2] = atLeast(a[2], 32, 64); return a; });
+  }
 
   function attach(opts) {
     injectCSS();
@@ -118,7 +164,7 @@
     host.appendChild(wrap);
 
     let THREE = null, renderer = null, scene = null, camera = null, root = null, user = null;
-    let raf = 0, last = 0, isOpen = false, touched = false, built = false;
+    let raf = 0, last = 0, isOpen = false, touched = false, built = false, frameN = 0;
     const cam0 = Object.assign({ dist: 8, theta: 0.6, phi: 1.15, fov: 45, target: [0, 0, 0], min: 2, max: 40 }, opts.camera || {});
     const orbit = { dist: cam0.dist, theta: cam0.theta, phi: cam0.phi, tx: cam0.target[0], ty: cam0.target[1], tz: cam0.target[2] };
     const labs = [];
@@ -226,25 +272,80 @@
       const dt = Math.min(0.05, Math.max(0, (t - last) / 1000)); last = t;
       if (!touched && opts.autoRotate) orbit.theta += opts.autoRotate * dt;
       if (user && user.update) { try { user.update(dt, t / 1000); } catch (e) { console.error(e); } }
+      if (shadowOn && (frameN++ % 20 === 0)) { markShadows(); fitShadow(); }
       placeCamera();
       renderer.render(scene, camera);
       drawLabels();
     }
 
     function build() {
-      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
       renderer.setPixelRatio(Math.min(global.devicePixelRatio || 1, 2));
       if ('outputEncoding' in renderer) renderer.outputEncoding = THREE.sRGBEncoding;
       view.insertBefore(renderer.domElement, labels);
       scene = new THREE.Scene();
       camera = new THREE.PerspectiveCamera(cam0.fov, 1, 0.05, 2000);
-      scene.add(new THREE.HemisphereLight(0xeaf2ff, 0x2a2f45, 0.85));
-      const sun = new THREE.DirectionalLight(0xffffff, 0.9); sun.position.set(5, 8, 6); scene.add(sun);
+      // 스튜디오 조명 반사(환경광): 표면에 부드러운 하이라이트와 입체감이 생겨요
+      let env = null; try { env = studioEnv(THREE, renderer); } catch (e) { /* 지원하지 않는 기기면 생략 */ }
+      const hemi = new THREE.HemisphereLight(0xeaf2ff, 0x2a2f45, 0.85);
+      const sun = new THREE.DirectionalLight(0xffffff, 0.9); sun.position.set(5, 8, 6);
+      [hemi, sun].forEach((l) => { l.userData.v3engine = true; scene.add(l); });
       root = new THREE.Group(); scene.add(root);
       user = opts.build ? opts.build({ THREE, scene, camera, root, renderer, label, info: (h) => { info.innerHTML = h || ''; }, controls, orbit }) || {} : {};
+      // 차시가 직접 조명(태양 등)을 두면 낮·밤 대비가 중요하므로 환경 반사를 쓰지 않아요
+      // (차시가 기본 조명을 바꾸거나 새 조명을 더했으면 그 조명을 그대로 존중해요)
+      let ownLight = hemi.intensity !== 0.85 || sun.intensity !== 0.9 || sun.position.x !== 5 || sun.position.y !== 8 || sun.position.z !== 6;
+      scene.traverse((o) => { if (o.isLight && !o.userData.v3engine) ownLight = true; });
+      if (!ownLight && opts.studio !== false) {
+        if (env) { scene.environment = env; hemi.intensity = 0.7; }
+        const rim = new THREE.DirectionalLight(0x9fc4ff, 0.3); rim.position.set(-6, 3, -7); rim.userData.v3engine = true; scene.add(rim);
+        if (opts.shadows !== false) setupShadows();
+      }
       built = true;
       if (global.ResizeObserver) new ResizeObserver(resize).observe(view);
       resize();
+    }
+
+    /* 부드러운 그림자: 물체끼리 드리우는 그림자로 앞뒤 깊이를 느끼게 해요 (기본 조명을 쓰는 화면만) */
+    let shadowOn = false, shadowSun = null;
+    function setupShadows() {
+      shadowSun = null;
+      scene.traverse((o) => { if (o.isDirectionalLight && o.userData.v3engine && !shadowSun && o.intensity >= 0.9) shadowSun = o; });
+      if (!shadowSun) return;
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      shadowSun.castShadow = true;
+      shadowSun.shadow.mapSize.set(2048, 2048);
+      shadowSun.shadow.radius = 4;
+      shadowOn = true;
+      fitShadow();
+    }
+    const tmpBox = { b: null, s: null };
+    function fitShadow() {
+      if (!shadowOn) return;
+      if (!tmpBox.b) { tmpBox.b = new THREE.Box3(); tmpBox.s = new THREE.Sphere(); }
+      tmpBox.b.setFromObject(root);
+      if (tmpBox.b.isEmpty()) return;
+      tmpBox.b.getBoundingSphere(tmpBox.s);
+      const r = Math.max(0.5, tmpBox.s.radius) * 1.15, c = tmpBox.s.center;
+      const dir = new THREE.Vector3(5, 8, 6).normalize();
+      shadowSun.position.copy(c).addScaledVector(dir, r * 2.5);
+      shadowSun.target.position.copy(c); shadowSun.target.updateMatrixWorld();
+      const cam = shadowSun.shadow.camera;
+      cam.left = -r; cam.right = r; cam.top = r; cam.bottom = -r; cam.near = 0.01; cam.far = r * 5;
+      cam.updateProjectionMatrix();
+      shadowSun.shadow.bias = -0.0004;
+      shadowSun.shadow.normalBias = r * 0.004;
+    }
+    // 새로 생긴 물체에도 그림자를 켜요 (불투명한 입체만)
+    function markShadows() {
+      root.traverse((o) => {
+        if (!o.isMesh || o.userData.v3shadow) return;
+        o.userData.v3shadow = true;
+        const m = Array.isArray(o.material) ? o.material[0] : o.material;
+        const solid = m && (m.isMeshStandardMaterial || m.isMeshPhongMaterial || m.isMeshLambertMaterial) && !m.transparent;
+        if (solid) { o.castShadow = true; o.receiveShadow = true; }
+      });
     }
 
     function open() {
@@ -258,10 +359,10 @@
         resize(); last = performance.now(); cancelAnimationFrame(raf); raf = requestAnimationFrame(frame);
         if (opts.onOpen) try { opts.onOpen(); } catch (e) { console.error(e); }
       };
-      if (THREE) go();
+      if (THREE) go(); else if (global.THREE) { upgradeGeometry(global.THREE); THREE = global.THREE; go(); }
       else {
         const msg = el('div', 'v3-msg', '3D 모형을 불러오는 중…'); view.appendChild(msg);
-        loadThree().then((T) => { THREE = T; msg.remove(); go(); }).catch(() => { msg.textContent = '3D 모형을 불러오지 못했어요. 인터넷 연결을 확인해 주세요.'; });
+        loadThree().then((T) => { upgradeGeometry(T); THREE = T; msg.remove(); go(); }).catch(() => { msg.textContent = '3D 모형을 불러오지 못했어요. 인터넷 연결을 확인해 주세요.'; });
       }
     }
     function close() {

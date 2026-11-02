@@ -40,7 +40,7 @@
   const BIN_X = 16, BIN_W = 132, BIN_H = 168;
   const CARD_X = 598, CARD_W = 188;
   const INSET = { x: 82, y: 250, r: 64 };    // 원자핵 확대 그림 (1단계)
-  const FONT = '"Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif';
+  const FONT = '"Pretendard Variable","Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif';
   const COL = { p: '#e2464b', e: '#3867f4', n: '#8a94a6', good: '#14a058', ink: '#1b2333', muted: '#5d6879', line: '#dde4ef', warn: '#f26b3a', sub: '#8b5cf6' };
   const MAXQ = 6;
 

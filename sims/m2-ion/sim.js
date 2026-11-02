@@ -43,7 +43,7 @@
   const EBIN = { x: 16, y: 176, w: 132, h: 168 };
   const CARD1 = { x: 598, y: 14, w: 188, h: 246 };
   const CARD2 = { x: 598, y: 272, w: 188, h: 234 };
-  const FONT = '"Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif';
+  const FONT = '"Pretendard Variable","Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif';
   const COL = { p: '#e2464b', e: '#3867f4', good: '#14a058', ink: '#1b2333', muted: '#5d6879', line: '#dde4ef', warn: '#f26b3a', sub: '#8b5cf6', cu: '#1f7ae0', mn: '#8e2fb5' };
   const MAXQ = 4;
 

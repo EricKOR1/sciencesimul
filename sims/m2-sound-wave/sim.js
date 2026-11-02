@@ -17,7 +17,7 @@
   const approach = SciSim.approach;
   const EASE = SciSim.ease;
   const rgba = SciSim.color.rgba;
-  const FONT = '"Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif';
+  const FONT = '"Pretendard Variable","Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif';
   const font = (px, w) => (w || 700) + ' ' + (Math.round(px * 2) / 2) + 'px ' + FONT;
   const mark = (b) => (b ? '✅' : '⬜');
   const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };

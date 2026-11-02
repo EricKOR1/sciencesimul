@@ -89,7 +89,7 @@
     wide: { w: 800, h: 520, panel: { x: 512, y: 10, w: 278, h: 500 } },
     tall: { w: 500, h: 860, panel: { x: 10, y: 528, w: 480, h: 324 } },
   };
-  const FONT = '"Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif';
+  const FONT = '"Pretendard Variable","Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif';
   const MONO = 'ui-monospace,"SF Mono",Menlo,Consolas,monospace';
   const f = (size, w) => (w || 'bold') + ' ' + size + 'px ' + FONT;
   const WIRE_P = '#d9434f', WIRE_N = '#3d4a63';

@@ -11,8 +11,8 @@
   'use strict';
   const { $, $$, Sound, clamp } = SciSim;
   const TAU = Math.PI * 2, DEG = Math.PI / 180;
-  const FONT = '"Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif';
-  const DISPLAY = '"Jua", ' + FONT;
+  const FONT = '"Pretendard Variable","Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif';
+  const DISPLAY = FONT;
   const RM = !!SciSim.reduceMotion;
   const rgba = SciSim.color.rgba, shade = SciSim.color.shade, mixc = SciSim.color.mix;
   const approach = SciSim.approach, ease = SciSim.ease;

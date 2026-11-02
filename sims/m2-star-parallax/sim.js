@@ -11,7 +11,7 @@
   'use strict';
   const { $, Sound, clamp, lerp, approach, tween } = SciSim;
   const DEG = Math.PI / 180, TAU = Math.PI * 2;
-  const FONT = '"Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif';
+  const FONT = '"Pretendard Variable","Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif';
   const RM = SciSim.reduceMotion;
   const rgba = SciSim.color.rgba;
   const easeIO = (t) => -(Math.cos(Math.PI * t) - 1) / 2;
@@ -613,14 +613,14 @@
     const dTxt = settled ? String(nd) : A.distV.toFixed(1);
     const lyTxt = (A.distV * 3.26).toFixed(1);
     if (wide) {
-      txt(ctx, pTxt + '″', Q.x + Q.w / 2, c.y + 62, 46, '#ffd36b', { weight: 900, font: '"Jua",' + FONT });
+      txt(ctx, pTxt + '″', Q.x + Q.w / 2, c.y + 62, 46, '#ffd36b', { weight: 900, font: FONT });
       txt(ctx, '연주시차', Q.x + Q.w / 2, c.y + 84, 14, '#bcd0ff', { weight: 700 });
       pill(ctx, Q.x + Q.w / 2, c.y + 122, '별까지의 거리  ' + dTxt + ' pc', { bg: 'rgba(14,60,110,.9)', size: 17, pad: 12, border: 'rgba(125,211,252,.5)' });
       txt(ctx, '= ' + lyTxt + '광년', Q.x + Q.w / 2, c.y + 166, 18, '#e8f0ff', { weight: 800 });
       if (nd === 1 && settled) txt(ctx, '연주시차 1″ ⇒ 1 pc(파섹)', Q.x + Q.w / 2, c.y + 202, 14, '#ffd36b', { weight: 800 });
     } else {
       const nx = Q.x + 330;
-      txt(ctx, pTxt + '″', nx, Q.y + 100, 44, '#ffd36b', { weight: 900, font: '"Jua",' + FONT });
+      txt(ctx, pTxt + '″', nx, Q.y + 100, 44, '#ffd36b', { weight: 900, font: FONT });
       txt(ctx, '연주시차', nx, Q.y + 122, 14, '#bcd0ff', { weight: 700 });
       pill(ctx, nx, Q.y + 160, '거리  ' + dTxt + ' pc', { bg: 'rgba(14,60,110,.9)', size: 17, pad: 12, border: 'rgba(125,211,252,.5)' });
       txt(ctx, '= ' + lyTxt + '광년', nx, Q.y + 204, 18, '#e8f0ff', { weight: 800 });
@@ -880,7 +880,7 @@
     ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(22, 28, 3, 0, TAU); ctx.fill();
     txt(ctx, c.st.name, 40, 34, 16, '#fff', { align: 'left', weight: 800, maxW: w - 52 });
     txt(ctx, c.st.con, 14, 58, 13, '#aac0f0', { align: 'left', weight: 700 });
-    txt(ctx, '연주시차 ' + c.st.p + '″', 14, h - 16, 21, '#ffd36b', { align: 'left', weight: 900, font: '"Jua",' + FONT });
+    txt(ctx, '연주시차 ' + c.st.p + '″', 14, h - 16, 21, '#ffd36b', { align: 'left', weight: 900, font: FONT });
     ctx.restore();
   }
 
