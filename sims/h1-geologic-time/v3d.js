@@ -14,7 +14,7 @@
     levels: [0, 1],
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
-      const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.85, metalness: 0.02 }, o || {}));
+      const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ envMapIntensity: 0.6, color: c, roughness: 0.85, metalness: 0.02 }, o || {}));
       const W = 6.4, D = 4.2;
       const ERA = [
         { key: 'pre', name: '선캄브리아시대', yr: '46억~5.4억 년 전', h: 1.7, bands: [0x6c5d4c, 0x7a6a55, 0x5f5242, 0x84735c], col: '#8a7a64' },
@@ -55,11 +55,11 @@
         return g;
       }
       function ammonite() {
-        const g = new THREE.Group(), m = fossilMat(0x8a5a2b), n = 90;
+        const g = new THREE.Group(), m = fossilMat(0x8a5a2b), m2 = fossilMat(0xa97339), n = 46;
         for (let i = 0; i < n; i++) {
-          const t = i / (n - 1), a = t * Math.PI * 5.2, r = 0.05 + t * 0.52 * (0.45 + 0.55 * t);
-          const rr = 0.028 + t * 0.12;
-          const s = new THREE.Mesh(new THREE.SphereGeometry(rr, 10, 8), i % 6 < 3 ? m : fossilMat(0xa97339));
+          const t = i / (n - 1), a = t * Math.PI * 4.6, r = 0.05 + t * 0.52 * (0.45 + 0.55 * t);
+          const rr = 0.04 + t * 0.15;
+          const s = new THREE.Mesh(new THREE.SphereGeometry(rr, 8, 6), i % 6 < 3 ? m : m2);
           s.position.set(Math.cos(a) * r, Math.sin(a) * r, 0); s.scale.z = 0.7; g.add(s);
         }
         g.scale.setScalar(0.95); return g;
@@ -74,10 +74,10 @@
         return g;
       }
       function tusk() {
-        const g = new THREE.Group(), m = fossilMat(0xf1e6c9), n = 40;
+        const g = new THREE.Group(), m = fossilMat(0xf1e6c9), n = 22;
         for (let i = 0; i < n; i++) {
           const t = i / (n - 1), a = -0.3 + t * 1.9;
-          const s = new THREE.Mesh(new THREE.SphereGeometry(0.15 * (1 - t * 0.85) + 0.02, 12, 8), m);
+          const s = new THREE.Mesh(new THREE.SphereGeometry(0.2 * (1 - t * 0.85) + 0.03, 10, 8), m);
           s.position.set(Math.sin(a) * 0.8 - 0.4, -Math.cos(a) * 0.8 + 0.4, 0); g.add(s);
         }
         return g;
@@ -102,12 +102,12 @@
         const mats = [];
         const bh = e.h / e.bands.length;
         e.bands.forEach((c, bi) => {
-          const m = mat(c, { transparent: true, opacity: 1 }); mats.push(m);
+          const m = mat(c); mats.push(m);
           const wob = 0.04 * ((bi + ei) % 3);
           const b = new THREE.Mesh(new THREE.BoxGeometry(W - wob * 2, bh - 0.012, D - wob * 2), m);
           b.position.y = bi * bh + bh / 2; b.castShadow = true; b.receiveShadow = true; inner.add(b);
           // 지층 사이의 얇은 구분선
-          const ln = new THREE.Mesh(new THREE.BoxGeometry(W + 0.004, 0.018, D + 0.004), mat(0x2a2f3a, { transparent: true, opacity: 0.5 })); ln.position.y = bi * bh; inner.add(ln); mats.push(ln.material);
+          const ln = new THREE.Mesh(new THREE.BoxGeometry(W + 0.004, 0.018, D + 0.004), mat(0x2f3440)); ln.position.y = bi * bh; inner.add(ln); mats.push(ln.material);
         });
         eras.push({ grp, inner, mats, fossils: [], y0, h: e.h, p: 1 });
         y0 += e.h;
@@ -119,7 +119,7 @@
       function put(era, obj, x, y, key, text, rotZ, size) {
         obj.position.set(x, eras[era].y0 + y, frontZ + 0.02); obj.rotation.z = rotZ || 0;
         if (size) obj.scale.multiplyScalar(size);
-        obj.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.material.transparent = true; eras[era].mats.push(o.material); } });
+        obj.traverse((o) => { if (o.isMesh) { o.castShadow = false; eras[era].mats.push(o.material); } });
         root.add(obj); eras[era].fossils.push({ obj, label: null, text });
       }
       put(0, stromatolite(), -1.4, 0.55, 'st', '스트로마톨라이트', 0, 1.0);
@@ -144,7 +144,7 @@
       label('↑ 새로움', [-W / 2 - 0.55, topY + 0.35, 0.3], { size: 12, offset: [-0.2, 0, 0] });
 
       // 바닥 판
-      const base = new THREE.Mesh(new THREE.CylinderGeometry(5.2, 5.4, 0.3, 48), mat(0x2d3547, { roughness: 0.9 })); base.position.y = -0.17; base.receiveShadow = true; root.add(base);
+      const base = new THREE.Mesh(new THREE.CylinderGeometry(5.2, 5.4, 0.3, 48), new THREE.MeshLambertMaterial({ color: 0x2d3547 })); base.position.y = -0.17; base.receiveShadow = true; root.add(base);
 
       /* ---------- 상태 · 조작 ---------- */
       const st = { sel: 'all', labels: true, play: false, pt: 0 };
@@ -152,7 +152,7 @@
         const si = ERA.findIndex((e) => e.key === st.sel);
         eras.forEach((e, i) => {
           const dim = si >= 0 && si !== i, op = dim ? 0.18 : 1;
-          e.mats.forEach((m) => { m.opacity = op; m.depthWrite = !dim; });
+          e.mats.forEach((m) => { m.transparent = dim; m.opacity = op; m.depthWrite = !dim; });
           e.fossils.forEach((f) => { f.obj.visible = e.p > 0.98; if (f.label) f.label.show(st.labels && !dim && e.p > 0.98); });
         });
         eraLabs.forEach((l, i) => { l.show(si < 0 || si === i); });

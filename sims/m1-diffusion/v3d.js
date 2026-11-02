@@ -9,8 +9,8 @@
     title: '확산과 증발 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     levels: [0, 1, 2],
-    camera: { dist: PHN0 ? 15 : 11.5, theta: 0.5, phi: 1.12, fov: 45, target: [0, -0.2, 0], min: 5, max: 26 },
-    autoRotate: 0.1,
+    camera: { dist: 10.5 * (PHN0 ? 1.05 : 1), theta: 0.18, phi: 1.2, fov: 45, target: [0, -0.2, 0], min: 5, max: 26 },
+    autoRotate: 0.05,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       /* ---------- 공통 도구 ---------- */
@@ -21,7 +21,7 @@
       const rnd = (() => { let s = 12345; return () => { s = (s * 16807) % 2147483647; return s / 2147483647; }; })();
       const _m = new THREE.Matrix4(), _c = new THREE.Color();
       function spheres(N, r, color, seg) {
-        const m = new THREE.InstancedMesh(new THREE.SphereGeometry(r, seg || 16, Math.round((seg || 16) * 0.75)), mat(color, { roughness: 0.35 }), N);
+        const m = new THREE.InstancedMesh(new THREE.SphereGeometry(r, seg || 16, Math.round((seg || 16) * 0.75)), mat(color, { roughness: 0.55, metalness: 0 }), N);
         m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); m.frustumCulled = false; m.castShadow = true;
         for (let i = 0; i < N; i++) m.setColorAt(i, _c.set(0xffffff));
         root.add(m); return m;
@@ -59,7 +59,7 @@
             c.lineWidth = big ? 5 : 2.5; c.beginPath(); c.moveTo(128 + ca * 104, 128 - sa * 104); c.lineTo(128 + ca * (big ? 84 : 92), 128 - sa * (big ? 84 : 92)); c.stroke();
             if (big) { c.font = '800 26px sans-serif'; c.fillText(String(Math.round(v * 10) / 10), 128 + ca * 62, 128 - sa * 62); }
           }
-          c.font = '800 24px sans-serif'; c.fillStyle = '#2563eb'; c.fillText(unit, 128, 190);
+          c.font = '800 20px sans-serif'; c.fillStyle = '#2563eb'; c.fillText(unit, 128, 200);
         });
         const face = new THREE.Mesh(new THREE.CircleGeometry(R * 0.93, 48), new THREE.MeshBasicMaterial({ map: tex })); face.position.z = 0.18; g.add(face);
         const needle = new THREE.Group(); needle.position.z = 0.24;
@@ -69,6 +69,15 @@
         g.userData.set = (v) => { needle.rotation.z = (-225 + 270 * Math.max(0, Math.min(max, v)) / max) * Math.PI / 180; };
         g.userData.set(0); return g;
       }
+      /* 사방으로 빛나는 별 모양 빛 번짐 */
+      function glowSprite(size, inner, mid) { const tex = canvasTex(128, 128, (c) => { const g = c.createRadialGradient(64, 64, 0, 64, 64, 64); g.addColorStop(0, inner || 'rgba(255,235,160,1)'); g.addColorStop(0.25, mid || 'rgba(255,190,60,.55)'); g.addColorStop(1, 'rgba(255,160,0,0)'); c.fillStyle = g; c.fillRect(0, 0, 128, 128); });
+        const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false })); s.scale.set(size, size, 1); return s; }
+      function starField(n, R) { const pos = []; for (let i = 0; i < n; i++) { const u = rnd() * 2 - 1, a = rnd() * 6.283, r = Math.sqrt(1 - u * u); pos.push(Math.cos(a) * r * R, u * R, Math.sin(a) * r * R); }
+        const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); return new THREE.Points(g, new THREE.PointsMaterial({ color: 0x9fb4e8, size: 1.5, sizeAttenuation: false, transparent: true, opacity: 0.55 })); }
+      /* 행성 겉면 무늬 (가로 줄무늬 / 점무늬) */
+      function bandTex(cols, seed) { return canvasTex(256, 128, (c, w, h) => { let s = seed || 3; const r = () => { s = (s * 16807) % 2147483647; return s / 2147483647; };
+        const n = cols.length; for (let i = 0; i < 16; i++) { c.fillStyle = cols[Math.floor(r() * n)]; c.fillRect(0, i * h / 16, w, h / 16 + 1); }
+        c.globalAlpha = 0.25; for (let i = 0; i < 60; i++) { c.fillStyle = cols[Math.floor(r() * n)]; c.beginPath(); c.ellipse(r() * w, r() * h, 8 + r() * 25, 2 + r() * 4, 0, 0, 7); c.fill(); } c.globalAlpha = 1; }); }
 
       /* ---------- 고체·액체·기체 입자 모형 (용기 속 입자, 입자마다 상태를 따로 가져요) ---------- */
       const SET = {
@@ -122,7 +131,7 @@
             }
           }
         };
-        const CM = { solid: new THREE.Color(0x4f83f0), liquid: new THREE.Color(0x22b8d9), gas: new THREE.Color(0xff9a3d) };
+        const CM = { solid: new THREE.Color(0x3563d8), liquid: new THREE.Color(0x14a6cf), gas: new THREE.Color(0xf57f1f) };
         sys.draw = (colorOf) => { for (let i = 0; i < N; i++) { const p = P[i]; put(mesh, i, p.x, p.y, p.z, 1); if (colorOf !== false) mesh.setColorAt(i, CM[p.mode]); } flush(mesh); };
         sys.snap();
         return sys;
@@ -212,7 +221,7 @@
               put(ink, i, p.x, p.y, p.z, 1); cnt[Math.min(NB - 1, Math.max(0, Math.floor((p.x + LX) / BW)))]++;
             }
             flush(ink);
-            for (let i = 0; i < NB; i++) { const hh = Math.max(0.02, cnt[i] / NI * 5.5); bars[i].scale.y = hh; bars[i].position.y = -LY - 0.4 + hh / 2 + 0.03; }
+            for (let i = 0; i < NB; i++) { const hh = Math.max(0.02, cnt[i] / NI * 3.2); bars[i].scale.y = hh; bars[i].position.y = -LY - 0.4 + hh / 2 + 0.03; }
           } else {
             /* 증발: 표면 입자가 확률적으로 기체가 돼요 */
             const rate = 0.5 * Math.pow(1.065, st.T - 20);

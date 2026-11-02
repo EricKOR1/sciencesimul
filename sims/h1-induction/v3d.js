@@ -16,7 +16,7 @@
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3;
-      const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.5, metalness: 0.15 }, o || {}));
+      const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ envMapIntensity: 0.6, color: c, roughness: 0.5, metalness: 0.15 }, o || {}));
       const S0 = (window.__sim && window.__sim.S) || {};
       const st = { scene: S0.mode === 'gen' ? 'gen' : 'mag', x: -4.6, auto: false, at: 0, vel: 0, emf: 0, prevX: -4.6, rps: 1.5, n: 1, phi: 0.6, ledA: 0, ledB: 0, flowT: 0 };
 
@@ -93,15 +93,14 @@
         bulb.position.set(0, BY, z);
         const tri = new THREE.Mesh(new THREE.ConeGeometry(0.15, 0.3, 3), mat(0x2a2f3a)); tri.rotation.z = -Math.PI / 2 * dir; tri.position.set(0, BY, z);
         const bar2 = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.32, 0.18), mat(0x2a2f3a)); bar2.position.set(0.17 * dir, BY, z);
-        const pl = new THREE.PointLight(dir > 0 ? 0xff5050 : 0x50ff80, 0, 4); pl.position.set(0, BY + 0.3, z);
-        gGen.add(bulb, tri, bar2, pl); return { bulb, pl };
+        gGen.add(bulb, tri, bar2); return { bulb };
       }
       const ledA = branch(0.95, 1), ledB = branch(-0.95, -1);
       const led1L = label('LED 1', [0, BY, 0.95], { size: 11.5, offset: [0, -0.6, 0.2] });
       const led2L = label('LED 2', [0, BY, -0.95], { size: 11.5, offset: [0, -0.6, -0.2] });
 
       /* ---------- 바닥 ---------- */
-      const base = new THREE.Mesh(new THREE.CylinderGeometry(5.4, 5.6, 0.3, 48), mat(0x2d3547, { roughness: 0.9, metalness: 0 })); base.position.y = -3.4; base.receiveShadow = true; root.add(base);
+      const base = new THREE.Mesh(new THREE.CylinderGeometry(5.4, 5.6, 0.3, 48), new THREE.MeshLambertMaterial({ color: 0x2d3547 })); base.position.y = -3.4; base.receiveShadow = true; root.add(base);
 
       /* ---------- 조작 ---------- */
       let segScene, rngX, autoB, rngS, segN;
@@ -164,8 +163,8 @@
             const th = 0.12;
             const ta = Math.max(0, e - th) / 1.0, tb = Math.max(0, -e - th) / 1.0;
             st.ledA += (Math.min(1, ta) - st.ledA) * Math.min(1, dt * 14); st.ledB += (Math.min(1, tb) - st.ledB) * Math.min(1, dt * 14);
-            ledA.bulb.material.emissiveIntensity = st.ledA * 2.4; ledA.pl.intensity = st.ledA * 1.8;
-            ledB.bulb.material.emissiveIntensity = st.ledB * 2.4; ledB.pl.intensity = st.ledB * 1.8;
+            ledA.bulb.material.emissiveIntensity = st.ledA * 2.4;
+            ledB.bulb.material.emissiveIntensity = st.ledB * 2.4;
             if (st.rps === 0) info('자석이 <b>멈춰 있으면</b> 전류가 없어서 LED가 꺼져요.<br>돌리는 속도를 올려 보세요.');
             else info('자석이 돌면 전류 방향이 <b>번갈아 바뀌어서</b> LED 두 개가 번갈아 켜져요.<br>빠르게 돌리거나 자석을 2개로 하면 더 밝아져요.');
           }

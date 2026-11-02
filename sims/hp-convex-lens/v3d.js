@@ -5,6 +5,7 @@
   'use strict';
   if (!window.SciSim3D) return;
   const PHN = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches), KD = PHN ? 1.3 : 1;
+  const LV = () => (typeof window.SciSimLevel === 'number' ? window.SciSimLevel : 0);
   const TAU = Math.PI * 2, clamp = (x, a, b) => Math.max(a, Math.min(b, x));
   function tools(THREE) {
     const V3 = THREE.Vector3, Y = new V3(0, 1, 0);
@@ -39,11 +40,13 @@
     }
     return { V3, Y, M, glass, mkArrow, setArrow, tube, disc, grid, arc };
   }
+  const KDX = PHN ? 1.45 : 1;
   window.SciSim3D.attach({
     title: '볼록 렌즈와 상 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: 14 * KD, theta: 0.5, phi: 1.2, min: 5, max: 30, target: [0, 0.4, 0] },
+    camera: { dist: 15 * KDX, theta: 0.3, phi: 1.22, min: 5, max: 30, target: [0, 0.4, 0] },
     autoRotate: 0,
+    levels: [0, 1, 2],
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const { V3, M, mkArrow, setArrow, tube, glass } = tools(THREE);
@@ -61,7 +64,7 @@
       const scr = new THREE.Mesh(new THREE.BoxGeometry(0.1, 3.0, 2.4), new THREE.MeshStandardMaterial({ color: 0xf1f5f9, roughness: 0.9, transparent: true, opacity: 0.85 })); root.add(scr);
       const rays = new THREE.Group(); root.add(rays);
       const fMarks = [new THREE.Mesh(new THREE.SphereGeometry(0.1, 12, 8), M(0xa78bfa)), new THREE.Mesh(new THREE.SphereGeometry(0.1, 12, 8), M(0xa78bfa))]; fMarks.forEach((m) => root.add(m));
-      const lO = label('물체', objA, { color: '#b45309', size: 12, offset: [0, 0.55, 0] }), lI = label('상', imgA, { color: '#e2464b', size: 12, offset: [0, 0.55, 0] }), lF1 = label('F', fMarks[0], { color: '#7c3aed', size: 12, offset: [0, -0.45, 0] }), lF2 = label('F', fMarks[1], { color: '#7c3aed', size: 12, offset: [0, -0.45, 0] });
+      const lO = label('물체', objA, { color: '#b45309', size: 12, offset: [0, 0.55, 0] }), lI = label('상', imgA, { color: '#e2464b', size: 12, offset: [0, 0.55, 0] }), lF1 = label('초점 F', fMarks[0], { color: '#7c3aed', size: 12, offset: [0, -0.45, 0] }), lF2 = label('초점 F', fMarks[1], { color: '#7c3aed', size: 12, offset: [0, -0.45, 0] });
       const lL = label('볼록 렌즈', lens, { color: '#0e7490', size: 12, offset: [0, 2.7, 0] });
       let rayMeshes = [];
       function build() {

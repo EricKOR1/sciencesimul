@@ -11,7 +11,7 @@
   window.SciSim3D.attach({
     title: '캘빈 회로 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: narrow ? 15 : 12.5, theta: 0.35, phi: 1.38, target: [0, 0, 0], min: 6, max: 22 },
+    camera: { dist: narrow ? 16 : 12.5, theta: 0.35, phi: 1.38, target: [0, 0, 0], min: 6, max: 22 },
     autoRotate: 0,
     levels: [0, 2],
     build(ctx) {
@@ -40,9 +40,10 @@
       const pMat = std(0xf472b6, { emissive: 0x3a0a22 }), oMat = std(0xef4444);
       function mol(n, mat, nP) {
         const g = new THREE.Group(), cs = [];
-        for (let i = 0; i < n; i++) { const c = new THREE.Mesh(new THREE.SphereGeometry(0.17, 20, 14), mat); c.position.set((i - (n - 1) / 2) * 0.3, 0, 0); g.add(c); cs.push(c); }
+        for (let i = 0; i < n; i++) { const c = new THREE.Mesh(new THREE.SphereGeometry(0.2, 20, 14), mat); c.position.set((i - (n - 1) / 2) * 0.34, 0, 0); g.add(c); cs.push(c); }
         const ps = [];
-        for (let i = 0; i < nP; i++) { const p = new THREE.Mesh(new THREE.SphereGeometry(0.12, 14, 10), pMat); p.position.set((i === 0 ? -1 : 1) * ((n - 1) / 2 * 0.3 + 0.2), 0.12, 0); g.add(p); ps.push(p); }
+        for (let i = 0; i < nP; i++) { const p = new THREE.Mesh(new THREE.SphereGeometry(0.12, 14, 10), pMat); p.position.set((i === 0 ? -1 : 1) * ((n - 1) / 2 * 0.34 + 0.24), 0.14, 0); g.add(p); ps.push(p); }
+        const shell = new THREE.Mesh(new THREE.CapsuleGeometry(0.3, (n - 1) * 0.34, 8, 20), std(0xffffff, { transparent: true, opacity: 0.1, depthWrite: false, roughness: 0.2 })); shell.rotation.z = Math.PI / 2; g.add(shell);
         g.userData = { cs, ps }; root.add(g); return g;
       }
       const rubp = [0, 1, 2].map(() => mol(5, cMat.rubp, 2));
@@ -77,8 +78,8 @@
         const ph = PHASES.find((p) => c >= p[0] && c < p[1]) || PHASES[0];
         if (ph[2] !== phaseTxt) { phaseTxt = ph[2]; info(ph[2] + '<br><span style="color:#9fb0d4">한 바퀴 완료 ' + cycles + '회 · 밖으로 나간 G3P ' + cycles + '개</span>'); }
       }
-      const aRs = (i) => 210 - i * 32, aRe = (i) => 90 + (1 - i) * 32;
-      const aP0 = (j) => aRe(j >> 1), aP1 = (j) => S1 + (1 - (j >> 1)) * 32, aG = (j) => S2 + (1 - (j >> 1)) * 32;
+      const aRs = (i) => 210 - i * 38, aRe = (i) => 90 + (1 - i) * 38;
+      const aP0 = (j) => aRe(j >> 1), aP1 = (j) => S1 + (1 - (j >> 1)) * 38, aG = (j) => S2 + (1 - (j >> 1)) * 38;
       const rOf = (j) => R + (j % 2 ? -0.34 : 0.34);
       const zOf = () => 0.05;
       const tang = (a) => a * D2R + Math.PI / 2;
@@ -105,11 +106,11 @@
           for (let j = 0; j < 6; j++) { setPga(j, red ? cMat.g3p : cMat.pga); put(c3[j], aP1(j), rOf(j), zOf(j)); }
           atps.forEach((g, i) => {
             if (i > 2) return; g.visible = true;
-            const from = pos(S1 + 6 + i * 22, R + 3.6, 0.3), to = pos(S1 + (1 - i) * 32, R + 0.95, 0.3);
+            const from = pos(S1 + 6 + i * 22, R + 3.6, 0.3), to = pos(S1 + (1 - i) * 38, R + 0.95, 0.3);
             if (!red) { g.position.lerpVectors(from, to, k); g.userData.core.material = atpMat; g.userData.tail.forEach((q) => { q.visible = true; }); }
             else { g.position.lerpVectors(to, from, back); g.userData.core.material = adpMat; g.userData.tail.forEach((q, n) => { q.visible = n < 1; }); }
           });
-          nds.forEach((g, i) => { g.visible = true; g.material = red ? nadpMat : nadphMat; const from = pos(S1 - 10 + i * 12, R + 3.4, -0.2), to = pos(S1 + (1 - i) * 32 - 7, R - 0.95, 0.3); g.position.lerpVectors(from, to, red ? 1 - back : k); });
+          nds.forEach((g, i) => { g.visible = true; g.material = red ? nadpMat : nadphMat; const from = pos(S1 - 10 + i * 12, R + 3.4, -0.2), to = pos(S1 + (1 - i) * 38 - 7, R - 0.95, 0.3); g.position.lerpVectors(from, to, red ? 1 - back : k); });
           lab.light.show(true); lab.light.set(red ? 'ATP → ADP + Pᵢ · NADPH → NADP⁺' : '명반응에서 온 ATP · NADPH'); lab.g3p.show(red); lab.pga.show(!red);
         } else if (c < 0.76) {                            // D: G3P 가 아래로, 1개는 밖으로
           const p = ease((c - 0.62) / 0.14);
@@ -126,7 +127,7 @@
             lab.g3p.show(true);
           } else {
             const s = ease(q * 2);
-            rubp.forEach((g, i) => { put(g, S2 - i * 32, R, 0.05); recolor(g, cMat.rubp); g.userData.ps.forEach((x) => { x.visible = true; }); g.scale.setScalar(Math.min(1, 0.3 + s)); });
+            rubp.forEach((g, i) => { put(g, S2 - i * 38, R, 0.05); recolor(g, cMat.rubp); g.userData.ps.forEach((x) => { x.visible = true; }); g.scale.setScalar(Math.min(1, 0.3 + s)); });
             for (let j = 0; j < 5; j++) if (q < 0.5) { setPga(j, cMat.g3p); put(c3[j], aG(j), rOf(j), zOf(j)); c3[j].scale.setScalar(1 - ease(q * 2)); }
             atps.forEach((g, i) => { if (i > 1) return; g.visible = true; g.position.lerpVectors(pos(S2 + 8 - i * 30, R + 0.95, 0.3), pos(S2 - 22, R + 3.6 + i * 0.4, 0.3), ease(q)); g.userData.core.material = adpMat; g.userData.tail.forEach((x, n) => { x.visible = n < 1; }); });
             lab.rubp.show(true);
@@ -142,7 +143,7 @@
 
       return {
         update(dt) {
-          dt = Math.min(dt, 0.05);
+          dt = Math.min(dt, 0.05) * (window.__v3dTS || 1);
           if (!paused) {
             cc += dt * speed / PER; if (cc >= 1) { cc -= 1; cycles++; }
             if (slider) slider.value = Math.floor(cc * 100);

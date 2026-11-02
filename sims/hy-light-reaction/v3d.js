@@ -10,14 +10,16 @@
   window.SciSim3D.attach({
     title: '틸라코이드 막 명반응 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: narrow ? 15 : 12, theta: 0.18, phi: 1.36, target: [0, 0.3, 0], min: 6, max: 22 },
+    camera: { dist: narrow ? 12.8 : 10.4, theta: 0.18, phi: 1.36, target: narrow ? [-0.3, 0, 0] : [0, 0.3, 0], min: 6, max: 22 },
     autoRotate: 0,
     levels: [0, 1, 2, 3],
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V = THREE.Vector3;
+      if (narrow) root.rotation.z = Math.PI / 2;      // 휴대폰(세로 화면)에서는 눕혀 둔 모형을 세워서 보여 줘요
       let light = 0.7, minor = false;
       const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.42, metalness: 0.04 }, o || {}));
+      const A = (p) => { const o = new THREE.Object3D(); o.position.set(p[0], p[1], p[2]); root.add(o); return o; };
 
       /* ---------- 틸라코이드 막 ---------- */
       {
@@ -62,8 +64,8 @@
       const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 1.3, 10), std(0x94a3b8)); arm.position.set(0.82, -0.7, 0); synth.add(arm);
 
       /* ---------- 입자 ---------- */
-      const eCore = std(0xfef08c, { emissive: 0xa16207, roughness: 0.25 }), eGeo = new THREE.SphereGeometry(0.09, 14, 10);
-      const shellGeo = new THREE.SphereGeometry(0.24, 18, 14);
+      const eCore = std(0xfef08c, { emissive: 0xa16207, roughness: 0.25 }), eGeo = new THREE.SphereGeometry(0.13, 14, 10);
+      const shellGeo = new THREE.SphereGeometry(0.3, 18, 14);
       const shellMats = { pq: std(0xfb923c, { transparent: true, opacity: 0.55, depthWrite: false }), pc: std(0x60a5fa, { transparent: true, opacity: 0.55, depthWrite: false }), fd: std(0xf87171, { transparent: true, opacity: 0.55, depthWrite: false }) };
       const path = new THREE.CatmullRomCurve3([
         [X.II, 0.25, 0], [X.II + 0.8, -0.1, 0.2], [X.II + 1.6, 0.0, 0], [X.b6f, 0, 0], [X.b6f + 0.5, 0.75, 0], [-0.6, 1.2, 0], [X.I - 0.2, 0.7, 0], [X.I, 0.1, 0],
@@ -71,7 +73,7 @@
       ].map((p) => new V(p[0], p[1], p[2])));
       const pathLen = path.getLength();
       const eps = [], photons = [], bits = [];
-      const hMat = std(0xfde047, { emissive: 0x7a5a00 }), hGeo = new THREE.SphereGeometry(0.13, 12, 10);
+      const hMat = std(0xfde047, { emissive: 0x7a5a00 }), hGeo = new THREE.SphereGeometry(0.16, 12, 10);
       const phMat = std(0xffffff, { emissive: 0xfff3a0, emissiveIntensity: 1.2, roughness: 0.2 });
       const o2Mat = std(0xef4444), o2Geo = new THREE.SphereGeometry(0.18, 14, 10), nadphMat = std(0x22d3ee, { emissive: 0x064e5a }), atpMat = std(0xfacc15, { emissive: 0x7a5a00 });
       const lumenH = [];
@@ -103,16 +105,16 @@
       }
 
       const L = {
-        lum: label('루멘 (H⁺ 많음)', [-5.2, 2.3, 0], { color: '#7c5a10' }),
-        str: label('스트로마 (H⁺ 적음)', [-5.2, -2.1, 0], { color: '#7c5a10' }),
-        ps2: label('광계 Ⅱ', [X.II, -0.95, 0.4], { color: '#047857' }),
-        bf: label('시토크롬 b₆f', [X.b6f, -0.95, 0.4], { color: '#92400e' }),
-        ps1: label('광계 Ⅰ', [X.I, -0.95, 0.4], { color: '#4d7c0f' }),
-        syn: label('ATP 합성 효소', [X.syn + 0.2, 0.95, 0], { color: '#5b21b6' }),
-        h2o: label('물 분해 → O₂', [X.II - 1.6, 2.1, 0], { color: '#991b1b' }),
-        nad: label('NADPH', [X.fnr + 0.3, -2.3, 0], { color: '#0e7490' }),
-        pq: label('PQ', [X.II + 1.5, 0.55, 0.4], { color: '#9a3412' }), pc: label('PC', [-0.6, 1.75, 0], { color: '#1d4ed8' }), fd: label('Fd', [X.I + 0.6, -1.6, 0.4], { color: '#b91c1c' }),
-        fn: label('NADP⁺ 환원 효소', [X.fnr + 0.2, -0.45, 0.4], { color: '#075985' }),
+        lum: label('루멘 (H⁺ 많음)', A([-5.2, 2.3, 0]), { color: '#7c5a10' }),
+        str: label('스트로마 (H⁺ 적음)', A([-5.2, -2.1, 0]), { color: '#7c5a10' }),
+        ps2: label('광계 Ⅱ', A([X.II, -0.95, 0.4]), { color: '#047857' }),
+        bf: label('시토크롬 b₆f', A([X.b6f, -0.95, 0.4]), { color: '#92400e' }),
+        ps1: label('광계 Ⅰ', A([X.I, -0.95, 0.4]), { color: '#4d7c0f' }),
+        syn: label('ATP 합성 효소', A([X.syn + 0.2, 0.95, 0]), { color: '#5b21b6' }),
+        h2o: label('물 분해 → O₂', A([X.II - 1.6, 2.1, 0]), { color: '#991b1b' }),
+        nad: label('NADPH', A([X.fnr + 0.3, -2.3, 0]), { color: '#0e7490' }),
+        pq: label('PQ', A([X.II + 1.5, 0.55, 0.4]), { color: '#9a3412' }), pc: label('PC', A([-0.6, 1.75, 0]), { color: '#1d4ed8' }), fd: label('Fd', A([X.I + 0.6, -1.6, 0.4]), { color: '#b91c1c' }),
+        fn: label('NADP⁺ 환원 효소', A([X.fnr + 0.2, -0.45, 0.4]), { color: '#075985' }),
       };
       function applyLabels() { ['pq', 'pc', 'fd', 'fn'].forEach((k) => L[k].show(minor)); }
       applyLabels();
@@ -122,10 +124,11 @@
       controls.range('빛의 세기', 0, 100, 5, 70, (v) => { light = v / 100; }, (v) => v + '%');
       const mb = controls.button('전달체 이름표 보기', () => { minor = !minor; mb.classList.toggle('on', minor); mb.textContent = minor ? '전달체 이름표 가리기' : '전달체 이름표 보기'; applyLabels(); });
 
-      let spawnAcc = 0.5, ang = 0, stepAcc = 0, cnt = 0, infoT = 0, w = 0;
+      for (let i = 0; i < 10; i++) addLumenH().s = 1;
+      let spawnAcc = 1, ang = 0, stepAcc = 0, cnt = 0, infoT = 0, w = 0;
       return {
         update(dt) {
-          dt = Math.min(dt, 0.05);
+          dt = Math.min(dt, 0.05) * (window.__v3dTS || 1);
           spawnAcc += light * 1.2 * dt; if (spawnAcc >= 1 && eps.length < 7) { spawnAcc -= 1; launch(); } else if (spawnAcc >= 1) spawnAcc = 1;
           // 빛 알갱이
           for (let i = photons.length - 1; i >= 0; i--) { const p = photons[i]; p.t += dt; p.m.position.lerpVectors(p.from, p.to, Math.min(1, p.t / p.dur)); if (p.t >= p.dur) { root.remove(p.m); photons.splice(i, 1); p.cb(); } }

@@ -18,6 +18,7 @@
     camera: { dist: PHONE ? 15.5 : 11, theta: 0.65, phi: 1.1, min: 5, max: 24, target: [0, 1.2, 0] },
     autoRotate: 0,
     build(ctx) {
+      if (ctx.THREE.ColorManagement) ctx.THREE.ColorManagement.legacyMode = false;     // 색을 보이는 그대로(sRGB) 쓰도록 맞춰요
       const { THREE, root, label, info, controls } = ctx;
       const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.85, metalness: 0.0 }, o || {}));
       const grp = new THREE.Group(); root.add(grp);

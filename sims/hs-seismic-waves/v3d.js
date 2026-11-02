@@ -90,18 +90,20 @@
       }
       function refresh() { setVib(); applyMed(); fmt(); xLab.show(st.med === 'liquid' && st.wave === 'S'); }
 
+      /* 3D에서 고른 파·매질을 2D 실험에도 알려 줘요 (2D의 setWave/setMed를 그대로 불러요) */
+      const push = (k) => { try { const q = window.__sim; if (!q) return; if (k === 'wave' && q.setWave) q.setWave(st.wave); if (k === 'med' && q.setMed) q.setMed(st.med); lastWave = st.wave; lastMed = st.med; } catch (e) {} };
+      let lastWave = st.wave, lastMed = st.med;
       const wSeg = controls.segment('파의 종류', [{ value: 'P', label: 'P파' }, { value: 'S', label: 'S파' }, { value: 'R', label: '표면파' }], st.wave, (v) => {
-        if (v === 'R' && st.med === 'liquid') { st.med = 'solid'; mSeg.set('solid'); }
-        st.wave = v; st.t = 0; refresh();
+        if (v === 'R' && st.med === 'liquid') { st.med = 'solid'; mSeg.set('solid'); push('med'); }
+        st.wave = v; st.t = 0; refresh(); push('wave');
       });
       const mSeg = controls.segment('매질', [{ value: 'solid', label: '고체' }, { value: 'liquid', label: '액체' }], st.med, (v) => {
-        st.med = v; if (v === 'liquid' && st.wave === 'R') { st.wave = 'P'; wSeg.set('P'); } st.t = 0; refresh();
+        st.med = v; if (v === 'liquid' && st.wave === 'R') { st.wave = 'P'; wSeg.set('P'); } st.t = 0; refresh(); push('med'); push('wave');
       });
       const bb = controls.button('🌊 파 다시 보내기', () => { st.t = 0; });
       refresh();
 
       const ss = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
-      let lastWave = st.wave, lastMed = st.med;
       return {
         update(dt) {
           /* 2D 실험의 선택을 따라가요 */

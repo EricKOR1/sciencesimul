@@ -13,7 +13,7 @@
     const CG = new THREE.CylinderGeometry(1, 1, 1, 16);
     const stickMat = new THREE.MeshStandardMaterial({ color: 0xc3ccdd, roughness: 0.45, metalness: 0.1 });
     const V = (x, y, z) => new THREE.Vector3(x, y, z);
-    function atom(k, s) { const m = new THREE.Mesh(SG, mat(k)); m.scale.setScalar((RAD[k] || 0.4) * (s || 1)); return m; }
+    function atom(k, s, pal) { const m = new THREE.Mesh(SG, mat(pal && pal[k] !== undefined ? pal[k] : k)); m.scale.setScalar((RAD[k] || 0.4) * (s || 1)); return m; }
     function stick(a, b, r, m) {
       const d = b.clone().sub(a), len = d.length(); const s = new THREE.Mesh(CG, m || stickMat);
       s.scale.set(r, Math.max(len, 1e-4), r); s.position.copy(a).add(b).multiplyScalar(0.5);
@@ -38,9 +38,9 @@
       OH: { f: 'OH⁻', a: [['O', -0.2, 0, 0], ['H', 0.75, 0, 0]], b: [[0, 1, 1]] },
     };
     /* 분자 만들기: k는 크기 배율. 이중·삼중 결합은 막대 여러 개 */
-    function mol(M, k) {
+    function mol(M, k, pal) {
       k = k || 1; const g = new THREE.Group(); const P = M.a.map((x) => V(x[1] * k, x[2] * k, x[3] * k));
-      M.a.forEach((x, i) => { const m = atom(x[0], k); m.position.copy(P[i]); g.add(m); });
+      M.a.forEach((x, i) => { const m = atom(x[0], k, pal); m.position.copy(P[i]); g.add(m); });
       M.b.forEach((b) => {
         const A = P[b[0]], B = P[b[1]], d = B.clone().sub(A).normalize();
         let perp = d.clone().cross(V(0, 0, 1)); if (perp.lengthSq() < 0.01) perp = d.clone().cross(V(0, 1, 0)); perp.normalize().multiplyScalar(0.11 * k);
@@ -80,7 +80,7 @@
   window.SciSim3D.attach({
     title: '반응식 입자 모형 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: phone ? 19 : 14.5, theta: 0.15, phi: 1.0, min: 6, max: 30, target: [0, 0, 0] },
+    camera: { dist: phone ? 21 : 15.5, theta: 0.15, phi: 0.95, min: 6, max: 34, target: [0, -0.4, 0] },
     autoRotate: 0,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
@@ -92,16 +92,16 @@
       };
       const U = 3; // 반응 단위 3번까지
       let rx = 'w', done = 0, auto = false, autoT = 0;
-      const K = 0.55, XSP = 1.9, ZSP = 2.4;
+      const K = 0.8;
       const pools = {}; // species -> [{g, tx, ty, tz, ts}]
       const spec = [];  // 현재 반응의 종 목록
       const root2 = new THREE.Group(); root.add(root2);
       const labs = [];
       for (let i = 0; i < 4; i++) { const l = label('', [0, 0, 0], { size: 12.5 }); l.show(false); labs.push(l); }
-      const tray = (x, col) => { const t = L.glassBox(8.6, 0.25, 6.0, col, 0.2); t.position.set(x, -1.6, 0); root.add(t); return t; };
-      tray(-5.0, 0x6aa2ff); tray(5.0, 0x58d68d);
-      const arr = L.arrow([-0.2, -1.2, 0], [1.3, -1.2, 0], 0xffd34d, 0.1, 0.45); arr.position.x = -0.55; root.add(arr);
-      const aL = label('반응', [0, -0.55, 0], { size: 12 });
+      const tray = (x, col) => { const t = L.glassBox(6.4, 0.25, 4.8, col, 0.2); t.position.set(x, -1.3, 0); root.add(t); return t; };
+      tray(-4.1, 0x6aa2ff); tray(4.1, 0x58d68d);
+      const arr = L.arrow([-0.7, -1.0, 0], [0.7, -1.0, 0], 0xffd34d, 0.1, 0.45); root.add(arr);
+      const aL = label('반응', [0, -0.2, 0], { size: 12 });
 
       function slots(side, idx, count, rowsN, row) { // 한 종의 i번째 분자의 칸 위치
         const per = 3; const col = idx % per, rr = Math.floor(idx / per);
@@ -122,7 +122,7 @@
           }
         });
         labs.forEach((l) => l.show(false));
-        spec.forEach((s, i) => { const l = labs[i]; l.obj = [s.side < 0 ? -5 : 5, 0.0, (s.row - (s.rows - 1) / 2) * ZSP * 1.1 - 1.25]; l.show(true); l.off = [0, 1.9, 0]; });
+        spec.forEach((s, i) => { const l = labs[i]; l.obj = [s.side < 0 ? -4.1 : 4.1, 0.0, (s.row - (s.rows - 1) / 2) * 2.9 - 1.2]; l.show(true); l.off = [0, 2.0, 0]; });
         place(true); text();
       }
       function counts(s) { return s.side < 0 ? s.c * (U - done) : s.c * done; }
@@ -132,9 +132,9 @@
           s.pool.forEach((p) => {
             const here = p.i < cnt;
             const per = 3, col = p.i % per, rr = Math.floor(p.i / per);
-            const x = (s.side < 0 ? -5.0 : 5.0) + (col - 1) * 1.7;
-            const z = (s.row - (s.rows - 1) / 2) * 2.7;
-            p.tx = here ? x : 0; p.ty = here ? -0.9 + rr * 1.15 : 0.2; p.tz = here ? z : 0; p.ts = here ? 1 : 0.001;
+            const x = (s.side < 0 ? -4.1 : 4.1) + (col - 1) * 1.9;
+            const z = (s.row - (s.rows - 1) / 2) * 2.9;
+            p.tx = here ? x : 0; p.ty = here ? -0.6 + rr * 1.25 : 0.2; p.tz = here ? z : 0; p.ts = here ? 1 : 0.001;
             if (snap) { p.g.position.set(p.tx, p.ty, p.tz); p.g.scale.setScalar(p.ts); }
           });
         });

@@ -15,6 +15,7 @@
     camera: { dist: PHONE ? 13 : 9.5, theta: 0.5, phi: 1.15, min: 4.5, max: 24, target: [0, 0.2, 0] },
     autoRotate: 0.15,
     build(ctx) {
+      if (ctx.THREE.ColorManagement) ctx.THREE.ColorManagement.legacyMode = false;     // 색을 보이는 그대로(sRGB) 쓰도록 맞춰요
       const { THREE, root, label, info, controls } = ctx;
       const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.8, metalness: 0 }, o || {}));
       const gA = new THREE.Group(), gB = new THREE.Group(); root.add(gA, gB);
@@ -81,9 +82,9 @@
       /* 심성암체 + 접촉 변성대 (오른쪽) */
       const dome = (cx, cy, rx, ry) => { const a = []; for (let i = 0; i <= 28; i++) { const t = Math.PI * i / 28; a.push([cx + Math.cos(t) * rx, cy - Math.sin(t) * ry + ry * 0]); } return a; };
       const half = (cx, cy, rx, ry) => { const a = []; for (let i = 0; i <= 28; i++) { const t = Math.PI * i / 28; a.push([cx + Math.cos(t) * rx, cy + Math.sin(t) * ry]); } return a; };
-      const aur = (rx, ry, col, d) => ext(half(2.7, YB, rx, ry), std(col, { transparent: false }), -ZD + d, ZD * 2 - 2 * d);
-      aur(2.2, 3.0, 0x9a7a52, 0.0); aur(1.75, 2.45, 0x6a4b48, 0.02);
-      const plut = ext(half(2.7, YB, 1.2, 1.9), std(0xc0443a, { emissive: 0x4a0f0a, emissiveIntensity: 0.55, roughness: 0.6 }), -ZD + 0.04, ZD * 2 - 0.08);
+      const aur = (rx, ry, col, e) => ext(half(2.7, YB, rx, ry), std(col), -ZD, ZD * 2 + e);
+      aur(2.2, 3.0, 0x9a7a52, 0.02); aur(1.75, 2.45, 0x6a4b48, 0.03);
+      const plut = ext(half(2.7, YB, 1.2, 1.9), std(0xc0443a, { emissive: 0x4a0f0a, emissiveIntensity: 0.55, roughness: 0.6 }), -ZD, ZD * 2 + 0.04);
       const aurTop = new THREE.Mesh(new THREE.BoxGeometry(0.01, 0.01, 0.01), std(0)); gB.add(aurTop);
       /* 힘 화살표 */
       const cL = arrow(gB, 0xffd34d, 1, 0.1), cR = arrow(gB, 0xffd34d, 1, 0.1); setArrow(cL, 1.4); setArrow(cR, 1.4); cL.rotation.z = -Math.PI / 2; cR.rotation.z = Math.PI / 2; cL.position.set(-XW - 1.6, -1.2, 0); cR.position.set(-0.4 + 0.0, 0, 0); cR.visible = false;
@@ -96,7 +97,7 @@
       function infoB() { info('깊이가 깊을수록 온도와 압력이 커져 <b>변성도가 높아져요</b>.<br>마그마 둘레에는 열 때문에 <b>좁은 접촉 변성대</b>(혼펠스 등)가 생겨요.'); }
       const rD = controls.range('깊이', 0, 3, 0.1, dz, (v) => setD(v), (v) => Math.round(v * 12) + ' km');
       const bEls = [].slice.call(gcEl.children, n0 + 3);   // (깊이 슬라이더 이후)
-      let view = 'A';
+      let view = 'A', lastG = null;
       const segV = controls.segment('보기', [{ value: 'A', label: '🔬 열·압력' }, { value: 'B', label: '⛰️ 변동대 단면' }], view, (v) => setView(v));
       function setView(v) {
         view = v; gA.visible = v === 'A'; gB.visible = v === 'B'; segV.set(v);
@@ -120,7 +121,7 @@
       setView(view);
       return {
         update(dt, t) {
-          if (view === 'A') { frame.rotation.y = 0; flakes.rotation.y = 0; }
+          try { const S = window.__sim && window.__sim.S; if (S && S.grain && view === 'A') { const key = S.grain.T + '|' + S.grain.P; if (key !== lastG) { lastG = key; T = clamp(Math.round((S.grain.T - 20) / 680 * 100 / 5) * 5, 0, 100); P = clamp(Math.round(S.grain.P / 600 * 100 / 5) * 5, 0, 100); rT.set(T); rP.set(P); applyA(); } } } catch (e) {}
           plut.material.emissiveIntensity = 0.5 + 0.12 * Math.sin(t * 2);
         },
         sync() {},

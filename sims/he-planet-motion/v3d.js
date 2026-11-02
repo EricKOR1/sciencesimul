@@ -13,9 +13,10 @@
   window.SciSim3D.attach({
     title: '행성의 겉보기 운동 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: PHONE ? 15 : 11.5, theta: 0.5, phi: 0.95, min: 5, max: 26 },
+    camera: { dist: PHONE ? 19 : 12.5, theta: 0.5, phi: 0.95, min: 5, max: 30 },
     autoRotate: 0,
     build(ctx) {
+      if (ctx.THREE.ColorManagement) ctx.THREE.ColorManagement.legacyMode = false;     // 색을 보이는 그대로(sRGB) 쓰도록 맞춰요
       const { THREE, scene, root, label, info, controls } = ctx;
       const SIM = () => window.__sim;
       const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.55, metalness: 0.05 }, o || {}));

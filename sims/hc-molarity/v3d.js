@@ -80,25 +80,25 @@
   window.SciSim3D.attach({
     title: '몰 농도 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: phone ? 15 : 11, theta: 0.5, phi: 1.2, min: 5, max: 24, target: [0, 2.2, 0] },
+    camera: { dist: phone ? 11.5 : 11, theta: 0.5, phi: 1.2, min: 5, max: 24, target: [0, 2.2, 0] },
     autoRotate: 0.15,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const L = makeLib(THREE);
       const R = 2.1;
       const SOL = {
-        glu: { name: '포도당', parts: [['glu', 0xffb54d, 0.17, 1]], f: 'C₆H₁₂O₆' },
+        glu: { name: '포도당', parts: [['glu', 0xffb54d, 0.19, 1]], f: 'C₆H₁₂O₆' },
         nacl: { name: 'NaCl', parts: [['Na⁺', 0xb07cf5, 0.12, 1], ['Cl⁻', 0x34c759, 0.16, 1]], f: 'NaCl' },
-        cacl2: { name: 'CaCl₂', parts: [['Ca²⁺', 0x6fd0c4, 0.15, 1], ['Cl⁻', 0x34c759, 0.16, 2]], f: 'CaCl₂' },
+        cacl2: { name: 'CaCl₂', parts: [['Ca²⁺', 0xffb02e, 0.17, 1], ['Cl⁻', 0x34c759, 0.16, 2]], f: 'CaCl₂' },
       };
       let sol = 'glu', n = 1.0, Vl = 1.0; // n: 몰수, Vl: 부피(L)
-      const UNIT = 24; // 1 mol = 24개 입자(그림)
+      const UNIT = 40; // 1 mol = 40개 입자(그림)
       const beaker = new THREE.Mesh(new THREE.CylinderGeometry(R, R, 1, 48, 1, true), new THREE.MeshStandardMaterial({ color: 0xcfe0ff, transparent: true, opacity: 0.14, roughness: 0.1, side: THREE.DoubleSide, depthWrite: false })); root.add(beaker);
       const rim = new THREE.Mesh(new THREE.TorusGeometry(R, 0.05, 12, 64), new THREE.MeshStandardMaterial({ color: 0xe0ebff, roughness: 0.2 })); rim.rotation.x = Math.PI / 2; root.add(rim);
       const bot = new THREE.Mesh(new THREE.CylinderGeometry(R, R, 0.12, 48), new THREE.MeshStandardMaterial({ color: 0xcfe0ff, transparent: true, opacity: 0.35, roughness: 0.1, depthWrite: false })); bot.position.y = 0.06; root.add(bot);
       const liqM = new THREE.MeshStandardMaterial({ color: 0x4aa3ff, transparent: true, opacity: 0.25, roughness: 0.12, depthWrite: false });
       const liq = new THREE.Mesh(new THREE.CylinderGeometry(R - 0.04, R - 0.04, 1, 48), liqM); root.add(liq);
-      const floor = new THREE.Mesh(new THREE.CylinderGeometry(R + 1.2, R + 1.2, 0.1, 48), new THREE.MeshStandardMaterial({ color: 0x24324f, roughness: 0.95, envMapIntensity: 0.05 })); floor.position.y = -0.05; root.add(floor);
+      const floor = new THREE.Mesh(new THREE.CylinderGeometry(R + 1.2, R + 1.2, 0.1, 48), new THREE.MeshBasicMaterial({ color: 0x050b18 })); floor.position.y = -0.05; root.add(floor);
       // 눈금 (0.5 L 간격)
       const ticks = []; for (let i = 1; i <= 8; i++) { const t = new THREE.Mesh(new THREE.BoxGeometry(i % 2 ? 0.2 : 0.38, 0.03, 0.03), L.mat(0xe8f0ff)); t.position.set(R + 0.0, 0, 0); root.add(t); ticks.push(t); }
       const NM = 120;

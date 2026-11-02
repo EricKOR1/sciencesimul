@@ -5,6 +5,7 @@
   'use strict';
   if (!window.SciSim3D) return;
   const PHN = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches), KD = PHN ? 1.3 : 1;
+  const LV = () => (typeof window.SciSimLevel === 'number' ? window.SciSimLevel : 0);
   const TAU = Math.PI * 2, clamp = (x, a, b) => Math.max(a, Math.min(b, x));
   function tools(THREE) {
     const V3 = THREE.Vector3, Y = new V3(0, 1, 0);
@@ -44,18 +45,19 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: 12 * KD, theta: 0.5, phi: 1.0, min: 5, max: 28, target: [0, 0.4, 0] },
     autoRotate: 0.1,
+    levels: [0, 1, 2],
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const { V3, M, mkArrow, setArrow } = tools(THREE);
       const st = { cfg: 'dip', field: true };
-      const W = 10, N = 120;
+      const W = 10, N = 90;
       const geo = new THREE.PlaneGeometry(W, W, N, N); geo.rotateX(-Math.PI / 2);
       const pos = geo.attributes.position, col = new Float32Array(pos.count * 3); geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
       const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.55, metalness: 0.05, side: THREE.DoubleSide });
-      const surf = new THREE.Mesh(geo, mat); surf.receiveShadow = true; surf.castShadow = true; root.add(surf);
+      const surf = new THREE.Mesh(geo, mat); surf.receiveShadow = true; root.add(surf);
       const charges = []; const chG = new THREE.Group(); root.add(chG);
       const arrows = []; const arG = new THREE.Group(); root.add(arG);
-      for (let i = 0; i < 49; i++) { const a = mkArrow(0xffffff, 0.022); arG.add(a); arrows.push(a); }
+      for (let i = 0; i < 49; i++) { const a = mkArrow(0xffffff, 0.034); arG.add(a); arrows.push(a); }
       const ball = new THREE.Mesh(new THREE.SphereGeometry(0.2, 24, 16), M(0xff5a5f, { emissive: 0x7f1d1d, roughness: 0.3 })); ball.castShadow = true; root.add(ball);
       const ballL = label('(+)시험 전하', ball, { color: '#e2464b', size: 12, offset: [0, 0.5, 0] });
       const lH = label('(+) 언덕: 전위 높음', [0, 0, 0], { color: '#dc2626', size: 12 }), lL = label('(−) 골짜기: 전위 낮음', [0, 0, 0], { color: '#2563eb', size: 12 });
@@ -70,9 +72,9 @@
         for (let i = 0; i < pos.count; i++) {
           const x = pos.array[i * 3], z = pos.array[i * 3 + 2], v = V(x, z), h = clamp(v * HS * 2.0, -2.2, 2.4);
           pos.array[i * 3 + 1] = h;
-          const t = clamp(v / 2.2, -1, 1), band = 0.5 + 0.5 * Math.cos(v * 9.5), shade = 0.82 + 0.18 * band;
-          const r = t > 0 ? 0.5 + 0.5 * t : 0.5 + 0.28 * t, g = 0.52 - 0.3 * Math.abs(t), b = t < 0 ? 0.55 - 0.45 * t : 0.55 - 0.45 * t;
-          col[i * 3] = (t > 0 ? 0.75 + 0.25 * t : 0.35 + 0.35 * (1 + t)) * shade; col[i * 3 + 1] = (0.55 - 0.3 * Math.abs(t) + 0.15 * (1 - Math.abs(t))) * shade; col[i * 3 + 2] = (t < 0 ? 0.75 + 0.25 * -t : 0.4 + 0.2 * (1 - t)) * shade;
+          const t = clamp(v / 2.2, -1, 1), band = 0.5 + 0.5 * Math.cos(v * 9.5), shade = 0.7 + 0.3 * band, at = Math.abs(t);
+          const bc = [0.11, 0.17, 0.27], pc = t > 0 ? [0.98, 0.32, 0.28] : [0.22, 0.46, 1.0];
+          for (let q = 0; q < 3; q++) col[i * 3 + q] = (bc[q] + (pc[q] - bc[q]) * Math.min(1, at * 1.6)) * shade;
         }
         pos.needsUpdate = true; geo.attributes.color.needsUpdate = true; geo.computeVertexNormals();
         // 전하 막대

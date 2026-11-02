@@ -80,7 +80,7 @@
   window.SciSim3D.attach({
     title: '기체 1몰 상자 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: phone ? 20 : 14, theta: 0.35, phi: 1.2, min: 8, max: 40, target: [0, 1.8, 0] },
+    camera: { dist: phone ? 20 : 17.5, theta: 0.35, phi: 1.2, min: 8, max: 40, target: [0, 1.8, 0] },
     autoRotate: 0.12,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
@@ -103,7 +103,7 @@
         }
         return { g, box, lab, mols, edge: 3 };
       });
-      const floor = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({ color: 0x24324f, roughness: 0.95, envMapIntensity: 0.05 }));
+      const floor = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ color: 0x050b18 }));
       floor.scale.set(3 * SPX - 0.4, 0.14, 5.0); floor.position.set(0, -0.08, 0); root.add(floor);
 
       function edgeOf() { return 3 * Math.cbrt(n * (273 + T) / 273); }

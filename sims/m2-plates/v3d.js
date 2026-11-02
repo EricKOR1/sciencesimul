@@ -27,12 +27,13 @@
         const g = new THREE.ExtrudeGeometry(sh, { depth, bevelEnabled: false }); g.translate(0, 0, -depth / 2);
         const me = new THREE.Mesh(g, m); me.castShadow = true; me.receiveShadow = true; return me;
       }
-      const cMantle = 0xe9803a, cOcean = 0x4f86a8, cCont = 0x9c8567, cSlab = 0x6f7f9c;
-      const mMantle = mat(cMantle, { emissive: 0xc9531a, emissiveIntensity: 0.45, roughness: 0.6 });
+      const at = (m, x, y, z) => { m.position.set(x, y, z); return m; };
+      const cMantle = 0xc4481c, cOcean = 0x43597d, cCont = 0x6e5539, cSlab = 0x6f7f9c;
+      const mMantle = mat(cMantle, { emissive: 0xb03a10, emissiveIntensity: 0.5, roughness: 0.6 });
       const mOc = mat(cOcean, { roughness: 0.7 });
       const mCont = mat(cCont, { roughness: 0.9 });
-      const mLith = mat(0x7d8aa6, { roughness: 0.8 });
-      const water = () => new THREE.MeshStandardMaterial({ color: 0x2f8fd8, transparent: true, opacity: 0.38, roughness: 0.1, depthWrite: false });
+      const mLith = mat(0x56688a, { roughness: 0.8 });
+      const water = () => new THREE.MeshStandardMaterial({ color: 0x2f8fd8, transparent: true, opacity: 0.3, roughness: 0.1, depthWrite: false });
       const G = { div: new THREE.Group(), conv: new THREE.Group(), trans: new THREE.Group() };
       KINDS.forEach((k) => { G[k].visible = false; root.add(G[k]); });
       const labs = [];
@@ -50,7 +51,7 @@
       const stripes = [];
       {
         const g = G.div;
-        g.add(Object.assign(new THREE.Mesh(new THREE.BoxGeometry(9.4, 2.4, D - 0.08), mMantle), { position: new V3(0, -2.55, 0) }));
+        g.add(at(new THREE.Mesh(new THREE.BoxGeometry(9.4, 2.4, D - 0.08), mMantle), 0, -2.55, 0));
         const plL = new THREE.Mesh(new THREE.BoxGeometry(4.4, 1.0, D), mLith); plL.position.set(-2.4, -0.85, 0); plL.castShadow = plL.receiveShadow = true;
         const plR = plL.clone(); plR.position.x = 2.4; g.add(plL, plR);
         // 해령: 가운데로 오를수록 높은 산맥
@@ -75,14 +76,15 @@
       {
         const g = G.conv, slope = 0.7;
         const yS = (x) => 0.1 - slope * (x + 0.6);
-        g.add(Object.assign(new THREE.Mesh(new THREE.BoxGeometry(9.4, 3.2, D - 0.08), mMantle), { position: new V3(0, -2.05, 0) }));
+        g.add(at(new THREE.Mesh(new THREE.BoxGeometry(9.4, 3.2, D - 0.08), mMantle), 0, -2.05, 0));
         g.add(poly([[-4.7, 0.1], [-0.6, 0.1], [3.5, yS(3.5)], [3.5, yS(3.5) - 0.55], [-0.6, -0.45], [-4.7, -0.45]], D, mOc));
         // 해구(오목한 바닥): 얇은 어두운 덩어리
-        const cont = poly([[-0.6, 0.1], [0.3, 0.5], [1.0, 0.9], [1.9, 1.05], [2.4, 1.95], [2.55, 2.0], [2.9, 1.05], [4.7, 1.05], [4.7, -1.0], [0.97, -1.0]], D, mCont);
+        const cont = poly([[-0.6, 0.1], [0.3, 0.5], [1.0, 0.9], [1.7, 1.05], [4.7, 1.05], [4.7, -1.0], [0.97, -1.0]], D, mCont);
         g.add(cont); volc = cont;
         const sea = new THREE.Mesh(new THREE.BoxGeometry(4.3, 0.7, D), water()); sea.position.set(-2.55, 0.45, 0); sea.renderOrder = 3; g.add(sea);
         // 화산 꼭대기 분화구 불빛
-        const crater = new THREE.Mesh(new THREE.SphereGeometry(0.17, 16, 12), new THREE.MeshBasicMaterial({ color: 0xff6a2a })); crater.position.set(2.48, 2.05, 0); g.add(crater);
+        const cone = new THREE.Mesh(new THREE.ConeGeometry(1.0, 1.25, 40, 1, false), mat(0x55402a, { roughness: 0.95 })); cone.position.set(2.7, 1.65, 0); cone.castShadow = true; g.add(cone);
+        const crater = new THREE.Mesh(new THREE.SphereGeometry(0.17, 16, 12), new THREE.MeshBasicMaterial({ color: 0xff6a2a })); crater.position.set(2.7, 2.3, 0); g.add(crater);
         for (let i = 0; i < 8; i++) { const s = new THREE.Mesh(new THREE.SphereGeometry(0.09, 10, 8), new THREE.MeshBasicMaterial({ color: 0xff8a3a })); s.userData = { u: i / 8 }; g.add(s); lava.push(s); }
         // 진원(지진이 시작된 곳): 섭입대를 따라 늘어선 빨간 공
         for (let i = 0; i < 8; i++) {
@@ -90,7 +92,7 @@
           s.position.set(x, yS(x) - 0.27, D / 2 + 0.05); s.userData.ph = i * 0.8; g.add(s); quakes.push(s);
         }
         // 마그마 올라오는 길 (섭입대 → 화산)
-        const mg = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new V3(1.7, yS(1.7) - 0.3, 0), new V3(1.9, -0.4, 0), new V3(2.3, 0.7, 0), new V3(2.48, 2.0, 0)]), 30, 0.07, 8), new THREE.MeshBasicMaterial({ color: 0xff6a2a, transparent: true, opacity: 0.75 }));
+        const mg = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new V3(1.7, yS(1.7) - 0.3, 0), new V3(1.9, -0.4, 0), new V3(2.4, 0.7, 0), new V3(2.7, 2.2, 0)]), 30, 0.07, 8), new THREE.MeshBasicMaterial({ color: 0xff6a2a, transparent: true, opacity: 0.75 }));
         g.add(mg);
         arrow(g, [-4.2, 0.6, D / 2 + 0.2], [-1.6, 0.6, D / 2 + 0.2]);
         arrow(g, [1.3, yS(1.3) + 0.25, D / 2 + 0.25], [2.1, yS(2.1) - 0.2, D / 2 + 0.25], 0xff7a7a);
@@ -101,7 +103,7 @@
       const tL = new THREE.Group(), tR = new THREE.Group();
       {
         const g = G.trans, DD = 5.4;
-        g.add(Object.assign(new THREE.Mesh(new THREE.BoxGeometry(9.4, 2.0, DD - 0.1), mMantle), { position: new V3(0, -2.35, 0) }));
+        g.add(at(new THREE.Mesh(new THREE.BoxGeometry(9.4, 2.0, DD - 0.1), mMantle), 0, -2.35, 0));
         [[tL, -2.3], [tR, 2.3]].forEach(([t, x]) => {
           const b = new THREE.Mesh(new THREE.BoxGeometry(4.5, 1.5, DD), mCont); b.position.set(x, -0.9, 0); b.castShadow = b.receiveShadow = true;
           const top = new THREE.Mesh(new THREE.BoxGeometry(4.5, 0.12, DD), mat(0x7ba05b, { roughness: 0.95 })); top.position.set(x, -0.1, 0); top.receiveShadow = true;
@@ -155,7 +157,7 @@
             quakes.forEach((q) => { const p = 0.5 + 0.5 * Math.sin(T * 3 + q.userData.ph); q.scale.setScalar(0.7 + 0.8 * p); q.material.opacity = 0.45 + 0.55 * p; });
             lava.forEach((l) => {
               const u = (T * 0.4 + l.userData.u) % 1, a = Math.PI * (0.2 + 0.6 * ((l.userData.u * 7) % 1)); const r = u * 1.6;
-              l.position.set(2.48 + Math.cos(a) * r * 0.5 + (Math.cos(a) > 0 ? 1 : -1) * 0, 2.05 + Math.sin(a) * r - 1.4 * u * u * 1.3 + 0.3, 0.5 * Math.sin(l.userData.u * 40));
+              l.position.set(2.7 + Math.cos(a) * r * 0.6, 2.3 + Math.sin(a) * r * 0.9 - 1.6 * u * u + 0.3, 0.5 * Math.sin(l.userData.u * 40));
               l.visible = u < 0.9; l.scale.setScalar(1 - u * 0.6);
             });
           } else {

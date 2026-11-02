@@ -11,6 +11,7 @@
   window.SciSim3D.attach({
     title: '전자껍질 모형 3D',
     camera: { dist: PHN ? 17 : 13, theta: 0.5, phi: 1.0, min: 6, max: 26 },
+    levels: [0],
     autoRotate: 0.18,
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;

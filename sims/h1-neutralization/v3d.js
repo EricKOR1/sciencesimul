@@ -12,18 +12,18 @@
   window.SciSim3D.attach({
     title: '3D 중화 반응 (이온 모형)',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: PHN ? 17 : 11.5, theta: 0.5, phi: 1.2, target: [0, 1.5, 0], min: 6, max: 26 },
+    camera: { dist: PHN ? 15 : 10, theta: 0.5, phi: 1.2, target: [0, 1.5, 0], min: 6, max: 26 },
     autoRotate: 0,
     levels: [0, 2],
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3;
-      const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.35, metalness: 0.05 }, o || {}));
+      const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ envMapIntensity: 0.6, color: c, roughness: 0.35, metalness: 0.05 }, o || {}));
       const st = { k: 0, ind: 'btb', names: true, t: 0, queue: 0, qT: 0 };
 
       /* ---------- 비커 ---------- */
       const WR = 2.55, WH = 3.2;
-      const floor = new THREE.Mesh(new THREE.CylinderGeometry(5.6, 5.8, 0.25, 56), mat(0x2d3547, { roughness: 0.95, metalness: 0 })); floor.position.y = -0.15; floor.receiveShadow = true; root.add(floor);
+      const floor = new THREE.Mesh(new THREE.CylinderGeometry(5.6, 5.8, 0.25, 56), new THREE.MeshLambertMaterial({ color: 0x2d3547 })); floor.position.y = -0.15; floor.receiveShadow = true; root.add(floor);
       const beaker = new THREE.Mesh(new THREE.CylinderGeometry(WR + 0.12, WR + 0.12, WH + 0.9, 56, 1, true), new THREE.MeshStandardMaterial({ color: 0xd6e6ff, transparent: true, opacity: 0.2, roughness: 0.05, side: THREE.DoubleSide, depthWrite: false })); beaker.position.y = (WH + 0.9) / 2; root.add(beaker);
       const rim = new THREE.Mesh(new THREE.TorusGeometry(WR + 0.12, 0.05, 10, 56), mat(0xe3eeff, { transparent: true, opacity: 0.6 })); rim.rotation.x = Math.PI / 2; rim.position.y = WH + 0.9; root.add(rim);
       const bot = new THREE.Mesh(new THREE.CylinderGeometry(WR + 0.12, WR + 0.12, 0.12, 56), mat(0xcfe0f7, { transparent: true, opacity: 0.45 })); bot.position.y = 0.04; root.add(bot);
@@ -44,19 +44,20 @@
       const sphere = (r, c, o) => { const m = new THREE.Mesh(new THREE.SphereGeometry(r, 26, 18), mat(c, o)); m.castShadow = true; return m; };
       function mk(kind) {
         const g = new THREE.Group();
-        if (kind === 'H') g.add(sphere(0.3, COL.H)); else if (kind === 'Cl') g.add(sphere(0.52, COL.Cl)); else if (kind === 'Na') g.add(sphere(0.46, COL.Na));
-        else if (kind === 'OH') { g.add(sphere(0.42, COL.OH)); const h = sphere(0.2, 0xf4f6fb); h.position.set(0.38, 0.18, 0); g.add(h); }
-        else { g.add(sphere(0.4, COL.O, { roughness: 0.3 })); [[-0.4, -0.25], [0.4, -0.25]].forEach((q) => { const h = sphere(0.2, 0xf4f6fb); h.position.set(q[0], q[1], 0); g.add(h); }); }
-        if (kind !== 'W') { const plus = kind === 'H' || kind === 'Na'; const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: signTex(plus ? '+' : '−', plus ? '#900' : '#003'), transparent: true, depthTest: false })); sp.scale.set(0.75, 0.75, 1); sp.renderOrder = 5; g.add(sp); }
+        if (kind === 'H') g.add(sphere(0.26, COL.H)); else if (kind === 'Cl') g.add(sphere(0.44, COL.Cl)); else if (kind === 'Na') g.add(sphere(0.38, COL.Na));
+        else if (kind === 'OH') { g.add(sphere(0.34, COL.OH)); const h = sphere(0.17, 0xf4f6fb); h.position.set(0.3, 0.15, 0); g.add(h); }
+        else { g.add(sphere(0.34, COL.O, { roughness: 0.3 })); [[-0.34, -0.22], [0.34, -0.22]].forEach((q) => { const h = sphere(0.17, 0xf4f6fb); h.position.set(q[0], q[1], 0); g.add(h); }); }
+        if (kind !== 'W') { const plus = kind === 'H' || kind === 'Na'; const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: signTex(plus ? '+' : '−', plus ? '#900' : '#003'), transparent: true, depthTest: false })); sp.scale.set(0.55, 0.55, 1); sp.renderOrder = 5; g.add(sp); }
         sg.add(g); return g;
       }
       let seed = 9; const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
-      const rpos = () => { const a = rnd() * 6.283, r = Math.sqrt(rnd()) * (WR - 0.75); return new V3(Math.cos(a) * r, 0.6 + rnd() * (WH - 1.2), Math.sin(a) * r); };
+      let pi = 0;
+      const rpos = () => { const i = (pi++ * 7) % 41, a = i * 2.4, r = Math.sqrt((i + 0.5) / 41) * (WR - 0.85); return new V3(Math.cos(a) * r, 0.75 + ((i * 0.618) % 1) * (WH - 1.5), Math.sin(a) * r); };
       // 입자 목록: { kind, g, home, ph, state }
       let P = [], rx = [];
       function spawn(kind, pos) { const g = mk(kind); const p = { kind, g, home: pos || rpos(), ph: rnd() * 6.28, v: new V3(), done: false }; g.position.copy(p.home); P.push(p); return p; }
       function rebuild(k) {
-        P.forEach((p) => sg.remove(p.g)); P = []; rx = [];
+        pi = 0; P.forEach((p) => sg.remove(p.g)); P = []; rx = [];
         const nOH = Math.max(0, k - NH), nH = Math.max(0, NH - k), nW = Math.min(k, NH);
         for (let i = 0; i < NH; i++) spawn('Cl'); for (let i = 0; i < nH; i++) spawn('H'); for (let i = 0; i < k; i++) spawn('Na'); for (let i = 0; i < nOH; i++) spawn('OH'); for (let i = 0; i < nW; i++) spawn('W');
         st.shown = k; refreshLabels();

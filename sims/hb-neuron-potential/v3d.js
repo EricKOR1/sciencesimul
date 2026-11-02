@@ -25,7 +25,7 @@
         heads.push([jx, 0.4, jz], [jx, -0.4, jz]);
         [-1, 1].forEach((sd) => { tails.push([jx + sd * 0.07, 0.215, jz], [jx + sd * 0.07, -0.215, jz]); });
       }
-      const hI = new THREE.InstancedMesh(new THREE.SphereGeometry(0.17, 14, 10), std(0xf5cfa8, { roughness: 0.5 }), heads.length);
+      const hI = new THREE.InstancedMesh(new THREE.SphereGeometry(0.17, 12, 8), std(0xf5cfa8, { roughness: 0.5 }), heads.length);
       const tI = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.035, 0.035, 0.34, 8), std(0xe0a95a, { roughness: 0.6 }), tails.length);
       heads.forEach((p, i) => { D.position.set(p[0], p[1], p[2]); D.scale.setScalar(1); D.updateMatrix(); hI.setMatrixAt(i, D.matrix); });
       tails.forEach((p, i) => { D.position.set(p[0], p[1], p[2]); D.updateMatrix(); tI.setMatrixAt(i, D.matrix); });

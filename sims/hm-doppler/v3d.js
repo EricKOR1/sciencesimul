@@ -5,6 +5,7 @@
   'use strict';
   if (!window.SciSim3D) return;
   const PHN = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches), KD = PHN ? 1.3 : 1;
+  const LV = () => (typeof window.SciSimLevel === 'number' ? window.SciSimLevel : 0);
   const TAU = Math.PI * 2, clamp = (x, a, b) => Math.max(a, Math.min(b, x));
   function tools(THREE) {
     const V3 = THREE.Vector3, Y = new V3(0, 1, 0);
@@ -39,11 +40,13 @@
     }
     return { V3, Y, M, glass, mkArrow, setArrow, tube, disc, grid, arc };
   }
+  const KDX = PHN ? 1.65 : 1;
   window.SciSim3D.attach({
     title: '도플러 효과 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: 16 * KD, theta: 0.15, phi: 0.95, min: 5, max: 28 },
+    camera: { dist: 16 * KDX, theta: 0.15, phi: 0.95, min: 5, max: 28 },
     autoRotate: 0,
+    levels: [0, 1],
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const { V3, M, mkArrow, setArrow, grid } = tools(THREE);

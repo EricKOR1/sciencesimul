@@ -19,7 +19,8 @@
 
   window.SciSim3D.attach({
     title: '지구시스템 3D',
-    camera: { dist: PHN ? 19 : 14.5, theta: -2.35, phi: 1.2, min: 6, max: 30 },
+    camera: { dist: PHN ? 15 : 14.5, theta: -2.35, phi: 1.2, min: 6, max: 30 },
+    levels: [2],
     autoRotate: 0,
     build(ctx) {
       const { THREE, scene, root, label, info, controls, orbit } = ctx;
@@ -94,7 +95,7 @@
 
       /* ---------- 생물권: 육지의 식물 · 바다의 생물 ---------- */
       const bio = new THREE.Group(); earth.add(bio);
-      const tGeo = new THREE.ConeGeometry(0.06, 0.16, 8), sGeo = new THREE.SphereGeometry(0.045, 8, 6);
+      const tGeo = new THREE.ConeGeometry(0.06, 0.16, 8), sGeo = new THREE.IcosahedronGeometry(0.045, 1);
       const tMat = std(0x2fa84a, { roughness: 0.5 }), fMat = std(0xffb84a, { roughness: 0.4, emissive: 0x6a3a00, emissiveIntensity: 0.4 });
       const nT = 420, nF = 160, trees = new THREE.InstancedMesh(tGeo, tMat, nT), fish = new THREE.InstancedMesh(sGeo, fMat, nF); bio.add(trees, fish);
       const dm = new THREE.Object3D(); let ti = 0, fi = 0, tries = 0;
@@ -138,7 +139,7 @@
         cutRock.visible = m === 'geo'; cutOcn.visible = m === 'hyd'; baseOcn.visible = m === 'hyd'; cutAtm.visible = m === 'atm'; bio.visible = m === 'bio';
         en.visible = energy && (m === 'all'); lSun.show(energy && m === 'all'); lIn.show(energy && m === 'all'); lMoon.show(energy && m === 'all'); lOut.show(m === 'all');
         sun.visible = en.visible;
-        orbit.dist = (PHN ? 19 : 14.5) * (m === 'all' && energy ? 1.12 : 0.72);
+        orbit.dist = (PHN ? 15 : 14.5) * (m === 'all' && energy ? 1.12 : 0.72);
         if (isCut || m === 'all' || m === 'bio') { orbit.theta = isCut ? -2.35 : 0.2; }
         if (m === 'geo') { ROCK.forEach((ly, i) => lab(i, ly.n, [0, 0, 0], [-(ly.r0 + ly.r1) / 2 * (i === 3 ? 1.0 : 1), (i % 2 ? 0.28 : -0.28) * (i === 3 ? 0 : 1) + (i === 3 ? 0.55 : 0), 0.05])); info('<b>지권</b>: 지각 · 맨틀 · 외핵 · 내핵으로 이루어져요. 외핵만 액체예요.'); }
         else if (m === 'hyd') { OCN.slice(1).forEach((ly, i) => lab(i, ly.n, [0, 0, 0], [-(ly.r0 + ly.r1) / 2, 0.2 * (i % 2 ? 1 : -1) , 0.05])); info('<b>수권</b>: 바다는 깊이에 따라 혼합층 · 수온 약층 · 심해층으로 나뉘어요. (두께는 크게 그렸어요)'); }

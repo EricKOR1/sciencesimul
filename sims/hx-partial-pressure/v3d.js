@@ -15,7 +15,7 @@
   window.SciSim3D.attach({
     title: '혼합 기체와 분압 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: PHONE ? 17 : 13.5, theta: 0.55, phi: 1.2, min: 7, max: 28, target: [1.5, 0, 0] },
+    camera: { dist: PHONE ? 16 : 13.5, theta: 0.5, phi: 1.2, min: 7, max: 28, target: [1.8, 0, 0] },
     autoRotate: 0.12,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
@@ -42,7 +42,7 @@
       const M = new THREE.Matrix4(), S0 = new V3(1, 1, 1);
 
       /* 쌓은 기둥 (전체 압력 = 분압의 합) */
-      const BX = 3.6, BW = 1.0;
+      const BX = 4.1, BW = 1.3;
       const cols = G.map((g) => {
         const m = new THREE.Mesh(new THREE.BoxGeometry(BW, 1, BW), new THREE.MeshStandardMaterial({ color: g.col, roughness: 0.4, metalness: 0.1 }));
         root.add(m); return m;
@@ -57,12 +57,13 @@
 
       function layoutBars() {
         let y = FLOOR; let tot = 0;
+        const sumN = G.reduce((a, g) => a + (only === 'all' || only === g.k ? cnt[g.k] : 0), 0), kS = Math.min(0.3, 5.4 / Math.max(1, sumN));
         G.forEach((g, i) => {
           const n = only === 'all' || only === g.k ? cnt[g.k] : 0;
-          const hh = Math.max(0.001, n * 0.26); const sh = n > 0;
+          const hh = Math.max(0.001, n * kS); const sh = n > 0;
           cols[i].visible = sh; cols[i].scale.set(1, hh, 1); cols[i].position.set(BX, y + hh / 2, 0);
-          labs[i].obj = [BX + 0.8, y + hh / 2, 0]; labs[i].show(sh);
-          labs[i].set(g.ko + ' ' + (n * UNIT).toFixed(1) + ' atm');
+          labs[i].obj = [BX, y + hh / 2, BW / 2 + 0.05]; labs[i].show(sh);
+          labs[i].set(g.ko + ' ' + (n * UNIT).toFixed(1));
           y += n > 0 ? hh : 0; tot += n;
         });
         bridge.position.set(BX, y, 0);

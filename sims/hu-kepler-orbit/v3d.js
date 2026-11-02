@@ -14,8 +14,8 @@
   window.SciSim3D.attach({
     title: '케플러 궤도 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    levels: [1, 2, 3],
-    camera: { dist: PHONE ? 14 : 9.8, theta: 0.3, phi: 0.95, min: 5, max: 26, target: [0.4, 0, 0] },
+    levels: [1, 3],
+    camera: { dist: PHONE ? 17 : 9.8, theta: 0.3, phi: 0.95, min: 5, max: 26, target: [0.4, 0, 0] },
     autoRotate: 0.12,
     build(ctx) {
       const { THREE, scene, root, label, info, controls } = ctx;
@@ -39,10 +39,10 @@
       label('태양(초점)', [0, 0.1, 0], { offset: [0, 0.65, 0], color: 'rgba(146,84,0,.9)' });
 
       /* 행성 */
-      const planet = new THREE.Mesh(new THREE.SphereGeometry(0.16, 28, 20), new THREE.MeshStandardMaterial({ color: 0x4aa3ff, roughness: 0.5, metalness: 0.05 })); root.add(planet);
+      const planet = new THREE.Mesh(new THREE.SphereGeometry(0.2, 28, 20), new THREE.MeshStandardMaterial({ color: 0x2f86e8, roughness: 0.5, metalness: 0.05 })); root.add(planet);
       const arrowM = new THREE.MeshStandardMaterial({ color: 0xffe066, roughness: 0.4, emissive: 0x805f00, emissiveIntensity: 0.5 });
-      const arrow = new THREE.Group(); const ash = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1, 10), arrowM), ahd = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.22, 14), arrowM); arrow.add(ash, ahd); root.add(arrow);
-      const sLab = label('', planet, { offset: [0, 0.55, 0], color: 'rgba(14,60,120,.9)', size: 11.5 });
+      const arrow = new THREE.Group(); const ash = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 1, 10), arrowM), ahd = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.32, 14), arrowM); arrow.add(ash, ahd); root.add(arrow);
+      const sLab = label('', planet, { offset: [0, 0.85, 0], color: 'rgba(14,60,120,.9)', size: 11.5 });
 
       /* 궤도 · 부채꼴 · 점 · 표시 */
       const orbitG = new THREE.Group(), secG = new THREE.Group(), dotG = new THREE.Group(), markG = new THREE.Group(); root.add(orbitG, secG, dotG, markG);
@@ -120,8 +120,8 @@
           /* 속도 화살표: 길이는 속력에 비례 (vis-viva와 같은 모양) */
           const r = Math.hypot(p[0], p[2]) / sc / st.a, sp = Math.sqrt(Math.max(1e-6, 2 / r - 1)) * 1;       // v / v_circ(a)
           v3.set(-Math.sin(E) * st.a, 0, -b_ * Math.cos(E)).normalize();
-          const len = Math.min(2.2, 0.55 * sp * (0.9 + 0.5 * st.e));
-          ash.scale.y = Math.max(0.01, len - 0.22); ash.position.y = (len - 0.22) / 2; ahd.position.y = len - 0.11;
+          const len = Math.max(0.5, Math.min(2.2, 0.7 * sp * (0.9 + 0.5 * st.e)));
+          ash.scale.y = Math.max(0.01, len - 0.32); ash.position.y = (len - 0.32) / 2; ahd.position.y = len - 0.16;
           arrow.position.set(p[0], 0.0, p[2]); arrow.quaternion.setFromUnitVectors(up, v3);
           const dist = Math.hypot(p[0], p[2]) / sc;
           sLab.set('속력 ' + sp.toFixed(1) + '(상대값) · 거리 ' + (dist >= 10 ? dist.toFixed(0) : dist.toFixed(1)) + ' AU');

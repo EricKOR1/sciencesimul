@@ -8,7 +8,7 @@
   window.SciSim3D.attach({
     title: '주사기 속 기체 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: PHN0 ? 17 : 13, theta: 0.55, phi: 1.2, fov: 45, target: [1.7, 0.7, 0], min: 6, max: 32 },
+    camera: { dist: 13 * (PHN0 ? 1.05 : 1), theta: 0.55, phi: 1.2, fov: 45, target: [1.7, 0.7, 0], min: 6, max: 32 },
     autoRotate: 0.12,
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
@@ -20,7 +20,7 @@
       const rnd = (() => { let s = 12345; return () => { s = (s * 16807) % 2147483647; return s / 2147483647; }; })();
       const _m = new THREE.Matrix4(), _c = new THREE.Color();
       function spheres(N, r, color, seg) {
-        const m = new THREE.InstancedMesh(new THREE.SphereGeometry(r, seg || 16, Math.round((seg || 16) * 0.75)), mat(color, { roughness: 0.35 }), N);
+        const m = new THREE.InstancedMesh(new THREE.SphereGeometry(r, seg || 16, Math.round((seg || 16) * 0.75)), mat(color, { roughness: 0.55, metalness: 0 }), N);
         m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); m.frustumCulled = false; m.castShadow = true;
         for (let i = 0; i < N; i++) m.setColorAt(i, _c.set(0xffffff));
         root.add(m); return m;
@@ -58,7 +58,7 @@
             c.lineWidth = big ? 5 : 2.5; c.beginPath(); c.moveTo(128 + ca * 104, 128 - sa * 104); c.lineTo(128 + ca * (big ? 84 : 92), 128 - sa * (big ? 84 : 92)); c.stroke();
             if (big) { c.font = '800 26px sans-serif'; c.fillText(String(Math.round(v * 10) / 10), 128 + ca * 62, 128 - sa * 62); }
           }
-          c.font = '800 24px sans-serif'; c.fillStyle = '#2563eb'; c.fillText(unit, 128, 190);
+          c.font = '800 20px sans-serif'; c.fillStyle = '#2563eb'; c.fillText(unit, 128, 200);
         });
         const face = new THREE.Mesh(new THREE.CircleGeometry(R * 0.93, 48), new THREE.MeshBasicMaterial({ map: tex })); face.position.z = 0.18; g.add(face);
         const needle = new THREE.Group(); needle.position.z = 0.24;
@@ -68,11 +68,20 @@
         g.userData.set = (v) => { needle.rotation.z = (-225 + 270 * Math.max(0, Math.min(max, v)) / max) * Math.PI / 180; };
         g.userData.set(0); return g;
       }
+      /* 사방으로 빛나는 별 모양 빛 번짐 */
+      function glowSprite(size, inner, mid) { const tex = canvasTex(128, 128, (c) => { const g = c.createRadialGradient(64, 64, 0, 64, 64, 64); g.addColorStop(0, inner || 'rgba(255,235,160,1)'); g.addColorStop(0.25, mid || 'rgba(255,190,60,.55)'); g.addColorStop(1, 'rgba(255,160,0,0)'); c.fillStyle = g; c.fillRect(0, 0, 128, 128); });
+        const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false })); s.scale.set(size, size, 1); return s; }
+      function starField(n, R) { const pos = []; for (let i = 0; i < n; i++) { const u = rnd() * 2 - 1, a = rnd() * 6.283, r = Math.sqrt(1 - u * u); pos.push(Math.cos(a) * r * R, u * R, Math.sin(a) * r * R); }
+        const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); return new THREE.Points(g, new THREE.PointsMaterial({ color: 0x9fb4e8, size: 1.5, sizeAttenuation: false, transparent: true, opacity: 0.55 })); }
+      /* 행성 겉면 무늬 (가로 줄무늬 / 점무늬) */
+      function bandTex(cols, seed) { return canvasTex(256, 128, (c, w, h) => { let s = seed || 3; const r = () => { s = (s * 16807) % 2147483647; return s / 2147483647; };
+        const n = cols.length; for (let i = 0; i < 16; i++) { c.fillStyle = cols[Math.floor(r() * n)]; c.fillRect(0, i * h / 16, w, h / 16 + 1); }
+        c.globalAlpha = 0.25; for (let i = 0; i < 60; i++) { c.fillStyle = cols[Math.floor(r() * n)]; c.beginPath(); c.ellipse(r() * w, r() * h, 8 + r() * 25, 2 + r() * 4, 0, 0, 7); c.fill(); } c.globalAlpha = 1; }); }
 
       const RC = 1.45, Y0 = -2.6, SPD = 2.6, PR = 0.12, NP = 36;
       const S0 = (window.__sim && window.__sim.S) || null;
       const st = { V: S0 && typeof S0.V === 'number' ? S0.V : 40, Vs: 0, last: S0 ? S0.V : null, hits: 0, rate: 0, tm: 0, auto: false, ad: -1, show: true, mark: true };
-      st.Vs = st.V;
+      st.Vs = st.V; st.rate = NP * SPD * 0.5 / (2 * (st.V / 10));
       const hOf = (V) => V / 10;
 
       /* 주사기 몸통 (유리) + 눈금 */

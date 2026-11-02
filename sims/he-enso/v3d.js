@@ -19,6 +19,7 @@
     camera: { dist: PHONE ? 21 : 15, theta: 0.42, phi: 1.2, min: 7, max: 30, target: [0, -0.2, 0] },
     autoRotate: 0,
     build(ctx) {
+      if (ctx.THREE.ColorManagement) ctx.THREE.ColorManagement.legacyMode = false;     // 색을 보이는 그대로(sRGB) 쓰도록 맞춰요
       const { THREE, root, label, info, controls } = ctx;
       const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.5, metalness: 0.02 }, o || {}));
       const walkG = new THREE.Group(), coastG = new THREE.Group(); root.add(walkG, coastG);
@@ -33,7 +34,7 @@
       function setArrow(g, len) { const u = g.userData, L = Math.max(0.02, len), hh = u.rad * 5; u.sh.scale.set(1, Math.max(0.01, L - hh), 1); u.sh.position.y = (L - hh) / 2; u.hd.position.y = L - hh / 2; g.visible = len > 0.05; }
 
       /* ================= 워커 순환 ================= */
-      const warmM = std(0xffffff, { vertexColors: true, transparent: true, opacity: 0.9, roughness: 0.35 }), coldM = std(0x1d4e9c, { transparent: true, opacity: 0.92, roughness: 0.4 });
+      const warmM = std(0xffffff, { vertexColors: true, roughness: 0.4 }), coldM = std(0x143f8c, { roughness: 0.45 });
       const warm = new THREE.Mesh(new THREE.BufferGeometry(), warmM), cold = new THREE.Mesh(new THREE.BufferGeometry(), coldM);
       walkG.add(warm, cold);
       const thTube = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial({ color: 0xfff3b0 })); walkG.add(thTube);
@@ -82,7 +83,7 @@
 
       /* ================= 해안 용승 ================= */
       const CX = 3.0, CZ = 2.0, CD = 3.0;
-      const cWarmM = std(0xffb35c, { transparent: true, opacity: 0.88, roughness: 0.3 }), cColdM = std(0x2563b8, { transparent: true, opacity: 0.92, roughness: 0.35 });
+      const cWarmM = std(0xf0701a, { roughness: 0.35 }), cColdM = std(0x1747a0, { roughness: 0.4 });
       const cWarm = new THREE.Mesh(new THREE.BufferGeometry(), cWarmM), cCold = new THREE.Mesh(new THREE.BufferGeometry(), cColdM); coastG.add(cWarm, cCold);
       const landSh = new THREE.Shape(); landSh.moveTo(CX, -CD); landSh.lineTo(CX, 0); landSh.lineTo(CX + 2.6, 0.55); landSh.lineTo(CX + 2.8, 0.55); landSh.lineTo(CX + 2.8, -CD); landSh.closePath();
       const land = new THREE.Mesh(new THREE.ExtrudeGeometry(landSh, { depth: CZ * 2, bevelEnabled: false }), std(0xb89463, { roughness: 0.95 })); land.position.z = -CZ; coastG.add(land);
@@ -123,7 +124,7 @@
         Object.values(L).forEach((l) => l.show(v === 'walk')); Object.values(cl).forEach((l) => l.show(v === 'coast'));
         gW.els.forEach((e) => (e.style.display = v === 'walk' ? '' : 'none')); gC.els.forEach((e) => (e.style.display = v === 'coast' ? '' : 'none'));
         ctx.orbit.tx = v === 'walk' ? 0 : -0.8; ctx.orbit.ty = v === 'walk' ? -0.2 : -1.0;
-        if (v === 'coast') { ctx.orbit.theta = 0.75; ctx.orbit.phi = 1.15; } else { ctx.orbit.theta = 0.42; ctx.orbit.phi = 1.2; }
+        if (v === 'coast') { ctx.orbit.theta = 0.75; ctx.orbit.phi = 1.15; ctx.orbit.dist = PHONE ? 25 : 19; } else { ctx.orbit.theta = 0.42; ctx.orbit.phi = 1.2; ctx.orbit.dist = PHONE ? 21 : 15; }
         updInfo();
       }
       function updInfo() {

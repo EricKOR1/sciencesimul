@@ -80,21 +80,21 @@
   window.SciSim3D.attach({
     title: '물의 자동 이온화 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: phone ? 15 : 11, theta: 0.3, phi: 1.2, min: 5, max: 24, target: [0, 0.6, 0] },
+    camera: { dist: phone ? 14.5 : 13.5, theta: 0.3, phi: 1.2, min: 5, max: 24, target: [0, 0.6, 0] },
     autoRotate: 0.1,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const L = makeLib(THREE), V = L.V;
-      const BW = 12, BH = 4.6, BD = 5;
+      const BW = 9.6, BH = 4.2, BD = 4.8;
       const box = L.glassBox(BW, BH, BD, 0x7fb6ff, 0.08); box.position.y = 0; root.add(box);
-      const floor = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({ color: 0x24324f, roughness: 0.95, envMapIntensity: 0.05 })); floor.scale.set(BW + 1, 0.12, BD + 1); floor.position.y = -BH / 2 - 0.08; root.add(floor);
+      const floor = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ color: 0x050b18 })); floor.scale.set(BW + 1, 0.12, BD + 1); floor.position.y = -BH / 2 - 0.08; root.add(floor);
       const pools = { w: [], h: [], o: [] };
-      const SC = { w: 0.5, h: 0.55, o: 0.55 };
+      const SC = { w: 0.45, h: 0.5, o: 0.5 };
       const mk = (arr, key, n, k) => { for (let i = 0; i < n; i++) { const g = L.mol(L.MOLS[key], k); g.visible = false; root.add(g); g.userData = { p: new THREE.Vector3(), v: new THREE.Vector3(L.rnd(-1, 1), L.rnd(-1, 1), L.rnd(-1, 1)).normalize(), w: new THREE.Vector3(L.rnd(-1, 1), L.rnd(-1, 1), L.rnd(-1, 1)) }; arr.push(g); } };
-      mk(pools.w, 'H2O', 34, SC.w); mk(pools.h, 'H3O', 18, SC.h); mk(pools.o, 'OH', 18, SC.o);
+      mk(pools.w, 'H2O', 26, SC.w); mk(pools.h, 'H3O', 18, SC.h); mk(pools.o, 'OH', 18, SC.o);
       // 주인공 한 쌍: 프로톤(H⁺) 이동 장면
-      const hero = new THREE.Group(); hero.position.set(0, 0.2, 1.4); root.add(hero);
-      const Oa = L.atom('O', 1.5), Ob = L.atom('O', 1.5), Ha = L.atom('H', 1.5), Hb1 = L.atom('H', 1.5), Hb2 = L.atom('H', 1.5), Hx = L.atom('H', 1.5), Hy = L.atom('H', 1.5);
+      const hero = new THREE.Group(); hero.position.set(0, 0.1, 1.0); root.add(hero);
+      const Oa = L.atom('O', 1.15), Ob = L.atom('O', 1.15), Ha = L.atom('H', 1.15), Hb1 = L.atom('H', 1.15), Hb2 = L.atom('H', 1.15), Hx = L.atom('H', 1.15), Hy = L.atom('H', 1.15);
       const parts = [Oa, Ob, Ha, Hb1, Hb2, Hx, Hy]; parts.forEach((m) => hero.add(m));
       const stM = new THREE.MeshStandardMaterial({ color: 0xc3ccdd, roughness: 0.45, transparent: true });
       const sticks = [0, 1, 2, 3].map(() => { const s = new THREE.Mesh(L.CG, stM.clone()); hero.add(s); return s; });
@@ -102,12 +102,12 @@
       const lH = label('', hero, { size: 13 }), lO = label('', hero, { size: 13 });
       lH.show(false); lO.show(false);
       let env = 'pure', slow = false, T = 0, bg = true;
-      const CNT = { pure: [4, 4], acid: [16, 1], base: [1, 16] };
+      const CNT = { pure: [4, 4], acid: [14, 1], base: [1, 14] };
       const LIM = [BW / 2 - 0.7, BH / 2 - 0.6, BD / 2 - 0.6];
       function setEnv() {
         const [h, o] = CNT[env]; const nh = h, no = o;
         const fill = (arr, n) => arr.forEach((g, i) => { g.visible = bg && i < n; if (g.visible) g.userData.p.set(L.rnd(-LIM[0], LIM[0]), L.rnd(-LIM[1], LIM[1]), L.rnd(-LIM[2], LIM[2]) - 0.6); });
-        fill(pools.w, 34); fill(pools.h, nh); fill(pools.o, no);
+        fill(pools.w, 26); fill(pools.h, nh); fill(pools.o, no);
         const txt = env === 'pure' ? '순수한 물: H₃O⁺ = OH⁻ (같은 수)' : env === 'acid' ? '산을 넣으면: H₃O⁺ ↑, OH⁻ ↓ (곱은 일정)' : '염기를 넣으면: OH⁻ ↑, H₃O⁺ ↓ (곱은 일정)';
         info('<b>2H₂O ⇌ H₃O⁺ + OH⁻</b><br>' + txt + '<br>실제로는 물 분자 약 5.5억 개 중 1개만 이온화돼요 (그림은 크게 과장).');
       }
@@ -154,7 +154,7 @@
             if (!g.visible) return; const u = g.userData; u.p.addScaledVector(u.v, sp * dt);
             ['x', 'y', 'z'].forEach((c, ci) => { const m = LIM[ci]; if (u.p[c] > m) { u.p[c] = m; u.v[c] = -Math.abs(u.v[c]); } else if (u.p[c] < -m) { u.p[c] = -m; u.v[c] = Math.abs(u.v[c]); } });
             // 주인공 쪽에 겹치지 않도록 살짝 밀어내기
-            const dx = u.p.x, dz = u.p.z - 1.4, dy = u.p.y - 0.2; if (Math.abs(dx) < 3.4 && Math.abs(dz) < 1.7 && Math.abs(dy) < 1.8) { u.v.z = Math.abs(u.v.z) * -1; u.p.z -= 0.06; }
+            const dx = u.p.x, dz = u.p.z - 1.0, dy = u.p.y - 0.1; if (Math.abs(dx) < 3.4 && Math.abs(dz) < 1.5 && Math.abs(dy) < 1.7) { u.v.z = Math.abs(u.v.z) * -1; u.p.z -= 0.06; }
             g.position.copy(u.p); g.rotation.x += u.w.x * dt; g.rotation.y += u.w.y * dt;
           }));
         },

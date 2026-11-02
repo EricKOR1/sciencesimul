@@ -6,6 +6,7 @@
   'use strict';
   if (!window.SciSim3D) return;
   const PHN = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches), KD = PHN ? 1.3 : 1;
+  const LV = () => (typeof window.SciSimLevel === 'number' ? window.SciSimLevel : 0);
   const TAU = Math.PI * 2, clamp = (x, a, b) => Math.max(a, Math.min(b, x));
   function tools(THREE) {
     const V3 = THREE.Vector3, Y = new V3(0, 1, 0);
@@ -40,16 +41,18 @@
     }
     return { V3, Y, M, glass, mkArrow, setArrow, tube, disc, grid, arc };
   }
+  const KDX = PHN ? 1.35 : 1;
   window.SciSim3D.attach({
     title: '파동의 간섭 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: 12 * KD, theta: 0.0, phi: 0.92, min: 5, max: 28, target: [0, 0, 1.0] },
+    camera: { dist: 12 * KDX, theta: 0.0, phi: 0.92, min: 5, max: 28, target: [0, 0, 1.0] },
     autoRotate: 0,
+    levels: [0, 1, 2],
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const { V3, M } = tools(THREE);
       const st = { lam: 1.0, d: 2.4, view: 'wave', t: 0 };
-      const W = 11, D = 9, NX = 110, NZ = 90;
+      const W = 11, D = 9, NX = 90, NZ = 72;
       const geo = new THREE.PlaneGeometry(W, D, NX, NZ); geo.rotateX(-Math.PI / 2); geo.translate(0, 0, 0.5);
       const pos = geo.attributes.position, col = new Float32Array(pos.count * 3); geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
       const surf = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.28, metalness: 0.15, side: THREE.DoubleSide })); surf.receiveShadow = true; root.add(surf);
@@ -62,7 +65,7 @@
       const l1 = label('파원 S₁', s1, { color: '#b45309', size: 12, offset: [0, 0.6, 0] }), l2 = label('파원 S₂', s2, { color: '#b45309', size: 12, offset: [0, 0.6, 0] });
       const lB = label('보강', [0, 0, 0], { color: '#15803d', size: 12 }), lD = label('상쇄', [0, 0, 0], { color: '#dc2626', size: 12 }), lS = label('스크린: 밝기', [0, -0.1, SCZ], { color: '#475569', size: 12, offset: [3.4, 0, 0.35] });
       const SZ = -D / 2 + 0.5;                 // 파원 z 위치
-      const cA = new THREE.Color(0x1d6fd6), cB = new THREE.Color(0x0b2a52), cC = new THREE.Color(0xdff1ff);
+      const cA = new THREE.Color(0x1a62b0), cB = new THREE.Color(0x071f40), cC = new THREE.Color(0xd6f0ff);
       const tc = new THREE.Color();
       const kk = () => TAU / st.lam;
       function intensity(x, z) { const r1 = Math.hypot(x + st.d / 2, z - SZ), r2 = Math.hypot(x - st.d / 2, z - SZ), k = kk(); const re = Math.cos(k * r1) / Math.sqrt(r1 + 1) + Math.cos(k * r2) / Math.sqrt(r2 + 1), im = Math.sin(k * r1) / Math.sqrt(r1 + 1) + Math.sin(k * r2) / Math.sqrt(r2 + 1); return (re * re + im * im); }
@@ -71,10 +74,10 @@
         info(st.view === 'wave'
           ? '<b>두 물결이 겹쳐요</b><br>마루와 마루가 만나면 <b style="color:#4ade80">보강</b>, 마루와 골이 만나면 <b style="color:#f87171">상쇄</b>예요.<br>파원 간격 d = ' + st.d.toFixed(1) + ' · 파장 λ = ' + st.lam.toFixed(1)
           : '<b>세기 무늬</b> (시간 평균)<br>밝은 띠 간격 Δx = λL/d ≈ <b>' + dx.toFixed(1) + '</b><br>λ가 크거나 d가 작을수록 무늬 간격이 넓어져요.');
-        lB.obj = [0, 0.15, 3.0]; lB.off = [0, 0.3, 0];
+        lB.obj = [0, 1.5, SCZ]; lB.off = [0, 0.1, 0];
         // 첫 상쇄선(경로차 λ/2) 위치
-        const th = Math.asin(Math.min(0.99, st.lam / 2 / st.d)); lD.obj = [Math.tan(th) * (3.0 - SZ), 0.1, 3.0]; lD.off = [0, 0.3, 0];
-        lB.show(true); lD.show(st.lam / 2 < st.d * 0.99);
+        const th = Math.asin(Math.min(0.99, st.lam / 2 / st.d)); lD.obj = [Math.tan(th) * (SCZ - SZ), 1.0, SCZ]; lD.off = [0, 0.1, 0];
+        lB.show(st.view === 'int'); lD.show(st.view === 'int' && st.lam / 2 < st.d * 0.99 && Math.abs(lD.obj[0]) < W / 2);
       }
       function refreshView() { const inten = st.view === 'int'; ['wave'].forEach(() => {}); bars.visible = true; txt(); }
       controls.segment('보기', [{ value: 'wave', label: '🌊 물결' }, { value: 'int', label: '📊 세기 무늬' }], st.view, (v) => { st.view = v; txt(); });
@@ -84,7 +87,7 @@
       const m4 = new THREE.Matrix4(); const px = pos.array, cl = col;
       return {
         update(dt) {
-          st.t += dt; const k = kk(), w = 3.2, inten = st.view === 'int', A = 0.17;
+          st.t += dt; const k = kk(), w = 1.7 * kk(), inten = st.view === 'int', A = 0.3;
           s1.position.x = -st.d / 2; s1.position.z = SZ; s2.position.x = st.d / 2; s2.position.z = SZ;
           for (let i = 0; i < pos.count; i++) {
             const x = px[i * 3], z = px[i * 3 + 2];
@@ -97,11 +100,10 @@
               y = A * 2.2 * (e1 * f1 * Math.sin(k * r1 - w * st.t) + e2 * f2 * Math.sin(k * r2 - w * st.t)); c = clamp(0.5 + y / (A * 4.4), 0, 1);
             }
             px[i * 3 + 1] = y;
-            if (inten) tc.copy(cB).lerp(cC, c); else tc.copy(cB).lerp(cA, Math.min(1, c * 1.7)).lerp(cC, Math.max(0, c - 0.55) * 2.2);
+            if (inten) tc.copy(cB).lerp(cC, c); else if (c < 0.5) tc.copy(cB).lerp(cA, c * 2); else tc.copy(cA).lerp(cC, (c - 0.5) * 2);
             cl[i * 3] = tc.r; cl[i * 3 + 1] = tc.g; cl[i * 3 + 2] = tc.b;
           }
           pos.needsUpdate = true; geo.attributes.color.needsUpdate = true; geo.computeVertexNormals();
-          if (st.t > 6 && st.t < 6.1) st.t = 6.1; 
           for (let i = 0; i < NB; i++) { const x = -W / 2 + W * (i + 0.5) / NB; const I = intensity(x, SCZ - 0.3), h = Math.max(0.02, Math.min(1.6, I * 0.45)); m4.makeScale(1, h, 1).setPosition(x, h / 2, SCZ); bars.setMatrixAt(i, m4); }
           bars.instanceMatrix.needsUpdate = true;
         },

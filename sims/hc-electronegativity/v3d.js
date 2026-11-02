@@ -13,7 +13,7 @@
     const CG = new THREE.CylinderGeometry(1, 1, 1, 16);
     const stickMat = new THREE.MeshStandardMaterial({ color: 0xc3ccdd, roughness: 0.45, metalness: 0.1 });
     const V = (x, y, z) => new THREE.Vector3(x, y, z);
-    function atom(k, s) { const m = new THREE.Mesh(SG, mat(k)); m.scale.setScalar((RAD[k] || 0.4) * (s || 1)); return m; }
+    function atom(k, s, pal) { const m = new THREE.Mesh(SG, mat(pal && pal[k] !== undefined ? pal[k] : k)); m.scale.setScalar((RAD[k] || 0.4) * (s || 1)); return m; }
     function stick(a, b, r, m) {
       const d = b.clone().sub(a), len = d.length(); const s = new THREE.Mesh(CG, m || stickMat);
       s.scale.set(r, Math.max(len, 1e-4), r); s.position.copy(a).add(b).multiplyScalar(0.5);
@@ -38,9 +38,9 @@
       OH: { f: 'OH⁻', a: [['O', -0.2, 0, 0], ['H', 0.75, 0, 0]], b: [[0, 1, 1]] },
     };
     /* 분자 만들기: k는 크기 배율. 이중·삼중 결합은 막대 여러 개 */
-    function mol(M, k) {
+    function mol(M, k, pal) {
       k = k || 1; const g = new THREE.Group(); const P = M.a.map((x) => V(x[1] * k, x[2] * k, x[3] * k));
-      M.a.forEach((x, i) => { const m = atom(x[0], k); m.position.copy(P[i]); g.add(m); });
+      M.a.forEach((x, i) => { const m = atom(x[0], k, pal); m.position.copy(P[i]); g.add(m); });
       M.b.forEach((b) => {
         const A = P[b[0]], B = P[b[1]], d = B.clone().sub(A).normalize();
         let perp = d.clone().cross(V(0, 0, 1)); if (perp.lengthSq() < 0.01) perp = d.clone().cross(V(0, 1, 0)); perp.normalize().multiplyScalar(0.11 * k);
@@ -80,7 +80,7 @@
   window.SciSim3D.attach({
     title: '전자 줄다리기 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: phone ? 12.5 : 9, theta: 0.4, phi: 1.2, min: 4, max: 20 },
+    camera: { dist: phone ? 9.6 : 9, theta: 0.4, phi: 1.2, min: 4, max: 20 },
     autoRotate: 0.15,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
@@ -91,7 +91,7 @@
       const NAMES = { HH: 'H–H', CH: 'C–H', HCl: 'H–Cl', HF: 'H–F', NaCl: 'Na–Cl' };
       let key = 'HF', showArrow = true;
       const grp = new THREE.Group(); root.add(grp);
-      const ND = 360;
+      const ND = 520;
       const dots = new THREE.InstancedMesh(L.SG, new THREE.MeshStandardMaterial({ color: 0xffd34d, emissive: 0xffb300, emissiveIntensity: 0.9, roughness: 0.4, transparent: true, opacity: 0.85 }), ND);
       dots.frustumCulled = false; root.add(dots);
       const dd = []; for (let i = 0; i < ND; i++) dd.push({ p: new THREE.Vector3(), c: Math.random() });
@@ -152,8 +152,8 @@
       return {
         update(dt) {
           acc += dt;
-          if (acc > 0.06) { acc = 0; for (let k = 0; k < 40; k++) resample((Math.random() * ND) | 0); }
-          for (let i = 0; i < ND; i++) { const d = dd[i]; dum.position.copy(d.p); dum.scale.setScalar(0.055 * d.c); dum.updateMatrix(); dots.setMatrixAt(i, dum.matrix); }
+          if (acc > 0.06) { acc = 0; for (let k = 0; k < 60; k++) resample((Math.random() * ND) | 0); }
+          for (let i = 0; i < ND; i++) { const d = dd[i]; dum.position.copy(d.p); dum.scale.setScalar(0.06 * d.c); dum.updateMatrix(); dots.setMatrixAt(i, dum.matrix); }
           dots.instanceMatrix.needsUpdate = true;
         },
       };

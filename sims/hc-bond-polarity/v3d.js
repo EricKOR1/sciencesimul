@@ -13,7 +13,7 @@
     const CG = new THREE.CylinderGeometry(1, 1, 1, 16);
     const stickMat = new THREE.MeshStandardMaterial({ color: 0xc3ccdd, roughness: 0.45, metalness: 0.1 });
     const V = (x, y, z) => new THREE.Vector3(x, y, z);
-    function atom(k, s) { const m = new THREE.Mesh(SG, mat(k)); m.scale.setScalar((RAD[k] || 0.4) * (s || 1)); return m; }
+    function atom(k, s, pal) { const m = new THREE.Mesh(SG, mat(pal && pal[k] !== undefined ? pal[k] : k)); m.scale.setScalar((RAD[k] || 0.4) * (s || 1)); return m; }
     function stick(a, b, r, m) {
       const d = b.clone().sub(a), len = d.length(); const s = new THREE.Mesh(CG, m || stickMat);
       s.scale.set(r, Math.max(len, 1e-4), r); s.position.copy(a).add(b).multiplyScalar(0.5);
@@ -38,9 +38,9 @@
       OH: { f: 'OH⁻', a: [['O', -0.2, 0, 0], ['H', 0.75, 0, 0]], b: [[0, 1, 1]] },
     };
     /* 분자 만들기: k는 크기 배율. 이중·삼중 결합은 막대 여러 개 */
-    function mol(M, k) {
+    function mol(M, k, pal) {
       k = k || 1; const g = new THREE.Group(); const P = M.a.map((x) => V(x[1] * k, x[2] * k, x[3] * k));
-      M.a.forEach((x, i) => { const m = atom(x[0], k); m.position.copy(P[i]); g.add(m); });
+      M.a.forEach((x, i) => { const m = atom(x[0], k, pal); m.position.copy(P[i]); g.add(m); });
       M.b.forEach((b) => {
         const A = P[b[0]], B = P[b[1]], d = B.clone().sub(A).normalize();
         let perp = d.clone().cross(V(0, 0, 1)); if (perp.lengthSq() < 0.01) perp = d.clone().cross(V(0, 1, 0)); perp.normalize().multiplyScalar(0.11 * k);
@@ -80,7 +80,7 @@
   window.SciSim3D.attach({
     title: '결합의 극성 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: phone ? 11.5 : 8, theta: 0.7, phi: 1.15, min: 3.5, max: 18 },
+    camera: { dist: phone ? 6.0 : 5.8, theta: 0.7, phi: 1.15, min: 2.5, max: 14 },
     autoRotate: 0.3,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
@@ -117,16 +117,16 @@
           const from = d > 0 ? i : j, to = d > 0 ? j : i; const A = P[from], B = P[to]; const dir = B.clone().sub(A).normalize();
           const off = new THREE.Vector3(0, 0.0, 0); const side = dir.clone().cross(new THREE.Vector3(0, 0, 1)); if (side.lengthSq() < 0.01) side.set(0, 1, 0); side.normalize().multiplyScalar(0.38);
           const a0 = A.clone().addScaledVector(dir, L.RAD[M.a[from][0]] + 0.1).add(side), a1 = B.clone().addScaledVector(dir, -(L.RAD[M.a[to][0]] + 0.12)).add(side);
-          if (a1.clone().sub(a0).dot(dir) > 0.2) g.add(L.arrow(a0.toArray(), a1.toArray(), 0xff9f43, 0.045, 0.28));
+          if (a1.clone().sub(a0).dot(dir) > 0.2) g.add(L.arrow(a0.toArray(), a1.toArray(), 0xff9f43, 0.06, 0.3));
         });
         // 알짜 쌍극자
         const mu = new THREE.Vector3(); P.forEach((p, i) => mu.addScaledVector(p, -q[i]));
         const len = mu.length();
         const polar = len > 0.15;
         if (polar) {
-          const dir = mu.clone().normalize(); const L0 = Math.min(3.4, 0.9 + len * 1.4);
+          const dir = mu.clone().normalize(); const L0 = Math.min(2.4, 0.7 + len * 1.1);
           const a0 = dir.clone().multiplyScalar(-L0 / 2).add(new THREE.Vector3(0, 0, 0)), a1 = dir.clone().multiplyScalar(L0 / 2);
-          const off = new THREE.Vector3(0, 1.3, 0); if (Math.abs(dir.y) > 0.8) off.set(1.3, 0, 0);
+          const off = new THREE.Vector3(0, 1.45, 0); if (Math.abs(dir.y) > 0.8) off.set(1.9, 0, 0);
           const arr = L.arrow(a0.clone().add(off).toArray(), a1.clone().add(off).toArray(), 0xffd34d, 0.1, 0.5); g.add(arr);
           netL.obj = a1.clone().add(off).multiplyScalar(0.5).add(a0.clone().add(off).multiplyScalar(0.5)).toArray(); netL.off = [0, 0.5, 0]; netL.set('알짜 쌍극자'); netL.show(true);
         } else { netL.obj = [0, 0, 0]; netL.off = [0, 1.7, 0]; netL.set('쌍극자 합 = 0'); netL.show(true); }

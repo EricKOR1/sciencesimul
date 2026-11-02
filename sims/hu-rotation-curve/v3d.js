@@ -19,8 +19,8 @@
   window.SciSim3D.attach({
     title: '은하 회전 곡선 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    levels: [0, 1, 3],
-    camera: { dist: PHONE ? 15 : 11.5, theta: 0.5, phi: 0.78, min: 5, max: 26 },
+    levels: [1, 3],
+    camera: { dist: PHONE ? 14 : 10.5, theta: 0.5, phi: 0.8, min: 5, max: 26 },
     autoRotate: 0,
     build(ctx) {
       const { THREE, scene, root, label, info, controls } = ctx;
@@ -56,7 +56,7 @@
       { const hp = new Float32Array(600 * 3); for (let i = 0; i < 600; i++) { const u = rnd() * 2 - 1, a = rnd() * TAU, s = Math.sqrt(1 - u * u), r = 30 * SC * Math.cbrt(rnd()) * 1.0; hp[i * 3] = Math.cos(a) * s * r; hp[i * 3 + 1] = u * r; hp[i * 3 + 2] = Math.sin(a) * s * r; }
         const hg = new THREE.BufferGeometry(); hg.setAttribute('position', new THREE.BufferAttribute(hp, 3));
         haloG.add(new THREE.Points(hg, new THREE.PointsMaterial({ color: 0xc4a8ff, size: 0.06, transparent: true, opacity: 0.55, depthWrite: false }))); }
-      const labHalo = label('암흑 물질 헤일로', [0, 30 * SC * 0.95, 0], { color: 'rgba(91,50,180,.92)' });
+      const labHalo = label('암흑 물질 헤일로', [30 * SC * 0.8, 30 * SC * 0.55, 0], { color: 'rgba(91,50,180,.92)' });
 
       /* 추적하는 별 3개 (2 · 8 · 16 kpc 근처) + 태양 */
       const TR = [{ r: 3, c: 0x7dd3fc, n: '안쪽' }, { r: 8.2, c: 0xffd23f, n: '태양' }, { r: 16, c: 0xff7a7a, n: '바깥쪽' }];

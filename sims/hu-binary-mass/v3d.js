@@ -6,7 +6,7 @@
   'use strict';
   if (!window.SciSim3D) return;
   const PHONE = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches);
-  const TAU = Math.PI * 2, A_AU = 19.78, E = 0.59, SC = 0.19, P0 = 50.1, M0 = 3.08;
+  const TAU = Math.PI * 2, A_AU = 19.78, E = 0.59, SC = 0.21, P0 = 50.1, M0 = 3.08;
 
   function kepE(M, e) { M = ((M % TAU) + TAU) % TAU; let x = e > 0.8 ? Math.PI : M + e * Math.sin(M); for (let i = 0; i < 40; i++) { const d = (x - e * Math.sin(x) - M) / (1 - e * Math.cos(x)); x -= d; if (Math.abs(d) < 1e-10) break; } return x; }
 
@@ -14,7 +14,7 @@
     title: '쌍성과 질량 중심 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     levels: [0, 1, 2],
-    camera: { dist: PHONE ? 17 : 12.5, theta: 0.35, phi: 0.95, min: 6, max: 28, target: [0.8, 0, 0] },
+    camera: { dist: PHONE ? 16 : 11.5, theta: 0.35, phi: 0.9, min: 6, max: 28, target: [0.8, 0, 0] },
     autoRotate: 0,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
@@ -27,11 +27,11 @@
         const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
         root.add(new THREE.Points(g, new THREE.PointsMaterial({ color: 0xaec3ff, size: 1.5, sizeAttenuation: false, transparent: true, opacity: 0.5 }))); }
       const glowTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d'), gr = g.createRadialGradient(64, 64, 0, 64, 64, 64); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.3, 'rgba(255,255,255,.4)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, 128, 128); return new THREE.CanvasTexture(c); })();
-      const mkStar = (col) => { const m = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 28), new THREE.MeshBasicMaterial({ color: col })); const gl = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: col, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false })); root.add(m, gl); return { m, gl }; };
+      const mkStar = (col) => { const m = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 28), new THREE.MeshBasicMaterial({ color: col })); const gl = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: col, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.75 })); root.add(m, gl); return { m, gl }; };
       const A = mkStar(0xcfe3ff), B = mkStar(0xfff1d6);
       const labA = label('', A.m, { offset: [0, 0.7, 0], color: 'rgba(30,64,140,.92)' }), labB = label('', B.m, { offset: [0, 0.6, 0], color: 'rgba(130,90,10,.92)' });
       const cm = new THREE.Mesh(new THREE.OctahedronGeometry(0.13), new THREE.MeshBasicMaterial({ color: 0xff6b6b })); root.add(cm);
-      label('질량 중심', cm, { offset: [0.2, -0.5, 0], size: 11.5, color: 'rgba(160,30,30,.92)' });
+      label('질량 중심', cm, { offset: [0.3, -0.8, 0], size: 11.5, color: 'rgba(160,30,30,.92)' });
       const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 1, 6), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.55 })); root.add(rod);
       const orbG = new THREE.Group(); root.add(orbG);
 
@@ -45,7 +45,7 @@
           orbG.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts, true), 200, 0.018, 6, true), new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: 0.75 })));
         });
         const rA = 0.26 + 0.2 * Math.cbrt(st.mA), rB = 0.2 + 0.2 * Math.cbrt(st.mB) * 0.7;
-        A.m.scale.setScalar(rA); A.gl.scale.setScalar(rA * 5); B.m.scale.setScalar(rB); B.gl.scale.setScalar(rB * 5);
+        A.m.scale.setScalar(rA); A.gl.scale.setScalar(rA * 3.4); B.m.scale.setScalar(rB); B.gl.scale.setScalar(rB * 3.4);
         labA.set('A ' + st.mA.toFixed(1) + ' M☉'); labB.set('B ' + st.mB.toFixed(1) + ' M☉'); st.M = M; st.P = Math.sqrt(Math.pow(A_AU, 3) / M);
         text();
       }

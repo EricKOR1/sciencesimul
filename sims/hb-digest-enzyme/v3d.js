@@ -5,9 +5,9 @@
   if (!window.SciSim3D) return;
   const narrow = window.innerWidth < 600 || window.innerHeight > window.innerWidth * 1.1;
   const ENZ = [
-    { name: '아밀레이스', color: 0x3f7fe8, shape: 'sphere' },
-    { name: '단백질 분해 효소', color: 0xa65bd9, shape: 'cube' },
-    { name: '라이페이스', color: 0x1fae92, shape: 'cone' },
+    { name: '아밀레이스', color: 0x2a62d8, shape: 'sphere' },
+    { name: '단백질 분해 효소', color: 0x8a3fc8, shape: 'cube' },
+    { name: '라이페이스', color: 0x12907a, shape: 'cone' },
   ];
   const SUB = [
     { name: '녹말', color: 0xf2b84a, prod: 0xc9e07a, shape: 'sphere', pn: '엿당 등' },
@@ -18,8 +18,9 @@
   window.SciSim3D.attach({
     title: '소화 효소 3D 모형 (열쇠-자물쇠)',
     hint: '효소와 기질을 바꿔 보고, 온도를 올려 봐요',
-    camera: { dist: narrow ? 11.5 : 9, theta: 0.5, phi: 1.2, min: 5, max: 18 },
+    camera: { dist: narrow ? 13 : 10.2, theta: 0.5, phi: 1.2, min: 5, max: 20, target: [0.7, 0.5, 0] },
     autoRotate: 0.12,
+    levels: [0, 2],
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V = THREE.Vector3;
@@ -74,7 +75,7 @@
       function restart() { clock = 0; }
 
       function ease(x) { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); }
-      const far = C.clone().multiplyScalar(5.6).add(new V(1.2, 1.4, 1.4));
+      const far = C.clone().multiplyScalar(3.7).add(new V(0.9, 0.7, 1.1));
       const hover = C.clone().multiplyScalar(R + 1.15);
       const dock = C.clone().multiplyScalar(R - 0.02);
       const lerpV = (a, b, t) => a.clone().lerp(b, t);
@@ -89,7 +90,7 @@
           const sp = temp < 37 ? 0.2 + 0.8 * (1 - cold * cold) : 1 + hot * 0.6;
           const before = clock; clock += dt * sp;
           const cyc = Math.floor(clock / CYC), ph = (clock % CYC);
-          if (Math.abs(den - denShown) > 0.01) { shapeEnzyme(ENZ[ei].shape, den); denShown = den; eMat.color.set(ENZ[ei].color).lerp(new THREE.Color(0x8b909c), den); }
+          if (Math.abs(den - denShown) > 0.01) { shapeEnzyme(ENZ[ei].shape, den); denShown = den; eMat.color.set(ENZ[ei].color).lerp(new THREE.Color(0x5a5f6b), den); }
           const match = ei === si && den < 0.55;
           const s = SUB[si];
           let pA, pB, prodA = false, prodB = false, showWater = false;
@@ -106,7 +107,7 @@
               pulse = 1 - Math.abs(k - 0.4) * 1.5;
             } else { const k = ease((ph - 3.2) / 1.0); pA = lerpV(lerpV(hover, far, 0.35), far, k); pB = pA.clone().add(dir.clone().multiplyScalar(0.95)); }
           } else if (ph < 5.6) {
-            if (match) { const k = ease((ph - 4.2) / 1.4); pA = lerpV(dock, dock.clone().add(new V(-0.6, 4.2, -1.8)), k); pB = lerpV(dock.clone().add(dir.clone().multiplyScalar(1.85)).add(perp.clone().multiplyScalar(0.5)), far.clone().add(new V(1.6, 1.6, 2.4)), k); prodA = prodB = true; }
+            if (match) { const k = ease((ph - 4.2) / 1.4); pA = lerpV(dock, dock.clone().add(new V(-0.6, 2.8, -1.8)), k); pB = lerpV(dock.clone().add(dir.clone().multiplyScalar(1.85)).add(perp.clone().multiplyScalar(0.5)), far.clone().add(new V(1.2, 1.2, 1.8)), k); prodA = prodB = true; }
             else { pA = far.clone(); pB = pA.clone().add(dir.clone().multiplyScalar(0.95)); }
           } else { pA = far.clone(); pB = pA.clone().add(dir.clone().multiplyScalar(0.95)); }
           // 분해 횟수 (한 주기에 한 번)

@@ -11,7 +11,8 @@
 
   window.SciSim3D.attach({
     title: '화산 단면과 분출 3D',
-    camera: { dist: PHN ? 21 : 15.5, theta: -0.8, phi: 1.2, target: [0, 3.0, 0], min: 7, max: 34 },
+    camera: { dist: PHN ? 17 : 12.5, theta: -0.8, phi: 1.22, target: [0, 2.6, 0], min: 7, max: 34 },
+    levels: [0],
     autoRotate: 0,
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
@@ -27,7 +28,7 @@
       const wallFull = new THREE.Mesh(new THREE.CylinderGeometry(RB, RB, 3.2, 72, 1, true), std(0x5b4a3a, { side: THREE.DoubleSide })); wallFull.position.y = -1.6;
       const cutG = new THREE.Group(), fullG = new THREE.Group(); cutG.add(terrCut, wallCut); fullG.add(terrFull, wallFull); body.add(cutG, fullG);
       // 바다/평지 기반
-      const sea = new THREE.Mesh(new THREE.RingGeometry(RB - 0.01, RB + 3.2, 72), std(0x3d8a58)); sea.rotation.x = -Math.PI / 2; sea.position.y = 0.005; body.add(sea);
+      const sea = new THREE.Mesh(new THREE.RingGeometry(RB - 0.01, RB + 3.2, 72), std(0x1f5a3a, { roughness: 0.95 })); sea.rotation.x = -Math.PI / 2; sea.position.y = 0.005; body.add(sea);
       /* ---------- 단면(층·화도·마그마 방) ---------- */
       const LAYC = [0x8a7e72, 0xc2a37a, 0x6f6459];
       function caps(rotY) {
@@ -60,9 +61,9 @@
       // 전체 보기(단면 끔)에서는 마그마 방은 숨겨요 (지표만)
       /* ---------- 분출물 ---------- */
       const ashMat = std(0x6a6258, { transparent: true, opacity: 0.7, roughness: 1, depthWrite: false });
-      const NA = 360, ash = new THREE.InstancedMesh(new THREE.SphereGeometry(0.2, 10, 8), ashMat, NA); ash.frustumCulled = false; root.add(ash);
-      const NB = 40, bomb = new THREE.InstancedMesh(new THREE.SphereGeometry(0.13, 12, 10), std(0xff6a2a, { emissive: 0xff3a10, emissiveIntensity: 0.9, roughness: 0.4 }), NB); bomb.frustumCulled = false; root.add(bomb);
-      const NG = 40, gas = new THREE.InstancedMesh(new THREE.SphereGeometry(0.28, 12, 10), std(0xf4f4f8, { transparent: true, opacity: 0.35, roughness: 1, depthWrite: false }), NG); gas.frustumCulled = false; root.add(gas);
+      const NA = 360, ash = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(0.2, 1), ashMat, NA); ash.frustumCulled = false; root.add(ash);
+      const NB = 40, bomb = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(0.13, 1), std(0xff6a2a, { emissive: 0xff3a10, emissiveIntensity: 0.9, roughness: 0.4 }), NB); bomb.frustumCulled = false; root.add(bomb);
+      const NG = 40, gas = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(0.28, 1), std(0xf4f4f8, { transparent: true, opacity: 0.35, roughness: 1, depthWrite: false }), NG); gas.frustumCulled = false; root.add(gas);
       const A = [], B = [], G = []; const dm = new THREE.Object3D(); const rnd = (a, b) => a + Math.random() * (b - a);
       for (let i = 0; i < NA; i++) A.push({ on: 0 }); for (let i = 0; i < NB; i++) B.push({ on: 0 }); for (let i = 0; i < NG; i++) G.push({ on: 0 });
       function emitAsh(p) { const H = VEI[vei].h * KM * rnd(0.55, 1.05), dec = 1.3; p.on = 1; p.t = 0; p.x = rnd(-0.12, 0.12); p.y = HC - 0.3; p.z = rnd(-0.12, 0.12); p.vy = Math.sqrt(2 * dec * H); p.dec = dec; p.ph = 0; p.s = rnd(0.7, 1.5); const a = rnd(0, 6.283); p.dx = Math.cos(a); p.dz = Math.sin(a); p.vh = rnd(0.1, 0.4); p.life = rnd(8, 14); }
@@ -75,7 +76,7 @@
         const g = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 60, 0.12, 6); lavas.push({ m: new THREE.Mesh(g, std(0xff5a1a, { emissive: 0xff3a10, emissiveIntensity: 1.0, roughness: 0.5 })), n: g.index.count }); body.add(lavas[i].m);
       });
       // 성층권 경계
-      const strat = new THREE.Mesh(new THREE.RingGeometry(0.4, 6.3, 72), new THREE.MeshBasicMaterial({ color: 0x6aa8ff, transparent: true, opacity: 0.18, side: THREE.DoubleSide, depthWrite: false })); strat.rotation.x = -Math.PI / 2; strat.position.y = HC + 12 * KM; root.add(strat);
+      const strat = new THREE.Mesh(new THREE.RingGeometry(0.4, 5.6, 72), new THREE.MeshBasicMaterial({ color: 0x6aa8ff, transparent: true, opacity: 0.12, side: THREE.DoubleSide, depthWrite: false })); strat.rotation.x = -Math.PI / 2; strat.position.y = HC + 12 * KM; root.add(strat);
       const lStrat = label('성층권 (약 12 km 위)', [4.6, HC + 12 * KM, 0], { size: 12, color: 'rgba(40,100,200,.9)' });
       const lCr = label('분화구', [0, HC + 0.3, 0], { size: 12 });
       const lCham = label('마그마 방', [0, -2.2, 0], { color: 'rgba(210,70,20,.92)', size: 12 });

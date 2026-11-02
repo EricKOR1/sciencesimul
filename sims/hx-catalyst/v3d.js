@@ -7,7 +7,7 @@
   if (!window.SciSim3D) return;
   const PHONE = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches);
   const sstep = (x) => { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); };
-  const SX = 1.3, OY = 4.9;
+  const SX = 1.3, OY = 4.2;
   const hill = (x, h) => -0.45 * (1 + Math.tanh(1.3 * x)) + h * Math.exp(-x * x / 0.9);  // x: -3..3
   const STAGES = ['반응물 접근', '표면에 흡착', '결합이 끊어짐', '새 결합 형성', '생성물이 떨어져 나감'];
   // 원자 키프레임 [x, y, z] — H1, H2, Cl1, Cl2
@@ -24,19 +24,19 @@
   window.SciSim3D.attach({
     title: '촉매 표면 반응 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: PHONE ? 19 : 14, theta: 0.35, phi: 1.2, min: 8, max: 30, target: [0, 2.3, 0] },
+    camera: { dist: PHONE ? 19 : 14.5, theta: 0.3, phi: 1.3, min: 8, max: 30, target: [0, 2.2, 0] },
     autoRotate: 0.08,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3, UP = new V3(0, 1, 0);
       const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.38, metalness: 0.05 }, o || {}));
       const S0 = window.__sim && window.__sim.S && window.__sim.S.en;
-      let cat = S0 ? !!S0.cat : true, stage = 0, playing = false, prog = 0;   // prog: 0 ~ 4 (키프레임 사이를 부드럽게)
+      let cat = true, stage = 0, playing = false, prog = 0;   // prog: 0 ~ 4 (키프레임 사이를 부드럽게)
       /* 금속 표면 */
       const surf = new THREE.Group(); root.add(surf);
-      const sg = new THREE.SphereGeometry(0.62, 24, 18), sm = mat(0xa5afc2, { metalness: 0.8, roughness: 0.28 });
-      const inst = new THREE.InstancedMesh(sg, sm, 11 * 4 * 2); let n = 0, M = new THREE.Matrix4();
-      for (let L = 0; L < 2; L++) for (let i = 0; i < 11; i++) for (let j = 0; j < 4; j++) { M.makeTranslation((i - 5 + (j % 2) * 0.5) * 1.25 + (L ? 0.6 : 0), -0.2 - L * 0.9, (j - 1.5) * 1.1 + (L ? 0.55 : 0)); inst.setMatrixAt(n++, M); }
+      const sg = new THREE.SphereGeometry(0.48, 24, 18), sm = mat(0xa5afc2, { metalness: 0.8, roughness: 0.28 });
+      const inst = new THREE.InstancedMesh(sg, sm, 12 * 4 * 2); let n = 0, M = new THREE.Matrix4();
+      for (let L = 0; L < 2; L++) for (let i = 0; i < 12; i++) for (let j = 0; j < 4; j++) { M.makeTranslation((i - 5.5 + (j % 2) * 0.5) * 1.0 + (L ? 0.5 : 0), -0.2 - L * 0.8, (j - 1.5) * 0.95 + (L ? 0.47 : 0)); inst.setMatrixAt(n++, M); }
       surf.add(inst);
       const lSurf = label('금속 촉매 표면', [-4.2, -0.2, 1.8], { color: 'rgba(100,116,139,.92)' });
       /* 원자 */

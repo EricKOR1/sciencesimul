@@ -16,7 +16,6 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHN ? 16 : 12, theta: 0.42, phi: 1.2, min: 6, max: 26, target: [1.2, 0.2, 0] },
     autoRotate: 0,
-    levels: [1, 2, 3],
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3;
@@ -24,8 +23,8 @@
       const sm = () => window.__sim;
 
       // 광학대 바닥과 광축
-      const bench = new THREE.Mesh(new THREE.BoxGeometry(20, 0.1, 5), mat(0x2a3552, { roughness: 0.8 })); bench.position.set(1, -1.9, 0); bench.receiveShadow = true; root.add(bench);
-      root.add(Object.assign(new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 20, 6), new THREE.MeshBasicMaterial({ color: 0x8aa0d0, transparent: true, opacity: 0.6 })), { rotation: new THREE.Euler(0, 0, Math.PI / 2), position: new V3(1, 0, 0) }));
+      const bench = new THREE.Mesh(new THREE.BoxGeometry(20, 0.1, 5), mat(0x141b30, { roughness: 0.85, metalness: 0 })); bench.position.set(1, -1.9, 0); bench.receiveShadow = true; root.add(bench);
+      { const ax = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 20, 6), new THREE.MeshBasicMaterial({ color: 0x8aa0d0, transparent: true, opacity: 0.6 })); ax.rotation.z = Math.PI / 2; ax.position.set(1, 0, 0); root.add(ax); }
 
       // 물체 (화살표): 밑은 광축 위, 끝에서 빛이 나가요
       function arrowObj(col, op) {

@@ -5,6 +5,7 @@
   'use strict';
   if (!window.SciSim3D) return;
   const PHN = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches), KD = PHN ? 1.3 : 1;
+  const LV = () => (typeof window.SciSimLevel === 'number' ? window.SciSimLevel : 0);
   const TAU = Math.PI * 2, clamp = (x, a, b) => Math.max(a, Math.min(b, x));
   function tools(THREE) {
     const V3 = THREE.Vector3, Y = new V3(0, 1, 0);
@@ -44,10 +45,11 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: 9 * KD, theta: 0.35, phi: 0.95, min: 4, max: 26, target: [0, 0.6, 0] },
     autoRotate: 0,
+    levels: [0, 2, 3],
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const { V3, M, mkArrow, setArrow, tube, disc, grid, glass } = tools(THREE);
-      const st = { mode: 'puck', v: 3, r: 2.5, cut: false, ph: 0, show: true, om: 1.6, cutT: 0 };
+      const st = { mode: LV() === 3 ? 'swing' : 'puck', v: 3, r: 2.5, cut: false, ph: 0, show: true, om: 1.6, cutT: 0 };
       const gP = new THREE.Group(), gS = new THREE.Group(); root.add(gP, gS);
       /* ---- 퍽 ---- */
       const table = new THREE.Mesh(new THREE.CylinderGeometry(4.0, 4.0, 0.2, 64), M(0x56718f, { roughness: 0.4 })); table.position.y = -0.1; table.receiveShadow = true; gP.add(table);
@@ -97,12 +99,13 @@
       }
       const ctl = {}; const barEl = ctx.renderer.domElement.parentNode.parentNode.querySelector('.v3-ctl');
       const grab = (k, fn) => { const b = barEl.children.length; const r = fn(); ctl[k] = [...barEl.children].slice(b); return r; };
-      controls.segment('실험', [{ value: 'puck', label: '🧊 퍽과 줄' }, { value: 'swing', label: '🎡 회전 그네' }], st.mode, (v) => { st.mode = v; setMode(); });
+      const mseg = controls.segment('실험', [{ value: 'puck', label: '🧊 퍽과 줄' }, { value: 'swing', label: '🎡 회전 그네' }], st.mode, (v) => { st.mode = v; setMode(); });
       grab('v', () => controls.range('속력', 1, 5, 0.5, st.v, (v) => { st.v = v; text(); }, (v) => v.toFixed(1) + ' m/s'));
       grab('r', () => controls.range('반지름', 1.5, 3.5, 0.5, st.r, (v) => { st.r = v; text(); }, (v) => v.toFixed(1) + ' m'));
       grab('cutB', () => controls.button('✂ 줄 끊기 / 다시', () => { st.cut = !st.cut; if (st.cut) { free = pos.clone(); st.cutT = 0; } else { free = null; } text(); }));
       grab('om', () => controls.range('회전 빠르기', 0.8, 2.6, 0.2, st.om, (v) => { st.om = v; text(); }, (v) => v.toFixed(1) + ' rad/s'));
       setMode();
+      window.addEventListener('scisim-level', (e) => { const l = e.detail && e.detail.level, nm = l === 3 ? 'swing' : 'puck'; if (nm !== st.mode) { st.mode = nm; mseg.set(nm); setMode(); } });
       const tmpA = new V3(), tmpB = new V3();
       return {
         update(dt) {

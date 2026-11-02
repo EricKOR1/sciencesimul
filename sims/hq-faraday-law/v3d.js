@@ -55,7 +55,7 @@
     function mkSeg(col, rad, o) { return new THREE.Mesh(new THREE.CylinderGeometry(rad, rad, 1, 8), (o && o.basic) ? basic(col, o.mo) : mat(col, o && o.mo)); }
     function setSeg(m, a, b) { const d = new V3().subVectors(b, a), l = d.length(); if (l < 1e-3) { m.visible = false; return m; } m.visible = true; m.scale.y = l; m.position.copy(a).addScaledVector(d, 0.5); m.quaternion.setFromUnitVectors(Yax, d.normalize()); return m; }
     function anchor(g, x, y, z) { const o = new THREE.Object3D(); o.position.set(x || 0, y || 0, z || 0); g.add(o); return o; }
-    function sphere(r, c, o) { return new THREE.Mesh(new THREE.SphereGeometry(r, 36, 24), mat(c, o)); }
+    function sphere(r, c, o) { return new THREE.Mesh(new THREE.SphereGeometry(r, r < 0.35 ? 22 : 36, r < 0.35 ? 14 : 24), mat(c, o)); }
     function tube(pts, r, c, o) {
       const curve = Array.isArray(pts) ? new THREE.CatmullRomCurve3(pts) : pts;
       return new THREE.Mesh(new THREE.TubeGeometry(curve, (o && o.seg) || 80, r, (o && o.rs) || 8, !!(o && o.closed)), (o && o.basic) ? basic(c, o.mo) : mat(c, o && o.mo));
@@ -85,14 +85,14 @@
   window.SciSim3D.attach({
     title: '전자기 유도 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: 12.5 * KD, theta: 0.5, phi: 1.2, min: 5, max: 28 },
+    camera: { dist: 12.5 * KD, theta: 0.5, phi: 1.32, min: 5, max: 28 },
     autoRotate: 0,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const h = H3(ctx); const { V3, mat, glass, mkArrow, setArrow, arrowSet, anchor, sphere, box, cyl, tube, grab, showCtl, toggleBtn } = h;
       const lessonS = () => (window.__sim && window.__sim.S) || null;
       const S0 = lessonS();
-      const st = { sc: S0 ? (MODE2SC[S0.mode] || 'flux') : 'flux', th: 35, R: 1.7, B: 2, N: 6, spd: 0.9, flip: 1, pause: false, strong: 2 };
+      const st = { sc: S0 ? (MODE2SC[S0.mode] || 'flux') : 'flux', th: S0 && S0.f && isFinite(S0.f.th) ? Math.max(0, Math.min(90, Math.round(S0.f.th))) : 30, R: 2.0, B: 2, N: 6, spd: 0.9, flip: 1, pause: false, strong: 2 };
       const gF = new THREE.Group(), gC = new THREE.Group(), gB = new THREE.Group(); root.add(gF, gC, gB);
 
       /* ================= ① 자기선속 ================= */
@@ -108,13 +108,13 @@
       function updFlux() {
         const R = st.R, th = st.th * Math.PI / 180, n = new V3(Math.sin(th), Math.cos(th), 0);
         loop.scale.set(R, R, R); loop.quaternion.setFromUnitVectors(new V3(0, 0, 1), n);
-        const sp = 1.25 / Math.sqrt(st.B), half = 4.4; let k = 0, thru = 0;
+        const sp = 1.2 / Math.sqrt(st.B), half = 3.3; let k = 0, thru = 0;
         for (let x = -half; x <= half + 1e-6; x += sp) for (let z = -half; z <= half + 1e-6; z += sp) {
           if (k >= MAXL) break;
           let inside = false;
           if (n.y > 1e-3) { const y = -(n.x * x + n.z * z) / n.y; inside = x * x + y * y + z * z <= R * R; }
           if (inside) thru++;
-          fArr.set(k++, new V3(x, -3.6, z), h.Yax, 7.2, inside ? 0xffd93d : 0x4f6fae);
+          fArr.set(k++, new V3(x, -2.9, z), h.Yax, 5.8, inside ? 0xffd93d : 0x5b7bc0);
         }
         for (; k < MAXL; k++) fArr.hide(k);
         fArr.flush();
@@ -123,7 +123,7 @@
         aTh.position.set(0.5 * n.x * (R * 0.5 + 0.6) + 0.35, 0.9, 0); lTh.set('θ = ' + Math.round(st.th) + '°'); lTh.show(st.th > 3);
         const phi = st.B * Math.PI * R * R * Math.cos(th) / 4.5;          // 보기 좋은 단위
         lPhi.set('선속 Φ ∝ 지나는 선 수 = ' + thru + '개');
-        info('<b>자기선속 Φ = B·A·cosθ</b> (노란 선이 면을 지나는 자기력선)<br>B가 세거나(선이 촘촘) 면이 넓거나 면이 B에 수직(θ=0°)일수록 Φ가 커요.<br>θ = 90°이면 선이 면과 나란해서 Φ = 0이에요.');
+        info('<b>Φ = B·A·cosθ</b> — 노란 선이 코일 면을 지나는 자기력선이에요.<br>선이 촘촘하고(B↑) 면이 넓고 면이 B에 수직(θ=0°)일수록 Φ가 커요.<br>θ = 90°이면 선이 면과 나란해서 Φ = 0이에요.');
       }
 
       /* ================= ② 자석과 코일 (유도 · 렌츠) ================= */
@@ -186,7 +186,7 @@
       /* ================= 조작 ================= */
       const seg = controls.segment('보기', [{ value: 'flux', label: '🧲 자기선속' }, { value: 'coil', label: '🔁 자석과 코일' }, { value: 'brake', label: '🌪️ 자기 브레이크' }], st.sc, (v) => go(v));
       grab('flux', () => controls.range('각도 θ', 0, 90, 5, st.th, (v) => { st.th = v; updFlux(); }, (v) => v + '°'));
-      grab('flux', () => controls.range('면적 A', 1.1, 2.3, 0.1, st.R, (v) => { st.R = v; updFlux(); }, (v) => (v * v / 2.89).toFixed(1) + '배'));
+      grab('flux', () => controls.range('면적 A', 1.3, 2.7, 0.1, st.R, (v) => { st.R = v; updFlux(); }, (v) => (v * v / 4).toFixed(1) + '배'));
       grab('flux', () => controls.range('자기장 B', 1, 3, 1, st.B, (v) => { st.B = v; updFlux(); }, (v) => v + '배'));
       grab('coil', () => controls.range('감은 수 N', 2, 10, 1, st.N, (v) => { st.N = v; buildCoil(); }, (v) => v + '회'));
       grab('coil', () => controls.range('자석 속력', 0.4, 1.6, 0.1, st.spd, (v) => { st.spd = v; }, (v) => v.toFixed(1) + '배'));
@@ -200,8 +200,8 @@
         [lN, lB, lTh, lPhi].forEach((l) => l.show(sc === 'flux'));
         [lMN, lMS, lG, lI, lPole].forEach((l) => l.show(sc === 'coil'));
         [lCu, lPl, lTc, lTp, lEd].forEach((l) => l.show(sc === 'brake'));
-        if (sc === 'flux') { updFlux(); ctx.orbit.dist = 13 * KD; ctx.orbit.phi = 1.15; ctx.orbit.ty = 0; }
-        else if (sc === 'coil') { ctx.orbit.dist = 13 * KD; ctx.orbit.phi = 1.35; ctx.orbit.tx = 1.2; ctx.orbit.ty = -0.3; } else { updBrakeInfo(); dropReset(); ctx.orbit.dist = 13 * KD; ctx.orbit.phi = 1.4; ctx.orbit.tx = 0; ctx.orbit.ty = -0.2; }
+        if (sc === 'flux') { updFlux(); ctx.orbit.dist = 12.5 * KD; ctx.orbit.phi = 1.32; ctx.orbit.ty = 0; }
+        else if (sc === 'coil') { ctx.orbit.dist = 17 * KD; ctx.orbit.phi = 1.4; ctx.orbit.tx = 1.2; ctx.orbit.ty = 0.1; } else { updBrakeInfo(); dropReset(); ctx.orbit.dist = 16.5 * KD; ctx.orbit.phi = 1.4; ctx.orbit.tx = 0; ctx.orbit.ty = -0.2; }
         if (sc !== 'coil') { ctx.orbit.tx = 0; }
       }
       go(st.sc);

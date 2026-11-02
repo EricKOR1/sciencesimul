@@ -14,8 +14,9 @@
   window.SciSim3D.attach({
     title: '면역 세포의 작용 3D',
     hint: '방식을 골라 보세요 · 드래그: 돌리기',
-    camera: { dist: narrow ? 13 : 10, theta: 0.3, phi: 1.2, min: 5, max: 20 },
+    camera: { dist: narrow ? 12.5 : 8.8, theta: 0.3, phi: 1.2, min: 5, max: 20 },
     autoRotate: 0.08,
+    levels: [0, 1],
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V = THREE.Vector3, V3 = (x, y, z) => new V(x, y, z || 0);
@@ -50,7 +51,7 @@
 
       /* ---------- 식균 작용 ---------- */
       { const g = mkG('phago');
-        const mac = new THREE.Mesh(bumpy(new THREE.SphereGeometry(1.7, 72, 52), 0.07, 2.6), ghost(0xf7c97a, 0.5, { roughness: 0.3 })); g.add(mac);
+        const mac = new THREE.Mesh(bumpy(new THREE.SphereGeometry(1.7, 72, 52), 0.07, 2.6), ghost(0xffae3d, 0.62, { roughness: 0.3 })); g.add(mac);
         const nuc = sph(0.55, std(0x8a5cc0), 0.9, 0.7, -0.3, 1.3, 0.8, 0.9); nuc.rotation.z = 0.5; g.add(nuc);
         const lyM = std(0xff8a3d, { emissive: 0x7a3000, emissiveIntensity: 0.4 }), lys = [];
         for (let i = 0; i < 7; i++) { const a = i * 0.9, l = sph(0.17, lyM, Math.cos(a) * 1.0 + 0.3, Math.sin(a * 1.7) * 0.9 - 0.2, Math.sin(a) * 0.9); l.userData.home = l.position.clone(); g.add(l); lys.push(l); }

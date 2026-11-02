@@ -19,7 +19,7 @@
       const V3 = THREE.Vector3;
       const S0 = window.__sim && window.__sim.S;
       const st = { scene: 'fusion', T: S0 && S0.T ? S0.T : 1500, t: 0 };
-      const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.5, metalness: 0.05 }, o || {}));
+      const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ envMapIntensity: 0.6, color: c, roughness: 0.5, metalness: 0.05 }, o || {}));
       const gc = document.createElement('canvas'); gc.width = gc.height = 128; const g2 = gc.getContext('2d'), gr = g2.createRadialGradient(64, 64, 0, 64, 64, 64);
       gr.addColorStop(0, 'rgba(255,240,170,1)'); gr.addColorStop(0.3, 'rgba(255,190,60,.55)'); gr.addColorStop(1, 'rgba(255,150,0,0)'); g2.fillStyle = gr; g2.fillRect(0, 0, 128, 128);
       const glowTex = new THREE.CanvasTexture(gc);

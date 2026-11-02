@@ -80,7 +80,7 @@
   window.SciSim3D.attach({
     title: '전하 운반자 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: phone ? 17 : 12.5, theta: 0.5, phi: 1.12, min: 6, max: 26, target: [0, 1.5, 0] },
+    camera: { dist: phone ? 21 : 16, theta: 0.5, phi: 1.1, min: 6, max: 30, target: [0, 2.6, 0] },
     autoRotate: 0.18,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
@@ -96,7 +96,7 @@
       const grp = new THREE.Group(); root.add(grp);
       const box = L.glassBox(W, H, D, 0x9ec5ff, 0.1); box.position.set(0, H / 2 + 0.1, 0); root.add(box);
       const water = L.glassBox(W - 0.05, H - 0.05, D - 0.05, 0x3b8cf0, 0.22); water.position.copy(box.position); water.visible = false; root.add(water);
-      const base = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({ color: 0x24324f, roughness: 0.95, envMapIntensity: 0.05 })); base.scale.set(W + 3.6, 0.14, D + 1.4); base.position.set(0, -0.0, 0); root.add(base);
+      const base = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ color: 0x050b18 })); base.scale.set(W + 3.6, 0.14, D + 1.4); base.position.set(0, -0.0, 0); root.add(base);
       // 전극판: (−) 왼쪽, (+) 오른쪽
       const plate = (x, col) => { const m = new THREE.Mesh(new THREE.BoxGeometry(0.16, H + 0.5, D + 0.3), new THREE.MeshStandardMaterial({ color: col, roughness: 0.3, metalness: 0.7 })); m.position.set(x, H / 2 + 0.2, 0); root.add(m); return m; };
       const pL = plate(-W / 2 - 0.2, 0x4f7cff), pR = plate(W / 2 + 0.2, 0xf0524f);
@@ -123,13 +123,13 @@
         const cy = box.position.y;
         const add = (color, r, n, kind, o) => { const m = inst(color, r, n, o); grp.add(m); const s = { m, n, r, kind, p: [], v: [], ph: [] }; for (let i = 0; i < n; i++) { s.p.push(new THREE.Vector3()); s.v.push(new THREE.Vector3(L.rnd(-1, 1), L.rnd(-1, 1), L.rnd(-1, 1)).normalize()); s.ph.push(Math.random() * 6.28); } sets.push(s); return s; };
         if (key === 'cu') {
-          const a = add(0xe08a3c, 0.4, 54, 'fixed', { metalness: 0.6, roughness: 0.3 });
-          lattice(6, 3, 3, 1.0, (i, x, y, z) => a.p[i].set(x, y, z));
-          const e = add(0xffd34d, 0.13, 46, 'electron', { emissive: 0xffb300, emissiveIntensity: 0.55 });
+          const a = add(0xe08a3c, 0.3, 54, 'fixed', { metalness: 0.6, roughness: 0.3 });
+          lattice(6, 3, 3, 1.1, (i, x, y, z) => a.p[i].set(x, y, z));
+          const e = add(0xffd34d, 0.15, 46, 'electron', { emissive: 0xffb300, emissiveIntensity: 0.55 });
           e.p.forEach((p) => p.set(L.rnd(-W / 2 + 0.3, W / 2 - 0.3), L.rnd(-H / 2 + 0.3, H / 2 - 0.3), L.rnd(-D / 2 + 0.3, D / 2 - 0.3)));
         } else if (key === 'nacls') {
           const na = add(0xb07cf5, 0.3, 27, 'fixed'), cl = add(0x34c759, 0.44, 27, 'fixed');
-          let a = 0, b = 0; lattice(6, 3, 3, 1.0, (i, x, y, z, ix, iy, iz) => { if ((ix + iy + iz) % 2) { if (a < 27) na.p[a++].set(x, y, z); } else if (b < 27) cl.p[b++].set(x, y, z); });
+          let a = 0, b = 0; lattice(6, 3, 3, 1.1, (i, x, y, z, ix, iy, iz) => { if ((ix + iy + iz) % 2) { if (a < 27) na.p[a++].set(x, y, z); } else if (b < 27) cl.p[b++].set(x, y, z); });
           na.n = a; cl.n = b; na.m.count = a; cl.m.count = b;
         } else if (key === 'nacll') {
           const na = add(0xb07cf5, 0.3, 17, 'cation'), cl = add(0x34c759, 0.44, 17, 'anion');

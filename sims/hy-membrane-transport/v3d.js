@@ -14,12 +14,13 @@
   window.SciSim3D.attach({
     title: '세포막 수송 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: narrow ? 12.5 : 9.5, theta: 0.3, phi: 1.36, target: [0, 0, 0], min: 5, max: 20 },
+    camera: { dist: narrow ? 11.5 : 9.5, theta: 0.3, phi: 1.36, target: [0, 0, 0], min: 5, max: 20 },
     autoRotate: 0,
     levels: [0, 1, 2],
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V = THREE.Vector3;
+      if (narrow) root.rotation.z = Math.PI / 2;      // 휴대폰(세로 화면)에서는 눕혀 둔 모형을 세워서 보여 줘요
       let mode = 'diff', atpOn = true;
       const std = (color, o) => new THREE.MeshStandardMaterial(Object.assign({ color, roughness: 0.45, metalness: 0.05 }, o || {}));
 
@@ -37,6 +38,7 @@
         for (let i = 0; i < NX; i++) for (let k = 0; k < NZ; k++) {
           const x = (i - (NX - 1) / 2) * SX + ((k % 2) ? SX / 2 : 0), z = (k - (NZ - 1) / 2) * 0.46;
           if (Math.abs(x) > XB + 0.2) continue;
+          if (mode !== 'diff' && z > -0.2) continue;       // 단백질이 보이도록 앞쪽을 잘라 단면을 보여 줘요
           if (holes[mode].some((o) => Math.hypot(x - o[0], z - o[1]) < o[2])) continue;
           for (let s = -1; s <= 1; s += 2) {
             const jx = Math.sin(i * 7.3 + k * 3.1 + s) * 0.04, jz = Math.cos(i * 5.1 + k * 2.3) * 0.04;
@@ -233,7 +235,7 @@
       let lastSim = null;
       return {
         update(dt, t) {
-          dt = Math.min(dt, 0.05);
+          dt = Math.min(dt, 0.05) * (window.__v3dTS || 1);
           const sm = window.__sim && window.__sim.S && window.__sim.S.mode;
           if (sm && sm !== lastSim) { lastSim = sm; const m2 = MODE_OF[sm]; if (m2 && m2 !== mode) { mode = m2; seg.set(mode); reset(); } }
           parts.forEach((p) => step(p, dt));

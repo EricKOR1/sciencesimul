@@ -50,7 +50,7 @@
 
       /* 지구(관측자) 쪽: +z 방향 */
       const earthG = new THREE.Group(); earthG.position.set(0, 0, 6.2); root.add(earthG);
-      earthG.add(new THREE.Mesh(new THREE.SphereGeometry(0.42, 32, 22), new THREE.MeshStandardMaterial({ color: 0x2f7fd8, roughness: 0.6, emissive: 0x0a2a55, emissiveIntensity: 0.5 })));
+      earthG.add(new THREE.Mesh(new THREE.SphereGeometry(0.3, 32, 22), new THREE.MeshStandardMaterial({ color: 0x2f7fd8, roughness: 0.6, emissive: 0x0a2a55, emissiveIntensity: 0.5 })));
       label('지구(관측)', [0, 0.55, 6.2], { size: 12, color: 'rgba(20,70,140,.92)' });
       const los = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 5.4, 6), new THREE.MeshBasicMaterial({ color: 0x9fb4e8, transparent: true, opacity: 0.4 })); los.rotation.x = Math.PI / 2; los.position.set(0, 0, 3.0); root.add(los);
 

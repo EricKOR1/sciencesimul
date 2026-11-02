@@ -17,12 +17,13 @@
     camera: { dist: PHONE ? 17 : 12.5, theta: 0.4, phi: 1.2, min: 6, max: 26, target: [0, -1.2, 0] },
     autoRotate: 0,
     build(ctx) {
+      if (ctx.THREE.ColorManagement) ctx.THREE.ColorManagement.legacyMode = false;     // 색을 보이는 그대로(sRGB) 쓰도록 맞춰요
       const { THREE, root, label, info, controls } = ctx;
       const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.85, metalness: 0 }, o || {}));
       const glow = (c, i) => std(c, { emissive: c, emissiveIntensity: i == null ? 0.7 : i, roughness: 0.5 });
       const grp = new THREE.Group(), live = new THREE.Group(); root.add(grp, live);
       const floor = new THREE.Mesh(new THREE.CylinderGeometry(7.4, 7.4, 0.2, 64), std(0x2a3550)); floor.position.y = -3.7; root.add(floor);
-      const polyMesh = (pts, mat, d) => { const sh = new THREE.Shape(); pts.forEach((p, i) => (i ? sh.lineTo(p[0], p[1]) : sh.moveTo(p[0], p[1]))); sh.closePath(); const g = new THREE.ExtrudeGeometry(sh, { depth: d || ZD * 2, bevelEnabled: false, curveSegments: 3 }); g.translate(0, 0, -(d || ZD * 2) / 2); const m = new THREE.Mesh(g, mat); m.castShadow = m.receiveShadow = true; grp.add(m); return m; };
+      const polyMesh = (pts, mat, d) => { const sh = new THREE.Shape(); pts.forEach((p, i) => (i ? sh.lineTo(p[0], p[1]) : sh.moveTo(p[0], p[1]))); sh.closePath(); const g = new THREE.ExtrudeGeometry(sh, { depth: d || ZD, bevelEnabled: false, curveSegments: 3 }); g.translate(0, 0, -(d || ZD)); const m = new THREE.Mesh(g, mat); m.castShadow = m.receiveShadow = true; grp.add(m); return m; };
       const arrow = (parent, col, len, rad) => { const g = new THREE.Group(), m = std(col, { emissive: col, emissiveIntensity: 0.35, roughness: 0.4 }), s = new THREE.Mesh(new THREE.CylinderGeometry(rad, rad, len - rad * 4, 12), m), h = new THREE.Mesh(new THREE.ConeGeometry(rad * 2.3, rad * 4.4, 16), m); s.position.y = (len - rad * 4) / 2; h.position.y = len - rad * 2.2; g.add(s, h); parent.add(g); return g; };
       const LB = { a: label('', [0, 0, 0], { size: 12 }), b: label('', [0, 0, 0], { size: 12 }), c: label('', [0, 0, 0], { size: 12 }), d: label('', [0, 0, 0], { size: 12 }), e: label('', [0, 0, 0], { size: 12 }) };
       const setL = (k, t, pos, col) => { LB[k].set(t); LB[k].obj = pos; LB[k].show(!!t); LB[k].el.style.background = col || ''; };
@@ -59,43 +60,43 @@
           polyMesh([[-XW, -3.4], [XW, -3.4], [XW, -1.0], [-XW, -1.0]], MAN);
           polyMesh([[-XW, -1.0], [-0.35, -1.0], [-0.35, 0], [-XW, 0]], LITH); polyMesh([[XW, -1.0], [0.35, -1.0], [0.35, 0], [XW, 0]], LITH);
           polyMesh([[-XW, -0.12], [-0.35, -0.12], [-0.35, 0], [-XW, 0]], CRUST); polyMesh([[XW, -0.12], [0.35, -0.12], [0.35, 0], [XW, 0]], CRUST);
-          const mg = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 20), MELT); mg.scale.set(1.8, 0.75, 1.5); mg.position.set(0, -1.7, 0); grp.add(mg);
-          const dk = new THREE.Mesh(new THREE.BoxGeometry(0.62, 1.3, ZD * 2 - 0.2), MELT); dk.position.set(0, -0.5, 0); grp.add(dk);
-          [-1, 1].forEach((s) => { const a = arrow(grp, 0xffd34d, 1.5, 0.09); a.position.set(s * 2.4, 0.25, ZD - 0.3); a.rotation.z = -s * Math.PI / 2; });
-          partic = [{ m: dots(26, 0xffd9a8), n: 26, f: (u, i) => { const side = i % 2 ? 1 : -1, a = u < 0.5 ? u / 0.5 : 1, b = u < 0.5 ? 0 : (u - 0.5) / 0.5; return [side * (0.15 + (i * 0.37 % 1) * 0.5 + b * 2.6), lerp(-3.1, -1.3, a) - b * 0.05, ((i * 0.61) % 1 - 0.5) * 2.4]; } }];
-          setL('a', '해령 (판이 벌어져요)', [0, 0.45, ZD], 'rgba(30,50,80,.9)'); setL('b', '맨틀이 올라오며 압력이 줄어 녹아요', [0, -1.7, ZD + 0.1], 'rgba(150,60,10,.92)'); setL('c', '현무암질 마그마', [0, -0.45, ZD + 0.1]);
+          const mg = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 20), MELT);  mg.position.set(0, -1.7, 0); mg.scale.set(1.8, 0.75, 1.1); grp.add(mg);
+          const dk = new THREE.Mesh(new THREE.BoxGeometry(0.62, 1.3, ZD + 0.02), MELT); dk.position.set(0, -0.5, -ZD / 2 + 0.01); grp.add(dk);
+          [-1, 1].forEach((s) => { const a = arrow(grp, 0xffd34d, 1.5, 0.09); a.position.set(s * 2.4, 0.25, 0.3); a.rotation.z = -s * Math.PI / 2; });
+          partic = [{ m: dots(26, 0xffd9a8), n: 26, f: (u, i) => { const side = i % 2 ? 1 : -1, a = u < 0.5 ? u / 0.5 : 1, b = u < 0.5 ? 0 : (u - 0.5) / 0.5; return [side * (0.15 + (i * 0.37 % 1) * 0.5 + b * 2.6), lerp(-3.1, -1.3, a) - b * 0.05, 0.3 - ((i * 0.61) % 1) * 1.6]; } }];
+          setL('a', '해령 (판이 벌어져요)', [0, 0.45, 0.2], 'rgba(30,50,80,.9)'); setL('b', '맨틀이 올라오며 압력이 줄어 녹아요', [0, -1.7, 0.2], 'rgba(150,60,10,.92)'); setL('c', '현무암질 마그마', [0, -0.45, 0.2]);
           info('<b>해령</b>: 판이 벌어지며 맨틀이 올라와요. 온도는 거의 그대로여도 <b>압력이 줄어</b> 녹아요(감압 용융).<br>만들어지는 마그마는 <b>현무암질</b>이에요.');
         } else if (v === 'arc') {
           polyMesh([[-XW, -3.4], [XW, -3.4], [XW, -1.3], [0.4, -1.3], [-XW, -1.3]], MAN);
           polyMesh([[0.2, -1.3], [XW, -1.3], [XW, 0], [0.2, 0]], CONT);
           polyMesh([[-XW, 0], [-0.4, 0], [3.0, -3.3], [2.1, -3.4], [-0.4, -0.9], [-XW, -0.9]].map((p) => p), LITH);
           polyMesh([[-XW, 0], [-0.4, 0], [-0.4, -0.12], [-XW, -0.12]], CRUST);
-          const mg = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 20), MELT); mg.scale.set(1.4, 0.7, 1.4); mg.position.set(2.5, -1.8, 0); grp.add(mg);
-          const dk = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.2, 2.0, 12), MELT); dk.position.set(2.9, -0.95, 0); dk.rotation.z = 0.09; grp.add(dk);
-          const vol = new THREE.Mesh(new THREE.ConeGeometry(0.85, 1.0, 28), std(0x6b4a35)); vol.position.set(3.0, 0.5, 0); grp.add(vol);
-          const ar = arrow(grp, 0xffd34d, 1.6, 0.09); ar.position.set(-2.8, -0.05, ZD - 0.2); ar.rotation.z = -Math.PI / 2 - 0.0; ar.rotation.z = -1.0;
-          partic = [{ m: dots(26, 0x7fd8ff, 0.07), n: 26, f: (u, i) => { const x0 = 0.9 + ((i * 0.37) % 1) * 0.3; return [lerp(x0, 2.2 + ((i * 0.53) % 1) * 0.5, u), lerp(-2.7 + ((i * 0.37) % 1) * 0.3, -1.9, u), ((i * 0.61) % 1 - 0.5) * 2.4]; } },
-            { m: dots(14, 0xffb066, 0.08), n: 14, f: (u, i) => [lerp(2.6, 3.0, u) + Math.sin(u * 8 + i) * 0.04, lerp(-1.9, 0.3, u), ((i * 0.61) % 1 - 0.5) * 0.3] }];
-          setL('a', '섭입하는 해양판', [-2.2, -0.35, ZD], 'rgba(30,50,80,.9)'); setL('b', '판에서 물이 빠져나와요', [1.2, -2.3, ZD + 0.1], 'rgba(15,100,150,.92)'); setL('c', '용융점이 낮아져 마그마 생성', [2.4, -1.9, ZD + 0.1], 'rgba(150,60,10,.92)'); setL('d', '화산', [3.0, 1.1, 0]);
+          const mg = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 20), MELT); mg.scale.set(1.4, 0.7, 1.0); mg.position.set(2.5, -1.8, 0); grp.add(mg);
+          const dk = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.2, 2.0, 12), MELT); dk.position.set(2.9, -0.95, -0.1); dk.rotation.z = 0.09; grp.add(dk);
+          const vol = new THREE.Mesh(new THREE.ConeGeometry(0.85, 1.0, 28), std(0x6b4a35)); vol.position.set(3.0, 0.5, -ZD / 2); grp.add(vol);
+          const ar = arrow(grp, 0xffd34d, 1.6, 0.09); ar.position.set(-2.8, -0.05, 0.3); ar.rotation.z = -Math.PI / 2 - 0.0; ar.rotation.z = -1.0;
+          partic = [{ m: dots(26, 0x7fd8ff, 0.07), n: 26, f: (u, i) => { const x0 = 0.9 + ((i * 0.37) % 1) * 0.3; return [lerp(x0, 2.2 + ((i * 0.53) % 1) * 0.5, u), lerp(-2.7 + ((i * 0.37) % 1) * 0.3, -1.9, u), 0.3 - ((i * 0.61) % 1) * 1.6]; } },
+            { m: dots(14, 0xffb066, 0.08), n: 14, f: (u, i) => [lerp(2.6, 3.0, u) + Math.sin(u * 8 + i) * 0.04, lerp(-1.9, 0.3, u), -0.3 - ((i * 0.61) % 1) * 0.3] }];
+          setL('a', '섭입하는 해양판', [-2.2, -0.35, 0.2], 'rgba(30,50,80,.9)'); setL('b', '판에서 물이 빠져나와요', [1.2, -2.3, 0.2], 'rgba(15,100,150,.92)'); setL('c', '용융점이 낮아져 마그마 생성', [2.4, -1.9, 0.2], 'rgba(150,60,10,.92)'); setL('d', '화산', [3.0, 1.1, -ZD / 2]);
           info('<b>섭입대</b>: 가라앉는 판에서 <b>물</b>이 빠져나와 맨틀의 녹는점이 낮아져요(<b>물 때문에 녹아요</b>).<br>마그마가 올라와 화산을 만들어요.');
         } else if (v === 'hot') {
           polyMesh([[-XW, -3.4], [XW, -3.4], [XW, -1.0], [-XW, -1.0]], MAN);
           polyMesh([[-XW, -1.0], [XW, -1.0], [XW, 0], [-XW, 0]], LITH); polyMesh([[-XW, -0.12], [XW, -0.12], [XW, 0], [-XW, 0]], CRUST);
           plume = new THREE.Group(); grp.add(plume);
           const st = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.34, 2.4, 20), MELT); st.position.y = -2.2; plume.add(st); const hd = new THREE.Mesh(new THREE.SphereGeometry(0.62, 28, 18), MELT); hd.position.y = -1.15; hd.scale.y = 0.8; plume.add(hd);
-          const ar = arrow(grp, 0xffd34d, 1.5, 0.09); ar.position.set(-3.8, 0.3, ZD - 0.2); ar.rotation.z = -Math.PI / 2;
+          const ar = arrow(grp, 0xffd34d, 1.5, 0.09); ar.position.set(-3.8, 0.3, 0.3); ar.rotation.z = -Math.PI / 2;
           for (let k = 0; k < 4; k++) { const c = new THREE.Mesh(new THREE.ConeGeometry(0.8, 1, 28), std(k === 0 ? 0x7a4a2f : 0x5d5448)); grp.add(c); cones.push(c); }
           partic = [{ m: dots(22, 0xffd9a8), n: 22, f: (u, i) => [Math.sin(i * 2.1) * 0.12 * (1 + u), lerp(-3.2, -1.1, u), Math.cos(i * 2.1) * 0.12 * (1 + u)] }];
-          setL('a', '열점 (뜨거운 맨틀 기둥)', [0, -2.4, ZD * 0.3], 'rgba(150,60,10,.92)'); setL('b', '판이 움직여요', [-3.6, 1.0, ZD], 'rgba(30,50,80,.9)'); setL('c', '새 화산', [0, 1.3, 0]); setL('d', '오래된 화산섬', [3.2, 0.9, 0]);
+          setL('a', '열점 (뜨거운 맨틀 기둥)', [0, -2.4, 0.5], 'rgba(150,60,10,.92)'); setL('b', '판이 움직여요', [-3.6, 1.0, 0.3], 'rgba(30,50,80,.9)'); setL('c', '새 화산', [0, 1.3, -ZD / 2]); setL('d', '오래된 화산섬', [3.2, 0.9, -ZD / 2]);
           info('<b>열점</b>: 맨틀 깊은 곳의 뜨거운 기둥이 올라와 마그마를 만들어요.<br>판이 움직이면 화산이 <b>줄지어</b> 생기고, 멀수록 오래된 섬이에요.');
         } else {
           polyMesh([[-XW, -3.4], [XW, -3.4], [XW, 0], [-XW, 0]], CONT);
-          const pl = new THREE.Mesh(new THREE.SphereGeometry(1, 36, 24), glow(0xe0522a, 0.55)); pl.scale.set(1.9, 0.9, 1.5); pl.position.set(-1.6, -1.9, 0); pl.userData.k = 'pl'; grp.add(pl);
-          const dk = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.16, 2.2, 12), glow(0xe0522a, 0.55)); dk.position.set(0.3, -0.9, 0); dk.rotation.z = 1.0; grp.add(dk);
-          const vol = new THREE.Mesh(new THREE.ConeGeometry(1.3, 1.3, 32), std(0x5c4636)); vol.position.set(1.7, 0.65, 0); grp.add(vol);
-          const lava = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.5, 20), glow(0xff6a2a, 0.9)); lava.position.set(1.7, 1.45, 0); lava.userData.k = 'lava'; grp.add(lava);
+          const pl = new THREE.Mesh(new THREE.SphereGeometry(1, 36, 24), glow(0xe0522a, 0.55)); pl.scale.set(1.9, 0.9, 1.0); pl.position.set(-1.6, -1.9, 0); pl.userData.k = 'pl'; grp.add(pl);
+          const dk = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.16, 2.2, 12), glow(0xe0522a, 0.55)); dk.position.set(0.3, -0.9, -0.1); dk.rotation.z = 1.0; grp.add(dk);
+          const vol = new THREE.Mesh(new THREE.ConeGeometry(1.3, 1.3, 32), std(0x5c4636)); vol.position.set(1.7, 0.65, -0.6); grp.add(vol);
+          const lava = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.5, 20), glow(0xff6a2a, 0.9)); lava.position.set(1.7, 1.45, -0.6); lava.userData.k = 'lava'; grp.add(lava);
           sample = new THREE.Mesh(new THREE.BoxGeometry(1.9, 1.9, 1.9), new THREE.MeshStandardMaterial({ roughness: 0.7 })); sample.position.set(-3.4, 1.8, 0); sample.rotation.set(0.4, 0.6, 0); live.add(sample);
-          setL('a', '마그마가 굳은 땅속 (심성암)', [-1.6, -0.55, ZD], 'rgba(140,50,10,.92)'); setL('b', '지표로 나온 용암 (화산암)', [1.7, 1.9, 0], 'rgba(140,50,10,.92)'); setL('c', '', [0, 0, 0]);
+          setL('a', '마그마가 굳은 땅속 (심성암)', [-1.6, -0.55, 0.3], 'rgba(140,50,10,.92)'); setL('b', '지표로 나온 용암 (화산암)', [1.7, 1.9, -0.6], 'rgba(140,50,10,.92)'); setL('c', '', [0, 0, 0]);
           applyRock();
         }
         applyArrows();
@@ -127,8 +128,8 @@
           partic.forEach((pa) => { for (let i = 0; i < pa.n; i++) { const u = (i / pa.n + t * 0.16) % 1, p = pa.f(u, i); dm.position.set(p[0], p[1], p[2]); dm.scale.setScalar(1); dm.updateMatrix(); pa.m.setMatrixAt(i, dm.matrix); } pa.m.instanceMatrix.needsUpdate = true; });
           if (view === 'hot' && cones.length) {
             const off = (t * 0.28) % 1.9;
-            cones.forEach((c, k) => { const x = off + k * 1.9, age = x / 5.6, h = x < 0.5 ? 1.3 * (x / 0.5) : 1.3 * Math.max(0.08, 1 - age * 1.05); c.position.set(x - 0.0, h / 2 + 0.0, 0); c.scale.set(1 - age * 0.35, Math.max(0.05, h), 1 - age * 0.35); c.visible = x < 5.0; c.material.color.setHex(k === 0 && x < 1.0 ? 0x7a4a2f : 0x5d5448); });
-            LB.c.obj = [off, 1.5, 0]; LB.d.obj = [off + 1.9 * 1.5, 1.0, 0];
+            cones.forEach((c, k) => { const x = off + k * 1.9, age = x / 5.6, h = x < 0.5 ? 1.3 * (x / 0.5) : 1.3 * Math.max(0.08, 1 - age * 1.05); c.position.set(x - 0.0, h / 2 + 0.0, -ZD / 2); c.scale.set(1 - age * 0.35, Math.max(0.05, h), 1 - age * 0.35); c.visible = x < 5.0; c.material.color.setHex(k === 0 && x < 1.0 ? 0x7a4a2f : 0x5d5448); });
+            LB.c.obj = [off, 1.5, -ZD / 2]; LB.d.obj = [off + 1.9 * 1.5, 1.0, -ZD / 2];
             if (plume) plume.scale.setScalar(1 + 0.03 * Math.sin(t * 3));
           }
           if (sample) { sample.rotation.y += dt * 0.35; }

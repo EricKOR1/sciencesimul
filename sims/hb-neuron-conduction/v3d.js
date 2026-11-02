@@ -11,8 +11,9 @@
   window.SciSim3D.attach({
     title: '흥분의 전도 3D (말이집 유무 비교)',
     hint: '자극을 주고 두 신경의 속도를 비교해 봐요 · 드래그: 돌리기',
-    camera: { dist: narrow ? 17 : 12.5, theta: 0.25, phi: 1.12, min: 7, max: 24, target: [0, 0, 0] },
+    camera: { dist: narrow ? 18 : 13.5, theta: 0.25, phi: 1.12, min: 7, max: 26, target: [-0.4, 0, 0] },
     autoRotate: 0,
+    levels: [0, 1],
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = (x, y, z) => new THREE.Vector3(x, y, z || 0);
@@ -61,12 +62,12 @@
         a: label('말이집 신경 (유수 신경)', A.soma, { offset: [0.3, 1.0, 0], color: 'rgba(49,130,246,.92)' }),
         b: label('말이집 없는 신경 (무수 신경)', B.soma, { offset: [0.4, 1.0, 0], color: 'rgba(49,130,246,.92)' }),
         den: label('가지 돌기', [-6.6, 0.8, 1.9]), cell: label('신경 세포체', A.soma, { offset: [0, -0.95, 0] }),
-        mye: label('말이집', A.sheaths[3], { offset: [0, 0.55, 0.1] }), nod: label('랑비에 결절', [X0 + IL * 4, 0, 1.9], { offset: [0, -0.5, 0.3], color: 'rgba(255,138,61,.92)' }),
+        mye: label('말이집', A.sheaths[2], { offset: [0, 0.55, 0.1] }), nod: label('랑비에 결절', [X0 + IL * 4, 0, 1.9], { offset: [0, -0.5, 0.3], color: 'rgba(255,138,61,.92)' }),
         end: label('축삭 말단', [XE + 0.9, 0.6, 1.9]),
         ta: label('', [XE + 1.3, -0.6, 1.9], { color: 'rgba(30,150,80,.95)' }), tb: label('', [XE + 1.3, -0.6, -1.9], { color: 'rgba(30,150,80,.95)' }),
       };
       L.nod.el.style.color = '#1b2333'; L.ta.show(false); L.tb.show(false);
-      let labOn = true; controls.button('이름표 숨김/보임', () => { labOn = !labOn; ['den', 'cell', 'mye', 'nod', 'end'].forEach((k) => L[k].show(labOn)); });
+      let labOn = true;
 
       let damaged = false, tau = -0.6, finishA = -1, finishB = -1;
       const dmg = [false, false, false, false, false, false, false];
@@ -75,9 +76,10 @@
         A.sheaths.forEach((s, k) => { s.visible = !dmg[k]; });
         info(v ? '<b>말이집이 손상</b>되면 그 구간은 이웃으로 차례로 전도돼서 느려져요.<br>(탈수초성 질환)' : '말이집 신경은 결절에서 결절로 <b>건너뛰며(도약 전도)</b> 빨라요.<br>말이집이 없는 신경은 이웃 부위로 차례로 전도돼요.');
       }
+      controls.button('▶ 자극 주기', () => stim());
       controls.segment('말이집', [{ label: '정상', value: false }, { label: '일부 손상', value: true }], false, (v) => { setDamage(v); stim(); });
       function stim() { tau = 0; finishA = finishB = -1; L.ta.show(false); L.tb.show(false); }
-      controls.button('▶ 자극 주기', stim);
+      controls.button('이름표 숨김/보임', () => { labOn = !labOn; ['den', 'cell', 'mye', 'nod', 'end'].forEach((k) => L[k].show(labOn)); });
       setDamage(false);
 
       // 말이집 신경의 시간표

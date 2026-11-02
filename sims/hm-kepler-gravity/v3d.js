@@ -5,6 +5,7 @@
   'use strict';
   if (!window.SciSim3D) return;
   const PHN = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches), KD = PHN ? 1.3 : 1;
+  const LV = () => (typeof window.SciSimLevel === 'number' ? window.SciSimLevel : 0);
   const TAU = Math.PI * 2, clamp = (x, a, b) => Math.max(a, Math.min(b, x));
   function tools(THREE) {
     const V3 = THREE.Vector3, Y = new V3(0, 1, 0);
@@ -39,11 +40,13 @@
     }
     return { V3, Y, M, glass, mkArrow, setArrow, tube, disc, grid, arc };
   }
+  const KDX = PHN ? 1.55 : 1;
   window.SciSim3D.attach({
     title: '케플러 법칙 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: 9 * KD, theta: 0.3, phi: 0.95, min: 4, max: 26 },
+    camera: { dist: 9 * KDX, theta: 0.3, phi: 0.95, min: 4, max: 26 },
     autoRotate: 0,
+    levels: [0, 1],
     build(ctx) {
       const { THREE, root, label, info, controls, scene } = ctx;
       const { V3, M, tube, mkArrow, setArrow } = tools(THREE);

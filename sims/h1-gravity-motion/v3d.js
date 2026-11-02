@@ -5,12 +5,13 @@
   'use strict';
   if (!window.SciSim3D) return;
   const PHN = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches);
-  const BODY = { moon: { n: '달', g: 1.6, c: 0x9aa0aa }, mars: { n: '화성', g: 3.7, c: 0xc2673c }, earth: { n: '지구', g: 9.8, c: 0x4f9f58 }, jup: { n: '목성', g: 24.8, c: 0xb98a5c } };
+  const BODY = { moon: { n: '달', g: 1.6, c: 0x4a4f58 }, mars: { n: '화성', g: 3.7, c: 0x7a3a20 }, earth: { n: '지구', g: 9.8, c: 0x1f5a2c }, jup: { n: '목성', g: 24.8, c: 0x6a4a2a } };
   const H = 30, KY = 0.17, KX = 0.1, DT = 0.5;
 
   window.SciSim3D.attach({
     title: '떨어뜨린 공 · 던진 공 3D',
-    camera: { dist: PHN ? 17 : 12.5, theta: 0.3, phi: 1.3, target: [0.8, 2.2, 0], min: 6, max: 26 },
+    camera: { dist: PHN ? 24 : 17, theta: 0.3, phi: 1.3, target: [1.4, 2.4, 0], min: 8, max: 34 },
+    levels: [3],
     autoRotate: 0,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
@@ -25,7 +26,7 @@
       for (let x = -6; x <= 9; x += 1.5) { pts.push(new THREE.Vector3(x, 0, -2.38), new THREE.Vector3(x, H * KY, -2.38)); }
       gridG.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts), lm));
       // 발사대
-      const tower = new THREE.Mesh(new THREE.BoxGeometry(0.9, H * KY, 1.8), std(0x8b93a8, { roughness: 0.7 })); tower.position.set(-5.6, H * KY / 2, 0.2); root.add(tower);
+      const tower = new THREE.Mesh(new THREE.BoxGeometry(0.9, H * KY, 1.8), std(0x39425a, { roughness: 0.8 })); tower.position.set(-5.6, H * KY / 2, 0.2); root.add(tower);
       const X0 = -5.0, ZA = -0.45, ZB = 0.75;
       const ballA = new THREE.Mesh(new THREE.SphereGeometry(0.28, 32, 24), std(0xf0556a, { roughness: 0.3 })), ballB = new THREE.Mesh(new THREE.SphereGeometry(0.28, 32, 24), std(0x3b82f6, { roughness: 0.3 }));
       root.add(ballA, ballB);

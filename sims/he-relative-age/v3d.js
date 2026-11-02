@@ -19,10 +19,11 @@
   window.SciSim3D.attach({
     title: '지층과 지질 사건 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    levels: [1, 2],
+    levels: [0, 1, 2],
     camera: { dist: PHONE ? 15 : 11, theta: 0.55, phi: 1.12, min: 5, max: 24, target: [0, 1.5, 0] },
     autoRotate: 0,
     build(ctx) {
+      if (ctx.THREE.ColorManagement) ctx.THREE.ColorManagement.legacyMode = false;     // 색을 보이는 그대로(sRGB) 쓰도록 맞춰요
       const { THREE, root, label, info, controls } = ctx;
       const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.85, metalness: 0 }, o || {}));
       const grp = new THREE.Group(); root.add(grp);

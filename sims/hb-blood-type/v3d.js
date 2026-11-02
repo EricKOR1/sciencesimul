@@ -12,6 +12,7 @@
     hint: '혈액형과 혈청을 골라 [섞기]를 눌러 봐요',
     camera: { dist: narrow ? 12.5 : 10, theta: 0.4, phi: 1.15, min: 5, max: 20 },
     autoRotate: 0.1,
+    levels: [0, 1],
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V = THREE.Vector3, V3 = (x, y, z) => new V(x, y, z || 0);
@@ -22,7 +23,7 @@
       const prof = [], f = (p) => Math.sqrt(Math.max(0, 1 - p * p)) * (0.207 + 2.003 * p * p - 1.123 * p * p * p * p) * 0.5;
       for (let i = 0; i <= 36; i++) { const p = i / 36; prof.push(new THREE.Vector2(p, f(p))); } for (let i = 36; i >= 0; i--) { const p = i / 36; prof.push(new THREE.Vector2(p, -f(p))); }
       const rbcGeo = new THREE.LatheGeometry(prof, 48);
-      const rbcM = std(0xd9453a, { roughness: 0.38, transparent: true, opacity: 0.92 });
+      const rbcM = std(0xd9453a, { roughness: 0.38, transparent: true, opacity: 0.92, side: THREE.DoubleSide });
       const NR = 6, cells = [];
       const disp = [V3(-3.0, 0.8, 0.6), V3(0.2, 2.0, -1.2), V3(3.0, 0.6, 0.8), V3(-1.6, -1.8, 1.2), V3(1.9, -1.7, -0.8), V3(-0.2, 0.0, 2.4)];
       const clus = [V3(0, 0, 0)].concat([0, 1, 2, 3, 4].map((k) => V3(Math.cos(k * 1.2566 + 0.3) * 2.0, (k % 2 ? 0.25 : -0.25), Math.sin(k * 1.2566 + 0.3) * 2.0)));
@@ -92,8 +93,8 @@
           for (let i = ia; i < NR * NS; i++) aI.setMatrixAt(i, D.matrix); for (let i = ib; i < NR * NS; i++) bI.setMatrixAt(i, D.matrix);
           aI.instanceMatrix.needsUpdate = true; bI.instanceMatrix.needsUpdate = true;
           // 응집소: 혈청이 없으면 혈장 속 자기 응집소, 있으면 혈청의 응집소
-          const wantA = serum === 'a' ? NF : serum === 'none' ? (TYPES[type].ab.indexOf('a') >= 0 ? 10 : 0) : 0;
-          const wantB = serum === 'b' ? NF : serum === 'none' ? (TYPES[type].ab.indexOf('b') >= 0 ? 10 : 0) : 0;
+          const wantA = serum === 'a' ? NF : serum === 'none' ? (TYPES[type].ab.indexOf('a') >= 0 ? 8 : 0) : 0;
+          const wantB = serum === 'b' ? NF : serum === 'none' ? (TYPES[type].ab.indexOf('b') >= 0 ? 8 : 0) : 0;
           const place = (mesh, arr, want, matched) => {
             let used = 0;
             for (let i = 0; i < NF; i++) {

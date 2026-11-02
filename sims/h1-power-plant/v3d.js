@@ -15,7 +15,7 @@
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3;
-      const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.55, metalness: 0.15 }, o || {}));
+      const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ envMapIntensity: 0.6, color: c, roughness: 0.55, metalness: 0.15 }, o || {}));
       const glass = (c, op) => new THREE.MeshStandardMaterial({ color: c, transparent: true, opacity: op, roughness: 0.15, metalness: 0.1, depthWrite: false, side: THREE.DoubleSide });
       const S0 = (window.__sim && window.__sim.S) || {};
       const st = {
@@ -26,7 +26,7 @@
       const pOf = () => (st.src === 'coal' ? st.fuel / 60 : Math.max(0, Math.min(1, 1 - st.rod)));
 
       /* ---------- 바닥 ---------- */
-      const base = new THREE.Mesh(new THREE.BoxGeometry(17.5, 0.3, 9.5), mat(0x3a4560, { roughness: 0.95, metalness: 0 })); base.position.set(1.2, -1.3, -0.4); base.receiveShadow = true; root.add(base);
+      const base = new THREE.Mesh(new THREE.BoxGeometry(17.5, 0.3, 9.5), new THREE.MeshLambertMaterial({ color: 0x3a4560 })); base.position.set(1.2, -1.3, -0.4); base.receiveShadow = true; root.add(base);
       const pad = new THREE.Mesh(new THREE.BoxGeometry(11.6, 0.12, 3), mat(0x8a93a6, { roughness: 0.9, metalness: 0 })); pad.position.set(-0.5, -1.08, 0); pad.receiveShadow = true; root.add(pad);
 
       /* ---------- 터빈 + 발전기 (같은 축에 연결) ---------- */

@@ -20,7 +20,7 @@
   window.SciSim3D.attach({
     title: '광물 표본 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: PHN ? 11 : 8.5, theta: 0.5, phi: 1.15, min: 4, max: 20, target: [0, 0.6, 0] },
+    camera: { dist: PHN ? 11 : 8.6, theta: 0.5, phi: 1.15, min: 4, max: 20, target: [0, 0.6, 0] },
     autoRotate: 0.25,
     levels: [0],
     build(ctx) {
@@ -30,7 +30,7 @@
       const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.4, metalness: 0.05 }, o || {}));
       const flat = (g) => { const n = g.toNonIndexed(); n.computeVertexNormals(); return n; };
       function dispIco(r, seed, amp, sx, sy, sz) {
-        const g = new THREE.IcosahedronGeometry(r, 3); const p = g.attributes.position, v = new V3();
+        const g = new THREE.SphereGeometry(r, 56, 40); const p = g.attributes.position, v = new V3();
         for (let i = 0; i < p.count; i++) {
           v.fromBufferAttribute(p, i); const n = v.clone().normalize();
           const k = 1 + amp * (Math.sin(n.x * 4.1 + seed) * Math.cos(n.y * 3.7 - seed) + 0.6 * Math.sin(n.z * 5.3 + seed * 2));
@@ -89,10 +89,10 @@
       const plate = new THREE.Group(); root.add(plate);
       const tile = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.1, 1.2), mat(0xf4f1ea, { roughness: 0.85 })); tile.receiveShadow = true; plate.add(tile);
       const strk = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.02, 0.2), mat(0xe8b800, { roughness: 0.9 })); strk.position.set(0, 0.06, 0); plate.add(strk);
-      plate.position.set(0, 0.05, 2.9);
+      plate.position.set(2.6, 0.05, 1.9); plate.rotation.y = -0.6; plate.scale.setScalar(0.85);
       const labS = label('조흔색', plate, { offset: [0, 0.4, 0.8] });
       const labN = label('', [0, 2.4, 0], { color: 'rgba(255,211,77,.92)' }); labN.el.style.color = '#1b2333'; labN.el.style.fontSize = '15px';
-      const ring = new THREE.Mesh(new THREE.CylinderGeometry(2.1, 2.3, 0.1, 48), mat(0x3a4766, { roughness: 0.6, metalness: 0.2 }));
+      const ring = new THREE.Mesh(new THREE.CylinderGeometry(2.1, 2.3, 0.1, 48), mat(0x0e1530, { roughness: 1, metalness: 0 }));
       ring.position.y = -0.04; ring.receiveShadow = true; root.add(ring);
 
       let sel = 'pyrite', mag = false, clipT = 0;

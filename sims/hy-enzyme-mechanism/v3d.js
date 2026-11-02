@@ -32,9 +32,9 @@
       });
       // 활성 부위 바닥: 어두운 홈 + 기질 모양 틀(유령)
       const siteMat = std(COL.site, { roughness: 0.6, emissive: 0x082f49 });
-      const pocket = new THREE.Mesh(new THREE.SphereGeometry(0.62, 28, 20), siteMat); pocket.scale.set(1.0, 0.45, 1.0); pocket.position.set(0, 0.0, 0); enz.add(pocket);
-      const ghostMat = std(0xffffff, { transparent: true, opacity: 0.18, emissive: 0x7dd3fc, emissiveIntensity: 0.6, depthWrite: false });
-      const ghost = new THREE.Group(); ghost.position.set(0, 0.46, 0); enz.add(ghost);
+      const pocket = new THREE.Mesh(new THREE.SphereGeometry(0.62, 28, 20), siteMat); pocket.scale.set(1.15, 0.12, 0.9); pocket.position.set(0, 0.43, 0); enz.add(pocket);
+      const ghostMat = std(0xffffff, { transparent: true, opacity: 0.3, emissive: 0x7dd3fc, emissiveIntensity: 0.7, depthWrite: false });
+      const ghost = new THREE.Group(); ghost.position.set(0, 0.7, 0); enz.add(ghost);
       [[-0.3, 0], [0.3, 0]].forEach((p) => { const g = new THREE.Mesh(new THREE.SphereGeometry(0.36, 20, 16), ghostMat); g.position.set(p[0], 0, 0); ghost.add(g); });
       const waterMat = std(0xe0f2fe, { transparent: true, opacity: 0.0 });
       let gap = 0.78, gapT = 0.78;                          // 두 턱 사이 절반 간격
@@ -85,7 +85,7 @@
         info(h.join('<br>'));
       }
 
-      const sIn = new V(), sTarget = new V(0, 0.55, 0);
+      const sIn = new V(), sTarget = new V(0, 0.78, 0);
       let infoPh = '';
       function step(dt) {
         t += dt;
@@ -94,29 +94,29 @@
         const ease = (k) => { k = Math.max(0, Math.min(1, k)); return k * k * (3 - 2 * k); };
         if (ph === 'in') {
           const k = ease(t / 1.9);
-          const target = ok ? sTarget : new V(0, 1.7, 0);
+          const target = ok ? sTarget : new V(0, 2.0, 0);
           subG.position.lerpVectors(new V(0.8, 3.7, 0.4), target, k);
           subG.rotation.z = (1 - k) * 1.6 * (sub === 'far' ? 1 : 1); subG.rotation.y = (1 - k) * 0.8;
           if (model === 'induced') gapT = 1.15;
           if (t > 1.9) { ph = ok ? 'bind' : 'jam'; t = 0; L_sub.show(true); if (ok) { gapT = sub === 'near' ? 0.7 : 0.62; } }
         } else if (ph === 'bind') {
           subG.rotation.set(0, 0, 0);
-          ghostMat.opacity = 0.18 * (1 - ease(t / 0.6));
+          ghostMat.opacity = 0.3 * (1 - ease(t / 0.6));
           if (t > 1.1) { ph = 'react'; t = 0; }
         } else if (ph === 'react') {
           // 결합이 늘어나다가 끊어져요
           const k = ease(t / 1.2);
           if (u.a) { u.a.position.x = -0.3 - 0.22 * k; u.b.position.x = 0.3 + 0.22 * k; u.bond.scale.set(1, 1 - k * 0.9, 1 - k * 0.9); u.bond.visible = k < 0.9; u.bond.scale.y = 1 + k * 1.2; }
-          subG.position.y = 0.55 + 0.04 * Math.sin(t * 40) * k;
+          subG.position.y = 0.78 + 0.04 * Math.sin(t * 40) * k;
           if (t > 1.2) { ph = 'out'; t = 0; L_sub.show(false); L_prod.show(true); gapT = model === 'induced' ? 1.15 : 0.78; }
         } else if (ph === 'out') {
           const k = ease(t / 1.6);
           if (u.a) { u.a.position.set(-0.52 - 1.6 * k, 0.9 * k, 0.5 * k); u.b.position.set(0.52 + 1.6 * k, 0.9 * k, -0.5 * k); }
-          ghostMat.opacity = 0.18 * k;
+          ghostMat.opacity = 0.3 * k;
           if (t > 2.2) { count++; restart(); }
         } else if (ph === 'jam') {
           const k = t / 1.6;
-          subG.position.y = 1.7 + (k < 0.5 ? 0 : 1) * (k - 0.5) * 4; subG.rotation.z = Math.sin(t * 22) * 0.18 * (1 - k);
+          subG.position.y = 2.0 + (k < 0.5 ? 0 : 1) * (k - 0.5) * 4; subG.rotation.z = Math.sin(t * 22) * 0.18 * (1 - k);
           if (t > 2.4) { count++; restart(); }
         }
         if (ph !== infoPh) { infoPh = ph; text(); }
@@ -133,7 +133,7 @@
       let lastM = null, lastS = null;
       return {
         update(dt) {
-          dt = Math.min(dt, 0.05);
+          dt = Math.min(dt, 0.05) * (window.__v3dTS || 1);
           const c = window.__sim && window.__sim.S && window.__sim.S.cx;
           if (c && (c.model !== lastM || c.sub !== lastS)) { lastM = c.model; lastS = c.sub; if (c.model !== model || c.sub !== sub) { model = c.model; sub = c.sub; segM.set(model); segS.set(sub); restart(); } }
           step(dt);

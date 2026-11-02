@@ -23,10 +23,10 @@
   window.SciSim3D.attach({
     title: '수온·용존 산소 3D 기둥',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    levels: [1, 2, 3],
     camera: { dist: PHONE ? 17 : 12.5, theta: 0.35, phi: 1.28, min: 6, max: 26, target: [0, -2.5, 0] },
     autoRotate: 0,
     build(ctx) {
+      if (ctx.THREE.ColorManagement) ctx.THREE.ColorManagement.legacyMode = false;     // 색을 보이는 그대로(sRGB) 쓰도록 맞춰요
       const { THREE, root, label, info, controls } = ctx;
       const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.5, metalness: 0.0 }, o || {}));
       const XS = [-3.6, -1.2, 1.2, 3.6], CW = 1.7;

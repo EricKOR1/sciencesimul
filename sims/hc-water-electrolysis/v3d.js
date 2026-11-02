@@ -13,7 +13,7 @@
     const CG = new THREE.CylinderGeometry(1, 1, 1, 16);
     const stickMat = new THREE.MeshStandardMaterial({ color: 0xc3ccdd, roughness: 0.45, metalness: 0.1 });
     const V = (x, y, z) => new THREE.Vector3(x, y, z);
-    function atom(k, s) { const m = new THREE.Mesh(SG, mat(k)); m.scale.setScalar((RAD[k] || 0.4) * (s || 1)); return m; }
+    function atom(k, s, pal) { const m = new THREE.Mesh(SG, mat(pal && pal[k] !== undefined ? pal[k] : k)); m.scale.setScalar((RAD[k] || 0.4) * (s || 1)); return m; }
     function stick(a, b, r, m) {
       const d = b.clone().sub(a), len = d.length(); const s = new THREE.Mesh(CG, m || stickMat);
       s.scale.set(r, Math.max(len, 1e-4), r); s.position.copy(a).add(b).multiplyScalar(0.5);
@@ -38,9 +38,9 @@
       OH: { f: 'OH⁻', a: [['O', -0.2, 0, 0], ['H', 0.75, 0, 0]], b: [[0, 1, 1]] },
     };
     /* 분자 만들기: k는 크기 배율. 이중·삼중 결합은 막대 여러 개 */
-    function mol(M, k) {
+    function mol(M, k, pal) {
       k = k || 1; const g = new THREE.Group(); const P = M.a.map((x) => V(x[1] * k, x[2] * k, x[3] * k));
-      M.a.forEach((x, i) => { const m = atom(x[0], k); m.position.copy(P[i]); g.add(m); });
+      M.a.forEach((x, i) => { const m = atom(x[0], k, pal); m.position.copy(P[i]); g.add(m); });
       M.b.forEach((b) => {
         const A = P[b[0]], B = P[b[1]], d = B.clone().sub(A).normalize();
         let perp = d.clone().cross(V(0, 0, 1)); if (perp.lengthSq() < 0.01) perp = d.clone().cross(V(0, 1, 0)); perp.normalize().multiplyScalar(0.11 * k);
@@ -80,8 +80,8 @@
   window.SciSim3D.attach({
     title: '물의 전기 분해 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: phone ? 17 : 13, theta: 0.45, phi: 1.2, min: 6, max: 28, target: [0, 2.6, 0] },
-    autoRotate: 0.15,
+    camera: { dist: phone ? 22 : 17, theta: 0.45, phi: 1.2, min: 6, max: 34, target: [0, 3.3, 0] },
+    autoRotate: 0,
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
       const L = makeLib(THREE);
@@ -115,9 +115,10 @@
       const sw = new THREE.Mesh(new THREE.SphereGeometry(0.2, 20, 14), new THREE.MeshStandardMaterial({ color: 0x555d6e, emissive: 0x000000 })); sw.position.set(0, 1.2, 3.9); dev.add(sw);
       dev.add(L.tube([[-1.1, 1.0, 3.5], [-1.4, 1.0, 2.0], [-EX, 5.5, 1.0], [-EX, 5.55, 0]], 0.06, 0x4f7cff));
       dev.add(L.tube([[1.1, 1.0, 3.5], [1.4, 1.0, 2.0], [EX, 5.5, 1.0], [EX, 5.55, 0]], 0.06, 0xf0524f));
-      const lc = label('(−)극 · H₂', [-EX, TT + 0.2, 0], { size: 13, color: 'rgba(79,124,255,.92)' });
-      const la = label('(+)극 · O₂', [EX, TT + 0.2, 0], { size: 13, color: 'rgba(240,82,79,.92)' });
-      const lb = label('전원 장치', [0, 1.6, 3.9], { size: 12 });
+      const anc = (x, y, z) => { const o = new THREE.Object3D(); o.position.set(x, y, z); dev.add(o); return o; };
+      const lc = label('(−)극 · H₂', anc(-EX, TT + 0.2, 0), { size: 13, color: 'rgba(79,124,255,.92)' });
+      const la = label('(+)극 · O₂', anc(EX, TT + 0.2, 0), { size: 13, color: 'rgba(240,82,79,.92)' });
+      const lb = label('전원 장치', anc(0, 1.7, 3.9), { size: 12 });
       // 기포
       const NB = 70;
       const bub = new THREE.InstancedMesh(L.SG, new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.75, roughness: 0.05, metalness: 0 }), NB); bub.frustumCulled = false; dev.add(bub);
@@ -168,7 +169,7 @@
       function setMode(m) {
         mode = m; dev.visible = m === 'dev'; mm.visible = m === 'mol';
         lc.show(m === 'dev'); la.show(m === 'dev'); lb.show(m === 'dev'); eqLab.show(m === 'mol'); lw.show(m === 'mol'); lp.show(m === 'mol'); lt.show(false);
-        orbit.ty = m === 'dev' ? 2.6 : 0.3; orbit.dist = (phone ? 17 : 13) * (m === 'dev' ? 1 : 0.9);
+        orbit.ty = m === 'dev' ? 3.3 : 0.3; orbit.dist = m === 'dev' ? (phone ? 22 : 17) : (phone ? 17 : 13);
         bPow.style.display = m === 'dev' ? '' : 'none'; bClr.style.display = m === 'dev' ? '' : 'none'; bPlay.style.display = m === 'mol' ? '' : 'none'; rg.hide(m === 'dev');
         if (m === 'dev') devInfo(); else setProg(prog);
       }
@@ -184,6 +185,7 @@
         update(dt, t) {
           dt = Math.min(dt, 0.05);
           if (mode === 'dev') {
+            dev.rotation.y += dt * 0.15;
             if (on && gas < 3.4) gas += dt * 0.11;
             // 시험관 안 물·기체 (기체는 위에서부터 차올라요; H2는 O2의 2배)
             const len = TT - TB;

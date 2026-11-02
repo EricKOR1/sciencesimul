@@ -86,7 +86,7 @@
           far.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 24, 0.025, 6, false), new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.6 })));
         }
       }
-      capill([-3.0, 1.55], 0.7, 1.0, 0xd36b8a); capill([3.0, 1.55], 0.7, 1.0, 0xd36b8a); capill([0, -3.5], 1.5, 0.4, 0xd7885a); capill([0, 3.5], 0.4, 0.4, 0xd7885a);
+      capill([-3.0, 1.55, -0.25], 0.7, 1.0, 0xd36b8a); capill([3.0, 1.55, -0.25], 0.7, 1.0, 0xd36b8a); capill([0, -3.5, 0], 1.5, 0.4, 0xd7885a); capill([0, 3.5, 0.1], 0.4, 0.4, 0xd7885a);
 
       // 흐르는 혈구 알갱이
       const NP = 38;

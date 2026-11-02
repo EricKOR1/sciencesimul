@@ -14,14 +14,14 @@
   window.SciSim3D.attach({
     title: '분자 간 힘 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: PHONE ? 15 : 11.5, theta: 0.5, phi: 1.2, min: 5, max: 26 },
+    camera: { dist: PHONE ? 12.5 : 11, theta: 0.5, phi: 1.2, min: 5, max: 26 },
     autoRotate: 0.15,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3, UP = new V3(0, 1, 0);
       const sim = () => (window.__sim && window.__sim.S && window.__sim.S.forces) || null;
       const g = new THREE.Group(); root.add(g);
-      let kind = sim() && KEYS[sim().f] ? sim().f : 'disp', temp = 25, lastF = kind;
+      let kind = sim() && KEYS[sim().f] ? sim().f : 'disp', temp = 25, lastF = kind;   // lastF: 2D 쪽에서 마지막으로 본 힘
       const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.4, metalness: 0.05 }, o || {}));
       const mols = [], links = [], labs = [];
 
@@ -89,25 +89,28 @@
         plabel('HCl', dipM[3], null, [0, -1.2, 0]);
         info('<b>쌍극자·쌍극자 힘</b> · 극성 분자끼리<br>한 분자의 δ+(H)와 이웃 분자의 δ−(Cl)가 마주 보도록 정렬돼 끌어당겨요.');
       }
-      /* ---- ③ 수소 결합: 물 분자 ---- */
+      /* ---- ③ 수소 결합: 물 분자 4개 고리 (각 분자의 H가 이웃 분자의 O를 향해요) ---- */
       let hbW = [];
       function sceneHB() {
-        // 한 분자의 H가 이웃의 O를 향하는 삼각 배치
-        const P = [new V3(0, -0.2, 0), new V3(3.1, 1.2, 0.4), new V3(-1.9, 2.9, -0.4), new V3(-1.4, -2.9, 0.6)];
-        hbW = P.map((p, i) => { const w = water(p, 0); w.userData.ph = i * 1.3; return w; });
-        // 방향을 맞춤: 각 H가 이웃 O를 향하도록 회전 (대략)
-        hbW[0].rotation.z = -0.55; hbW[1].rotation.z = 1.6; hbW[2].rotation.z = -2.2; hbW[3].rotation.z = 3.1;
-        plabel('O−H···O', hbW[0], 'rgba(255,90,95,.92)', [0.4, 1.9, 0]);
-        plabel('수소 결합', hbW[1], null, [0, 1.7, 0]);
+        const D = 2.05, P = [new V3(-D, -D, 0.45), new V3(D, -D, -0.45), new V3(D, D, 0.45), new V3(-D, D, -0.45)];
+        hbW = P.map((p, i) => {
+          const w = water(p, 0), q = P[(i + 1) % 4], ang = Math.atan2(q.y - p.y, q.x - p.x);
+          w.rotation.z = ang - (Math.PI / 2 - 52.25 * Math.PI / 180);             // H₁이 다음 분자의 O 쪽을 향하게
+          w.userData.ph = i * 1.3; w.userData.base = p.clone(); w.userData.next = (i + 1) % 4; return w;
+        });
+        plabel('O−H···O', hbW[0], 'rgba(255,90,95,.92)', [2.6, -0.2, 0.2]);
+        plabel('수소 결합', hbW[2], null, [0, 1.9, 0]);
         info('<b>수소 결합</b> · F, O, N에 붙은 H<br>H가 이웃 분자의 O 비공유 전자쌍과 끌려요. 분산력·쌍극자 힘보다 훨씬 강해서 끓는점이 높아요.');
       }
       function setBonds() {
         links.forEach((l) => g.remove(l)); links.length = 0;
         if (kind === 'hb') {
           g.updateMatrixWorld(true);
-          const hs = [], os = [];
-          hbW.forEach((w, i) => { const wp = (v) => v.clone().applyMatrix4(w.matrixWorld); os.push({ i, p: wp(new V3()) }); [w.userData.h1, w.userData.h2].forEach((h) => hs.push({ i, p: wp(h) })); });
-          hs.forEach((h) => { let best = null; os.forEach((o) => { if (o.i !== h.i) { const d = o.p.distanceTo(h.p); if (!best || d < best.d) best = { d, o }; } }); if (best && best.d < 3.6) { const l = dashed(h.p, best.o.p.clone().sub(h.p).normalize().multiplyScalar(best.d - 0.55).add(h.p), 0xff5a5f, 0.07); l.userData.pair = [h, best.o]; links.push(l); g.add(l); } });
+          hbW.forEach((w) => {
+            const n = hbW[w.userData.next], h = w.userData.h1.clone().applyMatrix4(w.matrixWorld), o = new V3().applyMatrix4(n.matrixWorld);
+            const d = o.clone().sub(h), L = d.length(); if (L < 0.9) return;
+            const l = dashed(h.clone().addScaledVector(d.clone().normalize(), 0.35), o.clone().addScaledVector(d.clone().normalize(), -0.6), 0xff5a5f, 0.075); links.push(l); g.add(l);
+          });
         }
       }
       function build() {
@@ -116,7 +119,7 @@
         setBonds(); update2();
       }
       function update2() { if (kind === 'hb') setBonds(); }
-      const seg = controls.segment('힘', [{ value: 'disp', label: '분산력' }, { value: 'dip', label: '쌍극자 힘' }, { value: 'hb', label: '수소 결합' }], kind, (v) => { kind = v; lastF = v; build(); });
+      const seg = controls.segment('힘', [{ value: 'disp', label: '분산력' }, { value: 'dip', label: '쌍극자 힘' }, { value: 'hb', label: '수소 결합' }], kind, (v) => { kind = v; build(); });
       controls.range('온도', 0, 100, 5, temp, (v) => { temp = v; }, (v) => v + ' °C');
       controls.text('온도가 높을수록 분자 운동이 활발해요.');
       build();
@@ -151,7 +154,7 @@
               });
             }
           } else {
-            hbW.forEach((w) => { w.position.y += Math.sin(t * (1 + temp / 40) + w.userData.ph) * dt * (0.1 + temp / 100); });
+            hbW.forEach((w) => { const b = w.userData.base, a = 0.05 + temp / 100 * 0.35; w.position.set(b.x + Math.sin(t * 1.3 + w.userData.ph) * a, b.y + Math.sin(t * 1.7 + w.userData.ph * 2) * a, b.z + Math.cos(t * 1.1 + w.userData.ph) * a); });
             bondT += dt; if (bondT > 0.2) { bondT = 0; setBonds(); }
           }
         },

@@ -80,7 +80,7 @@
   window.SciSim3D.attach({
     title: 'pH와 이온 수 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: phone ? 14 : 10, theta: 0.5, phi: 1.2, min: 5, max: 22, target: [0, 1.7, 0] },
+    camera: { dist: phone ? 10.5 : 10, theta: 0.5, phi: 1.2, min: 5, max: 22, target: [0, 1.7, 0] },
     autoRotate: 0.15,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
@@ -90,18 +90,18 @@
       const bot = new THREE.Mesh(new THREE.CylinderGeometry(R, R, 0.12, 48), new THREE.MeshStandardMaterial({ color: 0xcfe0ff, transparent: true, opacity: 0.35, roughness: 0.1, depthWrite: false })); bot.position.y = 0.06; root.add(bot);
       const rim = new THREE.Mesh(new THREE.TorusGeometry(R, 0.05, 12, 64), new THREE.MeshStandardMaterial({ color: 0xe0ebff, roughness: 0.2 })); rim.rotation.x = Math.PI / 2; rim.position.y = HGT; root.add(rim);
       const LV = 3.5;
-      const liq = new THREE.Mesh(new THREE.CylinderGeometry(R - 0.04, R - 0.04, LV, 48), new THREE.MeshStandardMaterial({ color: 0x66cc66, transparent: true, opacity: 0.38, roughness: 0.15, depthWrite: false })); liq.position.y = LV / 2 + 0.06; root.add(liq);
+      const liq = new THREE.Mesh(new THREE.CylinderGeometry(R - 0.04, R - 0.04, LV, 48), new THREE.MeshStandardMaterial({ color: 0x66cc66, transparent: true, opacity: 0.26, roughness: 0.15, depthWrite: false })); liq.position.y = LV / 2 + 0.06; root.add(liq);
       const top = new THREE.Mesh(new THREE.CircleGeometry(R - 0.04, 48), new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.25, roughness: 0.05, depthWrite: false })); top.rotation.x = -Math.PI / 2; top.position.y = LV + 0.06; root.add(top);
-      const floor = new THREE.Mesh(new THREE.CylinderGeometry(R + 1.2, R + 1.2, 0.1, 48), new THREE.MeshStandardMaterial({ color: 0x24324f, roughness: 0.95, envMapIntensity: 0.05 })); floor.position.y = -0.05; root.add(floor);
+      const floor = new THREE.Mesh(new THREE.CylinderGeometry(R + 1.2, R + 1.2, 0.1, 48), new THREE.MeshBasicMaterial({ color: 0x050b18 })); floor.position.y = -0.05; root.add(floor);
       const NMAX = 1500;
       const mk = (col, em) => { const m = new THREE.InstancedMesh(L.SG, new THREE.MeshStandardMaterial({ color: col, emissive: em, emissiveIntensity: 0.45, roughness: 0.35 }), NMAX); m.frustumCulled = false; m.count = 0; root.add(m); return m; };
-      const mH = mk(0xff4d4d, 0x7a0000), mO = mk(0x4d8dff, 0x00287a);
+      const mH = mk(0xff2b4a, 0x9a0020), mO = mk(0x4d8dff, 0x00287a);
       const pts = { h: [], o: [] };
       const rp = () => { const r = Math.sqrt(Math.random()) * (R - 0.25), a = Math.random() * 6.283; return { x: Math.cos(a) * r, y: 0.25 + Math.random() * (LV - 0.35), z: Math.sin(a) * r, ph: Math.random() * 6.28, sp: 0.4 + Math.random() * 0.6 }; };
       for (let i = 0; i < NMAX; i++) { pts.h.push(rp()); pts.o.push(rp()); }
       const dum = new THREE.Object3D();
       const INDI = [0xe53935, 0xf4511e, 0xfb8c00, 0xfdd835, 0x7cb342, 0x43a047, 0x00897b, 0x1e88e5, 0x3949ab, 0x5e35b1, 0x6a1b9a, 0x7b1fa2, 0x8e24aa];
-      let pH = 3, base = 3, wat = 0;
+      let pH = 4, base = 4, wat = 0, last2d = null;
       const lblN = label('', [0, LV + 0.6, 0], { size: 12.5 });
       function counts() { return [Math.min(NMAX, Math.round(Math.pow(10, 7 - pH))), Math.min(NMAX, Math.round(Math.pow(10, pH - 7)))]; }
       function show() {
@@ -112,15 +112,16 @@
         const sat = trueH > NMAX || trueO > NMAX;
         const sci = (e) => '10<sup>' + e + '</sup>';
         lblN.set('pH ' + (Math.round(pH * 10) / 10) + (pH < 7 ? ' 산성' : pH > 7 ? ' 염기성' : ' 중성'));
-        info('<b>[H⁺] = ' + sci(-Math.round(pH * 10) / 10) + ' mol/L</b> · pH ' + (Math.round(pH * 10) / 10) + '<br><span style="color:#ff6b6b">●</span> H⁺(H₃O⁺) <b>' + (trueH >= 1e6 ? '많아요' : fmt(trueH)) + '</b> · <span style="color:#6ba5ff">●</span> OH⁻ <b>' + (trueO >= 1e6 ? '많아요' : fmt(trueO)) + '</b> (pH 7 = 1개 기준)<br>' + (sat ? '1500개를 넘으면 다 그릴 수 없어요. 그래서 로그(pH) 눈금을 써요!' : 'pH가 1 내려가면 H⁺ 수는 10배로 늘어요.'));
+        info('<b>[H⁺] = ' + sci(-Math.round(pH * 10) / 10) + ' mol/L</b><br><span style="color:#ff6b6b">●</span> H⁺ <b>' + fmt(trueH) + '</b> · <span style="color:#6ba5ff">●</span> OH⁻ <b>' + fmt(trueO) + '</b> (pH 7일 때 각 1개 기준)<br>' + (sat ? '너무 많아 다 못 그려요. 그래서 로그(pH) 눈금을 써요!' : 'pH가 1 내려가면 H⁺ 수는 10배예요.'));
       }
-      function fmt(x) { return x >= 10 ? Math.round(x) + '개' : x >= 1 ? '1개' : '0.' + '0'.repeat(Math.min(5, Math.round(-Math.log10(x)) - 1)) + '1개'; }
+      function fmt(x) { return x >= 1e6 ? '아주 많아요' : x >= 0.7 ? Math.round(x) + '개' : '거의 없어요'; }
       const rg = controls.range('pH', 1, 13, 1, pH, (v) => { pH = +v; base = pH; wat = 0; show(); }, (v) => v);
       controls.button('💧 물 10배 섞기', () => { if (pH === 7) return; pH = pH < 7 ? Math.min(7, pH + 1) : Math.max(7, pH - 1); rg.set(pH); show(); });
       controls.button('↺ 처음', () => { pH = base; rg.set(pH); show(); });
       show();
       return {
         update(dt, t) {
+          try { const e = window.__sim && window.__sim.S && window.__sim.S.ex; if (e && typeof e.pH === 'number') { if (last2d === null) last2d = e.pH; else if (e.pH !== last2d) { last2d = e.pH; pH = base = e.pH; rg.set(pH); show(); } } } catch (x) { /* 2D 상태를 읽지 못하면 무시 */ }
           const [nh, no] = counts();
           [[mH, pts.h, nh], [mO, pts.o, no]].forEach(([m, arr, n]) => {
             for (let i = 0; i < n; i++) { const p = arr[i]; dum.position.set(p.x + Math.sin(t * p.sp + p.ph) * 0.12, p.y + Math.cos(t * p.sp * 1.3 + p.ph) * 0.12, p.z + Math.sin(t * p.sp * 0.8 + p.ph * 2) * 0.12); dum.scale.setScalar(n > 300 ? 0.075 : n > 40 ? 0.1 : 0.15); dum.updateMatrix(); m.setMatrixAt(i, dum.matrix); }

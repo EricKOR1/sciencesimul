@@ -56,7 +56,7 @@
         auraT = used ? R[used - 1] + 0.45 : 0.9;
         const col = q === 0 ? 0x3ddc84 : q > 0 ? 0xff5a5f : 0x4a78ff;
         aura.material.color.setHex(col);
-        const sym = SYM[p] + (q ? (Math.abs(q) > 1 ? Math.abs(q) : '') + (q > 0 ? '⁺' : '⁻') : '');
+        const sym = SYM[p] + (q ? (Math.abs(q) > 1 ? '⁰¹²³⁴⁵⁶⁷⁸⁹'[Math.abs(q)] : '') + (q > 0 ? '⁺' : '⁻') : '');
         const kind = q === 0 ? '원자 (중성)' : q > 0 ? '양이온' : '음이온';
         const how = q === 0 ? '양성자 수 = 전자 수' : q > 0 ? `전자 ${q}개를 <b>잃어서</b> (+)가 더 많아요` : `전자 ${-q}개를 <b>얻어서</b> (−)가 더 많아요`;
         info(`<b>${sym}</b> · ${kind}<br><b style="color:#ff8f8f">양성자 ${p}</b> · <b style="color:#8fb0ff">전자 ${e}</b> → 전하 ${q > 0 ? '+' + q : q < 0 ? '−' + (-q) : '0'}<br>${how}`);

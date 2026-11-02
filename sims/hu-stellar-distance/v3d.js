@@ -6,17 +6,17 @@
   'use strict';
   if (!window.SciSim3D) return;
   const PHONE = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches);
-  const TAU = Math.PI * 2, DEG = Math.PI / 180, RO = 2, RBG = 22, BETA = 35 * DEG;
+  const TAU = Math.PI * 2, DEG = Math.PI / 180, RO = 2.3, RBG = 22, BETA = 25 * DEG;
 
   window.SciSim3D.attach({
     title: '연주 시차 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     levels: [0],
-    camera: { dist: PHONE ? 22 : 16, theta: 0.7, phi: 1.1, min: 6, max: 34, target: [0, 1.5, -3] },
+    camera: { dist: PHONE ? 19 : 13.5, theta: 0.9, phi: 1.12, min: 6, max: 36, target: [0, 1.2, -2.8] },
     autoRotate: 0,
     build(ctx) {
       const { THREE, scene, root, label, info, controls } = ctx;
-      const st = { m: 0, D: 8, play: true, track: true, shots: [], key: '' };
+      const st = { m: 0, D: 7, play: true, track: true, shots: [], key: '' };
       const sr = () => { try { return window.__sim && window.__sim.S; } catch (e) { return null; } };
 
       scene.add(new THREE.AmbientLight(0x93a6e0, 0.5));
@@ -97,7 +97,7 @@
         const a0 = S.clone().negate().normalize(), a1 = E.clone().sub(S).normalize(), r = 1.6, pts = [];
         for (let i = 0; i <= 16; i++) { const u = i / 16, v = a0.clone().lerp(a1, u).normalize().multiplyScalar(r).add(S); pts.push(v); }
         arcG.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 24, 0.03, 6, false), new THREE.MeshBasicMaterial({ color: 0x7dd3fc })));
-        parLab.obj = pts[8].clone(); parLab.off = [0.55, 0, 0];
+        parLab.obj = pts[8].toArray(); parLab.off = [0.55, 0, 0];
         const ang = Math.acos(Math.max(-1, Math.min(1, a0.dot(a1)))) / DEG; parLab.set('p ≈ ' + ang.toFixed(1) + '°');
       }
       function text() {

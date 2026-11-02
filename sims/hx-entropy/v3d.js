@@ -10,12 +10,12 @@
   window.SciSim3D.attach({
     title: '확산과 엔트로피 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: PHONE ? 15 : 11.5, theta: 0.45, phi: 1.2, min: 6, max: 24 },
+    camera: { dist: PHONE ? 14 : 10, theta: 0.45, phi: 1.15, min: 6, max: 24 },
     autoRotate: 0.12,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3;
-      let N = 20, open = false, plate = 0;      // plate: 0(닫힘) → 1(완전히 열림)
+      let N = 30, open = false, plate = 0;      // plate: 0(닫힘) → 1(완전히 열림)
       const box = new THREE.Mesh(new THREE.BoxGeometry(LX * 2, LY * 2, LZ * 2), new THREE.MeshStandardMaterial({ color: 0xbfe3ff, transparent: true, opacity: 0.12, roughness: 0.1, side: THREE.DoubleSide, depthWrite: false })); root.add(box);
       root.add(new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(LX * 2, LY * 2, LZ * 2)), new THREE.LineBasicMaterial({ color: 0x9fc8ee, transparent: true, opacity: 0.8 })));
       const base = new THREE.Mesh(new THREE.BoxGeometry(LX * 2 + 0.5, 0.25, LZ * 2 + 0.5), new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.5, metalness: 0.4 })); base.position.y = -LY - 0.125; root.add(base);

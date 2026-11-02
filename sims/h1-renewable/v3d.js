@@ -10,20 +10,20 @@
   window.SciSim3D.attach({
     title: '3D 태양광 · 풍력',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: PHN ? 17 : 11, theta: 0.25, phi: 1.3, target: [0.5, 1.2, 0], min: 6, max: 26 },
+    camera: { dist: PHN ? 14 : 9.5, theta: 0.25, phi: 1.3, target: [0.2, 1.6, 0], min: 6, max: 26 },
     autoRotate: 0,
     levels: [0, 1],
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3, Y = new V3(0, 1, 0);
-      const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.55, metalness: 0.1 }, o || {}));
+      const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ envMapIntensity: 0.6, color: c, roughness: 0.55, metalness: 0.1 }, o || {}));
       const D0 = (window.__sim && window.__sim.DV) || {};
       const st = { sub: D0.sub === 'wind' ? 'wind' : 'solar', angle: typeof D0.angle === 'number' ? D0.angle : 0, cloud: typeof D0.cloud === 'number' ? D0.cloud : 60, wind: typeof D0.wind === 'number' ? D0.wind : 6, ang: 0, om: 0, t: 0, last: { a: D0.angle, c: D0.cloud, w: D0.wind, sub: D0.sub } };
       const solarP = () => { const inc = Math.abs(90 - ELEV - st.angle); const irr = Math.max(0, 1000 * Math.cos(inc * DEG) * (1 - 0.75 * st.cloud / 100)); return { inc, irr, p: irr * 0.2 }; };
       const windP = () => { const v = st.wind; return v < 3 ? 0 : v >= 12 ? 2 : 2 * Math.pow(v / 12, 3); };
 
       /* ---------- 바닥 ---------- */
-      const ground = new THREE.Mesh(new THREE.CylinderGeometry(7.2, 7.4, 0.3, 64), mat(0x5b8f45, { roughness: 1, metalness: 0 })); ground.position.y = -0.15; ground.receiveShadow = true; root.add(ground);
+      const ground = new THREE.Mesh(new THREE.CylinderGeometry(4.6, 4.8, 0.3, 64), new THREE.MeshLambertMaterial({ color: 0x3f7a33 })); ground.position.y = -0.15; ground.receiveShadow = true; root.add(ground);
 
       /* ================= ① 태양광 ================= */
       const gS = new THREE.Group(); root.add(gS);
@@ -44,7 +44,7 @@
       const rays = [];
       const rayM = new THREE.MeshBasicMaterial({ color: 0xffd34d, transparent: true, opacity: 0.85 });
       for (let i = 0; i < 5; i++) {
-        const g = new THREE.Group(), L = 5.2, sh = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, L, 8), rayM), hd = new THREE.Mesh(new THREE.ConeGeometry(0.11, 0.3, 12), rayM);
+        const g = new THREE.Group(), L = 5.2, sh = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, L, 8), rayM), hd = new THREE.Mesh(new THREE.ConeGeometry(0.15, 0.36, 12), rayM);
         sh.position.y = L / 2; hd.position.y = 0.0; hd.rotation.x = Math.PI; g.add(sh, hd);
         g.userData = { off: (i - 2) * 0.62, mat: rayM }; gS.add(g); rays.push(g);
       }
@@ -68,7 +68,7 @@
       for (let k = 0; k < 3; k++) {
         const c = new THREE.Group();
         [[0, 0, 0, 0.5], [0.5, 0.05, 0.1, 0.4], [-0.5, 0, -0.1, 0.38], [0.15, 0.3, 0, 0.38]].forEach((q) => { const m = new THREE.Mesh(new THREE.SphereGeometry(q[3], 16, 12), mat(0xdfe5f1, { roughness: 1, transparent: true, opacity: 0.95 })); m.position.set(q[0], q[1], q[2]); c.add(m); });
-        const p = sunDir.clone().multiplyScalar(4.1 + k * 0.1).add(new V3(0, PY + 0.2, (k - 1) * 1.3)); c.position.copy(p); c.userData.k = k; clouds.add(c);
+        const p = sunDir.clone().multiplyScalar(4.9 + k * 0.25).add(new V3(0, PY + 0.2, (k - 1) * 1.5)); c.position.copy(p); c.userData.k = k; clouds.add(c);
       }
       const labSun = label('☀ 햇빛', sunM, { size: 12.5, offset: [0, 1.2, 0] });
       const labPanel = label('태양광 패널', [0, PY + 0.2, 0], { size: 12.5, offset: [1.9, -0.2, 0] });
@@ -116,17 +116,17 @@
         if (so) {
           const s = solarP(); pivot.rotation.z = st.angle * DEG; placeRays();
           nrm.visible = nrmH.visible = true;
-          clouds.children.forEach((c, k) => { c.visible = st.cloud > 15 + k * 25; c.scale.setScalar(0.7 + st.cloud / 100 * 0.8); });
-          rayM.opacity = 0.25 + 0.65 * (1 - 0.75 * st.cloud / 100);
+          clouds.children.forEach((c, k) => { c.visible = st.cloud > 15 + k * 25; c.scale.setScalar(0.45 + st.cloud / 100 * 0.35); });
+          rayM.opacity = 0.4 + 0.55 * (1 - 0.75 * st.cloud / 100);
           panelM.emissiveIntensity = 0.05 + s.irr / 1000 * 0.9;
-          labInc.set('입사각 ' + Math.round(s.inc) + '°'); labInc.obj = pivotPoint(); labInc.off = [0, 0, 0];
+          labInc.set('입사각 ' + Math.round(s.inc) + '°'); labInc.obj = pivotPoint(); labInc.off = [-0.9, 0.2, 0];
           info('햇빛이 패널에 <b>수직</b>으로 닿을수록(입사각이 작을수록) 전기가 많이 나와요.<br>지금 입사각 <b>' + Math.round(s.inc) + '°</b> · 구름 ' + st.cloud + '% → 약 <b>' + Math.round(s.p) + ' W</b> (패널 1 m²)');
         } else {
           const p = windP(), v = st.wind;
           info(v < 3 ? '풍속이 <b>3 m/s</b>보다 약하면 날개가 거의 돌지 않아 발전하지 못해요.' : '풍속 <b>' + v + ' m/s</b> → 출력 약 <b>' + (Math.round(p * 100) / 100).toFixed(2) + ' MW</b><br>출력은 풍속의 <b>세제곱</b>에 비례하고, 12 m/s 이상이면 정격 출력(2.00 MW)이에요.');
         }
       }
-      const pivotPoint = () => new V3(0, PY + 1.6, 0).add(new V3(-Math.sin(st.angle * DEG), Math.cos(st.angle * DEG), 0).multiplyScalar(0.0));
+      const pivotPoint = () => new V3(-0.2, PY + 0.4, 0).add(new V3(-Math.sin(st.angle * DEG), Math.cos(st.angle * DEG), 0).multiplyScalar(1.0));
       show();
 
       return {

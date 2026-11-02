@@ -5,6 +5,7 @@
   'use strict';
   if (!window.SciSim3D) return;
   const PHN = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches), KD = PHN ? 1.3 : 1;
+  const LV = () => (typeof window.SciSimLevel === 'number' ? window.SciSimLevel : 0);
   const TAU = Math.PI * 2, clamp = (x, a, b) => Math.max(a, Math.min(b, x));
   function tools(THREE) {
     const V3 = THREE.Vector3, Y = new V3(0, 1, 0);
@@ -42,15 +43,15 @@
   window.SciSim3D.attach({
     title: '시간 팽창과 길이 수축 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: 12.5 * KD, theta: 0.2, phi: 1.2, min: 5, max: 28, target: [0, 1.2, 0] },
+    camera: { dist: 10.5 * KD, theta: 0.2, phi: 1.2, min: 5, max: 28, target: [0, 1.2, 0] },
     autoRotate: 0,
+    levels: [0, 1, 2],
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const { V3, M, mkArrow, setArrow, tube, grid } = tools(THREE);
-      const st = { b: 0.6, mode: 'clock', t: 0 };
+      const st = { b: 0.6, mode: LV() === 2 ? 'ship' : 'clock', t: 0 };
       const gC = new THREE.Group(), gL = new THREE.Group(); root.add(gC, gL);
       const H = 2.6;                                    // 거울 사이 간격
-      grid(18, 5, 1, 0x7a8fb3, 0).material;
       const gr = grid(20, 6, 1, 0x7a8fb3, -0.02, 0.2); root.add(gr);
       /* ---- 빛시계 ---- */
       function clock(col, y0) {
@@ -59,7 +60,7 @@
         const rod = [-0.7, 0.7].map((x) => { const r = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, H, 8), M(col, { transparent: true, opacity: 0.55 })); r.position.set(x, H / 2, -0.4); g.add(r); return r; });
         const ph = new THREE.Mesh(new THREE.SphereGeometry(0.16, 20, 14), new THREE.MeshBasicMaterial({ color: 0xffe66d })); g.add(ph);
         const glow = new THREE.Mesh(new THREE.SphereGeometry(0.3, 16, 12), new THREE.MeshBasicMaterial({ color: 0xffd34d, transparent: true, opacity: 0.25, depthWrite: false })); ph.add(glow);
-        root.add(g); gC.add(g); return { g, ph, bot, top };
+        gC.add(g); return { g, ph, bot, top };
       }
       const c0 = clock(0x34d399, 0), c1 = clock(0x60a5fa, 0);
       c0.g.position.set(-3.6, 0, 0);
@@ -89,10 +90,11 @@
         gC.visible = st.mode === 'clock'; gL.visible = st.mode === 'ship'; [lA, lB, lt0, lt1, lv].forEach((l) => l.show(st.mode === 'clock')); [lS, lG, lL].forEach((l) => l.show(st.mode === 'ship'));
         ctx.orbit.ty = st.mode === 'clock' ? 1.3 : 1.0; txt();
       }
-      controls.segment('보기', [{ value: 'clock', label: '🕒 빛시계' }, { value: 'ship', label: '🚀 길이 수축' }], st.mode, (v) => { st.mode = v; setMode(); });
+      const rseg = controls.segment('보기', [{ value: 'clock', label: '🕒 빛시계' }, { value: 'ship', label: '🚀 길이 수축' }], st.mode, (v) => { st.mode = v; setMode(); });
       controls.range('속력 v', 0, 0.95, 0.05, st.b, (v) => { st.b = v; reset(); txt(); }, (v) => v.toFixed(2) + 'c');
       function reset() { st.t = 0; st.n0 = 0; st.n1 = 0; trailG.children.slice().forEach((c) => { trailG.remove(c); c.geometry.dispose(); }); trail.length = 0; st.px = -0.5; }
       reset(); setMode();
+      window.addEventListener('scisim-level', (e) => { const l = e.detail && e.detail.level, nm = l === 2 ? 'ship' : 'clock'; if (nm !== st.mode) { st.mode = nm; rseg.set(nm); setMode(); } });
       const T0 = 2.0;                                        // 정지 시계의 한 번 오가는 시간 (화면 시간)
       return {
         update(dt) {

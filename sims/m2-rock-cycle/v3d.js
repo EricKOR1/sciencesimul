@@ -17,7 +17,7 @@
   window.SciSim3D.attach({
     title: '암석의 순환 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: PHN ? 17 : 12.5, theta: 0.35, phi: 1.2, min: 6, max: 26, target: [0, -0.4, 0] },
+    camera: { dist: PHN ? 19 : 15, theta: 0.3, phi: 1.2, min: 6, max: 26, target: [0, -0.4, 0] },
     autoRotate: 0,
     levels: [3],
     build(ctx) {
@@ -39,7 +39,7 @@
       const top = XS.map((x) => [x, h(x)]);
       const B = -3.3;
       // 바탕 (화성암 바위층)
-      root.add(poly([[-5, B], ...top, [5, B]], D, mat(0x6f6a73, { roughness: 0.9 })));
+      root.add(poly([[-5, B], ...top, [5, B]], D, mat(0x4d4857, { roughness: 0.9 })));
       // 분지의 퇴적층 (모래 · 진흙 · 자갈) : 오른쪽
       const sedCols = [0xd9c27a, 0xa77c58, 0x8d8277];
       sedCols.forEach((c, i) => {
@@ -54,9 +54,9 @@
       });
       // 마그마방
       const chamber = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 24), mat(0xff6a1f, { emissive: 0xff4a10, emissiveIntensity: 1.1, roughness: 0.3 }));
-      chamber.scale.set(2.2, 0.75, D * 0.5); chamber.position.set(-1.4, -2.55, 0); root.add(chamber);
+      chamber.scale.set(2.2, 0.75, 0.7); chamber.position.set(-1.4, -2.55, D / 2 - 0.2); root.add(chamber);
       // 마그마 관 (굴뚝)
-      const conduit = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new V3(-1.9, -2.2, 0), new V3(-2.5, -0.6, 0), new V3(-3.0, 1.0, 0), new V3(-3.1, 2.25, 0)]), 40, 0.18, 10), mat(0xff7a2a, { emissive: 0xff4a10, emissiveIntensity: 1.0 }));
+      const conduit = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new V3(-1.9, -2.2, D / 2 - 0.15), new V3(-2.5, -0.6, D / 2 - 0.15), new V3(-3.0, 1.0, D / 2 - 0.15), new V3(-3.1, 2.25, 0)]), 40, 0.22, 10), mat(0xff7a2a, { emissive: 0xff4a10, emissiveIntensity: 1.0 }));
       root.add(conduit);
       // 바다
       const sea = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.5, D), new THREE.MeshStandardMaterial({ color: 0x2f8fd8, transparent: true, opacity: 0.4, roughness: 0.1, depthWrite: false }));
@@ -93,7 +93,7 @@
         const m = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pp), 40, 0.1, 8), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.0 }));
         root.add(m); return m;
       });
-      const labRock = [label('화성암', [-2.2, 1.0, Z], { color: 'rgba(255,255,255,.2)' }), label('퇴적암', [4.0, -0.9, Z]), label('변성암', [4.0, -2.2, Z]), label('마그마', chamber, { offset: [-0.3, -0.1, Z] })];
+      const labRock = [label('화성암', [-2.2, 1.0, Z]), label('퇴적암', [4.0, -0.9, Z]), label('변성암', [4.0, -2.2, Z]), label('마그마', chamber, { offset: [-0.6, 0.0, 0.7] })];
       const labStage = label('', token, { offset: [0, 0.55, 0], color: 'rgba(255,211,77,.95)' }); labStage.el.style.color = '#1b2333';
       const labW = label('풍화 · 침식', [-0.3, 1.1, 0]); const labV = label('화산', [-3.1, 2.9, 0]);
 

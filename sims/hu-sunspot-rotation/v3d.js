@@ -31,7 +31,7 @@
   window.SciSim3D.attach({
     title: '태양의 차등 자전 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    levels: [0, 1, 2],
+    levels: [0, 2],
     camera: { dist: PHONE ? 17 : 12.5, theta: 0.0, phi: 1.28, min: 5, max: 20 },
     autoRotate: 0,
     build(ctx) {

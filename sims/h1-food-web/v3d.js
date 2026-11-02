@@ -22,15 +22,15 @@
   window.SciSim3D.attach({
     title: '3D 먹이 그물과 에너지 피라미드',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: PHN ? 21 : 14.5, theta: 0.6, phi: 1.2, target: [0, 3.0, 0], min: 7, max: 32 },
+    camera: { dist: PHN ? 19 : 12.5, theta: 0.6, phi: 1.2, target: [0, 2.8, 0], min: 7, max: 32 },
     autoRotate: 0.15,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3, Y = new V3(0, 1, 0);
-      const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.45, metalness: 0.05 }, o || {}));
+      const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ envMapIntensity: 0.6, color: c, roughness: 0.45, metalness: 0.05 }, o || {}));
       const S0 = (window.__sim && window.__sim.S) || {};
       const st = { scene: S0.mode === 'pyr' || S0.mode === 'flow' ? 'pyr' : 'web', chain: S0.mode === 'chain', names: true, heat: true, t: 0, last: S0.mode };
-      const floor = new THREE.Mesh(new THREE.CylinderGeometry(6.2, 6.4, 0.25, 56), mat(0x2d3547, { roughness: 0.95, metalness: 0 })); floor.position.y = -0.2; floor.receiveShadow = true; root.add(floor);
+      const floor = new THREE.Mesh(new THREE.CylinderGeometry(5.2, 5.4, 0.25, 56), new THREE.MeshLambertMaterial({ color: 0x2d3547 })); floor.position.y = -0.2; floor.receiveShadow = true; root.add(floor);
       const gW = new THREE.Group(), gP = new THREE.Group(); root.add(gW, gP);
       const LH = 1.35;
 
@@ -38,24 +38,27 @@
       const nodes = {}, links = [];
       Object.keys(SP).forEach((k) => {
         const s = SP[k], g = new THREE.Group(); g.position.set(s.p[0], s.lv * LH + 0.5, s.p[2]);
-        const r = s.lv === 0 ? 0.42 : 0.36;
-        const body = new THREE.Mesh(s.lv === 0 ? new THREE.CylinderGeometry(0.55, 0.55, 0.3, 28) : new THREE.SphereGeometry(r, 28, 20), mat(s.c, { roughness: 0.4 })); body.castShadow = true; g.add(body);
+        const r = 0.5;
+        const body = new THREE.Mesh(s.lv === 0 ? new THREE.CylinderGeometry(0.7, 0.7, 0.34, 32) : new THREE.SphereGeometry(r, 28, 20), mat(s.c, { roughness: 0.4 })); body.castShadow = true; g.add(body);
         // 같은 단계 판 (보기 좋게 바닥에 그림자 막대)
         const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, s.lv * LH + 0.5, 6), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.15 })); stem.position.y = -(s.lv * LH + 0.5) / 2; g.add(stem);
-        gW.add(g); nodes[k] = { g, body, lab: label(s.e + ' ' + s.n, g, { size: 12.5, offset: [0, 0.75, 0] }), k };
+        gW.add(g); nodes[k] = { g, body, lab: label(s.e + ' ' + s.n, g, { size: 12.5, offset: [0, 0.95, 0] }), k };
       });
       LINKS.forEach(([a, b], i) => {
         const A = nodes[a].g.position, B = nodes[b].g.position, d = new V3().subVectors(B, A), L = d.length(), u = d.clone().normalize();
-        const s0 = A.clone().addScaledVector(u, 0.5), s1 = B.clone().addScaledVector(u, -0.55), mid = s0.clone().lerp(s1, 0.5); mid.y += 0.25;
+        const s0 = A.clone().addScaledVector(u, 0.62), s1 = B.clone().addScaledVector(u, -0.7), mid = s0.clone().lerp(s1, 0.5); mid.y += 0.25;
         const curve = new THREE.QuadraticBezierCurve3(s0, mid, s1);
         const m = new THREE.MeshStandardMaterial({ color: 0xffd75e, emissive: 0xffa800, emissiveIntensity: 0.35, roughness: 0.4, transparent: true });
-        const tube = new THREE.Mesh(new THREE.TubeGeometry(curve, 24, 0.045, 8, false), m); gW.add(tube);
-        const t = curve.getTangentAt(1), head = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.34, 14), m); head.position.copy(s1); head.quaternion.setFromUnitVectors(Y, t); gW.add(head);
+        const tube = new THREE.Mesh(new THREE.TubeGeometry(curve, 24, 0.06, 8, false), m); gW.add(tube);
+        const t = curve.getTangentAt(1), head = new THREE.Mesh(new THREE.ConeGeometry(0.19, 0.42, 14), m); head.position.copy(s1); head.quaternion.setFromUnitVectors(Y, t); gW.add(head);
         const bead = new THREE.Mesh(new THREE.SphereGeometry(0.07, 10, 8), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true })); gW.add(bead);
         links.push({ a, b, tube, head, m, bead, curve, ph: (i * 0.37) % 1, chain: CHAIN.some((c, j) => CHAIN[j + 1] && c === a && CHAIN[j + 1] === b) });
       });
-      // 높이 안내 (먹이 단계 이름)
-      const lvLabs = ROLE.map((t, i) => label(t, [-4.4, i * LH + 0.5, -2.2], { size: 11.5, color: 'rgba(20,70,40,.9)' }));
+      // 먹이 단계마다 반투명한 원판 (높이 = 먹이 단계)
+      const lvLabs = ROLE.map((t, i) => {
+        const d = new THREE.Mesh(new THREE.CylinderGeometry(4.3, 4.3, 0.03, 56), new THREE.MeshBasicMaterial({ color: LV_COL[i], transparent: true, opacity: 0.13, depthWrite: false })); d.position.y = i * LH + 0.25; gW.add(d);
+        return label(t, [0, i * LH + 0.25, 0], { size: 11.5, color: 'rgba(20,70,40,.9)', offset: [3.2, 0, 3.0] });
+      });
 
       /* ================= 에너지 피라미드 ================= */
       const R = [3.0, 2.3, 1.65, 1.05, 0.55], LHP = 1.05;

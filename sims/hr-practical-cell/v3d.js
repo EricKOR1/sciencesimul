@@ -81,12 +81,12 @@
         update(dt, t) {
           dt = Math.min(dt, 0.05);
           if (kind === 'mn') {
-            for (let i = 0; i < NE; i++) { const u = ((i / NE) - t * 0.12 + 10) % 1; const p = wcur.getPointAt(1 - u); M.makeTranslation(p.x, p.y, p.z); em.setMatrixAt(i, M); }
+            for (let i = 0; i < NE; i++) { const u = ((((i / NE) - t * 0.12) % 1) + 1) % 1; const p = wcur.getPointAt(Math.min(1, 1 - u)); M.makeTranslation(p.x, p.y, p.z); em.setMatrixAt(i, M); }
             em.instanceMatrix.needsUpdate = true;
             bulb.material.emissiveIntensity = 0.8 + 0.2 * Math.sin(t * 6);
           } else {
             const dir = mode === 'dis' ? 1 : -1;
-            for (let i = 0; i < NE; i++) { const u = ((i / NE) + dir * t * 0.14 + 10) % 1; const p = wB.getPointAt(u); M.makeTranslation(p.x, p.y, p.z); eB.setMatrixAt(i, M); }
+            for (let i = 0; i < NE; i++) { const u = ((((i / NE) + dir * t * 0.14) % 1) + 1) % 1; const p = wB.getPointAt(u); M.makeTranslation(p.x, p.y, p.z); eB.setMatrixAt(i, M); }
             eB.instanceMatrix.needsUpdate = true;
             LP.forEach((q, i) => { q.u = ((q.u + dir * dt * 0.1) % 1 + 1) % 1; const x = -SX + 0.95 + (SX * 2 - 1.9) * q.u; M.makeTranslation(x, q.y + Math.sin(t * 2 + i) * 0.1, q.z); lm.setMatrixAt(i, M); });
             lm.instanceMatrix.needsUpdate = true;

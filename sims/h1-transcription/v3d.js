@@ -15,6 +15,7 @@
   window.SciSim3D.attach({
     title: '전사: DNA에서 mRNA로 3D',
     camera: { dist: PHN ? 17 : 12.5, theta: 0.25, phi: 1.2, target: [0, 0.4, 0], min: 6, max: 24 },
+    levels: [0],
     autoRotate: 0,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;

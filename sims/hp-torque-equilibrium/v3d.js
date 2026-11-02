@@ -5,6 +5,7 @@
   'use strict';
   if (!window.SciSim3D) return;
   const PHN = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches), KD = PHN ? 1.3 : 1;
+  const LV = () => (typeof window.SciSimLevel === 'number' ? window.SciSimLevel : 0);
   const TAU = Math.PI * 2, clamp = (x, a, b) => Math.max(a, Math.min(b, x));
   function tools(THREE) {
     const V3 = THREE.Vector3, Y = new V3(0, 1, 0);
@@ -42,12 +43,12 @@
   window.SciSim3D.attach({
     title: '돌림힘과 평형 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: 11.5 * KD, theta: 0.35, phi: 1.2, min: 4, max: 26, target: [0, 1.2, 0] },
+    camera: { dist: 10 * KD, theta: 0.35, phi: 1.2, min: 4, max: 26, target: [0, 1.2, 0] },
     autoRotate: 0,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const { V3, M, mkArrow, setArrow, tube, disc } = tools(THREE);
-      const st = { mode: 'see', m1: 2, d1: 3, m2: 3, d2: 2, th: 0, thv: 0, r: 3, F: 4, ang: 90 };
+      const st = { mode: LV() === 0 ? 'wr' : 'see', m1: 2, d1: 3, m2: 3, d2: 2, th: 0, thv: 0, r: 3, F: 4, ang: 90 };
       const gS = new THREE.Group(), gW = new THREE.Group(); root.add(gS, gW);
       const ground = new THREE.Mesh(new THREE.BoxGeometry(11, 0.1, 4), M(0x1f3d30, { roughness: 1 })); ground.position.y = -0.05; ground.receiveShadow = true; root.add(ground);
       /* ---- 시소 ---- */
@@ -79,7 +80,7 @@
         ['m1', 'd1', 'm2', 'd2'].forEach((k) => ctl[k].forEach((n) => (n.style.display = st.mode === 'see' ? '' : 'none')));
         ['r', 'F', 'ang'].forEach((k) => ctl[k].forEach((n) => (n.style.display = st.mode === 'wr' ? '' : 'none')));
         [lw1, lw2, lpv, lt1, lt2, lbal].forEach((l) => l.show(st.mode === 'see')); [lF, lr, lτ].forEach((l) => l.show(st.mode === 'wr'));
-        ground.visible = st.mode === 'see'; ctx.orbit.ty = st.mode === 'see' ? 1.2 : 0.4; ctx.orbit.phi = st.mode === 'see' ? 1.2 : 0.95; ctx.orbit.dist = (st.mode === 'see' ? 11.5 : 9) * KD; txt();
+        ground.visible = st.mode === 'see'; ctx.orbit.ty = st.mode === 'see' ? 1.2 : 0.4; ctx.orbit.phi = st.mode === 'see' ? 1.2 : 0.95; ctx.orbit.dist = (st.mode === 'see' ? 10 : 9) * KD; txt();
       }
       function txt() {
         if (st.mode === 'see') {
@@ -99,6 +100,7 @@
       grab('F', () => controls.range('힘 F', 1, 8, 1, st.F, (v) => { st.F = v; txt(); }, (v) => v + ' N'));
       grab('ang', () => controls.range('힘의 방향 θ', 20, 90, 10, st.ang, (v) => { st.ang = v; txt(); }, (v) => v + '°'));
       mode();
+      window.addEventListener('scisim-level', (e) => { const l = e.detail && e.detail.level, nm = l === 0 ? 'wr' : 'see'; if (nm !== st.mode) { st.mode = nm; seg.set(nm); mode(); } });
       const tmp = new V3(); let ph = 0;
       return {
         update(dt) {

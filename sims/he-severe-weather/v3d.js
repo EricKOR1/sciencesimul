@@ -13,9 +13,10 @@
     title: '뇌우(적란운) 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     levels: [0],
-    camera: { dist: PHONE ? 15.5 : 10.5, theta: 0.5, phi: 1.3, min: 6, max: 28, target: [0.6, 2.5, 0] },
+    camera: { dist: PHONE ? 14 : 9.2, theta: 0.5, phi: 1.3, min: 6, max: 28, target: [0.6, 2.5, 0] },
     autoRotate: 0.08,
     build(ctx) {
+      if (ctx.THREE.ColorManagement) ctx.THREE.ColorManagement.legacyMode = false;     // 색을 보이는 그대로(sRGB) 쓰도록 맞춰요
       const { THREE, root, label, info, controls } = ctx;
       const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.9, metalness: 0 }, o || {}));
       let sd = 5; const rnd = () => { sd = (sd * 16807) % 2147483647; return sd / 2147483647; };

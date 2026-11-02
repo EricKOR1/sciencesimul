@@ -16,6 +16,7 @@
     camera: { dist: PHONE ? 19 : 15, theta: 0.55, phi: 1.08, min: 6, max: 30, target: [0, 1.3, 0] },
     autoRotate: 0.12,
     build(ctx) {
+      if (ctx.THREE.ColorManagement) ctx.THREE.ColorManagement.legacyMode = false;     // 색을 보이는 그대로(sRGB) 쓰도록 맞춰요
       const { THREE, root, label, info, controls, renderer } = ctx;
       renderer.localClippingEnabled = true;
       const cutPlane = new THREE.Plane(new THREE.Vector3(0, 0, -1), 0);       // z>0 쪽을 잘라 내요
@@ -27,7 +28,7 @@
       const SEA = 14, sg = new THREE.PlaneGeometry(SEA, SEA, 70, 70); sg.rotateX(-Math.PI / 2);
       const sea = new THREE.Mesh(sg, new THREE.MeshStandardMaterial({ color: 0x0c3f78, roughness: 0.35, metalness: 0.15, transparent: true, opacity: 0.97 })); root.add(sea);
       const sp = sg.attributes.position, sx0 = Float32Array.from(sp.array);
-      const base = new THREE.Mesh(new THREE.BoxGeometry(SEA, 0.12, SEA), new THREE.MeshStandardMaterial({ color: 0x1a2b4a, roughness: 0.9 })); base.position.y = -0.1; root.add(base);
+      const base = new THREE.Mesh(new THREE.BoxGeometry(SEA, 0.12, SEA), new THREE.MeshStandardMaterial({ color: 0x1a2b4a, roughness: 0.9 })); base.position.y = -0.4; root.add(base);
 
       /* 눈벽 · 눈 */
       const wall = new THREE.Mesh(new THREE.BufferGeometry(), cloudMat({ side: THREE.DoubleSide, transparent: true, opacity: 0.96 })); root.add(wall); clouds.push(wall);

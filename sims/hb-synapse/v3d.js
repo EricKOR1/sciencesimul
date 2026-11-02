@@ -20,6 +20,7 @@
     hint: '드래그: 돌리기 · 약물을 골라 어느 단계가 막히는지 봐요',
     camera: { dist: narrow ? 12.5 : 10.5, theta: 0.32, phi: 1.3, min: 6, max: 20, target: [0, -0.1, 0] },
     autoRotate: 0,
+    levels: [0, 1],
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V = THREE.Vector3;
@@ -36,7 +37,7 @@
       const preMem = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 0.1, 56), preMemM); preMem.scale.set(3.8, 1, 2.4); preMem.position.y = YM; root.add(preMem);
       const postMem = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 0.1, 56), postMemM); postMem.scale.set(4.2, 1, 2.8); postMem.position.y = -YM; root.add(postMem);
       // 축삭 (위로 이어지는 관)
-      root.add(Object.assign(new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.9, 1.3, 28, 1, true), ghost(0x4cc38a, 0.3)), { position: new V(0, YM + 2.3, 0) }));
+      { const ax = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.9, 1.3, 28, 1, true), ghost(0x4cc38a, 0.3)); ax.position.set(0, YM + 2.3, 0); root.add(ax); }
 
       /* 수용체 · 분해 효소 · Ca²⁺ 통로 */
       const rcv = RX.map((x) => {
@@ -72,16 +73,16 @@
       const naI = new THREE.InstancedMesh(new THREE.SphereGeometry(0.11, 12, 9), std(0xffb02e, { emissive: 0x6a4000, emissiveIntensity: 0.5 }), 8); root.add(naI);
       const caI = new THREE.InstancedMesh(new THREE.SphereGeometry(0.11, 12, 9), std(0xff6bd5, { emissive: 0x80207a, emissiveIntensity: 0.5 }), 6); root.add(caI);
       // 시냅스 후 반응 막대
-      const barBg = new THREE.Mesh(new THREE.BoxGeometry(0.2, 3.0, 0.2), std(0x6b7aa0)); barBg.position.set(5.2, -1.6, 0); root.add(barBg);
-      const barFg = new THREE.Mesh(new THREE.BoxGeometry(0.3, 1, 0.3), std(0xffd34d, { emissive: 0xffa800, emissiveIntensity: 0.6 })); barFg.position.set(5.2, -3.1, 0); root.add(barFg);
+      const barBg = new THREE.Mesh(new THREE.BoxGeometry(0.2, 3.0, 0.2), std(0x6b7aa0)); barBg.position.set(4.7, -1.6, 0); root.add(barBg);
+      const barFg = new THREE.Mesh(new THREE.BoxGeometry(0.3, 1, 0.3), std(0xffd34d, { emissive: 0xffa800, emissiveIntensity: 0.6 })); barFg.position.set(4.7, -3.1, 0); root.add(barFg);
 
       const L = {
         term: label('시냅스 이전 뉴런(축삭 말단)', [-2.0, YM + 2.15, 0], { color: 'rgba(30,150,100,.92)' }),
         ves: label('시냅스 소낭', vs[0].g, { offset: [0, 0.65, 0] }),
-        cleft: label('시냅스 틈', [-4.0, 0, 0], {}), rec: label('수용체', rcv[3].g, { offset: [0.7, 0.5, 0] }),
-        ase: label('분해 효소', ache[2], { offset: [0.5, 0.35, 0] }), post: label('시냅스 이후 뉴런', [-2.4, -YM - 1.6, 0], { color: 'rgba(210,90,130,.92)' }),
-        ach: label('아세틸콜린(ACh)', [3.6, 0.1, 0.2], { color: 'rgba(40,170,200,.92)' }),
-        bar: label('시냅스 이후 뉴런의 흥분', [5.2, 0.05, 0], { size: 12, color: 'rgba(40,50,80,.9)' }),
+        cleft: label('시냅스 틈', [-4.3, 0, 0], {}), rec: label('수용체', rcv[1].g, { offset: [0, 0.75, 0] }),
+        ase: label('분해 효소', ache[1], { offset: [0, -0.55, 0.5] }), post: label('시냅스 이후 뉴런', [-2.4, -YM - 1.6, 0], { color: 'rgba(210,90,130,.92)' }),
+        ach: label('아세틸콜린(ACh)', [3.6, 0.3, 0.3], { color: 'rgba(40,170,200,.92)' }),
+        bar: label('이후 뉴런 흥분', [4.7, 0.0, 0], { size: 12, color: 'rgba(40,50,80,.9)' }),
       };
       L.cleft.el.textContent = '시냅스 틈';
 
@@ -137,12 +138,12 @@
               if (a.y < -YM + 0.14) { a.vy = Math.abs(a.vy); a.y = -YM + 0.14; }
               if (a.y < -YM + 0.9) {
                 if (rOn) rcv.forEach((r, ri) => { if (r.bound < 0 && a.st === 0 && Math.abs(a.x - r.x) < 0.3 && Math.abs(a.z) < 0.3 && a.y < -YM + 0.8) { r.bound = idx; a.st = 1; a.rc = ri; a.tm = 0; } });
-                if (aOn && a.st === 0) ache.forEach((e) => { if (Math.abs(a.x - e.position.x) < 0.32 && Math.abs(a.z - e.position.z) < 0.35 && a.y < -YM + 0.5) { a.st = 2; a.tm = 0; } });
+                if (aOn && a.st === 0) ache.forEach((e) => { if (Math.abs(a.x - e.position.x) < 0.45 && Math.abs(a.z - e.position.z) < 0.5 && a.y < -YM + 0.7) { a.st = 2; a.tm = 0; } });
               }
               a.sc = 1;
             } else if (a.st === 1) { // 수용체에 결합
               const r = rcv[a.rc]; a.tm += dt; a.x += (r.x - a.x) * Math.min(1, dt * 12); a.z += (0 - a.z) * Math.min(1, dt * 12); a.y += (-YM + 0.82 - a.y) * Math.min(1, dt * 12);
-              if (a.tm > 1.3) { r.bound = -1; a.st = 0; a.vy = 0.6; a.vx = (R() - 0.5); a.y += 0.15; }
+              if (a.tm > 1.3) { r.bound = -1; a.st = 0; const ne = ache.reduce((b, e) => (Math.abs(e.position.x - a.x) < Math.abs(b.position.x - a.x) ? e : b), ache[0]); a.vx = (ne.position.x - a.x) * 0.9; a.vy = 0.05; a.vz = -a.z; a.y += 0.12; }
             } else if (a.st === 2) { // 분해
               a.tm += dt; a.sc = Math.max(0, 1 - a.tm * 2.2); if (a.tm > 0.45) a.on = false;
             }

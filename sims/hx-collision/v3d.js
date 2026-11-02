@@ -30,8 +30,6 @@
         b.visible = vis; if (!vis) return;
         const d = q.clone().sub(p), L = d.length(); b.scale.set(1, L, 1); b.position.copy(p).add(q).multiplyScalar(0.5); b.quaternion.setFromUnitVectors(UP, d.normalize());
       }
-      /* 바닥 격자(눈금) */
-      const floor = new THREE.Mesh(new THREE.PlaneGeometry(26, 7), mat(0x1c2740, { roughness: 0.9, transparent: true, opacity: 0.85 })); floor.rotation.x = -Math.PI / 2; floor.position.set(-1, -1.3, 0); root.add(floor);
       /* 반응 경로 에너지 곡선 (위) */
       const OY = 5.3, SX = 1.25;
       const pts = []; for (let i = 0; i <= 90; i++) { const x = -3 + 6 * i / 90; pts.push(new V3(x * SX, OY + prof(x), 0)); }
@@ -47,7 +45,7 @@
       /* 상태 */
       const st = { phase: 'idle', xc: -8, nx: 0, tm: 0, v: VFAST, react: false, vb: 0, rp: 0, drift: 0, beadU: -3, msg: '' };
       let xcContact = 0, climbU = -1;
-      const lead = () => (opt.no === 'O' ? 0 : 0.70);         // NO₂의 맨 앞 원자 x (N이 앞이면 N=0, O가 앞이면 O_a=0)
+      const lead = () => 0;                                   // NO₂의 맨 앞 원자(O_a 또는 N)가 x = 0에 있어요
       const base = () => {                                    // NO₂ 정지 위치 (nx 만큼 밀림)
         if (opt.no === 'O') return { N: new V3(0.70, 1.66, 0), Oa: new V3(0, 0, 0), Ob: new V3(0, 3.32, 0) };
         return { N: new V3(0, 0, 0), Oa: new V3(0.70, 1.66, 0), Ob: new V3(0.70, -1.66, 0) };

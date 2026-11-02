@@ -41,7 +41,7 @@
         group: grp, n,
         set(i, p, dir, len, col) {
           if (len < 0.02) { sh.setMatrixAt(i, zero); hd.setMatrixAt(i, zero); return; }
-          const hl = Math.min(len * 0.55, rad * 6.5), hr = rad * 2.7;
+          const hl = Math.min(len * 0.55, rad * 6.5), hr = Math.min(rad * 2.7, hl * 0.5);
           Q.setFromUnitVectors(Yax, dir);
           S.set(rad, Math.max(0.001, len - hl), rad); M.compose(p, Q, S); sh.setMatrixAt(i, M);
           P.copy(dir).multiplyScalar(len - hl).add(p); S.set(hr, hl, hr); M.compose(P, Q, S); hd.setMatrixAt(i, M);
@@ -55,7 +55,7 @@
     function mkSeg(col, rad, o) { return new THREE.Mesh(new THREE.CylinderGeometry(rad, rad, 1, 8), (o && o.basic) ? basic(col, o.mo) : mat(col, o && o.mo)); }
     function setSeg(m, a, b) { const d = new V3().subVectors(b, a), l = d.length(); if (l < 1e-3) { m.visible = false; return m; } m.visible = true; m.scale.y = l; m.position.copy(a).addScaledVector(d, 0.5); m.quaternion.setFromUnitVectors(Yax, d.normalize()); return m; }
     function anchor(g, x, y, z) { const o = new THREE.Object3D(); o.position.set(x || 0, y || 0, z || 0); g.add(o); return o; }
-    function sphere(r, c, o) { return new THREE.Mesh(new THREE.SphereGeometry(r, 36, 24), mat(c, o)); }
+    function sphere(r, c, o) { return new THREE.Mesh(new THREE.SphereGeometry(r, r < 0.35 ? 22 : 36, r < 0.35 ? 14 : 24), mat(c, o)); }
     function tube(pts, r, c, o) {
       const curve = Array.isArray(pts) ? new THREE.CatmullRomCurve3(pts) : pts;
       return new THREE.Mesh(new THREE.TubeGeometry(curve, (o && o.seg) || 80, r, (o && o.rs) || 8, !!(o && o.closed)), (o && o.basic) ? basic(c, o.mo) : mat(c, o && o.mo));
@@ -85,7 +85,7 @@
   window.SciSim3D.attach({
     title: '정전기 유도와 분극 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: 12 * KD, theta: 0.35, phi: 1.18, min: 5, max: 26 },
+    camera: { dist: 12 * KD, theta: 0.12, phi: 1.25, min: 5, max: 26 },
     autoRotate: 0,
     levels: [0, 1, 2],
     build(ctx) {
@@ -174,7 +174,7 @@
       const stem = cyl(0.08, 0.08, 2.6, 0xc9a24a, { metalness: 0.8, roughness: 0.3 }, 14); stem.position.y = 0.55; gE.add(stem);
       const topBall = sphere(0.55, 0xd4af37, { metalness: 0.85, roughness: 0.25 }); topBall.position.y = 1.95; gE.add(topBall);
       const leafL = new THREE.Group(), leafR = new THREE.Group(); leafL.position.y = leafR.position.y = -0.75; gE.add(leafL, leafR);
-      const lfG = new THREE.BoxGeometry(0.05, 1.2, 0.5); lfG.translate(0, -0.6, 0);
+      const lfG = new THREE.BoxGeometry(0.34, 1.25, 0.03); lfG.translate(0, -0.62, 0);
       const lfM = new THREE.Mesh(lfG, mat(0xf0d36a, { metalness: 0.8, roughness: 0.25 })), lfM2 = lfM.clone(); lfM2.material = lfM.material.clone();
       leafL.add(lfM); leafR.add(lfM2);
       const rod = new THREE.Group(); const rodBody = cyl(0.22, 0.22, 3.2, 0xe9edf5, { roughness: 0.3, metalness: 0.1 }); rodBody.rotation.z = Math.PI / 2; rodBody.position.x = -1.6;
@@ -248,8 +248,8 @@
         pTop.material.emissive.setHex(st.on ? POS : 0); pBot.material.emissive.setHex(st.on ? NEG : 0); pTop.material.emissiveIntensity = pBot.material.emissiveIntensity = 0.25;
         lPT.show(st.on); lPB.show(st.on);
         info(st.mol === 'polar'
-          ? '<b>극성 분자</b>: 전기장이 없으면 제멋대로, 전기장이 걸리면 + 끝이 −판 쪽을 향해 늘어서요.<br>유전체 표면에 분극 전하가 생겨 안쪽 전기장이 <b>1/κ</b>로 약해져요.<br>그래서 같은 전압에서 축전기에 더 많은 전하가 저장돼요 (C = κC₀).'
-          : '<b>무극성 분자</b>: 전기장이 걸리면 전자 구름이 +판 쪽으로 살짝 쏠려 <b>유도 쌍극자</b>가 돼요.<br>이후는 같아요. 표면에 분극 전하가 생기고 안쪽 전기장이 <b>1/κ</b>로 약해져요 (κ = ' + st.kappa + ').');
+          ? '<b>극성 분자</b>: 전기장이 걸리면 + 끝이 −판 쪽을 향해 늘어서요.<br>표면에 분극 전하가 생겨 안쪽 전기장이 <b>1/κ</b>로 약해지고, 축전기에 더 많은 전하가 저장돼요 (C = κC₀).'
+          : '<b>무극성 분자</b>: 전기장이 걸리면 전자 구름이 +판 쪽으로 쏠려 <b>유도 쌍극자</b>가 돼요.<br>이후는 같아요. 안쪽 전기장이 <b>1/κ</b>로 약해져요 (κ = ' + st.kappa + ').');
         mols.forEach((g) => { g.userData.bar.visible = g.userData.pP.visible = g.userData.pN.visible = st.mol === 'polar'; g.userData.np.visible = st.mol !== 'polar'; });
       }
       const polarQ = new THREE.Quaternion(), tq = new THREE.Quaternion(), wob = new THREE.Quaternion(), eul = new THREE.Euler();
@@ -274,7 +274,7 @@
         [lRod, lLeaf, lTop, lGnd].forEach((l) => l.show(sc === 'scope'));
         [lPT, lPB, lSl, lSt, lSb, lE0].forEach((l) => l.show(sc === 'diel'));
         if (sc === 'induce') updInduce(); else if (sc === 'scope') updScope(); else updDiel();
-        ctx.orbit.dist = (sc === 'diel' ? 12.5 : sc === 'scope' ? 12 : 11) * KD;
+        ctx.orbit.dist = (sc === 'diel' ? 12.5 : sc === 'scope' ? 12 : 10) * KD;
       }
       go(st.sc);
       let lastMode = S0 ? S0.mode : '';

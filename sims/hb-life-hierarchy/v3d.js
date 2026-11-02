@@ -22,6 +22,7 @@
     hint: '단계를 눌러 확대해 보세요 · 드래그: 돌리기',
     camera: { dist: narrow ? 12 : 8.5, theta: 0.7, phi: 1.1, min: 4, max: 24 },
     autoRotate: 0.22,
+    levels: [0],
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
       const DIST = narrow ? [11, 12, 13, 15, 13.5, 14, 15, 16] : [8.5, 9, 10, 12, 10.5, 11.5, 12, 13];

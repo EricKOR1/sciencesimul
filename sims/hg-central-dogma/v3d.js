@@ -12,12 +12,13 @@
   window.SciSim3D.attach({
     title: '전사 · 번역 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: narrow ? 13 : 10.5, theta: 0.28, phi: 1.32, target: [0, 0.4, 0], min: 5, max: 20 },
+    camera: { dist: narrow ? 12 : 8.8, theta: 0.22, phi: 1.3, target: narrow ? [-0.7, 0, 0] : [0, 0.7, 0], min: 5, max: 20 },
     autoRotate: 0,
-    levels: [1, 2],
+    levels: [0, 1, 2],
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V = THREE.Vector3, M4 = new THREE.Matrix4(), cc = new THREE.Color();
+      if (narrow) root.rotation.z = Math.PI / 2;      // 휴대폰(세로 화면)에서는 눕혀 둔 모형을 세워서 보여 줘요
       let mode = 'tx';
       const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.4, metalness: 0.04 }, o || {}));
       const txG = new THREE.Group(), tlG = new THREE.Group(); root.add(txG, tlG);
@@ -70,12 +71,13 @@
           M4.makeTranslation(x, y + 0.0, z); rna.setMatrixAt(i, M4);
         }
         rna.instanceMatrix.needsUpdate = true; rna.count = rnaMax;
-        pol.position.set(px, 0.25, -0.1);
+        pol.position.set(px, 0.25, -0.1); mrnaAnch.position.set(px - 1.6, -1.55, 0.4);
         NTP.forEach((o, i) => { const k = (t * 0.4 + o.ph) % 1; o.m.position.set(px + 1.8 - k * 1.7, 1.9 - k * 1.5, 0.9 - k * 0.7); o.m.scale.setScalar(k > 0.92 ? 0.01 : 1); });
       }
+      const mrnaAnch = An(txG, 0, -2.0, 0.4);
       const Ltx = {
         pol: label('RNA 중합 효소', An(txG, 0, 1.55, 0), { color: '#0f766e' }), dna: label('DNA', An(txG, -4.7, 1.0, 0), { color: '#1d4ed8' }),
-        tpl: label('주형 가닥', An(txG, 3.6, -0.75, 0.2), { color: '#1e3a8a' }), mrna: label('mRNA', An(txG, 0, -2.0, 0.4), { color: '#9a3412' }), ntp: label('RNA 뉴클레오타이드', An(txG, 0, 2.5, 0.9), { color: '#92400e' }),
+        tpl: label('주형 가닥', An(txG, 3.6, -0.75, 0.2), { color: '#1e3a8a' }), mrna: label('mRNA', mrnaAnch, { color: '#9a3412' }), ntp: label('RNA 뉴클레오타이드', An(txG, 0, 2.5, 0.9), { color: '#92400e' }),
       };
 
       /* ===================== 번역 ===================== */
@@ -83,20 +85,20 @@
       const STOP = 8;
       const codCol = (k) => (k < 0 || k > STOP ? 0x94a3b8 : k === 0 ? 0x22c55e : k === STOP ? 0xef4444 : AAC[(k * 3) % 8]);
       const aaCol = (k) => (k === 0 ? 0x22c55e : AAC[(k * 3) % 8]);
-      const mr = new THREE.InstancedMesh(new THREE.SphereGeometry(0.1, 12, 10), std(0xffffff, { roughness: 0.35 }), NCOD * 3);
+      const mr = new THREE.InstancedMesh(new THREE.SphereGeometry(0.115, 12, 10), std(0xffffff, { roughness: 0.35 }), NCOD * 3);
       for (let k = 0; k < NCOD; k++) for (let j = 0; j < 3; j++) mr.setColorAt(k * 3 + j, cc.setHex(codCol(KC0 + k)));
       mr.instanceColor.needsUpdate = true; tlG.add(mr);
-      const MY = -0.78;
+      const MY = -0.62;
       // 리보솜
       const big = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), std(0xa78bfa, { transparent: true, opacity: 0.4, depthWrite: false, roughness: 0.35 })); big.scale.set(2.2, 1.2, 1.4); big.position.set(0.1, 0.6, 0); tlG.add(big); big.renderOrder = 2;
-      const small = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), std(0xf9a8d4, { transparent: true, opacity: 0.5, depthWrite: false, roughness: 0.35 })); small.scale.set(1.8, 0.62, 1.15); small.position.set(0.1, -1.18, 0); tlG.add(small); small.renderOrder = 2;
+      const small = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), std(0xf9a8d4, { transparent: true, opacity: 0.5, depthWrite: false, roughness: 0.35 })); small.scale.set(1.8, 0.62, 1.15); small.position.set(0.1, -1.17, 0); tlG.add(small); small.renderOrder = 2;
       // tRNA 풀
       function makeT() {
         const g = new THREE.Group();
-        const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 1.0, 12), std(0x2dd4bf, { roughness: 0.4 })); stem.position.y = -0.1; g.add(stem);
-        const arm = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.14, 0.2), std(0x14b8a6)); arm.position.set(0.0, 0.32, 0); g.add(arm);
-        const aa = new THREE.Mesh(new THREE.SphereGeometry(0.17, 20, 14), std(0xffffff, { roughness: 0.3 })); aa.position.set(0, 0.55, 0); g.add(aa);
-        const ac = []; for (let j = 0; j < 3; j++) { const b = new THREE.Mesh(new THREE.SphereGeometry(0.1, 12, 10), std(0xffffff)); b.position.set((j - 1) * DB2, -0.62, 0); g.add(b); ac.push(b); }
+        const stem = new THREE.Mesh(new THREE.CapsuleGeometry(0.15, 0.62, 8, 16), std(0x2dd4bf, { roughness: 0.4 })); stem.position.y = -0.05; g.add(stem);
+        const lobe = new THREE.Mesh(new THREE.SphereGeometry(0.22, 18, 14), std(0x14b8a6)); lobe.position.set(0.17, 0.2, 0); g.add(lobe);
+        const aa = new THREE.Mesh(new THREE.SphereGeometry(0.22, 22, 16), std(0xffffff, { roughness: 0.3 })); aa.position.set(0, 0.62, 0); g.add(aa);
+        const ac = []; for (let j = 0; j < 3; j++) { const b = new THREE.Mesh(new THREE.SphereGeometry(0.115, 14, 10), std(0xffffff)); b.position.set((j - 1) * DB2, -0.52, 0); g.add(b); ac.push(b); }
         g.userData = { aa, ac, stem }; tlG.add(g); return g;
       }
       const pool = [0, 1, 2, 3].map(makeT);
@@ -104,7 +106,7 @@
       const chainM = new THREE.InstancedMesh(new THREE.SphereGeometry(0.17, 18, 14), std(0xffffff, { roughness: 0.3 }), 12); tlG.add(chainM);
       const bondM = new THREE.Mesh(new THREE.TorusGeometry(0.25, 0.04, 8, 24), std(0xfacc15, { emissive: 0xfacc15, emissiveIntensity: 0.8, transparent: true, opacity: 0 })); tlG.add(bondM);
       const rf = new THREE.Mesh(new THREE.SphereGeometry(0.35, 22, 16), std(0xef4444, { roughness: 0.4 })); rf.visible = false; tlG.add(rf);
-      const XA = SP, XP = 0, XE = -SP, TY = 0.55;      // 슬롯 위치 (tRNA 몸통 가운데)
+      const XA = SP, XP = 0, XE = -SP, TY = -0.1;      // 슬롯 위치 (tRNA 몸통 가운데)
       let cyc = 0, cf = 0, rel = -1, slot = { A: null, P: null, E: null };
       const ease = (k) => { k = Math.max(0, Math.min(1, k)); return k * k * (3 - 2 * k); };
       const lerp = (a, b, k) => a + (b - a) * k;
@@ -178,7 +180,7 @@
       let lastSim = null;
       return {
         update(dt, t) {
-          dt = Math.min(dt, 0.05);
+          dt = Math.min(dt, 0.05) * (window.__v3dTS || 1);
           const sm = window.__sim && window.__sim.S && window.__sim.S.mode;
           if (sm && sm !== lastSim) { lastSim = sm; const m2 = MODE_OF[sm]; if (m2 && m2 !== mode) { seg.set(m2); setMode(m2); } }
           if (paused) { return; }

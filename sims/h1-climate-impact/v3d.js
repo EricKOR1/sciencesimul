@@ -11,13 +11,13 @@
   window.SciSim3D.attach({
     title: '3D 태평양 단면',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: PHN ? 22 : 13, theta: 0.3, phi: 1.2, target: [0, 0.3, 0], min: 8, max: 34 },
+    camera: { dist: PHN ? 23 : 14.5, theta: 0.3, phi: 1.2, target: [0, 0.3, 0], min: 8, max: 34 },
     autoRotate: 0,
     levels: [0],
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3, Y = new V3(0, 1, 0);
-      const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.6, metalness: 0.03 }, o || {}));
+      const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ envMapIntensity: 0.6, color: c, roughness: 0.6, metalness: 0.03 }, o || {}));
       const W = 12, H = 3.4, D = 3.2, NX = 60;
       const S0 = window.__sim && window.__sim.S;
       const st = { w: S0 && typeof S0.w === 'number' ? S0.w : 50, wS: 50, lastS: S0 ? S0.w : null, t: 0 };
@@ -42,7 +42,7 @@
       const surf = new THREE.Mesh(surfGeo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.25, metalness: 0.05, transparent: true, opacity: 0.92 }));
       surf.position.y = 0; surf.receiveShadow = true; root.add(surf);
       // 바닥과 양쪽 옆면
-      const floor = new THREE.Mesh(new THREE.BoxGeometry(W + 0.2, 0.3, D + 0.2), mat(0x35405a, { roughness: 1 })); floor.position.y = -H - 0.15; root.add(floor);
+      const floor = new THREE.Mesh(new THREE.BoxGeometry(W + 0.2, 0.3, D + 0.2), new THREE.MeshLambertMaterial({ color: 0x35405a })); floor.position.y = -H - 0.15; root.add(floor);
       const side = (x) => { const m = new THREE.Mesh(new THREE.BoxGeometry(0.25, H + 0.3, D + 0.2), mat(0x7a6a4a, { roughness: 1 })); m.position.set(x, -H / 2 + 0.05, 0); root.add(m); return m; };
       side(-W / 2 - 0.12); side(W / 2 + 0.12);
       // 동·서 육지 (해안)

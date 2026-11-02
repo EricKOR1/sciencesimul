@@ -9,10 +9,10 @@
     title: '열의 이동 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     levels: [0, 1, 2],
-    camera: { dist: PHN0 ? 15 : 11.5, theta: 0.45, phi: 1.2, fov: 45, target: [0, 0, 0], min: 5, max: 26 },
+    camera: { dist: 9.5 * (PHN0 ? 1.05 : 1), theta: 0.45, phi: 1.2, fov: 45, target: [0, 0, 0], min: 5, max: 26 },
     autoRotate: 0.08,
     build(ctx) {
-      const { THREE, root, label, info, controls } = ctx;
+      const { THREE, root, label, info, controls, orbit } = ctx;
       /* ---------- 공통 도구 ---------- */
       const PHN = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches);
       const V3 = THREE.Vector3, Yax = new V3(0, 1, 0);
@@ -21,7 +21,7 @@
       const rnd = (() => { let s = 12345; return () => { s = (s * 16807) % 2147483647; return s / 2147483647; }; })();
       const _m = new THREE.Matrix4(), _c = new THREE.Color();
       function spheres(N, r, color, seg) {
-        const m = new THREE.InstancedMesh(new THREE.SphereGeometry(r, seg || 16, Math.round((seg || 16) * 0.75)), mat(color, { roughness: 0.35 }), N);
+        const m = new THREE.InstancedMesh(new THREE.SphereGeometry(r, seg || 16, Math.round((seg || 16) * 0.75)), mat(color, { roughness: 0.55, metalness: 0 }), N);
         m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); m.frustumCulled = false; m.castShadow = true;
         for (let i = 0; i < N; i++) m.setColorAt(i, _c.set(0xffffff));
         root.add(m); return m;
@@ -59,7 +59,7 @@
             c.lineWidth = big ? 5 : 2.5; c.beginPath(); c.moveTo(128 + ca * 104, 128 - sa * 104); c.lineTo(128 + ca * (big ? 84 : 92), 128 - sa * (big ? 84 : 92)); c.stroke();
             if (big) { c.font = '800 26px sans-serif'; c.fillText(String(Math.round(v * 10) / 10), 128 + ca * 62, 128 - sa * 62); }
           }
-          c.font = '800 24px sans-serif'; c.fillStyle = '#2563eb'; c.fillText(unit, 128, 190);
+          c.font = '800 20px sans-serif'; c.fillStyle = '#2563eb'; c.fillText(unit, 128, 200);
         });
         const face = new THREE.Mesh(new THREE.CircleGeometry(R * 0.93, 48), new THREE.MeshBasicMaterial({ map: tex })); face.position.z = 0.18; g.add(face);
         const needle = new THREE.Group(); needle.position.z = 0.24;
@@ -69,7 +69,17 @@
         g.userData.set = (v) => { needle.rotation.z = (-225 + 270 * Math.max(0, Math.min(max, v)) / max) * Math.PI / 180; };
         g.userData.set(0); return g;
       }
+      /* 사방으로 빛나는 별 모양 빛 번짐 */
+      function glowSprite(size, inner, mid) { const tex = canvasTex(128, 128, (c) => { const g = c.createRadialGradient(64, 64, 0, 64, 64, 64); g.addColorStop(0, inner || 'rgba(255,235,160,1)'); g.addColorStop(0.25, mid || 'rgba(255,190,60,.55)'); g.addColorStop(1, 'rgba(255,160,0,0)'); c.fillStyle = g; c.fillRect(0, 0, 128, 128); });
+        const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false })); s.scale.set(size, size, 1); return s; }
+      function starField(n, R) { const pos = []; for (let i = 0; i < n; i++) { const u = rnd() * 2 - 1, a = rnd() * 6.283, r = Math.sqrt(1 - u * u); pos.push(Math.cos(a) * r * R, u * R, Math.sin(a) * r * R); }
+        const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); return new THREE.Points(g, new THREE.PointsMaterial({ color: 0x9fb4e8, size: 1.5, sizeAttenuation: false, transparent: true, opacity: 0.55 })); }
+      /* 행성 겉면 무늬 (가로 줄무늬 / 점무늬) */
+      function bandTex(cols, seed) { return canvasTex(256, 128, (c, w, h) => { let s = seed || 3; const r = () => { s = (s * 16807) % 2147483647; return s / 2147483647; };
+        const n = cols.length; for (let i = 0; i < 16; i++) { c.fillStyle = cols[Math.floor(r() * n)]; c.fillRect(0, i * h / 16, w, h / 16 + 1); }
+        c.globalAlpha = 0.25; for (let i = 0; i < 60; i++) { c.fillStyle = cols[Math.floor(r() * n)]; c.beginPath(); c.ellipse(r() * w, r() * h, 8 + r() * 25, 2 + r() * 4, 0, 0, 7); c.fill(); } c.globalAlpha = 1; }); }
 
+      const LG = { cond: [], conv: [], rad: [] };
       const st = { mode: 'cond', heat: true, mat: 'cu', pos: 'bottom', vac: false, foil: false };
       const cCold = new THREE.Color(0x5b8def), cHot = new THREE.Color(0xff4a2a), cc = new THREE.Color();
       const flameMat = () => new THREE.MeshBasicMaterial({ color: 0xff8a2a, transparent: true, opacity: 0.9 });
@@ -88,9 +98,9 @@
       const burner1 = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.55, 0.5, 20), mat(0x475569, { metalness: 0.6, roughness: 0.4 })); burner1.position.set(X0 - 0.5, -2.75, 0); cond.add(burner1);
       cond.add(Object.assign(tubeMesh([[X0 - 0.5, -1.9, 0], [X0 - 0.5, -1.2, 0], [X0 - 0.25, -0.6, 0]], 0.04, 0xff8a2a), {}));
       const arrC = mkArrow(0xffb020, 0.07); setArrow(arrC, new V3(X0 + 0.5, 1.5, 0), new V3(-X0 - 0.3, 1.5, 0)); cond.add(arrC);
-      label('열이 이동해요', [0, 1.5, 0], { size: 12, offset: [0, 0.4, 0] });
-      const hotLab = label('뜨거운 쪽', [X0, -0.6, 0], { size: 11.5, offset: [0, -1.1, 0] });
-      const coldLab = label('차가운 쪽', [-X0, -0.6, 0], { size: 11.5, offset: [0, -1.1, 0] });
+      LG.cond.push(label('열이 이동해요', [0, 1.5, 0], { size: 12, offset: [0, 0.4, 0] }));
+      const hotLab = label('뜨거운 쪽', [X0, -0.6, 0], { size: 11.5, offset: [0, -1.1, 0] }); LG.cond.push(hotLab);
+      const coldLab = label('차가운 쪽', [-X0, -0.6, 0], { size: 11.5, offset: [0, -1.1, 0] }); LG.cond.push(coldLab);
       const baseV = []; for (let c = 0; c < NC; c++) for (let j = 0; j < 3; j++) for (let k = 0; k < 3; k++) baseV.push([X0 + c * GAP, (j - 1) * 0.45, (k - 1) * 0.45, c, rnd() * 6.28, rnd() * 6.28, rnd() * 6.28]);
 
       /* ===== 2) 대류: 비커 속 물 ===== */
@@ -103,9 +113,9 @@
       const burner2 = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.7, 0.5, 20), mat(0x475569, { metalness: 0.6, roughness: 0.4 })); conv.add(burner2);
       const cp = spheres(NP, 0.11, 0xffffff, 10), CP = [];
       for (let i = 0; i < NP; i++) CP.push({ al: rnd() * 6.283, ph: rnd() * 6.283, s: 0.25 + 0.75 * rnd(), jit: rnd() });
-      const hotLab2 = label('따뜻한 물은 위로', [0, BH * 0.7, 0], { size: 11.5, offset: [-0.8, 0.2, 0] });
-      const coldLab2 = label('찬물은 아래로', [BR * 0.85, -BH * 0.4, 0], { size: 11.5, offset: [0.2, 0, 0] });
-      const heatLab2 = label('가열', flame2, { size: 11.5, offset: [0, -1.3, 0] });
+      const hotLab2 = LG.conv[LG.conv.push(label('따뜻한 물은 위로', [0, BH * 0.7, 0], { size: 11.5, offset: [-0.8, 0.2, 0] })) - 1];
+      const coldLab2 = LG.conv[LG.conv.push(label('찬물은 아래로', [BR * 0.85, -BH * 0.4, 0], { size: 11.5, offset: [0.2, 0, 0] })) - 1];
+      const heatLab2 = label('가열', flame2, { size: 11.5, offset: [0, -1.3, 0] }); LG.conv.push(heatLab2);
 
       /* ===== 3) 복사: 전등(태양) → 물체 ===== */
       const rad = new THREE.Group(); root.add(rad);
@@ -114,17 +124,17 @@
       const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false })); glow.scale.set(5, 5, 1); glow.position.copy(sun.position); rad.add(glow);
       const obj = new THREE.Mesh(new THREE.BoxGeometry(1.4, 1.6, 1.6), mat(0x7ba7e0, { roughness: 0.5, emissive: 0x000000 })); obj.position.set(3.6, 0, 0); rad.add(obj);
       const chamber = new THREE.Mesh(new THREE.BoxGeometry(5.4, 2.4, 2.4), glass(0xbfe0ff, 0.08)); chamber.position.set(-0.1, 0, 0); rad.add(chamber);
-      rad.add(Object.assign(new THREE.LineSegments(new THREE.EdgesGeometry(chamber.geometry), new THREE.LineBasicMaterial({ color: 0x9cc3ff })), { position: chamber.position }));
+      { const ce = new THREE.LineSegments(new THREE.EdgesGeometry(chamber.geometry), new THREE.LineBasicMaterial({ color: 0x9cc3ff })); ce.position.copy(chamber.position); rad.add(ce); }
       const foil = new THREE.Mesh(new THREE.BoxGeometry(0.06, 2.2, 2.2), mat(0xe5e7eb, { metalness: 1, roughness: 0.12 })); foil.position.set(1.2, 0, 0); rad.add(foil);
       const airP = spheres(60, 0.07, 0x9db6d8, 8), AP = [];
       for (let i = 0; i < 60; i++) { AP.push({ x: -2.7 + rnd() * 5.2, y: (rnd() * 2 - 1) * 1.1, z: (rnd() * 2 - 1) * 1.1, vx: rnd() - 0.5, vy: rnd() - 0.5, vz: rnd() - 0.5 }); }
       const NR = 14, rays = [];
       for (let i = 0; i < NR; i++) { const c = new THREE.Mesh(new THREE.SphereGeometry(0.1, 10, 8), new THREE.MeshBasicMaterial({ color: 0xffd34d, transparent: true, opacity: 0.9 })); rad.add(c); rays.push({ m: c, u: i / NR, y: (rnd() * 2 - 1) * 0.8, z: (rnd() * 2 - 1) * 0.8, rf: false }); }
       let Tobj = 0;
-      label('태양(열원)', sun, { size: 12, offset: [0, 1.4, 0] });
-      const objLab = label('물체', obj, { size: 12, offset: [0, 1.2, 0] });
-      const foilLab = label('은박지', foil, { size: 11.5, offset: [0, 1.5, 0] });
-      const vacLab = label('', [0, 1.6, 0], { size: 11.5 });
+      LG.rad.push(label('태양(열원)', sun, { size: 12, offset: [0, 1.4, 0] }));
+      const objLab = label('물체', obj, { size: 12, offset: [0, 1.2, 0] }); LG.rad.push(objLab);
+      const foilLab = label('은박지', foil, { size: 11.5, offset: [0, 1.5, 0] }); LG.rad.push(foilLab);
+      const vacLab = label('', [0, 1.6, 0], { size: 11.5 }); LG.rad.push(vacLab);
 
       /* 조작 */
       const modeSeg = controls.segment('', [{ value: 'cond', label: '전도' }, { value: 'conv', label: '대류' }, { value: 'rad', label: '복사' }], 'cond', (v) => setMode(v));
@@ -147,9 +157,11 @@
       rest.forEach((el, i) => { (i < nCond ? grp.cond : i < nCond + nConv ? grp.conv : grp.rad).push(el); });
 
       function setMode(v) {
-        st.mode = v; modeSeg.set(v);
+        st.mode = v; modeSeg.set(v); orbit.dist = (PHN0 ? 1.05 : 1) * { cond: 9.5, conv: 10.5, rad: 10 }[v];
         cond.visible = v === 'cond'; conv.visible = v === 'conv'; rad.visible = v === 'rad';
         Object.keys(grp).forEach((k) => grp[k].forEach((el) => { el.style.display = k === v ? '' : 'none'; }));
+        Object.keys(LG).forEach((k) => LG[k].forEach((L) => L.show(k === v)));
+        if (v === 'rad') foilLab.show(st.foil);
         sep.style.display = ''; text();
       }
       function text() {
@@ -158,6 +170,7 @@
         else info('<b>복사</b>: 열이 <b>물질 없이도</b> 빛처럼 전해져요.<br>' + (st.vac ? '공기를 빼도(진공) 열이 전달돼요.' : '공기가 있어도 복사로 열이 전달돼요.') + (st.foil ? ' 은박지가 복사열을 <b>반사</b>해요.' : '') + '<br>태양의 열이 지구에 오는 방식이에요.');
       }
 
+      setMode('cond');
       let tt = 0;
       return {
         update(dt, t) {

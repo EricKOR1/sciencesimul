@@ -80,23 +80,23 @@
   window.SciSim3D.attach({
     title: '중화 반응 이온 모형 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: phone ? 15 : 11, theta: 0.5, phi: 1.2, min: 5, max: 24, target: [0, 2.2, 0] },
+    camera: { dist: phone ? 9.5 : 9, theta: 0.5, phi: 1.15, min: 5, max: 22, target: [0, 1.6, 0] },
     autoRotate: 0.14,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const L = makeLib(THREE);
-      const R = 2.6, HB = 4.8;
-      let ac = 'hcl', Va = 20, Vb = 0, spec = true;
+      const R = 2.6, HB = 3.8;
+      let ac = 'hcl', Va = 20, Vb = 10, spec = true;
       const beaker = new THREE.Mesh(new THREE.CylinderGeometry(R, R, HB, 48, 1, true), new THREE.MeshStandardMaterial({ color: 0xcfe0ff, transparent: true, opacity: 0.14, roughness: 0.1, side: THREE.DoubleSide, depthWrite: false })); beaker.position.y = HB / 2; root.add(beaker);
       const bot = new THREE.Mesh(new THREE.CylinderGeometry(R, R, 0.12, 48), new THREE.MeshStandardMaterial({ color: 0xcfe0ff, transparent: true, opacity: 0.35, roughness: 0.1, depthWrite: false })); bot.position.y = 0.06; root.add(bot);
       const rim = new THREE.Mesh(new THREE.TorusGeometry(R, 0.05, 12, 64), new THREE.MeshStandardMaterial({ color: 0xe0ebff, roughness: 0.2 })); rim.rotation.x = Math.PI / 2; rim.position.y = HB; root.add(rim);
       const liqM = new THREE.MeshStandardMaterial({ color: 0xf2d23a, transparent: true, opacity: 0.32, roughness: 0.12, depthWrite: false });
       const liq = new THREE.Mesh(new THREE.CylinderGeometry(R - 0.04, R - 0.04, 1, 48), liqM); root.add(liq);
-      const floor = new THREE.Mesh(new THREE.CylinderGeometry(R + 1.2, R + 1.2, 0.1, 48), new THREE.MeshStandardMaterial({ color: 0x24324f, roughness: 0.95, envMapIntensity: 0.05 })); floor.position.y = -0.05; root.add(floor);
+      const floor = new THREE.Mesh(new THREE.CylinderGeometry(R + 1.2, R + 1.2, 0.1, 48), new THREE.MeshBasicMaterial({ color: 0x050b18 })); floor.position.y = -0.05; root.add(floor);
       const NM = 200;
       const KINDS = [
-        { k: 'H', col: 0xff4d4d, r: 0.115, em: 0.4 }, { k: 'OH', col: 0x4d8dff, r: 0.115, em: 0.4 },
-        { k: 'A', col: 0x34c759, r: 0.14, em: 0.15 }, { k: 'Na', col: 0xb07cf5, r: 0.1, em: 0.15 }, { k: 'W', col: 0x9ee7ff, r: 0.085, em: 0.25 },
+        { k: 'H', col: 0xff3b55, r: 0.16, em: 0.4 }, { k: 'OH', col: 0x4d8dff, r: 0.16, em: 0.4 },
+        { k: 'A', col: 0x34c759, r: 0.19, em: 0.15 }, { k: 'Na', col: 0xb07cf5, r: 0.14, em: 0.15 }, { k: 'W', col: 0x9ee7ff, r: 0.12, em: 0.25 },
       ];
       const SET = KINDS.map((d) => { const m = new THREE.InstancedMesh(L.SG, new THREE.MeshStandardMaterial({ color: d.col, roughness: 0.35, emissive: d.col, emissiveIntensity: d.em }), NM); m.count = 0; m.frustumCulled = false; root.add(m); const p = []; for (let i = 0; i < NM; i++) p.push({ u: Math.sqrt(Math.random()), a: Math.random() * 6.283, y: Math.random(), ph: Math.random() * 6.28, sp: 0.5 + Math.random() }); return Object.assign({ m, p, cur: 0, tgt: 0 }, d); });
       const dum = new THREE.Object3D();
@@ -108,14 +108,15 @@
       }
       function refresh() {
         const c = calc(); SET.forEach((s) => { s.tgt = Math.min(NM, c[s.k]); s.m.visible = s.k === 'A' || s.k === 'Na' ? spec : true; });
-        SET[2].r = ac === 'hcl' ? 0.14 : 0.18; SET[2].m.material.color.setHex(ac === 'hcl' ? 0x34c759 : 0xf5c518); SET[2].m.material.emissive.setHex(ac === 'hcl' ? 0x34c759 : 0xf5c518);
+        SET[2].r = ac === 'hcl' ? 0.19 : 0.24; SET[2].m.material.color.setHex(ac === 'hcl' ? 0x34c759 : 0xf5c518); SET[2].m.material.emissive.setHex(ac === 'hcl' ? 0x34c759 : 0xf5c518);
         const acidic = c.H > 0, basic = c.OH > 0;
         liqM.color.setHex(acidic ? 0xf2d23a : basic ? 0x3a78f2 : 0x3fbf6a);
-        hh = 0.7 + (Va + Vb) / 100 * 3.4; liq.scale.y = hh; liq.position.y = hh / 2 + 0.06;
+        hh = 0.8 + (Va + Vb) / 100 * 2.6; liq.scale.y = hh; liq.position.y = hh / 2 + 0.06;
         lbl.obj = [0, hh + 0.7, 0]; lbl.set(acidic ? '산성 (H⁺ 남음)' : basic ? '염기성 (OH⁻ 남음)' : '중성 (완전 중화)');
         lbl.el.style.background = acidic ? 'rgba(200,150,0,.9)' : basic ? 'rgba(50,100,230,.9)' : 'rgba(30,140,70,.9)';
         const nm = ac === 'hcl' ? 'HCl' : 'H₂SO₄';
-        info('<b>' + nm + ' ' + Va + ' mL + NaOH ' + Vb + ' mL</b> (각 0.1 M)<br>산이 내는 H⁺ ' + c.hAcid + '개 · OH⁻ ' + Vb + '개 → <b>H₂O ' + c.rxn + '개</b> 생성<br>' + (acidic ? '남은 H⁺ ' + c.H + '개 → 산성' : basic ? '남은 OH⁻ ' + c.OH + '개 → 염기성' : '<b>H⁺ = OH⁻ → 중성</b> (a·M·V = b·M′·V′)'));
+        const dot = (c) => '<span style="color:#' + c + '">●</span>';
+        info('<b>' + nm + ' ' + Va + ' mL + NaOH ' + Vb + ' mL</b> (각 0.1 M)<br>' + dot('ff3b55') + 'H⁺ ' + c.hAcid + ' + ' + dot('4d8dff') + 'OH⁻ ' + Vb + ' → ' + dot('9ee7ff') + '<b>H₂O ' + c.rxn + '개</b><br>' + (acidic ? '남은 H⁺ ' + c.H + '개 → 산성' : basic ? '남은 OH⁻ ' + c.OH + '개 → 염기성' : '<b>H⁺ = OH⁻ → 중성</b> (aMV = bM′V′)') + (spec ? ' · ' + dot(ac === 'hcl' ? '34c759' : 'f5c518') + dot('b07cf5') + '구경꾼' : ''));
       }
       controls.segment('산', [{ value: 'hcl', label: 'HCl (1가)' }, { value: 'h2so4', label: 'H₂SO₄ (2가)' }], ac, (v) => { ac = v; refresh(); });
       controls.range('산의 부피', 10, 40, 10, Va, (v) => { Va = +v; refresh(); }, (v) => v + ' mL');

@@ -6,6 +6,7 @@
   'use strict';
   if (!window.SciSim3D) return;
   const PHN = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches), KD = PHN ? 1.3 : 1;
+  const LV = () => (typeof window.SciSimLevel === 'number' ? window.SciSimLevel : 0);
   const TAU = Math.PI * 2, clamp = (x, a, b) => Math.max(a, Math.min(b, x));
   function tools(THREE) {
     const V3 = THREE.Vector3, Y = new V3(0, 1, 0);
@@ -45,6 +46,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: 11 * KD, theta: 0.5, phi: 1.15, min: 4, max: 26 },
     autoRotate: 0.15,
+    levels: [0, 1],
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const { V3, M, glass } = tools(THREE);

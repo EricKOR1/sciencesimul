@@ -5,7 +5,7 @@
   'use strict';
   if (!window.SciSim3D) return;
   const PHN = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches);
-  const NX = 6, NY = 4, NZ = 4, SP = 1.15;
+  const NX = 6, NY = 3, NZ = 3, SP = 1.4;
   const MAT = {
     metal: { name: '도체 (구리 등 금속)', atom: 0xe39a45 },
     semi: { name: '반도체 (규소)', atom: 0x9aa9c9 },
@@ -14,7 +14,8 @@
 
   window.SciSim3D.attach({
     title: '도체·부도체·반도체 3D',
-    camera: { dist: PHN ? 17 : 12.5, theta: 0.55, phi: 1.2, min: 6, max: 26 },
+    camera: { dist: PHN ? 15 : 11, theta: 0.55, phi: 1.2, min: 6, max: 26 },
+    levels: [1],
     autoRotate: 0.12,
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
@@ -22,7 +23,7 @@
       let mat = 'metal', V = 0.6, Tm = 0.3, dope = false;
       const W = (NX - 1) * SP, H = (NY - 1) * SP, Dp = (NZ - 1) * SP;
       /* 원자 격자 */
-      const A = NX * NY * NZ, aGeo = new THREE.SphereGeometry(0.34, 24, 16);
+      const A = NX * NY * NZ, aGeo = new THREE.IcosahedronGeometry(0.27, 2);
       const atoms = new THREE.InstancedMesh(aGeo, std(MAT.metal.atom, { roughness: 0.3, metalness: 0.5 }), A); root.add(atoms);
       const home = [];
       for (let i = 0; i < NX; i++) for (let j = 0; j < NY; j++) for (let k = 0; k < NZ; k++) home.push(new THREE.Vector3(i * SP - W / 2, j * SP - H / 2, k * SP - Dp / 2));
@@ -32,10 +33,10 @@
       label('−', pL, { offset: [0, (H + 1.6) / 2 + 0.5, 0], size: 17 }); label('+', pR, { offset: [0, (H + 1.6) / 2 + 0.5, 0], size: 17 });
       const curLab = label('', [0, -H / 2 - 1.4, 0], { color: 'rgba(255,211,77,.92)' }); curLab.el.style.color = '#1b2333';
       /* 전자 */
-      const NE = 220, eGeo = new THREE.SphereGeometry(0.13, 14, 10);
+      const NE = 160, eGeo = new THREE.IcosahedronGeometry(0.15, 1);
       const eMesh = new THREE.InstancedMesh(eGeo, std(0x62b4ff, { emissive: 0x1a5fb0, emissiveIntensity: 0.9, roughness: 0.2 }), NE); root.add(eMesh);
       const eB = new THREE.InstancedMesh(eGeo, std(0x62b4ff, { emissive: 0x1a5fb0, emissiveIntensity: 0.6, roughness: 0.3 }), A); root.add(eB); // 원자에 묶인 전자
-      const hMesh = new THREE.InstancedMesh(new THREE.SphereGeometry(0.15, 14, 10), std(0xffd34d, { emissive: 0x7a5a00, emissiveIntensity: 0.6, transparent: true, opacity: 0.8 }), 80); root.add(hMesh);
+      const hMesh = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(0.15, 1), std(0xffd34d, { emissive: 0x7a5a00, emissiveIntensity: 0.6, transparent: true, opacity: 0.8 }), 80); root.add(hMesh);
       const E = []; for (let i = 0; i < NE; i++) E.push({ p: new THREE.Vector3((Math.random() - 0.5) * W, (Math.random() - 0.5) * H, (Math.random() - 0.5) * Dp), v: new THREE.Vector3(), ph: Math.random() * 6.28 });
       const dummy = new THREE.Object3D();
       let nFree = 0, nHole = 0;
@@ -71,7 +72,7 @@
             dummy.scale.setScalar(1); dummy.updateMatrix(); atoms.setMatrixAt(a, dummy.matrix);
             if (mat !== 'metal') {
               const free = mat === 'semi' && a < nFree * 0.0; // 묶인 전자는 원자 둘레를 돌아요
-              const ang = t * 3 + a, r = 0.52;
+              const ang = t * 3 + a, r = 0.42;
               dummy.position.set(h.x + Math.cos(ang) * r, h.y + Math.sin(ang * 0.8) * 0.18, h.z + Math.sin(ang) * r); dummy.scale.setScalar(mat === 'semi' && a % 5 < 1 && (a < (nFree + nHole) * 0.5) ? 0.0001 : 1); dummy.updateMatrix(); eB.setMatrixAt(a, dummy.matrix);
             }
           }

@@ -17,7 +17,7 @@
   window.SciSim3D.attach({
     title: '첨가 중합 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: PHONE ? 20 : 15.5, theta: 0.35, phi: 1.2, min: 7, max: 30, target: [0, 1.2, 0] },
+    camera: { dist: PHONE ? 22 : 17, theta: 0.3, phi: 1.25, min: 7, max: 32, target: [0, 1.4, 0] },
     autoRotate: 0.07,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
@@ -60,7 +60,7 @@
           units.push({ grp, cA, cB, dbl, dbl2, bonds, prog: u === 0 ? 1 : 0, joining: false, ph: u * 1.3, a, b });
         }
         labs.push(label(T.n, [0, -2.4, 0], { color: 'rgba(30,41,59,.9)' }));
-        labs.push(label('단위체', [(NU * 2 - 1) / 2 * 0 + cpos(2).x + 0.4, 5.6, 0], { color: 'rgba(180,120,0,.95)' }));
+        labs.push(label('단위체', [cpos(3).x, 4.9, 0], { color: 'rgba(180,120,0,.95)' }));
         place(0, 0);
       }
       function place(dt, t) {
@@ -69,7 +69,7 @@
           if (u.joining) { u.prog = Math.min(1, u.prog + dt / 1.5); if (u.prog >= 1) u.joining = false; }
           const f = sstep(u.prog), joined = u.prog >= 1; if (joined) nJ++;
           const bob = (1 - f) * (Math.sin(t * 1.6 + u.ph) * 0.18);
-          u.grp.position.set(0, (1 - f) * (4.3 + 0.6 * ((i * 7) % 3)) + bob, (1 - f) * (-1.2 + 0.9 * ((i * 5) % 3)));
+          u.grp.position.set(0, (1 - f) * (3.3 + 0.5 * ((i * 7) % 3)) + bob, (1 - f) * (-1.2 + 0.9 * ((i * 5) % 3)));
           u.grp.rotation.set((1 - f) * 0.0, 0, 0);
           u.bonds.forEach((q) => { const p = q.p.clone(), qq = q.q.clone(); setStick(q.m, p, qq, 1); });
           // 이중 결합: 이어 붙으면서 사라져요

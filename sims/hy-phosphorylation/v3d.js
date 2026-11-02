@@ -13,14 +13,16 @@
   window.SciSim3D.attach({
     title: '두 가지 인산화 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: narrow ? 13.5 : 10.5, theta: 0.2, phi: 1.36, target: [0, -0.2, 0], min: 5, max: 20 },
+    camera: { dist: narrow ? 11.5 : 10.5, theta: 0.2, phi: 1.36, target: narrow ? [0.2, 0, 0] : [0, -0.2, 0], min: 5, max: 20 },
     autoRotate: 0,
     levels: [0, 1, 2],
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
       const V = THREE.Vector3;
+      if (narrow) root.rotation.z = Math.PI / 2;      // 휴대폰(세로 화면)에서는 눕혀 둔 모형을 세워서 보여 줘요
       let mode = 'chemi', grad = 0.8;
       const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.42, metalness: 0.04 }, o || {}));
+      const A = (p) => { const o = new THREE.Object3D(); o.position.set(p[0], p[1], p[2]); root.add(o); return o; };
       const chemi = new THREE.Group(), sub = new THREE.Group(); root.add(chemi, sub);
 
       /* ================= ① 화학 삼투 ================= */
@@ -103,7 +105,7 @@
       { const m = std(0x38bdf8, { roughness: 0.32 });
         const b = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 28), m); b.scale.set(2.3, 1.1, 1.5); enzS.add(b);
         [-1, 1].forEach((s) => { const j = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 24), m); j.scale.set(0.7, 1.0, 1.2); j.position.set(s * 1.55, 0.9, 0); enzS.add(j); });
-        const pk = new THREE.Mesh(new THREE.SphereGeometry(0.9, 28, 18), std(0x0c4a6e, { emissive: 0x082f49 })); pk.scale.set(1.2, 0.4, 0.9); pk.position.y = 0.95; enzS.add(pk); }
+        const pk = new THREE.Mesh(new THREE.SphereGeometry(0.9, 28, 18), std(0x0c4a6e, { emissive: 0x082f49 })); pk.scale.set(1.25, 0.2, 0.9); pk.position.y = 1.0; enzS.add(pk); }
       const Pmat = std(0xf472b6, { emissive: 0x3a0a22 }), Cmat = std(0x94a3b8, { roughness: 0.35 }), Amat = std(0xfb923c, { roughness: 0.35 });
       function pBall(r) { return new THREE.Mesh(new THREE.SphereGeometry(r || 0.2, 16, 12), Pmat); }
       const substrate = new THREE.Group(), adp = new THREE.Group(), pyr = new THREE.Group(), atp = new THREE.Group(), pfly = pBall(0.2);
@@ -140,18 +142,18 @@
 
       /* ---------- 이름표 · 조작 ---------- */
       const L = {
-        ims: label('막 사이 공간 (H⁺ 많음)', [-2.4, 2.6, 0], { color: '#7c5a10' }),
-        mat: label('기질 (H⁺ 적음)', [-2.4, -2.6, 0], { color: '#7c5a10' }),
-        etc: label('전자 전달계', [-2.1, 0.95, 0], { color: '#1e40af' }),
-        syn: label('ATP 합성 효소', [AX + 1.1, 0.8, 0], { color: '#5b21b6' }),
-        atp: label('ATP', [AX - 0.5, -3.1, 0], { color: '#92400e' }),
-        sE: label('효소', [0, -2.5, 0], { color: '#075985' }),
-        sS: label('인산기를 가진 기질', [-3.2, 2.2, 0], { color: '#9d174d' }),
-        sA: label('ADP', [3.3, 2.0, 0], { color: '#9a3412' }),
+        ims: label('막 사이 공간 (H⁺ 많음)', A([-2.4, 2.6, 0]), { color: '#7c5a10' }),
+        mat: label('기질 (H⁺ 적음)', A([-2.4, -2.6, 0]), { color: '#7c5a10' }),
+        etc: label('전자 전달계', A([-2.1, 0.95, 0]), { color: '#1e40af' }),
+        syn: label('ATP 합성 효소', A([AX + 1.1, 0.8, 0]), { color: '#5b21b6' }),
+        atp: label('ATP', A([AX - 0.5, -3.1, 0]), { color: '#92400e' }),
+        sE: label('효소', A([0, -2.5, 0]), { color: '#075985' }),
+        sS: label('인산기를 가진 기질', A([-3.2, 2.2, 0]), { color: '#9d174d' }),
+        sA: label('ADP', A([3.3, 2.0, 0]), { color: '#9a3412' }),
       };
       function setMode(m) {
         mode = m; chemi.visible = m === 'chemi'; sub.visible = m === 'sub';
-        orbit.dist = m === 'sub' ? (narrow ? 11 : 8.2) : (narrow ? 13.5 : 10.5); orbit.phi = m === 'sub' ? 1.15 : 1.36; orbit.ty = m === 'sub' ? 0.6 : -0.2;
+        orbit.dist = m === 'sub' ? (narrow ? 10 : 8.2) : (narrow ? 11.5 : 10.5); orbit.phi = m === 'sub' ? 1.15 : 1.36; { const ty = m === 'sub' ? 0.6 : -0.2; if (narrow) { orbit.tx = -ty; orbit.ty = 0; } else orbit.ty = ty; }
         ['ims', 'mat', 'etc', 'syn', 'atp'].forEach((k) => L[k].show(m === 'chemi')); ['sE', 'sS', 'sA'].forEach((k) => L[k].show(m === 'sub'));
         st = 0; text();
       }
@@ -169,7 +171,7 @@
       let ang = 0, stepAcc = 0, pumpAcc = 0, lastMode = null, cnt = 0;
       return {
         update(dt) {
-          dt = Math.min(dt, 0.05);
+          dt = Math.min(dt, 0.05) * (window.__v3dTS || 1);
           const sm = window.__sim && window.__sim.S && window.__sim.S.mode;
           if (sm && sm !== lastMode) { lastMode = sm; const m2 = MODE_OF[sm]; if (m2 && m2 !== mode) { seg.set(m2); setMode(m2); showRow(m2 === 'chemi'); } }
           if (mode === 'sub') { stepSub(dt); return; }

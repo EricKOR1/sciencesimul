@@ -5,6 +5,7 @@
   'use strict';
   if (!window.SciSim3D) return;
   const PHN = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches), KD = PHN ? 1.3 : 1;
+  const LV = () => (typeof window.SciSimLevel === 'number' ? window.SciSimLevel : 0);
   const TAU = Math.PI * 2, clamp = (x, a, b) => Math.max(a, Math.min(b, x));
   function tools(THREE) {
     const V3 = THREE.Vector3, Y = new V3(0, 1, 0);
@@ -44,6 +45,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: 12 * KD, theta: 0.45, phi: 1.2, min: 5, max: 28 },
     autoRotate: 0,
+    levels: [0, 1],
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const { V3, M, tube } = tools(THREE);
@@ -61,7 +63,7 @@
         const an = new THREE.Mesh(new THREE.SphereGeometry(0.14, 16, 12), new THREE.MeshBasicMaterial({ color: 0x4ade80, transparent: true, opacity: 0.5, depthWrite: false })); root.add(an); antiM.push(an);
       }
       const lN = label('마디', nodeM[1], { color: '#dc2626', size: 12, offset: [0, -0.4, 0] }), lA = label('배', antiM[0], { color: '#15803d', size: 12, offset: [0, 0.55, 0] });
-      const lL = label('길이 L', [0, -2.3, 0], { color: '#475569', size: 12 }), lla = label('', [0, 0, 0], { color: '#7c3aed', size: 12 });
+      const lla = label('', [0, 0, 0], { color: '#7c3aed', size: 12 });
       const lR = label('→ 오른쪽으로 가는 파동', [0, 2.8, 0], { color: '#e8590c', size: 12 }), lLf = label('← 왼쪽으로 가는 파동', [0, -2.8, 0], { color: '#2f6df6', size: 12 }), lS = label('합 = 정상파', [0, 0.0, 0], { color: '#a16207', size: 12, offset: [0, 1.5, 0] });
       let envMesh = [];
       function rebuild() {

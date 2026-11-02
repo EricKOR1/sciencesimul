@@ -6,6 +6,7 @@
   'use strict';
   if (!window.SciSim3D) return;
   const PHN = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches), KD = PHN ? 1.3 : 1;
+  const LV = () => (typeof window.SciSimLevel === 'number' ? window.SciSimLevel : 0);
   const TAU = Math.PI * 2, clamp = (x, a, b) => Math.max(a, Math.min(b, x));
   function tools(THREE) {
     const V3 = THREE.Vector3, Y = new V3(0, 1, 0);
@@ -43,8 +44,9 @@
   window.SciSim3D.attach({
     title: '탈출 속도와 궤도 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: 13 * KD, theta: 0.4, phi: 0.95, min: 5, max: 30 },
+    camera: { dist: 16 * KD, theta: 0.25, phi: 1.4, min: 5, max: 34 },
     autoRotate: 0,
+    levels: [0, 3],
     build(ctx) {
       const { THREE, root, label, info, controls, scene } = ctx;
       const { V3, M, tube } = tools(THREE);
@@ -56,13 +58,13 @@
       for (let i = 0; i < 70; i++) { const x = rnd() * 512, y = 30 + rnd() * 196, r = 8 + rnd() * 34; g.fillStyle = rnd() > 0.2 ? '#4a9d5c' : '#c9b873'; g.beginPath(); g.ellipse(x, y, r, r * 0.6, rnd() * 3, 0, TAU); g.fill(); }
       g.fillStyle = '#f1f5f9'; g.fillRect(0, 0, 512, 14); g.fillRect(0, 242, 512, 14);
       const tex = new THREE.CanvasTexture(c);
-      const earth = new THREE.Mesh(new THREE.SphereGeometry(RE, 64, 48), M(0xffffff, { map: tex, roughness: 0.75 })); root.add(earth);
-      const atm = new THREE.Mesh(new THREE.SphereGeometry(RE * 1.04, 48, 32), new THREE.MeshBasicMaterial({ color: 0x74c0ff, transparent: true, opacity: 0.16, side: THREE.BackSide, depthWrite: false })); root.add(atm);
+      const earth = new THREE.Mesh(new THREE.SphereGeometry(RE - 0.05, 64, 48), M(0xffffff, { map: tex, roughness: 0.75 })); root.add(earth);
+      const atm = new THREE.Mesh(new THREE.SphereGeometry(RE * 1.03, 48, 32), new THREE.MeshBasicMaterial({ color: 0x74c0ff, transparent: true, opacity: 0.16, side: THREE.BackSide, depthWrite: false })); root.add(atm);
       const sat = new THREE.Group(); const body = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.2, 0.2), M(0xe5e7eb, { metalness: 0.7, roughness: 0.3 })); sat.add(body);
       [-1, 1].forEach((s) => { const p = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.5, 0.2), M(0x3b82f6, { metalness: 0.5 })); p.position.x = 0.0; p.position.z = s * 0.3; sat.add(p); });
       const fl = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.2, 10), new THREE.MeshBasicMaterial({ color: 0xffa94d })); fl.rotation.z = Math.PI / 2; fl.position.x = -0.24; sat.add(fl); root.add(sat);
       const pad = new THREE.Mesh(new THREE.SphereGeometry(0.06, 10, 8), M(0xff5a5f, { emissive: 0xff5a5f })); pad.position.set(0, RE, 0); root.add(pad);
-      const lE = label('지구', [0, -RE - 0.1, 0], { color: '#2563eb', size: 13, offset: [0, 0, 0] }), lPad = label('발사 위치', pad, { color: '#e2464b', size: 12, offset: [0, 0.35, 0] }), lT = label('', sat, { color: '#a16207', size: 13, offset: [0, 0.5, 0] });
+      const lE = label('지구', [0, -RE * 0.4, RE * 0.9], { color: '#2563eb', size: 13, offset: [0, 0, 0] }), lPad = label('발사 위치', pad, { color: '#e2464b', size: 12, offset: [0, 0.35, 0] }), lT = label('', sat, { color: '#a16207', size: 13, offset: [0, 0.5, 0] });
       let path = null, pts = [], kind = '', pathLen = 1;
       const MAXR = 9.5;
       function integrate() {

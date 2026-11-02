@@ -41,7 +41,7 @@
         group: grp, n,
         set(i, p, dir, len, col) {
           if (len < 0.02) { sh.setMatrixAt(i, zero); hd.setMatrixAt(i, zero); return; }
-          const hl = Math.min(len * 0.55, rad * 6.5), hr = rad * 2.7;
+          const hl = Math.min(len * 0.55, rad * 6.5), hr = Math.min(rad * 2.7, hl * 0.5);
           Q.setFromUnitVectors(Yax, dir);
           S.set(rad, Math.max(0.001, len - hl), rad); M.compose(p, Q, S); sh.setMatrixAt(i, M);
           P.copy(dir).multiplyScalar(len - hl).add(p); S.set(hr, hl, hr); M.compose(P, Q, S); hd.setMatrixAt(i, M);
@@ -55,7 +55,7 @@
     function mkSeg(col, rad, o) { return new THREE.Mesh(new THREE.CylinderGeometry(rad, rad, 1, 8), (o && o.basic) ? basic(col, o.mo) : mat(col, o && o.mo)); }
     function setSeg(m, a, b) { const d = new V3().subVectors(b, a), l = d.length(); if (l < 1e-3) { m.visible = false; return m; } m.visible = true; m.scale.y = l; m.position.copy(a).addScaledVector(d, 0.5); m.quaternion.setFromUnitVectors(Yax, d.normalize()); return m; }
     function anchor(g, x, y, z) { const o = new THREE.Object3D(); o.position.set(x || 0, y || 0, z || 0); g.add(o); return o; }
-    function sphere(r, c, o) { return new THREE.Mesh(new THREE.SphereGeometry(r, 36, 24), mat(c, o)); }
+    function sphere(r, c, o) { return new THREE.Mesh(new THREE.SphereGeometry(r, r < 0.35 ? 22 : 36, r < 0.35 ? 14 : 24), mat(c, o)); }
     function tube(pts, r, c, o) {
       const curve = Array.isArray(pts) ? new THREE.CatmullRomCurve3(pts) : pts;
       return new THREE.Mesh(new THREE.TubeGeometry(curve, (o && o.seg) || 80, r, (o && o.rs) || 8, !!(o && o.closed)), (o && o.basic) ? basic(c, o.mo) : mat(c, o && o.mo));
@@ -139,7 +139,7 @@
         });
         if (st.sc === 'single') {
           fib(26).forEach((dv) => {
-            const pts = []; for (let k = 0; k <= 12; k++) pts.push(dv.clone().multiplyScalar(0.45 + k * 0.55));
+            const pts = []; for (let k = 0; k <= 8; k++) pts.push(dv.clone().multiplyScalar(0.45 + k * 0.55));
             const curve = new THREE.CatmullRomCurve3(pts);
             gLines.add(new THREE.Mesh(new THREE.TubeGeometry(curve, 20, 0.026, 6, false), lineMat));
             [0.38, 0.75].forEach((u) => { const c = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.27, 12), coneMat); c.position.copy(curve.getPointAt(u)); c.quaternion.setFromUnitVectors(h.Yax, dv); gLines.add(c); });
@@ -224,9 +224,9 @@
       }
 
       /* ---------- 평행판 ---------- */
-      const topP = h.box(7, 0.14, 7, POS, { roughness: 0.35, metalness: 0.5 }), botP = h.box(7, 0.14, 7, NEG, { roughness: 0.35, metalness: 0.5 }); gP.add(topP, botP);
+      const topP = h.box(6, 0.14, 6, POS, { roughness: 0.35, metalness: 0.5 }), botP = h.box(6, 0.14, 6, NEG, { roughness: 0.35, metalness: 0.5 }); gP.add(topP, botP);
       const pArr = arrowSet(25, 0.035); gP.add(pArr.group);
-      const eqP = [0.25, 0.5, 0.75].map((f, i) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(6.6, 6.6), h.glass(0xffb070, 0.16)); m.rotation.x = Math.PI / 2; gP.add(m); return m; });
+      const eqP = [0.25, 0.5, 0.75].map((f, i) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(5.6, 5.6), h.glass(0xffb070, 0.16)); m.rotation.x = Math.PI / 2; gP.add(m); return m; });
       const aTop = anchor(gP), aBot = anchor(gP), aEq = [anchor(gP), anchor(gP), anchor(gP)], aSide = anchor(gP);
       const lTop = label('+ 극판', aTop, { color: '#c0392b', size: 13 }), lBot = label('− 극판', aBot, { color: '#2f6df6', size: 13 });
       const lEq = aEq.map((a) => label('', a, { color: '#b45309', size: 12 })); const lEfld = label('균일한 전기장', aSide, { color: '#0f766e', size: 12 });
@@ -238,11 +238,11 @@
         let k = 0;
         for (let i = -2; i <= 2; i++) for (let j = -2; j <= 2; j++, k++) {
           const len = Math.min(d - 0.35, 0.34 * E + 0.35);
-          pArr.set(k, new V3(i * 1.3, d / 2 - 0.12, j * 1.3), new V3(0, -1, 0), len, 0x35d6c0);
+          pArr.set(k, new V3(i * 1.1, d / 2 - 0.12, j * 1.1), new V3(0, -1, 0), len, 0x35d6c0);
         }
         pArr.flush();
-        eqP.forEach((m, i) => { const f = [0.25, 0.5, 0.75][i]; m.position.y = d / 2 - f * d; aEq[i].position.set(3.1, d / 2 - f * d, 3.1); lEq[i].set((V * (1 - f)).toFixed(1).replace('.0', '') + ' V'); });
-        aTop.position.set(-3.2, d / 2 + 0.3, 3.2); aBot.position.set(-3.2, -d / 2 - 0.3, 3.2); aSide.position.set(0, 0, 3.4);
+        eqP.forEach((m, i) => { const f = [0.25, 0.5, 0.75][i]; m.position.y = d / 2 - f * d; aEq[i].position.set(2.7, d / 2 - f * d, 2.7); lEq[i].set((V * (1 - f)).toFixed(1).replace('.0', '') + ' V'); });
+        aTop.position.set(-2.8, d / 2 + 0.3, 2.8); aBot.position.set(-2.8, -d / 2 - 0.3, 2.8); aSide.position.set(0, 0, 3.0);
         lEq.forEach((l, i) => l.show(st.equi && gP.visible)); eqP.forEach((m) => (m.visible = st.equi));
         if (!gP.visible) return;
         info('<b>평행판 사이는 균일한 전기장</b> E = ΔV ÷ d = ' + V + ' ÷ ' + d + ' = <b>' + E.toFixed(1) + '</b><br>등전위면은 판과 나란한 평면이고, 간격이 일정해요.<br>+q는 전기장 방향(위→아래)으로 가속돼요 (일 W = qΔV).');
@@ -256,7 +256,7 @@
       grab('plates', () => controls.range('판 간격 d', 2, 5, 0.5, st.d, (v) => { st.d = v; qy = 0; qv = 0; updPlates(); }, (v) => v.toFixed(1)));
       function go(sc) {
         seg.set(sc);
-        if (sc === 'plates') { st.sc = 'plates'; gC.visible = false; gP.visible = true; applyVis(); updPlates(); qy = 0; qv = 0; ctx.orbit.dist = 12.5 * KD; ctx.orbit.phi = 1.2; }
+        if (sc === 'plates') { st.sc = 'plates'; gC.visible = false; gP.visible = true; applyVis(); updPlates(); qy = 0; qv = 0; ctx.orbit.dist = 15 * KD; ctx.orbit.phi = 1.4; }
         else { setPreset(sc); ctx.orbit.dist = 14 * KD; }
         showCtl(sc === 'plates' ? 'plates' : '__none');
       }

@@ -17,7 +17,7 @@
   window.SciSim3D.attach({
     title: '작용기 3D 분자 모형',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: PHONE ? 11 : 8.5, theta: 0.6, phi: 1.2, min: 4, max: 18 },
+    camera: { dist: PHONE ? 12 : 10.5, theta: 0.6, phi: 1.2, min: 4, max: 18 },
     autoRotate: 0.3,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;

@@ -9,6 +9,7 @@
   window.SciSim3D.attach({
     title: '이온 결합과 NaCl 결정 3D',
     camera: { dist: PHN ? 17 : 12.5, theta: 0.7, phi: 1.1, min: 6, max: 26 },
+    levels: [1],
     autoRotate: 0.22,
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;

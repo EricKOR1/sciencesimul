@@ -12,7 +12,7 @@
   window.SciSim3D.attach({
     title: '전기 분해 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: PHONE ? 19 : 13.5, theta: 0.3, phi: 1.22, min: 8, max: 28, target: [0, 1.0, 0] },
+    camera: { dist: PHONE ? 19 : 12.5, theta: 0.3, phi: 1.22, min: 8, max: 28, target: [0, 1.0, 0] },
     autoRotate: 0.06,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
@@ -44,9 +44,9 @@
       const NE = 6, emat = mat(0x42e8ff, { emissive: 0x00a9c0, emissiveIntensity: 0.9 });
       const eL = new THREE.InstancedMesh(new THREE.SphereGeometry(0.13, 12, 10), emat, NE), eR = new THREE.InstancedMesh(new THREE.SphereGeometry(0.13, 12, 10), emat, NE); [eL, eR].forEach((m) => { m.frustumCulled = false; root.add(m); });
       /* 이온 */
-      const NI = 22, NA = 14;
+      const NI = 14, NA = 14;
       const mkI = (n, r, c) => { const m = new THREE.InstancedMesh(new THREE.SphereGeometry(r, 18, 14), mat(c, { roughness: 0.3, emissive: c, emissiveIntensity: 0.18 }), n); m.frustumCulled = false; root.add(m); return m; };
-      const naM = mkI(NI, 0.22, 0xb07cff), clM = mkI(NI, 0.3, 0x3ed36b), ohM = mkI(NA, 0.17, 0xff5fa8);
+      const naM = mkI(NI, 0.2, 0xb07cff), clM = mkI(NI, 0.27, 0x3ed36b), ohM = mkI(NA, 0.17, 0xff5fa8);
       const rnd = (a, b) => a + Math.random() * (b - a);
       const spawn = (side) => { const a = Math.random() * 6.28, r = Math.sqrt(Math.random()) * (BR - 0.5); return new V3(Math.cos(a) * r, rnd(FY + 0.5, top - 0.4), Math.sin(a) * r * 0.8); };
       const NaP = Array.from({ length: NI }, () => ({ p: spawn(), s: rnd(0.5, 1.0), pulse: 0 })), ClP = Array.from({ length: NI }, () => ({ p: spawn(), s: rnd(0.5, 1.0), pulse: 0 }));

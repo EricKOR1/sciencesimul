@@ -22,10 +22,12 @@
   window.SciSim3D.attach({
     title: '별의 속 구조 3D',
     camera: { dist: PHN ? 17 : 12.5, theta: -2.35, phi: 1.2, min: 6, max: 26 },
+    levels: [2],
     autoRotate: 0,
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
-      let kind = 'sun', zoomOn = true;
+      const lvNow = () => (typeof window.SciSimLevel === 'number' ? window.SciSimLevel : 0);
+      let kind = lvNow() === 2 ? 'big' : 'sun', zoomOn = true;
       const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.55, metalness: 0.0, side: THREE.DoubleSide }, o || {}));
       const star = new THREE.Group(); star.position.x = -2.4; root.add(star);
       const body = new THREE.Group(); star.add(body);
@@ -93,7 +95,7 @@
 
       const segK = controls.segment('별 종류', [{ value: 'sun', label: '태양 같은 별' }, { value: 'big', label: '무거운 별' }], kind, (v) => { kind = v; build(v); });
       const bz = controls.button('핵융합 확대 ✓', () => { zoomOn = !zoomOn; bz.classList.toggle('on', zoomOn); bz.textContent = '핵융합 확대 ' + (zoomOn ? '✓' : '✕'); build(kind); }); bz.classList.add('on');
-      build(kind);
+      segK.set(kind); build(kind);
 
       return {
         update(dt, t) {
@@ -109,7 +111,7 @@
           const f = T > 3.5 && T < 4.6 ? 1 - Math.abs(T - 3.9) / 0.7 : 0; flash.material.opacity = Math.max(0, f) * 0.8; flash.scale.setScalar(0.5 + Math.max(0, f) * 1.6);
           pho.forEach((m, i) => { const q = T - 3.8; m.visible = q > 0 && q < 3; const r = Math.max(0, q) * 0.5; m.position.copy(m.userData.d).multiplyScalar(0.3 + r); m.material.opacity = 1; });
         },
-        sync() {},
+        sync() { const k = lvNow() === 2 ? 'big' : 'sun'; if (k !== kind) { kind = k; segK.set(k); build(k); } },
       };
     },
   });

@@ -80,10 +80,10 @@
   function makeEq(THREE, L, root, opt) {
     opt = opt || {};
     const W = 5.2, D = 3.6, H0 = 3.6;
-    const PAL_A = { N: 0xd9e4f5, O: 0xf4f7fc }, PAL_B = { N: 0xb4621a, O: 0xe3a45c };
+    const PAL_A = { N: 0x9fb4da, O: 0xc9d6ee }, PAL_B = { N: 0xb4621a, O: 0xe3a45c };
     const box = L.glassBox(1, 1, 1, 0xb9d3ff, 0.1); root.add(box);
     const fillM = box.userData.fill.material;
-    const floor = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({ color: 0x24324f, roughness: 0.95, envMapIntensity: 0.05 })); floor.scale.set(W + 1.6, 0.14, D + 1.4); floor.position.y = -0.08; root.add(floor);
+    const floor = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ color: 0x050b18 })); floor.scale.set(W + 1.6, 0.14, D + 1.4); floor.position.y = -0.08; root.add(floor);
     const KA = 0.3, KB = 0.28;
     const A = [], B = [];
     const mk = (arr, key, k, pal) => { for (let i = 0; i < arr.n; i++) { const g = L.mol(L.MOLS[key], k, pal); g.visible = false; root.add(g); g.userData = { on: false, p: new THREE.Vector3(), v: new THREE.Vector3(), w: new THREE.Vector3(L.rnd(-1, 1), L.rnd(-1, 1), L.rnd(-1, 1)) }; arr.push(g); } };
@@ -133,7 +133,7 @@
         const mid = g1.userData.p.clone().add(best.userData.p).multiplyScalar(0.5); off(g1); off(best);
         const a = A.find((q) => !q.userData.on); if (a) { place(a, mid.x, mid.y, mid.z); pop(mid.x, mid.y, mid.z, 0x5de2ff); S.hist.push([S.t, 'r']); }
       }
-      fx.forEach((f) => { if (f.t < 0.5) { f.t += dt; const u = f.t / 0.5; f.m.scale.setScalar(0.25 + u * 0.9); f.m.material.opacity = 0.65 * (1 - u); if (u >= 1) f.m.visible = false; } });
+      fx.forEach((f) => { if (f.t < 0.5) { f.t += dt; const u = f.t / 0.5; f.m.scale.setScalar(0.2 + u * 0.55); f.m.material.opacity = 0.55 * (1 - u); if (u >= 1) f.m.visible = false; } });
       // 색: NO₂ 비율에 따라 갈색
       const nb = act(B).length, na = act(A).length, frac = nb / (nb + 2 * na + 1e-6);
       fillM.color.setHex(0xb9d3ff).lerp(new THREE.Color(0xb5651d), Math.min(1, frac * 1.05)); fillM.opacity = 0.1 + 0.34 * frac;
@@ -146,7 +146,7 @@
   window.SciSim3D.attach({
     title: '평형 이동 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: phone ? 13.5 : 10, theta: 0.5, phi: 1.1, min: 5, max: 22, target: [0, 2.4, 0] },
+    camera: { dist: phone ? 15 : 14, theta: 0.5, phi: 1.28, min: 5, max: 26, target: [0, 2.6, 0] },
     autoRotate: 0.1,
     levels: [1, 2],
     build(ctx) {
@@ -157,13 +157,13 @@
       const pis = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 1, 40), new THREE.MeshStandardMaterial({ color: 0x9aa6bf, roughness: 0.3, metalness: 0.75 })); root.add(pis);
       const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 3, 16), new THREE.MeshStandardMaterial({ color: 0xc3ccdd, roughness: 0.3, metalness: 0.8 })); root.add(rod);
       const knob = new THREE.Mesh(new THREE.SphereGeometry(0.32, 20, 14), new THREE.MeshStandardMaterial({ color: 0xf0524f, roughness: 0.4 })); root.add(knob);
-      const flame = new THREE.Mesh(new THREE.ConeGeometry(0.5, 1.1, 20), new THREE.MeshStandardMaterial({ color: 0xff7a1a, emissive: 0xff5a00, emissiveIntensity: 1.2, transparent: true, opacity: 0.9 })); flame.position.set(0, -0.6, 0); root.add(flame);
-      const ice = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.8, 1.8), new THREE.MeshStandardMaterial({ color: 0xbfe6ff, transparent: true, opacity: 0.6, roughness: 0.1 })); ice.position.set(0, -0.6, 0); root.add(ice);
-      const lab = label('', [0, 0, 0], { size: 13 });
+      const flame = new THREE.Mesh(new THREE.ConeGeometry(0.5, 1.1, 20), new THREE.MeshStandardMaterial({ color: 0xff7a1a, emissive: 0xff5a00, emissiveIntensity: 1.2, transparent: true, opacity: 0.9 })); flame.position.set(E.W / 2 + 1.5, 0.6, 0); root.add(flame);
+      const ice = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.8, 1.8), new THREE.MeshStandardMaterial({ color: 0xbfe6ff, transparent: true, opacity: 0.6, roughness: 0.1 })); ice.position.set(E.W / 2 + 1.5, 0.45, 0); root.add(ice);
+      const lab = label('', [0, 0, 0], { size: 13 }); const lh = label('', [E.W / 2 + 1.5, 1.6, 0], { size: 12.5 });
       let vol = 1, temp = 'mid', acc = 0, base = null;
       const TF = { low: 0.6, mid: 1, high: 1.5 };
       function applyV() { E.setH(vol); const h = E.H0 * vol; pis.scale.set(E.W / 2 + 0.05, 0.3, E.W / 2 + 0.05); pis.scale.z = E.D / 2 + 0.05; pis.position.y = h + 0.15; rod.position.y = h + 1.65; knob.position.y = h + 3.2; lab.obj = [E.W / 2 + 0.2, h + 0.5, 0]; lab.set(vol < 0.9 ? '압력 ↑ (부피 ↓)' : vol > 1.1 ? '압력 ↓ (부피 ↑)' : '1기압'); }
-      function applyT() { E.S.Tf = TF[temp]; flame.visible = temp === 'high'; ice.visible = temp === 'low'; }
+      function applyT() { E.S.Tf = TF[temp]; flame.visible = temp === 'high'; ice.visible = temp === 'low'; lh.show(temp !== 'mid'); lh.set(temp === 'high' ? '가열 (온도 ↑)' : '얼음 (온도 ↓)'); }
       function show() {
         const s = E.stats(); const tot = s.nA + s.nB;
         let msg = '';

@@ -5,6 +5,7 @@
   'use strict';
   if (!window.SciSim3D) return;
   const PHN = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches), KD = PHN ? 1.3 : 1;
+  const LV = () => (typeof window.SciSimLevel === 'number' ? window.SciSimLevel : 0);
   const TAU = Math.PI * 2, clamp = (x, a, b) => Math.max(a, Math.min(b, x));
   function tools(THREE) {
     const V3 = THREE.Vector3, Y = new V3(0, 1, 0);
@@ -42,12 +43,14 @@
   window.SciSim3D.attach({
     title: '충돌과 운동량 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: 11.5 * KD, theta: 0.35, phi: 1.12, min: 4, max: 26, target: [0, 0.6, 0] },
+    camera: { dist: 9.2 * KD, theta: 0.3, phi: 1.15, min: 4, max: 26, target: [0, 0.6, 0] },
     autoRotate: 0,
+    levels: [0, 1, 2],
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const { V3, M, mkArrow, setArrow } = tools(THREE);
-      const st = { kind: 'el', m1: 2, m2: 1, v1: 3, ph: 'before', t: 0, x1: -3, x2: 2, u1: 3, u2: 0, hold: 0, hit: false };
+      const kindOf = (l) => (l === 1 ? 'el' : 'rc');
+      const st = { kind: kindOf(LV()), m1: 2, m2: 1, v1: 3, ph: 'before', t: 0, x1: -3, x2: 2, u1: 3, u2: 0, hold: 0, hit: false };
       const rail = new THREE.Mesh(new THREE.BoxGeometry(11.5, 0.16, 1.5), M(0x94a3b8, { metalness: 0.5, roughness: 0.3 })); rail.position.y = -0.08; rail.receiveShadow = true; root.add(rail);
       const track = new THREE.Mesh(new THREE.BoxGeometry(11.5, 0.03, 0.12), M(0x475569)); track.position.y = 0.01; root.add(track);
       [-5.8, 5.8].forEach((x) => { const b = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.5, 1.5), M(0x64748b)); b.position.set(x, 0.17, 0); root.add(b); });
@@ -75,11 +78,12 @@
       }
       function txt() {}
       let ctlr = {};
-      controls.segment('충돌', [{ value: 'el', label: '🎱 탄성' }, { value: 'in', label: '🧲 비탄성' }, { value: 'rc', label: '💥 반동' }], st.kind, (v) => { st.kind = v; setup(); });
+      const kseg = controls.segment('충돌', [{ value: 'el', label: '🎱 탄성' }, { value: 'in', label: '🧲 비탄성' }, { value: 'rc', label: '💥 반동' }], st.kind, (v) => { st.kind = v; setup(); });
       controls.range('수레 1 질량', 1, 4, 1, st.m1, (v) => { st.m1 = v; setup(); }, (v) => v + ' kg');
       controls.range('수레 2 질량', 1, 4, 1, st.m2, (v) => { st.m2 = v; setup(); }, (v) => v + ' kg');
       controls.button('▶ 다시 하기', () => setup());
       setup();
+      window.addEventListener('scisim-level', (e) => { const nk = kindOf(e.detail && e.detail.level); if (nk !== st.kind) { st.kind = nk; kseg.set(nk); setup(); } });
       const tmp = new V3();
       return {
         update(dt) {

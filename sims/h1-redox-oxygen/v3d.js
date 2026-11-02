@@ -1,6 +1,6 @@
 /* h1-redox-oxygen · 3D 산소의 이동과 산화·환원
    산화 = 산소를 얻는 반응, 환원 = 산소를 잃는 반응. 원자 모형으로 산소 원자(빨강)가 어디에서 어디로 옮겨 가는지 따라가 봐요.
-   ① 2Mg + O₂ → 2MgO (산화)  ② CuO + H₂ → Cu + H₂O  ③ 2CuO + C → 2Cu + CO₂ (산화 구리의 환원)  ④ CH₄ + 2O₂ → CO₂ + 2H₂O (연소)
+   ① 2Cu + O₂ → 2CuO, 2Mg + O₂ → 2MgO (산화)  ② CuO + H₂ → Cu + H₂O  ③ 2CuO + C → 2Cu + CO₂ (산화 구리의 환원)  ④ CH₄ + 2O₂ → CO₂ + 2H₂O (연소)
    원자의 배치와 크기는 보기 좋게 단순하게 그린 모형이에요. */
 (function () {
   'use strict';
@@ -10,6 +10,14 @@
 
   // atoms: [원소, 처음 위치, 나중 위치]  bonds: [i, j, 'b'(처음에만) | 'a'(나중에만)]
   const RX = {
+    cu: {
+      eq: '2Cu + O₂ → 2CuO',
+      atoms: [['Cu', [-3.4, 0.9], [-3.4, 0.9]], ['Cu', [-3.4, -0.9], [-3.4, -0.9]], ['O', [1.6, 0.45], [-2.0, 0.9]], ['O', [2.8, 0.45], [-2.0, -0.9]]],
+      bonds: [[2, 3, 'b'], [0, 2, 'a'], [1, 3, 'a']],
+      tags: [['산화 (산소를 얻음)', 0, '#e2464b'], ['산화 (산소를 얻음)', 1, '#e2464b']],
+      names: [['Cu 구리', 0], ['O₂ 산소', 2]], after: [['CuO', 0], ['CuO', 1]],
+      txt: '구리가 <b>산소를 얻어</b> 산화 구리(Ⅱ)가 돼요. <b>산소를 얻는 반응 = 산화</b>',
+    },
     mg: {
       eq: '2Mg + O₂ → 2MgO',
       atoms: [['Mg', [-3.4, 0.9], [-3.4, 0.9]], ['Mg', [-3.4, -0.9], [-3.4, -0.9]], ['O', [1.6, 0.45], [-2.0, 0.9]], ['O', [2.8, 0.45], [-2.0, -0.9]]],
@@ -54,9 +62,9 @@
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3, Y = new V3(0, 1, 0);
-      const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.35, metalness: 0.05 }, o || {}));
-      const st = { rx: 'mg', p: 0, play: false, t: 0 };
-      const floor = new THREE.Mesh(new THREE.CylinderGeometry(6.4, 6.6, 0.25, 56), mat(0x2d3547, { roughness: 0.95, metalness: 0 })); floor.position.y = -2.4; floor.receiveShadow = true; root.add(floor);
+      const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ envMapIntensity: 0.6, color: c, roughness: 0.35, metalness: 0.05 }, o || {}));
+      const st = { rx: 'cu', p: 0, play: false, t: 0 };
+      const floor = new THREE.Mesh(new THREE.CylinderGeometry(6.4, 6.6, 0.25, 56), new THREE.MeshLambertMaterial({ color: 0x2d3547 })); floor.position.y = -2.4; floor.receiveShadow = true; root.add(floor);
       const grp = new THREE.Group(); root.add(grp);
       let cur = null;
       const ease = (x) => { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); };
@@ -104,7 +112,7 @@
         else if (!end) setInfo('산소 원자가 <b>이동</b>하고 있어요. 결합이 끊어지고 새로 만들어져요.');
         else setInfo(C.R.txt + '<br><b>' + C.R.eq + '</b>');
       }
-      const seg = controls.segment('반응', [{ value: 'mg', label: 'Mg + O₂' }, { value: 'h2', label: 'CuO + H₂' }, { value: 'c', label: 'CuO + C' }, { value: 'ch4', label: 'CH₄ 연소' }], st.rx, (v) => { st.rx = v; st.p = 0; st.play = false; playB.textContent = '▶ 반응 시작'; rng.set(0); build(v); apply(); });
+      const seg = controls.segment('반응', [{ value: 'cu', label: 'Cu + O₂' }, { value: 'mg', label: 'Mg + O₂' }, { value: 'h2', label: 'CuO + H₂' }, { value: 'c', label: 'CuO + C' }, { value: 'ch4', label: 'CH₄ 연소' }], st.rx, (v) => { st.rx = v; st.p = 0; st.play = false; playB.textContent = '▶ 반응 시작'; rng.set(0); build(v); apply(); });
       const playB = controls.button('▶ 반응 시작', () => { if (st.p >= 0.999) st.p = 0; st.play = !st.play; playB.textContent = st.play ? '⏸ 멈춤' : '▶ 반응 시작'; });
       const rng = controls.range('진행', 0, 100, 1, 0, (v) => { st.play = false; playB.textContent = '▶ 반응 시작'; st.p = v / 100; }, (v) => v + '%');
       build(st.rx); apply();

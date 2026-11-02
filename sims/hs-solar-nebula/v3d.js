@@ -22,7 +22,7 @@
       const st = { stage: 'collapse', p: 0, play: false, t: 0, key: '' };
       const sr = () => { try { return window.__sim && window.__sim.S; } catch (e) { return null; } };
       scene.add(new THREE.AmbientLight(0x8fa0d8, 0.45));
-      const sunLight = new THREE.PointLight(0xfff0cc, 2.4, 0, 0); scene.add(sunLight);
+      const sunLight = new THREE.PointLight(0xfff0cc, 1.35, 0, 0); scene.add(sunLight);
       { let seed = 3; const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }; const pos = [];
         for (let i = 0; i < 360; i++) { const u = rnd() * 2 - 1, a = rnd() * TAU, r = Math.sqrt(1 - u * u); pos.push(Math.cos(a) * r * 55, u * 55, Math.sin(a) * r * 55); }
         const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
@@ -41,13 +41,15 @@
       const rho0 = new Float32Array(N), ph0 = new Float32Array(N), z0 = new Float32Array(N), rf = new Float32Array(N), pos = new Float32Array(N * 3), col = new Float32Array(N * 3);
       const ROCK = [0.78, 0.66, 0.5], ICE = [0.72, 0.9, 1.0], DUST = [0.85, 0.78, 0.65];
       for (let i = 0; i < N; i++) {
-        const u = rnd() * 2 - 1, a = rnd() * TAU, s = Math.sqrt(1 - u * u), R = Math.cbrt(rnd()) * 100;         // 성운 반지름 100 AU 안에서 균일
+        const u = rnd() * 2 - 1, a = rnd() * TAU, s = Math.sqrt(1 - u * u), R = Math.pow(rnd(), 0.62) * 100;         // 성운 반지름 100 AU 안에서 균일
         rho0[i] = Math.abs(R * s); ph0[i] = a; z0[i] = R * u; rf[i] = Math.pow(rnd(), 0.8);
       }
       const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.BufferAttribute(col, 3));
-      const pm = new THREE.PointsMaterial({ size: 0.075, map: dotTex, vertexColors: true, transparent: true, opacity: 0.95, depthWrite: false, sizeAttenuation: true });
+      const pm = new THREE.PointsMaterial({ size: 0.1, map: dotTex, vertexColors: true, transparent: true, opacity: 0.95, depthWrite: false, sizeAttenuation: true });
       const pts = new THREE.Points(g, pm); pts.frustumCulled = false; root.add(pts);
 
+      const nebTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d'), gr = x.createRadialGradient(64, 64, 0, 64, 64, 64); gr.addColorStop(0, 'rgba(150,130,255,.5)'); gr.addColorStop(0.5, 'rgba(110,120,230,.22)'); gr.addColorStop(1, 'rgba(90,110,220,0)'); x.fillStyle = gr; x.fillRect(0, 0, 128, 128); return new THREE.CanvasTexture(c); })();
+      const neb = new THREE.Sprite(new THREE.SpriteMaterial({ map: nebTex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false })); root.add(neb);
       /* 눈선 고리 · 거리 표시 · 행성 */
       const ring = new THREE.Mesh(new THREE.TorusGeometry(SNOW * AU, 0.02, 10, 128), new THREE.MeshBasicMaterial({ color: 0x38bdf8 })); ring.rotation.x = Math.PI / 2; root.add(ring);
       const snowLab = label('눈선 약 2.7 AU', [SNOW * AU, 0, 0], { offset: [0.2, 0.3, 0], color: 'rgba(3,105,161,.92)' });
@@ -59,8 +61,8 @@
       /* 분화 모형: 철(어두운 금속) · 규산염(밝은 암석) 입자가 섞여 있다가 층으로 나뉘어요 */
       const diffG = new THREE.Group(); root.add(diffG);
       const ND = 700, dStart = [], dEnd = [], isFe = [];
-      const diffMeshFe = new THREE.InstancedMesh(new THREE.SphereGeometry(0.075, 12, 9), new THREE.MeshStandardMaterial({ color: 0x9a6b4a, roughness: 0.35, metalness: 0.6 }), ND);
-      const diffMeshSi = new THREE.InstancedMesh(new THREE.SphereGeometry(0.075, 12, 9), new THREE.MeshStandardMaterial({ color: 0xd8cfc0, roughness: 0.6 }), ND);
+      const diffMeshFe = new THREE.InstancedMesh(new THREE.SphereGeometry(0.075, 12, 9), new THREE.MeshStandardMaterial({ color: 0x8a5a3c, roughness: 0.4, metalness: 0.5 }), ND);
+      const diffMeshSi = new THREE.InstancedMesh(new THREE.SphereGeometry(0.075, 12, 9), new THREE.MeshStandardMaterial({ color: 0xa89a86, roughness: 0.65 }), ND);
       diffMeshFe.frustumCulled = diffMeshSi.frustumCulled = false; diffG.add(diffMeshFe, diffMeshSi);
       const shell = new THREE.Mesh(new THREE.SphereGeometry(2.55, 48, 32), new THREE.MeshStandardMaterial({ color: 0xff7a3a, roughness: 0.5, transparent: true, opacity: 0.16, depthWrite: false, emissive: 0xff4a10, emissiveIntensity: 0.35 })); diffG.add(shell);
       const nFe = Math.floor(ND * 0.32);
@@ -78,12 +80,12 @@
       function layout() {
         const s = st.stage, p = st.p;
         const showDisc = s !== 'differ';
-        pts.visible = showDisc; sun.visible = sunGlow.visible = showDisc; sunLab.show(showDisc); diffG.visible = !showDisc;
+        pts.visible = showDisc; neb.visible = s === 'collapse'; sun.visible = sunGlow.visible = showDisc; sunLab.show(showDisc); diffG.visible = !showDisc;
         ring.visible = s === 'condense'; snowLab.show(s === 'condense');
         probe.visible = probeRing.visible = s === 'condense';
         planets.forEach((m) => (m.visible = s === 'accrete'));
         labPl.forEach((l) => l.show(s === 'accrete' && p > 0.5)); lFe.show(!showDisc && p > 0.7); lSi.show(!showDisc && p > 0.7);
-        sunLight.visible = showDisc;
+        sunLight.visible = true; sunLight.position.set(showDisc ? 0 : 4, showDisc ? 0 : 5, showDisc ? 0 : 6);
         text();
       }
       function cNow() { return st.stage === 'collapse' ? st.p : 1; }
@@ -126,24 +128,25 @@
           if (s !== 'differ') {
             const col0 = s === 'collapse';
             /* 수축: 높이는 크게 줄고, 반지름은 조금만 줄어요. 회전은 각운동량 보존으로 빨라져요 */
-            const kz = 1 - 0.93 * c, kr = 1 - 0.7 * c, spin = 0.1 / (kr * kr), RC = 4.4;
+            const kz = 1 - 0.93 * c, kr = 1 - 0.7 * c, spin = 0.1 / (kr * kr), RC = 3.8;
             for (let i = 0; i < N; i++) {
               const R = rho0[i] / 100;
               let rho, y, th;
               if (col0) { rho = R * RC * kr; y = (z0[i] / 100) * RC * kz; th = ph0[i] + spin * st.t * (0.55 + 0.45 / (R + 0.25)); }
-              else { rho = 4.3 * Math.pow(R, 1.1); y = (z0[i] / 100) * 4.3 * 0.07; th = ph0[i] + 0.8 * st.t / Math.pow(Math.max(rho, 0.35), 1.5); }
+              else { rho = 4.3 * Math.pow(R, 1.6); y = (z0[i] / 100) * 4.3 * 0.07; th = ph0[i] + 0.8 * st.t / Math.pow(Math.max(rho, 0.35), 1.5); }
               pos[i * 3] = rho * Math.cos(th); pos[i * 3 + 1] = y; pos[i * 3 + 2] = rho * Math.sin(th);
               const cc = col0 ? DUST : (rho / AU < SNOW ? ROCK : ICE), k = 0.7 + 0.3 * rf[i];
               col[i * 3] = cc[0] * k; col[i * 3 + 1] = cc[1] * k; col[i * 3 + 2] = cc[2] * k;
             }
+            neb.visible = col0; neb.scale.setScalar(RC * kr * 2.7); neb.material.opacity = 1 - 0.85 * c;
             g.attributes.position.needsUpdate = true; g.attributes.color.needsUpdate = true;
             pm.opacity = s === 'accrete' ? 0.95 - 0.7 * p : 0.95;
-            const sunR = 0.18 + 0.32 * (s === 'collapse' ? c : 1); sun.scale.setScalar(sunR); sunGlow.scale.setScalar(sunR * 7);
+            const sunR = s === 'collapse' ? 0.15 + 0.2 * c : 0.3; sun.scale.setScalar(sunR); sunGlow.scale.setScalar(sunR * 7);
             if (s === 'condense') { const r = 0.3 + p * 9.7; probe.position.set(r * AU, 0, 0); const T = 280 / Math.sqrt(r); probe.material.color.set(r < SNOW ? 0xc7a37a : 0xbfe6ff); probeRing.scale.setScalar(r * AU); probeRing.material.color.set(r < SNOW ? 0xc7a37a : 0xbfe6ff); }
             if (s === 'accrete') planets.forEach((m, i) => {
               const { a, r, th } = m.userData, g0 = Math.max(0, Math.min(1, (p - 0.05 - i * 0.04) * 1.6)), ang = th + st.t * 0.6 / Math.sqrt(a) ;
               m.scale.setScalar(Math.max(0.001, r * g0 * (i < 4 ? 1 : 1)) ); m.position.set(a * AU * Math.cos(ang), 0, a * AU * Math.sin(ang)); m.visible = g0 > 0.02;
-              if (i === 2) labPl[0].obj = m.position.clone(); if (i === 4) labPl[1].obj = m.position.clone();
+              if (i === 2) { labPl[0].obj = [m.position.x, 0.25, m.position.z]; } if (i === 4) { labPl[1].obj = [m.position.x, 0.5, m.position.z]; }
             });
             sun.rotation.y += dt;
           } else {

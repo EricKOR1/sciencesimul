@@ -20,12 +20,12 @@
 
       /* ================= 호흡 기관 ================= */
       // 폐 (오른쪽 · 왼쪽)
-      const lungM = mat(0xf2a0b2, { transparent: true, opacity: 0.42, roughness: 0.4, depthWrite: false });
+      const lungM = mat(0xf08aa0, { transparent: true, opacity: 0.5, roughness: 0.4, depthWrite: false });
       const lungR = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 28), lungM), lungL = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 28), lungM);
       lungR.position.set(-1.45, 0.2, 0); lungL.position.set(1.45, 0.2, 0); lungR.renderOrder = lungL.renderOrder = 2;
       organ.add(lungR, lungL);
       // 기관 · 기관지 · 세기관지 (가지 뻗기)
-      const airM = mat(0xd9e4f5, { roughness: 0.35, transparent: true, opacity: 0.95 });
+      const airM = mat(0xa9c4f5, { roughness: 0.35, emissive: 0x23407a, emissiveIntensity: 0.4 });
       const paths = [];
       function tube(pts, r, m) { const c = new THREE.CatmullRomCurve3(pts); const me = new THREE.Mesh(new THREE.TubeGeometry(c, 24, r, 10, false), m || airM); me.castShadow = true; organ.add(me); return c; }
       const nose = new THREE.Mesh(new THREE.SphereGeometry(0.4, 20, 14), mat(0xf2c9a0)); nose.scale.set(0.8, 0.9, 1.3); nose.position.set(0, 3.55, 0.7); organ.add(nose);
@@ -52,36 +52,36 @@
       // 갈비뼈
       const ribs = new THREE.Group(); organ.add(ribs);
       const boneM = mat(0xe8dcc0, { roughness: 0.6 });
-      for (let i = 0; i < 6; i++) {
-        const y = 1.7 - i * 0.62, w = 2.55 - Math.abs(i - 2) * 0.12 - (i > 3 ? (i - 3) * 0.12 : 0), d = 1.25;
-        const pts = []; for (let k = 0; k <= 24; k++) { const a = -Math.PI * 0.82 + k / 24 * Math.PI * 1.64; pts.push(new V3(Math.sin(a) * w, y - 0.12 * Math.cos(a) * 0 - (Math.abs(Math.sin(a)) * 0.22), Math.cos(a) * d * 0.9 - 0.1)); }
-        const rb = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 60, 0.07, 8, false), boneM); rb.castShadow = true; ribs.add(rb);
+      for (let i = 0; i < 5; i++) {
+        const y = 1.6 - i * 0.62, w = 2.4 - Math.abs(i - 1.5) * 0.12, d = 1.2;
+        const pts = []; for (let k = 0; k <= 24; k++) { const a = -Math.PI * 0.78 + k / 24 * Math.PI * 1.56; pts.push(new V3(Math.sin(a) * w, y - 0.55 * (1 + Math.cos(a)) / 2, Math.cos(a) * d - 0.05)); }
+        const rb = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 60, 0.06, 8, false), boneM); rb.castShadow = true; ribs.add(rb);
       }
-      const ster = new THREE.Mesh(new THREE.BoxGeometry(0.28, 3.0, 0.1), boneM); ster.position.set(0, 0.5, 1.0); organ.add(ster);
+      const ster = new THREE.Mesh(new THREE.BoxGeometry(0.2, 2.4, 0.08), boneM); ster.position.set(0, 0.55, 1.12); organ.add(ster);
       // 가로막 (돔)
       const dia = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 16, 0, Math.PI * 2, 0, Math.PI / 2), mat(0xb5453f, { roughness: 0.6, side: THREE.DoubleSide, transparent: true, opacity: 0.92 }));
       dia.scale.set(2.5, 1, 1.25); organ.add(dia);
       // 공기 알갱이
       const NA = 70;
-      const airI = new THREE.InstancedMesh(new THREE.SphereGeometry(0.06, 8, 6), new THREE.MeshBasicMaterial({ color: 0x9fe8ff }), NA); airI.frustumCulled = false; organ.add(airI);
+      const airI = new THREE.InstancedMesh(new THREE.SphereGeometry(0.08, 8, 6), new THREE.MeshBasicMaterial({ color: 0x9fe8ff }), NA); airI.frustumCulled = false; organ.add(airI);
       const flows = [];
       [[-1, 0], [1, 0]].forEach(([sd]) => { const pts = [new V3(0, 3.5, 0.6), new V3(0, 3.0, 0.15), new V3(0, 1.4, 0), new V3(sd * 0.7, 0.85, 0), new V3(sd * 1.1, 0.3, 0), new V3(sd * 1.5, -0.4, 0)]; flows.push(new THREE.CatmullRomCurve3(pts)); });
       const lOrg = [label('코', nose, { offset: [0, 0.5, 0] }), label('기관', [0, 2.4, 0.2]), label('기관지', [0.75, 1.15, 0.3]), label('폐', lungL, { offset: [0.2, 0.9, 0.9] }), label('가로막', dia, { offset: [0, -0.2, 1.1] }), label('갈비뼈', [-2.5, 0.9, 0.5])];
 
       /* ================= 폐포 ================= */
-      const wallM = mat(0xffb0c0, { transparent: true, opacity: 0.28, roughness: 0.3, depthWrite: false, side: THREE.DoubleSide });
-      const AP = [[0, 0.2, 0], [1.3, -0.5, 0.5], [-1.2, -0.6, 0.6], [0.2, -1.3, -0.9], [-0.1, 1.2, -0.9], [1.1, 0.9, -0.5]];
+      const wallM = mat(0xff9fb5, { transparent: true, opacity: 0.4, emissive: 0x6a2030, emissiveIntensity: 0.25, roughness: 0.3, depthWrite: false, side: THREE.DoubleSide });
+      const AP = [[0, 0.2, 0], [1.3, -0.5, 0.5], [-1.2, -0.6, 0.6], [0.2, -1.3, -0.9], [-0.1, 1.2, -0.9], [1.1, 0.9, -0.5]].map((q) => q.map((v) => v * 1.35));
       const caps = [], alvS = [];
-      alv.add(Object.assign(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new V3(0, 4.0, 0), new V3(0, 2.5, 0), new V3(0, 0.9, 0)]), 20, 0.2, 12), airM)));
+      alv.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new V3(0, 4.2, 0), new V3(0, 2.8, 0), new V3(0, 1.2, 0)]), 20, 0.2, 12), airM));
       AP.forEach((p, i) => {
         const s = new THREE.Mesh(new THREE.SphereGeometry(0.72, 36, 24), wallM); s.position.set(...p); s.renderOrder = 2; alv.add(s); alvS.push(s);
-        const k1 = new THREE.Mesh(new THREE.TorusKnotGeometry(0.76, 0.05, 120, 8, 3, 4), mat(0xff5a5a, { emissive: 0xaa1010, emissiveIntensity: 0.3, roughness: 0.35 }));
-        const k2 = new THREE.Mesh(new THREE.TorusKnotGeometry(0.76, 0.05, 120, 8, 4, 3), mat(0x4a78ff, { emissive: 0x1a3ab0, emissiveIntensity: 0.3, roughness: 0.35 }));
+        const k1 = new THREE.Mesh(new THREE.TorusKnotGeometry(0.76, 0.032, 140, 6, 3, 4), mat(0xff5a5a, { emissive: 0xaa1010, emissiveIntensity: 0.3, roughness: 0.35 }));
+        const k2 = new THREE.Mesh(new THREE.TorusKnotGeometry(0.76, 0.032, 140, 6, 4, 3), mat(0x4a78ff, { emissive: 0x1a3ab0, emissiveIntensity: 0.3, roughness: 0.35 }));
         [k1, k2].forEach((k) => { k.position.set(...p); k.rotation.set(i, i * 2, i * 0.5); alv.add(k); });
       });
       // 모세 혈관 가지 (폐동맥쪽 파랑, 폐정맥쪽 빨강)
-      alv.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new V3(-3.4, -2.2, 0.5), new V3(-2.2, -1.5, 0.6), new V3(-1.2, -0.6, 0.6)]), 20, 0.1, 8), mat(0x4a78ff, { emissive: 0x1a3ab0, emissiveIntensity: 0.3 })));
-      alv.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new V3(1.3, -0.5, 0.5), new V3(2.4, -1.2, 0.4), new V3(3.4, -2.2, 0.2)]), 20, 0.1, 8), mat(0xff5a5a, { emissive: 0xaa1010, emissiveIntensity: 0.3 })));
+      alv.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new V3(-3.9, -2.5, 0.5), new V3(-2.6, -1.7, 0.7), new V3(-1.6, -0.8, 0.8)]), 20, 0.1, 8), mat(0x4a78ff, { emissive: 0x1a3ab0, emissiveIntensity: 0.3 })));
+      alv.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new V3(1.75, -0.7, 0.7), new V3(2.9, -1.5, 0.4), new V3(3.9, -2.5, 0.2)]), 20, 0.1, 8), mat(0xff5a5a, { emissive: 0xaa1010, emissiveIntensity: 0.3 })));
       // 기체 알갱이: 산소(→ 혈액), 이산화 탄소(→ 폐포)
       const NG = AP.length * 5;
       const gO = new THREE.InstancedMesh(new THREE.SphereGeometry(0.075, 10, 8), new THREE.MeshBasicMaterial({ color: 0xbff4ff }), NG);
@@ -121,7 +121,7 @@
           if (mode === 'organ') {
             const s = 1 + 0.16 * vol;
             lungR.scale.set(1.05 * s, 1.85 * (1 + 0.12 * vol), 1.0 * s); lungL.scale.set(1.0 * s, 1.75 * (1 + 0.12 * vol), 0.95 * s);
-            ribs.scale.set(1 + 0.07 * vol, 1, 1 + 0.07 * vol); ribs.position.y = 0.16 * vol; ster.position.z = 1.0 + 0.1 * vol; ster.position.y = 0.5 + 0.12 * vol;
+            ribs.scale.set(1 + 0.07 * vol, 1, 1 + 0.07 * vol); ribs.position.y = 0.16 * vol; ster.position.z = 1.12 + 0.1 * vol; ster.position.y = 0.5 + 0.12 * vol;
             dia.scale.set(2.45, 1.05 - 0.75 * vol, 1.25); dia.position.y = -1.55 - 0.45 * vol;
             lungR.position.y = lungL.position.y = 0.2 - 0.05 * vol;
             // 공기 알갱이: 부피가 커질 때 들어가요

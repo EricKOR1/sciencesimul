@@ -12,8 +12,8 @@
   window.SciSim3D.attach({
     title: '전향력과 지균풍 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    levels: [1, 2, 3],
-    camera: { dist: PHONE ? 17 : 12, theta: 0.15, phi: 0.95, min: 6, max: 26, target: [0, 0, 0.3] },
+    levels: [2, 3],
+    camera: { dist: PHONE ? 21 : 12, theta: 0.15, phi: 0.95, min: 6, max: 26, target: [0, 0, 0.3] },
     autoRotate: 0,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
@@ -22,7 +22,7 @@
       { const S = sr(); if (S) { if (typeof S.lat === 'number') st.lat = Math.min(80, Math.max(10, S.lat)); if (typeof S.spc === 'number') st.spc = S.spc; } }
 
       /* 기압 지도: 북쪽이 저기압(파랑), 남쪽이 고기압(주황) */
-      const cv = document.createElement('canvas'); cv.width = 8; cv.height = 256; { const g = cv.getContext('2d'), gr = g.createLinearGradient(0, 0, 0, 256); gr.addColorStop(0, '#9cc4ee'); gr.addColorStop(0.5, '#e8eef4'); gr.addColorStop(1, '#f2c79a'); g.fillStyle = gr; g.fillRect(0, 0, 8, 256); }
+      const cv = document.createElement('canvas'); cv.width = 8; cv.height = 256; { const g = cv.getContext('2d'), gr = g.createLinearGradient(0, 0, 0, 256); gr.addColorStop(0, '#7fb0e6'); gr.addColorStop(0.5, '#c9d6e6'); gr.addColorStop(1, '#e9b88a'); g.fillStyle = gr; g.fillRect(0, 0, 8, 256); }
       const mapTex = new THREE.CanvasTexture(cv); if ('encoding' in mapTex) mapTex.encoding = THREE.sRGBEncoding;
       const map = new THREE.Mesh(new THREE.BoxGeometry(MX * 2, 0.18, MY * 2), [0, 1, 2, 3, 4, 5].map((i) => new THREE.MeshStandardMaterial(i === 2 ? { map: mapTex, roughness: 0.9 } : { color: 0x56627a, roughness: 0.9 })));
       map.position.y = -0.09; root.add(map);
@@ -35,7 +35,7 @@
         const ys = [];
         for (let k = -3; k <= 3; k++) { const y = k * gap; if (Math.abs(y) < MY - 0.25) ys.push([k, y]); }
         ys.forEach(([k, y]) => {
-          const m = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new THREE.Vector3(-MX + 0.1, 0.02, -y), new THREE.Vector3(MX - 0.1, 0.02, -y)]), 2, 0.04, 6, false), new THREE.MeshStandardMaterial({ color: 0x3a4a68, roughness: 0.6 }));
+          const m = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new THREE.Vector3(-MX + 0.1, 0.02, -y), new THREE.Vector3(MX - 0.1, 0.02, -y)]), 2, 0.05, 6, false), new THREE.MeshStandardMaterial({ color: 0x1e3a6e, roughness: 0.6 }));
           isoG.add(m);
         });
         isoLabs.forEach((l, i) => { const e = ys[i]; if (e) { l.show(true); l.obj = [MX - 0.5, 0.15, -e[1]]; l.set((1004 - 4 * e[0]) + ' hPa'); } else l.show(false); });
@@ -60,7 +60,7 @@
       const trailMeshes = []; for (let i = 0; i < 160; i++) { const m = new THREE.Mesh(tg, trailM); m.visible = false; root.add(m); trailMeshes.push(m); }
 
       const fVis = () => 1.6 * Math.sin(st.lat * DEG) / Math.sin(45 * DEG);
-      const PGF = () => 1.2 * 400 / st.spc;                      // 장면에서의 가속도 (간격이 넓으면 약해요)
+      const PGF = () => 0.8 * 400 / st.spc;                      // 장면에서의 가속도 (간격이 넓으면 약해요)
       const real = () => { const f = 2 * OMEGA * Math.sin(st.lat * DEG), pg = (400 / (st.spc * 1000)) / 1.2; return { f, pg, V: pg / f }; };
       function reset() { st.x = -MX + 0.8; st.y = 0; st.u = 0; st.v = 0; st.trail = []; st.pause = 0.4; trailMeshes.forEach((m) => (m.visible = false)); }
       function text() {

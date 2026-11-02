@@ -12,12 +12,13 @@
   window.SciSim3D.attach({
     title: 'CRISPR 유전자 가위 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: narrow ? 13 : 10.5, theta: 0.22, phi: 1.28, target: [-0.6, 0.4, 0], min: 5, max: 20 },
+    camera: { dist: narrow ? 12 : 10.5, theta: 0.22, phi: 1.28, target: narrow ? [-0.4, -0.6, 0] : [-0.6, 0.4, 0], min: 5, max: 20 },
     autoRotate: 0,
     levels: [0, 1],
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V = THREE.Vector3, M4 = new THREE.Matrix4(), cc = new THREE.Color();
+      if (narrow) root.rotation.z = Math.PI / 2;      // 휴대폰(세로 화면)에서는 눕혀 둔 모형을 세워서 보여 줘요
       const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.4, metalness: 0.04 }, o || {}));
       const An = (x, y, z) => { const o = new THREE.Object3D(); o.position.set(x, y, z); root.add(o); return o; };
       const ease = (k) => { k = Math.max(0, Math.min(1, k)); return k * k * (3 - 2 * k); };
@@ -34,9 +35,9 @@
       /* ---------- Cas9 · 가이드 RNA ---------- */
       const cas = new THREE.Group(); root.add(cas);
       { const m = std(0x7dd3fc, { transparent: true, opacity: 0.4, depthWrite: false, roughness: 0.3 });
-        const a = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 28), m); a.scale.set(1.5, 1.35, 1.15); a.position.set(-0.2, 0.15, 0); cas.add(a);
-        const b = new THREE.Mesh(new THREE.SphereGeometry(1, 36, 24), std(0x38bdf8, { transparent: true, opacity: 0.5, depthWrite: false, roughness: 0.3 })); b.scale.set(1.0, 1.0, 0.95); b.position.set(1.1, 0.5, 0.3); cas.add(b);
-        const c = new THREE.Mesh(new THREE.SphereGeometry(0.5, 24, 18), std(0x0ea5e9, { roughness: 0.35 })); c.position.set(-1.0, 0.9, 0.3); cas.add(c); }
+        const a = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 28), m); a.scale.set(1.75, 1.3, 1.1); a.position.set(-1.25, 0.15, 0); cas.add(a);
+        const b = new THREE.Mesh(new THREE.SphereGeometry(1, 36, 24), std(0x38bdf8, { transparent: true, opacity: 0.5, depthWrite: false, roughness: 0.3 })); b.scale.set(0.9, 0.95, 0.9); b.position.set(-0.1, 0.55, 0.3); cas.add(b);
+        const c = new THREE.Mesh(new THREE.SphereGeometry(0.5, 24, 18), std(0x0ea5e9, { roughness: 0.35 })); c.position.set(-2.2, 0.85, 0.3); cas.add(c); }
       const hnh = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.6, 16), std(0xef4444, { emissive: 0x330000, roughness: 0.35 })), ruvc = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.6, 16), std(0xef4444, { emissive: 0x330000, roughness: 0.35 }));
       hnh.rotation.z = Math.PI; ruvc.position.set(CUT, -0.75, 0); hnh.position.set(CUT, 0.75, 0); cas.add(hnh, ruvc);   // 두 가위 날
       cas.userData.cut = [hnh, ruvc];
@@ -56,10 +57,10 @@
       [0, 1].forEach(() => { fix.add(new THREE.Mesh(new THREE.SphereGeometry(0.13, 16, 12), fixMat)); });
 
       /* ---------- 상태 ---------- */
-      let step = 0, t = 0, casX = -5.2, bubble = 0, gap = 0, donorK = 0, casA = 1;
+      let step = 0, t = 0, casX = -3.6, bubble = 0, gap = 0, donorK = 0, casA = 1;
       function setStep(s) {
         step = s; t = 0;
-        casX = s === 0 ? -5.2 : 0; bubble = s === 0 ? 0 : 1; gap = s >= 2 ? 1.0 : 0; donorK = 0; casA = 1;
+        casX = s === 0 ? -3.6 : 0; bubble = s === 0 ? 0 : 1; gap = s >= 2 ? 1.0 : 0; donorK = 0; casA = 1;
         cas.visible = true; fix.visible = false; donor.visible = false; text();
         L.donor.show(s === 3);
       }
@@ -129,12 +130,12 @@
       let lastSim = null;
       return {
         update(dt) {
-          dt = Math.min(dt, 0.05); t += dt;
+          dt = Math.min(dt, 0.05) * (window.__v3dTS || 1); t += dt;
           const sm = window.__sim && window.__sim.S && window.__sim.S.mode;
           if (sm && sm !== lastSim) { lastSim = sm; const s2 = MODE_OF[sm]; if (s2 !== undefined && s2 !== step) { segB.set(s2); setStep(s2); } }
           if (step === 0) {
             const k = Math.min(1, t / 4.2);
-            casX = lerp(-5.2, 0, ease(k)) + (k < 1 ? Math.sin(t * 9) * 0.07 : 0);
+            casX = lerp(-3.6, 0, ease(k)) + (k < 1 ? Math.sin(t * 9) * 0.07 : 0);
             bubble = k >= 1 ? ease((t - 4.2) / 1.0) : 0;
             if (t > 9) t = 0;                   // 반복해서 훑어요
           } else if (step === 1) {

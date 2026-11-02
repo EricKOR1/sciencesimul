@@ -25,11 +25,11 @@
       const anode = new THREE.Mesh(new THREE.BoxGeometry(0.3, 4.2, 2.0), mat(0xd9824c, { metalness: 0.85, roughness: 0.3 })); anode.position.set(AX, FY + 2.2, 0); root.add(anode);
       const eTop = FY + 2.2 + 2.1;
       /* 음극: 열쇠 (머리 고리 + 몸통 + 이빨) — 한 그룹 */
-      const keyMat = mat(0x8c96a6, { metalness: 0.85, roughness: 0.35 });
-      const key = new THREE.Group(); key.position.set(KX, top - 0.2, 0); root.add(key);
-      const head = new THREE.Mesh(new THREE.TorusGeometry(0.62, 0.2, 20, 48), keyMat); head.position.set(0, 0.35 + 0.1, 0); head.rotation.y = Math.PI / 2; key.add(head);
-      const shaft = new THREE.Mesh(new THREE.BoxGeometry(0.24, 2.6, 0.34), keyMat); shaft.position.set(0, -1.4, 0); key.add(shaft);
-      [[-2.55, 0.42], [-2.15, 0.3], [-1.75, 0.4]].forEach(([y, l]) => { const t = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.24, l), keyMat); t.position.set(0, y, 0.17 + l / 2); key.add(t); });
+      const keyMat = mat(0xaab4c4, { metalness: 0.85, roughness: 0.35 });
+      const key = new THREE.Group(); key.position.set(KX, top - 0.5, 0); key.scale.setScalar(1.15); root.add(key);
+      const head = new THREE.Mesh(new THREE.TorusGeometry(0.62, 0.2, 20, 48), keyMat); head.position.set(0, 0.45, 0); key.add(head);
+      const shaft = new THREE.Mesh(new THREE.BoxGeometry(0.34, 2.6, 0.26), keyMat); shaft.position.set(0, -1.4, 0); key.add(shaft);
+      [[-2.55, 0.42], [-2.15, 0.3], [-1.75, 0.4]].forEach(([y, l]) => { const t = new THREE.Mesh(new THREE.BoxGeometry(l, 0.24, 0.26), keyMat); t.position.set(0.17 + l / 2, y, 0); key.add(t); });
       const clip = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.2, 10), mat(0xd18a3a, { metalness: 0.7, roughness: 0.35 })); clip.position.set(KX, top + 0.5, 0); root.add(clip);
       /* 전지 + 도선 */
       const BY = eTop + 1.7;
@@ -48,7 +48,7 @@
       const rnd = (a, b) => a + Math.random() * (b - a);
       const CP = Array.from({ length: NC }, (_, i) => ({ u: i / NC, y: rnd(FY + 0.7, top - 0.6), z: rnd(-0.9, 0.9), ph: Math.random() * 6 }));
       const M = new THREE.Matrix4();
-      const plateShade = new THREE.Color(0x8c96a6), cuC = new THREE.Color(0xd9824c);
+      const plateShade = new THREE.Color(0xaab4c4), cuC = new THREE.Color(0xd9824c);
       const L = {
         a: label('(+)극 구리판 · 녹아요', anode, { color: 'rgba(217,119,6,.95)', offset: [0, 2.6, 0] }),
         k: label('(−)극 철 열쇠 · 도금돼요', key, { color: 'rgba(37,99,235,.95)', offset: [0.6, 1.5, 0] }),
@@ -67,7 +67,7 @@
           pw += ((power ? 1 : 0) - pw) * Math.min(1, dt * 4);
           plated = Math.min(1, plated + dt * 0.035 * cur * pw);
           keyMat.color.copy(plateShade).lerp(cuC, Math.min(1, plated * 1.4)); keyMat.metalness = 0.85;
-          const k = 1 + plated * 0.12; key.scale.set(k, 1, k * 1.15);
+          const k = 1.15 * (1 + plated * 0.06); key.scale.set(k, k, k);
           anode.scale.set(1 - plated * 0.4, 1, 1);
           for (let i = 0; i < NE; i++) {
             const u = (i / NE + t * 0.22 * pw * (0.6 + cur * 0.25)) % 1;

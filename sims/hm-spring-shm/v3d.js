@@ -5,6 +5,7 @@
   'use strict';
   if (!window.SciSim3D) return;
   const PHN = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches), KD = PHN ? 1.3 : 1;
+  const LV = () => (typeof window.SciSimLevel === 'number' ? window.SciSimLevel : 0);
   const TAU = Math.PI * 2, clamp = (x, a, b) => Math.max(a, Math.min(b, x));
   function tools(THREE) {
     const V3 = THREE.Vector3, Y = new V3(0, 1, 0);
@@ -39,23 +40,26 @@
     }
     return { V3, Y, M, glass, mkArrow, setArrow, tube, disc, grid, arc };
   }
+  const KDX = PHN ? 1.2 : 1;
   window.SciSim3D.attach({
     title: '용수철 진자 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: 11.5 * KD, theta: 0.55, phi: 1.3, min: 4, max: 26, target: [1.4, 0, 0] },
+    camera: { dist: 14.5 * KDX, theta: 0.4, phi: 1.3, min: 4, max: 30, target: [1.3, 0.2, 0] },
     autoRotate: 0,
+    levels: [0, 3],
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const { V3, M, mkArrow, setArrow, tube } = tools(THREE);
       const st = { A: 1.2, m: 1, k: 4, t: 0, trace: true };
       const Ytop = 3.6, Y0 = 0.4;                    // 천장 · 평형 위치
       const bar = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.2, 0.9), M(0x64748b, { metalness: 0.4 })); bar.position.set(0, Ytop + 0.1, 0); root.add(bar);
-      const floor = new THREE.Mesh(new THREE.BoxGeometry(9, 0.1, 3), M(0x1f3d30, { roughness: 1 })); floor.position.set(1.8, -2.4, 0); floor.receiveShadow = true; root.add(floor);
+      const floor = new THREE.Mesh(new THREE.BoxGeometry(9, 0.1, 3), M(0x1c2b3a, { roughness: 1 })); floor.position.set(1.8, -2.4, 0); floor.receiveShadow = true; root.add(floor);
       // 평형 위치선 · 끝점
       const eq = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.014, 0.014), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.55 })); eq.position.set(0, Y0, 0); root.add(eq);
       const endA = eq.clone(), endB = eq.clone(); endA.material = endB.material = new THREE.MeshBasicMaterial({ color: 0xffd34d, transparent: true, opacity: 0.5 }); root.add(endA, endB);
       // 용수철 (매 프레임 길이만 바꿔 다시 만들지 않고, 점들을 갱신하는 튜브 대신 코일을 작은 구로 표현)
-      const NS = 160, coil = new THREE.InstancedMesh(new THREE.SphereGeometry(0.045, 8, 6), M(0xcbd5e1, { metalness: 0.7, roughness: 0.3 }), NS); root.add(coil);
+      const NS = 150, cg = new THREE.CylinderGeometry(0.045, 0.045, 1, 8); cg.rotateX(Math.PI / 2); const coil = new THREE.InstancedMesh(cg, M(0xcbd5e1, { metalness: 0.7, roughness: 0.3 }), NS); root.add(coil);
+      const dum = new THREE.Object3D(), pa = new THREE.Vector3(), pb = new THREE.Vector3();
       const mass = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.7, 0.9), M(0x3b82f6, { roughness: 0.35, metalness: 0.15 })); mass.castShadow = true; root.add(mass);
       const fA = mkArrow(0xff5a5f, 0.05), vA = mkArrow(0x34d399, 0.05); root.add(fA, vA);
       const lF = label('복원력 F', fA, { color: '#e2464b', size: 12 }), lV = label('속도 v', vA, { color: '#0f766e', size: 12 });
@@ -72,7 +76,7 @@
       const lEp = label('E_p', eP, { color: '#2f6df6', size: 12, offset: [0, -0.1, 0.1] }), lEk = label('E_k', eK, { color: '#d97706', size: 12, offset: [0, -0.1, 0.1] });
       const m = new THREE.Matrix4(), q = new THREE.Quaternion();
       const omega = () => Math.sqrt(st.k / st.m);
-      const hist = [];
+      const hist = []; let acc = 0;
       function txt() { info('<b>주기 T = 2π√(m/k) = ' + (TAU / omega()).toFixed(2) + ' s</b><br>진폭 ' + st.A.toFixed(1) + ' (m) · 질량 ' + st.m.toFixed(1) + ' kg · k ' + st.k + ' N/m<br>진폭을 바꿔도 주기는 그대로예요.'); }
       function setAmp() { endA.position.y = Y0 + st.A; endB.position.y = Y0 - st.A; lA.off = [0, st.A, 0]; lA.obj = [-1.15, Y0, 0]; }
       controls.range('진폭', 0.4, 1.6, 0.2, st.A, (v) => { st.A = v; setAmp(); txt(); }, (v) => v.toFixed(1));
@@ -86,13 +90,15 @@
           mass.position.set(0, y - 0.35, 0);
           // 용수철: 천장 ~ 질량 위
           const yTop = Ytop, yBot = y; const turns = 14;
-          for (let i = 0; i < NS; i++) { const u = i / (NS - 1), a = u * turns * TAU; m.makeTranslation(0.32 * Math.cos(a), yTop + (yBot - yTop) * u, 0.32 * Math.sin(a)); coil.setMatrixAt(i, m); }
+          const hp = (u) => pa.set(0.34 * Math.cos(u * turns * TAU), yTop + (yBot - yTop) * u, 0.34 * Math.sin(u * turns * TAU));
+          let prev = hp(0).clone();
+          for (let i = 0; i < NS; i++) { const u = (i + 1) / NS; pb.copy(hp(u)); dum.position.copy(prev).add(pb).multiplyScalar(0.5); dum.lookAt(pb.x, pb.y, pb.z); dum.scale.set(1, 1, prev.distanceTo(pb) * 1.08); dum.updateMatrix(); coil.setMatrixAt(i, dum.matrix); prev.copy(pb); }
           coil.instanceMatrix.needsUpdate = true;
           setArrow(fA, new V3(0.7, y, 0), new V3(0.7, y - x * 0.9 * st.k / 8, 0)); lF.off = [0.25, 0, 0];
           setArrow(vA, new V3(-0.7, y, 0), new V3(-0.7, y + v * 0.35, 0)); lV.off = [-0.25, 0, 0];
           fA.visible = Math.abs(x) > 0.05; vA.visible = Math.abs(v) > 0.05; lF.show(fA.visible); lV.show(vA.visible);
           // 그래프: 최근 기록
-          hist.push(x); if (hist.length > TN) hist.shift();
+          acc += dt; while (acc >= 0.03) { acc -= 0.03; hist.push(x); if (hist.length > TN) hist.shift(); }
           const dx = 6.2 / TN; tick.position.set(1, y, 0); guide.position.set(0.5, y, 0); guide.scale.x = 1; 
           for (let i = 0; i < TN; i++) { const hv = hist[hist.length - 1 - i]; const S = hv === undefined ? 0 : 1; m.makeScale(S, S, S).setPosition(1 + i * dx, Y0 + (hv || 0), 0); trace.setMatrixAt(i, m); }
           trace.instanceMatrix.needsUpdate = true;

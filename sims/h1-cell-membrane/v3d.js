@@ -16,6 +16,7 @@
   window.SciSim3D.attach({
     title: '세포막 입자 모형 3D',
     camera: { dist: PHN ? 17 : 12.5, theta: 0.45, phi: 1.28, target: [0, 0, 0], min: 6, max: 24 },
+    levels: [1],
     autoRotate: 0.0,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
@@ -31,7 +32,7 @@
         lip.push([x, z]);
       }
       const NL = lip.length * 2;
-      const heads = new THREE.InstancedMesh(new THREE.SphereGeometry(0.17, 18, 14), std(0xffc857, { roughness: 0.35 }), NL), tails = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.035, 0.035, MT * 0.92, 8), std(0xf6e6b4, { roughness: 0.6 }), NL * 2);
+      const heads = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(0.17, 1), std(0xffc857, { roughness: 0.35 }), NL), tails = new THREE.InstancedMesh(new THREE.BoxGeometry(0.07, MT * 0.92, 0.07), std(0xf6e6b4, { roughness: 0.6 }), NL * 2);
       root.add(heads, tails);
       const mem = new THREE.Group(); root.add(mem);
       const wob = lip.map(() => [Math.random() * 6, Math.random() * 6]);

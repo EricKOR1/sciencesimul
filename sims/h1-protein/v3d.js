@@ -8,17 +8,19 @@
   const SEQ = 'VHLTPEEKSAVTALWGK'.split('');
   const NAME = { V: '발린', H: '히스티딘', L: '류신', T: '트레오닌', P: '프롤린', E: '글루탐산', K: '라이신', S: '세린', A: '알라닌', W: '트립토판', G: '글라이신' };
   const TYPE = { V: 'h', L: 'h', A: 'h', W: 'h', P: 'h', G: 'n', T: 'n', S: 'n', H: '+', K: '+', E: '-' };
-  const COL = { h: 0xff9f43, n: 0x7bd88f, '+': 0x4aa3ff, '-': 0xf0556a };
+  const COL = { h: 0xff8a1f, n: 0x2fbf5a, '+': 0x2f7bf6, '-': 0xe8334a };
   const N = SEQ.length;
 
   window.SciSim3D.attach({
     title: '단백질 사슬 3D',
-    camera: { dist: PHN ? 16 : 11.5, theta: 0.6, phi: 1.15, min: 5, max: 26 },
+    camera: { dist: PHN ? 12.5 : 9.2, theta: 0.6, phi: 1.15, min: 4, max: 26 },
+    levels: [2, 3],
     autoRotate: 0.22,
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
       const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.35, metalness: 0.05 }, o || {}));
-      let view = 'chain', mut = false, fold = 0, anim = false;
+      const lvNow = () => (typeof window.SciSimLevel === 'number' ? window.SciSimLevel : 0);
+      let view = lvNow() === 3 ? 'cell' : 'chain', mut = lvNow() === 3, fold = 0, anim = true;
       const gC = new THREE.Group(), gB = new THREE.Group(); root.add(gC, gB);
 
       /* ---------- 사슬 ---------- */
@@ -35,7 +37,7 @@
       }
       const beads = [], blabs = [];
       for (let i = 0; i < N; i++) {
-        const m = new THREE.Mesh(new THREE.SphereGeometry(0.3, 28, 20), std(COL[TYPE[SEQ[i]]])); gC.add(m); beads.push(m);
+        const m = new THREE.Mesh(new THREE.SphereGeometry(0.34, 28, 20), std(COL[TYPE[SEQ[i]]], { roughness: 0.3, metalness: 0.0 })); gC.add(m); beads.push(m);
       }
       let tube = null; const tubeMat = std(0xcfd8ee, { roughness: 0.5 });
       const bead6lab = label('', beads[5], { offset: [0, 0.75, 0], color: 'rgba(240,85,106,.92)' });
@@ -93,7 +95,7 @@
         view = v; gC.visible = v === 'chain'; gB.visible = v === 'cell';
         [...fCtl].forEach((e) => { e.style.display = v === 'chain' ? '' : 'none'; });
         bead6lab.show(v === 'chain'); cLab.show(v === 'cell'); nlab.show(v === 'chain'); clab.show(v === 'chain');
-        orbit.dist = v === 'chain' ? (PHN ? 16 : 11.5) : (PHN ? 18 : 13);
+        orbit.dist = v === 'chain' ? (PHN ? 12.5 : 9.2) : (PHN ? 16 : 11.5);
         if (v === 'chain') paintChain(); else paintCells();
         segV.set(v);
       }
@@ -103,7 +105,7 @@
       const rg = controls.range('접힘', 0, 100, 1, 0, (v) => { fold = v / 100; anim = false; paintChain(); }, (v) => v + '%');
       const bB = controls.button('▶ 접히기', () => { fold = 0; anim = true; rg.set(0); });
       const fCtl = [...document.querySelector('.v3-ctl').children].slice(nBefore);
-      setView('chain');
+      segM.set(mut); setView(view);
       return {
         update(dt, t) {
           if (view === 'chain') {
@@ -122,7 +124,7 @@
             });
           }
         },
-        sync() {},
+        sync() { const l3 = lvNow() === 3; if (l3 !== (view === 'cell')) { mut = l3; segM.set(mut); setView(l3 ? 'cell' : 'chain'); } },
       };
     },
   });

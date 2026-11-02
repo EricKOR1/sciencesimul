@@ -13,7 +13,7 @@
     const CG = new THREE.CylinderGeometry(1, 1, 1, 16);
     const stickMat = new THREE.MeshStandardMaterial({ color: 0xc3ccdd, roughness: 0.45, metalness: 0.1 });
     const V = (x, y, z) => new THREE.Vector3(x, y, z);
-    function atom(k, s) { const m = new THREE.Mesh(SG, mat(k)); m.scale.setScalar((RAD[k] || 0.4) * (s || 1)); return m; }
+    function atom(k, s, pal) { const m = new THREE.Mesh(SG, mat(pal && pal[k] !== undefined ? pal[k] : k)); m.scale.setScalar((RAD[k] || 0.4) * (s || 1)); return m; }
     function stick(a, b, r, m) {
       const d = b.clone().sub(a), len = d.length(); const s = new THREE.Mesh(CG, m || stickMat);
       s.scale.set(r, Math.max(len, 1e-4), r); s.position.copy(a).add(b).multiplyScalar(0.5);
@@ -38,9 +38,9 @@
       OH: { f: 'OH⁻', a: [['O', -0.2, 0, 0], ['H', 0.75, 0, 0]], b: [[0, 1, 1]] },
     };
     /* 분자 만들기: k는 크기 배율. 이중·삼중 결합은 막대 여러 개 */
-    function mol(M, k) {
+    function mol(M, k, pal) {
       k = k || 1; const g = new THREE.Group(); const P = M.a.map((x) => V(x[1] * k, x[2] * k, x[3] * k));
-      M.a.forEach((x, i) => { const m = atom(x[0], k); m.position.copy(P[i]); g.add(m); });
+      M.a.forEach((x, i) => { const m = atom(x[0], k, pal); m.position.copy(P[i]); g.add(m); });
       M.b.forEach((b) => {
         const A = P[b[0]], B = P[b[1]], d = B.clone().sub(A).normalize();
         let perp = d.clone().cross(V(0, 0, 1)); if (perp.lengthSq() < 0.01) perp = d.clone().cross(V(0, 1, 0)); perp.normalize().multiplyScalar(0.11 * k);
@@ -81,7 +81,7 @@
     title: '루이스 구조 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     levels: [1, 2, 3],
-    camera: { dist: phone ? 12 : 8.5, theta: 0.6, phi: 1.15, min: 4, max: 20 },
+    camera: { dist: phone ? 5.6 : 5.4, theta: 0.6, phi: 1.15, min: 4, max: 20 },
     autoRotate: 0.25,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
@@ -92,7 +92,7 @@
       const g = new THREE.Group(); root.add(g);
       const lbl = []; for (let i = 0; i < 4; i++) { const l = label('', [0, 0, 0], { size: 12.5 }); l.show(false); lbl.push(l); }
       const eM = [new THREE.MeshStandardMaterial({ color: 0xffd34d, emissive: 0xffa800, emissiveIntensity: 0.8, roughness: 0.3 }), new THREE.MeshStandardMaterial({ color: 0x5de2ff, emissive: 0x00a8d8, emissiveIntensity: 0.8, roughness: 0.3 })];
-      const E_R = 0.075;
+      const E_R = 0.09;
       function dot(p, mi) { const m = new THREE.Mesh(L.SG, eM[mi]); m.scale.setScalar(E_R); m.position.copy(p); return m; }
       function pair(c, axis, mi0, mi1) { // 전자 두 개 (axis 방향으로 벌어짐)
         const gr = new THREE.Group(); const a = axis.clone().normalize().multiplyScalar(0.11); gr.add(dot(c.clone().add(a), mi0), dot(c.clone().sub(a), mi1)); return gr;
@@ -125,7 +125,7 @@
         M.b.forEach((b) => {
           const A = P[b[0]], B = P[b[1]], d = B.clone().sub(A), mid = A.clone().add(B).multiplyScalar(0.5); const dn = d.clone().normalize();
           let perp = dn.clone().cross(V(0, 0, 1)); if (perp.lengthSq() < 0.01) perp = dn.clone().cross(V(0, 1, 0)); perp.normalize();
-          const order = b[2], offs = order === 1 ? [0] : order === 2 ? [-0.34, 0.34] : [-0.5, 0, 0.5];
+          const order = b[2], offs = order === 1 ? [0.2] : order === 2 ? [-0.3, 0.3] : [-0.42, 0.21, 0.5];
           offs.forEach((o) => { const c = mid.clone().addScaledVector(perp, o); const pr = new THREE.Group(); pr.add(dot(c.clone().addScaledVector(dn, 0.13), 0), dot(c.clone().addScaledVector(dn, -0.13), 1)); g.add(pr); });
           around[b[0]] += order * 2; around[b[1]] += order * 2;
         });

@@ -12,14 +12,16 @@
   window.SciSim3D.attach({
     title: '효소 저해 3D 모형',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: narrow ? 14.5 : 10.8, theta: 0.15, phi: 1.3, target: [0, 0.5, 0], min: 6, max: 22 },
+    camera: { dist: narrow ? 13 : 10.8, theta: 0.15, phi: 1.3, target: narrow ? [-0.8, 0, 0] : [0, 0.5, 0], min: 6, max: 22 },
     autoRotate: 0,
     levels: [0, 1],
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V = THREE.Vector3;
+      if (narrow) root.rotation.z = Math.PI / 2;      // 휴대폰(세로 화면)에서는 눕혀 둔 모형을 세워서 보여 줘요
       let type = 'comp', nS = 5, nI = 7;
       const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.38, metalness: 0.03 }, o || {}));
+      const A = (p) => { const o = new THREE.Object3D(); o.position.set(p[0], p[1], p[2]); root.add(o); return o; };
       const enzMat = std(0x38bdf8, { roughness: 0.32 }), siteMat = std(0x0c4a6e, { emissive: 0x082f49, roughness: 0.6 });
       const alloMat = std(0x7e22ce, { emissive: 0x2e1065, roughness: 0.5 });
 
@@ -73,7 +75,7 @@
         L_allo.show(type === 'non'); L_act.show(true);
         pickLabels(); text();
       }
-      const L_act = label('활성 부위', [0, EY + 1.2, 0], { color: '#0f3b57' });
+      const L_act = label('활성 부위', A([0, EY + 1.2, 0]), { color: '#0f3b57' });
       const L_s = label('기질', null, { color: '#9f1239' }), L_i = label('저해제', null, { color: '#6b21a8', offset: [0, 0.5, 0] });
       const L_allo = label('다른 자리', [EX[2] + 1.85, EY + 0.55, 0], { color: '#6b21a8' });
 
@@ -166,7 +168,7 @@
       let lastType = null, lastIdx = null;
       return {
         update(dt) {
-          dt = Math.min(dt, 0.05);
+          dt = Math.min(dt, 0.05) * (window.__v3dTS || 1);
           const md = window.__sim && window.__sim.S && window.__sim.S.md;
           if (md && (md.type !== lastType || md.idx !== lastIdx)) {
             lastType = md.type; lastIdx = md.idx;

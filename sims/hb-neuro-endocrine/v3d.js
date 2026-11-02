@@ -11,8 +11,9 @@
   window.SciSim3D.attach({
     title: '신경 신호 vs 호르몬 신호 3D',
     hint: '신호를 보내 속도 · 범위 · 지속 시간을 비교해 봐요',
-    camera: { dist: narrow ? 17 : 12.5, theta: 0.12, phi: 0.95, min: 7, max: 24, target: [0, 0, 0] },
+    camera: { dist: narrow ? 21 : 15.5, theta: 0.12, phi: 0.95, min: 7, max: 28, target: [0, 0, 0] },
     autoRotate: 0,
+    levels: [0, 1],
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = (x, y, z) => new THREE.Vector3(x, y, z || 0);
@@ -22,15 +23,15 @@
       const R = rng(9), D = new THREE.Object3D();
 
       /* 바닥 판 두 개 (신경 · 호르몬 구역) */
-      [[ZN, 0x2a3b66], [ZH, 0x4a2a46]].forEach(([z, c]) => { const m = new THREE.Mesh(new THREE.BoxGeometry(13.4, 0.1, 4.6), std(c, { roughness: 0.9, transparent: true, opacity: 0.55 })); m.position.set(0, -1.15, z); m.receiveShadow = true; root.add(m); });
+      [[ZN, 0x1b2a55], [ZH, 0x3a1d38]].forEach(([z, c]) => { const m = new THREE.Mesh(new THREE.BoxGeometry(13.4, 0.1, 4.6), std(c, { roughness: 0.9, transparent: true, opacity: 0.55 })); m.position.set(0, -1.15, z); m.receiveShadow = true; root.add(m); });
 
       /* 세포 만들기 */
       function cell(x, z, kind) { // kind: 'tn' 신경 표적 · 'nn' 비표적 · 'th' 호르몬 표적 · 'nh' 비표적
         const g = new THREE.Group(); g.position.set(x, 0, z);
-        const base = kind[0] === 't' ? 0xf5a3b8 : 0xb4bac8;
+        const base = kind[0] === 't' ? 0xe0517a : 0x6f7a90;
         const m = std(base, { roughness: 0.4, emissive: 0x000000 });
         g.add(new THREE.Mesh(new THREE.SphereGeometry(0.62, 32, 22), m));
-        const nm = std(kind[0] === 't' ? 0x9a4a72 : 0x6a7080); const nu = new THREE.Mesh(new THREE.SphereGeometry(0.25, 16, 12), nm); nu.position.set(0.1, 0.05, 0.12); g.add(nu);
+        const nm = std(kind[0] === 't' ? 0x8a2a58 : 0x4a5262); const nu = new THREE.Mesh(new THREE.SphereGeometry(0.25, 16, 12), nm); nu.position.set(0.1, 0.05, 0.12); g.add(nu);
         root.add(g); return { g, m, kind, glow: 0, hold: 0, x, z };
       }
       function receptor(c, dirx, dirz, type) {
@@ -43,7 +44,7 @@
       }
 
       /* 신경 구역 */
-      const somaM = std(0x9a7fe0, { roughness: 0.4 });
+      const somaM = std(0x7a55d0, { roughness: 0.4 });
       const soma = new THREE.Mesh(new THREE.SphereGeometry(0.75, 32, 22), somaM); soma.position.set(-5.2, 0, ZN); root.add(soma);
       const dm = std(0xb59cf0); [[-0.9, 0.5, 0.5], [-1.0, -0.3, 0.7], [-0.9, 0.3, -0.7], [-0.8, -0.2, -0.55]].forEach((q) => root.add(tube([V3(-5.2 - 0.5, 0, ZN), V3(-5.2 + q[0] * 1.3, q[1] * 0.8, ZN + q[2]), V3(-5.2 + q[0] * 1.8, q[1], ZN + q[2] * 1.4)], 0.06, dm, 12)));
       const axM = std(0xf2b24a, { roughness: 0.4 });
@@ -58,7 +59,7 @@
       const vesM = ghost(0xff6b6b, 0.22, { roughness: 0.2, side: THREE.DoubleSide });
       const vessel = new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.62, 12.4, 36, 1, true), vesM); vessel.rotation.z = Math.PI / 2; vessel.position.set(0.3, 0, ZH); vessel.renderOrder = 2; root.add(vessel);
       const vend = (x) => { const t = new THREE.Mesh(new THREE.TorusGeometry(0.62, 0.05, 8, 30), std(0xd94a4a)); t.rotation.y = Math.PI / 2; t.position.set(x, 0, ZH); root.add(t); }; vend(-5.9); vend(6.5);
-      const gland = new THREE.Mesh(new THREE.SphereGeometry(0.95, 36, 24), std(0xd18ad9, { roughness: 0.4 })); gland.position.set(-5.2, 0, ZH - 1.9); root.add(gland);
+      const gland = new THREE.Mesh(new THREE.SphereGeometry(0.95, 36, 24), std(0xb560c4, { roughness: 0.4 })); gland.position.set(-5.2, 0, ZH - 1.9); root.add(gland);
       const gm = std(0xffa24d, { emissive: 0x7a3c00, emissiveIntensity: 0.4 }); for (let k = 0; k < 9; k++) { const gr = new THREE.Mesh(new THREE.SphereGeometry(0.12, 10, 8), gm); const a = k * 2.4; gr.position.set(-5.2 + Math.cos(a) * 0.5, Math.sin(a * 1.3) * 0.4, ZH - 1.9 + Math.sin(a) * 0.5); root.add(gr); }
       root.add(tube([V3(-5.2, 0, ZH - 1.2), V3(-5.0, 0, ZH - 0.7), V3(-4.5, 0, ZH - 0.3)], 0.12, std(0xd18ad9), 12));
       // 호르몬 표적 세포 3 · 비표적 3

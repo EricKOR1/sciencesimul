@@ -39,10 +39,11 @@
   window.SciSim3D.attach({
     title: '해양 컨베이어 벨트 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    levels: [2, 3],
+    levels: [0, 2, 3],
     camera: { dist: PHONE ? 14 : 10.5, theta: 0.2, phi: 1.1, min: 5.5, max: 22 },
     autoRotate: 0.12,
     build(ctx) {
+      if (ctx.THREE.ColorManagement) ctx.THREE.ColorManagement.legacyMode = false;     // 색을 보이는 그대로(sRGB) 쓰도록 맞춰요
       const { THREE, root, label, info, controls } = ctx;
       const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.5, metalness: 0.05 }, o || {}));
       const tex = earthTex(THREE);
@@ -68,9 +69,9 @@
       const cc = new THREE.Color(); let k0 = 0; FL.forEach((f) => { f.k0 = k0; for (let i = 0; i < f.n; i++) { cc.set(f.id === 'surf' ? 0xffd9a8 : f.id === 'aabw' ? 0xe4dcff : 0xcfeaff); dots.setColorAt(k0 + i, cc); } k0 += f.n; });
 
       const LB = {
-        n: label('북대서양 심층수 침강', ll(62, -28, R * 1.03), { size: 12, offset: [0, 0.35, 0] }), s: label('남극 저층수 침강', ll(-72, -42, R * 1.03), { size: 12, offset: [0, -0.3, 0] }),
-        sf: label('표층 해류 (따뜻함)', ll(20, -58, R * 1.03), { size: 12, color: 'rgba(170,70,10,.92)' }), dp: label('심층 해류 (차가움)', ll(-30, -33, R * 0.9), { size: 12, color: 'rgba(15,80,170,.92)' }),
-        up: label('올라옴(용승)', ll(12, 60, R * 1.03), { size: 11.5, color: 'rgba(15,100,150,.9)' }),
+        n: label('북대서양 심층수 침강', ll(62, -28, R * 1.03).toArray(), { size: 12, offset: [0, 0.35, 0] }), s: label('남극 저층수 침강', ll(-72, -42, R * 1.03).toArray(), { size: 12, offset: [0, -0.3, 0] }),
+        sf: label('표층 해류 (따뜻함)', ll(20, -58, R * 1.03).toArray(), { size: 12, color: 'rgba(170,70,10,.92)' }), dp: label('심층 해류 (차가움)', ll(-30, -33, R * 0.9).toArray(), { size: 12, color: 'rgba(15,80,170,.92)' }),
+        up: label('올라옴(용승)', ll(12, 60, R * 1.03).toArray(), { size: 11.5, color: 'rgba(15,100,150,.9)' }),
       };
 
       /* 상태 */

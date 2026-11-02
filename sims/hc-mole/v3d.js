@@ -80,7 +80,7 @@
   window.SciSim3D.attach({
     title: '몰 상자 쌓기 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: phone ? 14 : 10, theta: 0.5, phi: 1.15, min: 5, max: 30, target: [0, 1.4, 0] },
+    camera: { dist: phone ? 10.5 : 10, theta: 0.5, phi: 1.15, min: 5, max: 30, target: [0, 1.4, 0] },
     autoRotate: 0.22,
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
@@ -97,7 +97,7 @@
       const group = new THREE.Group(); root.add(group);
       const labs = [];
       for (let i = 0; i < 3; i++) { const l = label('', [0, 0, 0], { size: 12.5 }); l.show(false); labs.push(l); }
-      const fl = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({ color: 0x24324f, roughness: 0.95, envMapIntensity: 0.05 }));
+      const fl = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ color: 0x050b18 }));
       fl.scale.set(3 * SP + 0.6, 0.12, BOXW + 0.9); fl.position.set(0, -0.1, 0); root.add(fl);
       const sphM = new THREE.Mesh(L.SG, L.mat(0xffffff));
       let mO, mH, mEgg, carton = [];
@@ -106,7 +106,7 @@
 
       function rebuild() {
         L.clear(group); carton = [];
-        fl.scale.x = Math.ceil(amt - 1e-9) * SP + 1.0; orbit.dist = (phone ? 1.3 : 1) * (7.4 + 2.2 * Math.ceil(amt - 1e-9));
+        fl.scale.x = Math.ceil(amt - 1e-9) * SP + 1.0; orbit.dist = (phone ? 1.12 : 1) * (7.4 + 2.2 * Math.ceil(amt - 1e-9));
         const S = SUB[sub];
         const boxes = Math.ceil(amt - 1e-9);
         const ox = -(boxes - 1) * SP / 2;

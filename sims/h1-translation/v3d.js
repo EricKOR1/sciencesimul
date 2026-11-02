@@ -14,7 +14,8 @@
 
   window.SciSim3D.attach({
     title: '번역: 리보솜과 tRNA 3D',
-    camera: { dist: PHN ? 17 : 12.5, theta: 0.28, phi: 1.3, target: [0, 1.0, 0], min: 6, max: 24 },
+    camera: { dist: PHN ? 15 : 10.5, theta: 0.1, phi: 1.4, target: [0, 1.1, 0], min: 6, max: 24 },
+    levels: [0],
     autoRotate: 0,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
@@ -27,7 +28,7 @@
       root.add(big, small);
       label('리보솜 큰 단위체', big, { offset: [-1.6, 1.15, 0.8], size: 12 }); label('작은 단위체', small, { offset: [1.9, -0.7, 0.7], size: 12 });
       // mRNA
-      const NM = 24, back = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 30, 8), std(0xe7ebf5)); back.rotation.z = Math.PI / 2; back.position.set(0, 0, 0); root.add(back);
+      const NM = 24, back = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 18, 8), std(0xe7ebf5)); back.rotation.z = Math.PI / 2; back.position.set(0, 0, 0); root.add(back);
       const bases = []; const bg = new THREE.SphereGeometry(0.17, 20, 14);
       SEQ.forEach((cd, k) => cd.split('').forEach((b, j) => { const m = new THREE.Mesh(bg, std(BASE[b], { roughness: 0.3 })); root.add(m); bases.push({ m, k, j }); }));
       // 앞뒤 가짜 염기(5′ UTR / 3′ 꼬리)로 mRNA가 계속 이어진 느낌

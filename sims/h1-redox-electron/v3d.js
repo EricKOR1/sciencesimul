@@ -11,7 +11,7 @@
   const RX = {
     zn: {
       name: 'Zn + Cu²⁺', eq: 'Zn + Cu²⁺ → Zn²⁺ + Cu',
-      don: [{ pos: [-2.6, 0, 0], el: 'Zn', n: 2, col: 0x9aa9bd, rad: 0.95 }],
+      don: [{ pos: [-2.6, 0, 0], el: 'Zn', n: 2, col: 0x7f90a8, rad: 0.95 }],
       acc: [{ pos: [2.6, 0, 0], el: 'Cu', n: 2, col: 0xd9822b, ionCol: 0x3b82f6, rad: 0.85 }],
       pairs: [[0, 0, 2]],
       before: ['Zn', 'Cu²⁺'], after: ['Zn²⁺', 'Cu'],
@@ -42,12 +42,13 @@
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3;
-      const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.38, metalness: 0.15 }, o || {}));
+      const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ envMapIntensity: 0.6, color: c, roughness: 0.38, metalness: 0.15 }, o || {}));
       const st = { rx: 'zn', p: 0, play: false, t: 0 };
       const eMat = new THREE.MeshStandardMaterial({ color: 0xffd23f, emissive: 0xffb800, emissiveIntensity: 0.7, roughness: 0.25, metalness: 0 });
       const eGeo = new THREE.SphereGeometry(0.15, 18, 14);
 
-      const floor = new THREE.Mesh(new THREE.CylinderGeometry(6.4, 6.6, 0.25, 56), mat(0x2d3547, { roughness: 0.95, metalness: 0 })); floor.position.y = -2.4; floor.receiveShadow = true; root.add(floor);
+      const slotTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'); g.strokeStyle = '#ffe48a'; g.lineWidth = 5; g.setLineDash([8, 7]); g.beginPath(); g.arc(32, 32, 24, 0, 7); g.stroke(); return new THREE.CanvasTexture(c); })();
+      const floor = new THREE.Mesh(new THREE.CylinderGeometry(5.2, 5.4, 0.25, 56), new THREE.MeshLambertMaterial({ color: 0x2d3547 })); floor.position.y = -2.6; floor.receiveShadow = true; root.add(floor);
       const grp = new THREE.Group(); root.add(grp);
       let parts = null;
 
@@ -67,7 +68,7 @@
           const a = new THREE.Group(); a.position.set(...c.pos); g.add(a);
           const body = new THREE.Mesh(new THREE.SphereGeometry(c.rad, 40, 28), mat(c.ionCol, { metalness: c.neutral ? 0.1 : 0.2, roughness: c.neutral ? 0.4 : 0.25, transparent: !c.neutral, opacity: c.neutral ? 1 : 0.88 })); body.castShadow = true; a.add(body);
           const slots = [];
-          for (let k = 0; k < c.n; k++) { const s = new THREE.Mesh(new THREE.SphereGeometry(0.17, 14, 10), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.35, wireframe: true })); s.position.set(Math.cos(k / c.n * 6.28 + 0.5) * (c.rad + 0.55), Math.sin(k / c.n * 6.28 + 0.5) * (c.rad + 0.55), 0); a.add(s); slots.push(s); }
+          for (let k = 0; k < c.n; k++) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: slotTex, transparent: true, opacity: 0.9, depthWrite: false })); s.scale.set(0.5, 0.5, 1); s.position.set(Math.cos(k / c.n * 6.28 + 0.5) * (c.rad + 0.55), Math.sin(k / c.n * 6.28 + 0.5) * (c.rad + 0.55), 0); a.add(s); slots.push(s); }
           const lb = label(R.before[1], a, { size: 14, offset: [0, c.rad + 0.85, 0] });
           P.acc.push({ a, body, slots, lb, c });
         });

@@ -5,13 +5,14 @@
   'use strict';
   if (!window.SciSim3D) return;
   const PHN = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches);
-  const PX = 1.55, DR = 0.5; // 활성 부위 위치/반지름
+  const PX = 1.2, DR = 0.5; // 활성 부위 위치/반지름
   const CA = [PX + 0.05, 0.42, 0], CB = [PX + 0.05, -0.42, 0];
   const CAD = [PX + 0.0, 0.85, 0.15], CBD = [PX - 0.1, -0.2, 0.75]; // 변성된 활성 부위
 
   window.SciSim3D.attach({
     title: '효소와 기질 3D',
-    camera: { dist: PHN ? 12 : 8.5, theta: 0.45, phi: 1.3, target: [1.2, 0, 0], min: 4, max: 20 },
+    camera: { dist: PHN ? 13 : 9.5, theta: 0.8, phi: 1.32, target: [1.1, 0, 0], min: 4, max: 20 },
+    levels: [2],
     autoRotate: 0,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
@@ -22,6 +23,7 @@
         const centers = (denat ? [CAD, CBD] : [CA, CB]).map((c) => new THREE.Vector3(...c));
         for (let i = 0; i < pos.count; i++) {
           v.fromBufferAttribute(pos, i);
+          { const nn = Math.sin(v.x * 2.3 + v.z * 1.7) * Math.cos(v.y * 2.9 - v.x) * 0.09 + Math.sin(v.z * 4.1 + v.y * 3.3) * 0.035; v.multiplyScalar(1 + nn); }
           if (denat) { // 변성: 울퉁불퉁하게 일그러짐
             const n = Math.sin(v.x * 3.1 + v.y * 2.3) * Math.cos(v.z * 2.7 + v.x) * 0.16 + Math.sin(v.y * 5 + v.z * 4) * 0.05;
             v.multiplyScalar(1 + n); v.x *= 1.1; v.y *= 0.92;

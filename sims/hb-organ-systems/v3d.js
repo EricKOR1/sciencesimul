@@ -10,6 +10,7 @@
     hint: '기관계를 골라 보고 운동 세기를 바꿔 봐요',
     camera: { dist: narrow ? 15 : 12.5, theta: 0.35, phi: 1.4, min: 6, max: 22, target: [0, 0.6, 0] },
     autoRotate: 0.12,
+    levels: [0, 1],
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V = THREE.Vector3, V3 = (x, y, z) => new V(x, y, z || 0);

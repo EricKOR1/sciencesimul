@@ -11,18 +11,18 @@
   window.SciSim3D.attach({
     title: '3D 산과 염기 (이온 모형)',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: PHN ? 17 : 11.5, theta: 0.5, phi: 1.2, target: [0, 1.6, 0], min: 6, max: 26 },
+    camera: { dist: PHN ? 15 : 10, theta: 0.5, phi: 1.2, target: [0, 1.6, 0], min: 6, max: 26 },
     autoRotate: 0,
     levels: [0, 2],
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3;
-      const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.35, metalness: 0.05 }, o || {}));
+      const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ envMapIntensity: 0.6, color: c, roughness: 0.35, metalness: 0.05 }, o || {}));
       const st = { sub: 'hcl', s: 0, play: false, names: true, t: 0, sel: 1 };
 
       /* ---------- 비커 · 전극 · 전구 ---------- */
       const WR = 2.55, WH = 3.2;
-      const floor = new THREE.Mesh(new THREE.CylinderGeometry(5.6, 5.8, 0.25, 56), mat(0x2d3547, { roughness: 0.95, metalness: 0 })); floor.position.y = -0.15; floor.receiveShadow = true; root.add(floor);
+      const floor = new THREE.Mesh(new THREE.CylinderGeometry(5.6, 5.8, 0.25, 56), new THREE.MeshLambertMaterial({ color: 0x2d3547 })); floor.position.y = -0.15; floor.receiveShadow = true; root.add(floor);
       const beaker = new THREE.Mesh(new THREE.CylinderGeometry(WR + 0.12, WR + 0.12, WH + 0.9, 56, 1, true), new THREE.MeshStandardMaterial({ color: 0xd6e6ff, transparent: true, opacity: 0.2, roughness: 0.05, metalness: 0, side: THREE.DoubleSide, depthWrite: false })); beaker.position.y = (WH + 0.9) / 2; root.add(beaker);
       const rim = new THREE.Mesh(new THREE.TorusGeometry(WR + 0.12, 0.05, 10, 56), mat(0xe3eeff, { transparent: true, opacity: 0.6 })); rim.rotation.x = Math.PI / 2; rim.position.y = WH + 0.9; root.add(rim);
       const bot = new THREE.Mesh(new THREE.CylinderGeometry(WR + 0.12, WR + 0.12, 0.12, 56), mat(0xcfe0f7, { transparent: true, opacity: 0.45 })); bot.position.y = 0.04; root.add(bot);
@@ -36,7 +36,8 @@
       const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.62, 32, 24), bulbM); bulbG.add(bulb);
       const base = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.32, 0.4, 16), mat(0x8a93a6, { metalness: 0.7 })); base.position.y = -0.72; bulbG.add(base);
       const fil = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.015, 8, 16), new THREE.MeshBasicMaterial({ color: 0xffb400 })); fil.position.y = -0.05; bulbG.add(fil);
-      const bl = new THREE.PointLight(0xffd070, 0, 7); bl.position.set(0, WH + 2.5, 0); root.add(bl);
+            const gcv = document.createElement('canvas'); gcv.width = gcv.height = 128; { const g = gcv.getContext('2d'), gr = g.createRadialGradient(64, 64, 0, 64, 64, 64); gr.addColorStop(0, 'rgba(255,235,150,1)'); gr.addColorStop(0.35, 'rgba(255,200,70,.5)'); gr.addColorStop(1, 'rgba(255,170,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, 128, 128); }
+      const bglow = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(gcv), transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false })); bglow.scale.set(3.6, 3.6, 1); bulbG.add(bglow);
       const wireM = mat(0x2a2f3a, { metalness: 0.3 });
       [-1, 1].forEach((sg) => { const c = new THREE.CatmullRomCurve3([new V3(sg * (WR - 0.45), WH + 0.9, 0), new V3(sg * (WR - 0.45), WH + 1.5, 0), new V3(sg * 0.6, WH + 1.9, 0), new V3(sg * 0.2, WH + 2.1, 0)], false, 'catmullrom', 0.2); root.add(new THREE.Mesh(new THREE.TubeGeometry(c, 30, 0.035, 8, false), wireM)); });
       label('(−)', electrodes[0], { size: 12, offset: [0, WH / 2 + 0.6, 0] }); label('(+)', electrodes[1], { size: 12, offset: [0, WH / 2 + 0.6, 0] });
@@ -50,12 +51,12 @@
       function sphere(r, c, o) { const m = new THREE.Mesh(new THREE.SphereGeometry(r, 28, 20), mat(c, o)); m.castShadow = true; return m; }
       function ion(kind) {
         const g = new THREE.Group();
-        if (kind === 'H') g.add(sphere(0.3, COL.H));
-        else if (kind === 'Cl') g.add(sphere(0.52, COL.Cl));
-        else if (kind === 'Na') g.add(sphere(0.46, COL.Na));
-        else { g.add(sphere(0.42, COL.OH)); const h = sphere(0.2, 0xf4f6fb); h.position.set(0.38, 0.18, 0); g.add(h); }
+        if (kind === 'H') g.add(sphere(0.26, COL.H));
+        else if (kind === 'Cl') g.add(sphere(0.44, COL.Cl));
+        else if (kind === 'Na') g.add(sphere(0.38, COL.Na));
+        else { g.add(sphere(0.34, COL.OH)); const h = sphere(0.17, 0xf4f6fb); h.position.set(0.3, 0.15, 0); g.add(h); }
         const plus = kind === 'H' || kind === 'Na';
-        const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: signTex(plus ? '+' : '−', plus ? '#900' : '#003'), transparent: true, depthTest: false })); sp.scale.set(0.75, 0.75, 1); sp.renderOrder = 5; g.add(sp);
+        const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: signTex(plus ? '+' : '−', plus ? '#900' : '#003'), transparent: true, depthTest: false })); sp.scale.set(0.55, 0.55, 1); sp.renderOrder = 5; g.add(sp);
         g.userData.sp = sp; return g;
       }
       let seed = 5; const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
@@ -68,7 +69,7 @@
       function rebuild() {
         sg.clear(); items = [];
         for (let i = 0; i < NU; i++) {
-          const a = rnd() * 6.283, r = Math.sqrt(rnd()) * (WR - 0.95), y = 0.6 + rnd() * (WH - 1.2) + 0.1;
+          const a = i * 2.4 + 0.5, r = Math.sqrt((i + 0.5) / NU) * (WR - 1.35), y = 0.9 + ((i * 0.618) % 1) * (WH - 1.8);
           const dir = new V3(rnd() - 0.5, rnd() - 0.5, rnd() - 0.5).normalize();
           const it = { base: new V3(Math.cos(a) * r, y, Math.sin(a) * r), dir, ph: rnd() * 6.28, i };
           if (st.sub === 'suc') { it.mol = sugar(); sg.add(it.mol); }
@@ -86,7 +87,7 @@
       function apply() {
         const s = st.s, hasIon = st.sub !== 'suc';
         names[0].show(st.names && (s > 0.5 || st.sub === 'suc')); names[1].show(st.names && s > 0.5 && hasIon);
-        bulbM.emissiveIntensity = hasIon ? Math.min(1, s * 1.1) * 1.6 : 0; bl.intensity = hasIon ? s * 2.2 : 0;
+        bulbM.emissiveIntensity = hasIon ? Math.min(1, s * 1.1) * 1.6 : 0; bglow.material.opacity = hasIon ? Math.min(1, s * 1.1) * 0.9 : 0;
         const nm = { hcl: '염산(HCl)', naoh: '수산화 나트륨(NaOH) 수용액', suc: '설탕물' }[st.sub];
         if (st.sub === 'hcl') info(s < 0.05 ? '<b>HCl</b>이 물에 녹기 전이에요. 녹이면 어떻게 될까요?' : '<b>HCl → H⁺ + Cl⁻</b><br>산은 물에 녹아 <b>수소 이온(H⁺)</b>을 내놓아요. 이온이 있어 전구가 켜져요.');
         else if (st.sub === 'naoh') info(s < 0.05 ? '<b>NaOH</b>가 물에 녹기 전이에요. 녹이면 어떻게 될까요?' : '<b>NaOH → Na⁺ + OH⁻</b><br>염기는 물에 녹아 <b>수산화 이온(OH⁻)</b>을 내놓아요. 전구가 켜져요.');

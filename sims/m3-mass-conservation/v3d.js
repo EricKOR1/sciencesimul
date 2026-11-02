@@ -135,23 +135,23 @@
     host: '.stage-card',
     title: '질량 보존 3D 모형',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: PHN ? 16 : 12.5, theta: 0.1, phi: 1.2, min: 6, max: 28, target: [0, 0.3, 0] },
+    camera: { dist: PHN ? 21 : 13, theta: 0.1, phi: 1.2, min: 6, max: 28, target: [0, 0.3, 0] },
     autoRotate: 0,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const K = ChemKit(THREE);
-      let n = 2, open = false, p = 0, playing = false, esc = 0, rx = null;
-      const CX = 3.5;
+      let n = 2, open = false, p = 0, playing = false, esc = 0, rx = null, rxS = null;
+      const CX = 3.2;
       const glass = new THREE.MeshStandardMaterial({ color: 0xbfe3ff, roughness: 0.08, metalness: 0, transparent: true, opacity: 0.16, depthWrite: false, side: THREE.DoubleSide });
       const metal = new THREE.MeshStandardMaterial({ color: 0x8b95a7, roughness: 0.4, metalness: 0.7 });
       const stopMat = new THREE.MeshStandardMaterial({ color: 0xe8a14b, roughness: 0.7 });
       const stoppers = [];
       [-CX, CX].forEach((cx) => {
-        const base = new THREE.Mesh(new THREE.BoxGeometry(4.6, 0.45, 4.6), metal); base.position.set(cx, -1.55, 0); root.add(base);
-        const top = new THREE.Mesh(new THREE.BoxGeometry(4.2, 0.08, 4.2), new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.3 })); top.position.set(cx, -1.3, 0); root.add(top);
-        const fl = new THREE.Mesh(new THREE.CylinderGeometry(2.0, 2.0, 3.8, 48, 1, true), glass); fl.position.set(cx, 0.6, 0); root.add(fl);
-        const rim = new THREE.Mesh(new THREE.TorusGeometry(2.0, 0.05, 10, 56), glass); rim.rotation.x = Math.PI / 2; rim.position.set(cx, 2.5, 0); root.add(rim);
-        const st = new THREE.Mesh(new THREE.CylinderGeometry(1.3, 1.1, 0.6, 32), stopMat); st.position.set(cx, 2.7, 0); root.add(st); stoppers.push(st);
+        const base = new THREE.Mesh(new THREE.BoxGeometry(4.1, 0.45, 4.1), metal); base.position.set(cx, -1.55, 0); root.add(base);
+        const top = new THREE.Mesh(new THREE.BoxGeometry(3.7, 0.08, 3.7), new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.3 })); top.position.set(cx, -1.3, 0); root.add(top);
+        const fl = new THREE.Mesh(new THREE.CylinderGeometry(1.75, 1.75, 3.8, 48, 1, true), glass); fl.position.set(cx, 0.6, 0); root.add(fl);
+        const rim = new THREE.Mesh(new THREE.TorusGeometry(1.75, 0.05, 10, 56), glass); rim.rotation.x = Math.PI / 2; rim.position.set(cx, 2.5, 0); root.add(rim);
+        const st = new THREE.Mesh(new THREE.CylinderGeometry(1.15, 0.95, 0.6, 32), stopMat); st.position.set(cx, 2.7, 0); root.add(st); stoppers.push(st);
       });
       const labL = label('', [-CX, -1.3, 2.6], { color: 'rgba(14,165,233,.92)', size: 15 }), labR = label('', [CX, -1.3, 2.6], { color: 'rgba(34,197,94,.92)', size: 15 });
       label('반응 전', [-CX, 3.4, 0], { color: 'rgba(14,165,233,.9)' }); label('반응 후', [CX, 3.4, 0], { color: 'rgba(34,197,94,.9)' });
@@ -160,8 +160,10 @@
       const hd = new THREE.Mesh(new THREE.ConeGeometry(0.28, 0.5, 20), am); hd.rotation.z = -Math.PI / 2; hd.position.x = 0.7; arrow.add(sh, hd); arrow.position.y = 0.6; root.add(arrow);
       const massOf = (list) => list.reduce((s, sp) => s + K.SP[sp].a.reduce((q, e) => q + AM[e], 0), 0);
       function build() {
-        if (rx) rx.dispose();
-        rx = K.makeRxn(root, { re: [['H2O2', n]], pr: [['H2O', n], ['O2', n / 2]], rigid: false }, { cxR: -CX, cxP: CX, sp: 1.55, noPlate: true, gas: ['O2'] });
+        if (rx) rx.dispose(); if (rxS) rxS.dispose();
+        const def = { re: [['H2O2', n]], pr: [['H2O', n], ['O2', n / 2]], rigid: false };
+        rx = K.makeRxn(root, def, { cxR: CX, cxP: CX, sp: 1.5, noPlate: true, gas: ['O2'] });      // 오른쪽 용기에서 반응이 일어나요
+        rxS = K.makeRxn(root, def, { cxR: -CX, cxP: -CX, sp: 1.5, noPlate: true }); rxS.set(0);     // 왼쪽 용기: 반응 전 모습 그대로
         esc = 0; rx.set(p); rx.setEsc(0); text();
       }
       function text() {

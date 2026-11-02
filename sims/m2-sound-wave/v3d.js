@@ -11,7 +11,7 @@
   window.SciSim3D.attach({
     title: '소리 전달 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: PHN ? 17 : 12.5, theta: 0.55, phi: 1.15, min: 6, max: 28, target: [0.5, 0, 0] },
+    camera: { dist: PHN ? 22 : 16, theta: 0.5, phi: 1.15, min: 6, max: 34, target: [1.3, 0, 0] },
     autoRotate: 0,
     levels: [0, 1, 2],
     build(ctx) {

@@ -11,20 +11,20 @@
   window.SciSim3D.attach({
     title: '3D 지구의 열수지',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: PHN ? 27 : 18.5, theta: 0.28, phi: 1.28, target: [0, 4.3, 0], min: 8, max: 36 },
+    camera: { dist: PHN ? 21 : 18.5, theta: 0.28, phi: 1.28, target: [0, 4.3, 0], min: 8, max: 36 },
     autoRotate: 0,
     levels: [0, 1],
     build(ctx) {
       const { THREE, root, scene, label, info, controls } = ctx;
       const V3 = THREE.Vector3, Y = new V3(0, 1, 0);
-      const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.6, metalness: 0.05 }, o || {}));
+      const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ envMapIntensity: 0.6, color: c, roughness: 0.6, metalness: 0.05 }, o || {}));
       const st = { gas: 1, show: 'all', t: 0 };
 
       /* ---------- 땅 · 바다 · 대기 ---------- */
       const GW = 13, GD = 5;
-      const land = new THREE.Mesh(new THREE.BoxGeometry(GW * 0.55, 0.8, GD), mat(0x2f6a24, { roughness: 0.95 })); land.position.set(-GW * 0.225, -0.4, 0); land.receiveShadow = true; root.add(land);
-      const sea = new THREE.Mesh(new THREE.BoxGeometry(GW * 0.45, 0.8, GD), mat(0x0f4a9a, { roughness: 0.3, metalness: 0.05 })); sea.position.set(GW * 0.275, -0.4, 0); sea.receiveShadow = true; root.add(sea);
-      const rock = new THREE.Mesh(new THREE.BoxGeometry(GW, 0.5, GD), mat(0x4a4036, { roughness: 1 })); rock.position.y = -1.05; root.add(rock);
+      const land = new THREE.Mesh(new THREE.BoxGeometry(GW * 0.55, 0.8, GD), new THREE.MeshLambertMaterial({ color: 0x2f6a24 })); land.position.set(-GW * 0.225, -0.4, 0); land.receiveShadow = true; root.add(land);
+      const sea = new THREE.Mesh(new THREE.BoxGeometry(GW * 0.45, 0.8, GD), new THREE.MeshLambertMaterial({ color: 0x1255b0 })); sea.position.set(GW * 0.275, -0.4, 0); sea.receiveShadow = true; root.add(sea);
+      const rock = new THREE.Mesh(new THREE.BoxGeometry(GW, 0.5, GD), new THREE.MeshLambertMaterial({ color: 0x4a4036 })); rock.position.y = -1.05; root.add(rock);
       for (let i = 0; i < 6; i++) { // 숲 (작은 나무)
         const tr = new THREE.Group(), tk = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.07, 0.3, 8), mat(0x6b4a2b)), cr = new THREE.Mesh(new THREE.ConeGeometry(0.28, 0.65, 10), mat(0x2f7a3a));
         cr.position.y = 0.45; tr.add(tk, cr); tr.position.set(-5.8 + i * 0.55, 0.15, -1.6 + (i % 3) * 0.3); tr.traverse((o) => { if (o.isMesh) o.castShadow = true; }); root.add(tr);

@@ -11,9 +11,10 @@
   window.SciSim3D.attach({
     title: '온대 저기압과 전선 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: PHONE ? 19 : 14.5, theta: -0.45, phi: 0.98, min: 5, max: 28, target: [0.8, 0.7, 0.6] },
+    camera: { dist: PHONE ? 16 : 11.5, theta: -0.45, phi: 0.98, min: 5, max: 28, target: [0.8, 0.7, 0.6] },
     autoRotate: 0.1,
     build(ctx) {
+      if (ctx.THREE.ColorManagement) ctx.THREE.ColorManagement.legacyMode = false;     // 색을 보이는 그대로(sRGB) 쓰도록 맞춰요
       const { THREE, root, label, info, controls } = ctx;
       const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.8, metalness: 0 }, o || {}));
       let sd = 9; const rnd = () => { sd = (sd * 16807) % 2147483647; return sd / 2147483647; };
@@ -79,7 +80,7 @@
       function apply() {
         const w = mode !== 'cold', c = mode !== 'warm';
         warmWedge.visible = wfLine.visible = w; coldWedge.visible = cfLine.visible = c; wsym.forEach((m) => (m.visible = w)); csym.forEach((m) => (m.visible = c)); mvW.visible = w; mvC.visible = c;
-        LB.wf.show(w); LB.cf.show(c); LB.ws.show(w && showCl); LB.cs.show(c && showCl); LB.cold.show(mode === 'all'); LB.warm.show(mode === 'all'); LB.low.show(mode === 'all');
+        LB.wf.show(w); LB.cf.show(c); LB.ws.show(mode === 'warm' && showCl); LB.cs.show(mode === 'cold' && showCl); LB.cold.show(mode === 'all'); LB.warm.show(mode === 'all'); LB.low.show(mode === 'all');
         windA.forEach((a) => (a.visible = mode === 'all'));
         rainW.visible = w && showCl; rainC.visible = c && showCl; flowW.visible = w; flowC.visible = c;
         info(mode === 'warm' ? '<b>온난 전선</b>: 따뜻한 공기가 찬 공기 위로 완만하게 올라가요.<br>층운형 구름이 넓게 생기고 약한 비가 오래 와요. 지나가면 기온이 올라가요.' : mode === 'cold' ? '<b>한랭 전선</b>: 찬 공기가 따뜻한 공기를 급하게 밀어 올려요.<br>적운형 구름이 높이 솟고 좁은 지역에 소나기가 와요. 지나가면 기온이 내려가요.' : '북반구 저기압에서는 바람이 <b>반시계 방향</b>으로 중심에 모여 들어요.<br>찬 공기는 아래로 쐐기 모양을 이루어요.');

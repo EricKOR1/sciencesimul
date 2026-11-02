@@ -32,7 +32,7 @@
     title: '태양 대기 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     levels: [0, 1],
-    camera: { dist: PHONE ? 17 : 12.5, theta: 0.7, phi: 1.2, min: 6, max: 28 },
+    camera: { dist: PHONE ? 13.5 : 12.5, theta: 1.0, phi: 1.22, min: 6, max: 28 },
     autoRotate: 0,
     build(ctx) {
       const { THREE, root, label, info, controls, renderer } = ctx;
@@ -73,12 +73,12 @@
       const cutObjs = [bodyCut, chromCut, transCut], fullObjs = [bodyFull, chromFull, transFull];
 
       /* 층 이름표 (단면 위, x>0 쪽 단면 z=0) */
-      const lp = (r, a) => [r * Math.cos(a * DEG), r * Math.sin(a * DEG), 0.03];
+      const lp = (r, a) => [0.03, r * Math.sin(a * DEG), r * Math.cos(a * DEG)];
       const labL = [
         label('광구', lp(RS * 0.97, 22), { color: 'rgba(146,84,0,.92)' }), label('채층', lp(3.33, 52), { color: 'rgba(185,28,28,.92)' }),
         label('천이층', lp(3.57, 74), { color: 'rgba(109,40,217,.92)', size: 11.5 }), label('코로나', lp(4.7, 40), { color: 'rgba(30,64,140,.92)' }),
       ];
-      labL[0].off = [0.2, 0, 0]; labL[1].off = [0.7, 0.1, 0]; labL[2].off = [0.6, 0.35, 0]; labL[3].off = [0.0, 0.0, 0];
+      labL.forEach((l) => (l.off = [0.2, 0, 0]));
 
       /* 현상: 홍염 고리 · 플레어 · 코로나 홀 · 태양풍 · CME */
       const phenG = new THREE.Group(); root.add(phenG);
@@ -92,12 +92,12 @@
         const m = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 48, 0.06, 8, false), loopM); phenG.add(m); return { m, top: pts[12] };
       }
       const L1 = loopAt(20 * DEG, 20 * DEG, 0.55, 1.1), L2 = loopAt(-10 * DEG, 80 * DEG, 0.45, 0.75), L3 = loopAt(30 * DEG, 140 * DEG, 0.5, 0.9), L4 = loopAt(0.15, 20 * DEG + 0.12, 0.3, 0.55);
-      const labProm = label('홍염', L3.top, { color: 'rgba(185,28,28,.92)' });
+      const labProm = label('홍염', L3.top.toArray(), { color: 'rgba(185,28,28,.92)' });
       /* 플레어 */
       const flTex = glowTexture([[0, 'rgba(255,255,255,1)'], [0.25, 'rgba(255,240,150,.8)'], [1, 'rgba(255,200,60,0)']]);
       const flare = new THREE.Sprite(new THREE.SpriteMaterial({ map: flTex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false })); phenG.add(flare);
       const fl0 = L1.top.clone().normalize().multiplyScalar(RS * 1.01); flare.position.copy(fl0); flare.scale.setScalar(0.01);
-      const labFl = label('플레어', fl0, { color: 'rgba(150,100,0,.95)' });
+      const labFl = label('플레어', fl0.toArray(), { color: 'rgba(150,100,0,.95)' });
       /* 코로나 홀 + 열린 자기장(태양풍) */
       const holeD = new THREE.Vector3(0, 1, 0.12).normalize();
       const hole = new THREE.Mesh(new THREE.CircleGeometry(0.85, 40), new THREE.MeshBasicMaterial({ color: 0x1b1020, transparent: true, opacity: 0.85, side: THREE.DoubleSide, depthWrite: false })); hole.position.copy(holeD).multiplyScalar(RS * 1.01); hole.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), holeD); phenG.add(hole);
@@ -149,8 +149,8 @@
           else { flare.scale.setScalar(0.35 + 0.06 * Math.sin(st.t * 3)); flare.material.opacity = 0.55; }
           if (st.cme >= 0) {
             st.cme += dt * 0.35; const u = st.cme; cme.visible = true;
-            const r = RS * 1.02 + u * 6.5; cme.scale.setScalar(Math.max(0.1, r * 0.55)); cme.position.copy(cDir).multiplyScalar(r * 0.55 + RS * 0.6);
-            cmeM.opacity = Math.max(0, 0.55 * (1 - u)); labCme.obj = cme.position.clone().addScaledVector(cDir, r * 0.55); labCme.show(u < 0.95 && st.mode === 'phen');
+            const rc = 0.35 + 1.6 * u, r = RS + 0.15 + 4.8 * u; cme.scale.setScalar(rc); cme.position.copy(cDir).multiplyScalar(r);
+            cmeM.opacity = Math.max(0, 0.5 * (1 - u)); labCme.obj = cme.position.clone().addScaledVector(cDir, rc + 0.2).toArray(); labCme.show(u < 0.95 && st.mode === 'phen');
             if (u >= 1) { st.cme = -1; cme.visible = false; labCme.show(false); }
           }
           winds.forEach((w) => { const u = ((st.t * 0.45 + w.off) % 1); v.copy(w.p0).addScaledVector(w.dir, u * 2.8); w.dot.position.copy(v); w.dot.scale.setScalar(1 - 0.5 * u); });

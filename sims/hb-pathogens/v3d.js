@@ -18,6 +18,7 @@
     hint: '병원체를 골라 돌려 보세요 · 구조와 크기가 달라요',
     camera: { dist: narrow ? 13 : 9.5, theta: 0.6, phi: 1.15, min: 4.5, max: 20 },
     autoRotate: 0.25,
+    levels: [0],
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = (x, y, z) => new THREE.Vector3(x, y, z || 0);
@@ -40,7 +41,7 @@
         const hM = std(0xff6a3d, { roughness: 0.4 }), nM = std(0x34c27a, { roughness: 0.4 });
         const sp = fib(42), spikes = [];
         sp.forEach((d, i) => { const m = i % 4 === 3 ? nM : hM, s = new THREE.Group(); const st = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.07, 0.4, 8), m); st.position.y = 0.2; const tip = i % 4 === 3 ? new THREE.Mesh(new THREE.SphereGeometry(0.14, 12, 8), m) : new THREE.Mesh(new THREE.ConeGeometry(0.15, 0.22, 12), m); tip.position.y = 0.5; if (i % 4 !== 3) tip.rotation.x = Math.PI; s.add(st, tip); s.position.copy(d.clone().multiplyScalar(1.82)); s.quaternion.setFromUnitVectors(V3(0, 1, 0), d); g.add(s); spikes.push(s); });
-        g.scale.setScalar(1.35);
+        g.userData.base = 1.3;
         lab(0, '돌기 단백질(항원)', spikes[0], { offset: [0.2, 0.4, 0] }); lab(0, '단백질 껍질', cap, { offset: [0.6, -0.5, 0.9] }); lab(0, '유전 물질', g, { offset: [0, 0.1, 0.4] });
         g.userData.spin = true; }
       /* 1 세균 */
@@ -54,46 +55,45 @@
         const fm = std(0x2f9e6c, { roughness: 0.5 }), fl = [];
         for (let k = 0; k < 6; k++) { const pts2 = []; const a = k * 1.05, off = (R() - 0.5) * 0.3; for (let i = 0; i < 24; i++) { const u = i / 23; pts2.push(V3(-1.35 - u * 2.4, Math.sin(u * 11 + k) * 0.17 * u + Math.sin(a) * 0.45 * (1 - u * 0.5), Math.cos(u * 11 + k) * 0.17 * u + Math.cos(a) * 0.45 * (1 - u * 0.5))); } const f = new THREE.Mesh(tubeG(pts2, 0.03, 60), fm); bact.add(f); fl.push(f); }
         for (let k = 0; k < 24; k++) { const d = V3(R() - 0.5, (R() - 0.5) * 1.6, (R() - 0.5) * 1.6).normalize(); if (Math.abs(d.x) > 0.7) continue; const pl = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.35, 5), fm); pl.position.set(d.x * 1.1 + (R() - 0.5) * 2, d.y * 0.9, d.z * 0.9); pl.quaternion.setFromUnitVectors(V3(0, 1, 0), V3(d.x * 0.3, d.y, d.z).normalize()); pl.position.y = d.y * 1.05; pl.position.z = d.z * 1.05; bact.add(pl); }
-        bact.scale.setScalar(1.15);
+        bact.scale.setScalar(1.5);
         lab(1, '세포벽', bact, { offset: [0.3, 1.3, 0] }); lab(1, '원형 DNA (핵막 없음)', dna, { offset: [0, -1.4, 0.6] }); lab(1, '편모', fl[0], { offset: [-0.5, 0.7, 0.4] });
         g.userData.swim = bact; }
       /* 2 곰팡이 */
+      let rootTube = null, firstSpore = null;
       { const g = mk(2), hm = std(0xe8dcb5, { roughness: 0.55 }), hg = ghost(0xe8dcb5, 0.5, { roughness: 0.3 }), nm = std(0x7a4fb0), ns = [];
         function branch(p, d, len, rad, depth) {
           const pts = [p.clone()]; let q = p.clone(), dir = d.clone();
           for (let i = 0; i < 5; i++) { dir.add(V3((R() - 0.5) * 0.5, (R() - 0.5) * 0.4, (R() - 0.5) * 0.5)).normalize(); q = q.clone().add(dir.clone().multiplyScalar(len / 5)); pts.push(q.clone()); }
-          g.add(new THREE.Mesh(tubeG(pts, rad, 30), hg));
+          { const hm2 = new THREE.Mesh(tubeG(pts, rad, 30), hg); g.add(hm2); if (!rootTube) rootTube = hm2; }
           for (let i = 1; i < pts.length; i++) { const sp = new THREE.Mesh(new THREE.TorusGeometry(rad, rad * 0.18, 6, 14), hm); sp.position.copy(pts[i]); sp.lookAt(pts[i].clone().add(pts[i].clone().sub(pts[i - 1]))); g.add(sp); if (i % 2 === 1) { const n = sph(rad * 0.5, nm, pts[i].x, pts[i].y, pts[i].z); g.add(n); ns.push(n); } }
           if (depth > 0) { branch(pts[3], dir.clone().add(V3(0.7, 0.3, 0.4)).normalize(), len * 0.8, rad * 0.8, depth - 1); branch(pts[4], dir.clone().add(V3(-0.6, -0.2, -0.5)).normalize(), len * 0.75, rad * 0.8, depth - 1); }
-          else { const sm = std(0xf0a34a, { roughness: 0.4 }); for (let k = 0; k < 4; k++) { const sp = sph(rad * 0.7, sm, pts[5].x + (k - 1.5) * rad * 0.9, pts[5].y + (k % 2) * rad, pts[5].z + (k % 3 - 1) * rad * 0.6); g.add(sp); } }
+          else { const sm = std(0xf0a34a, { roughness: 0.4 }); for (let k = 0; k < 4; k++) { const sp = sph(rad * 0.7, sm, pts[5].x + (k - 1.5) * rad * 0.9, pts[5].y + (k % 2) * rad, pts[5].z + (k % 3 - 1) * rad * 0.6); g.add(sp); if (!firstSpore) firstSpore = sp; } }
         }
-        branch(V3(-3, -1.2, 0), V3(1, 0.4, 0.1).normalize(), 3.2, 0.2, 2);
+        branch(V3(-3, -1.2, 0), V3(1, 0.4, 0.1).normalize(), 3.2, 0.27, 2);
         g.userData.spore = true;
-        lab(2, '균사', g, { offset: [-1.2, -0.8, 0.5] }); lab(2, '핵', ns[2], { offset: [0, 0.4, 0] }); lab(2, '포자', g, { offset: [2.2, 1.3, 0.3] });
-        g.position.x = 0.5; g.scale.setScalar(1.05); g.position.y = 0.3;
-        // 이름표가 균사 끝 위치와 맞게 보정
-        labs[2][0].obj = V3(-1.3, -0.3, 0.2); labs[2][2].obj = V3(2.3, 1.6, 0); labs[2][0].off = [0, 0, 0]; labs[2][2].off = [0, 0, 0]; }
+        lab(2, '균사', rootTube, { offset: [-2.0, -0.1, 0.3] }); lab(2, '핵', ns[2], { offset: [0, 0.45, 0] }); lab(2, '포자', firstSpore, { offset: [0.3, 0.5, 0] });
+        g.position.x = -0.3; g.userData.base = 1.25; g.position.y = -1.0;
+      }
       /* 3 원생생물 : 적혈구 안의 말라리아 원충 */
       { const g = mk(3);
         function rbcGeo() { const pr = [], f = (p) => Math.sqrt(Math.max(0, 1 - p * p)) * (0.207 + 2.003 * p * p - 1.123 * p * p * p * p) * 0.52; for (let i = 0; i <= 40; i++) { const p = i / 40; pr.push(new THREE.Vector2(p * 1.0, f(p))); } for (let i = 40; i >= 0; i--) { const p = i / 40; pr.push(new THREE.Vector2(p * 1.0, -f(p))); } return new THREE.LatheGeometry(pr, 48); }
         const geo = rbcGeo();
-        const big = new THREE.Mesh(geo, ghost(0xff6a5c, 0.5, { roughness: 0.3 })); big.scale.setScalar(2.9); big.rotation.x = 0.6; g.add(big);
-        const pm = std(0x5b2a8c, { roughness: 0.4 });
-        const ring = new THREE.Mesh(new THREE.TorusGeometry(0.62, 0.17, 16, 40), pm); ring.rotation.x = Math.PI / 2 + 0.6; ring.position.set(0.25, 0, 0.1); g.add(ring);
+        const big = new THREE.Mesh(geo, ghost(0xff6a5c, 0.5, { roughness: 0.3 })); big.scale.setScalar(2.3); big.rotation.x = 0.6; g.add(big);
+        const pm = std(0x6a2fb0, { roughness: 0.35, emissive: 0x2a0a55, emissiveIntensity: 0.4 });
+        const ring = new THREE.Mesh(new THREE.TorusGeometry(0.66, 0.2, 16, 40), pm); ring.rotation.x = Math.PI / 2 + 0.6; ring.position.set(0.25, 0, 0.1); g.add(ring);
         const chro = sph(0.2, std(0xffd34d, { emissive: 0x7a5a00, emissiveIntensity: 0.4 }), 0.2 + 0.62, 0.35, 0.1); g.add(chro);
-        ring.add(); const nuc = sph(0.17, std(0xffd34d, { emissive: 0x7a5a00, emissiveIntensity: 0.5 }), 0.9, 0.42, 0.1); g.add(nuc); g.remove(chro);
-        const mer = std(0xa87be0, { roughness: 0.4 }); [[1.7, 0.3, 0.6], [2.0, -0.2, -0.2]].forEach(() => 0);
-        [[-3.5, -1.8, -1.2, 1.6, 0.4], [3.6, 1.5, -1.5, 1.4, -0.3], [-2.8, 2.3, -2.0, 1.2, 0.2], [3.0, -2.4, -0.4, 1.5, 0.8]].forEach((q) => { const r = new THREE.Mesh(geo, ghost(0xe5483f, 0.55, { roughness: 0.35 })); r.scale.setScalar(q[3] * 0.62); r.position.set(q[0], q[1], q[2]); r.rotation.set(q[4], q[4] * 2, q[4]); g.add(r); });
+        const nuc = sph(0.17, std(0xffd34d, { emissive: 0x7a5a00, emissiveIntensity: 0.5 }), 0.9, 0.42, 0.1); g.add(nuc); g.remove(chro);
+                [[-3.5, -1.6, -1.2, 1.5, 0.4], [3.5, 1.4, -1.5, 1.3, -0.3], [-2.6, 2.4, -2.0, 1.1, 0.2], [3.1, -2.2, -0.4, 1.4, 0.8]].forEach((q) => { const r = new THREE.Mesh(geo, ghost(0xe5483f, 0.55, { roughness: 0.35 })); r.scale.setScalar(q[3] * 0.62); r.position.set(q[0], q[1], q[2]); r.rotation.set(q[4], q[4] * 2, q[4]); g.add(r); });
         lab(3, '적혈구', big, { offset: [-1.2, 1.5, 0.5] }); lab(3, '말라리아 원충 (핵 있음)', ring, { offset: [0.2, 0.8, 0.8] });
         g.userData.tilt = big; }
       /* 4 기생충 : 회충 */
       { const g = mk(4), N = 70;
-        const wm = std(0xf3c9b4, { roughness: 0.4 });
+        const wm = std(0xe8a08a, { roughness: 0.4 });
         const body = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 18, 12), wm, N); g.add(body);
         const egg = std(0xc9a56a, { roughness: 0.7 });
         [[-2.8, -1.8, 1.2], [-2.2, -2.1, 0.8], [-3.2, -2.1, 0.2]].forEach((q) => { const e = sph(0.3, egg, q[0], q[1], q[2], 1.35, 1, 1); e.rotation.z = q[0]; g.add(e); const sh = sph(0.14, std(0xe8d19a), q[0], q[1], q[2], 1.2, 1, 1); g.add(sh); });
         const mouth = sph(0.1, std(0x8a4a4a), 0, 0, 0); g.add(mouth);
-        lab(4, '회충 (다세포 동물)', g, { offset: [0, 1.4, 0] }); lab(4, '알', V3(-2.8, -1.4, 0.8), {});
+        lab(4, '회충 (다세포 동물)', g, { offset: [0, 1.4, 0] }); lab(4, '알', [-2.8, -1.4, 0.8], {});
         g.userData.worm = { body, mouth, N };
         g.scale.setScalar(1.0); }
 
@@ -107,16 +107,16 @@
       return {
         update(dt, t) {
           grow = Math.min(1, grow + dt * 2.5); const e = 1 - Math.pow(1 - grow, 3);
-          groups.forEach((g) => g.scale.setScalar(0.75 + 0.25 * e));
+          groups.forEach((g) => g.scale.setScalar((g.userData.base || 1) * (0.75 + 0.25 * e)));
           const g1 = groups[1]; if (g1.userData.swim) { g1.userData.swim.position.y = Math.sin(t * 1.2) * 0.12; g1.userData.swim.rotation.z = Math.sin(t * 0.9) * 0.06; }
           const g4 = groups[4].userData.worm, N = g4.N;
           for (let i = 0; i < N; i++) {
-            const s = i / (N - 1), x = (s - 0.5) * 7.0, amp = 0.5 * (0.35 + 0.65 * s), ph = s * 7 - t * 3.0;
+            const s = i / (N - 1), x = (s - 0.5) * 8.0, amp = 0.6 * (0.35 + 0.65 * s), ph = s * 7 - t * 3.0;
             const y = Math.sin(ph) * amp, z = Math.cos(ph * 0.8) * 0.15;
-            const rad = 0.3 * Math.min(1, 0.35 + Math.sin(Math.min(1, s * 1.1) * Math.PI) * 0.9) * (s > 0.92 ? 0.7 : 1);
+            const rad = 0.42 * Math.min(1, 0.35 + Math.sin(Math.min(1, s * 1.1) * Math.PI) * 0.9) * (s > 0.92 ? 0.7 : 1);
             D.position.set(x, y, z); D.scale.set(0.13 + rad * 0.2, rad, rad); D.rotation.set(0, 0, 0); D.updateMatrix(); g4.body.setMatrixAt(i, D.matrix);
           }
-          g4.body.instanceMatrix.needsUpdate = true; g4.mouth.position.set(-3.55, Math.sin(-t * 3.0) * 0.5 * 0.35, 0);
+          g4.body.instanceMatrix.needsUpdate = true; g4.mouth.position.set(-4.05, Math.sin(-t * 3.0) * 0.5 * 0.35, 0);
         },
         sync() {},
       };
