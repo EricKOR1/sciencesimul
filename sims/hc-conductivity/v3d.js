@@ -13,7 +13,7 @@
     const CG = new THREE.CylinderGeometry(1, 1, 1, 16);
     const stickMat = new THREE.MeshStandardMaterial({ color: 0xc3ccdd, roughness: 0.45, metalness: 0.1 });
     const V = (x, y, z) => new THREE.Vector3(x, y, z);
-    function atom(k, s) { const m = new THREE.Mesh(SG, mat(k)); m.scale.setScalar((RAD[k] || 0.4) * (s || 1)); return m; }
+    function atom(k, s, pal) { const m = new THREE.Mesh(SG, mat(pal && pal[k] !== undefined ? pal[k] : k)); m.scale.setScalar((RAD[k] || 0.4) * (s || 1)); return m; }
     function stick(a, b, r, m) {
       const d = b.clone().sub(a), len = d.length(); const s = new THREE.Mesh(CG, m || stickMat);
       s.scale.set(r, Math.max(len, 1e-4), r); s.position.copy(a).add(b).multiplyScalar(0.5);
@@ -38,9 +38,9 @@
       OH: { f: 'OH⁻', a: [['O', -0.2, 0, 0], ['H', 0.75, 0, 0]], b: [[0, 1, 1]] },
     };
     /* 분자 만들기: k는 크기 배율. 이중·삼중 결합은 막대 여러 개 */
-    function mol(M, k) {
+    function mol(M, k, pal) {
       k = k || 1; const g = new THREE.Group(); const P = M.a.map((x) => V(x[1] * k, x[2] * k, x[3] * k));
-      M.a.forEach((x, i) => { const m = atom(x[0], k); m.position.copy(P[i]); g.add(m); });
+      M.a.forEach((x, i) => { const m = atom(x[0], k, pal); m.position.copy(P[i]); g.add(m); });
       M.b.forEach((b) => {
         const A = P[b[0]], B = P[b[1]], d = B.clone().sub(A).normalize();
         let perp = d.clone().cross(V(0, 0, 1)); if (perp.lengthSq() < 0.01) perp = d.clone().cross(V(0, 1, 0)); perp.normalize().multiplyScalar(0.11 * k);
@@ -96,7 +96,7 @@
       const grp = new THREE.Group(); root.add(grp);
       const box = L.glassBox(W, H, D, 0x9ec5ff, 0.1); box.position.set(0, H / 2 + 0.1, 0); root.add(box);
       const water = L.glassBox(W - 0.05, H - 0.05, D - 0.05, 0x3b8cf0, 0.22); water.position.copy(box.position); water.visible = false; root.add(water);
-      const base = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({ color: 0x1a2540, roughness: 0.85 })); base.scale.set(W + 3.6, 0.14, D + 1.4); base.position.set(0, -0.0, 0); root.add(base);
+      const base = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({ color: 0x24324f, roughness: 0.95, envMapIntensity: 0.05 })); base.scale.set(W + 3.6, 0.14, D + 1.4); base.position.set(0, -0.0, 0); root.add(base);
       // 전극판: (−) 왼쪽, (+) 오른쪽
       const plate = (x, col) => { const m = new THREE.Mesh(new THREE.BoxGeometry(0.16, H + 0.5, D + 0.3), new THREE.MeshStandardMaterial({ color: col, roughness: 0.3, metalness: 0.7 })); m.position.set(x, H / 2 + 0.2, 0); root.add(m); return m; };
       const pL = plate(-W / 2 - 0.2, 0x4f7cff), pR = plate(W / 2 + 0.2, 0xf0524f);

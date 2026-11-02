@@ -92,7 +92,7 @@
       const LV = 3.5;
       const liq = new THREE.Mesh(new THREE.CylinderGeometry(R - 0.04, R - 0.04, LV, 48), new THREE.MeshStandardMaterial({ color: 0x66cc66, transparent: true, opacity: 0.38, roughness: 0.15, depthWrite: false })); liq.position.y = LV / 2 + 0.06; root.add(liq);
       const top = new THREE.Mesh(new THREE.CircleGeometry(R - 0.04, 48), new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.25, roughness: 0.05, depthWrite: false })); top.rotation.x = -Math.PI / 2; top.position.y = LV + 0.06; root.add(top);
-      const floor = new THREE.Mesh(new THREE.CylinderGeometry(R + 1.2, R + 1.2, 0.1, 48), new THREE.MeshStandardMaterial({ color: 0x0f182c, roughness: 0.95 })); floor.position.y = -0.05; root.add(floor);
+      const floor = new THREE.Mesh(new THREE.CylinderGeometry(R + 1.2, R + 1.2, 0.1, 48), new THREE.MeshStandardMaterial({ color: 0x24324f, roughness: 0.95, envMapIntensity: 0.05 })); floor.position.y = -0.05; root.add(floor);
       const NMAX = 1500;
       const mk = (col, em) => { const m = new THREE.InstancedMesh(L.SG, new THREE.MeshStandardMaterial({ color: col, emissive: em, emissiveIntensity: 0.45, roughness: 0.35 }), NMAX); m.frustumCulled = false; m.count = 0; root.add(m); return m; };
       const mH = mk(0xff4d4d, 0x7a0000), mO = mk(0x4d8dff, 0x00287a);

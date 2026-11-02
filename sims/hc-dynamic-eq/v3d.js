@@ -83,7 +83,7 @@
     const PAL_A = { N: 0xd9e4f5, O: 0xf4f7fc }, PAL_B = { N: 0xb4621a, O: 0xe3a45c };
     const box = L.glassBox(1, 1, 1, 0xb9d3ff, 0.1); root.add(box);
     const fillM = box.userData.fill.material;
-    const floor = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({ color: 0x1a2540, roughness: 0.85 })); floor.scale.set(W + 1.6, 0.14, D + 1.4); floor.position.y = -0.08; root.add(floor);
+    const floor = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({ color: 0x24324f, roughness: 0.95, envMapIntensity: 0.05 })); floor.scale.set(W + 1.6, 0.14, D + 1.4); floor.position.y = -0.08; root.add(floor);
     const KA = 0.3, KB = 0.28;
     const A = [], B = [];
     const mk = (arr, key, k, pal) => { for (let i = 0; i < arr.n; i++) { const g = L.mol(L.MOLS[key], k, pal); g.visible = false; root.add(g); g.userData = { on: false, p: new THREE.Vector3(), v: new THREE.Vector3(), w: new THREE.Vector3(L.rnd(-1, 1), L.rnd(-1, 1), L.rnd(-1, 1)) }; arr.push(g); } };

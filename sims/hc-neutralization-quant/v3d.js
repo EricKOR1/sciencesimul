@@ -92,7 +92,7 @@
       const rim = new THREE.Mesh(new THREE.TorusGeometry(R, 0.05, 12, 64), new THREE.MeshStandardMaterial({ color: 0xe0ebff, roughness: 0.2 })); rim.rotation.x = Math.PI / 2; rim.position.y = HB; root.add(rim);
       const liqM = new THREE.MeshStandardMaterial({ color: 0xf2d23a, transparent: true, opacity: 0.32, roughness: 0.12, depthWrite: false });
       const liq = new THREE.Mesh(new THREE.CylinderGeometry(R - 0.04, R - 0.04, 1, 48), liqM); root.add(liq);
-      const floor = new THREE.Mesh(new THREE.CylinderGeometry(R + 1.2, R + 1.2, 0.1, 48), new THREE.MeshStandardMaterial({ color: 0x0f182c, roughness: 0.95 })); floor.position.y = -0.05; root.add(floor);
+      const floor = new THREE.Mesh(new THREE.CylinderGeometry(R + 1.2, R + 1.2, 0.1, 48), new THREE.MeshStandardMaterial({ color: 0x24324f, roughness: 0.95, envMapIntensity: 0.05 })); floor.position.y = -0.05; root.add(floor);
       const NM = 200;
       const KINDS = [
         { k: 'H', col: 0xff4d4d, r: 0.115, em: 0.4 }, { k: 'OH', col: 0x4d8dff, r: 0.115, em: 0.4 },

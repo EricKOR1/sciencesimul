@@ -87,7 +87,7 @@
       const L = makeLib(THREE);
       const W = 8.4, H = 3.6, D = 4.2;
       const box = L.glassBox(W, H, D, 0x9ec5ff, 0.1); box.position.y = H / 2; root.add(box);
-      const floor = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({ color: 0x0f182c, roughness: 0.95 })); floor.scale.set(W + 1, 0.14, D + 1); floor.position.y = -0.08; root.add(floor);
+      const floor = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({ color: 0x24324f, roughness: 0.95, envMapIntensity: 0.05 })); floor.scale.set(W + 1, 0.14, D + 1); floor.position.y = -0.08; root.add(floor);
       const KS = 0.55, LIM = [W / 2 - 0.6, H / 2 - 0.6, D / 2 - 0.6];
       const mk = (key, n) => { const a = []; for (let i = 0; i < n; i++) { const g = L.mol(L.MOLS[key], KS); g.visible = false; root.add(g); g.userData = { on: false, p: new THREE.Vector3(), v: new THREE.Vector3(), w: new THREE.Vector3(L.rnd(-1, 1), L.rnd(-1, 1), L.rnd(-1, 1)) }; a.push(g); } return a; };
       const P = { H2: mk('H2', 10), O2: mk('O2', 6), H2O: mk('H2O', 10) };

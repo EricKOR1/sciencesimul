@@ -87,7 +87,7 @@
       const L = makeLib(THREE), V = L.V;
       const BW = 12, BH = 4.6, BD = 5;
       const box = L.glassBox(BW, BH, BD, 0x7fb6ff, 0.08); box.position.y = 0; root.add(box);
-      const floor = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({ color: 0x0f182c, roughness: 0.95 })); floor.scale.set(BW + 1, 0.12, BD + 1); floor.position.y = -BH / 2 - 0.08; root.add(floor);
+      const floor = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({ color: 0x24324f, roughness: 0.95, envMapIntensity: 0.05 })); floor.scale.set(BW + 1, 0.12, BD + 1); floor.position.y = -BH / 2 - 0.08; root.add(floor);
       const pools = { w: [], h: [], o: [] };
       const SC = { w: 0.5, h: 0.55, o: 0.55 };
       const mk = (arr, key, n, k) => { for (let i = 0; i < n; i++) { const g = L.mol(L.MOLS[key], k); g.visible = false; root.add(g); g.userData = { p: new THREE.Vector3(), v: new THREE.Vector3(L.rnd(-1, 1), L.rnd(-1, 1), L.rnd(-1, 1)).normalize(), w: new THREE.Vector3(L.rnd(-1, 1), L.rnd(-1, 1), L.rnd(-1, 1)) }; arr.push(g); } };

@@ -101,7 +101,7 @@
       [[7.2, 0.6], [7.4, -1.0], [6.6, 1.9], [7.9, 1.4], [6.8, -2.2]].forEach((q, i) => {
         const h = new THREE.Group(), w = 0.9 + (i % 2) * 0.25, hh = 0.7 + (i % 3) * 0.28;
         const body = new THREE.Mesh(new THREE.BoxGeometry(w, hh, 0.8), mat([0xe8e0d0, 0xd9d2e6, 0xe6d6d0, 0xd2e2e6, 0xe6e2c8][i])); body.position.y = hh / 2; body.castShadow = true; h.add(body);
-        const roof = new THREE.Mesh(new THREE.ConeGeometry(w * 0.78, 0.45, 4), mat(0xa9543d, { roughness: 0.8 })); roof.rotation.y = Math.PI / 4; roof.position.y = hh + 0.22; roof.castShadow = true; h.add(roof);
+        const roof = new THREE.Mesh(new THREE.ConeGeometry(w * 0.62, 0.4, 4), mat(0xa9543d, { roughness: 0.8 })); roof.rotation.y = Math.PI / 4; roof.position.y = hh + 0.22; roof.castShadow = true; h.add(roof);
         for (let k = 0; k < 2; k++) { const wm = new THREE.MeshStandardMaterial({ color: 0x2a3550, emissive: 0xffd466, emissiveIntensity: 0, roughness: 0.3 }); const wd = new THREE.Mesh(new THREE.PlaneGeometry(0.22, 0.26), wm); wd.position.set(-w * 0.22 + k * w * 0.44, hh * 0.55, 0.405); h.add(wd); wins.push(wm); }
         h.position.set(q[0], -1.15, q[1]); h.rotation.y = -0.2 + i * 0.3; root.add(h); houses.push(h);
       });

@@ -117,7 +117,7 @@
         const g = new THREE.Group(); const tr = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.24, 1.5, 12), std(0x5e3d20, { roughness: 0.85 })); tr.position.y = 0.75; g.add(tr);
         const cols = [0x1f6b2a, 0x2a7d32, 0x1a5e2e], R = rng(Math.round(s * 100));
         [[0, 2.1, 0, 0.8], [0.5, 1.8, 0.2, 0.55], [-0.45, 1.9, -0.2, 0.6], [0.1, 2.6, 0.1, 0.55], [-0.1, 1.8, 0.5, 0.5]].forEach((q, i) => g.add(sph(q[3], std(cols[i % 3], { roughness: 0.8 }), q[0], q[1], q[2])));
-        g.scale.setScalar(s * (0.9 + R() * 0.2)); return g;
+        g.scale.setScalar(s * 0.78 * (0.9 + R() * 0.2)); return g;
       }
       function bush(s) { const g = new THREE.Group(), m = std(0x2f7d38, { roughness: 0.8 }); g.add(sph(0.4, m, 0, 0.3, 0), sph(0.3, m, 0.3, 0.22, 0.1), sph(0.3, m, -0.28, 0.2, -0.1)); const b = std(0xd9423f); [[0.2, 0.55, 0.2], [-0.15, 0.45, 0.25], [0.0, 0.62, -0.1]].forEach((q) => g.add(sph(0.06, b, q[0], q[1], q[2]))); g.scale.setScalar(s); return g; }
       function mushroom(s) { const g = new THREE.Group(); const st = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.08, 0.3, 10), std(0xf0e6d2)); st.position.y = 0.15; g.add(st); const c = new THREE.Mesh(new THREE.SphereGeometry(0.2, 18, 10, 0, Math.PI * 2, 0, Math.PI / 2), std(0xd9423f)); c.position.y = 0.3; g.add(c); g.scale.setScalar(s); return g; }

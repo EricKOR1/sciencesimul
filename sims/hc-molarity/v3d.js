@@ -98,7 +98,7 @@
       const bot = new THREE.Mesh(new THREE.CylinderGeometry(R, R, 0.12, 48), new THREE.MeshStandardMaterial({ color: 0xcfe0ff, transparent: true, opacity: 0.35, roughness: 0.1, depthWrite: false })); bot.position.y = 0.06; root.add(bot);
       const liqM = new THREE.MeshStandardMaterial({ color: 0x4aa3ff, transparent: true, opacity: 0.25, roughness: 0.12, depthWrite: false });
       const liq = new THREE.Mesh(new THREE.CylinderGeometry(R - 0.04, R - 0.04, 1, 48), liqM); root.add(liq);
-      const floor = new THREE.Mesh(new THREE.CylinderGeometry(R + 1.2, R + 1.2, 0.1, 48), new THREE.MeshStandardMaterial({ color: 0x0f182c, roughness: 0.95 })); floor.position.y = -0.05; root.add(floor);
+      const floor = new THREE.Mesh(new THREE.CylinderGeometry(R + 1.2, R + 1.2, 0.1, 48), new THREE.MeshStandardMaterial({ color: 0x24324f, roughness: 0.95, envMapIntensity: 0.05 })); floor.position.y = -0.05; root.add(floor);
       // 눈금 (0.5 L 간격)
       const ticks = []; for (let i = 1; i <= 8; i++) { const t = new THREE.Mesh(new THREE.BoxGeometry(i % 2 ? 0.2 : 0.38, 0.03, 0.03), L.mat(0xe8f0ff)); t.position.set(R + 0.0, 0, 0); root.add(t); ticks.push(t); }
       const NM = 120;
