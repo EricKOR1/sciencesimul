@@ -1,0 +1,93 @@
+/* h1-transcription · 3D 전사 (DNA 이중 나선 → mRNA)
+   RNA 중합효소가 DNA 이중 나선을 풀며 지나가고, DNA 한 가닥(주형)과 짝이 맞는 염기(A-U, T-A, G-C, C-G)를 이어
+   mRNA를 만들어요. 지나간 DNA는 다시 이중 나선으로 감겨요. */
+(function () {
+  'use strict';
+  if (!window.SciSim3D) return;
+  const PHN = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches);
+  const CODING = 'ATGGAACCATGGGTGCCATAATGC'; // 비주형(암호) 가닥
+  const N = CODING.length, DX = 0.5;
+  const COMP = { A: 'T', T: 'A', G: 'C', C: 'G' }, RNA = { A: 'U', T: 'A', G: 'C', C: 'G' };
+  const COL = { A: 0x6fd36b, T: 0xf0556a, U: 0xff8a5c, G: 0xffd34d, C: 0x4aa3ff };
+  const TEMPLATE = CODING.split('').map((b) => COMP[b]);          // 주형 가닥
+  const MRNA = TEMPLATE.map((b) => RNA[b]);                        // 만들어지는 mRNA
+
+  window.SciSim3D.attach({
+    title: '전사: DNA에서 mRNA로 3D',
+    camera: { dist: PHN ? 17 : 12.5, theta: 0.25, phi: 1.2, target: [0, 0.4, 0], min: 6, max: 24 },
+    autoRotate: 0,
+    build(ctx) {
+      const { THREE, root, label, info, controls } = ctx;
+      const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.4, metalness: 0.05 }, o || {}));
+      let p = -2, play = true, names = true, speed = 1;
+      const R = 0.85, TW = 0.62; // 나선 반지름, 염기쌍당 회전각
+      const xo = (i) => (i - (N - 1) / 2) * DX;
+      const bGeo = new THREE.SphereGeometry(0.18, 20, 14), rGeo = new THREE.CylinderGeometry(0.05, 0.05, 1, 8);
+      const cod = [], tmp = [], rung = [], rn = [];
+      for (let i = 0; i < N; i++) {
+        cod.push(new THREE.Mesh(bGeo, std(COL[CODING[i]], { roughness: 0.3 }))); tmp.push(new THREE.Mesh(bGeo, std(COL[TEMPLATE[i]], { roughness: 0.3 })));
+        rn.push(new THREE.Mesh(bGeo, std(COL[MRNA[i]], { roughness: 0.3, emissive: COL[MRNA[i]], emissiveIntensity: 0.2 })));
+        const a = new THREE.Mesh(rGeo, std(0xdfe6f5, { roughness: 0.5 })), b = new THREE.Mesh(rGeo, std(0xdfe6f5, { roughness: 0.5 }));
+        rung.push([a, b]); root.add(cod[i], tmp[i], rn[i], a, b);
+      }
+      const tubeMat = std(0x9fb4e8, { roughness: 0.5 }), rTubeMat = std(0xff8a5c, { roughness: 0.5 });
+      let tCod = null, tTmp = null, tRna = null;
+      // 중합효소
+      const pol = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), std(0xc9a0ff, { transparent: true, opacity: 0.42, depthWrite: false, roughness: 0.3 })); pol.scale.set(0.95, 1.35, 1.1); root.add(pol);
+      const lPol = label('RNA 중합효소', pol, { offset: [0, 1.8, 0], color: 'rgba(110,60,220,.92)' });
+      const lDir = label('전사 방향 →', [3.5, -2.0, 0], { size: 12 });
+      const lT = label('주형 가닥', [-5.2, -1.7, 0], { size: 12 }), lC = label('DNA 다른 가닥', [-5.2, 1.7, 0], { size: 12 }), lM = label('mRNA', [4.5, 2.9, 0], { color: 'rgba(200,90,30,.92)' });
+      const lDNA = label('DNA 이중 나선', [-5.0, 0.0, 0], { size: 12 });
+      const sm = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+      const V = THREE.Vector3;
+      const tTop = (i) => new V(xo(i), 1.35, 0.0), tBot = (i) => new V(xo(i), -1.35, 0.0);
+      // 염기쌍 i의 위치: 이중 나선(닫힘) ↔ 풀린 모양(열림)
+      function posOf(i) {
+        const a = i * TW, hx = new V(xo(i), Math.cos(a) * R, Math.sin(a) * R), hy = new V(xo(i), -Math.cos(a) * R, -Math.sin(a) * R);
+        const w = 1 - sm(0.0, 1.6, Math.abs(i - p) - 0.8); // 효소 근처(약 ±1.5쌍)는 풀림
+        return { a: hx.lerp(tTop(i).setZ(0.0), w), b: hy.lerp(tBot(i), w), w };
+      }
+      function paint() {
+        const Pa = [], Pb = [], Pr = [];
+        for (let i = 0; i < N; i++) {
+          const q = posOf(i); Pa.push(q.a); Pb.push(q.b);
+          cod[i].position.copy(q.a); tmp[i].position.copy(q.b);
+          // 염기쌍 연결 막대: 닫혀 있을 때만
+          const open = q.w > 0.55;
+          rung[i].forEach((r, k) => {
+            const A = q.a, B = q.b, mid = A.clone().lerp(B, 0.5); const half = k ? mid.clone().lerp(B, 0) : mid; r.visible = !open;
+            const from = k ? B : A, d = mid.clone().sub(from), len = d.length();
+            r.position.copy(from).add(mid).multiplyScalar(0.5); r.scale.set(1, Math.max(0.001, len), 1); r.quaternion.setFromUnitVectors(new V(0, 1, 0), d.normalize());
+          });
+          // mRNA: 효소 뒤쪽에서 주형에 붙었다가 위로 떨어져 나가요
+          const made = p - i; // 효소가 지나간 정도
+          const vis = made > -0.2; rn[i].visible = vis; if (vis) {
+            const att = q.b.clone().add(new V(0, 0.55, 0.0)), free = new V(xo(i) + 0.0, 2.5 + Math.sin(i * 0.5) * 0.12, 0.5 + Math.sin(i * 0.7) * 0.25);
+            const e = sm(1.0, 4.5, made), pop = sm(-0.2, 0.5, made);
+            rn[i].position.copy(att.lerp(free, e)); rn[i].scale.setScalar(0.35 + 0.65 * pop); if (e < 1) { const w = new V(0, 0, 0); }
+            Pr.push(rn[i].position.clone());
+          }
+        }
+        [tCod, tTmp, tRna].forEach((t) => { if (t) { root.remove(t); t.geometry.dispose(); } });
+        tCod = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(Pa), 120, 0.05, 6), tubeMat); tTmp = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(Pb), 120, 0.05, 6), tubeMat); root.add(tCod, tTmp);
+        if (Pr.length >= 2) { tRna = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(Pr), 100, 0.05, 6), rTubeMat); root.add(tRna); } else tRna = null;
+        pol.position.set(xo(Math.max(0, Math.min(N - 1, p))) , 0, 0); pol.visible = p > -1.5 && p < N + 1;
+        lPol.show(pol.visible);
+        const made = Math.max(0, Math.min(N, Math.floor(p + 1.2)));
+        lM.show(made >= 3); lM.obj = [xo(Math.max(0, Math.min(N - 1, p - 3))) + 0.0, 2.9, 0.4];
+        lDir.show(true); lT.show(names); lC.show(names); lDNA.show(false);
+        info(p < 0.5 ? '<b>전사 시작</b>: RNA 중합효소가 DNA에 붙어 이중 나선을 풀어요.' : p < N - 1.5 ? '<b>mRNA 합성</b>: 주형 가닥의 염기와 짝이 맞는 RNA 염기를 이어요. (A→U, T→A, G→C, C→G)' : '<b>전사 끝</b>: mRNA가 떨어져 나가 핵 밖으로 나가고, DNA는 다시 이중 나선이 돼요.');
+      }
+      const bP = controls.button('❚❚ 멈춤', () => { play = !play; bP.textContent = play ? '❚❚ 멈춤' : '▶ 재생'; });
+      controls.range('속도', 1, 4, 1, 2, (v) => { speed = v / 2; }, (v) => '×' + (v / 2));
+      controls.button('↺ 처음부터', () => { p = -2; });
+      const bN = controls.button('이름표 ✓', () => { names = !names; bN.classList.toggle('on', names); bN.textContent = '이름표 ' + (names ? '✓' : '✕'); paint(); }); bN.classList.add('on');
+      controls.text('<span style="color:#6fd36b">●A</span> <span style="color:#f0556a">●T</span> <span style="color:#ff8a5c">●U(RNA)</span> <span style="color:#ffd34d">●G</span> <span style="color:#4aa3ff">●C</span>');
+      p = 4; paint();
+      return {
+        update(dt) { if (play) { p += dt * 1.1 * speed; if (p > N + 3) p = -2; } paint(); },
+        sync() { paint(); },
+      };
+    },
+  });
+})();

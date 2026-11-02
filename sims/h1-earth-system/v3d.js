@@ -1,0 +1,164 @@
+/* h1-earth-system · 3D 지구시스템 (지권·수권·기권·생물권·외권)
+   권역을 하나씩 골라 층 구조를 단면으로 보고, 지구시스템을 움직이는 에너지원(태양·지구 내부·달)을 확인해요.
+   ※ 대기·바다의 두께는 보기 쉽도록 크게 늘려 그렸어요. */
+(function () {
+  'use strict';
+  if (!window.SciSim3D) return;
+  const PHN = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches);
+  const R = 2.5;
+  // 3D 값 잡음으로 대륙 모양을 만들어요 (구 위에서 이음매 없음)
+  function hash(x, y, z) { let h = Math.sin(x * 127.1 + y * 311.7 + z * 74.7) * 43758.5453; return h - Math.floor(h); }
+  function vnoise(x, y, z) {
+    const xi = Math.floor(x), yi = Math.floor(y), zi = Math.floor(z), xf = x - xi, yf = y - yi, zf = z - zi;
+    const u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf), w = zf * zf * (3 - 2 * zf);
+    const l = (a, b, t) => a + (b - a) * t; let r = 0;
+    const c = (dx, dy, dz) => hash(xi + dx, yi + dy, zi + dz);
+    return l(l(l(c(0, 0, 0), c(1, 0, 0), u), l(c(0, 1, 0), c(1, 1, 0), u), v), l(l(c(0, 0, 1), c(1, 0, 1), u), l(c(0, 1, 1), c(1, 1, 1), u), v), w);
+  }
+  function fbm(x, y, z) { return vnoise(x, y, z) * 0.55 + vnoise(x * 2.1, y * 2.1, z * 2.1) * 0.28 + vnoise(x * 4.3, y * 4.3, z * 4.3) * 0.17; }
+
+  window.SciSim3D.attach({
+    title: '지구시스템 3D',
+    camera: { dist: PHN ? 19 : 14.5, theta: -2.35, phi: 1.2, min: 6, max: 30 },
+    autoRotate: 0,
+    build(ctx) {
+      const { THREE, scene, root, label, info, controls, orbit } = ctx;
+      const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.6, metalness: 0 }, o || {}));
+      // 직접 조명: 태양
+      const sunPos = new THREE.Vector3(-8.6, 3.2, 4.4);
+      const sunL = new THREE.DirectionalLight(0xfff2d8, 1.5); sunL.position.copy(sunPos); scene.add(sunL);
+      scene.add(new THREE.HemisphereLight(0x9fb8ff, 0x20243a, 0.55));
+      let mode = 'all', energy = true;
+
+      /* ---------- 지구 표면 무늬 ---------- */
+      const TW = 512, TH = 256, cv = document.createElement('canvas'); cv.width = TW; cv.height = TH;
+      const cx = cv.getContext('2d'), img = cx.createImageData(TW, TH), mask = new Uint8Array(TW * TH);
+      const cvO = document.createElement('canvas'); cvO.width = TW; cvO.height = TH; const cxO = cvO.getContext('2d'), imgO = cxO.createImageData(TW, TH);
+      for (let y = 0; y < TH; y++) {
+        const lat = (0.5 - y / TH) * Math.PI;
+        for (let x = 0; x < TW; x++) {
+          const lon = (x / TW) * Math.PI * 2, px = Math.cos(lat) * Math.cos(lon), py = Math.sin(lat), pz = Math.cos(lat) * Math.sin(lon);
+          const h = fbm(px * 1.9 + 3.1, py * 1.9 + 1.7, pz * 1.9 + 5.3), i = (y * TW + x) * 4;
+          const land = h > 0.545, ice = Math.abs(lat) > 1.3 - (fbm(px * 6, py * 6, pz * 6) - 0.5) * 0.3;
+          mask[y * TW + x] = land ? 1 : 0;
+          let r, g, b;
+          if (ice) { r = 238; g = 244; b = 250; }
+          else if (land) { const t = Math.min(1, (h - 0.545) / 0.16); const dry = Math.abs(lat) < 0.55 && fbm(px * 3 + 9, py * 3, pz * 3) > 0.52; r = (dry ? 205 : 70) + t * (dry ? -30 : 60); g = (dry ? 175 : 150) - t * 40; b = (dry ? 110 : 70) + t * 20; }
+          else { r = 25; g = 90; b = 160; }
+          img.data[i] = r; img.data[i + 1] = g; img.data[i + 2] = b; img.data[i + 3] = 255;
+          // 바다 겹: 바다는 푸르게(불투명), 육지는 투명
+          const dp = Math.max(0, 0.545 - h) / 0.3; imgO.data[i] = 20 + 20 * (1 - dp); imgO.data[i + 1] = 95 + 45 * (1 - dp); imgO.data[i + 2] = 175 + 30 * (1 - dp); imgO.data[i + 3] = ice ? 0 : (land ? 0 : 255);
+        }
+      }
+      cx.putImageData(img, 0, 0); cxO.putImageData(imgO, 0, 0);
+      const texG = new THREE.CanvasTexture(cv), texO = new THREE.CanvasTexture(cvO);
+      [texG, texO].forEach((t) => { if ('outputEncoding' in t) t.encoding = THREE.sRGBEncoding; t.anisotropy = 4; });
+
+      const earth = new THREE.Group(); root.add(earth);
+      const ground = new THREE.Mesh(new THREE.SphereGeometry(R, 96, 64), std(0xffffff, { map: texG, roughness: 0.85 })); earth.add(ground);
+      const ocean = new THREE.Mesh(new THREE.SphereGeometry(R + 0.012, 96, 64), std(0xffffff, { map: texO, transparent: true, roughness: 0.15, metalness: 0.1, depthWrite: false })); earth.add(ocean);
+      const cloud = new THREE.Mesh(new THREE.SphereGeometry(R + 0.07, 64, 40), std(0xffffff, { transparent: true, opacity: 0.0, roughness: 1, depthWrite: false }));
+      earth.add(cloud);
+      // 얇은 대기 빛무리 (전체 보기)
+      const halo = [0.12, 0.26, 0.42].map((d, i) => { const m = new THREE.Mesh(new THREE.SphereGeometry(R + d, 48, 32), new THREE.MeshBasicMaterial({ color: 0x7db4ff, transparent: true, opacity: 0.1 - i * 0.025, depthWrite: false, side: THREE.BackSide })); earth.add(m); return m; });
+      const sAtm = new THREE.Mesh(new THREE.SphereGeometry(R + 0.13, 64, 40), new THREE.MeshStandardMaterial({ color: 0x8fc0ff, transparent: true, opacity: 0.16, depthWrite: false, roughness: 0.3 })); earth.add(sAtm);
+
+      /* ---------- 단면(쐐기를 잘라낸 층) ---------- */
+      const wedge = 3 * Math.PI / 2;
+      function cutaway(layers, withShell) {
+        const g = new THREE.Group();
+        layers.forEach((ly, i) => {
+          const mat = () => std(ly.c, { transparent: ly.o != null && ly.o < 1, opacity: ly.o == null ? 1 : ly.o, depthWrite: !(ly.o != null && ly.o < 1), emissive: ly.e ? ly.c : 0x000000, emissiveIntensity: ly.e || 0, side: THREE.DoubleSide, roughness: 0.55 });
+          const sph = new THREE.Mesh(new THREE.SphereGeometry(ly.r1, 64, 40, 0, wedge), ly.map ? std(0xffffff, { map: ly.map, side: THREE.DoubleSide, roughness: 0.85 }) : mat());
+          if (i === layers.length - 1 || ly.surface) g.add(sph);
+          [Math.PI / 2, Math.PI].forEach((rot) => { const ring = new THREE.Mesh(new THREE.RingGeometry(ly.r0, ly.r1, 64, 1, -Math.PI / 2, Math.PI), mat()); ring.rotation.y = rot; g.add(ring); });
+        });
+        return g;
+      }
+      const ROCK = [
+        { r0: 0, r1: R * 0.19, c: 0xffe27a, e: 0.6, n: '내핵 (고체)' }, { r0: R * 0.19, r1: R * 0.55, c: 0xff9a3c, e: 0.4, n: '외핵 (액체)' },
+        { r0: R * 0.55, r1: R * 0.93, c: 0xb9442d, e: 0.15, n: '맨틀' }, { r0: R * 0.93, r1: R, c: 0x8a7a68, n: '지각', map: texG },
+      ];
+      const OCN = [
+        { r0: 0, r1: 2.2, c: 0x6b6f7c, n: '해저' }, { r0: 2.2, r1: 2.42, c: 0x0b3f8a, n: '심해층' },
+        { r0: 2.42, r1: 2.48, c: 0x1f7ad0, n: '수온 약층' }, { r0: 2.48, r1: 2.53, c: 0x58c8ff, n: '혼합층', o: 0.95 },
+      ];
+      const ATM = [
+        { r0: R, r1: R + 0.28, c: 0x7fb8ff, o: 0.5, n: '대류권' }, { r0: R + 0.28, r1: R + 0.58, c: 0x6a8cff, o: 0.45, n: '성층권' },
+        { r0: R + 0.58, r1: R + 0.88, c: 0x7a6bff, o: 0.38, n: '중간권' }, { r0: R + 0.88, r1: R + 1.3, c: 0xb06bff, o: 0.3, n: '열권' },
+      ];
+      const cutRock = cutaway(ROCK), cutOcn = cutaway(OCN), cutAtm = cutaway(ATM.map((a) => Object.assign({ surface: true }, a)));
+      earth.add(cutRock, cutOcn, cutAtm);
+      cutOcn.children[0].material.side = THREE.DoubleSide;
+      const baseOcn = new THREE.Mesh(new THREE.SphereGeometry(2.2, 48, 32, 0, wedge), std(0x6b6f7c, { side: THREE.DoubleSide })); earth.add(baseOcn);
+
+      /* ---------- 생물권: 육지의 식물 · 바다의 생물 ---------- */
+      const bio = new THREE.Group(); earth.add(bio);
+      const tGeo = new THREE.ConeGeometry(0.06, 0.16, 8), sGeo = new THREE.SphereGeometry(0.045, 8, 6);
+      const tMat = std(0x2fa84a, { roughness: 0.5 }), fMat = std(0xffb84a, { roughness: 0.4, emissive: 0x6a3a00, emissiveIntensity: 0.4 });
+      const nT = 420, nF = 160, trees = new THREE.InstancedMesh(tGeo, tMat, nT), fish = new THREE.InstancedMesh(sGeo, fMat, nF); bio.add(trees, fish);
+      const dm = new THREE.Object3D(); let ti = 0, fi = 0, tries = 0;
+      while ((ti < nT || fi < nF) && tries++ < 20000) {
+        const lat = Math.asin(Math.random() * 2 - 1), lon = Math.random() * Math.PI * 2; if (Math.abs(lat) > 1.15) continue;
+        const x = Math.floor((lon / (Math.PI * 2)) * TW) % TW, y = Math.min(TH - 1, Math.floor((0.5 - lat / Math.PI) * TH)), isL = mask[y * TW + x];
+        const dir = new THREE.Vector3(Math.cos(lat) * Math.cos(lon), Math.sin(lat), Math.cos(lat) * Math.sin(lon));
+        if (isL && ti < nT) { dm.position.copy(dir).multiplyScalar(R + 0.06); dm.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir); dm.scale.setScalar(1); dm.updateMatrix(); trees.setMatrixAt(ti++, dm.matrix); }
+        else if (!isL && fi < nF) { dm.position.copy(dir).multiplyScalar(R + 0.03); dm.quaternion.identity(); dm.scale.setScalar(1); dm.updateMatrix(); fish.setMatrixAt(fi++, dm.matrix); }
+      }
+      bio.visible = false;
+
+      /* ---------- 에너지원: 태양 · 지구 내부 · 달 ---------- */
+      const en = new THREE.Group(); root.add(en);
+      const sun = new THREE.Mesh(new THREE.SphereGeometry(1.25, 40, 28), new THREE.MeshBasicMaterial({ color: 0xffd34d })); sun.position.copy(sunPos).multiplyScalar(1.12); en.add(sun);
+      const sunGlow = new THREE.Mesh(new THREE.SphereGeometry(1.8, 32, 20), new THREE.MeshBasicMaterial({ color: 0xffc04a, transparent: true, opacity: 0.18, depthWrite: false })); sunGlow.position.copy(sun.position); en.add(sunGlow);
+      const moon = new THREE.Mesh(new THREE.SphereGeometry(0.55, 32, 24), std(0xcfd2d8, { roughness: 0.95 })); en.add(moon);
+      function arrow(from, to, col, rad) {
+        const g = new THREE.Group(), d = to.clone().sub(from), len = d.length(), hl = Math.min(len * 0.4, rad * 7);
+        const sh = new THREE.Mesh(new THREE.CylinderGeometry(rad, rad, len - hl, 12), new THREE.MeshBasicMaterial({ color: col })); sh.position.y = (len - hl) / 2;
+        const hd = new THREE.Mesh(new THREE.ConeGeometry(rad * 2.6, hl, 16), new THREE.MeshBasicMaterial({ color: col })); hd.position.y = len - hl / 2;
+        g.add(sh, hd); g.position.copy(from); g.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize()); return g;
+      }
+      const sd = sunPos.clone().normalize();
+      [[0, 0, 0], [0, 0.9, 0.5], [0, -0.9, 0.4]].forEach((o) => { const off = new THREE.Vector3(...o); en.add(arrow(sunPos.clone().multiplyScalar(0.74).add(off), sunPos.clone().multiplyScalar(0.42).add(off), 0xffd34d, 0.07)); });
+      const inner = [new THREE.Vector3(0.6, -0.5, -1).normalize(), new THREE.Vector3(0.9, 0.4, -0.7).normalize(), new THREE.Vector3(0.2, -0.9, -0.5).normalize()];
+      inner.forEach((d) => en.add(arrow(d.clone().multiplyScalar(R + 0.15), d.clone().multiplyScalar(R + 1.15), 0xff7a3c, 0.06)));
+      const lSun = label('태양 에너지', sun, { offset: [0, 2.3, 0], color: 'rgba(180,120,0,.92)' });
+      const lIn = label('지구 내부 에너지', [inner[0].x * (R + 1.2), inner[0].y * (R + 1.2), inner[0].z * (R + 1.2)], { color: 'rgba(200,80,30,.92)' });
+      const lMoon = label('달 · 조력 에너지', moon, { offset: [0, 0.9, 0], color: 'rgba(80,90,120,.92)' });
+      const lOut = label('외권 (우주)', [0, R + 2.6, 0], { size: 12 });
+
+      const labs = [];
+      function clearLabs() { labs.forEach((l) => l.show(false)); }
+      function lab(i, t, p, o) { if (!labs[i]) labs[i] = label('', [0, 0, 0], { size: 12 }); const l = labs[i]; l.set(t); l.obj = p; l.off = o || [0, 0, 0]; l.show(true); return l; }
+      function setMode(m) {
+        mode = m; clearLabs();
+        const isCut = m === 'geo' || m === 'hyd' || m === 'atm';
+        ground.visible = m === 'all' || m === 'bio' || m === 'atm'; ocean.visible = m === 'all' || m === 'bio' || m === 'atm';
+        cloud.visible = false; sAtm.visible = m === 'all' || m === 'bio'; halo.forEach((h) => { h.visible = m === 'all' || m === 'bio'; });
+        cutRock.visible = m === 'geo'; cutOcn.visible = m === 'hyd'; baseOcn.visible = m === 'hyd'; cutAtm.visible = m === 'atm'; bio.visible = m === 'bio';
+        en.visible = energy && (m === 'all'); lSun.show(energy && m === 'all'); lIn.show(energy && m === 'all'); lMoon.show(energy && m === 'all'); lOut.show(m === 'all');
+        sun.visible = en.visible;
+        orbit.dist = (PHN ? 19 : 14.5) * (m === 'all' && energy ? 1.12 : 0.72);
+        if (isCut || m === 'all' || m === 'bio') { orbit.theta = isCut ? -2.35 : 0.2; }
+        if (m === 'geo') { ROCK.forEach((ly, i) => lab(i, ly.n, [0, 0, 0], [-(ly.r0 + ly.r1) / 2 * (i === 3 ? 1.0 : 1), (i % 2 ? 0.28 : -0.28) * (i === 3 ? 0 : 1) + (i === 3 ? 0.55 : 0), 0.05])); info('<b>지권</b>: 지각 · 맨틀 · 외핵 · 내핵으로 이루어져요. 외핵만 액체예요.'); }
+        else if (m === 'hyd') { OCN.slice(1).forEach((ly, i) => lab(i, ly.n, [0, 0, 0], [-(ly.r0 + ly.r1) / 2, 0.2 * (i % 2 ? 1 : -1) , 0.05])); info('<b>수권</b>: 바다는 깊이에 따라 혼합층 · 수온 약층 · 심해층으로 나뉘어요. (두께는 크게 그렸어요)'); }
+        else if (m === 'atm') { ATM.forEach((ly, i) => lab(i, ly.n, [0, 0, 0], [-(ly.r0 + ly.r1) / 2, 0.15 * (i % 2 ? 1 : -1), 0.05])); info('<b>기권</b>: 높이에 따른 기온 변화로 대류권 · 성층권 · 중간권 · 열권으로 나뉘어요.'); }
+        else if (m === 'bio') { info('<b>생물권</b>: 육지와 바다, 대기 아래쪽에 걸쳐 생물이 살아요. 초록 점은 식물, 주황 점은 바다 생물이에요.'); lab(0, '지구에서 생물이 사는 곳', [0, R + 0.4, 0], [0, 0, 0]); }
+        else { info('<b>지구시스템</b>: 지권 · 수권 · 기권 · 생물권 · 외권이 서로 영향을 주고받아요. 에너지원은 태양, 지구 내부, 달이에요.'); }
+        segG.set(m);
+      }
+      const segG = controls.segment('권역', [{ value: 'all', label: '전체' }, { value: 'atm', label: '기권' }, { value: 'hyd', label: '수권' }, { value: 'geo', label: '지권' }, { value: 'bio', label: '생물권' }], mode, setMode);
+      const bE = controls.button('에너지원 ✓', () => { energy = !energy; bE.classList.toggle('on', energy); bE.textContent = '에너지원 ' + (energy ? '✓' : '✕'); setMode(mode); }); bE.classList.add('on');
+      setMode('all');
+      return {
+        update(dt, t) {
+          if (mode === 'all' || mode === 'bio') { earth.rotation.y = t * 0.12; cloud.rotation.y = t * 0.03; }
+          else earth.rotation.y = Math.sin(t * 0.4) * 0.12;
+          const a = t * 0.25; moon.position.set(Math.cos(a) * 5.4, 0.9, Math.sin(a) * 5.4); moon.rotation.y = t * 0.1;
+          sunGlow.scale.setScalar(1 + Math.sin(t * 2) * 0.03);
+        },
+        sync() {},
+      };
+    },
+  });
+})();

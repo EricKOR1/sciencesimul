@@ -1,0 +1,152 @@
+/* h1-redox-electron · 3D 전자의 이동과 산화·환원
+   산화 = 전자를 잃는 반응, 환원 = 전자를 얻는 반응. 전자(노란 구슬)가 어디에서 어디로 가는지, 입자의 전하가 어떻게 바뀌는지 보여 줘요.
+   ① Zn + Cu²⁺ → Zn²⁺ + Cu   ② Cu + 2Ag⁺ → Cu²⁺ + 2Ag   ③ 2Mg + O₂ → 2MgO (Mg → Mg²⁺ + 2e⁻, O + 2e⁻ → O²⁻)
+   입자 크기와 거리는 실제와 달라요. 이온이 물속에서 어떻게 있는지(물 분자 감싸기)는 그리지 않았어요. */
+(function () {
+  'use strict';
+  if (!window.SciSim3D) return;
+  const PHN = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches);
+
+  /* 반응 정의: 주는 쪽(donor)과 받는 쪽(acc), 둘 사이의 전자 이동(pairs) */
+  const RX = {
+    zn: {
+      name: 'Zn + Cu²⁺', eq: 'Zn + Cu²⁺ → Zn²⁺ + Cu',
+      don: [{ pos: [-2.6, 0, 0], el: 'Zn', n: 2, col: 0x9aa9bd, rad: 0.95 }],
+      acc: [{ pos: [2.6, 0, 0], el: 'Cu', n: 2, col: 0xd9822b, ionCol: 0x3b82f6, rad: 0.85 }],
+      pairs: [[0, 0, 2]],
+      before: ['Zn', 'Cu²⁺'], after: ['Zn²⁺', 'Cu'],
+    },
+    ag: {
+      name: 'Cu + 2Ag⁺', eq: 'Cu + 2Ag⁺ → Cu²⁺ + 2Ag',
+      don: [{ pos: [-2.8, 0, 0], el: 'Cu', n: 2, col: 0xd9822b, rad: 0.95 }],
+      acc: [{ pos: [2.4, 1.5, 0], el: 'Ag', n: 1, col: 0xdde3ee, ionCol: 0x8ec5ff, rad: 0.8 }, { pos: [2.4, -1.5, 0], el: 'Ag', n: 1, col: 0xdde3ee, ionCol: 0x8ec5ff, rad: 0.8 }],
+      pairs: [[0, 0, 1], [0, 1, 1]],
+      before: ['Cu', 'Ag⁺'], after: ['Cu²⁺', 'Ag'],
+    },
+    mg: {
+      name: '2Mg + O₂', eq: '2Mg + O₂ → 2MgO',
+      don: [{ pos: [-2.6, 1.5, 0], el: 'Mg', n: 2, col: 0xc9d2de, rad: 0.95 }, { pos: [-2.6, -1.5, 0], el: 'Mg', n: 2, col: 0xc9d2de, rad: 0.95 }],
+      acc: [{ pos: [2.5, 0.85, 0], el: 'O', n: 2, col: 0xe2464b, ionCol: 0xe2464b, rad: 0.8, neutral: true }, { pos: [2.5, -0.85, 0], el: 'O', n: 2, col: 0xe2464b, ionCol: 0xe2464b, rad: 0.8, neutral: true }],
+      pairs: [[0, 0, 2], [1, 1, 2]],
+      before: ['Mg', 'O'], after: ['Mg²⁺', 'O²⁻'],
+    },
+  };
+  const SUP = { 2: '²', 1: '' };
+
+  window.SciSim3D.attach({
+    title: '3D 전자의 이동',
+    hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
+    camera: { dist: PHN ? 14 : 9.5, theta: 0.25, phi: 1.3, min: 5, max: 22 },
+    autoRotate: 0,
+    levels: [0, 1, 2],
+    build(ctx) {
+      const { THREE, root, label, info, controls } = ctx;
+      const V3 = THREE.Vector3;
+      const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.38, metalness: 0.15 }, o || {}));
+      const st = { rx: 'zn', p: 0, play: false, t: 0 };
+      const eMat = new THREE.MeshStandardMaterial({ color: 0xffd23f, emissive: 0xffb800, emissiveIntensity: 0.7, roughness: 0.25, metalness: 0 });
+      const eGeo = new THREE.SphereGeometry(0.15, 18, 14);
+
+      const floor = new THREE.Mesh(new THREE.CylinderGeometry(6.4, 6.6, 0.25, 56), mat(0x2d3547, { roughness: 0.95, metalness: 0 })); floor.position.y = -2.4; floor.receiveShadow = true; root.add(floor);
+      const grp = new THREE.Group(); root.add(grp);
+      let parts = null;
+
+      function ringTex() { return null; }
+      function build(key) {
+        if (parts) { grp.remove(parts.g); parts.labs.forEach((l) => l.show(false)); }
+        const R = RX[key], g = new THREE.Group(); grp.add(g);
+        const P = { g, R, don: [], acc: [], es: [], labs: [], flash: [] };
+        R.don.forEach((d, i) => {
+          const a = new THREE.Group(); a.position.set(...d.pos); g.add(a);
+          const body = new THREE.Mesh(new THREE.SphereGeometry(d.rad, 40, 28), mat(d.col, { metalness: 0.55, roughness: 0.3 })); body.castShadow = true; a.add(body);
+          const cloud = new THREE.Mesh(new THREE.SphereGeometry(d.rad + 0.5, 32, 22), new THREE.MeshBasicMaterial({ color: 0xffe48a, transparent: true, opacity: 0.1, depthWrite: false })); a.add(cloud);
+          const lb = label(R.before[0], a, { size: 14, offset: [0, d.rad + 0.85, 0] });
+          P.don.push({ a, body, cloud, lb, d, ox: 0 });
+        });
+        R.acc.forEach((c, i) => {
+          const a = new THREE.Group(); a.position.set(...c.pos); g.add(a);
+          const body = new THREE.Mesh(new THREE.SphereGeometry(c.rad, 40, 28), mat(c.ionCol, { metalness: c.neutral ? 0.1 : 0.2, roughness: c.neutral ? 0.4 : 0.25, transparent: !c.neutral, opacity: c.neutral ? 1 : 0.88 })); body.castShadow = true; a.add(body);
+          const slots = [];
+          for (let k = 0; k < c.n; k++) { const s = new THREE.Mesh(new THREE.SphereGeometry(0.17, 14, 10), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.35, wireframe: true })); s.position.set(Math.cos(k / c.n * 6.28 + 0.5) * (c.rad + 0.55), Math.sin(k / c.n * 6.28 + 0.5) * (c.rad + 0.55), 0); a.add(s); slots.push(s); }
+          const lb = label(R.before[1], a, { size: 14, offset: [0, c.rad + 0.85, 0] });
+          P.acc.push({ a, body, slots, lb, c });
+        });
+        // 전자 구슬: 주는 쪽 둘레를 돌다가 받는 쪽으로 가요
+        let ei = 0;
+        R.pairs.forEach(([di, ai, n], pi) => { for (let k = 0; k < n; k++) { const m = new THREE.Mesh(eGeo, eMat); g.add(m); P.es.push({ m, di, ai, k, n, pi, idx: ei++, slot: k }); } });
+        const nDon = R.don.length;
+        // 주는 쪽의 전자 수를 나눠서 둘레에 배치
+        R.don.forEach((d, di) => { const mine = P.es.filter((e) => e.di === di); mine.forEach((e, k) => { e.orbit = k; e.nOrb = mine.length; }); });
+        // 산화·환원 이름표
+        const ox = label('산화 (전자를 잃음)', P.don[0].a, { size: 12.5, color: '#e2464b', offset: [0, -(R.don[0].rad + 0.95), 0] }), rd = label('환원 (전자를 얻음)', P.acc[0].a, { size: 12.5, color: '#3b6ff0', offset: [0, -(R.acc[0].rad + 0.95), 0] });
+        P.ox = ox; P.rd = rd; P.labs = [...P.don.map((d) => d.lb), ...P.acc.map((a) => a.lb), ox, rd];
+        ox.show(false); rd.show(false);
+        // 전자 이동 화살표 (점선 느낌의 얇은 관)
+        const a0 = new V3(...R.don[0].pos), b0 = new V3(...R.acc[0].pos);
+        const mid = a0.clone().lerp(b0, 0.5); mid.y += 0.0;
+        const arrow = new THREE.Group(); const L = a0.distanceTo(b0) - 3.2;
+        const sh = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, L, 8), new THREE.MeshBasicMaterial({ color: 0xffd23f, transparent: true, opacity: 0.5 })); sh.rotation.z = Math.PI / 2; const hd = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.3, 12), sh.material); hd.rotation.z = -Math.PI / 2; hd.position.x = L / 2 + 0.1; arrow.add(sh, hd); arrow.position.set(mid.x, 0, 0); g.add(arrow);
+        const eLab = label('전자(e⁻)의 이동', arrow, { size: 12.5, offset: [0, 0.55, 0] }); P.labs.push(eLab); P.eLab = eLab;
+        parts = P;
+      }
+
+      let lastInfo = '';
+      const setInfo = (h) => { if (h !== lastInfo) { lastInfo = h; info(h); } };
+      const setLab = (l, t) => { if (l.txt !== t) { l.txt = t; l.set(t); } };
+      const ease = (x) => { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); };
+      function apply() {
+        const P = parts, R = P.R, p = st.p, nE = P.es.length;
+        // 전자별 진행도: 순서대로 출발
+        P.es.forEach((e) => {
+          const start = (e.idx / nE) * 0.55, u = ease((p - start) / 0.4);
+          const d = P.don[e.di], c = P.acc[e.ai], da = new V3(...R.don[e.di].pos), ca = new V3(...R.acc[e.ai].pos);
+          const th = e.orbit / e.nOrb * Math.PI * 2 + st.t * 2.2 + e.idx;
+          const from = da.clone().add(new V3(Math.cos(th) * (R.don[e.di].rad + 0.35), Math.sin(th) * (R.don[e.di].rad + 0.35), Math.sin(th * 1.0) * 0.0));
+          const sl = c.slots[e.slot]; const to = ca.clone().add(sl.position);
+          const pos = new V3().lerpVectors(from, to, u); pos.y += Math.sin(u * Math.PI) * 0.9; pos.z += Math.sin(u * Math.PI) * 0.4;
+          if (u >= 1) { const th2 = th + e.slot * Math.PI; pos.copy(ca).add(new V3(Math.cos(th2) * (R.acc[e.ai].rad + 0.55), Math.sin(th2) * (R.acc[e.ai].rad + 0.55), 0)); }
+          e.m.position.copy(pos); e.e = u;
+        });
+        // 이온/원자 전환
+        P.don.forEach((d, di) => {
+          const out = P.es.filter((e) => e.di === di), done = out.filter((e) => e.e >= 1).length, lost = out.filter((e) => e.e > 0.5).length, ion = lost >= out.length;
+          const k = lost / Math.max(1, out.length);
+          d.body.scale.setScalar(1 - 0.22 * k); d.body.material.color.setHex(d.d.col).lerp(new THREE.Color(0xe9eef7), 0.55 * k); d.body.material.opacity = 1;
+          d.cloud.scale.setScalar(1 - 0.3 * k); d.cloud.material.opacity = 0.1 * (1 - k);
+          setLab(d.lb, ion ? R.after[0] : R.before[0]);
+        });
+        P.acc.forEach((a, ai) => {
+          const into = P.es.filter((e) => e.ai === ai), got = into.filter((e) => e.e >= 1).length, full = got >= into.length, k = got / Math.max(1, into.length);
+          a.slots.forEach((s, i) => { s.visible = i >= got; });
+          const c = a.c; const col = new THREE.Color(c.ionCol).lerp(new THREE.Color(c.col), k);
+          a.body.material.color.copy(col); a.body.material.transparent = !(c.neutral || full); a.body.material.opacity = c.neutral || full ? 1 : 0.88;
+          a.body.material.metalness = c.neutral ? 0.1 : 0.2 + 0.4 * k; a.body.scale.setScalar(c.neutral ? 1 + 0.2 * k : 1 + 0.1 * k);
+          setLab(a.lb, full ? R.after[1] : R.before[1]);
+        });
+        const mid = p > 0.04 && p < 0.96, end = p >= 0.96;
+        P.ox.show(end); P.rd.show(end); P.eLab.show(mid || end);
+        const donName = R.after[0], accName = R.after[1];
+        if (p < 0.04) setInfo('<b>' + R.eq.split(' → ')[0] + '</b> 이 만났어요.<br>▶ 전자 이동을 눌러 <b>전자(노란 구슬)</b>가 어디로 가는지 봐요.');
+        else if (!end) setInfo('전자가 <b>' + R.before[0] + ' → ' + R.before[1] + '</b> 쪽으로 옮겨 가고 있어요.<br>전자를 잃는 쪽은 + 전하가 늘고, 얻는 쪽은 줄어요.');
+        else setInfo('<b>' + R.before[0] + '</b>은 전자를 잃어 <b>' + donName + '</b>(산화), <b>' + R.before[1] + '</b>은 전자를 얻어 <b>' + accName + '</b>(환원)이 됐어요.<br><b>' + R.eq + '</b>');
+      }
+
+      const seg = controls.segment('반응', [{ value: 'zn', label: 'Zn + Cu²⁺' }, { value: 'ag', label: 'Cu + Ag⁺' }, { value: 'mg', label: 'Mg + O₂' }], st.rx, (v) => { st.rx = v; st.p = 0; st.play = false; playB.textContent = '▶ 전자 이동'; rng.set(0); build(v); apply(); });
+      const playB = controls.button('▶ 전자 이동', () => { if (st.p >= 0.999) { st.p = 0; } st.play = !st.play; playB.textContent = st.play ? '⏸ 멈춤' : '▶ 전자 이동'; });
+      const rng = controls.range('진행', 0, 100, 1, 0, (v) => { st.play = false; playB.textContent = '▶ 전자 이동'; st.p = v / 100; }, (v) => v + '%');
+      build(st.rx); apply();
+      let lastP = -1;
+
+      return {
+        update(dt, t) {
+          st.t += dt;
+          if (st.play) { st.p = Math.min(1, st.p + dt / 5.5); rng.set(Math.round(st.p * 100)); if (st.p >= 1) { st.play = false; playB.textContent = '↺ 다시 보기'; } }
+          apply();
+          parts.g.rotation.y = 0;
+          parts.don.forEach((d) => { d.a.rotation.z = t * 0.2; });
+        },
+        sync() {},
+      };
+    },
+  });
+})();
