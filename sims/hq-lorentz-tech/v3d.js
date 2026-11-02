@@ -41,7 +41,7 @@
         group: grp, n,
         set(i, p, dir, len, col) {
           if (len < 0.02) { sh.setMatrixAt(i, zero); hd.setMatrixAt(i, zero); return; }
-          const hl = Math.min(len * 0.55, rad * 6.5), hr = rad * 2.7;
+          const hl = Math.min(len * 0.55, rad * 6.5), hr = Math.min(rad * 2.7, hl * 0.5);
           Q.setFromUnitVectors(Yax, dir);
           S.set(rad, Math.max(0.001, len - hl), rad); M.compose(p, Q, S); sh.setMatrixAt(i, M);
           P.copy(dir).multiplyScalar(len - hl).add(p); S.set(hr, hl, hr); M.compose(P, Q, S); hd.setMatrixAt(i, M);
@@ -121,7 +121,7 @@
       const eArr = [0, 1, 2, 3, 4].map(() => { const a = mkArrow(0xffe14d, 0.05); gC.add(a); return a; });
       const cyP = sphere(0.2, 0xff6b6b, { emissive: 0xff3b3b, emissiveIntensity: 0.9 }); gC.add(cyP);
       const cyTr = makeTrail(gC, 90, 0xff8a8a, 0.07);
-      const lDee = label('D형 금속 상자 (전기장 ⇄ 교대로)', anchor(gC, 0, 0.5, -4.1), { color: '#b45309', size: 12 }), lCB = label('자기장 B (위쪽)', anchor(gC, 3.2, 1.9, -3.2), { color: '#4f46e5', size: 12 });
+      const lDee = label('D형 금속 상자', anchor(gC, -4.2, 0.4, 3.0), { color: '#b45309', size: 12 }), lCB = label('자기장 B (위쪽)', anchor(gC, 3.2, 1.9, -3.2), { color: '#4f46e5', size: 12 });
       const lE = label('', anchor(gC, 0, 0.9, 0), { color: '#a16207', size: 12 }), lCp = label('양성자', cyP, { color: '#c0392b', size: 12, offset: [0, 0.5, 0] });
       const R0 = 0.9;
       const rN = (n) => R0 * Math.sqrt(n + 1) / st.B;
@@ -157,8 +157,8 @@
       pl1.material = mat(0xff8a8a, { metalness: 0.6, roughness: 0.4 }); pl2.material = mat(0x8ab4ff, { metalness: 0.6, roughness: 0.4 });
       const selE = mkArrow(0xffe14d, 0.05); setArrow(selE, new V3(-4.5, 1.0, 0.55), new V3(-4.5, 1.0, -0.55)); gM.add(selE);
       const gunM = cyl(0.5, 0.65, 1.2, 0x4b5563, { metalness: 0.6 }); gunM.rotation.z = Math.PI / 2; gunM.position.set(-7.4, 0, 0); gM.add(gunM);
-      bGrid(gM, 3, 2, -6.2, -1.2, 1.6, 1.6, 1.6, 0.9, true);                       // 속도 선택기의 B₁
-      const bm = bGrid(gM, 6, 6, -1.6, 0.6, 1.5, 1.5, 1.9, 1.0, true);
+      bGrid(gM, 3, 2, -6.2, -1.2, 1.6, 1.6, 1.2, 0.6, true);                       // 속도 선택기의 B₁
+      const bm = bGrid(gM, 6, 6, -1.6, 0.6, 1.5, 1.5, 1.2, 0.6, true);
       const SP = [{ m: 1, c: 0xff6b6b, n: '가벼운 이온' }, { m: 2, c: 0x4ade80, n: '' }, { m: 3, c: 0x60a5fa, n: '무거운 이온' }];
       const msIon = SP.map((s) => { const p = sphere(0.18, s.c, { emissive: s.c, emissiveIntensity: 0.9 }); p.visible = false; gM.add(p); return { p, tr: makeTrail(gM, 50, s.c, 0.06), t: 0, on: false }; });
       const lMs = [label('E ↓ , B₁ 속도 선택기', anchor(gM, -4.5, 1.6, 0), { color: '#b45309', size: 12 }), label('B₂ 구역', anchor(gM, 2.2, 2.0, -0.6), { color: '#4f46e5', size: 12 }), label('검출기', anchor(gM, -2.5, 0.9, 6.5), { color: '#475569', size: 12 })];
@@ -193,14 +193,14 @@
       const bLine = new THREE.Mesh(new THREE.TorusGeometry(TR, 0.03, 8, 96), h.basic(0x9db7ff)); bLine.rotation.x = Math.PI / 2; gT.add(bLine);
       const bCones = []; for (let i = 0; i < 8; i++) { const psi = i / 8 * Math.PI * 2 + 0.2; const c = new THREE.Mesh(new THREE.ConeGeometry(0.13, 0.4, 12), h.basic(0xcfe0ff)); c.position.set(TR * Math.cos(psi), 0, TR * Math.sin(psi)); c.quaternion.setFromUnitVectors(h.Yax, new V3(-Math.sin(psi), 0, Math.cos(psi))); gT.add(c); bCones.push(c); }
       const NI = 7;
-      const tk = []; for (let i = 0; i < 2 * NI; i++) { const ion = i < NI, p = sphere(ion ? 0.15 : 0.1, ion ? 0xff6b6b : 0x60a5fa, { emissive: ion ? 0xff3b3b : 0x3b82f6, emissiveIntensity: 0.9 }); gT.add(p); tk.push({ p, ion, psi: Math.random() * 6.28, th: Math.random() * 6.28, cu: (Math.random() - 0.5) * 0.7, cv: (Math.random() - 0.5) * 0.7, vp: (0.5 + Math.random() * 0.4) * (ion ? 1 : -1.3), lost: 0, tr: makeTrail(gT, 26, ion ? 0xff8a8a : 0x7aa8ff, ion ? 0.05 : 0.04) }); }
+      const tk = []; for (let i = 0; i < 2 * NI; i++) { const ion = i < NI, p = sphere(ion ? 0.2 : 0.14, ion ? 0xff6b6b : 0x60a5fa, { emissive: ion ? 0xff3b3b : 0x3b82f6, emissiveIntensity: 0.9 }); gT.add(p); tk.push({ p, ion, psi: Math.random() * 6.28, th: Math.random() * 6.28, cu: (Math.random() - 0.5) * 0.7, cv: (Math.random() - 0.5) * 0.7, vp: (0.5 + Math.random() * 0.4) * (ion ? 1 : -1.3), lost: 0, tr: makeTrail(gT, 26, ion ? 0xff8a8a : 0x7aa8ff, ion ? 0.05 : 0.04) }); }
       const lTor = label('토카막 (도넛형 자기장 용기)', anchor(gT, 0, TA + 0.9, -TR), { color: '#be185d', size: 12 }), lCoil = label('자기장 코일', anchor(gT, TR, TA + 0.5, 0), { color: '#b45309', size: 12 }), lBt = label('자기장 B', anchor(gT, -TR, 0.6, 0), { color: '#4f46e5', size: 12 });
       const lIon = label('이온 (+)', anchor(gT, 0, 0, 0), { color: '#c0392b', size: 11 }), lEl = label('전자 (−)', anchor(gT, 0, 0, 0), { color: '#2563eb', size: 11 });
       let lostN = 0, tkT = 0;
       function larmor(ion) { return 0.27 * Math.sqrt(st.T) / st.Bt * (ion ? 1 : 0.38); }
       function tkInfo() {
         const rho = larmor(true), lose = rho + 0.45 > TA;
-        info('<b>플라스마 가두기</b>: 하전 입자는 자기장 둘레를 <b>나선</b>으로 감아 돌며 움직여요 (r = mv/qB).<br>자기장이 세면 회전 반지름이 작아져 용기 벽에 닿지 않아요. 온도(속력)가 높으면 반지름이 커져요.<br>' + (lose ? '<b>지금은 반지름이 커서 벽에 부딪혀 잃어버려요.</b>' : '지금은 입자가 용기 안에 갇혀 있어요.'));
+        info('<b>플라스마 가두기</b>: 입자는 자기장 둘레를 <b>나선</b>으로 감아 돌아요 (r = mv/qB).<br>자기장이 세면 반지름이 작아지고, 온도(속력)가 높으면 커져요.<br>' + (lose ? '<b>지금은 반지름이 커서 벽에 부딪혀 잃어버려요.</b>' : '지금은 입자가 용기 안에 갇혀 있어요.'));
       }
       grab('tok', () => controls.range('자기장 B', 0.2, 1.0, 0.1, st.Bt, (v) => { st.Bt = v; tkInfo(); }, (v) => v.toFixed(1)));
       grab('tok', () => controls.range('온도', 0.5, 2.5, 0.25, st.T, (v) => { st.T = v; tkInfo(); }, (v) => v.toFixed(2) + '배'));
@@ -229,9 +229,9 @@
         return new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 90, rad, 6, false), mat(col, { emissive: col, emissiveIntensity: 0.5, transparent: true, opacity: 0.55 }));
       }
       [2, 4].forEach((L) => { for (let i = 0; i < 8; i++) bFieldLines.add(dipLine(L, i / 8 * Math.PI * 2, L === 2 ? 0xff9f7a : 0x9d8cff, 0.02)); });
-      const belt1 = new THREE.Mesh(new THREE.TorusGeometry(2.3 * RE, 0.55 * RE, 20, 56), glass(0xff7a59, 0.14)), belt2 = new THREE.Mesh(new THREE.TorusGeometry(4.0 * RE, 0.85 * RE, 20, 56), glass(0x6c8cff, 0.1));
-      belt1.rotation.x = belt2.rotation.x = Math.PI / 2; belt1.scale.z = belt2.scale.z = 1.9; gV.add(belt1, belt2);
-      const vp = sphere(0.1, 0xffe14d, { emissive: 0xffc800, emissiveIntensity: 1 }); gV.add(vp); const vTr = makeTrail(gV, 70, 0xffd54d, 0.035);
+      const belt1 = new THREE.Mesh(new THREE.TorusGeometry(2.3 * RE, 0.55 * RE, 20, 56), glass(0xff7a59, 0.1)), belt2 = new THREE.Mesh(new THREE.TorusGeometry(4.0 * RE, 0.8 * RE, 20, 56), glass(0x6c8cff, 0.06));
+      belt1.rotation.x = belt2.rotation.x = Math.PI / 2; belt1.scale.z = belt2.scale.z = 1.4; gV.add(belt1, belt2);
+      const vp = sphere(0.2, 0xffe14d, { emissive: 0xffc800, emissiveIntensity: 1 }); gV.add(vp); const vTr = makeTrail(gV, 70, 0xffd54d, 0.06);
       const aur = [1, -1].map((s) => { const m = new THREE.Mesh(new THREE.TorusGeometry(0.45, 0.05, 10, 40), mat(0x4ade80, { emissive: 0x4ade80, emissiveIntensity: 1, transparent: true, opacity: 0 })); m.rotation.x = Math.PI / 2; gV.add(m); return m; });
       const lEarth = label('지구', earth, { color: '#1d4ed8', size: 13, offset: [0, -1.55, 0] }), lIn = label('안쪽 띠', anchor(gV, 2.3 * RE, 0.9, 0), { color: '#c2410c', size: 12 }), lOut = label('바깥 띠', anchor(gV, 4.3 * RE, 1.5, 0), { color: '#4f46e5', size: 12 }), lAur = label('', anchor(gV, 0, 0, 0), { color: '#15803d', size: 12 });
       const Bq = (lam) => Math.sqrt(1 + 3 * Math.sin(lam) ** 2) / Math.pow(Math.cos(lam), 6);
@@ -268,10 +268,10 @@
         [lTor, lCoil, lBt, lIon, lEl].forEach((l) => l.show(sc === 'tok'));
         [lEarth, lIn, lOut].forEach((l) => l.show(sc === 'van')); if (sc !== 'van') lAur.show(false);
         const o = ctx.orbit; o.tx = o.ty = o.tz = 0;
-        if (sc === 'cyc') { cyReset(); o.dist = 13 * KD; o.phi = 0.85; info('<b>사이클로트론</b>: 두 D형 상자 사이 틈에서 전기장이 입자를 가속하고, 상자 안에서는 자기장이 반원을 그리게 해요.<br>속력이 빨라질수록 반지름이 커지지만 <b>반바퀴 도는 시간은 일정</b>(T = 2πm/qB)해서 전기장의 방향을 같은 주기로 바꿔 주면 돼요.'); }
-        else if (sc === 'mass') { msReset(); stack.fill(0); spotMeshes.forEach((m) => (m.visible = false)); updMass(); o.dist = 15 * KD; o.phi = 0.95; o.tx = -1.2; o.tz = 2.0; }
+        if (sc === 'cyc') { cyReset(); o.dist = 16.5 * KD; o.phi = 0.95; info('<b>사이클로트론</b>: 틈에서는 전기장이 가속하고, 상자 안에서는 자기장이 반원을 그리게 해요.<br>빨라질수록 반지름은 커지지만 <b>반바퀴 도는 시간은 일정</b>(T = 2πm/qB)해요.'); }
+        else if (sc === 'mass') { msReset(); stack.fill(0); spotMeshes.forEach((m) => (m.visible = false)); updMass(); o.dist = 23 * KD; o.phi = 0.95; o.theta = 0.2; o.tx = -0.6; o.tz = 2.6; }
         else if (sc === 'tok') { o.dist = 14.5 * KD; o.phi = 0.95; tkInfo(); }
-        else { o.dist = 13 * KD; o.phi = 1.2; vanInfo(); }
+        else { o.dist = 17 * KD; o.phi = 1.2; vanInfo(); }
       }
       go(st.sc);
       lIon.obj = tk[0].p; lEl.obj = tk[NI].p;

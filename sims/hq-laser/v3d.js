@@ -41,7 +41,7 @@
         group: grp, n,
         set(i, p, dir, len, col) {
           if (len < 0.02) { sh.setMatrixAt(i, zero); hd.setMatrixAt(i, zero); return; }
-          const hl = Math.min(len * 0.55, rad * 6.5), hr = rad * 2.7;
+          const hl = Math.min(len * 0.55, rad * 6.5), hr = Math.min(rad * 2.7, hl * 0.5);
           Q.setFromUnitVectors(Yax, dir);
           S.set(rad, Math.max(0.001, len - hl), rad); M.compose(p, Q, S); sh.setMatrixAt(i, M);
           P.copy(dir).multiplyScalar(len - hl).add(p); S.set(hr, hl, hr); M.compose(P, Q, S); hd.setMatrixAt(i, M);

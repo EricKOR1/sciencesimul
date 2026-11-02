@@ -41,7 +41,7 @@
         group: grp, n,
         set(i, p, dir, len, col) {
           if (len < 0.02) { sh.setMatrixAt(i, zero); hd.setMatrixAt(i, zero); return; }
-          const hl = Math.min(len * 0.55, rad * 6.5), hr = rad * 2.7;
+          const hl = Math.min(len * 0.55, rad * 6.5), hr = Math.min(rad * 2.7, hl * 0.5);
           Q.setFromUnitVectors(Yax, dir);
           S.set(rad, Math.max(0.001, len - hl), rad); M.compose(p, Q, S); sh.setMatrixAt(i, M);
           P.copy(dir).multiplyScalar(len - hl).add(p); S.set(hr, hl, hr); M.compose(P, Q, S); hd.setMatrixAt(i, M);
@@ -83,7 +83,7 @@
   window.SciSim3D.attach({
     title: '렌즈와 광선 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: 17 * KD, theta: 0.7, phi: 1.2, min: 7, max: 34, target: [1.5, 0, 0] },
+    camera: { dist: 19 * KD, theta: 0.4, phi: 1.15, min: 7, max: 34, target: [1.5, 0, 0] },
     autoRotate: 0,
     levels: [0, 3],
     build(ctx) {
@@ -157,9 +157,9 @@
         nseg = 0; hits = [];
         const convex = st.type === 'convex', ap = st.ap, cols = st.chroma ? [['r', 0xff5a5a], ['g', 0x4ade80], ['b', 0x6aa8ff]] : [['g', 0xfff3b0]];
         const f = R / (2 * (NR - 1));
-        const rings = [0.28, 0.52, 0.76, 1.0], na = 8;
+        const rings = [0.35, 0.68, 1.0], na = 8;
         const rays = [[0, 0]]; rings.forEach((q) => { for (let a = 0; a < na; a++) rays.push([ap * q * Math.cos(a / na * Math.PI * 2 + 0.2), ap * q * Math.sin(a / na * Math.PI * 2 + 0.2)]); });
-        const XE = 11, th = 0.022;
+        const XE = 9, th = 0.02;
         cols.forEach(([k, col]) => {
           const n = st.chroma ? IDX[k] : NR;
           rays.forEach(([y, z]) => {
