@@ -11,6 +11,9 @@
      hint: '드래그해서 돌려 보세요',      // (선택) 창 아래 안내
      camera: { dist: 8, theta: 0.6, phi: 1.1, fov: 45, target: [0,0,0] },
      autoRotate: 0.25,                 // 사용자가 만지기 전 천천히 회전 (rad/s, 0이면 정지)
+     levels: [0, 1],                   // (선택) 이 단계(0부터)에서만 3D로 시작. 없으면 모든 단계에서 3D로 시작
+     fit: true,                        // (선택) 세로로 긴 화면에서 자동으로 물러서서 보기 (false면 끔)
+     studio: true, shadows: true,      // (선택) 스튜디오 환경광 · 그림자 (차시가 조명을 직접 두면 자동으로 꺼짐)
      build(ctx) {                      // 처음 열 때 한 번: ctx = { THREE, scene, camera, root, label(), info(), controls() }
        // root(THREE.Group)에 물체를 추가하고, 매 프레임 update(dt, t)를 돌려줘요
        return { update(dt, t) {}, sync() {} };
@@ -18,6 +21,8 @@
      onOpen() {}, onClose() {},
    });
    v3.open(); v3.close(); v3.sync();   // sync: 실험 상태가 바뀌었을 때 3D 모형을 다시 맞추기
+   ※ 3D가 있는 차시는 기본으로 3D 화면으로 시작하고(기기 사양이 낮으면 2D), [▦ 2D | 🧊 3D] 버튼으로 바꿀 수 있어요.
+     학생이 고른 방식은 다른 차시에도 적용돼요 (localStorage 'sciencesimul:view').
    ========================================================= */
 (function (global) {
   'use strict';
@@ -39,22 +44,50 @@
     return loading;
   }
 
+  let glOK = null;
   function webglOK() {
-    try { const c = doc.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch (e) { return false; }
+    if (glOK != null) return glOK;
+    try { const c = doc.createElement('canvas'); glOK = !!(c.getContext('webgl2') || c.getContext('webgl')); } catch (e) { glOK = false; }
+    return glOK;
   }
+
+  /* 보기 설정: 'auto'(기기에 맞게) | '3d' | '2d'  — 모든 차시에 함께 적용돼요 */
+  const VIEW_KEY = 'sciencesimul:view', SLOW_KEY = 'sciencesimul:slow3d', QUAL_KEY = 'sciencesimul:q3d';
+  const ls = {
+    get(k) { try { return global.localStorage.getItem(k); } catch (e) { return null; } },
+    set(k, v) { try { if (v == null) global.localStorage.removeItem(k); else global.localStorage.setItem(k, v); } catch (e) { /* 무시 */ } },
+  };
+  function pref() { const v = ls.get(VIEW_KEY); return v === '3d' || v === '2d' ? v : 'auto'; }
+  function setPref(v) { ls.set(VIEW_KEY, v === 'auto' ? null : v); if (v !== '2d') ls.set(SLOW_KEY, null); }
+  // 기기 사양 추정: WebGL이 없거나, 메모리 2GB 이하·CPU 2코어 이하이거나, 전에 3D가 너무 느렸던 기기는 2D로 시작
+  function capable() {
+    if (!webglOK()) return false;
+    const n = global.navigator || {};
+    if (n.deviceMemory && n.deviceMemory <= 2) return false;
+    if (n.hardwareConcurrency && n.hardwareConcurrency <= 2) return false;
+    if (ls.get(SLOW_KEY) === '1') return false;
+    return true;
+  }
+  function start3D() { const p = pref(); return p === '3d' ? webglOK() : p === '2d' ? false : capable(); }
+  function toast(msg) { try { global.SciSim && global.SciSim.toast && global.SciSim.toast(msg); } catch (e) { /* 무시 */ } }
 
   let cssDone = false;
   function injectCSS() {
     if (cssDone) return; cssDone = true;
     const st = doc.createElement('style');
     st.textContent = `
-.v3-btn { min-height: 40px; padding: 6px 14px; border-radius: 999px; border: 2px solid var(--subject, #3867f4); background: #fff; color: var(--subject, #3867f4); font-weight: 800; font-size: 14.5px; cursor: pointer; white-space: nowrap; }
-.v3-btn.on { background: var(--subject, #3867f4); color: #fff; }
-.v3-btn.float { position: absolute; top: 10px; right: 10px; z-index: 24; box-shadow: 0 4px 14px rgba(20,30,60,.18); }
+.v3-seg { display: inline-flex; gap: 2px; padding: 3px; border-radius: 12px; background: var(--surface-2, #f3f5f8); border: 1px solid var(--line, #e3e7ee); flex: none; }
+.v3-seg button { min-height: 36px; padding: 4px 12px; border: 0; border-radius: 9px; background: transparent; color: var(--muted, #556); font-weight: 800; font-size: 14px; cursor: pointer; white-space: nowrap; }
+.v3-seg button.on { background: var(--subject, #3182f6); color: #fff; }
+.v3-seg.float { position: absolute; top: 10px; right: 10px; z-index: 26; background: rgba(255,255,255,.94); box-shadow: 0 4px 14px rgba(20,30,60,.18); }
+.v3-on > .v3-seg.float { background: rgba(10,16,30,.72); border-color: rgba(255,255,255,.22); top: 6px; right: 6px; }
+.v3-on > .v3-seg.float button:not(.on) { color: #dbe4f7; }
 .v3-wrap { position: absolute; inset: 0; z-index: 25; display: flex; flex-direction: column; background: radial-gradient(ellipse at 50% 40%, #1d2a4a 0%, #0c1222 100%); color: #e8eefc; animation: v3in .25s ease; }
 .v3-wrap[hidden] { display: none; }
 @keyframes v3in { from { opacity: 0; } to { opacity: 1; } }
 .v3-head { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: rgba(8,12,24,.55); }
+.v3-wrap.pad .v3-head { padding-right: 150px; }
+.v3-head .v3-full { display: none; }
 .v3-title { flex: 1; min-width: 0; font-weight: 800; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .v3-head button { min-height: 38px; padding: 4px 12px; border-radius: 999px; border: 1px solid rgba(255,255,255,.35); background: rgba(255,255,255,.1); color: #fff; font-weight: 800; font-size: 13.5px; cursor: pointer; white-space: nowrap; }
 .v3-view { position: relative; flex: 1; min-height: 0; overflow: hidden; touch-action: none; cursor: grab; }
@@ -72,7 +105,16 @@
 .v3-ctl input[type=range] { width: 140px; height: 38px; }
 .v3-hint { position: absolute; right: 10px; bottom: 8px; font-size: 12px; color: #9fb0d4; pointer-events: none; }
 .v3-msg { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 20px; text-align: center; font-weight: 800; }
-@media (max-width: 599px) { .v3-wrap { position: fixed; inset: 0; z-index: 200; } .v3-title { font-size: 14px; } .v3-info { font-size: 12px; max-width: 75%; } .v3-ctl input[type=range] { width: 110px; } }
+.v3-wrap.full { position: fixed; inset: 0; z-index: 200; }
+.v3-wrap.full ~ .v3-seg.float, .v3-wrap.full + .v3-seg { position: fixed; z-index: 201; }
+@media (max-width: 599px) {
+  .v3-head .v3-full { display: inline-block; }
+  .v3-head { padding: 6px 8px; }
+  .v3-wrap.pad .v3-head { padding-right: 128px; }
+  .v3-head .v3-reset { display: none; }
+  .v3-wrap.full .v3-head .v3-reset { display: inline-block; }
+  .stage-canvas.v3-on, .stage-card.v3-on { aspect-ratio: auto !important; height: auto; min-height: min(78vh, 600px); }
+  .v3-title { font-size: 14px; } .v3-info { font-size: 12px; max-width: 75%; } .v3-ctl input[type=range] { width: 110px; } }
 @media (prefers-reduced-motion: reduce) { .v3-wrap { animation: none; } }
 `;
     doc.head.appendChild(st);
@@ -126,22 +168,27 @@
     wrap('RingGeometry', (a) => { a[2] = atLeast(a[2], 32, 64); return a; });
   }
 
+  const instances = [];
   function attach(opts) {
     injectCSS();
     const host = typeof opts.host === 'string' ? doc.querySelector(opts.host) : (opts.host || doc.querySelector('.stage-canvas'));
     if (!host) return null;
     if (getComputedStyle(host).position === 'static') host.style.position = 'relative';
 
-    /* 버튼 */
-    const btn = el('button', 'v3-btn', opts.label || '🧊 3D');
-    btn.type = 'button'; btn.title = '3D 모형으로 보기'; btn.setAttribute('aria-label', btn.title);
+    /* 2D | 3D 전환 버튼 */
+    const btn = el('div', 'v3-seg'); btn.setAttribute('role', 'group'); btn.setAttribute('aria-label', '보기 방식');
+    const b2 = el('button', '', '▦ 2D'), b3 = el('button', '', opts.label || '🧊 3D');
+    b2.type = b3.type = 'button'; b2.title = '2D 실험 화면'; b3.title = '3D 입체 모형';
+    btn.append(b2, b3);
     if (opts.feature) btn.setAttribute('data-feature', opts.feature);
     let place = opts.button === null ? null : (typeof opts.button === 'string' ? doc.querySelector(opts.button) : opts.button) || doc.querySelector('.stage-toolbar');
     // 버튼 자리가 화면에 보이지 않으면(예: 휴대폰에서 도구 막대가 숨겨짐) 실험 화면 오른쪽 위에 띄워요
+    let wrapEl = null;
     function placeBtn() {
       const visible = place && place.offsetParent !== null && getComputedStyle(place).display !== 'none';
       if (visible) { if (btn.parentNode !== place) { btn.classList.remove('float'); place.appendChild(btn); } }
       else if (btn.parentNode !== host) { btn.classList.add('float'); host.appendChild(btn); }
+      if (wrapEl) wrapEl.classList.toggle('pad', btn.parentNode === host);
     }
     placeBtn();
     global.addEventListener('resize', placeBtn);
@@ -151,9 +198,9 @@
     const wrap = el('div', 'v3-wrap'); wrap.hidden = true;
     const head = el('div', 'v3-head');
     const title = el('div', 'v3-title', '🧊 ' + (opts.title || '3D 모형'));
-    const resetB = el('button', '', '↺ 시점'); resetB.type = 'button';
-    const closeB = el('button', '', '✕ 닫기'); closeB.type = 'button';
-    head.append(title, resetB, closeB);
+    const resetB = el('button', 'v3-reset', '↺ 시점'); resetB.type = 'button';
+    const fullB = el('button', 'v3-full', '⛶ 크게'); fullB.type = 'button';
+    head.append(title, resetB, fullB);
     const view = el('div', 'v3-view');
     const labels = el('div', 'v3-labels');
     const info = el('div', 'v3-info');
@@ -161,7 +208,13 @@
     view.append(labels, info, hint);
     const ctl = el('div', 'v3-ctl');
     wrap.append(head, view, ctl);
-    host.appendChild(wrap);
+    host.insertBefore(wrap, btn.parentNode === host ? btn : null);
+    wrapEl = wrap; placeBtn();
+    fullB.addEventListener('click', () => {
+      const on = !wrap.classList.contains('full'); wrap.classList.toggle('full', on); fullB.textContent = on ? '↙ 작게' : '⛶ 크게';
+      if (btn.parentNode === host) btn.style.position = on ? 'fixed' : '';
+      resize();
+    });
 
     let THREE = null, renderer = null, scene = null, camera = null, root = null, user = null;
     let raf = 0, last = 0, isOpen = false, touched = false, built = false, frameN = 0;
@@ -170,8 +223,8 @@
     const labs = [];
 
     function placeCamera() {
-      const p = Math.max(0.05, Math.min(Math.PI - 0.05, orbit.phi));
-      camera.position.set(orbit.tx + orbit.dist * Math.sin(p) * Math.sin(orbit.theta), orbit.ty + orbit.dist * Math.cos(p), orbit.tz + orbit.dist * Math.sin(p) * Math.cos(orbit.theta));
+      const p = Math.max(0.05, Math.min(Math.PI - 0.05, orbit.phi)), D = orbit.dist * fitK;
+      camera.position.set(orbit.tx + D * Math.sin(p) * Math.sin(orbit.theta), orbit.ty + D * Math.cos(p), orbit.tz + D * Math.sin(p) * Math.cos(orbit.theta));
       camera.lookAt(orbit.tx, orbit.ty, orbit.tz);
     }
     function resize() {
@@ -179,6 +232,7 @@
       const w = Math.max(1, view.clientWidth), h = Math.max(1, view.clientHeight);
       renderer.setSize(w, h, false);
       camera.aspect = w / h; camera.updateProjectionMatrix();
+      fitK = opts.fit === false ? 1 : (w / h < 0.95 ? Math.min(1.6, Math.pow(0.95 / (w / h), 0.55)) : 1);
     }
 
     /* 3D 위치에 붙는 HTML 이름표 */
@@ -251,36 +305,102 @@
       text(html) { const s = el('span', 'lab', html); ctl.appendChild(s); return s; },
     };
 
-    /* 드래그 회전 · 확대 */
-    const ptrs = new Map(); let pinch0 = 0, dist0 = 0;
-    view.addEventListener('pointerdown', (e) => { view.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY }); touched = true; if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; pinch0 = Math.hypot(a.x - b.x, a.y - b.y); dist0 = orbit.dist; } });
+    /* 드래그 회전 · 확대
+       잡은 곳이 손가락(마우스)을 따라 움직여요: 앞쪽 물체를 잡으면 그대로, 회전 중심보다 뒤에 있는 물체
+       (궤도의 뒤쪽, 하늘 돔 안쪽 등)를 잡으면 방향을 뒤집어 그 물체가 끄는 방향으로 움직이게 해요. */
+    const ptrs = new Map(); let pinch0 = 0, dist0 = 0, dirX = 1, dirY = 1;
+    const vel = { t: 0, p: 0 };
+    let ray = null, ndc = null, bsph = null;
+    function grabSign(e) {
+      if (!built || !THREE) return 1;
+      try {
+        if (!ray) { ray = new THREE.Raycaster(); ndc = new THREE.Vector2(); bsph = new THREE.Sphere(); }
+        const r = view.getBoundingClientRect();
+        ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+        new THREE.Box3().setFromObject(root).getBoundingSphere(bsph);
+        const R = Math.max(1e-3, bsph.radius);
+        ray.params.Line = { threshold: R * 0.015 }; ray.params.Points = { threshold: R * 0.02 };
+        ray.setFromCamera(ndc, camera);
+        const hits = ray.intersectObject(root, true).filter((h) => h.object.visible !== false && !(h.object.material && h.object.material.opacity === 0));
+        const pivot = new THREE.Vector3(orbit.tx, orbit.ty, orbit.tz);
+        const camD = camera.position.distanceTo(pivot);
+        if (hits.length) return hits[0].distance > camD * 1.02 ? -1 : 1;
+        // 빈 곳을 잡았을 때: 카메라가 모형 안에 있으면(하늘 돔 등) 뒤집기
+        return camera.position.distanceTo(bsph.center) < R * 0.9 ? -1 : 1;
+      } catch (err) { return 1; }
+    }
+    view.addEventListener('pointerdown', (e) => {
+      view.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY, t: performance.now() }); touched = true; vel.t = vel.p = 0;
+      if (ptrs.size === 1) { const sg = grabSign(e); dirX = sg; dirY = sg; }
+      if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; pinch0 = Math.hypot(a.x - b.x, a.y - b.y); dist0 = orbit.dist; }
+    });
     view.addEventListener('pointermove', (e) => {
       if (!ptrs.has(e.pointerId)) return;
-      const p = ptrs.get(e.pointerId), dx = e.clientX - p.x, dy = e.clientY - p.y;
-      p.x = e.clientX; p.y = e.clientY;
-      if (ptrs.size === 1) { orbit.theta -= dx * 0.008; orbit.phi = Math.max(0.05, Math.min(Math.PI - 0.05, orbit.phi - dy * 0.008)); }
-      else if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; const d = Math.hypot(a.x - b.x, a.y - b.y); if (pinch0 > 0) orbit.dist = Math.max(cam0.min, Math.min(cam0.max, dist0 * pinch0 / d)); }
+      const p = ptrs.get(e.pointerId), dx = e.clientX - p.x, dy = e.clientY - p.y, now = performance.now(), dts = Math.max(1, now - p.t) / 1000;
+      p.x = e.clientX; p.y = e.clientY; p.t = now;
+      if (ptrs.size === 1) {
+        const dT = -dx * 0.008 * dirX, dP = -dy * 0.008 * dirY;
+        orbit.theta += dT; orbit.phi = Math.max(0.05, Math.min(Math.PI - 0.05, orbit.phi + dP));
+        vel.t = vel.t * 0.5 + (dT / dts) * 0.5; vel.p = vel.p * 0.5 + (dP / dts) * 0.5;
+      } else if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; const d = Math.hypot(a.x - b.x, a.y - b.y); if (pinch0 > 0) orbit.dist = Math.max(cam0.min, Math.min(cam0.max, dist0 * pinch0 / d)); vel.t = vel.p = 0; }
     });
-    const up = (e) => { ptrs.delete(e.pointerId); if (ptrs.size < 2) pinch0 = 0; };
+    const up = (e) => {
+      const p = ptrs.get(e.pointerId);
+      if (p && performance.now() - p.t > 80) vel.t = vel.p = 0; // 멈췄다 놓으면 관성 없음
+      ptrs.delete(e.pointerId); if (ptrs.size < 2) pinch0 = 0;
+    };
     view.addEventListener('pointerup', up); view.addEventListener('pointercancel', up);
     view.addEventListener('wheel', (e) => { e.preventDefault(); touched = true; orbit.dist = Math.max(cam0.min, Math.min(cam0.max, orbit.dist * (e.deltaY > 0 ? 1.1 : 0.9))); }, { passive: false });
-    resetB.addEventListener('click', () => { Object.assign(orbit, { dist: cam0.dist, theta: cam0.theta, phi: cam0.phi, tx: cam0.target[0], ty: cam0.target[1], tz: cam0.target[2] }); touched = false; });
+    resetB.addEventListener('click', () => { Object.assign(orbit, { dist: cam0.dist, theta: cam0.theta, phi: cam0.phi, tx: cam0.target[0], ty: cam0.target[1], tz: cam0.target[2] }); touched = false; vel.t = vel.p = 0; });
+
+    /* 화면이 세로로 길면 모형이 잘리지 않게 조금 물러서서 봐요 */
+    let fitK = 1;
+    /* 기기 성능 확인: 처음 몇 초 동안 프레임 속도를 재서, 느리면 화질을 낮추고 그래도 느리면 2D로 바꿔요 */
+    const perf = { n: 0, sum: 0, stage: ls.get(QUAL_KEY) === 'low' ? 1 : 0, done: !!global.SCISIM_3D_NOPERF };
+    function perfStep(dt) {
+      if (perf.done || doc.hidden) return;
+      perf.n++; if (perf.n <= 15) return;
+      perf.sum += dt;
+      if (perf.n < 75) return;
+      const fps = 60 / perf.sum; perf.n = 0; perf.sum = 0;
+      if (fps >= 24) { perf.done = true; return; }
+      if (perf.stage === 0) { perf.stage = 1; ls.set(QUAL_KEY, 'low'); lowQuality(); return; }
+      perf.done = true;
+      if (fps < 12 && pref() === 'auto') {
+        ls.set(SLOW_KEY, '1'); close();
+        toast('이 기기에서는 3D가 느려서 2D 화면으로 바꿨어요. 🧊 3D 버튼으로 언제든 다시 볼 수 있어요.');
+      }
+    }
+    function lowQuality() {
+      if (!renderer) return;
+      renderer.setPixelRatio(1);
+      if (shadowOn) { renderer.shadowMap.enabled = false; shadowOn = false; root.traverse((o) => { if (o.isMesh) { o.castShadow = false; o.receiveShadow = false; } }); if (contact) contact.visible = true; }
+      resize();
+    }
 
     function frame(t) {
       if (!isOpen) return;
       raf = requestAnimationFrame(frame);
-      const dt = Math.min(0.05, Math.max(0, (t - last) / 1000)); last = t;
+      const rawDt = Math.max(0, (t - last) / 1000), dt = Math.min(0.05, rawDt); last = t;
+      // 단계 설명을 읽는 동안(실험 잠금)에는 화면만 한 번 그려 두고 쉬어요
+      if (doc.body.classList.contains('sim-locked') && frameN > 3) { perf.n = 0; perf.sum = 0; return; }
       if (!touched && opts.autoRotate) orbit.theta += opts.autoRotate * dt;
+      if (!ptrs.size && (vel.t || vel.p)) {
+        orbit.theta += vel.t * dt; orbit.phi = Math.max(0.05, Math.min(Math.PI - 0.05, orbit.phi + vel.p * dt));
+        const k = Math.pow(0.04, dt); vel.t *= k; vel.p *= k; if (Math.abs(vel.t) + Math.abs(vel.p) < 0.01) vel.t = vel.p = 0;
+      }
+      perfStep(Math.min(rawDt, 0.5));
       if (user && user.update) { try { user.update(dt, t / 1000); } catch (e) { console.error(e); } }
-      if (shadowOn && (frameN++ % 20 === 0)) { markShadows(); fitShadow(); }
+      if (frameN++ % 20 === 0) { if (shadowOn) markShadows(); fitShadow(); }
       placeCamera();
       renderer.render(scene, camera);
+      if (global.SciSimShare && global.SciSimShare.grab) global.SciSimShare.grab(renderer.domElement);
       drawLabels();
     }
 
     function build() {
       renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
-      renderer.setPixelRatio(Math.min(global.devicePixelRatio || 1, 2));
+      renderer.setPixelRatio(perf.stage ? 1 : Math.min(global.devicePixelRatio || 1, 2));
       if ('outputEncoding' in renderer) renderer.outputEncoding = THREE.sRGBEncoding;
       view.insertBefore(renderer.domElement, labels);
       scene = new THREE.Scene();
@@ -299,7 +419,7 @@
       if (!ownLight && opts.studio !== false) {
         if (env) { scene.environment = env; hemi.intensity = 0.7; }
         const rim = new THREE.DirectionalLight(0x9fc4ff, 0.3); rim.position.set(-6, 3, -7); rim.userData.v3engine = true; scene.add(rim);
-        if (opts.shadows !== false) setupShadows();
+        if (opts.shadows !== false) { if (!perf.stage) setupShadows(); setupContact(); }
       }
       built = true;
       if (global.ResizeObserver) new ResizeObserver(resize).observe(view);
@@ -320,8 +440,30 @@
       shadowOn = true;
       fitShadow();
     }
+    /* 바닥 접지 그림자: 모형 아래에 부드러운 그림자 원판을 깔아 떠 있지 않고 놓여 있는 느낌을 줘요 (가벼움) */
+    let contact = null;
+    function setupContact() {
+      const c = doc.createElement('canvas'); c.width = c.height = 128;
+      const g = c.getContext('2d'), gr = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+      gr.addColorStop(0, 'rgba(0,0,0,0.55)'); gr.addColorStop(0.55, 'rgba(0,0,0,0.18)'); gr.addColorStop(1, 'rgba(0,0,0,0)');
+      g.fillStyle = gr; g.fillRect(0, 0, 128, 128);
+      const tex = new THREE.CanvasTexture(c);
+      contact = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, opacity: 0.6 }));
+      contact.rotation.x = -Math.PI / 2; contact.renderOrder = -1; contact.userData.v3engine = true; contact.raycast = () => {};
+      scene.add(contact);
+    }
     const tmpBox = { b: null, s: null };
     function fitShadow() {
+      if (contact) {
+        if (!tmpBox.b) { tmpBox.b = new THREE.Box3(); tmpBox.s = new THREE.Sphere(); }
+        tmpBox.b.setFromObject(root);
+        if (!tmpBox.b.isEmpty()) {
+          const sx = tmpBox.b.max.x - tmpBox.b.min.x, sz = tmpBox.b.max.z - tmpBox.b.min.z, sy = tmpBox.b.max.y - tmpBox.b.min.y;
+          const size = Math.max(sx, sz, sy * 0.6) * 1.35;
+          contact.scale.set(size, size, 1);
+          contact.position.set((tmpBox.b.min.x + tmpBox.b.max.x) / 2, tmpBox.b.min.y - Math.max(0.02, sy * 0.06), (tmpBox.b.min.z + tmpBox.b.max.z) / 2);
+        }
+      }
       if (!shadowOn) return;
       if (!tmpBox.b) { tmpBox.b = new THREE.Box3(); tmpBox.s = new THREE.Sphere(); }
       tmpBox.b.setFromObject(root);
@@ -348,39 +490,64 @@
       });
     }
 
-    function open() {
+    function setBtns() { b3.classList.toggle('on', isOpen); b2.classList.toggle('on', !isOpen); host.classList.toggle('v3-on', isOpen); b3.setAttribute('aria-pressed', isOpen ? 'true' : 'false'); b2.setAttribute('aria-pressed', isOpen ? 'false' : 'true'); }
+    function open(quiet) {
       if (isOpen) return;
-      isOpen = true; wrap.hidden = false; btn.classList.add('on');
-      if (global.SciSim && global.SciSim.Sound) try { global.SciSim.Sound.click(); } catch (e) {}
-      if (!webglOK()) { view.appendChild(el('div', 'v3-msg', '이 기기에서는 3D 화면을 표시할 수 없어요.')); return; }
+      isOpen = true; wrap.hidden = false; setBtns();
+      if (!quiet && global.SciSim && global.SciSim.Sound) try { global.SciSim.Sound.click(); } catch (e) {}
+      if (!webglOK()) { view.appendChild(el('div', 'v3-msg', '이 기기에서는 3D 화면을 표시할 수 없어요. ▦ 2D로 실험해 주세요.')); return; }
       const go = () => {
         if (!isOpen) return;
         if (!built) build(); else if (user && user.sync) { try { user.sync(); } catch (e) { console.error(e); } }
-        resize(); last = performance.now(); cancelAnimationFrame(raf); raf = requestAnimationFrame(frame);
+        resize(); last = performance.now(); frameN = 0; cancelAnimationFrame(raf); raf = requestAnimationFrame(frame);
         if (opts.onOpen) try { opts.onOpen(); } catch (e) { console.error(e); }
       };
       if (THREE) go(); else if (global.THREE) { upgradeGeometry(global.THREE); THREE = global.THREE; go(); }
       else {
         const msg = el('div', 'v3-msg', '3D 모형을 불러오는 중…'); view.appendChild(msg);
-        loadThree().then((T) => { upgradeGeometry(T); THREE = T; msg.remove(); go(); }).catch(() => { msg.textContent = '3D 모형을 불러오지 못했어요. 인터넷 연결을 확인해 주세요.'; });
+        loadThree().then((T) => { upgradeGeometry(T); THREE = T; msg.remove(); go(); }).catch(() => { msg.textContent = '3D 모형을 불러오지 못했어요. 인터넷 연결을 확인하거나 ▦ 2D로 실험해 주세요.'; });
       }
     }
     function close() {
       if (!isOpen) return;
-      isOpen = false; wrap.hidden = true; btn.classList.remove('on'); cancelAnimationFrame(raf);
+      isOpen = false; wrap.hidden = true; setBtns(); cancelAnimationFrame(raf);
+      if (wrap.classList.contains('full')) fullB.click();
       if (opts.onClose) try { opts.onClose(); } catch (e) { console.error(e); }
     }
-    btn.addEventListener('click', () => (isOpen ? close() : open()));
-    closeB.addEventListener('click', close);
+    // 학생이 고른 보기 방식은 다른 차시에도 그대로 적용돼요
+    b3.addEventListener('click', () => {
+      if (isOpen) return;
+      const was = start3D(); setPref('3d'); open();
+      if (!was) toast('🧊 이제 3D가 있는 차시는 3D 화면으로 시작해요.');
+    });
+    b2.addEventListener('click', () => {
+      if (!isOpen) return;
+      const was = start3D(); setPref('2d'); close();
+      if (global.SciSim && global.SciSim.Sound) try { global.SciSim.Sound.click(); } catch (e) {}
+      if (was) toast('▦ 이제 3D가 있는 차시도 2D 화면으로 시작해요. (첫 화면 ‘3D 보기’에서 바꿀 수 있어요)');
+    });
+    setBtns();
+    // 3D 기본: 기기가 3D를 충분히 돌릴 수 있으면 처음부터 3D로 열어요.
+    // opts.levels = [0, 2] 처럼 주면 그 단계(0부터)에서만 3D로 시작하고, 다른 단계는 2D로 시작해요.
+    const wantAt = (li) => start3D() && (!Array.isArray(opts.levels) || opts.levels.indexOf(li) >= 0);
+    let curLevel = null;
+    global.addEventListener('scisim-level', (e) => {
+      const li = e.detail && e.detail.level; if (li === curLevel) return; curLevel = li;
+      if (wantAt(li)) open(true); else close();
+    });
+    setTimeout(() => { if (curLevel != null) return; curLevel = typeof global.SciSimLevel === 'number' ? global.SciSimLevel : 0; if (wantAt(curLevel)) open(true); }, 0);
+    instances.push({ close, open: () => open(true), get isOpen() { return isOpen; } });
     doc.addEventListener('visibilitychange', () => { if (doc.hidden) cancelAnimationFrame(raf); else if (isOpen && built) { last = performance.now(); raf = requestAnimationFrame(frame); } });
 
     return {
-      open, close, button: btn, el: wrap,
+      open: () => open(), close, button: btn, el: wrap,
       get isOpen() { return isOpen; },
       sync() { if (built && user && user.sync) try { user.sync(); } catch (e) { console.error(e); } },
       setTitle(t) { title.textContent = '🧊 ' + t; },
     };
   }
 
-  global.SciSim3D = { attach, loadThree };
+  // 설정은 그대로 두고 지금 화면만 2D로 (미션 카드의 '2D로 실험하기' 버튼)
+  function show2D() { instances.forEach((v) => v.close()); }
+  global.SciSim3D = { attach, loadThree, pref, setPref, capable, webglOK, start3D, show2D, get anyOpen() { return instances.some((v) => v.isOpen); } };
 })(window);

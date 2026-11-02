@@ -438,6 +438,10 @@ input[type=range]:disabled { opacity: .45; cursor: not-allowed; }
 .game-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; font-size: 14px; color: var(--muted); }
 .game-foot button { border: 0; background: none; color: var(--muted); cursor: pointer; font-weight: 700; text-decoration: underline; padding: 8px 0; font-size: 14px; min-height: 40px; }
 
+/* 3D 화면을 보는 중일 때 미션 안내 */
+.v3-note { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin: 2px 0 8px; padding: 8px 10px; border-radius: 12px; background: var(--primary-soft); font-size: 13.5px; font-weight: 600; color: var(--ink-2); }
+.v3-note .btn { min-height: 36px; padding: 4px 12px; font-size: 14px; }
+
 /* 배운 내용(공책) */
 .concept { font-size: 15.5px; }
 .concept h3 { font-size: 17px; margin: 14px 0 6px; color: var(--subject-ink); }
