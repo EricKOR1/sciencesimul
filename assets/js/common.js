@@ -998,4 +998,13 @@
     catalogInfo, Store, Sound, el, $, $$, themeButton, isDark, setTheme, toast, modal, confetti, stage, pointer, loop, bindRange,
     clamp, lerp, fmt, starsHTML, game, wireHeader,
   };
+
+  /* 내 화면 공유(QR): 첫 화면·모든 차시에서 함께 불러와요 (assets/js/share.js) */
+  (function () {
+    const me = document.currentScript && document.currentScript.src;
+    if (!me || global.SCISIM_NO_HOST) return;
+    const s = document.createElement('script');
+    s.src = me.replace(/common\.js(\?.*)?$/, 'share.js'); s.async = true;
+    document.head.appendChild(s);
+  })();
 })(window);

@@ -45,6 +45,13 @@
         <input id="search" type="search" placeholder="실험 이름이나 개념으로 찾기 (예: 압력, 전류, 유전)" autocomplete="off" aria-label="실험 찾기">
       </label>
       <label class="switch"><input type="checkbox" id="onlyReady"> 실험 있는 단원만</label>
+      <label class="view-pref" title="3D 모형이 있는 차시를 어떤 화면으로 시작할지 골라요">🧊 3D 보기
+        <select id="viewPref">
+          <option value="auto">자동 (기기에 맞게)</option>
+          <option value="3d">항상 3D로 시작</option>
+          <option value="2d">항상 2D로 시작</option>
+        </select>
+      </label>
     </div>
 
     <section id="unitList" class="unit-list" aria-live="polite"></section>
@@ -57,6 +64,8 @@
         <li>실험은 <b>👀 관찰 → 🧪 실험 → 💡 설명 → 🏠 적용</b> 단계로 진행되고, 단계마다 새 도구가 하나씩 열려요.</li>
         <li>단계를 마칠 때마다 <b>⭐ 별</b>을 받고, 배운 내용은 <b>📘 배운 내용</b> 공책에 차곡차곡 쌓여요.</li>
         <li>오른쪽 위 <b>🌙</b> 버튼으로 어두운 화면으로 바꿀 수 있어요.</li>
+        <li><b>🧊 3D</b>가 있는 차시는 입체 모형 화면으로 시작해요. 기기가 느리면 자동으로 2D로 시작하고, 실험 화면의 <b>▦ 2D | 🧊 3D</b> 버튼이나 위의 <b>3D 보기</b>에서 바꿀 수 있어요.</li>
+        <li><b>📡</b> 버튼을 누르면 내 QR 코드가 나와요. 친구가 QR을 찍으면 내 학습 화면을 자기 자리에서 함께 볼 수 있어요.</li>
       </ol>
       <p class="muted">진행 상황(별·점수)은 이 기기의 브라우저에 저장됩니다. 단원·성취기준은 교육부 고시 제2022-33호 [별책 9] 과학과 교육과정을 따르며, 교과서(출판사)에 따라 순서가 다를 수 있어요.</p>
     </details>

@@ -608,6 +608,32 @@ input[type=range]:disabled { opacity: .45; cursor: not-allowed; }
   }
 }
 
+/* =========================================================
+   내 화면 공유 (QR)
+   ========================================================= */
+.share-btn { position: relative; }
+.share-btn.live::after { content: ""; position: absolute; right: 7px; bottom: 7px; width: 8px; height: 8px; border-radius: 50%; background: var(--good); border: 2px solid var(--surface); }
+.share-btn.watched { border-color: var(--good); }
+.share-n { position: absolute; top: -4px; right: -4px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 99px; background: var(--good); color: #fff; font-style: normal; font-size: 12px; font-weight: 800; line-height: 20px; text-align: center; }
+.share-n[hidden] { display: none; }
+.share-sheet { text-align: left; width: min(420px, 100%); padding: 22px 20px 16px; }
+.share-sheet h2 { font-size: 22px; margin-bottom: 4px; }
+.share-sheet .sh-lead { margin: 0 0 12px; color: var(--muted); font-size: 14.5px; }
+.sh-qr { width: min(240px, 70vw); aspect-ratio: 1; margin: 0 auto 10px; background: #fff; border-radius: 16px; padding: 8px; display: grid; place-items: center; color: #191f28; font-size: 13px; text-align: center; }
+.sh-qr svg { width: 100%; height: 100%; display: block; }
+.sh-code { text-align: center; font-size: 14px; color: var(--muted); font-weight: 700; margin-bottom: 10px; }
+.sh-code b { display: block; font-size: 30px; letter-spacing: .12em; color: var(--ink); font-weight: 800; }
+.sh-url { display: flex; gap: 6px; margin-bottom: 10px; }
+.sh-url input { flex: 1; min-width: 0; font-size: 13.5px; padding: 8px 10px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); }
+.sh-name { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; color: var(--muted); margin-bottom: 10px; }
+.sh-name input { flex: 1; min-width: 0; font-size: 15px; padding: 8px 10px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+.sh-status { font-size: 14px; font-weight: 700; padding: 8px 12px; border-radius: 12px; background: var(--surface-2); color: var(--muted); margin-bottom: 10px; }
+.sh-status.on { background: var(--good-soft); color: var(--good-ink); }
+.sh-status.error { background: var(--warn-soft); color: var(--warn-ink); }
+.sh-actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.sh-note { margin: 10px 0 0; font-size: 12.5px; color: var(--faint); }
+@media (max-width: 599px) { .sim-header .share-btn, .sim-header .theme-btn, .sim-header #soundBtn { width: 40px; height: 40px; font-size: 17px; } .sim-header-right { gap: 4px; } .sim-header .star-meter { display: none; } }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
