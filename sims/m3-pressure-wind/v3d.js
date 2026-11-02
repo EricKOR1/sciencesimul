@@ -23,14 +23,14 @@
       const sm = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.7, metalness: 0 }, o || {}));
       const D = 5;
       /* 바다 · 육지 */
-      const seaM = sm(0x2b7bc2, { roughness: 0.25, transparent: true, opacity: 0.92 });
+      const seaM = sm(0x1d5f9f, { roughness: 0.25, transparent: true, opacity: 0.92 });
       const sea = new THREE.Mesh(new THREE.BoxGeometry(D, 1.2, 4.2, 40, 1, 12), seaM); sea.position.set(-D / 2, -0.6, 0); root.add(sea);
       const seaTop = sea.geometry.attributes.position; const seaY0 = []; for (let i = 0; i < seaTop.count; i++) seaY0.push(seaTop.getY(i));
-      const landM = sm(0xd9b26a, { roughness: 0.95 }); const land = new THREE.Mesh(new THREE.BoxGeometry(D, 1.2, 4.2), landM); land.position.set(D / 2, -0.6, 0); root.add(land);
-      const hills = new THREE.Group(); [[1.5, 1.0, 0.8], [2.4, 0.6, -0.9], [3.4, 1.3, 0.2], [4.2, 0.7, -0.4]].forEach((q) => { const m = new THREE.Mesh(new THREE.ConeGeometry(q[1] * 0.9, q[1] * 1.1, 24), sm(0x5b9b55, { roughness: 0.9 })); m.position.set(q[0], q[1] * 0.55, q[2]); hills.add(m); }); root.add(hills);
+      const landM = sm(0xb98d45, { roughness: 0.95 }); const land = new THREE.Mesh(new THREE.BoxGeometry(D, 1.2, 4.2), landM); land.position.set(D / 2, -0.6, 0); root.add(land);
+      const hills = new THREE.Group(); [[1.5, 1.0, 0.8], [2.4, 0.6, -0.9], [3.4, 1.3, 0.2], [4.2, 0.7, -0.4]].forEach((q) => { const m = new THREE.Mesh(new THREE.ConeGeometry(q[1] * 0.9, q[1] * 1.1, 24), sm(0x3f7d3a, { roughness: 0.9 })); m.position.set(q[0], q[1] * 0.55, q[2]); hills.add(m); }); root.add(hills);
       const snow = new THREE.Mesh(new THREE.BoxGeometry(D - 0.1, 0.08, 4.1), sm(0xf1f5f9, { roughness: 0.9 })); snow.position.set(D / 2, 0.04, 0); root.add(snow);
       /* 열기 · 냉기 표시 (땅 위 반투명 판) */
-      const heatM = new THREE.MeshBasicMaterial({ color: 0xff5a2a, transparent: true, opacity: 0.0, depthWrite: false }); const heat = new THREE.Mesh(new THREE.BoxGeometry(D, 0.06, 4.2), heatM); heat.position.set(D / 2, 0.06, 0); root.add(heat);
+      const heatM = new THREE.MeshBasicMaterial({ color: 0xff3a1a, transparent: true, opacity: 0.0, depthWrite: false }); const heat = new THREE.Mesh(new THREE.BoxGeometry(D, 0.06, 4.2), heatM); heat.position.set(D / 2, 0.06, 0); root.add(heat);
       const heat2 = new THREE.Mesh(new THREE.BoxGeometry(D, 0.06, 4.2), new THREE.MeshBasicMaterial({ color: 0xff5a2a, transparent: true, opacity: 0, depthWrite: false })); heat2.position.set(-D / 2, 0.07, 0); root.add(heat2);
       /* 해 · 달 */
       const sun = new THREE.Mesh(new THREE.SphereGeometry(0.7, 28, 20), new THREE.MeshBasicMaterial({ color: 0xffd34d })); sun.position.set(2.6, 5.4, -2); root.add(sun);
@@ -49,8 +49,8 @@
       const labW = label('', [0, 0.45, 2.4], { color: 'rgba(30,41,59,.92)', size: 14 });
       function apply() {
         const c = CASES[key], dir = c.warm ? 1 : -1;
-        landM.color.set(c.warm ? (c.big ? 0xc99d52 : 0xd9b26a) : 0x8da2b3); snow.visible = key === 'winter';
-        hills.visible = true; heatM.opacity = c.warm ? 0.28 : 0; heat2.material.opacity = 0;
+        landM.color.set(c.warm ? (c.big ? 0xa9803d : 0xb98d45) : 0x6f8396); snow.visible = key === 'winter';
+        hills.visible = true; heatM.opacity = c.warm ? 0.16 : 0; heat2.material.opacity = 0;
         sun.visible = c.warm; moon.visible = !c.warm;
         const hi = c.warm ? -D / 2 : D / 2, lo = c.warm ? D / 2 : -D / 2;
         labH.obj = [hi, 4.3, 0]; labL.obj = [lo, 4.3, 0];
