@@ -23,6 +23,7 @@
     title: '원자 모형 3D — 보어 궤도와 확률 구름',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: 16 * KD, theta: 0.6, phi: 1.15, min: 4, max: 40 },
+    levels: [1, 2, 3],
     autoRotate: 0.12,
     build(ctx) {
       const { THREE, root, renderer, label, info, controls } = ctx;
@@ -124,10 +125,7 @@
       const bar = ctx.renderer.domElement.parentNode.parentNode.querySelector('.v3-ctl');
       function grab(k, v, fn) { const before = bar.children.length; const r = fn(); ctlNodes[k] = [...bar.children].slice(before); vis[k] = v; return r; }
       const isB = () => st.mode === 'bohr', isC = () => st.mode !== 'bohr';
-      const segM = grab('mode', () => true, () => controls.segment('모형', [{ value: 'bohr', label: '🪐 보어 궤도' }, { value: 'cloud', label: '☁️ 확률 구름' }, { value: 'cmp', label: '⚖️ 겹쳐 보기' }], st.mode, (v) => { st.mode = v; reorient(); show(); }));
-      const segN = grab('n', isB, () => controls.segment('전자 궤도 n', [1, 2, 3, 4, 5].map((n) => ({ value: n, label: String(n) })), st.n, (v) => { st.n = v; st.tr = null; show(); }));
-      Object.keys(HL).forEach((k) => grab('tr' + k, isB, () => controls.button(HL[k].ni + '→' + HL[k].nf + ' ' + HL[k].name, () => startTr(k))));
-      const rN = grab('N', isC, () => controls.range('측정 횟수', 50, 6000, 50, st.N, (v) => { st.N = v; ptsGeo.setDrawRange(0, st.N); text(); }, (v) => v + '번'));
+      const segN = { set() {} }, segM = { set() {} }, rN = { set() {} };   // 모형·궤도·전이·측정 횟수는 2D 조작판이 정해요
       const cutB = grab('cut', isC, () => controls.button('단면 보기 ✕', () => { st.cut = !st.cut; cutB.classList.toggle('on', st.cut); cutB.textContent = '단면 보기 ' + (st.cut ? '✓' : '✕'); show(); }));
       const shB = grab('shell', () => st.mode === 'cloud', () => controls.button('0.053 nm 껍질 ✓', () => { st.shell = !st.shell; shB.classList.toggle('on', st.shell); shB.textContent = '0.053 nm 껍질 ' + (st.shell ? '✓' : '✕'); show(); }));
       shB.classList.add('on');
@@ -137,8 +135,15 @@
       }
       reorient(); show();
 
+      let lsig = '', lkey = null;
       return {
         update(dt, t) {
+          { const S = lessonS(); if (S) {
+              const m = S.mode === 'bohr' ? 'bohr' : S.mode === 'cmp' ? 'cmp' : 'cloud';
+              const g = m + '|' + (S.bo ? S.bo.n : 1) + '|' + (S.cl ? Math.round(S.cl.n / 50) : 0) + '|' + S.mode;
+              if (g !== lsig) { lsig = g; if (m !== st.mode) { st.mode = m; reorient(); } if (m === 'bohr' && S.bo && !(S.bo.key && S.bo.key === lkey)) { st.tr = null; st.n = Math.max(1, Math.min(5, S.bo.n || 1)); } if (m !== 'bohr') st.N = Math.max(50, Math.min(6000, S.cl && S.cl.n > 0 ? Math.round(S.cl.n / 50) * 50 : 1500)); show(); }
+              if (S.mode === 'bohr' && S.bo && S.bo.key !== lkey) { lkey = S.bo.key; if (lkey && HL[lkey]) startTr(lkey); }
+            } }
           if (st.mode === 'bohr') {
             // 궤도를 도는 전자 (바깥일수록 느려요: ω ∝ 1/n³)
             ang += dt * 2.2 / Math.pow(nCur, 1.5);
@@ -159,7 +164,7 @@
             // 겹쳐 보기: 보어 궤도를 도는 전자 한 개 (노란 점)
           }
         },
-        sync() {
+        sync() { lsig = ''; return;
           const S = lessonS(); if (!S) return;
           if (S.mode === 'bohr' || S.mode === 'cloud' || S.mode === 'cmp') { st.mode = S.mode; segM.set(st.mode); reorient(); }
           if (S.cl && S.cl.n > 0) { st.N = Math.max(50, Math.min(6000, Math.round(S.cl.n / 50) * 50)); rN.set(st.N); }

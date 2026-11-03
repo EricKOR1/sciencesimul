@@ -90,6 +90,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: 16.5 * KD, theta: 0.45, phi: 1.22, min: 8, max: 34, target: [0.5, 0.0, 0] },
     autoRotate: 0,
+    levels: [0, 1],
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const h = H3(ctx); const { V3, mat, glass, anchor, sphere, box, cyl, tube } = h;
@@ -150,25 +151,30 @@
         const T = sol.T;
         info('<b>E = ' + st.E.toFixed(1) + ' < V₀ = ' + st.V0.toFixed(1) + '</b> — 고전 입자라면 장벽을 넘을 수 없어요.<br>파동 함수는 장벽 속에서 <b>지수적으로 줄지만 0이 아니라서</b> 반대쪽으로 새어 나와요.<br>통과 확률 T ≈ <b>' + (T >= 0.1 ? (T * 100).toFixed(0) : (T * 100).toFixed(1)) + ' %</b> · 장벽이 두껍거나 높을수록 T가 급격히 줄어요.');
       }
-      controls.range('입자 에너지 E', 1, 4.5, 0.5, st.E, (v) => { st.E = Math.min(v, st.V0 - 0.5); rebuild(); resetCount(); }, (v) => v.toFixed(1));
-      controls.range('장벽 높이 V₀', 4, 8, 0.5, st.V0, (v) => { st.V0 = v; if (st.E > v - 0.5) st.E = v - 0.5; rebuild(); resetCount(); }, (v) => v.toFixed(1));
-      controls.range('장벽 두께 L', 0.4, 3.0, 0.2, st.L, (v) => { st.L = v; rebuild(); resetCount(); }, (v) => v.toFixed(1));
       /* 입자 (확률로 통과) */
       const LANE = 3.1, balls = [];
       for (let i = 0; i < 5; i++) { const m = sphere(0.24, 0x7dd3fc, { emissive: 0x38bdf8, emissiveIntensity: 0.8, transparent: true, opacity: 0.95 }); m.visible = false; root.add(m); balls.push({ m, on: false, x: 0, v: 1, dir: 1, pass: false, decided: false }); }
-      let spawn = 0.4, tries = 0, passes = 0;
+      let spawn = 0.4, tries = 0, passes = 0, T2d = null, lsig = '';
       function resetCount() { tries = passes = 0; balls.forEach((b) => { b.on = false; b.m.visible = false; }); }
-      controls.button('↺ 세기 초기화', () => resetCount());
       rebuild();
       return {
         update(dt, t) {
           dt = Math.min(dt, 0.05);
+          { const sim = window.__sim; if (sim && sim.S) { const S = sim.S, P = S.pr; let g = S.mode;
+              if (S.mode === 'prob') g += '|' + P.v + '|' + P.vh + '|' + P.part;
+              if (g !== lsig) { lsig = g;
+                if (S.mode === 'prob') {
+                  const dV = +P.vh, m = P.part === 'p' ? 1836.15 : 1, d = P.v / 10, kap2 = 5.123 * Math.sqrt(dV * m);
+                  st.E = 3; st.V0 = 5; st.L = Math.max(0.3, Math.min(3.4, kap2 * d / Math.sqrt(2))); T2d = Math.exp(-2 * kap2 * d); rebuild(); resetCount();
+                  info('<b>장벽과 확률</b>: ' + (P.part === 'p' ? '양성자' : '전자') + ', 장벽 높이 ' + dV.toFixed(1) + ' eV, 두께 ' + d.toFixed(1) + ' nm<br>모형 통과 확률 T = ' + (T2d >= 0.01 ? (T2d * 100).toFixed(1) + ' %' : T2d.toExponential(1)) + ' — 두꺼울수록 급격히 줄어요 (그림의 두께는 비율에 맞게 줄여 그렸어요).');
+                } else { T2d = null; st.E = 3; st.V0 = 5; st.L = 1.4; rebuild(); resetCount(); }
+              } } }
           gHelix.rotation.x = -t * 1.4;                                      // 위상 e^{−iEt}: 나선이 돌아요
           spawn -= dt; if (spawn <= 0) { spawn = 0.9; const b = balls.find((q) => !q.on); if (b) { b.on = true; b.x = XL + 1; b.dir = 1; b.decided = false; b.pass = false; b.m.visible = true; b.m.material.color.setHex(0x7dd3fc); b.m.material.emissive.setHex(0x38bdf8); } }
           balls.forEach((b) => {
             if (!b.on) return;
             b.x += b.dir * 6 * dt;
-            if (!b.decided && b.dir > 0 && b.x >= 0) { b.decided = true; tries++; b.pass = Math.random() < sol.T; if (b.pass) { passes++; b.m.material.color.setHex(0x4ade80); b.m.material.emissive.setHex(0x22c55e); } }
+            if (!b.decided && b.dir > 0 && b.x >= 0) { b.decided = true; tries++; b.pass = Math.random() < (T2d != null ? T2d : sol.T); if (b.pass) { passes++; b.m.material.color.setHex(0x4ade80); b.m.material.emissive.setHex(0x22c55e); } }
             if (b.decided && b.pass && b.x > st.L && b.dir > 0) { /* 통과: 계속 직진 */ }
             if (b.decided && !b.pass && b.dir > 0 && b.x >= 0) { b.x = 0; b.dir = -1; b.m.material.color.setHex(0xfb7185); b.m.material.emissive.setHex(0xe11d48); }
             b.m.position.set(b.x, LANE, 0);
@@ -177,7 +183,7 @@
           });
           lBall.set('시도 ' + tries + '회 중 통과 ' + passes + '회'); lBall.obj = aSh; lBall.off = [0, 1.7, 0];
         },
-        sync() {},
+        sync() { lsig = ''; },
       };
     },
   });

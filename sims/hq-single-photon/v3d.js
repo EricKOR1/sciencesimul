@@ -174,13 +174,7 @@
         else msg = '<b>틈 하나만 열면</b> 간섭 줄무늬 없이 넓은 한 덩어리가 돼요.<br>두 틈이 모두 열려야 간섭이 생겨요.';
         info(msg);
       }
-      /* 조작 */
-      controls.segment('틈', [{ value: 'both', label: '두 틈' }, { value: 'A', label: '틈 A만' }, { value: 'B', label: '틈 B만' }], st.slits, (v) => { st.slits = v; cfg(); });
-      toggleBtn('*', '틈 검출기', st.det, (on) => { st.det = on; cfg(); });
-      controls.range('가속 전압', 50, 500, 50, st.V, (v) => { st.V = v; cfg(); }, (v) => v + ' V');
-      controls.button('● 1개', () => shoot(1));
-      controls.button('●●● 100개', () => shoot(100));
-      controls.button('↺ 지우기', () => reset());
+      /* 값(틈·검출기·전압·쏘기)은 2D 조작판이 정하고, 3D는 같은 설정으로 같은 개수만큼 쏘아 줘요 */
       toggleBtn('*', '확률 곡선', false, (on) => { st.curve = on; curve.visible = on; });
       function cfg() {
         cover[0].visible = st.slits === 'B' ? false : false; cover[0].visible = st.slits === 'A'; cover[1].visible = st.slits === 'B';       // A만 열면 B(−z) 덮기
@@ -189,10 +183,12 @@
         recomputePdf(); reset();
       }
       cfg();
-      let acc = 0, rt = 0;
+      let acc = 0, rt = 0, lastN = 0, lcfg = '';
       return {
         update(dt, t) {
           dt = Math.min(dt, 0.05);
+          { const S = lessonS(); if (S && S.cfg) { const k = S.cfg.slits + '|' + (S.cfg.det && S.cfg.slits === 'both') + '|' + S.cfg.V; if (k !== lcfg) { lcfg = k; st.slits = S.cfg.slits; st.det = S.cfg.det && S.cfg.slits === 'both'; st.V = S.cfg.V; cfg(); lastN = S.data ? S.data.N : 0; shoot(Math.min(S.data ? S.data.N : 0, 300)); }
+            const N = S.data ? S.data.N : 0; if (N < lastN) { reset(); } else if (N > lastN) shoot(Math.min(N - lastN, 300)); lastN = N; } }
           if (st.queue > 0) { acc += dt * (st.queue > 20 ? 22 : 5); while (acc >= 1 && st.queue > 0) { if (launch()) { st.queue--; acc -= 1; } else break; } } else acc = 0;
           fly.forEach((f) => {
             if (!f.on) return; f.t += dt / 1.1; const u = f.t;
@@ -212,7 +208,7 @@
           });
           lWave.show(!(st.det && st.slits === 'both')); lWave.off = [0, 0, 0];
         },
-        sync() {},
+        sync() { lcfg = ''; },
       };
     },
   });
