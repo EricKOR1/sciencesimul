@@ -90,7 +90,7 @@
       const h = H3(ctx); const { V3, mat, glass, anchor, sphere, grab, showCtl, toggleBtn } = h;
       const lessonS = () => (window.__sim && window.__sim.S) || null;
       const S0 = lessonS();
-      const st = { sc: S0 ? (MODE2SC[S0.mode] || 'fuse') : 'fuse', T: 16, tun: true, flow: true };
+      const st = { sc: S0 ? (MODE2SC[S0.mode] || 'fuse') : 'fuse', T: 16, tun: true, flow: true, eff: true, lg: 0 };
       const gF = new THREE.Group(), gS = new THREE.Group(); root.add(gF, gS);
 
       /* ================= ① 핵융합: 양성자 4개 → 헬륨-4 ================= */
@@ -107,20 +107,18 @@
       let cyc = { t: 0, fuse: false, tries: 0, hits: 0, started: false };
       const Tc = 12;                                                     // 이 온도(백만 K) 이상이면 장벽 앞까지 와서 융합
       function startCycle() {
-        const eff = st.T >= Tc;
+        const eff = st.eff;
         let fuse = eff; if (!eff && st.tun) fuse = Math.random() < 0.3 + 0.03 * st.T;
         cyc = { t: 0, fuse, tun: !eff && fuse, tries: cyc.tries + 1, hits: cyc.hits + (fuse ? 1 : 0), started: true };
       }
       function fuseInfo() {
-        const eff = st.T >= Tc;
-        info('<b>온도 ' + st.T + '백만 K</b> — ' + (eff ? '양성자가 빨라 장벽 가까이 다가가 융합해요.' : (st.tun ? '속도가 부족해 장벽 앞에서 튕기지만, 가끔 <b>터널 효과</b>로 장벽을 지나 융합해요.' : '속도가 부족해 장벽 앞에서 튕겨 나와요. 융합이 일어나지 않아요.')) + '<br>4H → He-4 : 질량이 약 <b>0.7 %</b> 줄고, 그만큼 E = mc²의 에너지(감마선·운동 에너지)가 나와요.');
+        const eff = st.eff;
+        info('<b>온도 ' + (st.T >= 100 ? Math.round(st.T) : st.T.toFixed(1)) + '백만 K</b> — ' + (eff ? '양성자가 빨라 장벽 가까이 다가가 융합해요.' : (st.tun ? '속도가 부족해 장벽 앞에서 튕기지만, 가끔 <b>터널 효과</b>로 장벽을 지나 융합해요 (실제 확률은 아주 작아서, 그림에서는 크게 그렸어요).' : '속도가 부족해 장벽 앞에서 튕겨 나와요. 융합이 일어나지 않아요.')) + '<br>4H → He-4 : 질량이 약 <b>0.7 %</b> 줄고, 그만큼 E = mc²의 에너지(감마선·운동 에너지)가 나와요.');
       }
-      grab('fuse', () => controls.range('온도', 4, 24, 2, st.T, (v) => { st.T = v; fuseInfo(); }, (v) => v + '백만 K'));
-      toggleBtn('fuse', '터널 효과', true, (on) => { st.tun = on; fuseInfo(); });
       function fuseUpdate(dt) {
         if (!cyc.started) startCycle();
         cyc.t += dt;
-        const t = cyc.t, eff = st.T >= Tc, appr = 2.6 / (0.55 + 0.045 * st.T), rMin = cyc.fuse ? 0.5 : 1.95;
+        const t = cyc.t, eff = st.eff, appr = 2.6 / (0.55 + 0.045 * st.T), rMin = cyc.fuse ? 0.5 : 1.95;
         const r0 = 3.6; let r, phase = 'in';
         if (t < appr) { const u = t / appr; r = r0 + (rMin - r0) * (u * u * (3 - 2 * u) * 0.5 + u * 0.5); phase = 'in'; }
         else if (cyc.fuse) { r = rMin; phase = 'fused'; }
@@ -162,7 +160,6 @@
       const NPH = 40, phot = new THREE.InstancedMesh(new THREE.SphereGeometry(0.06, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffffff }), NPH); gS.add(phot);
       const pw = []; for (let i = 0; i < NPH; i++) pw.push({ x: (Math.random() - 0.5) * 0.4, y: (Math.random() - 0.5) * 0.4, s: 0.1 + Math.random() * 0.6 });
       const sunInfo = () => info('<b>태양의 속</b>: 핵에서 4H → He 핵융합으로 에너지가 만들어져요.<br>빛은 복사층에서 수없이 부딪히며 천천히 나가고, 대류층에서는 가스가 뜨겁게 올라오고 식어 내려가요.<br>광구에서 우리 눈에 보이는 빛이 나와요.');
-      toggleBtn('sun', '에너지 흐름', true, (on) => { st.flow = on; cells.visible = phot.visible = on; });
       function sunUpdate(dt, t) {
         halo.material.opacity = 0.09 + 0.02 * Math.sin(t * 1.2);
         coreSph.material.emissiveIntensity = 1.1 + 0.25 * Math.sin(t * 3);
@@ -182,7 +179,7 @@
       }
 
       /* ================= 조작 ================= */
-      const seg = controls.segment('보기', [{ value: 'fuse', label: '⚛️ 핵융합' }, { value: 'sun', label: '☀️ 태양의 속' }], st.sc, (v) => go(v));
+      const seg = { set() {} };
       function go(sc) {
         st.sc = sc; seg.set(sc); showCtl(sc);
         gF.visible = sc === 'fuse'; gS.visible = sc === 'sun';
@@ -198,9 +195,10 @@
           dt = Math.min(dt, 0.05);
           const S = lessonS();
           if (S && S.mode !== lastMode) { lastMode = S.mode; const sc = MODE2SC[S.mode]; if (sc && sc !== st.sc) go(sc); }
+          if (S && S.cd && window.__sim.cdPhys) { const P = window.__sim.cdPhys(), tun = S.cd.tn === 'on', k = Math.round(P.T / 1e5) + '|' + P.contact + '|' + tun; if (k !== st.fk) { st.fk = k; st.T = P.T / 1e6; st.eff = P.contact; st.tun = tun; fuseInfo(); cyc.started = false; } }
           if (st.sc === 'fuse') fuseUpdate(dt); else sunUpdate(dt, t);
         },
-        sync() {},
+        sync() { st.fk = ''; },
       };
     },
   });
