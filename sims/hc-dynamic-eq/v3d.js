@@ -26,7 +26,7 @@
         const g = new THREE.Group(); root.add(g);
         const glass = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({ color: 0x9ec5ff, transparent: true, opacity: 0.1, roughness: 0.15, depthWrite: false }));
         const edge = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1, 1, 1)), new THREE.LineBasicMaterial({ color: 0xcfe0ff, transparent: true, opacity: 0.75 }));
-        const lid = new THREE.Mesh(new THREE.BoxGeometry(1, 0.14, 1), new THREE.MeshStandardMaterial({ color: 0x8a95a8, roughness: 0.5 }));
+        const lid = new THREE.Mesh(new THREE.BoxGeometry(1, 0.14, 1), new THREE.MeshStandardMaterial({ color: 0x8a95a8, roughness: 0.5, transparent: true, opacity: 0.45 }));
         g.add(glass, edge, lid);
         const mk = (key, n, rx, ry) => { const m = new THREE.InstancedMesh(SG, MAT[key], n); m.frustumCulled = false; m.userData = { rx, ry }; g.add(m); return m; };
         const B = { g, glass, edge, lid, D: mk('D', 130, 0.2, 0.13), M: mk('M', 230, 0.12, 0.12), Dt: mk('Dt', 130, 0.2, 0.13), Mt: mk('Mt', 130, 0.12, 0.12), W: 4, H: 3, Dp: 3, w: [] };

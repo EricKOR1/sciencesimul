@@ -120,7 +120,7 @@
       function setMode(S) {
         const mode = S.mode; if (mode === cur) return; cur = mode;
         Object.keys(G).forEach((k) => (G[k].visible = k === mode)); Object.keys(LAB).forEach((k) => LAB[k].forEach((l) => l.show(k === mode)));
-        const cams = { well: { tx: 0, ty: 3.4, tz: 0, phi: 1.3, theta: 0.5, dist: 16 }, astro: { tx: 0, ty: 0.3, tz: 0, phi: 1.3, theta: 0.2, dist: 13 }, rocket: { tx: 0, ty: 1.5, tz: 0, phi: 1.3, theta: 0.35, dist: 12 } };
+        const cams = { well: { tx: 0, ty: 3.3, tz: 0, phi: 1.3, theta: 0.5, dist: 12 }, astro: { tx: 0, ty: 0.3, tz: 0, phi: 1.3, theta: 0.2, dist: 11 }, rocket: { tx: 0, ty: 1.5, tz: 0, phi: 1.3, theta: 0.35, dist: 12 } };
         const c2 = cams[mode]; if (c2) Object.assign(orbit, c2, { dist: c2.dist * KD });
       }
       return {

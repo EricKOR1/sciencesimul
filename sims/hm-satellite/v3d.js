@@ -141,7 +141,7 @@
         const mode = (S.mode === 'orbit' || S.mode === 'meas') ? 'orbit' : S.mode; if (mode === cur) return; cur = mode;
         Object.keys(G).forEach((k) => (G[k].visible = k === mode)); Object.keys(LAB).forEach((k) => LAB[k].forEach((l) => l.show(k === mode)));
         obKey = ''; gKey = '';
-        if (mode === 'orbit') Object.assign(orbit, { tx: 0, ty: 0, tz: 0, phi: 0.95, theta: 0.2, dist: PHONE ? 16 : 11 });
+        if (mode === 'orbit') Object.assign(orbit, { tx: 0, ty: 0, tz: 0, phi: 0.95, theta: 0.2, dist: PHONE ? 26 : 17 });
         else if (mode === 'geo') Object.assign(orbit, { tx: 0, ty: 0, tz: 0, phi: 1.05, theta: 0.5, dist: PHONE ? 70 : 62 });
         else if (mode === 'mass') Object.assign(orbit, { tx: 0, ty: 0, tz: 0, phi: 0.95, theta: 0.2, dist: PHONE ? 15 : 11 });
         else Object.assign(orbit, { tx: 0, ty: 0, tz: 0, phi: 1.0, theta: 0.2, dist: PHONE ? 15 : 11 });

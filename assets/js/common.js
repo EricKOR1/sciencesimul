@@ -673,6 +673,11 @@
       const lv = levels[m._level];
       if (!free) applyFeatures(featuresUpTo(m._level), false);
       setLock(false);
+      // 단계 중간에서 이어 할 때도 3D 화면이 지금 단계에 맞게 열리도록 알려 줘요
+      if (global.SciSimLevel !== m._level) {
+        global.SciSimLevel = m._level;
+        try { global.dispatchEvent(new CustomEvent('scisim-level', { detail: { level: m._level } })); } catch (e) { /* 무시 */ }
+      }
       wrong = 0; hintUsed = false; holdStart = 0; lastStatus = null; phase = 'active';
       bodyMission.innerHTML = '';
       resetPanelScroll();

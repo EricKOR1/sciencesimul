@@ -137,7 +137,7 @@
       const rowOf = () => { const r = document.querySelectorAll('.v3-player'); return r[r.length - 1]; };
       const pl = controls.player({ duration: 10, loop: true, label: '섞어서 중화', phases: [[0, '섞기 전'], [0.1, '섞는 중'], [0.5, '섞은 용액'], [0.55, 'H⁺ + OH⁻ → H₂O'], [0.88, '다시 처음으로']], onFrame(p) { pI = p; own = p > 0; } });
       const rowP = rowOf();
-      const AP = (phone ? [-2.0, -1.5] : [-3.6, -1.4]), BP = (phone ? [2.0, -1.5] : [3.6, -1.4]), CP = [0, phone ? 2.2 : 2.4];
+      const AP = (phone ? [-1.9, -2.0] : [-3.4, -1.8]), BP = (phone ? [1.9, -2.0] : [3.4, -1.8]), CP = [0, phone ? 2.9 : 3.0];
       function buildOwn(nH, nOH) {
         ownP = [];
         const rnd = (R) => { const a = Math.random() * 6.283, r = Math.sqrt(Math.random()) * (R - 0.3); return [Math.cos(a) * r, Math.sin(a) * r]; };
@@ -160,7 +160,7 @@
             const I = S.ion, pr = sm(I.pr.v);
             const o = own;
             const lvA = o ? 0.62 * (1 - sm(clamp((pI - 0.1) / 0.4, 0, 1))) : 0.62 * (1 - pr), lvC = o ? Math.max(0.06, 0.65 * sm(clamp((pI - 0.1) / 0.4, 0, 1))) : Math.max(0.06, 0.65 * pr);
-            const R = phone ? 1.3 : 1.7;
+            const R = phone ? 1.2 : 1.45;
             shape(bk[0], R, 3.6, AP[0], AP[1], lvA, 0xffc4c4); shape(bk[1], R, 3.6, BP[0], BP[1], lvA, 0xbdd1ff); shape(bk[2], R + 0.2, 3.6, CP[0], CP[1], lvC, 0xd6cff6);
             [['HCl 수용액', 0], ['NaOH 수용액', 1], ['섞은 용액', 2]].forEach(([nm, i]) => { const B = bk[i]; B.lab.show(true); B.lab.obj = [B.g.position.x, 3.6 + 0.4, B.g.position.z]; B.lab.set(nm); });
             if (o) {
