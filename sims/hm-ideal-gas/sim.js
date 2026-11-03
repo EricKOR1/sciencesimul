@@ -835,6 +835,6 @@
 
   /* ---------- 디버그 (Playwright) ---------- */
   window.__sim = {
-    S, VW, VH, get game() { return game; }, setScene, setFlag, sxRec, sxFill, sxFit, sxRead, igSolve, hotCalc, hotLift, tireAbs, lungV, balAt, Pm, N_SYR, K0,
+    igSolve, sxRead, EXPS, R_GAS, S, VW, VH, get game() { return game; }, setScene, setFlag, sxRec, sxFill, sxFit, sxRead, igSolve, hotCalc, hotLift, tireAbs, lungV, balAt, Pm, N_SYR, K0,
   };
 })();

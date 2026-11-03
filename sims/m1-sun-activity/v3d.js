@@ -165,11 +165,22 @@
       controls.segment('', [{ value: 'surface', label: '광구' }, { value: 'atm', label: '대기' }, { value: 'act', label: '활동' }], 'surface', (v) => { st.mode = v; if (v === 'atm') { occB.style.display = ''; } else { occB.style.display = 'none'; } show(); });
       const rA = controls.range('흑점 수', 0, 100, 5, st.act, (v) => setAct(v), (v) => (v < 25 ? '적음(극소기)' : v > 75 ? '많음(극대기)' : '보통'));
       const occB = controls.button('🌑 광구 가리기', () => { st.occ = !st.occ; occB.classList.toggle('on', st.occ); show(); }); occB.style.display = 'none';
+      /* ▶ 재생: 약 11년 주기 — 흑점 수가 극소기 → 극대기 → 극소기로 변해요 (2D '활동의 변화'와 같은 내용) */
+      let pmode = false, built = false;
+      const cycPl = controls.player({
+        duration: 10, loop: true, autoplay: false, label: '11년 주기',
+        phases: [[0, '극소기'], [0.25, '늘어나요'], [0.5, '극대기'], [0.75, '줄어들어요']],
+        onFrame(p) { if (!built) return; if (st.mode !== 'act') { st.mode = 'act'; occB.style.display = 'none'; show(); } pmode = true; const v = Math.round(50 - 50 * Math.cos(2 * Math.PI * p)); if (v !== st.act) { st.act = v; setAct(v); rA.set(v); } },
+      });
+      built = true;
+      let lastSc = null;
       setAct(st.act);
 
       const seed = { t: 0 };
       return {
         update(dt, t) {
+          const l = ctx.lesson && ctx.lesson(), sc = l && l.S && l.S.scene;
+          if (sc !== lastSc) { lastSc = sc; const m = sc === 'photo' ? 'surface' : sc === 'atmo' ? 'atm' : sc === 'earth' ? null : sc ? 'act' : null; if (m && m !== st.mode) { st.mode = m; occB.style.display = m === 'atm' ? '' : 'none'; show(); } }
           sun.rotation.y += dt * 0.1;
           const act = st.mode === 'act' ? 0.6 + st.act / 100 : 0.4, bright = 0.9 + 0.1 * Math.sin(t * 1.5);
           if (st.mode !== 'surface') { corU.uT.value = t; corU.uK.value = (st.occ ? 1.5 : 0.4) * (0.9 + 0.1 * act + 0.05 * Math.sin(t * 1.7)); }

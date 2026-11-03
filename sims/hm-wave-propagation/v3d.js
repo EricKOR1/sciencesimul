@@ -1,6 +1,6 @@
 /* hm-wave-propagation · 3D 탄성파의 진행
-   파동이 진행해도 매질의 알갱이(붉은 점)는 제자리에서 진동만 해요. 이동하는 것은 '에너지(모양)'예요.
-   횡파: 알갱이가 진행 방향에 수직으로 진동 · 종파: 알갱이가 진행 방향과 나란히 진동. v = fλ. */
+   2D 실험(window.__sim)의 질량–용수철 사슬을 그대로 입체로 보여 줘요: 🧩 연결 모형(펄스 · 표시점) · ↕↔ 종파·횡파 · 〰 v = fλ · 🧵 줄의 속력.
+   알갱이(질량)는 제자리에서 진동하고 <b>파동(펄스)만 진행</b>해요. 값(k · m · 진동수 · 장력)은 옆 조작판이 정하고 3D는 따라가요. 파동 방정식은 쓰지 않아요. (🔊 소리의 속력 장면은 2D 화면에서 해요) */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -42,65 +42,62 @@
   }
   const KDX = PHN ? 1.6 : 1;
   window.SciSim3D.attach({
-    title: '횡파와 종파 3D',
-    hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: 11 * KDX, theta: 0.3, phi: 1.22, min: 4, max: 28 },
+    title: '탄성파의 진행 3D',
+    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 값은 옆 조작판에서 바꿔요',
+    camera: { dist: 12 * KDX, theta: 0.25, phi: 1.2, min: 4, max: 30, target: [0, 0, 0] },
     autoRotate: 0,
-    levels: [0, 1, 2],
+    levels: [0, 1, 2, 3],
     build(ctx) {
-      const { THREE, root, label, info, controls } = ctx;
-      const { V3, M, mkArrow, setArrow } = tools(THREE);
-      const st = { type: 'trans', f: 0.5, A: 0.8, t: 0 };
-      const V = 2.0, NX = 44, NZ = 5, X0 = -5.2, DX = 10.4 / (NX - 1), DZ = 0.62;
-      const cnt = NX * NZ, ps = new THREE.InstancedMesh(new THREE.SphereGeometry(0.09, 14, 10), M(0x7dd3fc, { roughness: 0.35 }), cnt);
-      ps.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(cnt * 3), 3); root.add(ps);
-      const c0 = new THREE.Color(0x7dd3fc), c1 = new THREE.Color(0xff5a5f), cm = new THREE.Color(0xffd34d);
-      for (let i = 0; i < cnt; i++) ps.setColorAt(i, c0);
-      const MK = 14;                                              // 표시한 알갱이(한 줄)
-      const mk = new THREE.Mesh(new THREE.SphereGeometry(0.16, 20, 14), M(0xff5a5f, { emissive: 0x7f1d1d, roughness: 0.3 })); root.add(mk);
-      const rail = new THREE.Mesh(new THREE.BoxGeometry(0.02, 3.4, 0.02), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.3 })); root.add(rail);
-      const railX = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.02, 0.02), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.3 })); root.add(railX);
-      const src = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 4.8), M(0x64748b, { metalness: 0.4 })); src.position.x = X0 - 0.45; root.add(src);
-      const dirA = mkArrow(0x34d399, 0.05); setArrow(dirA, new V3(4.0, -1.6, 0), new V3(5.6, -1.6, 0)); root.add(dirA);
-      const lD = label('진행 방향', [4.8, -1.6, 0], { color: '#0f766e', size: 12, offset: [0, -0.35, 0] }), lM = label('표시한 알갱이', mk, { color: '#e2464b', size: 12, offset: [0, 0.45, 0] });
-      const lL = label('λ', [0, 1.6, 0], { color: '#7c3aed', size: 12 }), lSrc = label('진동 장치', src, { color: '#475569', size: 12, offset: [0, 0.55, 0] });
-      const lamb = new THREE.Mesh(new THREE.BoxGeometry(1, 0.025, 0.025), new THREE.MeshBasicMaterial({ color: 0xc4b5fd })); root.add(lamb);
-      const m4 = new THREE.Matrix4();
-      const lam = () => V / st.f;
-      function txt() {
-        info(st.type === 'trans'
-          ? '<b>횡파</b>: 알갱이가 위아래로 흔들려요. 진행 방향과 <b>수직</b>이에요.<br>f = ' + st.f.toFixed(2) + ' Hz · λ = ' + lam().toFixed(1) + ' m · v = fλ = <b>' + V.toFixed(1) + ' m/s</b>'
-          : '<b>종파</b>: 알갱이가 앞뒤로 흔들려요. 진행 방향과 <b>나란해요</b>.<br>알갱이가 몰린 곳(밀)과 흩어진 곳(소)이 번갈아 나아가요.<br>f = ' + st.f.toFixed(2) + ' Hz · λ = ' + lam().toFixed(1) + ' m');
-        lL.obj = [X0 + 2.5 + lam() / 2, 1.95, 0]; lamb.scale.x = lam(); lamb.position.set(X0 + 2.5 + lam() / 2, 1.7, 0);
-      }
-      controls.segment('파동', [{ value: 'trans', label: '↕ 횡파' }, { value: 'long', label: '↔ 종파' }], st.type, (v) => { st.type = v; txt(); });
-      controls.range('진동수 f', 0.3, 1.2, 0.1, st.f, (v) => { st.f = v; txt(); }, (v) => v.toFixed(1) + ' Hz');
-      txt();
-      const tmp = new THREE.Color();
+      const { THREE, root, label, info, controls, orbit } = ctx;
+      const { V3, M } = tools(THREE);
+      const sim = () => ctx.lesson();
+      const NMAX = 130, ps = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 14, 10), M(0x7dd3fc, { roughness: 0.35 }), NMAX); ps.frustumCulled = false; ps.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(NMAX * 3), 3); root.add(ps);
+      const m4 = new THREE.Matrix4(), c0 = new THREE.Color(0x7dd3fc), cg = new THREE.Color(0xff5a5f), cnum = [0xff5a5f, 0xffd34d, 0x34d399].map((h) => new THREE.Color(h)), q = new THREE.Quaternion(), sc3 = new THREE.Vector3(), pp = new THREE.Vector3();
+      const src = new THREE.Mesh(new THREE.BoxGeometry(0.4, 1.6, 2.4), M(0x64748b, { metalness: 0.4 })); root.add(src);
+      const base = new THREE.Mesh(new THREE.BoxGeometry(1, 0.05, 0.05), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.3 })); root.add(base);
+      const gl = [0, 1, 2].map((i) => { const m = new THREE.Mesh(new THREE.BoxGeometry(0.03, 3.4, 0.03), new THREE.MeshBasicMaterial({ color: cnum[i], transparent: true, opacity: 0.5 })); root.add(m); return m; });
+      const gLab = [0, 1, 2].map((i) => label(['①', '②', '③'][i], gl[i], { color: '#26324a', size: 13 }));
+      const lSrc = label('진동 장치', src, { color: '#475569', size: 12 }), lDir = label('진행 방향 →', [0, -2.4, 0], { color: '#0f766e', size: 12 });
+      const demo = { p: 0, on: false }; let pl = null, last = '';
+      pl = controls.player({ duration: 8, loop: true, autoplay: false, label: '펄스 보내기', phases: [[0, '펄스가 출발해요'], [0.3, '알갱이는 제자리 · 파동만 진행'], [0.85, '끝에서 흡수']], onFrame(p) { demo.p = p; demo.on = p > 0 || !!(pl && pl.playing); } });
+      pl.row = ctx.renderer.domElement.parentNode.parentNode.querySelector('.v3-player');
+      const U = 1.6, FS = [1.0, 1.5, 2.0, 2.5, 3.0];
+      const NOTE = '🔊 소리의 속력(온도에 따른 소리 경주)은 2D 화면에서 해요. 위의 [▦ 2D]를 눌러 보세요.';
       return {
-        update(dt) {
-          st.t += dt; const k = TAU / lam(), w = TAU * st.f, front = V * st.t, A = st.type === 'trans' ? st.A : st.A * 0.8;
-          let mkx = 0, mky = 0, mkz = 0;
-          for (let i = 0; i < NX; i++) {
-            const x = X0 + i * DX; const tt = st.t - (x - X0) / V;
-            const on = tt > 0 ? 1 : 0, s = on * A * Math.sin(w * tt) * (on ? Math.min(1, tt * 3) : 0), ds = on * (A * k * Math.cos(w * tt));
-            for (let j = 0; j < NZ; j++) {
-              const z = (j - (NZ - 1) / 2) * DZ, idx = i * NZ + j;
-              if (st.type === 'trans') m4.makeTranslation(x, s, z); else m4.makeTranslation(x + s, 0, z);
-              ps.setMatrixAt(idx, m4);
-              const dens = st.type === 'long' ? clamp(-ds * 1.2 * 1, -1, 1) : clamp(s / A * 0.6, -1, 1);
-              if (st.type === 'long') { tmp.copy(c0); if (dens > 0) tmp.lerp(c1, dens); else tmp.lerp(new THREE.Color(0x2563eb), -dens * 0.9); }
-              else { tmp.copy(c0).lerp(cm, Math.max(0, dens) * 0.9); }
-              ps.setColorAt(idx, tmp);
-              if (i === MK && j === (NZ - 1) / 2) { mkx = st.type === 'trans' ? x : x + s; mky = st.type === 'trans' ? s : 0; mkz = z; }
-            }
+        update() {
+          const A = sim(); if (!A || !A.S) return; const S = A.S, sc = A.sc;
+          if (!pl.playing && pl.p === 0) demo.on = false;
+          if (S.mode === 'snd' || !sc || !sc.ch) { ps.visible = src.visible = base.visible = false; gl.forEach((g) => (g.visible = false)); gLab.forEach((l) => l.show(false)); lSrc.show(false); lDir.show(false); pl.row.style.display = 'none'; info(NOTE); return; }
+          pl.row.style.display = ''; ps.visible = src.visible = base.visible = true; lSrc.show(true); lDir.show(true);
+          const ch = sc.ch, n = Math.min(NMAX, ch.n), a = ch.a, long = sc.kind === 'L', len = (n - 1) * a, sx = len * U / 2;
+          const sc2 = S.mode === 'sp' ? 1 : 1;
+          const usedDemo = demo.on && sc.drv.kind === 'none';
+          let yv = ch.y;
+          if (usedDemo) { const v = sc.v0, w = Math.max(0.15, sc.tau * v * 0.8), t = demo.p * (len + 6 * w) / v - 3 * w / v; yv = new Float32Array(n); for (let i = 0; i < n; i++) { const z = (i * a - v * t) / w; yv[i] = sc.A * Math.exp(-z * z); } }
+          const ar = Math.min(1, 2.2 / Math.max(0.2, sc.A * 4)), rr = Math.max(0.05, Math.min(0.14, a * U * 0.45));
+          let maxd = 0;
+          for (let i = 0; i < NMAX; i++) {
+            if (i >= n) { m4.makeScale(0, 0, 0); ps.setMatrixAt(i, m4); continue; }
+            const d = yv[i] * U * (long ? 1.6 : 1.6); maxd = Math.max(maxd, Math.abs(d)); const x = i * a * U - sx + (long ? d : 0), y = long ? 0 : d;
+            const gi = sc.gates.indexOf(i), r = gi >= 0 ? rr * 1.9 : rr; pp.set(x, y, 0); sc3.set(r, r, r); m4.compose(pp, q, sc3); ps.setMatrixAt(i, m4);
+            const col = gi >= 0 ? cnum[gi % 3] : (long ? (c0.clone().lerp(cg, Math.min(1, Math.max(0, -(yv[Math.min(n - 1, i + 1)] - yv[Math.max(0, i - 1)]) * 6)))) : c0); ps.setColorAt(i, col);
           }
-          ps.instanceMatrix.needsUpdate = true; ps.instanceColor.needsUpdate = true;
-          mk.position.set(mkx, mky, mkz); rail.position.set(X0 + MK * DX, 0, mkz); rail.visible = st.type === 'trans'; railX.position.set(X0 + MK * DX, 0, mkz); railX.visible = st.type === 'long'; railX.scale.x = 1;
-          src.position.y = st.type === 'trans' ? (st.t > 0 ? A * Math.sin(w * st.t) : 0) : 0; src.position.x = X0 - 0.45 + (st.type === 'long' ? A * Math.sin(w * st.t) : 0);
+          ps.count = n; ps.instanceMatrix.needsUpdate = true; ps.instanceColor.needsUpdate = true;
+          src.position.set(-sx - 0.4, long ? 0 : (yv[0] * U * 1.6), 0); base.scale.x = len * U; base.position.set(0, 0, 0);
+          [0, 1, 2].forEach((i) => { const g = sc.gates[i], ok = g != null && g < n; gl[i].visible = ok; gLab[i].show(ok); if (ok) { gl[i].position.set(g * a * U - sx, 0, 0); gLab[i].off = [0, 1.9, 0]; } });
+          lSrc.off = [0, 1.1, 0]; lDir.obj = [0, -2.4, 0];
+          void sc2; void maxd; void FS;
+          let t2;
+          if (S.mode === 'model') t2 = '<b>🧩 연결 모형: 무엇이 이동할까?</b> · 질량 알갱이를 용수철이 이어 놓았어요 (k = ' + A.KS[S.kv] + ' N/m · m = ' + A.MS[S.mv] + ' kg)<br>펄스가 지나갈 때 표시점 ①②③은 <b>제자리에서 위아래로 진동</b>할 뿐 옆으로 이동하지 않아요. 이동하는 것은 <b>파동(에너지 · 모양)</b>이에요.' + (S.meas.v != null ? '<br>측정한 펄스 속력: ' + S.meas.v.toFixed(1) + ' m/s' : '');
+          else if (S.mode === 'lt') t2 = '<b>' + (S.lt.dir === 'T' ? '↕ 횡파' : '↔ 종파') + '</b> · 파동 용수철 4.0 m<br>' + (S.lt.dir === 'T' ? '알갱이가 진행 방향과 <b>수직</b>으로 흔들려요.' : '알갱이가 진행 방향과 <b>나란하게</b> 흔들려요. 몰린 곳(밀, 빨강)과 흩어진 곳(소)이 번갈아 나타나요.') + '<br>기록한 통과 시간: 횡파 ' + (S.lt.time.T != null ? S.lt.time.T.toFixed(2) + ' s' : '—') + ' · 종파 ' + (S.lt.time.L != null ? S.lt.time.L.toFixed(2) + ' s' : '—');
+          else if (S.mode === 'fl') t2 = '<b>〰 v = fλ</b> · 진동수 f = ' + FS[S.fl.fi].toFixed(1) + ' Hz<br>진동수를 바꿔 파장 λ를 재고 f × λ를 비교해요. 같은 매질에서는 f가 커지면 λ가 짧아지고 속력 v = fλ는 일정해요.';
+          else t2 = '<b>🧵 줄의 속력</b> · 장력 ' + A.TS[S.sp.Tv] + ' N · 단위 길이당 질량 μ = ' + A.MUS[S.sp.mv] + '<br>장력이 클수록 · 줄이 가벼울수록 펄스가 빨리 지나가요 (측정한 관계로 정리해요).';
+          if (usedDemo) t2 += '<br><span style="color:#ffd34d">▶ 펄스가 오른쪽으로 진행하는 동안 알갱이는 제자리에서 진동해요.</span>';
+          if (t2 !== last) { last = t2; info(t2); }
         },
         sync() {},
       };
+      // eslint-disable-next-line no-unreachable
     },
   });
 })();

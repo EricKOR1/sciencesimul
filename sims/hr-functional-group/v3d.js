@@ -1,5 +1,6 @@
 /* hr-functional-group · 3D 작용기와 탄소 화합물
    같은 탄소 뼈대라도 어떤 작용기(−OH, −CHO, −COOH)가 붙었는지에 따라 성질이 달라져요.
+   2D의 '분자 모형 조립'에서 고른 분자(10가지)와 '성질 탐구'에서 고른 시료를 그대로 보여 줘요. 3단계(성질 탐구)에서 열려요.
    결합 길이와 각은 실제 값에 가깝게(C–C 1.53 Å, C=O 1.21 Å 등) 계산해서 그린 모형이에요. */
 (function () {
   'use strict';
@@ -10,15 +11,19 @@
   const GRP = { none: ['작용기 없음 (알케인)', '탄소와 수소만 있어서 매우 안정하고 극성이 거의 없어요.'], OH: ['하이드록시기 (−OH)', '알코올의 작용기예요. 수소 결합을 할 수 있어 끓는점이 높아요.'], CHO: ['알데하이드기 (−CHO)', '탄소 끝에 C=O와 H가 붙어 있어요. 산화되기 쉬워 환원성이 있어요.'], COOH: ['카복실기 (−COOH)', 'C=O와 −OH가 함께 있어요. 물에서 H⁺를 내놓아 약한 산성을 띠어요.'] };
   const LIST = [
     { id: 'ethane', f: 'CH₃CH₃', n: '에테인', g: 'none', bp: -89 }, { id: 'methanol', f: 'CH₃OH', n: '메탄올', g: 'OH', bp: 65 },
-    { id: 'ethanol', f: 'CH₃CH₂OH', n: '에탄올', g: 'OH', bp: 78 }, { id: 'acetaldehyde', f: 'CH₃CHO', n: '아세트알데하이드', g: 'CHO', bp: 20 },
-    { id: 'acetic', f: 'CH₃COOH', n: '아세트산', g: 'COOH', bp: 118 },
+    { id: 'ethanol', f: 'CH₃CH₂OH', n: '에탄올', g: 'OH', bp: 78 }, { id: 'propanol', f: 'CH₃CH₂CH₂OH', n: '1-프로판올', g: 'OH', bp: 97 },
+    { id: 'formaldehyde', f: 'HCHO', n: '폼알데하이드', g: 'CHO', bp: -19 }, { id: 'acetaldehyde', f: 'CH₃CHO', n: '아세트알데하이드', g: 'CHO', bp: 20 },
+    { id: 'propanal', f: 'CH₃CH₂CHO', n: '프로판알', g: 'CHO', bp: 48 }, { id: 'formic', f: 'HCOOH', n: '폼산', g: 'COOH', bp: 101 },
+    { id: 'acetic', f: 'CH₃COOH', n: '아세트산', g: 'COOH', bp: 118 }, { id: 'propanoic', f: 'CH₃CH₂COOH', n: '프로판산', g: 'COOH', bp: 141 },
   ];
+  const CHAIN = { propanol: [3, 'OH'], formaldehyde: [1, 'CHO'], propanal: [3, 'CHO'], formic: [1, 'COOH'], propanoic: [3, 'COOH'] };
 
   window.SciSim3D.attach({
     title: '작용기 3D 분자 모형',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHONE ? 12 : 10.5, theta: 0.6, phi: 1.2, min: 4, max: 18 },
     autoRotate: 0.3,
+    levels: [2],   // 3단계 '성질 탐구'. 1·2단계(블록 · 조립)와 4단계(분류)는 2D 화면의 끌어 놓기가 필요해요
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3, UP = new V3(0, 1, 0);
@@ -55,6 +60,22 @@
           const o1 = add('O', at(c2, d[0], 1.21), 1); bond(c2, o1, 2); const o2 = add('O', at(c2, d[1], 1.36), 1); bond(c2, o2);
           const h = add('H', at(o2, d[1].clone().applyAxisAngle(n, 1.15), 0.97), 1); bond(o2, h);
         }
+        if (CHAIN[id]) {
+          const [n, grp] = CHAIN[id], ua = new V3(0.83, 0.56, 0), ub = new V3(0.83, -0.56, 0), cs = [add('C', new V3(), n === 1)], us = [];
+          for (let k = 1; k < n; k++) { const u = k % 2 ? ua : ub; us.push(u); const c = add('C', at(cs[k - 1], u, 1.53), k === n - 1); bond(cs[k - 1], c); cs.push(c); }
+          if (n > 1) Hs(cs[0], tet(us[0], 0));
+          for (let k = 1; k < n - 1; k++) { const bis = us[k - 1].clone().negate().add(us[k]).negate().normalize(); [1, -1].forEach((z) => { const h = add('H', at(cs[k], bis.clone().multiplyScalar(0.58).add(new V3(0, 0, 0.82 * z)), 1.09)); bond(cs[k], h); }); }
+          const ce = cs[n - 1], b = n > 1 ? us[n - 2].clone().negate() : X.clone().negate();
+          const rot = (v, a) => new V3(v.x * Math.cos(a) - v.y * Math.sin(a), v.x * Math.sin(a) + v.y * Math.cos(a), 0), nz = new V3(0, 0, 1), r1 = rot(b, 2.0944), r2 = rot(b, -2.0944);
+          if (grp === 'OH') {
+            const d = tet(b, 0), o = add('O', at(ce, d[0], 1.43), 1); bond(ce, o); Hs(ce, [d[1], d[2]]);
+            const h = add('H', at(o, tet(d[0].clone().negate(), 1.0)[0], 0.96), 1); bond(o, h);
+          } else {
+            const o = add('O', at(ce, r1, 1.21), 1); bond(ce, o, 2);
+            if (grp === 'CHO') { const h = add('H', at(ce, r2, 1.1), 1); bond(ce, h); if (n === 1) { const h2 = add('H', at(ce, b, 1.1), 1); bond(ce, h2); } }
+            else { const o2 = add('O', at(ce, r2, 1.36), 1); bond(ce, o2); const h = add('H', at(o2, r2.clone().applyAxisAngle(nz, 1.15), 0.97), 1); bond(o2, h); if (n === 1) { const h2 = add('H', at(ce, b, 1.1), 1); bond(ce, h2); } }
+          }
+        }
         return { A, B };
       }
       function stick(a, b, r, col) { const d = b.clone().sub(a), L = d.length(), m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, L, 14), mat(col)); m.position.copy(a).add(b).multiplyScalar(0.5); m.quaternion.setFromUnitVectors(UP, d.normalize()); return m; }
@@ -85,11 +106,19 @@
         halos.forEach((h, i) => { const el = atoms[i].userData.el; h.scale.setScalar(fill ? 1.0 : 1); h.position.copy(atoms[i].position); const base = BS[el] * 1.12, r = fill ? VDW[el] * 0.62 : base; h.scale.setScalar((r + 0.2) / (base + 0.2)); });
         halos.forEach((h) => { if (!hi) h.visible = false; });
       }
-      controls.segment('분자', LIST.map((m) => ({ value: m.id, label: m.id === 'acetaldehyde' ? '알데하이드' : m.n })), cur, (v) => { cur = v; build(); });
+      controls.text('분자는 2D 화면에서 골라요 (조립한 분자 · 성질 탐구의 시료).');
       const hb = controls.button('작용기 강조 ✓', () => { hi = !hi; hb.classList.toggle('on', hi); hb.textContent = '작용기 강조 ' + (hi ? '✓' : '✕'); build(); }); hb.classList.add('on');
       controls.segment('모양', [{ value: 0, label: '공-막대' }, { value: 1, label: '공간 채움' }], 0, (v) => { fill = !!v; build(); });
       build();
-      return {};
+      return {
+        update() {
+          try {
+            const S2 = window.__sim.S, w = window.__sim; let k = cur;
+            if (S2.mode === 'build' && w.A2) k = w.A2.k; else if (S2.mode === 'lab' && w.L3) k = w.L3.sel;
+            if (k !== cur && LIST.some((m) => m.id === k)) { cur = k; build(); }
+          } catch (e) { /* 무시 */ }
+        },
+      };
     },
   });
 })();

@@ -843,7 +843,7 @@
 
   /* ---------- 디버그 (Playwright) ---------- */
   window.__sim = {
-    S, VW, VH, get game() { return game; }, setScene, setFlag, enterScene, RS, V, ambObs, ambF, clFormula, phF, wfNew, clNew,
+    AX0, AXE, AOFF, AF, VSA, S, VW, VH, get game() { return game; }, setScene, setFlag, enterScene, RS, V, ambObs, ambF, clFormula, phF, wfNew, clNew,
     run(sec) { const n = Math.ceil(sec / 0.02); for (let i = 0; i < n; i++) { if (S.mode === 'amb') ambStep(0.02); else if (S.mode === 'wf') { S.wf.A.advance(0.02 * KT); S.wf.B.advance(0.02 * KT); } else if (S.mode === 'calc') S.cl.rs.advance(0.02 * KT); else if (S.mode === 'phone') { S.ph.t += 0.02; S.ph.trace.push([S.ph.t, phF(S.ph.t)]); } } },
   };
 })();

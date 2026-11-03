@@ -1,6 +1,6 @@
 /* hm-spring-shm · 3D 용수철 진자와 단진동
-   복원력 F = −kx (변위에 비례, 반대 방향), 주기 T = 2π√(m/k) (진폭과 무관).
-   오른쪽에 x–t 그래프가 시간 축으로 펼쳐져 나와요. 막대는 위치 에너지(E_p)와 운동 에너지(E_k). */
+   2D 실험(window.__sim)의 진자를 그대로 입체로 보여 줘요: 🌀 진자 관찰 · 🧲 복원력(F = −kx) · ⏱️ 주기(질량 · 용수철 상수 · 진폭) · 📈 에너지와 위상.
+   수평·수직 용수철, 질량 m, 용수철 상수 k, 진폭은 옆 조작판이 정하고 3D는 따라가요. 변위 x는 평형점 O에서 재요. */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -41,69 +41,60 @@
     return { V3, Y, M, glass, mkArrow, setArrow, tube, disc, grid, arc };
   }
   const KDX = PHN ? 1.2 : 1;
+  const f2 = (v) => (v >= 0 ? '+' : '−') + Math.abs(v).toFixed(2);
   window.SciSim3D.attach({
     title: '용수철 진자 3D',
-    hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: 14.5 * KDX, theta: 0.4, phi: 1.3, min: 4, max: 30, target: [1.3, 0.2, 0] },
+    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 값은 옆 조작판에서 바꿔요',
+    camera: { dist: 12 * KDX, theta: 0.4, phi: 1.3, min: 4, max: 30, target: [0, 0, 0] },
     autoRotate: 0,
-    levels: [0, 3],
+    levels: [0, 1, 2, 3],
     build(ctx) {
-      const { THREE, root, label, info, controls } = ctx;
-      const { V3, M, mkArrow, setArrow, tube } = tools(THREE);
-      const st = { A: 1.2, m: 1, k: 4, t: 0, trace: true };
-      const Ytop = 3.6, Y0 = 0.4;                    // 천장 · 평형 위치
-      const bar = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.2, 0.9), M(0x64748b, { metalness: 0.4 })); bar.position.set(0, Ytop + 0.1, 0); root.add(bar);
-      const floor = new THREE.Mesh(new THREE.BoxGeometry(9, 0.1, 3), M(0x1c2b3a, { roughness: 1 })); floor.position.set(1.8, -2.4, 0); floor.receiveShadow = true; root.add(floor);
-      // 평형 위치선 · 끝점
-      const eq = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.014, 0.014), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.55 })); eq.position.set(0, Y0, 0); root.add(eq);
-      const endA = eq.clone(), endB = eq.clone(); endA.material = endB.material = new THREE.MeshBasicMaterial({ color: 0xffd34d, transparent: true, opacity: 0.5 }); root.add(endA, endB);
-      // 용수철 (매 프레임 길이만 바꿔 다시 만들지 않고, 점들을 갱신하는 튜브 대신 코일을 작은 구로 표현)
-      const NS = 150, cg = new THREE.CylinderGeometry(0.045, 0.045, 1, 8); cg.rotateX(Math.PI / 2); const coil = new THREE.InstancedMesh(cg, M(0xcbd5e1, { metalness: 0.7, roughness: 0.3 }), NS); root.add(coil);
-      const dum = new THREE.Object3D(), pa = new THREE.Vector3(), pb = new THREE.Vector3();
-      const mass = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.7, 0.9), M(0x3b82f6, { roughness: 0.35, metalness: 0.15 })); mass.castShadow = true; root.add(mass);
-      const fA = mkArrow(0xff5a5f, 0.05), vA = mkArrow(0x34d399, 0.05); root.add(fA, vA);
-      const lF = label('복원력 F', fA, { color: '#e2464b', size: 12 }), lV = label('속도 v', vA, { color: '#0f766e', size: 12 });
-      const lE = label('평형 위치', [-1.15, Y0, 0], { color: '#475569', size: 12 }), lA = label('진폭 A', [-1.15, Y0 + st.A, 0], { color: '#a16207', size: 12 });
-      // 그래프 (x–t) : 구슬 자취
-      const TN = 150, trace = new THREE.InstancedMesh(new THREE.SphereGeometry(0.05, 8, 6), M(0xffb020, { emissive: 0x7a4a00, roughness: 0.5 }), TN); root.add(trace);
-      const axis = tube([new V3(1, Y0, 0), new V3(7.2, Y0, 0)], 0.015, 0xffffff, { basic: true, op: 0.5 }); root.add(axis);
-      const lT = label('시간 t →', [7.0, Y0, 0], { color: '#475569', size: 12, offset: [0, -0.3, 0] });
-      const tick = new THREE.Mesh(new THREE.SphereGeometry(0.1, 16, 12), M(0xffd34d)); root.add(tick);
-      const guide = new THREE.Mesh(new THREE.BoxGeometry(1, 0.012, 0.012), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.25 })); root.add(guide);
-      // 에너지 막대
-      const eP = new THREE.Mesh(new THREE.BoxGeometry(0.4, 1, 0.4), M(0x4c8dff, { roughness: 0.4 })), eK = new THREE.Mesh(new THREE.BoxGeometry(0.4, 1, 0.4), M(0xff9f43, { roughness: 0.4 }));
-      eP.position.x = -3.1; eK.position.x = -2.5; root.add(eP, eK);
-      const lEp = label('E_p', eP, { color: '#2f6df6', size: 12, offset: [0, -0.1, 0.1] }), lEk = label('E_k', eK, { color: '#d97706', size: 12, offset: [0, -0.1, 0.1] });
-      const m = new THREE.Matrix4(), q = new THREE.Quaternion();
-      const omega = () => Math.sqrt(st.k / st.m);
-      const hist = []; let acc = 0;
-      function txt() { info('<b>주기 T = 2π√(m/k) = ' + (TAU / omega()).toFixed(2) + ' s</b><br>진폭 ' + st.A.toFixed(1) + ' (m) · 질량 ' + st.m.toFixed(1) + ' kg · k ' + st.k + ' N/m<br>진폭을 바꿔도 주기는 그대로예요.'); }
-      function setAmp() { endA.position.y = Y0 + st.A; endB.position.y = Y0 - st.A; lA.off = [0, st.A, 0]; lA.obj = [-1.15, Y0, 0]; }
-      controls.range('진폭', 0.4, 1.6, 0.2, st.A, (v) => { st.A = v; setAmp(); txt(); }, (v) => v.toFixed(1));
-      controls.range('질량', 0.5, 4, 0.5, st.m, (v) => { st.m = v; hist.length = 0; txt(); }, (v) => v.toFixed(1) + ' kg');
-      controls.range('용수철 상수', 2, 16, 2, st.k, (v) => { st.k = v; hist.length = 0; txt(); }, (v) => v + ' N/m');
-      setAmp(); txt();
+      const { THREE, root, label, info, controls, orbit } = ctx;
+      const { V3, M, mkArrow, setArrow } = tools(THREE);
+      const sim = () => ctx.lesson();
+      const U = 10;
+      const floor = new THREE.Mesh(new THREE.BoxGeometry(14, 0.1, 3), M(0x1c2b3a, { roughness: 1 })); floor.position.set(0, -0.06, 0); root.add(floor);
+      const wall = new THREE.Mesh(new THREE.BoxGeometry(0.3, 1.8, 1.4), M(0x64748b, { metalness: 0.4 })); root.add(wall);
+      const ceil = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.25, 1.4), M(0x64748b, { metalness: 0.4 })); root.add(ceil);
+      const blk = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), M(0xf59e0b, { roughness: 0.4, metalness: 0.2 })); blk.castShadow = true; root.add(blk);
+      const springM = new THREE.Mesh(new THREE.BufferGeometry(), M(0xcbd5e1, { metalness: 0.7, roughness: 0.3 })); root.add(springM);
+      const eq = new THREE.Mesh(new THREE.BoxGeometry(0.03, 2.4, 0.03), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.6 })); root.add(eq);
+      const eqH = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.03, 0.03), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.6 })); root.add(eqH);
+      const aV = mkArrow(0x2563eb, 0.05), aA = mkArrow(0xe2464b, 0.05); root.add(aV, aA);
+      const lO = label('평형점 O', [0, 0, 0], { color: '#475569', size: 12 }), lV = label('속도 v', aV, { color: '#2563eb', size: 12 }), lA = label('가속도 a', aA, { color: '#e2464b', size: 12 }), lM = label('', blk, { color: '#b45309', size: 12 });
+      const mkEnd = () => new THREE.Mesh(new THREE.BoxGeometry(0.03, 2, 0.03), new THREE.MeshBasicMaterial({ color: 0xffd34d, transparent: true, opacity: 0.55 }));
+      const endA = mkEnd(), endB = mkEnd(); root.add(endA, endB);
+      const demo = { p: 0, on: false }; let pl = null, skey = '';
+      function coil(p0, p1, n, r) { const pts = [], N = 80, d = p1.clone().sub(p0), L = d.length(); const u = d.clone().normalize(); const side = Math.abs(u.y) > 0.9 ? new V3(1, 0, 0) : new V3(0, 1, 0), w = new V3().crossVectors(u, side).normalize(), v = new V3().crossVectors(u, w).normalize(); for (let i = 0; i <= N; i++) { const t = i / N, a = t * n * Math.PI * 2, e = Math.min(1, Math.min(t, 1 - t) * 8); pts.push(p0.clone().addScaledVector(u, t * L).addScaledVector(w, Math.cos(a) * r * e).addScaledVector(v, Math.sin(a) * r * e)); } return new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 160, 0.035, 5, false); }
+      let lastTxt = '';
+      function scene(A, S) {
+        const o = S.o, os = A.osc(); let x = os.x, v = os.v, a = os.a;
+        if (demo.on) { const w = os.w, x0 = o.x0, q = demo.p * Math.PI * 2; x = x0 * Math.cos(q); v = -x0 * w * Math.sin(q); a = -w * w * x; }
+        const vert = o.orient === 'v', m = o.m, k = o.k, side = 0.45 + Math.min(0.5, m * 0.35);
+        blk.scale.set(side, side, side); wall.visible = !vert; ceil.visible = vert;
+        let bx, by;
+        if (!vert) { bx = x * U; by = side / 2; wall.position.set(-4.4, 0.9, 0); springKey(new V3(-4.25, by, 0), new V3(bx - side / 2, by, 0)); eq.position.set(0, 1.0, 0); eq.visible = true; eqH.visible = false; endA.position.set(o.x0 * U, 1, 0); endB.position.set(-o.x0 * U, 1, 0); endA.rotation.z = endB.rotation.z = 0; }
+        else { bx = 0; by = 1.6 - x * U; ceil.position.set(0, 4.3, 0); springKey(new V3(0, 4.15, 0), new V3(0, by + side / 2, 0)); eq.visible = false; eqH.visible = true; eqH.position.set(0, 1.6, 0); endA.position.set(0, 1.6 + o.x0 * U, 0); endB.position.set(0, 1.6 - o.x0 * U, 0); endA.rotation.z = endB.rotation.z = Math.PI / 2; endA.scale.y = endB.scale.y = 0.6; }
+        if (!vert) endA.scale.y = endB.scale.y = 1;
+        blk.position.set(bx, by, 0); lM.set(m + ' kg'); lM.off = [0, side / 2 + 0.4, 0];
+        lO.obj = vert ? [1.3, 1.6, 0] : [0, 0, 0]; lO.off = vert ? [0, 0, 0] : [0, 0, 0]; if (!vert) lO.obj = [0, 0.0, 0.8];
+        const dirV = vert ? new V3(0, -1, 0) : new V3(1, 0, 0), c = new V3(bx, by, 0).add(new V3(0, vert ? 0 : side / 2 + 0.5, 0)).add(vert ? new V3(side / 2 + 0.5, 0, 0) : new V3());
+        setArrow(aV, c, c.clone().addScaledVector(dirV, v * 3)); setArrow(aA, c.clone().add(new V3(0, vert ? 0 : 0.5, vert ? 0.5 : 0)), c.clone().add(new V3(0, vert ? 0 : 0.5, vert ? 0.5 : 0)).addScaledVector(dirV, a * 0.12));
+        lV.off = [0, 0.3, 0]; lA.off = [0, 0.3, 0];
+        const mode = S.mode; let t2 = '<b>🌀 용수철 진자 · ' + (vert ? '수직' : '수평') + '</b> · m = ' + m + ' kg · k = ' + k + ' N/m' + (vert ? ' · g = ' + o.g + ' m/s²' : '') + '<br>변위 x = <b>' + f2(x) + ' m</b> (평형점 O 기준) · 속도 v = ' + f2(v) + ' m/s · 가속도 a = ' + f2(a) + ' m/s²<br>';
+        if (mode === 'force') t2 += '복원력 F = −kx : 변위와 <b>반대 방향</b>이고 크기는 변위에 비례해요 → 가속도 a도 변위와 반대 방향 (a–x 그래프는 기울기가 음수인 직선).';
+        else if (mode === 'period') t2 += '주기는 질량 m · 용수철 상수 k로 정해지고, 진폭과 중력(수평/수직, 달)에는 영향이 없어요. 하나씩만 바꿔 측정해요.';
+        else if (mode === 'energy') { const Ep = 0.5 * k * x * x, Et = 0.5 * k * o.x0 * o.x0; t2 += '역학적 에너지: 운동 E<sub>k</sub> = ' + (Et - Ep).toFixed(3) + ' J + 탄성 E<sub>p</sub> = ' + Ep.toFixed(3) + ' J = ½kA² = ' + Et.toFixed(3) + ' J (일정). 양 끝점에서 속력 0, 평형점에서 가장 빠름.'; }
+        else t2 += '끝점(±A)에서는 속력이 0이고 가속도가 가장 커요. 평형점에서는 가속도 0, 속력 최대예요.';
+        if (t2 !== lastTxt) { lastTxt = t2; info(t2 + '<br><span style="opacity:.8">진폭 · 용수철 · 질량은 옆 조작판에서 바꿔요.</span>'); }
+      }
+      function springKey(p0, p1) { const key = [p0.x, p0.y, p1.x.toFixed(2), p1.y.toFixed(2)].join('|'); if (key === skey) return; skey = key; springM.geometry.dispose(); springM.geometry = coil(p0, p1, 9, 0.22); }
+      pl = controls.player({ duration: 5, loop: true, autoplay: false, label: '한 주기', phases: [[0, '오른쪽(+) 끝점'], [0.25, '평형점 (가장 빠름)'], [0.5, '왼쪽(−) 끝점'], [0.75, '평형점 (가장 빠름)']], onFrame(p) { demo.p = p; demo.on = p > 0 || !!(pl && pl.playing); } });
       return {
-        update(dt) {
-          st.t += dt; const w = omega(), x = st.A * Math.cos(w * st.t), v = -st.A * w * Math.sin(w * st.t);
-          const y = Y0 + x;
-          mass.position.set(0, y - 0.35, 0);
-          // 용수철: 천장 ~ 질량 위
-          const yTop = Ytop, yBot = y; const turns = 14;
-          const hp = (u) => pa.set(0.34 * Math.cos(u * turns * TAU), yTop + (yBot - yTop) * u, 0.34 * Math.sin(u * turns * TAU));
-          let prev = hp(0).clone();
-          for (let i = 0; i < NS; i++) { const u = (i + 1) / NS; pb.copy(hp(u)); dum.position.copy(prev).add(pb).multiplyScalar(0.5); dum.lookAt(pb.x, pb.y, pb.z); dum.scale.set(1, 1, prev.distanceTo(pb) * 1.08); dum.updateMatrix(); coil.setMatrixAt(i, dum.matrix); prev.copy(pb); }
-          coil.instanceMatrix.needsUpdate = true;
-          setArrow(fA, new V3(0.7, y, 0), new V3(0.7, y - x * 0.9 * st.k / 8, 0)); lF.off = [0.25, 0, 0];
-          setArrow(vA, new V3(-0.7, y, 0), new V3(-0.7, y + v * 0.35, 0)); lV.off = [-0.25, 0, 0];
-          fA.visible = Math.abs(x) > 0.05; vA.visible = Math.abs(v) > 0.05; lF.show(fA.visible); lV.show(vA.visible);
-          // 그래프: 최근 기록
-          acc += dt; while (acc >= 0.03) { acc -= 0.03; hist.push(x); if (hist.length > TN) hist.shift(); }
-          const dx = 6.2 / TN; tick.position.set(1, y, 0); guide.position.set(0.5, y, 0); guide.scale.x = 1; 
-          for (let i = 0; i < TN; i++) { const hv = hist[hist.length - 1 - i]; const S = hv === undefined ? 0 : 1; m.makeScale(S, S, S).setPosition(1 + i * dx, Y0 + (hv || 0), 0); trace.setMatrixAt(i, m); }
-          trace.instanceMatrix.needsUpdate = true;
-          const Ep = 0.5 * st.k * x * x, Ek = 0.5 * st.m * v * v, sc = 0.55 / (0.5 * st.k * 1.6 * 1.6) * 2.4;
-          eP.scale.y = Math.max(0.001, Ep * sc); eK.scale.y = Math.max(0.001, Ek * sc); eP.position.y = Y0 - 1.7 + eP.scale.y / 2; eK.position.y = Y0 - 1.7 + eK.scale.y / 2;
+        update() {
+          const A = sim(); if (!A || !A.S) return; const S = A.S;
+          if (!pl.playing && pl.p === 0) demo.on = false;
+          scene(A, S);
         },
         sync() {},
       };

@@ -90,6 +90,7 @@
       const labs = {}; const L = (sc, text, obj, o) => { const l = label(text, obj, o); const raw = l.set; let last = text; l.set = (t) => { if (t !== last) { last = t; raw(t); } }; (labs[sc] = labs[sc] || []).push(l); return l; };
       let lastInfo = ''; const info = (hh) => { if (hh !== lastInfo) { lastInfo = hh; ctx.info(hh); } };
       const gT = new THREE.Group(), gR = new THREE.Group(), gH = new THREE.Group(), gP = new THREE.Group(); root.add(gT, gR, gH, gP);
+      const st = { a: 2.0, lam: 1.2, note: "" };
       const X0 = -6.5, X1 = 8, YH = 4.2, XB = -2.5;
       const NX = 112, NY = 64;
       const geo = new THREE.PlaneGeometry(X1 - X0, 2 * YH, NX, NY); geo.rotateX(-Math.PI / 2);        // x–z 평면 위의 수면 (z = 폭 방향)

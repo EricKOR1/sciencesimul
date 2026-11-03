@@ -1,6 +1,6 @@
-/* hm-ideal-gas · 3D 기체 분자 모형과 압력
-   기체 분자가 용기 벽에 충돌하는 힘이 압력이에요. 온도가 높으면 분자가 빠르고(충돌이 세고 잦음), 부피가 작으면 충돌이 잦아져요.
-   막대 눈금은 벽에 부딪히는 충격량의 시간 평균(상대값)으로, P ∝ nT/V (PV = nRT) 를 보여 줘요. */
+/* hm-ideal-gas · 3D 기체 분자 모형과 이상 기체 법칙
+   2D 실험(window.__sim)의 장면을 그대로 입체로 보여 줘요: 🔬 기체 모형(부피 V · 온도 T → 압력 P) · 📟 센서 실험(등온 · 정압 · 정적) · 🧮 PV = nRT.
+   분자가 벽(피스톤)에 부딪히는 힘이 압력이에요. 온도는 분자의 평균 운동 에너지에 비례해요. 값은 옆 조작판이 정하고 3D는 따라가요. (🛞 타이어 · 🤿 잠수 · 🎈 열기구는 2D 화면에서 해요) */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -40,62 +40,57 @@
     }
     return { V3, Y, M, glass, mkArrow, setArrow, tube, disc, grid, arc };
   }
+  const f1 = (v) => (Math.round(v * 10) / 10).toFixed(1);
   window.SciSim3D.attach({
     title: '기체 분자와 압력 3D',
-    hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: 12.5 * KD, theta: 0.65, phi: 1.1, min: 5, max: 28 },
-    autoRotate: 0.12,
-    levels: [0, 1],
+    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 값은 옆 조작판에서 바꿔요',
+    camera: { dist: 12.5 * KD, theta: 0.65, phi: 1.1, min: 5, max: 28, target: [0, 0, 0] },
+    autoRotate: 0,
+    levels: [0, 1, 2],
     build(ctx) {
-      const { THREE, root, label, info, controls } = ctx;
+      const { THREE, root, label, info, controls, orbit } = ctx;
       const { V3, M } = tools(THREE);
-      const st = { T: 300, n: 100, Vf: 1.0 };
-      const NMAX = 200, LX = 6, LY = 3.4, LZ = 3.4;          // 부피 = 오른쪽 피스톤 위치에 비례
+      const sim = () => ctx.lesson();
+      const NMAX = 200, LX = 6, LY = 3.4, LZ = 3.4;
       const pos = new Float32Array(NMAX * 3), vel = new Float32Array(NMAX * 3);
-      const im = new THREE.InstancedMesh(new THREE.SphereGeometry(0.1, 14, 10), M(0xffffff, { roughness: 0.3 }), NMAX); im.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(NMAX * 3), 3); root.add(im);
+      const im = new THREE.InstancedMesh(new THREE.SphereGeometry(0.1, 14, 10), M(0xffffff, { roughness: 0.3 }), NMAX); im.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(NMAX * 3), 3); im.frustumCulled = false; root.add(im);
       const box = new THREE.Mesh(new THREE.BoxGeometry(1, LY, LZ), new THREE.MeshStandardMaterial({ color: 0x9ec5ff, transparent: true, opacity: 0.1, roughness: 0.1, side: THREE.DoubleSide, depthWrite: false })); root.add(box);
       const edges = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1, LY, LZ)), new THREE.LineBasicMaterial({ color: 0xbcd4ff, transparent: true, opacity: 0.6 })); root.add(edges);
-      const pis = new THREE.Mesh(new THREE.BoxGeometry(0.22, LY + 0.1, LZ + 0.1), M(0x64748b, { metalness: 0.6, roughness: 0.3 })); root.add(pis);
+      const pis = new THREE.Mesh(new THREE.BoxGeometry(0.22, LY + 0.1, LZ + 0.1), M(0x64748b, { metalness: 0.6 })); root.add(pis);
       const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 3, 16), M(0x94a3b8, { metalness: 0.7 })); rod.rotation.z = Math.PI / 2; root.add(rod);
       const handle = new THREE.Mesh(new THREE.BoxGeometry(0.25, 1.1, 1.1), M(0xe2464b)); root.add(handle);
-      // 압력 계기
       const gauge = new THREE.Group(); root.add(gauge);
       const gb = new THREE.Mesh(new THREE.BoxGeometry(0.5, 3, 0.3), M(0x334155)); gb.position.y = 1.5; gauge.add(gb);
-      const gf = new THREE.Mesh(new THREE.BoxGeometry(0.34, 1, 0.34), M(0xff6b6b, { emissive: 0x7f1d1d, roughness: 0.4 })); gauge.add(gf);
-      gauge.position.set(-3.2, -LY / 2, 1.5);
-      const lP = label('압력 P', gb, { color: '#e2464b', size: 13, offset: [0, 1.9, 0] }), lPis = label('피스톤(부피)', pis, { color: '#475569', size: 12, offset: [0, LY / 2 + 0.4, 0] });
-      const lW = label('벽에 충돌 → 압력', [-LX / 2, 0, 0], { color: '#2563eb', size: 12, offset: [-0.0, 0.0, 0] });
-      const colS = new THREE.Color(0x60a5fa), colF = new THREE.Color(0xff7b54), tc = new THREE.Color();
-      const m4 = new THREE.Matrix4();
-      function resetP() { for (let i = 0; i < NMAX; i++) { pos[i * 3] = (Math.random() - 0.5) * LX * 0.9; pos[i * 3 + 1] = (Math.random() - 0.5) * LY * 0.9; pos[i * 3 + 2] = (Math.random() - 0.5) * LZ * 0.9; const a = Math.random() * TAU, b = Math.acos(2 * Math.random() - 1); vel[i * 3] = Math.sin(b) * Math.cos(a); vel[i * 3 + 1] = Math.cos(b); vel[i * 3 + 2] = Math.sin(b) * Math.sin(a); } }
-      resetP();
-      let hits = 0, acc = 0, P = 0, Pshown = 0;
-      const spd = () => Math.sqrt(st.T / 300) * 3.2;
-      function txt() { info('<b>P ∝ n·T / V</b><br>분자 수 ' + st.n + ' · 온도 ' + st.T + ' K · 부피 ' + (st.Vf * 100).toFixed(0) + '%<br>분자가 빠를수록, 많을수록, 좁을수록 압력이 커져요.'); }
-      controls.range('온도', 150, 600, 50, st.T, (v) => { st.T = v; txt(); }, (v) => v + ' K');
-      controls.range('부피', 0.4, 1.0, 0.1, st.Vf, (v) => { st.Vf = v; for (let i = 0; i < NMAX; i++) { const lim = LX * st.Vf / 2; if (pos[i * 3] > lim) pos[i * 3] = lim - 0.1; } txt(); }, (v) => (v * 100).toFixed(0) + '%');
-      controls.range('분자 수', 40, 200, 20, st.n, (v) => { st.n = v; txt(); }, (v) => v + '개');
-      txt();
+      const gf = new THREE.Mesh(new THREE.BoxGeometry(0.34, 1, 0.34), M(0xff6b6b, { emissive: 0x7f1d1d })); gauge.add(gf); gauge.position.set(-3.2, -LY / 2, 1.5);
+      const lP = label('압력 P', gb, { color: '#e2464b', size: 13 }), lPis = label('피스톤(부피)', pis, { color: '#475569', size: 12 }); lP.off = [0, 1.9, 0]; lPis.off = [0, LY / 2 + 0.4, 0];
+      const colS = new THREE.Color(0x60a5fa), colF = new THREE.Color(0xff7b54), tc = new THREE.Color(), m4 = new THREE.Matrix4();
+      for (let i = 0; i < NMAX; i++) { pos[i * 3] = (Math.random() - 0.5) * LX * 0.9; pos[i * 3 + 1] = (Math.random() - 0.5) * LY * 0.9; pos[i * 3 + 2] = (Math.random() - 0.5) * LZ * 0.9; const a = Math.random() * 6.283, b = Math.acos(2 * Math.random() - 1); vel[i * 3] = Math.sin(b) * Math.cos(a); vel[i * 3 + 1] = Math.cos(b); vel[i * 3 + 2] = Math.sin(b) * Math.sin(a); }
+      let acc = 0, hits = 0, Ps = 0, Pshown = 0, last = '';
+      const NOTE = '🛞 타이어 · 🤿 잠수와 풍선 · 🎈 열기구 설계는 2D 화면에서 해요. 위의 [▦ 2D]를 눌러 보세요.';
       return {
         update(dt) {
-          const s = spd(), VL = LX * st.Vf, x0 = -LX / 2, x1 = x0 + VL, hy = LY / 2, hz = LZ / 2; let imp = 0;
+          const A = sim(); if (!A || !A.S) return; const S = A.S;
+          let vf, TK, n, P, txt;
+          if (S.mode === 'model') { const m = S.m; vf = m.V / 40; TK = m.T; n = 100; P = 100 * 20 / 300 * m.T / m.V; txt = '<b>🔬 기체 모형: 충돌이 만드는 압력</b><br>부피 V = ' + m.V + ' mL · 온도 T = ' + m.T + ' K (' + (m.T - 273) + ' °C) → 압력 P = <b>' + f1(P) + ' kPa</b><br>부피를 줄이면 벽에 부딪히는 횟수가 늘고, 온도를 높이면 분자가 빨라져 횟수와 세기가 커져요.'; }
+          else if (S.mode === 'sensor') { const ex = S.sx.exp, rd = A.sxRead(ex, S.sx.x[ex]); vf = rd.V / 40; TK = rd.TK; n = 100; P = rd.P; txt = '<b>📟 센서 실험 · ' + A.EXPS[ex].name + '</b> (' + (ex === 'iso' ? '온도 일정' : ex === 'isob' ? '압력 일정' : '부피 일정') + ')<br>V = ' + f1(rd.V) + ' mL · P = ' + f1(rd.P) + ' kPa · t = ' + Math.round(rd.t) + ' °C (' + Math.round(rd.TK) + ' K)<br>' + (ex === 'iso' ? 'P와 V는 반비례 (PV 일정).' : ex === 'isob' ? 'V–t 직선을 낮은 온도로 연장하면 V = 0이 되는 온도가 있어요 (절대 영도).' : 'P–t 직선을 낮은 온도로 연장하면 P = 0이 되는 온도가 있어요 (절대 영도).'); }
+          else if (S.mode === 'eq') { const o = A.igSolve(); const VL = o.syr ? o.V : o.V; vf = clamp(VL / 50, 0.15, 1); TK = o.T; n = clamp(o.n * 100, 20, 200); P = o.P; txt = '<b>🧮 PV = nRT</b> (R = 8.31 J/(mol·K))<br>P = ' + f1(o.P) + ' kPa · V = ' + (o.V < 1 ? f1(o.V * 1000) + ' mL' : f1(o.V) + ' L') + ' · T = ' + f1(o.T) + ' K · n = ' + (o.n < 0.01 ? f1(o.n * 1e4) + ' × 10⁻⁴ mol' : o.n.toFixed(2) + ' mol') + '<br>세 값을 정하면 나머지 하나가 계산돼요 (분자가 많을수록 · 온도가 높을수록 · 부피가 작을수록 압력이 커요).'; }
+          else { info(NOTE); im.visible = box.visible = edges.visible = pis.visible = rod.visible = handle.visible = gauge.visible = false; lP.show(false); lPis.show(false); return; }
+          im.visible = box.visible = edges.visible = pis.visible = rod.visible = handle.visible = gauge.visible = true; lP.show(true); lPis.show(true);
+          vf = clamp(vf, 0.2, 1); if (txt !== last) { last = txt; info(txt); }
+          const s = Math.sqrt(TK / 300) * 3.2, VL = LX * vf, x0 = -LX / 2, x1 = x0 + VL, hy = LY / 2, hz = LZ / 2; let imp = 0; const nn = Math.round(clamp(n, 20, NMAX));
           for (let i = 0; i < NMAX; i++) {
-            const k = i * 3; pos[k] += vel[k] * s * dt; pos[k + 1] += vel[k + 1] * s * dt; pos[k + 2] += vel[k + 2] * s * dt;
-            if (i < st.n) {
-              if (pos[k] > x1 - 0.1) { pos[k] = x1 - 0.1; vel[k] = -Math.abs(vel[k]); imp += 2 * Math.abs(vel[k]) * s; }
-              else if (pos[k] < x0 + 0.1) { pos[k] = x0 + 0.1; vel[k] = Math.abs(vel[k]); imp += 2 * Math.abs(vel[k]) * s; }
-              if (pos[k + 1] > hy - 0.1) { pos[k + 1] = hy - 0.1; vel[k + 1] = -Math.abs(vel[k + 1]); imp += 2 * Math.abs(vel[k + 1]) * s; } else if (pos[k + 1] < -hy + 0.1) { pos[k + 1] = -hy + 0.1; vel[k + 1] = Math.abs(vel[k + 1]); imp += 2 * Math.abs(vel[k + 1]) * s; }
-              if (pos[k + 2] > hz - 0.1) { pos[k + 2] = hz - 0.1; vel[k + 2] = -Math.abs(vel[k + 2]); imp += 2 * Math.abs(vel[k + 2]) * s; } else if (pos[k + 2] < -hz + 0.1) { pos[k + 2] = -hz + 0.1; vel[k + 2] = Math.abs(vel[k + 2]); imp += 2 * Math.abs(vel[k + 2]) * s; }
-              const sp = Math.min(1, (st.T - 150) / 450); tc.copy(colS).lerp(colF, sp);
-              m4.makeTranslation(pos[k], pos[k + 1], pos[k + 2]); im.setMatrixAt(i, m4); im.setColorAt(i, tc);
+            const k = i * 3;
+            if (i < nn) {
+              pos[k] += vel[k] * s * dt; pos[k + 1] += vel[k + 1] * s * dt; pos[k + 2] += vel[k + 2] * s * dt;
+              if (pos[k] > x1 - 0.1) { pos[k] = x1 - 0.1; vel[k] = -Math.abs(vel[k]); imp += 2 * Math.abs(vel[k]) * s; } else if (pos[k] < x0 + 0.1) { pos[k] = x0 + 0.1; vel[k] = Math.abs(vel[k]); imp += 2 * Math.abs(vel[k]) * s; }
+              if (pos[k + 1] > hy - 0.1) { pos[k + 1] = hy - 0.1; vel[k + 1] = -Math.abs(vel[k + 1]); } else if (pos[k + 1] < -hy + 0.1) { pos[k + 1] = -hy + 0.1; vel[k + 1] = Math.abs(vel[k + 1]); }
+              if (pos[k + 2] > hz - 0.1) { pos[k + 2] = hz - 0.1; vel[k + 2] = -Math.abs(vel[k + 2]); } else if (pos[k + 2] < -hz + 0.1) { pos[k + 2] = -hz + 0.1; vel[k + 2] = Math.abs(vel[k + 2]); }
+              tc.copy(colS).lerp(colF, clamp((TK - 250) / 300, 0, 1)); m4.makeTranslation(pos[k], pos[k + 1], pos[k + 2]); im.setMatrixAt(i, m4); im.setColorAt(i, tc);
             } else { m4.makeScale(0, 0, 0); im.setMatrixAt(i, m4); }
           }
           im.instanceMatrix.needsUpdate = true; im.instanceColor.needsUpdate = true;
-          acc += imp * 0.0 + imp; hits += dt; if (hits > 0.25) { P = acc / hits / (2 * (VL * LY + VL * LZ + LY * LZ)) * 0.5; acc = 0; hits = 0; }
-          Pshown += (P - Pshown) * Math.min(1, dt * 6);
           box.scale.x = VL; box.position.x = x0 + VL / 2; edges.scale.x = VL; edges.position.x = x0 + VL / 2; pis.position.x = x1 + 0.11; rod.position.x = x1 + 1.5; handle.position.x = x1 + 3.1;
-          const h = clamp(Pshown * 0.13, 0.05, 2.9); gf.scale.y = h; gf.position.y = h / 2 + 0.05; lP.off = [0, 1.9, 0];
-          lPis.obj = pis; lW.obj = [x0, 0, 0.0]; lW.show(false);
+          const h = clamp(P / 300 * 2.8, 0.05, 2.9); gf.scale.y = h; gf.position.y = h / 2 + 0.05; void acc; void hits; void Ps; void Pshown;
         },
         sync() {},
       };

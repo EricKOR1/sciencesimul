@@ -1,5 +1,6 @@
 /* hr-electroplating · 3D 구리 도금 (철 열쇠에 구리 입히기)
    (+)극 구리판: Cu → Cu²⁺ + 2e⁻ (산화, 녹아요) · (−)극 열쇠: Cu²⁺ + 2e⁻ → Cu (환원, 달라붙어요).
+   1단계(도금 실험)는 2D의 연결 · 진행(%)을, 2단계(석출 분석)는 2D의 전류(A) · 시간(분)과 석출한 구리의 질량을 그대로 보여 줘요. 3 · 4단계는 2D 화면이에요.
    전류가 셀수록 같은 시간에 더 많이 도금돼요 (석출량 ∝ 전하량). 시간은 빠르게 돌린 모형이에요. */
 (function () {
   'use strict';
@@ -12,6 +13,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHONE ? 19 : 13.5, theta: 0.3, phi: 1.22, min: 8, max: 28, target: [0, 1.0, 0] },
     autoRotate: 0.06,
+    levels: [0, 1],
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3;
@@ -56,16 +58,18 @@
         i: label('Cu²⁺ →', [0, top - 0.5, 0], { color: 'rgba(30,111,224,.92)' }),
       };
       let showLab = true, txt = '';
-      const pb = controls.button('전원 ON ✓', () => { power = !power; pb.classList.toggle('on', power); pb.textContent = '전원 ' + (power ? 'ON ✓' : 'OFF ✕'); }); pb.classList.add('on');
-      controls.range('전류', 1, 3, 1, cur, (v) => { cur = v; }, (v) => ['약', '보통', '센'][v - 1] + ' 전류');
-      controls.button('↺ 새 열쇠로', () => { plated = 0; });
+      controls.text('연결 · 전류 · 시간은 2D 조작판에서 바꿔요.');
       const lb = controls.button('이름표 ✓', () => { showLab = !showLab; lb.classList.toggle('on', showLab); lb.textContent = '이름표 ' + (showLab ? '✓' : '✕'); Object.values(L).forEach((l) => l.show(showLab)); }); lb.classList.add('on');
-      let pw = 1;
+      let pw = 0, info2 = '';
       return {
         update(dt, t) {
           dt = Math.min(dt, 0.05);
+          const w = window.__sim, S2 = w && w.S, md = S2 ? S2.mode : '';
+          info2 = '';
+          if (md === 'analysis' && S2.an) { const a = S2.an; power = a.t > 0; cur = a.I >= 1 ? 3 : a.I >= 0.5 ? 2 : 1; plated = Math.min(1, w.anMass() / (w.massCu(1, 20) || 1)); info2 = '<br>전류 <b>' + a.I + ' A</b> · 시간 <b>' + Math.round(a.ts) + '분</b> → 석출한 Cu <b>' + w.anMass().toFixed(3) + ' g</b>'; }
+          else if (md === 'plate' && S2.pl) { const p = S2.pl; power = !!p.flow && p.flow > 0.05 || (p.run && w.plMode() === 'good'); plated = p.pc; cur = 2; info2 = '<br>도금 진행 ' + Math.round(p.pc * 100) + ' %' + (w.plN() < 4 ? ' · 2D에서 부품을 조립해요' : ''); }
+          else { power = false; }
           pw += ((power ? 1 : 0) - pw) * Math.min(1, dt * 4);
-          plated = Math.min(1, plated + dt * 0.035 * cur * pw);
           keyMat.color.copy(plateShade).lerp(cuC, Math.min(1, plated * 1.4)); keyMat.metalness = 0.85;
           const k = 1.15 * (1 + plated * 0.06); key.scale.set(k, k, k);
           anode.scale.set(1 - plated * 0.4, 1, 1);
@@ -82,7 +86,7 @@
             M.makeScale(s, s, s); M.setPosition(AX + 0.4 + (KX - 0.4 - AX - 0.4) * q.u, q.y + Math.sin(t * 2 + q.ph) * 0.12, q.z + Math.cos(t * 1.7 + q.ph) * 0.1); cm.setMatrixAt(i, M);
           });
           cm.instanceMatrix.needsUpdate = true;
-          const tx = !power ? '<b>전원이 꺼져 있어요</b><br>전류가 흐르지 않아 도금이 멈춰요.' : '<b>도금 ' + Math.round(plated * 100) + '%</b> · ' + ['약한', '보통', '센'][cur - 1] + ' 전류<br>(+)극: Cu → Cu²⁺ + 2e⁻ (산화)<br>(−)극: Cu²⁺ + 2e⁻ → Cu (환원) · 전류가 셀수록 빨리 입혀져요';
+          const tx = !power ? '<b>전류가 흐르지 않아요</b><br>회로를 연결하고 전원을 켜면 도금이 시작돼요.'+info2 : '<b>도금 ' + Math.round(plated * 100) + '%</b> · ' + ['약한', '보통', '센'][cur - 1] + ' 전류<br>(+)극: Cu → Cu²⁺ + 2e⁻ (산화)<br>(−)극: Cu²⁺ + 2e⁻ → Cu (환원) · 전류가 셀수록 빨리 입혀져요' + info2;
           if (tx !== txt) { txt = tx; info(tx); }
         },
       };
