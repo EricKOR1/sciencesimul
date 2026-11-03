@@ -731,6 +731,6 @@
 
   /* ---------- 디버그 (Playwright) ---------- */
   window.__sim = {
-    S, VW, VH, get game() { return game; }, get hit() { return S.hit; }, setScene, setFlag, updateCtl, ampOf, FNR, strField, strAt, insF, insRatio, fqF1, f1Of, vOf, resetIns,
+    L0, WVIS, A_DRV, YMAX, insF1open, LG, strField_: strField, S, VW, VH, get game() { return game; }, get hit() { return S.hit; }, setScene, setFlag, updateCtl, ampOf, FNR, strField, strAt, insF, insRatio, fqF1, f1Of, vOf, resetIns,
   };
 })();

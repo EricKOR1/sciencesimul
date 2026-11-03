@@ -11,6 +11,7 @@
     title: '편광 3D — 빛의 진동 방향',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHN ? 25 : 15.5, theta: PHN ? 0.8 : 0.48, phi: 1.2, min: 8, max: 40, target: [0, 0, 0] },
+    levels: [0],
     autoRotate: 0,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
@@ -130,15 +131,14 @@
         info(h);
       }
 
-      /* ---------- 조작 ---------- */
-      const segN = controls.segment('편광판', [{ value: 1, label: '1장' }, { value: 2, label: '2장' }, { value: 3, label: '3장' }], st.n, (v) => { st.n = v; layout(); });
-      const rA = controls.range('돌리는 판의 투과축', 0, 180, 5, st.ang, (v) => { st.ang = v; layout(); }, (v) => v + '°');
-      controls.button('90° (직교)', () => { st.ang = 90; rA.set(90); layout(); });
-      controls.button('0°', () => { st.ang = 0; rA.set(0); layout(); });
+      /* ---------- 2D 실험의 값을 그대로 따라가요 (값은 왼쪽 조작판에서 바꿔요) ---------- */
+      let built = false, plUser = false, lastSig = '';
+      const pl = controls.player({ duration: 8, loop: true, autoplay: false, label: '편광판 돌리기', phases: [[0, '투과축 0° (나란히)'], [0.25, '45°'], [0.5, '90° (직교)'], [0.75, '135°']], onFrame(p) { if (!built) return; plUser = true; st.ang = p * 180; layout(); } });
+      built = true;
       layout();
-
       return {
         update(dt, t) {
+          { const S = lessonS(); if (S && S.pol) { const sig = S.mode + '|' + S.pol.n + '|' + S.pol.ang; if (sig !== lastSig) { lastSig = sig; if (plUser) { plUser = false; pl.pause(); } if (S.mode === 'pol' || true) { st.n = S.pol.n; st.ang = S.pol.ang; layout(); } } } }
           const n = st.n; const edges = [LAMP + 0.7].concat(xs).concat([SCR - 0.05]);
           waves.forEach((w, k) => w.forEach((r) => { r.mesh.visible = r.line.visible = k <= n; }));
           // ① 자연광: 방향이 계속 바뀌는 여러 장의 띠
@@ -152,7 +152,7 @@
             r.mesh.material.opacity = Math.min(0.45, 0.05 + A * 0.3); r.line.material.opacity = A < 0.02 ? 0.25 : 0.95;
           }
         },
-        sync() { const S = lessonS(); if (!S || !S.pol) return; st.n = S.pol.n; st.ang = S.pol.ang; segN.set(st.n); rA.set(st.ang); layout(); },
+        sync() { lastSig = ''; },
       };
     },
   });

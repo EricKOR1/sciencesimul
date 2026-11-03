@@ -1,7 +1,7 @@
-/* hm-air-column · 3D 관 속의 정상파
-   공기 알갱이가 관을 따라 앞뒤로 흔들려요(종파). 열린 끝은 변위의 배, 닫힌 끝은 변위의 마디.
-   색: 알갱이가 몰린 곳(밀한 곳, 붉은색)과 흩어진 곳(소한 곳, 파란색). 열린 관 λ = 2L/n, 한쪽 닫힌 관 λ = 4L/n (n = 1, 3, 5).
-   소리의 속력 v = fλ. */
+/* hm-air-column · 3D 관 속의 정상파와 소리의 속력
+   2D 실험(window.__sim)의 장면을 그대로 입체로 보여 줘요: 〓 관 속 정상파(열린 끝 · 닫힌 끝) · 🔔 공명 실험(소리굽쇠 · 공기 기둥) · 📏 음속 측정.
+   열린 끝은 변위의 배, 닫힌 끝은 변위의 마디예요. 관의 종류 · 배음 · 공기 기둥 길이 · 소리굽쇠는 옆 조작판이 정하고 3D는 따라가요.
+   (🎷 관악기 · 병 불기는 2D 화면에서 해요) */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -50,7 +50,7 @@
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const { V3, M, glass } = tools(THREE);
-      const st = { type: 'open', n: 1, t: 0, L: 1, sp: true };
+      const st = { type: 'open', n: 1, t: 0, L: 1, sp: true, mode: 'tube', amp: 0.55 };
       const LEN = 8, R = 0.8, NS = 56, NR = 7;
       const tubeM = new THREE.Mesh(new THREE.CylinderGeometry(R + 0.12, R + 0.12, LEN, 40, 1, true), new THREE.MeshStandardMaterial({ color: 0x9ec5ff, roughness: 0.1, transparent: true, opacity: 0.16, side: THREE.DoubleSide, depthWrite: false }));
       tubeM.rotation.z = Math.PI / 2; root.add(tubeM);
@@ -87,18 +87,24 @@
         const nm = marks.find((q) => q.visible && q.userData.t === 'n'), am = marks.find((q) => q.visible && q.userData.t === 'a');
         lN.obj = nm || [0, -9, 0]; lA.obj = am || [0, -9, 0]; lN.off = lA.off = [0, -0.45, 0]; lN.show(!!nm && st.sp); lA.show(!!am && st.sp);
         const lamv = lam();
-        info('<b>' + (st.type === 'open' ? '양쪽이 열린 관' : '한쪽이 닫힌 관') + ' · ' + st.n + '번째 정상파</b><br>λ = ' + (st.type === 'open' ? '2L/' + st.n : '4L/' + st.n) + ' = L의 ' + (lamv / LEN).toFixed(2) + '배<br>v = f·λ : 같은 관에서 파장이 짧을수록 진동수가 커요.');
+        if (st.mode === 'tube') info('<b>' + (st.type === 'open' ? '양쪽이 열린 관' : '한쪽이 닫힌 관') + ' · ' + st.n + '번째 정상파</b><br>λ = ' + (st.type === 'open' ? '2L/' + st.n : '4L/' + st.n) + ' = L의 ' + (lamv / LEN).toFixed(2) + '배<br>v = f·λ : 같은 관에서 파장이 짧을수록 진동수가 커요.');
       }
-      const nSeg = controls.segment('관', [{ value: 'open', label: '〓 양쪽 열림' }, { value: 'closed', label: '⊐ 한쪽 닫힘' }], st.type, (v) => { st.type = v; if (v === 'closed' && st.n % 2 === 0) st.n = st.n + 1; setN(); setup(); });
-      const nb = []; const bar = ctx.renderer.domElement.parentNode.parentNode.querySelector('.v3-ctl');
-      controls.text('배음');
-      const bs = [1, 2, 3, 4, 5].map((n) => { const b = controls.button(n + '', () => { if (st.type === 'closed' && n % 2 === 0) return; st.n = n; setN(); setup(); }); return b; });
-      function setN() { bs.forEach((b, i) => { b.classList.toggle('on', i + 1 === st.n); b.style.opacity = st.type === 'closed' && (i + 1) % 2 === 0 ? '0.3' : ''; }); }
-      const sb = controls.button('마디·배 ✓', () => { st.sp = !st.sp; sb.classList.toggle('on', st.sp); sb.textContent = '마디·배 ' + (st.sp ? '✓' : '✕'); setup(); }); sb.classList.add('on');
-      setN(); setup();
+      let lastInfo = '';
+      setup();
       return {
         update(dt) {
-          st.t += dt * 2.2; const k = kk(), amp = 0.55;
+          const A = ctx.lesson(); if (!A || !A.S) return; const S = A.S;
+          const isTube = S.mode === 'tube', isRes = S.mode === 'res' || S.mode === 'meas', other = !isTube && !isRes;
+          parts.visible = tubeM.visible = spk.visible = fork.visible = !other; if (other) { marks.forEach((m) => (m.visible = false)); [lN, lA, lO1, lO2, lC].forEach((l) => l.show(false)); info('🎷 관악기(구멍 열기 · 배음 구성)와 병 불기는 2D 화면에서 해요. 위의 [▦ 2D]를 눌러 보세요.'); return; }
+          let ty, nn, amp = 0.55;
+          if (isTube) { ty = S.tb.type; nn = S.tb.n; } else {
+            const r = S.mode === 'res' ? S.rs : S.ms, Lcm = S.mode === 'res' ? S.rs.L : (S.ms.run ? S.ms.run.L || 0 : 0), lam = A.lamOf(r.f, r.t) * 100; ty = 'closed';
+            const ratio = (Lcm + A.E_CM) / (lam / 4); nn = Math.max(1, Math.round((ratio + 1) / 2) * 2 - 1); amp = 0.55 * (S.mode === 'res' ? A.loud(Lcm, r.f, r.t) : 1);
+            const key = 'r' + nn + '|' + Math.round(Lcm) + '|' + r.f + '|' + r.t; if (key !== lastInfo) { lastInfo = key; info(S.mode === 'res' ? '<b>🔔 공명 실험</b> · 소리굽쇠 ' + r.f + ' Hz · 기온 ' + r.t + ' °C · 공기 기둥 길이 L = <b>' + Math.round(Lcm) + ' cm</b><br>소리의 세기 ' + Math.round(100 * A.loud(Lcm, r.f, r.t)) + ' % → ' + (A.loud(Lcm, r.f, r.t) > 0.9 ? '<b>공명! 소리가 가장 커요</b> (닫힌 끝은 마디, 열린 끝 쪽은 배)' : 'L을 바꿔 소리가 가장 커지는 위치를 찾아요.') + '<br>공명할 때 공기 기둥의 진동과 소리굽쇠의 진동수가 같아져 정상파가 생겨요.' : '<b>📏 음속 측정</b> · 소리굽쇠 ' + r.f + ' Hz · 기온 ' + r.t + ' °C<br>이웃한 공명 위치의 차 ΔL = λ/2 이므로 λ = 2ΔL, 소리의 속력 v = fλ 로 구해요 (측정은 2D 화면에서 해요).'); }
+          }
+          st.amp = amp;
+          if (st.type !== ty || st.n !== nn) { st.type = ty; st.n = nn; setup(); }
+          const k = kk();
           for (let i = 0; i < NS; i++) {
             const x0 = base[i * NR][0], s = disp(x0, st.t) * amp, ds = -k * Math.sin(k * (x0 + LEN / 2)) * Math.cos(st.t); // 밀도 ~ -∂s/∂x
             const dens = -(-k * Math.sin(k * (x0 + LEN / 2))) * Math.cos(st.t) * 0 + (k * Math.sin(k * (x0 + LEN / 2)) * Math.cos(st.t)); // ∂s/∂x 의 부호 반전 = 밀한 정도

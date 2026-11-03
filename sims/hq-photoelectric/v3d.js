@@ -92,6 +92,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: 22 * KD, theta: 0.55, phi: 1.32, min: 9, max: 36, target: [1.3, 0.2, 0] },
     autoRotate: 0,
+    levels: [0, 2],
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const h = H3(ctx); const { V3, mat, glass, anchor, sphere, box, cyl, tube } = h;
@@ -137,19 +138,17 @@
         const head = '<b>광자 에너지 E = hf = ' + E.toFixed(2) + ' eV</b> · 일함수 W = ' + w + ' eV (' + METALS[st.metal].name + ')<br>';
         if (k <= 0) info(head + '광자 하나의 에너지가 W보다 작아서 <b>전자가 나오지 않아요</b>.<br>빛을 세게(광자를 많이) 해도 소용없어요. 파장을 짧게 해 보세요.');
         else info(head + '전자의 최대 운동 에너지 = E − W = <b>' + k.toFixed(2) + ' eV</b> → 정지 전압 V₀ = <b>' + k.toFixed(2) + ' V</b><br>' + (st.V >= k - 1e-6 ? '역전압 ' + st.V.toFixed(1) + ' V ≥ V₀: 전자가 양극에 닿지 못해 <b>전류 0</b>' : '역전압 ' + st.V.toFixed(1) + ' V < V₀: 빠른 전자는 양극에 도착해요. 빛의 세기는 전자 <b>수</b>만 바꿔요.'));
-        lV.set('역전압 ' + st.V.toFixed(1) + ' V');
+        lV.set('역전압 ' + st.V.toFixed(2) + ' V');
         const c = waveColor(st.lam); beam.material.color.copy(c); lc.material.color.copy(c); lc.material.emissive.copy(c); phM.material.color.copy(c); phM.material.emissive.copy(c);
         lPh.el.style.background = '#' + c.clone().multiplyScalar(0.55).getHexString();
         cath.material.color.setHex(METALS[st.metal].c);
       }
-      controls.range('파장 λ', 200, 700, 10, st.lam, (v) => { st.lam = v; txt(); }, (v) => v + ' nm' + (v < 380 ? ' (자외선)' : ''));
-      controls.range('빛의 세기', 1, 5, 1, st.I, (v) => { st.I = v; }, (v) => v);
-      controls.range('역전압 V', 0, 3, 0.1, st.V, (v) => { st.V = v; txt(); }, (v) => v.toFixed(1) + ' V');
-      controls.segment('금속', [{ value: 'Na', label: '나트륨' }, { value: 'Zn', label: '아연' }], st.metal, (v) => { st.metal = v; txt(); });
       txt();
+      let lsig = '';
       return {
         update(dt, t) {
           dt = Math.min(dt, 0.05);
+          { const S = lessonS(); if (S && S.tb) { const g = S.tb.lam + '|' + S.tb.V + '|' + S.tb.k; if (g !== lsig) { lsig = g; st.lam = S.tb.lam; st.V = S.tb.V; st.I = Math.max(1, Math.min(5, S.tb.k)); txt(); } } }
           spawnT -= dt; const rate = 1.4 * st.I;
           while (spawnT <= 0) {
             spawnT += 1 / rate * (0.6 + Math.random() * 0.8);
@@ -188,7 +187,7 @@
           flashT -= dt; flash.material.opacity = Math.max(0, flashT / 0.12); flash.visible = flashT > 0;
           const pulse = 1 + 0.08 * Math.sin(t * 5); lamp.scale.setScalar(pulse * 0.98);
         },
-        sync() {},
+        sync() { lsig = ''; },
       };
     },
   });

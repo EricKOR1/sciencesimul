@@ -172,7 +172,7 @@
         const F = S.fl, tau = st.tauUser ? st.tauP * sim.TAU_MAX : F.tau;
         const light = LMAP[F.light] || 'g', tb = sim.thickAt(sim.H_CM, tau), yp = Math.max(0.03, Math.min(0.97, F.probe / sim.H_CM));
         const k = [light, Math.round(tb), yp.toFixed(3)].join(); if (k === st.fk) return; st.fk = k;
-        const lc = st.light !== light || Math.abs(st.tb - tb) > 0.5; st.light = light; st.tb = tb; st.yp = yp;
+        const lc = !wedge || st.light !== light || Math.abs(st.tb - tb) > 0.5; st.light = light; st.tb = tb; st.yp = yp;
         if (lc) { paint(); buildWedge(); }
         upd();
       }

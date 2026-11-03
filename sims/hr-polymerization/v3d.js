@@ -6,7 +6,7 @@
   'use strict';
   if (!window.SciSim3D) return;
   const PHONE = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches);
-  const K = 1.25, NU = 10, GS = 0.52;                     // 1 Å → 1.25 단위, 단위체 10개 (전체를 0.52배로 줄여 그려요)
+  const K = 1.25, NU = 10, GS = 0.4;                     // 1 Å → 1.25 단위, 단위체 10개 (전체를 0.4배로 줄여 그려요)
   const sstep = (x) => { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); };
   const TYPES = {
     pe: { n: '폴리에틸렌 (PE)', mono: '에틸렌 CH₂=CH₂', X: 'H', use: '비닐 봉지 · 포장 필름', unit: '−CH₂−CH₂−' },
@@ -17,7 +17,7 @@
   window.SciSim3D.attach({
     title: '첨가 중합 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: PHONE ? 20 : 14, theta: 0.3, phi: 1.25, min: 7, max: 32, target: [0, 0.8, 0] },
+    camera: { dist: PHONE ? 20 : 15, theta: 0.3, phi: 1.25, min: 7, max: 32, target: [0, 0.8, 0] },
     autoRotate: 0.07,
     levels: [0],   // 1단계 에틸렌 사슬 모형. 나머지 단계는 2D 화면이에요
     build(ctx) {

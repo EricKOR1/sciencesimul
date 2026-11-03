@@ -209,6 +209,7 @@
       function oClear() { oSegs.forEach((m) => { gO.remove(m); m.geometry.dispose(); }); oSegs.length = 0; for (let i = gO.children.length - 1; i >= 0; i--) { const c = gO.children[i]; if (c.userData && c.userData.tmp) { gO.remove(c); c.traverse((q) => { if (q.geometry) q.geometry.dispose(); }); } } }
       function seg2(a, b, col, rad, op) { const m = mkSeg(col, rad || 0.03, { basic: true, mo: op != null ? { transparent: true, opacity: op } : undefined }); setSeg(m, a, b); gO.add(m); oSegs.push(m); return m; }
       function poly(pts, col, rad, op) { for (let i = 0; i < pts.length - 1; i++) seg2(pts[i], pts[i + 1], col, rad, op); }
+      const A = (o, q) => { if (q.position) o.position.copy(q.position); if (q.rotation) o.rotation.copy(q.rotation); return o; };
       function tmp(o) { o.userData.tmp = true; gO.add(o); return o; }
       function setLab(i, text, x, y, color) { const o = oLab[i]; o.a.position.set(x, y, 0); o.l.set(text); if (color) o.l.el.style.background = color; o.l.show(!!(labs.other && labs.other.on) && !!text); }
       const v = (x, y) => new V3(x, y, 0);
@@ -232,7 +233,7 @@
           const F = cc ? v(-f, 0) : v(f, 0);
           ys.forEach((y) => { const M = v(cc ? -y * y / (4 * f) : y * y / (4 * f), y); seg2(v(-9, y), M, W, 0.03);
             if (cc) { const d = F.clone().sub(M).normalize(); seg2(M, M.clone().addScaledVector(d, 7), W, 0.03); } else { const d = M.clone().sub(F).normalize(); seg2(M, M.clone().addScaledVector(d, 7), W, 0.03); seg2(M, F, 0xfbbf24, 0.015, 0.55); } });
-          tmp(Object.assign(new THREE.Mesh(new THREE.SphereGeometry(0.11, 12, 8), mat(0xffe14d, { emissive: 0xffc800, emissiveIntensity: 1 })), { position: F }));
+          tmp(A(new THREE.Mesh(new THREE.SphereGeometry(0.11, 12, 8), mat(0xffe14d, { emissive: 0xffc800, emissiveIntensity: 1 })), { position: F }));
           setLab(0, cc ? '초점 F (빛이 모여요)' : '허초점 F′ (퍼진 빛의 연장선)', F.x, 0.7, '#a16207'); setLab(1, cc ? '오목 거울' : '볼록 거울', 0, 2.6, '#0369a1'); setLab(2, '평행광', -7, 2.1);
           info(cc ? '<b>오목 거울</b>은 평행광을 한 점 F에 모아요 (초점거리 10 cm).<br>반사의 법칙으로 빛이 반사돼요. 망원경·손전등에 써요.' : '<b>볼록 거울</b>은 평행광을 퍼뜨려요.<br>퍼진 빛의 연장선은 거울 뒤쪽의 한 점에서 나온 것처럼 보여요. 자동차 측면 거울에 써요.');
         } else if (kind === 'pmirror') {
@@ -268,7 +269,7 @@
           const a = S.pt.a * 0.5, f = FU, bcm = S.pt.a * 10 / (S.pt.a - 10), b = bcm * 0.5, hO = 1.5, ans = !!S.pt.ans, mk = S.show.numB;
           const lm = new THREE.Mesh(new THREE.LatheGeometry((function () { const pts = [], N = 16; for (let i = 0; i <= N; i++) pts.push(new THREE.Vector2(2.4 * i / N, -0.55 + 0.55 * (i / N) * (i / N) * 0.0 - 0.45 * (i / N) * (i / N))); for (let i = N; i >= 0; i--) pts.push(new THREE.Vector2(2.4 * i / N, 0.55 + 0.45 * (i / N) * (i / N))); return pts; }()), 48), new THREE.MeshStandardMaterial({ color: 0xbfe6ff, roughness: 0.06, transparent: true, opacity: 0.4, depthWrite: false, side: THREE.DoubleSide })); lm.rotation.z = -Math.PI / 2; lm.scale.set(0.5, 1, 1); tmp(lm);
           seg2(v(-a - 2.5, 0), v(b + 3.5, 0), 0x94a3b8, 0.012, 0.6);
-          const O = v(-a, hO); tmp(Object.assign(new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.3, 10), mat(0xff6b6b, { emissive: 0xff3b3b, emissiveIntensity: 0.5 })), { position: O.clone() }));
+          const O = v(-a, hO); tmp(A(new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.3, 10), mat(0xff6b6b, { emissive: 0xff3b3b, emissiveIntensity: 0.5 })), { position: O.clone() }));
           seg2(v(-a, 0), O, 0xff6b6b, 0.05);
           const I = v(b, -hO * b / a), L1 = v(0, hO), L2 = v(0, 0);
           // 세 광선: ① 축에 나란히 → 초점 ② 렌즈 중심 → 직진 ③ 앞 초점 통과 → 나란히
@@ -276,8 +277,8 @@
           seg2(O, L1, 0xffd34d, 0.03); seg2(L1, ext(L1, I, 0.8), 0xffd34d, 0.03);
           seg2(O, ext(O, L2, 0.0), 0x4ade80, 0.03); seg2(L2, ext(O, I, 0.8).clone().setX(I.x + 0.8), 0x4ade80, 0.03);
           const Ff = v(-f, 0), d3 = Ff.clone().sub(O).normalize(), L3 = O.clone().addScaledVector(d3, (0 - O.x) / d3.x); seg2(O, L3, 0x60a5fa, 0.03); seg2(L3, v(b + 0.8, L3.y), 0x60a5fa, 0.03);
-          [v(-f, 0), v(f, 0), v(-2 * f, 0)].forEach((P, i) => tmp(Object.assign(new THREE.Mesh(new THREE.SphereGeometry(0.09, 10, 8), mat(0xffe14d, { emissive: 0xffc800, emissiveIntensity: 1 })), { position: P })));
-          if (ans) tmp(Object.assign(new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.3, 10), mat(0x7dd3fc, { emissive: 0x38bdf8, emissiveIntensity: 0.6 })), { position: I.clone(), rotation: new THREE.Euler(0, 0, Math.PI) })), seg2(v(I.x, 0), I, 0x7dd3fc, 0.05);
+          [v(-f, 0), v(f, 0), v(-2 * f, 0)].forEach((P, i) => tmp(A(new THREE.Mesh(new THREE.SphereGeometry(0.09, 10, 8), mat(0xffe14d, { emissive: 0xffc800, emissiveIntensity: 1 })), { position: P })));
+          if (ans) tmp(A(new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.3, 10), mat(0x7dd3fc, { emissive: 0x38bdf8, emissiveIntensity: 0.6 })), { position: I.clone(), rotation: new THREE.Euler(0, 0, Math.PI) })), seg2(v(I.x, 0), I, 0x7dd3fc, 0.05);
           setLab(0, '물체 (a = ' + S.pt.a + ' cm)', -a, hO + 0.7, '#c2410c'); setLab(1, '앞 초점 F', -f, -0.7, '#a16207'); setLab(2, '뒤 초점 F', f, -0.7, '#a16207'); setLab(3, '볼록 렌즈 (f = 10 cm)', 0, 2.8, '#0369a1');
           setLab(4, ans ? '상 (b = ' + (Math.round(bcm * 10) / 10) + ' cm, 거꾸로 선 실상)' : (mk ? '상의 위치 b = ?' : '세 광선이 만나는 곳이 상이에요'), I.x, I.y - 0.7, '#0f766e');
           ctl.dist = Math.max(16, 8 + a + b * 0.5) * KD; ctl.tx = (b - a) / 2;
@@ -289,7 +290,7 @@
             const eyeX = fo + fe + (tube - 1010) * 0.12;
             if (sv === 'refr') {
               mkLens(0, 2.2, 0.28); mkLens(eyeX, 0.5, 0.18);
-              tmp(Object.assign(new THREE.Mesh(new THREE.CylinderGeometry(2.3, 2.3, eyeX + 1.2, 28, 1, true), mat(0x64748b, { metalness: 0.5, side: THREE.DoubleSide, transparent: true, opacity: 0.18, depthWrite: false })), { rotation: new THREE.Euler(0, 0, Math.PI / 2), position: v(eyeX / 2 - 0.1, 0) }));
+              tmp(A(new THREE.Mesh(new THREE.CylinderGeometry(2.3, 2.3, eyeX + 1.2, 28, 1, true), mat(0x64748b, { metalness: 0.5, side: THREE.DoubleSide, transparent: true, opacity: 0.18, depthWrite: false })), { rotation: new THREE.Euler(0, 0, Math.PI / 2), position: v(eyeX / 2 - 0.1, 0) }));
               [0.05, -0.05].forEach((sl, si) => {
                 const col = si ? 0x7dd3fc : 0xfff3b0;
                 [-1.8, -0.9, 0, 0.9, 1.8].forEach((hh) => {
@@ -303,9 +304,9 @@
               ctl.dist = 22 * KD; ctl.tx = 5;
               info('<b>굴절 망원경</b>: 긴 초점거리의 대물렌즈가 먼 천체의 상을 만들고, 짧은 초점거리의 접안렌즈가 이를 확대해요. 두 렌즈 사이의 거리(경통 길이 ' + tube + ' mm)가 f₀ + fₑ(= 1010 mm)에 맞을 때 가장 선명해요.' + (mk ? '' : ''));
             } else {
-              tmp(Object.assign(new THREE.Mesh(new THREE.CylinderGeometry(2.4, 2.4, 0.2, 40, 1), mat(0xe2e8f0, { metalness: 0.9, roughness: 0.15 })), { rotation: new THREE.Euler(0, 0, Math.PI / 2), position: v(10, 0) }));
+              tmp(A(new THREE.Mesh(new THREE.CylinderGeometry(2.4, 2.4, 0.2, 40, 1), mat(0xe2e8f0, { metalness: 0.9, roughness: 0.15 })), { rotation: new THREE.Euler(0, 0, Math.PI / 2), position: v(10, 0) }));
               [-1.6, -0.8, 0.8, 1.6].forEach((hh) => { const M = v(10 - hh * hh / 40, hh); seg2(v(-4, hh), M, W, 0.025); const dd = v(0, 0).sub(M).normalize(); seg2(M, M.clone().addScaledVector(dd, 6.0), W, 0.025); });
-              tmp(Object.assign(new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.0, 0.7), mat(0xe2e8f0, { metalness: 0.9 })), { position: v(3.6, 0), rotation: new THREE.Euler(0, 0, Math.PI / 4) }));
+              tmp(A(new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.0, 0.7), mat(0xe2e8f0, { metalness: 0.9 })), { position: v(3.6, 0), rotation: new THREE.Euler(0, 0, Math.PI / 4) }));
               setLab(0, '오목 반사경 (주경)', 10.2, 2.9, '#0369a1'); setLab(1, '평면 보조 거울', 3.6, 1.0, '#475569'); setLab(2, '접안렌즈', 3.6, 3.3, '#0f766e');
               ctl.tx = 3; ctl.dist = 20 * KD;
               info('<b>반사 망원경</b>: 오목 거울로 빛을 모으고 작은 거울로 옆쪽 접안렌즈로 보내요. 렌즈와 달리 거울은 <b>뒷면을 받쳐서 크게 만들 수 있고</b> 색에 따른 번짐이 없어서 큰 망원경은 대부분 반사식이에요.');
@@ -313,9 +314,9 @@
           } else if (sv === 'mic') {
             const xo = 0, xe = 11;
             mkLens(xo, 0.9, 0.25); mkLens(xe, 1.4, 0.22);
-            tmp(Object.assign(new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.5, xe + 1, 24, 1, true), mat(0x64748b, { metalness: 0.5, side: THREE.DoubleSide, transparent: true, opacity: 0.18, depthWrite: false })), { rotation: new THREE.Euler(0, 0, Math.PI / 2), position: v(xe / 2, 0) }));
+            tmp(A(new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.5, xe + 1, 24, 1, true), mat(0x64748b, { metalness: 0.5, side: THREE.DoubleSide, transparent: true, opacity: 0.18, depthWrite: false })), { rotation: new THREE.Euler(0, 0, Math.PI / 2), position: v(xe / 2, 0) }));
             const O = v(-1.6, 0.35), Ii = v(5, -1.9);
-            tmp(Object.assign(new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.35, 10), mat(0xff6b6b, { emissive: 0xff3b3b, emissiveIntensity: 0.5 })), { position: O.clone() }));
+            tmp(A(new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.35, 10), mat(0xff6b6b, { emissive: 0xff3b3b, emissiveIntensity: 0.5 })), { position: O.clone() }));
             seg2(v(-1.6, 0), O, 0xff6b6b, 0.04); seg2(v(5, 0), Ii, 0x7dd3fc, 0.05);
             seg2(O, v(0, O.y), 0xffd34d, 0.025); seg2(v(0, O.y), Ii, 0xffd34d, 0.025); seg2(O, Ii, 0x4ade80, 0.025);
             seg2(Ii, v(xe, -1.4), 0xffd34d, 0.02, 0.7); seg2(Ii, v(xe, 0.4), 0x4ade80, 0.02, 0.7); seg2(v(xe, -1.4), v(xe + 4, -2.6), 0xffd34d, 0.025); seg2(v(xe, 0.4), v(xe + 4, 0.4 + 0.0), 0x4ade80, 0.025);

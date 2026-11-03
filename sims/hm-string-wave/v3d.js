@@ -1,6 +1,6 @@
 /* hm-string-wave · 3D 현의 정상파
-   양 끝이 고정된 줄에는 L = nλ/2 일 때 정상파가 생겨요. 마디는 늘 가만히, 배는 가장 크게 진동해요.
-   '두 진행파' 보기에서는 오른쪽·왼쪽으로 가는 두 파동의 합이 정상파가 되는 모습을 보여 줘요. */
+   2D 실험(window.__sim)의 줄을 그대로 입체로 보여 줘요: 〰 정상파(진동수를 올리며 공명 찾기 · 입사파 + 반사파) · 📏 파장 조건(L = nλ/2) · 🎵 진동수(길이 · 장력 · 굵기) · 🎸 현악기(프렛 · 자연 배음).
+   구동되는 줄은 2D와 같은 식으로 계산해요 (세로 눈금은 확대했어요). 값은 옆 조작판이 정하고 3D는 따라가요. */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -42,67 +42,71 @@
   }
   window.SciSim3D.attach({
     title: '현의 정상파 3D',
-    hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: 12 * KD, theta: 0.45, phi: 1.2, min: 5, max: 28 },
+    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 값은 옆 조작판에서 바꿔요',
+    camera: { dist: 12 * KD, theta: 0.35, phi: 1.25, min: 5, max: 28, target: [0, 0, 0] },
     autoRotate: 0,
-    levels: [0, 1],
+    levels: [0, 1, 2, 3],
     build(ctx) {
-      const { THREE, root, label, info, controls } = ctx;
+      const { THREE, root, label, info, controls, orbit } = ctx;
       const { V3, M, tube } = tools(THREE);
-      const st = { n: 3, A: 0.9, view: 'stand', node: true, t: 0 };
-      const L = 8, NP = 96;
-      const m4 = new THREE.Matrix4();
-      const mkStr = (col) => { const im = new THREE.InstancedMesh(new THREE.SphereGeometry(0.075, 12, 8), M(col, { roughness: 0.35, emissive: col, emissiveIntensity: 0.15 }), NP); root.add(im); return im; };
-      const sMid = mkStr(0xffd34d), sR = mkStr(0xff8a65), sL = mkStr(0x6ab0ff);
-      const env = new THREE.Group(); root.add(env);
+      const sim = () => ctx.lesson();
+      const LU = 8, NP = 100, YU = 0.12, m4 = new THREE.Matrix4();
+      const mkStr = (col, r) => { const im = new THREE.InstancedMesh(new THREE.SphereGeometry(r || 0.075, 12, 8), M(col, { roughness: 0.35, emissive: col, emissiveIntensity: 0.3 }), NP + 1); im.frustumCulled = false; root.add(im); return im; };
+      const sTot = mkStr(0xffd34d, 0.08), sInc = mkStr(0xff8a65, 0.055), sRef = mkStr(0x6ab0ff, 0.055);
       const post = (x) => { const p = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.18, 1.6, 20), M(0x64748b, { metalness: 0.5 })); p.position.set(x, 0, 0); root.add(p); return p; };
-      post(-L / 2 - 0.1); post(L / 2 + 0.1);
+      const pL = post(-LU / 2 - 0.1), pR = post(LU / 2 + 0.1);
+      const gen = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.9, 0.9), M(0x4b5563, { metalness: 0.5 })); root.add(gen);
       const nodeM = [], antiM = [];
-      for (let i = 0; i < 6; i++) {
-        const nd = new THREE.Mesh(new THREE.SphereGeometry(0.17, 16, 12), M(0xef4444, { emissive: 0x7f1d1d, roughness: 0.4 })); root.add(nd); nodeM.push(nd);
-        const an = new THREE.Mesh(new THREE.SphereGeometry(0.14, 16, 12), new THREE.MeshBasicMaterial({ color: 0x4ade80, transparent: true, opacity: 0.5, depthWrite: false })); root.add(an); antiM.push(an);
+      for (let i = 0; i < 7; i++) { const nd = new THREE.Mesh(new THREE.SphereGeometry(0.17, 16, 12), M(0xef4444, { emissive: 0x7f1d1d })); root.add(nd); nodeM.push(nd); const an = new THREE.Mesh(new THREE.SphereGeometry(0.14, 16, 12), new THREE.MeshBasicMaterial({ color: 0x4ade80, transparent: true, opacity: 0.7 })); root.add(an); antiM.push(an); }
+      const fret = new THREE.Mesh(new THREE.BoxGeometry(0.08, 1.2, 0.5), M(0xffe58a, { emissive: 0x7a6200 })); root.add(fret);
+      const lN = label('마디', nodeM[1], { color: '#dc2626', size: 12 }), lA = label('배', antiM[0], { color: '#15803d', size: 12 }), lGen = label('진동 발생기', gen, { color: '#475569', size: 12 }), lFr = label('프렛(줄을 누른 곳)', fret, { color: '#a16207', size: 12 }), lTop = label('', [0, 2.6, 0], { color: '#26324a', size: 13 });
+      const lI = label('→ 입사파', [-2.6, 2.4, 0], { color: '#e8590c', size: 12 }), lR = label('← 반사파', [2.6, -2.4, 0], { color: '#2563eb', size: 12 });
+      const demo = { p: 0, on: false }; let pl = null, last = '';
+      function stand(n, Lw, x0, A, fq) { // 정상파 모양 y = A sin(nπx/L) cos(wt)
+        const w = fq * 6.283; return (xx, t) => A * Math.sin(n * Math.PI * (xx - x0) / Lw) * Math.cos(w * t);
       }
-      const lN = label('마디', nodeM[1], { color: '#dc2626', size: 12, offset: [0, -0.4, 0] }), lA = label('배', antiM[0], { color: '#15803d', size: 12, offset: [0, 0.55, 0] });
-      const lla = label('', [0, 0, 0], { color: '#7c3aed', size: 12 });
-      const lR = label('→ 오른쪽으로 가는 파동', [0, 2.8, 0], { color: '#e8590c', size: 12 }), lLf = label('← 왼쪽으로 가는 파동', [0, -2.8, 0], { color: '#2f6df6', size: 12 }), lS = label('합 = 정상파', [0, 0.0, 0], { color: '#a16207', size: 12, offset: [0, 1.5, 0] });
-      let envMesh = [];
-      function rebuild() {
-        envMesh.forEach((e) => { env.remove(e); e.geometry.dispose(); }); envMesh = [];
-        const k = st.n * Math.PI / L, up = [], dn = [];
-        for (let i = 0; i <= 80; i++) { const x = -L / 2 + L * i / 80; up.push(new V3(x, st.A * Math.sin(k * (x + L / 2)), 0)); dn.push(new V3(x, -st.A * Math.sin(k * (x + L / 2)), 0)); }
-        [up, dn].forEach((p) => { const t = tube(p, 0.018, 0xc4b5fd, { basic: true, op: 0.55 }); env.add(t); envMesh.push(t); });
-        for (let i = 0; i < 6; i++) {
-          nodeM[i].visible = st.view === 'stand' && st.node && i <= st.n; antiM[i].visible = st.view === 'stand' && st.node && i < st.n;
-          nodeM[i].position.set(-L / 2 + L * i / st.n, 0, 0);
+      function nodes(n, x0, Lw, show) { for (let i = 0; i < 7; i++) { nodeM[i].visible = show && i <= n; antiM[i].visible = show && i < n; if (i <= n) nodeM[i].position.set(x0 + Lw * i / n, 0, 0); if (i < n) antiM[i].position.set(x0 + Lw * (i + 0.5) / n, 0, 0); } lN.show(show && n >= 1); lA.show(show && n >= 1); lN.obj = nodeM[Math.min(1, n)]; lA.obj = antiM[0]; lN.off = [0, -0.45, 0]; lA.off = [0, 0.4, 0]; }
+      const NOTE = '';
+      const FS = { f: 0 };
+      function scene(A, S, tm) {
+        const mode = S.mode; let txt = '';
+        fret.visible = false; lFr.show(false); lI.show(false); lR.show(false); lGen.show(false); gen.visible = false; sInc.visible = sRef.visible = false;
+        pL.position.x = -LU / 2 - 0.1; pR.position.x = LU / 2 + 0.1; pR.visible = true;
+        const set = (im, fn) => { for (let i = 0; i <= NP; i++) { const xx = -LU / 2 + LU * i / NP, y = fn(xx, i / NP); m4.makeTranslation(xx, y, 0); im.setMatrixAt(i, m4); } im.instanceMatrix.needsUpdate = true; };
+        if (mode === 'drive') {
+          const d = S.dr; let f = d.fe || d.f; if (demo.on && !d.sweep) f = demo.p * 700; const F = A.strField_(Math.max(0.5, f)), wt = tm * 6.283 * A.WVIS;
+          // 줄의 끝(x=0)에 발생기, x = L0 쪽이 고정 끝 (2D와 같은 식: s = L0 − x)
+          set(sTot, (xx) => A.strAt(F, A.L0 - (xx + LU / 2) / LU * A.L0, wt).tot * YU * 1.0);
+          const parts = d.parts; sInc.visible = sRef.visible = parts; if (parts) { set(sInc, (xx) => A.strAt(F, A.L0 - (xx + LU / 2) / LU * A.L0, wt).inc * YU * 1.0 + 2.6); set(sRef, (xx) => A.strAt(F, A.L0 - (xx + LU / 2) / LU * A.L0, wt).ref * YU * 1.0 - 2.6); lI.show(true); lR.show(true); lI.obj = [-2.6, 3.0, 0]; lR.obj = [2.6, -3.0, 0]; }
+          gen.visible = true; gen.position.set(LU / 2 + 0.45, (A.strAt(F, 0, wt).tot) * YU, 0); pR.position.x = 100; pR.visible = false; lGen.show(true); lGen.off = [0, 0.8, 0];
+          const nn = Math.round(f / A.FNR(1)), res = Math.abs(f - A.FNR(nn)) < 6 && nn >= 1; nodes(res ? nn : 0, -LU / 2, LU, res);
+          txt = '<b>〰 정상파: 고정된 줄의 공명</b> · 구동 진동수 f = <b>' + Math.round(f) + ' Hz</b><br>' + (res ? '줄이 크게 떨려요 (공명): 배 ' + nn + '개 · 마디 ' + (nn + 1) + '개 (양 끝 포함).' : '이 진동수에서는 줄이 조금만 떨려요. 진동수를 천천히 올리며 크게 떨리는 진동수를 찾아요.') + '<br>정상파 = 입사파(주황) + 반사파(파랑)의 합(노랑). 마디에서는 두 파동이 늘 상쇄돼요.<br><span style="opacity:.8">진동수는 옆 조작판에서 올려요 (▶ 아래 재생도 가능).</span>';
+        } else if (mode === 'lam') {
+          const l = S.lam, Lw = LU * l.L / 500, x0 = -Lw / 2; pL.position.x = x0 - 0.1; pR.position.x = x0 + Lw + 0.1;
+          const fn = stand(l.n, Lw, x0, 1.2, 0.5), t = tm; set(sTot, (xx) => (xx < x0 || xx > x0 + Lw ? 0 : fn(xx, t)) );
+          nodes(l.n, x0, Lw, true); lTop.show(false);
+          txt = '<b>📏 파장 조건: L = nλ/2</b> · 줄의 길이 L = ' + (l.L / 1000).toFixed(3) + ' m · n = ' + l.n + ' (마디 ' + (l.n + 1) + '개)<br>마디와 마디 사이는 반 파장(λ/2)이므로 L = n × λ/2 이고, 파장은 λ = 2L/n 이에요.' + (l.show ? '<br>지금 파장 λ = ' + (2 * l.L / l.n).toFixed(0) + ' mm' : '') + '<br><span style="opacity:.8">n과 길이는 옆 조작판에서 바꿔요.</span>';
+        } else if (mode === 'freq') {
+          const q = S.fq, Lw = LU * q.L / 500, x0 = -Lw / 2; pL.position.x = x0 - 0.1; pR.position.x = x0 + Lw + 0.1;
+          const f1 = A.f1Of(q.L / 1000, q.T, q.mu), fn = stand(1, Lw, x0, 1.3, 0.35 + 0.5 * Math.log2(Math.max(1, f1 / 100)) * 0.6), t = tm; set(sTot, (xx) => (xx < x0 || xx > x0 + Lw ? 0 : fn(xx, t))); nodes(1, x0, Lw, true);
+          txt = '<b>🎵 진동수: f = nv/2L</b> · 길이 L = ' + (q.L / 1000).toFixed(3) + ' m · 장력 T = ' + q.T + ' N · 단위 길이당 질량 μ = ' + q.mu + ' g/m<br>줄이 짧을수록 · 장력이 클수록 · 가늘수록(μ 작을수록) 진동수(음의 높이)가 커져요. 하나씩만 바꿔 비교해요 (진동 속도는 느리게 보여요).' + (q.hide ? '' : '<br>기본 진동수 f₁ = ' + f1.toFixed(0) + ' Hz');
+        } else {
+          const s = S.ins, ratio = A.insF1open() / (A.insF() / (s.harm ? 2 : 1)) , Lw = LU, x0 = -LU / 2; const leff = Math.max(0.15, Math.min(1, 1 / (A.insF() / (s.harm ? 2 : 1) / A.insF1open())));
+          const n = s.harm ? 2 : 1, x1 = x0 + Lw * (1 - leff); fret.visible = leff < 0.999; fret.position.set(x1, 0, 0.1); lFr.show(fret.visible); lFr.off = [0, 0.9, 0];
+          const fn = stand(n, Lw * leff, x1, 1.2, 0.8), t = tm; set(sTot, (xx) => (xx < x1 ? 0 : fn(xx, t))); nodes(n, x1, Lw * leff, true); void ratio;
+          txt = '<b>🎸 기타 1번 줄 (E4)</b> · 장력과 프렛 위치 · ' + (s.harm ? '자연 배음 (줄 가운데를 살짝 건드려요)' : '프렛으로 줄을 짧게 눌러요') + '<br>진동하는 줄의 길이가 짧을수록 높은 음이 나요: 진동수 ' + A.insF().toFixed(0) + ' Hz' + (s.harm ? ' (기본음의 2배, 한 옥타브 위)' : '') + '<br><span style="opacity:.8">장력 · 프렛 · 배음은 옆 조작판에서 바꿔요.</span>';
         }
-        env.visible = st.view === 'stand';
-        lN.show(st.node && st.view === 'stand'); lA.show(st.node && st.view === 'stand'); lN.obj = nodeM[Math.min(1, st.n)];
-        lA.obj = antiM[0]; lA.off = [0, 0, 0]; lla.set('λ = 2L/' + st.n); lla.obj = [-L / 2 + L / st.n / 2, 0, 0]; lla.off = [0, -0.0, 0.0];
-        lla.show(false);
-        lR.show(st.view === 'two'); lLf.show(st.view === 'two'); lS.show(st.view === 'two');
-        info(st.view === 'stand'
-          ? '<b>' + st.n + '배 진동 · 마디 ' + (st.n + 1) + '개 · 배 ' + st.n + '개</b><br>L = nλ/2 이므로 λ = 2L/' + st.n + '<br>진동수 f = n·v/2L : n이 클수록 높은 소리예요.'
-          : '<b>두 진행파의 합</b><br>같은 모양의 두 파동이 서로 반대로 지나가며 겹쳐요. 마디에서는 늘 서로 상쇄돼요.');
+        if (txt !== last) { last = txt; info(txt); }
       }
-      controls.segment('보기', [{ value: 'stand', label: '〰 정상파' }, { value: 'two', label: '⇄ 두 진행파' }], st.view, (v) => { st.view = v; rebuild(); });
-      controls.segment('배음', [1, 2, 3, 4, 5].map((n) => ({ value: n, label: n + '배' })), st.n, (v) => { st.n = v; rebuild(); });
-      controls.range('진폭', 0.3, 1.2, 0.1, st.A, (v) => { st.A = v; rebuild(); }, (v) => v.toFixed(1));
-      const nb = controls.button('마디·배 ✓', () => { st.node = !st.node; nb.classList.toggle('on', st.node); nb.textContent = '마디·배 ' + (st.node ? '✓' : '✕'); rebuild(); }); nb.classList.add('on');
-      rebuild();
+      pl = controls.player({ duration: 12, loop: true, autoplay: false, label: '진동수 올리기', phases: [[0, '0 Hz에서 천천히 올려요'], [0.28, '첫 공명 근처 (200 Hz)'], [0.57, '둘째 공명 근처 (400 Hz)'], [0.86, '셋째 공명 근처 (600 Hz)']], onFrame(p) { demo.p = p; demo.on = p > 0 || !!(pl && pl.playing); } });
+      pl.row = ctx.renderer.domElement.parentNode.parentNode.querySelector('.v3-player');
+      let cur = '';
       return {
-        update(dt) {
-          st.t += dt; const k = st.n * Math.PI / L, w = 2.6 * st.n ** 0.5 * 1.0;
-          const two = st.view === 'two', oy = two ? 2.3 : 0;
-          for (let i = 0; i < NP; i++) {
-            const x = -L / 2 + L * i / (NP - 1), xx = x + L / 2;
-            const yR = 0.5 * st.A * Math.sin(k * xx - w * st.t) * 1, yL = 0.5 * st.A * Math.sin(k * xx + w * st.t);
-            const ys = st.A * Math.sin(k * xx) * Math.cos(w * st.t);
-            m4.makeTranslation(x, ys, 0); sMid.setMatrixAt(i, m4);
-            const S = two ? 1 : 0;
-            m4.makeScale(S, S, S).setPosition(x, 2.4 + yR * 1.8, 0); sR.setMatrixAt(i, m4);
-            m4.makeScale(S, S, S).setPosition(x, -2.4 + yL * 1.8, 0); sL.setMatrixAt(i, m4);
-          }
-          sMid.instanceMatrix.needsUpdate = sR.instanceMatrix.needsUpdate = sL.instanceMatrix.needsUpdate = true;
+        update(dt, tm) {
+          const A = sim(); if (!A || !A.S) return; const S = A.S;
+          if (S.mode !== cur) { cur = S.mode; pl.row.style.display = cur === 'drive' ? '' : 'none'; if (cur !== 'drive') { pl.pause(); pl.set(0); } last = ''; lTop.show(false); Object.assign(orbit, { tx: 0, ty: 0, tz: 0, phi: 1.25, theta: 0.35, dist: (cur === 'drive' ? 13.5 : 12) * KD }); }
+          if (!pl.playing && pl.p === 0) demo.on = false;
+          scene(A, S, tm);
         },
         sync() {},
       };

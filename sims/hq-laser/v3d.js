@@ -114,9 +114,6 @@
       const lM1 = label('전반사 거울', anchor(root, XL - 0.3, 1.9, 0), { color: '#475569', size: 12 }), lM2 = label('일부 투과 거울', anchor(root, XR + 0.3, 1.9, 0), { color: '#475569', size: 12 });
       const lRod = label('이득 매질 (루비 막대)', anchor(root, 0, -1.7, 0), { color: '#be123c', size: 12 }), lLamp = label('펌핑 (섬광 램프)', anchor(root, -2.4, 2.05, 0.3), { color: '#a16207', size: 12 });
       const lOut = label('레이저 빛', anchor(root, XR + 5.0, 0.75, 0), { color: '#b91c1c', size: 13 }), lN = label('', anchor(root, 0, 2.3, 0), { color: '#475569', size: 12 });
-      controls.range('펌핑 세기', 0, 1, 0.05, st.P, (v) => { st.P = v; txt(); }, (v) => Math.round(v * 100) + '%');
-      controls.range('출구 거울 반사율', 0.7, 0.99, 0.03, st.R, (v) => { st.R = v; txt(); }, (v) => Math.round(v * 100) + '%');
-      controls.button('↺ 처음부터', () => { st.N2 = 0; st.q = 0.003; });
       function thr() { const L = 0.3 + 4 * (1 - st.R), n2 = L / 1.8; return (n2 / (1 - n2)) / 1.2; }
       function txt() {
         const th = thr(), on = st.q > 0.05;
@@ -125,10 +122,11 @@
             : '<b>아직 레이저가 아니에요</b>: 들뜬 원자가 자발 방출로 사방에 약한 빛만 내요.<br>펌핑 세기가 문턱(약 ' + Math.round(th * 100) + '%)을 넘어야 유도 방출이 연쇄적으로 일어나요.'));
       }
       txt();
-      let outV = 0, tx = 0;
+      let outV = 0, tx = 0, lsig = '';
       return {
         update(dt, t) {
           dt = Math.min(dt, 0.05);
+          { const S = lessonS(); if (S) { let P = st.P, R = st.R; if (S.mode === 'cavity') { P = S.cv.on ? S.cv.p / 100 : 0; R = { '1': 0.99, '5': 0.95, '10': 0.9, none: 0.3 }[S.cv.tm] || 0.9; } else if (S.mode === 'invert') { P = S.iv.p / 100; R = 0.9; } const g = P + '|' + R; if (g !== lsig) { lsig = g; if (R !== st.R || P < st.P) { st.N2 = 0; st.q = 0.003; } st.P = P; st.R = R; mR.visible = !(S.mode === 'cavity' && S.cv.tm === 'none'); txt(); } } }
           const L = 0.3 + 4 * (1 - st.R), G = 1.8, A = 1.2, B = 1.0;
           for (let s = 0; s < 3; s++) { const d = dt; const n2 = st.N2, q = st.q; st.N2 = Math.max(0, Math.min(1, n2 + (A * st.P * (1 - n2) - B * n2 - G * n2 * q * 3.0) * d)); st.q = Math.max(0.0, Math.min(1.2, q + (G * n2 * q - L * q + 0.02 * n2) * d)); }
           const nv = Math.min(NP, Math.round(st.q * 160)), out = Math.max(0, (1 - st.R) * st.q * 5);
@@ -158,7 +156,7 @@
           lN.set('들뜬 원자 ' + atoms.filter((a) => a.on).length + ' / ' + NA + (st.N2 > 0.4 ? ' (N₂ > N₁ : 밀도 반전)' : ''));
           if (Math.round(t * 4) !== tx) { tx = Math.round(t * 4); txt(); }
         },
-        sync() {},
+        sync() { lsig = ''; },
       };
     },
   });

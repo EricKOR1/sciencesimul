@@ -740,6 +740,6 @@
 
   /* ---------- 디버그 (Playwright) ---------- */
   window.__sim = {
-    S, VW, VH, get game() { return game; }, setScene, setFlag, updateCtl, loud, resL, measOf, vFrom, vFirst, windGeo, botF, setRL, markSeen, INS,
+    E_CM, lamOf, S, VW, VH, get game() { return game; }, setScene, setFlag, updateCtl, loud, resL, measOf, vFrom, vFirst, windGeo, botF, setRL, markSeen, INS,
   };
 })();
