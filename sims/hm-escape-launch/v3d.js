@@ -69,7 +69,7 @@
       [1, 2, 5, 10, 20, 50, 100].forEach((k) => { const y = HH * Math.log(k) / Math.log(100); const t = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.03, 0.03), M(0xdbe4f5)); t.position.set(0.2, y, 0); G.well.add(t); reg('well', label(k === 1 ? '지표 (R)' : k + ' R', [0.9, y, 0], { color: '#475569', size: 11 })); });
       const wTrail = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial({ color: 0xffd34d })); void wTrail;
       let wtr = null, wtKey = ''; const wV = mkArrow(0x22c55e, 0.05), wGr = mkArrow(0xef4444, 0.05); G.well.add(wV, wGr);
-      const lwv = reg('well', label('속도 v', wV, { color: '#15803d', size: 12 })), lwg = reg('well', label('중력', wGr, { color: '#b91c1c', size: 12 })), lwr = reg('well', label('', rock, { color: '#26324a', size: 12 })), lwa = reg('well', label('최고점', [0.6, 0, 0], { color: '#7c3aed', size: 12 }));
+      const lwv = reg('well', label('속도 v', wV, { color: '#15803d', size: 12, offset: [-1.2, 0.55, 0] })), lwg = reg('well', label('중력', wGr, { color: '#b91c1c', size: 12, offset: [-1.1, -0.25, 0] })), lwr = reg('well', label('', rock, { color: '#26324a', size: 12 })), lwa = reg('well', label('최고점', [0.6, 0, 0], { color: '#7c3aed', size: 12 }));
       function wellScene(A, S) {
         const w = S.w, E = A.etot(w.v0), yOf = (r) => HH * Math.log(Math.max(r, A.RE_) / A.RE_) / Math.log(100);
         const y = yOf(w.r); rock.position.set(0, y, 0); flame.visible = w.st === 'run' && w.v > 0;

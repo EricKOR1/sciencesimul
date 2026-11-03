@@ -80,7 +80,7 @@
   window.SciSim3D.attach({
     title: '몰과 아보가드로 수 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 단계와 오른쪽 조작이 2D와 똑같이 이어져요',
-    camera: { dist: phone ? 13.5 : 10.5, theta: 0.3, phi: 0.95, min: 5, max: 30, target: [0, 0.4, 0] },
+    camera: { dist: phone ? 16.5 : 10.5, theta: 0.3, phi: 0.95, min: 5, max: 30, target: [0, 0.4, 0] },
     autoRotate: 0.1,
     levels: [0, 1],
     build(ctx) {
@@ -201,7 +201,7 @@
       const rowMol = rowOf();
       const PL = { egg: plEgg, drop: plDrop, mol: plMol };
       let lastKind = '';
-      const DIST = phone ? { egg: 14, drop: 15, mol: 15 } : { egg: 10.5, drop: 11, mol: 13 };
+      const DIST = phone ? { egg: 17, drop: 16, mol: 17 } : { egg: 10.5, drop: 11, mol: 13 };
 
       return {
         update(dt, t) {
