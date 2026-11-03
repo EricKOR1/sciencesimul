@@ -21,6 +21,9 @@
      onOpen() {}, onClose() {},
    });
    v3.open(); v3.close(); v3.sync();   // sync: 실험 상태가 바뀌었을 때 3D 모형을 다시 맞추기
+   ctx.controls.player({...})          // ▶ 재생/⏸ 멈춤 + 진행 막대 + 빠르기: 한 주기의 움직임을 반복 재생 (아래 player 설명)
+   ctx.level / ctx.onLevel(fn)         // 지금 학습 단계 / 단계가 바뀔 때 → 2D와 같은 장면으로 맞추기
+   ctx.lesson()                        // 2D 실험 상태(window.__sim) — 2D와 3D가 같은 값을 보여 주도록
    ※ 3D가 있는 차시는 기본으로 3D 화면으로 시작하고(기기 사양이 낮으면 2D), [▦ 2D | 🧊 3D] 버튼으로 바꿀 수 있어요.
      학생이 고른 방식은 다른 차시에도 적용돼요 (localStorage 'sciencesimul:view').
    ========================================================= */
@@ -103,6 +106,12 @@
 .v3-ctl button { min-height: 38px; padding: 4px 11px; border-radius: 999px; border: 1px solid rgba(255,255,255,.35); background: rgba(255,255,255,.08); color: #fff; font-weight: 800; font-size: 13.5px; cursor: pointer; }
 .v3-ctl button.on { background: #ffd34d; border-color: #ffd34d; color: #1b2333; }
 .v3-ctl input[type=range] { width: 140px; height: 38px; }
+.v3-player { display: flex; align-items: center; gap: 8px; flex: 1 1 100%; min-width: 0; padding: 2px 0; }
+.v3-ctl .v3-play { min-width: 92px; background: #ffd34d; border-color: #ffd34d; color: #1b2333; }
+.v3-ctl .v3-play.on { background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.4); color: #fff; }
+.v3-player input[type=range] { flex: 1; min-width: 80px; width: auto; }
+.v3-player .v3-ph { font-weight: 800; font-size: 13px; color: #ffd34d; min-width: 4.5em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 40%; }
+.v3-player .v3-sp { min-width: 48px; }
 .v3-hint { position: absolute; right: 10px; bottom: 8px; font-size: 12px; color: #9fb0d4; pointer-events: none; }
 .v3-msg { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 20px; text-align: center; font-weight: 800; }
 .v3-wrap.full { position: fixed; inset: 0; z-index: 200; }
@@ -282,6 +291,7 @@
     }
 
     /* 조작 도구 (창 아래 줄) */
+    const players = [];
     const controls = {
       segment(lab, items, value, onChange) {
         if (lab) ctl.appendChild(el('span', 'lab', lab));
@@ -303,6 +313,45 @@
       },
       button(text, onClick) { const b = el('button', '', text); b.type = 'button'; b.addEventListener('click', onClick); ctl.appendChild(b); return b; },
       text(html) { const s = el('span', 'lab', html); ctl.appendChild(s); return s; },
+      /* ▶ 재생: 정해진 움직임(한 주기)을 반복해서 보여 줘요. 진행 막대로 원하는 순간을 골라 볼 수도 있어요.
+         const pl = controls.player({ duration: 6, loop: true, autoplay: false, label: '▶ 재생',
+           phases: [[0, '전기'], [0.25, '중기'], ...],   // (선택) 구간 이름: [시작 비율, 이름]
+           onFrame(p, dt) { ... }                         // p: 0~1 (한 주기 안의 위치)
+         });  pl.play(); pl.pause(); pl.set(0.5); pl.playing; pl.p */
+      player(o) {
+        o = o || {};
+        const row = el('div', 'v3-player');
+        const pb = el('button', 'v3-play', '▶ ' + (o.label || '재생')); pb.type = 'button';
+        const sc = doc.createElement('input'); sc.type = 'range'; sc.min = 0; sc.max = 1000; sc.step = 1; sc.value = 0; sc.setAttribute('aria-label', '진행 위치');
+        const ph = el('span', 'v3-ph', '');
+        const sp = el('button', 'v3-sp', '1×'); sp.type = 'button'; sp.title = '빠르기';
+        row.append(pb, sc, ph, sp); ctl.appendChild(row);
+        const P = { p: 0, playing: false, speed: 1, dur: Math.max(0.5, o.duration || 6) };
+        const phases = (o.phases || []).slice().sort((a, b) => a[0] - b[0]);
+        function phaseName(p) { let n = ''; phases.forEach(([at, name]) => { if (p >= at - 1e-6) n = name; }); return n; }
+        function show() { sc.value = Math.round(P.p * 1000); ph.textContent = phaseName(P.p); pb.textContent = P.playing ? '⏸ 멈춤' : '▶ ' + (o.label || '재생'); pb.classList.toggle('on', P.playing); }
+        function emit(dt) { if (o.onFrame) try { o.onFrame(P.p, dt || 0); } catch (e) { console.error(e); } }
+        const api = {
+          get p() { return P.p; }, get playing() { return P.playing; },
+          play() { if (P.p >= 1 && !o.loop) P.p = 0; P.playing = true; touched = touched || !!o.stopRotate; show(); },
+          pause() { P.playing = false; show(); },
+          set(p) { P.p = Math.max(0, Math.min(1, p)); emit(0); show(); },
+          tick(dt) {
+            if (!P.playing) return;
+            P.p += dt * P.speed / P.dur;
+            if (P.p >= 1) { if (o.loop !== false) P.p %= 1; else { P.p = 1; P.playing = false; } }
+            emit(dt); show();
+          },
+        };
+        pb.addEventListener('click', () => (P.playing ? api.pause() : api.play()));
+        sc.addEventListener('input', () => { P.p = +sc.value / 1000; emit(0); show(); });
+        const SPEEDS = [1, 2, 0.5];
+        sp.addEventListener('click', () => { P.speed = SPEEDS[(SPEEDS.indexOf(P.speed) + 1) % SPEEDS.length]; sp.textContent = (P.speed === 0.5 ? '½' : P.speed) + '×'; });
+        players.push(api);
+        show(); emit(0);
+        if (o.autoplay) api.play();
+        return api;
+      },
     };
 
     /* 드래그 회전 · 확대
@@ -390,6 +439,7 @@
         const k = Math.pow(0.04, dt); vel.t *= k; vel.p *= k; if (Math.abs(vel.t) + Math.abs(vel.p) < 0.01) vel.t = vel.p = 0;
       }
       perfStep(Math.min(rawDt, 0.5));
+      players.forEach((pl) => pl.tick(dt));
       if (user && user.update) { try { user.update(dt, t / 1000); } catch (e) { console.error(e); } }
       if (frameN++ % 20 === 0) { if (shadowOn) markShadows(); fitShadow(); }
       placeCamera();
@@ -411,7 +461,14 @@
       const sun = new THREE.DirectionalLight(0xffffff, 0.9); sun.position.set(5, 8, 6);
       [hemi, sun].forEach((l) => { l.userData.v3engine = true; scene.add(l); });
       root = new THREE.Group(); scene.add(root);
-      user = opts.build ? opts.build({ THREE, scene, camera, root, renderer, label, info: (h) => { info.innerHTML = h || ''; }, controls, orbit }) || {} : {};
+      const lvHooks = [];
+      global.addEventListener('scisim-level', (e) => { const li = e.detail && e.detail.level; lvHooks.forEach((f) => { try { f(li); } catch (err) { console.error(err); } }); });
+      user = opts.build ? opts.build({
+        THREE, scene, camera, root, renderer, label, info: (h) => { info.innerHTML = h || ''; }, controls, orbit,
+        get level() { return typeof global.SciSimLevel === 'number' ? global.SciSimLevel : 0; },   // 지금 학습 단계(0부터)
+        onLevel(f) { lvHooks.push(f); },                                                      // 단계가 바뀔 때 (2D와 같은 장면으로 맞추기)
+        lesson: () => global.__sim || null,                                                    // 2D 실험 상태 (sim.js의 window.__sim)
+      }) || {} : {};
       // 차시가 직접 조명(태양 등)을 두면 낮·밤 대비가 중요하므로 환경 반사를 쓰지 않아요
       // (차시가 기본 조명을 바꾸거나 새 조명을 더했으면 그 조명을 그대로 존중해요)
       let ownLight = hemi.intensity !== 0.85 || sun.intensity !== 0.9 || sun.position.x !== 5 || sun.position.y !== 8 || sun.position.z !== 6;
