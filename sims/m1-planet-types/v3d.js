@@ -84,14 +84,14 @@
       root.add(starField(300, 70));
       const st = { mode: 'size', real: false, cut: false };
       const PL = [
-        { n: '수성', R: 0.38, den: 5.4, moon: '0개', col: ['#9a9a9a', '#b9b3a8', '#8a8579'], g: 0 },
-        { n: '금성', R: 0.95, den: 5.2, moon: '0개', col: ['#e8cf9a', '#d9b877', '#f0dfb8'], g: 0 },
-        { n: '지구', R: 1, den: 5.5, moon: '1개', col: ['#2f7fd8', '#4caf6a', '#2f7fd8', '#f2f6fa'], g: 0 },
-        { n: '화성', R: 0.53, den: 3.9, moon: '2개', col: ['#c9623b', '#b5532f', '#d98a5c'], g: 0 },
-        { n: '목성', R: 11.2, den: 1.3, moon: '많음', col: ['#d9b48a', '#c58a5c', '#efe2cc', '#b97a4a'], g: 1, ring: 0.25 },
-        { n: '토성', R: 9.45, den: 0.7, moon: '많음', col: ['#e6d3a0', '#d3bb82', '#f2e6bf'], g: 1, ring: 1 },
-        { n: '천왕성', R: 4.0, den: 1.3, moon: '많음', col: ['#9fe1e6', '#86d3dc'], g: 1, ring: 0.3 },
-        { n: '해왕성', R: 3.9, den: 1.6, moon: '많음', col: ['#3d63dd', '#4c78f0', '#3558c8'], g: 1, ring: 0.25 },
+        { n: '수성', R: 0.38, den: 5.43, moon: '0개', col: ['#9a9a9a', '#b9b3a8', '#8a8579'], g: 0 },
+        { n: '금성', R: 0.95, den: 5.24, moon: '0개', col: ['#e8cf9a', '#d9b877', '#f0dfb8'], g: 0 },
+        { n: '지구', R: 1, den: 5.51, moon: '1개', col: ['#2f7fd8', '#4caf6a', '#2f7fd8', '#f2f6fa'], g: 0 },
+        { n: '화성', R: 0.53, den: 3.93, moon: '2개', col: ['#c9623b', '#b5532f', '#d98a5c'], g: 0 },
+        { n: '목성', R: 11.2, den: 1.33, moon: '95개 이상', col: ['#d9b48a', '#c58a5c', '#efe2cc', '#b97a4a'], g: 1, ring: 0.25 },
+        { n: '토성', R: 9.45, den: 0.69, moon: '270개 이상', col: ['#e6d3a0', '#d3bb82', '#f2e6bf'], g: 1, ring: 1 },
+        { n: '천왕성', R: 4.01, den: 1.27, moon: '28개 이상', col: ['#9fe1e6', '#86d3dc'], g: 1, ring: 0.3 },
+        { n: '해왕성', R: 3.88, den: 1.64, moon: '16개', col: ['#3d63dd', '#4c78f0', '#3558c8'], g: 1, ring: 0.25 },
       ];
       /* 단면(¼ 잘라낸 모양): 겹겹의 층 */
       function cutaway(R, layers) {
