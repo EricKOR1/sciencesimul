@@ -11,6 +11,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHN ? 17 : 12.5, theta: 0.0, phi: 1.3, min: 5, max: 26, target: [-1.2, 0, 0] },
     autoRotate: 0,
+    levels: [1],              // 단계 2(눈의 조절: 홍채와 수정체)에서 3D로 시작해요. 맹점 실험·감각 기관 이름표는 2D 화면에서 해요
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
       const V3 = THREE.Vector3;
@@ -61,7 +62,7 @@
         setRays(pr - 0.06);
         info('<b>눈</b> · 어두우면 동공이 커지고, 밝으면 작아져요.<br>가까운 물체를 볼 때 수정체가 <b>두꺼워져요</b>(섬모체 수축).<br>상은 망막에 <b>거꾸로</b> 맺혀 시각 신경으로 가요.');
       }
-      [['각막', [-1.75, 0.35, -0.2]], ['홍채·동공', [-0.95, 1.0, -0.2]], ['수정체', [-0.55, 0.0, 0.0]], ['섬모체', [-0.6, -1.12, -0.12]], ['유리체', [0.5, 0.35, 0.0]], ['망막', [R * 0.7, -1.18, 0.0]], ['공막', [0.4, 1.7, -0.1]], ['시각 신경', [R + 1.0, -0.35, 0.0]]].forEach(([t, p]) => L('eye', t, p));
+      [['각막', [-1.75, 0.35, -0.2]], ['홍채', [-0.95, 1.0, -0.2]], ['수정체', [-0.55, 0.0, 0.0]], ['섬모체', [-0.6, -1.12, -0.12]], ['망막', [R * 0.7, -1.18, 0.0]], ['시각 신경', [R + 1.0, -0.35, 0.0]]].forEach(([t, p]) => L('eye', t, p));
       /* ================= 귀 ================= */
       const tube = (pts, r, c, o) => { const m = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts.map((p) => new V3(p[0], p[1], p[2]))), 64, r, 12, false), sm(c, o)); return m; };
       const pinna = new THREE.Mesh(new THREE.TorusGeometry(0.95, 0.2, 14, 40, 4.6), sm(0xf3b79a)); pinna.rotation.y = Math.PI / 2; pinna.rotation.z = 0.9; pinna.position.set(-5.3, 0.1, 0); ear.add(pinna);
@@ -78,28 +79,62 @@
       const bead = new THREE.Mesh(new THREE.SphereGeometry(0.12, 14, 10), new THREE.MeshBasicMaterial({ color: 0xffffff })); cochlea.add(bead);
       const canals = new THREE.Group(); [[0, 0, 0], [Math.PI / 2, 0, 0], [0, Math.PI / 2, 0]].forEach((r, i) => { const t = new THREE.Mesh(new THREE.TorusGeometry(0.62, 0.065, 12, 36), sm(0x34d399)); t.rotation.set(r[0], r[1], r[2]); t.rotation.x += i === 0 ? 0 : 0; canals.add(t); }); canals.position.set(0.2, 1.3, 0); canals.rotation.set(0.3, 0.5, 0.2); ear.add(canals);
       const vest = new THREE.Mesh(new THREE.SphereGeometry(0.3, 20, 14), sm(0x34d399)); vest.position.set(0.3, 0.7, 0); ear.add(vest);
-      const cn = tube([[1.3, -0.1, 0], [2.2, 0.2, 0], [3.2, 0.5, 0], [4.0, 0.6, 0]], 0.1, 0xfacc15); ear.add(cn);
+      const cnPts = [[1.3, -0.1, 0], [2.2, 0.2, 0], [3.2, 0.5, 0], [4.0, 0.6, 0]], cn = tube(cnPts, 0.1, 0xfacc15); ear.add(cn);
+      const cnC = new THREE.CatmullRomCurve3(cnPts.map((p) => new V3(p[0], p[1], p[2]))), pulse = new THREE.Mesh(new THREE.SphereGeometry(0.17, 14, 10), new THREE.MeshBasicMaterial({ color: 0xffffff })); pulse.visible = false; ear.add(pulse);
       const brain = new THREE.Mesh(new THREE.SphereGeometry(1.5, 40, 28), sm(0xf9a8d4, { transparent: true, opacity: 0.55, roughness: 0.6, depthWrite: false })); brain.scale.set(1, 0.85, 0.9); brain.position.set(5.2, 0.7, 0); ear.add(brain);
-      [['귓바퀴', [-5.35, 1.15, 0]], ['외이도', [-3.6, 0.55, 0]], ['고막', [-2.3, 0.6, 0]], ['귓속뼈', [-1.45, 0.62, 0]], ['반고리관', [0.2, 2.1, 0]], ['달팽이관', [1.1, -0.7, 0.9]], ['청각 신경', [3.0, 0.9, 0]], ['귀인두관', [-2.3, -2.6, 0]], ['뇌', [5.2, 2.0, 0]]].forEach(([t, p]) => L('ear', t, p));
+      [['귓바퀴', [-5.35, 1.15, 0]], ['외이도', [-3.6, 0.55, 0]], ['고막', [-2.3, 0.6, 0]], ['귓속뼈', [-1.45, 0.62, 0]], ['반고리관', [0.2, 2.1, 0]], ['전정 기관', [0.3, 1.15, 0]], ['달팽이관', [1.1, -0.7, 0.9]], ['청각 신경', [3.0, 0.9, 0]], ['뇌', [5.2, 2.0, 0]]].forEach(([t, p]) => L('ear', t, p));
       /* 소리 파동 */
       const waves = []; for (let i = 0; i < 5; i++) { const w = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.025, 8, 36), new THREE.MeshBasicMaterial({ color: 0x7dd3fc, transparent: true, opacity: 0.8 })); w.rotation.y = Math.PI / 2; ear.add(w); waves.push(w); }
-      function earUpdate() { info('<b>귀</b> · 소리 → <b>고막</b> 진동 → <b>귓속뼈</b>(망치뼈·모루뼈·등자뼈)가 진동을 키워 전달 → <b>달팽이관</b>에서 신호로 바뀌어 <b>청각 신경</b> → 뇌예요.<br>반고리관·전정 기관은 몸의 회전과 기울어짐(평형)을 느껴요.'); }
+      function earUpdate() { info('<b>귀</b> · 소리 → <b>고막</b> 진동 → <b>귓속뼈</b>가 진동을 키워 전달 → <b>달팽이관</b>에서 신호로 바뀌어 <b>청각 신경</b> → 뇌예요.<br>반고리관·전정 기관은 몸의 회전과 기울어짐(평형)을 느껴요.'); }
       function setMode(m) { mode = m; eye.visible = m === 'eye'; ear.visible = m === 'ear'; orbit.tx = m === 'eye' ? -1.2 : 0.2; orbit.dist = m === 'eye' ? (PHN ? 17 : 12.5) : (PHN ? 20 : 15); showNames(); m === 'eye' ? eyeUpdate() : earUpdate(); sl.style.display = ''; }
       function showNames() { labs.eye.forEach((l) => l.show(names && mode === 'eye')); labs.ear.forEach((l) => l.show(names && mode === 'ear')); }
-      const sl = { style: {} };
-      controls.segment('보기', [{ value: 'eye', label: '👁️ 눈' }, { value: 'ear', label: '👂 귀' }], mode, setMode);
-      const rb = controls.range('주변 밝기', 0, 100, 1, bright, (v) => { bright = v; if (mode === 'eye') eyeUpdate(); }, (v) => (v < 35 ? '어두움' : v > 65 ? '밝음' : '보통'));
-      const rd = controls.range('물체 거리', 0, 100, 1, dist, (v) => { dist = v; if (mode === 'eye') eyeUpdate(); }, (v) => (v > 60 ? '가까움' : v < 30 ? '멀리' : '보통'));
-      const rl = controls.range('소리 크기', 0, 100, 1, loud, (v) => { loud = v; }, (v) => v);
+      /* 2D 차시와 같은 값을 읽어요: 눈의 조절(주변 밝기 · 물체까지 거리) · 귀(소리 전달) */
+      let sig = '', infoK = '';
       const nb = controls.button('이름 ✓', () => { names = !names; nb.textContent = '이름 ' + (names ? '✓' : '✕'); showNames(); }); nb.classList.add('on');
+      /* ▶ 재생: 눈 → 밝기·거리를 바꿔 보여 줘요(2D 슬라이더도 같이 움직여요) · 귀 → 소리가 뇌까지 가는 길 */
+      let first = true, pEar = 0;
+      const pEye = controls.player({
+        duration: 10, loop: true, label: '눈의 조절',
+        phases: [[0, '아주 밝아요 · 동공↓'], [0.15, '어두워져요 · 동공↑'], [0.25, '아주 어두워요'], [0.4, '다시 밝아져요'], [0.5, '멀리 봐요 · 수정체 얇게'], [0.65, '가까이 봐요 · 수정체 두껍게'], [0.85, '다시 멀리 봐요']],
+        onFrame(p) {
+          if (first) return;
+          const L = ctx.lesson(); if (!L || !L.S || L.S.scene !== 'eye') return;
+          const b = p < 0.5 ? 0.5 + 0.5 * Math.cos(p * 4 * Math.PI) : 0.5, o = p < 0.5 ? 0.5 : 0.5 + 0.5 * Math.cos((p - 0.5) * 4 * Math.PI);
+          L.S.adj.bright = b; L.S.adj.obj = o; L.bBright.set(b); L.bObj.set(o);
+        },
+      });
+      const pEarP = controls.player({
+        duration: 6, loop: true, label: '소리 전달',
+        phases: [[0, '귓바퀴·외이도'], [0.22, '고막이 떨려요'], [0.4, '귓속뼈'], [0.52, '달팽이관'], [0.72, '청각 신경'], [0.88, '뇌']],
+        onFrame(p) { if (first) return; const L = ctx.lesson(); if (L && L.S && L.S.ear.t < 0 && p < 0.06 && L.startSound) L.startSound(); },
+      });
+      first = false;
+      const host = nb.parentNode, rows = Array.from(host.querySelectorAll('.v3-player')); const eyeRow = rows[0], earRow = rows[1];
+      function setMode(m) { mode = m; eye.visible = m === 'eye'; ear.visible = m === 'ear'; orbit.tx = m === 'eye' ? -1.2 : 0.2; orbit.dist = m === 'eye' ? (PHN ? 17 : 12.5) : (PHN ? 20 : 15); showNames(); eyeRow.style.display = m === 'eye' ? '' : 'none'; earRow.style.display = m === 'ear' ? '' : 'none'; sig = ''; }
       setMode('eye'); eyeUpdate();
       return {
         update(dt, t) {
-          if (mode === 'ear') {
-            const A = loud / 100, ph = t * 9;
-            drum.position.x = -2.3 + Math.sin(ph) * 0.07 * A; b1.rotation.z = 0.2 + Math.sin(ph) * 0.15 * A; b2.rotation.z = Math.PI / 2 - 0.3 + Math.sin(ph) * 0.1 * A; b3.position.x = -0.95 + Math.sin(ph) * 0.05 * A;
-            waves.forEach((w, i) => { const u = (t * 0.45 + i / 5) % 1, x = -6.2 + u * 3.9; w.position.set(x, 0, 0); const s = x < -4.6 ? 1.6 - (x + 6.2) / 1.6 * 0.9 + 0.3 : 0.65; w.scale.setScalar(Math.max(0.5, s)); w.material.opacity = (0.15 + 0.7 * A) * (1 - Math.abs(u - 0.5) * 0.9); w.visible = A > 0.02; });
-            const uu = (t * 0.35) % 1; const pt = spC.getPoint(uu); bead.position.copy(pt); bead.scale.setScalar(0.5 + A);
+          const L = ctx.lesson(); if (!L || !L.S) return;
+          const S = L.S, m = S.scene === 'eye' || S.scene === 'blind' ? 'eye' : 'ear';
+          if (m !== mode) setMode(m);
+          if (mode === 'eye') {
+            const b = Math.round(S.adj.bright * 100), d = Math.round(S.adj.lens.value * 100);
+            const k = b + '|' + d;
+            if (k !== sig) { sig = k; bright = b; dist = d; eyeUpdate(); }
+            const nn = S.scene === 'blind' ? '<br><span style="color:#fcd34d">맹점: 시각 신경이 모여 눈 밖으로 나가는 곳이라 상이 맺혀도 보이지 않아요. (맹점 실험은 2D 화면에서 해요)</span>' : '';
+            if (nn !== infoK) { infoK = nn; eyeUpdate(); if (nn) info('<b>눈</b> · 어두우면 동공이 커지고, 밝으면 작아져요.<br>가까운 물체를 볼 때 수정체가 <b>두꺼워져요</b>(섬모체 수축).<br>상은 망막에 <b>거꾸로</b> 맺혀 시각 신경으로 가요.' + nn); }
+          } else {
+            const playing = S.ear.t >= 0;
+            if (playing && !pEarP.playing) pEarP.set(Math.min(1, S.ear.t / 5.6));
+            pEar = playing ? Math.min(1, S.ear.t / 5.6) : pEarP.p;
+            const A = 0.6, ph = pEar * 140, act = pEar > 0.2 && pEar < 0.85 ? 1 : 0;
+            drum.position.x = -2.3 + Math.sin(ph) * 0.07 * A * act; b1.rotation.z = 0.2 + Math.sin(ph) * 0.15 * A * act; b2.rotation.z = Math.PI / 2 - 0.3 + Math.sin(ph) * 0.1 * A * act; b3.position.x = -0.95 + Math.sin(ph) * 0.05 * A * act;
+            const wu = Math.min(1, pEar / 0.25);
+            waves.forEach((w, i) => { const u = (wu + i * 0.12) % 1, x = -6.2 + Math.min(1, u) * 3.9; w.position.set(x, 0, 0); const sc2 = x < -4.6 ? 1.6 - (x + 6.2) / 1.6 * 0.9 + 0.3 : 0.65; w.scale.setScalar(Math.max(0.5, sc2)); w.material.opacity = 0.7 * (1 - Math.abs(u - 0.5) * 0.9); w.visible = pEar > 0.005 && pEar < 0.28 && i < 1 + Math.floor(wu * 5); });
+            const uu = Math.max(0, Math.min(1, (pEar - 0.5) / 0.25)); const pt = spC.getPoint(uu * 0.999); bead.position.copy(pt); bead.visible = pEar > 0.5 && pEar < 0.76;
+            const nu = Math.max(0, Math.min(1, (pEar - 0.72) / 0.18)); pulse.visible = pEar > 0.72 && pEar < 0.92; pulse.position.copy(cnC.getPoint(nu * 0.999));
+            brain.material.emissive.setHex(pEar > 0.88 ? 0xf472b6 : 0x000000);
+            const ik = Math.round(pEar * 20) + '|' + playing; if (ik !== infoK) { infoK = ik; earUpdate(); }
           }
         },
       };

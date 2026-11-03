@@ -891,4 +891,5 @@
   window.__sim = {
     S, VW, VH, get game() { return game; }, setScene, updateCtl, L1, L3, orbR, levY, chipY, startTransition, firePhoton, recordLine, H_LINES, E_OBS, dEn, lamOf, TOL,
   };
+  Object.assign(window.__sim, { LINES, SRC, HC, E_ION, En, kindOf, NLEV });   // 3D 보기가 2D와 같은 값을 쓰도록 내보내요
 })();

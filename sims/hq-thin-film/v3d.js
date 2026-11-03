@@ -93,22 +93,22 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: 15.5 * KD, theta: 0.5, phi: 1.28, min: 6, max: 30, target: [2.2, 0, 0] },
     autoRotate: 0,
-    levels: [1, 2, 3],
     build(ctx) {
-      const { THREE, root, label, info, controls } = ctx;
-      const h = H3(ctx); const { V3, mat, glass, anchor, sphere, box, cyl, tube, mkSeg, setSeg } = h;
+      const { THREE, root, label, controls } = ctx;
+      const labs = {}; const L = (sc, text, obj, o) => { const l = label(text, obj, o); const raw = l.set; let last = text; l.set = (t) => { if (t !== last) { last = t; raw(t); } }; (labs[sc] = labs[sc] || []).push(l); return l; };
+      let lastInfo = ''; const info = (hh) => { if (hh !== lastInfo) { lastInfo = hh; ctx.info(hh); } };
+      const h = H3(ctx); const { V3, mat, glass, anchor, sphere, box, cyl, tube, mkSeg, setSeg, grab, showCtl } = h;
       const lessonS = () => (window.__sim && window.__sim.S) || null;
-      const S0 = lessonS();
-      const st = { light: S0 && S0.fl && LIGHTS[S0.fl.light] ? S0.fl.light : 'g', tb: 2400, yp: 0.15, play: false };
-      if (S0 && S0.fl && S0.fl.light === '532') st.light = 'g';
+      const st = { light: 'g', tb: 800, yp: 0.15, play: false, tauUser: false, tauP: 0 };
+      const gFilm = new THREE.Group(), gPh = new THREE.Group(), gW = new THREE.Group(); root.add(gFilm, gPh, gW);
       const HH = 6, WW = 5;
       /* 틀 */
       const fm = mat(0x64748b, { metalness: 0.6, roughness: 0.35 });
-      const addB = (w, hh, d, x, y) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, hh, d), fm); m.position.set(x, y, 0); root.add(m); };
+      const addB = (w, hh, d, x, y) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, hh, d), fm); m.position.set(x, y, 0); gFilm.add(m); };
       addB(WW + 0.5, 0.25, 0.3, 0, HH / 2 + 0.12); addB(WW + 0.5, 0.25, 0.3, 0, -HH / 2 - 0.12); addB(0.25, HH, 0.3, -WW / 2 - 0.12, 0); addB(0.25, HH, 0.3, WW / 2 + 0.12, 0);
       /* 막 (무늬 텍스처) */
       const cv = document.createElement('canvas'); cv.width = 4; cv.height = 512; const g2 = cv.getContext('2d'), tex = new THREE.CanvasTexture(cv); tex.encoding = THREE.sRGBEncoding;
-      const film = new THREE.Mesh(new THREE.PlaneGeometry(WW, HH), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.1, metalness: 0.0, transparent: true, opacity: 0.96 })); root.add(film);
+      const film = new THREE.Mesh(new THREE.PlaneGeometry(WW, HH), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.1, metalness: 0.0, transparent: true, opacity: 0.96 })); gFilm.add(film);
       const tAt = (u) => st.tb * u;                                              // u: 0(맨 위) → 1(아래), 두께(nm)
       function intensity(lamNm, t) { const s = Math.sin(2 * Math.PI * NF * t / lamNm); return s * s; }
       function paint() {
@@ -126,24 +126,24 @@
       const WX = 5.6, WMAX = 1.55;
       let wedge = null;
       function buildWedge() {
-        if (wedge) { root.remove(wedge); wedge.geometry.dispose(); }
+        if (wedge) { gFilm.remove(wedge); wedge.geometry.dispose(); }
         const wm = Math.max(0.05, WMAX * st.tb / 3000);
         const shp = new THREE.Shape(); shp.moveTo(0, HH / 2); shp.lineTo(0, -HH / 2); shp.lineTo(-wm, -HH / 2); shp.lineTo(0, HH / 2);
         const gm = new THREE.ExtrudeGeometry(shp, { depth: 0.5, bevelEnabled: false }); gm.rotateY(-Math.PI / 2); gm.translate(WX + 0.25, 0, 0);
-        wedge = new THREE.Mesh(gm, glass(0x9fd8ff, 0.5, { roughness: 0.1 })); root.add(wedge);
+        wedge = new THREE.Mesh(gm, glass(0x9fd8ff, 0.5, { roughness: 0.1 })); gFilm.add(wedge);
         wedge.userData.wm = wm;
       }
-      const edge = new THREE.Mesh(new THREE.BoxGeometry(0.04, HH, 0.04), mat(0xcbd5e1)); edge.position.set(WX, 0, 0); root.add(edge);
+      const edge = new THREE.Mesh(new THREE.BoxGeometry(0.04, HH, 0.04), mat(0xcbd5e1)); edge.position.set(WX, 0, 0); gFilm.add(edge);
       /* 프로브 · 광선 */
-      const probeDot = sphere(0.14, 0xffffff, { emissive: 0xffffff, emissiveIntensity: 0.7 }); root.add(probeDot);
-      const link = mkSeg(0xe2e8f0, 0.014, { basic: true, mo: { transparent: true, opacity: 0.45 } }); root.add(link);
+      const probeDot = sphere(0.14, 0xffffff, { emissive: 0xffffff, emissiveIntensity: 0.7 }); gFilm.add(probeDot);
+      const link = mkSeg(0xe2e8f0, 0.014, { basic: true, mo: { transparent: true, opacity: 0.45 } }); gFilm.add(link);
       const rayMat = (c) => new THREE.MeshBasicMaterial({ color: c });
       const rayI = [mkSeg(0xffffff, 0.04, { basic: true }), mkSeg(0xffa94d, 0.04, { basic: true }), mkSeg(0x4ade80, 0.04, { basic: true }), mkSeg(0x4ade80, 0.04, { basic: true }), mkSeg(0x4ade80, 0.04, { basic: true })];
-      rayI.forEach((m) => root.add(m));
-      const aI = anchor(root), a1 = anchor(root), a2 = anchor(root), aT = anchor(root), aP = anchor(root, -WW / 2 - 0.3, 0, 0.1);
-      const lI = label('입사광', aI, { color: '#475569', size: 12 }), l1 = label('① 앞면 반사 (위상 π 변화)', a1, { color: '#c2410c', size: 12 }), l2 = label('② 뒷면 반사 (2nt 더 이동)', a2, { color: '#15803d', size: 12 });
-      const lT = label('', aT, { color: '#0369a1', size: 12 }), lTop = label('맨 위: t ≈ 0 → 검은 띠', anchor(root, -WW / 2 + 0.2, HH / 2 - 0.35, 0.1), { color: '#475569', size: 11 });
-      const lWd = label('쐐기 모양 단면 (두께를 크게 그렸어요)', anchor(root, WX, -HH / 2 - 0.55, 0), { color: '#475569', size: 11 }), lFilm = label('비누막', anchor(root, 0, -HH / 2 - 0.55, 0.1), { color: '#475569', size: 12 });
+      rayI.forEach((m) => gFilm.add(m));
+      const aI = anchor(gFilm), a1 = anchor(gFilm), a2 = anchor(gFilm), aT = anchor(gFilm), aP = anchor(gFilm, -WW / 2 - 0.3, 0, 0.1);
+      const lI = L('film', '입사광', aI, { color: '#475569', size: 12 }), l1 = L('film', '① 앞면 반사 (위상 π 변화)', a1, { color: '#c2410c', size: 12 }), l2 = L('film', '② 뒷면 반사 (2nt 더 이동)', a2, { color: '#15803d', size: 12 });
+      const lT = L('film', '', aT, { color: '#0369a1', size: 12 }), lTop = L('film', '맨 위: t ≈ 0 → 검은 띠', anchor(gFilm, -WW / 2 + 0.2, HH / 2 - 0.35, 0.1), { color: '#475569', size: 11 });
+      const lWd = L('film', '쐐기 모양 단면 (두께를 크게 그렸어요)', anchor(gFilm, WX, -HH / 2 - 0.55, 0), { color: '#475569', size: 11 }), lFilm = L('film', '비누막', anchor(gFilm, 0, -HH / 2 - 0.55, 0.1), { color: '#475569', size: 12 });
       function upd() {
         const u = st.yp, y = HH / 2 - u * HH, t = tAt(u), wm = wedge.userData.wm, w = wm * u;
         const lamL = st.light === 'w' ? 532 : LIGHTS[st.light][0], cc = lamRGB(lamL);
@@ -165,16 +165,104 @@
         const msg = st.light === 'w' ? '백색광은 파장마다 보강되는 두께가 달라 <b>무지개 색 띠</b>가 생겨요.' : bright ? '이 높이는 2nt가 (m+½)λ에 가까워서 <b>보강</b> → 밝은 줄이에요.' : '이 높이는 2nt가 mλ에 가까워서 <b>상쇄</b> → 어두운 줄이에요.';
         info('<b>두 반사광의 간섭</b>: ① 앞면 반사는 위상이 π 바뀌고, ② 뒷면 반사는 2nt만큼 더 가요.<br>' + msg + '<br>막이 아래로 갈수록 두꺼워져 같은 색의 줄이 일정한 간격으로 반복돼요.');
       }
-      controls.segment('빛', [{ value: 'r', label: '빨강' }, { value: 'g', label: '초록' }, { value: 'b', label: '파랑' }, { value: 'w', label: '백색' }], st.light, (v) => { st.light = v; paint(); upd(); });
-      const rTb = controls.range('아랫부분 두께', 600, 3000, 200, st.tb, (v) => { st.tb = v; paint(); buildWedge(); upd(); }, (v) => v + ' nm');
-      controls.range('관찰 높이', 0.05, 0.95, 0.025, st.yp, (v) => { st.yp = v; upd(); }, (v) => (v < 0.2 ? '위쪽' : v > 0.8 ? '아래쪽' : '가운데'));
-      const bp = controls.button('▶ 막이 얇아져요', () => { st.play = !st.play; bp.textContent = st.play ? '⏸ 멈춤' : '▶ 막이 얇아져요'; if (st.play && st.tb < 800) { st.tb = 3000; } });
-      paint(); buildWedge(); upd();
+
+      /* ---------- 2D와 같은 값 (비누막 관찰) ---------- */
+      const LMAP = { '532': 'g', '650': 'r', '450': 'b', '600': 'g', white: 'w', w: 'w' };
+      function filmFrame(sim, S) {
+        const F = S.fl, tau = st.tauUser ? st.tauP * sim.TAU_MAX : F.tau;
+        const light = LMAP[F.light] || 'g', tb = sim.thickAt(sim.H_CM, tau), yp = Math.max(0.03, Math.min(0.97, F.probe / sim.H_CM));
+        const k = [light, Math.round(tb), yp.toFixed(3)].join(); if (k === st.fk) return; st.fk = k;
+        const lc = st.light !== light || Math.abs(st.tb - tb) > 0.5; st.light = light; st.tb = tb; st.yp = yp;
+        if (lc) { paint(); buildWedge(); }
+        upd();
+      }
+      let plFilm = null;
+
+      /* ---------- 반사와 위상 (줄 파동의 반사: 고정단은 뒤집히고, 자유단은 그대로) ---------- */
+      const NR = 70, ropeI = new THREE.InstancedMesh(new THREE.SphereGeometry(0.075, 10, 8), mat(0xffffff, { roughness: 0.4, emissive: 0xffffff, emissiveIntensity: 0.4 }), NR); gPh.add(ropeI);
+      const wall = box(0.4, 3.4, 1.4, 0x7b8798, { metalness: 0.4 }); wall.position.set(4.3, 0, 0); gPh.add(wall);
+      const pole = cyl(0.07, 0.07, 3.4, 0x9aa6b8, {}, 10); pole.position.set(4.3, 0, 0); gPh.add(pole);
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(0.2, 0.04, 8, 20), mat(0x475569)); ring.rotation.y = Math.PI / 2; gPh.add(ring);
+      const lWallL = L('phase', '', anchor(gPh, 4.3, 2.2, 0), { color: '#475569', size: 13 }), lMed = L('phase', '', anchor(gPh, -1.0, 2.5, 0), { color: '#26324a', size: 13 });
+      const pulseF = (u) => 1.15 * Math.exp(-(u * u) / 0.55);
+      let phP = 0, built = false;
+      const Mph = new THREE.Matrix4(), Cph = new THREE.Color();
+      function phaseFrame(sim, S) {
+        const P = S.ph, state = sim.phState ? sim.phState() : 'flip';
+        const useRope = S.show.selA, rope = useRope ? P.rope : (state === 'flip' ? 'fixed' : 'free'), refl = useRope ? 1 : (state === 'none' ? 0 : 1);
+        const s = rope === 'fixed' ? -1 : 1, Ln = 8, c = -2 + phP * (2 * Ln + 4);
+        wall.visible = rope === 'fixed'; pole.visible = ring.visible = rope === 'free';
+        for (let i = 0; i < NR; i++) {
+          const u = Ln * i / (NR - 1), x = -4 + u;
+          const yi = pulseF(u - c), yr = refl * s * pulseF(2 * Ln - u - c), y = yi + yr;
+          Mph.makeTranslation(x, y, 0); ropeI.setMatrixAt(i, Mph);
+          ropeI.setColorAt(i, Math.abs(yr) > Math.abs(yi) && Math.abs(yr) > 0.05 ? Cph.setHex(0xf26b3a) : Math.abs(yi) > 0.05 ? Cph.setHex(0x4a86ff) : Cph.setHex(0x9aa6b8));
+          if (i === NR - 1 && rope === 'free') ring.position.set(4.3, Math.max(-1.5, Math.min(1.5, y)), 0);
+        }
+        ropeI.instanceMatrix.needsUpdate = true; if (ropeI.instanceColor) ropeI.instanceColor.needsUpdate = true;
+        const n1 = P.n1, n2 = P.n2;
+        lWallL.set(rope === 'fixed' ? '고정단 (벽)' : '자유단 (고리)');
+        lMed.set(useRope ? '' : 'n₁ = ' + n1.toFixed(2) + ' → n₂ = ' + n2.toFixed(2));
+        lMed.show(!useRope && !!labs.phase.on);
+        info('<b>🧵 반사와 위상: 줄 파동의 반사</b><br>' + (rope === 'fixed' ? '고정단: 반사 펄스가 위아래로 <b>뒤집혀요</b> (위상 π).' : '자유단: 반사 펄스가 그대로예요 (위상 변화 없음).') + '<br>' + (useRope ? '줄의 끝 모양은 2D에서 골라요.' : '빛은 굴절률이 <b>큰 쪽 경계</b>(n₂ > n₁)에서 반사할 때 위상이 π 바뀌고, 작은 쪽(n₂ < n₁)에서는 그대로예요. 지금: ' + (state === 'flip' ? 'n₂ > n₁ → 위상 π 변화 (고정단과 같아요)' : state === 'same' ? 'n₂ < n₁ → 위상 변화 없음 (자유단과 같아요)' : 'n₁ = n₂ → 경계가 없어 반사가 없어요')));
+      }
+
+      /* ---------- 간섭 조건 · 코팅 (두 반사광의 합) ---------- */
+      const slab = box(5.4, 0.4, 2.2, 0xbfe3ff, { transparent: true, opacity: 0.55, depthWrite: false, roughness: 0.1 }); slab.position.set(-3.6, -0.8, 0); gW.add(slab);
+      const base = box(5.4, 0.8, 2.2, 0x94a3b8, { roughness: 0.6 }); base.position.set(-3.6, -1.6, 0); gW.add(base);
+      const wRay = [0, 1, 2, 3, 4].map(() => mkSeg(0xffffff, 0.04, { basic: true })); wRay.forEach((m) => gW.add(m));
+      const aWi = anchor(gW), aW1 = anchor(gW), aW2 = anchor(gW), aWt = anchor(gW);
+      const lWi = L('wave', '입사광', aWi, { color: '#475569', size: 12 }), lW1 = L('wave', '① 앞면 반사', aW1, { color: '#c2410c', size: 12 }), lW2 = L('wave', '② 뒷면 반사', aW2, { color: '#15803d', size: 12 }), lWt = L('wave', '', aWt, { color: '#0369a1', size: 12 });
+      const waveM = [0, 1, 2].map((i) => { const m = new THREE.Mesh(new THREE.TubeGeometry(new THREE.LineCurve3(new V3(0, 0, 0), new V3(1, 0, 0)), 4, 0.05, 6, false), h.basic([0xf26b3a, 0x4ade80, 0xffffff][i])); gW.add(m); return m; });
+      const axisW = mkSeg(0x64748b, 0.015, { basic: true }); setSeg(axisW, new V3(1.4, 1.4, 0), new V3(8.2, 1.4, 0)); gW.add(axisW);
+      const lWv1 = L('wave', '① 앞면 반사광', anchor(gW, 8.6, 2.5, 0), { color: '#c2410c', size: 12 }), lWv2 = L('wave', '② 뒷면 반사광', anchor(gW, 8.6, 1.4, 0), { color: '#15803d', size: 12 }), lWvS = L('wave', '합성 (두 반사광의 합)', anchor(gW, 8.6, 0.0, 0), { color: '#475569', size: 12 });
+      let wKey = '';
+      function updWave(S, sim) {
+        const cond = S.mode === 'cond';
+        const lam = cond ? S.cd.lam : 550, n = cond ? 1.33 : sim.N_MG, tnm = cond ? S.cd.tD : S.ap.tD;
+        const key = [S.mode, lam, Math.round(tnm * 2)].join(); if (key === wKey) return; wKey = key;
+        const w = Math.max(0.04, tnm / (cond ? 600 : 250) * (cond ? 1.3 : 0.9));
+        slab.scale.y = w / 0.4; slab.position.y = -0.6 - w / 2 + 0.0; slab.material.color.setHex(cond ? 0xbfe3ff : 0xd8c7ff); base.position.y = -0.6 - w - 0.4; base.material.color.setHex(cond ? 0x0b1224 : 0x94a3b8); base.material.opacity = cond ? 0.5 : 1; base.material.transparent = cond;
+        const top = -0.6, y = top, A = new V3(-3.6, y, 0), sT = 0.35, aIn = 1.6;
+        setSeg(wRay[0], new V3(-3.6 - aIn * 1.3, y + aIn, 0), A); setSeg(wRay[1], A, new V3(-3.6 + aIn * 1.3, y + aIn, 0));
+        const B = new V3(-3.6 + sT * w * 1.0, y - w, 0), C = new V3(-3.6 + 2 * sT * w, y, 0);
+        setSeg(wRay[2], A, B); setSeg(wRay[3], B, C); setSeg(wRay[4], C, new V3(C.x + aIn * 1.3, y + aIn, 0));
+        wRay[1].material.color.setHex(0xffa94d); [wRay[2], wRay[3], wRay[4]].forEach((m) => m.material.color.setHex(0x4ade80));
+        aWi.position.set(-5.4, y + 1.5, 0.3); aW1.position.set(-1.7, y + 1.8, 0.3); aW2.position.set(-0.5 + 2 * sT * w, y + 1.2, 0.3);
+        const delta = 2 * Math.PI * 2 * n * tnm / lam, ph1 = cond ? Math.PI : Math.PI, ph2 = cond ? 0 : Math.PI;     // 비누막: 앞면만 π · 코팅: 앞뒤 모두 π
+        const amp = Math.abs(Math.cos(((ph1 - ph2) - delta) / 2)) , m = 2 * n * tnm / lam;
+        lWt.set('t = ' + Math.round(tnm) + ' nm · 2nt = ' + m.toFixed(2) + 'λ'); aWt.position.set(1.0, y - w - 0.6, 0.3);
+        const col = lam < 490 ? 0x6aa0ff : lam < 570 ? 0x4ade80 : lam < 620 ? 0xffc34d : 0xff6b6b;
+        const NX = 90, kx = 2 * Math.PI / 1.7;
+        const f = (ph) => { const pts = []; for (let i = 0; i <= NX; i++) { const x = 1.6 + 6.6 * i / NX; pts.push(new V3(x, 0, 0.0)); } return pts; };
+        void f;
+        function mk(i, yc, ph, amp2, c2) {
+          const pts = []; for (let k = 0; k <= NX; k++) { const x = 1.6 + 6.6 * k / NX; pts.push(new V3(x, yc + amp2 * 0.6 * Math.sin(kx * (x - 1.6) + ph), 0)); }
+          waveM[i].geometry.dispose(); waveM[i].geometry = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), NX, i === 2 ? 0.07 : 0.045, 6, false); waveM[i].material.color.setHex(c2);
+        }
+        const p1 = ph1, p2 = ph2 - delta;
+        mk(0, 2.5, p1, 1, 0xf26b3a); mk(1, 1.4, p2, 1, 0x4ade80);
+        const sumA = Math.sqrt(2 + 2 * Math.cos(p1 - p2)), sumPh = Math.atan2(Math.sin(p1) + Math.sin(p2), Math.cos(p1) + Math.cos(p2));
+        mk(2, 0.0, sumPh, sumA, col);
+        waveM[2].material.color.setHex(col);
+        const verdict = sumA > 1.9 ? '<b>보강 간섭</b> → 밝게 보여요' : sumA < 0.2 ? '<b>상쇄 간섭</b> → 어둡게(거의 안 보여요)' : '중간 밝기';
+        info(cond ? '<b>📐 간섭 조건: 두 반사광의 합</b> (비누막 n = 1.33, 파장 ' + lam + ' nm)<br>① 앞면 반사는 위상이 π 변해요. ② 뒷면 반사는 2nt만큼 더 가요.<br>2nt = ' + m.toFixed(2) + 'λ → ' + verdict + '<br>보강: 2nt = (m+½)λ, 상쇄: 2nt = mλ' :
+          '<b>🔍 무반사 코팅</b> (MgF₂ n = ' + n + ', 550 nm 빛)<br>앞면·뒷면 반사 모두 위상이 π 변해서 위상 차는 경로차 2nt뿐이에요.<br>2nt = ' + m.toFixed(2) + 'λ → ' + verdict + '<br>2nt = λ/2 (t = λ/4n ≈ 100 nm)이면 두 반사광이 상쇄돼 반사가 가장 약해요.');
+      }
+      plFilm = grab('film', () => controls.player({ duration: 12, loop: true, autoplay: false, label: '막이 흘러내려요', phases: [[0, '새로 만든 막'], [0.3, '아래로 흘러 두꺼워져요'], [0.7, '줄무늬 간격이 넓어져요']], onFrame(p) { if (!built) return; st.tauP = p; st.tauUser = true; st.fk = ''; } }));
+      const plPh = grab('phase', () => controls.player({ duration: 6, loop: true, autoplay: true, label: '펄스 보내기', phases: [[0, '입사 펄스'], [0.4, '끝에서 반사'], [0.8, '되돌아와요']], onFrame(p) { phP = p; } }));
+      built = true;
+      let sig2d = '';
       return {
         update(dt, t) {
-          if (st.play) { st.tb -= dt * 180; if (st.tb < 500) st.tb = 3000; rTb.set(Math.round(st.tb / 200) * 200); paint(); buildWedge(); upd(); }
+          const sim = window.__sim; if (!sim) return; const S = sim.S, m = S.mode;
+          const sc = m === 'film' ? 'film' : m === 'phase' ? 'phase' : 'wave';
+          if (sc !== st.sc) { st.sc = sc; wKey = ''; st.fk = ''; gFilm.visible = sc === 'film'; gPh.visible = sc === 'phase'; gW.visible = sc === 'wave'; Object.keys(labs).forEach((k) => labs[k].forEach((l) => l.show(k === sc))); const o = ctx.orbit; o.theta = 0.35; o.phi = 1.3; o.tx = sc === 'film' ? 2.2 : sc === 'wave' ? 2.2 : 0; o.ty = 0; o.dist = (sc === 'wave' ? 19 : sc === 'phase' ? 13 : 15.5) * KD; showCtl(sc === 'film' ? 'film' : '__none'); }
+          if (sc === 'film') { const k2 = [S.fl.tau, S.fl.light, S.fl.probe, S.fl.play].join(); if (k2 !== sig2d) { sig2d = k2; if (st.tauUser && S.fl.play) { st.tauUser = false; plFilm.pause(); } st.fk = ''; } filmFrame(sim, S); }
+          else if (sc === 'wave') updWave(S, sim);
+          else phaseFrame(sim, S);
         },
-        sync() {},
+        sync() { st.fk = ''; wKey = ''; },
       };
     },
   });

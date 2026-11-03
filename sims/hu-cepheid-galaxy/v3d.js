@@ -15,6 +15,7 @@
   window.SciSim3D.attach({
     title: '구상 성단 3D 지도',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
+    levels: [2],
     camera: { dist: 58 * FIT, theta: 0.9, phi: 1.0, fov: 42, target: [5, 0, 0], min: 14, max: 180 },
     autoRotate: 0.1,
     build(ctx) {
@@ -68,6 +69,7 @@
       });
       function segs(arr, hex, op) { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(arr), 3)); return new THREE.LineSegments(g, new THREE.LineBasicMaterial({ color: hex, transparent: true, opacity: op })); }
       const drops = segs(dropPts, 0xffc58a, 0.5), spokes = segs(dist, 0xffe08a, 0.55); spokes.visible = false; root.add(drops, spokes);
+      const upd = (obj, arr) => { obj.geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(arr.length ? arr : [0, 0, 0, 0, 0, 0]), 3)); obj.geometry.attributes.position.needsUpdate = true; obj.geometry.computeBoundingSphere(); };
       // 은하면 위의 그림자(수선의 발)
       const feet = new THREE.Points((() => { const g = new THREE.BufferGeometry(); const a = []; GC.forEach((c) => { const p = G(c.x, c.y, c.z); a.push(p[0], 0, p[2]); }); g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(a), 3)); return g; })(), new THREE.PointsMaterial({ size: 3, color: 0xffc58a, map: dot, transparent: true, depthWrite: false, sizeAttenuation: false, opacity: 0.8 }));
       root.add(feet);
@@ -90,40 +92,50 @@
       const labDist = label('약 ' + MEAN.r.toFixed(1) + ' kpc', [mp[0] / 2, 0, mp[2] / 2], { size: LS, color: 'rgba(10,90,40,.92)', offset: [0, -2.2, 0] }); labDist.show(false);
       const labDisc = label('은하 원반 (지름 약 30 kpc)', [mp[0] + 15, 0, mp[2] + 3], { size: LS - 0.5, color: 'rgba(40,60,130,.9)', offset: [0, 1.8, 0] }); labDisc.show(false);
 
-      /* ---- 상태 · 안내 ---- */
-      let showCenter = false, showDrop = true, showSpoke = false;
+      /* ---- 상태 · 안내 (2D에서 구하거나 불러온 성단만 보여요) ---- */
+      let showCenter = false, showDrop = true, showSpoke = false, shown = [], nShown = -1;
+      const isDone = (i) => { const S = lessonS(); return !!(S.done && S.done[i]); };
+      const isShown = (i) => { const S = lessonS(); return !!(sim.game && sim.game.free) || isDone(i) || !!(S.fly && S.fly[i] && S.fly[i].landed); };
       function text() {
-        const done = GC.filter((c, i) => isDone(i)).length;
+        const n = shown.filter(Boolean).length, mine = GC.filter((c, i) => isDone(i)).length;
         if (!showCenter) {
-          info('<b>구상 성단 24개의 3차원 위치</b> (태양이 원점)<br>거리 d와 방향(ℓ, b)으로 놓았어요. 점선은 은하면까지의 높이예요.<br>성단들은 어디를 중심으로 퍼져 있을까요? <b>🎯 중심 찾기</b>를 눌러 봐요.' +
-            (done ? '<br><span style="color:#67e8f9">하늘색 고리</span> = 수업에서 직접 구한 성단 (' + done + '개)' : ''));
+          info('<b>구상 성단의 3차원 위치</b> (태양이 원점) · 지금 ' + n + '개<br>수업에서 거리 d를 구하거나 불러온 성단이 방향(ℓ, b)과 거리 d로 나타나요. 점선은 은하면까지의 높이예요.<br>성단들은 어디를 중심으로 퍼져 있을까요?' +
+            (mine ? '<br><span style="color:#67e8f9">하늘색 고리</span> = 직접 구한 성단 (' + mine + '개)' : ''));
         } else {
-          info('<b>중심 = 은하 중심</b><br>성단 24개는 태양이 아니라 <b>궁수자리 쪽 한 점</b>(태양에서 약 <b>' + MEAN.r.toFixed(1) + ' kpc</b>) 둘레에 공 모양으로 퍼져 있어요.<br>그래서 태양은 은하의 중심이 아니에요. (샤플리)');
+          info('<b>중심 = 은하 중심</b><br>성단 ' + n + '개는 태양이 아니라 <b>궁수자리 쪽 한 점</b>(태양에서 약 <b>' + MEAN.r.toFixed(1) + ' kpc</b>) 둘레에 공 모양으로 퍼져 있어요.<br>그래서 태양은 은하의 중심이 아니에요. (샤플리)');
         }
       }
-      const isDone = (i) => { const S = lessonS(); return !!(S.done && S.done[i]) || !!(S.fly && S.fly[i] && S.fly[i].landed); };
-      function paintDone() { let c = 0; GC.forEach((g, i) => { const d = isDone(i); if (rings[i].visible !== d) rings[i].visible = d; if (d) c++; }); return c; }
-
+      function paintDone() {
+        const key = GC.map((g, i) => (isShown(i) ? (isDone(i) ? 2 : 1) : 0)).join('');
+        if (key === shown.key) return false; shown = GC.map((g, i) => isShown(i)); shown.key = key;
+        const dp = [], di = [], fe = [];
+        GC.forEach((c, i) => {
+          balls[i].visible = shown[i]; rings[i].visible = shown[i] && isDone(i);
+          if (shown[i]) { const p = G(c.x, c.y, c.z); dp.push(p[0], p[1], p[2], p[0], 0, p[2]); di.push(0, 0, 0, p[0], p[1], p[2]); fe.push(p[0], 0, p[2]); }
+        });
+        upd(drops, dp); upd(spokes, di); upd(feet, fe);
+        return true;
+      }
       controls.segment('시점', [{ value: 'top', label: '⬇ 위에서' }, { value: 'side', label: '➡ 옆에서' }, { value: 'tilt', label: '↗ 비스듬히' }], 'tilt', (v) => {
         if (v === 'top') { orbit.phi = 0.06; orbit.theta = 0; } else if (v === 'side') { orbit.phi = 1.5; orbit.theta = 0.0; } else { orbit.phi = 1.0; orbit.theta = 0.9; }
       });
-      const cB = controls.button('🎯 중심 찾기', () => { showCenter = !showCenter; cB.classList.toggle('on', showCenter); apply(); });
       const dB = controls.button('높이 점선 ✓', () => { showDrop = !showDrop; dB.classList.toggle('on', showDrop); dB.textContent = '높이 점선 ' + (showDrop ? '✓' : '✕'); apply(); }); dB.classList.add('on');
       const sB = controls.button('태양에서 잇기', () => { showSpoke = !showSpoke; sB.classList.toggle('on', showSpoke); apply(); });
       function apply() {
         cg.visible = showCenter; labMean.show(showCenter); labDist.show(showCenter); labDisc.show(showCenter);
         drops.visible = showDrop; feet.visible = showDrop; spokes.visible = showSpoke; text();
       }
-      // 수업에서 이미 중심을 찾았으면 켜진 채로 시작해요 (읽기만)
+      /* 2D에서 중심(십자가)을 찾아 맞췄을 때만 중심을 보여 줘요 (읽기만) */
       function readLesson() {
         const S = lessonS(), free = !!(sim.game && sim.game.free);
-        if (!showCenter && ((S.mk && S.mk.set && sim.mapOK && sim.mapOK()) || (free && S.view === 'map' && GC.every((g, i) => isDone(i))))) { showCenter = true; cB.classList.add('on'); }
-        paintDone(); apply();
+        const prev = showCenter;
+        showCenter = !!((S.mk && S.mk.set && sim.mapOK && sim.mapOK()) || (free && S.view === 'map' && GC.every((g, i) => isDone(i))));
+        const ch = paintDone(); if (ch || prev !== showCenter || !readLesson.once) { readLesson.once = true; apply(); }
       }
       readLesson();
-      let acc = 0;
+      let acc = 0, lastC = showCenter;
       return {
-        update(dt) { labNP.show(orbit.phi > 0.6 && orbit.phi < Math.PI - 0.6); acc += dt; if (acc > 0.5) { acc = 0; const before = rings.map((r) => r.visible).join(); paintDone(); if (rings.map((r) => r.visible).join() !== before) text(); } },
+        update(dt) { labNP.show(orbit.phi > 0.6 && orbit.phi < Math.PI - 0.6); acc += dt; if (acc > 0.4) { acc = 0; const was = showCenter; readLesson(); } },
         sync() { readLesson(); },
       };
     },

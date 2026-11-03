@@ -761,6 +761,7 @@
   /* ---------- 디버그 (Playwright) ---------- */
   window.__sim = {
     S, VW, VH, get game() { return game; }, setScene, setFlag, shotLaunch, shotReset, flight, vdMark, VGEO, ORDER, ordViolations, moveOrd, TG: S.tg, tgWall,
+    SCN, NF, FDT, VX, VY0, vidPos, posAt, curShot, eff,
     stepAll(sec) { const n = Math.ceil(sec / 0.02); for (let i = 0; i < n; i++) { shotStep(S.sh, 0.02, null, onThrowDone); ['a', 'b', 'c'].forEach((k) => shotStep(S.tg.shots[k], 0.02, SCN[k].wall, onTargetDone)); } },
   };
 })();

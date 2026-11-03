@@ -1274,7 +1274,7 @@ SciSim.loop((dt, t) => {
 
 /* ---------- 디버그 (Playwright) ---------- */
 window.__sim = {
-  S, VW, VH, get game() { return game; }, setScene, setSub, NAMES, LV, AP, AP_CROSS, apAxes, thAxes, RG, AG, TG, rsV, rsConc, rsTargets, startStim, startRun, resetRest, resetAP, resetThr, typeAt, TXY, NP, rsCnt,
+  S, VW, VH, get game() { return game; }, setScene, setSub, NAMES, LV, AP, AP_CROSS, thV, apPhaseOf: apPhase, apNowV: apNow, apAxes, thAxes, RG, AG, TG, rsV, rsConc, rsTargets, startStim, startRun, resetRest, resetAP, resetThr, typeAt, TXY, NP, rsCnt,
   stepAll(sec) { const n = Math.ceil(sec / 0.02); for (let i = 0; i < n; i++) { if (S.mode === 'rest') stepRest(0.02); else if (S.mode === 'ap') stepAP(0.02); else if (S.mode === 'thr') stepThr(0.02); } },
 };
 

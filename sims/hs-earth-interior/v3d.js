@@ -54,6 +54,7 @@
   window.SciSim3D.attach({
     title: '지진파로 본 지구 내부 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
+    levels: [1, 2],
     camera: { dist: PHONE ? 14.5 : 9.5, theta: 0.65, phi: 1.2, min: 5, max: 24 },
     autoRotate: 0,
     build(ctx) {
@@ -132,8 +133,21 @@
       capLabs[0].obj = lp(0.78, 150); capLabs[1].obj = lp(0.40, 160); capLabs[2].obj = lp(0.0, 0); capLabs[2].obj = [0.16, -0.0, 0.06];
 
       /* 상태 */
-      let wv = 'P', dl = 60, bands = true, clock = 0, burst = 0;
-      const rd = () => { try { const S = window.__sim && window.__sim.S; if (S) return { w: ['P', 'S', 'B'].includes(S.shW) ? S.shW : null, d: typeof S.dl === 'number' ? S.dl : null }; } catch (e) {} return {}; };
+      let wv = 'P', dl = 60, bands = false, mode = 'shadow', dp = 0, P = 0;
+      const RW = () => window.__sim || {};
+      const rd = () => { try { const S = RW().S; if (S) return { w: ['P', 'S', 'B'].includes(S.shW) ? S.shW : null, d: typeof S.dl === 'number' ? S.dl : null, m: S.mode, dp: S.dp, bk: S.bandK, found: S.found || {}, free: !!(RW().game && RW().game.free) }; } catch (e) {} return {}; };
+      /* 2D 속도 불연속 단계: 탐침 깊이 (2D의 '탐침의 깊이' 슬라이더, 깊이 = 6371 × (값/1000)²) */
+      const probe = new THREE.Mesh(new THREE.SphereGeometry(0.12, 16, 12), new THREE.MeshBasicMaterial({ color: 0xffffff })); root.add(probe);
+      const probeLine = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 1, 8), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.8 })); root.add(probeLine);
+      const probeLab = label('', probe, { offset: [0.9, 0, 0], color: 'rgba(15,23,42,.92)' });
+      const layerOf = (d) => (d < 35 ? '지각' : d < 410 ? '상부 맨틀' : d < 660 ? '맨틀 전이대' : d < 2891 ? '하부 맨틀' : d < 5150 ? '외핵 (액체)' : '내핵 (고체)');
+      const JL = [['moho', '모호면 · 약 35 km', 35], ['tz', '전이대 · 410~660 km', 535], ['cmb', '맨틀-핵 경계 · 2891 km', 2891], ['icb', '내핵 경계 · 5150 km', 5150]];
+      const jumpLabs = JL.map((j) => ({ id: j[0], l: label(j[1], [Math.sin(deg(25)) * (1 - j[2] / RE) * ER, Math.cos(deg(25)) * (1 - j[2] / RE) * ER, 0.1], { size: 11.5, color: 'rgba(12,18,34,.85)' }) }));
+      function setProbe() {
+        const dep = RE * Math.pow(dp / 1000, 2), r = (1 - dep / RE) * ER;
+        probe.position.set(0.02, r, 0.08); probeLine.scale.y = Math.max(0.001, ER - r); probeLine.position.set(0.02, (r + ER) / 2, 0.08);
+        probeLab.set('깊이 ' + Math.round(dep) + ' km · ' + layerOf(dep)); fmtInfo();
+      }
       function setObs() {
         const th = deg(dl), r = ER * 1.012;
         obs.position.set(Math.sin(th) * r, Math.cos(th) * r, 0); obsRing.position.copy(obs.position); obsRing.lookAt(0, 0, 0);
@@ -143,13 +157,23 @@
         fmtInfo();
       }
       function applyVis() {
-        const showP = wv !== 'S', showS = wv !== 'P';
+        const sh = mode === 'shadow', ds = mode === 'disc';
+        const showP = sh && wv !== 'S', showS = sh && wv !== 'P';
         rays.forEach((r) => { const v = r.kind === 'P' ? showP : showS; r.m.visible = v; r.dot.visible = v; });
         xMarks.forEach((x) => (x.visible = showS));
         zP.visible = bands && showP; zS.visible = bands && showS; labP.show(bands && showP); labS.show(bands && showS); labL.show(showP);
+        star.visible = sh; epiLab.show(sh); wave.forEach((m) => (m.visible = sh)); obs.visible = obsRing.visible = sh; obsLab.show(sh); if (arc) arc.visible = sh;
+        probe.visible = probeLine.visible = ds; probeLab.show(ds);
         fmtInfo();
       }
       function fmtInfo() {
+        if (mode === 'disc') {
+          const dep = RE * Math.pow(dp / 1000, 2);
+          info('<b>속도 불연속</b> · 탐침 깊이 ' + Math.round(dep) + ' km · ' + layerOf(dep) + '<br>깊이 약 2900 km에서 P파 속도가 급감하고 S파가 사라져요 (외핵은 액체).'); return;
+        }
+        if (mode !== 'shadow') {
+          info('지구 내부는 <b>지각 · 맨틀 · 외핵(액체) · 내핵(고체)</b>의 층으로 이뤄져 있어요.'); return;
+        }
         const p = pArr(dl), s = sArr(dl), showP = wv !== 'S', showS = wv !== 'P';
         const chip = (nm, ok, why) => '<span style="color:' + (ok ? '#86efac' : '#fca5a5') + '"><b>' + nm + (ok ? ' 도착 ○' : ' 도착 ×') + '</b></span> ' + why;
         let h = '진앙각 <b>Δ = ' + dl + '°</b><br>';
@@ -158,33 +182,49 @@
         if (showP && showS && !s && p) h += '→ 103° 너머에서 S파만 없으면 외핵은 <b>액체</b>예요.';
         info(h);
       }
-      const rr = controls.range('관측점 Δ', 0, 180, 1, dl, (v) => { dl = v; setObs(); }, (v) => v + '°');
-      const wSeg = controls.segment('보이는 파', [{ value: 'P', label: 'P파' }, { value: 'S', label: 'S파' }, { value: 'B', label: '둘 다' }], wv, (v) => { wv = v; applyVis(); });
-      const bb = controls.button('암영대 띠 ✓', () => { bands = !bands; bb.classList.toggle('on', bands); bb.textContent = '암영대 띠 ' + (bands ? '✓' : '✕'); applyVis(); }); bb.classList.add('on');
-      controls.button('🌊 지진파 다시 보내기', () => { clock = 0; burst = 0; });
-      const l0 = rd(); if (l0.w) wv = l0.w; if (l0.d != null) { dl = l0.d; rr.set(dl); }
-      setObs(); applyVis();
+      const rr = controls.range('관측점 Δ', 0, 180, 1, dl, (v) => { dl = v; setObs(); try { RW().setDl(v); } catch (e) {} }, (v) => v + '°');
+      const wSeg = controls.segment('보이는 파', [{ value: 'P', label: 'P파' }, { value: 'S', label: 'S파' }, { value: 'B', label: '둘 다' }], wv, (v) => { wv = v; applyVis(); try { const q = RW(); if (q.S) { q.S.shW = v; q.syncSh(); } } catch (e) {} });
+      /* ▶ 재생: 진원의 지진파가 퍼지고, 광선을 따라 P파·S파가 지구 속을 지나가요 */
+      const player = controls.player({
+        duration: 12, loop: true, autoplay: true, label: '재생',
+        phases: [[0, '진원에서 출발'], [0.5, '지구 속을 통과']],
+        onFrame(p) { P = p; },
+      });
+      const l0 = rd(); if (l0.w) wv = l0.w; if (l0.d != null) { dl = l0.d; rr.set(dl); } if (l0.m) mode = l0.m; if (typeof l0.dp === 'number') dp = l0.dp;
+      setObs(); setProbe(); applyVis();
       const v1 = new THREE.Vector3();
       const markWave = () => wSeg.set(wv);
       markWave();
+      /* 2D → 3D: 2D의 단계(모드)·관측점·보이는 파·탐침을 매 프레임 따라가요 */
+      function follow() {
+        const l = rd(); let ch = false;
+        if (l.m && l.m !== mode) { mode = l.m; ch = true; }
+        if (l.w && l.w !== wv) { wv = l.w; markWave(); ch = true; }
+        if (l.d != null && l.d !== dl) { dl = l.d; rr.set(dl); setObs(); }
+        if (typeof l.dp === 'number' && l.dp !== dp) { dp = l.dp; setProbe(); }
+        const bk = !!(l.free || (typeof l.bk === 'number' && l.bk > 0.3));
+        if (bk !== bands) { bands = bk; ch = true; }
+        jumpLabs.forEach((j) => j.l.show(mode === 'disc' && !!(l.free || (l.found && l.found[j.id]))));
+        if (ch) applyVis();
+      }
 
       return {
         update(dt) {
-          clock += dt;
+          follow();
           rays.forEach((r) => {
-            const speed = r.kind === 'P' ? 3.2 : 1.9, per = r.L + 2.0, d = ((clock * speed + r.off * 4) % per);
-            if (d <= r.L) { r.dot.position.copy(r.curve.getPointAt(Math.min(1, d / r.L))); r.dot.visible = r.m.visible; } else r.dot.visible = false;
+            const cnt = r.kind === 'P' ? 2 : 1, u = ((P * cnt + r.off) % 1) / 0.85;
+            if (u <= 1) { r.dot.position.copy(r.curve.getPointAt(Math.min(1, u))); r.dot.visible = r.m.visible; } else r.dot.visible = false;
           });
           wave.forEach((m, i) => {
-            const ph = ((clock * 0.28 + i / 3) % 1), th = ph * Math.PI, rr_ = Math.sin(th) * ER * 1.006, y = Math.cos(th) * ER * 1.006;
+            const ph = ((P * 3 + i / 3) % 1), th = ph * Math.PI, rr_ = Math.sin(th) * ER * 1.006, y = Math.cos(th) * ER * 1.006;
             m.position.set(0, y, 0); m.scale.setScalar(Math.max(0.001, rr_)); m.material.opacity = 0.75 * (1 - ph);
           });
-          star.rotation.y += dt * 1.5; star.scale.setScalar(1 + 0.12 * Math.sin(clock * 5));
-          obsRing.scale.setScalar(1 + 0.15 * Math.sin(clock * 4));
+          star.rotation.y = P * Math.PI * 2 * 6; star.scale.setScalar(1 + 0.12 * Math.sin(P * Math.PI * 2 * 12));
+          obsRing.scale.setScalar(1 + 0.15 * Math.sin(P * Math.PI * 2 * 8));
           const cam = ctx.camera.position, vis = (cam.x + cam.z) / (cam.length() * 1.414) > 0.35;
-          capLabs.forEach((l) => l.show(vis)); labL.show(vis && wv !== 'S');
+          capLabs.forEach((l) => l.show(vis)); labL.show(vis && mode === 'shadow' && wv !== 'S');
         },
-        sync() { const l = rd(); let ch = false; if (l.w && l.w !== wv) { wv = l.w; markWave(); ch = true; } if (l.d != null && l.d !== dl) { dl = l.d; rr.set(dl); ch = true; } if (ch) { setObs(); applyVis(); } },
+        sync() { follow(); },
       };
     },
   });

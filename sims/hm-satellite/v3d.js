@@ -1,7 +1,6 @@
-/* hm-satellite · 3D 인공위성의 궤도
-   ① 저궤도·극궤도: 같은 고도의 원 궤도라도 궤도면이 다르면 지구 위를 지나는 길이 달라요 (지구는 자전해요).
-   ② 정지 위성: 주기 24시간 · 자전과 같은 방향 · 적도 상공 → 지상에서 정지해 보여요. 고도·궤도면을 바꿔 확인해요.
-   원 궤도만 다뤄요 (v = √(GM/r), T = 2πr/v). 수업의 정지 위성 장면(고도·궤도면)을 읽어 시작해요(읽기 전용). */
+/* hm-satellite · 3D 인공위성의 운동
+   2D 실험(window.__sim)의 장면을 그대로 입체로 보여 줘요: 🛰️ 궤도 속력(발사 속력 · 고도 → 원 궤도) · 📏 주기와 반지름(측정) · 🌍 정지 위성(주기 24시간) · ⚖️ 질량 구하기(이오 · 달 · 지구) · 무중량(자유 낙하).
+   원 궤도에 한정해요 (v = √(GM/r), T = 2πr/v). 값은 옆 조작판과 2D 화면이 정하고 3D는 따라가요. 위성은 중력 하나만으로 움직여요. */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -11,7 +10,7 @@
   const T_SID = 86164;                                            // 지구 자전 주기 (s)
   const WE = 2 * Math.PI / T_SID;
   const GEO_R = Math.cbrt(GM * T_SID * T_SID / (4 * Math.PI * Math.PI)), GEO_H = GEO_R - RE;
-  const ER = 3, K = ER / RE, D2R = Math.PI / 180;
+  const ER = 3, K = ER / RE, D2R = Math.PI / 180, TAU = Math.PI * 2;
   const vcirc = (r) => Math.sqrt(GM / r), per = (r) => 2 * Math.PI * Math.sqrt(r * r * r / GM);
   const fmtN = (n) => Math.round(n).toLocaleString('ko-KR');
   const hm = (s) => { const m = Math.round(s / 60); return m < 180 ? m + '분' : Math.floor(m / 60) + '시간 ' + (m % 60) + '분'; };
@@ -37,152 +36,123 @@
     g.putImageData(im, 0, 0); return cv;
   }
 
+  const f1 = (v) => (Math.round(v * 10) / 10).toFixed(1), f2 = (v) => (Math.round(v * 100) / 100).toFixed(2);
+  const sup = (s) => String(s).replace(/[-0-9]/g, (c) => ({ '-': '⁻', 0: '⁰', 1: '¹', 2: '²', 3: '³', 4: '⁴', 5: '⁵', 6: '⁶', 7: '⁷', 8: '⁸', 9: '⁹' }[c]));
+  function sci(x, d) { if (x === 0) return '0'; const e = Math.floor(Math.log10(Math.abs(x))); let m = x / Math.pow(10, e); if (+m.toFixed(d) >= 10) { m /= 10; return m.toFixed(d) + ' × 10' + sup(e + 1); } return m.toFixed(d) + ' × 10' + sup(e); }
   window.SciSim3D.attach({
     button: null,
     title: '인공위성 궤도 3D',
-    hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: 11, theta: 0.7, phi: 1.1, min: 5, max: 100 },
+    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 값은 옆 조작판에서 바꿔요',
+    camera: { dist: 12, theta: 0.5, phi: 1.1, min: 4, max: 110, target: [0, 0, 0] },
     autoRotate: 0,
+    levels: [0, 1, 2, 3],
     build(ctx) {
-      const { THREE, root, label, info, controls, orbit, renderer } = ctx;
-      const ctlEl = renderer.domElement.closest('.v3-wrap').querySelector('.v3-ctl');
-      const grab = (fn) => { const b = ctlEl.children.length; fn(); return [...ctlEl.children].slice(b); };
-      const earth = new THREE.Group(); root.add(earth);
+      const { THREE, root, label, info, orbit, renderer } = ctx;
+      const sim = () => ctx.lesson();
+      const M = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.6, metalness: 0.1 }, o || {}));
+      const V3 = THREE.Vector3;
+      const G = {}; ['orbit', 'geo', 'mass', 'wless'].forEach((k) => { G[k] = new THREE.Group(); root.add(G[k]); });
+      const LAB = {}; const reg = (k, l) => { (LAB[k] = LAB[k] || []).push(l); return l; };
+      const satMk = (col, g) => { const s = new THREE.Group(); s.add(new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, 0.2), M(col, { roughness: 0.4, metalness: 0.4 }))); s.add(new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.015, 0.2), M(0x3b82f6, { metalness: 0.5, emissive: 0x1d4ed8, emissiveIntensity: 0.4 }))); g.add(s); return s; };
+      const arrowMk = (g, col) => { const a = new THREE.ArrowHelper(new V3(1, 0, 0), new V3(), 1, col, 0.3, 0.2); g.add(a); return a; };
+      const lineMk = (g, col, op) => { const l = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: col, transparent: op != null, opacity: op == null ? 1 : op })); l.frustumCulled = false; g.add(l); return l; };
+      const ringLine = (g, col, op) => { const l = lineMk(g, col, op); l.setR = (r, inc) => { const p = []; const i = (inc || 0) * D2R; for (let k = 0; k <= 120; k++) { const u = k / 120 * TAU; p.push(new V3(r * Math.cos(u), r * Math.sin(u) * Math.sin(i), -r * Math.sin(u) * Math.cos(i))); } l.geometry.setFromPoints(p); }; return l; };
+      /* ================= 🛰️ 궤도 · 📏 측정 (중심 천체 둘레 원 궤도 만들기) ================= */
+      const body = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), M(0x3b82f6, { roughness: 0.7 })); G.orbit.add(body);
+      const oSat = satMk(0xe8edf6, G.orbit), oTrail = lineMk(G.orbit, 0xffd34d, 0.9), oRing = ringLine(G.orbit, 0xffffff, 0.35);
+      const oV = arrowMk(G.orbit, 0x22c55e), oG = arrowMk(G.orbit, 0xef4444);
+      const lBody = reg('orbit', label('', body, { color: 'rgba(12,18,34,.85)', size: 13 })), lSat = reg('orbit', label('인공위성', oSat, { color: 'rgba(14,116,144,.92)', size: 12 })), lV = reg('orbit', label('속도 v', [0, 0, 0], { color: 'rgba(21,128,61,.92)', size: 12 })), lGr = reg('orbit', label('중력 (구심력)', [0, 0, 0], { color: 'rgba(185,28,28,.92)', size: 12 }));
+      let obKey = '';
+      function orbitScene(A, S) {
+        const o = S.ob, b = o.meas ? A.BODIES[0] : A.BODIES[o.b], h = o.meas ? S.me.h : o.h, r0 = b.R + h * 1000, k = 3.4 / r0;
+        const key = b.n + '|' + h; if (key !== obKey) { obKey = key; body.material.color.set(b.col); oRing.setR(r0 * k, 0); lBody.set(b.n); }
+        body.scale.setScalar(Math.max(0.15, b.R * k)); lBody.off = [0, Math.max(0.15, b.R * k) + 0.4, 0];
+        const x = o.x * k, y = o.y * k; oSat.position.set(x, 0, -y); oSat.scale.setScalar(Math.max(1, orbit.dist / 12)); oSat.lookAt(0, 0, 0);
+        const pts = o.trail.map((q) => new V3(q[0] * k, 0, -q[1] * k)); if (pts.length > 1) oTrail.geometry.setFromPoints(pts); else oTrail.geometry.setFromPoints([new V3(), new V3(0, 0.001, 0)]);
+        const r = Math.hypot(o.x, o.y) || r0, sp = Math.hypot(o.vx, o.vy) || 1, sc = Math.max(1, orbit.dist / 12);
+        const vd = new V3(o.vx, 0, -o.vy).normalize(), gd = new V3(-x, 0, y).normalize(), pos = oSat.position;
+        oV.position.copy(pos); oV.setDirection(vd); oV.setLength(1.2 * sc, 0.35 * sc, 0.25 * sc); oG.position.copy(pos); oG.setDirection(gd); oG.setLength(1.0 * sc, 0.35 * sc, 0.25 * sc);
+        lV.obj = pos.clone().addScaledVector(vd, 1.3 * sc); lGr.obj = pos.clone().addScaledVector(gd, 1.1 * sc); lSat.off = [0, 0.5 * sc, 0];
+        const vNow = o.meas ? A.vcNow() : o.v;
+        let t;
+        if (o.meas) t = '<b>📏 ' + b.n + ' 둘레 원 궤도 · 고도 ' + S.me.h + ' km</b> (측정 장면)<br>궤도 반지름 r = ' + sci(r0, 2) + ' m · 속력 v = <b>' + f2(vNow) + ' km/s</b> (이 고도의 원 궤도 속력)<br>v와 한 바퀴 도는 시간 T를 측정해 표와 그래프를 채워요 (T = 2πr/v).<br>';
+        else t = '<b>🛰️ ' + b.n + ' 둘레 원 궤도 만들기</b> · 고도 ' + h + ' km → r = ' + sci(r0, 2) + ' m<br>발사 속력 v = <b>' + f2(vNow) + ' km/s</b> (옆 조작판) · ' + (o.st === 'ready' ? '속력을 정하고 발사하세요. 중력이 구심력 역할을 하는 속력(원 궤도 속력)이 아니면 원이 아니에요.' : o.st === 'run' ? '도는 중… 돈 바퀴 수 ' + f1(o.revs) : o.msg || '궤도를 마쳤어요') + '<br>';
+        info(t + '위성에는 <b>중력만</b> 작용해요: 중력이 구심력이라 GMm/r² = mv²/r → v = √(GM/r) (위성의 질량은 상관없어요).');
+      }
+      /* ================= 🌍 정지 위성 ================= */
+      const earth = new THREE.Group(); G.geo.add(earth);
       const tex = new THREE.CanvasTexture(earthCanvas()); if ('encoding' in tex) tex.encoding = THREE.sRGBEncoding; tex.anisotropy = 4;
       earth.add(new THREE.Mesh(new THREE.SphereGeometry(ER, 72, 48), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.9 })));
-      const eqLine = (r, col, op, dashed) => { const p = []; for (let i = 0; i <= 120; i++) { const a = i / 120 * Math.PI * 2; p.push(new THREE.Vector3(Math.cos(a) * r, 0, -Math.sin(a) * r)); } const g = new THREE.BufferGeometry().setFromPoints(p); const l = new THREE.Line(g, dashed ? new THREE.LineDashedMaterial({ color: col, dashSize: 0.18, gapSize: 0.12, transparent: true, opacity: op }) : new THREE.LineBasicMaterial({ color: col, transparent: true, opacity: op })); if (dashed) l.computeLineDistances(); return l; };
-      earth.add(eqLine(ER * 1.003, 0xffffff, 0.55, false));                         // 적도
-      const axis = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, -ER * 1.35, 0), new THREE.Vector3(0, ER * 1.5, 0)]), new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.6 }));
-      earth.add(axis);
-      const north = label('북극 ↑', [0, ER * 1.6, 0], { color: 'rgba(12,18,34,.8)' });
-      // 자전 방향: 북극 위에서 내려다볼 때 반시계 방향 (서 → 동)
-      const RA = ER * 0.55, A1 = Math.PI * 1.5;
-      const rotAr = new THREE.Mesh(new THREE.TorusGeometry(RA, 0.03, 8, 60, A1), new THREE.MeshBasicMaterial({ color: 0xffd34d }));
-      rotAr.rotation.x = -Math.PI / 2; rotAr.position.y = ER * 1.25; root.add(rotAr);
-      const rotHead = new THREE.Mesh(new THREE.ConeGeometry(0.11, 0.28, 14), new THREE.MeshBasicMaterial({ color: 0xffd34d }));
-      rotHead.position.set(Math.cos(A1) * RA, ER * 1.25, -Math.sin(A1) * RA);
-      rotHead.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(-Math.sin(A1), 0, -Math.cos(A1)));
-      root.add(rotHead);
-      const rotLab = label('자전 (서 → 동)', [Math.cos(0.5) * RA, ER * 1.25 + 0.3, -Math.sin(0.5) * RA], { color: 'rgba(120,80,0,.9)' });
-      /* 궤도와 위성 */
-      const makeSat = (col) => {
-        const g = new THREE.Group();
-        g.add(new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, 0.2), new THREE.MeshStandardMaterial({ color: col, roughness: 0.4, metalness: 0.4 })));
-        const pn = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.015, 0.2), new THREE.MeshStandardMaterial({ color: 0x3b82f6, roughness: 0.3, metalness: 0.5, emissive: 0x1d4ed8, emissiveIntensity: 0.4 })); g.add(pn);
-        root.add(g); return g;
-      };
-      const ring = (col) => { const l = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial({ color: col })); root.add(l); return l; };
-      const S1 = { name: '저궤도 위성', col: 0x22d3ee, hex: 'rgba(14,116,144,.92)', inc: 51.6, ring: ring(0x22d3ee), mesh: makeSat(0x67e8f9), u0: 0.6 };
-      const S2 = { name: '극궤도 위성', col: 0xe879f9, hex: 'rgba(134,25,143,.92)', inc: 90, ring: ring(0xe879f9), mesh: makeSat(0xf0abfc), u0: 2.2 };
-      const S3 = { name: '정지 위성', col: 0xfacc15, hex: 'rgba(133,77,14,.92)', inc: 0, ring: ring(0xfacc15), mesh: makeSat(0xfde68a), u0: 0.6 };
-      const sats = [S1, S2, S3], NTR = 4500;
-      sats.forEach((s) => { s.lab = label(s.name, s.mesh, { color: s.hex, offset: [0, 0.5, 0] }); s.n = 0; s.buf = new Float32Array(3 * NTR); s.attr = new THREE.BufferAttribute(s.buf, 3); s.attr.setUsage(THREE.DynamicDrawUsage); const tg = new THREE.BufferGeometry(); tg.setAttribute('position', s.attr); tg.setDrawRange(0, 0); s.trail = new THREE.Points(tg, new THREE.PointsMaterial({ color: s.col, size: 3.2, sizeAttenuation: false })); s.trail.frustumCulled = false; earth.add(s.trail); });
-      /* 지상 관측점 */
-      const pin = new THREE.Mesh(new THREE.SphereGeometry(0.075, 14, 10), new THREE.MeshBasicMaterial({ color: 0xff3b30 })); earth.add(pin);
-      const pinLab = label('지상 관측자', pin, { color: 'rgba(185,28,28,.92)', offset: [0, -0.4, 0] });
-      const sightG = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3(0, 1, 0)]);
-      const sight = new THREE.Line(sightG, new THREE.LineDashedMaterial({ color: 0xff8a80, dashSize: 0.3, gapSize: 0.2 })); root.add(sight);
-      const velA = new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), new THREE.Vector3(), 1, 0x22c55e, 0.3, 0.2), grvA = new THREE.ArrowHelper(new THREE.Vector3(0, -1, 0), new THREE.Vector3(), 1, 0xef4444, 0.3, 0.2);
-      root.add(velA, grvA);
-
-      /* 상태 */
-      let zoomIn = false, mode = 'low', h = 400, hG = 20000, incG = 0, speed = 1, t = 0, sc = 1, tgt = null, sample = 0;
-      const TS = [0, 1440, 4000];
-      const rOf = () => RE + (mode === 'low' ? h : hG);
-      function planePt(inc, u, r, out) { const i = inc * D2R; return out.set(r * K * Math.cos(u), r * K * Math.sin(u) * Math.sin(i), -r * K * Math.sin(u) * Math.cos(i)); }
-      let tubeR = 0.03;
-      function ringGeo(inc, r) { const p = []; for (let i = 0; i < 120; i++) p.push(planePt(inc, i / 120 * Math.PI * 2, r, new THREE.Vector3())); return new THREE.TubeGeometry(new THREE.CatmullRomCurve3(p, true), 240, tubeR, 6, true); }
-      function clearTrails() { sats.forEach((s) => { s.n = 0; s.trail.geometry.setDrawRange(0, 0); }); }
-      function configure() {
-        const low = mode === 'low';
-        S1.ring.visible = S1.mesh.visible = S2.ring.visible = S2.mesh.visible = low; S1.lab.show(low); S2.lab.show(low);
-        S3.ring.visible = S3.mesh.visible = !low; S3.lab.show(!low); pin.visible = !low; pinLab.show(!low); sight.visible = !low;
-        const r = rOf();
-        const asp = Math.min(1.3, renderer.domElement.clientWidth / Math.max(1, renderer.domElement.clientHeight)), dist0 = low ? (asp < 0.9 ? 17 : 11) : Math.max(14, Math.min(95, r * K * 1.28 / (0.414 * asp)));
-        tubeR = 0.0034 * dist0;
-        if (low) { S1.r = S2.r = r; S1.ring.geometry.dispose(); S1.ring.geometry = ringGeo(S1.inc, r); S2.ring.geometry.dispose(); S2.ring.geometry = ringGeo(S2.inc, r); }
-        else { S3.inc = incG; S3.r = r; S3.ring.geometry.dispose(); S3.ring.geometry = ringGeo(incG, r); S3.name = incG === 0 ? '정지 위성 후보 (적도 궤도)' : '극궤도 위성 (같은 고도)'; S3.lab.set(incG === 0 ? '인공위성 (적도 궤도)' : '인공위성 (극궤도)'); }
-        clearTrails();
-        gLow.forEach((n) => (n.style.display = low ? '' : 'none')); gGeo.forEach((n) => (n.style.display = low ? 'none' : ''));
-        tgt = { dist: dist0 };
-        // 관측자는 처음에 위성 바로 아래 (적도)
-        pin.position.set(Math.cos(S3.u0) * ER * 1.002, 0, -Math.sin(S3.u0) * ER * 1.002);
-        fmtInfo();
+      earth.add((() => { const p = []; for (let i = 0; i <= 120; i++) { const a = i / 120 * TAU; p.push(new V3(Math.cos(a) * ER * 1.003, 0, -Math.sin(a) * ER * 1.003)); } return new THREE.Line(new THREE.BufferGeometry().setFromPoints(p), new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.55 })); })());
+      const axisL = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new V3(0, -ER * 1.35, 0), new V3(0, ER * 1.5, 0)]), new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.6 })); earth.add(axisL);
+      const lNorth = reg('geo', label('북극 ↑', [0, ER * 1.6, 0], { color: 'rgba(12,18,34,.8)' }));
+      const SA = { iss: { h: 400, u0: 1.6, mesh: satMk(0xe8edf6, G.geo), ring: ringLine(G.geo, 0xe8edf6, 0.35), name: '국제우주정거장' }, gps: { h: 20200, u0: 4.2, mesh: satMk(0xd9a8ff, G.geo), ring: ringLine(G.geo, 0xd9a8ff, 0.4), name: 'GPS 위성' } };
+      const SelS = { mesh: satMk(0xfde68a, G.geo), ring: ringLine(G.geo, 0xffc85a, 0.85), u0: 0.7 };
+      Object.keys(SA).forEach((k) => { SA[k].ring.setR((RE + SA[k].h) * K, 0); reg('geo', label(SA[k].name, SA[k].mesh, { color: 'rgba(55,65,81,.9)', size: 11.5 })).off = [0, 0.45, 0]; });
+      const lSel = reg('geo', label('', SelS.mesh, { color: 'rgba(133,77,14,.92)', size: 12.5 })); lSel.off = [0, 0.5, 0];
+      const pin = new THREE.Mesh(new THREE.SphereGeometry(0.075, 14, 10), new THREE.MeshBasicMaterial({ color: 0xff3b30 })); earth.add(pin); const lPin = reg('geo', label('지상 관측자', pin, { color: 'rgba(185,28,28,.92)', size: 12 })); lPin.off = [0, -0.4, 0];
+      const sight = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new V3(), new V3(0, 1, 0)]), new THREE.LineDashedMaterial({ color: 0xff8a80, dashSize: 0.3, gapSize: 0.2 })); G.geo.add(sight);
+      const gV = arrowMk(G.geo, 0x22c55e), gGr = arrowMk(G.geo, 0xef4444);
+      let gKey = '';
+      function geoScene(A, S) {
+        const g = S.ge, h = g.h, r = RE + h, v = vcirc(r), T = per(r), Tsid = T_SID, stat = Math.abs(T - Tsid) < 120 && g.inc === 0;
+        const key = h + '|' + g.inc; if (key !== gKey) { gKey = key; SelS.ring.setR(r * K, g.inc); }
+        earth.rotation.y = WE * g.t;
+        const u = SelS.u0 + TAU * g.t / T, i = g.inc * D2R, sc = Math.max(1.3, orbit.dist / 12 * 1.1);
+        SelS.mesh.position.set(r * K * Math.cos(u), r * K * Math.sin(u) * Math.sin(i), -r * K * Math.sin(u) * Math.cos(i)); SelS.mesh.lookAt(0, 0, 0); SelS.mesh.scale.setScalar(sc);
+        Object.keys(SA).forEach((k) => { const q = SA[k], rr = RE + q.h, uu = q.u0 + TAU * g.t / per(rr); q.mesh.position.set(rr * K * Math.cos(uu), 0, -rr * K * Math.sin(uu)); q.mesh.lookAt(0, 0, 0); q.mesh.scale.setScalar(sc * 0.85); });
+        lSel.set(g.inc === 0 ? '내 위성 (적도 궤도)' : '내 위성 (극궤도)');
+        pin.position.set(Math.cos(SelS.u0) * ER * 1.002, 0, -Math.sin(SelS.u0) * ER * 1.002); pin.scale.setScalar(Math.max(1, sc * 0.8));
+        const pos = SelS.mesh.position, tv = new V3(-Math.sin(u), Math.cos(u) * Math.sin(i), -Math.cos(u) * Math.cos(i)).normalize(), gd = pos.clone().normalize().negate();
+        gV.position.copy(pos); gV.setDirection(tv); gV.setLength(1.1 * sc, 0.35 * sc, 0.25 * sc); gGr.position.copy(pos); gGr.setDirection(gd); gGr.setLength(1.1 * sc, 0.35 * sc, 0.25 * sc);
+        const tw = new V3(); pin.getWorldPosition(tw); const pa = sight.geometry.attributes.position; pa.setXYZ(0, tw.x, tw.y, tw.z); pa.setXYZ(1, pos.x, pos.y, pos.z); pa.needsUpdate = true; sight.computeLineDistances();
+        const near = orbit.dist < 26; lNorth.show(near); lPin.show(near);
+        const rel = T < Tsid ? '위성이 더 빨라서 지상에서 보면 <b>동쪽으로 흘러가요</b>' : '위성이 더 느려서 지상에서 보면 <b>서쪽으로 뒤처져요</b>';
+        info('<b>🌍 정지 위성</b> · 고도 <b>' + Math.round(h).toLocaleString('ko-KR') + ' km</b> · 속력 ' + f2(v) + ' km/s · 주기 <b>' + (T / 3600).toFixed(1) + '시간</b> (지구 자전 24시간)<br>' + (stat ? '<b style="color:#86efac">지상에서 정지해 보여요!</b> 적도 상공 · 자전과 같은 방향 · 주기 24시간' : (g.inc !== 0 ? '궤도면이 적도면과 달라서(극궤도) 주기가 24시간이어도 지상에서 <b>정지해 보이지 않아요</b>.' : rel)) + '<br><span style="opacity:.8">고도 · 궤도면 · 속도는 옆 조작판에서 바꿔요 (고도는 계산해서 찾아요).</span>');
       }
-      function fmtInfo() {
-        const r = rOf(), v = vcirc(r), T = per(r), nday = 86400 / T;
-        if (mode === 'low') {
-          info('고도 <b>' + fmtN(h) + ' km</b> → r = ' + fmtN(r) + ' km<br>속력 v = √(GM/r) = <b>' + v.toFixed(2) + ' km/s</b> · 주기 T = <b>' + hm(T) + '</b><br>하루에 지구를 약 <b>' + nday.toFixed(1) + '바퀴</b> 돌아요.<br><span style="color:#67e8f9">하늘색</span>(경사 51.6°, ISS처럼)은 위도 ±51.6° 사이만, <span style="color:#f0abfc">분홍색</span>(극궤도)은 북극과 남극을 지나요. 지구가 자전해서 자취가 매번 달라져요.');
-        } else {
-          const stat = Math.abs(T - T_SID) < 120 && incG === 0, geoish = Math.abs(T - T_SID) < 120;
-          const rel = T < T_SID ? '위성이 더 빨라서 지상에서 보면 <b>동쪽으로 흘러가요</b>' : '위성이 더 느려서 지상에서 보면 <b>서쪽으로 뒤처져요</b>';
-          info('고도 <b>' + fmtN(hG) + ' km</b> · 속력 <b>' + v.toFixed(2) + ' km/s</b> · 주기 <b>' + (T / 3600).toFixed(1) + '시간</b> (자전 24시간)<br>' +
-            (stat ? '<b style="color:#86efac">지상에서 정지해 보여요!</b> 적도 상공 · 자전과 같은 방향 · 주기 24시간<br>고도 약 ' + (GEO_H / 10000).toFixed(1) + '만 km (r = 4.22×10⁴ km)' : (incG !== 0 ? (geoish ? '주기는 24시간이지만 <b>극궤도</b>라 남북으로 오가며 한 곳에 머물지 못해요.' : rel) : (geoish ? '' : rel))));
-        }
+      /* ================= ⚖️ 질량 구하기 ================= */
+      const mC = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 28), M(0xd9a066)), mS = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 18), M(0xf2d45c)); G.mass.add(mC, mS);
+      const mRing = ringLine(G.mass, 0xffffff, 0.45), mRod = lineMk(G.mass, 0xffffff, 0.55);
+      const lmC = reg('mass', label('', mC, { color: 'rgba(12,18,34,.85)', size: 13 })), lmS = reg('mass', label('', mS, { color: 'rgba(12,18,34,.85)', size: 12 }));
+      function massScene(A, S) {
+        const ms = S.ms, p = A.MASSES[ms.i], hide = A.eff('hideAns'), R = 4.2;
+        mC.material.color.set(p.col); mC.scale.setScalar(p.cs / 34 * 1.6); mS.scale.setScalar(p.ss / 34 * 1.6); mS.material.color.set(p.sat === '이오' ? '#f2d45c' : p.sat === '지구' ? '#3b82f6' : '#d9dde6');
+        mRing.setR(R, 0); mS.position.set(R * Math.cos(ms.ang), 0, -R * Math.sin(ms.ang)); mRod.geometry.setFromPoints([new V3(), mS.position.clone()]);
+        lmC.set(p.c); lmS.set(p.sat); lmC.off = [0, p.cs / 34 * 1.6 + 0.4, 0]; lmS.off = [0, 0.5, 0];
+        info('<b>⚖️ 위성으로 천체의 질량 재기: ' + p.name + '</b><br>관측한 r = <b>' + sci(p.r, 2) + ' m</b> · 관측한 T = <b>' + sci(p.T, 2) + ' s</b> (' + p.Tt + ')<br>' + (hide ? '중심 천체의 질량 M = 4π²r³ / (GT²)을 계산해 2D 화면에 입력해요.' : p.c + '의 질량 M = ' + sci(A.massOf(p), 2) + ' kg') + '<br>중력이 구심력 → GMm/r² = m(2πr/T)² → 위성의 질량은 약분돼요.<br><span style="opacity:.8">어느 천체인지는 옆 조작판에서 골라요.</span>');
       }
-      function readLesson() { try { const S = window.__sim && window.__sim.S; if (S && S.ge) return { mode: S.mode === 'geo' ? 'geo' : null, h: S.ge.h, inc: S.ge.inc === 90 ? 90 : 0 }; } catch (e) {} return null; }
-
-      const segMode = controls.segment('보기', [{ value: 'low', label: '🛰️ 저궤도·극궤도' }, { value: 'geo', label: '📡 정지 위성' }], mode, (v) => { mode = v; configure(); });
-      let rLow, rGeo, segInc;
-      const gLow = grab(() => { rLow = controls.range('고도 h', 200, 2000, 50, h, (x) => { h = x; configure(); }, (x) => fmtN(x) + ' km'); });
-      const gGeo = grab(() => {
-        rGeo = controls.range('고도 h', 20000, 50000, 100, hG, (x) => { hG = x; configure(); }, (x) => fmtN(x) + ' km');
-        controls.button('📡 24시간 주기 고도', () => { hG = Math.round(GEO_H / 100) * 100; rGeo.set(hG); configure(); });
-        segInc = controls.segment('궤도면', [{ value: 0, label: '적도면' }, { value: 90, label: '극궤도' }], incG, (v) => { incG = v; configure(); });
-      });
-      controls.segment('시간', [{ value: 0, label: '⏸' }, { value: 1, label: '▶' }, { value: 2, label: '⏩' }], speed, (v) => { speed = v; });
-      const l0 = readLesson(); if (l0) { if (l0.mode) { mode = l0.mode; segMode.set(mode); } hG = Math.max(20000, Math.min(50000, Math.round(l0.h / 100) * 100)); incG = l0.inc; rGeo.set(hG); segInc.set(incG); }
-      configure();
-      orbit.dist = tgt.dist; tgt = null;
-      const tA = new THREE.Vector3(), tB = new THREE.Vector3(), tC = new THREE.Vector3(), mat = new THREE.Matrix4();
-
-      function place(s, u) {
-        planePt(s.inc, u, s.r, s.mesh.position);
-        // 위성 본체의 방향: 지구 쪽을 향해 두기
-        s.mesh.lookAt(0, 0, 0);
-        s.mesh.scale.setScalar(sc);
+      /* ================= 🚀 무중량 (자유 낙하) ================= */
+      const wE = new THREE.Mesh(new THREE.SphereGeometry(2.0, 40, 28), M(0x3b82f6)); G.wless.add(wE); const wRing = ringLine(G.wless, 0xffffff, 0.4);
+      const wSat = new THREE.Group(); G.wless.add(wSat);
+      { const hull = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1.0, 1.0), new THREE.MeshStandardMaterial({ color: 0xcbd5e1, transparent: true, opacity: 0.4, roughness: 0.2 })); wSat.add(hull); const man = new THREE.Mesh(new THREE.SphereGeometry(0.16, 14, 10), M(0xffd9b5)); wSat.add(man); const body2 = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.14, 0.4, 12), M(0xff9a6a)); body2.position.y = -0.3; wSat.add(body2); wSat.userData.man = [man, body2]; }
+      const wV = arrowMk(G.wless, 0xffe58a), wGr = arrowMk(G.wless, 0xff7b7b);
+      const lwS = reg('wless', label('위성 안의 우주인 (함께 떨어지는 중)', wSat, { color: 'rgba(12,18,34,.85)', size: 12 })), lwG = reg('wless', label('중력', [0, 0, 0], { color: 'rgba(185,28,28,.92)', size: 12 }));
+      function wlessScene(A, S) {
+        const w = S.wl, Rr = 4.4, a = -w.t * 0.9 + 2.2, rr = A.RE_ + w.h * 1000, gO = A.GM_E_ / (rr * rr), g0 = 9.8;
+        wRing.setR(Rr, 0); wSat.position.set(Rr * Math.cos(-a), 0, Rr * Math.sin(-a) * -1); wSat.position.set(Rr * Math.cos(a), 0, -Rr * Math.sin(a));
+        const pos = wSat.position, tv = new V3(Math.sin(a), 0, Math.cos(a)).normalize(), gd = pos.clone().multiplyScalar(-1).setY(0).normalize();
+        wV.position.copy(pos); wV.setDirection(tv); wV.setLength(1.6, 0.4, 0.28); wGr.position.copy(pos); wGr.setDirection(gd); wGr.setLength(1.1, 0.4, 0.28);
+        lwG.obj = pos.clone().addScaledVector(gd, 1.2); lwS.off = [0, 1.0, 0];
+        wSat.userData.man[0].position.y = 0.25 + 0.06 * Math.sin(w.t * 1.7); wSat.userData.man[1].position.y = -0.1 + 0.06 * Math.sin(w.t * 1.7);
+        info('<b>🚀 위성 안은 왜 무중량일까</b> · 고도 ' + w.h + ' km<br>이 고도의 중력 가속도 = ' + f2(gO) + ' m/s² (지표 g의 ' + Math.round(gO / g0 * 100) + ' %) — 중력은 여전히 커요!<br>위성과 우주인은 <b>함께 자유 낙하</b>하고 있어서 서로 누르지 않아요 → 둥둥 떠요 (무중량). 위성은 접선 방향으로 가려다 계속 지구 쪽으로 떨어져요.<br><span style="opacity:.8">고도는 옆 조작판에서 바꿔요.</span>');
       }
-      let sized = false;
+      let cur = '';
+      function setMode(S) {
+        const mode = (S.mode === 'orbit' || S.mode === 'meas') ? 'orbit' : S.mode; if (mode === cur) return; cur = mode;
+        Object.keys(G).forEach((k) => (G[k].visible = k === mode)); Object.keys(LAB).forEach((k) => LAB[k].forEach((l) => l.show(k === mode)));
+        obKey = ''; gKey = '';
+        if (mode === 'orbit') Object.assign(orbit, { tx: 0, ty: 0, tz: 0, phi: 0.95, theta: 0.2, dist: PHONE ? 16 : 11 });
+        else if (mode === 'geo') Object.assign(orbit, { tx: 0, ty: 0, tz: 0, phi: 1.05, theta: 0.5, dist: PHONE ? 70 : 62 });
+        else if (mode === 'mass') Object.assign(orbit, { tx: 0, ty: 0, tz: 0, phi: 0.95, theta: 0.2, dist: PHONE ? 15 : 11 });
+        else Object.assign(orbit, { tx: 0, ty: 0, tz: 0, phi: 1.0, theta: 0.2, dist: PHONE ? 15 : 11 });
+      }
       return {
-        update(dt) {
-          if (!sized) { sized = true; configure(); orbit.dist = tgt ? tgt.dist : orbit.dist; tgt = null; }
-          t += dt * TS[speed];
-          earth.rotation.y = WE * t;
-          if (tgt) { const d = tgt.dist - orbit.dist; orbit.dist += d * Math.min(1, dt * 3); if (Math.abs(d) < 0.02 * tgt.dist) tgt = null; }
-          sc = Math.max(1.3, orbit.dist / 12 * 1.1);
-          const near = orbit.dist < 26; north.show(near); rotLab.show(near); pinLab.show(mode === 'geo' && near);
-          const act = mode === 'low' ? [S1, S2] : [S3];
-          act.forEach((s) => {
-            const r = s.r || rOf(), u = s.u0 + 2 * Math.PI * t / per(r);
-            place(s, u);
-            sample += dt;
-          });
-          // 자취: 위성 바로 아래 지표면 점 (지구 좌표)
-          if (sample > 0.013 && TS[speed] > 0) {
-            sample = 0;
-            act.forEach((s) => {
-              tA.copy(s.mesh.position).normalize().multiplyScalar(ER * 1.004);
-              tB.copy(tA); tB.applyAxisAngle(new THREE.Vector3(0, 1, 0), -earth.rotation.y);
-              if (s.n >= NTR) { s.buf.copyWithin(0, 3); s.n = NTR - 1; }
-              s.buf[3 * s.n] = tB.x; s.buf[3 * s.n + 1] = tB.y; s.buf[3 * s.n + 2] = tB.z; s.n++;
-              s.attr.needsUpdate = true; s.trail.geometry.setDrawRange(0, s.n);
-            });
-          }
-          // 화살표 (선택된 위성 하나: 저궤도에서는 극궤도 위성, 정지 위성 모드에서는 그 위성)
-          const A = mode === 'low' ? S1 : S3;
-          const r = A.r || rOf(), u = A.u0 + 2 * Math.PI * t / per(r);
-          const pos = A.mesh.position;
-          tA.set(-Math.sin(u), Math.cos(u) * Math.sin(A.inc * D2R), -Math.cos(u) * Math.cos(A.inc * D2R)).normalize();
-          velA.position.copy(pos); velA.setDirection(tA); velA.setLength(1.1 * sc, 0.35 * sc, 0.25 * sc);
-          tB.copy(pos).normalize().negate(); grvA.position.copy(pos); grvA.setDirection(tB); grvA.setLength(1.1 * sc, 0.35 * sc, 0.25 * sc);
-          // 지상 관측자 → 위성 시선
-          if (mode === 'geo') {
-            pin.getWorldPosition(tC);
-            const pa = sight.geometry.attributes.position; pa.setXYZ(0, tC.x, tC.y, tC.z); pa.setXYZ(1, pos.x, pos.y, pos.z); pa.needsUpdate = true; sight.computeLineDistances();
-          }
-          pin.scale.setScalar(Math.max(1, sc * 0.8));
+        update() {
+          const A = sim(); if (!A || !A.S) return; const S = A.S;
+          setMode(S);
+          if (cur === 'orbit') orbitScene(A, S); else if (cur === 'geo') geoScene(A, S); else if (cur === 'mass') massScene(A, S); else wlessScene(A, S);
         },
-        sync() { const l = readLesson(); if (l) { if (l.mode && l.mode !== mode) { mode = l.mode; segMode.set(mode); } hG = Math.max(20000, Math.min(50000, Math.round(l.h / 100) * 100)); incG = l.inc; rGeo.set(hG); segInc.set(incG); configure(); } },
+        sync() {},
       };
     },
   });

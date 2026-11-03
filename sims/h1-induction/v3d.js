@@ -1,7 +1,8 @@
 /* h1-induction · 3D 전자기 유도와 간이 발전기
    ① 막대자석을 코일에 넣었다 뺐다 하면 코일을 지나는 자기장이 변해 유도 전류가 흘러요 (멈추면 전류 없음, 방향은 들어갈 때와 나올 때 반대).
    ② 자석을 코일 안에서 돌리면 코일을 지나는 자기장이 계속 변해 전류 방향이 번갈아 바뀌고, 반대로 연결한 LED가 번갈아 켜져요.
-   수식(패러데이·렌츠 법칙)은 다루지 않고 관찰 사실로만 보여 줘요. 크기와 비율은 보기 좋게 줄인 모형이에요. */
+   2D 실험의 상태(window.__sim)를 그대로 따라가요: 자석의 위치·극, 검류계 바늘, 자석 수·코일 감은 수(세기 요인), 간이 발전기의 회전 속도·LED.
+   3D의 [넣기/빼기]·위치 슬라이더·▶ 재생·회전 속도는 2D를 바꿔요. 수식(패러데이·렌츠 법칙)은 다루지 않고 관찰 사실로만 보여 줘요. */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -13,6 +14,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHN ? 16 : 10.5, theta: 0.35, phi: 1.1, target: [0, -0.4, 0], min: 6, max: 28 },
     autoRotate: 0,
+    levels: [0, 1, 2],
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3;
@@ -21,14 +23,18 @@
       const st = { scene: S0.mode === 'gen' ? 'gen' : 'mag', x: -4.6, auto: false, at: 0, vel: 0, emf: 0, prevX: -4.6, rps: 1.5, n: 1, phi: 0.6, ledA: 0, ledB: 0, flowT: 0 };
 
       /* ---------- 코일 (x축 방향 나선) ---------- */
-      const CR = 1.25, CL = 2.6, NT = 9;
-      function coilGroup() {
-        const g = new THREE.Group(), pts = [];
+      const CR = 1.25, CL = 2.6;
+      let NT = 9;   // 코일 감은 수 (2D: 100회 = 9바퀴로 그려요, 50회 · 200회도 같은 비율)
+      const coilMat = mat(COPPER, { metalness: 0.55, roughness: 0.32 });
+      const coil = new THREE.Group(); root.add(coil);
+      function buildCoil(n) {
+        NT = n; while (coil.children.length) { const c = coil.children[0]; coil.remove(c); c.geometry.dispose(); }
+        const pts = [];
         for (let i = 0; i <= NT * 36; i++) { const s = i / 36; pts.push(new V3(-CL / 2 + CL * s / NT, CR * Math.cos(s * Math.PI * 2), CR * Math.sin(s * Math.PI * 2))); }
-        const tube = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 500, 0.075, 8, false), mat(COPPER, { metalness: 0.55, roughness: 0.32 }));
-        tube.castShadow = true; g.add(tube); return g;
+        const tube = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), Math.max(120, NT * 36), 0.075, 8, false), coilMat);
+        tube.castShadow = true; coil.add(tube);
       }
-      const coil = coilGroup(); root.add(coil);
+      buildCoil(NT);
       const wireM = mat(COPPER, { metalness: 0.5, roughness: 0.35 });
       const wire = (pts, par) => { const m = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts, false, 'catmullrom', 0), 40, 0.05, 8, false), wireM); (par || root).add(m); return m; };
 
@@ -102,29 +108,36 @@
       /* ---------- 바닥 ---------- */
       const base = new THREE.Mesh(new THREE.CylinderGeometry(5.4, 5.6, 0.3, 48), new THREE.MeshLambertMaterial({ color: 0x2d3547 })); base.position.y = -3.4; base.receiveShadow = true; root.add(base);
 
-      /* ---------- 조작 ---------- */
-      let segScene, rngX, autoB, rngS, segN;
+      /* ---------- 조작 (2D를 대신 눌러 줘요) ---------- */
+      const L2 = () => (ctx.lesson && ctx.lesson()) || null;
+      const probe = controls.text(''); probe.style.display = 'none'; const ctlRow = probe.parentElement;
+      const grab = (fn) => { const before = new Set(ctlRow.children); fn(); return Array.from(ctlRow.children).filter((c) => !before.has(c)); };
+      let rngX, plM, rngS, internal = true;
+      const magB = [];
+      const gMag1 = grab(() => {
+        magB.push(controls.button('▶ 코일에 넣기', () => { const L = L2(); if (L && L.S.mode === 'obs') L.startAuto(1, 1); }));
+        magB.push(controls.button('◀ 빼기', () => { const L = L2(); if (L && L.S.mode === 'obs') L.startAuto(-1, 1); }));
+        controls.button('🔄 자석 극 바꾸기', () => { const L = L2(); if (L && L.flipPole) L.flipPole(); });
+        magB.push(controls.button('📏 측정하기', () => { const L = L2(); if (L && L.measure) L.measure(); }));
+        rngX = controls.range('자석 위치', 0, 100, 1, 0, (v) => { const L = L2(); if (!L || L.S.run || L.S.auto) return; L.S.drag = null; L.S.xm = L.XMIN + (L.XMAX - L.XMIN) * v / 100; if (!internal) plM.pause(); }, (v) => (v >= 98 ? '코일 안' : v <= 2 ? '코일에서 멀리' : v + ' %'));
+        plM = controls.player({
+          duration: 8, loop: true, label: '넣었다 뺐다',
+          phases: [[0, '자석을 넣어요'], [0.42, '코일 속에서 멈춤'], [0.58, '자석을 빼요']],
+          onFrame(p) { if (internal) return; const L = L2(); if (!L || L.S.run || L.S.auto) return; const u = p < 0.42 ? p / 0.42 : p < 0.58 ? 1 : 1 - (p - 0.58) / 0.42; const e = u * u * (3 - 2 * u); L.S.drag = null; L.S.xm = L.XMIN + (L.XMAX - L.XMIN) * e; },
+        });
+      });
+      const gGen1 = grab(() => {
+        rngS = controls.range('돌리는 속도', 0, 4, 0.25, 2, (v) => { const el = document.getElementById('sRev'); if (el) { el.value = v; el.dispatchEvent(new Event('input', { bubbles: true })); } }, (v) => v.toFixed(2).replace(/0$/, '') + ' 회/초');
+      });
+      internal = false;
       function showScene() {
-        gMag.visible = st.scene === 'mag'; gGen.visible = st.scene === 'gen';
-        magN.show(st.scene === 'mag'); magS.show(st.scene === 'mag'); coilLab.show(true);
-        genN.show(st.scene === 'gen'); genLab.show(st.scene === 'gen'); led1L.show(st.scene === 'gen'); led2L.show(st.scene === 'gen'); galL.show(st.scene === 'mag');
-        [rngX && rngX, autoB].forEach(() => {});
-        ui();
-      }
-      const ctlRows = {};
-      segScene = controls.segment('보기', [{ value: 'mag', label: '🧲 자석과 코일' }, { value: 'gen', label: '⚙️ 간이 발전기' }], st.scene, (v) => { st.scene = v; showScene(); });
-      rngX = controls.range('자석 위치', -5, 5, 0.05, st.x, (v) => { st.auto = false; autoB.textContent = '▶ 자동으로 넣다 뺐다'; st.x = v; }, (v) => (Math.abs(v) < 0.3 ? '코일 안' : v < 0 ? '왼쪽' : '오른쪽'));
-      autoB = controls.button('▶ 자동으로 넣다 뺐다', () => { st.auto = !st.auto; st.at = Math.asin(Math.max(-1, Math.min(1, st.x / 4.6))); autoB.textContent = st.auto ? '⏸ 멈춤' : '▶ 자동으로 넣다 뺐다'; });
-      rngS = controls.range('돌리는 속도', 0, 3, 0.1, st.rps, (v) => { st.rps = v; }, (v) => (v === 0 ? '멈춤' : v < 1 ? '느리게' : v < 2 ? '보통' : '빠르게'));
-      segN = controls.segment('자석', [{ value: 1, label: '1개' }, { value: 2, label: '2개' }], 1, (v) => { st.n = v; mB.visible = v === 2; });
-      mB.visible = false;
-      const ctlEls = Array.from(autoB.parentElement.children);
-      const iX = ctlEls.indexOf(autoB);
-      function ui() {
         const mag = st.scene === 'mag';
-        // 컨트롤 줄: [보기 라벨, 버튼2] [자석위치 라벨, 슬라이더], 자동 버튼, [속도 라벨, 슬라이더], [자석 라벨, 버튼2]
-        ctlEls.forEach((el, i) => { if (i < 3) return; const isMagPart = i <= iX; el.style.display = (isMagPart ? mag : !mag) ? '' : 'none'; });
+        gMag.visible = mag; gGen.visible = !mag;
+        magN.show(mag); magS.show(mag); coilLab.show(true);
+        genN.show(!mag); genLab.show(!mag); led1L.show(!mag); led2L.show(!mag); galL.show(mag);
+        gMag1.forEach((e) => { e.style.display = mag ? '' : 'none'; }); gGen1.forEach((e) => { e.style.display = mag ? 'none' : ''; });
       }
+      mB.visible = false; const mC = bar(2.6, 0.8); mC.visible = false; gMag.add(mC);
       showScene();
 
       /* ---------- 갱신 ---------- */
@@ -132,48 +145,52 @@
       const tmp = new V3();
       function helixAt(s, out) { const a = s * Math.PI * 2; return out.set(-CL / 2 + CL * s / NT, CR * Math.cos(a), CR * Math.sin(a)); }
 
+      const setInfo = (h) => { if (h !== setInfo.h) { setInfo.h = h; info(h); } };
+      let sceneOf = (S) => (S && S.S && S.S.mode === 'gen' || S && S.S && S.S.mode === 'conv' ? 'gen' : 'mag');
       return {
         update(dt, t) {
+          const L = L2(), S = L && L.S;
+          if (S) { const sc = sceneOf(L); if (sc !== st.scene) { st.scene = sc; showScene(); } }
           if (st.scene === 'mag') {
-            if (st.auto) { st.at += dt * 0.75; st.x = Math.sin(st.at) * 4.6; rngX.set(st.x); }
-            const v = (st.x - st.prevX) / Math.max(dt, 1e-3); st.prevX = st.x;
-            st.vel += (v - st.vel) * Math.min(1, dt * 14);
-            const dPhi = (flux(st.x + 0.04) - flux(st.x - 0.04)) / 0.08;   // 자석 위치에 따른 자기장 변화율
-            st.emf = -dPhi * st.vel * (1 / 1.0);
-            magnet.position.set(st.x, 0, 0);
-            const e = Math.max(-1, Math.min(1, st.emf / 1.6));
+            const lab = S && S.mode === 'lab', cfg = lab ? S.cfg : { mg: 1, tn: 100 };
+            const turns = Math.max(3, Math.round(9 * cfg.tn / 100)); if (turns !== NT) buildCoil(turns);
+            mB.visible = false; mC.visible = cfg.mg === 2; mC.position.set(st.x, 0.85, 0);
+            if (S) {
+              st.x = -4.6 + 4.6 * (S.xm - L.XMIN) / (L.XMAX - L.XMIN);
+              const pct = Math.round(100 * (S.xm - L.XMIN) / (L.XMAX - L.XMIN)); if (Math.abs(rngX.value - pct) > 0.5) rngX.set(pct);
+              st.pol = S.pol;
+              const busy = !!(S.run || S.auto);
+              magB[0].disabled = magB[1].disabled = busy || S.mode !== 'obs'; magB[2].style.display = lab ? '' : 'none'; magB[0].style.display = magB[1].style.display = lab ? 'none' : '';
+              if (!S.run && !S.auto) { internal = true; const u = (S.xm - L.XMIN) / (L.XMAX - L.XMIN); if (!plM.playing) plM.set(u * 0.42 > 0 ? Math.min(0.42, u * 0.42) : 0); internal = false; }
+            }
+            const pol = S ? S.pol : 1;
+            magnet.position.set(st.x, 0, 0); magnet.rotation.y = pol < 0 ? Math.PI : 0; mC.rotation.y = magnet.rotation.y;
+            magN.off = [pol < 0 ? -1.0 : 1.0, 0.75, 0]; magS.off = [pol < 0 ? 1.0 : -1.0, 0.75, 0];
+            const e = S ? Math.max(-1, Math.min(1, S.needle.value / 10)) : 0;
             needleG.rotation.z += (-e * 1.25 - needleG.rotation.z) * Math.min(1, dt * 18);
-            const on = Math.abs(e) > 0.04;
-            const dirS = e > 0 ? 1 : -1;
+            const on = Math.abs(e) > 0.04, dirS = e > 0 ? 1 : -1;
             st.flowT += dt * dirS * (0.35 + Math.abs(e) * 2.4);
             flow.forEach((c, i) => {
               c.visible = on; if (!on) return;
               const s = (((i / flow.length + st.flowT) % 1) + 1) % 1 * NT; helixAt(s, tmp); c.position.copy(tmp);
               const nx = helixAt(s + 0.02 * dirS, new V3()); c.quaternion.setFromUnitVectors(new V3(0, 1, 0), nx.sub(tmp).normalize());
             });
-            if (st.vel === 0 || Math.abs(st.vel) < 0.02) {
-              info('자석이 <b>' + (Math.abs(st.x) < 0.3 ? '코일 안에서도' : '') + ' 멈춰 있으면</b> 전류가 흐르지 않아요.<br>자석을 코일에 넣거나 빼 보세요.');
-            } else info('자석이 움직이면 코일을 지나는 자기장이 변해 <b>유도 전류</b>가 흘러요.<br>들어갈 때와 나올 때 <b>방향이 반대</b>예요.');
+            if (!on) setInfo('자석이 <b>' + (S && L.tipS(S.xm) > 0 ? '코일 안에서도' : '') + ' 멈춰 있으면</b> 전류가 흐르지 않아요.<br>자석을 코일에 넣거나 빼 보세요.' + (lab && S ? '<br>자석 ' + cfg.mg + '개 · 코일 ' + cfg.tn + '회' : ''));
+            else setInfo('자석이 움직이면 코일을 지나는 자기장이 변해 <b>유도 전류</b>가 흘러요.<br>들어갈 때와 나올 때 <b>방향이 반대</b>예요.' + (lab && S ? '<br>자석 ' + cfg.mg + '개 · 코일 ' + cfg.tn + '회' : ''));
           } else {
             flow.forEach((c) => { c.visible = false; });
-            const w = st.rps * Math.PI * 2 * 0.5;
-            st.phi += w * dt; spin.rotation.y = st.phi;
-            // 자석이 x축과 이루는 각 → 코일을 지나는 자기장 cos φ, 유도 전압 ∝ 회전 속도 × sin φ
-            const e = Math.sin(st.phi) * (st.rps / 3) * (st.n === 2 ? 1.0 : 0.62) * 1.6;
-            const th = 0.12;
-            const ta = Math.max(0, e - th) / 1.0, tb = Math.max(0, -e - th) / 1.0;
-            st.ledA += (Math.min(1, ta) - st.ledA) * Math.min(1, dt * 14); st.ledB += (Math.min(1, tb) - st.ledB) * Math.min(1, dt * 14);
-            ledA.bulb.material.emissiveIntensity = st.ledA * 2.4;
-            ledB.bulb.material.emissiveIntensity = st.ledB * 2.4;
-            if (st.rps === 0) info('자석이 <b>멈춰 있으면</b> 전류가 없어서 LED가 꺼져요.<br>돌리는 속도를 올려 보세요.');
-            else info('자석이 돌면 전류 방향이 <b>번갈아 바뀌어서</b> LED 두 개가 번갈아 켜져요.<br>빠르게 돌리거나 자석을 2개로 하면 더 밝아져요.');
+            const g = S ? S.gen : null;
+            if (g) {
+              const turns = Math.max(3, Math.round(9 * g.tn / 100)); if (turns !== NT) buildCoil(turns);
+              spin.rotation.y = g.phi; mB.visible = g.mg === 2;
+              ledA.bulb.material.emissiveIntensity = g.ledA * 2.4; ledB.bulb.material.emissiveIntensity = g.ledB * 2.4;
+              if (rngS && Math.abs(rngS.value - g.ft) > 0.01) rngS.set(g.ft);
+              const pct = L.ledPct(g);
+              setInfo(g.ft === 0 ? '자석이 <b>멈춰 있으면</b> 전류가 없어서 LED가 꺼져요.<br>돌리는 속도를 올려 보세요.' : '자석이 돌면 전류 방향이 <b>번갈아 바뀌어서</b> LED 두 개가 번갈아 켜져요.<br>회전 ' + g.f.toFixed(1) + ' 회/초 · 코일 ' + g.tn + '회 · 자석 ' + g.mg + '개 → LED 최대 밝기 <b>' + pct + ' %</b>');
+            }
           }
         },
-        sync() {
-          const S = (window.__sim && window.__sim.S) || {};
-          if (S.mode === 'gen' && st.scene !== 'gen') { st.scene = 'gen'; segScene.set('gen'); showScene(); }
-          else if ((S.mode === 'obs' || S.mode === 'lab') && st.scene !== 'mag') { st.scene = 'mag'; segScene.set('mag'); showScene(); }
-        },
+        sync() {},
       };
     },
   });

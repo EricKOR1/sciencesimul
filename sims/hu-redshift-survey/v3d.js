@@ -1,81 +1,101 @@
-/* hu-redshift-survey · 3D 허블 법칙과 우주 팽창
-   멀리 있는 은하일수록 더 빨리 멀어져요: v = H₀ · d  (H₀ ≈ 70 km/s/Mpc). 이 속도는 스펙트럼선의 적색 이동 z ≈ v/c 로 알 수 있어요.
-   우주 팽창은 건포도 빵이 부푸는 것과 같아서 어느 은하에서 보아도 모든 은하가 멀어지고, '팽창의 중심'은 따로 없어요.
-   은하의 위치는 보기 좋게 만든 모형이에요(범위: 320 Mpc). 2D 실험의 단계에서 시작해요. */
+/* hu-redshift-survey · 3D 은하의 3차원 지도 (적색 편이로 거리를 구해 쐐기 도표를 입체로)
+   하늘 사진은 방향(θ)만 알려 줘요. 스펙트럼선의 적색 이동 z로 후퇴 속도 v = cz, 거리 d = v / H₀ (H₀ = 70 km/s/Mpc)를 구하면
+   은하를 3차원 공간에 놓을 수 있어요. 2D 쐐기 도표에서 찍은 은하를 그대로 입체로 보여 줘요.
+   분광 z(오차 약 10⁻⁴)로 잰 지도는 은하단과 빈 곳이 선명하고, 측광 z(오차 약 0.03)로 잰 지도는 거리가 번져 흐려져요.
+   (높이 방향의 두께는 보기 좋게 나타냈어요.) 2D 실험의 은하 자료(GAL, WD)를 그대로 읽어요. */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
   const PHONE = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches);
-  const TAU = Math.PI * 2, UNIT = 5 / 320, H0 = 70, C = 3.0e5;       // 장면 길이 / Mpc
+  const TAU = Math.PI * 2, DEG = Math.PI / 180, UNIT = 5 / 320, RMAX = 320, THMAX = 20, EL = 6 * DEG;   // 장면 길이 / Mpc
 
   window.SciSim3D.attach({
-    title: '허블 법칙과 우주 팽창 3D',
+    title: '은하의 3차원 지도 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    levels: [1, 2],
-    camera: { dist: PHONE ? 18 : 13, theta: 0.6, phi: 1.05, min: 5, max: 26 },
-    autoRotate: 0.1,
+    levels: [2],
+    camera: { dist: PHONE ? 11.5 : 8.6, theta: Math.PI, phi: 0.62, min: 3, max: 22, target: [0, 0, 2.3] },
+    autoRotate: 0,
     build(ctx) {
-      const { THREE, root, label, info, controls, orbit } = ctx;
-      const st = { a: 1, play: true, obs: 0, t: 0, arrows: true };
+      const { THREE, root, label, info, controls } = ctx;
+      const W = () => window.__sim || {};
+      const st = { blur: 0, key: '', P: 0 };
       let seed = 77; const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
       { const pos = []; for (let i = 0; i < 400; i++) { const u = rnd() * 2 - 1, a = rnd() * TAU, r = Math.sqrt(1 - u * u); pos.push(Math.cos(a) * r * 60, u * 60, Math.sin(a) * r * 60); }
         const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
         root.add(new THREE.Points(g, new THREE.PointsMaterial({ color: 0xaec3ff, size: 1.4, sizeAttenuation: false, transparent: true, opacity: 0.45 }))); }
 
-      /* 은하 */
-      const N = 150, P = [];                                    // 위치 (Mpc)
-      for (let i = 0; i < N; i++) { const u = rnd() * 2 - 1, a = rnd() * TAU, s = Math.sqrt(1 - u * u), R = 25 + 295 * Math.cbrt(rnd()); P.push(new THREE.Vector3(Math.cos(a) * s * R, u * R * 0.8, Math.sin(a) * s * R)); }
-      P[0].set(0, 0, 0);                                       // 우리은하
-      P[1].set(130, 40, 140);                                   // 다른 관측자 후보
-      P[2].set(-170, -50, 120);
-      const ex = new THREE.Vector3(0.62, 0.15, -0.77).multiplyScalar(224); P[3].copy(ex);       // 설명용 은하 (약 224 Mpc)
-      const gm = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 16, 12), new THREE.MeshStandardMaterial({ roughness: 0.5, metalness: 0.0, emissive: 0x222233, emissiveIntensity: 0.6 }), N); gm.frustumCulled = false; root.add(gm);
-      const am = new THREE.InstancedMesh(new THREE.ConeGeometry(0.04, 1, 8), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.85 }), N); am.frustumCulled = false; root.add(am);
-      const col = new THREE.Color();
-      const rad = []; for (let i = 0; i < N; i++) rad.push(0.06 + rnd() * 0.06);
-      const dm = new THREE.Object3D(), up = new THREE.Vector3(0, 1, 0), v = new THREE.Vector3();
-      const ringM = new THREE.Mesh(new THREE.TorusGeometry(0.28, 0.02, 10, 40), new THREE.MeshBasicMaterial({ color: 0xffd23f })); root.add(ringM);
-      const labObs = label('관측자(우리은하)', [0, 0, 0], { color: 'rgba(30,64,140,.92)' }), labEx = label('', [0, 0, 0], { size: 11.5, color: 'rgba(130,80,10,.92)' });
-      const shells = [100, 200, 300].map((d) => { const m = new THREE.Mesh(new THREE.SphereGeometry(d * UNIT, 40, 28), new THREE.MeshBasicMaterial({ color: 0x6f8de0, transparent: true, opacity: 0.045, depthWrite: false, wireframe: false })); root.add(m); return m; });
-      const shellLab = [100, 200, 300].map((d) => label(d + ' Mpc', [0, 0, 0], { size: 11, color: 'rgba(40,60,120,.85)' }));
-      let lastObs = -1;
+      /* 쐐기 (방향 θ ±20°, 거리 0~320 Mpc) · 거리 눈금 */
+      const lineMat = (op) => new THREE.LineBasicMaterial({ color: 0x94a3b8, transparent: true, opacity: op });
+      const dir = (th, d, el) => new THREE.Vector3(d * UNIT * Math.cos(el) * Math.sin(th * DEG), d * UNIT * Math.sin(el), d * UNIT * Math.cos(el) * Math.cos(th * DEG));
+      [-THMAX, THMAX].forEach((th) => root.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([dir(th, 0, 0), dir(th, RMAX, 0)]), lineMat(0.7))));
+      [100, 200, 300].forEach((d) => {
+        const p = []; for (let i = 0; i <= 40; i++) p.push(dir(-THMAX + (2 * THMAX * i) / 40, d, 0));
+        root.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(p), lineMat(0.5)));
+        label(d + ' Mpc', dir(THMAX + 1.5, d, 0).toArray(), { size: 11, color: 'rgba(40,60,120,.85)' });
+      });
+      const wedgeFill = (() => { const sh = new THREE.Shape(); sh.moveTo(0, 0); for (let i = 0; i <= 40; i++) { const th = (-THMAX + (2 * THMAX * i) / 40) * DEG; sh.lineTo(RMAX * UNIT * Math.sin(th), RMAX * UNIT * Math.cos(th)); } sh.lineTo(0, 0);
+        const m = new THREE.Mesh(new THREE.ShapeGeometry(sh), new THREE.MeshBasicMaterial({ color: 0x6366f1, transparent: true, opacity: 0.1, side: THREE.DoubleSide, depthWrite: false })); m.rotation.x = Math.PI / 2; root.add(m); return m; })();
+      const obs = new THREE.Mesh(new THREE.SphereGeometry(0.1, 20, 14), new THREE.MeshBasicMaterial({ color: 0x60a5fa })); root.add(obs);
+      label('우리 (관측자)', obs, { offset: [0, 0.4, 0], color: 'rgba(30,64,140,.92)' });
+
+      /* 은하 400개 (2D의 GAL) */
+      const w0 = W(), GAL = w0.GAL || [], N = Math.min(400, GAL.length || 0);
+      const gm = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 12, 9), new THREE.MeshBasicMaterial({ color: 0xffffff }), Math.max(1, N)); gm.frustumCulled = false; root.add(gm);
+      const col = new THREE.Color(), dm = new THREE.Object3D();
+      for (let i = 0; i < N; i++) { const tg = i < 6; gm.setColorAt(i, col.setHex(tg ? 0xfbbf24 : (GAL[i].kind && GAL[i].kind.indexOf('cl') === 0 ? 0xc7d2fe : 0xe0e7ff))); }
+      if (gm.instanceColor) gm.instanceColor.needsUpdate = true;
+      const tgLab = []; for (let i = 0; i < 6; i++) tgLab.push(label('G' + (i + 1), [0, 0, 0], { size: 11, color: 'rgba(120,80,0,.92)' }));
+      const selRing = new THREE.Mesh(new THREE.TorusGeometry(0.2, 0.015, 8, 32), new THREE.MeshBasicMaterial({ color: 0x4ade80 })); selRing.visible = false; root.add(selRing);
+      const smooth = (t) => { t = Math.max(0, Math.min(1, t)); return t * t * (3 - 2 * t); };
+      const reflect = (d) => { let v = Math.abs(d); if (v > RMAX) v = 2 * RMAX - v; return Math.max(0, Math.min(RMAX, v)); };
+      let shown = 0;
       function layout() {
-        const o = P[st.obs];
-        for (let i = 0; i < N; i++) {
-          v.copy(P[i]).sub(o).multiplyScalar(st.a * UNIT);                 // 팽창하면 거리가 a배
-          const d = v.length() / (st.a * UNIT);                              // 은하 사이 거리(Mpc, 팽창 전)
-          dm.position.copy(v); dm.scale.setScalar(i === st.obs ? 0.17 : rad[i]); dm.quaternion.identity(); dm.updateMatrix(); gm.setMatrixAt(i, dm.matrix);
-          const zz = Math.min(1, d * st.a / 320); col.setRGB(0.7 + 0.3 * zz, 0.82 - 0.3 * zz, 1 - 0.75 * zz); gm.setColorAt(i, i === st.obs ? col.setHex(0x3ea0ff) : col);
-          /* 멀어지는 속도 화살표: v = H0·d 에 비례 (길이) */
-          if (i === st.obs || !st.arrows) { dm.scale.setScalar(0.0001); dm.updateMatrix(); am.setMatrixAt(i, dm.matrix); continue; }
-          const L = Math.min(1.35, d * UNIT * 0.2 * st.a + 0.02), dir = v.clone().normalize();
-          dm.position.copy(v).addScaledVector(dir, rad[i] + L / 2 + 0.03); dm.scale.set(1, Math.max(0.001, L), 1); dm.quaternion.setFromUnitVectors(up, dir); dm.updateMatrix(); am.setMatrixAt(i, dm.matrix);
-        }
-        gm.instanceMatrix.needsUpdate = am.instanceMatrix.needsUpdate = true; if (gm.instanceColor) gm.instanceColor.needsUpdate = true;
-        ringM.position.set(0, 0, 0); ringM.visible = false;
-        const e = P[3].clone().sub(o).multiplyScalar(st.a * UNIT); ringM.position.copy(e); ringM.visible = st.obs !== 3; ringM.lookAt(ctx.camera.position);
-        labEx.obj = e.toArray(); labEx.off = [0, 0.55, 0];
-        const dE = P[3].distanceTo(o), vE = H0 * dE * st.a, z = vE / C; labEx.set('d ≈ ' + Math.round(dE * st.a) + ' Mpc'); labEx.show(st.obs !== 3);
-        labObs.obj = [0, 0, 0]; labObs.off = [0, 0.6, 0]; labObs.set(st.obs === 0 ? '관측자(우리은하)' : '다른 은하에서 본 모습');
-        shells.forEach((m, i) => { m.scale.setScalar(st.a); shellLab[i].obj = [0, ([100, 200, 300][i]) * UNIT * st.a, 0]; });
-        text(dE * st.a, vE, z);
+        const w = W(), S = w.S || {}, WD = S.wd || { list: [], set: new Set() }, free = !!(w.game && w.game.free);
+        const sig = (w.SIG_SPEC || 0.43) + ((w.SIG_PHOT || 129) - (w.SIG_SPEC || 0.43)) * smooth(st.blur);
+        const idxs = [];
+        if (S.view === 'wedge') WD.list.forEach((e) => idxs.push(e.i));
+        else for (let i = 0; i < 6; i++) if (free || (S.dOK && S.dOK[i])) idxs.push(i);
+        shown = 0; tgLab.forEach((l) => l.show(false));
+        idxs.forEach((i) => {
+          const g = GAL[i]; if (!g || shown >= N) return;
+          const dd = reflect(g.d + g.eps * sig), p = dir(g.th, dd, g.u * EL), tg = i < 6;
+          dm.position.copy(p); dm.scale.setScalar(tg ? 0.08 : 0.045); dm.quaternion.identity(); dm.updateMatrix(); gm.setMatrixAt(shown++, dm.matrix);
+          if (tg) { tgLab[i].obj = p.toArray(); tgLab[i].off = [0, 0.22, 0]; tgLab[i].show(true); }
+        });
+        gm.count = shown; gm.instanceMatrix.needsUpdate = true;
+        const sel = S.sel; if (S.view !== 'wedge' && sel >= 0 && sel < 6 && GAL[sel] && (free || (S.dOK && S.dOK[sel]))) { selRing.visible = true; selRing.position.copy(dir(GAL[sel].th, GAL[sel].d, GAL[sel].u * EL)); selRing.lookAt(ctx.camera.position); } else selRing.visible = false;
+        const mode = WD.mode || 'spec', errK = !!(WD.errOK && WD.errOK[0] && WD.errOK[1]) || free;
+        let h;
+        if (S.view === 'wedge') {
+          h = '<b>은하의 3차원 지도</b> · 찍은 은하 ' + shown + '개<br>방향 θ와 거리 d(= cz / H₀)로 놓았어요. 거리는 <b>' + (mode === 'spec' ? '분광 z' : '측광 z') + '</b>로 쟀어요.<br>' +
+            (st.blur < 0.5 ? '분광 z로 재면 은하단과 빈 곳이 <b>선명</b>해요.' : '측광 z로 재면 거리가 <b>번져서</b> 구조가 흐려져요.') + (errK ? '' : '');
+        } else h = '<b>스펙트럼으로 거리를 구한 은하</b> · ' + shown + '개<br>z → v = cz → d = v / H₀ 로 거리를 구하면 은하를 3차원에 놓을 수 있어요. 옆에서 은하마다 계산해 봐요.';
+        info(h);
       }
-      function text(d, vE, z) {
-        info('<b>' + (st.obs === 0 ? '우리은하에서 본 우주' : '다른 은하에서 봐도 똑같아요') + '</b><br>멀수록 화살표(멀어지는 속도)가 길어요: <b>v = H₀·d</b><br>예) d ≈ ' + Math.round(d) + ' Mpc → v ≈ ' + Math.round(vE).toLocaleString() + ' km/s, 적색 이동 z ≈ ' + z.toFixed(3));
+      /* ▶ 재생: 분광 z → 측광 z → 분광 z 로 바꿔 가며 같은 은하들의 지도가 어떻게 선명해지고 흐려지는지 봐요 (2D '거리 측정' 선택도 함께 바뀌어요) */
+      let ready = false, lastMode = '';
+      const player = controls.player({
+        duration: 10, loop: true, autoplay: false, label: '재생',
+        phases: [[0, '분광 z (선명)'], [0.45, '측광 z (흐림)']],
+        onFrame(p) {
+          st.P = p; if (!ready) return;
+          const m = (p >= 0.45 && p < 0.95) ? 'phot' : 'spec';
+          const w = W(), S = w.S;
+          if (S && S.view === 'wedge' && S.wd && m !== lastMode) { lastMode = m; S.wd.mode = m; S.wd.seen[m] = true; try { w.updateCtl(); } catch (e) { /* 무시 */ } }
+        },
+      });
+      ready = true;
+      function follow(dt) {
+        const w = W(), S = w.S; if (!S || !S.wd) return;
+        const tgt = S.wd.mode === 'phot' ? 1 : 0;
+        const nb = st.blur + (tgt - st.blur) * Math.min(1, dt * 2.4);
+        const key = [S.view, S.wd.list.length, S.wd.mode, S.sel, S.dOK && S.dOK.join(''), w.game && w.game.free].join('|');
+        if (Math.abs(nb - st.blur) > 0.002 || key !== st.key) { st.blur = Math.abs(tgt - nb) < 0.002 ? tgt : nb; st.key = key; layout(); }
       }
-      const rA = controls.range('우주 팽창', 0.5, 1.6, 0.01, 1, (v2) => { st.a = v2; st.play = false; bP.textContent = '▶ 팽창시키기'; layout(); }, (v2) => '크기 ×' + v2.toFixed(2));
-      const bP = controls.button('▶ 팽창시키기', () => { st.play = !st.play; bP.textContent = st.play ? '⏸ 멈춤' : '▶ 팽창시키기'; if (st.play && st.a > 1.55) st.a = 0.6; });
-      const bO = controls.button('🔭 다른 은하에서 보기', () => { st.obs = st.obs === 0 ? 1 : st.obs === 1 ? 2 : 0; layout(); });
-      const bAr = controls.button('속도 화살표 ✓', () => { st.arrows = !st.arrows; bAr.classList.toggle('on', st.arrows); bAr.textContent = '속도 화살표 ' + (st.arrows ? '✓' : '✕'); layout(); }); bAr.classList.add('on');
-      st.play = false; bP.textContent = '▶ 팽창시키기';
       layout();
       return {
-        update(dt) {
-          if (st.play) { st.a += dt * 0.09; if (st.a > 1.6) st.a = 0.5; rA.set(Math.round(st.a * 100) / 100); layout(); }
-          else if (st.obs !== lastObs) lastObs = st.obs;
-          ringM.lookAt(ctx.camera.position);
-        },
-        sync() { layout(); },
+        update(dt) { follow(dt); selRing.lookAt(ctx.camera.position); },
+        sync() { st.key = ''; layout(); },
       };
     },
   });

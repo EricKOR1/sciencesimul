@@ -7,8 +7,7 @@
   if (!window.SciSim3D) return;
   const PHONE = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches);
   const G = 9.8, TAU = Math.PI * 2, LX = 10, LZ = 3.2, LV = 4.2;     // 수조 길이 · 폭 · 보이는 파장
-  const HS = [5, 10, 20, 40, 100, 200, 400, 1000, 4000];             // 고를 수 있는 수심(m)
-
+  
   function waveOf(T, h) {                                            // 분산 관계 풀기
     const w = TAU / T; let k = w * w / G;
     for (let i = 0; i < 60; i++) { const f = G * k * Math.tanh(k * h) - w * w, d = G * Math.tanh(k * h) + G * k * h / Math.pow(Math.cosh(k * h), 2); k -= f / d; if (!(k > 0)) k = w * w / G; }
@@ -24,8 +23,8 @@
     autoRotate: 0,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
-      const st = { T: 8, hi: 8, orb: true, t: 0, mode: null };
-      const H = () => HS[st.hi];
+      const st = { T: 6, h: 4000, orb: true, mode: 'deep', P: 0, sub: 'depth' };
+      const H = () => st.h;
       const sr = () => { try { return window.__sim && window.__sim.S; } catch (e) { return null; } };
 
       /* 수조: 바닥 + 뒷벽 + 물 */
@@ -77,25 +76,42 @@
         classify();
       }
       function classify() {
-        const c = cls(W.hl), nm = c === 'deep' ? '심해파' : c === 'shallow' ? '천해파' : '전이파';
+        const S = sr() || {}, g = (window.__sim && window.__sim.game), free = !!(g && g.free), c = cls(W.hl), m = st.mode;
+        const nm = c === 'deep' ? '심해파' : c === 'shallow' ? '천해파' : '전이파';
         const cs = c === 'deep' ? 'c = gT/2π' : c === 'shallow' ? 'c = √(gh)' : '두 식의 중간';
-        info('<b>' + nm + '</b> · 주기 ' + st.T + ' s, 수심 ' + H() + ' m<br>파장 λ ≈ ' + (W.L >= 100 ? Math.round(W.L) : W.L.toFixed(1)) + ' m · 파속 ≈ ' + W.c.toFixed(1) + ' m/s<br>h/λ = ' + (W.hl >= 1 ? W.hl.toFixed(1) : W.hl.toFixed(2)) + ' → ' + (c === 'deep' ? '입자가 <b>원</b>을 그려요' : c === 'shallow' ? '입자가 <b>납작한 타원</b>을 그려요 (바닥은 앞뒤로만)' : '타원이 점점 납작해져요') + '<br><span style="opacity:.85">' + cs + '</span>');
+        const hl = 'h/λ = ' + (W.hl >= 1 ? W.hl.toFixed(1) : W.hl.toFixed(3));
+        const shape = c === 'deep' ? '입자가 <b>원</b>을 그려요' : c === 'shallow' ? '입자가 <b>납작한 타원</b>을 그려요 (바닥은 앞뒤로만)' : '타원이 점점 납작해져요';
+        const lam = '파장 λ ≈ ' + (W.L >= 1000 ? Math.round(W.L / 100) / 10 + ' km' : W.L >= 100 ? Math.round(W.L) + ' m' : W.L.toFixed(1) + ' m');
+        const cc = m === 'shallow' ? Math.sqrt(G * H()) : W.c, cv = cc.toFixed(cc >= 100 ? 0 : 1) + ' m/s';
+        let h;
+        if (m === 'deep') h = '<b>심해파</b> · 주기 T = ' + st.T + ' s<br>' + lam + ' · 파속 c = gT/2π = ' + ((S.showC2 || free) ? cv : '?') + '<br>' + shape + '. 깊이 λ/2 아래에서는 궤도가 거의 사라져요.';
+        else if (m === 'shallow') h = '<b>천해파</b> · ' + (st.sub === 'beach' ? '해빈에서 관측 위치의 수심 ' + (+H().toFixed(2)) + ' m (T = 10 s)' : '수심 h = ' + H() + ' m · 긴 파(T = 600 s)') + '<br>파속 c = √(gh) = ' + cv + '<br>' + shape;
+        else if (m === 'trans') h = '<b>수심 ' + H() + ' m</b> · 주기 T = 10 s<br>' + hl + ' · 파속 c = ' + cv + '<br>' + ((S.showCls || free) ? '<b>' + nm + '</b> → ' + shape + '<br><span style="opacity:.85">' + cs + '</span>' : 'h/λ 값으로 어느 영역인지 직접 판단해 봐요.');
+        else h = '<b>' + nm + '</b> · 주기 ' + st.T + ' s, 수심 ' + H() + ' m<br>' + lam + ' · 파속 ≈ ' + cv + '<br>' + hl + ' → ' + shape;
+        info(h);
       }
 
-      const rT = controls.range('주기 T', 4, 20, 1, st.T, (v) => { st.T = v; rebuild(); }, (v) => v + ' s');
-      const rH = controls.range('수심 h', 0, HS.length - 1, 1, st.hi, (v) => { st.hi = v; rebuild(); }, (v) => HS[v] + ' m');
       const bo = controls.button('궤도 고리 ✓', () => { st.orb = !st.orb; bo.classList.toggle('on', st.orb); bo.textContent = '궤도 고리 ' + (st.orb ? '✓' : '✕'); rebuild(); }); bo.classList.add('on');
+      /* ▶ 재생: 한 번에 물결 2주기. 부표(붉은 입자)가 궤도를 따라 제자리에서 돌아요 */
+      const player = controls.player({
+        duration: 6, loop: true, autoplay: true, label: '재생',
+        phases: [[0, '마루'], [0.25, '내려감'], [0.5, '골'], [0.75, '올라감']],
+        onFrame(p) { st.P = p; },
+      });
 
-      function follow() {                                                         // 2D 단계에 맞춰 시작값 읽기
-        const S = sr(); if (!S) return;
-        const key = S.mode + '|' + S.T2 + '|' + S.h3 + '|' + S.h4;
-        if (key === st.key) return; st.key = key;
-        if (S.mode === 'deep') { st.T = S.T2; st.hi = HS.indexOf(4000); }
-        else if (S.mode === 'shallow') { st.T = 20; st.hi = HS.indexOf(HS.reduce((b, v) => (Math.abs(v - S.h3) < Math.abs(b - S.h3) ? v : b), 4000)); if (S.h3 <= 100) st.T = 20; }
-        else if (S.mode === 'trans') { st.T = 10; st.hi = HS.indexOf(HS.reduce((b, v) => (Math.abs(v - S.h4) < Math.abs(b - S.h4) ? v : b), 400)); }
+      /* 2D → 3D: 2D 단계의 값(심해파 T · 천해파 수심 · 해빈 위치 · 전이파 수심)을 그대로 읽어요 */
+      function follow() {
+        const S = sr(), g = window.__sim; if (!S) return;
+        let T, h, key;
+        if (S.mode === 'deep') { T = S.T2; h = 4000; }
+        else if (S.mode === 'shallow') {
+          if (S.sub3 === 'beach' && g && g.beach && g.beach()) { const rows = g.beach().rows, i = Math.max(0, Math.min(rows.length - 1, Math.round((S.pos3 / 100) * (rows.length - 1)))); T = 10; h = Math.max(0.2, rows[i].h); }
+          else { T = 600; h = S.h3; }
+        } else if (S.mode === 'trans') { T = 10; h = S.h4; }
         else return;
-        if (S.mode === 'shallow') st.T = 20;
-        rT.set(st.T); rH.set(st.hi); rebuild();
+        key = S.mode + '|' + S.sub3 + '|' + T + '|' + h + '|' + (S.showC2 ? 1 : 0) + (S.showCls ? 1 : 0) + (g && g.game && g.game.free ? 1 : 0);
+        if (key === st.key) return; st.key = key;
+        st.mode = S.mode; st.sub = S.sub3; st.T = T; st.h = h; rebuild();
       }
       follow(); rebuild();
 
@@ -103,8 +119,8 @@
       return {
         update(dt) {
           follow();
-          st.t += dt; const w = TAU / (st.T * 3), k = TAU / LV;                    // 보기 좋게 3배 느리게
-          const a = st.a, ph = -w * st.t;
+          const k = TAU / LV;
+          const a = st.a, ph = -TAU * 2 * st.P;
           for (let i = 0; i < sp.count; i++) { const x = sx[i]; sp.setY(i, a * Math.cos(k * x + ph)); }
           sp.needsUpdate = true; surfGeo.computeVertexNormals();
           let n = 0;

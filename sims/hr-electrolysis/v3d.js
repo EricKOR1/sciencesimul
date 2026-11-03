@@ -2,7 +2,8 @@
    외부 전원이 (−)극으로 전자를 밀어 넣어요. (−)극에서는 환원, (+)극에서는 산화가 일어나요.
    용융 NaCl: (−) Na⁺ + e⁻ → Na, (+) 2Cl⁻ → Cl₂ + 2e⁻
    NaCl 수용액: (−) 2H₂O + 2e⁻ → H₂ + 2OH⁻ (Na⁺는 물보다 환원되기 어려워요), (+) 2Cl⁻ → Cl₂ + 2e⁻
-   입자 수와 속도는 모형 스케치예요. */
+   2D에서 고른 화면(용융 NaCl · NaCl 수용액)과 전원(⚡ 켜기 · 끄기)을 그대로 따라가요 (3D 전원 단추도 2D 단추를 눌러 줘요).
+   입자 수와 속도는 모형 스케치예요. 2단계(용융 NaCl)와 3단계(수용액 경쟁)에서 열려요. */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -14,6 +15,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHONE ? 19 : 12.5, theta: 0.3, phi: 1.22, min: 8, max: 28, target: [0, 1.0, 0] },
     autoRotate: 0.06,
+    levels: [1, 2],   // 2단계 용융 NaCl · 3단계 수용액 경쟁. 1·4단계(전지와 비교 · 전자 계산)는 2D 화면이에요
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3;
@@ -71,15 +73,21 @@
         L.prodC.set(v === 'ml' ? 'Na 생성' : 'H₂ 기체'); L.prodA.set('Cl₂ 기체'); txt = '';
       }
       let txt = '';
-      const seg = controls.segment('전해질', [{ value: 'ml', label: '용융 NaCl' }, { value: 'aq', label: 'NaCl 수용액' }], scene, setScene);
-      const pb = controls.button('전원 ON ✓', () => { power = !power; pb.classList.toggle('on', power); pb.textContent = '전원 ' + (power ? 'ON ✓' : 'OFF ✕'); }); pb.classList.add('on');
+      const pb = controls.button('⚡ 전원 OFF ✕', () => {
+        const w = window.__sim, md = w && w.S && w.S.mode, bt = document.getElementById(md === 'molten' ? 'bMlPow' : md === 'aqueous' ? 'bAqPow' : '');
+        if (bt && !bt.disabled) { bt.click(); return; }                       // 2D의 전원 단추와 같은 단추
+        power = !power;
+      });
+      controls.text('전해질(용융 NaCl · 수용액)은 2D 화면의 단계에서 골라요.');
       const lb = controls.button('이름표 ✓', () => { showLab = !showLab; lb.classList.toggle('on', showLab); lb.textContent = '이름표 ' + (showLab ? '✓' : '✕'); setLab(); }); lb.classList.add('on');
-      setScene(scene); let pw = 1;
+      setScene(scene); let pw = 0;
       return {
         update(dt, t) {
           dt = Math.min(dt, 0.05);
           const ms = window.__sim && window.__sim.S && window.__sim.S.mode;
-          if (ms !== lastMode) { lastMode = ms; if (ms === 'molten' && scene !== 'ml') { seg.set('ml'); setScene('ml'); } else if (ms === 'aqueous' && scene !== 'aq') { seg.set('aq'); setScene('aq'); } }
+          if (ms !== lastMode) { lastMode = ms; if (ms === 'molten' && scene !== 'ml') setScene('ml'); else if (ms === 'aqueous' && scene !== 'aq') setScene('aq'); }
+          { const S2 = window.__sim && window.__sim.S; if (S2 && (ms === 'molten' || ms === 'aqueous')) power = ms === 'molten' ? !!S2.ml.on : !!S2.aq.on; }
+          pb.classList.toggle('on', power); pb.textContent = '⚡ 전원 ' + (power ? 'ON ✓' : 'OFF ✕');
           pw += ((power ? 1 : 0) - pw) * Math.min(1, dt * 4);
           const sp = 0.75 * pw;
           /* 전자: (−)극으로 내려가고, (+)극에서는 올라가요 */
@@ -127,7 +135,7 @@
           } else { OH.forEach((o, i) => { M.makeScale(0.0001, 0.0001, 0.0001); ohM.setMatrixAt(i, M); }); }
           ohM.instanceMatrix.needsUpdate = true;
           pink.material.opacity = scene === 'aq' ? 0.0 : 0;
-          const tx = !power ? '<b>전원이 꺼져 있어요</b><br>외부 전원이 없으면 비자발 반응은 일어나지 않아요.' : scene === 'ml' ? '<b>용융 NaCl 전기 분해</b><br>(−)극: Na⁺ + e⁻ → Na (환원)<br>(+)극: 2Cl⁻ → Cl₂ + 2e⁻ (산화)' : '<b>NaCl 수용액 전기 분해</b><br>(−)극: 2H₂O + 2e⁻ → H₂ + 2OH⁻<br>(+)극: 2Cl⁻ → Cl₂ + 2e⁻ · Na⁺는 남아요';
+          const tx = !power ? '<b>전원이 꺼져 있어요</b><br>외부 전원이 없으면 비자발 반응은 일어나지 않아요. (2D의 ⚡ 단추나 위의 전원 단추로 켜요)' : scene === 'ml' ? '<b>용융 NaCl 전기 분해</b><br>(−)극: Na⁺ + e⁻ → Na (환원)<br>(+)극: 2Cl⁻ → Cl₂ + 2e⁻ (산화)' : '<b>NaCl 수용액 전기 분해</b><br>(−)극: 2H₂O + 2e⁻ → H₂ + 2OH⁻<br>(+)극: 2Cl⁻ → Cl₂ + 2e⁻ · Na⁺는 남아요';
           if (tx !== txt) { txt = tx; info(tx); }
         },
       };

@@ -912,7 +912,7 @@ SciSim.loop((dt, t) => {
 
 /* ---------- 디버그 (Playwright) ---------- */
 window.__sim = {
-  S, VW, VH, PHONE, get game() { return game; }, setScene, HCELLS, HL, cellPos, LOOP, CG, TGG, CASES, CMP_ROWS, neuralEff, hormEff, pokeNow, secrete, setCur, newRo,
+  S, VW, VH, PHONE, get game() { return game; }, setScene, HCELLS, HL, NEU_DUR, H_SPEED, HLOOP_SEC, neuU, cellPos, LOOP, CG, TGG, CASES, CMP_ROWS, neuralEff, hormEff, pokeNow, secrete, setCur, newRo,
   stepHor, stepNeu,
   solveRo(i) { const ro = S.tog.ro[i]; ro.order = ro.cards.map((c, k) => k); ro.order = ro.o.solution.map((id) => ro.cards.findIndex((c) => c.id === id)); ro.snap(true); updateCtl(); },
 };

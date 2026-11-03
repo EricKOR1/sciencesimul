@@ -22,6 +22,7 @@
   window.SciSim3D.attach({
     title: '에크만 나선 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
+    levels: [1],
     camera: { dist: PHONE ? 15 : 12, theta: 0.55, phi: 1.1, target: [0, -2.2, 0], min: 5, max: 30 },
     autoRotate: 0,
     build(ctx) {
@@ -56,25 +57,28 @@
       const netT = new THREE.Object3D(); root.add(netT);
       const netLab = label('', netT, { color: 'rgba(91,33,182,.94)' });
 
-      /* 상태 */
-      let wind = 0, wV = 0, sgn = 1, showNet = true, clock = 0, tgtPhi = null;
-      const rd = () => { try { const S = window.__sim && window.__sim.S; if (S) return { w: [0, 90, 180, 270].includes(S.wind) ? S.wind : null, hem: S.hem === 'S' ? -1 : S.hem === 'N' ? 1 : null }; } catch (e) {} return {}; };
+      /* 상태 (2D 에크만 나선 단계: 바람 방향 · 층 측정 · 모두 더하기를 그대로 따라가요) */
+      let wind = 0, wV = 0, sgn = 1, P = 1, tgtPhi = null, sumOk = false, allM = false, free = false, meas = {};
+      const RW = () => window.__sim || {};
+      const rd = () => { try { const q = RW(), S = q.S; if (S) return { w: [0, 90, 180, 270].includes(S.wind) ? S.wind : null, hem: S.mode === 'balance' && S.hem === 'S' ? -1 : 1, meas: S.meas || {}, sum: S.sumT >= 0.99, free: !!(q.game && q.game.free) }; } catch (e) {} return {}; };
       const side = () => (sgn > 0 ? '오른쪽' : '왼쪽');
       function dirAt(z, b) { return bearing(b + sgn * spTh(z)); }
       function netVec(b) { let x = 0, zz = 0; CH.forEach((z) => { const d = dirAt(z, b), v = spV(z); x += d[0] * v; zz += d[2] * v; }); return [x, zz]; }
       function netRel() { const [x, zz] = netVec(0), rel = Math.atan2(x, -zz) / DEG; const n = Math.round(((sgn * rel) % 360 + 360) % 360); return Math.abs(n - 90) <= 4 ? 90 : n; }
+      const isM = (z) => !!(free || meas[z]);
       function fmtInfo() {
         const w = compass(wind);
-        const rows = LAYS.map((z) => '<b>' + z + ' m</b> ' + side() + ' ' + spTh(z) + '° · ' + spV(z).toFixed(1) + ' cm/s').join('<br>');
-        const net = netRel();
-        info('<b>' + (sgn > 0 ? '북반구' : '남반구') + '</b> · 바람 ' + w + '쪽으로<br>' + rows + '<br>모든 층의 합(<span style="color:#c4b5fd">보라 화살표</span>)은 바람의 <b>' + side() + ' ' + net + '°</b> = 평균 수송');
+        const rows = LAYS.map((z) => '<b>' + z + ' m</b> ' + (isM(z) ? side() + ' ' + spTh(z) + '° · ' + spV(z).toFixed(1) + ' cm/s' : '— (아직 측정 안 했어요)')).join('<br>');
+        let h = '<b>' + (sgn > 0 ? '북반구' : '남반구') + '</b> · 바람 ' + w + '쪽으로<br>' + rows;
+        h += sumOk ? '<br>모든 층의 합(<span style="color:#c4b5fd">보라 화살표</span>)은 바람의 <b>' + side() + ' ' + netRel() + '°</b> = 평균 수송' : (allM ? '<br>‘모두 더하기’를 눌러 화살표를 이어 붙여 봐요.' : '<br>옆의 표에서 깊이를 눌러 층마다 측정해요.');
+        info(h);
       }
       function place(b) {
         // 층별 화살표와 나선
         const pts = [], sp = [];
         ZS.forEach((z, i) => {
           const d = dirAt(z, b), L = spV(z) * LS, o = arr[i];
-          o.a.position.set(0, -z * YS, 0); o.a.setDirection(V(d[0], 0, d[2])); o.a.setLength(Math.max(0.12, L), Math.min(0.3, Math.max(0.1, L * 0.4)), Math.min(0.2, Math.max(0.07, L * 0.28)));
+          o.a.position.set(0, -z * YS, 0); o.a.setDirection(V(d[0], 0, d[2]));
           o.d = d; o.L = L;
         });
         for (let z = 0; z <= DZ; z += 2.5) { const d = dirAt(z, b), L = spV(z) * LS; pts.push(V(d[0] * L, -z * YS, d[2] * L)); sp.push(V(d[0] * L, -(DZ * YS + 0.38), d[2] * L)); }
@@ -84,7 +88,7 @@
         tipLabs.forEach(({ z, lab }) => { const d = dirAt(z, b), L = spV(z) * LS; lab.obj = [d[0] * (L + 0.1), -z * YS + (z === 0 ? -0.32 : 0.2), d[2] * (L + 0.1)]; lab.set(z + ' m · ' + spTh(z) + '°'); });
         // 평균 수송
         const [nx, nz] = netVec(b), mag = Math.hypot(nx, nz), NL = Math.max(0.5, mag * 0.045), nd = V(nx / mag, 0, nz / mag);
-        netA.setDirection(nd); netA.setLength(NL, 0.5, 0.34); netA.visible = showNet; netLab.show(showNet);
+        netA.setDirection(nd); netA.setLength(NL, 0.5, 0.34);
         netT.position.set(nd.x * (NL + 0.45), 0.7, nd.z * (NL + 0.45)); netLab.set('평균 수송 · 바람의 ' + side() + ' ' + netRel() + '°');
         // 바람
         const wd = bearing(b);
@@ -92,23 +96,47 @@
         windT.position.set(-wd[0] * 3.0 + wd[2] * 2.6, 1.15, -wd[2] * 3.0 - wd[0] * 2.6); windLab.set('바람 → ' + compass(wind) + '쪽');
       }
       function apply() { fmtInfo(); }
-      controls.segment('바람', [{ value: 0, label: '↑ 북' }, { value: 90, label: '→ 동' }, { value: 180, label: '↓ 남' }, { value: 270, label: '← 서' }], wind, (v) => { wind = v; apply(); });
-      const segH = controls.segment('반구', [{ value: 1, label: '북반구' }, { value: -1, label: '남반구' }], sgn, (v) => { sgn = v; wV = wind; place(wV); apply(); });
-      const nb = controls.button('평균 수송 ✓', () => { showNet = !showNet; nb.classList.toggle('on', showNet); nb.textContent = '평균 수송 ' + (showNet ? '✓' : '✕'); netA.visible = showNet; netLab.show(showNet); }); nb.classList.add('on');
+      const wSeg = controls.segment('바람', [{ value: 0, label: '↑ 북' }, { value: 90, label: '→ 동' }, { value: 180, label: '↓ 남' }, { value: 270, label: '← 서' }], wind, (v) => { wind = v; try { RW().setWind(v); } catch (e) {} apply(); });
       const vb = controls.button('🛰️ 위에서 보기', () => { const top_ = orbit.phi > 0.5; vb.textContent = top_ ? '🎥 비스듬히 보기' : '🛰️ 위에서 보기'; tgtPhi = top_ ? 0.12 : 1.1; if (top_) { orbit.theta = 0; } });
-      const l0 = rd(); if (l0.w != null) wind = l0.w; if (l0.hem != null) { sgn = l0.hem; segH.set(sgn); }
+      /* ▶ 재생: 바람이 표면을 끌면 아래 층이 차례로 끌려 움직이며 오른쪽으로 돌아요 (표면 → 100 m) */
+      const player = controls.player({
+        duration: 8, loop: true, autoplay: false, label: '재생',
+        phases: [[0, '표면 (바람이 끌어요)'], [0.3, '25 m'], [0.55, '50 m'], [0.8, '100 m']],
+        onFrame(p) { P = p; },
+      });
+      player.set(1);
+      const l0 = rd(); if (l0.w != null) { wind = l0.w; wSeg.set(wind); } sgn = l0.hem || 1; meas = l0.meas || {}; free = !!l0.free;
       wV = wind; place(wV); apply();
 
+      function follow() {
+        const l = rd(); let ch = false;
+        if (l.w != null && l.w !== wind) { wind = l.w; wSeg.set(wind); ch = true; }
+        if (l.hem && l.hem !== sgn) { sgn = l.hem; wV = wind; place(wV); ch = true; }
+        const m = l.meas || {}, f = !!l.free, sm = !!l.sum;
+        if (f !== free || sm !== sumOk || LAYS.some((z) => !!m[z] !== !!meas[z])) { free = f; sumOk = sm; meas = Object.assign({}, m); ch = true; }
+        allM = LAYS.every((z) => isM(z));
+        if (ch) apply();
+      }
       return {
         update(dt) {
-          clock += dt;
+          follow();
           // 바람 방향이 바뀔 때 부드럽게 돌려요
           let d = wind - wV; d = ((d + 540) % 360) - 180;
           if (Math.abs(d) > 0.2) { wV += d * Math.min(1, dt * 6); place(wV); } else if (wV !== wind) { wV = wind; place(wV); }
-          arr.forEach((o, i) => { const f = (clock * 0.55 + i * 0.09) % 1; o.dot.position.set(o.d[0] * o.L * f, -o.z * YS + 0.04, o.d[2] * o.L * f); });
+          const play = P < 0.999;
+          arr.forEach((o, i) => {
+            const isLay = LAYS.indexOf(o.z) >= 0, vis = isLay ? isM(o.z) : allM;
+            const g = Math.max(0, Math.min(1, (P * 1.25 - (o.z / DZ) * 0.8) / 0.25)), L = o.L * g;
+            o.a.visible = vis && L > 0.01; o.dot.visible = vis && g > 0.5;
+            if (o.a.visible) o.a.setLength(Math.max(0.12, L), Math.min(0.3, Math.max(0.1, L * 0.4)), Math.min(0.2, Math.max(0.07, L * 0.28)));
+            const f = (P * 3 + i * 0.09) % 1; o.dot.position.set(o.d[0] * o.L * f, -o.z * YS + 0.04, o.d[2] * o.L * f);
+          });
+          tipLabs.forEach(({ z, lab }) => lab.show(isM(z) && P > (z / DZ) * 0.8 + 0.05));
+          spiral.visible = spiralShadow.visible = allM && P > 0.98;
+          const nv = (sumOk || free) && P > 0.98; netA.visible = nv; netLab.show(nv);
           if (tgtPhi != null) { const e = tgtPhi - orbit.phi; orbit.phi += e * Math.min(1, dt * 4); if (Math.abs(e) < 0.01) tgtPhi = null; }
         },
-        sync() { const l = rd(); let ch = false; if (l.w != null && l.w !== wind) { wind = l.w; ch = true; } if (l.hem != null && l.hem !== sgn) { sgn = l.hem; segH.set(sgn); ch = true; } if (ch) { wV = wind; place(wV); apply(); } },
+        sync() { follow(); },
       };
     },
   });

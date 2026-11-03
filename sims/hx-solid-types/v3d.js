@@ -1,4 +1,6 @@
-/* hx-solid-types · 3D 네 가지 결정 (이온 · 금속 · 공유 · 분자)
+/* hx-solid-types · 3D 네 가지 결정 (이온 · 분자 · 공유 · 금속)
+   2단계 '네 가지 결정'(모형 보기)과 3단계 '성질 시험'에서 2D가 고른 결정/시료를 따라가요.
+   (2D 쪽 '결정의 종류' 단추와 시료 단추가 이 화면을 조절해요. 1·4단계는 2D 화면이에요.)
    입자가 3차원으로 어떻게 쌓여 있는지 돌려 보고, 한 층을 밀어 보며(망치로 치는 것과 같은 상황)
    결정마다 '깨지는가 / 펴지는가 / 아주 단단한가 / 쉽게 흩어지는가'를 입체 모형으로 확인해요.
    ※ 단위 세포·배위수·충전율 같은 수치는 다루지 않고 입자의 배열 모양만 보여 줘요. */
@@ -8,11 +10,10 @@
   const COLORS = { Na: 0xf59e0b, Cl: 0x22b14c, Cu: 0xc7743b, C: 0x4b5563, O: 0xe23b3b, e: 0x60a5fa };
   const TYPES = {
     ion:   { nm: '이온 결정', ex: 'NaCl' },
-    metal: { nm: '금속 결정', ex: 'Cu' },
-    cov:   { nm: '공유 결정', ex: '다이아몬드·흑연' },
     mol:   { nm: '분자 결정', ex: '드라이아이스(CO₂)' },
+    cov:   { nm: '공유 결정', ex: '다이아몬드' },
+    metal: { nm: '금속 결정', ex: 'Cu' },
   };
-  const KEYS = ['ion', 'metal', 'cov', 'mol'];
 
   // 휴대폰에서는 단계에 따라 도구 줄이 사라지므로 화면 오른쪽 아래의 떠 있는 버튼을 써요.
   const PHONE = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches);
@@ -22,11 +23,12 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: 10, theta: 0.7, phi: 1.1, min: 4, max: 24 },
     autoRotate: 0.22,
+    levels: [1, 2],   // 2단계(네 가지 결정) · 3단계(성질 시험). 1·4단계는 2D 화면에서 해요
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
       const wrap = ctx.renderer.domElement.closest('.v3-wrap'), ctlEl = wrap.querySelector('.v3-ctl');
       const grab = (fn) => { const n0 = ctlEl.children.length; const r = fn(); return { r, els: [].slice.call(ctlEl.children, n0) }; };
-      let type = 'ion', cov = 'diamond', amt = 0, current = false;
+      let type = 'ion', cov = 'diamond', amt = 0, current = false, sl = null, curB = null;
       let S = null;                      // 현재 장면 { update(dt,t), apply(v), text() }
       const g = new THREE.Group(); root.add(g);
       const labs = [label('', [0, 0, 0]), label('', [0, 0, 0]), label('', [0, 0, 0])]; labs.forEach((l) => l.show(false));
@@ -221,25 +223,47 @@
         covEls.forEach((e) => { e.hidden = type !== 'cov'; });
         curEls.forEach((e) => { e.hidden = type !== 'metal'; });
       }
-      function show() { info(S.text(amt)); }
+      function show() { info((note ? '<span style="color:#ffd34d">' + note + TYPES[type].nm + '</span><br>' : '') + S.text(amt)); }
       const SLB = { ion: '층 밀기', metal: '층 밀기', cov: '층 밀기', mol: '가열' };
 
-      const typeSeg = controls.segment('결정', KEYS.map((k) => ({ value: k, label: TYPES[k].nm })), type, (v) => { type = v; amt = 0; sl.set(0); current = false; curB.classList.remove('on'); curB.textContent = '전류 흘리기 ✕'; setScene(); });
+      function pickType(v) { type = v; amt = 0; if (sl) sl.set(0); current = false; if (curB) { curB.classList.remove('on'); curB.textContent = '전류 흘리기 ✕'; } setScene(); }
       const cg = grab(() => controls.segment('', [{ value: 'diamond', label: '다이아몬드' }, { value: 'graphite', label: '흑연' }], cov, (v) => { cov = v; amt = 0; sl.set(0); setScene(); }));
       const covEls = cg.els;
       const cb = grab(() => controls.button('전류 흘리기 ✕', () => { current = !current; curB.classList.toggle('on', current); curB.textContent = '전류 흘리기 ' + (current ? '✓' : '✕'); show(); }));
-      const curB = ctlEl.lastElementChild, curEls = cb.els;
+      curB = ctlEl.lastElementChild; const curEls = cb.els;
       const slg = grab(() => controls.range('', 0, 1, 0.01, 0, (v) => { amt = v; S.apply(v); show(); }, (v) => SLB[type] + ' ' + (v < 0.03 ? '0' : Math.round(v * 100) + '%')));
-      const sl = slg.r; { const w = document.createElement('span'); w.style.cssText = 'display:inline-flex;align-items:center;gap:6px;white-space:nowrap'; slg.els[0].parentNode.insertBefore(w, slg.els[0]); slg.els.forEach((e) => w.appendChild(e)); }
+      sl = slg.r; { const w = document.createElement('span'); w.style.cssText = 'display:inline-flex;align-items:center;gap:6px;white-space:nowrap'; slg.els[0].parentNode.insertBefore(w, slg.els[0]); slg.els.forEach((e) => w.appendChild(e)); }
 
-      const api = {
-        update(dt, t) { if (S && S.update) S.update(dt, t); },
-        sync() { // 2D '네 가지 결정'에서 고른 결정으로 시작 (읽기 전용)
-          try { const s = window.__sim; if (s && s.S && s.S.types && TYPES[s.S.types.cur] && s.S.types.cur !== type) { type = s.S.types.cur; amt = 0; sl.set(0); typeSeg.set(type); setScene(); } } catch (e) { /* 무시 */ }
+      controls.player({
+        duration: 8, loop: true, autoplay: false, label: '재생',
+        phases: [[0, '밀기 · 가열'], [0.8, '되돌리기']],
+        onFrame(p) {
+          if (!S || !sl) return;
+          const e = p < 0.8 ? p / 0.8 : 1 - (p - 0.8) / 0.2; amt = e * e * (3 - 2 * e);
+          sl.set(amt); S.apply(amt); show();
         },
+      });
+      /* 2D가 고른 결정: 네 가지 결정 → 보는 결정 / 성질 시험 → 고른 시료의 결정 종류 */
+      let note = '';
+      function want() {
+        try {
+          const w = window.__sim, S2 = w.S;
+          if (S2.mode === 'types' && TYPES[S2.types.cur]) { note = ''; return S2.types.cur; }
+          if (S2.mode === 'bench' && w.SP[S2.bench.cur]) { const sp = w.SP[S2.bench.cur]; note = '시료: ' + sp.nm + ' → '; return sp.type; }
+          note = ''; return null;
+        } catch (e) { return null; }
+      }
+      let lastNote = '';
+      const api = {
+        update(dt, t) {
+          const w = want();
+          if (w && w !== type) pickType(w);
+          if (note !== lastNote) { lastNote = note; show(); }
+          if (S && S.update) S.update(dt, t);
+        },
+        sync() { lastNote = ''; },
       };
-      setScene();
-      api.sync();
+      type = want() || 'ion'; setScene();
       return api;
     },
   });

@@ -1062,6 +1062,7 @@
   window.__sim = {
     S, VW, VH, MA, BOT, SEL_A, SEL_B, SEL_C, slN1, slN2, slT, slTc, thickAt, slopeAt, sinI, sinA, coatR, cdState, phState, brightIdx, markLines, filmRGB, whiteColor, setScene, updateCtl, flLay, cdLay, phLay, lgSeg, lamSeg, apSeg, ropeSeg, setT,
     setSub(sub) { S.ap.sub = sub; updateCtl(); },
+    thickAt, H_CM, TAU_MAX, N_MG, N_GLASS,
     perfPrep(m) { if (m === 'film') { S.fl.play = true; S.fl.tau = 1; } },
     get game() { return game; },
   };

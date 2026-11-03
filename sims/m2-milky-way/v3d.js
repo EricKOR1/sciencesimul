@@ -5,7 +5,7 @@
   if (!window.SciSim3D) return;
   const TAU = Math.PI * 2, DEG = Math.PI / 180;
   const GR = 50;                         // 은하 반지름 5만 광년 (단위: 천 광년)
-  const SUN_R = 26;                      // 태양계: 중심에서 약 2.6만 광년 (수업: 약 3만 광년)
+  const SUN_R = 30;                      // 태양계: 중심에서 약 3만 광년 (수업과 같아요)
   const KK = Math.tan(17 * DEG), R0 = 7, TH = Math.log(GR / R0) / KK;
 
   function rng(seed) {
@@ -29,7 +29,8 @@
     title: '우리은하 3D 모형',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: 118 * FIT, theta: 0.5, phi: 0.95, fov: 45, min: 25, max: 330 },
-    autoRotate: 0.1,
+    autoRotate: 0,
+    levels: [],                      // 1~4단계 미션(하늘 누르기 · ☀ 끌기 · 카드 놓기)은 2D 화면에서 해요
     build(ctx) {
       const { THREE, root, camera, label, info, controls, orbit } = ctx;
       const R = rng(2024);
@@ -176,22 +177,32 @@
       function text() {
         if (mode === 'out') {
           info('<b>바깥에서 본 우리은하</b><br>중심에 <b>막대</b>가 있는 <b>나선</b> 모양이고, 지름은 약 <b>10만 광년</b>이에요. 원반은 아주 얇고 중심부만 볼록해요.<br>' +
-            '태양계는 중심에서 약 3만 광년(관측값 약 2.6만 광년) 떨어진 나선팔 위에 있어요.');
+            '태양계는 중심에서 약 <b>3만 광년</b> 떨어진 곳에 있어요. 우리은하는 천천히 <b>회전</b>해요.');
         } else {
           info('<b>☀ 태양계에서 본 하늘</b><br>태양계는 원반 <b>안쪽</b>에 있어서, 원반 방향으로는 별이 겹쳐 <b>은하수 띠</b>로 보여요. 원반 위·아래 방향은 별이 적어요.<br>끌어서 둘러봐요.');
         }
       }
 
       const viewSeg = controls.segment('보는 곳', [{ value: 'out', label: '🌌 바깥에서' }, { value: 'sun', label: '☀ 태양계에서' }], 'out', (v) => { if (v === 'sun') toSun(); else toOut(); sideBtns(); });
-      const upB = controls.button('⬆ 위에서', () => { if (mode === 'out') { orbit.phi = 0.06; orbit.theta = 0; } });
-      const sideB = controls.button('➡ 옆에서', () => { if (mode === 'out') { orbit.phi = 1.5; orbit.theta = 0.3; } });
+      // 위에서 / 옆에서: 2D 모형의 [위에서 · 옆에서]와 같은 조작 (2D 화면도 같이 바뀌어요)
+      const upB = controls.button('⬆ 위에서', () => { if (mode === 'out') { if (sim && sim.setView) sim.setView('top'); else { orbit.phi = 0.06; } } });
+      const sideB = controls.button('➡ 옆에서', () => { if (mode === 'out') { if (sim && sim.setView) sim.setView('side'); else { orbit.phi = 1.5; } } });
+      // ▶ 재생: 우리은하가 천천히 한 바퀴 회전해요 (2D 모형도 같이 돌아요)
+      let pl = null;
+      pl = controls.player({
+        duration: 40, loop: true, autoplay: false, label: '은하 회전',
+        phases: [[0, '위에서 보면 시계 반대 방향'], [0.5, '반 바퀴']],
+        onFrame(p) { if (!pl || mode !== 'out') return; const S = sim && sim.S; if (S) { S.yaw = p * 360; S.yawV = 0; S.pause = 2; } },
+      });
       const openB = controls.button('산개 성단 ✓', () => { showOpen = !showOpen; openB.classList.toggle('on', showOpen); openB.textContent = '산개 성단 ' + (showOpen ? '✓' : '✕'); applyVis(); updateLabels(); }); openB.classList.add('on');
       const globB = controls.button('구상 성단 ✓', () => { showGlob = !showGlob; globB.classList.toggle('on', showGlob); globB.textContent = '구상 성단 ' + (showGlob ? '✓' : '✕'); applyVis(); updateLabels(); }); globB.classList.add('on');
       const haloB = controls.button('헤일로 ✓', () => { showHalo = !showHalo; haloB.classList.toggle('on', showHalo); haloB.textContent = '헤일로 ' + (showHalo ? '✓' : '✕'); applyVis(); updateLabels(); }); haloB.classList.add('on');
       function sideBtns() { const o = mode === 'out'; upB.style.display = o ? '' : 'none'; sideB.style.display = o ? '' : 'none'; }
       sideBtns();
 
+      let lastSunKey = '';
       function readLesson() { // 수업에서 학생이 ☀를 놓았다면 그 자리를 따라가요 (읽기만)
+        { const q = sim && sim.S && sim.S.sun; const key = q ? q.mode + ':' + (q.gx || 0).toFixed(1) + ':' + (q.gy || 0).toFixed(1) : ''; if (key === lastSunKey) return; lastSunKey = key; }
         try {
           const s = sim && sim.S && sim.S.sun;
           if (s && s.mode === 'placed' && isFinite(s.gx) && isFinite(s.gy) && Math.hypot(s.gx, s.gy) > 3) { sun = { x: s.gx, y: s.gy }; } else sun = { x: sunBase[0], y: sunBase[1] };
@@ -206,8 +217,17 @@
       }
       readLesson(); applyVis(); text();
 
+      let lastTiltT = null, k0 = 0;
       return {
         update() {
+          const S = sim && sim.S;
+          if (S && (k0++ % 3) === 0 && mode === 'out') {
+            // 2D의 회전각 · 위/옆 보기를 따라가요 (재생 중에는 3D가 2D를 이끌어요)
+            root.rotation.y = (S.yaw || 0) * DEG;
+            if (S.tiltT !== lastTiltT || Math.abs((S.tilt || 0) - (S.tiltT || 0)) > 0.5) { lastTiltT = S.tiltT; orbit.phi = 0.06 + Math.max(0, Math.min(90, S.tilt || 0)) / 90 * 1.44; }
+            readLesson();
+          }
+          if (mode === 'sun') root.rotation.y = 0;
           if (mode === 'sun') { // 카메라를 태양 자리에 두고, 끌면 보는 방향만 바꿔요
             const p = Math.max(0.05, Math.min(Math.PI - 0.05, orbit.phi)), d = 1;
             orbit.dist = d;

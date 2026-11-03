@@ -1026,7 +1026,7 @@
   /* ---------- 디버그 (Playwright) ---------- */
   window.__sim = {
     S, VW, VH, SC, STP, IN, TRK, MS, SP, numF, numT, numP, numV, s1Sels, fSels, s4Sels, sel1R, s1St, fSt, s4St,
-    get game() { return game; }, setScene, updateCtl, launch, clearC, Fm, orbMain, orbParamsM, setSpecies, resetOrb, trkOK, fastOK, trkN, condOK, taskOK, radOK, F0, trkDown, trackLabelPos, lp,
+    get game() { return game; }, setScene, updateCtl, launch, clearC, Fm, orbMain, orbParamsM, cmpV, setSpecies, resetOrb, trkOK, fastOK, trkN, condOK, taskOK, radOK, F0, trkDown, trackLabelPos, lp,
   };
 
 })();

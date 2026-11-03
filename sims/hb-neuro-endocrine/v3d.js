@@ -1,136 +1,119 @@
-/* hb-neuro-endocrine · 3D 신경 신호와 호르몬 신호 비교
-   위: 신경 - 축삭을 따라 한 표적 세포에 빠르게 · 아래: 호르몬 - 혈액을 타고 퍼지며 수용체가 있는 표적 세포에만 작용(느리지만 넓고 오래)
-   [신호 보내기]를 눌러 속도·범위·지속 시간의 차이를 직접 봐요. */
+/* hb-neuro-endocrine · 3D 신경 신호와 호르몬 신호
+   2D 차시와 같은 두 장면: ⚡ 신경 신호(가시에 찔림 → 감각 뉴런 → 연합 뉴런(척수) → 운동 뉴런 → 팔 근육, 약 0.05초, 연결된 한 곳에만)
+   🩸 호르몬 신호(호르몬 분비 → 혈액이 도는 고리 혈관 → 표적 세포 ②·④만 수용체에 결합해 반응, ① ③ ⑤는 반응 없음)
+   2D의 🌵 가시에 찔리기 · 🧪 호르몬 분비 · 🔬 수용체 보기 단추를 3D에서도 쓸 수 있고, ▶ 재생은 한 번의 신호 전체를 반복해서 보여 줘요. */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
   const narrow = window.innerWidth < 600 || window.innerHeight > window.innerWidth * 1.1;
-  function rng(seed) { let s = seed >>> 0; return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; }; }
-  const ZN = -2.6, ZH = 2.4, XT = 3.7;
+  const L2 = () => window.__sim || null;
+  const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+  const lerp = (a, b, t) => a + (b - a) * t;
 
-  window.SciSim3D.attach({
+  const v3 = window.SciSim3D.attach({
     title: '신경 신호 vs 호르몬 신호 3D',
-    hint: '신호를 보내 속도 · 범위 · 지속 시간을 비교해 봐요',
-    camera: { dist: narrow ? 21 : 15.5, theta: 0.12, phi: 0.95, min: 7, max: 28, target: [0, 0, 0] },
+    hint: '2D의 가시에 찔리기 · 호르몬 분비 단추와 같이 움직여요 · 드래그: 돌리기',
+    camera: { dist: narrow ? 17 : 13, theta: 0.0, phi: 1.0, min: 6, max: 26, target: [0, 0, 0] },
     autoRotate: 0,
-    levels: [0, 1],
+    levels: [0],
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = (x, y, z) => new THREE.Vector3(x, y, z || 0);
       const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.45, metalness: 0.03 }, o || {}));
       const ghost = (c, op, o) => std(c, Object.assign({ transparent: true, opacity: op, depthWrite: false, roughness: 0.25 }, o || {}));
-      const tube = (pts, r, m, seg) => new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), seg || 40, r, 10), m);
-      const R = rng(9), D = new THREE.Object3D();
+      const tube = (pts, r, m, seg, closed) => new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts, !!closed), seg || 40, r, 10, !!closed), m);
+      const LS = L2(); if (!LS) return {};
+      const click = (sel) => { const b = document.querySelector(sel); if (b) b.click(); };
 
-      /* 바닥 판 두 개 (신경 · 호르몬 구역) */
-      [[ZN, 0x1b2a55], [ZH, 0x3a1d38]].forEach(([z, c]) => { const m = new THREE.Mesh(new THREE.BoxGeometry(13.4, 0.1, 4.6), std(c, { roughness: 0.9, transparent: true, opacity: 0.55 })); m.position.set(0, -1.15, z); m.receiveShadow = true; root.add(m); });
+      /* ---------- ⚡ 신경 신호 ---------- */
+      const NG = new THREE.Group(); root.add(NG);
+      const X = (u) => (u - 385) / 62;
+      const spinal = new THREE.Mesh(new THREE.BoxGeometry(X(432) - X(296), 1.5, 1.8), ghost(0x94a3b8, 0.22)); spinal.position.set((X(296) + X(432)) / 2, 0, 0); NG.add(spinal);
+      const neuron = (u0, u1, col, sx, sCol) => { const g = new THREE.Group(); g.add(tube([V3(X(u0), 0, 0), V3(X(u1), 0, 0)], 0.1, std(col, { roughness: 0.35 }), 20)); const so = new THREE.Mesh(new THREE.SphereGeometry(0.28, 24, 16), std(sCol)); so.position.set(X(sx), 0.5, 0); g.add(so); g.add(tube([V3(X(sx), 0.25, 0), V3(X(sx), 0, 0)], 0.05, std(col), 6)); NG.add(g); return so; };
+      const sen = neuron(100, 300, 0x2563eb, 230, 0x3b82f6), asn = neuron(324, 408, 0x7c3aed, 366, 0x8b5cf6), mot = neuron(440, 646, 0xea580c, 490, 0xf97316);
+      const syn = [316, 432].map((u) => { const s = new THREE.Mesh(new THREE.SphereGeometry(0.17, 18, 12), std(0xffffff)); s.position.set(X(u), 0, 0); NG.add(s); return s; });
+      const finger = new THREE.Mesh(new THREE.CapsuleGeometry(0.22, 0.7, 6, 14), std(0xf5c9a0)); finger.rotation.z = Math.PI / 2; finger.position.set(X(52), 0.1, 0); NG.add(finger);
+      const thorn = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.7, 14), std(0x3f9b4a)); thorn.position.set(X(52), -0.95, 0); NG.add(thorn);
+      const muscle = new THREE.Mesh(new THREE.SphereGeometry(1, 28, 18), std(0xdc4a4a, { roughness: 0.5 })); muscle.position.set(X(718), 0, 0); NG.add(muscle);
+      const pulse = new THREE.Mesh(new THREE.SphereGeometry(0.2, 18, 12), new THREE.MeshBasicMaterial({ color: 0xffe27a })); NG.add(pulse);
+      const others = [['심장', 0xd7263d, -3.8], ['위', 0xe8918a, 0], ['다리 근육', 0xc77a5a, 3.8]].map(([n, c, x]) => { const m = new THREE.Mesh(new THREE.SphereGeometry(0.42, 20, 14), ghost(c, 0.55)); m.position.set(x, -1.0, 2.4); NG.add(m); const l = label(n + ' · 연결 없음 → 반응 없음', m, { offset: [0, -0.7, 0], size: 12 }); return { m, l }; });
+      const NL = [label('감각 뉴런', sen, { offset: [0, 0.6, 0], color: 'rgba(37,99,235,.92)' }), label('연합 뉴런', asn, { offset: [0, 0.6, 0], color: 'rgba(124,58,237,.92)' }), label('운동 뉴런', mot, { offset: [0, 0.6, 0], color: 'rgba(234,88,12,.92)' }),
+        label('척수 (중추)', spinal, { offset: [0, -1.0, 0.5] }), label('시냅스', syn[0], { offset: [0, -0.5, 0] }), label('가시', thorn, { offset: [0.4, -0.5, 0] }), label('', muscle, { offset: [0, -1.5, 0] }), label('', NG, { offset: [0, 2.6, 0], color: 'rgba(40,50,80,.92)', size: 14 })];
 
-      /* 세포 만들기 */
-      function cell(x, z, kind) { // kind: 'tn' 신경 표적 · 'nn' 비표적 · 'th' 호르몬 표적 · 'nh' 비표적
-        const g = new THREE.Group(); g.position.set(x, 0, z);
-        const base = kind[0] === 't' ? 0xe0517a : 0x6f7a90;
-        const m = std(base, { roughness: 0.4, emissive: 0x000000 });
-        g.add(new THREE.Mesh(new THREE.SphereGeometry(0.62, 32, 22), m));
-        const nm = std(kind[0] === 't' ? 0x8a2a58 : 0x4a5262); const nu = new THREE.Mesh(new THREE.SphereGeometry(0.25, 16, 12), nm); nu.position.set(0.1, 0.05, 0.12); g.add(nu);
-        root.add(g); return { g, m, kind, glow: 0, hold: 0, x, z };
+      /* ---------- 🩸 호르몬 신호 ---------- */
+      const HG = new THREE.Group(); root.add(HG);
+      const HL = LS.HL, S2 = 62;
+      const loopPt = (phi, off) => { const p = LS.LOOP ? LS.LOOP.at(phi) : { x: HL.cx, y: HL.cy, nx: 0, ny: -1 }; return V3((p.x - HL.cx) / S2 + (off ? p.nx * off : 0), 0, (p.y - HL.cy) / S2 + (off ? p.ny * off : 0)); };
+      const lp = []; for (let k = 0; k < 96; k++) lp.push(loopPt(k / 96));
+      const vessel = tube(lp, 0.42, ghost(0xff8a80, 0.32, { side: THREE.DoubleSide }), 220, true); vessel.renderOrder = 2; HG.add(vessel);
+      const gp = loopPt(0, -1.7), gland = new THREE.Mesh(new THREE.SphereGeometry(0.62, 28, 18), std(0xb560c4)); gland.position.copy(gp); HG.add(gland);
+      const cells = LS.HCELLS.map((c, i) => {
+        const p = LS.LOOP.at(c.phi), pos = V3((p.x - HL.cx) / S2 + p.nx * HL.off / S2 * 1.0, 0, (p.y - HL.cy) / S2 + p.ny * HL.off / S2 * 1.0);
+        const m = std(0x8fb4e8, { roughness: 0.4, emissive: 0x000000 }), g = new THREE.Group(); g.position.copy(pos); g.add(new THREE.Mesh(new THREE.SphereGeometry(0.5, 28, 18), m)); const nu = new THREE.Mesh(new THREE.SphereGeometry(0.2, 14, 10), std(0x3a5a96)); nu.position.set(0.05, 0.12, 0.05); g.add(nu);
+        const dir = V3(-p.nx, 0, -p.ny).normalize();
+        const geo = c.shape === 'cup' ? new THREE.ConeGeometry(0.2, 0.36, 18, 1, true) : c.shape === 'sq' ? new THREE.BoxGeometry(0.3, 0.3, 0.3) : c.shape === 'tri' ? new THREE.TetrahedronGeometry(0.25) : new THREE.OctahedronGeometry(0.22);
+        const rm = std(c.target ? 0x33c46e : 0x8a8f9c, { side: THREE.DoubleSide }); const r = new THREE.Mesh(geo, rm); if (c.shape === 'cup') r.quaternion.setFromUnitVectors(V3(0, 1, 0), dir); r.position.copy(dir.clone().multiplyScalar(0.62)); r.visible = false; g.add(r);
+        HG.add(g); return { g, m, r, pos, dir, c, lab: label(c.name, g, { offset: [0, 0.85, 0], size: 14 }) };
+      });
+      const NP = 20, hI = new THREE.InstancedMesh(new THREE.ConeGeometry(0.1, 0.24, 12), std(0xff8a3d, { emissive: 0x7a3000, emissiveIntensity: 0.5 }), NP); HG.add(hI);
+      const NR = 16, rI = new THREE.InstancedMesh(new THREE.SphereGeometry(0.11, 10, 8), std(0xe5483f, { roughness: 0.4 }), NR); HG.add(rI);
+      const D = new THREE.Object3D();
+      const HLab = [label('내분비샘 (호르몬 분비)', gland, { offset: [0, 1.0, 0], color: 'rgba(130,60,170,.92)' }), label('혈관 (혈액이 돌아요)', HG, { offset: [0, -0.8, 3.0], size: 12 }), label('', HG, { offset: [0, 0.2, 0], size: 15, color: 'rgba(40,50,80,.92)' })];
+
+      /* 가짜 상태: ▶ 재생(2D와 같은 규칙의 한 번의 신호) */
+      let pp = 0, scene = '', lastInfo = '';
+      const T_NEU = 2.2, TH = 130;
+      const sceneOf = () => { const m = L2().S.mode; return m === 'neu' ? 'neu' : 'hor'; };
+      const pl = controls.player({ duration: 8, loop: true, autoplay: false, label: '신호 재생', phases: [[0, '신호 출발'], [0.35, '전달 중'], [0.8, '반응']], onFrame(p) { pp = p; } });
+      const active = () => pl.playing || pl.p > 0;
+      function synthHor(t) { // t: 모형 초 (0 ~ TH)
+        const parts = [], cells = LS.HCELLS.map(() => ({ act: 0, nope: 0 })); let first = null; const bound = LS.HCELLS.map(() => 0), reacted = LS.HCELLS.map(() => null);
+        for (let k = 0; k < 14; k++) {
+          let phi = -k * 0.0045 + t / LS.HLOOP_SEC, state = 'flow', cell = -1, f = 0;
+          for (let n = 0; n < 3 && state === 'flow'; n++) LS.HCELLS.forEach((c, i) => { const q = c.phi + n; if (state === 'flow' && c.target && -k * 0.0045 < q && phi >= q && bound[i] < 4) { state = 'dock'; cell = i; f = 1; bound[i]++; const rt = (q + k * 0.0045) * LS.HLOOP_SEC; if (reacted[i] == null || rt < reacted[i]) reacted[i] = rt; } });
+          parts.push({ phi, state, cell, f });
+        }
+        reacted.forEach((rt, i) => { if (rt != null && t >= rt) { cells[i].act = 1; if (first == null || rt < first) first = rt; } });
+        const rbc = Array.from({ length: NR }, (_, i) => ({ phi: (i / NR + t / LS.HLOOP_SEC * 0.9) % 1 }));
+        return { run: true, t, particles: parts, cells, first, rbc, showR: L2().S.hor.showR };
       }
-      function receptor(c, dirx, dirz, type) {
-        const d = new THREE.Vector3(dirx, 0, dirz).normalize();
-        const geo = type === 'cone' ? new THREE.ConeGeometry(0.2, 0.34, 18, 1, true) : new THREE.BoxGeometry(0.3, 0.3, 0.3);
-        const mat = std(type === 'cone' ? 0x33c46e : 0x8a8f9c, { side: THREE.DoubleSide, roughness: 0.4 });
-        const r = new THREE.Mesh(geo, mat);
-        if (type === 'cone') r.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d); r.position.copy(d.clone().multiplyScalar(0.7));
-        c.g.add(r); return r;
-      }
+      function setScene(sc) { scene = sc; NG.visible = sc === 'neu'; HG.visible = sc === 'hor'; NL.forEach((l) => l.show(sc === 'neu')); others.forEach((o) => o.l.show(sc === 'neu')); HLab.forEach((l) => l.show(sc === 'hor')); cells.forEach((c) => c.lab.show(sc === 'hor')); lastInfo = ''; }
+      const setI = (h) => { if (h !== lastInfo) { lastInfo = h; info(h); } };
+      controls.button('🌵 가시에 찔리기 (2D와 같이)', () => { const L = L2(); if (L && L.S.mode !== 'neu') L.setScene('neu'); click('#bPoke'); });
+      controls.button('🧪 호르몬 분비 (2D와 같이)', () => { const L = L2(); if (L && L.S.mode !== 'hor') L.setScene('hor'); click('#bSecrete'); });
+      controls.button('🔬 수용체 보기', () => { const L = L2(); if (L && L.S.mode !== 'hor') L.setScene('hor'); click('#bRecep'); });
 
-      /* 신경 구역 */
-      const somaM = std(0x7a55d0, { roughness: 0.4 });
-      const soma = new THREE.Mesh(new THREE.SphereGeometry(0.75, 32, 22), somaM); soma.position.set(-5.2, 0, ZN); root.add(soma);
-      const dm = std(0xb59cf0); [[-0.9, 0.5, 0.5], [-1.0, -0.3, 0.7], [-0.9, 0.3, -0.7], [-0.8, -0.2, -0.55]].forEach((q) => root.add(tube([V3(-5.2 - 0.5, 0, ZN), V3(-5.2 + q[0] * 1.3, q[1] * 0.8, ZN + q[2]), V3(-5.2 + q[0] * 1.8, q[1], ZN + q[2] * 1.4)], 0.06, dm, 12)));
-      const axM = std(0xf2b24a, { roughness: 0.4 });
-      root.add(tube([V3(-4.5, 0, ZN), V3(2.9, 0, ZN)], 0.12, axM, 30));
-      const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.28, 24, 16), std(0xf2b24a)); bulb.position.set(3.0, 0, ZN); root.add(bulb);
-      const tN = cell(XT + 0.55, ZN, 'tn'), n1 = cell(XT + 0.55, ZN - 1.9, 'nn'), n2 = cell(XT + 0.55, ZN + 1.5, 'nn'), n3 = cell(XT + 2.05, ZN - 0.4, 'nn');
-      receptor(tN, -1, 0, 'cone'); [n1, n2, n3].forEach((c) => receptor(c, -1, 0, 'box'));
-      const pulse = new THREE.Mesh(new THREE.SphereGeometry(0.2, 18, 12), new THREE.MeshBasicMaterial({ color: 0xffe14d, transparent: true, opacity: 0.9 })); pulse.visible = false; root.add(pulse);
-      const ntI = new THREE.InstancedMesh(new THREE.SphereGeometry(0.07, 10, 8), new THREE.MeshBasicMaterial({ color: 0x7ee8ff }), 10); root.add(ntI);
-
-      /* 호르몬 구역 */
-      const vesM = ghost(0xff6b6b, 0.22, { roughness: 0.2, side: THREE.DoubleSide });
-      const vessel = new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.62, 12.4, 36, 1, true), vesM); vessel.rotation.z = Math.PI / 2; vessel.position.set(0.3, 0, ZH); vessel.renderOrder = 2; root.add(vessel);
-      const vend = (x) => { const t = new THREE.Mesh(new THREE.TorusGeometry(0.62, 0.05, 8, 30), std(0xd94a4a)); t.rotation.y = Math.PI / 2; t.position.set(x, 0, ZH); root.add(t); }; vend(-5.9); vend(6.5);
-      const gland = new THREE.Mesh(new THREE.SphereGeometry(0.95, 36, 24), std(0xb560c4, { roughness: 0.4 })); gland.position.set(-5.2, 0, ZH - 1.9); root.add(gland);
-      const gm = std(0xffa24d, { emissive: 0x7a3c00, emissiveIntensity: 0.4 }); for (let k = 0; k < 9; k++) { const gr = new THREE.Mesh(new THREE.SphereGeometry(0.12, 10, 8), gm); const a = k * 2.4; gr.position.set(-5.2 + Math.cos(a) * 0.5, Math.sin(a * 1.3) * 0.4, ZH - 1.9 + Math.sin(a) * 0.5); root.add(gr); }
-      root.add(tube([V3(-5.2, 0, ZH - 1.2), V3(-5.0, 0, ZH - 0.7), V3(-4.5, 0, ZH - 0.3)], 0.12, std(0xd18ad9), 12));
-      // 호르몬 표적 세포 3 · 비표적 3
-      const HC = [['th', 0.6, ZH + 1.7], ['nh', 1.6, ZH - 1.7], ['th', 2.6, ZH + 1.7], ['nh', 3.8, ZH - 1.7], ['th', 4.7, ZH + 1.7], ['nh', 5.7, ZH + 1.7]].map((q) => { const c = cell(q[1], q[2], q[0]); receptor(c, 0, q[2] > ZH ? -1 : 1, q[0] === 'th' ? 'cone' : 'box'); return c; });
-      const targets = HC.filter((c) => c.kind === 'th');
-      const hI = new THREE.InstancedMesh(new THREE.ConeGeometry(0.1, 0.24, 14), std(0xff8a3d, { emissive: 0x7a3000, emissiveIntensity: 0.5 }), 44), hormones = [];
-      root.add(hI);
-      const rbcI = new THREE.InstancedMesh(new THREE.SphereGeometry(0.1, 12, 8), std(0xe5483f, { roughness: 0.4 }), 22); root.add(rbcI);
-      const rbc = Array.from({ length: 22 }, (_, i) => ({ u: i / 22, dz: (R() - 0.5) * 0.7, dy: (R() - 0.5) * 0.7 }));
-
-      /* 이름표 */
-      const L = {
-        tn: label('신경 신호', soma, { offset: [0.8, 1.2, 0], color: 'rgba(49,130,246,.92)' }),
-        tg: label('표적 세포', tN.g, { offset: [0, 1.1, 0] }), nt: label('표적 아님', n1.g, { offset: [0, 1.0, 0] }),
-        th: label('호르몬 신호', gland, { offset: [0.6, 1.4, 0], color: 'rgba(49,130,246,.92)' }),
-        gl: label('내분비샘', gland, { offset: [0, -1.1, 0] }), bv: label('혈관', [-2.5, 0.8, ZH], {}),
-        t2: label('표적 세포', targets[0].g, { offset: [0, 1.1, 0] }), n2: label('표적 아님', HC[1].g, { offset: [0, 1.0, 0] }),
-        rec: label('수용체', [XT, 0.5, ZN], {}),
-      };
-      L.rec.show(false);
-      const tmsg = label('', [XT + 0.2, 1.4, ZN], { color: 'rgba(30,150,80,.95)' }); tmsg.show(false);
-      const hmsg = label('', [2.6, 1.5, ZH + 1.7], { color: 'rgba(30,150,80,.95)' }); hmsg.show(false);
-
-      let clk = -1, show = 'both', emitT = 0, nSent = 0, firstN = -1, firstH = -1;
-      function send() {
-        clk = 0; emitT = 0; nSent = 0; firstN = firstH = -1; tmsg.show(false); hmsg.show(false);
-        hormones.length = 0; [tN, ...HC].forEach((c) => { c.glow = 0; c.hold = 0; });
-      }
-      controls.button('▶ 신호 보내기', send);
-      controls.segment('보기', [{ label: '둘 다', value: 'both' }, { label: '신경만', value: 'n' }, { label: '호르몬만', value: 'h' }], 'both', (v) => { show = v; });
-      info('<b>신경</b>: 연결된 한 곳에 빠르게, 짧게<br><b>호르몬</b>: 혈액으로 온몸에, 수용체가 맞는 표적 세포에만 느리지만 오래');
-
-      const hpos = new THREE.Vector3();
       return {
         update(dt, t) {
-          if (clk >= 0) clk += dt;
-          const showN = show !== 'h', showH = show !== 'n';
-          // ----- 신경 -----
-          const tp = clk / 0.5; // 0~1: 축삭을 따라 이동
-          pulse.visible = showN && clk >= 0 && tp < 1; pulse.position.set(-4.5 + Math.min(1, tp) * 7.4, 0, ZN); pulse.scale.setScalar(1 + 0.2 * Math.sin(t * 30));
-          for (let i = 0; i < 10; i++) { const u = (clk - 0.5 - i * 0.015) / 0.35, on = showN && u > 0 && u < 1; D.position.set(3.3 + Math.min(1, u) * 0.3 + Math.sin(i) * 0.02, Math.sin(i * 2.1) * 0.12, ZN + Math.cos(i * 1.7) * 0.12); D.scale.setScalar(on ? 1 : 0.001); D.rotation.set(0, 0, 0); D.updateMatrix(); ntI.setMatrixAt(i, D.matrix); }
-          ntI.instanceMatrix.needsUpdate = true;
-          if (clk >= 0.85 && firstN < 0) { firstN = clk; tN.glow = 1; tN.hold = 0.9; tmsg.set('반응! (' + clk.toFixed(1) + '초)'); tmsg.show(showN); }
-          // ----- 호르몬 -----
-          if (clk >= 0.1 && clk < 2.2 && showH) { emitT += dt; while (emitT > 0.09) { emitT -= 0.09; if (hormones.length < 40) hormones.push({ x: -4.5, y: (R() - 0.5) * 0.5, z: ZH + (R() - 0.5) * 0.5, st: 0, tm: 0, v: 1.35 + R() * 0.3, site: null, tgt: -1 }); } }
-          for (let i = hormones.length - 1; i >= 0; i--) {
-            const h = hormones[i];
-            if (h.st === 0) {
-              h.x += h.v * dt; h.y += (R() - 0.5) * dt * 1.2; h.z += (R() - 0.5) * dt * 1.2; h.y = Math.max(-0.4, Math.min(0.4, h.y)); h.z = Math.max(ZH - 0.4, Math.min(ZH + 0.4, h.z));
-              targets.forEach((c, ci) => { if (h.st === 0 && Math.abs(h.x - c.x) < 0.12 && R() < 0.5 && !c.taken) { h.st = 1; h.tm = 0; h.tgt = ci; c.taken = (c.taken || 0) + 1; } });
-              if (h.x > 6.4) hormones.splice(i, 1);
-            } else if (h.st === 1) {
-              const c = targets[h.tgt]; h.tm += dt;
-              const sx = c.x + (Math.sin(h.tm * 0 + i) * 0.1), sz = c.z - 0.75, k = Math.min(1, h.tm / 0.5);
-              h.x += (sx - h.x) * k * 0.2; h.y += (0 - h.y) * k * 0.2; h.z += (sz - h.z) * k * 0.2;
-              if (h.tm > 0.5 && c.glow < 1) { c.glow = 1; c.hold = 6; if (firstH < 0) { firstH = clk; hmsg.set('첫 반응 ' + clk.toFixed(1) + '초'); hmsg.show(showH); } }
-              if (h.tm > 6) { c.taken = 0; hormones.splice(i, 1); }
+          const L = L2(); if (!L) return; const sc = sceneOf(); if (sc !== scene) setScene(sc);
+          if (sc === 'neu') {
+            const n = L.S.neu, ap = active(), p = ap ? clamp(pp / 0.7, 0, 1) : n.p, run = ap ? pp < 0.7 : n.run, done = ap ? pp >= 0.7 : n.done;
+            const musc = ap ? (pp >= 0.68 ? 1 : 0) : n.musc;
+            const u = L.neuU(p); pulse.visible = ap ? pp > 0 && pp < 0.7 : n.run; pulse.position.set(X(u), 0, 0); pulse.scale.setScalar(1 + 0.2 * Math.sin(t * 30));
+            muscle.scale.set(lerp(60, 42, musc) / 62, lerp(26, 38, musc) / 62 * 1.4, 0.7 + 0.2 * musc); muscle.material.color.setHex(musc > 0.5 ? 0xdc2626 : 0xc43d3d);
+            finger.position.x = X(52) - musc * 0.25; NL[6].set(musc > 0.5 ? '팔 근육 수축!' : '팔 근육');
+            NL[7].set('⏱ 반응 시간 ' + (0.05 * p).toFixed(3) + ' s (목표 0.050 s, 천천히 보여 줘요)'); NL[7].show(true);
+            [sen, asn, mot].forEach((s, i) => { const on = run && p > [0.0, 0.36, 0.62][i] && p < [0.36, 0.62, 1][i]; s.material.emissive.setHex(on ? 0x886600 : 0); s.material.emissiveIntensity = on ? 0.8 : 0; });
+            setI('<b>⚡ 신경 신호</b>: 연결된 한 곳에만, 아주 빠르게 전달돼요.<br>가시 → 감각 뉴런 → 연합 뉴런(척수) → 운동 뉴런 → 팔 근육 (약 0.05초)<br>' + (done ? '✅ 신경 신호가 약 0.05초 만에 팔 근육 한 곳에만 전달됐어요. 심장·위·다리 근육은 연결이 없어 반응이 없어요.' : '🌵 가시에 찔리기(또는 ▶ 신호 재생)를 눌러 신호를 따라가 봐요.'));
+          } else {
+            const h = active() ? synthHor(pp * TH) : L.S.hor;
+            const hp = h.particles, vis = L.S.hor.showR || active() && L.S.hor.showR;
+            cells.forEach((c, i) => { const cs = h.cells[i]; c.r.visible = !!L.S.hor.showR; c.m.emissive.setHex(cs.act > 0.05 ? 0x33e07a : cs.nope > 0.05 ? 0xcc3333 : 0); c.m.emissiveIntensity = cs.act > 0.05 ? 0.6 * cs.act : cs.nope > 0.05 ? 0.4 * cs.nope : 0; c.g.scale.setScalar(1 + 0.08 * (cs.act || 0)); c.lab.set(c.c.name + (cs.act > 0.5 ? ' 반응!' : '') + (L.S.hor.showR ? (c.c.target ? ' (표적)' : '') : '')); });
+            for (let i = 0; i < NP; i++) {
+              const q = hp[i];
+              if (!q) { D.position.set(0, -50, 0); D.scale.setScalar(0.001); }
+              else if (q.state === 'dock' && q.cell >= 0) { const c = cells[q.cell]; D.position.copy(c.pos).addScaledVector(c.dir, 0.95 - 0.3 * q.f).add(V3((i % 3 - 1) * 0.09, 0, (i % 2) * 0.09)); D.scale.setScalar(1); D.rotation.set(0, 0, 0); }
+              else { const p = loopPt(q.phi); D.position.set(p.x, (i % 3 - 1) * 0.08, p.z + (i % 4 - 1.5) * 0.06); D.scale.setScalar(q.phi < 0 ? 0.001 : 1); D.rotation.set(0, 0, -Math.PI / 2); }
+              D.updateMatrix(); hI.setMatrixAt(i, D.matrix);
             }
+            hI.instanceMatrix.needsUpdate = true;
+            for (let i = 0; i < NR; i++) { const b = h.rbc[i]; if (!b) continue; const p = loopPt(b.phi); D.position.set(p.x, 0.05, p.z + ((i % 3) - 1) * 0.1); D.rotation.set(0, 0, 0); D.scale.set(1, 0.6, 1); D.updateMatrix(); rI.setMatrixAt(i, D.matrix); }
+            rI.instanceMatrix.needsUpdate = true;
+            HLab[2].set(h.run || h.t > 0 ? '⏱ 호르몬 분비 후 ' + h.t.toFixed(0) + ' 초(모형 시간)' + (h.first != null ? ' · 첫 반응 ' + h.first.toFixed(0) + ' 초' : '') : '🧪 호르몬 분비를 눌러요');
+            setI('<b>🩸 호르몬 신호</b>: 호르몬이 혈액을 타고 온몸을 돌다가 <b>수용체가 맞는 표적 세포(②·④)</b>에만 결합해 반응해요. 반응은 느리지만 넓고 오래 가요.<br>🔬 수용체 보기로 수용체 모양을 확인해 봐요 (초록 컵 = 호르몬 X의 수용체).');
           }
-          for (let i = 0; i < 44; i++) { const h = hormones[i]; if (h && showH) { D.position.set(h.x, h.y, h.z); D.rotation.set(0, 0, h.st ? -Math.PI / 2 * 0 : Math.PI / 2 * (h.st ? 0 : -1)); D.rotation.z = h.st === 0 ? -Math.PI / 2 : 0; D.scale.setScalar(1); } else { D.position.set(0, -50, 0); D.scale.setScalar(0.001); } D.updateMatrix(); hI.setMatrixAt(i, D.matrix); }
-          hI.instanceMatrix.needsUpdate = true;
-          rbc.forEach((r, i) => { r.u = (r.u + dt * 0.12) % 1; D.position.set(-5.7 + r.u * 12.2, r.dy * 0.7, ZH + r.dz * 0.7); D.rotation.set(0, 0, 0); D.scale.set(1, 0.6, 1); D.updateMatrix(); rbcI.setMatrixAt(i, D.matrix); });
-          rbcI.instanceMatrix.needsUpdate = true;
-          // 표적 세포 반응(빛남)
-          [tN, ...targets].forEach((c) => { c.hold -= dt; const want = c.hold > 0 ? 1 : 0; c.glow += (want - c.glow) * Math.min(1, dt * (want ? 8 : 3)); c.m.emissive.set(0x33e07a); c.m.emissiveIntensity = c.glow * 0.65; c.g.scale.setScalar(1 + c.glow * 0.08); });
-          L.tn.show(showN); L.tg.show(showN); L.nt.show(showN); L.th.show(showH); L.gl.show(showH); L.bv.show(showH); L.t2.show(showH); L.n2.show(showH);
-          pulse.visible = pulse.visible && showN;
-          tmsg.show(showN && firstN >= 0 && clk < 6); hmsg.show(showH && firstH >= 0);
-          if (clk > 14) clk = -1;
         },
-        sync() {},
+        sync() { scene = ''; },
       };
     },
   });

@@ -60,6 +60,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: 8.6, theta: 0.5, phi: 1.2, min: 4, max: 20 },
     autoRotate: 0,
+    levels: [2, 3],                  // 1·2단계(분류·화살표 연결)는 2D 화면에서 해요
     build(ctx) {
       const { THREE, root, label, info, controls, orbit, renderer } = ctx;
       renderer.localClippingEnabled = true;
@@ -202,17 +203,28 @@
           b.classList.add('on');
         });
       });
+      let selSeg = null;
       const gCut = grab(() => {
         controls.segment('자르기', [{ value: 'oct', label: '1/8' }, { value: 'quarter', label: '1/4' }, { value: 'half', label: '반쪽' }], level, (v) => { level = v; buildCaps(); cutInfo(); orbit.phi = LEVELS[v][1] ? 0.95 : 1.25; });
-        controls.segment('층', [{ value: 'all', label: '전체' }].concat(LAYERS.map((L) => ({ value: L.id, label: L.name }))), sel, (v) => { sel = v; applySel(); cutInfo(); });
+        selSeg = controls.segment('층', [{ value: 'all', label: '전체' }].concat(LAYERS.map((L) => ({ value: L.id, label: L.name }))), sel, (v) => { sel = v; applySel(); cutInfo(); });
         const tb = controls.button('지각 두께: 실제 비율', () => { thickMode = !thickMode; tb.textContent = thickMode ? '지각 두께: 크게 그림' : '지각 두께: 실제 비율'; tb.classList.toggle('on', thickMode); buildCaps(); cutInfo(); });
       });
       buildCaps(); applySel(); applySys(); setMode('sys');
 
+      /* 학습 단계에 맞춰: 1·2단계 = 지구계, 3·4단계 = 지권 단면 */
+      const stepMode = () => { const m = ctx.level >= 2 ? 'cut' : 'sys'; if (m !== mode) { setMode(m); modeSeg.set(m); } };
+      ctx.onLevel(stepMode);
+      let lastFocus = null;
       let sized = false;
       return {
         update(dt) {
-          if (!sized) { sized = true; setMode(mode); }
+          if (!sized) { sized = true; setMode(mode); stepMode(); }
+          const L2 = ctx.lesson && ctx.lesson();       // 2D에서 누른 층을 3D에서도 강조
+          if (L2 && L2.S && L2.S.focus !== lastFocus) {
+            lastFocus = L2.S.focus;
+            const f = LAYERS.some((L) => L.id === lastFocus) ? lastFocus : 'all';
+            if (f !== sel) { sel = f; selSeg.set(f); applySel(); if (mode === 'cut') cutInfo(); }
+          }
           if (mode === 'sys') { globe.rotation.y += 0.22 * dt; cloudM.rotation.y += 0.06 * dt; }
           if (mode === 'cut') {
             const C = LEVELS[level], dv = new THREE.Vector3(C[0], C[1], C[2]).normalize();

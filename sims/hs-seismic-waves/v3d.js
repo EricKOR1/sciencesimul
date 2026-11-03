@@ -95,12 +95,18 @@
       let lastWave = st.wave, lastMed = st.med;
       const wSeg = controls.segment('파의 종류', [{ value: 'P', label: 'P파' }, { value: 'S', label: 'S파' }, { value: 'R', label: '표면파' }], st.wave, (v) => {
         if (v === 'R' && st.med === 'liquid') { st.med = 'solid'; mSeg.set('solid'); push('med'); }
-        st.wave = v; st.t = 0; refresh(); push('wave');
+        st.wave = v; player.set(0); refresh(); push('wave');
       });
       const mSeg = controls.segment('매질', [{ value: 'solid', label: '고체' }, { value: 'liquid', label: '액체' }], st.med, (v) => {
-        st.med = v; if (v === 'liquid' && st.wave === 'R') { st.wave = 'P'; wSeg.set('P'); } st.t = 0; refresh(); push('med'); push('wave');
+        st.med = v; if (v === 'liquid' && st.wave === 'R') { st.wave = 'P'; wSeg.set('P'); } player.set(0); refresh(); push('med'); push('wave');
       });
-      const bb = controls.button('🌊 파 다시 보내기', () => { st.t = 0; });
+      /* ▶ 재생: 진원에서 보낸 파가 덩어리를 지나가요 (15초 안에 P파는 2번, S파·표면파는 1번 — 속도는 P > S > 표면파 그대로) */
+      const CYC = 15, TC = { P: 7.5, S: 15, R: 15 };
+      const player = controls.player({
+        duration: CYC, loop: true, autoplay: true, label: '재생',
+        phases: [[0, '파가 출발'], [0.5, '지나가는 중']],
+        onFrame(p) { st.t = (p * CYC) % TC[st.wave]; },
+      });
       refresh();
 
       const ss = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
@@ -109,13 +115,11 @@
           /* 2D 실험의 선택을 따라가요 */
           try {
             const S = window.__sim && window.__sim.S;
-            if (S && (S.wave !== lastWave || S.med !== lastMed)) { lastWave = S.wave; lastMed = S.med; st.wave = S.wave; st.med = S.med; wSeg.set(st.wave); mSeg.set(st.med); st.t = 0; refresh(); }
+            if (S && (S.wave !== lastWave || S.med !== lastMed)) { lastWave = S.wave; lastMed = S.med; st.wave = S.wave; st.med = S.med; wSeg.set(st.wave); mSeg.set(st.med); player.set(0); refresh(); }
           } catch (e) {}
-          st.t += dt;
           const w = st.wave, v = SPEED[w], a = AMP[w], k = W / v, liq = st.med === 'liquid';
           const front = X0 - 0.2 + v * st.t;
           const xEnd = X0 + (NX - 1) * SP;
-          if (front > xEnd + 6) st.t = 0;
           src.position.x = X0 - SP * 0.9 + (w === 'P' ? 0.12 * Math.sin(-W * st.t) : 0);
           src.position.y = blk.position.y + (w === 'S' ? 0.12 * Math.sin(-W * st.t) : w === 'R' ? 0.06 * Math.sin(-W * st.t) : 0);
           for (let n = 0; n < N; n++) {

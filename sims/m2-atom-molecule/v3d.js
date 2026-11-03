@@ -1,27 +1,34 @@
-/* m2-atom-molecule · 3D 입자 모형 (공 막대 / 공간 채움)
-   원자 1개로 존재하는 입자(He, Cu)와 원자가 결합한 분자(H₂, O₂, N₂, H₂O, CO₂, CH₄, NH₃)를 돌려 보고,
-   '나누기'로 분자를 원자로 나누어 봐요. 평면 그림으로는 알 수 없는 분자의 입체 모양을 확인해요. */
+/* m2-atom-molecule · 3D 입자 모형
+   2D 실험의 물질과 같아요: 원자로 존재(헬륨 · 네온 · 구리) · 분자로 존재(산소 · 이산화 탄소 · 물 · 메테인) · 이온으로 존재(소금).
+   '나누기'(▶ 재생)로 분자를 원자로 나누면 더 이상 그 물질의 성질이 없어요. (결합의 원리 · 분자 모양 설명은 이 차시에서 다루지 않아요.)
+   2D 입자 현미경에서 관찰 중인 물질, 1단계에서 물 분자를 나눈 상태를 따라가요. */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
-  const COL = { H: 0xf1f5f9, C: 0x3a3f4b, N: 0x3f6fe8, O: 0xef4b4b, He: 0x7fd8e8, Cu: 0xc7743b };
-  const NAME = { H: '수소', C: '탄소', N: '질소', O: '산소', He: '헬륨', Cu: '구리' };
-  const RB = { H: 0.26, C: 0.4, N: 0.38, O: 0.38, He: 0.5, Cu: 0.88 };      // 공 막대 반지름 (Å 단위 장면)
-  const RV = { H: 1.1, C: 1.7, N: 1.55, O: 1.52, He: 1.4, Cu: 1.4 };       // 공간 채움 반지름 (반데르발스 반지름 정도)
+  const COL = { H: 0xf5f7fb, C: 0x3a3f4b, O: 0xef4b4b, He: 0x7fd8e8, Ne: 0xff8a5c, Cu: 0xc7743b, Na: 0x9b7be0, Cl: 0x3fbf5f };   // 2D 실험과 같은 색
+  const NAME = { H: '수소', C: '탄소', O: '산소', He: '헬륨', Ne: '네온', Cu: '구리', Na: '나트륨', Cl: '염소' };
+  const RB = { H: 0.26, C: 0.4, O: 0.38, He: 0.5, Ne: 0.55, Cu: 0.88, Na: 0.5, Cl: 0.72 };      // 공 반지름 (Å 단위 장면)
   const T4 = 0.63;
   // 좌표(Å)는 2D 실험 화면의 분자 자료와 같아요.
   const MOLS = {
-    He:  { f: 'He', name: '헬륨', kind: 'atom', atoms: [['He', 0, 0, 0]], bonds: [] },
-    Cu:  { f: 'Cu', name: '구리', kind: 'metal', atoms: [], bonds: [] },
-    H2:  { f: 'H₂', name: '수소', kind: 'mol', atoms: [['H', -0.37, 0, 0], ['H', 0.37, 0, 0]], bonds: [[0, 1, 1]] },
+    He:  { f: 'He', name: '헬륨', kind: 'atom', atoms: [['He', 0, 0, 0]], bonds: [], cap: '헬륨 원자가 하나씩 따로 떨어져 빠르게 날아다녀요.' },
+    Ne:  { f: 'Ne', name: '네온', kind: 'atom', atoms: [['Ne', 0, 0, 0]], bonds: [], cap: '네온 원자가 하나씩 따로 떨어져 빠르게 날아다녀요.' },
+    Cu:  { f: 'Cu', name: '구리', kind: 'metal', atoms: [], bonds: [], cap: '구리 원자가 규칙적으로 끝없이 이어져 있어요. 제자리에서 떨기만 해요.' },
     O2:  { f: 'O₂', name: '산소', kind: 'mol', atoms: [['O', -0.6, 0, 0], ['O', 0.6, 0, 0]], bonds: [[0, 1, 2]] },
-    N2:  { f: 'N₂', name: '질소', kind: 'mol', atoms: [['N', -0.55, 0, 0], ['N', 0.55, 0, 0]], bonds: [[0, 1, 3]] },
-    H2O: { f: 'H₂O', name: '물', kind: 'mol', atoms: [['O', 0, 0.2, 0], ['H', -0.76, -0.39, 0], ['H', 0.76, -0.39, 0]], bonds: [[0, 1, 1], [0, 2, 1]] },
     CO2: { f: 'CO₂', name: '이산화 탄소', kind: 'mol', atoms: [['O', -1.16, 0, 0], ['C', 0, 0, 0], ['O', 1.16, 0, 0]], bonds: [[0, 1, 2], [1, 2, 2]] },
+    H2O: { f: 'H₂O', name: '물', kind: 'mol', atoms: [['O', 0, 0.2, 0], ['H', -0.76, -0.39, 0], ['H', 0.76, -0.39, 0]], bonds: [[0, 1, 1], [0, 2, 1]] },
     CH4: { f: 'CH₄', name: '메테인', kind: 'mol', atoms: [['C', 0, 0, 0], ['H', T4, T4, T4], ['H', T4, -T4, -T4], ['H', -T4, T4, -T4], ['H', -T4, -T4, T4]], bonds: [[0, 1, 1], [0, 2, 1], [0, 3, 1], [0, 4, 1]] },
-    NH3: { f: 'NH₃', name: '암모니아', kind: 'mol', atoms: [['N', 0, -0.12, 0], ['H', 0, 0.33, 0.94], ['H', 0.81, 0.33, -0.47], ['H', -0.81, 0.33, -0.47]], bonds: [[0, 1, 1], [0, 2, 1], [0, 3, 1]] },
+    NaCl: { f: 'NaCl', name: '소금', kind: 'ion', atoms: [], bonds: [], cap: '(+)전하를 띤 입자와 (−)전하를 띤 입자가 번갈아 규칙적으로 배열해 있어요. 이렇게 전하를 띤 입자를 <b>이온</b>이라고 해요.' },
   };
-  const KEYS = ['He', 'Cu', 'H2', 'O2', 'N2', 'H2O', 'CO2', 'CH4', 'NH3'];
+  const KEYS = ['He', 'Ne', 'Cu', 'O2', 'CO2', 'H2O', 'CH4', 'NaCl'];
+  // 2D 입자 현미경의 시료 이름 → 이 모형의 키
+  const OF2D = { he: 'He', ne: 'Ne', cu: 'Cu', o2: 'O2', co2: 'CO2', h2o: 'H2O', ch4: 'CH4', nacl: 'NaCl' };
+  // 소금: 나트륨 이온(+)과 염화 이온(−)이 번갈아 쌓인 작은 조각 (3×3×3)
+  (function () {
+    const d = 1.45, a = [];
+    for (let x = -1; x <= 1; x++) for (let y = -1; y <= 1; y++) for (let z = -1; z <= 1; z++) a.push([(x + y + z) % 2 === 0 ? 'Na' : 'Cl', x * d, y * d, z * d]);
+    MOLS.NaCl.atoms = a;
+  })();
   // 구리: 면심 입방(최조밀) 조각, 1 Å 단위 (Cu–Cu 약 2.56 Å)
   (function () {
     const d = 2.56 / Math.SQRT2, a = [];
@@ -34,6 +41,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: 6, theta: 0.6, phi: 1.2, min: 3, max: 16 },
     autoRotate: 0.3,
+    levels: [],                      // 1~4단계 미션은 모두 2D 화면에서 해요 (3D는 [🧊 3D]로 열어요)
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       let key = 'H2O', style = 'ball', split = 0;
@@ -50,7 +58,7 @@
       }
       function fitCamera() { // 입자 크기와 화면 비율에 맞춰 처음 거리를 정해요
         const v = ctx.renderer.domElement, asp = Math.max(0.3, v.clientWidth / Math.max(1, v.clientHeight));
-        const base = key === 'Cu' ? 11 : key === 'He' ? 5 : key === 'CO2' ? 8 : (style === 'space' ? 7.5 : 6);
+        const base = key === 'Cu' || key === 'NaCl' ? 11 : key === 'He' || key === 'Ne' ? 5 : key === 'CO2' ? 8 : 6;
         ctx.orbit.dist = base * (asp < 1 ? Math.min(2, Math.pow(1 / asp, 0.75)) : 1);
       }
       function clearAll() {
@@ -97,23 +105,50 @@
       function text() {
         const M = MOLS[key];
         if (M.kind === 'atom') {
-          info('<b>' + M.name + ' (' + M.f + ')</b><br>원자 1개가 그대로 하나의 입자예요. 다른 원자와 결합하지 않고 따로따로 떠다녀요.');
+          info('<b>' + M.name + ' (' + M.f + ')</b> · 원자로 존재<br>' + M.cap);
         } else if (M.kind === 'metal') {
-          info('<b>' + M.name + ' (' + M.f + ')</b><br>분자 없이 <b>원자</b>가 규칙적으로 빈틈없이 쌓여 있어요. 그래서 구리는 원자로 존재하는 물질이에요.<br><span style="color:#9fb0d4">(13개만 떼어 낸 조각)</span>');
+          info('<b>' + M.name + ' (' + M.f + ')</b> · 원자로 존재<br>' + M.cap + '<br><span style="color:#9fb0d4">(13개만 떼어 낸 조각)</span>');
+        } else if (M.kind === 'ion') {
+          info('<b>' + M.name + ' (' + M.f + ')</b> · 이온으로 존재<br>' + M.cap + '<br><span style="color:#9fb0d4">(27개만 떼어 낸 조각 · 나트륨 이온 <b style="color:#b9a3f0">(+)</b> · 염화 이온 <b style="color:#6fdc8c">(−)</b>)</span>');
         } else {
           const cnt = {}; M.atoms.forEach((a) => { cnt[a[0]] = (cnt[a[0]] || 0) + 1; });
           const parts = Object.keys(cnt).map((s) => NAME[s] + ' 원자 ' + cnt[s] + '개').join(' + ');
           if (split > 0.7) info('<b>분자를 나누었어요!</b><br>' + parts + '로 흩어졌어요. 원자는 더 이상 <b>' + M.name + '</b>의 성질을 갖지 않아요.');
           else if (split > 0.12) info('<b>' + M.name + ' 분자(' + M.f + ')</b>를 나누는 중…<br>결합이 끊어지고 있어요.');
-          else info('<b>' + M.name + ' 분자 (' + M.f + ')</b><br>' + parts + '가 결합한 입자 1개예요.<br>' + (key === 'CO2' ? '일직선 모양이에요.' : key === 'H2O' ? '굽은 모양이에요 (결합각 약 104.5°).' : key === 'CH4' ? '탄소가 가운데, 수소 4개가 정사면체 꼭짓점에 있어요.' : key === 'NH3' ? '삼각뿔 모양이에요.' : '두 원자가 붙은 막대 모양이에요.'));
+          else info('<b>' + M.name + ' 분자 (' + M.f + ')</b> · 분자로 존재<br>' + parts + '가 결합한 입자(분자) 1개예요. 물질의 성질을 가진 가장 작은 입자예요.');
         }
       }
-      controls.segment('입자', KEYS.map((k) => ({ value: k, label: MOLS[k].f })), key, (v) => { key = v; split = 0; sl.set(0); fitCamera(); build(); });
-      controls.segment('모형', [{ value: 'ball', label: '공-막대' }, { value: 'space', label: '공간 채움' }], style, (v) => { style = v; fitCamera(); build(); });
-      const sl = controls.range('나누기', 0, 1, 0.01, 0, (v) => { split = v; refresh(); }, (v) => (v < 0.05 ? '(분자)' : v > 0.95 ? '(원자들)' : Math.round(v * 100) + '%'));
-      fitCamera();
-      build();
-      return {};
+      let pl = null, ctlEl = null;
+      function playerRow(on) { if (!ctlEl) ctlEl = ctx.renderer.domElement.closest('.v3-wrap').querySelector('.v3-ctl'); const r = ctlEl && ctlEl.querySelector('.v3-player'); if (r) r.style.display = on ? '' : 'none'; const ri = ctlEl && [...ctlEl.querySelectorAll('input[type=range]')].find((x) => !x.closest('.v3-player')); if (ri) { ri.style.display = on ? '' : 'none'; if (ri.previousElementSibling) ri.previousElementSibling.style.display = on ? '' : 'none'; } }
+      function setKey(k) { key = k; split = 0; sl.set(0); fitCamera(); build(); playerRow(MOLS[k].kind === 'mol'); }
+      const seg = controls.segment('물질', KEYS.map((k) => ({ value: k, label: MOLS[k].name })), key, (v) => setKey(v));
+      const sl = controls.range('나누기', 0, 1, 0.01, 0, (v) => { split = v; if (pl) pl.pause(); refresh(); }, (v) => (v < 0.05 ? '(분자)' : v > 0.95 ? '(원자들)' : Math.round(v * 100) + '%'));
+      // ▶ 재생: 분자 1개가 원자로 나뉘었다가 다시 모여요 (분자를 나누면 원자 — 물질의 성질이 사라져요)
+      const ease = (x) => x * x * (3 - 2 * x);
+      pl = controls.player({
+        duration: 8, loop: true, autoplay: false, label: '분자 나누기',
+        phases: [[0, '분자 1개'], [0.2, '나누는 중'], [0.5, '원자로 흩어졌어요'], [0.72, '다시 모여요']],
+        onFrame(p) {
+          if (!pl) return;
+          const v = p < 0.2 ? 0 : p < 0.5 ? ease((p - 0.2) / 0.3) : p < 0.72 ? 1 : 1 - ease((p - 0.72) / 0.28);
+          split = v; sl.set(v); refresh();
+        },
+      });
+      fitCamera(); build(); playerRow(MOLS[key].kind === 'mol');
+
+      /* 2D 실험을 따라가요: 1단계에서 물 분자를 나눈 상태, 입자 현미경에서 관찰 중인 물질 */
+      let lastSig = '', k0 = 0;
+      function from2D() {
+        const s = window.__sim; if (!s || !s.S) return;
+        let k = null, sp = null;
+        if (s.S.scene === 'zoom' && s.ZM) { k = 'H2O'; sp = s.ZM.split ? 1 : 0; }
+        else if (s.S.scene === 'scope' && s.SCP && s.SCP.cur && OF2D[s.SCP.cur]) k = OF2D[s.SCP.cur];
+        const sig = (k || '') + ':' + (sp == null ? '' : sp);
+        if (!k || sig === lastSig) return; lastSig = sig;
+        if (k !== key) { seg.set(k); setKey(k); }
+        if (sp != null && MOLS[key].kind === 'mol') { if (pl) pl.pause(); split = sp; sl.set(sp); refresh(); }
+      }
+      return { sync: from2D, update() { if ((k0++ % 10) === 0) from2D(); } };
     },
   });
 })();

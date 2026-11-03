@@ -1,6 +1,6 @@
-/* m1-three-states · 3D 고체·액체·기체의 입자 모형
-   고체: 입자가 규칙적으로 배열하고 제자리에서 진동해요. 액체: 입자가 가깝지만 자리를 바꾸며 움직여요.
-   기체: 입자가 멀리 떨어져 자유롭게 날아다녀요. 용기의 크기를 바꿔 모양·부피 변화를 확인해 봐요. */
+/* m1-three-states · 3D 얼음·물·수증기의 입자 모형 (2D '입자 모형으로 비교하기'와 같은 장면)
+   고체(얼음): 입자가 규칙적으로 배열하고 제자리에서 진동해요. 액체(물): 입자가 가깝지만 불규칙하고 위치를 바꾸며 이동해요.
+   기체(수증기): 입자가 멀리 떨어져 빠르고 자유롭게 운동해요. 옆의 📏 거리 · 🧩 배열 · 🏃 운동 버튼(2D)과 함께 바뀌어요. */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -8,9 +8,9 @@
   window.SciSim3D.attach({
     title: '세 가지 상태의 입자 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    levels: [1, 2],
-    camera: { dist: 9.8 * (PHN0 ? 1.05 : 1), theta: 0.6, phi: 1.15, fov: 45, target: [0, 0, 0], min: 5, max: 26 },
-    autoRotate: 0.18,
+    levels: [1],   // 2단계(입자 모형으로 비교하기): 얼음·물·수증기 — 나머지 단계는 2D에서 끌어 놓기·분류
+    camera: { dist: 13 * (PHN0 ? 1.1 : 1), theta: 0.25, phi: 1.2, fov: 45, target: [0, 0, 0], min: 5, max: 26 },
+    autoRotate: 0.06,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       /* ---------- 공통 도구 ---------- */
@@ -142,45 +142,64 @@
         g.add(m, e); g.userData.set = (w, h) => g.scale.set(w, h, w); g.userData.set(W, H); return g;
       }
 
-      const PR = 0.17, N = 125, HH = 2.3;
-      const COL = { solid: 0x4f83f0, liquid: 0x22b8d9, gas: 0xff9a3d };
-      const NAME = { solid: '고체', liquid: '액체', gas: '기체' };
-      const sys = stateSys(N, PR, 0x4f83f0), st = { mode: 'solid', W: 1.6, ctr: false };
-      const frame = boxFrame(st.W, HH); root.add(frame);
-      const stand = new THREE.Mesh(new THREE.CylinderGeometry(3.4, 3.6, 0.2, 48), mat(0x64748b, { metalness: 0.4, roughness: 0.4 })); stand.position.y = -HH - 0.12; root.add(stand);
-      /* 배열 눈금: 입자 하나를 따라가는 꼬리 */
-      const trail = []; const tr = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0xffd23f })); root.add(tr);
-      const TN = 40; const tp = new Float32Array(TN * 3); tr.geometry.setAttribute('position', new THREE.BufferAttribute(tp, 3)); tr.frustumCulled = false;
-      let tn = 0, tcount = 0;
-      const one = 27; // 따라갈 입자
-      const nameLab = label('', [0, HH + 0.4, 0], { size: 14, color: 'rgba(30,64,175,.92)' });
-
-      const FACT = {
-        solid: ['입자가 <b>규칙적으로 빽빽하게</b> 배열하고 <b>제자리에서 진동</b>만 해요.', '모양과 부피가 일정해요.'],
-        liquid: ['입자가 가깝지만 <b>서로 자리를 바꾸며</b> 움직여요.', '부피는 일정하고, 모양은 그릇에 따라 변해요.'],
-        gas: ['입자가 멀리 떨어져 <b>자유롭게 날아다녀요</b>.', '모양과 부피가 일정하지 않고 그릇을 가득 채워요.'],
-      };
-      function show() {
-        nameLab.set(NAME[st.mode]);
-
-        info(FACT[st.mode][0] + '<br>' + FACT[st.mode][1]);
-      }
-      function setW(w) { st.W = w; sys.W = w; frame.userData.set(w, HH); }
-      sys.H = HH; setW(st.W); sys.snap();
-      controls.segment('상태', [{ value: 'solid', label: '고체' }, { value: 'liquid', label: '액체' }, { value: 'gas', label: '기체' }], 'solid', (v) => {
-        st.mode = v; sys.set(v, v === 'gas'); if (v === 'liquid') sys.P.forEach((p) => { p.vx += (rnd() - 0.5) * 0.5; p.vz += (rnd() - 0.5) * 0.5; }); show();
+      const PR = 0.17, N = 64, HH = 2.0, W = 1.15;
+      const KINDS = ['solid', 'liquid', 'gas'], XS = [-3.3, 0, 3.3];
+      const NAME = { solid: '얼음 (고체)', liquid: '물 (액체)', gas: '수증기 (기체)' };
+      // 2D 비교 장면과 같은 구성: 얼음·물·수증기 (같은 물 입자, 입자 수도 같아요)
+      const sysS = KINDS.map((k, i) => {
+        const s = stateSys(N, PR, 0x4f83f0); s.H = HH; s.W = W; s.mesh.position.x = XS[i];
+        const fr = boxFrame(W, HH); fr.position.x = XS[i]; root.add(fr);
+        s.prep(k); return s;
       });
-      controls.range('용기 너비', 1.3, 2.4, 0.1, st.W, (v) => setW(v), (v) => (v < 1.6 ? '좁게' : v < 2.0 ? '보통' : '넓게'));
-      const trB = controls.button('📍 입자 하나 따라가기', () => { st.ctr = !st.ctr; trB.classList.toggle('on', st.ctr); tn = 0; });
-      show();
-      const dot = new THREE.Mesh(new THREE.SphereGeometry(PR * 1.5, 16, 12), new THREE.MeshBasicMaterial({ color: 0xffd23f, transparent: true, opacity: 0.55, depthWrite: false })); root.add(dot);
+      const stand = new THREE.Mesh(new THREE.BoxGeometry(11.4, 0.2, 3.4), mat(0x64748b, { metalness: 0.4, roughness: 0.4 })); stand.position.y = -HH - 0.12; root.add(stand);
+      const nameLab = KINDS.map((k, i) => label(NAME[k], [XS[i], HH, 0], { size: 13.5, color: 'rgba(30,64,175,.92)', offset: [0, 0.45, 0] }));
+      const featLab = KINDS.map((k, i) => label('', [XS[i], -HH, 0], { size: 12, color: 'rgba(20,90,70,.92)', offset: [0, -0.45, 0] }));
+      /* 입자 하나를 따라가는 꼬리 (2D의 주황색 입자) */
+      const TN = 40, one = 27, trails = KINDS.map(() => {
+        const l = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0xffa31a })); const tp = new Float32Array(TN * 3);
+        l.geometry.setAttribute('position', new THREE.BufferAttribute(tp, 3)); l.frustumCulled = false; root.add(l); return { l, tp, n: 0 };
+      });
+      const dots = KINDS.map(() => { const d = new THREE.Mesh(new THREE.SphereGeometry(PR * 1.5, 16, 12), new THREE.MeshBasicMaterial({ color: 0xffa31a, transparent: true, opacity: 0.55, depthWrite: false })); root.add(d); return d; });
+      let follow = true, tcount = 0;
+
+      const FEAT = {
+        dist: { solid: '거리: 매우 가까워요', liquid: '거리: 가까워요', gas: '거리: 매우 멀어요' },
+        order: { solid: '배열: 규칙적이에요', liquid: '배열: 불규칙해요', gas: '배열: 매우 불규칙해요' },
+        move: { solid: '운동: 제자리에서 진동', liquid: '운동: 위치를 바꾸며 이동', gas: '운동: 빠르고 자유롭게' },
+      };
+      const NOTE = {
+        dist: '<b>📏 거리</b>: 고체는 입자 사이가 <b>매우 가깝고</b>, 액체는 <b>가까우며</b>, 기체는 <b>매우 멀어요</b>.',
+        order: '<b>🧩 배열</b>: 고체는 <b>규칙적</b>으로 늘어서고, 액체는 <b>불규칙</b>하며, 기체는 <b>매우 불규칙</b>해요.',
+        move: '<b>🏃 운동</b>: 고체는 <b>제자리에서 진동</b>하고, 액체는 서로 <b>위치를 바꾸며 이동</b>하며, 기체는 <b>빠르고 자유롭게</b> 운동해요.',
+      };
+      let lastView = '#', lastTxt = '', vTick = 0;
+      function show(view) {
+        view = view || null;
+        featLab.forEach((l, i) => { l.show(!!view); if (view) l.set(FEAT[view][KINDS[i]]); });
+        const txt = view ? NOTE[view] + '<br>세 상태 모두 <b>같은 입자</b>로 이루어져 있어요.' : '얼음·물·수증기는 모두 <b>같은 입자</b>로 이루어져 있어요. 달라진 것은 입자 사이의 <b>거리</b>, 입자의 <b>배열</b>, 입자의 <b>운동</b>이에요.<br>옆의 📏 거리 · 🧩 배열 · 🏃 운동 버튼을 눌러 하나씩 비교해 보세요.';
+        if (txt !== lastTxt) { lastTxt = txt; info(txt); }
+      }
+      const trB = controls.button('📍 입자 하나 따라가기', () => { follow = !follow; trB.classList.toggle('on', follow); trails.forEach((t) => { t.n = 0; }); });
+      trB.classList.add('on');
+      show(null);
       return {
-        update(dt, t) {
-          sys.step(dt); sys.draw();
-          const p = sys.P[one]; dot.position.set(p.x, p.y, p.z); dot.visible = st.ctr;
-          tr.visible = st.ctr;
-          if (st.ctr) { tcount += dt; if (tcount > 0.04) { tcount = 0; if (tn < TN) { tp[tn * 3] = p.x; tp[tn * 3 + 1] = p.y; tp[tn * 3 + 2] = p.z; tn++; } else { tp.copyWithin(0, 3); tp[(TN - 1) * 3] = p.x; tp[(TN - 1) * 3 + 1] = p.y; tp[(TN - 1) * 3 + 2] = p.z; }
-            tr.geometry.setDrawRange(0, tn); tr.geometry.attributes.position.needsUpdate = true; } }
+        update(dt) {
+          const l = ctx.lesson && ctx.lesson();
+          vTick += dt;
+          if (l && l.state && vTick > 0.15) { vTick = 0; const view = l.state().view || null; if (view !== lastView) { lastView = view; show(view); } }
+          tcount += dt;
+          sysS.forEach((sys, i) => {
+            sys.step(dt); sys.draw();
+            const p = sys.P[one], x = p.x + XS[i];
+            dots[i].position.set(x, p.y, p.z); dots[i].visible = follow; trails[i].l.visible = follow;
+            if (follow && tcount > 0.04) {
+              const t = trails[i], tp = t.tp;
+              if (t.n < TN) { tp[t.n * 3] = x; tp[t.n * 3 + 1] = p.y; tp[t.n * 3 + 2] = p.z; t.n++; }
+              else { tp.copyWithin(0, 3); tp[(TN - 1) * 3] = x; tp[(TN - 1) * 3 + 1] = p.y; tp[(TN - 1) * 3 + 2] = p.z; }
+              t.l.geometry.setDrawRange(0, t.n); t.l.geometry.attributes.position.needsUpdate = true;
+            }
+          });
+          if (tcount > 0.04) tcount = 0;
         },
         sync() {},
       };

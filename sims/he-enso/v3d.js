@@ -2,7 +2,7 @@
    [워커 순환] 무역풍이 따뜻한 표층수를 서쪽으로 밀어 모으면, 서쪽은 수온 약층이 깊고 비구름이 생기고 동쪽은 찬 물이 올라와요(용승).
    엘니뇨·라니냐에서는 이 구조가 어떻게 달라지는지 입체 단면으로 봐요. (p: -1 라니냐 · 0 정상 · +1 엘니뇨, 수치는 실험의 예시 값)
    [해안 용승] 해안과 나란한 바람 → 에크만 수송으로 표층수가 바다 쪽으로 밀리고 아래의 찬 물이 올라와요.
-   2D 실험의 상태(S.pT, S.mode, S.dir, S.ws)를 읽어 따라가요(읽기 전용). */
+   2D 실험의 값(S.mode, S.dir, S.ws, S.pW·pS·pT·pR)을 그대로 따라가요. 조작은 2D 옆 조작판에서 하고, ▶는 그 조작판(바람 방향 · 무역풍 세기 · 진행 단계)을 대신 움직여 줘요. */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -46,8 +46,8 @@
       const ths = (p) => ({ dW: A(TA.thW, p) * SC, dE: A(TA.thE, p) * SC, sl: A(TA.slope, p) * 0.0035 });
       const yTh = (x, q) => -(lerp(q.dW, q.dE, (x + XL) / (2 * XL)));
       const ySf = (x, q) => q.sl * (-x / XL);
-      function build(p) {
-        const q = ths(p), N = 36, top = [], th = [];
+      function build(pS, pT) {
+        const q = ths(pT), N = 36, top = [], th = [];
         for (let i = 0; i <= N; i++) { const x = -XL + (2 * XL * i) / N; top.push([x, ySf(x, q)]); th.push([x, yTh(x, q) + 0.0]); }
         const sh = new THREE.Shape(); sh.moveTo(top[0][0], top[0][1]); top.forEach((v) => sh.lineTo(v[0], v[1])); for (let i = N; i >= 0; i--) sh.lineTo(th[i][0], th[i][1]); sh.closePath();
         const sh2 = new THREE.Shape(); sh2.moveTo(th[0][0], th[0][1]); th.forEach((v) => sh2.lineTo(v[0], v[1])); sh2.lineTo(XL, YB); sh2.lineTo(-XL, YB); sh2.closePath();
@@ -55,7 +55,7 @@
         const g1 = new THREE.ExtrudeGeometry(sh, ex), g2 = new THREE.ExtrudeGeometry(sh2, ex);
         g1.translate(0, 0, -ZD); g2.translate(0, 0, -ZD);
         const pos = g1.attributes.position, col = new Float32Array(pos.count * 3);
-        const sstW = A(TA.sstW, p), sstC = A(TA.sstC, p), sstE = A(TA.sstE, p), c = new THREE.Color();
+        const sstW = A(TA.sstW, pS), sstC = A(TA.sstC, pS), sstE = A(TA.sstE, pS), c = new THREE.Color();
         for (let i = 0; i < pos.count; i++) { const f = (pos.getX(i) + XL) / (2 * XL), T = f < 0.5 ? lerp(sstW, sstC, f * 2) : lerp(sstC, sstE, (f - 0.5) * 2); c.copy(ramp(T)); col[i * 3] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b; }
         g1.setAttribute('color', new THREE.BufferAttribute(col, 3));
         warm.geometry.dispose(); cold.geometry.dispose(); warm.geometry = g1; cold.geometry = g2;
@@ -105,72 +105,88 @@
         dv: label('', dv[1], { size: 12, offset: [0, 1.0, 0] }), cold: label('찬 심층수', [-3.4, -2.2, CZ], { size: 11.5, color: 'rgba(20,50,130,.92)' }), warmL: label('따뜻한 표층수', [-3.4, -0.35, CZ], { size: 11.5, color: 'rgba(160,50,10,.9)' }),
       };
 
-      /* ================= 상태 · 조작 ================= */
-      let view = 'walk', p = 0, pT = 0, uC = 0, uT = 2, built = -9, lastS = null, lastMode = null, lastUs = null, lastCb = -9;
+      /* ================= 상태 (2D 실험의 값을 그대로 따라가요) · ▶ ================= */
+      /* 2D와 같은 값: S.pW(바람) · S.pS(표층 수온) · S.pT(수온 약층) · S.pR(용승·강수·워커 순환) — 진행 단계마다 따로 변해요. 조작은 2D 옆 조작판에서 하고, ▶는 그 조작판을 대신 눌러 줘요 */
+      let view = 'walk', pW = 0, pS = 0, pT = 0, pR = 0, uC = 2, lastMode = null, lastCb = -9, infoKey = '', ready = false;
       const rd = () => { try { const s = window.__sim && window.__sim.S; return s || null; } catch (e) { return null; } };
-      const ctlEl = controls.text('').parentElement; ctlEl.removeChild(ctlEl.lastChild);
-      const grab = (fn) => { const n0 = ctlEl.children.length; const r = fn(); return { r, els: [].slice.call(ctlEl.children, n0) }; };
-      const segV = controls.segment('보기', [{ value: 'walk', label: '🌐 워커 순환' }, { value: 'coast', label: '🏖️ 해안 용승' }], view, (v) => setView(v));
-      const gW = grab(() => controls.segment('상태', [{ value: -1, label: '라니냐' }, { value: 0, label: '정상' }, { value: 1, label: '엘니뇨' }], 0, (v) => { pT = v; }));
-      const segP = gW.r;
-      const gC = grab(() => ({
-        seg: controls.segment('바람', [{ value: 3, label: '용승 바람' }, { value: 0, label: '바람 없음' }, { value: -3, label: '침강 바람' }], 3, (v) => { sgn = v / 3; uT = sgn * mag; updInfo(); }),
-        rng: controls.range('세기', 1, 3, 1, 2, (v) => { mag = v; uT = sgn * mag; updInfo(); }, (v) => ['약', '중', '강'][v - 1]),
-      }));
-      let sgn = 1, mag = 2; uT = 2;
-      const segC = { set: (v) => gC.r.seg.set(v) }, rngW = gC.r.rng;
-            function setView(v) {
-        view = v; walkG.visible = v === 'walk'; coastG.visible = v === 'coast'; segV.set(v);
+      const NAME_EL = ['정상 상태', '① 무역풍 약화', '② 난수 동쪽으로', '③ 수온 약층 변화', '④ 용승 약화·강수 이동'], NAME_LA = ['정상 상태', '① 무역풍 강화', '② 난수 서쪽에 더 모임', '③ 수온 약층 변화', '④ 용승 강화·강수 서쪽'];
+      function setView(v) {
+        view = v; walkG.visible = v === 'walk'; coastG.visible = v === 'coast';
         Object.values(L).forEach((l) => l.show(v === 'walk')); Object.values(cl).forEach((l) => l.show(v === 'coast'));
-        gW.els.forEach((e) => (e.style.display = v === 'walk' ? '' : 'none')); gC.els.forEach((e) => (e.style.display = v === 'coast' ? '' : 'none'));
         ctx.orbit.tx = v === 'walk' ? 0 : -0.8; ctx.orbit.ty = v === 'walk' ? -0.2 : -1.0;
         if (v === 'coast') { ctx.orbit.theta = 0.75; ctx.orbit.phi = 1.15; ctx.orbit.dist = PHONE ? 25 : 19; } else { ctx.orbit.theta = 0.42; ctx.orbit.phi = 1.2; ctx.orbit.dist = PHONE ? 21 : 15; }
-        updInfo();
+        infoKey = '';
       }
       function updInfo() {
-        if (view === 'walk') {
-          const t = p < -0.35 ? '<b>라니냐</b>: 무역풍이 더 강해져 서쪽에 따뜻한 물이 더 쌓이고, 동쪽 용승이 강해져요.' : p > 0.35 ? '<b>엘니뇨</b>: 무역풍이 약해져 따뜻한 물이 동쪽으로 퍼지고, 동쪽 용승이 약해져요. 비구름도 동쪽으로 와요.' : '<b>정상</b>: 무역풍이 따뜻한 물을 서쪽으로 밀어요. 서쪽은 비가 많고, 동쪽은 찬 물이 올라와요.';
-          info(t);
-        } else info(uT > 0.2 ? '해안과 나란한 바람 → 표층수가 바다 쪽으로 밀려 아래의 <b>찬 물이 올라와요(용승)</b>.<br>찬 물에는 영양염이 많아요.' : uT < -0.2 ? '바람이 반대면 표층수가 해안에 쌓여 <b>가라앉아요(침강)</b>.<br>따뜻한 표층이 두꺼워지고 영양염이 줄어요.' : '바람이 없으면 표층수가 움직이지 않아요.<br>용승 바람이나 침강 바람을 골라 보세요.');
+        const S = rd(), l = window.__sim, m = S && S.mode;
+        let key, html;
+        if (view === 'coast') {
+          const dir = S ? S.dir : 'N', ws = S ? S.ws : 2, up = uC > 0.2, dn = uC < -0.2;
+          key = 'c' + dir + ws + (up ? 'u' : dn ? 'd' : 'n');
+          html = (dir === '0' ? '<b>바람 없음</b>' : '<b>해안을 따라 ' + (dir === 'N' ? '북쪽' : '남쪽') + '으로 · 세기 ' + ws + '</b>') + '<br>' + (up ? '표층수가 바다 쪽으로 밀려 아래의 <b>찬 심층수가 올라와요(용승)</b>. 영양염이 풍부해 좋은 어장이 돼요.' : dn ? '표층수가 해안에 모여 아래로 <b>가라앉아요(침강)</b>. 산소를 심층으로 운반해요.' : '바람이 없으면 표층수가 움직이지 않아요.');
+        } else if (m === 'enso') {
+          const el = S.sign > 0, st = S.stage || 0;
+          key = 'e' + el + st; html = '<b>' + (el ? '엘니뇨' : '라니냐') + '</b> · ' + (el ? NAME_EL : NAME_LA)[st] + '<br>' + (el ? '무역풍이 약해져 서쪽의 따뜻한 해수가 동쪽으로 퍼지고, 동태평양 용승이 약해지고, 비구름이 동쪽으로 와요.' : '무역풍이 강해져 서쪽에 따뜻한 해수가 더 모이고, 동태평양 용승이 강해져요.');
+        } else {
+          const mm = l && l.mv ? l.mv() : null;
+          key = 'n' + (mm ? mm.pct + '|' + Math.round(mm.thW) + '|' + Math.round(mm.thE) : '');
+          html = mm ? '<b>무역풍 평소의 ' + mm.pct + ' %</b><br>수온 약층 깊이 서쪽 약 ' + Math.round(mm.thW) + ' m · 동쪽 약 ' + Math.round(mm.thE) + ' m, 서쪽 해수면이 동쪽보다 약 ' + Math.round(mm.slope) + ' cm 높아요.' : '<b>정상</b>: 무역풍이 따뜻한 물을 서쪽으로 밀어요. 서쪽은 비가 많고, 동쪽은 찬 물이 올라와요.';
+        }
+        if (key !== infoKey) { infoKey = key; info(html); }
       }
-      function syncSim() {
+      function readSim() {
         const S = rd(); if (!S) return;
-        if (S.mode !== lastMode) { lastMode = S.mode; if (S.mode === 'coast') setView('coast'); else if (S.mode) setView('walk'); }
-        if (typeof S.pT === 'number' && lastS !== S.pT) { if (lastS !== null) { pT = S.pT; segP.set(null); } else { pT = S.pT; } lastS = S.pT; }
-        if (S.mode === 'coast' && typeof S.Us === 'number' && lastUs !== S.Us) { { uT = S.Us; sgn = Math.sign(S.Us) || 0; if (S.Us) mag = Math.max(1, Math.min(3, Math.round(Math.abs(S.Us)))); gC.r.seg.set(sgn * 3); rngW.set(mag); updInfo(); } lastUs = S.Us; }
+        if (S.mode !== lastMode) { lastMode = S.mode; setView(S.mode === 'coast' ? 'coast' : 'walk'); }
+        pW = S.pW || 0; pS = S.pS || 0; pT = S.pT || 0; pR = S.pR || 0; if (typeof S.Us === 'number') uC = S.Us;
       }
-      syncSim(); p = pT; if (rd() && rd().mode === 'coast') setView('coast'); else setView('walk'); segP.set(Math.abs(pT) < 0.05 ? 0 : null);
+      readSim(); if (!rd()) setView('walk');
+      /* ▶ : 2D 조작판의 버튼·슬라이더를 대신 움직여 줘요 (바람 방향 · 무역풍 세기 · 진행 단계) */
+      const $q = (q) => document.querySelector(q);
+      const setRange = (q, v) => { const e = $q(q); if (e && +e.value !== v) { e.value = v; e.dispatchEvent(new Event('input', { bubbles: true })); } };
+      const pctAt = (p) => { const v = p < 0.25 ? 100 + 50 * (p / 0.25) : p < 0.5 ? 150 - 50 * ((p - 0.25) / 0.25) : p < 0.75 ? 100 - 60 * ((p - 0.5) / 0.25) : 40 + 60 * ((p - 0.75) / 0.25); return Math.max(40, Math.min(150, Math.round(v / 10) * 10)); };
+      const pl = controls.player({
+        duration: 12, loop: true, autoplay: false, label: '재생',
+        onFrame(p) {
+          if (!ready) return; const S = rd(); if (!S) return;
+          if (S.mode === 'coast') { const d = p < 1 / 3 ? 'N' : p < 2 / 3 ? '0' : 'S', b = $q('#wdBtns .opt[data-d="' + d + '"]'); if (S.dir !== d && b) b.click(); }
+          else if (S.mode === 'normal') setRange('#sTr', pctAt(p));
+          else if (S.mode === 'enso') setRange('#sPh', Math.min(4, Math.floor(p * 5)));
+        },
+      });
+      ready = true;
       const loopPts = (q) => {
-        const xu = -XL + 2 * XL * A(TA.rainX, p), xd = 5.0, xm = (xu + xd) / 2, y0 = 0.45 + q.sl * 0.2;
+        const xu = -XL + 2 * XL * A(TA.rainX, pR), xd = 5.0, xm = (xu + xd) / 2, y0 = 0.45 + q.sl * 0.2;
         return [[xd, y0], [xm, y0 - 0.08], [xu + 0.25, y0], [xu - 0.05, 1.5], [xu, 2.75], [xm, 2.95], [xd, 2.75], [xd + 0.2, 1.5]].map((v) => new THREE.Vector3(v[0], v[1], 0));
       };
       let curve = null, q0 = null, xu = 0;
       const dm = new THREE.Object3D(), tmp = new THREE.Vector3();
       function applyP() {
-        q0 = build(p); const pts = loopPts(q0); curve = new THREE.CatmullRomCurve3(pts, true, 'centripetal'); xu = pts[3].x;
+        q0 = build(pS, pT); const pts = loopPts(q0); curve = new THREE.CatmullRomCurve3(pts, true, 'centripetal'); xu = pts[3].x;
         loopM.geometry.dispose(); loopM.geometry = new THREE.TubeGeometry(curve, 80, 0.035, 6, true);
         cloudG.position.x = xu; cloudG.position.y = 0; L.cloud.obj = cloudG;
-        const up = A(TA.upw, p); upA.forEach((a, i) => setArrow(a, 0.35 + up * 1.4)); const wd = A(TA.walk, p); setArrow(wind, 0.5 + wd * 1.0); setArrow(w2, 0.5 + wd * 1.0);
+        const up = A(TA.upw, pR); upA.forEach((a, i) => setArrow(a, 0.35 + up * 1.4)); const wd = A(TA.walk, pW); setArrow(wind, 0.5 + wd * 1.0); setArrow(w2, 0.5 + wd * 1.0);
         wind.position.x = 2.8 + (0.5 + wd) * 0.5; w2.position.x = wind.position.x;
         L.w.obj = [-XL + 0.3, 0.6, ZD]; L.th.obj = [0, yTh(0, q0) + 0.0, ZD];
       }
-      applyP();
+      let bS = pS, bT = pT, bR = pR, bW = pW;
+      applyP(); updInfo();
 
       return {
         update(dt, t) {
-          syncSim();
-          if (Math.abs(p - pT) > 0.002) { p += (pT - p) * Math.min(1, dt * 4); if (Math.abs(p - pT) <= 0.002) p = pT; if (Math.abs(p - built) > 0.01 || p === pT) { built = p; applyP(); updInfo(); } }
+          readSim();
+          if (Math.abs(pS - bS) > 0.003 || Math.abs(pT - bT) > 0.003 || Math.abs(pR - bR) > 0.003 || Math.abs(pW - bW) > 0.003) { bS = pS; bT = pT; bR = pR; bW = pW; applyP(); }
+          updInfo();
           if (view === 'walk') {
-            const sp = (0.045 + 0.05 * A(TA.walk, p));
+            const sp = (0.045 + 0.05 * A(TA.walk, pR));
             for (let i = 0; i < NP; i++) { const u = (i / NP + t * sp) % 1; curve.getPointAt(u, tmp); dm.position.copy(tmp); dm.position.z = ((i * 37) % 7 - 3) * 0.3; dm.scale.setScalar(0.8); dm.updateMatrix(); parts.setMatrixAt(i, dm.matrix); }
             parts.instanceMatrix.needsUpdate = true;
-            const rn = Math.min(1, 0.4 + A([0.9, 0.7, 0.9], p)); const nvis = Math.round(NR * rn);
+            const rn = Math.min(1, 0.4 + A([0.9, 0.7, 0.9], pR)); const nvis = Math.round(NR * rn);
             for (let i = 0; i < NR; i++) { const s = rseed[i], f = (t * 0.9 + s[2]) % 1; dm.position.set(xu + s[0] * 2.0, 2.0 - f * 2.0, s[1] * 2.6); dm.scale.setScalar(i < nvis ? 1 : 0.0001); dm.updateMatrix(); rain.setMatrixAt(i, dm.matrix); }
             rain.instanceMatrix.needsUpdate = true;
             upA.forEach((a, i) => { a.position.y = YB + 0.25 + 0.12 * Math.sin(t * 2 + i); });
           } else {
-            uC += (uT - uC) * Math.min(1, dt * 3); const u = uC / 3;
-            if (Math.abs(u - lastCb) > 0.004) { lastCb = u; buildCoast(u); updInfo(); }
+            const u = uC / 3;
+            if (Math.abs(u - lastCb) > 0.004) { lastCb = u; buildCoast(u); }
             const au = Math.abs(uC);
             setArrow(cWind, au > 0.1 ? 0.8 + 0.45 * au : 0); cWind.rotation.x = uC > 0 ? Math.PI / 2 : -Math.PI / 2; cWind.position.z = uC > 0 ? -1.9 : 1.9;
             ek.forEach((a, i) => { setArrow(a, au > 0.1 ? 0.5 + 0.3 * au : 0); a.rotation.z = uC > 0 ? Math.PI / 2 : -Math.PI / 2; a.position.x = uC > 0 ? CX - 0.1 : CX - 1.8; });
@@ -179,7 +195,7 @@
             cl.dv.set(uC > 0.1 ? '용승 ↑ (찬 물)' : uC < -0.1 ? '침강 ↓' : ''); cl.dv.show(au > 0.1); cl.wind.show(au > 0.1); cl.ek.show(au > 0.1); cl.cold.show(true);
           }
         },
-        sync() { syncSim(); },
+        sync() { readSim(); },
       };
     },
   });

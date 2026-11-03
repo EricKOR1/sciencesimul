@@ -1903,8 +1903,8 @@
     S.drop = { t0: now(), key };
     Sound.tone(880, 0.08, 'sine', 0.06, 0.25);
   }
-  function modelTap(p) {
-    const h = cellHit(p);
+  function modelTap(p, forced) {
+    const h = forced || cellHit(p);
     if (!h || !h.key) return;
     if (S.pickMode && h.cell === 'plant') {      // 고르기는 식물 세포에서만 (동물 세포는 눌러서 이름을 확인)
       if (S.picks.has(h.key)) S.picks.delete(h.key); else S.picks.add(h.key);
@@ -2403,7 +2403,17 @@
 
   // 테스트·점검용
   window.__sim = {
-    S, game, setScene, setMag, LAY: () => LAY, KIND: () => KIND,
+    S, game, setScene, setMag, LAY: () => LAY,
+    // 3D 모형에서 구조를 눌렀을 때 2D와 같은 상태로 (모형 장면에서만)
+    tapModel(cell, key) {
+      if (S.scene !== 'model' || !ST[key]) return;
+      const h = { cell, key };
+      if (key === 'wall' || key === 'memb') {
+        if (cell === 'plant') { const q = plantPt(PLANT, -2.4, key === 'wall' ? 7 : PLANT.membI); h.ux = q[0]; h.uy = q[1]; }
+        else h.th = 2.6;
+      } else if (key === 'chl' || key === 'mito') h.inst = 0;
+      modelTap(null, h);
+    }, KIND: () => KIND,
     toClient(x, y) { const r = view.canvas.getBoundingClientRect(); return { x: r.left + (x / W) * r.width, y: r.top + (y / H) * r.height }; },
     nucleusPoint(key) {
       // 시야 가운데에서 가장 가까운 핵 (화면 좌표)

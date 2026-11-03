@@ -1,6 +1,6 @@
-/* m1-friction-buoyancy · 3D 물속에서 부력 측정
-   용수철저울에 매단 물체를 물에 담그면 부력(위쪽 힘)이 생겨 저울 눈금이 줄어요. 눈금 = 무게 − 부력.
-   물체가 물에 잠긴 부피가 클수록 부력이 커요 (완전히 잠기면 더 깊이 넣어도 같아요). 나무토막은 무게 = 부력이 되는 높이에서 떠요. */
+/* m1-friction-buoyancy · 3D 물속에서 부력 측정 (2D와 같은 장면)
+   비치볼을 물속으로 누르면 위로 떠올라요(부력의 방향). 용수철저울에 매단 금속 원기둥(공기 중 5.0 N)을 물에 담그면 눈금이 줄어요: 부력 = 공기 중 무게 − 물속 무게.
+   잠긴 부피가 클수록 부력이 커요(완전히 잠기면 더 깊이 넣어도 같아요). 2D의 공·원기둥·저울 상태를 그대로 보여 주고, ▶ 재생은 실험을 한 번 반복해요. */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -79,19 +79,23 @@
         const n = cols.length; for (let i = 0; i < 16; i++) { c.fillStyle = cols[Math.floor(r() * n)]; c.fillRect(0, i * h / 16, w, h / 16 + 1); }
         c.globalAlpha = 0.25; for (let i = 0; i < 60; i++) { c.fillStyle = cols[Math.floor(r() * n)]; c.beginPath(); c.ellipse(r() * w, r() * h, 8 + r() * 25, 2 + r() * 4, 0, 0, 7); c.fill(); } c.globalAlpha = 1; }); }
 
-      const WL = 0.6, TB = -2.4, TW = 3.4, TD = 1.9;          // 수면 · 수조 바닥 · 수조 반폭 · 반깊이
-      const st = { obj: 'big', pct: 0, t: 0, bob: 0 };
-      const OBJ = { small: { n: '작은 추', W: 4, vol: 50, size: 0.95, col: 0x7c8aa0 }, big: { n: '큰 추', W: 4, vol: 100, size: 1.35, col: 0x7c8aa0 }, wood: { n: '나무토막', W: 3, vol: 100, size: 1.5, col: 0xc08a50 } };
-
-      /* 수조 */
-      const tank = new THREE.Mesh(new THREE.BoxGeometry(2 * TW, 4.2, 2 * TD), glass(0xcfe6ff, 0.12)); tank.position.y = TB + 2.1; root.add(tank);
+      /* 2D '물속에서 부력 측정'과 같은 장면: 비치볼(부력의 방향) → 금속 원기둥 + 용수철저울(부력의 크기, 공기 중 5.0 N)
+         2D의 공·원기둥·저울 눈금(window.__sim)을 그대로 따라가요. ▶ 재생은 지금 단계의 실험을 한 번 반복해요. */
+      const WL = 0.6, TB = -2.2, TW = 3.0, TD = 1.7, PXU = 50;          // 수면 · 수조 바닥 · 수조 반폭 · 반깊이 · 2D 픽셀→그림 단위
+      const HC = 98 / PXU, RC = 27 / PXU, RB = 38 / PXU;                // 원기둥 높이·반지름, 공 반지름
+      const CYW = 5.0, CYFB = 1.96, BW = 1.0, BFB = 4.0;                // 2D와 같은 값 (N)
+      const tank = new THREE.Mesh(new THREE.BoxGeometry(2 * TW, 5.6, 2 * TD), glass(0xcfe6ff, 0.12)); tank.position.y = TB + 2.8; root.add(tank);
       { const te = new THREE.LineSegments(new THREE.EdgesGeometry(tank.geometry), new THREE.LineBasicMaterial({ color: 0x9cc3ff })); te.position.copy(tank.position); root.add(te); }
-      const water = new THREE.Mesh(new THREE.BoxGeometry(2 * TW - 0.06, WL - TB, 2 * TD - 0.06), glass(0x3d9cff, 0.3, { side: THREE.FrontSide })); water.position.y = (WL + TB) / 2; root.add(water);
-      const surf = new THREE.Mesh(new THREE.PlaneGeometry(2 * TW - 0.06, 2 * TD - 0.06), new THREE.MeshBasicMaterial({ color: 0x9fd0ff, transparent: true, opacity: 0.35, depthWrite: false, side: THREE.DoubleSide })); surf.rotation.x = -Math.PI / 2; surf.position.y = WL; root.add(surf);
+      const water = new THREE.Mesh(new THREE.BoxGeometry(2 * TW - 0.06, 1, 2 * TD - 0.06), glass(0x3d9cff, 0.3, { side: THREE.FrontSide })); root.add(water);
+      const surf = new THREE.Mesh(new THREE.PlaneGeometry(2 * TW - 0.06, 2 * TD - 0.06), new THREE.MeshBasicMaterial({ color: 0x9fd0ff, transparent: true, opacity: 0.35, depthWrite: false, side: THREE.DoubleSide })); surf.rotation.x = -Math.PI / 2; root.add(surf);
       const table = new THREE.Mesh(new THREE.BoxGeometry(2 * TW + 1.2, 0.25, 2 * TD + 1.2), mat(0x64748b, { roughness: 0.7 })); table.position.y = TB - 0.12; root.add(table);
+      function setWater(y) { water.scale.y = y - TB; water.position.y = (y + TB) / 2; surf.position.y = y; }
 
-      /* 물체 + 매다는 줄 + 용수철저울 */
-      const obj = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), mat(0x7c8aa0, { metalness: 0.5, roughness: 0.4 })); root.add(obj);
+      /* 비치볼 */
+      const ballTex = canvasTex(256, 128, (c, w, h) => { const cols = ['#ef4444', '#ffffff', '#3b82f6', '#ffffff', '#facc15', '#ffffff']; for (let i = 0; i < 6; i++) { c.fillStyle = cols[i]; c.fillRect(i * w / 6, 0, w / 6 + 1, h); } });
+      const ball = new THREE.Mesh(new THREE.SphereGeometry(RB, 32, 24), mat(0xffffff, { map: ballTex, roughness: 0.4 })); root.add(ball);
+      /* 금속 원기둥 + 용수철저울 */
+      const cyl = new THREE.Mesh(new THREE.CylinderGeometry(RC, RC, HC, 32), mat(0x9aa7b8, { metalness: 0.7, roughness: 0.3 })); root.add(cyl);
       const thread = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 1, 6), mat(0xe5e7eb)); root.add(thread);
       const sc = new THREE.Group(); root.add(sc);
       const body = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.34, 1.7, 24), glass(0xe8f1ff, 0.35)); sc.add(body);
@@ -104,46 +108,93 @@
       const wA = mkArrow(0xe5484d, 0.07), bA = mkArrow(0x2f6df6, 0.07), tA = mkArrow(0x16a34a, 0.07); root.add(wA, bA, tA);
       const wLab = label('무게', wA, { size: 12, color: 'rgba(200,40,50,.92)' }), bLab = label('부력', bA, { size: 12, color: 'rgba(40,90,230,.92)' }), tLab = label('저울이 당기는 힘', tA, { size: 11.5, color: 'rgba(20,130,60,.92)' });
       const rdLab = label('', sc, { size: 13, color: 'rgba(30,64,175,.92)', offset: [1.0, 0.2, 0] });
+      const dpLab = label('', [TW, WL, 0], { size: 12, color: 'rgba(30,64,175,.92)', offset: [0.2, 0.5, 0] });
 
-      function calc(t) {
-        const o = OBJ[st.obj], h = o.size, hang = st.obj !== 'wood', p = st.pct;
-        let bottom, sub;
-        if (hang) { bottom = p <= 100 ? WL + 0.35 - p / 100 * (h + 0.35) : WL - h - (p - 100) / 30 * 0.9; bottom = Math.max(TB + 0.02, bottom); sub = Math.max(0, Math.min(1, (WL - bottom) / h)); }
-        else { sub = Math.min(1, o.W / (o.vol * 0.01)); bottom = WL - sub * h + 0.05 * Math.sin(t * 3) * st.bob; }
-        const Fb = hang ? (o.vol * 0.01) * sub : o.W;
-        return { o, h, hang, sub, Fb, W: o.W, read: hang ? o.W - Fb : 0, bottom };
-      }
-      function layout(t) {
-        const c = calc(t), { o, h } = c, cy = c.bottom + h / 2;
-        obj.scale.set(h, h, h); obj.material.color.setHex(o.col); obj.material.metalness = st.obj === 'wood' ? 0 : 0.5; obj.material.roughness = st.obj === 'wood' ? 0.8 : 0.4;
-        obj.position.set(0, cy, 0);
-        if (c.hang) {
-          const ext = 0.25 + 0.28 * c.read, top = cy + h / 2, bodyBottom = top + 0.7 + ext;
-          thread.visible = true; thread.scale.y = 0.7; thread.position.set(0, top + 0.35, 0);
-          rod.scale.y = Math.max(0.01, ext); rod.position.y = top + 0.7 + ext / 2;
-          body.position.y = bodyBottom + 0.85; spr.position.y = bodyBottom + 0.7; spr.scale.y = 0.9; cap.position.y = bodyBottom + 1.72; ring.position.y = bodyBottom + 2.05;
-          sc.visible = true;
-          setArrow(tA, new V3(0.9, top, 0), new V3(0.9, top + 0.35 * c.read + 0.05, 0)); tA.visible = c.read > 0.05;
-          rdLab.obj = [0, bodyBottom + 0.85, 0]; rdLab.set('눈금 <b>' + c.read.toFixed(1) + ' N</b>'); rdLab.show(true); hand.obj = [0, bodyBottom + 2.05, 0]; hand.show(true);
-          tLab.obj = [0.9, top + 0.35 * c.read / 2 + 0.2, 0]; tLab.show(c.read > 0.05);
-        } else { thread.visible = false; sc.visible = false; tA.visible = false; hand.show(false); tLab.show(false); rdLab.show(false); }
-        setArrow(wA, new V3(-0.9, cy, 0), new V3(-0.9, cy - 0.35 * c.W - 0.05, 0)); wLab.obj = [-0.9, cy - 0.35 * c.W / 2 - 0.1, 0]; wLab.off = [-0.55, 0, 0];
-        if (c.Fb > 0.02) { setArrow(bA, new V3(0.55, cy, 0), new V3(0.55, cy + 0.35 * c.Fb + 0.05, 0)); bA.visible = true; bLab.obj = [0.55, cy + 0.35 * c.Fb / 2 + 0.2, 0]; bLab.show(true); } else { bA.visible = false; bLab.show(false); }
-        return c;
-      }
-      function text(c) {
-        if (!c.hang) info('나무토막은 <b>무게(' + c.W + ' N) = 부력</b>이 되는 높이까지만 잠겨서 떠요.<br>잠긴 부피는 약 <b>' + Math.round(c.sub * 100) + '%</b>예요.<br>(나무의 밀도가 물보다 작아요)');
-        else info('저울 눈금 <b>' + c.read.toFixed(1) + ' N</b> = 무게 ' + c.W + ' N − 부력 <b>' + c.Fb.toFixed(1) + ' N</b><br>물에 잠긴 부피 <b>' + Math.round(c.sub * c.o.vol) + ' cm³</b>' + (c.sub >= 1 ? ' (완전히 잠겼어요)' : '') + '<br>잠긴 부피가 클수록 부력이 커요. 부력은 위쪽이에요.');
-      }
-      const seg = controls.segment('', [{ value: 'small', label: '작은 추' }, { value: 'big', label: '큰 추' }, { value: 'wood', label: '나무토막' }], 'big', (v) => { st.obj = v; st.bob = 1; });
-      const sl = controls.range('물에 넣기', 0, 130, 5, 0, (v) => { st.pct = v; }, (v) => (v === 0 ? '공기 중' : v < 100 ? '내리는 중' : '완전히 잠김'));
-      controls.button('↺ 처음으로', () => { st.pct = 0; sl.set(0); });
-      layout(0);
+      const L2 = () => (ctx.lesson && ctx.lesson()) || null;
+      const cl = (v, a, b) => Math.max(a, Math.min(b, v)), sm = (x) => { x = cl(x, 0, 1); return x * x * (3 - 2 * x); };
+      let pmode = false, built = false, pP = 0, sig = '', lastTxt = '';
+      const pl = controls.player({
+        duration: 11, loop: true, autoplay: false, label: '재생', phases: [[0, '']],
+        onFrame(p) { if (!built) return; pmode = true; pP = p; },
+      });
+      built = true;
+      const setInfo = (h) => { if (h !== lastTxt) { lastTxt = h; info(h); } };
+      const phEl = () => document.querySelector('.v3-player .v3-ph');
 
+      /* 구형 공이 d(0~1)만큼 잠기면 잠긴 부피 비율 */
+      const capFrac = (d) => d * d * (3 - 2 * d);
+      function showBall(cy, vy) {      // cy: 공 중심 높이
+        const d = cl((WL + RB - (cy - RB) - RB) / (2 * RB), 0, 1);   // (수면 아래로 잠긴 깊이) / 지름
+        const dd = cl((WL - (cy - RB)) / (2 * RB), 0, 1), fr = capFrac(dd), Fb = fr * BFB;
+        ball.visible = true; ball.position.set(0, cy, 0); ball.rotation.y += 0.01;
+        cyl.visible = sc.visible = thread.visible = false; tA.visible = false; hand.show(false); tLab.show(false); rdLab.show(false);
+        setArrow(wA, new V3(-1.3, cy, 0), new V3(-1.3, cy - 0.35 * BW - 0.05, 0)); wLab.obj = [-1.3, cy - 0.2, 0]; wLab.off = [-0.6, 0, 0]; wLab.set('무게 ' + BW.toFixed(1) + ' N'); wLab.show(true);
+        if (Fb > 0.02) { setArrow(bA, new V3(1.3, cy, 0), new V3(1.3, cy + 0.35 * Fb + 0.05, 0)); bA.visible = true; bLab.obj = [1.3, cy + 0.35 * Fb / 2 + 0.2, 0]; bLab.set('부력 ' + Fb.toFixed(1) + ' N'); bLab.show(true); } else { bA.visible = false; bLab.show(false); }
+        dpLab.set('잠긴 깊이 ' + Math.round(dd * 100) + ' %'); dpLab.show(true);
+        setWater(WL);
+        return { dd, Fb };
+      }
+      function showCyl(bot, read) {   // bot: 원기둥 바닥 높이, read: 저울 눈금(N)
+        const frac = cl((WL - bot) / HC, 0, 1), cy = bot + HC / 2, top = bot + HC;
+        const Fb = CYW - read;
+        ball.visible = false; cyl.visible = sc.visible = thread.visible = true;
+        cyl.position.set(0, cy, 0);
+        const ext = 0.25 + 0.2 * read, bodyBottom = top + 0.7 + ext;
+        thread.scale.y = 0.7; thread.position.set(0, top + 0.35, 0);
+        rod.scale.y = Math.max(0.01, ext); rod.position.y = top + 0.7 + ext / 2;
+        body.position.y = bodyBottom + 0.85; spr.position.y = bodyBottom + 0.7; spr.scale.y = 0.9; cap.position.y = bodyBottom + 1.72; ring.position.y = bodyBottom + 2.05;
+        setArrow(tA, new V3(0.95, top, 0), new V3(0.95, top + 0.2 * read + 0.05, 0)); tA.visible = read > 0.05; tLab.obj = [0.95, top + 0.2 * read / 2 + 0.2, 0]; tLab.show(true);
+        rdLab.obj = [0, bodyBottom + 0.85, 0]; rdLab.set('눈금 <b>' + read.toFixed(1) + ' N</b>'); rdLab.show(true); hand.obj = [0, bodyBottom + 2.05, 0]; hand.show(true);
+        setArrow(wA, new V3(-0.95, cy, 0), new V3(-0.95, cy - 0.2 * CYW - 0.05, 0)); wLab.obj = [-0.95, cy - 0.2 * CYW / 2 - 0.1, 0]; wLab.off = [-0.6, 0, 0]; wLab.set('무게 ' + CYW.toFixed(1) + ' N'); wLab.show(true);
+        if (Fb > 0.05) { setArrow(bA, new V3(0.5, cy, 0), new V3(0.5, cy + 0.2 * Fb * 1.4 + 0.05, 0)); bA.visible = true; bLab.obj = [0.5, cy + 0.2 * Fb * 1.4 / 2 + 0.3, 0]; bLab.set('부력 ' + Fb.toFixed(1) + ' N'); bLab.show(true); } else { bA.visible = false; bLab.show(false); }
+        dpLab.set('잠긴 정도 ' + Math.round(frac * 100) + ' %'); dpLab.show(true);
+        setWater(WL + 0.5 * frac);          // 완전히 잠기면 물이 조금 올라와요 (2D와 같게)
+        return { frac, Fb };
+      }
+
+      const DEQ = 0.33;                       // 비치볼이 뜰 때의 잠긴 깊이 (무게 = 부력)
+      const yEq = WL - 2 * RB * DEQ + RB;
       return {
         update(dt, t) {
-          st.bob = Math.max(0, st.bob - dt * 0.4);
-          const c = layout(t); st.t += dt; const k = (t * 4) | 0; if (k !== st.last) { st.last = k; text(c); }
+          const l = L2(), BB = l && l.BB;
+          const stage = BB ? BB.stage : 1;
+          const key = [stage, BB && BB.ball.drag, BB && BB.ball.released, BB && BB.grab].join();
+          if (key !== sig) { sig = key; if (pmode) { pmode = false; pl.pause(); } }
+          const ph = phEl();
+          let r, txt;
+          if (stage === 1) {
+            let cy;
+            if (pmode) {
+              const p = pP;
+              if (p < 0.12) cy = yEq + 0.03 * Math.sin(t * 3);
+              else if (p < 0.45) { const q = sm((p - 0.12) / 0.3); cy = yEq + (WL - 2 * RB * 0.92 + RB - yEq) * q; }
+              else if (p < 0.5) cy = WL - 2 * RB * 0.92 + RB;
+              else { const tau = (p - 0.5) * 11; cy = yEq + (WL - 2 * RB * 0.92 + RB - yEq) * Math.exp(-0.9 * tau) * Math.cos(5.2 * tau); cy = Math.min(cy, WL + 1.8); }
+              if (ph) ph.textContent = p < 0.12 ? '물 위에 떠 있어요' : p < 0.5 ? '물속으로 눌러요' : '놓았더니 떠올라요';
+            } else { cy = BB ? WL - (BB.ball.y - l.TK.wl0) / PXU : yEq; if (ph) ph.textContent = ''; }
+            r = showBall(cy);
+            txt = '<b>부력의 방향</b>: 물속의 비치볼을 놓으면 <b>위쪽</b>으로 떠올라요. 물이 물체를 <b>위로</b> 밀어 올리는 힘이 <b>부력</b>이에요 (방향은 중력과 반대인 위쪽).<br>깊이 누를수록(잠긴 부피가 클수록) 부력이 커요 · 지금 잠긴 깊이 <b>' + Math.round(r.dd * 100) + ' %</b>, 부력 <b>' + r.Fb.toFixed(1) + ' N</b> (무게 ' + BW.toFixed(1) + ' N).';
+          } else {
+            let bot, read;
+            if (pmode) {
+              const p = pP;
+              // 0 % → 50 % → 100 % → 더 깊이 → 다시 올려요
+              const a = p < 0.08 ? 0 : p < 0.7 ? sm((p - 0.08) / 0.62) : 1 - sm((p - 0.78) / 0.2);
+              bot = WL + 0.35 - a * (HC + 0.35 + 0.9);
+              bot = Math.max(TB + 0.02, bot);
+              const fr = cl((WL - bot) / HC, 0, 1); read = CYW - CYFB * fr;
+              if (ph) ph.textContent = p < 0.08 ? '공기 중' : p < 0.4 ? '반쯤 잠겨요' : p < 0.7 ? '완전히 잠겨요' : p < 0.78 ? '더 깊이' : '올려요';
+            } else {
+              const g = BB ? l.bGeo() : null; read = BB ? BB.read : CYW;
+              // 2D 원기둥 위치를 그대로: 바닥 높이 = 수면 − (바닥 px − 처음 수면 px) / PXU
+              bot = g ? WL - (g.cylBot - l.TK.wl0) / PXU : WL + 0.35;
+              if (ph) ph.textContent = '';
+            }
+            r = showCyl(bot, read);
+            txt = '<b>부력의 크기</b> = 공기 중 무게 <b>' + CYW.toFixed(1) + ' N</b> − 물속 무게(저울 눈금 <b>' + read.toFixed(1) + ' N</b>) = <b>' + r.Fb.toFixed(1) + ' N</b><br>잠긴 부피가 클수록 부력이 커요(0 → 약 1.0 → 약 2.0 N). <b>완전히 잠긴 뒤</b>에는 더 깊이 넣어도 <b>일정</b>해요.';
+          }
+          if (l && l.scene !== 'B') txt = '<b>마찰력</b> 실험과 <b>생활 속 마찰력·부력</b>은 2D 화면에서 해 보세요. 3D는 물속의 부력(비치볼 · 금속 원기둥)을 보여 줘요.<br>' + txt;
+          setInfo(txt);
         },
         sync() {},
       };

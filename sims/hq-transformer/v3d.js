@@ -86,13 +86,14 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: 13.5 * KD, theta: 0.4, phi: 1.22, min: 6, max: 28 },
     autoRotate: 0,
-    levels: [0, 1, 2],
     build(ctx) {
-      const { THREE, root, label, info, controls } = ctx;
-      const h = H3(ctx); const { V3, mat, glass, anchor, sphere, box, cyl, tube, grab } = h;
+      const { THREE, root, label, controls } = ctx;
+      const h = H3(ctx); const { V3, mat, glass, anchor, sphere, box, cyl, tube, grab, mkArrow, setArrow, mkSeg, setSeg, showCtl } = h;
+      const labs = {}; const L = (sc, text, obj, o) => { const l = label(text, obj, o); const raw = l.set; let last = text; l.set = (t) => { if (t !== last) { last = t; raw(t); } }; (labs[sc] = labs[sc] || []).push(l); return l; };
+      let lastInfo = ''; const info = (hh) => { if (hh !== lastInfo) { lastInfo = hh; ctx.info(hh); } };
       const lessonS = () => (window.__sim && window.__sim.S) || null;
-      const S0 = lessonS();
-      const st = { N1: 8, N2: 4, ac: !(S0 && S0.a && S0.a.src === 'dc') };
+      const st = { N1: 4, N2: 8, ac: true, sw: false, T1: 0, T2: 0 };
+      const turnsOf = (N) => Math.max(2, Math.round(2 + 10 * Math.sqrt(N / 1000)));
       const CX = 2.4, CYh = 2.0, TH = 1.0;                                 // 철심 중심선 사각형의 반폭 · 반높이 · 굵기
       const coreMat = mat(0x8e9bb0, { metalness: 0.85, roughness: 0.32, emissive: 0x4f8cff, emissiveIntensity: 0 });
       const mk = (w, hh, d, x, y) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, hh, d), coreMat); m.position.set(x, y, 0); root.add(m); return m; };
@@ -143,42 +144,130 @@
         let d = ((u % 1) + 1) % 1 * PL, i = 0; while (d > segLen[i]) { d -= segLen[i]; i++; }
         const a = path[i], b = path[(i + 1) % 4]; pT.subVectors(b, a).normalize(); pP.copy(a).addScaledVector(pT, d); return i;
       }
-      const lP = label('', anchor(root, -CX - 1.3, 2.4, 0), { color: '#c2410c', size: 13 }), lS = label('', anchor(root, CX + 1.3, 2.4, 0), { color: '#0f766e', size: 13 });
-      const lCore = label('철심', anchor(root, 0, CYh + 0.75, 0), { color: '#475569', size: 13 });
-      const lFlux = label('철심 속 자기선속', anchor(root, 0, 0.0, 0.6), { color: '#2563eb', size: 12 });
-      const lSrc = label('', src, { color: '#0369a1', size: 12, offset: [0, 0.9, 0] }), lBulb = label('', bulb, { color: '#a16207', size: 13, offset: [0, 1.3, 0] });
-      function txt() {
-        const V2 = 220 * st.N2 / st.N1, kind = st.N2 > st.N1 ? '승압' : st.N2 < st.N1 ? '강압' : '같은 전압';
-        lP.set('1차 코일 N₁ = ' + st.N1 + '회'); lS.set('2차 코일 N₂ = ' + st.N2 + '회');
-        lSrc.set(st.ac ? '교류 220 V' : '직류 220 V');
-        lBulb.set(st.ac ? 'V₂ = ' + Math.round(V2) + ' V' : 'V₂ = 0 V');
-        info(st.ac
-          ? '<b>교류</b>: 선속이 계속 변해서 2차 코일에 전압이 유도돼요.<br>V₁ : V₂ = N₁ : N₂ → 220 : ' + Math.round(V2) + ' (<b>' + kind + '</b>)<br>이상적인 변압기에서는 전력 V₁I₁ = V₂I₂ 가 같아요.'
-          : '<b>직류</b>: 전류가 일정해 철심의 선속이 <b>변하지 않아요</b>.<br>선속 변화가 없으면 유도 전압이 생기지 않아 전구가 꺼져요.<br>변압기는 교류에서만 작동해요.');
+      const lP = L('tr', '', anchor(root, -CX - 1.3, 2.4, 0), { color: '#c2410c', size: 13 }), lS = L('tr', '', anchor(root, CX + 1.3, 2.4, 0), { color: '#0f766e', size: 13 });
+      const lCore = L('tr', '철심', anchor(root, 0, CYh + 0.75, 0), { color: '#475569', size: 13 });
+      const lFlux = L('tr', '철심 속 자기선속', anchor(root, 0, 0.0, 0.6), { color: '#2563eb', size: 12 });
+      const lSrc = L('tr', '', src, { color: '#0369a1', size: 12, offset: [0, 0.9, 0] }), lBulb = L('tr', '', bulb, { color: '#a16207', size: 13, offset: [0, 1.3, 0] });
+      /* 모형 전체(철심·코일·전원·전구)를 한 묶음으로 보이게/숨기게 해요 */
+      const modelObjs = root.children.slice();
+      let coilKey = '';
+      function setTurns(n1, n2) { if (n1 === st.T1 && n2 === st.T2) return; st.T1 = n1; st.T2 = n2; st.N1 = n1; st.N2 = n2; build(0); build(1); wiring(); }
+      setTurns(4, 8);
+      function updTr(S, sim) {
+        const a = S.a, n1 = sim.TR.n1, n2 = sim.TR.n2, V1 = sim.TR.V1, V2 = V1 * n2 / n1, mk = S.gate === 'mt2';
+        setTurns(turnsOf(n1), turnsOf(n2)); st.ac = a.src === 'ac'; st.sw = a.sw;
+        lP.set('1차 코일 N₁ = ' + n1 + '회'); lS.set('2차 코일 N₂ = ' + n2 + '회');
+        lSrc.set((st.ac ? '교류 ' : '직류 ') + V1 + ' V · 스위치 ' + (a.sw ? '닫힘' : '열림'));
+        lBulb.set(st.ac && a.sw ? 'V₂ = ' + V2 + ' V' : 'V₂ = 0 V');
+        info(mk ? '<b>변압기</b>: 교류와 직류에서 2차 전구가 어떻게 되는지 비교해 보세요. (스위치는 2D에서 눌러요)' :
+          '<b>변압기</b> (N₁ : N₂ = ' + n1 + ' : ' + n2 + ', V₁ = ' + V1 + ' V)<br>' + (a.sw ? (st.ac ? '교류: 선속이 계속 변해서 2차 코일에 전압이 유도돼요. V₂ = V₁ × N₂/N₁ = ' + V2 + ' V (승압)' : '직류: 선속이 변하지 않아 유도 전압이 생기지 않고 전구가 꺼져요.') : '스위치를 닫으면 1차 코일에 전류가 흘러요 (2D에서 눌러요).'));
       }
-      const seg = controls.segment('전원', [{ value: 'ac', label: '교류 ∿' }, { value: 'dc', label: '직류 ═' }], st.ac ? 'ac' : 'dc', (v) => { st.ac = v === 'ac'; txt(); });
-      controls.range('N₁ (1차)', 2, 12, 1, st.N1, (v) => { st.N1 = v; build(0); wiring(); txt(); }, (v) => v + '회');
-      controls.range('N₂ (2차)', 2, 12, 1, st.N2, (v) => { st.N2 = v; build(1); wiring(); txt(); }, (v) => v + '회');
-      txt();
-      let lastMode = S0 ? S0.mode : '';
+      function updRatio(S, sim) {
+        const r = S.r, V2 = sim.rV2(), I1 = sim.rI1(), mk = S.gate === 'mr2';
+        setTurns(turnsOf(r.N1), turnsOf(r.N2)); st.ac = true; st.sw = true;
+        lP.set('1차 코일 N₁ = ' + r.N1 + '회'); lS.set('2차 코일 N₂ = ' + r.N2 + '회');
+        lSrc.set('교류 V₁ = ' + r.V1 + ' V'); lBulb.set('V₂ = ' + (Math.round(V2 * 100) / 100) + ' V · I₂ = ' + r.I2 + ' A');
+        const kind = r.N2 > r.N1 ? '승압' : r.N2 < r.N1 ? '강압' : '같은 전압';
+        info('<b>권선비: V₁ : V₂ = N₁ : N₂</b><br>N₁ : N₂ = ' + r.N1 + ' : ' + r.N2 + ' → V₂ = ' + (Math.round(V2 * 100) / 100) + ' V (<b>' + kind + '</b>)<br>이상적인 변압기: V₁I₁ = V₂I₂ → I₁ = ' + (mk ? '?' : (Math.round(I1 * 1000) / 1000) + ' A') + '<br>(그림의 코일 감은 수는 비율을 보기 좋게 줄여 그렸어요)');
+      }
+
+      /* ================= 송전 (P = VI, 손실 I²R) ================= */
+      const gG = new THREE.Group(); root.add(gG);
+      const plant = box(1.8, 1.3, 1.4, 0x64748b, { roughness: 0.6 }); plant.position.set(-8.2, 0.65, 0); gG.add(plant);
+      const stack = cyl(0.2, 0.28, 1.6, 0x475569, {}, 16); stack.position.set(-8.7, 2.1, 0); gG.add(stack);
+      const city = new THREE.Group(); [[0, 1.0, 0.9], [1.1, 1.8, 0.9], [2.2, 1.3, 0.9], [0.6, 0.9, -1.2], [1.8, 1.5, -1.2]].forEach((b, i) => { const m = box(0.9, b[1], 0.9, [0x94a3b8, 0xa8b3c7, 0x8794ab][i % 3], { roughness: 0.6 }); m.position.set(b[0], b[1] / 2, b[2]); city.add(m); const wnd = box(0.5, 0.1, 0.02, 0xffe27a, { emissive: 0xffd24d, emissiveIntensity: 0.9 }); wnd.position.set(b[0], b[1] * 0.6, b[2] + 0.46); city.add(wnd); }); city.position.set(6.4, 0, 0); gG.add(city);
+      const tw1 = box(0.9, 1.0, 0.9, 0x7c8aa0, { metalness: 0.4 }), tw2 = box(0.9, 1.0, 0.9, 0x7c8aa0, { metalness: 0.4 }); tw1.position.set(-6.5, 0.5, 0); tw2.position.set(5.0, 0.5, 0); gG.add(tw1, tw2);
+      const pyl = []; for (let i = 0; i < 6; i++) { const x = -4.6 + i * 1.95, g = new THREE.Group(); const m = box(0.14, 3.6, 0.14, 0x64748b, { metalness: 0.5 }); m.position.y = 1.8; const arm = box(1.1, 0.12, 0.12, 0x64748b, { metalness: 0.5 }); arm.position.y = 3.3; g.add(m, arm); g.position.set(x, 0, 0); gG.add(g); pyl.push(g); }
+      const lineM = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1, 10), mat(0x8da2c4, { emissive: 0xff3b1a, emissiveIntensity: 0, roughness: 0.5 })); lineM.rotation.z = Math.PI / 2; lineM.scale.y = 11.4; lineM.position.set(0.3, 3.35, 0); gG.add(lineM);
+      const lineGlow = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 11.4, 16), new THREE.MeshBasicMaterial({ color: 0xff5a2a, transparent: true, opacity: 0, depthWrite: false })); lineGlow.rotation.z = Math.PI / 2; lineGlow.position.set(0.3, 3.35, 0); gG.add(lineGlow);
+      const NG = 40, gDots = new THREE.InstancedMesh(new THREE.SphereGeometry(0.1, 10, 8), mat(0xffe14d, { emissive: 0xffd400, emissiveIntensity: 0.9 }), NG); gG.add(gDots);
+      L('grid', '발전소', anchor(gG, -8.2, 2.2, 0), { color: '#475569', size: 13 }); L('grid', '도시', anchor(gG, 7.2, 2.6, 0), { color: '#475569', size: 13 });
+      L('grid', '승압', tw1, { color: '#c2410c', size: 12, offset: [0, 0.9, 0] }); L('grid', '강압', tw2, { color: '#0f766e', size: 12, offset: [0, 0.9, 0] });
+      const lGrid = L('grid', '', anchor(gG, 0.3, 4.4, 0), { color: '#a16207', size: 14 }), lHeat = L('grid', '', anchor(gG, 0.3, 2.6, 0), { color: '#b91c1c', size: 13 });
+      let gFlow = 0;
+      function updGrid(S, sim, dt) {
+        const G = sim.GRID, vi = S.g.vi, V = G.volts[vi], I = G.P / V, loss = I * I * G.R, frac = Math.min(1, loss / G.P), mk = S.gate === 'mg2';
+        const heat = Math.min(1, Math.pow(frac, 0.5) * 1.4);
+        lineM.material.emissiveIntensity = heat * 1.6; lineGlow.material.opacity = heat * 0.55; lineM.material.color.setHex(heat > 0.35 ? 0xd6a58f : 0x8da2c4);
+        lGrid.set('송전 전압 ' + V + ' V · 송전 전력 P = ' + G.P + ' W'); lHeat.set(mk ? '선로 손실 ?' : 'I = ' + (Math.round(I * 10) / 10) + ' A · 손실 ' + Math.round(loss) + ' W (' + Math.round(frac * 100) + ' %)');
+        const n = Math.max(3, Math.min(NG, Math.round(Math.sqrt(I) * 2.2))), spd = 0.25;
+        gFlow = (gFlow + dt * spd) % 1;
+        for (let i = 0; i < NG; i++) { if (i >= n) { M4s.makeScale(0, 0, 0); } else { const u = ((i / n + gFlow) % 1); M4s.makeTranslation(-5.4 + 11.4 * u, 3.35 + 0.0, 0.0); } gDots.setMatrixAt(i, M4s); }
+        gDots.instanceMatrix.needsUpdate = true;
+        info('<b>송전: 고전압으로 손실을 줄여요</b><br>P = VI → 같은 전력(' + G.P + ' W)도 전압이 높으면 전류가 작아요.<br>' + (mk ? '송전 전압 ' + V + ' V → 손실 P손실 = I²R 을 직접 계산해 보세요.' : 'V = ' + V + ' V → I = P/V = ' + (Math.round(I * 100) / 100) + ' A → 손실 P손실 = I²R = ' + Math.round(loss * 10) / 10 + ' W (송전선 저항 R = ' + G.R + ' Ω)<br>전류가 작을수록 선로가 덜 뜨거워요.'));
+      }
+      const M4s = new THREE.Matrix4();
+
+      /* ================= 인덕터 (자체 유도) ================= */
+      const gD = new THREE.Group(); root.add(gD);
+      const batt = box(1.0, 1.6, 0.8, 0x374151, { roughness: 0.5 }); batt.position.set(-5.2, 0, 0); gD.add(batt);
+      const bPlus = box(0.3, 0.2, 0.3, 0xe2464b, {}); bPlus.position.set(-5.2, 0.9, 0); gD.add(bPlus);
+      const coilD = new THREE.Group(); gD.add(coilD); coilD.position.set(-0.2, 0, 0);
+      (function () { const pts = [], n = 9, seg = 30, R = 0.9, H = 4.2; for (let i = 0; i <= n * seg; i++) { const s2 = i / seg, a = s2 * Math.PI * 2; pts.push(new V3(-H / 2 + H * s2 / n, R * Math.cos(a), R * Math.sin(a))); } coilD.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), n * seg, 0.07, 8, false), mat(COPPER, { metalness: 0.5, roughness: 0.35 }))); }());
+      const ironC = cyl(0.62, 0.62, 4.5, 0x8e9bb0, { metalness: 0.85, roughness: 0.3, transparent: true, opacity: 0.95 }); ironC.rotation.z = Math.PI / 2; coilD.add(ironC);
+      const swBase = box(1.3, 0.12, 0.5, 0x64748b, {}); swBase.position.set(-3.3, -2.0, 0); gD.add(swBase);
+      const swArm = box(1.1, 0.08, 0.1, 0xcbd5e1, { metalness: 0.7 }); swArm.geometry.translate(0.55, 0, 0); swArm.position.set(-3.9, -1.9, 0); gD.add(swArm);
+      const bulbD = sphere(0.6, 0xfff3c4, { roughness: 0.15, emissive: 0xffd24d, emissiveIntensity: 0, transparent: true, opacity: 0.92 }); bulbD.position.set(4.4, 0, 0); gD.add(bulbD);
+      const spark = new THREE.Mesh(new THREE.OctahedronGeometry(0.28, 0), new THREE.MeshBasicMaterial({ color: 0xfff1a8 })); spark.position.set(-2.8, -1.9, 0); spark.visible = false; gD.add(spark);
+      const wr = (pts) => { const m = tube(pts, 0.04, 0xe39a45, { mo: { metalness: 0.4 } }); gD.add(m); return m; };
+      wr([new V3(-5.2, 0.9, 0), new V3(-5.2, 2.2, 0), new V3(-2.3, 2.2, 0), new V3(-2.3, 0, 0)]);
+      wr([new V3(1.9, 0, 0), new V3(2.6, 2.2, 0), new V3(4.4, 2.2, 0), new V3(4.4, 0.6, 0)]);
+      wr([new V3(4.4, -0.6, 0), new V3(4.4, -2.0, 0), new V3(-2.8, -2.0, 0)]);
+      wr([new V3(-5.2, -0.9, 0), new V3(-5.2, -2.0, 0), new V3(-4.3, -2.0, 0), new V3(-3.9, -1.9, 0)]);
+      const ND = 22, dD = new THREE.InstancedMesh(new THREE.ConeGeometry(0.13, 0.34, 10), mat(0xffe14d, { emissive: 0xffd400, emissiveIntensity: 0.8 }), ND); gD.add(dD);
+      const loopD = [new V3(-5.2, 2.2, 0), new V3(-2.3, 2.2, 0), new V3(-2.3, 0, 0), new V3(1.9, 0, 0), new V3(2.6, 2.2, 0), new V3(4.4, 2.2, 0), new V3(4.4, -2.0, 0), new V3(-4.3, -2.0, 0), new V3(-5.2, -2.0, 0), new V3(-5.2, 2.2, 0)];
+      const segLD = []; let totLD = 0; for (let i = 0; i < loopD.length - 1; i++) { const d = loopD[i].distanceTo(loopD[i + 1]); segLD.push(d); totLD += d; }
+      const L_I = L('ind', '', anchor(gD, -0.2, 1.6, 0), { color: '#a16207', size: 13 }), L_B = L('ind', '전지 12 V', batt, { color: '#475569', size: 12, offset: [0, 1.2, 0] }), L_Co = L('ind', '인덕터 (코일)', coilD, { color: '#b45309', size: 12, offset: [0, 1.4, 0] }), L_Bu = L('ind', '전구', bulbD, { color: '#a16207', size: 12, offset: [0, 1.0, 0] }), L_Sw = L('ind', '스위치', swBase, { color: '#475569', size: 12, offset: [0, -0.5, 0] }), L_Ir = L('ind', '철심', ironC, { color: '#475569', size: 12, offset: [0, 0.2, 0.9] });
+      let dFlow = 0;
+      function updInd(S, sim, dt) {
+        const s = S.i, IND = sim.IND, Iv = Math.max(0, s.I), frac = Math.min(1, Iv / IND.I0);
+        ironC.visible = s.core; L_Ir.show(s.core && !!labs.ind.on);
+        swArm.rotation.z = s.closed ? 0 : 0.5;
+        bulbD.material.emissiveIntensity = Math.min(1.5, (s.glow != null ? s.glow : frac) * 1.6); 
+        spark.visible = s.flash > 0.05; spark.scale.setScalar(0.6 + 1.6 * s.flash + 0.3 * Math.sin(performance.now() / 40));
+        dFlow = (dFlow + dt * 0.35 * frac) % 1;
+        for (let i = 0; i < ND; i++) {
+          if (frac < 0.03) { M4s.makeScale(0, 0, 0); dD.setMatrixAt(i, M4s); continue; }
+          let d = ((i / ND + dFlow) % 1) * totLD, k = 0; while (d > segLD[k]) { d -= segLD[k]; k++; if (k >= segLD.length) { k = segLD.length - 1; break; } }
+          const a = loopD[k], b = loopD[k + 1], dir = b.clone().sub(a).normalize(); const pos = a.clone().addScaledVector(dir, d); const q = new THREE.Quaternion().setFromUnitVectors(h.Yax, dir); M4s.compose(pos, q, new V3(1, 1, 1)); dD.setMatrixAt(i, M4s);
+        }
+        dD.instanceMatrix.needsUpdate = true;
+        L_I.set('I = ' + Iv.toFixed(2) + ' A' + (s.closed ? '' : s.opening ? ' (줄어드는 중)' : ''));
+        const mk = S.gate === 'mi2';
+        info('<b>인덕터: 전류의 변화를 방해해요</b><br>' + (s.closed ? '스위치를 닫으면 전류가 <b>천천히</b> 늘어요 (자체 유도로 증가를 방해). 철심이 있으면 L이 커서 더 천천히 늘어요.' : s.opening ? '스위치를 열면 전류가 갑자기 줄어들려 하고, 코일이 이를 방해해 큰 유도 기전력(ε = −LΔI/Δt)을 만들어 스파크가 튀어요.' : '스위치가 열려 있어요. 2D에서 닫고 열어 보세요.') + '<br>인덕터 L = ' + (s.core ? IND.Lcore : IND.Lair) + ' H (철심 ' + (s.core ? '있음' : '없음') + ')' + (mk ? '' : ' · 코일 전압 ' + (Math.abs(s.vL) < 0.5 ? '0' : s.vL.toFixed(0)) + ' V'));
+      }
+
+      /* ================= 장면 · 2D 상태 따라가기 ================= */
+      let lastSc = '', lastFlux = 0, phaseT = 0;
+      function show(sc) {
+        const tr = sc === 'tr' || sc === 'ratio';
+        modelObjs.forEach((o) => { o.visible = tr; }); cones.visible = tr; coils.forEach((c) => c && (c.visible = tr)); wires.forEach((w) => (w.visible = tr)); src.visible = bulb.visible = tr;
+        gG.visible = sc === 'grid'; gD.visible = sc === 'ind';
+        Object.keys(labs).forEach((k) => { labs[k].on = k === sc || (k === 'tr' && tr); labs[k].forEach((l) => l.show(k === sc || (k === 'tr' && tr))); });
+        const o = ctx.orbit; o.tx = o.ty = o.tz = 0; o.theta = 0.4; o.phi = 1.22; o.dist = (sc === 'grid' ? 21 : sc === 'ind' ? 15 : 13.5) * KD; if (sc === 'grid') { o.phi = 1.35; o.ty = 1.4; } if (sc === 'ind') o.phi = 1.35;
+      }
       return {
         update(dt, t) {
-          const S = lessonS();
-          if (S && S.mode !== lastMode) { lastMode = S.mode; }
-          const V2 = 220 * st.N2 / st.N1, w = t * 3.2, s = Math.sin(w);
-          const flux = st.ac ? s : 0.9;                                     // 직류: 일정한 선속
-          coreMat.emissiveIntensity = 0.1 + 0.55 * Math.abs(flux);
-          // 화살촉: 교류는 앞뒤로 흔들리고, 직류는 한 방향으로 일정하게 흘러요
-          const off = st.ac ? 0.07 * Math.sin(w - Math.PI / 2) : (t * 0.06) % 1, dir = st.ac ? Math.sign(Math.cos(w)) || 1 : 1;
-          for (let i = 0; i < NC; i++) {
-            const seg = pathAt(i / NC + off);
-            Qq.setFromUnitVectors(h.Yax, pT.clone().multiplyScalar(st.ac ? dir : 1)); Mx.compose(pP, Qq, One); cones.setMatrixAt(i, Mx);
+          dt = Math.min(dt, 0.05);
+          const sim = window.__sim; if (!sim) return; const S = sim.S, sc = S.mode;
+          if (sc !== lastSc) { lastSc = sc; show(sc); }
+          if (sc === 'tr') updTr(S, sim); else if (sc === 'ratio') updRatio(S, sim); else if (sc === 'grid') updGrid(S, sim, dt); else updInd(S, sim, dt);
+          if (sc === 'tr' || sc === 'ratio') {
+            const a = S.a, V2 = sc === 'tr' ? sim.TR.V1 * sim.TR.n2 / sim.TR.n1 : sim.rV2();
+            phaseT += dt; const acOn = sc === 'ratio' || a.src === 'ac';
+            const flux = sc === 'ratio' ? Math.sin(phaseT * 3.2) : (a.sw ? (a.src === 'ac' ? -Math.cos(a.phase) : 0.9) : 0);
+            const live = sc === 'ratio' || a.sw;
+            coreMat.emissiveIntensity = live ? 0.1 + 0.55 * Math.abs(flux) : 0.04;
+            const dflux = (flux - lastFlux) / Math.max(dt, 1e-3); lastFlux = flux;
+            const dc = !acOn;
+            const off = dc ? (t * 0.06) % 1 : 0.07 * flux, dir = dc ? 1 : (Math.sign(dflux) || 1);
+            for (let i = 0; i < NC; i++) { pathAt(i / NC + off); Qq.setFromUnitVectors(h.Yax, pT.clone().multiplyScalar(dc ? 1 : dir)); Mx.compose(pP, Qq, One); cones.setMatrixAt(i, Mx); }
+            cones.instanceMatrix.needsUpdate = true; cones.visible = live; cones.material.emissiveIntensity = 0.35 + 0.65 * Math.abs(dc ? 1 : flux);
+            const lit = sc === 'ratio' ? Math.min(1.25, V2 / 110) : (a.src === 'ac' && a.sw ? (a.lit != null ? a.lit : 1) : 0);
+            const b = sc === 'ratio' ? (lit * (0.85 + 0.15 * Math.abs(Math.cos(phaseT * 3.2)))) : lit;
+            bulb.material.emissiveIntensity = b * 1.6; glow.material.opacity = Math.min(0.5, b * 0.35);
+            wave.visible = acOn; flat.visible = !acOn;
           }
-          cones.instanceMatrix.needsUpdate = true;
-          cones.material.emissiveIntensity = 0.35 + 0.65 * Math.abs(st.ac ? Math.abs(s) : 1);
-          const b = st.ac ? Math.min(1.25, V2 / 110) * (0.82 + 0.18 * Math.abs(Math.cos(w))) : 0;
-          bulb.material.emissiveIntensity = b * 1.6; glow.material.opacity = Math.min(0.5, b * 0.35);
-          wave.visible = st.ac; flat.visible = !st.ac;
         },
         sync() {},
       };

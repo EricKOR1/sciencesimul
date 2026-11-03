@@ -1,17 +1,18 @@
-/* hb-neuron-conduction · 3D 흥분의 전도 (무수 신경 vs 말이집 신경의 도약 전도)
-   위: 말이집이 있는 축삭 (랑비에 결절에서 결절로 건너뛰는 도약 전도) · 아래: 말이집이 없는 축삭 (이웃으로 차례로 전도)
-   자극을 주면 두 신경에서 흥분이 이동하는 모습을 나란히 비교해요. */
+/* hb-neuron-conduction · 3D 흥분의 전도
+   2D 차시와 같은 두 장면을 입체로: ① 국소 전류 — 축삭 7구간(구간 1 = 가지 돌기 쪽, 구간 7 = 축삭 말단 쪽)이 분극 → 탈분극 → 재분극으로 차례로 흥분
+   ② 말이집 전도 — 같은 길이의 무말이집 축삭(19곳)과 말이집 축삭(랑비에 결절 4곳)의 경주 (정상 · 일부 손상 · 심하게 손상)
+   막전위 색(−70 mV 파랑 → +30 mV 빨강)과 시간(ms)은 2D의 활동 전위 곡선 AP(τ)를 그대로 써요. 2D의 자극·출발·말이집 상태 단추가 3D를 움직여요. */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
   const narrow = window.innerWidth < 600 || window.innerHeight > window.innerWidth * 1.1;
-  const X0 = -4.0, IL = 1.16, NN = 8, XE = X0 + IL * (NN - 1);   // 결절 8개, 마디 사이 7개
-  const HOP = 0.18, VU = 1.7;
+  const L2 = () => window.__sim || null;
+  const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
 
   window.SciSim3D.attach({
-    title: '흥분의 전도 3D (말이집 유무 비교)',
-    hint: '자극을 주고 두 신경의 속도를 비교해 봐요 · 드래그: 돌리기',
-    camera: { dist: narrow ? 18 : 13.5, theta: 0.25, phi: 1.12, min: 7, max: 26, target: [-0.4, 0, 0] },
+    title: '흥분의 전도 3D (국소 전류 · 말이집)',
+    hint: '2D의 ⚡ 자극 주기 · 🏁 출발 · 말이집 상태 단추가 3D를 움직여요 · 드래그: 돌리기',
+    camera: { dist: narrow ? 18 : 13.5, theta: 0.2, phi: 1.15, min: 6, max: 28, target: [0, 0, 0] },
     autoRotate: 0,
     levels: [0, 1],
     build(ctx) {
@@ -19,106 +20,114 @@
       const V3 = (x, y, z) => new THREE.Vector3(x, y, z || 0);
       const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.45, metalness: 0.03 }, o || {}));
       const tube = (pts, r, m, seg) => new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), seg || 40, r, 10), m);
-      const D = new THREE.Object3D();
+      const cB = new THREE.Color(0x3b6fe0), cM = new THREE.Color(0xfff2c2), cR = new THREE.Color(0xe5483f), tmpC = new THREE.Color();
+      const vCol = (v) => { const t = clamp((v + 80) / 110, 0, 1); return t < 0.45 ? tmpC.copy(cB).lerp(cM, t / 0.45) : tmpC.copy(cM).lerp(cR, (t - 0.45) / 0.55); };
+      const LS = L2(); if (!LS) return {};
+      const AP = LS.AP, NSEG = LS.NSEG, NS = LS.NS, NODES = LS.NODES, DELTA = LS.DELTA;
 
-      function neuron(z, myel) {
-        const g = new THREE.Group(); g.position.z = z; root.add(g);
+      /* 신경 세포 앞쪽(가지 돌기 · 세포체)과 뒤쪽(축삭 말단) */
+      function ends(g, x0, x1, z) {
         const somaM = std(0x9a7fe0, { roughness: 0.4 });
-        const soma = new THREE.Mesh(new THREE.SphereGeometry(0.62, 32, 22), somaM); soma.position.x = -5.6; g.add(soma);
-        const nuc = new THREE.Mesh(new THREE.SphereGeometry(0.26, 20, 14), std(0x4b2a96)); nuc.position.set(-5.65, 0.05, 0.25); g.add(nuc);
+        const soma = new THREE.Mesh(new THREE.SphereGeometry(0.62, 32, 22), somaM); soma.position.set(x0 - 1.0, 0, 0); g.add(soma);
+        const nuc = new THREE.Mesh(new THREE.SphereGeometry(0.26, 20, 14), std(0x4b2a96)); nuc.position.set(x0 - 1.05, 0.05, 0.25); g.add(nuc);
         const dm = std(0xb59cf0, { roughness: 0.45 });
-        [[-6.4, 0.7, 0.2], [-6.5, -0.2, 0.7], [-6.3, -0.8, -0.3], [-6.4, 0.3, -0.7]].forEach((q, i) => {
-          g.add(tube([V3(-5.9, 0.1 * i - 0.1, 0), V3((q[0] - 5.9) / 2 - 0.1, q[1] * 0.6, q[2] * 0.6), V3(q[0] - 0.4, q[1], q[2])], 0.07, dm, 20));
-          g.add(tube([V3(q[0] - 0.4, q[1], q[2]), V3(q[0] - 0.7, q[1] + 0.25, q[2] + 0.2)], 0.045, dm, 8), tube([V3(q[0] - 0.4, q[1], q[2]), V3(q[0] - 0.7, q[1] - 0.2, q[2] - 0.15)], 0.045, dm, 8));
-        });
-        const hill = new THREE.Mesh(new THREE.ConeGeometry(0.34, 0.9, 20), somaM); hill.rotation.z = -Math.PI / 2; hill.position.x = -4.95; g.add(hill);
-        const axM = std(0xf2b24a, { roughness: 0.4 }), axR = myel ? 0.12 : 0.15;
-        const axon = tube([V3(-4.6, 0, 0), V3(XE + 0.2, 0, 0)], axR, axM, 30); g.add(axon);
-        // 축삭 말단
+        [[-0.9, 0.7, 0.2], [-1.0, -0.2, 0.7], [-0.8, -0.8, -0.3], [-0.9, 0.3, -0.7]].forEach((q, i) => g.add(tube([V3(x0 - 1.3, 0.1 * i - 0.1, 0), V3(x0 - 1.7 + q[0] * 0.3, q[1] * 0.6, q[2] * 0.6), V3(x0 - 1.4 + q[0], q[1], q[2])], 0.07, dm, 16)));
+        const hill = new THREE.Mesh(new THREE.ConeGeometry(0.34, 0.8, 20), somaM); hill.rotation.z = -Math.PI / 2; hill.position.x = x0 - 0.35; g.add(hill);
         const tm = std(0xf2b24a, { roughness: 0.4 }), tips = [];
-        [[0.55, 0.65, 0.2], [0.75, 0.0, -0.1], [0.55, -0.65, 0.3]].forEach((q) => { g.add(tube([V3(XE + 0.2, 0, 0), V3(XE + 0.4, q[1] * 0.5, q[2] * 0.5), V3(XE + q[0] + 0.4, q[1], q[2])], 0.07, tm, 16)); const b = new THREE.Mesh(new THREE.SphereGeometry(0.17, 18, 12), std(0xf2b24a, { emissive: 0x000000 })); b.position.set(XE + q[0] + 0.5, q[1], q[2]); g.add(b); tips.push(b); });
-        const o = { g, axon, tips, sheaths: [], nodeGlow: [], soma };
-        if (myel) {
-          for (let k = 0; k < NN - 1; k++) {
-            const m = std(0xfff0c8, { transparent: true, opacity: 0.62, roughness: 0.3, depthWrite: false });
-            const s = new THREE.Mesh(new THREE.CapsuleGeometry(0.28, IL - 0.14 - 0.56, 8, 24), m); s.rotation.z = Math.PI / 2; s.position.x = X0 + k * IL + IL / 2; s.renderOrder = 2; g.add(s); o.sheaths.push(s);
-          }
-        }
-        // 흥분 부위 (빛나는 띠) + 국소 전류 점
-        const glowM = new THREE.MeshBasicMaterial({ color: 0xffe14d, transparent: true, opacity: 0.9, depthWrite: false });
-        const glow = new THREE.Mesh(new THREE.CylinderGeometry(axR + 0.1, axR + 0.1, myel ? 0.2 : 0.7, 28, 1, true), glowM); glow.rotation.z = Math.PI / 2; glow.renderOrder = 3; g.add(glow);
-        const core = new THREE.Mesh(new THREE.SphereGeometry(0.2, 18, 12), new THREE.MeshBasicMaterial({ color: 0xfff6b0, transparent: true, opacity: 0.8, depthWrite: false })); core.scale.set(myel ? 1 : 2.2, 1, 1); g.add(core);
-        const dots = new THREE.InstancedMesh(new THREE.SphereGeometry(0.06, 10, 8), new THREE.MeshBasicMaterial({ color: 0xff7a3d }), 6); g.add(dots);
-        Object.assign(o, { glow, core, dots, glowM });
-        return o;
+        [[0.55, 0.65, 0.2], [0.75, 0.0, -0.1], [0.55, -0.65, 0.3]].forEach((q) => { g.add(tube([V3(x1, 0, 0), V3(x1 + 0.2, q[1] * 0.5, q[2] * 0.5), V3(x1 + q[0] + 0.2, q[1], q[2])], 0.07, tm, 12)); const b = new THREE.Mesh(new THREE.SphereGeometry(0.14, 14, 10), std(0xf2b24a)); b.position.set(x1 + q[0] + 0.2, q[1], q[2]); g.add(b); tips.push(b); });
+        g.position.z = z || 0; return { soma, tips };
       }
-      const A = neuron(1.9, true), B = neuron(-1.9, false);
-      // 랑비에 결절 표시
-      const nodeM = std(0xff8a3d, { emissive: 0x7a2d00, emissiveIntensity: 0.4 });
-      const nodes = []; for (let k = 0; k < NN; k++) { const n = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.025, 8, 24), nodeM); n.rotation.y = Math.PI / 2; n.position.set(X0 + k * IL, 0, 1.9); root.add(n); nodes.push(n); }
-      nodes.forEach((n) => { n.visible = false; });
 
-      const L = {
-        a: label('말이집 신경 (유수 신경)', A.soma, { offset: [0.3, 1.0, 0], color: 'rgba(49,130,246,.92)' }),
-        b: label('말이집 없는 신경 (무수 신경)', B.soma, { offset: [0.4, 1.0, 0], color: 'rgba(49,130,246,.92)' }),
-        den: label('가지 돌기', [-6.6, 0.8, 1.9]), cell: label('신경 세포체', A.soma, { offset: [0, -0.95, 0] }),
-        mye: label('말이집', A.sheaths[2], { offset: [0, 0.55, 0.1] }), nod: label('랑비에 결절', [X0 + IL * 4, 0, 1.9], { offset: [0, -0.5, 0.3], color: 'rgba(255,138,61,.92)' }),
-        end: label('축삭 말단', [XE + 0.9, 0.6, 1.9]),
-        ta: label('', [XE + 1.3, -0.6, 1.9], { color: 'rgba(30,150,80,.95)' }), tb: label('', [XE + 1.3, -0.6, -1.9], { color: 'rgba(30,150,80,.95)' }),
+      /* ① 국소 전류 : 축삭 7구간 */
+      const LG = new THREE.Group(); root.add(LG);
+      const SW = 1.3, X0 = -((NSEG - 1) * SW) / 2;
+      const segMesh = [], segMat = [];
+      for (let i = 0; i < NSEG; i++) {
+        const m = std(0x3b6fe0, { roughness: 0.35 }); const c = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.34, SW - 0.06, 28), m); c.rotation.z = Math.PI / 2; c.position.x = X0 + i * SW; LG.add(c); segMesh.push(c); segMat.push(m);
+        const ring = new THREE.Mesh(new THREE.TorusGeometry(0.35, 0.02, 8, 28), std(0x24324f)); ring.rotation.y = Math.PI / 2; ring.position.x = X0 + (i + 0.5) * SW; if (i < NSEG - 1) LG.add(ring);
+      }
+      const cdEnds = ends(LG, X0 - SW / 2 + 0.2, X0 + (NSEG - 0.5) * SW, 0);
+      const arrows = []; for (let i = 0; i < NSEG - 1; i++) { const a = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.3, 10), new THREE.MeshBasicMaterial({ color: 0xffb020 })); a.rotation.z = -Math.PI / 2; a.position.set(X0 + (i + 0.5) * SW, 0.62, 0); LG.add(a); arrows.push(a); }
+      const rfx = []; for (let i = 0; i < NSEG; i++) { const x = new THREE.Mesh(new THREE.OctahedronGeometry(0.14, 0), new THREE.MeshBasicMaterial({ color: 0x24324f })); x.position.set(X0 + i * SW, 0.62, 0); LG.add(x); rfx.push(x); }
+      const lg = { s: [], dend: label('가지 돌기 쪽 (구간 1)', LG, { offset: [X0 - 1.6, 1.3, 0] }), end: label('축삭 말단 쪽 (구간 7)', LG, { offset: [-X0 + 1.3, 1.3, 0] }), cur: label('국소 전류', arrows[2], { offset: [0, 0.5, 0], color: 'rgba(245,158,11,.95)' }) };
+      for (let i = 0; i < NSEG; i++) { const l = label('구간 ' + (i + 1), segMesh[i], { offset: [0, -0.75, 0], size: 12 }); lg.s.push(l); }
+      const lstate = label('', LG, { offset: [0, -1.9, 0], size: 14, color: 'rgba(124,58,237,.92)' });
+
+      /* ② 말이집 경주 */
+      const RG = new THREE.Group(); root.add(RG);
+      const RX0 = -5.0, RX1 = 5.0, SP = (RX1 - RX0) / (NS - 1), ZU = 1.7, ZM = -1.7;
+      const uMat = [], uMesh = [];
+      for (let k = 0; k < NS; k++) { const m = std(0x3b6fe0, { roughness: 0.35 }); const c = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, SP - 0.02, 20), m); c.rotation.z = Math.PI / 2; c.position.set(RX0 + k * SP, 0, ZU); RG.add(c); uMat.push(m); uMesh.push(c); }
+      const unE = ends(new THREE.Group(), RX0, RX1, 0); // 쓰지 않음 (이름표 위치용)
+      const gU = new THREE.Group(); RG.add(gU); const eU = ends(gU, RX0 - SP / 2, RX1 + SP / 2, ZU); gU.position.z = 0;
+      const mx = (k) => RX0 + k * SP;
+      const axM = std(0x7fd0c8, { roughness: 0.4 }); const axon = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, RX1 - RX0 + SP, 18), axM); axon.rotation.z = Math.PI / 2; axon.position.set((RX0 + RX1) / 2, 0, ZM); RG.add(axon);
+      const gM = new THREE.Group(); RG.add(gM); const eM = ends(gM, RX0 - SP / 2, RX1 + SP / 2, ZM);
+      const sheaths = [], nodeMat = [];
+      for (let j = 0; j < 3; j++) { const xa = mx(NODES[j]) + SP * 0.45, xb = mx(NODES[j + 1]) - SP * 0.45; const m = std(0xf6cf6b, { roughness: 0.35, transparent: true, opacity: 0.85 }); const s = new THREE.Mesh(new THREE.CapsuleGeometry(0.34, xb - xa - 0.68, 8, 24), m); s.rotation.z = Math.PI / 2; s.position.set((xa + xb) / 2, 0, ZM); RG.add(s); sheaths.push([s, m]); }
+      for (let j = 0; j < 4; j++) { const m = std(0x3b6fe0, { roughness: 0.3, emissive: 0x000000 }); const n = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, SP * 0.9, 22), m); n.rotation.z = Math.PI / 2; n.position.set(mx(NODES[j]), 0, ZM); RG.add(n); nodeMat.push(m); }
+      const glows = []; for (let k = 0; k < NS; k++) { const g = new THREE.Mesh(new THREE.SphereGeometry(0.34, 14, 10), new THREE.MeshBasicMaterial({ color: 0xffd447, transparent: true, opacity: 0, depthWrite: false })); g.position.set(mx(k), 0, ZU); RG.add(g); glows.push(g); }
+      const ngl = []; for (let j = 0; j < 4; j++) { const g = new THREE.Mesh(new THREE.SphereGeometry(0.4, 14, 10), new THREE.MeshBasicMaterial({ color: 0xffd447, transparent: true, opacity: 0, depthWrite: false })); g.position.set(mx(NODES[j]), 0, ZM); RG.add(g); ngl.push(g); }
+      const lr = {
+        u: label('무말이집 축삭', gU, { offset: [-1.0, 1.1, ZU], color: 'rgba(49,130,246,.92)' }), m: label('말이집 축삭 (랑비에 결절 4곳)', gM, { offset: [-1.0, 1.1, ZM], color: 'rgba(49,130,246,.92)' }),
+        sh: label('말이집', sheaths[0][0], { offset: [0, 0.65, 0.1] }), nd: label('랑비에 결절', nodeMat.length ? RG : RG, { offset: [mx(NODES[1]), -0.65, ZM] }),
+        tu: label('', RG, { offset: [RX1 + 1.8, -0.7, ZU], color: 'rgba(30,150,80,.95)' }), tm: label('', RG, { offset: [RX1 + 1.8, -0.7, ZM], color: 'rgba(30,150,80,.95)' }),
       };
-      L.nod.el.style.color = '#1b2333'; L.ta.show(false); L.tb.show(false);
-      let labOn = true;
 
-      let damaged = false, tau = -0.6, finishA = -1, finishB = -1;
-      const dmg = [false, false, false, false, false, false, false];
-      function setDamage(v) {
-        damaged = v; [1, 3, 5].forEach((k) => { dmg[k] = v; });
-        A.sheaths.forEach((s, k) => { s.visible = !dmg[k]; });
-        info(v ? '<b>말이집이 손상</b>되면 그 구간은 이웃으로 차례로 전도돼서 느려져요.<br>(탈수초성 질환)' : '말이집 신경은 결절에서 결절로 <b>건너뛰며(도약 전도)</b> 빨라요.<br>말이집이 없는 신경은 이웃 부위로 차례로 전도돼요.');
+      /* 재생 (한 번의 신호 전체를 천천히 보여 줘요) */
+      let pt = 0, scene = '', lastInfo = '';
+      const T_LOCAL = 6 * DELTA + 6 + 1, T_RACE = 34;
+      const pl = controls.player({
+        duration: 9, loop: true, autoplay: false, label: '신호 전달',
+        phases: [[0, '자극'], [0.15, '전달 중'], [0.8, '끝']],
+        onFrame(p) { pt = p; },
+      });
+      const sceneOf = () => { const L = L2(); const m = L ? L.S.mode : 'local'; return m === 'myelin' ? 'race' : 'local'; };
+      function setScene(sc) {
+        scene = sc; LG.visible = sc === 'local'; RG.visible = sc === 'race'; lastInfo = '';
+        lg.s.forEach((l) => l.show(sc === 'local')); [lg.dend, lg.end, lg.cur, lstate].forEach((l) => l.show(sc === 'local')); Object.values(lr).forEach((l) => l.show(sc === 'race')); lr.tu.show(false); lr.tm.show(false);
       }
-      controls.button('▶ 자극 주기', () => stim());
-      controls.segment('말이집', [{ label: '정상', value: false }, { label: '일부 손상', value: true }], false, (v) => { setDamage(v); stim(); });
-      function stim() { tau = 0; finishA = finishB = -1; L.ta.show(false); L.tb.show(false); }
-      controls.button('이름표 숨김/보임', () => { labOn = !labOn; ['den', 'cell', 'mye', 'nod', 'end'].forEach((k) => L[k].show(labOn)); });
-      setDamage(false);
+      const setI = (h) => { if (h !== lastInfo) { lastInfo = h; info(h); } };
+      /* 2D 단추 따라 하기 */
+      const clickDom = (sel) => { const b = document.querySelector(sel); if (b) b.click(); };
+      controls.segment('자극 위치', [{ label: '왼쪽 끝', value: 'left' }, { label: '가운데', value: 'mid' }, { label: '오른쪽 끝', value: 'right' }], 'left', (v) => clickDom('#locSeg button[data-loc="' + v + '"]'));
+      controls.button('⚡ 자극 주기 (2D와 같이)', () => { const L = L2(); if (!L) return; if (L.S.mode === 'myelin') clickDom('#bRace'); else clickDom('#bStimCd'); });
+      controls.segment('말이집', [{ label: '정상', value: 0 }, { label: '일부 손상', value: 1 }, { label: '심하게 손상', value: 2 }], 0, (v) => clickDom('#dmgSeg button[data-d="' + v + '"]'));
+      const playing = () => pl.playing || pl.p > 0;
+      const NAMES = { pol: '분극', dep: '탈분극', rep: '재분극' };
 
-      // 말이집 신경의 시간표
-      function timelineA() { const dur = dmg.map((d) => (d ? IL / (VU * 0.85) : HOP)); const cum = [0]; dur.forEach((d) => cum.push(cum[cum.length - 1] + d)); return { dur, cum }; }
       return {
         update(dt, t) {
-          if (tau >= 0 || tau < 0) tau += dt;
-          const ta = timelineA(), totA = ta.cum[ta.cum.length - 1], totB = (XE - X0) / VU;
-          // 말이집 신경
-          let ax = X0, hopping = false, f = 0, kk = -1, onA = tau >= 0 && tau < totA + 0.35;
-          if (tau >= 0) {
-            kk = 0; while (kk < 6 && tau > ta.cum[kk + 1]) kk++;
-            if (tau <= totA) { f = (tau - ta.cum[kk]) / ta.dur[kk]; hopping = true; ax = X0 + kk * IL + (dmg[kk] ? f * IL : (f > 0.85 ? IL : 0)); }
-            else ax = XE;
+          const L = L2(); if (!L) return; const sc = sceneOf(); if (sc !== scene) setScene(sc);
+          if (sc === 'local') {
+            const cd = L.S.cd; let vs = [];
+            if (playing()) { const tm = pt * T_LOCAL; for (let i = 0; i < NSEG; i++) { const tau = tm - i * DELTA; vs.push(tau > 0 && tau < 6 ? AP(tau) : -70); } }
+            else for (let i = 0; i < NSEG; i++) { const s = cd.seg[i]; vs.push(s.tau == null ? -70 : AP(s.tau)); }
+            const sts = vs.map((v, i) => { const tau = playing() ? pt * T_LOCAL - i * DELTA : cd.seg[i].tau; return tau == null || tau <= 0 ? 'pol' : tau < 1.5 ? 'pol' : tau < 2 ? 'dep' : tau < 6 ? 'rep' : 'pol'; });
+            vs.forEach((v, i) => { segMat[i].color.copy(vCol(v)); const on = v > -60; segMat[i].emissive.setHex(on ? 0x663300 : 0); segMat[i].emissiveIntensity = on ? clamp((v + 60) / 90, 0, 1) : 0; const tauI = playing() ? pt * T_LOCAL - i * DELTA : cd.seg[i].tau; rfx[i].visible = tauI != null && tauI > 2 && tauI < 6; });
+            arrows.forEach((a, i) => { const act = vs[i] > -40 || vs[i + 1] > -40; a.visible = act; });
+            lstate.set(sts.map((s, i) => '구간 ' + (i + 1) + ' ' + NAMES[s]).filter((x, i) => sts[i] !== 'pol').join(' · ') || '막전위 −70 mV (분극) — ⚡ 자극을 줘요');
+            setI('<b>국소 전류</b>: 흥분한 구간(탈분극)의 (+)전하가 이웃 구간으로 흘러 이웃이 역치에 닿으면 활동 전위가 차례로 생겨요.<br>색 = 막전위 (파랑 −70 mV 분극 → 빨강 +30 mV 탈분극) · ✕ = 불응기<br>구간 1 = 가지 돌기 쪽 → 구간 7 = 축삭 말단 쪽' + (cd.frozen ? '<br>⏸ 포착한 장면이에요' : ''));
+          } else {
+            const mc = L.S.mc, dmg = mc.dmg; const st = L.S.mc.starts || { un: [], my: [] };
+            const starts = (mc.run || mc.starts) ? mc.starts : null;
+            let tm = playing() ? pt * T_RACE : (mc.run || mc.starts ? mc.t : 0);
+            const S0 = playing() ? (function () { const un = [], my = []; for (let k = 0; k < NS; k++) un.push(DELTA * k); for (let j = 0; j < 4; j++) my.push(dmg === 2 && j >= 2 ? Infinity : DELTA * j + (dmg === 1 && j >= 2 ? 3 : 0)); return { un, my }; })() : (starts || L.S.mc.starts || (function () { const un = [], my = []; for (let k = 0; k < NS; k++) un.push(DELTA * k); for (let j = 0; j < 4; j++) my.push(dmg === 2 && j >= 2 ? Infinity : DELTA * j + (dmg === 1 && j >= 2 ? 3 : 0)); return { un, my }; })());
+            const sv = (s) => { const tau = tm - s; return tau > 0 && tau < 6 ? AP(tau) : -70; };
+            for (let k = 0; k < NS; k++) { const v = sv(S0.un[k]); uMat[k].color.copy(vCol(v)); glows[k].material.opacity = v > -30 ? 0.5 * clamp((v + 30) / 60, 0, 1) : 0; }
+            for (let j = 0; j < 4; j++) { const v = isFinite(S0.my[j]) ? sv(S0.my[j]) : -70; nodeMat[j].color.copy(vCol(v)); ngl[j].material.opacity = v > -30 ? 0.55 * clamp((v + 30) / 60, 0, 1) : 0; }
+            sheaths.forEach(([s, m], j) => { const dm = dmg > 0 && j === 1; m.color.setHex(dm ? 0xd9c28a : 0xf6cf6b); m.opacity = dm ? 0.5 : 0.85; });
+            const fU = S0.un[NS - 1] + DELTA, fM = S0.my[3] + DELTA, okM = isFinite(fM);
+            const showT = tm > 0 && (mc.run || mc.starts || playing());
+            lr.tu.show(showT && tm >= fU); lr.tu.set('도착 ' + fU.toFixed(1) + ' ms');
+            lr.tm.show(showT && okM && tm >= fM); lr.tm.set(okM ? '도착 ' + fM.toFixed(1) + ' ms' : '');
+            if (showT && !okM && tm > 16) { lr.tm.show(true); lr.tm.set('전도 차단 ✕'); }
+            eU.tips.forEach((b) => { const on = tm >= fU && tm < fU + 1.5; b.material.emissive.setHex(on ? 0xffc933 : 0); b.material.emissiveIntensity = on ? 1 : 0; });
+            eM.tips.forEach((b) => { const on = okM && tm >= fM && tm < fM + 1.5; b.material.emissive.setHex(on ? 0xffc933 : 0); b.material.emissiveIntensity = on ? 1 : 0; });
+            setI('<b>말이집 상태: ' + ['정상', '일부 손상', '심하게 손상'][dmg] + '</b> · 경과 ' + Math.max(0, tm).toFixed(1) + ' ms<br>무말이집은 이웃으로 차례로, 말이집 축삭은 랑비에 결절에서 결절로 건너뛰며(도약 전도) 전도돼요.' + (dmg === 1 ? '<br>일부 손상: 손상된 구간 뒤로 신호가 늦어요.' : dmg === 2 ? '<br>심하게 손상: 신호가 손상 부위를 넘지 못하고 막혀요.' : '') + '<br>(1 ms를 느리게 보여 주고, 속도 차는 모형에서 줄여 보여 줘요)');
           }
-          A.glow.visible = A.core.visible = tau >= 0 && tau < totA + 0.25;
-          A.glow.position.set(ax, 0, 0); A.core.position.set(ax, 0, 0);
-          const pulse = 0.85 + 0.15 * Math.sin(t * 25);
-          A.glow.scale.setScalar(pulse); A.core.scale.set(1.0 * pulse, pulse, pulse);
-          // 국소 전류 점 : 마디 사이를 빠르게 이동
-          for (let i = 0; i < 6; i++) {
-            const show = hopping && !dmg[kk] && tau >= 0;
-            const u = (f * 1.0 + i / 6) % 1; D.position.set(show ? ax * 0 + (X0 + kk * IL + u * IL) : 0, 0, 0); D.scale.setScalar(show ? 1 : 0.001); D.rotation.set(0, 0, 0); D.updateMatrix(); A.dots.setMatrixAt(i, D.matrix);
-          }
-          A.dots.instanceMatrix.needsUpdate = true;
-          // 무수 신경
-          const bx = Math.min(XE, X0 + Math.max(0, tau) * VU);
-          B.glow.visible = B.core.visible = tau >= 0 && tau < totB + 0.25;
-          B.glow.position.set(bx, 0, 0); B.core.position.set(bx, 0, 0); B.glow.scale.setScalar(pulse); B.core.scale.set(2.2 * pulse, pulse, pulse);
-          for (let i = 0; i < 6; i++) { const show = tau >= 0 && tau < totB; D.position.set(show ? bx + 0.45 + (i * 0.14 + (t * 1.5) % 0.14) : 0, 0, 0); D.scale.setScalar(show ? 0.8 : 0.001); D.updateMatrix(); B.dots.setMatrixAt(i, D.matrix); }
-          B.dots.instanceMatrix.needsUpdate = true;
-          // 도착 표시
-          if (tau >= totA && finishA < 0) { finishA = totA; L.ta.set('도착 ' + totA.toFixed(1) + '초'); L.ta.show(true); }
-          if (tau >= totB && finishB < 0) { finishB = totB; L.tb.set('도착 ' + totB.toFixed(1) + '초'); L.tb.show(true); }
-          [[A, finishA], [B, finishB]].forEach(([o, f2]) => o.tips.forEach((tp) => { const on = f2 >= 0 && tau - f2 < 0.8; tp.material.emissive.set(on ? 0xffc933 : 0x000000); tp.material.emissiveIntensity = on ? 1 : 0; }));
-          // 결절 표시 (활성)
-          nodes.forEach((n, k) => { n.visible = labOn; });
         },
-        sync() {},
+        sync() { scene = ''; },
       };
     },
   });

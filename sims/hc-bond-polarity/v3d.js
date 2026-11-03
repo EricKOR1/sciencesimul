@@ -79,68 +79,104 @@
   const phone = window.matchMedia && window.matchMedia('(max-width: 599px)').matches;
   window.SciSim3D.attach({
     title: '결합의 극성 3D',
-    hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: phone ? 6.0 : 5.8, theta: 0.7, phi: 1.15, min: 2.5, max: 14 },
-    autoRotate: 0.3,
+    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 전기 음성도 슬라이더는 2D와 똑같이 이어져요',
+    camera: { dist: phone ? 9.6 : 8.4, theta: 0.45, phi: 1.2, min: 4, max: 20, target: [0, 0.3, 0] },
+    autoRotate: 0.1,
+    levels: [0],
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const L = makeLib(THREE);
-      const EN = { H: 2.2, C: 2.55, N: 3.04, O: 3.44, F: 3.98, Cl: 3.16, B: 2.04 };
-      const KEYS = ['HCl', 'CO2', 'H2O', 'NH3', 'CH4', 'BF3', 'CCl4'];
-      let key = 'H2O', showB = true, showC = true;
-      const g = new THREE.Group(); root.add(g);
-      const lbl = []; for (let i = 0; i < 5; i++) { const l = label('', [0, 0, 0], { size: 12.5 }); l.show(false); lbl.push(l); }
-      const netL = label('', [0, 0, 0], { size: 13, color: 'rgba(255,200,40,.95)' }); netL.el.style.color = '#1b2333'; netL.show(false);
-      function chargeColor(q) { // 음전하 빨강 · 양전하 파랑
-        const t = Math.min(1, Math.abs(q) / 0.9); const c = new THREE.Color(0xdde6f5); return c.lerp(new THREE.Color(q < 0 ? 0xff3b3b : 0x3b6bff), t);
+      const clamp = (x, a, b) => Math.max(a, Math.min(b, x)), sm = L.sstep;
+      const enCol = (e10) => { const t = Math.pow(clamp((e10 - 8) / 32, 0, 1), 0.85); return new THREE.Color(0xf1ebfd).lerp(new THREE.Color(0x5b21b6), t); };
+      const f1 = (v) => (v / 10).toFixed(1);
+      const XA = -1.9, XB = 1.9, RA = 0.62;
+      const grp = new THREE.Group(); root.add(grp);
+      const matA = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.35 }), matB = matA.clone();
+      const atA = new THREE.Mesh(L.SG, matA), atB = new THREE.Mesh(L.SG, matB); atA.scale.setScalar(RA); atB.scale.setScalar(RA); atA.position.x = XA; atB.position.x = XB; grp.add(atA, atB);
+      const shMat = (c) => new THREE.MeshStandardMaterial({ color: c, transparent: true, opacity: 0.12, roughness: 0.2, depthWrite: false });
+      const shA = new THREE.Mesh(L.SG, shMat(0xdde6f5)), shB = new THREE.Mesh(L.SG, shMat(0xdde6f5)); shA.position.x = XA; shB.position.x = XB; grp.add(shA, shB);
+      const ND = 460;
+      const dots = new THREE.InstancedMesh(L.SG, new THREE.MeshStandardMaterial({ color: 0xffd34d, emissive: 0xffb300, emissiveIntensity: 0.9, roughness: 0.4, transparent: true, opacity: 0.85 }), ND);
+      dots.frustumCulled = false; grp.add(dots);
+      const dd = []; for (let i = 0; i < ND; i++) dd.push({ p: new THREE.Vector3(), c: 0.5 + Math.random() * 0.7 });
+      const dum = new THREE.Object3D();
+      const lA = label('', [XA, 0, 0], { size: 13.5 }), lB = label('', [XB, 0, 0], { size: 13.5 });
+      lA.off = [0, -1.25, 0]; lB.off = [0, -1.25, 0]; lA.el.style.color = lB.el.style.color = '#fff';
+      const dA = label('', [XA, 0, 0], { size: 13 }), dB = label('', [XB, 0, 0], { size: 13 }); dA.off = [0, 1.05, 0]; dB.off = [0, 1.05, 0];
+      const arrowG = new THREE.Group(); grp.add(arrowG);
+      const dipL = label('쌍극자 모멘트', [0, 1.75, 0], { size: 12, color: 'rgba(255,200,40,.95)' }); dipL.el.style.color = '#1b2333';
+      let pos = 0.5;
+      function resample(i) {
+        const d = dd[i], atB2 = Math.random() < pos, cx = atB2 ? XB : XA, spread = 0.55 + RA * 0.9;
+        let x = cx + (Math.random() + Math.random() + Math.random() - 1.5) * spread * 1.6;
+        if (atB2) x = Math.max(x, XA + (XB - XA) * 0.25); else x = Math.min(x, XB - (XB - XA) * 0.25);
+        const r = (Math.random() + Math.random() + Math.random() - 1.5) * 1.1, th = Math.random() * Math.PI * 2, fall = Math.max(0.35, 1 - Math.abs(x - cx) / (spread * 1.6) * 0.5);
+        d.p.set(x, r * Math.cos(th) * fall * 0.7, r * Math.sin(th) * fall * 0.7);
       }
-      function build() {
-        L.clear(g); lbl.forEach((l) => l.show(false)); netL.show(false);
-        const M = L.MOLS[key]; const n = M.a.length;
-        // 중심 원자 결정: HCl은 2원자, 나머지는 0번이 중심
-        const q = M.a.map(() => 0);
-        const P = M.a.map((a) => new THREE.Vector3(a[1], a[2], a[3]));
-        M.b.forEach((b) => { const i = b[0], j = b[1]; const d = (EN[M.a[j][0]] - EN[M.a[i][0]]) * 0.32; q[j] -= d; q[i] += d; });
-        // 분자를 질량 중심 대신 기하 중심으로 맞추기
-        const cen = P.reduce((s, p) => s.add(p), new THREE.Vector3()).multiplyScalar(1 / n);
-        P.forEach((p) => p.sub(cen));
-        const mol = L.mol(M, 1); mol.position.copy(cen).multiplyScalar(-1); g.add(mol);
-        // 전하 구름(껍질)
-        M.a.forEach((a, i) => {
-          if (!showC) return;
-          const sh = new THREE.Mesh(L.SG, new THREE.MeshStandardMaterial({ color: chargeColor(q[i]), transparent: true, opacity: 0.1 + 0.34 * Math.min(1, Math.abs(q[i]) / 0.8), roughness: 0.2, depthWrite: false }));
-          sh.scale.setScalar(L.RAD[a[0]] * 2.0); sh.position.copy(P[i]); g.add(sh);
-        });
-        // 결합 쌍극자 화살표 (δ+ 쪽에서 δ− 쪽으로)
-        if (showB) M.b.forEach((b) => {
-          const i = b[0], j = b[1]; const d = EN[M.a[j][0]] - EN[M.a[i][0]]; if (Math.abs(d) < 0.4) return;
-          const from = d > 0 ? i : j, to = d > 0 ? j : i; const A = P[from], B = P[to]; const dir = B.clone().sub(A).normalize();
-          const off = new THREE.Vector3(0, 0.0, 0); const side = dir.clone().cross(new THREE.Vector3(0, 0, 1)); if (side.lengthSq() < 0.01) side.set(0, 1, 0); side.normalize().multiplyScalar(0.38);
-          const a0 = A.clone().addScaledVector(dir, L.RAD[M.a[from][0]] + 0.1).add(side), a1 = B.clone().addScaledVector(dir, -(L.RAD[M.a[to][0]] + 0.12)).add(side);
-          if (a1.clone().sub(a0).dot(dir) > 0.2) g.add(L.arrow(a0.toArray(), a1.toArray(), 0xff9f43, 0.06, 0.3));
-        });
-        // 알짜 쌍극자
-        const mu = new THREE.Vector3(); P.forEach((p, i) => mu.addScaledVector(p, -q[i]));
-        const len = mu.length();
-        const polar = len > 0.15;
-        if (polar) {
-          const dir = mu.clone().normalize(); const L0 = Math.min(2.4, 0.7 + len * 1.1);
-          const a0 = dir.clone().multiplyScalar(-L0 / 2).add(new THREE.Vector3(0, 0, 0)), a1 = dir.clone().multiplyScalar(L0 / 2);
-          const off = new THREE.Vector3(0, 1.45, 0); if (Math.abs(dir.y) > 0.8) off.set(1.9, 0, 0);
-          const arr = L.arrow(a0.clone().add(off).toArray(), a1.clone().add(off).toArray(), 0xffd34d, 0.1, 0.5); g.add(arr);
-          netL.obj = a1.clone().add(off).multiplyScalar(0.5).add(a0.clone().add(off).multiplyScalar(0.5)).toArray(); netL.off = [0, 0.5, 0]; netL.set('알짜 쌍극자'); netL.show(true);
-        } else { netL.obj = [0, 0, 0]; netL.off = [0, 1.7, 0]; netL.set('쌍극자 합 = 0'); netL.show(true); }
-        // 원소 이름표
-        let li = 0; const done = {};
-        M.a.forEach((a, i) => { if (li >= 5) return; const l = lbl[li++]; l.obj = P[i].toArray(); l.off = [0, 0.62, 0]; const s = q[i]; l.set(a[0] + (Math.abs(s) > 0.12 ? (s < 0 ? ' δ−' : ' δ+') : '')); l.el.style.background = Math.abs(s) > 0.12 ? (s < 0 ? 'rgba(235,70,70,.85)' : 'rgba(60,110,255,.85)') : ''; l.show(true); });
-        const nb = M.b.filter((b) => Math.abs(EN[M.a[b[1]][0]] - EN[M.a[b[0]][0]]) >= 0.4).length;
-        info('<b>' + M.f + '</b> · 극성 결합 ' + nb + '개<br>' + (polar ? '<b>극성 분자</b>: 결합 쌍극자의 합이 0이 아니에요.' : (nb ? '<b>무극성 분자</b>: 극성 결합이 있어도 대칭이라 합이 0이에요.' : '<b>무극성 분자</b>')) + '<br><span style="color:#ff9f43">주황 화살표</span> 결합 쌍극자 · <span style="color:#ffd34d">노랑</span> 알짜');
+      const clClass = (d) => d === 0 ? ['무극성 공유 결합', '두 원자의 전기 음성도가 같아 전자쌍이 가운데에 있고 부분 전하가 없어요.'] : d < 5 ? ['극성이 약한 공유 결합', 'Δχ가 작아 전자쌍이 조금 치우쳐서 부분 전하(δ⁺, δ⁻)가 작게 생겨요.'] : d < 20 ? ['극성 공유 결합', 'Δχ가 클수록 전자쌍이 더 많이 치우치고 δ⁺, δ⁻가 커져요.'] : ['극성이 매우 큰 결합', '전자쌍이 거의 한쪽에 가 있어요. 실제 물질에서는 금속 + 비금속이면 이온 결합이에요.'];
+
+      /* ▶ 재생: 오른쪽 원자의 전기 음성도를 올려 가며 전자 구름이 쏠리는 모습 */
+      let own = false, sig = '', pB = 0;
+      const rowOf = () => { const r = document.querySelectorAll('.v3-player'); return r[r.length - 1]; };
+      const pl = controls.player({ duration: 9, loop: true, label: 'χ(B) 올리기', phases: [[0, 'Δχ = 0'], [0.1, 'χ(B) 커지는 중'], [0.55, '최대'], [0.7, '내리는 중']], onFrame(p) { pB = p; own = p > 0; } });
+      const rowP = rowOf();
+      const bAnim = (p) => (p < 0.1 ? 0 : p < 0.55 ? sm((p - 0.1) / 0.45) : p < 0.7 ? 1 : 1 - sm((p - 0.7) / 0.3));
+      const qOf = (d10) => sm(d10 / 10 / 2.4);
+      let accT = 0, lastKey = '', shown = { pos: 0.5 };
+
+      function setAtoms(sA, sB, eA, eB) {
+        matA.color.copy(enCol(eA)); matB.color.copy(enCol(eB));
       }
-      controls.segment('분자', KEYS.map((k) => ({ value: k, label: L.MOLS[k].f })), key, (v) => { key = v; build(); });
-      const b1 = controls.button('결합 화살표 ✓', () => { showB = !showB; b1.classList.toggle('on', showB); b1.textContent = '결합 화살표 ' + (showB ? '✓' : '✕'); build(); }); b1.classList.add('on');
-      const b2 = controls.button('전하 구름 ✓', () => { showC = !showC; b2.classList.toggle('on', showC); b2.textContent = '전하 구름 ' + (showC ? '✓' : '✕'); build(); }); b2.classList.add('on');
-      build();
-      return {};
+      return {
+        update(dt, t) {
+          const Z = ctx.lesson(); if (!Z) return; dt = Math.min(dt, 0.05);
+          const S = Z.S, sc = S.scene;
+          let sA = 'A', sB = 'B', eA = S.cl.a, eB = S.cl.b, nmA = '왼쪽 A 원자', nmB = '오른쪽 B 원자', cposT = null, arr = S.cl.arr || 0, showAll = true, note = '';
+          const cloudScene = sc === 'cloud' || !sc;
+          if (cloudScene) { const sg = [S.cl.a, S.cl.b].join('|'); if (sg !== sig) { sig = sg; if (own) { own = false; pl.pause(); pl.set(0); } } }
+          rowP.style.display = cloudScene ? '' : 'none'; if (!cloudScene && pl.playing) pl.pause();
+          let d, q, posT;
+          if (cloudScene) {
+            if (own) { eB = Math.round(eA + (40 - eA) * bAnim(pB)); }
+            d = Math.abs(eA - eB); posT = own ? 0.5 + 0.5 * Math.sign(eB - eA) * qOf(d) : S.cl.pos;
+            if (own) arr = d > 0 ? 1 : 0;
+          } else {
+            let b = null;
+            if (sc === 'arrows') b = Z.CARDS[S.ar.sel]; else if (sc === 'scale' && S.sc.sel != null) b = Z.SCB[S.sc.sel];
+            if (!b) { b = Z.CARDS[S.ar.sel] || Z.CARDS[3]; }
+            sA = b.a; sB = b.b; eA = b.ea; eB = b.eb; nmA = sA + ' 원자'; nmB = sB + ' 원자';
+            d = b.d10; const done = sc === 'arrows' ? !!S.ar.done[b.id] : true;
+            posT = done ? 0.5 + 0.5 * Math.sign(eB - eA) * qOf(d) : 0.5; arr = done && d > 0 ? 1 : 0; showAll = done;
+            if (!done) note = '2D에서 Δχ와 화살표 방향을 정하면 전자 구름이 쏠려요.';
+          }
+          q = qOf(d); pos += (posT - pos) * (1 - Math.pow(0.003, dt));
+          setAtoms(sA, sB, eA, eB);
+          lA.set((cloudScene ? 'A' : sA) + '<br><small>χ = ' + f1(eA) + '</small>'); lB.set((cloudScene ? 'B' : sB) + '<br><small>χ = ' + f1(eB) + '</small>');
+          const lowA = eA < eB, show = showAll && d > 0 && q > 0.04;
+          const chg = (isDelta, big) => (isDelta ? 'δ⁺' : 'δ⁻');
+          dA.show(show); dB.show(show);
+          if (show) { dA.set(lowA ? 'δ⁺' : 'δ⁻'); dB.set(lowA ? 'δ⁻' : 'δ⁺'); dA.el.style.background = lowA ? 'rgba(235,70,70,.88)' : 'rgba(60,110,255,.88)'; dB.el.style.background = lowA ? 'rgba(60,110,255,.88)' : 'rgba(235,70,70,.88)'; }
+          const cs = (side) => { const lo = side === 'A' ? lowA : !lowA; return lo ? 0xff3b3b : 0x3b6bff; };
+          shA.material.color.setHex(d > 0 ? cs('A') : 0xdde6f5); shB.material.color.setHex(d > 0 ? cs('B') : 0xdde6f5);
+          const sz = 1.7 + 0.9 * q; shA.scale.setScalar(sz * (lowA ? 0.85 : 1.1)); shB.scale.setScalar(sz * (lowA ? 1.1 : 0.85));
+          shA.material.opacity = shB.material.opacity = 0.1 + 0.3 * q;
+          accT += dt; if (accT > 0.06) { accT = 0; for (let k = 0; k < 55; k++) resample((Math.random() * ND) | 0); }
+          for (let i = 0; i < ND; i++) { const dd2 = dd[i]; dum.position.copy(dd2.p); dum.scale.setScalar(0.06 * dd2.c); dum.updateMatrix(); dots.setMatrixAt(i, dum.matrix); }
+          dots.instanceMatrix.needsUpdate = true;
+          // 쌍극자 화살표 (δ⁺ → δ⁻, 길이 = Δχ에 비례)
+          L.clear(arrowG);
+          const showArr = arr > 0.05 && d > 0 && showAll;
+          dipL.show(showArr);
+          if (showArr) {
+            const len = Math.min(3.6, 0.35 + d / 10 * 1.15) * arr, from = lowA ? -1 : 1, x0 = from * (-len / 2 + (lowA ? 0 : 0)), a0 = [from > 0 ? len / 2 : -len / 2, 1.55, 0], a1 = [from > 0 ? -len / 2 : len / 2, 1.55, 0];
+            const A0 = lowA ? [-len / 2, 1.55, 0] : [len / 2, 1.55, 0], A1 = lowA ? [len / 2, 1.55, 0] : [-len / 2, 1.55, 0];
+            if (len > 0.3) arrowG.add(L.arrow(A0, A1, 0xffd34d, 0.09, 0.4));
+            dipL.obj = [0, 1.55, 0]; dipL.off = [0, 0.55, 0];
+          }
+          const cls = clClass(d), head = cloudScene ? 'Δχ = |χ(B) − χ(A)| = |' + f1(eB) + ' − ' + f1(eA) + '| = <b>' + f1(d) + '</b>' : '<b>' + sA + '–' + sB + '</b> · χ ' + f1(eA) + ', ' + f1(eB) + (showAll ? ' · Δχ = <b>' + f1(d) + '</b>' : '');
+          info(head + '<br>' + (showAll ? '<b>' + cls[0] + '</b> — ' + cls[1] : note) + (showArr ? '<br>화살표(+→)는 결합의 쌍극자 모멘트예요. δ⁺ 쪽에서 δ⁻ 쪽으로 향해요.' : ''));
+        },
+      };
     },
   });
 })();

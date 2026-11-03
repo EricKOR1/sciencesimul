@@ -27,6 +27,7 @@
   window.SciSim3D.attach({
     title: '우주 거대 구조 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
+    levels: [2, 3],
     camera: { dist: 480 * FIT, theta: 0.55, phi: 0.95, fov: 42, target: [0, 0, -160], min: 80, max: 1800 },
     autoRotate: 0,
     build(ctx) {
@@ -95,17 +96,34 @@
       /* ===== 점 구름 (그룹마다 하나) ===== */
       const objs = [];
       const plainMat = (hex, size, op) => new THREE.PointsMaterial({ size, map: dot, color: new THREE.Color(hex), transparent: true, opacity: op, depthWrite: false, blending: THREE.AdditiveBlending, sizeAttenuation: false });
-      function mkPts(list, g, part, size, op) {
-        const pos = new Float32Array(list.length * 3);
-        list.forEach((p, i) => { const q = TW(p[0], p[1], p[2]); pos.set(q, i * 3); });
-        const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      const R2 = rng(99);
+      function mkPts(list, g, part, size, op, cr) {
+        const pos = new Float32Array(list.length * 3), ini = new Float32Array(list.length * 3);
+        list.forEach((p, i) => { const q = TW(p[0], p[1], p[2]); pos.set(q, i * 3); const r = 8 + R2() * 312, t = (R2() * 2 - 1) * (r * 0.38), h = (R2() * 2 - 1) * 60; ini.set(TW(r, t, h), i * 3); });
+        const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pos.slice(), 3));
         const m = new THREE.Points(geo, plainMat(PLAIN, size, op)); m.frustumCulled = false; root.add(m);
-        objs.push({ m, g, part, size, op }); return m;
+        objs.push({ m, g, part, size, op, fin: pos, ini, list, cr: cr || null }); return m;
       }
       Object.keys(groups).forEach((g) => {
         const sz = g === 'cluster' ? 2.8 : g === 'field' ? 1.9 : 2.3, op = g === 'cluster' ? 0.6 : g === 'field' ? 0.55 : 0.7;
-        mkPts(groups[g].out, g, 'out', sz, op); mkPts(groups[g].fill, g, 'fill', sz, op); mkPts(groups[g].slab, g, 'slab', sz + 0.6, Math.min(1, op + 0.25));
+        const crOf = (list) => list.map((p) => { let bi = 0, bd = 1e9; nodes.forEach((n, i) => { const d = dist3(n.p, p); if (d < bd) { bd = d; bi = i; } }); return nodes[bi].p[0]; });
+        mkPts(groups[g].out, g, 'out', sz, op, g === 'cluster' ? crOf(groups[g].out) : null); mkPts(groups[g].fill, g, 'fill', sz, op, g === 'cluster' ? crOf(groups[g].fill) : null); mkPts(groups[g].slab, g, 'slab', sz + 0.6, Math.min(1, op + 0.25));
       });
+      /* 구조 성장(요동 · 우주 나이) · 적색 편이 왜곡(신의 손가락)을 반영해 점 위치를 다시 계산해요 */
+      let gF = 1, gFog = 0;
+      function morph() {
+        objs.forEach((o) => {
+          if (o.part === 'slab') return;
+          const pos = o.m.geometry.attributes.position, a = pos.array, n = o.list.length;
+          for (let i = 0; i < n; i++) {
+            const k = i * 3, rI = -o.ini[k + 2], rF = -o.fin[k + 2];
+            let tt = o.ini[k] + (o.fin[k] - o.ini[k]) * gF, hh = o.ini[k + 1] + (o.fin[k + 1] - o.ini[k + 1]) * gF, rr = rI + (rF - rI) * gF;
+            if (o.cr && gFog > 0.001) rr = o.cr[i] + (rr - o.cr[i]) * (1 + 4 * gFog);
+            a[k] = tt; a[k + 1] = hh; a[k + 2] = -rr;
+          }
+          pos.needsUpdate = true;
+        });
+      }
 
       /* ===== 보조 도형: 쐐기·단면·상자·보이드·관측자 ===== */
       const lineMat = (hex, op) => new THREE.LineBasicMaterial({ color: hex, transparent: true, opacity: op });
@@ -150,24 +168,34 @@
       labSet(sLabs, false);
 
       /* ===== 상태 · 보기 ===== */
-      let colored = false, showVoid = false, slice = false;
+      let colored = false, showVoid = false, slice = false, mode = 'struct', gate = false, ostat = '';
+      const free = () => !!(sim && sim.game && sim.game.free);
       function applyAll() {
+        const origin = mode === 'origin';
+        const col = colored && !gate && !origin, vd = showVoid && !gate && !origin, sl = slice && !origin;
         objs.forEach((o) => {
-          const mat = o.m.material, base = colored ? COL[o.g] : PLAIN;
-          if (o.part === 'fill') o.m.visible = !slice;
-          mat.color.set(slice && o.part === 'slab' ? SLC : base);
-          mat.size = slice && o.part === 'slab' ? 4.2 : o.size;
-          mat.opacity = slice ? (o.part === 'slab' ? 1 : o.part === 'out' ? 0.14 : o.op) : o.op;
+          const mat = o.m.material, base = col ? COL[o.g] : PLAIN;
+          if (o.part === 'fill') o.m.visible = !sl;
+          if (o.part === 'slab') o.m.visible = !origin;
+          mat.color.set(sl && o.part === 'slab' ? SLC : base);
+          mat.size = sl && o.part === 'slab' ? 4.2 : o.size;
+          mat.opacity = sl ? (o.part === 'slab' ? 1 : o.part === 'out' ? 0.14 : o.op) : o.op;
         });
-        wedgeG.visible = slice; voidG.visible = showVoid;
-        sLabs.forEach((l) => { const t = l.el.textContent; l.show((colored && t !== '보이드') || (showVoid && t === '보이드')); });
+        wedgeG.visible = sl; voidG.visible = vd;
+        sLabs.forEach((l) => { const t = l.el.textContent; l.show((col && t !== '보이드') || (vd && t === '보이드')); });
         text();
       }
       function text() {
-        if (slice) info('<b>쐐기 단면</b>: 수업의 <b>은하 지도</b>는 이 3차원 공간을 두께 약 ' + (SLAB * 2) + ' Mpc로 얇게 잘라 <b>위에서 본</b> 쐐기 도표예요. <span style="color:#ffe45e">노란 점 ' + groups.cluster.slab.concat(groups.fil.slab, groups.field.slab, groups.wall.slab).length + '개</span>가 수업의 은하 지도 속 은하예요.<br>위·아래로 이어지는 구조는 지도에 나타나지 않아요.');
-        else if (colored || showVoid) info('<b>그물 구조</b><br>' + (colored ? '<span style="color:#ffb04a">주황</span> 은하단(마디) · <span style="color:#7fb5ff">파랑</span> 필라멘트(실) · <span style="color:#5eead4">청록</span> 장벽(벽) · 회색 홀로 있는 은하<br>' : '') + (showVoid ? '푸른 공 = 보이드(은하가 거의 없는 빈 곳)<br>' : '') + '은하는 중력으로 모여 마디·실·벽을 이루고 그 사이에 큰 빈 곳이 생겨요.');
-        else info('<b>우주 거대 구조 (합성 모형, 폭 약 ' + 2 * 130 + ' Mpc)</b><br>은하는 고르게 퍼져 있지 않고 <b>그물</b>처럼 이어져 있어요. 어디가 몰려 있고 어디가 비었는지 돌려 보며 찾아봐요. (1 Mpc ≈ 326만 광년)');
+        const w = (sim && sim.S) || {}, o = w.or || { eps: 5, age: 138, ageD: 138 };
+        if (mode === 'origin') {
+          let st = null; try { st = sim.orbStats(o.eps, o.ageD || o.age); } catch (e) { /* 무시 */ }
+          info('<b>구조의 기원</b> · 처음 밀도 요동 ±' + o.eps + ' % · 우주 나이 ' + Math.round(o.ageD || o.age) + '억 년<br>' + (o.eps === 0 ? '요동이 0 %이면 시간이 지나도 구조가 생기지 않아요. 은하는 고르게 흩어져 있어요.' : '조금 더 밀한 곳이 중력으로 주변 물질을 끌어당겨 <b>마디·실</b>이 되고, 비어 가는 곳은 <b>보이드</b>가 돼요.') + (st && st.ready !== false ? '<br>빈 곳 칸 ' + st.voids + ' / 64' : ''));
+        } else if (sliceOn()) info('<b>쐐기 단면</b>: 수업의 <b>은하 지도</b>는 이 3차원 공간을 두께 약 ' + (SLAB * 2) + ' Mpc로 얇게 잘라 <b>위에서 본</b> 쐐기 도표예요. <span style="color:#ffe45e">노란 점</span>이 수업의 은하 지도 속 은하예요.<br>위·아래로 이어지는 구조는 지도에 나타나지 않아요.');
+        else if (mode === 'struct' && gFog > 0.3) info('<b>적색 편이로 본 위치</b>: 은하단 속 은하의 움직임(고유 속도)이 거리처럼 보여서 은하단이 <b>시선 방향으로 길쭉</b>하게 늘어나 보여요 (신의 손가락).');
+        else if (colored && !gate || showVoid && !gate) info('<b>그물 구조</b><br>' + (colored ? '<span style="color:#ffb04a">주황</span> 은하단(마디) · <span style="color:#7fb5ff">파랑</span> 필라멘트(실) · <span style="color:#5eead4">청록</span> 장벽(벽) · 회색 홀로 있는 은하<br>' : '') + (showVoid ? '푸른 공 = 보이드(은하가 거의 없는 빈 곳)<br>' : '') + '은하는 중력으로 모여 마디·실·벽을 이루고 그 사이에 큰 빈 곳이 생겨요.');
+        else info('<b>우주 거대 구조 (합성 모형, 폭 약 ' + 2 * 130 + ' Mpc)</b><br>은하는 고르게 퍼져 있지 않고 <b>그물</b>처럼 이어져 있어요. 은하단 · 필라멘트 · 장벽 · 보이드를 돌려 보며 찾아봐요. (1 Mpc ≈ 326만 광년)');
       }
+      const sliceOn = () => slice && mode !== 'origin';
       const view = (v) => { // 위·옆에서 볼 때는 수업의 눕힌 쐐기 도표처럼 거리 r이 오른쪽으로 가요
         if (v === 'top') { orbit.phi = 0.06; orbit.theta = Math.PI / 2; orbit.dist = 420 * (narrow ? 2.3 : 1); } else if (v === 'side') { orbit.phi = 1.5; orbit.theta = Math.PI / 2; orbit.dist = 480 * (narrow ? 1.5 : 1); } else { orbit.phi = 0.95; orbit.theta = 0.55; orbit.dist = 480 * FIT; }
         spin = v === 'tilt'; };
@@ -177,13 +205,41 @@
       const cB = controls.button('🎨 구조 색', () => { colored = !colored; cB.classList.toggle('on', colored); applyAll(); });
       const vB = controls.button('🫧 보이드', () => { showVoid = !showVoid; vB.classList.toggle('on', showVoid); applyAll(); });
       const sB = controls.button('🔪 쐐기 단면', () => { slice = !slice; sB.classList.toggle('on', slice); if (slice) view('top'); applyAll(); });
-      function readLesson() { // 수업이 은하 지도·밀도 분석이면 단면부터 보여 줘요 (읽기만)
-        try { const v = sim && sim.S && sim.S.view; if ((v === 'map' || v === 'grid') && !slice && !synced) { slice = true; sB.classList.add('on'); view('top'); } synced = true; } catch (e) { /* 괜찮아요 */ }
-        applyAll();
+      /* ▶ 재생: 구조의 기원 단계에서 우주 나이를 1억 → 138억 년으로 늘려 가며 작은 요동이 자라 구조가 생기는 과정을 봐요 (2D '우주 나이'도 함께 움직여요) */
+      let ready = false, syncing = false;
+      const player = controls.player({
+        duration: 12, loop: true, autoplay: false, label: '재생',
+        phases: [[0, '거의 균일'], [0.4, '요동이 자라요'], [0.8, '그물 구조']],
+        onFrame(p) {
+          if (!ready || syncing || mode !== 'origin') return;
+          const age = Math.max(1, Math.round(1 + 137 * p)), el = document.getElementById('sAge');
+          if (el) { el.value = age; el.dispatchEvent(new Event('input', { bubbles: true })); }
+        },
+      });
+      ready = true;
+      const plRow = renderer.domElement.parentNode.parentNode.querySelector('.v3-player');
+      function follow() {
+        const S = sim && sim.S; if (!S) return;
+        const v = S.view, nm = v === 'origin' ? 'origin' : v === 'struct' ? 'struct' : 'map';
+        const g = (v === 'map' || v === 'grid') && !free() && !(sim.markersOK && sim.markersOK().length >= 6);
+        let f = 1, fog = 0;
+        if (nm === 'origin') { const o = S.or, eps = o.epsD != null ? o.epsD : o.eps, age = o.ageD != null ? o.ageD : o.age; f = Math.max(0, Math.min(1, (eps / 5) * (sim.aOfAge ? sim.aOfAge(age) / sim.aOfAge(138) : age / 138))); }
+        if (nm === 'struct' && S.st) fog = S.st.fog || 0;
+        const key = nm + '|' + g + '|' + f.toFixed(3) + '|' + fog.toFixed(2);
+        if (plRow) plRow.style.display = nm === 'origin' ? '' : 'none';
+        if (key === ostat) return; ostat = key;
+        mode = nm; gate = g; gF = f; gFog = fog;
+        if (nm === 'origin') { const a = S.or.ageD != null ? S.or.ageD : S.or.age; syncing = true; player.set(Math.max(0, Math.min(1, (a - 1) / 137))); syncing = false; }
+        morph(); applyAll();
       }
       let synced = false;
+      function readLesson() { // 수업이 은하 지도·밀도 분석이면 단면부터 보여 줘요 (읽기만)
+        try { const v = sim && sim.S && sim.S.view; if ((v === 'map' || v === 'grid') && !slice && !synced) { slice = true; sB.classList.add('on'); view('top'); } synced = true; } catch (e) { /* 괜찮아요 */ }
+        ostat = ''; follow();
+      }
       readLesson();
-      return { update(dt) { if (spin) orbit.theta += 0.07 * dt; }, sync() { synced = false; readLesson(); } };
+      let acc = 0;
+      return { update(dt) { if (spin) orbit.theta += 0.07 * dt; acc += dt; if (acc > 0.1) { acc = 0; follow(); } }, sync() { synced = false; readLesson(); } };
     },
   });
 })();

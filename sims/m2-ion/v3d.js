@@ -50,7 +50,7 @@
       function apply() {
         const s = sm(); if (!s) return;
         const p = Math.max(1, Math.min(20, s.np())), e = Math.min(20, s.ne()), q = p - e;
-        if (p !== cur.p) { rebuild(p); }
+        if (p !== cur.p) { rebuild(p); elSeg.set(p); showEls(); }
         cur.p = p; cur.e = e;
         const used = e > 0 ? shellsUsed(e) : 0;
         auraT = used ? R[used - 1] + 0.45 : 0.9;
@@ -62,10 +62,18 @@
         info(`<b>${sym}</b> · ${kind}<br><b style="color:#ff8f8f">양성자 ${p}</b> · <b style="color:#8fb0ff">전자 ${e}</b> → 전하 ${q > 0 ? '+' + q : q < 0 ? '−' + (-q) : '0'}<br>${how}`);
         labA.set(sym); labA.el.style.fontSize = '17px';
       }
-      controls.segment('원소', [{ label: 'Na', value: 11 }, { label: 'Mg', value: 12 }, { label: 'O', value: 8 }, { label: 'Cl', value: 17 }], 11, (p) => { const s = sm(); if (s) { s.setState(p, p); apply(); } });
+      const elSeg = controls.segment('원소', [{ label: 'Na', value: 11 }, { label: 'Mg', value: 12 }, { label: 'O', value: 8 }, { label: 'Cl', value: 17 }], 11, (p) => { const s = sm(); if (s) { s.setState(p, p); apply(); } });
       controls.button('전자 잃기 −1', () => sm() && sm().minusE());
       controls.button('전자 얻기 +1', () => sm() && sm().plusE());
       controls.text('원자핵의 양성자 수는 그대로예요');
+      /* 2D 단계에 맞춰 고를 수 있는 원소만 보여 줘요: 0단계 Na · 1단계 Na, Mg · 2단계 Cl, O */
+      const ctlEl = ctx.renderer.domElement.closest('.v3-wrap').querySelector('.v3-ctl');
+      const STEP_EL = [['Na'], ['Na', 'Mg'], ['Cl', 'O']];
+      function showEls() {
+        const ok = STEP_EL[Math.min(ctx.level, 2)] || STEP_EL[2];
+        [...ctlEl.querySelectorAll('button')].forEach((b) => { const t = b.textContent.trim(); if (['Na', 'Mg', 'O', 'Cl'].includes(t)) b.style.display = ok.includes(t) ? '' : 'none'; });
+      }
+      ctx.onLevel(showEls); showEls();
       return {
         sync() { cur.p = -1; apply(); },
         update(dt, t) {

@@ -110,9 +110,10 @@
 
       /* ---------- 에너지원: 태양 · 지구 내부 · 달 ---------- */
       const en = new THREE.Group(); root.add(en);
-      const sun = new THREE.Mesh(new THREE.SphereGeometry(1.25, 40, 28), new THREE.MeshBasicMaterial({ color: 0xffd34d })); sun.position.copy(sunPos).multiplyScalar(1.12); en.add(sun);
-      const sunGlow = new THREE.Mesh(new THREE.SphereGeometry(1.8, 32, 20), new THREE.MeshBasicMaterial({ color: 0xffc04a, transparent: true, opacity: 0.18, depthWrite: false })); sunGlow.position.copy(sun.position); en.add(sunGlow);
-      const moon = new THREE.Mesh(new THREE.SphereGeometry(0.55, 32, 24), std(0xcfd2d8, { roughness: 0.95 })); en.add(moon);
+      const sunG = new THREE.Group(), coreG = new THREE.Group(), moonG = new THREE.Group(); en.add(sunG, coreG, moonG);
+      const sun = new THREE.Mesh(new THREE.SphereGeometry(1.25, 40, 28), new THREE.MeshBasicMaterial({ color: 0xffd34d })); sun.position.copy(sunPos).multiplyScalar(1.12); sunG.add(sun);
+      const sunGlow = new THREE.Mesh(new THREE.SphereGeometry(1.8, 32, 20), new THREE.MeshBasicMaterial({ color: 0xffc04a, transparent: true, opacity: 0.18, depthWrite: false })); sunGlow.position.copy(sun.position); sunG.add(sunGlow);
+      const moon = new THREE.Mesh(new THREE.SphereGeometry(0.55, 32, 24), std(0xcfd2d8, { roughness: 0.95 })); moonG.add(moon);
       function arrow(from, to, col, rad) {
         const g = new THREE.Group(), d = to.clone().sub(from), len = d.length(), hl = Math.min(len * 0.4, rad * 7);
         const sh = new THREE.Mesh(new THREE.CylinderGeometry(rad, rad, len - hl, 12), new THREE.MeshBasicMaterial({ color: col })); sh.position.y = (len - hl) / 2;
@@ -120,9 +121,9 @@
         g.add(sh, hd); g.position.copy(from); g.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize()); return g;
       }
       const sd = sunPos.clone().normalize();
-      [[0, 0, 0], [0, 0.9, 0.5], [0, -0.9, 0.4]].forEach((o) => { const off = new THREE.Vector3(...o); en.add(arrow(sunPos.clone().multiplyScalar(0.74).add(off), sunPos.clone().multiplyScalar(0.42).add(off), 0xffd34d, 0.07)); });
+      [[0, 0, 0], [0, 0.9, 0.5], [0, -0.9, 0.4]].forEach((o) => { const off = new THREE.Vector3(...o); sunG.add(arrow(sunPos.clone().multiplyScalar(0.74).add(off), sunPos.clone().multiplyScalar(0.42).add(off), 0xffd34d, 0.07)); });
       const inner = [new THREE.Vector3(0.6, -0.5, -1).normalize(), new THREE.Vector3(0.9, 0.4, -0.7).normalize(), new THREE.Vector3(0.2, -0.9, -0.5).normalize()];
-      inner.forEach((d) => en.add(arrow(d.clone().multiplyScalar(R + 0.15), d.clone().multiplyScalar(R + 1.15), 0xff7a3c, 0.06)));
+      inner.forEach((d) => coreG.add(arrow(d.clone().multiplyScalar(R + 0.15), d.clone().multiplyScalar(R + 1.15), 0xff7a3c, 0.06)));
       const lSun = label('태양 에너지', sun, { offset: [0, 2.3, 0], color: 'rgba(180,120,0,.92)' });
       const lIn = label('지구 내부 에너지', [inner[0].x * (R + 1.2), inner[0].y * (R + 1.2), inner[0].z * (R + 1.2)], { color: 'rgba(200,80,30,.92)' });
       const lMoon = label('달 · 조력 에너지', moon, { offset: [0, 0.9, 0], color: 'rgba(80,90,120,.92)' });
@@ -137,9 +138,8 @@
         ground.visible = m === 'all' || m === 'bio' || m === 'atm'; ocean.visible = m === 'all' || m === 'bio' || m === 'atm';
         cloud.visible = false; sAtm.visible = m === 'all' || m === 'bio'; halo.forEach((h) => { h.visible = m === 'all' || m === 'bio'; });
         cutRock.visible = m === 'geo'; cutOcn.visible = m === 'hyd'; baseOcn.visible = m === 'hyd'; cutAtm.visible = m === 'atm'; bio.visible = m === 'bio';
-        en.visible = energy && (m === 'all'); lSun.show(energy && m === 'all'); lIn.show(energy && m === 'all'); lMoon.show(energy && m === 'all'); lOut.show(m === 'all');
-        sun.visible = en.visible;
-        orbit.dist = (PHN ? 15 : 14.5) * (m === 'all' && energy ? 1.12 : 0.72);
+        en.visible = m === 'all'; lOut.show(m === 'all');
+        orbit.dist = (PHN ? 15 : 14.5) * (m === 'all' ? 1.12 : 0.72);
         if (isCut || m === 'all' || m === 'bio') { orbit.theta = isCut ? -2.35 : 0.2; }
         if (m === 'geo') { ROCK.forEach((ly, i) => lab(i, ly.n, [0, 0, 0], [-(ly.r0 + ly.r1) / 2 * (i === 3 ? 1.0 : 1), (i % 2 ? 0.28 : -0.28) * (i === 3 ? 0 : 1) + (i === 3 ? 0.55 : 0), 0.05])); info('<b>지권</b>: 지각 · 맨틀 · 외핵 · 내핵으로 이루어져요. 외핵만 액체예요.'); }
         else if (m === 'hyd') { OCN.slice(1).forEach((ly, i) => lab(i, ly.n, [0, 0, 0], [-(ly.r0 + ly.r1) / 2, 0.2 * (i % 2 ? 1 : -1) , 0.05])); info('<b>수권</b>: 바다는 깊이에 따라 혼합층 · 수온 약층 · 심해층으로 나뉘어요. (두께는 크게 그렸어요)'); }
@@ -148,14 +148,51 @@
         else { info('<b>지구시스템</b>: 지권 · 수권 · 기권 · 생물권 · 외권이 서로 영향을 주고받아요. 에너지원은 태양, 지구 내부, 달이에요.'); }
         segG.set(m);
       }
-      const segG = controls.segment('권역', [{ value: 'all', label: '전체' }, { value: 'atm', label: '기권' }, { value: 'hyd', label: '수권' }, { value: 'geo', label: '지권' }, { value: 'bio', label: '생물권' }], mode, setMode);
-      const bE = controls.button('에너지원 ✓', () => { energy = !energy; bE.classList.toggle('on', energy); bE.textContent = '에너지원 ' + (energy ? '✓' : '✕'); setMode(mode); }); bE.classList.add('on');
+      const segG = controls.segment('권역', [{ value: 'all', label: '전체' }, { value: 'atm', label: '기권' }, { value: 'hyd', label: '수권' }, { value: 'geo', label: '지권' }, { value: 'bio', label: '생물권' }], mode, (v) => { setMode(v); lastWant = v; const L = lesson(); if (L && L.S && L.S.mode === 'layers' && (v === 'geo' || v === 'atm' || v === 'hyd') && L.setSub) L.setSub(v); });
+      const lesson = () => window.__sim || null;
+      let lastWant = '', lastKey = '', demoP = 0, moonA = 0.5;
+      // 조석: 달을 켜면 바닷물이 달 쪽과 반대쪽으로 부풀어요
+      const tide = new THREE.Mesh(new THREE.SphereGeometry(R + 0.05, 64, 40), new THREE.MeshBasicMaterial({ color: 0x3aa0ff, transparent: true, opacity: 0.28, depthWrite: false })); root.add(tide);
+      const tideLab = label('밀물·썰물 (바닷물이 부풀어요)', [0, -R - 0.9, 0], { size: 12 }); tideLab.show(false);
+      function wantMode() {
+        const L = lesson(), S = L && L.S; if (!S) return null;
+        return S.mode === 'layers' && (S.sub === 'geo' || S.sub === 'atm' || S.sub === 'hyd') ? S.sub : (S.mode === 'sort' ? 'bio' : 'all');
+      }
+      // 태양 · 달 · 지구를 눌러 에너지원 켜기 (2D의 그림 누르기와 같아요)
+      const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(); let down = null; const rd = ctx.renderer.domElement;
+      rd.addEventListener('pointerdown', (e) => { down = { x: e.clientX, y: e.clientY }; });
+      rd.addEventListener('pointerup', (e) => {
+        if (!down || Math.hypot(e.clientX - down.x, e.clientY - down.y) > 6) { down = null; return; } down = null;
+        const L = lesson(); if (mode !== 'all' || !L || !L.toggleSrc || !L.S || (L.S.mode !== 'energy' && L.S.mode !== 'pair')) return;
+        const r = rd.getBoundingClientRect(); ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); ray.setFromCamera(ndc, ctx.camera);
+        const hit = ray.intersectObjects([sun, moon, ground], false)[0];
+        if (hit) L.toggleSrc(hit.object === sun ? 'sun' : hit.object === moon ? 'moon' : 'core');
+      });
+      const pl = controls.player({
+        duration: 10, loop: true, autoplay: false, label: '자전과 조석',
+        phases: [[0, '지구 자전 (하루)'], [0.5, '밀물·썰물이 한 번 더']],
+        onFrame(p) { demoP = p; },
+      });
       setMode('all');
       return {
         update(dt, t) {
-          if (mode === 'all' || mode === 'bio') { earth.rotation.y = t * 0.12; cloud.rotation.y = t * 0.03; }
+          const L = lesson(), S = L && L.S, demo = demoP > 0 || pl.playing;
+          const w = wantMode(); if (w && w !== lastWant) { lastWant = w; if (w !== mode) setMode(w); }
+          if (demo) { earth.rotation.y = demoP * Math.PI * 2; if (mode !== 'all' && mode !== 'bio') earth.rotation.y = 0; }
+          else if (mode === 'all' || mode === 'bio') { earth.rotation.y = t * 0.12; cloud.rotation.y = t * 0.03; }
           else earth.rotation.y = Math.sin(t * 0.4) * 0.12;
-          const a = t * 0.25; moon.position.set(Math.cos(a) * 5.4, 0.9, Math.sin(a) * 5.4); moon.rotation.y = t * 0.1;
+          const a = demo ? moonA : t * 0.25; if (!demo) moonA = a;
+          moon.position.set(Math.cos(a) * 5.4, 0.9, Math.sin(a) * 5.4); moon.rotation.y = t * 0.1;
+          // 에너지원: 2D에서 켠 것만 보여요
+          const src = S ? S.src : { sun: false, core: false, moon: false }, show = mode === 'all';
+          sunG.visible = show && src.sun; coreG.visible = show && src.core; moonG.visible = show;
+          lSun.show(sunG.visible); lIn.show(coreG.visible); lMoon.show(show && src.moon);
+          moon.material.emissive.setHex(src.moon ? 0x555a66 : 0x000000);
+          const tOn = show && src.moon && !(S && S.srcA && S.srcA.moon < 0.05); tide.visible = tOn; tideLab.show(tOn);
+          if (tOn) { const md = new THREE.Vector3(moon.position.x, 0, moon.position.z).normalize(), k = S && S.srcA ? S.srcA.moon : 1; tide.quaternion.setFromUnitVectors(new THREE.Vector3(1, 0, 0), md); tide.scale.set(1 + 0.09 * k, 1 - 0.03 * k, 1 - 0.03 * k); }
+          const key = (S ? (src.sun ? 1 : 0) + ',' + (src.core ? 1 : 0) + ',' + (src.moon ? 1 : 0) : '') + mode;
+          if (key !== lastKey && mode === 'all') { lastKey = key; const on = [src.sun && '태양', src.core && '지구 내부', src.moon && '달'].filter(Boolean); info('<b>지구시스템</b>: 지권 · 수권 · 기권 · 생물권 · 외권이 서로 영향을 주고받아요.<br>에너지원: 태양 복사 에너지 · 지구 내부 에너지 · 조석 에너지(달)' + (S && (S.mode === 'energy' || S.mode === 'pair') ? '<br>켠 에너지원: <b>' + (on.length ? on.join(' · ') : '없음 (옆 버튼이나 그림을 눌러 켜요)') + '</b>' : '')); }
+          else if (mode !== 'all') lastKey = '';
           sunGlow.scale.setScalar(1 + Math.sin(t * 2) * 0.03);
         },
         sync() {},

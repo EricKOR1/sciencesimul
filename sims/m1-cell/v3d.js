@@ -19,6 +19,7 @@
     hint: '드래그: 돌리기 · 구조를 눌러 이름 알아보기',
     camera: { dist: narrow ? 9.2 : 6.8, theta: 0.75, phi: 1.12, min: 4, max: 18 },
     autoRotate: 0,
+    levels: [1],   // 2단계(세포 구조 찾기)의 모형과 같은 장면 — 현미경·카드 놓기 단계는 2D 화면에서
     build(ctx) {
       const { THREE, root, label, info, controls, renderer, camera } = ctx;
       renderer.localClippingEnabled = true;
@@ -200,11 +201,14 @@
         select(h ? h.object.userData.key : null);
       });
 
+      const L2 = () => (ctx.lesson && ctx.lesson()) || null;
       function select(key) {
         sel = key; refresh();
+        const l = L2(); if (l && key && l.tapModel) l.tapModel(kind, key);   // 2D 모형에도 같은 이름표/고르기가 생기게
       }
+      let lab2 = null, picks2 = '';
       function refresh() {
-        Object.keys(labs).forEach((k) => Object.keys(labs[k]).forEach((key) => labs[k][key].show(k === kind && (labelsOn || sel === key))));
+        Object.keys(labs).forEach((k) => Object.keys(labs[k]).forEach((key) => labs[k][key].show(k === kind && (labelsOn || sel === key || !!(lab2 && lab2[k] && lab2[k][key])))));
         const isP = kind === 'plant';
         let h = '<b>' + (isP ? '🌿 식물 세포' : '🐾 동물 세포') + '</b> · 잘라 본 모습<br>';
         if (sel) {
@@ -214,6 +218,8 @@
           h += isP ? '세포벽 · 세포막 · 핵 · 엽록체 · 미토콘드리아가 모두 있어요. 구조를 눌러 이름을 알아봐요.'
             : '세포막 · 핵 · 미토콘드리아가 있어요. <b>세포벽과 엽록체는 없어요.</b> 구조를 눌러 보세요.';
         }
+        const l = L2();
+        if (l && l.S && l.S.pickMode && isP) h += '<br><span style="color:#ffd34d">👆 2D 문제: 식물 세포에서 구조를 눌러 고르세요 · 고른 구조 ' + l.S.picks.size + '개</span>';
         info(h);
       }
       controls.segment('세포', [{ value: 'plant', label: '🌿 식물 세포' }, { value: 'animal', label: '🐾 동물 세포' }], kind, (v) => {
@@ -225,9 +231,14 @@
 
       return {
         update(dt, t) {
+          const l = L2();
+          if (l && l.S) {
+            const sig = Object.keys(l.S.labels.plant).join() + '|' + Object.keys(l.S.labels.animal).join() + '|' + l.S.pickMode + '|' + Array.from(l.S.picks).join();
+            if (sig !== picks2) { picks2 = sig; lab2 = l.S.labels; refresh(); }
+          }
           const pulse = 0.55 + 0.35 * Math.sin(t * 6);
           Object.keys(hi).forEach((k) => Object.keys(hi[k]).forEach((key) => {
-            const on = k === kind && sel === key, col = new THREE.Color(ST[key].color);
+            const on = k === kind && (sel === key || !!(l && l.S && l.S.pickMode && k === 'plant' && l.S.picks.has(key))), col = new THREE.Color(ST[key].color);
             hi[k][key].forEach((m) => { m.emissive.copy(col).multiplyScalar(on ? pulse : 0); });
           }));
         },

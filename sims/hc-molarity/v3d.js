@@ -79,66 +79,119 @@
   const phone = window.matchMedia && window.matchMedia('(max-width: 599px)').matches;
   window.SciSim3D.attach({
     title: '몰 농도 3D',
-    hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: phone ? 11.5 : 11, theta: 0.5, phi: 1.2, min: 5, max: 24, target: [0, 2.2, 0] },
-    autoRotate: 0.15,
+    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 용액 고르기와 부피는 2D와 똑같이 이어져요',
+    camera: { dist: phone ? 14 : 11, theta: 0.5, phi: 1.2, min: 5, max: 26, target: [0, 1.8, 0] },
+    autoRotate: 0.1,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const L = makeLib(THREE);
-      const R = 2.1;
-      const SOL = {
-        glu: { name: '포도당', parts: [['glu', 0xffb54d, 0.19, 1]], f: 'C₆H₁₂O₆' },
-        nacl: { name: 'NaCl', parts: [['Na⁺', 0xb07cf5, 0.12, 1], ['Cl⁻', 0x34c759, 0.16, 1]], f: 'NaCl' },
-        cacl2: { name: 'CaCl₂', parts: [['Ca²⁺', 0xffb02e, 0.17, 1], ['Cl⁻', 0x34c759, 0.16, 2]], f: 'CaCl₂' },
-      };
-      let sol = 'glu', n = 1.0, Vl = 1.0; // n: 몰수, Vl: 부피(L)
-      const UNIT = 40; // 1 mol = 40개 입자(그림)
-      const beaker = new THREE.Mesh(new THREE.CylinderGeometry(R, R, 1, 48, 1, true), new THREE.MeshStandardMaterial({ color: 0xcfe0ff, transparent: true, opacity: 0.14, roughness: 0.1, side: THREE.DoubleSide, depthWrite: false })); root.add(beaker);
-      const rim = new THREE.Mesh(new THREE.TorusGeometry(R, 0.05, 12, 64), new THREE.MeshStandardMaterial({ color: 0xe0ebff, roughness: 0.2 })); rim.rotation.x = Math.PI / 2; root.add(rim);
-      const bot = new THREE.Mesh(new THREE.CylinderGeometry(R, R, 0.12, 48), new THREE.MeshStandardMaterial({ color: 0xcfe0ff, transparent: true, opacity: 0.35, roughness: 0.1, depthWrite: false })); bot.position.y = 0.06; root.add(bot);
-      const liqM = new THREE.MeshStandardMaterial({ color: 0x4aa3ff, transparent: true, opacity: 0.25, roughness: 0.12, depthWrite: false });
-      const liq = new THREE.Mesh(new THREE.CylinderGeometry(R - 0.04, R - 0.04, 1, 48), liqM); root.add(liq);
-      const floor = new THREE.Mesh(new THREE.CylinderGeometry(R + 1.2, R + 1.2, 0.1, 48), new THREE.MeshBasicMaterial({ color: 0x050b18 })); floor.position.y = -0.05; root.add(floor);
-      // 눈금 (0.5 L 간격)
-      const ticks = []; for (let i = 1; i <= 8; i++) { const t = new THREE.Mesh(new THREE.BoxGeometry(i % 2 ? 0.2 : 0.38, 0.03, 0.03), L.mat(0xe8f0ff)); t.position.set(R + 0.0, 0, 0); root.add(t); ticks.push(t); }
-      const NM = 120;
-      let sets = [];
+      const clamp = (x, a, b) => Math.max(a, Math.min(b, x)), sm = L.sstep;
+      const floor = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ color: 0x050b18 })); floor.scale.set(15, 0.1, 9); floor.position.y = -0.06; root.add(floor);
       const dum = new THREE.Object3D();
-      const lbl = label('', [0, 0, 0], { size: 13 }), lv = label('', [R + 0.2, 0, 0], { size: 12 });
-      const HU = 1.9; // 1 L의 높이
-      function build() {
-        sets.forEach((s) => root.remove(s.m)); sets = [];
-        const S = SOL[sol]; const hh = Vl * HU;
-        S.parts.forEach(([nm, col, r, k]) => {
-          const cnt = Math.round(n * UNIT * k); const m = new THREE.InstancedMesh(L.SG, new THREE.MeshStandardMaterial({ color: col, roughness: 0.35, emissive: col, emissiveIntensity: 0.2 }), cnt); m.frustumCulled = false; root.add(m);
-          const p = []; for (let i = 0; i < cnt; i++) p.push({ u: Math.sqrt(Math.random()), a: Math.random() * 6.283, y: Math.random(), ph: Math.random() * 6.28, sp: 0.5 + Math.random() });
-          sets.push({ m, p, r, cnt }); 
-        });
-        update2();
+      const hex = (s) => parseInt(String(s).replace('#', ''), 16);
+      function makeBeaker() {
+        const g = new THREE.Group(); root.add(g);
+        const wall = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 1, 40, 1, true), new THREE.MeshStandardMaterial({ color: 0xcfe0ff, transparent: true, opacity: 0.14, roughness: 0.1, side: THREE.DoubleSide, depthWrite: false }));
+        const bot = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 0.1, 40), new THREE.MeshStandardMaterial({ color: 0xcfe0ff, transparent: true, opacity: 0.35, roughness: 0.1, depthWrite: false }));
+        const liqM = new THREE.MeshStandardMaterial({ color: 0xa7d3ff, transparent: true, opacity: 0.3, roughness: 0.12, depthWrite: false });
+        const liq = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 1, 40), liqM);
+        const mk = (n) => { const m = new THREE.InstancedMesh(L.SG, new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.35, emissiveIntensity: 0.2 }), n); m.frustumCulled = false; return m; };
+        const B = { g, wall, bot, liq, liqM, ticks: [], sets: { a: mk(40), b: mk(40), c: mk(40) }, p: [], R: 1, Hc: 3, lab: label('', [0, 0, 0], { size: 12.5 }), lab2: label('', [0, 0, 0], { size: 12 }) };
+        g.add(wall, bot, liq, B.sets.a, B.sets.b, B.sets.c);
+        for (let i = 0; i < 40; i++) B.p.push({ u: Math.sqrt(Math.random()), a: Math.random() * 6.283, y: Math.random(), ph: Math.random() * 6.28, sp: 0.5 + Math.random() });
+        return B;
       }
-      function update2() {
-        const hh = Vl * HU; beaker.scale.y = 4.6 * 1; beaker.position.y = 2.3; rim.position.y = 4.6;
-        liq.scale.y = hh; liq.position.y = hh / 2 + 0.06;
-        liqM.opacity = 0.18 + 0.1 * Math.min(1, n / Vl / 2);
-        const c = n / Vl; const S = SOL[sol];
-        ticks.forEach((t, i) => { t.position.y = 0.06 + (i + 1) * 0.5 * HU; t.visible = (i + 1) * 0.5 <= 2.3; });
-        lbl.obj = [0, hh + 0.75, 0]; lbl.set((n).toFixed(1) + ' mol / ' + Vl.toFixed(1) + ' L = <b>' + c.toFixed(2) + ' M</b>');
-        lv.obj = [R + 0.2, hh + 0.06, 0]; lv.set(Vl.toFixed(1) + ' L'); lv.off = [0.55, 0, 0];
-        const ions = S.parts.length > 1 ? '<br>' + S.parts.map(([nm, col, r, k]) => '<span style="color:#' + col.toString(16).padStart(6, '0') + '">●</span> [' + nm + '] = <b>' + (c * k).toFixed(2) + ' M</b>').join(' · ') : '';
-        info('<b>' + S.name + ' 수용액</b> · 몰 농도 M = n ÷ V = <b>' + c.toFixed(2) + ' M</b><br>입자 ' + Math.round(n * UNIT * S.parts.reduce((a, b) => a + b[3], 0)) + '개가 ' + Vl.toFixed(1) + ' L 안에 들어 있어요 (1 mol = ' + UNIT + '개로 그림)' + ions);
+      const bk = [makeBeaker(), makeBeaker(), makeBeaker()];
+      function shape(B, R, Hc, x, z, level, color, alpha) {
+        B.R = R; B.Hc = Hc; B.g.position.set(x, 0, z);
+        B.wall.scale.set(R, Hc, R); B.wall.position.y = Hc / 2; B.bot.scale.set(R, 1, R); B.bot.position.y = 0.05;
+        const hh = Math.max(0.02, level * Hc); B.hh = hh; B.liq.scale.set(R - 0.04, hh, R - 0.04); B.liq.position.y = hh / 2 + 0.05;
+        B.liqM.color.setHex(hex(color)); B.liqM.opacity = alpha;
       }
-      controls.segment('물질', Object.keys(SOL).map((k) => ({ value: k, label: SOL[k].name })), sol, (v) => { sol = v; build(); });
-      const r1 = controls.range('용질', 0.5, 2, 0.5, n, (v) => { n = +v; build(); }, (v) => (+v).toFixed(1) + ' mol');
-      const r2 = controls.range('부피', 0.5, 2, 0.5, Vl, (v) => { Vl = +v; update2(); }, (v) => (+v).toFixed(1) + ' L');
-      controls.button('💧 물 더하기 (부피 ×2)', () => { Vl = Math.min(2, Vl * 2); r2.set(Vl); update2(); });
-      build();
+      function balls(B, key, n, r, color, off, t, lay) {
+        const m = B.sets[key]; m.material.color.setHex(hex(color)); m.material.emissive.setHex(hex(color));
+        const cnt = Math.min(n, 40); m.count = cnt;
+        for (let i = 0; i < cnt; i++) {
+          const q = B.p[(i + off) % 40], rr = q.u * (B.R - 0.3 - r);
+          let x = Math.cos(q.a) * rr + Math.sin(t * q.sp + q.ph) * 0.07, y = 0.2 + r + q.y * Math.max(0.05, B.hh - 0.3 - r * 2) + Math.cos(t * q.sp * 1.2 + q.ph) * 0.05, z = Math.sin(q.a) * rr + Math.cos(t * q.sp + q.ph) * 0.07;
+          if (lay) { const p = lay(i); x = p[0]; y = p[1]; z = p[2]; }
+          dum.position.set(x, y, z); dum.scale.setScalar(r); dum.updateMatrix(); m.setMatrixAt(i, dum.matrix);
+        }
+        m.instanceMatrix.needsUpdate = true; m.visible = cnt > 0;
+      }
+      const hide = (B, keys) => { keys.forEach((k) => { B.sets[k].count = 0; B.sets[k].visible = false; }); };
+      const SUP = '⁰¹²³⁴⁵⁶⁷⁸⁹';
+
+      /* ▶ 재생기: 희석(부피 늘리기) · 이온으로 나뉘기 */
+      let own = null, sig = '', pD = 0, pI = 0, lastMode = '';
+      const rowOf = () => { const r = document.querySelectorAll('.v3-player'); return r[r.length - 1]; };
+      const plD = controls.player({ duration: 9, loop: true, label: '물 더하기', phases: [[0, '1.0 M · 100 mL'], [0.1, '물을 더하는 중'], [0.7, '1200 mL'], [0.85, '다시 처음으로']], onFrame(p) { pD = p; own = p > 0 ? 'dil' : (own === 'dil' ? null : own); } });
+      const rowD = rowOf();
+      const plI = controls.player({ duration: 7, loop: true, label: '이온으로 나누기', phases: [[0, '화학식 단위'], [0.15, '이온으로 나뉘어요'], [0.6, '이온 농도'], [0.85, '다시 모여요']], onFrame(p) { pI = p; own = p > 0 ? 'ion' : (own === 'ion' ? null : own); } });
+      const rowI = rowOf();
+      const vOf = (p) => 100 + 1100 * (p < 0.1 ? 0 : p < 0.7 ? sm((p - 0.1) / 0.6) : p < 0.85 ? 1 : 1 - sm((p - 0.85) / 0.15));
+      const sOf = (p) => (p < 0.15 ? 0 : p < 0.6 ? sm((p - 0.15) / 0.45) : p < 0.85 ? 1 : 1 - sm((p - 0.85) / 0.15));
+
       return {
         update(dt, t) {
-          const hh = Vl * HU;
-          sets.forEach((s) => {
-            for (let i = 0; i < s.cnt; i++) { const p = s.p[i]; const rr = p.u * (R - 0.3); dum.position.set(Math.cos(p.a) * rr + Math.sin(t * p.sp + p.ph) * 0.1, 0.25 + p.y * (hh - 0.4) + Math.cos(t * p.sp * 1.2 + p.ph) * 0.08, Math.sin(p.a) * rr + Math.sin(t * p.sp * 0.8 + p.ph * 2) * 0.1); dum.scale.setScalar(s.r); dum.updateMatrix(); s.m.setMatrixAt(i, dum.matrix); }
-            s.m.instanceMatrix.needsUpdate = true;
-          });
+          const Z = ctx.lesson(); if (!Z) return;
+          const S = Z.S, mode = S.mode;
+          if (mode !== lastMode) { lastMode = mode; ctx.orbit.dist = mode === 'cmp' ? (phone ? 15 : 11.5) : (phone ? 12 : 10); }
+          const sg = [mode, S.sub.cmp, S.calc.k, S.dil.V, S.ion.k].join('|'); if (sg !== sig) { sig = sg; if (own) { const k = own === 'dil' ? plD : plI; own = null; k.pause(); k.set(0); } }
+          rowD.style.display = mode === 'dil' ? '' : 'none'; rowI.style.display = mode === 'ion' ? '' : 'none';
+          if (mode !== 'dil' && plD.playing) plD.pause(); if (mode !== 'ion' && plI.playing) plI.pause();
+          bk.forEach((B) => { B.g.visible = false; B.lab.show(false); B.lab2.show(false); });
+          if (mode === 'cmp') {
+            const set = Z.SETS[S.sub.cmp], names = ['A', 'B', 'C'];
+            set.forEach((s, i) => {
+              const B = bk[i]; B.g.visible = true; B.lab.show(true); B.lab2.show(true);
+              shape(B, 0.95, 3.2, (i - 1) * 3.0, 0, S.cmp.lv[i], s.c, 0.3); hide(B, ['b', 'c']);
+              balls(B, 'a', s.n, 0.15, '#8b5cf6', i * 17, t);
+              B.lab.obj = [(i - 1) * 3.0, 3.2 + 0.4, 0]; B.lab.set(names[i] + ' · 용질 ' + (s.n * 0.1).toFixed(1) + ' mol');
+              const per = S.cmp.perT > 0.5; B.lab2.obj = [(i - 1) * 3.0, B.hh + 0.1, 0]; B.lab2.off = [0, 0.55, 0]; B.lab2.set('용액 ' + s.V.toFixed(2) + ' L' + (per ? '<br>1 L당 ' + Math.round(s.n / s.V) + '개 = ' + (s.n * 0.1 / s.V).toFixed(1) + ' M' : ''));
+            });
+            info('<b>' + (S.sub.cmp === 'same' ? '부피가 같은 비커 3개' : '부피가 다른 비커 3개') + '</b> · ● = 용질 0.1 mol<br>몰 농도 M = 용질의 몰수 n(mol) ÷ 용액의 부피 V(L)<br>진한 비커부터 차례로 눌러 순서를 정해 보세요. 비커 속 입자 수와 용액의 부피를 함께 봐요.');
+            return;
+          }
+          if (mode === 'calc') {
+            const s = Z.CS.find((q) => q.k === S.calc.k), rows = Z.calcRows[s.k], B = bk[0]; B.g.visible = true; B.lab.show(true); B.lab2.show(true);
+            shape(B, 1.3, 3.8, 0, 0, 0.62, s.k === 'hcl' ? '#fca5a5' : '#a7d3ff', 0.3); hide(B, ['b', 'c']);
+            balls(B, 'a', s.rev ? 8 : Math.max(2, Math.round(s.n / 0.025)), 0.16, s.k === 'hcl' ? '#ef4444' : '#8b5cf6', 0, t);
+            B.lab.obj = [0, 3.8 + 0.4, 0]; B.lab.set(s.label);
+            B.lab2.obj = [0, B.hh, 0]; B.lab2.off = [0, 0.5, 0]; B.lab2.set('용액 전체 ' + s.V + ' mL = ' + s.Vl.toFixed(3) + ' L');
+            let txt;
+            if (!s.rev) txt = '용질의 질량 ' + s.mass.toFixed(1) + ' g (몰질량 ' + s.MM + ' g/mol) → 몰수 n = ' + (rows[0].ok ? (+s.n.toFixed(3)) + ' mol' : '? mol') + ' → 몰 농도 M = ' + (rows[2].ok ? (+s.M.toFixed(3)) + ' mol/L' : '? mol/L');
+            else txt = '몰 농도 ' + s.Mc.toFixed(1) + ' mol/L, 부피 ' + s.Vl.toFixed(3) + ' L → 몰수 n = ' + (rows[0].ok ? (+s.n.toFixed(2)) + ' mol' : '? mol') + ' → 질량 = ' + (rows[1].ok ? (+s.mass.toFixed(2)) + ' g' : '? g');
+            info('<b>' + s.name + ' 수용액</b><br>' + txt + '<br>부피는 mL가 아니라 L로 바꿔 계산해요.');
+            return;
+          }
+          if (mode === 'dil') {
+            const o = own === 'dil', V = o ? vOf(pD) : S.dil.V, Vd = o ? V : S.dil.Vd, M = Z.dilM(Math.max(V, 1)), Md = Z.dilM(Math.max(Vd, 1));
+            const B = bk[0]; B.g.visible = true; B.lab.show(true); B.lab2.show(true);
+            shape(B, 1.4, 4.4, 0, 0, clamp(Vd / 1200, 0.02, 1), '#8b5cf6', 0.18 + 0.5 * clamp(Md, 0, 1) * 0.5); hide(B, ['b', 'c']);
+            balls(B, 'a', 10, 0.17, '#6d28d9', 0, t);
+            B.lab.obj = [0, 4.4 + 0.4, 0]; B.lab.set('용질 ● 10개 = 0.10 mol (그대로)');
+            B.lab2.obj = [0, B.hh, 0]; B.lab2.off = [0, 0.5, 0]; B.lab2.set('V′ = ' + Math.round(Vd) + ' mL');
+            info('<b>물을 더해 묽히기</b> (1.0 M 100 mL에서 시작)<br>전체 부피 V′ = <b>' + Math.round(V) + ' mL</b> · 넣은 물 ' + Math.round(V - 100) + ' mL<br>M × V = M′ × V′ → M′ = <b>' + M.toFixed(3) + ' M</b><br>물을 더해도 용질의 몰수는 그대로예요. 부피만 늘어 농도가 낮아져요.');
+            return;
+          }
+          // 이온 농도
+          const q = Z.IONS.find((x) => x.k === S.ion.k), o = own === 'ion', sp = o ? sOf(pI) : sm(S.ion.split);
+          const B = bk[0]; B.g.visible = true; B.lab.show(true); B.lab2.show(true);
+          shape(B, 1.8, 3.4, 0, 0, 0.7, '#a7d3ff', 0.28); hide(B, ['c']);
+          const slots = [[-0.8, -0.7], [0.8, -0.7], [-0.8, 0.7], [0.8, 0.7]], cr = q.cat[3] / 62, ar = q.an[3] / 62, d = (cr + ar) * 1.0 + sp * 0.55 + 0.06;
+          const cen = q.cat[1] === 1 ? 'cat' : 'an', nS = cen === 'cat' ? q.an[1] : q.cat[1];
+          const cenR = cen === 'cat' ? cr : ar, satR = cen === 'cat' ? ar : cr;
+          const place = (isCat) => (i) => {
+            const u = Math.floor(i / (isCat === (cen === 'cat') ? 1 : nS)), sl = slots[u % 4], wob = Math.sin(t * 1.2 + u * 1.7) * 0.05 * sp, baseY = B.hh * 0.5, baseP = [sl[0], baseY + (u < 2 ? 0.25 : -0.25), sl[1]];
+            if (isCat === (cen === 'cat')) return [baseP[0] + (nS === 1 ? -d / 2 : 0) + wob, baseP[1] + (nS === 1 ? 0 : 0), baseP[2]];
+            const k = i % nS; return nS === 1 ? [baseP[0] + d / 2 + wob, baseP[1], baseP[2]] : [baseP[0] + (k ? d : -d) + wob, baseP[1] + 0.25, baseP[2]];
+          };
+          balls(B, 'a', 4 * q.cat[1], cr, q.cat[2], 0, t, place(true)); balls(B, 'b', 4 * q.an[1], ar, q.an[2], 0, t, place(false));
+          B.lab.obj = [0, 3.4 + 0.4, 0]; B.lab.set(q.cs + ' M ' + q.f + ' 수용액 1 L');
+          B.lab2.obj = [0, B.hh, 0]; B.lab2.off = [0, 0.5, 0]; B.lab2.set(sp > 0.5 ? '양이온 ' + 4 * q.cat[1] + '개 : 음이온 ' + 4 * q.an[1] + '개 = ' + q.cat[1] + ' : ' + q.an[1] : '화학식 단위 4개');
+          const fmtC = (c) => (c >= 0.1 ? c.toFixed(2) : c.toPrecision(2));
+          info('<b>' + q.f + '</b> ' + q.cs + ' M 수용액<br>화학식 단위 1개 → <span style="color:' + q.cat[2] + '">●</span> ' + q.cat[0] + ' ' + q.cat[1] + '개 + <span style="color:' + q.an[2] + '">●</span> ' + q.an[0] + ' ' + q.an[1] + '개<br>[' + q.cat[0] + '] = ' + q.cs + ' × ' + q.cat[1] + ' = <b>' + fmtC(q.c * q.cat[1]) + ' M</b> · [' + q.an[0] + '] = ' + q.cs + ' × ' + q.an[1] + ' = <b>' + fmtC(q.c * q.an[1]) + ' M</b>');
         },
       };
     },

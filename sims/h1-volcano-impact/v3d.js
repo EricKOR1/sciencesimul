@@ -6,7 +6,7 @@
   if (!window.SciSim3D) return;
   const PHN = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches);
   const RB = 4.5, HC = 2.75, KM = 0.21; // 기슭 반지름, 화구 높이, 1 km 당 높이
-  const VEI = { 3: { h: 10, n: 150, bomb: 14, lava: 1.0 }, 5: { h: 25, n: 260, bomb: 26, lava: 1.4 }, 7: { h: 45, n: 340, bomb: 34, lava: 1.8 } };
+  const VEI = { 3: { h: 10, vol: '0.01', n: 150, bomb: 14, lava: 1.0 }, 4: { h: 15, vol: '0.1', n: 205, bomb: 20, lava: 1.2 }, 5: { h: 25, vol: '1', n: 260, bomb: 26, lava: 1.4 }, 6: { h: 35, vol: '10', n: 300, bomb: 30, lava: 1.6 }, 7: { h: 45, vol: '100', n: 340, bomb: 34, lava: 1.8 } };
   const hAt = (r) => r < 0.35 ? 2.35 + (r / 0.35) * (HC - 2.35) : HC * Math.pow(Math.max(0, 1 - (r - 0.35) / (RB - 0.35)), 1.6);
 
   window.SciSim3D.attach({
@@ -86,19 +86,24 @@
       const lBomb = label('화산탄', [2.5, 4, 1], { color: 'rgba(210,70,20,.92)', size: 12 });
       const lGas = label('화산 가스', [-1.4, 4.2, 0], { size: 12 });
       function setCut(v) { cut = v; cutG.visible = v; fullG.visible = !v; lCham.show(v); lDuct.show(v); orbit.theta = v ? -0.8 : 0.4; }
-      function setVei(v) { vei = v; T = 0; info('<b>VEI ' + v + '</b> · 화산재 기둥 약 <b>' + VEI[v].h + ' km</b><br>' + (v >= 5 ? '화산재가 성층권까지 올라가 오래 머물러요.' : '화산재가 대류권에 머물러 곧 가라앉아요.') + '<br>용암 · 화산 쇄설물(화산재·화산탄) · 화산 가스가 분출해요.'); seg.set(v); }
-      const seg = controls.segment('분출 세기(VEI)', [{ value: 3, label: '3 약함' }, { value: 5, label: '5 강함' }, { value: 7, label: '7 매우 강함' }], vei, setVei);
+      function setVei(v, from2d) { vei = v; T = 0; if (!from2d) { const L2 = window.__sim; if (L2 && L2.setVei && L2.S && L2.S.vei !== v) L2.setVei(v); } info('<b>VEI ' + v + '</b> · 화산재 기둥 약 <b>' + VEI[v].h + ' km</b> · 분출물 <b>' + VEI[v].vol + ' km³ 이상</b><br>' + (v >= 5 ? '화산재가 성층권까지 올라가 오래 머물러요.' : '화산재가 대류권에 머물러 곧 가라앉아요.') + '<br>용암 · 화산 쇄설물(화산재·화산탄) · 화산 가스가 분출해요.'); seg.set(v); }
+      const seg = controls.segment('분출 세기(VEI)', [3, 4, 5, 6, 7].map((v) => ({ value: v, label: 'VEI ' + v })), vei, (v) => setVei(v));
       const bC = controls.button('단면 ✓', () => { setCut(!cut); bC.classList.toggle('on', cut); bC.textContent = '단면 ' + (cut ? '✓' : '✕'); }); bC.classList.add('on');
-      controls.button('▶ 다시 분출', () => { T = 0; });
+      let demoP = 0;
+      const pl = controls.player({
+        duration: 16, loop: true, autoplay: false, label: '분출',
+        phases: [[0, '분출 시작'], [0.2, '화산재 기둥'], [0.44, '분출 끝'], [0.6, '화산재가 가라앉아요']],
+        onFrame(p) { demoP = p; T = p * 16; },
+      });
       const S0 = () => (window.__sim && window.__sim.S) || null; let lastV = S0() && S0().vei;
-      if (lastV === 3 || lastV === 5 || lastV === 7) vei = lastV;
+      if (VEI[lastV]) vei = lastV;
       setCut(true); setVei(vei);
       const sm = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
       let acc = 0;
       return {
         update(dt, t) {
-          const s = S0(); if (s && s.vei !== lastV) { lastV = s.vei; const m = s.vei <= 4 ? 3 : s.vei <= 6 ? 5 : 7; if (m !== vei) setVei(m); }
-          T += dt; const erupting = (T % 16) < 7; if (T > 16) T = T % 16;
+          const s = S0(); if (s && s.vei !== lastV) { lastV = s.vei; if (VEI[s.vei] && s.vei !== vei) setVei(s.vei, true); }
+          if (!pl.playing && demoP === 0) T += dt; const erupting = (T % 16) < 7; if (T > 16) T = T % 16;
           const V = VEI[vei]; acc += dt;
           // 방출
           const rate = erupting ? V.n / 9 : 0; let em = Math.floor(acc * rate);

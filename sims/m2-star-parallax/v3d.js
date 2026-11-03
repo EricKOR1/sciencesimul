@@ -12,7 +12,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHN ? 14 : 11, theta: 0.5, phi: 1.1, min: 8, max: 55, target: [0, 5, 0] },
     autoRotate: 0,
-    levels: [0, 1, 2],
+    levels: [1, 2],                  // 0단계(연필 시차 실험) · 3단계(카드 놓기)는 2D 화면에서 해요
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
       const V3 = THREE.Vector3;
@@ -58,6 +58,13 @@
       const distR = controls.range('별까지 거리', 1, 10, 1, dist, (v) => { dist = v; const s = sm(); if (s && s.setDist) s.setDist(v); info2(v); }, (v) => v + ' pc');
       const bJ = controls.button('1월', () => { const s = sm(); if (s) { s.S.angT = 180; } });
       const bL = controls.button('7월', () => { const s = sm(); if (s) { s.S.angT = 360; } });
+      // ▶ 재생: 지구가 태양 둘레를 한 바퀴 돌아요 (1월 → 4월 → 7월 → 10월). 2D 모형의 지구도 같은 위치로 움직여요.
+      let pl = null;
+      pl = controls.player({
+        duration: 12, loop: true, autoplay: false, label: '지구 공전',
+        phases: [[0, '1월'], [0.25, '4월'], [0.5, '7월'], [0.75, '10월']],
+        onFrame(p) { if (!pl) return; const s = sm() && sm().S; if (!s) return; s.ang = s.angT = (180 + p * 360) % 360; },
+      });
       controls.button('시선 선 켜기/끄기', () => { showL = !showL; });
       controls.button('이름표', () => { labs = !labs; });
       info2(dist);
@@ -67,6 +74,7 @@
       return {
         update(dt, t) {
           const s = sm() && sm().S;
+          if (s && s.drag && pl && pl.playing) pl.pause();     // 2D에서 지구를 끌면 재생을 멈춰요
           if (s) { if (s.dist !== dist && !(Math.abs(s.dist - dist) < 0.01)) { dist = s.dist; distR.set(dist); info2(dist); } a0 = s.ang; }
           const a = a0 * Math.PI / 180;
           earth.position.set(Math.cos(a) * R, 0, Math.sin(a) * R); earth.rotation.y += dt * 2;

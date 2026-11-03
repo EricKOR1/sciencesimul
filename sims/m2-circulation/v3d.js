@@ -12,7 +12,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHN ? 9 : 7, theta: 0.15, phi: 1.4, min: 3.5, max: 24, target: [0, 0.2, 0] },
     autoRotate: 0,
-    levels: [0, 1, 2],
+    levels: [],                      // 1~4단계 미션은 2D 화면(이름표 · 카드 · 혈액 방울 끌기)에서 해요
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
       const V3 = THREE.Vector3;
@@ -97,7 +97,7 @@
       /* ---------- 이름표 ---------- */
       const L = {};
       const lab = (k, t, obj, off) => { L[k] = label(t, obj, { offset: off }); return L[k]; };
-      lab('ra', '우심방', RA, [-0.1, 0.0, 0.75]); lab('rv', '우심실', RV, [-0.3, -0.3, 0.8]); lab('la', '좌심방', LA, [0.3, 0.2, -0.2]); lab('lv', '좌심실 (벽이 가장 두꺼움)', LV, [0.6, -0.6, 0.7]);
+      lab('ra', '우심방', RA, [-0.1, 0.0, 0.75]); lab('rv', '우심실', RV, [-0.3, -0.3, 0.8]); lab('la', '좌심방', LA, [0.3, 0.2, -0.2]); lab('lv', '좌심실', LV, [0.6, -0.6, 0.7]);
       lab('aorta', '대동맥', [1.2, 2.4, 0.3]); lab('pa', '폐동맥', [-1.3, 1.9, -0.4]); lab('pv', '폐정맥', [1.5, 0.9, -0.5]); lab('vc', '대정맥', [-1.1, -1.6, 0.1]);
       lab('valve', '판막', valves[0], [-0.3, 0.3, 0.3]);
       lab('lung', '폐 (산소를 받아요)', lungL, [0, 1.6, 0.2]); lab('bodyL', '온몸 (산소를 내줘요)', body, [0, 0.9, 0.2]); lab('headL', '머리·팔', head, [0.2, 0.8, 0.2]);
@@ -106,8 +106,9 @@
       const HEARTL = ['ra', 'rv', 'la', 'lv', 'aorta', 'pa', 'pv', 'vc', 'valve'], ALLL = ['lung', 'bodyL', 'headL', 'pcirc', 'scirc', 'aorta', 'pa', 'vc'];
 
       /* ---------- 조작 ---------- */
-      let mode = 'heart', hl = 'all', rate = 1.1, cut = false, play = true;
+      let mode = 'heart', hl = 'all', rate = 0.8, cut = false, flowP = 0, pl = null, lastRate = -1, pushedAt = -9, now = 0;
       let tgt = { dist: PHN ? 17 : 12.5, ty: 0 }, T = 0, pulse = 0, sys = 0;
+      const fmtRate = (v) => (v < 0.6 ? '🐢 천천히 보기' : '분당 ' + Math.round(v * 80) + '회');   // 2D 박동 속도와 같은 표시
       function applyMode() {
         tgt = mode === 'heart' ? { dist: PHN ? 9 : 6.8, ty: 0.15 } : { dist: PHN ? 21 : 14.5, ty: 0 };
         Object.keys(L).forEach((k) => L[k].show(showL && (mode === 'heart' ? HEARTL.includes(k) : ALLL.includes(k))));
@@ -115,14 +116,23 @@
       }
       function texts() {
         const m = { all: '', pulm: '', sys: '' };
-        if (mode === 'heart') info('심장은 <b>네 개의 방</b>으로 나뉘어요. 심방은 피를 받고, <b>심실</b>은 피를 내보내요. <b>판막</b>이 피가 거꾸로 흐르는 것을 막아요.<br>왼쪽 아래 <b>좌심실</b>은 온몸으로 보내서 벽이 가장 두꺼워요.');
+        if (mode === 'heart') info('심장은 <b>네 개의 방</b>으로 나뉘어요. 심방은 피를 받고, <b>심실</b>은 피를 내보내요. <b>판막</b>이 피가 거꾸로 흐르는 것을 막아요.<br>그림은 마주 본 모습이라 몸의 오른쪽이 화면의 왼쪽이에요.');
         else if (hl === 'pulm') info('<b>폐순환</b>: 우심실 → 폐동맥 → <b>폐</b> → 폐정맥 → 좌심방<br>폐에서 산소를 받아 <b style="color:#ff8f8f">동맥혈</b>(빨강)이 돼요.');
         else if (hl === 'sys') info('<b>체순환</b>: 좌심실 → 대동맥 → <b>온몸</b> → 대정맥 → 우심방<br>온몸에 산소를 주고 <b style="color:#8fb0ff">정맥혈</b>(파랑)이 돼요.');
         else info('혈액은 <b>폐순환</b>과 <b>체순환</b>, 두 길을 돌아요.<br><b style="color:#8fb0ff">파랑</b>: 산소가 적은 혈액 · <b style="color:#ff8f8f">빨강</b>: 산소가 많은 혈액');
       }
       const segM = controls.segment('보기', [{ label: '심장 확대', value: 'heart' }, { label: '순환 전체', value: 'all' }], mode, (v) => { mode = v; applyMode(); });
       controls.segment('강조', [{ label: '전체', value: 'all' }, { label: '폐순환', value: 'pulm' }, { label: '체순환', value: 'sys' }], hl, (v) => { hl = v; texts(); });
-      controls.range('심장 박동', 0.6, 2, 0.1, rate, (v) => { rate = v; }, (v) => Math.round(v * 60) + '회/분');
+      const rateR = controls.range('심장 박동', 0.25, 1.6, 0.05, rate, (v) => {
+        rate = v; lastRate = v; pushedAt = now;
+        const i = document.getElementById('sRate'); if (i) { i.value = v; i.dispatchEvent(new Event('input')); }   // 2D 박동 속도도 같이 바뀌어요
+      }, fmtRate);
+      // ▶ 재생: 혈액 방울(크게 보이는 알갱이)이 폐순환 · 체순환을 따라 한 바퀴 돌아요
+      pl = controls.player({
+        duration: 14, loop: true, autoplay: true, label: '혈액 순환',
+        phases: [[0, '우심방 → 우심실'], [0.08, '폐동맥 → 폐'], [0.3, '폐정맥 → 좌심방'], [0.42, '좌심방 → 좌심실'], [0.54, '대동맥 → 온몸'], [0.8, '대정맥 → 우심방']],
+        onFrame(p) { flowP = p; },
+      });
       controls.button('단면 보기', () => { cut = !cut; });
       controls.button('이름표', () => { showL = !showL; applyMode(); });
       applyMode();
@@ -133,7 +143,10 @@
         sync() { lastM = null; syncScene(); },
         update(dt, t) {
           if ((k0++ % 15) === 0) syncScene();
-          if (play) T += dt * rate;
+          now = t;
+          const H2 = sm() && sm().HT;                       // 2D의 박동 속도 · 멈춤을 그대로 따라가요
+          if (H2 && typeof H2.rate === 'number' && now - pushedAt > 0.5 && Math.abs(H2.rate - lastRate) > 1e-6) { rate = H2.rate; lastRate = rate; rateR.set(rate); }
+          if (!(H2 && H2.paused)) T += dt * rate * (80 / 60);
           const ph = T % 1;
           const atr = ph < 0.14 ? Math.sin(ph / 0.14 * Math.PI) : 0, vent = ph >= 0.14 && ph < 0.5 ? Math.sin((ph - 0.14) / 0.36 * Math.PI) : 0;
           sys = vent;
@@ -150,10 +163,10 @@
           let idx = 0;
           loops.forEach((lp, li) => {
             for (let i = 0; i < NP; i++) {
-              const u = ((T * 0.11 + i / NP) % 1);
+              const u = ((flowP + i / NP) % 1);
               const pos = lp.curve.getPoint(u); const ti = Math.floor(u * lp.n) % lp.n, p = lp.pts[ti];
               const on = hl === 'all' || (hl === 'pulm' ? p[4] === 0 : p[4] === 1);
-              dm.position.copy(pos); dm.scale.setScalar(on ? 1 : 0.01); dm.updateMatrix(); inst.setMatrixAt(idx, dm.matrix);
+              dm.position.copy(pos); dm.scale.setScalar(on ? (i === 0 ? 2.4 : 1) : 0.01); dm.updateMatrix(); inst.setMatrixAt(idx, dm.matrix);
               inst.setColorAt(idx, p[3] ? cr : cb); idx++;
             }
           });

@@ -5,7 +5,7 @@
   if (!window.SciSim3D) return;
   /* ---------- 공통: 분자 모형과 반응 도우미 ---------- */
   function ChemKit(THREE) {
-    const COL = { H: 0xf1f5f9, O: 0xef4444, C: 0x3f4756, N: 0x3b82f6, Mg: 0xa3e635, Cu: 0xe08a3c, Cl: 0x14b8a6 };
+    const COL = { H: 0xf1f5f9, O: 0xe2464b, C: 0x3f4756, N: 0x3b82f6, Mg: 0xa3e635, Cu: 0xd2693a, Cl: 0x14b8a6 };
     const RAD = { H: 0.27, O: 0.4, C: 0.4, N: 0.38, Mg: 0.5, Cu: 0.5, Cl: 0.46 };
     const NAME = { H: '수소', O: '산소', C: '탄소', N: '질소', Mg: '마그네슘', Cu: '구리', Cl: '염소' };
     const SP = {
@@ -130,47 +130,80 @@
     return { html: rows.join(' · '), ok };
   }
   const PHN = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches);
-  const MET = { Cu: { n: '구리', ox: 'CuO', m: 64, ratio: '4 : 1' }, Mg: { n: '마그네슘', ox: 'MgO', m: 24, ratio: '3 : 2' } };
   const gcd = (a, b) => (b ? gcd(b, a % b) : a);
+  /* 2D 차시의 장면: lab(구리 가열) · graph(질량비 그래프) · cuo(산화 구리 입자 모형) · sugar(설탕물) · mg(마그네슘 연소) · water(물 생성) */
   window.SciSim3D.attach({
     host: '.stage-card',
     title: '일정 성분비 3D 입자 모형',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
+    levels: [0, 2, 3],           // 단계 2(그래프 점 찍기·직선 긋기)는 2D 그래프가 필요해서 2D로 시작해요
     camera: { dist: PHN ? 22 : 13.5, theta: 0.1, phi: 1.1, min: 6, max: 28, target: [0, 0.2, 0] },
     autoRotate: 0,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const K = ChemKit(THREE);
-      let met = 'Cu', M = 4, O = 3, p = 0, playing = false, rx = null, hold = 0;
-      label('반응 전', [-3.7, -1.1, 2.4], { color: 'rgba(14,165,233,.9)' }); label('반응 후', [3.7, -1.1, 2.4], { color: 'rgba(34,197,94,.9)' });
+      let rx = null, sig = '', qd = 0, lastSV = null;
+      const labB = label('반응 전', [-3.7, -1.1, 2.4], { color: 'rgba(14,165,233,.9)' }), labA = label('반응 후', [3.7, -1.1, 2.4], { color: 'rgba(34,197,94,.9)' });
       const arrow = new THREE.Group(); const am = new THREE.MeshStandardMaterial({ color: 0xffd34d, roughness: 0.4, emissive: 0x6b4a00, emissiveIntensity: 0.5 });
       const sh = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 1.2, 16), am); sh.rotation.z = Math.PI / 2;
       const hd = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.55, 20), am); hd.rotation.z = -Math.PI / 2; hd.position.x = 0.85; arrow.add(sh, hd); root.add(arrow);
-      function build() {
-        if (rx) rx.dispose();
-        const e = Math.min(Math.floor(M / 2), O), I = MET[met];
-        const re = [[met, M], ['O2', O]], pr = [];
-        if (e) pr.push([I.ox, 2 * e]); if (M - 2 * e) pr.push([met, M - 2 * e]); if (O - e) pr.push(['O2', O - e]);
-        rx = K.makeRxn(root, { re, pr }, { cxR: -3.7, cxP: 3.7, sp: 1.85 });
-        rx.set(p); text(e);
+      /* 설탕물(혼합물) 장면: 비커 + 물 + 설탕 알갱이 */
+      const mix = new THREE.Group(); mix.visible = false; root.add(mix);
+      const bk = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 2.0, 4.4, 40, 1, true), new THREE.MeshStandardMaterial({ color: 0xbfe3ff, roughness: 0.08, transparent: true, opacity: 0.18, depthWrite: false, side: THREE.DoubleSide })); bk.position.y = 0.6; mix.add(bk);
+      const wat = new THREE.Mesh(new THREE.CylinderGeometry(1.95, 1.85, 1, 40), new THREE.MeshStandardMaterial({ color: 0x8fc9ff, roughness: 0.2, transparent: true, opacity: 0.5, depthWrite: false })); mix.add(wat);
+      const cubeG = new THREE.BoxGeometry(0.34, 0.34, 0.34), cubeM = new THREE.MeshStandardMaterial({ color: 0xfdf0cf, roughness: 0.6 });
+      const cubes = []; for (let i = 0; i < 12; i++) { const c = new THREE.Mesh(cubeG, cubeM); const a = i * 2.4, r = 0.25 + (i % 4) * 0.38; c.position.set(Math.cos(a) * r, -1.45 + Math.floor(i / 6) * 0.36, Math.sin(a) * r); c.rotation.set(i, i * 2, 0); mix.add(c); cubes.push(c); }
+      const bkBase = new THREE.Mesh(new THREE.CylinderGeometry(2.1, 2.1, 0.2, 40), new THREE.MeshStandardMaterial({ color: 0x8b95a7, roughness: 0.4, metalness: 0.6 })); bkBase.position.y = -1.7; mix.add(bkBase);
+      function view() {
+        const S = ctx.lesson() || {}, sc = (S.S && S.S.scene) || 'lab';
+        if (sc === 'sugar') { const SG = S.SG || { sugar: 0, water: 100 }; return { sc, SG, key: sc + '|' + SG.sugar + '|' + SG.water }; }
+        if (sc === 'cuo') return { sc, re: [['Cu', 6], ['O2', 4]], pr: [['CuO', 6], ['O2', 1]], key: sc };
+        if (sc === 'mg') { const a = (S.MG && S.MG.amt) || 6, n = a / 3 * 2; return { sc, a, re: [['Mg', n], ['O2', n / 2]], pr: [['MgO', n]], key: sc + a }; }
+        if (sc === 'water') {
+          const o = (S.WT && S.WT.o) || 20, nO = o / 4, used = Math.min(nO, 4);
+          return { sc, o, re: [['H2', 8], ['O2', nO]], pr: [['H2O', 2 * used], ['H2', 8 - 2 * used], ['O2', nO - used]], key: sc + o };
+        }
+        return { sc, re: [['Cu', 4], ['O2', 2]], pr: [['CuO', 4]], key: 'cu' };          // lab · graph
       }
-      function text(e) {
-        const I = MET[met], f = I.ox, a = 2 * e * I.m, b = 2 * e * 16;
-        const lines = ['<b>2' + met + ' + O₂ → 2' + f + '</b>'];
-        if (e) { const g = gcd(a, b); lines.push('반응한 질량: ' + I.n + ' ' + a + ' : 산소 ' + b + ' = <b>' + a / g + ' : ' + b / g + '</b>'); lines.push('원자 개수비 ' + I.n + ' : 산소 = <b>1 : 1</b>'); }
-        const lm = M - 2 * e, lo = O - e;
-        lines.push(lm || lo ? '남은 입자: ' + (lm ? I.n + ' ' + lm + '개 ' : '') + (lo ? '산소 분자 ' + lo + '개' : '') + ' (반응 못 함)' : '<span style="color:#86efac">남는 입자 없이 모두 반응했어요.</span>');
-        info(lines.join('<br>'));
+      function text(v, S) {
+        const ok = (t) => '<span style="color:#86efac">' + t + '</span>';
+        if (v.sc === 'cuo') return '<b>구리 원자 6개 + 산소 분자 4개 → 산화 구리(Ⅱ) 6개</b><br>구리 원자 6개는 산소 <b>원자</b> 6개(= 산소 분자 3개)와 짝을 지어요.<br>' + ok('산소 분자 1개가 남아요. 구리 : 산소 질량비는 언제나 4 : 1이에요.');
+        if (v.sc === 'mg') return '<b>마그네슘 ' + v.a + ' g + 산소 ' + (v.a * 2 / 3).toFixed(1) + ' g → 산화 마그네슘 ' + (v.a * 5 / 3).toFixed(1) + ' g</b><br>2Mg + O₂ → 2MgO<br>' + ok('마그네슘 : 산소 = 3 : 2 (원자 1 : 1로 결합)');
+        if (v.sc === 'water') {
+          const k = Math.min(2, v.o / 8), left = v.o > 16 ? '산소 ' + (v.o - 16) + ' g이 남아요.' : v.o < 16 ? '산소가 모자라 수소 ' + (2 - k).toFixed(0) + ' g이 남아요.' : '남는 물질이 없어요.';
+          return '<b>수소 2 g + 산소 ' + v.o + ' g → 물 ' + (9 * k).toFixed(0) + ' g</b><br>수소 2 g은 산소 16 g과 결합해요. (수소 : 산소 = 1 : 8)<br>' + ok(left) + '<br><span style="opacity:.8">입자 모형: 수소 2 g = 수소 분자 8개, 산소 8 g = 산소 분자 2개</span>';
+        }
+        const L = S.LAB || {};
+        return '<b>구리 + 산소 → 산화 구리(Ⅱ)</b><br>2Cu + O₂ → 2CuO<br>구리 2.00 g + 산소 0.50 g = 산화 구리(Ⅱ) 2.50 g<br>' + ok('구리 : 산소 = 4 : 1 (원자 1 : 1)') + (L.scaleVal != null ? '<br>지금 저울: <b>' + L.scaleVal.toFixed(2) + ' g</b> · 가열 ' + (L.round || 0) + '회' : '');
       }
-      controls.segment('금속', [{ value: 'Cu', label: '구리' }, { value: 'Mg', label: '마그네슘' }], met, (v) => { met = v; build(); });
-      controls.range('금속 원자', 2, 8, 2, M, (v) => { M = v; build(); }, (v) => v + '개');
-      controls.range('산소 분자', 1, 4, 1, O, (v) => { O = v; build(); }, (v) => v + '개');
-      const pr = controls.range('진행', 0, 100, 1, 0, (v) => { p = v / 100; playing = false; pb.textContent = '▶ 재생'; rx.set(p); }, (v) => v + '%');
-      const pb = controls.button('▶ 재생', () => { playing = !playing; if (playing && p >= 1) p = 0; pb.textContent = playing ? '❚❚ 멈춤' : '▶ 재생'; });
-      build();
+      function rebuild(v) {
+        if (rx) rx.dispose(); rx = null;
+        const S = ctx.lesson() || {};
+        const isMix = v.sc === 'sugar'; mix.visible = isMix; if (plRow) plRow.style.display = isMix ? 'none' : ''; arrow.visible = !isMix; labB.show(!isMix); labA.show(!isMix);
+        if (isMix) {
+          const w = v.SG.water, h = Math.max(0.6, w / 300 * 3.8); wat.scale.y = h; wat.position.y = -1.6 + h / 2;
+          const n = Math.round(Math.min(v.SG.sugar, 120) / 10); cubes.forEach((c, i) => { c.visible = i < n; });
+          const g = v.SG.sugar ? gcd(v.SG.sugar, w) : 1;
+          info('<b>설탕물은 혼합물이에요</b><br>설탕 ' + v.SG.sugar + ' g + 물 ' + w + ' g' + (v.SG.sugar ? '<br>설탕 : 물 = <b>' + v.SG.sugar / g + ' : ' + w / g + '</b>' : '') + '<br><span style="color:#fcd34d">설탕과 물은 얼마든지 섞을 수 있어서 성분비가 정해져 있지 않아요.</span>');
+          return;
+        }
+        const n = Math.max(v.re.reduce((a, q) => a + q[1], 0), v.pr.reduce((a, q) => a + q[1], 0));
+        rx = K.makeRxn(root, { re: v.re.filter((q) => q[1] > 0), pr: v.pr.filter((q) => q[1] > 0) }, { cxR: -3.7, cxP: 3.7, sp: n > 9 ? 1.25 : 1.7 });
+        rx.set(qd);
+        const c = countHtml(rx.countR, rx.countP);
+        info(text(v, S) + '<br><span style="opacity:.85">원자 수 ' + c.html + '</span>');
+      }
+      const pl = controls.player({
+        duration: 6, loop: true, label: '반응 재생',
+        phases: [[0, '반응 전'], [0.08, '결합이 끊어져요'], [0.29, '원자가 짝지어요'], [0.67, '산화물이 만들어져요'], [0.9, '반응 후']],
+        onFrame(p) { qd = Math.max(0, Math.min(1, (p - 0.08) / 0.82)); if (rx) rx.set(qd); },
+      });
+      const plRow = Array.from(labB.el.closest('.v3-wrap').querySelectorAll('.v3-player'))[0];
       return {
         update(dt, t) {
-          if (playing) { if (p >= 1) { hold += dt; if (hold > 1.5) { p = 0; hold = 0; } } else p = Math.min(1, p + dt / 4); pr.set(Math.round(p * 100)); rx.set(p); }
+          const v = view(), S = ctx.lesson() || {};
+          if (v.key !== sig) { sig = v.key; rebuild(v); }
+          else if (v.sc === 'lab' && S.LAB && S.LAB.scaleVal !== lastSV) { lastSV = S.LAB.scaleVal; rebuild(v); }
           arrow.position.x = Math.sin(t * 2.5) * 0.07;
         },
       };

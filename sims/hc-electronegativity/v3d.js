@@ -78,83 +78,127 @@
 
   const phone = window.matchMedia && window.matchMedia('(max-width: 599px)').matches;
   window.SciSim3D.attach({
-    title: '전자 줄다리기 3D',
-    hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
+    title: '전기 음성도 3D',
+    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 줄다리기와 원소 고르기는 2D와 똑같이 이어져요',
     camera: { dist: phone ? 9.6 : 9, theta: 0.4, phi: 1.2, min: 4, max: 20 },
-    autoRotate: 0.15,
+    autoRotate: 0.12,
+    levels: [0, 2],
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const L = makeLib(THREE);
-      const EN = { H: 2.2, C: 2.55, Cl: 3.16, F: 3.98, Na: 0.93 };
-      const CORE = { H: 0.34, C: 0.44, Cl: 0.56, F: 0.45, Na: 0.4 };
-      const PAIRS = { HH: ['H', 'H'], CH: ['C', 'H'], HCl: ['H', 'Cl'], HF: ['H', 'F'], NaCl: ['Na', 'Cl'] };
-      const NAMES = { HH: 'H–H', CH: 'C–H', HCl: 'H–Cl', HF: 'H–F', NaCl: 'Na–Cl' };
-      let key = 'HF', showArrow = true;
-      const grp = new THREE.Group(); root.add(grp);
+      const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+      L.COL.Li = 0xcc80ff; L.COL.Be = 0xc2ff00; L.COL.Mg = 0x8aff00; L.COL.Al = 0xbfa6a6; L.COL.Si = 0xf0c8a0; L.COL.P = 0xff8000; L.COL.K = 0x8f40d4; L.COL.Br = 0xa62929; L.COL.O = 0xf0524f;
+      const gTug = new THREE.Group(), gAt = new THREE.Group(); root.add(gTug, gAt);
+
+      /* ---------- ① 전자 줄다리기 (2D: H–H · H–F · Na–Cl) ---------- */
       const ND = 520;
       const dots = new THREE.InstancedMesh(L.SG, new THREE.MeshStandardMaterial({ color: 0xffd34d, emissive: 0xffb300, emissiveIntensity: 0.9, roughness: 0.4, transparent: true, opacity: 0.85 }), ND);
-      dots.frustumCulled = false; root.add(dots);
-      const dd = []; for (let i = 0; i < ND; i++) dd.push({ p: new THREE.Vector3(), c: Math.random() });
+      dots.frustumCulled = false; gTug.add(dots);
+      const dd = []; for (let i = 0; i < ND; i++) dd.push({ p: new THREE.Vector3(), c: 0.5 + Math.random() * 0.7, u: Math.random() });
       const dum = new THREE.Object3D();
-      let A = null, B = null, w = 0.5, xa = -1, xb = 1, sa = 1, sb = 1;
-      const lA = label('', [0, 0, 0], { size: 14 }), lB = label('', [0, 0, 0], { size: 14 }), lM = label('', [0, 0, 0], { size: 12, color: 'rgba(120,90,0,.85)' });
+      const lA = label('', [0, 0, 0], { size: 13.5 }), lB = label('', [0, 0, 0], { size: 13.5 });
       lA.el.style.color = lB.el.style.color = '#fff';
-      function shell(sym, x) {
-        const g = new THREE.Group(); g.position.set(x, 0, 0);
-        const core = L.atom(sym, 1); core.scale.setScalar(CORE[sym]); g.add(core);
-        const sh = new THREE.Mesh(L.SG, new THREE.MeshStandardMaterial({ color: L.COL[sym], transparent: true, opacity: 0.16, roughness: 0.2, depthWrite: false })); sh.scale.setScalar(CORE[sym] * 2.5); g.add(sh);
-        return g;
+      const shellG = new THREE.Group(); gTug.add(shellG);
+      let curId = '', xa = -1.4, xb = 1.4, wNow = 0.5;
+      const CORE = (s, Z) => 0.3 + 0.06 * Z.E[s].p;
+      function buildTug(Z, m) {
+        curId = m.id; L.clear(shellG);
+        const ra = CORE(m.a, Z), rb = CORE(m.b, Z), sep = (m.id === 'NaCl' ? 3.6 : 2.5 + (ra + rb) * 0.8);
+        xa = -sep / 2; xb = sep / 2;
+        [[m.a, xa, ra], [m.b, xb, rb]].forEach(([sym, x, r]) => {
+          const g = new THREE.Group(); g.position.set(x, 0, 0);
+          const core = L.atom(sym, 1); core.scale.setScalar(r); g.add(core);
+          const sh = new THREE.Mesh(L.SG, new THREE.MeshStandardMaterial({ color: L.COL[sym] !== undefined ? L.COL[sym] : 0x9aa5b6, transparent: true, opacity: 0.16, roughness: 0.2, depthWrite: false })); sh.scale.setScalar(r * 2.5); g.add(sh);
+          shellG.add(g);
+        });
+        lA.obj = [xa, 0, 0]; lB.obj = [xb, 0, 0]; lA.off = [0, -1.2, 0]; lB.off = [0, -1.2, 0];
       }
-      let arr = null;
-      function sample(i) {
-        const d = dd[i], onA = Math.random() > w; // w = B쪽(전기 음성도 큰 쪽) 비율... 
-        return d;
-      }
-      function build() {
-        L.clear(grp);
-        const [a, b] = PAIRS[key]; // b가 항상 전기 음성도가 크거나 같은 쪽이 되도록 정렬
-        const [lo, hi] = EN[a] <= EN[b] ? [a, b] : [b, a];
-        const dx = Math.abs(EN[hi] - EN[lo]);
-        const sep = (key === 'NaCl' ? 3.6 : 2.5 + (CORE[lo] + CORE[hi]) * 0.8);
-        xa = -sep / 2; xb = sep / 2; A = lo; B = hi;
-        grp.add(shell(lo, xa), shell(hi, xb));
-        w = key === 'NaCl' ? 0.97 : 0.5 + 0.5 * Math.tanh(dx / 1.35); // 높은 쪽에 머무는 시간 비율
-        sa = CORE[lo]; sb = CORE[hi];
-        for (let i = 0; i < ND; i++) resample(i);
-        lA.obj = [xa, 0, 0]; lB.obj = [xb, 0, 0]; lA.off = [0, -1.15, 0]; lB.off = [0, -1.15, 0];
-        const q = dx < 0.4 ? '' : 'δ';
-        const cA = dx < 0.4 ? '' : (key === 'NaCl' ? ' (+)' : ' δ+'), cB = dx < 0.4 ? '' : (key === 'NaCl' ? ' (−)' : ' δ−');
-        lA.set(lo + '<br><small>χ ' + EN[lo].toFixed(2) + cA + '</small>'); lB.set(hi + '<br><small>χ ' + EN[hi].toFixed(2) + cB + '</small>');
-        lA.el.style.background = dx < 0.4 ? '' : 'rgba(60,110,255,.85)'; lB.el.style.background = dx < 0.4 ? '' : 'rgba(235,70,70,.85)';
-        if (dx >= 0.4) { arr = L.arrow([xa + 0.4, 1.5, 0], [xb - 0.1, 1.5, 0], 0xffd34d, 0.05, 0.3); grp.add(arr); arr.visible = showArrow; lM.obj = [(xa + xb) / 2, 1.5, 0]; lM.off = [0, 0.5, 0]; lM.set('전자가 끌려가요'); lM.show(showArrow); } else { arr = null; lM.show(false); }
-        const kind = key === 'NaCl' ? '이온 결합에 가까워요 (전자가 거의 완전히 이동)' : dx < 0.4 ? '무극성 공유 결합 (치우침 없음)' : '극성 공유 결합 (전자쌍이 ' + hi + ' 쪽으로)';
-        info('<b>' + NAMES[key] + '</b> · χ 차이 Δχ = <b>' + dx.toFixed(2) + '</b><br>전자 구름이 ' + hi + ' 쪽에 <b>' + Math.round(w * 100) + '%</b> 머물러요.<br>' + kind);
-      }
-      function resample(i) {
-        const d = dd[i], atB = Math.random() < w; // B(χ 큼) 근처에 있을 확률 w
-        const cx = atB ? xb : xa, s = (atB ? sb : sa);
-        // 공유 영역으로 퍼진 가우시안 구름: 원자 둘레 + 두 원자 사이
-        const spread = 0.55 + s * 0.9;
+      function resample(i, ra, rb) {
+        const d = dd[i], atB = Math.random() < wNow, cx = atB ? xb : xa, s = atB ? rb : ra, spread = 0.55 + s * 0.9;
         let x = cx + (Math.random() + Math.random() + Math.random() - 1.5) * spread * 1.6;
-        const lim = (xa + xb) / 2;
-        // 서로 다른 원자 쪽으로 너무 넘어가지 않게 살짝 제한
         if (atB) x = Math.max(x, xa + (xb - xa) * 0.25); else x = Math.min(x, xb - (xb - xa) * 0.25);
-        const r = (Math.random() + Math.random() + Math.random() - 1.5) * 1.1;
-        const th = Math.random() * Math.PI * 2;
-        const fall = Math.max(0.35, 1 - Math.abs(x - cx) / (spread * 1.6) * 0.5);
+        const r = (Math.random() + Math.random() + Math.random() - 1.5) * 1.1, th = Math.random() * Math.PI * 2, fall = Math.max(0.35, 1 - Math.abs(x - cx) / (spread * 1.6) * 0.5);
         d.p.set(x, r * Math.cos(th) * fall * 0.75, r * Math.sin(th) * fall * 0.75);
-        d.c = 0.5 + Math.random() * 0.7;
       }
-      const ctl = controls.segment('결합', Object.keys(PAIRS).map((k) => ({ value: k, label: NAMES[k] })), key, (v) => { key = v; build(); });
-      const ab = controls.button('전자 끄는 방향 ✓', () => { showArrow = !showArrow; ab.classList.toggle('on', showArrow); ab.textContent = '전자 끄는 방향 ' + (showArrow ? '✓' : '✕'); if (arr) arr.visible = showArrow; lM.show(showArrow && !!arr); }); ab.classList.add('on');
-      build();
-      let acc = 0;
+
+      /* ---------- ③ 경향의 까닭 (2D: 원자 모형 · 핵이 최외각 전자를 당기는 힘) ---------- */
+      const shellCfg = (E, s) => { const z = E[s].Z; if (s === 'Br') return [2, 8, 18, 7]; if (z <= 10) return z <= 2 ? [z] : [2, z - 2]; return [2, 8, z - 10]; };
+      const pullRaw = (E, s) => E[s].v / (E[s].p * E[s].p);
+      const nuc = new THREE.Mesh(L.SG, L.mat(0xe8604c)); nuc.scale.setScalar(0.45); gAt.add(nuc);
+      const atLab = label('', [0, 0, 0], { size: 13.5, color: 'rgba(91,33,182,.9)' }); const nucLab = label('', [0, 0, 0], { size: 12 });
+      const ringG = new THREE.Group(), elG = new THREE.Group(); gAt.add(ringG, elG);
+      let atKey = '', arrowM = null, outerE = null;
+      const goldM = new THREE.MeshStandardMaterial({ color: 0xffc933, emissive: 0xffb300, emissiveIntensity: 0.6, roughness: 0.3 }), blueM = new THREE.MeshStandardMaterial({ color: 0x8fa8d8, roughness: 0.4 });
+      let atEls = [], ringsA = [], ringsRadii = [];
+      function buildAtom(Z, s) {
+        L.clear(ringG); L.clear(elG); atEls = []; ringsA = [];
+        const cfg = shellCfg(Z.E, s), n = cfg.length;
+        cfg.forEach((c, k) => {
+          const r = 0.85 + 0.62 * k, ring = new THREE.Mesh(new THREE.TorusGeometry(r, k === n - 1 ? 0.025 : 0.014, 8, 64), new THREE.MeshBasicMaterial({ color: k === n - 1 ? 0x9b6bff : 0x7887aa, transparent: true, opacity: 0.8 })); ring.rotation.x = Math.PI / 2; ringG.add(ring);
+          for (let j = 0; j < c; j++) { const outer = k === n - 1, m = new THREE.Mesh(L.SG, outer ? goldM : blueM); m.scale.setScalar(outer ? 0.13 : 0.1); elG.add(m); atEls.push({ m, k, j, c, r, outer, first: outer && j === 0 }); }
+        });
+        outerR = 0.85 + 0.62 * (n - 1);
+        if (arrowM) { gAt.remove(arrowM); }
+      }
+      let outerR = 1, arrowG = new THREE.Group(); gAt.add(arrowG);
+      const arrMat = new THREE.MeshStandardMaterial({ color: 0x7c3aed, roughness: 0.4 });
+      const arrShaft = new THREE.Mesh(L.CG, arrMat), arrHead = new THREE.Mesh(new THREE.ConeGeometry(1, 1, 18), arrMat); arrowG.add(arrShaft, arrHead);
+
+      /* ---------- ▶ 재생: 원자 번호를 따라 가기 ---------- */
+      let own = false, sig = '', pA = 0;
+      const rowOf = () => { const r = document.querySelectorAll('.v3-player'); return r[r.length - 1]; };
+      const pl = controls.player({ duration: 8, loop: true, label: '원소 따라가기', onFrame(p) { pA = p; own = p > 0; } });
+      const rowA = rowOf();
+
       return {
-        update(dt) {
-          acc += dt;
-          if (acc > 0.06) { acc = 0; for (let k = 0; k < 60; k++) resample((Math.random() * ND) | 0); }
-          for (let i = 0; i < ND; i++) { const d = dd[i]; dum.position.copy(d.p); dum.scale.setScalar(0.06 * d.c); dum.updateMatrix(); dots.setMatrixAt(i, dum.matrix); }
-          dots.instanceMatrix.needsUpdate = true;
+        update(dt, t) {
+          const Z = ctx.lesson(); if (!Z) return; dt = Math.min(dt, 0.05);
+          const S = Z.S, tugMode = S.scene === 'tug' || S.scene === 'tb' || S.scene === 'od';
+          const atomMode = S.scene === 'atom';
+          gTug.visible = !atomMode; gAt.visible = atomMode;
+          rowA.style.display = atomMode ? '' : 'none'; if (!atomMode && pl.playing) pl.pause();
+          lA.show(!atomMode); lB.show(!atomMode); atLab.show(atomMode); nucLab.show(atomMode);
+          const sg = [S.scene, S.at.mode, S.at.i].join('|'); if (sg !== sig) { sig = sg; if (own) { own = false; pl.pause(); pl.set(0); } }
+          if (!atomMode) {
+            const m = Z.TUGS.find((q) => q.id === S.tug.cur) || Z.TUGS[0];
+            if (m.id !== curId) buildTug(Z, m);
+            wNow = clamp(S.tug.sp.value, 0.02, 0.98);
+            const ra = CORE(m.a, Z), rb = CORE(m.b, Z), rev = S.tug.reveal > 0.5 || S.tug.done[m.id];
+            for (let k = 0; k < 60; k++) resample((Math.random() * ND) | 0, ra, rb);
+            for (let i = 0; i < ND; i++) { const d = dd[i]; dum.position.copy(d.p); dum.scale.setScalar(0.06 * d.c); dum.updateMatrix(); dots.setMatrixAt(i, dum.matrix); }
+            dots.instanceMatrix.needsUpdate = true;
+            const Ea = Z.E[m.a], Eb = Z.E[m.b];
+            lA.set(m.a + '<br><small>최외각 전자 ' + Ea.v + '개' + (rev ? ' · χ ' + (Ea.e / 10).toFixed(1) : '') + '</small>'); lB.set(m.b + '<br><small>최외각 전자 ' + Eb.v + '개' + (rev ? ' · χ ' + (Eb.e / 10).toFixed(1) : '') + '</small>');
+            const nm = m.a + '–' + m.b;
+            let txt;
+            if (rev) {
+              const side = Math.abs(S.tug.sp.value - 0.5) < 0.03 ? '가운데' : (S.tug.sp.value > 0.5 ? m.b : m.a) + ' 쪽';
+              txt = '전자쌍이 <b>' + side + '</b>으로 치우쳤어요 (전자 구름이 ' + (S.tug.sp.value > 0.5 ? m.b : m.a) + ' 쪽에 ' + Math.round(Math.max(S.tug.sp.value, 1 - S.tug.sp.value) * 100) + '%).<br>전기 음성도: ' + m.a + ' ' + (Ea.e / 10).toFixed(1) + ' · ' + m.b + ' ' + (Eb.e / 10).toFixed(1) + ' — 클수록 공유 전자쌍을 더 세게 끌어당겨요.';
+            } else txt = '공유 전자쌍이 어느 쪽으로 쏠릴지 <b>예측</b>하고 줄다리기를 시작해 보세요.<br>전기 음성도: 공유 결합에서 원자가 공유 전자쌍을 끌어당기는 상대적인 세기';
+            info('<b>' + nm + '</b> 전자 줄다리기<br>' + txt);
+            lA.el.style.background = lB.el.style.background = '';
+            return;
+          }
+          // ---- 원자 모형 ----
+          const ser = Z.SERIES[S.at.mode], els = ser.els, nEl = els.length;
+          const idx = own ? Math.min(nEl - 1, Math.floor(pA * nEl)) : S.at.i, s = els[idx], e = Z.E[s];
+          if (s !== atKey) { atKey = s; buildAtom(Z, s); }
+          const mx = Math.max.apply(null, els.map((q) => pullRaw(Z.E, q))), pn = pullRaw(Z.E, s) / mx;
+          const spd = 0.9;
+          let hiP = null;
+          atEls.forEach((q) => {
+            const a = t * spd / (q.k + 1) * (q.k % 2 ? -1 : 1) + (Math.PI * 2 * q.j) / q.c; q.m.position.set(Math.cos(a) * q.r, 0, Math.sin(a) * q.r);
+            if (q.first) hiP = q.m.position.clone();
+          });
+          nucLab.obj = [0, 0.55, 0]; nucLab.set('+' + e.Z);
+          atLab.obj = [0, 2.9, 0]; atLab.set(e.s + ' · ' + e.n + ' (' + e.p + '주기 ' + e.g + '족)');
+          arrowG.visible = !!hiP;
+          if (hiP) {
+            const dir = hiP.clone().normalize().multiplyScalar(-1), len = Math.min(outerR - 0.5, 0.3 + 0.8 * outerR * pn), w = 0.035 + 0.07 * pn, start = hiP.clone().addScaledVector(dir, -dir.length() * 0 + 0.2).add(dir.clone().multiplyScalar(0));
+            arrShaft.scale.set(w, Math.max(0.05, len - 0.25), w); const mid = hiP.clone().add(dir.clone().multiplyScalar(0.2 + (len - 0.25) / 2)); arrShaft.position.copy(mid); arrShaft.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
+            arrHead.scale.set(w * 2.8, 0.25, w * 2.8); arrHead.position.copy(hiP).add(dir.clone().multiplyScalar(0.2 + len - 0.125)); arrHead.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
+          }
+          info('<b>' + e.s + ' (' + e.n + ')</b> · ' + ser.label + '<br>핵전하 +' + e.Z + ' · 전자껍질 ' + e.p + '개 · 최외각 전자 ' + e.v + '개 · 전기 음성도 χ = ' + (e.e == null ? '—' : (e.e / 10).toFixed(1)) + '<br>노란 점 = 최외각 전자, 보라 화살표 = 핵이 최외각 전자를 당기는 힘(모형)<br>' + ser.note + ' 당기는 힘이 ' + (ser.note.indexOf('아래') >= 0 ? '작아져요' : '커져요') + '.');
         },
       };
     },

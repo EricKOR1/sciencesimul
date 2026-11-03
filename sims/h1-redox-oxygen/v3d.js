@@ -1,6 +1,8 @@
 /* h1-redox-oxygen · 3D 산소의 이동과 산화·환원
    산화 = 산소를 얻는 반응, 환원 = 산소를 잃는 반응. 원자 모형으로 산소 원자(빨강)가 어디에서 어디로 옮겨 가는지 따라가 봐요.
-   ① 2Cu + O₂ → 2CuO, 2Mg + O₂ → 2MgO (산화)  ② CuO + H₂ → Cu + H₂O  ③ 2CuO + C → 2Cu + CO₂ (산화 구리의 환원)  ④ CH₄ + 2O₂ → CO₂ + 2H₂O (연소)
+   2D 실험의 입자 모형과 같은 7가지 반응이에요: 2Cu + O₂ → 2CuO, 2Mg + O₂ → 2MgO (산화) · CuO + H₂ → Cu + H₂O, 2CuO + C → 2Cu + CO₂ (환원)
+   · Fe₂O₃ + 3CO → 2Fe + 3CO₂ (철의 제련) · CH₄ + 2O₂ → CO₂ + 2H₂O (연소) · CO₂ + 2H₂O → CH₂O + O₂ + H₂O (광합성).
+   어떤 반응을 보여 줄지는 2D에서 고른 것(가열 시료 · 환원 종류 · 용광로 · 비교 사례)을 따라가고, 2D에서 가열하면 3D도 함께 진행돼요.
    원자의 배치와 크기는 보기 좋게 단순하게 그린 모형이에요. */
 (function () {
   'use strict';
@@ -8,7 +10,8 @@
   const PHN = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches);
   const EL = { C: [0x4d5566, 0.5], H: [0xf4f6fb, 0.3], O: [0xe2464b, 0.46], Cu: [0xd9822b, 0.58], Mg: [0xc9d2de, 0.58] };
 
-  // atoms: [원소, 처음 위치, 나중 위치]  bonds: [i, j, 'b'(처음에만) | 'a'(나중에만)]
+  // atoms: [원소, 처음 위치, 나중 위치]  bonds: [i, j, 'b'(처음에만) | 'a'(나중에만) | 'p'(늘 있음)]
+  const FP = (fx, fy) => [Math.round((fx - 0.5) * 92) / 10, Math.round((0.58 - fy) * 60) / 10]; // 2D 입자 모형의 위치(비율)를 3D 좌표로
   const RX = {
     cu: {
       eq: '2Cu + O₂ → 2CuO',
@@ -47,9 +50,29 @@
       atoms: [['C', [-3.2, 0.0], [-3.0, 1.5]], ['H', [-4.1, 0.9], [0.8, 0.7]], ['H', [-2.3, 0.9], [2.1, 0.7]], ['H', [-4.1, -0.9], [0.8, -1.7]], ['H', [-2.3, -0.9], [2.1, -1.7]],
         ['O', [1.7, 1.3], [-4.2, 1.5]], ['O', [2.9, 1.3], [1.45, 1.3]], ['O', [1.7, -1.3], [-1.8, 1.5]], ['O', [2.9, -1.3], [1.45, -1.0]]],
       bonds: [[0, 1, 'b'], [0, 2, 'b'], [0, 3, 'b'], [0, 4, 'b'], [5, 6, 'b'], [7, 8, 'b'], [0, 5, 'a'], [0, 7, 'a'], [6, 1, 'a'], [6, 2, 'a'], [8, 3, 'a'], [8, 4, 'a']],
-      tags: [['산화 (산소를 얻음)', 0, '#e2464b']],
-      names: [['CH₄ 메테인', 0], ['O₂ ×2', 5]], after: [['CO₂', 0], ['H₂O ×2', 6]],
-      txt: '메테인이 산소와 결합해 이산화 탄소와 물이 돼요. 연소는 <b>빠르게 일어나는 산화</b>예요.',
+      tags: [['산화 (산소를 얻음)', 0, '#e2464b'], ['환원 (O₂)', 5, '#3b6ff0']],
+      names: [['CH₄ 메테인', 0], ['O₂ ×2 산소', 5]], after: [['CO₂', 0], ['H₂O ×2', 6]],
+      txt: '메테인이 산소를 얻어 이산화 탄소와 물이 돼요(산화). 산소는 짝으로 <b>환원</b>돼요.',
+    },
+    fe: {
+      eq: 'Fe₂O₃ + 3CO → 2Fe + 3CO₂',
+      atoms: [['Fe', FP(0.13, 0.46), FP(0.13, 0.46)], ['Fe', FP(0.13, 0.7), FP(0.13, 0.7)],
+        ['O', FP(0.29, 0.34), FP(0.54, 0.3)], ['O', FP(0.29, 0.58), FP(0.54, 0.54)], ['O', FP(0.29, 0.8), FP(0.54, 0.78)],
+        ['C', FP(0.69, 0.3), FP(0.69, 0.3)], ['O', FP(0.83, 0.3), FP(0.83, 0.3)], ['C', FP(0.69, 0.54), FP(0.69, 0.54)], ['O', FP(0.83, 0.54), FP(0.83, 0.54)], ['C', FP(0.69, 0.78), FP(0.69, 0.78)], ['O', FP(0.83, 0.78), FP(0.83, 0.78)]],
+      bonds: [[0, 2, 'b'], [0, 3, 'b'], [1, 3, 'b'], [1, 4, 'b'], [5, 6, 'p'], [7, 8, 'p'], [9, 10, 'p'], [2, 5, 'a'], [3, 7, 'a'], [4, 9, 'a'], [0, 1, 'a']],
+      tags: [['환원 (산소를 잃음)', 0, '#3b6ff0'], ['산화 (산소를 얻음)', 5, '#e2464b']],
+      names: [['Fe₂O₃ 산화 철(Ⅲ)', 0], ['CO ×3 일산화 탄소', 5]], after: [['Fe 철', 0], ['CO₂ ×3', 5]],
+      txt: '일산화 탄소(CO)가 철광석의 <b>산소를 가져가</b> 이산화 탄소가 돼요(산화). 산소를 잃은 산화 철(Ⅲ)은 <b>철</b>이 돼요(환원).',
+    },
+    ph: {
+      eq: 'CO₂ + 2H₂O → CH₂O + O₂ + H₂O',
+      atoms: [['C', FP(0.24, 0.42), FP(0.24, 0.42)], ['O', FP(0.1, 0.42), FP(0.28, 0.82)], ['O', FP(0.38, 0.42), FP(0.38, 0.42)],
+        ['O', FP(0.66, 0.2), FP(0.74, 0.16)], ['H', FP(0.58, 0.31), FP(0.12, 0.28)], ['H', FP(0.74, 0.31), FP(0.12, 0.56)],
+        ['O', FP(0.66, 0.66), FP(0.9, 0.16)], ['H', FP(0.58, 0.77), FP(0.18, 0.92)], ['H', FP(0.74, 0.77), FP(0.38, 0.92)]],
+      bonds: [[1, 0, 'b'], [0, 2, 'p'], [3, 4, 'b'], [3, 5, 'b'], [6, 7, 'b'], [6, 8, 'b'], [3, 6, 'a'], [0, 4, 'a'], [0, 5, 'a'], [1, 7, 'a'], [1, 8, 'a']],
+      tags: [['환원 (산소를 잃음)', 0, '#3b6ff0'], ['산화 (산소 기체가 나옴)', 3, '#e2464b']],
+      names: [['CO₂ 이산화 탄소', 0], ['H₂O ×2 물', 3]], after: [['CH₂O (포도당의 ⅙)', 0], ['O₂ 산소 기체', 3]],
+      txt: '이산화 탄소는 산소를 잃어 양분(CH₂O)이 되고(환원), 물에서 <b>산소 기체</b>가 나와요(산화). 산화와 환원은 짝이에요.',
     },
   };
 
@@ -63,14 +86,16 @@
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3, Y = new V3(0, 1, 0);
       const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ envMapIntensity: 0.6, color: c, roughness: 0.35, metalness: 0.05 }, o || {}));
-      const st = { rx: 'cu', p: 0, play: false, t: 0 };
+      const st = { rx: null, t: 0 };
+      const cache = {};
       const floor = new THREE.Mesh(new THREE.CylinderGeometry(6.4, 6.6, 0.25, 56), new THREE.MeshLambertMaterial({ color: 0x2d3547 })); floor.position.y = -2.4; floor.receiveShadow = true; root.add(floor);
       const grp = new THREE.Group(); root.add(grp);
       let cur = null;
       const ease = (x) => { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); };
 
       function build(key) {
-        if (cur) { grp.remove(cur.g); cur.labs.forEach((l) => l.show(false)); }
+        if (cur) { cur.g.visible = false; cur.labs.forEach((l) => l.show(false)); }
+        if (cache[key]) { cur = cache[key]; cur.g.visible = true; return; }
         const R = RX[key], g = new THREE.Group(); grp.add(g);
         const C = { R, g, atoms: [], bonds: [], labs: [], trails: [] };
         R.atoms.forEach((a, i) => {
@@ -91,16 +116,17 @@
         C.afters = R.after.map(([t, i]) => label(t, C.atoms[i].m, { size: 12.5, offset: [0, EL[R.atoms[i][0]][1] + 0.75, 0] }));
         C.labs = [...C.names, ...C.tags, ...C.afters]; cur = C;
         C.afters.forEach((l) => l.show(false)); C.tags.forEach((l) => l.show(false));
+        cache[key] = C;
       }
       let lastInfo = '';
       const setInfo = (h) => { if (h !== lastInfo) { lastInfo = h; info(h); } };
       const tmpA = new V3(), tmpB = new V3(), tmpD = new V3();
       function apply() {
-        const C = cur, p = st.p, u = ease((p - 0.18) / 0.62);
+        const C = cur, p = pl.p, u = ease((p - 0.18) / 0.62);
         C.atoms.forEach((a, i) => { a.m.position.lerpVectors(a.p0, a.p1, u); const hop = Math.sin(u * Math.PI) * (a.a[0] === 'O' && a.p0.distanceTo(a.p1) > 2.2 ? 1.3 : 0.0); a.m.position.y += hop; a.m.position.z = Math.sin(u * Math.PI) * (hop ? 0.7 : 0); });
         C.bonds.forEach((b) => {
           const A = C.atoms[b.i].m.position, B = C.atoms[b.j].m.position; tmpD.subVectors(B, A); const L = tmpD.length();
-          const op = b.k === 'b' ? 1 - ease((p - 0.3) / 0.22) : ease((p - 0.58) / 0.22);
+          const op = b.k === 'p' ? 1 : b.k === 'b' ? 1 - ease((p - 0.3) / 0.22) : ease((p - 0.58) / 0.22);
           b.m.visible = op > 0.03; b.m.material.opacity = op;
           const ra = EL[C.R.atoms[b.i][0]][1], rb = EL[C.R.atoms[b.j][0]][1];
           b.m.scale.set(1, Math.max(0.01, L - 0.2), 1); tmpA.copy(A).lerp(B, 0.5); b.m.position.copy(tmpA); b.m.quaternion.setFromUnitVectors(Y, tmpD.normalize());
@@ -108,21 +134,43 @@
         C.trails.forEach((t) => { t.material.opacity = (p > 0.04 && p < 0.97) ? 0.55 : 0.0; });
         const end = p >= 0.97;
         C.names.forEach((l) => l.show(p < 0.5)); C.afters.forEach((l) => l.show(p >= 0.5)); C.tags.forEach((l) => l.show(end));
-        if (p < 0.03) setInfo('<b>' + C.R.eq.split(' → ')[0] + '</b><br>▶ 반응 시작을 눌러 <b>산소 원자(빨강)</b>가 어디로 가는지 따라가 봐요.');
+        if (p < 0.03) setInfo('<b>' + C.R.eq.split(' → ')[0] + '</b><br>▶ 재생을 눌러(또는 2D에서 가열해) <b>산소 원자(빨강)</b>가 어디로 가는지 따라가 봐요.');
         else if (!end) setInfo('산소 원자가 <b>이동</b>하고 있어요. 결합이 끊어지고 새로 만들어져요.');
         else setInfo(C.R.txt + '<br><b>' + C.R.eq + '</b>');
       }
-      const seg = controls.segment('반응', [{ value: 'cu', label: 'Cu + O₂' }, { value: 'mg', label: 'Mg + O₂' }, { value: 'h2', label: 'CuO + H₂' }, { value: 'c', label: 'CuO + C' }, { value: 'ch4', label: 'CH₄ 연소' }], st.rx, (v) => { st.rx = v; st.p = 0; st.play = false; playB.textContent = '▶ 반응 시작'; rng.set(0); build(v); apply(); });
-      const playB = controls.button('▶ 반응 시작', () => { if (st.p >= 0.999) st.p = 0; st.play = !st.play; playB.textContent = st.play ? '⏸ 멈춤' : '▶ 반응 시작'; });
-      const rng = controls.range('진행', 0, 100, 1, 0, (v) => { st.play = false; playB.textContent = '▶ 반응 시작'; st.p = v / 100; }, (v) => v + '%');
-      build(st.rx); apply();
-
+      const pl = controls.player({
+        duration: 7, loop: true, label: '반응 보기',
+        phases: [[0, '반응 전'], [0.2, '산소 원자 이동'], [0.8, '반응 후']],
+        onFrame() { if (cur) apply(); },
+      });
+      // 2D에서 고른 반응(시료 · 환원 종류 · 용광로 · 비교 사례)을 따라가요
+      const L2 = () => (ctx.lesson && ctx.lesson()) || null;
+      const keyOf = () => {
+        const S = L2(); if (!S || !S.ST) return 'cu';
+        const m = S.MODE;
+        return m === 'oxid' ? S.ST.metal : m === 'reduc' ? S.ST.red : m === 'blast' ? 'fe' : S.ST.cmp;
+      };
+      const rsKey = (k) => (L2() && L2().MODE === 'compare' && k === 'fe' ? 'fe2' : k);
+      let lastProg = -1;
+      function pick(k) {
+        st.rx = k; build(k);
+        const S = L2(), r = S && S.RS && S.RS[rsKey(k)];
+        lastProg = r ? r.prog : -1;
+        pl.pause(); pl.set(r && (r.done || r.prog > 0) ? r.prog : 0);
+      }
+      pick(keyOf());
       return {
         update(dt, t) {
           st.t += dt;
-          if (st.play) { st.p = Math.min(1, st.p + dt / 6); rng.set(Math.round(st.p * 100)); if (st.p >= 1) { st.play = false; playB.textContent = '↺ 다시 보기'; } }
+          const k = keyOf();
+          if (k !== st.rx) pick(k);
+          else {
+            // 2D에서 가열 중이면(진행률이 바뀌면) 3D도 같은 진행으로 맞춰요
+            const S = L2(), r = S && S.RS && S.RS[rsKey(k)];
+            if (r && r.prog !== lastProg) { lastProg = r.prog; pl.set(r.prog); }
+          }
           apply();
-          cur.atoms.forEach((a, i) => { if (st.p < 0.03 || st.p > 0.97) { a.m.position.y += Math.sin(t * 1.5 + i) * 0.0015; } });
+          cur.atoms.forEach((a, i) => { if (pl.p < 0.03 || pl.p > 0.97) { a.m.position.y += Math.sin(t * 1.5 + i) * 0.0015; } });
         },
         sync() {},
       };

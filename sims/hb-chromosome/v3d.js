@@ -1,5 +1,6 @@
 /* hb-chromosome · 3D DNA → 뉴클레오솜 → 염색사 → 염색체, 그리고 핵형 분석
-   DNA가 히스톤을 감고 겹겹이 응축해 염색체가 되는 과정을 입체로 보고, 사람의 핵형(상염색체 22쌍 + 성염색체 1쌍)을 살펴봐요. */
+   DNA가 히스톤을 감고 겹겹이 응축해 염색체가 되는 과정을 입체로 보고, 사람의 핵형(상염색체 22쌍 + 성염색체 1쌍)을 살펴봐요.
+   2D 차시의 응축 슬라이더(DNA 이중 나선 · 뉴클레오솜 · 염색사 · 염색체)와 복제 전·후, 핵형 장면을 따라가요. ▶ 응축 과정은 2D 슬라이더도 함께 움직여요. */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -123,18 +124,32 @@
         if (cur === 4) { txt = STAGES[4].info + (down ? '<br>21번이 3개: 다운 증후군(염색체 47개)' : ''); kg.extra.visible = down; kg.l21.set(down ? '21번 (3개)' : '21번'); }
         info(txt);
       }
-      const seg = controls.segment('', STAGES.map((s, i) => ({ label: s.k, value: i })), 0, setStage);
+      const seg = controls.segment('', STAGES.map((s, i) => ({ label: s.k, value: i })), 0, (i) => { const L = L2(); if (L) { if (i === 4) L.setMode('karyo'); else { L.setMode('struct'); L.S.cond.target = i; L.updateCtl(); } } setStage(i); });
       const subA = [], subB = [], mark = () => document.querySelector('.v3-ctl');
       let n0 = mark() ? mark().children.length : 0;
-      controls.segment('복제', [{ label: '복제 후(X)', value: true }, { label: '복제 전', value: false }], true, (v) => { repl = v; refresh(); });
+      controls.segment('복제', [{ label: '복제 후(X)', value: true }, { label: '복제 전', value: false }], true, (v) => { repl = v; const L = L2(); if (L && L.S.mode === 'struct') { L.S.rep.target = v ? 1 : 0; L.updateCtl(); } refresh(); });
       let n1 = mark() ? mark().children.length : 0;
       controls.segment('성별', [{ label: '남자 XY', value: true }, { label: '여자 XX', value: false }], true, (v) => { male = v; setSex(); refresh(); });
       controls.button('21번 염색체 +1', () => { down = !down; refresh(); });
       const ctlEl = mark(); if (ctlEl) { [...ctlEl.children].slice(n0, n1).forEach((e) => subA.push(e)); [...ctlEl.children].slice(n1).forEach((e) => subB.push(e)); }
       function setSex() { kg.sexY.visible = male; kg.sexX2.visible = !male; }
-      setStage(0);
+      const L2 = () => window.__sim || null;
+      let plGuard = false, ready = false;
+      const pl = controls.player({ duration: 10, loop: true, autoplay: false, label: '응축 과정', phases: [[0, 'DNA 이중 나선'], [0.25, '뉴클레오솜'], [0.5, '염색사'], [0.75, '염색체']],
+        onFrame(p) { if (plGuard || !ready) return; const st = Math.min(3, Math.floor(p * 4)); if (st !== cur || (L2() && L2().S.mode !== 'struct')) { const L = L2(); if (L) { if (L.S.mode !== 'struct') L.setMode('struct'); L.S.cond.target = st; L.updateCtl(); } setStage(st); } } });
+      let seenK = '';
+      setStage(0); ready = true;
       return {
         update(dt, t) {
+          const L = L2();
+          if (L && !(pl.playing)) {
+            const k = L.S.mode + '|' + Math.round(L.S.cond.target) + '|' + (L.S.rep.target > 0.5 ? 1 : 0);
+            if (k !== seenK) {
+              seenK = k;
+              if (L.S.mode === 'struct') { const st = Math.max(0, Math.min(3, Math.round(L.S.cond.target))); repl = L.S.rep.target > 0.5; if (st !== cur) setStage(st); else refresh(); }
+              else if (L.S.mode === 'karyo') { if (cur !== 4) setStage(4); }
+            }
+          }
           grow = Math.min(1, grow + dt * 2.2); const e = 1 - Math.pow(1 - grow, 3);
           groups.forEach((g, k) => { if (g.visible) g.scale.setScalar(k === 4 ? 0.86 + 0.04 * e : 0.8 + 0.2 * e); });
           if (cur === 3) {

@@ -83,6 +83,7 @@ function foldChain(start, phob, seed) {
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: 7, theta: 0.15, phi: 1.4, fov: 40, min: 3, max: 30, target: [0, PHONE ? 0.5 : 0, 0] },
     autoRotate: 0,
+    levels: [2, 3],   // 1·2단계(구슬 · 사슬 · 경우의 수)는 2D에서 직접 해 봐요. 접힘 · 변성 단계에서 3D로 시작
     build(ctx) {
       const { THREE, root, label, info, controls, orbit, camera } = ctx;
       const N = SEQ.length;
@@ -149,11 +150,12 @@ function foldChain(start, phob, seed) {
       const hemeL = label('● 헴 (산소와 결합)', subs[1].heme, { color: 'rgba(185,28,28,.93)', offset: [0, -0.45, 0] });
 
       /* 상태 */
-      let stage = 1, denat = false, replay = 0, T = 0, fitNeeded = true, camGo = 0, infoT = 0;
+      let stage = 1, denat = false, foldedFlag = false, playing = false, lastLs = {}, replay = 0, T = 0, fitNeeded = true, camGo = 0, infoT = 0;
       const targetFor = (s) => {
         if (stage === 1) return prim;
         if (denat) return COIL[s];
-        return stage === 2 ? secd : FOLD;
+        if (stage === 2) return secd;
+        return stage === 4 || foldedFlag ? FOLD : secd;   // 3차: 2D처럼 '물에 풀어 접기' 전에는 접히기 전 모습
       };
       function snapAll() { subs.forEach((S, s) => { const t = targetFor(s); S.cur = t.map((p) => p.slice()); }); }
 
@@ -184,16 +186,18 @@ function foldChain(start, phob, seed) {
       }
       const seqRow = SEQ.map((k) => '<span style="display:inline-block;margin:1px;padding:0 4px;border-radius:5px;background:' + HEX(AAI[k].col) + ';color:#fff;font-size:' + (PHONE ? 10 : 11) + 'px">' + AAI[k].ab + '</span>').join('');
       function refreshInfo() {
-        const W = PHONE ? 215 : 262;
+        const W = PHONE ? 215 : 262, L = ctx.lesson(), mode = L && L.S ? L.S.mode : 'fold';
         const t = {
           1: '<b>1차 구조</b>: 아미노산 서열<br>구슬 12개가 <b>펩타이드 결합</b>(노란 막대)으로 이어졌어요.',
           2: '<b>2차 구조</b>: <b>나선</b>과 <b>병풍</b><br>사슬 일부가 <b>수소 결합</b>(흰 점선)으로 규칙적으로 접혀요.',
-          3: '<b>3차 구조</b>: 입체 구조<br>R기끼리의 상호작용으로 접혀요. 소수성 R기(주황)는 안쪽, 친수성·전하 R기는 물과 닿는 바깥쪽.',
+          3: '<b>3차 구조</b>: 입체 구조<br>R기끼리의 상호작용으로 접혀요. 소수성 R기(주황)는 안쪽, 친수성·전하 R기는 물과 닿는 바깥쪽.' + (foldedFlag || denat ? '' : '<br><span style="color:#fcd34d">💧 물에 풀어 접기를 눌러 보세요.</span>'),
           4: '<b>4차 구조</b>: 폴리펩타이드 4개<br>헤모글로빈 = α 사슬 2개 + β 사슬 2개 (헴 4개).',
         }[stage];
         let extra = '';
-        if (stage === 3 && !denat) { const m = metric(); extra = '<br><span style="color:#fdba74">중심까지 평균 거리: 소수성 ' + m[0].toFixed(1) + ' / 친수성·전하 ' + m[1].toFixed(1) + '</span>'; }
-        if (denat) extra = stage === 1 ? '<br><span style="color:#fca5a5">🔥 서열은 변성되어도 그대로예요.</span>' : '<br><span style="color:#fca5a5">🔥 변성: 입체 구조가 풀려 기능을 잃어요. 서열 · 펩타이드 결합은 그대로!</span>';
+        if (stage === 3 && !denat && foldedFlag) { const m = metric(); extra = '<br><span style="color:#fdba74">중심까지 평균 거리: 소수성 ' + m[0].toFixed(1) + ' / 친수성·전하 ' + m[1].toFixed(1) + '</span>'; }
+        if (mode === 'denat' && L && L.S.dn) { const d = L.S.dn; extra = '<br><span style="color:#fca5a5">처리: ' + (d.acid ? '강산' : d.alc ? '알코올' : d.T + ' °C') + ' · 효소 활성 ' + Math.round(d.f * 100) + ' %' + (denat ? '<br>🔥 변성: 입체 구조가 풀려 기능을 잃어요. 서열 · 펩타이드 결합은 그대로!' : '<br>열 · 강산 · 알코올로 변성시켜 보세요 (왼쪽 조작).') + '</span>'; }
+        else if (mode === 'sickle') extra = '<br><span style="color:#fcd34d">🔴 낫 모양 화면은 ▦ 2D에서 정상 · 변이 β 사슬을 비교해 보세요. (6번째 아미노산 하나가 바뀌어요)</span>';
+        else if (mode !== 'fold') extra = '<br><span style="color:#fcd34d">이 단계의 구슬 · 사슬 실험은 ▦ 2D에서 해요. 3D는 접힘 · 변성에서 2D와 함께 움직여요.</span>';
         info('<div style="max-width:' + W + 'px">' + t + extra + '<div style="margin-top:3px">' + seqRow + '</div></div>');
       }
       function applyLabels() {
@@ -205,19 +209,64 @@ function foldChain(start, phob, seed) {
       }
       function setStage(v, quiet) {
         if (v === stage && !quiet) return; stage = v; fitNeeded = true; camGo = 1.3;
-        replay = 0;
-        segCtl.set(stage); refreshInfo(); applyLabels(); denB.style.display = '';
-        foldB.style.display = stage === 3 ? '' : 'none';
+        replay = 0; if (stage <= 2) foldedFlag = false;
+        segCtl.set(stage); refreshInfo(); applyLabels();
+        foldB.style.display = stage === 3 && !foldedFlag ? '' : 'none';
         if (stage === 4) subs.forEach((S, s) => { if (s > 0) { S.cur = targetFor(s).map((p) => p.slice()); } });
       }
-      const segCtl = controls.segment('구조 단계', [{ value: 1, label: '1차' }, { value: 2, label: '2차' }, { value: 3, label: '3차' }, { value: 4, label: '4차' }], 1, (v) => setStage(v));
-      const denB = controls.button('🔥 변성', () => { denat = !denat; denB.classList.toggle('on', denat); denB.textContent = denat ? '↺ 원래 모양' : '🔥 변성'; fitNeeded = true; refreshInfo(); applyLabels(); });
-      const foldB = controls.button('▶ 접기 다시 보기', () => { if (denat) { denat = false; denB.classList.remove('on'); denB.textContent = '🔥 변성'; } subs[0].cur = secd.map((p) => p.slice()); replay = 2.6; refreshInfo(); applyLabels(); });
+      /* 3D에서 단계를 고르면 2D도 같은 단계로 (4차는 2D처럼 3차를 접은 뒤에만) */
+      function userStage(v) {
+        const L = ctx.lesson();
+        if (player && player.playing) player.pause();
+        if (L && L.foldSetStage && L.S.mode === 'fold') {
+          L.foldSetStage(v);
+          if (L.S.fold.stage !== v) { segCtl.set(stage); info('<div style="max-width:250px">4차 구조는 먼저 3차 구조를 완성해야 볼 수 있어요.<br><span style="color:#fcd34d">💧 물에 풀어 접기를 눌러 보세요.</span></div>'); infoT = 2.5; return; }
+          lastLs.stage = v;
+        }
+        setStage(v);
+      }
+      const segCtl = controls.segment('구조 단계', [{ value: 1, label: '1차' }, { value: 2, label: '2차' }, { value: 3, label: '3차' }, { value: 4, label: '4차' }], 1, userStage);
+      const foldB = controls.button('💧 물에 풀어 접기', () => {
+        const L = ctx.lesson();
+        if (player && player.playing) player.pause();
+        if (L && L.foldStart && L.S.mode === 'fold') { L.foldStart(); lastLs.stage = L.S.fold.stage; }
+        if (stage !== 3) setStage(3);
+        foldedFlag = true; subs[0].cur = secd.map((p) => p.slice()); replay = 2.6; foldB.style.display = 'none'; refreshInfo(); applyLabels();
+      });
       foldB.style.display = 'none';
 
+      /* ▶ 한 번 접히는 과정 보기: 1차 → 2차 → 3차(접힘) → 4차 */
+      let pStage = 0;
+      const player = controls.player({
+        duration: 10, loop: true, autoplay: false, label: '구조 단계',
+        phases: [[0, '1차 · 서열'], [0.25, '2차 · 나선 · 병풍'], [0.5, '3차 · 접힘'], [0.75, '4차 · 헤모글로빈']],
+        onFrame(p) {
+          const v = p < 0.25 ? 1 : p < 0.5 ? 2 : p < 0.75 ? 3 : 4;
+          if (v !== pStage) { pStage = v; denat = false; if (v === 3) { foldedFlag = true; } setStage(v); }
+          if (v === 3 && !foldedFlag) foldedFlag = true;
+        },
+      });
+
       function lessonStage() { try { const s = window.__sim && window.__sim.S; if (s && s.fold && s.fold.stage >= 1 && s.fold.stage <= 4) return s.fold.stage; } catch (e) {} return null; }
-      { const ls = lessonStage(); if (ls) stage = ls; }
-      segCtl.set(stage); snapAll(); foldB.style.display = stage === 3 ? '' : 'none'; refreshInfo(); applyLabels();
+      /* 2D가 바뀌면 3D도 따라가요 (2D → 3D) */
+      function followLesson() {
+        const L = ctx.lesson(); if (!L || !L.S) return;
+        const mode = L.S.mode;
+        if (mode !== lastLs.mode) { lastLs.mode = mode; lastLs.stage = null; if (denat !== false && mode !== 'denat') denat = false; applyLabels(); refreshInfo(); }
+        if (mode === 'denat') {
+          const d = L.S.dn, dn = d.f < 0.5;
+          if (!foldedFlag || stage !== 3 || dn !== denat) { foldedFlag = true; denat = dn; if (stage !== 3) setStage(3, true); fitNeeded = true; applyLabels(); refreshInfo(); foldB.style.display = 'none'; }
+          lastInfo.f = d.f;
+          return;
+        }
+        if (denat) { denat = false; fitNeeded = true; applyLabels(); refreshInfo(); }
+        const st = lessonStage();
+        if (mode === 'fold' && st && st !== lastLs.stage) { lastLs.stage = st; if (st !== stage) { if (st === 3 && L.S.fold.folded) foldedFlag = true; setStage(st); } }
+        if (mode === 'fold' && L.S.fold && (L.S.fold.run || L.S.fold.folded) && stage === 3 && !foldedFlag) { foldedFlag = true; foldB.style.display = 'none'; refreshInfo(); }
+      }
+      const lastInfo = {};
+      { const ls = lessonStage(); if (ls) { stage = ls; lastLs.stage = ls; } const L0 = ctx.lesson(); if (L0 && L0.S && L0.S.fold && (L0.S.fold.folded || L0.S.fold.run)) foldedFlag = true; }
+      segCtl.set(stage); snapAll(); foldB.style.display = stage === 3 && !foldedFlag ? '' : 'none'; refreshInfo(); applyLabels();
 
       /* 구조 4개 위치 · 크기 */
       const grp = subs.map(() => ({ x: 0, y: 0, z: 0, s: 1 }));
@@ -235,10 +284,11 @@ function foldChain(start, phob, seed) {
       return {
         update(dt, t) {
           T = t;
+          if (!player.playing) followLesson(); else lastLs.stage = lessonStage();
           if (fitNeeded && camera.aspect) { fit(); fitNeeded = false; }
           if (camGo > 0) { camGo -= dt; const ct = stage === 1 ? 0.12 : stage === 2 ? 0.7 : 0.85, cp = stage === 1 ? 1.42 : stage === 2 ? 1.1 : 1.12; orbit.theta += (ct - orbit.theta) * Math.min(1, dt * 3); orbit.phi += (cp - orbit.phi) * Math.min(1, dt * 3); }
-          infoT -= dt; if (infoT < 0) { infoT = 0.3; if (stage === 3 && !denat) refreshInfo(); }
-          const folded3 = stage >= 3 && !denat;
+          infoT -= dt; if (infoT < 0) { infoT = 0.3; if ((stage === 3 && !denat) || denat || (ctx.lesson() && ctx.lesson().S.mode === 'denat')) refreshInfo(); }
+          const folded3 = stage >= 3 && !denat && (foldedFlag || stage === 4);
           subs.forEach((S, s) => {
             const tg = targetFor(s), rate = replay > 0 ? 1.6 : 3.2;
             S.cur.forEach((c, i) => { for (let k = 0; k < 3; k++) c[k] = ap(c[k], tg[i][k], dt, rate); });
@@ -266,7 +316,7 @@ function foldChain(start, phob, seed) {
             });
           }
         },
-        sync() { const ls = lessonStage(); if (ls && ls !== stage) setStage(ls); },
+        sync() { followLesson(); },
       };
     },
   });

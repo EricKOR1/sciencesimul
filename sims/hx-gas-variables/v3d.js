@@ -12,6 +12,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHONE ? 15 : 12.5, theta: 0.7, phi: 1.25, min: 6, max: 26, target: [0, 0.2, 0] },
     autoRotate: 0.18,
+    levels: [0, 1, 2],   // 4단계(하나의 식)는 2D의 식 카드 끌어 놓기가 필요해요
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3;
@@ -54,11 +55,12 @@
       const labP = label('', knob, { color: 'rgba(239,106,91,.92)', offset: [0, 0.7, 0] });
       const labV = label('', [HW + 0.1, FLOOR, HW], { color: 'rgba(56,134,214,.92)' });
 
-      const cur = { n: 0.5, T: 300, V: 12.3, P: 1, h: 5 }; let h = 5, lastTxt = '';
+      const cur = { n: 0.5, T: 300, V: 12.3, P: 1, h: 5, kind: 'gen', mode: 'boyle', sub: 'charles' }; let h = 5, lastTxt = '';
       const tmpM = new THREE.Matrix4(), tmpC = new THREE.Color();
       function read() {
         const s = st0();
-        if (s) { cur.n = s.n; cur.T = s.T; cur.V = s.V; cur.P = s.P; }
+        if (s) { cur.n = s.n; cur.T = s.T; cur.V = s.V; cur.P = s.P; cur.kind = s.kind; }
+        try { const S = window.__sim.S; cur.mode = S.mode; cur.sub = S.sub.temp; } catch (e) { /* 무시 */ }
         return cur;
       }
       function layout(dt) {
@@ -87,15 +89,22 @@
           if (p.y > top) { p.y = top; p.d.y = -Math.abs(p.d.y); p.fl = 1; } else if (p.y < bot) { p.y = bot; p.d.y = Math.abs(p.d.y); p.fl = 1; }
           p.fl = Math.max(0, p.fl - dt * 4);
           tmpM.makeTranslation(p.x, p.y, p.z); const sc = 1 + (flashOn ? p.fl * 0.5 : 0); tmpM.scale(new V3(sc, sc, sc)); mesh.setMatrixAt(i, tmpM);
-          if (colorBySpeed) { const k = Math.min(1, Math.max(0, (sp * p.f / 2.3 - 0.3) / 1.4)); tmpC.setHSL(0.62 - 0.62 * k, 0.85, 0.58); }
-          else tmpC.setHex(0x7cc4ff);
+          if (colorBySpeed && c.kind === 'gen') { const k = Math.min(1, Math.max(0, (sp * p.f / 2.3 - 0.3) / 1.4)); tmpC.setHSL(0.62 - 0.62 * k, 0.85, 0.58); }
+          else tmpC.setHex((KIND[c.kind] || KIND.gen)[1]);
           if (flashOn && p.fl > 0.4) tmpC.lerp(new THREE.Color(0xffffff), p.fl);
           mesh.setColorAt(i, tmpC);
         }
         mesh.instanceMatrix.needsUpdate = true; if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
       }
+      const KIND = { gen: ['기체', 0x7cc4ff], he: ['He', 0xf2b705], n2: ['N₂', 0x3867f4], co2: ['CO₂', 0x9ca3af] };
       function text() {
-        const c = cur, t = '<b>P = ' + c.P.toFixed(2) + ' atm</b> · V = ' + c.V.toFixed(1) + ' L<br>T = ' + Math.round(c.T) + ' K · n = ' + c.n.toFixed(2) + ' mol<br>입자가 벽을 더 자주·세게 때리면 압력이 커져요.';
+        const c = cur, nm = (KIND[c.kind] || KIND.gen)[0];
+        let line;
+        if (c.mode === 'boyle' || c.mode === 'unify') line = '온도 300 K · 몰수 0.50 mol 고정<br>P × V = ' + (c.P * c.V).toFixed(1) + ' atm·L (일정)';
+        else if (c.mode === 'temp' && c.sub === 'gay') line = '부피 12.30 L 고정 · 온도가 오르면 압력이 커져요';
+        else if (c.mode === 'temp') line = '압력 1.00 atm 고정 · 온도가 오르면 부피가 커져요';
+        else line = nm + ' · 300 K, 1.00 atm 고정 · 몰수가 늘면 부피가 커져요';
+        const t = '<b>P = ' + c.P.toFixed(2) + ' atm</b> · V = ' + c.V.toFixed(1) + ' L<br>T = ' + Math.round(c.T) + ' K · n = ' + c.n.toFixed(2) + ' mol<br>' + line + '<br>입자가 벽을 더 자주·세게 때리면 압력이 커져요.';
         if (t !== lastTxt) { lastTxt = t; info(t); labP.set('P ' + c.P.toFixed(2) + ' atm'); labV.set('V ' + c.V.toFixed(1) + ' L'); }
       }
       controls.segment('입자 색', [{ value: 'spd', label: '속도 색' }, { value: 'one', label: '한 가지 색' }], 'spd', (v) => { colorBySpeed = v === 'spd'; });

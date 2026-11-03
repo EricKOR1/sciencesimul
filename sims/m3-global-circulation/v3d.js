@@ -34,11 +34,12 @@
     hint: '드래그: 돌리기 · 두 손가락/휠: 확대',
     camera: { dist: narrow ? 7.4 : 4.8, theta: 0.3, phi: 1.42, target: narrow ? [0.45, 0.22, 0] : [0.4, 0.22, 0], min: 2.6, max: 11 },
     autoRotate: 0,
+    levels: [0, 1, 3],            // 단계 3(바람 카드 끌어 놓기)은 2D 화면에서 해요
     build(ctx) {
       const { THREE, root, camera, label, info, controls } = ctx;
       const V = THREE.Vector3;
       const P = (lat, lon, r) => new V(r * Math.cos(lat * D2R) * Math.sin(lon * D2R), r * Math.sin(lat * D2R), r * Math.cos(lat * D2R) * Math.cos(lon * D2R));
-      let view = 'both', focus = 'all', hemi = 'N', spin = true;
+      let view = 'cell', focus = 'all', hemi = 'N', spin = true, scene = 'flash', circ = true, circA = 1, latV = 0, tp = 0, sig = '';
 
       /* ---- 지구 (자전하는 그룹) ---- */
       const earth = new THREE.Group(); root.add(earth);
@@ -61,6 +62,18 @@
       // 대기 (과장해서 두껍게)
       const atm = new THREE.Mesh(new THREE.SphereGeometry(1.45, 48, 32), new THREE.MeshBasicMaterial({ color: 0x7ab8ff, transparent: true, opacity: 0.05, side: THREE.BackSide, depthWrite: false }));
       root.add(atm);
+      /* ---- 손전등 장면(위도별 에너지): 같은 빛이 위도에 따라 얼마나 퍼지는지 ---- */
+      const beam = new THREE.Group(); root.add(beam);
+      const beamBox = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, 1), new THREE.MeshBasicMaterial({ color: 0xfff2a8, transparent: true, opacity: 0.32, depthWrite: false })); beam.add(beamBox);
+      const spotMat = new THREE.MeshBasicMaterial({ color: 0xfde047, transparent: true, opacity: 0.7, depthWrite: false, side: THREE.DoubleSide });
+      let spot = null; const sunLab = label('☀ 햇빛', [0, 0.1, 3.0], { color: 'rgba(161,98,7,.92)', size: 13 });
+      function setBeam(lat) {
+        const yc = Math.min(0.9, Math.sin(Math.min(lat, 90) * D2R)), h = 0.1, zc = Math.sqrt(1 - yc * yc);
+        beamBox.position.set(0, yc, (zc + 3.2) / 2); beamBox.scale.z = 3.2 - zc;
+        const yh = Math.min(1, yc + h), yl = Math.max(-1, yc - h), th0 = Math.acos(yh), th1 = Math.acos(yl), thc = (th0 + th1) / 2, d = Math.min(1.3, Math.asin(Math.min(1, h / Math.max(0.05, Math.sin(thc)))));
+        if (spot) { root.remove(spot); spot.geometry.dispose(); }
+        spot = new THREE.Mesh(new THREE.SphereGeometry(1.006, 28, 8, Math.PI / 2 - d, 2 * d, th0, th1 - th0), spotMat); root.add(spot);
+      }
       // 적도·극축
       const axis = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 2.7, 6), new THREE.MeshBasicMaterial({ color: 0xcbd5e1, transparent: true, opacity: 0.5 })); root.add(axis);
 
@@ -77,7 +90,7 @@
         const tube = new THREE.Mesh(new THREE.TubeGeometry(curve, 120, 0.011, 6, true), new THREE.MeshBasicMaterial({ color: c.col, transparent: true, opacity: 0.55 }));
         root.add(tube);
         const parts = [];
-        for (let i = 0; i < 8; i++) { const m = new THREE.Mesh(cone, new THREE.MeshStandardMaterial({ color: c.col, emissive: c.col, emissiveIntensity: 0.55, roughness: 0.4 })); root.add(m); parts.push({ m, t: i / 8 }); }
+        for (let i = 0; i < 8; i++) { const m = new THREE.Mesh(cone, new THREE.MeshStandardMaterial({ color: c.col, emissive: c.col, emissiveIntensity: 0.55, roughness: 0.4 })); root.add(m); parts.push({ m, t: i / 8, i }); }
         loops.push({ c, sg, curve, tube, parts });
       }));
       // 상승·하강 이름표 (북반구)
@@ -116,58 +129,78 @@
 
       const wp = new V(), nrm = new V(), eastV = new V(), northV = new V(), head = new V(), up = new V(0, 1, 0);
       function layout() {
-        const showCells = view !== 'wind', showWind = view !== 'cell';
+        const S = ((ctx.lesson() || {}).S) || {};
+        scene = S.scene || 'flash'; focus = scene === 'cells' ? (S.focus || 'all') : 'all'; circ = S.circ !== false; circA = S.circA == null ? 1 : S.circA; latV = S.lat || 0;
+        view = scene === 'wind' ? 'wind' : scene === 'role' ? 'both' : scene === 'cells' ? 'cell' : 'none';
+        const showCells = view === 'cell' || view === 'both', showWind = view === 'wind' || view === 'both';
+        const fl = scene === 'flash'; if (typeof plRow !== 'undefined' && plRow) plRow.style.display = fl ? 'none' : ''; beam.visible = fl; if (spot) spot.visible = fl; sunLab.show(fl);
+        if (fl) setBeam(latV);
+        const dim = scene === 'role' && !circ;
         loops.forEach((L) => {
           const on = showCells && (hemi === 'both' || L.sg > 0) && (focus === 'all' || focus === L.c.id);
           L.tube.visible = showCells && (hemi === 'both' || L.sg > 0);
-          L.tube.material.opacity = on ? 0.6 : 0.12;
-          L.parts.forEach((p) => { p.m.visible = on; });
+          L.tube.material.opacity = dim ? 0.1 : on ? 0.6 : 0.12;
+          L.parts.forEach((p) => { p.m.visible = on && !dim; });
         });
-        arrows.forEach((a) => { a.m.visible = showWind && (hemi === 'both' || a.sg > 0) && (focus === 'all' || WINDS[a.k] === WINDS[CELLS.find((c) => c.id === focus).wind]); });
-        markLabs.forEach((L) => L.show(showCells && focus === 'all'));
+        const fw = focus === 'all' ? null : WINDS[CELLS.find((c) => c.id === focus).wind];
+        arrows.forEach((a) => { a.m.visible = showWind && (hemi === 'both' || a.sg > 0) && (!fw || WINDS[a.k] === fw); });
+        markLabs.forEach((L) => L.show(showCells && focus === 'all' && scene === 'cells'));
         cellLabs.forEach((L, i) => L.show(showCells && (focus === 'all' || focus === CELLS[i].id)));
-        windLabs.forEach((L) => { L.show2 = showWind && (focus === 'all' || WINDS[L.k] === WINDS[CELLS.find((c) => c.id === focus).wind]); });
-        writeInfo();
+        windLabs.forEach((L) => { L.show2 = showWind && (!fw || WINDS[L.k] === fw); });
+        korLab.show2 = scene !== 'flash';
+        writeInfo(S);
       }
-      function writeInfo() {
+      function writeInfo(S) {
         const parts = [];
         const c = CELLS.find((x) => x.id === focus), W2 = c && WINDS[c.wind];
-        if (focus === 'all') {
+        if (scene === 'flash') {
+          const k = 1 / Math.max(0.05, Math.cos(Math.min(latV, 87) * D2R));
+          parts.push('<b>🔦 위도 ' + Math.round(latV) + '°</b>에 같은 빛을 비춰요.<br>빛이 퍼지는 넓이는 적도의 약 <b>' + k.toFixed(1) + '배</b>' + (latV < 8 ? ' (적도: 빛이 가장 모여요)' : ''));
+          parts.push('<span style="color:#fcd34d">고위도일수록 같은 빛이 넓게 퍼져서 단위 면적당 받는 태양 에너지가 적어요.</span>');
+        } else if (scene === 'role') {
+          parts.push(circ ? '<b>🌀 대기 대순환 작동</b>: 열이 저위도에서 고위도로 옮겨져요.<br>에너지가 남는 저위도와 부족한 고위도의 차이가 줄어요.' : '<b>⏸ 대순환이 멈춘다고 가정</b>: 열이 옮겨지지 않아 저위도는 더 남고 고위도는 더 부족해져요.');
+          if (circ) parts.push('지표 바람: <b>무역풍·편서풍·극동풍</b>');
+        } else if (focus === 'all' && scene === 'cells') {
           parts.push('<b>순환 3개</b>가 위도마다 세로 고리를 이뤄요.<br><b style="color:#86efac">상승</b> 0°·60° (구름·비) · <b style="color:#93c5fd">하강</b> 30°·극 (맑고 건조)');
-          if (view !== 'cell') parts.push('지표 바람: <b>무역풍·편서풍·극동풍</b> (비스듬히 불어요)');
+        } else if (scene === 'wind') {
+          parts.push('<b>무역풍(북동풍)</b> 0~30° · <b>편서풍(남서풍)</b> 30~60° · <b>극동풍(북동풍)</b> 60~90°<br>북반구에서 지표 바람은 비스듬히 불어요.');
         } else if (focus === 'h') parts.push('<b style="color:#38bdf8">저위도 순환</b>: 적도에서 <b>상승</b> → 높은 곳에서 30° 쪽으로 이동 → 30°에서 <b>하강</b> → 지표에서 적도로 되돌아와요. 지표 바람은 <b>무역풍</b>이에요.');
         else if (focus === 'f') parts.push('<b style="color:#a78bfa">중위도 순환</b>: 30°에서 <b>하강</b> → 지표에서 60° 쪽으로 이동 → 60°에서 <b>상승</b> → 높은 곳에서 30° 쪽으로 되돌아가요. 지표 바람은 <b>편서풍</b>이에요.');
-        else parts.push('<b style="color:#fbbf24">고위도 순환</b>: 60°에서 <b>상승</b> → 높은 곳에서 극으로 이동 → 극에서 <b>하강</b> → 지표에서 60° 쪽으로 되돌아와요. 지표 바람은 <b>극동풍</b>이에요.');
-        if (hemi === 'both' && focus === 'all') parts.push('<span style="color:#ffd34d">남반구</span>는 거울처럼 대칭이고, 지표 바람은 북반구와 반대로 비스듬히 불어요 (무역풍은 남동풍).');
-        else if (W2 && view !== 'cell') parts.push(W2.name + ': 북반구에서 <b>' + W2.sub + '</b>');
-        parts.push('<span style="color:#fca5a5">●</span> 우리나라 (약 37°N, 편서풍 지역)');
+        else if (focus === 'p') parts.push('<b style="color:#fbbf24">고위도 순환</b>: 60°에서 <b>상승</b> → 높은 곳에서 극으로 이동 → 극에서 <b>하강</b> → 지표에서 60° 쪽으로 되돌아와요. 지표 바람은 <b>극동풍</b>이에요.');
+        if (scene !== 'flash' && hemi === 'both') parts.push('<span style="color:#ffd34d">남반구</span>는 거울처럼 대칭이에요. 지표 바람은 북반구와 반대로 비스듬히 불어요.');
+        if (scene !== 'flash') parts.push('<span style="color:#fca5a5">●</span> 우리나라 (약 37°N, 편서풍 지역)');
         info(parts.join('<br>'));
       }
-      controls.segment('보기', [{ value: 'both', label: '순환 + 바람' }, { value: 'cell', label: '상승·하강 순환' }, { value: 'wind', label: '지표 바람' }], view, (v) => { view = v; layout(); });
-      controls.segment('순환', [{ value: 'all', label: '전체' }, { value: 'h', label: '저위도' }, { value: 'f', label: '중위도' }, { value: 'p', label: '고위도' }], focus, (v) => { focus = v; layout(); });
-      controls.segment('반구', [{ value: 'N', label: '북반구' }, { value: 'both', label: '양쪽' }], hemi, (v) => { hemi = v; layout(); });
+      controls.segment('반구', [{ value: 'N', label: '북반구' }, { value: 'both', label: '양쪽' }], hemi, (v) => { hemi = v; sig = ''; });
       const spB = controls.button('🌍 자전 ✓', () => { spin = !spin; spB.classList.toggle('on', spin); spB.textContent = '🌍 자전 ' + (spin ? '✓' : '✕'); }); spB.classList.add('on');
+      /* ▶ 공기의 순환 한 바퀴 (한 고리를 따라 상승 → 이동 → 하강 → 지표에서 되돌아옴) */
+      const plr = controls.player({
+        duration: 10, loop: true, autoplay: true, label: '공기 순환',
+        phases: [[0, '상승 기류'], [0.12, '높은 곳에서 이동'], [0.42, '하강 기류'], [0.56, '지표 부근에서 이동'], [0.92, '상승 기류']],
+        onFrame(p) { tp = p; },
+      });
+      const plRow = Array.from(ctx.controls.text('').parentNode.querySelectorAll('.v3-player'))[0];
       layout();
 
       return {
-        sync() {
-          const s = window.__sim && window.__sim.S;
-          if (s && ['all', 'h', 'f', 'p'].indexOf(s.focus) >= 0 && s.focus !== focus) { focus = s.focus; layout(); }
-        },
         update(dt, t) {
-          if (spin) earth.rotation.y += 0.22 * dt;            // 서 → 동 (북극 위에서 보면 반시계 방향)
-          const sl = window.SciSim && window.SciSim.reduceMotion ? 0.2 : 1;
+          const S = ((ctx.lesson() || {}).S) || {};
+          const ns = [S.scene, S.focus, S.circ, Math.round(S.lat || 0), hemi].join('|');
+          if (ns !== sig) { sig = ns; layout(); }
+          if (spin && scene !== 'flash') earth.rotation.y += 0.22 * dt;            // 서 → 동 (북극 위에서 보면 반시계 방향)
+          else if (scene === 'flash') earth.rotation.y = 0;
+          const run = !(scene === 'role' && !circ);
           loops.forEach((L) => {
             if (!L.parts[0].m.visible) return;
             L.parts.forEach((p) => {
-              p.t = (p.t + dt * 0.1 * sl) % 1;
+              p.t = ((run ? tp : 0) + p.i / 8) % 1;
               const pos = L.curve.getPointAt(p.t), tg = L.curve.getTangentAt(p.t);
               p.m.position.copy(pos); p.m.quaternion.setFromUnitVectors(up, tg);
             });
           });
           arrows.forEach((a) => {
             if (!a.m.visible) return;
-            const s = ((t * 0.12 * sl + a.ph) % 1);
+            const s = ((run ? tp : 0) + a.ph) % 1;
             const lat = a.lat0 + a.vn * ARC * s / D2R, lon = a.lon0 + a.ve * ARC * s / Math.cos(a.lat0 * D2R) / D2R;
             a.m.position.copy(P(lat, lon, 1.02));
             const la = lat * D2R, lo = lon * D2R;
@@ -178,7 +211,7 @@
             const k = Math.sin(Math.PI * s); a.m.scale.setScalar(0.35 + 0.65 * k);
           });
           windLabs.forEach((L) => { L.o.getWorldPosition(wp); nrm.copy(wp).normalize(); L.show(!!L.show2 && nrm.dot(camera.position.clone().sub(wp).normalize()) > 0.25 && (hemi === 'both' || true)); });
-          kor.getWorldPosition(wp); nrm.copy(wp).normalize(); korLab.show(nrm.dot(camera.position.clone().sub(wp).normalize()) > 0.2);
+          kor.getWorldPosition(wp); nrm.copy(wp).normalize(); korLab.show(korLab.show2 !== false && nrm.dot(camera.position.clone().sub(wp).normalize()) > 0.2);
         },
       };
     },

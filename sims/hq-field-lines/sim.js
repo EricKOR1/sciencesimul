@@ -905,7 +905,7 @@
 
   /* ---------- 디버그 (Playwright) ---------- */
   window.__sim = {
-    S, VW, VH, FR, E2, PL, FIG1, A4, QS, M2R, B2, num2, num3, m2Sels, b2Sels, q4Sels, RADS, MS,
+    S, VW, VH, FR, E2, PL, FIG1, A4, QS, M2R, B2, num2, num3, m2Sels, b2Sels, q4Sels, RADS, MS, PS, CX, CY, tcPos, IV,
     get game() { return game; }, setScene, Vof, plGeom, plGo, plBack, tcGo, tPhys, Eof3, ptOK, allOK, strongest, polar, check4, updateCtl,
     stepAll(sec) { const n = Math.ceil(sec / 0.02); for (let i = 0; i < n; i++) { S.t += 0.02; stepAll1(0.02); parts.update(0.02); } },
   };

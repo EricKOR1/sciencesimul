@@ -738,7 +738,7 @@
   });
 
   window.__sim = {
-    S, VW, VH, CARDS, rowsA, rowsB, clsRows, ratioRow, KW, IONFRAC, W_MOL, get game() { return game; },
+    S, VW, VH, BOX, CARDS, rowsA, rowsB, clsRows, ratioRow, KW, IONFRAC, W_MOL, get game() { return game; },
     setScene, startIonize, kwVals, kwAok, kwBok, cardDone, activePairs, mdInit, kwSettled,
     stepAll(sec) { const n = Math.ceil(sec / 0.02); for (let i = 0; i < n; i++) { S.t += 0.02; stepAll1(0.02); parts.update(0.02); } },
   };

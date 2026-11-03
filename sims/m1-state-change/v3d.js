@@ -1,6 +1,6 @@
 /* m1-state-change · 3D 상태 변화와 입자 배열
    상태가 변할 때 입자의 '배열'과 '운동'만 달라지고, 입자의 종류와 수(질량)는 그대로예요.
-   융해·기화·승화(고→기)는 열을 흡수하고, 응고·액화·승화(기→고)는 열을 방출해요. */
+   2D 차시와 같은 여섯 화살표(융해·응고·기화·액화·승화 두 방향)와 '질량·부피' 실험(양초·물·에탄올)을 3D로 보여 줘요. */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -144,46 +144,99 @@
 
       const PR = 0.17, N = 125, HH = 2.3, W = 1.7;
       const NAME = { solid: '고체', liquid: '액체', gas: '기체' };
+      // 2D '상태 변화 6가지의 이름'과 같은 여섯 화살표 (id · 이름 · 방향)
       const CH = {
-        melt: { name: '융해', a: 'solid', b: 'liquid', heat: 1 }, freeze: { name: '응고', a: 'liquid', b: 'solid', heat: -1 },
-        vap: { name: '기화', a: 'liquid', b: 'gas', heat: 1 }, cond: { name: '액화', a: 'gas', b: 'liquid', heat: -1 },
-        sub1: { name: '승화', a: 'solid', b: 'gas', heat: 1 }, sub2: { name: '승화', a: 'gas', b: 'solid', heat: -1 },
+        melt: { name: '융해', a: 'solid', b: 'liquid' }, freeze: { name: '응고', a: 'liquid', b: 'solid' },
+        vap: { name: '기화', a: 'liquid', b: 'gas' }, cond: { name: '액화', a: 'gas', b: 'liquid' },
+        sub1: { name: '승화', a: 'solid', b: 'gas' }, sub2: { name: '승화', a: 'gas', b: 'solid' },
       };
-      const sys = stateSys(N, PR, 0xffffff), st = { key: 'melt', t: 0, phase: 'wait', cur: 'melt' };
+      // 2D '상태가 변하면 부피와 질량은?' 실험 (밀폐 용기, 질량 g · 부피 mL)
+      const EX = {
+        wax: { name: '양초', a: 'liquid', b: 'solid', mass: 121.0, vA: 44, vB: 40, note: '녹인 양초가 담긴 밀폐 용기' },
+        water: { name: '물', a: 'liquid', b: 'solid', mass: 100.0, vA: 40, vB: 44, note: '물이 가득 담긴 밀폐 병' },
+        eth: { name: '에탄올', a: 'liquid', b: 'gas', mass: 3.0, vA: 1, vB: 500, note: '에탄올 몇 방울이 든 비닐봉지' },
+      };
+      const sm = (x) => { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); };
+      const expVol = (e, f, key) => (key === 'eth' ? 1 + 499 * Math.pow(f, 1.6) : e.vA + (e.vB - e.vA) * sm((f - 0.15) / 0.8));
+      const sys = stateSys(N, PR, 0xffffff), st = { key: 'melt', t: 0, phase: 'wait', mode: 'theater', exp: 'wax', expMode: '' };
       sys.H = HH; sys.W = W;
       const frame = boxFrame(W, HH); root.add(frame);
       const stand = new THREE.Mesh(new THREE.CylinderGeometry(3.2, 3.4, 0.2, 48), mat(0x64748b, { metalness: 0.4, roughness: 0.4 })); stand.position.y = -HH - 0.12; root.add(stand);
-      /* 열 출입 화살표 */
-      const arr = mkArrow(0xff6a3d, 0.1); root.add(arr);
       const nameLab = label('', [0, HH + 0.5, 0], { size: 14, color: 'rgba(30,64,175,.92)' });
-      const heatLab = label('', [3.1, -HH + 0.15, 0], { size: 12.5 });
       const cntLab = label('입자 ' + N + '개', [-W, -HH, W], { size: 11.5, offset: [-0.2, -0.45, 0.2] });
+      const massLab = label('', [2.6, -HH + 0.3, 0], { size: 12.5, color: 'rgba(20,90,70,.92)' });
+      const volLab = label('', [2.6, -HH + 1.0, 0], { size: 12.5, color: 'rgba(30,64,175,.92)' });
+      const l2 = () => (ctx.lesson && ctx.lesson()) || null;
+      let lastTxt = ''; const setInfo = (h) => { if (h !== lastTxt) { lastTxt = h; info(h); } };
+      let pmode = false, built = false;
 
+      function setBox(w, h) { sys.W = w; sys.H = h; frame.userData.set(w, h); stand.position.y = -h - 0.12; }
       function start(key) {
-        const c = CH[key]; st.key = key; st.t = 0; st.phase = 'wait';
-        sys.prep(c.a);
+        const c = CH[key]; st.key = key; st.t = 0; st.phase = 'wait'; st.mode = 'theater';
+        setBox(W, HH); sys.prep(c.a);
         nameLab.set(c.name + ' (' + NAME[c.a] + ' → ' + NAME[c.b] + ')');
-        heatLab.set(c.heat > 0 ? '🔥 열을 흡수해요' : '❄ 열을 방출해요');
-        heatLab.el.style.background = c.heat > 0 ? 'rgba(220,70,40,.9)' : 'rgba(40,110,220,.9)';
-        if (c.heat > 0) setArrow(arr, new V3(3.6, -HH + 1.0, 0), new V3(2.2, -HH + 1.0, 0)); else setArrow(arr, new V3(2.2, -HH + 1.0, 0), new V3(3.6, -HH + 1.0, 0));
-        arr.children.forEach((m) => { m.material.color.setHex(c.heat > 0 ? 0xff6a3d : 0x3b82f6); });
+        massLab.show(false); volLab.show(false); cntLab.show(true);
         text();
       }
       function text() {
         const c = CH[st.key], now = st.phase === 'done' ? c.b : c.a;
-        info('<b>' + c.name + '</b>: ' + NAME[c.a] + ' → ' + NAME[c.b] + ' · 열을 <b>' + (c.heat > 0 ? '흡수' : '방출') + '</b>해요<br>지금은 <b>' + NAME[now] + '</b> 상태예요. 입자의 <b>배열과 운동</b>만 달라져요.<br>입자의 종류와 수는 그대로여서 <b>질량은 변하지 않아요</b>.');
+        setInfo('<b>' + c.name + '</b>: ' + NAME[c.a] + ' → ' + NAME[c.b] + '<br>지금은 <b>' + NAME[now] + '</b> 상태예요. 상태가 변하면 입자의 <b>배열과 운동</b>이 달라져요.<br>입자의 종류와 수는 그대로여서 <b>질량은 변하지 않아요</b>.' + (st.key === 'sub1' || st.key === 'sub2' ? '<br>승화는 액체를 거치지 않고 고체 ⇄ 기체로 곧바로 변하는 두 방향의 변화예요.' : ''));
+      }
+      function toExp(key) {
+        const e = EX[key]; st.mode = 'exp'; st.exp = key; st.expMode = '';
+        sys.prep(e.a); setBox(1.7, 2.0); nameLab.set(e.name + ' 실험 · ' + e.note); massLab.show(true); volLab.show(true); cntLab.show(true);
+      }
+      function showExp(f) {
+        const e = EX[st.exp], V = expVol(e, f, st.exp);
+        const g = st.exp === 'eth' ? Math.max(0, Math.min(1, (V - 1) / 499)) : 0;
+        const w = st.exp === 'eth' ? 1.45 + 1.1 * g : 1.7 * Math.cbrt(V / e.vA), h = st.exp === 'eth' ? 1.8 + 0.9 * g : 2.0 * Math.cbrt(V / e.vA);
+        setBox(w, h);
+        sys.mix(e.a, e.b, f);
+        massLab.set('⚖ 질량 ' + e.mass.toFixed(1) + ' g (그대로)'); volLab.set('부피 ' + (st.exp === 'eth' ? (V < 5 ? '1' : '약 ' + Math.round(V / 10) * 10) : Math.round(V)) + ' mL');
+        massLab.obj = [w + 0.9, -h + 0.5, 0]; volLab.obj = [w + 0.9, -h + 1.3, 0];
+        setInfo('<b>' + e.name + '</b>: ' + NAME[e.a] + ' → ' + NAME[e.b] + ' (밀폐 용기)<br>저울의 <b>질량은 그대로</b>이고 <b>부피</b>만 달라져요. 입자의 수와 종류는 같고, 입자 사이의 <b>거리와 배열</b>만 달라지기 때문이에요.');
       }
       const seg = controls.segment('', [
         { value: 'melt', label: '융해' }, { value: 'freeze', label: '응고' }, { value: 'vap', label: '기화' }, { value: 'cond', label: '액화' }, { value: 'sub1', label: '승화(고→기)' }, { value: 'sub2', label: '승화(기→고)' },
-      ], 'melt', (v) => start(v));
-      controls.button('↺ 다시 보기', () => start(st.key));
+      ], 'melt', (v) => { start(v); pmode = false; pl.pause(); const l = l2(); if (l && l.playArrow) l.playArrow(v); });
+      /* ▶ 재생: 고르거나 보고 있는 변화를 처음 상태 → 변하는 중 → 변한 뒤로 반복 (실험 장면은 처음 → 나중 → 처음) */
+      const pl = controls.player({
+        duration: 8, loop: true, autoplay: false, label: '재생',
+        phases: [[0, '처음 상태'], [0.25, '변하는 중'], [0.5, '변한 뒤'], [0.9, '처음으로']],
+        onFrame(p) { if (!built) return; pmode = true; playP = p; },
+      });
+      built = true;
+      let playP = 0, vTick = 0, lastArrow = null, lastScene = '', wantB = false;
       start('melt');
 
       return {
         update(dt) {
-          st.t += dt;
-          if (st.phase === 'wait' && st.t > 1.6) { st.phase = 'done'; sys.set(CH[st.key].b, CH[st.key].b === 'gas'); text(); }
+          const l = l2(); vTick += dt;
+          let scene = lastScene;
+          if (l && l.state && vTick > 0.15) {
+            vTick = 0; const s = l.state(); scene = s.scene; const arrow = s.th && s.th.arrow;
+            if (scene !== lastScene) { lastScene = scene; pmode = false; pl.pause(); if (scene === 'exp') toExp(s.exp ? s.exp.key : 'wax'); else if (st.mode === 'exp') start(st.key); }
+            if (scene === 'exp' && s.exp && s.exp.key !== st.exp) { toExp(s.exp.key); pmode = false; pl.pause(); }
+            if (scene !== 'exp' && arrow && arrow !== lastArrow && CH[arrow]) { start(arrow); seg.set(arrow); pmode = false; pl.pause(); }
+            lastArrow = arrow;
+          }
+          if (st.mode === 'exp') {
+            const f = pmode ? (playP < 0.45 ? sm(playP / 0.45) : playP < 0.55 ? 1 : 1 - sm((playP - 0.55) / 0.35)) : (l && l.X ? l.X.f : 0);
+            showExp(Math.max(0, Math.min(1, f)));
+          } else {
+            if (pmode) {
+              // p로 단계를 정해요: 처음 상태(0~0.25) → 변하는 중 → 변한 뒤
+              const wb = playP >= 0.25 && playP < 0.9;
+              if (wb !== wantB) { wantB = wb; const c = CH[st.key]; if (wb) { sys.set(c.b, c.b === 'gas'); st.phase = 'done'; } else { sys.prep(c.a); st.phase = 'wait'; } text(); }
+            } else {
+              st.t += dt;
+              if (st.phase === 'wait' && st.t > 1.6) { st.phase = 'done'; sys.set(CH[st.key].b, CH[st.key].b === 'gas'); text(); }
+              wantB = st.phase === 'done';
+            }
+          }
           sys.step(dt); sys.draw();
+          const ph = document.querySelector('.v3-player .v3-ph');
+          if (ph && st.mode === 'exp') ph.textContent = pmode ? (playP < 0.45 ? (EX[st.exp].b === 'gas' ? '가열' : '식히기') : playP < 0.55 ? '변한 뒤' : '되돌리기') : '';
         },
         sync() {},
       };

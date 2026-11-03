@@ -28,6 +28,7 @@
     title: '공유 결합 3D 모형',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: 6.2, theta: 0.5, phi: 1.2, min: 3, max: 14 },
+    levels: [0],
     autoRotate: 0.3,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
@@ -80,16 +81,20 @@
         const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, len, 14), stickMat);
         m.position.copy(a).add(b).multiplyScalar(0.5); m.quaternion.setFromUnitVectors(UP, d.normalize()); return m;
       }
+      let atomObjs = [], bondObjs = [];
       function build() {
-        clearAll();
+        clearAll(); atomObjs = []; bondObjs = [];
         const M = MOLS[key];
         const space = style === 'cloud';
         M.atoms.forEach((a, i) => {
-          const s = a[0], m = sphere(space ? RV[s] * 0.6 : RB[s] * 0.8, COL[s], space ? 0.45 : 1);
-          m.position.set(a[1], a[2], a[3]); g.add(m);
-          if (!labs[i]) labs[i] = label('', m, { color: 'rgba(245,158,11,.95)' });
-          labs[i].obj = m; labs[i].el.style.color = '#1b2333';
-          labs[i].set(s); labs[i].show(true); labs[i].off = [0, (space ? RV[s] * 0.6 : RB[s] * 0.8) + 0.28, 0];
+          const s = a[0], rr = space ? RV[s] * 0.6 : RB[s] * 0.8, ag = new THREE.Group();
+          ag.position.set(a[1], a[2], a[3]); ag.userData.base = ag.position.clone(); g.add(ag); atomObjs.push(ag);
+          ag.add(sphere(rr, COL[s], space ? 0.45 : 1));
+          if (!labs[i]) labs[i] = label('', ag, { color: 'rgba(245,158,11,.95)' });
+          labs[i].obj = ag; labs[i].el.style.color = '#1b2333';
+          labs[i].set(s); labs[i].show(true); labs[i].off = [0, rr + 0.28, 0];
+          // 비공유 전자쌍은 원자를 따라다녀요
+          if (showLP) lpDirs(M, i).forEach((d) => { ag.add(pairLobe(d.clone().multiplyScalar(rr + 0.28), d, LONE, 0.3, 0.16)); });
         });
         // 공유 전자쌍: 결합 가운데에 쌍마다 하나씩 (2중·3중이면 나란히)
         M.bonds.forEach(([i, j, o]) => {
@@ -98,20 +103,24 @@
           side.cross(nd).normalize();
           const side2 = nd.clone().cross(side).normalize();
           const offs = o === 1 ? [[0, 0]] : o === 2 ? [[0.17, 0], [-0.17, 0]] : [[0, 0.2], [0.18, -0.12], [-0.18, -0.12]];
+          const cB = A.clone().add(B).multiplyScalar(0.5), bg = new THREE.Group(), lg = new THREE.Group();
+          bg.position.copy(cB); bg.userData.base = cB.clone(); g.add(bg); bg.add(lg);
           offs.forEach(([x, y]) => {
-            const c = A.clone().add(B).multiplyScalar(0.5).add(side.clone().multiplyScalar(x)).add(side2.clone().multiplyScalar(y));
-            g.add(pairLobe(c, nd, SHARE, Math.min(len * 0.34, 0.62), 0.15 + (o === 1 ? 0.04 : 0)));
+            const c = side.clone().multiplyScalar(x).add(side2.clone().multiplyScalar(y));
+            lg.add(pairLobe(c, nd, SHARE, Math.min(len * 0.34, 0.62), 0.15 + (o === 1 ? 0.04 : 0)));
           });
-          if (!space) g.add(stick(A, B, 0.035));
+          let st = null; if (!space) { st = stick(A.clone().sub(cB), B.clone().sub(cB), 0.035); bg.add(st); }
+          bondObjs.push({ g: bg, lg, st });
         });
-        if (showLP) M.atoms.forEach((a, i) => {
-          lpDirs(M, i).forEach((d) => {
-            const P = V(a.slice(1)), r = space ? RV[a[0]] * 0.6 : RB[a[0]] * 0.8;
-            g.add(pairLobe(P.clone().add(d.clone().multiplyScalar(r + 0.28)), d, LONE, 0.3, 0.16));
-          });
-        });
+        form(0, 1);
         text();
         counts();
+      }
+      // 원자 사이 거리(s: 0이면 결합 거리)와 공유 전자쌍(a: 0~1)을 맞춰요
+      function form(s, a) {
+        const aa = Math.max(0.0001, Math.min(1, a));
+        atomObjs.forEach((ag) => ag.position.copy(ag.userData.base).multiplyScalar(1 + s));
+        bondObjs.forEach((b) => { b.g.position.copy(b.g.userData.base).multiplyScalar(1 + s); b.lg.scale.setScalar(aa); b.lg.visible = a > 0.02; if (b.st) { b.st.scale.set(aa, 1 + s, aa); b.st.visible = a > 0.02; } });
       }
       function perAtom(M, i) {
         let n = 0; M.bonds.forEach(([a, b, o]) => { if (a === i || b === i) n += o * 2; });
@@ -133,16 +142,30 @@
         info('<b>' + M.n + ' (' + M.f + ')</b> · ' + M.kind + '<br><span style="color:#fbbf24">황색</span> 공유 전자쌍 <b>' + sh + '쌍</b>' + (lp ? ' · <span style="color:#c4b5fd">보라</span> 비공유 전자쌍 <b>' + lp + '쌍</b>' : '') +
           '<br>' + (showCnt ? '각 원자의 바깥 전자: 수소 2개, 나머지 8개 → 비활성 기체와 같은 배치' : '공유 전자쌍 1쌍 = 결합 1개'));
       }
-      const segMol = controls.segment('분자', KEYS.map((k) => ({ value: k, label: MOLS[k].f })), key, (v) => { key = v; fit(); build(); });
+      const segMol = controls.segment('분자', KEYS.map((k) => ({ value: k, label: MOLS[k].f })), key, (v) => { key = v; fit(); build(); const L = window.__sim; if (L && L.S && L.S.scene === 'share' && (v === 'H2' || v === 'Cl2') && L.resetShare) { L.resetShare(v); lastSh = v; } });
       controls.segment('모형', [{ value: 'pair', label: '전자쌍' }, { value: 'cloud', label: '원자 크기' }], style, (v) => { style = v; build(); });
       const lpB = controls.button('비공유 전자쌍 ✓', () => { showLP = !showLP; lpB.classList.toggle('on', showLP); lpB.textContent = '비공유 전자쌍 ' + (showLP ? '✓' : '✕'); build(); }); lpB.classList.add('on');
       const cB = controls.button('바깥 전자 세기 ✕', () => { showCnt = !showCnt; cB.classList.toggle('on', showCnt); cB.textContent = '바깥 전자 세기 ' + (showCnt ? '✓' : '✕'); build(); });
+      let demoP = 0, lastSh = null, lastMade = 0;
+      const ease = (x) => x * x * (3 - 2 * x);
+      const pl = controls.player({
+        duration: 7, loop: true, autoplay: false, label: '결합 만들기',
+        phases: [[0, '떨어진 원자'], [0.3, '가까워져요'], [0.5, '전자쌍 공유'], [0.8, '결합 완성']],
+        onFrame(p) { demoP = p; if (p > 0) form(1.8 * (1 - ease(Math.min(1, p / 0.5))), ease(Math.max(0, Math.min(1, (p - 0.5) / 0.25)))); },
+      });
+      const KMAP = { H2O1: 'H2O', O2: 'O2', N2: 'N2', C1O2: 'CO2', H3N1: 'NH3', C1H4: 'CH4' };
       const api = {
-        sync() { // 2D '전자쌍 공유' 장면에서 고른 분자(H₂ / Cl₂)로 시작 (읽기 전용)
-          try { const s = window.__sim; if (s && s.S.scene === 'share' && s.SH && MOLS[s.SH.mol] && s.SH.mol !== key) { key = s.SH.mol; segMol.set(key); fit(); build(); } } catch (e) { /* 무시 */ }
+        sync() {},
+        update() {
+          const L = window.__sim; if (!L || !L.S) return;
+          // 2D → 3D: 전자쌍 공유 장면에서 고른 분자, 분자 만들기에서 완성한 분자
+          if (L.S.scene === 'share' && L.SH && MOLS[L.SH.mol] && L.SH.mol !== lastSh) { lastSh = L.SH.mol; if (key !== lastSh) { key = lastSh; segMol.set(key); fit(); build(); } }
+          if (L.BU && L.BU.made) { const ks = Object.keys(L.BU.made).filter((k) => L.BU.made[k]); if (ks.length !== lastMade) { const newest = ks[ks.length - 1]; lastMade = ks.length; if (L.S.scene === 'build' && KMAP[newest] && key !== KMAP[newest]) { key = KMAP[newest]; segMol.set(key); fit(); build(); } } }
+          if (demoP === 0 && !pl.playing) {
+            if (L.S.scene === 'share' && L.SH.mol === key) form(1.8 * (1 - L.SH.slider), L.SH.bonded ? L.SH.bondA : 0); else form(0, 1);
+          }
         },
       };
-      api.sync();
       fit();
       build();
       return api;

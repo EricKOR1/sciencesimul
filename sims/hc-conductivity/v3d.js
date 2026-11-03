@@ -79,20 +79,27 @@
   const phone = window.matchMedia && window.matchMedia('(max-width: 599px)').matches;
   window.SciSim3D.attach({
     title: '전하 운반자 3D',
-    hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
+    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 시료와 전기장은 2D와 똑같이 이어져요',
     camera: { dist: phone ? 21 : 16, theta: 0.5, phi: 1.1, min: 6, max: 30, target: [0, 2.6, 0] },
-    autoRotate: 0.18,
+    autoRotate: 0.12,
+    levels: [2],
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const L = makeLib(THREE);
       const W = 6.6, H = 3.2, D = 3.2; // 시료 상자
+      const E1 = '<span style="color:#ffd34d">●</span>';
       const SMP = {
-        cu: { name: '구리(금속)', cond: 'yes', txt: '<span style="color:#ffd34d">●</span> 자유 전자가 (+)극 쪽으로 흘러 전류가 통해요.<br>양이온(주황)은 제자리에서 떨기만 해요.' },
-        nacls: { name: '고체 NaCl', cond: 'no', txt: 'Na⁺와 Cl⁻가 격자 자리에 <b>고정</b>돼 있어요.<br>전하를 나를 입자가 움직일 수 없어 전기가 안 통해요.' },
-        nacll: { name: '용융 NaCl', cond: 'yes', txt: '녹으면 Na⁺(보라)는 (−)극, Cl⁻(초록)는 (+)극 쪽으로 이동해요.<br><b>자유롭게 움직이는 이온</b>이 전하를 날라요.' },
-        sugar: { name: '설탕 수용액', cond: 'no', txt: '설탕 분자(분홍)는 <b>전하가 없는 분자</b>예요.<br>물에 녹아도 이온이 없어서 전기가 안 통해요.' },
+        cu: { name: '구리(금속)', cond: 'yes', txt: E1 + ' 자유 전자가 (+)극 쪽으로 흘러 전류가 통해요.<br>양이온(주황)은 제자리에서 떨기만 해요. 전하 운반자: <b>자유 전자</b>' },
+        nacl_s: { name: '고체 NaCl', cond: 'no', txt: 'Na⁺와 Cl⁻가 격자 자리에 <b>고정</b>돼 있어요.<br>움직이는 전하가 없어 전기가 안 통해요.' },
+        nacl_l: { name: '용융 NaCl', cond: 'yes', txt: '녹으면 Na⁺(보라)는 (−)극, Cl⁻(초록)는 (+)극 쪽으로 이동해요.<br>전하 운반자: <b>이온</b>' },
+        nacl_aq: { name: 'NaCl 수용액', cond: 'yes', txt: '물에 녹은 Na⁺(보라)는 (−)극, Cl⁻(초록)는 (+)극 쪽으로 이동해요.<br>전하 운반자: <b>이온</b>' },
+        sugar_aq: { name: '설탕 수용액', cond: 'no', txt: '설탕 분자(분홍)는 <b>전하가 없는 분자</b>예요.<br>물에 녹아도 이온이 없어서 전기가 안 통해요.' },
+        hcl_aq: { name: 'HCl 수용액', cond: 'diss', txt: '' },
+        mol: { name: '분자 물질', cond: 'no', txt: '분자는 <b>전하가 없어서</b> 전기장 안에서도 전류가 흐르지 않아요.' },
+        mol_s: { name: '분자 고체', cond: 'no', txt: '분자는 <b>전하가 없어서</b> 전기가 안 통해요.' },
       };
-      let key = 'cu', field = true, t0 = 0;
+      const keyOfItem = (it) => (!it ? null : it.mat === 'metal' ? 'cu' : it.mat === 'ionic' ? (it.form === 'solid' ? 'nacl_s' : it.form === 'melt' ? 'nacl_l' : 'nacl_aq') : it.id === 'hcl_aq' ? 'hcl_aq' : it.form === 'aq' ? 'sugar_aq' : it.form === 'solid' ? 'mol_s' : 'mol');
+      let bulbTarget = -1, key = 'cu', field = false, t0 = 0, diss = false, dissK = 0, itemName = '';
       const grp = new THREE.Group(); root.add(grp);
       const box = L.glassBox(W, H, D, 0x9ec5ff, 0.1); box.position.set(0, H / 2 + 0.1, 0); root.add(box);
       const water = L.glassBox(W - 0.05, H - 0.05, D - 0.05, 0x3b8cf0, 0.22); water.position.copy(box.position); water.visible = false; root.add(water);
@@ -119,7 +126,7 @@
       let sets = []; // {mesh, n, r, p[], v[], kind}
       function lattice(nx, ny, nz, sp, cb) { let i = 0; for (let x = 0; x < nx; x++) for (let y = 0; y < ny; y++) for (let z = 0; z < nz; z++) cb(i++, (x - (nx - 1) / 2) * sp, (y - (ny - 1) / 2) * sp, (z - (nz - 1) / 2) * sp, x, y, z); }
       function build() {
-        L.clear(grp); sets = []; water.visible = key === 'sugar'; bl.show(true);
+        L.clear(grp); sets = []; water.visible = key === 'sugar_aq' || key === 'nacl_aq' || key === 'hcl_aq'; bl.show(true);
         const cy = box.position.y;
         const add = (color, r, n, kind, o) => { const m = inst(color, r, n, o); grp.add(m); const s = { m, n, r, kind, p: [], v: [], ph: [] }; for (let i = 0; i < n; i++) { s.p.push(new THREE.Vector3()); s.v.push(new THREE.Vector3(L.rnd(-1, 1), L.rnd(-1, 1), L.rnd(-1, 1)).normalize()); s.ph.push(Math.random() * 6.28); } sets.push(s); return s; };
         if (key === 'cu') {
@@ -127,27 +134,47 @@
           lattice(6, 3, 3, 1.1, (i, x, y, z) => a.p[i].set(x, y, z));
           const e = add(0xffd34d, 0.15, 46, 'electron', { emissive: 0xffb300, emissiveIntensity: 0.55 });
           e.p.forEach((p) => p.set(L.rnd(-W / 2 + 0.3, W / 2 - 0.3), L.rnd(-H / 2 + 0.3, H / 2 - 0.3), L.rnd(-D / 2 + 0.3, D / 2 - 0.3)));
-        } else if (key === 'nacls') {
+        } else if (key === 'nacl_s') {
           const na = add(0xb07cf5, 0.3, 27, 'fixed'), cl = add(0x34c759, 0.44, 27, 'fixed');
           let a = 0, b = 0; lattice(6, 3, 3, 1.1, (i, x, y, z, ix, iy, iz) => { if ((ix + iy + iz) % 2) { if (a < 27) na.p[a++].set(x, y, z); } else if (b < 27) cl.p[b++].set(x, y, z); });
           na.n = a; cl.n = b; na.m.count = a; cl.m.count = b;
-        } else if (key === 'nacll') {
+        } else if (key === 'nacl_l' || key === 'nacl_aq') {
           const na = add(0xb07cf5, 0.3, 17, 'cation'), cl = add(0x34c759, 0.44, 17, 'anion');
           [na, cl].forEach((s) => s.p.forEach((p) => p.set(L.rnd(-W / 2 + 0.5, W / 2 - 0.5), L.rnd(-H / 2 + 0.5, H / 2 - 0.5), L.rnd(-D / 2 + 0.5, D / 2 - 0.5))));
+        } else if (key === 'hcl_aq') {
+          const h = add(0xf5f6fa, 0.22, 9, 'hcl_h'), cl = add(0x34c759, 0.44, 9, 'hcl_cl');
+          [h, cl].forEach((q) => q.p.forEach((p) => p.set(L.rnd(-W / 2 + 0.5, W / 2 - 0.5), L.rnd(-H / 2 + 0.5, H / 2 - 0.5), L.rnd(-D / 2 + 0.5, D / 2 - 0.5))));
+          const wa = add(0x8fd0ff, 0.2, 40, 'neutral'); wa.p.forEach((p) => p.set(L.rnd(-W / 2 + 0.5, W / 2 - 0.5), L.rnd(-H / 2 + 0.5, H / 2 - 0.5), L.rnd(-D / 2 + 0.5, D / 2 - 0.5)));
+        } else if (key === 'mol_s') {
+          const m = add(0xff8fb1, 0.44, 18, 'fixed'); lattice(6, 3, 1, 1.1, (i, x, y, z) => m.p[i].set(x, y, z));
+        } else if (key === 'mol') {
+          const m = add(0xff8fb1, 0.44, 14, 'neutral'); m.p.forEach((p) => p.set(L.rnd(-W / 2 + 0.5, W / 2 - 0.5), L.rnd(-H / 2 + 0.5, H / 2 - 0.5), L.rnd(-D / 2 + 0.5, D / 2 - 0.5)));
         } else {
           const su = add(0xff8fb1, 0.44, 8, 'neutral'), wa = add(0x8fd0ff, 0.2, 52, 'neutral');
           [su, wa].forEach((s) => s.p.forEach((p) => p.set(L.rnd(-W / 2 + 0.5, W / 2 - 0.5), L.rnd(-H / 2 + 0.5, H / 2 - 0.5), L.rnd(-D / 2 + 0.5, D / 2 - 0.5))));
         }
         grp.position.y = cy;
-        const S = SMP[key];
-        info('<b>' + S.name + '</b> · 전류 ' + (S.cond === 'yes' ? '<span style="color:#7be08a"><b>통해요 ○</b></span>' : '<span style="color:#ff8a8a"><b>안 통해요 ✕</b></span>') + '<br>' + S.txt);
+        showInfo();
       }
-      controls.segment('시료', Object.keys(SMP).map((k) => ({ value: k, label: SMP[k].name })), key, (v) => { key = v; build(); });
-      const fb = controls.button('전기장 ✓', () => { field = !field; fb.classList.toggle('on', field); fb.textContent = '전기장 ' + (field ? '✓' : '✕'); }); fb.classList.add('on');
+      const condNow = () => { const c = SMP[key].cond; return c === 'diss' ? diss : c === 'yes'; };
+      function showInfo() {
+        const S = SMP[key], c = condNow(), nm = itemName || S.name;
+        const txt = key === 'hcl_aq' ? (diss ? 'HCl 분자가 물과 만나 <b>H⁺와 Cl⁻로 이온화</b>했어요.<br>H⁺(흰색)는 (−)극, Cl⁻(초록)는 (+)극 쪽으로 이동해요. 전하 운반자: <b>이온</b>' : 'HCl 분자는 전하가 없어서 전기가 안 통해요. 2D에서 <b>물에 녹이기</b>를 하면 이온으로 나뉘어요.') : S.txt;
+        info('<b>' + nm + '</b> · 전류 ' + (c ? '<span style="color:#7be08a"><b>통해요 ○</b></span>' : '<span style="color:#ff8a8a"><b>안 통해요 ✕</b></span>') + (field ? ' · 전기장 켜짐' : ' · 전기장 꺼짐') + '<br>' + txt);
+      }
       build();
       return {
         update(dt, t) {
           dt = Math.min(dt, 0.05);
+          const Z = ctx.lesson();
+          if (Z) {
+            const S2 = Z.S; let nk = key, nm = '';
+            if (S2.scene === 'model') nk = Z.M.id; else if (S2.scene === 'lab' && S2.st.item) { nk = keyOfItem(S2.st.item) || key; nm = S2.st.item.name; }
+            const nf = S2.scene === 'lab' ? S2.amp > 0.5 : !!S2.field, nd = !!Z.M.diss;
+            if (nk !== key || nm !== itemName) { key = nk; itemName = nm; field = nf; diss = nd; dissK = nd ? 1 : 0; build(); }
+            else if (nf !== field || nd !== diss) { field = nf; diss = nd; showInfo(); }
+            bulbTarget = S2.scene === 'lab' && S2.st.item ? Math.min(1, S2.glow * 1.2) : -1;
+          }
           let flow = 0;
           sets.forEach((s) => {
             for (let i = 0; i < s.n; i++) {
@@ -155,13 +182,15 @@
               if (s.kind === 'fixed') {
                 const q = s.ph[i]; dum.position.set(p.x + Math.sin(t * 7 + q) * 0.035, p.y + Math.sin(t * 6 + q * 1.7) * 0.035, p.z + Math.cos(t * 6.5 + q) * 0.035);
               } else {
-                const sp = s.kind === 'electron' ? 1.3 : s.kind === 'neutral' ? 0.7 : 0.75;
+                let kd = s.kind; if (kd === 'hcl_h') kd = diss ? 'cation' : 'bond'; else if (kd === 'hcl_cl') kd = diss ? 'anion' : 'neutral';
+                if (kd === 'bond') { const q = sets.find((x) => x.kind === 'hcl_cl'); p.set(q.p[i].x - 0.55, q.p[i].y, q.p[i].z); dum.position.copy(p); dum.scale.setScalar(s.r); dum.updateMatrix(); s.m.setMatrixAt(i, dum.matrix); continue; }
+                const sp = kd === 'electron' ? 1.3 : kd === 'neutral' ? 0.7 : 0.75;
                 v.x += L.rnd(-1, 1) * dt * 6; v.y += L.rnd(-1, 1) * dt * 6; v.z += L.rnd(-1, 1) * dt * 6; v.normalize();
                 let vx = v.x * sp, vy = v.y * sp, vz = v.z * sp;
-                if (field) { const dr = s.kind === 'electron' ? 1.7 : s.kind === 'cation' ? -0.85 : s.kind === 'anion' ? 0.85 : 0; vx += dr; }
+                if (field) { const dr = kd === 'electron' ? 1.7 : kd === 'cation' ? -0.85 : kd === 'anion' ? 0.85 : 0; vx += dr; }
                 p.x += vx * dt; p.y += vy * dt; p.z += vz * dt;
                 const lx = W / 2 - s.r - 0.1, ly = H / 2 - s.r - 0.1, lz = D / 2 - s.r - 0.1;
-                if (p.x > lx) { if (s.kind === 'electron') p.x = -lx; else { p.x = lx; v.x = -Math.abs(v.x); } } else if (p.x < -lx) { p.x = -lx; v.x = Math.abs(v.x); }
+                if (p.x > lx) { if (kd === 'electron') p.x = -lx; else { p.x = lx; v.x = -Math.abs(v.x); } } else if (p.x < -lx) { p.x = -lx; v.x = Math.abs(v.x); }
                 if (p.y > ly) { p.y = ly; v.y = -Math.abs(v.y); } else if (p.y < -ly) { p.y = -ly; v.y = Math.abs(v.y); }
                 if (p.z > lz) { p.z = lz; v.z = -Math.abs(v.z); } else if (p.z < -lz) { p.z = -lz; v.z = Math.abs(v.z); }
                 dum.position.copy(p);
@@ -170,8 +199,8 @@
             }
             s.m.instanceMatrix.needsUpdate = true;
           });
-          const on = field && SMP[key].cond === 'yes';
-          const target = on ? 1 : 0; t0 += (target - t0) * (1 - Math.pow(0.02, dt));
+          const on = field && condNow();
+          const target = bulbTarget >= 0 ? bulbTarget : (on ? 1 : 0); t0 += (target - t0) * (1 - Math.pow(0.02, dt));
           bulb.material.emissiveIntensity = t0 * 1.6; glow.intensity = t0 * 2.2;
         },
       };

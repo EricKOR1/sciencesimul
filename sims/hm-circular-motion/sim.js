@@ -1134,6 +1134,7 @@
   /* ---------- 디버그 (Playwright) ---------- */
   window.__sim = {
     S, VW, VH, get game() { return game; }, setScene, setFlag, pkReset, blRecord, blCut, rdReset, roFloor, dvCalc, swing, swingTheta, whAz, roMinW, rdVmax, blBest,
+    eff, RO_H0, WH_R, SW_RP, SW_L, SW_H, RD_R, RO_R, PUCK_V0, PUCK_M, rdL, blL, pkL,
     stepAll(sec) { const n = Math.ceil(sec / 0.02); for (let i = 0; i < n; i++) { pkStep(0.02); blStep(0.02); rdStep(0.02); whStep(0.02); roStep(0.02); } },
   };
 })();

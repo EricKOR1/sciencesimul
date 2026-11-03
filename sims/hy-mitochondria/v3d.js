@@ -17,6 +17,7 @@
     hint: '드래그: 돌리기 · 두 손가락/휠: 확대',
     camera: { dist: narrow ? 5.9 : 3.9, target: narrow ? [0, 0.3, 0] : [0, 0, 0], theta: 0.38, phi: 1.4, min: 2.2, max: 10 },
     autoRotate: 0,
+    levels: [0, 1],   // 3 · 4단계(표면적 · 세포 추론)는 2D에서, 모형 조립 · 구조와 기능(내막 확대)에서 3D로 시작
     build(ctx) {
       const { THREE, root, label, info, controls, renderer } = ctx;
       renderer.localClippingEnabled = true;
@@ -195,21 +196,29 @@
         }
       }
 
-      const cutR = controls.range('단면', 0, 100, 1, Math.round(cut * 100), (v) => setCut(v / 100), (v) => v + ' %');
-      controls.segment('보기', [{ value: 'name', label: '구조 이름' }, { value: 'flow', label: '에너지 전환' }], mode, (v) => { mode = v; cnB.style.display = v === 'flow' ? '' : 'none'; applyViz(); });
-      const cnB = controls.button('🧪 시안화물 처리', () => { cn = !cn; cnB.classList.toggle('on', cn); cnB.textContent = cn ? '🧪 시안화물 처리됨' : '🧪 시안화물 처리'; applyViz(); });
+      /* 2D와 같은 값: 단면 정도(3D 모형 화면의 슬라이더) · 시안화물(내막 확대 화면). 3D에서 바꾸면 2D도 같이 바뀌어요 */
+      const cutR = controls.range('단면', 0, 100, 1, Math.round(cut * 100), (v) => { setCut(v / 100); const L = ctx.lesson(); if (L && L.bCut && L.S.mode === 'build') L.bCut(v / 100); }, (v) => v + ' %');
+      const cnB = controls.button('🧪 시안화물 처리', () => { const L = ctx.lesson(); if (L && L.znSetDrug && L.S.mode === 'zoom') { L.znSetDrug(!cn); } else { cn = !cn; cnB.classList.toggle('on', cn); cnB.textContent = cn ? '🧪 시안화물 처리됨' : '🧪 시안화물 처리'; applyViz(); } });
       cnB.style.display = 'none';
       setCut(cut);
 
-      let spawn = 0, spawnP = 0;
+      let spawn = 0, spawnP = 0, lastSt = {};
+      /* 2D 화면이 3D 모형(build) · 지도(map) · 내막 확대(zoom) 중 어디인지, 단면 정도, 시안화물 여부를 따라가요 */
+      function poll() {
+        const L = ctx.lesson(); if (!L || !L.S) return;
+        const m = L.S.mode, nm = m === 'zoom' ? 'flow' : 'name';
+        let ch = false;
+        if (nm !== mode) { mode = nm; cnB.style.display = mode === 'flow' ? '' : 'none'; ch = true; }
+        if (m === 'build' && L.S.b && L.S.b.sT !== lastSt.sT) { lastSt.sT = L.S.b.sT; if (Math.abs(L.S.b.sT - cut) > 1e-3) { cutR.set(Math.round(L.S.b.sT * 100)); setCut(L.S.b.sT); } }
+        const zc = !!(L.S.zm && L.S.zm.cn);
+        if (m === 'zoom' && zc !== cn) { cn = zc; cnB.classList.toggle('on', cn); cnB.textContent = cn ? '🧪 시안화물 처리됨' : '🧪 시안화물 처리'; ch = true; }
+        if (m !== 'zoom' && cn) { cn = false; cnB.classList.remove('on'); cnB.textContent = '🧪 시안화물 처리'; ch = true; }
+        if (ch) applyViz();
+      }
       return {
-        sync() {
-          // 2D 차시의 현재 상황(절개 정도, 시안화물)을 읽기만 해서 시작점으로 써요
-          const s = window.__sim && window.__sim.S;
-          if (s && s.b && typeof s.b.sT === 'number' && s.b.sT > 0.05) { cutR.set(Math.round(s.b.sT * 100)); setCut(s.b.sT); }
-          if (s && s.zm && typeof s.zm.cn === 'boolean' && s.zm.cn !== cn) { cn = s.zm.cn; cnB.classList.toggle('on', cn); cnB.textContent = cn ? '🧪 시안화물 처리됨' : '🧪 시안화물 처리'; applyViz(); }
-        },
+        sync() { poll(); },
         update(dt, t) {
+          poll();
           const c = plane.constant, flow = mode === 'flow', run = flow && !cn, slow = reduce() ? 0.2 : 1;
           // H⁺ 떠다니기 (막 사이 공간)
           hs.forEach((h, i) => {

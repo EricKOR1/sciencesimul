@@ -1261,6 +1261,7 @@
   });
 
   window.__sim = {
+    ACID_U, MAXU, V_A, V_MAX, CONC_A,
     S, BU, G, IN, NT, ST, CS, CASES, MATS, DATA, game, levels, setScene, buDrop, buAdd, resetBuret, gAdd, gPlot, setConc, resetGraph, resetIons, addNaOH, startEvap, setDose, csSet, csRow, csMat, csSlot, plotted1, dOf, inComplete, hCount, oCount, stOk, graphClick, gX, gY, handleHit, BL, GL, NL, interp, tempAt,
     toClient: (x, y) => { const r = view.canvas.getBoundingClientRect(); return { x: r.left + x * r.width / VW, y: r.top + y * r.height / VH }; },
     fillCases() { CASES.forEach((c) => { CS.assign[c.id] = c.m; }); },

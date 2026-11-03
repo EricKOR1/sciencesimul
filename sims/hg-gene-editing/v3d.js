@@ -1,20 +1,20 @@
 /* hg-gene-editing · 3D CRISPR-Cas9 유전자 가위
    가이드 RNA(주황)가 표적 DNA와 상보적으로 짝을 지으면 Cas9(가위 단백질)가 PAM(NGG) 옆 DNA 두 가닥을 모두 잘라요.
-   잘린 DNA는 세포가 고쳐요: NHEJ(끝을 이어 붙이다 염기가 빠지거나 끼어 유전자가 망가짐) / HDR(공여 DNA를 본보기로 정확히 교정). */
+   잘린 DNA는 세포가 고쳐요: NHEJ(끝을 이어 붙이다 염기가 빠지거나 끼어 유전자가 망가짐) / HDR(주형 DNA를 본보기로 정확히 교정). */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
   const narrow = window.innerWidth < 600 || window.innerHeight > window.innerWidth * 1.1;
   const DB = 0.12, RAD = 0.3, PITCH = 2.4, X0 = -5.8, X1 = 5.0, N = Math.floor((X1 - X0) / DB);
   const T0 = -2.7, T1 = -0.3, PAM1 = 0.06, CUT = -0.66;        // 표적 20nt, PAM 3nt, 절단 위치
-  const MODE_OF = { target: 0, calc: 0, repair: 1, flow: 3, cases: 3 };
+  const MODE_OF = { target: 0, calc: 0, repair: 1 };   // 치료 흐름 · 사례 · 한계 · 전망은 2D 화면에서
 
   window.SciSim3D.attach({
     title: 'CRISPR 유전자 가위 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: narrow ? 12 : 10.5, theta: 0.22, phi: 1.28, target: narrow ? [-0.4, -0.6, 0] : [-0.6, 0.4, 0], min: 5, max: 20 },
     autoRotate: 0,
-    levels: [0, 1],
+    levels: [0, 1],   // 3 · 4단계(치료 사례 · 한계와 전망)는 2D 화면에서
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V = THREE.Vector3, M4 = new THREE.Matrix4(), cc = new THREE.Color();
@@ -51,7 +51,7 @@
         gb.instanceMatrix.needsUpdate = true;
       }
 
-      /* ---------- 공여 DNA ---------- */
+      /* ---------- 주형 DNA ---------- */
       const donor = new THREE.InstancedMesh(new THREE.SphereGeometry(0.1, 12, 10), std(0x4ade80, { emissive: 0x052e16, roughness: 0.35 }), 80); root.add(donor); donor.visible = false;
       const fixMat = std(0xef4444, { emissive: 0x440000 }), fix = new THREE.Group(); fix.visible = false; root.add(fix);
       [0, 1].forEach(() => { fix.add(new THREE.Mesh(new THREE.SphereGeometry(0.13, 16, 12), fixMat)); });
@@ -68,16 +68,16 @@
         const h = [
           '<b>① 표적 찾기</b> · 가이드 RNA가 DNA 위를 훑다가, <b>PAM(NGG)</b> 옆에서 표적 서열과 <b>상보적으로 결합</b>해요.',
           '<b>② 절단</b> · Cas9의 두 가위 날이 PAM에서 3염기 떨어진 곳의 <b>두 가닥을 모두</b> 잘라요(이중 가닥 절단).',
-          '<b>③ 수리: NHEJ</b> · 끝을 그냥 이어 붙이다 <b>염기가 빠지거나 끼어</b> 유전자가 망가질 수 있어요(유전자 기능 상실).',
-          '<b>④ 수리: HDR</b> · 정상 서열의 <b>공여 DNA</b>를 본보기로 삼아 정확히 고쳐요.',
+          '<b>③ 수리: 끝 연결(NHEJ)</b> · 끝을 그대로 이어 붙이다 <b>염기가 빠지거나 끼어</b> 유전자가 망가질 수 있어요(유전자 기능 상실).',
+          '<b>④ 수리: 주형 DNA를 함께 넣기(HDR)</b> · 정상 서열의 <b>주형 DNA</b>를 본보기로 삼아 정확히 고쳐요.',
         ];
         info(h[step]);
       }
       // 시작 지점에서 막 바뀐 단계에서는 DNA 가 어디에 있든 보이도록 Cas9 위치를 맞춰요
       const L = {
         cas: label('Cas9', cas, { color: '#075985', offset: [0, 1.6, 0] }), g: label('가이드 RNA', An(T0 - 0.9, 1.9, 0), { color: '#9a3412' }), dna: label('표적 DNA', An(3.4, 0.9, 0), { color: '#1e3a8a' }),
-        pam: label('PAM (NGG)', An((T1 + PAM1) / 2 + 0.1, -1.35, 0), { color: '#86198f' }), cut: label('절단 위치', An(CUT, -1.9, 0), { color: '#991b1b' }), donor: label('공여 DNA (정상 서열)', An(CUT, 3.0, 0), { color: '#166534' }),
-        tgt: label('표적 서열 20nt', An((T0 + T1) / 2, -1.35, 0), { color: '#854d0e' }),
+        pam: label('PAM (NGG)', An((T1 + PAM1) / 2 + 0.1, -1.35, 0), { color: '#86198f' }), cut: label('절단 위치', An(CUT, -1.9, 0), { color: '#991b1b' }), donor: label('주형 DNA (정상 서열)', An(CUT, 3.0, 0), { color: '#166534' }),
+        tgt: label('표적 서열 (20염기)', An((T0 + T1) / 2, -1.35, 0), { color: '#854d0e' }),
       };
       L.donor.show(false);
 
@@ -115,7 +115,7 @@
       }
       const dm = new THREE.Matrix4();
       function placeDonor(k) {
-        // 공여 DNA: 절단 틈(폭 1.0)을 메우는 이중 가닥(초록)
+        // 주형 DNA: 절단 틈(폭 1.0)을 메우는 이중 가닥(초록)
         let n = 0;
         for (let s2 = 0; s2 < 2; s2++) for (let i = 0; i < 9; i++) {
           const x = CUT - 0.48 + i * DB * 1.0, a = 2 * Math.PI * x / PITCH + s2 * Math.PI;
@@ -124,31 +124,64 @@
         donor.count = n; donor.instanceMatrix.needsUpdate = true;
       }
 
-      const segB = controls.segment('단계', [{ value: 0, label: '① 표적 찾기' }, { value: 1, label: '② 절단' }, { value: 2, label: '③ NHEJ' }, { value: 3, label: '④ HDR' }], 0, (v) => setStep(v));
-      controls.button('↻ 다시 보기', () => setStep(step));
-      setStep(0);
-      let lastSim = null;
+      /* 한 과정 16초: ① 표적 찾기 (0~5.5) → ② 절단 (5.5~9) → ③/④ 수리 (9~16; 수리 방식은 단계 버튼 · 2D 선택을 따라가요) */
+      const DUR = 16, TS = [0, 5.5, 9.0], repairMode = { v: 2 };
+      let curStep = -1;
+      function toLesson(s2) {      // 3D에서 단계를 고르면 2D 절단과 수리 화면도 같은 단계로
+        const L = ctx.lesson(); if (!L || !L.S || L.S.mode !== 'repair' || !L.RP) return;
+        const RPs = L.RP;
+        if (s2 === 0) { if (RPs.stage !== 0) L.rpReset(true); return; }
+        if (RPs.stage >= 2 || (RPs.stage === 1 && s2 === 1 && false)) L.rpReset(true);
+        if (RPs.stage === 0) L.rpCut();
+        if (s2 >= 2) { RPs.mode = s2 === 3 ? 'hdr' : 'nhej'; L.updateCtl(); L.rpRepair(); }
+      }
+      const segB = controls.segment('단계', [{ value: 0, label: '① 표적 찾기' }, { value: 1, label: '② 절단' }, { value: 2, label: '③ 끝 연결 (NHEJ)' }, { value: 3, label: '④ 주형 DNA (HDR)' }], 0, (v) => { if (v >= 2) repairMode.v = v; player.set((v >= 2 ? TS[2] + 0.01 : TS[v]) / DUR); toLesson(v); setStep(v); curStep = v; });
+      const player = controls.player({
+        duration: DUR, loop: true, autoplay: true, label: '유전자 가위',
+        phases: [[0, '① 표적 찾기'], [TS[1] / DUR, '② 절단'], [TS[2] / DUR, '③ 수리 (선택한 방식)']],
+        onFrame() {},
+      });
+      setStep(0); curStep = 0;
+      let lastSim = null, lastKey = '';
+      /* 2D에서 어느 화면인지 · 절단과 수리의 진행(절단 전 · 절단 · 끝 연결 · 주형 DNA)을 따라가요 */
+      function pollLesson() {
+        const L = ctx.lesson(); if (!L || !L.S) return;
+        const sm = L.S.mode;
+        if (sm !== lastSim) { lastSim = sm; if (sm === 'target' || sm === 'calc') { player.set(0); repairMode.v = 2; } }
+        if (sm === 'repair' && L.RP) {
+          const R = L.RP, key = R.stage + ':' + R.mode;
+          if (key !== lastKey) {
+            lastKey = key;
+            const s2 = R.stage === 0 ? 0 : R.stage === 1 ? 1 : (R.mode === 'hdr' ? 3 : 2);
+            if (R.mode) repairMode.v = R.mode === 'hdr' ? 3 : 2;
+            if (!player.playing || true) player.set((s2 === 0 ? 0.5 : s2 === 1 ? TS[1] + 1.5 : TS[2] + 0.01) / DUR);
+            if (s2 >= 2 && player.playing) player.set((TS[2] + 0.01) / DUR);
+          }
+        }
+      }
       return {
         update(dt) {
-          dt = Math.min(dt, 0.05) * (window.__v3dTS || 1); t += dt;
-          const sm = window.__sim && window.__sim.S && window.__sim.S.mode;
-          if (sm && sm !== lastSim) { lastSim = sm; const s2 = MODE_OF[sm]; if (s2 !== undefined && s2 !== step) { segB.set(s2); setStep(s2); } }
+          dt = Math.min(dt, 0.05) * (window.__v3dTS || 1);
+          pollLesson();
+          // 진행 막대(player)의 위치로 단계와 단계 안의 시간(t)을 정해요
+          { const T = player.p * DUR, ns = T < TS[1] ? 0 : T < TS[2] ? 1 : repairMode.v; t = T < TS[1] ? T : T < TS[2] ? T - TS[1] : T - TS[2];
+            if (ns !== curStep) { const tt = t; setStep(ns); t = tt; curStep = ns; segB.set(ns); } }
           if (step === 0) {
+            casA = 1; gap = 0; fix.visible = false; donor.visible = false;
             const k = Math.min(1, t / 4.2);
             casX = lerp(-3.6, 0, ease(k)) + (k < 1 ? Math.sin(t * 9) * 0.07 : 0);
             bubble = k >= 1 ? ease((t - 4.2) / 1.0) : 0;
-            if (t > 9) t = 0;                   // 반복해서 훑어요
           } else if (step === 1) {
-            casX = 0; bubble = 1; gap = ease((t - 1.0) / 1.2);
-            const f = t > 1.0 && t < 1.5; cas.userData.cut.forEach((m) => { m.material.emissive.setHex(f ? 0xff2222 : 0x330000); });
+            casX = 0; bubble = 1; casA = 1; fix.visible = false; donor.visible = false; gap = ease((t - 0.8) / 1.2);
+            const f = t > 0.8 && t < 1.3; cas.userData.cut.forEach((m) => { m.material.emissive.setHex(f ? 0xff2222 : 0x330000); });
           } else if (step === 2) {                       // NHEJ: 끝을 그냥 이어 붙여요 (염기가 끼어들어요)
-            bubble = lerp(1, 0, ease(t / 1.2)); casA = 1 - ease((t - 0.8) / 1.0);
+            donor.visible = false; bubble = lerp(1, 0, ease(t / 1.2)); casA = 1 - ease((t - 0.8) / 1.0);
             gap = lerp(1.0, 0.36, ease((t - 2.0) / 1.4));
             fix.visible = gap < 0.5;
             if (fix.visible) { dnaPos(0, CUT, P0); dnaPos(1, CUT, P1); fix.children[0].position.copy(P0); fix.children[1].position.copy(P1); }
-          } else {                                        // HDR: 공여 DNA 가 틈을 메워요
+          } else {                                        // HDR: 주형 DNA 가 틈을 메워요
             bubble = lerp(1, 0, ease(t / 1.2)); casA = 1 - ease((t - 0.8) / 1.0);
-            gap = 1.0; donorK = ease((t - 1.8) / 1.8); donor.visible = donorK > 0.001; placeDonor(donorK);
+            fix.visible = false; gap = 1.0; donorK = ease((t - 1.8) / 1.8); donor.visible = donorK > 0.001; placeDonor(donorK);
           }
           cas.position.set(casX, 0, 0);
           cas.visible = casA > 0.02; cas.scale.setScalar(Math.max(0.01, casA));

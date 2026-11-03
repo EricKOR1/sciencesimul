@@ -1,6 +1,7 @@
-/* hp-convex-lens · 3D 볼록 렌즈와 상
-   렌즈 공식 1/a + 1/b = 1/f. 물체가 초점 밖(a > f)이면 거꾸로 선 실상이 스크린에 맺히고, 초점 안(a < f)이면 확대된 바로 선 허상이 생겨요.
-   세 광선: ① 광축에 나란히 → 초점 통과, ② 렌즈 중심 → 직진, ③ 앞쪽 초점 통과 → 광축에 나란히. */
+/* hp-convex-lens · 3D 볼록렌즈와 상
+   2D 실험(window.__sim)의 장면을 그대로 입체로 보여 줘요: 🔺 굴절과 렌즈(평행 광선 · 프리즘 조각/곡면 렌즈) · 🧭 광선 추적(세 주광선) · 🔬 상 실험(광학대 · 스크린) · 🏭 노광 공정(마스크 → 렌즈 → 웨이퍼).
+   물체 거리·렌즈 곡률·스크린 위치는 옆 조작판이 정하고 3D는 따라가요. 결상 공식은 쓰지 않고, 광선의 작도와 직접 측정으로만 상을 찾아요.
+   (광학대 그림은 2D처럼 세로 방향을 2.4배로 늘려 그렸어요) */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -41,78 +42,165 @@
     return { V3, Y, M, glass, mkArrow, setArrow, tube, disc, grid, arc };
   }
   const KDX = PHN ? 1.45 : 1;
+  const KY = 2.4, UX = 0.2, UY = UX * KY;
+  const f1 = (v) => (Math.round(v * 10) / 10).toFixed(1), f2 = (v) => (Math.round(v * 100) / 100).toFixed(2);
   window.SciSim3D.attach({
-    title: '볼록 렌즈와 상 3D',
-    hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: 15 * KDX, theta: 0.3, phi: 1.22, min: 5, max: 30, target: [0, 0.4, 0] },
+    title: '볼록렌즈와 상 3D',
+    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 값은 옆 조작판에서 바꿔요',
+    camera: { dist: 16 * KD, theta: 0.0, phi: 1.2, min: 4, max: 40, target: [0, 0, 0] },
     autoRotate: 0,
     levels: [0, 1, 2],
     build(ctx) {
-      const { THREE, root, label, info, controls } = ctx;
-      const { V3, M, mkArrow, setArrow, tube, glass } = tools(THREE);
-      const st = { f: 2.5, a: 6 };
-      const HO = 1.1, FAR = 9;
-      // 광학대
-      const bench = new THREE.Mesh(new THREE.BoxGeometry(22, 0.14, 1.4), M(0x64748b, { metalness: 0.5, roughness: 0.4 })); bench.position.y = -0.9; bench.receiveShadow = true; root.add(bench);
-      const axis = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 22, 6), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5 })); axis.rotation.z = Math.PI / 2; root.add(axis);
-      const lens = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), new THREE.MeshStandardMaterial({ color: 0x9fd2ff, roughness: 0.05, metalness: 0, transparent: true, opacity: 0.4, depthWrite: false })); lens.scale.set(0.34, 2.3, 2.3); root.add(lens);
-      const rim = new THREE.Mesh(new THREE.TorusGeometry(2.3, 0.09, 12, 56), M(0x475569, { metalness: 0.6 })); rim.rotation.y = Math.PI / 2; root.add(rim);
-      const stand = new THREE.Mesh(new THREE.BoxGeometry(0.3, 1.0, 0.5), M(0x475569)); stand.position.set(0, -2.2 + 0.1, 0); root.add(stand);
-      const objA = mkArrow(0xffb020, 0.07), imgA = mkArrow(0xff5a5f, 0.07); root.add(objA, imgA);
-      const imgMat = imgA.userData.sh.material; imgMat.transparent = true;
-      const candle = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, 0.9), M(0x64748b)); root.add(candle);
-      const scr = new THREE.Mesh(new THREE.BoxGeometry(0.1, 3.0, 2.4), new THREE.MeshStandardMaterial({ color: 0xf1f5f9, roughness: 0.9, transparent: true, opacity: 0.85 })); root.add(scr);
-      const rays = new THREE.Group(); root.add(rays);
-      const fMarks = [new THREE.Mesh(new THREE.SphereGeometry(0.1, 12, 8), M(0xa78bfa)), new THREE.Mesh(new THREE.SphereGeometry(0.1, 12, 8), M(0xa78bfa))]; fMarks.forEach((m) => root.add(m));
-      const lO = label('물체', objA, { color: '#b45309', size: 12, offset: [0, 0.55, 0] }), lI = label('상', imgA, { color: '#e2464b', size: 12, offset: [0, 0.55, 0] }), lF1 = label('초점 F', fMarks[0], { color: '#7c3aed', size: 12, offset: [0, -0.45, 0] }), lF2 = label('초점 F', fMarks[1], { color: '#7c3aed', size: 12, offset: [0, -0.45, 0] });
-      const lL = label('볼록 렌즈', lens, { color: '#0e7490', size: 12, offset: [0, 2.7, 0] });
-      let rayMeshes = [];
-      function build() {
-        rayMeshes.forEach((m) => { rays.remove(m); m.geometry.dispose(); }); rayMeshes = [];
-        const f = st.f, a = st.a, near = Math.abs(a - f) < 0.06;
-        const b = near ? 1e9 : 1 / (1 / f - 1 / a), mag = -b / a, hi = mag * HO;
-        const ox = -a, oy = HO, real = b > 0 && !near, far = real && b > FAR - 0.5;
-        objA.position.set(ox, 0, 0); setArrow(objA, new V3(ox, 0, 0), new V3(ox, oy, 0)); candle.position.set(ox, -0.1, 0); 
-        fMarks[0].position.set(-f, 0, 0); fMarks[1].position.set(f, 0, 0);
-        const add = (pts, col, op, thin) => { const t = tube(pts, thin || 0.022, col, { basic: true, op: op || 0.9 }); rays.add(t); rayMeshes.push(t); };
-        const P = (x, y) => new V3(x, y, 0);
-        const lensY = (y) => y;                                 // 얇은 렌즈 근사
-        const colr = [0xffe066, 0x7ee787, 0x79c0ff];
-        // ① 광축에 나란히 → 렌즈 → 초점
-        // ② 중심 직진, ③ 초점 통과 → 렌즈 → 나란히
-        const y1 = oy, y3 = oy * (1 + 0) * 1;                    // 렌즈 위 높이: ① oy, ③ oy * f/(a - f) 로 계산
-        const y3L = near ? null : oy * f / (f - a) * 1.0 * -1 * -1;
-        // ③: 물체 끝에서 F(-f)를 통과해 렌즈에 닿는 높이: 직선 (ox,oy) → (-f,0) 연장 : y = oy * (0 - (-f)) / ((-f) - ox) 에서 x=0
-        const hit3 = near ? 0 : oy * (0 - (-f)) / ((-f) - ox) * -1 * -1;
-        // 직선: y(x) = oy + (0 - oy)/((-f) - ox) * (x - ox) → x=0
-        const y3a = oy + (0 - oy) / ((-f) - ox) * (0 - ox);
-        const xe = Math.min(FAR, Math.max(real ? b : FAR, 4));
-        if (!near) {
-          const bx = real ? b : -b;                                  // 상의 x 좌표 (실상: +b, 허상: 음수)
-          const ix = real ? b : -(-b) * 1;                          // 허상은 b<0: 상의 x = b (음수)
-          const imx = b, imy = hi;
-          // 광선 ①
-          add([P(ox, y1), P(0, y1)], colr[0]);
-          const dx1 = (f), dy1 = -y1;                                // (0,y1) → (f,0)
-          if (real) { add([P(0, y1), P(imx, imy)], colr[0]); if (b < FAR) { } } else { const tt = 6 / f; add([P(0, y1), P(Math.min(FAR, 0 + (FAR) * 1), y1 + dy1 / f * FAR)], colr[0]); add([P(0, y1), P(imx, imy)], colr[0], 0.3, 0.014); }
-          // 광선 ②
-          add([P(ox, oy), P(0, 0)], colr[1]);
-          if (real) add([P(0, 0), P(imx, imy)], colr[1]); else { add([P(0, 0), P(FAR, -oy / ox * 0 + (-oy / ox) * FAR)], colr[1]); add([P(0, 0), P(imx, imy)], colr[1], 0.3, 0.014); }
-          // 광선 ③
-          add([P(ox, oy), P(0, y3a)], colr[2]);
-          if (real) add([P(0, y3a), P(imx, imy)], colr[2]); else { add([P(0, y3a), P(FAR, y3a)], colr[2]); add([P(0, y3a), P(imx, imy)], colr[2], 0.3, 0.014); }
-          const showI = (real && b <= FAR) || !real;
-          imgA.visible = showI; if (showI) { setArrow(imgA, new V3(imx, 0, 0), new V3(imx, hi, 0)); imgMat.opacity = real ? 1 : 0.45; imgA.userData.hd.material = imgMat; }
-          scr.visible = real && b <= FAR; scr.position.set(imx, 0.6, 0); lI.show(showI); lI.set(real ? '실상(거꾸로)' : '허상(바로, 확대)'); 
-        } else { imgA.visible = false; scr.visible = false; lI.show(false); add([P(ox, oy), P(0, oy)], colr[0]); add([P(0, oy), P(FAR, oy)], colr[0]); add([P(ox, oy), P(0, y3a)], colr[2]); add([P(0, y3a), P(FAR, y3a)], colr[2]); }
-        info(near ? '<b>물체가 초점에 있어요.</b><br>굴절한 빛이 나란히 나가서 상이 생기지 않아요.' : real
-          ? '<b>실상</b> · 물체 거리 a = ' + a.toFixed(1) + ' → 상 거리 b = ' + (b > 50 ? '아주 멀리' : b.toFixed(1)) + '<br>거꾸로 선 상, 크기 ' + Math.abs(mag).toFixed(1) + '배 (스크린에 맺혀요).<br>1/a + 1/b = 1/f'
-          : '<b>허상</b> · 물체가 초점 안쪽(a &lt; f)이에요.<br>스크린에는 맺히지 않고, 렌즈 너머로 바로 선 상이 ' + Math.abs(mag).toFixed(1) + '배로 보여요.');
+      const { THREE, root, label, info, controls, orbit } = ctx;
+      const { V3, M, mkArrow, setArrow, tube } = tools(THREE);
+      const sim = () => ctx.lesson();
+      const P = (x, y, z) => new V3(x * UX, y * UY, z || 0);
+      const gT = new THREE.Group(), gB = new THREE.Group(), gR = new THREE.Group(); root.add(gT, gB, gR);
+      const benchBase = (g, w) => { const b = new THREE.Mesh(new THREE.BoxGeometry(w, 0.14, 1.6), M(0x334155, { metalness: 0.4, roughness: 0.5 })); b.position.set(0, -4.1, 0); b.receiveShadow = true; g.add(b); const ax = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, w, 6), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.45 })); ax.rotation.z = Math.PI / 2; g.add(ax); return b; };
+      const lensMesh = (g, halfCm, col) => { const m = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), new THREE.MeshStandardMaterial({ color: col || 0x9fd2ff, roughness: 0.05, transparent: true, opacity: 0.42, depthWrite: false })); m.scale.set(0.25, halfCm * UY, halfCm * UY / 1.2); g.add(m); const r = new THREE.Mesh(new THREE.TorusGeometry(1, 0.05, 10, 56), M(0x475569, { metalness: 0.6 })); r.scale.set(halfCm * UY / 1.2, halfCm * UY, 1); r.rotation.y = Math.PI / 2; r.scale.set(halfCm * UY / 1.2, halfCm * UY, 1); g.add(r); return m; };
+      const tubeLine = (g, pts, col, op, thin, dashed) => { if (pts.length < 2) return null; const t = tube(pts, thin || 0.022, col, { basic: true, op: op || 0.95 }); g.add(t); return t; };
+      /* ================= 🧭 광선 추적 ================= */
+      benchBase(gT, 22);
+      const lensT = lensMesh(gT, 14.6);
+      const objT = mkArrow(0xffd447, 0.07), imgT = mkArrow(0x5ef2c6, 0.07); gT.add(objT, imgT);
+      const fm = [-20, -10, 10, 20].map((c) => { const m = new THREE.Mesh(new THREE.SphereGeometry(0.09, 12, 8), M(0xffd447, { emissive: 0x7a6200 })); m.position.set(c * UX, 0, 0); gT.add(m); return m; });
+      const fl = [[-20, '2F'], [-10, 'F'], [10, 'F'], [20, '2F']].map(([c, nm]) => label(nm, [c * UX, 0, 0], { color: '#7a6200', size: 12 }));
+      const lObjT = label('물체', objT, { color: '#b45309', size: 12 }), lImgT = label('', imgT, { color: '#14a058', size: 12 }), lLensT = label('볼록렌즈 (광선은 가운데 면에서 꺾어 그려요)', [0, 0, 0], { color: '#0e7490', size: 12 });
+      const rayG = new THREE.Group(); gT.add(rayG); let rKey = '';
+      const demoT = { p: 0, on: false };
+      const zoneName = (a, f) => (a > 2 * f + 1e-6 ? '2f 밖' : Math.abs(a - 2 * f) < 1e-6 ? '2f 위' : a > f + 1e-6 ? 'f와 2f 사이' : Math.abs(a - f) < 1e-6 ? '초점(f) 위' : 'f 안쪽');
+      function trace(A, S) {
+        const t = S.tr, f = A.F_TR, H = 2.5, a = demoT.on ? 40 - 35 * (1 - Math.abs(2 * demoT.p - 1)) : t.a;
+        const rays = demoT.on ? { 1: true, 2: true, 3: true } : t.rays, showImg = demoT.on || t.showImg === true || t.found;
+        const key = [a.toFixed(2), rays[1], rays[2], rays[3]].join('|');
+        if (key !== rKey) {
+          rKey = key; while (rayG.children.length) { const c = rayG.children[0]; rayG.remove(c); c.geometry.dispose(); }
+          const pr = A.principal(a);
+          pr.forEach((r) => { if (!rays[r.k]) return; const col = parseInt(r.color.slice(1), 16);
+            r.solid.forEach((p) => tubeLine(rayG, p.map((q) => P(q[0], q[1])), col, 0.95, 0.024));
+            r.dashed.forEach((p) => tubeLine(rayG, p.map((q) => P(q[0], q[1])), col, 0.5, 0.014)); });
+        }
+        setArrow(objT, P(-a, 0), P(-a, H)); lObjT.off = [0, 0.4, 0];
+        const im = Math.abs(a - f) < 1e-6 ? null : { b: a * f / (a - f) }, ix = im ? im.b : 0, iy = im ? -H * im.b / a : 0, real = a > f;
+        const inRange = im && Math.abs(ix) < 60;
+        imgT.visible = !!(showImg && inRange); lImgT.show(imgT.visible);
+        if (imgT.visible) { setArrow(imgT, P(ix, 0), P(ix, iy)); imgT.children.forEach((c) => { c.material = c.material.clone(); c.material.transparent = true; c.material.opacity = real ? 1 : 0.5; }); lImgT.set(real ? '실상' : '허상'); lImgT.el.style.background = real ? '#14a058' : '#7c5cff'; lImgT.off = [0, real ? -0.6 : 0.6, 0]; }
+        const z = zoneName(a, f);
+        let t2 = '<b>🧭 광선 추적</b> · 물체 거리 a = ' + (demoT.on ? a.toFixed(1) : a) + ' cm (f = ' + f.toFixed(0) + ' cm, 2f = ' + (2 * f).toFixed(0) + ' cm) · <b>' + z + '</b><br>';
+        if (!im) t2 += '물체가 초점에 있으면 렌즈를 지난 광선들이 서로 평행해서 한 점에서 만나지 않아요. 그래서 상이 맺히지 않아요.';
+        else if (showImg) t2 += '작도로 찾은 상: 렌즈 ' + (real ? '오른쪽' : '왼쪽') + ' ' + Math.abs(ix).toFixed(1) + ' cm, 물체의 ' + (Math.abs(ix) / a).toFixed(2) + '배, ' + (real ? '거꾸로 선 <b>실상</b> (스크린에 맺혀요)' : '바로 선 <b>허상</b> (스크린에 맺히지 않아요)');
+        else t2 += '세 주광선: ① 광축에 평행하게 들어가면 렌즈를 지나 초점을 지나요 ② 렌즈 중심을 지나면 그대로 직진해요 ③ 앞쪽 초점을 지나 들어가면 렌즈를 지나 광축에 평행하게 나가요.';
+        info(t2 + '<br><span style="opacity:.8">물체 거리 · 보일 광선은 옆 조작판에서 골라요.</span>');
       }
-      controls.range('초점거리 f', 1.5, 3.5, 0.5, st.f, (v) => { st.f = v; build(); }, (v) => v.toFixed(1));
-      controls.range('물체 거리 a', 1, 10, 0.5, st.a, (v) => { st.a = v; build(); }, (v) => v.toFixed(1));
-      build();
-      return { update() {}, sync() {} };
+      /* ================= 🔬 상 실험 · 🏭 노광 공정 (광학대) ================= */
+      benchBase(gB, 30);
+      const lensB = lensMesh(gB, 4);
+      const objB = mkArrow(0xffd447, 0.07); gB.add(objB);
+      const land = new THREE.Group(); gB.add(land);
+      { const sky = new THREE.Mesh(new THREE.BoxGeometry(0.1, 2.4, 2.2), M(0x7ec4ff, { emissive: 0x2a5a88 })); land.add(sky); const hill = new THREE.Mesh(new THREE.ConeGeometry(0.9, 1.1, 4), M(0x4caf6a)); hill.position.set(0.1, -0.7, 0); hill.rotation.y = 0.7; land.add(hill); const sun = new THREE.Mesh(new THREE.SphereGeometry(0.28, 14, 10), M(0xffe28a, { emissive: 0xffc800 })); sun.position.set(0.1, 0.7, 0.5); land.add(sun); }
+      const scrB = new THREE.Mesh(new THREE.BoxGeometry(0.06, 10 * UY * 0.4, 3.2), M(0xf1f5f9, { roughness: 0.95 })); gB.add(scrB);
+      const cvS = document.createElement('canvas'); cvS.width = 96; cvS.height = 192; const cs = cvS.getContext('2d'); const texS = new THREE.CanvasTexture(cvS);
+      const faceS = new THREE.Mesh(new THREE.PlaneGeometry(3.0, 10 * UY * 0.4 - 0.1), new THREE.MeshBasicMaterial({ map: texS, transparent: true })); faceS.rotation.y = Math.PI / 2; gB.add(faceS);
+      const card = new THREE.Mesh(new THREE.BoxGeometry(0.06, 4 * UY, 4 * UY / 1.2 * 1.05), M(0x1f2937)); gB.add(card);
+      const rayB = new THREE.Group(); gB.add(rayB);
+      const lObjB = label('물체', objB, { color: '#b45309', size: 12 }), lLensB = label('볼록렌즈', lensB, { color: '#0e7490', size: 12 }), lScrB = label('스크린', scrB, { color: '#475569', size: 12 }), lSharp = label('선명해요!', scrB, { color: '#14a058', size: 13 }), lCard = label('카드', card, { color: '#1f2937', size: 12 });
+      const dimA = label('', [0, 0, 0], { color: '#b45309', size: 12 }), dimB = label('', [0, 0, 0], { color: '#0e7490', size: 12 });
+      let bKey = '';
+      function drawScreen(blurCm, alpha, mH, litho, far) {
+        const w = 96, h = 192, pxc = 24;   // 세로 1 cm = 24 px (화면 높이 8 cm)
+        cs.clearRect(0, 0, w, h); cs.save(); cs.globalAlpha = alpha; cs.shadowColor = litho ? 'rgba(120,255,200,1)' : 'rgba(255,230,140,1)';
+        const bl = Math.min(40, blurCm * pxc * 0.7); cs.shadowBlur = bl; cs.fillStyle = litho ? '#7dffc9' : '#ffe9a0';
+        cs.translate(-1000, 0); cs.shadowOffsetX = 1000;
+        if (far) { cs.fillStyle = '#e8c870'; cs.fillRect(w / 2 - 6 + 1000, h / 2 - 8, 12, 14); }
+        else { const top = h / 2, ht = mH * pxc; const y0 = top, y1 = top + ht; cs.beginPath(); cs.moveTo(w / 2 + 1000, y0); cs.lineTo(w / 2 + 1000, y1); cs.lineWidth = 6; cs.strokeStyle = cs.fillStyle; cs.stroke(); cs.beginPath(); cs.moveTo(w / 2 - 10 + 1000, y1 - 12); cs.lineTo(w / 2 + 1000, y1 + 4); cs.lineTo(w / 2 + 10 + 1000, y1 - 12); cs.closePath(); cs.fill(); }
+        cs.restore(); texS.needsUpdate = true;
+      }
+      function benchScene(A, S, litho) {
+        let cfg, st, sx, ar, namesObj = '물체', H;
+        if (litho) { const g = A.benchGeom(A.A_LITHO, A.F_LITHO, false, 6), blur = 8 * Math.abs(S.lt.w - g.b) / g.b; cfg = { a: A.A_LITHO, far: false, cover: false, sx: S.lt.w, H: 6, f: A.F_LITHO }; st = { g, blur, sharp: blur <= 0.25 }; }
+        else { st = A.benchState(); cfg = st.cfg; }
+        H = cfg.H; sx = cfg.sx; const g = st.g, a = cfg.a, far = cfg.far, D = 8;
+        const showA = !far; const ox = -(far ? 40 : a);
+        objB.visible = showA; land.visible = far && !litho; if (showA) { setArrow(objB, P(ox, 0), P(ox, H)); lObjB.set(litho ? '마스크' : '물체'); lObjB.off = [0, 0.4, 0]; lObjB.show(true); } else lObjB.show(false);
+        if (far) { land.position.set(-11 * 1, 0, 0); }
+        scrB.position.set(sx * UX, 0, 0); faceS.position.set(sx * UX - 0.05, 0, 0); lScrB.set(litho ? '웨이퍼' : '스크린'); lScrB.off = [0, 1.7, 0];
+        lensB.scale.set(0.25, 4 * UY, 4 * UY / 1.2); lLensB.set(litho ? '축소 투영 렌즈' : '볼록렌즈'); lLensB.off = [0, 1.8, 0];
+        card.visible = !!cfg.cover; lCard.show(!!cfg.cover); if (cfg.cover) { card.position.set(0.1, -4 * UY / 2, 0); lCard.off = [0, -0.2, 0]; }
+        const bl = st.blur, alpha = (cfg.cover ? 0.5 : 1) * clamp(1 - bl * 0.25, 0.35, 1);
+        drawScreen(bl, alpha, far ? 0.6 : Math.abs(g.yi), litho, far); faceS.visible = true;
+        // 광선: 물체 끝 → 렌즈(가운데 · 위 · 아래 가장자리) → 상 → 스크린
+        const key = [a.toFixed(1), sx.toFixed(1), far, cfg.cover, litho].join('|');
+        if (key !== bKey) {
+          bKey = key; while (rayB.children.length) { const c = rayB.children[0]; rayB.remove(c); c.geometry.dispose(); }
+          const bx = g.b, by = far ? 0 : g.yi, col = litho ? 0x7dffc9 : 0xffe28a;
+          const edges = cfg.cover ? [D / 2] : [D / 2, -D / 2, 0];
+          edges.forEach((yl) => {
+            const start = far ? P(ox, yl) : P(ox, H);
+            const endx = Math.max(sx, bx) + 0, slope = (by - yl) / bx;
+            const yEnd = yl + slope * (sx), yI = by;
+            tubeLine(rayB, [start, P(0, yl), P(sx, yEnd)], col, yl === 0 ? 0.55 : 0.9, 0.018); void endx; void yI;
+            if (sx < bx) tubeLine(rayB, [P(sx, yEnd), P(bx, by)], col, 0.3, 0.012);
+          });
+        }
+        dimA.show(showA); dimB.show(true);
+        dimA.obj = [ox / 2 * UX * 1 - 0, -4.4, 0.9]; dimA.obj = [(ox / 2) * UX, -4.1, 0.9]; dimA.set(litho ? '마스크~렌즈 ' + a.toFixed(0) + ' cm' : 'a = ' + a.toFixed(1) + ' cm'); dimB.obj = [(sx / 2) * UX, -4.1, 0.9]; dimB.set(litho ? '렌즈~웨이퍼 ' + sx.toFixed(1) + ' cm' : 'b = ' + sx.toFixed(1) + ' cm');
+        lSharp.show(st.sharp); lSharp.off = [0, 2.3, 0];
+        if (!litho) info('<b>🔬 상 실험 · 광학대</b><br>물체 거리 a = ' + (far ? '∞ (먼 풍경)' : a.toFixed(1) + ' cm') + ' · 스크린 거리 b = ' + sx.toFixed(1) + ' cm' + (far ? '' : ' · 상의 크기 = 물체의 ' + f2(g.m) + '배') + '<br>' + (st.sharp ? '<b>상이 선명해요!</b> 📏 기록하기를 눌러요.' : '스크린을 움직여 상이 선명해지는 곳을 찾아요. (번짐 ' + f1(bl) + ' cm)') + (cfg.cover ? '<br>🃏 렌즈의 아래쪽 절반을 가렸어요: 상은 어떻게 될까요?' : '') + '<br><span style="opacity:.8">초점거리 f는 직접 재서 구해요 · 물체 거리와 스크린은 옆 조작판에서 바꿔요.</span>');
+        else info('<b>🏭 노광: 마스크 → 렌즈 → 웨이퍼</b><br>마스크는 렌즈에서 ' + A.A_LITHO.toFixed(0) + ' cm · 웨이퍼 위치 ' + sx.toFixed(1) + ' cm' + (st.sharp ? ' → <b>초점이 맞아요</b> (선명)' : ' → 초점이 맞지 않아요 (번짐 ' + f1(bl) + ' cm)') + '<br>빛의 파장 ' + ({ '436': '436 nm', '365': '365 nm 자외선', '193': '193 nm 심자외선', '13.5': '13.5 nm 극자외선' }[S.lt.wl]) + ' · 파장이 짧을수록 더 가는 선까지 인쇄돼요.<br><span style="opacity:.8">웨이퍼 위치와 파장은 옆 조작판에서 바꿔요.</span>');
+      }
+      /* ================= 🔺 굴절과 렌즈 (평행 광선, 1 cm = 0.45칸) ================= */
+      const UR = 0.45, flagG = new THREE.Group(); gR.add(flagG);
+      { const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.4, 8), M(0xe2464b)); pole.position.y = 0.5; flagG.add(pole); const cl = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.35, 0.03), M(0xe2464b, { emissive: 0x7f1d1d })); cl.position.set(0.3, 1.0, 0); flagG.add(cl); }
+      const axisR = new THREE.Mesh(new THREE.BoxGeometry(16, 0.02, 0.02), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.35 })); axisR.position.set(4, 0, 0); gR.add(axisR);
+      const lensR = new THREE.Group(); gR.add(lensR); const rayR = new THREE.Group(); gR.add(rayR); let rrKey = '';
+      const lFlag = label('초점 표지', flagG, { color: '#e2464b', size: 12 }), lLensR = label('', lensR, { color: '#0e7490', size: 12 });
+      function refract(A, S) {
+        const rf = S.rf, view = rf.view, R = rf.R;
+        const key = view + '|' + R;
+        if (key !== rrKey) {
+          rrKey = key;
+          while (lensR.children.length) { const c = lensR.children[0]; lensR.remove(c); c.geometry.dispose(); }
+          while (rayR.children.length) { const c = rayR.children[0]; rayR.remove(c); c.geometry.dispose(); }
+          const polys = A.lensPolys(R, view);
+          polys.forEach((poly) => { const sh = new THREE.Shape(poly.map((q) => new THREE.Vector2(q[0] * UR, q[1] * UR))); const g = new THREE.ExtrudeGeometry(sh, { depth: 1.6, bevelEnabled: false }); g.translate(0, 0, -0.8); const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ color: view === 'prism' ? 0x9ad0ff : 0x9fd2ff, roughness: 0.08, transparent: true, opacity: 0.5, depthWrite: false })); lensR.add(m); const eg = new THREE.EdgesGeometry(g); lensR.add(new THREE.LineSegments(eg, new THREE.LineBasicMaterial({ color: 0xcfe8ff }))); });
+          A.rayHeights(R, view).forEach((y0) => { const r = A.traceRay(y0, polys); const pts = r.pts.map((q) => new V3(q[0] * UR, q[1] * UR, 0)); tubeLine(rayR, pts, 0xffe066, 0.95, 0.03); });
+        }
+        flagG.position.set(rf.flag * UR, 0, 0); lFlag.off = [0.3, 1.5, 0];
+        lLensR.obj = [0, 3.2, 0]; lLensR.set(view === 'prism' ? '프리즘 조각' : '곡면 렌즈');
+        info('<b>🔺 ' + (view === 'prism' ? '프리즘 조각' : '곡면 렌즈') + '에서 빛이 꺾여요</b> · 곡률 반지름 R = ' + R + ' cm<br>' + (view === 'prism' ? '평행 광선이 각 조각에서 꺾이는 정도가 달라요. 가장자리 조각일수록 더 많이 꺾여요.' : '평행 광선이 렌즈를 지나며 한 점으로 모여요. 깃발(초점 표지)을 광선이 모이는 곳에 놓아 보세요. 렌즈를 더 볼록하게(R↓) 하면 모이는 곳이 가까워져요.') + '<br><span style="opacity:.8">보기 · R · 깃발은 옆 조작판에서 바꿔요.</span>');
+      }
+      /* ================= 장면 · ▶ 재생 ================= */
+      let plT = null;
+      plT = controls.player({ duration: 12, loop: true, autoplay: false, label: '물체 옮기기', phases: [[0, '물체를 렌즈에 가까이 (2f 밖 → f 안쪽)'], [0.5, '물체를 멀리 (f 안쪽 → 2f 밖)']], onFrame(p) { demoT.p = p; demoT.on = p > 0 || !!(plT && plT.playing); } });
+      plT.row = ctx.renderer.domElement.parentNode.parentNode.querySelector('.v3-player');
+      let cur = '';
+      const labsT = [lObjT, lImgT, lLensT].concat(fl), labsB = [lObjB, lLensB, lScrB, lSharp, lCard, dimA, dimB], labsR = [lFlag, lLensR];
+      function setMode(S) {
+        const mode = S.mode === 'litho' ? (S.lt.sub === 'proj' ? 'litho' : 'flow') : S.mode;
+        if (mode === cur) return; cur = mode;
+        gT.visible = mode === 'trace'; gB.visible = mode === 'bench' || mode === 'litho'; gR.visible = mode === 'refract';
+        labsT.forEach((l) => l.show(mode === 'trace')); labsB.forEach((l) => l.show(mode === 'bench' || mode === 'litho')); labsR.forEach((l) => l.show(mode === 'refract'));
+        lLensT.show(false);
+        plT.row.style.display = mode === 'trace' ? '' : 'none'; if (mode !== 'trace') { plT.pause(); plT.set(0); }
+        bKey = ''; rKey = ''; rrKey = '';
+        if (mode === 'trace') Object.assign(orbit, { tx: 0, ty: 0, tz: 0, phi: 1.25, theta: 0.0, dist: 17 * KD });
+        else if (mode === 'bench') Object.assign(orbit, { tx: 1.5, ty: -0.5, tz: 0, phi: 1.2, theta: 0.15, dist: 15 * KD });
+        else if (mode === 'litho') Object.assign(orbit, { tx: 0.5, ty: -0.5, tz: 0, phi: 1.2, theta: 0.15, dist: 17 * KD });
+        else if (mode === 'refract') Object.assign(orbit, { tx: 3, ty: 0, tz: 0, phi: 1.25, theta: 0.0, dist: 13 * KD });
+      }
+      const NOTE = { flow: '🏭 노광 공정의 순서 카드(웨이퍼 세척 → … → 감광제 제거)는 2D 화면에서 해요. 위의 [▦ 2D]를 눌러 보세요.' };
+      return {
+        update() {
+          const A = sim(); if (!A || !A.S) return; const S = A.S;
+          setMode(S);
+          if (cur === 'trace') { if (!plT.playing && plT.p === 0) demoT.on = false; trace(A, S); }
+          else if (cur === 'bench') benchScene(A, S, false);
+          else if (cur === 'litho') benchScene(A, S, true);
+          else if (cur === 'refract') refract(A, S);
+          else info(NOTE.flow);
+        },
+        sync() {},
+      };
     },
   });
 })();

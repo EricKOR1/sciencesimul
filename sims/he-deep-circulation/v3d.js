@@ -39,7 +39,7 @@
   window.SciSim3D.attach({
     title: '해양 컨베이어 벨트 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    levels: [0, 2, 3],
+    levels: [2, 3],        // 0·1단계(수조 실험·단면 카드)는 2D 화면에서 해요
     camera: { dist: PHONE ? 14 : 10.5, theta: 0.2, phi: 1.1, min: 5.5, max: 22 },
     autoRotate: 0.12,
     build(ctx) {
@@ -69,9 +69,9 @@
       const cc = new THREE.Color(); let k0 = 0; FL.forEach((f) => { f.k0 = k0; for (let i = 0; i < f.n; i++) { cc.set(f.id === 'surf' ? 0xffd9a8 : f.id === 'aabw' ? 0xe4dcff : 0xcfeaff); dots.setColorAt(k0 + i, cc); } k0 += f.n; });
 
       const LB = {
-        n: label('북대서양 심층수 침강', ll(62, -28, R * 1.03).toArray(), { size: 12, offset: [0, 0.35, 0] }), s: label('남극 저층수 침강', ll(-72, -42, R * 1.03).toArray(), { size: 12, offset: [0, -0.3, 0] }),
-        sf: label('표층 해류 (따뜻함)', ll(20, -58, R * 1.03).toArray(), { size: 12, color: 'rgba(170,70,10,.92)' }), dp: label('심층 해류 (차가움)', ll(-30, -33, R * 0.9).toArray(), { size: 12, color: 'rgba(15,80,170,.92)' }),
-        up: label('올라옴(용승)', ll(12, 60, R * 1.03).toArray(), { size: 11.5, color: 'rgba(15,100,150,.9)' }),
+        n: label('② 침강 (북대서양 심층수)', ll(62, -28, R * 1.03).toArray(), { size: 12, offset: [0, 0.35, 0] }), s: label('남극 저층수 침강', ll(-72, -42, R * 1.03).toArray(), { size: 12, offset: [0, -0.3, 0] }),
+        sf: label('① 표층 난류(북상)', ll(20, -58, R * 1.03).toArray(), { size: 12, color: 'rgba(170,70,10,.92)' }), dp: label('③ 심층 이동(남하)', ll(-30, -33, R * 0.9).toArray(), { size: 12, color: 'rgba(15,80,170,.92)' }),
+        up: label('④ 느린 상승', ll(12, 60, R * 1.03).toArray(), { size: 11.5, color: 'rgba(15,100,150,.9)' }),
       };
 
       /* 상태 */
@@ -79,7 +79,7 @@
       const SIM = () => window.__sim;
       const calc = (f) => { try { const s = SIM(); if (s && s.strengthF) return s.strengthF(f); } catch (e) {} return clamp(1 - f / 6.5, 0, 1); };
       let lastSimF = null; try { const s = SIM(); if (s && s.S) { F = s.S.F || 0; lastSimF = s.S.F; } } catch (e) {}
-      const rF = controls.range('담수 유입', 0, 10, 0.5, F, (v) => { F = v; refresh(); }, (v) => v.toFixed(1) + ' (빙하 녹은 물)');
+      const rF = controls.range('담수 유입', 0, 10, 0.5, F, (v) => { F = v; refresh(); try { const s = SIM(); if (s && s.setF) { s.setF(v); lastSimF = v; } } catch (e) {} }, (v) => v.toFixed(1) + ' (빙하 담수)');
       const bS = controls.button('표층 ✓', () => { showS = !showS; bS.classList.toggle('on', showS); bS.textContent = '표층 ' + (showS ? '✓' : '✕'); apply(); }); bS.classList.add('on');
       const bD = controls.button('심층 ✓', () => { showD = !showD; bD.classList.toggle('on', showD); bD.textContent = '심층 ' + (showD ? '✓' : '✕'); apply(); }); bD.classList.add('on');
       function apply() {
@@ -89,13 +89,48 @@
       }
       function refresh() {
         str = calc(F); const pc = Math.round(str * 100);
+        let sal = null; try { const s = SIM(); if (s && s.salF) sal = s.salF(F); } catch (e) {}
+        if (ctx.level === 2) { info('<b>순환 고리</b>: ① 표층 난류(북상) → ② 침강 → ③ 심층 이동(남하) → ④ 느린 상승<br>한 바퀴 약 1000년 (예시). ▶ 를 눌러 노란 입자를 돌려 보세요.'); return; }
         FL.forEach((f) => { f.mat.opacity = f.kind === 'surf' ? 0.55 + 0.4 * str : 0.2 + 0.7 * str; });
-        info('침강 세기 <b>' + pc + '%</b> · 담수 유입 ' + F.toFixed(1) + '<br>' + (pc === 0 ? '표층수가 가벼워져 <b>침강이 멈췄어요</b>. 북상하는 따뜻한 해류도 약해져요.' : pc < 60 ? '담수가 섞여 염분이 낮아지면 침강이 <b>약해져요</b>.' : '차갑고 <b>짠</b> 물이 무거워 가라앉고, 순환이 이어져요.'));
+        info('침강 세기 <b>' + pc + '%</b> · 담수 유입 ' + F.toFixed(1) + (sal != null ? ' · 표층 염분 ' + sal.toFixed(2) + ' psu' : '') + '<br>' + (pc === 0 ? '표층수가 가벼워져 <b>침강이 멈췄어요</b>. 북상하는 따뜻한 해류도 약해져요.' : pc < 60 ? '담수가 섞여 염분이 낮아지면 침강이 <b>약해져요</b>.' : '차갑고 <b>짠</b> 물이 무거워 가라앉고, 순환이 이어져요.'));
       }
-      apply(); refresh();
+      /* ▶ 순환 고리: 노란 입자가 ① 표층 난류 → ② 침강 → ③ 심층 이동 → ④ 느린 상승으로 한 바퀴 (구간별 시간 몫은 2D와 같아요) */
+      const LEG = (() => { try { const s = SIM(); if (s && s.LOOP_LEG) return s.LOOP_LEG.map((l) => l[1]); } catch (e) {} return [0.05, 0.02, 0.6, 0.33]; })();
+      const YEARS = 1000, cum = [0]; LEG.forEach((w, i) => cum.push(cum[i] + w));
+      const NAMES = ['① 표층 난류(북상)', '② 침강', '③ 심층 이동(남하)', '④ 느린 상승'];
+      const vS = new THREE.Vector3(), vE = new THREE.Vector3(), vT = new THREE.Vector3();
+      const surfEnd = FL[0].curve.getPointAt(1), nadwStart = FL[1].curve.getPointAt(0);
+      const bead = new THREE.Mesh(new THREE.SphereGeometry(0.17, 20, 14), new THREE.MeshBasicMaterial({ color: 0xfde047 })); grp.add(bead);
+      const trailM = new THREE.MeshBasicMaterial({ color: 0xfde047, transparent: true, opacity: 0.35 }), trail = [];
+      for (let i = 0; i < 10; i++) { const m = new THREE.Mesh(new THREE.SphereGeometry(0.12 - i * 0.008, 10, 8), trailM); grp.add(m); trail.push(m); }
+      const bl = label('', [0, 0, 0], { size: 12.5, color: 'rgba(120,80,0,.95)', offset: [0, 0.4, 0] }); bl.obj = bead;
+      function loopPos(u, out) {
+        u = ((u % 1) + 1) % 1; let k = 0; while (k < 3 && u >= cum[k + 1]) k++;
+        const q = (u - cum[k]) / LEG[k];
+        if (k === 0) FL[0].curve.getPointAt(q, out);
+        else if (k === 1) { out.copy(surfEnd).lerp(nadwStart, q); }
+        else if (k === 2) FL[1].curve.getPointAt(q, out);
+        else { FL[3].curve.getPointAt(q, out); out.setLength(R * (0.9 + 0.118 * q * q * (3 - 2 * q))); }
+        return k;
+      }
+      let lastLoop = null, lastU = 0, syncing = false;
+      function showLoop(u) {
+        lastU = u; const k = loopPos(u, vT); bead.position.copy(vT);
+        for (let i = 0; i < trail.length; i++) { loopPos(u - (i + 1) * 0.006, vS); trail[i].position.copy(vS); }
+        bl.set(NAMES[k] + ' · ' + Math.round(u * YEARS).toLocaleString() + '년째');
+        bead.visible = bl.visible = ctx.level === 2; trail.forEach((m) => (m.visible = ctx.level === 2)); bl.show(ctx.level === 2);
+      }
+      const pl = controls.player({
+        duration: 20, loop: true, autoplay: false, label: '한 바퀴 돌리기',
+        phases: [[0, NAMES[0]], [cum[1], NAMES[1]], [cum[2], NAMES[2]], [cum[3], NAMES[3]]],
+        onFrame(p) { showLoop(p); if (!syncing && ctx.level === 2) { try { const s = SIM(); if (s && s.S) { s.S.loopT = p * YEARS; lastLoop = s.S.loopT; } } catch (e) {} } },
+      });
+      apply(); refresh(); showLoop(0);
+      ctx.onLevel(() => { refresh(); showLoop(lastU); });
       const dm = new THREE.Object3D(), tmp = new THREE.Vector3();
       return {
         update(dt, t) {
+          try { const s = SIM(); if (s && s.S && ctx.level === 2 && !pl.playing && s.S.loopT !== lastLoop) { syncing = true; pl.set((s.S.loopT % YEARS) / YEARS); syncing = false; lastLoop = s.S.loopT; } } catch (e) {}
           try { const s = SIM(); if (s && s.S && s.S.F !== lastSimF) { lastSimF = s.S.F; F = s.S.F; rF.set(F); refresh(); } } catch (e) {}
           FL.forEach((f) => {
             for (let i = 0; i < f.n; i++) {

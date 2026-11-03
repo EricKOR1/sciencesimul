@@ -1,5 +1,6 @@
 /* hb-organ-systems · 3D 사람 몸과 기관계의 통합적 작용
-   소화계 · 순환계 · 호흡계 · 배설계를 몸속 위치대로 입체로 보고, 운동 세기를 바꾸면 심장과 폐가 함께 빨라지는 것을 확인해요. */
+   소화계 · 순환계 · 호흡계 · 배설계를 몸속 위치대로 입체로 보고, 2D 차시와 같은 운동 강도(0 안정 ~ 100 달리기)에 따라
+   심박수 70→150회/분 · 호흡수 14→35회/분 · 체온 37.0→38.5 °C · 땀 · 오줌 생성이 함께 바뀌는 것을 확인해요. 2D의 강도 슬라이더와 양방향으로 맞물려요. */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -7,7 +8,7 @@
 
   window.SciSim3D.attach({
     title: '사람 몸의 기관계 3D',
-    hint: '기관계를 골라 보고 운동 세기를 바꿔 봐요',
+    hint: '기관계를 골라 보고 운동 강도를 바꿔 봐요 (2D와 같은 값)',
     camera: { dist: narrow ? 15 : 12.5, theta: 0.35, phi: 1.4, min: 6, max: 22, target: [0, 0.6, 0] },
     autoRotate: 0.12,
     levels: [0, 1],
@@ -90,7 +91,7 @@
 
       let mode = 'all', ex = 0, phH = 0, phB = 0, bpm = 70, bpr = 14, lastTxt = '';
       const INFO = {
-        all: '소화·순환·호흡·배설계가 서로 연결되어 함께 일해요.<br>운동 세기를 올려 보세요.',
+        all: '소화·순환·호흡·배설계가 서로 연결되어 함께 일해요.<br>달리기 강도를 올려 보세요.',
         dig: '<b>소화계</b>: 음식물을 분해하고 영양소를 흡수해 순환계로 보내요.',
         cir: '<b>순환계</b>: 심장이 혈액을 보내 영양소·산소·이산화 탄소·노폐물을 운반해요.',
         res: '<b>호흡계</b>: 폐에서 산소를 얻고 이산화 탄소를 내보내요.',
@@ -103,15 +104,24 @@
         lastTxt = '';
       }
       controls.segment('', [{ label: '전체', value: 'all' }, { label: '소화계', value: 'dig' }, { label: '순환계', value: 'cir' }, { label: '호흡계', value: 'res' }, { label: '배설계', value: 'exc' }], 'all', setMode);
-      controls.range('운동 세기', 0, 100, 1, 0, (v) => { ex = v / 100; }, (v) => (v < 20 ? '안정' : v < 60 ? '보통' : '격렬'));
+      const L2 = () => window.__sim || null;
+      let plGuard = false;
+      const rI = controls.range('달리기 강도', 0, 100, 1, 0, (v) => { const L = L2(); if (L) L.setInt(v); ex = v / 100; }, (v) => v + ' % ' + (v < 20 ? '(안정)' : v >= 90 ? '(달리기)' : ''));
+      /* ▶ 안정 → 달리기 → 회복 : 강도를 한 주기 동안 0 → 100 → 0으로 바꿔 줘요 (2D 슬라이더도 함께 움직여요) */
+      const pl = controls.player({
+        duration: 12, loop: true, autoplay: false, label: '안정 → 달리기',
+        phases: [[0, '안정'], [0.12, '달리기 시작'], [0.4, '달리는 중'], [0.7, '회복']],
+        onFrame(p) { const L = L2(); if (!L || plGuard) return; const I = p < 0.12 ? 0 : p < 0.4 ? 100 * (p - 0.12) / 0.28 : p < 0.7 ? 100 : 100 * (1 - (p - 0.7) / 0.3); L.setInt(Math.round(I)); },
+      });
       setMode('all');
 
       const D = new THREE.Object3D(), tmp = new V();
       const tgt = { bpm: 70, bpr: 14 };
       return {
         update(dt, t) {
-          tgt.bpm = 70 + 95 * ex; tgt.bpr = 14 + 26 * ex;
-          bpm += (tgt.bpm - bpm) * Math.min(1, dt * 2.5); bpr += (tgt.bpr - bpr) * Math.min(1, dt * 2.5);
+          const L = L2(), R = L && L.S.run;
+          if (R) { ex = R.I / 100; if (Math.abs(rI.value - R.I) > 0.5) rI.set(R.I); bpm = R.hr; bpr = R.rr; }
+          else { tgt.bpm = 70 + 80 * ex; tgt.bpr = 14 + 21 * ex; bpm += (tgt.bpm - bpm) * Math.min(1, dt * 2.5); bpr += (tgt.bpr - bpr) * Math.min(1, dt * 2.5); }
           const slow = 0.45;
           phH += dt * slow * bpm / 60 * Math.PI * 2; phB += dt * slow * bpr / 60 * Math.PI * 2;
           const beat = Math.pow(Math.max(0, Math.sin(phH)), 6), br = 0.5 + 0.5 * Math.sin(phB);
@@ -134,8 +144,10 @@
           // 이름표 위치 (동맥·정맥 등 점 위치)
           LB.tra.obj = [0, 3.0, 0.2]; LB.art.obj = [-0.62, -1.3, 0.1]; LB.ven.obj = [0.7, -1.3, 0.1]; LB.kid.obj = [0.82, -0.2, -0.38]; LB.ure.obj = [-0.45, -1.4, -0.25];
           LB.art.off = [0, 0, 0]; LB.ven.off = [0, 0, 0]; LB.tra.off = [0, 0, 0]; LB.kid.off = [0.6, 0, 0]; LB.ure.off = [0, 0, 0];
-          const txt = mode + '|' + Math.round(bpm) + '|' + Math.round(bpr);
-          if (txt !== lastTxt) { lastTxt = txt; info(INFO[mode] + '<br>심장 박동 ' + Math.round(bpm) + '회/분 · 호흡 ' + Math.round(bpr) + '회/분'); }
+          const SW = (s) => (s < 0.1 ? '거의 없음' : s < 0.6 ? '조금 나요' : '많이 나요'), UR = (u) => (u > 0.9 ? '보통' : u > 0.6 ? '조금 줄어듦' : '적음');
+          const tp = R ? R.temp.toFixed(1) : (37 + 1.5 * ex).toFixed(1), sw = R ? SW(R.sweat) : SW(ex), ur = R ? UR(R.urine) : UR(1 - 0.6 * ex);
+          const txt = mode + '|' + Math.round(bpm) + '|' + Math.round(bpr) + '|' + tp + sw + ur;
+          if (txt !== lastTxt) { lastTxt = txt; info(INFO[mode] + '<br>강도 ' + Math.round(ex * 100) + ' % · 심박수 ' + Math.round(bpm) + '회/분 · 호흡수 ' + Math.round(bpr) + '회/분 · 체온 ' + tp + ' °C<br>땀 ' + sw + ' · 오줌 생성량 ' + ur); }
         },
         sync() {},
       };

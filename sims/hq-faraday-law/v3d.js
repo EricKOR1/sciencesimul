@@ -88,11 +88,14 @@
     camera: { dist: 12.5 * KD, theta: 0.5, phi: 1.32, min: 5, max: 28 },
     autoRotate: 0,
     build(ctx) {
-      const { THREE, root, label, info, controls } = ctx;
+      const { THREE, root, label, controls } = ctx;
       const h = H3(ctx); const { V3, mat, glass, mkArrow, setArrow, arrowSet, anchor, sphere, box, cyl, tube, grab, showCtl, toggleBtn } = h;
       const lessonS = () => (window.__sim && window.__sim.S) || null;
       const S0 = lessonS();
-      const st = { sc: S0 ? (MODE2SC[S0.mode] || 'flux') : 'flux', th: S0 && S0.f && isFinite(S0.f.th) ? Math.max(0, Math.min(90, Math.round(S0.f.th))) : 30, R: 2.0, B: 2, N: 6, spd: 0.9, flip: 1, pause: false, strong: 2 };
+      const st = { sc: '', th: 30, R: 2.0, B: 2, N: 6, spd: 0.9, flip: 1, pause: false, strong: 2, Bv: 0.5, Av: 0.02, label: '' };
+      const labs = {}; const L = (sc, text, obj, o) => { const l = label(text, obj, o); const raw = l.set; let last = text; l.set = (t) => { if (t !== last) { last = t; raw(t); } }; (labs[sc] = labs[sc] || []).push(l); return l; };
+      let lastInfo = ''; const info = (hh) => { if (hh !== lastInfo) { lastInfo = hh; ctx.info(hh); } };
+      const sciS = (x, d) => { if (!x) return '0'; const sup = { 0: '⁰', 1: '¹', 2: '²', 3: '³', 4: '⁴', 5: '⁵', 6: '⁶', 7: '⁷', 8: '⁸', 9: '⁹', '-': '⁻' }; let e = Math.floor(Math.log10(Math.abs(x) * (1 + 1e-12))), m = x / Math.pow(10, e); return m.toFixed(d == null ? 1 : d) + '×10' + String(e).replace(/[0-9-]/g, (c) => sup[c]); };
       const gF = new THREE.Group(), gC = new THREE.Group(), gB = new THREE.Group(); root.add(gF, gC, gB);
 
       /* ================= ① 자기선속 ================= */
@@ -101,10 +104,10 @@
       const disc = new THREE.Mesh(new THREE.CircleGeometry(1, 48), glass(0xffe08a, 0.22));
       const loop = new THREE.Group(); loop.add(ring, disc); gF.add(loop);
       const nArr = mkArrow(0xffffff, 0.045); gF.add(nArr);
-      const aN = anchor(gF), lN = label('면의 수직 방향 n', aN, { color: '#475569', size: 12 });
-      const aB = anchor(gF, 3.2, 3.4, 0), lB = label('자기장 B', aB, { color: '#2f6df6', size: 13 });
-      const aTh = anchor(gF), lTh = label('', aTh, { color: '#a16207', size: 13 });
-      const aPhi = anchor(gF, 0, -1.6, 0), lPhi = label('', aPhi, { color: '#b45309', size: 14 });
+      const aN = anchor(gF), lN = L('flux', '면의 수직 방향 n', aN, { color: '#475569', size: 12 });
+      const aB = anchor(gF, 3.2, 3.4, 0), lB = L('flux', '자기장 B', aB, { color: '#2f6df6', size: 13 });
+      const aTh = anchor(gF), lTh = L('flux', '', aTh, { color: '#a16207', size: 13 });
+      const aPhi = anchor(gF, 0, -1.6, 0), lPhi = L('flux', '', aPhi, { color: '#b45309', size: 14 });
       function updFlux() {
         const R = st.R, th = st.th * Math.PI / 180, n = new V3(Math.sin(th), Math.cos(th), 0);
         loop.scale.set(R, R, R); loop.quaternion.setFromUnitVectors(new V3(0, 0, 1), n);
@@ -121,9 +124,9 @@
         const o = new V3(0, 0, 0);
         setArrow(nArr, o, n.clone().multiplyScalar(R + 0.9)); aN.position.copy(n).multiplyScalar(R + 1.0);
         aTh.position.set(0.5 * n.x * (R * 0.5 + 0.6) + 0.35, 0.9, 0); lTh.set('θ = ' + Math.round(st.th) + '°'); lTh.show(st.th > 3);
-        const phi = st.B * Math.PI * R * R * Math.cos(th) / 4.5;          // 보기 좋은 단위
-        lPhi.set('선속 Φ ∝ 지나는 선 수 = ' + thru + '개');
-        info('<b>Φ = B·A·cosθ</b> — 노란 선이 코일 면을 지나는 자기력선이에요.<br>선이 촘촘하고(B↑) 면이 넓고 면이 B에 수직(θ=0°)일수록 Φ가 커요.<br>θ = 90°이면 선이 면과 나란해서 Φ = 0이에요.');
+        const phi = st.Bv * st.Av * Math.cos(th);
+        lPhi.set('Φ = BAcosθ = ' + phi.toFixed(4) + ' Wb (지나는 선 ' + thru + '개)');
+        info('<b>Φ = B·A·cosθ</b> — 노란 선이 코일 면을 지나는 자기력선이에요.<br>B = ' + st.Bv.toFixed(1) + ' T, A = ' + st.Av.toFixed(3) + ' m², θ = ' + Math.round(st.th) + '° → Φ = ' + phi.toFixed(4) + ' Wb<br>선이 촘촘하고(B↑) 면이 넓고 면이 B에 수직(θ=0°)일수록 Φ가 커요. θ = 90°이면 선이 면과 나란해서 Φ = 0이에요.');
       }
 
       /* ================= ② 자석과 코일 (유도 · 렌츠) ================= */
@@ -142,7 +145,7 @@
       const magnet = new THREE.Group(); gC.add(magnet);
       const mN = box(0.9, 1.6, 0.9, NC, { roughness: 0.35, metalness: 0.3 }), mS = box(0.9, 1.6, 0.9, SC, { roughness: 0.35, metalness: 0.3 });
       mN.position.y = -0.8; mS.position.y = 0.8; magnet.add(mN, mS);          // N극이 아래
-      const lMN = label('N', mN, { color: '#e2464b', size: 15 }), lMS = label('S', mS, { color: '#2f6df6', size: 15 });
+      const lMN = L('coil', 'N', mN, { color: '#e2464b', size: 15 }), lMS = L('coil', 'S', mS, { color: '#2f6df6', size: 15 });
       /* 검류계 */
       const gal = new THREE.Group(); gal.position.set(4.2, -1.2, 0); gC.add(gal);
       const gBody = cyl(1.15, 1.15, 0.35, 0x2c3345, { roughness: 0.4, metalness: 0.4 }, 40); gBody.rotation.x = Math.PI / 2; gal.add(gBody);
@@ -153,9 +156,9 @@
       const wr1 = tube([new V3(CY, -CH / 2, 0), new V3(CY + 0.6, -CH / 2 - 0.3, 0.3), new V3(3.0, -1.6, 0.3), new V3(3.3, -1.35, 0.2)], 0.035, COPPER, { mo: { metalness: 0.4 } });
       const wr2 = tube([new V3(CY, CH / 2, 0), new V3(2.4, CH / 2 + 0.4, 0.2), new V3(3.8, 0.6, 0.2), new V3(4.2, -0.4, 0.2)], 0.035, COPPER, { mo: { metalness: 0.4 } });
       gC.add(wr1, wr2);
-      const lG = label('검류계', gal, { color: '#475569', size: 12, offset: [0, 1.5, 0] });
-      const lI = label('', anchor(gC, 0, 0, 0), { color: '#a16207', size: 13 });
-      const aCoilTop = anchor(gC, 0, CH / 2 + 0.55, 0), lPole = label('', aCoilTop, { color: '#7c3aed', size: 12 });
+      const lG = L('coil', '검류계', gal, { color: '#475569', size: 12, offset: [0, 1.5, 0] });
+      const lI = L('coil', '', anchor(gC, 0, 0, 0), { color: '#a16207', size: 13 });
+      const aCoilTop = anchor(gC, 0, CH / 2 + 0.55, 0), lPole = L('coil', '', aCoilTop, { color: '#7c3aed', size: 12 });
       const NCONE = 20, cones = new THREE.InstancedMesh(new THREE.ConeGeometry(0.11, 0.3, 12), mat(0xffe14d, { emissive: 0xffd400, emissiveIntensity: 0.8, roughness: 0.3 }), NCONE); gC.add(cones);
       let my = 3.6, vy = 0, ph = 0, curI = 0, flowT = 0, prevPhi = 0;
       const Phi = (y) => 1 / Math.pow(1 + (y / 1.6) * (y / 1.6), 1.5);
@@ -171,10 +174,10 @@
       const floor1 = cyl(1.3, 1.3, 0.12, 0x7b8798, { metalness: 0.3 }), floor2 = floor1.clone(); floor1.position.set(-2.2, YB - 0.65, 0); floor2.position.set(2.2, YB - 0.65, 0); gB.add(floor1, floor2);
       const eddy = [0, 1].map(() => { const m = new THREE.Mesh(new THREE.TorusGeometry(1.0, 0.07, 12, 48), mat(0xffd54d, { emissive: 0xffb300, emissiveIntensity: 0.9, transparent: true, opacity: 0, depthWrite: false })); m.rotation.x = Math.PI / 2; m.position.x = -2.2; gB.add(m); return m; });
       const aC = anchor(gB, -2.2, YT + 0.8, 0), aP = anchor(gB, 2.2, YT + 0.8, 0);
-      const lCu = label('구리관', aC, { color: '#b45309', size: 13 }), lPl = label('플라스틱관', aP, { color: '#475569', size: 13 });
+      const lCu = L('pipe', '구리관', aC, { color: '#b45309', size: 13 }), lPl = L('pipe', '플라스틱관', aP, { color: '#475569', size: 13 });
       const aTc = anchor(gB, -2.2, YB - 1.1, 0), aTp = anchor(gB, 2.2, YB - 1.1, 0);
-      const lTc = label('', aTc, { color: '#b45309', size: 13 }), lTp = label('', aTp, { color: '#475569', size: 13 });
-      const aEd = anchor(gB, -2.2, 0, 1.2), lEd = label('와전류', aEd, { color: '#a16207', size: 12 });
+      const lTc = L('pipe', '', aTc, { color: '#b45309', size: 13 }), lTp = L('pipe', '', aTp, { color: '#475569', size: 13 });
+      const aEd = anchor(gB, -2.2, 0, 1.2), lEd = L('pipe', '와전류', aEd, { color: '#a16207', size: 12 });
       let bt = -1, ycu = YT, ypl = YT, vcu = 0, vpl = 0, tdone = [0, 0];
       const G = 6;
       function dropReset() { bt = -1; ycu = ypl = YT; vcu = vpl = 0; tdone = [0, 0]; }
@@ -183,86 +186,135 @@
         info('<b>구리관 속 자석은 천천히 떨어져요.</b><br>자석이 움직이면 관에 <b>와전류</b>가 생기고, 렌츠 법칙에 따라 자석의 운동을 방해하는 자기장이 만들어져요.<br>플라스틱관은 전류가 흐르지 못해 그대로 떨어져요.');
       }
 
-      /* ================= 조작 ================= */
-      const seg = controls.segment('보기', [{ value: 'flux', label: '🧲 자기선속' }, { value: 'coil', label: '🔁 자석과 코일' }, { value: 'brake', label: '🌪️ 자기 브레이크' }], st.sc, (v) => go(v));
-      grab('flux', () => controls.range('각도 θ', 0, 90, 5, st.th, (v) => { st.th = v; updFlux(); }, (v) => v + '°'));
-      grab('flux', () => controls.range('면적 A', 1.3, 2.7, 0.1, st.R, (v) => { st.R = v; updFlux(); }, (v) => (v * v / 4).toFixed(1) + '배'));
-      grab('flux', () => controls.range('자기장 B', 1, 3, 1, st.B, (v) => { st.B = v; updFlux(); }, (v) => v + '배'));
-      grab('coil', () => controls.range('감은 수 N', 2, 10, 1, st.N, (v) => { st.N = v; buildCoil(); }, (v) => v + '회'));
-      grab('coil', () => controls.range('자석 속력', 0.4, 1.6, 0.1, st.spd, (v) => { st.spd = v; }, (v) => v.toFixed(1) + '배'));
-      grab('coil', () => controls.button('🔁 자석 방향 바꾸기', () => { st.flip = -st.flip; mN.position.y = -0.8 * st.flip; mS.position.y = 0.8 * st.flip; }));
-      toggleBtn('coil', '움직임 멈춤', false, (on) => { st.pause = on; });
-      grab('brake', () => controls.button('▶ 떨어뜨리기', () => dropGo()));
-      grab('brake', () => controls.range('자석 세기', 1, 3, 1, st.strong, (v) => { st.strong = v; dropReset(); }, (v) => ['약함', '보통', '강함'][v - 1]));
-      function go(sc) {
-        st.sc = sc; seg.set(sc); showCtl(sc);
-        gF.visible = sc === 'flux'; gC.visible = sc === 'coil'; gB.visible = sc === 'brake';
-        [lN, lB, lTh, lPhi].forEach((l) => l.show(sc === 'flux'));
-        [lMN, lMS, lG, lI, lPole].forEach((l) => l.show(sc === 'coil'));
-        [lCu, lPl, lTc, lTp, lEd].forEach((l) => l.show(sc === 'brake'));
-        if (sc === 'flux') { updFlux(); ctx.orbit.dist = 12.5 * KD; ctx.orbit.phi = 1.32; ctx.orbit.ty = 0; }
-        else if (sc === 'coil') { ctx.orbit.dist = 17 * KD; ctx.orbit.phi = 1.4; ctx.orbit.tx = 1.2; ctx.orbit.ty = 0.1; } else { updBrakeInfo(); dropReset(); ctx.orbit.dist = 16.5 * KD; ctx.orbit.phi = 1.4; ctx.orbit.tx = 0; ctx.orbit.ty = -0.2; }
-        if (sc !== 'coil') { ctx.orbit.tx = 0; }
+      /* ================= 도체판 진자 (자기 브레이크 · 2D의 진자 각도를 그대로 따라가요) ================= */
+      const gPd = new THREE.Group(); root.add(gPd);
+      const PL_ = 4.2, PIV = new V3(0, 3.6, 0);
+      const pivBar = box(1.6, 0.18, 0.5, 0x64748b, { metalness: 0.5 }); pivBar.position.copy(PIV); gPd.add(pivBar);
+      const swing = new THREE.Group(); swing.position.copy(PIV); gPd.add(swing);
+      const rodSw = cyl(0.04, 0.04, PL_, 0x94a3b8, { metalness: 0.6 }, 8); rodSw.position.y = -PL_ / 2; swing.add(rodSw);
+      const plate = new THREE.Group(); plate.position.y = -PL_ - 0.7; swing.add(plate);
+      const plBody = box(1.7, 1.5, 0.12, 0xc9824a, { metalness: 0.7, roughness: 0.3 }); plate.add(plBody);
+      const slits = []; for (let i = 0; i < 4; i++) { const sl = box(0.07, 1.0, 0.16, 0x0b1224, { roughness: 1 }); sl.position.set(-0.6 + i * 0.4, -0.2, 0); sl.visible = false; plate.add(sl); slits.push(sl); }
+      const mgN = box(1.5, 1.6, 0.55, NC, { roughness: 0.35, metalness: 0.3 }), mgS = box(1.5, 1.6, 0.55, SC, { roughness: 0.35, metalness: 0.3 });
+      mgN.position.set(0, PIV.y - PL_ - 0.7, 0.62); mgS.position.set(0, PIV.y - PL_ - 0.7, -0.62); gPd.add(mgN, mgS);
+      const eddyP = [0, 1].map(() => { const m = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.045, 10, 36), mat(0xffd54d, { emissive: 0xffb300, emissiveIntensity: 0.9, transparent: true, opacity: 0, depthWrite: false })); gPd.add(m); return m; });
+      const aPlate = anchor(plate, 0, 1.05, 0), lPlate = L('pend', '', aPlate, { color: '#b45309', size: 13 });
+      L('pend', 'N', mgN, { color: '#e2464b', size: 13, offset: [0, 1.0, 0] }); L('pend', 'S', mgS, { color: '#2f6df6', size: 13, offset: [0, 1.0, 0] });
+      const aEdP = anchor(gPd, 0, PIV.y - PL_ - 0.7, 1.4), lEdP = L('pend', '와전류', aEdP, { color: '#a16207', size: 12 });
+      const PNOTE = { cu: '구리: 전기가 잘 통해 와전류가 크게 흐르고, 렌츠 법칙으로 진자의 운동을 크게 방해해요.', al: '알루미늄: 구리보다 전기가 덜 통해 와전류가 조금 약하고 방해도 조금 약해요.', pl: '플라스틱: 절연체라 와전류가 흐르지 못해 거의 방해하지 않아요.', slot: '틈 있는 구리: 틈이 와전류 고리를 끊어 방해가 약해져요.' };
+      function updPend(S, sim, dt) {
+        const b = S.b, M = sim.MATS[b.mat] || sim.MATS.cu, ph = b.phi;
+        swing.rotation.z = -ph;
+        plBody.material.color.set(M.col); plBody.material.metalness = b.mat === 'pl' ? 0.1 : 0.7; plBody.material.transparent = b.mat === 'pl'; plBody.material.opacity = b.mat === 'pl' ? 0.55 : 1;
+        slits.forEach((q) => (q.visible = b.mat === 'slot'));
+        const x = PL_ * Math.sin(ph) + 0.7 * Math.sin(ph) * 0;
+        const inF = Math.abs(PL_ * Math.sin(ph)) < 1.1, spd = Math.abs(b.w), act = inF ? Math.min(1, spd * 0.9 * M.k * (b.mag || 1) * 0.6) : 0;
+        eddyP.forEach((m, i) => { const px = PL_ * Math.sin(ph); m.position.set(px, PIV.y - PL_ * Math.cos(ph) - 0.7, 0.1 + (i ? 0.18 : -0.18)); m.material.opacity += (act * 0.95 - m.material.opacity) * Math.min(1, dt * 10); m.rotation.z += dt * (i ? -4 : 4) * (0.3 + act); });
+        lEdP.show(act > 0.12 && !!labs.pend.on); aEdP.position.set(PL_ * Math.sin(ph), PIV.y - PL_ * Math.cos(ph) - 0.7, 1.5);
+        lPlate.set(M.name + '판');
+        mgN.material.emissive.setHex(NC); mgN.material.emissiveIntensity = 0.08 * (b.mag || 1); mgS.material.emissive.setHex(SC); mgS.material.emissiveIntensity = 0.08 * (b.mag || 1);
+        info('<b>🌪️ 도체판 진자: 와전류가 운동을 막아요</b><br>판의 재질: ' + M.name + ' · 자석 세기: ' + ['', '약', '중', '강'][b.mag || 1] + '<br>' + PNOTE[b.mat] + '<br>' + (b.run ? '진자가 움직이는 동안 자석 사이에서 와전류가 생겨요.' : '2D의 [▶ 진자 놓기]로 진자를 놓아 보세요.'));
       }
-      go(st.sc);
-      let lastMode = S0 ? S0.mode : '';
+
+      /* ================= 2D 실험의 값을 그대로 따라가요 ================= */
+      let built = false, pipeP = 0, pipeUser = false, emfP = 0, emfUser = false;
+      const plEmf = grab('emf', () => controls.player({ duration: 8, loop: true, autoplay: true, label: '자석 빼기', phases: [[0, '코일 속 자석'], [0.15, '자석을 빼요 (ΔΦ)'], [0.55, '멀리 있어요']], onFrame(p) { if (!built) return; emfP = p; } }));
+      const plPipe = grab('pipe', () => controls.player({ duration: 12, loop: true, autoplay: false, label: '자석 떨어뜨리기', phases: [[0, '놓는 순간'], [0.3, '빨라지다가'], [0.6, '(구리관) 일정한 속력']], onFrame(p) { if (!built) return; pipeP = p; pipeUser = true; } }));
+      built = true;
+      const CAMS = { flux: [12.5, 1.32, 0, 0], coil: [17, 1.4, 1.2, 0.1], pipe: [16.5, 1.4, 0, -0.2], pend: [13, 1.3, 0, 0.6] };
+      let lastSc = '', lastPipeRun = false, localT = -1;
+      function scOf(S) { return S.mode === 'flux' ? 'flux' : S.mode === 'emf' || S.mode === 'lenz' ? 'coil' : (S.b.view === 'pipe' ? 'pipe' : 'pend'); }
+      function go(sc, S) {
+        st.sc = sc;
+        gF.visible = sc === 'flux'; gC.visible = sc === 'coil'; gB.visible = sc === 'pipe'; gPd.visible = sc === 'pend';
+        Object.keys(labs).forEach((k) => { labs[k].on = k === sc; labs[k].forEach((l) => l.show(k === sc)); });
+        showCtl(sc === 'coil' && S.mode === 'emf' ? 'emf' : sc === 'pipe' ? 'pipe' : '__none');
+        const c = CAMS[sc], o = ctx.orbit; o.dist = c[0] * KD; o.phi = c[1]; o.tx = c[2]; o.ty = c[3]; o.tz = 0;
+        if (sc === 'pipe') { dropReset(); }
+        pipeUser = false; plPipe.pause();
+      }
+      const epsOf = (sim) => { try { return sim.epsOf(); } catch (e) { return 0; } };
       return {
         update(dt, t) {
-          const S = lessonS();
-          if (S && S.mode !== lastMode) { lastMode = S.mode; const sc = MODE2SC[S.mode]; if (sc && sc !== st.sc) go(sc); }
-          if (st.sc === 'flux') {
-            lN.show(true);
+          dt = Math.min(dt, 0.05);
+          const sim = window.__sim; if (!sim) return; const S = sim.S, sc = scOf(S);
+          if (sc !== lastSc) { lastSc = sc; go(sc, S); }
+          else if (sc === 'coil') showCtl(S.mode === 'emf' ? 'emf' : '__none');
+          if (sc === 'flux') {
+            const f = S.f; st.th = f.dth; st.Bv = f.dB; st.Av = f.dA; st.B = f.dB / 0.25; st.R = Math.sqrt(f.dA / 0.015) * 2;
+            const k = [st.th, st.Bv, st.Av].join(); if (k !== st.fk) { st.fk = k; updFlux(); }
           }
-          if (st.sc === 'coil') {
-            if (!st.pause) ph += dt * st.spd * 1.1;
-            const y = 3.6 * Math.cos(ph), vyN = -3.6 * Math.sin(ph) * st.spd * 1.1; vy = vyN; my = y;
-            magnet.position.y = my;
-            // 선속: N극이 아래인 자석 → B가 아래쪽. flip이면 반대. 변화율로 유도 전류
+          if (sc === 'coil') {
+            let ovI = null, y = 0, vyN = 0, note = '', head = '';
+            if (S.mode === 'emf') {
+              const e = S.e, w = 0.06 + 0.6 * e.dt, p0 = 0.15; st.N = Math.max(2, Math.min(10, Math.round(e.N / 50)));
+              const u = emfP < p0 ? 0 : emfP < p0 + w ? (emfP - p0) / w : emfP < 0.8 ? 1 : 1 - (emfP - 0.8) / 0.2 * 1;
+              const eu = u * u * (3 - 2 * u), y1 = 4.2; y = emfP < p0 + w || emfP < 0.8 ? y1 * (emfP < p0 ? 0 : Math.min(1, (emfP - p0) / w)) : y1 * (1 - (emfP - 0.8) / 0.2);
+              const inWin = emfP >= p0 && emfP <= p0 + w, win = 8 * w;
+              vyN = inWin ? y1 / win : (emfP >= 0.8 ? -y1 / (8 * 0.2) : 0);
+              const eps = epsOf(sim); ovI = inWin ? Math.min(3, eps / 25) : 0;
+              const mk = S.gate === 'me2';
+              head = '<b>⚡ 유도 기전력 ε = NΔΦ/Δt</b><br>N = ' + e.N + '회, ΔΦ = ' + e.dp.toFixed(3) + ' Wb, Δt = ' + e.dt.toFixed(2) + ' s<br>' + (inWin ? '자석을 빼는 동안 ε = ' + (mk ? '?' : eps.toFixed(1) + ' V') : '자석이 멈춰 있으면 ΔΦ = 0 이라 ε = 0') + ' — Δt가 짧을수록(빨리 뺄수록) ε가 커요.<br>';
+              if (inWin) st.liveEps = eps; void eu;
+            } else {
+              const l = S.l; st.N = 6;
+              if (l.view === 'mag') { y = (300 - l.mx) * 0.02; vyN = -l.vx * 0.02; st.flip = l.flip; head = '<b>🔁 렌츠 법칙</b>: 유도 전류는 선속의 변화를 방해하는 방향으로 흘러요.<br>'; }
+              else { y = 4.2; vyN = 0; st.flip = 1; head = '<b>🔁 렌츠 법칙</b> — ' + (l.view === 'rail' ? '막대 도체 장면(ε = BLv, F = BIL)' : '가상 실험') + '은 2D에서 해요. 3D는 자석-코일 모형이에요.<br>'; }
+            }
+            if (st.N !== st.Nb) { st.Nb = st.N; buildCoil(); }
+            my = Math.max(-5, Math.min(5, y)); vy = vyN; magnet.position.y = my;
+            mN.position.y = -0.8 * st.flip; mS.position.y = 0.8 * st.flip;
             const dPdy = (Phi(my + 0.02) - Phi(my - 0.02)) / 0.04, dPdt = dPdy * vy * st.flip;
-            const I = Math.max(-3, Math.min(3, dPdt * st.N * 0.35));        // + : 위에서 볼 때 시계 반대 방향
+            let I = Math.max(-3, Math.min(3, dPdt * st.N * 0.35));
+            if (ovI != null) I = Math.sign(I || -1) * ovI * (I === 0 ? 0 : 1);
             curI += (I - curI) * (1 - Math.exp(-dt * 12));
             needle.rotation.z = -Math.max(-0.95, Math.min(0.95, curI * 0.4));
-            // 전류 화살촉
             const on = Math.abs(curI) > 0.12;
             for (let i = 0; i < NCONE; i++) {
               if (!on) { Mx.makeScale(0, 0, 0); cones.setMatrixAt(i, Mx); continue; }
-              const u = ((i / NCONE + flowT) % 1 + 1) % 1, a = u * Math.PI * 2, s = Math.sign(curI);
-              Pp.set((CY + 0.14) * Math.cos(a), 0, (CY + 0.14) * Math.sin(a));
-              // 위에서 볼 때 시계 반대 방향 = a가 줄어드는 쪽
-              Tg.set(Math.sin(a), 0, -Math.cos(a)).multiplyScalar(s);
+              const u = ((i / NCONE + flowT) % 1 + 1) % 1, a = u * Math.PI * 2, sgn = Math.sign(curI);
+              Pp.set((CY + 0.14) * Math.cos(a), 0, (CY + 0.14) * Math.sin(a)); Tg.set(Math.sin(a), 0, -Math.cos(a)).multiplyScalar(sgn);
               Qq.setFromUnitVectors(h.Yax, Tg); Mx.compose(Pp, Qq, Sc); cones.setMatrixAt(i, Mx);
             }
             cones.instanceMatrix.needsUpdate = true; flowT += dt * 0.25 * Math.sign(curI) * Math.min(1.5, Math.abs(curI) * 0.8);
-            // 설명
-            lI.set(on ? '유도 전류 ' + (curI > 0 ? '↺' : '↻') : '전류 0');
-            lI.obj = cones; lI.off = [CY + 0.9, 0.2, 0];
+            lI.set(on ? '유도 전류 ' + (curI > 0 ? '↺' : '↻') : '전류 0'); lI.obj = cones; lI.off = [CY + 0.9, 0.2, 0];
             const approaching = (my > 0 && vy < 0) || (my < 0 && vy > 0);
-            lPole.show(on);
-            if (!on) info('<b>선속이 변하지 않을 때는 유도 전류가 0이에요.</b><br>자석이 코일 한가운데에 있거나 멈춰 있으면 ΔΦ = 0이에요.<br>자석을 빨리 움직일수록, 감은 수 N이 많을수록 전류가 세져요.');
+            lPole.show(on && !!labs.coil.on);
+            if (!on) info(head + '선속이 변하지 않을 때는 유도 전류가 0이에요.');
             else {
               const E = my > 0 ? (st.flip > 0 ? 'N' : 'S') : (st.flip > 0 ? 'S' : 'N'), cp = approaching ? E : (E === 'N' ? 'S' : 'N');
               lPole.set('코일 ' + (my > 0 ? '위' : '아래') + '쪽 = ' + cp + '극'); lPole.el.style.background = cp === 'N' ? '#e2464b' : '#2f6df6';
-              info('<b>자석이 코일에서 ' + (approaching ? '다가와요' : '멀어져요') + '</b> → 선속이 ' + (approaching ? '늘어요' : '줄어요') + '.<br>유도 전류가 이 변화를 <b>방해</b>해요 (렌츠 법칙): ' + (approaching ? '같은 극이 마주 보아 밀어내고' : '다른 극이 마주 보아 끌어당기고') + ',<br>ε = −N·ΔΦ/Δt 이므로 N이 클수록 바늘이 크게 움직여요.');
+              info(head + '자석이 코일에서 <b>' + (approaching ? '다가와요' : '멀어져요') + '</b> → 선속이 ' + (approaching ? '늘어요' : '줄어요') + '. 유도 전류가 이 변화를 <b>방해</b>해요: ' + (approaching ? '같은 극이 마주 보아 밀어내고' : '다른 극이 마주 보아 끌어당기고') + ' 있어요.');
             }
             aCoilTop.position.y = (my > 0 ? 1 : -1) * (CH / 2 + 0.55);
           }
-          if (st.sc === 'brake') {
-            if (bt >= 0) {
-              bt += dt;
-              if (ypl > YB) { vpl += G * dt; ypl -= vpl * dt; if (ypl <= YB) { ypl = YB; tdone[1] = bt; } }
-              const vT = 1.5 / (st.strong * st.strong * 0.55 + 0.3);
-              if (ycu > YB) { vcu = Math.min(vT, vcu + G * dt); ycu -= vcu * dt; if (ycu <= YB) { ycu = YB; tdone[0] = bt; } }
+          if (sc === 'pipe') {
+            const b = S.b, pp = b.pipe;
+            if (pp.run && !lastPipeRun) { localT = 0; pipeUser = false; plPipe.pause(); }
+            lastPipeRun = pp.run;
+            st.strong = b.mag || 2;
+            let tt = -1;
+            if (pipeUser) tt = pipeP * 12; else if (localT >= 0) { localT += dt; tt = localT; if (localT > 14) localT = -1; }
+            if (tt < 0) { ycu = ypl = YT; tdone = [0, 0]; }
+            else {
+              ypl = Math.max(YB, YT - 0.5 * G * tt * tt); if (ypl <= YB && !tdone[1]) tdone[1] = tt;
+              const vT = 1.5 / (st.strong * st.strong * 0.55 + 0.3), k = G / vT;
+              ycu = Math.max(YB, YT - vT * (tt - (1 - Math.exp(-k * tt)) / k)); vcu = vT * (1 - Math.exp(-k * tt)); if (ycu <= YB && !tdone[0]) tdone[0] = tt;
+              if (pipeUser && tt < 0.05) tdone = [0, 0];
             }
+            bt = tt;
             magCu.position.set(-2.2, ycu, 0); magPl.position.set(2.2, ypl, 0);
-            const fast = bt >= 0 && ycu > YB ? vcu / 3 : 0;
+            const fast = tt >= 0 && ycu > YB ? vcu / 3 : 0;
             eddy[0].position.set(-2.2, ycu + 0.62, 0); eddy[1].position.set(-2.2, ycu - 0.62, 0);
             eddy.forEach((m, i) => { m.material.opacity = Math.min(0.95, fast * 1.6); m.rotation.z += dt * (i ? -3 : 3) * (0.5 + fast); });
-            lEd.show(fast > 0.1); aEd.position.set(-2.2, ycu, 1.25);
-            lTc.set(tdone[0] ? '⏱ ' + tdone[0].toFixed(1) + '초' : (bt >= 0 ? '⏱ ' + bt.toFixed(1) + '초' : '')); lTp.set(tdone[1] ? '⏱ ' + tdone[1].toFixed(1) + '초' : (bt >= 0 ? '⏱ ' + bt.toFixed(1) + '초' : ''));
-            lTc.show(bt >= 0); lTp.show(bt >= 0);
+            lEd.show(fast > 0.1 && !!labs.pipe.on); aEd.position.set(-2.2, ycu, 1.25);
+            lTc.set(tdone[0] ? '⏱ ' + tdone[0].toFixed(1) + '초' : (tt >= 0 ? '⏱ ' + tt.toFixed(1) + '초' : '')); lTp.set(tdone[1] ? '⏱ ' + tdone[1].toFixed(1) + '초' : (tt >= 0 ? '⏱ ' + tt.toFixed(1) + '초' : ''));
+            lTc.show(tt >= 0 && !!labs.pipe.on); lTp.show(tt >= 0 && !!labs.pipe.on);
+            info('<b>🌪️ 구리관 속 자석은 천천히 떨어져요</b> (자석 세기: ' + ['', '약', '중', '강'][st.strong] + ')<br>자석이 움직이면 관에 <b>와전류</b>가 생기고, 렌츠 법칙에 따라 자석의 운동을 방해하는 자기장이 만들어져요. 플라스틱관은 전류가 흐르지 못해 그대로 떨어져요.<br>' + (tdone[0] ? '구리관 ' + tdone[0].toFixed(1) + '초 vs 플라스틱관 ' + tdone[1].toFixed(1) + '초 (모형 시간)' : '2D의 [▶ 자석 떨어뜨리기]나 아래 ▶ 로 떨어뜨려 보세요.'));
           }
+          if (sc === 'pend') updPend(S, sim, dt);
         },
-        sync() {},
+        sync() { st.fk = ''; },
       };
     },
   });

@@ -78,69 +78,76 @@
 
   const phone = window.matchMedia && window.matchMedia('(max-width: 599px)').matches;
   window.SciSim3D.attach({
-    title: '한계 반응물 3D',
-    hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
+    title: '남는 반응물 3D',
+    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 산소의 양과 반응시키기는 2D와 똑같이 이어져요',
     camera: { dist: phone ? 11.5 : 10.5, theta: 0.45, phi: 1.12, min: 5, max: 24, target: [0, 1.5, 0] },
-    autoRotate: 0.1,
+    autoRotate: 0.08,
+    levels: [3],
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const L = makeLib(THREE);
-      const W = 6.8, H = 3.2, D = 3.6;
+      const clamp = (x, a, b) => Math.max(a, Math.min(b, x)), sm = L.sstep;
+      const W = 6.8, H = 3.2, D = 3.6, UNIT = 0.25;
       const box = L.glassBox(W, H, D, 0x9ec5ff, 0.1); box.position.y = H / 2; root.add(box);
       const floor = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ color: 0x050b18 })); floor.scale.set(W + 1, 0.14, D + 1); floor.position.y = -0.08; root.add(floor);
-      const KS = 0.85, LIM = [W / 2 - 0.9, H / 2 - 0.7, D / 2 - 0.7];
-      const mk = (key, n) => { const a = []; for (let i = 0; i < n; i++) { const g = L.mol(L.MOLS[key], KS); g.visible = false; root.add(g); g.userData = { on: false, p: new THREE.Vector3(), v: new THREE.Vector3(), w: new THREE.Vector3(L.rnd(-1, 1), L.rnd(-1, 1), L.rnd(-1, 1)) }; a.push(g); } return a; };
-      const P = { H2: mk('H2', 10), O2: mk('O2', 6), H2O: mk('H2O', 10) };
-      const fx = []; for (let i = 0; i < 6; i++) { const m = new THREE.Mesh(L.SG, new THREE.MeshBasicMaterial({ color: 0x9ee7ff, transparent: true, opacity: 0, depthWrite: false })); m.visible = false; root.add(m); fx.push({ m, t: 9 }); }
-      const lab = label('', [0, H + 0.6, 0], { size: 13 });
-      let nH = 6, nO = 2, state = 'ready', timer = 0, flag = '';
-      const rp = () => new THREE.Vector3(L.rnd(-LIM[0], LIM[0]), L.rnd(-LIM[1], LIM[1]), L.rnd(-LIM[2], LIM[2]));
-      function put(g, p) { const u = g.userData; u.on = true; g.visible = true; u.p.copy(p); u.v.set(L.rnd(-1, 1), L.rnd(-1, 1), L.rnd(-1, 1)).normalize(); g.position.set(p.x, p.y + H / 2, p.z); }
-      function off(g) { g.userData.on = false; g.visible = false; }
-      const act = (k) => P[k].filter((g) => g.userData.on);
-      function pop(p) { const f = fx.find((q) => q.t > 0.5) || fx[0]; f.t = 0; f.m.position.set(p.x, p.y + H / 2, p.z); f.m.visible = true; }
-      function setup() {
-        state = 'ready'; flag = '';
-        Object.values(P).forEach((a) => a.forEach(off));
-        for (let i = 0; i < nH; i++) put(P.H2[i], rp()); for (let i = 0; i < nO; i++) put(P.O2[i], rp());
-        text();
-      }
-      function text() {
-        const h = act('H2').length, o = act('O2').length, w = act('H2O').length;
-        let tail = '';
-        if (state === 'done') { tail = h > 0 && o === 0 ? '<b>O₂가 먼저 다 쓰였어요</b> → 한계 반응물 O₂, 남은 H₂ ' + h + '개' : o > 0 && h === 0 ? '<b>H₂가 먼저 다 쓰였어요</b> → 한계 반응물 H₂, 남은 O₂ ' + o + '개' : w ? '<b>둘 다 남김없이 반응했어요</b> (계수비 2 : 1)' : '반응할 분자가 없어요.'; }
-        else tail = '2H₂ + O₂ → 2H₂O : H₂ 2개와 O₂ 1개가 짝이 돼요.';
-        info('H₂ <b>' + h + '개</b> · O₂ <b>' + o + '개</b> · H₂O <b>' + w + '개</b><br>' + tail);
-        lab.set(state === 'done' && (h || o) ? (h ? '남은 H₂' : '남은 O₂') : '2H₂ + O₂ → 2H₂O'); lab.show(true);
-      }
-      const r1 = controls.range('H₂', 0, 10, 1, nH, (v) => { nH = +v; setup(); }, (v) => v + '개');
-      const r2 = controls.range('O₂', 0, 6, 1, nO, (v) => { nO = +v; setup(); }, (v) => v + '개');
-      const go = controls.button('▶ 반응시키기', () => { if (state === 'ready') { state = 'run'; timer = 0; } });
-      controls.button('↺ 처음', () => setup());
-      setup();
+      const KS = 0.8, LIM = [W / 2 - 0.9, H / 2 - 0.7, D / 2 - 0.7];
+      const mk = (key, n) => { const a = []; for (let i = 0; i < n; i++) { const g = L.mol(L.MOLS[key], KS); g.visible = false; root.add(g); g.userData = { p: new THREE.Vector3(L.rnd(-LIM[0], LIM[0]), L.rnd(-LIM[1], LIM[1]), L.rnd(-LIM[2], LIM[2])), v: new THREE.Vector3(L.rnd(-1, 1), L.rnd(-1, 1), L.rnd(-1, 1)).normalize(), w: new THREE.Vector3(L.rnd(-1, 1), L.rnd(-1, 1), L.rnd(-1, 1)) }; a.push(g); } return a; };
+      const P = { H2: mk('H2', 8), O2: mk('O2', 8), H2O: mk('H2O', 8) };
+      const fx = []; for (let i = 0; i < 4; i++) { const m = new THREE.Mesh(L.SG, new THREE.MeshBasicMaterial({ color: 0x9ee7ff, transparent: true, opacity: 0, depthWrite: false })); m.visible = false; root.add(m); fx.push(m); }
+      const lab = label('2H₂ + O₂ → 2H₂O', [0, H + 0.6, 0], { size: 13 });
+      const center = (j) => new THREE.Vector3((j - 1.5) * 1.5, 0.3, ((j % 2) - 0.5) * 1.2);
+      const ej = [0, 0, 0, 0], fired = [false, false, false, false];
+      const tmp = new THREE.Vector3();
+
+      let own = false, sig = '', pP = 0;
+      const rowOf = () => { const r = document.querySelectorAll('.v3-player'); return r[r.length - 1]; };
+      const pl = controls.player({ duration: 9, loop: true, label: '반응 진행', phases: [[0, '반응 전'], [0.1, '반응 중'], [0.8, '반응 후'], [0.9, '처음으로']], onFrame(p) { pP = p; own = p > 0; } });
+      const fOwn = (p) => (p < 0.1 ? 0 : p < 0.8 ? (p - 0.1) / 0.7 : p < 0.9 ? 1 : 1 - (p - 0.9) / 0.1);
+
       return {
-        update(dt) {
-          dt = Math.min(dt, 0.05);
-          Object.values(P).forEach((a) => a.forEach((g) => {
-            const u = g.userData; if (!u.on) return;
-            u.p.addScaledVector(u.v, 1.0 * dt);
-            ['x', 'y', 'z'].forEach((c, ci) => { const m = LIM[ci]; if (u.p[c] > m) { u.p[c] = m; u.v[c] = -Math.abs(u.v[c]); } else if (u.p[c] < -m) { u.p[c] = -m; u.v[c] = Math.abs(u.v[c]); } });
-            g.position.set(u.p.x, u.p.y + H / 2, u.p.z); g.rotation.x += u.w.x * dt; g.rotation.y += u.w.y * dt;
-          }));
-          fx.forEach((f) => { if (f.t < 0.5) { f.t += dt; const u = f.t / 0.5; f.m.scale.setScalar(0.3 + u * 1.1); f.m.material.opacity = 0.7 * (1 - u); if (u >= 1) f.m.visible = false; } });
-          if (state === 'run') {
-            timer += dt;
-            if (timer > 0.7) {
-              timer = 0; const hs = act('H2'), os = act('O2');
-              if (hs.length >= 2 && os.length >= 1) {
-                const o = os[0], op = o.userData.p.clone(); hs.sort((a, b) => a.userData.p.distanceToSquared(op) - b.userData.p.distanceToSquared(op));
-                const h1 = hs[0], h2 = hs[1]; const m = op.clone().add(h1.userData.p).add(h2.userData.p).multiplyScalar(1 / 3);
-                off(o); off(h1); off(h2); const w = P.H2O.filter((g) => !g.userData.on);
-                if (w[0] && w[1]) { put(w[0], m.clone().add(new THREE.Vector3(-0.4, 0, 0))); put(w[1], m.clone().add(new THREE.Vector3(0.4, 0, 0))); w[0].userData.v.set(-1, 0.1, 0).normalize(); w[1].userData.v.set(1, -0.1, 0).normalize(); }
-                pop(m); text();
-              } else { state = 'done'; text(); }
-            }
+        update(dt, t) {
+          const Z = ctx.lesson(); if (!Z) return; dt = Math.min(dt, 0.05);
+          const S = Z.S.left, o2g = S.o2, kO = Math.round(o2g / 32 / UNIT), kH = 8, produced = Math.min(kH, 2 * kO), n = Math.floor(produced / 2);
+          const s = [o2g, S.phase, S.events.length].join('|');
+          if (s !== sig) { sig = s; if (own) { own = false; pl.pause(); pl.set(0); } }
+          const u = own ? fOwn(pP) * n : 0;
+          for (let j = 0; j < 4; j++) {
+            const tgt = own ? clamp(u - j, 0, 1) : (j < n && (S.phase === 'done' || (S.events[j] && S.events[j].done)) ? 1 : 0);
+            ej[j] = own ? tgt : ej[j] + (tgt - ej[j]) * (1 - Math.pow(0.02, dt));
+            if (ej[j] > 0.5 && !fired[j]) { fired[j] = true; const f = fx[j]; f.userData.t = 0; f.position.copy(center(j)); f.visible = true; }
+            if (ej[j] < 0.2) fired[j] = false;
           }
+          fx.forEach((f) => { if (f.visible) { f.userData.t = (f.userData.t || 0) + dt; const q = f.userData.t / 0.5; f.scale.setScalar(0.3 + q * 1.1); f.material.opacity = 0.7 * (1 - q); if (q >= 1) f.visible = false; } });
+          const walk = (g) => {
+            const q = g.userData; q.p.addScaledVector(q.v, 1.0 * dt);
+            ['x', 'y', 'z'].forEach((c, ci) => { const m = LIM[ci]; if (q.p[c] > m) { q.p[c] = m; q.v[c] = -Math.abs(q.v[c]); } else if (q.p[c] < -m) { q.p[c] = -m; q.v[c] = Math.abs(q.v[c]); } });
+            g.rotation.x += q.w.x * dt; g.rotation.y += q.w.y * dt;
+          };
+          const place = (g, pos, sc) => { g.visible = sc > 0.02; g.position.set(pos.x, pos.y + H / 2, pos.z); g.scale.setScalar(Math.max(0.001, sc)); };
+          P.H2.forEach((g, i) => {
+            walk(g); const j = Math.floor(i / 2), shown = i < kH, e = j < n ? ej[j] : 0;
+            if (!shown) { g.visible = false; return; }
+            tmp.copy(g.userData.p).lerp(center(j), sm(e / 0.5) * (j < n ? 1 : 0)).add(new THREE.Vector3(i % 2 ? 0.45 : -0.45, 0, 0).multiplyScalar(sm(e / 0.5) * (j < n ? 1 : 0)));
+            place(g, tmp, 1 - sm((e - 0.45) / 0.25));
+          });
+          P.O2.forEach((g, i) => {
+            walk(g); if (i >= kO) { g.visible = false; return; }
+            const e = i < n ? ej[i] : 0; tmp.copy(g.userData.p).lerp(center(i), sm(e / 0.5) * (i < n ? 1 : 0));
+            place(g, tmp, 1 - sm((e - 0.45) / 0.25));
+          });
+          P.H2O.forEach((g, i) => {
+            walk(g); const j = Math.floor(i / 2); if (j >= n) { g.visible = false; return; }
+            const e = ej[j], c = center(j), off = i % 2 ? 0.45 : -0.45, k = sm((e - 0.8) / 0.2);
+            tmp.set(c.x + off, c.y, c.z).lerp(g.userData.p, k); place(g, tmp, sm((e - 0.5) / 0.3));
+          });
+          const cur = own ? u : ej.reduce((a, b) => a + b, 0), doneNow = cur >= n - 1e-3 && n > 0 && (own ? pP >= 0.8 && pP < 0.9 : S.phase === 'done');
+          const c = Z.calcLeft(o2g), fT = (v) => String(+v.toFixed(2));
+          const head = '수소 H₂ 4 g(2 mol) + 산소 O₂ <b>' + o2g + ' g</b>(' + fT(c.nO) + ' mol) · 입자 1개 = ' + UNIT + ' mol<br>2H₂ + O₂ → 2H₂O : H₂ 2개와 O₂ 1개가 짝이 돼요.';
+          let tail;
+          if (doneNow) tail = '<br>' + (c.lO > 1e-6 ? '<b>H₂가 먼저 소진</b> → O₂ ' + fT(c.lO) + ' mol = ' + fT(c.gO) + ' g 남아요' : c.lH > 1e-6 ? '<b>O₂가 먼저 소진</b> → H₂ ' + fT(c.lH) + ' mol = ' + fT(c.gH) + ' g 남아요' : '남는 물질 없이 모두 반응해요') + ' · 생성된 H₂O ' + fT(c.nW) + ' mol = ' + fT(c.gW) + ' g';
+          else tail = '<br>먼저 모두 소진되는 반응물이 생성물의 양을 정해요.';
+          info(head + tail);
+          lab.show(true);
         },
       };
     },

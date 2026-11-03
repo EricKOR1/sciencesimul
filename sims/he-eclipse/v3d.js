@@ -2,6 +2,7 @@
    지구를 가운데 두고(지구 중심 모형) 황도면, 5.1° 기울어진 달 궤도, 교점(승교점·강교점), 태양의 방향을 입체로 봐요.
    날짜를 흘려 보내면 교점선은 거의 제자리인데 태양이 황도를 따라 1년에 한 바퀴 돌아, 태양이 교점선 근처에 올 때(식 계절)
    삭·망이 일어나면 달이 황도면 가까이(황위 약 ±1.5° 이내)에 있어서 일식·월식이 일어나요.
+   2D의 모형 날짜(S.day)·궤도 기울기(S.tilt)와 서로 같이 움직여요(3D에서 바꾸면 2D 슬라이더도 바뀌고, 2D에서 바꾸면 3D도 따라가요).
    천체력(황경·교점 이동·거리)과 일식·월식 판정 식은 2D 실험과 같아요. 지구·달 크기와 거리는 보기 좋게 그렸어요(축척 아님). */
 (function () {
   'use strict';
@@ -44,6 +45,7 @@
   window.SciSim3D.attach({
     host: '.stage-canvas',
     button: wide ? undefined : null,
+    levels: [0],            // 일식·월식의 종류와 그림자 궤적(1~3단계)은 2D 화면에서 해요
     title: '3D 달 궤도·교점·식 계절',
     hint: ' ',
     camera: Object.assign({ fov: 45, target: [0, 0, 0], min: 4, max: 40 }, VIEWS.obl),
@@ -160,13 +162,19 @@
       const probe = controls.text(''); probe.style.display = 'none'; const ctlEl = probe.parentElement;
       const fixLab = (em) => { const k = ctlEl.children, inp = k[k.length - 1], l = k[k.length - 2]; l.style.minWidth = em + 'em'; l.style.display = 'inline-block'; const g = document.createElement('span'); g.style.cssText = 'display:inline-flex;align-items:center;gap:8px;flex-wrap:nowrap'; ctlEl.insertBefore(g, l); g.append(l, inp); };
       const br = () => { const e = controls.text(''); e.style.cssText = 'flex-basis:100%;height:0;padding:0;margin:-3px 0'; };
-      const dayR = controls.range('📅', 0, DAYMAX, 0.1, st.day, (v) => { st.goal = null; st.play = false; playB.textContent = '▶ 재생'; st.day = v; refresh(); }, (v) => '모형 날짜 ' + v.toFixed(1) + '일');
+      const w2D = (q, v) => { const e = document.querySelector(q); if (e && +e.value !== v) { e.value = v; e.dispatchEvent(new Event('input', { bubbles: true })); } };
+      const dayR = controls.range('📅', 0, DAYMAX, 0.1, st.day, (v) => { st.goal = null; if (pl) pl.pause(); st.day = v; refresh(); w2D('#sDay', v); }, (v) => '모형 날짜 ' + v.toFixed(1) + '일');
       fixLab(10);
-      const playB = controls.button('▶ 재생', () => { st.play = !st.play; st.goal = null; playB.textContent = st.play ? '⏸ 멈춤' : '▶ 재생'; });
+      let pl = null, ready = false;
+      pl = controls.player({
+        duration: 20, loop: true, autoplay: false, label: '날짜 흐르기',
+        onFrame(p) { if (!ready) return; st.goal = null; st.day = DAYMAX * p; dayR.set(st.day); refresh(); w2D('#sDay', Math.round(st.day * 10) / 10); },
+      });
+      pl.pause(); ready = true;
       br();
-      controls.button('◀ 이전 삭·망', () => { const p = SYZ.filter((q) => q.d < st.day - 0.2).pop(); st.play = false; playB.textContent = '▶ 재생'; if (p) st.goal = p.d; });
-      controls.button('다음 삭·망 ▶', () => { const p = SYZ.find((q) => q.d > st.day + 0.2); st.play = false; playB.textContent = '▶ 재생'; if (p) st.goal = p.d; });
-      const tiltR = controls.range('궤도 기울기', 0, 10, 0.1, st.tilt, (v) => { st.tilt = v; SYZ = syzygies(v); refresh(); }, (v) => v.toFixed(1) + '°');
+      controls.button('◀ 이전 삭·망', () => { if (pl) pl.pause(); const l = ctx.lesson(); if (l && l.stepSyz) { l.stepSyz(-1); return; } const p = SYZ.filter((q) => q.d < st.day - 0.2).pop(); if (p) st.goal = p.d; });
+      controls.button('다음 삭·망 ▶', () => { if (pl) pl.pause(); const l = ctx.lesson(); if (l && l.stepSyz) { l.stepSyz(1); return; } const p = SYZ.find((q) => q.d > st.day + 0.2); if (p) st.goal = p.d; });
+      const tiltR = controls.range('궤도 기울기', 0, 10, 0.1, st.tilt, (v) => { st.tilt = v; SYZ = syzygies(v); refresh(); w2D('#sTilt', v); }, (v) => v.toFixed(1) + '°');
       fixLab(9);
       br();
       const bandB = controls.button('식 범위 ✓', () => { st.band = !st.band; bandB.classList.toggle('on', st.band); bandB.textContent = '식 범위 ' + (st.band ? '✓' : '✕'); refresh(); }); bandB.classList.add('on');
@@ -176,8 +184,15 @@
 
       return {
         update(dt) {
-          if (st.play) { st.day += dt * 22; if (st.day >= DAYMAX) { st.day = DAYMAX; st.play = false; playB.textContent = '▶ 재생'; } dayR.set(st.day); refresh(); }
-          else if (st.goal != null) { const dd = st.goal - st.day; st.day += Math.sign(dd) * Math.min(Math.abs(dd), Math.max(0.15, Math.abs(dd) * 6 * dt)); if (Math.abs(st.goal - st.day) < 0.02) { st.day = st.goal; st.goal = null; } dayR.set(st.day); refresh(); }
+          const l = ctx.lesson(), S = l && l.S;
+          if (S && !pl.playing) {
+            const dN = Math.min(DAYMAX, Math.max(0, S.day)), tN = typeof S.tiltV === 'number' ? S.tiltV : S.tilt;
+            let ch = false;
+            if (typeof tN === 'number' && Math.abs(tN - st.tilt) > 0.005) { st.tilt = tN; SYZ = syzygies(st.tilt); tiltR.set(st.tilt); ch = true; }
+            if (typeof dN === 'number' && Math.abs(dN - st.day) > 0.02) { st.day = dN; dayR.set(st.day); ch = true; }
+            if (ch) { st.goal = null; refresh(); ready = false; pl.set(st.day / DAYMAX); ready = true; }
+          }
+          if (st.goal != null) { const dd = st.goal - st.day; st.day += Math.sign(dd) * Math.min(Math.abs(dd), Math.max(0.15, Math.abs(dd) * 6 * dt)); if (Math.abs(st.goal - st.day) < 0.02) { st.day = st.goal; st.goal = null; } dayR.set(st.day); refresh(); }
         },
         sync() { try { const s = window.__sim && window.__sim.S; if (s) { if (typeof s.day === 'number') { st.day = Math.min(DAYMAX, Math.max(0, s.day)); dayR.set(st.day); } if (typeof s.tilt === 'number') { st.tilt = s.tilt; SYZ = syzygies(st.tilt); tiltR.set(st.tilt); } st.goal = null; refresh(); } } catch (e) {} },
       };

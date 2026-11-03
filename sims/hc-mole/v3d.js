@@ -78,85 +78,156 @@
 
   const phone = window.matchMedia && window.matchMedia('(max-width: 599px)').matches;
   window.SciSim3D.attach({
-    title: '몰 상자 쌓기 3D',
-    hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: phone ? 10.5 : 10, theta: 0.5, phi: 1.15, min: 5, max: 30, target: [0, 1.4, 0] },
-    autoRotate: 0.22,
+    title: '몰과 아보가드로 수 3D',
+    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 단계와 오른쪽 조작이 2D와 똑같이 이어져요',
+    camera: { dist: phone ? 13.5 : 10.5, theta: 0.3, phi: 0.95, min: 5, max: 30, target: [0, 0.4, 0] },
+    autoRotate: 0.1,
+    levels: [0, 1],
     build(ctx) {
-      const { THREE, root, label, info, controls, orbit } = ctx;
+      const { THREE, root, label, info, controls } = ctx;
       const L = makeLib(THREE);
-      const SUB = {
-        egg: { name: '달걀', unit: 12, box: '1다스', mass: null },
-        H2O: { name: '물', mass: 18, o: 0x59a8ff, h: 0xf3f6fb, r: 0.2, cl: '물 H₂O' },
-        C: { name: '탄소', mass: 12, o: 0x6b7280, r: 0.2, cl: '탄소 C' },
-        Cu: { name: '구리', mass: 63.5, o: 0xe08a3c, r: 0.22, cl: '구리 Cu' },
-      };
-      let sub = 'H2O', amt = 1;
-      const N3 = 5, GAP = 0.42, BOXW = N3 * GAP + 0.3; // 상자 한 변 (입자 5×5×5 = 125개 = 1 mol을 나타내요)
-      const SP = BOXW + 0.55;
-      const group = new THREE.Group(); root.add(group);
-      const labs = [];
-      for (let i = 0; i < 3; i++) { const l = label('', [0, 0, 0], { size: 12.5 }); l.show(false); labs.push(l); }
-      const fl = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ color: 0x050b18 }));
-      fl.scale.set(3 * SP + 0.6, 0.12, BOXW + 0.9); fl.position.set(0, -0.1, 0); root.add(fl);
-      const sphM = new THREE.Mesh(L.SG, L.mat(0xffffff));
-      let mO, mH, mEgg, carton = [];
+      const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+      const sm = L.sstep;
+      const NA = 6.02e23, RATE = 1e8;
+      const fmt = (v) => String(+v.toFixed(3));
+      const gEgg = new THREE.Group(), gDrop = new THREE.Group(), gMol = new THREE.Group();
+      root.add(gEgg, gDrop, gMol);
+      const floor = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ color: 0x050b18 }));
+      floor.scale.set(15, 0.1, 12); floor.position.set(0, -0.06, -0.8); root.add(floor);
       const dum = new THREE.Object3D();
-      const eggGeo = new THREE.SphereGeometry(1, 24, 18);
 
-      function rebuild() {
-        L.clear(group); carton = [];
-        fl.scale.x = Math.ceil(amt - 1e-9) * SP + 1.0; orbit.dist = (phone ? 1.12 : 1) * (7.4 + 2.2 * Math.ceil(amt - 1e-9));
-        const S = SUB[sub];
-        const boxes = Math.ceil(amt - 1e-9);
-        const ox = -(boxes - 1) * SP / 2;
-        if (sub === 'egg') {
-          const dozens = amt; // 1, 2, 3 다스
-          for (let b = 0; b < dozens; b++) {
-            const cx = ox + b * SP;
-            const car = new THREE.Mesh(new THREE.BoxGeometry(BOXW, 0.5, 2 * 0.62 + 0.3), new THREE.MeshStandardMaterial({ color: 0xd9b88a, roughness: 0.9 })); car.position.set(cx, 0.25, 0); group.add(car);
-            const em = new THREE.InstancedMesh(eggGeo, new THREE.MeshStandardMaterial({ color: 0xfff1d6, roughness: 0.4 }), 12);
-            for (let i = 0; i < 12; i++) { dum.position.set(cx - BOXW / 2 + 0.45 + (i % 6) * 0.58 + 0.05, 0.78, (i < 6 ? -0.34 : 0.34)); dum.scale.set(0.27, 0.36, 0.27); dum.updateMatrix(); em.setMatrixAt(i, dum.matrix); }
-            group.add(em);
-            labs[b].obj = [cx, 1.9, 0]; labs[b].set('12개 = 1다스'); labs[b].show(true);
-          }
-          for (let b = dozens; b < 3; b++) labs[b].show(false);
-          info('<b>1다스 = 12개</b> · 달걀 ' + dozens + '다스 = <b>' + (dozens * 12) + '개</b><br>낱개로 세지 않고 12개씩 묶음으로 세요.<br>화학에서는 <b>6.02×10²³개</b>를 한 묶음(1 mol)으로 세요.');
-          return;
-        }
-        // 1 mol 상자 — 5×5×5 입자 (한 상자 = 6.02×10²³개)
-        const per = N3 * N3 * N3, total = Math.round(per * amt);
-        const water = sub === 'H2O';
-        const nO = total;
-        mO = new THREE.InstancedMesh(L.SG, new THREE.MeshStandardMaterial({ color: S.o, roughness: 0.35, metalness: sub === 'Cu' ? 0.55 : 0.06 }), nO);
-        mH = water ? new THREE.InstancedMesh(L.SG, L.mat('H'), nO * 2) : null;
-        for (let i = 0; i < nO; i++) {
-          const b = Math.floor(i / per), j = i % per;
-          const x = j % N3, y = Math.floor(j / N3) % N3, z = Math.floor(j / (N3 * N3));
-          const cx = ox + b * SP;
-          const px = cx - BOXW / 2 + 0.3 + (x + 0.5) * GAP - 0.15 + 0.08, py = 0.3 + y * GAP, pz = -BOXW / 2 + 0.45 + (z + 0.5) * GAP - 0.08;
-          dum.position.set(px, py, pz); dum.scale.setScalar(S.r * (water ? 1.0 : 1.05)); dum.rotation.set(0, 0, 0); dum.updateMatrix(); mO.setMatrixAt(i, dum.matrix);
-          if (water) {
-            const a = (i * 2.399) % (Math.PI * 2);
-            [1, -1].forEach((sg, k) => { dum.position.set(px + Math.cos(a + sg * 0.9) * 0.15, py + Math.sin(a + sg * 0.9) * 0.15 - 0.03, pz + 0.05 * sg); dum.scale.setScalar(0.1); dum.updateMatrix(); mH.setMatrixAt(i * 2 + k, dum.matrix); });
-          }
-        }
-        group.add(mO); if (mH) group.add(mH);
-        for (let b = 0; b < boxes; b++) {
-          const cx = ox + b * SP, frac = Math.min(1, amt - b);
-          const g = L.glassBox(BOXW, BOXW, BOXW, 0x9ec5ff, 0.1); g.position.set(cx, BOXW / 2 + 0.05, 0); group.add(g);
-          labs[b].obj = [cx, BOXW + 0.55, 0]; labs[b].set(frac < 1 ? '0.5 mol' : '1 mol = 6.02×10²³개'); labs[b].show(true);
-        }
-        for (let b = boxes; b < 3; b++) labs[b].show(false);
-        const cnt = (6.02 * amt).toFixed(2).replace(/\.?0+$/, '');
-        info('<b>' + S.cl + ' ' + amt + ' mol</b> = 입자 <b>' + cnt + '×10²³개</b><br>질량 = ' + amt + ' × ' + S.mass + ' g = <b>' + (amt * S.mass).toFixed(amt * S.mass % 1 ? 1 : 0) + ' g</b><br>입자 수는 같아도 물질마다 1 mol의 질량이 달라요.');
+      /* ---- 달걀과 다스 상자 (2D: 세기의 한계 · 달걀) ---- */
+      const eggGeo = new THREE.SphereGeometry(1, 20, 14), eggMat = new THREE.MeshStandardMaterial({ color: 0xfff1d6, roughness: 0.4 });
+      const eggs = [], boxes = [], boxLabs = [];
+      for (let j = 0; j < 60; j++) { const m = new THREE.Mesh(eggGeo, eggMat); m.scale.set(0.22, 0.3, 0.22); gEgg.add(m); eggs.push(m); }
+      const carMat = new THREE.MeshStandardMaterial({ color: 0xd9b88a, roughness: 0.9 });
+      for (let i = 0; i < 5; i++) {
+        const car = new THREE.Mesh(new THREE.BoxGeometry(3, 0.4, 1.5), carMat); gEgg.add(car); boxes.push(car);
+        const l = label('', [0, 1.2, 0], { size: 12.5 }); l.show(false); boxLabs.push(l);
       }
-      let rr = null;
-      function setSub(v) { sub = v; if (v === 'egg') amt = Math.max(1, Math.ceil(amt)); if (rr) rr.set(amt); rebuild(); }
-      controls.segment('물질', [{ value: 'egg', label: '🥚 달걀' }, { value: 'H2O', label: '물' }, { value: 'C', label: '탄소' }, { value: 'Cu', label: '구리' }], sub, (v) => setSub(v));
-      rr = controls.range('양', 0.5, 3, 0.5, amt, (v) => { amt = sub === 'egg' ? Math.max(1, Math.ceil(v)) : +v; rebuild(); }, (v) => (sub === 'egg' ? Math.max(1, Math.ceil(v)) + '다스' : (+v) + ' mol'));
-      setSub('H2O');
-      return {};
+      const BWID = 3, trayLab = label('낱개', [0, 0.6, 2.2], { size: 12.5 }); trayLab.show(false);
+      const boxPos = (i, nb) => { const row = Math.floor(i / 3), cnt = Math.min(3, nb - row * 3), col = i % 3; return [(col - (cnt - 1) / 2) * (BWID + 0.35), -1.7 - row * 2.0]; };
+      const trayPos = (j) => [-2.25 + (j % 10) * 0.5, 0.9 + Math.floor(j / 10) * 0.55];
+      function eggScene(Z, own, p) {
+        const S = Z.S, n = S.eg.n, nb = Math.ceil(n / 12);
+        let full = 0;
+        const cnt = [0, 0, 0, 0, 0];
+        for (let i = 0; i < 5; i++) {
+          boxes[i].visible = i < nb;
+          if (i < nb) { const b = boxPos(i, nb); boxes[i].position.set(b[0], 0.2, b[1]); }
+        }
+        for (let j = 0; j < 60; j++) {
+          const m = eggs[j]; m.visible = j < n; if (j >= n) continue;
+          let u;
+          if (own) { const s = 0.1 + 0.6 * (j / Math.max(1, n - 1)); u = sm((p - s) / 0.2) * (1 - sm((p - 0.9) / 0.1)); }
+          else u = clamp(S.eg.eggs[j] ? S.eg.eggs[j].u : 0, 0, 1);
+          const b = boxPos(Math.floor(j / 12), nb), sl = j % 12, c = sl % 6, r = Math.floor(sl / 6);
+          const tp = trayPos(j), x1 = b[0] - BWID / 2 + 0.35 + c * ((BWID - 0.7) / 5), z1 = b[1] - 0.32 + r * 0.64;
+          m.position.set(tp[0] + (x1 - tp[0]) * u, 0.3 + (0.5 - 0.3) * u + Math.sin(u * Math.PI) * 1.0, tp[1] + (z1 - tp[1]) * u);
+          if (u >= 0.999) cnt[Math.floor(j / 12)]++;
+        }
+        for (let i = 0; i < 5; i++) {
+          const l = boxLabs[i]; l.show(i < nb);
+          if (i < nb) { const b = boxPos(i, nb); l.obj = [b[0], 1.0, b[1]]; const f = cnt[i] === 12; if (f) full++; l.set(f ? '1다스' : cnt[i] + ' / 12'); }
+        }
+        trayLab.show(true); trayLab.obj = [0, 0.6, 0.9 + (Math.ceil(n / 10) - 1) * 0.55 / 2 + 1.0]; trayLab.set('낱개 ' + n + '개');
+        info('<b>달걀 ' + n + '개</b> · 1다스 = 12개' + (full === nb ? '<br>' + n + '개 ÷ 12개 = <b>' + (n / 12) + '다스</b>' : '<br>12개씩 묶어 다스 상자에 담아요.') + '<br>화학에서는 <b>6.02×10²³개</b>를 한 묶음(1 mol)으로 세요.');
+      }
+
+      /* ---- 물 한 방울 (2D: 세기의 한계 · 물 한 방울) ---- */
+      const dropMat = new THREE.MeshStandardMaterial({ color: 0x5bb4f5, transparent: true, opacity: 0.35, roughness: 0.1 });
+      const dr = new THREE.Mesh(new THREE.SphereGeometry(1.15, 28, 20), dropMat); dr.position.set(0, 1.5, -1.2); gDrop.add(dr);
+      const drTop = new THREE.Mesh(new THREE.ConeGeometry(0.98, 1.3, 24), dropMat); drTop.position.set(0, 2.95, -1.2); gDrop.add(drTop);
+      const dms = [];
+      for (let i = 0; i < 10; i++) { const m = L.mol(L.MOLS.H2O, 0.3); gDrop.add(m); dms.push(m); }
+      const RX0 = -4.6, RX1 = 4.6, RZ = 1.8, rx = (e) => RX0 + (RX1 - RX0) * e / 24;
+      const ruler = new THREE.Mesh(new THREE.BoxGeometry(RX1 - RX0, 0.07, 0.07), new THREE.MeshStandardMaterial({ color: 0x8a95a6 })); ruler.position.set(0, 0.1, RZ); gDrop.add(ruler);
+      const SUP = '⁰¹²³⁴⁵⁶⁷⁸⁹', dropLabs = [];
+      [0, 6, 12, 18, 24].forEach((e) => {
+        const t = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.3, 0.06), ruler.material); t.position.set(rx(e), 0.1, RZ); gDrop.add(t);
+        dropLabs.push(label('10' + String(e).split('').map((c) => SUP[+c]).join(''), [rx(e), -0.25, RZ], { size: 11.5 }));
+      });
+      const dropE = Math.log10(0.05 / 18 * NA), molE = Math.log10(NA);
+      [[dropE, '한 방울', 0x0e7490, 0.9], [molE, '1 mol', 0xb45309, 1.5]].forEach((m) => {
+        const pil = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, m[3], 8), new THREE.MeshStandardMaterial({ color: m[2] })); pil.position.set(rx(m[0]), 0.1 + m[3] / 2, RZ); gDrop.add(pil);
+        dropLabs.push(label(m[1], [rx(m[0]), 0.2 + m[3] + 0.15, RZ], { size: 12, color: '#' + m[2].toString(16).padStart(6, '0') }));
+      });
+      const mk = new THREE.Mesh(L.SG, L.mat(0x8b5cf6)); mk.scale.setScalar(0.2); mk.position.set(RX0, 0.1, RZ); gDrop.add(mk);
+      const cntLab = label('0개', [RX0, 0.65, RZ], { size: 12.5, color: '#6d28d9' });
+      const dropLab = label('물 한 방울 ≈ 0.05 g', [0, 4.1, -1.2], { size: 12.5 });
+      function dropScene(Z, own, p, t) {
+        const S = Z.S, DN = Z.DROP_N;
+        let counted;
+        if (own) counted = p >= 0.92 ? DN * (1 - sm((p - 0.92) / 0.08)) : DN * Math.pow(clamp(p / 0.8, 0, 1), 2);
+        else counted = S.dr.done ? DN : DN * Math.pow(clamp(S.dr.t / S.dr.dur, 0, 1), 2);
+        dms.forEach((m, i) => { const a = i * 2.4 + t * 0.35, r = Math.sqrt((i + 0.5) / 10) * 0.8; m.position.set(Math.cos(a) * r, 1.3 + Math.sin(a * 1.3) * 0.45, -1.2 + Math.sin(a) * r); m.rotation.y = a; });
+        mk.position.x = rx(clamp(Math.log10(Math.max(counted, 1)), 0, 24));
+        cntLab.obj = [mk.position.x, 0.65, RZ]; cntLab.set(counted < 1e7 ? Math.round(counted).toLocaleString('ko-KR') + '개' : Z.sci(counted, 3) + '개');
+        const sec = counted / RATE, doneNow = counted >= DN * 0.9999;
+        info('<b>물 한 방울 ≈ 0.05 g</b> → n = 0.05 / 18 = ' + Z.sci(DN / NA, 3) + ' mol<br>N = n × 6.02×10²³ ≈ <b>' + Z.sci(DN, 2) + '개</b><br>1초에 10⁸개씩 세면: 센 분자 ' + (counted > 0 ? Z.sci(counted, 3) : '0') + '개 · 걸린 시간 ' + (doneNow ? '약 <b>' + Z.timeStr(sec) + '</b>' : counted > 0 ? Z.timeStr(sec) : '0초') + '<br>6.02×10²³개(1 mol)는 약 ' + Z.timeStr(Z.MOL_SEC) + '이 걸려요.');
+      }
+
+      /* ---- 1 mol 상자 (2D: 몰의 정의) ---- */
+      const molGs = [], crates = [], crateLabs = [];
+      const CX = (i) => (phone ? 0 : (i - 1) * 5.0), CZ = (i) => (phone ? (i - 1) * 2.6 : 0) - 0.8;
+      for (let i = 0; i < 3; i++) {
+        const g = L.glassBox(4.5, 1.5, 2.0, 0x9ec5ff, 0.1); g.position.set(CX(i), 0.8, CZ(i)); gMol.add(g); crates.push(g);
+        const l = label('', [CX(i), 1.9, CZ(i)], { size: 12.5 }); l.show(false); crateLabs.push(l);
+        for (let q = 0; q < 10; q++) {
+          const m = L.mol(L.MOLS.H2O, 0.42); m.position.set(CX(i) - 1.8 + (q % 5) * 0.9, 0.55, CZ(i) - 0.45 + Math.floor(q / 5) * 0.9); m.visible = false; gMol.add(m); molGs.push(m);
+        }
+        const slab = new THREE.Mesh(new THREE.BoxGeometry(4.9, 0.1, 2.4), new THREE.MeshStandardMaterial({ color: 0x1b2540, roughness: 0.8 })); slab.position.set(CX(i), 0.0, CZ(i)); gMol.add(slab);
+      }
+      function molScene(Z, own, p) {
+        const n = own ? 3 * (p < 0.92 ? Math.min(1, p / 0.85) : 1 - sm((p - 0.92) / 0.08)) : Z.S.mo.disp;
+        for (let i = 0; i < 3; i++) {
+          const fill = clamp(n * 10 - i * 10, 0, 10), full = fill >= 9.999;
+          for (let q = 0; q < 10; q++) { const a = clamp(fill - q, 0, 1), m = molGs[i * 10 + q]; m.visible = a > 0.01; m.scale.setScalar(0.5 + 0.5 * a); }
+          crates[i].userData.fill.material.color.setHex(full ? 0xffd34d : 0x9ec5ff); crates[i].userData.fill.material.opacity = full ? 0.2 : 0.1;
+          const l = crateLabs[i]; l.show(fill > 0.01); l.set(full ? '1 mol × 6.02×10²³개' : fmt(fill / 10) + ' mol');
+        }
+        const nn = Math.round(n * 10) / 10;
+        info('<b>1 mol = 6.02×10²³개</b> (아보가드로 수) · 상자 하나 = 1 mol · 한 칸 = 0.1 mol<br>N = n × 6.02×10²³ = ' + fmt(nn) + ' × 6.02×10²³ = <b>' + Z.sci(nn * NA) + '개</b><br>몰은 개수의 단위예요. 그림은 대표 입자만 그렸어요.');
+      }
+
+      /* ---- 재생기 3개: 장면마다 하나만 보여요 ---- */
+      let own = null, sig = '', pEgg = 0, pDrop = 0, pMol = 0;
+      const rowOf = () => { const r = document.querySelectorAll('.v3-player'); return r[r.length - 1]; };
+      const plEgg = controls.player({ duration: 9, loop: true, label: '12개씩 묶기', phases: [[0, '낱개'], [0.1, '묶는 중'], [0.7, '다스 상자'], [0.9, '다시 풀기']], onFrame(p) { pEgg = p; own = p > 0 ? 'egg' : (own === 'egg' ? null : own); } });
+      const rowEgg = rowOf();
+      const plDrop = controls.player({ duration: 8, loop: true, label: '세기', phases: [[0, '세기 전'], [0.02, '세는 중'], [0.8, '다 셌어요'], [0.92, '처음으로']], onFrame(p) { pDrop = p; own = p > 0 ? 'drop' : (own === 'drop' ? null : own); } });
+      const rowDrop = rowOf();
+      const plMol = controls.player({ duration: 10, loop: true, label: '상자 채우기', phases: [[0, '0 mol'], [0.28, '1 mol'], [0.57, '2 mol'], [0.85, '3 mol'], [0.92, '비우기']], onFrame(p) { pMol = p; own = p > 0 ? 'mol' : (own === 'mol' ? null : own); } });
+      const rowMol = rowOf();
+      const PL = { egg: plEgg, drop: plDrop, mol: plMol };
+      let lastKind = '';
+      const DIST = phone ? { egg: 14, drop: 15, mol: 15 } : { egg: 10.5, drop: 11, mol: 13 };
+
+      return {
+        update(dt, t) {
+          const Z = ctx.lesson(); if (!Z) return;
+          const S = Z.S, kind = S.mode === 'count' ? (S.sub.count === 'egg' ? 'egg' : 'drop') : 'mol';
+          const s = [S.mode, S.sub.count, S.eg.n, S.eg.packed, S.dr.run, Math.round(S.mo.n * 10)].join('|');
+          if (s !== sig) {
+            sig = s;
+            if (own) { const k = own; own = null; PL[k].pause(); PL[k].set(0); }
+          }
+          if (kind !== lastKind) { lastKind = kind; ctx.orbit.dist = DIST[kind]; }
+          rowEgg.style.display = kind === 'egg' ? '' : 'none'; rowDrop.style.display = kind === 'drop' ? '' : 'none'; rowMol.style.display = kind === 'mol' ? '' : 'none';
+          if (kind !== 'egg' && plEgg.playing) plEgg.pause();
+          if (kind !== 'drop' && plDrop.playing) plDrop.pause();
+          if (kind !== 'mol' && plMol.playing) plMol.pause();
+          gEgg.visible = kind === 'egg'; gDrop.visible = kind === 'drop'; gMol.visible = kind === 'mol';
+          trayLab.show(kind === 'egg');
+          if (kind !== 'egg') boxLabs.forEach((l) => l.show(false));
+          if (kind !== 'mol') crateLabs.forEach((l) => l.show(false));
+          const o = own === kind;
+          if (kind === 'egg') eggScene(Z, o, pEgg);
+          else if (kind === 'drop') dropScene(Z, o, pDrop, t);
+          else molScene(Z, o, pMol);
+          dropLabs.concat([dropLab, cntLab]).forEach((l) => l.show(kind === 'drop'));
+        },
+      };
     },
   });
 })();

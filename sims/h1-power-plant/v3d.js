@@ -1,6 +1,8 @@
 /* h1-power-plant · 3D 발전소 (열원 → 증기 → 터빈 → 발전기 → 송전 → 도시)
    열원이 물을 끓여 만든 수증기가 터빈을 돌리고, 터빈과 연결된 발전기가 전기를 만들어요.
-   화력: 석탄을 태운 열 / 원자력: 핵분열로 나온 열 (제어봉을 넣으면 연쇄 반응이 줄어요). 모든 크기와 배치는 보기 좋게 줄인 모형이에요. */
+   화력: 석탄을 태운 열 / 원자력: 핵분열로 나온 열 (제어봉을 넣으면 연쇄 반응이 줄어요). 모든 크기와 배치는 보기 좋게 줄인 모형이에요.
+   2D와 같아요: 석탄 투입량(0~60 t/시간)·제어봉(0~100 %)·전기 출력(MW)·열원을 2D 상태에서 그대로 읽고, 3D의 슬라이더는 2D 슬라이더를 바꿔요.
+   ▶ 재생: 열원(연료) → 보일러(물을 가열) → 수증기 → 터빈 → 발전기 → 송전, 2D 흐름도의 여섯 단계를 따라가요. */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -11,7 +13,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHN ? 25 : 15.5, theta: 0.5, phi: 1.1, target: [1.2, 0.4, -0.4], min: 7, max: 34 },
     autoRotate: 0.1,
-    levels: [0, 1, 2],
+    levels: [1, 2],
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3;
@@ -23,7 +25,7 @@
         fuel: S0.coal && typeof S0.coal.fuel === 'number' ? S0.coal.fuel : 30,
         rod: S0.nk && typeof S0.nk.rodSet === 'number' ? S0.nk.rodSet : 0.6, ang: 0, p: 0, pS: 0, t: 0, lastMode: S0.mode,
       };
-      const pOf = () => (st.src === 'coal' ? st.fuel / 60 : Math.max(0, Math.min(1, 1 - st.rod)));
+      const pOf = () => (st.src === 'coal' ? st.fuel / 60 : 0.5);
 
       /* ---------- 바닥 ---------- */
       const base = new THREE.Mesh(new THREE.BoxGeometry(17.5, 0.3, 9.5), new THREE.MeshLambertMaterial({ color: 0x3a4560 })); base.position.set(1.2, -1.3, -0.4); base.receiveShadow = true; root.add(base);
@@ -116,30 +118,64 @@
       label('송전', [4.5, 1.0, 0], { size: 12.5 }); label('도시', [7.2, 0.8, 0.6], { size: 12.5 });
 
       /* ---------- 조작 ---------- */
-      let rngF, rngR;
-      const seg = controls.segment('열원', [{ value: 'coal', label: '🔥 화력 (석탄)' }, { value: 'nuke', label: '☢ 원자력' }], st.src, (v) => { st.src = v; show(); });
-      rngF = controls.range('연료량', 0, 60, 5, st.fuel, (v) => { st.fuel = v; show(true); }, (v) => v + ' t/시간');
-      rngR = controls.range('제어봉', 0, 100, 5, Math.round(st.rod * 100), (v) => { st.rod = v / 100; show(true); }, (v) => v + '% 넣음');
+      const L2 = () => (ctx.lesson && ctx.lesson()) || null;
+      let rngF, rngR, internal = true;
       const probe = controls.text(''); probe.style.display = 'none'; const ctlRow = probe.parentElement;
+      const grab = (fn) => { const before = new Set(ctlRow.children); fn(); return Array.from(ctlRow.children).filter((c) => !before.has(c)); };
+      const seg = controls.segment('열원', [{ value: 'coal', label: '🔥 화력 (석탄)' }, { value: 'nuke', label: '☢ 원자력' }], st.src, (v) => {
+        st.src = v; const L = L2(); if (L && L.S && (L.S.mode === 'coal' || L.S.mode === 'nuke') && L.setScene) L.setScene(v); show();
+      });
+      const gF = grab(() => { rngF = controls.range('석탄 투입량', 0, 60, 0.5, st.fuel, (v) => { st.fuel = v; const el = document.getElementById('sFuel'); if (el) { el.value = v; el.dispatchEvent(new Event('input', { bubbles: true })); } show(true); }, (v) => v + ' t/시간'); });
+      const gR = grab(() => { rngR = controls.range('제어봉', 0, 100, 5, Math.round(st.rod * 100), (v) => { st.rod = v / 100; const L = L2(); if (L && L.setRod) L.setRod(v / 100); show(true); }, (v) => v + '% 넣음'); });
+
+      /* ▶ 재생: 발전소 흐름도 (열원 → 보일러 → 수증기 → 터빈 → 발전기 → 송전) */
+      const STG = [
+        { n: '열원(연료)', c: () => (st.src === 'coal' ? new V3(-4.4, -0.8, 0.3) : new V3(-4.4, -0.1, 0)) }, { n: '보일러(물을 가열)', c: () => new V3(-4.4, 0.9, 0) },
+        { n: '수증기', c: () => new V3(-2.4, 0.7, 0) }, { n: '터빈', c: () => new V3(-0.55, 0, 0) }, { n: '발전기', c: () => new V3(gx, 0, 0) }, { n: '송전', c: () => new V3(5.6, 2.1, 0) },
+      ];
+      const mk = new THREE.Mesh(new THREE.SphereGeometry(0.22, 16, 12), new THREE.MeshBasicMaterial({ color: 0xffe14d, transparent: true, depthTest: false })); mk.renderOrder = 9; mk.visible = false; root.add(mk);
+      const mkRing = new THREE.Mesh(new THREE.TorusGeometry(0.45, 0.04, 8, 28), new THREE.MeshBasicMaterial({ color: 0xffe14d, transparent: true, depthTest: false })); mkRing.renderOrder = 9; mkRing.visible = false; root.add(mkRing);
+      const mkLab = label('', mk, { size: 12.5, color: '#b45309', offset: [0, 0.8, 0] }); mkLab.show(false);
+      let flowP = null, tmpV = new V3();
+      const gP = grab(() => {
+        flowP = controls.player({
+          duration: 12, loop: true, label: '발전 과정',
+          phases: STG.map((q, i) => [i / 6, q.n]),
+          onFrame(p) { if (!internal) { mk.visible = mkRing.visible = true; } placeMk(p); },
+        });
+      });
+      function placeMk(p) {
+        const f = p * 6, i = Math.min(5, Math.floor(f)), u = f - i, a = STG[i].c(), b = STG[Math.min(5, i + 1)].c();
+        const e = u < 0.4 ? 0 : (u - 0.4) / 0.6, k = e * e * (3 - 2 * e);
+        mk.position.copy(a).lerp(b, i === 5 ? 0 : k); mkRing.position.copy(mk.position);
+        mkLab.set(STG[i].n); mkLab.show(mk.visible);
+        const fade = p > 0.97 ? (1 - p) / 0.03 : p < 0.03 ? p / 0.03 : 1; mk.material.opacity = mkRing.material.opacity = Math.max(0.05, fade);
+      }
+      internal = false; mk.visible = mkRing.visible = false;
       function show(soft) {
         const c = st.src === 'coal';
         gCoal.visible = c; gNuke.visible = !c; coalLab.forEach((l) => l.show(c)); nukeLab.forEach((l) => l.show(!c));
-        // 슬라이더 2개 중 열원에 맞는 것만 보여 줘요
-        const ch = ctlRow ? Array.from(ctlRow.children) : [];
-        // [라벨, 버튼, 버튼, 라벨, 슬라이더, 라벨, 슬라이더]
-        ch.forEach((el, i) => { if (i === 3 || i === 4) el.style.display = c ? '' : 'none'; if (i === 5 || i === 6) el.style.display = c ? 'none' : ''; });
-        const p = Math.round(pOf() * 100);
-        info(c ? '<b>석탄 → 열 → 수증기 → 터빈 → 발전기 → 전기</b><br>연료를 많이 태울수록 수증기가 많아져 터빈이 빨리 돌아요. (출력 약 ' + p + '%)'
-          : '<b>핵분열 → 열 → 수증기 → 터빈 → 발전기 → 전기</b><br>제어봉을 넣으면 중성자를 흡수해 연쇄 반응이 줄어요. (출력 약 ' + p + '%)');
+        gF.forEach((e) => { e.style.display = c ? '' : 'none'; }); gR.forEach((e) => { e.style.display = c ? 'none' : ''; });
       }
       show();
+      const setInfo = (h) => { if (h !== setInfo.h) { setInfo.h = h; info(h); } };
 
       return {
         update(dt, t) {
           st.t += dt;
-          const S = window.__sim && window.__sim.S;
+          const L = L2(), S = L && L.S;
           if (S && S.mode !== st.lastMode) { st.lastMode = S.mode; if (S.mode === 'coal' || S.mode === 'nuke') { st.src = S.mode; seg.set(S.mode); show(); } }
-          st.pS += (pOf() - st.pS) * Math.min(1, dt * 2.2);
+          let pw = pOf();
+          if (S) {
+            st.fuel = S.coal.fuel; st.rod = S.nk.rodSet;
+            if (Math.abs(rngF.value - st.fuel) > 0.01) rngF.set(st.fuel);
+            if (Math.abs(rngR.value - Math.round(st.rod * 100)) > 0.5) rngR.set(Math.round(st.rod * 100));
+            pw = st.src === 'coal' ? Math.max(0, Math.min(1, S.coal.Q / (60 * L.FUEL_MW))) : Math.max(0, Math.min(1, S.nk.n));
+            if (st.src === 'coal') setInfo('<b>석탄 → 열 → 수증기 → 터빈 → 발전기 → 전기</b><br>석탄 ' + st.fuel + ' t/시간 → 전기 출력 <b>' + Math.round(L.coalP()) + ' MW</b> (목표 100 MW). 많이 태울수록 터빈이 빨리 돌아요.');
+            else setInfo('<b>핵분열 → 열 → 수증기 → 터빈 → 발전기 → 전기</b><br>제어봉 <b>' + Math.round(S.nk.rod * 100) + ' %</b> 넣음 → 전기 출력 <b>' + L.nkP() + ' MW</b> (정격 1000 MW). 제어봉을 넣으면 연쇄 반응이 줄어요.');
+          } else setInfo(st.src === 'coal' ? '<b>석탄 → 열 → 수증기 → 터빈 → 발전기 → 전기</b>' : '<b>핵분열 → 열 → 수증기 → 터빈 → 발전기 → 전기</b>');
+          if (flowP && (flowP.playing || mk.visible)) { internal = true; placeMk(flowP.p); internal = false; if (!flowP.playing && !mk.visible) mkLab.show(false); }
+          st.pS += (pw - st.pS) * Math.min(1, dt * 2.2);
           const p = st.pS, w = p * 7; st.ang += w * dt;
           shaft.rotation.x = st.ang;
           // 증기
@@ -154,7 +190,7 @@
             glowF.material.opacity = 0.15 + f * 0.6; glowF.visible = f > 0.02;
             smokes.forEach((s) => { const u = (st.t * 0.2 + s.userData.ph) % 1; s.position.set(-5.4 + Math.sin(u * 4 + s.userData.ph * 6) * 0.1 + u * 0.4, 1.9 + u * 2.4, -0.5); s.scale.setScalar(0.5 + u * 1.5); s.material.opacity = (1 - u) * 0.35 * (0.2 + f); });
           } else {
-            ctrl.forEach((c) => { c.position.y = 0.95 - (1 - st.rod) * 1.0 + (0); c.position.y = 0.95 - st.rod * 1.15 + 0.2; });
+            const rr = S ? S.nk.rod : st.rod; ctrl.forEach((c) => { c.position.y = 0.95 - rr * 1.15 + 0.2; });
             rods.forEach((r) => { r.material.emissiveIntensity = 0.2 + p * 1.0; });
             neus.forEach((n) => { const u = n.userData, a = t * u.sp + u.ph; n.position.set(Math.cos(a) * u.r, Math.sin(a * 1.7) * 0.7, Math.sin(a * 1.3) * u.r); n.visible = (u.ph / 6.28) < 0.2 + p * 0.8; });
           }

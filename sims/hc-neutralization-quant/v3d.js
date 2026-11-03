@@ -79,59 +79,146 @@
   const phone = window.matchMedia && window.matchMedia('(max-width: 599px)').matches;
   window.SciSim3D.attach({
     title: '중화 반응 이온 모형 3D',
-    hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: phone ? 9.5 : 9, theta: 0.5, phi: 1.15, min: 5, max: 22, target: [0, 1.6, 0] },
-    autoRotate: 0.14,
+    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 시료 고르기와 부피는 2D와 똑같이 이어져요',
+    camera: { dist: phone ? 13 : 11, theta: 0.5, phi: 1.15, min: 5, max: 24, target: [0, 1.5, 0.4] },
+    autoRotate: 0.08,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const L = makeLib(THREE);
-      const R = 2.6, HB = 3.8;
-      let ac = 'hcl', Va = 20, Vb = 10, spec = true;
-      const beaker = new THREE.Mesh(new THREE.CylinderGeometry(R, R, HB, 48, 1, true), new THREE.MeshStandardMaterial({ color: 0xcfe0ff, transparent: true, opacity: 0.14, roughness: 0.1, side: THREE.DoubleSide, depthWrite: false })); beaker.position.y = HB / 2; root.add(beaker);
-      const bot = new THREE.Mesh(new THREE.CylinderGeometry(R, R, 0.12, 48), new THREE.MeshStandardMaterial({ color: 0xcfe0ff, transparent: true, opacity: 0.35, roughness: 0.1, depthWrite: false })); bot.position.y = 0.06; root.add(bot);
-      const rim = new THREE.Mesh(new THREE.TorusGeometry(R, 0.05, 12, 64), new THREE.MeshStandardMaterial({ color: 0xe0ebff, roughness: 0.2 })); rim.rotation.x = Math.PI / 2; rim.position.y = HB; root.add(rim);
-      const liqM = new THREE.MeshStandardMaterial({ color: 0xf2d23a, transparent: true, opacity: 0.32, roughness: 0.12, depthWrite: false });
-      const liq = new THREE.Mesh(new THREE.CylinderGeometry(R - 0.04, R - 0.04, 1, 48), liqM); root.add(liq);
-      const floor = new THREE.Mesh(new THREE.CylinderGeometry(R + 1.2, R + 1.2, 0.1, 48), new THREE.MeshBasicMaterial({ color: 0x050b18 })); floor.position.y = -0.05; root.add(floor);
-      const NM = 200;
-      const KINDS = [
-        { k: 'H', col: 0xff3b55, r: 0.16, em: 0.4 }, { k: 'OH', col: 0x4d8dff, r: 0.16, em: 0.4 },
-        { k: 'A', col: 0x34c759, r: 0.19, em: 0.15 }, { k: 'Na', col: 0xb07cf5, r: 0.14, em: 0.15 }, { k: 'W', col: 0x9ee7ff, r: 0.12, em: 0.25 },
-      ];
-      const SET = KINDS.map((d) => { const m = new THREE.InstancedMesh(L.SG, new THREE.MeshStandardMaterial({ color: d.col, roughness: 0.35, emissive: d.col, emissiveIntensity: d.em }), NM); m.count = 0; m.frustumCulled = false; root.add(m); const p = []; for (let i = 0; i < NM; i++) p.push({ u: Math.sqrt(Math.random()), a: Math.random() * 6.283, y: Math.random(), ph: Math.random() * 6.28, sp: 0.5 + Math.random() }); return Object.assign({ m, p, cur: 0, tgt: 0 }, d); });
-      const dum = new THREE.Object3D();
-      const lbl = label('', [0, 0, 0], { size: 12.5 });
-      let hh = 2;
-      function calc() {
-        const hAcid = Va * (ac === 'hcl' ? 1 : 2), oh = Vb, rxn = Math.min(hAcid, oh);
-        return { H: Math.max(0, hAcid - oh), OH: Math.max(0, oh - hAcid), A: Va, Na: Vb, W: rxn, hAcid, rxn };
+      const clamp = (x, a, b) => Math.max(a, Math.min(b, x)), sm = L.sstep;
+      const floor = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ color: 0x050b18 })); floor.scale.set(15, 0.1, 10); floor.position.y = -0.06; root.add(floor);
+      const KC = { 'H+': 0xe2464b, 'OH-': 0x3867f4, 'Na+': 0xf59e0b, 'Cl-': 0x14a058, 'Ca2+': 0x8b5cf6, SO4: 0xc2410c, H2O: 0x9ee7ff };
+      const KR = { 'H+': 0.14, 'OH-': 0.19, 'Na+': 0.17, 'Cl-': 0.19, 'Ca2+': 0.2, SO4: 0.22, H2O: 0.19 };
+      const mats = {}; const matOf = (k) => mats[k] || (mats[k] = new THREE.MeshStandardMaterial({ color: KC[k] || 0xffffff, roughness: 0.35, emissive: KC[k] || 0, emissiveIntensity: 0.18 }));
+      const SGm = new THREE.SphereGeometry(1, 16, 12);
+      const COLS = { acid: 0xf2d23a, ok: 0x3fbf6a, base: 0x3a78f2 };
+      function makeBeaker(i) {
+        const g = new THREE.Group(); root.add(g);
+        const wall = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 1, 40, 1, true), new THREE.MeshStandardMaterial({ color: 0xcfe0ff, transparent: true, opacity: 0.14, roughness: 0.1, side: THREE.DoubleSide, depthWrite: false }));
+        const bot = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 0.1, 40), new THREE.MeshStandardMaterial({ color: 0xcfe0ff, transparent: true, opacity: 0.35, roughness: 0.1, depthWrite: false }));
+        const liqM = new THREE.MeshStandardMaterial({ color: 0xf2d23a, transparent: true, opacity: 0.3, roughness: 0.12, depthWrite: false });
+        const liq = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 1, 40), liqM);
+        g.add(wall, bot, liq);
+        const pool = []; for (let k = 0; k < 70; k++) { const m = new THREE.Mesh(SGm, matOf('H+')); m.visible = false; g.add(m); pool.push(m); }
+        return { g, wall, bot, liq, liqM, pool, lab: label('', [0, 0, 0], { size: 12.5 }), R: 1.5, Hc: 3.6, hh: 2 };
       }
-      function refresh() {
-        const c = calc(); SET.forEach((s) => { s.tgt = Math.min(NM, c[s.k]); s.m.visible = s.k === 'A' || s.k === 'Na' ? spec : true; });
-        SET[2].r = ac === 'hcl' ? 0.19 : 0.24; SET[2].m.material.color.setHex(ac === 'hcl' ? 0x34c759 : 0xf5c518); SET[2].m.material.emissive.setHex(ac === 'hcl' ? 0x34c759 : 0xf5c518);
-        const acidic = c.H > 0, basic = c.OH > 0;
-        liqM.color.setHex(acidic ? 0xf2d23a : basic ? 0x3a78f2 : 0x3fbf6a);
-        hh = 0.8 + (Va + Vb) / 100 * 2.6; liq.scale.y = hh; liq.position.y = hh / 2 + 0.06;
-        lbl.obj = [0, hh + 0.7, 0]; lbl.set(acidic ? '산성 (H⁺ 남음)' : basic ? '염기성 (OH⁻ 남음)' : '중성 (완전 중화)');
-        lbl.el.style.background = acidic ? 'rgba(200,150,0,.9)' : basic ? 'rgba(50,100,230,.9)' : 'rgba(30,140,70,.9)';
-        const nm = ac === 'hcl' ? 'HCl' : 'H₂SO₄';
-        const dot = (c) => '<span style="color:#' + c + '">●</span>';
-        info('<b>' + nm + ' ' + Va + ' mL + NaOH ' + Vb + ' mL</b> (각 0.1 M)<br>' + dot('ff3b55') + 'H⁺ ' + c.hAcid + ' + ' + dot('4d8dff') + 'OH⁻ ' + Vb + ' → ' + dot('9ee7ff') + '<b>H₂O ' + c.rxn + '개</b><br>' + (acidic ? '남은 H⁺ ' + c.H + '개 → 산성' : basic ? '남은 OH⁻ ' + c.OH + '개 → 염기성' : '<b>H⁺ = OH⁻ → 중성</b> (aMV = bM′V′)') + (spec ? ' · ' + dot(ac === 'hcl' ? '34c759' : 'f5c518') + dot('b07cf5') + '구경꾼' : ''));
+      const bk = [makeBeaker(0), makeBeaker(1), makeBeaker(2)];
+      function shape(B, R, Hc, x, z, level, color) {
+        B.R = R; B.Hc = Hc; B.g.visible = true; B.g.position.set(x, 0, z);
+        B.wall.scale.set(R, Hc, R); B.wall.position.y = Hc / 2; B.bot.scale.set(R, 1, R); B.bot.position.y = 0.05;
+        const hh = Math.max(0.05, level * Hc); B.hh = hh; B.liq.scale.set(R - 0.04, hh, R - 0.04); B.liq.position.y = hh / 2 + 0.05; B.liqM.color.setHex(color);
       }
-      controls.segment('산', [{ value: 'hcl', label: 'HCl (1가)' }, { value: 'h2so4', label: 'H₂SO₄ (2가)' }], ac, (v) => { ac = v; refresh(); });
-      controls.range('산의 부피', 10, 40, 10, Va, (v) => { Va = +v; refresh(); }, (v) => v + ' mL');
-      const rb = controls.range('NaOH', 0, 60, 5, Vb, (v) => { Vb = +v; refresh(); }, (v) => v + ' mL');
-      controls.button('⚖ 완전 중화', () => { Vb = Va * (ac === 'hcl' ? 1 : 2); rb.set(Vb); refresh(); });
-      const sb = controls.button('구경꾼 이온 ✓', () => { spec = !spec; sb.classList.toggle('on', spec); sb.textContent = '구경꾼 이온 ' + (spec ? '✓' : '✕'); refresh(); }); sb.classList.add('on');
-      refresh();
+      function mirror(B, box, sc) {
+        let i = 0; const r = box.r;
+        box.ions.forEach((q) => {
+          if (i >= B.pool.length) return; if (q.zz === undefined) q.zz = Math.random();
+          const u = clamp((q.x - r.x) / Math.max(1, r.w), 0, 1), v = clamp((q.y - r.y) / Math.max(1, r.h), 0, 1), m = B.pool[i++];
+          const rad = B.R - 0.25, ax = (u - 0.5) * 2 * rad, az = (q.zz - 0.5) * 2 * rad * 0.9, d = Math.hypot(ax, az), k = d > rad ? rad / d : 1;
+          m.visible = !q.dying || true; m.material = matOf(q.kind); m.scale.setScalar((KR[q.kind] || 0.18) * (sc || 1));
+          m.position.set(ax * k, 0.25 + (1 - v) * Math.max(0.2, B.hh - 0.4), az * k);
+        });
+        for (; i < B.pool.length; i++) B.pool[i].visible = false;
+      }
+      const hideAll = () => bk.forEach((B) => { B.g.visible = false; B.lab.show(false); B.pool.forEach((m) => { m.visible = false; }); });
+      /* 뷰렛 (완전 중화 장면) */
+      const bur = new THREE.Group(); root.add(bur);
+      const burTube = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 5, 16), new THREE.MeshStandardMaterial({ color: 0xcfe0ff, transparent: true, opacity: 0.25, depthWrite: false })); burTube.position.y = 5.8;
+      const burFill = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.17, 1, 16), new THREE.MeshStandardMaterial({ color: 0xa9c3ff, transparent: true, opacity: 0.7 }));
+      const burTip = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.5, 14), new THREE.MeshStandardMaterial({ color: 0x9aa6bf })); burTip.rotation.x = Math.PI; burTip.position.y = 3.05;
+      bur.add(burTube, burFill, burTip); bur.visible = false;
+      const burLab = label('', [0, 0, 0], { size: 12.5 });
+
+      const ownPool = []; for (let k = 0; k < 80; k++) { const m = new THREE.Mesh(SGm, matOf('H+')); m.visible = false; root.add(m); ownPool.push(m); }
+      let ownN = 0;
+      function drawOwn(pos, kind, sc) { if (ownN >= ownPool.length) return; const m = ownPool[ownN++]; m.visible = sc > 0.02; m.material = matOf(kind); m.scale.setScalar((KR[kind] || 0.18) * sc); m.position.set(pos[0], pos[1], pos[2]); }
+      function flushOwn() { for (let i = ownN; i < ownPool.length; i++) ownPool[i].visible = false; ownN = 0; }
+      /* ▶ 재생: 이온 모형 (A + B → C, H⁺ + OH⁻ → H₂O) */
+      let own = false, sig = '', pI = 0, ownKey = '', ownP = [];
+      const rowOf = () => { const r = document.querySelectorAll('.v3-player'); return r[r.length - 1]; };
+      const pl = controls.player({ duration: 10, loop: true, label: '섞어서 중화', phases: [[0, '섞기 전'], [0.1, '섞는 중'], [0.5, '섞은 용액'], [0.55, 'H⁺ + OH⁻ → H₂O'], [0.88, '다시 처음으로']], onFrame(p) { pI = p; own = p > 0; } });
+      const rowP = rowOf();
+      const AP = (phone ? [-2.0, -1.5] : [-3.6, -1.4]), BP = (phone ? [2.0, -1.5] : [3.6, -1.4]), CP = [0, phone ? 2.2 : 2.4];
+      function buildOwn(nH, nOH) {
+        ownP = [];
+        const rnd = (R) => { const a = Math.random() * 6.283, r = Math.sqrt(Math.random()) * (R - 0.3); return [Math.cos(a) * r, Math.sin(a) * r]; };
+        const mk = (kind, side, idx) => { const h = rnd(1.4), t = rnd(1.5); return { kind, side, idx, h, t, hy: 0.4 + Math.random() * 1.2, ty: 0.4 + Math.random() * 1.0, d: Math.random() * 0.6, pair: null }; };
+        const hs = [], os = [];
+        for (let i = 0; i < nH; i++) { const a = mk('H+', 'A', i); ownP.push(a); hs.push(a); ownP.push(mk('Cl-', 'A', i)); }
+        for (let i = 0; i < nOH; i++) { const b = mk('OH-', 'B', i); ownP.push(b); os.push(b); ownP.push(mk('Na+', 'B', i)); }
+        const n = Math.min(hs.length, os.length);
+        for (let i = 0; i < n; i++) { hs[i].pair = os[i]; os[i].pair = hs[i]; const c = rnd(1.0); hs[i].c = os[i].c = [c[0], c[1], 0.9 + Math.random() * 0.8]; }
+      }
+
       return {
         update(dt, t) {
-          SET.forEach((s) => {
-            const d = s.tgt - s.cur; s.cur += Math.sign(d) * Math.min(Math.abs(d), dt * 45);
-            const n = Math.round(s.cur); s.m.count = n;
-            for (let i = 0; i < n; i++) { const p = s.p[i]; const rr = p.u * (R - 0.3); dum.position.set(Math.cos(p.a) * rr + Math.sin(t * p.sp + p.ph) * 0.12, 0.25 + p.y * (hh - 0.4) + Math.cos(t * p.sp * 1.2 + p.ph) * 0.08, Math.sin(p.a) * rr + Math.sin(t * p.sp * 0.8 + p.ph * 2) * 0.12); dum.scale.setScalar(s.r); dum.updateMatrix(); s.m.setMatrixAt(i, dum.matrix); }
-            s.m.instanceMatrix.needsUpdate = true;
-          });
+          const Z = ctx.lesson(); if (!Z) return;
+          const S = Z.S, mode = S.mode;
+          rowP.style.display = mode === 'ion' ? '' : 'none'; if (mode !== 'ion' && pl.playing) pl.pause();
+          const sg = [mode, S.ion.nH, S.ion.nOH, S.ion.phase, S.mol.si, S.rest.si, S.waste.ag].join('|'); if (sg !== sig) { sig = sg; if (own) { own = false; pl.pause(); pl.set(0); } }
+          hideAll(); bur.visible = false; burLab.show(false);
+          if (mode === 'ion') {
+            const I = S.ion, pr = sm(I.pr.v);
+            const o = own;
+            const lvA = o ? 0.62 * (1 - sm(clamp((pI - 0.1) / 0.4, 0, 1))) : 0.62 * (1 - pr), lvC = o ? Math.max(0.06, 0.65 * sm(clamp((pI - 0.1) / 0.4, 0, 1))) : Math.max(0.06, 0.65 * pr);
+            const R = phone ? 1.3 : 1.7;
+            shape(bk[0], R, 3.6, AP[0], AP[1], lvA, 0xffc4c4); shape(bk[1], R, 3.6, BP[0], BP[1], lvA, 0xbdd1ff); shape(bk[2], R + 0.2, 3.6, CP[0], CP[1], lvC, 0xd6cff6);
+            [['HCl 수용액', 0], ['NaOH 수용액', 1], ['섞은 용액', 2]].forEach(([nm, i]) => { const B = bk[i]; B.lab.show(true); B.lab.obj = [B.g.position.x, 3.6 + 0.4, B.g.position.z]; B.lab.set(nm); });
+            if (o) {
+              const key = I.nH + '|' + I.nOH; if (key !== ownKey || !ownP.length) { ownKey = key; buildOwn(I.nH, I.nOH); }
+              let used = [0, 0, 0];
+              const fade = pI < 0.05 ? sm(pI / 0.05) : pI > 0.9 ? 1 - sm((pI - 0.9) / 0.1) : 1;
+              const pour = clamp((pI - 0.1) / 0.4, 0, 1), react = clamp((pI - 0.55) / 0.3, 0, 1);
+              const pairsDone = [];
+              ownP.forEach((q) => {
+                const home = q.side === 'A' ? bk[0] : bk[1], c = bk[2];
+                const mv = sm(clamp((pour - q.d) / 0.4, 0, 1)); const inC = mv >= 1;
+                const bi = inC ? 2 : (mv > 0 ? 2 : (q.side === 'A' ? 0 : 1)), Bt = bk[bi];
+                // 월드 좌표로 보간
+                const hp = [home.g.position.x + q.h[0], 0.3 + q.hy * (home.hh / 2), home.g.position.z + q.h[1]];
+                const tp = [c.g.position.x + q.t[0], 0.3 + q.ty * (c.hh / 1.2 + 0.3), c.g.position.z + q.t[1]];
+                let pos = [hp[0] + (tp[0] - hp[0]) * mv, hp[1] + (tp[1] - hp[1]) * mv + Math.sin(mv * Math.PI) * 1.3, hp[2] + (tp[2] - hp[2]) * mv];
+                let sc = 1, kind = q.kind;
+                if (q.pair && react > 0) { const cc = [c.g.position.x + q.c[0], 0.3 + q.c[2], c.g.position.z + q.c[1]]; const k = sm(clamp(react / 0.6, 0, 1)); pos = [pos[0] + (cc[0] - pos[0]) * k, pos[1] + (cc[1] - pos[1]) * k, pos[2] + (cc[2] - pos[2]) * k]; if (react > 0.65) { kind = 'H2O'; sc = 1; } }
+                if (q.pair && react > 0.65 && q.kind === 'OH-') return;
+                drawOwn(pos, kind, sc * fade);
+              });
+              flushOwn();
+              info('<b>HCl + NaOH → NaCl + H₂O</b><br>구경꾼 이온 Na⁺, Cl⁻는 그대로 있고, <b>H⁺ + OH⁻ → H₂O</b>만 일어나요 (알짜 이온식).');
+              return;
+            }
+            mirror(bk[0], Z.boxA); mirror(bk[1], Z.boxB); mirror(bk[2], Z.boxC);
+            flushOwn(true);
+            info('<b>HCl + NaOH → NaCl + H₂O</b><br>' + (I.phase === 'done' ? '알짜 이온식: <b>H⁺ + OH⁻ → H₂O</b> (Na⁺ · Cl⁻는 구경꾼 이온)' : I.phase === 'sep' ? 'HCl에는 H⁺ ' + I.nH + '개와 Cl⁻ ' + I.nH + '개, NaOH에는 Na⁺ ' + I.nOH + '개와 OH⁻ ' + I.nOH + '개가 있어요. 2D에서 섞어 보세요.' : '섞은 뒤 H⁺와 OH⁻가 만나 H₂O가 돼요.'));
+            return;
+          }
+          flushOwn(true);
+          const B = bk[0], R = phone ? 1.9 : 2.2;
+          if (mode === 'mol') {
+            const si = S.mol.si, s = Z.SM[si], v = S.mol.v[si], c = Z.molCalc(si, v);
+            shape(B, R, 3.8, 0, 0.6, clamp(0.35 + c.Vtot / 100, 0.3, 0.9), c.H > 1e-6 ? COLS.acid : c.OH > 1e-6 ? COLS.base : COLS.ok);
+            mirror(B, Z.boxM);
+            bur.visible = true; bur.position.set(0, 3.2, 0.6); burTube.position.y = 2.6; burTip.position.y = -0.1; burTube.scale.y = 1;
+            const fill = clamp((50 - v) / 50, 0, 1) * 5; burFill.scale.y = Math.max(0.01, fill); burFill.position.y = 0.15 + fill / 2 + 0.0; burFill.material.color.setHex(s.flask.kind === 'acid' ? 0xa9c3ff : 0xffb3b3);
+            burLab.show(true); burLab.obj = [0, 3.2 + 5.4, 0.6]; burLab.set(s.bur.Ms + ' M ' + s.bur.f + ' · 눈금 ' + v.toFixed(1) + ' mL');
+            B.lab.show(true); B.lab.obj = [0, 3.8 + 0.4, 0.6]; B.lab.set(s.flask.Ms + ' M ' + s.flask.f + ' ' + s.flask.V + ' mL + BTB');
+            const f2 = (x) => String(+x.toFixed(2));
+            info('<b>' + s.label + '</b> 에 ' + s.bur.Ms + ' M ' + s.bur.f + ' <b>' + v.toFixed(1) + ' mL</b> 넣기<br>H⁺ 몰수 ' + f2(c.nH) + ' mmol · OH⁻ 몰수 ' + f2(c.nOH) + ' mmol → ' + (c.neutral ? '<b>같아요 → 완전 중화</b> (BTB 초록)' : c.H > 0 ? 'H⁺가 남아 산성 (BTB 노랑)' : 'OH⁻가 남아 염기성 (BTB 파랑)') + '<br>산이 내놓은 H⁺ 몰수 = 염기가 내놓은 OH⁻ 몰수 → a M V = b M′ V′ · ● 1개 ≈ 0.25 mmol');
+            return;
+          }
+          if (mode === 'rest') {
+            const r = Z.RS[S.rest.si];
+            shape(B, R, 3.8, 0, 0.6, clamp(0.35 + r.Vt / 100, 0.3, 0.9), r.rest === 'H' ? COLS.acid : r.rest === 'OH' ? COLS.base : COLS.ok);
+            mirror(B, Z.boxR);
+            B.lab.show(true); B.lab.obj = [0, 3.8 + 0.4, 0.6]; B.lab.set(r.acid.Ms + ' M HCl ' + r.acid.V + ' mL + ' + r.base.Ms + ' M NaOH ' + r.base.V + ' mL');
+            info('<b>' + r.id + ' 섞은 뒤의 용액</b> (총 부피 ' + r.Vt + ' mL)<br>HCl: H⁺ ' + (+r.nH.toFixed(2)) + ' mmol · NaOH: OH⁻ ' + (+r.nOH.toFixed(2)) + ' mmol<br>같은 수의 H⁺와 OH⁻는 H₂O가 되고, 남은 이온이 용액의 성질을 정해요. 남은 이온의 몰수를 총 부피로 나누면 농도예요.');
+            return;
+          }
+          // 폐수 중화
+          const W = S.waste, a = Z.AG[W.ag], c = Z.wCalc(W.ag, W.dose);
+          shape(B, R + 0.3, 3.8, 0, 0.6, 0.7, c.state === 0 ? COLS.acid : c.state === 1 ? COLS.ok : COLS.base);
+          mirror(B, Z.boxW);
+          B.lab.show(true); B.lab.obj = [0, 3.8 + 0.4, 0.6]; B.lab.set('산성 폐수 탱크 1000 L · [H⁺] = 0.010 M');
+          info('<b>폐수 중화</b>: ' + a.nm + ' 가루를 <b>' + W.dose + ' g</b> 넣었어요<br>폐수 1000 L의 H⁺는 10 mol이에요 (● 1개 = 0.5 mol). ' + a.nm + ' 1 mol(' + a.Mm + ' g)은 OH⁻ ' + a.k + ' mol을 내놓아요.<br>' + (c.state === 1 ? '<b>H⁺와 OH⁻ 몰수가 같아요 → 중화 (pH 7)</b>' : c.state === 0 ? '아직 H⁺가 남아 산성이에요.' : 'OH⁻가 남아 염기성이에요.'));
         },
       };
     },

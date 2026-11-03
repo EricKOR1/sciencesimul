@@ -6,7 +6,7 @@
   'use strict';
   if (!window.SciSim3D) return;
   const narrow = window.innerWidth < 600 || window.innerHeight > window.innerWidth * 1.1;
-  const SMD = [2, 3, 5, 7, 10, 14];
+  const SMD = [2, 3, 5, 7, 10, 14], SL = [1, 2, 4, 8, 16, 32];
   const XB = 5.4, YB0 = -0.3, YB1 = 4.2, ZB = 2.0;
 
   window.SciSim3D.attach({
@@ -14,12 +14,12 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: narrow ? 13 : 10.8, theta: 0.15, phi: 1.3, target: narrow ? [-0.8, 0, 0] : [0, 0.5, 0], min: 6, max: 22 },
     autoRotate: 0,
-    levels: [0, 1],
+    levels: [1],   // 1단계(저해제 실험 · 그래프)와 3단계(되먹임 · 카드뉴스)는 2D 화면, 2단계 '저해 모형'에서 3D로 시작
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V = THREE.Vector3;
       if (narrow) root.rotation.z = Math.PI / 2;      // 휴대폰(세로 화면)에서는 눕혀 둔 모형을 세워서 보여 줘요
-      let type = 'comp', nS = 5, nI = 7;
+      let type = 'comp', nS = 5;   // 2D처럼 저해제 개수: 경쟁적 6개 · 비경쟁적 4개
       const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.38, metalness: 0.03 }, o || {}));
       const A = (p) => { const o = new THREE.Object3D(); o.position.set(p[0], p[1], p[2]); root.add(o); return o; };
       const enzMat = std(0x38bdf8, { roughness: 0.32 }), siteMat = std(0x0c4a6e, { emissive: 0x082f49, roughness: 0.6 });
@@ -70,7 +70,7 @@
       function rebuild() {
         clearMols();
         for (let i = 0; i < nS; i++) addMol('S');
-        if (type !== 'none') for (let i = 0; i < nI; i++) addMol('I');
+        const nI = type === 'comp' ? 6 : type === 'non' ? 4 : 0; for (let i = 0; i < nI; i++) addMol('I');
         enz.forEach((e) => { e.allo.visible = type === 'non'; });
         L_allo.show(type === 'non'); L_act.show(true);
         pickLabels(); text();
@@ -92,7 +92,7 @@
         const t1 = type === 'none' ? '<b>저해제 없음</b> · 기질이 활성 부위에 결합해 생성물이 돼요.'
           : type === 'comp' ? '<b>경쟁적 저해</b> · 저해제(<span style="color:#c4b5fd">●●</span>)가 활성 부위를 두고 기질과 경쟁해요. 기질을 늘려 보세요.'
             : '<b>비경쟁적 저해</b> · 저해제(<span style="color:#c084fc">✦</span>)가 다른 자리에 붙어 활성 부위 모양이 변해요.';
-        info(t1 + '<br>최근 10초 동안 생성물 <b>' + per + '개</b> · 기질 ' + nS + '개');
+        info(t1 + '<br>최근 10초 동안 생성물 <b>' + per + '개</b> · 기질 농도 [S] ' + SL[SMD.indexOf(nS)] + ' mM');
       }
       function step(m, dt) {
         const o = m.obj;
@@ -160,12 +160,13 @@
         e.gap += (e.gapT - e.gap) * Math.min(1, dt * 7); jaws(e);
       }
 
-      const seg = controls.segment('저해제', [{ value: 'none', label: '없음' }, { value: 'comp', label: '경쟁적' }, { value: 'non', label: '비경쟁적' }], type, (v) => { type = v; rebuild(); });
-      const rng = controls.range('기질 수', 2, 14, 1, nS, (v) => { nS = v; rebuild(); }, (v) => v + '개');
+      /* 2D 저해 모형(S.md)과 같은 값: 저해제 종류 · 기질 농도 [S] 6단계(2 · 3 · 5 · 7 · 10 · 14개). 3D에서 바꾸면 2D도 같이 바뀌어요 */
+      let lastType = null, lastIdx = null;
+      const seg = controls.segment('저해제', [{ value: 'none', label: '없음' }, { value: 'comp', label: '경쟁적' }, { value: 'non', label: '비경쟁적' }], type, (v) => { type = v; lastType = v; const L = ctx.lesson(); if (L && L.mdSetType) L.mdSetType(v); rebuild(); });
+      const rng = controls.range('기질 [S]', 0, 5, 1, SMD.indexOf(nS), (i) => { nS = SMD[i]; lastIdx = i; const L = ctx.lesson(); if (L && L.S && L.S.md) { L.S.md.idx = i; L.updateCtl(); } rebuild(); }, (i) => SL[i] + ' mM');
       enz.forEach((e) => { e.cool = 0; jaws(e); });
       rebuild();
 
-      let lastType = null, lastIdx = null;
       return {
         update(dt) {
           dt = Math.min(dt, 0.05) * (window.__v3dTS || 1);
@@ -173,7 +174,7 @@
           if (md && (md.type !== lastType || md.idx !== lastIdx)) {
             lastType = md.type; lastIdx = md.idx;
             const ty = md.type === 'comp' || md.type === 'non' || md.type === 'none' ? md.type : type, ns = SMD[md.idx] || nS;
-            if (ty !== type || ns !== nS) { type = ty; nS = ns; seg.set(type); rng.set(nS); rebuild(); }
+            if (ty !== type || ns !== nS) { type = ty; nS = ns; seg.set(type); rng.set(SMD.indexOf(nS)); rebuild(); }
           }
           mols.forEach((m) => step(m, dt));
           enz.forEach((e) => updEnz(e, dt));

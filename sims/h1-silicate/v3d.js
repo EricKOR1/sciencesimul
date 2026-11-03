@@ -88,6 +88,7 @@
     title: '규산염 광물 구조 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: 11, theta: 0.7, phi: 1.1, min: 5, max: 26 },
+    levels: [],
     autoRotate: 0.25,
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
@@ -164,7 +165,7 @@
         orbit.dist = TYPES[type].cam * fitK(); orbit.phi = TYPES[type].phi;
         rebuild();
       }
-      const typeSeg = controls.segment('연결 방식', KEYS.map((k) => ({ value: k, label: TYPES[k].name })), type, (v) => setType(v));
+      const typeSeg = controls.segment('연결 방식', KEYS.map((k) => ({ value: k, label: TYPES[k].name })), type, (v) => { setType(v); const L = window.__sim; if (L && L.setType && L.ST && L.ST.type !== v) L.setType(v); lastT2 = v; });
       const n0 = ctlEl.children.length;
       const nSl = controls.range('사면체', 1, 24, 1, 4, (v) => { nVis = Math.min(v, ST.all.length); rebuild(); }, (v) => v + '개');
       pack([].slice.call(ctlEl.children, n0));
@@ -173,12 +174,22 @@
       const gSl = controls.range('쪼개기', 0, 1, 0.01, 0, (v) => { gap = v; applyGap(); text(lastN, lastSh); }, (v) => (v < 0.03 ? '0' : Math.round(v * 100) + '%'));
       pack([].slice.call(ctlEl.children, n1));
       const fB = controls.button('사면체 면 ✓', () => { showFace = !showFace; fB.classList.toggle('on', showFace); fB.textContent = '사면체 면 ' + (showFace ? '✓' : '✕'); rebuild(); }); fB.classList.add('on');
+      let lastT2 = null;
       function sync() {
-        try { const s = window.__sim; if (s && s.ST && TYPES[s.ST.type] && s.ST.type !== type) { typeSeg.set(s.ST.type); setType(s.ST.type); } } catch (e) { /* 무시 */ }
+        try { const s = window.__sim; if (s && s.ST && TYPES[s.ST.type] && s.ST.type !== lastT2) { lastT2 = s.ST.type; if (s.ST.type !== type) { typeSeg.set(s.ST.type); setType(s.ST.type); } } } catch (e) { /* 무시 */ }
       }
+      // ▶ 쪼개 보기: 이어진 구조가 약한 면을 따라 벌어졌다 다시 모여요 (한 사이클)
+      const pl = controls.player({
+        duration: 6, loop: true, autoplay: false, label: '쪼개 보기',
+        phases: [[0, '이어진 구조'], [0.2, '쪼개져요'], [0.5, '벌어진 모습'], [0.75, '다시 모여요']],
+        onFrame(p) { gap = p < 0.2 ? 0 : p < 0.5 ? (p - 0.2) / 0.3 : p < 0.75 ? 1 : 1 - (p - 0.75) / 0.25; gap = gap * gap * (3 - 2 * gap); gSl.set(gap); applyGap(); text(lastN, lastSh); },
+      });
+      // 2D 단계에 맞춰: ② 사면체 단계에서는 사슬형의 사면체 2개(산소 1개를 함께 써요)를 보여 줘요
+      ctx.onLevel((li) => { if (li === 1) { pl.pause(); setType('chain'); typeSeg.set('chain'); nVis = 2; nSl.set(2); rebuild(); } else { lastT2 = null; } });
       setType('island');
       sync();
-      return { sync };
+      if (ctx.level === 1) { setType('chain'); typeSeg.set('chain'); nVis = 2; nSl.set(2); rebuild(); }
+      return { sync, update() { sync(); } };
     },
   });
 })();

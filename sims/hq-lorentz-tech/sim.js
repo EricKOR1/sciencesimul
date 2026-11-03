@@ -954,7 +954,7 @@
   /* ---------- 디버그 (Playwright) ---------- */
   window.__sim = {
     S, VW, VH, SC, STP, IN, MS, numF, numM, numR, s4Sels, sat4R, s4St, SAT, TKS, VA, MSC,
-    get game() { return game; }, setScene, updateCtl, cyStart, cyReset, cyFres, cyKext, cyDelta, msV, msReset, tkTemp, tkReset, vaLaunch, msMean, cycOK, msOK, tkOK, vaOK,
+    get game() { return game; }, CY, QE, MEV, SPC, SETS, tkR_mm, cyGain, setScene, updateCtl, cyStart, cyReset, cyFres, cyKext, cyDelta, msV, msReset, tkTemp, tkReset, vaLaunch, msMean, cycOK, msOK, tkOK, vaOK,
     stepAll(sec) { const n = Math.ceil(sec / 0.02); for (let i = 0; i < n; i++) { S.t += 0.02; if (S.mode === 'cyc') stepCyc(0.02); else if (S.mode === 'mass') stepMs(0.02); else if (S.mode === 'tok') stepTok(0.02); else stepVan(0.02); } },
   };
 

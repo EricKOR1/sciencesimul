@@ -21,7 +21,8 @@
     autoRotate: 0,
     build(ctx) {
       const { THREE, scene, root, label, info, controls, orbit } = ctx;
-      const st = { sel: -1, speed: 0.7, t: 0, trails: true };
+      const st = { sel: -1, P: 0, trails: true, key: '' };
+      const DCYC = 50.07, NREV = [28, 14, 7, 3];                      // 한 반복 = 약 50일: 이오 28바퀴 · 에우로파 14 · 가니메데 7 · 칼리스토 3 (실제 주기와 1 % 안팎으로 같아요)
       const sr = () => { try { return window.__sim && window.__sim.S; } catch (e) { return null; } };
 
       /* 빛: 태양은 +x 쪽 */
@@ -57,13 +58,19 @@
       });
 
       function text() {
+        const q = window.__sim || {}, S = q.S || {}, ratio = S.view === 'meaning' || S.view === 'all' || !!(S.flags && S.flags.calcK) || !!(q.game && q.game.free);
         const L = bodies.map((b, i) => (st.sel === -1 || st.sel === i ? b.m.n + ' ' + (b.m.a ** 3 / b.m.T ** 2).toFixed(1) : null)).filter(Boolean);
-        if (st.sel === -1) info('<b>멀수록 오래 걸려요</b> (T: 이오 1.8일 → 칼리스토 16.7일)<br>a³/T² 값: ' + L.join(' · ') + '<br>→ 모두 <b>거의 같아요</b> (T² ∝ a³)');
-        else { const b = bodies[st.sel].m; info('<b>' + b.n + '</b> · a = ' + b.a + ' ×10⁵ km, T = ' + b.T + '일<br>a³/T² = ' + (b.a ** 3 / b.T ** 2).toFixed(1) + '<br>다른 위성도 같은 값이에요 → <b>케플러 제3법칙</b>'); }
+        if (st.sel === -1) info('<b>멀수록 오래 걸려요</b> (T: 이오 1.77일 → 칼리스토 16.7일)' + (ratio ? '<br>a³/T² 값: ' + L.join(' · ') + '<br>→ 모두 <b>거의 같아요</b> (T² ∝ a³)' : '<br>위성마다 a(10⁵ km)와 T(일)가 달라요. 옆에서 a³/T²을 직접 계산해 봐요.'));
+        else { const b = bodies[st.sel].m; info('<b>' + b.n + '</b> · a = ' + b.a + ' ×10⁵ km, T = ' + b.T + '일' + (ratio ? '<br>a³/T² = ' + (b.a ** 3 / b.T ** 2).toFixed(1) + '<br>다른 위성도 같은 값이에요 → <b>케플러 제3법칙</b>' : '')); }
       }
       const items = [{ value: -1, label: '전체' }].concat(MOONS.map((m, i) => ({ value: i, label: m.n })));
       const seg = controls.segment('위성', items, -1, (v) => { st.sel = +v; apply(); });
-      controls.segment('빠르기', [{ value: 0.3, label: '느리게' }, { value: 0.7, label: '보통' }, { value: 1.6, label: '빠르게' }], 0.7, (v) => { st.speed = +v; });
+      /* ▶ 재생: 위성들이 목성 둘레를 돌아요 (1일 ≈ 0.7초). 안쪽 위성일수록 빨리 돌아요 */
+      const player = controls.player({
+        duration: 36, loop: true, autoplay: true, label: '재생',
+        phases: [[0, '이오·에우로파·가니메데·칼리스토가 공전']],
+        onFrame(p) { st.P = p; },
+      });
       controls.button('👁 옆에서(지구에서 본 모습)', () => { orbit.phi = Math.PI / 2 - 0.02; orbit.theta = 0.0; });
       controls.button('⬇ 위에서', () => { orbit.phi = 0.35; });
       function apply() { bodies.forEach((b, i) => { const on = st.sel === -1 || st.sel === i; b.tube.material.opacity = on ? 0.85 : 0.18; b.lb.show(true); b.mesh.scale.setScalar(on ? 1 : 0.8); }); text(); }
@@ -72,11 +79,10 @@
 
       return {
         update(dt) {
-          st.dayAcc = (st.dayAcc || 0) + dt * st.speed / 0.7;
-          const d = st.dayAcc;
-          jup.rotation.y += dt * 0.9;
-          bodies.forEach((b) => {
-            const ang = TAU * d / b.m.T + b.m.ph; b.mesh.position.set(b.r * Math.cos(ang), 0, b.r * Math.sin(ang));
+          { const S = sr(), q = window.__sim, k = S ? S.view + (S.flags && S.flags.calcK ? 1 : 0) + (q && q.game && q.game.free ? 1 : 0) : ''; if (k !== st.key) { st.key = k; text(); } }
+          jup.rotation.y = st.P * TAU * 5;
+          bodies.forEach((b, bi) => {
+            const ang = TAU * NREV[bi] * st.P + b.m.ph; b.mesh.position.set(b.r * Math.cos(ang), 0, b.r * Math.sin(ang));
             b.tr.forEach((p, k) => { const a2 = ang - (k + 1) * 0.12 * (b.m.T < 5 ? 1 : 0.5) * 1.0; p.position.set(b.r * Math.cos(a2), 0, b.r * Math.sin(a2)); p.scale.setScalar(1 - k / 16); p.visible = st.trails; });
           });
         },

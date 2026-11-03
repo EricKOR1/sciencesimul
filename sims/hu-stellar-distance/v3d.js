@@ -16,7 +16,10 @@
     autoRotate: 0,
     build(ctx) {
       const { THREE, scene, root, label, info, controls } = ctx;
-      const st = { m: 0, D: 7, play: true, track: true, shots: [], key: '' };
+      const st = { m: 0, D: 7, track: true, shots: [], key: '', sel: 2 };
+      const W = () => window.__sim || {};
+      const PARS = [0.7681, 0.3792, 0.1947, 0.1302, 0.0968, 0.0888, 0.0760, 0.0489];
+      const dOf = (i) => 4.5 + 5.4 * Math.log10((1 / PARS[i]) / 1.3);
       const sr = () => { try { return window.__sim && window.__sim.S; } catch (e) { return null; } };
 
       scene.add(new THREE.AmbientLight(0x93a6e0, 0.5));
@@ -46,7 +49,7 @@
       /* 가까운 별 */
       const star = new THREE.Mesh(new THREE.SphereGeometry(0.26, 32, 24), new THREE.MeshBasicMaterial({ color: 0xffb98a })); root.add(star);
       const sGlow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, color: 0xff9d6a })); sGlow.scale.set(1.9, 1.9, 1); root.add(sGlow);
-      const starLab = label('가까운 별', star, { offset: [0, 0.6, 0], color: 'rgba(160,70,20,.92)' });
+      const starLab = label('별', star, { offset: [0, 0.6, 0], color: 'rgba(160,70,20,.92)' });
       const baseLine = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 1, 6), new THREE.MeshBasicMaterial({ color: 0xffd9b0, transparent: true, opacity: 0.35 })); root.add(baseLine);
 
       /* 시선(지구 → 별 → 배경) · 겉보기 위치 · 연주 시차각 호 */
@@ -98,29 +101,38 @@
         for (let i = 0; i <= 16; i++) { const u = i / 16, v = a0.clone().lerp(a1, u).normalize().multiplyScalar(r).add(S); pts.push(v); }
         arcG.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 24, 0.03, 6, false), new THREE.MeshBasicMaterial({ color: 0x7dd3fc })));
         parLab.obj = pts[8].toArray(); parLab.off = [0.55, 0, 0];
-        const ang = Math.acos(Math.max(-1, Math.min(1, a0.dot(a1)))) / DEG; parLab.set('p ≈ ' + ang.toFixed(1) + '°');
+        const ang = Math.acos(Math.max(-1, Math.min(1, a0.dot(a1)))) / DEG; parLab.set('시차각 p');
       }
       function text() {
         info('<b>연주 시차</b> p: 별이 <b>가까울수록 크고</b> 멀수록 작아요.<br>지구가 반년 사이에 움직이면 별이 배경별 사이에서 <b>타원</b>을 그리며 움직여 보여요.<br>거리 d(파섹) = 1 / p(″)');
       }
 
-      const rM = controls.range('월(달)', 0, 12, 0.5, st.m, (v) => { st.m = v; st.play = false; bP.textContent = '▶ 지구 돌리기'; upd(); }, (v) => v + '개월');
-      const rD = controls.range('별까지 거리', 5, 14, 0.5, st.D, (v) => { st.D = v; rebuildStar(); }, (v) => (v <= 7 ? '가까움' : v <= 10 ? '보통' : '멀어요') + ' (' + (v * 0.5).toFixed(1) + ')');
-      const bP = controls.button('⏸ 멈춤', () => { st.play = !st.play; bP.textContent = st.play ? '⏸ 멈춤' : '▶ 지구 돌리기'; });
-      controls.button('📷 이 달 위치 남기기', () => { if (st.shots.indexOf(st.m) < 0) st.shots.push(st.m); if (st.shots.length > 4) st.shots.shift(); rebuildShots(); });
-      controls.button('🧹 지우기', () => { st.shots = []; rebuildShots(); });
+      /* ▶ 재생: 지구가 태양을 한 바퀴(12개월) 돌아요. 2D의 '관측 시기(달)'도 같은 값으로 움직여요 */
+      let syncing = false, ready = false;
+      const player = controls.player({
+        duration: 12, loop: true, autoplay: false, label: '지구 돌리기',
+        phases: [[0, '1월 초'], [0.25, '4월 초'], [0.5, '7월 초'], [0.75, '10월 초']],
+        onFrame(p) { st.m = 12 * p; upd(); if (ready && !syncing) { try { W().setMonth(12 * p); } catch (e) {} } },
+      });
+      ready = true;
       const bT = controls.button('1년 궤적 ✓', () => { st.track = !st.track; bT.classList.toggle('on', st.track); bT.textContent = '1년 궤적 ' + (st.track ? '✓' : '✕'); rebuildTrack(); }); bT.classList.add('on');
 
+      /* 2D → 3D: 고른 별(거리) · 관측 시기(달) · 찍은 사진(달)을 그대로 읽어요 */
       function follow() {
         const S = sr(); if (!S || !S.pr) return;
-        if (S.pr.m !== st.key) { st.key = S.pr.m; st.m = S.pr.m; st.play = false; bP.textContent = '▶ 지구 돌리기'; rM.set(st.m); upd(); }
+        const P = S.pr, k = P.sel + '|' + P.cap.map((c) => c.m).join(',');
+        if (Math.abs(P.m - Math.round(st.m * 2) / 2) > 0.01 && Math.abs(P.m - st.m) > 0.01) { syncing = true; player.set(P.m / 12); syncing = false; if (!player.playing) st.m = P.m; upd(); }
+        if (k !== st.key) {
+          st.key = k;
+          if (P.sel !== st.sel) { st.sel = P.sel; st.D = dOf(P.sel); const i = W().STAR8 ? W().STAR8[P.sel] : null; starLab.set(i ? i.n : '별'); st.shots = []; rebuildStar(); }
+          st.shots = P.cap.map((c) => c.m); rebuildShots();
+        }
       }
-      { const S0 = sr(); if (S0 && S0.pr) { st.key = S0.pr.m; st.m = S0.pr.m; rM.set(st.m); } }
+      { const S0 = sr(); if (S0 && S0.pr) { st.sel = S0.pr.sel; st.D = dOf(S0.pr.sel); st.m = S0.pr.m; player.set(S0.pr.m / 12); st.shots = S0.pr.cap.map((c) => c.m); st.key = S0.pr.sel + '|' + S0.pr.cap.map((c) => c.m).join(','); } }
       rebuildStar();
       return {
         update(dt) {
           follow();
-          if (st.play) { st.m = (st.m + dt * 0.7) % 12; rM.set(Math.round(st.m * 2) / 2); upd(); }
           glow.scale.setScalar(2.2 + 0.08 * Math.sin(performance.now() / 400));
         },
         sync() { st.key = ''; follow(); },

@@ -50,12 +50,13 @@
 
   window.SciSim3D.attach({
     title: '분자의 극성 3D',
-    hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
+    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 분자 고르기와 판정은 2D와 똑같이 이어져요',
     camera: { dist: 6.2, theta: 0.3, phi: 1.2, min: 3, max: 18 },
-    autoRotate: 0.25,
+    autoRotate: 0.2,
+    levels: [0],
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
-      let key = 'H2O', bend = 180, showBond = true, showNet = true, showSum = false;
+      let key = 'H2O', bend = 180, showBond = true, showSum = false;
       const g = new THREE.Group(); root.add(g);
       const labs = [], extra = [];
       const UP = new THREE.Vector3(0, 1, 0);
@@ -127,11 +128,11 @@
         // 알짜 쌍극자 (분자 가운데에서 굵게)
         const net = dp.reduce((s, x) => s.add(x.dir.clone().multiplyScalar(x.d)), new THREE.Vector3());
         const nlen = net.length();
-        if (showNet && nlen > 1e-3) { const nd = net.clone().normalize(); g.add(arrow(nd.clone().multiplyScalar(0.3), nd.clone().multiplyScalar(0.3 + Math.max(0.45, nlen * SC)), 0.085, 0xec4899)); }
+        if (judged && nlen > 1e-3) { const nd = net.clone().normalize(); g.add(arrow(nd.clone().multiplyScalar(0.3), nd.clone().multiplyScalar(0.3 + Math.max(0.45, nlen * SC)), 0.085, 0xec4899)); }
         netLab.obj = null; netLab.show(false);
         // 벡터 더하기: 화살표를 머리-꼬리로 이어 붙여 아래쪽에 그리기
         let sumNote = '';
-        if (showSum) {
+        if (showSum && judged) {
           let low = 0; M.A.forEach((a) => { low = Math.min(low, a.p[1]); });
           let cur = new THREE.Vector3(-1.2, low - 1.7, 0); const start = cur.clone();
           const SS = 1.0;
@@ -153,23 +154,30 @@
         const polarNow = nlen > 1e-3;
         const bondP = dp.length ? '결합은 극성(' + dp.map((x) => x.d).filter((v, i, a) => a.indexOf(v) === i).join('·') + ' 만큼 쏠림)' : '';
         info('<b>' + T.f + '</b> (' + T.n + ') · ' + (key === 'CO2' && bend < 180 ? '굽은형 (' + bend + '°)' : T.shape) + '<br><span style="color:#fbbf24">주황</span> 결합 쌍극자 · <span style="color:#f9a8d4">분홍</span> 알짜 쌍극자(합)' +
-          '<br><b>' + (polarNow ? '극성 분자: 화살표가 상쇄되지 않고 남아요.' : '무극성 분자: 결합은 극성이어도 화살표가 상쇄돼요.') + '</b>' + sumNote);
+          (judged ? '<br><b>' + (polarNow ? '극성 분자: 화살표가 상쇄되지 않고 남아요.' : '무극성 분자: 결합은 극성이어도 화살표가 상쇄돼요.') + '</b>' + sumNote : '<br>결합 쌍극자 화살표를 이어 붙여 합을 생각해 보고, 2D에서 극성 · 무극성을 판정해 보세요. (판정하면 알짜 쌍극자도 보여 줘요)'));
       }
-      const segMol = controls.segment('분자', KEYS.map((k) => ({ value: k, label: MOLS[k].f })), key, (v) => { key = v; fit(); build(); });
-      const bendSl = controls.range('CO₂ 결합각', 100, 180, 5, 180, (v) => { bend = v; if (key !== 'CO2') { key = 'CO2'; segMol.set('CO2'); } build(); }, (v) => v + '°');
+      let judged = false, own = false, pB = 0, sig = '', sumOn = false;
+      const rowOf = () => { const r = document.querySelectorAll('.v3-player'); return r[r.length - 1]; };
       const bB = controls.button('결합 쌍극자 ✓', () => { showBond = !showBond; bB.classList.toggle('on', showBond); bB.textContent = '결합 쌍극자 ' + (showBond ? '✓' : '✕'); build(); }); bB.classList.add('on');
-      const nB = controls.button('알짜 쌍극자 ✓', () => { showNet = !showNet; nB.classList.toggle('on', showNet); nB.textContent = '알짜 쌍극자 ' + (showNet ? '✓' : '✕'); build(); }); nB.classList.add('on');
       const sB = controls.button('화살표 더하기 ✕', () => { showSum = !showSum; sB.classList.toggle('on', showSum); sB.textContent = '화살표 더하기 ' + (showSum ? '✓' : '✕'); build(); });
+      const pl = controls.player({ duration: 8, loop: true, label: 'CO₂ 구부리기', phases: [[0, '직선 180°'], [0.2, '구부리는 중'], [0.5, '굽은형'], [0.7, '펴는 중']], onFrame(p) { pB = p; own = p > 0; } });
+      const rowP = rowOf();
+      const bendOf = (p) => 180 - 80 * (p < 0.2 ? 0 : p < 0.5 ? (p - 0.2) / 0.3 : p < 0.7 ? 1 : 1 - (p - 0.7) / 0.3);
       const api = {
-        sync() { // 2D 화면에서 고른 분자·결합각으로 시작 (읽기 전용)
-          try {
-            const s = window.__sim; if (!s || !s.PL) return;
-            const mk = s.PL.mol, bd = s.PL.bend;
-            if (MOLS[mk] && (mk !== key || (mk === 'CO2' && bd !== bend))) { key = mk; if (mk === 'CO2' && bd >= 100 && bd <= 180) { bend = bd; bendSl.set(bd); } segMol.set(key); build(); }
-          } catch (e) { /* 무시 */ }
+        update() {
+          const Z = ctx.lesson(); if (!Z) return;
+          const inPolar = Z.S.scene === 'polar';
+          rowP.style.display = inPolar ? '' : 'none'; if (!inPolar && pl.playing) pl.pause();
+          const PLs = Z.PL, mk = PLs.mol;
+          const sg = [mk, PLs.bend, !!PLs.judged[mk]].join('|');
+          if (sg !== sig) { sig = sg; if (own) { own = false; pl.pause(); pl.set(0); } }
+          let k = mk, bd = PLs.bend;
+          if (own) { k = 'CO2'; bd = Math.round(bendOf(pB) / 5) * 5; }
+          const j = !!PLs.judged[mk] && !own;
+          if (!MOLS[k]) return;
+          if (k !== key || bd !== bend || j !== judged) { key = k; bend = bd; judged = j; fit(); build(); }
         },
       };
-      api.sync();
       fit();
       build();
       return api;

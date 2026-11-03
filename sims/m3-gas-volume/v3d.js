@@ -5,10 +5,11 @@
   if (!window.SciSim3D) return;
   /* ---------- 공통: 분자 모형과 반응 도우미 ---------- */
   function ChemKit(THREE) {
-    const COL = { H: 0xf1f5f9, O: 0xef4444, C: 0x3f4756, N: 0x3b82f6, Mg: 0xa3e635, Cu: 0xe08a3c, Cl: 0x14b8a6 };
+    const COL = { H: 0xd5deec, O: 0xef6a6a, C: 0x3f4756, N: 0x4a7bf0, Mg: 0xa3e635, Cu: 0xe08a3c, Cl: 0x7fd16a };
     const RAD = { H: 0.27, O: 0.4, C: 0.4, N: 0.38, Mg: 0.5, Cu: 0.5, Cl: 0.46 };
     const NAME = { H: '수소', O: '산소', C: '탄소', N: '질소', Mg: '마그네슘', Cu: '구리', Cl: '염소' };
     const SP = {
+      O: { n: '산소 원자', f: 'O', a: ['O'], p: [[0, 0, 0]], b: [] },
       H2: { n: '수소', f: 'H₂', a: ['H', 'H'], p: [[-0.3, 0, 0], [0.3, 0, 0]], b: [[0, 1, 1]] },
       O2: { n: '산소', f: 'O₂', a: ['O', 'O'], p: [[-0.4, 0, 0], [0.4, 0, 0]], b: [[0, 1, 2]] },
       N2: { n: '질소', f: 'N₂', a: ['N', 'N'], p: [[-0.38, 0, 0], [0.38, 0, 0]], b: [[0, 1, 3]] },
@@ -130,87 +131,101 @@
     return { html: rows.join(' · '), ok };
   }
   const PHN = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches);
+  /* 2D 차시와 같은 반응 · 같은 부피(mL) : 수증기 · 암모니아 · 염화 수소 */
   const RX = {
-    h2o: { t: '수증기', re: [['H2', 2], ['O2', 1]], pr: [['H2O', 2]], eq: '2H₂ + O₂ → 2H₂O' },
-    nh3: { t: '암모니아', re: [['N2', 1], ['H2', 3]], pr: [['NH3', 2]], eq: 'N₂ + 3H₂ → 2NH₃' },
-    hcl: { t: '염화 수소', re: [['H2', 1], ['Cl2', 1]], pr: [['HCl', 2]], eq: 'H₂ + Cl₂ → 2HCl' },
+    water:   { t: '수증기', A: 'H2', B: 'O2', C: 'H2O', a: 2, b: 1, c: 2, eq: '2H₂ + O₂ → 2H₂O' },
+    ammonia: { t: '암모니아', A: 'N2', B: 'H2', C: 'NH3', a: 1, b: 3, c: 2, eq: 'N₂ + 3H₂ → 2NH₃' },
+    hcl:     { t: '염화 수소', A: 'H2', B: 'Cl2', C: 'HCl', a: 1, b: 1, c: 2, eq: 'H₂ + Cl₂ → 2HCl' },
   };
-  const U = 2, HU = 1.15;           // 부피 1칸에 분자 2개, 한 칸의 높이
+  const MLU = 5, HU = 1.15;          // 분자 1개 = 5 mL · 10 mL 한 칸의 높이
+  const fmt = (v) => (Math.abs(v - Math.round(v)) < 1e-9 ? String(Math.round(v)) : v.toFixed(1));
   window.SciSim3D.attach({
     host: '.stage-card',
     title: '기체 반응 부피비 3D 모형',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: PHN ? 16 : 11, theta: 0.1, phi: 1.3, min: 6, max: 28, target: [0, 1.4, 0] },
+    camera: { dist: PHN ? 17 : 11.5, theta: 0.1, phi: 1.3, min: 6, max: 28, target: [0, 1.7, 0] },
     autoRotate: 0,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const K = ChemKit(THREE);
-      let key = 'h2o', p = 0, playing = false, hold = 0, cyl = [];
+      let cyl = [], sig = '', q = 0, cur = null;
       const glass = new THREE.MeshStandardMaterial({ color: 0xbfe3ff, roughness: 0.08, transparent: true, opacity: 0.14, depthWrite: false, side: THREE.DoubleSide });
       const ringM = new THREE.MeshStandardMaterial({ color: 0xaab7cc, roughness: 0.4, metalness: 0.4 });
       const pistM = new THREE.MeshStandardMaterial({ color: 0xe8a14b, roughness: 0.5, metalness: 0.2 });
-      const R = 1.05, HMAX = 3 * HU + 0.3;
+      const R = 1.05, HMAX = 4 * HU + 0.3;
       const arrow = new THREE.Group(); const am = new THREE.MeshStandardMaterial({ color: 0xffd34d, roughness: 0.4, emissive: 0x6b4a00, emissiveIntensity: 0.5 });
       const sh = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.9, 16), am); sh.rotation.z = Math.PI / 2;
-      const hd = new THREE.Mesh(new THREE.ConeGeometry(0.28, 0.5, 20), am); hd.rotation.z = -Math.PI / 2; hd.position.x = 0.65; arrow.add(sh, hd); arrow.position.set(0.1, 1.5, 0); root.add(arrow);
+      const hd = new THREE.Mesh(new THREE.ConeGeometry(0.28, 0.5, 20), am); hd.rotation.z = -Math.PI / 2; hd.position.x = 0.65; arrow.add(sh, hd); arrow.position.set(0.7, 1.5, 0); root.add(arrow);
       const labs = [label('', [0, 0, 0]), label('', [0, 0, 0]), label('', [0, 0, 0])];
       const g = new THREE.Group(); root.add(g);
       function clear() { while (g.children.length) g.remove(g.children[0]); cyl = []; }
-      function mkCyl(x, sp, coef, isProd, k) {
-        const c = { x, sp, coef, isProd, mols: [], piston: null, vol: 0 };
+      function mkCyl(x, sp, n0, used, isProd) {
+        const c = { x, sp, n0, used, isProd, mols: [], piston: null };
         const tube = new THREE.Mesh(new THREE.CylinderGeometry(R, R, HMAX, 40, 1, true), glass); tube.position.set(x, HMAX / 2, 0); g.add(tube);
         const base = new THREE.Mesh(new THREE.CylinderGeometry(R + 0.12, R + 0.12, 0.18, 40), ringM); base.position.set(x, -0.09, 0); g.add(base);
-        for (let i = 1; i <= 3; i++) { const t = new THREE.Mesh(new THREE.TorusGeometry(R + 0.01, 0.018, 8, 48), ringM); t.rotation.x = Math.PI / 2; t.position.set(x, i * HU, 0); g.add(t); }
+        for (let i = 1; i <= 4; i++) { const t = new THREE.Mesh(new THREE.TorusGeometry(R + 0.01, 0.018, 8, 48), ringM); t.rotation.x = Math.PI / 2; t.position.set(x, i * HU, 0); g.add(t); }
         c.piston = new THREE.Group(); const pd = new THREE.Mesh(new THREE.CylinderGeometry(R - 0.03, R - 0.03, 0.14, 40), pistM); const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 1.3, 12), ringM); rod.position.y = 0.7; c.piston.add(pd, rod); g.add(c.piston);
-        const n = coef * U;
-        for (let i = 0; i < n; i++) {
-          const m = K.molGroup(sp, 0.8); g.add(m);
+        for (let i = 0; i < n0; i++) {
+          const m = K.molGroup(sp, 0.75); g.add(m);
           const a = Math.random() * 6.28, r = Math.random() * (R - 0.4);
-          m.userData = { x: Math.cos(a) * r, z: Math.sin(a) * r, y: 0.3 + Math.random() * HU * 2, vx: (Math.random() - 0.5) * 1.6, vy: (Math.random() - 0.5) * 1.8, vz: (Math.random() - 0.5) * 1.6, w: new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).multiplyScalar(2), idx: i };
+          m.userData = { x: Math.cos(a) * r, z: Math.sin(a) * r, y: 0.3 + Math.random() * HU * 2, vx: (Math.random() - 0.5) * 1.6, vy: (Math.random() - 0.5) * 1.8, vz: (Math.random() - 0.5) * 1.6, w: new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).multiplyScalar(2) };
           c.mols.push(m);
         }
         cyl.push(c); return c;
       }
-      function build() {
-        clear(); const r = RX[key];
-        const xs = r.re.length === 2 ? [-4.3, -1.9] : [-3];
-        r.re.forEach((q, i) => mkCyl(xs[i], q[0], q[1], false, i));
-        r.pr.forEach((q) => mkCyl(3.4, q[0], q[1], true, 0));
-        text();
+      /* 지금 2D 실험의 반응과 부피 */
+      function scenario() {
+        const S = ctx.lesson() || {}, sc = (S.S && S.S.scene) || 'react';
+        let key = 'water', va = 20, vb = 10, hypo = false;
+        if (sc === 'react' && S.RS) { key = S.RS.rx; va = S.RS.va; vb = S.RS.vb; }
+        else if (sc === 'table' && S.TB) { key = S.TB.rx; const r = RX[key]; va = r.a * 10; vb = r.b * 10; }
+        else if (sc === 'model') { hypo = !!(S.MD && S.MD.hypo); va = 20; vb = hypo ? 20 : 10; }
+        if (!RX[key]) key = 'water';
+        return { sc, key, va, vb, hypo, sig: [sc, key, va, vb, hypo].join('|') };
       }
-      const pc = (p) => p;
-      function visibleN(c) { return Math.round(c.coef * U * (c.isProd ? p : 1 - p)); }
-      function text() {
-        const r = RX[key], re = r.re.map((q) => q[1]), pr = r.pr.map((q) => q[1]);
-        info('<b>' + r.eq + '</b><br>부피비 <b>' + re.concat(pr).join(' : ') + '</b> = 분자 수의 비<br>같은 온도·압력에서 기체 부피는 분자 수에 비례해요.');
+      function rebuild(c) {
+        clear(); cur = c;
+        const r = RX[c.key];
+        const hy = c.hypo ? { B: 'O', b: 2, c: 2 } : null;
+        const a = r.a, b = hy ? hy.b : r.b, cc = hy ? hy.c : r.c;
+        const k = Math.min(c.va / a, c.vb / b);
+        c.res = { k, usedA: k * a, usedB: k * b, vC: k * cc, leftA: c.va - k * a, leftB: c.vb - k * b };
+        const nA = c.va / MLU, nB = c.vb / MLU, nC = c.res.vC / MLU;
+        const spB = hy ? 'O' : r.B;
+        mkCyl(-4.3, r.A, nA, c.res.usedA / MLU, false); mkCyl(-1.9, spB, nB, c.res.usedB / MLU, false); mkCyl(3.4, r.C, nC, 0, true);
+        c.spB = spB;
+        text(c);
       }
-      function layoutStatic() {
-        cyl.forEach((c, i) => { const n = visibleN(c); c.vol = n / U; });
+      function text(c) {
+        const r = RX[c.key], R2 = c.res, nm = (sp) => K.SP[sp].n;
+        const left = R2.leftA > 1e-9 ? nm(r.A) + ' ' + fmt(R2.leftA) + ' mL' : R2.leftB > 1e-9 ? nm(c.spB) + ' ' + fmt(R2.leftB) + ' mL' : '';
+        let h = '<b>' + r.eq + '</b><br>' + nm(r.A) + ' ' + c.va + ' mL + ' + nm(c.spB === 'O' ? 'O' : r.B) + ' ' + c.vb + ' mL → ' + nm(r.C) + ' ' + fmt(R2.vC) + ' mL<br>';
+        if (c.hypo) h += '<span style="color:#fca5a5">산소가 O 1개짜리라면 부피비가 1 : 1 : 1이 돼서, 실험에서 얻은 2 : 1 : 2와 맞지 않아요.</span>';
+        else h += '반응한 부피비 <b>' + [r.a, r.b, r.c].join(' : ') + '</b> = 분자 수의 비 (같은 온도·압력)<br>' + (left ? '<span style="color:#fcd34d">반응 후 남는 기체: ' + left + '</span>' : '<span style="color:#86efac">남는 기체 없이 모두 반응했어요.</span>');
+        info(h);
       }
-      controls.segment('반응', Object.keys(RX).map((k) => ({ value: k, label: RX[k].t })), key, (v) => { key = v; build(); });
-      const pr = controls.range('진행', 0, 100, 1, 0, (v) => { p = v / 100; playing = false; pb.textContent = '▶ 재생'; }, (v) => v + '%');
-      const pb = controls.button('▶ 재생', () => { playing = !playing; if (playing && p >= 1) p = 0; pb.textContent = playing ? '❚❚ 멈춤' : '▶ 재생'; });
-      build();
+      const vis = (c, o) => (o.isProd ? Math.round(o.n0 * q) : Math.round(o.n0 - o.used * q));
+      controls.player({
+        duration: 6, loop: true, label: '반응 재생',
+        phases: [[0, '반응 전'], [0.12, '반응하는 중'], [0.8, '반응 후']],
+        onFrame(p) { q = Math.max(0, Math.min(1, (p - 0.12) / 0.68)); },
+      });
       return {
         update(dt, t) {
-          if (playing) { if (p >= 1) { hold += dt; if (hold > 1.5) { p = 0; hold = 0; } } else p = Math.min(1, p + dt / 4.5); pr.set(Math.round(p * 100)); }
-          const r = RX[key];
-          cyl.forEach((c, ci) => {
-            const n = visibleN(c), h = Math.max(0.2, (n / U) * HU);
-            c.piston.position.set(c.x, h + 0.07, 0); c.piston.visible = n > 0;
-            c.mols.forEach((m, i) => {
+          const c = scenario();
+          if (c.sig !== sig) { sig = c.sig; rebuild(c); }
+          cyl.forEach((o, ci) => {
+            const n = vis(cur, o), h = Math.max(0.2, n * MLU / 10 * HU);
+            o.piston.position.set(o.x, h + 0.07, 0); o.piston.visible = n > 0;
+            o.mols.forEach((m, i) => {
               const u = m.userData; m.visible = i < n; if (i >= n) return;
               u.x += u.vx * dt; u.y += u.vy * dt; u.z += u.vz * dt;
               const lim = R - 0.5; const rr = Math.hypot(u.x, u.z);
               if (rr > lim) { const nx = u.x / rr, nz = u.z / rr, dot = u.vx * nx + u.vz * nz; if (dot > 0) { u.vx -= 2 * dot * nx; u.vz -= 2 * dot * nz; } u.x = nx * lim; u.z = nz * lim; }
               if (u.y < 0.3) { u.y = 0.3; u.vy = Math.abs(u.vy); } if (u.y > h - 0.3) { u.y = Math.max(0.3, h - 0.3); u.vy = -Math.abs(u.vy); }
-              m.position.set(c.x + u.x, u.y, u.z); m.rotation.x += u.w.x * dt; m.rotation.y += u.w.y * dt; m.rotation.z += u.w.z * dt;
+              m.position.set(o.x + u.x, u.y, u.z); m.rotation.x += u.w.x * dt; m.rotation.y += u.w.y * dt; m.rotation.z += u.w.z * dt;
             });
-          });
-          const labText = (c) => K.SP[c.sp].n + ' ' + K.SP[c.sp].f;
-          cyl.forEach((c, i) => {
-            const L = labs[i]; L.obj = [c.x, -0.45, 0.5]; const n = visibleN(c);
-            L.set(labText(c) + ' · 부피 <b>' + (n / U) + '</b>'); L.show(true);
+            const L = labs[ci]; L.obj = [o.x, -0.45, 0.5]; L.set(K.SP[o.sp].n + ' ' + K.SP[o.sp].f + ' · <b>' + fmt(n * MLU) + ' mL</b>'); L.show(true);
           });
           for (let i = cyl.length; i < 3; i++) labs[i].show(false);
         },

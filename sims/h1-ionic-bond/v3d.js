@@ -1,5 +1,6 @@
-/* h1-ionic-bond · 3D 이온 결합 (전자 이동 · NaCl 결정 · 힘을 가하면)
-   Na → Na⁺ + e⁻, Cl + e⁻ → Cl⁻ 로 만들어진 이온이 번갈아 쌓여 결정이 되고, 어긋나면 같은 전하끼리 밀어내 쪼개져요. */
+/* h1-ionic-bond · 3D 이온 결합 (전자 이동 · NaCl 결정)
+   Na → Na⁺ + e⁻, Cl + e⁻ → Cl⁻ 로 만들어진 이온이 번갈아 쌓여 결정이 돼요.
+   1단계(전자 이동)는 2D의 거리 슬라이더·전자 옮기기와 서로 맞춰지고, 금빛 전자를 눌러 옮길 수 있어요. */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -9,14 +10,14 @@
   window.SciSim3D.attach({
     title: '이온 결합과 NaCl 결정 3D',
     camera: { dist: PHN ? 17 : 12.5, theta: 0.7, phi: 1.1, min: 6, max: 26 },
-    levels: [1],
+    levels: [0],
     autoRotate: 0.22,
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
       const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.35, metalness: 0.1 }, o || {}));
-      let mode = 'transfer', spread = 0, layers = 4, play = false, tp = 0, shear = 0, shearGo = false, shT = 0;
-      const gT = new THREE.Group(), gL = new THREE.Group(), gF = new THREE.Group();
-      root.add(gT, gL, gF);
+      let mode = 'transfer', spread = 0, layers = 4, grow = -1;
+      const gT = new THREE.Group(), gL = new THREE.Group();
+      root.add(gT, gL);
       const labs = [];
       const L = (t, o, opt) => { const l = label(t, o, opt); labs.push(l); return l; };
 
@@ -45,16 +46,17 @@
       gL.add(bondM);
       const dummy = new THREE.Object3D(), Yv = new THREE.Vector3(0, 1, 0);
       function pos(i, j, k) { const o = (N - 1) / 2; return new THREE.Vector3((i - o) * D * (1 + spread), (j - o) * D * (1 + spread), (k - o) * D * (1 + spread)); }
+      const visOf = (i, j, k) => k < layers && (grow < 0 || k * 16 + j * 4 + i < grow);
       function layoutLattice() {
         let a = 0, b = 0, c = 0;
         for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) for (let k = 0; k < N; k++) {
-          const p = pos(i, j, k), isNa = (i + j + k) % 2 === 0, vis = k < layers;
+          const p = pos(i, j, k), isNa = (i + j + k) % 2 === 0, vis = visOf(i, j, k);
           dummy.position.copy(p); dummy.scale.setScalar(vis ? (isNa ? rNa : rCl) * (1 - spread * 0.1) : 0.0001); dummy.quaternion.identity(); dummy.updateMatrix();
           if (isNa) mNa.setMatrixAt(a++, dummy.matrix); else mCl.setMatrixAt(b++, dummy.matrix);
           // 이웃과의 결합선(+x, +y, +z 방향)
           [[1, 0, 0], [0, 1, 0], [0, 0, 1]].forEach((d) => {
             const ni = i + d[0], nj = j + d[1], nk = k + d[2];
-            if (ni >= N || nj >= N || nk >= N || nk >= layers || !vis || spread < 0.05) { dummy.scale.setScalar(0.0001); dummy.position.copy(p); }
+            if (ni >= N || nj >= N || nk >= N || !visOf(ni, nj, nk) || !vis || spread < 0.05) { dummy.scale.setScalar(0.0001); dummy.position.copy(p); }
             else {
               const q = pos(ni, nj, nk), dv = q.clone().sub(p), len = dv.length();
               dummy.position.copy(p).add(q).multiplyScalar(0.5); dummy.quaternion.setFromUnitVectors(Yv, dv.normalize()); dummy.scale.set(1, len, 1);
@@ -68,89 +70,90 @@
       const lNa = L('Na⁺ (작은 구)', [0, 0, 0], { color: 'rgba(120,70,220,.9)' }), lCl = L('Cl⁻ (큰 구)', [0, 0, 0], { color: 'rgba(20,140,80,.9)' });
       function tagLattice() { const o = (N - 1) / 2, s = D * (1 + spread); lNa.obj = pos(0, 0, 0).add(new THREE.Vector3(-0.2, 0, 0.0)); lNa.off = [-1.2, 0.6, 0]; lCl.obj = pos(N - 1, 0, 0); lCl.off = [1.3, 0.6, 0]; if (layers < 1) layers = 1; }
 
-      /* ---------- 3) 힘을 가하면: 위쪽 절반이 한 칸 밀려 같은 전하끼리 마주 보면 반발 ---------- */
-      const NS = 4, DS = 1.5;
-      const sm = [], FL = [];
-      const ionsF = [];
-      for (let i = 0; i < NS; i++) for (let j = 0; j < NS; j++) for (let k = 0; k < 2; k++) {
-        const isNa = (i + j + k) % 2 === 0;
-        const m = new THREE.Mesh(geoI, std(isNa ? CNA : CCL, { roughness: 0.3 })); m.scale.setScalar(isNa ? rNa : rCl);
-        gF.add(m); ionsF.push({ m, i, j, k, isNa, up: j >= NS / 2 });
-      }
-      const repLab = L('같은 전하끼리 밀어내요!', [0, 0, 0], { color: 'rgba(220,60,60,.92)' });
-      const fArrows = [];
-      for (let q = 0; q < 2; q++) { const a = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.6, 16), std(0xff5a52, { emissive: 0xff2a20, emissiveIntensity: 0.6 })); gF.add(a); fArrows.push(a); }
-      function layoutForce() {
-        const o = (NS - 1) / 2; const sh = Math.min(1, shear) * DS; // 위쪽 절반이 +x로 밀림
-        const split = shear > 1.15 ? (shear - 1.15) * 1.6 : 0;
-        ionsF.forEach((q) => {
-          const x = (q.i - o) * DS + (q.up ? sh : 0), y = (q.j - o) * DS + (q.up ? split : 0), z = (q.k - 0.5) * DS;
-          q.m.position.set(x, y, z);
-        });
-        const mid = shear > 0.4 && shear <= 1.15;
-        repLab.show(shear > 0.75); repLab.obj = [0, 0, 1.6]; repLab.off = [0, 0.1, 0];
-        fArrows.forEach((a, n) => { a.visible = shear > 0.75; a.position.set((n ? 1 : -1) * 0.0, (NS / 2 - 0.5) * 0 + 0 + split * 0.5, 1.6 - 0.0); a.rotation.set(0, 0, n ? Math.PI / 2 : -Math.PI / 2); a.position.x = (n ? 1 : -1) * 0.5 + (shear * DS * 0.25); a.position.y = split * 0.5; a.position.z = 1.05; });
-      }
-
+      const PHN2 = PHN, D_FAR = PHN2 ? 232 : 316, D_ION = PHN2 ? 132 : 170, R2 = PHN2 ? 76 : 98, AY = PHN2 ? 290 : 268;
+      const ease = (x) => x * x * (3 - 2 * x);
       function setMode(m) {
-        mode = m; gT.visible = m === 'transfer'; gL.visible = m === 'lattice'; gF.visible = m === 'force';
+        mode = m; gT.visible = m === 'transfer'; gL.visible = m === 'lattice';
         labs.forEach((l) => l.show(false));
         ctlLat.forEach((e) => { e.style.display = m === 'lattice' ? '' : 'none'; });
-        ctlFor.forEach((e) => { e.style.display = m === 'force' ? '' : 'none'; });
         ctlTr.forEach((e) => { e.style.display = m === 'transfer' ? '' : 'none'; });
-        if (m === 'transfer') {
-          orbit.dist = PHN ? 15 : 11.5; naLab.show(true); clLab.show(true); tp = 0; play = false;
-          info('<b>전자가 옮겨 가요.</b><br>나트륨은 전자 1개를 잃고 <b>Na⁺</b>, 염소는 전자 1개를 얻어 <b>Cl⁻</b>가 돼요.<br>▶ 버튼을 눌러 보세요.');
-        } else if (m === 'lattice') {
-          orbit.dist = PHN ? 17 : 12.5; layoutLattice(); tagLattice(); lNa.show(true); lCl.show(true);
-          info('<b>NaCl 결정</b>: Na⁺와 Cl⁻가 번갈아 규칙적으로 쌓여요.<br>이온 하나는 반대 전하의 이온 6개에 둘러싸여 있어요.');
-        } else {
-          orbit.dist = PHN ? 15 : 11; layoutForce(); info('<b>이온 결정은 잘 깨져요.</b><br>한 층이 어긋나면 같은 전하끼리 마주 보아 서로 밀어내요.');
+        plT.pause(); plL.pause();
+        if (m === 'transfer') { orbit.dist = PHN ? 15 : 11.5; naLab.show(true); clLab.show(true); lastInfo = ''; plT.set(0); }
+        else {
+          orbit.dist = PHN ? 17 : 12.5; grow = -1; layoutLattice(); tagLattice(); lNa.show(true); lCl.show(true);
+          info('<b>NaCl 결정</b>: Na⁺와 Cl⁻가 번갈아 규칙적으로 쌓여요.<br>같은 전하끼리는 밀어내고, 반대 전하끼리는 끌어당겨요. 이온 하나는 반대 전하의 이온 6개에 둘러싸여 있어요.');
         }
         segM.set(m);
       }
-      const segM = controls.segment('', [{ value: 'transfer', label: '전자 이동' }, { value: 'lattice', label: 'NaCl 결정' }, { value: 'force', label: '힘을 가하면' }], mode, setMode);
-      const ctlTr = [], ctlLat = [], ctlFor = [];
+      const segM = controls.segment('', [{ value: 'transfer', label: '전자 이동' }, { value: 'lattice', label: 'NaCl 결정' }], mode, setMode);
+      const ctlTr = [], ctlLat = [];
       const host = (fn) => { const before = document.querySelector('.v3-ctl').children.length; const r = fn(); const kids = [...document.querySelector('.v3-ctl').children].slice(before); return [r, kids]; };
-      let [bPlay, k1] = host(() => controls.button('▶ 전자 옮기기', () => { play = true; tp = 0; })); ctlTr.push(...k1);
+      /* 전자 이동: p = 0이면 2D 상태를 그대로 보여 주고, ▶ 재생·진행 막대를 쓰면 한 사이클을 보여 줘요 */
+      let demoP = 0;
+      let [plT, k1] = host(() => controls.player({
+        duration: 9, loop: true, autoplay: false, label: '전자 이동',
+        phases: [[0, 'Na · Cl 원자'], [0.35, '가까이'], [0.45, '전자 이동'], [0.65, '이온 결합']],
+        onFrame(p) { demoP = p; },
+      })); ctlTr.push(...k1);
+      let [plL, k1b] = host(() => controls.player({
+        duration: 8, loop: true, autoplay: false, label: '이온 쌓기',
+        phases: [[0, '아래층부터 쌓는 중'], [0.97, 'NaCl 결정 완성']],
+        onFrame(p) { grow = p >= 0.97 ? -1 : Math.floor(p / 0.97 * layers * 16) + 1; layoutLattice(); },
+      })); ctlLat.push(...k1b);
       let [r1, k2] = host(() => controls.range('이온 사이 벌리기', 0, 1, 0.05, 0, (v) => { spread = v; layoutLattice(); tagLattice(); })); ctlLat.push(...k2);
       let [r2, k3] = host(() => controls.range('층 수', 1, 4, 1, 4, (v) => { layers = v; layoutLattice(); }, (v) => v + '층')); ctlLat.push(...k3);
-      let [r3, k4] = host(() => controls.button('힘 주기 ▶', () => { shearGo = true; shT = 0; shear = 0; })); ctlFor.push(...k4);
-      let [r4, k5] = host(() => controls.button('↺ 처음으로', () => { shearGo = false; shear = 0; layoutForce(); })); ctlFor.push(...k5);
-      setMode('transfer');
+      let lastInfo = '';
+      setMode(window.__sim && window.__sim.S && window.__sim.S.scene === 'lattice' ? 'lattice' : 'transfer');
+
+      /* 금빛 전자를 눌러 옮기기 (2D의 전자 누르기와 같아요) */
+      const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(); let down = null;
+      const rd = ctx.renderer.domElement;
+      rd.addEventListener('pointerdown', (e) => { down = { x: e.clientX, y: e.clientY }; });
+      rd.addEventListener('pointerup', (e) => {
+        if (!down || Math.hypot(e.clientX - down.x, e.clientY - down.y) > 6) { down = null; return; } down = null;
+        const L2 = window.__sim; if (mode !== 'transfer' || demoP > 0 || !L2 || !L2.A) return;
+        const r = rd.getBoundingClientRect(); ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+        ray.setFromCamera(ndc, ctx.camera);
+        if (ray.intersectObject(movE.e, false).length && L2.A.phase === 'idle' && L2.A.slider >= 0.8 && L2.startFly) L2.startFly(L2.VW / 2 - L2.A.d.value / 2 + R2, AY);
+      });
 
       let lastSc = null;
       const scMap = { atoms: 'transfer', lattice: 'lattice' };
       function syncScene() { const q = window.__sim && window.__sim.S; if (!q || q.scene === lastSc) return; lastSc = q.scene; const m = scMap[q.scene]; if (m && m !== mode) setMode(m); }
-      syncScene();
-      const ease = (x) => x * x * (3 - 2 * x);
       return {
         update(dt, t) {
           syncScene();
           if (mode === 'transfer') {
-            if (play) { tp = Math.min(1, tp + dt / 3.2); }
-            const k = ease(tp);
+            const L2 = window.__sim, A = L2 && L2.A, demo = demoP > 0 || plT.playing;
+            // 2D 상태(거리·전자 이동)를 읽거나, 재생 중이면 p로 한 사이클을 보여 줘요
+            let gap, k, qa, glow;
+            if (demo) {
+              const p = demoP; gap = p < 0.35 ? 6.3 - 1.6 * ease(p / 0.35) : p < 0.65 ? 4.7 : 4.7 - 1.3 * ease((p - 0.65) / 0.2);
+              k = ease(Math.max(0, Math.min(1, (p - 0.45) / 0.2))); qa = k; glow = p >= 0.3 && p < 0.45 ? 1 : 0;
+            } else if (A) {
+              gap = 3.4 + 2.9 * Math.max(0, Math.min(1, (A.d.value - D_ION) / (D_FAR - D_ION)));
+              k = A.phase === 'fly' ? A.eu : A.phase === 'done' ? 1 : 0; qa = A.qa; glow = A.phase === 'idle' && A.slider >= 0.8 ? 1 : 0;
+            } else { gap = 6.3; k = 0; qa = 0; glow = 0; }
+            NA.g.position.x = -gap / 2; CL.g.position.x = gap / 2;
             NA.es.forEach((o) => { if (o === movE) return; const a = o.a0 + t * o.sp; o.e.position.set(Math.cos(a) * o.r, 0, Math.sin(a) * o.r); });
             CL.es.forEach((o) => { const a = o.a0 + t * o.sp; o.e.position.set(Math.cos(a) * o.r, 0, Math.sin(a) * o.r); });
-            // 이동하는 전자: Na 바깥 껍질 → 공중 → Cl 바깥 껍질
-            const a0 = movE.a0 + t * movE.sp;
-            const sx = NA.g.position.x + 2.3 * Math.cos(0), cx = CL.g.position.x - 2.3;
-            const px = sx + (cx - sx) * k, py = Math.sin(k * Math.PI) * 1.2;
-            const p = new THREE.Vector3(px - NA.g.position.x, py, 0);
-            movE.e.position.copy(p);
-            movE.e.parent !== NA.g && NA.g.add(movE.e);
-            // Na 껍질: 전자 잃으면 가장 바깥 껍질 사라짐 (Na⁺는 작아져요), Cl⁻는 커져요
+            // 옮겨 가는 전자: Na 바깥 껍질 → 공중 → Cl 바깥 껍질
+            const sx = 2.3, cx = gap - 2.3, px = sx + (cx - sx) * k, py = Math.sin(k * Math.PI) * 1.2;
+            if (k < 0.001) { const a = movE.a0 + t * movE.sp; movE.e.position.set(Math.cos(a) * 2.3, 0, Math.sin(a) * 2.3); } else movE.e.position.set(px, py, 0);
+            movE.e.scale.setScalar(1 + (glow ? 0.35 + 0.25 * Math.sin(t * 8) : 0));
             NA.rings[2].visible = k < 0.5; CL.rings[2].material.opacity = 0.55;
-            const nsc = 1 - 0.18 * k; NA.rings.forEach((r, i) => { r.scale.setScalar(i === 2 ? 1 : nsc); });
-            CL.g.scale.setScalar(1 + 0.12 * k);
-            NA.g.children[0].material.color.setHex(k > 0.5 ? 0x8f5df5 : CNA); CL.g.children[0].material.color.setHex(k > 0.5 ? 0x25b673 : CCL);
-            naCh.show(tp >= 1); clCh.show(tp >= 1);
-            eLab.show(play && tp < 1); eLab.obj = [(px + 0) , py + 0.6, 0];
-            if (tp >= 1 && play) { play = false; info('<b>이온이 생겼어요.</b><br><b>Na⁺</b>(양이온)과 <b>Cl⁻</b>(음이온)는 <b>정전기적 인력</b>으로 끌어당겨 이온 결합을 이뤄요.'); }
-            const gap = 6.4 - 1.6 * k; // 이온이 되면 서로 끌려 가까워져요
-            NA.g.position.x = -gap / 2; CL.g.position.x = gap / 2;
-          } else if (mode === 'force') {
-            if (shearGo) { shT += dt; shear = Math.min(2.2, shT * 0.6); layoutForce(); if (shear >= 2.2) shearGo = false; }
+            const nsc = 1 - 0.18 * qa; NA.rings.forEach((r, i) => { r.scale.setScalar(i === 2 ? 1 : nsc); });
+            CL.g.scale.setScalar(1 + 0.12 * qa);
+            NA.g.children[0].material.color.setHex(qa > 0.5 ? 0x8f5df5 : CNA); CL.g.children[0].material.color.setHex(qa > 0.5 ? 0x25b673 : CCL);
+            const ions = qa > 0.95; naCh.show(ions); clCh.show(ions);
+            eLab.show(k > 0.02 && k < 0.98); eLab.obj = [-gap / 2 + px, py + 0.6, 0];
+            const key = ions ? 2 : glow ? 1 : 0;
+            if (key !== lastInfo) {
+              lastInfo = key;
+              info(ions ? '<b>이온이 생겼어요.</b><br>Na는 전자 1개를 잃어 <b>Na⁺</b>(2-8), Cl은 전자 1개를 얻어 <b>Cl⁻</b>(2-8-8)가 돼요. 반대 전하는 <b>정전기적 인력</b>으로 결합해요.'
+                : glow ? '바깥 전자껍질이 맞닿았어요. <b>금빛 전자</b>를 눌러 Cl의 빈자리로 옮겨 보세요.'
+                  : '<b>전자가 옮겨 가요.</b><br>2D의 <b>거리</b> 슬라이더로 Na와 Cl을 가까이 하거나, ▶ 버튼으로 한 번 보세요.');
+            }
           }
         },
         sync() { syncScene(); },

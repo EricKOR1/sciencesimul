@@ -60,7 +60,7 @@
   /* ================= 상수·물리 ================= */
   const BLUE = '#2563eb', RED = '#e2464b', GREEN = '#14a058', ORANGE = '#f59e0b', PURPLE = '#7c3aed';
   const GN = 6.67e-11;
-  const ME = 5.97e24, RE = 6.37e6, GM = GN * ME;         // GM = 3.98 × 10¹⁴ m³/s²
+  const ME = 5.97e24, RE = 6.37e6, GM = GN * ME, GM_ = GM;         // GM = 3.98 × 10¹⁴ m³/s²
   const G0 = GM / (RE * RE);                              // 지표 중력 가속도 9.81 m/s²
   const VESC_E = Math.sqrt(2 * GM / RE) / 1000;           // 11.18 km/s
   const EK_MAX = 80, EP_MIN = -70;                        // MJ/kg 눈금 범위
@@ -1265,6 +1265,7 @@
   /* ---------- 디버그 (Playwright) ---------- */
   window.__sim = {
     S, VW, VH, get game() { return game; }, setScene, setFlag, wLaunch, wReady, hmaxOf, etot, BODIES, GASES, stays, vrmsOf, plCheck, plSelect, asThrow, rkToggle, lnPlay, sgLaunch, sgModel, sgPlan, SG_BASE, ordV, RULES_C,
+    RE_: RE, GM_, M_ASTRO, PXS, WEIGHT, rkThrust, XLN, eff: (k) => (game && game.free ? false : S.flags[k]),
     stepAll(sec) { const n = Math.ceil(sec / 0.02); for (let i = 0; i < n; i++) { wStep(0.02); plStep(0.02); asStep(0.02); rkStep(0.02); lnStep(0.02); sgStep(0.02); } },
   };
 })();

@@ -1,6 +1,6 @@
 /* hb-synapse · 3D 시냅스 전달 (전기 → 화학 → 전기)와 약물의 작용 지점
-   활동 전위가 오면 Ca²⁺이 들어와 시냅스 소낭이 아세틸콜린(ACh)을 분비하고, ACh이 수용체에 결합하면 Na⁺이 들어가 다음 뉴런이 흥분해요.
-   ACh은 분해 효소가 분해해요. 약물을 골라 어느 단계가 막히는지 확인해요. */
+   2D 차시의 6단계(활동 전위 도착 → Ca²⁺ 유입 → 소낭 융합 → 방출·확산 → 수용체 결합 → 분해·재흡수)를 ▶ 재생으로 반복해 보여 주고,
+   2D와 같은 5가지 약물(보툴리눔 독소 · 쿠라레 · 니코틴 · 유기인계 살충제 · SSRI)이 어느 단계에 작용하는지 확인해요. */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -9,18 +9,19 @@
   const YM = 0.85;                       // 막의 높이 (위: 시냅스 이전, 아래: 시냅스 이후)
   const RX = [-2.4, -0.8, 0.8, 2.4], EX = [-1.6, 0, 1.6], CAX = [-2.7, 2.7], VX = [-1.3, 0, 1.3];
   const DRUGS = {
-    none: { name: '약물 없음', info: '활동 전위가 오면 ACh이 분비되고, 수용체에 결합한 뒤 분해 효소가 분해해요.' },
-    botox: { name: '보툴리눔 독소', info: '<b>보툴리눔 독소</b>: ACh 분비를 막아요. 소낭이 융합하지 못해 신호가 전달되지 않아요(근육 이완).' },
-    curare: { name: '쿠라레', info: '<b>쿠라레</b>: ACh 수용체를 막아요. ACh이 있어도 결합하지 못해 신호가 전달되지 않아요.' },
-    organo: { name: '유기인계 살충제', info: '<b>유기인계 살충제</b>: 분해 효소를 억제해요. ACh이 남아 수용체가 계속 열려 흥분이 이어져요.' },
+    none: { name: '약물 없음', info: '활동 전위가 오면 신경전달물질(아세틸콜린)이 분비되고, 수용체에 결합한 뒤 분해 효소가 분해하거나 말단이 재흡수해요.' },
+    botox: { name: '보툴리눔 독소', info: '<b>보툴리눔 독소</b>: 아세틸콜린의 분비를 막아요(소낭이 융합하지 못해요). 근육에 신호가 가지 않아 근육이 이완·마비돼요.' },
+    curare: { name: '쿠라레', info: '<b>쿠라레</b>: 아세틸콜린 수용체를 막아요. 아세틸콜린이 결합하지 못해 근육이 이완돼요.' },
+    nicotine: { name: '니코틴', info: '<b>니코틴</b>: 아세틸콜린 수용체에 결합해 아세틸콜린처럼 작용해요(수용체 작용 모방). 중독·의존 위험이 있어요.' },
+    organo: { name: '유기인계 살충제', info: '<b>유기인계 살충제</b>: 아세틸콜린 분해 효소를 억제해 아세틸콜린이 쌓여요. 근육이 지나치게 수축해요(독).' },
+    ssri: { name: 'SSRI(재흡수 억제)', info: '<b>세로토닌 재흡수 억제제(SSRI)</b>: 말단으로의 세로토닌 재흡수를 억제해 틈에 세로토닌이 오래 남아요. 항우울제로 쓰이며 반드시 의사의 처방이 필요해요.' },
   };
-
   window.SciSim3D.attach({
     title: '시냅스 3D (신호 전달과 약물)',
-    hint: '드래그: 돌리기 · 약물을 골라 어느 단계가 막히는지 봐요',
+    hint: '드래그: 돌리기 · ▶ 재생으로 6단계를 보고, 약물을 골라 막히는 단계를 확인해요',
     camera: { dist: narrow ? 12.5 : 10.5, theta: 0.32, phi: 1.3, min: 6, max: 20, target: [0, -0.1, 0] },
     autoRotate: 0,
-    levels: [0, 1],
+    levels: [1],
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V = THREE.Vector3;
@@ -81,51 +82,53 @@
         ves: label('시냅스 소낭', vs[0].g, { offset: [0, 0.65, 0] }),
         cleft: label('시냅스 틈', [-4.3, 0, 0], {}), rec: label('수용체', rcv[1].g, { offset: [0, 0.75, 0] }),
         ase: label('분해 효소', ache[1], { offset: [0, -0.55, 0.5] }), post: label('시냅스 이후 뉴런', [-2.4, -YM - 1.6, 0], { color: 'rgba(210,90,130,.92)' }),
-        ach: label('아세틸콜린(ACh)', [3.6, 0.3, 0.3], { color: 'rgba(40,170,200,.92)' }),
+        ach: label('신경전달물질(아세틸콜린)', [3.0, 0.3, 0.3], { color: 'rgba(40,170,200,.92)' }),
         bar: label('이후 뉴런 흥분', [4.7, 0.0, 0], { size: 12, color: 'rgba(40,50,80,.9)' }),
       };
       L.cleft.el.textContent = '시냅스 틈';
 
-      let drug = 'none', clk = -1, autoRun = true, idleT = 1.2, level = 0, apGlow = 0;
+      let drug = 'none', clk = -1, level = 0, apGlow = 0, taken = false, mimOn = false, infoDirty = true, caBlock = false;
       const free = () => { for (let i = 0; i < NA; i++) if (!ach[i].on) return ach[i]; return null; };
       function trigger() { clk = 0; vs.forEach((v) => { if (v.state === 0) v.t = 0; }); }
       function clearAch() { ach.forEach((a) => { a.on = false; }); rcv.forEach((r) => { r.bound = -1; }); }
       function setDrug(d) {
         drug = d; clearAch(); rcv.forEach((r) => { r.xs.visible = d === 'curare'; });
         acheMat.color.set(d === 'organo' ? 0x8a8f99 : 0xffc933); L.ase.set(d === 'organo' ? '분해 효소 (억제됨)' : '분해 효소');
-        vs.forEach((v) => { v.state = 0; v.sc = 1; }); clk = -1; idleT = 0.8; info(DRUGS[d].info);
+        vs.forEach((v) => { v.state = 0; v.sc = 1; }); clk = -1; infoDirty = true; mimM.forEach((m) => { m.visible = false; }); txX.forEach((x) => { x.visible = d === 'ssri'; });
+        L.ach.set(d === 'ssri' ? '세로토닌' : '신경전달물질(아세틸콜린)'); if (typeof replay === 'function' && typeof pl !== 'undefined') replay(pl.p);
       }
-      controls.segment('약물', Object.keys(DRUGS).map((k) => ({ label: DRUGS[k].name.replace('유기인계 살충제', '유기인계 살충제'), value: k })), 'none', setDrug);
-      controls.button('▶ 활동 전위 도착', () => { trigger(); });
-      const autoBtn = controls.button('자동 반복', () => { autoRun = !autoRun; autoBtn.classList.toggle('on', autoRun); }); autoBtn.classList.add('on');
-      info(DRUGS.none.info);
+      controls.segment('약물', Object.keys(DRUGS).map((k) => ({ label: DRUGS[k].name, value: k })), 'none', setDrug);
+      const caB = controls.button('Ca²⁺ 통로 차단', () => { caBlock = !caBlock; caB.classList.toggle('on', caBlock); caB.textContent = caBlock ? 'Ca²⁺ 통로 차단 해제' : 'Ca²⁺ 통로 차단'; if (typeof pl !== 'undefined') replay(pl.p); });
+      /* 재흡수 통로(SSRI가 막는 곳) · 니코틴 모방 입자 */
+      const TXPOS = [-3.0, 3.0];
+      const txX = TXPOS.map((x) => { const g = new THREE.Group(); const b = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.5, 14, 1, true), std(0x2f9e6c, { side: THREE.DoubleSide })); g.add(b); const xm = std(0xff3b3b, { emissive: 0xff0000, emissiveIntensity: 0.6 }); [Math.PI / 4, -Math.PI / 4].forEach((a) => { const q = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.06, 0.06), xm); q.rotation.z = a; q.position.y = -0.5; g.add(q); }); g.position.set(x, YM - 0.05, 0); g.visible = false; root.add(g); return g; });
+      const txBase = TXPOS.map((x) => { const b = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.45, 14, 1, true), std(0x2f9e6c, { side: THREE.DoubleSide })); b.position.set(x, YM + 0.2, 0.0); root.add(b); return b; });
+      const mimM = [0, 1, 2].map((i) => { const m = new THREE.Mesh(new THREE.SphereGeometry(0.13, 14, 10), std(0x7ae27a, { emissive: 0x1a8a1a, emissiveIntensity: 0.6 })); m.position.set(RX[i + 1 > 3 ? 3 : i + 1] - 0.0, -YM + 0.85, 0); m.visible = false; root.add(m); return m; });
 
       function release(v) {
         for (let k = 0; k < 8; k++) { const a = free(); if (!a) break; Object.assign(a, { on: true, st: 0, x: v.g.position.x + (R() - 0.5) * 0.4, y: YM - 0.15 - R() * 0.2, z: (R() - 0.5) * 0.6, vx: (R() - 0.5) * 0.6, vy: -0.7 - R() * 0.5, vz: (R() - 0.5) * 0.4, tm: 0, sc: 1, rc: -1 }); }
       }
-      return {
-        update(dt, t) {
-          if (clk < 0 && autoRun) { idleT -= dt; if (idleT <= 0) { trigger(); idleT = 7.5; } }
+      function stepSim(dt, t) {
           if (clk >= 0) clk += dt;
           // 활동 전위 도착 · Ca²⁺ 유입 · 소낭 융합
           apGlow = clk >= 0 && clk < 0.6 ? 1 - clk / 0.6 : 0;
           preMemM.emissive.set(0xffe14d); preMemM.emissiveIntensity = apGlow * 0.9;
-          const caOn = clk >= 0.15 && clk < 1.6;
+          const caOn = clk >= 0.15 && clk < 1.6 && !caBlock;
           for (let i = 0; i < 6; i++) { const u = ((clk - 0.15) * 0.9 + i * 0.33) % 1, cx = CAX[i % 2] + (i % 3 - 1) * 0.04; D.position.set(cx, YM - 0.8 + Math.max(0, u) * 1.9, (i % 3 - 1) * 0.06); D.scale.setScalar(caOn ? 1 : 0.001); D.rotation.set(0, 0, 0); D.updateMatrix(); caI.setMatrixAt(i, D.matrix); }
           caI.instanceMatrix.needsUpdate = true;
           vs.forEach((v) => {
             const g = v.g;
             if (v.docked) {
-              if (v.state === 0 && clk >= 1.0 && drug !== 'botox') { v.state = 1; v.t = 0; }
+              if (v.state === 0 && clk >= 1.0 && drug !== 'botox' && !caBlock) { v.state = 1; v.t = 0; }
               if (v.state === 1) { v.t += dt; const k = Math.min(1, v.t / 0.45); g.position.y = v.home.y - 0.3 * k; g.scale.set(1 + k * 0.5, 1 - k * 0.65, 1 + k * 0.5); if (k >= 1) { release(v); v.state = 2; v.t = 0; g.visible = false; } }
               else if (v.state === 2) { v.t += dt; if (v.t > 4.0) { v.state = 3; v.t = 0; g.visible = true; g.position.copy(v.home); g.scale.setScalar(0.01); } }
               else if (v.state === 3) { v.t += dt; const k = Math.min(1, v.t / 0.8); g.scale.setScalar(Math.max(0.01, k)); if (k >= 1) { v.state = 0; } }
               else { g.position.y = v.home.y + Math.sin(t * 2 + v.ph) * 0.02; g.scale.setScalar(1); }
             } else { g.position.set(v.home.x + Math.sin(t * 0.6 + v.ph) * 0.18, v.home.y + Math.cos(t * 0.5 + v.ph) * 0.12, v.home.z + Math.sin(t * 0.4 + v.ph * 2) * 0.1); }
           });
-          if (clk > 7) clk = -1;
           // ACh 입자
-          const rOn = drug !== 'curare', aOn = drug !== 'organo';
+          const rOn = drug !== 'curare', aOn = drug !== 'organo' && drug !== 'ssri';
+          if (clk >= 4.3 && !taken) { taken = true; ach.forEach((a) => { if (a.on && a.st === 0) a.fate = drug === 'ssri' ? 'stay' : (R() < 0.4 ? 'take' : 'enz'); }); }
           let i = 0;
           ach.forEach((a, idx) => {
             if (!a.on) { D.position.set(0, -60, 0); D.scale.setScalar(0.001); D.updateMatrix(); achI.setMatrixAt(idx, D.matrix); return; }
@@ -141,6 +144,8 @@
                 if (aOn && a.st === 0) ache.forEach((e) => { if (Math.abs(a.x - e.position.x) < 0.45 && Math.abs(a.z - e.position.z) < 0.5 && a.y < -YM + 0.7) { a.st = 2; a.tm = 0; } });
               }
               a.sc = 1;
+              if (a.fate === 'take' && drug !== 'ssri') { const tx = Math.abs(a.x - TXPOS[0]) < Math.abs(a.x - TXPOS[1]) ? TXPOS[0] : TXPOS[1]; a.x += (tx - a.x) * Math.min(1, dt * 1.2); a.z += (0 - a.z) * Math.min(1, dt * 1.2); a.y += 0.5 * dt; if (a.y > YM - 0.1 && Math.abs(a.x - tx) < 0.25) { a.st = 3; a.tm = 0; } }
+            } else if (a.st === 3) { a.tm += dt; a.y += dt * 0.9; a.sc = Math.max(0, 1 - a.tm * 1.6); if (a.tm > 0.6) a.on = false;
             } else if (a.st === 1) { // 수용체에 결합
               const r = rcv[a.rc]; a.tm += dt; a.x += (r.x - a.x) * Math.min(1, dt * 12); a.z += (0 - a.z) * Math.min(1, dt * 12); a.y += (-YM + 0.82 - a.y) * Math.min(1, dt * 12);
               if (a.tm > 1.3) { r.bound = -1; a.st = 0; const ne = ache.reduce((b, e) => (Math.abs(e.position.x - a.x) < Math.abs(b.position.x - a.x) ? e : b), ache[0]); a.vx = (ne.position.x - a.x) * 0.9; a.vy = 0.05; a.vz = -a.z; a.y += 0.12; }
@@ -150,10 +155,11 @@
             D.position.set(a.x, a.y, a.z); D.scale.setScalar(Math.max(0.001, a.sc)); D.updateMatrix(); achI.setMatrixAt(idx, D.matrix);
           });
           achI.instanceMatrix.needsUpdate = true;
+          mimM.forEach((m, i) => { m.visible = drug === 'nicotine' && clk >= 2.4; });
           // 수용체 열림 · Na⁺ 유입
           let openSum = 0;
           rcv.forEach((r, ri) => {
-            const want = r.bound >= 0 && rOn ? 1 : 0; r.open += (want - r.open) * Math.min(1, dt * 9); openSum += r.open;
+            const nic = drug === 'nicotine' && clk >= 2.4 && ri >= 1 && ri <= 3; const want = (r.bound >= 0 && rOn) || nic ? 1 : 0; r.open += (want - r.open) * Math.min(1, dt * 9); openSum += r.open;
             r.gate.position.set(r.open * 0.4, -0.3, 0); r.gate.rotation.z = -r.open * 1.0; r.gate.material.color.set(r.open > 0.5 ? 0x33c46e : 0xe5483f);
             r.mat.emissive.set(0x33ff88); r.mat.emissiveIntensity = r.open * 0.35;
           });
@@ -161,9 +167,26 @@
           naI.instanceMatrix.needsUpdate = true;
           level += (openSum / 4 - level) * Math.min(1, dt * 3);
           barFg.scale.y = Math.max(0.02, level * 3.0); barFg.position.y = -3.1 + barFg.scale.y / 2;
+        
+      }
+      let tt = 0, lastP = 0, lastStage = -1;
+      const CYC = 7;
+      function resetSim() { clearAch(); vs.forEach((v) => { v.state = 0; v.sc = 1; v.t = 0; v.g.visible = true; v.g.position.copy(v.home); v.g.scale.setScalar(1); }); rcv.forEach((r) => { r.open = 0; r.bound = -1; }); level = 0; taken = false; trigger(); clk = 0; mimOn = false; }
+      function replay(p) { resetSim(); let rest = p * CYC; while (rest > 0) { const h = Math.min(0.05, rest); tt += h; stepSim(h, tt); rest -= h; } lastP = p; }
+      const stageNames = ['① 활동 전위 도착', '② Ca²⁺ 유입', '③ 소낭 융합', '④ 방출·확산', '⑤ 수용체 결합', '⑥ 분해·재흡수'];
+      const stageAt = [0, 0.15, 1.0, 1.45, 2.4, 4.2];
+      const pl = controls.player({
+        duration: CYC, loop: true, autoplay: true, label: '신호 전달 6단계',
+        phases: stageAt.map((c, i) => [c / CYC, stageNames[i]]),
+        onFrame(p, dt) {
+          const dp = p - lastP;
+          if (dt > 0 && dp >= 0 && dp < 0.2) { const h = dp * CYC; if (h > 0) { tt += h; stepSim(h, tt); } lastP = p; }
+          else replay(p);
+          let k = 0; stageAt.forEach((c, i) => { if (p * CYC >= c) k = i; });
+          if (k !== lastStage || infoDirty) { lastStage = k; infoDirty = false; const L2 = window.__sim; info('<b>' + stageNames[k] + '</b>: ' + (L2 ? L2.STAGES[k].d : '') + '<br>' + DRUGS[drug].info); }
         },
-        sync() {},
-      };
+      });
+      return { update() {}, sync() {} };
     },
   });
 })();

@@ -1,6 +1,6 @@
-/* m1-force-balance · 3D 두 힘의 합력과 힘의 평형
-   한 물체에 나란한 두 힘이 작용하면 같은 방향은 더하고, 반대 방향은 큰 힘 − 작은 힘이 합력이에요.
-   두 힘이 <b>크기가 같고, 방향이 반대이고, 같은 작용선</b> 위에 있어야 물체가 그대로 있어요(힘의 평형). 작용선이 어긋나면 물체가 돌아요. */
+/* m1-force-balance · 3D 얼음판 위 상자: 나란한 두 힘의 합력과 힘의 평형
+   2D '얼음판' 장면과 같아요(힘 F₁·F₂ N, 오른쪽 고리의 작용점 위/가운데/아래, 핀). 힘은 2D 조작판에서 정하고, ▶ 재생은 네 가지 장면을 차례로 보여 줘요.
+   같은 방향은 합력 = 두 힘의 합, 반대 방향은 큰 힘 − 작은 힘. 크기가 같고 방향이 반대이며 같은 작용선이면 평형이에요. */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -9,7 +9,7 @@
     title: '합력과 힘의 평형 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     levels: [1, 2],
-    camera: { dist: 9.5 * (PHN0 ? 1.05 : 1), theta: 0.3, phi: 1.12, fov: 45, target: [0, 0.2, 0], min: 6, max: 28 },
+    camera: { dist: 10.5 * (PHN0 ? 1.12 : 1), theta: 0.25, phi: 0.95, fov: 45, target: [0, -0.2, 0], min: 6, max: 28 },
     autoRotate: 0,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
@@ -79,57 +79,94 @@
         const n = cols.length; for (let i = 0; i < 16; i++) { c.fillStyle = cols[Math.floor(r() * n)]; c.fillRect(0, i * h / 16, w, h / 16 + 1); }
         c.globalAlpha = 0.25; for (let i = 0; i < 60; i++) { c.fillStyle = cols[Math.floor(r() * n)]; c.beginPath(); c.ellipse(r() * w, r() * h, 8 + r() * 25, 2 + r() * 4, 0, 0, 7); c.fill(); } c.globalAlpha = 1; }); }
 
-      const st = { same: false, f1: 5, f2: 5, d: 0, x: 0, v: 0, th: 0, w: 0, last: -1 };
-      const K = 0.6, LIM = 3.2;
-      /* 레일 + 수레 */
-      const rail = new THREE.Mesh(new THREE.BoxGeometry(2 * LIM + 3.2, 0.2, 1.6), mat(0x64748b, { metalness: 0.4, roughness: 0.5 })); rail.position.y = -0.7; root.add(rail);
-      for (let i = -3; i <= 3; i++) { const tk = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.02, 1.6), mat(0xcbd5e1)); tk.position.set(i * 1.1, -0.59, 0); root.add(tk); }
+      /* 2D '얼음판' 장면과 같은 구성(위에서 본 얼음판 위의 상자, 왼쪽 고리 · 오른쪽 고리 + 작용점 위/가운데/아래, 핀).
+         힘 F(+ 오른쪽 / − 왼쪽, N)과 작용점은 2D의 값을 그대로 읽어 와요. 조작은 옆의 2D 조작판에서 해요. */
+      const PX = 44.4, SLOTS = [-26 / 44.4, 0, 26 / 44.4], HOOK = 48 / 44.4, KN = 0.4, LIM = 3.4;
+      const ice = new THREE.Mesh(new THREE.BoxGeometry(2 * LIM + 3.4, 0.2, 4.6), mat(0xcfe8ff, { roughness: 0.15, metalness: 0.1, transparent: true, opacity: 0.92 })); ice.position.y = -0.7; root.add(ice);
+      for (let i = -3; i <= 3; i++) { const tk = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.02, 4.6), mat(0xb6d4ef)); tk.position.set(i * 1.1, -0.59, 0); root.add(tk); }
       const cart = new THREE.Group(); root.add(cart);
-      const body = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.9, 1.1), mat(0xf59e0b, { roughness: 0.45 })); cart.add(body);
-      [[-0.6, 0.55], [0.6, 0.55], [-0.6, -0.55], [0.6, -0.55]].forEach((p) => { const w = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.12, 18), mat(0x334155)); w.rotation.x = Math.PI / 2; w.position.set(p[0], -0.5, p[1] * 1.0); cart.add(w); });
-      const hk1 = new THREE.Mesh(new THREE.SphereGeometry(0.1, 12, 10), mat(0xcbd5e1, { metalness: 0.8 })); hk1.position.set(-0.95, 0, 0); cart.add(hk1);
-      const hk2 = new THREE.Mesh(new THREE.SphereGeometry(0.1, 12, 10), mat(0xcbd5e1, { metalness: 0.8 })); cart.add(hk2);
+      const body = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.9, 1.8), mat(0xf59e0b, { roughness: 0.45 })); cart.add(body);
+      const hk1 = new THREE.Mesh(new THREE.SphereGeometry(0.11, 12, 10), mat(0xcbd5e1, { metalness: 0.8 })); hk1.position.set(-HOOK, 0, 0); cart.add(hk1);
+      const hk2 = new THREE.Mesh(new THREE.SphereGeometry(0.11, 12, 10), mat(0xcbd5e1, { metalness: 0.8 })); cart.add(hk2);
+      const pin = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.6, 12), mat(0xef4444)); pin.position.set(0, 0.7, 0); cart.add(pin);
       const a1 = mkArrow(0x2f6df6, 0.07), a2 = mkArrow(0xe5484d, 0.07), an = mkArrow(0x16a34a, 0.09); root.add(a1, a2, an);
       const l1 = label('', a1, { size: 12.5, color: 'rgba(40,90,230,.92)' }), l2 = label('', a2, { size: 12.5, color: 'rgba(200,40,50,.92)' }), ln = label('', an, { size: 12.5, color: 'rgba(20,130,60,.92)' });
-      const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new V3(-5.5, 0, 0), new V3(5.5, 0, 0)]), new THREE.LineDashedMaterial({ color: 0xffffff, dashSize: 0.18, gapSize: 0.12, transparent: true, opacity: 0.55 })); line.computeLineDistances(); root.add(line);
-      const line2 = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new V3(-5.5, 0, 0), new V3(5.5, 0, 0)]), new THREE.LineDashedMaterial({ color: 0xffb3b3, dashSize: 0.18, gapSize: 0.12, transparent: true, opacity: 0.7 })); line2.computeLineDistances(); root.add(line2);
-      label('작용선', [5.0, 0, 0], { size: 11, offset: [0, 0.3, 0] });
+      const mkLine = (c, o) => new THREE.Line(new THREE.BufferGeometry().setFromPoints([new V3(-5.5, 0, 0), new V3(5.5, 0, 0)]), new THREE.LineDashedMaterial({ color: c, dashSize: 0.18, gapSize: 0.12, transparent: true, opacity: o }));
+      const line = mkLine(0xffffff, 0.7), line2 = mkLine(0xff8a8a, 0.9); line.computeLineDistances(); line2.computeLineDistances(); root.add(line, line2);
+      label('작용선', [5.0, -0.5, 0], { size: 11, offset: [0, 0.3, 0] });
+      const yAx = new V3(0, 1, 0), tmpP = new V3();
 
-      function text() {
-        const net = st.same ? st.f1 + st.f2 : st.f2 - st.f1, bal = Math.abs(net) < 0.05 && st.d < 0.05;
-        const dir = net > 0 ? '→ 오른쪽' : net < 0 ? '← 왼쪽' : '';
-        info('합력 = <b>' + Math.abs(net).toFixed(0) + ' N</b> ' + dir + (st.same ? ' (같은 방향이면 더해요)' : net === 0 ? ' (0)' : ' (반대 방향이면 큰 힘 − 작은 힘)') + '<br>' + (bal ? '<b>힘의 평형</b>: 크기가 같고, 방향이 반대고, 같은 작용선 위예요 → 정지 (또는 등속).' : net !== 0 ? '합력이 있으면 물체의 운동 상태가 변해요 (합력 방향으로 빨라져요).' : '크기가 같고 방향이 반대여도 <b>작용선이 어긋나</b> 있어서 물체가 돌아요.'));
+      /* ▶ 재생: 2D 실험과 같은 네 장면을 차례로 (핀을 꽂은 채 힘 정하기 → 핀 빼기 → 운동) */
+      const SC = [
+        { F: [2, 3], slot: 1, name: '같은 방향 2 N · 3 N' },
+        { F: [-2, 5], slot: 1, name: '반대 방향 2 N · 5 N' },
+        { F: [-4, 4], slot: 1, name: '크기 같고 반대 · 같은 작용선' },
+        { F: [-3, 3], slot: 0, name: '크기 같고 반대 · 작용선 다름' },
+      ];
+      let pmode = false, built = false, playP = 0, sig = '', lastTxt = '';
+      const pl = controls.player({
+        duration: 14, loop: true, autoplay: false, label: '재생',
+        phases: SC.map((s, i) => [i / SC.length, s.name]),
+        onFrame(p) { if (!built) return; pmode = true; playP = p; },
+      });
+      built = true;
+      const L0 = () => (ctx.lesson && ctx.lesson()) || null;
+      const setInfo = (h) => { if (h !== lastTxt) { lastTxt = h; info(h); } };
+      const fN = (f) => (f === 0 ? '0 N' : (f > 0 ? '→ ' : '← ') + Math.abs(f) + ' N');
+      function formula(f1, f2) {
+        const a = Math.abs(f1), b = Math.abs(f2), n = Math.abs(f1 + f2);
+        if (!a && !b) return '합력 = 0';
+        if (!a || !b) return '합력 = ' + (a || b) + ' N';
+        if (Math.sign(f1) === Math.sign(f2)) return '합력 = ' + a + ' N + ' + b + ' N = ' + n + ' N';
+        return '합력 = ' + Math.max(a, b) + ' N − ' + Math.min(a, b) + ' N = ' + (n ? n + ' N' : '0');
       }
-      controls.segment('', [{ value: false, label: '반대 방향' }, { value: true, label: '같은 방향' }], false, (v) => { st.same = v; text(); });
-      controls.range('왼쪽 힘 F₁', 0, 10, 1, st.f1, (v) => { st.f1 = v; text(); }, (v) => v + ' N');
-      controls.range('오른쪽 힘 F₂', 0, 10, 1, st.f2, (v) => { st.f2 = v; text(); }, (v) => v + ' N');
-      controls.range('작용선 어긋남', 0, 1, 0.1, st.d, (v) => { st.d = v; text(); }, (v) => (v < 0.05 ? '같은 선' : v.toFixed(1)));
-      controls.button('■ 멈추고 처음으로', () => { st.x = 0; st.v = 0; st.th = 0; st.w = 0; });
-      text();
 
       return {
-        update(dt, t) {
-          const h = Math.min(dt, 0.05), net = st.same ? st.f1 + st.f2 : st.f2 - st.f1;
-          st.v += net * K * h * 0.5; st.v *= 1 - 0.1 * h; st.x += st.v * h;
-          const torque = st.f2 * st.d * 0.9; st.w += torque * h * 0.8; st.w *= 1 - 0.5 * h; st.th += st.w * h;
-          if (Math.abs(st.x) > LIM) { st.x = 0; st.v = 0; }
-          cart.position.set(st.x, 0, 0); cart.rotation.z = st.th;
-          hk2.position.set(0.95, st.d * 0.4, 0);
-          const p1 = new V3(-0.95, 0, 0).applyAxisAngle(new V3(0, 0, 1), st.th).add(cart.position), p2 = new V3(0.95, st.d * 0.4, 0).applyAxisAngle(new V3(0, 0, 1), st.th).add(cart.position);
-          const net2 = st.same ? st.f1 + st.f2 : st.f2 - st.f1, ny = -1.4, R = new V3(0, 0, 1);
-          if (!st.same) {
-            setArrow(a1, p1.clone().add(new V3(-0.12, 0, 0)), p1.clone().add(new V3(-0.12 - st.f1 * 0.38, 0, 0)));
-            l1.obj = [p1.x - 0.12 - st.f1 * 0.19, p1.y + 0.4, 0];
-          } else {
-            const q = p2.clone().add(new V3(0.12, 0.42, 0));
-            setArrow(a1, q, q.clone().add(new V3(st.f1 * 0.38, 0, 0)));
-            l1.obj = [q.x + st.f1 * 0.19, q.y + 0.35, 0];
+        update(dt) {
+          const l = L0(), B = l && l.B, sc = l ? l.scene : 'B';
+          let F0 = 0, F1 = 0, slot = 1, x = 0, z = 0, th = 0, pinned = true;
+          if (pmode) {
+            const n = SC.length, k = Math.min(n - 1, Math.floor(playP * n)), q = playP * n - k, tau = q * 4.2;  // 한 장면 = 4.2초 분량
+            const s = SC[k]; F0 = s.F[0]; F1 = s.F[1]; slot = s.slot;
+            const run = Math.max(0, tau - 0.9), netv = F0 + F1, fade = q > 0.88 ? 1 - (q - 0.88) / 0.12 : 1;
+            pinned = tau < 0.9;
+            x = Math.max(-LIM, Math.min(LIM, 0.5 * 0.17 * netv * run * run));
+            const tq = F1 * SLOTS[slot] * 0.9; th = slot !== 1 ? Math.max(-3.1, Math.min(3.1, 0.5 * 0.45 * tq * run * run)) : 0;
+            z = 0; cart.scale.setScalar(0.4 + 0.6 * Math.min(1, fade * 1.0 + 0.0));
+            cart.scale.setScalar(1);
+          } else if (B) {
+            F0 = B.F[0]; F1 = B.F[1]; slot = B.slot; pinned = B.st === 'pinned' || B.st === 'pinIn';
+            x = (B.x - l.BC.cx) / PX; z = (B.y - l.BC.cy) / PX; th = B.th;
           }
-          a1.visible = st.f1 > 0; l1.set('F₁ ' + st.f1 + ' N'); l1.show(st.f1 > 0);
-          setArrow(a2, p2.clone().add(new V3(0.12, 0, 0)), p2.clone().add(new V3(0.12 + st.f2 * 0.38, 0, 0))); a2.visible = st.f2 > 0;
-          l2.obj = [p2.x + 0.12 + st.f2 * 0.19, p2.y - 0.3, 0]; l2.set('F₂ ' + st.f2 + ' N'); l2.show(st.f2 > 0);
-          if (Math.abs(net2) > 0) { setArrow(an, new V3(st.x, ny, 0.4), new V3(st.x + net2 * 0.38, ny, 0.4)); an.visible = true; ln.obj = [st.x + net2 * 0.19, ny - 0.1, 0.4]; ln.set('합력 ' + Math.abs(net2) + ' N'); ln.show(true); } else { an.visible = false; ln.set('합력 0 N'); ln.obj = [st.x, ny, 0.4]; ln.show(true); }
-          line2.position.y = st.d * 0.4; line2.visible = st.d > 0.05;
+          const net = F0 + F1, hz2 = SLOTS[slot];
+          if (pmode || !B) { /* 재생 중에는 핀을 뺀 직후부터 */ }
+          cart.position.set(x, 0, z); cart.rotation.y = -th; pin.visible = pinned;
+          hk2.position.set(HOOK, 0, hz2);
+          const c = Math.cos(th), s = Math.sin(th);
+          const wp = (lx, lz) => tmpP.set(x + lx * c - lz * s, 0, z + lx * s + lz * c).clone();
+          const p1 = wp(-HOOK, 0), p2 = wp(HOOK, hz2);
+          // 힘 화살표 (왼쪽 고리, 오른쪽 고리): 힘의 방향으로 길이 = 크기 × 0.4
+          const drawF = (g, lab, p, f, dz, txt) => { if (f === 0) { g.visible = false; lab.show(false); return; } setArrow(g, p.clone().add(new V3(0, 0.05, dz)), p.clone().add(new V3(f * KN, 0.05, dz))); g.visible = true; lab.obj = [p.x + f * KN / 2, 0.45, p.z + dz]; lab.set(txt + ' ' + fN(f)); lab.show(true); };
+          drawF(a1, l1, p1, F0, 0, 'F₁'); drawF(a2, l2, p2, F1, 0, 'F₂');
+          // 합력 화살표 (상자 아래)
+          const ny = -0.2, nz = 1.9;
+          if (net !== 0) { setArrow(an, new V3(x, ny, nz), new V3(x + net * KN, ny, nz)); an.visible = true; ln.obj = [x + net * KN / 2, ny + 0.1, nz]; ln.set('합력 ' + fN(net)); }
+          else { an.visible = false; ln.obj = [x, ny + 0.1, nz]; ln.set('합력 0 N'); }
+          ln.show(F0 !== 0 || F1 !== 0);
+          line.position.z = 0; line2.position.z = hz2; line2.visible = slot !== 1; line.visible = true;
+          // 안내
+          let txt;
+          if (sc && sc !== 'B') txt = '<b>힘의 합력과 평형</b>은 얼음판 장면에서 알아봐요. (이 장면은 2D 화면에서 해 보세요)';
+          else {
+            const bal = net === 0 && slot === 1, spin = net === 0 && slot !== 1 && F1 !== 0;
+            txt = (pmode ? '<b>▶ ' + SC[Math.min(SC.length - 1, Math.floor(playP * SC.length))].name + '</b><br>' : '') + '<b>' + formula(F0, F1) + '</b>' + (net !== 0 ? ' (' + (net > 0 ? '오른쪽' : '왼쪽') + ')' : '') + '<br>';
+            if (F0 === 0 && F1 === 0) txt += '핀을 꽂은 채 옆의 2D 조작판에서 두 힘을 정하고 ▶ 핀 빼기를 눌러 보세요.';
+            else if (F0 !== 0 && F1 !== 0 && Math.sign(F0) === Math.sign(F1)) txt += '두 힘의 방향이 같으면 합력은 <b>두 힘의 합</b>이고 방향은 두 힘과 같아요.';
+            else if (net !== 0) txt += '두 힘의 방향이 반대이면 합력은 <b>큰 힘 − 작은 힘</b>이고 방향은 <b>큰 힘 쪽</b>이에요.';
+            else if (bal) txt += '<b>힘의 평형</b>: 크기가 같고, 방향이 반대이며, <b>같은 작용선</b> 위에 있어 합력이 0이에요. 멈춰 있던 물체는 계속 멈춰 있어요.';
+            else if (spin) txt += '크기가 같고 방향이 반대여도 <b>작용선이 다르면</b> 상자가 제자리에서 돌아요.';
+          }
+          setInfo(txt);
         },
         sync() {},
       };

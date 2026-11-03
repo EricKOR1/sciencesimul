@@ -21,6 +21,7 @@
     hint: '드래그: 돌리기 · 두 손가락/휠: 확대',
     camera: { dist: narrow ? 3.9 : 2.85, target: narrow ? [0, 0.25, 0] : [0, 0, 0], theta: 0.38, phi: 1.42, min: 2, max: 9 },
     autoRotate: 0,
+    levels: [0, 2],   // 2단계(색소 분리)와 4단계(추론)는 2D 화면에서, 3D 모형 조립 · 구조와 기능 단계에서 3D로 시작
     build(ctx) {
       const { THREE, root, label, info, controls, renderer } = ctx;
       renderer.localClippingEnabled = true;
@@ -180,22 +181,46 @@
         else info('<b>탄소 고정 (스트로마에서)</b>: 스트로마의 <b>효소</b>가 CO₂로 <b>포도당</b>을 만들어요. 명반응에서 만든 ATP를 써요.<br>남는 포도당은 <b>녹말 알갱이</b>로 임시 저장해요.');
       }
       function setCut(v) { cut = v; plane.constant = 0.62 - 0.6 * v; rebuildRim(); applyViz(); }
-      const cutR = controls.range('단면', 0, 100, 1, Math.round(cut * 100), (v) => setCut(v / 100), (v) => v + ' %');
-      controls.segment('보기', [{ value: 'name', label: '구조 이름' }, { value: 'light', label: '명반응(막)' }, { value: 'calvin', label: '탄소 고정(스트로마)' }], mode, (v) => { mode = v; applyViz(); });
+      /* 단면 정도는 2D 3D 모형 화면(S.b.sT)과 같이 움직여요 */
+      const cutR = controls.range('단면', 0, 100, 1, Math.round(cut * 100), (v) => { setCut(v / 100); const L = ctx.lesson(); if (L && L.bCut && L.S.mode === 'build') L.bCut(v / 100); }, (v) => v + ' %');
+      let usePlayer = false, accP = 0;
+      const segV = controls.segment('보기', [{ value: 'name', label: '구조 이름' }, { value: 'light', label: '명반응(틸라코이드 막)' }, { value: 'calvin', label: '탄소 고정(스트로마)' }], mode, (v) => { mode = v; usePlayer = false; applyViz(); });
+      /* ▶ 명반응 → 탄소 고정 한 번 보기 (빛 흡수 → H⁺ 쌓임 → ATP 합성 → CO₂ 고정 → 포도당 · 녹말) */
+      let player = null;
+      player = controls.player({
+        duration: 12, loop: true, autoplay: false, label: '광합성 과정',
+        phases: [[0, '빛 흡수'], [0.15, 'H⁺ 쌓임'], [0.3, 'ATP 합성'], [0.5, 'CO₂ 고정'], [0.75, '포도당 · 녹말']],
+        onFrame(p) {
+          if (p === 0 && !(player && player.playing) && !usePlayer) return;
+          usePlayer = true;
+          const m = p < 0.5 ? 'light' : 'calvin';
+          accP = p < 0.5 ? Math.min(1, p / 0.28) : 0;
+          if (m !== mode) { mode = m; segV.set(m); applyViz(); }
+        },
+      });
       setCut(cut);
+      let lastMode2d = null, lastSt = null;
+      function poll() {
+        const L = ctx.lesson(); if (!L || !L.S) return;
+        const m = L.S.mode;
+        if (m !== lastMode2d) {          // 2D 화면이 바뀌면 같은 내용으로: 3D 모형 → 구조 이름, 구조와 기능 → 명반응(막)
+          lastMode2d = m;
+          const nm = m === 'func' ? 'light' : m === 'build' ? 'name' : null;
+          if (nm && nm !== mode) { mode = nm; usePlayer = false; segV.set(nm); applyViz(); }
+        }
+        if (m === 'build' && L.S.b && L.S.b.sT !== lastSt) { lastSt = L.S.b.sT; if (Math.abs(L.S.b.sT - cut) > 1e-3) { cutR.set(Math.round(L.S.b.sT * 100)); setCut(L.S.b.sT); } }
+      }
 
       /* 움직임 */
       const toks = [], atps = [], cos = [], glus = [];
       let sp1 = 0, sp2 = 0, sp3 = 0, acc = 0;
       return {
-        sync() {
-          const s = window.__sim && window.__sim.S;
-          if (s && s.b && typeof s.b.sT === 'number' && s.b.sT > 0.05) { cutR.set(Math.round(s.b.sT * 100)); setCut(s.b.sT); }
-        },
+        sync() { poll(); },
         update(dt, t) {
+          poll();
           const c = plane.constant, slow = reduce() ? 0.2 : 1, light = mode === 'light', calvin = mode === 'calvin';
           beams.visible = light;
-          acc = light ? Math.min(1, acc + dt * 0.5) : Math.max(0, acc - dt * 0.8);
+          acc = usePlayer ? accP : light ? Math.min(1, acc + dt * 0.5) : Math.max(0, acc - dt * 0.8);
           // 빛 알갱이
           photons.forEach((p, i) => {
             const on = light;

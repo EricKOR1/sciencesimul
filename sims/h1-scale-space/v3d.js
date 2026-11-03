@@ -12,8 +12,8 @@
     { id: 'ant', n: '개미', m: 5e-3, t: '약 5×10⁻³ m', e: -2 }, { id: 'human', n: '사람 키', m: 1.7, t: '약 1.7 m', e: 0 },
     { id: 'everest', n: '에베레스트산 높이', m: 8.8e3, t: '약 8.8×10³ m', e: 4 }, { id: 'earth', n: '지구 지름', m: 1.3e7, t: '약 1.3×10⁷ m', e: 7 },
     { id: 'sun', n: '태양 지름', m: 1.4e9, t: '약 1.4×10⁹ m', e: 9 }, { id: 'esdist', n: '지구–태양 거리', m: 1.5e11, t: '약 1.5×10¹¹ m', e: 11 },
-    { id: 'proxima', n: '가장 가까운 별까지', m: 4e16, t: '약 4×10¹⁶ m (4.2광년)', e: 16 }, { id: 'milkyway', n: '우리은하 지름', m: 9.5e20, t: '약 9.5×10²⁰ m (10만 광년)', e: 21 },
-    { id: 'universe', n: '관측 가능한 우주', m: 9e26, t: '약 9×10²⁶ m (930억 광년)', e: 26 },
+    { id: 'proxima', n: '가장 가까운 별까지', m: 4e16, t: '약 4×10¹⁶ m (4.2광년)', e: 17 }, { id: 'milkyway', n: '우리은하 지름', m: 9.5e20, t: '약 9.5×10²⁰ m (10만 광년)', e: 21 },
+    { id: 'universe', n: '관측 가능한 우주', m: 9e26, t: '약 9×10²⁶ m (930억 광년)', e: 27 },
   ];
   const NOTE = {
     proton: '원자핵을 이루는 입자예요.', hatom: '핵은 원자보다 약 10만 배 작아요. 핵 둘레를 전자 구름이 감싸요.', dna: '이중 나선의 지름이에요.', virus: '전자 현미경으로 볼 수 있어요.',
@@ -94,7 +94,7 @@
           g.add(pointsOf(arr, cols, 0.05)); g.add(new THREE.Mesh(new THREE.SphereGeometry(4.5, 40, 28), new THREE.MeshBasicMaterial({ color: 0x3a4a9a, transparent: true, opacity: 0.08, depthWrite: false, side: THREE.DoubleSide }))); labs.push(label('점 하나가 은하 무리', [0, 4.9, 0], { size: 12 })); return g; },
       };
 
-      function select(i, quiet) {
+      function select(i, quiet, from2d) {
         idx = Math.max(0, Math.min(OB.length - 1, i)); const o = OB[idx];
         if (cur) { root.remove(cur); cur.traverse((x) => { if (x.geometry) x.geometry.dispose(); }); }
         labs.forEach((l) => l.show(false)); labs.length = 0; upd = null;
@@ -102,6 +102,7 @@
         const prev = idx > 0 ? OB[idx - 1] : null; const ratio = prev ? Math.round(Math.log10(o.m / prev.m)) : 0;
         info('<b>' + o.n + '</b> · ' + o.t + '<br>' + NOTE[o.id] + (prev ? '<br>앞의 <b>' + prev.n + '</b>보다 약 <b>10<sup>' + ratio + '</sup>배</b> 커요.' : ''));
         rng && rng.set(idx);
+        if (!from2d && !quiet) { const L = window.__sim; if (L && L.setExp && L.OBJ && L.OBJ[idx]) L.setExp(L.OBJ[idx].le, true); }
         const cnt = document.querySelector('.v3-scale-cnt'); if (cnt) cnt.textContent = '';
       }
       const rng = controls.range('대상', 0, OB.length - 1, 1, idx, (v) => select(v), (v) => OB[v].n);
@@ -109,11 +110,15 @@
       let lastNear = (window.__sim && window.__sim.S && window.__sim.S.nearId) || null;
       if (lastNear) { const k = OB.findIndex((o) => o.id === lastNear); if (k >= 0) idx = k; }
       select(idx, true);
+      const N = OB.length;
+      controls.player({ duration: 15, loop: true, autoplay: false, label: '줌 여행',
+        phases: OB.map((o, i) => [i / N, o.n]),
+        onFrame(p) { const k = Math.min(N - 1, Math.floor(p * N)); if (k !== idx) select(k); } });
       return {
         update(dt, t) {
           pop = Math.min(1, pop + dt * 2.2); const s = 1 - Math.pow(1 - pop, 3); cur.scale.setScalar(0.2 + 0.8 * s);
           if (upd) upd(t);
-          const q = window.__sim && window.__sim.S && window.__sim.S.nearId; if (q && q !== lastNear) { lastNear = q; const k = OB.findIndex((o) => o.id === q); if (k >= 0 && k !== idx) select(k); }
+          const q = window.__sim && window.__sim.S && window.__sim.S.nearId; if (q && q !== lastNear) { lastNear = q; const k = OB.findIndex((o) => o.id === q); if (k >= 0 && k !== idx) select(k, false, true); }
         },
         sync() {},
       };

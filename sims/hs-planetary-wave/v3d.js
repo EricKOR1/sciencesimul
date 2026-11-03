@@ -20,13 +20,14 @@
   window.SciSim3D.attach({
     title: '편서풍 파동 3D (북극 위에서)',
     hint: '드래그: 돌리기 · 두 손가락/휠: 확대',
+    levels: [2],
     camera: { dist: narrow ? 4.8 : 3.4, phi: 0.28, theta: 0.0, target: narrow ? [0, 0, -0.45] : [-0.45, 0, 0], min: 2.2, max: 9 },
     autoRotate: 0,
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
       const V = THREE.Vector3;
       const P = (lat, lon, r) => new V(r * Math.cos(lat * D2R) * Math.sin(lon * D2R), r * Math.sin(lat * D2R), r * Math.cos(lat * D2R) * Math.cos(lon * D2R));
-      let n = 5, amp = 9, drift = true, tint = true, names = true, th0 = 0.6;
+      let n = 5, amp = 9, tint = true, names = true, th0 = 0.6, P0 = 0, base = 0.6;
 
       /* 지구 */
       const W = 1024, H = 512, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
@@ -79,7 +80,7 @@
       }
       /* 서풍 알갱이 (동쪽으로 흘러요) */
       const parts = [], pg = new THREE.SphereGeometry(0.017, 10, 8), pm = new THREE.MeshBasicMaterial({ color: 0xfff3dc });
-      for (let i = 0; i < 40; i++) { const m = new THREE.Mesh(pg, pm); root.add(m); parts.push({ m, s: i / 40 }); }
+      for (let i = 0; i < 40; i++) { const m = new THREE.Mesh(pg, pm); root.add(m); parts.push({ m, s0: i / 40 }); }
 
       /* 능 · 골 (표시와 공기의 이동 화살표) */
       const ridges = [], troughs = [];
@@ -121,29 +122,43 @@
         writeInfo();
       }
       function writeInfo() {
-        info('<b>북극 위에서 본 편서풍 파동</b><br>제트축(<b style="color:#fb923c">주황</b>)이 남북으로 굽이쳐요. 남쪽으로 처진 <b style="color:#93c5fd">골</b>에는 한기가 남하하고, 북쪽으로 솟은 <b style="color:#fca5a5">능</b>에는 난기가 북상해요.<br>파동 수 <b>n = ' + n + '</b> · 파장 ≈ ' + lamN(n).toLocaleString('ko-KR') + ' km (위도 45° 둘레 ÷ n) · 진폭 ' + amp + '° · 동쪽(반시계)으로 평균 10 m/s' + (n === 3 ? '<br><span style="color:#ffd34d">파동 수는 보통 4~6개예요.</span>' : ''));
+        const q = window.__sim || {}, S = q.S || {}, show = !!(S.showLam || (q.game && q.game.free));
+        info('<b>북극 위에서 본 편서풍 파동</b><br>제트축(<b style="color:#fb923c">주황</b>)이 남북으로 굽이쳐요. 남쪽으로 처진 <b style="color:#93c5fd">골</b>에는 한기가 남하하고, 북쪽으로 솟은 <b style="color:#fca5a5">능</b>에는 난기가 북상해요.<br>파동 수 <b>n = ' + n + '</b> · 진폭 ' + amp + '°' + (show ? ' · 파장 λ ≈ ' + lamN(n).toLocaleString('ko-KR') + ' km (위도 45° 둘레 ÷ n)' : ' · 파장은 옆에서 직접 계산해 봐요') + ' · 파동은 동쪽(반시계)으로 평균 10 m/s');
       }
-      const nR = controls.range('파동 수 n', 3, 6, 1, n, (v) => { n = v; layout(); }, (v) => v + '개');
-      const aR = controls.range('진폭', 3, 14, 1, amp, (v) => { amp = v; layout(); }, (v) => v + '°');
+      const nR = controls.range('파동 수 n', 4, 6, 1, n, (v) => { n = v; layout(); try { window.__sim.setN(v); } catch (e) {} }, (v) => v + '개');
+      const aR = controls.range('진폭', 3, 14, 1, amp, (v) => { amp = v; layout(); try { window.__sim.setAmp(v); } catch (e) {} }, (v) => v + '°');
       controls.segment('시점', [{ value: 0.28, label: '북극 위' }, { value: 0.95, label: '비스듬히' }, { value: 1.4, label: '옆에서' }], 0.28, (v) => { orbit.phi = v; });
       const tB = controls.button('한기·난기 색 ✓', () => { tint = !tint; tB.classList.toggle('on', tint); tB.textContent = '한기·난기 색 ' + (tint ? '✓' : '✕'); layout(); }); tB.classList.add('on');
-      const dB = controls.button('동진 ▶', () => { drift = !drift; dB.classList.toggle('on', drift); dB.textContent = drift ? '동진 ▶' : '동진 ⏸'; }); dB.classList.add('on');
+      /* ▶ 재생: 파동이 동쪽으로 한 파장만큼 나아가요 (평균 10 m/s로 동진). 한 파장 지나면 같은 모양이라 끊김 없이 반복돼요 */
+      const player = controls.player({
+        duration: 12, loop: true, autoplay: true, label: '재생',
+        phases: [[0, '동쪽으로 이동'], [0.5, '한 파장의 절반']],
+        onFrame(p) { P0 = p; th0 = base + (TAU / n) * p; layout(); },
+      });
       layout();
 
+      let lastKey = '';
+      function follow() {
+        const q = window.__sim, s = q && q.S; if (!s) return;
+        const nn = Math.max(4, Math.min(6, Math.round(s.n))), aa = Math.max(3, Math.min(14, Math.round(s.amp)));
+        const key = nn + '|' + aa + '|' + (s.showLam ? 1 : 0) + (q.game && q.game.free ? 1 : 0);
+        if (key === lastKey) return; lastKey = key;
+        if (nn !== n || aa !== amp) { n = nn; amp = aa; nR.set(n); aR.set(amp); }
+        th0 = base + (TAU / n) * P0; layout();
+      }
+      follow();
       return {
         sync() {
           const s = window.__sim && window.__sim.S;
           if (s && isFinite(s.n) && isFinite(s.amp)) {
-            const nn = Math.max(3, Math.min(6, Math.round(s.n))), aa = Math.max(3, Math.min(14, Math.round(s.amp)));
+            const nn = Math.max(4, Math.min(6, Math.round(s.n))), aa = Math.max(3, Math.min(14, Math.round(s.amp)));
             if (nn !== n || aa !== amp) { n = nn; amp = aa; nR.set(n); aR.set(amp); layout(); }
           }
         },
         update(dt, t) {
-          const slow = window.SciSim && window.SciSim.reduceMotion ? 0.2 : 1;
-          if (drift) { th0 = (th0 + 0.14 * dt * slow) % TAU; layout(); }
+          follow();
           parts.forEach((p) => {
-            p.s = (p.s + dt * 0.09 * slow) % 1;
-            const lon = p.s * 360, c = contour(lon);
+            const lon = ((p.s0 + P0) % 1) * 360, c = contour(lon);
             p.m.position.copy(P(c, lon, 1.045));
           });
           kor.getWorldPosition(_a); _b.copy(cam.position).sub(_a).normalize(); korLab.show(_a.clone().normalize().dot(_b) > 0.2);

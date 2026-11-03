@@ -1484,7 +1484,7 @@ function solvePl(pl) {
   pl.layout(true); pl.follow();
 }
 window.__sim = {
-  S, VW, VH, PHONE, get game() { return game; }, setScene, solvePl, selectLobe, selectPart, setAuto, resetCer, BM, CER_R, INFO_R, LOBE, PARTS, TR, SG, CASG, PAIRG, TBG, PERG, STEM_LAY,
+  S, VW, VH, PHONE, get game() { return game; }, setScene, LOBE_INFO, solvePl, selectLobe, selectPart, setAuto, resetCer, BM, CER_R, INFO_R, LOBE, PARTS, TR, SG, CASG, PAIRG, TBG, PERG, STEM_LAY,
   hitLobe, stemHit, cutXNow,
   lobeScreen(l) { const cer = S.cer; for (let k = cer.hits.length - 1; k >= 0; k--) { const q = BM.q[cer.hits[k]]; if (q.lobe === l && !q.sub) { let x = 0, y = 0; q.v.forEach((i) => { x += PX[i] / 4; y += PY[i] / 4; }); if (hitLobe({ x, y }) === l) return { x, y }; } } return null; },
 };

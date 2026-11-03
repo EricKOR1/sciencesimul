@@ -2359,6 +2359,6 @@
     expDone(key) { selectExp(key, true); X.f = 1; X.dir = 0; X.done[key] = true; X.rec[key].mA = EXPS[key].mass; X.rec[key].vA = EXPS[key].vB; X.badge = 1; X.flash = 1; refreshUI(); },
     solveSort() { B4.cards.forEach((c) => { c.bin = c.ans; c.order = ++placeLife.n; }); layoutBins(false); },
     wrongSort() { B4.cards.forEach((c, i) => { c.bin = i === 0 ? 'melt' : c.ans; c.order = ++placeLife.n; }); layoutBins(false); },
-    B1, B2, B4, TH, X, VWR, ARROWS, LAY, PBox, D,
+    B1, B2, B4, TH, X, VWR, ARROWS, LAY, PBox, D, playArrow,
   };
 })();

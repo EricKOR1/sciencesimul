@@ -149,6 +149,7 @@
     title: 'DNA 이중 나선 3D 모형',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHONE ? 14.5 : 10.6, theta: 0.5, phi: 1.38, fov: 40, min: 5, max: 26, target: [0, PHONE ? 1.4 : 0, 0] },
+    levels: [],
     autoRotate: 0.3,
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
@@ -196,9 +197,16 @@
         return null;
       }
       const lt = lessonTw(); if (lt != null) { H.setTwist(lt); twR.set(lt * 100); refresh(); }
-
+      let lastLt = lt, demo = false;
+      // ▶ 꼬임 풀기 · 다시 꼬기: 이중 나선 ↔ 사다리 (한 사이클)
+      const pl = controls.player({
+        duration: 8, loop: true, autoplay: false, label: '꼬임 풀기',
+        phases: [[0, '꼬인 이중 나선'], [0.2, '풀리는 중'], [0.5, '사다리 모양'], [0.7, '다시 꼬여요']],
+        onFrame(p) { animDir = 0; demo = p > 0; const v = p < 0.2 ? 1 : p < 0.5 ? 1 - (p - 0.2) / 0.3 : p < 0.7 ? 0 : (p - 0.7) / 0.3; const e = v * v * (3 - 2 * v); H.setTwist(e); twR.set(Math.round(e * 100)); refresh(); },
+      });
       return {
         update(dt) {
+          { const t2 = lessonTw(); if (t2 !== lastLt) { lastLt = t2; if (t2 != null && !pl.playing && !animDir) { H.setTwist(t2); twR.set(t2 * 100); refresh(); } } }
           if (faceT > 0 && H.tw < 0.05) { faceT -= dt; const tgt = Math.round(orbit.theta / Math.PI) * Math.PI; orbit.theta += (tgt - orbit.theta) * Math.min(1, dt * 3); orbit.phi += (1.5 - orbit.phi) * Math.min(1, dt * 3); }
           if (animDir) {
             const v = Math.max(0, Math.min(1, H.tw + animDir * dt * 0.45));

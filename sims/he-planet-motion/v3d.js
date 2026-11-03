@@ -1,6 +1,6 @@
 /* he-planet-motion · 3D 행성의 겉보기 운동
    위에서 본 태양계 모형에 '지구에서 본 하늘 고리'를 붙여요. 지구에서 행성으로 그은 시선이 하늘 고리와 만나는 점이
-   별자리 사이를 어떻게 움직이는지(순행·역행)를 입체로 봐요. 2D 실험의 시각(S.t)과 고른 행성을 그대로 따라가요(읽기 전용). */
+   별자리 사이를 어떻게 움직이는지(순행·역행)를 입체로 봐요. 2D 실험의 시각(S.t)과 고른 행성을 그대로 따라가고, ▶ 재생은 2D의 시간 슬라이더를 대신 움직여 줘요(공전 모형은 한 회합 주기, 내행성·외행성·역행은 2D 슬라이더의 처음부터 끝까지). */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -63,7 +63,7 @@
       const mkLab = label('', mark, { offset: [0, 0.3, 0], size: 12 });
 
       /* 상태 */
-      let id = 'venus', k = 3.8, off = 0, play = false, names = true, cur = null;
+      let id = 'venus', k = 3.8, names = true, cur = null;
       const read = () => {
         const s = SIM(); if (!s) return null; const S = s.S, v = S.view;
         const p = v === 'inner' ? S.inner : v === 'outer' ? S.outer : v === 'retro' ? S.pl4 : S.sel;
@@ -74,12 +74,26 @@
         while (orbG.children.length) { const c = orbG.children.pop(); c.geometry.dispose(); }
         orbit(1, k, 0x6fa8ff); orbit(a, k, new THREE.Color(s.PL[p].col).getHex());
         pl.material.color.set(s.PL[p].col); pl.scale.setScalar(p === 'jupiter' || p === 'saturn' ? 1.5 : p === 'mercury' ? 0.7 : 1);
-        pLab.set(NAMES[p]); mkLab.set(NAMES[p]); segPl.set(p);
+        pLab.set(NAMES[p]); mkLab.set(NAMES[p]);
       }
-      const segPl = controls.segment('행성', Object.keys(NAMES).map((v) => ({ value: v, label: NAMES[v] })), id, (v) => { setPlanet(v); lastSim = v; });
-      let lastSim = null;
-      controls.button('▶ 시간 흐르기', function () { play = !play; this.textContent = play ? '⏸ 멈춤' : '▶ 시간 흐르기'; });
-      controls.button('⟲ 처음', () => { off = 0; });
+      let lastSim = null, syncing = false, ready = false;
+      /* ▶ 한 번 재생 = 2D 시간 슬라이더의 한 바퀴 (보기마다 범위가 달라요) */
+      const RANGE = { orbit: null, inner: [0, 584], outer: [-390, 390], retro: [-110, 110] };
+      const tp = controls.player({
+        duration: 14, loop: true, autoplay: false, label: '시간 흐르기',
+        onFrame(p) {
+          if (!ready || syncing) return; const s = SIM(); if (!s) return; const S = s.S, v = S.view;
+          if (s.stopAll) s.stopAll();
+          if (v === 'inner') s.setU2(Math.round(S.syn2 * p)); else if (v === 'outer') s.setU3(Math.round(-S.syn3 / 2 + S.syn3 * p)); else if (v === 'retro') s.setU4(Math.round(-S.E4.W + 2 * S.E4.W * p)); else { const r = read(); if (r && r.id) S.t = p * s.synodicD(r.id); }
+        },
+      });
+      tp.pause(); ready = true;
+      function followSim() {
+        const s = SIM(); if (!s || tp.playing) return; const S = s.S, v = S.view; let p = null;
+        if (v === 'inner') p = (S.u2 || 0) / S.syn2; else if (v === 'outer') p = ((S.u3 || 0) + S.syn3 / 2) / S.syn3; else if (v === 'retro') p = ((S.u4 || 0) + S.E4.W) / (2 * S.E4.W);
+        else { const r = read(); if (r && r.id) { const syn = s.synodicD(r.id); p = (((S.t || 0) % syn) + syn) % syn / syn; } }
+        if (p != null && Math.abs(p - tp.p) > 0.002) { syncing = true; tp.set(Math.max(0, Math.min(1, p))); syncing = false; }
+      }
       const nb = controls.button('별자리 이름 ✓', () => { names = !names; nb.classList.toggle('on', names); nb.textContent = '별자리 이름 ' + (names ? '✓' : '✕'); }); nb.classList.add('on');
 
       const up = new THREE.Vector3(0, 1, 0), a3 = new THREE.Vector3(), b3 = new THREE.Vector3(), d3 = new THREE.Vector3();
@@ -90,8 +104,8 @@
         if (r.id && r.id !== lastSim) { lastSim = r.id; if (r.id !== id) setPlanet(r.id); }
         if (!cur) { cur = 1; setPlanet(id); }
         const s = r.s;
-        if (play) off += s.synodicD(id) / 14 * dt;
-        const t = r.t + off;
+        followSim();
+        const t = r.t;
         const he = s.helio(s.PL.earth, t), hp = s.helio(s.PL[id], t);
         a3.copy(w3(he)); b3.copy(w3(hp)); earth.position.copy(a3); pl.position.copy(b3); sky.position.copy(a3);
         d3.subVectors(b3, a3); d3.y = 0; const dist = d3.length(); d3.normalize();

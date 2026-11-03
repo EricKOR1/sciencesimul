@@ -1,6 +1,7 @@
 /* hb-meiosis · 3D 감수 분열 (염색체 2n=4)
    복제 → 2가 염색체 → 상동 염색체 분리(감수 1분열) → 염색 분체 분리(감수 2분열)로 염색체 수가 반으로 줄어든 생식세포 4개가 만들어져요.
-   슬라이더를 움직이거나 [재생]을 눌러 시기별 염색체와 방추사의 모습을 입체로 봐요. */
+   2D 차시와 같은 감수 분열 9단계(복제 전 → 복제 → 감수 1분열 전기·중기·후기 → 세포 2개 → 감수 2분열 중기·후기 → 생식세포 4개)와 DNA 상대량 값이고,
+   2D에서 감수 분열을 진행하면 3D도 같은 시기로 따라가요. ▶ 재생은 한 번의 감수 분열 전체를 반복해서 보여 줘요. */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -40,6 +41,7 @@
     title: '감수 분열 3D (염색체 4개)',
     hint: '슬라이더로 시기를 옮겨 보세요 · 붉은색=어머니, 푸른색=아버지 쪽 염색체',
     camera: { dist: narrow ? 14.5 : 11.5, theta: 0.35, phi: 0.95, min: 6, max: 22 },
+    levels: [1, 2],
     autoRotate: 0.08,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
@@ -74,21 +76,19 @@
       const poleM = std(0xffd34d, { emissive: 0x7a5a00, emissiveIntensity: 0.5 }), poleI = new THREE.InstancedMesh(new THREE.SphereGeometry(0.14, 12, 8), poleM, 6); root.add(poleI);
 
       const lab2 = label('2가 염색체', null, { color: 'rgba(255,122,70,.92)' }), labS = label('방추사', null, {}), labN = label('핵막', null, {}), labH = label('상동 염색체', null, {});
-      let s = 0, tgt = 0, auto = false, hold = 0, lastKey = '';
-      const rng = controls.range('시기', 0, 8, 0.01, 0, (v) => { tgt = v; auto = false; autoB.classList.remove('on'); }, (v) => STAGES[Math.round(v)].n);
-      controls.button('◀', () => { tgt = Math.max(0, Math.round(tgt) - 1); auto = false; autoB.classList.remove('on'); });
-      controls.button('▶', () => { tgt = Math.min(8, Math.round(tgt) + 1); auto = false; autoB.classList.remove('on'); });
-      const autoB = controls.button('▶ 재생', () => { auto = !auto; autoB.classList.toggle('on', auto); if (auto && tgt >= 8) { tgt = 0; s = 0; } hold = 0; });
+      let s = 0, tgt = 0, auto = false, hold = 0, lastKey = '', playing = false, seen2D = -1, plGuard = false;
+      const L2 = () => window.__sim || null;
+      const rng = controls.range('시기', 0, 8, 0.01, 0, (v) => { tgt = v; pl.pause(); }, (v) => STAGES[Math.round(v)].n);
+      controls.button('◀', () => { tgt = Math.max(0, Math.round(tgt) - 1); pl.pause(); rng.set(tgt); });
+      controls.button('▶', () => { tgt = Math.min(8, Math.round(tgt) + 1); pl.pause(); rng.set(tgt); });
+      const pl = controls.player({ duration: 12, loop: true, autoplay: false, label: '감수 분열',
+        phases: [[0, '복제 전'], [1 / 9, '복제 후'], [2 / 9, '전기 Ⅰ'], [3 / 9, '중기 Ⅰ'], [4 / 9, '후기 Ⅰ'], [5 / 9, '세포 2개'], [6 / 9, '중기 Ⅱ'], [7 / 9, '후기 Ⅱ'], [8 / 9, '생식세포 4개']],
+        onFrame(p) { if (plGuard) return; tgt = Math.min(8, p * 9); rng.set(tgt); auto = true; } });
 
-      const tmp = new THREE.Vector3(), up = V3(0, 1, 0);
-      function spoke(i, a, b, w) {
-        const m = spokes[i]; m.visible = w > 0.03; if (!m.visible) return;
-        m.material.opacity = 0.55 * w; const d = tmp.copy(b).sub(a), L = d.length();
-        m.position.copy(a).add(b).multiplyScalar(0.5); m.scale.set(1, Math.max(0.01, L), 1); m.quaternion.setFromUnitVectors(up, d.normalize());
-      }
       return {
         update(dt, t) {
-          if (auto) { if (hold > 0) hold -= dt; else { tgt = Math.min(8, tgt + dt * 0.42); if (Math.abs(tgt - Math.round(tgt)) < 0.012 && tgt < 8) { hold = 0.9; tgt = Math.round(tgt) + 0.02; } if (tgt >= 8) { tgt = 8; auto = false; autoB.classList.remove('on'); } } rng.set(tgt); }
+          if (pl.playing) { tgt = Math.min(8, pl.p * 9); rng.set(tgt); } else { auto = false; }
+          { const L = L2(); if (L && L.S.proc === 'mei' && !pl.playing && L.S.f !== seen2D) { seen2D = L.S.f; tgt = L.S.f; rng.set(tgt); } }
           s += (tgt - s) * Math.min(1, dt * (auto ? 6 : 4)); if (Math.abs(tgt - s) < 0.001) s = tgt;
           const ss = Math.min(8, Math.max(0, s));
           // 세포

@@ -1,7 +1,8 @@
 /* hx-osmosis · 3D 반투과성 막과 삼투
    막 가운데에는 작은 물 분자만 지나갈 수 있어요. 용질이 적은 쪽(물 분자가 더 많은 쪽)에서 많은 쪽으로
    물이 더 많이 건너가서 용액 쪽 수면이 올라가요.
-   슬라이더는 2D 실험의 양쪽 농도(setIL / setIR)와 연결돼 있어요. 입자 수는 모형 스케치예요. */
+   슬라이더는 2D 실험의 양쪽 농도(setIL / setIR)와 연결돼 있어요 (한 칸 = 0.05 M). 입자 수는 모형 스케치예요.
+   1단계 '반투막'과 2단계 '입자 모형'에서 열려요. 3·4단계(감자 실험 설계 · 생활 속 삼투)는 2D 화면이에요. */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -13,6 +14,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHONE ? 15 : 11.5, theta: 0.4, phi: 1.22, min: 6, max: 24, target: [0, 0.2, 0] },
     autoRotate: 0.1,
+    levels: [0, 1],
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3;
@@ -52,8 +54,8 @@
       const labM = label('반투과성 막', [0, FLOOR + 0.5, DEP / 2], { color: 'rgba(5,150,105,.92)' });
       let txt = '', spawn = 0;
 
-      const sL = controls.range('왼쪽 용질', 0, 10, 1, loc.L, (v) => { loc.L = v; if (window.__sim && window.__sim.setIL) { try { window.__sim.setIL(v); } catch (e) { /* 무시 */ } } }, (v) => v + '칸');
-      const sR = controls.range('오른쪽 용질', 0, 10, 1, loc.R, (v) => { loc.R = v; if (window.__sim && window.__sim.setIR) { try { window.__sim.setIR(v); } catch (e) { /* 무시 */ } } }, (v) => v + '칸');
+      const sL = controls.range('왼쪽 농도', 0, 10, 1, loc.L, (v) => { loc.L = v; if (window.__sim && window.__sim.setIL) { try { window.__sim.setIL(v); } catch (e) { /* 무시 */ } } }, (v) => (v * 0.05).toFixed(2) + ' M');
+      const sR = controls.range('오른쪽 농도', 0, 10, 1, loc.R, (v) => { loc.R = v; if (window.__sim && window.__sim.setIR) { try { window.__sim.setIR(v); } catch (e) { /* 무시 */ } } }, (v) => (v * 0.05).toFixed(2) + ' M');
       const tb = controls.button('물 이동 표시 ✓', () => { showT = !showT; tb.classList.toggle('on', showT); tb.textContent = '물 이동 표시 ' + (showT ? '✓' : '✕'); }); tb.classList.add('on');
 
       return {
@@ -104,10 +106,11 @@
             M.makeTranslation(q.dir * (-0.9 + 1.8 * q.t), q.y, q.z); tm.setMatrixAt(i, M);
           });
           tm.instanceMatrix.needsUpdate = true;
-          const net = loc.R - loc.L;
-          const s2 = '<b>' + (net === 0 ? '양쪽 농도가 같아서 수면이 그대로예요.' : (net > 0 ? '오른쪽' : '왼쪽') + ' 용액이 더 진해요') + '</b><br>' + (net === 0 ? '물 분자는 양쪽으로 같은 수가 건너가요.' : '물 분자가 묽은 쪽 → 진한 쪽으로 더 많이 건너가서, 진한 쪽 수면이 올라가요.') + '<br><span style="color:#ff9a2e">주황색 큰 입자</span>는 막을 못 지나가요.';
+          const net = loc.R - loc.L; let cnt = null; try { if (window.__sim.S.mode === 'mol') cnt = window.__sim.mz.cnt; } catch (e) { cnt = null; }
+          const s2 = '<b>' + (net === 0 ? '양쪽 농도가 같아서 수면이 그대로예요.' : (net > 0 ? '오른쪽' : '왼쪽') + ' 용액이 더 진해요') + '</b><br>' + (net === 0 ? '물 분자는 양쪽으로 같은 수가 건너가요.' : '물 분자가 묽은 쪽 → 진한 쪽으로 더 많이 건너가서, 진한 쪽 수면이 올라가요.') + '<br><span style="color:#ff9a2e">주황색 큰 입자(설탕)</span>는 막을 못 지나가요.<br>수위 차 <b>' + Math.abs(loc.dh).toFixed(1) + ' cm</b>' + (cnt ? ' · 2D에서 센 물 분자 → ' + cnt.lr + '번 · ← ' + cnt.rl + '번' : '');
           if (s2 !== txt) { txt = s2; info(s2); }
-          labL.set('왼쪽 ' + (loc.L === 0 ? '순수한 물' : '용액 ' + loc.L)); labR.set('오른쪽 ' + (loc.R === 0 ? '순수한 물' : '용액 ' + loc.R));
+          const fm = (i) => (i === 0 ? '순수한 물 (0 M)' : (i * 0.05).toFixed(2) + ' M 용액');
+          labL.set('왼쪽 ' + fm(loc.L)); labR.set('오른쪽 ' + fm(loc.R));
         },
       };
     },

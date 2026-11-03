@@ -79,84 +79,127 @@
   const phone = window.matchMedia && window.matchMedia('(max-width: 599px)').matches;
   window.SciSim3D.attach({
     title: '반응식 입자 모형 3D',
-    hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: phone ? 21 : 15.5, theta: 0.15, phi: 0.95, min: 6, max: 34, target: [0, -0.4, 0] },
+    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 반응 고르기와 계수는 2D와 똑같이 이어져요',
+    camera: { dist: phone ? 21 : 15.5, theta: 0.15, phi: 0.8, min: 6, max: 34, target: [0, -0.2, 0] },
     autoRotate: 0,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const L = makeLib(THREE);
-      const RX = {
-        w: { name: '물 생성', R: [['H2', 2], ['O2', 1]], P: [['H2O', 2]], eq: '2H₂ + O₂ → 2H₂O' },
-        n: { name: '암모니아', R: [['N2', 1], ['H2', 3]], P: [['NH3', 2]], eq: 'N₂ + 3H₂ → 2NH₃' },
-        c: { name: '메테인 연소', R: [['CH4', 1], ['O2', 2]], P: [['CO2', 1], ['H2O', 2]], eq: 'CH₄ + 2O₂ → CO₂ + 2H₂O' },
-      };
-      const U = 3; // 반응 단위 3번까지
-      let rx = 'w', done = 0, auto = false, autoT = 0;
-      const K = 0.8;
-      const pools = {}; // species -> [{g, tx, ty, tz, ts}]
-      const spec = [];  // 현재 반응의 종 목록
-      const root2 = new THREE.Group(); root.add(root2);
-      const labs = [];
-      for (let i = 0; i < 4; i++) { const l = label('', [0, 0, 0], { size: 12.5 }); l.show(false); labs.push(l); }
-      const tray = (x, col) => { const t = L.glassBox(6.4, 0.25, 4.8, col, 0.2); t.position.set(x, -1.3, 0); root.add(t); return t; };
-      tray(-4.1, 0x6aa2ff); tray(4.1, 0x58d68d);
-      const arr = L.arrow([-0.7, -1.0, 0], [0.7, -1.0, 0], 0xffd34d, 0.1, 0.45); root.add(arr);
-      const aL = label('반응', [0, -0.2, 0], { size: 12 });
+      const sm = L.sstep, clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+      /* 이 차시에서만 쓰는 분자 모형 (2D와 같은 물질) */
+      L.COL.Al = 0xa8b5c7; L.COL.Fe = 0xb45309; L.RAD.Al = 0.5; L.RAD.Fe = 0.5;
+      const M = L.MOLS, V3 = (x, y, z) => [x, y, z];
+      M.C3H8 = { a: [['C', -1.25, -0.3, 0], ['C', 0, 0.35, 0], ['C', 1.25, -0.3, 0], ['H', -1.85, 0.1, 0.85], ['H', -1.85, 0.1, -0.85], ['H', -1.4, -1.35, 0], ['H', 0, 1.0, 0.9], ['H', 0, 1.0, -0.9], ['H', 1.85, 0.1, 0.85], ['H', 1.85, 0.1, -0.85], ['H', 1.4, -1.35, 0]], b: [[0, 1, 1], [1, 2, 1], [0, 3, 1], [0, 4, 1], [0, 5, 1], [1, 6, 1], [1, 7, 1], [2, 8, 1], [2, 9, 1], [2, 10, 1]] };
+      M.Al = { a: [['Al', 0, 0, 0]], b: [] };
+      M.Fe = { a: [['Fe', 0, 0, 0]], b: [] };
+      M.AlCl3 = { a: [['Al', 0, 0, 0], ['Cl', 1.9, 0, 0], ['Cl', -0.95, 0, 1.65], ['Cl', -0.95, 0, -1.65]], b: [[0, 1, 1], [0, 2, 1], [0, 3, 1]] };
+      M.C2H5OH = { a: [['C', -1.2, -0.2, 0], ['C', 0.1, 0.4, 0], ['O', 1.3, -0.3, 0], ['H', 1.9, 0.2, 0], ['H', 0.1, 1.05, 0.85], ['H', 0.1, 1.05, -0.85], ['H', -1.8, 0.2, 0.85], ['H', -1.8, 0.2, -0.85], ['H', -1.3, -1.3, 0]], b: [[0, 1, 1], [1, 2, 1], [2, 3, 1], [1, 4, 1], [1, 5, 1], [0, 6, 1], [0, 7, 1], [0, 8, 1]] };
+      M.Fe2O3 = { a: [['Fe', -1.0, 0, 0], ['Fe', 1.0, 0, 0], ['O', 0, 0.9, 0], ['O', 0, -0.45, 0.8], ['O', 0, -0.45, -0.8]], b: [[0, 2, 1], [1, 2, 1], [0, 3, 1], [1, 3, 1], [0, 4, 1], [1, 4, 1]] };
+      (function () { const a = [], b = []; for (let i = 0; i < 6; i++) { const t = i * Math.PI / 3, c = a.length; a.push(['C', 1.2 * Math.cos(t), 0, 1.2 * Math.sin(t)]); a.push(['O', 2.2 * Math.cos(t), 0, 2.2 * Math.sin(t)]); a.push(['H', 1.3 * Math.cos(t), 0.95, 1.3 * Math.sin(t)]); a.push(['H', 2.8 * Math.cos(t), 0.5, 2.8 * Math.sin(t)]); b.push([c, c + 1, 1], [c, c + 2, 1], [c + 1, c + 3, 1]); if (i) b.push([c, c - 4, 1]); } b.push([0, 20, 1]); M.C6H12O6 = { a, b }; })();
+      const FOR = (k) => k.replace(/\d/g, (d) => '₀₁₂₃₄₅₆₇₈₉'[+d]);
+      const ext = (k) => Math.max.apply(null, M[k].a.map((x) => Math.hypot(x[1], x[2], x[3]) + (L.RAD[x[0]] || 0.4)));
+      const kOf = (k) => clamp(1.15 / ext(k), 0.3, 0.8);
 
-      function slots(side, idx, count, rowsN, row) { // 한 종의 i번째 분자의 칸 위치
-        const per = 3; const col = idx % per, rr = Math.floor(idx / per);
-        const x = (side < 0 ? -5.0 : 5.0) + (col - 1) * XSP * 1.25;
-        const z = (row - (rowsN - 1) / 2) * ZSP * 1.1 + (rr - 0.5) * 0;
-        return [x, -1.15 + rr * 1.3 - (Math.floor(count / per) > 0 ? 0 : 0), z];
-      }
-      function build() {
-        L.clear(root2); spec.length = 0;
-        const R = RX[rx];
-        const rowsR = R.R.length, rowsP = R.P.length;
-        R.R.forEach(([k, c], row) => spec.push({ k, c, side: -1, row, rows: rowsR, pool: [] }));
-        R.P.forEach(([k, c], row) => spec.push({ k, c, side: 1, row, rows: rowsP, pool: [] }));
-        spec.forEach((s) => {
-          for (let i = 0; i < s.c * U; i++) {
-            const g = L.mol(L.MOLS[s.k], K); g.scale.setScalar(0.001); g.position.set(0, 0, 0); root2.add(g);
-            s.pool.push({ g, i, ph: Math.random() * 6 });
-          }
+      const PER = 4, DX = 1.5, DY = 1.15, ROWZ = 2.9;
+      const root2 = new THREE.Group(); root.add(root2);
+      const labs = []; for (let i = 0; i < 4; i++) { const l = label('', [0, 0, 0], { size: 12.5 }); l.show(false); labs.push(l); }
+      const tray = (x, col) => { const t = L.glassBox(6.8, 0.25, 4.8, col, 0.2); t.position.set(x, -1.3, 0); root.add(t); return t; };
+      tray(-4.1, 0x6aa2ff); tray(4.1, 0x58d68d);
+      const arr = L.arrow([-0.5, -1.0, 0], [0.5, -1.0, 0], 0xffd34d, 0.1, 0.4); root.add(arr);
+      const packBoxes = []; for (let i = 0; i < 8; i++) { const g = L.glassBox(2.9, 1.0, 1.4, 0xffd34d, 0.16); g.visible = false; root.add(g); packBoxes.push(g); }
+      const packLabs = []; for (let i = 0; i < 3; i++) { const l = label('1 mol 상자', [0, 0, 0], { size: 11.5, color: '#92400e' }); l.show(false); packLabs.push(l); }
+
+      let spec = [], specKey = '';
+      function rebuild(list, key) {
+        specKey = key; L.clear(root2); spec = [];
+        list = list.map((s) => Object.assign({}, s, { side: s.side === 0 ? -1 : s.side }));
+        const nL = list.filter((s) => s.side < 0).length, nR = list.length - nL; let iL = 0, iR = 0;
+        list.forEach((s) => {
+          const row = s.side < 0 ? iL++ : iR++, rows = s.side < 0 ? nL : nR, N = s.N, pool = [];
+          const k = kOf(s.k);
+          for (let i = 0; i < N; i++) { const g = L.mol(M[s.k], k); g.scale.setScalar(0.001); root2.add(g); pool.push({ g, i, ph: Math.random() * 6 }); }
+          spec.push({ k: s.k, side: s.side, row, rows, N, pool, a: 0, label: '' });
         });
         labs.forEach((l) => l.show(false));
-        spec.forEach((s, i) => { const l = labs[i]; l.obj = [s.side < 0 ? -4.1 : 4.1, 0.0, (s.row - (s.rows - 1) / 2) * 2.9 - 1.2]; l.show(true); l.off = [0, 2.0, 0]; });
-        place(true); text();
+        spec.forEach((s, i) => { const l = labs[i]; if (!l) return; l.obj = [s.side < 0 ? -4.1 : 4.1, 0, (s.row - (s.rows - 1) / 2) * ROWZ]; l.off = [0, 1.9, 0]; l.show(true); });
       }
-      function counts(s) { return s.side < 0 ? s.c * (U - done) : s.c * done; }
-      function place(snap) {
-        spec.forEach((s) => {
-          const cnt = counts(s);
-          s.pool.forEach((p) => {
-            const here = p.i < cnt;
-            const per = 3, col = p.i % per, rr = Math.floor(p.i / per);
-            const x = (s.side < 0 ? -4.1 : 4.1) + (col - 1) * 1.9;
-            const z = (s.row - (s.rows - 1) / 2) * 2.9;
-            p.tx = here ? x : 0; p.ty = here ? -0.6 + rr * 1.25 : 0.2; p.tz = here ? z : 0; p.ts = here ? 1 : 0.001;
-            if (snap) { p.g.position.set(p.tx, p.ty, p.tz); p.g.scale.setScalar(p.ts); }
-          });
-        });
+      const posOf = (s, i) => ({ x: (s.side < 0 ? -4.1 : 4.1) + ((i % PER) - (PER - 1) / 2) * DX, y: -0.6 + Math.floor(i / PER) * DY, z: (s.row - (s.rows - 1) / 2) * ROWZ });
+      function amounts(list, f) { spec.forEach((s, i) => { s.a = list[i].a(f); s.lab = list[i].lab; if (labs[i]) { labs[i].set(s.lab); labs[i].show(true); } }); }
+
+      /* --- 장면 정의: 2D 상태에서 목록을 만들어요 --- */
+      function reactionList(Z) {
+        const S = Z.S;
+        if (S.mode === 'balance') {
+          const bi = Z.balInfo(), c = bi.eq.c;
+          return { key: 'b' + S.b.sel + '|' + c.join(','), info: () => '<b>' + eqStr(bi.r.sp.map((s, i) => ({ k: s.k, c: c[i], side: s.side }))) + '</b><br>' + (bi.same ? '⚖️ 양쪽의 원자 수가 같아요!' + (bi.simplest ? ' 가장 간단한 정수비예요.' : ' 계수를 가장 작은 정수비로 줄여 보세요.') : '⚠️ ' + bi.bad.join(' · ') + ' 원자 수가 달라요') + '<br>화학식은 바꿀 수 없고, 계수만 바꿔서 양쪽 원자 수를 맞춰요.',
+            sp: bi.r.sp.map((s, i) => ({ k: s.k, side: s.side, N: Math.min(12, c[i]), a: (f) => Math.min(12, c[i]) * (s.side ? f : 1 - f), lab: FOR(s.k) + ' · ' + c[i] + '개' })) };
+        }
+        if (S.mode === 'mass') {
+          const mi = Z.massInfo(), i = S.q.sel;
+          return { key: 'q' + i, info: () => '<b>' + eqStr(mi.rx.sp.map((s) => ({ k: s[0], c: s[1], side: s[3] }))) + '</b><br>계수비 = 몰수비 (' + mi.coefs.join(' : ') + ')<br>질량 = 몰수 × 몰질량 → 질량비는 계수비와 달라요. 그래도 질량의 합은 같아요(질량 보존).<br>대표 입자 한 개 = 1 mol',
+            sp: mi.rx.sp.map((s, j) => { const fl = S.q.filled[i][j]; return { k: s[0], side: s[3], N: s[1], a: (f) => s[1] * (s[3] ? f : 1 - f), lab: FOR(s[0]) + ' · ' + s[1] + ' mol<br>' + Z.MM(s[0]) + ' g/mol' + (fl ? ' → <b>' + fl + ' g</b>' : '') }; }) };
+        }
+        const rx = Z.READ[S.r.sel];
+        return { key: 'r' + S.r.sel, info: () => '<b>' + eqStr(rx.sp.map((s) => ({ k: s[0], c: s[1], side: s[3] }))) + '</b> (' + rx.ctx + ')<br>' + (S.r.sub === 'sent' ? '계수비 = 몰수비: ' + rx.sp.map((s) => s[1]).join(' : ') + '<br>' + (S.r.sent[S.r.sel] ? rx.sentDone : '반응식의 계수를 몰수로 읽어 몰 문장을 완성해요.') : '반응 전후 질량의 합은 같아요(질량 보존).<br>몰수 × 몰질량으로 각 물질의 질량을 구해 합해요.'),
+          sp: rx.sp.map((s) => ({ k: s[0], side: s[3], N: s[1], a: (f) => s[1] * (s[3] ? f : 1 - f), lab: FOR(s[0]) + ' · 계수 ' + s[1] })) };
       }
-      function text() {
-        const R = RX[rx];
-        spec.forEach((s, i) => { labs[i].set(L.MOLS[s.k].f + ' · ' + counts(s) + '개'); });
-        // 원자 수 보존
-        info('<b>' + R.eq + '</b><br>반응 ' + done + '번 → 반응물 ' + R.R.map(([k, c]) => L.MOLS[k].f + ' ' + c * (U - done)).join(', ') + ' / 생성물 ' + R.P.map(([k, c]) => L.MOLS[k].f + ' ' + c * done).join(', ') + '<br>계수비 = 분자 수의 비 = <b>몰수비</b> (' + R.R.concat(R.P).map((x) => x[1]).join(' : ') + ')');
+      function eqStr(sp) { const side = (sd) => sp.filter((s) => s.side === sd).map((s) => (s.c > 1 ? s.c + ' ' : '') + FOR(s.k)).join(' + '); return side(0) + ' → ' + side(1); }
+
+      /* --- ② 계수비 = 몰수비 (2H₂ + O₂ → 2H₂O, 처음 H₂ 6 mol · O₂ 3 mol) --- */
+      const MSP = [{ k: 'H2', side: -1, N: 12 }, { k: 'O2', side: -1, N: 6 }, { k: 'H2O', side: 1, N: 12 }];
+      function molInfoFor(Z, x) {
+        const q = { cH2: x, cO2: x / 2, fW: x, rH2: 6 - x, rO2: 3 - x / 2 }, fT = (v) => String(+v.toFixed(2));
+        return { q, spList: [
+          { k: 'H2', side: -1, N: 12, a: () => (6 - x) * 2, lab: 'H₂ · ' + fT(q.rH2) + ' mol' },
+          { k: 'O2', side: -1, N: 6, a: () => (3 - x / 2) * 2, lab: 'O₂ · ' + fT(q.rO2) + ' mol' },
+          { k: 'H2O', side: 1, N: 12, a: () => x * 2, lab: 'H₂O · ' + fT(q.fW) + ' mol' }],
+          text: '<b>2H₂ + O₂ → 2H₂O</b> · 처음 H₂ 6 mol, O₂ 3 mol<br>반응한 H₂ <b>' + fT(x) + ' mol</b> → 반응한 O₂ ' + fT(q.cO2) + ' mol, 생긴 H₂O ' + fT(q.fW) + ' mol<br>계수비 2 : 1 : 2 = 몰수비 (대표 입자 한 개 = 0.5 mol)' };
       }
-      controls.segment('반응', Object.keys(RX).map((k) => ({ value: k, label: RX[k].name })), rx, (v) => { rx = v; done = 0; auto = false; rr.set(0); build(); });
-      const rr = controls.range('반응 횟수', 0, U, 1, 0, (v) => { done = +v; auto = false; place(); text(); }, (v) => v + '번');
-      controls.button('▶ 자동 진행', () => { done = 0; rr.set(0); place(); text(); auto = true; autoT = 0; });
-      build();
+
+      /* ---- 재생기: 반응 진행 ---- */
+      let own = null, sig = '', pR = 0, pM = 0, lastKind = '';
+      const rowOf = () => { const r = document.querySelectorAll('.v3-player'); return r[r.length - 1]; };
+      const mkP = (kind, o, set) => { const pl = controls.player(Object.assign({ loop: true }, o, { onFrame(p) { set(p); own = p > 0 ? kind : (own === kind ? null : own); } })); return { pl, row: rowOf() }; };
+      const PR = mkP('rx', { duration: 8, label: '반응 진행', phases: [[0, '반응 전'], [0.12, '반응 중'], [0.5, '반응 후'], [0.88, '처음으로']] }, (p) => { pR = p; });
+      const PM = mkP('mol', { duration: 10, label: '반응 진행', phases: [[0, 'H₂ 6 mol'], [0.1, '반응 중'], [0.85, 'H₂ 모두 반응'], [0.93, '처음으로']] }, (p) => { pM = p; });
+      const PL = { rx: PR, mol: PM };
+      const fRx = (p) => (p < 0.1 ? 0 : p < 0.5 ? sm((p - 0.1) / 0.4) : p < 0.88 ? 1 : 1 - sm((p - 0.88) / 0.12));
+      const xMol = (p) => 6 * (p < 0.1 ? 0 : p < 0.85 ? sm((p - 0.1) / 0.75) : p < 0.93 ? 1 : 1 - sm((p - 0.93) / 0.07));
+
       return {
         update(dt, t) {
-          const k = 1 - Math.pow(0.0015, dt);
-          spec.forEach((s) => s.pool.forEach((p) => {
-            const g = p.g; g.position.x += (p.tx - g.position.x) * k; g.position.y += (p.ty + (p.ts > 0.5 ? Math.sin(t * 1.3 + p.ph) * 0.07 : 0) - g.position.y) * k; g.position.z += (p.tz - g.position.z) * k;
-            const sc = g.scale.x + (p.ts - g.scale.x) * k; g.scale.setScalar(Math.max(0.001, sc)); g.rotation.y += dt * 0.5; g.visible = sc > 0.01;
+          const Z = ctx.lesson(); if (!Z) return; dt = Math.min(dt, 0.05);
+          const S = Z.S, kind = S.mode === 'mol' ? 'mol' : 'rx';
+          const bs = S.b.eq[S.b.sel].c.join(','), s = [S.mode, S.b.sel, bs, S.q.sel, S.r.sel, S.m.x, S.m.packOn, S.b.ran].join('|');
+          if (s !== sig) { sig = s; if (own) { const k = own; own = null; PL[k].pl.pause(); PL[k].pl.set(0); } }
+          if (kind !== lastKind) { lastKind = kind; }
+          Object.keys(PL).forEach((k) => { PL[k].row.style.display = k === kind ? '' : 'none'; if (k !== kind && PL[k].pl.playing) PL[k].pl.pause(); });
+          const o = own === kind;
+          let spList, key, text, f = 0, pack = 0;
+          if (kind === 'mol') {
+            const x = o ? xMol(pM) : S.m.vx, mi = molInfoFor(Z, x); spList = mi.spList; key = 'mol'; text = mi.text; pack = S.m.pack;
+          } else { const r = reactionList(Z); spList = r.sp; key = r.key; text = r.info(); f = o ? fRx(pR) : (S.b.ran && S.mode === 'balance' ? 1 : 0); }
+          if (key !== specKey) rebuild(spList, key);
+          amounts(spList, f);
+          const kk = 1 - Math.pow(0.0015, dt);
+          spec.forEach((sp) => sp.pool.forEach((p) => {
+            const g = p.g, ps = posOf(sp, p.i), sc = sm(sp.a - p.i), here = sc > 0.001;
+            g.visible = here; if (!here) return;
+            g.position.set(ps.x, ps.y + Math.sin(t * 1.3 + p.ph) * 0.06, ps.z); g.scale.setScalar(Math.max(0.001, sc)); g.rotation.y += dt * 0.5;
           }));
-          if (auto) { autoT += dt; if (autoT > 1.6) { autoT = 0; if (done < U) { done++; rr.set(done); place(); text(); } else auto = false; } }
+          // 1 mol 상자 (계수비 = 몰수비 단계)
+          let bi = 0, pl = 0;
+          packBoxes.forEach((b) => { b.visible = false; }); packLabs.forEach((l) => l.show(false));
+          if (kind === 'mol' && pack > 0.01) {
+            spec.forEach((sp, si) => {
+              for (let j = 0; j < sp.N; j += 2) {
+                if (sp.a < j + 2 - 1e-6 || bi >= 8) continue;
+                const p0 = posOf(sp, j), b = packBoxes[bi++]; b.visible = true; b.position.set(p0.x + DX / 2, p0.y + 0.25, p0.z); b.scale.set(2.9 * pack, 1.0 * pack, 1.4 * pack);
+              }
+              if (pl < 3 && sp.a >= 2) { const l = packLabs[pl++]; l.obj = [(sp.side < 0 ? -4.1 : 4.1), 2.6, (sp.row - (sp.rows - 1) / 2) * ROWZ]; l.show(pack > 0.5); l.set('1 mol 상자 = 입자 2개'); }
+            });
+          }
+          info(text);
         },
       };
     },

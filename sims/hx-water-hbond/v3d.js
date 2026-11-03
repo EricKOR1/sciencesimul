@@ -20,6 +20,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: 11, theta: 0.6, phi: 1.25, min: 5, max: 22 },
     autoRotate: 0.2,
+    levels: [0, 2],   // 1단계(수소 결합 이웃 만들기) · 3단계(얼음의 밀도). 2·4단계는 2D 화면이에요
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
       const R = rng(20260);
@@ -191,22 +192,44 @@
         const V = 1 - (1 - 0.9167 / 0.9998) * w, rho = RHO_ICE / V;
         const per = innerAvg.toFixed(1);
         const state = w < 0.05 ? '얼음' : w > 0.95 ? '물 (액체)' : '녹는 중';
-        info('<b>' + state + '</b> · 분자 ' + N + '개를 그린 모형<br>' + (w < 0.05
+        const m2 = mode2(), d2 = dens2(), nb = hbOn2();
+        const dline = m2 === 'dens' && d2
+          ? '<br><b>' + (d2.T > 0 ? '' : d2.T < 0 ? '−' : '') + Math.abs(d2.T) + ' °C ' + (d2.frozen ? '얼음' : '물') + '</b>: 같은 질량 1.00 g의 부피 <b>' + (1 / d2.rho).toFixed(3) + ' cm³</b> → 밀도 <b>' + d2.rho.toFixed(4) + ' g/cm³</b>'
+          : '<br>같은 분자 수의 부피 <b>' + (V * 100).toFixed(0) + '%</b> → 밀도 약 <b>' + rho.toFixed(3) + ' g/cm³</b>';
+        info((demoOn() ? '▶ ' : '') + '<b>' + state + '</b> · 분자 ' + N + '개를 그린 모형<br>' + (w < 0.05
           ? '분자 하나가 이웃 4개와 <span style="color:#ff8a8f">수소 결합</span>(점선)을 해서 <b>6각 고리</b>와 빈 공간이 생겨요.'
           : w > 0.95 ? '수소 결합이 끊어지고 이어지기를 반복하며 분자들이 빈 공간으로 들어와 가까워져요.' : '수소 결합이 하나씩 끊어지며 구조가 무너지고 있어요.') +
-          '<br>같은 분자 수의 부피 <b>' + (V * 100).toFixed(0) + '%</b> → 밀도 약 <b>' + rho.toFixed(3) + ' g/cm³</b>' + '<br>가운데 분자 하나의 수소 결합: ' + (w < 0.05 ? '<b>4개</b> (주는 자리 2 + 받는 자리 2)' : w > 0.95 ? '평균 <b>약 ' + per + '개</b> (끊어졌다 이어졌다 해요)' : '하나씩 끊어지는 중…'));
+          dline + '<br>가운데 분자 하나의 수소 결합: ' + (w < 0.05 ? '<b>4개</b> (주는 자리 2 + 받는 자리 2)' : w > 0.95 ? '평균 <b>약 ' + per + '개</b> (끊어졌다 이어졌다 해요)' : '하나씩 끊어지는 중…') + (m2 === 'hb' && nb >= 0 && !demoOn() ? '<br>2D에서 이은 수소 결합 <b>' + nb + ' / 4</b> (H 쪽 2 + 비공유 전자쌍 쪽 2)' : ''));
       }
-      const sl = controls.range('상태', 0, 1, 0.01, 0, (v) => { w = v; layout(); }, (v) => (v < 0.03 ? '얼음' : v > 0.97 ? '물' : '녹는 중 ' + frac(v) + '%'));
+      const mode2 = () => { try { return window.__sim.S.mode; } catch (e) { return ''; } };
+      const dens2 = () => { try { const w2 = window.__sim, d = w2.S.dens; return { T: d.T, frozen: d.frozen, q: d.q, rho: w2.dRho() }; } catch (e) { return null; } };
+      const hbOn2 = () => { try { return window.__sim.S.hb.on.filter(Boolean).length; } catch (e) { return -1; } };
+      let demo = null;
+      const pl = controls.player({
+        duration: 10, loop: true, autoplay: false, label: '재생',
+        phases: [[0, '얼음'], [0.1, '녹는 중'], [0.45, '물'], [0.55, '얼리는 중']],
+        onFrame(p) { demo = p; },
+      });
+      const demoOn = () => demo != null && (pl.playing || pl.p > 0.0005);
       controls.segment('시점', [{ value: 'side', label: '옆에서' }, { value: 'top', label: '위에서 (고리 구멍)' }], 'side', (v) => { orbit.phi = v === 'top' ? 0.1 : 1.25; });
       const hbB = controls.button('수소 결합 ✓', () => { showHB = !showHB; hbB.classList.toggle('on', showHB); hbB.textContent = '수소 결합 ' + (showHB ? '✓' : '✕'); layout(); }); hbB.classList.add('on');
       const rgB = controls.button('6각 고리 ✓', () => { showRing = !showRing; rgB.classList.toggle('on', showRing); rgB.textContent = '6각 고리 ' + (showRing ? '✓' : '✕'); layout(); }); rgB.classList.add('on');
       { const vv = ctx.renderer.domElement, asp = Math.max(0.3, vv.clientWidth / Math.max(1, vv.clientHeight)); if (asp < 1) orbit.dist = Math.max(orbit.dist, 3.4 / (0.414 * asp)); }
+      let lastSig = '', lastDemo = false;
       const api = {
-        sync() { // 2D '얼음의 밀도'가 물 상태이면 물로 시작 (읽기 전용)
-          try { const s = window.__sim; if (s && s.S && s.S.mode === 'dens' && s.S.dens && (s.S.dens.frozen ? 0 : 1) !== Math.round(w)) { w = s.S.dens.frozen ? 0 : 1; sl.set(w); layout(); } } catch (e) { /* 무시 */ }
+        update() {
+          let tw = 0; const m2 = mode2();
+          if (demoOn()) {                          // ▶ 재생: 얼음 → 녹음 → 물 → 얼음 (한 주기)
+            const p = demo, x = p < 0.1 ? 0 : p < 0.45 ? (p - 0.1) / 0.35 : p < 0.55 ? 1 : p < 0.9 ? 1 - (p - 0.55) / 0.35 : 0;
+            tw = x * x * (3 - 2 * x);
+          } else if (m2 === 'dens') { const d = dens2(); tw = d ? (d.q != null ? d.q : d.frozen ? 0 : 1) : 0; }
+          const sig = m2 + '|' + (m2 === 'dens' ? (dens2() || {}).T + ',' + (dens2() || {}).frozen : m2 === 'hb' ? hbOn2() : '');
+          const changed = sig !== lastSig;
+          if (changed) { if (lastSig && demoOn()) { pl.pause(); pl.set(0); tw = 0; } lastSig = sig; }
+          if (Math.abs(tw - w) > 0.002 || changed || demoOn() !== lastDemo) { lastDemo = demoOn(); w = tw; layout(); }
         },
+        sync() { lastSig = ''; },
       };
-      api.sync();
       layout();
       return api;
     },

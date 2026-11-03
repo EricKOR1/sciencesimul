@@ -1,96 +1,126 @@
-/* hx-catalyst · 3D 금속 표면 촉매: H₂ + Cl₂ → 2 HCl (모형)
-   ① 반응물이 촉매 표면에 달라붙고(흡착) ② 결합이 약해져 원자로 나뉘고 ③ 새 결합이 만들어지고 ④ 생성물이 떨어져 나가요.
-   촉매는 활성화 에너지가 더 낮은 다른 길을 열어 줘서 반응 속도를 높여요 (반응 엔탈피는 그대로, 촉매는 소모되지 않아요).
-   위쪽 곡선: 회색 = 촉매 없이, 주황 = 촉매 있을 때 (모형 스케치예요). */
+/* hx-catalyst · 3D 촉매 표면에서 일어나는 H₂O₂ 분해: 2 H₂O₂ → 2 H₂O + O₂  (2D 실험과 같은 반응)
+   ① 반응물이 촉매 표면에 달라붙고(흡착) ② O–O 결합이 끊어지고 ③ H가 옮겨 가며 새 결합이 만들어지고 ④ 생성물이 떨어져 나가요.
+   촉매는 활성화 에너지(Eₐ)가 더 낮은 다른 길을 열어 줘서 반응 속도를 높여요. ΔH = −196 kJ 는 그대로이고 촉매는 소모되지 않아요.
+   위쪽 곡선(에너지 도표): 회색 = 촉매 없이 Eₐ 75 kJ, 주황 = 촉매 있을 때 Eₐ 50 kJ (2D '에너지 도표'의 값, 모형 스케치예요).
+   촉매 있음 · 없음은 2D에서 골라요: 1단계는 고른 촉매(촉매 없음 · KI · MnO₂ · 간 조각), 2단계는 '촉매' 단추. */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
   const PHONE = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches);
   const sstep = (x) => { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); };
-  const SX = 1.3, OY = 4.2;
-  const hill = (x, h) => -0.45 * (1 + Math.tanh(1.3 * x)) + h * Math.exp(-x * x / 0.9);  // x: -3..3
-  const STAGES = ['반응물 접근', '표면에 흡착', '결합이 끊어짐', '새 결합 형성', '생성물이 떨어져 나감'];
-  // 원자 키프레임 [x, y, z] — H1, H2, Cl1, Cl2
+  const SX = 1.3, OY = 7.4, KS = 0.012;                 // 에너지 1 kJ → 높이 0.012
+  const E0 = 75, E1 = 50, DH = -196;                      // 2D의 ENS 값 (kJ)
+  const STAGES = ['반응물 접근', '표면에 흡착', 'O–O 결합이 끊어짐', 'H가 옮겨 가며 새 결합 형성', '생성물이 떨어져 나감'];
+  const curveE = (x, ea) => { const s = sstep((x + 3) / 6); return (DH * s + (ea - DH / 2) * Math.exp(-x * x / 0.8)) * KS; };
+  // 원자: 0 H1, 1 O1, 2 O2, 3 H2 (H₂O₂ 첫째) / 4 H3, 5 O3, 6 O4, 7 H4 (둘째)
   const KF = [
-    [[-3.2, 3.0, 0.3], [-2.4, 3.0, 0.3], [2.3, 3.2, -0.3], [3.5, 3.2, -0.3]],
-    [[-2.2, 0.55, 0.4], [-1.45, 0.55, 0.4], [1.4, 0.55, -0.4], [2.6, 0.55, -0.4]],
-    [[-2.6, 0.45, 0.9], [-0.9, 0.45, -0.1], [0.9, 0.45, 0.1], [2.6, 0.45, -0.9]],
-    [[-1.5, 0.45, 0.9], [-0.3, 0.45, -0.7], [0.5, 0.45, 0.9], [1.4, 0.45, -0.7]],
-    [[-1.6, 3.6, 0.9], [-0.5, 3.6, -0.7], [-0.45, 3.2, 0.9], [0.6, 3.2, -0.7]],
+    [[-3.7, 3.1, 0.3], [-3.0, 3.5, 0.3], [-1.8, 3.5, 0.3], [-1.1, 3.1, 0.3], [1.1, 3.3, -0.3], [1.8, 3.7, -0.3], [3.0, 3.7, -0.3], [3.7, 3.3, -0.3]],
+    [[-3.5, 0.75, 0.5], [-2.8, 0.55, 0.5], [-1.6, 0.55, 0.5], [-0.9, 0.75, 0.5], [0.9, 0.75, -0.5], [1.6, 0.55, -0.5], [2.8, 0.55, -0.5], [3.5, 0.75, -0.5]],
+    [[-3.6, 0.8, 0.7], [-2.9, 0.5, 0.7], [-1.0, 0.5, 0.4], [-0.3, 0.85, 0.4], [0.3, 0.85, -0.4], [1.0, 0.5, -0.4], [2.9, 0.5, -0.7], [3.6, 0.8, -0.7]],
+    [[-3.4, 0.9, 0.8], [-2.7, 0.5, 0.7], [-0.6, 0.5, 0.25], [-2.0, 0.95, 1.1], [2.0, 0.95, -1.1], [2.7, 0.5, -0.7], [0.6, 0.5, -0.25], [3.4, 0.9, -0.8]],
+    [[-3.9, 3.9, 0.8], [-3.2, 3.5, 0.7], [-0.6, 3.6, 0.25], [-2.5, 3.9, 1.1], [2.5, 3.9, -1.1], [3.2, 3.5, -0.7], [0.6, 3.6, -0.25], [3.9, 3.9, -0.8]],
   ];
-  // 단계별 결합 [i, j]
-  const BONDS = [[[0, 1], [2, 3]], [[0, 1], [2, 3]], [], [[0, 2], [1, 3]], [[0, 2], [1, 3]]];
+  // 단계별 결합 (원자 번호 쌍)
+  const BONDS = [
+    [[0, 1], [1, 2], [2, 3], [4, 5], [5, 6], [6, 7]],
+    [[0, 1], [1, 2], [2, 3], [4, 5], [5, 6], [6, 7]],
+    [[0, 1], [2, 3], [4, 5], [6, 7]],
+    [[0, 1], [3, 1], [4, 5], [7, 5]],
+    [[0, 1], [3, 1], [4, 5], [7, 5], [2, 6]],
+  ];
+  const OXY = [1, 2, 5, 6];
 
   window.SciSim3D.attach({
-    title: '촉매 표면 반응 3D',
+    title: '촉매 표면 반응 3D · H₂O₂ 분해',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: PHONE ? 19 : 14.5, theta: 0.3, phi: 1.3, min: 8, max: 30, target: [0, 2.2, 0] },
+    camera: { dist: PHONE ? 22 : 16.5, theta: 0.3, phi: 1.3, min: 8, max: 36, target: [-1.2, 3.9, 0] },
     autoRotate: 0.08,
+    levels: [0, 1],   // 1단계(촉매 실험) · 2단계(에너지 도표). 3~5단계는 2D 화면이에요
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3, UP = new V3(0, 1, 0);
       const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.38, metalness: 0.05 }, o || {}));
-      const S0 = window.__sim && window.__sim.S && window.__sim.S.en;
-      let cat = true, stage = 0, playing = false, prog = 0;   // prog: 0 ~ 4 (키프레임 사이를 부드럽게)
-      /* 금속 표면 */
+      const W = () => window.__sim || null;
+      let cat = false, catName = '촉매 없음', prog = 0, demo = false, txt = '';
+      /* 촉매 표면 */
       const surf = new THREE.Group(); root.add(surf);
       const sg = new THREE.SphereGeometry(0.48, 24, 18), sm = mat(0xa5afc2, { metalness: 0.8, roughness: 0.28 });
-      const inst = new THREE.InstancedMesh(sg, sm, 12 * 4 * 2); let n = 0, M = new THREE.Matrix4();
+      const inst = new THREE.InstancedMesh(sg, sm, 12 * 4 * 2); let n = 0; const M = new THREE.Matrix4();
       for (let L = 0; L < 2; L++) for (let i = 0; i < 12; i++) for (let j = 0; j < 4; j++) { M.makeTranslation((i - 5.5 + (j % 2) * 0.5) * 1.0 + (L ? 0.5 : 0), -0.2 - L * 0.8, (j - 1.5) * 0.95 + (L ? 0.47 : 0)); inst.setMatrixAt(n++, M); }
       surf.add(inst);
-      const lSurf = label('금속 촉매 표면', [-4.2, -0.2, 1.8], { color: 'rgba(100,116,139,.92)' });
-      /* 원자 */
-      const spec = [[0xf1f5f9, 0.32], [0xf1f5f9, 0.32], [0x22b14c, 0.52], [0x22b14c, 0.52]];
-      const at = spec.map(([c, r]) => { const m = new THREE.Mesh(new THREE.SphereGeometry(r, 32, 24), mat(c)); root.add(m); return m; });
-      const bd = Array.from({ length: 2 }, () => { const m = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 1, 12), mat(0xb4bfd2)); root.add(m); return m; });
-      const faint = Array.from({ length: 2 }, () => { const m = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1, 10), mat(0xffd34d, { transparent: true, opacity: 0.55, emissive: 0xaa8800, emissiveIntensity: 0.4 })); root.add(m); return m; });
-      const lH = label('H', at[0], { offset: [0, 0.6, 0] }), lC = label('Cl', at[2], { offset: [0, 0.8, 0] });
-      /* 반응 경로 곡선 */
-      const mk = (h, col) => { const p = []; for (let i = 0; i <= 90; i++) { const x = -3 + 6 * i / 90; p.push(new V3(x * SX, OY + hill(x, h), 0)); } return new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(p), 180, 0.07, 10, false), mat(col, { emissive: col, emissiveIntensity: 0.35 })); };
-      const cNo = mk(2.2, 0x8a94a8), cCat = mk(1.0, 0xff9a3c); root.add(cNo, cCat);
+      label('촉매 표면', [-4.6, -0.2, 1.8], { color: 'rgba(100,116,139,.92)' });
+      /* 원자 · 결합 */
+      const at = Array.from({ length: 8 }, (_, i) => { const isH = i === 0 || i === 3 || i === 4 || i === 7; const m = new THREE.Mesh(new THREE.SphereGeometry(isH ? 0.3 : 0.5, 32, 24), mat(isH ? 0xf1f5f9 : 0xe23b3b)); root.add(m); return m; });
+      const bd = Array.from({ length: 6 }, () => { const m = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 1, 12), mat(0xb4bfd2)); root.add(m); return m; });
+      const faint = OXY.map(() => { const m = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1, 10), mat(0xffd34d, { transparent: true, opacity: 0.55, emissive: 0xaa8800, emissiveIntensity: 0.4 })); root.add(m); return m; });
+      const lA = label('H₂O₂', at[1], { offset: [0, 0.8, 0] }), lB = label('H₂O₂', at[5], { offset: [0, 0.8, 0] }), lO = label('O₂', [0, 4.4, 0], { color: 'rgba(14,116,144,.92)' });
+      lO.show(false);
+      /* 에너지 도표 (위) */
+      const mk = (ea, col) => { const p = []; for (let i = 0; i <= 90; i++) { const x = -3 + 6 * i / 90; p.push(new V3(x * SX, OY + curveE(x, ea), 0)); } return new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(p), 180, 0.07, 10, false), mat(col, { transparent: true, emissive: col, emissiveIntensity: 0.5 })); };
+      const cNo = mk(E0, 0x8a94a8), cCat = mk(E1, 0xff9a3c); root.add(cNo, cCat);
       const bead = new THREE.Mesh(new THREE.SphereGeometry(0.27, 24, 18), mat(0xffd34d, { emissive: 0xffa500, emissiveIntensity: 0.6 })); root.add(bead);
-      const lNo = label('촉매 없이 (Eₐ 큼)', [-0.4 * SX, OY + 2.2 + 0.25, 0], { color: 'rgba(100,116,139,.92)' });
-      const lCat = label('촉매 있을 때 (Eₐ 작음)', [0.9 * SX, OY + 1.0 - 0.2, 0], { color: 'rgba(230,120,20,.92)' });
-      const lE = label('에너지', [-3.2 * SX, OY + 1.5, 0], { color: 'rgba(30,41,59,.85)' });
+      const baseLine = new THREE.Mesh(new THREE.BoxGeometry(2.6 * SX, 0.03, 0.03), mat(0x5c6b8a, { transparent: true, opacity: 0.6 })); baseLine.position.set(-3 * SX + 1.3 * SX - 0.2, OY, 0); root.add(baseLine);
+      const eaArrow = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1, 10), mat(0xffd34d, { emissive: 0xaa8800, emissiveIntensity: 0.5 })); root.add(eaArrow);
+      const dhArrow = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, Math.abs(DH) * KS, 10), mat(0x34d399, { emissive: 0x0b6e4f, emissiveIntensity: 0.5 })); dhArrow.position.set(3.35 * SX, OY + DH * KS / 2, 0); root.add(dhArrow);
+      const dhCone = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.34, 14), mat(0x34d399, { emissive: 0x0b6e4f, emissiveIntensity: 0.5 })); dhCone.position.set(3.35 * SX, OY + DH * KS + 0.17, 0); dhCone.rotation.x = Math.PI; root.add(dhCone);
+      const lEa = label('', [0, 0, 0], { color: 'rgba(180,120,0,.92)' });
+      label('ΔH = −196 kJ', [3.35 * SX + 0.2, OY + DH * KS / 2, 0], { color: 'rgba(5,150,105,.92)' });
+      label('반응물 2H₂O₂', [-3 * SX, OY + 0.45, 0], { color: 'rgba(30,41,59,.9)' });
+      label('생성물 2H₂O + O₂', [2.6 * SX, OY + DH * KS - 0.55, 0], { color: 'rgba(30,41,59,.9)' });
+      const lNo = label('촉매 없이 75 kJ', [-1.9 * SX, OY + 0.2 + 0.55, 0], { color: 'rgba(100,116,139,.92)' });
+      const lCat = label('촉매 있을 때 50 kJ', [1.6 * SX, OY - 0.3, 0], { color: 'rgba(230,120,20,.92)' });
 
-      const pos = [0, 1, 2, 3].map(() => new V3());
+      const pos = Array.from({ length: 8 }, () => new V3());
       function setBond(m, p, q, vis) { m.visible = vis; if (!vis) return; const d = q.clone().sub(p), L = d.length(); m.scale.set(1, L, 1); m.position.copy(p).add(q).multiplyScalar(0.5); m.quaternion.setFromUnitVectors(UP, d.normalize()); }
       function apply(pr, t) {
         const k = Math.min(3.999, pr), a = Math.floor(k), f = sstep(k - a);
-        const effA = cat ? a : 0, tot = cat ? 1 : 0;
-        for (let i = 0; i < 4; i++) {
-          const p0 = KF[a][i], p1 = KF[a + 1][i]; pos[i].set(p0[0] + (p1[0] - p0[0]) * f, p0[1] + (p1[1] - p0[1]) * f, p0[2] + (p1[2] - p0[2]) * f);
-          if (!cat) { pos[i].copy(new V3(...KF[0][i])); pos[i].y += Math.sin(t * 2 + i) * 0.15; pos[i].x += Math.sin(t * 1.5 + i * 2) * 0.2; }
+        for (let i = 0; i < 8; i++) {
+          const p0 = KF[a][i], p1 = KF[a + 1][i];
+          if (cat) pos[i].set(p0[0] + (p1[0] - p0[0]) * f, p0[1] + (p1[1] - p0[1]) * f, p0[2] + (p1[2] - p0[2]) * f);
+          else { pos[i].set(...KF[0][i]); pos[i].y += Math.sin(t * 2 + i) * 0.15; pos[i].x += Math.sin(t * 1.5 + i * 2) * 0.2; }
           at[i].position.copy(pos[i]);
         }
-        // 결합: 현재 키프레임 a → a+1 사이에서 앞 단계 결합은 f<0.5 동안, 뒤 단계 결합은 f>=0.5부터
-        const cur = BONDS[f < 0.5 || !cat ? a : a + 1];
-        const list = cat ? cur : BONDS[0];
-        const mkB = (arr, idx) => { const b = arr[idx]; if (!b) { setBond(bd[idx], pos[0], pos[1], false); return; } };
-        bd.forEach((m, idx) => { const b = list[idx]; if (b) setBond(m, pos[b[0]], pos[b[1]], true); else m.visible = false; void mkB; });
-        // 흡착 단계에서 금속 표면과 점선 (약한 결합)
-        faint.forEach((m, idx) => { const on = cat && ((a === 1 && f > 0.2) || a === 2 || (a === 3 && f < 0.6)); if (!on) { m.visible = false; return; } const i = idx ? 3 : 0; setBond(m, pos[i], new V3(pos[i].x, -0.1, pos[i].z), true); });
-        void effA; void tot;
-        // 곡선 위의 공
-        const u = cat ? -3 + 6 * (pr / 4) : -3 + 1.1 * (0.5 - 0.5 * Math.cos(t * 1.6)) * 0.7;
-        const h = cat ? 1.0 : 2.2; bead.position.set(u * SX, OY + hill(u, h) + 0.3, 0);
+        const list = cat ? BONDS[f < 0.5 ? a : a + 1] : BONDS[0];
+        bd.forEach((m, idx) => { const b = list[idx]; if (b) setBond(m, pos[b[0]], pos[b[1]], true); else m.visible = false; });
+        faint.forEach((m, idx) => { const on = cat && ((a === 1 && f > 0.2) || a === 2 || (a === 3 && f < 0.6)); if (!on) { m.visible = false; return; } const i = OXY[idx]; setBond(m, pos[i], new V3(pos[i].x, -0.1, pos[i].z), true); });
+        const st = cat ? Math.min(4, Math.round(pr)) : 0, late = cat && pr >= 2.5;
+        lA.set(late ? 'H₂O' : 'H₂O₂'); lB.set(late ? 'H₂O' : 'H₂O₂');
+        lO.show(cat && pr >= 3.6); lO.obj = [(pos[2].x + pos[6].x) / 2, pos[2].y + 0.8, 0];
+        // 에너지 도표: 현재 경로 강조, 공은 도표를 따라 움직여요
+        const ea = cat ? E1 : E0;
+        cNo.material.opacity = cat ? 0.35 : 1; cCat.material.opacity = cat ? 1 : 0.35;
+        const u = cat ? -3 + 6 * (pr / 4) : -3 + 1.6 * (0.5 - 0.5 * Math.cos(t * 1.6)) * 0.7;
+        bead.position.set(u * SX, OY + curveE(u, ea) + 0.3, 0);
         bead.material.color.setHex(cat ? 0xffd34d : 0xcbd5e1);
+        eaArrow.scale.set(1, Math.max(0.01, curveE(0, ea)), 1); eaArrow.position.set(-0.45 * SX, OY + curveE(0, ea) / 2, 0);
+        lEa.obj = [-0.45 * SX - 0.1, OY + curveE(0, ea) / 2 + 0.05, 0]; lEa.set('Eₐ = ' + ea + ' kJ');
+        lNo.show(true); lCat.show(true);
+        return st;
       }
-      const seg = controls.segment('단계', STAGES.map((s, i) => ({ value: i, label: (i + 1) + '' })), 0, (v) => { stage = v; playing = false; prog = v; playBtn.textContent = '▶ 자동 재생'; });
-      const catSeg = controls.segment('촉매', [{ value: 1, label: '있음' }, { value: 0, label: '없음' }], cat ? 1 : 0, (v) => { cat = !!v; });
-      const playBtn = controls.button('▶ 자동 재생', () => { playing = !playing; playBtn.textContent = playing ? '⏸ 멈춤' : '▶ 자동 재생'; if (playing && prog >= 3.98) prog = 0; });
-      let txt = '';
+
+      const pl = controls.player({
+        duration: 10, loop: true, autoplay: false, label: '재생',
+        phases: [[0, STAGES[0]], [0.125, STAGES[1]], [0.375, STAGES[2]], [0.625, STAGES[3]], [0.875, STAGES[4]]],
+        onFrame(p) { prog = p * 4; demo = true; },
+      });
+      controls.text('촉매 있음 · 없음은 2D 조작판에서 골라요.');
+
+      /* 지금 2D 화면의 촉매 */
+      function read() {
+        const w = W(), S = w && w.S; if (!S) return;
+        if (S.mode === 'en') { cat = !!S.en.cat; catName = cat ? '촉매 있음' : '촉매 없음'; }
+        else if (S.mode === 'eq') { cat = S.eq.mode !== 0; catName = S.eq.mode === 2 ? '촉매 있음 · 없음 비교' : cat ? '촉매 있음' : '촉매 없음'; }
+        else if (S.mode === 'exp' && w.CATS) { const c = w.CATS[S.ex.sel]; cat = S.ex.sel > 0; catName = c ? c.name : '촉매 없음'; }
+      }
       return {
         update(dt, t) {
-          dt = Math.min(dt, 0.05);
-          const s = window.__sim && window.__sim.S && window.__sim.S.en;
-          if (s && !!s.cat !== cat && s.__seen !== undefined) { /* 무시 */ }
-          if (playing && cat) { prog += dt * 0.5; if (prog >= 4) { prog = 4; playing = false; playBtn.textContent = '▶ 자동 재생'; } seg.set(Math.min(4, Math.round(prog))); }
-          apply(Math.min(4, prog), t);
-          const st = Math.min(4, Math.round(prog));
-          const body = !cat ? '촉매가 없으면 H₂와 Cl₂가 그냥 부딪혀야 해서 Eₐ가 커요. 거의 반응하지 않아요.' : ['H₂와 Cl₂가 표면 가까이 와요.', '표면에 달라붙어요(흡착). 분자 안의 결합이 약해져요.', '결합이 끊어져 원자가 표면 위를 움직여요.', 'H와 Cl이 새 결합(H–Cl)을 만들어요.', 'HCl이 떨어져 나가요. 촉매는 그대로 남아요!'][st];
-          const tx = '<b>' + (cat ? (st + 1) + '단계 · ' + STAGES[st] : '촉매 없음') + '</b><br>' + body;
-          if (tx !== txt) { txt = tx; info(tx); lH.show(true); }
+          read();
+          if (!pl.playing && pl.p === 0) prog = 0;
+          const st = apply(Math.min(4, prog), t);
+          const body = !cat ? '촉매가 없으면 H₂O₂ 분자끼리 Eₐ(75 kJ) 이상의 에너지로 부딪혀야 해서 반응이 거의 일어나지 않아요.' : [
+            'H₂O₂ 두 분자가 촉매 표면 가까이 와요.', '표면에 달라붙어요(흡착). 분자 안의 결합이 약해져요.', 'O–O 결합이 끊어져요.', 'H가 옮겨 가 H₂O가 되고, O 원자 둘이 만나 O₂가 돼요.', '생성물 2H₂O와 O₂가 떨어져 나가요. 촉매는 그대로 남아요.'][st];
+          const tx = '<b>2 H₂O₂ → 2 H₂O + O₂</b> · ' + catName + '<br><b>' + (cat ? (st + 1) + '단계 · ' + STAGES[st] : '촉매 없음') + '</b><br>' + body + '<br>' + (cat ? '촉매 Eₐ 50 kJ (없을 때 75 kJ) · ΔH −196 kJ 그대로' : 'Eₐ 75 kJ · ΔH −196 kJ');
+          if (tx !== txt) { txt = tx; info(tx); }
         },
       };
     },

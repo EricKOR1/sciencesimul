@@ -18,6 +18,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHONE ? 15.5 : 8.4, theta: 0.2, phi: 1.3, fov: 40, min: 4, max: 20, target: [PHONE ? 0 : -0.5, PHONE ? 0.3 : 0, 0] },
     autoRotate: 0,
+    levels: [1, 2],   // 1단계(조립 · 이중층 배열)와 4단계(통과 시험 · 분류)는 2D 실험 화면에서, 막 단백질 · 유동성 단계에서 3D로 시작
     build(ctx) {
       const { THREE, root, label, info, controls, orbit, renderer } = ctx;
       renderer.localClippingEnabled = true;
@@ -132,9 +133,21 @@
         info('<div style="max-width:' + (PHONE ? 205 : 235) + 'px"><b>유동 모자이크</b> · 유동성 <b>' + pct + ' %</b><br>머리(파랑, 친수성)는 바깥쪽, 꼬리(주황, 소수성)는 안쪽에 모인 <b>이중층</b><br>통합 단백질은 박혀 있고, 말초 단백질은 표면에 붙어 있어요.</div>');
         labs.forEach((l) => l.show(names)); cholL.show(names && hasChol && chol.length > 0);
       }
-      const tR = controls.range('온도', 1, 37, 1, Tc, (v) => { Tc = v; refresh(); }, (v) => v + ' °C');
-      const uR = controls.range('불포화', 0, 100, 10, U, (v) => { U = v; refresh(); }, (v) => v + ' %');
-      const cB = controls.button('🧈 콜레스테롤', () => { hasChol = !hasChol; cB.classList.toggle('on', hasChol); chol.forEach((c) => { c.g.visible = hasChol; }); refresh(); });
+      /* 3D에서 조작하면 2D 유동성 실험(S.fx)도 같은 값으로 (2D 슬라이더를 움직인 것과 같아요) */
+      function toLesson(fn) { try { const L = ctx.lesson(); if (L && L.S && L.S.fx && L.fxReset) { fn(L.S.fx, L); } } catch (e) {} }
+      const tR = controls.range('온도', 1, 37, 1, Tc, (v) => { Tc = v; refresh(); toLesson((f, L) => { f.T = v; const e = document.getElementById('sFT'); if (e) e.value = v; lastFx.T = v; L.fxReset(); }); }, (v) => v + ' °C');
+      const uR = controls.range('불포화 지방산', 0, 100, 10, U, (v) => { U = v; refresh(); toLesson((f, L) => { f.u = v; const e = document.getElementById('sFU'); if (e) e.value = v; lastFx.u = v; L.fxReset(); }); }, (v) => v + ' %');
+      const lastFx = {};
+      function setChol(v) { hasChol = v; cB.classList.toggle('on', hasChol); chol.forEach((c) => { c.g.visible = hasChol; }); refresh(); }
+      const cB = controls.button('🧈 콜레스테롤', () => {
+        const L = ctx.lesson();
+        if (L && L.S && L.S.mode === 'prot' && L.S.pr) {   // 막 단백질 화면: 2D의 콜레스테롤 넣기 / 모두 빼기와 같게
+          if (!hasChol) { const n = L.S.pr.chol; L.prAddChol(); if (L.S.pr.chol === n) return; setChol(true); }
+          else { L.S.pr.chol = 0; L.S.pr.cdrop = [0, 0, 0, 0, 0, 0]; L.updateCtl(); setChol(false); }
+          return;
+        }
+        setChol(!hasChol); toLesson((f, L2) => { f.chol = hasChol; lastFx.chol = hasChol; L2.fxReset(); });
+      });
       const xB = controls.button('✂ 단면', () => { cut = !cut; xB.classList.toggle('on', cut); allMats.forEach((m) => { m.clippingPlanes = cut ? [plane] : null; m.needsUpdate = true; }); if (cut) camGo = 1.3; refresh(); }); xB.classList.toggle('on', cut);
       const nB = controls.button('🏷 이름표', () => { names = !names; nB.classList.toggle('on', names); refresh(); }); nB.classList.toggle('on', names);
       allMats.forEach((m) => { m.clippingPlanes = [plane]; });
@@ -142,7 +155,14 @@
       function fromLesson() {
         const f = lessonFx(); if (!f) return;
         Tc = Math.max(1, Math.min(37, f.T)); U = Math.max(0, Math.min(100, f.u)); tR.set(Tc); uR.set(U);
-        if (!!f.chol !== hasChol) cB.click();
+        if (!!f.chol !== hasChol) setChol(!!f.chol);
+        lastFx.T = f.T; lastFx.u = f.u; lastFx.chol = f.chol;
+      }
+      /* 2D에서 바뀌면 3D도 따라가요: 유동성 화면은 온도 · 불포화 · 콜레스테롤, 막 단백질 화면은 콜레스테롤 유무 */
+      function poll() {
+        const L = ctx.lesson(); if (!L || !L.S) return;
+        if (L.S.mode === 'fluid') { const f = L.S.fx; if (f && (f.T !== lastFx.T || f.u !== lastFx.u || f.chol !== lastFx.chol)) { fromLesson(); refresh(); } }
+        else if (L.S.mode === 'prot' && L.S.pr) { const c = L.S.pr.chol > 0; if (c !== hasChol) setChol(c); }
       }
       cB.classList.toggle('on', hasChol);
       fromLesson(); refresh();
@@ -151,6 +171,7 @@
       let tPrev = 0;
       return {
         update(dt, t) {
+          poll();
           if (camGo > 0 && cut) { camGo -= dt; orbit.theta += (0.18 - orbit.theta) * Math.min(1, dt * 3); orbit.phi += (1.3 - orbit.phi) * Math.min(1, dt * 3); }
           syncM(); const m = M01;
           // 옆으로 자리 바꾸기

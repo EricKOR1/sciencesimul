@@ -79,9 +79,10 @@
   const phone = window.matchMedia && window.matchMedia('(max-width: 599px)').matches;
   window.SciSim3D.attach({
     title: 'pH와 이온 수 3D',
-    hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
+    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · pH와 희석 단계는 2D와 똑같이 이어져요',
     camera: { dist: phone ? 10.5 : 10, theta: 0.5, phi: 1.2, min: 5, max: 22, target: [0, 1.7, 0] },
-    autoRotate: 0.15,
+    autoRotate: 0.12,
+    levels: [0, 1, 2],
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const L = makeLib(THREE);
@@ -101,27 +102,46 @@
       for (let i = 0; i < NMAX; i++) { pts.h.push(rp()); pts.o.push(rp()); }
       const dum = new THREE.Object3D();
       const INDI = [0xe53935, 0xf4511e, 0xfb8c00, 0xfdd835, 0x7cb342, 0x43a047, 0x00897b, 0x1e88e5, 0x3949ab, 0x5e35b1, 0x6a1b9a, 0x7b1fa2, 0x8e24aa];
-      let pH = 4, base = 4, wat = 0, last2d = null;
+      let pH = 7, info0 = '', own = null, sig = '', pE = 0, pD = 0, lastTxt = '';
       const lblN = label('', [0, LV + 0.6, 0], { size: 12.5 });
+      const clamp = (x, a, b) => Math.max(a, Math.min(b, x)), sm = L.sstep;
       function counts() { return [Math.min(NMAX, Math.round(Math.pow(10, 7 - pH))), Math.min(NMAX, Math.round(Math.pow(10, pH - 7)))]; }
-      function show() {
+      function fmt(x) { return x >= 1e6 ? '아주 많아요' : x >= 0.7 ? Math.round(x) + '개' : '거의 없어요'; }
+      function show(extra) {
         const col = pH >= 6.5 && pH <= 7.5 ? 0x4cc36b : INDI[Math.max(0, Math.min(12, Math.round(pH) - 1))];
         liq.material.color.setHex(col);
         const [nh, no] = counts(); mH.count = nh; mO.count = no;
         const trueH = Math.pow(10, 7 - pH), trueO = Math.pow(10, pH - 7);
         const sat = trueH > NMAX || trueO > NMAX;
-        const sci = (e) => '10<sup>' + e + '</sup>';
-        lblN.set('pH ' + (Math.round(pH * 10) / 10) + (pH < 7 ? ' 산성' : pH > 7 ? ' 염기성' : ' 중성'));
-        info('<b>[H⁺] = ' + sci(-Math.round(pH * 10) / 10) + ' mol/L</b><br><span style="color:#ff6b6b">●</span> H⁺ <b>' + fmt(trueH) + '</b> · <span style="color:#6ba5ff">●</span> OH⁻ <b>' + fmt(trueO) + '</b> (pH 7일 때 각 1개 기준)<br>' + (sat ? '너무 많아 다 못 그려요. 그래서 로그(pH) 눈금을 써요!' : 'pH가 1 내려가면 H⁺ 수는 10배예요.'));
+        const ph = Math.round(pH * 10) / 10;
+        lblN.set('pH ' + ph.toFixed(1).replace(/\.0$/, '') + (pH < 6.95 ? ' 산성' : pH > 7.05 ? ' 염기성' : ' 중성'));
+        const txt = '<b>[H⁺] = 10<sup>' + (-ph).toString().replace('-', '−') + '</sup> mol/L</b> · pH = −log[H⁺] = ' + ph.toFixed(1).replace(/\.0$/, '') + '<br><span style="color:#ff6b6b">●</span> H⁺ <b>' + fmt(trueH) + '</b> · <span style="color:#6ba5ff">●</span> OH⁻ <b>' + fmt(trueO) + '</b> (pH 7일 때 각 1개 기준)<br>' + (extra || '') + (sat ? '너무 많아 다 못 그려요. 그래서 로그(pH) 눈금을 써요!' : 'pH가 1 내려가면 H⁺ 수는 10배예요.');
+        if (txt !== lastTxt) { lastTxt = txt; info(txt); }
       }
-      function fmt(x) { return x >= 1e6 ? '아주 많아요' : x >= 0.7 ? Math.round(x) + '개' : '거의 없어요'; }
-      const rg = controls.range('pH', 1, 13, 1, pH, (v) => { pH = +v; base = pH; wat = 0; show(); }, (v) => v);
-      controls.button('💧 물 10배 섞기', () => { if (pH === 7) return; pH = pH < 7 ? Math.min(7, pH + 1) : Math.max(7, pH - 1); rg.set(pH); show(); });
-      controls.button('↺ 처음', () => { pH = base; rg.set(pH); show(); });
+      const rowOf = () => { const r = document.querySelectorAll('.v3-player'); return r[r.length - 1]; };
+      const plE = controls.player({ duration: 10, loop: true, label: 'pH 바꾸기', phases: [[0, 'pH 1 · 강산'], [0.25, 'pH 7 · 중성'], [0.5, 'pH 13 · 강염기'], [0.75, 'pH 7 · 중성']], onFrame(p) { pE = p; own = p > 0 ? 'e' : (own === 'e' ? null : own); } });
+      const rowE = rowOf();
+      const plD = controls.player({ duration: 9, loop: true, label: '10배씩 묽히기', phases: [[0, '처음 용액'], [0.1, '묽히는 중'], [0.75, '7번 묽힘'], [0.88, '처음으로']], onFrame(p) { pD = p; own = p > 0 ? 'd' : (own === 'd' ? null : own); } });
+      const rowD = rowOf();
+      const dilPHc = (sub, s) => { const c = Math.pow(10, -(s + 1)), x = (c + Math.sqrt(c * c + 4e-14)) / 2, p = -Math.log10(x); return sub === 'hcl' ? p : 14 - p; };
       show();
       return {
         update(dt, t) {
-          try { const e = window.__sim && window.__sim.S && window.__sim.S.ex; if (e && typeof e.pH === 'number') { if (last2d === null) last2d = e.pH; else if (e.pH !== last2d) { last2d = e.pH; pH = base = e.pH; rg.set(pH); show(); } } } catch (x) { /* 2D 상태를 읽지 못하면 무시 */ }
+          const Z = ctx.lesson();
+          if (Z) {
+            const S = Z.S, mode = S.mode;
+            rowE.style.display = mode === 'exp' ? '' : 'none'; rowD.style.display = mode === 'dil' ? '' : 'none';
+            if (mode !== 'exp' && plE.playing) plE.pause(); if (mode !== 'dil' && plD.playing) plD.pause();
+            const sg = [mode, S.ex.pH, S.dp.sub, S.dp.step.hcl, S.dp.step.naoh].join('|'); if (sg !== sig) { sig = sg; if (own) { own = null; plE.pause(); plE.set(0); plD.pause(); plD.set(0); } }
+            let np = pH, extra = '';
+            if (mode === 'exp') { np = own === 'e' ? 7 - 6 * Math.cos(2 * Math.PI * pE) : S.ex.pH; }
+            else if (mode === 'calc') np = S.pc.pH;
+            else if (mode === 'dil') {
+              const sub = S.dp.sub; np = own === 'd' ? dilPHc(sub, 7 * (pD < 0.1 ? 0 : pD < 0.75 ? sm((pD - 0.1) / 0.65) : pD < 0.88 ? 1 : 1 - sm((pD - 0.88) / 0.12))) : S.dp.meter;
+              extra = (sub === 'hcl' ? '염산(HCl)' : '수산화 나트륨(NaOH)') + ' 10배 희석 · ';
+            }
+            if (Math.abs(np - pH) > 1e-4 || extra !== info0) { pH = np; info0 = extra; show(extra); }
+          }
           const [nh, no] = counts();
           [[mH, pts.h, nh], [mO, pts.o, no]].forEach(([m, arr, n]) => {
             for (let i = 0; i < n; i++) { const p = arr[i]; dum.position.set(p.x + Math.sin(t * p.sp + p.ph) * 0.12, p.y + Math.cos(t * p.sp * 1.3 + p.ph) * 0.12, p.z + Math.sin(t * p.sp * 0.8 + p.ph * 2) * 0.12); dum.scale.setScalar(n > 300 ? 0.075 : n > 40 ? 0.1 : 0.15); dum.updateMatrix(); m.setMatrixAt(i, dum.matrix); }

@@ -11,6 +11,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHN ? 21 : 16, theta: 0.0, phi: 1.3, min: 6, max: 32, target: [2.5, 1.2, 0] },
     autoRotate: 0,
+    levels: [0, 3],           // 뉴런(단계 1) · 무조건 반사(단계 4)에서 3D로 시작해요. 뇌의 부분 짝짓기·자 잡기 반응 시간 재기는 2D 화면에서 해요
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
       const V3 = THREE.Vector3;
@@ -71,35 +72,54 @@
         const names2 = segs.map((s, i) => (i === seg && tPath >= 0 && !done ? '<b>' + s[0] + '</b>' : s[0]));
         info('<b>' + (rpath === 'reflex' ? '반사' : '의식적 반응') + '</b> (' + (rpath === 'reflex' ? '뇌를 거치지 않아요 → 더 빨라요' : '뇌가 판단해서 → 더 느려요') + ')<br>자극 → ' + names2.join(' → ') + ' → 반응');
       }
-      function setMode(m) { mode = m; nG.visible = m === 'neuron'; rG.visible = m === 'reflex'; pulse.visible = false; tPath = -1; done = false; react = 0; labelsShow(); orbit.tx = m === 'neuron' ? 4.8 : 2.4; orbit.ty = m === 'neuron' ? 0 : 1.3; orbit.dist = m === 'neuron' ? (PHN ? 24 : 15.5) : (PHN ? 21 : 16); if (m === 'neuron') info('<b>뉴런(신경 세포)</b>: 자극은 <b>가지 돌기 → 신경 세포체 → 축삭 돌기 → 축삭 말단</b> 방향으로만 전달돼요.<br>말이집이 있으면 자극이 랑비에 결절을 건너뛰며 빨리 전달돼요.'); else { segs = makePath(); rinfo(); } sw(); }
+      function sw() { if (typeof mb !== 'undefined') mb.style.display = mode === 'neuron' ? '' : 'none'; }
+      function setMode(m) { mode = m; nG.visible = m === 'neuron'; rG.visible = m === 'reflex'; pulse.visible = false; tPath = -1; done = false; react = 0; labelsShow(); orbit.tx = m === 'neuron' ? 4.8 : 2.4; orbit.ty = m === 'neuron' ? 0 : 1.3; orbit.dist = m === 'neuron' ? (PHN ? 24 : 15.5) : (PHN ? 21 : 16); if (m === 'neuron') info('<b>뉴런(신경 세포)</b>: 자극은 <b>가지 돌기 → 신경 세포체 → 축삭 돌기 → 축삭 돌기 끝</b> 방향으로만 전달돼요.<br>말이집이 있으면 자극이 랑비에 결절을 건너뛰며 빨리 전달돼요.'); else { segs = makePath(); rinfo(); } sw(); }
       function labelsShow() { labs.n.forEach((l) => l.show(names && mode === 'neuron')); labs.r.forEach((l) => l.show(names && mode === 'reflex')); stepLab.show(false); }
-      controls.segment('보기', [{ value: 'neuron', label: '뉴런' }, { value: 'reflex', label: '반사궁' }], mode, setMode);
-      const sb = controls.segment('경로', [{ value: 'reflex', label: '반사(뜨거운 것)' }, { value: 'brain', label: '의식적 반응' }], rpath, (v) => { rpath = v; if (mode === 'reflex') { segs = makePath(); tPath = -1; done = false; react = 0; pulse.visible = false; rinfo(); } });
-      const stim = controls.button('⚡ 자극 주기', () => { if (mode === 'neuron') { nT = 0; pulse.visible = true; } else play(); });
       const mb = controls.button('말이집 ✓', () => { myelin = !myelin; mb.textContent = '말이집 ' + (myelin ? '✓' : '✕'); sheath.visible = myelin; }); mb.classList.add('on');
       const nb = controls.button('이름 ✓', () => { names = !names; nb.textContent = '이름 ' + (names ? '✓' : '✕'); labelsShow(); }); nb.classList.add('on');
-      function sw() { mb.style.display = mode === 'neuron' ? '' : 'none'; if (sb.set) { /* 세그먼트는 그대로 둠 */ } }
-      let nT = -1;
+      /* ▶ 신호 전달: 2D 화면과 같은 장면 (뉴런 · 뉴런 연결 · 자 잡기 · 반사). p로만 움직여서 진행 막대로 골라 볼 수 있어요 */
+      let first = true, p3 = 0, reflexRF = null;
+      const pl = controls.player({
+        duration: 6, loop: true, label: '신호 전달',
+        phases: [[0, '자극'], [0.08, '① 가지 돌기 → 축삭 돌기'], [0.85, '반응']],
+        onFrame(p) {
+          p3 = p; if (first) return;
+          const L = ctx.lesson(); if (!L || !L.S || p > 0.05) return;
+          if (mode === 'neuron' && L.S.scene === 'neuron' && L.fireStim) L.fireStim();
+          else if (L.S.scene === 'reflex' && L.S.scene && L.RF && L.RF.t < 0 && L.runReflex) L.runReflex();
+        },
+      });
+      first = false;
+      function sceneOf(L) {
+        const S = L && L.S ? L.S.scene : 'neuron';
+        if (S === 'neuron') return (L.NV && L.NV.view === 'chain') ? ['reflex', 'reflex'] : ['neuron', 'reflex'];
+        if (S === 'ruler') return ['reflex', 'brain'];
+        return ['reflex', 'reflex'];
+      }
+      let key = '';
       setMode('neuron');
       return {
         update(dt, t) {
-          flame.scale.y = 1 + Math.sin(t * 9) * 0.08; flame2.scale.y = 1 + Math.sin(t * 12) * 0.12; flame.visible = flame2.visible = mode === 'reflex';
-          if (mode === 'neuron' && nT >= 0) {
-            nT += dt * (myelin ? 0.2 : 0.075); const f = Math.min(1, nT);
-            const e = myelin ? f : f; const p = nPath.getPointAt(Math.min(0.999, e)); pulse.position.copy(p); pulse.scale.setScalar(1 + 0.25 * Math.sin(t * 14));
-            if (nT > 1.15) { nT = -1; pulse.visible = false; }
+          const L = ctx.lesson(), sc = sceneOf(L), k = sc.join('|') + '|' + (L && L.RF ? L.RF.mode : '') + '|' + (L && L.S ? L.S.scene : '');
+          if (k !== key) {
+            key = k;
+            if (sc[0] !== mode) setMode(sc[0]);
+            if (sc[1] !== rpath) { rpath = sc[1]; }
+            segs = makePath(); done = false; react = 0; tPath = -1; pulse.visible = false; mb.style.display = mode === 'neuron' ? '' : 'none';
+            const M = L && L.RFM && L.S && L.S.scene === 'reflex' ? L.RFM[L.RF.mode] : null;
+            flame.visible = flame2.visible = mode === 'reflex' && (!M || L.RF.mode === 'hot');
+            if (mode === 'reflex') { rinfo(); if (M) info('<b>' + M.name + '</b> (' + M.center + '이 중추 · 뇌를 거치지 않아요 → 더 빨라요)<br>자극 → 감각 신경 → <b>' + M.center + '</b> → 운동 신경 → 반응<br><span style="opacity:.85">' + M.note + '</span>'); }
           }
-          if (mode === 'reflex') {
-            if (tPath >= 0 && !done) {
-              const S = segs[seg], cu = S[2];
-              if (hold > 0) hold -= dt; else { segT += dt * 0.42 / Math.max(1, cu.getLength() / 3.5); if (segT >= 1) { segT = 1; seg++; segT = 0; hold = 0.28; if (seg >= segs.length) { done = true; react = 1; pulse.visible = false; } rinfo(); } }
-              if (!done) { const pp = segs[Math.min(seg, segs.length - 1)][2].getPointAt(Math.min(0.999, segT)); pulse.position.copy(pp); pulse.scale.setScalar(1 + 0.2 * Math.sin(t * 14)); stepLab.set(segs[Math.min(seg, segs.length - 1)][0]); stepLab.show(names); }
-            }
-            if (done) { stepLab.show(false); react = Math.max(0, react - dt * 0.35); }
-            const r = done ? Math.min(1, (2 - react * 1.6)) : 0; const k = done ? Math.min(1, Math.max(0, 1 - react * 1.2)) : 0;
-            muscle.scale.y = 1 - 0.25 * k; finger.position.x = 5.6 - 1.6 * k; finger.position.y = 3.6 + 0.9 * k; finger.rotation.z = 0.5 * k;
-            if (!done && tPath < 0) { muscle.scale.y = 1; finger.position.set(5.6, 3.6, 0); finger.rotation.z = 0; }
-            if (done && react <= 0) { tPath = -1; done = false; muscle.scale.y = 1; finger.position.set(5.6, 3.6, 0); finger.rotation.z = 0; rinfo(); }
+          flame.scale.y = 1 + Math.sin(t * 9) * 0.08; flame2.scale.y = 1 + Math.sin(t * 12) * 0.12;
+          if (mode === 'neuron') {
+            const f = Math.max(0, Math.min(1, (p3 - 0.08) / 0.77)); pulse.visible = p3 > 0.08 && p3 < 0.9; const pp = nPath.getPointAt(Math.min(0.999, f)); pulse.position.copy(pp); pulse.scale.setScalar(1 + 0.25 * Math.sin(t * 14));
+          } else {
+            const u = Math.max(0, Math.min(1, (p3 - 0.08) / 0.72)) * segs.length, sg = Math.min(segs.length - 1, Math.floor(u)), st = Math.min(0.999, u - sg);
+            const moving = p3 > 0.08 && p3 < 0.8;
+            pulse.visible = moving; if (moving) { pulse.position.copy(segs[sg][2].getPointAt(st)); pulse.scale.setScalar(1 + 0.2 * Math.sin(t * 14)); stepLab.set(segs[sg][0]); stepLab.show(names); } else stepLab.show(false);
+            if (moving && sg !== seg) { seg = sg; rinfo(); }
+            const kk = p3 < 0.8 ? 0 : p3 < 0.9 ? (p3 - 0.8) / 0.1 : 1 - (p3 - 0.9) / 0.1;
+            muscle.scale.y = 1 - 0.25 * kk; finger.position.x = 5.6 - 1.6 * kk; finger.position.y = 3.6 + 0.9 * kk; finger.rotation.z = 0.5 * kk;
           }
         },
       };

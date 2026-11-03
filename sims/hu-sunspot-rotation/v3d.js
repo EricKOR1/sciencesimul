@@ -31,12 +31,15 @@
   window.SciSim3D.attach({
     title: '태양의 차등 자전 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    levels: [0, 2],
+    levels: [2],
     camera: { dist: PHONE ? 17 : 12.5, theta: 0.0, phi: 1.28, min: 5, max: 20 },
     autoRotate: 0,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
-      const st = { day: 0, play: true, rate: 3, rigid: false, grid: true };
+      const st = { day: 0, P: 0, key: '' };
+      const W = () => window.__sim || {};
+      const DFLT = [{ phi: 5, l0: -40, om: 13.4, col: '#2563eb' }, { phi: 20, l0: -30, om: 13.1, col: '#16a34a' }, { phi: 35, l0: -35, om: 12.6, col: '#d97706' }, { phi: 45, l0: -25, om: 12.1, col: '#dc2626' }];
+      const SP = (W().SP4 && W().SP4.length === 4) ? W().SP4 : DFLT;
       const sunG = new THREE.Group(); sunG.rotation.x = 0.12; root.add(sunG);       // 자전축을 조금 기울여요
 
       /* 태양: 테두리가 어두워지는 쉐이더 */
@@ -60,54 +63,61 @@
       const axis = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, RS * 2.7, 8), new THREE.MeshBasicMaterial({ color: 0xcfd8ff, transparent: true, opacity: 0.55 })); sunG.add(axis);
       const labN = label('북극', [0, RS * 1.38, 0], { size: 11.5 }), labE = label('적도', [RS * 1.03, 0, 0], { size: 11.5 });
 
-      /* 흑점 줄: 같은 경도에서 출발 */
-      const LATS = [-60, -45, -30, -15, 0, 15, 30, 45, 60];
-      const spots = LATS.map((lat) => {
+      /* 흑점 4개 (2D '위도별 흑점 주기'의 흑점: 위도 5° · 20° · 35° · 45°) — 지구에서 본 하루 이동 각도(회합)로 움직여요 */
+      const SPOT_N = ['①', '②', '③', '④'];
+      const spots = SP.map((sp, i) => {
         const g = new THREE.Group();
-        const pen = new THREE.Mesh(new THREE.CircleGeometry(0.19, 28), new THREE.MeshBasicMaterial({ color: 0x8a3b12, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -2 }));
-        const um = new THREE.Mesh(new THREE.CircleGeometry(0.1, 24), new THREE.MeshBasicMaterial({ color: 0x1b0c05, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -4 })); um.position.z = 0.002;
-        g.add(pen, um); sunG.add(g); return { g, lat };
+        const pen = new THREE.Mesh(new THREE.CircleGeometry(0.2, 28), new THREE.MeshBasicMaterial({ color: 0x8a3b12, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -2 }));
+        const um = new THREE.Mesh(new THREE.CircleGeometry(0.11, 24), new THREE.MeshBasicMaterial({ color: 0x1b0c05, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -4 })); um.position.z = 0.002;
+        const ring = new THREE.Mesh(new THREE.RingGeometry(0.23, 0.29, 28), new THREE.MeshBasicMaterial({ color: new THREE.Color(sp.col), side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -6 })); ring.position.z = 0.003;
+        g.add(pen, um, ring); sunG.add(g);
+        const lb = label('위도 ' + sp.phi + '°', g, { size: 11.5, color: 'rgba(15,20,40,.85)' }); lb.off = [0, 0.45, 0];
+        return { g, lat: sp.phi, lon0: sp.l0, om: sp.om, lb };
       });
-      /* 흑점이 지나간 자리(꼬리)와 비교용 '한 덩어리로 도는' 점 */
       const trailG = new THREE.Group(); sunG.add(trailG);
-      const tg = new THREE.SphereGeometry(0.035, 8, 6), tm = new THREE.MeshBasicMaterial({ color: 0xffffff });
-      const trailN = 30, trails = LATS.map(() => { const arr = []; for (let k = 0; k < trailN; k++) { const m = new THREE.Mesh(tg, tm); m.visible = false; trailG.add(m); arr.push(m); } return arr; });
-      const refLine = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(Array.from({ length: 40 }, (_, k) => { const lat = (k / 39 * 2 - 1) * 70 * DEG; return new THREE.Vector3(RS * 1.012 * Math.cos(lat), RS * 1.012 * Math.sin(lat), 0); })), 60, 0.018, 6, false), new THREE.MeshBasicMaterial({ color: 0x7ee0ff }));
-      sunG.add(refLine);
-
-      label('출발선(하늘색)', [0, RS * 0.98, RS * 0.6], { size: 11.5, color: 'rgba(14,100,140,.92)' });
+      const tg = new THREE.SphereGeometry(0.035, 8, 6);
+      const trailN = 24, trails = SP.map((sp) => { const tm = new THREE.MeshBasicMaterial({ color: new THREE.Color(sp.col) }); const arr = []; for (let k = 0; k < trailN; k++) { const m = new THREE.Mesh(tg, tm); m.visible = false; trailG.add(m); arr.push(m); } return arr; });
       const place = (lat, lon, r) => { const la = lat * DEG, lo = lon * DEG; return [r * Math.cos(la) * Math.sin(lo), r * Math.sin(la), r * Math.cos(la) * Math.cos(lo)]; };   // lon 0 = +z (정면)
-      const SW = (l) => (st.rigid ? omSid(0) : omSid(l));
-      const o = new THREE.Object3D(), nrm = new THREE.Vector3();
+      const nrm = new THREE.Vector3();
       function put(g, lat, lon, r) {
         const p = place(lat, lon, r); g.position.set(p[0], p[1], p[2]); nrm.set(p[0], p[1], p[2]).normalize();
         g.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), nrm);
       }
       function text() {
-        const days = Math.round(st.day), eq = 360 / omSid(0), hi = 360 / omSid(60);
-        info('<b>' + days + '일 지났어요</b><br>' + (st.rigid ? '한 덩어리로 돈다면 모두 같은 줄을 유지해요. 실제 태양은 그렇지 않아요.' : '적도 <b>약 ' + eq.toFixed(0) + '일</b>, 위도 60° <b>약 ' + hi.toFixed(0) + '일</b> 에 한 바퀴 돌아요 → 줄이 어긋나요.'));
+        const q = W(), free = !!(q.game && q.game.free);
+        let h = '<b>경과 ' + st.day.toFixed(1) + '일</b> · 흑점 4개 (위도 ' + SP.map((s) => s.phi + '°').join(' · ') + ')<br>태양은 기체라서 위도마다 도는 빠르기가 달라요(<b>차등 자전</b>): 같은 줄에서 출발해도 높은 위도의 흑점이 점점 뒤처져요.';
+        if (free) h += '<br>회합 주기 ' + SP.map((s) => '<b>' + (360 / s.om).toFixed(1) + '일</b>').join(' · ');
+        info(h);
       }
-      const bP = controls.button('⏸ 멈춤', () => { st.play = !st.play; bP.textContent = st.play ? '⏸ 멈춤' : '▶ 재생'; });
-      const rD = controls.range('날짜', 0, 90, 1, 0, (v) => { st.day = v; st.play = false; bP.textContent = '▶ 재생'; }, (v) => v + '일');
-      const bR = controls.button('한 덩어리로 돌면? ✕', () => { st.rigid = !st.rigid; bR.classList.toggle('on', st.rigid); bR.textContent = '한 덩어리로 돌면? ' + (st.rigid ? '✓' : '✕'); st.day = 0; text(); });
-      controls.button('↺ 처음으로', () => { st.day = 0; st.play = true; bP.textContent = '⏸ 멈춤'; });
+      /* ▶ 재생: 위성 영상을 합성하듯 0~7일을 보여 줘요 (2D '경과일' 슬라이더와 같은 값) */
+      let syncing = false, ready = false;
+      const player = controls.player({
+        duration: 10, loop: true, autoplay: true, label: '재생',
+        phases: [[0, '0일'], [0.5, '3.5일'], [0.9, '7일']],
+        onFrame(p) { st.P = p; st.day = 7 * p; if (ready && !syncing) { try { const q = W(), S = q.S; if (S && S.df && (S.view === 'compose' || S.view === 'diff')) { q.setCDay(7 * p, true); S.df.play = false; } } catch (e) {} } },
+      });
+      ready = true;
+      function follow() {
+        const q = W(), S = q.S; if (!S || !S.df) return;
+        if ((S.view === 'compose' || S.view === 'diff') && Math.abs(S.df.cDay - st.day) > 0.02 && (S.df.play || S.df.cDay > 0)) { syncing = true; player.set(S.df.cDay / 7); syncing = false; if (S.df.play) player.pause(); }
+        const k = (q.game && q.game.free) ? 1 : 0; if (k !== st.key) { st.key = k; text(); }
+      }
       text();
 
       let acc = 0;
       return {
         update(dt) {
-          if (st.play) { st.day += dt * st.rate; if (st.day > 90) st.day = 0; rD.set(Math.round(st.day)); }
+          follow();
           spots.forEach((s, i) => {
-            const lon = SW(s.lat) * st.day; put(s.g, s.lat, lon, RS * 1.003);
-                        /* 지나간 자리 (몇 개만) */
+            put(s.g, s.lat, s.lon0 + s.om * st.day, RS * 1.003);
             trails[i].forEach((m, k) => {
-              const back = (k + 1) * 2.2; if (st.day < back * 0.5) { m.visible = false; return; }
-              const l2 = SW(s.lat) * (st.day - back); m.visible = true; const p = place(s.lat, l2, RS * 1.006); m.position.set(p[0], p[1], p[2]);
+              const back = (k + 1) * 0.3; if (st.day < back) { m.visible = false; return; }
+              m.visible = true; const p = place(s.lat, s.lon0 + s.om * (st.day - back), RS * 1.006); m.position.set(p[0], p[1], p[2]);
             });
           });
           acc += dt; if (acc > 0.2) { acc = 0; text(); }
         },
-        sync() {},
+        sync() { follow(); },
       };
     },
   });

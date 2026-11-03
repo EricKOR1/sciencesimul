@@ -965,7 +965,7 @@
   });
 
   window.__sim = {
-    S, VW, VH, ANA_CARDS, FORM_CARDS, CHAIN, CELLS, get game() { return game; }, setScene, atpCount, rnum, atpOf, heatOf, tempOf,
+    S, VW, VH, AP, PHONE, ANA_CARDS, FORM_CARDS, CHAIN, CELLS, get game() { return game; }, setScene, atpCount, rnum, atpOf, heatOf, tempOf,
     stepAll(sec) { const n = Math.ceil(sec / 0.02); for (let i = 0; i < n; i++) { if (S.mode === 'react') stepReact(0.02); else if (S.mode === 'energy') stepEnergy(0.02); else if (S.mode === 'atp') stepAtp(0.02); else stepApply(0.02); } },
   };
 

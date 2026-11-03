@@ -1,7 +1,8 @@
 /* he-severe-weather · 3D 뇌우(적란운)의 일생
    적운 → 성숙 → 소멸 단계에서 상승 기류·하강 기류·비·모루 구름이 어떻게 달라지는지 입체로 봐요.
    성숙 단계에서는 구름 속 전하 분리와 번개(⚡), 번쩍 뒤 천둥까지 걸린 시간으로 거리를 어림하는 것도 볼 수 있어요.
-   2D 실험의 단계(S.stage)를 읽어 따라가요(읽기 전용). */
+   2D의 발달 단계 슬라이더(S.stage)와 서로 같이 움직이고, ⚡ 번개는 2D의 번개·천둥 시계와 같은 번개예요(번쩍 → 천둥까지의 시간 × 340 m/s = 거리).
+   ▶ 재생: 적운 → 성숙 → 소멸 단계를 한 바퀴 돌려 봐요. */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -58,8 +59,17 @@
       const cur = Object.assign({}, STG[1]);
       const rdS = () => { try { const s = window.__sim && window.__sim.S; return s && s.mode === 'storm' && s.stage >= 1 && s.stage <= 3 ? s.stage : null; } catch (e) { return null; } };
       let lastSim = rdS(); if (lastSim) { st = lastSim; Object.assign(cur, STG[st]); }
-      const seg = controls.segment('단계', [{ value: 1, label: '적운' }, { value: 2, label: '성숙' }, { value: 3, label: '소멸' }], st, (v) => { st = v; text(); });
-      controls.button('⚡ 번개 치게 하기', () => { if (st !== 2) { st = 2; seg.set(2); text(); wait = 1.2; } else wait = 0; });
+      const L2 = () => window.__sim || null;
+      const set2D = (v) => { try { const l = L2(); if (l && l.setStage && l.S && l.S.stage !== v) { l.setStage(v); lastSim = v; } } catch (e) {} };
+      const seg = controls.segment('단계', [{ value: 1, label: '적운 단계' }, { value: 2, label: '성숙 단계' }, { value: 3, label: '소멸 단계' }], st, (v) => { if (pl) pl.pause(); st = v; set2D(v); text(); });
+      let pl = null;
+      controls.button('⚡ 번개 치게 하기', () => { if (pl) pl.pause(); if (st !== 2) { st = 2; seg.set(2); set2D(2); text(); wait = 1.2; } else wait = 0; });
+      pl = controls.player({
+        duration: 12, loop: true, autoplay: false, label: '뇌우의 일생',
+        phases: [[0, '적운 단계'], [1 / 3, '성숙 단계'], [2 / 3, '소멸 단계']],
+        onFrame(p) { const v = p < 1 / 3 ? 1 : p < 2 / 3 ? 2 : 3; if (v !== st) { st = v; seg.set(v); set2D(v); pendingInfo = ''; text(); } },
+      });
+      pl.pause();
       function text() {
         const t = ['', '<b>적운 단계</b>: 상승 기류만 있어요. 구름이 위로 자라요.', '<b>성숙 단계</b>: 상승·하강 기류가 함께 있어요. 비·우박·번개가 가장 심해요.', '<b>소멸 단계</b>: 하강 기류가 우세해요. 상승 기류가 약해져 비가 줄고 구름이 흩어져요.'];
         info(pendingInfo || t[st]);
@@ -69,7 +79,8 @@
         for (let i = 0; i <= n; i++) { const f = i / n; pts.push(new THREE.Vector3(x0 + (i % 2 ? 1 : -1) * (i > 0 && i < n ? 0.18 + rnd() * 0.2 : 0) + f * 0.6, lerp(BASE + 0.1, 0.05, f), z0 + (rnd() - 0.5) * 0.15)); }
         bolt.geometry.dispose(); bolt.geometry = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts, false, 'catmullrom', 0.3), 40, 0.05, 6, false);
         bolt.visible = true; flash = 1; strikeT = 0;
-        pendingInfo = '번쩍! <b>3초</b> 뒤에 천둥이 들리면 번개는 약 <b>1 km</b> 거리예요. (소리는 1초에 약 340 m)<br>성숙 단계에서는 번개가 쳐요.';
+        try { const l = L2(); if (l && l.strike && l.S && (!l.S.thunder || l.S.thunder.arrived)) l.strike(); } catch (e) {}
+        pendingInfo = '번쩍! 천둥이 들릴 때까지 걸린 시간(초) × 340 m/s = 번개까지의 거리예요. (예: 5초 → 1.7 km)<br>2D 화면의 시계로 시간을 재 보세요.';
         text(); setTimeout(() => { pendingInfo = ''; text(); }, 5000);
       }
       text();

@@ -79,11 +79,11 @@
         const n = cols.length; for (let i = 0; i < 16; i++) { c.fillStyle = cols[Math.floor(r() * n)]; c.fillRect(0, i * h / 16, w, h / 16 + 1); }
         c.globalAlpha = 0.25; for (let i = 0; i < 60; i++) { c.fillStyle = cols[Math.floor(r() * n)]; c.beginPath(); c.ellipse(r() * w, r() * h, 8 + r() * 25, 2 + r() * 4, 0, 0, 7); c.fill(); } c.globalAlpha = 1; }); }
 
-      const NMAX = 90, PR = 0.15, A = 1.8;           // 상자 한 변의 절반
-      const st = { n: 30, T: 20, mode: 'box', hits: 0, rate: 0, tm: 0, pr: 1, mark: true };
+      const NMAX = 120, PR = 0.15, A = 1.8;           // 상자 한 변의 절반
+      const st = { n: 40, T: 20, mode: 'box', hits: 0, rate: 0, tm: 0, pr: 1, mark: true, sc: 'box' };
       const V0 = Math.pow(2 * A, 3);
       const speedOf = (T) => 2.4 * Math.sqrt((T + 273) / 293);
-      const balR = () => 1.55 + 0.75 * (st.n - 10) / 80;
+      const balR = () => 0.9 + 1.3 * Math.sqrt(Math.max(0, Math.min(1, (st.n - 10) / 80)));
       const volume = () => st.mode === 'box' ? V0 : 4 / 3 * Math.PI * Math.pow(balR(), 3);
 
       /* 용기: 상자(유리) / 풍선(고무막) */
@@ -102,23 +102,35 @@
 
       /* 압력계 */
       const GX = 5.1, GY = -0.3;
-      const gauge = makeDial(1.15, 4, '상대 압력', 0.2, 1); gauge.position.set(GX, GY, 0); root.add(gauge);
+      const gauge = makeDial(1.15, 4, '기압', 0.2, 1); gauge.position.set(GX, GY, 0); root.add(gauge);
       const gst = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.4, 0.9, 20), mat(0x8b95a7, { metalness: 0.5 })); gst.position.set(GX, GY - 1.45, 0); root.add(gst);
-      label('압력', [GX, GY + 1.55, 0], { size: 12.5 });
+      const gaugeLab = { visible: true }; const gaugeLabel = label('압력 (기압)', [GX, GY + 1.55, 0], { size: 12.5 }); const gstEl = gst;
 
       function applyMode() {
         const isBox = st.mode === 'box';
         box.visible = isBox; bal.visible = knot.visible = !isBox; stand.position.y = (isBox ? -A : -balR()) - 0.35;
         for (let i = 0; i < NMAX; i++) { const p = P[i]; if (!isBox) { const r = balR() - PR, d = Math.hypot(p.x, p.y, p.z); if (d > r) { p.x *= r / d * 0.95; p.y *= r / d * 0.95; p.z *= r / d * 0.95; } } }
       }
+      let lastTxt = '';
       function text() {
-        info('입자 <b>' + st.n + '개</b> · 온도 <b>' + st.T + ' °C</b> · 벽에 <b>초당 약 ' + Math.round(st.rate) + '번</b> 부딪혀요<br>상대 압력 <b>' + st.pr.toFixed(2) + '</b><br>' + (st.mode === 'box' ? '부딪히는 횟수가 많을수록 압력이 커져요.' : '공기를 더 넣으면 압력이 커져 풍선이 부풀어요.'));
+        const n = st.n, sc = st.sc;
+        let h;
+        if (sc === 'block') h = '<b>기체의 압력</b>은 입자가 벽에 부딪혀 생겨요. (벽돌과 눈 · 압력의 뜻은 2D 화면에서 알아봐요)';
+        else if (sc === 'box') h = '기체 입자는 <b>모든 방향</b>으로 끊임없이 움직여요. 입자 사이는 <b>빈 공간</b>이에요. 주황색 입자 하나를 따라가 보세요.';
+        else if (sc === 'balloon') h = '입자 <b>' + n + '개</b>가 풍선 안쪽 벽에 <b>모든 방향</b>으로 충돌해서 풍선이 <b>둥글게</b> 부풀어요.<br>공기를 넣을수록 입자 수가 많아져 충돌 횟수(초당 약 ' + Math.round(st.rate) + '번)가 늘고 풍선이 커져요.';
+        else h = '입자 <b>' + n + '개</b> · 벽에 <b>초당 약 ' + Math.round(st.rate) + '번</b> 부딪혀요 · 압력 <b>' + st.pr.toFixed(2) + ' 기압</b><br>기체의 압력은 입자가 벽에 <b>충돌</b>하여 생기고 <b>모든 방향</b>으로 작용해요. 충돌 횟수가 많을수록 압력이 커요.<br>공기를 넣는 것은 옆의 2D 조작판(🫧 공기 넣기)에서 해요.';
+        if (h !== lastTxt) { lastTxt = h; info(h); }
       }
-      function calcP() { st.pr = (st.n / 30) * Math.sqrt((st.T + 273) / 293) / (volume() / V0 * (st.mode === 'box' ? 1 : 0.9)); }
+      function calcP() { st.pr = st.n / 40; }
 
-      controls.segment('용기', [{ value: 'box', label: '▣ 상자' }, { value: 'bal', label: '🎈 풍선' }], 'box', (v) => { st.mode = v; applyMode(); });
-      const rn = controls.range('입자 수', 10, NMAX, 5, st.n, (v) => { st.n = v; applyMode(); }, (v) => v + '개');
-      const rt = controls.range('온도', -50, 150, 5, st.T, (v) => { st.T = v; }, (v) => v + ' °C');
+      /* ▶ 재생: 공기를 넣어 입자 수가 늘면 충돌이 늘고 압력이 커져요 (40 → 100개 → 처음으로) */
+      let pmode = false, built = false, pP = 0, sig = '';
+      const pl = controls.player({
+        duration: 9, loop: true, autoplay: false, label: '재생', phases: [[0, '']],
+        onFrame(p) { if (!built) return; pmode = true; pP = p; },
+      });
+      built = true;
+      const sm = (x) => { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); };
       const markB = controls.button('💥 충돌 표시', () => { st.mark = !st.mark; markB.classList.toggle('on', st.mark); }); markB.classList.add('on');
       applyMode(); calcP(); gauge.userData.set(st.pr); text();
       const wallLab = label('', [0, A + 0.5, 0], { size: 12, color: 'rgba(61,109,242,.9)' }); wallLab.set('입자가 벽에 부딪혀요');
@@ -126,6 +138,18 @@
       let smoothR = balR();
       return {
         update(dt, t) {
+          const l = ctx.lesson && ctx.lesson(), S = l && l.S, sc = S ? S.scene : 'membrane';
+          const key = [sc, l ? l.n : 0].join();
+          if (key !== sig) { sig = key; if (pmode) { pmode = false; pl.pause(); } }
+          const ph = document.querySelector('.v3-player .v3-ph');
+          let nn;
+          if (pmode) { const q = pP < 0.7 ? sm(pP / 0.7) : 1 - sm((pP - 0.85) / 0.15); nn = Math.round(40 + 60 * q); if (ph) ph.textContent = pP < 0.7 ? '공기를 넣어요' : pP < 0.85 ? '압력이 커졌어요' : '처음으로'; }
+          else { nn = l ? Math.min(NMAX, l.n) : 40; if (ph) ph.textContent = ''; }
+          const mode0 = (pmode ? (sc === 'balloon' ? 'bal' : 'box') : (sc === 'balloon' ? 'bal' : 'box'));
+          st.sc = pmode && sc !== 'balloon' ? 'membrane' : sc; st.n = nn;
+          if (mode0 !== st.mode) { st.mode = mode0; }
+          applyMode();
+          gauge.visible = gstEl.visible = gaugeLab.visible = (st.sc === 'membrane' || st.sc === 'balloon');
           const isBox = st.mode === 'box', sp = speedOf(st.T), h = Math.min(dt, 0.05) / 2, n = st.n;
           smoothR += (balR() - smoothR) * Math.min(1, dt * 4);
           const rr = smoothR - PR;
@@ -143,11 +167,13 @@
           }
           for (let i = 0; i < NMAX; i++) {
             if (i >= n) { put(ps, i, 0, -50, 0, 0.001); continue; }
-            const p = P[i]; p.hot = Math.max(0, p.hot - dt); put(ps, i, p.x, p.y, p.z, 1 + p.hot * 1.2); tint(ps, i, st.mark && p.hot > 0 ? 0xffb020 : 0x3d6df2);
+            const p = P[i]; p.hot = Math.max(0, p.hot - dt); put(ps, i, p.x, p.y, p.z, (i === 0 && st.sc === 'box' ? 1.6 : 1) + p.hot * 1.2); tint(ps, i, i === 0 && st.sc === 'box' ? 0xff8a1f : st.mark && p.hot > 0 ? 0xffb020 : 0x3d6df2);
           }
           flush(ps);
           if (!isBox) { bal.scale.setScalar(smoothR + 0.04 + 0.03 * Math.sin(t * 6)); knot.position.set(0, -smoothR - 0.12, 0); knot.rotation.x = Math.PI; stand.position.y = -smoothR - 0.65; }
-          st.tm += dt; if (st.tm >= 0.6) { st.rate = st.rate * 0.4 + 0.6 * (st.hits / st.tm); st.hits = 0; st.tm = 0; calcP(); gauge.userData.set(st.pr); text(); }
+          st.tm += dt; if (st.tm >= 0.6) { st.rate = st.rate * 0.4 + 0.6 * (st.hits / st.tm); st.hits = 0; st.tm = 0; calcP(); text(); }
+          gauge.userData.set(pmode ? st.pr : (S ? S.needle : st.pr));
+          gaugeLabel.show(gauge.visible);
           gauge.rotation.y = orbit.theta * 0.6;
         },
         sync() {},

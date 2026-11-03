@@ -79,13 +79,13 @@
   const phone = window.matchMedia && window.matchMedia('(max-width: 599px)').matches;
   window.SciSim3D.attach({
     title: '물의 전기 분해 3D',
-    hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
+    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 전압·전해질·전원은 2D와 똑같이 이어져요',
     camera: { dist: phone ? 22 : 17, theta: 0.45, phi: 1.2, min: 6, max: 34, target: [0, 3.3, 0] },
     autoRotate: 0,
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
       const L = makeLib(THREE);
-      let mode = 'dev', on = false, gas = 0, prog = 0, playing = false;
+      let mode = 'dev', on = false, gasH = 0, gasO = 0, prog = 0, own = null, pD = 0, pM = 0, sig = '', curmA = 0, elecOn = false, Vv = 9, runT = 0;
       const dev = new THREE.Group(), mm = new THREE.Group(); root.add(dev, mm);
       /* ---------- 장치 ---------- */
       const BR = 3.0, BH = 4.4;
@@ -109,7 +109,7 @@
         return { g, water, gasM };
       });
       // 눈금
-      tubes.forEach((T) => { for (let i = 0; i <= 6; i++) { const y = TB + 0.5 + i * 0.72; const t = new THREE.Mesh(new THREE.BoxGeometry(i % 2 ? 0.12 : 0.22, 0.02, 0.02), L.mat(0xe0ebff)); t.position.set(TR + 0.0, y, 0); T.g.add(t); } });
+      const CAP = 13.7; tubes.forEach((T, ti) => { for (let i = 0; i <= 13; i++) { const y = TT - i * (TT - TB) / CAP; const t = new THREE.Mesh(new THREE.BoxGeometry(i % 2 ? 0.12 : 0.22, 0.02, 0.02), L.mat(0xe0ebff)); t.position.set(ti ? TR : -TR, y, 0); T.g.add(t); } });
       // 전원 장치와 전선
       const bat = new THREE.Mesh(new THREE.BoxGeometry(2.6, 1.1, 1.4), new THREE.MeshStandardMaterial({ color: 0x2f3b57, roughness: 0.5, metalness: 0.2 })); bat.position.set(0, 0.55, 3.9); dev.add(bat);
       const sw = new THREE.Mesh(new THREE.SphereGeometry(0.2, 20, 14), new THREE.MeshStandardMaterial({ color: 0x555d6e, emissive: 0x000000 })); sw.position.set(0, 1.2, 3.9); dev.add(sw);
@@ -159,44 +159,61 @@
         lw.show(p < 0.15); lp.show(p > 0.9);
         mmInfo();
       }
+      let lastInfo = '';
+      const setInfo = (h) => { if (h !== lastInfo) { lastInfo = h; info(h); } };
       function mmInfo() {
-        info('<b>2H₂O → 2H₂ + O₂</b><br>O–H 결합 4개가 끊기고, H–H 결합 2개와 O=O 결합 1개가 새로 생겨요.<br>원자의 종류와 수는 그대로예요 (H 4개, O 2개).');
+        const names = ['① 물 분자 2개', '② O–H 결합이 끊어져요', '③ 새 짝을 찾아요', '④ H₂ 2개 + O₂ 1개'], st = prog < 0.17 ? 0 : prog < 0.5 ? 1 : prog < 0.85 ? 2 : 3;
+        setInfo('<b>2H₂O → 2H₂ + O₂</b> · ' + names[st] + ' (' + Math.round(prog * 100) + ' %)<br>O–H 결합 4개가 끊기고, H–H 결합 2개와 O=O 결합 1개가 새로 생겨요.<br>원자의 종류와 수는 그대로예요 (H 4개, O 2개).');
       }
       function devInfo() {
-        const h = gas, vh = Math.min(5, h * 2), vo = Math.min(5, h);
-        info('<b>물의 전기 분해</b> · 전원 ' + (on ? '<span style="color:#7be08a"><b>ON</b></span>' : 'OFF') + '<br>H₂ ' + (vh * 2).toFixed(0) + ' mL : O₂ ' + (vo * 2).toFixed(0) + ' mL' + (h > 0.8 ? ' = <b>2 : 1</b>' : '') + '<br>(−)극에서 H₂, (+)극에서 O₂가 생겨요. 부피비는 계수비와 같아요.');
+        const f1 = (v) => (Math.round(v * 10) / 10).toFixed(1);
+        setInfo('<b>물의 전기 분해</b> · ' + (elecOn ? '전해질 수용액' : '순수한 물') + ' · 전압 ' + Vv + ' V · 전원 ' + (on ? '<span style="color:#7be08a"><b>ON</b></span>' : 'OFF') + '<br>전류 ' + curmA + ' mA · 시간 ' + f1(runT) + '분<br>(−)극 H₂ <b>' + f1(gasH) + ' mL</b> : (+)극 O₂ <b>' + f1(gasO) + ' mL</b>' + (gasH > 0.4 ? ' = <b>2 : 1</b>' : '') + '<br>부피비는 계수비(2 : 1)와 같아요. (25 °C, 1 mol = 24.5 L)');
       }
       function setMode(m) {
         mode = m; dev.visible = m === 'dev'; mm.visible = m === 'mol';
         lc.show(m === 'dev'); la.show(m === 'dev'); lb.show(m === 'dev'); eqLab.show(m === 'mol'); lw.show(m === 'mol'); lp.show(m === 'mol'); lt.show(false);
         orbit.ty = m === 'dev' ? 3.3 : 0.3; orbit.dist = m === 'dev' ? (phone ? 22 : 17) : (phone ? 17 : 13);
-        bPow.style.display = m === 'dev' ? '' : 'none'; bClr.style.display = m === 'dev' ? '' : 'none'; bPlay.style.display = m === 'mol' ? '' : 'none'; rg.hide(m === 'dev');
+        rowD.style.display = m === 'dev' ? '' : 'none'; rowM.style.display = m === 'mol' ? '' : 'none';
+        if (m === 'dev') { if (plM.playing) plM.pause(); } else if (plD.playing) plD.pause();
         if (m === 'dev') devInfo(); else setProg(prog);
       }
-      controls.segment('보기', [{ value: 'dev', label: '실험 장치' }, { value: 'mol', label: '입자 모형' }], mode, setMode);
-      const bPow = controls.button('⚡ 전원 켜기', () => { on = !on; bPow.classList.toggle('on', on); bPow.textContent = on ? '⚡ 전원 끄기' : '⚡ 전원 켜기'; });
-      const bClr = controls.button('↺ 기체 비우기', () => { gas = 0; devInfo(); });
-      const bPlay = controls.button('▶ 반응 보기', () => { prog = 0; playing = true; });
-      const rgR = controls.range('진행', 0, 100, 1, 0, (v) => { prog = v / 100; playing = false; setProg(prog); }, (v) => v + '%');
-      const rgIn = document.querySelector('.v3-ctl input[type=range]'), rgLab = rgIn && rgIn.previousSibling;
-      const rg = { hide(h) { if (rgIn) { rgIn.style.display = h ? 'none' : ''; if (rgLab) rgLab.style.display = h ? 'none' : ''; } } };
+      const rowOf = () => { const r = document.querySelectorAll('.v3-player'); return r[r.length - 1]; };
+      const plD = controls.player({ duration: 10, loop: true, label: '8분 전기 분해', phases: [[0, '시작'], [0.02, '기체 모으는 중'], [0.8, '8분 완료'], [0.92, '장치 비우기']], onFrame(p) { pD = p; own = p > 0 ? 'dev' : (own === 'dev' ? null : own); } });
+      const rowD = rowOf();
+      const plM = controls.player({ duration: 9, loop: true, label: '반응 보기', phases: [[0, '① 물 분자 2개'], [0.17, '② 결합이 끊어져요'], [0.5, '③ 새 짝을 찾아요'], [0.85, '④ H₂ + O₂'], [0.97, '처음으로']], onFrame(p) { pM = p; own = p > 0 ? 'mol' : (own === 'mol' ? null : own); } });
+      const rowM = rowOf();
       setMode('dev');
       return {
         update(dt, t) {
           dt = Math.min(dt, 0.05);
+          const Z = ctx.lesson();
+          if (Z) {
+            const S2 = Z.S, want = S2.scene === 'model' ? 'mol' : 'dev';
+            const sg = [want, S2.V, S2.elec, S2.on, S2.run.t > 0 ? 1 : 0, S2.draining].join('|');
+            if (sg !== sig) { sig = sg; if (own) { const k = own === 'dev' ? plD : plM; own = null; k.pause(); k.set(0); } }
+            if (want !== mode) setMode(want);
+            Vv = S2.V; elecOn = S2.elec;
+            if (mode === 'dev') {
+              if (own === 'dev') {
+                const pp = pD < 0.8 ? pD / 0.8 : pD < 0.92 ? 1 : 1 - (pD - 0.92) / 0.08, ft = pp * 8, I = elecOn ? Z.curOf(Vv) : 0;
+                runT = ft; gasH = I > 0 ? Z.rateH(Vv) * ft : 0; gasO = I > 0 ? Z.rateO(Vv) * ft : 0; on = I > 0 && pD < 0.8; curmA = I;
+              } else { gasH = S2.gas.h; gasO = S2.gas.o; runT = S2.run.t; on = !!(S2.on && elecOn && Z.curOf(Vv) > 0 && !S2.draining && S2.run.t < 8); curmA = S2.on && elecOn ? Z.curOf(Vv) : 0; }
+            } else prog = own === 'mol' ? (pM < 0.97 ? pM / 0.97 : 1 - (pM - 0.97) / 0.03) : S2.m.t;
+          }
           if (mode === 'dev') {
-            dev.rotation.y += dt * 0.15;
-            if (on && gas < 3.4) gas += dt * 0.11;
+            dev.rotation.y += dt * 0.1;
+            liq.material.color.setHex(elecOn ? 0x2f8cff : 0x7fc4ff); liq.material.opacity = elecOn ? 0.38 : 0.22;
+            const gas = 0, H3 = gasH, O3 = gasO;
             // 시험관 안 물·기체 (기체는 위에서부터 차올라요; H2는 O2의 2배)
             const len = TT - TB;
             tubes.forEach((T, i) => {
-              const frac = Math.min(0.97, gas * (i === 0 ? 2 : 1) / 6.6);
+              const frac = Math.min(0.97, (i === 0 ? H3 : O3) / CAP);
               const gh = len * frac, wh = (TT - TB) - gh + 0.0;
               T.gasM.scale.set(1, Math.max(gh, 1e-3), 1); T.gasM.position.y = TT - gh / 2; T.gasM.visible = gh > 0.02;
               const wy0 = TB, wTop = TT - gh; T.water.scale.set(1, Math.max(wTop - wy0, 1e-3), 1); T.water.position.y = (wy0 + wTop) / 2;
             });
             // 기포
-            if (on) { acc[0] += dt * 14; acc[1] += dt * 7; }
+            if (on) { const k = Math.max(0.3, curmA / 130); acc[0] += dt * 14 * k; acc[1] += dt * 7 * k; }
             for (let side = 0; side < 2; side++) {
               while (acc[side] >= 1) { acc[side] -= 1; const b = bs.find((q) => !q.on); if (!b) break; b.on = true; b.x = (side ? EX : -EX) + L.rnd(-0.06, 0.06); b.y = 1.0 + L.rnd(0, 0.3); b.z = L.rnd(-0.06, 0.06); b.v = L.rnd(1.6, 2.3); b.s = L.rnd(0.06, 0.1); b.side = side; }
             }
@@ -208,9 +225,7 @@
             bub.instanceMatrix.needsUpdate = true;
             sw.material.emissive.setHex(on ? 0x22cc55 : 0x000000);
             devInfo.t = (devInfo.t || 0) + dt; if (devInfo.t > 0.4) { devInfo.t = 0; devInfo(); }
-          } else {
-            if (playing) { prog += dt / 7; if (prog >= 1) { prog = 1; playing = false; } rgR.set(Math.round(prog * 100)); setProg(prog); }
-          }
+          } else { setProg(prog); }
         },
       };
     },

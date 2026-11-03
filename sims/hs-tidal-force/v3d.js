@@ -37,6 +37,7 @@
   window.SciSim3D.attach({
     title: '기조력과 평형 조석 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
+    levels: [0, 1, 2],
     camera: { dist: PHONE ? 20 : 15, theta: PHONE ? -1.25 : 0.35, phi: PHONE ? 0.8 : 0.7, target: PHONE ? [0, 0, 0] : [1.8, 0, 0], min: 7, max: 40 },
     autoRotate: 0,
     build(ctx) {
@@ -82,7 +83,7 @@
       /* 기조력 화살표 (달의 기조력 = 그 지점의 달의 인력 − 지구 중심의 평균 인력) */
       const arrows = [], KT = 26;
       const arrowG = new THREE.Group(); root.add(arrowG);
-      let wantArrows = true, sunOn = true, playing = true, day = 0, dayV = 0, spin = 0;
+      let wantArrows = true, sunOn = false, day = 0, dayV = 0, mk = 1, bulgeK = 1, mode = 'force', P = 0, MRc = MR;
       const mdir = new THREE.Vector3(), sdir = new THREE.Vector3(1, 0, 0);
       const arrowPts = [];                                         // 달 방향을 기준으로 한 점 (축에 대한 각, 방위각)
       [0, 20, 40, 60, 80, 100, 120, 140, 160, 180].forEach((pol) => { [0, 90, 180, 270].forEach((az) => { if ((pol === 0 || pol === 180) && az > 0) return; arrowPts.push([pol * DEG, az * DEG]); }); });
@@ -96,7 +97,7 @@
           dv.copy(mdir).multiplyScalar(DR).sub(pv);                       // 달 → 지표 점
           const r = dv.length(), k = (DR * DR) / (r * r * r);
           fv.copy(dv).multiplyScalar(k).sub(mdir);                        // 기조력 (달 인력 − 중심의 평균 인력)
-          const len = fv.length() * KT * RO, A = arrows[i];
+          const len = fv.length() * KT * RO * mk, A = arrows[i];
           A.position.copy(pv).multiplyScalar(RO * 1.02);
           if (len < 0.02) { A.visible = false; return; }
           A.visible = wantArrows; A.setDirection(fv.clone().normalize()); A.setLength(Math.max(0.12, len), Math.min(0.2, len * 0.45), Math.min(0.12, len * 0.3));
@@ -105,7 +106,7 @@
       /* 바다 모양 (평형 조석) */
       const pos = oceanGeo.attributes.position;
       function shapeOcean() {
-        const aM = HM / 2 * KV, aS = HS / 2 * KV;
+        const aM = HM / 2 * KV * mk * bulgeK, aS = HS / 2 * KV * bulgeK;
         for (let i = 0; i < pos.count; i++) {
           const x = base[3 * i] / RO, y = base[3 * i + 1] / RO, z = base[3 * i + 2] / RO;
           const dm = x * mdir.x + y * mdir.y + z * mdir.z, ds = x * sdir.x + y * sdir.y + z * sdir.z;
@@ -117,11 +118,11 @@
       }
       function tideAt(dir) {
         const dm = dir.dot(mdir), ds = dir.dot(sdir);
-        return (HM / 2) * (2 * dm * dm - 1) + (sunOn ? (HS / 2) * (2 * ds * ds - 1) : 0);   // m
+        return bulgeK * ((HM / 2) * mk * (2 * dm * dm - 1) + (sunOn ? (HS / 2) * (2 * ds * ds - 1) : 0));   // m
       }
       const labNear = label('달 쪽 부풀음', [0, 0, 0], { color: 'rgba(30,64,175,.92)' }), labFar = label('반대쪽 부풀음', [0, 0, 0], { color: 'rgba(30,64,175,.92)' });
       /* 상태 갱신 */
-      let thV = 0, thT = 0;
+      let thV = 0, thT = 0, last = [NaN, NaN, NaN];
       function setDay(d, fromLesson) {
         day = Math.max(0, Math.min(SYN, d)); thT = (360 * day / SYN) * DEG;
         if (rDay) rDay.set(day);
@@ -129,32 +130,70 @@
         fmtInfo();
       }
       function fmtInfo() {
-        const th = thT, rg = sunOn ? rangeAt(th) : HM, spring = sunOn && rg >= 0.7, neap = sunOn && rg <= 0.28;
-        let h = '<b>' + day.toFixed(1) + '일 · ' + phaseName(day) + '</b> — 바다가 <b>달 쪽</b>과 <b>반대쪽</b> 두 곳에서 부풀어요.<br>';
-        h += sunOn ? (spring ? '달·태양 부풀음이 <b>겹쳐요</b> → <span style="color:#fca5a5">사리(대조)</span>' : neap ? '달·태양 부풀음이 <b>어긋나요</b> → <span style="color:#93c5fd">조금(소조)</span>' : '달과 태양의 부풀음이 일부만 겹쳐요') + ' · 조차 <b>' + rg.toFixed(2) + ' m</b>' : '태양을 끄고 달만 보면 조차 <b>0.49 m</b>';
-        h += '<br>지구가 자전하면 관측점이 두 부풀음을 지나 <b>하루 약 2번 만조</b>예요. <span style="color:#fda4af">분홍 화살표</span> = 기조력';
+        const q = W(), S = q.S || {}, free = !!(q.game && q.game.free);
+        let h;
+        if (mode === 'force') {
+          const st3 = (S.stage || 1) >= 3 || free;
+          h = '<b>기조력 = 달의 인력 − 지구 중심의 평균 인력</b><br>' + (st3 ? '달 쪽과 반대쪽 <b>두 곳</b>에서 바닷물이 부풀어요 (높이 과장). <span style="color:#fda4af">분홍 화살표</span> = 기조력' : '옆의 ①→②→③ 단추를 눌러 단계별로 비교해요. ③에서 기조력 화살표와 부풀음이 나타나요.');
+        } else if (mode === 'compare') {
+          h = '<b>기조력 ∝ M / d³</b> · 달까지의 거리 d = ' + (S.dm || 3.844).toFixed(2) + ' (×10⁵ km)<br>달이 가까울수록(근지점 3.56) 부풀음이 커지고, 멀수록(원지점 4.07) 작아져요.';
+        } else if (mode === 'cycle') {
+          h = '<b>조석 주기</b> · 지구가 한 바퀴 자전하는 동안 달도 조금 공전해요.<br>관측점이 같은 부풀음 아래로 다시 오려면 조금 더 돌아야 해요. 부표 = 관측점의 바다 높이';
+        } else {
+          const th = thT, rg = rangeAt(th), spring = rg >= 0.7, neap = rg <= 0.28;
+          h = '<b>' + day.toFixed(1) + '일 · ' + phaseName(day) + '</b> — 바다가 <b>달 쪽</b>과 <b>반대쪽</b> 두 곳에서 부풀어요.<br>';
+          h += (spring ? '달·태양 부풀음이 <b>겹쳐요</b> → <span style="color:#fca5a5">사리</span>' : neap ? '달·태양 부풀음이 <b>어긋나요</b> → <span style="color:#93c5fd">조금</span>' : '달과 태양의 부풀음이 일부만 겹쳐요') + ' · 조차 <b>' + rg.toFixed(2) + ' m</b>';
+          h += '<br>지구가 자전하면 관측점이 두 부풀음을 지나 <b>하루 약 2번 만조</b>예요.';
+        }
         info(h);
       }
       let rDay = null;
-      const segPh = controls.segment('달 위치', [{ value: 0, label: '🌑 삭' }, { value: 7.4, label: '🌓 상현' }, { value: 14.8, label: '🌕 망' }, { value: 22.1, label: '🌗 하현' }], 0, (v) => setDay(v));
-      rDay = controls.range('날짜', 0, SYN, 0.5, 0, (v) => setDay(v), (v) => v.toFixed(1) + '일');
-      const sb = controls.button('☀️ 태양 포함 ✓', () => { sunOn = !sunOn; sb.classList.toggle('on', sunOn); sb.textContent = '☀️ 태양 ' + (sunOn ? '포함 ✓' : '끄기'); sun.visible = sunGlow.visible = sunOn; sunLine.visible = sunOn; labSun.show(sunOn); shapeOcean(); fmtInfo(); }); sb.classList.add('on');
-      const ab = controls.button('기조력 화살표 ✓', () => { wantArrows = !wantArrows; ab.classList.toggle('on', wantArrows); ab.textContent = '기조력 화살표 ' + (wantArrows ? '✓' : '✕'); arrowG.visible = wantArrows; }); ab.classList.add('on');
-      const pb = controls.button('⏸ 자전', () => { playing = !playing; pb.textContent = playing ? '⏸ 자전' : '▶ 자전'; pb.classList.toggle('on', playing); }); pb.classList.add('on');
-      const rd = () => { try { const S = window.__sim && window.__sim.S; if (S && typeof S.day === 'number') return S.day; } catch (e) {} return null; };
-      const d0 = rd(); if (d0 != null) { day = d0; } setDay(day);
-      thV = thT; let last = [NaN, NaN];
+      const segPh = controls.segment('달 위치', [{ value: 0, label: '🌑 삭' }, { value: 7.4, label: '🌓 상현' }, { value: 14.8, label: '🌕 망' }, { value: 22.1, label: '🌗 하현' }], 0, (v) => { setDay(v); try { W().setDay(v); } catch (e) {} });
+      rDay = controls.range('날짜', 0, SYN, 0.5, 0, (v) => { setDay(v); try { W().setDay(v); } catch (e) {} }, (v) => v.toFixed(1) + '일');
+      const W = () => window.__sim || {};
+      const segPhSet = (v) => { segPh.set(v); };
+      /* ▶ 재생: 지구가 하루(24시간) 동안 한 바퀴 자전해요. 관측점(부표)이 두 부풀음을 차례로 지나가요 */
+      let syncing = false, ready = false;
+      const player = controls.player({
+        duration: 12, loop: true, autoplay: false, label: '재생',
+        phases: [[0, '0시'], [0.25, '6시'], [0.5, '12시'], [0.75, '18시']],
+        onFrame(p) { P = p; const q = W(), S = q.S; if (ready && !syncing && S && S.mode === 'equil') { S.hr = 24 * p; S.playing = false; } },
+      });
+      ready = true;
+      function setP(v) { syncing = true; player.set(Math.max(0, Math.min(1, v))); syncing = false; }
+      const d0 = (() => { try { const S = W().S; return S && typeof S.day === 'number' ? S.day : null; } catch (e) { return null; } })();
+      if (d0 != null) day = d0; setDay(day);
+      thV = thT;
+
+      /* 2D → 3D: 2D 단계(모드)에 맞춰 장면을 바꾸고, 날짜·시각·달 거리·단계를 그대로 따라가요 */
+      let key = '';
+      function follow() {
+        const q = W(), S = q.S; if (!S) return;
+        const free = !!(q.game && q.game.free);
+        mode = S.mode || 'force';
+        const st3 = mode !== 'force' || (S.stage || 1) >= 3 || free;
+        sunOn = mode === 'compare' || mode === 'equil'; bulgeK = st3 ? 1 : 0; wantArrows = st3;
+        const dm = mode === 'compare' && typeof S.dmV === 'number' ? S.dmV : 3.844; mk = Math.pow(3.844 / dm, 3); MRc = MR * dm / 3.844;
+        if (typeof S.day === 'number' && Math.abs(S.day - day) > 0.01) setDay(S.day);
+        if (mode === 'equil' && (S.playing || S.hr > 0) && Math.abs(S.hr / 24 - P) > 0.0005) setP(S.hr / 24);
+        if (mode === 'cycle' && (S.c2run || S.c2 > 0) && Math.abs(S.c2 / 24 - P) > 0.0005) setP(S.c2 / 24);
+        const k = [mode, sunOn, st3, dm.toFixed(2), S.stage, free].join('|');
+        if (k !== key) { key = k; sun.visible = sunGlow.visible = sunOn; sunLine.visible = sunOn; labSun.show(sunOn); arrowG.visible = wantArrows; labNear.show(st3); labFar.show(st3); last = [NaN, NaN]; fmtInfo(); }
+      }
+      follow();
 
       return {
         update(dt, t) {
-          // 달 위치로 천천히 이동 (최단 각도)
-          let d = thT - thV; d = Math.atan2(Math.sin(d), Math.cos(d)); thV += d * Math.min(1, dt * 4);
-          if (Math.abs(d) < 0.0005) thV = thT;
+          follow();
+          // 달 위치로 천천히 이동 (최단 각도). 조석 주기 단계에서는 하루 동안 달도 조금(약 12°) 공전해요
+          const drift = mode === 'cycle' ? (360 / SYN) * DEG * Math.min(1.04, P) : 0;
+          let d = (thT + drift) - thV; d = Math.atan2(Math.sin(d), Math.cos(d)); thV += d * Math.min(1, dt * 4);
+          if (Math.abs(d) < 0.0005) thV = thT + drift;
           mdir.set(Math.cos(thV), 0, -Math.sin(thV));
-          moon.position.copy(mdir).multiplyScalar(MR);
-          moonLine.geometry.setFromPoints([mdir.clone().multiplyScalar(-3.4), mdir.clone().multiplyScalar(MR - 0.6)]); moonLine.computeLineDistances();
-          if (last[0] !== thV || last[1] !== sunOn) { shapeOcean(); placeArrows(); last = [thV, sunOn]; }
-          if (playing) spin += 0.55 * dt;
+          moon.position.copy(mdir).multiplyScalar(MRc);
+          moonLine.geometry.setFromPoints([mdir.clone().multiplyScalar(-3.4), mdir.clone().multiplyScalar(MRc - 0.6)]); moonLine.computeLineDistances();
+          if (last[0] !== thV || last[1] !== sunOn || last[2] !== mk) { shapeOcean(); placeArrows(); last = [thV, sunOn, mk]; }
+          const spin = Math.PI * 2 * P;
           earth.rotation.y = spin;
           // 부표: 관측점 위의 바다 높이
           pv.copy(pinDir).applyAxisAngle(Y, spin);
@@ -166,7 +205,7 @@
           const top = RO + KV * tideAt(mdir) + 0.75;
           labNear.obj = [mdir.x * top, mdir.y * top, mdir.z * top]; labFar.obj = [-mdir.x * top, -mdir.y * top, -mdir.z * top];
         },
-        sync() { const d = rd(); if (d != null && Math.abs(d - day) > 0.01) setDay(d); },
+        sync() { follow(); },
       };
     },
   });

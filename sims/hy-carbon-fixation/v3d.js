@@ -1,5 +1,5 @@
 /* hy-carbon-fixation · 3D 캘빈 회로 (탄소 고정 · 환원 · RuBP 재생)
-   회로 한 바퀴: CO₂ 3개 + RuBP(5탄소) 3개 → PGA(3탄소) 6개 → (ATP · NADPH 사용) G3P 6개
+   회로 한 바퀴: CO₂ 3개 + RuBP(5탄소) 3개 → 3PG(3탄소) 6개 → (ATP · NADPH 사용) G3P 6개
    → G3P 1개는 밖으로(포도당의 재료), 나머지 5개는 ATP를 써서 RuBP 3개로 재생돼요. 회로의 탄소 수가 늘 보존되는 것을 구슬로 확인해요. */
 (function () {
   'use strict';
@@ -17,7 +17,7 @@
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V = THREE.Vector3;
-      let speed = 1, paused = false;
+      let cycles = 0, cc = 0;
       const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.38, metalness: 0.04 }, o || {}));
       const pos = (a, r, z) => new V((r || R) * Math.cos(a * D2R), (r || R) * Math.sin(a * D2R), z || 0);
 
@@ -61,18 +61,18 @@
       const lab = {
         s0: label('① 탄소 고정', pos(S0, R + 0.5, 0.2).toArray(), { color: '#1d4ed8' }), s1: label('② 환원', pos(S1, R + 0.8, 0.2).toArray(), { color: '#b45309' }), s2: label('③ RuBP 재생', pos(S2, R + 0.9, 0.2).toArray(), { color: '#047857' }),
         co2: label('CO₂', [0, R + 2.3, 0], { color: '#475569' }), rubp: label('RuBP (5탄소)', pos(180, R + 1.1, 0.2).toArray(), { color: '#1e40af' }),
-        pga: label('PGA (3탄소)', pos(30, R + 1.5, 0.2).toArray(), { color: '#475569' }), g3p: label('G3P (3탄소)', pos(-90, R + 1.1, 0.2).toArray(), { color: '#92400e' }),
+        pga: label('3PG (3탄소)', pos(30, R + 1.5, 0.2).toArray(), { color: '#475569' }), g3p: label('G3P (3탄소)', pos(-90, R + 1.1, 0.2).toArray(), { color: '#92400e' }),
         outl: label('G3P 1개 → 밖으로', [0, 0, 0], { color: '#92400e' }), light: label('명반응의 ATP · NADPH', [-0.0, 0.1, 0.0], { color: '#0e7490' }),
       };
       const outAnchor = new THREE.Object3D(); root.add(outAnchor); lab.outl.obj = outAnchor;
       lab.light.obj = [R + 1.6, -R * 0.5 - 1.2, 0];
-      let phaseTxt = '', cycles = 0, lastC = 0, cc = 0;
+      let phaseTxt = '';
       const PHASES = [
         [0.0, 0.26, '<b>① 탄소 고정</b> · CO₂ 3개(3C)가 RuBP 3개(15C)와 결합해요.'],
-        [0.26, 0.48, '<b>① 탄소 고정</b> · 불안정한 6탄소 화합물이 갈라져 <b>PGA(3C) 6개</b>(18C)가 돼요.'],
-        [0.48, 0.62, '<b>② 환원</b> · 명반응의 <b>ATP · NADPH</b>를 써서 PGA → G3P가 돼요.'],
+        [0.26, 0.48, '<b>① 탄소 고정</b> · 불안정한 6탄소 화합물이 갈라져 <b>3PG(3C) 6개</b>(18C)가 돼요.'],
+        [0.48, 0.62, '<b>② 환원</b> · 명반응의 <b>ATP 6개 · NADPH 6개</b>를 써서 3PG 6개가 G3P 6개로 환원돼요.'],
         [0.62, 0.76, '<b>③</b> G3P 6개 중 <b>1개(3C)</b>는 밖으로 나가 포도당의 재료가 돼요.'],
-        [0.76, 1.0, '<b>③ RuBP 재생</b> · 남은 G3P 5개(15C)가 ATP를 써서 RuBP 3개(15C)로 돌아와요.'],
+        [0.76, 1.0, '<b>③ RuBP 재생</b> · 남은 G3P 5개(15C)가 <b>ATP 3개</b>를 써서 RuBP 3개(15C)로 돌아와요.'],
       ];
       function setText(c) {
         const ph = PHASES.find((p) => c >= p[0] && c < p[1]) || PHASES[0];
@@ -93,11 +93,11 @@
           rubp.forEach((g, i) => { put(g, lerp(aRs(i), aRe(i), p), R, 0.05); recolor(g, cMat.rubp); g.userData.ps.forEach((q) => { q.visible = true; }); });
           co2.forEach((g, i) => { g.visible = true; g.position.copy(pos(aRe(i), R + lerp(3.2, 0.5, p), 0.1)); g.rotation.z = tang(aRe(i)); });
           lab.co2.show(true); lab.rubp.show(true);
-        } else if (c < 0.26) {                            // 결합 → PGA 2개씩
+        } else if (c < 0.26) {                            // 결합 → 3PG 2개씩
           const k = (c - 0.22) / 0.04;
           for (let j = 0; j < 6; j++) { setPga(j, cMat.pga); put(c3[j], aP0(j), rOf(j), zOf(j)); c3[j].scale.setScalar(0.5 + 0.5 * ease(k)); }
           lab.pga.show(true);
-        } else if (c < 0.48) {                            // B: PGA 가 오른쪽 아래로
+        } else if (c < 0.48) {                            // B: 3PG 가 오른쪽 아래로
           const p = ease((c - 0.26) / 0.22);
           for (let j = 0; j < 6; j++) { setPga(j, cMat.pga); put(c3[j], lerp(aP0(j), aP1(j), p), rOf(j), zOf(j)); }
           lab.pga.show(true);
@@ -136,21 +136,25 @@
       }
       layout(0); setText(0);
 
-      controls.segment('속도', [{ value: 0.5, label: '느리게' }, { value: 1, label: '보통' }], speed, (v) => { speed = v; });
-      const pb = controls.button('⏸ 멈추기', () => { paused = !paused; pb.textContent = paused ? '▶ 이어서' : '⏸ 멈추기'; pb.classList.toggle('on', paused); });
-      controls.range('회로 위치', 0, 99, 1, 0, (v) => { cc = v / 100; paused = true; pb.textContent = '▶ 이어서'; pb.classList.add('on'); layout(cc); setText(cc); }, (v) => v + '%');
-      const slider = document.querySelector('.v3-ctl input[type=range]');
+      /* ▶ 회로 한 바퀴 (CO₂ 3분자 고정 → 환원 → RuBP 재생). 위치는 진행 막대로 고를 수 있어요. */
+      const player = controls.player({
+        duration: 14, loop: true, autoplay: true, label: '회로 한 바퀴',
+        phases: [[0, '① 탄소 고정'], [0.26, '① 3PG 6개'], [0.48, '② 환원'], [0.62, 'G3P 1개 밖으로'], [0.76, '③ RuBP 재생']],
+        onFrame(p) { if (p < cc - 0.5) { cycles++; } cc = p; layout(cc); setText(cc); },
+      });
+      /* 2D 캘빈 회로(S.cv)의 단계를 따라가요: 고정 → 환원 → 재생 */
+      let lastKey = '';
+      function poll() {
+        const L = ctx.lesson(); if (!L || !L.S || !L.S.cv || L.S.mode !== 'cal') return;
+        const cv = L.S.cv, key = cv.phase + cv.fixed + (cv.done ? 'd' : '');
+        if (key === lastKey) return; lastKey = key;
+        const at = cv.done ? 0.99 : cv.phase === 'fix' ? Math.min(0.2, cv.fixed / 3 * 0.22) : cv.phase === 'reduce' ? 0.5 : 0.78;
+        player.pause(); player.set(at);
+      }
 
       return {
-        update(dt) {
-          dt = Math.min(dt, 0.05) * (window.__v3dTS || 1);
-          if (!paused) {
-            cc += dt * speed / PER; if (cc >= 1) { cc -= 1; cycles++; }
-            if (slider) slider.value = Math.floor(cc * 100);
-            layout(cc); setText(cc);
-          }
-        },
-        sync() { setText(cc); },
+        update() { poll(); },
+        sync() { poll(); setText(cc); },
       };
     },
   });

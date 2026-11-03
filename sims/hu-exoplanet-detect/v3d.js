@@ -26,7 +26,8 @@
     autoRotate: 0,
     build(ctx) {
       const { THREE, scene, root, label, info, controls, orbit } = ctx;
-      const st = { mode: 'rv', inc: 90, rp: 0.24, q: 0.22, th: 3.6, key: '' };
+      const st = { mode: 'rv', inc: 90, rp: 0.0275, q: 0.22, th: 3.6, th0: 3.6, P: 0, key: '', pl: 3, view: 'rv', depth: 0 };
+      const PLN = ['지구', '해왕성', '토성', '목성'], KOF = [29.8e3 * 3.0e-6, 5.4e3 * 5.15e-5, 9.7e3 * 2.86e-4, 13.1e3 / 1047], TRA = [0.05, 0.4, 1, 5.2];
       const sr = () => { try { return window.__sim && window.__sim.S; } catch (e) { return null; } };
 
       scene.add(new THREE.AmbientLight(0x8fa0d8, 0.5));
@@ -113,30 +114,44 @@
 
       function setCap() { cap.textContent = st.mode === 'rv' ? '별의 시선 속도 (파랑 ↑ 다가옴)' : '별의 밝기'; }
       function text(v) {
-        if (st.mode === 'rv') info('<b>시선 속도법</b><br>별은 질량 중심을 작게 돌아요. 다가올 땐 <span style="color:#9ccaff">파란색</span>, 멀어질 땐 <span style="color:#ffab94">붉은색</span> 쪽으로 빛이 치우쳐요.' + (st.inc < 20 ? '<br>위에서 보면(i 작음) 시선 방향 움직임이 거의 없어요.' : ''));
-        else info('<b>통과법</b><br>행성이 별 앞을 지날 때만 밝기가 줄어요. 지금 밝기 <b>' + (v * 100).toFixed(1) + '%</b>' + (st.inc < 84 ? '<br>기울기 ' + Math.round(st.inc) + '° 라서 행성이 별을 비켜 가요.' : '<br>밝기 감소 ≈ (Rp/R*)² = ' + (st.rp * st.rp * 100).toFixed(1) + '%'));
+        if (st.mode === 'rv') info('<b>시선 속도법</b> · 행성: ' + (st.view === 'peg' ? '51 Peg b' : PLN[st.pl]) + '<br>별은 질량 중심을 작게 돌아요. 다가올 땐 <span style="color:#9ccaff">파란색</span>, 멀어질 땐 <span style="color:#ffab94">붉은색</span> 쪽으로 빛이 치우쳐요.<br>행성이 무거울수록 별이 더 크게 흔들려요.');
+        else info('<b>통과법</b><br>행성이 별 앞을 지날 때만 밝기가 줄어요. 지금 밝기 <b>' + (v * 100).toFixed(2) + '%</b>' + (st.depth > 0.00001 ? ' · 깊이 ' + (st.depth * 100).toFixed(2) + '%' : '<br>이 기울기에서는 행성이 별을 비켜 가요.'));
       }
       function setMode(m) { st.mode = m; curve = null; setCap(); }
-      const mSeg = controls.segment('관측 방법', [{ value: 'rv', label: '시선 속도' }, { value: 'tr', label: '통과' }], st.mode, (v) => { setMode(v); });
-      const rI = controls.range('궤도 기울기 i', 20, 90, 1, st.inc, (v) => { st.inc = v; rebuildOrbit(); curve = null; }, (v) => v + '°');
-      const rP = controls.range('행성 크기', 0.1, 0.35, 0.01, st.rp, (v) => { st.rp = v; planet.scale.setScalar(v * RS); curve = null; }, (v) => 'Rp/R* = ' + v.toFixed(2));
       controls.button('👁 지구에서 보기', () => { orbit.theta = 0; orbit.phi = Math.PI / 2; orbit.dist = PHONE ? 16 : 13; });
-      planet.scale.setScalar(st.rp * RS);
+      /* ▶ 재생: 별과 행성이 질량 중심을 한 바퀴 돌아요 (9초). 곡선 위 빨간 점이 지금 위치예요 */
+      const player = controls.player({
+        duration: PER, loop: true, autoplay: true, label: '재생',
+        phases: [[0, '한 바퀴'], [0.5, '반 바퀴']],
+        onFrame(p) { st.P = p; },
+      });
 
+      /* 2D → 3D: 장면(시선 속도 · 51 Peg b · 통과)과 2D의 행성 · 행성 반지름 · 궤도 기울기를 그대로 읽어요 */
+      const mkInc = (S) => {                                          // 2D의 충격 변수 b = (a/R*)·cos i 를 장면의 궤도 기울기로 옮겨요
+        const aRs = TRA[S.tr.ai] * 215.03, b = aRs * Math.cos(S.tr.inc * DEG);
+        return Math.acos(Math.min(0.97, Math.abs(b) * RS / AO)) / DEG;
+      };
       function follow() {
         const S = sr(); if (!S) return;
-        const key = S.view + '|' + (S.tr ? S.tr.inc : '');
+        const key = [S.view, S.rv && S.rv.pl, S.tr && S.tr.rp, S.tr && S.tr.ai, S.tr && S.tr.inc].join('|');
         if (key === st.key) return; st.key = key;
-        if (S.view === 'transit') { st.mode = 'tr'; mSeg.set('tr'); if (S.tr && S.tr.inc >= 20 && S.tr.inc <= 90) { st.inc = S.tr.inc; rI.set(st.inc); rebuildOrbit(); } }
-        else if (S.view === 'rv' || S.view === 'peg') { st.mode = 'rv'; mSeg.set('rv'); }
-        curve = null; setCap();
+        st.view = S.view;
+        if (S.view === 'rv' || S.view === 'peg') {
+          st.mode = 'rv'; st.inc = 90; st.pl = S.rv.pl; planet.scale.setScalar(0.2);
+          st.q = S.view === 'peg' ? 0.22 : 0.22 * Math.sqrt(KOF[S.rv.pl] / KOF[3]);
+        } else if (S.tr && (S.view === 'transit' || S.view === 'density' || S.view === 'lens' || S.view === 'match')) {
+          if (S.view !== 'transit' && st.mode === 'rv' && S.view !== 'density') { return; }
+          st.mode = 'tr'; st.q = 0.04; st.rp = S.tr.rp / 109.1; st.inc = mkInc(S); planet.scale.setScalar(Math.max(0.05, st.rp * RS));
+        } else return;
+        rebuildOrbit(); curve = null; setCap(); text(1);
       }
+      planet.scale.setScalar(0.2);
       follow(); rebuildOrbit(); setCap();
       let acc = 0;
       return {
         update(dt) {
           follow();
-          st.th += dt * TAU / PER;
+          st.th = st.th0 + TAU * st.P;
           orbitPos(st.th, tmp);                                         // 행성(질량 중심 기준)
           const sx = -st.q * tmp.x, sy = -st.q * tmp.y, sz = -st.q * tmp.z;
           star.position.set(sx, sy, sz); glow.position.copy(star.position); starLight.position.copy(star.position);
@@ -147,6 +162,7 @@
           starMat.color.copy(cc); glowMat.color.copy(cc);
           /* 통과 밝기 */
           const d = Math.hypot(tmp.x - sx, tmp.y - sy), flux = tmp.z > 0 ? 1 - overlap(d, RS, st.rp * RS) : 1;
+          if (st.mode === 'tr') { if (!curve) buildCurve(); st.depth = 1 - Math.min(...curve); }
           acc += dt; if (acc > 0.12) { acc = 0; text(flux); }
           drawCurve();
         },

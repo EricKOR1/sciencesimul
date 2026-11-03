@@ -19,8 +19,10 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: 11 * KD, theta: 0.5, phi: 1.1, min: 5, max: 22 },
     autoRotate: 0,
+    levels: [0, 1, 2],
     build(ctx) {
-      const { THREE, root, label, info, controls } = ctx;
+      const { THREE, root, label, info: info0, controls } = ctx;
+      const st0 = {}; let infoFig = false; const info = (h) => info0(infoFig ? '<b>🔍 그림 해석은 2D 그림에서 해요</b> (3D는 복습용 모형)<br>' + h : h);
       const V3 = THREE.Vector3, Yax = new V3(0, 1, 0);
       const lessonS = () => (window.__sim && window.__sim.S) || null;
       const S0 = lessonS();
@@ -224,30 +226,34 @@
         Object.keys(ctlNodes).forEach((k) => ctlNodes[k].forEach((n) => { n.style.display = vis[k]() ? '' : 'none'; }));
       }
 
-      /* ---------- 조작 ---------- */
+      /* ---------- 조작: 값은 2D 화면 옆의 조작판이 정해요 (3D는 같은 값을 그대로 보여 줘요) ---------- */
       const bar = ctx.renderer.domElement.parentNode.parentNode.querySelector('.v3-ctl');
       function grab(k, v, fn) { const before = bar.children.length; const r = fn(); ctlNodes[k] = [...bar.children].slice(before); vis[k] = v; return r; }
-      const M = (x) => () => st.mode === x;
-      const rng = {};
-      const segC = grab('mode', () => true, () => controls.segment('실험', [{ value: 'wire', label: '🧭 직선' }, { value: 'loop', label: '⭕ 원형' }, { value: 'sol', label: '🧲 솔레노이드' }], st.mode, (v) => { st.mode = v; reorient(); show(); }));
-      rng.wI = grab('wI', M('wire'), () => controls.range('전류 I', 0, 20, 1, st.w.I, (v) => { st.w.I = v; show(); }, (v) => v + ' A'));
-      rng.wR = grab('wR', M('wire'), () => controls.range('거리 r', 2, 20, 1, st.w.r, (v) => { st.w.r = v; show(); }, (v) => v + ' cm'));
-      rng.lI = grab('lI', M('loop'), () => controls.range('전류 I', 1, 8, 0.5, st.l.I, (v) => { st.l.I = v; show(); }, (v) => v.toFixed(1) + ' A'));
-      rng.lR = grab('lR', M('loop'), () => controls.range('반지름 R', 3, 8, 0.5, st.l.R, (v) => { st.l.R = v; show(); }, (v) => v.toFixed(1) + ' cm'));
-      rng.lN = grab('lN', M('loop'), () => controls.range('감은 수 N', 1, 3, 1, st.l.N, (v) => { st.l.N = v; show(); }, (v) => v + '회'));
-      rng.sN = grab('sN', M('sol'), () => controls.range('n', 500, 4000, 500, st.s.n, (v) => { st.s.n = v; show(); }, (v) => v + '회/m'));
-      rng.sI = grab('sI', M('sol'), () => controls.range('전류 I', 0, 3, 0.1, st.s.I, (v) => { st.s.I = v; show(); }, (v) => v.toFixed(1) + ' A'));
-      grab('dir', () => true, () => controls.button('🔁 전류 방향 바꾸기', () => { const o = st.mode === 'wire' ? st.w : st.mode === 'loop' ? st.l : st.s; o.dir = -o.dir; show(); }));
-      const ironB = grab('iron', M('sol'), () => controls.button('철심 ✕', () => { st.s.iron = !st.s.iron; ironB.classList.toggle('on', st.s.iron); ironB.textContent = '철심 ' + (st.s.iron ? '✓' : '✕'); show(); }));
       const compB = grab('comp', () => true, () => controls.button('나침반 ✓', () => { st.comp = !st.comp; compB.classList.toggle('on', st.comp); compB.textContent = '나침반 ' + (st.comp ? '✓' : '✕'); show(); }));
-      compB.classList.add('on'); if (st.s.iron) { ironB.classList.add('on'); ironB.textContent = '철심 ✓'; }
+      compB.classList.add('on');
       function reorient() { const o = ctx.orbit; if (st.mode === 'wire') { o.phi = 1.05; o.dist = 11.5 * KD; } else if (st.mode === 'loop') { o.dist = 9.5 * KD; o.phi = 1.25; o.theta = 0.9; } else { o.dist = 12 * KD; o.phi = 1.2; } o.ty = 0; }
       reorient(); show();
+
+      /* ---------- 2D 실험의 값을 그대로 따라가요 ---------- */
+      let lastSig = '';
+      function readLesson() {
+        const S = lessonS(); if (!S) return;
+        const sig = JSON.stringify([S.mode, S.f && S.f.fig, S.w && [S.w.I, S.w.r, S.w.dir], S.l && [S.l.I, S.l.R, S.l.N, S.l.dir], S.s && [S.s.n, S.s.I, !!S.s.iron, S.s.dir]]);
+        if (sig === lastSig) return; lastSig = sig;
+        const pm = st.mode;
+        infoFig = S.mode === 'fig'; st.mode = (S.mode === 'loop' || S.mode === 'sol') ? S.mode : 'wire';
+        if (S.w) Object.assign(st.w, { I: S.w.I, r: S.w.r, dir: S.w.dir });
+        if (S.l) Object.assign(st.l, { I: S.l.I, R: S.l.R, N: S.l.N, dir: S.l.dir });
+        if (S.s) Object.assign(st.s, { n: S.s.n, I: S.s.I, iron: !!S.s.iron, dir: S.s.dir });
+        if (pm !== st.mode) reorient();
+        show();
+      }
 
       /* ---------- 매 프레임 ---------- */
       let ft = 0; const tmp = new V3(), pbuf = new V3(), bb = new V3();
       return {
         update(dt) {
+          readLesson();
           ft = (ft + dt * 0.12) % 1; const m = st.mode;
           if (m === 'wire') {
             const w = st.w, on = w.I > 0;
@@ -263,14 +269,7 @@
             compS.forEach((c) => { const p = c.g.position; bAt(SRC_S, pbuf.copy(p), bb); const k = bb.length(); bb.multiplyScalar(0.01 * s.dir * (s.I > 0 ? (s.iron ? 40 : 6) * s.I * (s.n / 2000) : 0)); aim(c, bb.add(EARTH.clone().multiplyScalar(0.12)), dt); void k; });
           }
         },
-        sync() {
-          const S = lessonS(); if (!S) return;
-          if (S.mode === 'wire' || S.mode === 'loop' || S.mode === 'sol') { st.mode = S.mode; segC.set(st.mode); }
-          if (S.w) { Object.assign(st.w, { I: S.w.I, r: S.w.r, dir: S.w.dir }); rng.wI.set(st.w.I); rng.wR.set(st.w.r); }
-          if (S.l) { Object.assign(st.l, { I: S.l.I, R: S.l.R, N: S.l.N, dir: S.l.dir }); rng.lI.set(st.l.I); rng.lR.set(st.l.R); rng.lN.set(st.l.N); }
-          if (S.s) { Object.assign(st.s, { n: S.s.n, I: S.s.I, iron: !!S.s.iron, dir: S.s.dir }); rng.sN.set(st.s.n); rng.sI.set(st.s.I); ironB.classList.toggle('on', st.s.iron); ironB.textContent = '철심 ' + (st.s.iron ? '✓' : '✕'); }
-          reorient(); show();
-        },
+        sync() { lastSig = ''; },
       };
     },
   });

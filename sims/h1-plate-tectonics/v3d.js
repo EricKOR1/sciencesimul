@@ -120,17 +120,35 @@
           info('<b>보존형 경계(변환 단층)</b>: 두 판이 어긋나게 스쳐 지나가요. 지층이 어긋나 강과 길이 끊기고, 판이 걸렸다 풀리며 지진이 일어나요.');
         }
         conG.visible = conv && mode !== 'trans';
-        slider && slider.set(Math.round(s * 100));
       }
-      const segB = controls.segment('경계', [{ value: 'div', label: '발산' }, { value: 'sub', label: '섭입' }, { value: 'col', label: '충돌' }, { value: 'trans', label: '보존' }], mode, (v) => { mode = v; s = 0; play = false; bP.textContent = '▶ 재생'; orbit.theta = v === 'trans' ? 0.6 : 0.35; orbit.phi = v === 'trans' ? 0.95 : 1.12; paint(); });
-      const slider = controls.range('시간', 0, 100, 1, 0, (v) => { s = v / 100; play = false; bP.textContent = '▶ 재생'; paint(); }, (v) => v + '%');
-      const bP = controls.button('▶ 재생', () => { if (s >= 0.99) s = 0; play = !play; bP.textContent = play ? '❚❚ 멈춤' : '▶ 재생'; });
+      const KEYMAP = { div: 'div', sub: 'sub', col: 'coll', trans: 'trans' };
+      function setBoundary(v, from2d) {
+        mode = v; orbit.theta = v === 'trans' ? 0.6 : 0.35; orbit.phi = v === 'trans' ? 0.95 : 1.12; segB.set(v);
+        if (!from2d) { const L2 = lesson(); if (L2 && L2.S) { L2.S.mot = v === 'sub' || v === 'col' ? 'conv' : v; if (v === 'sub' || v === 'col') L2.S.conv = KEYMAP[v]; L2.S.bt = 0; if (L2.updateCtl) L2.updateCtl(); } }
+        paint();
+      }
+      const lesson = () => window.__sim || null;
+      let demoP = 0;
+      const segB = controls.segment('경계', [{ value: 'div', label: '발산' }, { value: 'sub', label: '섭입' }, { value: 'col', label: '충돌' }, { value: 'trans', label: '보존' }], mode, (v) => setBoundary(v, false));
+      const pl = controls.player({
+        duration: 10, loop: true, autoplay: false, label: '판의 운동',
+        phases: [[0, '판이 움직이기 시작'], [0.5, '경계의 지형이 자라요'], [0.85, '지형 완성']],
+        onFrame(p) { demoP = p; s = p; paint(); },
+      });
       const bC = controls.button('맨틀 대류 ✓', () => { conv = !conv; bC.classList.toggle('on', conv); bC.textContent = '맨틀 대류 ' + (conv ? '✓' : '✕'); paint(); }); bC.classList.add('on');
       s = 0.35; paint();
+      let lastBk = null, lastS = -1;
       return {
         update(dt, t) {
-          if (play) { s += dt * 0.08; if (s >= 1) { s = 1; play = false; bP.textContent = '↺ 다시'; } paint(); }
-          loops.forEach((lp, i) => lp.dots.forEach((d, k) => { const u = ((t * 0.09 + k / 6) % 1 + 1) % 1; d.position.copy(lp.curve.getPointAt(u)); }));
+          const L2 = lesson(), S = L2 && L2.S, idle = demoP === 0 && !pl.playing;
+          // 2D 단계의 경계(상대 운동)와 시간을 따라가요
+          if (S) {
+            const bk = S.mot ? (S.mot === 'conv' ? S.conv : S.mot) : null, mk = bk === 'coll' ? 'col' : bk;
+            if (idle && mk && mk !== lastBk) { lastBk = mk; if (mk !== mode) setBoundary(mk, true); }
+            if (idle && S.mode === 'boundary' && mk) { const ns = Math.min(1, (S.bt % 14) / 14); if (Math.abs(ns - lastS) > 0.01) { lastS = ns; s = ns; paint(); } }
+          }
+          const heat = S && S.mode === 'convect' ? 0.2 + 0.8 * Math.min(1, S.heat || 0) : 1;
+          loops.forEach((lp, i) => lp.dots.forEach((d, k) => { const u = ((t * 0.09 * heat + k / 6) % 1 + 1) % 1; d.position.copy(lp.curve.getPointAt(u)); }));
         },
         sync() {},
       };

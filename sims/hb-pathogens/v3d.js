@@ -1,5 +1,6 @@
 /* hb-pathogens · 3D 병원체 5종 (바이러스 · 세균 · 곰팡이 · 원생생물 · 기생충)
-   병원체마다 구조가 어떻게 다른지(세포 구조 유무, 핵의 유무, 다세포 여부) 돌려 보며 비교해요. */
+   2D 차시의 가상 현미경 시료와 같은 5종: 병원체마다 세포 구조·핵(핵막)·몸 구성·크기·관찰 도구와 예(독감·홍역 / 결핵·식중독 / 무좀 / 말라리아 / 회충증)를 2D와 같은 값으로 보여 줘요.
+   2D에서 고른 시료를 따라가고, 3D에서 고르면 2D 시료도 바뀌어요. 기생충은 몸이 움직이는 모습을 보여 줘요. */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -98,14 +99,20 @@
         g.scale.setScalar(1.0); }
 
       const wk = (g, dt, t) => 0; let cur = -1, grow = 1;
+      const KEYS = ['virus', 'bact', 'fungus', 'proto', 'worm'];
+      function infoOf(i) {
+        const L = window.__sim, P = L && L.PATH[KEYS[i]]; if (!P) return KINDS[i].info;
+        return '<b>' + P.name + '</b> (' + P.ex + ')<br>세포 구조 <b>' + P.cell + '</b> · 핵(핵막) <b>' + P.nuc + '</b> · 몸 <b>' + P.body + '</b><br>크기 ' + P.size + ' · 관찰 ' + P.tool + '<br>' + P.note;
+      }
       function show(i) {
         if (i === cur) return; cur = i; groups.forEach((g, k) => { g.visible = k === i; labs[k].forEach((l) => l.show(k === i)); });
-        grow = 0; info(KINDS[i].info);
+        grow = 0; info(infoOf(i)); if (typeof seg !== 'undefined') seg.set(i);
       }
-      controls.segment('', KINDS.map((k, i) => ({ label: k.k, value: i })), 0, show);
+      const seg = controls.segment('', KINDS.map((k, i) => ({ label: k.k, value: i })), 0, (i) => { const L = window.__sim; if (L) L.pickSample(KEYS[i]); show(i); });
       show(0);
       return {
         update(dt, t) {
+          { const L = window.__sim; if (L && L.S.O) { const k = KEYS.indexOf(L.S.O.cur); if (k >= 0 && k !== cur) show(k); } }
           grow = Math.min(1, grow + dt * 2.5); const e = 1 - Math.pow(1 - grow, 3);
           groups.forEach((g) => g.scale.setScalar((g.userData.base || 1) * (0.75 + 0.25 * e)));
           const g1 = groups[1]; if (g1.userData.swim) { g1.userData.swim.position.y = Math.sin(t * 1.2) * 0.12; g1.userData.swim.rotation.z = Math.sin(t * 0.9) * 0.06; }

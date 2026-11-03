@@ -78,66 +78,163 @@
 
   const phone = window.matchMedia && window.matchMedia('(max-width: 599px)').matches;
   window.SciSim3D.attach({
-    title: '기체 1몰 상자 3D',
-    hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: phone ? 20 : 17.5, theta: 0.35, phi: 1.2, min: 8, max: 40, target: [0, 1.8, 0] },
-    autoRotate: 0.12,
+    title: '몰 환산과 기체 부피 3D',
+    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 단계와 오른쪽 조작이 2D와 똑같이 이어져요',
+    camera: { dist: phone ? 15 : 12, theta: 0.35, phi: 1.12, min: 6, max: 40, target: [0, 1.5, 0] },
+    autoRotate: 0.08,
+    levels: [0, 1, 3],
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const L = makeLib(THREE);
-      const GAS = [
-        { key: 'H2', f: 'H₂', M: 2, col: 0x9ec5ff, sp: 1.6 },
-        { key: 'O2', f: 'O₂', M: 32, col: 0xf0524f, sp: 0.8 },
-        { key: 'CO2', f: 'CO₂', M: 44, col: 0x8a93a3, sp: 0.68 },
-      ];
-      let n = 1, T = 0;
-      const SPX = 5.4, K = 0.42;
-      const boxes = GAS.map((g, gi) => {
-        const box = L.glassBox(1, 1, 1, g.col, 0.11); box.position.x = (gi - 1) * SPX; root.add(box);
-        const lab = label(g.f + ' · ' + g.M + ' g', [(gi - 1) * SPX, 4, 0], { size: 13 });
-        const mols = [];
-        for (let i = 0; i < 24; i++) {
-          const m = L.mol(L.MOLS[g.key], K); root.add(m);
-          m.userData = { p: new THREE.Vector3(), v: new THREE.Vector3(L.rnd(-1, 1), L.rnd(-1, 1), L.rnd(-1, 1)).normalize(), w: new THREE.Vector3(L.rnd(-1, 1), L.rnd(-1, 1), L.rnd(-1, 1)) };
-          mols.push(m);
-        }
-        return { g, box, lab, mols, edge: 3 };
-      });
+      const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+      const sm = L.sstep, NA = 6.02e23, V0 = 22.4;
+      const KEY = { h2: 'H2', o2: 'O2', co2: 'CO2', n2: 'N2', ch4: 'CH4' };
+      const COLN = { h2: 0x60a5fa, o2: 0xf87171, co2: 0xa78bfa, n2: 0x34d399, ch4: 0xfbbf24 };
       const floor = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ color: 0x050b18 }));
-      floor.scale.set(3 * SPX - 0.4, 0.14, 5.0); floor.position.set(0, -0.08, 0); root.add(floor);
+      floor.scale.set(15, 0.1, 12); floor.position.set(0, -0.06, 0); root.add(floor);
 
-      function edgeOf() { return 3 * Math.cbrt(n * (273 + T) / 273); }
-      function setup() {
-        const e = edgeOf(), cnt = Math.round(12 * n);
-        boxes.forEach((B) => {
-          B.edge = e; B.box.scale.set(e, e, e); B.box.position.y = e / 2;
-          B.lab.obj = [B.box.position.x, e + 0.5, 0];
-          B.mols.forEach((m, i) => {
-            m.visible = i < cnt;
-            const lim = e / 2 - 0.5; m.userData.p.set(L.rnd(-lim, lim), L.rnd(-lim, lim), L.rnd(-lim, lim));
+      /* 풍선(투명 공) + 안에서 움직이는 분자 */
+      function makeBall(max, k) {
+        const g = new THREE.Group(); root.add(g);
+        const mat = new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.2, roughness: 0.15, depthWrite: false });
+        const sph = new THREE.Mesh(L.SG, mat); g.add(sph);
+        const B = { g, sph, mat, mols: [], r: 1, cnt: 0, key: '', k, max, lab: label('', [0, 0, 0], { size: 12.5 }) };
+        B.setKey = (key) => {
+          if (B.key === key) return; B.key = key;
+          B.mols.forEach((m) => g.remove(m)); B.mols = [];
+          for (let i = 0; i < max; i++) {
+            const m = L.mol(L.MOLS[key], k); m.userData = { p: new THREE.Vector3(L.rnd(-1, 1), L.rnd(-1, 1), L.rnd(-1, 1)).multiplyScalar(0.62), v: new THREE.Vector3(L.rnd(-1, 1), L.rnd(-1, 1), L.rnd(-1, 1)).normalize(), w: new THREE.Vector3(L.rnd(-1, 1), L.rnd(-1, 1), L.rnd(-1, 1)) };
+            g.add(m); B.mols.push(m);
+          }
+        };
+        B.set = (r, cnt, col) => { B.r = r; B.cnt = cnt; sph.scale.setScalar(r); mat.color.setHex(col); B.mols.forEach((m, i) => { m.visible = i < cnt; }); };
+        B.step = (dt, speed) => {
+          const lim = Math.max(0.1, B.r - 0.42 * B.k / 0.4);
+          B.mols.forEach((m) => {
+            if (!m.visible) return; const u = m.userData;
+            u.p.addScaledVector(u.v, speed * dt / lim);
+            const d = u.p.length(); if (d > 1) { u.p.multiplyScalar(1 / d); u.v.reflect(u.p.clone().normalize()); }
+            m.position.copy(u.p).multiplyScalar(lim); m.rotation.x += u.w.x * dt; m.rotation.y += u.w.y * dt; m.rotation.z += u.w.z * dt;
           });
-        });
-        const V = (22.4 * n * (273 + T) / 273);
-        info('<b>기체 ' + n + ' mol</b> · ' + T + ' °C, 1기압<br>부피 <b>' + V.toFixed(1) + ' L</b> (세 기체가 모두 같아요)<br>분자 수 <b>' + (6.02 * n).toFixed(2).replace(/\.?0+$/, '') + '×10²³개</b> · 질량만 달라요');
+        };
+        B.place = (x, y, z) => { g.position.set(x, y, z); B.lab.obj = [x, y + B.r + 0.45, z]; };
+        B.show = (v) => { g.visible = v; B.lab.show(v); };
+        return B;
       }
-      controls.segment('양', [{ value: 0.5, label: '0.5 mol' }, { value: 1, label: '1 mol' }, { value: 2, label: '2 mol' }], n, (v) => { n = +v; setup(); });
-      controls.range('온도', 0, 100, 25, T, (v) => { T = +v; const e = edgeOf(); boxes.forEach((B) => { B.edge = e; B.box.scale.set(e, e, e); B.box.position.y = e / 2; B.lab.obj = [B.box.position.x, e + 0.5, 0]; }); const V = 22.4 * n * (273 + T) / 273; info('<b>기체 ' + n + ' mol</b> · ' + T + ' °C, 1기압<br>부피 <b>' + V.toFixed(1) + ' L</b> (세 기체가 모두 같아요)<br>분자 수 <b>' + (6.02 * n).toFixed(2).replace(/\.?0+$/, '') + '×10²³개</b> · 질량만 달라요'); }, (v) => v + ' °C');
-      setup();
+      const rOf = (v, a, cap) => Math.min(cap || 9, a * Math.cbrt(Math.max(v, 0.05)));
+
+      /* ① 풍선 3개 (같은 부피 = 같은 분자 수) */
+      const BK = ['h2', 'o2', 'co2'], bal = BK.map((k) => { const b = makeBall(26, 0.36); b.setKey(KEY[k]); return b; });
+      const balPos = (i) => (phone ? [0, 0, (i - 1) * 3.8] : [(i - 1) * 4.7, 0, 0]);
+      function balScene(Z, dt) {
+        const bw = Z.S.bw, eq = Math.abs(bw.v.o2 - bw.v.h2) <= 0.05 && Math.abs(bw.v.co2 - bw.v.h2) <= 0.05;
+        let lines = '';
+        BK.forEach((k, i) => {
+          const g = Z.GAS[k], vd = bw.vd[k], r = rOf(vd, 0.62, 1.9), cnt = Math.min(26, Math.round(vd / 1.12));
+          const b = bal[i]; b.show(true); b.set(r, cnt, COLN[k]); const p = balPos(i); b.place(p[0], r + 0.25, p[2]); b.step(dt, 1.4);
+          b.lab.set(g.name + ' ' + g.f + '<br><b>' + vd.toFixed(1) + ' L</b>');
+          const v = bw.v[k]; lines += '<br>' + g.f + ' ' + v.toFixed(1) + ' L → n = ' + Z.fm(v / V0, 3) + ' mol · N = ' + Z.sci(v / V0 * NA, 4) + '개';
+        });
+        info('<b>같은 온도·같은 압력(0 °C, 1기압)의 풍선</b>' + lines + '<br>' + (eq ? '✅ 부피가 같으면 기체의 종류와 관계없이 분자 수가 같아요!' : '부피가 다르면 분자 수도 달라요. 부피를 맞춰 보세요.') + '<br>대표 입자 한 개 = 0.05 mol');
+      }
+
+      /* ② 온도와 1 mol의 부피 */
+      const tb = makeBall(19, 0.36); tb.setKey('O2');
+      const ghost = new THREE.Mesh(L.SG, new THREE.MeshBasicMaterial({ color: 0x394258, wireframe: true, transparent: true, opacity: 0.35 })); root.add(ghost);
+      const therm = new THREE.Group(); root.add(therm);
+      const tube = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 3.4, 12), new THREE.MeshStandardMaterial({ color: 0xcfe0ff, transparent: true, opacity: 0.35 })); tube.position.y = 1.9; therm.add(tube);
+      const bulb = new THREE.Mesh(L.SG, new THREE.MeshStandardMaterial({ color: 0xe2464b, roughness: 0.3 })); bulb.scale.setScalar(0.3); bulb.position.y = 0.2; therm.add(bulb);
+      const mer = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 1, 10), new THREE.MeshStandardMaterial({ color: 0xe2464b })); therm.add(mer);
+      const thLab = label('0 °C', [0, 0, 0], { size: 12.5, color: '#b4231f' });
+      function tempScene(Z, dt, Td) {
+        const vm = Math.round(V0 * (273 + Td) / 273 * 10) / 10, r = rOf(vm, 0.68, 2.6), r0 = 0.68 * Math.cbrt(V0);
+        tb.show(true); tb.set(r, 19, 0xf87171); tb.place(phone ? 0.5 : 1.0, r + 0.3, 0); tb.step(dt, 1.0 * Math.sqrt((273 + Td) / 273));
+        tb.lab.set('1 mol 기체: 분자 6.02×10²³개<br><b>' + vm.toFixed(1) + ' L</b>');
+        ghost.visible = true; ghost.scale.setScalar(r0); ghost.position.copy(tb.g.position);
+        therm.visible = true; therm.position.set(phone ? -3.3 : -4.2, 0, 0);
+        const h = 0.2 + 3.0 * (Td / 50); mer.scale.y = h; mer.position.y = 0.2 + h / 2;
+        thLab.show(true); thLab.obj = [therm.position.x, 4.0, 0]; thLab.set(Math.round(Td) + ' °C');
+        info('<b>1 mol의 부피: 0 °C → 22.4 L, 25 °C → 24.5 L</b><br>지금 ' + Math.round(Td) + ' °C → <b>' + vm.toFixed(1) + ' L</b> (점선은 0 °C 크기)<br>온도가 높아지면 분자가 더 빨리 움직여 분자 사이가 멀어져 부피가 커져요. 분자 수는 그대로예요.');
+      }
+
+      /* ③ 환산 허브: 질량 → 몰 → 부피 · 입자 수 */
+      const hb = makeBall(30, 0.34), hbBlock = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({ color: 0xcfd6e4, roughness: 0.5 })), hbPad = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.2, 2.2), new THREE.MeshStandardMaterial({ color: 0x516079 }));
+      root.add(hbBlock, hbPad); const hbLab = label('', [0, 0, 0], { size: 12.5 });
+      function hubScene(Z, dt, f) {
+        const h = Z.S.hb, g = Z.GAS[h.gas], m = h.m * f, n = m / g.M, V = n * V0, N = n * NA;
+        hb.show(true); hb.setKey(KEY[h.gas]);
+        const r = clamp(0.5 * Math.cbrt(Math.max(V, 0.05)), 0.25, 3.3), cnt = clamp(Math.round(n / 0.05), n > 0 ? 1 : 0, 30);
+        hb.set(r, cnt, COLN[h.gas]); const x0 = phone ? 1.0 : 1.8; hb.place(x0, r + 0.3, 0); hb.step(dt, 1.3);
+        hb.lab.set(g.name + ' ' + g.f + '<br><b>' + V.toFixed(V < 10 ? 2 : 1) + ' L</b> (0 °C, 1기압)');
+        const s = 0.45 + 0.28 * Math.cbrt(m / 11 + 0.001); hbBlock.visible = hbPad.visible = hbLab.visible = true; hbLab.show(true);
+        const px = phone ? -2.6 : -3.6; hbPad.position.set(px, 0.1, 0); hbBlock.scale.set(s, s, s); hbBlock.position.set(px, 0.2 + s / 2, 0); hbBlock.material.color.setHex(COLN[h.gas]);
+        hbLab.obj = [px, 0.4 + s + 0.5, 0]; hbLab.set('질량 <b>' + (m < 10 ? m.toFixed(1) : Math.round(m)) + ' g</b>');
+        info('<b>' + g.name + ' ' + g.f + ' ' + h.m + ' g</b> (몰질량 ' + g.M + ' g/mol)<br>질량 ÷ ' + g.M + ' = <b>' + Z.fm(h.m / g.M, 3) + ' mol</b><br>부피 = 몰수 × 22.4 L/mol = <b>' + Z.fm(h.m / g.M * V0, 3) + ' L</b> · 입자 수 = 몰수 × 6.02×10²³ = <b>' + Z.sci(h.m / g.M * NA, 4) + '개</b><br>몰(mol)을 가운데에 두고 바꿔요. 대표 입자 한 개 = 0.05 mol');
+      }
+
+      /* ④ 종합 도전 · 드라이아이스 */
+      const dry = makeBall(10, 0.36); dry.setKey('CO2');
+      const iceB = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({ color: 0xeaf3ff, roughness: 0.4 })); root.add(iceB);
+      const dPad = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 0.2, 24), new THREE.MeshStandardMaterial({ color: 0x516079 })); dPad.position.set(0, 0.1, 0); root.add(dPad);
+      const iceLab = label('드라이아이스 22 g (CO₂)', [0, 1.4, 0], { size: 12.5 });
+      function dryScene(Z, dt, p) {
+        const fn = Z.S.fn, T = fn.T, vt = Z.iceV(T), left = 1 - clamp(p, 0, 1), s = 0.95 * Math.cbrt(Math.max(left, 0.0001));
+        iceB.visible = dPad.visible = iceLab.visible = true; iceB.scale.set(s, s, s); iceB.position.set(0, 0.2 + s / 2, 0); iceB.visible = left > 0.01; iceLab.show(true); iceLab.obj = [0, 0.4 + Math.max(s, 0.3) + 0.4, 0];
+        const V = vt * p, r = rOf(V, 0.55, 2.6);
+        dry.show(V > 0.3); dry.set(r, Math.round(10 * p), 0xf9a8d4); dry.place(0, 2.7 + r * 0.9, 0); dry.step(dt, 1.2);
+        dry.lab.set(fn.okT[T] ? '<b>' + Z.fm(vt, 2) + ' L</b>' : '<b>? L</b>');
+        info('<b>드라이아이스 22 g (CO₂)</b> · 몰질량 44 g/mol · ' + T + ' °C, 1기압<br>1 mol의 부피: 0 °C → 22.4 L, 25 °C → ' + Z.VM25 + ' L<br>승화 <b>' + Math.round(p * 100) + ' %</b> · 기체의 부피는 얼마일까요? 계산해서 2D 칸에 써 보세요.<br>온도가 높을수록 1 mol의 부피가 커서 풍선도 더 커져요.');
+      }
+
+      /* ④ 종합 도전 · 이산화 탄소의 밀도 (촛불) */
+      const tank = L.glassBox(4.6, 3.2, 2.2, 0xcfe0ff, 0.1); tank.position.set(0, 1.6, 0); root.add(tank);
+      const layer = new THREE.Mesh(new THREE.BoxGeometry(4.5, 1, 2.1), new THREE.MeshStandardMaterial({ color: 0x8c7ae0, transparent: true, opacity: 0.55, depthWrite: false })); root.add(layer);
+      const candle = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.9, 16), new THREE.MeshStandardMaterial({ color: 0xfff6dd })); candle.position.set(0, 0.5, 0); root.add(candle);
+      const flame = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.5, 14), new THREE.MeshBasicMaterial({ color: 0xffa726 })); root.add(flame);
+      const densLab = label('', [0, 0, 0], { size: 12.5 });
+      let flameV = 1;
+      function densScene(Z, dt, lv) {
+        const fn = Z.S.fn, th = 3.2; lv = clamp(lv, 0, 1);
+        tank.visible = layer.visible = candle.visible = flame.visible = true;
+        layer.visible = lv > 0.003; layer.scale.y = Math.max(0.01, th * lv); layer.position.set(0, th * lv / 2 + 0.02, 0);
+        const covered = th * lv >= 0.42 * th; flameV = covered ? Math.max(0, flameV - dt * 3) : Math.min(1, flameV + dt * 4);
+        flame.visible = flameV > 0.05; flame.scale.setScalar(Math.max(0.05, flameV)); flame.position.set(0, 0.95 + 0.25 * flameV, 0);
+        densLab.show(true); densLab.obj = [0, 3.7, 0]; densLab.set('CO₂ ' + Z.dens(44).toFixed(2) + ' g/L · 공기 ' + Z.dens(29).toFixed(2) + ' g/L');
+        info('<b>이산화 탄소는 아래로 깔려요</b><br>밀도 = M ÷ 22.4: CO₂ ' + Z.dens(44).toFixed(2) + ' g/L, 공기 ' + Z.dens(29).toFixed(2) + ' g/L<br>CO₂ 층 높이 ' + Math.round(lv * 100) + ' % · 촛불 ' + (flameV > 0.5 ? '켜져 있어요' : '꺼졌어요') + '<br>몰질량이 클수록 같은 부피의 질량(밀도)이 커요.');
+      }
+
+      /* ---- 재생기 ---- */
+      let own = null, sig = '', pT = 0, pH = 0, pD = 0, pS = 0;
+      const rowOf = () => { const r = document.querySelectorAll('.v3-player'); return r[r.length - 1]; };
+      const mkP = (kind, o, set) => { const o2 = Object.assign({ loop: true }, o, { onFrame(p) { set(p); own = p > 0 ? kind : (own === kind ? null : own); } }); const pl = controls.player(o2); return { pl, row: rowOf() }; };
+      const PT = mkP('temp', { duration: 10, label: '온도 올리기', phases: [[0, '0 °C'], [0.25, '25 °C'], [0.5, '50 °C'], [0.75, '식히는 중']] }, (p) => { pT = p; });
+      const PH = mkP('hub', { duration: 8, label: '기체 모으기', phases: [[0, '질량 0 g'], [0.05, '모으는 중'], [0.85, '다 모았어요'], [0.93, '비우기']] }, (p) => { pH = p; });
+      const PS = mkP('dry', { duration: 8, label: '승화시키기', phases: [[0, '고체'], [0.04, '승화하는 중'], [0.8, '모두 기체'], [0.92, '다시 얼리기']] }, (p) => { pS = p; });
+      const PD = mkP('dens', { duration: 9, label: 'CO₂ 붓기', phases: [[0, '빈 수조'], [0.05, '붓는 중'], [0.7, '촛불이 꺼져요'], [0.9, '비우기']] }, (p) => { pD = p; });
+      const PL = { temp: PT, hub: PH, dry: PS, dens: PD };
+      let lastKind = '';
+      const DIST = phone ? { bal: 17, temp: 14, hub: 14, dry: 14, dens: 14 } : { bal: 13, temp: 11, hub: 11.5, dry: 11, dens: 11 };
+
       return {
-        update(dt) {
-          dt = Math.min(dt, 0.05);
-          const sT = Math.sqrt((273 + T) / 273);
-          boxes.forEach((B) => {
-            const lim = B.edge / 2 - 0.45;
-            B.mols.forEach((m) => {
-              if (!m.visible) return;
-              const u = m.userData, s = B.g.sp * sT * 2.0;
-              u.p.addScaledVector(u.v, s * dt);
-              ['x', 'y', 'z'].forEach((a) => { if (u.p[a] > lim) { u.p[a] = lim; u.v[a] = -Math.abs(u.v[a]); } else if (u.p[a] < -lim) { u.p[a] = -lim; u.v[a] = Math.abs(u.v[a]); } });
-              m.position.set(B.box.position.x + u.p.x, B.box.position.y + u.p.y, u.p.z);
-              m.rotation.x += u.w.x * dt * 1.5; m.rotation.y += u.w.y * dt * 1.5; m.rotation.z += u.w.z * dt * 1.5;
-            });
-          });
+        update(dt, t) {
+          const Z = ctx.lesson(); if (!Z) return; dt = Math.min(dt, 0.05);
+          const S = Z.S, fn = S.fn, bw = S.bw, hbs = S.hb;
+          const kind = S.mode === 'balloon' ? (S.sub.balloon === 'bal' ? 'bal' : 'temp') : S.mode === 'final' ? (S.sub.final === 'dry' ? 'dry' : 'dens') : 'hub';
+          const s = [kind, bw.T, hbs.gas, hbs.m, fn.T, fn.run, fn.levelT].join('|');
+          if (s !== sig) { sig = s; if (own) { const k = own; own = null; PL[k].pl.pause(); PL[k].pl.set(0); } }
+          if (kind !== lastKind) { lastKind = kind; ctx.orbit.dist = DIST[kind]; }
+          Object.keys(PL).forEach((k) => { PL[k].row.style.display = k === kind ? '' : 'none'; if (k !== kind && PL[k].pl.playing) PL[k].pl.pause(); });
+          [bal[0], bal[1], bal[2], tb, hb, dry].forEach((b) => b.show(false));
+          ghost.visible = therm.visible = thLab.visible = false; thLab.show(false);
+          hbBlock.visible = hbPad.visible = false; hbLab.show(false);
+          iceB.visible = dPad.visible = false; iceLab.show(false);
+          tank.visible = layer.visible = candle.visible = flame.visible = false; densLab.show(false);
+          const o = own === kind;
+          if (kind === 'bal') balScene(Z, dt);
+          else if (kind === 'temp') tempScene(Z, dt, o ? 50 * (0.5 - 0.5 * Math.cos(2 * Math.PI * pT)) : bw.Td);
+          else if (kind === 'hub') hubScene(Z, dt, o ? (pH < 0.93 ? sm(pH / 0.85) : 1 - sm((pH - 0.93) / 0.07)) : 1);
+          else if (kind === 'dry') dryScene(Z, dt, o ? (pS < 0.92 ? sm(pS / 0.8) : 1 - sm((pS - 0.92) / 0.08)) : fn.p);
+          else densScene(Z, dt, o ? 0.9 * (pD < 0.9 ? sm(pD / 0.7) : 1 - sm((pD - 0.9) / 0.1)) : fn.level);
         },
       };
     },

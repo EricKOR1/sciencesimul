@@ -1,4 +1,6 @@
-/* hr-practical-cell · 3D 실용 전지의 구조
+/* hr-practical-cell · 3D 실용 전지의 구조 (2D '구조 비교'의 세 전지 + '전지 분류'의 방전 · 충전)
+   2D에서 고른 전지(망가니즈 건전지 · 납 축전지 · 리튬 이온 전지)와 방전/충전을 그대로 따라가요.
+   '전지 분류' 단계에서는 학생이 2D에서 전자 방향을 고르기 전까지 전자의 흐름을 멈춰 두고, ▶ 재생을 누르면 방전 ↔ 충전을 번갈아 보여 줘요.
    ① 망가니즈 건전지(1차 전지): 아연 통(−극) · 전해질 풀 · MnO₂+탄소(+극 물질) · 탄소 막대(+극 단자). 반쪽을 잘라 단면을 보여 줘요.
    ② 리튬 이온 전지(2차 전지): 흑연(−) | 분리막 | 리튬 코발트 산화물(+). 방전·충전할 때 Li⁺와 전자의 이동 방향이 반대로 바뀌어요.
    크기와 입자 수는 모형 스케치예요. */
@@ -12,11 +14,12 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHONE ? 17 : 12.5, theta: 0.35, phi: 1.2, min: 6, max: 26, target: [0, 0.6, 0] },
     autoRotate: 0.07,
+    levels: [3],   // 4단계 '전지 분류'. 1·2·3단계는 카드 · 색칠 · 기록이 2D 화면에서 필요해요
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3;
       const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.45, metalness: 0.05 }, o || {}));
-      const A = new THREE.Group(), B = new THREE.Group(); root.add(A, B);
+      const A = new THREE.Group(), B = new THREE.Group(), C = new THREE.Group(); root.add(A, B, C);
       let kind = 'mn', mode = 'dis', showLab = true;
       const M = new THREE.Matrix4(), hide = (m, i) => { M.makeScale(0.0001, 0.0001, 0.0001); m.setMatrixAt(i, M); };
       const hideLab = [];
@@ -70,31 +73,85 @@
         label('흑연 (−극 물질)', [-SX, -SH / 2 - 0.45, 0], { color: 'rgba(100,116,139,.95)' }), label('리튬 코발트 산화물 (+극)', [SX, -SH / 2 - 0.45, 0], { color: 'rgba(37,99,235,.95)' }),
         label('분리막 · 전해질', [0, -SH / 2 - 0.45, 0], { color: 'rgba(30,41,59,.9)' }), label('Li⁺', [0, 0.3, SZ / 2], { color: 'rgba(124,58,237,.95)' }), label('e⁻', [-2, ctop + 0.55, 0], { color: 'rgba(8,145,178,.92)' }),
       ];
-      function setKind(k) { kind = k; A.visible = k === 'mn'; B.visible = k === 'li'; showL(); }
-      function showL() { labsA.forEach((l) => l.show(showLab && kind === 'mn')); labsB.forEach((l) => l.show(showLab && kind === 'li')); }
-      const segK = controls.segment('전지', [{ value: 'mn', label: '망가니즈 건전지' }, { value: 'li', label: '리튬 이온 전지' }], kind, setKind);
-      const segMode = controls.segment('상태', [{ value: 'dis', label: '방전 (사용)' }, { value: 'chg', label: '충전' }], mode, (v) => { mode = v; });
+      /* ---------- ③ 납 축전지 (Pb | 묽은 황산 | PbO₂) ---------- */
+      const acid = new THREE.Mesh(new THREE.BoxGeometry(SX * 2 + 1.7, SH, SZ), mat(0xf7e08a, { transparent: true, opacity: 0.2, depthWrite: false })); C.add(acid);
+      const mkPlates = (x, col, n) => { const g = new THREE.Group(); g.position.x = x; for (let i = 0; i < 3; i++) { const p = new THREE.Mesh(new THREE.BoxGeometry(0.35, SH - 0.7, SZ - 0.5), mat(col, { metalness: 0.35, roughness: 0.6 })); p.position.set((i - 1) * 0.55, -0.05, 0); g.add(p); } const bar = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.18, 0.5), mat(0x94a3b8, { metalness: 0.85, roughness: 0.3 })); bar.position.set(0, SH / 2 - 0.2, 0); g.add(bar); return g; };
+      C.add(mkPlates(-SX, 0x8b95a7), mkPlates(SX, 0x6b4a3a));
+      const sepC = new THREE.Mesh(new THREE.BoxGeometry(0.1, SH - 0.4, SZ - 0.3), mat(0xf1f5f9, { transparent: true, opacity: 0.55, depthWrite: false })); C.add(sepC);
+      C.add(new THREE.Mesh(new THREE.TubeGeometry(wB, 80, 0.06, 10, false), mat(0xd18a3a, { metalness: 0.7, roughness: 0.35 })));
+      const devC = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.7, 0.8), mat(0x64748b, { metalness: 0.3 })); devC.position.set(0, ctop, 0); C.add(devC);
+      const devLC = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 12), mat(0xffc83d, { emissive: 0xffc83d, emissiveIntensity: 0.9 })); devLC.position.set(0, ctop + 0.45, 0); C.add(devLC);
+      const eC = new THREE.InstancedMesh(new THREE.SphereGeometry(0.13, 12, 10), mat(0x42e8ff, { emissive: 0x00a9c0, emissiveIntensity: 0.9 }), NE); eC.frustumCulled = false; C.add(eC);
+      const NI = 14, hI = new THREE.InstancedMesh(new THREE.SphereGeometry(0.13, 14, 10), mat(0xf8fafc, { emissive: 0x94a3b8, emissiveIntensity: 0.4 }), NI), sI = new THREE.InstancedMesh(new THREE.SphereGeometry(0.2, 16, 12), mat(0xfbbf24, { emissive: 0xb45309, emissiveIntensity: 0.35 }), NI);
+      hI.frustumCulled = false; sI.frustumCulled = false; C.add(hI, sI);
+      const IP = Array.from({ length: NI }, (_, i) => ({ u: i / NI, y: -SH / 2 + 0.5 + Math.random() * (SH - 1), z: (Math.random() - 0.5) * (SZ - 0.8) }));
+      const labsC = [
+        label('Pb판 (−극 물질)', [-SX, -SH / 2 - 0.45, 0], { color: 'rgba(100,116,139,.95)' }), label('PbO₂판 (+극 물질)', [SX, -SH / 2 - 0.45, 0], { color: 'rgba(120,70,40,.95)' }),
+        label('분리막 · 묽은 황산(전해질)', [0, -SH / 2 - 0.45, 0], { color: 'rgba(30,41,59,.9)' }), label('e⁻', [-2, ctop + 0.55, 0], { color: 'rgba(8,145,178,.92)' }),
+      ];
+      function setKind(k) { kind = k; A.visible = k === 'mn'; B.visible = k === 'li'; C.visible = k === 'pb'; showL(); }
+      function showL() { labsA.forEach((l) => l.show(showLab && kind === 'mn')); labsB.forEach((l) => l.show(showLab && kind === 'li')); labsC.forEach((l) => l.show(showLab && kind === 'pb')); }
       const lb = controls.button('이름표 ✓', () => { showLab = !showLab; lb.classList.toggle('on', showLab); lb.textContent = '이름표 ' + (showLab ? '✓' : '✕'); showL(); }); lb.classList.add('on');
       setKind('mn');
-      let txt = '';
+      let txt = '', demoMode = null;
+      const pl = controls.player({
+        duration: 8, loop: true, autoplay: false, label: '방전 ↔ 충전 재생',
+        phases: [[0, '방전 (사용)'], [0.5, '충전']],
+        onFrame(p) { demoMode = p < 0.5 ? 'dis' : 'chg'; },
+      });
+      const demoOn = () => pl.playing || pl.p > 0.0005;
+      const KMAP = { mn: 'mn', alk: 'mn', pb: 'pb', lead: 'pb', li: 'li' };
+      const NAME = { mn: '망가니즈 건전지', pb: '납 축전지', li: '리튬 이온 전지' };
+      function read2D() {
+        const w = window.__sim, S2 = w && w.S; const r = { md: '', k: kind, mode: 'dis', chosen: true, alk: false };
+        if (!S2) return r;
+        r.md = S2.mode;
+        if (S2.mode === 'compare' && S2.cm) { r.k = KMAP[S2.cm.cell] || kind; }
+        else if (S2.mode === 'classify' && S2.cf && S2.cf.sub === 'cycle') {
+          const c = S2.cf; r.k = KMAP[c.bat] || kind; r.mode = c.mode === 'chg' ? 'chg' : 'dis'; r.alk = c.bat === 'alk';
+          r.chosen = !!(c.dir && c.dir[c.bat] && c.dir[c.bat][c.mode]);
+        }
+        return r;
+      }
+      const ionLoop = (inst, arr, dir, fn) => arr.forEach((q, i) => { q.u = ((q.u + dir * 0.0016) % 1 + 1) % 1; fn(q, i, inst); });
       return {
         update(dt, t) {
           dt = Math.min(dt, 0.05);
+          const r = read2D();
+          if (r.k !== kind) { setKind(r.k); }
+          let mode = r.mode, active = r.chosen;
+          if (demoOn() && demoMode) { mode = demoMode; active = true; }
+          const primary = kind === 'mn';
+          if (primary && mode === 'chg') active = false;          // 1차 전지는 충전할 수 없어요
+          const dir = mode === 'dis' ? 1 : -1;
           if (kind === 'mn') {
-            for (let i = 0; i < NE; i++) { const u = ((((i / NE) - t * 0.12) % 1) + 1) % 1; const p = wcur.getPointAt(Math.min(1, 1 - u)); M.makeTranslation(p.x, p.y, p.z); em.setMatrixAt(i, M); }
+            for (let i = 0; i < NE; i++) { if (!active) { hide(em, i); continue; } const u = ((((i / NE) - t * 0.12) % 1) + 1) % 1; const p = wcur.getPointAt(Math.min(1, 1 - u)); M.makeTranslation(p.x, p.y, p.z); em.setMatrixAt(i, M); }
             em.instanceMatrix.needsUpdate = true;
-            bulb.material.emissiveIntensity = 0.8 + 0.2 * Math.sin(t * 6);
-          } else {
-            const dir = mode === 'dis' ? 1 : -1;
-            for (let i = 0; i < NE; i++) { const u = ((((i / NE) + dir * t * 0.14) % 1) + 1) % 1; const p = wB.getPointAt(u); M.makeTranslation(p.x, p.y, p.z); eB.setMatrixAt(i, M); }
+            bulb.material.emissiveIntensity = active ? 0.8 + 0.2 * Math.sin(t * 6) : 0.08;
+          } else if (kind === 'li') {
+            for (let i = 0; i < NE; i++) { if (!active) { hide(eB, i); continue; } const u = ((((i / NE) + dir * t * 0.14) % 1) + 1) % 1; const p = wB.getPointAt(u); M.makeTranslation(p.x, p.y, p.z); eB.setMatrixAt(i, M); }
             eB.instanceMatrix.needsUpdate = true;
-            LP.forEach((q, i) => { q.u = ((q.u + dir * dt * 0.1) % 1 + 1) % 1; const x = -SX + 0.95 + (SX * 2 - 1.9) * q.u; M.makeTranslation(x, q.y + Math.sin(t * 2 + i) * 0.1, q.z); lm.setMatrixAt(i, M); });
+            LP.forEach((q, i) => { if (active) q.u = ((q.u + dir * dt * 0.1) % 1 + 1) % 1; const x = -SX + 0.95 + (SX * 2 - 1.9) * q.u; M.makeTranslation(x, q.y + Math.sin(t * 2 + i) * 0.1, q.z); lm.setMatrixAt(i, M); });
             lm.instanceMatrix.needsUpdate = true;
-            devL.material.emissiveIntensity = mode === 'dis' ? 0.9 : 0.1; devL.material.color.setHex(mode === 'dis' ? 0xffc83d : 0x5de08a);
+            devL.material.emissiveIntensity = active ? (mode === 'dis' ? 0.9 : 0.1) : 0.05; devL.material.color.setHex(mode === 'dis' ? 0xffc83d : 0x5de08a);
+          } else {
+            for (let i = 0; i < NE; i++) { if (!active) { hide(eC, i); continue; } const u = ((((i / NE) + dir * t * 0.14) % 1) + 1) % 1; const p = wB.getPointAt(u); M.makeTranslation(p.x, p.y, p.z); eC.setMatrixAt(i, M); }
+            eC.instanceMatrix.needsUpdate = true;
+            IP.forEach((q, i) => {
+              if (active) q.u = ((q.u + dir * dt * 0.1) % 1 + 1) % 1;
+              const xh = -SX + 0.95 + (SX * 2 - 1.9) * q.u, xs = SX - 0.95 - (SX * 2 - 1.9) * q.u;      // H⁺: (−) → (+), SO₄²⁻: (+) → (−) (방전)
+              M.makeTranslation(xh, q.y + Math.sin(t * 2 + i) * 0.1, q.z); hI.setMatrixAt(i, M);
+              M.makeTranslation(xs, q.y + 0.2 + Math.cos(t * 2 + i) * 0.1, -q.z); sI.setMatrixAt(i, M);
+            });
+            hI.instanceMatrix.needsUpdate = true; sI.instanceMatrix.needsUpdate = true;
+            devLC.material.emissiveIntensity = active ? (mode === 'dis' ? 0.9 : 0.1) : 0.05; devLC.material.color.setHex(mode === 'dis' ? 0xffc83d : 0x5de08a);
           }
-          const tx = kind === 'mn'
-            ? '<b>망가니즈 건전지 (1차 전지)</b><br>아연 통이 산화돼 전자를 내보내고, 탄소 막대 쪽에서 전자를 받아요.<br>한 번 쓰면 충전할 수 없어요.'
-            : (mode === 'dis' ? '<b>리튬 이온 전지 · 방전</b><br>Li⁺: 흑연 → 리튬 코발트 산화물 (분리막 통과)<br>전자: (−)극 → 외부 회로 → (+)극' : '<b>리튬 이온 전지 · 충전</b><br>충전기가 전자를 거꾸로 밀어 줘요.<br>Li⁺와 전자 모두 방전 때와 반대로 움직여요 (2차 전지).');
+          let tx;
+          if (kind === 'mn') tx = '<b>망가니즈 건전지 (1차 전지)</b><br>(−)극 아연 통이 산화돼 전자를 내보내고, (+)극 MnO₂ + 탄소 막대 쪽에서 전자를 받아요.<br>한 번 쓰면 충전할 수 없어요.' + (r.alk ? '<br>알칼리 건전지도 Zn–MnO₂ 1차 전지예요.' : '') + (mode === 'chg' ? '<br><b style="color:#fca5a5">1차 전지는 충전할 수 없어요. 충전하면 위험해요.</b>' : '');
+          else if (kind === 'pb') tx = mode === 'dis' ? '<b>납 축전지 · 방전 (2차 전지)</b><br>(−)극 Pb, (+)극 PbO₂, 전해질 묽은 황산<br>전자: (−)극 → 외부 회로 → (+)극' : '<b>납 축전지 · 충전</b><br>충전기가 전자를 거꾸로 밀어 줘요.<br>전자와 이온이 모두 방전 때와 반대로 움직여요.';
+          else tx = mode === 'dis' ? '<b>리튬 이온 전지 · 방전 (2차 전지)</b><br>Li⁺: 흑연 → 리튬 코발트 산화물 (분리막 통과)<br>전자: (−)극 → 외부 회로 → (+)극' : '<b>리튬 이온 전지 · 충전</b><br>충전기가 전자를 거꾸로 밀어 줘요.<br>Li⁺와 전자 모두 방전 때와 반대로 움직여요 (2차 전지).';
+          if (r.md === 'classify' && !r.chosen && !demoOn()) tx += '<br><span style="color:#ffd34d">2D에서 전자의 이동 방향을 고르면 전자 흐름을 보여 줘요.</span>';
+          else if (r.md !== 'classify' && r.md !== 'compare') tx += '<br><span style="color:#9fb0d4">이 단계의 활동은 2D 화면에서 해요.</span>';
           if (tx !== txt) { txt = tx; info(tx); }
         },
       };

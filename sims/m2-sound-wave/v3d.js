@@ -13,7 +13,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHN ? 22 : 16, theta: 0.5, phi: 1.15, min: 6, max: 34, target: [1.3, 0, 0] },
     autoRotate: 0,
-    levels: [0, 1, 2],
+    levels: [1, 2],                  // 1단계(줄 흔들기 · 진공 종 미션)는 2D 화면에서 해요
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3;
@@ -50,33 +50,40 @@
       const box = new THREE.Mesh(new THREE.BoxGeometry(NX * SP, NY * SP, NZ * SP * 1.2), new THREE.MeshBasicMaterial({ color: 0x6f8fd0, wireframe: true, transparent: true, opacity: 0.08 }));
       box.position.set(SX + NX * SP / 2, 0, 0); root.add(box);
 
-      let vol = 3, pitch = 400, air = true, aAir = 1, play = true, phase = 0, vacBtn;
+      let vol = 3, pitch = 400, air = true, aAir = 1, phase = 0, pl = null, pushedAt = -9, now = 0;
       const lamOf = (f) => Math.max(0.9, Math.min(5, 2.6 * Math.pow(400 / f, 0.85)));
       let lastS = '';
+      /* 2D 실험의 소리 크기 · 진동수 · (진공 종에서) 공기의 양을 그대로 따라가요 */
       function readS() {
         const s = sm() && sm().S; if (!s) return;
-        const key = s.vol + ':' + s.pitch + ':' + (s.air != null ? s.air : 1) + ':' + s.pump;
+        const a2 = !(s.scene === 'bell' && s.air != null && s.air < 0.5); if (a2 !== air) { air = a2; text(); }
+        if (now - pushedAt < 0.8) return;
+        const key = s.vol + ':' + s.pitch;
         if (key === lastS) return; lastS = key;
-        vol = Math.max(1, Math.min(5, s.vol || 3)); pitch = s.pitch || 400; volR.set(vol); pitchR.set(pitch);
-        if (s.scene === 'bell' || s.pump) { air = !(s.air != null && s.air < 0.5); }
+        vol = Math.max(1, Math.min(5, s.vol || 3)); pitch = s.pitch || 400; volR.set(vol); pitchR.set(pitch); text();
       }
       function text() {
-        const lam = lamOf(pitch);
-        info(air ? `<b>소리는 파동</b>이에요. 공기 입자가 <b>제자리에서 앞뒤로 떨리면서</b> 촘촘한 곳(빨강)이 퍼져 나가요.<br>소리 ${VOLN[vol - 1]} · 높이 ${pitch} Hz` : `<b>공기가 없어요!</b> 소리를 전달해 줄 입자가 없어서 <b>소리가 들리지 않아요</b>.`);
+        info(air ? `<b>소리는 파동</b>이에요. 공기 입자가 <b>제자리에서 앞뒤로 떨리면서</b> 촘촘한 곳(빨강)이 퍼져 나가요.<br>소리 크기 <b>${VOLN[vol - 1]}</b> (진폭이 클수록 큰 소리)<br>진동수 <b>${pitch} Hz</b> (클수록 높은 소리 · 파장이 짧아요)` : `<b>공기가 없어요!</b> 소리를 전달해 줄 입자가 없어서 <b>소리가 들리지 않아요</b>.`);
       }
-      const volR = controls.range('소리 크기', 1, 5, 1, vol, (v) => { vol = v; text(); }, (v) => VOLN[v - 1]);
-      const pitchR = controls.range('높낮이', 150, 900, 10, pitch, (v) => { pitch = v; text(); }, (v) => v + ' Hz');
-      vacBtn = controls.button('공기 빼기', () => { air = !air; vacBtn.textContent = air ? '공기 빼기' : '공기 넣기'; text(); });
+      // 3D에서 바꾸면 2D 실험의 값도 같이 바뀌어요
+      const volR = controls.range('소리 크기', 1, 5, 1, vol, (v) => { vol = v; pushedAt = now; const s = sm(); if (s && s.setVol) s.setVol(v); text(); }, (v) => VOLN[v - 1]);
+      const pitchR = controls.range('진동수', 150, 900, 10, pitch, (v) => { pitch = v; pushedAt = now; const s = sm(); if (s && s.setPitch) s.setPitch(v); text(); }, (v) => v + ' Hz');
+      // ▶ 재생: 한 주기 동안 공기 입자가 한 번 앞뒤로 떨리고, 파동은 한 파장만큼 나아가요 (멈춰서 촘촘한 곳 · 성긴 곳을 살펴봐요)
+      pl = controls.player({
+        duration: 3, loop: true, autoplay: true, label: '파동 재생',
+        phases: [[0, '한 주기 시작'], [0.25, '1/4 주기'], [0.5, '반 주기'], [0.75, '3/4 주기']],
+        onFrame(p) { phase = p * Math.PI * 2; },
+      });
       controls.button('이름표', () => { const v = labSp.visible === false; labSp.show(v); labEar.show(v); labAir.show(v); });
       text();
       const c1 = new THREE.Color(0x4a7bff), c2 = new THREE.Color(0xf2f4fa), c3 = new THREE.Color(0xff4a4a), tc = new THREE.Color();
       const dm = new THREE.Object3D(); let k0 = 0;
       return {
         update(dt, t) {
+          now = t;
           if ((k0++ % 8) === 0) readS();
-          aAir += ((air ? 1 : 0) - aAir) * Math.min(1, dt * 3);
-          const lam = lamOf(pitch), kk = Math.PI * 2 / lam, om = 4.2 * (pitch / 400) ** 0.5;   // 슬로 모션
-          phase += dt * om;
+          { const s2 = sm() && sm().S; const tgt = s2 && s2.scene === 'bell' && s2.air != null ? s2.air : 1; aAir += (tgt - aAir) * Math.min(1, dt * 6); }   // 진공 종에서는 2D의 공기 양을 따라가요
+          const lam = lamOf(pitch), kk = Math.PI * 2 / lam;
           const A = 0.05 * vol * 1.0 * Math.min(1, aAir * 1.2);
           const R0 = SX - 0.4;
           let n = 0;

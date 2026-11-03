@@ -132,8 +132,17 @@
       }
 
       /* 조작 */
-      const rng = controls.range('부피', 10, 50, 1, Math.round(st.V), (v) => { st.auto = false; autoB.classList.remove('on'); st.V = v; }, (v) => v + ' mL');
-      const autoB = controls.button('▶ 눌렀다 당기기', () => { st.auto = !st.auto; autoB.classList.toggle('on', st.auto); if (st.auto) st.ad = st.V > 30 ? -1 : 1; });
+      /* 부피는 2D와 같은 값 (10~50 mL): 3D에서 바꾸면 2D 피스톤도 같이 움직여요 */
+      let pmode = false, built = false, pP = 0;
+      const sm = (x) => { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); };
+      const pl = controls.player({
+        duration: 8, loop: true, autoplay: false, label: '눌렀다 당기기',
+        phases: [[0, '눌러요'], [0.35, '꾹 눌렀어요'], [0.5, '당겨요'], [0.85, '처음으로']],
+        onFrame(p) { if (!built) return; pmode = true; pP = p; },
+      });
+      built = true;
+      const vOf = (p) => (p < 0.35 ? 40 - 28 * sm(p / 0.35) : p < 0.5 ? 12 : p < 0.85 ? 12 + 36 * sm((p - 0.5) / 0.35) : 48 - 8 * sm((p - 0.85) / 0.15));
+      const rng = controls.range('부피', 10, 50, 1, Math.round(st.V), (v) => { pmode = false; pl.pause(); st.V = v; const l = window.__sim; if (l && l.setV) l.setV(v); else if (l && l.S) l.S.V = v; st.last = v; }, (v) => v + ' mL');
       const markB = controls.button('💥 충돌 표시', () => { st.mark = !st.mark; markB.classList.toggle('on', st.mark); });
       markB.classList.add('on');
       text();
@@ -141,8 +150,8 @@
       return {
         update(dt, t) {
           const sim = window.__sim && window.__sim.S;
-          if (sim && typeof sim.V === 'number' && sim.V !== st.last) { st.last = sim.V; st.V = sim.V; rng.set(Math.round(sim.V)); st.auto = false; autoB.classList.remove('on'); }
-          if (st.auto) { st.V += st.ad * 9 * dt; if (st.V <= 12) { st.V = 12; st.ad = 1; } if (st.V >= 50) { st.V = 50; st.ad = -1; } rng.set(Math.round(st.V)); }
+          if (sim && typeof sim.V === 'number' && sim.V !== st.last) { st.last = sim.V; st.V = sim.V; rng.set(Math.round(sim.V)); pmode = false; pl.pause(); }
+          if (pmode) { st.V = vOf(pP); rng.set(Math.round(st.V)); }
           st.Vs += (st.V - st.Vs) * Math.min(1, dt * 10);
           const top = Y0 + hOf(st.Vs) - PR, bot = Y0 + PR, rmax = RC - PR;
           const sub = 2, h = Math.min(dt, 0.05) / sub;

@@ -12,7 +12,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHN ? 11 : 8.2, theta: 0.6, phi: 1.2, min: 4, max: 22 },
     autoRotate: 0.12,
-    levels: [0, 1, 2],
+    levels: [1, 2],                  // 1단계(입자 눌러 보기)는 2D 화면에서 해요
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const sm = () => window.__sim;

@@ -19,7 +19,7 @@
     autoRotate: 0.12,
     build(ctx) {
       const { THREE, scene, root, label, info, controls } = ctx;
-      const st = { a: 2, e: 0.3, M: 0, speed: 1, sec: true, dots: true, arrow: true, f2: false, key: '', n: 8 };
+      const st = { a: 2, e: 0.3, M: 0, sec: false, dots: true, arrow: true, f2: false, key: '', n: 8, view: 'ellipse' };
       const sr = () => { try { return window.__sim && window.__sim.S; } catch (e) { return null; } };
 
       /* 빛: 태양이 광원 */
@@ -88,24 +88,30 @@
       function text() {
         const a = st.a, e = st.e, q = a * (1 - e), Q = a * (1 + e);
         const f = (x) => (x >= 100 ? Math.round(x) : x >= 10 ? x.toFixed(1) : x.toFixed(2));
-        info('<b>타원 궤도</b> · a = ' + f(a) + ' AU, e = ' + e.toFixed(3).replace(/0+$/, '').replace(/\.$/, '') + '<br>근일점 q = a(1−e) = ' + f(q) + ' AU · 원일점 Q = a(1+e) = ' + f(Q) + ' AU<br>' + (st.sec ? '같은 시간 부채꼴의 넓이는 모두 같아요.' : '이심률이 클수록 납작한 타원이에요.'));
+        info('<b>' + (st.view === 'comet' ? '혜성 궤도' : st.view === 'grav' ? '태양의 중력으로 도는 궤도' : '타원 궤도') + '</b> · a = ' + f(a) + ' AU, e = ' + e.toFixed(3).replace(/0+$/, '').replace(/\.$/, '') + '<br>근일점 q = a(1−e) = ' + f(q) + ' AU · 원일점 Q = a(1+e) = ' + f(Q) + ' AU<br>' + (st.sec ? '같은 시간 동안 쓸고 지나간 부채꼴의 넓이는 모두 같아요 (면적 속도 일정).' : '이심률이 클수록 납작한 타원이에요. 태양은 한 초점에 있어요.'));
       }
 
-      const rA = controls.range('긴반지름 a', 1, 18, 0.1, st.a, (v) => { st.a = v; rebuild(); }, (v) => v.toFixed(1) + ' AU');
-      const rE = controls.range('이심률 e', 0, 0.97, 0.01, st.e, (v) => { st.e = v; rebuild(); }, (v) => v.toFixed(2));
-      const bS = controls.button('같은 시간 부채꼴 ✓', () => { st.sec = !st.sec; bS.classList.toggle('on', st.sec); bS.textContent = '같은 시간 부채꼴 ' + (st.sec ? '✓' : '✕'); rebuild(); }); bS.classList.add('on');
+      const bS = controls.button('같은 시간 부채꼴 ✕', () => { st.sec = !st.sec; st.secUser = true; bS.classList.toggle('on', st.sec); bS.textContent = '같은 시간 부채꼴 ' + (st.sec ? '✓' : '✕'); rebuild(); });
       const bF = controls.button('빈 초점 보기 ✕', () => { st.f2 = !st.f2; bF.classList.toggle('on', st.f2); bF.textContent = '빈 초점 보기 ' + (st.f2 ? '✓' : '✕'); rebuild(); });
-      controls.segment('빠르기', [{ value: 0.5, label: '느리게' }, { value: 1, label: '보통' }, { value: 2, label: '빠르게' }], 1, (v) => { st.speed = +v; });
+      /* ▶ 재생: 행성이 한 바퀴 돌아요 (평균 근점 이각 M이 시간에 비례). 근일점에서 빠르고 원일점에서 느려요 */
+      const player = controls.player({
+        duration: 14, loop: true, autoplay: true, label: '재생',
+        phases: [[0, '근일점'], [0.25, '멀어지는 중'], [0.5, '원일점'], [0.75, '가까워지는 중']],
+        onFrame(p) { st.M = p * TAU; },
+      });
 
+      /* 2D → 3D: 2D 단계의 a, e 값을 그대로 읽어요 (슬라이더는 2D 쪽 것을 써요) */
       function follow() {
         const S = sr(); if (!S) return;
         const key = S.view + '|' + (S.view === 'ellipse' ? S.a + '|' + S.e : S.view === 'area' ? S.e3 : S.view === 'comet' ? S.a4 + '|' + S.e4 : '');
         if (key === st.key) return; st.key = key;
+        const prev = st.view; st.view = S.view;
         if (S.view === 'ellipse') { st.a = S.a; st.e = S.e; }
         else if (S.view === 'area') { st.a = 2; st.e = S.e3; }
         else if (S.view === 'comet') { st.a = S.a4; st.e = S.e4; }
-        else return;
-        rA.set(st.a); rE.set(st.e); rebuild();
+        else { st.a = 1; st.e = 0; }
+        if (prev !== S.view && !st.secUser) { st.sec = S.view === 'area'; bS.classList.toggle('on', st.sec); bS.textContent = '같은 시간 부채꼴 ' + (st.sec ? '✓' : '✕'); }
+        rebuild();
       }
       follow(); rebuild();
 
@@ -113,8 +119,6 @@
       return {
         update(dt) {
           follow();
-          /* 평균 근점 이각 M은 시간에 비례: 한 바퀴를 약 14초에 (a가 커도 같은 박자로 비교해요) */
-          st.M += dt * st.speed * TAU / 14;
           const p = posAt(st.M), E = kepE(st.M, st.e);
           planet.position.set(p[0], 0, p[2]);
           /* 속도 화살표: 길이는 속력에 비례 (vis-viva와 같은 모양) */

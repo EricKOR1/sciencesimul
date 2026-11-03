@@ -138,15 +138,27 @@
         info('온도 <b>' + Math.round(st.Tg) + ' °C</b> → 부피 <b>' + Math.round(Vof(st.Tg)) + ' mL</b> (압력은 그대로)<br>피스톤에 부딪히는 입자: <b>초당 약 ' + Math.round(st.rate) + '번</b><br>온도가 높으면 입자가 빠르고 세게 부딪혀 피스톤이 올라가요.');
       }
 
-      const rng = controls.range('온도', -50, 150, 5, st.T, (v) => { st.T = v; }, (v) => v + ' °C');
-      controls.segment('', [{ value: -50, label: '❄ 차갑게' }, { value: 20, label: '실온' }, { value: 150, label: '🔥 뜨겁게' }], -999, (v) => { st.T = v; rng.set(v); });
+      /* 온도는 2D와 같은 값 (−50~150 °C): 3D에서 바꾸면 2D 온도도 같이 바뀌어요 */
+      let pmode = false, built = false, pP = 0;
+      const sm = (x) => { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); };
+      const pl = controls.player({
+        duration: 10, loop: true, autoplay: false, label: '가열 · 냉각',
+        phases: [[0, '가열해요'], [0.3, '뜨거워요'], [0.42, '냉각해요'], [0.82, '실온으로']],
+        onFrame(p) { if (!built) return; pmode = true; pP = p; },
+      });
+      built = true;
+      const tOf = (p) => (p < 0.3 ? 20 + 100 * sm(p / 0.3) : p < 0.42 ? 120 : p < 0.82 ? 120 - 170 * sm((p - 0.42) / 0.4) : -50 + 70 * sm((p - 0.82) / 0.18));
+      const setSim = (v) => { const l = window.__sim; if (l && l.setT) l.setT(v); else if (l && l.S) l.S.Tset = v; };
+      const rng = controls.range('온도', -50, 150, 5, st.T, (v) => { pmode = false; pl.pause(); st.T = v; setSim(v); if (window.__sim && window.__sim.S) st.last = window.__sim.S.Tset; }, (v) => v + ' °C');
+      controls.segment('', [{ value: -50, label: '❄ 차갑게' }, { value: 20, label: '실온' }, { value: 150, label: '🔥 뜨겁게' }], -999, (v) => { pmode = false; pl.pause(); st.T = v; rng.set(v); setSim(v); if (window.__sim && window.__sim.S) st.last = window.__sim.S.Tset; });
       const markB = controls.button('💥 충돌 표시', () => { st.mark = !st.mark; markB.classList.toggle('on', st.mark); }); markB.classList.add('on');
       text();
 
       return {
         update(dt, t) {
           const sim = window.__sim && window.__sim.S;
-          if (sim && typeof sim.Tset === 'number' && sim.Tset !== st.last) { st.last = sim.Tset; st.T = sim.Tset; rng.set(sim.Tset); }
+          if (sim && typeof sim.Tset === 'number' && sim.Tset !== st.last) { st.last = sim.Tset; st.T = sim.Tset; rng.set(sim.Tset); pmode = false; pl.pause(); }
+          if (pmode) { st.T = tOf(pP); rng.set(Math.round(st.T / 5) * 5); }
           st.Tg += (st.T - st.Tg) * Math.min(1, dt * 2.2);
           const top = Y0 + hOf(Vof(st.Tg)) - PR, bot = Y0 + PR, rmax = RC - PR, sp = speedOf(st.Tg);
           const sub = 2, h = Math.min(dt, 0.05) / sub, fT = Math.max(0, Math.min(1, (st.Tg + 50) / 200));

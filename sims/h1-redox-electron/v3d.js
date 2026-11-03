@@ -1,6 +1,8 @@
 /* h1-redox-electron · 3D 전자의 이동과 산화·환원
    산화 = 전자를 잃는 반응, 환원 = 전자를 얻는 반응. 전자(노란 구슬)가 어디에서 어디로 가는지, 입자의 전하가 어떻게 바뀌는지 보여 줘요.
    ① Zn + Cu²⁺ → Zn²⁺ + Cu   ② Cu + 2Ag⁺ → Cu²⁺ + 2Ag   ③ 2Mg + O₂ → 2MgO (Mg → Mg²⁺ + 2e⁻, O + 2e⁻ → O²⁻)
+   2D와 같아요: 어떤 반응을 보여 줄지는 2D에서 고른 실험(금속과 이온 · 전자의 이동 · 규칙성)을 따라가고, 2D의 진행(가열 · 전자 옮기기)과 3D가 함께 움직여요.
+   2D의 [🔍 전자 보기]를 켜면(금속과 이온 단계) 3D에도 전자가 보여요.
    입자 크기와 거리는 실제와 달라요. 이온이 물속에서 어떻게 있는지(물 분자 감싸기)는 그리지 않았어요. */
 (function () {
   'use strict';
@@ -43,7 +45,8 @@
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3;
       const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ envMapIntensity: 0.6, color: c, roughness: 0.38, metalness: 0.15 }, o || {}));
-      const st = { rx: 'zn', p: 0, play: false, t: 0 };
+      const st = { rx: null, t: 0 };
+      const cache = {};
       const eMat = new THREE.MeshStandardMaterial({ color: 0xffd23f, emissive: 0xffb800, emissiveIntensity: 0.7, roughness: 0.25, metalness: 0 });
       const eGeo = new THREE.SphereGeometry(0.15, 18, 14);
 
@@ -54,7 +57,8 @@
 
       function ringTex() { return null; }
       function build(key) {
-        if (parts) { grp.remove(parts.g); parts.labs.forEach((l) => l.show(false)); }
+        if (parts) { parts.g.visible = false; parts.labs.forEach((l) => l.show(false)); }
+        if (cache[key]) { parts = cache[key]; parts.g.visible = true; return; }
         const R = RX[key], g = new THREE.Group(); grp.add(g);
         const P = { g, R, don: [], acc: [], es: [], labs: [], flash: [] };
         R.don.forEach((d, i) => {
@@ -88,7 +92,7 @@
         const arrow = new THREE.Group(); const L = a0.distanceTo(b0) - 3.2;
         const sh = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, L, 8), new THREE.MeshBasicMaterial({ color: 0xffd23f, transparent: true, opacity: 0.5 })); sh.rotation.z = Math.PI / 2; const hd = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.3, 12), sh.material); hd.rotation.z = -Math.PI / 2; hd.position.x = L / 2 + 0.1; arrow.add(sh, hd); arrow.position.set(mid.x, 0, 0); g.add(arrow);
         const eLab = label('전자(e⁻)의 이동', arrow, { size: 12.5, offset: [0, 0.55, 0] }); P.labs.push(eLab); P.eLab = eLab;
-        parts = P;
+        parts = P; cache[key] = P;
       }
 
       let lastInfo = '';
@@ -96,7 +100,7 @@
       const setLab = (l, t) => { if (l.txt !== t) { l.txt = t; l.set(t); } };
       const ease = (x) => { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); };
       function apply() {
-        const P = parts, R = P.R, p = st.p, nE = P.es.length;
+        const P = parts, R = P.R, p = pl.p, nE = P.es.length;
         // 전자별 진행도: 순서대로 출발
         P.es.forEach((e) => {
           const start = (e.idx / nE) * 0.55, u = ease((p - start) / 0.4);
@@ -124,24 +128,48 @@
           a.body.material.metalness = c.neutral ? 0.1 : 0.2 + 0.4 * k; a.body.scale.setScalar(c.neutral ? 1 + 0.2 * k : 1 + 0.1 * k);
           setLab(a.lb, full ? R.after[1] : R.before[1]);
         });
+        const S2 = L2(), showE = !(S2 && S2.MODE === 'bench' && S2.BENCH) || S2.BENCH.showE;
+        P.es.forEach((e) => { e.m.visible = showE; }); P.acc.forEach((a) => { if (!showE) a.slots.forEach((s) => { s.visible = false; }); });
         const mid = p > 0.04 && p < 0.96, end = p >= 0.96;
-        P.ox.show(end); P.rd.show(end); P.eLab.show(mid || end);
+        P.ox.show(end); P.rd.show(end); P.eLab.show(showE && (mid || end));
         const donName = R.after[0], accName = R.after[1];
-        if (p < 0.04) setInfo('<b>' + R.eq.split(' → ')[0] + '</b> 이 만났어요.<br>▶ 전자 이동을 눌러 <b>전자(노란 구슬)</b>가 어디로 가는지 봐요.');
+        if (p < 0.04) setInfo('<b>' + R.eq.split(' → ')[0] + '</b> 이 만났어요.<br>▶ 재생을 눌러(또는 2D에서 반응을 진행해) <b>전자(노란 구슬)</b>가 어디로 가는지 봐요.');
         else if (!end) setInfo('전자가 <b>' + R.before[0] + ' → ' + R.before[1] + '</b> 쪽으로 옮겨 가고 있어요.<br>전자를 잃는 쪽은 + 전하가 늘고, 얻는 쪽은 줄어요.');
         else setInfo('<b>' + R.before[0] + '</b>은 전자를 잃어 <b>' + donName + '</b>(산화), <b>' + R.before[1] + '</b>은 전자를 얻어 <b>' + accName + '</b>(환원)이 됐어요.<br><b>' + R.eq + '</b>');
       }
 
-      const seg = controls.segment('반응', [{ value: 'zn', label: 'Zn + Cu²⁺' }, { value: 'ag', label: 'Cu + Ag⁺' }, { value: 'mg', label: 'Mg + O₂' }], st.rx, (v) => { st.rx = v; st.p = 0; st.play = false; playB.textContent = '▶ 전자 이동'; rng.set(0); build(v); apply(); });
-      const playB = controls.button('▶ 전자 이동', () => { if (st.p >= 0.999) { st.p = 0; } st.play = !st.play; playB.textContent = st.play ? '⏸ 멈춤' : '▶ 전자 이동'; });
-      const rng = controls.range('진행', 0, 100, 1, 0, (v) => { st.play = false; playB.textContent = '▶ 전자 이동'; st.p = v / 100; }, (v) => v + '%');
-      build(st.rx); apply();
-      let lastP = -1;
+      const L2 = () => (ctx.lesson && ctx.lesson()) || null;
+      const pl = controls.player({
+        duration: 6, loop: true, label: '전자 이동',
+        phases: [[0, '반응 전'], [0.05, '전자가 이동'], [0.96, '반응 후']],
+        onFrame() { if (parts) apply(); },
+      });
+      // 2D에서 고른 실험을 따라가요: 금속과 이온 = 고른 실험, 전자의 이동 = Zn + Cu²⁺, 규칙성 = Mg + O₂(산소의 눈/전자의 눈) · Cu + Ag⁺(전자 장부)
+      let last = 'zn';
+      const keyOf = () => {
+        const S = L2(); if (!S) return last;
+        const m = S.MODE;
+        if (m === 'bench' && S.BENCH) last = S.BENCH.k; else if (m === 'move') last = 'zn'; else if (m === 'rule') last = S.SUB === 'dual' ? 'mg' : 'ag';
+        return last;
+      };
+      const progOf = (k) => {
+        const S = L2(); if (!S) return -1;
+        if (S.MODE === 'move' && S.MV) return Math.min(1, S.MV.zn.reduce((n, z) => n + z.e.filter((e) => e.st === 'gone').length, 0) / 4);
+        return S.SIMS && S.SIMS[k] ? S.SIMS[k].prog : -1;
+      };
+      let lastProg = -2;
+      function pick(k) {
+        st.rx = k; build(k);
+        lastProg = progOf(k); pl.pause(); pl.set(lastProg > 0 ? lastProg : 0);
+      }
+      pick(keyOf());
 
       return {
         update(dt, t) {
           st.t += dt;
-          if (st.play) { st.p = Math.min(1, st.p + dt / 5.5); rng.set(Math.round(st.p * 100)); if (st.p >= 1) { st.play = false; playB.textContent = '↺ 다시 보기'; } }
+          const k = keyOf();
+          if (k !== st.rx) pick(k);
+          else { const q = progOf(k); if (q !== lastProg) { lastProg = q; if (q >= 0) pl.set(q); } }
           apply();
           parts.g.rotation.y = 0;
           parts.don.forEach((d) => { d.a.rotation.z = t * 0.2; });

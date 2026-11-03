@@ -1,4 +1,5 @@
 /* hb-digest-enzyme · 3D 효소와 기질 (열쇠-자물쇠 모형)
+   2D 차시의 소화제(아밀레이스·프로테이스·라이페이스)와 녹말·단백질(흰자)·지방(우유), 온도(0·37·60 °C)·pH(2·7·11) 조건과 같은 값으로 맞춰요.
    소화 효소는 활성 부위 모양이 맞는 기질에만 작용하고(기질 특이성), 온도가 너무 높으면 단백질인 효소의 모양이 변해 작용하지 못해요. */
 (function () {
   'use strict';
@@ -6,21 +7,21 @@
   const narrow = window.innerWidth < 600 || window.innerHeight > window.innerWidth * 1.1;
   const ENZ = [
     { name: '아밀레이스', color: 0x2a62d8, shape: 'sphere' },
-    { name: '단백질 분해 효소', color: 0x8a3fc8, shape: 'cube' },
+    { name: '프로테이스', color: 0x8a3fc8, shape: 'cube' },
     { name: '라이페이스', color: 0x12907a, shape: 'cone' },
   ];
   const SUB = [
-    { name: '녹말', color: 0xf2b84a, prod: 0xc9e07a, shape: 'sphere', pn: '엿당 등' },
-    { name: '단백질', color: 0xe76a5a, prod: 0xf6a58f, shape: 'cube', pn: '아미노산 등' },
-    { name: '지방', color: 0xf0d84a, prod: 0xf6efa0, shape: 'cone', pn: '지방산·글리세롤' },
+    { name: '녹말', color: 0xf2b84a, prod: 0xc9e07a, shape: 'sphere', pn: '엿당' },
+    { name: '단백질', color: 0xe76a5a, prod: 0xf6a58f, shape: 'cube', pn: '아미노산' },
+    { name: '지방', color: 0xf0d84a, prod: 0xf6efa0, shape: 'cone', pn: '지방산·모노글리세리드' },
   ];
 
   window.SciSim3D.attach({
     title: '소화 효소 3D 모형 (열쇠-자물쇠)',
-    hint: '효소와 기질을 바꿔 보고, 온도를 올려 봐요',
+    hint: '효소와 기질을 바꿔 보고, 온도(0~60 °C)·pH(2~11)를 바꿔 봐요 · 2D의 선택도 따라가요',
     camera: { dist: narrow ? 13 : 10.2, theta: 0.5, phi: 1.2, min: 5, max: 20, target: [0.7, 0.5, 0] },
     autoRotate: 0.12,
-    levels: [0, 2],
+    levels: [2],
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V = THREE.Vector3;
@@ -69,9 +70,22 @@
         lS.set(s.name + ' (기질)');
       }
       function applyEnz() { eMat.color.set(ENZ[ei].color); lE.set(ENZ[ei].name); denShown = -1; }
-      const segE = controls.segment('효소', ENZ.map((e, i) => ({ label: e.name.replace(' 분해 효소', '분해효소'), value: i })), 0, (v) => { ei = v; applyEnz(); restart(); });
+      const segE0 = null;
+      const segE2 = controls.segment('효소', ENZ.map((e, i) => ({ label: e.name, value: i })), 0, (v) => { ei = v; applyEnz(); restart(); });
       const segS = controls.segment('기질', SUB.map((s, i) => ({ label: s.name, value: i })), 0, (v) => { si = v; applySub(); restart(); });
-      controls.range('온도', 0, 80, 1, 37, (v) => { temp = v; }, (v) => v + ' ℃');
+      const rT = controls.range('온도', 0, 60, 1, 37, (v) => { temp = v; }, (v) => v + ' °C');
+      const rP = controls.range('pH', 2, 11, 1, 7, (v) => { pHv = v; }, (v) => 'pH ' + v);
+      let pHv = 7;
+      const NUT = ['starch', 'egg', 'milk'], CT = [0, 37, 60], CP = [2, 7, 11];
+      let seen = { nut: null, tk: null, ts: -2, ps: -2 };
+      function follow2D() { // 2D 차시의 선택을 따라가요 (기질·온도·pH)
+        const L = window.__sim; if (!L) return;
+        const S2 = L.S, ni = NUT.indexOf(S2.lab.nut);
+        if (ni >= 0 && seen.nut !== S2.lab.nut) { seen.nut = S2.lab.nut; si = ni; ei = ni; applySub(); applyEnz(); segE2.set(ei); segS.set(si); restart(); }
+        const sel = S2.cond.sel;
+        if (sel.temp !== seen.ts) { seen.ts = sel.temp; if (sel.temp >= 0) { temp = CT[sel.temp]; rT.set(temp); } }
+        if (sel.ph !== seen.ps) { seen.ps = sel.ph; if (sel.ph >= 0) { pHv = CP[sel.ph]; rP.set(pHv); } }
+      }
       function restart() { clock = 0; }
 
       function ease(x) { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); }
@@ -85,9 +99,11 @@
 
       return {
         update(dt, t) {
+          follow2D();
           const hot = Math.max(0, (temp - 37) / 43), cold = temp < 37 ? 1 - temp / 37 : 0;
           den = Math.max(0, Math.min(1, (temp - 44) / 20)); den = den * den * (3 - 2 * den);
-          const sp = temp < 37 ? 0.2 + 0.8 * (1 - cold * cold) : 1 + hot * 0.6;
+          const phf = Math.max(0.3, 1 - Math.abs(pHv - 7) / 5 * 0.7);
+          const sp = (temp < 37 ? 0.2 + 0.8 * (1 - cold * cold) : 1 + hot * 0.6) * phf;
           const before = clock; clock += dt * sp;
           const cyc = Math.floor(clock / CYC), ph = (clock % CYC);
           if (Math.abs(den - denShown) > 0.01) { shapeEnzyme(ENZ[ei].shape, den); denShown = den; eMat.color.set(ENZ[ei].color).lerp(new THREE.Color(0x5a5f6b), den); }
@@ -128,11 +144,11 @@
           lS.obj = uB;
           // 효소 떨림 (뜨거울수록)
           enzyme.position.set(Math.sin(t * 40) * 0.01 * (1 + hot * 3), Math.cos(t * 37) * 0.01 * (1 + hot * 3), 0);
-          const key = ei + '|' + si + '|' + (den > 0.55 ? 'd' : temp < 15 ? 'c' : 'n') + '|' + count;
+          const key = ei + '|' + si + '|' + (den > 0.55 ? 'd' : temp < 15 ? 'c' : 'n') + '|' + (pHv === 7 ? 'p' : pHv < 7 ? 'a' : 'b') + '|' + count;
           if (key !== lastKey) {
             lastKey = key;
             let l1 = ei === si ? '<b>' + ENZ[ei].name + '</b>의 활성 부위와 <b>' + s.name + '</b>의 모양이 맞아요.' : '모양이 맞지 않아 <b>' + SUB[si].name + '</b>은 분해되지 않아요.';
-            let l2 = den > 0.55 ? '높은 온도에서 효소의 모양이 변해 작용하지 못해요 (변성).' : temp < 15 ? '온도가 낮아 반응이 느려요.' : ei === si ? '분해 산물: ' + s.pn + ' (분해 ' + count + '번)' : '효소는 한 가지 기질에만 작용해요(기질 특이성).';
+            let l2 = pHv !== 7 && den <= 0.55 ? 'pH ' + pHv + '는 최적 pH(7)에서 멀어 효소의 활성이 낮아요.' : den > 0.55 ? '높은 온도에서 효소의 모양이 변해 작용하지 못해요 (변성).' : temp < 15 ? '온도가 낮아 반응이 느려요.' : ei === si ? '분해 산물: ' + s.pn + ' (분해 ' + count + '번)' : '효소는 한 가지 기질에만 작용해요(기질 특이성).';
             info(l1 + '<br>' + l2);
             lT.set(den > 0.55 ? '변성된 효소' : ei === si ? (temp > 30 && temp < 42 ? '최적 온도 부근' : '') : '');
             lT.show(den > 0.55 || (ei === si && temp > 30 && temp < 42));

@@ -76,6 +76,7 @@
     title: '뉴턴의 대포 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: 12, theta: 0.9, phi: 1.15, min: 0.12, max: 70 },
+    levels: [0],
     autoRotate: 0,
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
@@ -119,7 +120,7 @@
       let tubeR = 0.03, v = 7.0, sh = predict(v), clock = 0, playSec = 10, issOn = false, tgt = null, rv = null, sc = 1;
       const PMK = 5070 / 10;                                                   // 원 궤도 한 바퀴를 10초로 보여 주는 배속
 
-      function readLesson() { try { const s = window.__sim && window.__sim.S; if (s && typeof s.v === 'number') return Math.max(1, Math.min(12, s.v)); } catch (e) {} return null; }
+      function readLesson() { try { const s = window.__sim && window.__sim.S; if (s && typeof s.v === 'number') return Math.max(1, Math.min(9, s.v)); } catch (e) {} return null; }
       const MSG = {
         impact: () => '<b>떨어져요 (낙하)</b>: 중력이 이기고 속도가 모자라 지구로 돌아와요.<br>도달 거리 약 <b>' + fmtN(sh.range) + ' km</b>',
         circle: () => '<b>원 궤도</b>: 떨어지는 만큼 지구 표면이 휘어져서 같은 높이로 계속 돌아요.<br>한 바퀴 약 <b>' + Math.round(sh.P / 60) + '분</b>',
@@ -155,21 +156,29 @@
       }
       function setV(x, fromLesson) { v = Math.round(x * 100) / 100; sh = predict(v); build(); if (!fromLesson) rv.set(v); }
 
-      rv = controls.range('발사 속력', 1, 12, 0.1, v, (x) => { v = x; sh = predict(v); build(); }, (x) => x.toFixed(1) + ' km/s');
-      controls.button('🔥 다시 발사', () => { clock = 0; });
-      controls.button('⭕ 원 궤도 속력', () => { setV(VC); });
-      controls.button('🚀 탈출 속력', () => { setV(VESC + 0.05); });
+      const to2D = (x) => { const el = document.getElementById('sV'); if (el) { el.value = x; el.dispatchEvent(new Event('input', { bubbles: true })); } };
+      rv = controls.range('발사 속력', 1, 9, 0.1, v, (x) => { v = x; sh = predict(v); build(); to2D(x); }, (x) => x.toFixed(1) + ' km/s');
+      controls.button('🔥 발사', () => { clock = 0; const L = window.__sim; if (L && L.fire && L.S && L.S.mode === 'cannon') L.fire(); });
+      controls.button('⭕ 원 궤도 속력(약 7.9)', () => { setV(VC); to2D(Math.round(VC * 10) / 10); });
       const ib = controls.button('🛰️ ISS 궤도', () => { issOn = !issOn; ib.classList.toggle('on', issOn); iss.visible = issOn; issLab.show(issOn); });
       const l0 = readLesson(); if (l0 != null) { v = l0; sh = predict(v); rv.set(v); }
       build();
       ctx.camera.near = 0.01; ctx.camera.updateProjectionMatrix();
       orbit.dist = tgt.dist; orbit.tx = tgt.tx; orbit.ty = tgt.ty; tgt = null;
       const tmpA = new THREE.Vector3(), tmpB = new THREE.Vector3();
+      let demoP = 0, lastShot = null;
+      const pl = controls.player({
+        duration: 10, loop: true, autoplay: false, label: '발사',
+        phases: [[0, '발사'], [0.5, '날아가는 중']],
+        onFrame(p) { demoP = p; },
+      });
 
       return {
         update(dt) {
           clock += dt;
-          const ph = sh.closed ? ((clock / playSec) % 1) : Math.min(1, (clock % (playSec + 1.2)) / playSec);
+          { const s2 = window.__sim && window.__sim.S; if (s2 && s2.mode === 'cannon') { if (typeof s2.v === 'number' && Math.abs(s2.v - v) > 0.001 && s2.v >= 1 && s2.v <= 9) { v = s2.v; sh = predict(v); rv.set(v); build(); } if (s2.shot !== lastShot) { lastShot = s2.shot; if (s2.shot) clock = 0; } } }
+          const demo = demoP > 0 || pl.playing;
+          const ph = demo ? demoP : sh.closed ? ((clock / playSec) % 1) : Math.min(1, (clock % (playSec + 1.2)) / playSec);
           const q = posAt(sh, ph * sh.tEnd), pos = P3(q.x, q.y);
           ball.position.copy(pos);
           const sp = Math.hypot(q.vx, q.vy) || 1;

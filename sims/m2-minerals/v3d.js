@@ -95,21 +95,24 @@
       const ring = new THREE.Mesh(new THREE.CylinderGeometry(2.1, 2.3, 0.1, 48), mat(0x0e1530, { roughness: 1, metalness: 0 }));
       ring.position.y = -0.04; ring.receiveShadow = true; root.add(ring);
 
-      let sel = 'pyrite', mag = false, clipT = 0;
-      function setSel(k) {
+      let sel = 'pyrite', mag = false, clipT = 0, last2D = null;
+      function setSel(k, push) {
         sel = k; KEYS.forEach((q) => { spec[q].visible = q === k; });
         const st = STREAK[k]; strk.material.color.set(st[1]);
         const ms = window.__sim && window.__sim.MINERALS; const m = ms && ms.find((q) => q.id === k);
         info(`<b>${NM[k]}</b> · 겉보기 색 ${COLOR[k]}<br>조흔색 <b>${st[0]}</b> (아래 흰 판)<br>${NOTE[k]}`);
         labN.set(NM[k]);
+        const S2 = sm() && sm().S; if (push && S2 && S2.sel !== k) { S2.sel = k; if (S2.seen && S2.seen.add) S2.seen.add(k); }   // 3D에서 고른 표본을 2D에도 반영
+        last2D = S2 ? S2.sel : null;
         clipBtn.style.display = k === 'magnetite' ? '' : 'none'; mag = false;
       }
-      const seg = controls.segment('광물', KEYS.map((k) => ({ label: NM[k], value: k })), 'pyrite', setSel);
+      const seg = controls.segment('광물', KEYS.map((k) => ({ label: NM[k], value: k })), 'pyrite', (k) => setSel(k, true));
       const clipBtn = controls.button('🧲 클립 대 보기', () => { mag = !mag; });
       setSel(window.__sim && window.__sim.S && KEYS.includes(window.__sim.S.sel) ? window.__sim.S.sel : 'pyrite'); seg.set(sel);
       return {
         sync() { const s = window.__sim && window.__sim.S; if (s && KEYS.includes(s.sel) && s.sel !== sel) { setSel(s.sel); seg.set(sel); } },
         update(dt, t) {
+          this.sync();   // 2D에서 표본을 바꾸면 3D도 따라가요
           const g = spec[sel]; g.rotation.y = 0;
           if (sel === 'magnetite') {
             clipT += ((mag ? 1 : 0) - clipT) * Math.min(1, dt * 4);

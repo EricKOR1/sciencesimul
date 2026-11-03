@@ -12,6 +12,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHN ? 17 : 13, theta: 0.5, phi: 1.2, min: 4, max: 40 },
     autoRotate: 0.05,
+    levels: [],                      // 1~4단계 미션(발사 · 연표 · 짝짓기 · 계획서)은 2D 화면에서 해요
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
       const V3 = THREE.Vector3;
@@ -78,7 +79,7 @@
       const lS = [label('태양', sun, { offset: [0, 1.5, 0] }), label('보이저 1호', pv1, { offset: [0, 0.5, 0], color: 'rgba(40,130,160,.95)' }), label('보이저 2호', pv2, { offset: [0, 0.5, 0], color: 'rgba(110,80,200,.95)' }), label('화성 탐사선', pm, { offset: [0, 0.5, 0], color: 'rgba(190,90,50,.95)' })];
       solar.visible = false;
 
-      let mode = 'near', labs = true, showDeb = true, tL = -1, PH = 0;
+      let mode = 'near', labs = true, showDeb = true, PH = 0, pl = null, internal = false;
       const dm = new THREE.Object3D(), tmp = new V3();
       function apply() {
         near.visible = mode === 'near'; solar.visible = mode === 'sol';
@@ -87,8 +88,13 @@
         if (mode === 'near') { orbit.dist = PHN ? 17 : 12; orbit.phi = 1.2; info('<b>지구 주변</b>: 인공위성·우주 정거장·우주 망원경이 지구를 돌아요.<br>수명이 다한 위성의 조각 같은 <b>우주 쓰레기</b>도 많이 떠돌아서 위험해요.'); }
         else { orbit.dist = PHN ? 36 : 27; orbit.phi = 1.1; info('<b>태양계 탐사</b>: 탐사선은 행성 곁을 지나가며 사진과 자료를 보내요.<br>보이저 1·2호는 목성과 토성을 지나 태양계 밖으로 나아가고 있어요.'); }
       }
-      controls.segment('보기', [{ label: '지구 주변', value: 'near' }, { label: '태양계', value: 'sol' }], mode, (v) => { mode = v; apply(); });
-      controls.button('🚀 로켓 발사', () => { mode = 'near'; apply(); tL = 0; });
+      const sg = controls.segment('보기', [{ label: '지구 주변', value: 'near' }, { label: '태양계', value: 'sol' }], mode, (v) => { mode = v; apply(); });
+      // ▶ 재생: 로켓 발사 → 우주(고도 100 km) 도착 → 인공위성을 궤도에 올리기 (2D의 '로켓 발사!'와 같은 순서)
+      pl = controls.player({
+        duration: 9, loop: true, autoplay: false, label: '로켓 발사',
+        phases: [[0, '카운트다운 · 점화'], [0.06, '우주(고도 100 km)를 향해 상승'], [0.6, '우주 도착'], [0.66, '인공위성이 궤도에']],
+        onFrame(p) { if (!pl || internal) return; if (mode !== 'near') { mode = 'near'; sg.set('near'); apply(); } },
+      });
       controls.button('우주 쓰레기', () => { showDeb = !showDeb; apply(); });
       controls.button('이름표', () => { labs = !labs; apply(); });
       apply();
@@ -107,16 +113,24 @@
             gps.forEach((g, i) => orb(g, rGps, tilt.gps, 0, 0.35, i * 2.09));
             if (showDeb) for (let i = 0; i < ND; i++) { const d = debD[i]; const a = d.ph + PH * d.sp; tmp.set(Math.cos(a) * d.r, 0, Math.sin(a) * d.r).applyAxisAngle(new V3(1, 0, 0), d.inc).applyAxisAngle(new V3(0, 1, 0), d.node); dm.position.copy(tmp); dm.rotation.set(PH + i, PH * 0.7, 0); dm.updateMatrix(); deb.setMatrixAt(i, dm.matrix); }
             deb.instanceMatrix.needsUpdate = true;
-            // 로켓 발사: 지표 → 곡선을 그리며 상승 → 궤도
-            if (tL >= 0) {
-              tL += dt; const u = Math.min(1, tL / 6);
-              const lat = 25 * DEG, ang = u * u * 1.6, r = 1.62 + (1.98 - 1.62) * Math.pow(u, 0.7);
-              const pp = new V3(Math.cos(lat + ang * 0.55), Math.sin(lat + ang * 0.55), 0).multiplyScalar(r); pp.applyAxisAngle(new V3(0, 1, 0), ang * 0.9 + 0.2);
-              rocket.position.copy(pp); rocket.visible = true;
-              const tang = new V3(-Math.sin(ang * 0.9 + 0.2), 0, Math.cos(ang * 0.9 + 0.2)).multiplyScalar(0.9 * u);
-              rocket.quaternion.setFromUnitVectors(new V3(0, 1, 0), tmp.copy(pp).normalize().add(tang).normalize());
-              flame.visible = u < 1; flame.scale.set(1, 0.7 + 0.5 * Math.sin(t * 40), 1);
-              if (tL > 9) { tL = -1; rocket.visible = false; }
+            // 로켓 발사: 지표 → 곡선을 그리며 상승 → 궤도. 2D에서 발사하면 같은 단계로 따라가요.
+            {
+              const L2 = window.__sim && window.__sim.LC;
+              if (L2 && L2.phase !== 'idle' && !pl.playing) {
+                const ph = L2.phase;
+                const u2 = ph === 'count' ? 0.05 * Math.min(1, L2.t / 2.7) : ph === 'burn' ? 0.06 + 0.54 * Math.min(1, L2.alt / 100) : ph === 'coast' ? 0.6 + 0.06 * Math.min(1, L2.t / 1.5) : ph === 'orbit' ? 0.66 + 0.33 * Math.min(1, (L2.ot || 0) / 4.6) : 1;
+                if (Math.abs(u2 - pl.p) > 0.004) { internal = true; pl.set(u2); internal = false; }
+              }
+              const u = pl.p;
+              if (u > 0.001 && u < 0.995) {
+                const w = Math.min(1, u / 0.66);
+                const lat = 25 * DEG, ang = w * w * 1.6, r = 1.62 + (1.98 - 1.62) * Math.pow(w, 0.7);
+                const pp = new V3(Math.cos(lat + ang * 0.55), Math.sin(lat + ang * 0.55), 0).multiplyScalar(r); pp.applyAxisAngle(new V3(0, 1, 0), ang * 0.9 + 0.2);
+                rocket.position.copy(pp); rocket.visible = true;
+                const tang = new V3(-Math.sin(ang * 0.9 + 0.2), 0, Math.cos(ang * 0.9 + 0.2)).multiplyScalar(0.9 * w);
+                rocket.quaternion.setFromUnitVectors(new V3(0, 1, 0), tmp.copy(pp).normalize().add(tang).normalize());
+                flame.visible = u > 0.04 && u < 0.62; flame.scale.set(1, 0.7 + 0.5 * Math.sin(t * 40), 1);
+              } else rocket.visible = false;
             }
           } else {
             PL.forEach((p) => { const a = p.ph + PH * p.sp * 0.25; p.m.position.copy(pos(p, a)); p.m.rotation.y += dt; });

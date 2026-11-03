@@ -1198,4 +1198,5 @@
     readouts();
   });
   window.FreeFallDebug = { S, P, geo, VW, VH, makeRun, finishedRun, setViewT, get game() { return game; } };
+  window.__sim = { get S() { return S; }, OBJ, G, fallD, fallV, landT, finishedRun, setViewT, makeRun };   // 3D 보기가 같은 값을 읽고 시각을 맞추는 데 써요
 })();

@@ -1,6 +1,7 @@
 /* he-galaxy-types · 3D 은하 모형
    같은 은하도 보는 각도(기울기 i)에 따라 달라 보여요. 타원 은하는 3차원 타원체, 나선·막대 나선·렌즈형은 원반+팽대부, 불규칙은 덩어리로 보며
-   정면(face-on)과 옆(edge-on)에서 어떻게 보이는지, 타원 은하의 E 값(n = 10(1 − b/a))이 어떻게 달라지는지 확인해요. */
+   정면(face-on)과 옆(edge-on)에서 어떻게 보이는지, 타원 은하의 E 값(n = 10(1 − b/a))이 어떻게 달라지는지 확인해요.
+   2D 허블 분류의 타원 은하(은하 가·나·다)와 소리굽쇠 도표의 유형을 따라가고, 성간 물질 값(Sa 5 % · Sc 15 % · Irr 25 %)도 2D와 같아요. ▶ 재생은 기울기 i를 옆(90°)에서 정면(3°)까지 오가며 보여 줘요. */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -37,6 +38,7 @@
   const FIT = Math.max(1, 1.4 / asp);
 
   window.SciSim3D.attach({
+    levels: [1, 2],          // 0단계(은하 묶기)·3단계(AI 분류)는 2D 화면에서 해요
     title: '은하 모양 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: 25 * FIT, theta: 0.4, phi: 1.2, fov: 42, min: 12, max: 120 },
@@ -161,6 +163,15 @@
       });
       const axB = controls.button('대칭축 ✓', () => { showAxis = !showAxis; axB.classList.toggle('on', showAxis); axB.textContent = '대칭축 ' + (showAxis ? '✓' : '✕'); axisLine.visible = showAxis && type !== 'Irr'; }); axB.classList.add('on');
 
+      /* ▶ 기울기 i를 옆(edge-on)에서 정면(face-on)까지 오가요 */
+      let plReady = false;
+      const plr = controls.player({
+        duration: 9, loop: true, autoplay: false, label: '기울기 바꾸기',
+        phases: [[0, '옆에서 (i ≈ 90°)'], [0.25, '비스듬히'], [0.5, '정면 (i ≈ 3°)'], [0.75, '비스듬히']],
+        onFrame(p) { if (!plReady) return; const i = 3 + 87 * (0.5 + 0.5 * Math.cos(TAU * p)); orbit.phi = Math.max(0.05, i * DEG); },
+      });
+      plr.pause(); plReady = true;
+
       /* ---- 안내 글 ---- */
       let lastTxt = '';
       function incl() { const p = Math.max(0.0, Math.min(Math.PI, orbit.phi)); return Math.min(p, Math.PI - p) / DEG; }
@@ -199,6 +210,7 @@
 
       return {
         update() {
+          readLesson();
           const i = incl(); if (iRange && Math.abs(iRange.value - i) > 0.7 && !document.activeElement.matches('input[type=range]')) iRange.set(Math.max(3, Math.min(90, Math.round(i))));
           axTip.obj = [0, (type === 'E' ? Math.max(axes().a, axes().c) : RD * 0.62) * 1.0 + 1.2, 0];
           axTip.show(showAxis && type !== 'Irr' && i > 28);

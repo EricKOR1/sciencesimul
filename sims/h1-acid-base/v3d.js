@@ -1,6 +1,8 @@
 /* h1-acid-base · 3D 산과 염기의 이온 모형
    산(HCl)은 물에 녹아 수소 이온(H⁺)과 염화 이온(Cl⁻)으로, 염기(NaOH)는 나트륨 이온(Na⁺)과 수산화 이온(OH⁻)으로 나뉘어요 (이온화).
    이온이 있으면 전류가 흘러 전구가 켜져요. 설탕은 분자 그대로 녹아 이온이 없어서 전구가 꺼져 있어요.
+   2D의 이온 모형(물질 카드 5장)과 같아요: HCl · NaOH · 설탕 · 메테인(CH₄, 물에 거의 녹지 않아요) · 메탄올(CH₃OH, 분자 그대로 녹아요).
+   2D에서 카드를 물에 넣으면 3D도 같은 물질로 바뀌어 녹기 시작하고, 3D의 물질 단추를 눌러도 2D에서 같은 카드를 녹여요.
    입자 크기와 수는 실제와 달라요 (물 분자는 그리지 않았어요). */
 (function () {
   'use strict';
@@ -13,12 +15,18 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHN ? 15 : 10, theta: 0.5, phi: 1.2, target: [0, 1.6, 0], min: 6, max: 26 },
     autoRotate: 0,
-    levels: [0, 2],
+    levels: [2],
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3;
       const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ envMapIntensity: 0.6, color: c, roughness: 0.35, metalness: 0.05 }, o || {}));
-      const st = { sub: 'hcl', s: 0, play: false, names: true, t: 0, sel: 1 };
+      const st = { sub: 'hcl', s: 0, names: true, t: 0 };
+      const SUBS = [
+        { id: 'hcl', f: 'HCl', name: '염화 수소', n: 6, res: 'H⁺ + Cl⁻' }, { id: 'naoh', f: 'NaOH', name: '수산화 나트륨', n: 6, res: 'Na⁺ + OH⁻' },
+        { id: 'suc', f: 'C₁₂H₂₂O₁₁', name: '설탕', n: 4 }, { id: 'ch4', f: 'CH₄', name: '메테인', n: 6 }, { id: 'meoh', f: 'CH₃OH', name: '메탄올', n: 6 },
+      ];
+      const subOf = (id) => SUBS.find((q) => q.id === id) || SUBS[0];
+      const L2 = () => (ctx.lesson && ctx.lesson()) || null;
 
       /* ---------- 비커 · 전극 · 전구 ---------- */
       const WR = 2.55, WH = 3.2;
@@ -65,14 +73,22 @@
         cs.forEach((c) => { const m = sphere(0.24, c[3]); m.position.set(c[0], c[1], c[2]); g.add(m); });
         return g;
       }
-      const NU = 8;
+      function molOf(kind) {
+        const g = new THREE.Group(), add = (r, c, x, y, z) => { const m = sphere(r, c); m.position.set(x, y, z); g.add(m); };
+        if (kind === 'ch4') { add(0.28, 0x4d5566, 0, 0, 0); [[0.38, 0.38, 0.38], [-0.38, -0.38, 0.38], [-0.38, 0.38, -0.38], [0.38, -0.38, -0.38]].forEach((p) => add(0.16, 0xf4f6fb, p[0], p[1], p[2])); }
+        else { add(0.27, 0x4d5566, -0.25, 0, 0); add(0.24, 0xe2464b, 0.3, 0.1, 0); add(0.14, 0xf4f6fb, 0.62, 0.3, 0); [[-0.5, 0.35, 0.15], [-0.5, -0.25, 0.3], [-0.25, -0.15, -0.4]].forEach((p) => add(0.14, 0xf4f6fb, p[0], p[1], p[2])); }
+        return g;
+      }
+      let NU = 8;
       function rebuild() {
+        NU = subOf(st.sub).n;
         sg.clear(); items = [];
         for (let i = 0; i < NU; i++) {
           const a = i * 2.4 + 0.5, r = Math.sqrt((i + 0.5) / NU) * (WR - 1.35), y = 0.9 + ((i * 0.618) % 1) * (WH - 1.8);
           const dir = new V3(rnd() - 0.5, rnd() - 0.5, rnd() - 0.5).normalize();
           const it = { base: new V3(Math.cos(a) * r, y, Math.sin(a) * r), dir, ph: rnd() * 6.28, i };
           if (st.sub === 'suc') { it.mol = sugar(); sg.add(it.mol); }
+          else if (st.sub === 'ch4' || st.sub === 'meoh') { it.mol = molOf(st.sub); it.gas = st.sub === 'ch4'; sg.add(it.mol); }
           else { const A = st.sub === 'hcl' ? ion('H') : ion('Na'), B = st.sub === 'hcl' ? ion('Cl') : ion('OH'); it.A = A; it.B = B; sg.add(A, B); }
           items.push(it);
         }
@@ -80,35 +96,59 @@
         names.forEach((l) => l.show(false));
         if (st.sub === 'hcl') { names[0].obj = items[0].A; names[0].set('H⁺ 수소 이온'); names[1].obj = items[0].B; names[1].set('Cl⁻ 염화 이온'); }
         else if (st.sub === 'naoh') { names[0].obj = items[0].A; names[0].set('Na⁺ 나트륨 이온'); names[1].obj = items[0].B; names[1].set('OH⁻ 수산화 이온'); }
-        else { names[0].obj = items[0].mol; names[0].set('설탕 분자'); }
+        else { names[0].obj = items[0].mol; names[0].set(st.sub === 'suc' ? '설탕 분자' : st.sub === 'ch4' ? 'CH₄ 메테인 분자' : 'CH₃OH 메탄올 분자'); }
       }
       const names = [label('', [0, 0, 0], { size: 12, color: 'rgba(30,30,60,.85)' }), label('', [0, 0, 0], { size: 12, color: 'rgba(30,30,60,.85)' })];
 
       function apply() {
-        const s = st.s, hasIon = st.sub !== 'suc';
-        names[0].show(st.names && (s > 0.5 || st.sub === 'suc')); names[1].show(st.names && s > 0.5 && hasIon);
+        const s = st.s, hasIon = st.sub === 'hcl' || st.sub === 'naoh', q = subOf(st.sub);
+        names[0].show(st.names && (s > 0.5 || !hasIon)); names[1].show(st.names && s > 0.5 && hasIon);
         bulbM.emissiveIntensity = hasIon ? Math.min(1, s * 1.1) * 1.6 : 0; bglow.material.opacity = hasIon ? Math.min(1, s * 1.1) * 0.9 : 0;
-        const nm = { hcl: '염산(HCl)', naoh: '수산화 나트륨(NaOH) 수용액', suc: '설탕물' }[st.sub];
-        if (st.sub === 'hcl') info(s < 0.05 ? '<b>HCl</b>이 물에 녹기 전이에요. 녹이면 어떻게 될까요?' : '<b>HCl → H⁺ + Cl⁻</b><br>산은 물에 녹아 <b>수소 이온(H⁺)</b>을 내놓아요. 이온이 있어 전구가 켜져요.');
-        else if (st.sub === 'naoh') info(s < 0.05 ? '<b>NaOH</b>가 물에 녹기 전이에요. 녹이면 어떻게 될까요?' : '<b>NaOH → Na⁺ + OH⁻</b><br>염기는 물에 녹아 <b>수산화 이온(OH⁻)</b>을 내놓아요. 전구가 켜져요.');
-        else info('설탕은 물에 녹아도 <b>분자 그대로</b> 있어서 이온이 없어요.<br>전류가 흐르지 않아 전구가 꺼져 있어요.');
+        let h;
+        if (st.sub === 'hcl') h = s < 0.05 ? '<b>HCl</b> 분자가 물에 들어가면 어떻게 될까요?' : '<b>HCl → H⁺ + Cl⁻</b><br>산은 물에 녹아 <b>수소 이온(H⁺)</b>을 내놓아요. 이온이 있어 전구가 켜져요.';
+        else if (st.sub === 'naoh') h = s < 0.05 ? '<b>NaOH</b> 분자가 물에 들어가면 어떻게 될까요?' : '<b>NaOH → Na⁺ + OH⁻</b><br>염기는 물에 녹아 <b>수산화 이온(OH⁻)</b>을 내놓아요. 전구가 켜져요.';
+        else if (st.sub === 'ch4') h = '<b>CH₄ 메테인</b>: 물에 거의 녹지 않아요.<br>수소(H)가 들어 있어도 H⁺을 내놓지 않아 산이 아니에요.';
+        else if (st.sub === 'meoh') h = '<b>CH₃OH 메탄올</b>: 이온 없음 (분자 그대로 녹아요).<br>OH가 들어 있어도 OH⁻을 내놓지 않아 염기가 아니에요. 전구는 꺼져 있어요.';
+        else h = '<b>설탕</b>: 이온 없음 (분자 그대로 녹아요).<br>이온이 없어 전류가 흐르지 않아 전구가 꺼져 있어요.';
+        if (h !== apply.h) { apply.h = h; info(h); }
       }
-      const seg = controls.segment('물질', [{ value: 'hcl', label: '염산 HCl' }, { value: 'naoh', label: 'NaOH' }, { value: 'suc', label: '설탕' }], st.sub, (v) => { st.sub = v; st.s = 0; st.play = false; playB.textContent = '▶ 물에 녹이기'; rng.set(0); rebuild(); apply(); });
-      const rng = controls.range('녹은 정도', 0, 100, 1, 0, (v) => { st.play = false; playB.textContent = '▶ 물에 녹이기'; st.s = v / 100; apply(); }, (v) => v + '%');
-      const playB = controls.button('▶ 물에 녹이기', () => { if (st.s >= 0.99) st.s = 0; st.play = !st.play; playB.textContent = st.play ? '⏸ 멈춤' : '▶ 물에 녹이기'; });
+      const bts = SUBS.map((q) => {
+        const b = controls.button(q.f, () => {
+          const S = L2();
+          if (S && S.S && S.S.scene === 'ion' && S.startDissolve) S.startDissolve(q.id);   // 2D에서 같은 카드를 물에 넣어요
+          else { if (q.id !== st.sub) { st.sub = q.id; rebuild(); } pl.set(0); pl.play(); }
+        });
+        return b;
+      });
       controls.button('🏷 이름', () => { st.names = !st.names; apply(); });
+      const pl = controls.player({
+        duration: 7, loop: true, label: '물에 녹이기',
+        phases: [[0, '물에 넣기'], [0.15, '녹는 중'], [0.65, '녹은 뒤']],
+        onFrame(p) { st.s = Math.max(0, Math.min(1, (p - 0.12) / 0.5)); if (items.length) apply(); },
+      });
+      let lastCur = null, lastT = 0;
+      {
+        const S = L2(); if (S && S.IO && S.IO.cur) { lastCur = S.IO.cur; st.sub = subOf(lastCur).id; }
+      }
       rebuild(); apply();
 
       const ease = (x) => { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); };
       return {
         update(dt, t) {
           st.t += dt;
-          if (st.play) { st.s = Math.min(1, st.s + dt / 4); rng.set(Math.round(st.s * 100)); apply(); if (st.s >= 1) { st.play = false; playB.textContent = '↺ 다시 하기'; } }
+          const S = L2(), IO = S && S.IO;
+          const again = IO && IO.cur && IO.cur === lastCur && IO.t < lastT - 0.3;   // 같은 카드를 다시 넣었을 때
+          lastT = IO ? IO.t : 0;
+          if (IO && (IO.cur !== lastCur || again)) {            // 2D에서 카드를 물에 넣으면 3D도 같은 물질로 바꿔서 녹여요
+            lastCur = IO.cur;
+            if (lastCur) { if (lastCur !== st.sub) { st.sub = lastCur; rebuild(); } pl.set(0); pl.play(); }
+          }
+          bts.forEach((b, i) => { const q = SUBS[i], tried = !!(IO && IO.tried && IO.tried[q.id]), t2 = q.f + (tried ? ' ✓' : ''); b.classList.toggle('on', q.id === st.sub); if (b.textContent !== t2) b.textContent = t2; });
           const s = st.s;
           items.forEach((it) => {
             const w = new V3(Math.sin(t * 0.7 + it.ph) * 0.22, Math.sin(t * 0.9 + it.ph * 1.7) * 0.18, Math.cos(t * 0.6 + it.ph * 1.3) * 0.22);
             const c = it.base.clone().add(w);
-            if (it.mol) { it.mol.position.copy(c); it.mol.position.x += ease(s) * 0.3 * Math.sin(it.ph); it.mol.rotation.set(t * 0.4 + it.ph, t * 0.3, 0); }
+            if (it.mol) { it.mol.position.copy(c); it.mol.position.x += ease(s) * 0.3 * Math.sin(it.ph); if (it.gas) { const top = WH + 0.25 + 0.25 * Math.sin(it.ph * 3); it.mol.position.y = c.y + ease(s * 1.2 - it.i / NU * 0.5) * (top - c.y); } it.mol.rotation.set(t * 0.4 + it.ph, t * 0.3, 0); }
             else {
               const u = ease(s * 1.3 - it.i / NU * 0.3), sep = 0.38 + u * 1.15, drift = u * 0.35;
               it.A.position.copy(c).addScaledVector(it.dir, sep); it.B.position.copy(c).addScaledVector(it.dir, -sep);

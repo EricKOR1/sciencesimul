@@ -10,7 +10,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHN ? 14 : 10.5, theta: 0.35, phi: 1.3, min: 4, max: 24, target: [0, 0.4, 0] },
     autoRotate: 0,
-    levels: [0, 2, 3],
+    levels: [],                      // 모든 단계의 미션이 2D 화면(이름표 · 모형 · 갈비뼈·가로막 · 운동 강도)에서 이뤄져요
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
       const V3 = THREE.Vector3;
@@ -91,33 +91,53 @@
       alv.visible = false;
 
       /* ================= 조작 ================= */
-      let mode = 'organ', breath = 'auto', rate = 0.5, vol = 0.5, volT = 0.5, T = 0.75, labs = true;
+      let mode = 'organ', vol = 0, ext = null, labs = true, pl = null, gp = 0, ctlEl = null, extPrev = -1;
+      let lastTxt = '';
+      const say = (h) => { if (h !== lastTxt) { lastTxt = h; info(h); } };
       function txt() {
-        if (mode === 'alv') info('폐포 속 <b>산소</b>는 폐포 → <b>모세 혈관</b>으로, 혈액 속 <b>이산화 탄소</b>는 모세 혈관 → 폐포로 <b>확산</b>돼요.');
-        else {
-          const ph = vol > 0.5 ? '들숨' : '날숨';
-          info(breath === 'auto' ? '<b>숨 쉬는 중!</b> 가로막이 내려가고 갈비뼈가 올라가면 <b>들숨</b>, 반대면 <b>날숨</b>이에요.' : breath === 'in' ? '<b>들숨</b>: 갈비뼈↑ 가로막↓ → 가슴 속 부피↑ 압력↓ → 공기가 폐로 들어와요.' : '<b>날숨</b>: 갈비뼈↓ 가로막↑ → 가슴 속 부피↓ 압력↑ → 공기가 폐에서 나가요.');
-        }
+        if (mode === 'alv') say('폐포 속 <b>산소</b>는 폐포 → <b>모세 혈관</b>으로, 혈액 속 <b>이산화 탄소</b>는 모세 혈관 → 폐포로 <b>확산</b>돼요.<br>운동 강도를 높이면(2D 슬라이더) 숨도 혈액도 빨라져요.');
+        else if (vol > 0.5) say('<b>들숨</b>: 갈비뼈가 올라가고 가로막이 내려가요 → 가슴 속 <b>부피↑ 압력↓</b> → 공기가 폐로 들어와요.');
+        else say('<b>날숨</b>: 갈비뼈가 내려가고 가로막이 올라가요 → 가슴 속 <b>부피↓ 압력↑</b> → 공기가 폐에서 나가요.');
+      }
+      function playerRow(on) {
+        if (!ctlEl) ctlEl = ctx.renderer.domElement.closest('.v3-wrap').querySelector('.v3-ctl');
+        const r = ctlEl.querySelector('.v3-player'); if (r) r.style.display = on ? '' : 'none';
+        [...ctlEl.querySelectorAll('button')].forEach((b) => { const t = b.textContent.trim(); if (t === '들숨 끝' || t === '날숨 끝') b.style.display = on ? '' : 'none'; });
       }
       function apply() {
         organ.visible = mode === 'organ'; alv.visible = mode === 'alv';
         lOrg.forEach((l) => l.show(labs && mode === 'organ')); lAlv.forEach((l) => l.show(labs && mode === 'alv'));
         orbit.tx = 0; orbit.ty = mode === 'organ' ? 0.4 : -0.3; orbit.dist = mode === 'organ' ? (PHN ? 14 : 10.5) : (PHN ? 14 : 10.5);
-        txt();
+        txt(); playerRow(mode === 'organ' && ext == null);
       }
       const sg = controls.segment('보기', [{ label: '호흡 기관', value: 'organ' }, { label: '폐포 확대', value: 'alv' }], mode, (v) => { mode = v; apply(); });
-      controls.segment('호흡', [{ label: '자동', value: 'auto' }, { label: '들숨', value: 'in' }, { label: '날숨', value: 'out' }], breath, (v) => { breath = v; txt(); });
+      // ▶ 재생: 들숨 → 날숨 한 번 (2D의 '숨 쉬기'와 같은 순서). 2D가 호흡을 보여 주는 장면에서는 2D의 값을 그대로 따라가요.
+      pl = controls.player({
+        duration: 4.4, loop: true, autoplay: true, label: '숨 쉬기',
+        phases: [[0, '들숨 (부피↑ 압력↓)'], [0.5, '날숨 (부피↓ 압력↑)']],
+        onFrame(p) { if (ext == null) vol = 0.5 - 0.5 * Math.cos(p * Math.PI * 2); },
+      });
+      controls.button('들숨 끝', () => { pl.pause(); pl.set(0.5); });
+      controls.button('날숨 끝', () => { pl.pause(); pl.set(0); });
       controls.button('이름표', () => { labs = !labs; apply(); });
       apply();
       const dm = new THREE.Object3D(); let k0 = 0, lastSc = '';
-      function readScene() { const s = sm() && sm().S && sm().S.scene; if (!s || s === lastSc) return; lastSc = s; const m = s === 'alveoli' ? 'alv' : 'organ'; if (m !== mode) { mode = m; sg.set(m); apply(); } if (s === 'chest' && breath === 'out') { /* 그대로 */ } }
+      function readScene() { const s = sm() && sm().S && sm().S.scene; if (!s || s === lastSc) return; lastSc = s; const m = s === 'alveoli' ? 'alv' : 'organ'; if (m !== mode) { mode = m; sg.set(m); apply(); } }
       return {
         sync() { lastSc = ''; readScene(); },
         update(dt, t) {
           if ((k0++ % 15) === 0) readScene();
-          if (breath === 'auto') { T += dt * rate; volT = 0.5 - 0.5 * Math.cos((T % 1) * Math.PI * 2); }
-          else volT = breath === 'in' ? 1 : 0;
-          vol += (volT - vol) * Math.min(1, dt * 6);
+          { // 2D가 호흡을 보여 주는 장면이면 그 값을 따라가요: 가슴 모형(CH.L) · 기도의 숨 쉬기(AW.b) · 폐포(AL.b)
+            const s2 = sm(), sc = s2 && s2.S && s2.S.scene; let e = null;
+            if (sc === 'chest' && s2.CH) e = s2.CH.L;
+            else if (sc === 'airway' && s2.AW && s2.AW.on) e = s2.AW.b;
+            else if (sc === 'alveoli' && s2.AL) e = s2.AL.b;
+            if ((e == null) !== (ext == null)) { ext = e; playerRow(e == null && mode === 'organ'); }
+            ext = e;
+            if (e != null) vol = Math.max(0, Math.min(1, e));
+            const ex = s2 && s2.AL ? s2.AL.exv || 0 : 0; gp += dt * (0.35 + 0.6 * ex);
+          }
+          if (((k0 + 1) % 10) === 0) txt();
           if (mode === 'organ') {
             const s = 1 + 0.16 * vol;
             lungR.scale.set(1.05 * s, 1.85 * (1 + 0.12 * vol), 1.0 * s); lungL.scale.set(1.0 * s, 1.75 * (1 + 0.12 * vol), 0.95 * s);
@@ -131,12 +151,11 @@
               dm.scale.setScalar(0.9 + 0.2 * Math.sin(i)); dm.updateMatrix(); airI.setMatrixAt(i, dm.matrix);
             }
             airI.instanceMatrix.needsUpdate = true;
-            if (breath === 'auto' && (k0 % 20) === 0) txt();
           } else {
             alvS.forEach((s, i) => s.scale.setScalar(0.95 + 0.1 * vol));
             // 확산: 산소는 폐포 가운데 → 모세 혈관, 이산화 탄소는 반대로
             for (let i = 0; i < NG; i++) {
-              const a = i % AP.length, c = AP[a], ph = ((t * 0.35 + i * 0.173) % 1);
+              const a = i % AP.length, c = AP[a], ph = ((gp + i * 0.173) % 1);
               const ang = i * 2.399 + a, dir = new V3(Math.sin(ang * 1.3) * Math.cos(ang), Math.sin(ang * 0.9 + 1), Math.sin(ang * 1.3) * Math.sin(ang)).normalize();
               const inOut = ph < 0.5 ? ph / 0.5 : 1 - (ph - 0.5) / 0.5;           // 0(가운데) → 1(벽 바깥) → 0
               const r = 0.1 + 0.7 * ph;

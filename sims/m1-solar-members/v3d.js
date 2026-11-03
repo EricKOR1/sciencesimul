@@ -113,6 +113,16 @@
         root.add(m); p.m = m; p.ph = i * 1.3 + 0.5; p.lab = label(p.n, m, { size: 11.5, offset: [0, p.r + 0.55, 0] }); planets.push(p);
       });
 
+      /* 위성: 달(지구) · 이오 · 유로파 · 가니메데 · 칼리스토(목성) — 2D와 같은 천체, 거리와 크기는 보기 좋게 */
+      const MOONS = [
+        { n: '달', host: '지구', d: 0.75, r: 0.1, P: 0.5, c: 0xcfcfcf, ph: 0.6 },
+        { n: '이오', host: '목성', d: 1.25, r: 0.075, P: 0.36, c: 0xe8d77a, ph: 0.2 },
+        { n: '유로파', host: '목성', d: 1.55, r: 0.07, P: 0.7, c: 0xdad2c0, ph: 2.1 },
+        { n: '가니메데', host: '목성', d: 1.9, r: 0.1, P: 1.3, c: 0xa89c8c, ph: 3.9 },
+        { n: '칼리스토', host: '목성', d: 2.3, r: 0.09, P: 2.3, c: 0x7f766c, ph: 5.3 },
+      ];
+      MOONS.forEach((m) => { m.hostP = PL.find((p) => p.n === m.host); m.m = new THREE.Mesh(new THREE.SphereGeometry(m.r, 20, 14), mat(m.c, { roughness: 0.9 })); root.add(m.m); m.lab = label(m.n, m.m, { size: 10.5, offset: [0, m.r + 0.4, 0], color: 'rgba(70,70,70,.88)' }); });
+
       /* 소행성대 (화성과 목성 사이) */
       const NA = 520, belt = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(0.05, 0), mat(0x9a8f82, { roughness: 0.95 }), NA); belt.frustumCulled = false; root.add(belt);
       const BP = []; for (let i = 0; i < NA; i++) { const a = rnd() * 6.283, r = rOf(2.2 + rnd() * 1.1); BP.push([r, a, (rnd() - 0.5) * 0.35, 0.6 + 0.8 * rnd()]); }
@@ -150,15 +160,15 @@
       /* 보기 */
       function applyFocus() {
         const f = st.focus;
-        planets.forEach((p) => { p.m.visible = p.lab.visible = f === 'all' || f === 'planet'; });
+        planets.forEach((p) => { p.m.visible = p.lab.visible = f === 'all' || f === 'planet'; }); MOONS.forEach((m) => { m.m.visible = m.lab.visible = f === 'all' || f === 'planet'; });
         belt.visible = beltLab.visible = f === 'all' || f === 'small'; DW.forEach((d) => { d.m.visible = d.l.visible = d.lab.visible = f === 'all' || f === 'small'; });
         comet.visible = cometOrbit.visible = f === 'all' || f === 'small'; cLab.visible = cLab2.visible = comet.visible;
         beltLab.show(st.names && belt.visible); cLab.show(st.names && comet.visible); cLab2.show(st.names && comet.visible);
-        planets.forEach((p) => p.lab.show(st.names && p.m.visible)); DW.forEach((d) => d.lab.show(st.names && d.m.visible)); sunLab.show(st.names);
+        planets.forEach((p) => p.lab.show(st.names && p.m.visible)); MOONS.forEach((m) => m.lab.show(st.names && m.m.visible)); DW.forEach((d) => d.lab.show(st.names && d.m.visible)); sunLab.show(st.names);
         text();
       }
       function text() {
-        const t = { all: '<b>태양</b>은 스스로 빛나는 별이에요. 태양 둘레를 <b>행성</b> 8개와 소행성·혜성 같은 작은 천체들이 돌아요.<br>바깥쪽 보라색 궤도에는 <b>왜소행성</b>이 있어요.', planet: '<b>행성</b> 8개는 태양 둘레를 거의 같은 평면에서 같은 방향으로 돌아요.<br>안쪽 4개는 암석 행성, 바깥쪽 4개는 크고 가스가 많은 행성이에요.', small: '<b>소행성</b>은 화성~목성 사이에 많이 모여 있어요. <b>왜소행성</b>은 행성보다 작고 공전 궤도 근처를 정리하지 못했어요.<br><b>혜성</b>은 태양에 가까워지면 꼬리가 생기고, 꼬리는 항상 <b>태양의 반대쪽</b>을 향해요.' }[st.focus];
+        const t = { all: '<b>태양</b>은 스스로 빛나는 별이에요. 태양 둘레를 <b>행성</b> 8개와 소행성·혜성 같은 작은 천체들이 돌아요.<br>바깥쪽 보라색 궤도에는 <b>왜소행성</b>이 있어요.', planet: '<b>행성</b> 8개는 태양 둘레를 거의 같은 평면에서 같은 방향으로 돌아요.<br><b>위성</b>은 행성 둘레를 돌아요: 지구의 달, 목성의 이오·유로파·가니메데·칼리스토.', small: '<b>소행성</b>(베스타·아포피스 등)은 화성~목성 사이에 많이 모여 있어요. <b>왜소행성</b>은 행성보다 작고 공전 궤도 근처를 정리하지 못했어요.<br><b>혜성</b>은 태양에 가까워지면 꼬리가 생기고, 꼬리는 항상 <b>태양의 반대쪽</b>을 향해요.' }[st.focus];
         info(t);
       }
       controls.segment('', [{ value: 'all', label: '전체' }, { value: 'planet', label: '행성' }, { value: 'small', label: '소행성·혜성' }], 'all', (v) => { st.focus = v; applyFocus(); });
@@ -172,6 +182,7 @@
           const T = st.t;
           planets.forEach((p) => { const a = p.ph + T * 0.8 / Math.pow(p.P, 0.62); p.m.position.set(Math.cos(a) * p.R, 0, Math.sin(a) * p.R); p.m.rotation.y += dt * 0.6; });
           DW.forEach((d) => { const a = d.ph + T * 0.8 / Math.pow(d.P, 0.62); const sx = d.R, sz = d.R * (1 - d.e * 0.3); const v = new V3(Math.cos(a) * sx - d.R * d.e * 0.5, 0, Math.sin(a) * sz); if (d.l.rotation.x) v.applyAxisAngle(new V3(1, 0, 0), d.l.rotation.x); d.m.position.copy(v); });
+          MOONS.forEach((m) => { const a = m.ph + T * 1.0 / m.P * 0.9, hp = m.hostP.m.position; m.m.position.set(hp.x + Math.cos(a) * m.d, hp.y + Math.sin(a * 0.5) * 0.04, hp.z + Math.sin(a) * m.d); });
           for (let i = 0; i < NA; i++) { const b = BP[i], a = b[1] + T * 0.12 / Math.pow(b[0], 0.5) * b[3]; _bm.makeScale(b[3], b[3], b[3]); _bm.setPosition(Math.cos(a) * b[0], b[2], Math.sin(a) * b[0]); belt.setMatrixAt(i, _bm); }
           belt.instanceMatrix.needsUpdate = true;
           if (st.play) cT += dt * 0.28; const M = cT % 6.2832; placeComet(M);

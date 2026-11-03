@@ -19,7 +19,7 @@
     autoRotate: 0,
     build(ctx) {
       const { THREE, scene, root, label, info, controls } = ctx;
-      const st = { stage: 'collapse', p: 0, play: false, t: 0, key: '' };
+      const st = { stage: 'collapse', p: 0, t: 0 };
       const sr = () => { try { return window.__sim && window.__sim.S; } catch (e) { return null; } };
       scene.add(new THREE.AmbientLight(0x8fa0d8, 0.45));
       const sunLight = new THREE.PointLight(0xfff0cc, 1.35, 0, 0); scene.add(sunLight);
@@ -97,24 +97,42 @@
         else info('<b>분화</b> · 녹은 천체 속에서 <b>무거운 철은 가라앉아</b> 핵이 되고 가벼운 규산염은 맨틀·지각이 돼요. (' + Math.round(p * 100) + '%)');
       }
       function pFmt(v) { const s = st.stage; return s === 'collapse' ? '수축 ' + Math.round(v * 100) + '%' : s === 'condense' ? '거리 ' + (0.3 + v * 9.7).toFixed(1) + ' AU' : s === 'accrete' ? '성장 ' + Math.round(v * 100) + '%' : '가라앉기 ' + Math.round(v * 100) + '%'; }
-      const sSeg = controls.segment('단계', [{ value: 'collapse', label: '수축' }, { value: 'condense', label: '응축' }, { value: 'accrete', label: '집적' }, { value: 'differ', label: '분화' }], st.stage, (v) => setStage(v, true));
-      const rP = controls.range('진행', 0, 1, 0.01, 0, (v) => { st.p = v; st.play = false; bP.textContent = '▶ 자동'; layout(); }, pFmt);
-      const bP = controls.button('▶ 자동', () => { st.play = !st.play; bP.textContent = st.play ? '⏸ 멈춤' : '▶ 자동'; if (st.play && st.p >= 0.99) { st.p = 0; } });
-      function setStage(v, byUser) {
-        st.stage = v; sSeg.set(v);
-        if (v === 'collapse') st.p = byUser ? 0 : st.p; else if (v === 'condense') st.p = 0.2; else if (v === 'accrete') st.p = 0.1; else st.p = 0.0;
-        rP.set(st.p); st.play = !!byUser; bP.textContent = st.play ? '⏸ 멈춤' : '▶ 자동'; layout();
+      /* 단계(2D 모드)는 2D 실험이 정해요. 수축·응축·분화는 2D 슬라이더/상태와 같은 값을 쓰고, ▶ 재생은 그 값을 움직여요 */
+      let ready = false, syncing = false;
+      const clamp01 = (x) => Math.min(1, Math.max(0, x));
+      const pl = controls.player({
+        duration: 8, loop: true, autoplay: false, label: '재생',
+        onFrame(p) {
+          if (!ready || syncing) return;
+          st.p = p; const w = window.__sim, S = sr();
+          if (w && S) {
+            if (st.stage === 'collapse') w.setR(Math.round((100 - 90 * p) * 10) / 10);
+            else if (st.stage === 'condense') w.setDist(0.3 + 9.7 * p);
+            else if (st.stage === 'differ') { S.diff = p; S.diffDir = 0; }
+          }
+          text();
+        },
+      });
+      ready = true;
+      function setP(v) { st.p = v; syncing = true; pl.set(v); syncing = false; }
+      function setStage(v) {
+        st.stage = v; pl.pause();
+        st.p = v === 'accrete' ? 0.1 : 0;
+        setP(st.p); layout();
       }
-      setStage('collapse', false);
+      setStage('collapse');
 
+      /* 2D → 3D: 단계(모드)와 슬라이더·진행 상태를 그대로 따라가요 */
       function follow() {
-        const S = sr(); if (!S) return;
-        const key = S.mode + '|' + S.r + '|' + S.dist;
-        if (key === st.key) return; const prevMode = (st.key.split('|')[0]); st.key = key;
+        const S = sr(), w = window.__sim; if (!S) return;
         const m = S.mode === 'accrete' || S.mode === 'differ' || S.mode === 'condense' ? S.mode : 'collapse';
-        if (m !== st.stage && prevMode !== S.mode) { setStage(m, false); }
-        if (S.mode === 'collapse' && typeof S.r === 'number') { st.p = Math.min(1, Math.max(0, (100 - S.r) / 90)); st.play = false; rP.set(st.p); bP.textContent = '▶ 자동'; layout(); }
-        if (S.mode === 'condense' && typeof S.dist === 'number' && S.dist > 0) { st.p = Math.min(1, Math.max(0, (S.dist - 0.3) / 9.7)); rP.set(st.p); layout(); }
+        if (m !== st.stage) setStage(m);
+        let v = null;
+        if (m === 'collapse' && typeof S.r === 'number') v = clamp01((100 - S.r) / 90);
+        else if (m === 'condense' && typeof S.dist === 'number' && S.dist > 0) v = clamp01((S.dist - 0.3) / 9.7);
+        else if (m === 'differ' && typeof S.diff === 'number') v = clamp01(S.diff);
+        else if (m === 'accrete' && w && w.ACC && w.ACC.play) { v = clamp01(w.ACC.T / w.T_END); pl.pause(); }
+        if (v != null && Math.abs(v - st.p) > 0.0015) { setP(v); text(); }
       }
       follow();
 
@@ -123,7 +141,6 @@
         update(dt) {
           follow(); st.t += dt;
           const s = st.stage;
-          if (st.play) { st.p = Math.min(1, st.p + dt / (s === 'condense' ? 9 : 7)); rP.set(st.p); if (st.p >= 1) { st.play = false; bP.textContent = '▶ 자동'; } text(); }
           const c = cNow(), p = st.p;
           if (s !== 'differ') {
             const col0 = s === 'collapse';
@@ -161,7 +178,7 @@
             lFe.obj = [0, -0.1, 0]; lFe.show(p > 0.7);
           }
         },
-        sync() { st.key = ''; follow(); },
+        sync() { follow(); },
       };
     },
   });

@@ -1,5 +1,6 @@
 /* hb-immunity · 3D 면역 세포의 작용 (식균 작용 · 항체(체액성 면역) · 세포독성 T 림프구(세포성 면역))
-   선천적 면역은 식세포가 병원체를 삼켜 분해하고, 후천적 면역은 특정 항원에 맞춰 항체나 T 림프구가 작용해요. */
+   선천적 면역은 식세포가 병원체를 삼켜 분해하고, 후천적 면역은 특정 항원에 맞춰 항체나 T 림프구가 작용해요.
+   2D 차시의 장면(선천적 방어의 식균 작용 / 림프구의 🩸 혈액 속 세균 → 체액성 면역 · 🦠 세포 안 바이러스 → 세포성 면역)을 따라가고, 단계 이름도 2D와 같이 보여 줘요. 각 방식마다 ▶ 재생이 있어요. */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -131,13 +132,30 @@
         };
       }
 
-      let mode = 'phago', clk = 0;
-      const show = (m) => { mode = m; clk = 0; Object.keys(groups).forEach((k) => { groups[k].visible = k === m; labs[k].forEach((l) => l.show(k === m)); }); info(MODES[m].info); };
-      controls.segment('', Object.keys(MODES).map((k) => ({ label: MODES[k].name.replace(' (선천적)', '').replace(' (체액성 면역)', '').replace(' (세포성 면역)', ''), value: k })), 'phago', show);
-      controls.button('↻ 처음부터', () => { clk = 0; });
+      let mode = 'phago', clk = 0, seen2D = '', stageTxt = '';
+      const show = (m) => { mode = m; clk = 0; if (typeof pls !== 'undefined') { Object.keys(pls).forEach((k) => { pls[k].row.style.display = k === m ? '' : 'none'; if (k === m) pls[k].pl.set(0); }); } Object.keys(groups).forEach((k) => { groups[k].visible = k === m; labs[k].forEach((l) => l.show(k === m)); }); info(MODES[m].info); };
+      const seg = controls.segment('', Object.keys(MODES).map((k) => ({ label: MODES[k].name.replace(' (선천적)', '').replace(' (체액성 면역)', '').replace(' (세포성 면역)', ''), value: k })), 'phago', (m) => {
+        const L = window.__sim; if (L) { if (m === 'phago') L.setScene('inn'); else { L.setScene('lym'); L.makeLym(m === 'tc' ? 'cell' : 'hum'); } seen2D = L.S.mode + (L.S.L ? L.S.L.kind : ''); }
+        show(m);
+      });
+      const PH = { phago: [[0, '세균 접근'], [0.35, '삼킴'], [0.65, '분해']], ab: [[0, '항체 분비'], [0.3, '항원에 결합'], [0.59, '병원체 무력화']], tc: [[0, 'T 림프구 접근'], [0.4, '감염 세포에 결합'], [0.7, '감염 세포 제거']] };
+      const pls = {};
+      Object.keys(MODES).forEach((k) => { const pl = controls.player({ duration: MODES[k].T, loop: true, autoplay: true, label: '재생', phases: PH[k], onFrame(p) { if (k === mode) clk = p * MODES[k].T; } }); const ctlEl = document.querySelector('.v3-ctl'); pls[k] = { pl, row: ctlEl.lastElementChild }; pls[k].row.style.display = k === mode ? '' : 'none'; });
       show('phago');
       return {
-        update(dt, t) { clk += dt; if (clk > MODES[mode].T) clk = 0; upd[mode](clk, dt, t); },
+        update(dt, t) {
+          const L = window.__sim;
+          if (L && L.S) {
+            const key = L.S.mode + (L.S.L ? L.S.L.kind : '') + (L.S.L && L.S.mode === 'lym' ? L.S.L.stage : '');
+            if (key !== seen2D) {
+              const kmode = L.S.mode + (L.S.L ? L.S.L.kind : ''); const prev = seen2D.replace(/\d+$/, ''); seen2D = key;
+              if (L.S.mode === 'inn' || L.S.mode === 'lym') { const m = L.S.mode === 'inn' ? 'phago' : (L.S.L && L.S.L.kind === 'cell' ? 'tc' : 'ab'); if (m !== mode) { seg.set(m); show(m); } }
+              if (L.S.mode === 'lym' && L.S.L) { const st = L.STG[L.S.L.kind]; stageTxt = '<br>2D 단계 ' + (L.S.L.stage + 1) + ' / ' + st.st.length + ' · <b>' + st.st[Math.min(L.S.L.stage, st.st.length - 1)].t + '</b>: ' + st.st[Math.min(L.S.L.stage, st.st.length - 1)].c; } else stageTxt = '';
+              info(MODES[mode].info + stageTxt);
+            }
+          }
+          upd[mode](clk, dt, t);
+        },
         sync() {},
       };
     },

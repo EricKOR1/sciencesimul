@@ -116,7 +116,7 @@
     const lbl = label('', [-0.3, YB0, 0], { size: 12.5 }); const lblFlask = label('', [0, 3.8, 0], { size: 12.5 });
     const lblSample = label(CFG.flaskLabel, [2.6, 0.5, 0], { size: 12 });
     const dum = new THREE.Object3D();
-    let Vt = 0, Vd = 0, show = true, dropAcc = 0;
+    let Vt = 0, Vd = 0, show = true, dropAcc = 0, rdStart = 0, own = false, pP = 0, sigT = '', lastKey = '', readyF = 0;
     const PINK = new THREE.Color(0xff3d8b), CLEAR = new THREE.Color(0xcfe8ff);
     function counts(v) {
       const e = CFG.Veq, u = v / e;
@@ -124,9 +124,9 @@
     }
     function refresh() {
       const v = Vd; const u = v / CFG.Veq;
-      const surf = YB0 - v * PER, h = Math.max(surf - YB1, 1e-3);
+      const surf = YB0 - (v + rdStart) * PER, h = Math.max(surf - YB1, 1e-3);
       bliq.scale.set(1, h, 1); bliq.position.set(0, YB1 + h / 2, 0);
-      lbl.obj = [-0.3, surf, 0]; lbl.off = [-1.1, 0, 0]; lbl.set(v.toFixed(1) + ' mL');
+      lbl.obj = [-0.3, surf, 0]; lbl.off = [-1.1, 0, 0]; lbl.set((v + rdStart).toFixed(2) + ' mL');
       const pk = Math.max(0, Math.min(1, (v - CFG.Veq + 0.15) / 0.7));
       liqM.color.copy(CLEAR).lerp(PINK, pk); liqM.opacity = 0.3 + 0.28 * pk;
       lblFlask.obj = [1.7, 4.3, 0]; lblFlask.off = [0.9, 0, 0];
@@ -135,18 +135,29 @@
       lblFlask.el.style.background = pk > 0.05 ? 'rgba(235,70,130,.88)' : '';
       const c = counts(v); SP.forEach((s, i) => { s.m.count = show ? c[i] : 0; });
       let msg = v < CFG.Veq - 0.6 ? CFG.msgBefore : near ? CFG.msgAt : CFG.msgAfter;
-      info('<b>' + CFG.title + '</b> · 넣은 NaOH <b>' + v.toFixed(1) + ' mL</b><br>' + msg + '<br>' + (v >= CFG.Veq - 0.3 ? '종말점의 부피 ≈ <b>' + CFG.Veq + ' mL</b>' : '지시약(페놀프탈레인)은 아직 무색이에요.'));
+      info('<b>' + CFG.title + '</b> · ' + CFG.titrantLabel + ' · 넣은 부피 <b>' + v.toFixed(2) + ' mL</b> (눈금 ' + (v + rdStart).toFixed(2) + ' mL)<br>' + msg + '<br>' + (pk > 0.05 ? '지시약(페놀프탈레인)이 분홍색으로 변했어요. 색이 변하는 순간이 종말점이에요.' : '지시약(페놀프탈레인)은 아직 무색이에요.'));
     }
-    const rg = controls.range('NaOH', 0, 30, 0.5, 0, (v) => { Vt = +v; }, (v) => v.toFixed(1) + ' mL');
-    controls.button('▼ 종말점까지', () => { Vt = CFG.Veq; rg.set(CFG.Veq); });
-    controls.button('↺ 처음', () => { Vt = 0; Vd = 0; rg.set(0); refresh(); });
+    const plT = controls.player({ duration: 12, loop: true, label: 'NaOH 떨어뜨리기', phases: [[0, '적정 시작'], [0.04, 'NaOH를 넣는 중'], [0.85, '처음으로 되돌려요']], onFrame(p) { pP = p; own = p > 0; } });
+    const volOwn = (p) => 20 * (p < 0.85 ? Math.min(1, p / 0.85) : 1 - (p - 0.85) / 0.15);
     const ib = controls.button('이온 ✓', () => { show = !show; ib.classList.toggle('on', show); ib.textContent = '이온 ' + (show ? '✓' : '✕'); refresh(); }); ib.classList.add('on');
     // 이온 이름 안내 (info 말미)
     refresh();
     return {
       update(dt, t) {
         dt = Math.min(dt, 0.05);
-        const d = Vt - Vd; const step = Math.sign(d) * Math.min(Math.abs(d), dt * 7);
+        const Z = ctx.lesson();
+        if (Z) {
+          const TT = Z.TT, vE = Z.tVeq();
+          if (Math.abs(vE - CFG.Veq) > 1e-6) { CFG.Veq = vE; CFG.pEnd = 0.85 * vE / 20; }
+          const key = TT.cfg ? TT.cfg.key + '|' + TT.ready : ''; if (key !== lastKey) { lastKey = key; if (own) { own = false; plT.pause(); plT.set(0); } }
+          if (TT.cfg && TT.cfg.flaskLabel) lblSample.set(TT.cfg.flaskLabel);
+          if (TT.cfg && TT.cfg.titrantLabel) CFG.titrantLabel = TT.cfg.titrantLabel;
+          rdStart = TT.start || 0; readyF = TT.ready ? 1 : 0;
+          Vt = own ? volOwn(pP) : Z.tV();
+          if (own) Vd = Vt;
+          bliq.visible = TT.ready || own; 
+        }
+        const d = Vt - Vd; const step = Math.sign(d) * Math.min(Math.abs(d), Math.max(dt * 7, Math.abs(d) * 0.3));
         if (Math.abs(d) > 1e-4) {
           Vd += step; dropAcc += Math.abs(step) * 2.2; refresh();
           while (dropAcc >= 1 && step > 0) { dropAcc -= 1; const dr = drops.find((q) => !q.on); if (dr) { dr.on = true; dr.m.visible = true; dr.m.position.set(0, 5.2, 0); dr.v = 0; } else dropAcc = 0; }
@@ -164,7 +175,7 @@
 
   const phone = window.matchMedia && window.matchMedia('(max-width: 599px)').matches;
   const CFG = {
-    title: 'HCl + NaOH', Veq: 15, titrant: 0x9ec5ff, flaskLabel: 'HCl 20 mL + 지시약',
+    title: 'HCl + NaOH', Veq: 15, pEnd: 0.6375, titrantLabel: '0.100 M NaOH', titrant: 0x9ec5ff, flaskLabel: 'HCl 20 mL + 지시약',
     species: [
       { name: 'H⁺', col: 0xff4d4d, r: 0.12, f: (u) => Math.max(0, 1 - u) },
       { name: 'Cl⁻', col: 0x34c759, r: 0.15, f: () => 1 },
@@ -177,7 +188,8 @@
   };
   window.SciSim3D.attach({
     title: '중화 적정 장치 3D',
-    hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
+    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 뷰렛 조작과 시료는 2D와 똑같이 이어져요',
+    levels: [1],
     camera: { dist: phone ? 24 : 18.5, theta: 0.5, phi: 1.2, min: 6, max: 36, target: [0.5, 5.6, 0] },
     autoRotate: 0.12,
     build(ctx) { return makeTitration(ctx, CFG); },

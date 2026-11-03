@@ -1,7 +1,8 @@
 /* he-typhoon · 3D 태풍의 구조
    눈(맑음) · 눈벽(가장 높고 센 구름) · 나선 구름 띠를 입체로 보고, 공기의 흐름(아래 반시계 방향 수렴 → 눈벽에서 상승 → 위 시계 방향 발산)을 따라가요.
    '단면'은 태풍을 반으로 잘라 풍속 곡선(눈벽에서 최대)을 보여 주고, '위험 반원'은 진행 방향의 오른쪽(바람이 더 센 쪽)을 표시해요.
-   2D 실험의 중심 기압(S.pres)을 읽어 시작해요(읽기 전용). */
+   2D와 같은 수치(예시): 최대 풍속 40 m/s, 눈의 반지름 40 km, 최대 풍속 반지름 100 km, 이동 속도 30 km/h(8 m/s), 기압 1 hPa 하강 ≈ 해수면 1 cm 상승.
+   중심 기압은 2D의 슬라이더(S.pres)와 서로 같이 움직이고, ▶ 재생은 관측점 위로 태풍이 지나가는 -10 ~ +10시간이에요(2D '시간'과 같아요). */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -12,9 +13,9 @@
   window.SciSim3D.attach({
     title: '태풍의 구조 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    levels: [0, 1, 3],
+    levels: [1, 3],              // 0단계(발생 조건)·2단계(이동·소멸)는 2D 지도에서 해요
     camera: { dist: PHONE ? 19 : 15, theta: 0.55, phi: 1.08, min: 6, max: 30, target: [0, 1.3, 0] },
-    autoRotate: 0.12,
+    autoRotate: 0,
     build(ctx) {
       if (ctx.THREE.ColorManagement) ctx.THREE.ColorManagement.legacyMode = false;     // 색을 보이는 그대로(sRGB) 쓰도록 맞춰요
       const { THREE, root, label, info, controls, renderer } = ctx;
@@ -55,18 +56,24 @@
         eye: label('눈 (맑고 바람 약함)', [0, 0.1, 0], { size: 12 }), wall: label('눈벽 (바람 최대·가장 높은 구름)', [0, 0, 0], { size: 12, color: 'rgba(120,40,10,.92)' }),
         band: label('나선 구름 띠', [0, 0, 0], { size: 12 }), up: label('상승 기류', [0, 0, 0], { size: 11.5, color: 'rgba(160,60,20,.9)' }),
         inn: label('아래: 반시계 방향으로 모여요', [-3.6, 0.5, 2.2], { size: 11.5, color: 'rgba(20,90,140,.9)' }), out: label('위: 시계 방향으로 퍼져요', [3.2, 3.9, 0], { size: 11.5, color: 'rgba(90,60,170,.9)' }),
-        dg: label('위험 반원 (오른쪽)', [3.4, 0.1, 1.8], { size: 12, color: 'rgba(170,30,30,.92)' }), sf: label('안전 반원 (왼쪽)', [-3.4, 0.1, 1.8], { size: 12, color: 'rgba(30,70,160,.92)' }),
+        dg: label('위험 반원 (오른쪽) 48 m/s', [3.4, 0.1, 1.8], { size: 12, color: 'rgba(170,30,30,.92)' }), sf: label('안전 반원 (왼쪽) 32 m/s', [-3.4, 0.1, 1.8], { size: 12, color: 'rgba(30,70,160,.92)' }),
         mv: label('진행 방향', trk, { size: 11.5, offset: [0.7, 0.3, 0] }), vp: label('풍속 곡선', [3.0, 1.6, 0], { size: 11.5, color: 'rgba(120,90,0,.92)' }),
       };
 
       /* 상태 */
-      let pres = 950, showFlow = true, showDg = false, P = { rE: 0.7, top: 3.2, v: 45 };
-      let sync0 = null; try { const s = window.__sim && window.__sim.S; if (s && typeof s.pres === 'number') sync0 = s.pres; } catch (e) {}
-      const wprof = (r) => { const x = r / P.rE; return x < 1 ? P.v * Math.pow(x, 1.2) * 0.9 : P.v * Math.pow(1 / x, 0.6); };
+      const L2 = () => ctx.lesson();
+      let pres = 1010, showFlow = true, showDg = false, P = { rE: 0.7, top: 3.4, v: 40 };
+      let sync0 = pres;
+      /* 2D와 같은 풍속 곡선: 눈(40 km)에서 약하고 100 km에서 최대 40 m/s. 3D 1칸 = 40/0.7 km */
+      const KMU = 40 / 0.7, VMAX = 40, R_E = 40, R_M = 100;
+      const sm = (x) => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
+      const gProf = (rk) => (rk < R_E ? 0.2 * rk / R_E : rk <= R_M ? 0.2 + 0.8 * sm((rk - R_E) / (R_M - R_E)) : Math.pow(R_M / rk, 0.8));
+      const vRot = (rk) => { const l = L2(); return l && l.vRot ? l.vRot(rk) : VMAX * gProf(rk); };
+      const wprof = (r) => VMAX * gProf(r * KMU);
       const rWall = (y) => P.rE + 1.1 * Math.pow(y / P.top, 1.35);
 
       function rebuild() {
-        const s = clamp((1010 - pres) / 90, 0.1, 1); P.rE = 0.95 - 0.45 * s; P.top = 2.9 + 0.7 * s; P.v = Math.round(18 + 52 * s);
+        /* 눈의 크기·최대 풍속은 2D와 같이 고정(40 km · 40 m/s). 중심 기압은 해수면 상승(폭풍 해일)만 바꿔요 */
         /* 눈벽: 두꺼운 쐐기 단면을 돌려서 만든 면 */
         const prof2 = [], N = 16; for (let i = 0; i <= N; i++) { const y = P.top * i / N; prof2.push(new THREE.Vector2(rWall(y), y)); }
         for (let i = N; i >= 0; i--) { const y = P.top * i / N, th = 0.35 + 0.45 * (1 - i / N) + 0.15; prof2.push(new THREE.Vector2(rWall(y) + th, y)); }
@@ -84,11 +91,16 @@
         prof.geometry.dispose(); prof.geometry = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 100, 0.04, 6, false);
         LB.eye.obj = [0, 0.1, 0]; LB.wall.obj = [rWall(P.top * 0.9) + 0.4, P.top * 0.9, 0]; LB.up.obj = [rWall(P.top * 0.5) + 0.7, P.top * 0.5, 0]; LB.band.obj = [Math.cos(-2.5 * Math.log(1.6 / (P.rE + 1.0))) * 3.6, 0.5, 2.6];
         LB.vp.obj = [3.0, 0.2 + wprof(3.0) / P.v * 1.7 + 0.3, 0];
-        info('중심 기압 <b>' + pres + ' hPa</b> · 최대 풍속 약 <b>' + P.v + ' m/s</b><br>바람은 <b>눈벽</b>에서 가장 세고, <b>눈</b>에서는 약해요.<br>기압이 낮을수록 눈이 작고 바람이 세요.');
-        seaH = (1010 - pres) / 100 * 0.9;
+        seaH = (1010 - pres) / 80 * 0.9; txt();
       }
-      let seaH = 0; rebuild();
-      const rP = controls.range('중심 기압', 920, 995, 5, pres, (v) => { pres = v; rebuild(); }, (v) => v + ' hPa');
+      let seaH = 0;
+      function txt() {
+        if (ctx.level === 3) info('<b>위험 반원</b>(진행 방향 오른쪽): 풍속 = 회전 풍속 + 이동 속도 = 40 + 8 = <b>48 m/s</b><br><b>안전 반원</b>(왼쪽): 40 − 8 = <b>32 m/s</b> (이동 속도 30 km/h ≈ 8 m/s). ▶ 로 A·B 지점의 풍속을 비교해 보세요.');
+        else info('중심 기압 <b>' + pres + ' hPa</b> (주변 1010 hPa) → 해수면 상승 약 <b>' + (1010 - pres) + ' cm</b><br><b>눈</b>(하강 기류, 바람 약함) – <b>눈벽</b>(풍속·강수 최대 40 m/s) – 나선 구름 띠. ▶ 로 태풍이 관측점 위를 지나갈 때를 봐요.');
+      }
+      { const l = L2(); if (l && l.S && typeof l.S.pres === 'number') pres = clamp(l.S.pres, 930, 1010); }
+      sync0 = pres; rebuild();
+      const rP = controls.range('중심 기압', 930, 1010, 1, pres, (v) => { pres = v; rebuild(); try { const l = L2(); if (l && l.setPres) { l.setPres(v); sync0 = v; } } catch (e) {} }, (v) => v + ' hPa');
       const bCut = controls.button('단면 보기', () => { cut = !cut; bCut.classList.toggle('on', cut); apply(); });
       const bFlow = controls.button('공기 흐름 ✓', () => { showFlow = !showFlow; bFlow.classList.toggle('on', showFlow); bFlow.textContent = '공기 흐름 ' + (showFlow ? '✓' : '✕'); apply(); }); bFlow.classList.add('on');
       const bDg = controls.button('위험 반원', () => { showDg = !showDg; bDg.classList.toggle('on', showDg); apply(); });
@@ -96,13 +108,50 @@
         clouds.forEach((m) => { m.material.clippingPlanes = cut ? [cutPlane] : []; m.material.needsUpdate = true; });
         flow.visible = showFlow; danger.visible = safe.visible = showDg; prof.visible = profBase.visible = cut; LB.vp.show(cut); LB.dg.show(showDg); LB.sf.show(showDg); LB.mv.show(showDg); trk.visible = showDg;
         LB.inn.show(showFlow); LB.out.show(showFlow); LB.up.show(false); LB.band.show(!cut);
+        if (ctx.level === 3) { danger.visible = safe.visible = true; LB.dg.show(true); LB.sf.show(true); LB.mv.show(true); trk.visible = true; }
+        txt();
       }
+      /* 관측점: 태풍은 가운데에 두고 관측점이 -10 ~ +10시간 동안 지나가요(태풍이 북쪽으로 30 km/h로 가는 것과 같은 상대 운동). 1단계는 중심 바로 위, 3단계는 A(동쪽 100 km)·B(서쪽 100 km) */
+      const KMH = 30, ZU = KMH / KMU;
+      const OBS = [{ id: 'O', x: 0, name: '관측점', lv: 1 }, { id: 'A', x: 100 / KMU, name: 'A', lv: 3 }, { id: 'B', x: -100 / KMU, name: 'B', lv: 3 }];
+      const obsStd = (c) => new THREE.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: 0.5, roughness: 0.5 });
+      OBS.forEach((o) => {
+        o.g = new THREE.Group(); root.add(o.g);
+        const col = o.id === 'A' ? 0xff5a4a : o.id === 'B' ? 0x4aa8ff : 0xb78bff;
+        const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1.0, 8), obsStd(col)); pole.position.y = 0.5; o.g.add(pole);
+        const ball = new THREE.Mesh(new THREE.SphereGeometry(0.17, 16, 12), obsStd(col)); ball.position.y = 1.05; o.g.add(ball);
+        const ln = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.02, 2 * 10 * ZU), new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.5 })); ln.position.set(o.x, 0.12, 0); root.add(ln); o.ln = ln;
+        o.lab = label('', o.g, { size: 12, color: 'rgba(30,20,70,.92)', offset: [0, 0.75, 0] });
+      });
+      const rOf = (o, tt) => Math.hypot(o.x, ZU * tt) * KMU;
+      const spdNow = (o, tt) => { const l = L2(); if (o.id !== 'O' && l && l.spdOf) return l.spdOf(o.id, tt); const v = vRot(rOf(o, tt)); return o.id === 'A' ? v + 8 : o.id === 'B' ? v - 8 : v; };
+      let syncing = false, tNow = -10;
+      function place(tt) {
+        tNow = tt; const lv = ctx.level;
+        OBS.forEach((o) => {
+          const on = o.lv === lv; o.g.visible = on; o.ln.visible = on; o.lab.show(on);
+          o.g.position.set(o.x, 0.1, ZU * tt);
+          const r = rOf(o, tt), v = spdNow(o, tt), zone = r < R_E ? '눈' : r <= 150 ? '눈벽 부근' : '구름 띠';
+          o.lab.set(o.name + ' · ' + (tt > 0 ? '+' : tt < 0 ? '−' : '') + Math.abs(Math.round(tt * 10) / 10) + '시간<br>' + (lv === 3 ? '' : '중심까지 ' + Math.round(r) + ' km · ') + '풍속 ' + Math.round(v) + ' m/s' + (lv === 3 ? '' : ' (' + zone + ')'));
+        });
+      }
+      const pl = controls.player({
+        duration: 16, loop: true, autoplay: false, label: '태풍 지나가기',
+        phases: [[0, '접근'], [0.25, '눈벽 ①'], [0.4333, '눈'], [0.5667, '눈벽 ②'], [0.75, '멀어짐']],
+        onFrame(p) {
+          const tt = -10 + 20 * p; place(tt);
+          const l = L2(); if (!syncing && ctx.level === 3 && l && l.setTi) l.setTi(Math.round(tt * 10) / 10);
+        },
+      });
+      { const l = L2(); syncing = true; pl.set(ctx.level === 3 && l && l.S && typeof l.S.ti === 'number' ? (l.S.ti + 10) / 20 : 0.25); syncing = false; }
+      ctx.onLevel(() => { txt(); apply(); const l = L2(); syncing = true; pl.set(ctx.level === 3 && l && l.S && typeof l.S.ti === 'number' ? (l.S.ti + 10) / 20 : pl.p); syncing = false; });
       apply();
 
       const dm2 = new THREE.Object3D(), pos = new THREE.Vector3();
       return {
         update(dt, t) {
           this.sync();
+          { const l = L2(); if (ctx.level === 3 && l && l.S && typeof l.S.ti === 'number' && !pl.playing && Math.abs(l.S.ti - tNow) > 0.05) { syncing = true; pl.set((l.S.ti + 10) / 20); syncing = false; } }
           /* 바다 물결 + 낮은 기압으로 해수면 상승 */
           for (let i = 0; i < sp.count; i++) {
             const x = sx0[i * 3], z = sx0[i * 3 + 2], r = Math.hypot(x, z);
@@ -123,7 +172,7 @@
           }
           trk.position.z = -4.9 - 0.12 * Math.sin(t * 3);
         },
-        sync() { try { const s = window.__sim && window.__sim.S; if (s && typeof s.pres === 'number' && s.pres !== sync0) { sync0 = s.pres; pres = clamp(Math.round(s.pres / 5) * 5, 920, 995); rP.set(pres); rebuild(); } } catch (e) {} },
+        sync() { try { const s = window.__sim && window.__sim.S; if (s && typeof s.pres === 'number' && s.pres !== sync0) { sync0 = s.pres; pres = clamp(s.pres, 930, 1010); rP.set(pres); rebuild(); } } catch (e) {} },
       };
     },
   });

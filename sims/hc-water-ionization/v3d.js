@@ -79,19 +79,23 @@
   const phone = window.matchMedia && window.matchMedia('(max-width: 599px)').matches;
   window.SciSim3D.attach({
     title: '물의 자동 이온화 3D',
-    hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
+    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 장면과 산·염기 넣기는 2D와 똑같이 이어져요',
     camera: { dist: phone ? 14.5 : 13.5, theta: 0.3, phi: 1.2, min: 5, max: 24, target: [0, 0.6, 0] },
-    autoRotate: 0.1,
+    autoRotate: 0.08,
+    levels: [1, 2],
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const L = makeLib(THREE), V = L.V;
+      const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
       const BW = 9.6, BH = 4.2, BD = 4.8;
       const box = L.glassBox(BW, BH, BD, 0x7fb6ff, 0.08); box.position.y = 0; root.add(box);
       const floor = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ color: 0x050b18 })); floor.scale.set(BW + 1, 0.12, BD + 1); floor.position.y = -BH / 2 - 0.08; root.add(floor);
-      const pools = { w: [], h: [], o: [] };
       const SC = { w: 0.45, h: 0.5, o: 0.5 };
-      const mk = (arr, key, n, k) => { for (let i = 0; i < n; i++) { const g = L.mol(L.MOLS[key], k); g.visible = false; root.add(g); g.userData = { p: new THREE.Vector3(), v: new THREE.Vector3(L.rnd(-1, 1), L.rnd(-1, 1), L.rnd(-1, 1)).normalize(), w: new THREE.Vector3(L.rnd(-1, 1), L.rnd(-1, 1), L.rnd(-1, 1)) }; arr.push(g); } };
-      mk(pools.w, 'H2O', 26, SC.w); mk(pools.h, 'H3O', 18, SC.h); mk(pools.o, 'OH', 18, SC.o);
+      const rw = () => ({ p: new THREE.Vector3(), v: new THREE.Vector3(L.rnd(-1, 1), L.rnd(-1, 1), L.rnd(-1, 1)).normalize(), w: new THREE.Vector3(L.rnd(-1, 1), L.rnd(-1, 1), L.rnd(-1, 1)) });
+      const mk = (key, n) => { const a = []; for (let i = 0; i < n; i++) { const g = L.mol(L.MOLS[key], SC[key === 'H2O' ? 'w' : key === 'H3O' ? 'h' : 'o']); g.visible = false; g.userData = rw(); root.add(g); a.push(g); } return a; };
+      const walk = { w: mk('H2O', 26), h: mk('H3O', 24), o: mk('OH', 24) };
+      const mir = { w: mk('H2O', 18), h: mk('H3O', 18), o: mk('OH', 18) };
+      const protonM = new THREE.Mesh(L.SG, new THREE.MeshStandardMaterial({ color: 0xffd34d, emissive: 0xffa800, emissiveIntensity: 0.8, roughness: 0.3 })); protonM.scale.setScalar(0.2); protonM.visible = false; root.add(protonM);
       // 주인공 한 쌍: 프로톤(H⁺) 이동 장면
       const hero = new THREE.Group(); hero.position.set(0, 0.1, 1.0); root.add(hero);
       const Oa = L.atom('O', 1.15), Ob = L.atom('O', 1.15), Ha = L.atom('H', 1.15), Hb1 = L.atom('H', 1.15), Hb2 = L.atom('H', 1.15), Hx = L.atom('H', 1.15), Hy = L.atom('H', 1.15);
@@ -101,16 +105,8 @@
       const halo = new THREE.Mesh(L.SG, new THREE.MeshBasicMaterial({ color: 0xffd34d, transparent: true, opacity: 0, depthWrite: false })); hero.add(halo);
       const lH = label('', hero, { size: 13 }), lO = label('', hero, { size: 13 });
       lH.show(false); lO.show(false);
-      let env = 'pure', slow = false, T = 0, bg = true;
-      const CNT = { pure: [4, 4], acid: [14, 1], base: [1, 14] };
       const LIM = [BW / 2 - 0.7, BH / 2 - 0.6, BD / 2 - 0.6];
-      function setEnv() {
-        const [h, o] = CNT[env]; const nh = h, no = o;
-        const fill = (arr, n) => arr.forEach((g, i) => { g.visible = bg && i < n; if (g.visible) g.userData.p.set(L.rnd(-LIM[0], LIM[0]), L.rnd(-LIM[1], LIM[1]), L.rnd(-LIM[2], LIM[2]) - 0.6); });
-        fill(pools.w, 26); fill(pools.h, nh); fill(pools.o, no);
-        const txt = env === 'pure' ? '순수한 물: H₃O⁺ = OH⁻ (같은 수)' : env === 'acid' ? '산을 넣으면: H₃O⁺ ↑, OH⁻ ↓ (곱은 일정)' : '염기를 넣으면: OH⁻ ↑, H₃O⁺ ↓ (곱은 일정)';
-        info('<b>2H₂O ⇌ H₃O⁺ + OH⁻</b><br>' + txt + '<br>실제로는 물 분자 약 5.5억 개 중 1개만 이온화돼요 (그림은 크게 과장).');
-      }
+      Object.keys(walk).forEach((k) => walk[k].forEach((g) => g.userData.p.set(L.rnd(-LIM[0], LIM[0]), L.rnd(-LIM[1], LIM[1]), L.rnd(-LIM[2], LIM[2]))));
       // 주인공 장면: 주기 9초. 0~2.5 접근 / 2.5~3.5 H⁺ 이동 / 3.5~5.5 이온 상태 / 5.5~7 다시 접근 / 7~8 되돌아옴 / 8~9 물
       const O1 = V(-1.7, 0, 0), O2 = V(1.7, 0, 0);
       function scene(ph) {
@@ -142,21 +138,53 @@
         lO.set(ionic ? 'OH⁻' : 'H₂O'); lH.set(ionic ? 'H₃O⁺' : 'H₂O'); lO.show(true); lH.show(true);
         lO.el.style.background = ionic ? 'rgba(60,110,255,.88)' : ''; lH.el.style.background = ionic ? 'rgba(235,70,70,.88)' : '';
       }
-      controls.segment('용액', [{ value: 'pure', label: '순수한 물' }, { value: 'acid', label: '산 넣기' }, { value: 'base', label: '염기 넣기' }], env, (v) => { env = v; setEnv(); });
-      const sb = controls.button('🐢 천천히', () => { slow = !slow; sb.classList.toggle('on', slow); }); 
-      const gb = controls.button('주변 분자 ✓', () => { bg = !bg; gb.classList.toggle('on', bg); gb.textContent = '주변 분자 ' + (bg ? '✓' : '✕'); setEnv(); }); gb.classList.add('on');
-      setEnv();
+      const hashY = (i) => { const x = Math.sin((i + 1) * 78.233) * 43758.5453; return x - Math.floor(x); };
+      const sciTxt = (x) => { if (!(x > 0)) return '0'; const e = Math.floor(Math.log10(x) + 1e-9), m = x / Math.pow(10, e), SUPD = '⁰¹²³⁴⁵⁶⁷⁸⁹'; return (Math.round(m * 10) / 10).toFixed(1) + '×10' + (e < 0 ? '⁻' : '') + String(Math.abs(e)).split('').map((c) => SUPD[+c]).join(''); };
+
+      /* ▶ 재생: 프로톤(H⁺)이 이동하는 장면을 확대해서 봐요 */
+      let own = false, sig = '', pH = 0;
+      const rowOf = () => { const r = document.querySelectorAll('.v3-player'); return r[r.length - 1]; };
+      const pl = controls.player({ duration: 9, loop: true, label: '자동 이온화 확대', phases: [[0, '물 분자 2개'], [0.28, 'H⁺ 이동'], [0.4, 'H₃O⁺ + OH⁻'], [0.62, '다시 만나요'], [0.78, 'H⁺ 되돌아와요'], [0.9, '물 분자']], onFrame(p) { pH = p; own = p > 0; } });
+      const rowP = rowOf();
+
       return {
-        update(dt) {
-          dt = Math.min(dt, 0.05); T += dt * (slow ? 0.5 : 1); scene(T % 9);
-          const sp = 0.9;
-          Object.keys(pools).forEach((k) => pools[k].forEach((g) => {
-            if (!g.visible) return; const u = g.userData; u.p.addScaledVector(u.v, sp * dt);
+        update(dt, t) {
+          const Z = ctx.lesson(); if (!Z) return; dt = Math.min(dt, 0.05);
+          const S = Z.S, mode = S.mode, BOX = Z.BOX, isModel = mode === 'model';
+          const sg = [mode, S.kw.mode, S.kw.x].join('|'); if (sg !== sig) { sig = sg; if (own) { own = false; pl.pause(); pl.set(0); } }
+          const show = own;
+          // 주인공(확대) 장면
+          hero.visible = show; lH.show(show); lO.show(show);
+          if (show) scene(pH * 9);
+          // 배경 분자
+          Object.keys(walk).forEach((k) => walk[k].forEach((g) => { g.visible = false; })); Object.keys(mir).forEach((k) => mir[k].forEach((g) => { g.visible = false; })); protonM.visible = false;
+          if (isModel && BOX) {
+            const lim = [LIM[0], LIM[2]];
+            if (!show) S.md.mol.forEach((q, i) => {
+              const key = q.type === 'w' ? 'w' : q.type === 'oh' ? 'o' : 'h', g = mir[key][i]; if (!g) return;
+              const u = clamp((q.x - BOX.x) / BOX.w, 0, 1), v = clamp((q.y - BOX.y) / BOX.h, 0, 1);
+              g.visible = true; g.position.set((u - 0.5) * 2 * lim[0], (hashY(i) - 0.5) * (BH - 1.4), (v - 0.5) * 2 * lim[1]); g.rotation.y = -q.ang;
+            });
+            if (!show) S.md.ev.forEach((e) => { if ((e.ph === 'tr' || e.ph === 'tr2') && e.hx != null) { const u = clamp((e.hx - BOX.x) / BOX.w, 0, 1), v = clamp((e.hy - BOX.y) / BOX.h, 0, 1); protonM.visible = true; protonM.position.set((u - 0.5) * 2 * lim[0], 0.3, (v - 0.5) * 2 * lim[1]); } });
+            const ratio = S.md.ratioShown ? '<br>이온화한 물 분자의 비율 ≈ <b>1.8×10⁻⁹</b> (약 5.5억 개 중 1개)' : '';
+            if (show) info('<b>2H₂O ⇌ H₃O⁺ + OH⁻</b> (확대)<br>물 분자 한 개가 다른 물 분자에게 H⁺를 넘겨 H₃O⁺와 OH⁻가 돼요. 곧 다시 만나 물로 돌아와요.');
+            else info('<b>2H₂O ⇌ H₃O⁺ + OH⁻</b> · 이온 쌍이 생겼다가 다시 물이 되는 일이 계속돼요 (동적 평형)<br>지금 H₃O⁺ ' + S.md.mol.filter((q) => q.type === 'h3o').length + '개 · OH⁻ ' + S.md.mol.filter((q) => q.type === 'oh').length + '개 (그림은 크게 과장)' + ratio);
+            return;
+          }
+          // Kw 규칙 · 그 밖의 장면: 입자 수는 농도의 로그 눈금으로 줄여 그려요
+          const kw = S.kw, vals = Z.kwVals(), eH = kw.mode === 'pure' ? 7 : (kw.mode === 'acid' ? kw.x : 14 - kw.x), eO = kw.mode === 'pure' ? 7 : (kw.mode === 'acid' ? 14 - kw.x : kw.x);
+          const cnt = (e) => clamp(Math.round(4 + (7 - e) * 3), 1, 24);
+          const nh = cnt(S.kw.lh != null ? S.kw.lh : eH), no = cnt(S.kw.lo != null ? S.kw.lo : eO);
+          const fillW = (arr, n) => arr.forEach((g, i) => { g.visible = !show && i < n; });
+          fillW(walk.w, 26); fillW(walk.h, nh); fillW(walk.o, no);
+          Object.keys(walk).forEach((k) => walk[k].forEach((g) => {
+            if (!g.visible) return; const u = g.userData; u.p.addScaledVector(u.v, 0.9 * dt);
             ['x', 'y', 'z'].forEach((c, ci) => { const m = LIM[ci]; if (u.p[c] > m) { u.p[c] = m; u.v[c] = -Math.abs(u.v[c]); } else if (u.p[c] < -m) { u.p[c] = -m; u.v[c] = Math.abs(u.v[c]); } });
-            // 주인공 쪽에 겹치지 않도록 살짝 밀어내기
-            const dx = u.p.x, dz = u.p.z - 1.0, dy = u.p.y - 0.1; if (Math.abs(dx) < 3.4 && Math.abs(dz) < 1.5 && Math.abs(dy) < 1.7) { u.v.z = Math.abs(u.v.z) * -1; u.p.z -= 0.06; }
             g.position.copy(u.p); g.rotation.x += u.w.x * dt; g.rotation.y += u.w.y * dt;
           }));
+          const nm = kw.mode === 'pure' ? '순수한 물' : (kw.mode === 'acid' ? 'HCl' : 'NaOH') + ' 용액';
+          if (show) info('<b>2H₂O ⇌ H₃O⁺ + OH⁻</b> (확대)<br>물 분자 한 개가 다른 물 분자에게 H⁺를 넘겨 H₃O⁺와 OH⁻가 돼요.');
+          else info('<b>' + nm + '</b> · [H⁺] = <b>' + sciTxt(vals.h) + ' M</b> · [OH⁻] = <b>' + sciTxt(vals.oh) + ' M</b><br>' + (kw.mode === 'pure' ? '순수한 물에서는 H₃O⁺와 OH⁻가 같은 수예요.' : kw.mode === 'acid' ? '산을 넣으면 H₃O⁺가 늘고 OH⁻는 줄어요. 그래도 OH⁻는 남아 있어요.' : '염기를 넣으면 OH⁻가 늘고 H₃O⁺는 줄어요. 그래도 H₃O⁺는 남아 있어요.') + '<br>(입자 수는 농도를 로그 눈금으로 줄여 그린 거예요)');
         },
       };
     },

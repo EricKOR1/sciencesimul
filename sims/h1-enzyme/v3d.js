@@ -39,28 +39,45 @@
       const lAS = label('활성 부위', enz, { offset: [PX + 0.6, 1.25, 0.2], size: 12 });
       // 기질 (두 조각이 이어진 분자)
       const sub = new THREE.Group(); root.add(sub);
-      const sA = new THREE.Mesh(new THREE.SphereGeometry(0.42, 32, 24), std(0xff9f43, { roughness: 0.3 })), sB = new THREE.Mesh(new THREE.SphereGeometry(0.42, 32, 24), std(0x6fd36b, { roughness: 0.3 }));
+      const sA = new THREE.Mesh(new THREE.SphereGeometry(0.42, 32, 24), std(0x3b82f6, { roughness: 0.3 })), sB = new THREE.Mesh(new THREE.SphereGeometry(0.42, 32, 24), std(0x60a5fa, { roughness: 0.3 }));
       sA.position.set(0, 0.42, 0); sB.position.set(0, -0.42, 0); sub.add(sA, sB);
       const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.6, 12), std(0xe8e8e8)); sub.add(neck);
-      const lS = label('기질', sub, { offset: [0.0, 1.05, 0], color: 'rgba(200,110,20,.92)' });
+      const lS = label('기질 ②', sub, { offset: [0.0, 1.05, 0], color: 'rgba(40,100,210,.92)' });
       const lP = label('생성물', sub, { offset: [0, 1.4, 0], color: 'rgba(30,140,60,.92)' }); lP.show(false);
       // 다른 모양 기질
-      const alt = new THREE.Mesh(new THREE.OctahedronGeometry(0.7, 0), std(0xff6bd6, { roughness: 0.3 })); root.add(alt);
+      const altT = new THREE.TetrahedronGeometry(0.85, 0), altD = new THREE.OctahedronGeometry(0.7, 0);
+      const alt = new THREE.Mesh(altD, std(0xec4899, { roughness: 0.3 })); root.add(alt);
       const heat = []; for (let i = 0; i < 10; i++) { const h = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.025, 8, 20), new THREE.MeshBasicMaterial({ color: 0xff7a3c })); root.add(h); heat.push(h); }
       const sm = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
       const lerp = (a, b, k) => a + (b - a) * k;
-      const msg = { ok: '<b>정상 효소</b>: 기질이 활성 부위에 딱 맞게 결합해 생성물로 나뉘어요. 효소는 그대로라 계속 반응시켜요.', hot: '<b>온도가 너무 높아요</b>: 효소의 입체 구조가 변해(변성) 활성 부위가 기질과 맞지 않아요. 반응이 잘 안 일어나요.', other: '<b>모양이 다른 기질</b>: 활성 부위에 맞지 않아 결합하지 못해요. 효소는 자기에게 맞는 기질에만 작용해요(기질 특이성).' };
+      const msg = { ok: '<b>기질 ②</b>가 활성 부위에 딱 맞게 결합해 생성물로 나뉘어요. 효소는 그대로라 계속 반응시켜요.', tri: '<b>기질 ①</b>: 모양이 활성 부위와 달라 결합하지 못해요. 효소는 자기에게 맞는 기질에만 작용해요(기질 특이성).', dia: '<b>기질 ③</b>: 모양이 활성 부위와 달라 결합하지 못해요. 효소는 자기에게 맞는 기질에만 작용해요(기질 특이성).', hot: '<b>온도가 너무 높아요</b>: 효소의 입체 구조가 변해(변성) 활성 부위가 기질과 맞지 않아요. 반응이 잘 안 일어나요.', other: '<b>모양이 다른 기질</b>: 활성 부위에 맞지 않아 결합하지 못해요. 효소는 자기에게 맞는 기질에만 작용해요(기질 특이성).' };
       function setMode(m) {
         mode = m; T0 = 0; enz.geometry = m === 'hot' ? gDN : gOK; enz.material.color.setHex(m === 'hot' ? 0x9aa6a2 : 0x2fb8a6); enz.material.emissive.setHex(m === 'hot' ? 0x2a1208 : 0x0b4a42);
-        alt.visible = m === 'other'; sub.visible = m !== 'other'; lS.obj = m === 'other' ? alt : sub; lAS.show(m !== 'hot'); heat.forEach((h) => { h.visible = m === 'hot'; });
+        const isO = m === 'tri' || m === 'dia'; if (isO) { alt.geometry = m === 'tri' ? altT : altD; alt.material.color.setHex(m === 'tri' ? 0xfb923c : 0xec4899); lS.set(m === 'tri' ? '기질 ①' : '기질 ③'); lS.el.style.background = m === 'tri' ? 'rgba(220,110,20,.92)' : 'rgba(210,50,130,.92)'; } else lS.set('기질 ②');
+        alt.visible = isO; sub.visible = !isO; lS.obj = isO ? alt : sub; lAS.show(m !== 'hot'); heat.forEach((h) => { h.visible = m === 'hot'; });
         info(msg[m]); seg.set(m);
       }
-      const seg = controls.segment('상황', [{ value: 'ok', label: '정상 반응' }, { value: 'hot', label: '온도가 높을 때' }, { value: 'other', label: '다른 기질' }], mode, setMode);
+      const seg = controls.segment('상황', [{ value: 'tri', label: '기질 ①' }, { value: 'ok', label: '기질 ② (맞음)' }, { value: 'dia', label: '기질 ③' }], mode === 'hot' ? 'ok' : mode, (v) => { setMode(v); lastWant = v; const L = window.__sim, S = L && L.S; if (S && S.mode === 'lock' && S.sub === 'bind' && L.lockAttempt) { const it = S.lock.items.find((q) => q.id === (v === 'ok' ? 'A' : v === 'tri' ? 'T' : 'B')); if (it && it.state === 'tray') L.lockAttempt(it); } });
       setMode('ok');
       const Q = new THREE.Vector3();
+      let demoP = 0, lastWant = '', lastHot = false;
+      const pl = controls.player({
+        duration: 9, loop: true, autoplay: false, label: '반응',
+        phases: [[0, '기질이 다가와요'], [0.27, '결합을 시도해요'], [0.45, '결과'], [0.8, '다시 처음으로']],
+        onFrame(p) { demoP = p; },
+      });
       return {
         update(dt, t) {
-          T0 += dt; const P = 9, tt = T0 % P;
+          // 2D(열쇠-자물쇠) 상태: 온도로 변성된 정도 · 고른 기질을 따라가요
+          { const L2 = window.__sim, S2 = L2 && L2.S, LK = S2 && S2.lock;
+            if (LK && S2.mode === 'lock') {
+              const hot = (LK.dPerm || 0) > 0.4;
+              const want = hot ? 'hot' : LK.sel === 'A' ? 'ok' : LK.sel === 'T' ? 'tri' : LK.sel === 'B' ? 'dia' : '';
+              if (want && want !== lastWant) { lastWant = want; if (want !== mode) { setMode(want); } }
+              if (!hot && lastHot && mode === 'hot') setMode('ok');
+              lastHot = hot;
+            } } 
+          const demo = demoP > 0 || pl.playing; if (!demo) T0 += dt; const P = 9, tt = demo ? demoP * P : T0 % P;
           if (mode === 'ok') {
             const approach = sm(0.4, 2.4, tt), bind = sm(2.4, 3.1, tt), split = sm(4.0, 6.2, tt);
             // 기질: 오른쪽 위에서 비스듬히 다가와 활성 부위에 들어감

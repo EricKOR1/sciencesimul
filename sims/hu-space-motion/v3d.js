@@ -56,7 +56,7 @@
 
       /* ===== 상태 ===== */
       let scene = 'star', si = 0, tYr = 0, showComp = true;
-      let dipT = 0, showArrows = true, showLines = true, yaw = 0, yawGoal = null, zoomOn = false, zm = 0;
+      let dipT = 0, showArrows = false, showLines = true, yaw = 0, yawGoal = null, zoomOn = false, zm = 0;
       const earthCol = 0x3b82f6;
 
       /* ===================== ① 한 별 ===================== */
@@ -181,24 +181,21 @@
       }
 
       /* ===================== 조작 ===================== */
-      const sceneSeg = controls.segment('보기', [{ value: 'star', label: '⭐ 한 별의 속도' }, { value: 'dip', label: '🌌 북두칠성' }], scene, (v) => setScene(v));
-      let starRange, dipRange, yawRange, starSeg = null;
+      let starRange, dipRange, yawRange, starSeg = null; let player = null, syncing = false, ready = false;
       const starCtl = grp(() => {
-        starSeg = controls.segment('별', STAR4.map((s, i) => ({ value: i, label: s.n })), si, (v) => { si = v; fitFor = -1; buildStar(); });
-        starRange = controls.range('흐른 시간', 0, 20000, 250, tYr, (v) => { tYr = v; buildStar(); }, (v) => v.toLocaleString('en-US') + '년');
+        starRange = controls.range('흐른 시간', 0, 20000, 250, tYr, (v) => { tYr = v; buildStar(); try { sim.setTv(v); } catch (e) { /* 무시 */ } }, (v) => v.toLocaleString('en-US') + '년');
         const cB = controls.button('점선 ✓', () => { showComp = !showComp; cB.classList.toggle('on', showComp); cB.textContent = '점선 ' + (showComp ? '✓' : '✕'); buildStar(); }); cB.classList.add('on');
       });
       const dipCtl = grp(() => {
-        yawRange = controls.range('시점', 0, 90, 1, 0, (v) => { yaw = v; yawGoal = null; applyYaw(); }, (v) => v + '°' + (v === 0 ? ' (지구에서)' : v === 90 ? ' (옆)' : ''));
+        yawRange = controls.range('시점', 0, 90, 1, 0, (v) => { yaw = v; yawGoal = null; applyYaw(); try { sim.setYaw(v); } catch (e) { /* 무시 */ } }, (v) => v + '°' + (v === 0 ? ' (지구에서)' : v === 90 ? ' (옆)' : ''));
         controls.button('🌍 지구에서', () => { yawGoal = 0; });
         controls.button('↔ 옆에서', () => { yawGoal = 90; });
-        dipRange = controls.range('시간', -100000, 100000, 5000, dipT, (v) => { dipT = v; updateDip(); }, (v) => (v === 0 ? '지금' : (v > 0 ? '+' : '−') + Math.abs(v / 1000) + '천 년'));
-        const aB = controls.button('운동 화살표 ✓', () => { showArrows = !showArrows; aB.classList.toggle('on', showArrows); aB.textContent = '운동 화살표 ' + (showArrows ? '✓' : '✕'); updateDip(); }); aB.classList.add('on');
+        dipRange = controls.range('시간', -100000, 100000, 5000, dipT, (v) => { dipT = v; updateDip(); try { sim.setT(v); } catch (e) { /* 무시 */ } }, (v) => (v === 0 ? '지금' : (v > 0 ? '+' : '−') + Math.abs(v / 1000) + '천 년'));
         const zB = controls.button('🔍 확대', () => { zoomOn = !zoomOn; zB.classList.toggle('on', zoomOn); });
         const lB = controls.button('지구에서 잇기 ✓', () => { showLines = !showLines; lB.classList.toggle('on', showLines); lB.textContent = '지구에서 잇기 ' + (showLines ? '✓' : '✕'); updateDip(); }); lB.classList.add('on');
       });
       function setScene(v) {
-        scene = v; sceneSeg.set(v);
+        scene = v;
         starCtl.forEach((n) => { n.style.display = v === 'star' ? '' : 'none'; });
         dipCtl.forEach((n) => { n.style.display = v === 'dip' ? '' : 'none'; });
         sg.visible = v === 'star'; dg.visible = v === 'dip';
@@ -217,20 +214,42 @@
             seen = key;
             if (S.view === 'con' && S.cn && S.cn.ds === 'dip') { dipT = S.cn.t || 0; yaw = Math.min(90, S.cn.yaw || 0); yawRange && yawRange.set(yaw); setScene('dip'); return; }
             if (S.view === 'rad') si = S.rd.sel < 4 ? S.rd.sel : 0; else if (S.view === 'tan') si = S.tn.sel; else if (S.view === 'vec') { si = 0; tYr = Math.min(20000, S.vc.t || 0); }
-            fitFor = -1; if (starSeg) starSeg.set(si); if (starRange) starRange.set(tYr); setScene('star'); return;
+            fitFor = -1; if (starRange) starRange.set(tYr); setScene('star'); return;
           }
         } catch (e) { /* 수업 상태를 못 읽어도 괜찮아요 */ }
         if (scene === 'star') buildStar(); else updateDip();
       }
       setScene('star'); readLesson();
+      /* ▶ 재생: 한 별에서는 흐른 시간 0 → 20 000년, 북두칠성에서는 −10만 → +10만 년을 지나가요 (2D 시간 슬라이더도 함께 움직여요) */
+      player = controls.player({
+        duration: 14, loop: true, autoplay: false, label: '재생',
+        phases: [[0, '지금'], [0.5, '시간이 흘러요']],
+        onFrame(p) {
+          if (!ready || syncing) return;
+          if (scene === 'dip') { dipT = Math.round((-100000 + 200000 * p) / 5000) * 5000; updateDip(); try { sim.setT(dipT); } catch (e) { /* 무시 */ } }
+          else { tYr = Math.round(20000 * p / 250) * 250; buildStar(); try { sim.setTv(tYr); } catch (e) { /* 무시 */ } }
+        },
+      });
+      ready = true;
+      const setPl = (p) => { syncing = true; player.set(Math.max(0, Math.min(1, p))); syncing = false; };
+      /* 2D → 3D: 시간 · 시점 · 운동 화살표를 매 프레임 따라가요 */
+      function followLive() {
+        const S = lessonS(); if (!S.view) return;
+        if (scene === 'dip' && S.cn) {
+          if (typeof S.cn.t === 'number' && S.cn.t !== dipT) { dipT = S.cn.t; updateDip(); setPl((dipT + 100000) / 200000); }
+          if (typeof S.cn.yaw === 'number' && yawGoal == null && Math.abs(S.cn.yaw - yaw) > 0.5) { yaw = Math.min(90, S.cn.yaw); yawRange.set(Math.round(yaw)); applyYaw(); }
+          if (!!S.cn.arrows !== showArrows) { showArrows = !!S.cn.arrows; updateDip(); }
+        } else if (scene === 'star' && S.view === 'vec' && S.vc && typeof S.vc.t === 'number' && S.vc.t !== tYr) { tYr = S.vc.t; buildStar(); setPl(tYr / 20000); }
+      }
       let acc = 0, lastKn = '';
       return {
         update(dt) {
+          followLive();
           if (orbit.tx === 1 && orbit.ty === 0 && orbit.tz === 0 && orbit.dist === 5) { // '↺ 시점' 단추: 지금 장면에 맞는 시점으로 되돌려요
             if (scene === 'star') { fitFor = -1; orbit.theta = 0.8; orbit.phi = 1.1; buildStar(); } else { applyYaw(); orbit.phi = Math.PI / 2; }
           }
           if (scene === 'dip') { const g = zoomOn ? 1 : 0; if (Math.abs(zm - g) > 0.002) { zm += (g - zm) * Math.min(1, dt * 6); applyYaw(); } }
-          if (yawGoal != null && scene === 'dip') { yaw += Math.sign(yawGoal - yaw) * Math.min(Math.abs(yawGoal - yaw), dt * 110); applyYaw(); yawRange.set(Math.round(yaw)); if (yaw === yawGoal) yawGoal = null; }
+          if (yawGoal != null && scene === 'dip') { yaw += Math.sign(yawGoal - yaw) * Math.min(Math.abs(yawGoal - yaw), dt * 110); applyYaw(); yawRange.set(Math.round(yaw)); try { sim.setYaw(Math.round(yaw)); } catch (e) { /* 무시 */ } if (yaw === yawGoal) yawGoal = null; }
           acc += dt; if (acc > 0.5) { acc = 0; const k = (known('vr') ? 1 : 0) + '' + (known('vt') ? 1 : 0) + (known('v') ? 1 : 0) + (known('dm') ? 1 : 0) + (grpKnown() ? 1 : 0); if (k !== lastKn) { lastKn = k; if (scene === 'star') buildStar(); else updateDip(); } }
         },
         sync() { readLesson(); },

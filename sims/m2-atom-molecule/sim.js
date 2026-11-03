@@ -1811,7 +1811,7 @@
   let FREEZE = false;
   SciSim.loop((dt, t) => { lastDt = dt; if (!FREEZE) update(dt); draw(now()); if (lastFree !== !!(game && game.free)) refreshUI(); });
   window.__sim = Object.assign({
-    S, SC, get game() { return game; }, ff(sec) { const n = Math.round(sec * 60); for (let i = 0; i < n; i++) update(1 / 60); },
+    S, SC, SCP, ZM, get game() { return game; }, ff(sec) { const n = Math.round(sec * 60); for (let i = 0; i < n; i++) update(1 / 60); },
     v2s(x, y) { const r = view.canvas.getBoundingClientRect(); return { x: r.left + x * r.width / VW, y: r.top + y * r.height / VH }; },
     setScene, refreshUI, freeze(v) { FREEZE = !!v; }, zoomJump, useScope, useCount,
   }, DBG);

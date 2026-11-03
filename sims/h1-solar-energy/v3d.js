@@ -1,63 +1,31 @@
-/* h1-solar-energy · 3D 태양: 단면 · 핵융합 · 지구까지
-   ① 태양 단면: 핵(중심부) → 복사층 → 대류층 → 광구 (크기는 실제 비율에 가깝게 줄인 모형)
-   ② 핵융합: 중심부의 수소 핵(양성자)은 서로 밀어내지만, 온도가 높아 충분히 빠르면 부딪혀 융합해요. 수소 핵 4개 → 헬륨 핵 1개 + 에너지.
-      입자의 움직임은 단순한 모의 계산이에요 (서로 밀어내는 힘 + 열운동). 2D 실험처럼 온도 100~2000만 K.
-   ③ 지구까지: 태양이 내보내는 에너지 중 지구에 닿는 것은 약 20억분의 1 (거리와 크기는 줄여서 그렸어요). */
+/* h1-solar-energy · 3D 핵융합 · 질량이 에너지로 · 지구의 에너지 흐름
+   2D 실험과 같은 3장면이에요 (2D에서 고른 장면을 따라가요).
+   ① 핵융합 (2D 1단계): 수소 핵(양성자)은 서로 밀어내지만, 온도가 높아 충분히 빠르면 부딪혀 융합해요. 수소 핵 4개 → 헬륨 핵 1개 + 에너지.
+      온도 100~2000만 K는 2D의 온도 슬라이더와 같은 값이에요 (3D 슬라이더도 2D를 바꿔요). 입자의 움직임은 단순한 모의 계산이에요.
+   ② 질량이 에너지로 (2D 2단계): 수소 핵 4개의 질량 100 → 헬륨 핵 1개 99.3, 줄어든 질량 0.7(0.7 %)이 에너지로 바뀌어요.
+   ③ 지구의 에너지 흐름 (2D 3단계): 태양이 내보내는 에너지 중 지구에 닿는 것은 약 20억분의 1, 지구에 온 에너지(100)가 열 · 증발·구름·비 · 바람 · 해류 · 광합성으로 가요. */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
   const PHN = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches);
 
   window.SciSim3D.attach({
-    title: '3D 태양과 핵융합',
+    title: '3D 핵융합과 태양 에너지',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHN ? 13 : 9, theta: 0.3, phi: 1.2, min: 5, max: 30 },
     autoRotate: 0.12,
-    levels: [0, 1],
+    levels: [0, 1, 2],
     build(ctx) {
       const { THREE, root, camera, label, info, controls, orbit } = ctx;
       const V3 = THREE.Vector3;
       const S0 = window.__sim && window.__sim.S;
-      const st = { scene: 'fusion', T: S0 && S0.T ? S0.T : 1500, t: 0 };
+      const st = { scene: 'fusion', T: S0 && S0.T ? S0.T : 1500, t: 0, demo: false, sig: '' };
+      const L2 = () => (ctx.lesson && ctx.lesson()) || null;
       const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ envMapIntensity: 0.6, color: c, roughness: 0.5, metalness: 0.05 }, o || {}));
       const gc = document.createElement('canvas'); gc.width = gc.height = 128; const g2 = gc.getContext('2d'), gr = g2.createRadialGradient(64, 64, 0, 64, 64, 64);
       gr.addColorStop(0, 'rgba(255,240,170,1)'); gr.addColorStop(0.3, 'rgba(255,190,60,.55)'); gr.addColorStop(1, 'rgba(255,150,0,0)'); g2.fillStyle = gr; g2.fillRect(0, 0, 128, 128);
       const glowTex = new THREE.CanvasTexture(gc);
       const glowMat = (op) => new THREE.SpriteMaterial({ map: glowTex, transparent: true, opacity: op == null ? 1 : op, blending: THREE.AdditiveBlending, depthWrite: false });
-
-      /* ================= ① 태양 단면 ================= */
-      const gSun = new THREE.Group(); root.add(gSun);
-      const R = 3.6, LAY = [
-        { n: '핵', r: 0.25 * R, c: 0xfff1a8, e: 0xffe36b, ei: 1.1 },
-        { n: '복사층', r: 0.7 * R, c: 0xffc23d, e: 0xff9d1a, ei: 0.6 },
-        { n: '대류층', r: R, c: 0xff7a2a, e: 0xe0480e, ei: 0.55 },
-      ];
-      const sunG = new THREE.Group(); sunG.rotation.y = 3 * Math.PI / 4 + 0.35; gSun.add(sunG);
-      const P3 = Math.PI * 1.5;
-      for (let i = LAY.length - 1; i >= 0; i--) {
-        const L = LAY[i];
-        const sph = new THREE.Mesh(new THREE.SphereGeometry(L.r, 64, 40, 0, P3), new THREE.MeshStandardMaterial({ color: L.c, emissive: L.e, emissiveIntensity: L.ei, roughness: 0.7, side: THREE.DoubleSide }));
-        sunG.add(sph);
-        const r0 = i ? LAY[i - 1].r : 0;
-        const cutA = i ? new THREE.RingGeometry(r0, L.r, 64, 1, Math.PI / 2, Math.PI) : new THREE.CircleGeometry(L.r, 48, Math.PI / 2, Math.PI);
-        const m = new THREE.MeshStandardMaterial({ color: L.c, emissive: L.e, emissiveIntensity: L.ei * 0.9, roughness: 0.8, side: THREE.DoubleSide });
-        const a = new THREE.Mesh(cutA, m), b = new THREE.Mesh(cutA.clone(), m);
-        b.rotation.y = -Math.PI / 2; sunG.add(a, b);
-      }
-      const coreG = new THREE.Sprite(glowMat(0.9)); coreG.scale.set(R * 0.9, R * 0.9, 1); sunG.add(coreG);
-      const sunGlow = new THREE.Sprite(glowMat(0.5)); sunGlow.scale.set(R * 3.6, R * 3.6, 1); gSun.add(sunGlow);
-      const slabs = [
-        label('핵 · 1500만 K', [0, 0, 0], { size: 12.5, offset: [0, 0, 0.1] }),
-        label('복사층', [0, 0, 0], { size: 12 }),
-        label('대류층', [0, 0, 0], { size: 12 }),
-        label('여기서 핵융합이 일어나요', [0, 0, 0], { size: 11.5, color: 'rgba(160,60,0,.9)' }),
-      ];
-      function placeSunLabels() {
-        const rot = (v) => v.clone().applyAxisAngle(new V3(0, 1, 0), sunG.rotation.y);
-        slabs[0].obj = rot(new V3(-0.1, 0.05, -0.1)); slabs[1].obj = rot(new V3(-R * 0.48, 0, -0.01)).add(new V3(0, 0.7, 0));
-        slabs[2].obj = rot(new V3(-R * 0.86, 0, 0)).add(new V3(0, -0.2, 0)); slabs[3].obj = rot(new V3(-0.1, 0.5, -0.1)); slabs[3].off = [0, 1.15, 0];
-      }
-      placeSunLabels();
 
       /* ================= ② 핵융합 ================= */
       const gFu = new THREE.Group(); root.add(gFu);
@@ -147,51 +115,120 @@
         else if (fused === 0) info('수소 핵은 모두 + 전기를 띠어 서로 <b>밀어내요</b>.<br>충분히 빠르게 부딪히면 융합해요.');
       }
 
-      /* ================= ③ 지구까지 ================= */
+      /* ================= ② 질량이 에너지로 ================= */
+      const gMa = new THREE.Group(); root.add(gMa);
+      const MH = [[1, 1, 1], [-1, -1, 1], [-1, 1, -1], [1, -1, -1]].map((q) => new V3(q[0], q[1], q[2]).multiplyScalar(0.42));
+      const maH = MH.map((q, i) => { const m = new THREE.Mesh(new THREE.SphereGeometry(RP, 24, 18), pMat); gMa.add(m); return m; });
+      const heG = new THREE.Group(); gMa.add(heG);
+      MH.forEach((q, i) => { const m = new THREE.Mesh(new THREE.SphereGeometry(RP, 24, 18), i % 2 ? nMat : pMat); m.position.copy(q).multiplyScalar(0.62 / 0.42 * 0.62); heG.add(m); });
+      const maGlow = new THREE.Sprite(glowMat(0)); maGlow.scale.set(1, 1, 1); gMa.add(maGlow);
+      const maRays = []; for (let i = 0; i < 12; i++) { const d = rv(); const m = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.45, 8), new THREE.MeshBasicMaterial({ color: 0xfff1a0, transparent: true, opacity: 0 })); m.userData.d = d; m.quaternion.setFromUnitVectors(new V3(0, 1, 0), d); gMa.add(m); maRays.push(m); }
+      const mHlab = label('수소 핵 4개 · 질량 100', maH[0], { size: 12.5, offset: [0, 1.0, 0] }), mHelab = label('헬륨 핵 1개 · 질량 99.3', heG, { size: 12.5, offset: [0, 1.0, 0], color: '#b45309' }), mElab = label('줄어든 질량 → 빛에너지', [0, 1.4, 0], { size: 12.5, color: '#e0480e' });
+      function setMass(p) {   // p: 0 융합 전 → 1 융합 후 (2D의 fz.v와 같은 진행)
+        const ease = (x) => { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); };
+        const u1 = ease(p / 0.4), u2 = ease((p - 0.5) / 0.35), fused = p >= 0.42;
+        maH.forEach((m, i) => { const st0 = new V3(-3, 0, 0).add(MH[i].clone().multiplyScalar(1.9)); m.position.copy(st0).lerp(MH[i].clone().multiplyScalar(0.0), u1); m.visible = !fused; m.position.x = -3 + 3 * u1 + MH[i].x * (1.9 - 1.9 * u1); m.position.y = MH[i].y * (1.9 - 1.9 * u1); m.position.z = MH[i].z * (1.9 - 1.9 * u1); });
+        heG.visible = fused; heG.position.set(2.6 * u2 - 0.0, 0, 0);
+        const k = Math.max(0, Math.min(1, (p - 0.42) / 0.5));
+        maGlow.material.opacity = fused ? Math.max(0, 1 - k) * 0.9 : 0; maGlow.scale.setScalar(0.6 + k * 6);
+        maRays.forEach((r) => { r.material.opacity = fused ? Math.max(0, 1 - k) : 0; r.position.copy(r.userData.d).multiplyScalar(0.5 + k * 3.2); });
+        mHlab.show(!fused); mHelab.show(fused); mElab.show(p >= 0.55); mElab.obj = [0, 1.7, 0];
+      }
+
+      /* ================= ③ 지구의 에너지 흐름 ================= */
       const gEa = new THREE.Group(); root.add(gEa);
-      const sun3 = new THREE.Mesh(new THREE.SphereGeometry(2.2, 40, 28), new THREE.MeshStandardMaterial({ color: 0xffb62a, emissive: 0xff9410, emissiveIntensity: 0.9, roughness: 0.8 })); sun3.position.set(-7, 0, 0); gEa.add(sun3);
-      const sg = new THREE.Sprite(glowMat(0.7)); sg.scale.set(11, 11, 1); sg.position.copy(sun3.position); gEa.add(sg);
+      const sun3 = new THREE.Mesh(new THREE.SphereGeometry(1.8, 40, 28), new THREE.MeshStandardMaterial({ color: 0xffb62a, emissive: 0xff9410, emissiveIntensity: 0.9, roughness: 0.8 })); sun3.position.set(-5.2, 0, 0); gEa.add(sun3);
+      const sg = new THREE.Sprite(glowMat(0.7)); sg.scale.set(9, 9, 1); sg.position.copy(sun3.position); gEa.add(sg);
       const ec = document.createElement('canvas'); ec.width = 256; ec.height = 128; { const g = ec.getContext('2d'); g.fillStyle = '#2f7fd8'; g.fillRect(0, 0, 256, 128); g.fillStyle = '#4caf6a'; let sd = 7; const rn = () => { sd = (sd * 16807) % 2147483647; return sd / 2147483647; }; for (let i = 0; i < 16; i++) { const x = rn() * 256, y = 20 + rn() * 88; for (let j = 0; j < 7; j++) { g.beginPath(); g.ellipse(x + (rn() - 0.5) * 30, y + (rn() - 0.5) * 18, 6 + rn() * 16, 4 + rn() * 9, rn() * 3, 0, 7); g.fill(); } } g.fillStyle = '#f2f6fa'; g.fillRect(0, 0, 256, 7); g.fillRect(0, 121, 256, 7); }
-      const earth = new THREE.Mesh(new THREE.SphereGeometry(0.55, 36, 24), new THREE.MeshStandardMaterial({ map: new THREE.CanvasTexture(ec), roughness: 0.7 })); earth.position.set(6.5, 0, 0); gEa.add(earth);
-      const beads = []; for (let i = 0; i < 70; i++) { const b = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffe14d })); b.userData = { dir: rv(), ph: Math.random(), sp: 0.12 + Math.random() * 0.1 }; b.userData.dir.x = Math.abs(b.userData.dir.x) + 0.15; b.userData.dir.normalize(); gEa.add(b); beads.push(b); }
-      const eaLab = [label('☀ 태양', sun3, { size: 12.5, offset: [0, 2.9, 0] }), label('지구', earth, { size: 12.5, offset: [0, 1.0, 0] }), label('태양 에너지의 약 20억분의 1만 지구에 닿아요', [-0.5, -1.6, 0], { size: 12 })];
+      const earth = new THREE.Mesh(new THREE.SphereGeometry(0.75, 36, 24), new THREE.MeshStandardMaterial({ map: new THREE.CanvasTexture(ec), roughness: 0.7 })); earth.position.set(1.4, 0, 0); gEa.add(earth);
+      const beads = []; for (let i = 0; i < 60; i++) { const b = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffe14d })); b.userData = { dir: rv(), ph: Math.random(), sp: 0.12 + Math.random() * 0.1 }; b.userData.dir.x = Math.abs(b.userData.dir.x) * 0.55 + 0.6; b.userData.dir.y *= 0.5; b.userData.dir.z *= 0.5; b.userData.dir.normalize(); gEa.add(b); beads.push(b); }
+      const eaLab = [label('☀ 태양', sun3, { size: 12.5, offset: [0, 2.3, 0] }), label('지구', earth, { size: 12.5, offset: [0, -1.1, 0] }), label('지구에 닿는 양: 태양이 내보내는 에너지의 약 20억분의 1', [-1.6, -2.7, 0], { size: 12 })];
+      const PCOL = [0xef4444, 0x38bdf8, 0x94a3b8, 0x22d3ee, 0x22c55e];
+      const PTH = ['열', '증발·구름·비', '바람', '해류', '광합성'], PV = [45.9, 22, 1.5, 0.5, 0.1], PSUB = ['대기와 지표를 데워요', '물의 순환', '공기의 움직임', '바닷물의 흐름', '식물이 저장해요'];
+      const pArr = PTH.map((n, i) => {
+        const g = new THREE.Group(), y = 1.6 - i * 0.8, len = 0.7 + 2.3 * Math.sqrt(PV[i] / 45.9), r = 0.05 + 0.2 * Math.sqrt(PV[i] / 45.9);
+        const m = new THREE.MeshStandardMaterial({ color: PCOL[i], emissive: PCOL[i], emissiveIntensity: 0.3, roughness: 0.4, transparent: true });
+        const sh = new THREE.Mesh(new THREE.CylinderGeometry(r, r, len, 12), m); sh.rotation.z = -Math.PI / 2; sh.position.x = len / 2;
+        const hd = new THREE.Mesh(new THREE.ConeGeometry(r * 2 + 0.06, 0.32, 14), m); hd.rotation.z = -Math.PI / 2; hd.position.x = len + 0.1;
+        g.add(sh, hd); g.position.set(2.3, y, 0); gEa.add(g);
+        return { g, m, lab: label(n + ' ' + PV[i], g, { size: 11.5, offset: [len + 0.9, 0, 0] }), len };
+      });
+      const refl = (() => { const g = new THREE.Group(); const m = new THREE.MeshStandardMaterial({ color: 0xffd54a, emissive: 0xffa800, emissiveIntensity: 0.3, transparent: true, opacity: 0.8 }); const sh = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 1.4, 10), m); sh.position.y = 0.7; const hd = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.32, 12), m); hd.position.y = 1.5; g.add(sh, hd); g.position.set(0.9, 0.6, 0); g.rotation.z = 0.5; gEa.add(g); return g; })();
+      const reLab = label('반사 30', refl, { size: 11.5, offset: [-0.9, 1.2, 0] });
+      const inLab = label('지구에 온 에너지 100', [-0.2, 2.35, 0], { size: 11.5, color: 'rgba(160,100,0,.95)' });
 
       /* ---------- 조작 ---------- */
-      const seg = controls.segment('보기', [{ value: 'fusion', label: '⚛ 핵융합' }, { value: 'sun', label: '☀ 태양 단면' }, { value: 'earth', label: '🌍 지구까지' }], st.scene, (v) => { st.scene = v; showScene(); });
-      const rng = controls.range('온도', 100, 2000, 50, st.T, (v) => { st.T = v; fusionInfoLow(); }, (v) => v + '만 K' + (v === 1500 ? ' (태양 중심부)' : ''));
-      const again = controls.button('↺ 다시 하기', () => { spawn(); fusionInfoLow(); });
-      const ctlEls = [rng, again];
-      const kids = Array.from(again.parentElement.children), iR = kids.length - 4;     // [보기 라벨, 버튼 3개, 온도 라벨, 슬라이더, 버튼]
+      const probe = controls.text(''); probe.style.display = 'none'; const ctlRow = probe.parentElement;
+      const grab = (fn) => { const before = new Set(ctlRow.children); fn(); return Array.from(ctlRow.children).filter((c) => !before.has(c)); };
+      let internal = true, rng, rngM, plM, plF; const pathBtns = [];
+      const gFu1 = grab(() => {
+        rng = controls.range('온도', 100, 2000, 100, st.T, (v) => { st.T = v; const L = L2(); if (L && L.setT) L.setT(v); fusionInfoLow(); }, (v) => v + '만 K' + (v === 1500 ? ' (태양 중심부)' : ''));
+        controls.button('↺ 다시 하기', () => { spawn(); fusionInfoLow(); });
+      });
+      const gMa1 = grab(() => {
+        rngM = controls.range('수소의 질량', 100, 1000, 100, 100, (v) => { const L = L2(); if (L && L.setM) L.setM(v); }, (v) => v + ' g');
+        controls.button('🔥 융합시키기', () => { const L = L2(); if (L && L.startFuse && L.S && L.S.mode === 'mass') { st.demo = false; L.startFuse(); } else { st.demo = true; plM.set(0); plM.play(); } });
+        plM = controls.player({ duration: 6, loop: true, label: '융합 보기', phases: [[0, '수소 핵 4개'], [0.4, '융합'], [0.55, '헬륨 핵 + 에너지']], onFrame(p) { if (!internal) st.demo = true; setMass(p); } });
+      });
+      const gEa1 = grab(() => {
+        PTH.forEach((n, i) => { const b = controls.button(n, () => { const L = L2(); if (L && L.S) { L.S.sel = i; L.S.pkt = { i, t: 0 }; } else { st.demo = true; plF.set(i / 5 + 0.01); } }); pathBtns.push(b); });
+        plF = controls.player({ duration: 10, loop: true, label: '에너지의 길', phases: PTH.map((n, i) => [i / 5, n]), onFrame(p) { if (internal) return; st.demo = true; const L = L2(), i = Math.min(4, Math.floor(p * 5)); if (L && L.S && L.S.sel !== i) { L.S.sel = i; L.S.pkt = { i, t: 0 }; } st.sel = i; } });
+      });
+      internal = false; st.demo = false; st.sel = -1;
+      spawn(); setMass(0);
+
+      const sceneOf = (S) => { const m = S && S.S && S.S.mode; return m === 'mass' ? 'mass' : m === 'flow' || m === 'apply' ? 'earth' : 'fusion'; };
+      let lastScene = '';
       function showScene() {
         const s = st.scene;
-        gSun.visible = s === 'sun'; gFu.visible = s === 'fusion'; gEa.visible = s === 'earth';
-        slabs.forEach((l) => l.show(s === 'sun')); eaLab.forEach((l) => l.show(s === 'earth'));
-        for (let i = 4; i < kids.length; i++) kids[i].style.display = s === 'fusion' ? '' : 'none';
+        gFu.visible = s === 'fusion'; gMa.visible = s === 'mass'; gEa.visible = s === 'earth';
+        eaLab.forEach((l) => l.show(s === 'earth')); pArr.forEach((a) => a.lab.show(s === 'earth')); reLab.show(s === 'earth'); inLab.show(s === 'earth');
         pLab.show(s === 'fusion'); heLab.show(s === 'fusion' && phase === 'done'); enLab.show(s === 'fusion' && phase === 'done');
-        if (s === 'sun') info('태양 에너지는 <b>중심부(핵)</b>에서 만들어져 바깥으로 전해져요.<br>핵은 온도가 약 <b>1500만 K</b>로 가장 뜨거워요.');
-        else if (s === 'earth') info('태양이 내보낸 에너지가 <b>지구에 도착</b>해요.<br>지구에 닿는 양은 전체의 아주 작은 부분이에요.');
-        else fusionInfoLow();
-        orbit && orbit.setTarget && 0;
+        mHlab.show(false); mHelab.show(false); mElab.show(false); if (s === 'mass') setMass(plM.p);
+        gFu1.forEach((e) => { e.style.display = s === 'fusion' ? '' : 'none'; }); gMa1.forEach((e) => { e.style.display = s === 'mass' ? '' : 'none'; }); gEa1.forEach((e) => { e.style.display = s === 'earth' ? '' : 'none'; });
+        if (s === 'fusion') fusionInfoLow();
       }
-      spawn(); showScene();
+      st.scene = 'fusion'; showScene();
+      const setInfo = (h) => { if (h !== setInfo.h) { setInfo.h = h; info(h); } };
 
       return {
         update(dt, t) {
           st.t += dt;
+          const S = L2(), SS = S && S.S, K = S && S.K;
+          const sc = sceneOf(S);
+          if (sc !== st.scene) { st.scene = sc; showScene(); }
           if (st.scene === 'fusion') {
+            if (SS && typeof SS.T === 'number' && SS.T !== st.T) { st.T = SS.T; rng.set(SS.T); fusionInfoLow(); }
             stepFusion(Math.min(dt, 0.05)); updateBursts(dt);
             if (phase === 'done') { phaseT += dt; if (phaseT > 4.5) { spawn(); heLab.show(false); enLab.show(false); fusionInfoLow(); } }
             const p0 = ps[0]; pLab.obj = p0 && p0.kind === 'p' ? p0.g : (ps.find((q) => q.kind === 'p') || { g: null }).g; pLab.show(!!pLab.obj && phase === 'run');
             const he = ps.find((q) => q.kind === 'he'); if (he) { heLab.obj = he.g; heLab.off = [0, 0.95, 0]; enLab.obj = he.g; enLab.off = [1.1, -0.4, 0]; }
             hot.material.opacity = 0.18 + 0.14 * (st.T / 2000);
-          } else if (st.scene === 'sun') {
-            sunG.rotation.y += dt * 0.0; coreG.scale.setScalar(R * (0.85 + Math.sin(t * 2) * 0.05)); placeSunLabels();
+          } else if (st.scene === 'mass') {
+            // 2D에서 융합시키면 3D도 같은 진행으로 따라가요
+            const fz = S && S.fz, key = SS ? (SS.fuseT >= 0 ? (SS.fuseDone ? 'd' : 'r') : 'n') : '';
+            if (key !== st.sig) { st.sig = key; if (key) { st.demo = false; plM.pause(); } }
+            if (!st.demo && fz) { internal = true; plM.set(key === 'n' ? 0 : fz.v); internal = false; }
+            if (SS && rngM && Math.abs(rngM.value - SS.M) > 0.5) rngM.set(SS.M);
+            if (K) {
+              const dm = K.LOSS_PCT / 100 * (SS ? SS.M : 100), p = plM.p;
+              setInfo(p < 0.42 ? '수소 핵 4개의 질량을 <b>' + K.H_MASS + '</b>이라 하면 헬륨 핵 1개는 <b>' + K.HE_MASS + '</b>이에요. 융합시키면 질량이 줄어요.'
+                : '수소 핵 4개 <b>' + K.H_MASS + '</b> → 헬륨 핵 1개 <b>' + K.HE_MASS + '</b>: 줄어든 질량 <b>' + K.LOSS + ' (' + K.LOSS_PCT + ' %)</b>가 에너지로 바뀌어요.<br>수소 ' + (SS ? SS.M : 100) + ' g이 융합하면 질량 약 ' + (Math.round(dm * 10) / 10) + ' g이 에너지로 바뀌어요.');
+            }
           } else {
-            beads.forEach((b) => { const u = b.userData, k = (t * u.sp + u.ph) % 1; b.position.copy(sun3.position).addScaledVector(u.dir, 2.2 + k * 12); const toE = Math.abs(b.position.y) < 0.5 && Math.abs(b.position.z) < 0.5; b.visible = true; b.material.opacity = 1; b.scale.setScalar(toE ? 1.4 : 0.8); });
+            if (SS) {
+              const sel = SS.sel;
+              if (!st.demo) st.sel = sel; else if (!plF.playing && SS.sel !== st.sel) st.demo = false;
+              pathBtns.forEach((b, i) => { const done = SS.visited && SS.visited.has(i); const tx = PTH[i] + (done ? ' ✓' : ''); b.classList.toggle('on', i === st.sel); if (b.textContent !== tx) b.textContent = tx; });
+            }
+            pArr.forEach((a, i) => { const on = st.sel < 0 || st.sel === i; a.m.opacity = on ? 1 : 0.22; });
+            const si = st.sel;
+            setInfo(si >= 0 ? '<b>' + PTH[si] + '</b> (' + PSUB[si] + '): 지구에 온 에너지 100 중 <b>' + PV[si] + '</b><br>' + (S && S.PATHS ? S.PATHS[si].note : '') : '태양이 내보내는 에너지 중 지구에 닿는 것은 <b>약 20억분의 1</b>이에요. 지구에 온 에너지를 100으로 놓고, 반사 30 · 흡수 70이 열·증발·바람·해류·광합성으로 가요.<br>길을 눌러 보세요.');
+            beads.forEach((b) => { const u = b.userData, k = (t * u.sp + u.ph) % 1; b.position.copy(sun3.position).addScaledVector(u.dir, 1.8 + k * 7.2); });
             earth.rotation.y = t * 0.5; sg.material.opacity = 0.6 + Math.sin(t * 2) * 0.05;
           }
         },
-        sync() { const S = window.__sim && window.__sim.S; if (S && typeof S.T === 'number' && S.T !== st.T && st.scene === 'fusion') { st.T = S.T; rng.set(S.T); } },
+        sync() {},
       };
     },
   });

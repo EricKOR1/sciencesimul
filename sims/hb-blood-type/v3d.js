@@ -9,7 +9,7 @@
 
   window.SciSim3D.attach({
     title: '혈액형과 응집 반응 3D',
-    hint: '혈액형과 혈청을 골라 [섞기]를 눌러 봐요',
+    hint: '혈액형과 혈청을 골라 ▶ 섞기 → 응집을 눌러 봐요',
     camera: { dist: narrow ? 12.5 : 10, theta: 0.4, phi: 1.15, min: 5, max: 20 },
     autoRotate: 0.1,
     levels: [0, 1],
@@ -64,16 +64,20 @@
 
       let type = 'A', serum = 'none', agg = 0, mixing = false, lastKey = '';
       function matches() { const g = TYPES[type].ag; return (serum === 'a' && g.indexOf('A') >= 0) || (serum === 'b' && g.indexOf('B') >= 0); }
-      controls.segment('혈액형', ['A', 'B', 'AB', 'O'].map((k) => ({ label: k + '형', value: k })), 'A', (v) => { type = v; agg = 0; mixing = false; });
-      controls.segment('혈청', [{ label: '없음', value: 'none' }, { label: '항A 혈청', value: 'a' }, { label: '항B 혈청', value: 'b' }], 'none', (v) => { serum = v; agg = 0; mixing = false; });
-      controls.button('▶ 섞기', () => { mixing = true; });
-      controls.button('↺ 되돌리기', () => { mixing = false; });
+      controls.segment('혈액형', ['A', 'B', 'AB', 'O'].map((k) => ({ label: k + '형', value: k })), 'A', (v) => { type = v; agg = 0; mixing = false; pl.pause(); pl.set(0); });
+      controls.segment('혈청', [{ label: '없음', value: 'none' }, { label: '항A 혈청', value: 'a' }, { label: '항B 혈청', value: 'b' }], 'none', (v) => { serum = v; agg = 0; mixing = false; pl.pause(); pl.set(0); });
+      let pp = 0;
+      const pl = controls.player({ duration: 6, loop: false, autoplay: false, label: '섞기 → 응집',
+        phases: [[0, '섞기 전'], [0.08, '섞는 중'], [0.4, '결과']], onFrame(p) { pp = p; } });
+      const usePl = () => pl.playing || pl.p > 0;
+      controls.button('↺ 되돌리기', () => { mixing = false; pl.pause(); pl.set(0); agg = 0; });
 
       const link = []; for (let k = 0; k < 5; k++) { link.push([0, k + 1]); link.push([k + 1, ((k + 1) % 5) + 1]); }
       const tmpM = new THREE.Matrix4(), siteM = new THREE.Matrix4(), q = new THREE.Quaternion(), up = V3(0, 1, 0);
       return {
         update(dt, t) {
-          const doAgg = mixing && matches(); agg += ((doAgg ? 1 : 0) - agg) * Math.min(1, dt * (doAgg ? 1.1 : 2.2));
+          if (usePl()) { mixing = pp > 0.08; agg = serum !== 'none' && matches() && mixing ? Math.max(0, Math.min(1, (pp - 0.08) / 0.5)) : 0; }
+          const doAgg = mixing && matches(); if (!usePl()) agg += ((doAgg ? 1 : 0) - agg) * Math.min(1, dt * (doAgg ? 1.1 : 2.2));
           const u = ease(agg);
           let ia = 0, ib = 0;
           const hasA = TYPES[type].ag.indexOf('A') >= 0, hasB = TYPES[type].ag.indexOf('B') >= 0;

@@ -5,17 +5,18 @@
   'use strict';
   if (!window.SciSim3D) return;
   const PHN = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches);
-  const SEQ = ['AUG', 'GAA', 'GUG', 'CCA', 'UGG', 'UAA'];
-  const AA = ['Met', 'Glu', 'Val', 'Pro', 'Trp', null];
+  /* 2D '단백질 합성'과 같은 mRNA: AUG GAA CCA UGG UAA (아미노산 4개 + 종결 코돈) */
+  const SEQ = ['AUG', 'GAA', 'CCA', 'UGG', 'UAA'];
+  const AA = ['Met', 'Glu', 'Pro', 'Trp', null];
   const AACOL = { Met: 0xffb347, Glu: 0xf0556a, Val: 0x6fd36b, Pro: 0x4aa3ff, Trp: 0xb26bff };
   const BASE = { A: 0x6fd36b, U: 0xf0556a, G: 0xffd34d, C: 0x4aa3ff };
   const COMP = { A: 'U', U: 'A', G: 'C', C: 'G' };
-  const D = 4.4, NCY = 4, W = 1.25;
+  const D = 4.4, NCY = 3, W = 1.25;
 
   window.SciSim3D.attach({
     title: '번역: 리보솜과 tRNA 3D',
     camera: { dist: PHN ? 15 : 10.5, theta: 0.1, phi: 1.4, target: [0, 1.1, 0], min: 6, max: 24 },
-    levels: [0],
+    levels: [],
     autoRotate: 0,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
@@ -102,14 +103,18 @@
         lCod.show(false); lStop.show(true); lChain.obj = [-3.2 - rel * 1.4, 3.2 + rel * 2.4, 0];
         info('<b>④ 종결</b><br>종결 코돈 <b>UAA</b>에는 맞는 tRNA가 없어요. 사슬이 떨어져 나가 접히면 <b>단백질</b>이 돼요.');
       }
-      const bP = controls.button('❚❚ 멈춤', () => { play = !play; bP.textContent = play ? '❚❚ 멈춤' : '▶ 재생'; });
-      controls.button('↺ 처음부터', () => { T = 0; });
       const bN = controls.button('이름표 ✓', () => { names = !names; bN.classList.toggle('on', names); bN.textContent = '이름표 ' + (names ? '✓' : '✕'); }); bN.classList.add('on');
       const total = NCY * D, endLen = 5.5;
       function paint() { if (T < total) { const c = Math.floor(T / D), ph = T - c * D; setPos(c, ph); } else setEnd(T - total); }
+      let demoP = 0;
+      const pl = controls.player({
+        duration: total + endLen, loop: true, autoplay: false, label: '번역',
+        phases: [[0, 'GAA 코돈 · Glu'], [D / (total + endLen), 'CCA 코돈 · Pro'], [2 * D / (total + endLen), 'UGG 코돈 · Trp'], [total / (total + endLen), 'UAA 종결 코돈']],
+        onFrame(p) { demoP = p; T = p * (total + endLen); },
+      });
       paint();
       return {
-        update(dt) { if (play) { T += dt; if (T > total + endLen) T = 0; } paint(); },
+        update(dt) { if (!pl.playing && demoP === 0) { T += dt; if (T > total + endLen) T = 0; } paint(); },
         sync() {},
       };
     },

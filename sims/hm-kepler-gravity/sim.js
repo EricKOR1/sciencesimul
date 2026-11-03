@@ -800,6 +800,7 @@
   /* ---------- 디버그 (Playwright) ---------- */
   window.__sim = {
     S, VW, VH, get game() { return game; }, setScene, setFlag, grProcess, sectorFrac, kepE, marsObs, moonA, PL, rat, ordV, RULES_A, RULES_B,
+    E_AREA, E_MARS, A_MARS, MARS_N, kpos, showCalc, MOON_R, MOON_T,
     stepAll(sec) { const n = Math.ceil(sec / 0.02); for (let i = 0; i < n; i++) { obStep(0.02); grStep(0.02); foStep(0.02); } },
   };
 })();

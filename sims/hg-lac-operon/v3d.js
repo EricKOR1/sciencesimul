@@ -1,7 +1,7 @@
 /* hg-lac-operon · 3D 젖당 오페론
    조절 유전자 · 프로모터 · 작동 부위 · 구조 유전자(lacZ · lacY · lacA)가 한 줄로 늘어선 DNA.
-   젖당이 없으면 억제 단백질이 작동 부위에 붙어 RNA 중합 효소가 못 지나가요.
-   젖당이 있으면 (알로)젖당이 억제 단백질에 붙어 모양이 변해 떨어져 나가고, 전사 → 번역으로 젖당 분해 효소가 만들어져요. */
+   젖당이 없으면 억제자이 작동 부위에 붙어 RNA 중합 효소가 못 지나가요.
+   젖당이 있으면 (알로)젖당이 억제자에 붙어 모양이 변해 떨어져 나가고, 전사 → 번역으로 젖당 분해 효소가 만들어져요. */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -20,7 +20,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: narrow ? 11 : 9.2, theta: 0.22, phi: 1.2, target: narrow ? [-0.5, -1.0, 0] : [-1.0, 0.5, 0], min: 5, max: 22 },
     autoRotate: 0,
-    levels: [0, 1, 2],
+    levels: [0, 1, 2],   // 4단계(돌연변이 · 예측 표 · 트립토판)는 2D 화면에서
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V = THREE.Vector3, M4 = new THREE.Matrix4(), cc = new THREE.Color();
@@ -46,17 +46,17 @@
       const L = {
         I: label('조절 유전자', An(-4.85, -1.45, 0), { color: '#475569' }), P: label('프로모터', An(-3.4, -1.45, 0), { color: '#3f6212' }),
         O: label('작동 부위', An(-2.3, -1.95, 0), { color: '#9a3412' }), S: label('구조 유전자', An(0.9, -1.45, 0), { color: '#1e3a8a' }),
-        pol: label('RNA 중합 효소', null, { color: '#0f766e' }), rep: label('억제 단백질', null, { color: '#991b1b' }),
-        lact: label('젖당', null, { color: '#92400e', offset: [0, 0.4, 0] }), mrna: label('mRNA', null, { color: '#9a3412' }), enz: label('젖당 분해 효소', null, { color: '#1e3a8a' }),
+        pol: label('RNA 중합 효소', null, { color: '#0f766e' }), rep: label('억제자', null, { color: '#5b21b6' }),
+        lact: label('젖당 (유도자)', null, { color: '#92400e', offset: [0, 0.4, 0] }), mrna: label('mRNA', null, { color: '#9a3412' }), enz: label('젖당 분해 효소', null, { color: '#1e3a8a' }),
       };
 
-      /* ---------- RNA 중합 효소 · 억제 단백질 ---------- */
+      /* ---------- RNA 중합 효소 · 억제자 ---------- */
       const pol = new THREE.Group(); root.add(pol);
       { const b = new THREE.Mesh(new THREE.SphereGeometry(1, 36, 24), std(0x14b8a6, { transparent: true, opacity: 0.45, depthWrite: false, roughness: 0.3 })); b.scale.set(0.7, 0.72, 0.72); pol.add(b);
         const c1 = new THREE.Mesh(new THREE.SphereGeometry(0.42, 20, 14), std(0x0d9488)); c1.scale.setScalar(0.75); c1.position.set(0.15, 0.25, -0.2); pol.add(c1); }
       pol.position.set(PSTART, 0, 0);
       const rep = new THREE.Group(); root.add(rep);
-      const repMat = std(0xef4444, { roughness: 0.35 });
+      const repMat = std(0x7c3aed, { roughness: 0.35 });   // 2D처럼 보라색 억제자 단백질
       { [-0.34, 0.34].forEach((z) => { const s = new THREE.Mesh(new THREE.SphereGeometry(0.33, 24, 18), repMat); s.position.set(0, 0.7, z); rep.add(s); const f = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 0.5, 12), repMat); f.position.set(0, 0.3, z * 0.55); rep.add(f); });
         const top = new THREE.Mesh(new THREE.SphereGeometry(0.3, 20, 14), repMat); top.position.set(0, 1.0, 0); rep.add(top); }
       const OP = new V(-2.3, 0.1, 0); rep.position.copy(OP);
@@ -78,18 +78,25 @@
       }
       const ease = (k) => { k = Math.max(0, Math.min(1, k)); return k * k * (3 - 2 * k); };
 
-      let ph = 'blocked', pt = 0, progress = 0, rnaFade = 1, repFly = 0, bound = 0, mrnaN = 0;
+      let ph = 'blocked', pt = 0, progress = 0, rnaFade = 1, repFly = 0, bound = 0, mrnaN = 0, prevT = 0, enzOn = false;
       function setLac(v) {
         lac = v; ph = v ? 'binding' : 'blocked'; pt = 0; progress = 0; bound = 0; repFly = 0;
         lacts.forEach((o, i) => { o.g.visible = v && i < 6; o.state = 'free'; o.slot = -1; o.t = 0; o.g.position.set((Math.random() * 2 - 1) * 3.5, 1.6 + Math.random() * 1.6, (Math.random() * 2 - 1) * 1.2); o.g.userData.a.position.x = -0.18; o.g.userData.b.position.x = 0.18; o.g.userData.a.visible = o.g.userData.b.visible = true; o.g.scale.setScalar(1); });
-        if (!v) { repMat.color.setHex(0xef4444); rep.position.copy(OP); rep.rotation.set(0, 0, 0); }
+        if (!v) { repMat.color.setHex(0x7c3aed); rep.position.copy(OP); rep.rotation.set(0, 0, 0); }
         pol.position.set(PSTART, 0, 0); text();
       }
       function text() {
-        if (!lac) info('<b>젖당이 없을 때</b> · <b>억제 단백질</b>이 작동 부위에 붙어 RNA 중합 효소가 지나가지 못해요. 구조 유전자가 전사되지 않아요(꺼짐).');
-        else info('<b>젖당이 있을 때</b> · 젖당(알로젖당)이 억제 단백질에 붙으면 억제 단백질이 떨어져 나가요. RNA 중합 효소가 구조 유전자를 전사해 <b>젖당 분해 효소</b>가 만들어져요(켜짐).');
+        if (!lac) info('<b>젖당이 없을 때</b> · <b>억제자</b>이 작동 부위에 붙어 RNA 중합 효소가 지나가지 못해요. 구조 유전자가 전사되지 않아요(꺼짐).');
+        else info('<b>젖당이 있을 때</b> · 젖당(알로젖당)이 억제자에 붙으면 억제자이 떨어져 나가요. RNA 중합 효소가 구조 유전자를 전사해 <b>젖당 분해 효소</b>가 만들어져요(켜짐).');
       }
-      const seg = controls.segment('상태', [{ value: 'no', label: '젖당 없음' }, { value: 'yes', label: '젖당 있음' }], 'no', (v) => setLac(v === 'yes'));
+      const seg = controls.segment('상태', [{ value: 'no', label: '젖당 없음' }, { value: 'yes', label: '젖당 있음' }], 'no', (v) => { setLac(v === 'yes'); player.set(0); });
+      /* ▶ 젖당이 있을 때 한 과정: 유도자 결합 → 억제자 떨어짐 → 전사 → 젖당 분해 효소 (젖당이 없으면 억제자가 그대로 막고 있어요) */
+      const DUR = 14;
+      const player = controls.player({
+        duration: DUR, loop: true, autoplay: true, label: '젖당 있을 때',
+        phases: [[0, '젖당(유도자)이 억제자에 결합'], [2.1 / DUR, '억제자가 떨어져요'], [3.7 / DUR, '전사: mRNA 합성'], [12 / DUR, '젖당 분해 효소 생성']],
+        onFrame() {},
+      });
       setLac(false);
 
       let lastSim = null;
@@ -100,24 +107,26 @@
           const sm = window.__sim && window.__sim.S && window.__sim.S.mode;
           if (sm && sm !== lastSim) { lastSim = sm; if (sm === 'lac' && !lac) { seg.set('yes'); setLac(true); } else if ((sm === 'nolac' || sm === 'struct') && lac) { seg.set('no'); setLac(false); } }
           pt += dt;
-          // 중합 효소 · 억제 단백질
+          const TT = player.p * DUR;
+          if (lac) { if (TT < prevT - 0.5) { lacts.forEach((o, i) => { if (i < 2) { o.state = 'free'; o.g.position.set((Math.random() * 2 - 1) * 3.5, 1.6 + Math.random() * 1.6, (Math.random() * 2 - 1) * 1.2); } }); } prevT = TT; }
+          // 중합 효소 · 억제자
           if (!lac) {
             pol.position.x = PSTART + 0.3 * (0.5 - 0.5 * Math.cos(t * 2.0));
             rep.position.copy(OP);
             if (enzs.length) enzs.forEach((e) => { e.t += dt; });
-          } else if (ph === 'binding') {
-            pol.position.x = PSTART + 0.2 * (0.5 - 0.5 * Math.cos(t * 2.0));
-            if (bound >= 2) { ph = 'leaving'; pt = 0; }
-          } else if (ph === 'leaving') {
-            const k = ease(pt / 1.6); repMat.color.setHex(k > 0.2 ? 0xfca5a5 : 0xef4444);
-            rep.position.set(OP.x + k * 0.8, OP.y + k * 2.4, k * 1.6); rep.rotation.z = k * 0.9;
-            if (k >= 1) { ph = 'go'; pt = 0; progress = 0; }
-          } else if (ph === 'go') {
-            progress += dt * 0.12; pol.position.x = PSTART + 0.2 + progress * (END - PSTART - 0.2);
-            if (progress >= 1) { ph = 'done'; pt = 0; addEnz('Z', 2.5); addEnz('Y', 3.0); addEnz('A', 3.4); if (enzs.length > 9) { const o = enzs.splice(0, 3); o.forEach((e) => root.remove(e.g)); } }
-          } else if (ph === 'done') {
-            pol.position.x = END + Math.min(1.2, pt * 1.2); pol.scale.setScalar(Math.max(0.01, 1 - pt / 1.4));
-            if (pt > 1.5) { pol.scale.setScalar(1); pol.position.x = PSTART; ph = 'go'; pt = 0; progress = 0; }
+          } else {
+            bound = TT >= 2.1 ? 2 : TT >= 0.8 ? 1 : 0;
+            if (TT < 2.1) { ph = 'binding'; pol.position.x = PSTART + 0.2 * (0.5 - 0.5 * Math.cos(t * 2.0)); rep.position.copy(OP); repMat.color.setHex(0x7c3aed); }
+            else {
+              const k = ease((TT - 2.1) / 1.6); repMat.color.setHex(k > 0.2 ? 0xc4b5fd : 0x7c3aed);
+              rep.position.set(OP.x + k * 0.8, OP.y + k * 2.4, k * 1.6); rep.rotation.z = k * 0.9;
+              if (TT < 3.7) { ph = 'leaving'; pol.position.x = PSTART + 0.2 * (0.5 - 0.5 * Math.cos(t * 2.0)); }
+              else if (TT < 12.0) { ph = 'go'; progress = (TT - 3.7) / 8.3; pol.position.x = PSTART + 0.2 + progress * (END - PSTART - 0.2); }
+              else { ph = 'done'; pt = Math.min(1.5, TT - 12.0); pol.position.x = END + Math.min(1.2, pt * 1.2); pol.scale.setScalar(Math.max(0.01, 1 - pt / 1.4)); }
+            }
+            const wantE = TT >= 12.0 ? 3 : 0;
+            if (wantE && enzs.length < 3 + (enzs.length > 3 ? 0 : 0) && !enzOn) { enzOn = true; addEnz('Z', 2.5); addEnz('Y', 3.0); addEnz('A', 3.4); }
+            if (!wantE && enzOn) { enzOn = false; enzs.splice(0).forEach((e) => root.remove(e.g)); }
           }
           if (ph !== 'done') pol.scale.setScalar(1);
           // mRNA
@@ -131,14 +140,16 @@
           }
           rna.instanceMatrix.needsUpdate = true;
           // 젖당
+          const TTc = lac ? TT : 0;
           lacts.forEach((o, i) => {
             if (!o.g.visible) return;
+            if (lac && i < 2 && (o.state === 'goto' || o.state === 'bound') && TTc < 0.8 + i * 1.3) o.state = 'free';
             if (o.state === 'free') {
               o.v.x += (Math.random() - .5) * 5 * dt; o.v.y += (Math.random() - .5) * 5 * dt; o.v.z += (Math.random() - .5) * 5 * dt; o.v.setLength(0.8);
               o.g.position.addScaledVector(o.v, dt); const p = o.g.position;
               if (Math.abs(p.x) > 4.2) o.v.x *= -1; if (p.y > 3.6 || p.y < 1.2) o.v.y *= -1; if (Math.abs(p.z) > 1.4) o.v.z *= -1;
               o.g.rotation.z += dt;
-              if (ph === 'binding' && bound < 2 && i === bound && pt > 0.8 + bound * 1.3) { o.state = 'goto'; o.slot = bound; o.t = 0; bound++; }
+              if (lac && i < 2 && TTc >= 0.8 + i * 1.3) { o.state = 'goto'; o.slot = i; o.t = 0; }
               // 효소가 가까이 있으면 분해돼요
               if (enzs.length && ph !== 'binding') enzs.forEach((e) => { if (o.state === 'free' && e.kind === 'Z' && e.g.position.distanceTo(p) < 0.9) { o.state = 'split'; o.t = 0; } });
             } else if (o.state === 'goto') {

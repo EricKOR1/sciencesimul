@@ -1144,7 +1144,7 @@ SciSim.loop((dt, t) => {
 });
 
 window.__sim = {
-  S, VW, VH, get game() { return game; }, setScene, setSub, LG, MG, CG, SG, CASES, stimulate, startRace, caX, caseCur, setCurs, setSnap, startCapture, segX, activeSegs, mxs, raceStarts,
+  S, VW, VH, get game() { return game; }, setScene, setSub, AP, NSEG, NS, NODES, DELTA, siteV, LG, MG, CG, SG, CASES, stimulate, startRace, caX, caseCur, setCurs, setSnap, startCapture, segX, activeSegs, mxs, raceStarts,
   stepAll(sec) { const n = Math.ceil(sec / 0.02); for (let i = 0; i < n; i++) { if (S.mode === 'local') stepCD(0.02); else if (S.mode === 'myelin') stepMC(0.02); } },
 };
 

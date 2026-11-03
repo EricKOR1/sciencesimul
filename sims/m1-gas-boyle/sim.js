@@ -842,7 +842,7 @@
 
   /* ---------- 점검용 (자동 테스트) ---------- */
   window.__sim = {
-    S, view, parts,
+    S, view, parts, setV,
     feat(list) { F = new Set(list); },
     ff(sec) { const n = Math.round(sec * 60); for (let i = 0; i < n; i++) step(1 / 60); },
     nan() { return parts.some((p) => p.x !== p.x || p.y !== p.y); },

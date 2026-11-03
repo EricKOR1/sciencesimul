@@ -1,6 +1,6 @@
-/* m1-state-change-heat · 3D 얼음을 가열해 수증기가 될 때까지 (가열 곡선)
-   상태가 변하는 동안(녹는 중·끓는 중)에는 열을 계속 흡수해도 온도가 일정해요. 열이 입자 사이의 배열을 바꾸는 데 쓰이기 때문이에요.
-   오른쪽 아래 그래프에 지금 위치가 점으로 나타나요. (0 °C에서 녹고 100 °C에서 끓는 물을 기준으로 한 모형이에요.) */
+/* m1-state-change-heat · 3D 가열 곡선(얼음 −20 °C → 수증기)과 냉각 곡선(80 °C 팔미트산)
+   2D 실험과 같은 곡선·같은 값이에요. 상태가 변하는 동안(녹는 중·끓는 중·응고 중)에는 온도가 일정해요.
+   2D의 🔥 가열하기 / ❄️ 식히기를 누르면 3D도 함께 움직이고, ▶ 재생은 곡선 한 번을 반복해요. 오른쪽 아래 그래프에 지금 위치가 점으로 나타나요. */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -8,8 +8,8 @@
   window.SciSim3D.attach({
     title: '가열 곡선 3D',
     hint: ' ',
-    levels: [0, 1, 2],
-    camera: { dist: 10 * (PHN0 ? 1.05 : 1), theta: 0.6, phi: 1.15, fov: 45, target: [-0.6, -0.4, 0], min: 5, max: 26 },
+    levels: [0, 1],   // 가열 곡선 · 냉각 곡선 단계 (열 흡수/방출 분류·생활 적용은 2D에서)
+    camera: { dist: 12.5 * (PHN0 ? 1.08 : 1), theta: 0.6, phi: 1.15, fov: 45, target: [-0.6, -0.5, 0], min: 5, max: 26 },
     autoRotate: 0.15,
     build(ctx) {
       const { THREE, root, label, info, controls, renderer } = ctx;
@@ -143,83 +143,120 @@
       }
 
       const PR = 0.17, N = 125, HH = 2.3, W = 1.7;
-      /* 가한 열 Q(0~100) → 온도 T. 구간: 얼음 가열 0-14, 녹음 14-32, 물 가열 32-60, 끓음 60-88, 수증기 가열 88-100 */
-      const SEGS = [[0, 14, -20, 0], [14, 32, 0, 0], [32, 60, 0, 100], [60, 88, 100, 100], [88, 100, 100, 120]];
-      function tempOf(q) { for (const s of SEGS) if (q <= s[1]) return s[2] + (s[3] - s[2]) * (q - s[0]) / (s[1] - s[0]); return 120; }
-      function phaseOf(q) { return q < 14 ? 0 : q < 32 ? 1 : q < 60 ? 2 : q < 88 ? 3 : 4; }
-      const PN = ['고체 (얼음)', '녹는 중 (고체 + 액체)', '액체 (물)', '끓는 중 (액체 + 기체)', '기체 (수증기)'];
-      const PD = [
-        '입자가 제자리에서 진동해요. 열을 흡수하면 <b>온도가 올라가요</b>.',
-        '열을 흡수해도 <b>온도는 0 °C로 일정</b>해요. 열이 입자 배열을 바꾸는 데 쓰여요.',
-        '입자가 자리를 바꾸며 움직여요. 열을 흡수하면 <b>온도가 올라가요</b>.',
-        '열을 흡수해도 <b>온도는 100 °C로 일정</b>해요. 입자가 서로 멀어지는 데 열이 쓰여요.',
-        '입자가 자유롭게 날아다녀요. 열을 흡수하면 <b>온도가 더 올라가요</b>.',
-      ];
-      const sys = stateSys(N, PR, 0xffffff), st = { q: 0, play: 0, ph: -1 };
+      /* 2D 실험과 같은 곡선 (시간[분] · 온도[°C]) */
+      const CURVES = {
+        heat: { title: '가열 곡선', tmin: -20, tmax: 120, xmax: 40, end: 36.8, start: 'solid',
+          segs: [
+            { id: 'ice', t0: 0, t1: 2.4, T0: -20, T1: 0, a: 'solid', b: 'solid', lab: '고체 (얼음)', flat: false },
+            { id: 'melt', t0: 2.4, t1: 9.4, T0: 0, T1: 0, a: 'solid', b: 'liquid', lab: '녹는 중 (고체 + 액체)', flat: true, name: '융해' },
+            { id: 'water', t0: 9.4, t1: 21.4, T0: 0, T1: 100, a: 'liquid', b: 'liquid', lab: '액체 (물)', flat: false },
+            { id: 'boil', t0: 21.4, t1: 34.4, T0: 100, T1: 100, a: 'liquid', b: 'gas', lab: '끓는 중 (액체 + 기체)', flat: true, name: '기화' },
+            { id: 'steam', t0: 34.4, t1: 36.8, T0: 100, T1: 120, a: 'gas', b: 'gas', lab: '기체 (수증기)', flat: false }] },
+        cool: { title: '냉각 곡선', tmin: 20, tmax: 90, xmax: 20, end: 18, start: 'liquid',
+          segs: [
+            { id: 'liq', t0: 0, t1: 3.4, T0: 80, T1: 63, a: 'liquid', b: 'liquid', lab: '액체 (팔미트산)', flat: false },
+            { id: 'frz', t0: 3.4, t1: 11.4, T0: 63, T1: 63, a: 'liquid', b: 'solid', lab: '응고 중 (액체 + 고체)', flat: true, name: '응고' },
+            { id: 'sol', t0: 11.4, t1: 18, T0: 63, T1: 30, a: 'solid', b: 'solid', lab: '고체 (팔미트산)', flat: false }] },
+      };
+      const lerp = (a, b, f) => a + (b - a) * f, cl = (v, a, b) => Math.max(a, Math.min(b, v));
+      function curveAt(cv, t) { const sg = cv.segs; let i = 0; while (i < sg.length - 1 && t >= sg[i].t1) i++; const s = sg[i], f = cl((t - s.t0) / (s.t1 - s.t0), 0, 1); return { i, s, f, T: lerp(s.T0, s.T1, f) }; }
+      const sys = stateSys(N, PR, 0xffffff), st = { key: 'heat', t: 0, lastT: 0, seg: -1, on: false };
       sys.H = HH; sys.W = W;
       const frame = boxFrame(W, HH, 0xdff0ff); root.add(frame);
       const stand = new THREE.Mesh(new THREE.CylinderGeometry(2.9, 3.1, 0.2, 48), mat(0x64748b, { metalness: 0.4, roughness: 0.4 })); stand.position.y = -HH - 0.12; root.add(stand);
-      /* 가열 장치 */
+      /* 가열 장치(가열) / 찬물 수조(냉각) */
       const burner = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.7, 0.5, 24), mat(0x475569, { metalness: 0.6, roughness: 0.4 })); burner.position.y = -HH - 0.5; root.add(burner);
       const flame = new THREE.Mesh(new THREE.ConeGeometry(0.34, 0.9, 20), new THREE.MeshBasicMaterial({ color: 0xff8a2a, transparent: true, opacity: 0.9 })); flame.position.y = -HH - 0.04; root.add(flame);
       const flame2 = new THREE.Mesh(new THREE.ConeGeometry(0.18, 0.55, 16), new THREE.MeshBasicMaterial({ color: 0xffe082 })); flame2.position.y = -HH - 0.15; root.add(flame2);
+      const bath = new THREE.Mesh(new THREE.BoxGeometry(2 * W + 1.1, HH * 1.1, 2 * W + 1.1), glass(0x5fb4ff, 0.2, { side: THREE.FrontSide })); bath.position.y = -HH + HH * 0.55 - 0.05; root.add(bath);
+      const bathLab = label('찬물 수조', bath, { size: 11.5, offset: [W + 0.9, -0.3, 0] });
+      const arrIn = mkArrow(0xff6a3d, 0.1), arrOut = mkArrow(0x3b82f6, 0.1); root.add(arrIn, arrOut);
+      setArrow(arrIn, new V3(1.2, -HH - 0.9, 0), new V3(0.4, -HH - 0.1, 0)); setArrow(arrOut, new V3(W + 0.1, -HH + 1.0, 0), new V3(W + 1.5, -HH + 1.0, 0));
+      const arrLab = label('', [0, 0, 0], { size: 12, color: 'rgba(220,70,40,.92)' });
       const tLab = label('', [0, HH + 0.45, 0], { size: 14, color: 'rgba(30,64,175,.92)' });
-      /* 온도계 */
+      const subLab = label('', [0, HH + 1.05, 0], { size: 12 });
+      /* 온도계 (곡선에 맞춰 눈금이 바뀜) */
       const TX = -3.4, TY0 = -HH, TH = 2 * HH;
       const tg = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, TH + 0.6, 24), glass(0xe8f1ff, 0.28)); tg.position.set(TX, TY0 + TH / 2, 0); root.add(tg);
       const tb = new THREE.Mesh(new THREE.SphereGeometry(0.42, 24, 16), mat(0xef4444, { roughness: 0.3 })); tb.position.set(TX, TY0 - 0.4, 0); root.add(tb);
       const col = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 1, 16), mat(0xef4444, { roughness: 0.3 })); root.add(col);
-      const yOfT = (T) => TY0 + (T + 20) / 140 * TH;
-      [0, 100].forEach((T) => { const tk = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.04, 0.04), mat(0x334155)); tk.position.set(TX + 0.4, yOfT(T), 0); root.add(tk); label(T + ' °C', [TX + 0.4, yOfT(T), 0], { size: 10.5, offset: [0.65, 0, 0] }); });
+      const yOfT = (T, cv) => TY0 + (T - cv.tmin) / (cv.tmax - cv.tmin) * TH;
+      const ticks = [0, 1].map(() => { const m = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.04, 0.04), mat(0x334155)); root.add(m); return { m, l: label('', [0, 0, 0], { size: 10.5, offset: [0.65, 0, 0] }) }; });
+      function setTicks(cv) { const vals = cv === CURVES.heat ? [0, 100] : [63, 80]; ticks.forEach((tk, i) => { tk.m.position.set(TX + 0.4, yOfT(vals[i], cv), 0); tk.l.obj = [TX + 0.4, yOfT(vals[i], cv), 0]; tk.l.set(vals[i] + ' °C'); }); }
 
-      /* 가열 곡선 그래프 (오른쪽 아래) */
+      /* 곡선 그래프 (오른쪽 아래) */
       const view = renderer.domElement.parentElement;
       const box = document.createElement('div');
       box.style.cssText = 'position:absolute;right:10px;bottom:10px;z-index:3;padding:5px 7px 6px;border-radius:12px;background:rgba(8,12,24,.8);border:1px solid rgba(255,255,255,.22);text-align:center;pointer-events:none;color:#e8eefc;font-size:11.5px;font-weight:800;line-height:1.3';
       const GW = PHN0 ? 118 : 156, GH = PHN0 ? 84 : 108, cv = document.createElement('canvas'); cv.width = GW * 2; cv.height = GH * 2; cv.style.cssText = 'display:block;width:' + GW + 'px;height:' + GH + 'px;margin:2px auto 0';
-      box.append(Object.assign(document.createElement('div'), { textContent: '📈 가열 곡선' }), cv); view.appendChild(box);
+      const gTitle = Object.assign(document.createElement('div'), { textContent: '📈 가열 곡선' });
+      box.append(gTitle, cv); view.appendChild(box);
       const g2 = cv.getContext('2d');
-      function drawGraph() {
-        const S = 2, w = cv.width, h = cv.height, L = 22 * S, B = 14 * S, T = 6 * S, R = 6 * S;
-        const X = (q) => L + (w - L - R) * q / 100, Y = (t) => h - B - (h - B - T) * (t + 20) / 140;
+      function drawGraph(key, t) {
+        const C = CURVES[key], S = 2, w = cv.width, h = cv.height, L = 22 * S, B = 14 * S, T = 6 * S, R = 6 * S;
+        const X = (q) => L + (w - L - R) * q / C.xmax, Y = (v) => h - B - (h - B - T) * (v - C.tmin) / (C.tmax - C.tmin);
+        const at = (q) => curveAt(C, q).T;
         g2.clearRect(0, 0, w, h);
         g2.strokeStyle = 'rgba(255,255,255,.35)'; g2.lineWidth = 1.5; g2.beginPath(); g2.moveTo(L, T); g2.lineTo(L, h - B); g2.lineTo(w - R, h - B); g2.stroke();
-        g2.setLineDash([4, 4]); g2.strokeStyle = 'rgba(255,255,255,.22)'; [0, 100].forEach((t) => { g2.beginPath(); g2.moveTo(L, Y(t)); g2.lineTo(w - R, Y(t)); g2.stroke(); }); g2.setLineDash([]);
-        g2.fillStyle = '#b9c6e4'; g2.font = '800 ' + 10 * S + 'px sans-serif'; g2.textAlign = 'right'; g2.fillText('100', L - 3 * S, Y(100) + 3 * S); g2.fillText('0', L - 3 * S, Y(0) + 3 * S);
-        g2.textAlign = 'center'; g2.fillText('가한 열 →', (L + w) / 2, h - 2 * S);
-        g2.lineWidth = 3; g2.strokeStyle = '#6aa9ff'; g2.beginPath(); for (let q = 0; q <= 100; q += 1) { const x = X(q), y = Y(tempOf(q)); q ? g2.lineTo(x, y) : g2.moveTo(x, y); } g2.stroke();
-        g2.strokeStyle = '#ffd34d'; g2.lineWidth = 4; g2.beginPath(); for (let q = 0; q <= st.q; q += 1) { const x = X(q), y = Y(tempOf(q)); q ? g2.lineTo(x, y) : g2.moveTo(x, y); } g2.stroke();
-        g2.fillStyle = '#ffd34d'; g2.beginPath(); g2.arc(X(st.q), Y(tempOf(st.q)), 5 * S, 0, 7); g2.fill();
+        const lv = key === 'heat' ? [0, 100] : [63];
+        g2.setLineDash([4, 4]); g2.strokeStyle = 'rgba(255,255,255,.22)'; lv.forEach((v) => { g2.beginPath(); g2.moveTo(L, Y(v)); g2.lineTo(w - R, Y(v)); g2.stroke(); }); g2.setLineDash([]);
+        g2.fillStyle = '#b9c6e4'; g2.font = '800 ' + 10 * S + 'px sans-serif'; g2.textAlign = 'right'; lv.forEach((v) => g2.fillText(String(v), L - 3 * S, Y(v) + 3 * S));
+        g2.textAlign = 'center'; g2.fillText((key === 'heat' ? '가열' : '냉각') + ' 시간 →', (L + w) / 2, h - 2 * S);
+        g2.lineWidth = 3; g2.strokeStyle = key === 'heat' ? '#ff8a7a' : '#6aa9ff'; g2.globalAlpha = 0.55; g2.beginPath(); for (let q = 0; q <= C.end; q += 0.2) { const x = X(q), y = Y(at(q)); q ? g2.lineTo(x, y) : g2.moveTo(x, y); } g2.stroke(); g2.globalAlpha = 1;
+        g2.strokeStyle = '#ffd34d'; g2.lineWidth = 4; g2.beginPath(); for (let q = 0; q <= t; q += 0.2) { const x = X(q), y = Y(at(q)); q ? g2.lineTo(x, y) : g2.moveTo(x, y); } g2.stroke();
+        g2.fillStyle = '#ffd34d'; g2.beginPath(); g2.arc(X(t), Y(at(t)), 5 * S, 0, 7); g2.fill();
       }
 
-      function apply() {
-        const q = st.q, T = tempOf(q), ph = phaseOf(q);
-        if (ph !== st.ph || ph === 1 || ph === 3) {
-          if (ph === 0) sys.mix('solid', 'solid', 0); else if (ph === 1) sys.mix('solid', 'liquid', (q - 14) / 18); else if (ph === 2) sys.set('liquid', false);
-          else if (ph === 3) sys.mix('liquid', 'gas', (q - 60) / 28); else sys.set('gas', false);
-          if (ph === 0) sys.set('solid', false);
-        }
-        if (ph !== st.ph) { st.ph = ph; }
-        /* 온도에 따라 입자 빠르기 조금 달라지게 */
-        SET.solid.noise = 3 + 8 * (T + 20) / 20; SET.liquid.sp = 0.8 + 0.7 * T / 100; SET.liquid.noise = 3 + 8 * T / 100; SET.gas.sp = 2.4 + 1.6 * (T - 100) / 20;
-        const ty = yOfT(T); col.scale.y = ty - (TY0 - 0.4); col.position.set(TX, (ty + TY0 - 0.4) / 2, 0);
-        tLab.set(PN[ph] + ' · ' + Math.round(T) + ' °C');
-        info('<b>' + PN[ph] + '</b> · 온도 <b>' + Math.round(T) + ' °C</b><br>' + PD[ph]);
-        drawGraph();
+      const l2 = () => (ctx.lesson && ctx.lesson()) || null;
+      let pmode = false, built = false, playP = 0, sig = '', lastTxt = '';
+      const setInfo = (h) => { if (h !== lastTxt) { lastTxt = h; info(h); } };
+      const pl = controls.player({
+        duration: 14, loop: true, autoplay: false, label: '재생',
+        phases: [[0, '']],
+        onFrame(p) { if (!built) return; pmode = true; playP = p; },
+      });
+      built = true;
+      const PHASE_NAME = { heat: ['얼음 가열', '녹는 중', '물 가열', '끓는 중', '수증기'], cool: ['액체 냉각', '응고 중', '고체 냉각'] };
+      function setKey(key) {
+        const C = CURVES[key]; st.key = key; st.seg = -1; st.lastT = 0; sys.prep(C.start); gTitle.textContent = '📈 ' + C.title; setTicks(C);
+        bath.visible = bathLab.visible = key === 'cool'; burner.visible = key === 'heat';
       }
-      sys.prep('solid');
-      const rng = controls.range('가한 열', 0, 100, 1, 0, (v) => { st.play = 0; st.q = v; apply(); updBtn(); }, (v) => v + '%');
-      const hB = controls.button('▶ 가열하기', () => { st.play = st.play === 1 ? 0 : 1; updBtn(); });
-      const cB = controls.button('❄ 냉각하기', () => { st.play = st.play === -1 ? 0 : -1; updBtn(); });
-      function updBtn() { hB.classList.toggle('on', st.play === 1); cB.classList.toggle('on', st.play === -1); hB.textContent = st.play === 1 ? '⏸ 멈춤' : '▶ 가열하기'; cB.textContent = st.play === -1 ? '⏸ 멈춤' : '❄ 냉각하기'; }
-      apply();
+      setKey('heat');
 
       return {
-        update(dt, t) {
-          if (st.play) { st.q = Math.max(0, Math.min(100, st.q + st.play * 7 * dt)); if (st.q <= 0 || st.q >= 100) { st.play = 0; updBtn(); } rng.set(Math.round(st.q)); const kq = Math.round(st.q * 4); if (kq !== st.kq) { st.kq = kq; apply(); } }
+        update(dt, tm) {
+          const l = l2(), S = l && l.S, sc = S ? S.scene : 'heat';
+          const key = sc === 'cool' ? 'cool' : sc === 'heat' ? 'heat' : st.key;
+          const R = l && l.RUN && l.RUN[key];
+          const k2 = [key, R && R.on, R && R.t > 0, sc].join();
+          if (k2 !== sig) { sig = k2; if (pmode) { pmode = false; pl.pause(); } }
+          if (key !== st.key) setKey(key);
+          const C = CURVES[key];
+          let t = pmode ? playP * C.end : (R ? Math.min(R.t, C.end) : 0);
+          if (t < st.lastT - 0.3) { sys.prep(C.start); st.seg = -1; }
+          st.lastT = t;
+          const cur = curveAt(C, t), sg = cur.s, T = cur.T;
+          sys.mix(sg.a, sg.b, sg.a === sg.b ? 0 : cur.f);
+          if (sg.a === sg.b && sys.mode !== sg.a) sys.set(sg.a, false);
+          /* 온도에 따라 입자 빠르기 조금 달라지게 */
+          const rel = (T - C.tmin) / (C.tmax - C.tmin);
+          SET.solid.noise = 3 + 8 * rel; SET.liquid.sp = 0.8 + 0.7 * rel; SET.liquid.noise = 3 + 8 * rel; SET.gas.sp = 2.4 + 1.6 * rel;
+          const ty = yOfT(T, C); col.scale.y = ty - (TY0 - 0.4); col.position.set(TX, (ty + TY0 - 0.4) / 2, 0);
+          const running = pmode ? t < C.end - 0.05 : !!(R && R.on);
+          const hot = key === 'heat' && running, cold = key === 'cool' && running;
+          flame.visible = flame2.visible = hot; const fl = 0.9 + 0.12 * Math.sin(tm * 25); flame.scale.set(1, fl, 1); flame2.scale.set(1, fl * 1.1, 1);
+          arrIn.visible = hot; arrOut.visible = cold;
+          arrLab.show(hot || cold); arrLab.obj = hot ? [1.0, -HH - 1.1, 0] : [W + 1.0, -HH + 1.3, 0]; arrLab.set(hot ? '🔥 열을 계속 공급' : '열이 물 쪽으로 빠져나가요'); arrLab.el.style.background = hot ? 'rgba(220,70,40,.92)' : 'rgba(40,110,220,.92)';
+          tLab.obj = [0, HH + 0.45, 0]; tLab.set(sg.lab + ' · ' + Math.round(T) + ' °C');
+          subLab.show(false);
+          let txt = '<b>' + sg.lab + '</b> · 온도 <b>' + Math.round(T) + ' °C</b> · ' + t.toFixed(1) + '분<br>';
+          if (key === 'heat') txt += sg.flat ? '계속 가열해도 <b>온도가 ' + sg.T0 + ' °C로 일정</b>한 <b>수평 구간</b>이에요(' + sg.name + '). 열은 계속 공급되고, 이 열은 입자의 <b>배열을 바꾸는</b>(상태를 바꾸는) 데 쓰여요.' : sg.id === 'ice' ? '입자가 제자리에서 진동해요. 열을 흡수하면 <b>온도가 올라가요</b>.' : sg.id === 'water' ? '입자가 자리를 바꾸며 움직여요. 열을 흡수하면 <b>온도가 올라가요</b>.' : '상태 변화가 모두 끝나 다시 <b>온도가 올라가요</b>.';
+          else txt += sg.flat ? '계속 식혀도 <b>온도가 ' + sg.T0 + ' °C로 일정</b>한 <b>수평 구간</b>이에요(' + sg.name + '). 응고하며 입자가 규칙적으로 배열되고 <b>열에너지를 방출</b>해서 온도가 내려가지 않아요.' : sg.id === 'liq' ? '식으면서 <b>온도가 내려가요</b>.' : '모두 굳은 뒤에야 고체의 <b>온도가 다시 내려가요</b>.';
+          if (S && S.scene !== 'heat' && S.scene !== 'cool') txt = '<b>상태 변화와 열에너지의 출입</b>(열 흡수 · 열 방출 분류)은 2D 화면에서 해 보세요.<br>' + txt;
+          setInfo(txt);
+          drawGraph(key, t);
+          const ph = document.querySelector('.v3-player .v3-ph'); if (ph) ph.textContent = pmode ? PHASE_NAME[key][cur.i] : '';
           sys.step(dt); sys.draw();
-          const on = st.play === 1 ? 1 : 0, fl = 0.9 + 0.12 * Math.sin(t * 25);
-          flame.visible = flame2.visible = !!on; flame.scale.set(1, fl, 1); flame2.scale.set(1, fl * 1.1, 1);
         },
         sync() {},
       };

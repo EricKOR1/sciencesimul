@@ -1,12 +1,12 @@
 /* hg-dna-replication · 3D DNA 복제 분기점 (복제 포크)
    부모 DNA(파랑) → 헬리케이스가 풀면 → 두 딸 DNA: 기존 가닥(파랑) + 새 가닥(빨강) = 반보존적 복제.
-   새 가닥은 5′→3′ 방향으로만 만들어져요: 리딩 가닥은 연속, 지연 가닥은 프라이머(보라)에서 시작하는 오카자키 절편 → 연결 효소가 이어요. */
+   새 가닥은 5′→3′ 방향으로만 만들어져요: 선도 가닥은 연속, 지연 가닥은 프라이머(보라)에서 시작하는 오카자키 절편 → 연결 효소가 이어요. */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
   const narrow = window.innerWidth < 600 || window.innerHeight > window.innerWidth * 1.1;
   const PAR = 5, DAU = 6, SL = 0.6, PITCH = 2.6, RAD = 0.5, DB = 0.13;
-  const COL = { old: 0x60a5fa, nw: 0xfb7185, prim: 0xd946ef };
+  const COL = { old: 0x60a5fa, nw: 0xfb7185, prim: 0xf97316 };   // 2D 차시와 같은 색: 파랑 = 원래 가닥 · 빨강 = 새 가닥 · 프라이머 주황
 
   window.SciSim3D.attach({
     title: 'DNA 복제 분기점 3D',
@@ -82,14 +82,14 @@
       function polAt(side, q, scale) {
         const f = frame(side, q), g = new THREE.Group(); g.position.copy(f.c);
         const d = new V().crossVectors(f.n, f.b); g.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(d, f.n, f.b));
-        const body = new THREE.Mesh(new THREE.SphereGeometry(1, 36, 24), std(0x14b8a6, { transparent: true, opacity: 0.42, depthWrite: false, roughness: 0.3 })); body.scale.set(0.85 * scale, 0.95 * scale, 0.9 * scale); g.add(body);
-        const ring = new THREE.Mesh(new THREE.TorusGeometry(0.78, 0.13, 16, 40), std(0x0d9488)); ring.rotation.y = Math.PI / 2; ring.position.x = -0.3 * scale; g.add(ring);
+        const body = new THREE.Mesh(new THREE.SphereGeometry(1, 36, 24), std(0xa855f7, { transparent: true, opacity: 0.42, depthWrite: false, roughness: 0.3 })); body.scale.set(0.85 * scale, 0.95 * scale, 0.9 * scale); g.add(body);
+        const ring = new THREE.Mesh(new THREE.TorusGeometry(0.78, 0.13, 16, 40), std(0x7e22ce)); ring.rotation.y = Math.PI / 2; ring.position.x = -0.3 * scale; g.add(ring);
         enzG.add(g); return g;
       }
       const polA = polAt(sideU, 2.55, 1.0);
       const polB = polAt(sideL, frags[0].s0 + 0.75, 0.9);
-      const prim = new THREE.Mesh(new THREE.SphereGeometry(0.26, 18, 14), std(0xa21caf, { roughness: 0.35 })); { const p = strandPos(sideL, frags[0].s0 - 0.15, 0, new V()); const f = frame(sideL, frags[0].s0 - 0.15); prim.position.copy(p).addScaledVector(f.n, -0.35); enzG.add(prim); }
-      const lig = new THREE.Mesh(new THREE.TorusGeometry(0.72, 0.15, 16, 40), std(0xfacc15, { emissive: 0x4a3600 }));
+      const prim = new THREE.Mesh(new THREE.SphereGeometry(0.26, 18, 14), std(0xf97316, { roughness: 0.35 })); { const p = strandPos(sideL, frags[0].s0 - 0.15, 0, new V()); const f = frame(sideL, frags[0].s0 - 0.15); prim.position.copy(p).addScaledVector(f.n, -0.35); enzG.add(prim); }
+      const lig = new THREE.Mesh(new THREE.TorusGeometry(0.72, 0.15, 16, 40), std(0x16a34a, { emissive: 0x052e16 }));
       { const q = frags[1].e0 + 0.9, f = frame(sideL, q), d = new V().crossVectors(f.n, f.b); lig.position.copy(f.c); lig.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(d, f.n, f.b)); lig.rotateY(Math.PI / 2); enzG.add(lig); }
 
       /* ---------- 방향 화살표 · 합성 표시 ---------- */
@@ -100,7 +100,7 @@
         const c = new THREE.Mesh(new THREE.ConeGeometry(0.17, 0.5, 18), aMat); c.position.copy(p).addScaledVector(new V(p.x - f.c.x, p.y - f.c.y, p.z - f.c.z).normalize(), 0.3);
         c.quaternion.setFromUnitVectors(Y, dd.normalize()); dirG.add(c); return c;
       }
-      arrow(sideU, 3.4, Math.PI, -1); arrow(sideU, 5.2, Math.PI, -1);        // 리딩 가닥: 분기점 쪽으로
+      arrow(sideU, 3.4, Math.PI, -1); arrow(sideU, 5.2, Math.PI, -1);        // 선도 가닥: 분기점 쪽으로
       frags.forEach((f) => { arrow(sideL, f.s0 + 0.8, 0, +1); });             // 지연 가닥: 분기점에서 멀어지는 쪽
       arrow(0, 1.6, 0, +1); arrow(0, 3.4, Math.PI, +1);
       const glow = [0, 1, 2].map(() => { const m = new THREE.Mesh(new THREE.SphereGeometry(0.16, 16, 12), std(0xffffff, { emissive: 0xfff3a0, emissiveIntensity: 1.2 })); root.add(m); return m; });
@@ -112,13 +112,13 @@
       const fU = frame(sideU, 3.6), fL = frame(sideL, 3.6);
       const L = {
         hel: label('헬리케이스', An(-0.45, 1.3, 0), { color: '#9a3412' }),
-        pol: label('DNA 중합 효소', An(polA.position.x, polA.position.y + 1.25, 0), { color: '#0f766e' }),
-        lead: label('리딩 가닥 (연속)', An(5.2, frame(sideU, 5.2).c.y + 1.0, 0), { color: '#be123c' }),
-        lag: label('지연 가닥 (불연속)', An(5.2, frame(sideL, 5.2).c.y - 1.0, 0), { color: '#be123c' }),
+        pol: label('DNA 중합 효소', An(polA.position.x, polA.position.y + 1.25, 0), { color: '#7e22ce' }),
+        lead: label('선도 가닥 (연속 합성)', An(5.2, frame(sideU, 5.2).c.y + 1.0, 0), { color: '#be123c' }),
+        lag: label('지연 가닥 (짧은 조각)', An(5.2, frame(sideL, 5.2).c.y - 1.0, 0), { color: '#be123c' }),
         old: label('부모 DNA', An(-PAR + 1.5, 1.1, 0), { color: '#1d4ed8' }),
-        pri: label('프라이머', An(prim.position.x - 0.1, prim.position.y - 0.75, 0), { color: '#86198f' }),
-        ok: label('오카자키 절편', An(frags[1].s0 + 0.7, frame(sideL, frags[1].s0 + 0.7).c.y - 1.0, 0), { color: '#be123c' }),
-        lig: label('연결 효소', An(lig.position.x + 0.2, lig.position.y - 0.95, 0), { color: '#854d0e' }),
+        pri: label('프라이머 (주황)', An(prim.position.x - 0.1, prim.position.y - 0.75, 0), { color: '#c2410c' }),
+        ok: label('짧은 조각 (오카자키 절편)', An(frags[1].s0 + 0.7, frame(sideL, frags[1].s0 + 0.7).c.y - 1.0, 0), { color: '#be123c' }),
+        lig: label('연결 효소 (초록)', An(lig.position.x + 0.2, lig.position.y - 0.95, 0), { color: '#15803d' }),
         d1: label('5′→3′', An(3.5, frame(sideU, 3.5).c.y + 0.95, 0), { color: '#713f12' }),
         d2: label('5′→3′', An(frags[1].s0 + 0.9, frame(sideL, frags[1].s0 + 0.9).c.y + 0.95, 0), { color: '#713f12' }),
       };
@@ -133,21 +133,28 @@
       const b1 = controls.button('효소 보기', () => { showEnz = !showEnz; b1.classList.toggle('on', showEnz); applyShow(); }); b1.classList.add('on');
       const b2 = controls.button('5′→3′ 방향 보기', () => { showDir = !showDir; b2.classList.toggle('on', showDir); applyShow(); });
 
+      /* ▶ 복제 포크 한 번: 헬리케이스가 풀고 → 프라이머 → DNA 중합 효소(5′→3′) → 연결 효소 */
+      const player = controls.player({
+        duration: 8, loop: true, autoplay: true, label: '복제 포크',
+        phases: [[0, '헬리케이스가 풀어요'], [0.2, '프라이머가 붙어요'], [0.4, '중합 효소가 새 가닥 합성'], [0.75, '연결 효소가 이어요']],
+        onFrame() {},
+      });
       return {
-        update(dt, t) {
+        update(dt) {
+          const pp = player.p, t = pp * 8;
           helix.rotation.x += dt * 2.2;
           // 합성 신호: 리딩은 분기점 쪽으로, 지연은 분기점에서 멀어지는 쪽으로 번져요
-          const w = (t * 0.45) % 1;
+          const w = (pp * 3) % 1;
           strandPos(sideU, DAU - w * (DAU - A0 - 0.1), Math.PI, glow[0].position);
           frags.slice(0, 2).forEach((f, i) => { strandPos(sideL, f.s0 + 0.3 + ((w + i * 0.4) % 1) * (f.e0 - f.s0 - 0.3), 0, glow[i + 1].position); });
           free.forEach((o, i) => {
             const side = i % 2 ? sideU : sideL, q0 = side === sideU ? A0 + 0.5 : frags[0].s0 + 0.4;
-            const k = (t * 0.35 + i * 0.37) % 1, fr = frame(side, q0 + 0.4);
+            const k = (pp * 2 + i * 0.37) % 1, fr = frame(side, q0 + 0.4);
             const tgt = strandPos(side, q0 + 0.2, side === sideU ? Math.PI : 0, new V());
-            const startP = tgt.clone().addScaledVector(fr.n, side === sideU ? 1.6 : -1.6).add(new V(Math.sin(o.ph + t) * 0.3, 0, 1.2));
+            const startP = tgt.clone().addScaledVector(fr.n, side === sideU ? 1.6 : -1.6).add(new V(Math.sin(o.ph + pp * Math.PI * 2) * 0.3, 0, 1.2));
             o.m.position.lerpVectors(startP, tgt, k * k); o.m.scale.setScalar(k > 0.95 ? 0.01 : 1);
           });
-          polA.position.y = frame(sideU, 2.55).c.y + Math.sin(t * 2) * 0.01;
+          polA.position.y = frame(sideU, 2.55).c.y + Math.sin(pp * Math.PI * 8) * 0.01;
         },
         sync() {},
       };

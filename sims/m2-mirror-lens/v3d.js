@@ -16,8 +16,9 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHN ? 16 : 12, theta: 0.42, phi: 1.2, min: 6, max: 26, target: [1.2, 0.2, 0] },
     autoRotate: 0,
+    levels: [2, 3],                  // 1·2단계(눈금자 읽기, 광선 끌기)는 2D 화면에서 해요
     build(ctx) {
-      const { THREE, root, label, info, controls } = ctx;
+      const { THREE, root, label, info, controls, renderer } = ctx;
       const V3 = THREE.Vector3;
       const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.5, metalness: 0.05 }, o || {}));
       const sm = () => window.__sim;
@@ -152,10 +153,48 @@
         const how = c.real ? '빛이 <b>실제로 모이는 곳</b>(실선)에 상이 보여요.' : '빛이 <b>퍼져 나가서</b>, 거꾸로 연장한 점선이 만나는 곳에 상이 보여요.';
         const nm = TYPES.find((q) => q.v === type).l;
         const txt = c.farAway ? `<b>${nm}</b><br>물체가 초점 가까이에 있어서 빛이 거의 나란히 나가요.<br>상이 아주 멀리 생겨요.` : `<b>${nm}</b> · 상은 ${size}, ${dirw}<br>${how}`;
-        info(txt);
+        if (txt !== cacheTxt) { cacheTxt = txt; info(txt); }
       }
-      const seg1 = controls.segment('종류', TYPES.map((q) => ({ label: q.l, value: q.v })), type, (v) => { type = v; show(); rebuild(); });
-      const rng = controls.range('물체 거리', 0.5, 3.2, 0.02, r, (v) => { r = v; rebuild(); }, (v) => v < 1 ? '가까이' : v < 1.7 ? '조금 멀리' : '멀리');
+      const cmOf = (v) => Math.round(v * 3.125 * 2) / 2;               // 평면거울: 물체 거리를 cm로 (2D 차시의 2~10 cm)
+      let pushedAt = -9, now = 0;
+      /* 3D에서 바꾼 값을 2D 실험에도 똑같이 반영해요 */
+      function to2d() {
+        const s = sm(); if (!s) return;
+        pushedAt = now;
+        try {
+          if (type === 'plane') { if (s.scene === 'plane' && s.plGoCm) s.plGoCm(cmOf(r), true); return; }
+          const mir = type === 'convexM' || type === 'concaveM';
+          if (mir && s.scene === 'mirror') {
+            const want = type === 'concaveM' ? 'concave' : 'convex';
+            if (s.BN.mtype !== want) { s.BN.mtype = want; s.BN.fade = 0; s.syncUI(); }
+            s.setBenchD('mirror', r * s.BG_.f, true);
+          } else if (!mir && s.scene === 'lens') {
+            const want = type === 'convexL' ? 'convex' : 'concave';
+            if (s.LN.ltype !== want) { s.LN.ltype = want; s.LN.fade = 0; s.syncUI(); }
+            s.setBenchD('lens', r * s.BG_.fl, true);
+          }
+        } catch (e) { /* 2D 상태를 읽을 수 없으면 3D만 바꿔요 */ }
+      }
+      let allowed = TYPES.map((q) => q.v), ctlEl = null;
+      function showAllowed(list) {
+        allowed = list;
+        if (!ctlEl) ctlEl = renderer.domElement.closest('.v3-wrap').querySelector('.v3-ctl');
+        const labs = {}; TYPES.forEach((q) => { labs[q.l] = q.v; });
+        [...ctlEl.querySelectorAll('button')].forEach((b) => { const v = labs[b.textContent.trim()]; if (v) b.style.display = list.includes(v) ? '' : 'none'; });
+      }
+      const seg1 = controls.segment('종류', TYPES.map((q) => ({ label: q.l, value: q.v })), type, (v) => { type = v; show(); pl && pl.pause(); rebuild(); rng.set(r); to2d(); });
+      const rng = controls.range('물체 거리', 0.5, 3.2, 0.02, r, (v) => { r = v; pl && pl.pause(); rebuild(); to2d(); }, (v) => (type === 'plane' ? '거울에서 ' + cmOf(v) + ' cm' : v < 1 ? '가까이' : v < 1.7 ? '조금 멀리' : '멀리'));
+      /* ▶ 재생: 물체가 거울·렌즈에 가까이 갔다가 멀어지는 것을 반복해서 상의 변화를 봐요 */
+      let pl = null, lastCm = -1;
+      pl = controls.player({
+        duration: 12, loop: true, autoplay: false, label: '물체 오가기',
+        phases: [[0, '가까이'], [0.15, '점점 멀어져요'], [0.5, '멀리'], [0.65, '점점 가까워져요']],
+        onFrame(p) {
+          if (!pl) return;     // 만들어질 때 한 번 불리는 초기 호출은 무시해요
+          r = 0.5 + 2.7 * (0.5 - 0.5 * Math.cos(p * Math.PI * 2)); rng.set(r); rebuild();
+          if (type !== 'plane') to2d(); else if (cmOf(r) !== lastCm) { lastCm = cmOf(r); to2d(); }
+        },
+      });
       controls.button('이름표', () => { labsOn = !labsOn; limg.show(labsOn); lobj.show(labsOn); lf.forEach((l) => l.show(labsOn)); rebuild(); });
       function show() { Object.entries(parts).forEach(([k, g]) => { g.visible = k === type; }); }
       show(); rebuild();
@@ -163,20 +202,22 @@
       let last2d = '';
       function from2d() {
         const s = sm(); if (!s) return;
-        let t = null, rr = null;
+        let t = null, rr = null, list = null;
         try {
-          if (s.scene === 'plane') t = 'plane';
-          else if (s.scene === 'mirror') { const c = s.calcMirror(); t = c.conc ? 'concaveM' : 'convexM'; rr = c.d / c.f; }
-          else if (s.scene === 'lens') { const c = s.calcLens(); t = c.conv ? 'convexL' : 'concaveL'; rr = c.d / c.f; }
-          else if (s.scene === 'rays' || s.scene === 'eye') t = 'plane';
+          if (s.scene === 'plane') { t = 'plane'; rr = s.plCm() / 3.125; list = ['plane']; }
+          else if (s.scene === 'mirror') { const c = s.calcMirror(); t = c.conc ? 'concaveM' : 'convexM'; rr = c.d / c.f; list = ['convexM', 'concaveM']; }
+          else if (s.scene === 'lens') { const c = s.calcLens(); t = c.conv ? 'convexL' : 'concaveL'; rr = c.d / c.f; list = ['convexL', 'concaveL']; }
+          else if (s.scene === 'rays' || s.scene === 'eye') { t = 'plane'; list = ['plane']; }
         } catch (e) { return; }
         if (!t) return;
+        if (list.join() !== allowed.join()) showAllowed(list);
+        if (now - pushedAt < 0.8 || (pl && pl.playing)) return;       // 방금 3D에서 바꿨거나 재생 중이면 2D 값으로 되돌리지 않아요
         const key = t + ':' + (rr == null ? '' : rr.toFixed(2));
         if (key === last2d) return; last2d = key;
         type = t; if (rr != null) r = Math.max(0.5, Math.min(3.2, rr)); seg1.set(type); rng.set(r); show(); rebuild();
       }
       let k0 = 0;
-      return { sync() { from2d(); }, update(dt, t) { if ((k0++ % 10) === 0) from2d(); fm.forEach((f) => f.scale.setScalar(1 + 0.15 * Math.sin(t * 4))); } };
+      return { sync() { from2d(); }, update(dt, t) { now = t; if ((k0++ % 10) === 0) from2d(); fm.forEach((f) => f.scale.setScalar(1 + 0.15 * Math.sin(t * 4))); } };
     },
   });
 })();

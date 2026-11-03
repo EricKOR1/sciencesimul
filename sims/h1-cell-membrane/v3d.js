@@ -6,11 +6,15 @@
   if (!window.SciSim3D) return;
   const PHN = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches);
   const XW = 5.2, ZW = 3.0, YH = 3.4, MT = 0.62; // 막 반너비, 막 깊이, 위아래 높이, 막 반두께
+  /* 2D 실험과 같은 입자 5종 (이름 · 색 · 통과 방식) */
   const TYPES = {
-    o2: { n: '산소 (작은 입자)', c: 0x4aa3ff, r: 0.14, pass: 'free', num: 34 },
-    ion: { n: '이온', c: 0xb26bff, r: 0.19, pass: 'channel', num: 28 },
-    big: { n: '단백질·녹말 (큰 입자)', c: 0xe0a458, r: 0.36, pass: 'none', num: 8 },
+    water: { n: '물 H₂O', c: 0x3b9eff, r: 0.13, pass: 'free' },
+    oxygen: { n: '산소 O₂', c: 0xef4444, r: 0.15, pass: 'free' },
+    ion: { n: '이온 Na⁺', c: 0xa855f7, r: 0.19, pass: 'channel' },
+    starch: { n: '녹말', c: 0xeab308, r: 0.34, pass: 'none' },
+    protein: { n: '단백질', c: 0xb45309, r: 0.4, pass: 'none' },
   };
+  const TKEYS = ['water', 'oxygen', 'ion', 'starch', 'protein'];
   const CH = { x: -1.6, z: 0.4 };
 
   window.SciSim3D.attach({
@@ -22,7 +26,7 @@
       const { THREE, root, label, info, controls } = ctx;
       const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.45, metalness: 0.05 }, o || {}));
       const dm = new THREE.Object3D();
-      let show = { o2: true, ion: true, big: true }, paused = false;
+      
       /* ---------- 인지질 이중층 ---------- */
       const SP = 0.4, nx = Math.floor(XW * 2 / SP), nz = Math.floor(ZW * 2 / SP), lip = [];
       for (let i = 0; i < nx; i++) for (let k = 0; k < nz; k++) {
@@ -54,66 +58,64 @@
       chan.position.set(CH.x, 0, CH.z); mem.add(chan);
       label('단백질 통로', chan, { offset: [0, MT + 0.7, 0], size: 12, color: 'rgba(110,60,220,.92)' });
       label('인지질 이중층', [XW - 1.2, 0, ZW], { size: 12, color: 'rgba(160,110,10,.92)' });
-      label('세포 밖 (입자 많음)', [-XW + 1.6, YH - 0.4, 0], { size: 12 }); label('세포 안', [-XW + 0.9, -YH + 0.4, 0], { size: 12 });
-      /* ---------- 입자 ---------- */
-      const P = []; const meshes = {};
-      Object.keys(TYPES).forEach((k) => {
-        const T = TYPES[k]; meshes[k] = new THREE.InstancedMesh(new THREE.SphereGeometry(T.r, 18, 14), std(T.c, { roughness: 0.25, emissive: T.c, emissiveIntensity: 0.25 }), T.num); root.add(meshes[k]);
-      });
-      function reset() {
-        P.length = 0;
-        Object.keys(TYPES).forEach((k) => { const T = TYPES[k]; for (let i = 0; i < T.num; i++) {
-          const out = i < T.num * 0.9;  // 처음에는 세포 밖에 대부분
-          P.push({ k, i, x: (Math.random() * 2 - 1) * (XW - 0.3), y: out ? MT + 0.3 + Math.random() * (YH - MT - 0.6) : -(MT + 0.3 + Math.random() * (YH - MT - 0.6)), z: (Math.random() * 2 - 1) * (ZW - 0.3), vx: 0, vy: 0, vz: 0 });
-        } });
-      }
-      reset();
+      label('세포 밖', [-XW + 1.2, YH - 0.4, 0], { size: 12 }); label('세포 안', [-XW + 0.9, -YH + 0.4, 0], { size: 12 });
+      /* ---------- 입자: 2D에서 고른 입자 한 종류를 같은 개수로 ---------- */
+      const MAXN = 90, pm = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 18, 14), std(0xffffff, { roughness: 0.25, emissive: 0x444444, emissiveIntensity: 0.25 }), MAXN); root.add(pm);
+      const P = []; let sel = 'water', counts = [0, 0];
       const sdr = () => (Math.random() - 0.5);
-      const counts = {};
+      const cur = { out: 20, in: 0, key: '' };
+      function reset() {
+        P.length = 0; const T = TYPES[sel];
+        pm.material.color.setHex(T.c); pm.material.emissive.setHex(T.c);
+        const mk = (n, top) => { for (let i = 0; i < n && P.length < MAXN; i++) P.push({ x: (Math.random() * 2 - 1) * (XW - 0.3), y: (top ? 1 : -1) * (MT + 0.3 + Math.random() * (YH - MT - 0.6)), z: (Math.random() * 2 - 1) * (ZW - 0.3), vx: 0, vy: 0, vz: 0 }); };
+        mk(cur.out, true); mk(cur.in, false);
+      }
       function step(dt) {
-        Object.keys(TYPES).forEach((k) => { counts[k] = [0, 0]; });
+        counts = [0, 0]; const T = TYPES[sel];
         for (const p of P) {
-          const T = TYPES[p.k]; const sp = p.k === 'big' ? 1.3 : 2.2;
+          const sp = T.pass === 'none' ? 1.3 : 2.2;
           p.vx = p.vx * 0.9 + sdr() * sp * 0.9; p.vy = p.vy * 0.9 + sdr() * sp * 0.9; p.vz = p.vz * 0.9 + sdr() * sp * 0.9;
           let nx2 = p.x + p.vx * dt, ny = p.y + p.vy * dt, nz = p.z + p.vz * dt;
           if (Math.abs(nx2) > XW - T.r) { nx2 = Math.sign(nx2) * (XW - T.r); p.vx *= -1; }
           if (Math.abs(nz) > ZW - T.r) { nz = Math.sign(nz) * (ZW - T.r); p.vz *= -1; }
           if (Math.abs(ny) > YH - T.r) { ny = Math.sign(ny) * (YH - T.r); p.vy *= -1; }
-          // 막 영역을 지나려는지
           const inM = (y) => Math.abs(y) < MT + 0.22 + T.r * 0.6;
           if (inM(ny) && !inM(p.y)) {
             const dch = Math.hypot(nx2 - CH.x, nz - CH.z);
             const ok = T.pass === 'free' || (T.pass === 'channel' && dch < 0.22);
             if (!ok) { ny = p.y; p.vy *= -1; }
           } else if (inM(ny) && inM(p.y)) {
-            // 막 속에서는 계속 지나가도록 y 방향을 유지
             if (T.pass === 'channel') { const dch = Math.hypot(nx2 - CH.x, nz - CH.z); if (dch > 0.3) { const toX = CH.x - nx2, toZ = CH.z - nz; nx2 += toX * 0.2; nz += toZ * 0.2; } }
           }
           p.x = nx2; p.y = ny; p.z = nz;
-          counts[p.k][p.y > 0 ? 0 : 1]++;
+          counts[p.y > 0 ? 0 : 1]++;
         }
       }
       function paint() {
-        const idx = {}; 
-        for (const p of P) { const m = meshes[p.k]; const i = idx[p.k] = (idx[p.k] || 0); idx[p.k]++;
-          dm.position.set(p.x, p.y, p.z); dm.scale.setScalar(show[p.k] ? 1 : 0.0001); dm.rotation.set(0, 0, 0); dm.updateMatrix(); m.setMatrixAt(i, dm.matrix); }
-        Object.values(meshes).forEach((m) => { m.instanceMatrix.needsUpdate = true; });
+        const T = TYPES[sel];
+        for (let i = 0; i < MAXN; i++) { const p = P[i]; if (p) { dm.position.set(p.x, p.y, p.z); dm.scale.setScalar(T.r); } else { dm.position.set(0, -50, 0); dm.scale.setScalar(0.0001); } dm.rotation.set(0, 0, 0); dm.updateMatrix(); pm.setMatrixAt(i, dm.matrix); }
+        pm.instanceMatrix.needsUpdate = true;
       }
       function updInfo() {
-        info('<b>' + (show.o2 && show.ion && show.big ? '입자 3종' : '고른 입자') + '</b> (바깥 / 안)<br>' +
-          Object.keys(TYPES).filter((k) => show[k]).map((k) => TYPES[k].n.split(' ')[0] + ' ' + counts[k][0] + ' / ' + counts[k][1]).join(' · ') +
-          '<br>많은 쪽에서 적은 쪽으로 퍼져요 (확산).');
+        const T = TYPES[sel], how = T.pass === 'free' ? '작은 입자라서 인지질 사이로 <b>바로 통과</b>해요.' : T.pass === 'channel' ? '전하를 띠어서 <b>단백질 통로</b>로만 지나가요.' : '너무 커서 막을 <b>통과하지 못해요</b>.';
+        info('<b>' + T.n + '</b> (세포 밖 ' + counts[0] + '개 · 세포 안 ' + counts[1] + '개)<br>' + how + '<br>입자는 많은 쪽에서 적은 쪽으로 퍼져요 (확산).');
       }
-      const tog = (k, lab) => { const b = controls.button(lab + ' ✓', () => { show[k] = !show[k]; b.classList.toggle('on', show[k]); b.textContent = lab + (show[k] ? ' ✓' : ' ✕'); paint(); }); b.classList.add('on'); return b; };
-      tog('o2', '산소'); tog('ion', '이온'); tog('big', '단백질·녹말');
-      controls.button('↺ 다시 시작', () => { reset(); });
-      layoutLipids(0); let acc = 0;
+      const segT = controls.segment('입자', TKEYS.map((k) => ({ value: k, label: TYPES[k].n.split(' ')[0] })), sel, (v) => { const L = window.__sim; if (L && L.selectType) L.selectType(v); sel = v; syncFrom2D(true); });
+      function syncFrom2D(force) {
+        const L = window.__sim, m = L && L.S && L.S.md; if (!m || !TYPES[m.sel]) return;
+        const t = m.ts[m.sel], key = m.sel + '|' + t.out + '|' + t.in;
+        if (!force && key === cur.key) return;
+        cur.key = key; sel = m.sel; cur.out = t.out; cur.in = t.in; segT.set(sel); reset(); paint();
+      }
+      controls.button('↺ 다시 시작', () => { syncFrom2D(true); });
+      syncFrom2D(true); layoutLipids(0); let acc = 0;
       return {
         update(dt, t) {
-          if (!paused) { step(dt); } layoutLipids(t); paint();
-          acc += dt; if (acc > 0.4) { acc = 0; updInfo(); }
+          syncFrom2D(false);
+          step(dt); layoutLipids(t); paint();
+          acc += dt; if (acc > 0.3) { acc = 0; updInfo(); }
         },
-        sync() {},
+        sync() { syncFrom2D(true); },
       };
     },
   });

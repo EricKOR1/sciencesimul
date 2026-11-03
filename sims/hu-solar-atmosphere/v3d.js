@@ -36,7 +36,8 @@
     autoRotate: 0,
     build(ctx) {
       const { THREE, root, label, info, controls, renderer } = ctx;
-      const st = { mode: 'layers', flare: 0, cme: -1, t: 0 };
+      const st = { mode: 'layers', flare: 0, cme: -1, t: 0, P: 0, h: 100, key: '', fN: 0, names: true };
+      const W = () => window.__sim || {};
       const sr = () => { try { return window.__sim && window.__sim.S; } catch (e) { return null; } };
       /* 층 구조 단면: 사분면 한 조각을 잘라 낸 구 (phi: π → 5π/2) */
       const cutSphere = (r, mat) => { const m = new THREE.Mesh(new THREE.SphereGeometry(r, 96, 64, Math.PI, Math.PI * 1.5), mat); m.userData.cut = true; return m; };
@@ -115,9 +116,20 @@
       const cDir = fl0.clone().normalize(); cme.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), cDir);
       const labCme = label('CME', [0, 0, 0], { color: 'rgba(160,80,0,.95)' });
 
+      /* 높이 h(km) → 장면 반지름 (층 두께를 키워 그렸어요): 광구 0~500 · 채층 500~2000 · 천이층 2000~2100 · 코로나 2100~ */
+      const radOf = (h) => (h <= 500 ? RS + (R1 - RS) * h / 500 : h <= 2000 ? R1 + (R2 - R1) * (h - 500) / 1500 : h <= 2100 ? R2 + (R3 - R2) * (h - 2000) / 100 : R3 + 1.8 * Math.min(1, (h - 2100) / 7900));
+      const TOF = (h) => (h <= 500 ? 5800 - 1400 * h / 500 : h <= 2000 ? 4400 * Math.pow(20000 / 4400, (h - 500) / 1500) : h <= 2100 ? 20000 * Math.pow(1e6 / 20000, (h - 2000) / 100) : 1e6 * (1 + 0.5 * (h - 2100) / 7900));
+      const probe = new THREE.Mesh(new THREE.SphereGeometry(0.1, 18, 12), new THREE.MeshBasicMaterial({ color: 0xffffff })); root.add(probe);
+      const probeLab = label('', probe, { color: 'rgba(12,18,34,.92)' }); probeLab.off = [0.55, 0, 0];
+      const LN = ['광구', '채층', '천이층', '코로나'], layerOf = (h) => (h < 500 ? 0 : h < 2000 ? 1 : h < 2100 ? 2 : 3);
+      const fmtT = (T) => (T >= 1e5 ? (T / 1e6).toFixed(2) + '×10⁶ K' : Math.round(T / 100) * 100 + ' K');
+      function setProbe() {
+        const r = radOf(st.h), a = -25 * DEG; probe.position.set(0.03, r * Math.sin(a), r * Math.cos(a)); probe.visible = st.mode === 'layers'; probeLab.show(st.mode === 'layers');
+        probeLab.set('높이 ' + Math.round(st.h).toLocaleString('ko-KR') + ' km · ' + fmtT(TOF(st.h)));
+      }
       function temp() {
-        /* 온도 안내(층 구조) */
-        info('<b>층 구조</b> (두께는 과장했어요)<br>광구 5800 K → 채층 4400 K 이하에서 다시 상승<br>천이층에서 급상승 → <b>코로나는 100만 K 이상</b>');
+        const q = W(), free = !!(q.game && q.game.free), cards = q.S && q.S.view === 'cards' && !free && !(q.lyOK && q.lyOK());
+        info('<b>층 구조</b> (층의 두께는 보기 좋게 키워 그렸어요)<br>높이 ' + Math.round(st.h).toLocaleString('ko-KR') + ' km' + (cards ? '' : ' · <b>' + LN[layerOf(st.h)] + '</b>') + ' · 온도 <b>' + fmtT(TOF(st.h)) + '</b><br>광구(5800 K)에서 올라갈수록 처음엔 식다가, 천이층에서 급상승해 <b>코로나는 100만 K 이상</b>이에요.');
       }
       function phenInfo() { info('<b>대기 현상</b><br><span style="color:#ff9d8a">홍염</span>은 자기장 고리를 따라 뜬 가스, <b>플레어</b>는 폭발, <b>CME</b>는 코로나 물질의 방출, <b>코로나 홀</b>에서는 태양풍이 빠르게 나가요.'); }
       function setMode(m) {
@@ -125,17 +137,33 @@
         capG.visible = L; phenG.visible = !L; streamG.visible = !L; corona.visible = true;
         cutObjs.forEach((o) => (o.visible = L)); fullObjs.forEach((o) => (o.visible = !L));
         chM.opacity = L ? 0.3 : 0.1; trM.opacity = L ? 0.25 : 0.08;
-        labL.forEach((l) => l.show(L)); labProm.show(!L); labFl.show(!L); labHole.show(!L); labCme.show(false);
-        L ? temp() : phenInfo(); mSeg.set(m);
+        labL.forEach((l) => l.show(L && st.names)); labProm.show(!L); labFl.show(!L); labHole.show(!L); labCme.show(false);
+        setProbe(); L ? temp() : phenInfo(); syncing = true; player.set(L ? pOfH(st.h) : 0); syncing = false;
       }
-      const mSeg = controls.segment('보기', [{ value: 'layers', label: '층 구조' }, { value: 'phen', label: '대기 현상' }], st.mode, (v) => setMode(v));
-      controls.button('💥 플레어', () => { if (st.mode !== 'phen') setMode('phen'); st.flare = 1; });
-      controls.button('☄ CME 보내기', () => { if (st.mode !== 'phen') setMode('phen'); st.cme = 0; });
+      /* ▶ 재생: 층 구조에서는 광구에서 코로나까지 높이를 올려 가며 온도를 보여 줘요(2D 높이 슬라이더도 함께 움직여요). 대기 현상에서는 플레어 → CME가 차례로 일어나요 */
+      const HB = [[0, 0], [0.22, 500], [0.55, 2000], [0.66, 2100], [1, 10000]];
+      const hOfP = (p) => { for (let i = 1; i < HB.length; i++) if (p <= HB[i][0]) return HB[i - 1][1] + (HB[i][1] - HB[i - 1][1]) * (p - HB[i - 1][0]) / (HB[i][0] - HB[i - 1][0]); return 10000; };
+      const pOfH = (h) => { for (let i = 1; i < HB.length; i++) if (h <= HB[i][1]) return HB[i - 1][0] + (HB[i][0] - HB[i - 1][0]) * (h - HB[i - 1][1]) / (HB[i][1] - HB[i - 1][1]); return 1; };
+      let syncing = false, ready = false;
+      const player = controls.player({
+        duration: 10, loop: true, autoplay: false, label: '재생',
+        phases: [[0, '광구'], [0.22, '채층'], [0.55, '천이층'], [0.66, '코로나']],
+        onFrame(p) {
+          st.P = p; if (!ready) return;
+          if (st.mode === 'layers' && !syncing) { st.h = Math.round(hOfP(p) / 50) * 50; setProbe(); temp(); try { W().setH(st.h); } catch (e) {} }
+        },
+      });
+      ready = true;
 
       function follow() {
-        const S = sr(); if (!S) return; const key = S.view; if (key === st.key) return; st.key = key;
-        if (S.view === 'phen' || S.view === 'pair') { if (st.mode !== 'phen') setMode('phen'); }
-        else if (S.view === 'graph' || S.view === 'cards') { if (st.mode !== 'layers') setMode('layers'); }
+        const q = W(), S = q.S; if (!S) return;
+        const m = (S.view === 'phen' || S.view === 'pair') ? 'phen' : 'layers';
+        if (m !== st.mode) { setMode(m); }
+        if (st.mode === 'layers') {
+          if (S.ly && typeof S.ly.h === 'number' && Math.abs(S.ly.h - st.h) > 1) { st.h = S.ly.h; setProbe(); temp(); syncing = true; player.set(pOfH(st.h)); syncing = false; }
+          const nm = !(S.view === 'cards' && !(q.game && q.game.free) && !(q.lyOK && q.lyOK()));
+          if (nm !== st.names) { st.names = nm; labL.forEach((l) => l.show(nm)); temp(); }
+        } else if (S.ph && S.ph.flareN !== st.fN) { st.fN = S.ph.flareN; if (S.ph.flare >= 0) { player.set(0); player.play(); } }
       }
       setMode('layers'); follow();
 
@@ -143,18 +171,17 @@
       return {
         update(dt) {
           follow(); st.t += dt;
-          if (st.mode === 'layers') { root.rotation.y += 0; }
-          loopM.emissiveIntensity = 0.75 + 0.25 * Math.sin(st.t * 2.2);
-          if (st.flare > 0) { st.flare = Math.max(0, st.flare - dt * 0.55); const f = Math.sin(Math.min(1, (1 - st.flare) * 3) * Math.PI / 2) * st.flare; flare.scale.setScalar(0.2 + 3.4 * f); flare.material.opacity = Math.min(1, f * 1.4); }
-          else { flare.scale.setScalar(0.35 + 0.06 * Math.sin(st.t * 3)); flare.material.opacity = 0.55; }
-          if (st.cme >= 0) {
-            st.cme += dt * 0.35; const u = st.cme; cme.visible = true;
-            const rc = 0.35 + 1.6 * u, r = RS + 0.15 + 4.8 * u; cme.scale.setScalar(rc); cme.position.copy(cDir).multiplyScalar(r);
-            cmeM.opacity = Math.max(0, 0.5 * (1 - u)); labCme.obj = cme.position.clone().addScaledVector(cDir, rc + 0.2).toArray(); labCme.show(u < 0.95 && st.mode === 'phen');
-            if (u >= 1) { st.cme = -1; cme.visible = false; labCme.show(false); }
+          loopM.emissiveIntensity = 0.75 + 0.25 * Math.sin(st.P * Math.PI * 2 * 20);
+          if (st.mode === 'phen') {
+            const f = Math.sin(Math.min(1, Math.max(0, st.P / 0.35)) * Math.PI), u = Math.min(1, Math.max(0, (st.P - 0.15) / 0.8));
+            flare.scale.setScalar(0.3 + 3.2 * f); flare.material.opacity = 0.35 + 0.65 * f;
+            if (u > 0 && u < 1) {
+              cme.visible = true; const rc = 0.35 + 1.6 * u, r = RS + 0.15 + 4.8 * u; cme.scale.setScalar(rc); cme.position.copy(cDir).multiplyScalar(r);
+              cmeM.opacity = Math.max(0, 0.5 * (1 - u)); labCme.obj = cme.position.clone().addScaledVector(cDir, rc + 0.2).toArray(); labCme.show(u < 0.95);
+            } else { cme.visible = false; labCme.show(false); }
           }
-          winds.forEach((w) => { const u = ((st.t * 0.45 + w.off) % 1); v.copy(w.p0).addScaledVector(w.dir, u * 2.8); w.dot.position.copy(v); w.dot.scale.setScalar(1 - 0.5 * u); });
-          corona.material.opacity = 0.9 + 0.1 * Math.sin(st.t * 1.3);
+          winds.forEach((w) => { const u = ((st.P * 4 + w.off) % 1); v.copy(w.p0).addScaledVector(w.dir, u * 2.8); w.dot.position.copy(v); w.dot.scale.setScalar(1 - 0.5 * u); });
+          corona.material.opacity = 0.9 + 0.1 * Math.sin(st.P * Math.PI * 2 * 13);
         },
         sync() { st.key = null; follow(); },
       };

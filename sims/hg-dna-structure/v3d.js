@@ -151,6 +151,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHONE ? 15.5 : 12.6, theta: 0.5, phi: 1.38, fov: 40, min: 5, max: 26, target: [0, PHONE ? 1.5 : 0, 0] },
     autoRotate: 0.25,
+    levels: [2],   // 1 · 2단계(샤가프 자료 · X선 회절 사진)와 4단계(발표 자료)는 2D 화면에서, 염기쌍 맞추기 · 이중 나선 단계에서 3D로 시작
     build(ctx) {
       const { THREE, root, label, info, controls, orbit, camera } = ctx;
       const H = makeHelix(THREE, root, { N: 20, seq: SEQ20, a: 0.5, rings: true, strandCols: SC, arrows: true, arrowCols: [0x93c5fd, 0xc4b5fd] });
@@ -231,6 +232,20 @@
       tog('↗ 방향', () => showDir, (v) => { showDir = v; H.setArrows(v); });
       tog('🌀 홈', () => showGroove, (v) => { showGroove = v; grooveG.visible = v; });
       tog('📏 치수', () => showDim, (v) => { showDim = v; });
+      /* ▶ 사다리 → 이중 나선으로 꼬이는 과정 (2D '③ 나선으로 꼬기'와 같은 동작) */
+      const ease = (k) => { k = Math.max(0, Math.min(1, k)); return k * k * (3 - 2 * k); };
+      let plOn = false;
+      let player = null;
+      player = controls.player({
+        duration: 7, loop: true, autoplay: false, label: '꼬이는 과정',
+        phases: [[0, '사다리 (꼬임 0 %)'], [0.12, '꼬이는 중'], [0.62, '이중 나선 완성'], [0.9, '다시 펴기']],
+        onFrame(p) {
+          if (p === 0 && !(player && player.playing) && !plOn) return;
+          plOn = true;
+          const v = p < 0.12 ? 0 : p < 0.62 ? ease((p - 0.12) / 0.5) : p < 0.9 ? 1 : 1 - ease((p - 0.9) / 0.1);
+          H.setTwist(v); twR.set(Math.round(v * 100)); buildGroove(); placeGroove(); if (v < 0.05) faceT = 1.4; refresh();
+        },
+      });
       H.setFocus('all'); pickPair(selI); buildGroove(); placeGroove();
 
       /* 홈 이름표는 카메라를 향한 쪽에 있을 때만 */
@@ -240,8 +255,19 @@
       function lessonTw() { try { const s = window.__sim && window.__sim.S; if (s && s.hx && typeof s.hx.tw === 'number' && s.hx.vis >= 1) return Math.max(0, Math.min(1, s.hx.tw)); } catch (e) {} return null; }
 
       { const t0 = lessonTw(); if (t0 != null) { H.setTwist(t0); twR.set(Math.round(t0 * 100)); buildGroove(); placeGroove(); refresh(); } }
+      /* 2D 이중 나선 화면의 꼬임 · 방향 표시를 따라가요 (2D 값이 바뀔 때마다) */
+      let lastTw = null, lastDir = null;
+      function poll() {
+        const L = ctx.lesson(); if (!L || !L.S || L.S.mode !== 'helix' || !L.S.hx) return;
+        const h = L.S.hx;
+        if (h.vis >= 1) {
+          if (h.tw !== lastTw) { lastTw = h.tw; if (!player.playing) { plOn = false; const t0 = Math.max(0, Math.min(1, h.tw)); H.setTwist(t0); twR.set(Math.round(t0 * 100)); buildGroove(); placeGroove(); if (t0 < 0.05) faceT = 1.4; refresh(); } }
+          if (h.dir !== lastDir) { lastDir = h.dir; showDir = !!h.dir; H.setArrows(showDir); refresh(); }
+        }
+      }
       return {
         update(dt) {
+          poll();
           if (faceT > 0 && H.tw < 0.05) { faceT -= dt; const tgt = Math.round(orbit.theta / Math.PI) * Math.PI; orbit.theta += (tgt - orbit.theta) * Math.min(1, dt * 3); orbit.phi += (1.5 - orbit.phi) * Math.min(1, dt * 3); }
           const g = showGroove && H.tw > 0.2;
           majL.show(g && facing(majA)); minL.show(g && facing(minA));

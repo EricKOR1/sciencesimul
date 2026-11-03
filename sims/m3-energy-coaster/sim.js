@@ -1426,4 +1426,5 @@
 
   // 테스트·디버깅용 (읽기 전용으로 사용)
   window.CoasterDebug = { S, PT, heightAt, slopeAt, energies, bobPos, get game() { return game; }, VW, VH, PIV, LP, PPP, BOT };
+  window.__sim = { get S() { return S; }, heightAt, slopeAt, energies, LP, N, DX, XEND, G, SCALE, HILL_IDX };   // 3D 보기가 같은 값을 읽는 데 써요
 })();

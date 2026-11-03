@@ -10,11 +10,15 @@
   const MWR = [2, 4, 6, 8, 12, 16, 20, 25, 30], MWV = [190, 205, 215, 220, 222, 220, 215, 210, 205];
   const Mlight = (r) => 5e10 * (1 - (1 + r / 3) * Math.exp(-r / 3));
   const vVis = (r) => Math.sqrt(G * Mlight(Math.max(r, 0.05)) / Math.max(r, 0.05));
+  let curR = MWR, curV = MWV;                                                // 지금 보는 은하의 관측 자료 (2D의 GALS)
   function vObs(r) {
-    if (r <= MWR[0]) return MWV[0] * (r / MWR[0]);
-    for (let i = 1; i < MWR.length; i++) if (r <= MWR[i]) { const f = (r - MWR[i - 1]) / (MWR[i] - MWR[i - 1]); return MWV[i - 1] + f * (MWV[i] - MWV[i - 1]); }
-    return MWV[MWV.length - 1];
+    const R = curR, V = curV;
+    if (r <= R[0]) return V[0] * (r / R[0]);
+    for (let i = 1; i < R.length; i++) if (r <= R[i]) { const f = (r - R[i - 1]) / (R[i] - R[i - 1]); return V[i - 1] + f * (V[i] - V[i - 1]); }
+    return V[V.length - 1];
   }
+  let mhNow = 0;
+  const vModel = (r) => Math.sqrt(G * (Mlight(Math.max(r, 0.05)) + mhNow * 1e11 * r / 30) / Math.max(r, 0.05));
 
   window.SciSim3D.attach({
     title: '은하 회전 곡선 3D',
@@ -24,7 +28,7 @@
     autoRotate: 0,
     build(ctx) {
       const { THREE, scene, root, label, info, controls } = ctx;
-      const st = { mode: 'obs', halo: true, t: 0, key: '' };
+      const st = { mode: 'obs', halo: false, t: 0, key: '', view: 'mass', gal: 0, ri: 3, T: 0, mh: 0, free: false };
       const sr = () => { try { return window.__sim && window.__sim.S; } catch (e) { return null; } };
       scene.add(new THREE.AmbientLight(0x8090c0, 0.5));
 
@@ -81,34 +85,55 @@
         g2.fillStyle = 'rgba(232,238,252,.85)'; g2.font = '700 20px sans-serif'; g2.textAlign = 'center'; g2.fillText('r (kpc)', (L + S - R) / 2, H - 3); g2.textAlign = 'right'; g2.fillText('220', L - 4, Y(220) + 6);
         const draw = (f, color, dash, w) => { g2.strokeStyle = color; g2.lineWidth = w; g2.setLineDash(dash); g2.beginPath(); for (let r = 0.5; r <= 30; r += 0.5) { const x = X(r), y = Y(f(r)); r === 0.5 ? g2.moveTo(x, y) : g2.lineTo(x, y); } g2.stroke(); g2.setLineDash([]); };
         draw(vVis, '#ffa94d', st.mode === 'vis' ? [] : [8, 7], st.mode === 'vis' ? 4.5 : 3);
-        draw(vObs, '#7ab8ff', st.mode === 'obs' ? [] : [8, 7], st.mode === 'obs' ? 4.5 : 3);
-        trs.forEach((q) => { const v = st.mode === 'obs' ? vObs(q.t.r) : vVis(q.t.r); g2.fillStyle = '#' + q.t.c.toString(16).padStart(6, '0'); g2.beginPath(); g2.arc(X(q.t.r), Y(v), 7, 0, 7); g2.fill(); });
+        draw(vObs, '#7ab8ff', st.mode === 'vis' ? [8, 7] : [], st.mode === 'vis' ? 3 : 4.5);
+        if (st.mode === 'model') draw(vModel, '#c4a8ff', [], 4);
+        trs.forEach((q) => { const v = st.mode === 'vis' ? vVis(q.t.r) : st.mode === 'model' ? vModel(q.t.r) : vObs(q.t.r); g2.fillStyle = '#' + q.t.c.toString(16).padStart(6, '0'); g2.beginPath(); g2.arc(X(q.t.r), Y(v), 7, 0, 7); g2.fill(); });
         g2.textAlign = 'left'; g2.font = '700 18px sans-serif'; g2.fillStyle = '#ffa94d'; g2.fillText('보이는 질량만', X(14), Y(vVis(14)) - 26); g2.fillStyle = '#7ab8ff'; g2.fillText('실제 관측', X(2), Y(vObs(24)) - 16);
       }
 
+      /* 2D 단계에서 고른 r(안쪽 질량 단계) · 은하 · 헤일로 질량을 그대로 보여 줘요 */
+      const rMark = new THREE.Mesh(new THREE.TorusGeometry(1, 0.012, 6, 96), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.85 })); rMark.rotation.x = Math.PI / 2; root.add(rMark);
+      const labMark = label('', [0, 0, 0], { size: 11.5, color: 'rgba(15,25,60,.92)' });
       function text() {
-        const v = st.mode === 'obs' ? vObs(8.2) : vVis(8.2);
-        info(st.mode === 'obs'
-          ? '<b>실제 관측</b>: 바깥에서도 속도가 거의 <b>일정</b>해요. 태양 ≈ ' + Math.round(v) + ' km/s<br>보이지 않는 <b>암흑 물질</b>이 은하를 둘러싸고 있어야 해요.'
-          : '<b>보이는 물질만</b>: 바깥으로 갈수록 케플러 법칙처럼 <b>느려져야</b> 해요. 태양 ≈ ' + Math.round(v) + ' km/s<br>실제 관측과 맞지 않아요.');
+        const w = window.__sim || {}, S = w.S || {};
+        const gn = (w.GALS && w.GALS[st.gal]) ? w.GALS[st.gal].n : '우리은하';
+        if (st.view === 'halo') info('<b>' + gn + '</b> · 관측(<b style="color:#7ab8ff">파랑</b>)은 바깥에서도 속도가 거의 <b>일정</b>해요.' + (st.gal === 0 ? '<br>헤일로 질량 ' + st.mh.toFixed(1) + '×10¹¹ M☉ (30 kpc 안쪽) → 모형 곡선(<b style="color:#c4a8ff">보라</b>)이 관측에 가까워져요.' : '<br>이 은하도 평평한 곡선이에요 → 보이지 않는 질량이 있어요.'));
+        else if (st.view === 'mass') info('<b>안쪽 질량 M(&lt;r) = r v² / G</b><br>r = ' + curR[st.ri] + ' kpc에서 회전 속도 v = ' + curV[st.ri] + ' km/s<br>바깥에서도 v가 거의 일정해요 → r이 클수록 안쪽 질량이 커져요.');
+        else if (st.mode === 'vis') info('<b>보이는 물질만</b>: 바깥으로 갈수록 케플러 법칙처럼 <b>느려져야</b> 해요.<br>실제 관측과 맞지 않아요.');
+        else info('<b>실제 관측</b>: 바깥에서도 속도가 거의 <b>일정</b>해요 (평평한 회전 곡선).');
       }
-      function setMode(m) { st.mode = m; haloG.visible = st.halo && m === 'obs' || false; labHalo.show(haloG.visible); if (m === 'obs') { st.halo = true; bH.classList.add('on'); bH.textContent = '헤일로 ✓'; haloG.visible = true; labHalo.show(true); } text(); mSeg.set(m); }
-      const mSeg = controls.segment('속도 비교', [{ value: 'obs', label: '실제 관측' }, { value: 'vis', label: '보이는 물질만' }], st.mode, (v) => setMode(v));
-      const bH = controls.button('헤일로 ✓', () => { st.halo = !st.halo; bH.classList.toggle('on', st.halo); bH.textContent = '헤일로 ' + (st.halo ? '✓' : '✕'); haloG.visible = st.halo; labHalo.show(st.halo); }); bH.classList.add('on');
-      setMode('obs'); haloG.visible = true;
+      function layoutView() {
+        const S = sr() || {};
+        haloG.visible = st.view === 'halo' && st.gal === 0 && st.mh > 0.02; labHalo.show(haloG.visible);
+        haloG.children.forEach((c, i) => { if (c.material) c.material.opacity = c.isPoints ? 0.55 * Math.min(1, st.mh / 2.4) : (i === 0 ? 0.1 : 0.05) * Math.min(1, st.mh / 2.4 + 0.15); });
+        const mk = st.view === 'mass'; rMark.visible = mk; labMark.show(mk);
+        if (mk) { const r = curR[st.ri]; rMark.scale.setScalar(r * SC); labMark.obj = [r * SC, 0.1, 0]; labMark.set('r = ' + r + ' kpc'); }
+        text();
+      }
+      /* ▶ 재생: 은하가 돌아요 (태양 위치에서 한 바퀴 ≈ 12초). 안쪽 별이 더 빨리 돌아요 */
+      const player = controls.player({
+        duration: 24, loop: true, autoplay: true, label: '재생',
+        phases: [[0, '회전 시작'], [0.5, '회전 중']],
+        onFrame(p) { st.T = p * 24; },
+      });
 
       function follow() {
-        const S = sr(); if (!S) return; const key = S.view; if (key === st.key) return; const first = st.key === ''; st.key = key;
-        if (S.view === 'halo' && st.mode !== 'obs') setMode('obs');
-        if (S.view === 'solar' && !first && st.mode !== 'vis') setMode('vis');
+        const w = window.__sim, S = sr(); if (!S) return;
+        const gi = S.view === 'halo' ? (S.gal || 0) : 0, mh = S.view === 'halo' ? (S.mh || 0) : 0, free = !!(w && w.game && w.game.free);
+        const key = [S.view, gi, S.ri, mh, free].join('|');
+        if (key === st.key) return; st.key = key;
+        st.view = S.view; st.gal = gi; st.ri = Math.max(0, Math.min(8, S.ri || 0)); st.mh = mh; mhNow = mh;
+        const g = w && w.GALS && w.GALS[gi]; if (g) { curR = g.R; curV = g.V; } else { curR = MWR; curV = MWV; }
+        st.mode = S.view === 'halo' ? (gi === 0 && mh > 0 ? 'model' : 'obs') : (S.view === 'solar' || S.view === 'light') ? 'vis' : 'obs';
+        layoutView();
       }
-      follow();
+      follow(); layoutView();
 
       const K = TAU / 12 / (220 / 8);                     // 태양 위치에서 한 바퀴 ≈ 12초
       return {
         update(dt) {
-          follow(); st.t += dt;
-          const f = st.mode === 'obs' ? vObs : vVis;
+          follow(); st.t = st.T;
+          const f = st.mode === 'vis' ? vVis : st.mode === 'model' ? vModel : vObs;
           for (let i = 0; i < N; i++) {
             const r = rr[i], th = th0[i] + (f(r) / Math.max(r, 0.3)) * K * st.t * (r < 0.3 ? 0 : 1);
             pos[i * 3] = r * SC * Math.cos(th); pos[i * 3 + 1] = yy[i]; pos[i * 3 + 2] = r * SC * Math.sin(th);

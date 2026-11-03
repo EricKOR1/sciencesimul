@@ -1,4 +1,5 @@
-/* m2-electromagnet · 3D 전자석 (코일의 자기장 · 막대자석 · 도선 그네)
+/* m2-electromagnet · 3D 전자석 (코일의 자기장 · 막대자석 · 도선 그네 · 전동기)
+   2D 실험의 장면 · 전류의 세기 · 전류 방향 · 자석의 극 · 자기력선 보기를 그대로 따라가요 (3D에서 바꾸면 2D도 바뀌어요).
    오른손 규칙: 감아쥔 네 손가락 = 전류가 도는 방향, 엄지 = 코일 안의 자기장 방향 = N극 쪽.
    방향 약속은 2D 실험과 같아요: 전류 방향 '정방향'이면 N극이 오른쪽(+x), 도선 그네에서는 전류 ⊙(앞쪽)일 때 힘이 오른쪽. */
 (function () {
@@ -12,6 +13,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: 12.5 * KD, theta: 0.5, phi: 1.2, min: 5, max: 30 },
     autoRotate: 0,
+    levels: [1, 2],                  // 1단계(나침반 끌기) · 4단계(전동기 모형)는 2D 화면에서 해요
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3, Yax = new V3(0, 1, 0);
@@ -19,7 +21,7 @@
       const lessonS = () => (window.__sim && window.__sim.S) || null;
       const S0 = lessonS();
       const st = {
-        scene: S0 && S0.scene === 'force' ? 'force' : S0 && S0.scene === 'magnet' ? 'magnet' : 'coil',
+        scene: S0 && ['force', 'magnet', 'motor', 'coil'].includes(S0.scene) ? S0.scene : 'coil', lines: true, w: 0, phi: 0.4,
         I: S0 ? Math.max(0, Math.min(3, S0.I || 0)) : 0, dir: S0 && S0.dir ? S0.dir : 1, pole: S0 && S0.pole ? S0.pole : 1,
         core: true, comp: true, flip: 1, th: 0, thV: 0,
       };
@@ -69,8 +71,8 @@
       const unitB = (p, out) => bAt(p.x, p.y, p.z, out).multiplyScalar(1 / B0);
 
       /* ---------- 장면 묶음 ---------- */
-      const gCoil = new THREE.Group(), gMag = new THREE.Group(), gSwing = new THREE.Group(), gLines = new THREE.Group();
-      root.add(gCoil, gMag, gSwing, gLines);
+      const gCoil = new THREE.Group(), gMag = new THREE.Group(), gSwing = new THREE.Group(), gLines = new THREE.Group(), gMotor = new THREE.Group();
+      root.add(gCoil, gMag, gSwing, gLines, gMotor);
 
       /* 자기력선 (축을 지나는 평면마다) */
       const lines = [];
@@ -204,6 +206,31 @@
       // 힘 화살표는 도선과 함께 회전하지 않도록 월드 기준으로 보정
       function fixFArrow() { fArrow.quaternion.premultiply(new THREE.Quaternion().setFromAxisAngle(new V3(0, 0, 1), -st.th)); iArrow.quaternion.premultiply(new THREE.Quaternion().setFromAxisAngle(new V3(0, 0, 1), -st.th)); }
 
+      /* ---------- ④ 전동기 (자기장 속에서 전류가 흐르는 코일이 회전) ---------- */
+      const mgN = box(1.6, 3.4, 2.6, NC, { transparent: true, opacity: 0.92 }), mgS = box(1.6, 3.4, 2.6, SCOL, { transparent: true, opacity: 0.92 });
+      mgN.position.x = -3.3; mgS.position.x = 3.3; gMotor.add(mgN, mgS);
+      const rotor = new THREE.Group(); gMotor.add(rotor);
+      const RR = 1.1, ZL = 1.15, cmat = mat(COPPER, { metalness: 0.4, roughness: 0.4 });
+      [[RR, 0], [-RR, 0]].forEach(([x, y]) => { const t = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, ZL * 2, 12), cmat); t.rotation.x = Math.PI / 2; t.position.set(x, y, 0); rotor.add(t); });
+      [ZL, -ZL].forEach((z) => { const t = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, RR * 2, 12), cmat); t.rotation.z = Math.PI / 2; t.position.set(0, 0, z); rotor.add(t); });
+      const axle = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 3.4, 12), mat(0x9aa3b2, { metalness: 0.7 })); axle.rotation.x = Math.PI / 2; gMotor.add(axle);
+      const mF = [mkArrow(0xf26b3a, 0.07), mkArrow(0xf26b3a, 0.07)]; mF.forEach((a) => gMotor.add(a));
+      const bArr = mkArrow(0xb79bff, 0.035); gMotor.add(bArr); setArrow(bArr, new V3(-2.3, -1.9, 1.2), new V3(2.3, -1.9, 1.2));
+      const lmN = label('N극', mgN, { color: '#e2464b', offset: [0, 1.95, 0] }), lmS = label('S극', mgS, { color: '#2f6df6', offset: [0, 1.95, 0] });
+      const lmC = label('코일', rotor, { color: '#a16207', offset: [0, 1.5, 0] }), lmF = label('힘', mF[0], { color: '#f26b3a', size: 14, offset: [0, 0.4, 0] }), lmB = label('자기장 B', bArr, { color: '#6d28d9', size: 13, offset: [0, -0.4, 0] });
+      const mT = new V3();
+      function updateMotor() {
+        rotor.rotation.z = st.phi;
+        const wa = Math.abs(st.w), sg = Math.sign(st.w) || 1, ls = 0.5 + Math.min(1.4, wa * 0.25);
+        [0, 1].forEach((k) => {
+          const side = k ? -1 : 1, a = st.phi + (k ? Math.PI : 0);
+          const px = Math.cos(a) * RR, py = Math.sin(a) * RR;
+          mT.set(-Math.sin(a) * sg, Math.cos(a) * sg, 0);
+          setArrow(mF[k], new V3(px, py, ZL + 0.15), new V3(px + mT.x * ls, py + mT.y * ls, ZL + 0.15)); mF[k].visible = wa > 0.3;
+        });
+        lmF.show(wa > 0.3);
+      }
+
       /* ---------- 나침반 ---------- */
       const comps = [];
       const CPOS = [[3.3, 0, 0.3], [-3.3, 0, 0.3], [0, 1.9, 0.3], [2.1, 1.6, 0.3], [-2.1, 1.6, 0.3], [0, -1.0, 1.5]];
@@ -231,11 +258,12 @@
       const ctlNodes = {};
       function show() {
         const sc = st.scene;
-        gCoil.visible = sc === 'coil'; gMag.visible = sc !== 'swing' && sc !== 'force'; gSwing.visible = sc === 'force'; gLines.visible = sc !== 'force';
+        gCoil.visible = sc === 'coil'; gMag.visible = sc === 'coil' || sc === 'magnet'; gSwing.visible = sc === 'force'; gMotor.visible = sc === 'motor'; gLines.visible = sc === 'coil' || sc === 'magnet';
+        [lmN, lmS, lmC, lmB].forEach((l) => l.show(sc === 'motor'));
         barN.visible = barS.visible = sc === 'magnet'; mN.show(sc === 'magnet'); mS.show(sc === 'magnet');
-        comps.forEach((c) => (c.g.visible = st.comp && sc !== 'force'));
+        comps.forEach((c) => (c.g.visible = st.comp && (sc === 'coil' || sc === 'magnet')));
         core.visible = st.core;
-        [swN, swS, labB].forEach((l) => l.show(sc === 'force')); if (sc !== 'force') { labF.show(false); labI.show(false); }
+        [swN, swS, labB].forEach((l) => l.show(sc === 'force')); if (sc !== 'force') { labF.show(false); labI.show(false); } if (sc !== 'motor') lmF.show(false);
         const f = effStrength(), coilOn = sc === 'coil' && st.I > 0;
         [labN, labS, labPlus, labMinus].forEach((l) => l.show(sc === 'coil'));
         capN.visible = capS.visible = sc === 'coil' && coilOn;
@@ -245,7 +273,7 @@
         batt.children[1].material.color.setHex(st.dir > 0 ? 0xe2464b : 0x2f6df6); batt.children[2].material.color.setHex(st.dir > 0 ? 0x2f6df6 : 0xe2464b);
         labPlus.obj = batt; labPlus.off = [st.dir > 0 ? -0.65 : 0.65, 0.55, 0]; labMinus.off = [st.dir > 0 ? 0.65 : -0.65, 0.55, 0];
         labPlus.el.style.background = '#e2464b'; labMinus.el.style.background = '#2f6df6';
-        const lineOn = (sc === 'coil' && coilOn) || sc === 'magnet';
+        const lineOn = (sc === 'coil' && coilOn) || (sc === 'magnet' && st.lines);
         gLines.visible = lineOn;
         if (lineOn) setLines(sc === 'magnet' ? st.flip : st.dir, 0.25 + 0.6 * Math.min(1, f / 2.4));
         placeBar();
@@ -256,44 +284,55 @@
             : '<b>전자석</b> · 자기장 세기 <b>' + w + '</b><br>🖐 오른손 네 손가락을 <b>전류가 도는 방향</b>으로 감아쥐면 <b>엄지</b>가 가리키는 끝이 <b style="color:#ff8a8f">N극</b>이에요.<br>지금은 <b>' + (st.dir > 0 ? '오른쪽' : '왼쪽') + '</b> 끝이 N극이에요. 전류 방향을 바꾸면 N극과 S극이 바뀌어요.');
         } else if (sc === 'magnet') {
           info('<b>막대자석</b><br>자기력선은 <b style="color:#ff8a8f">N극</b>에서 나와 <b style="color:#8fb0ff">S극</b>으로 들어가고, 자석 안에서는 S극→N극으로 이어진 <b>닫힌 곡선</b>이에요. 나침반의 붉은 바늘이 그 방향을 가리켜요.<br>전자석(코일)의 자기장과 모양이 같아요.');
+        } else if (sc === 'motor') {
+          const wa = Math.abs(st.w);
+          info('<b>전동기 (모터)</b><br>자석(N극·S극) 사이의 자기장 속에서 <b>전류가 흐르는 코일이 힘을 받아</b> 회전해요.<br>' + (st.I < 0.05 ? '전류가 0이라 코일이 돌지 않아요.' : '전류 <b>' + st.I.toFixed(1) + ' A</b> — 전류가 셀수록 더 빠르게 돌아요.' + (wa > 0.3 ? ' (' + (st.w > 0 ? '시계 반대 방향' : '시계 방향') + ')' : '')));
         } else {
           const fl = st.I * st.dir * st.pole;
           info('<b>도선 그네</b><br>' + (st.I < 0.05 ? '전류가 흐르지 않아 힘이 없어요.' : '전류(' + (st.dir > 0 ? '⊙ 앞쪽' : '⊗ 뒤쪽') + ')와 자기장(' + (st.pole > 0 ? '위→아래' : '아래→위') + ')에 모두 수직인 <b>' + (fl > 0 ? '오른쪽' : '왼쪽') + '</b>으로 힘을 받아요.<br>전류나 자석의 극 중 <b>하나만</b> 바꾸면 힘이 반대, 둘 다 바꾸면 그대로예요.'));
         }
         Object.keys(ctlNodes).forEach((k) => ctlNodes[k].forEach((n) => { const vis = ctlVis[k](); n.style.display = vis ? '' : 'none'; }));
       }
-      const ctlVis = { scene: () => true, I: () => st.scene !== 'magnet', dir: () => st.scene !== 'magnet', core: () => st.scene === 'coil', pole: () => st.scene === 'force', flip: () => st.scene === 'magnet', comp: () => st.scene !== 'force' };
+      const ctlVis = { I: () => st.scene !== 'magnet', dir: () => st.scene !== 'magnet', core: () => st.scene === 'coil', pole: () => st.scene === 'force', comp: () => st.scene === 'coil' || st.scene === 'magnet' };
       const bar = ctx.renderer.domElement.parentNode.parentNode.querySelector('.v3-ctl');
       function grab(k, fn) { const before = bar.children.length; const r = fn(); ctlNodes[k] = [...bar.children].slice(before); return r; }
 
       let segCtl, rngCtl;
-      segCtl = grab('scene', () => controls.segment('실험', [{ value: 'coil', label: '🌀 전자석' }, { value: 'magnet', label: '🧲 막대자석' }, { value: 'force', label: '🏇 도선 그네' }], st.scene, (v) => { st.scene = v; if ((v === 'coil' || v === 'force') && st.I === 0) { st.I = 2; rngCtl.set(2); } fitCam(); show(); }));
-      rngCtl = grab('I', () => controls.range('전류', 0, 3, 0.5, st.I, (v) => { st.I = v; show(); }, (v) => v.toFixed(1) + ' A'));
-      grab('dir', () => controls.button('🔁 전류 방향 바꾸기', () => { st.dir = -st.dir; show(); }));
-      grab('pole', () => controls.button('🔁 자석 극 바꾸기', () => { st.pole = -st.pole; show(); }));
-      grab('flip', () => controls.button('🔁 자석 뒤집기', () => { st.flip = -st.flip; show(); }));
+      // 2D 실험의 조작을 그대로 불러서 3D에서 바꿔도 2D가 같이 바뀌어요
+      const L2 = () => window.__sim || null, click2 = (id) => { const b = document.getElementById(id); if (b) b.click(); };
+      rngCtl = grab('I', () => controls.range('전류', 0, 3, 0.5, st.I, (v) => { st.I = v; const l = L2(); if (l && l.setCurrent) l.setCurrent(v); show(); }, (v) => v.toFixed(1) + ' A'));
+      grab('dir', () => controls.button('🔁 전류 방향 바꾸기', () => { click2('dirBtn'); from2D(); }));
+      grab('pole', () => controls.button('🔁 자석 극 바꾸기', () => { click2('poleBtn'); from2D(); }));
       const coreB = grab('core', () => controls.button('철심 ✓', () => { st.core = !st.core; coreB.classList.toggle('on', st.core); coreB.textContent = '철심 ' + (st.core ? '✓' : '✕'); show(); }));
       const cB = grab('comp', () => controls.button('나침반 ✓', () => { st.comp = !st.comp; cB.classList.toggle('on', st.comp); cB.textContent = '나침반 ' + (st.comp ? '✓' : '✕'); show(); }));
       coreB.classList.add('on'); cB.classList.add('on');
       function fitCam() { }
       show();
 
-      let lastScene = '';
+      let lastScene = '', k0 = 0;
+      function from2D() {
+        const S = lessonS(); if (!S) return;
+        let ch = false;
+        if (S.scene && S.scene !== st.scene && ['coil', 'magnet', 'force', 'motor'].includes(S.scene)) { st.scene = S.scene; ch = true; }
+        if (S.dir && S.dir !== st.dir) { st.dir = S.dir; ch = true; }
+        if (S.pole && S.pole !== st.pole) { st.pole = S.pole; ch = true; }
+        if (S.I != null && Math.abs(S.I - st.I) > 1e-6) { st.I = Math.max(0, Math.min(3, S.I)); rngCtl.set(st.I); ch = true; }
+        const ln = !!(S.lines || S.fill); if (ln !== st.lines) { st.lines = ln; ch = true; }
+        if (typeof S.w === 'number') st.w = S.w; if (typeof S.phi === 'number') st.phi = S.phi;
+        if (ch) show();
+      }
       return {
         update(dt) {
+          if ((k0++ % 4) === 0) from2D();
           const sc = st.scene;
+          if (sc === 'motor') { updateMotor(); if ((k0 % 12) === 0) show(); }
           if (sc === 'coil') updateFlow(dt);
           else flow.forEach((c) => (c.visible = false));
           if (sc === 'force') { updateSwing(dt); fixFArrow(); }
           updateCompass(dt);
-          if (lastScene !== sc) { lastScene = sc; ctx.orbit.tx = 0; ctx.orbit.ty = sc === 'force' ? 0.6 : -0.3; ctx.orbit.dist = (sc === 'force' ? 14 : 12.5) * KD; }
+          if (lastScene !== sc) { lastScene = sc; ctx.orbit.tx = 0; ctx.orbit.ty = sc === 'force' ? 0.6 : sc === 'motor' ? 0 : -0.3; ctx.orbit.dist = (sc === 'force' ? 14 : sc === 'motor' ? 11 : 12.5) * KD; }
         },
-        sync() {
-          const S = lessonS(); if (!S) return;
-          st.dir = S.dir || st.dir; st.pole = S.pole || st.pole; if (S.I != null) { st.I = Math.max(0, Math.min(3, S.I)); rngCtl.set(st.I); }
-          if (S.scene === 'magnet' || S.scene === 'force' || S.scene === 'coil') { st.scene = S.scene; segCtl.set(st.scene); }
-          show();
-        },
+        sync() { from2D(); show(); },
       };
     },
   });

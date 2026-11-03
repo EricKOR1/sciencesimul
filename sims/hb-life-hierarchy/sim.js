@@ -1047,7 +1047,7 @@
   });
 
   window.__sim = {
-    S, VW, VH, LV, STG, SORT_CARDS, CASES, ORG, orgXY, get game() { return game; }, setScene, makeMake, SY, EXAMPLE,
+    S, VW, VH, LV, STG, SORT_CARDS, CASES, ORG, orgXY, GTXT, SPN, syncControls, get game() { return game; }, setScene, makeMake, SY, EXAMPLE,
     stepAll(sec) { const n = Math.ceil(sec / 0.02); for (let i = 0; i < n; i++) { if (S.mode === 'zoom') stepZoom(0.02); else if (S.mode === 'group') stepGroup(0.02); else if (S.mode === 'sys') stepSys(0.02); else stepMake(0.02); } },
   };
 

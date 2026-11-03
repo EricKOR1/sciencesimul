@@ -7,11 +7,11 @@
   const D = 4.6;
   // 순환 단계 (경로 위의 구간 [시작u, 끝u])
   const STAGES = [
-    { id: 'cool', name: '냉각 · 굳음', u: [0.0, 0.17], t: '마그마가 <b>식어서 굳으면 화성암</b>이 돼요.' },
-    { id: 'weather', name: '풍화 · 침식', u: [0.17, 0.4], t: '암석이 부서지고(<b>풍화</b>) 깎여서 흘러가요(<b>침식·운반</b>).' },
-    { id: 'sed', name: '퇴적 · 굳음', u: [0.4, 0.62], t: '알갱이가 쌓이고 <b>다져져 굳으면 퇴적암</b>이 돼요.' },
-    { id: 'meta', name: '열과 압력', u: [0.62, 0.84], t: '땅속 <b>열과 압력</b>을 받으면 <b>변성암</b>이 돼요.' },
-    { id: 'melt', name: '녹음', u: [0.84, 1.0], t: '아주 뜨거워지면 암석이 <b>녹아 마그마</b>가 돼요.' },
+    { id: 'cool', name: '냉각', u: [0.0, 0.17], t: '마그마가 <b>냉각</b>되어 굳으면 <b>화성암</b>이 돼요.' },
+    { id: 'weather', name: '풍화·침식', u: [0.17, 0.4], t: '화성암이 부서지고(<b>풍화</b>) 깎여서(<b>침식</b>) <b>퇴적물</b>이 돼요.' },
+    { id: 'sed', name: '퇴적·굳음', u: [0.4, 0.62], t: '퇴적물이 쌓이고 <b>다져져 굳으면</b> <b>퇴적암</b>이 돼요.' },
+    { id: 'meta', name: '열과 압력', u: [0.62, 0.84], t: '퇴적암이 땅속에서 <b>열과 압력</b>을 받으면 <b>변성암</b>이 돼요.' },
+    { id: 'melt', name: '녹음', u: [0.84, 1.0], t: '변성암이 아주 뜨거워지면 <b>녹아서 마그마</b>가 돼요.' },
   ];
 
   window.SciSim3D.attach({
@@ -93,18 +93,21 @@
         const m = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pp), 40, 0.1, 8), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.0 }));
         root.add(m); return m;
       });
-      const labRock = [label('화성암', [-2.2, 1.0, Z]), label('퇴적암', [4.0, -0.9, Z]), label('변성암', [4.0, -2.2, Z]), label('마그마', chamber, { offset: [-0.6, 0.0, 0.7] })];
+      const labRock = [label('화성암', [-2.2, 1.0, Z]), label('퇴적물', [0.9, 0.95, Z]), label('퇴적암', [4.0, -0.9, Z]), label('변성암', [4.0, -2.2, Z]), label('마그마', chamber, { offset: [-0.6, 0.0, 0.7] })];
       const labStage = label('', token, { offset: [0, 0.55, 0], color: 'rgba(255,211,77,.95)' }); labStage.el.style.color = '#1b2333';
-      const labW = label('풍화 · 침식', [-0.3, 1.1, 0]); const labV = label('화산', [-3.1, 2.9, 0]);
+      const labW = label('풍화·침식', [-0.3, 1.1, 0]); const labV = label('화산', [-3.1, 2.9, 0]);
 
-      let u = 0, play = true, stage = 0, labsOn = true;
-      const segCtl = controls.segment('과정', STAGES.map((s, i) => ({ label: s.name, value: i })), 0, (i) => { play = false; u = (STAGES[i].u[0] + STAGES[i].u[1]) / 2; pb.textContent = '▶ 자동 순환'; });
-      const pb = controls.button('⏸ 멈춤', () => { play = !play; pb.textContent = play ? '⏸ 멈춤' : '▶ 자동 순환'; });
+      let u = 0, labsOn = true, pl = null;
+      const segCtl = controls.segment('과정', STAGES.map((s, i) => ({ label: s.name, value: i })), 0, (i) => { pl.pause(); pl.set((STAGES[i].u[0] + STAGES[i].u[1]) / 2); });
+      pl = controls.player({
+        duration: 20, loop: true, autoplay: true, label: '순환 재생',
+        phases: STAGES.map((st) => [st.u[0], st.name]),
+        onFrame(p) { u = Math.min(0.9999, p); },
+      });
       controls.button('이름표', () => { labsOn = !labsOn; labRock.concat([labW, labV]).forEach((l) => l.show(labsOn)); });
       let lastS = -1;
       return {
         update(dt, t) {
-          if (play) u = (u + dt / 28) % 1;
           let s = STAGES.findIndex((q) => u >= q.u[0] && u < q.u[1]); if (s < 0) s = 0;
           if (s !== lastS) { lastS = s; segCtl.set(s); info(`<b>${STAGES[s].name}</b><br>${STAGES[s].t}<br>화성암 → 퇴적물 → 퇴적암 → 변성암 → 마그마 …`); labStage.set(STAGES[s].name); }
           segTubes.forEach((m, i) => { m.material.opacity = i === s ? 0.5 : 0; });

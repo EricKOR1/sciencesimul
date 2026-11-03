@@ -11,6 +11,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHN ? 13.5 : 12, theta: 0.3, phi: 1.0, min: 6, max: 24, target: [0, 0, 0] },
     autoRotate: 0,
+    levels: [0, 1],                  // 2단계(전류계 읽기)·3단계(물의 흐름 모형)는 2D 화면에서 해요
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3;
@@ -70,23 +71,28 @@
       const LB = [label('전지', batt, { offset: [0, 1.2, 0] }), label('전구', bulb, { offset: [0, 2.6, 0] }), label('스위치', sw, { offset: [0, 0.8, 0.2] })];
       const lE = label('전자의 이동 방향', [-HX, 0.8, 0], { color: 'rgba(40,80,200,.95)' }), lI = label('전류의 방향', [HX, 0.8, 0], { color: 'rgba(200,70,60,.95)' });
 
-      let showE = true, showI = true, uPh = 0, lastInfo = '', glowV = 0, swA = 0, labs = true;
-      function inf(closed, V) {
-        const I = (V / 10).toFixed(2);
-        const k = (closed ? 'c' : 'o') + V.toFixed(1);
+      let showE = false, showI = false, uPh = 0, lastInfo = '', glowV = 0, swA = 0, labs = true;
+      function inf(closed, V, e, i) {
+        const k = (closed ? 'c' : 'o') + V.toFixed(1) + (e ? 'e' : '') + (i ? 'i' : '');
         if (k === lastInfo) return; lastInfo = k;
-        info(closed ? `<b>닫힌 회로</b>: 전자(파랑)가 <b>(−)극 → (+)극</b> 쪽으로 흘러요.<br>전류의 방향은 반대로 <b>(+)극 → (−)극</b>이에요.<br>전지 ${V.toFixed(1)} V → 전구 ${V > 4.2 ? '아주 밝아요' : V > 2.4 ? '밝아요' : '어두워요'}` : '<b>열린 회로</b>: 스위치가 열려 있어서 전자가 이어지지 않아 <b>전류가 흐르지 않아요</b>. 전구도 꺼져 있어요.');
+        if (!closed) { info('<b>열린 회로</b>: 스위치가 열려 있어서 회로가 끊겼어요. <b>전류가 흐르지 않아</b> 전구도 꺼져 있어요.'); return; }
+        let t = `<b>닫힌 회로</b>: 전지 → 전구 → 스위치가 도선으로 이어져 <b>전류가 흘러</b> 전구가 켜져요.<br>전지 ${V.toFixed(1)} V → 전구 ${V > 4.2 ? '아주 밝아요' : V > 2.4 ? '밝아요' : '어두워요'}`;
+        if (e) t += '<br><b style="color:#8fb0ff">전자(파랑)</b>는 <b>(−)극 → (+)극</b> 쪽으로 흘러요.';
+        if (i) t += '<br><b style="color:#ff9d90">전류(주황 화살표)</b>의 방향은 <b>(+)극 → (−)극</b>이에요. 전자와 반대예요.';
+        if (!e && !i) t += '<br><span style="color:#ffd34d">[전자 보기] · [전류 방향 보기]를 켜 보세요.</span>';
+        info(t);
       }
-      controls.button('🔌 스위치 열기/닫기', () => { const s = sm(); if (s) s.setClosed(!s.S.closed); });
+      // 2D 실험과 같은 스위치 · 전압 · 보기 설정을 써요 (3D에서 바꾸면 2D도 바뀌어요)
+      controls.button('🔌 스위치 열기/닫기', () => { const s = sm(); if (s) { s.S.touched.sw = true; s.setClosed(!s.S.closed); } });
       const vr = controls.range('전지 전압', 0.5, 6, 0.5, 3, (v) => { const s = sm(); if (s) s.setV(v); }, (v) => v.toFixed(1) + ' V');
-      controls.button('전자 보기', () => { showE = !showE; });
-      controls.button('전류 방향 보기', () => { showI = !showI; });
-      controls.button('이름표', () => { labs = !labs; LB.forEach((l) => l.show(labs)); lE.show(labs); lI.show(labs); });
+      controls.button('전자 보기', () => { const s = sm(); if (s) s.setShow(!s.S.showE, s.S.showI); });
+      controls.button('전류 방향 보기', () => { const s = sm(); if (s) s.setShow(s.S.showE, !s.S.showI); });
+      controls.button('이름표', () => { labs = !labs; LB.forEach((l) => l.show(labs)); lE.show(labs && showE); lI.show(labs && showI); });
       const dm = new THREE.Object3D(), p = new V3(), tg = new V3(), upv = new V3(0, 1, 0);
       let lastV = -1;
       return {
         update(dt, t) {
-          const s = sm() && sm().S; const closed = s ? !!s.closed : false, V = s ? s.V : 3;
+          const s = sm() && sm().S; const closed = s ? !!s.closed : false, V = s ? s.V : 3; showE = s ? !!s.showE : false; showI = s ? !!s.showI : false;
           if (V !== lastV) { lastV = V; vr.set(V); }
           const I = closed ? V / 10 : 0;
           swA += ((closed ? 0 : 0.8) - swA) * Math.min(1, dt * 10); hinge.rotation.z = swA;
@@ -103,7 +109,8 @@
             dm.position.copy(p); dm.quaternion.setFromUnitVectors(upv, tg); dm.scale.setScalar(closed && showI ? 1 : 0.001); dm.updateMatrix(); iInst.setMatrixAt(i, dm.matrix);
           }
           eInst.instanceMatrix.needsUpdate = true; iInst.instanceMatrix.needsUpdate = true; dm.quaternion.identity();
-          inf(closed, V);
+          lE.show(labs && showE && closed); lI.show(labs && showI && closed);
+          inf(closed, V, showE, showI);
         },
       };
     },

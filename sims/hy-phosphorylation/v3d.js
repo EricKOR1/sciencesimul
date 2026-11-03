@@ -20,7 +20,7 @@
       const { THREE, root, label, info, controls, orbit } = ctx;
       const V = THREE.Vector3;
       if (narrow) root.rotation.z = Math.PI / 2;      // 휴대폰(세로 화면)에서는 눕혀 둔 모형을 세워서 보여 줘요
-      let mode = 'chemi', grad = 0.8;
+      let mode = 'chemi';
       const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.42, metalness: 0.04 }, o || {}));
       const A = (p) => { const o = new THREE.Object3D(); o.position.set(p[0], p[1], p[2]); root.add(o); return o; };
       const chemi = new THREE.Group(), sub = new THREE.Group(); root.add(chemi, sub);
@@ -118,8 +118,8 @@
       const ease = (k) => { k = Math.max(0, Math.min(1, k)); return k * k * (3 - 2 * k); };
       const lerp3 = (o, a, b, k) => o.position.set(a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k, a[2] + (b[2] - a[2]) * k);
       let st = 0;
-      function stepSub(dt) {
-        st = (st + dt) % 7;
+      function renderSub(tt) {
+        st = tt;
         const sPos = [-0.55, -0.2, 0.0], aPos = [1.0, -0.2, 0.0];   // 결합 자리
         if (st < 2) {      // 들어오기
           const k = ease(st / 1.8);
@@ -157,30 +157,65 @@
         ['ims', 'mat', 'etc', 'syn', 'atp'].forEach((k) => L[k].show(m === 'chemi')); ['sE', 'sS', 'sA'].forEach((k) => L[k].show(m === 'sub'));
         st = 0; text();
       }
-      const rowEls = [];
-      function showRow(v) { rowEls.forEach((e) => { e.style.display = v ? '' : 'none'; }); }
+      /* 2D와 같은 값을 따라가요: 기질 수준(sub) · H⁺ 기울기(grad: NADH 공급 · 산소) · 화학 삼투(chemi: 처리). 3D에서 바꾸면 2D도 같이 바뀌어요 */
+      let gcur = 0.8, pumpF = 1, rotF = 1, leakF = 0;
       function text() {
-        if (mode === 'sub') info('<b>기질 수준 인산화</b><br>효소가 기질의 <b>인산기(●)</b>를 ADP에 직접 옮겨 ATP를 만들어요. 막이 없어도, 산소가 없어도 일어나요.');
-        else info('<b>산화적 인산화</b> · H⁺가 ATP 합성 효소를 지나 흐를 때 <b>회전자</b>가 돌며 ATP가 만들어져요.<br>H⁺ 기울기 <b>' + Math.round(grad * 100) + '%</b>' + (grad < 0.05 ? ' · 기울기가 없으면 멈춰요!' : ''));
+        const L = ctx.lesson(), v = L && L.S && L.S.sb ? (L.S.sb.view === 'tca' ? 'TCA 회로' : '해당 과정') : '';
+        if (mode === 'sub') info('<b>기질 수준 인산화</b>' + (v ? ' · ' + v : '') + '<br>효소가 기질의 <b>인산기(Ⓟ)</b>를 ADP에 직접 옮겨 ATP를 만들어요. 막이 없어도, 산소가 없어도 일어나요.');
+        else if (L && L.S && L.S.mode === 'chemi' && L.S.ch) {
+          const tr = L.S.ch.tr, nm = { none: '처리 없음', un: '짝풀림제', ol: '올리고마이신', cn: '시안화물' }[tr];
+          const ex = { none: 'H⁺가 ATP 합성 효소로 흘러 들어오며 ATP를 만들어요.', un: 'H⁺가 막으로 새어 기울기가 사라져요 → ATP는 줄고 열이 나요.', ol: 'ATP 합성 효소의 H⁺ 통로가 막혀 회전자가 멈춰요 → ATP 0, H⁺ 기울기는 커져요.', cn: '전자 전달이 막혀 H⁺를 퍼 올리지 못해요 → 기울기 · ATP 0.' }[tr];
+          info('<b>화학 삼투</b> · 처리: <b>' + nm + '</b><br>' + ex + '<br>ΔpH <b>' + gcur.toFixed(2) + '</b> · 산소 소비 ' + Math.round(L.S.ch.o2.v) + ' · ATP 합성 ' + Math.round(L.S.ch.atp.v));
+        } else if (L && L.S && L.S.mode === 'grad' && L.S.gr) info('<b>H⁺ 기울기</b> · 전자 전달계가 H⁺를 막 사이 공간으로 퍼 올려요.<br>NADH 공급 ' + L.S.gr.s + ' · 산소 ' + (L.S.gr.o2 ? '있음' : '없음') + '<br>ΔpH <b>' + gcur.toFixed(2) + '</b>' + (L.S.gr.o2 ? '' : ' · 전자가 흐르지 못해 기울기가 줄어요.'));
+        else info('<b>산화적 인산화</b> · H⁺가 ATP 합성 효소를 지나 흐를 때 <b>회전자</b>가 돌며 ATP가 만들어져요.<br>ΔpH <b>' + gcur.toFixed(2) + '</b>');
       }
-      const seg = controls.segment('인산화', [{ value: 'chemi', label: '화학 삼투' }, { value: 'sub', label: '기질 수준' }], mode, (v) => { setMode(v); showRow(v === 'chemi'); });
-      controls.range('H⁺ 기울기', 0, 100, 5, 80, (v) => { grad = v / 100; text(); }, (v) => v + '%');
-      { const ce = document.querySelector('.v3-ctl'); rowEls.push(ce.children[ce.children.length - 2], ce.children[ce.children.length - 1]); }
-      setMode('chemi');
+      const ctlEl = document.querySelector('.v3-ctl');
+      const grp = (fn) => { const n0 = ctlEl ? ctlEl.children.length : 0; fn(); return ctlEl ? Array.prototype.slice.call(ctlEl.children, n0) : []; };
+      let rngS, segO, segTr, player;
+      const gGrad = grp(() => {
+        rngS = controls.range('NADH 공급 속도', 0, 10, 1, 5, (v) => { const L = ctx.lesson(); if (L && L.S.gr) { L.S.gr.s = v; L.updateCtl(); } });
+        segO = controls.segment('산소', [{ value: 'on', label: '💨 있음' }, { value: 'off', label: '🚫 없음' }], 'on', (v) => { const L = ctx.lesson(); if (L && L.S.gr) { L.S.gr.o2 = v === 'on'; L.updateCtl(); } });
+      });
+      const gChem = grp(() => {
+        segTr = controls.segment('처리', [{ value: 'none', label: '처리 없음' }, { value: 'un', label: '🔥 짝풀림제' }, { value: 'ol', label: '🚧 올리고마이신' }, { value: 'cn', label: '🧪 시안화물' }], 'none', (v) => { const L = ctx.lesson(); if (L && L.chSet) L.chSet(v); });
+      });
+      const gSub = grp(() => {
+        player = controls.player({
+          duration: 7, loop: true, autoplay: true, label: '인산기 옮기기',
+          phases: [[0, '기질 · ADP 접근'], [2 / 7, '인산기 이동'], [3.2 / 7, 'ATP 완성'], [4.2 / 7, '떠남']],
+          onFrame(p) { renderSub(p * 7); },
+        });
+      });
+      const showG = (arr, on) => arr.forEach((e) => { e.style.display = on ? '' : 'none'; });
+      function applyCtl() { const L = ctx.lesson(), m = L && L.S ? L.S.mode : ''; showG(gSub, mode === 'sub'); showG(gGrad, mode === 'chemi' && m === 'grad'); showG(gChem, mode === 'chemi' && m !== 'grad'); }
+      let lastKey = '';
+      function poll() {
+        const L = ctx.lesson(); if (!L || !L.S) return;
+        const m = L.S.mode, m2 = MODE_OF[m] || mode;
+        if (m2 !== mode) { setMode(m2); }
+        if (m + mode !== lastKey) { lastKey = m + mode; applyCtl(); }
+        if (m === 'grad' && L.S.gr) {
+          const z = L.S.gr; gcur = z.g; pumpF = z.o2 ? z.s / 5 : 0; rotF = z.g; leakF = 0;
+          rngS.set(z.s); segO.set(z.o2 ? 'on' : 'off');
+        } else if (L.S.ch) {
+          const c = L.S.ch; gcur = c.g; pumpF = c.o2.v / 100; rotF = c.atp.v / 100 * (c.tr === 'none' ? 1 : 1); leakF = c.tr === 'un' ? 1 : 0;
+          if (m === 'chemi') segTr.set(c.tr);
+        }
+      }
+      setMode('chemi'); applyCtl();
 
-      let ang = 0, stepAcc = 0, pumpAcc = 0, lastMode = null, cnt = 0;
+      let txtT = 0, ang = 0, stepAcc = 0, pumpAcc = 0, leakAcc = 0, lastMode = null, cnt = 0;
       return {
         update(dt) {
           dt = Math.min(dt, 0.05) * (window.__v3dTS || 1);
-          const sm = window.__sim && window.__sim.S && window.__sim.S.mode;
-          if (sm && sm !== lastMode) { lastMode = sm; const m2 = MODE_OF[sm]; if (m2 && m2 !== mode) { seg.set(m2); setMode(m2); showRow(m2 === 'chemi'); } }
-          if (mode === 'sub') { stepSub(dt); return; }
-          const w = grad * 3.2;
+          poll(); txtT -= dt; if (txtT < 0) { txtT = 0.4; text(); }
+          if (mode === 'sub') return;       // 기질 수준 인산화는 ▶ 재생 막대(player)가 그려요
+          const w = rotF * 3.2, grad = gcur;
           ang += w * dt; rotor.rotation.y = -ang;
           // β 구조 변화 (열림 → 느슨 → 단단)
           const stp = Math.floor(ang / (Math.PI * 2 / 3));
           betas.forEach((b, i) => { const s = (stp + i) % 3; b.m.material.color.setHex(s === 0 ? 0x86efac : s === 1 ? 0x22c55e : 0x15803d); b.m.scale.set(1, 1.35 - (s === 2 ? 0.1 : 0), 1); });
-          if (stp !== cnt) { cnt = stp; if (grad > 0.02) spawnATP(betas[stp % 3].a + 0.2); }
+          if (stp !== cnt) { cnt = stp; if (rotF > 0.02) spawnATP(betas[stp % 3].a + 0.2); }
           // H⁺ 흐름: 회전자가 36° 돌 때마다 하나
           stepAcc += w * dt / (Math.PI * 2 / 10);
           while (stepAcc >= 1) {
@@ -192,7 +227,9 @@
             }
           }
           // 전자 전달계가 H⁺를 퍼 올려요
-          pumpAcc += w * dt / (Math.PI * 2 / 10) / 3 * (0.6 + 0.4 * grad);
+          pumpAcc += pumpF * 3.2 * dt / (Math.PI * 2 / 10) / 3 * (0.6 + 0.4 * grad);
+          leakAcc += leakF * 4 * dt;
+          while (leakAcc >= 1) { leakAcc -= 1; if (hs.length) { const o = hs.splice((Math.random() * hs.length) | 0, 1)[0]; const lx = (Math.random() * 2 - 1) * 3.6; trans.push({ m: o.m, pts: [o.m.position.clone(), new V(lx, 0.5, -0.6), new V(lx, -0.5, -0.6), new V(lx, -1.3, -0.4)], t: 0, dur: 0.8, end: 'mat' }); } }
           const target = Math.round(3 + grad * 22);
           while (pumpAcc >= 1) {
             pumpAcc -= 1;
@@ -218,7 +255,7 @@
           while (mat_.length < 4) newH(rndMat(), mat_);
           for (let i = atps.length - 1; i >= 0; i--) { const a = atps[i]; a.t += dt; a.g.position.addScaledVector(a.v, dt); a.g.scale.setScalar(Math.max(0.01, 1 - a.t / 2.2)); if (a.t > 2.2) { chemi.remove(a.g); atps.splice(i, 1); } }
         },
-        sync() { text(); },
+        sync() { poll(); text(); },
       };
     },
   });

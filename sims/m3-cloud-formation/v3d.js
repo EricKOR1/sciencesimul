@@ -13,10 +13,12 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHN ? 17 : 13.5, theta: 0.15, phi: 1.3, min: 6, max: 28, target: [0, 1.6, 0] },
     autoRotate: 0,
+    levels: [2],               // 단계 3(구름이 생기는 산비탈)에서 3D로 시작해요. 병 실험·강수 과정은 2D 화면에서 해요
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3, C = THREE.Color;
-      let mode = 'mtn', h = 0, auto = false, rain = true;
+      let mode = 'mtn', h = 0, rain = true;
+      const lift = (v) => { const L = ctx.lesson(); if (L && L.setLift) L.setLift(v); else { h = v; refresh(); } };
       const sm = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.6, metalness: 0 }, o || {}));
       /* 지형 */
       const s3 = (u) => { u = Math.max(0, Math.min(1, u)); return u * u * (3 - 2 * u); };
@@ -62,7 +64,7 @@
       const sun = new THREE.Mesh(new THREE.SphereGeometry(0.6, 28, 20), new THREE.MeshBasicMaterial({ color: 0xffd34d })); sun.position.set(-3.8, 5.6, -1.5); root.add(sun);
       const winds = []; for (let i = 0; i < 5; i++) { const m = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.4, 10), new THREE.MeshBasicMaterial({ color: 0xcbd5e1, transparent: true, opacity: 0.8 })); m.rotation.z = -Math.PI / 2; root.add(m); winds.push(m); }
       const airLab = label('', air, { color: 'rgba(15,23,42,.9)', size: 13, offset: [0, 1.2, 0] });
-      function setMode(m) { mode = m; shape(); sun.visible = m === 'conv'; winds.forEach((w) => { w.visible = m === 'mtn'; }); h = 0; rg.set(0); refresh(); }
+      function setMode(m) { mode = m; shape(); sun.visible = m === 'conv'; winds.forEach((w) => { w.visible = m === 'mtn'; }); lift(0); h = 0; refresh(); }
       function refresh() {
         const T = tAt(h), cl = h > LCL + 40, P = pathAt(h);
         const r = 0.62 * (1 + 0.5 * h / HM) * (1 + (TG - T) * 0.004);
@@ -71,17 +73,21 @@
         dots.visible = cl; airLab.set('공기 덩어리 ' + Math.round(h) + ' m · <b>' + Math.round(T) + '°C</b>');
         const parts = [];
         parts.push('<b>' + Math.round(h) + ' m</b>에서 기온 <b>' + Math.round(T) + '°C</b>, 부피 <b>' + (1 + 0.5 * h / HM).toFixed(2) + '배</b>');
-        parts.push(h < LCL - 40 ? '아직 이슬점(15°C) 위라서 구름이 없어요.' : h < LCL + 40 ? '이슬점에 도달! 수증기가 응결하기 시작해요.' : '<span style="color:#7dd3fc">수증기가 물방울이 되어 구름이 생겨요.</span>');
+        parts.push(h < LCL - 40 ? '아직 이슬점(15°C)보다 높아서 구름이 없어요.' : h < LCL + 40 ? '이슬점에 도달! 수증기가 응결하기 시작해요.' : '<span style="color:#7dd3fc">수증기가 물방울이 되어 구름이 생겨요.</span>');
         info(parts.join('<br>'));
       }
-      const rg = controls.range('높이', 0, HM, 20, 0, (v) => { h = v; auto = false; pb.textContent = '▲ 올라가기'; refresh(); }, (v) => Math.round(v) + ' m');
-      const pb = controls.button('▲ 올라가기', () => { auto = !auto; pb.textContent = auto ? '❚❚ 멈춤' : '▲ 올라가기'; if (auto && h >= HM) h = 0; });
-      controls.segment('상승 까닭', [{ value: 'mtn', label: '산비탈' }, { value: 'conv', label: '지표 가열' }], mode, setMode);
+      controls.segment('공기가 올라가는 까닭', [{ value: 'mtn', label: '산을 타고 오를 때' }, { value: 'conv', label: '지표가 가열될 때' }], mode, setMode);
+      /* ▶ 공기 덩어리가 올라갔다 내려와요 (2D 슬라이더의 높이도 같이 움직여요) */
+      controls.player({
+        duration: 10, loop: true, label: '공기 덩어리 상승',
+        phases: [[0, '올라가요 · 부피↑ 기온↓'], [0.25, '이슬점 도달 · 구름 밑면'], [0.33, '구름이 생겨요'], [0.5, '내려와요']],
+        onFrame(p) { const tri = p < 0.5 ? p * 2 : 2 - p * 2; lift(HM * tri); },
+      });
       const rb = controls.button('비 ✓', () => { rain = !rain; rb.textContent = '비 ' + (rain ? '✓' : '✕'); }); rb.classList.add('on');
-      shape(); refresh(); sun.visible = false;
+      shape(); refresh(); sun.visible = false; let lastH = -1;
       return {
         update(dt, t) {
-          if (auto) { h = Math.min(HM, h + dt * 190); rg.set(h); refresh(); if (h >= HM) { auto = false; pb.textContent = '▲ 올라가기'; } }
+          const L = ctx.lesson(); if (L && L.MT && Math.abs(L.MT.Hv - lastH) > 0.5) { lastH = L.MT.Hv; h = Math.max(0, Math.min(HM, L.MT.Hv)); refresh(); }
           /* 구름 방울 */
           const hLCL = LCL + 20, cur = Math.max(0, h - hLCL);
           puffs.forEach((q, i) => {

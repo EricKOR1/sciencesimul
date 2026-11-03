@@ -1659,7 +1659,7 @@
   // 테스트·디버깅용
   window.__sim = {
     get scene() { return scene; }, get game() { return game; }, W, H, PHONE, PL, PLR, EY, BN, LN, SORT, SORTS, PLG, BG_,
-    setScene, plGoCm, plCm, setBenchD, calcMirror, calcLens, sortSetup, plrP, plrP2, mirrorYs,
+    BN, LN, syncUI, setScene, plGoCm, plCm, setBenchD, calcMirror, calcLens, sortSetup, plrP, plrP2, mirrorYs,
     toClient(x, y) { const r = view.canvas.getBoundingClientRect(); return { x: r.left + x * r.width / W, y: r.top + y * r.height / H }; },
     benchObj(kind) { const st = kind === 'mirror' ? BN : LN; return { x: (kind === 'mirror' ? BG_.xm : BG_.xl) - st.d, y: BG_.ya - 10 }; },
   };

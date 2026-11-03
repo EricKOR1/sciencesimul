@@ -14,6 +14,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHN ? 9 : 9, theta: 0.2, phi: 1.3, min: 4, max: 22 },
     autoRotate: 0.08,
+    levels: [0, 2, 3],               // 1단계(스티커를 눌러 거리 재기 · 표 해석)는 2D 화면에서 해요
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3, DEG = Math.PI / 180;
@@ -54,15 +55,25 @@
       lattice.visible = false;
 
       /* ---------- 상태 · 조작 ---------- */
-      let mode = 'balloon', s = 1, ref = 0, play = false, dir = 1, labs = true, lastInfo = '';
+      let mode = 'balloon', s = 1, ref = 0, labs = true, lastInfo = '', pl = null;
       let latRef = 62;   // 격자에서의 기준 은하 번호
       const dm = new THREE.Object3D(), tmpA = new V3(), tmpB = new V3();
       const pastOK = () => { try { const g = sm() && sm().game && sm().game(); return !g || g.free || g.level === 3; } catch (e) { return true; } };
       function setS(v) { s = Math.max(0.1, Math.min(2, v)); const q = sm(); if (q && q.setSize) q.setSize(s, true); sizeR.set(s); }
       const sg = controls.segment('모형', [{ label: '풍선', value: 'balloon' }, { label: '은하 격자', value: 'lat' }], mode, (v) => { mode = v; balloon.visible = v === 'balloon'; lattice.visible = v === 'lat'; lastInfo = ''; });
-      const sizeR = controls.range('풍선 크기(팽창)', 0.1, 2, 0.02, s, (v) => { play = false; pb.textContent = '▶ 부풀리기'; if (v < 1 && !pastOK()) { v = 1; sizeR.set(1); } s = v; const q = sm(); if (q && q.setSize) q.setSize(v, true); }, (v) => (v < 0.95 ? '과거 ' : v > 1.05 ? '' : '') + '×' + v.toFixed(2));
+      const sizeR = controls.range('풍선 크기(팽창)', 0.1, 2, 0.02, s, (v) => { if (pl) pl.pause(); if (v < 1 && !pastOK()) { v = 1; sizeR.set(1); } s = v; const q = sm(); if (q && q.setSize) q.setSize(v, true); }, (v) => (v < 0.95 ? '과거 ' : v > 1.05 ? '' : '') + '×' + v.toFixed(2));
       const sgRef = controls.segment('기준', ST.map((q, i) => ({ label: q.id, value: i })), 0, (i) => { ref = i; const q = sm(); if (q && q.setRef) q.setRef(i, false); latRef = [62, 0, 124, 20, 100][i]; });
-      const pb = controls.button('▶ 부풀리기', () => { play = !play; pb.textContent = play ? '⏸ 멈춤' : '▶ 부풀리기'; if (play && s >= 1.98) s = 1; });
+      // ▶ 재생: 풍선이 1배 → 2배로 부풀고(스티커 사이가 모두 멀어져요), 다시 거꾸로 되감겨요. 2D 풍선도 같은 크기가 돼요.
+      const smooth = (x) => x * x * (3 - 2 * x);
+      pl = controls.player({
+        duration: 10, loop: true, autoplay: false, label: '풍선 부풀리기',
+        phases: [[0, '부풀리기 (1배 → 2배)'], [0.42, '멈춤'], [0.5, '되감기 (시간을 거꾸로)']],
+        onFrame(p) {
+          if (!pl) return;
+          const v = p < 0.42 ? 1 + smooth(p / 0.42) : p < 0.5 ? 2 : 2 - smooth((p - 0.5) / 0.5);
+          s = v; sizeR.set(v); const q = sm(); if (q && q.setSize) q.setSize(v, true);
+        },
+      });
       controls.button('이름표', () => { labs = !labs; });
       let k0 = 0;
       function arcGeom(a, b, R) {
@@ -74,8 +85,7 @@
         sync() { const q = sm() && sm().S; if (q) { s = q.s; sizeR.set(s); } },
         update(dt, t) {
           const q = sm() && sm().S;
-          if (play) { s += dt * 0.28 * dir; if (s >= 2) { s = 2; play = false; pb.textContent = '▶ 부풀리기'; } if (q) { try { sm().setSize(s, true); } catch (e) { /* 무시 */ } } sizeR.set(s); }
-          else if (q && Math.abs(q.s - s) > 0.004) { s = q.s; sizeR.set(s); }
+          if (!pl.playing && q && Math.abs(q.s - s) > 0.004) { s = q.s; sizeR.set(s); }
           if (s < 1 && !pastOK()) { s = 1; sizeR.set(1); if (sm() && sm().setSize) sm().setSize(1, true); }
           if (q && q.ref !== ref && q.ref != null) { ref = q.ref; sgRef.set(ref); latRef = [62, 0, 124, 20, 100][ref]; }
           const sz = Math.max(0.12, s);

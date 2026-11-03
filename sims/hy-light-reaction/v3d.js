@@ -12,12 +12,12 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: narrow ? 12.8 : 10.4, theta: 0.18, phi: 1.36, target: narrow ? [-0.3, 0, 0] : [0, 0.3, 0], min: 6, max: 22 },
     autoRotate: 0,
-    levels: [0, 1, 2, 3],
+    levels: [1, 2, 3],   // 1단계(빛 흡수 · 파장)는 2D 화면, 물 분해 · ATP 생성 · 조건 변화 단계에서 3D로 시작
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V = THREE.Vector3;
       if (narrow) root.rotation.z = Math.PI / 2;      // 휴대폰(세로 화면)에서는 눕혀 둔 모형을 세워서 보여 줘요
-      let light = 0.7, minor = false;
+      let light = 0.7, minor = false, treat = 'none', cyc = false, pulseAuto = true;
       const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.42, metalness: 0.04 }, o || {}));
       const A = (p) => { const o = new THREE.Object3D(); o.position.set(p[0], p[1], p[2]); root.add(o); return o; };
 
@@ -85,9 +85,11 @@
       function photon(from, to, arriveCb) { const m = new THREE.Mesh(new THREE.SphereGeometry(0.14, 14, 10), phMat); m.position.copy(from); root.add(m); photons.push({ m, from: from.clone(), to: to.clone(), t: 0, dur: 0.8, cb: arriveCb }); }
       function flash(mesh) { mesh.material.emissive.setHex(0x9a8a00); setTimeout(() => mesh.material.emissive.setHex(0x000000), 220); }
       function launch() {
+        if (treat === 'dry') return;          // 물이 모자라 광계 Ⅱ에 전자를 줄 수 없어요
         nPack++;
         photon(new V(-6.5, 4.6, 0.4), new V(X.II, 1.2, 0.2), () => {
           flash(psII);
+          if (treat === 'dcmu') return;       // 억제제: 광계 Ⅱ 뒤의 전자 전달이 막혀요
           // 물 분해: O₂ 와 H⁺
           const w = new THREE.Group(); { const o = new THREE.Mesh(new THREE.SphereGeometry(0.2, 14, 10), std(0xef4444)); w.add(o); [-1, 1].forEach((s) => { const h = new THREE.Mesh(new THREE.SphereGeometry(0.12, 12, 10), std(0xf1f5f9)); h.position.set(s * 0.2, 0.14, 0); w.add(h); }); }
           bit(w, new V(X.II - 1.4, 1.5, 0.3), new V(0.9, -0.15, 0), 0.9, -1);
@@ -118,17 +120,65 @@
       };
       function applyLabels() { ['pq', 'pc', 'fd', 'fn'].forEach((k) => L[k].show(minor)); }
       applyLabels();
-      function text() {
-        info('빛으로 <b>물이 분해</b>되고 전자가 이동해요. H⁺ 기울기로 <b>ATP</b>, 마지막에 <b>NADPH</b>가 만들어져요.<br><span style="color:#fde68a">ATP ' + nATP + ' · NADPH ' + nNADPH + ' · O₂ ' + nO2 + '</span>');
-      }
-      controls.range('빛의 세기', 0, 100, 5, 70, (v) => { light = v / 100; }, (v) => v + '%');
+      /* 2D(S.th)와 같은 값: 빛 세기 0~10 · 처리(없음 · 물 부족 · 억제제) · 순환적 전자 흐름. 3D에서 바꾸면 2D도 같이 바뀌어요 */
+      const ctlEl = document.querySelector('.v3-ctl');
+      const grp = (fn) => { const n0 = ctlEl ? ctlEl.children.length : 0; fn(); return ctlEl ? Array.prototype.slice.call(ctlEl.children, n0) : []; };
+      const showG = (arr, on) => arr.forEach((e) => { e.style.display = on ? '' : 'none'; });
+      let rngL, segT, segC, pulseB, tracer = null, player;
+      const lesson = () => { const L = ctx.lesson(); return L && L.S && L.S.th ? L : null; };
+      const gLight = grp(() => {
+        rngL = controls.range('빛 세기', 0, 10, 1, 7, (v) => { light = v / 10; const L = lesson(); if (L) { L.S.th.I = v; L.S.thKeep.I = v; const e = document.getElementById(L.S.mode === 'cond' ? 'sL4' : 'sL3'); if (e) e.value = v; L.updateCtl(); } });
+      });
+      const gCond = grp(() => {
+        segT = controls.segment('처리', [{ value: 'none', label: '없음' }, { value: 'dry', label: '💧 물 부족' }, { value: 'dcmu', label: '🧪 억제제' }], 'none', (v) => { treat = v; const L = lesson(); if (L) { L.S.th.treat = v; L.S.thKeep.treat = v; L.updateCtl(); } text(); });
+        segC = controls.segment('순환적 전자 흐름', [{ value: 'off', label: '끔' }, { value: 'on', label: '켬' }], 'off', (v) => { cyc = v === 'on'; const L = lesson(); if (L) { L.S.th.cyc = cyc; L.S.thKeep.cyc = cyc; L.updateCtl(); } text(); });
+      });
+      const gWater = grp(() => { pulseB = controls.button('☀ 빛 펄스 보내기', () => { const L = lesson(); if (L && L.S.mode === 'water') L.thPulse(); else { launch(); } }); });
       const mb = controls.button('전달체 이름표 보기', () => { minor = !minor; mb.classList.toggle('on', minor); mb.textContent = minor ? '전달체 이름표 가리기' : '전달체 이름표 보기'; applyLabels(); });
+      /* ▶ 전자 한 개의 여행: 물 분해 → PQ → 시토크롬 b₆f(H⁺ 펌프) → PC → 광계 Ⅰ → Fd → NADPH */
+      tracer = new THREE.Group();
+      { const c = new THREE.Mesh(new THREE.SphereGeometry(0.2, 18, 14), std(0xfff3a0, { emissive: 0xfde047, emissiveIntensity: 1.1 })); const sh = new THREE.Mesh(new THREE.SphereGeometry(0.42, 20, 16), std(0xfb923c, { transparent: true, opacity: 0.4, depthWrite: false })); tracer.add(c, sh); tracer.userData.sh = sh; tracer.visible = false; root.add(tracer); }
+      const gPlay = grp(() => {
+        player = controls.player({
+          duration: 9, loop: true, autoplay: false, label: '전자의 여행',
+          phases: [[0, '광계 Ⅱ · 물 분해'], [0.12, 'PQ'], [0.3, 'b₆f · H⁺ 펌프'], [0.42, 'PC'], [0.55, '광계 Ⅰ'], [0.7, 'Fd → NADPH']],
+          onFrame(p) {
+            const on = p > 0 || !!(player && player.playing); tracer.visible = on;
+            if (!on) return;
+            tracer.position.copy(path.getPoint(Math.min(0.999, p)));
+            const sh = tracer.userData.sh, u = p;
+            sh.material.color.setHex(u < 0.3 ? 0xfb923c : u < 0.66 ? 0x60a5fa : 0xf87171);
+          },
+        });
+      });
+      function modeCtl() {
+        const L = lesson(), m = L ? L.S.mode : 'cond';
+        showG(gLight, m === 'atp' || m === 'cond' || m === 'abs'); showG(gCond, m === 'cond'); showG(gWater, m === 'water');
+      }
+      let lastM = '', lastP = 0, lastTreat = null;
+      function poll() {
+        const L = lesson(); if (!L) return;
+        const m = L.S.mode, th = L.S.th;
+        if (m !== lastM) { lastM = m; modeCtl(); }
+        if (m === 'water') { light = 0; if (th.pulses !== lastP) { lastP = th.pulses; launch(); } }
+        else { light = m === 'abs' ? light : th.I / 10; rngL.set(th.I); lastP = th.pulses; }
+        if (th.treat !== treat) { treat = th.treat; segT.set(treat); text(); }
+        if (th.cyc !== cyc) { cyc = th.cyc; segC.set(cyc ? 'on' : 'off'); text(); }
+        if (m === 'cond') { segT.set(th.treat); segC.set(th.cyc ? 'on' : 'off'); }
+      }
+      modeCtl();
+      function text() {
+        const note = treat === 'dry' ? '<br><span style="color:#fca5a5">💧 물이 모자라 광계 Ⅱ에 전자를 줄 수 없어요.</span>' : treat === 'dcmu' ? '<br><span style="color:#fca5a5">🧪 억제제가 광계 Ⅱ 뒤의 전자 전달을 막아요.</span>' : cyc ? '<br><span style="color:#a7f3d0">🔁 광계 Ⅰ의 전자가 전달계로 되돌아와요.</span>' : '';
+        info('빛으로 <b>물이 분해</b>되고 전자가 이동해요. H⁺ 기울기로 <b>ATP</b>, 마지막에 <b>NADPH</b>가 만들어져요.<br><span style="color:#fde68a">ATP ' + nATP + ' · NADPH ' + nNADPH + ' · O₂ ' + nO2 + '</span>' + note);
+      }
 
       for (let i = 0; i < 10; i++) addLumenH().s = 1;
-      let spawnAcc = 1, ang = 0, stepAcc = 0, cnt = 0, infoT = 0, w = 0;
+      let cycAcc = 0, spawnAcc = 1, ang = 0, stepAcc = 0, cnt = 0, infoT = 0, w = 0;
       return {
         update(dt) {
           dt = Math.min(dt, 0.05) * (window.__v3dTS || 1);
+          poll();
+          if (cyc && treat === 'dry' && light > 0) { cycAcc += light * 1.0 * dt; if (cycAcc >= 1) { cycAcc = 0; photon(new V(-3.0, 4.8, -0.3), new V(X.I, 1.1, 0.2), () => { flash(psI); flash(b6f); for (let k = 0; k < 2; k++) { const o = addLumenH(new V(X.b6f + (k - 0.5) * 0.4, -0.9, 0)); o.s = 1; o.rise = 0; } }); } }
           spawnAcc += light * 1.2 * dt; if (spawnAcc >= 1 && eps.length < 7) { spawnAcc -= 1; launch(); } else if (spawnAcc >= 1) spawnAcc = 1;
           // 빛 알갱이
           for (let i = photons.length - 1; i >= 0; i--) { const p = photons[i]; p.t += dt; p.m.position.lerpVectors(p.from, p.to, Math.min(1, p.t / p.dur)); if (p.t >= p.dur) { root.remove(p.m); photons.splice(i, 1); p.cb(); } }
@@ -140,7 +190,7 @@
             if (u < 0.3) { sh.material = shellMats.pq; sh.visible = true; } else if (u < 0.36) sh.visible = false; else if (u < 0.66) { sh.material = shellMats.pc; sh.visible = true; } else if (u < 0.74) sh.visible = false; else { sh.material = shellMats.fd; sh.visible = true; }
             if (u > 0.34 && !e.pumped) { e.pumped = true; flash(b6f); for (let k = 0; k < 2; k++) { const m = new THREE.Mesh(hGeo, hMat); const o = addLumenH(new V(X.b6f + (k - 0.5) * 0.4, -0.9, 0)); o.s = 1; o.m.position.set(X.b6f + (k - 0.5) * 0.4, -0.9, 0); o.rise = 0; } }
             if (u > 0.55 && !e.p2) { e.p2 = true; photon(new V(-3.0, 4.8, -0.3), new V(X.I, 1.1, 0.2), () => flash(psI)); }
-            if (u >= 1) { eps.splice(i, 1); root.remove(e.g); nNADPH++; const m = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 12), nadphMat); bit(m, new V(X.fnr + 0.1, -1.4, 0), new V(0.5, -0.9, 0.2), 2.0, -1); flash(fnr); }
+            if (u >= 1) { eps.splice(i, 1); root.remove(e.g); if (cyc) { for (let k = 0; k < 2; k++) { const o = addLumenH(new V(X.b6f + (k - 0.5) * 0.4, -0.9, 0)); o.s = 1; o.rise = 0; } flash(b6f); continue; } nNADPH++; const m = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 12), nadphMat); bit(m, new V(X.fnr + 0.1, -1.4, 0), new V(0.5, -0.9, 0.2), 2.0, -1); flash(fnr); }
           }
           // ATP 합성 효소 · 루멘 H⁺
           const target = Math.round(3 + light * 18), lumenN = lumenH.length;
@@ -176,7 +226,7 @@
           }
           infoT += dt; if (infoT > 0.4) { infoT = 0; text(); }
         },
-        sync() { text(); },
+        sync() { poll(); text(); },
       };
     },
   });

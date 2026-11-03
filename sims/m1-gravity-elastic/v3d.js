@@ -1,6 +1,6 @@
-/* m1-gravity-elastic · 3D 중력의 방향 · 용수철의 탄성력 · 질량과 무게
-   중력은 지구 어디에서나 지구 중심 쪽으로 작용해요 (사과가 지구 중심 쪽으로 떨어져요).
-   용수철에 물체를 매달면 중력(무게)과 용수철의 탄성력이 같아져 멈춰요. 무게 = 질량 × 중력 (지구 9.8 N/kg, 달은 지구의 약 1/6). 질량은 어디서나 같아요. */
+/* m1-gravity-elastic · 3D 중력의 방향 · 용수철의 탄성력 · 질량과 무게 (2D 장면과 같은 구성)
+   중력: 북극·대한민국·남극·적도 반대편 어디서나 지구 중심 쪽. 탄성력: 1 N 추를 단 용수철, 늘어난 길이에 비례. 질량과 무게: 1 kg 물체는 지구 9.8 N, 달 1.6 N.
+   2D의 사과·추·용수철저울 상태를 그대로 읽어 따라가요. ▶ 재생은 장면마다 한 번의 과정(떨어뜨리기 · 추 달기 · 지구에서 달로)을 반복해요. */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -79,10 +79,13 @@
         const n = cols.length; for (let i = 0; i < 16; i++) { c.fillStyle = cols[Math.floor(r() * n)]; c.fillRect(0, i * h / 16, w, h / 16 + 1); }
         c.globalAlpha = 0.25; for (let i = 0; i < 60; i++) { c.fillStyle = cols[Math.floor(r() * n)]; c.beginPath(); c.ellipse(r() * w, r() * h, 8 + r() * 25, 2 + r() * 4, 0, 0, 7); c.fill(); } c.globalAlpha = 1; }); }
 
-      const st = { scene: 'dir', mass: 5, fall: false, ft: 0 };
-      const GE = 9.8, GM = 9.8 / 6;
+      const GE = 9.8, GM = 1.6;       // 2D와 같은 값: 지구 9.8 N/kg, 달 1.6 N/kg (약 1/6)
+      const L2 = () => (ctx.lesson && ctx.lesson()) || null;
+      const cl = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+      const sm = (x) => { x = cl(x, 0, 1); return x * x * (3 - 2 * x); };
+      const rf = (v) => Math.round(v * 10) / 10;
 
-      /* ===== A) 중력의 방향: 지구 둘레의 사과 ===== */
+      /* ===== A) 중력의 방향: 지구 둘레의 사과 (2D의 네 곳: 북극 · 대한민국 · 남극 · 적도 반대편) ===== */
       const A = new THREE.Group(); root.add(A);
       const RE = 2.6;
       const tex = canvasTex(512, 256, (c, w, h) => { c.fillStyle = '#2f7fd8'; c.fillRect(0, 0, w, h); c.fillStyle = '#4caf6a'; let s = 7; const r = () => { s = (s * 16807) % 2147483647; return s / 2147483647; };
@@ -90,80 +93,127 @@
         c.fillStyle = '#f2f6fa'; c.fillRect(0, 0, w, 14); c.fillRect(0, h - 14, w, 14); });
       const earth = new THREE.Mesh(new THREE.SphereGeometry(RE, 64, 48), mat(0xffffff, { map: tex, roughness: 0.75 })); A.add(earth);
       const core = new THREE.Mesh(new THREE.SphereGeometry(0.12, 12, 10), mat(0xffd23f, { emissive: 0x886600 })); A.add(core);
-      const SPOTS = [{ n: '북극', d: [0, 1, 0] }, { n: '남극', d: [0, -1, 0] }, { n: '동쪽 (적도)', d: [1, 0, 0] }, { n: '서쪽 (적도)', d: [-1, 0, 0] }];
+      const SPOTS = [{ n: '북극', deg: 0 }, { n: '대한민국 (북위 약 37°)', deg: 53 }, { n: '남극', deg: 180 }, { n: '적도 반대편', deg: 270 }];
       const HO = 1.6, apples = [];
-      SPOTS.forEach((s, i) => {
-        const d = new V3(...s.d), g = new THREE.Group();
+      SPOTS.forEach((s) => {
+        const r = s.deg * Math.PI / 180, d = new V3(Math.sin(r), Math.cos(r), 0), g = new THREE.Group();
         const ap = new THREE.Mesh(new THREE.SphereGeometry(0.3, 24, 18), mat(0xe53935, { roughness: 0.35 })); g.add(ap);
         const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.2, 8), mat(0x6b4a2b)); stem.position.y = 0.3; g.add(stem);
         const leaf = new THREE.Mesh(new THREE.SphereGeometry(0.1, 10, 8), mat(0x43a047)); leaf.scale.set(1.6, 0.4, 0.9); leaf.position.set(0.12, 0.38, 0); g.add(leaf);
         A.add(g);
         const ar = mkArrow(0xffb020, 0.045); A.add(ar);
-        const lab = label(s.n, g, { size: 11.5, offset: [d.x * 0.7, d.y * 0.7 + 0.1, 0] });
+        const lab = label(s.n, g, { size: 11.5, offset: [d.x * 0.9, d.y * 0.7 + 0.1, 0] });
         apples.push({ g, d, ar, h: HO, lab });
       });
       const gLab = label('지구 중심', core, { size: 11.5, offset: [0.2, -0.45, 0.2] });
       const dirText = label('화살표 = 중력 (모두 지구 중심 쪽)', [0, -RE - 1.4, 0], { size: 12, color: 'rgba(180,110,0,.92)' });
 
-      /* ===== B) 용수철 저울: 지구와 달 ===== */
+      /* ===== B) 용수철: 1 N 추 · 지구와 달의 용수철저울 ===== */
       const B = new THREE.Group(); root.add(B);
       function makeSpring(R, turns) { const pts = []; const n = turns * 14; for (let i = 0; i <= n; i++) { const a = i / 14 * 6.2832, y = -i / n; pts.push(new V3(Math.cos(a) * R, y, Math.sin(a) * R)); }
         const geo = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), n * 2, 0.045, 8, false); return new THREE.Mesh(geo, mat(0xcbd5e1, { metalness: 0.8, roughness: 0.25 })); }
-      const rigs = [];
-      [{ n: '지구', x: -3.2, g: GE, col: 0x2f7fd8, gr: 0x6b4a36 }, { n: '달', x: 3.2, g: GM, col: 0xbdb6a8, gr: 0x8b8578 }].forEach((w) => {
-        const g = new THREE.Group(); g.position.x = w.x; B.add(g);
+      function makeRig(x, name, floorCol, nameCol) {
+        const g = new THREE.Group(); g.position.x = x; B.add(g);
         const top = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.2, 0.6), mat(0x64748b, { metalness: 0.5, roughness: 0.4 })); top.position.y = 3.4; g.add(top);
         const post = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 6.6, 12), mat(0x64748b, { metalness: 0.5 })); post.position.set(-1.1, 0.2, -0.2); g.add(post);
-        const floor = new THREE.Mesh(new THREE.CylinderGeometry(1.8, 2, 0.25, 40), mat(w.gr, { roughness: 0.9 })); floor.position.y = -3.2; g.add(floor);
+        const floor = new THREE.Mesh(new THREE.CylinderGeometry(1.8, 2, 0.25, 40), mat(floorCol, { roughness: 0.9 })); floor.position.y = -3.2; g.add(floor);
         const sp = makeSpring(0.28, 9); sp.position.y = 3.3; g.add(sp);
-        const hook = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.025, 8, 16), mat(0xcbd5e1, { metalness: 0.8 })); g.add(hook);
-        const blk = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.9, 0.9), mat(0x7c8aa0, { metalness: 0.5, roughness: 0.4 })); g.add(blk);
+        const hook = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.025, 8, 16), mat(0xcbd5e1, { metalness: 0.8 })); hook.rotation.x = Math.PI / 2; g.add(hook);
+        const wts = []; for (let i = 0; i < 5; i++) { const w = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.42, 0.62), mat(0xf59e0b, { metalness: 0.4, roughness: 0.4 })); w.visible = false; g.add(w); wts.push(w); }
+        const obj = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.9, 0.9), mat(0x7c8aa0, { metalness: 0.5, roughness: 0.4 })); obj.visible = false; g.add(obj);
         const wA = mkArrow(0xe5484d, 0.07), eA = mkArrow(0x2f6df6, 0.07); g.add(wA, eA);
-        const nl = label(w.n + '에서', [w.x, -3.2, 0], { size: 13, color: w.n === '지구' ? 'rgba(30,80,170,.92)' : 'rgba(90,85,70,.92)', offset: [0, -0.5, 0] });
-        const bl = label('', blk, { size: 12, offset: [0.9, 0, 0] });
-        rigs.push({ g, sp, hook, blk, wA, eA, bl, nl, w });
-      });
+        const nl = label(name, [x, -3.2, 0], { size: 13, color: nameCol, offset: [0, -0.5, 0] });
+        const bl = label('', g, { size: 12, offset: [1.3, 0, 0] });
+        return { g, sp, hook, wts, obj, wA, eA, bl, nl, floor };
+      }
+      const rigS = makeRig(0, '용수철', 0x6b4a36, 'rgba(30,80,170,.92)');
+      const rigE = makeRig(-3.4, '지구', 0x6b4a36, 'rgba(30,80,170,.92)');
+      const rigM = makeRig(3.4, '달', 0x8b8578, 'rgba(90,85,70,.92)');
       const eqLab = label('중력(무게)과 탄성력이 같아서 멈춰요', [0, 3.9, 0], { size: 12, color: 'rgba(60,60,60,.9)' });
-      function layoutB() {
-        rigs.forEach((r) => {
-          const W = st.mass * r.w.g, ext = 0.14 * W / 4 + 0.6 * 0 ; const len = 0.9 + Math.min(3.9, W * 0.045);
-          r.sp.scale.y = len; r.hook.position.y = 3.3 - len - 0.05; r.hook.rotation.x = Math.PI / 2;
-          const by = 3.3 - len - 0.55; r.blk.position.y = by; const s = 0.7 + st.mass * 0.05; r.blk.scale.setScalar(s);
-          const fl = 0.04 * W;
-          setArrow(r.wA, new V3(0.7 + 0.2, by, 0), new V3(0.9, by - fl - 0.3, 0));
-          setArrow(r.eA, new V3(-0.9, by, 0), new V3(-0.9, by + fl + 0.3, 0));
-          r.bl.set(st.mass + ' kg · 무게 <b>' + (Math.round(W * 10) / 10) + ' N</b>');
-        });
+      /* 용수철 하나를 그려요: ext = 늘어난 길이(그림 단위), n = 1 N 추 개수, kg = 물체(1 kg) 달기, W = 무게(N), eN = 탄성력 크기(N)·방향 */
+      function setRig(r, o) {
+        const len = cl(0.9 + o.ext, 0.45, 5.2);
+        r.sp.scale.y = len; r.hook.position.y = 3.3 - len - 0.05;
+        let by = 3.3 - len - 0.12;
+        r.wts.forEach((w, i) => { const on = i < (o.n || 0); w.visible = on; if (on) { w.position.set(0, by - 0.21, 0); by -= 0.44; } });
+        r.obj.visible = !!o.kg; if (o.kg) { r.obj.position.y = 3.3 - len - 0.62; by = r.obj.position.y - 0.45; }
+        const ay = (o.kg ? 3.3 - len - 0.62 : by + 0.2);
+        const W = o.W || 0, fl = 0.1 * W;
+        if (W > 0.05) {
+          setArrow(r.wA, new V3(0.75, ay, 0), new V3(0.75, ay - fl - 0.3, 0)); setArrow(r.eA, new V3(-0.75, ay, 0), new V3(-0.75, ay + o.eUp * (fl + 0.3), 0));
+          r.eA.visible = Math.abs(o.eUp) > 0.05;
+        } else { r.wA.visible = false; r.eA.visible = false; }
+        r.bl.set(o.txt || ''); r.bl.show(!!o.txt);
       }
-      function text() {
-        if (st.scene === 'dir') info('중력은 지구 어디에서나 <b>지구 중심 쪽</b>으로 작용해요.<br>그래서 북극·남극·적도의 사과가 모두 <b>지구 중심 쪽(아래)</b>으로 떨어져요.<br>아래 = 지구 중심 방향이에요.');
-        else info('<b>무게</b> = 질량 × 중력이에요. 지구 ' + (Math.round(st.mass * GE * 10) / 10) + ' N, 달 ' + (Math.round(st.mass * GM * 10) / 10) + ' N (지구의 약 1/6).<br>용수철은 늘어난 만큼 <b>탄성력</b>이 생겨 무게와 같아질 때 멈춰요.<br><b>질량</b>은 달에서도 ' + st.mass + ' kg 그대로예요.');
+
+      /* ---- ▶ 재생: 장면에 맞게 한 번의 과정을 반복 ---- */
+      let pmode = false, built = false, pP = 0, sig = '', lastTxt = '';
+      const pl = controls.player({
+        duration: 10, loop: true, autoplay: false, label: '재생', phases: [[0, '']],
+        onFrame(p) { if (!built) return; pmode = true; pP = p; },
+      });
+      built = true;
+      const phEl = () => document.querySelector('.v3-player .v3-ph');
+      const setInfo = (h) => { if (h !== lastTxt) { lastTxt = h; info(h); } };
+      let cur = '';
+      function setView(v) {
+        cur = v; A.visible = v === 'G'; B.visible = v !== 'G';
+        const gv = v === 'G';
+        apples.forEach((a) => a.lab.show(gv)); gLab.show(gv); dirText.show(gv);
+        rigS.g.visible = v === 'S'; rigE.g.visible = rigM.g.visible = v === 'W';
+        [rigS, rigE, rigM].forEach((r) => { r.nl.show(false); r.bl.show(false); });
+        rigE.nl.show(v === 'W'); rigM.nl.show(v === 'W'); rigS.nl.show(v === 'S'); eqLab.show(v === 'S');
+        orb.dist = (PHN0 ? 1.05 : 1) * (gv ? 17 : v === 'S' ? 14 : 17);
       }
-      function setScene(v) {
-        st.scene = v; A.visible = v === 'dir'; B.visible = v === 'sp';
-        apples.forEach((a) => { a.lab.show(v === 'dir'); }); gLab.show(v === 'dir'); dirText.show(v === 'dir');
-        rigs.forEach((r) => { r.bl.show(v === 'sp'); r.nl.show(v === 'sp'); }); eqLab.show(v === 'sp'); massWrap.forEach((e) => { e.style.display = v === 'sp' ? '' : 'none'; }); dropB.style.display = v === 'dir' ? '' : 'none';
-        root.rotation.y = 0; text();
-      }
-      const seg = controls.segment('', [{ value: 'dir', label: '🍎 중력의 방향' }, { value: 'sp', label: '⚖ 용수철과 무게' }], 'dir', (v) => setScene(v));
-      const dropB = controls.button('🍎 사과 떨어뜨리기', () => { st.fall = true; st.ft = 0; });
-      const mr = controls.range('질량', 1, 10, 1, st.mass, (v) => { st.mass = v; layoutB(); text(); }, (v) => v + ' kg');
-      const massWrap = Array.from(dropB.parentElement.children).slice(-2);
-      layoutB(); setScene('dir');
+      const orb = ctx.orbit;
 
       return {
         update(dt, t) {
-          if (st.scene === 'dir') {
-            if (st.fall) { st.ft += dt; if (st.ft > 2.2) { st.fall = false; } }
-            const k = st.fall ? Math.min(1, st.ft / 1.0) : 0, hh = HO * (1 - k * k), bounce = st.fall && st.ft > 1.0 ? Math.max(0, 1 - (st.ft - 1.0) * 0.9) : 1;
-            apples.forEach((a) => {
-              const h = st.fall ? Math.max(0.3, hh) : HO + 0.08 * Math.sin(t * 2 + a.d.x * 3 + a.d.y);
+          const l = L2(), sc0 = l ? l.scene : 'G';
+          const sc = sc0 === 'G' ? 'G' : sc0 === 'S' ? 'S' : sc0 === 'W' ? 'W' : (cur || 'G');
+          const SP = l && l.SP, K = l && l.G && l.G.kids;
+          const key = [sc, K && K.map((k) => k.st).join(''), SP && SP.items.map((i) => i.att ? 1 : 0).join(''), SP && !!SP.hand].join();
+          if (key !== sig) { sig = key; if (pmode) { pmode = false; pl.pause(); } }
+          if (sc !== cur) setView(sc);
+          const ph = phEl();
+          if (sc === 'G') {
+            apples.forEach((a, i) => {
+              const k = K && K[i];
+              let h;
+              if (pmode) {
+                // 들고 있어요(0~0.25) → 떨어져요(~0.5) → 땅에 닿아요 → 다시 들어 올려요(0.85~1)
+                const q = pP; h = q < 0.25 ? HO : q < 0.5 ? HO - (HO - 0.3) * sm((q - 0.25) / 0.25) * 0 - (HO - 0.3) * Math.pow((q - 0.25) / 0.25, 2) : q < 0.85 ? 0.3 : 0.3 + (HO - 0.3) * sm((q - 0.85) / 0.15);
+              } else if (k) {
+                h = k.st === 'fall' ? HO - (HO - 0.3) * Math.pow(cl(k.t / 0.6, 0, 1), 2) : k.st === 'land' ? 0.3 : k.st === 'pick' ? 0.3 + (HO - 0.3) * sm(k.t / 0.42) : HO + 0.08 * Math.sin(t * 2 + i);
+              } else h = HO;
               const p = a.d.clone().multiplyScalar(RE + h); a.g.position.copy(p); a.g.quaternion.setFromUnitVectors(new V3(0, 1, 0), a.d);
-              const al = 1.15; setArrow(a.ar, p.clone().add(a.d.clone().multiplyScalar(-0.35)), p.clone().add(a.d.clone().multiplyScalar(-0.35 - al)));
-              a.ar.visible = true;
+              const falling = pmode ? (pP >= 0.25 && pP < 0.85) : !!(k && (k.st === 'fall' || k.st === 'land'));
+              setArrow(a.ar, p.clone().add(a.d.clone().multiplyScalar(-0.35)), p.clone().add(a.d.clone().multiplyScalar(-0.35 - 1.15))); a.ar.visible = true;
             });
             core.scale.setScalar(1 + 0.15 * Math.sin(t * 3));
-          } else { rigs.forEach((r) => { r.blk.rotation.y += dt * 0.3; }); }
+            if (ph) ph.textContent = pmode ? (pP < 0.25 ? '들고 있어요' : pP < 0.5 ? '떨어져요' : pP < 0.85 ? '땅에 닿아요' : '다시 들어 올려요') : '';
+            setInfo('<b>중력</b>은 지구가 물체를 <b>지구 중심</b> 쪽으로 끌어당기는 힘이에요.<br>북극·대한민국·남극·적도 반대편 어디에서나 사과는 <b>지구 중심 쪽</b>(아래)으로 떨어져요.<br>' + (pmode ? '' : '옆의 2D 장면에서 사과를 눌러 떨어뜨려 보세요. 아래 = 지구 중심 방향이에요.'));
+          } else if (sc === 'S') {
+            const N = SP ? SP.items.filter((i) => i.att).length : 0;
+            let n, ext, hand = false;
+            if (pmode) { const q = pP < 0.8 ? sm(pP / 0.8) : 1 - sm((pP - 0.8) / 0.2); n = Math.round(5 * q); ext = 0.7 * n; }
+            else { n = SP ? l.loadN() : 0; ext = SP ? cl(SP.x / l.CMPX * 0.35, -0.8, 3.6) : 0; hand = !!(SP && SP.hand); }
+            const dev = hand ? Math.sign(ext) : 0;
+            setRig(rigS, { n, ext, W: n, eUp: hand ? -Math.sign(ext) : 1, txt: n ? '추 ' + n + '개 = ' + n + ' N' : '' });
+            if (hand && Math.abs(ext) > 0.1) { setArrow(rigS.eA, new V3(-0.75, 1.0, 0), new V3(-0.75, 1.0 - Math.sign(ext) * 1.1, 0)); rigS.eA.visible = true; }
+            if (ph) ph.textContent = pmode ? (pP < 0.8 ? '추를 하나씩 달아요' : '추를 내려요') : '';
+            setInfo('<b>탄성력</b>은 변형된 용수철이 원래 모양으로 되돌아가려는 힘이에요. 방향은 변형된 방향과 <b>반대</b>이고, 크기는 <b>늘어난 길이에 비례</b>해요.<br>' + (n ? '1 N 추 <b>' + n + '개</b>를 달면 무게 ' + n + ' N = 탄성력 ' + n + ' N이 되어 멈춰요 (늘어난 길이 ' + rf(Math.max(0, pmode ? n * 2 : (SP ? SP.x / l.CMPX : 0))) + ' cm).' : '옆의 2D 장면에서 추를 달거나 용수철을 늘이고 눌러 보세요.'));
+          } else if (sc === 'W') {
+            const loadE = pmode ? (pP < 0.45 ? sm(pP / 0.1) * (1 - sm((pP - 0.4) / 0.05)) : 0) : (l && l.SC && l.SC.E.item ? 1 : 0);
+            const loadM = pmode ? (pP > 0.5 && pP < 0.95 ? sm((pP - 0.5) / 0.1) * (1 - sm((pP - 0.9) / 0.05)) : 0) : (l && l.SC && l.SC.M.item ? 1 : 0);
+            setRig(rigE, { kg: loadE > 0.02, ext: 0.3 * GE * loadE * 0.55, W: GE * loadE, eUp: 1, txt: loadE > 0.02 ? '1 kg · 무게 ' + rf(GE) + ' N' : '' });
+            setRig(rigM, { kg: loadM > 0.02, ext: 0.3 * GM * loadM * 0.55, W: GM * loadM, eUp: 1, txt: loadM > 0.02 ? '1 kg · 무게 ' + rf(GM) + ' N' : '' });
+            rigE.obj.scale.setScalar(1); rigM.obj.scale.setScalar(1);
+            if (ph) ph.textContent = pmode ? (pP < 0.45 ? '지구에서 재요' : pP < 0.5 ? '달로 옮겨요' : pP < 0.95 ? '달에서 재요' : '') : '';
+            setInfo('<b>질량</b>은 물체의 고유한 양(1 kg)으로 장소가 바뀌어도 변하지 않아요. <b>무게</b>는 중력의 크기(N)로 장소에 따라 달라요.<br>1 kg 물체의 무게: 지구 <b>' + GE + ' N</b>, 달 <b>' + GM + ' N</b> (지구의 약 1/6).' + (pmode ? '' : ' 옆의 2D 장면에서 용수철저울과 양팔저울로 재 보세요.'));
+          } else {
+            setInfo('<b>생활 속 중력과 탄성력</b> 문제는 2D 화면에서 풀어 보세요. 용수철저울은 탄성력이 늘어난 길이에 비례하는 성질로 무게를 재요.');
+          }
         },
         sync() {},
       };

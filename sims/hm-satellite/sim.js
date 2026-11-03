@@ -810,6 +810,7 @@
   /* ---------- 디버그 (Playwright) ---------- */
   window.__sim = {
     S, VW, VH, get game() { return game; }, setScene, setFlag, obLaunch, obReady, obRelaunch, vcNow, meRecord, mapPos, periodOf, GEO_R, GEO_H, massOf, MASSES, seen, ordV, RULES_C, orbitCircular,
+    BODIES, eff, RE_: RE, GM_E_: GM_E,
     stepAll(sec) { const n = Math.ceil(sec / 0.02); for (let i = 0; i < n; i++) { obStep(0.02); orbitWatch(); geStep(0.02); } },
   };
 })();

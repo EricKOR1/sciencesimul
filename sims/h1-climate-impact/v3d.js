@@ -1,7 +1,7 @@
 /* h1-climate-impact · 3D 태평양 단면 (엘니뇨와 라니냐)
    적도 태평양의 단면: 서쪽(왼쪽) 필리핀·인도네시아 ~ 동쪽(오른쪽) 페루 앞바다.
    무역풍이 센 평상시에는 따뜻한 표층수가 서쪽에 두껍게 쌓이고, 동쪽에서는 찬 심층수가 올라와(용승) 멸치가 많아요.
-   무역풍이 약해지면(엘니뇨) 따뜻한 물이 동쪽으로 퍼지고 용승이 약해져요. 2D 실험의 무역풍 세기 값(0~100)과 같은 값이에요. */
+   무역풍이 약해지면(엘니뇨) 따뜻한 물이 동쪽으로 퍼지고 용승이 약해져요. 2D 실험의 무역풍 세기 값(0~100)과 같은 값이에요. 2D 슬라이더와 3D 슬라이더·바로가기·▶ 재생은 서로 같은 값을 바꿔요(2D의 setWind). */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -22,9 +22,12 @@
       const S0 = window.__sim && window.__sim.S;
       const st = { w: S0 && typeof S0.w === 'number' ? S0.w : 50, wS: 50, lastS: S0 ? S0.w : null, t: 0 };
       st.wS = st.w;
-      const aOf = (w) => { const P = [[0, 2.6], [30, 0.5], [40, 0.25], [60, -0.25], [70, -0.5], [100, -1.6]]; w = Math.max(0, Math.min(100, w)); for (let i = 1; i < P.length; i++) if (w <= P[i][0]) return P[i - 1][1] + (P[i][1] - P[i - 1][1]) * (w - P[i - 1][0]) / (P[i][0] - P[i - 1][0]); return -1.6; };
+      const aLocal = (w) => { const P = [[0, 2.6], [30, 0.5], [40, 0.25], [60, -0.25], [70, -0.5], [100, -1.6]]; w = Math.max(0, Math.min(100, w)); for (let i = 1; i < P.length; i++) if (w <= P[i][0]) return P[i - 1][1] + (P[i][1] - P[i - 1][1]) * (w - P[i - 1][0]) / (P[i][0] - P[i - 1][0]); return -1.6; };
+      const L2 = () => (ctx.lesson && ctx.lesson()) || null;
+      const aOf = (w) => { const L = L2(); return L && L.aOf ? L.aOf(w) : aLocal(w); };
+      const THR = () => { const L = L2(); return L && L.K && L.K.THR ? L.K.THR : 0.5; };
       const pOf = (w) => Math.max(-0.6, Math.min(1, aOf(w) / 2.6));    // 0 평상시, 1 강한 엘니뇨, <0 라니냐
-      const catOf = (w) => (aOf(w) >= 0.5 ? 'el' : aOf(w) <= -0.5 ? 'la' : 'no');
+      const catOf = (w) => { const a = Math.round(aOf(w) * 10) / 10; return a >= THR() ? 'el' : a <= -THR() ? 'la' : 'no'; };
 
       /* ---------- 바닷물 단면: 위쪽 따뜻한 물층 + 아래 찬물 ---------- */
       // 수온약층 깊이 d(x): 평상시 서쪽 깊고 동쪽 얕음 (0~1: 위에서 아래로의 비율)
@@ -145,13 +148,24 @@
         const txt = { no: '<b>평상시</b>: 무역풍이 보통이라 따뜻한 물이 서쪽에 모이고, 동쪽은 찬 물이 올라와요(용승). 멸치가 많아요.',
           el: '<b>엘니뇨</b>: 무역풍이 약해져 따뜻한 물이 동쪽으로 퍼져요. 용승이 약해져 멸치가 줄고, 비구름도 동쪽으로 옮겨 가요.',
           la: '<b>라니냐</b>: 무역풍이 매우 강해 따뜻한 물이 서쪽에 더 쏠려요. 용승이 더 활발해요.' }[c];
-        info(txt);
+        const fi = Math.round(100 * Math.max(0.1, Math.min(1, 0.8 - 0.28 * a)) / 0.8);
+        info(txt + '<br>멸치 어획 지수 <b>' + fi + '</b> (평상시 = 100)');
         cloudTarget = -4.2 + (sm(0, 1, Math.max(0, Math.min(1, a / 2.6))) * 6.2) + (a < 0 ? a * 0.8 : 0);
       }
       let cloudTarget = -4.2;
-      const rngW = controls.range('무역풍 세기', 0, 100, 1, st.w, (v) => { st.w = v; seg.set(-1); }, (v) => (v <= 30 ? v + ' (약함)' : v >= 70 ? v + ' (매우 강함)' : v + ' (보통)'));
-      const seg = controls.segment('바로가기', [{ value: 50, label: '평상시' }, { value: 15, label: '엘니뇨' }, { value: 90, label: '라니냐' }], -1, (v) => { st.w = v; rngW.set(v); });
-      let lastW = -1;
+      const setW = (v) => { st.w = v; const L = L2(); if (L && L.setWind) { st.lastS = v; L.setWind(v); } };
+      const rngW = controls.range('무역풍 세기', 0, 100, 1, st.w, (v) => { setW(v); seg.set(-1); }, (v) => (v <= 30 ? v + ' (약함)' : v >= 70 ? v + ' (매우 강함)' : v + ' (보통)'));
+      const seg = controls.segment('바로가기', [{ value: 50, label: '평상시' }, { value: 15, label: '엘니뇨' }, { value: 90, label: '라니냐' }], -1, (v) => { setW(v); rngW.set(v); });
+      let lastW = -1, internal = true;
+      // ▶ 재생: 평상시 → 엘니뇨 → 평상시 → 라니냐 → 평상시 (무역풍 세기가 바뀌는 한 주기)
+      const KEYS = [[0, 50], [0.2, 15], [0.4, 50], [0.7, 90], [0.9, 50], [1, 50]];
+      const wOf = (p) => { for (let i = 1; i < KEYS.length; i++) if (p <= KEYS[i][0]) { const a = KEYS[i - 1], b = KEYS[i], u = (p - a[0]) / (b[0] - a[0] || 1), e = u * u * (3 - 2 * u); return a[1] + (b[1] - a[1]) * e; } return 50; };
+      controls.player({
+        duration: 12, loop: true, label: '무역풍이 바뀌면',
+        phases: [[0, '평상시 → 엘니뇨'], [0.2, '엘니뇨 → 평상시'], [0.4, '평상시 → 라니냐'], [0.7, '라니냐 → 평상시'], [0.9, '평상시']],
+        onFrame(p) { if (internal) return; const v = Math.round(wOf(p)); if (v !== st.w) { setW(v); rngW.set(v); seg.set(-1); } },
+      });
+      internal = false;
 
       return {
         update(dt, t) {

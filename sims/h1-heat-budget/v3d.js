@@ -1,7 +1,8 @@
 /* h1-heat-budget · 3D 지구의 열수지 (지표-대기 단면 블록)
-   입사하는 태양 복사 에너지를 100으로 놓고, 반사·흡수·지구 복사의 크기를 화살표 굵기로 보여 줘요 (2D 실험의 값과 같아요).
-   반사 30 · 대기 흡수 20 · 지표 흡수 50 / 지표 복사 114 · 대기가 되돌려 보내는 복사 92 · 우주로 나가는 복사 70.
-   온실 기체가 늘면 되돌아오는 복사가 늘어 지표가 더 데워져요. (크기와 비율은 보기 좋게 줄인 모형이에요) */
+   입사하는 태양 복사 에너지를 100으로 놓고, 반사·흡수·지구 복사의 크기를 화살표 굵기로 보여 줘요 (2D 실험과 같은 값이에요).
+   반사 30 · 대기 흡수 20 · 지표 흡수 50 / 지표 복사 114 · 되돌아오는 복사 92 · 우주로 방출 70 · 증발 22 · 대류·전도 6.
+   화살표의 값, 분자 수, CO₂ 농도, 되먹임(수증기·빙하)은 2D 상태(window.__sim)를 그대로 따라가고, 3D의 CO₂ 슬라이더·되먹임 단추는 2D를 바꿔요.
+   (크기와 비율은 보기 좋게 줄인 모형이에요) */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -13,12 +14,13 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHN ? 21 : 18.5, theta: 0.28, phi: 1.28, target: [0, 4.3, 0], min: 8, max: 36 },
     autoRotate: 0,
-    levels: [0, 1],
+    levels: [1, 2],
     build(ctx) {
       const { THREE, root, scene, label, info, controls } = ctx;
       const V3 = THREE.Vector3, Y = new V3(0, 1, 0);
       const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ envMapIntensity: 0.6, color: c, roughness: 0.6, metalness: 0.05 }, o || {}));
-      const st = { gas: 1, show: 'all', t: 0 };
+      const st = { show: 'all', t: 0 };
+      const L2 = () => (ctx.lesson && ctx.lesson()) || null;
 
       /* ---------- 땅 · 바다 · 대기 ---------- */
       const GW = 13, GD = 5;
@@ -61,11 +63,10 @@
         const h1 = new THREE.Mesh(new THREE.SphereGeometry(0.11, 12, 8), hMat), h2 = h1.clone(); h1.position.set(-0.2, -0.15, 0); h2.position.set(0.2, -0.15, 0); g.add(o, h1, h2); return g;
       }
       let seed = 11; const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
-      const NMAX = 34;
+      const NMAX = 38;
       for (let i = 0; i < NMAX; i++) { const g = co2(); g.userData = { kind: 'co2', b: new V3(-5.8 + rnd() * 11.6, 0.9 + rnd() * 3.3, -2 + rnd() * 4), ph: rnd() * 6.28, i }; root.add(g); mols.push(g); }
-      for (let i = 0; i < 8; i++) { const g = h2o(); g.userData = { kind: 'h2o', b: new V3(-5.5 + rnd() * 11, 0.8 + rnd() * 3.4, -2 + rnd() * 4), ph: rnd() * 6.28, i: 0 }; root.add(g); mols.push(g); }
-      const nCO2 = () => (st.gas === 0 ? 8 : st.gas === 1 ? 16 : 32);
-
+      for (let i = 0; i < 16; i++) { const g = h2o(); g.userData = { kind: 'h2o', b: new V3(-5.5 + rnd() * 11, 0.8 + rnd() * 3.4, -2 + rnd() * 4), ph: rnd() * 6.28, i: 0 }; root.add(g); mols.push(g); }
+      
       /* ---------- 화살표 (굵기 = 에너지의 양) ---------- */
       const arrows = [];
       function flux(name, a, b, col, val, kind, o) {
@@ -92,36 +93,78 @@
       const aRs = flux('지표 복사', [2.2, 0.15, 0.4], [2.2, 4.35, 0.4], IR_C, 114, 'ir');
       const aBk = flux('되돌아오는 복사', [4.4, 4.2, -0.2], [4.4, 0.15, -0.2], 0xf0506a, 92, 'ir');
       const aOut = flux('우주로 방출', [0.4, 4.6, 0], [0.4, 8.8, 0], IR_C, 70, 'ir');
-      const labs = {};
-      const mk = (A, off) => { A.lab = label(A.name + ' ' + A.val, A.g, { size: 12, color: A.kind === 'sun' ? 'rgba(160,100,0,.95)' : 'rgba(190,24,60,.95)', offset: off }); };
-      mk(aIn, [-0.9, 0.9, 0]); mk(aRef, [1.3, 0, 0]); mk(aAtm, [1.2, -0.4, 0]); mk(aSrf, [1.1, 0.2, 0]); mk(aRs, [-1.1, 1.8, 0]); mk(aBk, [1.2, 1.8, 0]); mk(aOut, [1.3, 2.2, 0]);
-      // 선택한 화살표의 라벨 위치는 화살표 중심
+      const aE = flux('증발', [5.7, 0.15, 1.0], [5.7, 3.1, 1.0], 0x38bdf8, 22, 'wat');
+      const aC = flux('대류·전도', [-0.9, 0.15, 1.2], [-0.9, 2.3, 1.2], 0xea580c, 6, 'wat');
+      const KEY = new Map([[aRef, 'R'], [aAtm, 'Aa'], [aSrf, 'Sa'], [aRs, 'Rs'], [aBk, 'B'], [aOut, 'O'], [aE, 'E'], [aC, 'C']]);
+      const mk = (A, off) => { A.lab = label(A.name + ' ' + A.val, A.g, { size: 12, color: A.kind === 'sun' ? 'rgba(160,100,0,.95)' : A.kind === 'ir' ? 'rgba(190,24,60,.95)' : 'rgba(3,105,161,.95)', offset: off }); };
+      mk(aIn, [-0.9, 0.9, 0]); mk(aRef, [1.3, 0, 0]); mk(aAtm, [1.2, -0.4, 0]); mk(aSrf, [1.1, 0.2, 0]); mk(aRs, [-1.1, 1.8, 0]); mk(aBk, [1.2, 1.8, 0]); mk(aOut, [1.3, 2.2, 0]); mk(aE, [0.9, 1.4, 0]); mk(aC, [-1.0, 1.0, 0]);
       arrows.forEach((A) => { A.lab.obj = A.mid = new THREE.Object3D(); A.mid.position.copy(A.a).lerp(A.b, 0.5); root.add(A.mid); });
 
+      /* ---------- 2D 상태를 따라가요 ---------- */
+      let sigA = '';
       function apply() {
-        const f = st.gas;           // 0 적게 / 1 현재 / 2 많이
-        const bk = [70, 92, 112][f] , rs = [90, 114, 126][f];
-        aBk.val = bk; aRs.val = rs;
-        arrows.forEach((A) => {
-          const hide = (st.show === 'sun' && A.kind === 'ir') || (st.show === 'ir' && A.kind === 'sun');
-          A.g.visible = !hide; A.lab.show(!hide);
-          layout(A);
-          A.lab.set(f === 1 || (A !== aBk && A !== aRs) ? A.name + ' ' + A.val : A.name + (f === 0 ? ' ▼' : ' ▲'));
-        });
-        const n = nCO2(); let k = 0;
-        mols.forEach((m) => { if (m.userData.kind === 'co2') { m.visible = k < n; k++; } });
-        const t = ['적게', '지금', '2배 가까이'][f];
-        if (f === 1) info('입사한 햇빛 <b>100</b> 중 30은 반사되고, 나머지 <b>70</b>이 지구에 흡수돼요.<br>지구는 같은 양(70)을 우주로 내보내서 <b>균형</b>을 이뤄요.');
-        else if (f === 2) info('온실 기체가 늘면 대기가 <b>되돌려 보내는 복사</b>가 늘어요.<br>지표가 더 데워지는 것이 <b>온실 효과 강화</b>예요.');
-        else info('온실 기체가 적으면 되돌아오는 복사가 줄어 지표가 <b>덜 데워져요</b>.<br>화살표 굵기는 에너지의 양이에요.');
+        const S = L2(), SS = S && S.S, bi = S && S.budgetI ? S.budgetI(SS.dT, SS.N, SS.iceS) : null;
+        const base = S && S.budgetI ? S.budgetI(0, 0, 0) : null, mode = SS ? SS.mode : 'gh';
+        const sig = (bi ? JSON.stringify(bi) : '') + st.show + mode + (S && S.board ? S.board.cards.map((c) => c.zone || '').join('') : '');
+        if (sig !== sigA) {
+          sigA = sig;
+          arrows.forEach((A) => {
+            const id = KEY.get(A);
+            if (id && bi) A.val = bi[id];
+            const hide = (st.show === 'sun' && A.kind === 'ir') || (st.show === 'ir' && A.kind === 'sun') || (st.show !== 'all' && A.kind === 'wat');
+            A.g.visible = !hide; A.lab.show(!hide);
+            layout(A);
+            let txt = A.name + ' ' + A.val;
+            if (id && base && bi && bi[id] !== base[id]) txt += bi[id] > base[id] ? ' ▲' : ' ▼';
+            // 열수지 그림 완성하기 단계: 아직 카드를 놓지 않은 칸은 값을 숨겨요
+            if (mode === 'budget' && id && S.board && ['R', 'Aa', 'Sa', 'Rs', 'B', 'O'].indexOf(id) >= 0) { const c = S.board.cards.find((q) => q.zone === id); txt = A.name + ' ' + (c ? c.v : '?'); }
+            A.lab.set(txt);
+          });
+        }
+        // 분자 수 (2D와 같은 식)
+        if (SS && S.K) {
+          const wantCO2 = Math.round(18 * SS.cs / S.K.C0), wantH2O = Math.round(12 * (1 + S.K.VAP_RISE * SS.vapS * SS.dT));
+          let a = 0, b = 0; mols.forEach((m) => { if (m.userData.kind === 'co2') { m.visible = a < wantCO2; a++; } else { m.visible = b < wantH2O; b++; } });
+        }
+        let h;
+        if (!SS) h = '입사한 햇빛 <b>100</b> 중 30은 반사되고, 나머지 <b>70</b>이 지구에 흡수돼요.';
+        else if (mode === 'budget') h = '입사한 햇빛 <b>100</b>은 반사 <b>30</b> · 대기 흡수 <b>20</b> · 지표 흡수 <b>50</b>으로 나뉘어요.<br>지구는 같은 양(70)을 우주로 내보내 <b>균형</b>을 이뤄요. 화살표 굵기는 에너지의 양이에요.';
+        else if (mode === 'emit') h = '온실 기체의 배출과 흡수는 2D 그래프에서 확인해요.<br>이 그림은 지금 열수지를 보여 줘요. 화살표 굵기는 에너지의 양이에요.';
+        else {
+          const sg = (x) => (Math.round(x * 10) / 10 >= 0 ? '+' : '−') + Math.abs(Math.round(x * 10) / 10).toFixed(1);
+          h = '이산화 탄소 <b>' + Math.round(SS.c) + ' ppm</b> · 기온 <b>' + sg(SS.dT) + ' °C</b> · 에너지 불균형 <b>' + sg(SS.N) + '</b><br>' +
+            (mode === 'fb' ? '되먹임: 수증기 <b>' + (SS.vap ? '켬' : '끔') + '</b> · 빙하 <b>' + (SS.ice ? '켬' : '끔') + '</b>. 빙하가 줄면 반사가 줄고, 수증기가 늘면 되돌아오는 복사가 늘어요.' : '온실 기체가 늘면 <b>되돌아오는 복사</b>가 늘어 지표가 더 데워져요. 새 평형에서 들어오는 에너지와 나가는 에너지가 다시 같아져요.');
+        }
+        if (h !== apply.h) { apply.h = h; info(h); }
       }
-      controls.segment('온실 기체', [{ value: 0, label: '적게' }, { value: 1, label: '지금' }, { value: 2, label: '많이' }], 1, (v) => { st.gas = v; apply(); });
+      // 조작 (2D의 슬라이더 · 되먹임 단추를 대신 눌러 줘요)
+      const probe = controls.text(''); probe.style.display = 'none'; const ctlRow = probe.parentElement;
+      const grab = (fn) => { const before = new Set(ctlRow.children); fn(); return Array.from(ctlRow.children).filter((c) => !before.has(c)); };
+      let internal = true, rng, pl;
+      const gGh = grab(() => {
+        rng = controls.range('CO₂ 농도', 280, 560, 10, 280, (v) => { const S = L2(); if (S && S.setC) S.setC(v); internal = true; pl.set((v - 280) / 280); internal = false; }, (v) => v + ' ppm');
+        pl = controls.player({
+          duration: 12, loop: true, label: 'CO₂ 늘리기', phases: [[0, '산업화 이전 280'], [0.45, '현재 420'], [0.95, '두 배 560']],
+          onFrame(p) { if (internal) return; const S = L2(); if (S && S.setC) S.setC(Math.round((280 + 280 * p) / 10) * 10); },
+        });
+      });
+      const fbBtns = [['vap', '💧 수증기 증가'], ['ice', '🧊 빙하 감소']];
+      const fbEls = [];
+      const gFb = grab(() => {
+        fbBtns.forEach(([k, txt]) => { const b = controls.button(txt, () => { const el = document.querySelector('#fbBtns [data-fb="' + k + '"]'); if (el) el.click(); }); fbEls.push([k, b]); });
+      });
       controls.segment('복사', [{ value: 'all', label: '모두' }, { value: 'sun', label: '태양 복사' }, { value: 'ir', label: '지구 복사' }], 'all', (v) => { st.show = v; apply(); });
+      internal = false;
       apply();
 
       return {
         update(dt, t) {
           st.t += dt;
+          apply();
+          { const S = L2(), SS = S && S.S, mode = SS ? SS.mode : 'gh';
+            gGh.forEach((e) => { e.style.display = mode === 'gh' ? '' : 'none'; }); gFb.forEach((e) => { e.style.display = mode === 'fb' ? '' : 'none'; });
+            if (SS && mode === 'gh') { if (Math.abs(rng.value - SS.c) > 0.5) rng.set(SS.c); if (!pl.playing && Math.abs(pl.p - (SS.c - 280) / 280) > 0.01) { internal = true; pl.set((SS.c - 280) / 280); internal = false; } }
+            if (SS && mode === 'fb') fbEls.forEach(([k, b]) => b.classList.toggle('on', !!SS[k])); }
           mols.forEach((m) => {
             const u = m.userData; if (!m.visible) return;
             m.position.set(u.b.x + Math.sin(t * 0.5 + u.ph) * 0.35, u.b.y + Math.sin(t * 0.7 + u.ph * 2) * 0.25, u.b.z + Math.cos(t * 0.45 + u.ph) * 0.3);

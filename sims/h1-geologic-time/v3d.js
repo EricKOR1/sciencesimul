@@ -1,6 +1,7 @@
 /* h1-geologic-time · 3D 지층 기둥과 화석
-   아래 지층일수록 오래되었고(지층 누중), 지질시대마다 대표 화석이 달라요.
-   시대 이름과 연대는 2D 실험(ERAS)과 같아요. 크기와 두께는 보기 좋게 줄인 모형이에요. */
+   2D 실험과 같아요: 절벽 단면의 지층 6겹(위 = 새로움, 아래 = 오래됨)을 위에서부터 차례로 파면 층마다 다른 화석이 나오고,
+   화석이 크게 바뀌는 경계가 3곳 있어요. 지질시대 이름과 연대는 2D의 ERAS와 같아요. (▶ 재생: 아래 지층부터 쌓이는 순서)
+   2D에서 파낸 지층(ST.dug)과 3D가 서로 맞춰져요. */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -9,19 +10,29 @@
   window.SciSim3D.attach({
     title: '3D 지층과 화석',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: PHN ? 16 : 11.5, theta: 0.45, phi: 1.2, target: [0, 3, 0], min: 7, max: 30 },
-    autoRotate: 0.18,
-    levels: [0, 1],
+    camera: { dist: PHN ? 16 : 11.5, theta: 0.45, phi: 1.2, target: [0, 3.1, 0], min: 7, max: 30 },
+    autoRotate: 0.12,
+    levels: [0],
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ envMapIntensity: 0.6, color: c, roughness: 0.85, metalness: 0.02 }, o || {}));
-      const W = 6.4, D = 4.2;
-      const ERA = [
-        { key: 'pre', name: '선캄브리아시대', yr: '46억~5.4억 년 전', h: 1.7, bands: [0x6c5d4c, 0x7a6a55, 0x5f5242, 0x84735c], col: '#8a7a64' },
-        { key: 'pal', name: '고생대', yr: '5.4억~2.5억 년 전', h: 1.5, bands: [0x3f8a63, 0x56a07a, 0x34765a, 0x62ad84], col: '#2fa56b' },
-        { key: 'mes', name: '중생대', yr: '2.5억~6600만 년 전', h: 1.5, bands: [0xc9803a, 0xdc9550, 0xb86f2f, 0xe3a566], col: '#e08a2e' },
-        { key: 'cen', name: '신생대', yr: '6600만 년 전~현재', h: 1.3, bands: [0x4f86d6, 0x6a9be0, 0x4377c4, 0x7ba9e6], col: '#3b82f6' },
+      const W = 6.4, D = 3.6, H = 1.05, N = 6;
+      /* 2D의 LAYERS (위 → 아래) 와 ERAS */
+      const LAY = [
+        { name: '매머드', col: 0xcdaa72, era: 3, note: '코끼리와 닮은 털북숭이 큰 포유류' },
+        { name: '화폐석', col: 0xc29c62, era: 3, note: '동전처럼 생긴 바다 생물' },
+        { name: '공룡 뼈', col: 0xab824f, era: 2, note: '땅 위를 걷던 거대한 파충류' },
+        { name: '암모나이트', col: 0x9c7449, era: 2, note: '소라처럼 감긴 껍데기의 바다 동물' },
+        { name: '삼엽충·필석', col: 0x826c58, era: 1, note: '아주 오래된 바다 생물' },
+        { name: '화석 거의 없음', col: 0x625d55, era: 0, note: '눈에 띄는 화석이 거의 없어요' },
       ];
+      const ERA = [
+        { key: 'pre', name: '선캄브리아시대', yr: '46억 ~ 5.4억 년 전', col: '#8a7a64', dur: '약 21시간 11분 (약 88 %)' },
+        { key: 'pal', name: '고생대', yr: '5.4억 ~ 2.5억 년 전', col: '#2fa56b', dur: '약 1시간 30분 (약 6 %)' },
+        { key: 'mes', name: '중생대', yr: '2.5억 ~ 6600만 년 전', col: '#e08a2e', dur: '약 58분 (약 4 %)' },
+        { key: 'cen', name: '신생대', yr: '6600만 년 전 ~ 현재', col: '#3b82f6', dur: '약 21분 (약 1.4 %)' },
+      ];
+      const BOUNDS = [2, 4, 5], BCOL = [0xef4444, 0x8b5cf6, 0x0ea5e9], BCSS = ['#ef4444', '#8b5cf6', '#0ea5e9'];
       const fossilMat = (c) => mat(c, { roughness: 0.55, metalness: 0.05 });
 
       /* ---------- 화석 모형 ---------- */
@@ -92,94 +103,133 @@
         return g;
       }
 
-      /* ---------- 지층 기둥 ---------- */
-      const eras = []; // { group, mats, fossils[] }
-      let y0 = 0;
-      const frontZ = D / 2;
-      ERA.forEach((e, ei) => {
-        const grp = new THREE.Group(); grp.position.y = y0; root.add(grp);
-        const inner = new THREE.Group(); grp.add(inner); // inner.scale.y 로 쌓이는 모양
-        const mats = [];
-        const bh = e.h / e.bands.length;
-        e.bands.forEach((c, bi) => {
-          const m = mat(c); mats.push(m);
-          const wob = 0.04 * ((bi + ei) % 3);
-          const b = new THREE.Mesh(new THREE.BoxGeometry(W - wob * 2, bh - 0.012, D - wob * 2), m);
-          b.position.y = bi * bh + bh / 2; b.castShadow = true; b.receiveShadow = true; inner.add(b);
-          // 지층 사이의 얇은 구분선
-          const ln = new THREE.Mesh(new THREE.BoxGeometry(W + 0.004, 0.018, D + 0.004), mat(0x2f3440)); ln.position.y = bi * bh; inner.add(ln); mats.push(ln.material);
-        });
-        eras.push({ grp, inner, mats, fossils: [], y0, h: e.h, p: 1 });
-        y0 += e.h;
-      });
-      const topY = y0;
-      // 맨 위 흙 + 풀
-      const soil = new THREE.Mesh(new THREE.BoxGeometry(W + 0.02, 0.16, D + 0.02), mat(0x5a8f3c)); soil.position.y = topY + 0.08; soil.receiveShadow = true; root.add(soil);
-
-      function put(era, obj, x, y, key, text, rotZ, size) {
-        obj.position.set(x, eras[era].y0 + y, frontZ + 0.02); obj.rotation.z = rotZ || 0;
-        if (size) obj.scale.multiplyScalar(size);
-        obj.traverse((o) => { if (o.isMesh) { o.castShadow = false; eras[era].mats.push(o.material); } });
-        root.add(obj); eras[era].fossils.push({ obj, label: null, text });
+      function graptolite() {
+        const g = new THREE.Group(), m = fossilMat(0x3a3330);
+        const stem = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.05, 0.08), m); stem.rotation.z = 0.25; g.add(stem);
+        for (let i = 0; i < 7; i++) { const t = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.3, 0.07), m); t.position.set(-0.55 + i * 0.18, -0.14 + i * 0.045, 0); t.rotation.z = 0.5; g.add(t); }
+        return g;
       }
-      put(0, stromatolite(), -1.4, 0.55, 'st', '스트로마톨라이트', 0, 1.0);
-      put(0, stromatolite(), 1.6, 1.1, 'st2', '', 0, 0.7);
-      put(1, trilobite(), -1.5, 0.7, 'tr', '삼엽충', 0.15);
-      put(1, fern(), 1.7, 0.75, 'fe', '고사리 화석', 0, 1.2);
-      put(2, ammonite(), -1.6, 0.85, 'am', '암모나이트', 0, 1.0);
-      put(2, bone(), 1.5, 0.75, 'bo', '공룡 뼈', 0, 1.2);
-      put(3, tusk(), -1.4, 0.75, 'tu', '매머드 상아', 0, 0.95);
-      put(3, nummulite(), 1.6, 0.6, 'nu', '화폐석', 0, 1.0);
-      // 화석 이름표 (켜고 끌 수 있어요)
-      const fosLabs = [];
-      eras.forEach((e) => e.fossils.forEach((f) => { if (f.text) { f.label = label(f.text, f.obj, { size: 12, offset: [0, 0.62, 0.4] }); fosLabs.push(f.label); } }));
-      // 시대 이름표 (오른쪽 옆면)
-      const eraLabs = ERA.map((e, i) => label(e.name + '<br><span style="font-weight:700;font-size:.88em">' + e.yr + '</span>', [W / 2 + 0.2, eras[i].y0 + eras[i].h / 2, 0.5], { size: 12, color: e.col, offset: [0.9, 0, 0] }));
 
+      /* ---------- 지층 기둥 (지층 1이 맨 위) ---------- */
+      const topY = N * H, frontZ = D / 2;
+      const yBot = (i) => (N - 1 - i) * H;
+      const lay = LAY.map((L, i) => {
+        const grp = new THREE.Group(); grp.position.y = yBot(i); root.add(grp);
+        const m = mat(L.col);
+        const b = new THREE.Mesh(new THREE.BoxGeometry(W, H - 0.014, D), m); b.position.y = H / 2; b.castShadow = true; b.receiveShadow = true; grp.add(b);
+        const ln = new THREE.Mesh(new THREE.BoxGeometry(W + 0.004, 0.02, D + 0.004), mat(0x2f3440)); grp.add(ln);
+        return { grp, mats: [m, ln.material], fos: null, nameLab: null, num: null };
+      });
+      // 파낸 굴 (2D의 굴과 같아요)
+      const shaftM = mat(0x2d2218, { roughness: 1 });
+      const shaft = new THREE.Mesh(new THREE.BoxGeometry(2.7, 1, 0.1), shaftM); shaft.visible = false; root.add(shaft);
+      // 맨 위 흙 + 풀
+      const soil = new THREE.Mesh(new THREE.BoxGeometry(W + 0.02, 0.14, D + 0.02), mat(0x5a8f3c)); soil.position.y = topY + 0.07; soil.receiveShadow = true; root.add(soil);
+
+      function addFossil(i, objs) {
+        const g = new THREE.Group(); g.position.set(0, yBot(i) + H / 2, frontZ + 0.18);
+        objs.forEach((o) => { o.obj.position.x += o.x; o.obj.scale.multiplyScalar(o.s); g.add(o.obj); });
+        g.traverse((o) => { if (o.isMesh) o.castShadow = false; });
+        g.visible = false; root.add(g); lay[i].fos = g;
+      }
+      addFossil(0, [{ obj: tusk(), x: 0.15, s: 0.72 }]);
+      addFossil(1, [{ obj: nummulite(), x: 0, s: 0.8 }]);
+      addFossil(2, [{ obj: bone(), x: 0, s: 0.95 }]);
+      addFossil(3, [{ obj: ammonite(), x: 0, s: 0.95 }]);
+      addFossil(4, [{ obj: trilobite(), x: -0.5, s: 0.5 }, { obj: graptolite(), x: 0.75, s: 0.55 }]);
+      addFossil(5, [{ obj: stromatolite(), x: 0, s: 0.5 }]);
+      lay.forEach((l, i) => {
+        l.num = label('지층 ' + (i + 1), [-W / 2, yBot(i) + H / 2, frontZ], { size: 12, offset: [-0.55, 0, 0] });
+        l.nameLab = label(LAY[i].name, l.fos, { size: 12.5, offset: [1.55, 0, 0.1] }); l.nameLab.show(false);
+      });
+      // 화석이 크게 바뀌는 경계 ①②③
+      const bLines = BOUNDS.map((bi, k) => {
+        const m = new THREE.Mesh(new THREE.BoxGeometry(W + 0.12, 0.05, D + 0.12), new THREE.MeshBasicMaterial({ color: BCOL[k] }));
+        m.position.y = yBot(bi) + H; m.visible = false; root.add(m);
+        const lb = label('경계 ' + '①②③'[k], [W / 2, yBot(bi) + H, frontZ], { size: 12.5, color: BCSS[k], offset: [0.55, 0, 0] }); lb.show(false);
+        return { m, lb };
+      });
+      // 시대 이름표 (오른쪽, 2단계 이후)
+      const eraSpan = [[4, 5], [4, 4], [2, 3], [0, 1]]; // era index → 지층 범위 (위=0)
+      const eraLabs = ERA.map((e, ei) => {
+        const sp = LAY.map((L, i) => (L.era === ei ? i : -1)).filter((i) => i >= 0);
+        const yc = (yBot(sp[0]) + yBot(sp[sp.length - 1]) + H) / 2;
+        const lb = label(e.name + '<br><span style="font-weight:700;font-size:.88em">' + e.yr + '</span>', [W / 2, yc, 0.4], { size: 12, color: e.col, offset: [1.25, 0, 0] });
+        lb.show(false); return lb;
+      });
+      // 시대 색 띠 (옆면)
+      ERA.forEach((e, ei) => {
+        const sp = LAY.map((L, i) => (L.era === ei ? i : -1)).filter((i) => i >= 0);
+        const h = sp.length * H, yc = (yBot(sp[0]) + yBot(sp[sp.length - 1]) + H) / 2;
+        const bar = new THREE.Mesh(new THREE.BoxGeometry(0.1, h - 0.04, D * 0.96), new THREE.MeshStandardMaterial({ color: e.col, roughness: 0.6 }));
+        bar.position.set(W / 2 + 0.07, yc, 0); bar.userData.era = ei; root.add(bar); e.bar = bar;
+      });
       // 시간 화살표 (왼쪽)
       const arrM = mat(0xe8eefc, { roughness: 0.4 });
       const aShaft = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, topY - 0.6, 12), arrM); aShaft.position.set(-W / 2 - 0.55, topY / 2, 0.3); root.add(aShaft);
       const aHead = new THREE.Mesh(new THREE.ConeGeometry(0.17, 0.42, 16), arrM); aHead.position.set(-W / 2 - 0.55, topY - 0.1, 0.3); root.add(aHead);
       label('오래됨 ↓', [-W / 2 - 0.55, 0.15, 0.3], { size: 12, offset: [-0.2, 0, 0] });
       label('↑ 새로움', [-W / 2 - 0.55, topY + 0.35, 0.3], { size: 12, offset: [-0.2, 0, 0] });
-
-      // 바닥 판
       const base = new THREE.Mesh(new THREE.CylinderGeometry(5.2, 5.4, 0.3, 48), new THREE.MeshLambertMaterial({ color: 0x2d3547 })); base.position.y = -0.17; base.receiveShadow = true; root.add(base);
 
       /* ---------- 상태 · 조작 ---------- */
-      const st = { sel: 'all', labels: true, play: false, pt: 0 };
-      function apply() {
-        const si = ERA.findIndex((e) => e.key === st.sel);
-        eras.forEach((e, i) => {
-          const dim = si >= 0 && si !== i, op = dim ? 0.18 : 1;
-          e.mats.forEach((m) => { m.transparent = dim; m.opacity = op; m.depthWrite = !dim; });
-          e.fossils.forEach((f) => { f.obj.visible = e.p > 0.98; if (f.label) f.label.show(st.labels && !dim && e.p > 0.98); });
-        });
-        eraLabs.forEach((l, i) => { l.show(si < 0 || si === i); });
-        const e = ERA[si];
-        if (e) info('<b>' + e.name + '</b> (' + e.yr + ')<br>이 시대의 지층에서 나오는 화석으로 그때의 생물과 환경을 알 수 있어요.');
-        else info('<b>아래 지층이 더 오래된 지층</b>이에요.<br>지질시대마다 대표 화석이 달라서, 화석으로 지층의 시대를 알 수 있어요.');
-      }
-      controls.segment('시대', [{ value: 'all', label: '전체' }, { value: 'pre', label: '선캄브리아' }, { value: 'pal', label: '고생대' }, { value: 'mes', label: '중생대' }, { value: 'cen', label: '신생대' }], 'all', (v) => { st.sel = v; apply(); });
-      const playB = controls.button('▶ 지층이 쌓이는 순서', () => {
-        if (st.play) return; st.play = true; st.pt = 0; eras.forEach((e) => { e.p = 0; e.inner.scale.y = 0.001; e.grp.visible = false; });
-        soil.visible = false; apply();
+      const st = { sel: 'all', labels: true };
+      const L2 = () => (ctx.lesson && ctx.lesson()) || null;
+      const clamp01 = (x) => Math.max(0, Math.min(1, x)), ease = (x) => x * x * (3 - 2 * x);
+      const segE = controls.segment('시대', [{ value: 'all', label: '전체' }].concat(ERA.map((e) => ({ value: e.key, label: e.name }))), 'all', (v) => { st.sel = v; lastInfo = ''; });
+      const digB = controls.button('⛏ 다음 지층 파기', () => { const S = L2(); if (S && S.digLayer && S.ST && S.MODE === 'strata') S.digLayer(S.ST.dug); });
+      controls.button('🏷 이름표', () => { st.labels = !st.labels; });
+      const pl = controls.player({
+        duration: 12, loop: true, label: '지층이 쌓이는 순서',
+        phases: [[0, '선캄브리아시대'], [1 / 6, '고생대'], [2 / 6, '중생대'], [4 / 6, '신생대']],
+        onFrame() {},
       });
-      controls.button('🏷 화석 이름', () => { st.labels = !st.labels; apply(); });
-      apply();
+      pl.set(1);
+      let lastInfo = '';
+      function setInfo(h) { if (h !== lastInfo) { lastInfo = h; info(h); } }
 
-      const ease = (x) => x * x * (3 - 2 * x);
       return {
-        update(dt) {
-          if (!st.play) return;
-          st.pt += dt; const per = 1.3;
-          eras.forEach((e, i) => {
-            const p = Math.max(0, Math.min(1, (st.pt - i * per) / per));
-            e.p = p; e.grp.visible = p > 0; e.inner.scale.y = Math.max(0.001, ease(p));
+        update() {
+          const S = L2(), ST = S && S.ST;
+          const dug = ST ? ST.dug : 0, A = ST && ST.anim;
+          const lv = ctx.level, eraMode = lv >= 1;
+          const dep = pl.playing || pl.p < 0.999;
+          const si = ERA.findIndex((e) => e.key === st.sel);
+          const bd = ST && !dep ? ST.bd : 0;
+          let depth = 0;
+          lay.forEach((l, i) => {
+            const k = N - 1 - i;
+            const pr = dep ? clamp01(pl.p * N - k) : 1;
+            l.grp.visible = pr > 0; l.grp.scale.y = Math.max(0.001, ease(pr));
+            const dim = si >= 0 && LAY[i].era !== si;
+            l.mats.forEach((m) => { m.transparent = dim; m.opacity = dim ? 0.2 : 1; m.depthWrite = !dim; });
+            const rv = dep ? (pr >= 1 ? 1 : 0) : (ST && i < dug ? ST.reveal[i] : 0);
+            const showF = rv > 0.01 && !dim;
+            l.fos.visible = showF; l.fos.scale.setScalar(Math.max(0.2, rv));
+            l.nameLab.show(st.labels && showF && rv > 0.5);
+            l.num.show(!dim);
           });
-          const done = st.pt > per * eras.length;
-          if (done) { st.play = false; eras.forEach((e) => { e.p = 1; e.inner.scale.y = 1; }); soil.visible = true; }
-          apply();
+          if (!dep && ST) depth = dug + (A ? ease(clamp01(A.t)) : 0);
+          shaft.visible = depth > 0.01 && si < 0;
+          if (shaft.visible) { shaft.scale.y = depth * H; shaft.position.set(0, topY - depth * H / 2, frontZ + 0.06); }
+          bLines.forEach((b, k) => { const on = bd > 0.95; b.m.visible = on; b.lb.show(on); });
+          ERA.forEach((e, ei) => { e.bar.visible = eraMode && !dep; eraLabs[ei].show(eraMode && !dep && (si < 0 || si === ei)); });
+          soil.visible = !dep || pl.p > 0.999;
+          if (digB) { const can = !!(S && S.MODE === 'strata' && !A && dug < N && !dep); digB.disabled = !can; digB.style.opacity = can ? '' : '0.45'; digB.textContent = dug >= N ? '✔ 모두 파냈어요' : A ? '⛏ 파는 중…' : '⛏ 다음 지층 파기'; }
+          // 안내 글
+          if (dep) {
+            const ph = Math.min(N - 1, Math.floor(pl.p * N)), li = N - 1 - ph;
+            setInfo('<b>지층은 아래에서 위로 쌓여요.</b><br>지금 쌓이는 지층: <b>지층 ' + (li + 1) + '</b> (' + ERA[LAY[li].era].name + ')<br>아래 지층일수록 오래된 지층이에요.');
+          } else if (si >= 0) {
+            const e = ERA[si];
+            setInfo('<b>' + e.name + '</b> (' + e.yr + ')<br>46억 년을 24시간으로 줄이면 ' + e.dur + '이에요.<br>이 시대의 지층에서 나오는 화석으로 그때의 생물과 환경을 알 수 있어요.');
+          } else if (lv === 0) {
+            setInfo('<b>아래 지층일수록 오래된 지층</b>이에요.<br>파낸 지층 <b>' + dug + ' / 6</b>' + (dug ? ' · 가장 최근 화석: <b>' + LAY[dug - 1].name + '</b>' : '') + '<br>' + (dug >= N ? '화석이 크게 바뀌는 경계가 <b>3곳</b> 있어요.' : '⛏ 버튼이나 2D에서 위에서부터 차례로 파 보세요.'));
+          } else if (lv === 1) {
+            setInfo('<b>지질시대</b>: 화석이 크게 바뀌는 경계로 나눠요.<br>46억 년 = 24시간이면<br>' + ERA.map((e) => e.name + ' ' + e.dur).join('<br>'));
+          } else {
+            setInfo('지질시대마다 대표 화석이 달라요. 산소·기온·대륙이 바뀌어 서식지와 먹이가 달라졌기 때문이에요. (그래프와 예측은 2D에서 해요)');
+          }
         },
         sync() {},
       };

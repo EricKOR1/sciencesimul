@@ -1,5 +1,7 @@
 /* hb-neuron-potential · 3D 신경 세포막과 이온 통로 (휴지 전위 · 활동 전위)
-   세포막에 박힌 Na⁺ 통로·K⁺ 통로·Na⁺-K⁺ 펌프를 확대해서, 이온이 드나들 때 막전위가 어떻게 바뀌는지 입체로 확인해요. */
+   세포막에 박힌 Na⁺ 통로·K⁺ 통로·Na⁺-K⁺ 펌프를 확대해서, 이온이 드나들 때 막전위가 어떻게 바뀌는지 입체로 확인해요.
+   2D 차시(🔋 휴지 전위의 펌프 ON/OFF, ⚡ 활동 전위의 자극 주기, 🎚 역치의 자극 세기)의 막전위·구간(탈분극·재분극·과분극)을 그대로 따라가요.
+   ▶ 활동 전위 재생: 2D 그래프와 같은 −70 → +30 → 과분극 → −70 mV 곡선을 반복해서 보여 줘요. */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -9,9 +11,10 @@
 
   window.SciSim3D.attach({
     title: '신경 세포막 3D (이온 통로)',
-    hint: '드래그: 돌리기 · 상태를 눌러 이온의 이동을 살펴봐요',
+    hint: '드래그: 돌리기 · 2D의 펌프·자극 단추를 그대로 따라가요',
     camera: { dist: narrow ? 14.5 : 11, theta: 0.28, phi: 1.22, min: 6, max: 20, target: [0, 0, 0] },
     autoRotate: 0,
+    levels: [1, 2, 3],
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.45, metalness: 0.03 }, o || {}));
@@ -91,31 +94,48 @@
       const lV = label('−70 mV', thumb, { offset: [0.9, 0, 0], size: 15, color: 'rgba(40,50,80,.95)' });
 
       /* 상태 */
-      const TARGET = { rest: -70, dep: 30, rep: -80 };
-      let st = 'rest', vm = -70, pumpOn = true, auto = false, autoT = 0, lastInfo = '';
+      const L2 = () => window.__sim || null;
+      const TARGET = { rest: -70, dep: 30, rep: -80, hyp: -80 };
+      let st = 'rest', vm = -70, manual = 'sync', pumpOn = true, lastInfo = '', tau = -1;
       const INFO = {
         rest: '<b>휴지 상태</b>: 통로가 닫혀 있고 Na⁺-K⁺ 펌프가 일해요.<br>막 안쪽이 바깥쪽보다 (−)여서 약 −70 mV예요.',
-        dep: '<b>탈분극</b>: Na⁺ 통로가 열려 Na⁺이 세포 안으로 확산해요.<br>막전위가 (+)쪽으로 올라가요.',
+        dep: '<b>탈분극</b>: Na⁺ 통로가 열려 Na⁺이 세포 안으로 확산해요.<br>막전위가 (+)쪽으로 올라가요 (최대 약 +30 mV).',
         rep: '<b>재분극</b>: Na⁺ 통로는 닫히고 K⁺ 통로가 열려 K⁺이 밖으로 나가요.<br>막전위가 다시 (−)로 내려가요.',
+        hyp: '<b>과분극</b>: K⁺ 통로가 아직 열려 있어 막전위가 −70 mV보다 더 낮아졌다가 서서히 −70 mV로 돌아와요.',
       };
-      const seg = controls.segment('', [{ label: '휴지 상태', value: 'rest' }, { label: '탈분극', value: 'dep' }, { label: '재분극', value: 'rep' }], 'rest', (v) => { auto = false; ab.classList.remove('on'); st = v; });
-      const ab = controls.button('▶ 활동 전위 자동', () => { auto = !auto; ab.classList.toggle('on', auto); autoT = 0; if (auto) st = 'rest', seg.set('rest'); });
-      const pb2 = controls.button('펌프 끄기', () => { pumpOn = !pumpOn; pb2.textContent = pumpOn ? '펌프 끄기' : '펌프 켜기'; pb2.classList.toggle('on', !pumpOn); });
+      const seg = controls.segment('', [{ label: '2D와 같이', value: 'sync' }, { label: '휴지', value: 'rest' }, { label: '탈분극', value: 'dep' }, { label: '재분극', value: 'rep' }, { label: '과분극', value: 'hyp' }], 'sync', (v) => { manual = v; if (pl.playing) pl.pause(); pl.set(0); });
+      const pb2 = controls.button('펌프 끄기', () => { const L = L2(); const b = document.querySelector('#pumpSeg button[data-p="' + (pumpOn ? 'off' : 'on') + '"]'); if (b) b.click(); });
+      /* ▶ 활동 전위 한 번 (2D 그래프와 같은 곡선: 휴지 1 ms → 탈분극 → 재분극 → 과분극, 모두 6 ms) */
+      const CROSS = (L2() && L2().AP_CROSS) || 3.9;
+      const pl = controls.player({
+        duration: 7, loop: true, autoplay: false, label: '활동 전위',
+        phases: [[0, '휴지'], [1 / 6, '탈분극'], [2 / 6, '재분극'], [CROSS / 6, '과분극']],
+        onFrame(p) { tau = p * 6; },
+      });
       let gNa = 0, gK = 0;
       const tmp = new THREE.Color();
 
       return {
         update(dt, t) {
-          if (auto) {
-            autoT += dt;
-            const seq = autoT % 5.2, ns = seq < 1.2 ? 'rest' : seq < 2.9 ? 'dep' : seq < 4.5 ? 'rep' : 'rest';
-            if (ns !== st) { st = ns; seg.set(ns); }
+          // 상태 정하기: ▶ 재생(또는 진행 막대) > 직접 고른 상태 > 2D 차시의 현재 장면
+          const L = L2(); let vDirect = null;
+          if (pl.playing || pl.p > 0) { const P = L ? L.AP : null; st = L ? ({ rest: 'rest', dep: 'dep', rep: 'rep', hyp: 'hyp' })[tau < 1 ? 'rest' : tau < 2 ? 'dep' : tau < CROSS ? 'rep' : 'hyp'] : 'rest'; vDirect = P ? P(Math.max(0, Math.min(6, tau))) : null; if (tau >= 5.999 || tau <= 0) { st = 'rest'; } }
+          else if (manual !== 'sync') st = manual;
+          else if (L) {
+            const S2 = L.S;
+            if (S2.mode === 'rest') { pumpOn = !!S2.rs.pump; st = 'rest'; vDirect = L.rsV(S2.rs.g); }
+            else if (S2.mode === 'ap') { const A = S2.ap; st = A.kind === 'ap' ? L.apPhaseOf(A.t) : 'rest'; vDirect = A.kind ? (A.kind === 'ap' ? L.AP(A.t) : L.apNowV()) : -70; }
+            else if (S2.mode === 'thr') { const T = S2.th, q = T.level != null ? L.LV.find((x) => x.s === T.level) : null; vDirect = q ? L.thV(T.t, q) : -70; const dv = vDirect - vm; st = !q ? 'rest' : dv > 0.8 && vDirect > -62 ? 'dep' : dv < -0.8 && vDirect > -70 ? 'rep' : dv < -0.8 ? 'hyp' : 'rest'; }
+            else { st = 'rest'; }
           }
+          if (L && L.S.mode !== 'rest' || manual !== 'sync' || pl.playing || pl.p > 0) { if (L && L.S.mode !== 'rest') pumpOn = true; }
+          if (L) { if (L.S.mode === 'rest' && manual === 'sync' && !(pl.playing || pl.p > 0)) pumpOn = !!L.S.rs.pump; }
+          pb2.textContent = pumpOn ? '펌프 끄기' : '펌프 켜기'; pb2.classList.toggle('on', !pumpOn);
           // 통로 열림 정도 · 막전위
-          const wNa = st === 'dep' ? 1 : 0, wK = st === 'rep' ? 1 : 0;
+          const wNa = st === 'dep' ? 1 : 0, wK = st === 'rep' || st === 'hyp' ? 1 : 0;
           gNa += (wNa - gNa) * Math.min(1, dt * 8); gK += (wK - gK) * Math.min(1, dt * 8);
-          const tgtV = !pumpOn && st === 'rest' ? -55 : TARGET[st];
-          vm += (tgtV - vm) * Math.min(1, dt * (st === 'dep' ? 3.2 : st === 'rep' ? 2.2 : 1.5));
+          if (vDirect != null) vm = vDirect;
+          else { const tgtV = !pumpOn && st === 'rest' ? -55 : TARGET[st]; vm += (tgtV - vm) * Math.min(1, dt * (st === 'dep' ? 3.2 : st === 'rep' ? 2.2 : 1.5)); }
           naGate.position.set(XNA + gNa * 0.75, 0.7 + gNa * 0.1, 0); naGate.rotation.z = -gNa * 0.9; naGateM.color.set(gNa > 0.5 ? 0x33c46e : 0xe5483f);
           kGate.position.set(XK + gK * 0.75, -0.7 - gK * 0.1, 0); kGate.rotation.z = gK * 0.9; kGateM.color.set(gK > 0.5 ? 0x33c46e : 0xe5483f);
           // 펌프
@@ -152,8 +172,8 @@
           thumb.position.y = (vm + 20) * 0.05; zero.position.y = 1.0;
           lV.set((vm < 0 ? '−' : vm > 0 ? '+' : '') + Math.abs(Math.round(vm)) + ' mV');
           lNa.set(gNa > 0.5 ? 'Na⁺ 통로 (열림)' : 'Na⁺ 통로 (닫힘)'); lK.set(gK > 0.5 ? 'K⁺ 통로 (열림)' : 'K⁺ 통로 (닫힘)');
-          const key = st + (pumpOn ? '' : 'x');
-          if (key !== lastInfo) { lastInfo = key; info(INFO[st] + (pumpOn ? '' : '<br>펌프가 멈추면 이온 농도 차이가 점점 사라져요.')); }
+          const key = st + (pumpOn ? '' : 'x') + (L && L.S.mode === 'thr' && L.S.th.level != null ? 't' + L.S.th.level : '');
+          if (key !== lastInfo) { lastInfo = key; info(INFO[st] + (pumpOn ? '' : '<br>펌프가 멈추면 이온 농도 차이가 점점 사라져요.') + (L && L.S.mode === 'thr' && L.S.th.level != null ? '<br>자극 세기 ' + L.S.th.level + (L.S.th.level >= 40 ? ' (역치 40 이상: 활동 전위)' : ' (역치 40 미만: 활동 전위 없음)') : '')); }
         },
         sync() {},
       };

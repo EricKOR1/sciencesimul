@@ -2,7 +2,8 @@
    [활동성 은하] 중심의 초대질량 블랙홀과 강착 원반, 먼지 토러스, 제트를 입체로 봐요. 보는 각도(제트 축에서 잰 각도 θ)에 따라 토러스가 중심을 가리는지가 달라져
    세이퍼트 1형(넓은 선 보임)·2형(안 보임)·블레이자(제트 정면)로 보여요. 토러스 경계는 2D 실험과 같이 θ = 60°로 했어요.
    '파장' 단추로 전파·적외선·가시광선·X선에서 어떤 부분이 보이는지도 볼 수 있어요.
-   [은하 충돌] 두 나선 은하가 중력으로 끌어당기며 합쳐져요(별 대신 점으로 그린 간단한 계산). 2D 실험의 보는 각도(S.ang)를 읽어 시작해요. */
+   [은하 충돌] 두 나선 은하가 중력으로 끌어당기며 합쳐져요(별 대신 점으로 그린 간단한 계산). 2D와 같은 값: 보는 각도 θ(S.ang)·파장(S.band)·충돌 시간(S.t4)을 2D 조작판과 서로 같이 움직여요(3D에서 바꾸면 2D도 바뀌어요).
+   은하 충돌은 한 번 계산해 둔 장면을 ▶ 재생으로 앞뒤로 볼 수 있어요. */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -79,6 +80,18 @@
       const col0 = new THREE.Color(0xffe2a8), col1 = new THREE.Color(0xa9ccff);
       function drawC() { for (let k = 0; k < NP * 2; k++) { dm.position.set(P.x[k * 3], P.x[k * 3 + 1], P.x[k * 3 + 2]); dm.scale.setScalar(1); dm.updateMatrix(); pts.setMatrixAt(k, dm.matrix); pts.setColorAt(k, P.g[k] ? col1 : col0); } pts.instanceMatrix.needsUpdate = true; pts.instanceColor.needsUpdate = true; cA.position.set(...CE[0].p); cB.position.set(...CE[1].p); gA2.position.copy(cA.position); gB2.position.copy(cB.position); }
       init(); drawC();
+      /* 충돌 장면을 한 번 계산해 두고(프레임), 시간 슬라이더·▶로 앞뒤로 볼 수 있게 해요 */
+      const FR = 160, TMAXC = 38; let SNAP = null;
+      function bake() {
+        init(); SNAP = []; const per = Math.round(TMAXC / 0.018 / (FR - 1));
+        for (let f = 0; f < FR; f++) { SNAP.push({ x: P.x.slice(), a: CE[0].p.slice(), b: CE[1].p.slice() }); for (let k = 0; k < per; k++) stepSim(0.018); }
+      }
+      function drawSnap(p) {
+        if (!SNAP) bake(); const f = clamp(p, 0, 1) * (FR - 1), i = Math.min(FR - 2, Math.floor(f)), u = f - i, A = SNAP[i], B = SNAP[i + 1];
+        for (let k = 0; k < NP * 2; k++) { const o = k * 3; dm.position.set(lerp(A.x[o], B.x[o], u), lerp(A.x[o + 1], B.x[o + 1], u), lerp(A.x[o + 2], B.x[o + 2], u)); dm.scale.setScalar(1); dm.updateMatrix(); pts.setMatrixAt(k, dm.matrix); pts.setColorAt(k, P.g[k] ? col1 : col0); }
+        pts.instanceMatrix.needsUpdate = true; pts.instanceColor.needsUpdate = true;
+        cA.position.set(lerp(A.a[0], B.a[0], u), lerp(A.a[1], B.a[1], u), lerp(A.a[2], B.a[2], u)); cB.position.set(lerp(A.b[0], B.b[0], u), lerp(A.b[1], B.b[1], u), lerp(A.b[2], B.b[2], u)); gA2.position.copy(cA.position); gB2.position.copy(cB.position);
+      }
       const LC = { a: label('은하 A', cA, { size: 12, offset: [0, 0.6, 0] }), b: label('은하 B', cB, { size: 12, offset: [0, 0.6, 0] }) };
 
       /* ================= 조작 ================= */
@@ -89,13 +102,17 @@
       const n0 = ctlEl.children.length;
       const BANDS = { all: '모두', radio: '전파', ir: '적외선', vis: '가시광선', xray: 'X선' };
       let band = 'all';
-      const segB = controls.segment('파장', Object.keys(BANDS).map((k) => ({ value: k, label: BANDS[k] })), band, (v) => { band = v; applyBand(); txt(); });
-      const rA = controls.range('보는 각도 θ', 0, 90, 1, 30, (v) => { orbit.phi = Math.max(0.06, v * Math.PI / 180); orbit.theta += 0; }, (v) => v + '°');
+      const segB = controls.segment('파장', Object.keys(BANDS).map((k) => ({ value: k, label: BANDS[k] })), band, (v) => { band = v; const l = window.__sim; if (l && l.setBand && v !== 'all') l.setBand(v); applyBand(); txt(); });
+      const rA = controls.range('보는 각도 θ', 0, 90, 1, 30, (v) => { orbit.phi = Math.max(0.06, v * Math.PI / 180); const l = window.__sim; if (l && l.setAng) { l.setAng(v); angLast = v; } }, (v) => v + '°');
       const bT = controls.button('토러스 반 자르기', () => { clipT = !clipT; bT.classList.toggle('on', clipT); torusM.clippingPlanes = clipT ? [new THREE.Plane(new THREE.Vector3(0, 0, -1), 0)] : []; torusM.needsUpdate = true; });
       const agnEls = [].slice.call(ctlEl.children, n0); const n1 = ctlEl.children.length;
-      const bPl = controls.button('⏸ 멈춤', () => { playC = !playC; bPl.textContent = playC ? '⏸ 멈춤' : '▶ 계속'; });
-      const bRs = controls.button('↺ 처음부터', () => { init(); drawC(); playC = true; bPl.textContent = '⏸ 멈춤'; });
-      const colEls = [].slice.call(ctlEl.children, n1);
+      let plReady = false, syncing = false;
+      const plC = controls.player({
+        duration: 16, loop: true, autoplay: false, label: '충돌 재생',
+        phases: [[0, '가까워져요'], [0.3, '스치며 뒤틀려요'], [0.65, '합쳐져요']],
+        onFrame(p) { if (!plReady || syncing || view !== 'col') return; drawSnap(p); const l = window.__sim; if (l && l.S) { l.S.play = false; l.setT4 && l.setT4(p); l.S.maxT = Math.max(l.S.maxT || 0, p); } },
+      });
+      const colEls = [].slice.call(ctlEl.children, n1); plC.pause(); plReady = true;
       ctx.renderer.localClippingEnabled = true;
       function applyBand() {
         const a = band === 'all', r = band === 'radio', i = band === 'ir', v = band === 'vis', x = band === 'xray';
@@ -123,13 +140,21 @@
       let infoT = 0;
       return {
         update(dt, t) {
+          { const S = sim(); if (S) {
+            if (S.view === 'v4' && view !== 'col') setView('col'); else if ((S.view === 'v1' || S.view === 'v2' || S.view === 'v3') && view !== 'agn') setView('agn');
+            if (S.view === 'v1' && S.band && S.band !== band && BANDS[S.band]) { band = S.band; segB.set(band); applyBand(); txt(); }
+          } }
           if (view === 'agn') {
             const S = sim(); if (S && S.ang !== angLast) { angLast = S.ang; rA.set(Math.round(S.ang)); orbit.phi = clamp(S.ang * Math.PI / 180, 0.06, 1.55); }
+            else if (S) { const th0 = Math.round(Math.min(orbit.phi, Math.PI - orbit.phi) * 180 / Math.PI); if (th0 !== Math.round(S.ang) && window.__sim.setAng) { window.__sim.setAng(th0); angLast = window.__sim.S.ang; } }
             const th = Math.min(orbit.phi, Math.PI - orbit.phi) * 180 / Math.PI; if (infoT++ % 8 === 0) { txt(); } rA.set(Math.round(th));
             disc.rotation.z += dt * 0.6;
             for (let i = 0; i < NK; i++) { const u = (i / NK + t * 0.12) % 1, s = i % 2 ? 1 : -1; dm.position.set(0, s * (0.3 + u * 5.2), 0); dm.scale.setScalar(1 - u * 0.5); dm.updateMatrix(); knots.setMatrixAt(i, dm.matrix); } knots.instanceMatrix.needsUpdate = true;
             bl.forEach((b, i) => { const a = b[0] + t * b[3] * 1.5; dm.position.set(Math.cos(a) * b[1], b[2], Math.sin(a) * b[1]); dm.scale.setScalar(1); dm.updateMatrix(); blr.setMatrixAt(i, dm.matrix); }); blr.instanceMatrix.needsUpdate = true;
-          } else if (playC) { for (let s = 0; s < 3; s++) stepSim(0.018); drawC(); if (tt > 38) { init(); } }
+          } else {
+            const S = sim(); if (!SNAP) { drawSnap(S && typeof S.t4 === 'number' ? S.t4 : 0); }
+            if (S && typeof S.t4 === 'number' && !plC.playing && Math.abs(S.t4 - plC.p) > 0.002) { syncing = true; plC.set(S.t4); syncing = false; drawSnap(S.t4); }
+          }
         },
         sync() {},
       };

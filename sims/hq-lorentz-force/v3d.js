@@ -19,14 +19,14 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: 11 * KD, theta: 0.7, phi: 0.9, min: 4, max: 40, target: [0, 1.5, 0] },
     autoRotate: 0,
+    levels: [1, 2],
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3, Yax = new V3(0, 1, 0);
       const lessonS = () => (window.__sim && window.__sim.S) || null;
-      const st = { sp: 'e', v: 2.0, B: 1.0, th: 90, vec: true };
+      const st = { sp: 'e', v: 2.0, B: 1.0, th: 90, vec: true, qn: 1, cmp: false, v2: 0 };
       const S0 = lessonS();
-      if (S0 && S0.o && SP[S0.o.sp]) { st.sp = S0.o.sp; st.v = S0.o.v; st.B = S0.o.B; st.th = [0, 30, 60, 90].includes(S0.o.th) ? S0.o.th : 90; }
-
+      
       const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.45, metalness: 0.05 }, o || {}));
       const basic = (c, o) => new THREE.MeshBasicMaterial(Object.assign({ color: c }, o || {}));
       function mkArrow(col, rad) {
@@ -65,7 +65,7 @@
       let P = null, scale = 1, wv = 1, tt = 0, nTurns = 2;
       function params() {
         const s = SP[st.sp], v = st.v * 1e6, B = st.B * s.bk, sin = Math.sin(st.th * D2R), cos = Math.cos(st.th * D2R);
-        const r = s.m * v * sin / (Math.abs(s.q) * B), Tper = TAU * s.m / (Math.abs(s.q) * B), pitch = TAU * s.m * v * cos / (Math.abs(s.q) * B);
+        const qa = Math.abs(s.q) * st.qn, r = s.m * v * sin / (qa * B), Tper = TAU * s.m / (qa * B), pitch = TAU * s.m * v * cos / (qa * B);
         return { s, v, B, r, T: Tper, pitch };
       }
       function rebuild() {
@@ -105,29 +105,45 @@
           h += s.sgn > 0 ? '양전하: 위에서 볼 때 <b>시계 방향</b>.' : '음전하: F가 양전하와 반대라 위에서 볼 때 <b>시계 반대 방향</b>.';
           h += ' 재생 속도는 입자마다 달라요.';
         }
-        info(h);
+        info(h + (infoNote ? '<br>' + infoNote : ''));
       }
 
-      /* ---------- 조작 ---------- */
-      const bar = ctx.renderer.domElement.parentNode.parentNode.querySelector('.v3-ctl');
-      const segSp = controls.segment('입자', [{ value: 'e', label: '전자' }, { value: 'p', label: '양성자' }, { value: 'pos', label: '양전자' }], st.sp, (v) => { st.sp = v; st.v = SP[v].vdef; st.B = SP[v].bdef; setRanges(); rebuild(); tt = 0; });
-      const b0 = bar.children.length;
-      const rV = controls.range('속력 v', 0, 4, 0.5, st.v, (v) => { st.v = v; rebuild(); tt = 0; }, (v) => g3(v) + '×10⁶ m/s');
-      const rB = controls.range('B', 0.5, 2, 0.1, st.B, (v) => { st.B = v; rebuild(); tt = 0; }, (v) => g3(v) + ' ' + SP[st.sp].bun);
-      const inputs = [...bar.querySelectorAll('input[type=range]')];
-      function setRanges() {
-        const s = SP[st.sp];
-        inputs[0].min = s.vmin; inputs[0].max = s.vmax; inputs[0].step = s.vstep; inputs[1].min = s.bmin; inputs[1].max = s.bmax; inputs[1].step = s.bstep;
-        rV.set(st.v); rB.set(st.B);
-      }
-      const segTh = controls.segment('θ (v와 B 사이)', [{ value: 0, label: '0° 나란히' }, { value: 30, label: '30°' }, { value: 60, label: '60°' }, { value: 90, label: '90° 수직' }], st.th, (v) => { st.th = v; rebuild(); tt = 0; });
+      /* ---------- 조작: 입자·v·B·θ는 2D 화면 옆의 조작판이 정해요 (3D는 같은 값을 그대로 보여 줘요) ---------- */
       const vecB = controls.button('벡터 ✓', () => { st.vec = !st.vec; vecB.classList.toggle('on', st.vec); vecB.textContent = '벡터 ' + (st.vec ? '✓' : '✕'); });
-      vecB.classList.add('on'); void b0;
-      setRanges(); rebuild();
-
+      vecB.classList.add('on');
+      /* 비교 입자 (속력이 다른 입자 하나 더): 2D의 [👥 비교 입자]와 같아요 */
+      const ball2 = new THREE.Mesh(new THREE.SphereGeometry(0.17, 24, 16), mat(0x10b981, { emissive: 0x0b5f44 })); root.add(ball2);
+      const lab2 = label('', ball2, { color: '#059669', size: 12.5, offset: [0, -0.7, 0] });
+      let trail2 = null, P2 = null;
+      function rebuild2() {
+        if (trail2) { root.remove(trail2); trail2.geometry.dispose(); trail2 = null; }
+        ball2.visible = false; lab2.show(false); P2 = null;
+        if (!st.cmp || st.v <= 0) return;
+        const s = SP[st.sp], v = st.v2 * 1e6, B = st.B * s.bk, sin = Math.sin(st.th * D2R), qa = Math.abs(s.q) * st.qn;
+        P2 = { r: s.m * v * sin / (qa * B), v: st.v2 };
+        const ru = P2.r * scale, N = 160, pts = []; for (let i = 0; i <= N; i++) { const a = i / N * TAU; pts.push(new V3(ru * Math.sin(a), 0, s.sgn * ru * (1 - Math.cos(a)))); }
+        trail2 = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), N, 0.04, 6, true), basic(0x10b981, { transparent: true, opacity: 0.8 })); root.add(trail2);
+        ball2.visible = true; lab2.show(true); lab2.set('비교 입자 v = ' + g3(st.v2) + '×10⁶ m/s · r = ' + g3(P2.r * 100) + ' cm');
+        const ru1 = P.r * scale; ctx.orbit.dist = Math.max(ctx.orbit.dist, (ru + ru1) * 4 * KD); ctx.orbit.tz = s.sgn * Math.max(ru, ru1);
+      }
+      /* ---------- 2D 실험의 값을 그대로 따라가요 ---------- */
+      let lastSig = '', infoNote = '';
+      function readLesson() {
+        const S = lessonS(); if (!S) return;
+        let sp = st.sp, v = st.v, B = st.B, th = st.th, qn = 1, cmp = false, v2 = 0, note = '';
+        if (S.mode === 'orb') { sp = S.o.sp; v = S.o.v; B = S.o.B; th = S.o.th; cmp = !!S.o.cmp; if (cmp) { try { v2 = window.__sim.cmpV(); } catch (e) { v2 = v * 2; } } }
+        else if (S.mode === 'mag') { sp = 'e'; v = S.m.v; B = S.m.B; th = S.m.th; qn = S.m.q; if (S.m.view === 'wire') note = '(도선 확대 장면 F = BIL은 2D에서 확인해요. 3D는 입자 하나의 운동이에요.)'; }
+        else if (S.mode === 'cond') { sp = S.c.sign > 0 ? 'pos' : 'e'; v = S.c.kase === 'rest' ? 0 : 2.0; B = 1.0; th = S.c.kase === 'par' ? 0 : S.c.kase === 'oblique' || S.c.kase === 'obl' ? 30 : 90; note = S.c.field === 'E' ? '전기장에서는 정지한 전하도 힘을 받지만, 이 3D 모형은 자기장 속의 운동을 보여 줘요.' : ''; }
+        else note = '(이 단계는 2D 그림을 읽는 활동이에요. 3D는 자기장 속 입자의 운동 모형이에요.)';
+        const sig = [sp, v, B, th, qn, cmp, v2, note].join('|');
+        if (sig === lastSig) return; lastSig = sig;
+        if (!SP[sp]) sp = 'e';
+        Object.assign(st, { sp, v, B, th, qn, cmp, v2 }); infoNote = note; tt = 0; rebuild(); rebuild2();
+      }
       const tmpV = new V3(), tmpF = new V3();
       return {
         update(dt) {
+          readLesson();
           tt += dt;
           const ru = P.r * scale, pu = P.pitch * scale, period = nTurns * TAU / wv;
           const t = st.v > 0 ? tt % period : 0;
@@ -150,12 +166,9 @@
           labV.show(show && st.v > 0); labB.show(show); labF.show(show && fmag > 0.01);
           if (show && fmag <= 0.01) { labF.set('F = 0'); labF.show(true); tipF.position.copy(pos).add(new V3(0.9, 0.2, 0)); } else labF.set('F = qv×B');
           labQ.show(true);
+          if (P2) { const a2 = wv * t, ru2 = P2.r * scale, sg2 = P.s.sgn; ball2.position.set(ru2 * Math.sin(a2), 0, sg2 * ru2 * (1 - Math.cos(a2))); }
         },
-        sync() {
-          const S = lessonS(); if (!S || !S.o || !SP[S.o.sp]) return;
-          st.sp = S.o.sp; st.v = S.o.v; st.B = S.o.B; if ([0, 30, 60, 90].includes(S.o.th)) st.th = S.o.th;
-          segSp.set(st.sp); segTh.set(st.th); setRanges(); rebuild(); tt = 0;
-        },
+        sync() { lastSig = ''; },
       };
     },
   });

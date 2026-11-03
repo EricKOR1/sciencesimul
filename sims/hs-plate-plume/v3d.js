@@ -19,7 +19,7 @@
     autoRotate: 0,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
-      const st = { v: 0.6, forces: true, plume: false, flow: false, t: 0, key: '', islands: [], nextIsl: 0, labels: true };
+      const st = { mode: 'ridge', forces: true, plume: false, flow: false, f: 0, SLc: SL, slabL: -1, pv: 5 };
       const sr = () => { try { return window.__sim && window.__sim.S; } catch (e) { return null; } };
 
       /* 맨틀 */
@@ -35,9 +35,8 @@
       { const shp = new THREE.Shape(); shp.moveTo(XR, 0); shp.lineTo(XT, 0);
         for (let i = 28; i >= 0; i--) { const x = XR + (XT - XR) * i / 28; shp.lineTo(x, -thick(x)); }
         const m = new THREE.Mesh(new THREE.ExtrudeGeometry(shp, { depth: DEP, bevelEnabled: false }), lithoMat); m.position.z = -DEP / 2; root.add(m); }
-      { const A = [XT, 0], B = [XT + dir[0] * SL, dir[1] * SL], C = [B[0] - nrm[0] * th, B[1] - nrm[1] * th], D = [A[0] - nrm[0] * th, A[1] - nrm[1] * th];
-        const shp = new THREE.Shape(); shp.moveTo(A[0], A[1]); shp.lineTo(B[0], B[1]); shp.lineTo(C[0], C[1]); shp.lineTo(D[0], D[1]); shp.lineTo(A[0], A[1]);
-        const m = new THREE.Mesh(new THREE.ExtrudeGeometry(shp, { depth: DEP, bevelEnabled: false }), slabMat); m.position.z = -DEP / 2; root.add(m); }
+      const slabMesh = (() => { const shp = new THREE.Shape(); shp.moveTo(0, 0); shp.lineTo(1, 0); shp.lineTo(1, -th); shp.lineTo(0, -th); shp.lineTo(0, 0);
+        const m = new THREE.Mesh(new THREE.ExtrudeGeometry(shp, { depth: DEP, bevelEnabled: false }), slabMat); m.position.set(XT, 0, -DEP / 2); m.rotation.z = -ANG; m.scale.x = SL; root.add(m); return m; })();
       /* 해령 (갈라지는 틈) */
       const ridge = new THREE.Mesh(new THREE.ConeGeometry(0.34, 0.3, 5, 1), new THREE.MeshStandardMaterial({ color: 0xff6a2e, emissive: 0xff3b10, emissiveIntensity: 0.7, roughness: 0.5 })); ridge.scale.set(1, 1, DEP / 0.68 * 0.8); ridge.rotation.y = 0; ridge.position.set(XR - 0.02, 0.1, 0); root.add(ridge);
       /* 대륙 (오른쪽, 위에 얹힌 판) */
@@ -47,7 +46,7 @@
 
       /* 판의 이동을 보여 주는 점 (해령 → 해구 → 슬래브) */
       const pathPt = (s) => {                                 // s: 0..1 경로 위의 점 (판의 가운데 높이)
-        const L1 = XT - XR, tot = L1 + SL, d = s * tot;
+        const L1 = XT - XR, tot = L1 + st.SLc, d = s * tot;
         if (d <= L1) { const x = XR + d; return [x, -thick(x) / 2]; }
         const q = d - L1; return [XT + dir[0] * q - nrm[0] * th / 2, dir[1] * q - nrm[1] * th / 2];
       };
@@ -62,9 +61,17 @@
       }
       const forceG = new THREE.Group(); root.add(forceG);
       const aPush = arrow(0xef4444, 2.2, 0.1); aPush.rotation.z = -Math.PI / 2; aPush.position.set(XR + 0.4, 0.75, DEP / 2 + 0.25); forceG.add(aPush);
-      const sp0 = pathPt(0.86), aPull = arrow(0x7c3aed, 2.3, 0.1); forceG.add(aPull);
-      aPull.position.set(sp0[0] - dir[0] * 1.3, sp0[1] - dir[1] * 1.3, DEP / 2 + 0.25); aPull.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(dir[0], dir[1], 0));
-      const lPush = label('해령 밀어내기', [XR + 1.6, 1.15, DEP / 2 + 0.25], { color: 'rgba(185,28,28,.92)' }), lPull = label('슬래브 끌어당김', [sp0[0] - 0.8, sp0[1] + 0.2, DEP / 2 + 0.25], { color: 'rgba(109,40,217,.92)' });
+      const aPull = arrow(0x7c3aed, 2.3, 0.1); forceG.add(aPull);
+      aPull.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(dir[0], dir[1], 0));
+      const lPush = label('해령 미는 힘', [XR + 1.6, 1.15, DEP / 2 + 0.25], { color: 'rgba(185,28,28,.92)' }), lPull = label('당기는 힘 (슬랩 당김)', [0, 0, DEP / 2 + 0.25], { color: 'rgba(109,40,217,.92)' });
+      /* 섭입한 판의 길이 L (2D 슬라이더 100~700 km) → 슬랩 길이 */
+      function setSlab(L) {
+        if (L === st.slabL) return; st.slabL = L; st.SLc = SL * L / 700; slabMesh.scale.x = st.SLc;
+        const q = [XT + dir[0] * st.SLc * 0.55 - nrm[0] * th / 2, dir[1] * st.SLc * 0.55 - nrm[1] * th / 2];
+        aPull.position.set(q[0] - dir[0] * 1.2, q[1] - dir[1] * 1.2, DEP / 2 + 0.25); lPull.obj = [q[0] - dir[0] * 0.2, q[1] + 0.55, DEP / 2 + 0.25];
+        lSlabL.set('길이 L = ' + st.slabL + ' km'); lSlabL.obj = [XT + dir[0] * st.SLc + 0.2, dir[1] * st.SLc - 0.35, DEP / 2 + 0.25];
+      }
+      const lSlabL = label('길이 L', [0, 0, 0], { size: 11.5, color: 'rgba(30,58,138,.92)' });
 
       /* 플룸 */
       const plumeG = new THREE.Group(); root.add(plumeG);
@@ -78,6 +85,16 @@
       const islG = new THREE.Group(); root.add(islG);
       const islMat = new THREE.MeshStandardMaterial({ color: 0x6b4f3a, roughness: 0.85 }), islTop = new THREE.MeshStandardMaterial({ color: 0x4caf6a, roughness: 0.85 });
 
+      /* 나이 표시 (2D '해양 암석권의 나이' 슬라이더 0~70백만 년) */
+      const ageG = new THREE.Group(); root.add(ageG);
+      const ageLine = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 1, 8), new THREE.MeshBasicMaterial({ color: 0xc4b5fd })); ageG.add(ageLine);
+      const ageDot = new THREE.Mesh(new THREE.SphereGeometry(0.13, 16, 12), new THREE.MeshBasicMaterial({ color: 0xa78bfa })); ageG.add(ageDot);
+      const lAge = label('', [0, 0, 0], { color: 'rgba(91,33,182,.94)' });
+      function setAge(age) {
+        const x = XR + (XT - XR) * Math.max(0, Math.min(70, age)) / 70, tk = thick(x), top = 0.7;
+        ageLine.scale.y = top + tk; ageLine.position.set(x, (top - tk) / 2, DEP / 2 + 0.07); ageDot.position.set(x, -tk / 2, DEP / 2 + 0.1);
+        lAge.obj = [x, top + 0.2, DEP / 2 + 0.1]; lAge.set('나이 ' + Math.round(age) + '백만 년 · 두께 약 ' + Math.round(12 * Math.sqrt(age)) + ' km');
+      }
       /* 맨틀 대류 점 (해령 위로 올라와 → 판 아래로 → 해구로 내려가 → 바닥에서 되돌아와요) */
       const flowPath = (s) => {
         const pts = [[XR + 0.2, -3.5], [XR + 0.2, -1.2], [XT - 0.2, -1.55], [XT + 1.0, -2.4], [XT + 0.5, -3.5], [XR + 0.2, -3.5]];
@@ -88,58 +105,82 @@
       label('해양 암석권', [-2.3, -0.65, 0.2], { size: 11.5, color: 'rgba(40,70,110,.92)' }); label('맨틀', [-3.5, -3.0, 0.2], { size: 11.5, color: 'rgba(150,60,10,.92)' });
       const lRidge = label('해령', [XR, 0.65, 0], { size: 11.5 }), lTrench = label('해구', [XT + 0.2, 0.55, 0.0], { size: 11.5 });
 
+      /* 화산섬 (열점 위를 판이 지나가며 줄지어 생겨요) — 재생 위치 p로만 움직여요 */
+      const NI = 6, isl = [];
+      for (let j = 0; j < NI; j++) { const g = new THREE.Group(); const c1 = new THREE.Mesh(new THREE.ConeGeometry(0.34, 0.5, 20), islMat), c2 = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.2, 20), islTop); c1.position.y = 0.25; c2.position.y = 0.55; g.add(c1, c2); islG.add(g); isl.push(g); }
+
       function text() {
-        const L = [];
-        if (st.forces) L.push('<span style="color:#fca5a5">해령 밀어내기</span>와 <span style="color:#c4b5fd">슬래브 끌어당김</span>이 판을 움직여요. 슬래브 끌어당김이 가장 커요.');
-        if (st.plume) L.push('<b>플룸</b>은 한 자리에 있고, 판이 그 위를 지나가며 <b>화산섬이 줄지어</b> 생겨요. 오래된 섬일수록 판 따라 멀리 있어요.');
-        if (!L.length) L.push('식으면서 두꺼워지고 무거워진 해양판이 해구에서 맨틀로 가라앉아요.');
+        const S = sr() || {}, w = window.__sim, m = st.mode, L = [];
+        if (m === 'ridge') {
+          const age = S.age == null ? 10 : S.age;
+          L.push('<b>해령 미는 힘</b> · 해양 암석권은 해령에서 멀어져 <b>나이</b>가 많아질수록 식어서 두꺼워지고(h ≈ 12√t) 무거워져 더 가라앉아요.');
+          L.push('나이 ' + Math.round(age) + '백만 년 · 암석권 두께 약 ' + Math.round(12 * Math.sqrt(age)) + ' km');
+        } else if (m === 'slab') {
+          L.push('<b>섭입하는 판</b>이 무거워 아래로 끌어당겨요 (슬랩 당김, F = Δρ·g·h·L).');
+          L.push('가라앉은 길이 L = ' + (S.L == null ? 300 : S.L) + ' km');
+        } else {
+          L.push('<b>맨틀 플룸</b>은 거의 고정된 채 핵–맨틀 경계(약 2900 km)에서 올라오고, 판은 그 위를 지나가며 판의 경계가 아닌 곳에 화산(열점)이 줄지어 생겨요.');
+          L.push('플룸 상승 속도 ' + st.pv + ' cm/년 (예시) · 올라온 거리 ' + (w && w.riseKm ? w.riseKm() : Math.round(st.f * 2900)) + ' km');
+        }
         info(L.join('<br>'));
       }
-      const bF = controls.button('힘 화살표 ✓', () => { st.forces = !st.forces; bF.classList.toggle('on', st.forces); bF.textContent = '힘 화살표 ' + (st.forces ? '✓' : '✕'); apply(); }); bF.classList.add('on');
-      const bP = controls.button('맨틀 플룸 ✕', () => { st.plume = !st.plume; bP.classList.toggle('on', st.plume); bP.textContent = '맨틀 플룸 ' + (st.plume ? '✓' : '✕'); apply(); });
-      const bC = controls.button('맨틀 대류 ✕', () => { st.flow = !st.flow; bC.classList.toggle('on', st.flow); bC.textContent = '맨틀 대류 ' + (st.flow ? '✓' : '✕'); apply(); });
-      const rV = controls.range('판의 속도', 0.2, 1.4, 0.1, st.v, (v) => { st.v = v; }, (v) => v.toFixed(1) + ' ×');
-      function setBtn(b, on, nm) { b.classList.toggle('on', on); b.textContent = nm + ' ' + (on ? '✓' : '✕'); }
       function apply() {
-        forceG.visible = st.forces; lPush.show(st.forces); lPull.show(st.forces);
-        plumeG.visible = st.plume; islG.visible = st.plume; lPlume.show(st.plume); lHot.show(st.plume); flowM.visible = st.flow;
+        const m = st.mode, pl = m === 'plume' || m === 'hot';
+        st.forces = m === 'ridge' || m === 'slab'; st.plume = pl; st.flow = pl;
+        forceG.visible = st.forces; lPush.show(st.forces); lPull.show(m === 'slab'); aPull.visible = m === 'slab'; lSlabL.show(m === 'slab');
+        ageG.visible = m === 'ridge'; lAge.show(m === 'ridge');
+        plumeG.visible = pl; lPlume.show(pl); lHot.show(pl); flowM.visible = pl; islG.visible = pl;
+        lTrench.show(true); lRidge.show(true);
         text();
       }
-      apply();
+      /* ▶ 재생: 해령에서 생긴 판이 해구로 가라앉는 한 바퀴 (플룸 단계에서는 판 위의 화산섬도 줄지어 생겨요) */
+      const player = controls.player({
+        duration: 10, loop: true, autoplay: false, label: '재생',
+        phases: [[0, '해령에서 생김'], [0.35, '식어서 두꺼워짐'], [0.7, '해구에서 가라앉음']],
+        onFrame(p) { st.p = p; },
+      });
+      st.p = 0;
+
       function follow() {
-        const S = sr(); if (!S) return; if (S.mode === st.key) return; st.key = S.mode;
-        if (S.mode === 'ridge' || S.mode === 'slab') { st.forces = true; st.plume = false; }
-        else if (S.mode === 'plume' || S.mode === 'hot') { st.forces = false; st.plume = true; }
-        else return;
-        setBtn(bF, st.forces, '힘 화살표'); setBtn(bP, st.plume, '맨틀 플룸'); apply();
+        const S = sr(); if (!S) return;
+        const m = S.mode === 'hot' ? 'plume' : S.mode;
+        if (m !== st.mode && (m === 'ridge' || m === 'slab' || m === 'plume')) { st.mode = m; apply(); }
+        if (st.mode === 'ridge' && S.age !== st.age) { st.age = S.age; setAge(S.age); text(); }
+        if (typeof S.L === 'number' && S.L !== st.lastL) { st.lastL = S.L; setSlab(S.L); if (st.mode === 'slab') text(); }
+        if (st.mode === 'plume') { if (S.pf !== st.f || S.pv !== st.pv) { st.f = S.pf; st.pv = S.pv; text(); } }
       }
-      follow();
+      st.lastL = null; setSlab(300); setAge(10);
+      follow(); apply();
 
       return {
         update(dt) {
-          follow(); st.t += dt;
-          const sp = st.v * 0.07;                                              // 경로 비율/초
+          follow();
+          const p = st.p || 0;
           for (let i = 0; i < NB; i++) {                                         // 단면 앞쪽 면에서 판을 따라 움직이는 점
-            const s = ((i / NB + st.t * sp) % 1), p = pathPt(s); dm.position.set(p[0], p[1], DEP / 2 + 0.06); dm.updateMatrix(); beadM.setMatrixAt(i, dm.matrix);
+            const s = ((i + 13 * p) / NB) % 1, q = pathPt(s); dm.position.set(q[0], q[1], DEP / 2 + 0.06); dm.scale.setScalar(1); dm.updateMatrix(); beadM.setMatrixAt(i, dm.matrix);
           }
           beadM.instanceMatrix.needsUpdate = true;
           if (st.plume) {
-            /* 플룸 입자: 줄기를 따라 위로 */
-            for (let i = 0; i < NP; i++) { const s = ((pseed[i][0] + st.t * 0.22) % 1), y = MB + 0.1 + s * (-MB - 1.0), r = 0.15 * (1 - 0.3 * s); dm.position.set(PX + pseed[i][1] * r * 1.4, y, pseed[i][2] * r * 1.4); dm.scale.setScalar(1); dm.updateMatrix(); pbM.setMatrixAt(i, dm.matrix); }
-            pbM.instanceMatrix.needsUpdate = true; head.scale.set(1 + 0.05 * Math.sin(st.t * 3), 0.7, 1 + 0.05 * Math.sin(st.t * 3));
-            /* 열점 화산섬: 새 섬이 생기고 판을 따라 오른쪽으로 움직여요 */
-            st.nextIsl -= dt; if (st.nextIsl <= 0) { st.nextIsl = 0.95 / (st.v * 0.75); const g = new THREE.Group(); const c1 = new THREE.Mesh(new THREE.ConeGeometry(0.34, 0.5, 20), islMat), c2 = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.2, 20), islTop); c1.position.y = 0.25; c2.position.y = 0.55; g.add(c1, c2); g.position.set(PX, 0, 0); g.userData.age = 0; islG.add(g); st.islands.push(g); }
-            st.islands.forEach((g) => { g.userData.age += dt; g.position.x += st.v * 0.75 * dt; const a = Math.max(0.15, 1 - g.userData.age * 0.09); g.scale.setScalar(Math.min(1, g.userData.age * 1.4 + 0.05) * a); });
-            while (st.islands.length && st.islands[0].position.x > XT - 0.1) { const g = st.islands.shift(); islG.remove(g); g.children.forEach((c) => c.geometry.dispose()); }
+            /* 플룸: 2D의 올라온 정도(S.pf)만큼 줄기가 자라요. 입자는 줄기를 따라 위로 */
+            const f = Math.max(0.001, Math.min(1, st.f)), H = -MB - 0.9, ytop = MB + H * f;
+            stem.scale.y = f; stem.position.y = MB + H * f / 2; head.position.y = ytop - 0.05; head.visible = stem.visible = st.f > 0.01;
+            const hs = 0.55 + 0.45 * f; head.scale.set(hs, 0.7 * hs, hs);
+            for (let i = 0; i < NP; i++) { const s = ((pseed[i][0] + 2 * p) % 1), y = MB + 0.1 + s * (ytop - MB - 0.2), r = 0.15 * (1 - 0.3 * s); dm.position.set(PX + pseed[i][1] * r * 1.4, y, pseed[i][2] * r * 1.4); dm.scale.setScalar(1); dm.updateMatrix(); pbM.setMatrixAt(i, dm.matrix); }
+            pbM.instanceMatrix.needsUpdate = true; pbM.visible = st.f > 0.01;
+            /* 열점 화산섬: 플룸이 지표에 닿으면 생기고 판을 따라 오른쪽으로 움직여요 */
+            const show = st.f >= 0.999;
+            isl.forEach((g, j) => { const u = ((j / NI + p) % 1); g.visible = show; g.position.set(PX + u * (XT - 0.1 - PX), 0, 0); g.scale.setScalar(Math.min(1, u * 8 + 0.05) * Math.max(0.15, 1 - u * 0.85)); });
             lHot.obj = [PX, 0.75, 0.2];
           }
-          if (st.flow) for (let i = 0; i < NFL; i++) {
-            const s = ((i / NFL + st.t * 0.03 * (st.v + 0.4)) % 1), p = flowPath(s), p2 = flowPath((s + 0.01) % 1);
-            dm.position.set(p[0], p[1], (i % 3 - 1) * 0.9); const d = new THREE.Vector3(p2[0] - p[0], p2[1] - p[1], 0); if (d.lengthSq() > 1e-9) dm.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize()); dm.scale.setScalar(1); dm.updateMatrix(); flowM.setMatrixAt(i, dm.matrix); dm.quaternion.identity();
+          if (st.flow) {
+            for (let i = 0; i < NFL; i++) {
+              const s = ((i / NFL + p) % 1), q = flowPath(s), q2 = flowPath((s + 0.01) % 1);
+              dm.position.set(q[0], q[1], (i % 3 - 1) * 0.9); const d = new THREE.Vector3(q2[0] - q[0], q2[1] - q[1], 0); if (d.lengthSq() > 1e-9) dm.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize()); dm.scale.setScalar(1); dm.updateMatrix(); flowM.setMatrixAt(i, dm.matrix); dm.quaternion.identity();
+            }
+            flowM.instanceMatrix.needsUpdate = true;
           }
-          if (st.flow) flowM.instanceMatrix.needsUpdate = true;
         },
-        sync() { st.key = ''; follow(); },
+        sync() { follow(); },
       };
     },
   });

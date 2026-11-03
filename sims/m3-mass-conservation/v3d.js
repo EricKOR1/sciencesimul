@@ -5,25 +5,23 @@
   if (!window.SciSim3D) return;
   /* ---------- 공통: 분자 모형과 반응 도우미 ---------- */
   function ChemKit(THREE) {
-    const COL = { H: 0xf1f5f9, O: 0xef4444, C: 0x3f4756, N: 0x3b82f6, Mg: 0xa3e635, Cu: 0xe08a3c, Cl: 0x14b8a6 };
-    const RAD = { H: 0.27, O: 0.4, C: 0.4, N: 0.38, Mg: 0.5, Cu: 0.5, Cl: 0.46 };
-    const NAME = { H: '수소', O: '산소', C: '탄소', N: '질소', Mg: '마그네슘', Cu: '구리', Cl: '염소' };
+    const COL = { H: 0xf5f7fb, O: 0xef4b4b, C: 0x3a3f4b, N: 0x3f6fe8, Na: 0x9b7be0, Cl: 0x3fbf5f, Ag: 0xc3ccd9, Ca: 0xf2a93b, Fe: 0x8b95a6 };
+    const RAD = { H: 0.27, O: 0.4, C: 0.4, N: 0.38, Na: 0.44, Cl: 0.47, Ag: 0.46, Ca: 0.49, Fe: 0.44 };
+    const NAME = { H: '수소', O: '산소', C: '탄소', N: '질소', Na: '나트륨', Cl: '염소', Ag: '은', Ca: '칼슘', Fe: '철' };
     const SP = {
-      H2: { n: '수소', f: 'H₂', a: ['H', 'H'], p: [[-0.3, 0, 0], [0.3, 0, 0]], b: [[0, 1, 1]] },
       O2: { n: '산소', f: 'O₂', a: ['O', 'O'], p: [[-0.4, 0, 0], [0.4, 0, 0]], b: [[0, 1, 2]] },
-      N2: { n: '질소', f: 'N₂', a: ['N', 'N'], p: [[-0.38, 0, 0], [0.38, 0, 0]], b: [[0, 1, 3]] },
-      Cl2: { n: '염소', f: 'Cl₂', a: ['Cl', 'Cl'], p: [[-0.46, 0, 0], [0.46, 0, 0]], b: [[0, 1, 1]] },
       H2O: { n: '물', f: 'H₂O', a: ['O', 'H', 'H'], p: [[0, 0.14, 0], [-0.66, -0.34, 0], [0.66, -0.34, 0]], b: [[0, 1, 1], [0, 2, 1]] },
-      H2O2: { n: '과산화 수소', f: 'H₂O₂', a: ['O', 'O', 'H', 'H'], p: [[-0.5, 0, 0], [0.5, 0, 0], [-0.95, 0.55, 0.35], [0.95, -0.55, -0.35]], b: [[0, 1, 1], [0, 2, 1], [1, 3, 1]] },
       CO2: { n: '이산화 탄소', f: 'CO₂', a: ['C', 'O', 'O'], p: [[0, 0, 0], [-1, 0, 0], [1, 0, 0]], b: [[0, 1, 2], [0, 2, 2]] },
-      NH3: { n: '암모니아', f: 'NH₃', a: ['N', 'H', 'H', 'H'], p: [[0, 0.3, 0], [-0.72, -0.28, 0.2], [0.72, -0.28, 0.2], [0, -0.28, -0.75]], b: [[0, 1, 1], [0, 2, 1], [0, 3, 1]] },
-      CH4: { n: '메테인', f: 'CH₄', a: ['C', 'H', 'H', 'H', 'H'], p: [[0, 0, 0], [0.62, 0.62, 0.62], [0.62, -0.62, -0.62], [-0.62, 0.62, -0.62], [-0.62, -0.62, 0.62]], b: [[0, 1, 1], [0, 2, 1], [0, 3, 1], [0, 4, 1]] },
-      HCl: { n: '염화 수소', f: 'HCl', a: ['H', 'Cl'], p: [[-0.55, 0, 0], [0.45, 0, 0]], b: [[0, 1, 1]] },
+      HCl: { n: '염산', f: 'HCl', a: ['H', 'Cl'], p: [[-0.55, 0, 0], [0.45, 0, 0]], b: [[0, 1, 1]] },
       C: { n: '탄소', f: 'C', a: ['C'], p: [[0, 0, 0]], b: [] },
-      Mg: { n: '마그네슘', f: 'Mg', a: ['Mg'], p: [[0, 0, 0]], b: [] },
-      Cu: { n: '구리', f: 'Cu', a: ['Cu'], p: [[0, 0, 0]], b: [] },
-      MgO: { n: '산화 마그네슘', f: 'MgO', a: ['Mg', 'O'], p: [[-0.42, 0, 0], [0.42, 0, 0]], b: [[0, 1, 1]] },
-      CuO: { n: '산화 구리(Ⅱ)', f: 'CuO', a: ['Cu', 'O'], p: [[-0.42, 0, 0], [0.42, 0, 0]], b: [[0, 1, 1]] },
+      Fe: { n: '철', f: 'Fe', a: ['Fe'], p: [[0, 0, 0]], b: [] },
+      Fe2O3: { n: '산화 철', f: 'Fe₂O₃', a: ['Fe', 'Fe', 'O', 'O', 'O'], p: [[-0.85, 0.45, 0], [0.85, 0.45, 0], [0, 0.95, 0], [-0.9, -0.5, 0], [0.9, -0.5, 0]], b: [[0, 2, 1], [1, 2, 1], [0, 3, 1], [1, 4, 1]] },
+      NaCl: { n: '염화 나트륨', f: 'NaCl', a: ['Na', 'Cl'], p: [[-0.62, 0, 0], [0.66, 0, 0]], b: [[0, 1, 1]] },
+      AgCl: { n: '염화 은', f: 'AgCl', a: ['Ag', 'Cl'], p: [[-0.6, 0, 0], [0.62, 0, 0]], b: [[0, 1, 1]] },
+      AgNO3: { n: '질산 은', f: 'AgNO₃', a: ['N', 'O', 'O', 'O', 'Ag'], p: [[0, 0, 0], [0, 0.8, 0], [-0.69, -0.4, 0], [0.69, -0.4, 0], [1.55, -0.2, 0]], b: [[0, 1, 2], [0, 2, 1], [0, 3, 1], [3, 4, 1]] },
+      NaNO3: { n: '질산 나트륨', f: 'NaNO₃', a: ['N', 'O', 'O', 'O', 'Na'], p: [[0, 0, 0], [0, 0.8, 0], [-0.69, -0.4, 0], [0.69, -0.4, 0], [1.55, -0.2, 0]], b: [[0, 1, 2], [0, 2, 1], [0, 3, 1], [3, 4, 1]] },
+      CaCO3: { n: '탄산 칼슘', f: 'CaCO₃', a: ['C', 'O', 'O', 'O', 'Ca'], p: [[0, 0, 0], [0, 0.8, 0], [-0.69, -0.4, 0], [0.69, -0.4, 0], [1.55, -0.2, 0]], b: [[0, 1, 2], [0, 2, 1], [0, 3, 1], [3, 4, 1]] },
+      CaCl2: { n: '염화 칼슘', f: 'CaCl₂', a: ['Ca', 'Cl', 'Cl'], p: [[0, 0, 0], [-0.95, 0.5, 0], [0.95, 0.5, 0]], b: [[0, 1, 1], [0, 2, 1]] },
     };
     Object.keys(SP).forEach((k) => { SP[k].p = SP[k].p.map((q) => q.map((v) => v * 1.3)); });
     const smooth = (x) => { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); };
@@ -130,60 +128,95 @@
     return { html: rows.join(' · '), ok };
   }
   const PHN = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches);
-  const AM = { H: 1, O: 16, C: 12, N: 14 };
+  /* 2D 차시의 실험들: 앙금 생성 · 기체 발생(열린/닫힌 용기) · 연소(강철 솜/나무, 열린 공간/밀폐 용기) · 원자 모형 */
+  const RXN = {
+    ppt:  { t: '앙금 생성', w: '질산 은 + 염화 나트륨 → 염화 은(흰 앙금) + 질산 나트륨', re: [['AgNO3', 2], ['NaCl', 2]], pr: [['AgCl', 2], ['NaNO3', 2]], gas: [], sp: 1.6 },
+    gas:  { t: '기체 발생', w: '탄산 칼슘 + 염산 → 염화 칼슘 + 물 + 이산화 탄소', re: [['CaCO3', 1], ['HCl', 2]], pr: [['CaCl2', 1], ['H2O', 1], ['CO2', 1]], gas: ['CO2'], sp: 1.7 },
+    wool: { t: '강철 솜의 연소', w: '철 + 산소 → 산화 철 (결합)', re: [['Fe', 4], ['O2', 3]], pr: [['Fe2O3', 2]], gas: [], sp: 1.4 },
+    wood: { t: '나무의 연소', w: '탄소(나무) + 산소 → 이산화 탄소', re: [['C', 2], ['O2', 2]], pr: [['CO2', 2]], gas: ['CO2'], sp: 1.6 },
+  };
+  const clamp01 = (x) => Math.max(0, Math.min(1, x));
   window.SciSim3D.attach({
     host: '.stage-card',
     title: '질량 보존 3D 모형',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: PHN ? 21 : 13, theta: 0.1, phi: 1.2, min: 6, max: 28, target: [0, 0.3, 0] },
+    camera: { dist: PHN ? 22 : 14, theta: 0.1, phi: 1.2, min: 6, max: 30, target: [0, 0.3, 0] },
     autoRotate: 0,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const K = ChemKit(THREE);
-      let n = 2, open = false, p = 0, playing = false, esc = 0, rx = null, rxS = null;
-      const CX = 3.2;
+      let rx = null, rxS = null, sig = '', cur = null, pp = 0;
+      const CX = 3.7, R = 2.1;
       const glass = new THREE.MeshStandardMaterial({ color: 0xbfe3ff, roughness: 0.08, metalness: 0, transparent: true, opacity: 0.16, depthWrite: false, side: THREE.DoubleSide });
       const metal = new THREE.MeshStandardMaterial({ color: 0x8b95a7, roughness: 0.4, metalness: 0.7 });
       const stopMat = new THREE.MeshStandardMaterial({ color: 0xe8a14b, roughness: 0.7 });
       const stoppers = [];
       [-CX, CX].forEach((cx) => {
-        const base = new THREE.Mesh(new THREE.BoxGeometry(4.1, 0.45, 4.1), metal); base.position.set(cx, -1.55, 0); root.add(base);
-        const top = new THREE.Mesh(new THREE.BoxGeometry(3.7, 0.08, 3.7), new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.3 })); top.position.set(cx, -1.3, 0); root.add(top);
-        const fl = new THREE.Mesh(new THREE.CylinderGeometry(1.75, 1.75, 3.8, 48, 1, true), glass); fl.position.set(cx, 0.6, 0); root.add(fl);
-        const rim = new THREE.Mesh(new THREE.TorusGeometry(1.75, 0.05, 10, 56), glass); rim.rotation.x = Math.PI / 2; rim.position.set(cx, 2.5, 0); root.add(rim);
-        const st = new THREE.Mesh(new THREE.CylinderGeometry(1.15, 0.95, 0.6, 32), stopMat); st.position.set(cx, 2.7, 0); root.add(st); stoppers.push(st);
+        const base = new THREE.Mesh(new THREE.BoxGeometry(2 * R + 0.5, 0.45, 2 * R + 0.5), metal); base.position.set(cx, -1.55, 0); root.add(base);
+        const top = new THREE.Mesh(new THREE.BoxGeometry(2 * R + 0.1, 0.08, 2 * R + 0.1), new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.3 })); top.position.set(cx, -1.3, 0); root.add(top);
+        const fl = new THREE.Mesh(new THREE.CylinderGeometry(R, R, 3.8, 48, 1, true), glass); fl.position.set(cx, 0.6, 0); root.add(fl);
+        const rim = new THREE.Mesh(new THREE.TorusGeometry(R, 0.05, 10, 56), glass); rim.rotation.x = Math.PI / 2; rim.position.set(cx, 2.5, 0); root.add(rim);
+        const st = new THREE.Mesh(new THREE.CylinderGeometry(R - 0.6, R - 0.8, 0.6, 32), stopMat); st.position.set(cx, 2.7, 0); root.add(st); stoppers.push(st);
       });
-      const labL = label('', [-CX, -1.3, 2.6], { color: 'rgba(14,165,233,.92)', size: 15 }), labR = label('', [CX, -1.3, 2.6], { color: 'rgba(34,197,94,.92)', size: 15 });
-      label('반응 전', [-CX, 3.4, 0], { color: 'rgba(14,165,233,.9)' }); label('반응 후', [CX, 3.4, 0], { color: 'rgba(34,197,94,.9)' });
+      const labL = label('', [-CX, -1.3, 2.9], { color: 'rgba(14,165,233,.92)', size: 15 }), labR = label('', [CX, -1.3, 2.9], { color: 'rgba(34,197,94,.92)', size: 15 });
+      label('반응 전', [-CX, 3.5, 0], { color: 'rgba(14,165,233,.9)' }); label('반응 후', [CX, 3.5, 0], { color: 'rgba(34,197,94,.9)' });
       const arrow = new THREE.Group(); const am = new THREE.MeshStandardMaterial({ color: 0xffd34d, roughness: 0.4, emissive: 0x6b4a00, emissiveIntensity: 0.5 });
-      const sh = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 1.0, 16), am); sh.rotation.z = Math.PI / 2;
-      const hd = new THREE.Mesh(new THREE.ConeGeometry(0.28, 0.5, 20), am); hd.rotation.z = -Math.PI / 2; hd.position.x = 0.7; arrow.add(sh, hd); arrow.position.y = 0.6; root.add(arrow);
-      const massOf = (list) => list.reduce((s, sp) => s + K.SP[sp].a.reduce((q, e) => q + AM[e], 0), 0);
-      function build() {
+      const sh = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.9, 16), am); sh.rotation.z = Math.PI / 2;
+      const hd = new THREE.Mesh(new THREE.ConeGeometry(0.28, 0.5, 20), am); hd.rotation.z = -Math.PI / 2; hd.position.x = 0.62; arrow.add(sh, hd); arrow.position.y = 0.6; root.add(arrow);
+
+      /* 지금 2D 실험이 어떤 장면인지 읽어요 */
+      function scenario() {
+        const L = ctx.lesson(); if (!L || !L.S) return { key: 'ppt', scene: 'ppt', closed: true };
+        const sc = L.S.scene;
+        if (sc === 'gas') return { key: 'gas', scene: sc, closed: L.GS.box === 'closed', lidOff: L.GS.lid === 'off' };
+        if (sc === 'burn') return { key: L.BS.mat, scene: sc, closed: L.BS.ctn === 'closed' };
+        if (sc === 'atoms') return { key: ['ppt', 'gas', 'wood'][L.AS.sel] || 'ppt', scene: sc, closed: true, atoms: true };
+        return { key: 'ppt', scene: 'ppt', closed: true };
+      }
+      /* 질량 값 (2D 저울과 같은 값) */
+      function masses(c, q, esc) {
+        if (c.atoms) return null;
+        const open = !c.closed || c.lidOff;
+        if (c.key === 'ppt') return [150, 150];
+        if (c.key === 'gas') return [120, open ? 120 - 1.1 * esc : 120];
+        if (c.key === 'wool') return [2, c.closed ? 2 : 2 + 0.4 * K.smooth(q)];
+        return [2, c.closed ? 2 : 2 - 1.6 * esc];
+      }
+      function note(c) {
+        if (c.key === 'ppt') return c.atoms ? '은 이온과 염화 이온이 짝을 바꿔요' : '흰색 앙금이 생겼는데도 질량은 그대로예요.';
+        if (c.key === 'gas') return c.atoms ? '생긴 이산화 탄소도 원자 수에 포함해요' : c.closed ? (c.lidOff ? '뚜껑을 열자 이산화 탄소가 빠져나가 질량이 줄어요.' : '닫힌 용기: 생긴 기체가 용기 안에 머물러요. 질량이 그대로예요.') : '열린 용기: 생긴 기체가 공기 중으로 빠져나가 질량이 줄어요.';
+        if (c.key === 'wool') return c.atoms ? '' : c.closed ? '밀폐 용기: 기체가 드나들지 못해 질량이 그대로예요.' : '열린 공간: 산소가 결합한 만큼 질량이 늘어요.';
+        return c.atoms ? '탄소가 산소와 결합해 이산화 탄소가 돼요' : c.closed ? '밀폐 용기: 이산화 탄소가 용기 안에 있어 질량이 그대로예요.' : '열린 공간: 이산화 탄소가 날아가 질량이 줄어요.';
+      }
+      function rebuild(c) {
         if (rx) rx.dispose(); if (rxS) rxS.dispose();
-        const def = { re: [['H2O2', n]], pr: [['H2O', n], ['O2', n / 2]], rigid: false };
-        rx = K.makeRxn(root, def, { cxR: CX, cxP: CX, sp: 1.5, noPlate: true, gas: ['O2'] });      // 오른쪽 용기에서 반응이 일어나요
-        rxS = K.makeRxn(root, def, { cxR: -CX, cxP: -CX, sp: 1.5, noPlate: true }); rxS.set(0);     // 왼쪽 용기: 반응 전 모습 그대로
-        esc = 0; rx.set(p); rx.setEsc(0); text();
+        const r = RXN[c.key], def = { re: r.re, pr: r.pr, rigid: false };
+        rx = K.makeRxn(root, def, { cxR: CX, cxP: CX, sp: r.sp, noPlate: true, gas: !c.closed || c.lidOff ? r.gas : [] });
+        rxS = K.makeRxn(root, def, { cxR: -CX, cxP: -CX, sp: r.sp, noPlate: true, gas: [] }); rxS.set(0);
+        stoppers.forEach((s) => { s.visible = c.closed && c.key !== 'ppt' && !c.lidOff; });
+        cur = c; frame(pp);
+        const cn = countHtml(rx.countR, rx.countP), r2 = RXN[c.key];
+        const eq = r2.re.map((q) => (q[1] > 1 ? q[1] : '') + K.SP[q[0]].f).join(' + ') + ' → ' + r2.pr.map((q) => (q[1] > 1 ? q[1] : '') + K.SP[q[0]].f).join(' + ');
+        info('<b>' + r2.w + '</b><br>' + eq + '<br>원자 수 ' + cn.html + '<br><span style="color:' + (c.closed || !r2.gas.length || c.key === 'wool' ? '#86efac' : '#fca5a5') + '">' + note(c) + '</span>');
       }
-      function text() {
-        const m0 = massOf(rx.RM), m1 = massOf(rx.PM), gas = 16 * n, rem = open ? m1 - gas * esc : m1;
-        labL.set('질량 <b>' + m0 + '</b>'); labR.set('질량 <b>' + Math.round(rem) + '</b>');
-        stoppers.forEach((s) => { s.visible = !open; });
-        const c = countHtml(rx.countR, rx.countP);
-        info('<b>' + n + 'H₂O₂ → ' + n + 'H₂O + ' + (n / 2 > 1 ? n / 2 : '') + 'O₂</b><br>원자 수 ' + c.html + '<br>' + (open
-          ? (esc > 0.5 ? '<span style="color:#fca5a5">산소 기체가 빠져나가 저울 값이 줄었어요. 원자는 없어지지 않았어요.</span>' : '열린 용기: 생긴 기체가 날아갈 수 있어요.')
-          : '<span style="color:#86efac">닫힌 용기: 기체가 갇혀서 질량이 그대로예요.</span>'));
+      /* p(0~1) → 반응(0.05~0.65) · 기체 이동(0.68~0.95) */
+      function frame(p) {
+        pp = p; if (!rx) return;
+        const q = clamp01((p - 0.05) / 0.6), esc = clamp01((p - 0.68) / 0.27);
+        rx.set(q); rx.setEsc(esc);
+        const m = masses(cur, q, esc);
+        labL.set(m ? '질량 <b>' + m[0].toFixed(1) + ' g</b>' : '');
+        labR.set(m ? '질량 <b>' + m[1].toFixed(1) + ' g</b>' : '');
       }
-      controls.segment('용기', [{ value: 0, label: '닫힌 용기' }, { value: 1, label: '열린 용기' }], 0, (v) => { open = !!v; esc = 0; rx.setEsc(0); text(); });
-      controls.segment('분자 수', [{ value: 2, label: '2개' }, { value: 4, label: '4개' }], 2, (v) => { n = v; build(); });
-      const pr = controls.range('진행', 0, 100, 1, 0, (v) => { p = v / 100; playing = false; esc = 0; pb.textContent = '▶ 재생'; rx.set(p); rx.setEsc(0); text(); }, (v) => v + '%');
-      const pb = controls.button('▶ 재생', () => { playing = !playing; if (playing && p >= 1) { p = 0; esc = 0; } pb.textContent = playing ? '❚❚ 멈춤' : '▶ 재생'; });
-      build();
+      const pl = controls.player({
+        duration: 8, loop: true, label: '반응 재생',
+        phases: [[0, '반응 전'], [0.05, '반응이 일어나요'], [0.65, '반응 후'], [0.68, '질량 확인']],
+        onFrame: frame,
+      });
       return {
         update(dt, t) {
-          if (playing && p < 1) { p = Math.min(1, p + dt / 4); pr.set(Math.round(p * 100)); rx.set(p); text(); if (p >= 1) playing = false, pb.textContent = '▶ 재생'; }
-          if (open && p >= 1 && esc < 1) { esc = Math.min(1, esc + dt * 0.3); rx.setEsc(esc); text(); }
+          const c = scenario(), s = [c.key, c.closed, c.lidOff, c.atoms].join('|');
+          if (s !== sig) { sig = s; rebuild(c); }
           arrow.position.x = Math.sin(t * 2.5) * 0.06;
         },
       };

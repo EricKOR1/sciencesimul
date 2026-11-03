@@ -1,10 +1,12 @@
 /* m3-free-fall · 3D 자유 낙하 (다중 섬광 사진)
-   공기 저항이 없으면 질량과 상관없이 모든 물체가 같게 떨어져요. 속력은 시간에 비례해 일정하게 늘고(9.8 m/s씩), 같은 시간 동안 이동 거리는 점점 길어져요. */
+   2D 차시와 같은 물체(쇠공 1 kg · 볼링공 7 kg · 깃털 1 g), 같은 탑 높이(20 m · 45 m), 같은 공기(없음/있음), 0.1초마다 찍는 다중 섬광 사진.
+   공기 저항이 없으면 질량과 상관없이 모든 물체가 같게 떨어지고, 속력은 1초마다 9.8 m/s씩 늘어요. 2D 실험 상태(window.__sim)를 읽어 같은 장면을 보여 줘요. */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
   const PHN = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches);
-  const S = 0.12, HT = 45;                         // 1 m = 0.12, 탑 높이 45 m
+  const SC = 0.12;                                  // 1 m = 0.12
+  const LOOK = { steel: { r: 0.26, c: 0x475569 }, bowl: { r: 0.38, c: 0x3867f4 }, feather: { r: 0.3, c: 0x16a34a } };
   window.SciSim3D.attach({
     host: '.stage-card',
     title: '자유 낙하 3D',
@@ -13,71 +15,89 @@
     autoRotate: 0,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
-      const V3 = THREE.Vector3;
-      let obj = 'two', g = 9.8, air = false, t = -1, strobe = true, names = true, done = false;
       const sm = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.45, metalness: 0.1 }, o || {}));
       const gnd = new THREE.Mesh(new THREE.BoxGeometry(11, 0.3, 6), sm(0x3d6f3a, { roughness: 0.95, metalness: 0 })); gnd.position.y = -0.15; root.add(gnd);
-      /* 탑 */
-      const topY = HT * S + 0.35;
-      [[-0.7, -0.6], [0.7, -0.6], [-0.7, 0.6], [0.7, 0.6]].forEach((q) => { const m = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.09, topY, 10), sm(0x94a3b8, { metalness: 0.6, roughness: 0.4 })); m.position.set(q[0] - 1.6, topY / 2, q[1]); root.add(m); });
-      const plat = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.12, 1.7), sm(0x64748b)); plat.position.set(-1.6, topY, 0); root.add(plat);
-      const arm = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.08, 0.3), sm(0xf59e0b)); arm.position.set(-0.45, topY + 0.1, 0); root.add(arm);
-      /* 눈금 막대 */
-      const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, HT * S + 0.2, 8), sm(0xe2e8f0)); rod.position.set(1.7, (HT * S + 0.2) / 2 - 0.1 + 0.1, -0.2); root.add(rod);
-      for (let m = 0; m <= 45; m += 5) { const tk = new THREE.Mesh(new THREE.BoxGeometry(m % 10 === 0 ? 0.5 : 0.28, 0.025, 0.025), sm(0xe2e8f0)); tk.position.set(1.7 - (m % 10 === 0 ? 0.25 : 0.14), topY - 0.35 - m * S + 0.35 - 0.35 + 0.35 - 0.0, -0.2); tk.position.y = (HT - m) * S; root.add(tk); }
-      /* 공 (물체) */
-      const defs = { two: [['쇠공 1 kg', 0.26, 0xcbd5e1, 1, 0.55], ['쇠공 5 kg', 0.4, 0x475569, 1, -0.55]], one: [['쇠공 1 kg', 0.26, 0xcbd5e1, 1, 0]], five: [['쇠공 5 kg', 0.4, 0x475569, 1, 0]], feather: [['쇠공', 0.3, 0xcbd5e1, 1, 0.55], ['깃털', 0.3, 0xfef3c7, 0.0, -0.55]] };
-      let balls = [];
-      const ghosts = new THREE.Group(); root.add(ghosts); const ghostLabs = []; const ghostMeshes = [];
-      const arrows = new THREE.Group(); root.add(arrows);
-      const bl = label('', [0, 0, 0], { size: 12, color: 'rgba(15,23,42,.9)' });
-      function clearBalls() { balls.forEach((b) => root.remove(b.m)); balls = []; while (ghosts.children.length) ghosts.remove(ghosts.children[0]); while (arrows.children.length) arrows.remove(arrows.children[0]); ghostLabs.forEach((l) => l.show(false)); ghostMeshes.length = 0; }
-      function setup() {
-        clearBalls(); t = -1; done = false;
-        defs[obj].forEach((d, i) => {
-          const m = obj === 'feather' && i === 1 ? new THREE.Mesh(new THREE.SphereGeometry(d[1], 20, 14), sm(d[2], { roughness: 0.95, metalness: 0 })) : new THREE.Mesh(new THREE.SphereGeometry(d[1], 36, 24), sm(d[2], { metalness: 0.7, roughness: 0.3 }));
-          if (obj === 'feather' && i === 1) m.scale.set(1.4, 0.35, 0.8);
-          m.position.set(-0.45, topY + 0.14 + d[1], d[4]); root.add(m); balls.push({ m, d, y: 0, v: 0, r: d[1] });
+      /* 탑과 눈금 (높이는 2D의 탑 높이 H에 맞춰 다시 만들어요) */
+      const tower = new THREE.Group(); root.add(tower);
+      let Hm = 0, topY = 0;
+      function buildTower(H) {
+        Hm = H; topY = H * SC + 0.35;
+        while (tower.children.length) tower.remove(tower.children[0]);
+        [[-0.7, -0.6], [0.7, -0.6], [-0.7, 0.6], [0.7, 0.6]].forEach((q) => { const m = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.09, topY, 10), sm(0x94a3b8, { metalness: 0.6, roughness: 0.4 })); m.position.set(q[0] - 1.6, topY / 2, q[1]); tower.add(m); });
+        const plat = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.12, 1.7), sm(0x64748b)); plat.position.set(-1.6, topY, 0); tower.add(plat);
+        const arm = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.08, 0.3), sm(0xf59e0b)); arm.position.set(-0.45, topY + 0.1, 0); tower.add(arm);
+        const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, H * SC + 0.3, 8), sm(0xe2e8f0)); rod.position.set(1.7, (H * SC + 0.3) / 2 - 0.05, -0.2); tower.add(rod);
+        for (let m = 0; m <= H; m += 5) { const tk = new THREE.Mesh(new THREE.BoxGeometry(m % 10 === 0 ? 0.5 : 0.28, 0.025, 0.025), sm(0xe2e8f0)); tk.position.set(1.7 - (m % 10 === 0 ? 0.25 : 0.14), m * SC, -0.2); tower.add(tk); }
+        mLab.forEach((l, i) => { const m = i * 10; l.show(m <= H); l.obj = [1.7 + 0.45, (H - m) * SC, -0.2]; l.set(m + ' m'); });
+        target.y = Math.max(1.6, H * SC * 0.5 + 0.2);
+      }
+      const mLab = []; for (let i = 0; i < 5; i++) mLab.push(label('', [0, 0, 0], { size: 11, color: 'rgba(30,41,59,.8)' }));
+      const target = { y: 2.7 };
+      /* 공 (물체) · 섬광 사진 */
+      let balls = [], key = '';
+      const ghostG = new THREE.SphereGeometry(1, 16, 12);
+      const bl = []; for (let i = 0; i < 3; i++) bl.push(label('', [0, 0, 0], { size: 12, color: 'rgba(15,23,42,.9)' }));
+      const fl = []; for (let i = 0; i < 14; i++) { const l = label('', [0, -99, 0], { size: 11, color: 'rgba(30,41,59,.85)' }); l.show(false); fl.push(l); }
+      function setupBalls(L) {
+        balls.forEach((b) => { root.remove(b.m); root.remove(b.gh); });
+        const S = L.S, keys = S.mode === 'compare' ? ['steel', 'bowl', 'feather'] : ['steel'];
+        balls = keys.map((k, i) => {
+          const o = L.OBJ[k], lk = LOOK[k], z = keys.length > 1 ? (i - 1) * 0.8 : 0;
+          const m = new THREE.Mesh(new THREE.SphereGeometry(lk.r, 32, 22), k === 'feather' ? sm(lk.c, { roughness: 0.95, metalness: 0 }) : sm(lk.c, { metalness: 0.7, roughness: 0.3 }));
+          if (k === 'feather') m.scale.set(1.4, 0.35, 0.8);
+          root.add(m);
+          const gh = new THREE.InstancedMesh(ghostG, new THREE.MeshStandardMaterial({ color: lk.c, transparent: true, opacity: 0.4, depthWrite: false }), 80); gh.count = 0; root.add(gh);
+          return { k, o, m, gh, r: lk.r, z, lk };
         });
-        info(infoText(0, 0));
+        bl.forEach((l, i) => { const b = balls[i]; l.show(!!b); if (b) l.set(b.o.name + ' ' + b.o.mass); });
       }
-      function infoText(tt, v) {
-        if (tt <= 0) return '<b>자유 낙하</b>: 가만히 놓은 물체가 중력만 받아 떨어지는 운동이에요.<br>' + (air ? '공기가 있으면 가벼운 물체는 저항 때문에 늦게 떨어져요.' : '공기 저항이 없으면 무거운 공도 가벼운 공도 <b>같이</b> 떨어져요.');
-        return '시간 <b>' + tt.toFixed(1) + '초</b> · 속력 <b>' + v.toFixed(1) + ' m/s</b><br>속력은 1초마다 약 <b>' + g.toFixed(1) + ' m/s</b>씩 늘어나요 (v = ' + g.toFixed(1) + ' × t).';
+      const dm = new THREE.Object3D();
+      function text(L) {
+        const S = L.S, t = S.visT || 0, run = S.run, air = run ? run.air : S.air, lead = balls[0];
+        const v = lead ? L.fallV(lead.o, t, air) : 0, d = lead ? Math.min(S.H, L.fallD(lead.o, t, air)) : 0;
+        let h = '<b>' + (S.mode === 'compare' ? '쇠공 · 볼링공 · 깃털' : '쇠공 1 kg') + '</b> · 탑 높이 <b>' + S.H + ' m</b> · ' + (air ? '공기 있음' : '진공(공기 없음)') + (S.strobe ? ' · 0.1초마다 섬광 사진' : '') + '<br>';
+        if (t <= 0.001) h += '전자석이 공을 놓으면 <b>자유 낙하</b>해요. ' + (S.mode === 'compare' ? (air ? '공기가 있으면 깃털이 늦게 떨어져요.' : '진공에서는 무거운 공과 가벼운 깃털이 같이 떨어져요.') : '▶ 떨어뜨리기를 눌러 보세요.');
+        else h += '시각 <b>' + t.toFixed(1) + ' s</b> · 낙하 거리 <b>' + d.toFixed(1) + ' m</b> · 속력 <b>' + v.toFixed(1) + ' m/s</b>' + (air ? '' : '<br>속력은 1초마다 <b>9.8 m/s</b>씩 일정하게 늘어요 (v = 9.8 × t).');
+        return h;
       }
-      const fl = new Array(17).fill(0).map(() => label('', [0, -99, 0], { size: 11, color: 'rgba(30,41,59,.85)' })); fl.forEach((l) => l.show(false));
-      let nextFlash = 0;
-      controls.segment('물체', [{ value: 'two', label: '쇠공 1·5 kg' }, { value: 'feather', label: '쇠공+깃털' }], obj, (v) => { obj = v; setup(); });
-      controls.segment('장소', [{ value: 9.8, label: '지구' }, { value: 1.6, label: '달' }], g, (v) => { g = v; air = air && v === 9.8; ab.textContent = '공기 ' + (air ? '✓' : '✕'); ab.classList.toggle('on', air); setup(); });
-      const ab = controls.button('공기 ✕', () => { if (g !== 9.8) return; air = !air; ab.textContent = '공기 ' + (air ? '✓' : '✕'); ab.classList.toggle('on', air); setup(); });
-      controls.button('▶ 떨어뜨리기', () => { setup(); t = 0; nextFlash = 0; });
-      const sb = controls.button('섬광 사진 ✓', () => { strobe = !strobe; sb.textContent = '섬광 사진 ' + (strobe ? '✓' : '✕'); sb.classList.toggle('on', strobe); }); sb.classList.add('on');
-      setup();
+      let infoK = '', first = true;
+      /* ▶ 떨어뜨리기: 2D 실험의 시각도 같이 움직여요 */
+      const pl = controls.player({
+        duration: 4, loop: true, label: '떨어뜨리기',
+        phases: [[0, '출발'], [0.1, '점점 빨라져요'], [0.9, '땅에 닿아요']],
+        onFrame(p) {
+          if (first) { first = false; return; }
+          const L = ctx.lesson(); if (!L || !L.S || L.S.state === 'running') return;
+          if (!L.S.run || L.S.state !== 'done') L.finishedRun();
+          L.setViewT(p * L.S.run.tMax);
+        },
+      });
       return {
         update(dt, tm) {
-          if (t < 0) { bl.show(false); return; }
-          t += dt; let anyMoving = false, tt = t, vShow = 0;
+          const L = ctx.lesson(); if (!L || !L.S) return;
+          const S = L.S, k = [S.mode, S.H, S.air].join('|');
+          if (S.H !== Hm) buildTower(S.H);
+          if (k !== key) { key = k; setupBalls(L); }
+          const t = S.visT || 0, run = S.run, air = run ? run.air : S.air;
+          if (!pl.playing && run && (S.state === 'running' || S.state === 'done') && run.tMax > 0) { const q = Math.min(1, (S.state === 'running' ? run.t : S.viewT) / run.tMax); if (Math.abs(q - pl.p) > 0.004) pl.set(q); }
           balls.forEach((b, i) => {
-            const feather = obj === 'feather' && i === 1 && air;
-            // 공기 저항: 깃털은 종단 속력이 작아요
-            if (feather) { const vt = 1.8; b.v += (g - g * (b.v / vt) * (b.v / vt)) * dt; } else b.v = g * t;
-            b.y = feather ? b.y + b.v * dt : 0.5 * g * t * t; if (!feather) b.y = 0.5 * g * t * t;
-            const yy = Math.min(HT, b.y); b.m.position.y = topY + 0.14 + b.r - yy * S;
-            if (obj === 'feather' && i === 1) b.m.rotation.z = Math.sin(tm * 3) * 0.4;
-            if (b.y < HT) anyMoving = true;
-            if (i === 0) vShow = b.v;
+            const d = Math.min(S.H, L.fallD(b.o, t, air));
+            b.m.position.set(-0.45, topY + 0.1 + b.r - d * SC, b.z);
+            if (b.k === 'feather') b.m.rotation.z = Math.sin(tm * 3) * 0.4;
+            bl[i].obj = b.m; bl[i].off = [0, 0.7, 0];
+            // 0.1초마다 찍은 섬광 사진
+            let n = 0;
+            if (S.strobe) for (let j = 0; j * 0.1 <= t + 1e-6 && n < 80; j++) { const dd = Math.min(S.H, L.fallD(b.o, j * 0.1, air)); dm.position.set(-0.45, topY + 0.1 + b.r - dd * SC, b.z); dm.scale.setScalar(b.r * 0.92); if (b.k === 'feather') dm.scale.set(b.r * 1.3, b.r * 0.32, b.r * 0.74); dm.updateMatrix(); b.gh.setMatrixAt(n++, dm.matrix); }
+            b.gh.count = n; b.gh.instanceMatrix.needsUpdate = true;
           });
-          const lead = balls[0]; const tl = lead.v / g;
-          if (strobe && t >= nextFlash && nextFlash <= 3.0 + (g < 5 ? 5 : 0)) {
-            const k = Math.round(nextFlash / 0.5), step = g < 5 ? 1.0 : 0.5; // 달에서는 1초마다
-            balls.forEach((b, i) => { const gh = new THREE.Mesh(new THREE.SphereGeometry(b.r, 20, 14), sm(b.d[2], { transparent: true, opacity: 0.35, depthWrite: false })); gh.position.copy(b.m.position); if (obj === 'feather' && i === 1) gh.scale.copy(b.m.scale); ghosts.add(gh); });
-            const yy = 0.5 * g * nextFlash * nextFlash; const L = fl[Math.min(fl.length - 1, k)];
-            if (yy <= HT + 0.01) { L.obj = [balls[0].m.position.x + 0.9, topY + 0.14 + balls[0].r - yy * S, balls[0].d[4]]; L.set(nextFlash.toFixed(1) + '초 · ' + yy.toFixed(1) + ' m · ' + (g * nextFlash).toFixed(1) + ' m/s'); L.show(names); }
-            nextFlash += step;
-          }
-          if (balls.length) { bl.obj = balls[0].m; bl.off = [0, 0.7, 0]; bl.set(balls[0].d[0] + (balls[1] ? ' · ' + balls[1].d[0] : '')); bl.show(names); }
-          if (!anyMoving && !done) { done = true; info('<b>' + (obj === 'feather' && air ? '깃털은 늦게 도착해요' : '둘이 동시에 도착해요') + '</b><br>' + (obj === 'feather' && air ? '공기 저항 때문이에요. 공기가 없으면 같이 떨어져요.' : '낙하 시간은 ' + Math.sqrt(2 * HT / g).toFixed(1) + '초. 질량과 상관없이 같아요.')); }
-          else if (!done) info(infoText(Math.min(t, Math.sqrt(2 * HT / g)), Math.min(g * t, g * Math.sqrt(2 * HT / g))));
+          // 0.5초마다 시각 · 거리 이름표
+          const lead = balls[0];
+          fl.forEach((l, i) => {
+            const tt = i * 0.5, ok = S.strobe && lead && tt <= t + 1e-6 && L.fallD(lead.o, tt, air) <= S.H + 1e-6;
+            l.show(!!ok); if (ok) { const dd = L.fallD(lead.o, tt, air); l.obj = [0.2, topY + 0.1 + lead.r - dd * SC, lead.z]; l.set(tt.toFixed(1) + ' s · ' + dd.toFixed(1) + ' m'); }
+          });
+          const ik = [t.toFixed(2), k, S.strobe, S.state].join('|');
+          if (ik !== infoK) { infoK = ik; info(text(L)); }
         },
       };
     },

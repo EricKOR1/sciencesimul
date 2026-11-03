@@ -1,7 +1,8 @@
 /* he-stellar-evolution · 3D 별의 일생
    [원시별] 가스 구름이 중력으로 수축하며 별이 될 준비를 해요. [태양 정도의 별] 주계열 → 적색 거성 → 행성상 성운 → 백색 왜성 (크기는 로그 눈금으로 줄여서 그렸어요).
    [큰 별] 주계열 → 초거성(양파 껍질 구조) → 초신성 폭발 → 중성자별 또는 블랙홀(처음 질량에 따라 달라요).
-   '속 보기'는 별의 1/4을 잘라 안쪽 층을 보여 줘요. 2D 실험의 수축 정도(S.p1)·단계(S.s2)·질량(S.M3)을 읽어 시작해요(읽기 전용). */
+   '속 보기'는 별의 1/4을 잘라 안쪽 층을 보여 줘요. 2D와 같은 값: 수축 정도(S.p1) · 단계(S.s2) · 처음 질량(S.M3) · 큰 별의 진행(S.u3)을 서로 같이 움직이고, 2D의 장면(원시별·주계열 이후·큰 별의 최후)을 따라가요.
+   ▶ 재생은 2D 슬라이더를 대신 움직여 줘요(수축 0→100 %, 단계 0→7, 큰 별 주계열 → 초거성 → 초신성 → 남은 천체). */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -18,7 +19,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     levels: [0, 1, 2],
     camera: { dist: PHONE ? 12 : 8.5, theta: 0.5, phi: 1.2, min: 3.5, max: 20 },
-    autoRotate: 0.18,
+    autoRotate: 0,
     build(ctx) {
       if (ctx.THREE.ColorManagement) ctx.THREE.ColorManagement.legacyMode = false;     // 색을 보이는 그대로(sRGB) 쓰도록 맞춰요
       const { THREE, scene, root, label, info, controls, renderer, orbit } = ctx;
@@ -47,24 +48,31 @@
       /* 상태 */
       let mode = 'sun', s = 0, sT = 0, mass = 15, stg = 0, cut = true, clk = 0, burst = 0, pp = 0.3, ppT = 0.3, lastP1 = null;
       const rdSim = () => { try { return window.__sim; } catch (e) { return null; } };
-      const sim0 = rdSim(); let lastS2 = null, lastM3 = null;
+      const sim0 = rdSim(); let lastS2 = null, lastM3 = null, lastU3 = null;
       if (sim0 && sim0.S) { s = sT = clamp(sim0.S.s2 || 0, 0, 7); mass = sim0.S.M3 || 15; if (sim0.S.view === 'v3') mode = 'big'; else if (sim0.S.view === 'v1') mode = 'proto'; if (typeof sim0.S.p1 === 'number') { pp = ppT = clamp(sim0.S.p1, 0, 1); lastP1 = sim0.S.p1; } lastS2 = sim0.S.s2; lastM3 = sim0.S.M3; }
       const sunAt = (x) => { const i = Math.min(SUN.length - 2, Math.floor(x)), u = x - i, a = SUN[i], b = SUN[i + 1]; return { T: Math.exp(lerp(Math.log(a[1]), Math.log(b[1]), u)), R: Math.exp(lerp(Math.log(a[2]), Math.log(b[2]), u)) }; };
       const fate = (M) => (M < 8 ? 'wd' : M < 25 ? 'ns' : 'bh');
       const FN = { wd: '백색 왜성', ns: '중성자별', bh: '블랙홀' };
       const STN = ['주계열', '초거성', '초신성', '남은 천체'];
 
-      const segM = controls.segment('보기', [{ value: 'proto', label: '🌌 원시별' }, { value: 'sun', label: '☀️ 태양 정도' }, { value: 'big', label: '💥 큰 별' }], mode, (v) => { mode = v; setCtl(); upd(true); });
+      const segM = { set() {} };
       const ctlEl = controls.text('').parentElement; ctlEl.removeChild(ctlEl.lastChild);
       const nP = ctlEl.children.length;
-      const rPp = controls.range('수축 정도', 0, 100, 1, Math.round(pp * 100), (v) => { ppT = pp = v / 100; upd(); }, (v) => v + '%');
+      const rPp = controls.range('수축 정도', 0, 100, 1, Math.round(pp * 100), (v) => { ppT = pp = v / 100; if (plP) plP.pause(); const l = rdSim(); if (l && l.setP1) { l.S.play1 = false; l.setP1(pp); lastP1 = l.S.p1; } upd(); }, (v) => v + '%');
       const protoEls = [].slice.call(ctlEl.children, nP);
       const n0 = ctlEl.children.length;
-      const rS = controls.range('단계', 0, 7, 0.1, s, (v) => { sT = v; upd(); }, (v) => SUN[Math.round(v)][3]);
+      const rS = controls.range('단계', 0, 7, 0.1, s, (v) => { sT = v; if (plS) plS.pause(); const l = rdSim(); if (l && l.setS2) { l.setS2(v); lastS2 = l.S.s2; } upd(); }, (v) => SUN[Math.round(v)][3]);
       const sunEls = [].slice.call(ctlEl.children, n0); const n1 = ctlEl.children.length;
-      const segS = controls.segment('단계', STN.map((n, i) => ({ value: i, label: n })), stg, (v) => { stg = v; burst = 0; upd(true); });
-      const rM = controls.range('처음 질량', 8, 40, 1, mass, (v) => { mass = v; upd(true); }, (v) => v + ' M☉');
+      const segS = controls.segment('단계', STN.map((n, i) => ({ value: i, label: n })), stg, (v) => { stg = v; burst = 0; if (plB) plB.pause(); const l = rdSim(); if (l && l.setU3) l.setU3([0.15, 0.5, 0.75, 0.95][v]); upd(true); });
+      const rM = controls.range('처음 질량', 1, 40, 1, Math.round(mass), (v) => { mass = v; const l = rdSim(); if (l && l.setM3) { l.setM3(v); lastM3 = l.S.M3; } upd(true); }, (v) => v + ' M☉');
       const bigEls = [].slice.call(ctlEl.children, n1);
+      let plP = null, plS = null, plB = null, ready = false;
+      const gp = (fn) => { const n = ctlEl.children.length; const r = fn(); return { r, els: [].slice.call(ctlEl.children, n) }; };
+      const gP1 = gp(() => controls.player({ duration: 8, loop: true, autoplay: false, label: '수축 시작', phases: [[0, '성간 구름'], [0.3, '원시별'], [0.9, '주계열 시작']], onFrame(p) { if (!ready) return; ppT = pp = p; rPp.set(Math.round(p * 100)); const l = rdSim(); if (l && l.setP1) { l.S.play1 = false; l.setP1(p); lastP1 = l.S.p1; } upd(); } }));
+      const gP2 = gp(() => controls.player({ duration: 14, loop: true, autoplay: false, label: '일생 재생', phases: SUN.map((x, i) => [i / 7, x[3]]).filter((x, i) => i < 8), onFrame(p) { if (!ready) return; sT = s = 7 * p; rS.set(sT); const l = rdSim(); if (l && l.setS2) { l.setS2(sT); lastS2 = l.S.s2; } upd(); } }));
+      const gP3 = gp(() => controls.player({ duration: 10, loop: true, autoplay: false, label: '큰 별의 일생', phases: [[0, '주계열'], [0.35, '초거성'], [0.7, '초신성'], [0.85, '남은 천체']], onFrame(p) { if (!ready) return; stg = p < 0.35 ? 0 : p < 0.7 ? 1 : p < 0.85 ? 2 : 3; segS.set(stg); const l = rdSim(); if (l && l.setU3) l.setU3(p); upd(true); } }));
+      plP = gP1.r; plS = gP2.r; plB = gP3.r; [plP, plS, plB].forEach((q) => q.pause()); ready = true;
+      protoEls.push.apply(protoEls, gP1.els); sunEls.push.apply(sunEls, gP2.els); bigEls.push.apply(bigEls, gP3.els);
       const bC = controls.button('속 보기 ✓', () => { cut = !cut; bC.classList.toggle('on', cut); bC.textContent = '속 보기 ' + (cut ? '✓' : '✕'); upd(true); }); bC.classList.add('on');
       function setCtl() { orbit.dist = mode === 'proto' ? (PHONE ? 15 : 10.5) : mode === 'sun' ? (PHONE ? 12 : 8.5) : (PHONE ? 13 : 9.5); protoEls.forEach((e) => (e.style.display = mode === 'proto' ? '' : 'none')); sunEls.forEach((e) => (e.style.display = mode === 'sun' ? '' : 'none')); bigEls.forEach((e) => (e.style.display = mode === 'big' ? '' : 'none')); segM.set(mode); if (mode === 'sun') { rS.set(sT); } else if (mode === 'big') { segS.set(stg); } }
       const clipMat = (m) => { m.clippingPlanes = cut ? planes : []; m.clipIntersection = true; m.needsUpdate = true; };
@@ -95,14 +103,16 @@
         } else {
           const fa = fate(mass), Mr = Math.pow(mass / 15, 0.3);
           if (stg === 0) { T = 28000; R = 0.85 * Mr; name = '주계열 (청백색)'; txt = '<b>주계열</b>: 질량이 클수록 <b>뜨겁고 밝고</b> 수명이 짧아요. 중심에서 수소를 태워요.'; }
+          else if (fa === 'wd' && stg === 1) { T = 3500; R = 2.2; name = '적색 거성'; txt = '<b>적색 거성</b>: 질량이 8 M☉ 미만인 별은 초신성이 되지 않고 부풀어 올라 <b>적색 거성</b>이 돼요.'; }
+          else if (fa === 'wd' && stg === 2) { T = 80000; R = 0.2; name = '행성상 성운'; txt = '<b>행성상 성운</b>: 바깥층이 천천히 날아가 껍질을 이루고, 뜨거운 중심핵이 남아요.'; }
           else if (stg === 1) { T = 3500; R = 2.2 * Mr; name = '초거성 (붉음)'; txt = '<b>초거성</b>: 중심에서 점점 무거운 원소를 태워 <b>양파 껍질</b>처럼 층이 생겨요. 마지막은 <b>철 핵</b>이에요.'; }
           else if (stg === 2) { T = 40000; R = 0.5; name = '초신성 폭발'; txt = '<b>초신성</b>: 철 핵이 무너졌다가 반동으로 폭발해 바깥층이 <b>엄청난 속도로 날아가요</b>.<br>이때 철보다 무거운 원소도 만들어져요.'; }
           else { name = FN[fa]; T = fa === 'bh' ? 1 : 80000; R = fa === 'bh' ? 0.35 : 0.14; txt = '처음 질량 <b>' + mass + ' M☉</b> → <b>' + FN[fa] + '</b><br>' + (fa === 'wd' ? '(8 M☉ 미만: 행성상 성운 뒤 백색 왜성)' : fa === 'ns' ? '(8~25 M☉: 중성자별 — 아주 작고 빠르게 돌아요)' : '(25 M☉ 이상: 블랙홀 — 빛도 빠져나오지 못해요)'); }
-          show.star = stg !== 2 && !(stg === 3 && fa === 'bh');
-          show.layers = stg === 1 && cut; layers.forEach((l, i) => { l.visible = show.layers; if (show.layers) l.scale.setScalar(R * [0.76, 0.58, 0.4, 0.25, 0.11][i]); });
+          show.star = (stg !== 2 || fa === 'wd') && !(stg === 3 && fa === 'bh');
+          show.layers = stg === 1 && cut && fa !== 'wd'; layers.forEach((l, i) => { l.visible = show.layers; if (show.layers) l.scale.setScalar(R * [0.76, 0.58, 0.4, 0.25, 0.11][i]); });
           LC.forEach((l, i) => { l.show(show.layers); if (show.layers) l.obj = [R * [0.8, 0.62, 0.43, 0.27, 0.12][i] * 0.8 + 0.05, R * (0.55 - i * 0.08) * 0.4, R * 0.0]; });
-          neb.visible = nebR.visible = stg === 3; if (stg === 3) { neb.scale.setScalar(3.4); nebR.scale.setScalar(3.1); neb.material.opacity = 0.18; nebR.material.opacity = 0.45; if (fa === 'wd') { neb.material.color.set(0x5fe0c8); } else neb.material.color.set(0xff8a6a); }
-          disc.visible = stg === 3 && fa === 'bh'; jets.forEach((j) => (j.visible = stg === 3 && fa !== 'wd')); ej.visible = stg === 2;
+          const nebOn = stg === 3 || (fa === 'wd' && stg === 2); neb.visible = nebR.visible = nebOn; if (nebOn) { neb.scale.setScalar(3.4); nebR.scale.setScalar(3.1); neb.material.opacity = 0.18; nebR.material.opacity = 0.45; if (fa === 'wd') { neb.material.color.set(0x5fe0c8); } else neb.material.color.set(0xff8a6a); }
+          disc.visible = stg === 3 && fa === 'bh'; jets.forEach((j) => (j.visible = stg === 3 && fa !== 'wd')); ej.visible = stg === 2 && fa !== 'wd';
           LB.set(name);
         }
         const c = kelvin(T); star.material.emissive.setRGB(c[0], c[1], c[2]); halo.material.color.setRGB(c[0], c[1], c[2]);
@@ -119,6 +129,10 @@
         update(dt, t) {
           clk += dt;
           const sm0 = rdSim(); if (sm0 && sm0.S) {
+            { const v = sm0.S.view, m = v === 'v1' ? 'proto' : v === 'v2' ? 'sun' : v === 'v3' ? 'big' : null; if (m && m !== mode) { mode = m; lastP1 = lastS2 = lastM3 = lastU3 = null; setCtl(); upd(true); } }
+            if (mode === 'big' && sm0.S.u3 !== lastU3) { lastU3 = sm0.S.u3; const u = sm0.S.u3 || 0; if (u > 0.001) { const st = u < 0.35 ? 0 : u < 0.7 ? 1 : u < 0.8 ? 2 : 3; if (st !== stg) { stg = st; segS.set(stg); burst = 0; upd(true); } } if (!plB.playing) { ready = false; plB.set(Math.min(1, u)); ready = true; } }
+            if (mode === 'sun' && !plS.playing) { ready = false; plS.set(clamp(sm0.S.s2 || 0, 0, 7) / 7); ready = true; }
+            if (mode === 'proto' && !plP.playing && typeof sm0.S.p1 === 'number') { ready = false; plP.set(clamp(sm0.S.p1, 0, 1)); ready = true; }
             if (sm0.S.s2 !== lastS2) { lastS2 = sm0.S.s2; if (mode === 'sun') { sT = clamp(sm0.S.s2, 0, 7); rS.set(sT); } }
             if (sm0.S.M3 !== lastM3) { lastM3 = sm0.S.M3; mass = sm0.S.M3; if (mode === 'big') rM.set(Math.round(mass)); upd(); }
           }
@@ -126,12 +140,12 @@
           if (mode === 'proto') { const Rc = lerp(3.6, 0.6, Math.pow(pp, 0.8)), fl = lerp(1, 0.22, pp), om = 0.25 + 2.4 * pp; for (let i = 0; i < NCL; i++) { const c = cd[i], a = c[4] + clk * om / (c[3] + 0.25), rr = c[3] * Rc, x = c[0] * rr, z = c[2] * rr; dm.position.set(x * Math.cos(a - c[4]) - z * Math.sin(a - c[4]), c[1] * rr * fl, x * Math.sin(a - c[4]) + z * Math.cos(a - c[4])); dm.scale.setScalar(1); dm.updateMatrix(); cloudP.setMatrixAt(i, dm.matrix); } cloudP.instanceMatrix.needsUpdate = true; cloudP.material.color.setRGB(1, lerp(0.62, 0.9, pp), lerp(0.45, 0.8, pp)); }
           if (Math.abs(s - sT) > 0.002) { s += (sT - s) * Math.min(1, dt * 5); upd(); }
           star.rotation.y += dt * 0.2; neb.rotation.y += dt * 0.05;
-          if (mode === 'big' && stg === 2) {
+          if (mode === 'big' && stg === 2 && fate(mass) !== 'wd') {
             burst += dt; const u = (burst % 4) / 4, r = 0.4 + u * 5.2, fade = 1 - u;
             for (let i = 0; i < NE; i++) { const d = ejd[i], rr = r * d[3]; dm.position.set(d[0] * rr, d[1] * rr, d[2] * rr); dm.scale.setScalar(Math.max(0.05, 1.4 * fade)); dm.updateMatrix(); ej.setMatrixAt(i, dm.matrix); }
             ej.instanceMatrix.needsUpdate = true; ej.material.color.setRGB(1, 0.75 + 0.25 * fade, 0.45 + 0.4 * fade);
             halo.visible = true; halo.material.color.setRGB(1, 0.9, 0.7); halo.scale.setScalar(2 + 5 * Math.max(0, 1 - u * 3)); halo.material.opacity = 1; star.visible = u < 0.15; star.scale.setScalar(0.5 + u * 8);
-          } else if (mode === 'big' && stg === 3) { jets.forEach((j) => { j.rotation.y = t * 6; }); disc.rotation.z += dt * 1.5; }
+          } else if (mode === 'big' && stg === 3 && fate(mass) !== 'wd') { jets.forEach((j) => { j.rotation.y = t * 6; }); disc.rotation.z += dt * 1.5; }
           else halo.scale.setScalar(halo.scale.x);
           if (mode === 'big' && stg === 0) halo.material.opacity = 0.85 + 0.1 * Math.sin(t * 3);
         },
