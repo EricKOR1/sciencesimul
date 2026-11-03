@@ -160,40 +160,79 @@
     else if (m.t === 'vp') { vw = m.w; vh = m.h; fit(); }
   }
 
-  /* ---------------- 연결 (보는 쪽) ---------------- */
-  let peer = null, conn = null, retryT = 0, openT = 0, tries = 0;
+  /* ---------------- 연결 (보는 쪽) ----------------
+     ① 직접 연결(WebRTC)을 먼저 시도하고, ② 5초 안에 화면이 오지 않으면 암호화된 중계 서버로도 받아요.
+     어느 쪽이든 먼저 화면을 보내 주는 길을 써요. */
+  const canZ = !!(global.DecompressionStream && global.Response && global.Blob && Blob.prototype.stream);
+  let peer = null, conn = null, retryT = 0, openT = 0, tries = 0, via = null, gotAny = false;
+  const say = (t, k) => { if (!via) setMsg(t, k); };           // 화면이 오고 있으면 안내를 덮어쓰지 않아요
+  function onAny(src, d) {
+    if (via && via !== src) return;
+    if (!via && d && d.t === 'doc') { via = src; if (src === 'p2p') stopRelay(); }
+    if (!via) return;                                            // 첫 화면(doc)을 받기 전의 조각은 건너뛰어요
+    gotAny = true;
+    onData(d).catch((e) => console.error(e));
+  }
   function connect() {
     clearTimeout(retryT); clearTimeout(openT);
     if (!peer || peer.destroyed) return start();
     if (peer.disconnected) { try { peer.reconnect(); } catch (e) { /* 무시 */ } }
     try { if (conn) conn.close(); } catch (e) { /* 무시 */ }
-    conn = peer.connect(PREFIX + code, { reliable: true, serialization: 'binary' });
-    conn.on('open', () => { clearTimeout(openT); tries = 0; setMsg('', 'on'); });
-    conn.on('data', (d) => { onData(d).catch((e) => console.error(e)); });
-    conn.on('close', () => later('친구가 다른 화면으로 이동하는 중이에요. 다시 연결하는 중…'));
+    conn = peer.connect(PREFIX + code, { reliable: true, serialization: 'binary', metadata: { z: canZ } });
+    conn.on('open', () => { clearTimeout(openT); tries = 0; });
+    conn.on('data', (d) => onAny('p2p', d));
+    conn.on('close', () => { if (via === 'p2p') { via = null; startRelaySoon(); } later('친구가 다른 화면으로 이동하는 중이에요. 다시 연결하는 중…'); });
     conn.on('error', () => later('연결이 끊겼어요. 다시 연결하는 중…'));
-    openT = setTimeout(() => { if (!conn || !conn.open) later('친구 화면을 찾는 중… (친구의 공유가 켜져 있는지 확인해 주세요)'); }, 7000);
+    openT = setTimeout(() => { if (!conn || !conn.open) later('친구 화면을 찾는 중…'); }, 7000);
   }
   function later(t) {
-    setMsg(t, 'wait');
+    say(t, 'wait');
     clearTimeout(retryT); retryT = setTimeout(connect, Math.min(6000, 1500 + (tries++) * 500));
   }
   function start() {
-    setMsg('친구 화면에 연결하는 중…', 'wait');
-    peer = new global.Peer(undefined, peerOpts());
+    say('친구 화면에 연결하는 중…', 'wait');
+    try { peer = new global.Peer(undefined, peerOpts()); } catch (e) { return; }
     peer.on('open', connect);
     peer.on('error', (e) => {
       const t = e && e.type;
-      if (t === 'peer-unavailable') later('친구 화면을 찾을 수 없어요. 친구가 이 사이트를 열고 공유를 켜 두었는지 확인해 주세요. 다시 찾는 중…');
-      else if (t === 'network' || t === 'server-error' || t === 'socket-error' || t === 'socket-closed') { setMsg('인터넷 연결을 확인해 주세요. 다시 연결하는 중…', 'bad'); try { peer.destroy(); } catch (x) { /* 무시 */ } peer = null; clearTimeout(retryT); retryT = setTimeout(start, 4000); }
+      if (t === 'peer-unavailable') later('친구 화면을 찾는 중… 친구 기기에서 이 사이트가 열려 있고 📡 공유가 켜져 있는지 확인해 주세요.');
+      else if (t === 'network' || t === 'server-error' || t === 'socket-error' || t === 'socket-closed') { try { peer.destroy(); } catch (x) { /* 무시 */ } peer = null; clearTimeout(retryT); retryT = setTimeout(start, 4000); }
     });
     peer.on('disconnected', () => { if (!peer.destroyed) setTimeout(() => { try { peer.reconnect(); } catch (x) { /* 무시 */ } }, 1500); });
   }
+
+  /* 중계 서버 (예비 통로) */
+  const vid = 'v' + Math.random().toString(36).slice(2, 10);
+  let relay = null, sec = null, hiT = 0, relayT = 0;
+  function startRelaySoon() { clearTimeout(relayT); relayT = setTimeout(startRelay, 5000); }
+  function startRelay() {
+    if (relay || via === 'p2p') return;
+    const sc = doc.createElement('script'); sc.src = 'assets/js/relay.js';
+    const go = () => global.SciSimRelay.secret(code).then((sx) => {
+      if (relay || via === 'p2p') return;
+      sec = sx;
+      relay = global.SciSimRelay.open({
+        key: sec.key,
+        onState: (st) => { if (st === 'up') { hi(); if (!via) say('중계 서버를 거쳐 친구 화면을 기다리는 중…', 'wait'); } },
+        onMessage: (topic, m) => onAny('relay', m),
+      });
+      relay.sub(sec.topic + '/screen');
+      clearInterval(hiT); hiT = setInterval(hi, 4000);
+    }).catch(() => { /* 이 기기에서는 중계를 쓸 수 없어요 */ });
+    if (global.SciSimRelay) go(); else { sc.onload = go; doc.head.appendChild(sc); }
+  }
+  // 공유하는 친구에게 '나 여기서 보고 있어요' 신호 (처음엔 전체 화면도 달라고 해요)
+  function hi() { if (relay && sec) relay.pub(sec.topic + '/hello', { t: 'hi', vid, z: canZ, need: via !== 'relay' }); }
+  function stopRelay() { clearInterval(hiT); clearTimeout(relayT); if (relay) { relay.close(); relay = null; } }
+  // 15초가 지나도 아무것도 오지 않으면 확인할 점을 알려 줘요
+  setTimeout(() => { if (!gotAny) say('친구 화면이 아직 오지 않았어요. 친구 기기에서 이 사이트(첫 화면이나 실험 화면)가 열려 있고 📡 공유가 켜져 있는지, 코드가 맞는지 확인해 주세요. 계속 찾는 중…', 'wait'); }, 15000);
   who.textContent = '친구 화면 · ' + code.slice(0, 3) + '-' + code.slice(3);
   stage.hidden = false;
   fit();
   const s = doc.createElement('script'); s.src = 'assets/vendor/peerjs.min.js'; s.onload = start;
-  s.onerror = () => setMsg('연결 도구를 불러오지 못했어요. 인터넷 연결을 확인해 주세요.', 'bad');
+  s.onerror = () => { /* 직접 연결 도구를 못 불러와도 중계로 시도해요 */ };
   doc.head.appendChild(s);
-  global.addEventListener('pagehide', () => { try { peer && peer.destroy(); } catch (e) { /* 무시 */ } });
+  say('친구 화면에 연결하는 중…', 'wait');
+  startRelaySoon();
+  global.addEventListener('pagehide', () => { try { peer && peer.destroy(); } catch (e) { /* 무시 */ } stopRelay(); });
 })(window);

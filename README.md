@@ -40,7 +40,9 @@
 - **📡 내 화면 공유(QR)**: 학생마다 기기에 6자리 코드가 생기고, 📡 버튼을 누르면 QR·주소(복사 가능)가 나옵니다.
   친구가 QR을 찍거나 주소(`watch.html?c=코드`)로 들어오면 공유한 학생의 학습 화면(실험·미션·3D)을 **자기 자리에서 실시간으로** 봅니다(보기 전용).
   WebRTC로 기기끼리 직접 연결하며(PeerJS, 처음 서로 찾을 때만 PeerJS 공개 중계 서버 사용), 공유 학생이 다른 차시로 옮겨도 자동으로 다시 연결됩니다.
-  인터넷 주소(예: GitHub Pages)로 열었을 때 동작하며, 학교 방화벽이 WebRTC를 막으면 연결되지 않을 수 있습니다.
+  기기끼리 직접 연결이 막힌 곳(학교 와이파이의 기기 간 차단, 휴대폰 데이터 등)에서는 5초 뒤 **공개 MQTT 중계 서버**(EMQX·HiveMQ 공개 브로커, Eclipse Paho)를 거쳐 화면을 보냅니다.
+  중계로 보내는 내용은 학생 코드에서 만든 키로 **암호화(AES-GCM)**되고, 통로 이름도 코드의 해시를 씁니다. 중계는 속도가 조금 느려요(초당 약 3장).
+  인터넷 주소(예: GitHub Pages)로 열었을 때 동작합니다.
 - 첫 단계와 배운 내용 공책에는 **성취기준 원문**과 **단원 학습 순서**가 표시됩니다.
 - 진행 기록(별·점수·단계)은 각 기기의 브라우저(localStorage)에 저장됩니다.
 
@@ -226,6 +228,8 @@ assets/js/share.js       내 화면 공유 (코드·QR·화면 보내기)
 assets/js/watch.js       친구 화면 보기 (watch.html)
 assets/vendor/peerjs.min.js PeerJS 1.5.4 (MIT, WebRTC 연결)
 assets/vendor/qrcode.js  QR Code Generator (Kazuhiko Arase, MIT)
+assets/js/relay.js       화면 공유 예비 통로 (암호화된 MQTT 중계)
+assets/vendor/paho-mqtt.js Eclipse Paho MQTT 1.1.0 (EDL-1.0)
 watch.html               친구 화면 보기 페이지
 assets/js/catalog.js     학년·단원·차시 목록과 성취기준  ← 새 시뮬레이션을 등록하는 곳
 assets/js/hub.js         메인 페이지 동작

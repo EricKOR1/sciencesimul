@@ -43,10 +43,49 @@
   let peerLib = null, qrLib = null;
   const needPeer = () => (global.Peer ? Promise.resolve() : (peerLib = peerLib || loadScript(BASE + 'vendor/peerjs.min.js')));
   const needQR = () => (global.qrcode ? Promise.resolve() : (qrLib = qrLib || loadScript(BASE + 'vendor/qrcode.js')));
+  let relayLib = null;
+  const needRelay = () => (global.SciSimRelay ? Promise.resolve() : (relayLib = relayLib || loadScript(BASE + 'js/relay.js')));
 
   /* ---------------- 연결 (공유하는 쪽) ---------------- */
   let peer = null, status = 'off', retry = 0, retryT = 0;
   const viewers = new Set();
+  /* 예비 통로(중계): 기기끼리 직접 연결이 막힌 친구(학교 와이파이 기기 간 차단, 휴대폰 데이터 등)를 위해
+     공개 중계 서버로도 화면을 보내요. 내용은 내 코드로만 풀 수 있게 암호화돼요(relay.js).
+     중계로 보는 친구들은 viewers 안의 객체 하나(R)로 묶어 한꺼번에 보내요. */
+  let relay = null, relayUp = false, relaySec = null, noZ = false;
+  const relayIds = new Map();      // 중계로 보는 친구 id → 마지막 신호 시각
+  const R = { open: true, relay: true, metadata: {}, send(msg) { if (relay && relaySec) relay.pub(relaySec.topic + '/screen', msg); }, close() {} };
+  const viewerCount = () => viewers.size - (viewers.has(R) ? 1 : 0) + relayIds.size;
+  function startRelay() {
+    if (relay || !st.on) return;
+    const code = st.code;
+    needRelay().then(() => global.SciSimRelay.secret(code)).then((sec) => {
+      if (relay || !st.on || code !== st.code) return;
+      relaySec = sec;
+      relay = global.SciSimRelay.open({
+        key: sec.key,
+        onState: (s2) => { relayUp = s2 === 'up'; render(); },
+        onMessage: (topic, m) => {
+          if (!m || m.t !== 'hi' || typeof m.vid !== 'string') return;
+          const isNew = !relayIds.has(m.vid);
+          relayIds.set(m.vid, Date.now());
+          if (m.z === false) noZ = true;
+          if (isNew || m.need) {                      // 새로 온 친구(또는 화면을 다시 달라는 친구)에게 전체 화면
+            viewers.add(R); render();
+            sendDoc([R]); startLoops();
+          }
+        },
+      });
+      relay.sub(sec.topic + '/hello');
+    }).catch(() => { /* 중계 없이 직접 연결만 */ });
+  }
+  function stopRelay() { if (relay) { relay.close(); relay = null; } relayUp = false; relaySec = null; relayIds.clear(); viewers.delete(R); }
+  // 신호가 끊긴 중계 친구 정리
+  setInterval(() => {
+    const now = Date.now(); let changed = false;
+    relayIds.forEach((t, id) => { if (now - t > 15000) { relayIds.delete(id); changed = true; } });
+    if (changed) { if (!relayIds.size) viewers.delete(R); if (!viewers.size) stopLoops(); render(); }
+  }, 5000);
   function startHost() {
     if (peer || !st.on) return;
     status = 'connecting'; render();
@@ -72,7 +111,7 @@
   function stopHost() {
     clearTimeout(retryT);
     viewers.forEach((c) => { try { c.close(); } catch (e) { /* 무시 */ } });
-    viewers.clear();
+    viewers.clear(); stopRelay();
     if (peer) { try { peer.destroy(); } catch (e) { /* 무시 */ } peer = null; }
     status = 'off'; stopLoops(); render();
   }
@@ -81,6 +120,7 @@
   global.addEventListener('pageshow', (e) => { if (e.persisted && st.on && (!peer || peer.destroyed)) { peer = null; startHost(); } });
 
   function onConn(conn) {
+    if (conn.metadata && conn.metadata.z === false) noZ = true;   // 압축을 풀 수 없는 기기
     conn.on('open', () => {
       viewers.add(conn); render();
       sendDoc([conn]);
@@ -129,7 +169,7 @@
     return global.matchMedia && global.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   }
   async function pack(str) {
-    if (global.CompressionStream && global.Response) {
+    if (!noZ && global.CompressionStream && global.Response) {
       try {
         const s = new Blob([str]).stream().pipeThrough(new global.CompressionStream('gzip'));
         return { z: 1, d: await new global.Response(s).arrayBuffer() };
@@ -183,7 +223,7 @@
   const sent = {};
   const lastFrame = new Map();      // cid → 작은 미리보기 지문 (같으면 안 보냄)
   const glSnap = new Map(), glLast = new Map(), glBusy = new Set();
-  const frameGap = () => { const n = viewers.size; return n <= 2 ? 100 : n <= 5 ? 160 : n <= 12 ? 330 : 500; };
+  const frameGap = () => { const n = viewerCount(); const g = n <= 2 ? 100 : n <= 5 ? 160 : n <= 12 ? 330 : 500; return viewers.has(R) ? Math.max(g, 350) : g; };
   // 3D(WebGL) 캔버스는 그린 직후에만 내용을 읽을 수 있어서, sim3d.js가 그릴 때마다 불러 줘요.
   // 보낼 때가 되었으면 그 순간의 그림을 복사해 두고 따로 압축해서 보내요.
   function grab(c) {
@@ -219,7 +259,7 @@
     }
     bgCache.set(c, v); return v;
   }
-  const many = () => viewers.size > 5;
+  const many = () => viewerCount() > 5 || viewers.has(R);
   // 한 캔버스 그림을 JPEG로 줄여 보내기 (바뀌지 않았으면 건너뛰기)
   async function sendCanvas(c, src) {
     const id = cidOf(c), fp = finger(src);
@@ -258,7 +298,7 @@
     doc.addEventListener('scroll', onScroll, true);
     doc.addEventListener('input', onInput, true); doc.addEventListener('change', onInput, true);
     global.addEventListener('resize', onResize);
-    const domLoop = () => { domTick(); domT = setTimeout(domLoop, viewers.size > 8 ? 450 : 250); };
+    const domLoop = () => { domTick(); domT = setTimeout(domLoop, viewerCount() > 8 || viewers.has(R) ? 450 : 250); };
     const frLoop = () => { frameTick(); frT = setTimeout(frLoop, frameGap()); };
     domLoop(); frLoop();
   }
@@ -288,20 +328,22 @@
   }
   function statusText() {
     if (!st.on) return '공유가 꺼져 있어요';
-    if (status === 'on') return viewers.size ? '👀 ' + viewers.size + '명이 보고 있어요' : '● 공유 준비 완료 · 친구가 QR을 찍으면 바로 보여요';
+    const vc = viewerCount();
+    if (status === 'on' || relayUp) return vc ? '👀 ' + vc + '명이 보고 있어요' : '● 공유 준비 완료 · 친구가 QR을 찍으면 바로 보여요';
     if (status === 'error') return '연결이 잠시 끊겼어요. 다시 연결하는 중…';
     return '연결하는 중…';
   }
   function render() {
     if (btn) {
       const n = btn.querySelector('.share-n');
-      n.hidden = !viewers.size; n.textContent = viewers.size;
-      btn.classList.toggle('live', st.on && status === 'on');
-      btn.classList.toggle('watched', viewers.size > 0);
+      const vc = viewerCount();
+      n.hidden = !vc; n.textContent = vc;
+      btn.classList.toggle('live', st.on && (status === 'on' || relayUp));
+      btn.classList.toggle('watched', vc > 0);
     }
     if (sheet) {
       sheet.querySelector('.sh-status').textContent = statusText();
-      sheet.querySelector('.sh-status').className = 'sh-status ' + (st.on ? status : 'off');
+      sheet.querySelector('.sh-status').className = 'sh-status ' + (st.on ? (relayUp ? 'on' : status) : 'off');
       sheet.querySelector('.sh-toggle').textContent = st.on ? '공유 끄기' : '공유 켜기';
     }
   }
@@ -339,7 +381,7 @@
           <button type="button" class="btn btn-sm sh-new">새 코드 만들기</button>
           <button type="button" class="btn btn-sm sh-close">닫기</button>
         </div>
-        <p class="sh-note">보는 친구는 화면을 볼 수만 있고 조작할 수는 없어요. 같은 와이파이에서 가장 잘 연결돼요.</p>
+        <p class="sh-note">보는 친구는 화면을 볼 수만 있고 조작할 수는 없어요. 기기끼리 바로 연결이 안 되는 곳(학교 와이파이, 휴대폰 데이터)에서는 내 코드로만 풀 수 있게 암호화해서 공개 중계 서버를 거쳐 보여 줘요.</p>
       </div>`;
     doc.body.appendChild(back); sheet = back;
     const fill = () => {
@@ -353,10 +395,10 @@
     nameIn.addEventListener('change', () => { st.name = nameIn.value.trim().slice(0, 12); save(); if (viewers.size) sendDoc([...viewers]); });
     back.querySelector('.sh-copy').addEventListener('click', () => copy(watchURL()));
     back.querySelector('.sh-url input').addEventListener('focus', (e) => e.target.select());
-    back.querySelector('.sh-toggle').addEventListener('click', () => { st.on = !st.on; save(); if (st.on) { retry = 0; startHost(); } else stopHost(); render(); });
+    back.querySelector('.sh-toggle').addEventListener('click', () => { st.on = !st.on; save(); if (st.on) { retry = 0; startHost(); startRelay(); } else stopHost(); render(); });
     back.querySelector('.sh-new').addEventListener('click', () => {
       stopHost(); st.code = newCode(); save(); fill();
-      if (st.on) setTimeout(startHost, 300);
+      if (st.on) setTimeout(() => { startHost(); startRelay(); }, 300);
     });
     const close = () => { back.remove(); sheet = null; doc.removeEventListener('keydown', esc); };
     const esc = (e) => { if (e.key === 'Escape') close(); };
@@ -371,9 +413,9 @@
     if (!btn) setTimeout(() => { makeButton(); render(); }, 600);
     if (global.location.protocol === 'file:') { status = 'error'; return; }  // 파일로 열면 공유할 수 없어요
     if (global.navigator.webdriver && !global.SCISIM_SHARE_TEST) return;      // 자동 점검 도구에서는 연결하지 않아요
-    if (st.on) startHost();
+    if (st.on) { startHost(); setTimeout(startRelay, 1500); }
   }
   if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', init); else setTimeout(init, 0);
 
-  global.SciSimShare = { grab, open: openSheet, get code() { return st.code; }, get viewers() { return viewers.size; }, get status() { return status; }, get sent() { return sent; } };
+  global.SciSimShare = { grab, open: openSheet, get code() { return st.code; }, get viewers() { return viewerCount(); }, get relayUp() { return relayUp; }, get status() { return status; }, get sent() { return sent; } };
 })(window);
