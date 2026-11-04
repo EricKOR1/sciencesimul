@@ -89,7 +89,7 @@
         const g = w.GAL3[w.S.gi], zv = 0.22 + 3.6 * g.z, lam1 = 1.0, lam2 = lam1 * (1 + zv), x0 = -5.2, x1 = 4.4;
         [[waveS, 1.2, lam1], [waveR, -0.95, lam2]].forEach(([m, y, lam]) => { for (let i = 0; i < NW; i++) { const x = x0 + 0.6 + (x1 - x0 - 1.4) * i / (NW - 1); Pw.set(x, y + 0.32 * Math.sin(Math.PI * 2 * (x / lam + t * 0.7)), 0); Mw.compose(Pw, Qw, Sw); m.setMatrixAt(i, Mw); } m.instanceMatrix.needsUpdate = true; });
         eyeS.position.set(x0, 1.2, 0); eyeR.position.set(x0, -0.95, 0); srcS.position.set(x1, 1.2, 0); srcR.position.set(x1 + 0.25 * Math.sin(t * 1.5), -0.95, 0); recA.position.set(x1 + 1.3, -0.95, 0);
-        lnObs.position.x = lamX(g.lam); lnCur.position.set(lamX(w.S.lamC), -2.6, 0.05);
+        lnObs.position.set(lamX(g.lam), -2.6, 0.04); lnCur.position.set(lamX(w.S.lamC), -2.6, 0.05);
         const dx = lamX(g.lam) - lamX(L0); shiftA.visible = dx > 0.05; if (shiftA.visible) { shiftA.scale.set(dx, 1, 1); shiftA.position.set(lamX(L0) + dx / 2, -3.35, 0); }
         lR1.show(true); lR2.show(true); lSpR.show(true); lSpO.show(true); lSpO.obj = [lamX(g.lam), -3.9, 0]; lSpC.show(true); lSpC.obj = [lamX(w.S.lamC) + 0.2, -1.55 - 0.35, 0]; lSpT.show(true); lSpT.obj = [3.2, -1.7, 0];
         gSel.r.set(w.S.gi); cur.r.set(w.S.lamC);
@@ -113,7 +113,7 @@
         DV.forEach((q, i) => {
           const p = DIRS[i].clone().multiplyScalar(q.d * DK), m = dGal[i], placed = S.placed[i] && S.placed[i].on, sel = S.pk === i;
           m.position.copy(p); m.scale.setScalar(0.16 + 0.04 * (sel ? 1 : 0)); m.material.color.setHex(placed ? 0x4ade80 : sel ? 0xfde047 : 0xe2e8f0); m.material.emissive.setHex(placed ? 0x15803d : sel ? 0xa16207 : 0x334155);
-          const L = Math.max(0.2, q.v * VK * 6), dir = DIRS[i], a = dArr[i], base = p.clone().addScaledVector(dir, 0.3);
+          const L = Math.max(0.2, q.v * VK * 0.75), dir = DIRS[i], a = dArr[i], base = p.clone().addScaledVector(dir, 0.3);
           a.position.copy(base).addScaledVector(dir, L / 2); a.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir); a.children[0].scale.set(1, L, 1); a.children[1].position.y = L / 2 + 0.15;
           dLab[i].show(true); dLab[i].obj = p.clone().addScaledVector(dir, -0.45).toArray(); dLab[i].set(q.k + ' · ' + q.d + ' Mpc');
         });
@@ -128,7 +128,7 @@
         uEls.forEach((e) => { e.style.display = r1 || d2 ? 'none' : ''; }); shw(gSel, r1); shw(cur, r1);
         if (r1 || d2) Object.keys(LB).forEach((k) => LB[k].show(false));
         if (!r1) [lR1, lR2, lSpR, lSpO, lSpC, lSpT].forEach((l) => l.show(false)); if (!d2) { dLab.forEach((l) => l.show(false)); lOb.show(false); }
-        const o = ctx.orbit; if (r1) { o.theta = 0; o.phi = Math.PI / 2; o.tx = 0; o.ty = -0.6; o.tz = 0; o.dist = PHONE ? 19 : 14; } else if (d2) { o.theta = 0.4; o.phi = 1.15; o.tx = 0; o.ty = 0; o.tz = 0; o.dist = PHONE ? 22 : 15; } else { o.theta = 0.5; o.phi = 1.1; o.tx = 0; o.ty = 0; o.tz = 0; o.dist = PHONE ? 14 : 10.5; }
+        const o = ctx.orbit; if (r1) { o.theta = 0; o.phi = Math.PI / 2; o.tx = 0; o.ty = PHONE ? 0.2 : -0.6; o.tz = 0; o.dist = PHONE ? 25 : 14; } else if (d2) { o.theta = 0.4; o.phi = 1.15; o.tx = 0; o.ty = 0; o.tz = 0; o.dist = PHONE ? 22 : 15; } else { o.theta = 0.5; o.phi = 1.1; o.tx = 0; o.ty = 0; o.tz = 0; o.dist = PHONE ? 14 : 10.5; }
       }
       plR.pause(); ready = true; syncing = true; plR.set(r); syncing = false;
       frame();
