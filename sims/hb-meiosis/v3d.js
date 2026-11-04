@@ -73,6 +73,16 @@
       /* 방추사 : 극과 염색 분체를 잇는 가는 막대 */
       const NSP = 24, spokes = [];
       for (let i = 0; i < NSP; i++) { const m = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 1, 6), std(0xd9d9d9, { transparent: true, opacity: 0.0, depthWrite: false })); m.visible = false; root.add(m); spokes.push(m); }
+      // 방추사 한 가닥: 극(a)에서 염색체(b)까지 가는 막대, w = 보이는 정도(0~1)
+      const _up = new THREE.Vector3(0, 1, 0), _d = new THREE.Vector3();
+      function spoke(i, a, b, w) {
+        const m = spokes[i]; if (!m) return;
+        if (!(w > 0.02)) { m.visible = false; return; }
+        _d.subVectors(b, a); const len = _d.length(); if (len < 1e-4) { m.visible = false; return; }
+        m.visible = true; m.position.copy(a).addScaledVector(_d, 0.5);
+        m.scale.set(1, len, 1); m.quaternion.setFromUnitVectors(_up, _d.normalize());
+        m.material.opacity = 0.75 * w;
+      }
       const poleM = std(0xffd34d, { emissive: 0x7a5a00, emissiveIntensity: 0.5 }), poleI = new THREE.InstancedMesh(new THREE.SphereGeometry(0.14, 12, 8), poleM, 6); root.add(poleI);
 
       const lab2 = label('2가 염색체', null, { color: 'rgba(255,122,70,.92)' }), labS = label('방추사', null, {}), labN = label('핵막', null, {}), labH = label('상동 염색체', null, {});
