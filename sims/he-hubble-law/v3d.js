@@ -1,6 +1,7 @@
 /* he-hubble-law · 3D 팽창하는 우주와 허블-르메트르 법칙
    은하들이 서로 멀어져요. 어느 은하에서 보아도 먼 은하일수록 더 빨리 멀어져요(v = H₀d). 그래서 우주에는 '중심'이 없어요.
    '관측자 바꾸기'로 다른 은하의 입장에서 보고, '시간을 거꾸로' 돌리면 모든 은하가 한 점으로 모여요(빅뱅). 이때 걸린 시간이 우주의 나이(≈ 1/H₀)예요.
+   1단계(적색 편이: 파장 늘어남 · K선 이동)와 2단계(관측자에서 본 은하 8개의 거리 · 후퇴 속도)도 2D와 같은 값으로 보여 줘요.
    2D와 같은 값: 허블 상수(S.H4)·시간 되감기(S.rew)·관측하는 은하(S.obs)를 서로 같이 움직여요(3D에서 바꾸면 2D도 바뀌어요). ▶ 되감기는 2D의 '시간 되감기' 슬라이더와 같아요. */
 (function () {
   'use strict';
@@ -11,7 +12,7 @@
   window.SciSim3D.attach({
     title: '팽창하는 우주 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    levels: [2, 3],          // 0~1단계(적색 편이·거리-속도 점 찍기)는 2D 화면에서 해요
+    levels: [2, 3],          // 0~1단계(적색 편이 재기 · 거리-속도 점 찍기)는 2D로 시작하고, 3D 단추로 같은 장면을 볼 수 있어요
     camera: { dist: PHONE ? 14 : 10.5, theta: 0.5, phi: 1.1, min: 4, max: 24 },
     autoRotate: 0,
     build(ctx) {
@@ -59,11 +60,87 @@
         LB.bg.show(r > 0.93); LB.bg.obj = bang;
         if (infoT++ % 6 === 0) info(r > 0.93 ? '모든 은하가 <b>한 점</b>으로 모여요 → 이때가 <b>우주의 시작</b>이에요.<br>H₀ = ' + H + ' km/s/Mpc → 나이 ≈ <b>' + Math.round(AGE) + '억 년</b> (≈ 1/H₀)' : '화살표가 길수록 <b>더 빨리</b> 멀어져요 (v = H₀d).<br>어느 은하에서 봐도 똑같아서 <b>우주의 중심은 없어요</b>.' + (r > 0 ? '<br>시간을 거꾸로 돌리는 중: ' + Math.round(AGE * r) + '억 년 전 · 우주가 ' + Math.round((1 - r) * 100) + '% 크기예요.' : ''));
       }
+
+      /* ================= 1단계 적색 편이(v1) · 2단계 거리와 후퇴 속도(v2): 2D와 같은 값으로 보여 줘요 ================= */
+      const gU = new THREE.Group(); while (root.children.length) gU.add(root.children[0]); root.add(gU);
+      const gR = new THREE.Group(), gD = new THREE.Group(); root.add(gR, gD); gR.visible = gD.visible = false;
+      const probe = controls.text(''); probe.style.display = 'none'; const ctlEl = probe.parentElement;
+      const uEls = Array.prototype.filter.call(ctlEl.children, (e) => e !== probe);
+      const grab = (fn) => { const n0 = ctlEl.children.length; const r2 = fn(); return { r: r2, els: Array.prototype.slice.call(ctlEl.children, n0) }; };
+      const shw = (g2, on) => g2.els.forEach((e) => { e.style.display = on ? '' : 'none'; });
+      const BM2 = (c, o) => new THREE.MeshBasicMaterial(Object.assign({ color: c }, o || {}));
+      const SMT = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.5 }, o || {}));
+      const L0 = 393.4, LLO = 385, LHI = 420, SPW = 11;
+      /* --- v1: 멀어지는 광원의 빛은 파장이 길어지고(적색 편이) K선이 오른쪽으로 옮겨 가요 --- */
+      const NW = 110, waveS = new THREE.InstancedMesh(new THREE.SphereGeometry(0.06, 8, 6), BM2(0x60a5fa), NW), waveR = new THREE.InstancedMesh(new THREE.SphereGeometry(0.06, 8, 6), BM2(0xf87171), NW); waveS.frustumCulled = waveR.frustumCulled = false; gR.add(waveS, waveR);
+      const eyeS = new THREE.Mesh(new THREE.SphereGeometry(0.42, 20, 14), SMT(0xf1f5f9)), eyeR = eyeS.clone(); gR.add(eyeS, eyeR);
+      const srcS = new THREE.Mesh(new THREE.SphereGeometry(0.34, 20, 14), BM2(0xbfdbfe)), srcR = new THREE.Mesh(new THREE.SphereGeometry(0.34, 20, 14), BM2(0xfecaca)); gR.add(srcS, srcR);
+      const recA = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.7, 16), SMT(0xfbbf24, { emissive: 0xfbbf24, emissiveIntensity: 0.6 })); recA.rotation.z = -Math.PI / 2; gR.add(recA);
+      const spCv = document.createElement('canvas'); spCv.width = 256; spCv.height = 8; { const c2 = spCv.getContext('2d'), gr = c2.createLinearGradient(0, 0, 256, 0); gr.addColorStop(0, '#6d28d9'); gr.addColorStop(1, '#7c3aed'); c2.fillStyle = gr; c2.fillRect(0, 0, 256, 8); }
+      const strip = new THREE.Mesh(new THREE.PlaneGeometry(SPW, 1.3), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(spCv) })); strip.position.set(0, -2.6, 0); gR.add(strip);
+      const lamX = (l) => -SPW / 2 + SPW * (l - LLO) / (LHI - LLO);
+      const lnRest = new THREE.Mesh(new THREE.BoxGeometry(0.08, 1.3, 0.05), BM2(0xffffff)), lnObs = new THREE.Mesh(new THREE.BoxGeometry(0.16, 1.3, 0.05), BM2(0x111827)), lnCur = new THREE.Mesh(new THREE.BoxGeometry(0.05, 1.7, 0.05), BM2(0xfde047));
+      lnRest.position.set(lamX(L0), -2.6, 0.03); lnObs.position.z = 0.04; lnCur.position.z = 0.05; gR.add(lnRest, lnObs, lnCur);
+      const shiftA = new THREE.Mesh(new THREE.BoxGeometry(1, 0.06, 0.06), BM2(0xfbbf24)); gR.add(shiftA);
+      const lR1 = label('정지한 광원: 파장 λ₀', [-5.2, 1.7, 0], { color: 'rgba(30,64,175,.92)' }), lR2 = label('멀어지는 광원: 파장이 더 길어요 (그림은 과장)', [-1.5, -0.35, 0], { color: 'rgba(185,28,28,.92)' }), lSpR = label('정지했을 때의 K선', [lamX(L0), -1.55, 0], { color: 'rgba(30,41,59,.9)' }), lSpO = label('이 은하의 K선', [0, -3.6, 0], { color: 'rgba(30,41,59,.9)' }), lSpC = label('내가 놓은 선', [0, -3.6, 0], { color: 'rgba(120,80,0,.92)' }), lSpT = label('Ca II K선 (보라색 영역의 어두운 선)', [0, -1.6, 0], { color: 'rgba(30,41,59,.88)' });
+      [lR1, lR2, lSpR, lSpO, lSpC, lSpT].forEach((l) => l.show(false));
+      const Mw = new THREE.Matrix4(), Pw = new THREE.Vector3(), Qw = new THREE.Quaternion(), Sw = new THREE.Vector3(1, 1, 1);
+      function updRed(w, t) {
+        const g = w.GAL3[w.S.gi], zv = 0.22 + 3.6 * g.z, lam1 = 1.0, lam2 = lam1 * (1 + zv), x0 = -5.2, x1 = 4.4;
+        [[waveS, 1.2, lam1], [waveR, -0.95, lam2]].forEach(([m, y, lam]) => { for (let i = 0; i < NW; i++) { const x = x0 + 0.6 + (x1 - x0 - 1.4) * i / (NW - 1); Pw.set(x, y + 0.32 * Math.sin(Math.PI * 2 * (x / lam + t * 0.7)), 0); Mw.compose(Pw, Qw, Sw); m.setMatrixAt(i, Mw); } m.instanceMatrix.needsUpdate = true; });
+        eyeS.position.set(x0, 1.2, 0); eyeR.position.set(x0, -0.95, 0); srcS.position.set(x1, 1.2, 0); srcR.position.set(x1 + 0.25 * Math.sin(t * 1.5), -0.95, 0); recA.position.set(x1 + 1.3, -0.95, 0);
+        lnObs.position.x = lamX(g.lam); lnCur.position.set(lamX(w.S.lamC), -2.6, 0.05);
+        const dx = lamX(g.lam) - lamX(L0); shiftA.visible = dx > 0.05; if (shiftA.visible) { shiftA.scale.set(dx, 1, 1); shiftA.position.set(lamX(L0) + dx / 2, -3.35, 0); }
+        lR1.show(true); lR2.show(true); lSpR.show(true); lSpO.show(true); lSpO.obj = [lamX(g.lam), -3.9, 0]; lSpC.show(true); lSpC.obj = [lamX(w.S.lamC) + 0.2, -1.55 - 0.35, 0]; lSpT.show(true); lSpT.obj = [3.2, -1.7, 0];
+        gSel.r.set(w.S.gi); cur.r.set(w.S.lamC);
+        return '<b>멀어지는 광원의 빛은 파장이 길어져요</b> (적색 편이)<br>' + g.nm + '의 K선이 정지했을 때의 위치(흰 선)보다 오른쪽(붉은 쪽)으로 옮겨 갔어요.<br>옮겨 간 만큼(Δλ)이 클수록 더 빨리 멀어져요.<br><span style="color:#9fb0d4">노란 선을 K선에 맞춘 뒤 z · v 계산과 기록은 ▦ 2D에서 해요.</span>';
+      }
+      const gSel = grab(() => controls.segment('은하', [0, 1, 2].map((i) => ({ value: i, label: '은하 ' + (i + 1) })), 0, (v) => { const w = window.__sim; if (w && w.setGal) w.setGal(v); }));
+      const cur = grab(() => controls.range('내 선의 파장', LLO, LHI, 0.1, 400, (v) => { const w = window.__sim; if (w && w.setLamC) w.setLamC(v); }, (v) => v.toFixed(1) + ' nm'));
+      /* --- v2: 거리와 후퇴 속도 --- */
+      const DK = 0.027, VK = 0.00016;
+      const dObs = new THREE.Mesh(new THREE.SphereGeometry(0.28, 20, 14), SMT(0x60a5fa, { emissive: 0x2563eb, emissiveIntensity: 0.5 })); gD.add(dObs);
+      const dGal = [], dArr = [];
+      for (let i = 0; i < 8; i++) {
+        const m = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 12), SMT(0xe2e8f0, { emissive: 0x334155, emissiveIntensity: 0.4 })); gD.add(m); dGal.push(m);
+        const a = new THREE.Group(), mm = SMT(0xff8a4a, { emissive: 0xff5a1a, emissiveIntensity: 0.5 }); a.add(new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1, 8), mm), new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.3, 12), mm)); gD.add(a); dArr.push(a);
+      }
+      const DIRS = [[0.9, 0.3, 0.2], [-0.8, 0.5, 0.3], [0.5, -0.7, 0.5], [-0.6, -0.5, 0.6], [0.2, 0.9, -0.4], [-0.9, 0.1, -0.4], [0.7, -0.4, -0.6], [-0.3, 0.6, 0.7]].map((d) => new THREE.Vector3(...d).normalize());
+      const dLab = DIRS.map((d, i) => { const l = label('', [0, 0, 0], { color: 'rgba(30,41,59,.9)', size: 12 }); l.show(false); return l; });
+      const lOb = label('우리 은하 (관측자)', [0, 0.6, 0], { color: 'rgba(30,64,175,.92)' }); lOb.show(false);
+      function updDist(w, t) {
+        const DV = w.DV, S = w.S, hubble = 70;
+        DV.forEach((q, i) => {
+          const p = DIRS[i].clone().multiplyScalar(q.d * DK), m = dGal[i], placed = S.placed[i] && S.placed[i].on, sel = S.pk === i;
+          m.position.copy(p); m.scale.setScalar(0.16 + 0.04 * (sel ? 1 : 0)); m.material.color.setHex(placed ? 0x4ade80 : sel ? 0xfde047 : 0xe2e8f0); m.material.emissive.setHex(placed ? 0x15803d : sel ? 0xa16207 : 0x334155);
+          const L = Math.max(0.2, q.v * VK * 6), dir = DIRS[i], a = dArr[i], base = p.clone().addScaledVector(dir, 0.3);
+          a.position.copy(base).addScaledVector(dir, L / 2); a.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir); a.children[0].scale.set(1, L, 1); a.children[1].position.y = L / 2 + 0.15;
+          dLab[i].show(true); dLab[i].obj = p.clone().addScaledVector(dir, -0.45).toArray(); dLab[i].set(q.k + ' · ' + q.d + ' Mpc');
+        });
+        lOb.show(true);
+        const n = S.placed.filter((q) => q && q.on).length;
+        return '<b>관측자에서 본 은하 8개</b> (A~H)<br>먼 은하일수록 화살표(후퇴 속도)가 길어요 → 거리와 속도는 비례해요.<br>그래프에 찍은 점 ' + n + ' / 8 (초록 = 찍은 은하)<br><span style="color:#9fb0d4">점을 찍고 직선을 그리는 일은 ▦ 2D에서 해요.</span>';
+      }
+      let scnU = '', lastU = '';
+      function applyU(v) {
+        if (v === scnU) return; scnU = v; lastU = '';
+        const r1 = v === 'v1', d2 = v === 'v2'; gU.visible = !(r1 || d2); gR.visible = r1; gD.visible = d2;
+        uEls.forEach((e) => { e.style.display = r1 || d2 ? 'none' : ''; }); shw(gSel, r1); shw(cur, r1);
+        if (r1 || d2) Object.keys(LB).forEach((k) => LB[k].show(false));
+        if (!r1) [lR1, lR2, lSpR, lSpO, lSpC, lSpT].forEach((l) => l.show(false)); if (!d2) { dLab.forEach((l) => l.show(false)); lOb.show(false); }
+        const o = ctx.orbit; if (r1) { o.theta = 0; o.phi = Math.PI / 2; o.tx = 0; o.ty = -0.6; o.tz = 0; o.dist = PHONE ? 19 : 14; } else if (d2) { o.theta = 0.4; o.phi = 1.15; o.tx = 0; o.ty = 0; o.tz = 0; o.dist = PHONE ? 22 : 15; } else { o.theta = 0.5; o.phi = 1.1; o.tx = 0; o.ty = 0; o.tz = 0; o.dist = PHONE ? 14 : 10.5; }
+      }
       plR.pause(); ready = true; syncing = true; plR.set(r); syncing = false;
       frame();
       return {
         update(dt, t) {
-          const S = sim() && sim().S;
+          const S = sim() && sim().S, vwU = S ? S.view : 'v3';
+          applyU(vwU === 'v1' || vwU === 'v2' ? vwU : 'main');
+          if (vwU === 'v1' || vwU === 'v2') {
+            const h = vwU === 'v1' ? updRed(sim(), t) : updDist(sim(), t);
+            if (h !== lastU) { lastU = h; info(h); }
+            ctx.orbit.theta = vwU === 'v1' ? 0 : ctx.orbit.theta; return;
+          }
           if (S) { if (S.obs != null) obs = S.obs % CAND.length; if (S.H4 !== lastH) { lastH = S.H4; H = S.H4; AGE = (sim().AGE && sim().AGE[H]) || 9778 / H; } if (S.rewD !== lastRD) { lastRD = S.rewD; r = clamp(S.rewD, 0, 1); if (!plR.playing) { syncing = true; plR.set(r); syncing = false; } } }
           frame();
         },

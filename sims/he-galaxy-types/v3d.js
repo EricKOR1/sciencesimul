@@ -38,7 +38,7 @@
   const FIT = Math.max(1, 1.4 / asp);
 
   window.SciSim3D.attach({
-    levels: [1, 2],          // 0단계(은하 묶기)·3단계(AI 분류)는 2D 화면에서 해요
+    levels: [1, 2],          // 0단계(은하 묶기)·3단계(AI 분류)는 끌어 놓는 활동이라 2D로 시작하고, 3D 단추로 고른 은하의 모양을 볼 수 있어요
     title: '은하 모양 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: 25 * FIT, theta: 0.4, phi: 1.2, fov: 42, min: 12, max: 120 },
@@ -173,7 +173,7 @@
       plr.pause(); plReady = true;
 
       /* ---- 안내 글 ---- */
-      let lastTxt = '';
+      let lastTxt = '', extraNote = '';
       function incl() { const p = Math.max(0.0, Math.min(Math.PI, orbit.phi)); return Math.min(p, Math.PI - p) / DEG; }
       function text(force) {
         const i = incl(), ci = Math.cos(i * DEG), si = Math.sin(i * DEG);
@@ -189,6 +189,7 @@
           h = '<b>' + T.nm + '</b><br>' + (NOTE[key] || '') + (type[1] === 'B' ? ' 중심에 <b>막대</b>가 있고 팔이 막대 끝에서 시작해요.' : '') +
             '<br>기울기 i = ' + Math.round(i) + '° → 보이는 b/a ≈ <b>' + ci.toFixed(2) + '</b>' + (i < 20 ? ' (정면: 팔이 잘 보여요)' : i > 75 ? ' (옆: 납작한 원반과 팽대부)' : '');
         }
+        h += extraNote;
         if (h !== lastTxt || force) { lastTxt = h; info(h); }
       }
 
@@ -206,11 +207,32 @@
           typeSeg && typeSeg.set(type);
         } catch (e) { /* 수업 상태를 못 읽어도 괜찮아요 */ }
       }
+      /* 1단계(은하 사진 묶기) · 4단계(AI 분류): 2D에서 고른 은하 사진의 실제 모양을 입체로 보여 줘요 (묶기 · 이름표 달기는 2D) */
+      const spKind = (sp) => (sp.t === 'E' ? { t: 'E', n: sp.n } : sp.t === 'Irr' ? { t: 'Irr' } : { t: (sp.bar ? 'SB' : 'S') + (sp.arm || 'b') });
+      let lastSp = null, aiT = 0, aiI = 0;
+      function showSp(sp, ph) {
+        const k = spKind(sp), key = k.t + (k.n != null ? ':' + k.n : '');
+        if (key === lastSp) return; lastSp = key; type = k.t; if (k.t === 'E') { nTrue = k.n; prolate = false; if (nRange) nRange.set(nTrue); } orbit.phi = (ph || 60) * DEG; typeSeg && typeSeg.set(type); rebuild();
+      }
+      function followCards(dt) {
+        const S = sim && sim.S; if (!S) return;
+        if (S.view === 'v1') {
+          const dn = sim.dn1, d = dn && dn.drag, it = d ? (d.it || d.item || d) : (dn && dn.sel);
+          if (it && it.sp) showSp(it.sp, 60);
+          else if (!lastSp) showSp(sim.G1[0].sp, 60);
+          const nn = sim.G1.filter((q) => q.bin != null).length;
+          extraNote = '<br><span style="color:#9fb0d4">은하 사진 12장을 모양별로 묶는 일은 ▦ 2D에서 해요. 고른 사진의 모양을 입체로 보여 줘요. (묶은 사진 ' + nn + ' / 12)</span>';
+        } else if (S.view === 'v4') {
+          aiT += dt; if (aiT > 3.2) { aiT = 0; aiI = (aiI + 1) % sim.G4.length; }
+          const g = sim.G4[aiI]; showSp(g.sp, g.edge ? 85 : 20 + 70 * (1 - (g.tilt || 1)) + 15);
+          extraNote = '<br><span style="color:#9fb0d4">AI 분류는 ▦ 2D에서 해요. 은하 ' + g.id + ' (' + (g.role === 'train' ? '훈련용' : '시험용') + ')의 모양을 차례로 보여 줘요.</span>';
+        } else extraNote = '';
+      }
       rebuild(); readLesson();
 
       return {
-        update() {
-          readLesson();
+        update(dt) {
+          readLesson(); followCards(Math.min(dt || 0.016, 0.05));
           const i = incl(); if (iRange && Math.abs(iRange.value - i) > 0.7 && !document.activeElement.matches('input[type=range]')) iRange.set(Math.max(3, Math.min(90, Math.round(i))));
           axTip.obj = [0, (type === 'E' ? Math.max(axes().a, axes().c) : RD * 0.62) * 1.0 + 1.2, 0];
           axTip.show(showAxis && type !== 'Irr' && i > 28);

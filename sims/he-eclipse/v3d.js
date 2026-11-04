@@ -289,11 +289,11 @@
       let scnE = '';
       const lastE = { v: '' };
       function applyScn(v) {
-        if (v === scnE) return; scnE = v; lastE.v = '';
+        if (v === scnE) return; const prevV = scnE; scnE = v; lastE.v = '';
         const orb = v === 'orbit';
         gOrb.visible = orb; gCn.visible = v === 'cone'; gGl.visible = v === 'globe'; gLn.visible = v === 'lunar';
         orbEls.forEach((e) => { e.style.display = orb ? '' : 'none'; });
-        if (orb) oldLabs.forEach((l) => l.show(l.keep !== false)); else oldLabs.forEach((l) => { if (l.visible) l.keep = true; else if (l.keep == null) l.keep = false; l.show(false); });
+        if (orb) oldLabs.forEach((l) => l.show(l.keep !== false)); else oldLabs.forEach((l) => { if (prevV === 'orbit' || prevV === '') l.keep = l.visible; l.show(false); });
         [cDist, cEy, cSweep, cCen].forEach((c2) => shw(c2, v === 'cone')); [gTime, gPlay, gSite].forEach((c2) => shw(c2, v === 'globe')); [lPath, lTime, lPlay].forEach((c2) => shw(c2, v === 'lunar'));
         [lcM, lcE, lcT, lcP, lcG, lcSun].forEach((l) => l.show(false)); [lGl].forEach((l) => l.show(false)); siteM.forEach((q) => q.l.show(false)); [lUm, lPe, lMn, lSt, lEW].forEach((l) => l.show(false));
         if (!orb) { lcM.show(v === 'cone'); lUm.show(v === 'lunar'); lPe.show(v === 'lunar'); }
@@ -301,7 +301,7 @@
         if (v === 'cone') { o.theta = 0; o.phi = Math.PI / 2; o.tx = 0; o.ty = 0; o.tz = 0; o.dist = wide ? 21 : 30; }
         else if (v === 'globe') { o.theta = 0; o.phi = Math.PI / 2; o.tx = 0; o.ty = 0; o.tz = 0; o.dist = wide ? 12 : 15; }
         else if (v === 'lunar') { o.theta = 0; o.phi = Math.PI / 2; o.tx = 0; o.ty = 0; o.tz = 0; o.dist = wide ? 13 : 17; }
-        else Object.assign(o, VIEWS[st.view || 'obl']);
+        else { Object.assign(o, VIEWS[st.view || 'obl']); try { refresh(); } catch (e) { /* 궤도 모형 안내 글을 다시 써요 */ } }
       }
       return {
         update(dt) {
