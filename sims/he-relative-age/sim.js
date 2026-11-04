@@ -1581,7 +1581,7 @@
 
   /* ---------- 디버그 (Playwright) ---------- */
   window.__sim = {
-    S, VW, VH, CORR_COLS, CG, layerBox, CASE_DEF, TYPE_DEF, A_EVENTS, RATES, rateMan, boxPour, boxDeform, boxReset, intrRun, intrReset, uncGo, uncPlay, corrTap, corrReset, setView, updateCtl, seqUnc, seqA, enterLevel, caseRects,
+    S, VW, VH, BOX, LH, MAXL, SED, boxGeom, RT, fmtMan, CORR_COLS, CG, layerBox, CASE_DEF, TYPE_DEF, A_EVENTS, RATES, rateMan, boxPour, boxDeform, boxReset, intrRun, intrReset, uncGo, uncPlay, corrTap, corrReset, setView, updateCtl, seqUnc, seqA, enterLevel, caseRects,
     get game() { return game; },
   };
 

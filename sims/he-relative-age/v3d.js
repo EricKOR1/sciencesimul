@@ -2,6 +2,7 @@
    2D 차시와 같은 두 장면을 입체 블록으로 봐요.
    [2단계 관입·포획] 셰일 · 사암 · 석회암을 마그마(암맥 D)가 뚫고 올라와요. 뚫은 쪽(D)이 나중이고, 속의 셰일·사암 조각(포획암)은 먼저예요. (2D의 ▶ 마그마 관입과 같은 값)
    [3단계 부정합] ① 퇴적 → ② 융기 → ③ 침식 → ④ 침강 → ⑤ 다시 퇴적. 깎인 면(부정합면) 위에 새 지층(역암·이암)이 쌓여요.
+   0단계(퇴적 상자 · 퇴적 속도) · 부정합의 세 종류 · 층서 대비도 2D와 같은 값으로 보여 줘요.
    ▶ 재생은 2D의 '부정합이 만들어지는 과정'(S.unc.u)과 같이 움직여요. */
 (function () {
   'use strict';
@@ -23,7 +24,7 @@
   window.SciSim3D.attach({
     title: '관입과 부정합 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    levels: [1, 2],                 // 0단계(퇴적 상자·속도)와 3단계(층서 대비)는 2D 화면에서 해요
+    levels: [1, 2],                 // 0단계(퇴적 상자·속도)와 3단계(층서 대비)는 값을 입력하고 층을 고르는 활동이라 2D로 시작하고, 3D 단추로 같은 장면을 볼 수 있어요
     camera: { dist: PHONE ? 16 : 11.5, theta: 0.55, phi: 1.12, min: 5, max: 26, target: [0, 1.4, 0] },
     autoRotate: 0,
     build(ctx) {
@@ -147,8 +148,149 @@
       show(sceneOf());
       let lastInfoP = -1;
       ctx.onLevel(() => { scene = null; show(sceneOf()); });
+
+      /* ================= 0단계 퇴적 상자(box) · 퇴적 속도(rate) · 3단계 부정합 종류(type) · 층서 대비(corr): 2D와 같은 값으로 보여 줘요 ================= */
+      const gOld = new THREE.Group(); root.children.filter((o) => o !== floor).forEach((o) => gOld.add(o)); root.add(gOld);
+      const gBx = new THREE.Group(), gRt = new THREE.Group(), gTy = new THREE.Group(), gCr = new THREE.Group(); root.add(gBx, gRt, gTy, gCr); gBx.visible = gRt.visible = gTy.visible = gCr.visible = false;
+      const probe = controls.text(''); probe.style.display = 'none'; const ctlEl = probe.parentElement;
+      const oldEls = Array.prototype.filter.call(ctlEl.children, (e) => e !== probe);
+      const grab = (fn) => { const n0 = ctlEl.children.length; const r = fn(); return { r, els: Array.prototype.slice.call(ctlEl.children, n0) }; };
+      const shw = (g2, on) => g2.els.forEach((e) => { e.style.display = on ? '' : 'none'; });
+      ctx.renderer.localClippingEnabled = true;
+      const KCOL = { gravel: 0x8f8a82, sand: 0xe0bd6a, clay: 0xb4694a, shale: COL.shale, lime: COL.lime, mud: COL.mud, tuff: 0xd9a441, granite: 0x8c7f8f };
+      const sdM = (c, o) => std(c, Object.assign({ roughness: 0.8 }, o || {}));
+      /* --- box --- */
+      const BS = 6, BD = 2.4, bk = BS / 268;                                // 상자 한 변 6
+      const boxG = new THREE.Group(); gBx.add(boxG);
+      { const gl = new THREE.Mesh(new THREE.BoxGeometry(BS, BS, BD), new THREE.MeshStandardMaterial({ color: 0xcfe8f7, transparent: true, opacity: 0.2, roughness: 0.08, depthWrite: false })); boxG.add(gl);
+        const ed = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(BS, BS, BD)), new THREE.LineBasicMaterial({ color: 0x64748b })); boxG.add(ed);
+        const nz = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.25, 0.8), sdM(0x64748b)); nz.position.set(0, BS / 2 + 0.12, 0); boxG.add(nz); }
+      const pedestal = new THREE.Mesh(new THREE.BoxGeometry(BS * 1.05, 0.25, BD + 0.6), sdM(0x94a3b8)); pedestal.position.y = -BS * 0.78; gBx.add(pedestal);
+      const layF = new THREE.Group(); boxG.add(layF);                          // 퇴적층 (상자 좌표 · 상자를 기울여 넣을 때의 수평 기준으로 돌려 놓아요)
+      const layM = Array.from({ length: 5 }, () => { const m = new THREE.Mesh(new THREE.BoxGeometry(BS * 2.4, 1, BD), sdM(0xffffff, { clippingPlanes: [new THREE.Plane(), new THREE.Plane(), new THREE.Plane(), new THREE.Plane()] })); m.visible = false; layF.add(m); return m; });
+      const NFALL = 200, fallM = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 8, 6), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.8 }), NFALL); fallM.frustumCulled = false; fallM.instanceMatrix.setUsage(THREE.DynamicDrawUsage); gBx.add(fallM);
+      const horiz = new THREE.Mesh(new THREE.BoxGeometry(BS * 1.9, 0.03, 0.03), new THREE.MeshBasicMaterial({ color: 0x0284c7 })); gBx.add(horiz);
+      const lHz = label('수평선 (중력 방향에 수직)', [BS * 0.95, 0, 0], { color: 'rgba(2,132,199,.92)' }), lBx = label('투입구', [0, BS / 2 + 0.7, 0], { color: 'rgba(30,41,59,.9)' }); lHz.show(false); lBx.show(false);
+      const lLay = Array.from({ length: 5 }, () => { const l = label('', [0, 0, 0], { color: 'rgba(30,41,59,.9)', size: 12 }); l.show(false); return l; });
+      const Mb = new THREE.Matrix4(), Cb = new THREE.Color(), Pb = new THREE.Vector3(), Qb = new THREE.Quaternion(), Sb = new THREE.Vector3();
+      const pourBtns = grab(() => ['gravel', 'sand', 'clay'].map((k) => controls.button('⬇ ' + ({ gravel: '자갈', sand: '모래', clay: '점토' })[k], () => { const w = window.__sim; if (w) w.boxPour(k); })));
+      const tiltR = grab(() => controls.range('상자 기울기', -20, 20, 1, 0, (v) => { const e = document.getElementById('sTilt'); if (e) { e.value = v; e.dispatchEvent(new Event('input')); } }, (v) => v + '°'));
+      const defB = grab(() => controls.button('🏔 땅 눌러 기울이기', () => { const w = window.__sim; if (w) w.boxDeform(); }));
+      const rstB = grab(() => controls.button('↺ 상자 비우기', () => { const w = window.__sim; if (w) w.boxReset(); }));
+      function updBox(w) {
+        const B = w.S.box, g = w.boxGeom(), th0 = B.layers.length ? B.th0 : g.th, def = B.def * Math.PI / 180;
+        boxG.rotation.z = -(g.th + def); layF.rotation.z = th0;
+        boxG.updateMatrixWorld(true);
+        const planes = [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([nx, ny]) => { const n = new THREE.Vector3(-nx, -ny, 0).transformDirection(boxG.matrixWorld), pt = new THREE.Vector3(nx * BS / 2, ny * BS / 2, 0).applyMatrix4(boxG.matrixWorld); return new THREE.Plane().setFromNormalAndCoplanarPoint(n, pt); });
+        const s = w.BOX.s, yl = (s / 2) * (Math.cos(th0) + Math.abs(Math.sin(th0))); let H = 0;
+        layM.forEach((m, i) => {
+          const l = B.layers[i]; m.visible = !!l && l.h > 0.01; lLay[i].show(false); if (!m.visible) return;
+          const y1 = yl - H, y2 = yl - H - l.h; H += l.h; const hh = l.h * bk;
+          m.scale.set(1, hh, 1); m.position.set(0, -((y1 + y2) / 2) * bk, 0); m.material.color.setHex(KCOL[w.SED[l.k].kind]); m.material.clippingPlanes.forEach((pl, q) => pl.copy(planes[q]));
+          lLay[i].show(true); lLay[i].obj = m; lLay[i].set(w.SED[l.k].name + (B.solid ? ' (굳어 암석이 됨)' : ''));
+        });
+        // 떨어지는 알갱이
+        for (let i = 0; i < NFALL; i++) {
+          const p = B.fall[i];
+          if (!p) { Sb.set(0.0001, 0.0001, 0.0001); Mb.compose(Pb.set(0, -9, 0), Qb, Sb); fallM.setMatrixAt(i, Mb); continue; }
+          const r = Math.max(0.045, p.r * bk * 1.3); Mb.compose(Pb.set((p.x - w.BOX.cx) * bk, -(p.y - w.BOX.cy) * bk, Math.sin(p.ph * 3.1) * (BD / 2 - 0.3)), Qb, Sb.set(r, r, r)); fallM.setMatrixAt(i, Mb); fallM.setColorAt(i, Cb.set(p.sd.col));
+        }
+        fallM.instanceMatrix.needsUpdate = true; if (fallM.instanceColor) fallM.instanceColor.needsUpdate = true;
+        const hy = (g.yLow - B.layers.reduce((a, l) => a + l.h, 0) - w.BOX.cy) * bk; horiz.visible = B.layers.length > 0; lHz.show(B.layers.length > 0); horiz.position.set(0, -hy, 0.4); lHz.obj = [BS * 0.95, -hy, 0.4];
+        lBx.show(true); tiltR.r.set(Math.round(B.tilt)); pourBtns.r.forEach((b) => { b.disabled = !!B.pour || B.layers.length >= w.MAXL || B.def > 0.5; });
+        const n = B.layers.length;
+        return '<b>퇴적 상자: 수평퇴적 · 지층 누중</b><br>' + (n ? '쌓인 층 ' + n + '개 · 아래에서 위로 차례로 쌓였어요. 상자를 기울여 넣어도 층은 수평으로 쌓여요.' : '자갈 · 모래 · 점토를 흘려 넣어 봐요. 상자를 먼저 기울여도 돼요.') + (B.def > 0.5 ? '<br>땅을 눌러 기울이면 수평선(파란 선)과 지층이 어긋나요 → 지층이 변형된 거예요.' : '') + '<br><span style="color:#9fb0d4">관찰 기록 · 질문은 ▦ 2D에서 해요.</span>';
+      }
+      /* --- rate: 퇴적 속도와 걸린 시간 --- */
+      const RKX = 0.075;                                               // 1 m = 0.075 단위
+      const colM = [0, 1].map((i) => { const m = new THREE.Mesh(new THREE.BoxGeometry(2.0, 1, 1.6), sdM(0xffffff)); gRt.add(m); const wt = new THREE.Mesh(new THREE.BoxGeometry(2.4, 1, 2.0), new THREE.MeshStandardMaterial({ color: i ? 0xa8dcf2 : 0x4a8fc4, transparent: true, opacity: 0.45, depthWrite: false })); gRt.add(wt); return { m, wt }; });
+      { const fl = new THREE.Mesh(new THREE.BoxGeometry(8.6, 0.2, 2.6), sdM(0x475569)); fl.position.set(0, -0.1, 0); gRt.add(fl);
+        const sc = new THREE.Mesh(new THREE.BoxGeometry(0.04, 50 * RKX, 0.04), sdM(0x94a3b8)); sc.position.set(-3.7, 25 * RKX, 0.8); gRt.add(sc); for (let m2 = 0; m2 <= 50; m2 += 10) { const tk = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.03, 0.03), sdM(0x94a3b8)); tk.position.set(-3.6, m2 * RKX, 0.8); gRt.add(tk); } }
+      const lRtT = [0, 1].map((i) => { const l = label('', [0, 0, 0], { color: 'rgba(37,99,235,.92)' }); l.show(false); return l; }), lRtL = [0, 1].map((i) => { const l = label('', [0, 0, 0], { color: 'rgba(30,41,59,.9)', size: 12 }); l.show(false); return l; }), lRtH = [0, 1].map(() => { const l = label('', [0, 0, 0], { color: 'rgba(71,85,105,.92)', size: 12 }); l.show(false); return l; }), lRtS = label('0 ~ 50 m', [-3.7, 50 * RKX + 0.4, 0.8], { color: 'rgba(71,85,105,.9)', size: 11.5 }); lRtS.show(false);
+      const thickR = grab(() => controls.range('쌓인 두께', 1, 50, 1, 30, (v) => { const e = document.getElementById('sThick'); if (e) { e.value = v; e.dispatchEvent(new Event('input')); } }, (v) => v + ' m'));
+      function updRate(w) {
+        const R = w.S.rate, thick = R.thickD;
+        [['deep', 0, -2.2], ['delta', 1, 2.2]].forEach(([env, i, x]) => {
+          const rt = w.RATES[env], h = Math.max(0.02, thick * RKX), c = colM[i];
+          c.m.scale.set(1, h, 1); c.m.position.set(x, h / 2, 0); c.m.material.color.setHex(KCOL[rt.kind]);
+          const top = 50 * RKX + 0.6, wh = Math.max(0.02, top - h); c.wt.scale.set(1, wh, 1); c.wt.position.set(x, h + wh / 2, 0);
+          lRtT[i].show(true); lRtT[i].obj = [x, 50 * RKX + 0.5, 0]; lRtT[i].set((i ? '🏝️ ' : '🌊 ') + rt.name); lRtT[i].el.style.background = rt.col;
+          lRtL[i].show(true); lRtL[i].obj = [x, -0.55, 0.9]; lRtL[i].set(rt.label);
+          const rec = R.rec[env], known = rec && rec.thick === R.thick; lRtH[i].show(true); lRtH[i].obj = [x, Math.min(h / 2, 50 * RKX), 1.0]; lRtH[i].set(known ? '⏱ ' + w.fmtMan(rec.val) : '⏱ ? 만 년');
+        });
+        lRtS.show(true); thickR.r.set(Math.round(R.thick));
+        return '<b>퇴적 속도와 걸린 시간</b><br>같은 두께 <b>' + Math.round(thick) + ' m</b>가 쌓이는 데 걸린 시간은 환경마다 달라요.<br>걸린 시간 = 두께 ÷ 퇴적 속도<br><span style="color:#9fb0d4">시간 계산 · 기록은 ▦ 2D에서 해요.</span>';
+      }
+      /* --- type: 부정합의 세 가지 종류 (가 · 나 · 다) --- */
+      const tyPane = [-4.2, 0, 4.2].map((x, i) => { const g3 = new THREE.Group(); g3.position.set(x, 0, 0); gTy.add(g3); return g3; });
+      const ERO3 = (u) => 0.12 * Math.sin(u * 4.1) + 0.07 * Math.sin(u * 9.3 + 1);
+      function mkTyper(k, g3) {
+        const W2 = 3.4, Dz = 1.6, clip = [new THREE.Plane(new THREE.Vector3(1, 0, 0), W2 / 2), new THREE.Plane(new THREE.Vector3(-1, 0, 0), W2 / 2)].map((pl) => pl.clone().translate(new THREE.Vector3(g3.position.x, 0, 0)));
+        const slab = (col, y0, y1, rotz, yc) => { const m = new THREE.Mesh(new THREE.BoxGeometry(6, Math.abs(y1 - y0), Dz), sdM(col, { clippingPlanes: clip })); m.position.set(0, (y0 + y1) / 2, 0); if (rotz) { const grp = new THREE.Group(); grp.position.set(0, yc || 1.0, 0); grp.rotation.z = rotz; m.position.y -= yc || 1.0; grp.add(m); g3.add(grp); } else g3.add(m); return m; };
+        const E0 = 1.5;                                                                                    // 부정합면 높이
+        const LOW = (x, h0) => { const g4 = new THREE.Group(); g3.add(g4); return g4; };
+        if (k === 'granite') { slab(KCOL.granite, 0, E0, 0); }
+        else if (k === 'horizontal') { slab(COL.shale, 0, 0.5, 0); slab(COL.sand, 0.5, 1.0, 0); slab(COL.lime, 1.0, E0, 0); }
+        else { const gA = new THREE.Group(); gA.position.set(0, 0.2, 0); gA.rotation.z = 0.5; g3.add(gA); [[COL.shale, -3, -1.5], [COL.sand, -1.5, 0], [COL.lime, 0, 1.5], [COL.shale, 1.5, 3], [COL.sand, 3, 4.5]].forEach(([c, a, b]) => { const m = new THREE.Mesh(new THREE.BoxGeometry(8, b - a, Dz), sdM(c, { clippingPlanes: [new THREE.Plane(new THREE.Vector3(0, -1, 0), E0), new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), clip[0], clip[1]] })); m.position.set(0, (a + b) / 2, 0); gA.add(m); });
+          const base2 = new THREE.Mesh(new THREE.BoxGeometry(W2, 0.2, Dz), sdM(COL.shale)); base2.position.set(0, -0.1, 0); g3.add(base2); }
+        // 부정합면 위의 새 지층 (수평)
+        const up1 = new THREE.Mesh(new THREE.BoxGeometry(W2, 0.45, Dz), sdM(COL.conglo)), up2 = new THREE.Mesh(new THREE.BoxGeometry(W2, 0.45, Dz), sdM(COL.mud)); up1.position.set(0, E0 + 0.225, 0); up2.position.set(0, E0 + 0.675, 0); g3.add(up1, up2);
+        const line = new THREE.Mesh(new THREE.BoxGeometry(W2 + 0.1, 0.05, Dz + 0.1), new THREE.MeshBasicMaterial({ color: 0xe11d48 })); line.position.set(0, E0, 0); g3.add(line);
+      }
+      ['granite', 'horizontal', 'tilted'].forEach((k, i) => mkTyper(k, tyPane[i]));
+      const lTy = [0, 1, 2].map((i) => { const l = label(['가', '나', '다'][i], [[-4.2, 0, 0], [0, 0, 0], [4.2, 0, 0]][i].map((v, q) => (q === 1 ? 2.6 : v)), { color: 'rgba(30,41,59,.92)', size: 15 }); l.show(false); return l; }), lTyU = label('부정합면 (붉은 선)', [0, 2.2, 0.9], { color: 'rgba(160,20,50,.95)' }); lTyU.show(false);
+      /* --- corr: 층서 대비 --- */
+      const crBase = new THREE.Mesh(new THREE.BoxGeometry(11, 0.2, 2.4), sdM(0x475569)); crBase.position.y = -0.1; gCr.add(crBase);
+      const CKS = 0.2, CX3 = [-3.6, 0, 3.6];
+      const crLayers = [];
+      const crW = window.__sim ? window.__sim.CORR_COLS : null;
+      const CORR_FALLBACK = null;
+      function buildCorr(w) {
+        if (crLayers.length) return;
+        w.CORR_COLS.forEach((cd, ci) => { let y = 0; cd.layers.forEach((ly, li) => { const h = ly[1] * CKS * 0.55; const m = new THREE.Mesh(new THREE.BoxGeometry(2.2, h - 0.02, 1.6), sdM(KCOL[ly[0]] || 0xaaaaaa)); m.position.set(CX3[ci], y + h / 2, 0); gCr.add(m); crLayers.push({ ci, li, m, key: ly[2] || '', y: y + h / 2, h }); y += h; }); if (cd.unc != null) { } const l = label(cd.name, [CX3[ci], -0.5, 0], { color: 'rgba(30,41,59,.9)' }); l.show(false); crLayers.push({ lab: l }); });
+      }
+      const crLines = ['tuff', 'amm'].map((k) => { const m = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 1, 8), new THREE.MeshBasicMaterial({ color: k === 'tuff' ? 0xd97706 : 0x7c3aed })); m.visible = false; gCr.add(m); const m2 = m.clone(); m2.visible = false; gCr.add(m2); return [m, m2]; });
+      const crLab = ['tuff', 'amm'].map((k) => { const l = label(k === 'tuff' ? '응회암 키층' : '암모나이트층', [0, 0, 0], { color: k === 'tuff' ? 'rgba(217,119,6,.95)' : 'rgba(124,58,237,.95)' }); l.show(false); return l; });
+      const lTri = label('삼엽충 화석층', [0, 0, 0], { color: 'rgba(71,85,105,.92)' }); lTri.show(false);
+      function updCorr(w) {
+        buildCorr(w); const C = w.S.corr;
+        crLayers.forEach((q) => { if (q.lab) { q.lab.show(true); return; } const hl = q.key === 'tuff' || q.key === 'amm', on = hl && (C.target === q.key || C.done[q.key]); q.m.material.emissive.setHex(on ? (q.key === 'tuff' ? 0xb45309 : 0x6d28d9) : hl ? 0x222222 : 0x000000); q.m.material.emissiveIntensity = on ? 0.55 : 0.2; });
+        ['tuff', 'amm'].forEach((k, i) => {
+          const picks = C.picked[k], pts = crLayers.filter((q) => !q.lab && q.key === k).map((q) => new THREE.Vector3(CX3[q.ci], q.y, 0.9));
+          [0, 1].forEach((j) => { const ln = crLines[i][j], a = pts[j], b = pts[j + 1], show = C.done[k] && a && b; ln.visible = !!show; if (show) { const d = b.clone().sub(a); ln.scale.set(1, d.length(), 1); ln.position.copy(a).add(b).multiplyScalar(0.5); ln.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize()); } });
+          crLab[i].show(C.done[k] && !!pts[1]); if (pts[1]) crLab[i].obj = pts[1].toArray();
+        });
+        const tri = crLayers.filter((q) => !q.lab && q.key === 'tri'); lTri.show(false);
+        const done = C.done;
+        return '<b>떨어진 세 지역의 지층 대비</b><br>같은 시기에 쌓인 층(키층 · 표준 화석)을 이으면 지층의 나이를 맞춰 볼 수 있어요.<br>응회암 키층 ' + (done.tuff ? '✅ 이었어요' : '⬜ (2D에서 같은 층을 골라요)') + ' · 암모나이트층 ' + (done.amm ? '✅ 이었어요' : '⬜') + '<br><span style="color:#9fb0d4">이을 층을 고르는 일은 ▦ 2D에서 해요. 3D는 세 지역의 지층 기둥이에요.</span>';
+      }
+      let scnN = '', lastN = '';
+      const NEWV = { box: 1, rate: 1, type: 1, corr: 1 };
+      function applyN(v) {
+        if (v === scnN) return; const prev = scnN; scnN = v; lastN = '';
+        const nw = !!NEWV[v];
+        gOld.visible = !nw; gBx.visible = v === 'box'; gRt.visible = v === 'rate'; gTy.visible = v === 'type'; gCr.visible = v === 'corr';
+        oldEls.forEach((e) => { e.style.display = nw ? 'none' : ''; });
+        pourBtns.r.length && shw(pourBtns, v === 'box'); shw(tiltR, v === 'box'); shw(defB, v === 'box'); shw(rstB, v === 'box'); shw(thickR, v === 'rate');
+        [lHz, lBx].forEach((l) => l.show(false)); lLay.forEach((l) => l.show(false)); lRtT.concat(lRtL, lRtH, [lRtS]).forEach((l) => l.show(false)); lTy.forEach((l) => l.show(v === 'type')); lTyU.show(v === 'type'); crLayers.forEach((q) => { if (q.lab) q.lab.show(v === 'corr'); }); crLab.forEach((l) => l.show(false));
+        if (nw) { Object.values(LB).forEach((l) => l.show(false)); floor.visible = v !== 'corr' || true; }
+        else if (prev) { scene = null; show(sceneOf()); }
+        const o = ctx.orbit;
+        if (v === 'box') { o.theta = 0.1; o.phi = 1.4; o.tx = 0; o.ty = -0.2; o.tz = 0; o.dist = PHONE ? 19 : 14; floor.position.y = -BS * 0.78 - 0.2; }
+        else if (v === 'rate') { o.theta = 0.2; o.phi = 1.3; o.tx = 0; o.ty = 1.8; o.tz = 0; o.dist = PHONE ? 17 : 12.5; floor.position.y = -0.3; }
+        else if (v === 'type') { o.theta = 0.15; o.phi = 1.35; o.tx = 0; o.ty = 1.0; o.tz = 0; o.dist = PHONE ? 21 : 15; floor.position.y = -0.3; }
+        else if (v === 'corr') { o.theta = 0.2; o.phi = 1.3; o.tx = 0; o.ty = 1.4; o.tz = 0; o.dist = PHONE ? 19 : 13.5; floor.position.y = -0.3; }
+        else { floor.position.y = -3.3; o.tx = 0; o.ty = 1.4; }
+      }
       return {
         update(dt) {
+          const lw = L2(), vN = lw && lw.S ? lw.S.view : '';
+          applyN(NEWV[vN] ? vN : 'old');
+          if (NEWV[vN]) {
+            const h = vN === 'box' ? updBox(lw) : vN === 'rate' ? updRate(lw) : vN === 'type' ? ((lTy.forEach((l) => l.show(true)), lTyU.show(true), '<b>부정합의 세 가지 종류</b><br>부정합면(붉은 선) 아래의 모습이 가 · 나 · 다마다 달라요. 아래가 화성암인지, 수평한 지층인지, 기울어진 지층인지 살펴봐요.<br><span style="color:#9fb0d4">알맞은 이름을 고르는 일은 ▦ 2D에서 해요.</span>')) : updCorr(lw);
+            if (h !== lastN) { lastN = h; info(h); }
+            return;
+          }
           const sc = sceneOf(); if (sc !== scene) show(sc);
           const l = L2();
           if (scene === 'intr') {
