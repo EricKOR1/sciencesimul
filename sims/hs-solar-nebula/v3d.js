@@ -151,7 +151,7 @@
               let rho, y, th;
               if (col0) { rho = R * RC * kr; y = (z0[i] / 100) * RC * kz; th = ph0[i] + spin * st.t * (0.55 + 0.45 / (R + 0.25)); }
               else { rho = 4.3 * Math.pow(R, 1.6); y = (z0[i] / 100) * 4.3 * 0.07; th = ph0[i] + 0.8 * st.t / Math.pow(Math.max(rho, 0.35), 1.5); }
-              pos[i * 3] = rho * Math.cos(th); pos[i * 3 + 1] = y; pos[i * 3 + 2] = rho * Math.sin(th);
+              pos[i * 3] = rho * Math.cos(th); pos[i * 3 + 1] = y; pos[i * 3 + 2] = -rho * Math.sin(th);
               const cc = col0 ? DUST : (rho / AU < SNOW ? ROCK : ICE), k = 0.7 + 0.3 * rf[i];
               col[i * 3] = cc[0] * k; col[i * 3 + 1] = cc[1] * k; col[i * 3 + 2] = cc[2] * k;
             }
@@ -162,7 +162,7 @@
             if (s === 'condense') { const r = 0.3 + p * 9.7; probe.position.set(r * AU, 0, 0); const T = 280 / Math.sqrt(r); probe.material.color.set(r < SNOW ? 0xc7a37a : 0xbfe6ff); probeRing.scale.setScalar(r * AU); probeRing.material.color.set(r < SNOW ? 0xc7a37a : 0xbfe6ff); }
             if (s === 'accrete') planets.forEach((m, i) => {
               const { a, r, th } = m.userData, g0 = Math.max(0, Math.min(1, (p - 0.05 - i * 0.04) * 1.6)), ang = th + st.t * 0.6 / Math.sqrt(a) ;
-              m.scale.setScalar(Math.max(0.001, r * g0 * (i < 4 ? 1 : 1)) ); m.position.set(a * AU * Math.cos(ang), 0, a * AU * Math.sin(ang)); m.visible = g0 > 0.02;
+              m.scale.setScalar(Math.max(0.001, r * g0 * (i < 4 ? 1 : 1)) ); m.position.set(a * AU * Math.cos(ang), 0, -a * AU * Math.sin(ang)); m.visible = g0 > 0.02;
               if (i === 2) { labPl[0].obj = [m.position.x, 0.25, m.position.z]; } if (i === 4) { labPl[1].obj = [m.position.x, 0.5, m.position.z]; }
             });
             sun.rotation.y += dt;

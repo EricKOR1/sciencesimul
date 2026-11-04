@@ -489,6 +489,7 @@
         if (opts.shadows !== false) { if (!perf.stage) setupShadows(); setupContact(); }
       }
       built = true;
+      wrap.__v3 = () => ({ THREE, scene, root, camera, labs, orbit });   // 점검 도구용 (화면에는 영향 없음)
       if (global.ResizeObserver) new ResizeObserver(resize).observe(view);
       resize();
     }

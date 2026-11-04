@@ -150,7 +150,7 @@
       const cm = new V3(), cq = new THREE.Quaternion(), dirv = new V3();
       function placeComet(M) { // M: 평균근점이각 근사 (케플러 방정식 풀이)
         let E = M; for (let k = 0; k < 6; k++) E = M + CE * Math.sin(E);
-        const lx = CA * (Math.cos(E) - CE), lz = CB * Math.sin(E);
+        const lx = CA * (Math.cos(E) - CE), lz = -CB * Math.sin(E);  // 북쪽에서 보면 시계 반대 방향
         cm.set(lx, 0, lz); cm.applyAxisAngle(new V3(1, 0, 0), 0.12); cm.applyAxisAngle(new V3(0, 1, 0), 0.7); comet.position.copy(cm);
         const d = cm.length(); dirv.copy(cm).normalize(); cq.setFromUnitVectors(new V3(0, -1, 0), dirv); comet.quaternion.copy(cq);
         const len = Math.max(0.01, Math.min(5.2, 6.5 / (d * d + 1.2) * 4)), vis = d < 8.5 ? 1 : 0.0;
@@ -188,10 +188,10 @@
       return {
         update(dt, t) {
           const T = pl.p * D;
-          planets.forEach((p) => { const a = p.ph + T * p.w; p.m.position.set(Math.cos(a) * p.R, 0, Math.sin(a) * p.R); p.m.rotation.y += dt * 0.6; });
-          DW.forEach((d) => { const a = d.ph + T * d.w; const sx = d.R, sz = d.R * (1 - d.e * 0.3); const v = new V3(Math.cos(a) * sx - d.R * d.e * 0.5, 0, Math.sin(a) * sz); if (d.l.rotation.x) v.applyAxisAngle(new V3(1, 0, 0), d.l.rotation.x); d.m.position.copy(v); });
-          MOONS.forEach((m) => { const a = m.ph + T * m.w, hp = m.hostP.m.position; m.m.position.set(hp.x + Math.cos(a) * m.d, hp.y + Math.sin(a * 0.5) * 0.04, hp.z + Math.sin(a) * m.d); });
-          for (let i = 0; i < NA; i++) { const b = BP[i], a = b[1] + T * BW[i]; _bm.makeScale(b[3], b[3], b[3]); _bm.setPosition(Math.cos(a) * b[0], b[2], Math.sin(a) * b[0]); belt.setMatrixAt(i, _bm); }
+          planets.forEach((p) => { const a = p.ph - T * p.w; p.m.position.set(Math.cos(a) * p.R, 0, Math.sin(a) * p.R); p.m.rotation.y += dt * 0.6; });
+          DW.forEach((d) => { const a = d.ph - T * d.w; const sx = d.R, sz = d.R * (1 - d.e * 0.3); const v = new V3(Math.cos(a) * sx - d.R * d.e * 0.5, 0, Math.sin(a) * sz); if (d.l.rotation.x) v.applyAxisAngle(new V3(1, 0, 0), d.l.rotation.x); d.m.position.copy(v); });
+          MOONS.forEach((m) => { const a = m.ph - T * m.w, hp = m.hostP.m.position; m.m.position.set(hp.x + Math.cos(a) * m.d, hp.y + Math.sin(a * 0.5) * 0.04, hp.z + Math.sin(a) * m.d); });
+          for (let i = 0; i < NA; i++) { const b = BP[i], a = b[1] - T * BW[i]; _bm.makeScale(b[3], b[3], b[3]); _bm.setPosition(Math.cos(a) * b[0], b[2], Math.sin(a) * b[0]); belt.setMatrixAt(i, _bm); }
           belt.instanceMatrix.needsUpdate = true;
           const M = (1.2 + T * cW) % 6.2832; placeComet(M);
           glow.scale.setScalar(8 + 0.3 * Math.sin(t * 2));

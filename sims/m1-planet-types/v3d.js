@@ -162,7 +162,7 @@
         update(dt, t) {
           items.forEach((it, i) => {
             it.g.rotation.y += dt * (it.p.g ? 0.5 : 0.2);
-            if (st.mode === 'moon') it.moons.forEach((o) => { o.a += dt * o.s; o.m.position.set(Math.cos(o.a) * o.r, 0.15 * Math.sin(o.a * 2), Math.sin(o.a) * o.r); o.m.scale.setScalar(o.sz); });
+            if (st.mode === 'moon') it.moons.forEach((o) => { o.a += dt * o.s; o.m.position.set(Math.cos(o.a) * o.r, 0.15 * Math.sin(o.a * 2), -Math.sin(o.a) * o.r); o.m.scale.setScalar(o.sz); });
           });
         },
         sync() {},

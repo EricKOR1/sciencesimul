@@ -63,7 +63,7 @@
       const parLab = label('', [0, 0, 0], { size: 12, color: 'rgba(30,64,140,.92)' });
 
       const sPos = () => new THREE.Vector3(0, st.D * Math.sin(BETA), -st.D * Math.cos(BETA));
-      const ePos = (m) => { const a = m / 12 * TAU; return new THREE.Vector3(RO * Math.cos(a), 0, RO * Math.sin(a)); };
+      const ePos = (m) => { const a = m / 12 * TAU; return new THREE.Vector3(RO * Math.cos(a), 0, -RO * Math.sin(a)); };  // 북쪽에서 보면 시계 반대 방향
       function bgHit(E, S) {                                          // 지구에서 별을 지나 배경 구와 만나는 점
         const d = S.clone().sub(E).normalize(), b = E.dot(d), c = E.lengthSq() - RBG * RBG, t = -b + Math.sqrt(b * b - c);
         return E.clone().addScaledVector(d, t);

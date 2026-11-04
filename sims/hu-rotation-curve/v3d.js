@@ -136,10 +136,10 @@
           const f = st.mode === 'vis' ? vVis : st.mode === 'model' ? vModel : vObs;
           for (let i = 0; i < N; i++) {
             const r = rr[i], th = th0[i] + (f(r) / Math.max(r, 0.3)) * K * st.t * (r < 0.3 ? 0 : 1);
-            pos[i * 3] = r * SC * Math.cos(th); pos[i * 3 + 1] = yy[i]; pos[i * 3 + 2] = r * SC * Math.sin(th);
+            pos[i * 3] = r * SC * Math.cos(th); pos[i * 3 + 1] = yy[i]; pos[i * 3 + 2] = -r * SC * Math.sin(th);
           }
           g.attributes.position.needsUpdate = true;
-          trs.forEach((q) => { const th = q.th + (f(q.t.r) / q.t.r) * K * st.t; q.m.position.set(q.t.r * SC * Math.cos(th), 0, q.t.r * SC * Math.sin(th)); });
+          trs.forEach((q) => { const th = q.th + (f(q.t.r) / q.t.r) * K * st.t; q.m.position.set(q.t.r * SC * Math.cos(th), 0, -q.t.r * SC * Math.sin(th)); });
           drawChart();
         },
         sync() { st.key = ''; follow(); },

@@ -129,7 +129,7 @@
           if (s && s.drag && pl && pl.playing) pl.pause();     // 2D에서 지구를 끌면 재생을 멈춰요
           if (s) { if (s.dist !== dist && !(Math.abs(s.dist - dist) < 0.01)) { dist = s.dist; distR.set(dist); info2(dist); } a0 = s.ang; }
           const a = a0 * Math.PI / 180;
-          earth.position.set(Math.cos(a) * R, 0, Math.sin(a) * R); earth.rotation.y += dt * 2;
+          earth.position.set(Math.cos(a) * R, 0, -Math.sin(a) * R);  // 북쪽에서 보면 시계 반대 방향 earth.rotation.y += dt * 2;
           const H = hOf(dist); sPos.set(0, H, 0); star.position.copy(sPos); starG.scale.setScalar(1 + 0.1 * Math.sin(t * 3));
           sunHalo.scale.setScalar(1 + 0.05 * Math.sin(t * 2));
           const J = eJan.position, L = eJul.position, E = earth.position;

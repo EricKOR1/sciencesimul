@@ -82,8 +82,8 @@
           { const S = sr(), q = window.__sim, k = S ? S.view + (S.flags && S.flags.calcK ? 1 : 0) + (q && q.game && q.game.free ? 1 : 0) : ''; if (k !== st.key) { st.key = k; text(); } }
           jup.rotation.y = st.P * TAU * 5;
           bodies.forEach((b, bi) => {
-            const ang = TAU * NREV[bi] * st.P + b.m.ph; b.mesh.position.set(b.r * Math.cos(ang), 0, b.r * Math.sin(ang));
-            b.tr.forEach((p, k) => { const a2 = ang - (k + 1) * 0.12 * (b.m.T < 5 ? 1 : 0.5) * 1.0; p.position.set(b.r * Math.cos(a2), 0, b.r * Math.sin(a2)); p.scale.setScalar(1 - k / 16); p.visible = st.trails; });
+            const ang = TAU * NREV[bi] * st.P + b.m.ph; b.mesh.position.set(b.r * Math.cos(ang), 0, -b.r * Math.sin(ang));
+            b.tr.forEach((p, k) => { const a2 = ang - (k + 1) * 0.12 * (b.m.T < 5 ? 1 : 0.5) * 1.0; p.position.set(b.r * Math.cos(a2), 0, -b.r * Math.sin(a2)); p.scale.setScalar(1 - k / 16); p.visible = st.trails; });
           });
         },
         sync() {},
