@@ -100,6 +100,8 @@
 .v3-lab { position: absolute; transform: translate(-50%, -50%); padding: 3px 8px; border-radius: 8px; background: rgba(8,12,24,.78); border: 1px solid rgba(255,255,255,.18); box-shadow: 0 2px 8px rgba(0,0,0,.35); color: #fff; font-weight: 700; font-size: 13px; letter-spacing: -0.01em; white-space: nowrap; backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
 .v3-info { position: absolute; left: 10px; top: 10px; max-width: min(320px, 70%); padding: 8px 10px; border-radius: 12px; background: rgba(8,12,24,.7); font-size: 13px; line-height: 1.45; pointer-events: none; }
 .v3-info:empty { display: none; }
+.v3-info.mini { max-height: 1.6em; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.v3-info.mini::after { content: ' ▾'; }
 .v3-ctl { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; padding: 8px 10px; background: rgba(8,12,24,.55); }
 .v3-ctl:empty { display: none; }
 .v3-ctl .lab { font-weight: 800; font-size: 13px; color: #b9c6e4; }
@@ -117,6 +119,7 @@
 .v3-wrap.full { position: fixed; inset: 0; z-index: 200; }
 .v3-wrap.full ~ .v3-seg.float, .v3-wrap.full + .v3-seg { position: fixed; z-index: 201; }
 @media (max-width: 599px) {
+  .v3-info { pointer-events: auto; cursor: pointer; font-size: 11.5px; line-height: 1.4; max-width: 72%; max-height: 38%; overflow: auto; padding: 6px 8px; }
   .v3-head .v3-full { display: inline-block; }
   .v3-head { padding: 6px 8px; }
   .v3-wrap.pad .v3-head { padding-right: 128px; }
@@ -214,6 +217,11 @@
     const labels = el('div', 'v3-labels');
     const info = el('div', 'v3-info');
     const hint = el('div', 'v3-hint', opts.hint || '드래그: 돌리기 · 휠/두 손가락: 확대');
+    // 휴대폰에서는 설명 상자를 눌러 접고 펼 수 있어요 (장면을 가리지 않게)
+    const isPhone = () => !!(global.matchMedia && global.matchMedia('(max-width: 599px)').matches);
+    info.addEventListener('pointerdown', (e) => { if (isPhone()) e.stopPropagation(); });   // 돌리기 대신 접기
+    info.addEventListener('click', () => { if (isPhone()) info.classList.toggle('mini'); });
+    info.title = '눌러서 접기/펴기';
     view.append(labels, info, hint);
     const ctl = el('div', 'v3-ctl');
     wrap.append(head, view, ctl);
@@ -285,8 +293,10 @@
           if (!hit(r)) { best = { cy, r }; break; }
         }
         const s = it.L.el.style;
-        if (best) { placed.push(best.r); s.left = it.x + 'px'; s.top = best.cy + 'px'; s.opacity = ''; }
-        else { s.left = it.x + 'px'; s.top = it.y + 'px'; s.opacity = '0.35'; }
+        // 화면 가장자리에서 잘리지 않게 안쪽으로 당겨요
+        const cx = (x) => Math.max(bw / 2 + 2, Math.min(w - bw / 2 - 2, x)), cy = (y) => Math.max(bh / 2 + 2, Math.min(h - bh / 2 - 2, y));
+        if (best) { placed.push(best.r); s.left = cx(it.x) + 'px'; s.top = cy(best.cy) + 'px'; s.opacity = ''; }
+        else { s.left = cx(it.x) + 'px'; s.top = cy(it.y) + 'px'; s.opacity = '0.35'; }
       }
     }
 
