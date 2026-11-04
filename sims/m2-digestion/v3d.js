@@ -87,12 +87,120 @@
 
       let mode = 'tract', u = 0, labsOn = true, enzOn = true, lastS = -1, pl = null, internal = false, pushedAt = -9, now = 0;
       const dm = new THREE.Object3D(), tmp = new V3();
+
+      /* ===== 실험 장면 tests(영양소 검출) · saliva(침의 소화 작용): 2D와 같은 시험관 · 점적병 · 색 변화 ===== */
+      let lpl = null;
+      const lab = new THREE.Group(); lab.visible = false; root.add(lab);
+      const UX = 0.0095, X3 = (px) => (px - 400) * UX, Y3 = (py) => 2.6 + (228 - py) * UX;
+      { const bench = new THREE.Mesh(new THREE.BoxGeometry(9.6, 0.24, 3.2), mat(0xcfd9cf, { roughness: 0.8 })); bench.position.y = -0.12; bench.receiveShadow = true; lab.add(bench);
+        const rack = new THREE.Mesh(new THREE.BoxGeometry(9.0, 0.12, 0.9), mat(0xb98a55, { roughness: 0.8 })); rack.position.set(0, 0.06, 0); lab.add(rack); }
+      const NUT = { starch: '녹말', sugar: '당', protein: '단백질', fat: '지방' };
+      const LTUBE = [0, 1, 2, 3].map((i) => {
+        const g = new THREE.Group(); lab.add(g);
+        const gl = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.36, 2.3, 28, 1, true), new THREE.MeshStandardMaterial({ color: 0xdff1ff, transparent: true, opacity: 0.2, roughness: 0.05, depthWrite: false, side: THREE.DoubleSide })); gl.position.y = 1.35; g.add(gl);
+        const gb = new THREE.Mesh(new THREE.SphereGeometry(0.36, 24, 12, 0, 6.283, Math.PI / 2, Math.PI / 2), gl.material); gb.position.y = 0.36; g.add(gb);
+        const liq = new THREE.Mesh(new THREE.CylinderGeometry(0.31, 0.31, 1, 24), new THREE.MeshStandardMaterial({ color: 0xefe7d3, roughness: 0.25, transparent: true, opacity: 0.92 })); g.add(liq);
+        const liqB = new THREE.Mesh(new THREE.SphereGeometry(0.31, 20, 10, 0, 6.283, Math.PI / 2, Math.PI / 2), liq.material); liqB.position.y = 0.36; g.add(liqB);
+        const heat = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.46, 1.5, 24, 1, true), new THREE.MeshBasicMaterial({ color: 0xff8a2a, transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide })); heat.position.y = 0.95; g.add(heat);
+        const bub = [0, 1, 2, 3].map(() => { const b = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.8 })); g.add(b); return b; });
+        const lb = label('', g, { size: 11.5, offset: [0, -0.35, 0.6] });
+        return { g, gl, liq, liqB, heat, bub, lb };
+      });
+      const LDROP = [0, 1, 2, 3].map((i) => {
+        const g = new THREE.Group(); lab.add(g);
+        const bt = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.8, 20), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.25, transparent: true, opacity: 0.9 })); bt.position.y = 0.55; g.add(bt);
+        const cap = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 10), mat(0x2a2f3a, { roughness: 0.5 })); cap.position.y = 1.05; g.add(cap);
+        const tip = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.4, 12), new THREE.MeshStandardMaterial({ color: 0xeef7fc, transparent: true, opacity: 0.85 })); tip.rotation.x = Math.PI; tip.position.y = 0.0; g.add(tip);
+        const dr = [0, 1, 2].map(() => { const d = new THREE.Mesh(new THREE.SphereGeometry(0.07, 10, 8), new THREE.MeshStandardMaterial({ color: 0xffffff })); lab.add(d); return d; });
+        return { g, bt, tip, dr, lb: label('', g, { size: 11.5, offset: [0, 0.7, 0] }) };
+      });
+      const bathBox = new THREE.Mesh(new THREE.BoxGeometry(4.6, 1.5, 1.6), new THREE.MeshStandardMaterial({ color: 0x7cc7ec, transparent: true, opacity: 0.28, roughness: 0.1, depthWrite: false })); bathBox.position.set(-1.7, 0.75, 0); bathBox.visible = false; lab.add(bathBox);
+      const bathLab = label('', [0, 0, 0], { size: 12.5, color: 'rgba(30,100,170,.92)' });
+      const RGC = { iodine: [0xefe7d3, 0x1e2670, 0xdcae52], benedict: [0xefe7d3, 0xd9531a, 0x3f86dd], biuret: [0xf6f3e4, 0x8a4cd1, 0x9cc3f2], sudan: [0xf1d36a, 0xff2d55, 0xf1d36a] };
+      const RGN = { iodine: '아이오딘', benedict: '베네딕트', biuret: '뷰렛', sudan: '수단 Ⅲ' };
+      const TST = [['iodine', '밥물 (녹말)', 'starch', '청람색'], ['benedict', '포도당 용액 (당)', 'sugar', '황적색'], ['biuret', '달걀 흰자 (단백질)', 'protein', '보라색'], ['sudan', '식용유 (지방)', 'fat', '선홍색']];
+      const FOODC = [0xefe7d3, 0xf1ecc8, 0xf6f3e4, 0xf1d36a];
+      const cc2 = new THREE.Color(), cc3 = new THREE.Color();
+      const sm2 = (x) => { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); };
+      let labTxt = '', lpmode = false, lpP = 0;
+      function setLabInfo(h) { if (h !== labTxt) { labTxt = h; info(h); } }
+      // 2D 시험관 → 3D 값
+      const tubeLive = (tb, name) => ({ x: tb.x, color: tb.color, lvl: tb.lvl, heat: tb.heat || 0, alpha: tb.alpha == null ? 1 : tb.alpha, label: name, ripple: tb.ripple || 0 });
+      const dropLive = (dp, name) => ({ x: dp.x, y: dp.y, color: dp.color, label: name, job: dp.job ? dp.job.stage : null, armed: !!dp.armed });
+      function labFrame(S, l, t, dt) {
+        const sc = S.scene; let tubes = [], drops = [], head = '', extra = '', bath = null;
+        if (lpmode) {
+          const p = lpP, T = p * 24;
+          if (sc === 'tests') {
+            const k = Math.min(3, Math.floor(T / 6)), q = (T - k * 6) / 6, key = TST[k][0], rc = RGC[key];
+            tubes = [0, 1, 2, 3].map((i) => { let col = FOODC[i], hot = 0; if (i === k) { cc2.setHex(rc[0]); cc3.setHex(rc[1]); col = '#' + cc2.lerp(cc3, sm2((q - 0.35) / 0.3)).getHexString(); hot = key === 'benedict' ? (q > 0.2 && q < 0.9 ? 1 : 0) : 0; } else { col = '#' + new THREE.Color(FOODC[i]).getHexString(); } return { x: 120 + i * 187, color: col, lvl: 0.58, heat: hot, alpha: 1, label: TST[i][1], ripple: 0 }; });
+            drops = [{ x: 120 + k * 187, y: q < 0.1 ? 138 + (228 - 138 - 70) * sm2(q / 0.1) : q < 0.5 ? 228 - 70 : 228 - 70 - (q - 0.5) / 0.1 * 90, color: '#' + new THREE.Color(RGC[key][2]).getHexString(), label: RGN[key], job: q > 0.1 && q < 0.3 ? 'drip' : null, armed: false }];
+            head = RGN[key] + ' → ' + TST[k][1].split(' ')[0] + (q > 0.7 ? ': ' + TST[k][3] + ' · ' + NUT[TST[k][2]] + ' 있음!' : '');
+            extra = q > 0.7 ? '<b>' + RGN[key] + ' 용액</b>이 ' + TST[k][3] + '으로 변했어요 → <b>' + NUT[TST[k][2]] + '</b>이 들어 있어요!' + (key === 'benedict' ? ' (베네딕트 용액은 가열해야 해요)' : '') : '<b>' + RGN[key] + ' 용액</b>을 ' + TST[k][1].split(' ')[0] + '에 떨어뜨려요.';
+          } else {
+            const ph = T < 4 ? 'prep' : T < 12 ? 'bath' : 'test', dg = ph === 'prep' ? 0 : ph === 'bath' ? sm2((T - 4) / 8) : 1, milk = 0xf0e9d8;
+            if (ph !== 'test') {
+              const q = T / 4;
+              tubes = [{ x: 140, color: '#f0e9d8', lvl: ph === 'prep' ? 0.35 + 0.15 * sm2(q * 2) : 0.5, heat: 0, alpha: 1, label: 'A · 증류수 + 녹말' }, { x: 300, color: '#f0e9d8', lvl: ph === 'prep' ? 0.35 + 0.15 * sm2(q * 2) : 0.5, heat: 0, alpha: 1, label: 'B · 침 + 녹말' }];
+              if (ph === 'prep') drops = [{ x: 140, y: 150, color: '#9fdcf5', label: '증류수', job: q < 0.8 ? 'drip' : null }, { x: 300, y: 150, color: '#f5ecb0', label: '침', job: q < 0.8 ? 'drip' : null }];
+              if (ph === 'bath') bath = { text: '37 °C 물중탕 ' + (dg * 10).toFixed(0) + '분 · 침 속 아밀레이스가 녹말을 엿당으로 분해해요', x0: -3.2, x1: 0.3 };
+              head = ph === 'prep' ? '시험관 A에는 증류수, B에는 침을 넣어요' : '37 °C 물중탕 ' + (dg * 10).toFixed(0) + '분';
+            } else {
+              const q = (T - 12) / 12, col = (a, b, f) => { cc2.setHex(a); cc3.setHex(b); return '#' + cc2.lerp(cc3, f).getHexString(); };
+              const fi = sm2((q - 0.1) / 0.2), fb = sm2((q - 0.55) / 0.2);
+              tubes = [{ x: 110, color: col(milk, 0x1e2670, fi), lvl: 0.5, heat: 0, alpha: 1, label: 'A · 아이오딘' }, { x: 215, color: col(milk, 0xa6a8cf, fi), lvl: 0.5, heat: 0, alpha: 1, label: 'B · 아이오딘' }, { x: 365, color: col(milk, 0x3f86dd, fb), lvl: 0.5, heat: q > 0.55 && q < 0.95 ? 1 : 0, alpha: 1, label: 'A · 베네딕트' }, { x: 470, color: col(milk, 0xdb6a1c, fb), lvl: 0.5, heat: q > 0.55 && q < 0.95 ? 1 : 0, alpha: 1, label: 'B · 베네딕트' }];
+              head = q < 0.5 ? '아이오딘 검사: A는 청람색, B는 연해요' : '베네딕트 검사: A는 변화 없고 B는 황적색이에요';
+              extra = q < 0.5 ? '침을 넣지 않은 <b>A</b>는 녹말이 그대로라 <b>청람색</b>, 침을 넣은 <b>B</b>는 녹말이 줄어 색이 <b>연해요</b>.' : '침을 넣은 <b>B</b>에서만 <b>황적색</b>이 나타나요 → 녹말이 <b>당(엿당)</b>으로 분해되었어요.';
+              drops = [{ x: q < 0.5 ? 162 : 417, y: 150, color: q < 0.5 ? '#d99a32' : '#3f86dd', label: q < 0.5 ? '아이오딘' : '베네딕트', job: q < 0.25 || (q > 0.55 && q < 0.7) ? 'drip' : null }];
+            }
+          }
+        } else if (sc === 'tests') {
+          const Tt = S.T || (l && l.T); if (!Tt) return;
+          tubes = Tt.tubes.map((tb) => tubeLive(tb, tb.food ? tb.food.name + ' (' + NUT[tb.food.nut] + ')' : ''));
+          drops = Object.keys(Tt.dp).map((k) => dropLive(Tt.dp[k], Tt.dp[k].label));
+          const note = Tt.tubes.map((tb) => tb.note).filter(Boolean).sort((a, b) => b.t0 - a.t0)[0], found = Object.keys(Tt.found).map((k) => NUT[k]).join(' · ');
+          extra = (note ? '<b>' + note.text + '</b><br>' : '') + '찾은 영양소: <b>' + (found || '아직 없어요') + '</b><br>아이오딘 → 녹말(청람색) · 베네딕트(가열) → 당(황적색) · 뷰렛 → 단백질(보라색) · 수단 Ⅲ → 지방(선홍색)<br>검출 용액은 옆의 2D 화면에서 시험관에 떨어뜨려요. 또는 ▶ 재생을 눌러 보세요.';
+          head = '';
+        } else {
+          const SL = l && l.SAL; if (!SL) return;
+          const ph = SL.phase;
+          if (ph === 'test') tubes = SL.split.map((q) => tubeLive(q, q.tag + ' · ' + (q.group === 1 ? '아이오딘' : '베네딕트'))); else tubes = [SL.A, SL.B].map((q, i) => tubeLive(q, (i ? 'B · 침' : 'A · 증류수') + ' + 녹말'));
+          const keys = ph === 'prep' ? ['water', 'saliva'] : ph === 'test' ? ['iodine', 'benedict'] : [];
+          drops = keys.map((k) => dropLive(SL.dp[k], SL.dp[k].label));
+          if (ph === 'bath') bath = { text: '37 °C 물중탕 ' + Math.round(SL.time) + '분', x0: -3.2, x1: 0.3 };
+          extra = ph === 'prep' ? '시험관 <b>A</b>에는 증류수, <b>B</b>에는 침을 넣어요. (옆의 2D 화면에서 점적병을 끌어다 놓아요)' : ph === 'bath' ? '<b>37 °C 물중탕</b>(몸 온도)에서 ' + Math.round(SL.time) + '분: 침 속 <b>아밀레이스</b>가 녹말을 <b>엿당</b>으로 분해해요.' : '아이오딘은 <b>녹말</b>이 있으면 청람색, 베네딕트는 가열했을 때 <b>당</b>이 있으면 황적색이 돼요. 침을 넣은 B에는 녹말이 줄고 당이 생겨요.';
+        }
+        // 시험관 그리기
+        LTUBE.forEach((o, i) => {
+          const tb = tubes[i]; o.g.visible = !!tb && tb.alpha > 0.05; o.lb.show(o.g.visible);
+          if (!tb || !o.g.visible) return;
+          o.g.position.set(X3(tb.x), 0.12, 0);
+          cc2.set(tb.color); o.liq.material.color.copy(cc2);
+          const h = Math.max(0.05, tb.lvl * 3.0 - 0.3); o.liq.scale.y = h; o.liq.position.y = 0.36 + h / 2;
+          o.heat.material.opacity = Math.min(0.28, tb.heat * 0.28) * (0.8 + 0.2 * Math.sin(t * 6)); o.heat.visible = tb.heat > 0.05;
+          o.bub.forEach((b, j) => { const u = ((t * 0.7 + j / 4) % 1); b.visible = tb.heat > 0.15; b.position.set(Math.sin(j * 2.1 + t) * 0.15, 0.5 + u * (h - 0.2), Math.cos(j * 1.7) * 0.12); });
+          o.lb.set(tb.label || ''); o.lb.off = [0, -0.2, 0.55];
+          o.g.rotation.z = Math.sin(t * 30) * 0.01 * (tb.ripple > 0.1 ? 1 : 0);
+        });
+        LDROP.forEach((o, i) => {
+          const d = drops[i]; o.g.visible = !!d; o.lb.show(!!d); o.dr.forEach((x) => { x.visible = false; });
+          if (!d) return;
+          o.g.position.set(X3(d.x), Y3(d.y) + 0.0, 0); o.g.rotation.z = d.job ? 0 : 0.0;
+          cc2.set(d.color); o.bt.material.color.copy(cc2); o.tip.material.color.copy(cc2.clone().lerp(new THREE.Color(0xffffff), 0.6));
+          o.lb.set(d.label || ''); o.lb.show(true);
+          if (d.job === 'drip' || d.job === 'pour') o.dr.forEach((x, j) => { const u = ((t * 1.6 + j / 3) % 1); x.visible = true; x.position.set(o.g.position.x, o.g.position.y - 0.25 - u * 1.2, 0); x.material.color.copy(cc2); });
+        });
+        bathBox.visible = !!bath; if (bath) { bathBox.position.x = (bath.x0 + bath.x1) / 2; bathBox.scale.x = (bath.x1 - bath.x0) / 4.6; bathLab.obj = [(bath.x0 + bath.x1) / 2, 1.8, 0.9]; bathLab.set('37 °C 물중탕'); } bathLab.show(!!bath);
+        const phE = document.querySelector('.v3-player .v3-ph');
+        setLabInfo((lpmode ? '<b>▶ ' + head + '</b><br>' : '') + extra + (sc === 'saliva' && !lpmode && S.scene ? '' : ''));
+      }
       function apply() {
-        tract.visible = mode === 'tract'; vil.visible = mode === 'vil';
+        tract.visible = mode === 'tract'; vil.visible = mode === 'vil'; lab.visible = mode === 'lab'; if (mode !== 'lab') { LTUBE.forEach((o) => o.lb.show(false)); LDROP.forEach((o) => o.lb.show(false)); bathLab.show(false); } lpmode = false;
         lTr.forEach((l) => l.show(labsOn && mode === 'tract')); enz.forEach((l) => l.show(enzOn && mode === 'tract')); lVil.forEach((l) => l.show(labsOn && mode === 'vil'));
-        if (mode === 'tract') { orbit.dist = PHN ? 17 : 12.5; orbit.ty = 1.0; orbit.phi = 1.35; } else { orbit.dist = PHN ? 13 : 9.5; orbit.ty = 0.1; orbit.phi = 1.3; }
+        if (mode === 'lab') { orbit.dist = PHN ? 15.5 : 10.5; orbit.ty = 1.0; orbit.phi = 1.3; orbit.theta = 0.2; } else if (mode === 'tract') { orbit.dist = PHN ? 17 : 12.5; orbit.ty = 1.0; orbit.phi = 1.35; } else { orbit.dist = PHN ? 13 : 9.5; orbit.ty = 0.1; orbit.phi = 1.3; }
         lastS = -1;
         playerRow(mode === 'tract');
+        if (mode === 'lab') labTxt = '';
         if (mode === 'vil') info('<b>소장 융털</b>이 영양소를 흡수해요.<br><b style="color:#8fd0ff">포도당·아미노산</b> → <b>모세 혈관</b><br><b style="color:#ffb02e">지방산·모노글리세리드</b> → <b>암죽관</b>');
       }
       const sg = controls.segment('보기', [{ label: '소화 기관', value: 'tract' }, { label: '소장 융털', value: 'vil' }], mode, (v) => { mode = v; apply(); });
@@ -108,21 +216,23 @@
           const T2 = sm() && sm().TR; if (T2) { T2.auto = null; T2.pt = pOfU(p); }
         },
       });
+      lpl = controls.player({ duration: 24, loop: true, autoplay: false, label: '실험 보기', phases: [[0, '']], onFrame(p) { lpmode = true; lpP = p; } });
       let ctlEl = null;
       function playerRow(on) {
         if (!ctlEl) ctlEl = ctx.renderer.domElement.closest('.v3-wrap').querySelector('.v3-ctl');
-        const r = ctlEl.querySelector('.v3-player'); if (r) r.style.display = on ? '' : 'none';
+        const rows = ctlEl.querySelectorAll('.v3-player'); if (rows[0]) rows[0].style.display = on ? '' : 'none'; if (rows[1]) rows[1].style.display = mode === 'lab' ? '' : 'none';
         [...ctlEl.children].forEach((c) => { if (c.classList.contains('lab') && c.textContent.trim() === '이동') c.style.display = on ? '' : 'none'; });
         [...ctlEl.querySelectorAll('button')].forEach((b) => { if (ST.some((q) => q.n === b.textContent.trim())) b.style.display = on ? '' : 'none'; });
       }
       controls.button('이름표', () => { labsOn = !labsOn; enzOn = labsOn; apply(); });
       apply();
       let lastSc = '', k0 = 0;
-      function readScene() { const s = sm() && sm().S && sm().S.scene; if (!s || s === lastSc) return; lastSc = s; const m = s === 'villi' ? 'vil' : 'tract'; if (m !== mode) { mode = m; sg.set(m); apply(); } }
+      function readScene() { const s = sm() && sm().S && sm().S.scene; if (!s || s === lastSc) return; lastSc = s; const m = s === 'villi' ? 'vil' : (s === 'tests' || s === 'saliva') ? 'lab' : 'tract'; if (m !== mode) { if (lpmode) { lpmode = false; if (lpl) lpl.pause(); } mode = m; sg.set(m); apply(); } }
       return {
         sync() { lastSc = ''; readScene(); },
         update(dt, t) {
           if ((k0++ % 15) === 0) readScene();
+          if (mode === 'lab') { const sm0 = sm(); if (sm0 && sm0.S) labFrame(sm0.S, sm0, t, dt); return; }
           if (mode === 'tract') {
             now = t;
             { // 2D에서 음식물을 옮기면(슬라이더 · 따라가기) 3D도 같은 위치로

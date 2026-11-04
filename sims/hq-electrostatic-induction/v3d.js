@@ -386,6 +386,60 @@
 
       /* ▶ 재생 */
       let built = false, sig = '';
+      /* ================= ⑥ 생활 속 사례 분류 (cards): 세 원리의 모형과 카드 ================= */
+      const gCa = new THREE.Group(); root.add(gCa); gCa.visible = false;
+      const BX = [-4.6, 0, 4.6], BY = 0.2;
+      const pedS = [0, 1, 2].map((i) => { const m = box(3.6, 0.2, 3.0, 0x334155, { roughness: 0.6 }); m.position.set(BX[i], BY - 1.3, 0); gCa.add(m); return m; });
+      ['정전기 유도', '유전 분극', '정전 차폐'].forEach((n, i) => L('cards', n, [BX[i], BY + 2.7, 0], { color: '#334155', size: 14 }));
+      ['도체 속 전하 이동', '절연체 분자의 정렬', '도체 속 E = 0'].forEach((n, i) => L('cards', n, [BX[i], BY + 2.25, 0], { color: '#475569', size: 11 }));
+      // ① 유도: 금속 막대 + 대전체 + 전자의 이동
+      const cRod = cyl(0.4, 0.4, 2.6, 0xb8c2d4, { metalness: 0.7, roughness: 0.25, transparent: true, opacity: 0.45 }); cRod.rotation.z = Math.PI / 2; cRod.position.set(BX[0] + 0.3, BY, 0); gCa.add(cRod);
+      const cBall = sphere(0.45, POS, { emissive: POS, emissiveIntensity: 0.3 }); cBall.position.set(BX[0] - 2.0, BY, 0); gCa.add(cBall); L('cards', '+ 대전체', cBall, { color: '#b91c1c', size: 11, offset: [0, 0.8, 0] });
+      const NE6 = 10, cEl = new THREE.InstancedMesh(new THREE.SphereGeometry(0.09, 10, 8), mat(NEG, { emissive: NEG, emissiveIntensity: 0.5 }), NE6), cIon = new THREE.InstancedMesh(new THREE.SphereGeometry(0.09, 10, 8), mat(POS, { emissive: POS, emissiveIntensity: 0.3 }), NE6); gCa.add(cEl, cIon);
+      // ② 분극: 극판 사이의 유전체 + 분자(쌍극자)
+      const dSl = box(1.9, 1.6, 1.2, 0xfde68a, { transparent: true, opacity: 0.4, roughness: 0.3 }); dSl.position.set(BX[1], BY, 0); gCa.add(dSl);
+      [-1.6, 1.6].forEach((dx, k) => { const pl = box(0.1, 2.2, 1.6, k ? 0x2f6df6 : 0xe2464b, { metalness: 0.6 }); pl.position.set(BX[1] + dx, BY, 0); gCa.add(pl); });
+      const ND = 6, dpA = new THREE.InstancedMesh(new THREE.SphereGeometry(0.13, 10, 8), mat(POS, { emissive: POS, emissiveIntensity: 0.3 }), ND), dpB = new THREE.InstancedMesh(new THREE.SphereGeometry(0.13, 10, 8), mat(NEG, { emissive: NEG, emissiveIntensity: 0.4 }), ND); gCa.add(dpA, dpB);
+      const dBar = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.03, 0.03, 1, 6), mat(0xcbd5e1), ND); gCa.add(dBar);
+      L('cards', '+', [BX[1] - 1.6, BY + 1.4, 0], { color: '#b91c1c', size: 13 }); L('cards', '−', [BX[1] + 1.6, BY + 1.4, 0], { color: '#1d4ed8', size: 13 });
+      // ③ 차폐: 속이 빈 금속 상자 + 바깥 전기장 화살표
+      const shBox = new THREE.Mesh(new THREE.BoxGeometry(1.9, 1.5, 1.5), new THREE.MeshStandardMaterial({ color: 0xb8c2d4, metalness: 0.8, roughness: 0.25, transparent: true, opacity: 0.42, depthWrite: false })); shBox.position.set(BX[2], BY, 0); gCa.add(shBox);
+      const shEd = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1.9, 1.5, 1.5)), new THREE.LineBasicMaterial({ color: 0x64748b })); shEd.position.copy(shBox.position); gCa.add(shEd);
+      const shA = [-0.5, 0, 0.5].map((z) => [0, 1].map((side) => { const a = h.mkArrow(0xf59e0b, 0.025); gCa.add(a); return { a, z, side }; })).flat();
+      const shInL = L('cards', 'E = 0', shBox, { color: '#166534', size: 13 });
+      // 카드(사례) — 2D에서 분류한 결과를 그대로 따라가요
+      const nCards = 6, cardL = [];
+      for (let i = 0; i < nCards; i++) { const l = L('cards', '', [0, 0, 0], { color: 'rgba(8,12,24,.85)', size: 12 }); cardL.push(l); }
+      const lCh = L('cards', '', [0, -2.9, 0], { color: 'rgba(15,118,110,.92)', size: 13 });
+      const caP = { on: false, p: 0 };
+      function updCards(S, sim, t) {
+        const A = S.ap, cs = A.cards || [], u = caP.on ? caP.p : 0.5 + 0.5 * Math.sin(t * 1.2);
+        // ① 전자가 대전체 쪽으로 (u: 0 = 멀리/전기장 없음, 1 = 가까이)
+        for (let i = 0; i < NE6; i++) { const x0 = BX[0] - 1.1 + 2.4 * (i + 0.5) / NE6, sh = -0.9 * u * Math.sin((i + 0.5) / NE6 * 3.14159 * 0.8 + 0.4), ey = ((i % 3) - 1) * 0.22; M4.makeTranslation(x0 + sh + 0.3, BY + ey, ((i * 3) % 2 - 0.5) * 0.3); cEl.setMatrixAt(i, M4); M4.makeTranslation(x0 + 0.3, BY + ey + 0.05, ((i * 3) % 2 - 0.5) * 0.3 + 0.2); cIon.setMatrixAt(i, M4); }
+        cEl.instanceMatrix.needsUpdate = cIon.instanceMatrix.needsUpdate = true; cBall.position.x = BX[0] - 2.2 + 0.5 * u;
+        // ② 분자(쌍극자)가 전기장 방향으로 정렬 (u 클수록 정렬)
+        const Q = new THREE.Quaternion();
+        for (let i = 0; i < ND; i++) {
+          const cx = BX[1] - 0.5 + 0.5 * (i % 3), cy = BY - 0.35 + 0.7 * Math.floor(i / 3), ang = (1 - u) * (i * 2.1 + 0.8) , dx = Math.cos(ang) * 0.17, dy = Math.sin(ang) * 0.17;
+          M4.makeTranslation(cx + dx, cy + dy, 0); dpA.setMatrixAt(i, M4); M4.makeTranslation(cx - dx, cy - dy, 0); dpB.setMatrixAt(i, M4);
+          Q.setFromUnitVectors(new V3(0, 1, 0), new V3(dx, dy, 0).normalize()); M4.compose(new V3(cx, cy, 0), Q, new V3(1, 0.34, 1)); dBar.setMatrixAt(i, M4);
+        }
+        dpA.instanceMatrix.needsUpdate = dpB.instanceMatrix.needsUpdate = dBar.instanceMatrix.needsUpdate = true;
+        // ③ 바깥 전기장은 상자 표면에서 끝나고 안쪽은 0
+        shA.forEach((q) => { const x0 = BX[2] + (q.side ? 0.95 : -0.95) * 1.0, dir = q.side ? 1 : -1, len = 0.5 + 0.4 * u; h.setArrow(q.a, new V3(x0 + dir * (len + 0.35), BY + q.z, q.z * 0.3), new V3(x0 + dir * 0.05, BY + q.z, q.z * 0.3)); q.a.visible = true; });
+        // 카드: 분류한 칸으로
+        const cnt = [0, 0, 0]; let placed = 0, bad = 0;
+        cs.forEach((c, i) => {
+          const l = cardL[i]; if (!l) return; l.set(c.emoji + ' ' + c.title);
+          if (c.bin == null) { l.obj = [-5.0 + (i % 3) * 5.0, -2.2 - Math.floor(i / 3) * 0.55, 1.6]; l.el.style.borderColor = 'rgba(255,255,255,.18)'; }
+          else { placed++; const k = cnt[c.bin]++; l.obj = [BX[c.bin], BY - 0.8 - k * 0.5, 1.6]; l.el.style.borderColor = c.bad ? '#e2464b' : 'rgba(255,255,255,.18)'; if (c.bad) bad++; }
+        });
+        lCh.set(placed ? '분류한 카드 ' + placed + ' / ' + cs.length + (bad ? ' · 다시 생각해 볼 카드 ' + bad + '개' : '') : '카드를 칸으로 끌어 놓는 활동은 2D에서 해요 ↑'); lCh.obj = [0, -3.4, 1.6];
+        info('<b>🗂 생활 속 사례를 원리별로 분류</b>: 세 가지 모형을 보며 생각해요.<br><b>정전기 유도</b>: 도체 속 전자가 이동 · <b>유전 분극</b>: 절연체 분자가 전기장 방향으로 정렬 · <b>정전 차폐</b>: 속이 빈 도체 안은 E = 0<br>(▶ 재생으로 전기장을 걸었다 끊어 보세요. 카드 분류는 2D에서 해요.)');
+      }
+      const plCa = grab('cards', () => controls.player({ duration: 8, loop: true, autoplay: false, label: '전기장 걸기', phases: [[0, '전기장 없음'], [0.5, '전기장을 걸어요']], onFrame(p) { if (!built) return; caP.on = true; caP.p = p < 0.5 ? p * 2 : 2 - p * 2; } }));
+
+
       const plInd = grab('induce', () => controls.player({ duration: 8, loop: true, autoplay: false, label: '대전체 오가기', phases: [[0, '멀리'], [0.15, '가까이 → 전자 이동'], [0.55, '멀어지며 원래대로']], onFrame(p) { if (!built) return; st.indP = p; st.indUser = true; sig = ''; } }));
       const plSc = grab('scope', () => controls.player({ duration: 12, loop: true, autoplay: false, label: '유도 대전 순서', phases: [[0, '막대를 가까이'], [0.3, '접지'], [0.55, '접지 끊기'], [0.78, '막대 치우기']], onFrame(p) { if (!built) return; st.scP = p; st.scUser = true; sig = ''; } }));
       const plPa = grab('paper', () => controls.player({ duration: 10, loop: true, autoplay: false, label: '끌려오는 과정', phases: [[0, '다가옴'], [0.25, '① 분자 정렬'], [0.5, '② 분극 전하'], [0.62, '③ 알짜힘'], [0.78, '④ 끌려 올라감']], onFrame(p) { if (!built) return; st.paP = p; st.paUser = true; sig = ''; } }));
@@ -393,15 +447,15 @@
       const plTo = grab('touch', () => controls.player({ duration: 8, loop: true, autoplay: false, label: '손가락 훑기', phases: [[0, '화면 위를 지나는 손가락']], onFrame(p) { if (!built) return; st.toP = p; st.toUser = true; sig = ''; } }));
       built = true;
 
-      function sceneOf(S) { return S.mode === 'induce' ? 'induce' : S.mode === 'electro' ? S.sc.sub : S.mode === 'dielec' ? S.de.sub : 'touch'; }
-      const CAM = { induce: [10, 1.25], scope: [12, 1.25], shield: [14, 1.2], paper: [11, 1.2], mol: [12.5, 1.25], cap: [12.5, 1.25], touch: [14, 0.95] };
+      function sceneOf(S) { return S.mode === 'induce' ? 'induce' : S.mode === 'electro' ? S.sc.sub : S.mode === 'dielec' ? S.de.sub : S.ap.sub === 'cards' ? 'cards' : 'touch'; }
+      const CAM = { induce: [10, 1.25], scope: [12, 1.25], shield: [14, 1.2], paper: [11, 1.2], mol: [12.5, 1.25], cap: [12.5, 1.25], touch: [14, 0.95], cards: [13, 1.2] };
       let last = '';
       function show(sc) {
-        gI.visible = sc === 'induce'; gE.visible = sc === 'scope'; gSh.visible = sc === 'shield'; gPa.visible = sc === 'paper'; gD.visible = sc === 'mol' || sc === 'cap'; gT.visible = sc === 'touch';
+        gI.visible = sc === 'induce'; gE.visible = sc === 'scope'; gSh.visible = sc === 'shield'; gPa.visible = sc === 'paper'; gD.visible = sc === 'mol' || sc === 'cap'; gT.visible = sc === 'touch'; gCa.visible = sc === 'cards';
         const key = (sc === 'mol' || sc === 'cap') ? 'diel' : sc;
         Object.keys(labs).forEach((k) => { labs[k].on = k === key; labs[k].forEach((l) => l.show(k === key)); });
         showCtl(sc); ctx.orbit.tx = 0; ctx.orbit.ty = 0; ctx.orbit.theta = 0.12; ctx.orbit.phi = CAM[sc][1]; ctx.orbit.dist = CAM[sc][0] * KD;
-        st.indUser = st.scUser = st.paUser = st.moUser = st.toUser = false; [plInd, plSc, plPa, plMo, plTo].forEach((p) => p.pause());
+        st.indUser = st.scUser = st.paUser = st.moUser = st.toUser = false; [plInd, plSc, plPa, plMo, plTo, plCa].forEach((p) => p.pause());
       }
       let ind2d = '', sc2d = '', pa2d = '', to2d = '';
       return {
@@ -417,6 +471,7 @@
           else if (sc === 'shield') updShield(S, sim, t);
           else if (sc === 'paper') updPaper(S, sim, t);
           else if (sc === 'touch') updTouch(S, sim, t);
+          else if (sc === 'cards') updCards(S, sim, t);
           else animDiel(S, sim, dt, t);
         },
         sync() { sig = ''; },

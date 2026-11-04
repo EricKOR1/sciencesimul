@@ -7,6 +7,7 @@
   if (!window.SciSim3D) return;
   const PHN0 = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches);
   window.SciSim3D.attach({
+    host: (window.matchMedia && window.matchMedia('(max-width: 599px)').matches) ? '.sc-tall' : '.sc-wide',
     title: '열의 이동 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     levels: [0, 1, 2, 3],

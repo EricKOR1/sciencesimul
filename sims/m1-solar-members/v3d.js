@@ -7,6 +7,7 @@
   if (!window.SciSim3D) return;
   const PHN0 = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches);
   window.SciSim3D.attach({
+    host: (window.matchMedia && window.matchMedia('(max-width: 599px)').matches) ? '.sc-tall' : '.sc-wide',
     title: '태양계 천체 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: 26 * (PHN0 ? 1.05 : 1), theta: 0.3, phi: 0.95, fov: 45, target: [0, 0, 0], min: 6, max: 60 },
@@ -172,20 +173,27 @@
         info(t);
       }
       controls.segment('', [{ value: 'all', label: '전체' }, { value: 'planet', label: '행성' }, { value: 'small', label: '소행성·혜성' }], 'all', (v) => { st.focus = v; applyFocus(); });
-      const pB = controls.button('⏸ 멈춤', () => { st.play = !st.play; pB.textContent = st.play ? '⏸ 멈춤' : '▶ 공전'; });
+      /* ▶ 공전: 한 바퀴 재생 시간 D초 동안 모든 천체가 '정수 바퀴'를 돌도록 속도를 맞춰서, 끝에서 처음으로 돌아갈 때 끊김 없이 이어져요 (빠르기 비율은 그대로 두었어요) */
+      const D = 240, TAU2 = Math.PI * 2;
+      const rev = (omega) => Math.max(1, Math.round(omega * D / TAU2)) * TAU2 / D;
+      planets.forEach((p) => { p.w = rev(0.8 / Math.pow(p.P, 0.62)); });
+      DW.forEach((d) => { d.w = rev(0.8 / Math.pow(d.P, 0.62)); });
+      MOONS.forEach((m) => { m.w = rev(1.0 / m.P * 0.9); });
+      const BW = []; for (let i = 0; i < NA; i++) BW.push(rev(0.12 / Math.pow(BP[i][0], 0.5) * BP[i][3]));
+      const cW = rev(0.28);
+      const pl = controls.player({ duration: D, loop: true, autoplay: true, label: '공전', phases: [[0, '한 바퀴 재생 (끊김 없이 반복)']], onFrame() {} });
       const nB = controls.button('🏷 이름표', () => { st.names = !st.names; nB.classList.toggle('on', st.names); applyFocus(); }); nB.classList.add('on');
       applyFocus();
 
       return {
         update(dt, t) {
-          if (st.play) st.t += dt;
-          const T = st.t;
-          planets.forEach((p) => { const a = p.ph + T * 0.8 / Math.pow(p.P, 0.62); p.m.position.set(Math.cos(a) * p.R, 0, Math.sin(a) * p.R); p.m.rotation.y += dt * 0.6; });
-          DW.forEach((d) => { const a = d.ph + T * 0.8 / Math.pow(d.P, 0.62); const sx = d.R, sz = d.R * (1 - d.e * 0.3); const v = new V3(Math.cos(a) * sx - d.R * d.e * 0.5, 0, Math.sin(a) * sz); if (d.l.rotation.x) v.applyAxisAngle(new V3(1, 0, 0), d.l.rotation.x); d.m.position.copy(v); });
-          MOONS.forEach((m) => { const a = m.ph + T * 1.0 / m.P * 0.9, hp = m.hostP.m.position; m.m.position.set(hp.x + Math.cos(a) * m.d, hp.y + Math.sin(a * 0.5) * 0.04, hp.z + Math.sin(a) * m.d); });
-          for (let i = 0; i < NA; i++) { const b = BP[i], a = b[1] + T * 0.12 / Math.pow(b[0], 0.5) * b[3]; _bm.makeScale(b[3], b[3], b[3]); _bm.setPosition(Math.cos(a) * b[0], b[2], Math.sin(a) * b[0]); belt.setMatrixAt(i, _bm); }
+          const T = pl.p * D;
+          planets.forEach((p) => { const a = p.ph + T * p.w; p.m.position.set(Math.cos(a) * p.R, 0, Math.sin(a) * p.R); p.m.rotation.y += dt * 0.6; });
+          DW.forEach((d) => { const a = d.ph + T * d.w; const sx = d.R, sz = d.R * (1 - d.e * 0.3); const v = new V3(Math.cos(a) * sx - d.R * d.e * 0.5, 0, Math.sin(a) * sz); if (d.l.rotation.x) v.applyAxisAngle(new V3(1, 0, 0), d.l.rotation.x); d.m.position.copy(v); });
+          MOONS.forEach((m) => { const a = m.ph + T * m.w, hp = m.hostP.m.position; m.m.position.set(hp.x + Math.cos(a) * m.d, hp.y + Math.sin(a * 0.5) * 0.04, hp.z + Math.sin(a) * m.d); });
+          for (let i = 0; i < NA; i++) { const b = BP[i], a = b[1] + T * BW[i]; _bm.makeScale(b[3], b[3], b[3]); _bm.setPosition(Math.cos(a) * b[0], b[2], Math.sin(a) * b[0]); belt.setMatrixAt(i, _bm); }
           belt.instanceMatrix.needsUpdate = true;
-          if (st.play) cT += dt * 0.28; const M = cT % 6.2832; placeComet(M);
+          const M = (1.2 + T * cW) % 6.2832; placeComet(M);
           glow.scale.setScalar(8 + 0.3 * Math.sin(t * 2));
         },
         sync() {},

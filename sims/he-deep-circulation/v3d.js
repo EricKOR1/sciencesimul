@@ -1,7 +1,8 @@
 /* he-deep-circulation · 3D 지구본 위의 해양 컨베이어 벨트
    북대서양과 남극 근처에서 차갑고 짠 물이 가라앉아 깊은 바다를 천천히 흐르고, 인도양·태평양에서 올라와 표층 해류로 돌아와요.
    지구본을 투명하게 해서 표층 흐름(주황)과 심층 흐름(파랑)을 함께 봐요. 담수(빙하 녹은 물)가 늘어나면 침강이 약해져요.
-   2D 실험의 담수 유입량(S.F)과 침강 세기 함수(strengthF)를 읽어 따라가요(읽기 전용). */
+   2D 실험의 담수 유입량(S.F)과 침강 세기 함수(strengthF)를 읽어 따라가요(읽기 전용).
+   1단계(침강 실험: 냉각한 수조에 짠 물 붓기) · 2단계(남북 바다 단면 · 수괴 카드)도 2D와 같은 값으로 보여 줘요 (카드 끌어 놓기는 2D). */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -127,9 +128,111 @@
       });
       apply(); refresh(); showLoop(0);
       ctx.onLevel(() => { refresh(); showLoop(lastU); });
+
+      /* ================= 1단계 침강 실험(tank) · 2단계 단면 모형(sect): 2D와 같은 값으로 보여 줘요 ================= */
+      const gG = new THREE.Group(); while (root.children.length) gG.add(root.children[0]); root.add(gG);
+      const gTk = new THREE.Group(), gSc = new THREE.Group(); root.add(gTk, gSc); gTk.visible = gSc.visible = false;
+      const probe = controls.text(''); probe.style.display = 'none'; const ctlEl = probe.parentElement;
+      const globeEls = Array.prototype.filter.call(ctlEl.children, (e) => e !== probe);
+      const grab = (fn) => { const n0 = ctlEl.children.length; const r = fn(); return { r, els: Array.prototype.slice.call(ctlEl.children, n0) }; };
+      const shw = (g2, on) => g2.els.forEach((e) => { e.style.display = on ? '' : 'none'; });
+      const MT = (c, o) => std(c, o);
+      /* --- tank --- */
+      const TW = 8.2, TH = 3.6, TD = 2.4;
+      { const gl = new THREE.Mesh(new THREE.BoxGeometry(TW, TH, TD), new THREE.MeshStandardMaterial({ color: 0xcfe8ff, transparent: true, opacity: 0.12, roughness: 0.08, depthWrite: false })); gTk.add(gl);
+        const ed = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(TW, TH, TD)), new THREE.LineBasicMaterial({ color: 0x9ab4d6 })); gTk.add(ed);
+        const wt = new THREE.Mesh(new THREE.BoxGeometry(TW - 0.06, TH * 0.92, TD - 0.06), MT(0xbfe0f5, { transparent: true, opacity: 0.35, roughness: 0.15, depthWrite: false })); wt.position.y = -TH * 0.04; gTk.add(wt); }
+      const plate = new THREE.Mesh(new THREE.BoxGeometry(1.1, TH * 0.9, TD * 0.9), MT(0xe2e8f0, { roughness: 0.4 })); plate.position.set(-TW / 2 - 0.7, 0, 0); gTk.add(plate);
+      const iceC = [0, 1, 2].map((i) => { const m = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.4, 0.4), MT(0xffffff, { transparent: true, opacity: 0.8 })); m.position.set(-TW / 2 - 0.7 + (i % 2 ? 0.1 : -0.1), 0.9 - i * 0.9, TD * 0.46); m.rotation.set(0.4, 0.5, 0.2 * i); gTk.add(m); return m; });
+      const fun = new THREE.Mesh(new THREE.ConeGeometry(0.6, 0.9, 20, 1, true), MT(0xcbd5e1, { side: THREE.DoubleSide })); fun.rotation.z = Math.PI; fun.position.set(-TW / 2 + 1.0, TH / 2 + 1.0, 0); gTk.add(fun);
+      const funL = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.15, 0.7, 16), MT(0x3b82f6, { transparent: true, opacity: 0.85 })); funL.position.set(-TW / 2 + 1.0, TH / 2 + 1.05, 0); gTk.add(funL);
+      const stream = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1, 8), MT(0x2563eb, { emissive: 0x1d4ed8, emissiveIntensity: 0.4 })); gTk.add(stream);
+      const NDY = 240, dyeM = new THREE.InstancedMesh(new THREE.SphereGeometry(0.075, 10, 8), MT(0x1d4ed8, { emissive: 0x1e3a8a, emissiveIntensity: 0.5 }), NDY); dyeM.frustumCulled = false; dyeM.instanceMatrix.setUsage(THREE.DynamicDrawUsage); gTk.add(dyeM);
+      const layB = new THREE.Mesh(new THREE.BoxGeometry(1, 1, TD - 0.2), MT(0x2563eb, { transparent: true, opacity: 0.25, depthWrite: false })); gTk.add(layB);
+      const layT = new THREE.Mesh(new THREE.BoxGeometry(1, 1, TD - 0.2), MT(0x60a5fa, { transparent: true, opacity: 0.22, depthWrite: false })); gTk.add(layT);
+      const lTkA = label('수조 속 물 20 °C · 34.5 psu', [TW / 2 - 1.5, TH / 2 + 0.55, 0], { color: 'rgba(100,116,139,.92)' }), lTkB = label('', [-TW / 2 + 3.0, TH / 2 + 1.1, 0], { color: 'rgba(37,99,235,.92)' }), lCold = label('냉각', [-TW / 2 - 0.7, -TH / 2 - 0.5, 0], { color: 'rgba(3,105,161,.92)' }), lPole = label('극 (찬 바다)', [-TW / 2 + 0.9, -TH / 2 - 0.5, 0], { color: 'rgba(3,105,161,.92)' }), lEq = label('적도 쪽', [TW / 2 - 0.9, -TH / 2 - 0.5, 0], { color: 'rgba(180,83,9,.92)' });
+      [lTkA, lTkB, lCold, lPole, lEq].forEach((l) => l.show(false));
+      const Md = new THREE.Matrix4();
+      const setIn = (id, v) => { const e = document.getElementById(id); if (e) { e.value = v; e.dispatchEvent(new Event('input')); } };
+      const tkT = grab(() => controls.range('부을 물의 수온', 0, 25, 1, 20, (v) => setIn('sTp', v), (v) => v + ' °C'));
+      const tkS = grab(() => controls.range('염분', 33, 38, 0.5, 34.5, (v) => setIn('sSp', v), (v) => v.toFixed(1) + ' psu'));
+      const tkPour = grab(() => controls.button('💧 붓기 시작', () => { const b = document.getElementById('bPour'); if (b) b.click(); }));
+      const tkRst = grab(() => controls.button('↺ 다시 하기', () => { const b = document.getElementById('bTpReset'); if (b) b.click(); }));
+      function updTank(w) {
+        const g = w.tkG(), tp = w.S.tp, DYs = w.DY, d = w.tpDelta(), TA = 20, SA = 34.5;
+        for (let i = 0; i < NDY; i++) {
+          const q = DYs[i];
+          if (!q) { Md.makeScale(0.0001, 0.0001, 0.0001); dyeM.setMatrixAt(i, Md); continue; }
+          Md.makeTranslation(((q.x - g.ix) / g.iw - 0.5) * TW, (0.5 - (q.y - g.iy) / g.ih) * TH * 0.92 - TH * 0.04, (q.o - 0.5) * (TD - 0.7)); dyeM.setMatrixAt(i, Md);
+        }
+        dyeM.instanceMatrix.needsUpdate = true;
+        const fr = (tp.front - g.ix) / g.iw, ft = (tp.frontTop - g.ix) / g.iw;
+        layB.visible = fr > 0.03; if (layB.visible) { const wd = fr * TW, hh = TH * 0.92 * 0.3; layB.scale.set(wd, hh, 1); layB.position.set(-TW / 2 + wd / 2, -TH / 2 + hh / 2 + 0.1, 0); }
+        layT.visible = ft > 0.03; if (layT.visible) { const wd = ft * TW, hh = TH * 0.92 * 0.18; layT.scale.set(wd, hh, 1); layT.position.set(-TW / 2 + wd / 2, TH * 0.44 - hh / 2, 0); }
+        const cold = Math.max(0, Math.min(1, (TA - tp.T) / 20)); plate.material.color.set(new THREE.Color(0xe2e8f0).lerp(new THREE.Color(0x38bdf8), cold)); iceC.forEach((m) => { m.material.opacity = 0.35 + 0.55 * cold; });
+        stream.visible = tp.pour; if (tp.pour) { const y0 = TH / 2 + 0.6, y1 = TH / 2 - 0.2; stream.scale.set(1, y0 - y1, 1); stream.position.set(-TW / 2 + 1.0, (y0 + y1) / 2, 0); }
+        funL.material.color.set(d < 0 ? 0xf59e0b : 0x3b82f6);
+        lTkA.show(true); lTkB.show(true); lTkB.set('부은 물 ' + tp.T + ' °C · ' + tp.S.toFixed(1) + ' psu'); [lCold, lPole, lEq].forEach((l) => l.show(true));
+        tkT.r.set(tp.T); tkS.r.set(tp.S); tkPour.els.forEach((e) => { e.classList.toggle('on', !!tp.pour); });
+        const ra = w.RHO(TA, SA), rp = w.RHO(tp.T, tp.S);
+        const msg = !tp.pour ? '조건을 정하고 <b>💧 붓기 시작</b>을 눌러요.' : d > 0 ? '부은 물이 더 무거워요 → 가라앉아 바닥을 따라 반대쪽으로 흘러요.' : d < 0 ? '부은 물이 더 가벼워요 → 위로 떠올라 표면을 따라 퍼져요.' : '밀도가 같아서 가라앉지도 뜨지도 않고 제자리에서 퍼져요.';
+        return '<b>수조 실험: 한쪽 끝을 냉각하고 짠물을 부어요</b><br>' + msg + '<br>밀도 ' + (ra != null ? '수조 속 물 ' + (Math.round(ra * 10) / 10) + ' · 부은 물 ' + (Math.round(rp * 10) / 10) + ' kg/m³ ' : '') + (d > 0 ? '(부은 물이 ' + d.toFixed(1) + ' 더 무거워요)' : d < 0 ? '(부은 물이 ' + (-d).toFixed(1) + ' 더 가벼워요)' : '(같아요)');
+      }
+      /* --- sect: 남북 바다 단면 --- */
+      const SWd = 10, SHt = 4.6, SDp = 1.0, sx = (lat) => (lat / 90) * (SWd / 2), sy = (dep) => SHt / 2 - (dep / 5000) * SHt;
+      { const cv = document.createElement('canvas'); cv.width = 4; cv.height = 128; const c2 = cv.getContext('2d'), gr = c2.createLinearGradient(0, 0, 0, 128); gr.addColorStop(0, '#8fd8f5'); gr.addColorStop(0.35, '#3b9fd6'); gr.addColorStop(1, '#17386e'); c2.fillStyle = gr; c2.fillRect(0, 0, 4, 128);
+        const seaP = new THREE.Mesh(new THREE.BoxGeometry(SWd, SHt, SDp), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(cv), transparent: true, opacity: 0.88 })); gSc.add(seaP);
+        const ed = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(SWd, SHt, SDp)), new THREE.LineBasicMaterial({ color: 0x9ab4d6 })); gSc.add(ed);
+        [-1, 1].forEach((sg) => { const ic = new THREE.Mesh(new THREE.BoxGeometry(SWd * 0.04, 0.16, SDp), MT(0xffffff)); ic.position.set(sg * (SWd / 2 - SWd * 0.02), SHt / 2 + 0.05, 0); gSc.add(ic); }); }
+      const BANDD = { mid: [600, 1500, '중층 (약 1000 m)'], deep: [2000, 4000, '심층 (2000~4000 m)'], bot: [4200, 5000, '저층 (4000 m 아래)'] };
+      Object.keys(BANDD).forEach((k) => { const [d0, d1, nm] = BANDD[k]; const m = new THREE.Mesh(new THREE.BoxGeometry(SWd, sy(d0) - sy(d1), SDp * 0.9), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.1, depthWrite: false })); m.position.set(0, (sy(d0) + sy(d1)) / 2, 0); gSc.add(m); const l = label(nm, [SWd / 2, (sy(d0) + sy(d1)) / 2, 0], { color: 'rgba(15,40,80,.8)', size: 11.5, offset: [1.1, 0, 0] }); l.show(false); BANDD[k].push(l); });
+      const MKS = ['nadw', 'aabw', 'aaiw'], MCOL = { aabw: 0x7c3aed, nadw: 0x2563eb, aaiw: 0x16a34a };
+      const siteR = MKS.map((k) => { const m = new THREE.Mesh(new THREE.TorusGeometry(0.28, 0.04, 8, 28), new THREE.MeshBasicMaterial({ color: 0xfde047 })); m.rotation.x = Math.PI / 2; gSc.add(m); return m; });
+      const siteL = MKS.map((k) => { const l = label('', [0, 0, 0], { color: 'rgba(15,40,80,.85)', size: 12 }); l.show(false); return l; });
+      const massB = MKS.map((k) => { const m = new THREE.Mesh(new THREE.SphereGeometry(0.3, 24, 18), MT(MCOL[k], { emissive: MCOL[k], emissiveIntensity: 0.3 })); m.visible = false; gSc.add(m); const st = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 1, 8), MT(MCOL[k], { transparent: true, opacity: 0.5 })); st.visible = false; gSc.add(st); const sp = new THREE.Mesh(new THREE.BoxGeometry(1, 0.7, SDp * 0.6), MT(MCOL[k], { transparent: true, opacity: 0.5, depthWrite: false })); sp.visible = false; gSc.add(sp); const l = label('', [0, 0, 0], { color: 'rgba(255,255,255,.92)', size: 12 }); l.el.style.color = '#1e293b'; l.show(false); return { m, st, sp, l }; });
+      const lSc = label('단순화한 남북 바다 단면 (대륙 없음) · 깊이 0~5000 m', [0, SHt / 2 + 0.55, 0], { color: 'rgba(30,41,59,.9)' }); lSc.show(false);
+      function updSect(w) {
+        const so = w.S.cards, sp = w.S.spread, M = w.MASSES, SEPf = w.SEP;
+        MKS.forEach((k, i) => {
+          const m = M[k], c = so.find((q) => q.id === k), x = sx(m.siteLat);
+          siteR[i].visible = !c.placed; siteR[i].position.set(x, SHt / 2 + 0.05, SDp / 2); siteR[i].rotation.z = 0; siteR[i].scale.setScalar(1 + 0.12 * Math.sin(performance.now() / 300 + i));
+          siteL[i].show(true); siteL[i].obj = [x, SHt / 2 + 0.45 + (k === 'aaiw' ? 0.45 : 0), 0]; siteL[i].set((m.siteLat < 0 ? '남위 ' : '북위 ') + Math.abs(m.siteLat) + '°');
+          const B = massB[i]; B.m.visible = B.st.visible = !!c.placed; B.l.show(!!c.placed);
+          if (c.placed) { const dep = Math.max(0, Math.min(5000, (c.my - SEPf.y0) / (SEPf.y1 - SEPf.y0) * 5000)), y = sy(dep); B.m.position.set(x, y, SDp * 0.3); B.st.scale.set(1, Math.max(0.01, SHt / 2 - y), 1); B.st.position.set(x, (SHt / 2 + y) / 2, SDp * 0.3); B.l.obj = [x + (m.siteLat > 0 ? -1.3 : 1.3), y, 0.3]; B.l.set(m.name); }
+        });
+        const SP = [['aabw', -70, 40], ['aaiw', -50, 30], ['nadw', 60, -55]];
+        SP.forEach(([k, a, b]) => { const i = MKS.indexOf(k), B = massB[i], sm = sp * sp * (3 - 2 * sp); B.sp.visible = sp > 0.01; if (B.sp.visible) { const x0 = sx(a), x1 = sx(a + (b - a) * sm), wd = Math.abs(x1 - x0), yc = sy(M[k].band === 'bot' ? 4600 : M[k].band === 'deep' ? 3000 : 1000); B.sp.scale.set(Math.max(0.01, wd), 1, 1); B.sp.position.set((x0 + x1) / 2, yc, 0); } });
+        Object.keys(BANDD).forEach((k) => BANDD[k][3].show(true)); lSc.show(true);
+        const un = so.filter((c) => !c.placed);
+        return '<b>단순화한 남북 바다 단면</b> (노란 고리 = 침강 위치)<br>놓은 수괴 ' + (3 - un.length) + ' / 3 · 밀도가 클수록 더 깊이 가라앉아요.' + (un.length ? '<br>' + un.map((c) => M[c.id].name + ' (' + M[c.id].T + ' °C · ' + M[c.id].S.toFixed(1) + ' psu)').join('<br>') : '<br>모두 놓았어요. ✔ 확인하기를 눌러요.') + '<br><span style="color:#9fb0d4">카드를 끌어 놓는 일은 ▦ 2D에서 해요.</span>';
+      }
+      let forceInfo = true, lastHtml = '', scnNow = '';
+      ctx.onLevel(() => { forceInfo = true; scnNow = ''; });
+      function applyScn(k) {
+        if (k === scnNow) return; scnNow = k; forceInfo = true;
+        const tk = k === 'tank', sc = k === 'sect';
+        gG.visible = !(tk || sc); gTk.visible = tk; gSc.visible = sc;
+        globeEls.forEach((e) => { e.style.display = tk || sc ? 'none' : ''; });
+        shw(tkT, tk); shw(tkS, tk); shw(tkPour, tk); shw(tkRst, tk);
+        if (tk || sc) { Object.keys(LB).forEach((q) => LB[q].show(false)); bl.show(false); }
+        else { apply(); showLoop(lastU); refresh(); }
+        if (!tk) [lTkA, lTkB, lCold, lPole, lEq].forEach((l) => l.show(false));
+        if (!sc) { siteL.forEach((l) => l.show(false)); massB.forEach((b) => b.l.show(false)); Object.keys(BANDD).forEach((q) => BANDD[q][3].show(false)); lSc.show(false); }
+        const o = ctx.orbit;
+        if (tk) { o.theta = 0.05; o.phi = 1.4; o.tx = 0; o.ty = 0.3; o.tz = 0; o.dist = PHONE ? 19 : 14; }
+        else if (sc) { o.theta = 0.05; o.phi = 1.45; o.tx = 0; o.ty = 0; o.tz = 0; o.dist = PHONE ? 20 : 13.5; }
+        else { o.theta = 0.2; o.phi = 1.1; o.tx = 0; o.ty = 0; o.tz = 0; o.dist = PHONE ? 14 : 10.5; }
+      }
       const dm = new THREE.Object3D(), tmp = new THREE.Vector3();
       return {
         update(dt, t) {
+          const sw = SIM(), vw = sw && sw.S ? sw.S.view : 'loop';
+          applyScn(vw === 'tank' || vw === 'sect' ? vw : 'globe');
+          if (vw === 'tank' || vw === 'sect') {
+            const h = vw === 'tank' ? updTank(sw) : updSect(sw);
+            if (h !== lastHtml || forceInfo) { lastHtml = h; forceInfo = false; info(h); }
+            ctx.orbit.theta = 0.05; return;
+          }
           try { const s = SIM(); if (s && s.S && ctx.level === 2 && !pl.playing && s.S.loopT !== lastLoop) { syncing = true; pl.set((s.S.loopT % YEARS) / YEARS); syncing = false; lastLoop = s.S.loopT; } } catch (e) {}
           try { const s = SIM(); if (s && s.S && s.S.F !== lastSimF) { lastSimF = s.S.F; F = s.S.F; rF.set(F); refresh(); } } catch (e) {}
           FL.forEach((f) => {

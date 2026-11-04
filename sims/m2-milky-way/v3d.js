@@ -30,7 +30,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: 118 * FIT, theta: 0.5, phi: 0.95, fov: 45, min: 25, max: 330 },
     autoRotate: 0,
-    levels: [],                      // 1~4단계 미션(하늘 누르기 · ☀ 끌기 · 카드 놓기)은 2D 화면에서 해요
+    levels: [],                      // 하늘 누르기 · ☀ 끌기 · 카드 놓기 미션은 2D 화면에서 해요 (성단 · 성운 장면은 3D로 볼 수 있어요)
     build(ctx) {
       const { THREE, root, camera, label, info, controls, orbit } = ctx;
       const R = rng(2024);
@@ -149,8 +149,8 @@
         const out = mode === 'out';
         labSun.show(out); labCen.show(out); labDia.show(out); labDist.show(out); distLine.visible = out;
         labOpen.show(out && showOpen); labGlob.show(out && showGlob); labHalo.show(out && showHalo);
-        labBand.show(!out); labUp.show(!out); labGC.show(!out);
-        if (!out) {
+        labBand.show(mode === 'sun'); labUp.show(mode === 'sun'); labGC.show(mode === 'sun');
+        if (mode === 'sun') {
           const p = G(sun.x, sun.y, 0), L = Math.hypot(p[0], p[2]) || 1, ux = -p[0] / L, uz = -p[2] / L; // 중심 방향
           // 중심의 반대 방향(은하수가 희미한 쪽)에 '띠' 이름표, 위쪽에 '원반 위쪽'
           labGC.obj = [0, 0, 0]; labGC.off = [0, 4, 0];
@@ -197,7 +197,7 @@
       const openB = controls.button('산개 성단 ✓', () => { showOpen = !showOpen; openB.classList.toggle('on', showOpen); openB.textContent = '산개 성단 ' + (showOpen ? '✓' : '✕'); applyVis(); updateLabels(); }); openB.classList.add('on');
       const globB = controls.button('구상 성단 ✓', () => { showGlob = !showGlob; globB.classList.toggle('on', showGlob); globB.textContent = '구상 성단 ' + (showGlob ? '✓' : '✕'); applyVis(); updateLabels(); }); globB.classList.add('on');
       const haloB = controls.button('헤일로 ✓', () => { showHalo = !showHalo; haloB.classList.toggle('on', showHalo); haloB.textContent = '헤일로 ' + (showHalo ? '✓' : '✕'); applyVis(); updateLabels(); }); haloB.classList.add('on');
-      function sideBtns() { const o = mode === 'out'; upB.style.display = o ? '' : 'none'; sideB.style.display = o ? '' : 'none'; }
+      function sideBtns() { const o = mode === 'out'; upB.style.display = o ? '' : 'none'; sideB.style.display = o ? '' : 'none'; try { nebBtns.forEach((e) => { e.style.display = xMode === 'neb' ? '' : 'none'; }); const rows = barEl.querySelectorAll('.v3-player'); if (rows[0]) rows[0].style.display = xMode ? 'none' : ''; if (rows[1]) rows[1].style.display = xMode ? '' : 'none'; } catch (e) { /* 아직 만들기 전 */ } }
       sideBtns();
 
       let lastSunKey = '';
@@ -217,10 +217,90 @@
       }
       readLesson(); applyVis(); text();
 
+      /* ===== 장면 cluster(성단 비교) · nebula(성운): 2D와 같은 내용을 입체로 — 산개 성단 vs 구상 성단 / 방출 · 반사 · 암흑 성운 ===== */
+      const gX = new THREE.Group(); gX.visible = false; root.add(gX);
+      const barEl = renderer0().closest('.v3-wrap').querySelector('.v3-ctl');
+      function renderer0() { return ctx.renderer.domElement; }
+      const rnd2 = rng(77);
+      const gaussP = (n, sx, sy, sz, cx, cy, cz) => { const a = []; for (let i = 0; i < n; i++) a.push([cx + gauss(rnd2) * sx, cy + gauss(rnd2) * sy, cz + gauss(rnd2) * sz]); return a; };
+      // 산개 성단: 별 수가 적고 모양이 불규칙, 푸른 젊은 별
+      const openC = cloud(gaussP(150, 1.5, 1.1, 1.0, -4.6, 0, 0).concat(gaussP(60, 0.7, 0.5, 0.5, -3.6, 0.6, 0.3)), '#a9ccff', 9, 1.0, {}); gX.add(openC);
+      // 구상 성단: 별이 아주 많고 공 모양, 가운데가 빽빽한 붉은 늙은 별
+      const globPts2 = []; for (let i = 0; i < 1500; i++) { const r = 2.6 * Math.pow(rnd2(), 0.55) * Math.pow(rnd2(), 0.3), u = rnd2() * 2 - 1, a = rnd2() * 6.283, q = Math.sqrt(1 - u * u); globPts2.push([4.6 + r * q * Math.cos(a), r * u, r * q * Math.sin(a)]); }
+      const globC = cloud(globPts2, '#ffbf80', 5, 0.95, {}); gX.add(globC);
+      const cluLab = [label('산개 성단', [-4.6, 2.8, 0], { color: 'rgba(20,80,130,.92)', size: LS }), label('구상 성단', [4.6, 3.3, 0], { color: 'rgba(130,70,10,.92)', size: LS }),
+        label('별 수 적음(수십~수천 개) · 모양이 불규칙 · 푸른 젊은 별 · 원반(나선팔)에 있어요', [-4.6, -2.7, 0], { color: 'rgba(20,80,130,.92)', size: LS - 1.5 }),
+        label('별 수 많음(수만~수십만 개) · 공 모양 · 붉은 늙은 별 · 헤일로·중심부에 있어요', [4.6, -3.3, 0], { color: 'rgba(130,70,10,.92)', size: LS - 1.5 })];
+      // 성운: 가스 구름 + 별 + 빛의 길
+      const nebG = new THREE.Group(); gX.add(nebG);
+      const NEBC = [
+        { name: '방출 성운', col: '#ff5a78', star: '#9fc4ff', txt: '<b>방출 성운</b>: 뜨거운 별빛(자외선)을 받은 가스가 <b>스스로 빛</b>을 내요. 주로 <b>붉게</b> 보여요. 예) 오리온 대성운', arrow: '#ff6a8a', rays: '스스로 빛을 내요' },
+        { name: '반사 성운', col: '#6aa8ff', star: '#fff2d0', txt: '<b>반사 성운</b>: 주변 별빛을 먼지가 <b>반사</b>해서 보여요. 주로 <b>푸르게</b> 보여요.', arrow: '#6aa8ff', rays: '별빛을 반사해요' },
+        { name: '암흑 성운', col: '#0a0b10', star: '#ffffff', txt: '<b>암흑 성운</b>: 짙은 가스와 먼지가 뒤쪽의 빛을 <b>가려서</b> 어둡게 보여요. 예) 말머리 성운', arrow: '#ffe08a', rays: '뒤쪽의 빛을 가려요' },
+      ];
+      const nebPts = [gaussP(900, 1.6, 1.2, 1.0, 0, 0, 0)].map((p) => p)[0];
+      const nebCl = NEBC.map((n, i) => { const m = cloud(nebPts, n.col, i === 2 ? 26 : 16, i === 2 ? 1 : 0.22, i === 2 ? { blending: THREE.NormalBlending, opacity: 0.92 } : {}); m.visible = false; nebG.add(m); return m; });
+      const backStars = cloud((() => { const a = []; for (let i = 0; i < 160; i++) a.push([-3.2 + rnd2() * 6.4, -2.6 + rnd2() * 5.2, -2.5 - rnd2() * 0.5]); return a; })(), '#e8f0ff', 5, 1, {}); backStars.visible = false; nebG.add(backStars);
+      const starM = new THREE.Mesh(new THREE.SphereGeometry(0.22, 16, 12), new THREE.MeshBasicMaterial({ color: 0x9fc4ff })); nebG.add(starM);
+      const starGlow = new THREE.Sprite(new THREE.SpriteMaterial({ map: dot, color: 0xbfd6ff, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false })); starGlow.scale.set(2.2, 2.2, 1); nebG.add(starGlow);
+      const eyeM = new THREE.Mesh(new THREE.SphereGeometry(0.25, 16, 12), new THREE.MeshStandardMaterial({ color: 0x4f8cff, emissive: 0x1b3aa8, emissiveIntensity: 0.4 })); eyeM.position.set(7.0, 0, 0); nebG.add(eyeM);
+      function mkAr(col, rad) { const g = new THREE.Group(), m = new THREE.MeshBasicMaterial({ color: col }); const sh = new THREE.Mesh(new THREE.CylinderGeometry(rad, rad, 1, 8), m), hd = new THREE.Mesh(new THREE.ConeGeometry(rad * 2.4, rad * 6, 12), m); g.add(sh, hd); g.userData = { sh, hd, rad, m }; return g; }
+      function setAr(g, a, b) { const d = new THREE.Vector3().subVectors(b, a), len = d.length(), { sh, hd, rad } = g.userData; if (len < 1e-3) { g.visible = false; return; } g.visible = true; const hl = Math.min(len * 0.5, rad * 6); sh.scale.y = Math.max(0.001, len - hl); sh.position.y = (len - hl) / 2; hd.scale.y = hl / (rad * 6); hd.position.y = len - hl / 2; g.position.copy(a); g.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize()); }
+      const arIn = mkAr(0xffe08a, 0.05), arOut = mkAr(0xff6a8a, 0.05); nebG.add(arIn, arOut);
+      const arIn2 = mkAr(0xffe08a, 0.04), arOut2 = mkAr(0xff6a8a, 0.04); nebG.add(arIn2, arOut2);
+      const nebLab = [label('별', starM, { size: LS, offset: [0, -0.5, 0] }), label('가스·먼지 구름', [0, 2.4, 0], { size: LS }), label('지구에서 보는 쪽 (관측자)', eyeM, { size: LS, offset: [0, 0.6, 0] }), label('', [3.2, 0.9, 0], { size: LS - 1, color: 'rgba(120,60,0,.9)' })];
+      const nebBtns = [];
+      { const before = barEl.children.length; controls.segment('성운 종류', NEBC.map((n, i) => ({ value: i, label: n.name })), 0, (v) => { if (sim && sim.setNeb) sim.setNeb(v); nebK = v; }); [...barEl.children].slice(before).forEach((e) => nebBtns.push(e)); }
+      let nebK = 0, xMode = '', savedX = null, xHid = [];
+      let plx = null, xP = 0, xPlay = false;
+      { const before = barEl.children.length; plx = controls.player({ duration: 16, loop: true, autoplay: false, label: '살펴보기', phases: [[0, '']], onFrame(p) { xPlay = true; xP = p; } }); }
+      function enterX(m) {
+        if (xMode === m) return;
+        if (!xMode) { savedX = { theta: orbit.theta, phi: orbit.phi, dist: orbit.dist, tx: orbit.tx, ty: orbit.ty, tz: orbit.tz, fov: camera.fov }; xHid = root.children.filter((c) => c !== gX && c.visible); xHid.forEach((c) => { c.visible = false; }); }
+        xMode = m; mode = 'x'; gX.visible = true; xPlay = false; if (plx.playing) plx.pause();
+        orbit.theta = 0; orbit.phi = 1.35; orbit.dist = (m === 'clu' ? 17 : 15) * (window.innerWidth < 600 ? 1.55 : 1); orbit.tx = 0; orbit.ty = 0; orbit.tz = 0; camera.fov = 45; camera.updateProjectionMatrix();
+        openC.visible = globC.visible = m === 'clu'; nebG.visible = m === 'neb'; cluLab.forEach((l) => l.show(m === 'clu')); if (m === 'clu') nebLab.forEach((l) => l.show(false));
+        updateLabels(); sideBtns(); lastXtxt = '';
+      }
+      function leaveX() {
+        if (!xMode) return;
+        xMode = ''; gX.visible = false; xHid.forEach((c) => { c.visible = true; }); xHid = []; if (savedX) { Object.assign(orbit, savedX); camera.fov = savedX.fov || 45; camera.updateProjectionMatrix(); }
+        mode = 'out'; cluLab.forEach((l) => l.show(false)); nebLab.forEach((l) => l.show(false)); applyVis(); updateLabels(); sideBtns(); text();
+      }
+      let lastXtxt = ''; const setX = (h) => { if (h !== lastXtxt) { lastXtxt = h; info(h); } };
+      function updX(dt, t) {
+        const S = sim && sim.S, ph = document.querySelector('.v3-player .v3-ph');
+        if (xMode === 'clu') {
+          let tx = 0, dist = 17 * (window.innerWidth < 600 ? 1.55 : 1);
+          if (xPlay) { const p = xP; tx = p < 0.4 ? -4.6 : p < 0.5 ? -4.6 + 9.2 * (p - 0.4) / 0.1 : 4.6; dist = 8 * (window.innerWidth < 600 ? 1.55 : 1); orbit.tx += (tx - orbit.tx) * Math.min(1, dt * 4); orbit.dist += (dist - orbit.dist) * Math.min(1, dt * 3); if (ph) ph.textContent = p < 0.45 ? '산개 성단' : '구상 성단'; }
+          else if (ph) ph.textContent = '';
+          openC.rotation.y += dt * 0.15; globC.rotation.y += dt * 0.1; openC.position.x = 0; 
+          setX('<b>산개 성단 vs 구상 성단</b><br><b style="color:#9fc4ff">산개 성단</b>: 별이 수십~수천 개로 적고 모양이 <b>불규칙</b>해요. 푸른빛의 <b>젊은 별</b>이 많고 은하 <b>원반(나선팔)</b>에 있어요. 예) 플레이아데스(M45)<br><b style="color:#ffbf80">구상 성단</b>: 별이 수만~수십만 개로 많고 <b>공 모양</b>이에요. 붉은빛의 <b>늙은 별</b>이 많고 은하 <b>헤일로·중심부</b>에 있어요. 예) M13<br>성단 카드 분류는 옆의 2D 화면에서 해요.');
+        } else if (xMode === 'neb') {
+          const k = xPlay ? Math.min(2, Math.floor(xP * 3)) : (S && S.neb != null ? S.neb : nebK), N = NEBC[k];
+          if (xPlay && sim && sim.setNeb && sim.S && sim.S.neb !== k) sim.setNeb(k);
+          nebCl.forEach((m, i) => { m.visible = i === k; }); backStars.visible = k === 2;
+          starM.visible = starGlow.visible = k !== 2; starM.material.color.set(N.star); starGlow.material.color.set(N.star); starGlow.scale.setScalar(2.0 + 0.2 * Math.sin(t * 3));
+          starM.position.set(k === 1 ? -2.6 : 0, k === 1 ? 0.2 : 0, 0.2); starGlow.position.copy(starM.position);
+          nebG.children.forEach(() => {});
+          const q = (Math.sin(t * 2.2) + 1) / 2;
+          // 빛의 길: 방출 = 별 → 가스 (자외선, 파랑) 그리고 가스 → 지구 (붉은 빛) / 반사 = 별 → 먼지 → 지구 (반사) / 암흑 = 뒤쪽 별빛이 구름에 막혀요
+          const y0 = k === 2 ? 1.2 : 0;
+          if (k === 0) { setAr(arIn, new THREE.Vector3(0.3, 0.3, 0.2), new THREE.Vector3(1.6, 0.9, 0.2)); arIn.userData.m.color.set('#9fc4ff'); setAr(arOut, new THREE.Vector3(2.2, 0.0, 0.2), new THREE.Vector3(6.2, 0.0, 0.2)); arOut.userData.m.color.set('#ff6a8a'); arIn2.visible = arOut2.visible = false; }
+          else if (k === 1) { setAr(arIn, new THREE.Vector3(-2.2, 0.2, 0.2), new THREE.Vector3(-0.2, 0.2, 0.2)); arIn.userData.m.color.set('#fff2d0'); setAr(arOut, new THREE.Vector3(1.0, 0.0, 0.2), new THREE.Vector3(6.2, 0.0, 0.2)); arOut.userData.m.color.set('#6aa8ff'); arIn2.visible = arOut2.visible = false; }
+          else { setAr(arIn, new THREE.Vector3(-3.0, 0.9, -0.6), new THREE.Vector3(-1.0, 0.9, -0.6)); arIn.userData.m.color.set('#ffe08a'); setAr(arIn2, new THREE.Vector3(-3.0, -0.6, -0.6), new THREE.Vector3(-1.0, -0.6, -0.6)); arIn2.userData.m.color.set('#ffe08a'); arOut.visible = arOut2.visible = false; }
+          nebLab[0].show(k !== 2); nebLab[0].set(k === 0 ? '뜨거운 별' : '별'); nebLab[1].show(true); nebLab[1].obj = [0, 2.2, 0]; nebLab[1].set(N.name + (k === 2 ? ' (짙은 가스·먼지)' : '')); nebLab[2].show(true);
+          nebLab[3].show(true); nebLab[3].set(k === 2 ? '뒤쪽 별빛이 가려져 어두워요' : N.rays); nebLab[3].obj = [k === 2 ? 3.0 : 3.8, k === 2 ? 0.0 : 0.9, 0];
+          if (ph) ph.textContent = xPlay ? N.name : '';
+          setX(N.txt + '<br>빛이 어떻게 되는지에 따라 <b>방출 · 반사 · 암흑 성운</b>으로 나눠요. 사진 분류는 옆의 2D 화면에서 해요.');
+        }
+      }
       let lastTiltT = null, k0 = 0;
       return {
-        update() {
+        update(dt, tm) {
           const S = sim && sim.S;
+          { const want = S && S.scene === 'cluster' ? 'clu' : S && S.scene === 'nebula' ? 'neb' : ''; if (want && want !== xMode) enterX(want); else if (!want && xMode) leaveX(); }
+          if (xMode) { updX(dt, tm); return; }
           if (S && (k0++ % 3) === 0 && mode === 'out') {
             // 2D의 회전각 · 위/옆 보기를 따라가요 (재생 중에는 3D가 2D를 이끌어요)
             root.rotation.y = (S.yaw || 0) * DEG;

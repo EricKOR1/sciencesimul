@@ -181,7 +181,7 @@
           const TT = sm() && sm().T, amOn = !!(TT && TT.am_a > 0.5), waOn = !!(TT && TT.water > 0.5), waK = TT ? Math.max(0, Math.min(1, TT.water)) : 0;
           AMP.forEach((o, i) => { o.g.visible = amOn; o.lab.show(amOn && labs); ampBtns[i].style.display = amOn ? '' : 'none'; if (amOn) { const rd = s && s.read && s.read[o.k], tg2 = rd ? I : 0; o.v += (tg2 - o.v) * Math.min(1, dt * 6); o.dial.userData.set(o.v); o.lab.set(o.tag + ' ' + o.cap + ' <b>' + (rd ? I.toFixed(2) + ' A' : '?') + '</b>'); } });
           const sc = 1 - 0.38 * waK; gCir.scale.setScalar(sc); gCir.position.set(-4.2 * waK, 0, 0);
-          gW.visible = waK > 0.02; gW.scale.setScalar(0.62 + 0.0 * waK); gW.position.set(3.7 * waK + 1.2 * (1 - waK), -0.4, 0);
+          gW.visible = waK > 0.02; gW.scale.setScalar(0.85); gW.position.set(3.4 * waK + 1.2 * (1 - waK), -0.4, 0);
           wLab.forEach((l) => l.show(gW.visible && labs)); hLab.show(gW.visible && labs);
           if (gW.visible) {
             const Vd = s ? (s.Vd != null ? s.Vd : V) : V;

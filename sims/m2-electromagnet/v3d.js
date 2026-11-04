@@ -13,7 +13,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: 12.5 * KD, theta: 0.5, phi: 1.2, min: 5, max: 30 },
     autoRotate: 0,
-    levels: [1, 2],                  // 1단계(나침반 끌기) · 4단계(전동기 모형)는 2D 화면에서 해요
+    levels: [1, 2, 3],               // 1단계(나침반 끌기)만 2D 화면에서 해요 (전동기 모형은 3D로 보여요)
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3, Yax = new V3(0, 1, 0);

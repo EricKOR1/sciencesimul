@@ -251,15 +251,69 @@
       }
       plFilm = grab('film', () => controls.player({ duration: 12, loop: true, autoplay: false, label: '막이 흘러내려요', phases: [[0, '새로 만든 막'], [0.3, '아래로 흘러 두꺼워져요'], [0.7, '줄무늬 간격이 넓어져요']], onFrame(p) { if (!built) return; st.tauP = p; st.tauUser = true; st.fk = ''; } }));
       const plPh = grab('phase', () => controls.player({ duration: 6, loop: true, autoplay: true, label: '펄스 보내기', phases: [[0, '입사 펄스'], [0.4, '끝에서 반사'], [0.8, '되돌아와요']], onFrame(p) { phP = p; } }));
+      /* ================= ⑤ 두께가 곳곳에서 다른 얇은 막들 (ex) ================= */
+      const gEx = new THREE.Group(); root.add(gEx); gEx.visible = false;
+      const gnd = box(12.5, 0.2, 9, 0x1f2937, { roughness: 0.8 }); gnd.position.set(0, -0.15, 0); gEx.add(gnd);
+      /* 두께 t(nm) → 반사색 (R·G·B 대표 파장 650 · 550 · 450 nm, 간섭 세기 sin²(2π n t / λ) — 앞면만 위상 π인 막) */
+      const rfl = (t, n, ph) => { const f = (lam) => Math.pow(Math.sin(2 * Math.PI * n * t / lam + ph), 2); return [f(650), f(550), f(450)]; };
+      const mkVC = (geo) => { const c = new Float32Array(geo.attributes.position.count * 3); geo.setAttribute('color', new THREE.BufferAttribute(c, 3)); return c; };
+      // 기름막이 뜬 물웅덩이
+      const pgeo = new THREE.CircleGeometry(2.3, 64, 0, Math.PI * 2); pgeo.rotateX(-Math.PI / 2); const pcol = mkVC(pgeo), ppos = pgeo.attributes.position;
+      const puddle = new THREE.Mesh(pgeo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.15, metalness: 0.1 })); puddle.position.set(-3.6, 0.0, -2.4); gEx.add(puddle);
+      const pBase = []; for (let i = 0; i < ppos.count; i++) pBase.push([ppos.getX(i), ppos.getZ(i)]);
+      const pRing = new THREE.Mesh(new THREE.TorusGeometry(2.33, 0.06, 8, 64), mat(0x475569)); pRing.rotation.x = Math.PI / 2; pRing.position.copy(puddle.position); gEx.add(pRing);
+      // 비눗방울
+      const bgeo = new THREE.SphereGeometry(1.5, 48, 32), bcol = mkVC(bgeo), bpos = bgeo.attributes.position;
+      const bubble = new THREE.Mesh(bgeo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.05, metalness: 0.0, transparent: true, opacity: 0.72 })); bubble.position.set(3.7, 1.7, -2.0); gEx.add(bubble);
+      const bBase = []; for (let i = 0; i < bpos.count; i++) bBase.push([bpos.getX(i), bpos.getY(i), bpos.getZ(i)]);
+      // 다이크로익 필터: 얇은 막을 여러 겹 쌓아 특정한 색만 반사
+      const dich = new THREE.Group(); dich.position.set(-3.6, 0.9, 2.4); gEx.add(dich);
+      for (let i = 0; i < 9; i++) { const pl = box(0.06, 1.7, 1.7, i % 2 ? 0x9fd8ff : 0xe8eefc, { transparent: true, opacity: 0.55, roughness: 0.1, metalness: 0.2 }); pl.position.set((i - 4) * 0.13, 0, 0); dich.add(pl); }
+      dich.rotation.y = Math.PI / 4;
+      const bIn = mkSeg(0xffffff, 0.06, { basic: true, mo: { transparent: true, opacity: 0.9 } }), bRef = mkSeg(0x4dd0e1, 0.06, { basic: true, mo: { transparent: true, opacity: 0.9 } }), bTr = mkSeg(0xff9a5a, 0.06, { basic: true, mo: { transparent: true, opacity: 0.9 } }); gEx.add(bIn, bRef, bTr);
+      setSeg(bIn, new V3(-6.0, 0.9, 2.4 + 0.0), new V3(-3.6, 0.9, 2.4)); setSeg(bRef, new V3(-3.6, 0.9, 2.4), new V3(-3.6, 0.9, 4.4)); setSeg(bTr, new V3(-3.6, 0.9, 2.4), new V3(-1.2, 0.9, 2.4));
+      // 간섭계: 거울이 λ/2 움직일 때마다 무늬가 한 줄씩
+      const IX = 3.0, IZ = 2.2, ifBS = box(0.7, 0.7, 0.12, 0x93c5fd, { transparent: true, opacity: 0.7, roughness: 0.1 }); ifBS.position.set(IX, 0.5, IZ); ifBS.rotation.y = Math.PI / 4; gEx.add(ifBS);
+      const ifLas = box(0.9, 0.4, 0.4, 0xef4444); ifLas.position.set(IX - 2.0, 0.5, IZ); gEx.add(ifLas);
+      const ifMf = box(0.1, 0.7, 0.7, 0xe2e8f0, { metalness: 0.9, roughness: 0.1 }); ifMf.position.set(IX, 0.5, IZ - 1.7); ifMf.rotation.y = Math.PI / 2; gEx.add(ifMf);
+      const ifMm = box(0.1, 0.7, 0.7, 0xe2e8f0, { metalness: 0.9, roughness: 0.1 }); gEx.add(ifMm);
+      const ifSl = box(1.6, 0.06, 0.25, 0x475569); ifSl.position.set(IX + 1.7, 0.2, IZ); gEx.add(ifSl);
+      const ifB = [0, 1, 2, 3].map(() => { const m = mkSeg(0xff5a5a, 0.035, { basic: true, mo: { transparent: true, opacity: 0.9 } }); gEx.add(m); return m; });
+      const fcv = document.createElement('canvas'); fcv.width = 128; fcv.height = 64; const fcx = fcv.getContext('2d'), ftex = new THREE.CanvasTexture(fcv);
+      const ifScr = new THREE.Mesh(new THREE.PlaneGeometry(1.8, 0.9), new THREE.MeshBasicMaterial({ map: ftex, side: THREE.DoubleSide })); ifScr.position.set(IX, 0.5, IZ + 1.9); gEx.add(ifScr);
+      L('ex', '🌈 기름막이 뜬 물웅덩이', puddle, { color: '#26324a', size: 12, offset: [0, 0.2, 2.6] }); L('ex', '🫧 비눗방울', bubble, { color: '#26324a', size: 12, offset: [0, -1.9, 0] });
+      L('ex', '🎛️ 다이크로익 필터', dich, { color: '#26324a', size: 12, offset: [0, 1.4, 0] }); L('ex', '흰빛', anchor(gEx, -5.4, 1.2, 2.4), { color: '#475569', size: 11 }); L('ex', '반사: 특정한 색', anchor(gEx, -3.6, 1.3, 4.6), { color: '#0e7490', size: 11 }); L('ex', '통과: 나머지 색', anchor(gEx, -1.4, 1.3, 2.4), { color: '#c2410c', size: 11 });
+      L('ex', '📏 간섭계', ifBS, { color: '#26324a', size: 12, offset: [0, 1.0, 0] }); const lIf = L('ex', '', ifScr, { color: '#26324a', size: 11, offset: [0, -0.9, 0] }), lMi = L('ex', '움직이는 거울', ifMm, { color: '#475569', size: 11, offset: [0, 0.8, 0] });
+      const exP = { on: false, p: 0 }; let exFilmT = 0;
+      const lambdaN = 633;
+      function updEx(S, sim, dt, t) {
+        const tt = exP.on ? exP.p * 10 : t, mix = 0.5 + 0.5 * Math.sin(tt * 0.9);
+        // 물웅덩이: 가운데가 두꺼운 기름막 (소용돌이 모양으로 두께가 달라요) n ≈ 1.45
+        for (let i = 0; i < ppos.count; i++) { const x = pBase[i][0], z = pBase[i][1], r = Math.hypot(x, z) / 2.3, a = Math.atan2(z, x), th = 250 + 700 * (1 - r) * (0.6 + 0.4 * Math.sin(a * 3 + r * 5 + mix * 2.2)) + 120 * Math.sin(r * 9 + mix * 3); const c = rfl(th, 1.45, Math.PI / 2); const k = 0.1 + 0.9 * (1 - 0.7 * r * r); pcol[i * 3] = c[0] * k; pcol[i * 3 + 1] = c[1] * k; pcol[i * 3 + 2] = c[2] * k; }
+        pgeo.attributes.color.needsUpdate = true;
+        // 비눗방울: 위쪽은 얇고 아래로 갈수록 두꺼워요 n ≈ 1.33
+        for (let i = 0; i < bpos.count; i++) { const [x, y, z] = bBase[i], u = (1.5 - y) / 3.0, a = Math.atan2(z, x), th = 40 + 700 * u * (0.7 + 0.3 * Math.sin(a * 2 + y * 4 + mix * 2.4)) ; const c = rfl(th, 1.33, 0); const lum = 0.15 + 0.85 * (0.5 + 0.5 * Math.cos(a - 0.6)) * 0.4 + 0.45; bcol[i * 3] = c[0] * lum; bcol[i * 3 + 1] = c[1] * lum; bcol[i * 3 + 2] = c[2] * lum; }
+        bgeo.attributes.color.needsUpdate = true; bubble.position.y = 1.7 + 0.08 * Math.sin(t * 1.3);
+        // 간섭계: 거울이 λ/2만큼 움직이면 무늬가 한 줄 이동 (2D에 없는 확대 모형: 거울 이동량은 크게 그려요)
+        const d = (exP.on ? exP.p : ((t * 0.12) % 1)) * 1.5, mm = IX + 1.7 + d * 0.9; ifMm.position.set(mm, 0.5, IZ);
+        const BS = new V3(IX, 0.5, IZ);
+        setSeg(ifB[0], new V3(IX - 1.55, 0.5, IZ), BS); setSeg(ifB[1], BS, new V3(IX, 0.5, IZ - 1.65)); setSeg(ifB[2], BS, new V3(mm - 0.05, 0.5, IZ)); setSeg(ifB[3], BS, new V3(IX, 0.5, IZ + 1.85));
+        const lines = d / 0.5, ph = lines;   // 거울이 0.5(= λ/2 모형) 움직일 때마다 한 줄
+        for (let x = 0; x < 128; x++) { const I = Math.pow(Math.cos(Math.PI * (x / 128 * 6 + ph)), 2), v = Math.round(255 * I); fcx.fillStyle = 'rgb(' + v + ',' + Math.round(v * 0.25) + ',' + Math.round(v * 0.2) + ')'; fcx.fillRect(x, 0, 1, 64); } ftex.needsUpdate = true;
+        lIf.set('무늬가 ' + lines.toFixed(1) + '줄 이동'); lMi.show(true);
+        info('<b>🌈 두께가 곳곳에서 다른 얇은 막</b>: 기름막·비눗방울은 위치마다 두께가 달라서 보강되는 색이 달라 <b>무지개 무늬</b>가 보여요.<br><b>🎛️ 다이크로익 필터</b>: 여러 겹의 얇은 막이 특정한 색만 반사해요. <b>📏 간섭계</b>: 거울이 파장의 절반(λ/2)만큼 움직일 때마다 무늬가 한 줄씩 이동해요 (확대한 모형이에요).');
+      }
+      const plEx = grab('ex', () => controls.player({ duration: 10, loop: true, autoplay: false, label: '무늬가 움직여요', phases: [[0, '거울이 제자리'], [0.4, '무늬가 이동해요']], onFrame(p) { if (!built) return; exP.on = true; exP.p = p; } }));
       built = true;
       let sig2d = '';
       return {
         update(dt, t) {
           const sim = window.__sim; if (!sim) return; const S = sim.S, m = S.mode;
-          const sc = m === 'film' ? 'film' : m === 'phase' ? 'phase' : 'wave';
-          if (sc !== st.sc) { st.sc = sc; wKey = ''; st.fk = ''; gFilm.visible = sc === 'film'; gPh.visible = sc === 'phase'; gW.visible = sc === 'wave'; Object.keys(labs).forEach((k) => labs[k].forEach((l) => l.show(k === sc))); const o = ctx.orbit; o.theta = 0.35; o.phi = 1.3; o.tx = sc === 'film' ? 2.2 : sc === 'wave' ? 2.2 : 0; o.ty = 0; o.dist = (sc === 'wave' ? 19 : sc === 'phase' ? 13 : 15.5) * KD; showCtl(sc === 'film' ? 'film' : '__none'); }
+          const sc = m === 'film' ? 'film' : m === 'phase' ? 'phase' : m === 'app' && S.ap.sub === 'ex' ? 'ex' : 'wave';
+          if (sc !== st.sc) { st.sc = sc; wKey = ''; st.fk = ''; gFilm.visible = sc === 'film'; gPh.visible = sc === 'phase'; gW.visible = sc === 'wave'; gEx.visible = sc === 'ex'; if (sc !== 'ex') plEx.pause(); Object.keys(labs).forEach((k) => labs[k].forEach((l) => l.show(k === sc))); const o = ctx.orbit; o.theta = 0.35; o.phi = 1.3; o.tx = sc === 'film' ? 2.2 : sc === 'wave' ? 2.2 : 0; o.ty = 0; o.dist = (sc === 'wave' ? 19 : sc === 'phase' ? 13 : sc === 'ex' ? 15 : 15.5) * KD * (sc === 'ex' && PHN ? 1.25 : 1); if (sc === 'ex') { o.phi = 0.85; o.theta = 0.1; o.tx = 0; o.ty = 0.3; } showCtl(sc === 'film' ? 'film' : sc === 'ex' ? 'ex' : '__none'); }
           if (sc === 'film') { const k2 = [S.fl.tau, S.fl.light, S.fl.probe, S.fl.play].join(); if (k2 !== sig2d) { sig2d = k2; if (st.tauUser && S.fl.play) { st.tauUser = false; plFilm.pause(); } st.fk = ''; } filmFrame(sim, S); }
           else if (sc === 'wave') updWave(S, sim);
+          else if (sc === 'ex') updEx(S, sim, dt, t);
           else phaseFrame(sim, S);
         },
         sync() { st.fk = ''; wKey = ''; },

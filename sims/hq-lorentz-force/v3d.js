@@ -19,9 +19,13 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: 11 * KD, theta: 0.7, phi: 0.9, min: 4, max: 40, target: [0, 1.5, 0] },
     autoRotate: 0,
-    levels: [1, 2],
+    levels: [1, 2, 3],
     build(ctx) {
-      const { THREE, root, label, info, controls } = ctx;
+      const { THREE, controls } = ctx;
+      const root = new THREE.Group(); ctx.root.add(root);
+      const K = { cur: 'orb', labs: [] };
+      const label = (text, obj, o, sc) => { const L = ctx.label(text, obj, o), sh = L.show; L._own = true; L._sc = sc || 'orb'; L._ap = () => sh(L._own && K.cur === L._sc); L.show = (v) => { L._own = v; L._ap(); }; K.labs.push(L); L._ap(); return L; };
+      const info = (hh) => ctx.info(hh);
       const V3 = THREE.Vector3, Yax = new V3(0, 1, 0);
       const lessonS = () => (window.__sim && window.__sim.S) || null;
       const st = { sp: 'e', v: 2.0, B: 1.0, th: 90, vec: true, qn: 1, cmp: false, v2: 0 };
@@ -126,6 +130,72 @@
         ball2.visible = true; lab2.show(true); lab2.set('비교 입자 v = ' + g3(st.v2) + '×10⁶ m/s · r = ' + g3(P2.r * 100) + ' cm');
         const ru1 = P.r * scale; ctx.orbit.dist = Math.max(ctx.orbit.dist, (ru + ru1) * 4 * KD); ctx.orbit.tz = s.sgn * Math.max(ru, ru1);
       }
+      /* =====================================================================
+         새 장면: 거품 상자의 궤적 읽기 (trk) — 2D의 TRK 궤적을 그대로 3D 거품 상자에 그려요
+         ===================================================================== */
+      const gTr = new THREE.Group(); ctx.root.add(gTr); gTr.visible = false;
+      const TU = 0.03, TX0 = 240, TY0 = 300;
+      const chamber = new THREE.Mesh(new THREE.BoxGeometry(14.5, 1.2, 11), new THREE.MeshStandardMaterial({ color: 0x9fc4ff, transparent: true, opacity: 0.12, roughness: 0.2, depthWrite: false })); chamber.position.set(0, 0, 0.8); gTr.add(chamber);
+      const chEdge = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(14.5, 1.2, 11)), new THREE.LineBasicMaterial({ color: 0x8aa0c8 })); chEdge.position.copy(chamber.position); gTr.add(chEdge);
+      for (let i = -3; i <= 3; i++) for (let j = -2; j <= 2; j++) { const a = mkArrow(0x9b7bff, 0.02); setArrow(a, new V3(i * 2.2, -0.6, j * 2.2 + 0.8), new V3(i * 2.2, 1.6, j * 2.2 + 0.8)); a.children.forEach((c) => { c.material = mat(0x9b7bff, { transparent: true, opacity: 0.4 }); }); gTr.add(a); }
+      const trLabs = []; const labT = (t, o, opt) => { const l = label(t, o, opt, 'trk'); trLabs.push(l); return l; };
+      labT('자기장 B ↑ (위에서 보면 ⊙ 화면 밖으로)', [-5, 1.7, -5.2], { color: '#6d28d9', size: 12.5 });
+      const trk = window.__sim.TRK, gridLines = [];
+      const trM = {}; // fig → [{tube, ghost, head, pts, mark, lab}]
+      function mkFig(f) {
+        if (trM[f]) return trM[f];
+        const list = (trk[f] || []).map((t) => {
+          const n = t.pts.length / 2, pts = []; for (let i = 0; i < n; i++) pts.push(new V3((t.pts[i * 2] - TX0) * TU, 0.05, (t.pts[i * 2 + 1] - TY0) * TU + 4.4));
+          const col = new THREE.Color(t.col).getHex(), cv = new THREE.CatmullRomCurve3(pts);
+          const tube = new THREE.Mesh(new THREE.TubeGeometry(cv, Math.min(300, n), 0.07, 8, false), basic(col)); tube.frustumCulled = false; gTr.add(tube);
+          const head = new THREE.Mesh(new THREE.SphereGeometry(0.2, 14, 10), basic(0xfbbf24)); gTr.add(head);
+          const mk = new THREE.Mesh(new THREE.SphereGeometry(0.34, 20, 14), mat(0x94a3b8, { roughness: 0.4 })); gTr.add(mk);
+          const lab = label('?', mk, { color: 'rgba(8,12,24,.0)', size: 20 }, 'trk'); lab.el.style.background = 'transparent'; lab.el.style.border = '0'; lab.el.style.boxShadow = 'none'; lab.el.style.color = '#fff'; lab.el.style.fontWeight = '900'; trLabs.push(lab);
+          const nm = label(f === 'a' ? '트랙 ' + t.id : '', mk, { color: 'rgba(8,12,24,.78)', size: 12, offset: [0, 0.75, 0] }, 'trk'); trLabs.push(nm);
+          return { t, n, tube, head, mk, lab, nm, pts };
+        });
+        trM[f] = list; return list;
+      }
+      ['a', 'b'].forEach(mkFig);
+      // 그림 다: 눈금 격자 + 양성자 한 개의 궤적 (r = 5.0 cm, 격자 한 칸 = 1.0 cm)
+      const fc = new THREE.Group(); gTr.add(fc);
+      for (let i = -6; i <= 6; i++) { [[new V3(i * 0.6, 0.02, -3.6 + 4.4 - 0.6), new V3(i * 0.6, 0.02, 3.6 + 4.4 - 3.6)]].forEach(() => { }); const l1 = h2Seg(new V3(i * 0.6, 0.02, -2.9), new V3(i * 0.6, 0.02, 3.9)); fc.add(l1); const l2 = h2Seg(new V3(-3.6, 0.02, 0.5 + i * 0.6), new V3(3.6, 0.02, 0.5 + i * 0.6)); fc.add(l2); }
+      function h2Seg(a, b) { const m = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 1, 4), basic(0x64748b, { transparent: true, opacity: 0.35 })); const d = new V3().subVectors(b, a); m.scale.y = d.length(); m.position.copy(a).addScaledVector(d, 0.5); m.quaternion.setFromUnitVectors(Yax, d.normalize()); return m; }
+      const CR = 100 * TU, cC = new V3(0, 0.05, 0.5), aS = -Math.PI * 0.9, aSpan = Math.PI * 1.55;
+      const cArc = []; for (let i = 0; i <= 120; i++) { const a = aS + aSpan * i / 120; cArc.push(new V3(cC.x + CR * Math.cos(a), 0.05, cC.z + CR * Math.sin(a))); }
+      const cTube = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(cArc), 120, 0.07, 8, false), basic(0xc2410c)); cTube.frustumCulled = false; fc.add(cTube);
+      const cRad = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1, 6), basic(0x16a34a)); { const d = new V3(Math.cos(0.5) * CR, 0, Math.sin(0.5) * CR); cRad.scale.y = d.length(); cRad.position.copy(cC).addScaledVector(d, 0.5); cRad.quaternion.setFromUnitVectors(Yax, d.clone().normalize()); } fc.add(cRad);
+      const cCen = sphereT(0.1, 0x475569); cCen.position.copy(cC); fc.add(cCen);
+      const cP = sphereT(0.26, 0xe2464b, { emissive: 0x661b1b }); fc.add(cP); const cPl = label('양성자 +', cP, { color: 'rgba(194,65,12,.92)', size: 12, offset: [0, 0.6, 0] }, 'trk'); trLabs.push(cPl);
+      const cRl = labT('r = 5.0 cm', [0.9, 0.4, 1.0], { color: '#16a34a', size: 13 }); const cGl = labT('격자 한 칸 = 1.0 cm · 양성자 · B = 0.20 T', [0, 0.1, 4.6], { color: '#334155', size: 12 });
+      function sphereT(r, c, o) { return new THREE.Mesh(new THREE.SphereGeometry(r, 18, 14), mat(c, o)); }
+      const orig = sphereT(0.18, 0x475569); orig.position.set(0, 0.05, 4.4); gTr.add(orig); const oLab = labT('', [0, 0.1, 4.4], { color: '#475569', size: 12 });
+      const trP = { on: false, tt: 0 }; let trSig = '';
+      function updTrk(S, dt, t) {
+        const k = S.k, f = k.fig; const sg = f + '|' + k.tt.toFixed(0); void sg;
+        Object.keys(trM).forEach((ff) => trM[ff].forEach((q) => { const on = ff === f; q.tube.visible = q.head.visible = q.mk.visible = on; q.lab.show(on); q.nm.show(on); }));
+        fc.visible = f === 'c'; cPl.show(f === 'c'); cRl.show(f === 'c'); cGl.show(f === 'c');
+        const tt = trP.on ? trP.tt : k.tt, ab = f === 'a' || f === 'b';
+        orig.visible = ab; oLab.show(ab); oLab.set(f === 'a' ? '충돌 위치' : '쌍 생성 위치'); oLab.obj = [0, 0.1, 4.4 + 0.9];
+        if (ab) {
+          const cyc = tt % 7.5, prog = Math.max(0, Math.min(1, cyc / 2.6)), fade = cyc > 6.3 ? Math.max(0, 1 - (cyc - 6.3) / 1.2) : 1;
+          trM[f].forEach((q) => {
+            const m = Math.max(2, Math.floor(q.n * prog)); q.tube.geometry.setDrawRange(0, Math.max(6, Math.floor(m / q.n * (q.tube.geometry.index ? q.tube.geometry.index.count : 0) / 1))); q.tube.material.opacity = 1; q.tube.material.transparent = true; q.tube.material.opacity = fade;
+            q.head.position.copy(q.pts[m - 1]); q.head.visible = prog < 1;
+            const i0 = Math.floor(q.n * 0.62); q.mk.position.copy(q.pts[i0]); q.mk.position.y = 0.25;
+            const g = k.guess[f][q.t.id], ok = g != null && g === q.t.sign; q.mk.material.color.setHex(g == null ? 0x94a3b8 : ok ? 0x16a34a : 0xf26b3a); q.lab.set(g == null ? '?' : g > 0 ? '+' : '−');
+          });
+        } else {
+          const cyc = tt % 6, prog = Math.max(0, Math.min(1, cyc / 2.4)), a = aS + aSpan * prog;
+          cP.position.set(cC.x + CR * Math.cos(a), 0.05, cC.z + CR * Math.sin(a)); cTube.geometry.setDrawRange(0, Math.max(6, Math.floor(prog * cTube.geometry.index.count)));
+        }
+        info(f === 'a' ? '<b>거품 상자 (위에서 본 모습)</b>: 모든 입자는 전하의 크기가 같아요. 곡선이 <b>휘는 방향</b>으로 부호를 알 수 있어요 (B ⊙에서 <b>+는 시계 방향</b>, −는 반시계). 반지름이 클수록 운동량 p = |q|Br이 커요.<br>트랙의 동그라미로 부호를 정하는 일은 2D에서 해요.'
+          : f === 'b' ? '<b>쌍 생성</b>: 한 곳에서 생긴 한 쌍은 <b>반대로 휘어요</b>. 나선으로 안쪽으로 감기면 에너지(속력)를 잃고 있어요. (부호 정하기는 2D에서 해요.)' : '<b>양성자 한 개의 궤적</b>: 격자 한 칸 = 1.0 cm이면 반지름 r = 5.0 cm. 운동량 p = qBr, 속력 v = p/m을 2D에서 계산해 보세요.');
+      }
+      const plTr = controls.player({ duration: 8, loop: true, autoplay: false, label: '궤적 다시 보기', phases: [[0, '입자가 지나가요'], [0.35, '궤적이 남아요'], [0.8, '사라져요']], onFrame(p) { trP.on = true; trP.tt = p * 7.5; } });
+      const trRow = document.querySelectorAll('.v3-player'); const trRowEl = trRow[trRow.length - 1]; trRowEl.style.display = 'none'; const vecBtn = vecB;
+      function setSc(k) { if (k === K.cur) return; K.cur = k; root.visible = k === 'orb'; gTr.visible = k === 'trk'; K.labs.forEach((L) => L._ap()); trRowEl.style.display = k === 'trk' ? '' : 'none'; vecBtn.style.display = k === 'trk' ? 'none' : ''; if (k !== 'trk') { plTr.pause(); lastSig = ''; } else { const o = ctx.orbit; o.theta = 0.0; o.phi = 0.62; o.dist = (PHN2() ? 21 : 13.5); o.tx = 0; o.ty = 0; o.tz = 1.0; } }
+      function PHN2() { return !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches); }
       /* ---------- 2D 실험의 값을 그대로 따라가요 ---------- */
       let lastSig = '', infoNote = '';
       function readLesson() {
@@ -142,7 +212,8 @@
       }
       const tmpV = new V3(), tmpF = new V3();
       return {
-        update(dt) {
+        update(dt, t0) {
+          { const S = lessonS(), k = S && S.mode === 'trk' ? 'trk' : 'orb'; if (k !== K.cur) setSc(k); if (k === 'trk') { const kk = S.k.fig; if (kk !== trSig) { trSig = kk; trP.on = false; plTr.pause(); } updTrk(S, dt, t0); return; } }
           readLesson();
           tt += dt;
           const ru = P.r * scale, pu = P.pitch * scale, period = nTurns * TAU / wv;

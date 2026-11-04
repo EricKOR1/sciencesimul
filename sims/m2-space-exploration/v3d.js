@@ -12,7 +12,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHN ? 17 : 13, theta: 0.5, phi: 1.2, min: 4, max: 40 },
     autoRotate: 0.05,
-    levels: [],                      // 1~4단계 미션(발사 · 연표 · 짝짓기 · 계획서)은 2D 화면에서 해요
+    levels: [],                      // 발사 · 연표 · 짝짓기 · 계획서 미션은 2D 화면에서 해요 (망원경 비교 장면은 3D로 볼 수 있어요)
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
       const V3 = THREE.Vector3;
@@ -79,13 +79,39 @@
       const lS = [label('태양', sun, { offset: [0, 1.5, 0] }), label('보이저 1호', pv1, { offset: [0, 0.5, 0], color: 'rgba(40,130,160,.95)' }), label('보이저 2호', pv2, { offset: [0, 0.5, 0], color: 'rgba(110,80,200,.95)' }), label('화성 탐사선', pm, { offset: [0, 0.5, 0], color: 'rgba(190,90,50,.95)' })];
       solar.visible = false;
 
+      /* ================= 망원경 비교: 지상 망원경 vs 우주 망원경 (2D '지상 vs 우주 망원경'과 같은 장면) ================= */
+      const scope = new THREE.Group(); scope.visible = false; root.add(scope);
+      { const eg = new THREE.Mesh(new THREE.SphereGeometry(8, 64, 20, 0, 6.283, 0, 0.9), mat(0x2f6fb8, { roughness: 0.8 })); eg.position.y = -8; scope.add(eg);
+        const land = new THREE.Mesh(new THREE.SphereGeometry(8.02, 64, 12, 1.2, 1.4, 0, 0.5), mat(0x4aa063, { roughness: 0.9 })); land.position.y = -8; scope.add(land);
+        const at = new THREE.Mesh(new THREE.SphereGeometry(9.8, 64, 20, 0, 6.283, 0, 0.8), new THREE.MeshBasicMaterial({ color: 0x6fb4ff, transparent: true, opacity: 0.2, side: THREE.DoubleSide, depthWrite: false })); at.position.y = -8; scope.add(at); }
+      const scStar = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 12), new THREE.MeshBasicMaterial({ color: 0xfff2c0 })); scStar.position.set(0, 7.2, 0); scope.add(scStar);
+      const scGal = (() => { const c = document.createElement('canvas'); c.width = c.height = 128; const make = (blur) => { const g = c.getContext('2d'); g.clearRect(0, 0, 128, 128); if (blur) g.filter = 'blur(6px)'; g.fillStyle = '#0b1230'; g.fillRect(0, 0, 128, 128);
+        g.fillStyle = 'rgba(255,230,170,.95)'; g.beginPath(); g.ellipse(64, 64, 8, 8, 0, 0, 7); g.fill(); for (let k = 0; k < 2; k++) for (let i = 0; i < 70; i++) { const a = i / 70 * 4 + k * Math.PI, r = 6 + i * 0.7; g.fillStyle = 'rgba(180,200,255,' + (0.9 - i / 90) + ')'; g.beginPath(); g.arc(64 + Math.cos(a) * r, 64 + Math.sin(a) * r * 0.55, 2.2, 0, 7); g.fill(); } g.filter = 'none'; const t = new THREE.CanvasTexture(c.cloneNode ? (() => { const c2 = document.createElement('canvas'); c2.width = c2.height = 128; c2.getContext('2d').drawImage(c, 0, 0); return c2; })() : c); if (THREE.sRGBEncoding) t.encoding = THREE.sRGBEncoding; return t; }; return { blur: make(true), sharp: make(false) }; })();
+      const imgG = new THREE.Mesh(new THREE.PlaneGeometry(1.7, 1.7), new THREE.MeshBasicMaterial({ map: scGal.blur })); imgG.position.set(-3.3, 1.7, 0.2); scope.add(imgG);
+      const imgS = new THREE.Mesh(new THREE.PlaneGeometry(1.7, 1.7), new THREE.MeshBasicMaterial({ map: scGal.sharp })); imgS.position.set(3.3, 4.6, 0.2); scope.add(imgS);
+      // 지상 망원경 (삼각대 + 관)
+      const gTel = new THREE.Group(); gTel.position.set(-3.3, -0.05, 0); scope.add(gTel);
+      { const tb = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.2, 1.1, 20), mat(0xe8edf5, { metalness: 0.4, roughness: 0.4 })); tb.position.y = 0.75; tb.rotation.z = 0.12; gTel.add(tb);
+        [-0.35, 0.35].forEach((x) => { const lg = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.7, 6), mat(0x64748b)); lg.position.set(x, 0.3, 0); lg.rotation.z = x * 0.8; gTel.add(lg); }); }
+      // 우주 망원경 (대기권 밖 궤도)
+      const sTel = new THREE.Group(); sTel.position.set(3.3, 3.2, 0); scope.add(sTel);
+      { const tb = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.26, 1.2, 24), mat(0xcbd2dc, { metalness: 0.8, roughness: 0.3 })); sTel.add(tb);
+        [-0.9, 0.9].forEach((x) => { const sp = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.04, 0.5), mat(0x2f4f9f, { metalness: 0.5, roughness: 0.4, emissive: 0x112266, emissiveIntensity: 0.4 })); sp.position.x = x; sTel.add(sp); }); }
+      // 별빛: 지상으로 오는 빛은 대기에서 흔들려요 (구불구불, 약해져요) / 우주로 오는 빛은 곧게 와요
+      const rayMat = (c, o) => new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: o });
+      const wav = []; for (let i = 0; i < 4; i++) { const pts = []; const off = (i - 1.5) * 0.16; for (let k = 0; k <= 40; k++) { const u = k / 40, y = 7.1 - u * 7.1, inAtm = Math.max(0, Math.min(1, (2.2 - y) / 2.0)); pts.push(new V3(-3.3 * u + off * u + Math.sin(k * 0.95 + i * 1.7) * 0.2 * inAtm, y, 0)); }
+        const rr = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 120, 0.03, 6, false), rayMat(0xffe08a, 0.65)); scope.add(rr); wav.push(rr); }
+      const strt = []; for (let i = 0; i < 4; i++) { const x1 = 3.3 + (i - 1.5) * 0.12; const rr = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new V3(0.0, 7.1, 0), new V3(x1 * 0.5, 5.4, 0), new V3(x1, 3.7, 0)]), 30, 0.03, 6, false), rayMat(0xffe08a, 0.9)); scope.add(rr); strt.push(rr); }
+      const scLab = [label('별(먼 천체)', scStar, { size: 12, offset: [0, 0.5, 0] }), label('대기 (빛이 흔들리고 흐려져요)', [-5.6, 0.9, 0], { size: 11.5, color: 'rgba(40,100,190,.92)' }), label('지상 망원경', gTel, { size: 12, offset: [0, 1.5, 0] }), label('우주 망원경 (대기 밖)', sTel, { size: 12, offset: [0, -0.8, 0] }),
+        label('흐릿한 상', imgG, { size: 11.5, offset: [0, 1.15, 0], color: 'rgba(120,60,20,.92)' }), label('선명한 상', imgS, { size: 11.5, offset: [0, 1.15, 0], color: 'rgba(15,100,70,.92)' })];
+      scope.children.forEach(() => {});
       let mode = 'near', labs = true, showDeb = true, PH = 0, pl = null, internal = false;
       const dm = new THREE.Object3D(), tmp = new V3();
       function apply() {
-        near.visible = mode === 'near'; solar.visible = mode === 'sol';
+        near.visible = mode === 'near'; solar.visible = mode === 'sol'; scope.visible = mode === 'scope'; scLab.forEach((l) => l.show(labs && mode === 'scope'));
         lNear.forEach((l) => l.show(labs && mode === 'near')); lDeb.show(labs && showDeb && mode === 'near'); lS.forEach((l) => l.show(labs && mode === 'sol')); PL.forEach((p) => p.l.show(labs && mode === 'sol'));
         deb.visible = showDeb;
-        if (mode === 'near') { orbit.dist = PHN ? 17 : 12; orbit.phi = 1.2; info('<b>지구 주변</b>: 인공위성·우주 정거장·우주 망원경이 지구를 돌아요.<br>수명이 다한 위성의 조각 같은 <b>우주 쓰레기</b>도 많이 떠돌아서 위험해요.'); }
+        if (mode === 'scope') { orbit.dist = PHN ? 22 : 15; orbit.phi = 1.4; orbit.theta = 0.1; orbit.tx = 0; orbit.ty = 3; orbit.tz = 0; info('<b>지상 망원경 vs 우주 망원경</b><br>별빛이 <b>대기</b>를 지나면서 흔들리고 흐려져서, 지상 망원경으로 본 상은 <b>흐릿해요</b>. 대기권 <b>밖</b>의 우주 망원경은 대기의 방해가 없어 <b>선명한 상</b>을 얻어요.<br>2D 화면에서 두 망원경을 눌러 비교해 보세요.'); } else if (mode === 'near') { orbit.ty = 0; orbit.dist = PHN ? 17 : 12; orbit.phi = 1.2; info('<b>지구 주변</b>: 인공위성·우주 정거장·우주 망원경이 지구를 돌아요.<br>수명이 다한 위성의 조각 같은 <b>우주 쓰레기</b>도 많이 떠돌아서 위험해요.'); }
         else { orbit.dist = PHN ? 36 : 27; orbit.phi = 1.1; info('<b>태양계 탐사</b>: 탐사선은 행성 곁을 지나가며 사진과 자료를 보내요.<br>보이저 1·2호는 목성과 토성을 지나 태양계 밖으로 나아가고 있어요.'); }
       }
       const sg = controls.segment('보기', [{ label: '지구 주변', value: 'near' }, { label: '태양계', value: 'sol' }], mode, (v) => { mode = v; apply(); });
@@ -98,9 +124,19 @@
       controls.button('우주 쓰레기', () => { showDeb = !showDeb; apply(); });
       controls.button('이름표', () => { labs = !labs; apply(); });
       apply();
+      let lastKey = '';
       return {
         update(dt, t) {
           PH += dt;
+          { const S0 = window.__sim && window.__sim.S, sc = S0 ? S0.scene : 'history', goal = sc === 'plan' && S0.plan ? S0.plan.goal : -1, key = sc + ':' + goal;
+            if (key !== lastKey) { lastKey = key; const want = sc === 'scope' ? 'scope' : sc === 'plan' ? (goal === 1 ? 'sol' : 'near') : (mode === 'scope' ? 'near' : mode); if (want !== mode) { mode = want; sg.set(want === 'scope' ? '' : want); apply(); } } }
+          if (mode === 'scope') {
+            const S1 = window.__sim && window.__sim.S, sv = S1 ? S1.scopeV : 'ground';
+            imgG.scale.setScalar(sv === 'ground' ? 1.25 : 0.9); imgS.scale.setScalar(sv === 'space' ? 1.25 : 0.9);
+            wav.forEach((w, i) => { w.rotation.z = Math.sin(PH * 3 + i * 1.3) * 0.004; w.material.opacity = 0.45 + 0.2 * Math.sin(PH * 5 + i); });
+            gTel.children[0].material.emissive.setHex(sv === 'ground' ? 0x223344 : 0); sTel.children[0].material.emissive.setHex(sv === 'space' ? 0x223344 : 0);
+            return;
+          }
           if (mode === 'near') {
             earth.rotation.y += dt * 0.12;
             const am = PH * 0.12; moon.position.set(Math.cos(am) * 9, 0.0, Math.sin(am) * 9);

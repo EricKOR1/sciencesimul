@@ -53,7 +53,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 값은 옆 조작판에서 바꿔요',
     camera: { dist: 19 * KD, theta: 0.15, phi: 1.3, min: 5, max: 40, target: [0, -1.5, 0] },
     autoRotate: 0,
-    levels: [0, 1, 2],
+    levels: [0, 1, 2, 3],
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
       const { V3, M, tube, mkArrow, setArrow } = tools(THREE);
@@ -68,6 +68,7 @@
         return { m, draw(o) {
           cx.fillStyle = '#05070d'; cx.fillRect(0, 0, 600, 48);
           for (let i = 0; i < 600; i++) { const nm = 400 + 300 * i / 599; if (o.cont) { const k = o.cont(nm), c = wl2rgb(nm); cx.fillStyle = 'rgb(' + Math.round(c[0] * 255 * k) + ',' + Math.round(c[1] * 255 * k) + ',' + Math.round(c[2] * 255 * k) + ')'; cx.fillRect(i, 0, 1, 48); } }
+          (o.dark || []).forEach((d) => { const x = (d.nm - 400) / 300 * 599; cx.fillStyle = 'rgba(5,7,13,' + d.d + ')'; cx.fillRect(x - 3, 0, 6, 48); });
           (o.lines || []).forEach((l) => { const c = wl2rgb(l.nm), x = (l.nm - 400) / 300 * 599, a = Math.max(0.3, l.a == null ? 1 : l.a); cx.fillStyle = 'rgba(' + Math.round(c[0] * 255) + ',' + Math.round(c[1] * 255) + ',' + Math.round(c[2] * 255) + ',' + a + ')'; cx.fillRect(x - 3, 0, 6, 48); cx.fillStyle = 'rgba(255,255,255,' + 0.5 * a + ')'; cx.fillRect(x - 1, 0, 2, 48); });
           tex.needsUpdate = true; } };
       }
@@ -197,22 +198,85 @@
       /* ================= 장면 · ▶ 재생 ================= */
       plB = controls.player({ duration: 12, loop: true, autoplay: false, label: '가시광선 선 4개', phases: [[0, '3 → 2 (656 nm)'], [0.25, '4 → 2 (486 nm)'], [0.5, '5 → 2 (434 nm)'], [0.75, '6 → 2 (410 nm)']], onFrame(p) { demoB.p = p; demoB.on = p > 0 || !!(plB && plB.playing); } });
       plB.row = ctx.renderer.domElement.parentNode.parentNode.querySelector('.v3-player');
+
+      /* ================= 🔬 한계 ①: 헬륨 비교 · ③: 흡수선 (분광기 두 줄) ================= */
+      const gHe = new THREE.Group(), gAb = new THREE.Group(); root.add(gHe, gAb); gHe.visible = gAb.visible = false;
+      const labHe = [], labAb = [];
+      const glassM = (c, op) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.1, transparent: true, opacity: op, depthWrite: false });
+      function mkRow(g, y0, kind, tint, labs, name) {
+        const ay = y0 + 1.6;
+        if (kind === 'lamp') { const m = new THREE.Mesh(new THREE.SphereGeometry(0.6, 20, 14), M(0xfff3c4, { emissive: 0xffc800, emissiveIntensity: 0.7 })); m.position.set(-9.2, ay, 0); g.add(m); }
+        else { const t = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 2.2, 16), M(new THREE.Color(tint).getHex(), { emissive: new THREE.Color(tint).getHex(), emissiveIntensity: 0.6 })); t.rotation.z = Math.PI / 2; t.position.set(-9.2, ay, 0); g.add(t); }
+        if (kind === 'lamp') { const cell = new THREE.Mesh(new THREE.CylinderGeometry(0.75, 0.75, 1.5, 24), glassM(0xbfe7ff, 0.35)); cell.rotation.z = Math.PI / 2; cell.position.set(-7.0, ay, 0); g.add(cell); labs.push(label('차가운 수소 기체', cell, { color: '#3b6fb0', size: 12 })); labs[labs.length - 1].off = [0, 1.1, 0]; }
+        [1, -1].forEach((sg) => { const b = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.7, 0.5), M(0x394258)); b.position.set(-5.3, ay + sg * 0.55, 0); g.add(b); });
+        const pr = new THREE.Mesh(new THREE.CylinderGeometry(1.0, 1.0, 1.2, 3), glassM(0x9ad0ff, 0.6)); pr.rotation.x = Math.PI / 2; pr.position.set(-3.6, ay, 0); g.add(pr);
+        const bm = new THREE.Mesh(new THREE.BoxGeometry(5.8, 0.1, 0.1), new THREE.MeshBasicMaterial({ color: kind === 'lamp' ? 0xfff3c4 : new THREE.Color(tint).getHex(), transparent: true, opacity: 0.8 })); bm.position.set(-6.3, ay, 0); g.add(bm);
+        const st = strip(g, -3, y0 - 0.1, 10, 1.1);
+        const lSrc = label(name, [-9.2, ay + 1.1, 0], { color: '#3a465c', size: 12 }); labs.push(lSrc);
+        return st;
+      }
+      const stHeA = mkRow(gHe, 4.0, 'tube', '#e879f9', labHe, '수소 준위로 예측 (모형)'), stHeB = mkRow(gHe, -0.8, 'tube', '#fde68a', labHe, '헬륨 방전관');
+      ruler(gHe, -3, -0.8, 10);
+      const dashHe = []; for (let i = 0; i < 4; i++) { const d = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 1, 6), new THREE.MeshBasicMaterial({ color: 0xff5a5f, transparent: true, opacity: 0.7 })); gHe.add(d); dashHe.push(d); }
+      const lHeBad = label('예측한 선과 실제 헬륨의 선이 어긋나요', [2, 2.1, 0], { color: '#e2464b', size: 13 }), lHeP = label('예측한 선 (위치만 예측해요 · 세기는 설명하지 못해요)', [2, 5.4, 0], { color: '#1d4ed8', size: 12 }), lHeR = label('실제로 관찰한 헬륨의 선', [2, 0.6, 0], { color: '#b45309', size: 12 });
+      labHe.push(lHeBad, lHeP, lHeR);
+      const stAbA = mkRow(gAb, 4.0, 'lamp', '#ffd9a0', labAb, '백색광 (연속)'), stAbB = mkRow(gAb, -0.8, 'tube', '#e879f9', labAb, '수소 방전관');
+      ruler(gAb, -3, -0.8, 10);
+      const dashAb = []; for (let i = 0; i < 4; i++) { const d = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 1, 6), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.55 })); gAb.add(d); dashAb.push(d); }
+      const lAbA = label('① 백색광이 수소 기체를 지난 뒤 (흡수 스펙트럼)', [2, 5.4, 0], { color: '#1d4ed8', size: 12 }), lAbB = label('② 수소 방전관이 내는 빛 (방출 스펙트럼)', [2, 0.6, 0], { color: '#b45309', size: 12 });
+      labAb.push(lAbA, lAbB);
+      // 준위 그림 (n = 2 ↔ n = 3) : 흡수 ↑ / 방출 ↓
+      const lvAb = new THREE.Group(); gAb.add(lvAb); lvAb.position.set(10.2, 4.0, 0);
+      [0, -1.6].forEach((y) => { const m = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.07, 0.2), M(0x2f6df6, { emissive: 0x1a3a8a })); m.position.set(0, y, 0); lvAb.add(m); });
+      const upA = mkArrow(0x14a058, 0.06), dnA = mkArrow(0xe2552a, 0.06); lvAb.add(upA, dnA); setArrow(upA, new V3(-0.5, -1.45, 0.1), new V3(-0.5, -0.15, 0.1)); setArrow(dnA, new V3(0.5, -0.15, 0.1), new V3(0.5, -1.45, 0.1));
+      const lN3 = label('n = 3', [11.8, 4.0, 0], { color: '#394258', size: 12 }), lN2 = label('n = 2', [11.8, 2.4, 0], { color: '#394258', size: 12 }), lUp = label('흡수', [9.5, 3.2, 0], { color: '#0f7a43', size: 12 }), lDn = label('방출', [11.0, 3.2, 0], { color: '#c2410c', size: 12 });
+      labAb.push(lN3, lN2, lUp, lDn);
+      let heKey = '';
+      function he(A, S) {
+        if (heKey !== 'he') { heKey = 'he'; stHeA.draw({ lines: A.H_LINES.map((l) => ({ nm: l.nm, a: 0.75 })) }); stHeB.draw({ lines: A.LINES.He }); A.H_LINES.forEach((l, i) => { const x = NM2X(l.nm), y1 = 4.0 - 0.6, y2 = -0.8 + 0.6; dashHe[i].position.set(x, (y1 + y2) / 2, 0.05); dashHe[i].scale.y = y1 - y2; }); }
+        info('<b>🔬 헬륨(전자 2개)에 보어 모형을 적용해 보면</b><br>수소 준위로 예측한 선 ' + A.H_LINES.map((l) => l.nm).join(' · ') + ' nm와 실제 헬륨의 선 ' + A.LINES.He.map((l) => l.nm).join(' · ') + ' nm가 어긋나요.<br>전자가 2개면 전자끼리도 서로 밀어내서 준위가 수소와 달라져요. 보어 모형은 전자가 1개인 수소(와 비슷한 이온)에만 맞아요.<br><span style="opacity:.85">수소 선의 실제 밝기: ' + A.H_LINES.map((l) => l.nm + ' nm ' + (Math.round(l.a * 100) / 100).toFixed(2)).join(' · ') + ' (밝기 차이는 설명하지 못해요)</span>');
+      }
+      function abs(A, S, tm) {
+        if (heKey !== 'abs') { heKey = 'abs'; stAbA.draw({ cont: (nm) => 0.28 + 0.72 * Math.pow((nm - 400) / 300, 1.1), dark: A.H_LINES.map((l) => ({ nm: l.nm, d: 0.92 })) }); stAbB.draw({ lines: A.H_LINES }); A.H_LINES.forEach((l, i) => { const x = NM2X(l.nm), y1 = 4.0 - 0.6, y2 = -0.8 + 0.6; dashAb[i].position.set(x, (y1 + y2) / 2, 0.05); dashAb[i].scale.y = y1 - y2; }); }
+        const tt = (tm * 0.8) % 2; upA.visible = true; upA.children.forEach((c) => { c.material.transparent = true; c.material.opacity = tt < 1 ? 1 : 0.25; }); dnA.children.forEach((c) => { c.material.transparent = true; c.material.opacity = tt >= 1 ? 1 : 0.25; });
+        info('<b>🔬 같은 위치에서 흡수하고 같은 위치에서 방출해요</b><br>두 준위(n = 3, 2)의 에너지 차이 ' + (Math.round(A.dEn(3, 2) * 100) / 100).toFixed(2) + ' eV에 해당하는 빛(' + A.H_LINES[0].nm + ' nm)만 흡수하고, 같은 빛만 방출해요.<br>그래서 흡수선의 위치가 방출선과 같고, 별빛의 흡수선으로 별의 구성 원소를 알아내요.');
+      }
+      /* ================= 🔬 한계 ②: 전자를 물질파로 보면 (고리 위의 정상파) ================= */
+      const ringW = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial({ color: 0x14a058 })); ringW.position.set(5.6, 0, 0); gC.add(ringW);
+      const nucW = new THREE.Mesh(new THREE.SphereGeometry(0.16, 16, 12), M(0xe2464b)); nucW.position.set(5.6, 0, 0); gC.add(nucW);
+      const lWv = label('', [5.6, 2.9, 0], { color: '#26324a', size: 12 }), lWs = label('', [5.6, -2.9, 0], { color: '#14a058', size: 12 }), lWt = label('전자를 물질파(파동)로 보면', [5.6, 3.5, 0], { color: '#2f6df6', size: 12 });
+      const demoR = { p: 0, on: false };
+      function ringWave(A, S, tm) {
+        const k = S.k, m = demoR.on ? 1.5 + 4.0 * demoR.p : k.ring, rr = 2.0, amp = 0.28, pts = [];
+        for (let i = 0; i <= 160; i++) { const th = i / 160 * TAUc; const r2 = rr + amp * Math.sin(m * th - tm * 2); pts.push(new V3(r2 * Math.cos(th), r2 * Math.sin(th), 0)); }
+        const g = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 160, 0.045, 5, false); ringW.geometry.dispose(); ringW.geometry = g;
+        const ok = Math.abs(m - Math.round(m)) < 0.05; ringW.material.color.setHex(ok ? 0x14a058 : 0xe2464b);
+        lWv.set('원둘레 = ' + f1(m) + ' × 파장'); lWs.set(ok ? '잘 이어져요 ✔' : '이어지지 않아요'); lWs.el.style.background = ok ? '#14a058' : '#e2464b';
+        return { m, ok };
+      }
+      const TAUc = Math.PI * 2, f1 = (v) => (Math.round(v * 10) / 10).toFixed(1);
+      let pR = null;
+      pR = controls.player({ duration: 10, loop: true, autoplay: false, label: '파장 수 바꾸기', phases: [[0, '1.5'], [0.25, '2'], [0.5, '3'], [0.75, '4'], [0.88, '5']], onFrame(p) { demoR.p = p; demoR.on = p > 0 || !!(pR && pR.playing); } });
+      { const rr = [...ctx.renderer.domElement.parentNode.parentNode.querySelectorAll('.v3-player')]; plB.row = rr[0]; pR.row = rr[1]; }
       let curM = '';
       const labsS = [lSrc, lSl, lPr, lCur, lKind], labsL = [lA, lB, lObs, lBase, lEax].concat(eTicks), labsB = [lN, lE, stBL, ionL, lPh].concat(orbL, ladLabs), labsC = [lRing, lCl];
       function setMode(S) {
-        const mode = S.mode === 'bohr' ? 'bohr' : S.mode === 'limit' ? (S.k.view === 'cloud' ? 'cloud' : 'limit') : S.mode;
+        const mode = S.mode === 'bohr' ? 'bohr' : S.mode === 'limit' ? S.k.view : S.mode;
         if (mode === curM) return; curM = mode;
-        gS.visible = mode === 'spec'; gL.visible = mode === 'ladder'; gB.visible = mode === 'bohr'; gC.visible = mode === 'cloud';
-        labsS.forEach((l) => l.show(mode === 'spec')); rulerLabs.forEach(([l, g]) => l.show(g === gS && mode === 'spec')); labsL.forEach((l) => l.show(mode === 'ladder')); labsB.forEach((l) => l.show(mode === 'bohr')); lPh.show(false); labsC.forEach((l) => l.show(mode === 'cloud'));
+        gS.visible = mode === 'spec'; gL.visible = mode === 'ladder'; gB.visible = mode === 'bohr'; gC.visible = mode === 'cloud'; gHe.visible = mode === 'he'; gAb.visible = mode === 'abs';
+        labHe.forEach((l) => l.show(mode === 'he')); labAb.forEach((l) => l.show(mode === 'abs')); [lWv, lWs, lWt].forEach((l) => l.show(mode === 'cloud'));
+        pR.row.style.display = mode === 'cloud' ? '' : 'none'; if (mode !== 'cloud') { pR.pause(); pR.set(0); }
+        labsS.forEach((l) => l.show(mode === 'spec')); rulerLabs.forEach(([l, g]) => l.show((g === gS && mode === 'spec') || (g === gHe && mode === 'he') || (g === gAb && mode === 'abs'))); labsL.forEach((l) => l.show(mode === 'ladder')); labsB.forEach((l) => l.show(mode === 'bohr')); lPh.show(false); labsC.forEach((l) => l.show(mode === 'cloud'));
         rungLab.forEach((l) => l.show(false));
         plB.row.style.display = mode === 'bohr' ? '' : 'none'; if (mode !== 'bohr') { plB.pause(); plB.set(0); }
         spKey = ''; lKey = ''; bKey = '';
         if (mode === 'spec') Object.assign(orbit, { tx: 1.5, ty: 0, tz: 0, phi: 1.35, theta: 0.1, dist: 17 * KD });
         else if (mode === 'ladder') Object.assign(orbit, { tx: 0, ty: -0.5, tz: 0, phi: 1.35, theta: 0.1, dist: 15 * KD });
         else if (mode === 'bohr') Object.assign(orbit, { tx: 3, ty: -2.0, tz: 0, phi: 1.3, theta: 0.15, dist: 22 * KD });
-        else if (mode === 'cloud') Object.assign(orbit, { tx: 0, ty: 0, tz: 0, phi: 1.2, theta: 0.3, dist: 10 * KD });
+        else if (mode === 'cloud') Object.assign(orbit, { tx: 2.8, ty: 0, tz: 0, phi: 1.2, theta: 0.3, dist: 13 * KD });
+        else if (mode === 'he' || mode === 'abs') Object.assign(orbit, { tx: 1.5, ty: 3.0, tz: 0, phi: 1.4, theta: 0.0, dist: 21 * KD });
+        heKey = '';
       }
-      const NOTE = '🔬 헬륨 비교와 흡수선은 2D 화면에서 해요. 위의 [▦ 2D]를 눌러 보세요. (전자 구름 보기에서는 3D로 볼 수 있어요)';
       return {
         update(dt, tm) {
           const A = sim(); if (!A || !A.S) return; const S = A.S;
@@ -220,8 +284,8 @@
           if (curM === 'spec') spec(A, S);
           else if (curM === 'ladder') ladder(A, S);
           else if (curM === 'bohr') { if (S.b.photon && plB.playing) plB.pause(); if (!plB.playing && plB.p === 0) demoB.on = false; bohr(A, S, tm); }
-          else if (curM === 'cloud') { cloud.rotation.y += dt * 0.15; info('<b>🔬 전자 구름</b><br>실제 전자는 정해진 궤도를 도는 입자가 아니라, 핵 주변에서 <b>발견될 확률의 구름</b>으로 나타나요. 보어 반지름(0.053 nm)은 확률이 가장 높은 거리예요.<br>보어 모형은 수소의 선 위치는 맞히지만, 선의 밝기 차이와 전자가 둘 이상인 원자는 설명하지 못해요.'); }
-          else info(NOTE);
+          else if (curM === 'he') he(A, S); else if (curM === 'abs') abs(A, S, tm);
+          else if (curM === 'cloud') { cloud.rotation.y += dt * 0.15; if (!pR.playing && pR.p === 0) demoR.on = false; const rw = ringWave(A, S, tm); info('<b>🔬 전자 구름</b><br>실제 전자는 정해진 궤도를 도는 입자가 아니라, 핵 주변에서 <b>발견될 확률의 구름</b>으로 나타나요. 보어 반지름(0.053 nm)은 확률이 가장 높은 거리예요.<br>보어 모형은 수소의 선 위치는 맞히지만, 선의 밝기 차이와 전자가 둘 이상인 원자는 설명하지 못해요.<br><b>전자를 물질파로 보면</b> 원둘레 = ' + f1(rw.m) + ' × 파장 → ' + (rw.ok ? '파장이 원둘레에 정수 번 들어가서 파동이 안정하게 이어져요 (보어 궤도 n = ' + Math.round(rw.m) + ').' : '정수 번이 아니라서 파동이 이어지지 않아요.')); }
         },
         sync() {},
       };

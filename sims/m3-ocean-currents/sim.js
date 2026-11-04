@@ -1188,7 +1188,7 @@
   });
 
   window.__sim = {
-    SPR, S, S1, S2, S3, S4, LOOP, CUR, KEYS, game: () => game, setScene, setWind, flipDir, dropBottle, slotPx, cardAt, dropCard, GYRE, setCity, mx, my, isLand,
+    SPR, S, S1, S2, S3, S4, LOOP, CUR, KEYS, TK, PXCM, vcmOf, game: () => game, setScene, setWind, flipDir, dropBottle, slotPx, cardAt, dropCard, GYRE, setCity, mx, my, isLand,
     frameMs: () => frameMs,
     hit(p) { const r = view.canvas.getBoundingClientRect(); return { x: r.left + p.x * r.width / VW, y: r.top + p.y * r.height / VH }; },
   };

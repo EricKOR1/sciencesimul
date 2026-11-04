@@ -210,17 +210,16 @@
       const LB = 'rgba(8,12,24,.78)', Mx2 = new THREE.Matrix4();
       const stdM = (w, hh, d, c, o) => new THREE.Mesh(new THREE.BoxGeometry(w, hh, d), mat(c, o));
       const sphM = (r, c, o) => new THREE.Mesh(new THREE.SphereGeometry(r, 22, 16), mat(c, o));
-      const gD = newScene('dbl'); CAMS.dbl = { dist: PHN ? 22 : 15.5, theta: 0.6, phi: 1.1, min: 7, max: 34, tx: 0, ty: 0.4, tz: 0.3 };
-      const RX0 = -6.5, RX1 = 6.5, RZ = 2.6, RY = -2.2, lamX = (l) => RX0 + (Math.min(-7, Math.max(-35, Math.log10(l))) + 35) / 28 * (RX1 - RX0);
-      const ruler = stdM(RX1 - RX0 + 0.6, 0.18, 0.5, 0x8e9bc9); ruler.position.set(0, RY, RZ); gD.add(ruler);
+      const gD = newScene('dbl'); CAMS.dbl = { dist: PHN ? 28 : 14.5, theta: 0.0, phi: 1.02, min: 7, max: 40, tx: 0, ty: 0.4, tz: 0.3 };
+      const RX0 = -5.6, RX1 = 5.6, RZ = 2.4, RY = -1.8, lamX = (l) => RX0 + (Math.min(-7, Math.max(-35, Math.log10(l))) + 35) / 28 * (RX1 - RX0);
       const thrX = lamX(1e-6 * 1e-7);
-      const zRed = new THREE.Mesh(new THREE.BoxGeometry(thrX - RX0 + 0.3, 4.2, 1.0), h.basic(0xe2464b, { transparent: true, opacity: 0.16, depthWrite: false })); zRed.position.set((RX0 - 0.3 + thrX) / 2, RY + 2.2, RZ); gD.add(zRed);
-      const zGrn = new THREE.Mesh(new THREE.BoxGeometry(RX1 + 0.3 - thrX, 4.2, 1.0), h.basic(0x50dc8c, { transparent: true, opacity: 0.16, depthWrite: false })); zGrn.position.set((thrX + RX1 + 0.3) / 2, RY + 2.2, RZ); gD.add(zGrn);
-      const thrM = stdM(0.06, 4.4, 1.0, 0xffd166, { emissive: 0xffd166, emissiveIntensity: 0.6 }); thrM.position.set(thrX, RY + 2.2, RZ); gD.add(thrM);
+      const rR = stdM(thrX - RX0 + 0.3, 0.2, 0.7, 0xe2464b, { emissive: 0xe2464b, emissiveIntensity: 0.25 }); rR.position.set((RX0 - 0.3 + thrX) / 2, RY, RZ); gD.add(rR);
+      const rG = stdM(RX1 + 0.3 - thrX, 0.2, 0.7, 0x50dc8c, { emissive: 0x50dc8c, emissiveIntensity: 0.25 }); rG.position.set((thrX + RX1 + 0.3) / 2, RY, RZ); gD.add(rG);
+      const thrM = stdM(0.07, 1.6, 0.7, 0xffd166, { emissive: 0xffd166, emissiveIntensity: 0.6 }); thrM.position.set(thrX, RY + 0.8, RZ); gD.add(thrM);
       [-35, -28, -21, -14, -7].forEach((e) => { const x = lamX(Math.pow(10, e)), t = stdM(0.05, 0.3, 0.05, 0xdbe4f7); t.position.set(x, RY - 0.2, RZ + 0.1); gD.add(t); label('10' + String(e).replace('-', '⁻').replace(/\d/g, (d) => '⁰¹²³⁴⁵⁶⁷⁸⁹'[d]), [x, RY - 0.65, RZ + 0.1], { color: LB, size: 11 }, 'dbl'); });
-      label('드브로이 파장 λ (m, 로그 눈금)', [0, RY - 1.25, RZ + 0.1], { color: 'rgba(8,12,24,.85)', size: 12 }, 'dbl');
-      label('◀ 무늬를 볼 수 없어요', [(RX0 + thrX) / 2, RY + 4.6, RZ], { color: 'rgba(192,53,59,.9)', size: 12 }, 'dbl'); label('무늬를 볼 수 있어요 ▶', [(thrX + RX1) / 2 + 0.6, RY + 4.6, RZ], { color: 'rgba(28,122,74,.9)', size: 12 }, 'dbl');
-      label('무늬 한계 λ/d = 10⁻⁶', [thrX, RY + 4.2, RZ], { color: 'rgba(138,106,0,.92)', size: 11, offset: [0, 0, 0] }, 'dbl');
+      label('드브로이 파장 λ (m, 로그 눈금)', [0, RY - 1.2, RZ + 0.1], { color: 'rgba(8,12,24,.85)', size: 12 }, 'dbl');
+      label('◀ 무늬를 볼 수 없어요', [(RX0 + thrX) / 2 - 0.5, RY - 1.9, RZ + 0.1], { color: 'rgba(192,53,59,.9)', size: 12 }, 'dbl'); label('무늬를 볼 수 있어요 ▶', [(thrX + RX1) / 2 + 0.6, RY - 1.9, RZ + 0.1], { color: 'rgba(28,122,74,.9)', size: 12 }, 'dbl');
+      label('무늬 한계 λ/d = 10⁻⁶', [thrX, RY + 1.85, RZ], { color: 'rgba(138,106,0,.92)', size: 11, offset: [0, 0, 0] }, 'dbl');
       // 입자 모형과 핀
       const mkIcon = (id) => {
         const g = new THREE.Group();
@@ -234,24 +233,28 @@
         const g = new THREE.Group(); gD.add(g); const rod = stdM(0.05, 1, 0.05, new THREE.Color(p.col).getHex()); g.add(rod); const ic = mkIcon(p.id); g.add(ic);
         const ring = new THREE.Mesh(new THREE.TorusGeometry(0.62, 0.04, 8, 32), h.basic(0xffffff)); ring.rotation.x = Math.PI / 2; g.add(ring);
         const lab = label('', ic, { color: 'rgba(8,12,24,.85)', size: 12, offset: [0, 0.85, 0] }, 'dbl');
-        return { p, g, rod, ic, ring, lab, hgt: [1.2, 3.2, 2.2, 1.2][i] };
+        return { p, g, rod, ic, ring, lab, hgt: [0.9, 2.7, 1.8, 0.9][i] };
       });
       // 이중 슬릿 시연 (고른 입자)
-      const DZ = -2.4, SLX = -1.5;
-      const dGun = sphM(0.35, 0xdde4f0, { emissive: 0x9fb6ff, emissiveIntensity: 0.4 }); dGun.position.set(-5.4, 0.9, DZ); gD.add(dGun);
-      [[-2.0, -0.55], [-0.4, 0.4], [0.55, 2.0]].forEach(([z0, z1]) => { const w = stdM(0.2, 2.2, Math.abs(z1 - z0), 0x8793a8, { metalness: 0.5 }); w.position.set(SLX, 0.9, DZ + (z0 + z1) / 2); gD.add(w); });
-      const dCv = document.createElement('canvas'); dCv.width = 256; dCv.height = 160; const dX = dCv.getContext('2d'), dTex = new THREE.CanvasTexture(dCv);
-      const dScr = new THREE.Mesh(new THREE.PlaneGeometry(3.4, 2.2), new THREE.MeshBasicMaterial({ map: dTex, side: THREE.DoubleSide })); dScr.rotation.y = -Math.PI / 2; dScr.position.set(3.4, 0.9, DZ); gD.add(dScr);
+      const DZ = -1.2, SLX = -2.0, DY = 2.3;
+      const dGun = sphM(0.35, 0xdde4f0, { emissive: 0x9fb6ff, emissiveIntensity: 0.4 }); dGun.position.set(-5.2, DY + 0.35, DZ); gD.add(dGun);
+      [[-1.9, -0.55], [-0.4, 0.4], [0.55, 1.9]].forEach(([z0, z1]) => { const w = stdM(0.2, 0.9, Math.abs(z1 - z0), 0x8793a8, { metalness: 0.5 }); w.position.set(SLX, DY + 0.45, DZ + (z0 + z1) / 2); gD.add(w); });
+      const dCv = document.createElement('canvas'); dCv.width = 160; dCv.height = 256; const dX = dCv.getContext('2d'), dTex = new THREE.CanvasTexture(dCv);
+      const dScr = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 3.4), new THREE.MeshBasicMaterial({ map: dTex, side: THREE.DoubleSide })); dScr.rotation.x = -Math.PI / 2; dScr.position.set(3.6, DY + 0.02, DZ); gD.add(dScr);
       const dFly = sphM(0.2, 0xffffff, { emissive: 0xffffff, emissiveIntensity: 0.7 }); gD.add(dFly);
-      const ldTitle = label('', dGun, { color: 'rgba(8,12,24,.85)', size: 12, offset: [0.4, 0.9, 0] }, 'dbl'), ldScr = label('', dScr, { color: LB, size: 12, offset: [0, 1.45, 0] }, 'dbl'), ldInfo = label('', [0, 0.9, DZ], { color: 'rgba(8,12,24,.0)', size: 12 }, 'dbl'); ldInfo.el.style.display = 'none'; ldInfo.show(false);
-      label('이중 슬릿 (d = 100 nm)', [SLX, 2.35, DZ], { color: LB, size: 12 }, 'dbl');
+      const ldTitle = label('', dGun, { color: 'rgba(8,12,24,.85)', size: 12, offset: [0.5, 0.9, 0] }, 'dbl'), ldScr = label('', dScr, { color: LB, size: 12, offset: [0, 0.8, 2.4] }, 'dbl');
+      label('이중 슬릿 (d = 100 nm)', [SLX, DY + 1.1, DZ], { color: LB, size: 12 }, 'dbl'); label('스크린', [3.6, DY + 0.3, DZ - 1.9], { color: LB, size: 11 }, 'dbl');
       let dSig = '';
       function paintScr(rev, can, ratio) {
         const key = rev + '|' + can; if (key === dSig) return; dSig = key;
-        dX.fillStyle = '#10151f'; dX.fillRect(0, 0, 256, 160);
-        if (!rev) { dX.fillStyle = '#8e9bc9'; dX.font = '900 90px sans-serif'; dX.textAlign = 'center'; dX.textBaseline = 'middle'; dX.fillText('?', 128, 84); }
-        else if (can) { for (let x = 0; x < 256; x++) { const u = (x - 128) / 128, I = Math.pow(Math.cos(u * 6 * Math.PI / 2 * 1.0), 2) * Math.pow(Math.sin(u * 2.4 + 1e-6) / (u * 2.4 + 1e-6), 2); const v = Math.round(255 * Math.min(1, I * 1.1)); dX.fillStyle = 'rgb(' + v + ',' + Math.round(v * 0.82) + ',' + Math.round(v * 0.35) + ')'; dX.fillRect(x, 0, 1, 160); } }
-        else { for (let x = 0; x < 256; x++) { const u = (x - 128) / 128, I = 0.5 * (Math.exp(-Math.pow((u - 0.28) / 0.17, 2)) + Math.exp(-Math.pow((u + 0.28) / 0.17, 2))), v = Math.round(255 * I); dX.fillStyle = 'rgb(' + v + ',' + Math.round(v * 0.82) + ',' + Math.round(v * 0.35) + ')'; dX.fillRect(x, 0, 1, 160); } }
+        dX.fillStyle = '#10151f'; dX.fillRect(0, 0, 160, 256);
+        if (!rev) { dX.fillStyle = '#8e9bc9'; dX.font = '900 90px sans-serif'; dX.textAlign = 'center'; dX.textBaseline = 'middle'; dX.fillText('?', 80, 130); }
+        else for (let y = 0; y < 256; y++) {
+          const u = (y - 128) / 128; let I;
+          if (can) { const a = u * 2.4 + 1e-6; I = Math.pow(Math.cos(u * 3 * Math.PI), 2) * Math.pow(Math.sin(a) / a, 2) * 1.1; }
+          else I = 0.5 * (Math.exp(-Math.pow((u - 0.28) / 0.17, 2)) + Math.exp(-Math.pow((u + 0.28) / 0.17, 2)));
+          const v = Math.round(255 * Math.min(1, I)); dX.fillStyle = 'rgb(' + v + ',' + Math.round(v * 0.82) + ',' + Math.round(v * 0.35) + ')'; dX.fillRect(0, y, 160, 1);
+        }
         dTex.needsUpdate = true;
       }
       const dP = { on: false, sel: 'e' }; let dSelSig = '';
@@ -267,8 +270,8 @@
         });
         const p = P.find((q) => q.id === sel), can = L.pCan(p), ratio = L.pRatio(p);
         paintScr(rev, can);
-        dFly.position.set(-5.4 + ((t * 1.6) % 1) * 5.0, 0.9 + 0.0, DZ + (((t * 1.6) % 1) > 0.5 ? 0 : 0)); dFly.material.color.set(p.col); dFly.material.emissive.set(p.col);
-        if (((t * 1.6) % 1) > 0.9) dFly.visible = false; else dFly.visible = true;
+        dFly.position.set(-5.2 + ((t * 1.6) % 1) * 8.6, DY + 0.35, DZ); dFly.material.color.set(p.col); dFly.material.emissive.set(p.col);
+        dFly.visible = ((t * 1.6) % 1) < 0.95;
         ldTitle.set('선택: ' + p.name + ' (' + p.sub + ')'); ldScr.set(rev ? (can ? '무늬를 볼 수 있어요 ✅' : '무늬를 볼 수 없어요 ❌') : '무늬가 보일까요? ? (2D 문제에서 예측해요)');
         info('<b>λ = h / p = h / (mv)</b>: ' + p.name + '의 질량 ' + L.sci(p.m, 1) + ' kg, 속력 ' + L.fmtV(L.pv(p)) + ' → <b>λ = ' + L.fmtLam(L.pLam(p)) + '</b><br>슬릿 간격 d = 100 nm와 비교한 <b>λ/d = ' + L.sci(ratio, 1) + '</b>' + (rev ? (can ? ' ≥ 10⁻⁶ → 간섭무늬를 볼 수 있어요.' : ' < 10⁻⁶ → 파장이 너무 짧아 무늬를 볼 수 없어요.') : '. 10⁻⁶ 이상이면 무늬를 볼 수 있어요. 어떨까요?'));
       }

@@ -1169,7 +1169,7 @@ SciSim.loop((dt, t) => {
 });
 
 window.__sim = {
-  S, VW, VH, SynFlow, get game() { return game; }, setScene, setSub, SNAMES, ST, DRG, DRUGS, STAGES, SMG, FLG, startSum, sumV, SUMROWS, drugFocusUpdate,
+  S, VW, VH, SynFlow, get game() { return game; }, setScene, setSub, SNAMES, ST, DRG, DRUGS, STAGES, SMG, FLG, startSum, sumV, apFromSum, SUMROWS, drugFocusUpdate,
   stepAll(sec) { const n = Math.ceil(sec / 0.02); for (let i = 0; i < n; i++) { if (S.mode === 'flow') S.sf2.update(0.02); else if (S.mode === 'sum') stepSum(0.02); else if (S.mode === 'drug') S.sf3.update(0.02); } },
 };
 

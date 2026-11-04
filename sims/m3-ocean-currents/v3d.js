@@ -26,9 +26,9 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHN ? 17 : 12.8, theta: 0, phi: 1.3, min: 6.5, max: 22, target: [0, 0.3, 0] },
     autoRotate: 0,
-    levels: [1, 2, 3],          // 단계 1(수조에 바람 불기)은 2D 실험이에요
+    levels: [0, 1, 2, 3],
     build(ctx) {
-      const { THREE, root, camera, label, info, controls } = ctx;
+      const { THREE, root, camera, label, info, controls, orbit } = ctx;
       const V3 = THREE.Vector3, R = 4;
       const P = (lat, lon, r) => new V3(r * Math.cos(lat * D2R) * Math.sin(lon * D2R), r * Math.sin(lat * D2R), r * Math.cos(lat * D2R) * Math.cos(lon * D2R));
       let focus = 'np', all = false, showWind = false, names = true, turn = 0, targetRot = 0, spin = false;
@@ -76,11 +76,54 @@
         return { c, m, a, L: label(c[0] + ' 8월 ' + c[3] + '°C', a, { size: 12, color: 'rgba(15,23,42,.9)', offset: [0, 0.12, 0] }) };
       });
       const bottle = new THREE.Mesh(new THREE.SphereGeometry(0.075, 14, 10), new THREE.MeshStandardMaterial({ color: 0xfde047, emissive: 0xfacc15, emissiveIntensity: 0.6 })); bottle.visible = false; earth.add(bottle);
+
+      /* ===== 단계 1: 수조에 바람 불기 (2D 실험과 같은 값: 바람 세기 · 방향 · 종이 조각 · 물속 흐름) ===== */
+      const tankG = new THREE.Group(); root.add(tankG); tankG.visible = false;
+      const U = 55, TXc = (px) => (px - 400) / U, TYc = (py) => (482 - py) / U, TWd = 500 / U, TD = 2.2, WH = TYc(334);
+      const sm = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.5, metalness: 0 }, o || {}));
+      tankG.add(new THREE.Mesh(new THREE.BoxGeometry(TWd, WH, TD), sm(0x38a0e0, { transparent: true, opacity: 0.32, roughness: 0.2, depthWrite: false })).translateY(WH / 2));
+      const glassBox = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(TWd, TYc(292), TD)), new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.8 })); glassBox.position.y = TYc(292) / 2; tankG.add(glassBox);
+      const surfG = new THREE.PlaneGeometry(TWd, TD, 50, 4); surfG.rotateX(-Math.PI / 2);
+      const surf = new THREE.Mesh(surfG, sm(0x8fd0ff, { transparent: true, opacity: 0.55, roughness: 0.1, side: THREE.DoubleSide, depthWrite: false })); tankG.add(surf);
+      const base = new THREE.Mesh(new THREE.BoxGeometry(TWd + 14, 0.2, 5), sm(0xc3ccd6, { roughness: 0.8 })); base.position.y = -0.1; tankG.add(base);
+      const ruler = new THREE.Mesh(new THREE.BoxGeometry(TWd, 0.04, 0.4), sm(0xf2c14e)); ruler.position.set(0, 0.02, TD / 2 + 0.3); tankG.add(ruler);
+      const rl = label('0 ~ 30 cm', [0, 0.2, TD / 2 + 0.7], { size: 11, color: 'rgba(107,74,0,.9)' });
+      const fan = new THREE.Group(); tankG.add(fan);
+      { const stand = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 3.0, 12), sm(0x7b8ca0)); stand.position.set(0, 1.5 - 0, 0); fan.add(stand);
+        const motor = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.6, 24), sm(0xe5eaf0)); motor.rotation.z = Math.PI / 2; motor.position.set(-0.1, 3.2, 0); fan.add(motor);
+        const hub = new THREE.Group(); hub.position.set(0.35, 3.2, 0); fan.add(hub); fan.userData.hub = hub;
+        for (let k = 0; k < 4; k++) { const b = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.85, 0.32), sm(0x93c5fd, { transparent: true, opacity: 0.9 })); b.position.y = 0.45; const gg = new THREE.Group(); gg.rotation.x = k * Math.PI / 2; gg.add(b); hub.add(gg); } }
+      const fanL = label('선풍기', fan, { offset: [0, 4.2, 0], size: 12, color: 'rgba(27,35,51,.85)' });
+      const NST = 18, strI = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 0.025, 0.025), new THREE.MeshBasicMaterial({ color: 0xf1f5f9, transparent: true, opacity: 0.7 }), NST); tankG.add(strI);
+      const NFP = 80, fpI = new THREE.InstancedMesh(new THREE.SphereGeometry(0.035, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.85 }), NFP); tankG.add(fpI);
+      const pap = [0, 1, 2, 3, 4, 5, 6].map((i) => { const m = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.05, 0.22), sm(new THREE.Color().setHSL((i * 0.15) % 1, 0.7, 0.55), { roughness: 0.6, transparent: true })); m.userData.z = (i % 3 - 1) * 0.55 + (i % 2) * 0.12; tankG.add(m); return m; });
+      const dmT = new THREE.Object3D(), stZ = Array.from({ length: NST }, (_, i) => (i % 6 - 2.5) * 0.3), fpZ = Array.from({ length: NFP }, (_, i) => ((i * 37) % 100 / 100 - 0.5) * (TD - 0.3));
+      const WN = ['꺼짐', '약', '중', '강'];
+      const wSeg = controls.segment('바람 세기', WN.map((n, i) => ({ value: i, label: n })), 0, (v) => { const L = ctx.lesson(); if (L && L.setWind) L.setWind(v); });
+      const fB = controls.button('↔ 바람 방향 바꾸기', () => { const L = ctx.lesson(); if (L && L.flipDir) L.flipDir(); });
+      const hostW = ctx.controls.text('').parentNode; const kidsW = Array.from(hostW.children); const wi = kidsW.findIndex((e) => e.textContent === '바람 세기'); const tankEls = kidsW.slice(wi, wi + 6).concat([fB]);
+      const showTankCtl = (v) => tankEls.forEach((e) => { e.style.display = v ? '' : 'none'; });
+      let tSig = '';
+      function tankFrame(L, t) {
+        const S1 = L.S1, w = S1.w, v = L.vcmOf(w), dir = S1.dir, vpx = v;
+        wSeg.set(S1.wind);
+        fan.position.x = TXc(S1.fanDir > 0 ? 62 : 738); fan.scale.set(S1.fanDir, S1.fanA, S1.fanA); fan.userData.hub.rotation.x = S1.blade; fanL.show(S1.fanA > 0.5);
+        const amp = 0.015 + 0.02 * w, p = surfG.attributes.position;
+        const hAt = (x3) => { const px = x3 * U + 400, slope = -dir * (px - 400) * 0.011 * w * 1.5; return WH - slope / U + Math.sin(x3 * 2.8 - t * 2 * (0.6 + 0.4 * w) * dir) * amp + Math.sin(x3 * 6 + t * 1.3) * amp * 0.45; };
+        for (let i = 0; i < p.count; i++) p.setY(i, hAt(p.getX(i)));
+        p.needsUpdate = true; surfG.computeVertexNormals();
+        L.S1.papers.forEach((q, i) => { const m = pap[i]; const x3 = TXc(q.x); m.position.set(x3, hAt(x3) + 0.04 + Math.sin(q.ph) * 0.01, m.userData.z); m.rotation.y = q.rot * 2; m.rotation.z = Math.sin(q.ph * 0.8) * 0.08; m.material.opacity = q.a; m.visible = q.a > 0.03; });
+        S1.fp.forEach((q, i) => { if (i >= NFP) return; const l = Math.abs(v) * q.k * 2.4 / U * 1.6; dmT.position.set(TXc(q.x), Math.min(TYc(q.y), hAt(TXc(q.x)) - 0.05), fpZ[i]); dmT.scale.set(1 + l * 18, 1, 1); dmT.rotation.set(0, 0, 0); dmT.updateMatrix(); fpI.setMatrixAt(i, dmT.matrix); }); fpI.instanceMatrix.needsUpdate = true;
+        const wa = Math.max(0, Math.min(1, w / 3)) * S1.fanA;
+        S1.streaks.forEach((s, i) => { const fx = S1.fanDir > 0 ? 82 : 718, x0 = fx + S1.fanDir * (30 + s.u * 560); dmT.position.set(TXc(x0), TYc(s.y) + 0.25, stZ[i % stZ.length]); dmT.scale.set(Math.max(0.0001, s.len / U * (0.6 + 0.4 * w) * (wa > 0.02 ? 1 : 0)), 1, 1); dmT.rotation.set(0, 0, 0); dmT.updateMatrix(); strI.setMatrixAt(i, dmT.matrix); }); strI.instanceMatrix.needsUpdate = true; strI.material.opacity = 0.2 + 0.6 * wa;
+        const key = S1.wind + '|' + dir + '|' + Math.round(v * 10);
+        if (key !== tSig) { tSig = key; info('<b>수조에 바람 불기</b> · 바람 <b>' + WN[S1.wind] + '</b><br>종이 조각의 속력 <b>' + v.toFixed(1) + ' cm/s</b> · 물이 흐르는 방향 <b>' + (S1.w < 0.3 ? '—' : dir > 0 ? '→ 오른쪽' : '← 왼쪽') + '</b><br><span style="opacity:.85">바람이 셀수록 물이 빨리 흘러요. 수면 가까이는 빠르고 깊을수록 느려요.</span>'); }
+      }
       const wv = new V3(), cam = new V3();
       const smooth = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
       const frOf = (p) => [smooth(0.25, 0.5, p), smooth(0.5, 0.8, p), smooth(0.25, 0.5, p), smooth(0.55, 0.85, p)];     // 2D 차시와 같은 단계별 나타남
       const PH = ['① 바람', '② 해류 생성', '③ 대륙에 막혀 꺾임', '④ 순환 완성'];
-      let sig = '', pIn = 1, offA = 0, sc = 0;
+      let sig = '', pIn = 1, offA = 0, sc = 0, lastSc = -1;
       const idxN = items.map((it) => it.tube.geometry.index.count);
       /* ▶ 해류가 순환을 만드는 과정 (2D 화면의 진행 슬라이더도 같이 움직여요) */
       const pl = controls.player({
@@ -101,6 +144,8 @@
       return {
         update(dt, t) {
           const L = ctx.lesson(), S = L && L.S; sc = S ? S.scene : 1;
+          if (sc !== lastSc) { lastSc = sc; const tk = sc === 0; tankG.visible = tk; earth.visible = !tk; wSeg.set(0); const hostT = ctx.controls.text('').parentNode; Array.from(hostT.children).forEach((e) => { if (e.classList.contains('v3-player') || e === wB || e === nb) e.style.display = tk ? 'none' : ''; }); sig = ''; orbit.tx = 0; orbit.ty = tk ? 1.6 : 0.3; orbit.dist = tk ? (PHN ? 19 : 13.5) : (PHN ? 17 : 12.8); if (tk) { korL.show(false); items.forEach((it) => it.lb.show(false)); windL.forEach((l) => l.show(false)); cityM.forEach((q) => q.L.show(false)); } showTankCtl(tk); }
+          if (sc === 0) { if (L && L.S1) tankFrame(L, t); return; }
           let d = targetRot - earth.rotation.y; d = Math.atan2(Math.sin(d), Math.cos(d)); earth.rotation.y += d * Math.min(1, dt * 3.2);
           if (sc === 1 && L.S2) { if (!pl.playing && Math.abs(L.S2.p - pl.p) > 0.003) pl.set(L.S2.p); }
           const p = sc === 1 ? pIn : 1; const fr = frOf(p);

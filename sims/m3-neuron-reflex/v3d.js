@@ -72,8 +72,63 @@
         const names2 = segs.map((s, i) => (i === seg && tPath >= 0 && !done ? '<b>' + s[0] + '</b>' : s[0]));
         info('<b>' + (rpath === 'reflex' ? '반사' : '의식적 반응') + '</b> (' + (rpath === 'reflex' ? '뇌를 거치지 않아요 → 더 빨라요' : '뇌가 판단해서 → 더 느려요') + ')<br>자극 → ' + names2.join(' → ') + ' → 반응');
       }
+
+      /* ============ 신경계 (뇌의 부분 · 척수 · 말초 신경) — 2D '신경계' 장면과 같은 모양 ============ */
+      const bG = new THREE.Group(); root.add(bG); bG.visible = false;
+      const bX = (x) => (x - 150) * 0.03, bY = (y) => -(y - 150) * 0.03;
+      const REG = {};
+      const REGD = [['cerebrum', 1.7], ['cerebellum', 1.3], ['diencephalon', 0.9], ['midbrain', 0.8], ['medulla', 0.8], ['cord', 0.6]];
+      const R_LAB = {};
+      function regionShape(poly) { const cu = new THREE.CatmullRomCurve3(poly.map((p) => new V3(bX(p[0]), bY(p[1]), 0)), true, 'catmullrom', 0.5); return new THREE.Shape(cu.getPoints(90).map((q) => new THREE.Vector2(q.x, q.y))); }
+      let brainReady = false;
+      function initBrain(L) {
+        const RG = L.REGIONS; if (!RG) return false;
+        REGD.forEach(([id, dep]) => {
+          const R = RG[id], g = new THREE.ExtrudeGeometry(regionShape(R.poly), { depth: dep, bevelEnabled: true, bevelThickness: 0.1, bevelSize: 0.09, bevelSegments: 3, curveSegments: 6 });
+          g.translate(0, 0, -dep / 2);
+          const m = new THREE.Mesh(g, sm(new THREE.Color(R.col), { roughness: 0.5, emissive: new THREE.Color(R.deep), emissiveIntensity: 0 })); bG.add(m);
+          const cx = R.lab ? R.lab[0] : 150, cy = R.lab ? R.lab[1] : 90;
+          const lb = label(R.name, [bX(id === 'cerebrum' ? 92 : cx), bY(id === 'cerebrum' ? 62 : cy), dep / 2 + 0.25], { size: 12, color: 'rgba(15,23,42,.88)' }); lb.show(false);
+          REG[id] = { m, R, lb, col: new THREE.Color(R.col), deep: new THREE.Color(R.deep) };
+        });
+        /* 말초 신경: 척수에서 갈라져 나와 온몸으로 (파랑: 감각 신경 · 주황: 운동 신경 신호가 오가요) */
+        [[[150, 300], [100, 330], [66, 372]], [[150, 300], [200, 330], [234, 372]], [[150, 312], [128, 350], [118, 395]], [[150, 312], [172, 350], [182, 395]]].forEach((pts) => {
+          const cu = new THREE.CatmullRomCurve3(pts.map((p) => new V3(bX(p[0]), bY(p[1]), 0.5)));
+          const t = new THREE.Mesh(new THREE.TubeGeometry(cu, 24, 0.07, 8), sm(0x14a39a, { emissive: 0x14a39a, emissiveIntensity: 0.15 })); bG.add(t); periph.push({ cu, t });
+        });
+        brainReady = true; return true;
+      }
+      const periph = [], pulsesB = [0, 1, 2, 3, 4, 5, 6, 7].map((i) => { const m = new THREE.Mesh(new THREE.SphereGeometry(0.11, 12, 8), new THREE.MeshBasicMaterial({ color: i % 2 ? 0xffab4a : 0x5aa2ff })); m.visible = false; bG.add(m); return m; });
+      const bLab = label('말초 신경계', [bX(100), bY(345), 0.7], { size: 12, color: 'rgba(15,118,110,.92)' }); bLab.show(false);
+      const cnsLab = label('중추 신경계 (뇌 + 척수)', [bX(150), bY(2), -0.2], { size: 12, color: 'rgba(194,65,12,.92)' }); cnsLab.show(false);
+      const hostN = ctx.controls.text('').parentNode, tailN = (fn) => { const n0 = hostN.children.length; fn(); return Array.from(hostN.children).slice(n0); };
+      const BRIDS = ['cerebrum', 'cerebellum', 'diencephalon', 'midbrain', 'medulla', 'cord', 'periph'];
+      const BRN = { cerebrum: '대뇌', cerebellum: '소뇌', diencephalon: '간뇌', midbrain: '중간뇌', medulla: '연수', cord: '척수', periph: '말초 신경' };
+      let brSeg = null; const hostN0 = hostN;
+      const brRow = tailN(() => { brSeg = controls.segment('신경계', BRIDS.map((id) => ({ value: id, label: BRN[id] })), '', (v) => { const L2 = ctx.lesson(); if (!L2 || !L2.NS || L2.NS.match.on) return; const N2 = L2.NS; if (v === 'periph') N2.sel = 'periph'; else { N2.sel = N2.sel === v ? null : v; if (N2.sel) N2.seen.add(N2.sel); } }); });
+      brRow.forEach((e) => { e.style.display = 'none'; });
+      let brSig = '';
+      function nervFrame(L, t) {
+        if (!brainReady && !initBrain(L)) return;
+        const N2 = L.NS, sel = N2.sel, mt = N2.match.on;
+        BRIDS.forEach((id) => { if (id !== 'periph') { const q = REG[id], h = (N2.hl && N2.hl[id]) || 0; q.m.material.emissiveIntensity = 0.55 * h; q.m.material.color.copy(q.col).lerp(q.deep, h * 0.75); q.lb.show(names); } });
+        periph.forEach((q) => { q.t.material.emissiveIntensity = 0.15 + 0.7 * N2.periph; q.t.scale.set(1 + N2.periph * 0.5, 1 + N2.periph * 0.5, 1 + N2.periph * 0.5); });
+        pulsesB.forEach((p, i) => { const q = periph[i >> 1], u = ((t * 0.45 + i * 0.37) % 1), f = (i % 2 ? u : 1 - u); p.visible = true; p.position.copy(q.cu.getPointAt(f)); });
+        bLab.show(names); cnsLab.show(names);
+        const key = (sel || '') + '|' + N2.seen.size + '|' + mt;
+        if (key !== brSig) {
+          brSig = key; if (brSeg) brSeg.set(sel || '');
+          if (mt) info('<b>뇌의 부분 짝짓기</b>는 2D 화면에서 해요.<br>3D에서는 뇌의 각 부분의 모양과 위치를 살펴봐요.');
+          else if (sel === 'periph') info('<b>말초 신경계</b>: 감각 신경과 운동 신경이 온몸에 퍼져 중추 신경계와 몸 곳곳을 이어 줘요. (심장·소화 기관을 조절하는 자율 신경도 있어요.)');
+          else if (sel) { const R = L.REGIONS[sel]; info('<b>' + R.name + '</b> · ' + R.ex + '<br>' + R.info); }
+          else info('<b>뇌의 부분과 척수</b>를 골라 보세요. (찾은 곳 ' + N2.seen.size + ' / 6)<br>대뇌 · 소뇌 · 간뇌 · 중간뇌 · 연수 · 척수');
+        }
+        bG.rotation.y = Math.sin(t * 0.35) * 0.35;
+      }
       function sw() { if (typeof mb !== 'undefined') mb.style.display = mode === 'neuron' ? '' : 'none'; }
-      function setMode(m) { mode = m; nG.visible = m === 'neuron'; rG.visible = m === 'reflex'; pulse.visible = false; tPath = -1; done = false; react = 0; labelsShow(); orbit.tx = m === 'neuron' ? 4.8 : 2.4; orbit.ty = m === 'neuron' ? 0 : 1.3; orbit.dist = m === 'neuron' ? (PHN ? 24 : 15.5) : (PHN ? 21 : 16); if (m === 'neuron') info('<b>뉴런(신경 세포)</b>: 자극은 <b>가지 돌기 → 신경 세포체 → 축삭 돌기 → 축삭 돌기 끝</b> 방향으로만 전달돼요.<br>말이집이 있으면 자극이 랑비에 결절을 건너뛰며 빨리 전달돼요.'); else { segs = makePath(); rinfo(); } sw(); }
+      function setMode(m) { mode = m; nG.visible = m === 'neuron'; rG.visible = m === 'reflex'; bG.visible = m === 'nervous'; if (typeof brRow !== 'undefined') { brRow.forEach((e) => { e.style.display = m === 'nervous' ? '' : 'none'; }); const pr = hostN0 && hostN0.querySelector('.v3-player'); if (pr) pr.style.display = m === 'nervous' ? 'none' : ''; }
+        if (m === 'nervous') { orbit.tx = 0; orbit.ty = -0.6; orbit.dist = PHN ? 24 : 19; labs.n.forEach((l) => l.show(false)); labs.r.forEach((l) => l.show(false)); stepLab.show(false); cnsLab.show(names); bLab.show(names); mb.style.display = 'none'; info('<b>신경계</b>'); return; }
+        if (typeof cnsLab !== 'undefined') { cnsLab.show(false); bLab.show(false); Object.keys(REG).forEach((id) => REG[id].lb.show(false)); } pulse.visible = false; tPath = -1; done = false; react = 0; labelsShow(); orbit.tx = m === 'neuron' ? 4.8 : 2.4; orbit.ty = m === 'neuron' ? 0 : 1.3; orbit.dist = m === 'neuron' ? (PHN ? 24 : 15.5) : (PHN ? 21 : 16); if (m === 'neuron') info('<b>뉴런(신경 세포)</b>: 자극은 <b>가지 돌기 → 신경 세포체 → 축삭 돌기 → 축삭 돌기 끝</b> 방향으로만 전달돼요.<br>말이집이 있으면 자극이 랑비에 결절을 건너뛰며 빨리 전달돼요.'); else { segs = makePath(); rinfo(); } sw(); }
       function labelsShow() { labs.n.forEach((l) => l.show(names && mode === 'neuron')); labs.r.forEach((l) => l.show(names && mode === 'reflex')); stepLab.show(false); }
       const mb = controls.button('말이집 ✓', () => { myelin = !myelin; mb.textContent = '말이집 ' + (myelin ? '✓' : '✕'); sheath.visible = myelin; }); mb.classList.add('on');
       const nb = controls.button('이름 ✓', () => { names = !names; nb.textContent = '이름 ' + (names ? '✓' : '✕'); labelsShow(); }); nb.classList.add('on');
@@ -94,6 +149,7 @@
         const S = L && L.S ? L.S.scene : 'neuron';
         if (S === 'neuron') return (L.NV && L.NV.view === 'chain') ? ['reflex', 'reflex'] : ['neuron', 'reflex'];
         if (S === 'ruler') return ['reflex', 'brain'];
+        if (S === 'nervous') return ['nervous', 'reflex'];
         return ['reflex', 'reflex'];
       }
       let key = '';
@@ -110,6 +166,7 @@
             flame.visible = flame2.visible = mode === 'reflex' && (!M || L.RF.mode === 'hot');
             if (mode === 'reflex') { rinfo(); if (M) info('<b>' + M.name + '</b> (' + M.center + '이 중추 · 뇌를 거치지 않아요 → 더 빨라요)<br>자극 → 감각 신경 → <b>' + M.center + '</b> → 운동 신경 → 반응<br><span style="opacity:.85">' + M.note + '</span>'); }
           }
+          if (mode === 'nervous') { if (L) nervFrame(L, t); return; }
           flame.scale.y = 1 + Math.sin(t * 9) * 0.08; flame2.scale.y = 1 + Math.sin(t * 12) * 0.12;
           if (mode === 'neuron') {
             const f = Math.max(0, Math.min(1, (p3 - 0.08) / 0.77)); pulse.visible = p3 > 0.08 && p3 < 0.9; const pp = nPath.getPointAt(Math.min(0.999, f)); pulse.position.copy(pp); pulse.scale.setScalar(1 + 0.25 * Math.sin(t * 14));

@@ -8,11 +8,12 @@
   const R = 2.3, DOME = 28;
 
   window.SciSim3D.attach({
+    host: (window.matchMedia && window.matchMedia('(max-width: 599px)').matches) ? '.sc-tall' : '.sc-wide',
     title: '연주시차 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHN ? 14 : 11, theta: 0.5, phi: 1.1, min: 8, max: 55, target: [0, 5, 0] },
     autoRotate: 0,
-    levels: [1, 2],                  // 0단계(연필 시차 실험) · 3단계(카드 놓기)는 2D 화면에서 해요
+    levels: [1, 2],                  // 0단계(연필 시차 실험: 눈 번갈아 감기)와 3단계(카드 놓기)는 2D 화면에서 해요 (3D로도 볼 수 있어요)
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
       const V3 = THREE.Vector3;
@@ -68,12 +69,63 @@
       controls.button('시선 선 켜기/끄기', () => { showL = !showL; });
       controls.button('이름표', () => { labs = !labs; });
       info2(dist);
+      /* ===== 장면 pencil(연필 시차 실험): 두 눈으로 번갈아 보면 가까운 연필이 먼 배경에서 움직여 보여요 (1칸 = 10 cm) ===== */
+      const orbObjs = root.children.slice(), orbLabs = [lSun, lE, lJan, lJul, lS, lmJ, lmL, lBg, lP];
+      const gP = new THREE.Group(); gP.visible = false; root.add(gP);
+      const WZ = -18;
+      { const head = new THREE.Mesh(new THREE.SphereGeometry(0.9, 32, 24), mat(0xf2c9a0, { roughness: 0.6 })); gP.add(head);
+        const nose = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.35, 12), mat(0xe8b88a)); nose.rotation.x = -Math.PI / 2; nose.position.set(0, -0.15, -1.0); gP.add(nose);
+        const wall = new THREE.Mesh(new THREE.BoxGeometry(16, 4.5, 0.2), mat(0x2a3556, { roughness: 0.9 })); wall.position.set(0, 0.6, WZ - 0.12); gP.add(wall);
+        for (let i = -7; i <= 7; i++) { const mk = new THREE.Mesh(new THREE.BoxGeometry(0.34, 3.3 + (i % 3) * 0.25, 0.06), mat([0xef6a5a, 0x5aa0ef, 0xf2d35a, 0x6fdc9a][((i % 4) + 4) % 4], { roughness: 0.7 })); mk.position.set(i * 1.05, 0.6, WZ + 0.0); gP.add(mk); } }
+      const eyes = [-0.33, 0.33].map((x) => { const g = new THREE.Group(); g.position.set(x, 0.12, -0.82); gP.add(g);
+        const w = new THREE.Mesh(new THREE.SphereGeometry(0.17, 16, 12), mat(0xffffff, { roughness: 0.3 })); g.add(w);
+        const pu = new THREE.Mesh(new THREE.SphereGeometry(0.08, 12, 10), mat(0x1b2333)); pu.position.z = -0.12; g.add(pu);
+        const lid = new THREE.Mesh(new THREE.SphereGeometry(0.19, 16, 10, 0, 6.283, 0, 1.7), mat(0xd9a77c)); lid.rotation.x = -Math.PI / 2; lid.position.z = -0.03; g.add(lid);
+        return { g, lid }; });
+      const pencil = new THREE.Group(); gP.add(pencil);
+      { const bd = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 1.1, 14), mat(0xf5c542, { roughness: 0.5 })); pencil.add(bd); const cap = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 12), mat(0xff7a3a)); cap.position.y = 0.6; pencil.add(cap);
+        const tp = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.22, 12), mat(0x2a2a2a)); tp.position.y = 0.66; pencil.add(tp);
+        const wd = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.14, 12), mat(0xe8c9a0)); wd.position.y = 0.52; pencil.add(wd); }
+      const cylP = (col, r) => { const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 1, 8), new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.9, depthWrite: false })); gP.add(m); return m; };
+      const sightL = cylP(0x9fe8ff, 0.03), sightR = cylP(0xffd34d, 0.03);
+      const spotL = new THREE.Mesh(new THREE.SphereGeometry(0.22, 16, 12), new THREE.MeshBasicMaterial({ color: 0x9fe8ff, transparent: true, opacity: 0.9, depthWrite: false })), spotR = new THREE.Mesh(new THREE.SphereGeometry(0.22, 16, 12), new THREE.MeshBasicMaterial({ color: 0xffd34d, transparent: true, opacity: 0.9, depthWrite: false })); gP.add(spotL, spotR);
+      const penLab = [label('왼쪽 눈', eyes[0].g, { size: 11.5, offset: [-0.4, 0.45, 0] }), label('오른쪽 눈', eyes[1].g, { size: 11.5, offset: [0.4, 0.45, 0] }), label('연필 (가까운 물체)', pencil, { size: 12, offset: [0, 0.95, 0] }), label('멀리 있는 배경', [0, 3.3, WZ], { size: 12 }), label('', [0, 1.6, WZ + 0.1], { size: 12, color: 'rgba(255,170,40,.95)' })];
+      penLab[4].el.style.color = '#1b2333';
+      let pX = 'orbit', penPl = null, penDem = false, penP = 0;
+      { const before = pl; penPl = controls.player({ duration: 14, loop: true, autoplay: false, label: '번갈아 보기', phases: [[0, '가까운 연필'], [0.5, '먼 연필']], onFrame(p) { penDem = true; penP = p; } }); }
+      const penRows = () => document.querySelectorAll('.v3-player');
+      function setPX(m) {
+        if (pX === m) return; pX = m; const isP = m === 'pencil';
+        orbObjs.forEach((o) => { o.visible = !isP; }); orbLabs.forEach((l) => l.show(!isP && labs)); gP.visible = isP; penLab.forEach((l) => l.show(isP));
+        const rows = penRows(); if (rows[0]) rows[0].style.display = isP ? 'none' : ''; if (rows[1]) rows[1].style.display = isP ? '' : 'none';
+        if (isP) { orbit.tx = 0; orbit.ty = 0; orbit.tz = -9; orbit.theta = 0; orbit.phi = 0.55; orbit.dist = PHN ? 36 : 26; penDem = false; if (penPl.playing) penPl.pause(); }
+        else { adj = 1.6; orbit.theta = 0.5; orbit.phi = 1.1; orbit.tz = 0; }
+      }
+      let penTxt = ''; const setPen = (h) => { if (h !== penTxt) { penTxt = h; info(h); } };
+      function updPencil(dt, t, sx) {
+        let d = sx ? sx.d : 40, sEye = sx ? (sx.eye > 0 ? -1 : 1) : -1, ph = '';
+        if (penDem) { const p = penP, far = p >= 0.5; d = far ? 60 : 15; const q = (far ? p - 0.5 : p) / 0.5; sEye = Math.floor(q * 4) % 2 === 0 ? -1 : 1; ph = (far ? '먼 연필 (' : '가까운 연필 (') + d + ' cm)'; }
+        const dz = d * 0.1, T = new V3(0, 0.12, -0.82 - dz), spots = [];
+        pencil.position.set(0, -0.43 + 0.12, -0.82 - dz);
+        [0, 1].forEach((i) => {
+          const E = new V3(eyes[i].g.position.x, 0.12, -0.82), k = (WZ - E.z) / (T.z - E.z), P = new V3(E.x + (T.x - E.x) * k, 0.12, WZ + 0.06);
+          const ln = i === 0 ? sightL : sightR; const dv = new V3().subVectors(P, E), len = dv.length(); ln.position.copy(E).addScaledVector(dv, 0.5); ln.scale.set(1, len, 1); ln.quaternion.setFromUnitVectors(new V3(0, 1, 0), dv.normalize());
+          (i === 0 ? spotL : spotR).position.copy(P); spots.push(P.x);
+          const open = (i === 0) === (sEye < 0); eyes[i].lid.visible = !open; ln.material.opacity = open ? 0.95 : 0.2; (i === 0 ? spotL : spotR).material.opacity = open ? 0.95 : 0.25;
+        });
+        const sh = Math.abs(spots[1] - spots[0]);
+        penLab[4].obj = [(spots[0] + spots[1]) / 2, 0.12, WZ + 2.2]; penLab[4].set('움직임 ' + (sh * 10).toFixed(0) + ' cm (눈 사이 6.5 cm)');
+        const phe = document.querySelector('.v3-player .v3-ph'); const rows = penRows(); const phr = rows[1] && rows[1].querySelector('.v3-ph'); if (phr) phr.textContent = penDem ? ph : '';
+        setPen((penDem ? '<b>▶ ' + ph + '</b><br>' : '') + '<b>시차</b>: 한쪽 눈씩 번갈아 보면 <b>가까운 연필</b>이 <b>먼 배경</b>에 대해 움직여 보여요 (배경의 노란 점 ↔ 하늘색 점).<br>연필이 <b>가까울수록</b> 많이, <b>멀수록</b> 조금 움직여 보여요. 연필 거리 <b>' + d + ' cm</b>' + (penDem ? '' : '<br>눈을 번갈아 감는 것은 옆의 2D 화면에서 해요. 또는 ▶ 재생을 눌러 보세요.'));
+      }
       let a0 = 270, k0 = 0;
       const nowP = new V3(), sPos = new V3(), out = new V3();
       function ext(from, to, len) { out.copy(to).sub(from).normalize().multiplyScalar(len).add(to); return out; }
       return {
         update(dt, t) {
           const s = sm() && sm().S;
+          setPX(s && s.scene === 'pencil' ? 'pencil' : 'orbit');
+          if (pX === 'pencil') { updPencil(dt, t, s); return; }
           if (s && s.drag && pl && pl.playing) pl.pause();     // 2D에서 지구를 끌면 재생을 멈춰요
           if (s) { if (s.dist !== dist && !(Math.abs(s.dist - dist) < 0.01)) { dist = s.dist; distR.set(dist); info2(dist); } a0 = s.ang; }
           const a = a0 * Math.PI / 180;

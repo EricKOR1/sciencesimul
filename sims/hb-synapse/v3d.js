@@ -21,7 +21,7 @@
     hint: '드래그: 돌리기 · ▶ 재생으로 6단계를 보고, 약물을 골라 막히는 단계를 확인해요',
     camera: { dist: narrow ? 12.5 : 10.5, theta: 0.32, phi: 1.3, min: 6, max: 20, target: [0, -0.1, 0] },
     autoRotate: 0,
-    levels: [1],
+    levels: [1, 2],
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V = THREE.Vector3;
@@ -186,7 +186,63 @@
           if (k !== lastStage || infoDirty) { lastStage = k; infoDirty = false; const L2 = window.__sim; info('<b>' + stageNames[k] + '</b>: ' + (L2 ? L2.STAGES[k].d : '') + '<br>' + DRUGS[drug].info); }
         },
       });
-      return { update() {}, sync() {} };
+      
+      /* ===== 신호 합산(EPSP · IPSP): 흥분성 입력(+5 mV) · 억제성 입력(−5 mV)이 한 뉴런에 모여요 — 2D '신호 합산'과 같은 값 ===== */
+      const mainG = new THREE.Group(); Array.from(root.children).forEach((o) => mainG.add(o)); root.add(mainG);
+      const mainLabs = Object.keys(L).map((k) => L[k]);
+      const sumG = new THREE.Group(); root.add(sumG); sumG.visible = false; const KS = narrow ? 0.62 : 0.8; sumG.scale.setScalar(KS); sumG.position.x = -2.4 * KS; const KP = (a) => [a[0] * KS - 2.4 * KS, a[1] * KS, a[2] * KS];
+      const SOMA = new THREE.Mesh(new THREE.SphereGeometry(1.15, 36, 26), std(0x2f9fa8, { roughness: 0.35 })); sumG.add(SOMA);
+      const snuc = new THREE.Mesh(new THREE.SphereGeometry(0.34, 18, 14), std(0x8d7fd4)); snuc.position.set(0.1, 0.1, 0.8); sumG.add(snuc);
+      const axon = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.17, 4.2, 14), std(0x7fd0c8, { roughness: 0.4 })); axon.rotation.z = Math.PI / 2; axon.position.set(3.1, 0, 0); sumG.add(axon);
+      const apBall = new THREE.Mesh(new THREE.SphereGeometry(0.3, 20, 14), new THREE.MeshBasicMaterial({ color: 0xffd447 })); apBall.visible = false; sumG.add(apBall);
+      const inN = [], inT = [], inB = [];
+      for (let side = 0; side < 2; side++) for (let i = 0; i < 8; i++) {
+        const exc = side === 0, f = i / 7, deg = exc ? 170 - 140 * f : -(25 + 130 * f), a = deg * Math.PI / 180, R0 = 3.1;
+        const px = Math.cos(a) * R0 - (exc ? 0.2 : 0.2), py = Math.sin(a) * R0 * 0.95, sx = Math.cos(a) * 1.15, sy = Math.sin(a) * 1.15;
+        const knob = new THREE.Mesh(new THREE.SphereGeometry(0.3, 18, 14), std(exc ? 0x22c55e : 0xef4444, { roughness: 0.4, emissive: exc ? 0x14532d : 0x7f1d1d, emissiveIntensity: 0.3 })); knob.position.set(px, py, 0); sumG.add(knob);
+        const tb = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1, 8), std(0x9aa8bf)); const d = new THREE.Vector3(sx - px, sy - py, 0), len = d.length(); tb.position.set((px + sx) / 2, (py + sy) / 2, 0); tb.scale.set(1, len, 1); tb.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize()); sumG.add(tb);
+        const pt = new THREE.Mesh(new THREE.SphereGeometry(0.12, 10, 8), new THREE.MeshBasicMaterial({ color: exc ? 0x86efac : 0xfca5a5 })); sumG.add(pt);
+        inN.push({ exc, i, knob, tb, pt, p: new THREE.Vector3(px, py, 0), s: new THREE.Vector3(sx, sy, 0) });
+      }
+      /* 합산 전위 막대 (−110 ~ −30 mV) */
+      const GY = (v) => -1.9 + (v + 110) / 80 * 3.8, gBg = new THREE.Mesh(new THREE.BoxGeometry(0.5, 3.8, 0.3), std(0x6b7aa0, { transparent: true, opacity: 0.45 })); gBg.position.set(5.6, 0, 0); sumG.add(gBg);
+      const gFg = new THREE.Mesh(new THREE.BoxGeometry(0.55, 1, 0.34), std(0x22c55e, { emissive: 0x0a4a22, emissiveIntensity: 0.4 })); sumG.add(gFg);
+      const thr = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.05, 0.1), new THREE.MeshBasicMaterial({ color: 0xe2464b })); thr.position.set(5.6, GY(-55), 0.1); sumG.add(thr);
+      const rest = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.04, 0.1), new THREE.MeshBasicMaterial({ color: 0x3b82f6 })); rest.position.set(5.6, GY(-70), 0.1); sumG.add(rest);
+      const sl = [label('역치 −55 mV', KP([6.9, GY(-55) + 0.12, 0]), { size: 12, color: 'rgba(192,57,43,.92)' }), label('휴지 −70 mV', KP([6.9, GY(-70) - 0.12, 0]), { size: 12, color: 'rgba(29,78,216,.92)' }), label('', KP([5.6, -2.45, 0]), { size: 13, color: 'rgba(38,50,74,.92)' }), label('', KP([0, -1.9, 0.5]), { size: 13, color: 'rgba(38,50,74,.92)' }), label('흥분성 입력 (+5 mV)', KP([-2.0, 3.55, 0]), { size: 12, color: 'rgba(21,128,61,.92)' }), label('억제성 입력 (−5 mV)', KP([-2.0, -3.6, 0]), { size: 12, color: 'rgba(185,28,28,.92)' }), label('활동 전위!', KP([5.4, 0.7, 0]), { size: 14, color: 'rgba(194,65,12,.95)' })];
+      sl.forEach((l) => l.show(false));
+      const hostS = ctx.controls.text('').parentNode; const before = Array.from(hostS.children);
+      const setRange = (id, v) => { const e = document.getElementById(id); if (e) { e.value = v; e.dispatchEvent(new Event('input', { bubbles: true })); } };
+      const rE = controls.range('🟢 흥분성 입력', 0, 8, 1, 2, (v) => setRange('sE', v), (v) => v + '개'), rI = controls.range('🔴 억제성 입력', 0, 8, 1, 1, (v) => setRange('sI', v), (v) => v + '개');
+      const pY = controls.button('🔮 발생할 것 같아요', () => { const b = document.getElementById('bPredYes'); if (b && !b.disabled) b.click(); }), pN = controls.button('🔮 안 생길 것 같아요', () => { const b = document.getElementById('bPredNo'); if (b && !b.disabled) b.click(); });
+      let lt = 0, ignS = false, actS = -9;
+      const pS = controls.player({ duration: 5, loop: true, label: '신호 합산', phases: [[0, '입력이 도착해요'], [0.2, '전위가 합산돼요'], [0.4, '역치에 도달하면 활동 전위'], [0.7, '활동 전위가 퍼져요']], onFrame(p) { if (!ignS) { lt = p * 10; actS = 1; } } });
+      const sumEls = Array.from(hostS.children).filter((e) => !before.includes(e));
+      let sSumSig = '', sMode = '';
+      const vCol = (v) => { const c = new THREE.Color(); if (v >= -40) c.set(0xf59e0b); else if (v >= -55) c.set(0xfacc15); else if (v >= -70) c.set(0x2f9fa8).lerp(new THREE.Color(0x5ac8b0), (v + 70) / 15); else c.set(0x3b82f6).lerp(new THREE.Color(0x2f9fa8), Math.max(0, 1 - (-70 - v) / 40)); return c; };
+      function sumFrame(Lx, t, dt) {
+        const sm = Lx.S.sm; if (!sm) return;
+        const E = sm.run ? sm.runE : sm.E, I = sm.run ? sm.runI : sm.I, tot = Lx.sumV(E, I);
+        const own = !sm.run; const tt = sm.run ? sm.t : (pS.playing ? lt : -1);
+        const fn = Lx.apFromSum ? Lx.apFromSum(5 * (E - I)) : null;
+        const V = fn && tt >= 0 ? fn.V(tt) : tot;
+        rE.set(sm.E); rI.set(sm.I);
+        inN.forEach((q) => { const on = q.i < (q.exc ? E : I); q.knob.scale.setScalar(on ? 1 : 0.55); q.knob.material.emissiveIntensity = on ? 0.6 : 0; q.knob.material.color.setHex(on ? (q.exc ? 0x22c55e : 0xef4444) : 0xc9d3e3); q.tb.visible = true; q.tb.material.color.setHex(on ? (q.exc ? 0x16a34a : 0xdc2626) : 0xd5deec);
+          const u = tt >= 0 && tt < 2.6 && on ? Math.min(1, tt / 1.2) : -1; q.pt.visible = u >= 0; if (u >= 0) q.pt.position.lerpVectors(q.p, q.s, u * 0.9); });
+        SOMA.material.color.copy(vCol(V)); SOMA.material.emissive.copy(vCol(V)); SOMA.material.emissiveIntensity = 0.25;
+        const bv = Math.max(-110, Math.min(-30, tt >= 0 ? V : tot)), y0 = GY(-70), y1 = GY(bv); gFg.scale.y = Math.max(0.02, Math.abs(y1 - y0)); gFg.position.set(5.6, (y0 + y1) / 2, 0); gFg.material.color.setHex(bv >= -55 - 1e-9 ? 0xf59e0b : bv >= -70 ? 0x22c55e : 0xe2464b);
+        const apOn = fn && fn.tstar != null && tt > fn.tstar; apBall.visible = !!apOn; if (apOn) { const k = Math.max(0, Math.min(1, (tt - fn.tstar) / 4.5)); apBall.position.set(1.2 + k * 4.0, 0, 0); }
+        sl[2].set(Math.round(bv) + ' mV'); sl[2].show(true); sl[3].set('막전위 ' + (Math.round(V) > 0 ? '+' : Math.round(V) < 0 ? '−' : '') + Math.abs(Math.round(V)) + ' mV'); sl[3].show(true); sl[4].show(true); sl[5].show(true); sl[0].show(true); sl[1].show(true); sl[6].show(!!apOn);
+        const key = E + '|' + I + '|' + (sm.run ? 1 : 0) + '|' + (sm.res ? (sm.res.ap ? 'a' : 'n') : '');
+        if (key !== sSumSig) { sSumSig = key; const ap = tot >= -55 - 1e-9; info('<b>신호 합산</b> · 흥분성 <b>' + E + '</b>개(+5 mV씩) · 억제성 <b>' + I + '</b>개(−5 mV씩)<br>합산 전위 = −70 + 5 × (' + E + ' − ' + I + ') = <b>' + (tot > 0 ? '+' : tot < 0 ? '−' : '') + Math.abs(tot) + ' mV</b><br>' + (ap ? '역치(−55 mV) 이상이라 <b style="color:#fcd34d">활동 전위가 발생해요</b>.' : '역치(−55 mV)에 못 미쳐서 <b>활동 전위가 발생하지 않아요</b>.') + '<br><small>예측 버튼을 누르면 2D와 똑같이 확인해 줘요.</small>'); }
+        const drivingS = sm.run; if (!pS.playing && !drivingS) { /* 정지 */ } 
+        if (drivingS && !pS.playing) { ignS = true; pS.set(Math.min(1, sm.t / 10)); ignS = false; }
+        pY.disabled = pN.disabled = !!sm.run;
+      }
+      function setSumMode(on) { mainG.visible = !on; sumG.visible = on; mainLabs.forEach((l) => l.show(false)); sl.forEach((l) => l.show(false)); before.forEach((e) => { e.style.display = on ? 'none' : ''; }); sumEls.forEach((e) => { e.style.display = on ? '' : 'none'; }); sSumSig = ''; if (on) pl.pause(); else { lastStage = -1; infoDirty = true; pl.play(); } }
+      setSumMode(false);
+
+      return { update(dt, t) { const Lx = window.__sim; const on = !!(Lx && Lx.S && Lx.S.mode === 'sum'); if (on !== sumG.visible) setSumMode(on); if (on) sumFrame(Lx, t, dt); }, sync() {} };
     },
   });
 })();

@@ -9,11 +9,12 @@
   const VOLN = ['아주 작게', '작게', '보통', '크게', '아주 크게'];
 
   window.SciSim3D.attach({
+    host: (window.matchMedia && window.matchMedia('(max-width: 599px)').matches) ? '.sc-tall' : '.sc-wide',
     title: '소리 전달 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHN ? 22 : 16, theta: 0.5, phi: 1.15, min: 6, max: 34, target: [1.3, 0, 0] },
     autoRotate: 0,
-    levels: [1, 2],                  // 1단계(줄 흔들기 · 진공 종 미션)는 2D 화면에서 해요
+    levels: [1, 2, 3],               // 1단계(줄 흔들기 · 진공 종 미션)는 2D 화면에서 해요
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3;
@@ -76,11 +77,79 @@
       });
       controls.button('이름표', () => { const v = labSp.visible === false; labSp.show(v); labEar.show(v); labAir.show(v); });
       text();
+      /* ===== 장면 rope(줄 파동) · 파형(소리굽쇠 · 피리 · 기타): 2D와 같은 줄 · 같은 파형 ===== */
+      const airObjs = root.children.slice();
+      const airLabs = [labSp, labEar, labAir];
+      const RNn = 120, RX0 = -5.2, RX1 = 5.6;
+      const gR = new THREE.Group(); gR.visible = false; root.add(gR);
+      const beads = new THREE.InstancedMesh(new THREE.SphereGeometry(0.12, 10, 8), mat(0xc58a4b, { roughness: 0.7 }), RNn); beads.frustumCulled = false; gR.add(beads);
+      const handle = new THREE.Mesh(new THREE.SphereGeometry(0.25, 16, 12), mat(0xffd34d, { emissive: 0xa87a00, emissiveIntensity: 0.4 })); gR.add(handle);
+      const post = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 3.4, 12), mat(0x64748b)); post.position.set(RX1 + 0.1, 0, 0); gR.add(post);
+      const mkCol = [0xef4444, 0x3b82f6, 0x22c55e];
+      const mks = mkCol.map((c) => { const m = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 12), mat(c, { emissive: c, emissiveIntensity: 0.35 })); gR.add(m); return m; });
+      const mkLabs = mks.map((m, i) => label('표시점 ' + (i + 1), m, { size: 11.5, offset: [0, 0.55, 0] }));
+      const guide = new THREE.Mesh(new THREE.BoxGeometry(RX1 - RX0, 0.015, 0.015), mat(0x94a3b8)); guide.position.set((RX0 + RX1) / 2, 0, 0); gR.add(guide);
+      const rLab = [label('손잡이 (위아래로 흔들어요)', handle, { size: 11.5, offset: [-0.5, 0.65, 0] }), label('파동이 나아가는 방향 →', [0.2, -1.8, 0], { size: 12 })];
+      const arrAuto = controls.button('🔁 자동으로 흔들기', () => { const b = document.getElementById('tgAuto'); if (b) b.click(); });
+      // 파형: 악기 + 파형 곡선 (같은 높이 · 크기라도 파형이 달라요)
+      const gT = new THREE.Group(); gT.visible = false; root.add(gT);
+      const NWB = 200, wbeads = new THREE.InstancedMesh(new THREE.SphereGeometry(0.07, 10, 8), mat(0x34d399, { emissive: 0x0b6e4f, emissiveIntensity: 0.5, roughness: 0.4 }), NWB); wbeads.frustumCulled = false; gT.add(wbeads);
+      const axisT = new THREE.Mesh(new THREE.BoxGeometry(9, 0.015, 0.015), mat(0x94a3b8)); axisT.position.set(1.6, 0, 0); gT.add(axisT);
+      const inst3 = { fork: new THREE.Group(), flute: new THREE.Group(), guitar: new THREE.Group() };
+      { const f = inst3.fork; const hd = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.9, 12), mat(0xc9d2e0, { metalness: 0.8, roughness: 0.3 })); hd.position.y = -0.9; f.add(hd);
+        [-0.22, 0.22].forEach((x) => { const p = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.8, 0.2), mat(0xdbe3ef, { metalness: 0.85, roughness: 0.25 })); p.position.set(x, 0.45, 0); f.add(p); });
+        const b = new THREE.Mesh(new THREE.TorusGeometry(0.22, 0.06, 8, 20, Math.PI), mat(0xdbe3ef, { metalness: 0.85, roughness: 0.25 })); b.rotation.z = Math.PI; b.position.y = -0.45; f.add(b); }
+      { const f = inst3.flute; const tb = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 3.4, 20), mat(0xe6c27a, { roughness: 0.5 })); tb.rotation.z = Math.PI / 2; f.add(tb);
+        for (let i = 0; i < 5; i++) { const h = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.05, 12), mat(0x3b2a14)); h.position.set(-0.5 + i * 0.5, 0.2, 0); f.add(h); } }
+      { const f = inst3.guitar; const b1 = new THREE.Mesh(new THREE.SphereGeometry(0.75, 24, 16), mat(0xb4682a, { roughness: 0.5 })); b1.scale.set(1, 1, 0.35); b1.position.y = -0.55; f.add(b1);
+        const b2 = new THREE.Mesh(new THREE.SphereGeometry(0.55, 24, 16), mat(0xb4682a, { roughness: 0.5 })); b2.scale.set(1, 1, 0.35); b2.position.y = 0.25; f.add(b2);
+        const hole = new THREE.Mesh(new THREE.CircleGeometry(0.2, 20), mat(0x20120a)); hole.position.set(0, -0.15, 0.27); f.add(hole);
+        const nk = new THREE.Mesh(new THREE.BoxGeometry(0.16, 1.7, 0.1), mat(0x5b3a1a)); nk.position.y = 1.35; f.add(nk); }
+      Object.keys(inst3).forEach((k) => { inst3[k].position.set(-5.6, 0, 0); inst3[k].visible = false; gT.add(inst3[k]); });
+      const iLab = label('', [-5.6, 1.8, 0], { size: 12.5, color: 'rgba(15,100,70,.92)' }), wLab = label('같은 소리의 높이 · 크기, 다른 파형 → 다른 음색', [1.6, 2.0, 0], { size: 12, color: 'rgba(15,100,70,.92)' });
+      const SHP = { fork: { a: [1, 0, 0, 0, 0, 0], th: [0, 0, 0, 0, 0, 0] }, flute: { a: [1, 0.55, 0.28, 0.12, 0, 0], th: [0, 2.2, 0.4, 2.6, 0, 0] }, guitar: { a: [1, 0.62, 0.5, 0.36, 0.22, 0.12], th: [0, 0.5, 1.2, 1.8, 2.4, 3.0] } };
+      const dm2 = new THREE.Object3D();
+      let lastMode = '';
+      function setSceneMode(m) {
+        if (m === lastMode) return; lastMode = m;
+        const isAir = m === 'wave';
+        airObjs.forEach((o) => { o.visible = isAir; }); airLabs.forEach((l) => l.show(isAir)); if (!isAir) mrk.show(false);
+        gR.visible = m === 'rope'; gT.visible = m === 'timbre'; mkLabs.forEach((l) => l.show(m === 'rope')); rLab.forEach((l) => l.show(m === 'rope')); arrAuto.style.display = m === 'rope' ? '' : 'none';
+        iLab.show(m === 'timbre'); wLab.show(m === 'timbre');
+        [volR, pitchR].forEach(() => {});
+        lastS = ''; if (isAir) text();
+      }
+      function updRope(S) {
+        const Rr = sm() && sm().R; if (!Rr) return;
+        const p = new V3();
+        for (let i = 0; i < RNn; i++) { const x = RX0 + (RX1 - RX0) * i / (RNn - 1), y = (Rr.u[Math.min(i, Rr.u.length - 1)] || 0) * 0.02; dm2.position.set(x, y, 0); dm2.updateMatrix(); beads.setMatrixAt(i, dm2.matrix); }
+        beads.instanceMatrix.needsUpdate = true;
+        handle.position.set(RX0 - 0.05, Rr.hand * 0.02, 0);
+        (Rr.MKI || [30, 60, 90]).forEach((idx, k) => { mks[k].position.set(RX0 + (RX1 - RX0) * idx / (RNn - 1), (Rr.u[idx] || 0) * 0.02, 0); });
+        const ph = document.querySelector('.v3-player .v3-ph'); if (ph) ph.textContent = '';
+        info('<b>줄 파동</b>: 손잡이를 흔들면 파동이 줄을 따라 <b>오른쪽으로 나아가요</b>. 하지만 줄의 각 점(<b>표시점</b>)은 <b>제자리에서 위아래로만</b> 움직여요. 파동은 <b>에너지(진동)</b>가 전달되는 거예요.' + (S && S.auto ? '' : '<br>손잡이는 옆의 2D 화면에서 끌거나, 🔁 자동으로 흔들기를 눌러 보세요.'));
+      }
+      function updTimbre(S, t) {
+        const k = S && SHP[S.timbre] ? S.timbre : 'fork', a = SHP[k].a, th = SHP[k].th, vv = Math.max(1, Math.min(5, (S && S.vol) || 3)), amp = 0.35 * vv / 3 * 1.0;
+        let pk = 0; for (let i = 0; i < 128; i++) { const q = (i / 128) * Math.PI * 2; let v = 0; for (let n = 0; n < 6; n++) v += a[n] * Math.sin((n + 1) * q + th[n]); pk = Math.max(pk, Math.abs(v)); }
+        const lam = lamOf(Math.max(150, (S && S.pitch) || 300)) * 1.15, ph0 = phase;
+        for (let i = 0; i < NWB; i++) { const x = -3 + 9 * i / (NWB - 1), q = (x / lam) * Math.PI * 2 - ph0; let v = 0; for (let n = 0; n < 6; n++) v += a[n] * Math.sin((n + 1) * q + th[n]); dm2.position.set(x, 0.9 * v / pk * amp * 2.2 + 0, 0); dm2.updateMatrix(); wbeads.setMatrixAt(i, dm2.matrix); }
+        wbeads.instanceMatrix.needsUpdate = true;
+        Object.keys(inst3).forEach((kk) => { inst3[kk].visible = kk === k; });
+        const nm = { fork: '소리굽쇠', flute: '피리', guitar: '기타' }[k];
+        iLab.set(nm); iLab.obj = [-5.6, 1.9, 0]; wLab.obj = [1.6, 2.1, 0];
+        inst3[k].rotation.z = 0; if (k === 'fork') inst3[k].children[1].position.x = -0.22 + 0.02 * Math.sin(phase * 3);
+        const ph = document.querySelector('.v3-player .v3-ph'); if (ph && !ph.textContent) ph.textContent = nm;
+        info('<b>' + nm + '</b>의 파형: ' + (k === 'fork' ? '부드러운 <b>사인 곡선</b>이에요.' : '마루와 골의 모양이 <b>복잡해요</b>.') + '<br>같은 높이(진동수)와 크기(진폭)여도 악기마다 <b>파형이 달라서</b> 소리의 맵시, <b>음색</b>이 달라요.' + '<br>악기는 옆의 2D 화면에서 바꿔요.');
+      }
       const c1 = new THREE.Color(0x4a7bff), c2 = new THREE.Color(0xf2f4fa), c3 = new THREE.Color(0xff4a4a), tc = new THREE.Color();
       const dm = new THREE.Object3D(); let k0 = 0;
       return {
         update(dt, t) {
           now = t;
+          { const S0 = sm() && sm().S, sc0 = S0 ? S0.scene : 'air', tm0 = sc0 === 'rope' ? 'rope' : (sc0 === 'scope' && (() => { const g0 = sm() && sm().game; return !!(g0 && !g0.free && g0.level === 3); })()) ? 'timbre' : 'wave'; setSceneMode(tm0);
+            if (tm0 === 'rope') { updRope(S0); return; }
+            if (tm0 === 'timbre') { updTimbre(S0, t); return; } }
           if ((k0++ % 8) === 0) readS();
           { const s2 = sm() && sm().S; const tgt = s2 && s2.scene === 'bell' && s2.air != null ? s2.air : 1; aAir += (tgt - aAir) * Math.min(1, dt * 6); }   // 진공 종에서는 2D의 공기 양을 따라가요
           const lam = lamOf(pitch), kk = Math.PI * 2 / lam;

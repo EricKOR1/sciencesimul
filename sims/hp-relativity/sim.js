@@ -788,5 +788,5 @@
   window.__sim = {
     S, VW, VH, get game() { return game; }, setScene, updateCtl, rate, startRun, launchMuons, resetClocks, LO, LK, LL, LS, T_MU_US, T_EARTH_US, H_THIN_KM, D_NOREL_M, N_MU, CARDS,
   };
-  Object.assign(window.__sim, { U_BALL, BETA_MU, H_ATM_KM, TAU_MU_US });   // 3D 보기가 2D와 같은 값을 쓰도록 내보내요
+  Object.assign(window.__sim, { CARDS, ERR_KM_DAY, U_BALL, BETA_MU, H_ATM_KM, TAU_MU_US });   // 3D 보기가 2D와 같은 값을 쓰도록 내보내요
 })();

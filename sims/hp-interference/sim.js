@@ -1351,6 +1351,6 @@
     S, VW, VH, SG, MM, PULSE, SAMPLE_X, PX0, PXM, PY0, PCM, UNK, BASE, slitXs, dxMm, setScene, measure, rippleLines, lamOf, sumAt, dotsOf, coatR, soapGeo, CMP, LINK, pathRatio, settled,
     get game() { return game; },
   };
-  Object.assign(window.__sim, { inten, wlRGB, LAMS, HALF_MM, ENV_MM, WV, FIELD_CM, SRC_X, RF, RPX, nBright, brightWord });   // 3D 보기가 2D와 같은 값을 쓰도록 내보내요
+  Object.assign(window.__sim, { N_SOAP, N_FILM, LAM_LIGO, LAM_GREEN, soapR, soapT, ligoI, inten, wlRGB, LAMS, HALF_MM, ENV_MM, WV, FIELD_CM, SRC_X, RF, RPX, nBright, brightWord });   // 3D 보기가 2D와 같은 값을 쓰도록 내보내요
 
 })();

@@ -1151,7 +1151,7 @@
 
   /* ---------- 디버그 (Playwright) ---------- */
   window.__sim = {
-    S, VW, VH, BP, RP, F_TR, F_BENCH, F_LITHO, A_LITHO, LITHO_W, ORDER, SHUF, TBL, TBL_ROWS, fOf, principal, trueTip, benchState, benchGeom, setObj, recordRow, pickOrder, toggleRay, setScene, imgKind, cx, cy, rX, rY, slA, slA2, slW, lensPolys, traceRay, rayHeights,
+    S, VW, VH, BP, RP, F_TR, F_BENCH, F_LITHO, A_LITHO, LITHO_W, ORDER, SHUF, TBL, TBL_ROWS, fOf, principal, trueTip, benchState, benchGeom, setObj, recordRow, pickOrder, STAGE_TXT, toggleRay, setScene, imgKind, cx, cy, rX, rY, slA, slA2, slW, lensPolys, traceRay, rayHeights,
     get game() { return game; },
   };
 

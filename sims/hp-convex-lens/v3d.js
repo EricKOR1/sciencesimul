@@ -1,7 +1,7 @@
 /* hp-convex-lens · 3D 볼록렌즈와 상
    2D 실험(window.__sim)의 장면을 그대로 입체로 보여 줘요: 🔺 굴절과 렌즈(평행 광선 · 프리즘 조각/곡면 렌즈) · 🧭 광선 추적(세 주광선) · 🔬 상 실험(광학대 · 스크린) · 🏭 노광 공정(마스크 → 렌즈 → 웨이퍼).
    물체 거리·렌즈 곡률·스크린 위치는 옆 조작판이 정하고 3D는 따라가요. 결상 공식은 쓰지 않고, 광선의 작도와 직접 측정으로만 상을 찾아요.
-   (광학대 그림은 2D처럼 세로 방향을 2.4배로 늘려 그렸어요) */
+   🏭 노광 공정은 웨이퍼 단면(6단계)도 입체로 봐요. (광학대 그림은 2D처럼 세로 방향을 2.4배로 늘려 그렸어요) */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -49,7 +49,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 값은 옆 조작판에서 바꿔요',
     camera: { dist: 16 * KD, theta: 0.0, phi: 1.2, min: 4, max: 40, target: [0, 0, 0] },
     autoRotate: 0,
-    levels: [0, 1, 2],
+    levels: [0, 1, 2, 3],
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
       const { V3, M, mkArrow, setArrow, tube } = tools(THREE);
@@ -173,12 +173,66 @@
       let plT = null;
       plT = controls.player({ duration: 12, loop: true, autoplay: false, label: '물체 옮기기', phases: [[0, '물체를 렌즈에 가까이 (2f 밖 → f 안쪽)'], [0.5, '물체를 멀리 (f 안쪽 → 2f 밖)']], onFrame(p) { demoT.p = p; demoT.on = p > 0 || !!(plT && plT.playing); } });
       plT.row = ctx.renderer.domElement.parentNode.parentNode.querySelector('.v3-player');
+
+      /* ================= 🏭 노광 공정 순서 (웨이퍼 단면 6장 · 맞게 고르면 단면이 차례로 나타나요) ================= */
+      const gW = new THREE.Group(); root.add(gW); gW.visible = false;
+      const GAPS = [[0.22, 0.38], [0.62, 0.78]], WW = 2.2, labW = [];
+      function mkWafer(stage) {
+        const g = new THREE.Group(), box = (x0, x1, y0, h, col, o) => { const m = new THREE.Mesh(new THREE.BoxGeometry((x1 - x0) * WW, h, 0.9), M(col, o || { roughness: 0.6 })); m.position.set(-WW / 2 + (x0 + x1) / 2 * WW, y0 + h / 2, 0); m.castShadow = true; g.add(m); return m; };
+        const hs = 0.3, ho = 0.12, hr = 0.2;
+        const segs = (excl) => { const out = []; let px = 0; GAPS.forEach(([a, b]) => { out.push([px, a]); px = b; }); out.push([px, 1]); return excl ? out : [[0, 1]]; };
+        box(0, 1, 0, hs, 0x8a95a8, { roughness: 0.5, metalness: 0.3 });
+        segs(stage >= 4).forEach(([a, b]) => box(a, b, hs, ho, 0x6aa8e8, { roughness: 0.3 }));
+        if (stage >= 1 && stage <= 4) {
+          segs(stage >= 3).forEach(([a, b]) => box(a, b, hs + ho, hr, 0xf06292, { roughness: 0.5 }));
+          if (stage === 2) GAPS.forEach(([a, b]) => box(a, b, hs + ho, hr, 0xffe28a, { roughness: 0.5, emissive: 0x6b5a10 }));
+        }
+        if (stage === 2) {
+          segs(true).forEach(([a, b]) => box(a, b, hs + ho + hr + 0.4, 0.07, 0x4b5878, { roughness: 0.5, metalness: 0.4 }));
+          GAPS.forEach(([a, b]) => [0.25, 0.75].forEach((q) => { const ar = mkArrow(0x7bdcff, 0.025); g.add(ar); const x = -WW / 2 + (a + (b - a) * q) * WW; setArrow(ar, new V3(x, hs + ho + hr + 1.1, 0), new V3(x, hs + ho + hr + 0.06, 0)); }));
+        }
+        if (stage === 0) for (let k = 0; k < 4; k++) { const d = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 6), M(0xffffff)); d.position.set(-WW / 2 + (0.12 + k * 0.25) * WW, hs + ho + 0.06, (k % 2 - 0.5) * 0.4); g.add(d); }
+        return g;
+      }
+      const cards = [];
+      for (let i = 0; i < 6; i++) {
+        const c = new THREE.Group(); gW.add(c);
+        const tile = new THREE.Mesh(new THREE.BoxGeometry(3.1, 2.5, 0.16), M(0xb4c0d6, { roughness: 0.8 })); tile.position.set(0, 1.2, -0.7); c.add(tile);
+        const dot = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 12), M(0xb9c3d6)); dot.position.set(-1.25, 2.2, -0.56); c.add(dot);
+        const wf = mkWafer(i); wf.position.set(0, 0.25, -0.1); wf.userData.s = 1.15; c.add(wf);
+        const lb = label('', [0, 0, 0], { color: '#3867f4', size: 12 }); labW.push(lb);
+        cards.push({ c, dot, wf, lb });
+      }
+      const lWt = label('', [0, 0, 0], { color: '#26324a', size: 12 }); labW.push(lWt);
+      const demoW = { p: 0, on: false };
+      let pW = null;
+      function flowScene(A, S) {
+        const l = S.lt, cols = PHN ? 2 : 3, rows = PHN ? 3 : 2, GX = 3.5, GY = 3.0;
+        const ordPlay = demoW.on && l.ordOK ? demoW.p * 6.5 : l.ordPlay, reveal = l.ordOK;
+        cards.forEach((q, i) => {
+          const col = i % cols, row = Math.floor(i / cols);
+          q.c.position.set((col - (cols - 1) / 2) * GX, ((rows - 1 - row) - (rows - 1) / 2) * GY - 0.4, 0);
+          const k = clamp((reveal ? ordPlay : 0) - i * 0.5, 0, 1), ez = 1 - Math.pow(1 - k, 3);
+          q.wf.visible = reveal && k > 0.01; q.wf.scale.set(1.15, Math.max(0.01, ez) * 1.15, 1.15);
+          const picked = l.order[i];
+          q.dot.material.color.setHex(reveal ? 0x14a058 : picked != null ? 0x3867f4 : 0xb9c3d6);
+          const nm = reveal ? A.ORDER[i] : picked != null ? A.ORDER[picked] : '';
+          q.lb.show(true); q.lb.set((i + 1) + '. ' + (nm || ((i + 1) + '번째'))); q.lb.obj = q.c; q.lb.off = [0, 2.95, 0];
+          q.lb.el.style.background = reveal ? '#14a058' : picked != null ? '#3867f4' : '#98a2b3'; q.lb.el.style.opacity = reveal ? Math.max(0.35, ez) : 1;
+        });
+        const cur = reveal ? Math.min(5, Math.floor(ordPlay / 0.5)) : -1;
+        lWt.show(false);
+        info('<b>🏭 노광 공정 순서</b> · 웨이퍼 단면이 단계마다 어떻게 바뀌는지 보여 줘요<br>' + (reveal ? (cur >= 0 && ordPlay < 6.5 ? A.STAGE_TXT[Math.min(5, Math.max(0, Math.floor((ordPlay - 0.25) / 0.5)))] + '<br>' : '') + '노광에서 마스크의 큰 회로 무늬를 투영 렌즈로 줄여 감광제에 맺고, 현상·식각을 거치면 웨이퍼 위에 아주 작은 회로가 만들어져요. 이 과정을 층마다 반복해요.' : '고른 카드 <b>' + l.order.length + ' / 6</b> · 옆 조작판의 카드를 순서대로 눌러 보세요.<br>맞게 고르면 단계마다 웨이퍼 단면이 나타나요.'));
+      }
+      pW = controls.player({ duration: 9, loop: true, autoplay: false, label: '공정 다시 보기', phases: [[0, '세척'], [0.08, '감광제 도포'], [0.16, '노광'], [0.24, '현상'], [0.32, '식각'], [0.4, '감광제 제거'], [0.55, '완성']], onFrame(p) { demoW.p = p; demoW.on = p > 0 || !!(pW && pW.playing); } });
+      { const rr = [...ctx.renderer.domElement.parentNode.parentNode.querySelectorAll('.v3-player')]; plT.row = rr[0]; pW.row = rr[1]; }
       let cur = '';
       const labsT = [lObjT, lImgT, lLensT].concat(fl), labsB = [lObjB, lLensB, lScrB, lSharp, lCard, dimA, dimB], labsR = [lFlag, lLensR];
       function setMode(S) {
         const mode = S.mode === 'litho' ? (S.lt.sub === 'proj' ? 'litho' : 'flow') : S.mode;
         if (mode === cur) return; cur = mode;
-        gT.visible = mode === 'trace'; gB.visible = mode === 'bench' || mode === 'litho'; gR.visible = mode === 'refract';
+        gT.visible = mode === 'trace'; gB.visible = mode === 'bench' || mode === 'litho'; gR.visible = mode === 'refract'; gW.visible = mode === 'flow'; labW.forEach((l) => l.show(mode === 'flow'));
+        pW.row.style.display = mode === 'flow' ? '' : 'none'; if (mode !== 'flow') { pW.pause(); pW.set(0); }
         labsT.forEach((l) => l.show(mode === 'trace')); labsB.forEach((l) => l.show(mode === 'bench' || mode === 'litho')); labsR.forEach((l) => l.show(mode === 'refract'));
         lLensT.show(false);
         plT.row.style.display = mode === 'trace' ? '' : 'none'; if (mode !== 'trace') { plT.pause(); plT.set(0); }
@@ -187,8 +241,8 @@
         else if (mode === 'bench') Object.assign(orbit, { tx: 1.5, ty: -0.5, tz: 0, phi: 1.2, theta: 0.15, dist: 15 * KD });
         else if (mode === 'litho') Object.assign(orbit, { tx: 0.5, ty: -0.5, tz: 0, phi: 1.2, theta: 0.15, dist: 17 * KD });
         else if (mode === 'refract') Object.assign(orbit, { tx: 3, ty: 0, tz: 0, phi: 1.25, theta: 0.0, dist: 13 * KD });
+        else if (mode === 'flow') Object.assign(orbit, { tx: 0, ty: 1.2, tz: 0, phi: 1.35, theta: 0.0, dist: (PHN ? 15 : 14) * KD });
       }
-      const NOTE = { flow: '🏭 노광 공정의 순서 카드(웨이퍼 세척 → … → 감광제 제거)는 2D 화면에서 해요. 위의 [▦ 2D]를 눌러 보세요.' };
       return {
         update() {
           const A = sim(); if (!A || !A.S) return; const S = A.S;
@@ -197,7 +251,7 @@
           else if (cur === 'bench') benchScene(A, S, false);
           else if (cur === 'litho') benchScene(A, S, true);
           else if (cur === 'refract') refract(A, S);
-          else info(NOTE.flow);
+          else { if (!pW.playing && pW.p === 0) demoW.on = false; if (!S.lt.ordOK && pW.playing) pW.pause(); flowScene(A, S); }
         },
         sync() {},
       };

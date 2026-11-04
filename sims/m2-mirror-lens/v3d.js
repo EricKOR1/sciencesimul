@@ -152,7 +152,7 @@
         const dirw = c.m > 0 ? '<b>바로</b> 서 있어요' : '<b>거꾸로</b> 서 있어요';
         const how = c.real ? '빛이 <b>실제로 모이는 곳</b>(실선)에 상이 보여요.' : '빛이 <b>퍼져 나가서</b>, 거꾸로 연장한 점선이 만나는 곳에 상이 보여요.';
         const nm = TYPES.find((q) => q.v === type).l;
-        const txt = c.farAway ? `<b>${nm}</b><br>물체가 초점 가까이에 있어서 빛이 거의 나란히 나가요.<br>상이 아주 멀리 생겨요.` : `<b>${nm}</b> · 상은 ${size}, ${dirw}<br>${how}`;
+        const txt = sortNote + (c.farAway ? `<b>${nm}</b><br>물체가 초점 가까이에 있어서 빛이 거의 나란히 나가요.<br>상이 아주 멀리 생겨요.` : `<b>${nm}</b> · 상은 ${size}, ${dirw}<br>${how}`);
         if (txt !== cacheTxt) { cacheTxt = txt; info(txt); }
       }
       const cmOf = (v) => Math.round(v * 3.125 * 2) / 2;               // 평면거울: 물체 거리를 cm로 (2D 차시의 2~10 cm)
@@ -196,6 +196,7 @@
         },
       });
       controls.button('이름표', () => { labsOn = !labsOn; limg.show(labsOn); lobj.show(labsOn); lf.forEach((l) => l.show(labsOn)); rebuild(); });
+      let sortNote = '';
       function show() { Object.entries(parts).forEach(([k, g]) => { g.visible = k === type; }); }
       show(); rebuild();
       // 2D 실험의 종류 · 물체 거리를 따라가요 (2D가 바뀔 때만)
@@ -208,7 +209,11 @@
           else if (s.scene === 'mirror') { const c = s.calcMirror(); t = c.conc ? 'concaveM' : 'convexM'; rr = c.d / c.f; list = ['convexM', 'concaveM']; }
           else if (s.scene === 'lens') { const c = s.calcLens(); t = c.conv ? 'convexL' : 'concaveL'; rr = c.d / c.f; list = ['convexL', 'concaveL']; }
           else if (s.scene === 'rays' || s.scene === 'eye') { t = 'plane'; list = ['plane']; }
+          else if (s.scene === 'sortM') { list = ['convexM', 'concaveM']; t = list.indexOf(type) >= 0 ? type : 'convexM'; rr = list.indexOf(type) >= 0 ? null : 2; }
+          else if (s.scene === 'sortL') { list = ['convexL', 'concaveL']; t = list.indexOf(type) >= 0 ? type : 'convexL'; rr = list.indexOf(type) >= 0 ? null : 2; }
         } catch (e) { return; }
+        const nn = s.scene === 'sortM' ? '<b>거울 쓰임 짝짓기</b>는 2D 화면에서 해요. 3D에서 볼록 · 오목 거울이 만드는 상을 비교해 보세요.<br>' : s.scene === 'sortL' ? '<b>렌즈 사례 분류</b>는 2D 화면에서 해요. 3D에서 볼록 · 오목 렌즈가 만드는 상을 비교해 보세요.<br>' : '';
+        if (nn !== sortNote) { sortNote = nn; cacheTxt = ''; if (t === type) rebuild(); }
         if (!t) return;
         if (list.join() !== allowed.join()) showAllowed(list);
         if (now - pushedAt < 0.8 || (pl && pl.playing)) return;       // 방금 3D에서 바꿨거나 재생 중이면 2D 값으로 되돌리지 않아요

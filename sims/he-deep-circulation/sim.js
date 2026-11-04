@@ -1054,7 +1054,7 @@
 
   /* ---------- 디버그 (Playwright) ---------- */
   window.__sim = {
-    S, VW, VH, LY, SEP, LPP, MASSES, DY, chainBoard, LOOP_LEG, strengthF, salF, rhoF, tkG, secTray,
+    S, VW, VH, LY, SEP, LPP, MASSES, DY, RHO, chainBoard, LOOP_LEG, strengthF, salF, rhoF, tkG, secTray,
     get game() { return game; },
     enterLevel, setView, resetTank, tpDelta, secDrop, latOfX, nearestBand,
     setF(v) { S.F = v; setSlider(sMelt, oMelt, v, meltTxt); },

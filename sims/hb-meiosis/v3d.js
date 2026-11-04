@@ -69,6 +69,32 @@
         return { outer, mid, ks };
       });
       const kin = chrs.map(() => null);
+      /* ===== 체세포분열 (2n=4): 염색체가 짝짓지 않고 각자 적도면에 늘어서요 — 2D '체세포분열' 5단계와 같아요 ===== */
+      const MITN = [['복제 전 (G1기)', 'G₁기: 염색체마다 염색 분체가 하나예요.', '2n=4 · DNA 상대량 2'], ['복제 (S기)', 'S기: DNA가 복제되어 염색체마다 염색 분체 2개가 붙어 있어요.', '2n=4 · DNA 상대량 4'], ['중기: 적도면에 배열', '염색체가 <b>각자</b> 적도면에 늘어서요. 상동 염색체끼리 짝짓지 않아요!', '2n=4 · DNA 상대량 4'], ['후기: 염색 분체 분리', '<b>염색 분체</b>가 분리되어 양극으로 이동해요. (염색체가 일시적으로 8개)', '염색체 8개 · DNA 상대량 4'], ['체세포분열 완료: 딸세포 2개', '딸세포 2개! 염색체 수가 모세포와 같은 2n=4예요.', '2n=4 · DNA 상대량 2 (세포당)']];
+      const mitG = new THREE.Group(); root.add(mitG); mitG.visible = false;
+      const mchr = [0, 1, 2, 3].map((c) => { const outer = new THREE.Group(); const ks = [0, 1].map(() => { const m = new THREE.Mesh(bar(LEN[c]), c % 2 ? BLUE : RED); outer.add(m); return m; }); mitG.add(outer); return { outer, ks }; });
+      const ZM = [-1.5, -0.5, 0.5, 1.5], MOFF = [0.07, 0.1, 0.1, 1.7, 2.5];
+      const CELLM = [[[0, 0, 0, 3.5, 3.3, 3.3], [0, 0, 0, 3.5, 3.3, 3.3], [0, 0, 0, 3.5, 3.3, 3.3], [0, 0, 0, 4.4, 3.2, 3.2], [-2.5, 0, 0, 2.5, 2.5, 2.5]], [[0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0], [2.5, 0, 0, 2.5, 2.5, 2.5]]];
+      const kvM = (arr, s2) => { const i = Math.min(3, Math.floor(s2)), f = sm(s2 - i), a = arr[i], b = arr[i + 1]; return a.map((v, k) => v + (b[k] - v) * f); };
+      const kfM = (arr, s2) => { const i = Math.min(3, Math.floor(s2)), f = sm(s2 - i); return arr[i] + (arr[i + 1] - arr[i]) * f; };
+      const tmpV = new THREE.Vector3();
+      function mitFrame(ss) {
+        cells.forEach((m, i) => { if (i < 2) { const k = kvM(CELLM[i], ss); m.position.set(k[0], k[1], k[2]); m.scale.set(Math.max(0.001, k[3]), Math.max(0.001, k[4]), Math.max(0.001, k[5])); m.visible = k[3] > 0.05; } else m.visible = false; });
+        const ns2 = 1 - sm((ss - 1.1) / 0.8); nuc.visible = ns2 > 0.02; nuc.position.set(0, 0, 0); nuc.scale.setScalar(Math.max(0.01, 2.2 * ns2));
+        const wM = sm((ss - 1.5) / 0.5) * (1 - sm((ss - 3.7) / 0.3)); let si = 0; const chrom = [];
+        mchr.forEach((C, c) => {
+          const p0 = POS[c][0], cx = kfM([p0[0], p0[0], 0, 0, 0], ss), cy = kfM([p0[1], p0[1], 0, 0, 0], ss), cz = kfM([p0[2], p0[2], ZM[c], ZM[c], ZM[c] * 0.55], ss);
+          const tilt = TILT0[c] * (1 - sm((ss - 1.0) / 0.8)), off = kfM(MOFF, ss);
+          C.outer.position.set(cx, cy, cz); C.outer.rotation.z = tilt;
+          C.ks.forEach((m, k) => { const sg = k ? 1 : -1, v = k === 0 ? 1 : sm(ss); m.position.x = sg * off; m.rotation.z = sg * -0.13 * sm(ss) * (1 - sm((ss - 2.6) / 0.6)); m.scale.setScalar(Math.max(0.001, v * (ss > 3.5 ? 1 - 0.1 * sm(ss - 3.5) : 1))); m.visible = v > 0.02; if (wM > 0.03 && v > 0.5) { m.getWorldPosition(tmpV); chrom.push([sg, tmpV.clone()]); } });
+        });
+        const poles = []; if (wM > 0.03) { const px = 3.9; [-1, 1].forEach((sg) => poles.push(V3(sg * px, 0, 0))); chrom.forEach(([sg, p]) => { if (si < NSP) spoke(si++, poles[sg > 0 ? 1 : 0], p, wM); }); }
+        for (; si < NSP; si++) spokes[si].visible = false;
+        const dm = new THREE.Object3D(); for (let i = 0; i < 6; i++) { if (i < poles.length) { dm.position.copy(poles[i]); dm.scale.setScalar(1); } else { dm.position.set(0, -99, 0); dm.scale.setScalar(0.001); } dm.updateMatrix(); poleI.setMatrixAt(i, dm.matrix); } poleI.instanceMatrix.needsUpdate = true;
+        lab2.show(false); labH.show(false); labS.show(wM > 0.6); labS.obj = [2.6, 0.2, 0]; labS.off = [0, 0, 0]; labN.show(ss < 1.2); labN.obj = [0, 2.3, 0]; labN.off = [0, 0, 0];
+        const key = 'm' + Math.round(ss) + nd; if (key !== lastKey) { lastKey = key; const S2 = MITN[Math.round(ss)]; info('<b>체세포분열 · ' + S2[0] + '</b><br>' + S2[1] + '<br>' + S2[2]); }
+      }
+      let proc = 'mei', cmpProc = 'mit', nd = '';
 
       /* 방추사 : 극과 염색 분체를 잇는 가는 막대 */
       const NSP = 24, spokes = [];
@@ -88,19 +114,38 @@
       const lab2 = label('2가 염색체', null, { color: 'rgba(255,122,70,.92)' }), labS = label('방추사', null, {}), labN = label('핵막', null, {}), labH = label('상동 염색체', null, {});
       let s = 0, tgt = 0, auto = false, hold = 0, lastKey = '', playing = false, seen2D = -1, plGuard = false;
       const L2 = () => window.__sim || null;
-      const rng = controls.range('시기', 0, 8, 0.01, 0, (v) => { tgt = v; pl.pause(); }, (v) => STAGES[Math.round(v)].n);
-      controls.button('◀', () => { tgt = Math.max(0, Math.round(tgt) - 1); pl.pause(); rng.set(tgt); });
-      controls.button('▶', () => { tgt = Math.min(8, Math.round(tgt) + 1); pl.pause(); rng.set(tgt); });
+      const maxS = () => (proc === 'mit' ? 4 : 8);
+      function push2D() { const L = L2(); if (!L || !L.setFrame || !L.S || L.S.mode === 'cmp') return; const k = Math.round(tgt); if (L.S.f !== k) { const act = proc === 'mit' ? pm : pl; L.setFrame(k); if (L.S.f !== k) { tgt = L.S.f; rng.set(tgt); if (act.playing) { act.pause(); } } } seen2D = L.S.f; }
+      const rng = controls.range('시기', 0, 8, 0.01, 0, (v) => { tgt = Math.min(maxS(), v); pl.pause(); pm.pause(); push2D(); }, (v) => (proc === 'mit' ? MITN : STAGES.map((q) => [q.n]))[Math.min(maxS(), Math.round(v))][0]);
+      controls.button('◀', () => { tgt = Math.max(0, Math.round(tgt) - 1); pl.pause(); pm.pause(); rng.set(tgt); push2D(); });
+      controls.button('▶', () => { tgt = Math.min(maxS(), Math.round(tgt) + 1); pl.pause(); pm.pause(); rng.set(tgt); push2D(); });
       const pl = controls.player({ duration: 12, loop: true, autoplay: false, label: '감수 분열',
         phases: [[0, '복제 전'], [1 / 9, '복제 후'], [2 / 9, '전기 Ⅰ'], [3 / 9, '중기 Ⅰ'], [4 / 9, '후기 Ⅰ'], [5 / 9, '세포 2개'], [6 / 9, '중기 Ⅱ'], [7 / 9, '후기 Ⅱ'], [8 / 9, '생식세포 4개']],
         onFrame(p) { if (plGuard) return; tgt = Math.min(8, p * 9); rng.set(tgt); auto = true; } });
 
+      const pm = controls.player({ duration: 9, loop: true, autoplay: false, label: '체세포분열', phases: [[0, '복제 전'], [1 / 5, '복제 후'], [2 / 5, '중기'], [3 / 5, '후기'], [4 / 5, '딸세포 2개']], onFrame(p) { if (plGuard) return; tgt = Math.min(4, p * 5); rng.set(tgt); auto = true; } });
+      const hostM = ctx.controls.text('').parentNode, rowsM = Array.from(hostM.querySelectorAll('.v3-player')), rowMei = rowsM[0], rowMit = rowsM[1], inpR = hostM.querySelector('input[type=range]');
+      const cmpSeg = controls.segment('보기', [{ value: 'mit', label: '체세포분열' }, { value: 'mei', label: '감수 분열' }], 'mit', (v) => { cmpProc = v; });
+      const cmpEls = Array.from(hostM.children).slice(-3);
+      function switchProc(p) {
+        proc = p; chrs.forEach((C) => { C.outer.visible = p === 'mei'; }); mitG.visible = p === 'mit'; rowMei.style.display = p === 'mei' ? '' : 'none'; rowMit.style.display = p === 'mit' ? '' : 'none';
+        if (inpR) inpR.max = p === 'mit' ? 4 : 8; tgt = Math.min(tgt, maxS()); rng.set(tgt); lastKey = ''; seen2D = -1; for (let i = 0; i < NSP; i++) spokes[i].visible = false; pl.pause(); pm.pause();
+        cells.forEach((m, i) => { m.visible = true; });
+      }
+      switchProc('mei');
       return {
         update(dt, t) {
-          if (pl.playing) { tgt = Math.min(8, pl.p * 9); rng.set(tgt); } else { auto = false; }
-          { const L = L2(); if (L && L.S.proc === 'mei' && !pl.playing && L.S.f !== seen2D) { seen2D = L.S.f; tgt = L.S.f; rng.set(tgt); } }
+          const L0 = L2(), S0 = L0 && L0.S;
+          const pn = !S0 ? 'mei' : S0.mode === 'cmp' ? cmpProc : (S0.proc === 'mit' ? 'mit' : 'mei');
+          if (pn !== proc) switchProc(pn);
+          { const isC = !!(S0 && S0.mode === 'cmp'); cmpEls.forEach((e) => { e.style.display = isC ? '' : 'none'; }); if (isC) cmpSeg.set(cmpProc); }
+          nd = S0 && S0.mode === 'nondis' ? 'N' : '';
+          const pa = proc === 'mit' ? pm : pl, NS2 = proc === 'mit' ? 5 : 9;
+          if (pa.playing) { tgt = Math.min(NS2 - 1, pa.p * NS2); rng.set(tgt); push2D(); } else { auto = false; }
+          { const L = L2(); if (L && L.S.mode !== 'cmp' && !pa.playing && L.S.f !== seen2D) { seen2D = L.S.f; tgt = Math.min(maxS(), L.S.f); rng.set(tgt); } }
           s += (tgt - s) * Math.min(1, dt * (auto ? 6 : 4)); if (Math.abs(tgt - s) < 0.001) s = tgt;
-          const ss = Math.min(8, Math.max(0, s));
+          const ss = Math.min(maxS(), Math.max(0, s));
+          if (proc === 'mit') { mitFrame(ss); return; }
           // 세포
           cells.forEach((m, i) => { const k = kv(CELL[i], ss); m.position.set(k[0], k[1], k[2]); m.scale.set(Math.max(0.001, k[3]), Math.max(0.001, k[4]), Math.max(0.001, k[5])); m.visible = k[3] > 0.05; });
           const ns = 1 - sm((ss - 1.9) / 0.7); nuc.visible = ns > 0.02; nuc.scale.setScalar(Math.max(0.01, 2.2 * ns));
@@ -108,7 +153,7 @@
           const phi = kf(PHI, ss), off = kf(OFF, ss), tk = kf(TILTK, ss), repl = sm(ss - 0.0), pos = [], wk = [];
           const baseTilt = (c) => { const w = 1 - sm((ss - 2.4) / 1.0); return TILT0[c] * w; };
           chrs.forEach((C, c) => {
-            const p = kv(POS[c], ss); C.outer.position.set(p[0], p[1], p[2]); C.outer.rotation.z = baseTilt(c); C.mid.rotation.y = phi;
+            let p = kv(POS[c], ss); if (nd && c === 1) { const q0 = kv(POS[0], ss), w = sm((ss - 3.4) / 1.0); p = [p[0] + (q0[0] + 0.5 - p[0]) * w, p[1] + (0.0 - p[1]) * w, p[2] + (0.0 - p[2]) * w]; } C.outer.position.set(p[0], p[1], p[2]); C.outer.rotation.z = baseTilt(c); C.mid.rotation.y = phi;
             C.ks.forEach((m, k) => { m.position.x = (k ? 1 : -1) * off; m.rotation.z = (k ? -1 : 1) * tk; const v = k === 0 ? 1 : sm(ss); m.scale.setScalar(Math.max(0.001, v)); m.visible = v > 0.02; });
             pos.push(V3(p[0], p[1], p[2]));
           });
@@ -125,8 +170,8 @@
           labS.show(wI > 0.6 || wII > 0.6); labS.obj = wI > 0.6 ? [2.6, 0.2, 0] : [2.5, 0.2, 1.6]; labS.off = [0, 0, 0];
           labN.show(ss > 0.3 && ss < 1.8); labN.obj = [0, 2.3, 0]; labN.off = [0, 0, 0];
           const vh = ss < 2.0; labH.show(vh && ss > 1.0); labH.obj = [0.1, 1.9, 0.0]; labH.off = [0, 0, 0];
-          const key = Math.round(ss);
-          if (key !== lastKey) { lastKey = key; const S = STAGES[key]; info('<b>' + S.n + '</b>: ' + S.t + '<br>' + S.c); }
+          const key = Math.round(ss) + nd;
+          if (key !== lastKey) { lastKey = key; const S = STAGES[Math.round(ss)]; info('<b>' + S.n + '</b>: ' + S.t + '<br>' + S.c + (nd && ss > 3.4 ? '<br><span style="color:#fcd34d">염색체 비분리: 상동 염색체가 같은 쪽으로 이동해 생식세포의 염색체 수가 n+1(3개) / n−1(1개)이 돼요.</span>' : '') + (S0 && S0.mode === 'cmp' ? '<br><small>비교표는 2D에서 채워요. 위에서 두 분열을 번갈아 봐요.</small>' : '')); }
         },
         sync() {},
       };

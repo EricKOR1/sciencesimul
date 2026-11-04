@@ -39,7 +39,8 @@
       const aGeo = new THREE.ConeGeometry(0.11, 0.3, 5); aGeo.translate(0, 0.15, 0);
       const bGeo = (() => { const s = new THREE.SphereGeometry(0.12, 12, 9); s.translate(0, 0.28, 0); const st = new THREE.CylinderGeometry(0.03, 0.03, 0.2, 6); st.translate(0, 0.1, 0); const pos = [], idx = []; let off = 0; [s, st].forEach((g) => { for (let i = 0; i < g.attributes.position.count; i++) pos.push(g.attributes.position.getX(i), g.attributes.position.getY(i), g.attributes.position.getZ(i)); g.index.array.forEach((k) => idx.push(k + off)); off += g.attributes.position.count; }); const o = new THREE.BufferGeometry(); o.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); o.setIndex(idx); o.computeVertexNormals(); return o; })();
       const aI = new THREE.InstancedMesh(aGeo, std(0x1fb85c, { roughness: 0.35, emissive: 0x0a4a22, emissiveIntensity: 0.4 }), NR * NS), bI = new THREE.InstancedMesh(bGeo, std(0xff8a2d, { roughness: 0.35, emissive: 0x6a3000, emissiveIntensity: 0.4 }), NR * NS);
-      root.add(aI, bI);
+      const rI = new THREE.InstancedMesh(new THREE.BoxGeometry(0.2, 0.2, 0.2).translate(0, 0.12, 0), std(0x8b5cf6, { roughness: 0.35, emissive: 0x3b1a8a, emissiveIntensity: 0.4 }), NR * 4);
+      root.add(aI, bI, rI);
 
       /* 응집소 (Y 항체) */
       function merged(parts) { const pos = [], nor = [], col = [], idx = []; let off = 0; parts.forEach(([geo, mat, color]) => { const g = geo.clone().applyMatrix4(mat); const c = new THREE.Color(color), p = g.attributes.position, n = g.attributes.normal; for (let i = 0; i < p.count; i++) { pos.push(p.getX(i), p.getY(i), p.getZ(i)); nor.push(n.getX(i), n.getY(i), n.getZ(i)); col.push(c.r, c.g, c.b); } g.index.array.forEach((k) => idx.push(k + off)); off += p.count; }); const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.setIndex(idx); return g; }
@@ -52,9 +53,10 @@
       }
       const NF = 22;
       const abA = new THREE.InstancedMesh(yGeo(0x1fe070), std(0xffffff, { vertexColors: true, roughness: 0.35 }), NF), abB = new THREE.InstancedMesh(yGeo(0xff8a2d), std(0xffffff, { vertexColors: true, roughness: 0.35 }), NF);
-      root.add(abA, abB);
+      const abR = new THREE.InstancedMesh(yGeo(0x8b5cf6), std(0xffffff, { vertexColors: true, roughness: 0.35 }), NF);
+      root.add(abA, abB, abR);
       const fr = (n) => Array.from({ length: n }, () => ({ p: V3((R() - 0.5) * 8, (R() - 0.5) * 4.2, (R() - 0.5) * 5), v: V3(R() - 0.5, R() - 0.5, R() - 0.5).multiplyScalar(0.5), q: new THREE.Quaternion().setFromEuler(new THREE.Euler(R() * 6, R() * 6, R() * 6)), spin: V3(R() - 0.5, R() - 0.5, R() - 0.5).normalize(), w: 0.4 + R() * 0.6 }));
-      const freeA = fr(NF), freeB = fr(NF);
+      const freeA = fr(NF), freeB = fr(NF), freeR = fr(NF);
 
       const lab = {
         rbc: label('적혈구', cells[0].m, { offset: [0, 1.2, 0] }),
@@ -62,24 +64,31 @@
         ab: label('응집소', null, { color: 'rgba(40,120,200,.92)' }),
       };
 
-      let type = 'A', serum = 'none', agg = 0, mixing = false, lastKey = '';
-      function matches() { const g = TYPES[type].ag; return (serum === 'a' && g.indexOf('A') >= 0) || (serum === 'b' && g.indexOf('B') >= 0); }
-      controls.segment('혈액형', ['A', 'B', 'AB', 'O'].map((k) => ({ label: k + '형', value: k })), 'A', (v) => { type = v; agg = 0; mixing = false; pl.pause(); pl.set(0); });
-      controls.segment('혈청', [{ label: '없음', value: 'none' }, { label: '항A 혈청', value: 'a' }, { label: '항B 혈청', value: 'b' }], 'none', (v) => { serum = v; agg = 0; mixing = false; pl.pause(); pl.set(0); });
+      let type = 'A', rh = true, serum = 'none', agg = 0, mixing = false, lastKey = '', follow = false, tsSig = '', own = false;
+      function matches() { const g = TYPES[type].ag; return (serum === 'a' && g.indexOf('A') >= 0) || (serum === 'b' && g.indexOf('B') >= 0) || (serum === 'r' && rh); }
+      const tSeg = controls.segment('혈액형', ['A', 'B', 'AB', 'O'].map((k) => ({ label: k + '형', value: k })), 'A', (v) => { type = v; agg = 0; mixing = false; follow = false; pl.pause(); pl.set(0); });
+      const rSeg = controls.segment('Rh식', [{ label: 'Rh⁺', value: '1' }, { label: 'Rh⁻', value: '0' }], '1', (v) => { rh = v === '1'; agg = 0; mixing = false; follow = false; pl.pause(); pl.set(0); });
+      const sSeg = controls.segment('혈청', [{ label: '없음', value: 'none' }, { label: '항A 혈청', value: 'a' }, { label: '항B 혈청', value: 'b' }, { label: '항Rh 혈청', value: 'r' }], 'none', (v) => { serum = v; agg = 0; mixing = false; follow = false; pl.pause(); pl.set(0); });
       let pp = 0;
       const pl = controls.player({ duration: 6, loop: false, autoplay: false, label: '섞기 → 응집',
         phases: [[0, '섞기 전'], [0.08, '섞는 중'], [0.4, '결과']], onFrame(p) { pp = p; } });
       const usePl = () => pl.playing || pl.p > 0;
-      controls.button('↺ 되돌리기', () => { mixing = false; pl.pause(); pl.set(0); agg = 0; });
+      controls.button('↺ 되돌리기', () => { mixing = false; follow = false; pl.pause(); pl.set(0); agg = 0; });
 
       const link = []; for (let k = 0; k < 5; k++) { link.push([0, k + 1]); link.push([k + 1, ((k + 1) % 5) + 1]); }
       const tmpM = new THREE.Matrix4(), siteM = new THREE.Matrix4(), q = new THREE.Quaternion(), up = V3(0, 1, 0);
       return {
         update(dt, t) {
-          if (usePl()) { mixing = pp > 0.08; agg = serum !== 'none' && matches() && mixing ? Math.max(0, Math.min(1, (pp - 0.08) / 0.5)) : 0; }
+          { const L = ctx.lesson(), S2 = L && L.S;
+            if (S2 && S2.mode === 'test' && S2.TS && S2.TS.loaded != null && L.SAMPLES) {
+              const T0 = S2.TS, sp = L.SAMPLES[T0.loaded], key2 = T0.loaded + '|' + T0.phase + '|' + T0.zoom + '|' + (T0.ins && T0.ins.agg);
+              if (key2 !== tsSig) { tsSig = key2; follow = true; type = sp.abo; rh = !!sp.rh; serum = (T0.phase === 'shake' || T0.phase === 'read') ? ['a', 'b', 'r'][T0.zoom] || 'none' : 'none'; mixing = T0.phase === 'shake' || T0.phase === 'read'; pl.pause(); pl.set(0); tSeg.set(type); rSeg.set(rh ? '1' : '0'); sSeg.set(serum); lastKey = ''; if (!mixing) agg = 0; }
+            } else if (tsSig) { tsSig = ''; }
+          }
+          if (usePl() && !follow) { mixing = pp > 0.08; agg = serum !== 'none' && matches() && mixing ? Math.max(0, Math.min(1, (pp - 0.08) / 0.5)) : 0; }
           const doAgg = mixing && matches(); if (!usePl()) agg += ((doAgg ? 1 : 0) - agg) * Math.min(1, dt * (doAgg ? 1.1 : 2.2));
           const u = ease(agg);
-          let ia = 0, ib = 0;
+          let ia = 0, ib = 0, ir = 0;
           const hasA = TYPES[type].ag.indexOf('A') >= 0, hasB = TYPES[type].ag.indexOf('B') >= 0;
           const poses = [];
           cells.forEach((c, i) => {
@@ -90,11 +99,11 @@
               const useA = hasA && (!hasB || (k % 2 === 0)), useB = hasB && (!hasA || (k % 2 === 1));
               const loc = new THREE.Matrix4().compose(s.pos, new THREE.Quaternion().setFromUnitVectors(up, s.nrm), V3(1, 1, 1));
               tmpM.compose(pos, qq, V3(1, 1, 1)); siteM.multiplyMatrices(tmpM, loc);
-              if (useA) aI.setMatrixAt(ia++, siteM); else if (useB) bI.setMatrixAt(ib++, siteM);
+              if (k >= 16) { if (rh) rI.setMatrixAt(ir++, siteM); } else if (useA) aI.setMatrixAt(ia++, siteM); else if (useB) bI.setMatrixAt(ib++, siteM);
             });
           });
           D.position.set(0, -80, 0); D.scale.setScalar(0.001); D.quaternion.identity(); D.updateMatrix();
-          for (let i = ia; i < NR * NS; i++) aI.setMatrixAt(i, D.matrix); for (let i = ib; i < NR * NS; i++) bI.setMatrixAt(i, D.matrix);
+          for (let i = ia; i < NR * NS; i++) aI.setMatrixAt(i, D.matrix); for (let i = ib; i < NR * NS; i++) bI.setMatrixAt(i, D.matrix); for (let i = ir; i < NR * 4; i++) rI.setMatrixAt(i, D.matrix); rI.instanceMatrix.needsUpdate = true;
           aI.instanceMatrix.needsUpdate = true; bI.instanceMatrix.needsUpdate = true;
           // 응집소: 혈청이 없으면 혈장 속 자기 응집소, 있으면 혈청의 응집소
           const wantA = serum === 'a' ? NF : serum === 'none' ? (TYPES[type].ab.indexOf('a') >= 0 ? 8 : 0) : 0;
@@ -116,24 +125,26 @@
             }
             mesh.instanceMatrix.needsUpdate = true;
           };
-          place(abA, freeA, wantA, serum === 'a' && matches() && mixing); place(abB, freeB, wantB, serum === 'b' && matches() && mixing);
+          const wantR = serum === 'r' ? NF : 0;
+          place(abA, freeA, wantA, serum === 'a' && matches() && mixing); place(abB, freeB, wantB, serum === 'b' && matches() && mixing); place(abR, freeR, wantR, serum === 'r' && matches() && mixing);
           // 이름표
           const p0 = poses[0][0];
           lab.ag.obj = [p0.x, p0.y + 1.45, p0.z]; lab.ag.off = [0, 0, 0];
           const fa = wantA ? freeA[0] : wantB ? freeB[0] : null;
           lab.ab.obj = fa ? [fa.p.x, fa.p.y + 0.7, fa.p.z] : [0, 3, 0]; lab.ab.off = [0, 0, 0];
-          const key = type + serum + (mixing ? 'm' : '') + (agg > 0.9 ? 'g' : '');
+          const key = type + (rh ? '+' : '-') + serum + (mixing ? 'm' : '') + (agg > 0.9 ? 'g' : '');
           if (key !== lastKey) {
             lastKey = key;
             const T = TYPES[type];
-            const agTxt = T.ag.length ? T.ag.map((x) => '응집원 ' + x).join(' + ') : '응집원 없음';
+            const rhTx = rh ? 'Rh⁺ (Rh 응집원 ■)' : 'Rh⁻ (Rh 응집원 없음)', sName = serum === 'a' ? '항A' : serum === 'b' ? '항B' : '항Rh';
+            const agTxt = (T.ag.length ? T.ag.map((x) => '응집원 ' + x).join(' + ') : 'ABO 응집원 없음') + ' · ' + rhTx;
             const abTxt = T.ab.length ? T.ab.map((x) => (x === 'a' ? '응집소 α(항A)' : '응집소 β(항B)')).join(' + ') : '응집소 없음';
-            lab.ag.set(T.ag.length ? '응집원 ' + T.ag.join('·') : '응집원 없음'); lab.ag.show(true);
-            lab.ab.set(serum === 'a' ? '항A 혈청의 응집소 α' : serum === 'b' ? '항B 혈청의 응집소 β' : (T.ab.length ? '혈장의 ' + (T.ab[0] === 'a' ? '응집소 α(항A)' : '응집소 β(항B)') : '응집소 없음'));
+            lab.ag.set((T.ag.length ? '응집원 ' + T.ag.join('·') : 'ABO 응집원 없음') + (rh ? ' · Rh■' : '')); lab.ag.show(true);
+            lab.ab.set(serum === 'a' ? '항A 혈청의 응집소 α' : serum === 'b' ? '항B 혈청의 응집소 β' : serum === 'r' ? '항Rh 혈청의 항D 항체' : (T.ab.length ? '혈장의 ' + (T.ab[0] === 'a' ? '응집소 α(항A)' : '응집소 β(항B)') : '응집소 없음'));
             lab.ab.show(serum !== 'none' || T.ab.length > 0);
-            if (serum === 'none') info('<b>' + type + '형</b>: 적혈구에 ' + agTxt + ', 혈장에 ' + abTxt + '<br>혈청을 골라 섞어 보세요.');
-            else if (!mixing) info('<b>' + type + '형</b> 혈액 + <b>' + (serum === 'a' ? '항A' : '항B') + ' 혈청</b>: [섞기]를 눌러 봐요.');
-            else info(matches() ? '<b>응집 반응 일어남</b>: 응집원과 응집소의 모양이 맞아 결합하고, 적혈구가 엉겨요.' : '<b>응집 없음</b>: 응집원과 응집소의 모양이 맞지 않아 결합하지 않아요.');
+            if (serum === 'none') info('<b>' + type + '형 ' + (rh ? 'Rh⁺' : 'Rh⁻') + '</b>: ' + agTxt + ', 혈장에 ' + abTxt + '<br>혈청을 골라 섞어 보세요.');
+            else if (!mixing) info('<b>' + type + '형 ' + (rh ? 'Rh⁺' : 'Rh⁻') + '</b> 혈액 + <b>' + sName + ' 혈청</b>: [섞기]를 눌러 봐요.');
+            else info(matches() ? '<b>응집 반응 일어남</b>: ' + (serum === 'r' ? 'Rh 응집원(■)에 항Rh 항체가 결합해 적혈구가 엉겨요 → <b>Rh⁺</b>.' : '응집원과 응집소의 모양이 맞아 결합하고, 적혈구가 엉겨요.') : '<b>응집 없음</b>: ' + (serum === 'r' ? 'Rh 응집원(■)이 없어서 항Rh 혈청과 반응하지 않아요 → <b>Rh⁻</b>.' : '응집원과 응집소의 모양이 맞지 않아 결합하지 않아요.'));
           }
         },
         sync() {},

@@ -110,8 +110,95 @@
       }
       const seg = controls.segment('', KINDS.map((k, i) => ({ label: k.k, value: i })), 0, (i) => { const L = window.__sim; if (L) L.pickSample(KEYS[i]); show(i); });
       show(0);
+
+      /* ===== 증식: 세균의 이분법(배양 접시) · 바이러스의 증식(숙주 세포) — 2D '증식과 전염'과 같은 상태 ===== */
+      const gG = new THREE.Group(), vG = new THREE.Group(); root.add(gG, vG); gG.visible = vG.visible = false;
+      const gLabs = [], vLabs = [];
+      const GL_ = (arr, t, o, op) => { const l = label(t, o, op || {}); l.show(false); arr.push(l); return l; };
+      /* 세균 배양 접시 */
+      const DR = 3.8;
+      gG.add(new THREE.Mesh(new THREE.CylinderGeometry(DR + 0.15, DR + 0.15, 0.45, 64, 1, true), ghost(0xdbeafe, 0.3)));
+      const agar = new THREE.Mesh(new THREE.CylinderGeometry(DR, DR, 0.2, 64), std(0xf5dd8d, { roughness: 0.55 })); agar.position.y = -0.1; gG.add(agar);
+      const NBM = 130, bactI = new THREE.InstancedMesh(new THREE.CapsuleGeometry(0.15, 0.35, 4, 8).rotateZ(Math.PI / 2), std(0x16a34a, { roughness: 0.4, emissive: 0x064e1e, emissiveIntensity: 0.3 }), NBM); gG.add(bactI);
+      const gL = [GL_(gLabs, '배양 접시 (현미경 시야)', [0, 0.7, DR + 0.4], { size: 12, color: 'rgba(38,50,74,.9)' }), GL_(gLabs, '', [0, 1.9, 0], { size: 14, color: 'rgba(22,101,52,.95)' })];
+      const eo = (x) => 1 - Math.pow(1 - x, 3);
+      const hostEls = []; let gSeg = null;
+      let ignG = false, actG = -9, lastG = -9, tnow = 0;
+      const gBtns = [];
+      const gBtn1 = controls.button('▶ 1시간 배양', () => { const b = document.getElementById('bGrow'); if (b && !b.disabled) b.click(); }); const gBtn2 = controls.button('↺ 처음부터', () => { const b = document.getElementById('bGrowReset'); if (b) b.click(); });
+      const pG = controls.player({ duration: 18, loop: false, label: '세균 증식', phases: [0, 1, 2, 3, 4, 5, 6].map((h) => [h / 7, h + '시간 · ' + Math.pow(2, 3 * h).toLocaleString('ko-KR') + '개']), onFrame() { if (!ignG) actG = tnow; } });
+      /* 바이러스 증식 */
+      const VW_ = 8.4, vBase = new THREE.Mesh(new THREE.BoxGeometry(VW_, 0.12, 6.4), std(0xe8e4f7, { roughness: 0.7 })); vBase.position.y = -0.1; vG.add(vBase);
+      const hosts = [0, 1, 2, 3, 4].map(() => { const g = new THREE.Group(); const body = new THREE.Mesh(new THREE.SphereGeometry(1, 28, 20), std(0xf9c9a8, { roughness: 0.4, transparent: true, opacity: 0.8 })); body.scale.set(1, 0.7, 1); g.add(body); const nuc = new THREE.Mesh(new THREE.SphereGeometry(0.3, 16, 12), std(0x8b5cf6, { roughness: 0.4 })); nuc.position.set(-0.25, 0.25, -0.1); g.add(nuc); const bar = new THREE.Mesh(new THREE.BoxGeometry(1, 0.06, 0.12), std(0x8b5cf6)); bar.position.set(0, 0.0, 1.35); g.add(bar); vG.add(g); return { g, body, nuc, bar }; });
+      const virI = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 0), std(0x7c3aed, { roughness: 0.35, flatShading: true, emissive: 0x2e1065, emissiveIntensity: 0.4 }), 80); vG.add(virI);
+      const vL = [GL_(vLabs, '숙주 세포', [0, 0, 0], { size: 12, color: 'rgba(124,45,18,.9)' }), GL_(vLabs, '바이러스', [0, 0, 0], { size: 12, color: 'rgba(91,33,182,.92)' })];
+      const vBtn1 = controls.button('▶ 시간 흐르기', () => { const b = document.getElementById('bVir'); if (b && !b.disabled) b.click(); }); const vBtn2 = controls.button('↺ 처음으로', () => { const b = document.getElementById('bVirReset'); if (b) b.click(); });
+      const pV = controls.player({ duration: 12, loop: false, label: '바이러스 증식', phases: [[0, '바이러스가 숙주 세포에 붙어요'], [0.08, '세포 안으로 침입'], [0.3, '세포 속에서 증식'], [0.4, '세포가 터져요 · 새 바이러스'], [0.6, '또 다른 세포를 감염']], onFrame() { if (!ignG) actG = tnow; } });
+      const hostC = ctx.controls.text('').parentNode, kidsC = Array.from(hostC.children);
+      const gEls = [gBtn1, gBtn2, pG.row || null].filter(Boolean), vEls = [vBtn1, vBtn2];
+      const rowsP = Array.from(hostC.querySelectorAll('.v3-player')); const rowG = rowsP[rowsP.length - 2], rowV = rowsP[rowsP.length - 1];
+      const showE = (a, v) => a.forEach((e) => { if (e) e.style.display = v ? '' : 'none'; });
+      let gm = 'obs', gSig = '', vSig = '', hmaxLast = -1, noteKey = '';
+      function setGM(m) {
+        gm = m; gG.visible = m === 'bact'; vG.visible = m === 'virus';
+        const obs = m === 'obs'; groups.forEach((g) => { g.visible = false; }); labs.forEach((a) => a.forEach((l) => l.show(false))); if (obs) { cur = -1; show(Math.max(0, KEYS.indexOf((window.__sim && window.__sim.S.O && window.__sim.S.O.cur) || 'virus'))); }
+        gLabs.forEach((l) => l.show(false)); vLabs.forEach((l) => l.show(false));
+        showE([gBtn1, gBtn2], m === 'bact'); rowG.style.display = m === 'bact' ? '' : 'none'; showE(vEls, m === 'virus'); rowV.style.display = m === 'virus' ? '' : 'none'; if (seg && seg.el) 0;
+        const segEls = Array.from(hostC.children).filter((e) => e.tagName === 'BUTTON' && /^(바이러스|세균|곰팡이|원생생물|기생충)$/.test(e.textContent)); segEls.forEach((e) => { e.style.display = obs ? '' : 'none'; });
+        gSig = ''; vSig = '';
+        if (m === 'obs') { info(infoOf(cur < 0 ? 0 : cur)); }
+      }
+      function bactFrame(L, t) {
+        const G = L.S.G; if (!G) return;
+        const Nn = Math.pow(2, Math.floor(3 * G.h + 1e-9)), k = DR / L.GL.dR, showN = Math.min(Nn, NBM);
+        for (let i = 0; i < NBM; i++) {
+          if (i >= showN) { D.position.set(0, -9, 0); D.scale.setScalar(0.0001); D.rotation.set(0, 0, 0); D.updateMatrix(); bactI.setMatrixAt(i, D.matrix); continue; }
+          const q = G.pos[i]; let x = q.x, y = q.y, sq = 0;
+          if (Nn <= 128 && i >= G.nPrev && G.split < 1) { const par = G.pos[i - G.nPrev] || G.pos[0], f = eo(G.split); x = par.x + (q.x - par.x) * f; y = par.y + (q.y - par.y) * f; sq = Math.sin(G.split * Math.PI * 0.6); }
+          else if (Nn <= 128 && i < G.nPrev && G.split < 1) sq = Math.sin(G.split * Math.PI);
+          D.position.set(x * k, 0.2, y * k); D.rotation.set(0, -q.rot, 0); D.scale.set(1 - 0.35 * sq, 1 + 0.15 * sq, 1 - 0.1 * sq); D.updateMatrix(); bactI.setMatrixAt(i, D.matrix);
+        }
+        bactI.instanceMatrix.needsUpdate = true;
+        const hmax = G.pts.length ? G.pts[G.pts.length - 1].h : 0, hh = G.run ? G.h : hmax, nn = Math.floor(3 * hh + 1e-9);
+        gL[1].set('<b>' + (Math.round(hh * 10) / 10) + '시간</b> · n = ' + nn + '회 · N = 2<sup>' + nn + '</sup> = <b>' + Nn.toLocaleString('ko-KR') + '개</b>'); gL[1].obj = [0, 2.2, 0]; gL.forEach((l) => l.show(true));
+        const key = nn + '|' + (Nn > 130 ? 1 : 0) + '|' + G.run;
+        if (key !== gSig) { gSig = key; info('<b>세균의 증식 (이분법)</b><br>세균은 한 마리가 둘로 나뉘는 이분법으로 늘어나요. <b>20분마다 2배</b> → 1시간 = 20분 × 3회 → 8배.<br>분열 횟수 n = 3 × 시간, 세균 수 N = 2<sup>n</sup> (개)' + (Nn > 130 ? '<br><span style="color:#fcd34d">접시 안에 다 그리지 못해 일부만 보여요.</span>' : '')); }
+        const driving = tnow - actG < 1.2;
+        if (driving && pG.playing) { const want = Math.min(6, Math.floor(pG.p * 7)); if (!G.run && G.pts.length - 1 < want && tnow - lastG > 1.0) { lastG = tnow; const b = document.getElementById('bGrow'); if (b && !b.disabled) b.click(); } else if (!G.run && want === 0 && G.pts.length > 1 && tnow - lastG > 1.0) { lastG = tnow; const b = document.getElementById('bGrowReset'); if (b) b.click(); } }
+        else if (!driving && !pG.playing) { const want = Math.min(1, (hh + 0.5 / 3) / 7); if (Math.abs(pG.p - want) > 0.03) { ignG = true; pG.set(Math.min(0.999, hh / 7 + 0.02)); ignG = false; } }
+      }
+      function virusFrame(L, t) {
+        const V = L.S.V; if (!V) return;
+        const R = L.VL.R, kk = VW_ / R.w, cx = R.x + R.w / 2, cy = R.y + R.h / 2, PROD = 3.6, YIELD = 6;
+        const P = (x, y) => [(x - cx) * kk, (y - cy) * kk];
+        let nv = 0;
+        hosts.forEach((h, i) => {
+          const c = V.cells[i]; h.g.visible = !!c; if (!c) return; const [x, z] = P(c.x, c.y), r = V.cr * kk;
+          h.g.position.set(x, r * 0.6, z); h.g.scale.setScalar(r);
+          h.body.material.color.setHex(c.st === 'i' ? 0xfbb6c4 : 0xf9c9a8); h.body.material.opacity = c.st === 'd' ? 0.25 : 0.82; h.body.material.emissive.setHex(c.flash > 0 ? 0xa78bfa : 0x000000); h.body.material.emissiveIntensity = c.flash;
+          h.nuc.visible = c.st !== 'd'; const p = c.st === 'i' ? Math.max(0, Math.min(1, (V.t - c.t0) / PROD)) : 0; h.bar.visible = c.st === 'i'; h.bar.scale.x = Math.max(0.01, 1.4 * p); h.bar.position.x = -0.7 + 0.7 * p;
+          if (c.st === 'i') { const n = 1 + Math.floor((YIELD - 1) * p); for (let q = 0; q < YIELD; q++) { const a = q / YIELD * Math.PI * 2 + 0.6; D.position.set(x + (0.12 + Math.cos(a) * 0.5) * r, r * 0.65, z + (0.1 + Math.sin(a) * 0.5) * r); D.scale.setScalar(q < n ? r * 0.2 : 0.0001); D.rotation.set(a, a * 2, 0); D.updateMatrix(); virI.setMatrixAt(nv++, D.matrix); } }
+        });
+        V.free.forEach((v) => { if (nv >= 80) return; const [x, z] = P(v.x, v.y); D.position.set(x, 0.35 + Math.sin(t * 3 + x) * 0.04, z); D.scale.setScalar(0.16 * Math.max(0.2, v.a)); D.rotation.set(t * 0.7, t * 0.9, 0); D.updateMatrix(); virI.setMatrixAt(nv++, D.matrix); });
+        for (let i = nv; i < 80; i++) { D.position.set(0, -9, 0); D.scale.setScalar(0.0001); D.updateMatrix(); virI.setMatrixAt(i, D.matrix); } virI.instanceMatrix.needsUpdate = true;
+        const tot = V.free.length + V.cells.reduce((s2, c) => s2 + (c.st === 'i' ? 1 + Math.floor((YIELD - 1) * Math.max(0, Math.min(1, (V.t - c.t0) / PROD))) : 0), 0);
+        const c0 = V.cells[0]; const [hx, hz] = P(c0.x, c0.y); vL[0].obj = [hx, 1.6, hz]; vL[1].obj = [P(V.free[0] ? V.free[0].x : cx, V.free[0] ? V.free[0].y : cy)[0], 0.8, P(0, V.free[0] ? V.free[0].y : cy)[1]]; vL.forEach((l) => l.show(true)); vL[1].show(V.free.length > 0);
+        const key = V.cells.map((c) => c.st).join('') + '|' + Math.floor(V.t / 1.2) + '|' + V.run;
+        if (key !== vSig) { vSig = key; info('<b>바이러스의 증식</b> · 지금 바이러스 <b>' + tot + '개</b> (감염된 세포 ' + V.cells.filter((c) => c.st === 'i').length + ' · 터진 세포 ' + V.cells.filter((c) => c.st === 'd').length + ')<br>' + (V.cells.some((c) => c.st === 'i') ? '바이러스는 <b>숙주 세포 안에서만</b> 증식해요. 새 바이러스가 충분히 만들어지면 세포가 터지고 밖으로 퍼져요.' : '바이러스는 스스로 증식하지 못해요. 숙주 세포에 침입해야 해요. ▶ 시간 흐르기를 눌러 보세요.')); }
+        const driving = tnow - actG < 1.2;
+        if (driving && pV.playing) { if (!V.run && !V.done && pV.p > 0.02 && tnow - lastG > 1.0) { lastG = tnow; const b = document.getElementById('bVir'); if (b) b.click(); } else if (V.done && pV.p < 0.04 && tnow - lastG > 1.0) { lastG = tnow; const b = document.getElementById('bVir'); if (b) b.click(); } }
+        else if (!driving && !pV.playing) { const want = Math.min(1, V.t / 12); if (Math.abs(pV.p - want) > 0.03) { ignG = true; pV.set(want); ignG = false; } }
+      }
+
+      setGM('obs');
       return {
         update(dt, t) {
+          tnow += dt;
+          { const L = window.__sim, S2 = L && L.S, want = S2 && S2.mode === 'grow' && S2.sub.grow === 'bact' ? 'bact' : S2 && S2.mode === 'grow' && S2.sub.grow === 'virus' ? 'virus' : 'obs';
+            if (want !== gm) setGM(want);
+            if (gm === 'obs' && S2) { const nk = S2.mode + '|' + (S2.sub && S2.sub[S2.mode]); if (nk !== noteKey) { noteKey = nk; const NT = { 'grow|route': '<b>전염 경로 짝짓기</b>는 2D 화면에서 해요.', sort: '<b>질병 분류</b>는 2D 화면에서 카드를 끌어다 놓아요.', 'apply|drug': '<b>약으로 치료하기</b>는 2D 화면에서 해요. 항생제는 세균에, 바이러스에는 효과가 없어요.', 'apply|block': '<b>전염 막기</b>는 2D 화면에서 해요.' }; const nt = NT[S2.mode + '|' + (S2.sub && S2.sub[S2.mode])] || NT[S2.mode]; if (nt) info(nt + '<br>3D에서는 병원체 5종의 구조를 비교해 보세요.'); else info(infoOf(cur < 0 ? 0 : cur)); } }
+            if (gm === 'bact') { bactFrame(L, t); return; }
+            if (gm === 'virus') { virusFrame(L, t); return; } }
           { const L = window.__sim; if (L && L.S.O) { const k = KEYS.indexOf(L.S.O.cur); if (k >= 0 && k !== cur) show(k); } }
           grow = Math.min(1, grow + dt * 2.5); const e = 1 - Math.pow(1 - grow, 3);
           groups.forEach((g) => g.scale.setScalar((g.userData.base || 1) * (0.75 + 0.25 * e)));

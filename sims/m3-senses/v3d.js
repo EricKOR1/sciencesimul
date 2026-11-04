@@ -86,10 +86,143 @@
       /* 소리 파동 */
       const waves = []; for (let i = 0; i < 5; i++) { const w = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.025, 8, 36), new THREE.MeshBasicMaterial({ color: 0x7dd3fc, transparent: true, opacity: 0.8 })); w.rotation.y = Math.PI / 2; ear.add(w); waves.push(w); }
       function earUpdate() { info('<b>귀</b> · 소리 → <b>고막</b> 진동 → <b>귓속뼈</b>가 진동을 키워 전달 → <b>달팽이관</b>에서 신호로 바뀌어 <b>청각 신경</b> → 뇌예요.<br>반고리관·전정 기관은 몸의 회전과 기울어짐(평형)을 느껴요.'); }
+
+      /* ===== 코·혀 · 피부 · 자극의 전달 (2D와 같은 상태·좌표) ===== */
+      const MS = 0.0145, X = (x) => (x - 520) * MS, Y = (y) => -(y - 250) * MS;
+      const p3 = (pts, z) => pts.map((q) => new V3(X(q[0]), Y(q[1]), z || 0));
+      const mkTube = (pts, r, col, o, z) => new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(p3(pts, z)), 40, r, 8, false), sm(col, o));
+      const polyShape = (pts) => new THREE.Shape(new THREE.CatmullRomCurve3(p3(pts), true, 'catmullrom', 0.5).getPoints(70).map((q) => new THREE.Vector2(q.x, q.y)));
+      const mkSlab = (pts, depth, col, o) => { const g = new THREE.ExtrudeGeometry(polyShape(pts), { depth, bevelEnabled: false }); g.translate(0, 0, -depth / 2); return new THREE.Mesh(g, sm(col, o)); };
+      const nsG = new THREE.Group(), skG = new THREE.Group(), paG = new THREE.Group(); root.add(nsG, skG, paG); [nsG, skG, paG].forEach((g) => { g.visible = false; });
+      const nlabs = [], slabs = [], plabs = [];
+      const NL = (arr, txt, pos, col) => { const l = label(txt, pos, { size: 12, color: col || 'rgba(15,23,42,.9)' }); l.show(false); arr.push(l); return l; };
+      const gold = 0xe9c46a, goldG = sm(0xfacc15, { emissive: 0xfacc15, emissiveIntensity: 0.15 });
+      /* -- 코와 혀 -- */
+      const HEADP = [[470, 66], [420, 94], [408, 140], [404, 176], [372, 214], [350, 240], [366, 258], [392, 260], [398, 284], [388, 300], [394, 314], [392, 338], [408, 368], [440, 396], [500, 420], [600, 430], [672, 380], [690, 260], [668, 140], [610, 84], [540, 60]];
+      nsG.add(mkSlab(HEADP, 2.0, 0xf6dcc3, { transparent: true, opacity: 0.3, depthWrite: false, roughness: 0.6 }));
+      const nBrain = new THREE.Mesh(new THREE.SphereGeometry(1, 36, 26), sm(0xf9a8d4, { roughness: 0.5, emissive: 0xf472b6, emissiveIntensity: 0 })); nBrain.scale.set(1.25, 0.95, 0.9); nBrain.position.set(X(548), Y(148), 0); nsG.add(nBrain);
+      nsG.add(mkSlab([[372, 248], [392, 236], [440, 226], [500, 230], [526, 250], [522, 278], [470, 284], [420, 280], [384, 268]], 0.9, 0xf8b9b9, { roughness: 0.6 }));
+      const OLF = [[432, 230], [462, 226], [492, 230], [510, 240]]; nsG.add(mkTube(OLF, 0.1, 0xfacc15, { emissive: 0xca8a04, emissiveIntensity: 0.3 }, 0.3));
+      const NERVE_SMELL = [[470, 228], [472, 196], [488, 170], [514, 156]], NERVE_TASTE = [[506, 330], [560, 326], [598, 296], [610, 238], [594, 186]];
+      nsG.add(mkTube(NERVE_SMELL, 0.07, gold, { roughness: 0.4 }, 0.1)); nsG.add(mkTube(NERVE_TASTE, 0.07, gold, { roughness: 0.4 }, 0.1));
+      nsG.add(mkSlab([[394, 300], [430, 292], [500, 294], [534, 306], [522, 338], [470, 348], [420, 342], [396, 326]], 0.8, 0xc85a74, { roughness: 0.6 }));
+      const tongue = mkSlab([[400, 324], [432, 308], [472, 302], [510, 308], [524, 332], [490, 344], [440, 344], [408, 338]], 0.9, 0xfb9cb8, { roughness: 0.5 }); tongue.position.z = 0.05; nsG.add(tongue);
+      [[418, 316], [438, 308], [458, 304], [478, 304], [498, 309]].forEach((b) => { const m = new THREE.Mesh(new THREE.SphereGeometry(0.075, 12, 8), sm(0xfcd34d, { emissive: 0xb45309, emissiveIntensity: 0.3 })); m.position.set(X(b[0]), Y(b[1]) + 0.04, 0.45); nsG.add(m); });
+      nsG.add(mkTube([[394, 286], [384, 300], [394, 316]], 0.06, 0xc2415e, {}, 0.1));
+      const throat = mkTube([[494, 240], [536, 258], [546, 288], [518, 316], [470, 322]], 0.12, 0xf4a3b0, { transparent: true, opacity: 0.8 }, 0); nsG.add(throat);
+      const eyeN = new THREE.Mesh(new THREE.SphereGeometry(0.14, 14, 10), sm(0xffffff)); eyeN.position.set(X(430), Y(150), 0.95); nsG.add(eyeN);
+      const plate = new THREE.Mesh(new THREE.CylinderGeometry(1.0, 1.0, 0.08, 28), sm(0xe2e8f0)); plate.position.set(X(150), Y(462), 0); nsG.add(plate);
+      const foodG = new THREE.Group(); nsG.add(foodG);
+      const apple = new THREE.Group(); { const a = new THREE.Mesh(new THREE.SphereGeometry(0.42, 22, 16), sm(0xdc2626, { roughness: 0.35 })); a.scale.y = 0.92; apple.add(a); const st = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.2, 6), sm(0x7c4a2d)); st.position.y = 0.45; apple.add(st); const lf = new THREE.Mesh(new THREE.SphereGeometry(0.12, 10, 8), sm(0x4ade80)); lf.scale.set(1.5, 0.3, 0.8); lf.position.set(0.14, 0.5, 0); apple.add(lf); }
+      const onion = new THREE.Group(); { const a = new THREE.Mesh(new THREE.SphereGeometry(0.42, 22, 16), sm(0xe8b98c, { roughness: 0.5 })); a.scale.set(1, 1.1, 1); onion.add(a); const t2 = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.35, 10), sm(0x86a352)); t2.position.y = 0.55; onion.add(t2); }
+      foodG.add(apple, onion);
+      const SO = new THREE.CatmullRomCurve3(p3([[190, 396], [250, 336], [316, 288], [366, 258], [420, 250], [458, 238]], 0.2)), SB = new THREE.CatmullRomCurve3(p3([[470, 322], [518, 316], [546, 288], [536, 258], [494, 240]], 0.2)), FM = new THREE.CatmullRomCurve3(p3([[150, 424], [236, 372], [330, 330], [402, 312]], 0.2));
+      const NSP = 14, smellI = new THREE.InstancedMesh(new THREE.SphereGeometry(0.07, 8, 6), new THREE.MeshBasicMaterial({ color: 0x4ade80 }), NSP); nsG.add(smellI);
+      const NTM = 6, tasteI = new THREE.InstancedMesh(new THREE.SphereGeometry(0.06, 8, 6), new THREE.MeshBasicMaterial({ color: 0xfb923c }), NTM); nsG.add(tasteI);
+      const NBK = 6, backI = new THREE.InstancedMesh(new THREE.SphereGeometry(0.06, 8, 6), new THREE.MeshBasicMaterial({ color: 0x4ade80 }), NBK); nsG.add(backI);
+      const pinch = new THREE.Group(); { const a = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.18, 0.5), sm(0xef4444)); const b = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.1, 0.5), sm(0xb91c1c)); b.position.y = -0.12; pinch.add(a, b); pinch.position.set(X(364), Y(248), 0); pinch.rotation.z = 0.35; nsG.add(pinch); }
+      const plsT = new THREE.Mesh(new THREE.SphereGeometry(0.13, 12, 8), new THREE.MeshBasicMaterial({ color: 0xf97316 })), plsS = new THREE.Mesh(new THREE.SphereGeometry(0.13, 12, 8), new THREE.MeshBasicMaterial({ color: 0x22c55e })); nsG.add(plsT, plsS);
+      const nT = [NL(nlabs, '대뇌', [X(548), Y(148) - 1.2, 0.8], 'rgba(157,23,77,.92)'), NL(nlabs, '후각 세포', [X(432), Y(222), 0.8], 'rgba(113,63,18,.92)'), NL(nlabs, '혀 (맛봉오리)', [X(458), Y(360), 0.8], 'rgba(190,24,93,.92)'), NL(nlabs, '후각 신경', [X(470), Y(180), 0.8], 'rgba(113,63,18,.92)'), NL(nlabs, '미각 신경', [X(612), Y(270), 0.8], 'rgba(113,63,18,.92)')];
+      const nRes = NL(nlabs, '', [X(610), Y(70), 0.8], 'rgba(22,163,74,.95)');
+      const ctlHost = ctx.controls.text('').parentNode;
+      const tail = (fn) => { const n0 = ctlHost.children.length; fn(); return Array.from(ctlHost.children).slice(n0); };
+      let ignN = false, actN = -9, lastN = -9, tnow = 0, nSig = '';
+      const foodSeg = []; let foodS = null;
+      const noseEls = tail(() => {
+        foodS = controls.segment('음식', [{ value: 'apple', label: '🍎 사과' }, { value: 'onion', label: '🧅 양파' }], 'apple', (v) => { const b = document.querySelector('#foodSeg button[data-food="' + v + '"]'); if (b) b.click(); });
+        const pb = controls.button('👃 코 막기', () => { const b = document.getElementById('btnPinch'); if (b) b.click(); }); pb.id = 'v3pinch';
+        controls.button('😋 맛보기', () => { const b = document.getElementById('btnTaste'); if (b && !b.disabled) b.click(); });
+      });
+      const noseRow = tail(() => { }); 
+      let noseP = null; const noseP_ = tail(() => { noseP = controls.player({ duration: 7, loop: false, label: '맛보기', phases: [[0, '음식을 입에 넣어요'], [0.14, '맛·냄새가 퍼져요'], [0.27, '신경으로 신호가 가요'], [0.49, '대뇌가 알아차려요']], onFrame() { if (!ignN) actN = tnow; } }); });
+      function noseFrame(L, t) {
+        const N = L.S.nose, tt = Math.max(0, N.t), mv = N.t >= 0 ? Math.max(0, Math.min(1, tt / 0.9)) : 0, eaten = N.t >= 0 && tt > 1.0;
+        foodG.visible = !eaten; apple.visible = N.food === 'apple'; onion.visible = N.food !== 'apple';
+        if (!eaten) { const q = mv > 0 ? FM.getPointAt(mv) : new V3(X(150), Y(426) + Math.sin(t * 2) * 0.03, 0.2); foodG.position.copy(q); foodG.scale.setScalar(1 - 0.3 * mv); }
+        const col = N.food === 'apple' ? 0x4ade80 : 0xc084fc; smellI.material.color.setHex(col); backI.material.color.setHex(col);
+        for (let i = 0; i < NSP; i++) { const p = (N.sp || [])[i]; if (p && !eaten) { const k = Math.max(0, Math.min(1, p.k)); const q = SO.getPointAt(Math.min(0.999, k)); dm.position.set(q.x, q.y + Math.sin(t * 3 + p.ph) * 0.07 * (1 - k), q.z); dm.scale.setScalar(1); } else { dm.position.set(0, 0, 0); dm.scale.setScalar(0.0001); } dm.updateMatrix(); smellI.setMatrixAt(i, dm.matrix); } smellI.instanceMatrix.needsUpdate = true;
+        const tasting = N.t >= 1.0 && N.t < 3.6;
+        for (let i = 0; i < NTM; i++) { const ph = (tt * 20 + i * 7) % 20; dm.position.set(X(420 + i * 16), Y(316 - 4) + ph / 20 * 0.35, 0.5); dm.scale.setScalar(tasting ? 1 - ph / 20 : 0.0001); dm.updateMatrix(); tasteI.setMatrixAt(i, dm.matrix); } tasteI.instanceMatrix.needsUpdate = true;
+        for (let i = 0; i < NBK; i++) { const kk = Math.max(0, Math.min(1, (tt - 1.1) / 1.4 - i * 0.1)), on = tasting && !N.pinched && kk > 0 && kk < 1; const q = SB.getPointAt(Math.min(0.999, kk)); dm.position.copy(q); dm.scale.setScalar(on ? 1 : 0.0001); dm.updateMatrix(); backI.setMatrixAt(i, dm.matrix); } backI.instanceMatrix.needsUpdate = true;
+        pinch.visible = N.pinch > 0.02; pinch.position.x = X(364) - (1 - N.pinch) * 0.35; pinch.scale.setScalar(Math.max(0.01, N.pinch));
+        const tp = N.t >= 1.9 && N.t < 4.6 ? Math.max(0, Math.min(0.999, (tt - 1.9) / 1.4)) : -1; plsT.visible = tp >= 0; if (tp >= 0) plsT.position.copy(new THREE.CatmullRomCurve3(p3(NERVE_TASTE, 0.1)).getPointAt(tp));
+        const sp2 = N.t >= 2.0 && N.t < 4.6 && !N.pinched ? Math.max(0, Math.min(0.999, (tt - 2.0) / 1.0)) : -1; plsS.visible = sp2 >= 0; if (sp2 >= 0) plsS.position.copy(new THREE.CatmullRomCurve3(p3(NERVE_SMELL, 0.1)).getPointAt(sp2));
+        const bgl = N.t >= 3 ? Math.max(0, Math.min(1, 1 - Math.abs(tt - 3.8) / 1.8)) : 0; nBrain.material.emissiveIntensity = 0.8 * bgl;
+        nT.forEach((l) => l.show(names)); const rs = N.result && L.S.nose.resultAt != null;
+        const resTxt = N.result === 'blur' ? '❓ 음… 무슨 맛이지? 맛이 흐릿해요' : N.result === 'apple' ? '🍎 사과 맛이야! (맛 + 향)' : N.result === 'onion' ? '🧅 양파 맛이야! (맛 + 향)' : '';
+        nRes.set(resTxt); nRes.show(!!resTxt && N.t >= 3.4); nRes.el.style.background = N.result === 'blur' ? 'rgba(180,83,9,.95)' : 'rgba(22,163,74,.95)';
+        foodS.set(N.food);
+        const nk = N.food + '|' + N.pinched + '|' + (N.t >= 0 ? 1 : 0) + '|' + (N.t >= 3.4 ? 1 : 0);
+        if (nk !== nSig) { nSig = nk; info('<b>코와 혀</b> · 맛은 <b>혀(미각)</b>와 <b>코(후각)</b>가 함께 느껴요.<br>' + (N.pinched ? '코를 막으면 냄새(기체)가 후각 세포에 닿지 못해 맛이 흐릿해요.' : '냄새(기체)는 코 안 <b>후각 세포</b>로, 맛(액체)은 혀의 <b>맛봉오리</b>로 받아들여요.') + '<br>' + (N.t >= 3.4 ? '신호가 대뇌에 도착했어요!' : '😋 맛보기를 눌러 보세요.')); }
+        const driving = tnow - actN < 1.2;
+        if (driving && noseP.playing) { if (N.t < 0 && noseP.p > 0.02 && tnow - lastN > 1.0) { lastN = tnow; const b = document.getElementById('btnTaste'); if (b && !b.disabled) b.click(); } }
+        else if (!driving && !noseP.playing) { const want = N.t >= 0 ? Math.min(1, N.t / 7) : 0; if (Math.abs(noseP.p - want) > 0.02) { ignN = true; noseP.set(want); ignN = false; } }
+      }
+      /* -- 피부 (두 점 식별) -- */
+      const skin = new THREE.Group(); skG.add(skin);
+      const layer = (y0, y1, col, o) => { const m = new THREE.Mesh(new THREE.BoxGeometry(14, y1 - y0, 3), sm(col, Object.assign({ transparent: true, opacity: 0.5, depthWrite: false }, o || {}))); m.position.set(0, (y0 + y1) / 2, 0); skin.add(m); return m; };
+      const epi = layer(-0.35, 0, 0xf2c6a4), derm = layer(-2.0, -0.35, 0xf5a99a, {}), fat = layer(-3.6, -2.0, 0xfde8a6);
+      const NRC = 9, recI = new THREE.InstancedMesh(new THREE.SphereGeometry(0.2, 14, 10), sm(0xfacc15, { emissive: 0xb45309, emissiveIntensity: 0.2 }), NRC); skin.add(recI);
+      const recNerve = Array.from({ length: NRC }, () => { const m = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 1, 6), sm(0xe9c46a, { roughness: 0.4 })); skin.add(m); return m; });
+      const pins = [0, 1].map(() => { const g = new THREE.Group(), c = new THREE.Mesh(new THREE.ConeGeometry(0.16, 1.4, 14), sm(0x94a3b8, { metalness: 0.5, roughness: 0.3 })); c.rotation.z = Math.PI; c.position.y = 0.7; g.add(c); skG.add(g); return g; });
+      const sT = [NL(slabs, '', [0, 0.1, 1.6], 'rgba(15,23,42,.92)'), NL(slabs, '표피', [-5.6, -0.18, 1.6], 'rgba(120,53,15,.9)'), NL(slabs, '진피 (감각점)', [-5.4, -1.2, 1.6], 'rgba(159,18,57,.9)'), NL(slabs, '지방층', [-5.4, -2.8, 1.6], 'rgba(120,83,9,.9)'), NL(slabs, '', [0, 3.0, 0], 'rgba(15,23,42,.92)')];
+      const skinSeg = []; let regS = null;
+      const skinEls = tail(() => { regS = controls.segment('부위', [{ value: 'finger', label: '☝️ 손끝' }, { value: 'back', label: '🧍 등' }], 'finger', (v) => { const b = document.querySelector('#regionSeg button[data-region="' + v + '"]'); if (b) b.click(); }); });
+      let gapS = null; const gapEls = [];
+      let skSig = '', gapSig = '';
+      const REGD = { finger: { name: '손끝', rho: 2.5, gaps: [1, 2, 3, 5, 8], uPerMm: 1 }, back: { name: '등', rho: 35, gaps: [10, 20, 30, 40, 50], uPerMm: 0.1 } };
+      function buildGap(L, reg) { /* 간격 버튼은 2D 것을 눌러요 */ const gb = Array.from(document.querySelectorAll('#gapSeg button')); gapEls.forEach((e) => e.remove()); gapEls.length = 0; gb.forEach((b, i) => { const x = controls.button(b.textContent, () => { const bb = Array.from(document.querySelectorAll('#gapSeg button'))[i]; if (bb) bb.click(); }); x.dataset.v3gap = '1'; gapEls.push(x); }); }
+      function skinFrame(L, t) {
+        const K = L.S.skin, R = REGD[K.region], two = K.gap > R.rho;
+        if (skSig !== K.region) { skSig = K.region; regS.set(K.region); buildGap(L, K.region); }
+        gapEls.forEach((e, i) => { const gb = document.querySelectorAll('#gapSeg button')[i]; e.classList.toggle('on', !!(gb && gb.classList.contains('on'))); if (gb) e.textContent = gb.textContent; });
+        const u = R.uPerMm, sp = R.rho * u, gapU = K.gap * u, press = K.press == null ? 0 : K.press;
+        for (let i = 0; i < NRC; i++) { const x = (i - (NRC - 1) / 2) * sp; const hit = Math.abs(Math.abs(x) - gapU / 2) < sp * 0.5 || (!two && Math.abs(x) < sp * 0.5 + gapU / 2); dm.position.set(x, -0.9, 0); dm.scale.setScalar(Math.abs(x) <= 6.8 ? 1 : 0.0001); dm.updateMatrix(); recI.setMatrixAt(i, dm.matrix); recI.setColorAt(i, new THREE.Color(hit && press > 0.5 ? 0xff7a1a : 0xfacc15));
+          const n = recNerve[i]; n.position.set(x, -1.9, 0); n.scale.set(1, 1.9, 1); n.position.y = -0.95; n.visible = Math.abs(x) <= 6.8; n.material.emissive.setHex(hit && press > 0.5 ? 0xf97316 : 0x000000); }
+        recI.instanceMatrix.needsUpdate = true; if (recI.instanceColor) recI.instanceColor.needsUpdate = true;
+        pins.forEach((g, i) => { const x = (i ? 1 : -1) * gapU / 2; g.position.set(x, 1.4 - 1.4 * press + 0.0, 0.0); g.visible = true; });
+        const seen = K.obs && K.obs[K.region] && (K.obs[K.region].one[K.gap] || K.obs[K.region].two[K.gap]);
+        sT[0].set('간격 ' + K.gap + ' mm'); sT[0].obj = [0, 2.2, 1.5]; sT[4].set(press > 0.9 ? (two ? '두 점으로 느껴요 ✌️' : '한 점으로 느껴요 ☝️') : '자극하는 중…'); sT[4].obj = [0, 3.4, 0]; sT.forEach((l, i) => l.show(i === 4 ? press > 0.5 : true));
+        const kk = K.region + '|' + K.gap + '|' + (press > 0.9 ? 1 : 0);
+        if (kk !== gSig2) { gSig2 = kk; info('<b>피부의 두 점 식별</b> · ' + R.name + '<br>감각점 사이의 간격은 약 <b>' + R.rho + ' mm</b>예요. 두 점 사이가 ' + (two ? '<b>그보다 멀어서</b> 서로 다른 감각점이 자극돼요 → <b>두 점</b>으로 느껴요.' : '<b>그보다 가까워서</b> 같은 감각점이 자극돼요 → <b>한 점</b>으로 느껴요.') + '<br><small>손끝은 감각점이 촘촘하고, 등은 듬성듬성해요.</small>'); }
+      }
+      let gSig2 = '';
+      /* -- 자극의 전달: 자극 → 감각 기관 → 감각 세포 → 감각 신경 → 대뇌 -- */
+      const headG = new THREE.Mesh(new THREE.SphereGeometry(2.3, 36, 26), sm(0xf6dcc3, { transparent: true, opacity: 0.25, depthWrite: false })); headG.scale.set(1.0, 1.1, 0.95); paG.add(headG);
+      const pBrain = new THREE.Mesh(new THREE.SphereGeometry(1, 36, 26), sm(0xf9a8d4, { roughness: 0.5, emissive: 0xf472b6, emissiveIntensity: 0 })); pBrain.scale.set(1.4, 0.95, 1.0); pBrain.position.set(0.2, 0.9, 0); paG.add(pBrain);
+      const STIMS = [
+        { t: '빛', organ: '눈', cell: '시각 세포', nerve: '시각 신경', col: 0xf59e0b, pos: [-2.0, 0.6, 0.6] }, { t: '소리', organ: '귀', cell: '청각 세포', nerve: '청각 신경', col: 0x3b82f6, pos: [0.2, -0.1, 2.0] },
+        { t: '냄새(기체)', organ: '코', cell: '후각 세포', nerve: '후각 신경', col: 0x22c55e, pos: [-2.2, -0.7, 0] }, { t: '맛(액체)', organ: '혀', cell: '미각 세포', nerve: '미각 신경', col: 0xf97316, pos: [-1.5, -1.5, 0.2] }, { t: '온도(열)', organ: '피부', cell: '온점·냉점', nerve: '감각 신경', col: 0xef4444, pos: [-0.2, -3.6, 0.2] },
+      ];
+      const org = [];
+      STIMS.forEach((q, i) => {
+        const o = new THREE.Mesh(i === 0 ? new THREE.SphereGeometry(0.4, 18, 14) : i === 1 ? new THREE.TorusGeometry(0.4, 0.12, 10, 20, 4.6) : i === 2 ? new THREE.ConeGeometry(0.3, 0.7, 14) : i === 3 ? new THREE.CapsuleGeometry(0.17, 0.6, 4, 10) : new THREE.BoxGeometry(1.2, 0.7, 0.6), sm(q.col, { roughness: 0.4 }));
+        if (i === 2) o.rotation.z = Math.PI / 2; if (i === 3) o.rotation.z = Math.PI / 2; if (i === 1) o.rotation.y = Math.PI / 2; o.position.set(...q.pos); paG.add(o);
+        const from = new V3(...q.pos), to = new V3(0.2 + (i - 2) * 0.35, 0.9, (i === 1 ? 0.5 : 0)), mid = from.clone().lerp(to, 0.5).add(new V3(i === 4 ? 0.8 : -0.1, 0, 0.3));
+        const cu = new THREE.CatmullRomCurve3([from, mid, to]); const tube = new THREE.Mesh(new THREE.TubeGeometry(cu, 30, 0.05, 8, false), sm(0xe9c46a, { roughness: 0.4, transparent: true, opacity: 0.35 })); paG.add(tube);
+        const pl = new THREE.Mesh(new THREE.SphereGeometry(0.12, 10, 8), new THREE.MeshBasicMaterial({ color: q.col })); pl.visible = false; paG.add(pl);
+        const lb = NL(plabs, q.organ + ' · ' + q.cell, [q.pos[0] - 1.2, q.pos[1] + (i === 4 ? 0.6 : 0.5), q.pos[2] + 0.5], 'rgba(15,23,42,.9)');
+        org.push({ q, o, cu, tube, pl, lb });
+      });
+      const pBrL = NL(plabs, '대뇌', [0.2, 2.3, 0], 'rgba(157,23,77,.92)');
+      const sendB = tail(() => { controls.button('⚡ 자극 보내기', () => { const b = document.getElementById('btnSend'); if (b && !b.disabled) b.click(); }); });
+      let pSig = '';
+      function pathFrame(L, t) {
+        const P = L.S.path, ok = (i) => { const r = P.rows[i]; return r && r.organ === i && r.cell === i; };
+        const arrive = P.sendT >= 0 ? Math.max(0, Math.min(1, (P.sendT - 1.6) / 0.6)) * Math.max(0, Math.min(1, (4.2 - P.sendT) / 0.8)) : 0; pBrain.material.emissiveIntensity = 0.9 * arrive;
+        let nok = 0;
+        org.forEach((g, i) => { const k = ok(i); if (k) nok++; g.tube.material.opacity = k ? 1 : 0.35; g.lb.show(names && k); g.lb.set('<b>' + g.q.t + '</b> → ' + g.q.organ + ' → ' + g.q.cell + ' → ' + g.q.nerve); g.o.visible = true;
+          const head = P.sendT >= 0 && k ? Math.max(0, Math.min(1, (P.sendT - i * 0.12) / 2.2)) : -1; g.pl.visible = head > 0 && head < 1 && P.sendT < 4.2; if (g.pl.visible) g.pl.position.copy(g.cu.getPointAt(Math.min(0.999, head))); });
+        pBrL.show(names);
+        const pk = nok + '|' + (P.sendT >= 0 ? 1 : 0);
+        if (pk !== pSig) { pSig = pk; info('<b>자극의 전달</b>: 자극 → <b>감각 기관</b> → <b>감각 세포</b> → <b>감각 신경</b> → <b>대뇌</b><br>2D에서 감각 기관·세포를 맞게 고른 길(' + nok + ' / 5)만 3D에서도 이어져요. ⚡ 자극 보내기로 신호를 보내 봐요.<br><small>카드 짝짓기는 2D 화면에서 해요.</small>'); }
+      }
+
       function setMode(m) { mode = m; eye.visible = m === 'eye'; ear.visible = m === 'ear'; orbit.tx = m === 'eye' ? -1.2 : 0.2; orbit.dist = m === 'eye' ? (PHN ? 17 : 12.5) : (PHN ? 20 : 15); showNames(); m === 'eye' ? eyeUpdate() : earUpdate(); sl.style.display = ''; }
       function showNames() { labs.eye.forEach((l) => l.show(names && mode === 'eye')); labs.ear.forEach((l) => l.show(names && mode === 'ear')); }
       /* 2D 차시와 같은 값을 읽어요: 눈의 조절(주변 밝기 · 물체까지 거리) · 귀(소리 전달) */
       let sig = '', infoK = '';
+      const dm = new THREE.Object3D();
       const nb = controls.button('이름 ✓', () => { names = !names; nb.textContent = '이름 ' + (names ? '✓' : '✕'); showNames(); }); nb.classList.add('on');
       /* ▶ 재생: 눈 → 밝기·거리를 바꿔 보여 줘요(2D 슬라이더도 같이 움직여요) · 귀 → 소리가 뇌까지 가는 길 */
       let first = true, pEar = 0;
@@ -109,14 +242,25 @@
         onFrame(p) { if (first) return; const L = ctx.lesson(); if (L && L.S && L.S.ear.t < 0 && p < 0.06 && L.startSound) L.startSound(); },
       });
       first = false;
-      const host = nb.parentNode, rows = Array.from(host.querySelectorAll('.v3-player')); const eyeRow = rows[0], earRow = rows[1];
-      function setMode(m) { mode = m; eye.visible = m === 'eye'; ear.visible = m === 'ear'; orbit.tx = m === 'eye' ? -1.2 : 0.2; orbit.dist = m === 'eye' ? (PHN ? 17 : 12.5) : (PHN ? 20 : 15); showNames(); eyeRow.style.display = m === 'eye' ? '' : 'none'; earRow.style.display = m === 'ear' ? '' : 'none'; sig = ''; }
+      const host = nb.parentNode, rows = Array.from(host.querySelectorAll('.v3-player')); const eyeRow = rows[1], earRow = rows[2];
+      const allEls = () => Array.from(ctx.controls.text('').parentNode.children);
+      function setMode(m) { mode = m; eye.visible = m === 'eye'; ear.visible = m === 'ear'; nsG.visible = m === 'nose'; skG.visible = m === 'skin'; paG.visible = m === 'path';
+        orbit.tx = m === 'eye' ? -1.2 : m === 'ear' ? 0.2 : m === 'nose' ? 0 : 0; orbit.ty = m === 'skin' ? 0.5 : m === 'path' ? -0.7 : 0; orbit.dist = m === 'eye' ? (PHN ? 17 : 12.5) : m === 'ear' ? (PHN ? 20 : 15) : m === 'nose' ? (PHN ? 14 : 10.5) : m === 'skin' ? (PHN ? 20 : 15) : (PHN ? 14 : 11);
+        showNames(); eyeRow.style.display = m === 'eye' ? '' : 'none'; earRow.style.display = m === 'ear' ? '' : 'none'; sig = ''; infoK = '';
+        nlabs.forEach((l) => l.show(false)); slabs.forEach((l) => l.show(false)); plabs.forEach((l) => l.show(false));
+        noseEls.concat(noseP_).forEach((e) => { e.style.display = m === 'nose' ? '' : 'none'; }); skinEls.concat(gapEls).forEach((e) => { e.style.display = m === 'skin' ? '' : 'none'; }); sendB.forEach((e) => { e.style.display = m === 'path' ? '' : 'none'; });
+        nb.style.display = m === 'skin' ? 'none' : ''; nSig = ''; gSig2 = ''; skSig = ''; pSig = '';
+        const hasPl = m === 'eye' || m === 'ear'; }
       setMode('eye'); eyeUpdate();
       return {
         update(dt, t) {
           const L = ctx.lesson(); if (!L || !L.S) return;
-          const S = L.S, m = S.scene === 'eye' || S.scene === 'blind' ? 'eye' : 'ear';
+          const S = L.S, m = S.scene === 'blind' || S.scene === 'adjust' ? 'eye' : S.scene === 'nose' ? 'nose' : S.scene === 'skin' ? 'skin' : S.scene === 'path' ? 'path' : 'ear';
+          tnow += dt;
           if (m !== mode) setMode(m);
+          if (mode === 'nose') { noseFrame(L, t); return; }
+          if (mode === 'skin') { skinFrame(L, t); return; }
+          if (mode === 'path') { pathFrame(L, t); return; }
           if (mode === 'eye') {
             const b = Math.round(S.adj.bright * 100), d = Math.round(S.adj.lens.value * 100);
             const k = b + '|' + d;

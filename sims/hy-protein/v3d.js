@@ -1,5 +1,7 @@
 /* hy-protein · 3D 단백질 구조 (1차 → 4차, 변성)
-   아미노산 12개 구슬(소수성 주황 · 친수성 파랑 · 전하 초록)이 이어진 사슬이 나선·병풍으로, 입체 구조로, 4개가 모인 헤모글로빈으로 접히는 모습 */
+   아미노산 12개 구슬(소수성 주황 · 친수성 파랑 · 전하 초록)이 이어진 사슬이 나선·병풍으로, 입체 구조로, 4개가 모인 헤모글로빈으로 접히는 모습
+   1단계(아미노산 구슬 · 물속 R기의 성질), 2단계(mRNA 코돈 순서대로 구슬 연결), 3단계 낫 모양 적혈구(정상 · 변이 β 사슬, 산소 많음 · 적음)도 2D와 같은 값으로 보여 줘요.
+   (분류 카드 놓기 · 경우의 수 계산은 2D에서 해요.) */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -83,7 +85,7 @@ function foldChain(start, phob, seed) {
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: 7, theta: 0.15, phi: 1.4, fov: 40, min: 3, max: 30, target: [0, PHONE ? 0.5 : 0, 0] },
     autoRotate: 0,
-    levels: [2, 3],   // 1·2단계(구슬 · 사슬 · 경우의 수)는 2D에서 직접 해 봐요. 접힘 · 변성 단계에서 3D로 시작
+    levels: [2, 3],   // 1·2단계(구슬 · 사슬)는 2D에서 끌어 놓는 활동이라 2D로 시작하고, 3D 단추로 같은 장면을 볼 수 있어요. 접힘 · 낫 모양 · 변성 단계에서 3D로 시작
     build(ctx) {
       const { THREE, root, label, info, controls, orbit, camera } = ctx;
       const N = SEQ.length;
@@ -281,9 +283,162 @@ function foldChain(start, phob, seed) {
       const foldCore = centroidOf(FOLD, (i) => PHOB[i]);
       const hdir = (() => { const c = centroidOf(FOLD); const d = [FOLD[6][0] - c[0], FOLD[6][1] - c[1], FOLD[6][2] - c[2]], L = Math.hypot(...d) || 1; return d.map((v) => v / L); })();
 
+
+      /* ================= 1·2단계 구슬(aa · sortaa · chain · calc) · 3단계 낫 모양 적혈구(sickle) ================= */
+      const gOld = new THREE.Group(); while (root.children.length) gOld.add(root.children[0]); root.add(gOld);
+      const gAA = new THREE.Group(), gCH = new THREE.Group(), gSK = new THREE.Group(); root.add(gAA, gCH, gSK); gAA.visible = gCH.visible = gSK.visible = false;
+      const probe = controls.text(''); probe.style.display = 'none'; const ctlEl = probe.parentElement;
+      const oldEls = Array.prototype.filter.call(ctlEl.children, (e) => e !== probe);
+      const grab = (fn) => { const n0 = ctlEl.children.length; const r = fn(); return { r, els: Array.prototype.slice.call(ctlEl.children, n0) }; };
+      const sh = (g2, on) => g2.els.forEach((e) => { e.style.display = on ? '' : 'none'; });
+      const W = () => window.__sim || null;
+      const stdM = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.38, metalness: 0.05 }, o || {}));
+      const KEYS6 = ['ser', 'gln', 'leu', 'val', 'lys', 'glu'];
+      /* 아미노산 구슬: 공통 부분(회색) + 아미노기(파랑) · 카복실기(빨강) + 곁사슬 R기(색) — 2D의 drawAA와 같아요 */
+      function mkBead() {
+        const g = new THREE.Group();
+        g.add(new THREE.Mesh(new THREE.SphereGeometry(0.3, 28, 20), stdM(0xd8dee8)));
+        const n = new THREE.Mesh(new THREE.SphereGeometry(0.1, 14, 10), stdM(0x3b82f6)); n.position.set(-0.19, 0.2, 0.08); g.add(n);
+        const c = new THREE.Mesh(new THREE.SphereGeometry(0.1, 14, 10), stdM(0xef4444)); c.position.set(-0.19, -0.2, 0.08); g.add(c);
+        const st = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.4, 8), stdM(0x64748b)); st.rotation.z = Math.PI / 2; st.position.x = 0.4; g.add(st);
+        const R = new THREE.Mesh(new THREE.SphereGeometry(0.27, 24, 18), stdM(0xf97316)); R.position.x = 0.72; g.add(R);
+        const sgH = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.05, 0.05), stdM(0xffffff, { emissive: 0xffffff, emissiveIntensity: 0.4 })), sgV = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.26, 0.05), stdM(0xffffff, { emissive: 0xffffff, emissiveIntensity: 0.4 }));
+        sgH.position.set(0.72, 0, 0.27); sgV.position.set(0.72, 0, 0.27); g.add(sgH, sgV);
+        const wat = []; for (let i = 0; i < 5; i++) { const w = new THREE.Mesh(new THREE.SphereGeometry(0.075, 10, 8), stdM(0x50a0eb, { transparent: true, opacity: 0.8 })); g.add(w); wat.push(w); }
+        return { g, R, sgH, sgV, wat, key: '' };
+      }
+      function setBead(B, key, withWater, t, ph) {
+        const a = AAI[key]; if (B.key !== key) { B.key = key; B.R.material.color.setHex(a.col); B.sgH.visible = a.cls === 'chg'; B.sgV.visible = key === 'lys'; }
+        B.wat.forEach((w, i) => { w.visible = withWater && a.cls !== 'phob'; if (w.visible) { const an = t * 0.9 + i * 6.283 / 5 + ph; w.position.set(0.72 + Math.cos(an) * 0.52, Math.sin(an) * 0.52, Math.sin(an * 0.7) * 0.2); } });
+      }
+      /* --- aa: 물속에서 R기의 성질 (2D의 S.aa.beads를 그대로) --- */
+      const TW = 7.2, TH = 4.6, TD = 2.6;
+      { const gl = new THREE.Mesh(new THREE.BoxGeometry(TW, TH, TD), new THREE.MeshStandardMaterial({ color: 0x8fc4ff, transparent: true, opacity: 0.13, roughness: 0.1, depthWrite: false })); gAA.add(gl);
+        const ed = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(TW, TH, TD)), new THREE.LineBasicMaterial({ color: 0x7aa7d8 })); gAA.add(ed);
+        const fl = new THREE.Mesh(new THREE.BoxGeometry(TW + 0.5, 0.2, TD + 0.5), stdM(0x1c2540)); fl.position.y = -TH / 2 - 0.1; gAA.add(fl); }
+      const aaPool = Array.from({ length: 14 }, () => { const b = mkBead(); b.g.visible = false; gAA.add(b.g); return b; });
+      const sortPool = KEYS6.map((k, i) => { const b = mkBead(); setBead(b, k, false, 0, 0); b.g.visible = false; b.g.position.set(((i % 3) - 1) * 2.6 - 0.3, i < 3 ? 0.9 : -1.1, 0); gAA.add(b.g); return b; });
+      const sortLab = KEYS6.map((k, i) => { const l = label(AAI[k].name + ' (' + AAI[k].ab + ')', sortPool[i].g, { color: 'rgba(15,23,42,.85)', offset: [0.35, -0.75, 0] }); l.show(false); return l; });
+      const lTank = label('물속 (확대)', [0, TH / 2 + 0.4, 0], { color: 'rgba(30,64,120,.9)' }); lTank.show(false);
+      const aaBtns = grab(() => KEYS6.map((k) => controls.button('+ ' + AAI[k].name, () => { const w = W(); if (w) w.aaAdd(k); })));
+      const aaClr = grab(() => controls.button('↺ 비우기', () => { const w = W(); if (w) w.aaClear(); }));
+      /* --- chain: mRNA 코돈 순서대로 구슬 연결 --- */
+      const CODS = ['UCU', 'CUG', 'GUU', 'AAA', 'GAA'], BC = { A: 0x16a34a, U: 0xa855f7, G: 0x2563eb, C: 0xf59e0b };
+      const CX = (i) => (i - 2) * 1.95, CYM = 2.0, CYB = -0.3;
+      { const strand = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 10.2, 8), stdM(0x94a3b8)); strand.rotation.z = Math.PI / 2; strand.position.set(0, CYM, 0); gCH.add(strand);
+        CODS.forEach((cd, i) => cd.split('').forEach((ch, j) => { const bs = new THREE.Mesh(new THREE.SphereGeometry(0.17, 14, 10), stdM(BC[ch])); bs.position.set(CX(i) + (j - 1) * 0.5, CYM, 0); gCH.add(bs); }));
+        for (let i = 0; i < 5; i++) { const ring = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.02, 8, 32), stdM(0x94a3b8, { transparent: true, opacity: 0.6 })); ring.position.set(CX(i), CYB, 0); gCH.add(ring); } }
+      const lCod = CODS.map((cd, i) => { const l = label(cd, [CX(i), CYM + 0.55, 0], { color: 'rgba(30,58,138,.9)' }); l.show(false); return l; });
+      const lmR = label('mRNA', [-5.4, CYM, 0], { color: 'rgba(71,85,105,.9)' }); lmR.show(false);
+      const chPool = Array.from({ length: 5 }, () => { const b = mkBead(); b.g.visible = false; gCH.add(b.g); return b; });
+      const chBond = Array.from({ length: 4 }, () => { const m = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.075, 1, 10), stdM(0xfbbf24, { emissive: 0x7a5a00, emissiveIntensity: 0.4 })); m.rotation.z = Math.PI / 2; m.visible = false; gCH.add(m); return m; });
+      const chWat = Array.from({ length: 4 }, () => { const m = new THREE.Mesh(new THREE.SphereGeometry(0.12, 12, 8), stdM(0x50a0eb, { transparent: true, opacity: 0.9, emissive: 0x2255aa, emissiveIntensity: 0.4 })); m.visible = false; gCH.add(m); return m; });
+      const chW = [0, 0, 0, 0]; let chN = 0;
+      const lPep = label('펩타이드 결합 + 물 분자(H₂O) 하나 빠져나가요', [0, CYB - 1.3, 0], { color: 'rgba(120,80,0,.92)' }); lPep.show(false);
+      const chBtns = grab(() => KEYS6.map((k) => controls.button(AAI[k].name, () => { const w = W(); if (w) w.chPlace(k); })));
+      const chClr = grab(() => controls.button('↺ 다시', () => { const w = W(); if (w) w.chReset(); }));
+      /* --- sickle: 정상 · 변이 헤모글로빈 β 사슬 / 산소 많음 · 적음 / 적혈구 모양 --- */
+      const SEQN = [['Val', 'phob'], ['His', 'chg'], ['Leu', 'phob'], ['Thr', 'phil'], ['Pro', 'phob'], ['Glu', 'chg'], ['Glu', 'chg'], ['Lys', 'chg']];
+      const CLC = { phob: 0xf97316, phil: 0x3b82f6, chg: 0x22b455 };
+      const skBeads = SEQN.map((q, i) => { const m = new THREE.Mesh(new THREE.SphereGeometry(0.3, 24, 16), stdM(CLC[q[1]])); m.position.set((i - 3.5) * 0.9, 3.7, 0); gSK.add(m); return m; });
+      for (let i = 0; i < 7; i++) { const st = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.6, 8), stdM(0xfbbf24)); st.rotation.z = Math.PI / 2; st.position.set((i - 3) * 0.9, 3.7, 0); gSK.add(st); }
+      const skRing = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.04, 10, 36), stdM(0x2563eb, { emissive: 0x2563eb, emissiveIntensity: 0.5 })); skRing.position.copy(skBeads[5].position); gSK.add(skRing);
+      const skLab = SEQN.map((q, i) => { const l = label(q[0], skBeads[i], { color: 'rgba(15,23,42,.82)', size: 11.5, offset: [0, -0.55, 0] }); l.show(false); return l; });
+      const lSeq = label('', [0, 5.2, 0], { color: 'rgba(30,58,138,.92)' }), lSix = label('', [skBeads[5].position.x + 0.2, 4.45, 0], { color: 'rgba(37,99,235,.92)' }); lSeq.show(false); lSix.show(false);
+      const HB = Array.from({ length: 6 }, () => { const g = new THREE.Group(); const b = new THREE.Mesh(new THREE.SphereGeometry(0.55, 28, 20), stdM(0xbfdbfe, { roughness: 0.3 })); g.add(b); const h = new THREE.Mesh(new THREE.SphereGeometry(0.16, 16, 12), stdM(0xdc2626, { emissive: 0x7f1d1d, emissiveIntensity: 0.4 })); h.position.set(-0.2, 0.15, 0.5); g.add(h); const kn = new THREE.Mesh(new THREE.SphereGeometry(0.17, 16, 12), stdM(0xf97316, { emissive: 0x9a3412, emissiveIntensity: 0.4 })); kn.position.set(0.55, 0, 0); g.add(kn); gSK.add(g); return { g, b, kn }; });
+      const fib = Array.from({ length: 5 }, () => { const m = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 1, 10), stdM(0xf97316, { emissive: 0x9a3412, emissiveIntensity: 0.4, transparent: true, opacity: 0 })); m.rotation.z = Math.PI / 2; gSK.add(m); return m; });
+      const lHb = label('', [-3.8, 1.2, 0], { color: 'rgba(51,65,85,.9)' }), lHb2 = label('', [0, -3.9, 0], { color: 'rgba(120,40,40,.92)' }), lKn = label('주황 돌기: 표면의 소수성 발린', [3.6, 0.7, 0], { color: 'rgba(194,65,12,.92)' }); [lHb, lHb2, lKn].forEach((l) => l.show(false));
+      /* 적혈구: 오목한 원반 → 낫 모양 (정점을 매 프레임 바꿔요) */
+      const rbcGeo = new THREE.SphereGeometry(1, 48, 32), rbcBase = Float32Array.from(rbcGeo.attributes.position.array);
+      const rbc = new THREE.Mesh(rbcGeo, stdM(0xb91c1c, { roughness: 0.4 })); rbc.position.set(0, -2.1, 0); gSK.add(rbc);
+      let rbcM = -1;
+      function shapeRBC(m) {
+        if (Math.abs(m - rbcM) < 0.004) return; rbcM = m; const pa = rbcGeo.attributes.position, R = 1.15, T = 0.34, e = m * m * (3 - 2 * m);
+        for (let i = 0; i < pa.count; i++) {
+          const px = rbcBase[i * 3], py = rbcBase[i * 3 + 1], pz = rbcBase[i * 3 + 2], rho2 = Math.min(1, px * px + pz * pz);
+          let x = R * px, z = R * pz, y = py * T * (0.3 + 0.9 * rho2);
+          x *= 1 + 1.0 * e; z *= 1 - 0.45 * e; const u = x / (R * 2);
+          y *= 1 - 0.55 * e * Math.min(1, u * u * 3);
+          z += 0.9 * e * u * u * R * 1.3;
+          pa.setXYZ(i, x, y + 0.0, z);
+        }
+        pa.needsUpdate = true; rbcGeo.computeVertexNormals();
+      }
+      shapeRBC(0);
+      const skMut = grab(() => controls.segment('β 사슬', [{ value: false, label: '정상' }, { value: true, label: '변이' }], false, (v) => { const w = W(); if (w) w.skSet(v, null); }));
+      const skLow = grab(() => controls.segment('산소', [{ value: false, label: '많음' }, { value: true, label: '적음' }], false, (v) => { const w = W(); if (w) w.skSet(null, v); }));
+      const Mn = new THREE.Matrix4();
+      function updSickle(w, t) {
+        const k = w.S.sk, m = k.mut;
+        skBeads[5].material.color.setHex(m ? CLC.phob : CLC.chg); skRing.material.color.setHex(m ? 0xdc2626 : 0x2563eb); skRing.material.emissive.setHex(m ? 0xdc2626 : 0x2563eb);
+        skLab[5].set(m ? 'Val' : 'Glu');
+        lSeq.set(m ? '변이 헤모글로빈 β 사슬 (처음 8개)' : '정상 헤모글로빈 β 사슬 (처음 8개)'); lSix.set(m ? '6번째: 글루탐산 → 발린 (친수성 → 소수성)' : '6번째: 글루탐산 (친수성, 전하)');
+        HB.forEach((o, i) => {
+          const xf = (i - 2.5) * 1.2 + Math.sin(t * (0.5 + i * 0.07) + i * 2.1) * 0.35, yf = Math.cos(t * (0.4 + i * 0.05) + i) * 0.35, xl = (i - 2.5) * 1.25, p = k.poly;
+          o.g.position.set(xf + (xl - xf) * p, 0.1 + yf * (1 - p), Math.sin(t * 0.6 + i * 1.7) * 0.4 * (1 - p)); o.g.rotation.y = i * 0.9 + t * 0.2 * (1 - p);
+          o.b.material.color.setHex(k.low ? 0x9db9dc : 0xbfdbfe); o.kn.visible = m; if (m) o.kn.position.set(0.55, 0, 0);
+        });
+        fib.forEach((f, i) => { const a = HB[i].g.position, b = HB[i + 1].g.position; f.position.set((a.x + b.x) / 2, (a.y + b.y) / 2, (a.z + b.z) / 2); f.scale.set(1, Math.max(0.01, a.distanceTo(b)), 1); f.rotation.set(0, 0, Math.atan2(b.y - a.y, b.x - a.x) - Math.PI / 2 + Math.PI); f.material.opacity = Math.min(0.9, k.poly * 1.2); f.visible = k.poly > 0.2; });
+        shapeRBC(k.sick); rbc.rotation.x = 1.2;
+        rbc.material.color.setHex(0xc43030);
+        lHb.set('산소가 ' + (k.low ? '적을 때' : '많을 때') + '의 헤모글로빈 분자들');
+        lHb2.set(k.sick > 0.5 ? '낫 모양 적혈구' : '둥근 원반 모양 적혈구');
+        const msg = !m ? '서열이 정상이면 접힘도 정상이라, 산소가 적어도 헤모글로빈이 따로 있고 적혈구는 둥근 모양이에요.' : (k.low ? '글루탐산 하나가 발린으로 바뀌면 접힘이 달라져요. 산소가 적으면 표면의 소수성 돌기끼리 달라붙어 긴 섬유가 되고 적혈구가 낫 모양이 돼요.' : '변이가 있어도 산소가 많을 때는 따로 떨어져 있어요. 산소를 적게 해 보세요.');
+        return '<b>' + (m ? '변이' : '정상') + ' 헤모글로빈 · 산소 ' + (k.low ? '적음' : '많음') + '</b><br>' + msg;
+      }
+      const lastEl = { v: '' };
+      function updBeads(w, md, dt, t) {
+        const aa = w.S.aa, TK = w.TANK;
+        if (md === 'aa') {
+          aaPool.forEach((B, i) => {
+            const b = aa.beads[i]; B.g.visible = !!b; if (!b) return;
+            setBead(B, b.key, true, t, b.ph);
+            B.g.position.set((b.x - (TK.x + TK.w / 2)) / TK.w * TW, -(b.y - (TK.y + TK.h * 0.5)) / TK.h * TH, Math.sin(i * 12.9 + 1.3) * (TD / 2 - 0.6));
+            B.g.rotation.z = -b.rot; B.g.scale.setScalar(1 + 0.25 * b.splash);
+          });
+          const ph = aa.beads.filter((b) => AAI[b.key].cls === 'phob').length, ot = aa.beads.length - ph;
+          return '<b>물속에서 아미노산 R기의 성질</b><br>구슬 ' + aa.beads.length + '개 (소수성 R기 ' + ph + ' · 그 밖의 R기 ' + ot + ')<br>소수성 R기(주황)끼리는 모여 뭉치고, 친수성 R기(파랑)와 전하를 띤 R기(초록)는 물 분자(작은 파랑 구)와 닿으려고 흩어져요.';
+        }
+        sortPool.forEach((B, i) => { B.g.rotation.y = Math.sin(t * 0.6 + i) * 0.5; });
+        return '<b>아미노산 6종</b><br>구슬마다 R기(색 구)가 달라요. 물속에서 본 성질로 분류하는 일은 ▦ 2D에서 해요.<br>파랑: 친수성 · 주황: 소수성 · 초록: 전하를 띠어요';
+      }
+      function updChain(w, md, dt, t) {
+        const c = w.S.ch, n = c.seated.length;
+        chPool.forEach((B, i) => { const pc = c.seated[i]; B.g.visible = !!pc; if (!pc) return; setBead(B, pc.key, false, t, 0); B.g.position.set(CX(i) - 0.3, CYB, 0); B.g.scale.setScalar(1 + 0.3 * (pc.pop || 0)); });
+        chBond.forEach((m, i) => { m.visible = n > i + 1; if (m.visible) { m.scale.set(1, 0.9, 1); m.position.set((CX(i) + CX(i + 1)) / 2 - 0.3 + 0.0, CYB + 0.0, 0); } });
+        if (n > chN) { for (let k = chN; k < n; k++) if (k >= 1) chW[k - 1] = 1.3; } chN = n;
+        chWat.forEach((m, i) => { chW[i] = Math.max(0, chW[i] - dt); m.visible = chW[i] > 0; if (m.visible) { const f = 1 - chW[i] / 1.3; m.position.set((CX(i) + CX(i + 1)) / 2 - 0.3 + f * 0.9, CYB - 0.2 + f * 1.4, 0.3); m.scale.setScalar(1 - 0.3 * f); } });
+        lPep.show(n >= 2); lPep.obj = [0, CYB - 1.2, 0];
+        const msg = c.done ? '폴리펩타이드 완성! 이 순서가 단백질의 1차 구조(아미노산 서열)예요.' : '다음은 ' + (n + 1) + '번째 코돈 <b>' + CODS[n] + '</b>에 맞는 아미노산이에요.' + (c.wrong ? '<br>틀린 횟수 ' + c.wrong + '번 · 코돈표는 ▦ 2D에서 봐요.' : '');
+        return '<b>mRNA 코돈 순서대로 연결해요</b><br>연결한 구슬 ' + n + ' / 5 · 펩타이드 결합 ' + Math.max(0, n - 1) + '개<br>' + msg + (md === 'calc' ? '<br><span style="color:#9fb0d4">경우의 수 계산(20ⁿ)은 ▦ 2D에서 해요. 아미노산은 20종이라서 구슬 n개의 서열은 20ⁿ가지예요.</span>' : '');
+      }
+      let curNew = '';
+      function applyNew(md) {
+        if (md === curNew) return; const was = curNew; curNew = md;
+        const isNew = md === 'aa' || md === 'sortaa' || md === 'chain' || md === 'calc' || md === 'sickle';
+        gOld.visible = !isNew; gAA.visible = md === 'aa' || md === 'sortaa'; gCH.visible = md === 'chain' || md === 'calc'; gSK.visible = md === 'sickle';
+        oldEls.forEach((e) => { e.style.display = isNew ? 'none' : ''; });
+        sh(aaBtns, md === 'aa'); sh(aaClr, md === 'aa'); sh(chBtns, md === 'chain'); sh(chClr, md === 'chain'); sh(skMut, md === 'sickle'); sh(skLow, md === 'sickle');
+        lTank.show(md === 'aa'); sortPool.forEach((B) => { B.g.visible = md === 'sortaa'; }); sortLab.forEach((l) => l.show(md === 'sortaa'));
+        lCod.forEach((l) => l.show(md === 'chain' || md === 'calc')); lmR.show(md === 'chain' || md === 'calc'); if (md !== 'chain' && md !== 'calc') lPep.show(false);
+        skLab.forEach((l) => l.show(md === 'sickle')); [lSeq, lSix, lHb, lHb2].forEach((l) => l.show(md === 'sickle')); lKn.show(false);
+        if (isNew) { resLabs.concat([nL, cL, helL, shL, gL, hbL, coreL, wetL, hemeL], subL).forEach((l) => l.show(false)); orbit.theta = 0.1; orbit.phi = 1.4; orbit.tx = 0; orbit.ty = md === 'sickle' ? 0.9 : 0.3; orbit.tz = 0; orbit.dist = md === 'sickle' ? (PHONE ? 24 : 17.5) : (PHONE ? 17 : 12.5); }
+        else if (was) { fitNeeded = true; camGo = 1.3; lastLs.mode = null; applyLabels(); }
+        lastEl.v = '';
+      }
       return {
         update(dt, t) {
           T = t;
+          const Lw = W(), mdN = Lw && Lw.S ? Lw.S.mode : 'fold';
+          applyNew(mdN);
+          if (mdN === 'aa' || mdN === 'sortaa' || mdN === 'chain' || mdN === 'calc' || mdN === 'sickle') {
+            dt = Math.min(dt, 0.05); let h;
+            if (mdN === 'sickle') { h = updSickle(Lw, t); skMut.r.set(!!Lw.S.sk.mut); skLow.r.set(!!Lw.S.sk.low); }
+            else if (mdN === 'chain' || mdN === 'calc') h = updChain(Lw, mdN, dt, t);
+            else h = updBeads(Lw, mdN, dt, t);
+            if (h !== lastEl.v) { lastEl.v = h; info('<div style="max-width:' + (PHONE ? 215 : 280) + 'px">' + h + '</div>'); }
+            return;
+          }
           if (!player.playing) followLesson(); else lastLs.stage = lessonStage();
           if (fitNeeded && camera.aspect) { fit(); fitNeeded = false; }
           if (camGo > 0) { camGo -= dt; const ct = stage === 1 ? 0.12 : stage === 2 ? 0.7 : 0.85, cp = stage === 1 ? 1.42 : stage === 2 ? 1.1 : 1.12; orbit.theta += (ct - orbit.theta) * Math.min(1, dt * 3); orbit.phi += (cp - orbit.phi) * Math.min(1, dt * 3); }

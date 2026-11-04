@@ -218,18 +218,71 @@
 
       /* ================= 2D 실험의 값을 그대로 따라가요 ================= */
       let built = false, pipeP = 0, pipeUser = false, emfP = 0, emfUser = false;
+      /* ================= ⑤ 움직이는 막대 도체 (rail) · 가상 실험 (fake) ================= */
+      const gRl = new THREE.Group(); root.add(gRl); gRl.visible = false;
+      const RU = 0.022, RXc = (px) => (px - 250) * RU, RZc = (py) => (py - 210) * RU, RLEN = 300;
+      const rBase = box(9.6, 0.2, 5.8, 0x1f2937, { roughness: 0.7 }); rBase.position.set(0, -0.2, 0); gRl.add(rBase);
+      const zT = RZc(120), zB = RZc(300), xL = RXc(60), xR = RXc(440);
+      [zT, zB].forEach((z) => { const r = cyl(0.07, 0.07, xR - xL, 0xb7c0d0, { metalness: 0.8, roughness: 0.3 }, 14); r.rotation.z = Math.PI / 2; r.position.set((xL + xR) / 2, 0.1, z); gRl.add(r); });
+      [[zT, RZc(180)], [RZc(240), zB]].forEach(([a, b]) => { const w = cyl(0.07, 0.07, Math.abs(b - a), 0xb7c0d0, { metalness: 0.8 }, 12); w.rotation.x = Math.PI / 2; w.position.set(xL, 0.1, (a + b) / 2); gRl.add(w); });
+      const resis = box(0.5, 0.3, 1.3, 0x475569, { roughness: 0.5 }); resis.position.set(xL, 0.15, RZc(210)); gRl.add(resis);
+      const barM = cyl(0.12, 0.12, (zB - zT) + 0.5, 0xcbd5e1, { metalness: 0.85, roughness: 0.25 }, 18); barM.rotation.x = Math.PI / 2; gRl.add(barM);
+      const fluxPl = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ color: 0xfacc15, transparent: true, opacity: 0.2, side: THREE.DoubleSide, depthWrite: false })); fluxPl.rotation.x = -Math.PI / 2; gRl.add(fluxPl);
+      const bArr = arrowSet(40, 0.025); gRl.add(bArr.group);
+      let bi = 0; for (let x = 90; x < 440; x += 44) for (let y = 138; y < 300; y += 40) { if (bi < 40) { bArr.set(bi++, new V3(RXc(x), 1.5, RZc(y)), new V3(0, -1, 0), 0.9, 0x7c3aed); } } bArr.flush();
+      const NCD = 36, cDots = new THREE.InstancedMesh(new THREE.SphereGeometry(0.09, 10, 8), mat(0xf59e0b, { emissive: 0xf59e0b, emissiveIntensity: 1 }), NCD); cDots.frustumCulled = false; gRl.add(cDots);
+      const aV = mkArrow(0x14b8a6, 0.05), aFe = mkArrow(0x2563eb, 0.07), aFm = mkArrow(0xf26b3a, 0.07); gRl.add(aV, aFe, aFm);
+      const eBar = [0x2563eb, 0xef4444].map((c, i) => { const m = new THREE.Mesh(new THREE.BoxGeometry(0.4, 1, 0.4), h.basic(c)); gRl.add(m); return m; });
+      const lBr = L('rail', '', [0, 2.0, zT - 0.7], { color: '#7c3aed', size: 12 }), lL = L('rail', 'L = 0.40 m', [xL + 0.5, 0.3, 0], { color: '#334155', size: 12 }), lR = L('rail', 'R = 0.30 Ω', resis, { color: '#475569', size: 12, offset: [0, 0.6, 0] });
+      const lV = L('rail', '', barM, { color: '#0f766e', size: 12, offset: [0.9, 1.0, -1.6] }), lFe = L('rail', '외력 F', barM, { color: '#1d4ed8', size: 12 }), lFm = L('rail', '', barM, { color: '#9a3412', size: 12 });
+      const lE1 = L('rail', '', [5.3, -0.3, 2.0], { color: '#475569', size: 11 }), lE2 = L('rail', '', [6.2, -0.3, 2.0], { color: '#475569', size: 11 }), lMsg = L('rail', '', [0, 0.4, 2.7], { color: '#9a3412', size: 12 }), lBang = L('rail', '', [0, 1.2, 0], { color: '#dc2626', size: 15 });
+      const lEn = L('rail', '', [5.7, 2.5, 2.0], { color: '#1e40af', size: 11 });
+      const rlP = { on: false, p: 0 }; let rlSig = '', lastView = '';
+      function pathPoint(pts, cum, s) { const tot = cum[cum.length - 1]; s = ((s % tot) + tot) % tot; for (let i = 1; i < cum.length; i++) if (s <= cum[i]) { const u = (s - cum[i - 1]) / (cum[i] - cum[i - 1]); return pts[i - 1].clone().lerp(pts[i], u); } return pts[0].clone(); }
+      function updRail(S, sim, dt) {
+        const l = S.l, f = l.fake, fake = l.view === 'fake', masked = S.gate === 'ml2';
+        const sg = l.view + '|' + l.push + '|' + f.on + '|' + f.done + '|' + l.rv + '|' + l.rB; if (sg !== rlSig) { rlSig = sg; if (rlP.on) { rlP.on = false; plRail.pause(); } }
+        let bx = fake ? f.x : l.bx, v = fake ? f.v : l.rv, run = fake ? (f.on || f.done) : (l.push && l.rwait <= 0), doneF = fake && f.done;
+        if (rlP.on) { if (fake) { const tt = rlP.p * 1.7, x = 41.25 * (Math.exp(1.333 * tt) - 1); bx = Math.min(RLEN, x); v = Math.exp(1.333 * tt); run = true; doneF = x >= RLEN; } else { bx = rlP.p * RLEN; v = l.rv; run = true; } }
+        const bxs = RXc(110 + bx);
+        barM.position.set(bxs, 0.25, RZc(210)); fluxPl.scale.set(Math.max(0.01, bxs - xL), zB - zT, 1); fluxPl.position.set((xL + bxs) / 2, 0.06, RZc(210));
+        const eps = fake ? 0 : l.rB * 0.4 * v, I = fake ? 0.6 + v * 0.3 : (run ? eps / 0.3 : 0), cur = run && I > 0.01;
+        // 전류 점 (실제: 막대에서 위(−z) 방향 → 반시계 / 가상: 반대)
+        const pts = [new V3(bxs, 0.25, zB), new V3(bxs, 0.25, zT), new V3(xL, 0.25, zT), new V3(xL, 0.25, zB), new V3(bxs, 0.25, zB)], P2 = fake ? pts.slice().reverse() : pts, cum = [0]; for (let i = 1; i < P2.length; i++) cum.push(cum[i - 1] + P2[i].distanceTo(P2[i - 1]));
+        const ph = (rlP.on ? rlP.p * 40 : Math.abs(l.rph)) * RU, gap = 0.55, nD = Math.min(NCD, Math.floor(cum[cum.length - 1] / gap));
+        for (let i = 0; i < NCD; i++) { if (cur && i < nD) { const pp = pathPoint(P2, cum, ph + i * gap); Mx.makeTranslation(pp.x, pp.y, pp.z); cDots.setMatrixAt(i, Mx); } else { Mx.makeScale(0, 0, 0); cDots.setMatrixAt(i, Mx); } } cDots.instanceMatrix.needsUpdate = true;
+        // 속도 · 힘
+        const at = new V3(bxs, 0.25, RZc(210));
+        if (run) { setArrow(aV, new V3(bxs + 0.2, 1.0, zT - 0.25), new V3(bxs + 0.2 + Math.min(2.2, Math.max(0.5, v * 0.35)), 1.0, zT - 0.25)); } else aV.visible = false;
+        let Fm = 0;
+        if (!fake) { Fm = l.rB * I * 0.4; const fl = Math.min(2.2, Fm / 0.86 * 2.2); if (run && fl > 0.1) { setArrow(aFe, at.clone().add(new V3(0.2, 0.5, 0.6)), at.clone().add(new V3(0.2 + fl, 0.5, 0.6))); setArrow(aFm, at.clone().add(new V3(-0.2, 0.5, -0.6)), at.clone().add(new V3(-0.2 - fl, 0.5, -0.6))); } else aFe.visible = aFm.visible = false; }
+        else { aFe.visible = false; Fm = 0.1333 * v; const fl = Math.min(2.2, Fm / 1.1 * 2.2); if (run) setArrow(aFm, at.clone().add(new V3(0.2, 0.5, -0.6)), at.clone().add(new V3(0.2 + fl, 0.5, -0.6))); else aFm.visible = false; }
+        lBr.set('B ⊗ 화면 속으로 ' + (fake ? '0.50' : l.rB.toFixed(2)) + ' T (아래로)'); lV.set('v = ' + v.toFixed(2) + ' m/s'); lV.show(run); lV.obj = [bxs + 0.3, 1.1, zT - 0.5];
+        lFe.show(!fake && !!aFe.visible); lFe.obj = [bxs + 1.2, 0.9, 0.6]; lFm.show(!!aFm.visible); lFm.set(fake ? '자기력이 운동 방향!' : (masked ? '자기력 F = ?' : '자기력 F = BIL')); lFm.obj = [bxs - (fake ? -1.2 : 1.2), 0.9, -0.6];
+        lMsg.set(fake ? '외력 = 0 인데 막대가 점점 빨라져요' : (l.push ? '막대는 일정한 속력 (화면은 느리게 보여 줘요)' : '▶ 2D에서 “막대 밀기”를 눌러 보세요')); lMsg.el.style.background = fake ? 'rgba(127,29,29,.9)' : 'rgba(255,255,255,.0)';
+        lBang.set('❌ 불가능! 에너지가 공짜로 늘어나요'); lBang.show(doneF); lEn.set(fake ? '운동 에너지 · 외력이 한 일' : '외력 Fv · 열 I²R');
+        // 에너지 막대
+        const KE = 0.5 * 0.1 * v * v, a0 = fake ? 0 : (masked ? 0 : Fm * v * (run ? 1 : 0) / 3.6), a1 = fake ? KE / 4 : (masked ? 0 : I * I * 0.3 / 3.6);
+        eBar[0].scale.y = Math.max(0.02, 2.6 * Math.min(1, fake ? 0 : a0)); eBar[0].position.set(5.3, -0.1 + eBar[0].scale.y / 2, 2.0);
+        eBar[1].scale.y = Math.max(0.02, 2.6 * Math.min(1, a1)); eBar[1].position.set(6.0, -0.1 + eBar[1].scale.y / 2, 2.0);
+        lE1.set(fake ? '외력 일 0 J' : (masked ? '외력 Fv ?' : '외력 Fv ' + (Fm * v * (run ? 1 : 0)).toPrecision(3) + ' W')); lE2.set(fake ? '운동 ' + KE.toPrecision(3) + ' J' : (masked ? '열 ?' : '열 ' + (I * I * 0.3).toPrecision(3) + ' W'));
+        const p3 = (x) => (Math.abs(x) < 1e-9 ? '0' : (x * (1 + 1e-12)).toPrecision(3));
+        info(fake ? '<b>🚫 만약 유도 전류가 선속 변화를 “돕는다면”?</b><br>자기력이 막대를 더 빨리 밀어요 → 빨라지면 ε도 힘도 커져 계속 빨라져요. 아무 일도 해 주지 않았는데 에너지가 늘어나니 <b>에너지 보존 법칙에 어긋나요</b>. 그래서 렌츠 법칙(방해)이 성립해요.'
+          : '<b>움직이는 막대 도체</b>: ε = BLv = ' + (l.push ? p3(eps) : '0') + ' V, I = ε/R = ' + (l.push ? p3(I) : '0') + ' A, 자기력 F = BIL = ' + (masked ? '?' : (l.push ? p3(Fm) : '0') + ' N') + '<br>유도 전류가 흐르는 막대는 <b>운동을 방해</b>하는 쪽으로 힘을 받아요. 막대가 한 일은 모두 저항에서 <b>열</b>로 바뀌어요.');
+      }
+      const plRail = grab('rail', () => controls.player({ duration: 7, loop: true, autoplay: false, label: '막대 밀기', phases: [[0, '출발'], [0.5, '움직이는 중'], [0.9, '끝']], onFrame(p) { if (!built) return; rlP.on = true; rlP.p = p; } }));
       const plEmf = grab('emf', () => controls.player({ duration: 8, loop: true, autoplay: true, label: '자석 빼기', phases: [[0, '코일 속 자석'], [0.15, '자석을 빼요 (ΔΦ)'], [0.55, '멀리 있어요']], onFrame(p) { if (!built) return; emfP = p; } }));
       const plPipe = grab('pipe', () => controls.player({ duration: 12, loop: true, autoplay: false, label: '자석 떨어뜨리기', phases: [[0, '놓는 순간'], [0.3, '빨라지다가'], [0.6, '(구리관) 일정한 속력']], onFrame(p) { if (!built) return; pipeP = p; pipeUser = true; } }));
       built = true;
-      const CAMS = { flux: [12.5, 1.32, 0, 0], coil: [17, 1.4, 1.2, 0.1], pipe: [16.5, 1.4, 0, -0.2], pend: [13, 1.3, 0, 0.6] };
+      const CAMS = { flux: [12.5, 1.32, 0, 0], coil: [17, 1.4, 1.2, 0.1], pipe: [16.5, 1.4, 0, -0.2], pend: [13, 1.3, 0, 0.6], rail: [12.5, 0.95, 0.9, -0.3] };
       let lastSc = '', lastPipeRun = false, localT = -1;
-      function scOf(S) { return S.mode === 'flux' ? 'flux' : S.mode === 'emf' || S.mode === 'lenz' ? 'coil' : (S.b.view === 'pipe' ? 'pipe' : 'pend'); }
+      function scOf(S) { return S.mode === 'flux' ? 'flux' : S.mode === 'lenz' && (S.l.view === 'rail' || S.l.view === 'fake') ? 'rail' : S.mode === 'emf' || S.mode === 'lenz' ? 'coil' : (S.b.view === 'pipe' ? 'pipe' : 'pend'); }
       function go(sc, S) {
         st.sc = sc;
-        gF.visible = sc === 'flux'; gC.visible = sc === 'coil'; gB.visible = sc === 'pipe'; gPd.visible = sc === 'pend';
+        gF.visible = sc === 'flux'; gC.visible = sc === 'coil'; gB.visible = sc === 'pipe'; gPd.visible = sc === 'pend'; gRl.visible = sc === 'rail';
         Object.keys(labs).forEach((k) => { labs[k].on = k === sc; labs[k].forEach((l) => l.show(k === sc)); });
-        showCtl(sc === 'coil' && S.mode === 'emf' ? 'emf' : sc === 'pipe' ? 'pipe' : '__none');
-        const c = CAMS[sc], o = ctx.orbit; o.dist = c[0] * KD; o.phi = c[1]; o.tx = c[2]; o.ty = c[3]; o.tz = 0;
+        showCtl(sc === 'coil' && S.mode === 'emf' ? 'emf' : sc === 'pipe' ? 'pipe' : sc === 'rail' ? 'rail' : '__none');
+        const c = CAMS[sc], o = ctx.orbit; o.dist = c[0] * KD; o.phi = c[1]; o.tx = c[2]; o.ty = c[3]; o.tz = 0; if (sc === 'rail') o.theta = 0.05;
         if (sc === 'pipe') { dropReset(); }
         pipeUser = false; plPipe.pause();
       }
@@ -239,7 +292,7 @@
           dt = Math.min(dt, 0.05);
           const sim = window.__sim; if (!sim) return; const S = sim.S, sc = scOf(S);
           if (sc !== lastSc) { lastSc = sc; go(sc, S); }
-          else if (sc === 'coil') showCtl(S.mode === 'emf' ? 'emf' : '__none');
+          else if (sc === 'coil') showCtl(S.mode === 'emf' ? 'emf' : '__none'); else if (sc === 'rail') showCtl('rail');
           if (sc === 'flux') {
             const f = S.f; st.th = f.dth; st.Bv = f.dB; st.Av = f.dA; st.B = f.dB / 0.25; st.R = Math.sqrt(f.dA / 0.015) * 2;
             const k = [st.th, st.Bv, st.Av].join(); if (k !== st.fk) { st.fk = k; updFlux(); }
@@ -259,7 +312,7 @@
             } else {
               const l = S.l; st.N = 6;
               if (l.view === 'mag') { y = (300 - l.mx) * 0.02; vyN = -l.vx * 0.02; st.flip = l.flip; head = '<b>🔁 렌츠 법칙</b>: 유도 전류는 선속의 변화를 방해하는 방향으로 흘러요.<br>'; }
-              else { y = 4.2; vyN = 0; st.flip = 1; head = '<b>🔁 렌츠 법칙</b> — ' + (l.view === 'rail' ? '막대 도체 장면(ε = BLv, F = BIL)' : '가상 실험') + '은 2D에서 해요. 3D는 자석-코일 모형이에요.<br>'; }
+              else { y = 4.2; vyN = 0; st.flip = 1; head = ''; }
             }
             if (st.N !== st.Nb) { st.Nb = st.N; buildCoil(); }
             my = Math.max(-5, Math.min(5, y)); vy = vyN; magnet.position.y = my;
@@ -313,6 +366,7 @@
             info('<b>🌪️ 구리관 속 자석은 천천히 떨어져요</b> (자석 세기: ' + ['', '약', '중', '강'][st.strong] + ')<br>자석이 움직이면 관에 <b>와전류</b>가 생기고, 렌츠 법칙에 따라 자석의 운동을 방해하는 자기장이 만들어져요. 플라스틱관은 전류가 흐르지 못해 그대로 떨어져요.<br>' + (tdone[0] ? '구리관 ' + tdone[0].toFixed(1) + '초 vs 플라스틱관 ' + tdone[1].toFixed(1) + '초 (모형 시간)' : '2D의 [▶ 자석 떨어뜨리기]나 아래 ▶ 로 떨어뜨려 보세요.'));
           }
           if (sc === 'pend') updPend(S, sim, dt);
+          if (sc === 'rail') updRail(S, sim, dt);
         },
         sync() { st.fk = ''; },
       };

@@ -210,12 +210,88 @@
         info('<b>🎞️ 재생: 기준광만 비춰도 입체상이 떠올라요</b><br>' + (P.ref ? '기준광을 필름에 비추면 필름 뒤에 <b>입체상</b>이 보여요.' : '기준광이 없으면 상이 재생되지 않아요.') + '<br>눈을 옆으로 옮기면(2D의 슬라이더) 앞의 공이 비켜나며 가려진 별이 보여요 (시차).<br>' + (full ? '필름 전체' : '필름 한 조각만으로도 전체 상이 보이지만 볼 수 있는 범위가 좁아져요.') + (v.star ? '<br><b>지금은 가려진 별이 보여요!</b>' : ''));
       }
 
+      /* ================= ⑤ 레이저의 회절 (laser) ================= */
+      const gL = new THREE.Group(), gD2 = new THREE.Group(); root.add(gL, gD2); gL.visible = gD2.visible = false;
+      const CAMS2 = { laser: { dist: PHN ? 28 : 14, theta: -0.3, phi: 0.95, tx: 0.2, ty: 0, tz: 0 }, door: { dist: 15 * KD, theta: -0.25, phi: 0.9, tx: 1.0, ty: 0, tz: 0 } };
+      const lbx = box(14.5, 0.3, 7, 0x1f2937, { roughness: 0.7 }); lbx.position.set(0.2, -0.9, 0); gL.add(lbx);
+      const lsBox = box(1.6, 0.8, 0.8, 0x4a5568); lsBox.position.set(-6.2, 0, 0); gL.add(lsBox); const lsLed = sphere(0.14, 0xe53935, { emissive: 0xff2020, emissiveIntensity: 1 }); lsLed.position.set(-5.35, 0, 0); gL.add(lsLed);
+      const lBeam = mkSeg(0xff3b30, 0.05, { basic: true, mo: { transparent: true, opacity: 0.9 } }); gL.add(lBeam);
+      const LXs = -1.2, LXe = 5.4, LK = 2.6 / 80;
+      const lPl = [0, 1].map(() => { const m = box(0.25, 1.8, 1, 0x556070, { metalness: 0.4 }); gL.add(m); return m; });
+      const lScr = box(0.2, 1.8, 5.5, 0x10131c); lScr.position.set(LXe, 0, 0); gL.add(lScr);
+      const lcv = document.createElement('canvas'); lcv.width = 256; lcv.height = 32; const lcx = lcv.getContext('2d'), ltex = new THREE.CanvasTexture(lcv);
+      const lScrTex = new THREE.Mesh(new THREE.PlaneGeometry(5.2, 1.7), new THREE.MeshBasicMaterial({ map: ltex, side: THREE.DoubleSide })); lScrTex.rotation.y = -Math.PI / 2; lScrTex.position.set(LXe - 0.12, 0, 0); gL.add(lScrTex);
+      const fanG = new THREE.BufferGeometry(); fanG.setAttribute('position', new THREE.BufferAttribute(new Float32Array(9), 3)); const fan = new THREE.Mesh(fanG, new THREE.MeshBasicMaterial({ color: 0xff3b30, transparent: true, opacity: 0.22, side: THREE.DoubleSide, depthWrite: false })); fan.frustumCulled = false; gL.add(fan);
+      let prof = null, lSig = '';
+      const lcF = L('laser', '레이저', lsBox, { color: '#475569', size: 12, offset: [0, 0.8, 0] }), lcSl = L('laser', '', anchor(gL, LXs, 1.5, 0), { color: '#26324a', size: 12 }), lcWd = L('laser', '', anchor(gL, 2.2, 0.2, 0), { color: '#e8501b', size: 13 });
+      L('laser', '스크린 (2 m)', anchor(gL, LXe, -1.3, 2.7), { color: '#475569', size: 12 }); L('laser', '(틈은 확대해서 그렸어요)', anchor(gL, LXs, -1.3, -1.4), { color: '#5d6879', size: 11 });
+      const lcI = L('laser', '밝기 (높을수록 밝아요)', anchor(gL, LXe - 0.6, 2.8, 2.6), { color: '#e53935', size: 11 });
+      const laP = { on: false, a: 0.5 }; let laSig = '';
+      const wlcol = [255, 70, 55];
+      function paintLaser(aMm) {
+        const L2 = window.__sim; for (let x = 0; x < 256; x++) { const mm = (x / 255 - 0.5) * 2 * 80 * (5.2 / 5.2); const v = Math.pow(L2.lasI(aMm, mm), 0.5); lcx.fillStyle = 'rgb(' + Math.round(wlcol[0] * v) + ',' + Math.round(wlcol[1] * v) + ',' + Math.round(wlcol[2] * v) + ')'; lcx.fillRect(x, 0, 1, 32); } ltex.needsUpdate = true;
+        if (prof) { gL.remove(prof); prof.geometry.dispose(); }
+        const pts = []; for (let i = 0; i <= 120; i++) { const mm = -80 + 160 * i / 120; pts.push(new V3(LXe - 0.7, -0.75 + L2.lasI(aMm, mm) * 2.0 + 0.0, mm * LK)); }
+        prof = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 240, 0.04, 6), basicM(0xff5a4a)); gL.add(prof);
+      }
+      function basicM(c) { return new THREE.MeshBasicMaterial({ color: c }); }
+      function updLaser(S, sim, t) {
+        const sg = S.df.slit; if (sg !== laSig) { laSig = sg; if (laP.on) { laP.on = false; plLa.pause(); } }
+        const aMm = laP.on ? laP.a : { '0.5': 0.5, '0.1': 0.1, '0.02': 0.02 }[S.df.slit], half = sim.lasHalf(aMm), gap = (3 + (Math.log10(aMm) + 1.7) * 9) * 0.04 * 1.6;
+        if (aMm !== lSig) { lSig = aMm; paintLaser(aMm); }
+        setSeg(lBeam, new V3(-5.3, 0, 0), new V3(LXs, 0, 0));
+        lPl[0].scale.z = 3.2 - gap / 2; lPl[0].position.set(LXs, 0, gap / 2 + (3.2 - gap / 2) / 2); lPl[1].scale.z = 3.2 - gap / 2; lPl[1].position.set(LXs, 0, -gap / 2 - (3.2 - gap / 2) / 2);
+        const gh = half * LK, pa = fanG.attributes.position; pa.setXYZ(0, LXs, 0, 0); pa.setXYZ(1, LXe - 0.1, 0, -gh); pa.setXYZ(2, LXe - 0.1, 0, gh); pa.needsUpdate = true;
+        lcSl.set('틈 ' + aMm + ' mm'); lcWd.set('중앙 무늬의 폭 ' + (2 * half).toFixed(half < 5 ? 1 : 0) + ' mm'); lcWd.obj = [2.2, 0.4, 0];
+        info('<b>🔦 레이저의 회절</b>: 틈이 <b>' + aMm + ' mm</b>이면 스크린(2 m)의 중앙 무늬 폭은 <b>' + (2 * half).toFixed(half < 5 ? 1 : 0) + ' mm</b>예요.<br>' + (aMm === 0.5 ? '틈이 넓으면 좁은 줄이 생겨요.' : aMm === 0.1 ? '틈을 좁히면 무늬가 더 넓게 퍼져요.' : '아주 좁은 틈: 스크린 가득 퍼져요.') + ' 막대 높이는 밝기예요.');
+      }
+
+      /* ================= ⑥ 소리와 빛이 문을 지날 때 (door) ================= */
+      const DW = 2.0, DXB = -2.5, DNX = 90, DNY = 56, DYH = 4.2, DX0 = -6.5, DX1 = 7.5;
+      const dgeo = new THREE.PlaneGeometry(DX1 - DX0, 2 * DYH, DNX, DNY); dgeo.rotateX(-Math.PI / 2);
+      const dpos = dgeo.attributes.position, dcol = new Float32Array(dpos.count * 3); dgeo.setAttribute('color', new THREE.BufferAttribute(dcol, 3));
+      const dbase = []; for (let i = 0; i < dpos.count; i++) dbase.push([dpos.getX(i) + (DX0 + DX1) / 2, dpos.getZ(i)]); for (let i = 0; i < dpos.count; i++) dpos.setX(i, dbase[i][0]);
+      const dwater = new THREE.Mesh(dgeo, new THREE.MeshStandardMaterial({ color: 0xffffff, vertexColors: true, roughness: 0.3, metalness: 0.1 })); gD2.add(dwater);
+      const dwU = box(0.45, 1.3, 1, 0x94a3b8, { metalness: 0.4 }), dwD = box(0.45, 1.3, 1, 0x94a3b8, { metalness: 0.4 }); gD2.add(dwU, dwD);
+      const hhD = DYH - DW / 2; dwU.scale.z = hhD; dwU.position.set(DXB, 0.3, DW / 2 + hhD / 2); dwD.scale.z = hhD; dwD.position.set(DXB, 0.3, -DW / 2 - hhD / 2);
+      const earPos = new V3(DXB + 3.1, 0.5, 2.7), ear = sphere(0.35, 0x14a058, { emissive: 0x0b6b3a, emissiveIntensity: 0.4 }); ear.position.copy(earPos); gD2.add(ear);
+      const earL = L('door', '', ear, { color: '#14a058', size: 13, offset: [0, 0.9, 0] }), dLab = L('door', '문 (폭 1 m)', anchor(gD2, DXB, 1.1, 0), { color: '#26324a', size: 12 }), dSrc = L('door', '', anchor(gD2, -5.2, 0.6, -2.6), { color: '#1d4ed8', size: 12 });
+      L('door', '모퉁이 너머', anchor(gD2, earPos.x, 0.2, earPos.z + 1.0), { color: '#475569', size: 11 });
+      const dtP = { on: false, light: false }; let dSig = '';
+      const dc0 = new THREE.Color(0x0b3a6b), dc1 = new THREE.Color(0x1769b3), dc2 = new THREE.Color(0x7fd6ff), dtc = new THREE.Color();
+      function updDoor(S, sim, t) {
+        const sg = S.df.door; if (sg !== dSig) { dSig = sg; if (dtP.on) { dtP.on = false; plDo.pause(); } }
+        const snd = dtP.on ? !dtP.light : S.df.door === 'sound', lam = snd ? 1.0 : 0.45, k = 2 * Math.PI / lam, w = 3.2, NA2 = 14, a = DW, src2 = []; for (let j = 0; j < NA2; j++) src2.push(-a / 2 + a * (j + 0.5) / NA2);
+        const wt = w * t;
+        for (let i = 0; i < dpos.count; i++) {
+          const x = dbase[i][0], z = dbase[i][1]; let u;
+          if (x < DXB - 0.22) u = Math.cos(k * (x - DXB) - wt);
+          else if (x < DXB + 0.22) u = Math.abs(z) < a / 2 ? Math.cos(-wt) : 0;
+          else if (!snd) u = Math.abs(z) < a / 2 ? Math.cos(k * (x - DXB) - wt) : 0;
+          else { let s = 0; const dx = x - DXB; for (let j = 0; j < NA2; j++) { const dz = z - src2[j], r = Math.sqrt(dx * dx + dz * dz) + 1e-3; s += Math.cos(k * r - wt + Math.PI / 4) / Math.sqrt(r); } u = s * (a / NA2) * Math.sqrt(k / (2 * Math.PI)); }
+          const edge = Math.min(1, (DX1 - x) / 1.2, (z + DYH) / 0.8, (DYH - z) / 0.8); u *= Math.max(0, edge); u = Math.max(-1.6, Math.min(1.6, u));
+          dpos.setY(i, u * 0.2); const f = Math.max(0, Math.min(1, (u + 1.2) / 2.4)); if (f < 0.5) dtc.copy(dc0).lerp(dc1, f * 2); else dtc.copy(dc1).lerp(dc2, (f - 0.5) * 2);
+          if (!snd) { dtc.lerp(new THREE.Color(0xfff0a0), 0.55 * f); if (x >= DXB && Math.abs(z) >= a / 2) dtc.copy(dc0).multiplyScalar(0.7); }
+          dcol[i * 3] = dtc.r; dcol[i * 3 + 1] = dtc.g; dcol[i * 3 + 2] = dtc.b;
+        }
+        dpos.needsUpdate = true; dgeo.attributes.color.needsUpdate = true; dgeo.computeVertexNormals();
+        // 귀에서 들리는 크기 (2D와 같은 계산)
+        let lvl = 0; if (snd) { const TKk = sim.TK, MIC2 = sim.MIC, xs = (window.innerWidth < 600 ? 150 : 200) + TKk.wt; try { const ref = sim.DOOR.amp(xs + Math.hypot(MIC2.x - xs, MIC2.y - TKk.h / 2), TKk.h / 2); lvl = sim.DOOR.amp(MIC2.x, MIC2.y) / Math.max(1e-6, ref); } catch (e) { lvl = 0.3; } }
+        earL.set(snd ? (lvl > 0.45 ? '또렷이 들려요' : lvl > 0.2 ? '작게 들려요' : '거의 안 들려요') : '안 보여요 (그림자)'); earL.el.style.background = snd && lvl > 0.2 ? 'rgba(20,160,88,.92)' : 'rgba(74,85,104,.92)';
+        ear.material.color.set(snd ? 0x14a058 : 0x6b7280); dSrc.set(snd ? '🔊 소리 (파장 약 0.5 m)' : '💡 빛 (파장 약 500 nm)');
+        info(snd ? '<b>🔊 소리는 문을 지나 퍼져요</b>: 파장 약 0.5 m, 문 폭 1 m는 파장의 <b>2배</b> → 크게 퍼져서 모퉁이 너머에서도 들려요.' : '<b>💡 빛은 문을 지나도 거의 직진해요</b>: 파장 약 500 nm, 문 폭 1 m는 파장의 약 <b>200만 배</b> → 퍼짐이 아주 작아 모퉁이 너머는 그림자예요.<br>(그림의 빛의 파장은 실제보다 훨씬 크게 그렸어요.)');
+      }
+
+      const PLS = [];
+      const mkPlayer = (sc, o) => { const p = ctx.controls.player(o), rs = document.querySelectorAll('.v3-player'), row = rs[rs.length - 1]; PLS.push({ sc, p, row }); row.style.display = 'none'; return p; };
+      const plLa = mkPlayer('laser', { duration: 8, loop: true, autoplay: false, label: '틈 좁히기', phases: [[0, '틈 0.5 mm'], [0.4, '0.1 mm'], [0.85, '0.02 mm']], onFrame(p) { laP.on = true; laP.a = Math.pow(10, Math.log10(0.5) + p * (Math.log10(0.02) - Math.log10(0.5))); } });
+      const plDo = mkPlayer('door', { duration: 8, loop: true, autoplay: false, label: '소리 ↔ 빛', phases: [[0, '소리'], [0.5, '빛']], onFrame(p) { dtP.on = true; dtP.light = p >= 0.5; } });
       /* ▶ 재생 */
       let built = false, tankP = 0, tankUser = false;
       built = true;
       let lastSc = '', fk = '';
       function tankFrame(S, t) {
-        const df = S.df, a = df.aCm * 0.5, lam = df.lamCm * 0.5, note = df.sub !== 'tank' ? '<br>(레이저·소리와 빛 장면은 2D에서 해요. 3D는 물결 탱크 모형이에요.)' : '';
+        const df = S.df, a = df.aCm * 0.5, lam = df.lamCm * 0.5, note = '';
         const key = [a, lam, note].join(); if (key !== fk) { fk = key; st.a = Math.max(0.25, Math.min(6, a)); st.lam = Math.max(0.7, Math.min(2.2, lam)); st.note = note; setup(); }
         const wt = w * t, n = pos.count;
         for (let i = 0; i < n; i++) {
@@ -234,9 +310,9 @@
       }
       return {
         update(dt, t) {
-          const sim = window.__sim; if (!sim) return; const S = sim.S, sc = S.mode === 'diff' ? 'tank' : S.mode === 'res' ? 'res' : S.mode === 'holo' ? 'holo' : 'play';
-          if (sc !== lastSc) { lastSc = sc; fk = ''; rKey = hKey = pKey = ''; gT.visible = sc === 'tank'; gR.visible = sc === 'res'; gH.visible = sc === 'holo'; gP.visible = sc === 'play'; Object.keys(labs).forEach((k2) => { labs[k2].on = k2 === sc; labs[k2].forEach((l) => l.show(k2 === sc)); }); const o = ctx.orbit; o.theta = sc === 'tank' ? -0.35 : sc === 'play' ? -0.5 : 0.2; o.phi = sc === 'tank' ? 0.95 : sc === 'res' ? 1.0 : 1.15; o.tx = sc === 'tank' ? 1 : 0; o.ty = sc === 'tank' ? -0.4 : sc === 'res' ? 1.2 : 0; o.dist = (sc === 'tank' ? 15.5 : sc === 'res' ? 11 : sc === 'holo' ? 16 : 14) * KD; showCtl('__none'); }
-          if (sc === 'tank') tankFrame(S, t); else if (sc === 'res') updRes(S, sim); else if (sc === 'holo') updHolo(S, sim); else updPlay(S, sim);
+          const sim = window.__sim; if (!sim) return; const S = sim.S, sc = S.mode === 'diff' ? (S.df.sub === 'laser' ? 'laser' : S.df.sub === 'door' ? 'door' : 'tank') : S.mode === 'res' ? 'res' : S.mode === 'holo' ? 'holo' : 'play';
+          if (sc !== lastSc) { lastSc = sc; fk = ''; rKey = hKey = pKey = ''; gT.visible = sc === 'tank'; gR.visible = sc === 'res'; gH.visible = sc === 'holo'; gP.visible = sc === 'play'; gL.visible = sc === 'laser'; gD2.visible = sc === 'door'; PLS.forEach((x) => { const on = x.sc === sc; x.row.style.display = on ? '' : 'none'; if (!on) x.p.pause(); }); Object.keys(labs).forEach((k2) => { labs[k2].on = k2 === sc; labs[k2].forEach((l) => l.show(k2 === sc)); }); const o = ctx.orbit; o.theta = sc === 'tank' ? -0.35 : sc === 'play' ? -0.5 : 0.2; o.phi = sc === 'tank' ? 0.95 : sc === 'res' ? 1.0 : 1.15; o.tx = sc === 'tank' ? 1 : 0; o.ty = sc === 'tank' ? -0.4 : sc === 'res' ? 1.2 : 0; o.dist = (sc === 'tank' ? 15.5 : sc === 'res' ? 11 : sc === 'holo' ? 16 : 14) * KD; showCtl('__none'); if (CAMS2[sc]) Object.assign(o, CAMS2[sc]); }
+          if (sc === 'tank') tankFrame(S, t); else if (sc === 'laser') updLaser(S, sim, t); else if (sc === 'door') updDoor(S, sim, t); else if (sc === 'res') updRes(S, sim); else if (sc === 'holo') updHolo(S, sim); else updPlay(S, sim);
         },
         sync() { fk = ''; rKey = hKey = pKey = ''; },
       };

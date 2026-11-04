@@ -1,6 +1,6 @@
 /* hp-relativity · 3D 광속 불변 · 시간 팽창 · 길이 수축
    2D 실험(window.__sim)의 장면을 그대로 입체로 보여 줘요: 🚆 기차 위의 공과 빛(빛의 속력은 더해지지 않아요) · 🕒 빛시계(움직이는 시계는 느리게 가요) · 📏 길이 수축(우주선 길이 · 뮤온 이야기).
-   식과 계산은 쓰지 않고, 속력에 따라 달라지는 모습(빠르기 · 길이 · 똑딱 횟수)만 보여 줘요. (🌍 영향 조사 장면은 2D 화면에서 해요) */
+   식과 계산은 쓰지 않고, 속력에 따라 달라지는 모습(빠르기 · 길이 · 똑딱 횟수)만 보여 줘요. 🌍 영향 조사(GPS 위성과 지도 오차 · 조사 카드 5장)도 입체로 봐요. */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -47,7 +47,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 값은 옆 조작판에서 바꿔요',
     camera: { dist: 15 * KD, theta: 0.1, phi: 1.25, min: 5, max: 36, target: [5, 1.2, 0] },
     autoRotate: 0,
-    levels: [0, 1, 2],
+    levels: [0, 1, 2, 3],
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
       const { V3, M, mkArrow, setArrow, tube, grid } = tools(THREE);
@@ -179,11 +179,86 @@
       plL = controls.player({ duration: 10, loop: true, autoplay: false, label: '속력 올리기', phases: [[0, '속력을 올려요 (길이가 줄어요)'], [0.5, '속력을 낮춰요']], onFrame(p) { demoL.p = p; demoL.on = p > 0 || !!(plL && plL.playing); } });
       plM = controls.player({ duration: 9, loop: true, autoplay: false, label: '뮤온 내려보내기', phases: [[0, '뮤온 40개가 내려가요'], [0.85, '지표 도착']], onFrame(p) { demoL.p = p; demoL.on = p > 0 || !!(plM && plM.playing); } });
       const rows = [...ctx.renderer.domElement.parentNode.parentNode.querySelectorAll('.v3-player')]; plO.row = rows[0]; plL.row = rows[1]; plM.row = rows[2];
+
+      /* ================= 🌍 영향 조사: 🛰️ GPS 위성 · 지도 오차 + 조사 카드 5장(가속기 · 뮤온 · 핵에너지 · SF) ================= */
+      const gS = new THREE.Group(); root.add(gS); gS.visible = false;
+      const labS = [], TAU2 = Math.PI * 2, KMU = 0.16;
+      const earth = new THREE.Mesh(new THREE.SphereGeometry(1.1, 36, 24), M(0x2f6df6, { roughness: 0.7 })); earth.position.set(0.4, 1.2, -4.2); gS.add(earth);
+      { [[0.3, 0.2, 0.55, 0.45], [-0.5, -0.1, 0.5, 0.35], [0.1, -0.6, 0.4, 0.3]].forEach(([lx, ly, w, h]) => { const c = new THREE.Mesh(new THREE.SphereGeometry(0.34, 12, 10), M(0x3fae5a, { roughness: 0.9 })); c.scale.set(w / 0.34 * 0.6, h / 0.34 * 0.6, 0.3); const v = new V3(lx, ly, 1).normalize().multiplyScalar(1.08); c.position.copy(v); c.lookAt(v.clone().multiplyScalar(2)); earth.add(c); }); }
+      const orbitC = new THREE.Mesh(new THREE.TorusGeometry(3.0, 0.025, 8, 100), new THREE.MeshBasicMaterial({ color: 0x8aa0d0, transparent: true, opacity: 0.7 })); orbitC.position.copy(earth.position); orbitC.rotation.x = Math.PI / 2 - 0.35; gS.add(orbitC);
+      const satG = new THREE.Group(); gS.add(satG);
+      { const body = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.34, 0.34), M(0xe5e7eb, { metalness: 0.6, roughness: 0.3 })); satG.add(body); [-1, 1].forEach((sg) => { const pn = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.04, 0.3), M(0x1e3a8a, { emissive: 0x0a1a50, metalness: 0.4 })); pn.position.x = sg * 0.55; satG.add(pn); }); const clk = new THREE.Mesh(new THREE.SphereGeometry(0.1, 12, 10), M(0xffd447, { emissive: 0x7a6200 })); clk.position.set(0, 0.28, 0); satG.add(clk); }
+      const sigB = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1, 6), new THREE.MeshBasicMaterial({ color: 0x7bdcff, transparent: true, opacity: 0.55 })); gS.add(sigB);
+      const pulses = [0, 1, 2].map(() => { const m = new THREE.Mesh(new THREE.SphereGeometry(0.09, 10, 8), new THREE.MeshBasicMaterial({ color: 0xbdf0ff })); gS.add(m); return m; });
+      // 지도 (한 칸 = 4 km, 가운데 = 실제 위치)
+      const MP = new THREE.Group(); MP.position.set(1.4, 0, 3.0); gS.add(MP);
+      { const half = 20 * KMU; const base = new THREE.Mesh(new THREE.BoxGeometry(half * 2, 0.1, half * 2), M(0x7f9a6d, { roughness: 1 })); base.position.y = -0.05; base.receiveShadow = true; MP.add(base);
+        const pts = []; for (let k = -5; k <= 5; k++) { const v = k * 4 * KMU; pts.push(v, 0.01, -half, v, 0.01, half, -half, 0.01, v, half, 0.01, v); }
+        const gg = new THREE.BufferGeometry(); gg.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3)); MP.add(new THREE.LineSegments(gg, new THREE.LineBasicMaterial({ color: 0x9fb48f, transparent: true, opacity: 0.8 })));
+        const river = new THREE.Mesh(new THREE.BoxGeometry(half * 2, 0.02, 0.9), M(0x3f78b8, { roughness: 0.3 })); river.position.set(0, 0.0, half * 0.35); MP.add(river);
+        const road = new THREE.Mesh(new THREE.BoxGeometry(half * 2.1, 0.02, 0.22), M(0x6b7280)); road.position.set(0, 0.01, -0.4); road.rotation.y = 0.2; MP.add(road); }
+      const posT = new THREE.Mesh(new THREE.SphereGeometry(0.2, 18, 14), M(0x14a058, { emissive: 0x0a5a30 })); posT.position.set(0, 0.2, 0); MP.add(posT);
+      const posE = new THREE.Mesh(new THREE.SphereGeometry(0.2, 18, 14), M(0xe2464b, { emissive: 0x7f1d1d })); MP.add(posE);
+      const errRing = new THREE.Mesh(new THREE.TorusGeometry(1, 0.03, 8, 64), new THREE.MeshBasicMaterial({ color: 0xe2464b, transparent: true, opacity: 0.8 })); errRing.rotation.x = Math.PI / 2; errRing.position.y = 0.05; MP.add(errRing);
+      const errArr = mkArrow(0xe2464b, 0.05); MP.add(errArr);
+      const lS2 = { sat: label('GPS 위성 (약 20000 km 상공)', satG, { color: '#334155', size: 12 }), t: label('실제 위치', posT, { color: '#0f7a43', size: 12 }), e: label('지도에 표시된 위치', posE, { color: '#e2464b', size: 12 }), g: label('지도 한 칸 = 4 km', [1.4, 0, 3.0 + 20 * KMU + 0.5], { color: '#475569', size: 11 }), st: label('', [5.0, 0.2, 3.0], { color: '#0f7a43', size: 13 }), earth: label('지구', earth, { color: '#1d4ed8', size: 12 }) };
+      labS.push(...Object.values(lS2));
+      // 조사 카드 소품 (선택한 카드에 따라 하나만 보여요)
+      const PR = new THREE.Group(); PR.position.set(5.6, 1.4, -4.2); gS.add(PR);
+      const props = [null, new THREE.Group(), new THREE.Group(), new THREE.Group(), new THREE.Group()]; props.forEach((g) => { if (g) { g.visible = false; PR.add(g); } });
+      const acc = props[1]; { const ring = new THREE.Mesh(new THREE.TorusGeometry(1.5, 0.12, 12, 60), M(0x6b7488, { metalness: 0.6, roughness: 0.35 })); ring.rotation.x = Math.PI / 2 - 0.5; acc.add(ring); for (let i = 0; i < 12; i++) { const a = i / 12 * TAU2, mg = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.28, 0.28), M(i % 2 ? 0xe2464b : 0x2f6df6)); mg.position.set(1.5 * Math.cos(a), 0, 1.5 * Math.sin(a)); mg.position.applyAxisAngle(new V3(1, 0, 0), -0.5); mg.rotation.x = -0.5; acc.add(mg); } }
+      const accP = [0, 1, 2].map(() => { const m = new THREE.Mesh(new THREE.SphereGeometry(0.12, 10, 8), new THREE.MeshBasicMaterial({ color: 0xffe14d })); acc.add(m); return m; });
+      const mu = props[2]; { const col = new THREE.Mesh(new THREE.BoxGeometry(1.2, 3.2, 1.2), new THREE.MeshStandardMaterial({ color: 0x7ec4ff, transparent: true, opacity: 0.2, depthWrite: false })); mu.add(col); const gd = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.12, 1.6), M(0x4caf6a)); gd.position.y = -1.7; mu.add(gd); }
+      const muP = [0, 1, 2, 3].map(() => { const m = new THREE.Mesh(new THREE.SphereGeometry(0.1, 10, 8), new THREE.MeshBasicMaterial({ color: 0xffd447 })); mu.add(m); return m; });
+      const nu = props[3]; const nuC = new THREE.Mesh(new THREE.SphereGeometry(0.7, 20, 16), M(0xf2873a, { emissive: 0x7a3a10 })); nu.add(nuC); const nuA = new THREE.Mesh(new THREE.SphereGeometry(0.45, 16, 12), M(0xf2873a, { emissive: 0x7a3a10 })), nuB = nuA.clone(); nu.add(nuA, nuB); const nuF = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 12), new THREE.MeshBasicMaterial({ color: 0xffe14d, transparent: true, opacity: 0.4, depthWrite: false })); nu.add(nuF);
+      const sf = props[4]; { const body = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 1.6, 20), M(0xe5e7eb, { metalness: 0.5 })); body.rotation.z = -Math.PI / 2; sf.add(body); const nose = new THREE.Mesh(new THREE.ConeGeometry(0.35, 0.7, 20), M(0xe2464b)); nose.rotation.z = -Math.PI / 2; nose.position.x = 1.15; sf.add(nose); [-1, 1].forEach((s) => { const fin = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.06, 0.5), M(0xe2464b)); fin.position.set(-0.7, 0, s * 0.45); sf.add(fin); }); for (let i = 0; i < 24; i++) { const st = new THREE.Mesh(new THREE.SphereGeometry(0.035, 6, 5), new THREE.MeshBasicMaterial({ color: 0xffffff })); st.position.set((Math.sin(i * 12.9) * 2.2), (Math.cos(i * 7.3) * 1.4), (Math.sin(i * 3.7) * 0.8) - 0.6); sf.add(st); } }
+      const lP = label('', PR, { color: '#26324a', size: 12 }); lP.off = [0, 2.2, 0]; labS.push(lP);
+      const flame = new THREE.Mesh(new THREE.ConeGeometry(0.25, 0.9, 12), new THREE.MeshBasicMaterial({ color: 0xffa040, transparent: true, opacity: 0.8 })); flame.rotation.z = Math.PI / 2; flame.position.x = -1.5; sf.add(flame);
+      const demoS = { p: 0, on: false, err: 0 };
+      let segS = null, segBtns = [], plS = null;
+      { const ctlEl = ctx.renderer.domElement.parentNode.parentNode.querySelector('.v3-ctl'), n0 = ctlEl ? ctlEl.children.length : 0;
+        segS = controls.segment('조사 카드', [{ label: '🛰️ GPS', value: 0 }, { label: '⚛️ 가속기', value: 1 }, { label: '☄️ 뮤온', value: 2 }, { label: '☢️ 핵', value: 3 }, { label: '🚀 SF', value: 4 }], 0, (v) => { const A = sim(); if (A && A.S) { A.S.c.sel = v; } });
+        segBtns = ctlEl ? [...ctlEl.children].slice(n0) : []; }
+      plS = controls.player({ duration: 9, loop: true, autoplay: false, label: '보정 끄고 이틀 보기', phases: [[0, '보정 끔 · 시간이 흘러요'], [0.5, '보정 켬 · 오차가 사라져요']], onFrame(p) { demoS.p = p; demoS.on = p > 0 || !!(plS && plS.playing); } });
+      { const rr = [...ctx.renderer.domElement.parentNode.parentNode.querySelectorAll('.v3-player')]; plO.row = rr[0]; plL.row = rr[1]; plM.row = rr[2]; plS.row = rr[3]; }
+      function soc(A, S, tm, dt) {
+        const c = S.c, sel = c.sel || 0;
+        if (segS) segS.set(sel);
+        // 위성이 지구를 돌아요
+        const a = tm * 0.45, R = 3.0, tilt = -0.35, cp = earth.position;
+        const sx = cp.x + R * Math.cos(a), sz = cp.z + R * Math.sin(a) * Math.cos(tilt), sy = cp.y + R * Math.sin(a) * Math.sin(-tilt) * 1;
+        satG.position.set(sx, sy, sz); satG.rotation.y = -a;
+        const demo = demoS.on; let gps = c.gps, day = c.day, errTarget;
+        if (demo) { gps = demoS.p < 0.5 ? 'off' : 'on'; day = demoS.p < 0.5 ? 2 * demoS.p / 0.5 : 2; }
+        errTarget = gps === 'off' ? A.ERR_KM_DAY * day : 0;
+        let err; if (demo) { demoS.err += (errTarget - demoS.err) * Math.min(1, dt * 7); err = demoS.err; } else { err = c.err == null ? 0 : c.err; demoS.err = err; }
+        // 신호 (위성 → 수신기)
+        const tgt = new V3(MP.position.x, 0.2, MP.position.z), d = new V3().subVectors(tgt, satG.position), L = d.length();
+        sigB.position.copy(satG.position).addScaledVector(d, 0.5); sigB.scale.set(1, L, 1); sigB.quaternion.setFromUnitVectors(new V3(0, 1, 0), d.clone().normalize());
+        pulses.forEach((m, i) => { const u = ((tm * 0.7 + i / 3) % 1); m.position.copy(satG.position).addScaledVector(d, u); });
+        // 지도 오차 (실제 위치에서 −34° 방향으로 err km)
+        const ang = -0.6, ex = Math.cos(ang) * err * KMU, ez = Math.sin(ang) * err * KMU;
+        posE.visible = err > 0.05; posE.position.set(ex, 0.2, ez); lS2.e.show(err > 0.05);
+        errRing.visible = err > 0.05; errRing.scale.set(Math.max(0.01, err * KMU), Math.max(0.01, err * KMU), 1);
+        if (err > 0.05) setArrow(errArr, new V3(0, 0.2, 0), new V3(ex, 0.2, ez)); else errArr.visible = false;
+        lS2.sat.off = [0, 0.7, 0]; lS2.t.off = [0, 0.5, 0]; lS2.e.off = [0, 0.5, 0]; lS2.earth.off = [0, 1.4, 0];
+        lS2.st.set('시계 보정: ' + (gps === 'on' ? '켬' : '끔') + ' · 경과 ' + f1(day) + ' 일<br>위치 오차 ' + Math.round(gps === 'off' ? A.ERR_KM_DAY * day : 0) + ' km'); lS2.st.el.style.background = gps === 'on' ? '#0f7a43' : '#b42318'; lS2.st.el.style.textAlign = 'center';
+        // 소품
+        props.forEach((g, i) => { if (g) g.visible = sel === i; });
+        PR.visible = sel !== 0; lP.show(sel !== 0);
+        const cd = A.CARDS[sel]; lP.set(cd.ic + ' ' + cd.name);
+        if (sel === 1) accP.forEach((m, i) => { const q = tm * 3.2 + i * 0.35, v = new V3(1.5 * Math.cos(q), 0, 1.5 * Math.sin(q)); v.applyAxisAngle(new V3(1, 0, 0), -0.5); m.position.copy(v); });
+        if (sel === 2) muP.forEach((m, i) => { const u = ((tm * 0.35 + i / 4) % 1); m.position.set(((i % 2) - 0.5) * 0.5, 1.5 - 3.2 * u, ((i % 3) - 1) * 0.25); m.visible = u < 0.98; });
+        if (sel === 3) { const q = (tm * 0.4) % 1, sp = Math.max(0, (q - 0.45) / 0.4); nuC.visible = q < 0.5; nuA.visible = nuB.visible = q >= 0.5; nuC.scale.setScalar(1 + 0.08 * Math.sin(tm * 25) * Math.min(1, q * 2)); nuA.position.set(-0.3 - 1.4 * sp, 0, 0); nuB.position.set(0.3 + 1.4 * sp, 0, 0); nuF.visible = q >= 0.5 && q < 0.9; nuF.scale.setScalar(0.4 + 2.2 * sp); nuF.material.opacity = 0.45 * (1 - sp); }
+        if (sel === 4) { sf.position.y = 0.15 * Math.sin(tm * 1.5); flame.scale.y = 0.8 + 0.4 * Math.sin(tm * 30); }
+        info('<b>' + cd.ic + ' ' + cd.name + '</b><br><span style="color:#ffb27a"><b>왜 상대성 이론이 필요할까?</b></span> ' + cd.need + '<br><span style="color:#7be3a0"><b>사회 · 생활에 준 영향</b></span> ' + cd.eff + '<br><span style="opacity:.85">🛰️ GPS 지도: 시계 보정 <b>' + (gps === 'on' ? '켬' : '끔') + '</b> · 경과 ' + f1(day) + ' 일 · 위치 오차 <b>' + Math.round(gps === 'off' ? A.ERR_KM_DAY * day : 0) + ' km</b> (보정하지 않으면 하루에 약 ' + A.ERR_KM_DAY + ' km씩 쌓여요)</span>');
+      }
       let cur = '';
       function setMode(S) {
         const mode = S.mode === 'len' ? (S.l.view === 'muon' ? 'muon' : 'ship') : S.mode;
         if (mode === cur) return; cur = mode;
-        gO.visible = mode === 'obs'; gC.visible = mode === 'clock'; gL.visible = mode === 'ship'; gM.visible = mode === 'muon';
+        gO.visible = mode === 'obs'; gC.visible = mode === 'clock'; gL.visible = mode === 'ship'; gM.visible = mode === 'muon'; gS.visible = mode === 'soc'; labS.forEach((l) => l.show(mode === 'soc'));
+        plS.row.style.display = mode === 'soc' ? '' : 'none'; if (mode !== 'soc') { plS.pause(); plS.set(0); } segBtns.forEach((b) => { b.style.display = mode === 'soc' ? '' : 'none'; });
         [lG[0], lG[1], lDg, lTr].forEach((l) => l.show(mode === 'obs')); [lBall, lLight, lGh].forEach((l) => l.show(false));
         [lA, lB, lAt, lBt, lVA].forEach((l) => l.show(mode === 'clock')); [lS, lSg, lRod, lLen].forEach((l) => l.show(mode === 'ship')); [lE, lM, lMs].forEach((l) => l.show(mode === 'muon')); lMs.show(false);
         plO.row.style.display = mode === 'obs' ? '' : 'none'; plL.row.style.display = mode === 'ship' ? '' : 'none'; plM.row.style.display = mode === 'muon' ? '' : 'none';
@@ -191,18 +266,18 @@
         if (mode === 'obs') Object.assign(orbit, { tx: 5, ty: 1.2, tz: 0, phi: 1.2, theta: 0.15, dist: 16 * KD });
         else if (mode === 'clock') Object.assign(orbit, { tx: -1, ty: 1.4, tz: 0, phi: 1.3, theta: 0.1, dist: 14 * KD });
         else if (mode === 'ship') Object.assign(orbit, { tx: 0, ty: 0.8, tz: 0, phi: 1.2, theta: 0.2, dist: 11 * KD });
-        else Object.assign(orbit, { tx: 0, ty: 3.8, tz: 0, phi: 1.35, theta: 0.1, dist: 17 * KD });
+        else if (mode === 'muon') Object.assign(orbit, { tx: 0, ty: 3.8, tz: 0, phi: 1.35, theta: 0.1, dist: 17 * KD });
+        else if (mode === 'soc') Object.assign(orbit, { tx: 2.0, ty: 0.0, tz: -0.4, phi: 0.78, theta: 0.0, dist: 16 * KD * (PHN ? 1.15 : 1) });
       }
-      const NOTE = '🌍 상대성 이론의 영향(GPS · 입자 가속기 · 핵에너지 …) 조사는 2D 화면에서 해요. 위의 [▦ 2D]를 눌러 보세요.';
       return {
-        update(dt) {
+        update(dt, tm) {
           const A = sim(); if (!A || !A.S) return; const S = A.S;
           setMode(S);
           if (cur === 'obs') { if (S.o.run && plO.playing) plO.pause(); if (!plO.playing && plO.p === 0) demoO.on = false; obs(A, S); }
           else if (cur === 'clock') clock(A, S);
           else if (cur === 'ship') { if (!plL.playing && plL.p === 0) demoL.on = false; lenShip(A, S); }
           else if (cur === 'muon') { if (S.l.mu && S.l.mu.running && plM.playing) plM.pause(); if (!plM.playing && plM.p === 0) demoL.on = false; muon(A, S); }
-          else info(NOTE);
+          else if (cur === 'soc') { if (!plS.playing && plS.p === 0) demoS.on = false; soc(A, S, tm, Math.min(dt, 0.05)); }
         },
         sync() {},
       };

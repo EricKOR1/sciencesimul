@@ -1380,7 +1380,7 @@
   /* ---------- 디버그 (Playwright) ---------- */
   window.__sim = {
     get game() { return game; }, get MODE() { return MODE; }, get SUB() { return SUB; }, VW, VH, ST, CK, EV, PR, PRD, LAYERS, ERAS, BDS,
-    setMode, enterLevel, updateCtl, digLayer, digAll, clockDrop, hrOf, setAgo, setU, pinTry, prPredict, prSelect, evG, stG, slotRect, layRect, ckG, tokRect, prG,
+    agoOfFrac, o2At, tAt, CONT, contPos, fracOf, eraAt, setMode, enterLevel, updateCtl, digLayer, digAll, clockDrop, hrOf, setAgo, setU, pinTry, prPredict, prSelect, evG, stG, slotRect, layRect, ckG, tokRect, prG,
     get mBoard() { return mBoard; }, get oBoard() { return oBoard; }, get fBoard() { return fBoard; },
     placeCard(board, id, zone) { const b = board; const c = b.cards.find((x) => x.id === id); const z = b.zone(zone); b.place(c, z); updateCtl(); },
     solveClock() { for (let k = 0; k < 3; k++) { const g = ckG(), a = (hrOf(BDS[k].ago) / 24) * TAU; clockDrop(k, { x: g.cx + Math.sin(a) * g.R, y: g.cy - Math.cos(a) * g.R }); } },
