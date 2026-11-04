@@ -835,7 +835,7 @@
 
   /* ---------- 디버그 (Playwright) ---------- */
   window.__sim = {
-    S, VW, VH, RC, SC, CD, PC, W4, setMode, setSub, setOb, obPlay, obRev, obJudge, mdSet, mdTrial, mdMany, cdPick, cdSet, prAssign, prInit, trayRect, binRect, prWrong, prPlaced, getSnap, NS,
+    S, VW, VH, RC, SC, CD, PC, W4, CP, sLevel, setMode, setSub, setOb, obPlay, obRev, obJudge, mdSet, mdTrial, mdMany, cdPick, cdSet, prAssign, prInit, trayRect, binRect, prWrong, prPlaced, getSnap, NS,
     get game() { return game; },
     stepAll(sec) { const n = Math.ceil(sec / 0.02); for (let i = 0; i < n; i++) { stepAll1(0.02); parts.update(0.02); } },
   };

@@ -1,6 +1,8 @@
 /* hr-bronsted · 3D 양성자(H⁺) 이동  (2단계 'H⁺ 옮기기'와 3단계 '짝산·짝염기'의 반응과 같아요)
    브뢴스테드·라우리 산은 H⁺를 주는 물질, 염기는 H⁺를 받는 물질이에요.
    2D에서 고른 반응(HCl + H₂O · H₂O + NH₃ · HCl(g) + NH₃(g) · CH₃COOH + H₂O)을 보여 주고, ▶ 재생하면 H⁺ 하나가 산에서 염기의 비공유 전자쌍으로 옮겨 가요.
+   1단계(정의의 한계): 같은 농도의 NaOH · NH₃ 수용액에 BTB를 넣는 실험과, HCl(g) · NH₃(g)가 만나 흰 연기가 생기는 실험을 2D와 같은 값으로 보여 줘요.
+   4단계(구별하기): 2D에서 고른 카드의 반응에서 H⁺가 어떻게 옮겨 가는지 보여 줘요 (산 · 염기 분류는 2D).
    결합 길이·각은 실제에 가깝게 그린 모형 스케치예요. */
 (function () {
   'use strict';
@@ -44,6 +46,53 @@
       note: '아세트산은 약한 산이라 정반응과 역반응이 함께 일어나는 동적 평형이 돼요. H⁺를 주고 남은 CH₃COO⁻가 짝염기예요.',
     },
   };
+
+  /* 구별하기(2D 4단계)의 나머지 반응 6개: 카드마다 H⁺가 어떻게 옮겨 가는지 보여 줘요 */
+  Object.assign(RX, {
+    hco3a: {
+      name: 'HCO₃⁻ + H₂O ⇌ CO₃²⁻ + H₃O⁺', acid: 'HCO₃⁻', base: 'H₂O', conjB: 'CO₃²⁻', conjA: 'H₃O⁺', rev: true,
+      atoms: [['C', V(-3.0, 0, 0), V(-3.0, 0, 0)], ['O', V(-3.0, 1.25, 0), V(-3.0, 1.25, 0)], ['O', V(-4.1, -0.62, 0), V(-4.1, -0.62, 0)], ['O', V(-1.9, -0.62, 0), V(-2.0, -0.62, 0)], ['H', V(-0.95, -0.62, 0), V(0.2, -0.62, -0.75)],
+        ['O', V(1.1, -0.62, 0), V(1.1, -0.62, 0)], ['H', V(1.6, 0.16, -0.45), V(1.6, 0.16, -0.45)], ['H', V(1.6, -1.4, -0.45), V(1.6, -1.4, -0.45)]],
+      bonds: [[0, 1, 'a'], [0, 2, 'a'], [0, 3, 'a'], [3, 4, 's'], [4, 5, 'e'], [5, 6, 'a'], [5, 7, 'a']], proton: 4, donor: 3, acc: 5,
+      note: 'HCO₃⁻는 H₂O에게 H⁺를 주어 CO₃²⁻가 돼요.',
+    },
+    hco3b: {
+      name: 'HCO₃⁻ + H₂O ⇌ H₂CO₃ + OH⁻', acid: 'H₂O', base: 'HCO₃⁻', conjB: 'OH⁻', conjA: 'H₂CO₃', rev: true,
+      atoms: [['C', V(-3.0, 0, 0), V(-3.0, 0, 0)], ['O', V(-3.0, 1.25, 0), V(-3.0, 1.25, 0)], ['O', V(-4.1, -0.62, 0), V(-4.1, -0.62, 0)], ['H', V(-4.9, -0.2, 0), V(-4.9, -0.2, 0)], ['O', V(-1.9, -0.62, 0), V(-1.9, -0.62, 0)],
+        ['O', V(1.3, -0.62, 0), V(1.45, -0.62, 0)], ['H', V(0.35, -0.62, 0), V(-0.8, -0.62, -0.6)], ['H', V(1.9, 0.16, -0.45), V(2.0, 0.16, -0.45)]],
+      bonds: [[0, 1, 'a'], [0, 2, 'a'], [2, 3, 'a'], [0, 4, 'a'], [5, 6, 's'], [4, 6, 'e'], [5, 7, 'a']], proton: 6, donor: 5, acc: 4,
+      note: 'HCO₃⁻는 H₂O에게서 H⁺를 받아 H₂CO₃가 돼요.',
+    },
+    ac: {
+      name: 'CH₃COO⁻ + H₂O ⇌ CH₃COOH + OH⁻', acid: 'H₂O', base: 'CH₃COO⁻', conjB: 'OH⁻', conjA: 'CH₃COOH', rev: true,
+      atoms: [['C', V(-4.0, -0.2, 0), V(-4.0, -0.2, 0)], ['H', V(-4.6, 0.7, 0), V(-4.6, 0.7, 0)], ['H', V(-4.5, -0.6, 0.85), V(-4.5, -0.6, 0.85)], ['H', V(-4.5, -0.6, -0.85), V(-4.5, -0.6, -0.85)],
+        ['C', V(-2.6, 0.2, 0), V(-2.6, 0.2, 0)], ['O', V(-2.2, 1.4, 0), V(-2.2, 1.4, 0)], ['O', V(-1.8, -0.6, 0), V(-1.8, -0.6, 0)],
+        ['O', V(1.9, -0.6, 0), V(2.1, -0.6, 0)], ['H', V(0.95, -0.6, 0), V(-0.6, -0.6, -0.65)], ['H', V(2.5, 0.2, -0.45), V(2.7, 0.2, -0.45)]],
+      bonds: [[0, 1, 'a'], [0, 2, 'a'], [0, 3, 'a'], [0, 4, 'a'], [4, 5, 'a'], [4, 6, 'a'], [7, 8, 's'], [6, 8, 'e'], [7, 9, 'a']], proton: 8, donor: 7, acc: 6,
+      note: 'CH₃COO⁻는 H₂O에게서 H⁺를 받아 CH₃COOH가 돼요.',
+    },
+    nh4: {
+      name: 'NH₄⁺ + H₂O ⇌ NH₃ + H₃O⁺', acid: 'NH₄⁺', base: 'H₂O', conjB: 'NH₃', conjA: 'H₃O⁺', rev: true,
+      atoms: [['N', V(-2.6, 0, 0), V(-2.9, 0, 0)], ['H', V(-1.2, 0, 0), V(0.1, 0, -0.75)], ['H', V(-3.1, 0.92, 0), V(-3.4, 0.92, 0)], ['H', V(-3.1, -0.46, 0.8), V(-3.4, -0.46, 0.8)], ['H', V(-3.1, -0.46, -0.8), V(-3.4, -0.46, -0.8)],
+        ['O', V(1.0, 0, 0), V(1.0, 0, 0)], ['H', V(1.5, 0.78, -0.45), V(1.5, 0.78, -0.45)], ['H', V(1.5, -0.78, -0.45), V(1.5, -0.78, -0.45)]],
+      bonds: [[0, 1, 's'], [1, 5, 'e'], [0, 2, 'a'], [0, 3, 'a'], [0, 4, 'a'], [5, 6, 'a'], [5, 7, 'a']], proton: 1, donor: 0, acc: 5,
+      note: 'NH₄⁺는 H₂O에게 H⁺를 주어 NH₃가 돼요.',
+    },
+    ohcl: {
+      name: 'OH⁻ + HCl → H₂O + Cl⁻', acid: 'HCl', base: 'OH⁻', conjB: 'Cl⁻', conjA: 'H₂O', rev: false,
+      atoms: [['O', V(-2.0, 0, 0), V(-2.0, 0, 0)], ['H', V(-2.9, 0.45, 0), V(-2.9, 0.45, 0)], ['Cl', V(3.0, 0, 0), V(3.4, 0, 0)], ['H', V(1.65, 0, 0), V(-0.9, 0, -0.75)]],
+      bonds: [[0, 1, 'a'], [2, 3, 's'], [0, 3, 'e']], proton: 3, donor: 2, acc: 0,
+      note: 'OH⁻는 HCl에게서 H⁺를 받아 H₂O가 돼요. H⁺가 없는 입자는 H⁺를 줄 수 없어요.',
+    },
+    co3: {
+      name: 'CO₃²⁻ + H₂O ⇌ HCO₃⁻ + OH⁻', acid: 'H₂O', base: 'CO₃²⁻', conjB: 'OH⁻', conjA: 'HCO₃⁻', rev: true,
+      atoms: [['C', V(-3.0, 0, 0), V(-3.0, 0, 0)], ['O', V(-3.0, 1.25, 0), V(-3.0, 1.25, 0)], ['O', V(-4.1, -0.62, 0), V(-4.1, -0.62, 0)], ['O', V(-1.9, -0.62, 0), V(-1.9, -0.62, 0)],
+        ['O', V(1.3, -0.62, 0), V(1.45, -0.62, 0)], ['H', V(0.35, -0.62, 0), V(-0.8, -0.62, -0.6)], ['H', V(1.9, 0.16, -0.45), V(2.0, 0.16, -0.45)]],
+      bonds: [[0, 1, 'a'], [0, 2, 'a'], [0, 3, 'a'], [4, 5, 's'], [3, 5, 'e'], [4, 6, 'a']], proton: 5, donor: 4, acc: 3,
+      note: 'CO₃²⁻는 H₂O에게서 H⁺를 받아 HCO₃⁻가 돼요.',
+    },
+  });
+  const SORTRX = ['hcl', 'nh3', 'hco3a', 'hco3b', 'ac', 'nh4', 'ohcl', 'co3'];
   const KEYS = ['hcl', 'nh3', 'hclg', 'ch3'];
 
   window.SciSim3D.attach({
@@ -51,7 +100,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHONE ? 12.5 : 9.5, theta: 0.35, phi: 1.25, min: 5, max: 22, target: [0, 0, 0] },
     autoRotate: 0,
-    levels: [1, 2],   // 2단계(H⁺ 옮기기) · 3단계(짝산·짝염기). 1·4단계는 2D 화면이에요
+    levels: [0, 1, 2],   // 1단계(정의의 한계) · 2단계(H⁺ 옮기기) · 3단계(짝산·짝염기). 4단계(구별하기)는 2D에서 카드를 끌어 놓아요
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3, UP = new V3(0, 1, 0);
@@ -98,6 +147,7 @@
         const md = S.mode;
         if (md === 'move' && S.mv) return { md, key: MAPK[S.mv.k] || 'hcl', after: S.mv.r && S.mv.r[S.mv.k] && S.mv.r[S.mv.k].done ? 1 : 0 };
         if (md === 'pairs' && S.pr) return { md, key: MAPK[S.pr.k] || 'nh3', after: S.pr.after && S.pr.dirShown === 'f' ? 1 : 0 };
+        if (md === 'sort' && S.so) { const c = S.so.drag ? S.so.drag.c : S.so.cards.find((q) => q.id === S.so.sel); return { md, key: SORTRX[c ? c.rx : 0], after: 0, card: c || null }; }
         return { md, key: key, after: 0 };
       }
       let demo = false, txt = '', sigK = '';
@@ -112,18 +162,134 @@
         },
       });
       const demoOn = () => demo && (pl.playing || pl.p > 0.0005);
+
+      /* ================= 1단계 '정의의 한계' (2D의 obs): BTB 시험 · 흰 연기 ================= */
+      const probe = controls.text(''); probe.style.display = 'none'; const ctlEl = probe.parentElement;
+      const oldEls = Array.prototype.filter.call(ctlEl.children, (e) => e !== probe);
+      const grab = (fn) => { const n0 = ctlEl.children.length; const r = fn(); return { r, els: Array.prototype.slice.call(ctlEl.children, n0) }; };
+      const gI = new THREE.Group(), gF = new THREE.Group(); root.add(gI); root.add(gF); gI.visible = gF.visible = false;
+      const glassM = () => new THREE.MeshStandardMaterial({ color: 0xcfe8ff, transparent: true, opacity: 0.16, roughness: 0.08, side: THREE.DoubleSide, depthWrite: false });
+      /* --- ind: 같은 농도의 NaOH · NH₃ 수용액에 BTB --- */
+      const BX = [-3.2, 3.2], BR = 1.55, BH = 3.4, BY0 = -1.7, LEV = 0.62;
+      const bk = [0, 1].map((i) => {
+        const gr = new THREE.Group(); gr.position.x = BX[i]; gI.add(gr);
+        const gl = new THREE.Mesh(new THREE.CylinderGeometry(BR, BR * 0.96, BH, 40, 1, true), glassM()); gl.position.y = BY0 + BH / 2; gr.add(gl);
+        const bs = new THREE.Mesh(new THREE.CylinderGeometry(BR * 0.96, BR * 0.96, 0.12, 40), mat(0x64748b)); bs.position.y = BY0 - 0.06; gr.add(bs);
+        const liq = new THREE.Mesh(new THREE.CylinderGeometry(BR - 0.04, BR * 0.96 - 0.04, BH * LEV, 40), new THREE.MeshStandardMaterial({ color: 0xcfe8ff, transparent: true, opacity: 0.7, roughness: 0.15, depthWrite: false })); liq.position.y = BY0 + BH * LEV / 2; gr.add(liq);
+        const nm = label(i ? '0.10 M NH₃ 수용액' : '0.10 M NaOH 수용액', [BX[i], BY0 - 0.5, 0], { color: 'rgba(30,41,59,.92)' }); nm.show(false);
+        const btb = label('BTB: 파란색 (염기성)', [BX[i], BY0 + BH + 0.5, 0], { color: 'rgba(37,99,235,.95)' }); btb.show(false);
+        return { gr, liq, nm, btb };
+      });
+      const NIO = 26, ionM = [0, 1].map((i) => { const m = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 14, 10), mat(0xffffff), NIO); m.frustumCulled = false; m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); bk[i].gr.add(m); return m; });
+      const IONS = [0, 1].map(() => Array.from({ length: NIO }, () => ({ a: Math.random() * 6.28, r: Math.sqrt(Math.random()) * (BR - 0.35), y: Math.random(), ph: Math.random() * 6.28, sp: 0.5 + Math.random() * 0.8 })));
+      const C_NA = new THREE.Color(0xa78bfa), C_OH = new THREE.Color(0xf43f5e), C_NH3 = new THREE.Color(0x60a5fa), C_NH4 = new THREE.Color(0x1d4ed8), Cmix0 = new THREE.Color(0xcfe8ff), Cmix1 = new THREE.Color(0x2f6df0);
+      const dropper = new THREE.Group(); { const t = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 1.3, 12), glassM()); t.position.y = 0.65; dropper.add(t); const gl2 = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.7, 12), mat(0x4ade80)); gl2.position.y = 0.45; dropper.add(gl2); const bu = new THREE.Mesh(new THREE.SphereGeometry(0.25, 16, 12), mat(0x334155)); bu.position.y = 1.5; bu.scale.y = 1.4; dropper.add(bu); } gI.add(dropper);
+      const dropM = Array.from({ length: 4 }, () => { const m = new THREE.Mesh(new THREE.SphereGeometry(0.1, 12, 8), mat(0x4ade80, { emissive: 0x16a34a, emissiveIntensity: 0.4 })); m.visible = false; gI.add(m); return m; });
+      const lLeg = label('', [0, BY0 - 1.5, 0], { color: 'rgba(30,41,59,.9)' }); lLeg.show(false);
+      const Mi = new THREE.Matrix4(), Pi = new V3(), Qi = new THREE.Quaternion(), Si = new V3();
+      function updInd(w, t) {
+        const o = w.S.ob, g2 = w.obG(), sep = g2.cx[1] - g2.cx[0], kx = (BX[1] - BX[0]) / sep, midpx = (g2.cx[0] + g2.cx[1]) / 2, kY = BH / g2.bh;
+        const surfPx = g2.by + 5 + (g2.bh - 11) * (1 - LEV), liqTop = BY0 + BH * LEV;
+        ['naoh', 'nh3'].forEach((k, i) => {
+          const B = bk[i], dye = o.dye[k]; B.liq.material.color.copy(Cmix0).lerp(Cmix1, dye * dye * (3 - 2 * dye));
+          B.btb.show(dye > 0.5); B.nm.show(true);
+          const m = ionM[i];
+          IONS[i].forEach((q, n) => {
+            let col, r;
+            if (i === 0) { col = n % 2 ? C_OH : C_NA; r = 0.17; } else if (n < 22) { col = C_NH3; r = 0.15; } else { col = n % 2 ? C_OH : C_NH4; r = 0.2 * (0.35 + 0.65 * Math.abs(Math.sin(t * 1.7 + n))); }
+            const y = BY0 + 0.3 + q.y * (BH * LEV - 0.6), a = q.a + t * 0.25 * q.sp;
+            Pi.set(Math.cos(a) * q.r + Math.sin(t * 2 + q.ph) * 0.06, y + Math.cos(t * 2.3 + q.ph) * 0.07, Math.sin(a) * q.r); Si.set(r, r, r); Mi.compose(Pi, Qi, Si); m.setMatrixAt(n, Mi); m.setColorAt(n, col);
+          });
+          m.instanceMatrix.needsUpdate = true; if (m.instanceColor) m.instanceColor.needsUpdate = true;
+        });
+        dropper.position.set((o.dr.x - midpx) * kx, BY0 + BH + 0.9, 0);
+        dropM.forEach((m, n) => { const d = o.drops[n]; m.visible = !!d; if (d) m.position.set((d.x - midpx) * kx, liqTop + (surfPx - d.y) * kY, 0); });
+        const l1 = o.dye.naoh > 0.5, l2 = o.dye.nh3 > 0.5;
+        lLeg.show(true); lLeg.set('Na⁺ · OH⁻ (NaOH) / NH₃ · NH₄⁺ · OH⁻ (NH₃ 수용액)');
+        return '<b>같은 농도의 NaOH와 NH₃ 수용액에 BTB를 넣어요</b><br>' + (l1 ? '✅ NaOH → Na⁺ + OH⁻: 화학식에 OH가 있어서 아레니우스 정의로 설명돼요.' : '⬜ NaOH 수용액에 BTB를 넣어 보세요.') + '<br>' + (l2 ? '❓ NH₃에는 OH⁻가 없는데도 BTB가 파랗게 변했어요.' : '⬜ NH₃ 수용액에도 BTB를 넣어 보세요.');
+      }
+      const indCtl = grab(() => controls.button('💧 NaOH에 BTB 넣기', () => { const w = W(); if (w) w.obDye('naoh'); }));
+      const indCtl2 = grab(() => controls.button('💧 NH₃ 수용액에 BTB 넣기', () => { const w = W(); if (w) w.obDye('nh3'); }));
+      const indRst = grab(() => controls.button('↺ 처음으로', () => { const w = W(); if (w) w.obReset(); }));
+      /* --- fume: 진한 염산 · 진한 암모니아수의 기체가 만나면 흰 연기 (NH₄Cl) --- */
+      const BTL = (() => { const pts = [[0.001, 0], [0.62, 0], [0.7, 0.06], [0.72, 0.9], [0.62, 1.5], [0.28, 1.95], [0.26, 2.5], [0.3, 2.55], [0.3, 2.6], [0.001, 2.6]].map(([r, y]) => new THREE.Vector2(r, y)); return new THREE.LatheGeometry(pts, 32); })();
+      const mkBottle = (col) => { const gr = new THREE.Group(); gr.add(new THREE.Mesh(BTL, glassM())); const lq = new THREE.Mesh(new THREE.CylinderGeometry(0.66, 0.66, 0.9, 28), new THREE.MeshStandardMaterial({ color: col, transparent: true, opacity: 0.6, roughness: 0.2, depthWrite: false })); lq.position.y = 0.5; gr.add(lq); gF.add(gr); return gr; };
+      const bA = mkBottle(0xfaf0a0), bB = mkBottle(0xbee1ff);
+      const benchF = new THREE.Mesh(new THREE.BoxGeometry(12, 0.2, 3), mat(0x3b4766)); benchF.position.y = -0.1; gF.add(benchF);
+      const haze = (c) => new THREE.Mesh(new THREE.SphereGeometry(1, 28, 20), new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: 0.2, depthWrite: false }));
+      const hA = haze(0x22c55e), hB = haze(0x60a5fa); gF.add(hA); gF.add(hB);
+      const gasF = new THREE.InstancedMesh(new THREE.SphereGeometry(0.09, 10, 8), mat(0xffffff), 28); gasF.frustumCulled = false; gasF.instanceMatrix.setUsage(THREE.DynamicDrawUsage); gF.add(gasF);
+      const NSM = 70, smk = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 10, 8), new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.55, roughness: 0.9 }), NSM); smk.frustumCulled = false; smk.instanceMatrix.setUsage(THREE.DynamicDrawUsage); gF.add(smk);
+      const SMK = Array.from({ length: NSM }, () => ({ life: Math.random(), x: 0, y: 0, z: 0, vx: 0, vz: 0 }));
+      const lHcl = label('HCl(g)', [0, 0, 0], { color: 'rgba(22,163,74,.92)' }), lNh3 = label('NH₃(g)', [0, 0, 0], { color: 'rgba(37,99,235,.92)' }), lSmk = label('NH₄Cl(s) 흰 연기', [0, 0, 0], { color: 'rgba(71,85,105,.92)' });
+      const lBA = label('진한 염산', [0, -0.6, 0], { color: 'rgba(30,41,59,.92)' }), lBB = label('진한 암모니아수', [0, -0.6, 0], { color: 'rgba(30,41,59,.92)' });
+      [lHcl, lNh3, lSmk, lBA, lBB].forEach((l) => l.show(false));
+      let smkAcc = 0;
+      function updFume(w, dt, t) {
+        const o = w.S.ob, G = w.fmG(), K = 9.2 / G.gMax, xmid = G.xR - G.gMax / 2, xL = G.xR - o.gap;
+        const XA = (xL - xmid) * K, XB = (G.xR - xmid) * K, hy = 1.8, Rr = G.R * K;
+        bA.position.set(XA, 0, 0); bB.position.set(XB, 0, 0);
+        hA.position.set(XA, hy, 0); hA.scale.setScalar(Rr); hB.position.set(XB, hy, 0); hB.scale.setScalar(Rr);
+        for (let i = 0; i < 14; i++) {
+          [[XA, 0], [XB, 1.3]].forEach(([cx, off], k) => { const rr = Rr * (0.25 + 0.65 * ((i * 0.37) % 1)), a = i * 1.7 + off + t * (0.5 + (i % 4) * 0.12); Pi.set(cx + Math.cos(a) * rr, hy + Math.sin(a * 1.3) * rr * 0.8, Math.sin(a * 0.8) * rr * 0.7); Si.set(1, 1, 1); Mi.compose(Pi, Qi, Si); gasF.setMatrixAt(i + k * 14, Mi); gasF.setColorAt(i + k * 14, k ? C_NH3 : new THREE.Color(0x4ade80)); });
+        }
+        gasF.instanceMatrix.needsUpdate = true; if (gasF.instanceColor) gasF.instanceColor.needsUpdate = true;
+        // 흰 연기: 두 구름이 겹치는 곳에서 피어올라요
+        const mx = (XA + XB) / 2, sm = o.smoke;
+        smkAcc += dt * 40 * sm; while (smkAcc >= 1) { smkAcc -= 1; const q = SMK.find((z) => z.life >= 1); if (!q) break; q.life = 0; q.x = mx + (Math.random() - 0.5) * Math.max(0.3, 2 * Rr - (XB - XA)); q.y = hy + (Math.random() - 0.5) * 1.0; q.z = (Math.random() - 0.5) * 1.2; q.vx = (Math.random() - 0.5) * 0.3; q.vz = (Math.random() - 0.5) * 0.2; }
+        SMK.forEach((q, i) => { q.life += dt * 0.38; if (q.life >= 1) { Si.set(0.0001, 0.0001, 0.0001); Mi.compose(Pi.set(0, -9, 0), Qi, Si); smk.setMatrixAt(i, Mi); return; } q.y += dt * 0.5; q.x += q.vx * dt; q.z += q.vz * dt; const r = 0.15 + q.life * 0.4; Si.set(r, r, r); Mi.compose(Pi.set(q.x, q.y, q.z), Qi, Si); smk.setMatrixAt(i, Mi); });
+        smk.instanceMatrix.needsUpdate = true;
+        lHcl.show(true); lHcl.obj = [XA, hy + Rr + 0.3, 0]; lNh3.show(true); lNh3.obj = [XB, hy + Rr + 0.3, 0];
+        lBA.show(true); lBA.obj = [XA, -0.55, 0.9]; lBB.show(true); lBB.obj = [XB, -0.55, 0.9];
+        lSmk.show(sm > 0.25); lSmk.obj = [mx, hy + Rr * 0.8 + 0.5, 0];
+        return '<b>HCl(g) + NH₃(g) → NH₄Cl(s) (흰 연기)</b><br>' + (sm > 0.4 ? '두 기체가 만나자 흰 연기가 생겼어요. 물도 수용액도 없는데 이것도 산과 염기의 반응이에요!' : '두 병을 가까이 가져가 기체 구름이 겹치게 해 보세요.') + '<br>흰 연기의 양 ' + Math.round(sm * 100) + ' %';
+      }
+      const frGap = grab(() => controls.range('두 병 사이', 0, 100, 1, 0, (v) => { const w = W(); if (!w) return; const G = w.fmG(); w.setGap(G.gMax - v / 100 * (G.gMax - G.gMin)); }, (v) => (v >= 100 ? '맞닿음' : v + ' % 가까이')));
+      const obView = grab(() => controls.segment('실험', [{ value: 'ind', label: 'BTB 시험' }, { value: 'fume', label: '흰 연기' }], 'ind', (v) => { const w = W(); if (w) w.obSwitch(v); }));
+      const sh = (gp, on) => gp.els.forEach((e) => { e.style.display = on ? '' : 'none'; });
+      let sceneK = '';
+      function applyScene(md, view) {
+        const k = md === 'obs' ? 'obs-' + view : md; if (k === sceneK) return; sceneK = k;
+        const isObs = md === 'obs';
+        g.visible = !isObs; gI.visible = isObs && view === 'ind'; gF.visible = isObs && view === 'fume';
+        oldEls.forEach((e) => { e.style.display = isObs ? 'none' : ''; });
+        sh(obView, isObs); sh(indCtl, isObs && view === 'ind'); sh(indCtl2, isObs && view === 'ind'); sh(indRst, isObs && view === 'ind'); sh(frGap, isObs && view === 'fume');
+        if (isObs) {
+          labs.forEach((l) => l.show(false));
+          const ind = view === 'ind'; bk.forEach((b) => { b.nm.show(ind); if (!ind) b.btb.show(false); }); lLeg.show(ind); [lHcl, lNh3, lSmk, lBA, lBB].forEach((l) => l.show(!ind));
+        } else { bk.forEach((b) => { b.nm.show(false); b.btb.show(false); }); lLeg.show(false); [lHcl, lNh3, lSmk, lBA, lBB].forEach((l) => l.show(false)); build(); }
+        const o = ctx.orbit;
+        if (isObs && view === 'ind') { o.dist = PHONE ? 15 : 11.5; o.tx = 0; o.ty = 0.8; o.theta = 0.2; o.phi = 1.35; }
+        else if (isObs) { o.dist = PHONE ? 21 : 11.5; o.tx = 0; o.ty = 1.3; o.theta = 0.1; o.phi = 1.4; }
+        else { o.dist = PHONE ? 12.5 : 9.5; o.tx = 0; o.ty = 0; o.theta = 0.35; o.phi = 1.25; }
+        txt = '';
+      }
       build();
       return {
         update(dt) {
           dt = Math.min(dt, 0.05);
-          const q = from2D();
+          const q = from2D(), w2 = W();
+          applyScene(q.md, w2 && w2.S && w2.S.ob ? w2.S.ob.view : 'ind');
+          if (q.md === 'obs') {
+            const tn = performance.now() / 1000, html = w2.S.ob.view === 'fume' ? updFume(w2, dt, tn) : updInd(w2, tn);
+            if (html !== txt) { txt = html; info(html); }
+            if (w2.S.ob.view === 'fume') frGap.r.set(w2.gapPct()); else { indCtl.els.forEach((e) => { e.disabled = !!w2.S.ob.act || w2.S.ob.dyeT.naoh >= 1; }); indCtl2.els.forEach((e) => { e.disabled = !!w2.S.ob.act || w2.S.ob.dyeT.nh3 >= 1; }); }
+            obView.r.set(w2.S.ob.view);
+            return;
+          }
+          showRole = q.md !== 'sort';
           if (q.key !== key) { key = q.key; build(); pl.pause(); pl.set(0); demo = false; }
           const md = q.md;
-          if (!demoOn()) prog += ((md === 'move' || md === 'pairs' ? q.after : 0) - prog) * Math.min(1, dt * 4);
+          if (md === 'sort') { if (!demoOn()) { const ph = (performance.now() / 1000 % 7) / 7; prog = ph < 0.2 ? 0 : ph < 0.6 ? (ph - 0.2) / 0.4 : 1; } }
+          else if (!demoOn()) prog += ((md === 'move' || md === 'pairs' ? q.after : 0) - prog) * Math.min(1, dt * 4);
           place();
           const R = RX[key], after = prog > 0.5;
           const other = md !== 'move' && md !== 'pairs';
-          const t = '<b>' + R.name + '</b><br>' + R.note + '<br>' + (after ? '반응 후: 산은 <b>짝염기</b>, 염기는 <b>짝산</b>이 돼요.' : '반응 전: <b>' + R.acid + '</b>(산) → H⁺ → <b>' + R.base + '</b>(염기)') + (other && !demoOn() ? '<br><span style="color:#9fb0d4">이 단계(관찰 · 구별하기)는 2D 화면에서 해요.</span>' : '');
+          if (md === 'sort') {
+            const c = q.card, t2 = '<b>' + R.name + '</b><br>' + (c ? '고른 카드: <b>' + c.f + '</b><br>' : '') + 'H⁺가 어디에서 어디로 옮겨 가는지 보고, 이 입자가 H⁺를 <b>주었는지 받았는지</b> 생각해 봐요.<br><span style="color:#9fb0d4">카드를 상자에 넣는 일은 ▦ 2D에서 해요.</span>';
+            labs.donor.show(false); labs.acc.show(false); if (t2 !== txt) { txt = t2; info(t2); } return;
+          }
+          const t = '<b>' + R.name + '</b><br>' + R.note + '<br>' + (after ? '반응 후: 산은 <b>짝염기</b>, 염기는 <b>짝산</b>이 돼요.' : '반응 전: <b>' + R.acid + '</b>(산) → H⁺ → <b>' + R.base + '</b>(염기)') + '';
           if (t !== txt) { txt = t; info(t); }
         },
       };

@@ -975,7 +975,7 @@
 
   /* ---------- 디버그 (Playwright) ---------- */
   window.__sim = {
-    S, VW, VH, RC, HS, HK, SP, SPK, TY, TK, TANS, UNK, UK, setMode, cardsLayout, placeCard, sortRC, slotOf, bL, tcell, benchTap, startTest, benchResult, hGeo, cLy, leafOf, clsAnswer, cellRC, HT, setHeatCur,
+    S, VW, VH, RC, PL, HORD, HSOFT, HS, HK, SP, SPK, TY, TK, TANS, UNK, UK, setMode, cardsLayout, placeCard, sortRC, slotOf, bL, tcell, benchTap, startTest, benchResult, hGeo, cLy, leafOf, clsAnswer, cellRC, HT, setHeatCur,
     get game() { return game; },
     stepAll(sec) { const n = Math.ceil(sec / 0.02); for (let i = 0; i < n; i++) { S.t += 0.02; stepAll1(0.02); parts.update(0.02); } },
   };

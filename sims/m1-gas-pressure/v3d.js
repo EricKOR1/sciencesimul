@@ -8,7 +8,7 @@
   window.SciSim3D.attach({
     title: '기체 입자와 압력 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    levels: [1, 2, 3],
+    levels: [0, 1, 2, 3],
     camera: { dist: 10.5 * (PHN0 ? 1.05 : 1), theta: 0.6, phi: 1.1, fov: 45, target: [1.7, 0.1, 0], min: 6, max: 30 },
     autoRotate: 0.15,
     build(ctx) {
@@ -126,7 +126,7 @@
       /* ▶ 재생: 공기를 넣어 입자 수가 늘면 충돌이 늘고 압력이 커져요 (40 → 100개 → 처음으로) */
       let pmode = false, built = false, pP = 0, sig = '';
       const pl = controls.player({
-        duration: 9, loop: true, autoplay: false, label: '재생', phases: [[0, '']],
+        duration: 10, loop: true, autoplay: false, label: '재생', phases: [[0, '']],
         onFrame(p) { if (!built) return; pmode = true; pP = p; },
       });
       built = true;
@@ -135,12 +135,85 @@
       applyMode(); calcP(); gauge.userData.set(st.pr); text();
       const wallLab = label('', [0, A + 0.5, 0], { size: 12, color: 'rgba(61,109,242,.9)' }); wallLab.set('입자가 벽에 부딪혀요');
 
+      /* ===== 장면 block · 벽돌과 눈: 같은 벽돌(같은 무게)을 넓은 면 / 좁은 면으로 눈 위에 놓아요 (2D 1 px = 0.01 그림 단위) ===== */
+      const gB = new THREE.Group(); gB.visible = false; root.add(gB);
+      gB.position.x = 1.7; gB.scale.setScalar(PHN0 ? 0.66 : 1.3);
+      const SNX = 7.2, SNZ = 2.8, SGX = 144, SGZ = 28;
+      { const sb = new THREE.Mesh(new THREE.BoxGeometry(SNX, 0.6, SNZ), [mat(0xe6f0fb), mat(0xe6f0fb), new THREE.MeshBasicMaterial({ visible: false }), mat(0xcfe0f3), mat(0xe6f0fb), mat(0xe6f0fb)]); sb.position.y = -0.3; gB.add(sb);
+        const gr = new THREE.Mesh(new THREE.BoxGeometry(SNX + 2.4, 0.2, SNZ + 2.4), mat(0xdbe7f5, { roughness: 0.9 })); gr.position.y = -0.7; gB.add(gr); }
+      const snowGeo = new THREE.PlaneGeometry(SNX, SNZ, SGX, SGZ); snowGeo.rotateX(-Math.PI / 2);
+      const snowMesh = new THREE.Mesh(snowGeo, mat(0xd5e2f0, { roughness: 0.95 })); snowMesh.receiveShadow = true; gB.add(snowMesh);
+      const BR = { wide: [2.16, 0.72, 0.72], narrow: [0.72, 2.16, 0.72] };
+      const brickTex = canvasTex(128, 64, (c, w, h) => { c.fillStyle = '#b4533c'; c.fillRect(0, 0, w, h); for (let i = 0; i < 160; i++) { c.fillStyle = Math.random() < 0.5 ? 'rgba(90,25,10,.25)' : 'rgba(255,190,150,.2)'; c.fillRect(Math.random() * w, Math.random() * h, 3, 2); } c.strokeStyle = 'rgba(255,220,200,.35)'; c.lineWidth = 3; c.strokeRect(2, 2, w - 4, h - 4); });
+      const brick = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), mat(0xffffff, { map: brickTex, roughness: 0.8 })); brick.castShadow = true; gB.add(brick);
+      const parr = [0, 1, 2, 3].map(() => { const a = mkArrow(0xf26b3a, 0.05); a.children.forEach((c) => { c.material.depthTest = false; c.renderOrder = 8; }); gB.add(a); return a; });
+      const wtArr = mkArrow(0x64748b, 0.07); gB.add(wtArr);
+      const bLab = label('', [0, 0, 0], { size: 12.5, color: 'rgba(30,64,175,.92)' }), bLab2 = label('', [0, 0, 0], { size: 12, color: 'rgba(200,80,20,.95)' });
+      let snowKey = '';
+      function carveSnow(list) {
+        const key = list.map((d) => [d.x, d.w, d.depth].map((v) => Math.round(v * 100)).join(':')).join('|');
+        if (key === snowKey) return; snowKey = key;
+        const P = snowGeo.attributes.position.array, e = 0.05, ez = 0.07, hz = 0.36;
+        for (let i = 0; i < P.length; i += 3) {
+          const x = P[i], z = P[i + 2]; let dep = 0;
+          for (const d of list) {
+            const out = Math.max(0, Math.abs(x - d.x) - d.w / 2), oz = Math.max(0, Math.abs(z) - hz);
+            const f = Math.max(0, 1 - out / e) * Math.max(0, 1 - oz / ez); dep = Math.max(dep, d.depth * f);
+          }
+          P[i + 1] = -dep;
+        }
+        snowGeo.attributes.position.needsUpdate = true; snowGeo.computeVertexNormals();
+      }
+      const BR0 = { wide: { w: 216 }, narrow: { w: 72 } }, DEP = { wide: 10, narrow: 30 };
+      function updBlock(dt, t, S) {
+        box.visible = bal.visible = knot.visible = stand.visible = false; ps.visible = false; gauge.visible = gst.visible = false; gaugeLabel.show(false); wallLab.show(false); markB.style.display = 'none';
+        if (!gB.visible) { orbit.phi = 1.32; orbit.theta = 0.25; }
+        gB.visible = true;
+        let orient = 'wide', bx = 400, base = 1.3, dents = [], sink = 0, touching = false, ph = '';
+        if (pmode) {
+          const p = pP;
+          const seg = p < 0.5 ? 0 : 1, q = seg === 0 ? p / 0.5 : (p - 0.5) / 0.5;
+          orient = seg === 0 ? 'wide' : 'narrow'; bx = seg === 0 ? 300 : 500;
+          const drop = Math.min(1, q / 0.3), push = Math.max(0, Math.min(1, (q - 0.3) / 0.35)), up = Math.max(0, (q - 0.9) / 0.1);
+          sink = DEP[orient] * push; touching = q >= 0.3 && q < 0.92;
+          base = (1 - drop) * 1.3 - sink * 0.02 + (q >= 0.92 ? up * 0.4 : 0);
+          if (seg === 1) dents.push({ x: -1.0, w: 2.16, depth: DEP.wide * 0.02 });
+          dents.push({ x: (bx - 400) * 0.01, w: BR0[orient].w * 0.01, depth: (q < 0.3 ? 0 : q < 0.92 ? sink : DEP[orient]) * 0.02 });
+          ph = p < 0.5 ? '넓은 면으로 놓아요 · 눈이 조금 눌려요' : '좁은 면으로 놓아요 · 눈이 더 깊이 눌려요';
+        } else if (S) {
+          orient = S.orient; bx = S.bx; sink = S.sink; touching = S.bstate === 'sink' || S.bstate === 'rest';
+          base = touching ? -S.sink * 0.02 : (372 - S.by) * 0.01;
+          Object.keys(S.dents || {}).forEach((k) => { const d = S.dents[k]; dents.push({ x: (d.x - 400) * 0.01, w: d.w * 0.01, depth: d.depth * 0.02 }); });
+          if (S.bstate === 'sink') dents.push({ x: (S.bx - 400) * 0.01, w: BR0[orient].w * 0.01, depth: S.sink * 0.02 });
+        }
+        const ph2 = document.querySelector('.v3-player .v3-ph'); if (ph2) ph2.textContent = pmode ? ph : '';
+        carveSnow(dents);
+        const d = BR[orient], cx = (bx - 400) * 0.01;
+        brick.scale.set(d[0], d[1], d[2]); brick.position.set(cx, base + d[1] / 2, 0);
+        const L = 0.3 + sink * 0.03;
+        parr.forEach((a, i) => {
+          const n = orient === 'wide' ? 4 : 1; if (!touching || i >= n) { a.visible = false; return; }
+          const ax = orient === 'wide' ? cx - d[0] / 2 + d[0] * (i + 0.5) / 4 : cx;
+          setArrow(a, new V3(ax, base + L * 0.8, 0), new V3(ax, base - 0.02 - sink * 0.0, 0)); a.userData.sh.scale.y = Math.max(0.01, a.userData.sh.scale.y);
+        });
+        setArrow(wtArr, new V3(cx + d[0] / 2 + 0.35, base + d[1] / 2 + 0.5, 0), new V3(cx + d[0] / 2 + 0.35, base + d[1] / 2 - 0.2, 0));
+        const sc2 = gB.scale.x;
+        bLab.obj = [(cx + 1.7 / sc2 * 0) * sc2 + 1.7, (base + d[1] + 0.35) * sc2, 0]; bLab.off = [0, 0.1, 0];
+        bLab.set(S && S.bstate === 'held' && !pmode ? '벽돌을 눈 위에 놓아요' : (orient === 'wide' ? '넓은 면 (면적 3)' : '좁은 면 (면적 1)')); bLab.show(true);
+        bLab2.obj = [(cx + d[0] / 2 + 0.35) * sc2 + 1.7, (base + d[1] / 2 + 0.5) * sc2, 0]; bLab2.off = [0.6, 0, 0]; bLab2.set('무게(누르는 힘) 같아요'); bLab2.show(true);
+        const cm = Math.round(sink / 5);
+        const tried = S && S.tried ? S.tried : { wide: false, narrow: false };
+        setInfo2((pmode ? '<b>▶ ' + ph + '</b><br>' : '') + '<b>압력</b>은 일정한 면적에 수직으로 작용하는 힘이에요. 같은 벽돌(같은 무게)도 <b>면적이 좁을수록</b> 압력이 커서 눈이 더 깊이 눌려요.' + (touching ? '<br>' + (orient === 'wide' ? '넓은 면' : '좁은 면') + ' · 눌린 깊이 약 <b>' + cm + ' cm</b>' : '') + (!pmode && S && !touching ? '<br>옆의 2D 화면에서 벽돌을 끌어 눈 위에 놓아 보세요. 또는 ▶ 재생을 눌러 보세요.' : ''));
+      }
+      let lastTxt2 = ''; const setInfo2 = (h) => { if (h !== lastTxt2) { lastTxt2 = h; info(h); } };
       let smoothR = balR();
       return {
         update(dt, t) {
           const l = ctx.lesson && ctx.lesson(), S = l && l.S, sc = S ? S.scene : 'membrane';
           const key = [sc, l ? l.n : 0].join();
           if (key !== sig) { sig = key; if (pmode) { pmode = false; pl.pause(); } }
+          if (sc === 'block') { updBlock(dt, t, S); return; }
+          if (gB.visible) { orbit.phi = 1.1; orbit.theta = 0.6; gB.visible = false; ps.visible = true; markB.style.display = ''; bLab.show(false); bLab2.show(false); wtArr.visible = false; lastTxt = ''; }
           const ph = document.querySelector('.v3-player .v3-ph');
           let nn;
           if (pmode) { const q = pP < 0.7 ? sm(pP / 0.7) : 1 - sm((pP - 0.85) / 0.15); nn = Math.round(40 + 60 * q); if (ph) ph.textContent = pP < 0.7 ? '공기를 넣어요' : pP < 0.85 ? '압력이 커졌어요' : '처음으로'; }

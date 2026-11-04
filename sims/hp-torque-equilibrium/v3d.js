@@ -1,6 +1,6 @@
 /* hp-torque-equilibrium · 3D 돌림힘과 평형
-   2D 실험(window.__sim)의 장면을 그대로 입체로 보여 줘요: 🔧 스패너(τ = F × ℓ) · ⚖️ 시소(회전 평형) · 📦 기울기 · 📚 책장(안정성).
-   값은 2D 옆 조작판이 정하고 3D는 따라가요. (우력·널빤지·크레인은 2D 화면에서 해요) */
+   2D 실험(window.__sim)의 장면을 그대로 입체로 보여 줘요: 🔧 스패너(τ = F × ℓ) · ⚖️ 시소(회전 평형) · 📦 기울기 · 📚 책장(안정성) · 🌀 우력 · 🌉 널빤지 · 🏗️ 크레인.
+   값은 2D 옆 조작판이 정하고 3D는 따라가요. 우력 · 🌉 널빤지 다리 · 🏗️ 크레인도 입체로 봐요. */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -49,12 +49,12 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 값은 옆 조작판에서 바꿔요',
     camera: { dist: 9 * KD, theta: 0.35, phi: 1.2, min: 3, max: 26, target: [0, 1.2, 0] },
     autoRotate: 0,
-    levels: [0, 1],
+    levels: [0, 1, 2],
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
       const { V3, M, mkArrow, setArrow, tube, disc } = tools(THREE);
       const sim = () => ctx.lesson();
-      const gSp = new THREE.Group(), gSs = new THREE.Group(), gTp = new THREE.Group(); root.add(gSp, gSs, gTp);
+      const gSp = new THREE.Group(), gSs = new THREE.Group(), gTp = new THREE.Group(), gCp = new THREE.Group(), gPk = new THREE.Group(), gCr = new THREE.Group(); root.add(gSp, gSs, gTp, gCp, gPk, gCr);
       function rod(a, b, r, col, op) {   // a→b 가는 막대(점선 대신 가는 막대)
         const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 1, 8), new THREE.MeshBasicMaterial({ color: col, transparent: op != null, opacity: op == null ? 1 : op }));
         m.userData = { a: new V3(), b: new V3() };
@@ -217,38 +217,184 @@
         if (kind === 'tilt') info('<b>📦 직육면체를 기울이면 언제 넘어질까?</b><br>tan θ한계 = (w/2) / h = ' + (w / 2).toFixed(2) + ' / ' + h.toFixed(2) + ' = ' + (w / 2 / h).toFixed(2) + ' → <b>θ한계 = ' + r1(tc).toFixed(1) + '°</b><br>' + (idle ? (inside ? '무게중심의 수직선이 받침면 안 → 되돌려 놓아요.' : '수직선이 받침면 밖 → 넘어져요.') : '💥 넘어졌어요! 한계 각 ' + r1(tc).toFixed(1) + '°') + '<br><span style="opacity:.8">폭 w · 무게중심 높이 h · 기울이는 각 θ는 옆 조작판에서 바꿔요.</span>');
         else info('<b>📚 책장(' + SHELF.MS + ' kg) + 무거운 책(' + SHELF.MB + ' kg)의 무게중심</b><br>무거운 책을 ' + SHELF.NAME[t.pos] + '에 → h = ' + h.toFixed(3) + ' m<br>tan θ한계 = ' + (SHELF.W / 2).toFixed(2) + ' / ' + h.toFixed(3) + ' → <b>θ한계 = ' + r1(tc).toFixed(1) + '°</b>' + (idle ? '' : '<br>💥 쓰러졌어요!') + '<br><span style="opacity:.8">무거운 책의 칸 · 기울이는 각은 옆 조작판에서 바꿔요.</span>');
       }
+
+      /* ================= 🌀 우력: 얼음 위의 막대 (위에서 본 모습, 1 m = 8칸, 위쪽 힘 = 화면 위 = −z) ================= */
+      const CS = 8, CPX = [-0.2, 0, 0.2], CFS = 0.08, labCp = [];
+      const ice = new THREE.Mesh(new THREE.BoxGeometry(9, 0.3, 5.6), M(0x5f93bb, { roughness: 0.25, metalness: 0.05 })); ice.position.y = -0.15; ice.receiveShadow = true; gCp.add(ice);
+      const startBox = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(0.4 * CS, 0.3, 0.55)), new THREE.LineBasicMaterial({ color: 0x3c506e })); startBox.position.y = 0.17; gCp.add(startBox);
+      const rodG = new THREE.Group(); gCp.add(rodG);
+      const rodM = new THREE.Mesh(new THREE.BoxGeometry(0.4 * CS, 0.3, 0.55), M(0xa8742f, { roughness: 0.55 })); rodM.position.y = 0.15; rodM.castShadow = true; rodG.add(rodM);
+      CPX.forEach((x) => { const d = new THREE.Mesh(new THREE.SphereGeometry(0.1, 14, 10), M(0x5a6679)); d.position.set(x * CS, 0.31, 0); rodG.add(d); });
+      const cDot = new THREE.Mesh(new THREE.SphereGeometry(0.15, 16, 12), M(0xe2464b)); cDot.position.set(0, 0.34, 0); rodG.add(cDot);
+      const cpArr = [0, 1, 2].map((i) => { const a = mkArrow(i === 1 ? 0x6d4fe0 : 0xd22a30, 0.07); gCp.add(a); return a; });
+      const cpLab = [0, 1, 2].map((i) => { const l = label('', [0, 0, 0], { color: i === 1 ? '#6d4fe0' : '#c0392b', size: 13 }); labCp.push(l); return l; });
+      const cpName = [['−0.2 m', '#475569'], ['중심(기준점)', '#c0392b'], ['+0.2 m', '#475569']].map((q, i) => { const l = label(q[0], [CPX[i] * CS, 0.1, 0.95], { color: q[1], size: 12 }); labCp.push(l); return l; });
+      const lCpRes = label('', [0, 0.4, -2.9], { color: '#26324a', size: 14 }); labCp.push(lCpRes);
+      const dC = { p: 0, on: false };
+      const cpKind = (f) => { const a = f[0] + f[1] + f[2], t = (f[2] - f[0]) / 5; if (f.every((v) => v === 0)) return '힘이 없어요'; if (a === 0 && t === 0) return '정지 (평형)'; if (a === 0) return '제자리에서 회전'; if (t === 0) return '이동만 (회전 없음)'; return '이동 + 회전'; };
+      function couple() {
+        const c = sim().S.cp; if (!c) return;
+        const r = c.run, f = r ? r.f : c.f;
+        let p = 0, done = false, running = false;
+        if (r && r.st === 'run') { p = r.t; running = true; }
+        else if (dC.on) { const pp = dC.p; p = pp < 0.15 ? 0 : pp < 0.85 ? (pp - 0.15) / 0.7 : 1; running = pp >= 0.15 && pp < 0.85; done = pp >= 0.85; }
+        else if (r) { p = 1; done = true; }
+        const a = f[0] + f[1] + f[2], t = (f[2] - f[0]) / 5, q = p * p;
+        const z0 = -clamp(a / 20, -1, 1) * 1.3 * q, rot = clamp(-t / 4 * 1.6, -3.2, 3.2) * q;
+        rodG.position.z = z0; rodG.rotation.y = -rot;
+        const fresh = p === 0 && !done;
+        cpName.forEach((l) => l.show(fresh));
+        f.forEach((v, i) => {
+          const px = CPX[i] * CS * Math.cos(rot), pz = z0 + CPX[i] * CS * Math.sin(rot), len = Math.abs(v) * CFS, sg = v > 0 ? -1 : 1;
+          cpArr[i].visible = v !== 0; cpLab[i].show(v !== 0);
+          if (v !== 0) {
+            setArrow(cpArr[i], new V3(px, 0.4, pz + sg * -0.38), new V3(px, 0.4, pz + sg * -0.38 + sg * len));
+            cpLab[i].obj = [px, 0.4, pz + sg * -0.38 + sg * (len + 0.45)]; cpLab[i].set((v > 0 ? '↑ ' : '↓ ') + Math.abs(v) + ' N');
+          }
+        });
+        lCpRes.show(done); if (done) lCpRes.set('결과: ' + cpKind(f));
+        lCpRes.el.style.background = done && a === 0 && t === 0 ? '#14a058' : '#26324a';
+        const sT = (t > 0 ? '+' : '') + t.toFixed(1);
+        info('<b>🌀 얼음 위의 막대 (위에서 본 모습, 마찰 없음)</b><br>① 알짜힘 ΣF = <b>' + (a > 0 ? '+' : '') + a + ' N</b>' + (a === 0 ? ' ✔' : '') + ' &nbsp; ② 돌림힘의 합 Στ = <b>' + sT + ' N·m</b>' + (t === 0 ? ' ✔' : '') +
+          '<br>' + (f.every((v) => v === 0) ? '옆 조작판에서 힘을 정해 주세요.' : (running ? '🐌 슬로모션으로 움직이는 중…' : '결과: <b>' + cpKind(f) + '</b>')) +
+          '<br><span style="opacity:.8">Στ = (−0.2)×F왼 + 0×F가운데 + 0.2×F오른 (반시계 +) · 힘은 옆 조작판에서 정해요.</span>');
+      }
+      /* ================= 🌉 널빤지 다리 (옆에서 본 모습, 1 m = 1칸) ================= */
+      const PH = 1.8, PTH = 0.25, FSC3 = 0.0025, PLK = { SPAN: 4, LEN: 8, WP: 200, WL: 400, OVER: 2 }, labPk = [];
+      const gnd = new THREE.Mesh(new THREE.BoxGeometry(13, 0.2, 3.4), M(0x56627a, { roughness: 1 })); gnd.position.set(2, -0.1, 0); gnd.receiveShadow = true; gPk.add(gnd);
+      [0, PLK.SPAN].forEach((x) => { const pil = new THREE.Mesh(new THREE.BoxGeometry(0.34, PH, 0.9), M(0x8e9ab0, { metalness: 0.3 })); pil.position.set(x, PH / 2, 0); pil.castShadow = true; gPk.add(pil); const sen = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.5, 0.5), M(0x1f2937)); sen.position.set(x, 0.25, 1.05); gPk.add(sen); });
+      const plankG = new THREE.Group(); plankG.position.set(PLK.SPAN, PH, 0); gPk.add(plankG);
+      const plankM = new THREE.Mesh(new THREE.BoxGeometry(PLK.LEN, PTH, 0.8), M(0xa8742f, { roughness: 0.55 })); plankM.position.set((-PLK.OVER - PLK.SPAN + PLK.LEN / 2), PTH / 2, 0); plankM.castShadow = true; plankG.add(plankM);
+      for (let m = 0; m <= 6; m++) { const tk = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.06, 0.82), M(0x5a3d1a)); tk.position.set(m - PLK.SPAN, PTH, 0); plankG.add(tk); const a = new THREE.Object3D(); a.position.set(m - PLK.SPAN, PTH, 0.55); plankG.add(a); labPk.push(label(String(m), a, { color: '#5a3d1a', size: 11 })); }
+      const loadM = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 0.6), M(0xf2873a, { roughness: 0.4, metalness: 0.2 })); loadM.castShadow = true; plankG.add(loadM);
+      const loadArr = mkArrow(0xe2464b, 0.05), plkArr = mkArrow(0xc0392b, 0.05), nArr = [mkArrow(0x14a058, 0.05), mkArrow(0x14a058, 0.05)]; gPk.add(loadArr, plkArr, nArr[0], nArr[1]);
+      const lLoadW = label('짐 400 N', [0, 0, 0], { color: '#c0392b', size: 12 }), lPlkW = label('판 200 N', [0, 0, 0], { color: '#c0392b', size: 12 });
+      const lNA = label('', [0, 0, 0], { color: '#14a058', size: 12 }), lNB = label('', [0, 0, 0], { color: '#14a058', size: 12 });
+      const sA = label('', [0, 0.5, 1.4], { color: '#1f2937', size: 12 }), sB = label('', [PLK.SPAN, 0.5, 1.4], { color: '#1f2937', size: 12 });
+      const pA = label('A 점', [0, 0.02, 1.45], { color: '#475569', size: 12 }), pB = label('B 점', [PLK.SPAN, 0.02, 1.45], { color: '#475569', size: 12 });
+      const lWarn = label('', [3, PH + 2.2, 0], { color: '#e2464b', size: 14 }), lRefP = label('', [0, PH + 0.9, 0.5], { color: '#b45309', size: 12 });
+      const refRing = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.05, 10, 32), M(0xf5b83d, { emissive: 0x7a5a00 })); gPk.add(refRing);
+      labPk.push(lLoadW, lPlkW, lNA, lNB, sA, sB, pA, pB, lWarn, lRefP);
+      const dP = { p: 0, on: false, px: 1, tip: 0 };
+      const nfmt = (n) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+      function plank(dt) {
+        const S = sim(), pk = S.S.pl; if (!pk) return;
+        const demo = dP.on; let x = pk.x, px = pk.px, tip = pk.tip;
+        if (demo) { x = Math.round(6 * dP.p * 10) / 10; px = x; const tg = S.plNA(x) < 0 ? 0.13 : 0; dP.tip += (tg - dP.tip) * Math.min(1, dt * 7); tip = dP.tip; }
+        const tp = S.plNA(x) < 0, NB = tp ? PLK.WP + PLK.WL : S.plNB(x), NA = tp ? 0 : S.plNA(x);
+        plankG.rotation.z = -tip;
+        const cs = Math.cos(tip), sn = Math.sin(tip), W = (lx, ly) => new V3(PLK.SPAN + lx * cs + ly * sn, PH - lx * sn + ly * cs, 0.0);
+        const lx = px - PLK.SPAN; loadM.position.set(lx, PTH + 0.3, 0);
+        const lt = W(lx, PTH + 0.6), ll = W(lx, PTH + 0.6 + PLK.WL * FSC3);
+        setArrow(loadArr, ll, lt); lLoadW.obj = [ll.x, ll.y + 0.2, 0];
+        const mc = W((PLK.LEN / 2 - PLK.OVER - PLK.SPAN), 0), me = mc.clone(); me.y -= PLK.WP * FSC3; setArrow(plkArr, mc, me); lPlkW.obj = [me.x, me.y - 0.2, 0];
+        const bx = PLK.SPAN * 0 + 0;
+        [[0, NA, nArr[0], lNA, sA, 'N_A'], [PLK.SPAN, NB, nArr[1], lNB, sB, 'N_B']].forEach(([xx, N, ar, lb, sl, nm]) => {
+          if (N > 0) { setArrow(ar, new V3(xx + 0.35, PH - N * FSC3, 0.0), new V3(xx + 0.35, PH + (xx === PLK.SPAN ? 0 : 0), 0)); ar.visible = true; lb.show(true); lb.obj = [xx + 0.35, PH - N * FSC3 - 0.2, 0]; lb.set(nfmt(N) + ' N'); }
+          else { ar.visible = false; lb.show(false); }
+          sl.set(nm + '<br>' + nfmt(N) + ' N');
+        });
+        void bx;
+        const ref = pk.ref; refRing.position.set(ref === 'A' ? 0 : PLK.SPAN, PH + 0.02, 0.5); lRefP.obj = [ref === 'A' ? 0 : PLK.SPAN, PH - 0.5, 0.6]; lRefP.set('기준점 ' + ref);
+        lWarn.show(tp || NA === 0); lWarn.set(tp ? '⚠️ A 쪽이 들려요! N_A = 0' : '아슬아슬: N_A = 0'); lWarn.el.style.background = tp ? '#e2464b' : '#f59e0b';
+        let eq;
+        if (tp) eq = '짐이 B에서 너무 멀어요. A를 기준으로 하면<br>N_B × 4.0 = 200 × 2.0 + 400 × ' + x.toFixed(1) + ' → N_B = ' + nfmt(S.plNB(x)) + ' N<br>N_A = 600 − N_B &lt; 0 → 받침은 당길 수 없어요.<br>평형이 깨져 B를 축으로 돌아가요.';
+        else if (ref === 'A') eq = 'N_B × 4.0 = 200 × 2.0 + 400 × ' + x.toFixed(1) + ' → <b>N_B = ' + nfmt(S.plNB(x)) + ' N</b><br>알짜힘 0: N_A + N_B = 200 + 400 → <b>N_A = ' + nfmt(S.plNA(x)) + ' N</b>';
+        else eq = 'N_A × 4.0 = 200 × 2.0 + 400 × (4.0 − ' + x.toFixed(1) + ') → <b>N_A = ' + nfmt(S.plNA(x)) + ' N</b><br>알짜힘 0: N_A + N_B = 200 + 400 → <b>N_B = ' + nfmt(S.plNB(x)) + ' N</b>';
+        info('<b>🌉 기준점 ' + ref + ' 점으로 돌림힘의 합 = 0</b> (짐 ' + x.toFixed(1) + ' m)<br>' + eq + '');
+      }
+      /* ================= 🏗️ 크레인 (옆에서 본 모습, 1 m = 0.45칸) ================= */
+      const CSC = 0.45, TH = 5.2, JL = 6.8, JR = 8.6, WCW = 3000, labCr = [];
+      const gnd2 = new THREE.Mesh(new THREE.BoxGeometry(12, 0.2, 3.4), M(0x56627a, { roughness: 1 })); gnd2.position.set(0, -0.1, 0); gnd2.receiveShadow = true; gCr.add(gnd2);
+      const towerM = M(0xe0a82e, { roughness: 0.5, metalness: 0.2 });
+      const tower = new THREE.Mesh(new THREE.BoxGeometry(0.5, TH, 0.5), towerM); tower.position.y = TH / 2; tower.castShadow = true; gCr.add(tower);
+      for (let y = 0.6; y < TH - 0.3; y += 0.8) { const rg = new THREE.Mesh(new THREE.BoxGeometry(0.58, 0.07, 0.58), M(0xb07d0a)); rg.position.y = y; gCr.add(rg); }
+      const base = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.3, 1.2), M(0x8e9ab0)); base.position.y = 0.15; gCr.add(base);
+      const armG = new THREE.Group(); armG.position.y = TH; gCr.add(armG);
+      const arm = new THREE.Mesh(new THREE.BoxGeometry((JL + JR) * CSC, 0.22, 0.32), M(0xf5b83d, { roughness: 0.45 })); arm.position.x = (JR - JL) / 2 * CSC; arm.castShadow = true; armG.add(arm);
+      for (let m = -6; m <= 8; m++) { if (!m) continue; const tk = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.1, 0.34), M(0x3c2a00)); tk.position.set(m * CSC, 0.14, 0); armG.add(tk); if (m % 2 === 0) { const a = new THREE.Object3D(); a.position.set(m * CSC, 0.42, 0); armG.add(a); labCr.push(label(String(Math.abs(m)), a, { color: '#7a5a00', size: 11 })); } }
+      const pivC = new THREE.Mesh(new THREE.SphereGeometry(0.16, 16, 12), M(0xe2464b)); pivC.position.y = TH; gCr.add(pivC);
+      const loadG = new THREE.Group(); gCr.add(loadG); const cwG = new THREE.Group(); gCr.add(cwG);
+      const loadBox = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), M(0xf2873a, { roughness: 0.4, metalness: 0.2 })); loadBox.castShadow = true; loadG.add(loadBox);
+      const cwBox = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.8, 0.9), M(0x6b7280, { roughness: 0.4, metalness: 0.5 })); cwBox.castShadow = true; cwG.add(cwBox); cwBox.position.y = -1.05;
+      const cabL = rod(new V3(), new V3(), 0.02, 0x4b5563), cabC = rod(new V3(), new V3(), 0.02, 0x4b5563); gCr.add(cabL, cabC);
+      const supArr = mkArrow(0x14a058, 0.06); gCr.add(supArr);
+      const lLd = label('', loadG, { color: '#c2410c', size: 13 }), lCw = label('', cwG, { color: '#4b5563', size: 13 });
+      const lSupC = label('', [0.7, TH - 0.8, 0.4], { color: '#14a058', size: 12 }), lCrSt = label('', [0, TH + 1.5, 0], { color: '#14a058', size: 15 });
+      labCr.push(lLd, lCw, lSupC, lCrSt);
+      const dR = { p: 0, on: false, beta: 0, dc: 3 };
+      function crane(dt) {
+        const S = sim(), c = S.S.cr; if (!c) return;
+        const net0 = c.wl * c.dl - WCW * (dR.on ? dR.dc : c.dc);
+        let beta = c.beta, dc = c.pdc;
+        if (dR.on) {
+          dR.dc = 0.5 + 5.5 * dR.p; const net = c.wl * c.dl - WCW * dR.dc;
+          const tg = net === 0 ? 0 : Math.sign(net) * clamp(0.04 + Math.abs(net) / 24000 * 0.1, 0.04, 0.1);
+          dR.beta += (tg - dR.beta) * Math.min(1, dt * 6); beta = dR.beta; dc = dR.dc;
+        } else { dR.beta = c.beta; dR.dc = c.dc; }
+        const dcx = dR.on ? dR.dc : c.dc, tL = c.wl * c.dl, tC = WCW * dcx, net = tL - tC;
+        armG.rotation.z = -beta;
+        const cb = Math.cos(beta), sb = Math.sin(beta);
+        const hookL = new V3(c.dl * CSC * cb, TH - c.dl * CSC * sb, 0), hookC = new V3(-dc * CSC * cb, TH + dc * CSC * sb, 0);
+        const lsz = 0.5 + c.wl / 1000 * 0.22;
+        loadBox.scale.setScalar(lsz); loadG.position.set(hookL.x, hookL.y - 1.1 - lsz / 2, 0);
+        cwG.position.set(hookC.x, hookC.y - 0.5, 0);
+        cabL.setA(hookL, new V3(hookL.x, hookL.y - 1.1, 0)); cabC.setA(hookC, new V3(hookC.x, hookC.y - 0.5, 0));
+        lLd.set('짐 ' + nfmt(c.wl) + ' N · ' + c.dl.toFixed(1) + ' m'); lLd.off = [0, -lsz / 2 - 0.2, 0.3]; lCw.set('평형추 ' + nfmt(WCW) + ' N · ' + dcx.toFixed(1) + ' m'); lCw.off = [0, -1.05 - 0.6, 0.3];
+        const Nn = c.wl + WCW; setArrow(supArr, new V3(0.65, TH - 0.3 - Nn / 6000 * 1.6, 0.4), new V3(0.65, TH - 0.15, 0.4)); lSupC.set('떠받치는 힘 ' + nfmt(Nn) + ' N'); lSupC.obj = [1.7, TH - 1.1, 0.4];
+        const lev = net === 0 && Math.abs(beta) < 0.01, tilt = Math.abs(beta) > 0.02;
+        lCrSt.show(lev || tilt); lCrSt.set(lev ? '평형!' : net > 0 ? '짐 쪽이 내려가요' : '평형추 쪽이 내려가요'); lCrSt.el.style.background = lev ? '#14a058' : '#e2464b';
+        info('<b>🏗️ 탑 꼭대기 기준 돌림힘 (N·m)</b><br>↻ 짐 쪽: ' + nfmt(c.wl) + ' N × ' + c.dl.toFixed(1) + ' m = <b>' + nfmt(tL) + ' N·m</b><br>↺ 평형추 쪽: ' + nfmt(WCW) + ' N × ' + dcx.toFixed(1) + ' m = <b>' + nfmt(tC) + ' N·m</b><br>' +
+          (net === 0 ? '돌림힘이 같아요 → 크레인이 평형이에요' : (tL > tC ? '짐 쪽 돌림힘이 더 커요 → 평형추를 더 멀리' : '평형추 쪽 돌림힘이 더 커요 → 평형추를 더 가까이')) +
+          '<br><span style="opacity:.8">알짜힘 0: 탑이 떠받치는 힘 = ' + nfmt(Nn) + ' N</span>');
+        void net0;
+      }
       /* ================= 장면 고르기 ================= */
-      let shown = '', pl = null;
+      let shown = '', pl = null, plC = null, plP = null, plR = null;
       function showMode(mode) {
         if (mode === shown) return; shown = mode;
-        gSp.visible = mode === 'spanner'; gSs.visible = mode === 'seesaw'; gTp.visible = mode === 'tilt' || mode === 'load';
+        gSp.visible = mode === 'spanner'; gSs.visible = mode === 'seesaw'; gTp.visible = mode === 'tilt' || mode === 'load'; gCp.visible = mode === 'couple'; gPk.visible = mode === 'plank'; gCr.visible = mode === 'crane';
+        labCp.forEach((l) => l.show(mode === 'couple')); labPk.forEach((l) => l.show(mode === 'plank')); labCr.forEach((l) => l.show(mode === 'crane'));
         const spl = mode === 'spanner';
         [lF, lEll, lTau, lRef].forEach((l) => l.show(spl)); tickAnchors.forEach((a) => a[2].show(spl));
         [lbA, lbB, ldA, ldB, lLev, lSup].concat(numL).forEach((l) => l.show(mode === 'seesaw'));
         [lW, lAx, lSupW, lTq, lAng].forEach((l) => l.show(gTp.visible)); lBook.show(false);
         if (pl && pl.row) pl.row.style.display = spl ? '' : 'none';
+        if (plC && plC.row) plC.row.style.display = mode === 'couple' ? '' : 'none'; if (plP && plP.row) plP.row.style.display = mode === 'plank' ? '' : 'none'; if (plR && plR.row) plR.row.style.display = mode === 'crane' ? '' : 'none';
         if (mode === 'spanner') { Object.assign(orbit, { tx: 2.3, ty: 0.3, tz: 0, phi: 0.7, theta: 0.0, dist: 9 * KD }); }
         else if (mode === 'seesaw') { Object.assign(orbit, { tx: 0, ty: 1.3, tz: 0, phi: 1.3, theta: 0.3, dist: 7.6 * KD }); }
         else if (mode === 'tilt') { Object.assign(orbit, { tx: -0.6, ty: 0.7, tz: 0, phi: 1.25, theta: 0.2, dist: 4.6 * KD }); bodyKey = ''; }
         else if (mode === 'load') { Object.assign(orbit, { tx: -0.4, ty: 1.0, tz: 0, phi: 1.3, theta: 0.25, dist: 7 * KD }); bodyKey = ''; }
+        else if (mode === 'couple') { Object.assign(orbit, { tx: 0, ty: 0, tz: 0, phi: 0.6, theta: 0.0, dist: 8.5 * KD }); }
+        else if (mode === 'plank') { Object.assign(orbit, { tx: 2, ty: 1.2, tz: 0, phi: 1.3, theta: 0.2, dist: 10.5 * KD * (PHN ? 1.1 : 1) }); }
+        else if (mode === 'crane') { Object.assign(orbit, { tx: -0.9, ty: 3.2, tz: 0, phi: 1.3, theta: 0.25, dist: 12 * KD * (PHN ? 1.25 : 1) }); }
         else { orbit.dist = 9 * KD; }
       }
-      const NOTE = { couple: '🌀 우력(얼음 위 막대)은 힘을 가하는 실험이라 2D 화면에서 해요. 위의 [▦ 2D]를 눌러 보세요.', plank: '🌉 널빤지 다리(받침 힘 N_A, N_B 예측)는 2D 화면에서 해요. 위의 [▦ 2D]를 눌러 보세요.', crane: '🏗️ 크레인(평형추)은 2D 화면에서 해요. 위의 [▦ 2D]를 눌러 보세요.' };
       /* ▶ 재생: 스패너로 지금 값 그대로 '힘 주기 → 돌리기 → 결과 → 되돌리기'를 되풀이해요 */
       pl = controls.player({ duration: 7, loop: true, autoplay: false, label: '돌려 보기',
         phases: [[0, '힘 주기'], [0.2, '돌리는 중'], [0.65, '결과'], [0.82, '되돌리기']],
         onFrame(p) { demo.p = p; demo.on = p > 0 || !!(pl && pl.playing); } });
-      pl.row = ctx.renderer.domElement.parentNode.parentNode.querySelector('.v3-player');
+      plC = controls.player({ duration: 6, loop: true, autoplay: false, label: '힘 가하기',
+        phases: [[0, '힘 주기'], [0.15, '움직이는 중'], [0.85, '결과']], onFrame(p) { dC.p = p; dC.on = p > 0 || !!(plC && plC.playing); } });
+      plP = controls.player({ duration: 8, loop: true, autoplay: false, label: '짐 옮기기',
+        phases: [[0, 'A 쪽'], [0.33, '가운데'], [0.66, 'B 너머'], [0.84, 'A가 들려요']], onFrame(p) { dP.p = p; dP.on = p > 0 || !!(plP && plP.playing); } });
+      plR = controls.player({ duration: 8, loop: true, autoplay: false, label: '평형추 옮기기',
+        phases: [[0, '가까이'], [0.5, '멀리']], onFrame(p) { dR.p = p; dR.on = p > 0 || !!(plR && plR.playing); } });
+      { const rows = ctx.renderer.domElement.parentNode.parentNode.querySelectorAll('.v3-player'); pl.row = rows[0]; plC.row = rows[1]; plP.row = rows[2]; plR.row = rows[3]; }
       return {
         update(dt) {
           const S = sim() && sim().S; if (!S) return;
           showMode(S.mode);
           if (S.sp && S.sp.st !== 'idle' && pl.playing) pl.pause();
           if (!pl.playing && pl.p === 0) demo.on = false;
+          if (S.cp && S.cp.run && S.cp.run.st === 'run' && plC.playing) plC.pause();
+          if (!plC.playing && plC.p === 0) dC.on = false; if (!plP.playing && plP.p === 0) dP.on = false; if (!plR.playing && plR.p === 0) dR.on = false;
           if (S.mode === 'spanner') spanner(dt);
           else if (S.mode === 'seesaw') seesaw();
           else if (S.mode === 'tilt' || S.mode === 'load') topple(S.mode);
-          else info(NOTE[S.mode] || '');
+          else if (S.mode === 'couple') couple();
+          else if (S.mode === 'plank') plank(dt);
+          else if (S.mode === 'crane') crane(dt);
         },
         sync() {},
       };

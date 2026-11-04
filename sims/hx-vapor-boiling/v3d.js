@@ -3,7 +3,8 @@
      2D의 항온 수조 온도(20 · 40 · 60 °C)와 '액체 더 넣기'를 그대로 따라가요.
    3단계 '압력과 끓는점' — 외부 압력(0.30 ~ 2.00 atm)과 가열 정도에 따라 물이 끓는 모습.
      증기 압력(물의 증기압 곡선)이 외부 압력과 같아지면 끓어요.
-   2·4단계(증기압 곡선 · 상평형 그림)는 그래프를 읽는 단계라서 2D 화면에서 해요.
+   2단계(증기압 곡선): 에터 · 에탄올 · 물의 밀폐 용기 3개를 같은 온도에서 나란히 보여 줘요 (그래프 읽기는 2D).
+   4단계(상평형 그림): 압력 · 온도에 따라 고체 · 액체 · 기체로 바뀌는 용기 (그림 읽기는 2D).
    모든 값은 2D 실험의 자료(LIQ · 물의 증기압 곡선)를 그대로 써요. 분자 수는 모형 스케치예요. */
 (function () {
   'use strict';
@@ -18,7 +19,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHONE ? 16 : 13, theta: 0.5, phi: 1.2, min: 6, max: 26, target: [0, 0.4, 0] },
     autoRotate: 0.12,
-    levels: [0, 2],   // 1단계(증기압), 3단계(압력과 끓는점). 2·4단계는 그래프를 읽어요
+    levels: [0, 2],   // 1단계(증기압), 3단계(압력과 끓는점). 2·4단계는 그래프를 읽고(2D가 기본) 3D에서는 같은 값의 실험 장면을 볼 수 있어요
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3;
@@ -106,10 +107,134 @@
         return FLOOR + liqH;
       }
 
+
+      /* ================= 2단계 · 4단계: 세 액체의 증기압(curve) · 상평형(phase)도 같은 값으로 실험 장면을 보여 줘요 ================= */
+      const gMain = new THREE.Group(); while (root.children.length) gMain.add(root.children[0]); root.add(gMain);
+      const gC = new THREE.Group(), gP = new THREE.Group(); root.add(gC); root.add(gP); gC.visible = gP.visible = false;
+      const probe = controls.text(''); probe.style.display = 'none'; const ctlEl = probe.parentElement;
+      const oldEls = Array.prototype.filter.call(ctlEl.children, (e) => e !== probe);
+      const grab = (fn) => { const n0 = ctlEl.children.length; const r = fn(); return { r, els: Array.prototype.slice.call(ctlEl.children, n0) }; };
+      const stdM = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.4, metalness: 0.05 }, o || {}));
+      /* --- curve: 세 개의 밀폐 용기 (에터 · 에탄올 · 물) --- */
+      const LK3 = ['ether', 'ethanol', 'water'], JX = [-4.4, 0, 4.4], JR = 1.3, JH = 4.0, JY = -2.6, NG = 44, LIQH = 0.9;
+      const jars = LK3.map((k, i) => {
+        const g = new THREE.Group(); g.position.x = JX[i]; gC.add(g);
+        const glass = new THREE.Mesh(new THREE.CylinderGeometry(JR, JR, JH, 40, 1, true), stdM(0xcfe8ff, { transparent: true, opacity: 0.16, roughness: 0.08, side: THREE.DoubleSide, depthWrite: false })); glass.position.y = JY + JH / 2; g.add(glass);
+        const base = new THREE.Mesh(new THREE.CylinderGeometry(JR, JR, 0.18, 40), stdM(0x64748b, { metalness: 0.4 })); base.position.y = JY - 0.09; g.add(base);
+        const lid = new THREE.Mesh(new THREE.CylinderGeometry(JR + 0.05, JR + 0.05, 0.22, 40), stdM(0x94a3b8, { metalness: 0.7, roughness: 0.3 })); lid.position.y = JY + JH + 0.11; g.add(lid);
+        const liqM = new THREE.Mesh(new THREE.CylinderGeometry(JR - 0.03, JR - 0.03, LIQH, 40), stdM(0xffffff, { transparent: true, opacity: 0.5, roughness: 0.15, depthWrite: false })); liqM.position.y = JY + LIQH / 2; g.add(liqM);
+        const gasM = new THREE.InstancedMesh(new THREE.SphereGeometry(0.16, 14, 10), stdM(0xffffff, { emissive: 0x112233, emissiveIntensity: 0.3 }), NG); gasM.frustumCulled = false; gasM.instanceMatrix.setUsage(THREE.DynamicDrawUsage); g.add(gasM);
+        const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 1, 20), stdM(0xffffff, { emissive: 0x222222, emissiveIntensity: 0.35 })); g.add(bar);
+        const lab = label('', [JX[i], JY + JH + 0.6, 0], { color: 'rgba(30,41,59,.92)' }); lab.show(false);
+        const nm = label('', [JX[i], JY - 0.7, 0], { color: 'rgba(30,41,59,.92)' }); nm.show(false);
+        const P = Array.from({ length: NG }, () => ({ on: false, p: new V3(), v: new V3() }));
+        return { k, g, liqM, gasM, bar, lab, nm, P, acc: 0 };
+      });
+      const BAR0 = JY + JH + 0.25, BARK = 2.2 / 760;     // 760 mmHg(1 atm)가 막대 높이 2.6
+      const refLine = new THREE.Mesh(new THREE.BoxGeometry(12.6, 0.04, 0.04), stdM(0xe2464b, { emissive: 0xe2464b, emissiveIntensity: 0.6 })); refLine.position.set(0, BAR0 + 760 * BARK, 0); gC.add(refLine);
+      const lRef = label('1 atm = 760 mmHg', [4.6, BAR0 + 760 * BARK + 0.35, 0], { color: 'rgba(226,70,75,.92)' }); lRef.show(false);
+      const lCT = label('', [0, JY - 1.5, 0], { color: 'rgba(30,41,59,.92)' }); lCT.show(false);
+      const Mx = new THREE.Matrix4(), Cc = new THREE.Color();
+      const fmtP = (v) => (v < 100 ? v.toFixed(1) : String(Math.round(v)));
+      function updCurve(w, dt, t) {
+        const c = w.S.curve, Tc = c.Tc, sp = 2.0 * Math.sqrt((Tc + 273.15) / 300);
+        const near = [];
+        jars.forEach((J) => {
+          const q = w.LIQ[J.k], on = c.show[J.k], inr = Tc >= q.Tmin && Tc <= q.tmax, Pm = inr ? q.P(Tc) : 0;
+          J.g.visible = true; J.liqM.material.color.set(q.c); J.gasM.material.color.set(q.c); J.bar.material.color.set(q.c);
+          J.liqM.material.opacity = on ? 0.5 : 0.12;
+          const target = on && inr ? Math.max(1, Math.min(NG, Math.round(Pm * 0.06))) : 0;
+          let act = 0; J.P.forEach((o) => { if (o.on) act++; });
+          if (act < target) { J.acc += dt * (4 + (target - act) * 5); while (J.acc > 1) { J.acc -= 1; const o = J.P.find((x) => !x.on); if (!o) break; const a = Math.random() * 6.28, r = Math.sqrt(Math.random()) * (JR - 0.3); o.on = true; o.p.set(Math.cos(a) * r, JY + LIQH + 0.1, Math.sin(a) * r); const ang = Math.random() * 6.28, el = Math.random() * 1.2 + 0.2; o.v.set(Math.cos(ang) * Math.cos(el), Math.sin(el), Math.sin(ang) * Math.cos(el)).multiplyScalar(sp * (0.6 + Math.random() * 0.8)); } }
+          const top = JY + JH - 0.2, surf = JY + LIQH;
+          J.P.forEach((o, i) => {
+            if (!o.on) { Mx.makeScale(0.0001, 0.0001, 0.0001); J.gasM.setMatrixAt(i, Mx); return; }
+            o.p.addScaledVector(o.v, dt);
+            const rr = Math.hypot(o.p.x, o.p.z); if (rr > JR - 0.2) { const nx = o.p.x / rr, nz = o.p.z / rr, d = o.v.x * nx + o.v.z * nz; o.v.x -= 2 * d * nx; o.v.z -= 2 * d * nz; o.p.x = nx * (JR - 0.2); o.p.z = nz * (JR - 0.2); }
+            if (o.p.y > top) { o.p.y = top; o.v.y = -Math.abs(o.v.y); }
+            if (o.p.y < surf + 0.12) { if (act > target) o.on = false; else { o.p.y = surf + 0.12; o.v.y = Math.abs(o.v.y); } }
+            Mx.makeTranslation(o.p.x, o.p.y, o.p.z); J.gasM.setMatrixAt(i, Mx);
+          });
+          J.gasM.instanceMatrix.needsUpdate = true;
+          const h = on && inr ? Math.max(0.05, Math.min(4.4, Pm * BARK)) : 0.05; J.bar.visible = on && inr; J.bar.scale.set(1, h, 1); J.bar.position.y = BAR0 + h / 2;
+          const boil = on && inr && Pm >= 760; J.bar.material.emissiveIntensity = boil ? 1.0 : 0.35;
+          J.lab.show(true); J.lab.obj = [J.g.position.x, BAR0 + h + 0.5, 0]; J.lab.set(!on ? '(숨김)' : inr ? fmtP(Pm) + ' mmHg' + (boil ? ' ≥ 1 atm' : '') : '데이터 없음');
+          J.nm.show(true); J.nm.set(q.short);
+          if (on && inr) near.push(q.short + ' ' + fmtP(Pm));
+        });
+        lRef.show(true); lCT.show(true); lCT.set('항온 수조 ' + Tc + ' °C');
+        return '<b>밀폐 용기 3개 · ' + Tc + ' °C</b><br>같은 온도에서도 증기압(막대 높이)이 달라요.<br>분자 간 힘이 약할수록 증기압이 커요: 에터 &gt; 에탄올 &gt; 물<br>증기압이 760 mmHg(빨간 선)와 같아지는 온도가 끓는점이에요. 그래프 읽기는 ▦ 2D에서 해요.';
+      }
+      const ctCtl = grab(() => controls.range('온도', 0, 120, 1, 20, (v) => { const w = sim(); if (w) w.setCT(v); }, (v) => v + ' °C'));
+      /* --- phase: 압력 · 온도에 따라 고체 · 액체 · 기체 --- */
+      const CR = 2.0, CH = 5.0, CY = -2.5, NP = 54;
+      const chamber = new THREE.Mesh(new THREE.CylinderGeometry(CR, CR, CH, 48, 1, true), stdM(0xcfe8ff, { transparent: true, opacity: 0.14, roughness: 0.08, side: THREE.DoubleSide, depthWrite: false })); chamber.position.y = CY + CH / 2; gP.add(chamber);
+      const heater = new THREE.Mesh(new THREE.CylinderGeometry(CR + 0.25, CR + 0.25, 0.2, 40), stdM(0x3a3f4b, { emissive: 0xff5a1f, emissiveIntensity: 0 })); heater.position.y = CY - 0.1; gP.add(heater);
+      const piston = new THREE.Group(); piston.add(new THREE.Mesh(new THREE.CylinderGeometry(CR + 0.05, CR + 0.05, 0.28, 48), stdM(0x94a3b8, { metalness: 0.7, roughness: 0.3 }))); gP.add(piston); piston.position.y = CY + CH + 0.14;
+      const pArr = []; for (let i = 0; i < 4; i++) { const a = new THREE.Group(), mm = stdM(0xffb454, { emissive: 0x663300, emissiveIntensity: 0.4 }); a.add(new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 1, 12), mm), new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.4, 16), mm)); gP.add(a); pArr.push(a); }
+      const pm = new THREE.InstancedMesh(new THREE.SphereGeometry(0.2, 18, 14), stdM(0xffffff, { emissive: 0x112233, emissiveIntensity: 0.25 }), NP); pm.frustumCulled = false; pm.instanceMatrix.setUsage(THREE.DynamicDrawUsage); gP.add(pm);
+      const LAT = [], LIQP = [], GAS = Array.from({ length: NP }, () => ({ p: new V3((Math.random() - 0.5) * 2, CY + 1 + Math.random() * 3, (Math.random() - 0.5) * 2), v: new V3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize() }));
+      for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) for (let k = 0; k < 4; k++) if (LAT.length < NP) LAT.push(new V3((i - 1.5) * 0.7, CY + 0.35 + j * 0.62, (k - 1.5) * 0.7));
+      { let guard = 0; while (LIQP.length < NP && guard++ < 6000) { const a = Math.random() * 6.28, r = Math.sqrt(Math.random()) * (CR - 0.35), v = new V3(Math.cos(a) * r, CY + 0.3 + Math.random() * 1.9, Math.sin(a) * r); if (LIQP.every((q) => q.distanceTo(v) > 0.45)) LIQP.push(v); } while (LIQP.length < NP) LIQP.push(new V3(0, CY + 1, 0)); }
+      const mixW = { solid: 0, liquid: 0, gas: 1 };
+      const lPh = label('', [0, CY + CH + 1.1, 0], { color: 'rgba(30,41,59,.92)' }); lPh.show(false);
+      const lSt = label('', [CR + 0.9, CY + 1.2, 0], { color: 'rgba(30,41,59,.92)' }); lSt.show(false);
+      const SNAME = { water: { solid: '고체 (얼음)', liquid: '액체 (물)', gas: '기체 (수증기)' }, co2: { solid: '고체 (드라이아이스)', liquid: '액체 이산화 탄소', gas: '기체 이산화 탄소' } };
+      const SCOL = { solid: 0xa8c8ff, liquid: 0x38bdf8, gas: 0xffd34d };
+      function updPhase(w, dt, t) {
+        const ph = w.S.phase, sub = w.S.sub.phase, d = w.PH[sub], st = w.stateOf(sub, ph.T, ph.P);
+        ['solid', 'liquid', 'gas'].forEach((k) => { mixW[k] += ((k === st ? 1 : 0) - mixW[k]) * Math.min(1, dt * 3); });
+        const sp = 1.2 + Math.max(0, Math.min(1, (ph.T + 100) / 500)) * 3.0, jit = 0.02 + Math.max(0, Math.min(1, (ph.T + 100) / 500)) * 0.12;
+        const top = CY + CH - 0.25 - 0.3 * Math.min(1, Math.log10(ph.P * 1000) / 6);
+        GAS.forEach((q) => { q.p.addScaledVector(q.v, sp * dt); const rr = Math.hypot(q.p.x, q.p.z); if (rr > CR - 0.25) { const nx = q.p.x / rr, nz = q.p.z / rr, dd = q.v.x * nx + q.v.z * nz; q.v.x -= 2 * dd * nx; q.v.z -= 2 * dd * nz; q.p.x = nx * (CR - 0.25); q.p.z = nz * (CR - 0.25); } if (q.p.y > top) { q.p.y = top; q.v.y = -Math.abs(q.v.y); } if (q.p.y < CY + 0.25) { q.p.y = CY + 0.25; q.v.y = Math.abs(q.v.y); } });
+        const tot = mixW.solid + mixW.liquid + mixW.gas || 1;
+        for (let i = 0; i < NP; i++) {
+          const a = LAT[i], b = LIQP[i], c = GAS[i].p, ws = mixW.solid / tot, wl = mixW.liquid / tot, wg = mixW.gas / tot, ph1 = i * 1.7;
+          const jx = Math.sin(t * (2 + (i % 5) * 0.4) + ph1) * jit * (wg > 0.5 ? 0 : 1), jy = Math.cos(t * (2.4 + (i % 4) * 0.4) + ph1) * jit * (wg > 0.5 ? 0 : 1);
+          Mx.makeTranslation(a.x * ws + b.x * wl + c.x * wg + jx, a.y * ws + b.y * wl + c.y * wg + jy, a.z * ws + b.z * wl + c.z * wg + jx * 0.7); pm.setMatrixAt(i, Mx);
+        }
+        pm.instanceMatrix.needsUpdate = true; pm.material.color.setHex(SCOL[st]);
+        heater.material.emissiveIntensity = Math.max(0, Math.min(1, (ph.T + 60) / 300)) * 0.9;
+        const L = 0.5 + 0.5 * Math.max(0, Math.min(3, Math.log10(ph.P) + 3)) ;
+        pArr.forEach((a, i) => { const ang = (i / 4) * 6.28 + 0.78; a.position.set(Math.cos(ang) * 1.2, CY + CH + 0.35 + L / 2 + 0.4, Math.sin(ang) * 1.2); a.children[0].scale.set(1, L, 1); a.children[1].position.y = -L / 2 - 0.18; a.children[1].rotation.x = Math.PI; });
+        piston.position.y = CY + CH + 0.14;
+        const Pt = ph.P >= 10 ? ph.P.toFixed(0) : ph.P >= 1 ? ph.P.toFixed(1) : ph.P.toFixed(3);
+        lPh.set('압력 ' + Pt + ' atm · 온도 ' + Math.round(ph.T) + ' °C'); lSt.set(SNAME[sub][st]);
+        const extra = ph.T > d.cp.T ? '<br>임계 온도(' + d.cp.T + ' °C)보다 높으면 압력을 높여도 액체가 되지 않아요.' : '';
+        return '<b>' + d.nm + ' · 밀폐 용기</b><br>지금 상태: <b>' + SNAME[sub][st] + '</b><br>압력 ' + Pt + ' atm · 온도 ' + Math.round(ph.T) + ' °C' + extra + '<br>상평형 그림에서 점의 위치가 상태를 정해요. 그림 읽기는 ▦ 2D에서 해요.';
+      }
+      const phSub = grab(() => controls.segment('물질', [{ value: 'water', label: '물' }, { value: 'co2', label: '이산화 탄소' }], 'water', (v) => { const w = sim(); if (w) w.phSub(v); }));
+      const phT = grab(() => controls.range('온도', -100, 400, 1, -50, (v) => { const w = sim(); if (w) w.setPhase(v, w.S.phase.P); }, (v) => v + ' °C'));
+      const phP = grab(() => controls.range('압력', -3, 3, 0.05, 0, (v) => { const w = sim(); if (w) w.setPhase(w.S.phase.T, Math.pow(10, v)); }, (v) => Math.pow(10, v).toFixed(v < 0 ? 3 : 1) + ' atm'));
+      let scNow = '';
+      const show = (g, on) => g.els.forEach((e) => { e.style.display = on ? '' : 'none'; });
+      function applyScene(md) {
+        if (md === scNow) return; scNow = md; txt = '';
+        gMain.visible = md === 'vap' || md === 'press'; gC.visible = md === 'curve'; gP.visible = md === 'phase';
+        oldEls.forEach((e) => { e.style.display = md === 'vap' || md === 'press' ? '' : 'none'; });
+        show(ctCtl, md === 'curve'); show(phSub, md === 'phase'); show(phT, md === 'phase'); show(phP, md === 'phase');
+        if (md !== 'curve') { jars.forEach((J) => { J.lab.show(false); J.nm.show(false); }); lRef.show(false); lCT.show(false); }
+        if (md !== 'phase') { lPh.show(false); lSt.show(false); }
+        if (md === 'phase') { lPh.show(true); lSt.show(true); }
+        const o = ctx.orbit;
+        if (md === 'curve') { o.dist = PHONE ? 22 : 19; o.tx = 0; o.ty = PHONE ? 1.6 : 0.2; o.theta = 0.15; o.phi = 1.4; }
+        else if (md === 'phase') { o.dist = PHONE ? 20 : 15; o.tx = 0; o.ty = 0.6; o.theta = 0.4; o.phi = 1.3; }
+        else { o.dist = PHONE ? 16 : 13; o.tx = 0; o.ty = 0.4; }
+        if (md === 'vap' || md === 'press') { tl.show(true); pl.show(true); } else { tl.show(false); pl.show(false); }
+      }
+
       return {
         update(dt, t) {
           dt = Math.min(dt, 0.05);
           let o = read(); const sg = readSig(o);
+          applyScene(o.mode);
+          if (o.mode === 'curve' || o.mode === 'phase') {
+            const w = sim(); let html;
+            if (o.mode === 'curve') { html = updCurve(w, dt, t); ctCtl.r.set(w.S.curve.Tc); }
+            else { html = updPhase(w, dt, t); phSub.r.set(w.S.sub.phase); phT.r.set(Math.round(w.S.phase.T)); phP.r.set(Math.log10(w.S.phase.P)); }
+            if (html !== txt) { txt = html; info(html); }
+            return;
+          }
           if (sg !== sig) { sig = sg; if (demo != null) { pl0.pause(); demo = null; } }   // 2D에서 값을 바꾸면 2D 값으로 돌아와요
           if (demo != null) o = applyDemo(o);
           const press = o.mode === 'press', other = o.mode !== 'vap' && !press;

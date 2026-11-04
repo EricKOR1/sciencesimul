@@ -41,7 +41,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: 6, theta: 0.6, phi: 1.2, min: 3, max: 16 },
     autoRotate: 0.3,
-    levels: [],                      // 1~4단계 미션은 모두 2D 화면에서 해요 (3D는 [🧊 3D]로 열어요)
+    levels: [2],                     // 3단계(원소 · 원자 · 분자 구별하기)는 3D로 시작 · 나머지 미션은 2D에서 해요 ([🧊 3D]로 열어요)
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       let key = 'H2O', style = 'ball', split = 0;
@@ -118,7 +118,7 @@
           else info('<b>' + M.name + ' 분자 (' + M.f + ')</b> · 분자로 존재<br>' + parts + '가 결합한 입자(분자) 1개예요. 물질의 성질을 가진 가장 작은 입자예요.');
         }
       }
-      let pl = null, ctlEl = null;
+      let pl = null, ctlEl = null, pmode = false, pP = 0;
       function playerRow(on) { if (!ctlEl) ctlEl = ctx.renderer.domElement.closest('.v3-wrap').querySelector('.v3-ctl'); const r = ctlEl && ctlEl.querySelector('.v3-player'); if (r) r.style.display = on ? '' : 'none'; const ri = ctlEl && [...ctlEl.querySelectorAll('input[type=range]')].find((x) => !x.closest('.v3-player')); if (ri) { ri.style.display = on ? '' : 'none'; if (ri.previousElementSibling) ri.previousElementSibling.style.display = on ? '' : 'none'; } }
       function setKey(k) { key = k; split = 0; sl.set(0); fitCamera(); build(); playerRow(MOLS[k].kind === 'mol'); }
       const seg = controls.segment('물질', KEYS.map((k) => ({ value: k, label: MOLS[k].name })), key, (v) => setKey(v));
@@ -129,13 +129,67 @@
         duration: 8, loop: true, autoplay: false, label: '분자 나누기',
         phases: [[0, '분자 1개'], [0.2, '나누는 중'], [0.5, '원자로 흩어졌어요'], [0.72, '다시 모여요']],
         onFrame(p) {
-          if (!pl) return;
+          if (!pl) return; pmode = true; pP = p;
+          const sc0 = window.__sim && window.__sim.S && window.__sim.S.scene; if (sc0 === 'count') return;
           const v = p < 0.2 ? 0 : p < 0.5 ? ease((p - 0.2) / 0.3) : p < 0.72 ? 1 : 1 - ease((p - 0.72) / 0.28);
           split = v; sl.set(v); refresh();
         },
       });
       fitCamera(); build(); playerRow(MOLS[key].kind === 'mol');
 
+
+      /* ===== 장면 count (원소 · 원자 · 분자 구별하기): 2D 렌즈 상자 속 분자들을 3D로 — 분자 렌즈 · 원자 렌즈 · 원소 렌즈 ===== */
+      const gN = new THREE.Group(); gN.visible = false; root.add(gN);
+      const cnLab = label('', [0, 2.6, 0], { size: 13, color: 'rgba(30,64,175,.92)' });
+      const cnLabs = [];
+      let cnSig = '', cnLens = 'mol';
+      const cnObj = { halos: [], atoms: [], bonds: [], free: [] };
+      const ELCOL = { H: 0xf5f7fb, O: 0xef4b4b, C: 0x3a3f4b };
+      const lensTxt = { mol: '분자 렌즈', atom: '원자 렌즈', elem: '원소 렌즈' };
+      function clearCount() { while (gN.children.length) gN.remove(gN.children[0]); cnObj.halos.length = cnObj.atoms.length = cnObj.bonds.length = cnObj.free.length = 0; cnLabs.forEach((l) => l.show(false)); }
+      function buildCount(mols, freeAtoms) {
+        clearCount();
+        const n = mols.length, per = n > 4 ? 3 : n, gapX = 3.6;
+        let li = 0;
+        mols.forEach((mk, mi) => {
+          const M = MOLS[mk], col = mi % per, row = Math.floor(mi / per);
+          const cx = (col - (Math.min(per, n) - 1) / 2) * gapX, cy = -row * 3.2 + (n > 4 ? 1.1 : 0);
+          const grp = new THREE.Group(); grp.position.set(cx, cy, 0); gN.add(grp);
+          const halo = new THREE.Mesh(new THREE.SphereGeometry(1.7, 32, 20), new THREE.MeshStandardMaterial({ color: 0x8fb6ff, transparent: true, opacity: 0.18, roughness: 0.2, depthWrite: false })); grp.add(halo); cnObj.halos.push(halo);
+          const objs = M.atoms.map((a, ai) => { const m = sphere(RB[a[0]], COL[a[0]]); m.position.set(a[1], a[2], a[3]); grp.add(m); const L = cnLabs[li] || (cnLabs[li] = label('', m)); li++; L.obj = m; L.off = [0, RB[a[0]] + 0.3, 0]; cnObj.atoms.push({ m, sym: a[0], L, mi }); return m; });
+          M.bonds.forEach(([i, j, o]) => { const ms = []; for (let k = 0; k < o; k++) { const b = new THREE.Mesh(new THREE.CylinderGeometry(o > 1 ? 0.05 : 0.08, o > 1 ? 0.05 : 0.08, 1, 12), stickMat); grp.add(b); ms.push(b); }
+            const A = objs[i].position, B = objs[j].position, dir = B.clone().sub(A).normalize(), side = new THREE.Vector3(0, 0, 1); if (Math.abs(dir.dot(side)) > 0.9) side.set(0, 1, 0); side.cross(dir).normalize();
+            ms.forEach((b, k) => place(b, A.clone().add(side.clone().multiplyScalar((k - (o - 1) / 2) * 0.17)), B.clone().add(side.clone().multiplyScalar((k - (o - 1) / 2) * 0.17))));
+            cnObj.bonds.push(ms); });
+        });
+        // 조립대에 올려 둔 떨어진 원자
+        freeAtoms.forEach((sym, i) => { const m = sphere(RB[sym], COL[sym]); m.position.set((i - (freeAtoms.length - 1) / 2) * 1.2, -3.0, 0.5); gN.add(m); cnObj.free.push(m); });
+      }
+      function updCount(l, t) {
+        const CT = l && l.CT; if (!CT) return;
+        const mols = CT.mols.map((m) => m.key), freeA = CT.atoms.filter((a) => a.state === 'in').map((a) => a.sym);
+        const sig = mols.join() + '|' + freeA.join();
+        if (sig !== cnSig) { cnSig = sig; buildCount(mols, freeA); const asp = ctx.renderer.domElement.clientWidth / Math.max(1, ctx.renderer.domElement.clientHeight); ctx.orbit.dist = (mols.length > 4 ? 12 : mols.length > 1 ? 10 : 7) * (asp < 1 ? Math.min(2, Math.pow(1 / asp, 0.7)) : 1); }
+        const lens = pmode ? (pP < 0.34 ? 'mol' : pP < 0.67 ? 'atom' : 'elem') : (CT.lens || 'mol');
+        const cnt = {}; let na = 0; cnObj.atoms.forEach((o) => { cnt[o.sym] = (cnt[o.sym] || 0) + 1; na++; });
+        // 렌즈별 보여 주기: 분자(분자마다 둥근 테두리) · 원자(원자마다 번호) · 원소(원소별 같은 색 + 이름)
+        cnObj.halos.forEach((h) => { h.visible = lens === 'mol'; });
+        let k = 0;
+        cnObj.atoms.forEach((o) => {
+          k++;
+          if (lens === 'atom') { o.m.material.color.setHex(0xe7ebf3); o.L.set(String(k)); o.L.show(true); }
+          else if (lens === 'elem') { o.m.material.color.setHex(COL[o.sym]); o.L.set(NAME[o.sym]); o.L.show(true); }
+          else { o.m.material.color.setHex(COL[o.sym]); o.L.show(false); }
+        });
+        cnObj.bonds.forEach((ms) => ms.forEach((b) => { b.visible = lens !== 'atom'; }));
+        const nm = mols.length;
+        cnLab.obj = [0, nm > 4 ? 3.9 : 2.7, 0];
+        cnLab.set(nm ? (lens === 'mol' ? '분자 <b>' + nm + '개</b>' : lens === 'atom' ? '원자 <b>' + na + '개</b>' : '원소 <b>' + Object.keys(cnt).length + '가지</b> (' + Object.keys(cnt).map((s) => NAME[s] + ' ' + cnt[s] + '개').join(' · ') + ')') : '조립대가 비어 있어요'); cnLab.show(true);
+        const f = freeA.length ? '<br>조립대의 원자: ' + freeA.length + '개 (옆의 2D 화면에서 탄소 · 산소 원자를 끌어다 놓으면 분자가 만들어져요)' : '';
+        const ph = document.querySelector('.v3-player .v3-ph'); if (ph) ph.textContent = pmode ? lensTxt[lens] : '';
+        setCountInfo((pmode ? '<b>▶ ' + lensTxt[lens] + '</b><br>' : '') + (lens === 'mol' ? '<b>분자 렌즈</b>: 원자들이 결합한 한 덩어리를 세어요. 분자는 <b>' + nm + '개</b>예요.' : lens === 'atom' ? '<b>원자 렌즈</b>: 분자를 이루는 원자 하나하나를 세어요. 원자는 모두 <b>' + na + '개</b>예요.' : '<b>원소 렌즈</b>: 원자의 <b>종류</b>를 세어요. 원소는 <b>' + Object.keys(cnt).length + '가지</b>예요.') + ' (분자 속 원자의 수는 분자마다 달라요.)' + f);
+      }
+      let cnTxt = ''; const setCountInfo = (h) => { if (h !== cnTxt) { cnTxt = h; info(h); } };
       /* 2D 실험을 따라가요: 1단계에서 물 분자를 나눈 상태, 입자 현미경에서 관찰 중인 물질 */
       let lastSig = '', k0 = 0;
       function from2D() {
@@ -148,7 +202,13 @@
         if (k !== key) { seg.set(k); setKey(k); }
         if (sp != null && MOLS[key].kind === 'mol') { if (pl) pl.pause(); split = sp; sl.set(sp); refresh(); }
       }
-      return { sync: from2D, update() { if ((k0++ % 10) === 0) from2D(); } };
+      let prevSc = '';
+      return { sync: from2D, update() {
+        const l = ctx.lesson && ctx.lesson(), sc = l && l.S ? l.S.scene : '';
+        if (sc !== prevSc) { if (pmode) { pmode = false; if (pl) pl.pause(); } prevSc = sc; const isC = sc === 'count'; gN.visible = isC; g.visible = !isC; if (isC) { labs.forEach((x) => x.show(false)); cnSig = ''; playerRow(true); const ri = ctlEl && [...ctlEl.querySelectorAll('input[type=range]')].find((x) => !x.closest('.v3-player')); if (ri) { ri.style.display = 'none'; if (ri.previousElementSibling) ri.previousElementSibling.style.display = 'none'; } } else { cnLab.show(false); cnLabs.forEach((x) => x.show(false)); playerRow(MOLS[key].kind === 'mol'); fitCamera(); build(); lastSig = ''; text(); } }
+        if (sc === 'count') { updCount(l, 0); return; }
+        if ((k0++ % 10) === 0) from2D();
+      } };
     },
   });
 })();

@@ -1,6 +1,6 @@
 /* hm-wave-propagation · 3D 탄성파의 진행
    2D 실험(window.__sim)의 질량–용수철 사슬을 그대로 입체로 보여 줘요: 🧩 연결 모형(펄스 · 표시점) · ↕↔ 종파·횡파 · 〰 v = fλ · 🧵 줄의 속력.
-   알갱이(질량)는 제자리에서 진동하고 <b>파동(펄스)만 진행</b>해요. 값(k · m · 진동수 · 장력)은 옆 조작판이 정하고 3D는 따라가요. 파동 방정식은 쓰지 않아요. (🔊 소리의 속력 장면은 2D 화면에서 해요) */
+   알갱이(질량)는 제자리에서 진동하고 <b>파동(펄스)만 진행</b>해요. 값(k · m · 진동수 · 장력)은 옆 조작판이 정하고 3D는 따라가요. 파동 방정식은 쓰지 않아요. 🔊 소리의 속력(공기 · 물 · 강철 경주)도 입체로 보여 줘요. */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -62,12 +62,47 @@
       pl = controls.player({ duration: 8, loop: true, autoplay: false, label: '펄스 보내기', phases: [[0, '펄스가 출발해요'], [0.3, '알갱이는 제자리 · 파동만 진행'], [0.85, '끝에서 흡수']], onFrame(p) { demo.p = p; demo.on = p > 0 || !!(pl && pl.playing); } });
       pl.row = ctx.renderer.domElement.parentNode.parentNode.querySelector('.v3-player');
       const U = 1.6, FS = [1.0, 1.5, 2.0, 2.5, 3.0];
-      const NOTE = '🔊 소리의 속력(온도에 따른 소리 경주)은 2D 화면에서 해요. 위의 [▦ 2D]를 눌러 보세요.';
+      /* ================= 🔊 소리의 속력: 공기 · 물 · 강철에서 100 m 경주 (S.snd) ================= */
+      const gSn = new THREE.Group(); gSn.visible = false; root.add(gSn);
+      const LANES = [['공기', 0, 0x0ea5e9, 40], ['물', 1500, 0x2563eb, 60], ['강철', 5900, 0x64748b, 80]], SX = 10;
+      const laneObj = LANES.map((ln, i) => {
+        const z = (i - 1) * 2.5, box = new THREE.Mesh(new THREE.BoxGeometry(SX + 0.6, 0.9, 1.3), new THREE.MeshStandardMaterial({ color: ln[2], transparent: true, opacity: 0.16, roughness: 0.3, depthWrite: false })); box.position.set(0, 0, z); gSn.add(box);
+        const edge = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(SX + 0.6, 0.9, 1.3)), new THREE.LineBasicMaterial({ color: ln[2], transparent: true, opacity: 0.6 })); edge.position.copy(box.position); gSn.add(edge);
+        const st = new THREE.Mesh(new THREE.BoxGeometry(0.08, 1.5, 1.5), new THREE.MeshBasicMaterial({ color: 0x16a34a })); st.position.set(-SX / 2, 0, z); gSn.add(st);
+        const en = new THREE.Mesh(new THREE.BoxGeometry(0.08, 1.5, 1.5), new THREE.MeshBasicMaterial({ color: 0xdc2626 })); en.position.set(SX / 2, 0, z); gSn.add(en);
+        const nn = ln[3] * 3, beads = new THREE.InstancedMesh(new THREE.SphereGeometry(0.07, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffffff }), nn); beads.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(nn * 3), 3); beads.frustumCulled = false; gSn.add(beads);
+        const head = new THREE.Mesh(new THREE.SphereGeometry(0.28, 18, 12), M(ln[2], { emissive: ln[2], emissiveIntensity: 0.3 })); gSn.add(head);
+        const lb = label(ln[0], [-SX / 2 - 1.1, 0, z], { color: '#26324a', size: 13 }), lv = label('', head, { color: '#' + ln[2].toString(16).padStart(6, '0'), size: 12 });
+        return { z, beads, head, lb, lv, nn, n: ln[3] };
+      });
+      const lStart = label('출발', [-SX / 2, 1.2, -2.5], { color: '#16a34a', size: 12 }), lEnd = label('100 m', [SX / 2, 1.2, -2.5], { color: '#dc2626', size: 12 }), lSlow = label('영상은 실제 시간의 1/20로 느리게 보여 줘요', [0, -1.4, 3.8], { color: '#475569', size: 12 });
+      const raceBtn = controls.button('▶ 소리 경주', () => { const b = document.getElementById('bRace'); if (b) b.click(); });
+      const cW = new THREE.Color(0xf8fafc), cR = new THREE.Color(0xff5a5f), cB = new THREE.Color(0x60a5fa), tcS = new THREE.Color();
+      let sndOn = false;
+      function sndScene(A, S) {
+        const sn = S.snd, r = sn.race, vAir = 331 + 0.6 * sn.temp;
+        LANES.forEach((ln, i) => {
+          const o = laneObj[i], v = ln[1] || vAir, p = r ? clamp(r.t / 20 * v / 100, 0, 1) : 0, xc = -SX / 2 + p * SX, tt = 100 / v;
+          o.head.position.set(xc, 0, o.z);
+          for (let k = 0; k < o.nn; k++) {
+            const gx = k % o.n, gy = Math.floor(k / o.n), x0 = -SX / 2 + SX * (gx + 0.5) / o.n, yy = ((gy % 3) - 1) * 0.22, zz = o.z + (Math.floor(gy / 1) % 3 - 1) * 0.2;
+            const u = (x0 - xc) / 0.7, g = r && p > 0 && p < 1 ? Math.exp(-u * u) : 0, d = 0.3 * g;
+            m4.makeTranslation(x0 + d, yy, zz); o.beads.setMatrixAt(k, m4);
+            tcS.copy(cW); if (g > 0.05) tcS.lerp(cR, g); o.beads.setColorAt(k, tcS);
+          }
+          o.beads.instanceMatrix.needsUpdate = true; o.beads.instanceColor.needsUpdate = true;
+          o.lv.set('v = ' + Math.round(v) + ' m/s' + (r && p >= 1 ? ' · 도착! ' + tt.toFixed(tt < 0.1 ? 3 : 2) + ' s' : '')); o.lv.off = [0, 0.7, 0];
+        });
+        info('<b>🔊 소리의 속력: 매질마다 달라요</b> · 지금 기온 ' + sn.temp + ' °C → 공기 중 v ≈ 331 + 0.6 × ' + sn.temp + ' = <b>' + vAir.toFixed(1) + ' m/s</b><br>물 약 1500 m/s · 강철 약 5900 m/s · 100 m를 가는 데 공기 ' + (100 / vAir).toFixed(2) + ' s, 물 ' + (100 / 1500).toFixed(3) + ' s, 강철 ' + (100 / 5900).toFixed(3) + ' s<br>소리는 종파라서 알갱이가 진행 방향으로 모였다 퍼지며 전해져요. 물과 강철은 탄성이 커서 빨라요.');
+      }
       return {
         update() {
           const A = sim(); if (!A || !A.S) return; const S = A.S, sc = A.sc;
           if (!pl.playing && pl.p === 0) demo.on = false;
-          if (S.mode === 'snd' || !sc || !sc.ch) { ps.visible = src.visible = base.visible = false; gl.forEach((g) => (g.visible = false)); gLab.forEach((l) => l.show(false)); lSrc.show(false); lDir.show(false); pl.row.style.display = 'none'; info(NOTE); return; }
+          if (S.mode === 'snd') { if (!sndOn) { sndOn = true; Object.assign(orbit, { tx: 0, ty: 0, tz: 0, phi: 1.0, theta: 0.15, dist: 15 * KDX }); } ps.visible = src.visible = base.visible = false; gl.forEach((g) => (g.visible = false)); gLab.forEach((l) => l.show(false)); lSrc.show(false); lDir.show(false); pl.row.style.display = 'none'; gSn.visible = true; laneObj.forEach((o) => { o.lb.show(true); o.lv.show(true); }); [lStart, lEnd, lSlow].forEach((l) => l.show(true)); raceBtn.style.display = ''; sndScene(A, S); return; }
+          if (sndOn) { sndOn = false; Object.assign(orbit, { tx: 0, ty: 0, tz: 0, phi: 1.2, theta: 0.25, dist: 12 * KDX }); }
+          gSn.visible = false; laneObj.forEach((o) => { o.lb.show(false); o.lv.show(false); }); [lStart, lEnd, lSlow].forEach((l) => l.show(false)); raceBtn.style.display = 'none';
+          if (!sc || !sc.ch) { ps.visible = src.visible = base.visible = false; gl.forEach((g) => (g.visible = false)); gLab.forEach((l) => l.show(false)); lSrc.show(false); lDir.show(false); pl.row.style.display = 'none'; return; }
           pl.row.style.display = ''; ps.visible = src.visible = base.visible = true; lSrc.show(true); lDir.show(true);
           const ch = sc.ch, n = Math.min(NMAX, ch.n), a = ch.a, long = sc.kind === 'L', len = (n - 1) * a, sx = len * U / 2;
           const sc2 = S.mode === 'sp' ? 1 : 1;

@@ -11,13 +11,14 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHN ? 13.5 : 12, theta: 0.3, phi: 1.0, min: 6, max: 24, target: [0, 0, 0] },
     autoRotate: 0,
-    levels: [0, 1],                  // 2단계(전류계 읽기)·3단계(물의 흐름 모형)는 2D 화면에서 해요
+    levels: [0, 1, 2, 3],            // 전류계 ⓐⓑⓒ(3단계)와 물의 흐름 모형(4단계)도 3D로 볼 수 있어요
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3;
+      const gCir = new THREE.Group(); root.add(gCir);
       const sm = () => window.__sim;
       const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.5, metalness: 0.1 }, o || {}));
-      const board = new THREE.Mesh(new THREE.BoxGeometry(11.6, 0.3, 7.4), mat(0x26324f, { roughness: 0.85, metalness: 0 })); board.position.y = -0.2; board.receiveShadow = true; root.add(board);
+      const board = new THREE.Mesh(new THREE.BoxGeometry(11.6, 0.3, 7.4), mat(0x26324f, { roughness: 0.85, metalness: 0 })); board.position.y = -0.2; board.receiveShadow = true; gCir.add(board);
 
       /* ----- 도선 경로 (전류 방향: 전지 (+) → 전구 → 스위치 → 전지 (−)) ----- */
       const HX = 4.6, HZ = 2.5, Y = 0.55, RC = 0.7;
@@ -35,10 +36,10 @@
       line(-HX, HZ - RC, -HX, -HZ + RC);
       arc(-HX + RC, -HZ + RC, Math.PI);
       const curve = new THREE.CatmullRomCurve3(pts, true, 'centripetal');
-      const wire = new THREE.Mesh(new THREE.TubeGeometry(curve, 400, 0.07, 10, true), mat(0xe39a45, { metalness: 0.5, roughness: 0.35 })); wire.castShadow = true; root.add(wire);
+      const wire = new THREE.Mesh(new THREE.TubeGeometry(curve, 400, 0.07, 10, true), mat(0xe39a45, { metalness: 0.5, roughness: 0.35 })); wire.castShadow = true; gCir.add(wire);
 
       /* ----- 전지 (뒤쪽 줄 왼쪽) ----- */
-      const batt = new THREE.Group(); batt.position.set(-2.6, 0.55, -HZ); root.add(batt);
+      const batt = new THREE.Group(); batt.position.set(-2.6, 0.55, -HZ); gCir.add(batt);
       const cell = new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.62, 2.6, 36), mat(0x2f6df6, { roughness: 0.35, metalness: 0.3 })); cell.rotation.z = Math.PI / 2; cell.castShadow = true; batt.add(cell);
       const band = new THREE.Mesh(new THREE.CylinderGeometry(0.64, 0.64, 0.5, 36), mat(0xffd34d, { roughness: 0.3, metalness: 0.4 })); band.rotation.z = Math.PI / 2; band.position.x = -0.9; batt.add(band);
       const capP = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.3, 20), mat(0xdfe6f2, { metalness: 0.9, roughness: 0.2 })); capP.rotation.z = Math.PI / 2; capP.position.x = 1.4; batt.add(capP);
@@ -47,7 +48,7 @@
       // 전지의 (+)는 오른쪽, (−)는 왼쪽: 전류는 (+)에서 시작 → 뒤쪽 줄을 따라 전구로
 
       /* ----- 전구 (오른쪽, 뒤쪽 줄) ----- */
-      const bulb = new THREE.Group(); bulb.position.set(2.2, 0.55, -HZ); root.add(bulb);
+      const bulb = new THREE.Group(); bulb.position.set(2.2, 0.55, -HZ); gCir.add(bulb);
       const base = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.45, 0.5, 24), mat(0xb7bcc7, { metalness: 0.9, roughness: 0.3 })); base.position.y = 0.2; bulb.add(base);
       const glass = new THREE.Mesh(new THREE.SphereGeometry(0.85, 36, 24), new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.28, roughness: 0.05, metalness: 0, depthWrite: false, emissive: 0xffd34d, emissiveIntensity: 0 })); glass.position.y = 1.2; glass.renderOrder = 3; bulb.add(glass);
       const fil = new THREE.Mesh(new THREE.TorusGeometry(0.22, 0.03, 8, 20, Math.PI * 1.7), new THREE.MeshStandardMaterial({ color: 0xffb347, emissive: 0xff8a00, emissiveIntensity: 0.2 })); fil.position.y = 1.15; bulb.add(fil);
@@ -55,7 +56,7 @@
       const halo = new THREE.Mesh(new THREE.SphereGeometry(1.6, 24, 16), new THREE.MeshBasicMaterial({ color: 0xffe08a, transparent: true, opacity: 0, depthWrite: false })); halo.position.y = 1.2; bulb.add(halo);
 
       /* ----- 스위치 (앞쪽 줄 가운데) ----- */
-      const sw = new THREE.Group(); sw.position.set(0, Y, HZ); root.add(sw);
+      const sw = new THREE.Group(); sw.position.set(0, Y, HZ); gCir.add(sw);
       const swBase = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.3, 0.9), mat(0x56627e, { roughness: 0.6 })); swBase.position.y = -0.2; sw.add(swBase);
       const hinge = new THREE.Group(); hinge.position.set(-0.8, 0.05, 0); sw.add(hinge);
       const lever = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.1, 0.22), mat(0xc9ced8, { metalness: 0.9, roughness: 0.25 })); lever.position.x = 0.85; hinge.add(lever);
@@ -65,12 +66,78 @@
 
       /* ----- 전자 · 전류 화살표 ----- */
       const NE = 64;
-      const eInst = new THREE.InstancedMesh(new THREE.SphereGeometry(0.1, 12, 8), new THREE.MeshStandardMaterial({ color: 0x3f78ff, emissive: 0x2a4fd0, emissiveIntensity: 0.9, roughness: 0.3 }), NE); eInst.frustumCulled = false; root.add(eInst);
+      const eInst = new THREE.InstancedMesh(new THREE.SphereGeometry(0.1, 12, 8), new THREE.MeshStandardMaterial({ color: 0x3f78ff, emissive: 0x2a4fd0, emissiveIntensity: 0.9, roughness: 0.3 }), NE); eInst.frustumCulled = false; gCir.add(eInst);
       const NI = 12;
-      const iInst = new THREE.InstancedMesh(new THREE.ConeGeometry(0.17, 0.46, 14), new THREE.MeshBasicMaterial({ color: 0xff7a6a }), NI); iInst.frustumCulled = false; root.add(iInst);
+      const iInst = new THREE.InstancedMesh(new THREE.ConeGeometry(0.17, 0.46, 14), new THREE.MeshBasicMaterial({ color: 0xff7a6a }), NI); iInst.frustumCulled = false; gCir.add(iInst);
       const LB = [label('전지', batt, { offset: [0, 1.2, 0] }), label('전구', bulb, { offset: [0, 2.6, 0] }), label('스위치', sw, { offset: [0, 0.8, 0.2] })];
       const lE = label('전자의 이동 방향', [-HX, 0.8, 0], { color: 'rgba(40,80,200,.95)' }), lI = label('전류의 방향', [HX, 0.8, 0], { color: 'rgba(200,70,60,.95)' });
 
+
+      /* ===== 3단계: 전류계 ⓐ ⓑ ⓒ (전류는 어디서나 같아요) · 물의 흐름 모형 (펌프 ↔ 전지, 높이 차 ↔ 전압, 물레방아 ↔ 전구, 밸브 ↔ 스위치) ===== */
+      const canvasTex = (w, h, draw) => { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); if (THREE.sRGBEncoding) t.encoding = THREE.sRGBEncoding; return t; };
+      function makeDial(R, max, unit, tickStep, labStep) {
+        const g = new THREE.Group();
+        const body = new THREE.Mesh(new THREE.CylinderGeometry(R, R, 0.2, 40), mat(0x8b95a7, { metalness: 0.6, roughness: 0.3 })); body.rotation.x = Math.PI / 2; g.add(body);
+        const tex = canvasTex(256, 256, (c) => {
+          c.fillStyle = '#f7f9fc'; c.beginPath(); c.arc(128, 128, 126, 0, 7); c.fill();
+          c.strokeStyle = '#334155'; c.fillStyle = '#1f2937'; c.textAlign = 'center'; c.textBaseline = 'middle';
+          for (let v = 0; v <= max + 1e-6; v += tickStep) {
+            const a = (-225 + 270 * v / max) * Math.PI / 180, ca = Math.cos(a), sa = Math.sin(a), big = Math.abs(v / labStep - Math.round(v / labStep)) < 1e-6;
+            c.lineWidth = big ? 6 : 3; c.beginPath(); c.moveTo(128 + ca * 110, 128 - sa * 110); c.lineTo(128 + ca * (big ? 86 : 96), 128 - sa * (big ? 86 : 96)); c.stroke();
+            if (big) { c.font = '800 28px sans-serif'; c.fillText(String(Math.round(v * 10) / 10), 128 + ca * 62, 128 - sa * 62); }
+          }
+          c.font = '800 34px sans-serif'; c.fillStyle = '#7c3aed'; c.fillText(unit, 128, 190);
+        });
+        const face = new THREE.Mesh(new THREE.CircleGeometry(R * 0.94, 40), new THREE.MeshBasicMaterial({ map: tex })); face.position.z = 0.11; g.add(face);
+        const needle = new THREE.Group(); needle.position.z = 0.15;
+        const nb = new THREE.Mesh(new THREE.BoxGeometry(R * 0.75, 0.05, 0.03), mat(0xe11d48, { roughness: 0.4 })); nb.position.x = R * 0.3; needle.add(nb); g.add(needle);
+        g.userData.set = (v) => { needle.rotation.z = (-225 + 270 * Math.max(0, Math.min(max, v)) / max) * Math.PI / 180; };
+        g.userData.set(0); return g;
+      }
+      const AMP = [{ k: 'a', tag: 'ⓐ', cap: '전구 앞', pos: [0.4, -HZ] }, { k: 'b', tag: 'ⓑ', cap: '전구 뒤', pos: [HX, 0] }, { k: 'c', tag: 'ⓒ', cap: '(−)극 앞', pos: [-HX, 0] }].map((o) => {
+        const g = new THREE.Group(); g.position.set(o.pos[0], Y, o.pos[1]); gCir.add(g);
+        const bx = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.5, 1.1), mat(0x5b3fb0, { roughness: 0.5, metalness: 0.2 })); bx.castShadow = true; g.add(bx);
+        const dial = makeDial(0.46, 0.6, 'A', 0.05, 0.1); dial.rotation.x = -Math.PI / 2; dial.position.y = 0.3; g.add(dial);
+        o.g = g; o.dial = dial; o.v = 0; o.lab = label('', g, { size: 12, color: 'rgba(100,60,200,.92)', offset: [0, 0.95, 0] }); o.lab.show(false);
+        return o;
+      });
+      const ampBtns = AMP.map((o) => { const b = controls.button(o.tag + ' 읽기', () => { const s = sm(); if (s && s.S.closed) s.S.read[o.k] = true; }); b.style.display = 'none'; return b; });
+      // 물의 흐름 모형
+      const gW = new THREE.Group(); gW.visible = false; root.add(gW);
+      const WL = -2.3, WR = 2.3, WB = 0, WCUT = 0.8;
+      const wH = (V) => 1.4 + (V - 0.5) / 5.5 * 2.6;
+      let pipeV = -1, pipeCurve = null, pipeMesh = null;
+      const pipeMat = new THREE.MeshStandardMaterial({ color: 0x5cc0f3, transparent: true, opacity: 0.55, roughness: 0.15, metalness: 0.1 });
+      function loopPts(top) { const r = 0.5, P = []; const rect = [[WL, WB], [WL, top], [WR, top], [WR, WB]]; // 펌프(왼쪽) → 위 → 오른쪽 → 아래 → 왼쪽
+        const seg = (a, b, n) => { for (let i = 0; i < n; i++) P.push(new V3(a[0] + (b[0] - a[0]) * i / n, a[1] + (b[1] - a[1]) * i / n, 0)); };
+        seg([WL, WB + r], [WL, top - r], 10); P.push(new V3(WL + r * 0.3, top - r * 0.3, 0)); seg([WL + r, top], [WR - r, top], 10); P.push(new V3(WR - r * 0.3, top - r * 0.3, 0)); seg([WR, top - r], [WR, WB + r], 10); P.push(new V3(WR - r * 0.3, WB + r * 0.3, 0)); seg([WR - r, WB], [WL + r, WB], 10); P.push(new V3(WL + r * 0.3, WB + r * 0.3, 0)); return P; }
+      function rebuildPipe(V) {
+        const top = wH(V); if (pipeMesh) { gW.remove(pipeMesh); pipeMesh.geometry.dispose(); }
+        pipeCurve = new THREE.CatmullRomCurve3(loopPts(top), true, 'centripetal', 0.5);
+        pipeMesh = new THREE.Mesh(new THREE.TubeGeometry(pipeCurve, 120, 0.17, 10, true), pipeMat); gW.add(pipeMesh);
+        wheelG.position.set(WR, top * 0.5, 0); hAr.position.set(WL - 0.9, 0, 0); setArrow2(hAr, top); hLab.obj = [(WL - 0.9) * 0.0, 0, 0];
+      }
+      const wheelG = new THREE.Group(); gW.add(wheelG);
+      { const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.5, 12), mat(0x7c5a2b)); hub.rotation.x = Math.PI / 2; wheelG.add(hub);
+        for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2, pd = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.16, 0.42), mat(0xc0813a, { roughness: 0.7 })); pd.position.set(Math.cos(a) * 0.45, Math.sin(a) * 0.45, 0); pd.rotation.z = a; wheelG.add(pd); } }
+      const pump = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 0.7, 24), mat(0x2f6df6, { metalness: 0.4, roughness: 0.35 })); pump.position.set(WL, 0.7, 0); gW.add(pump);
+      const valve = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.5, 0.5), mat(0xdc2626, { roughness: 0.5 })); valve.position.set(-0.4, WB, 0); gW.add(valve);
+      const hAr = mkArrow2(0xc2410c, 0.05); gW.add(hAr);
+      function mkArrow2(col, rad) { const g = new THREE.Group(), m = mat(col, { roughness: 0.4 }); const sh = new THREE.Mesh(new THREE.CylinderGeometry(rad, rad, 1, 10), m), h1 = new THREE.Mesh(new THREE.ConeGeometry(rad * 2.4, rad * 6, 12), m), h2 = new THREE.Mesh(new THREE.ConeGeometry(rad * 2.4, rad * 6, 12), m); h2.rotation.x = Math.PI; g.add(sh, h1, h2); g.userData = { sh, h1, h2, rad }; return g; }
+      function setArrow2(g, len) { const { sh, h1, h2, rad } = g.userData; sh.scale.y = Math.max(0.01, len - rad * 12); sh.position.y = len / 2; h1.position.y = len - rad * 3; h2.position.y = rad * 3; g.position.y = 0; }
+      const NDR = 26, drops = new THREE.InstancedMesh(new THREE.SphereGeometry(0.1, 10, 8), mat(0x1d9bf0, { roughness: 0.2 }), NDR); drops.frustumCulled = false; gW.add(drops);
+      const dm2 = new THREE.Object3D(), pp = new V3();
+      const wLab = [label('펌프', pump, { size: 11.5, offset: [-0.2, 0.7, 0] }), label('물레방아 = 전구', wheelG, { size: 11.5, offset: [0.4, 0.8, 0] }), label('밸브 = 스위치', valve, { size: 11.5, offset: [0, -0.5, 0] })];
+      const hLab = label('', [0, 0, 0], { size: 12, color: 'rgba(194,65,12,.95)' });
+      let wPh = 0, wLast = '';
+      rebuildPipe(3);
+      const ampTxt = { c: '' };
+      function circuitInfo(closed, V, e, i, amm, wat) {
+        const I = V / 10;
+        if (amm && closed) return '<b>전류계 ⓐ ⓑ ⓒ</b>: 전구 앞 · 전구 뒤 · (−)극 앞 어디서나 전류는 <b>' + I.toFixed(2) + ' A</b>로 <b>같아요</b>. 전류는 전구에서 <b>소모되지 않아요</b>.<br>전자는 사라지지 않고 회로를 따라 계속 돌아요. 옆의 ⓐⓑⓒ 읽기 단추를 눌러 값을 읽어 보세요.';
+        if (wat) return '<b>물의 흐름 모형</b>: 펌프가 물을 높이 올려 <b>높이 차</b>를 만들면 물이 흘러요. 전지가 만드는 <b>전압(' + V.toFixed(1) + ' V)</b>이 전류를 흐르게 해요.<br>높이 차 ↔ 전압, 물의 흐름 ↔ 전류, 물레방아 ↔ 전구, 밸브 ↔ 스위치예요. 전압이 높을수록 물(전자)이 <b>빠르게</b> 흘러 전구가 밝아져요.' + (closed ? '' : '<br><span style="color:#ffd34d">스위치(밸브)가 닫혀서 흐르지 않아요.</span>');
+        return null;
+      }
       let showE = false, showI = false, uPh = 0, lastInfo = '', glowV = 0, swA = 0, labs = true;
       function inf(closed, V, e, i) {
         const k = (closed ? 'c' : 'o') + V.toFixed(1) + (e ? 'e' : '') + (i ? 'i' : '');
@@ -110,7 +177,26 @@
           }
           eInst.instanceMatrix.needsUpdate = true; iInst.instanceMatrix.needsUpdate = true; dm.quaternion.identity();
           lE.show(labs && showE && closed); lI.show(labs && showI && closed);
-          inf(closed, V, showE, showI);
+          // 3단계 도구: 전류계 · 물의 흐름 모형
+          const TT = sm() && sm().T, amOn = !!(TT && TT.am_a > 0.5), waOn = !!(TT && TT.water > 0.5), waK = TT ? Math.max(0, Math.min(1, TT.water)) : 0;
+          AMP.forEach((o, i) => { o.g.visible = amOn; o.lab.show(amOn && labs); ampBtns[i].style.display = amOn ? '' : 'none'; if (amOn) { const rd = s && s.read && s.read[o.k], tg2 = rd ? I : 0; o.v += (tg2 - o.v) * Math.min(1, dt * 6); o.dial.userData.set(o.v); o.lab.set(o.tag + ' ' + o.cap + ' <b>' + (rd ? I.toFixed(2) + ' A' : '?') + '</b>'); } });
+          const sc = 1 - 0.38 * waK; gCir.scale.setScalar(sc); gCir.position.set(-4.2 * waK, 0, 0);
+          gW.visible = waK > 0.02; gW.scale.setScalar(0.62 + 0.0 * waK); gW.position.set(3.7 * waK + 1.2 * (1 - waK), -0.4, 0);
+          wLab.forEach((l) => l.show(gW.visible && labs)); hLab.show(gW.visible && labs);
+          if (gW.visible) {
+            const Vd = s ? (s.Vd != null ? s.Vd : V) : V;
+            if (Math.abs(Vd - pipeV) > 0.04) { pipeV = Vd; rebuildPipe(Vd); }
+            const top = wH(pipeV), flow = closed ? Math.max(0.15, V / 6) : 0;
+            wPh = (wPh + dt * 0.09 * flow * 2.2) % 1;
+            for (let i = 0; i < NDR; i++) { const u = ((i / NDR - wPh) % 1 + 1) % 1; pipeCurve.getPointAt(u, pp); dm2.position.copy(pp); dm2.scale.setScalar(closed ? 1 : 0.0001); dm2.updateMatrix(); drops.setMatrixAt(i, dm2.matrix); }
+            drops.instanceMatrix.needsUpdate = true;
+            wheelG.rotation.z -= dt * flow * 5; wheelG.position.set(WR, top * 0.5, 0);
+            valve.material.color.setHex(closed ? 0x16a34a : 0xdc2626);
+            hAr.position.set(WL - 0.85, WB, 0); setArrow2(hAr, top);
+            const wsc = gW.scale.x; hLab.obj = [gW.position.x + (WL - 1.0) * wsc, gW.position.y + top * 0.5 * wsc, 0]; hLab.off = [-0.2, 0, 0]; hLab.set('높이 차 = 전압 ' + V.toFixed(1) + ' V');
+          }
+          const ci = circuitInfo(closed, V, showE, showI, amOn && !waOn, waOn);
+          if (ci) { if (ci !== wLast) { wLast = ci; info(ci); lastInfo = ''; } } else { wLast = ''; inf(closed, V, showE, showI); }
         },
       };
     },

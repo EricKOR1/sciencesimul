@@ -1,7 +1,7 @@
 /* hm-air-column · 3D 관 속의 정상파와 소리의 속력
    2D 실험(window.__sim)의 장면을 그대로 입체로 보여 줘요: 〓 관 속 정상파(열린 끝 · 닫힌 끝) · 🔔 공명 실험(소리굽쇠 · 공기 기둥) · 📏 음속 측정.
    열린 끝은 변위의 배, 닫힌 끝은 변위의 마디예요. 관의 종류 · 배음 · 공기 기둥 길이 · 소리굽쇠는 옆 조작판이 정하고 3D는 따라가요.
-   (🎷 관악기 · 병 불기는 2D 화면에서 해요) */
+   🎺 관악기(플루트·클라리넷 모형, 구멍 열기)와 🍾 병 불기(물 높이)도 입체로 보여 줘요. */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -91,11 +91,105 @@
       }
       let lastInfo = '';
       setup();
+
+      /* ---- 🎺 관악기 · 🍾 병 불기 : 2D의 S.wd / S.bt 를 따라가요 ---- */
+      const S0 = { PPM: 10, NW: 44, NB: 36 };
+      const wG = new THREE.Group(); wG.visible = false; root.add(wG);
+      const INS = { open: { L0: 0.65, holes: [0.58, 0.52, 0.46, 0.41, 0.37] }, closed: { L0: 0.58, holes: [0.52, 0.46, 0.41, 0.37, 0.33] } };
+      const WX = (m) => (m - 0.33) * S0.PPM, WR = 0.55;
+      const bodyM = { open: M(0xcbd5e1, { metalness: 0.6, roughness: 0.3, transparent: true, opacity: 0.45, depthWrite: false }), closed: M(0x1f2430, { roughness: 0.5, transparent: true, opacity: 0.5, depthWrite: false }) };
+      const wBody = new THREE.Mesh(new THREE.CylinderGeometry(WR, WR, 1, 36, 1, true), bodyM.open); wBody.rotation.z = Math.PI / 2; wG.add(wBody);
+      const wCap = new THREE.Mesh(new THREE.CylinderGeometry(WR + 0.04, WR + 0.04, 0.3, 24), M(0x92400e)); wCap.rotation.z = Math.PI / 2; wG.add(wCap);
+      const wHoles = [], wHoleLab = [];
+      for (let i = 0; i < 5; i++) { const h = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.1, 20), M(0x111827)); h.position.z = WR + 0.02; h.rotation.x = Math.PI / 2; wG.add(h); wHoles.push(h); wHoleLab.push(label(String(i + 1), h, { color: '#475569', size: 11, offset: [0, -0.62, 0.3] })); }
+      const wCol = new THREE.Mesh(new THREE.CylinderGeometry(WR - 0.05, WR - 0.05, 1, 28, 1, true), new THREE.MeshStandardMaterial({ color: 0x60a5fa, transparent: true, opacity: 0.22, side: THREE.DoubleSide, depthWrite: false })); wCol.rotation.z = Math.PI / 2; wG.add(wCol);
+      const wP = new THREE.InstancedMesh(new THREE.SphereGeometry(0.07, 10, 8), M(0xffffff, { roughness: 0.4 }), S0.NW * 5);
+      wP.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(S0.NW * 5 * 3), 3); wP.frustumCulled = false; wG.add(wP);
+      const wBase = new THREE.Mesh(new THREE.BoxGeometry(8.8, 0.03, 0.2), M(0x64748b)); wBase.position.set(0, -WR - 2.12, 0); wG.add(wBase);
+      const wBreath = mkArr(0x0ea5e9, 0.06); wG.add(wBreath);
+      const wLen = new THREE.Mesh(new THREE.BoxGeometry(1, 0.07, 0.07), M(0x7c3aed)); wLen.position.set(0, -WR - 0.9, 0); wG.add(wLen);
+      const wEnd = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.8, 0.06), M(0x7c3aed)); wG.add(wEnd);
+      const lWL = label('울리는 공기 기둥 L', wLen, { color: '#7c3aed', size: 12, offset: [0, -0.35, 0] });
+      const lBr = label('입김', wBreath, { color: '#0369a1', size: 12, offset: [0, 0.35, 0] });
+      const lSn = label('소리 센서 f₁', [0, 1.6, 0], { color: '#0f766e', size: 13 });
+      const lIns = label('', [0, WR + 0.5, 0], { color: '#334155', size: 12 });
+      // 배음 막대 (소리 센서 스펙트럼): 가로 = 진동수, 높이 = 1/n
+      const NB2 = 10, wBars = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), M(0x6d8fd0), NB2); wBars.frustumCulled = false; wG.add(wBars);
+      const lSp = label('배음 구성', [0, 0, 0], { color: '#475569', size: 12 });
+      const bG = new THREE.Group(); bG.visible = false; root.add(bG);
+      const BH = 0.2, BP = 22, BRAD = 1.35;
+      const prof = [[0, 0], [BRAD - 0.12, 0], [BRAD, 0.12], [BRAD, BH * BP - 1.5], [0.8, BH * BP - 0.9], [0.72, BH * BP - 0.5], [0.72, BH * BP], [0.82, BH * BP]].map((p) => new THREE.Vector2(p[0], p[1]));
+      const bGlass = new THREE.Mesh(new THREE.LatheGeometry(prof, 40), new THREE.MeshStandardMaterial({ color: 0xa7f3d0, roughness: 0.1, transparent: true, opacity: 0.22, side: THREE.DoubleSide, depthWrite: false })); bG.add(bGlass);
+      const bWater = new THREE.Mesh(new THREE.CylinderGeometry(BRAD - 0.03, BRAD - 0.03, 1, 36), new THREE.MeshStandardMaterial({ color: 0x3b82f6, roughness: 0.2, transparent: true, opacity: 0.6 })); bG.add(bWater);
+      const bP = new THREE.InstancedMesh(new THREE.SphereGeometry(0.07, 10, 8), M(0xffffff, { roughness: 0.4 }), S0.NB * 6);
+      bP.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(S0.NB * 6 * 3), 3); bP.frustumCulled = false; bG.add(bP);
+      const bBreath = mkArr(0x0ea5e9, 0.06); bG.add(bBreath);
+      const bLen = new THREE.Mesh(new THREE.BoxGeometry(0.07, 1, 0.07), M(0x7c3aed)); bG.add(bLen);
+      const bTop = new THREE.Mesh(new THREE.SphereGeometry(0.12, 12, 8), new THREE.MeshBasicMaterial({ color: 0x22c55e })), bBot = new THREE.Mesh(new THREE.SphereGeometry(0.12, 12, 8), new THREE.MeshBasicMaterial({ color: 0xef4444 })); bG.add(bTop, bBot);
+      const lBL = label('L', bLen, { color: '#7c3aed', size: 12, offset: [0.55, 0, 0] });
+      const lBA = label('입구: 변위의 배', bTop, { color: '#15803d', size: 12, offset: [1.2, 0.3, 0] }), lBN = label('수면: 변위의 마디', bBot, { color: '#dc2626', size: 12, offset: [1.4, 0, 0] });
+      const lBW = label('물', [0, 0, 0], { color: '#1d4ed8', size: 12 }), lBBr = label('입김', bBreath, { color: '#0369a1', size: 12, offset: [0, 0.35, 0] }), lBf = label('', [0, 0, 0], { color: '#0f766e', size: 13 });
+      function mkArr(col, rad) { const g = new THREE.Group(), m = M(col); const sh = new THREE.Mesh(new THREE.CylinderGeometry(rad, rad, 1, 10), m), hd = new THREE.Mesh(new THREE.ConeGeometry(rad * 2.6, rad * 6, 14), m); g.add(sh, hd); g.userData = { sh, hd, rad }; return g; }
+      function arr(g, a, b) { const d = new V3().subVectors(b, a), len = d.length(), { sh, hd, rad } = g.userData; const hl = rad * 6; sh.scale.y = Math.max(0.01, len - hl); sh.position.y = (len - hl) / 2; hd.position.y = len - hl / 2; g.position.copy(a); g.quaternion.setFromUnitVectors(new V3(0, 1, 0), d.normalize()); }
+      let wType = '';
+      function dens(c, d) { tmpC.copy(colB); if (d > 0) tmpC.lerp(colC, d); else tmpC.lerp(colA, -d); }
+      function updWind(S, A) {
+        const w = S.wd, I = INS[w.type], G = A.windGeo(), wt = TAU * 0.9 * S.clock, ph = Math.cos(wt), Le = G.Le, op = w.type === 'open';
+        if (wType !== w.type) { wType = w.type; wBody.material = bodyM[w.type]; wBody.scale.y = I.L0 * S0.PPM; wBody.position.x = WX(I.L0 / 2); lIns.set(op ? '플루트 모형 (열린 관)' : '클라리넷 모형 (닫힌 관)'); }
+        wCap.visible = !op; wCap.position.x = WX(0) - 0.05;
+        for (let i = 0; i < 5; i++) { const on = w.holes[i]; wHoles[i].position.x = WX(I.holes[i]); wHoles[i].material.color.setHex(on ? 0x22c55e : 0x111827); wHoles[i].material.emissive.setHex(on ? 0x15803d : 0); wHoleLab[i].set(String(i + 1) + (on ? ' 열림' : '')); }
+        wCol.scale.y = Le * S0.PPM; wCol.position.x = WX(Le / 2);
+        wLen.scale.x = Le * S0.PPM; wLen.position.x = WX(Le / 2); wEnd.position.x = WX(Le);
+        if (op) arr(wBreath, new V3(WX(0.06), WR + 1.1, 0), new V3(WX(0.06) + 0.1, WR + 0.25, 0)); else arr(wBreath, new V3(WX(0) - 1.0, WR + 0.7, 0), new V3(WX(0) - 0.25, WR + 0.1, 0));
+        lBr.obj = wBreath; lBr.set(op ? '입김' : '입김·리드');
+        lSn.set(w.hide ? '소리 센서: f₁ = ?' : '소리 센서: f₁ = ' + Math.round(G.f1) + ' Hz (' + (op ? 'f₁ = v/2L' : 'f₁ = v/4L') + ')');
+        lSn.obj = [WX(I.L0 / 2), WR + 1.7, 0]; lIns.obj = [WX(I.L0 / 2), WR + 0.9, 0];
+        lWL.set('울리는 공기 기둥 L = ' + Le.toFixed(2) + ' m');
+        for (let i = 0; i < S0.NW; i++) {
+          const u = (i + 0.5) / S0.NW, xf = op ? Math.cos(Math.PI * u) : Math.sin(Math.PI * u / 2), dxf = op ? -Math.sin(Math.PI * u) : Math.cos(Math.PI * u / 2);
+          const sx = 0.32 * xf * ph; dens(0, clamp(-dxf * ph, -1, 1));
+          for (let j = 0; j < 5; j++) { const r = j === 0 ? 0 : WR * 0.7, a = (j - 1) * Math.PI / 2; m4.makeTranslation(WX(u * Le) + sx, r * Math.cos(a), r * Math.sin(a)); wP.setMatrixAt(i * 5 + j, m4); wP.setColorAt(i * 5 + j, tmpC); }
+        }
+        wP.instanceMatrix.needsUpdate = true; wP.instanceColor.needsUpdate = true;
+        const h1 = G.f1, kind = w.type, y0 = -WR - 2.1;
+        for (let k = 1; k <= NB2; k++) { const hh = kind === 'open' ? k : 2 * k - 1, fr = hh * h1, vis = fr <= 2400, bx = -4.2 + 8.4 * fr / 2400, bh = Math.max(0.001, vis ? 1.3 / hh : 0.001); m4.compose(new V3(bx, y0 + bh / 2, 0), new THREE.Quaternion(), new V3(0.16, bh, 0.16)); wBars.setMatrixAt(k - 1, m4); wBars.setColorAt(k - 1, tmpC.set(k === 1 ? 0xf59e0b : kind === 'open' ? 0x6d8fd0 : 0xc08a55)); }
+        if (wBars.instanceColor) wBars.instanceColor.needsUpdate = true; wBars.instanceMatrix.needsUpdate = true; lSp.obj = [-3.6, y0 - 0.4, 0]; lSp.set(op ? '배음 1 : 2 : 3 …' : '배음 1 : 3 : 5 …');
+        info('<b>🎺 ' + (op ? '플루트 모형 (열린 관)' : '클라리넷 모형 (닫힌 관)') + '</b> · 기온 ' + w.T + ' °C (소리 ' + Math.round(G.v) + ' m/s)<br>' + (op ? '양 끝이 배 → f₁ = v/2L' : '입 쪽이 마디, 열린 끝이 배 → f₁ = v/4L') + ' · L = ' + Le.toFixed(2) + ' m<br>입에서 가까운 구멍을 열수록 L이 짧아져 음이 높아져요.');
+      }
+      function updBottle(S, A) {
+        const hcm = S.bt.h, h = hcm / 100, L = BH - h, wt = TAU * 0.9 * S.clock, ph = Math.cos(wt), top = BH * BP, yS = (BH - L) * BP; // 수면 높이 = h*PPM
+        const f = A.botF();
+        bWater.scale.y = Math.max(0.001, yS); bWater.position.y = yS / 2; bWater.visible = hcm > 0;
+        bG.position.y = -2.2;
+        const Ls = L * BP;
+        for (let i = 0; i < S0.NB; i++) {
+          const z = (i + 0.5) / S0.NB * L, xz = Math.cos(Math.PI * z / (2 * L)), dz = -Math.sin(Math.PI * z / (2 * L));
+          dens(0, clamp(-dz * ph, -1, 1));
+          for (let j = 0; j < 6; j++) { const r = j === 0 ? 0 : 0.55, a = (j - 1) * TAU / 5; m4.makeTranslation(r * Math.cos(a), top - z * BP - 0.4 * xz * ph, r * Math.sin(a)); bP.setMatrixAt(i * 6 + j, m4); bP.setColorAt(i * 6 + j, tmpC); }
+        }
+        bP.instanceMatrix.needsUpdate = true; bP.instanceColor.needsUpdate = true;
+        arr(bBreath, new V3(0, top + 1.5, 0), new V3(0, top + 0.35, 0));
+        bLen.scale.y = Ls; bLen.position.set(1.0, top - Ls / 2, 0); bTop.position.set(0.0, top, 0); bBot.position.set(0.0, top - Ls, 0);
+        lBL.set('L = ' + L.toFixed(2) + ' m'); lBW.obj = [0, Math.max(0.3, yS / 2) - 2.2, 1.45]; lBW.set('물 ' + hcm + ' cm'); lBW.show(true);
+        lBf.obj = [0, top - 2.2 + 2.0, 0]; lBf.off = [0, 0.4, 0]; lBf.set('소리 센서 f₁ = ' + Math.round(f) + ' Hz');
+        info('<b>🍾 병 불기</b> · 병 입구를 닫힌 관으로 생각해요<br>물 ' + hcm + ' cm → 공기 기둥 L = ' + L.toFixed(2) + ' m, f₁ = v/(4L) = <b>' + Math.round(f) + ' Hz</b><br>물이 늘수록 L이 짧아져 소리가 높아져요. 수면은 마디, 입구는 배예요.');
+      }
+
       return {
         update(dt) {
           const A = ctx.lesson(); if (!A || !A.S) return; const S = A.S;
-          const isTube = S.mode === 'tube', isRes = S.mode === 'res' || S.mode === 'meas', other = !isTube && !isRes;
-          parts.visible = tubeM.visible = spk.visible = fork.visible = !other; if (other) { marks.forEach((m) => (m.visible = false)); [lN, lA, lO1, lO2, lC].forEach((l) => l.show(false)); info('🎷 관악기(구멍 열기 · 배음 구성)와 병 불기는 2D 화면에서 해요. 위의 [▦ 2D]를 눌러 보세요.'); return; }
+          const isTube = S.mode === 'tube', isRes = S.mode === 'res' || S.mode === 'meas', isW = S.mode === 'wind', isB = S.mode === 'bottle';
+          const other = isW || isB;
+          wG.visible = isW; bG.visible = isB;
+          parts.visible = tubeM.visible = spk.visible = fork.visible = !other;
+          if (other) {
+            marks.forEach((m) => (m.visible = false)); [lN, lA, lO1, lO2, lC].forEach((l) => l.show(false)); ringsG.visible = false; wall.visible = false;
+            [lWL, lBr, lSn, lIns, lSp].concat(wHoleLab).forEach((l) => l.show(isW)); [lBL, lBA, lBN, lBW, lBBr, lBf].forEach((l) => l.show(isB));
+            if (isW) updWind(S, A); else updBottle(S, A);
+            return;
+          }
+          [lWL, lBr, lSn, lIns, lSp, lBL, lBA, lBN, lBW, lBBr, lBf].concat(wHoleLab).forEach((l) => l.show(false));
+          if (!ringsG.visible) { ringsG.visible = true; setup(); }
           let ty, nn, amp = 0.55;
           if (isTube) { ty = S.tb.type; nn = S.tb.n; } else {
             const r = S.mode === 'res' ? S.rs : S.ms, Lcm = S.mode === 'res' ? S.rs.L : (S.ms.run ? S.ms.run.L || 0 : 0), lam = A.lamOf(r.f, r.t) * 100; ty = 'closed';

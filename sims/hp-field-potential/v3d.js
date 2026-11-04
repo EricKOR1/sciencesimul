@@ -1,6 +1,6 @@
 /* hp-field-potential · 3D 전기장과 전위차
    2D 실험(window.__sim)의 장면을 그대로 입체로 보여 줘요: ⚡ 전기력(두 점전하) · 🧭 전기장 지도(화살표 · 시험 전하) · 🔋 평행판 전위차(전하·전자).
-   전하량·거리·전압 같은 값은 옆 조작판이 정하고 3D는 따라가요. (🏠 적용 장면은 2D 화면에서 해요) */
+   전하량·거리·전압 같은 값은 옆 조작판이 정하고 3D는 따라가요. 🏠 적용(회로의 전위 · 전기 집진기 · 번개와 피뢰침)도 입체로 봐요. */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -170,16 +170,177 @@
         info('<b>🔋 평행판 사이의 전위차 · 판 사이 전압 ' + V + ' V</b><br>이 위치(' + trim(fmt(x, 1)) + ' cm)의 전위 ' + trim(fmt(vv, 1)) + ' V ((−)판이 0 V)<br>' + t2 + '<br><span style="opacity:.8">전압·전하 종류는 옆 조작판에서 바꿔요.</span>');
       }
       function ez(x) { return x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2; }
+
+      /* ================= 🏠 적용: 🔌 회로의 전위 · 🌫️ 전기 집진기 · ⛈️ 번개와 피뢰침 ================= */
+      const gAc = new THREE.Group(), gAd = new THREE.Group(), gAl = new THREE.Group(); root.add(gAc, gAd, gAl); gAc.visible = gAd.visible = gAl.visible = false;
+      const cm = (a, b, f) => new THREE.Color(a).lerp(new THREE.Color(b), f);
+      const potC = (f) => { f = clamp(f, 0, 1); return f < 0.5 ? cm('#4a7be0', '#f6f2ea', f * 2) : cm('#f6f2ea', '#e2574c', (f - 0.5) * 2); };
+      const labAc = [], labAd = [], labAl = [];
+      /* --- 🔌 회로: 전위 = 전기적 높이 (도선이 전위만큼 올라가요) --- */
+      let cirBuilt = '', cirData = null, cirScale = 0.02;
+      const cirWire = new THREE.Group(); gAc.add(cirWire);
+      const cirGround = new THREE.Mesh(new THREE.BoxGeometry(1, 0.06, 1), M(0x1b2540, { roughness: 1 })); gAc.add(cirGround);
+      const bulbM = [0, 1].map(() => { const b = new THREE.Mesh(new THREE.SphereGeometry(0.32, 24, 18), M(0xe8e2c8, { emissive: 0x000000, roughness: 0.3 })); gAc.add(b); return b; });
+      const batM = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.26, 1, 20), M(0x394258, { metalness: 0.4, roughness: 0.4 })); gAc.add(batM);
+      const qDots = []; for (let i = 0; i < 9; i++) { const d = new THREE.Mesh(new THREE.SphereGeometry(0.1, 12, 10), M(0xffffff, { roughness: 0.4 })); gAc.add(d); qDots.push(d); }
+      const qBig = new THREE.Mesh(new THREE.SphereGeometry(0.2, 20, 16), M(0xffffff, { roughness: 0.3 })); gAc.add(qBig);
+      const lQc = label('', qBig, { color: '#26324a', size: 12 }), lBat = label('', batM, { color: '#394258', size: 13 }), lBu = [label('전구 1', bulbM[0], { color: '#7a6a2a', size: 12 }), label('전구 2', bulbM[1], { color: '#7a6a2a', size: 12 })];
+      const lABC = ['A', 'B', 'C'].map((t) => label(t, [0, 0, 0], { color: '#5a4fcf', size: 13 }));
+      const lGnd = label('전위 0 V (땅 높이)', [0, 0, 0], { color: '#475569', size: 11 });
+      labAc.push(lQc, lBat, lGnd, ...lBu, ...lABC);
+      function buildCircuit(A) {
+        const C = A.CIR, key = C.L + '|' + C.R + '|' + C.BOT; if (key === cirBuilt) return; cirBuilt = key;
+        while (cirWire.children.length) { const c = cirWire.children[0]; cirWire.remove(c); if (c.geometry) c.geometry.dispose(); }
+        const s = 7 / (C.R - C.L); cirScale = s; const HV = 0.9, cx = (C.L + C.R) / 2, cz = (C.TOP + C.BOT) / 2;
+        const P = (px, py, pot) => new V3((px - cx) * s, 0.12 + pot * HV, (py - cz) * s);
+        cirData = { P, s, cx, cz, HV };
+        const N = 260, pts = [], cols = [], top = [], bot = [];
+        const at = (sv) => { sv = ((sv % C.tot) + C.tot) % C.tot; let i = 0; while (i < C.verts.length - 1 && C.cum[i + 1] <= sv) i++; const a = C.verts[i], b = C.verts[(i + 1) % C.verts.length], f = (sv - C.cum[i]) / Math.max(1e-6, C.cum[i + 1] - C.cum[i]); return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f]; };
+        const pos = [], col = [], idx = [];
+        for (let i = 0; i <= N; i++) { const q = at(Math.min(i / N * C.tot, C.tot - 0.001)), w = P(q[0], q[1], q[2]); pts.push(w); const c = potC(q[2] / A.BAT); pos.push(w.x, w.y, w.z, w.x, 0.03, w.z); col.push(c.r, c.g, c.b, c.r, c.g, c.b); if (i < N) { const k = i * 2; idx.push(k, k + 1, k + 2, k + 1, k + 3, k + 2); } }
+        const rg = new THREE.BufferGeometry(); rg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); rg.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); rg.setIndex(idx);
+        cirWire.add(new THREE.Mesh(rg, new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.32, side: THREE.DoubleSide, depthWrite: false })));
+        pts.pop(); pts.push(pts[0].clone());
+        cirWire.add(tube(pts, 0.07, 0x9aa6bb, { metalness: 0.5, roughness: 0.35 }, false));
+        const w = (C.R - C.L) * s, d = (C.BOT - C.TOP) * s + 1.2; cirGround.scale.set(w + 1.6, 1, d + 0.4); cirGround.position.set(0, 0, 0);
+        // 전지 (비탈을 따라 놓인 원통), 전구 (낮아지는 구간 한가운데)
+        const b0 = P(C.verts[0][0], C.verts[0][1], 0), b1 = P(C.verts[1][0], C.verts[1][1], A.BAT), mid = b0.clone().add(b1).multiplyScalar(0.5), dir = b1.clone().sub(b0);
+        batM.position.copy(mid); batM.scale.set(1, dir.length(), 1); batM.quaternion.setFromUnitVectors(new V3(0, 1, 0), dir.clone().normalize());
+        const m1 = P(C.b1x, C.TOP, A.BAT - A.U1 / 2), m2 = P(C.R, C.by, (A.BAT - A.U1) / 2); bulbM[0].position.copy(m1); bulbM[1].position.copy(m2);
+        lBat.obj = [mid.x - 0.7, mid.y, mid.z]; lBat.set('전지 ' + A.BAT + ' V<br>0 → ' + A.BAT + ' V');
+        [[2, 0], [5, 1], [8, 2]].forEach(([ci, k]) => { const v = C.verts[ci]; const q = P(v[0], v[1], v[2]); lABC[k].obj = [q.x, q.y + 0.35, q.z]; });
+        lGnd.obj = [-(w / 2) - 0.2, 0.05, (C.BOT - C.TOP) * s / 2 + 0.3];
+        void dir;
+      }
+      function circuit(A) {
+        const S = A.S, a = S.ap, C = A.CIR; buildCircuit(A); const D = cirData;
+        const at = (sv) => { sv = ((sv % C.tot) + C.tot) % C.tot; let i = 0; while (i < C.verts.length - 1 && C.cum[i + 1] <= sv) i++; const p = C.verts[i], q = C.verts[(i + 1) % C.verts.length], f = (sv - C.cum[i]) / Math.max(1e-6, C.cum[i + 1] - C.cum[i]); return [p[0] + (q[0] - p[0]) * f, p[1] + (q[1] - p[1]) * f, p[2] + (q[2] - p[2]) * f]; };
+        const N = 10;
+        qDots.forEach((d, i) => { const q = at(((a.ph % 1) + (i + 1) / N) * C.tot), w = D.P(q[0], q[1], q[2]); d.position.copy(w); d.material.color.copy(potC(q[2] / A.BAT)); });
+        const tk = at((a.ph % 1) * C.tot), tw = D.P(tk[0], tk[1], tk[2]); qBig.position.copy(tw); qBig.material.color.copy(potC(tk[2] / A.BAT)); qBig.material.emissive.copy(potC(tk[2] / A.BAT)).multiplyScalar(0.25);
+        lQc.obj = [tw.x, tw.y + 0.45, tw.z]; lQc.set('1 C · 전위 ' + fmt(tk[2], 1) + ' V');
+        bulbM[0].material.emissive.setHex(0xffd447).multiplyScalar(0.2 + 0.8 * clamp(A.U1 / A.BAT, 0, 1)); bulbM[1].material.emissive.setHex(0xffd447).multiplyScalar(0.2 + 0.8 * clamp(A.U2 / A.BAT, 0, 1));
+        bulbM[0].material.color.setHex(0xffe58a); bulbM[1].material.color.setHex(0xffe58a);
+        lBu[0].obj = [bulbM[0].position.x, bulbM[0].position.y + 0.5, bulbM[0].position.z]; lBu[1].obj = [bulbM[1].position.x + 0.7, bulbM[1].position.y, bulbM[1].position.z];
+        lBu[0].set('전구 1 · ' + A.R1 + ' Ω<br>' + trim(fmt(A.BAT, 1)) + ' → ' + trim(fmt(A.BAT - A.U1, 1)) + ' V'); lBu[1].set('전구 2 · ' + A.R2 + ' Ω<br>' + trim(fmt(A.BAT - A.U1, 1)) + ' → 0 V');
+        const s1 = (a.ph % 1) * C.tot, seg = (i, from, to) => clamp((s1 - C.cum[i]) / (C.cum[i + 1] - C.cum[i]), 0, 1) * Math.abs(to - from);
+        const g = seg(0, 0, A.BAT), l1 = seg(3, A.BAT, A.BAT - A.U1), l2 = seg(6, A.BAT - A.U1, 0);
+        info('<b>🔌 회로에서 전하의 전위 변화</b> · 도선의 높이가 전위예요<br>지금 1 C 전하의 전위 <b>' + fmt(tk[2], 1) + ' V</b> · 전류 ' + fmt(A.I_C, 2) + ' A (어디서나 같아요)<br>이번 바퀴: 전지 <b>+' + fmt(g, 1) + ' J</b> · 전구 1 <b>−' + fmt(l1, 1) + ' J</b> · 전구 2 <b>−' + fmt(l2, 1) + ' J</b><br><span style="opacity:.8">한 바퀴를 돌면 전위는 처음 값으로 돌아와요.</span>');
+      }
+      /* --- 🌫️ 전기 집진기 --- */
+      let dKey = '', dS = 44;
+      const gPlate = [0, 1].map((i) => { const m = new THREE.Mesh(new THREE.BoxGeometry(0.22, 6, 3.2), M(0x9aa6bb, { metalness: 0.5, roughness: 0.35 })); gAd.add(m); return m; });
+      const bandM = new THREE.Mesh(new THREE.BoxGeometry(5, 0.05, 3.2), new THREE.MeshBasicMaterial({ color: 0xf26b3a, transparent: true, opacity: 0.28, depthWrite: false })); gAd.add(bandM);
+      const chanM = new THREE.Mesh(new THREE.BoxGeometry(5, 6, 3.2), new THREE.MeshBasicMaterial({ color: 0x7c5cff, transparent: true, opacity: 0.0, depthWrite: false })); gAd.add(chanM);
+      const dustI = new THREE.InstancedMesh(new THREE.SphereGeometry(0.075, 8, 6), new THREE.MeshStandardMaterial({ roughness: 0.6 }), 110), stuckI = new THREE.InstancedMesh(new THREE.SphereGeometry(0.075, 8, 6), M(0x6b5d4f, { roughness: 0.9 }), 300);
+      dustI.frustumCulled = stuckI.frustumCulled = false; gAd.add(dustI, stuckI);
+      const eArr = [0, 1, 2].map(() => { const a = mkArrow(0x7c5cff, 0.045); gAd.add(a); return a; });
+      const lPp = label('(+)판 · 집진판', [0, 0, 0], { color: '#e2574c', size: 12 }), lPm = label('(−)판', [0, 0, 0], { color: '#4a7be0', size: 12 }), lBd = label('대전 구역', [0, 0, 0], { color: '#9a3412', size: 12 }), lDirty = label('↑ 더러운 공기', [0, 0, 0], { color: '#5a6679', size: 12 }), lClean = label('깨끗한 공기 ↑', [0, 0, 0], { color: '#14803f', size: 12 });
+      labAd.push(lPp, lPm, lBd, lDirty, lClean);
+      const zOf = new WeakMap(); const zFor = (o) => { let z = zOf.get(o); if (z == null) { z = (Math.random() - 0.5) * 2.8; zOf.set(o, z); } return z; };
+      const dm = new THREE.Object3D(), cDust = new THREE.Color(0x8a7a6a), cChg = new THREE.Color(0x4a6fd0);
+      function precip(A) {
+        const S = A.S, a = S.ap, p = A.PC, s = p.w / 5, H = (p.bot - p.top) / s; dS = s;
+        const key = p.w + '|' + H.toFixed(2); if (key !== dKey) { dKey = key; gPlate.forEach((m, i) => { m.geometry.dispose(); m.geometry = new THREE.BoxGeometry(0.22, H + 0.3, 3.2); m.position.set(i ? 2.6 : -2.6, H / 2, 0); }); chanM.geometry.dispose(); chanM.geometry = new THREE.BoxGeometry(5, H, 3.2); chanM.position.set(0, H / 2, 0); }
+        gPlate[0].material.color.setHex(a.lv ? 0xe2877f : 0x9aa6bb); gPlate[1].material.color.setHex(a.lv ? 0x7f9be0 : 0x9aa6bb);
+        chanM.material.opacity = a.lv ? 0.07 : 0; bandM.position.set(0, (p.bot - p.band) / s, 0);
+        const X = (px) => (px - (p.x0 + p.w / 2)) / s, Y = (py) => (p.bot - py) / s;
+        let n = 0; a.dust.forEach((d) => { if (n >= 110) return; dm.position.set(X(d.x), Y(d.y), zFor(d)); dm.scale.setScalar(d.r / 2.8); dm.updateMatrix(); dustI.setMatrixAt(n, dm.matrix); dustI.setColorAt(n, d.ch ? cChg : cDust); n++; });
+        dustI.count = n; dustI.instanceMatrix.needsUpdate = true; if (dustI.instanceColor) dustI.instanceColor.needsUpdate = true;
+        let m = 0; a.stuck.forEach((q) => { if (m >= 300) return; dm.position.set(-2.5 + (q.r + q.o * 0.35) / s, Y(q.y), zFor(q)); dm.scale.setScalar(q.r / 2.8); dm.updateMatrix(); stuckI.setMatrixAt(m, dm.matrix); m++; });
+        stuckI.count = m; stuckI.instanceMatrix.needsUpdate = true;
+        eArr.forEach((ar, i) => { if (!a.lv) { ar.visible = false; return; } const y = H * (0.25 + 0.25 * i + 0.1), len = (5 - 0.6) * a.lv / 2; setArrow(ar, new V3(-2.2, y, 0), new V3(-2.2 + len, y, 0)); });
+        lPp.obj = [-2.6, H + 0.4, 0]; lPm.obj = [2.6, H + 0.4, 0]; lBd.obj = [2.9, (p.bot - p.band) / s, 1.6]; lDirty.obj = [0, -0.3, 1.6]; lClean.obj = [0, H + 0.3, 0];
+        const tot = a.caught + a.passed, pct = tot ? Math.round(100 * a.caught / tot) : 0;
+        info('<b>🌫️ 전기 집진기</b> · 먼지에 전하를 띠게 해서 전기장으로 걸러 내요<br>① 먼지가 대전 구역에서 (−)전하를 띠어요(파란 점).<br>② (+)판과 (−)판 사이에 전기장이 생겨요.<br>③ (−) 먼지는 전기장 반대쪽 힘을 받아 (+)판에 붙어요.<br>전압: <b>' + (a.lv ? (a.lv === 1 ? '약하게' : '강하게') : '끔') + '</b> · 붙은 먼지 ' + a.caught + ' / 지나간 먼지 ' + a.passed + ' → 걸러진 비율 <b>' + pct + ' %</b>');
+      }
+      /* --- ⛈️ 번개와 피뢰침 --- */
+      const LS = 60, bolt3 = { key: null, main: null, brs: [] };
+      const sky = new THREE.Mesh(new THREE.BoxGeometry(14, 0.1, 6), M(0x4b5b3d, { roughness: 1 })); sky.position.set(0, -0.05, 0); sky.receiveShadow = true; gAl.add(sky);
+      const cloudG = new THREE.Group(); gAl.add(cloudG);
+      [[-0.28, 0.1, 0.9], [0, -0.1, 1.05], [0.28, 0.13, 0.95], [-0.1, 0.25, 0.8], [0.12, 0.25, 0.8]].forEach((c) => { const m = new THREE.Mesh(new THREE.SphereGeometry(0.62 * c[2], 20, 14), M(0x6f7b96, { roughness: 1 })); m.position.set(c[0] * 4.2, c[1], 0); m.scale.set(1.1, 0.8, 1.1); cloudG.add(m); });
+      const minusI = new THREE.InstancedMesh(new THREE.SphereGeometry(0.1, 8, 6), new THREE.MeshBasicMaterial({ color: 0xa9c4ff, transparent: true }), 8), plusI = new THREE.InstancedMesh(new THREE.SphereGeometry(0.1, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffb4ae, transparent: true }), 30);
+      gAl.add(minusI, plusI);
+      const houseG = new THREE.Group(); gAl.add(houseG);
+      const hw = 2.0, hh = 1.5;
+      { const wall = new THREE.Mesh(new THREE.BoxGeometry(hw, hh, 1.6), M(0xe8d9b8, { roughness: 0.8 })); wall.position.y = hh / 2; wall.castShadow = true; houseG.add(wall);
+        const roof = new THREE.Mesh(new THREE.ConeGeometry(1.55, 0.9, 4), M(0xb4573b, { roughness: 0.7 })); roof.rotation.y = Math.PI / 4; roof.position.y = hh + 0.45; roof.scale.z = 0.85; roof.castShadow = true; houseG.add(roof);
+        const door = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.7, 0.05), M(0x8a6a44)); door.position.set(0, 0.35, 0.83); houseG.add(door);
+        [-0.6, 0.6].forEach((x) => { const w = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.36, 0.05), M(0xcfe6fb, { emissive: 0x405060 })); w.position.set(x, 0.95, 0.83); houseG.add(w); }); }
+      const ROOF_TOP = hh + 0.9, ROD_TOP = ROOF_TOP + 0.85;
+      const rodG = new THREE.Group(); houseG.add(rodG);
+      { const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, ROD_TOP - hh - 0.3, 8), M(0xc9d2e0, { metalness: 0.8, roughness: 0.3 })); rod.position.y = (ROD_TOP + hh + 0.3) / 2; rodG.add(rod);
+        const tip = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.25, 10), M(0xe8edf5, { metalness: 0.8, roughness: 0.3 })); tip.position.y = ROD_TOP + 0.1; rodG.add(tip);
+        const wire = tube([new V3(0, hh + 0.4, 0), new V3(hw / 2 + 0.05, hh + 0.2, 0.2), new V3(hw / 2 + 0.4, hh * 0.6, 0.2), new V3(hw / 2 + 0.4, -0.2, 0.2)], 0.035, 0x8791a5, { metalness: 0.6 }); rodG.add(wire);
+        const gnd = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.04, 0.3), M(0x8791a5, { metalness: 0.5 })); gnd.position.set(hw / 2 + 0.4, -0.02, 0.2); rodG.add(gnd); }
+      const fire = [0, 1, 2].map((i) => { const f = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.6, 8), new THREE.MeshBasicMaterial({ color: 0xff7a1a, transparent: true, opacity: 0.85 })); f.position.set(-0.4 + i * 0.4, ROOF_TOP - 0.15, 0); houseG.add(f); return f; });
+      const curDots = [0, 1, 2, 3, 4, 5].map(() => { const d = new THREE.Mesh(new THREE.SphereGeometry(0.09, 10, 8), new THREE.MeshBasicMaterial({ color: 0xfff1a0 })); houseG.add(d); return d; });
+      const flashL = new THREE.PointLight(0xfff6c2, 0, 40); flashL.position.set(0, 5, 3); gAl.add(flashL);
+      const lRod = label('피뢰침 · 뾰족한 끝에 전하가 모여요', [0, 0, 0], { color: '#26324a', size: 12 }), lBurn = label('지붕이 불타요!', [0, 0, 0], { color: '#e2464b', size: 14 }), lHouse = label('', [0, 0, 0], { color: '#26324a', size: 12 }), lCloud = label('구름 (−)', [0, 0, 0], { color: '#3a4766', size: 12 }), lGrd = label('땅 (+) 유도 전하', [0, 0, 0], { color: '#7a3a36', size: 12 });
+      labAl.push(lRod, lBurn, lHouse, lCloud, lGrd);
+      const demoL = { p: 0, on: false };
+      const rnd = ((seed) => () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; })(7);
+      function mkBoltGeo(pts, r) { const g = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts, false, 'catmullrom', 0.1), pts.length * 4, r, 5, false); return g; }
+      function setBolt(ptsPx, brPx, A) {
+        const L = A.LG, W = (q) => new V3((q[0] - L.cx) / LS, (L.gy - q[1]) / LS, 0);
+        if (bolt3.main) { bolt3.main.geometry.dispose(); gAl.remove(bolt3.main); } bolt3.brs.forEach((b) => { b.geometry.dispose(); gAl.remove(b); }); bolt3.brs = [];
+        const mat = new THREE.MeshBasicMaterial({ color: 0xfffbd0, transparent: true }); bolt3.mat = mat;
+        bolt3.main = new THREE.Mesh(mkBoltGeo(ptsPx.map(W), 0.07), mat); gAl.add(bolt3.main);
+        brPx.forEach((bp) => { const m = new THREE.Mesh(mkBoltGeo(bp.map(W), 0.03), mat); gAl.add(m); bolt3.brs.push(m); });
+      }
+      function demoBoltPts(A) {
+        const L = A.LG, tx = L.hx, ty = A.S.ap.rod ? L.tipY : L.roofY, x0 = L.cx + 6, y0 = L.cy + 22, pts = [[x0, y0]], n = 9;
+        for (let i = 1; i < n; i++) { const f = i / n; pts.push([x0 + (tx - x0) * f + (((i * 37) % 11) - 5) * 4, y0 + (ty - y0) * f]); } pts.push([tx, ty]);
+        const br = [3, 6].map((k, j) => { const q = pts[k], dir = j ? 1 : -1, bp = [[q[0], q[1]]]; for (let i = 1; i <= 4; i++) bp.push([bp[i - 1][0] + dir * (8 + ((i * 5) % 7)), bp[i - 1][1] + 12 + (i % 3) * 3]); return bp; });
+        return { pts, br };
+      }
+      function lightning(A) {
+        const S = A.S, a = S.ap, L = A.LG, LH = (L.gy - L.roofY) / LS;
+        // 집 위치: 2D의 집 x 위치(오른쪽)
+        cloudG.position.set(0, (L.gy - L.cy) / LS, 0); const hxw = (L.hx - L.cx) / LS; houseG.position.set(hxw, 0, 0); houseG.scale.setScalar(1);
+        rodG.visible = !!a.rod;
+        let charged = a.charged, prog = 0, fade = 0, struck = !!a.struck, flash = a.flash, hitT = a.hitT || 0, dmg = a.dmg, bolting = !!a.bolt, key = null;
+        if (a.bolt) { const b = a.bolt; prog = clamp(b.t / 0.28, 0, 1); fade = b.t > 0.4 ? clamp(1 - (b.t - 0.4) / 1.0, 0, 1) : 1; key = b; if (bolt3.key !== b) { bolt3.key = b; setBolt(b.pts, b.br, A); } }
+        else if (demoL.on) {
+          const p = demoL.p; bolting = p >= 0.3 && p < 0.9; struck = p >= 0.42; charged = p < 0.3 ? 0.2 + 0.8 * p / 0.3 : p < 0.42 ? 1 : Math.max(0, 1 - (p - 0.42) * 3);
+          prog = clamp((p - 0.3) / 0.12, 0, 1); fade = p > 0.5 ? clamp(1 - (p - 0.5) / 0.3, 0, 1) : 1; flash = p >= 0.42 && p < 0.55 ? 1 - (p - 0.42) / 0.13 : 0; hitT = Math.max(0, (p - 0.42) * 6); dmg = !a.rod && p >= 0.42 ? 1 : 0;
+          const dk = 'demo' + (a.rod ? 'r' : 'h'); if (bolt3.key !== dk) { bolt3.key = dk; const d = demoBoltPts(A); setBolt(d.pts, d.br, A); }
+        } else { bolt3.key = null; }
+        const show = bolting && bolt3.main; [bolt3.main].concat(bolt3.brs).forEach((m, i) => { if (!m) return; m.visible = !!show && (i === 0 || prog > 0.5); });
+        if (show) { const idx = bolt3.main.geometry.index.count; bolt3.main.geometry.setDrawRange(0, Math.max(6, Math.floor(prog * idx / 3) * 3)); bolt3.mat.opacity = fade; }
+        flashL.intensity = flash * 2.5;
+        // 전하 표시
+        const d3 = new THREE.Object3D();
+        for (let i = 0; i < 8; i++) { d3.position.set((-0.34 + 0.68 * i / 7) * 4.2, (L.gy - L.cy - 40 / 1) / LS - 0.1 + 0.0, 0.0); d3.position.y = (L.gy - (L.cy + 40)) / LS; d3.scale.setScalar(1); d3.updateMatrix(); minusI.setMatrixAt(i, d3.matrix); }
+        minusI.instanceMatrix.needsUpdate = true; minusI.material.opacity = 0.25 + 0.75 * charged; plusI.material.opacity = 0.25 + 0.75 * charged;
+        let k = 0;
+        for (let x = -4.6; x <= 4.6 && k < 30; x += 0.9) { if (Math.abs(x - hxw) < 1.7) continue; d3.position.set(x, 0.12, 1.4); d3.updateMatrix(); plusI.setMatrixAt(k++, d3.matrix); }
+        if (a.rod) { for (let i = 0; i < 6 && k < 30; i++) { const t = i / 5; d3.position.set(hxw + 0.12, ROD_TOP - 0.05 - (ROD_TOP - hh - 0.5) * t * t * t, 0); d3.updateMatrix(); plusI.setMatrixAt(k++, d3.matrix); } }
+        else { for (let i = 0; i < 5 && k < 30; i++) { d3.position.set(hxw - 0.6 + i * 0.3, ROOF_TOP - 0.05 - Math.abs(i - 2) * 0.22, 0.4); d3.updateMatrix(); plusI.setMatrixAt(k++, d3.matrix); } }
+        plusI.count = k; plusI.instanceMatrix.needsUpdate = true;
+        // 피뢰침 전류 · 불
+        curDots.forEach((dd, i) => { const on = struck && a.rod && !(bolting && prog < 1) ? true : struck && a.rod; dd.visible = !!(on && fade > 0.02 && (a.bolt ? a.struck : demoL.on)); if (!dd.visible) return; const q = ((hitT * 2.2 + i / 6) % 1); if (q < 0.5) dd.position.set(0.0, ROD_TOP - (ROD_TOP - hh - 0.4) * (q / 0.5), 0); else { const u = (q - 0.5) / 0.5; dd.position.set(hw / 2 + 0.4 * Math.min(1, u * 2), hh + 0.2 - (hh + 0.4) * u, 0.2); } });
+        const burning = dmg > 0.02; fire.forEach((f, i) => { f.visible = burning; f.scale.y = 0.7 + 0.5 * Math.abs(Math.sin(S.t * 9 + i * 2)); f.material.opacity = Math.min(1, dmg); });
+        lBurn.show(burning); lBurn.obj = [hxw, ROOF_TOP + 0.9, 0]; lRod.show(!!a.rod); lRod.obj = [hxw - 2.4, ROD_TOP, 0.3];
+        lHouse.obj = [hxw, -0.1, 1.2]; lHouse.set(a.rod ? '피뢰침이 있는 집' : '피뢰침이 없는 집'); lCloud.obj = [-0.2, (L.gy - L.cy) / LS + 1.0, 0]; lGrd.obj = [-3.4, 0.0, 1.6];
+        const E = A.LE / 1e9;
+        info('<b>⛈️ ' + (a.rod ? '피뢰침이 있는 집에 번개가 치면?' : '피뢰침이 없는 집에 번개가 치면?') + '</b><br>구름–지면 전위차 약 10<sup>' + A.LVEXP + '</sup> V · 이동하는 전하 약 ' + A.LQ + ' C<br>에너지 = ' + A.LQ + ' C × 10<sup>' + A.LVEXP + '</sup> V = <b>' + fmt(E, 1) + ' × 10⁹ J</b><br>' + (a.rod ? '뾰족한 도체 끝에는 전하가 모여요. 번개는 피뢰침 끝으로 떨어지고 전하는 도선을 따라 땅으로 흘러가요 → 집은 안전해요.' : '피뢰침이 없으면 번개가 지붕에 직접 떨어져 위험해요.') + '<br><span style="opacity:.8">번개 치기와 피뢰침 여부는 옆 조작판에서 해요.</span>');
+      }
       /* ▶ 재생 줄: 장면마다 하나씩 */
       let plM = null, plC = null, plE = null;
       plM = controls.player({ duration: 7, loop: true, autoplay: false, label: '시험 전하 놓기', phases: [[0, '정지'], [0.12, '전기장 방향으로 움직여요']], onFrame(p) { demoM.p = p; demoM.on = p > 0 || !!(plM && plM.playing); } });
       plC = controls.player({ duration: 9, loop: true, autoplay: false, label: '옮기고 놓기', phases: [[0, '(+)판까지 옮기기 · U = qV 쌓임'], [0.5, '(+)판'], [0.6, '놓기 · U → K']], onFrame(p) { demoP.p = p; demoP.on = p > 0 || !!(plC && plC.playing) || !!(plE && plE.playing) ; } });
       plE = controls.player({ duration: 6, loop: true, autoplay: false, label: '전자 놓기', phases: [[0, '(−)판'], [0.1, '가속 · 운동 에너지 = V (eV)'], [0.7, '(+)판 도착']], onFrame(p) { demoP.p = p; demoP.on = p > 0 || !!(plE && plE.playing) || !!(plC && plC.playing); } });
-      const allRows = [...ctx.renderer.domElement.parentNode.parentNode.querySelectorAll('.v3-player')]; [plM, plC, plE].forEach((p, i) => (p.row = allRows[i]));
+      let plL = null;
+      plL = controls.player({ duration: 8, loop: true, autoplay: false, label: '번개 치기', phases: [[0, '전하가 쌓여요'], [0.3, '번개가 내려와요'], [0.42, '번개 치는 순간'], [0.55, '전하가 땅으로']], onFrame(p) { demoL.p = p; demoL.on = p > 0 || !!(plL && plL.playing); } });
+      const allRows = [...ctx.renderer.domElement.parentNode.parentNode.querySelectorAll('.v3-player')]; [plM, plC, plE, plL].forEach((p, i) => (p.row = allRows[i]));
       let cur = '';
       function setMode(mode, kind) {
-        const key = mode + (mode === 'plates' ? kind : ''); if (key === cur) return; cur = key;
+        const key = mode + (mode === 'plates' || mode === 'apply' ? kind : ''); if (key === cur) return; cur = key;
         gF.visible = mode === 'force'; gM.visible = mode === 'field'; gP.visible = mode === 'plates';
+        gAc.visible = mode === 'apply' && kind === 'circuit'; gAd.visible = mode === 'apply' && kind === 'precip'; gAl.visible = mode === 'apply' && kind === 'light';
+        labAc.forEach((l) => l.show(gAc.visible)); labAd.forEach((l) => l.show(gAd.visible)); labAl.forEach((l) => l.show(gAl.visible));
+        plL.row.style.display = gAl.visible ? '' : 'none'; if (!gAl.visible) { plL.pause(); plL.set(0); }
         [lA, lB, lFA, lFB, lD].forEach((l) => l.show(mode === 'force')); lTok.show(false); lCh.forEach((l) => l.show(false));
         [lE, lMi, lPl, lQ].concat(rulerL).forEach((l) => l.show(mode === 'plates'));
         plM.row.style.display = mode === 'field' ? '' : 'none'; plC.row.style.display = mode === 'plates' && kind !== 'electron' ? '' : 'none'; plE.row.style.display = mode === 'plates' && kind === 'electron' ? '' : 'none';
@@ -187,15 +348,19 @@
         if (mode === 'force') Object.assign(orbit, { tx: 1.5, ty: 0, tz: 0, phi: 0.85, theta: 0.1, dist: 10 * KD });
         else if (mode === 'field') Object.assign(orbit, { tx: 0, ty: 0, tz: 0, phi: 0.7, theta: 0.0, dist: 14.5 * KD });
         else if (mode === 'plates') Object.assign(orbit, { tx: 3, ty: 1.2, tz: 0, phi: 1.2, theta: 0.15, dist: 10 * KD });
+        else if (gAc.visible) Object.assign(orbit, { tx: 0, ty: 0.8, tz: 0, phi: 1.0, theta: 0.2, dist: 12 * KD * (PHN ? 1.15 : 1) });
+        else if (gAd.visible) Object.assign(orbit, { tx: 0, ty: 2.8, tz: 0, phi: 1.25, theta: 0.3, dist: 12 * KD });
+        else if (gAl.visible) Object.assign(orbit, { tx: 0, ty: 2.2, tz: 0, phi: 1.3, theta: 0.15, dist: 12 * KD * (PHN ? 1.1 : 1) });
       }
-      const NOTE = '🏠 적용 장면(회로의 전위 · 전기 집진기 · 번개와 피뢰침)은 2D 화면에서 해요. 위의 [▦ 2D]를 눌러 보세요.';
       return {
         update(dt) {
           const A = sim(); if (!A || !A.S) return; const S = A.S;
-          setMode(S.mode, S.pl && S.pl.kind);
+          setMode(S.mode, S.mode === 'apply' ? S.ap.sub : S.pl && S.pl.kind);
+          if (S.mode === 'apply' && S.ap.sub === 'light' && S.ap.bolt && plL.playing) plL.pause();
+          if (!plL.playing && plL.p === 0) demoL.on = false; if (S.ap.bolt) demoL.on = false;
           if (S.mode === 'field') { if (S.fl.tok.st !== 'tray' && plM.playing) plM.pause(); }
           if (S.mode === 'plates') { const el = S.pl.kind === 'electron'; if ((el ? S.pl.eSt !== 'rest' : S.pl.st !== 'held') && (plC.playing || plE.playing)) { plC.pause(); plE.pause(); } }
-          if (S.mode === 'force') force(S); else if (S.mode === 'field') field(S, A); else if (S.mode === 'plates') plates(S, A); else info(NOTE);
+          if (S.mode === 'force') force(S); else if (S.mode === 'field') field(S, A); else if (S.mode === 'plates') plates(S, A); else if (S.ap.sub === 'circuit') circuit(A); else if (S.ap.sub === 'precip') precip(A); else lightning(A);
         },
         sync() {},
       };

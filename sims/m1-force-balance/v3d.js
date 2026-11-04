@@ -8,7 +8,7 @@
   window.SciSim3D.attach({
     title: '합력과 힘의 평형 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    levels: [1, 2],
+    levels: [0, 1, 2, 3],
     camera: { dist: 10.5 * (PHN0 ? 1.12 : 1), theta: 0.25, phi: 0.95, fov: 45, target: [0, -0.2, 0], min: 6, max: 28 },
     autoRotate: 0,
     build(ctx) {
@@ -82,6 +82,7 @@
       /* 2D '얼음판' 장면과 같은 구성(위에서 본 얼음판 위의 상자, 왼쪽 고리 · 오른쪽 고리 + 작용점 위/가운데/아래, 핀).
          힘 F(+ 오른쪽 / − 왼쪽, N)과 작용점은 2D의 값을 그대로 읽어 와요. 조작은 옆의 2D 조작판에서 해요. */
       const PX = 44.4, SLOTS = [-26 / 44.4, 0, 26 / 44.4], HOOK = 48 / 44.4, KN = 0.4, LIM = 3.4;
+      const bStart = root.children.length;
       const ice = new THREE.Mesh(new THREE.BoxGeometry(2 * LIM + 3.4, 0.2, 4.6), mat(0xcfe8ff, { roughness: 0.15, metalness: 0.1, transparent: true, opacity: 0.92 })); ice.position.y = -0.7; root.add(ice);
       for (let i = -3; i <= 3; i++) { const tk = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.02, 4.6), mat(0xb6d4ef)); tk.position.set(i * 1.1, -0.59, 0); root.add(tk); }
       const cart = new THREE.Group(); root.add(cart);
@@ -93,7 +94,151 @@
       const l1 = label('', a1, { size: 12.5, color: 'rgba(40,90,230,.92)' }), l2 = label('', a2, { size: 12.5, color: 'rgba(200,40,50,.92)' }), ln = label('', an, { size: 12.5, color: 'rgba(20,130,60,.92)' });
       const mkLine = (c, o) => new THREE.Line(new THREE.BufferGeometry().setFromPoints([new V3(-5.5, 0, 0), new V3(5.5, 0, 0)]), new THREE.LineDashedMaterial({ color: c, dashSize: 0.18, gapSize: 0.12, transparent: true, opacity: o }));
       const line = mkLine(0xffffff, 0.7), line2 = mkLine(0xff8a8a, 0.9); line.computeLineDistances(); line2.computeLineDistances(); root.add(line, line2);
-      label('작용선', [5.0, -0.5, 0], { size: 11, offset: [0, 0.3, 0] });
+      const lnLab = label('작용선', [5.0, -0.5, 0], { size: 11, offset: [0, 0.3, 0] });
+      const bObjs = root.children.slice(bStart);
+      const phEl = () => document.querySelector('.v3-player .v3-ph');
+
+      /* ===== 장면 A · 옆에서 본 「힘 실험대」: 찰흙 · 수레 · 멈춤대 (2D 1 px = 0.01 그림 단위) ===== */
+      const gA = new THREE.Group(); gA.visible = false; root.add(gA);
+      const gT = new THREE.Group(); gT.visible = false; root.add(gT);
+      gA.scale.setScalar(PHN0 ? 0.72 : 1); gT.scale.setScalar(PHN0 ? 0.58 : 0.68);
+      gA.position.y = -0.2;
+      const WP = 800, UNIT = 0.01, KA3 = 0.34;   // 힘 1 N당 화살표 길이 0.34
+      const xray = (g) => g.children.forEach((c) => { c.material.depthTest = false; c.renderOrder = 8; });
+      { const top = new THREE.Mesh(new THREE.BoxGeometry(7.6, 0.18, 2.4), mat(0xe0a96d, { roughness: 0.7 })); top.position.set(0, -0.09, 0); top.receiveShadow = true; gA.add(top);
+        [-3.4, 3.4].forEach((x) => [0.9, -0.9].forEach((z) => { const lg = new THREE.Mesh(new THREE.BoxGeometry(0.2, 1.3, 0.2), mat(0xa86a35)); lg.position.set(x, -0.83, z); gA.add(lg); })); }
+      const stopA = [0, 1].map(() => { const m = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.5, 1.0), mat(0xdc2626, { roughness: 0.5 })); m.castShadow = true; gA.add(m); return m; });
+      const claySeg = 44, clayRing = 10, clayGeo = new THREE.BufferGeometry();
+      { const pos = new Float32Array((claySeg + 1) * (clayRing + 1) * 3), idx = [];
+        for (let i = 0; i < claySeg; i++) for (let j = 0; j < clayRing; j++) { const a = i * (clayRing + 1) + j, b = a + 1, c = a + clayRing + 1, d = c + 1; idx.push(a, c, b, b, c, d); }
+        clayGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3)); clayGeo.setIndex(idx); }
+      const clayMesh = new THREE.Mesh(clayGeo, mat(0xfdb88a, { roughness: 0.75, side: THREE.DoubleSide })); clayMesh.frustumCulled = false; clayMesh.castShadow = true; gA.add(clayMesh);
+      let CTY = 382;
+      function setClay(pts) {
+        const P = clayGeo.attributes.position.array, n = claySeg;
+        for (let i = 0; i <= n; i++) {
+          const px = pts[Math.min(i, pts.length - 1)], x = (px.x - WP / 2) * UNIT, h = Math.max(0, (CTY - px.y) * UNIT), dz = 0.62 * Math.sqrt(Math.sin(Math.PI * i / n));
+          for (let j = 0; j <= clayRing; j++) { const a = Math.PI * j / clayRing, o = (i * (clayRing + 1) + j) * 3; P[o] = x; P[o + 1] = h * Math.sin(a); P[o + 2] = dz * Math.cos(a); }
+        }
+        clayGeo.attributes.position.needsUpdate = true; clayGeo.computeVertexNormals();
+      }
+      const cartA = new THREE.Group(); gA.add(cartA);
+      { const b = new THREE.Mesh(new THREE.BoxGeometry(1.18, 0.4, 0.8), mat(0x2563eb, { roughness: 0.4 })); b.position.y = 0.36; b.castShadow = true; cartA.add(b);
+        const st = new THREE.Mesh(new THREE.BoxGeometry(1.08, 0.07, 0.82), mat(0xfacc15)); st.position.y = 0.57; cartA.add(st); }
+      const wheelsA = [];
+      [[-0.47, 0.43], [0.47, 0.43], [-0.47, -0.43], [0.47, -0.43]].forEach(([x, z]) => { const w = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.1, 20), mat(0x1e293b, { roughness: 0.6 })); w.rotation.x = Math.PI / 2; w.add(new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.22, 0.12), mat(0xcbd5e1))); const g = new THREE.Group(); g.position.set(x, 0.15, z); g.add(w); cartA.add(g); wheelsA.push(g); });
+      { const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.18, 8), mat(0x64748b)); rod.rotation.z = Math.PI / 2; rod.position.set(0.68, 0.4, 0); cartA.add(rod);
+        const ring = new THREE.Mesh(new THREE.TorusGeometry(0.065, 0.025, 8, 18), mat(0x22c55e)); ring.position.set(0.8, 0.4, 0); cartA.add(ring); }
+      const arA = mkArrow(0xf97316, 0.06); gA.add(arA); arA.visible = false; xray(arA);
+      const arLab = label('', [0, 0, 0], { size: 12.5, color: 'rgba(200,90,10,.95)' });
+      const labClay = label('찰흙', [0, 1, 0], { size: 11.5 }), labCart = label('수레', [0, 1, 0], { size: 11.5 });
+      const cartHook = (x) => ({ hx: x + 59 + 12, hy: 382 - 15 - 1 - 40 + 23 });
+      const CLAY0 = (() => { const a = [], n = claySeg; for (let i = 0; i <= n; i++) { const t = Math.PI * i / n, c = Math.cos(t), s = Math.sin(t); a.push({ x: 132 + 58 * (c >= 0 ? 1 : -1) * Math.pow(Math.abs(c), 0.8), y: 382 - 62 * Math.pow(s, 0.85) }); } a[0].y = 382; a[n].y = 382; return a; })();
+      function dentClay(d) {
+        const out = CLAY0.map((p) => ({ x: p.x, y: p.y }));
+        out.forEach((p) => { const w = Math.exp(-((p.x - 132) * (p.x - 132) + (p.y - 330) * (p.y - 330)) / (2 * 32 * 32)); p.y = Math.min(382, p.y + 40 * d * w); p.x += (p.x - 132) * 0.16 * d * (1 - w); });
+        out[0].y = 382; out[claySeg].y = 382; return out;
+      }
+      function updA(dt, l) {
+        const A = l && l.A; CTY = l ? l.TY : 382;
+        const AXs = l ? l.AX : { stop: 256, cush: 758, home: 507 };
+        stopA[0].position.set((AXs.stop - WP / 2) * UNIT, 0.25, 0); stopA[1].position.set((AXs.cush - WP / 2) * UNIT + 0.11, 0.25, 0);
+        const xMax = AXs.cush - 11 - 71;
+        let pts, cx, wheel = 0, arr = null, sqL = 0, sqR = 0, ph = '';
+        if (pmode) {
+          const p = playP, home = AXs.home;
+          pts = dentClay(p < 0.1 ? 0 : p < 0.3 ? (p - 0.1) / 0.2 : 1);
+          cx = home;
+          if (p >= 0.56 && p < 0.88) { const tau = (p - 0.56) * 14, v = 4 * 45, tb = (xMax - home) / v; cx = Math.min(xMax, home + v * tau); if (tau > tb) sqR = Math.max(0, 1 - (tau - tb) * 4); }
+          else if (p >= 0.88) cx = xMax + (home - xMax) * Math.min(1, (p - 0.88) / 0.12);
+          wheel = (cx - home) / 15;
+          if (p >= 0.05 && p < 0.28) { const k = p < 0.1 ? (p - 0.05) / 0.05 : p > 0.22 ? Math.max(0, 1 - (p - 0.22) / 0.06) : 1; arr = { ox: 132, oy: 320, dx: 0, dy: 72 * k, F: 3, pose: 'push' }; }
+          if (p >= 0.44 && p < 0.6) { const k = p < 0.48 ? (p - 0.44) / 0.04 : p > 0.56 ? Math.max(0, 1 - (p - 0.56) / 0.04) : 1; const g = cartHook(home); arr = { ox: g.hx, oy: g.hy, dx: 96 * k, dy: 0, F: 4, pose: 'pull' }; }
+          ph = p < 0.4 ? '찰흙을 눌러요 · 모양이 변해요' : '수레를 당겨요 · 운동 상태가 변해요';
+        } else {
+          pts = A ? A.clay.pts : CLAY0; cx = A ? A.cart.x : 507; wheel = A ? A.cart.wheel : 0; sqL = A ? A.cush.L : 0; sqR = A ? A.cush.R : 0;
+          const src = A && (A.drag || (A.drawMode ? A.drawn : null) || A.rel);
+          if (A && src && A.arrow.shown) {
+            const k = A.arrow.k; let ox = src.x; if (src === A.rel && src.obj === 'cart') ox = A.cart.x + src.offX;
+            const F = src.F || (A.drawn && A.drawn.F) || 0;
+            if (Math.hypot(A.arrow.dx, A.arrow.dy) > 2 && F) arr = { ox, oy: src.y, dx: A.arrow.dx * k, dy: A.arrow.dy * k, F, pose: src.pose };
+          }
+        }
+        setClay(pts);
+        cartA.position.x = (cx - WP / 2) * UNIT; wheelsA.forEach((w) => { w.rotation.z = -wheel; });
+        stopA[0].scale.x = 1 - sqL * 0.3; stopA[1].scale.x = 1 - sqR * 0.3;
+        if (arr) {
+          const o = new V3((arr.ox - WP / 2) * UNIT, (CTY - arr.oy) * UNIT, 0), kk = KA3 / 24, v = new V3(arr.dx * kk, -arr.dy * kk, 0);
+          setArrow(arA, o, o.clone().add(v)); arLab.obj = [(o.x + v.x * 0.5) * gA.scale.x, (o.y + v.y * 0.5 + 0.5) * gA.scale.x - 0.2, 0.3]; arLab.set((arr.pose === 'push' ? '미는 힘 ' : '당기는 힘 ') + arr.F + ' N'); arLab.show(true);
+        } else { arA.visible = false; arLab.show(false); }
+        labClay.obj = [(pts[Math.floor(claySeg / 2)].x - WP / 2) * UNIT * gA.scale.x, 1.1 * gA.scale.x - 0.2, 0]; labCart.obj = [cartA.position.x * gA.scale.x, 0.95 * gA.scale.x - 0.2, 0];
+        const ph2 = phEl(); if (ph2) ph2.textContent = pmode ? ph : '';
+        setInfo((pmode ? '<b>▶ ' + ph + '</b><br>' : '') + (arr ? '<b>' + (arr.pose === 'push' ? '미는 힘 ' : '당기는 힘 ') + arr.F + ' N</b>: 화살표의 <b>시작점</b>은 작용점, <b>방향</b>은 힘의 방향, <b>길이</b>는 힘의 크기예요.<br>' : '') + '<b>힘</b>은 물체의 <b>모양</b>이나 <b>운동 상태</b>를 변하게 하는 원인이에요. 단위는 <b>N</b>(뉴턴)이에요.' + (pmode || arr ? '' : '<br>옆의 2D 화면에서 찰흙이나 수레를 끌었다 놓으면 3D도 같이 움직여요. 또는 ▶ 재생을 눌러 보세요.'));
+      }
+
+      /* ===== 장면 T · 줄다리기(위에서 본 모습): 왼쪽 팀 3명(300 N) · 오른쪽 팀 1~5명(1명 = 100 N) ===== */
+      const TS = 1 / 70, TRY = 0;         // 2D px → 그림 단위
+      { const f = new THREE.Mesh(new THREE.BoxGeometry(12, 0.1, 4.6), mat(0x86c97a, { roughness: 0.9 })); f.position.y = -0.05; f.receiveShadow = true; gT.add(f);
+        const c = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.02, 4.6), mat(0xffffff)); c.position.y = 0.01; gT.add(c);
+        [-1, 1].forEach((s) => { const m = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.02, 4.6), mat(0xe8f5e3)); m.position.set(s * 84 * TS, 0.012, 0); gT.add(m); }); }
+      const ropeM = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1, 12), mat(0xb8864b, { roughness: 0.8 })); ropeM.rotation.z = Math.PI / 2; ropeM.position.y = 0.8; gT.add(ropeM);
+      const flag = new THREE.Group(); { const f1 = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.34, 0.14), mat(0xef4444)); f1.position.y = 0.8; flag.add(f1); const f2 = new THREE.Mesh(new THREE.ConeGeometry(0.13, 0.4, 3), mat(0xdc2626)); f2.rotation.x = Math.PI; f2.position.y = 0.5; flag.add(f2); } gT.add(flag);
+      const KID = [];
+      function mkKid(team, i) {
+        const g = new THREE.Group(), col = team < 0 ? 0x2563eb : 0xe0a800, hair = [0x3b2a1e, 0x5b3a24, 0x1f2937, 0x7c4a2a, 0x2b2118][(i + (team > 0 ? 2 : 0)) % 5];
+        const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.17, 0.42, 4, 10), mat(col, { roughness: 0.55 })); body.position.y = 0.78; body.castShadow = true; g.add(body);
+        const head = new THREE.Mesh(new THREE.SphereGeometry(0.15, 14, 10), mat(0xf1c39b, { roughness: 0.6 })); head.position.y = 1.26; head.castShadow = true; g.add(head);
+        const hr = new THREE.Mesh(new THREE.SphereGeometry(0.155, 14, 10, 0, 6.283, 0, 1.9), mat(hair, { roughness: 0.8 })); hr.position.y = 1.28; hr.rotation.x = -0.25; g.add(hr);
+        [-0.09, 0.09].forEach((z) => { const lg = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.5, 8), mat(0x334155)); lg.position.set(-team * 0.0, 0.28, z); g.add(lg); });
+        const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1, 8), mat(0xf1c39b)); gT.add(arm);
+        const k = { g, arm, team, i }; gT.add(g); KID.push(k); return k;
+      }
+      for (let i = 0; i < 3; i++) mkKid(-1, i);
+      for (let i = 0; i < 5; i++) mkKid(1, i);
+      const arL = mkArrow(0xf97316, 0.06), arR = mkArrow(0xf97316, 0.06), arN = mkArrow(0x7c3aed, 0.085); gT.add(arL, arR, arN); [arL, arR, arN].forEach(xray);
+      const tL = label('왼쪽 팀 300 N', [0, 0, 0], { size: 12.5, color: 'rgba(200,90,10,.95)' }), tR = label('', [0, 0, 0], { size: 12.5, color: 'rgba(200,90,10,.95)' }), tN = label('', [0, 0, 0], { size: 12.5, color: 'rgba(110,50,200,.95)' });
+      const kidX = (team, i) => (team * (116 + i * 48)) * TS * 1.0;     // 줄 가운데가 0
+      const tgState = { xo: 0, n: 1 };
+      const tmpV = new V3(), tmpE = new THREE.Euler();
+      function updT(dt, l, tt) {
+        const TG = l && l.TG;
+        let n = TG ? TG.n : 1, xo = TG ? TG.xo : 0, pops = TG ? TG.pop.map((s) => Math.max(0, Math.min(1, s.value))) : null, running = TG ? TG.st === 'run' || TG.st === 'tie' : false, ph = '';
+        if (pmode) {
+          const p = playP, k = Math.min(4, Math.floor(p * 5)), q = p * 5 - k, tau = q * 3.2;
+          n = k + 1; const nf = n * 100 - 300;
+          xo = nf === 0 ? Math.sin(tau * 7) * 1.2 : Math.max(-84, Math.min(84, 0.5 * 0.45 * nf * Math.max(0, tau - 0.4) * Math.max(0, tau - 0.4)));
+          if (q > 0.85) xo *= 1 - (q - 0.85) / 0.15;
+          pops = [0, 1, 2, 3, 4].map((j) => (j < n ? 1 : 0)); running = true;
+          ph = '오른쪽 팀 ' + n + '명 (' + n * 100 + ' N)' + (nf === 0 ? ' · 힘의 평형' : '');
+        }
+        const net = n * 100 - 300, fx = xo * TS;
+        // 줄 · 깃발
+        const x1 = (kidX(-1, 2) - 0.65), x2 = kidX(1, 4) + 0.65 + 0;
+        ropeM.scale.y = x2 - x1; ropeM.position.x = (x1 + x2) / 2 + fx; flag.position.x = fx;
+        KID.forEach((kd) => {
+          const side = kd.i % 2 === 0 ? -1 : 1, z = side * 19 * TS * 1.0, pop = kd.team < 0 ? 1 : (pops ? pops[kd.i] : (kd.i < n ? 1 : 0));
+          const bx = kidX(kd.team, kd.i) + fx;
+          kd.g.visible = kd.arm.visible = pop > 0.02; if (pop <= 0.02) return;
+          const jig = running ? Math.sin(tt * 9 + kd.i * 1.7 + kd.team) * 0.025 : 0, lean = -kd.team * (0.3 + (running ? 0.12 : 0)) + jig;
+          kd.g.position.set(bx, 0, z + side * 0.2); kd.g.rotation.set(0, 0, lean); kd.g.scale.setScalar(0.6 + 0.4 * pop);
+          // 어깨 → 줄을 잡은 손
+          tmpV.set(0, 0.95, 0).applyEuler(tmpE.set(0, 0, lean)).multiplyScalar(0.6 + 0.4 * pop).add(kd.g.position);
+          const hand = new V3(bx - kd.team * 0.1, 0.8, 0), len = tmpV.distanceTo(hand);
+          kd.arm.scale.y = len; kd.arm.position.copy(tmpV).add(hand).multiplyScalar(0.5); kd.arm.quaternion.setFromUnitVectors(Yax, hand.clone().sub(tmpV).normalize());
+        });
+        // 힘 화살표 (줄 가운데 위, 같은 작용선): 1칸 = 100 N = 0.5
+        const KT3 = 0.5 / 100, ay = 1.9;
+        setArrow(arL, new V3(fx, ay, 0), new V3(fx - 300 * KT3, ay, 0)); setArrow(arR, new V3(fx, ay, 0), new V3(fx + n * 100 * KT3, ay, 0));
+        tL.obj = [(fx - 150 * KT3) * gT.scale.x, ay * gT.scale.x + 0.1, 0]; tL.off = [0, 0.35, 0];
+        tR.obj = [(fx + n * 50 * KT3) * gT.scale.x, ay * gT.scale.x + 0.1, 0]; tR.off = [0, -0.35, 0]; tR.set('오른쪽 팀 ' + n * 100 + ' N'); tR.show(true); tL.show(true);
+        if (net !== 0) { setArrow(arN, new V3(fx, ay - 0.9, 0), new V3(fx + net * KT3, ay - 0.9, 0)); tN.set('합력 ' + (net > 0 ? '→ ' : '← ') + Math.abs(net) + ' N'); }
+        else { arN.visible = false; tN.set('합력 0 N'); }
+        tN.obj = [(fx + net * KT3 / 2) * gT.scale.x, (ay - 0.9) * gT.scale.x, 0]; tN.off = [0, 0.35, 0]; tN.show(true);
+        const ph2 = phEl(); if (ph2) ph2.textContent = pmode ? ph : '';
+        const a = Math.max(n * 100, 300), b = Math.min(n * 100, 300);
+        setInfo((pmode ? '<b>▶ ' + ph + '</b><br>' : '') + '<b>' + (net ? '합력 = ' + a + ' N − ' + b + ' N = ' + Math.abs(net) + ' N (' + (net > 0 ? '오른쪽' : '왼쪽') + ')' : '합력 = 300 N − 300 N = 0') + '</b><br>' +
+          (net === 0 ? '<b>힘의 평형</b>: 크기가 같고 방향이 반대이고 같은 작용선 위여서 깃발이 가운데에 그대로 있어요.' : '두 팀의 힘이 다르면 <b>큰 힘 쪽</b>으로 깃발이 끌려가요. (1칸 = 100 N)') + (pmode ? '' : '<br>오른쪽 팀 인원은 옆의 2D 화면에서 바꿔요.'));
+      }
       const yAx = new V3(0, 1, 0), tmpP = new V3();
 
       /* ▶ 재생: 2D 실험과 같은 네 장면을 차례로 (핀을 꽂은 채 힘 정하기 → 핀 빼기 → 운동) */
@@ -103,7 +248,7 @@
         { F: [-4, 4], slot: 1, name: '크기 같고 반대 · 같은 작용선' },
         { F: [-3, 3], slot: 0, name: '크기 같고 반대 · 작용선 다름' },
       ];
-      let pmode = false, built = false, playP = 0, sig = '', lastTxt = '';
+      let pmode = false, built = false, playP = 0, sig = '', lastTxt = '', curSc = 'B';
       const pl = controls.player({
         duration: 14, loop: true, autoplay: false, label: '재생',
         phases: SC.map((s, i) => [i / SC.length, s.name]),
@@ -122,8 +267,16 @@
       }
 
       return {
-        update(dt) {
+        update(dt, tt) {
           const l = L0(), B = l && l.B, sc = l ? l.scene : 'B';
+          if (sc !== curSc) { curSc = sc; if (pmode) { pmode = false; pl.pause(); } }
+          const isB = sc !== 'A' && sc !== 'T';
+          bObjs.forEach((o) => { o.visible = isB; }); gA.visible = sc === 'A'; gT.visible = sc === 'T';
+          lnLab.show(isB);
+          [arLab, labClay, labCart].forEach((x) => { if (sc !== 'A') x.show(false); else if (x !== arLab) x.show(true); });
+          [tL, tR, tN].forEach((x) => { if (sc !== 'T') x.show(false); });
+          if (sc === 'A') { updA(dt, l); return; }
+          if (sc === 'T') { updT(dt, l, tt || 0); return; }
           let F0 = 0, F1 = 0, slot = 1, x = 0, z = 0, th = 0, pinned = true;
           if (pmode) {
             const n = SC.length, k = Math.min(n - 1, Math.floor(playP * n)), q = playP * n - k, tau = q * 4.2;  // 한 장면 = 4.2초 분량
@@ -156,8 +309,7 @@
           line.position.z = 0; line2.position.z = hz2; line2.visible = slot !== 1; line.visible = true;
           // 안내
           let txt;
-          if (sc && sc !== 'B') txt = '<b>힘의 합력과 평형</b>은 얼음판 장면에서 알아봐요. (이 장면은 2D 화면에서 해 보세요)';
-          else {
+          {
             const bal = net === 0 && slot === 1, spin = net === 0 && slot !== 1 && F1 !== 0;
             txt = (pmode ? '<b>▶ ' + SC[Math.min(SC.length - 1, Math.floor(playP * SC.length))].name + '</b><br>' : '') + '<b>' + formula(F0, F1) + '</b>' + (net !== 0 ? ' (' + (net > 0 ? '오른쪽' : '왼쪽') + ')' : '') + '<br>';
             if (F0 === 0 && F1 === 0) txt += '핀을 꽂은 채 옆의 2D 조작판에서 두 힘을 정하고 ▶ 핀 빼기를 눌러 보세요.';

@@ -67,7 +67,32 @@
         });
         const nn = ST[st][2];
         info('<b>' + ST[st][0] + '</b><br>' + ST[st][1] + (st >= 2 ? '<br>세포 수 <b>' + nn + '개</b> · 세포 하나의 부피 <b>수정란의 1/' + nn + '</b> · 전체 부피는 <b>그대로</b>(수정란 = 1)' : ''));
-        labEgg.set(st === 0 ? '난자' : st === 1 ? '수정란' : nn + '세포'); labZ.show(names);
+        labEgg.set(st === 0 ? '난자' : st === 1 ? '수정란' : nn + '세포'); labZ.show(false);
+      }
+      /* 비교 보기: 보통의 체세포분열(분열 사이에 자라요) vs 난할(자라지 않고 바로 분열해요) — 2D 비교 보기와 같아요 */
+      const cmpG = new THREE.Group(); cmpG.visible = false; root.add(cmpG); if (PHN) cmpG.scale.setScalar(0.6);
+      const CR0 = 0.72, cmpC = [];
+      const mkC = (col, row) => { const b = new THREE.Mesh(cellG, sm(col, { transparent: true, opacity: 0.85, roughness: 0.35 })); const n = new THREE.Mesh(nucG, sm(0xb45309, { roughness: 0.5 })); n.scale.setScalar(0.3); b.add(n); cmpG.add(b); return b; };
+      const ROWY = [1.55, -1.55], COLX = [-3.0, 0, 3.0];
+      const specs = [  // [행, 열, 개수 중 몇째, 개수, 등장 시각]
+        [0, 0, 0, 1, 0], [0, 1, 0, 2, 1.2], [0, 1, 1, 2, 1.2], [0, 2, 0, 2, 3.6], [0, 2, 1, 2, 3.6],
+        [1, 0, 0, 1, 0], [1, 1, 0, 2, 1.2], [1, 1, 1, 2, 1.2], [1, 2, 0, 4, 3.6], [1, 2, 1, 4, 3.6], [1, 2, 2, 4, 3.6], [1, 2, 3, 4, 3.6],
+      ];
+      specs.forEach((sp2) => cmpC.push({ sp: sp2, m: mkC(sp2[0] ? 0xf9a8d4 : 0xfcd9a8) }));
+      const KS = PHN ? 0.6 : 1, cmpL = [label('보통의 체세포분열 · 분열 사이에 세포가 자라요', cmpG, { offset: [0, (ROWY[0] + 1.25) * KS, 0], size: 13, color: 'rgba(68,80,106,.95)' }), label('난할 · 자라지 않고 바로 분열해요', cmpG, { offset: [0, (ROWY[1] + 1.25) * KS, 0], size: 13, color: 'rgba(209,51,122,.95)' })];
+      cmpL.forEach((l) => l.show(false));
+      const cmpNote = { show() {}, set() {} };
+      function cmpFrame(t) {
+        const u = t % 9.5, fade = u > 8.6 ? 1 - (u - 8.6) / 0.9 : 1, sm2 = (a, b) => { const x = Math.max(0, Math.min(1, (u - a) / (b - a))); return x * x * (3 - 2 * x); };
+        cmpC.forEach((c) => {
+          const [row, col, i, n, t0] = c.sp, appear = col === 0 ? 1 : sm2(t0, t0 + 0.6);
+          const r2 = CR0 * Math.pow(1 / n, 1 / 3) * (n === 1 ? 1 : 1);
+          let r = CR0;
+          if (row === 0) r = col === 0 ? CR0 : col === 1 ? CR0 * (0.79 + 0.21 * sm2(1.4, 2.8)) : CR0;
+          else r = col === 0 ? CR0 : col === 1 ? CR0 * Math.pow(0.5, 1 / 3) : CR0 * Math.pow(0.25, 1 / 3);
+          const off = n === 1 ? [0, 0] : n === 2 ? [(i ? 1 : -1) * r * 1.02, 0] : [(i & 1 ? 1 : -1) * r * 1.02, (i & 2 ? 1 : -1) * r * 1.02];
+          c.m.position.set(COLX[col] + off[0], ROWY[row] + off[1], 0); c.m.scale.setScalar(Math.max(0.0001, r * appear * fade)); c.m.visible = appear * fade > 0.02;
+        });
       }
       /* 정자 */
       const NSP = 7, tails = new THREE.InstancedMesh(new THREE.SphereGeometry(0.045, 8, 6), sm(0xe2e8f0, { roughness: 0.5 }), NSP * 12), heads = new THREE.InstancedMesh(new THREE.SphereGeometry(0.14, 14, 10), sm(0x93c5fd, { roughness: 0.3 }), NSP);
@@ -80,7 +105,8 @@
       const pF = controls.player({ duration: 8, loop: true, label: '수정', phases: [[0, '정자 출발'], [0.3, '난자에 다가가요'], [0.6, '핵이 다가가요'], [0.85, '수정란']], onFrame() { if (!ign) act = tnow; } });
       const pC = controls.player({ duration: 14, loop: true, label: '난할', phases: [[0, '수정란'], [1 / 6, '2세포'], [2 / 6, '4세포'], [3 / 6, '8세포'], [4 / 6, '16세포'], [5 / 6, '32세포']], onFrame() { if (!ign) act = tnow; } });
       const rows = Array.from(nb.parentNode.querySelectorAll('.v3-player')), rowF = rows[0], rowC = rows[1];
-      let mode = 'fert'; rowC.style.display = 'none';
+      let lastSc = null, mode = 'fert'; rowC.style.display = 'none';
+      const cmpBtn = controls.button('비교 보기', () => { const b = document.getElementById('cmpBtn'); if (b) b.click(); }); cmpBtn.style.display = 'none';
       const click2 = (q) => { const b = document.querySelector(q); if (b) b.click(); };
       const click = (id) => { const b = document.getElementById(id); if (b && !b.disabled) b.click(); };
       const FTP = { idle: 0, swim: 0.12, enter: 0.3, zoom: 0.45, approach: 0.62, fuse: 0.8, done: 0.98 };
@@ -93,6 +119,10 @@
           if (L) {
             const sc = L.scene, fert = sc === 'fert';
             if (fert !== (mode === 'fert')) { mode = fert ? 'fert' : 'cleave'; rowF.style.display = fert ? '' : 'none'; rowC.style.display = fert ? 'none' : ''; }
+            if (sc !== lastSc) { lastSc = sc; if (sc === 'clay') info('<b>발생 모형 순서 놓기</b>는 2D 화면에서 끌어서 해요.<br>3D에서는 ▶ 난할로 세포가 1 → 2 → 4 → 8 → 32개로 늘어나는 모습을 보며 순서를 떠올려 봐요.'); else if (sc === 'graph') info('<b>그래프 읽기</b>는 2D 화면에서 해요.<br>\'비교 보기\'를 누르면 보통의 체세포분열과 난할을 3D로 비교해요.'); }
+            const showCmp = sc === 'graph' && !!L.G.cmp; cmpBtn.style.display = sc === 'graph' ? '' : 'none'; cmpBtn.classList.toggle('on', showCmp);
+            if (showCmp !== cmpG.visible) { cmpG.visible = showCmp; cmpL.forEach((l) => l.show(showCmp)); cmpNote.show(showCmp); labEgg.show(!showCmp); zona.visible = !showCmp; if (!showCmp) { apply(); } else info('<b>보통의 체세포분열 vs 난할</b><br>보통은 분열 사이에 세포가 자라서 크기가 그대로예요. 난할은 자라지 않고 바로 분열해서 세포가 점점 작아져요.'); }
+            if (showCmp) { cmpG.rotation.y = Math.atan2(ctx.camera.position.x, ctx.camera.position.z); cmpFrame(t); cmpNote.set('세포 수는 늘지만 난할의 세포는 점점 작아져요'); }
             const driving = tnow - act < 1.2;
             if (fert) {
               const ph = L.FT.ph || 'idle', p2 = FTP[ph] != null ? FTP[ph] : 0;
@@ -113,13 +143,13 @@
           }
           const k = 1 - Math.exp(-dt * 5);
           cells.forEach((c, i) => {
-            c.p.lerp(c.tp, k); c.r += (c.tr - c.r) * k; c.m.position.copy(c.p); c.m.scale.setScalar(Math.max(0.0001, c.r)); c.m.visible = c.r > 0.02;
+            c.p.lerp(c.tp, k); c.r += (c.tr - c.r) * k; c.m.position.copy(c.p); c.m.scale.setScalar(Math.max(0.0001, c.r)); c.m.visible = c.r > 0.02 && !cmpG.visible;
             c.nuc.scale.setScalar(st === 0 ? 0.42 : st === 1 ? 0.3 : Math.max(0.2, 0.35 * (st === 7 ? 0.9 : 1))); c.nuc.position.set(0.0, 0.0, 0.0);
             c.m.material.color.set(i < 52 || st < 7 ? 0xfcd9a8 : 0xf9a8d4);
           });
           zona.scale.setScalar(st === 0 ? 1 : 0.97 + Math.sin(t) * 0.004);
           /* 정자 */
-          const show = st === 0; heads.visible = tails.visible = show; labS.show(show && names);
+          const show = st === 0 && !cmpG.visible; heads.visible = tails.visible = show; labS.show(show && names);
           if (show) {
             sp.forEach((s, i) => {
               const u = Math.min(1, ((t * 0.16 * s.sp + s.off) % 1.25) / 1.0), tx = -R * 1.28, dir = new V3(Math.cos(s.a), Math.sin(s.a) * 0.6, Math.sin(s.a * 2) * 0.5);

@@ -8,7 +8,7 @@
   window.SciSim3D.attach({
     title: '물속의 부력 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    levels: [2],
+    levels: [0, 1, 2, 3],
     camera: { dist: 15 * (PHN0 ? 1.05 : 1), theta: 0.3, phi: 1.38, fov: 45, target: [0.4, 1.9, 0], min: 6, max: 34 },
     autoRotate: 0,
     build(ctx) {
@@ -84,6 +84,7 @@
       const WL = 0.6, TB = -2.2, TW = 3.0, TD = 1.7, PXU = 50;          // 수면 · 수조 바닥 · 수조 반폭 · 반깊이 · 2D 픽셀→그림 단위
       const HC = 98 / PXU, RC = 27 / PXU, RB = 38 / PXU;                // 원기둥 높이·반지름, 공 반지름
       const CYW = 5.0, CYFB = 1.96, BW = 1.0, BFB = 4.0;                // 2D와 같은 값 (N)
+      const bStart = root.children.length;
       const tank = new THREE.Mesh(new THREE.BoxGeometry(2 * TW, 5.6, 2 * TD), glass(0xcfe6ff, 0.12)); tank.position.y = TB + 2.8; root.add(tank);
       { const te = new THREE.LineSegments(new THREE.EdgesGeometry(tank.geometry), new THREE.LineBasicMaterial({ color: 0x9cc3ff })); te.position.copy(tank.position); root.add(te); }
       const water = new THREE.Mesh(new THREE.BoxGeometry(2 * TW - 0.06, 1, 2 * TD - 0.06), glass(0x3d9cff, 0.3, { side: THREE.FrontSide })); root.add(water);
@@ -110,11 +111,134 @@
       const rdLab = label('', sc, { size: 13, color: 'rgba(30,64,175,.92)', offset: [1.0, 0.2, 0] });
       const dpLab = label('', [TW, WL, 0], { size: 12, color: 'rgba(30,64,175,.92)', offset: [0.2, 0.5, 0] });
 
+      /* ===== 마찰력 장면 F(관찰) · L(저울로 재기) · C(생활): 2D와 같은 도막 · 접촉면 · 힘 화살표 (2D 1 px = 0.01 그림 단위) ===== */
+      const bObjs = root.children.slice(bStart);
+      const bLabs = [hand, wLab, bLab, tLab, rdLab, dpLab];
+      const gF = new THREE.Group(); gF.visible = false; root.add(gF);
+      const GS = PHN0 ? 0.7 : 1.75; gF.scale.setScalar(GS); gF.position.set(0, 1.4, 0);
+      const FW = 8, BWD = 1.12, BHT = 0.6, BDP = 0.9, NPXF = 24, SURFS = { glass: { name: '유리', f: 1.2 }, wood: { name: '나무', f: 2.0 }, sand: { name: '사포', f: 3.5 } };
+      const gx = (px) => (px - 400) * 0.01;
+      const surfTex = {
+        wood: canvasTex(256, 64, (c, w, h) => { c.fillStyle = '#e6bf8a'; c.fillRect(0, 0, w, h); c.strokeStyle = 'rgba(120,70,30,.35)'; c.lineWidth = 2; for (let k = 0; k < 6; k++) { c.beginPath(); c.moveTo(0, 6 + k * 10); for (let x = 0; x <= w; x += 16) c.lineTo(x, 6 + k * 10 + Math.sin(x * 0.07 + k) * 2); c.stroke(); } }),
+        sand: canvasTex(256, 64, (c, w, h) => { c.fillStyle = '#d9954f'; c.fillRect(0, 0, w, h); for (let i = 0; i < 900; i++) { c.fillStyle = Math.random() < 0.5 ? 'rgba(110,60,15,.6)' : 'rgba(255,230,180,.7)'; c.fillRect(Math.random() * w, Math.random() * h, 1.6, 1.6); } }),
+      };
+      const stripF = {
+        wood: new THREE.Mesh(new THREE.BoxGeometry(FW, 0.44, 2.2), mat(0xffffff, { map: surfTex.wood, roughness: 0.75 })),
+        sand: new THREE.Mesh(new THREE.BoxGeometry(FW, 0.44, 2.2), mat(0xffffff, { map: surfTex.sand, roughness: 1 })),
+        glass: new THREE.Mesh(new THREE.BoxGeometry(FW, 0.44, 2.2), mat(0xa8d8f2, { roughness: 0.05, metalness: 0.1, transparent: true, opacity: 0.85 })),
+      };
+      Object.keys(stripF).forEach((k) => { stripF[k].position.y = -0.22; stripF[k].receiveShadow = true; gF.add(stripF[k]); });
+      { const bench = new THREE.Mesh(new THREE.BoxGeometry(FW + 0.4, 0.9, 2.5), mat(0xa86a35, { roughness: 0.8 })); bench.position.y = -0.89; gF.add(bench); }
+      const woodMat = mat(0xb9733a, { roughness: 0.7 });
+      const blocksF = [0, 1].map((k) => { const b = new THREE.Mesh(new THREE.BoxGeometry(BWD, BHT, BDP), woodMat); b.castShadow = true; b.position.y = BHT / 2 + k * BHT; gF.add(b); return b; });
+      const hookF = new THREE.Mesh(new THREE.TorusGeometry(0.07, 0.025, 8, 16), mat(0x475569, { metalness: 0.6 })); gF.add(hookF);
+      const segF = [0, 1].map(() => { const m = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 1, 8), mat(0xa16207, { roughness: 0.8 })); gF.add(m); return m; });
+      const handleF = new THREE.Mesh(new THREE.SphereGeometry(0.16, 16, 12), mat(0xe9b86a, { roughness: 0.5 })); gF.add(handleF);
+      const faF = mkArrow(0xb45309, 0.07), paF = mkArrow(0xf97316, 0.07), mvF = mkArrow(0x64748b, 0.07); gF.add(faF, paF, mvF); [faF, paF, mvF].forEach((g) => g.children.forEach((c) => { c.material.depthTest = false; c.renderOrder = 8; }));
+      const faLab = label('', [0, 0, 0], { size: 12.5, color: 'rgba(160,80,10,.95)' }), paLab = label('', [0, 0, 0], { size: 12.5, color: 'rgba(200,90,10,.95)' }), mvLab = label('운동 방향', [0, 0, 0], { size: 11.5, color: 'rgba(80,95,115,.95)' });
+      const wtLab = label('', [0, 0, 0], { size: 12, color: 'rgba(120,70,30,.95)' });
+      // 용수철저울 (장면 L): 유리관 + 늘어나는 막대 + 눈금판
+      const sclF = new THREE.Group(); gF.add(sclF);
+      const sBody = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 1.28, 20), glass(0xe8f1ff, 0.4)); sBody.rotation.z = Math.PI / 2; sclF.add(sBody);
+      const sSpr = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 1, 14, 1, true), mat(0xcbd5e1, { metalness: 0.7, wireframe: true })); sSpr.rotation.z = Math.PI / 2; sclF.add(sSpr);
+      const sRod = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1, 10), mat(0x64748b, { metalness: 0.5 })); sRod.rotation.z = Math.PI / 2; sclF.add(sRod);
+      const sRing = new THREE.Mesh(new THREE.TorusGeometry(0.07, 0.022, 8, 16), mat(0x334155)); sclF.add(sRing);
+      const sStem = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.8, 8), mat(0x94a3b8)); sStem.position.set(0.64, 0.42, 0); sclF.add(sStem);
+      const dialF = makeDial(0.62, 10, 'N', 1, 2); dialF.position.set(0.64, 1.1, 0); sclF.add(dialF);
+      const mxNeedle = new THREE.Group(); mxNeedle.position.z = 0.21; { const nb = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.045, 0.03), mat(0x64748b)); nb.position.x = 0.2; mxNeedle.add(nb); } dialF.add(mxNeedle);
+      const rdF = label('', [0, 0, 0], { size: 13, color: 'rgba(15,23,42,.92)' }), mxF = label('', [0, 0, 0], { size: 11.5, color: 'rgba(80,95,115,.95)' });
+      // 장면 C: 거친 면과 매끄러운 면 비교는 같은 도막 · 접촉면을 한 쌍씩 놓아요
+      const gC = new THREE.Group(); gC.visible = false; root.add(gC); gC.scale.setScalar(PHN0 ? 0.7 : 1.5); gC.position.set(0, 1.5, 0);
+      const cPair = ['sand', 'glass'].map((k, i) => {
+        const x = i === 0 ? -2.1 : 2.1, g = new THREE.Group(); g.position.x = x; gC.add(g);
+        const st = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.4, 2.0), k === 'sand' ? mat(0xffffff, { map: surfTex.sand, roughness: 1 }) : mat(0xa8d8f2, { roughness: 0.05, transparent: true, opacity: 0.85 })); st.position.y = -0.2; g.add(st);
+        const b = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.55, 0.85), woodMat); b.position.y = 0.275; b.castShadow = true; g.add(b);
+        const ar = mkArrow(0xb45309, 0.07); ar.children.forEach((c) => { c.material.depthTest = false; c.renderOrder = 8; }); g.add(ar);
+        return { g, k, b, ar, lab: label('', [x * gC.scale.x, 0, 0], { size: 12.5, color: 'rgba(160,80,10,.95)' }), cap: label('', [x * gC.scale.x, 0, 0], { size: 12, color: 'rgba(30,64,175,.92)' }) };
+      });
+      const SURFN = { glass: '유리', wood: '나무', sand: '사포' };
+      let fPh = '';
+      function ropePose(ex, dxPx) {      // 도막 고리 → 손잡이: 팽팽하면 곧게, 느슨하면 처져요
+        const hx = gx(FR_.x + 59), hy = BHT / 2, sag = Math.max(0, 52 - dxPx) * 0.0055 + (dxPx < 52 ? 0.04 : 0), mx = (hx + ex) / 2;
+        hookF.position.set(hx, hy, 0); handleF.position.set(ex, hy, 0);
+        [[hx, hy, mx, hy - sag], [mx, hy - sag, ex, hy]].forEach((s, i) => {
+          const a = new V3(s[0], s[1], 0), b = new V3(s[2], s[3], 0), d = b.clone().sub(a);
+          segF[i].visible = true; segF[i].scale.y = Math.max(0.01, d.length()); segF[i].position.copy(a).add(b).multiplyScalar(0.5); segF[i].quaternion.setFromUnitVectors(Yax, d.normalize());
+        });
+      }
+      let FR_ = { x: 380 };
+      // 재생용 상태 계산
+      function playF(p) {      // 장면 F: 줄을 당기고 → 2 N에서 움직이기 시작 → 놓으면 미끄러져 멈춰요
+        const T = p * 18; let x = 380, dx = 38, st = 'idle', fr = 0, pa = 0, v = 0, ph = '살짝 당겨 보아요';
+        const NP = 24;
+        if (T < 4) { const q = Math.min(1, T / 2.5), Nn = 1.6 * q; dx = 52 + NP * Nn; pa = Nn; fr = -Nn; ph = '살짝 당겨도 도막은 가만히 있어요 (마찰력 = 당기는 힘)'; }
+        else if (T < 5.5) { const q = (T - 4) / 1.5, Nn = 1.6 + 0.4 * q; dx = 52 + NP * Nn; pa = Nn; fr = -Nn; ph = '2 N까지 당겨요'; }
+        else if (T < 9) { const tau = T - 5.5; v = 70; x = 380 + v * tau; dx = 52 + NP * 2; pa = 2; fr = -2; ph = '2 N을 넘기면 움직이기 시작해요'; st = 'pdrag'; }
+        else if (T < 12) { const tau = T - 9, v0 = 150, tstop = v0 / 300, t2 = Math.min(tau, tstop); x = 380 + 70 * 3.5 + v0 * t2 - 150 * t2 * t2; v = tau < tstop ? v0 - 300 * tau : 0; fr = v > 0 ? -2 : 0; dx = 38; ph = '놓으면 미끄러지다가 마찰력 때문에 멈춰요'; st = 'slide'; }
+        else { const q = Math.min(1, (T - 12) / 4), e = q * q * (3 - 2 * q); x = (380 + 70 * 3.5 + 150 * 150 / 300 / 2) + (380 - (380 + 70 * 3.5 + 150 * 150 / 300 / 2)) * e; ph = '처음 자리로 돌아가요'; dx = 38; }
+        return { x, dx, fr, pa, v, st, ph, surf: 'wood', blocks: 1 };
+      }
+      const TRIALS = [['glass', 1], ['wood', 1], ['sand', 1], ['wood', 2]];
+      function playL(p) {      // 장면 L: 접촉면과 도막 수를 바꿔 가며 움직이기 시작할 때의 눈금을 재요
+        const T = p * 18, k = Math.min(3, Math.floor(T / 4.5)), tt = T - k * 4.5, [surf, blocks] = TRIALS[k], fs = SURFS[surf].f * blocks;
+        const tRamp = 0.5 + fs / 1.5; let F = 0, maxF = 0, x = 232, hold = false;
+        if (tt < 0.5) F = 0; else if (tt < tRamp) { F = 1.5 * (tt - 0.5); maxF = F; hold = true; } else if (tt < tRamp + 1.3) { const s = tt - tRamp; F = fs; maxF = fs; x = 232 + 46 * (1 - Math.exp(-7 * s) * (Math.cos(16 * s) + 0.44 * Math.sin(16 * s))); hold = true; } else { F = fs; maxF = fs; x = 232 + 46 * (1 - Math.exp(-7 * 1.3) * 0); }
+        return { x, F, maxF, surf, blocks, hold, ph: SURFN[surf] + ' · 도막 ' + blocks + '개: ' + (maxF >= fs - 1e-6 ? '움직이기 시작! 마찰력 ' + fs.toFixed(1) + ' N' : '서서히 당겨요') };
+      }
+      function updFL(dt, l, sc, tt) {
+        const f = l && l.FR; const surfTop = 0;
+        let S;
+        if (sc === 'F') {
+          if (pmode) S = playF(pP); else S = f ? { x: f.x, dx: f.pull.dx, fr: f.fr.dx * f.fr.k / NPXF, pa: f.pa.dx * f.pa.k / NPXF, v: f.st === 'slide' ? f.v : f.st === 'pdrag' ? f.pull.sv : 0, st: f.st, surf: 'wood', blocks: 1, ph: '' } : playF(0);
+        } else {
+          if (pmode) S = playL(pP); else S = f ? { x: f.x, F: Math.max(0, f.gauge.value), maxF: f.maxNeedle, surf: f.surf, blocks: f.blocks, hold: f.hold, ph: '' } : { x: 232, F: 0, maxF: 0, surf: 'wood', blocks: 1, ph: '' };
+        }
+        FR_ = S; Object.keys(stripF).forEach((k) => { stripF[k].visible = k === S.surf; });
+        const bx = gx(S.x); blocksF.forEach((b, k) => { b.position.x = bx; b.visible = k < S.blocks; });
+        wtLab.obj = [bx * GS, (BHT * S.blocks * 0.5 + 1.4) * GS + 0.05, 0]; wtLab.set('도막 ' + (S.blocks * 5) + ' N · ' + SURFN[S.surf]); wtLab.show(true); wtLab.off = [0, 0.7, 0];
+        let fr = 0, pa = 0, v = 0;
+        if (sc === 'F') {
+          const ex = gx(S.x + 59 + 8 + S.dx); ropePose(ex, S.dx); fr = S.fr; pa = S.pa; v = S.v;
+          sclF.visible = false; rdF.show(false); mxF.show(false);
+        } else {
+          segF.forEach((s) => { s.visible = false; }); handleF.visible = false;
+          const hx = gx(S.x + 59), hy = BHT * 0.5, ext = Math.max(0, S.F) * 0.12;
+          hookF.position.set(hx, hy, 0); sclF.visible = true; sclF.position.set(hx + 0.12, hy, 0);
+          sBody.position.x = 0.7; sSpr.position.x = 0.7; sSpr.scale.y = 1.2 + ext * 0.5; sRod.scale.y = 0.4 + ext + 0.1; sRod.position.x = 1.34 + ext / 2; sRing.position.x = 1.38 + ext; sRing.rotation.y = Math.PI / 2;
+          sStem.position.x = 0.7; dialF.position.set(0.7, 1.15, 0);
+          dialF.userData.set(S.F); mxNeedle.rotation.z = (-225 + 270 * Math.min(10, S.maxF) / 10) * Math.PI / 180; mxNeedle.visible = S.maxF > 0.02;
+          rdF.obj = [(hx + 0.82) * GS, 1.4 * GS + 0.05, 0.9 * GS]; rdF.set('<b>' + S.F.toFixed(1) + ' N</b>'); rdF.show(true); rdF.off = [0.9, 0.55, 0];
+          mxF.obj = [(hx + 0.82) * GS, 1.4 * GS + 0.05, 0.9 * GS]; mxF.set('최대 ' + S.maxF.toFixed(1) + ' N'); mxF.show(S.maxF > 0.02); mxF.off = [0.9, 0.0, 0];
+          hookF.visible = true; fr = -S.F; pa = S.F;
+        }
+        // 화살표: 당기는 힘(주황) · 마찰력(갈색) · 운동 방향(회색), 1 N = 0.3
+        const K = 0.3, hy2 = BHT * 0.5, ay = -0.12;
+        const hxA = gx(S.x + 59) + 0.1;
+        if (Math.abs(pa) > 0.05) { const o = new V3(hxA, hy2 + 0.55, 0.65); setArrow(paF, o, o.clone().add(new V3(pa * K, 0, 0))); paLab.obj = [(o.x + pa * K / 2) * GS, (o.y + 1.4) * GS + 0.1, 0.65 * GS]; paLab.off = [0, 0.35, 0]; paLab.set('당기는 힘 ' + Math.abs(pa).toFixed(1) + ' N'); paLab.show(true); } else { paF.visible = false; paLab.show(false); }
+        if (Math.abs(fr) > 0.05) { const o = new V3(bx, ay, 1.2); setArrow(faF, o, o.clone().add(new V3(fr * K, 0, 0))); faLab.obj = [(o.x + fr * K / 2) * GS, (o.y + 1.4) * GS, 1.2 * GS]; faLab.off = [0, -0.45, 0]; faLab.set('마찰력 ' + Math.abs(fr).toFixed(1) + ' N (반대 방향)'); faLab.show(true); } else { faF.visible = false; faLab.show(false); }
+        if (Math.abs(v) > 18) { const dir = Math.sign(v), o = new V3(bx - dir * 0.4, BHT * S.blocks + 0.45, 0); setArrow(mvF, o, o.clone().add(new V3(dir * Math.min(1.2, Math.abs(v) * 0.005 + 0.3), 0, 0))); mvLab.obj = [(o.x + dir * 0.4) * GS, (o.y + 1.4) * GS, 0]; mvLab.off = [0, 0.35, 0]; mvLab.show(true); } else { mvF.visible = false; mvLab.show(false); }
+        const ph = phEl(); if (ph) ph.textContent = pmode ? S.ph : '';
+        let txt;
+        if (sc === 'F') txt = '<b>마찰력</b>: 접촉면에서 물체의 운동을 방해하는 힘이에요. 방향은 물체가 <b>운동하려는(운동하는) 방향과 반대</b>예요.<br>' + (Math.abs(pa) > 0.05 && Math.abs(v) < 18 ? '당기는 힘 ' + Math.abs(pa).toFixed(1) + ' N인데 도막이 가만히 있어요: 마찰력도 ' + Math.abs(fr).toFixed(1) + ' N이에요.' : Math.abs(v) >= 18 ? '운동 방향과 <b>반대</b>쪽으로 마찰력(2.0 N)이 작용해서 점점 느려져요.' : '옆의 2D 화면에서 줄 손잡이를 당기거나 도막을 튕겨 보세요. 또는 ▶ 재생을 눌러 보세요.');
+        else txt = '<b>마찰력의 크기</b>: 도막이 <b>움직이기 시작할 때의 눈금</b>이에요. 접촉면이 거칠수록, 무게가 클수록 커요 (유리 1.2 · 나무 2.0 · 사포 3.5 N, 도막 1개 = 5 N).<br>' + (S.maxF > 0.02 ? '지금 눈금 <b>' + S.F.toFixed(1) + ' N</b> · 최대 <b>' + S.maxF.toFixed(1) + ' N</b>' : '옆의 2D 화면에서 저울을 당기거나 ▶ 재생을 눌러 보세요.');
+        setInfo(txt);
+      }
+      function updC(dt, l) {
+        const ph = phEl(); if (ph) ph.textContent = '';
+        cPair.forEach((c, i) => {
+          const f = c.k === 'sand' ? 3.5 : 1.2, K = 0.3, hy = 0.275;
+          setArrow(c.ar, new V3(0.1, -0.12 - 0, 1.12), new V3(0.1 - f * K, -0.12, 1.12));
+          c.lab.obj = [(c.g.position.x - f * K / 2) * gC.scale.x, 1.5 * gC.scale.x - 0.12 * gC.scale.x, 1.12 * gC.scale.x]; c.lab.off = [0, -0.4, 0]; c.lab.set('마찰력 ' + f.toFixed(1) + ' N'); c.lab.show(true);
+          c.cap.obj = [c.g.position.x * gC.scale.x, 1.5 * gC.scale.x + 0.9, 0]; c.cap.set(c.k === 'sand' ? '거친 면 → 마찰력 크게' : '매끄러운 면(기름 · 왁스) → 마찰력 작게'); c.cap.show(true);
+        });
+        setInfo('<b>생활 속 마찰력</b>: 미끄러지지 않게 하려면 접촉면을 <b>거칠게</b>(등산화 밑창 · 눈길 체인 · 미끄럼 방지 매트), 잘 미끄러지게 하려면 <b>매끄럽게</b>(기름칠 · 스키 왁스) 해요.<br>카드를 알맞은 통에 넣는 <b>분류 활동</b>은 2D 화면에서 해 보세요.');
+      }
+
       const L2 = () => (ctx.lesson && ctx.lesson()) || null;
       const cl = (v, a, b) => Math.max(a, Math.min(b, v)), sm = (x) => { x = cl(x, 0, 1); return x * x * (3 - 2 * x); };
-      let pmode = false, built = false, pP = 0, sig = '', lastTxt = '';
+      let pmode = false, built = false, pP = 0, sig = '', lastTxt = '', curSc = 'B';
       const pl = controls.player({
-        duration: 11, loop: true, autoplay: false, label: '재생', phases: [[0, '']],
+        duration: 18, loop: true, autoplay: false, label: '재생', phases: [[0, '']],
         onFrame(p) { if (!built) return; pmode = true; pP = p; },
       });
       built = true;
@@ -157,6 +281,15 @@
       return {
         update(dt, t) {
           const l = L2(), BB = l && l.BB;
+          const sc2 = l ? l.scene : 'B';
+          if (sc2 !== curSc) { curSc = sc2; if (pmode) { pmode = false; pl.pause(); } }
+          const isB = sc2 === 'B';
+          bObjs.forEach((o) => { o.visible = isB; }); gF.visible = sc2 === 'F' || sc2 === 'L'; gC.visible = sc2 === 'C';
+          if (!isB) bLabs.forEach((x) => x.show(false));
+          if (sc2 !== 'F' && sc2 !== 'L') { [faLab, paLab, mvLab, wtLab, rdF, mxF].forEach((x) => x.show(false)); }
+          if (sc2 !== 'C') cPair.forEach((c) => { c.lab.show(false); c.cap.show(false); });
+          if (sc2 === 'F' || sc2 === 'L') { updFL(dt, l, sc2, t); return; }
+          if (sc2 === 'C') { updC(dt, l); return; }
           const stage = BB ? BB.stage : 1;
           const key = [stage, BB && BB.ball.drag, BB && BB.ball.released, BB && BB.grab].join();
           if (key !== sig) { sig = key; if (pmode) { pmode = false; pl.pause(); } }
@@ -193,7 +326,6 @@
             r = showCyl(bot, read);
             txt = '<b>부력의 크기</b> = 공기 중 무게 <b>' + CYW.toFixed(1) + ' N</b> − 물속 무게(저울 눈금 <b>' + read.toFixed(1) + ' N</b>) = <b>' + r.Fb.toFixed(1) + ' N</b><br>잠긴 부피가 클수록 부력이 커요(0 → 약 1.0 → 약 2.0 N). <b>완전히 잠긴 뒤</b>에는 더 깊이 넣어도 <b>일정</b>해요.';
           }
-          if (l && l.scene !== 'B') txt = '<b>마찰력</b> 실험과 <b>생활 속 마찰력·부력</b>은 2D 화면에서 해 보세요. 3D는 물속의 부력(비치볼 · 금속 원기둥)을 보여 줘요.<br>' + txt;
           setInfo(txt);
         },
         sync() {},

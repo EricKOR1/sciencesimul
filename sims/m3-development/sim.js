@@ -1213,6 +1213,6 @@
     slotPos: SLOT, homePos: (k) => { const m = P4.models[k]; return { x: m.x.value, y: m.y.value }; },
     place(k, slot) { placeModel(P4.models[k], slot); },
     correct: () => clayCorrect(),
-    divide, startSperm, setN, setCmp,
+    divide, startSperm, setN, setCmp, setScene,
   };
 })();

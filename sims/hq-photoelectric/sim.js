@@ -1085,7 +1085,7 @@
 
   /* ---------- 디버그 (Playwright) ---------- */
   window.__sim = {
-    S, VW, VH, MA, BOT, SEL_A, SEL_B, ROW, METALS, slL, slR, slK, slL2, slP, slT, slX, slH, slS, setScene, updateCtl, tbI, currentAt, ekOf, ephOf, isatOf, iPhoto, nPhot, dTarget, digOf, neOf, lumAt, plotPoint, recordV0, teSeg, daySeg, metalSeg, gX, gY, grAxes, pnN, pnI, LAM0,
+    S, VW, VH, MA, BOT, SEL_A, SEL_B, ROW, METALS, slL, slR, slK, slL2, slP, slT, slX, slH, slS, setScene, updateCtl, tbI, currentAt, ekOf, ephOf, isatOf, iPhoto, nPhot, dTarget, digOf, neOf, lumAt, plotPoint, recordV0, teSeg, daySeg, metalSeg, gX, gY, grAxes, pnN, pnI, LAM0, TEXP, NFULL, GW, GH, TGT, LAMG, EG, luxI, ephOf,
     perfPrep(m, sub) { if (m === 'tech' && sub) { S.te.sub = sub; updateCtl(); } },
     setSub(sub) { S.te.sub = sub; updateCtl(); },
     get game() { return game; },

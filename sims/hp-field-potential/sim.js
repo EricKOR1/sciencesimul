@@ -1278,6 +1278,7 @@
   window.__sim = {
     S, VW, VH, SH, PY, PH, FXA, FU, FSY, PX0, PU, PYM, PC, LG, CIR, MX0, MX1, MY0, MY1, TRAY, get game() { return game; },
     setScene, setD, loadPreset, releaseTok, tokBack, startCarry, dropCharge, shoot, strike, setSub, plReset, fPct, fieldAt, ruleSel, blankSel, RULES, BLANKS, chargeU, chargeK, elecKE, elecSpeed, potAt, arrive,
+    BAT, R1, R2, I_C, U1, U2, LQ, LE, LVEXP,
     place(x, y) { const t = S.fl.tok; t.st = 'placed'; t.x = x; t.y = y; updateCtl(); },
     stepAll(sec) { const n = Math.ceil(sec / 0.02); for (let i = 0; i < n; i++) { S.t += 0.02; stepAll1(0.02); parts.update(0.02); } },
   };

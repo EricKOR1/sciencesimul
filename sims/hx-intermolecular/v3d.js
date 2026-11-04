@@ -3,6 +3,7 @@
    ② 쌍극자–쌍극자 힘: HCl 6개 — δ+(H)와 이웃의 δ−(Cl)가 마주 보도록 정렬돼요.
    ③ 수소 결합: H₂O · HF · NH₃ — N·O·F에 결합한 H와 이웃 분자의 비공유 전자쌍(••) 사이의 힘이에요.
    2D의 힘 단추 · 원자/분자 단추가 이 화면을 조절해요 (window.__sim.S.forces).
+   분류하기(카드 8장)에서는 카드마다 분자 모형을 입체로 보여 줘요 (바닥 색 = 2D에서 놓은 상자).
    ※ 결합 길이·각은 실제 값에 가깝게 그린 모형 스케치예요. */
 (function () {
   'use strict';
@@ -215,6 +216,61 @@
         setInfo(FINFO.hb + '<br>' + HBNOTE[hbKey]);
       }
 
+
+      /* ---- ④ 분류하기(2D의 카드 8장): 카드마다 분자 모형을 입체로 보여 줘요 (상자 색 = 2D에서 놓은 상자) ---- */
+      const gS = new THREE.Group(); root.add(gS); gS.visible = false;
+      const BINC = [0x0ea5a4, 0xf59e0b, 0xe2464b], BINN = ['분산력', '쌍극자–쌍극자 힘', '수소 결합'];
+      const AT = { H: [0xf1f5f9, 0.28], C: [0x5b6472, 0.46], N: [0x3867f4, 0.46], O: [0xe23b3b, 0.46], F: [0x5fbf6a, 0.42], Cl: [0x22b14c, 0.6], Br: [0x9b2d20, 0.68], Ar: [0x7fd0d4, 0.7] };
+      const T4 = 1 / Math.sqrt(3);
+      const MOLS = {
+        h2o: { a: [['O', 0, 0, 0], ['H', 0.79, -0.61, 0], ['H', -0.79, -0.61, 0]], b: [[0, 1], [0, 2]] },
+        ar: { a: [['Ar', 0, 0, 0]], b: [] },
+        hcl: { a: [['Cl', -0.55, 0, 0], ['H', 0.8, 0, 0]], b: [[0, 1]] },
+        co2: { a: [['C', 0, 0, 0], ['O', 1.2, 0, 0], ['O', -1.2, 0, 0]], b: [[0, 1], [0, 2]] },
+        nh3: { a: [['N', 0, 0.25, 0], ['H', 0.94, -0.2, 0], ['H', -0.47, -0.2, 0.81], ['H', -0.47, -0.2, -0.81]], b: [[0, 1], [0, 2], [0, 3]] },
+        ch4: { a: [['C', 0, 0, 0], ['H', T4 * 1.0, T4 * 1.0, T4 * 1.0], ['H', -T4, -T4, T4], ['H', -T4, T4, -T4], ['H', T4, -T4, -T4]], b: [[0, 1], [0, 2], [0, 3], [0, 4]] },
+        hf: { a: [['F', -0.45, 0, 0], ['H', 0.6, 0, 0]], b: [[0, 1]] },
+        hbr: { a: [['Br', -0.6, 0, 0], ['H', 0.95, 0, 0]], b: [[0, 1]] },
+      };
+      const SORT_ID = ['h2o', 'ar', 'hcl', 'co2', 'nh3', 'ch4', 'hf', 'hbr'], SORT_F = ['H₂O', 'Ar', 'HCl', 'CO₂', 'NH₃', 'CH₄', 'HF', 'HBr'];
+      const SX = [-4.3, -1.45, 1.45, 4.3], SY = [1.6, -1.9], SK = 0.72;
+      const sortM = SORT_ID.map((id, i) => {
+        const def = MOLS[id], grp = new THREE.Group(), spin = new THREE.Group(); grp.add(spin);
+        grp.position.set(SX[i % 4], SY[Math.floor(i / 4)], 0);
+        def.a.forEach((a) => { const m = new THREE.Mesh(new THREE.SphereGeometry(AT[a[0]][1], 28, 20), mat(AT[a[0]][0])); m.position.set(a[1], a[2], a[3]); spin.add(m); });
+        def.b.forEach((b) => { const p0 = new V3(def.a[b[0]][1], def.a[b[0]][2], def.a[b[0]][3]), p1 = new V3(def.a[b[1]][1], def.a[b[1]][2], def.a[b[1]][3]); stick(spin, p0, p1, 0.09); });
+        const disc = new THREE.Mesh(new THREE.CylinderGeometry(1.35, 1.35, 0.06, 40), mat(0x64748b, { transparent: true, opacity: 0.5, roughness: 0.6 })); disc.position.y = -1.05; grp.add(disc);
+        const ring = new THREE.Mesh(new THREE.TorusGeometry(1.35, 0.06, 10, 48), mat(0xffffff, { emissive: 0xffffff, emissiveIntensity: 0.4 })); ring.rotation.x = Math.PI / 2; ring.position.y = -1.0; grp.add(ring);
+        gS.add(grp);
+        const lab = label(SORT_F[i], grp, { color: 'rgba(30,41,59,.9)', offset: [0, -1.55, 0] }); lab.show(false);
+        return { grp, spin, disc, ring, lab };
+      });
+      let sortOn = false;
+      function setSort(on) {
+        if (on === sortOn) return; sortOn = on; gS.visible = on; g.visible = !on;
+        sortM.forEach((s) => s.lab.show(on)); labs.forEach((l) => l.show(!on && true));
+        ctlEls.forEach((e) => { e.style.display = on ? 'none' : ''; });
+        const o = ctx.orbit; if (on) { o.dist = PHONE ? 18 : 16; o.ty = 0; } else { o.dist = PHONE ? 17 : 13.5; o.ty = 0; }
+        lastInfo = '';
+        if (!on) { build(); }
+      }
+      function updSort(t) {
+        const f = F(); if (!f || !f.cards) return;
+        const cards = f.cards; let placed = 0, sel = null;
+        sortM.forEach((s, i) => {
+          const c = cards.find((q) => q.id === SORT_ID[i]); if (!c) return;
+          const isSel = f.sel === c.id || c.drag; if (isSel) sel = c;
+          s.spin.rotation.y = t * 0.5 + i; s.spin.rotation.x = 0.3;
+          s.grp.scale.setScalar(SK * (isSel ? 1.2 : 1));
+          const b = c.bin; if (b !== null && b !== undefined) placed++;
+          s.disc.material.color.setHex(b !== null && b !== undefined ? BINC[b] : 0x64748b); s.disc.material.opacity = b !== null && b !== undefined ? 0.85 : 0.5;
+          s.ring.visible = !!isSel || !!c.flag; s.ring.material.color.setHex(c.flag ? 0xe2464b : 0xffd34d); s.ring.material.emissive.setHex(c.flag ? 0xe2464b : 0xffd34d);
+          s.lab.set(SORT_F[i] + (b !== null && b !== undefined ? ' · ' + BINN[b] : ''));
+        });
+        const hint = sel ? window.__sim.CARDS.find((x) => x.id === sel.id) : null;
+        setInfo('<b>분자 카드 8장 · 분류하기</b><br>' + (hint ? '고른 카드: <b>' + hint.f + '</b> (' + hint.hint + ')<br>' : '분자의 모양과 극성을 살펴봐요.<br>') + '상자에 놓은 카드 ' + placed + ' / 8 (바닥 색 = 놓은 상자)<br>순서: ① N·O·F에 직접 결합한 H → 수소 결합 ② 극성 분자 → 쌍극자 ③ 무극성 → 분산력<br>카드를 끌어 놓는 일은 ▦ 2D에서 해요.');
+      }
+
       function build() {
         clear(); dLink = null; lastInfo = ''; demo = null;
         if (kind === 'disp') sceneDisp(); else if (kind === 'dip') { dLink = new THREE.Group(); g.add(dLink); sceneDip(); } else sceneHB();
@@ -237,17 +293,19 @@
         const t = kind === 'disp' ? '▶ 재생: 전자 구름이 쏠렸다 돌아오는 모습을 반복해요.' : kind === 'dip' ? '▶ 재생: 제각각인 방향이 정렬되는 모습을 반복해요.' : '▶ 재생: 수소 결합 점선이 깜박여요.';
         if (noteEl.textContent !== t) noteEl.textContent = t;
       }
+      const probe = controls.text(''); probe.style.display = 'none'; const ctlEls = Array.prototype.filter.call(probe.parentElement.children, (e) => e !== probe);
       from2D(); build();
       return {
         update(dt, t) {
           dt = Math.min(dt, 0.05);
+          const isSort = sub() === 'sort'; setSort(isSort);
+          if (isSort) { updSort(t); return; }
           const before = kind + hbKey;
           from2D();
           if (kind + hbKey !== before) { pl.pause(); pl.set(0); demo = null; }
           if (demo != null && !pl.playing && pl.p === 0) demo = null;
           refreshNote();
           if (kind === 'disp') updDisp(t); else if (kind === 'dip') updDip(t, dt); else updHB(t);
-          if (sub() === 'sort') setInfo('<b>분류하기</b>는 2D 화면에서 해요<br>분자 카드 8장을 알맞은 힘의 상자로 끌어 놓아요. (위 [▦ 2D] 단추)');
         },
         sync() { lastInfo = ''; },
       };

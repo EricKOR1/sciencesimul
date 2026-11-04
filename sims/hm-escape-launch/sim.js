@@ -1265,7 +1265,7 @@
   /* ---------- 디버그 (Playwright) ---------- */
   window.__sim = {
     S, VW, VH, get game() { return game; }, setScene, setFlag, wLaunch, wReady, hmaxOf, etot, BODIES, GASES, stays, vrmsOf, plCheck, plSelect, asThrow, rkToggle, lnPlay, sgLaunch, sgModel, sgPlan, SG_BASE, ordV, RULES_C,
-    RE_: RE, GM_, M_ASTRO, PXS, WEIGHT, rkThrust, XLN, eff: (k) => (game && game.free ? false : S.flags[k]),
+    lnPos, lnSpeed, STAGE_PTS, V_ORB, V_ROT, EARTH_R, RING_R, sgNow, SG_REQ, RE_: RE, GM_, M_ASTRO, PXS, WEIGHT, rkThrust, XLN, eff: (k) => (game && game.free ? false : S.flags[k]),
     stepAll(sec) { const n = Math.ceil(sec / 0.02); for (let i = 0; i < n; i++) { wStep(0.02); plStep(0.02); asStep(0.02); rkStep(0.02); lnStep(0.02); sgStep(0.02); } },
   };
 })();

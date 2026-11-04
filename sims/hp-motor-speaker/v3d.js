@@ -1,6 +1,6 @@
 /* hp-motor-speaker · 3D 자기장 속 전류 · 전동기 · 스피커
    2D 실험(window.__sim)의 장면을 그대로 입체로 보여 줘요: ⚡ 자기장 속 도선이 받는 힘 F = BIL · ⚙️ 직류 전동기(코일 · 정류자 · 전력) · 🔊 스피커의 원리(보이스 코일 · 진동판).
-   값(B · I · L · 부하 · 진폭 · 진동수)은 옆 조작판이 정하고 3D는 따라가요. (🛠️ 스피커 설계는 2D 화면에서 해요)
+   값(B · I · L · 부하 · 진폭 · 진동수)은 옆 조작판이 정하고 3D는 따라가요. 🛠️ 스피커 설계는 내가 고른 값으로 만든 스피커 단면과 주파수 시험을 입체로 보여 주고, 시험 곡선 그래프는 2D에서 봐요.
    전동기 약속: N극이 왼쪽, S극이 오른쪽 → B는 N→S(+x). 앞에서 보면 오른쪽 변의 전류가 안쪽(⊗), 왼쪽 변이 바깥쪽(⊙)이에요. */
 (function () {
   'use strict';
@@ -228,17 +228,70 @@
         const txt = '<b>🔊 스피커의 단면</b> · 신호 ' + (dc ? '<b>직류</b>' : '<b>교류</b>') + '<br>신호 전류 i = ' + (s.i >= 0 ? '+' : '−') + f2(Math.abs(s.i)) + ' A (진폭 ' + f2(s.A) + ' A' + (dc ? '' : ' · 진동수 ' + s.f + ' Hz') + ') · 진동판 위치 x = ' + (s.x >= 0 ? '+' : '−') + f2(Math.abs(s.x)) + ' mm<br>' + (dc ? '직류는 방향이 일정해서 진동판이 한쪽으로 밀려 <b>고정</b>돼요 → 소리가 나지 않아요.' : '전류 방향이 바뀌면 힘의 방향도 바뀌어 진동판이 <b>앞뒤로 떨려요</b> → 공기가 떨려 소리가 돼요. 진폭이 크면 큰 소리, 진동수가 높으면 높은 소리예요.') + '<br><span style="opacity:.8">화면은 실제보다 500배 느려요 · 신호 종류 · 진폭 · 진동수는 옆 조작판에서 바꿔요.</span>';
         if (txt !== lastTxtS) { lastTxtS = txt; info(txt); }
       }
+
+      /* ================= 🛠️ 스피커 설계 (내가 고른 값으로 만든 스피커 단면 · 주파수 시험) ================= */
+      const dG = new THREE.Group(); root.add(dG); dG.visible = false;
+      const dMv = new THREE.Group(), dFix = new THREE.Group(); dG.add(dFix, dMv);
+      let dKey = '', dN = 4;
+      const mixc = (a, b, f) => new THREE.Color(a).lerp(new THREE.Color(b), f);
+      const dWaves = []; for (let i = 0; i < 6; i++) { const w = new THREE.Mesh(new THREE.TorusGeometry(1, 0.025, 6, 48), new THREE.MeshBasicMaterial({ color: 0x6aa0ff, transparent: true, opacity: 0.5, depthWrite: false })); w.rotation.x = Math.PI / 2; w.visible = false; dG.add(w); dWaves.push(w); }
+      const gapRings = [-1, 1].map(() => { const r = new THREE.Mesh(new THREE.TorusGeometry(1.9, 0.03, 6, 48), new THREE.MeshBasicMaterial({ color: 0x14a058, transparent: true, opacity: 0.8 })); r.rotation.x = Math.PI / 2; dG.add(r); return r; });
+      const lDm = label('진동판', dMv, { color: '#475569', size: 12 }), lDc = label('', dMv, { color: '#a65d22', size: 12 }), lDg = label('자석 틈 한계 ±1.5 mm', [0, 0, 0], { color: '#14a058', size: 11 }), lDmag = label('', [0, 0, 0], { color: '#394258', size: 12 }), lDst = label('', [0, 0, 0], { color: '#14a058', size: 14 });
+      const dLabs = [lDm, lDc, lDg, lDmag, lDst];
+      function buildDesign(d) {
+        [dFix, dMv].forEach((g) => { while (g.children.length) { const c = g.children[0]; g.remove(c); if (c.geometry) c.geometry.dispose(); } });
+        const R = d.cup === 'large' ? 4.5 : 2.9, thick = d.mat === 'thick', bc = clamp((d.B - 0.2) / 0.4, 0, 1), th = thick ? 0.16 : 0.07;
+        const ring = lathe([[1.7, 0], [2.6, 0], [2.6, 1.1], [1.7, 1.1], [1.7, 0]], 0xe2464b, { metalness: 0.3 }); ring.material.color.copy(mixc(0xf2a0a3, 0xe2464b, bc)); dFix.add(ring);
+        const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.75, 0.75, 1.5, 36), mat(0x2f6df6, { metalness: 0.3 })); pole.material.color.copy(mixc(0x8aa7f2, 0x2f6df6, bc)); pole.position.y = 0.75; dFix.add(pole);
+        const base = new THREE.Mesh(new THREE.CylinderGeometry(2.6, 2.6, 0.3, 48), mat(0x6b7488, { metalness: 0.6 })); base.position.y = -0.15; dFix.add(base);
+        for (let k = 0; k < 8; k++) { const a = k * Math.PI / 4; dFix.add(rod(new V3(2.6 * Math.cos(a), 1.1, 2.6 * Math.sin(a)), new V3(R * Math.cos(a), 2.15, R * Math.sin(a)), 0.05, mat(0x8a95a8, { metalness: 0.6 }))); }
+        const sus = new THREE.Mesh(new THREE.TorusGeometry(R, 0.1, 8, 48), mat(0x6b7488)); sus.rotation.x = Math.PI / 2; sus.position.y = 2.25; dFix.add(sus);
+        for (let i = 0; i < 4; i++) { const a = i * Math.PI / 2, ar = mkArrow(0xb79bff, 0.03); dFix.add(ar); setArrow(ar, new V3(2.1 * Math.cos(a), 0.55, 2.1 * Math.sin(a)), new V3(1.1 * Math.cos(a), 0.55, 1.1 * Math.sin(a))); ar.children.forEach((c) => { c.material = mat(0xb79bff, { transparent: true, opacity: 0.25 + 0.7 * bc }); }); }
+        const n = clamp(Math.round(d.N / 10), 2, 7), wr = d.wire === 'thin' ? 0.05 : 0.1, step = 0.14;
+        const tube0 = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 1.0, 36, 1, true), new THREE.MeshStandardMaterial({ color: 0xf4f0e6, side: THREE.DoubleSide, roughness: 0.7 })); tube0.position.y = 0.7; dMv.add(tube0);
+        for (let i = 0; i < n; i++) { const t = new THREE.Mesh(new THREE.TorusGeometry(1.2, wr, 8, 40), mat(0xe39a45, { metalness: 0.4 })); t.rotation.x = Math.PI / 2; t.position.y = 0.3 + i * step * (d.wire === 'thin' ? 1 : 1.35); dMv.add(t); }
+        const cone = lathe([[1.2, 1.2], [R, 2.3], [R + 0.1, 2.3], [R + 0.1, 2.3 - th], [1.25, 1.2 - th]], thick ? 0xb88a4a : 0xf1e7d0, { roughness: 0.6 }); dMv.add(cone);
+        dKey = [d.N, d.B, d.cup, d.mat, d.wire].join('|'); dN = n;
+        lDm.off = [R * 0.8, 1.5, 0.8]; lDc.off = [-2.0, 1.0, 0.6]; lDmag.obj = [0, -0.7, 2.7];
+        gapRings.forEach((g) => g.scale.setScalar(1));
+        dG.userData.R = R;
+      }
+      const dm2 = { p: 0, on: false };
+      let pD = null;
+      let lastTxtD = '';
+      function designScene(dt, S, A) {
+        const d = S.ds, ev = A.designOf(d), key = [d.N, d.B, d.cup, d.mat, d.wire].join('|'); if (key !== dKey) buildDesign(d);
+        const R = dG.userData.R || 3, GAP = A.SPEC.gap, F_LO = 200, F_HI = 4000;
+        const sweeping2D = d.sweep >= 0, demo = dm2.on && !sweeping2D;
+        const f = sweeping2D ? d.sweepF : demo ? F_LO + (F_HI - F_LO) * dm2.p : 1000;
+        const x = clamp(ev.X(f) * Math.sin(d.ph), -GAP * 1.4, GAP * 1.4), xm = x * 0.9;
+        dMv.position.y = xm;
+        const ok = ev.xmax <= GAP;
+        gapRings.forEach((g, i) => { g.position.y = 0.3 + (i ? 1 : -1) * GAP * 0.9; g.scale.setScalar(1.45); g.material.color.setHex(ok ? 0x14a058 : 0xe2464b); });
+        const loud = clamp(ev.L(f) / 12, 0, 1), tt = d.ph / (Math.PI * 2);
+        dWaves.forEach((w, i) => { const q = ((tt * 0.5 + i / dWaves.length) % 1 + 1) % 1; w.visible = loud > 0.02; w.position.y = 2.7 + q * 5; w.scale.setScalar(R * 0.55 + q * 2.2); w.material.opacity = 0.65 * loud * (1 - q); });
+        lDm.obj = dMv; lDc.set('보이스 코일 ' + d.N + '회 · ' + (d.wire === 'thin' ? '얇은 선' : '굵은 선')); lDc.obj = dMv;
+        lDg.obj = [2.7, 0.3 + GAP * 0.9, 0]; lDg.off = [1.2, 0.2, 0]; lDmag.set('자석 ' + (Math.round(d.B * 100) / 100).toFixed(2) + ' T'); lDmag.obj = [0, -0.5, 2.8];
+        const checks = A.specChecks(ev), tested = d.tested === A.sigOf(d), allOk = checks.every((c) => c.ok);
+        lDst.show(allOk && tested); lDst.set('설계 완료 ✔'); lDst.obj = [0, 8.2, 0];
+        const sweepTxt = sweeping2D || demo ? '시험 중 <b>' + Math.round(f) + ' Hz</b> · 소리 크기 <b>' + f2(ev.L(f)) + '</b> · 진폭 ' + f2(ev.X(f)) + ' mm' + (ev.X(f) > GAP ? ' <span style="color:#ff9b9b">(틈 밖 → 찌그러져요)</span>' : '') : '화면은 느리게 보여 줘요 (1 kHz 기준) · 아래 ▶ 시험하기로 200 Hz → 4 kHz를 훑어요';
+        const txt = '<b>🛠️ 내 스피커 설계</b> · 진동판 m = <b>' + f1(ev.m) + ' g</b> · 코일 저항 ' + f1(ev.R) + ' Ω · 소비 전력 ' + f1(ev.P) + ' mW · 비용 ' + Math.round(ev.cost) + '<br>' +
+          checks.map((c) => (c.ok ? '✅ ' : '⬜ ') + c.text).join('<br>') + '<br>' + sweepTxt + (tested ? '' : '<br><span style="opacity:.8">시험 곡선 그래프는 2D 화면에서 볼 수 있어요.</span>');
+        if (txt !== lastTxtD || sweeping2D || demo) { lastTxtD = txt; info(txt); }
+      }
+      pD = controls.player({ duration: 9, loop: true, autoplay: false, label: '시험하기', phases: [[0, '낮은 음'], [0.3, '1 kHz'], [0.6, '3 kHz'], [0.9, '높은 음']], onFrame(p) { dm2.p = p; dm2.on = p > 0 || !!(pD && pD.playing); } });
       /* ================= 장면 · ▶ 재생 ================= */
       const motorLabs = [labB, labL, labR, labPlus, labMinus, labBrush, labComm, labFA, labFB], fLabs = [lSup, lL, lB, lFo, lIo], sLabs = [lNm, lSm, lCo, lDi, lWv, lFs];
       const dm = { F: { p: 0, on: false }, M: { p: 0, on: false } };
       let pF = null, pM = null;
       pF = controls.player({ duration: 7, loop: true, autoplay: false, label: '전류 흘리기', phases: [[0, '전류 없음'], [0.15, '전류가 흐르면 힘을 받아요'], [0.5, '힘이 일정해요'], [0.8, '전류를 끊어요']], onFrame(p) { dm.F.p = p; dm.F.on = p > 0 || !!(pF && pF.playing); } });
       pM = controls.player({ duration: 8, loop: true, autoplay: false, label: '코일 한 바퀴', phases: [[0, '짝힘으로 회전'], [0.2, '정류자가 전류 방향을 바꿔요'], [0.3, '짝힘으로 회전'], [0.7, '정류자가 전류 방향을 바꿔요'], [0.8, '짝힘으로 회전']], onFrame(p) { dm.M.p = p; dm.M.on = p > 0 || !!(pM && pM.playing); } });
-      const rows = [...ctx.renderer.domElement.parentNode.parentNode.querySelectorAll('.v3-player')]; pF.row = rows[0]; pM.row = rows[1];
+      const rows = [...ctx.renderer.domElement.parentNode.parentNode.querySelectorAll('.v3-player')]; pD.row = rows[0]; pF.row = rows[1]; pM.row = rows[2];
       let cur = '';
       function setMode(mode) {
         if (mode === cur) return; cur = mode;
-        motorG.visible = mode === 'motor'; fG.visible = mode === 'force'; spG.visible = mode === 'speaker';
+        motorG.visible = mode === 'motor'; fG.visible = mode === 'force'; spG.visible = mode === 'speaker'; dG.visible = mode === 'design'; dLabs.forEach((l) => l.show(mode === 'design'));
+        pD.row.style.display = mode === 'design' ? '' : 'none'; if (mode !== 'design') { pD.pause(); pD.set(0); }
         motorLabs.forEach((l) => l.show(false)); fLabs.forEach((l) => l.show(false)); sLabs.forEach((l) => l.show(mode === 'speaker'));
         if (mode !== 'motor') { motorG.visible = false; } 
         pF.row.style.display = mode === 'force' ? '' : 'none'; pM.row.style.display = mode === 'motor' ? '' : 'none';
@@ -246,9 +299,9 @@
         if (mode === 'force') { Object.assign(ctx.orbit, { tx: -0.4, ty: 0, tz: 0, phi: 0.8, theta: 0.0, dist: 7 * KD }); lSup.show(true); lL.show(true); lB.show(true); }
         else if (mode === 'motor') { Object.assign(ctx.orbit, { tx: 0, ty: -0.6, tz: 0.4, phi: 1.15, theta: 0.55, dist: 14 * KD }); labB.show(true); labL.show(true); labR.show(true); labPlus.show(true); labMinus.show(true); labBrush.show(true); labComm.show(true); }
         else if (mode === 'speaker') { Object.assign(ctx.orbit, { tx: 0, ty: 2.5, tz: 0, phi: 1.25, theta: 0.5, dist: 15 * KD }); }
+        else if (mode === 'design') { Object.assign(ctx.orbit, { tx: 0, ty: 3.2, tz: 0, phi: 1.2, theta: 0.5, dist: 17 * KD }); }
         lastTxt = ''; lastTxtF = ''; lastTxtS = '';
       }
-      const NOTE = '🛠️ 스피커 설계(사양 → 선택 → 시험 → 개선)는 2D 화면에서 해요. 위의 [▦ 2D]를 눌러 보세요.';
       return {
         update(dt, tm) {
           const A = lessonS(); if (!A || !A.S) return; const S = A.S; dt = Math.min(dt, 0.05); tmT += dt;
@@ -256,7 +309,7 @@
           if (S.mode === 'force') { if (!pF.playing && pF.p === 0) dm.F.on = false; forceScene(dt, S); }
           else if (S.mode === 'motor') { if (S.mt.on && pM.playing) pM.pause(); if (!pM.playing && pM.p === 0) dm.M.on = false; demo.p = dm.M.p; demo.on = dm.M.on; motor(dt, S); }
           else if (S.mode === 'speaker') speaker(dt, S);
-          else info(NOTE);
+          else if (S.mode === 'design') { if (S.ds.sweep >= 0 && pD.playing) pD.pause(); if (!pD.playing && pD.p === 0) dm2.on = false; designScene(dt, S, A); }
         },
         sync() {},
       };

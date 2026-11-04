@@ -9,7 +9,7 @@
   window.SciSim3D.attach({
     title: '열의 이동 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    levels: [0, 1, 2],
+    levels: [0, 1, 2, 3],
     camera: { dist: 14 * (PHN0 ? 1.05 : 1), theta: 0.45, phi: 1.3, fov: 45, target: [0, 0, 0], min: 5, max: 26 },
     autoRotate: 0.08,
     build(ctx) {
@@ -54,8 +54,8 @@
       const flameMat = () => new THREE.MeshBasicMaterial({ color: 0xff8a2a, transparent: true, opacity: 0.9 });
       function mkFlame(s) { const g = new THREE.Group(); const a = new THREE.Mesh(new THREE.ConeGeometry(0.32 * s, 0.9 * s, 20), flameMat()); a.position.y = 0.45 * s; const b = new THREE.Mesh(new THREE.ConeGeometry(0.17 * s, 0.55 * s, 16), new THREE.MeshBasicMaterial({ color: 0xffe082 })); b.position.y = 0.28 * s; g.add(a, b); g.userData = { a, b }; return g; }
 
-      const LG = { cond: [], beaker: [], room: [], rad: [] };
-      const G = { cond: new THREE.Group(), beaker: new THREE.Group(), room: new THREE.Group(), rad: new THREE.Group() };
+      const LG = { cond: [], beaker: [], room: [], rad: [], thermos: [] };
+      const G = { cond: new THREE.Group(), beaker: new THREE.Group(), room: new THREE.Group(), rad: new THREE.Group(), thermos: new THREE.Group() };
       Object.keys(G).forEach((k) => root.add(G[k]));
       const NAMES = ['구리', '철', '나무'], RODCOL = [0xe39a45, 0x8b95a7, 0xb88a54];
 
@@ -147,6 +147,65 @@
       const vacLab = label('', [0, 1.6, 0], { size: 11.5 }); LG.rad.push(vacLab);
       let radP = { stove: false, stoveK: 0, vac: false, vacK: 0, foil: false, Tb: 20, Tw: 20, u: 0 };
 
+      /* ===== 5) 단열(보온병): 이중벽 · 진공층 · 은도금 · 뚜껑 — 열이 새어 나가는 길(전도·대류·복사)을 막아요 ===== */
+      const th = G.thermos;
+      const THH = { cond: 0.012, convGap: 0.008, convTop: 0.0145, rad: 0.0105 };
+      const thLoss = (vac, silver, lid) => ({ cond: THH.cond * (vac ? 0.04 : 1), convGap: THH.convGap * (vac ? 0 : 1), convTop: THH.convTop * (lid ? 0.07 : 1), rad: THH.rad * (silver ? 0.08 : 1) });
+      const thTemp = (k, tm) => 20 + 70 * Math.exp(-k * tm);
+      const THBASE = (() => { const o = thLoss(false, false, false); return o.cond + o.convGap + o.convTop + o.rad; })();
+      th.position.y = -0.2;
+      { const sh = new THREE.Mesh(new THREE.CylinderGeometry(1.15, 1.15, 3.7, 56, 1, true, 0.75, Math.PI * 2 - 1.5), mat(0xc5cedb, { metalness: 0.75, roughness: 0.28, side: THREE.DoubleSide })); sh.position.y = 0; th.add(sh);
+        const bt = new THREE.Mesh(new THREE.CylinderGeometry(1.15, 1.15, 0.14, 56), mat(0x8794aa, { metalness: 0.6, roughness: 0.4 })); bt.position.y = -1.85; th.add(bt);
+        const ring = new THREE.Mesh(new THREE.TorusGeometry(0.98, 0.1, 12, 48), mat(0xd9e0ea, { metalness: 0.7, roughness: 0.3 })); ring.rotation.x = Math.PI / 2; ring.position.y = 1.85; th.add(ring);
+        const gl = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 3.1, 48, 1, true), glass(0xcfe6ff, 0.3)); gl.position.y = 0.05; th.add(gl);
+        const gb = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 0.06, 48), glass(0xcfe6ff, 0.4)); gb.position.y = -1.5; th.add(gb); }
+      const silverM = new THREE.Mesh(new THREE.CylinderGeometry(0.84, 0.84, 3.1, 48, 1, true, 0.75, Math.PI * 2 - 1.5), mat(0xf4f7fb, { metalness: 1, roughness: 0.08, side: THREE.DoubleSide })); silverM.position.y = 0.05; th.add(silverM);
+      const waterM = new THREE.Mesh(new THREE.CylinderGeometry(0.74, 0.74, 1, 40), mat(0x9fd0f7, { transparent: true, opacity: 0.85, roughness: 0.2 })); th.add(waterM);
+      const lidM = new THREE.Group(); { const c1 = new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.52, 0.5, 28), mat(0xd99a52, { roughness: 0.85 })); c1.position.y = 0; lidM.add(c1); const c2 = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 0.22, 24), mat(0xe9b36a, { roughness: 0.8 })); c2.position.y = 0.36; lidM.add(c2); } th.add(lidM);
+      const NGAS = 30, gasP = spheres(NGAS, 0.045, 0xb8c9e6, 8, th), GQ = []; for (let i = 0; i < NGAS; i++) GQ.push({ a: rnd() * 6.283, r: 0.88 + rnd() * 0.12, ph: rnd() * 6.283, sp: 0.4 + rnd() * 0.4 });
+      const stm = []; for (let i = 0; i < 4; i++) { const s = new THREE.Mesh(new THREE.SphereGeometry(0.16, 12, 10), new THREE.MeshBasicMaterial({ color: 0xe6edf7, transparent: true, opacity: 0.0, depthWrite: false })); th.add(s); stm.push(s); }
+      const hA = { cond: [-0.5, 0, 0.5].map((x) => { const a = mkArrow(0xdc2626, 0.05); th.add(a); a.userData.x = x; return a; }), top: [-0.35, 0, 0.35].map((x) => { const a = mkArrow(0xd97706, 0.05); th.add(a); a.userData.x = x; return a; }),
+        gap: [-1, 1].map((s) => { const a = mkArrow(0xd97706, 0.04); th.add(a); a.userData.s = s; return a; }), rad: [-1, 1].map((s) => { const a = mkArrow(0x7c3aed, 0.05); th.add(a); a.userData.s = s; return a; }) };
+      LG.thermos.push(label('', [0, 3.0, 0], { size: 12.5, color: 'rgba(30,64,175,.92)' }));            // 물 온도
+      const thTop = label('대류', [0, 3.3, 0], { size: 11.5, color: 'rgba(200,110,0,.95)' }), thBot = label('전도', [0, -3.1, 0], { size: 11.5, color: 'rgba(200,40,40,.95)' }), thRad = label('복사', [1.9, 0, 0], { size: 11.5, color: 'rgba(110,50,200,.95)' }), thGap = label('', [-1.5, 0.9, 0], { size: 11.5, color: 'rgba(60,80,110,.95)' }), thLid = label('뚜껑', lidM, { size: 11.5, offset: [0.5, 0.5, 0] });
+      LG.thermos.push(thTop, thBot, thRad, thGap, thLid);
+      const thTemp0 = LG.thermos[0];
+      let thPh = '';
+      function thermosFrame(S, t, dt, p) {
+        const TH = S && S.TH;
+        let vac, silver, lid, T, Tc, tm, lidK;
+        if (pmode) {
+          const k4 = Math.min(3, Math.floor(p * 4)), q = p * 4 - k4;
+          vac = k4 >= 1; silver = k4 >= 2; lid = k4 >= 3; tm = 30 * q;
+          const o = thLoss(vac, silver, lid); T = thTemp(o.cond + o.convGap + o.convTop + o.rad, tm); Tc = thTemp(THBASE, tm); lidK = lid ? 1 : 0;
+          thPh = ['장치 없음 (보통 병)', '진공층을 달았어요', '은도금도 했어요', '뚜껑까지 덮었어요'][k4];
+        } else if (TH) { vac = TH.vac; silver = TH.silver; lid = TH.lid; T = TH.T; Tc = TH.Tc; tm = TH.t; lidK = TH.lidK; thPh = ''; }
+        else { vac = silver = lid = false; T = 90; Tc = 90; tm = 0; lidK = 0; thPh = ''; }
+        const lo = thLoss(vac, silver, lid), sC = lo.cond / THH.cond, sTop = lo.convTop / THH.convTop, sGap = lo.convGap / THH.convGap, sR = lo.rad / THH.rad;
+        waterM.scale.y = 1.9; waterM.position.y = -1.42 + 0.95; waterM.material.color.copy(heatCol(clamp((T - 20) / 70, 0, 1)));
+        silverM.visible = silver;
+        // 뚜껑
+        const lk = lidK, e = 1 - Math.pow(1 - lk, 3); lidM.position.set(1.5 * (1 - e), 3.5 - 1.45 * e, 0); lidM.rotation.z = -0.5 * (1 - e); thLid.show(lk < 0.5);
+        // 틈의 공기 (진공이면 없음)
+        for (let i = 0; i < NGAS; i++) { const g = GQ[i], vis = !vac; const y = ((((g.ph + t * g.sp * (sGap > 0.5 ? 0.5 : 0.1)) % 6.283) / 6.283) * 3.0) - 1.4; const a = g.a + (i % 2 ? 1 : -1) * 0.02 * Math.sin(t + i); put(gasP, i, Math.sin(a) * g.r, y, Math.cos(a) * g.r, vis ? 1 : 0); }
+        flush(gasP);
+        // 김
+        stm.forEach((s, i) => { const u = ((t * 0.35 + i / 4) % 1), a = lk < 0.5 && T > 35 ? clamp((T - 35) / 50, 0, 1) * (1 - lk * 2) : 0; s.position.set((i - 1.5) * 0.28 + Math.sin(u * 7 + i) * 0.1, 2.0 + u * 1.1, 0); s.material.opacity = a * 0.5 * Math.sin(u * Math.PI); });
+        // 열이 새어 나가는 길
+        hA.cond.forEach((a) => { if (sC > 0.2) setArrow(a, new V3(a.userData.x, -2.0, 0.1), new V3(a.userData.x, -2.0 - (0.5 + 0.9 * clamp(sC, 0, 1)), 0.1)); else a.visible = false; });
+        hA.top.forEach((a, i) => { if (sTop > 0.2) setArrow(a, new V3(a.userData.x * 1.2, 2.45, 0), new V3(a.userData.x * 1.6, 2.45 + 0.6 + 0.7 * clamp(sTop, 0, 1), 0)); else a.visible = false; });
+        hA.gap.forEach((a) => { if (sGap > 0.2) setArrow(a, new V3(a.userData.s * 0.97, -0.6, 0.0), new V3(a.userData.s * 0.97, 0.9, 0.0)); else a.visible = false; });
+        hA.rad.forEach((a) => { if (sR > 0.2) setArrow(a, new V3(a.userData.s * 1.25, 0.3, 0), new V3(a.userData.s * (1.25 + 0.4 + 0.9 * clamp(sR, 0, 1)), 0.3, 0)); else a.visible = false; });
+        thTop.show(sTop > 0.2 || lk > 0.5); thTop.set(sTop > 0.2 ? '대류 (위로 빠져나가요)' : '막힘 (뚜껑)'); thTop.obj = [0, 2.9 * 1 - 0.2, 0];
+        thBot.set(sC > 0.2 ? '전도 (바닥으로)' : '막힘 (진공)'); thBot.obj = [0, -3.05, 0];
+        thRad.set(sR > 0.2 ? '복사 (옆으로)' : '막힘 (은도금 반사)'); thRad.obj = [(sR > 0.2 ? 2.3 : 1.5), 0.7, 0];
+        thGap.set(vac ? '진공층 (공기 없음)' : '공기층 (대류)'); thGap.obj = [-1.35, 0.6, 0];
+        thTemp0.obj = [0, 0.8 - 0.2, 0.9]; thTemp0.off = [0, 0, 0]; thTemp0.set('물 <b>' + T.toFixed(1) + ' °C</b> · ' + Math.round(tm) + '분 뒤');
+        const dots = [vac ? '진공층' : null, silver ? '은도금' : null, lid ? '뚜껑' : null].filter(Boolean);
+        setInfo((pmode ? '<b>▶ ' + thPh + '</b><br>' : '') + '<b>단열</b>: 열은 <b>전도·대류·복사</b>로 새어 나가요. 새는 길을 막을수록 물이 오래 따뜻해요. 진공층은 <b>전도·대류</b>를, 은도금은 <b>복사</b>를, 뚜껑은 위로 빠지는 <b>대류</b>를 막아요.<br>장치: <b>' + (dots.length ? dots.join(' + ') : '없음') + '</b> · ' + Math.round(tm) + '분 뒤 물 <b>' + T.toFixed(1) + ' °C</b> (장치 없는 병은 ' + Tc.toFixed(1) + ' °C)' + (pmode ? '' : '<br>장치는 옆의 2D 조작판에서 달아요. 또는 ▶ 재생을 눌러 보세요.'));
+        const ph = phEl(); if (ph) ph.textContent = pmode ? thPh : '';
+      }
+
       /* ---- ▶ 재생: 지금 장면의 한 번의 변화를 반복 (2D 조작이 있으면 2D 상태가 우선) ---- */
       const player = { p: 0, on: false };
       let built = false, sig = '', mode = 'cond', pmode = false;
@@ -158,6 +217,7 @@
       built = true;
       const phEl = () => document.querySelector('.v3-player .v3-ph');
       const PHN = {
+        thermos: [[0, '']],
         cond: [[0, '가열 시작'], [0.3, '열이 퍼져요'], [0.82, '식는 중']],
         beaker: [[0, '아래를 가열'], [0.5, '순환']],
         rad: [[0, '난로 켜기'], [0.3, '공기 빼기'], [0.6, '은박지 놓기'], [0.9, '식는 중']],
@@ -172,7 +232,7 @@
       function setMode(v) {
         mode = v; Object.keys(G).forEach((k) => { G[k].visible = k === v; });
         Object.keys(LG).forEach((k) => LG[k].forEach((l) => l.show(k === v)));
-        orbit.dist = (PHN0 ? 1.05 : 1) * { cond: 14, beaker: 10.5, room: 11, rad: 12.5 }[v];
+        orbit.dist = (PHN0 ? 1.05 : 1) * { cond: 14, beaker: 10.5, room: 11, rad: 12.5, thermos: 12 }[v];
       }
       setMode('cond');
 
@@ -180,10 +240,11 @@
         update(dt, t) {
           const l = L2(), S = l && l.S;
           const sc = S ? S.scene : 'cond';
-          let m = sc === 'cond' ? 'cond' : sc === 'rad' ? 'rad' : sc === 'beaker' ? 'beaker' : sc === 'room' ? 'room' : mode;
+          let m = sc === 'cond' ? 'cond' : sc === 'rad' ? 'rad' : sc === 'beaker' ? 'beaker' : sc === 'room' ? 'room' : sc === 'thermos' ? 'thermos' : mode;
+          const TH0 = l && l.TH;
           const C = l && l.C, BK = l && l.BK, RM = l && l.RM, RD = l && l.RD;
           // 2D에서 조작하면 ▶ 재생을 멈추고 2D 상태를 따라가요
-          const key = [sc, C && C.heat, C && C.cooling, BK && BK.on, RM && RM.pos, RM && RM.on, RM && RM.mode, RD && RD.stove, RD && RD.vac, RD && RD.foil].join();
+          const key = [sc, C && C.heat, C && C.cooling, BK && BK.on, RM && RM.pos, RM && RM.on, RM && RM.mode, RD && RD.stove, RD && RD.vac, RD && RD.foil, TH0 && TH0.vac, TH0 && TH0.silver, TH0 && TH0.lid].join();
           if (key !== sig) { sig = key; if (pmode) { pmode = false; pl.pause(); } }
           const demoMode = pmode ? (m === 'room' ? 'beaker' : m) : m;
           if (demoMode !== mode) setMode(demoMode);
@@ -237,6 +298,8 @@
             setInfo(ac
               ? '<b>대류</b>: 에어컨의 차가운 공기는 무거워서 <b>아래로 내려오고</b>, 아래쪽의 따뜻한 공기는 위로 올라가며 순환해요. 그래서 에어컨은 <b>위쪽</b>에 달아요.'
               : '<b>대류</b>: 난방기를 <b>' + POSN[RM ? RM.pos : 'bottom'] + '</b>에 놓았어요 (' + (RM && RM.on ? '켜짐' : '꺼짐') + ').<br>' + ((RM ? RM.pos : 'bottom') === 'bottom' ? '데워진 공기는 위로 올라가고 위쪽의 찬 공기가 내려오며 순환해 방 전체가 데워져요.' : '데워진 공기는 위로 올라가기만 해서 위쪽에 머물고, 아래쪽은 오랫동안 추워요.') + ' 난방기의 위치와 켜기는 옆의 조작판에서 바꿔요.');
+          } else if (mode === 'thermos') {
+            thermosFrame(l, t, h, p);
           } else {
             // 복사
             let st;
@@ -261,7 +324,6 @@
             vacLab.set(st.vacK >= 0.5 ? '진공 (공기 없음)' : '공기 있음');
             setInfo('<b>복사</b>: 열이 <b>물질 없이도</b> 직접 전달돼요.<br>' + (st.stove ? (st.vacK >= 0.5 ? '공기를 뺀 진공에서도 컵이 따뜻해져요. ' : '공기가 있어도 열은 복사로 전달돼요. ') : '옆의 🔥 난로 켜기 버튼으로 난로를 켜 보세요. ') + (st.foil ? '은박지가 복사열을 <b>반사</b>해 컵까지 덜 전달돼요. ' : '') + '검은 컵이 흰 컵보다 복사열을 더 잘 흡수해요. 태양의 열이 지구에 오는 방식이에요.');
           }
-          if (S && S.scene === 'thermos') setInfo('<b>단열과 비유</b>(보온병 설계)는 2D 화면에서 해 보세요. 열은 <b>전도·대류·복사</b>로 이동해요.');
         },
         sync() {},
       };

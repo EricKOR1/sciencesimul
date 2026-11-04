@@ -1,7 +1,7 @@
 /* hp-momentum · 3D 작용 반작용과 운동량 보존
    2D 실험(window.__sim)의 장면을 그대로 입체로 보여 줘요: 🤝 줄로 연결된 두 수레(작용 반작용) · 🎱 일차원 충돌(합체/튕김) · 🚀 반동과 발사.
    질량·속도·충돌 유형은 옆 조작판이 정하고 3D는 따라가요. 위쪽 화살표는 각 물체의 운동량 p = mv, 아래 흰색 화살표는 총 운동량이에요.
-   (🏟️ 적용 장면은 2D 화면에서 해요) */
+   🏟️ 적용(자동차·당구공·수영 출발·대포·뉴턴의 요람)도 입체로 봐요. */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -49,7 +49,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 값은 옆 조작판에서 바꿔요',
     camera: { dist: 12 * KD, theta: 0.3, phi: 1.1, min: 4, max: 30, target: [5, 0.8, 0] },
     autoRotate: 0,
-    levels: [0, 1, 2],
+    levels: [0, 1, 2, 3],
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
       const { V3, M, mkArrow, setArrow } = tools(THREE);
@@ -105,6 +105,7 @@
       function show(list, on) { list.forEach((l) => l.show(on)); }
       function setMode(mode, scene) {
         const key = mode + '|' + scene; if (key === cur.key) return; cur.key = key;
+        apShow(mode === 'apply' ? scene : '');
         const rc = mode === 'recoil';
         Object.values(bodies).forEach((b) => (b.visible = false));
         track.visible = mode !== 'apply' && !(rc && scene === 'rocket') && mode !== 'x'; rope.visible = false; sens.forEach((s) => (s.visible = false));
@@ -115,7 +116,7 @@
         if (mode === 'pair') Object.assign(orbit, { tx: 4, ty: 0.9, tz: 0, phi: 1.1, theta: 0.2, dist: 8.5 * KD });
         else if (mode === 'collide') Object.assign(orbit, { tx: 5, ty: 0.9, tz: 0, phi: 1.1, theta: 0.2, dist: 9.5 * KD });
         else if (rc) Object.assign(orbit, { tx: 5, ty: 1.2, tz: 0, phi: 1.15, theta: 0.2, dist: 10 * KD });
-        else orbit.dist = 10 * KD;
+        else if (mode !== 'apply') orbit.dist = 10 * KD;
       }
       function arrows(items, tot, base, f, showTot) {   // items: [[arrow, label, x, p, y, text]]
         items.forEach(([ar, lb, x, p, y, txt]) => { setArrow(ar, new V3(x, y, 0), new V3(x + p * f, y, 0)); lb.obj = [x + p * f * 0.5, y, 0]; lb.off = [0, 0.3, 0]; lb.set(txt); lb.show(Math.abs(p) > 0.05); });
@@ -221,25 +222,152 @@
         else t1 = '0 = ' + SPACE.M + ' × (' + sg(r.vL, 3) + ') + ' + SPACE.m + ' × (' + sg(SPACE.v, 0) + ')<br>우주인의 반동 속력 = ' + r.Q + ' / ' + SPACE.M + ' = ' + Math.abs(r.vL).toFixed(3) + ' m/s (공기가 없어도 돼요) · ⏩ 10배 빠르게';
         info('<b>' + ({ skate: '⛸️ 스케이트 · 얼음판 10 m (마찰 없음)', gun: '🔫 총 쏘기', space: '👨‍🚀 우주 공간 (마찰·공기 없음)' }[sc]) + '</b><br>' + t1 + '<br><span style="opacity:.8">장면·질량은 옆 조작판에서 고르고 버튼을 눌러요.</span>');
       }
+
+      /* ===== 🏟️ 적용 장면: 🚗 자동차 · 🎱 당구공 · 🏊 수영 출발 · 💥 대포 · 🔔 뉴턴의 요람 ===== */
+      const gAp = new THREE.Group(); root.add(gAp); gAp.visible = false;
+      const KC = 0.4, KB = 10 / 6, apG = {};
+      const sgp = (n, d) => sg(n, d == null ? 0 : d);
+      const bx = (w, h, d, col, o) => new THREE.Mesh(new THREE.BoxGeometry(w, h, d), M(col, o));
+      { // 도로 · 당구대 · 물 · 요람 틀
+        const road = new THREE.Group(); const rd = bx(10.8, 0.16, 3.2, 0x151a22, { roughness: 0.9, metalness: 0 }); rd.position.set(5, -0.08, 0); rd.receiveShadow = true; road.add(rd);
+        for (let i = 0; i < 12; i++) { const d = bx(0.5, 0.02, 0.1, 0xf5d142, { roughness: 0.8 }); d.position.set(0.4 + i * 0.9, 0.01, 0); road.add(d); }
+        const roadC = new THREE.Group(); const rc2 = bx(14, 0.16, 3.4, 0x151a22, { roughness: 0.9, metalness: 0 }); rc2.position.set(6.4, -0.08, 0); rc2.receiveShadow = true; roadC.add(rc2);
+        for (let i = 0; i < 15; i++) { const d = bx(0.55, 0.02, 0.1, 0xf5d142, { roughness: 0.8 }); d.position.set(0 + i * 0.95, 0.01, 0); roadC.add(d); }
+        apG.roadC = roadC; gAp.add(roadC);
+        const table = new THREE.Group(); const tb = bx(10.8, 0.2, 3.2, 0x0b3d24, { roughness: 0.95, metalness: 0 }); tb.position.set(5, -0.1, 0); tb.receiveShadow = true; table.add(tb);
+        [[5, 1.65, 10.8, 0.2], [5, -1.65, 10.8, 0.2], [-0.4, 0, 0.2, 3.5], [10.4, 0, 0.2, 3.5]].forEach(([x, z, w, d]) => { const r = bx(w, 0.3, d, 0x8a5a2b); r.position.set(x, 0.05, z); table.add(r); });
+        const water = new THREE.Group(); const wt = new THREE.Mesh(new THREE.BoxGeometry(10.8, 0.9, 3.2), new THREE.MeshStandardMaterial({ color: 0x4aa8e8, roughness: 0.15, transparent: true, opacity: 0.55 })); wt.position.set(5, -0.45, 0); water.add(wt);
+        const cr = new THREE.Group();
+        apG.road = road; apG.table = table; apG.water = water; apG.cradle = cr; gAp.add(road, table, water, cr);
+      }
+      function mkCar(len, h, col, suv) {
+        const g = new THREE.Group(), body = bx(len, h * 0.42, 0.62, col, { roughness: 0.3, metalness: 0.4 }); body.position.y = 0.16 + h * 0.21; body.castShadow = true; g.add(body);
+        const cab = bx(len * (suv ? 0.72 : 0.5), h * 0.4, 0.56, col, { roughness: 0.3, metalness: 0.3 }); cab.material.color.offsetHSL(0, 0, -0.08); cab.position.set(-len * (suv ? 0.08 : 0.1), 0.16 + h * 0.42 + h * 0.2, 0); cab.castShadow = true; g.add(cab);
+        const win = bx(len * (suv ? 0.74 : 0.52), h * 0.2, 0.575, 0x9ccbee, { roughness: 0.1 }); win.position.set(cab.position.x, cab.position.y + 0.02, 0); g.add(win);
+        [-0.3, 0.3].forEach((fx) => [-0.32, 0.32].forEach((z) => { const w = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.1, 18), M(0x1f2937)); w.rotation.x = Math.PI / 2; w.position.set(fx * len, 0.15, z); g.add(w); }));
+        [-0.2, 0.2].forEach((z) => { const hl = bx(0.04, 0.07, 0.1, 0xfff3b0, { emissive: 0xaaa060 }); hl.position.set(len / 2, 0.16 + h * 0.2, z); g.add(hl); });
+        return g;
+      }
+      const carA = mkCar(4 * KC, 0.55, 0x3867f4, false), carB = mkCar(5 * KC, 0.75, 0xe2464b, true); gAp.add(carA, carB);
+      const ballA = new THREE.Mesh(new THREE.SphereGeometry(0.5, 28, 20), M(0x3867f4, { roughness: 0.15, metalness: 0.1 })), ballB = new THREE.Mesh(new THREE.SphereGeometry(0.5, 28, 20), M(0xe2464b, { roughness: 0.15, metalness: 0.1 }));
+      [ballA, ballB].forEach((b) => { b.castShadow = true; const st = bx(0.1, 0.1, 1.02, 0xffffff, { roughness: 0.3 }); b.add(st); gAp.add(b); });
+      const swimG = new THREE.Group(), platM = bx(1.8, 0.3, 1.2, 0x7a8aa6, { roughness: 0.5 }); platM.position.y = 0.05; platM.castShadow = true; swimG.add(platM); gAp.add(swimG);
+      const swimmer = new THREE.Group(); { const sb = bx(1.1, 0.28, 0.46, 0xf2873a, { roughness: 0.5 }); sb.castShadow = true; swimmer.add(sb); const hd = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 12), M(0xf3cfa8)); hd.position.x = 0.62; swimmer.add(hd); const cap = bx(0.18, 0.06, 0.2, 0x2b3345); cap.position.x = 0.64; cap.position.y = 0.17; swimmer.add(cap); } gAp.add(swimmer);
+      const cannonG = new THREE.Group(); { const cb = bx(1.3, 0.3, 0.9, 0x4d5a78, { metalness: 0.5, roughness: 0.4 }); cb.position.y = 0.4; cb.castShadow = true; cannonG.add(cb); const br = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.2, 1.5, 20), M(0x2b3345, { metalness: 0.7, roughness: 0.35 })); br.rotation.z = -Math.PI / 2; br.position.set(0.55, 0.7, 0); br.castShadow = true; cannonG.add(br); [-0.5, 0.5].forEach((z) => { const w = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.12, 22), M(0x1f2937)); w.rotation.x = Math.PI / 2; w.position.set(-0.1, 0.3, z); cannonG.add(w); }); } gAp.add(cannonG);
+      const shell = new THREE.Mesh(new THREE.SphereGeometry(0.14, 14, 10), M(0xc9a227, { metalness: 0.6 })); gAp.add(shell);
+      // 뉴턴의 요람
+      const CRL = 3.2, CRY = 4.2, CRR = 0.45, CR_T = 0.5, CR_A0 = 0.62, crBalls = [], crStr = [];
+      { const g = apG.cradle, fm = M(0x7a8aa6, { metalness: 0.5, roughness: 0.4 });
+        [-0.62, 0.62].forEach((z) => { const t = new THREE.Mesh(new THREE.BoxGeometry(5.6 * 1.2, 0.12, 0.12), fm); t.position.set(0, CRY, z); g.add(t); [-3.4, 3.4].forEach((x) => { const pst = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, CRY + 0.1, 12), fm); pst.position.set(x, CRY / 2, z); g.add(pst); }); });
+        const bs = bx(8.4, 0.2, 2.0, 0x5b6a80, { roughness: 0.6 }); bs.position.set(0, -0.1, 0); bs.receiveShadow = true; g.add(bs);
+        for (let i = 0; i < 5; i++) {
+          const b = new THREE.Mesh(new THREE.SphereGeometry(CRR, 28, 20), M(0xd7dde8, { metalness: 0.9, roughness: 0.2 })); b.castShadow = true; g.add(b); crBalls.push(b);
+          crStr.push([0, 1].map(() => rodC(0.012, 0x4d5a78, g)));
+        } }
+      function rodC(r, col, par) {   // a→b 가는 막대
+        const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 1, 6), new THREE.MeshBasicMaterial({ color: col })); par.add(m);
+        m.setA = (p, q) => { const d = new V3().subVectors(q, p), L = d.length(); m.scale.set(1, L, 1); m.position.copy(p).addScaledVector(d, 0.5); m.quaternion.setFromUnitVectors(new V3(0, 1, 0), d.normalize()); };
+        return m;
+      }
+      const lCr = label('', [1.2, CRY + 0.7, 0], { color: '#26324a', size: 13 });
+      const apSets = { car: ['roadC', carA, carB], ball: ['table', ballA, ballB], swim: ['water', swimG, swimmer], cannon: ['road', cannonG, shell], cradle: ['cradle'] };
+      function apShow(sel) {
+        gAp.visible = !!sel; ['road', 'roadC', 'table', 'water', 'cradle'].forEach((k) => (apG[k].visible = false));
+        [carA, carB, ballA, ballB, swimG, swimmer, cannonG, shell].forEach((o) => (o.visible = false));
+        lCr.show(false);
+        const set = apSets[sel]; if (!set) return;
+        apG[set[0]].visible = true; set.slice(1).forEach((o) => (o.visible = true));
+        if (sel === 'cradle') Object.assign(orbit, { tx: 0, ty: 2.4, tz: 0, phi: 1.25, theta: 0.3, dist: 9 * KD * (PHN ? 1.2 : 1) });
+        else if (sel === 'car') Object.assign(orbit, { tx: 6.4, ty: 1.2, tz: 0, phi: 1.0, theta: 0.15, dist: 13 * KD * (PHN ? 1.4 : 1) });
+        else Object.assign(orbit, { tx: 5, ty: 1.0, tz: 0, phi: 1.12, theta: 0.2, dist: 11 * KD * (PHN ? 1.35 : 1) });
+      }
+      function apCol(S, sel) {
+        const a = S.ap, c = a.run; if (!c) return;
+        const car = sel === 'car', k = car ? KC : KB;
+        let xA = c.xA, xB = c.xB, vA = c.cvA, vB = c.cvB, squash = c.squash, post = c.st === 'after' || c.st === 'done';
+        if (demo.on && (c.st === 'ready' || c.st === 'done')) {
+          const T0 = c.T0, TP = 1.6, t = demo.p * (T0 + TP); let joined = false; squash = 0;
+          if (t < T0 || !c.willHit) { xA = c.xAc - c.vA * (T0 - t); xB = c.xBc - c.vB * (T0 - t); vA = c.vA; vB = c.vB; post = !c.willHit && t >= T0; }
+          else { const q = t - T0; vA = c.v2A; vB = c.v2B; post = true; joined = c.type === 'stick'; xA = c.xAc + vA * q; xB = c.xBc + vB * q; if (joined) xB = xA + c.D0; squash = Math.max(0, 1 - q / 0.3); }
+          xA = clamp(xA, c.wA / 2, c.len - c.wA / 2); xB = clamp(xB, c.wB / 2, c.len - c.wB / 2);
+          if (joined) { xA = Math.min(xA, c.len - c.wB / 2 - c.D0); xB = xA + c.D0; }
+        }
+        const sq = 1 - 0.14 * squash;
+        let pa = 0, pb = 0, yA, yB;
+        if (car) { carA.position.set(xA * k, 0, 0); carB.position.set(xB * k, 0, 0); carA.scale.x = carB.scale.x = sq; yA = 2.2; yB = 2.9; }
+        else { const r = 0.5; ballA.position.set(xA * k, r, 0); ballB.position.set(xB * k, r, 0); ballA.rotation.z = -xA * k / r; ballB.rotation.z = -xB * k / r; yA = 1.4; yB = 1.9; }
+        pa = c.mA * vA; pb = c.mB * vB;
+        const f = car ? 1.6e-4 : 3.0, d = car ? 0 : 2, nm = car ? ['승용차', 'SUV'] : ['A', 'B'];
+        arrows([[aA, lA, xA * k, pa, yA, 'p ' + sgp(pa, d)], [aB, lB, xB * k, pb, yB, 'p ' + sgp(pb, d)]], pa + pb, car ? 6.4 : 5, f, true);
+        lT.set('총 운동량 ' + sgp(pa + pb, d) + ' kg·m/s');
+        const mt = (m) => car ? m : m.toFixed(2);
+        lnA.set(nm[0] + ' ' + mt(c.mA) + ' kg · ' + sg(vA, 1) + ' m/s'); lnB.set(nm[1] + ' ' + mt(c.mB) + ' kg · ' + sg(vB, 1) + ' m/s');
+        lnA.obj = car ? carA : ballA; lnB.obj = car ? carB : ballB; lnA.off = [0, car ? 0.75 : 0.9, 0]; lnB.off = [0, car ? 0.95 : 0.9, 0]; lnA.show(true); lnB.show(true);
+        const done = !!c.rec || post; let t1;
+        if (car) {
+          const P = CAR3.mA * CAR3.vA + CAR3.mB * CAR3.vB;
+          t1 = '총 운동량 = ' + CAR3.mA + ' × ' + CAR3.vA + ' + ' + CAR3.mB + ' × (' + sg(CAR3.vB, 0) + ') = ' + sg(P, 0) + ' kg·m/s<br>' +
+            (done ? '합체 후 속도 v = ' + sg(P, 0) + ' / ' + (CAR3.mA + CAR3.mB) + ' = <b>' + sg(c.v2A, 1) + ' m/s</b> (SUV 방향)<br>속도 변화: 승용차 ' + Math.abs(c.v2A - c.vA) + ' m/s, SUV ' + Math.abs(c.v2B - c.vB) + ' m/s → 가벼운 승용차가 더 크게 변해요.' : '▶ 충돌 시키기를 눌러 결과를 확인해요.');
+        } else t1 = '같은 질량 + 정면 탄성 충돌 → 속도를 서로 바꿔 가져요.<br>' + (done ? '충돌 후 A <b>' + sg(c.v2A, 1) + ' m/s</b>, B <b>' + sg(c.v2B, 1) + ' m/s</b> (운동량·운동 에너지 모두 보존)' : '▶ 충돌 시키기를 눌러 결과를 확인해요.');
+        info('<b>' + (car ? '🚗 자동차 정면 충돌 · 한 덩어리로 합체' : '🎱 당구공 정면 충돌 · 튕김') + '</b><br>' + t1 + '<br><span style="opacity:.8">위쪽 화살표는 p = mv, 아래 화살표는 총 운동량이에요. 식 고르기는 옆 조작판에서 해요.</span>');
+      }
+      const CAR3 = { mA: 1000, vA: 15, mB: 2000, vB: -15 };
+      function apRc(S, sel) {
+        const a = S.ap, r = a.rc; if (!r) return; const s = r.s, swim = sel === 'swim';
+        let xL = r.xL, xR = r.xR, on = r.st !== 'ready';
+        if (demo.on && r.st !== 'go') { const t = demo.p < 0.15 ? 0 : Math.min(1, (demo.p - 0.15) / 0.7) * s.dur; xL = Math.max(0.9, s.x0 + r.vL * t); xR = s.x0 + 0.5 + r.vR * t; on = demo.p >= 0.15; }
+        const xLc = clamp(xL, 0.9, 10.2);
+        if (swim) { swimG.position.set(xLc, 0.05 + (on ? Math.sin((xLc) * 3) * 0.03 : 0), 0); swimmer.position.set(clamp(xR, 0.5, 10.1), 0.52, 0); }
+        else { cannonG.position.set(xLc, 0, 0); const sx = on ? xR : xLc + 1.4; shell.visible = sx < 9.6; shell.position.set(sx, 0.7, 0); }
+        const f = swim ? 0.0125 : 0.00075, pL = on ? -r.Q : 0, pR = on ? r.Q : 0, xs = swim ? [xLc, clamp(xR, 0.5, 8.6)] : [xLc, Math.min(on ? xR : xLc + 1.4, 8.2)];
+        arrows([[aA, lA, xs[0], pL, swim ? 1.5 : 1.7, 'p ' + sgp(pL, 0)], [aB, lB, xs[1], pR, swim ? 2.1 : 2.3, 'p ' + sgp(pR, 0)]], 0, 5, f, false);
+        aT.visible = false; lT.show(false);
+        lnA.set((swim ? '출발대 ' : '대포 ') + (swim ? s.mL : s.mL) + ' kg' + (on ? ' · ' + sg(r.vL, 1) + ' m/s' : ''));
+        lnB.set((swim ? '선수 ' : '포탄 ') + s.mR + ' kg' + (on ? ' · ' + sg(r.vR, 1) + ' m/s' : ''));
+        lnA.obj = swim ? swimG : cannonG; lnB.obj = swim ? swimmer : shell; lnA.off = [0, -0.1, 0.9]; lnB.off = [0, 0.6, 0]; lnA.show(true); lnB.show(swim || shell.visible);
+        const M0 = s.mL, m0 = s.mR, v0 = s.vR;
+        const t1 = swim ? '0 = ' + m0 + ' × ' + v0.toFixed(1) + ' + ' + M0 + ' × V → V = ' + sg(-m0 * v0 / M0, 1) + ' m/s' : '0 = ' + m0 + ' × ' + v0 + ' + ' + M0 + ' × V → V = ' + sg(-m0 * v0 / M0, 1) + ' m/s';
+        info('<b>' + (swim ? '🏊 수영 출발 · 물에 떠 있는 출발대' : '💥 대포 발사') + '</b><br>' + t1 + '<br>' + (r.st === 'ready' && !on ? '▶ ' + (swim ? '출발하기' : '발사') + '를 눌러 결과를 확인해요. 처음엔 모두 정지해서 총 운동량은 0이에요.' : (swim ? '출발대는 반대 방향으로 ' : '대포는 반대 방향으로 ') + '<b>' + Math.abs(r.vL).toFixed(1) + ' m/s</b>로 ' + (swim ? '밀려나요.' : '반동해요.') + ' 총 운동량은 0 그대로예요.') + '<br><span style="opacity:.8">파랑 · 주황 화살표는 두 물체의 운동량(크기 같고 방향 반대)이에요.</span>');
+      }
+      function apCradle(S) {
+        const c = S.ap.cr, n = c.n; let st = c.st, t = c.t;
+        if (demo.on && c.st === 'hold') { st = 'swing'; t = demo.p < 0.1 ? -1 : (demo.p - 0.1) / 0.9 * 6; if (t < 0) st = 'hold'; }
+        let L = -CR_A0, R = 0;
+        if (st === 'swing') { const sv = t / CR_T * (Math.PI / 2), q = Math.floor(sv / (Math.PI / 2)) % 4, f = sv - Math.floor(sv / (Math.PI / 2)) * (Math.PI / 2); if (q === 0) { L = -CR_A0 * Math.cos(f); R = 0; } else if (q === 1) { L = 0; R = CR_A0 * Math.sin(f); } else if (q === 2) { L = 0; R = CR_A0 * Math.cos(f); } else { L = -CR_A0 * Math.sin(f); R = 0; } }
+        const ang = [0, 0, 0, 0, 0]; for (let i = 0; i < n; i++) ang[i] = L; for (let i = 0; i < n; i++) ang[4 - i] = R;
+        for (let i = 0; i < 5; i++) {
+          const px = (i - 2) * CRR * 2, a = ang[i], bxp = px + Math.sin(a) * CRL, byp = CRY - Math.cos(a) * CRL;
+          crBalls[i].position.set(bxp, byp, 0);
+          crStr[i][0].setA(new V3(px, CRY, -0.62), new V3(bxp, byp, 0)); crStr[i][1].setA(new V3(px, CRY, 0.62), new V3(bxp, byp, 0));
+        }
+        lCr.show(true); lCr.set(st === 'hold' ? '왼쪽 공 ' + n + '개를 들어 올렸어요' : '오른쪽에서도 공이 ' + n + '개 튀어 올라요'); lCr.el.style.background = st === 'hold' ? '#26324a' : '#14a058';
+        const e2 = n === 1 ? '½mv²' : '½m(' + n + 'v)² = ' + (n * n) + '·(½mv²)';
+        info('<b>🔔 뉴턴의 요람 · 마찰을 무시한 이상적인 경우</b><br>충돌 전: 공 ' + n + '개, 속력 v → 운동량 ' + n + 'mv · 운동 에너지 ' + (n === 1 ? '½mv²' : n + '·(½mv²)') +
+          '<br><span style="color:#7be3a0">○ ' + n + '개가 속력 v로</span>: 운동량 ' + n + 'mv · 에너지 ' + n + '·(½mv²) → 둘 다 보존!<br><span style="color:#ff9b9b">' + (n === 1 ? '○ 1개가 속력 v로 (위와 같아요)' : '✕ 1개가 속력 ' + n + 'v로') + '</span>' + (n === 1 ? '' : ': 운동량 ' + n + 'mv 같지만 에너지 ' + e2 + ' → 보존 안 돼요') +
+          '<br><span style="opacity:.8">운동량과 운동 에너지가 모두 보존되는 경우만 가능해요. 공 개수는 옆 조작판에서 골라요.</span>');
+      }
+      function apply(S) {
+        const a = S.ap; if (!a) return; const sel = a.sel;
+        if (sel === 'car' || sel === 'ball') apCol(S, sel); else if (sel === 'swim' || sel === 'cannon') apRc(S, sel); else apCradle(S);
+      }
       /* ▶ 재생: 지금 값 그대로 같은 실험을 되풀이해요 (장면마다 재생 줄이 하나씩) */
-      const PH = { pair: [[0, '출발'], [0.02, '줄 당기는 중'], [0.85, '측정 끝']], collide: [[0, '다가오는 중'], [0.38, '충돌!'], [0.42, '충돌 후']], recoil: [[0, '정지 (총 운동량 0)'], [0.15, '서로 밀어요']] };
-      const DM = { pair: { p: 0, on: false }, collide: { p: 0, on: false }, recoil: { p: 0, on: false } }, PLS = {};
+      const PH = { pair: [[0, '출발'], [0.02, '줄 당기는 중'], [0.85, '측정 끝']], collide: [[0, '다가오는 중'], [0.38, '충돌!'], [0.42, '충돌 후']], recoil: [[0, '정지 (총 운동량 0)'], [0.15, '서로 밀어요']], apply: [[0, '준비'], [0.15, '움직이는 중'], [0.85, '결과']] };
+      const DM = { pair: { p: 0, on: false }, collide: { p: 0, on: false }, recoil: { p: 0, on: false }, apply: { p: 0, on: false } }, PLS = {};
       Object.keys(PH).forEach((k) => {
-        PLS[k] = controls.player({ duration: k === 'collide' ? 6 : 7, loop: true, autoplay: false, label: k === 'pair' ? '줄 당기기' : k === 'collide' ? '충돌 시키기' : '서로 밀기', phases: PH[k],
+        PLS[k] = controls.player({ duration: k === 'collide' ? 6 : 7, loop: true, autoplay: false, label: k === 'pair' ? '줄 당기기' : k === 'collide' ? '충돌 시키기' : k === 'apply' ? '다시 보기' : '서로 밀기', phases: PH[k],
           onFrame(p) { DM[k].p = p; DM[k].on = p > 0 || !!(PLS[k] && PLS[k].playing); } });
         PLS[k].row = ctx.renderer.domElement.parentNode.parentNode.querySelectorAll('.v3-player');
         PLS[k].row = PLS[k].row[PLS[k].row.length - 1];
       });
-      const NOTE = '🏟️ 적용 장면(자동차·당구공·수영 출발·대포·뉴턴의 요람)은 2D 화면에서 해요. 위의 [▦ 2D]를 눌러 보세요.';
       return {
         update(dt, tm) {
           const S = sim() && sim().S; if (!S) return;
-          const mode = S.mode, sc = mode === 'recoil' && S.rc ? S.rc.scene : '';
+          const mode = S.mode, sc = mode === 'recoil' && S.rc ? S.rc.scene : mode === 'apply' && S.ap ? S.ap.sel : '';
           setMode(mode, sc); const pl = PLS[mode]; demo = DM[mode] || DM.collide;
           // 2D가 직접 실험을 돌리는 중이면 재생을 멈춰요
-          const busy = (mode === 'collide' && S.co && S.co.run && ['approach', 'hit', 'after'].indexOf(S.co.run.st) >= 0) || (mode === 'pair' && S.pr && S.pr.st === 'pull') || (mode === 'recoil' && S.rc && S.rc.st === 'go');
+          const busy = (mode === 'collide' && S.co && S.co.run && ['approach', 'hit', 'after'].indexOf(S.co.run.st) >= 0) || (mode === 'pair' && S.pr && S.pr.st === 'pull') || (mode === 'recoil' && S.rc && S.rc.st === 'go') || (mode === 'apply' && S.ap && ((S.ap.run && ['approach', 'hit', 'after'].indexOf(S.ap.run.st) >= 0) || (S.ap.rc && S.ap.rc.st === 'go') || (S.ap.sel === 'cradle' && S.ap.cr.st === 'swing')));
           if (pl) { if (busy && pl.playing) pl.pause(); if (busy) demo.on = false; else if (!pl.playing && pl.p === 0) demo.on = false; }
-          if (mode === 'collide') collide(S); else if (mode === 'pair') pair(S); else if (mode === 'recoil') recoil(S, tm); else info(NOTE);
+          if (mode === 'collide') collide(S); else if (mode === 'pair') pair(S); else if (mode === 'recoil') recoil(S, tm); else if (mode === 'apply') apply(S); else info('');
         },
         sync() {},
       };

@@ -86,8 +86,30 @@
     camera: { dist: 21 * KD, theta: -0.8, phi: 0.92, min: 8, max: 36, target: [0.6, 0.6, 0] },
     autoRotate: 0,
     build(ctx) {
-      const { THREE, root, label, info, controls } = ctx;
+      const { THREE, controls } = ctx;
+      /* ---- 여러 장면 도우미 (2D 장면 S.mode에 맞춰 그룹 · 이름표 · 재생 줄을 바꿔요) ---- */
+      const root = new THREE.Group(); ctx.root.add(root);
+      const G = { main: root }, K = { cur: '', labs: [], pls: [] };
+      const label = (text, obj, o, sc) => {
+        const L = ctx.label(text, obj, o), sh = L.show; L._own = true; L._sc = sc || 'main';
+        L._ap = () => sh(L._own && K.cur === L._sc); L.show = (v) => { L._own = v; L._ap(); }; K.labs.push(L); L._ap(); return L;
+      };
+      const mkPlayer = (sc, o) => {
+        const p = controls.player(o), rs = document.querySelectorAll('.v3-player'), row = rs[rs.length - 1];
+        K.pls.push({ sc, p, row }); row.style.display = sc === K.cur ? '' : 'none'; return p;
+      };
+      const newScene = (k) => { const g = new THREE.Group(); g.visible = false; ctx.root.add(g); G[k] = g; return g; };
+      const CAMS = { main: { dist: 21 * KD, theta: -0.8, phi: 0.92, min: 8, max: 36, tx: 0.6, ty: 0.6, tz: 0 } };
+      const info = (hh) => ctx.info(hh);
       const h = H3(ctx); const { V3, mat, glass, anchor, sphere, box, cyl, tube, grab, toggleBtn } = h;
+      function setScene(k) {
+        if (k === K.cur) return; const first = !K.cur; K.cur = k;
+        Object.keys(G).forEach((n) => (G[n].visible = n === k));
+        K.labs.forEach((L) => L._ap());
+        K.pls.forEach((x) => { const on = x.sc === k; x.row.style.display = on ? '' : 'none'; if (!on) x.p.pause(); });
+        h.showCtl(k === 'dbl' ? 'dbl' : 'main');
+        const c = CAMS[k]; if (c && !(first && k === 'main')) Object.assign(ctx.orbit, c, { tx: c.tx || 0, ty: c.ty || 0, tz: c.tz || 0 });
+      }
       const lessonS = () => (window.__sim && window.__sim.S) || null;
       const S0 = lessonS();
       const st = { slits: S0 && S0.cfg && S0.cfg.slits === 'A' ? 'A' : S0 && S0.cfg && S0.cfg.slits === 'B' ? 'B' : 'both', det: !!(S0 && S0.cfg && S0.cfg.det), V: 50, curve: false, queue: 0 };
@@ -175,18 +197,90 @@
         info(msg);
       }
       /* 값(틈·검출기·전압·쏘기)은 2D 조작판이 정하고, 3D는 같은 설정으로 같은 개수만큼 쏘아 줘요 */
-      toggleBtn('*', '확률 곡선', false, (on) => { st.curve = on; curve.visible = on; });
+      toggleBtn('main', '확률 곡선', false, (on) => { st.curve = on; curve.visible = on; });
       function cfg() {
         cover[0].visible = st.slits === 'B' ? false : false; cover[0].visible = st.slits === 'A'; cover[1].visible = st.slits === 'B';       // A만 열면 B(−z) 덮기
         cover[0].position.z = -ZS; cover[1].position.z = ZS;
         lDet.show(st.det && st.slits === 'both');
         recomputePdf(); reset();
       }
+      /* =====================================================================
+         새 장면: 드브로이 파장(dbl) — 입자마다 λ = h/(mv)가 얼마나 다른지, 이중 슬릿 무늬를 볼 수 있는지
+         ===================================================================== */
+      const LB = 'rgba(8,12,24,.78)', Mx2 = new THREE.Matrix4();
+      const stdM = (w, hh, d, c, o) => new THREE.Mesh(new THREE.BoxGeometry(w, hh, d), mat(c, o));
+      const sphM = (r, c, o) => new THREE.Mesh(new THREE.SphereGeometry(r, 22, 16), mat(c, o));
+      const gD = newScene('dbl'); CAMS.dbl = { dist: PHN ? 22 : 15.5, theta: 0.6, phi: 1.1, min: 7, max: 34, tx: 0, ty: 0.4, tz: 0.3 };
+      const RX0 = -6.5, RX1 = 6.5, RZ = 2.6, RY = -2.2, lamX = (l) => RX0 + (Math.min(-7, Math.max(-35, Math.log10(l))) + 35) / 28 * (RX1 - RX0);
+      const ruler = stdM(RX1 - RX0 + 0.6, 0.18, 0.5, 0x8e9bc9); ruler.position.set(0, RY, RZ); gD.add(ruler);
+      const thrX = lamX(1e-6 * 1e-7);
+      const zRed = new THREE.Mesh(new THREE.BoxGeometry(thrX - RX0 + 0.3, 4.2, 1.0), h.basic(0xe2464b, { transparent: true, opacity: 0.16, depthWrite: false })); zRed.position.set((RX0 - 0.3 + thrX) / 2, RY + 2.2, RZ); gD.add(zRed);
+      const zGrn = new THREE.Mesh(new THREE.BoxGeometry(RX1 + 0.3 - thrX, 4.2, 1.0), h.basic(0x50dc8c, { transparent: true, opacity: 0.16, depthWrite: false })); zGrn.position.set((thrX + RX1 + 0.3) / 2, RY + 2.2, RZ); gD.add(zGrn);
+      const thrM = stdM(0.06, 4.4, 1.0, 0xffd166, { emissive: 0xffd166, emissiveIntensity: 0.6 }); thrM.position.set(thrX, RY + 2.2, RZ); gD.add(thrM);
+      [-35, -28, -21, -14, -7].forEach((e) => { const x = lamX(Math.pow(10, e)), t = stdM(0.05, 0.3, 0.05, 0xdbe4f7); t.position.set(x, RY - 0.2, RZ + 0.1); gD.add(t); label('10' + String(e).replace('-', '⁻').replace(/\d/g, (d) => '⁰¹²³⁴⁵⁶⁷⁸⁹'[d]), [x, RY - 0.65, RZ + 0.1], { color: LB, size: 11 }, 'dbl'); });
+      label('드브로이 파장 λ (m, 로그 눈금)', [0, RY - 1.25, RZ + 0.1], { color: 'rgba(8,12,24,.85)', size: 12 }, 'dbl');
+      label('◀ 무늬를 볼 수 없어요', [(RX0 + thrX) / 2, RY + 4.6, RZ], { color: 'rgba(192,53,59,.9)', size: 12 }, 'dbl'); label('무늬를 볼 수 있어요 ▶', [(thrX + RX1) / 2 + 0.6, RY + 4.6, RZ], { color: 'rgba(28,122,74,.9)', size: 12 }, 'dbl');
+      label('무늬 한계 λ/d = 10⁻⁶', [thrX, RY + 4.2, RZ], { color: 'rgba(138,106,0,.92)', size: 11, offset: [0, 0, 0] }, 'dbl');
+      // 입자 모형과 핀
+      const mkIcon = (id) => {
+        const g = new THREE.Group();
+        if (id === 'e') { const s = sphM(0.2, 0x43b7ff, { emissive: 0x43b7ff, emissiveIntensity: 0.9 }); g.add(s); }
+        else if (id === 'n') g.add(sphM(0.3, 0xaab0c8));
+        else if (id === 'c') { g.add(sphM(0.45, 0x6f6a8a)); for (let k = 0; k < 12; k++) { const a = (k / 12) * 6.283, b = k % 2 ? 0.5 : -0.5, s = sphM(0.14, 0xc8c3e2); s.position.set(Math.cos(a) * 0.46 * Math.cos(b), Math.sin(b) * 0.46, Math.sin(a) * 0.46 * Math.cos(b)); g.add(s); } }
+        else { g.add(sphM(0.6, 0xfff7ea)); [-1, 1].forEach((sg) => { const r = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.025, 6, 30, 1.8), mat(0xd6453d)); r.position.x = sg * 0.35; r.rotation.y = Math.PI / 2; r.rotation.z = sg > 0 ? 0 : Math.PI; g.add(r); }); }
+        return g;
+      };
+      const P = window.__sim.PART, pins = P.map((p, i) => {
+        const g = new THREE.Group(); gD.add(g); const rod = stdM(0.05, 1, 0.05, new THREE.Color(p.col).getHex()); g.add(rod); const ic = mkIcon(p.id); g.add(ic);
+        const ring = new THREE.Mesh(new THREE.TorusGeometry(0.62, 0.04, 8, 32), h.basic(0xffffff)); ring.rotation.x = Math.PI / 2; g.add(ring);
+        const lab = label('', ic, { color: 'rgba(8,12,24,.85)', size: 12, offset: [0, 0.85, 0] }, 'dbl');
+        return { p, g, rod, ic, ring, lab, hgt: [1.2, 3.2, 2.2, 1.2][i] };
+      });
+      // 이중 슬릿 시연 (고른 입자)
+      const DZ = -2.4, SLX = -1.5;
+      const dGun = sphM(0.35, 0xdde4f0, { emissive: 0x9fb6ff, emissiveIntensity: 0.4 }); dGun.position.set(-5.4, 0.9, DZ); gD.add(dGun);
+      [[-2.0, -0.55], [-0.4, 0.4], [0.55, 2.0]].forEach(([z0, z1]) => { const w = stdM(0.2, 2.2, Math.abs(z1 - z0), 0x8793a8, { metalness: 0.5 }); w.position.set(SLX, 0.9, DZ + (z0 + z1) / 2); gD.add(w); });
+      const dCv = document.createElement('canvas'); dCv.width = 256; dCv.height = 160; const dX = dCv.getContext('2d'), dTex = new THREE.CanvasTexture(dCv);
+      const dScr = new THREE.Mesh(new THREE.PlaneGeometry(3.4, 2.2), new THREE.MeshBasicMaterial({ map: dTex, side: THREE.DoubleSide })); dScr.rotation.y = -Math.PI / 2; dScr.position.set(3.4, 0.9, DZ); gD.add(dScr);
+      const dFly = sphM(0.2, 0xffffff, { emissive: 0xffffff, emissiveIntensity: 0.7 }); gD.add(dFly);
+      const ldTitle = label('', dGun, { color: 'rgba(8,12,24,.85)', size: 12, offset: [0.4, 0.9, 0] }, 'dbl'), ldScr = label('', dScr, { color: LB, size: 12, offset: [0, 1.45, 0] }, 'dbl'), ldInfo = label('', [0, 0.9, DZ], { color: 'rgba(8,12,24,.0)', size: 12 }, 'dbl'); ldInfo.el.style.display = 'none'; ldInfo.show(false);
+      label('이중 슬릿 (d = 100 nm)', [SLX, 2.35, DZ], { color: LB, size: 12 }, 'dbl');
+      let dSig = '';
+      function paintScr(rev, can, ratio) {
+        const key = rev + '|' + can; if (key === dSig) return; dSig = key;
+        dX.fillStyle = '#10151f'; dX.fillRect(0, 0, 256, 160);
+        if (!rev) { dX.fillStyle = '#8e9bc9'; dX.font = '900 90px sans-serif'; dX.textAlign = 'center'; dX.textBaseline = 'middle'; dX.fillText('?', 128, 84); }
+        else if (can) { for (let x = 0; x < 256; x++) { const u = (x - 128) / 128, I = Math.pow(Math.cos(u * 6 * Math.PI / 2 * 1.0), 2) * Math.pow(Math.sin(u * 2.4 + 1e-6) / (u * 2.4 + 1e-6), 2); const v = Math.round(255 * Math.min(1, I * 1.1)); dX.fillStyle = 'rgb(' + v + ',' + Math.round(v * 0.82) + ',' + Math.round(v * 0.35) + ')'; dX.fillRect(x, 0, 1, 160); } }
+        else { for (let x = 0; x < 256; x++) { const u = (x - 128) / 128, I = 0.5 * (Math.exp(-Math.pow((u - 0.28) / 0.17, 2)) + Math.exp(-Math.pow((u + 0.28) / 0.17, 2))), v = Math.round(255 * I); dX.fillStyle = 'rgb(' + v + ',' + Math.round(v * 0.82) + ',' + Math.round(v * 0.35) + ')'; dX.fillRect(x, 0, 1, 160); } }
+        dTex.needsUpdate = true;
+      }
+      const dP = { on: false, sel: 'e' }; let dSelSig = '';
+      const segSel = h.grab('dbl', () => controls.segment('입자', [{ label: '전자', value: 'e' }, { label: '중성자', value: 'n' }, { label: 'C₆₀', value: 'c' }, { label: '야구공', value: 'b' }], 'e', (v) => { const L = window.__sim; L.S.d.sel = v; L.updateCtl(); dP.on = false; plD.pause(); }));
+      function updDbl(dt, t) {
+        const L = window.__sim, S = L.S, D = S.d, rev = D.revealed || (L.game && L.game.free);
+        if (D.sel !== dSelSig) { dSelSig = D.sel; segSel.set(D.sel); if (dP.on) { dP.on = false; plD.pause(); } }
+        const sel = dP.on ? dP.sel : D.sel;
+        pins.forEach((q) => {
+          const lam = L.pLam(q.p), x = lamX(lam), on = q.p.id === sel, ok = L.pCan(q.p);
+          q.g.position.set(x, RY, RZ); q.rod.scale.y = q.hgt; q.rod.position.y = q.hgt / 2; q.ic.position.y = q.hgt + 0.3; q.ic.scale.setScalar(on ? 1.25 : 1); q.ring.position.y = q.hgt + 0.3; q.ring.visible = on; q.ic.rotation.y = t * 0.6;
+          q.lab.set(q.p.name + ' · λ ' + L.fmtLam(lam) + (rev ? (ok ? ' ✅' : ' ❌') : '')); q.lab.el.style.borderColor = on ? '#fff' : 'rgba(255,255,255,.18)';
+        });
+        const p = P.find((q) => q.id === sel), can = L.pCan(p), ratio = L.pRatio(p);
+        paintScr(rev, can);
+        dFly.position.set(-5.4 + ((t * 1.6) % 1) * 5.0, 0.9 + 0.0, DZ + (((t * 1.6) % 1) > 0.5 ? 0 : 0)); dFly.material.color.set(p.col); dFly.material.emissive.set(p.col);
+        if (((t * 1.6) % 1) > 0.9) dFly.visible = false; else dFly.visible = true;
+        ldTitle.set('선택: ' + p.name + ' (' + p.sub + ')'); ldScr.set(rev ? (can ? '무늬를 볼 수 있어요 ✅' : '무늬를 볼 수 없어요 ❌') : '무늬가 보일까요? ? (2D 문제에서 예측해요)');
+        info('<b>λ = h / p = h / (mv)</b>: ' + p.name + '의 질량 ' + L.sci(p.m, 1) + ' kg, 속력 ' + L.fmtV(L.pv(p)) + ' → <b>λ = ' + L.fmtLam(L.pLam(p)) + '</b><br>슬릿 간격 d = 100 nm와 비교한 <b>λ/d = ' + L.sci(ratio, 1) + '</b>' + (rev ? (can ? ' ≥ 10⁻⁶ → 간섭무늬를 볼 수 있어요.' : ' < 10⁻⁶ → 파장이 너무 짧아 무늬를 볼 수 없어요.') : '. 10⁻⁶ 이상이면 무늬를 볼 수 있어요. 어떨까요?'));
+      }
+
+      const plD = mkPlayer('dbl', { duration: 8, loop: true, autoplay: false, label: '입자 비교', phases: [[0, '전자'], [0.25, '중성자'], [0.5, 'C₆₀'], [0.75, '야구공']], onFrame(p) { dP.on = true; dP.sel = ['e', 'n', 'c', 'b'][Math.min(3, Math.floor(p * 4))]; } });
       cfg();
+      setScene(window.__sim && window.__sim.S && window.__sim.S.mode === 'dbl' ? 'dbl' : 'main');
       let acc = 0, rt = 0, lastN = 0, lcfg = '';
       return {
         update(dt, t) {
           dt = Math.min(dt, 0.05);
+          { const S = lessonS(), k = S && S.mode === 'dbl' ? 'dbl' : 'main'; if (k !== K.cur) { setScene(k); lcfg = ''; txt(); } if (k === 'dbl') { updDbl(dt, t); return; } }
           { const S = lessonS(); if (S && S.cfg) { const k = S.cfg.slits + '|' + (S.cfg.det && S.cfg.slits === 'both') + '|' + S.cfg.V; if (k !== lcfg) { lcfg = k; st.slits = S.cfg.slits; st.det = S.cfg.det && S.cfg.slits === 'both'; st.V = S.cfg.V; cfg(); lastN = S.data ? S.data.N : 0; shoot(Math.min(S.data ? S.data.N : 0, 300)); }
             const N = S.data ? S.data.N : 0; if (N < lastN) { reset(); } else if (N > lastN) shoot(Math.min(N - lastN, 300)); lastN = N; } }
           if (st.queue > 0) { acc += dt * (st.queue > 20 ? 22 : 5); while (acc >= 1 && st.queue > 0) { if (launch()) { st.queue--; acc -= 1; } else break; } } else acc = 0;

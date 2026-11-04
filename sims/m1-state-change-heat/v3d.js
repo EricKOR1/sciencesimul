@@ -8,7 +8,7 @@
   window.SciSim3D.attach({
     title: '가열 곡선 3D',
     hint: ' ',
-    levels: [0, 1],   // 가열 곡선 · 냉각 곡선 단계 (열 흡수/방출 분류·생활 적용은 2D에서)
+    levels: [0, 1, 2, 3],   // 가열 곡선 · 냉각 곡선 · 열 흡수/방출 · 생활 적용
     camera: { dist: 12.5 * (PHN0 ? 1.08 : 1), theta: 0.6, phi: 1.15, fov: 45, target: [-0.6, -0.5, 0], min: 5, max: 26 },
     autoRotate: 0.15,
     build(ctx) {
@@ -223,9 +223,69 @@
       }
       setKey('heat');
 
+
+      /* ===== 장면 flow(열 흡수 / 열 방출) · life(생활 속 열에너지): 상태가 바뀌는 입자 모형 + 열의 출입 ===== */
+      const TRN = {
+        melt: { a: 'solid', b: 'liquid', name: '융해', pair: '고체 → 액체', abs: true },
+        freeze: { a: 'liquid', b: 'solid', name: '응고', pair: '액체 → 고체', abs: false },
+        vap: { a: 'liquid', b: 'gas', name: '기화', pair: '액체 → 기체', abs: true },
+        cond: { a: 'gas', b: 'liquid', name: '액화', pair: '기체 → 액체', abs: false },
+        sub1: { a: 'solid', b: 'gas', name: '승화', pair: '고체 → 기체', abs: true },
+        sub2: { a: 'gas', b: 'solid', name: '승화', pair: '기체 → 고체', abs: false },
+      };
+      const FLOWSEQ = ['melt', 'freeze', 'vap', 'cond', 'sub1', 'sub2'];
+      const LIFE = {
+        igloo: { seq: ['freeze'], t: '이글루 안에 물 뿌리기', d: '뿌린 물이 얼면서(응고) 열을 방출해서 이글루 안이 조금 따뜻해져요.' },
+        sweat: { seq: ['vap'], t: '땀이 마르면 시원해요', d: '땀이 마르면서(기화) 몸의 열을 흡수해서 시원해져요.' },
+        icebox: { seq: ['melt'], t: '아이스박스의 얼음', d: '얼음이 녹으면서(융해) 열을 흡수해서 음료가 시원하게 유지돼요.' },
+        aircon: { seq: ['vap', 'cond'], t: '에어컨의 냉매', d: '실내에서 냉매가 기화하며 열을 흡수하고, 실외에서 액화하며 열을 방출해요.' },
+        steam: { seq: ['cond'], t: '스팀 난방', d: '수증기가 라디에이터에서 물로 변하면서(액화) 열을 방출해서 방이 따뜻해져요.' },
+      };
+      let stateTouch = false;
+      const trs = { id: '', c: 0, lastKey: '', vid: 'igloo', vt: 0 };
+      const trLab = label('', [0, HH + 0.45, 0], { size: 13.5, color: 'rgba(30,64,175,.92)' }), trLab2 = label('', [0, HH + 1.15, 0], { size: 12, color: 'rgba(80,60,160,.92)' });
+      function setThermo(v) { tg.visible = tb.visible = col.visible = v; ticks.forEach((tk) => { tk.m.visible = v; tk.l.show(v); }); box.style.display = v ? '' : 'none'; if (!v) subLab.show(false); }
+      function transFrame(sc, l, dt, tm) {
+        let seq, title = '', desc = '', lessonKey = '';
+        if (sc === 'flow') { const TH2 = l && l.TH, sel = TH2 && TH2.arrow; seq = sel && TRN[sel] ? [sel] : FLOWSEQ; lessonKey = sel || '-'; }
+        else { const id = trs.vid, o = LIFE[id] || LIFE.igloo; seq = o.seq; title = o.t; desc = o.d; lessonKey = id; }
+        const CY = 6, tot = CY * seq.length;
+        let c;
+        if (pmode) c = (playP * 18) % tot; else { trs.c = (trs.c + Math.min(dt, 0.05)) % tot; c = trs.c; }
+        const idx = Math.min(seq.length - 1, Math.floor(c / CY)), q = c - idx * CY, T = TRN[seq[idx]];
+        const k = sc + ':' + seq.join(',') + ':' + idx + ':' + (pmode ? 'p' : 'n');
+        if (k !== trs.lastKey) { trs.lastKey = k; sys.prep(T.a); }
+        const f = Math.max(0, Math.min(1, (q - 0.8) / 3.8)), e = f * f * (3 - 2 * f);
+        sys.mix(T.a, T.b, e);
+        const running = q > 0.6 && q < 5.2;
+        setThermo(false); tLab.show(false);
+        burner.visible = T.abs; flame.visible = flame2.visible = T.abs && running; bath.visible = bathLab.visible = !T.abs; const flk = 0.9 + 0.12 * Math.sin(tm * 25); flame.scale.set(1, flk, 1); flame2.scale.set(1, flk * 1.1, 1);
+        arrIn.visible = T.abs && running; arrOut.visible = !T.abs && running;
+        arrLab.show(running); arrLab.obj = T.abs ? [1.0, -HH - 1.1, 0] : [W + 1.0, -HH + 1.3, 0]; arrLab.set(T.abs ? '🔥 열을 흡수해요' : '❄️ 열을 방출해요');
+        arrLab.el.style.background = T.abs ? 'rgba(220,70,40,.92)' : 'rgba(40,100,230,.92)';
+        trLab.obj = [0, HH + 0.45, 0]; trLab.set('<b>' + T.name + '</b> (' + T.pair + ') · ' + (T.abs ? '열 흡수' : '열 방출')); trLab.show(true);
+        const nm = ['고체', '액체', '기체'], stateName = (s) => (s === 'solid' ? '고체' : s === 'liquid' ? '액체' : '기체');
+        trLab2.show(false);
+        const ph = document.querySelector('.v3-player .v3-ph'); if (ph) ph.textContent = pmode ? T.name + (T.abs ? ' (열 흡수)' : ' (열 방출)') + (seq.length > 1 && sc === 'life' ? '' : '') : '';
+        const why = T.abs ? '입자 사이가 <b>멀어지는</b> 변화라서 열을 <b>흡수</b>해요.' : '입자 사이가 <b>가까워지는</b> 변화라서 열을 <b>방출</b>해요.';
+        let txt;
+        if (sc === 'flow') txt = '<b>' + T.name + '</b> (' + T.pair + '): ' + why + '<br>융해 · 기화 · 승화(고체→기체)는 열을 <b>흡수</b>하고, 응고 · 액화 · 승화(기체→고체)는 열을 <b>방출</b>해요.' + (lessonKey === '-' ? '<br>여섯 가지 상태 변화를 차례로 보여 줘요. 열 흡수/방출 <b>분류 활동</b>은 옆의 2D 화면에서 해요.' : '');
+        else txt = '<b>' + title + '</b><br>' + desc + '<br>(' + T.name + ': ' + why + ')<br>카드를 상자에 넣는 <b>분류 활동</b>은 2D 화면에서 해요.';
+        setInfo(txt);
+        sys.step(dt); sys.draw();
+        drawGraphClear();
+      }
+      function drawGraphClear() { }
       return {
         update(dt, tm) {
           const l = l2(), S = l && l.S, sc = S ? S.scene : 'heat';
+          if (sc === 'flow' || sc === 'life') {
+            if (sc === 'life') { trs.vt += dt; if (trs.vt > 0.25 || !trs.vid) { trs.vt = 0; try { const sv = l.state(); if (sv && sv.viewer) trs.vid = sv.viewer; } catch (e) { /* 무시 */ } } }
+            if (sig !== 'T:' + sc) { sig = 'T:' + sc; if (pmode) { pmode = false; pl.pause(); } trs.lastKey = ''; trs.c = 0; stateTouch = true; }
+            if (sc === 'life' && trs.vid !== trs.prevVid) { trs.prevVid = trs.vid; trs.c = 0; trs.lastKey = ''; if (pmode) { pmode = false; pl.pause(); } }
+            transFrame(sc, l, dt, tm); return;
+          }
+          if (stateTouch) { stateTouch = false; setThermo(true); tLab.show(true); trLab.show(false); trLab2.show(false); bath.visible = bathLab.visible = st.key === 'cool'; burner.visible = st.key === 'heat'; sys.prep(CURVES[st.key].start); st.seg = -1; st.lastT = 0; }
           const key = sc === 'cool' ? 'cool' : sc === 'heat' ? 'heat' : st.key;
           const R = l && l.RUN && l.RUN[key];
           const k2 = [key, R && R.on, R && R.t > 0, sc].join();
@@ -252,7 +312,6 @@
           let txt = '<b>' + sg.lab + '</b> · 온도 <b>' + Math.round(T) + ' °C</b> · ' + t.toFixed(1) + '분<br>';
           if (key === 'heat') txt += sg.flat ? '계속 가열해도 <b>온도가 ' + sg.T0 + ' °C로 일정</b>한 <b>수평 구간</b>이에요(' + sg.name + '). 열은 계속 공급되고, 이 열은 입자의 <b>배열을 바꾸는</b>(상태를 바꾸는) 데 쓰여요.' : sg.id === 'ice' ? '입자가 제자리에서 진동해요. 열을 흡수하면 <b>온도가 올라가요</b>.' : sg.id === 'water' ? '입자가 자리를 바꾸며 움직여요. 열을 흡수하면 <b>온도가 올라가요</b>.' : '상태 변화가 모두 끝나 다시 <b>온도가 올라가요</b>.';
           else txt += sg.flat ? '계속 식혀도 <b>온도가 ' + sg.T0 + ' °C로 일정</b>한 <b>수평 구간</b>이에요(' + sg.name + '). 응고하며 입자가 규칙적으로 배열되고 <b>열에너지를 방출</b>해서 온도가 내려가지 않아요.' : sg.id === 'liq' ? '식으면서 <b>온도가 내려가요</b>.' : '모두 굳은 뒤에야 고체의 <b>온도가 다시 내려가요</b>.';
-          if (S && S.scene !== 'heat' && S.scene !== 'cool') txt = '<b>상태 변화와 열에너지의 출입</b>(열 흡수 · 열 방출 분류)은 2D 화면에서 해 보세요.<br>' + txt;
           setInfo(txt);
           drawGraph(key, t);
           const ph = document.querySelector('.v3-player .v3-ph'); if (ph) ph.textContent = pmode ? PHASE_NAME[key][cur.i] : '';

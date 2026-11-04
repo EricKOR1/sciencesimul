@@ -1055,7 +1055,7 @@
 
   /* ---------- 디버그 (Playwright) ---------- */
   window.__sim = {
-    S, VW, VH, MA, BOT, GE, VR, OR, pt, toUV, PART, SEL_A, SEL_P, SEL_W, SEL_D, fire, setCfg, setScene, updateCtl, distFor, lamNm, lamTxt, pickOK, pCan, pLam, pMom, fmtLam, cur, resetData, patternName, stageOf,
+    S, VW, VH, MA, BOT, GE, VR, OR, pt, toUV, PART, SEL_A, SEL_P, SEL_W, SEL_D, fire, setCfg, setScene, updateCtl, distFor, lamNm, lamTxt, pickOK, pCan, pLam, pMom, fmtLam, cur, resetData, patternName, stageOf, pv, pRatio, PTH, PD, fmtV, sci, lamTxt,
     perfPrep() { setScene('pattern'); S.show.wave = true; setInterval(() => { if (S.queue < 50) fire(300); }, 700); },
     get game() { return game; },
   };

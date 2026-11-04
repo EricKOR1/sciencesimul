@@ -1297,6 +1297,7 @@
   afterScene();
   window.__sim = {
     draw: () => draw(), S, SETS, setScene, setSeason, setFrontType, setMap, setLayer, game: () => game, clSlot, tankAction, frUI,
+    MAP: { CONT, KOREA, ISLES, KP, AIR, SEASONS, FIELD, CENT, COLD_FRONT, WARM_FRONT, CF_L, WF_L, ptAt, massRevealed },
     unlockAll() { ['masscards', 'tank', 'front', 'column', 'wmap'].forEach((f) => F.add(f)); },
     place(setId, cardId, slot) { const set = SETS[setId], c = set.cards.find((x) => x.id === cardId), t = set.targets[slot]; c.slot = slot; cardTo(c, t.x + t.cdx, t.y + t.cdy, t.cs); },
   };

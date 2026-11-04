@@ -39,7 +39,7 @@
       const { THREE, root, camera, label, info, controls } = ctx;
       const V = THREE.Vector3;
       const P = (lat, lon, r) => new V(r * Math.cos(lat * D2R) * Math.sin(lon * D2R), r * Math.sin(lat * D2R), r * Math.cos(lat * D2R) * Math.cos(lon * D2R));
-      let view = 'cell', focus = 'all', hemi = 'N', spin = true, scene = 'flash', circ = true, circA = 1, latV = 0, tp = 0, sig = '';
+      const BANDS_N = ['저위도', '중위도', '고위도']; let bandSig = 99, view = 'cell', focus = 'all', hemi = 'N', spin = true, scene = 'flash', circ = true, circA = 1, latV = 0, tp = 0, sig = '';
 
       /* ---- 지구 (자전하는 그룹) ---- */
       const earth = new THREE.Group(); root.add(earth);
@@ -127,15 +127,37 @@
       });
       const korLab = label('우리나라', kor, { color: 'rgba(185,28,28,.92)', size: 12 }); korLab.off = [0, 0.06, 0];
 
+      /* ---- 열 운반(role): 저위도의 남는 열 → 고위도, 위도별 에너지 남음(+)/부족(−) ---- */
+      const NPK = 14, packI = new THREE.InstancedMesh(new THREE.SphereGeometry(0.075, 12, 8), new THREE.MeshStandardMaterial({ color: 0xfb923c, emissive: 0xea580c, emissiveIntensity: 0.8, roughness: 0.4 }), NPK * 2); root.add(packI); packI.visible = false;
+      const packLab = label('🔥 저위도의 남는 열 → 고위도로', [1.5 * Math.cos(40 * D2R) + 0.2, 1.5 * Math.sin(40 * D2R) + 0.28, 0], { color: 'rgba(120,53,15,.9)', size: 12 }); packLab.show(false);
+      const BAND = [[0, 30, 15], [30, 60, 45], [60, 90, 75]];
+      const bandM = BAND.map((b, i) => { const th0 = (90 - b[1]) * D2R, th1 = (90 - b[0]) * D2R; const m = new THREE.Mesh(new THREE.SphereGeometry(1.012, 48, 6, 0, Math.PI * 2, th0, th1 - th0), new THREE.MeshBasicMaterial({ color: 0x22c55e, transparent: true, opacity: 0.3, depthWrite: false })); earth.add(m); m.visible = false; return m; });
+      const bandLab = BAND.map((b, i) => { const o = new THREE.Object3D(); o.position.set(1.04 * Math.cos(b[2] * D2R), 1.04 * Math.sin(b[2] * D2R), 0); root.add(o); const L = label('', o, { size: 13, color: 'rgba(21,128,61,.92)' }); L.off = [-0.12, 0, 0]; L.show(false); return L; });
+      /* ---- 날씨 이동(sat): 구름과 황사가 편서풍을 타고 서 → 동 (지구에 붙어 있어요) ---- */
+      const NCL = 7, cloudGrp = []; const puffG2 = new THREE.SphereGeometry(1, 12, 8), cloudMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1, transparent: true, opacity: 0.92 });
+      const SYSV = [[0.2, 0.15], [0.55, 0.3], [0.9, 0.5], [0.35, 0.7], [0.75, 0.85], [0.05, 0.45], [0.65, 0.58]];
+      for (let i = 0; i < NCL; i++) { const g = new THREE.Group(); for (let j = 0; j < 4; j++) { const m = new THREE.Mesh(puffG2, cloudMat); m.userData = { dx: (j - 1.5) * 0.035, dz: ((j * 7) % 3 - 1) * 0.02, r: 0.03 + (j % 2) * 0.012 }; g.add(m); } earth.add(g); g.visible = false; cloudGrp.push(g); }
+      const NDU = 26, dustI = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 10, 8), new THREE.MeshStandardMaterial({ color: 0xe0b050, roughness: 1, transparent: true, opacity: 0.6 }), NDU); earth.add(dustI); dustI.visible = false;
+      const dustSeed = []; for (let i = 0; i < NDU; i++) dustSeed.push({ a: Math.random() * 6.28, d: Math.sqrt(Math.random()), r: 0.016 + Math.random() * 0.018 });
+      const gobi = new THREE.Object3D(); gobi.position.copy(P(42, 104, 1.01)); earth.add(gobi);
+      const gobiLab = label('황사 발원지(사막)', gobi, { color: 'rgba(146,98,12,.92)', size: 12 }); gobiLab.off = [0, 0.06, 0]; gobiLab.show(false);
+      const westO = new THREE.Object3D(); westO.position.copy(P(47, 118, 1.03)); earth.add(westO);
+      const westLab = label('편서풍: 서쪽 → 동쪽', westO, { color: '#8b5cf6', size: 12 }); westLab.off = [0, 0.1, 0]; westLab.show(false);
+      let faced = false;
+      const dm2 = new THREE.Object3D(), tN = new V(), tE = new V();
       const wp = new V(), nrm = new V(), eastV = new V(), northV = new V(), head = new V(), up = new V(0, 1, 0);
       function layout() {
         const S = ((ctx.lesson() || {}).S) || {};
         scene = S.scene || 'flash'; focus = scene === 'cells' ? (S.focus || 'all') : 'all'; circ = S.circ !== false; circA = S.circA == null ? 1 : S.circA; latV = S.lat || 0;
         view = scene === 'wind' ? 'wind' : scene === 'role' ? 'both' : scene === 'cells' ? 'cell' : 'none';
+        const rl = scene === 'role', st = scene === 'sat';
         const showCells = view === 'cell' || view === 'both', showWind = view === 'wind' || view === 'both';
         const fl = scene === 'flash'; if (typeof plRow !== 'undefined' && plRow) plRow.style.display = fl ? 'none' : ''; beam.visible = fl; if (spot) spot.visible = fl; sunLab.show(fl);
         if (fl) setBeam(latV);
-        const dim = scene === 'role' && !circ;
+        packI.visible = rl; packLab.show(rl && circ); bandM.forEach((m) => { m.visible = rl; }); bandLab.forEach((L) => L.show(rl));
+        cloudGrp.forEach((g) => { g.visible = st; }); dustI.visible = st; gobiLab.show(st); westLab.show2 = st; if (!st) westLab.show(false); if (st && !faced) faced = true; if (!st) faced = false;
+        if (typeof circRow !== 'undefined') { circRow.forEach((e) => { e.style.display = rl ? '' : 'none'; }); sceneRow.forEach((e) => { e.style.display = (rl || st) && (S.lv >= 3 || S.free) ? '' : 'none'; }); if (st && plRow) plRow.style.display = 'none'; }
+        const dim = scene === 'role' && !circ; 
         loops.forEach((L) => {
           const on = showCells && (hemi === 'both' || L.sg > 0) && (focus === 'all' || focus === L.c.id);
           L.tube.visible = showCells && (hemi === 'both' || L.sg > 0);
@@ -150,6 +172,7 @@
         korLab.show2 = scene !== 'flash';
         writeInfo(S);
       }
+      const f0 = (v) => (v >= 0 ? '+' : '') + Math.round(v);
       function writeInfo(S) {
         const parts = [];
         const c = CELLS.find((x) => x.id === focus), W2 = c && WINDS[c.wind];
@@ -158,8 +181,11 @@
           parts.push('<b>🔦 위도 ' + Math.round(latV) + '°</b>에 같은 빛을 비춰요.<br>빛이 퍼지는 넓이는 적도의 약 <b>' + k.toFixed(1) + '배</b>' + (latV < 8 ? ' (적도: 빛이 가장 모여요)' : ''));
           parts.push('<span style="color:#fcd34d">고위도일수록 같은 빛이 넓게 퍼져서 단위 면적당 받는 태양 에너지가 적어요.</span>');
         } else if (scene === 'role') {
+          parts.push('위도별 에너지: 저위도 <b>' + f0(S.surpA ? S.surpA[0] : 0) + '</b> · 중위도 <b>' + f0(S.surpA ? S.surpA[1] : 0) + '</b> · 고위도 <b>' + f0(S.surpA ? S.surpA[2] : 0) + '</b>');
           parts.push(circ ? '<b>🌀 대기 대순환 작동</b>: 열이 저위도에서 고위도로 옮겨져요.<br>에너지가 남는 저위도와 부족한 고위도의 차이가 줄어요.' : '<b>⏸ 대순환이 멈춘다고 가정</b>: 열이 옮겨지지 않아 저위도는 더 남고 고위도는 더 부족해져요.');
           if (circ) parts.push('지표 바람: <b>무역풍·편서풍·극동풍</b>');
+        } else if (scene === 'sat') {
+          parts.push('<b>🛰️ 날씨 이동</b>: 중위도에서는 <b>편서풍</b>이 불어 구름과 <b style="color:#fcd34d">황사</b>가 <b>서쪽에서 동쪽</b>으로 움직여요.<br>그래서 우리나라(약 37°N) 날씨는 서쪽에서부터 바뀌어요.');
         } else if (focus === 'all' && scene === 'cells') {
           parts.push('<b>순환 3개</b>가 위도마다 세로 고리를 이뤄요.<br><b style="color:#86efac">상승</b> 0°·60° (구름·비) · <b style="color:#93c5fd">하강</b> 30°·극 (맑고 건조)');
         } else if (scene === 'wind') {
@@ -180,6 +206,9 @@
         onFrame(p) { tp = p; },
       });
       const plRow = Array.from(ctx.controls.text('').parentNode.querySelectorAll('.v3-player'))[0];
+      const ctlHost = ctx.controls.text('').parentNode, tail = (fn) => { const n0 = ctlHost.children.length; fn(); return Array.from(ctlHost.children).slice(n0); };
+      const sceneRow = tail(() => controls.segment('화면', [{ value: 'role', label: '🔥 열 운반' }, { value: 'sat', label: '🛰️ 날씨 이동' }], 'role', (v) => { const b = document.querySelector('#sceneSeg button[data-s="' + v + '"]'); if (b) b.click(); }));
+      const circRow = tail(() => controls.segment('대순환', [{ value: '0', label: '⏸ 멈춘다고 가정' }, { value: '1', label: '🌀 작동' }], '1', (v) => { const b = document.querySelector('#circSeg button[data-c="' + v + '"]'); if (b) b.click(); }));
       layout();
 
       return {
@@ -187,9 +216,37 @@
           const S = ((ctx.lesson() || {}).S) || {};
           const ns = [S.scene, S.focus, S.circ, Math.round(S.lat || 0), hemi].join('|');
           if (ns !== sig) { sig = ns; layout(); }
-          if (spin && scene !== 'flash') earth.rotation.y += 0.22 * dt;            // 서 → 동 (북극 위에서 보면 반시계 방향)
+          if (spin && scene !== 'flash' && scene !== 'sat') earth.rotation.y += 0.22 * dt;            // 서 → 동 (북극 위에서 보면 반시계 방향)
           else if (scene === 'flash') earth.rotation.y = 0;
           const run = !(scene === 'role' && !circ);
+          if (scene === 'role') {
+            const pk = S.packets || [], ca = S.circA == null ? 1 : S.circA;
+            for (let i = 0; i < NPK * 2; i++) {
+              const q = pk[i % NPK], sg = i < NPK ? 1 : -1; let sc2 = 0;
+              if (q && (i < NPK || hemi === 'both')) { const u = q.u, lat = (4 + u * 82) * sg, r = 1.52 + Math.sin(u * 9) * 0.02; dm2.position.set(r * Math.cos(lat * D2R), r * Math.sin(lat * D2R), 0); sc2 = Math.sin(u * Math.PI) * ca; }
+              dm2.scale.setScalar(Math.max(0.0001, sc2)); dm2.rotation.set(0, 0, 0); dm2.updateMatrix(); packI.setMatrixAt(i, dm2.matrix);
+            } packI.instanceMatrix.needsUpdate = true;
+            const sa = S.surpA || [3, -2, -4];
+            bandM.forEach((m, i) => { const v = sa[i]; m.material.color.set(v >= 0 ? 0x22c55e : 0xef4444); m.material.opacity = 0.2 + 0.5 * Math.min(1, Math.abs(v) / 44) + 0.08; bandLab[i].set(BANDS_N[i] + ' <b>' + f0(v) + '</b>'); bandLab[i].el.style.background = v >= 0 ? 'rgba(21,128,61,.92)' : 'rgba(185,28,28,.92)'; });
+            if (circ !== (S.circ !== false) || Math.abs(circA - (S.circA == null ? 1 : S.circA)) > 0.02) { sig = ''; }
+            else if (Math.round(sa[2]) !== bandSig) { bandSig = Math.round(sa[2]); writeInfo(S); }
+          }
+          if (scene !== 'sat') { earth.rotation.x = 0; earth.scale.setScalar(1); atm.scale.setScalar(1); }
+          if (scene === 'sat') {
+            earth.scale.setScalar(narrow ? 1.9 : 1.55); earth.rotation.x = 0.6; atm.scale.setScalar(1.3);
+            if (faced === true) { const az = Math.atan2(camera.position.x, camera.position.z); earth.rotation.y = az - 127.5 * D2R + 0.0; faced = 'done'; }
+            cloudGrp.forEach((g, i) => {
+              const sv = SYSV[i], u = ((sv[0] + t * 0.022) % 1.4) - 0.2, lon = 95 + u * 55, lat = 58 - sv[1] * 36, fade = Math.max(0, Math.min(1, (u + 0.2) * 5, (1.2 - u) * 5));
+              g.position.copy(P(lat, lon, 1.012)); tN.set(-Math.sin(lat * D2R) * Math.sin(lon * D2R), Math.cos(lat * D2R), -Math.sin(lat * D2R) * Math.cos(lon * D2R)); tE.set(Math.cos(lon * D2R), 0, -Math.sin(lon * D2R));
+              g.children.forEach((m) => { m.position.copy(tE).multiplyScalar(m.userData.dx * 2.2).addScaledVector(tN, m.userData.dz * 2.2); m.scale.set(m.userData.r * 1.8 * fade, m.userData.r * 0.55 * fade, m.userData.r * 1.5 * fade); m.lookAt(g.position.clone().multiplyScalar(2)); });
+              g.lookAt(g.position.clone().multiplyScalar(2));
+            });
+            const cyc = 16, p = (t % cyc) / cyc, e = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2, a = Math.sin(p * Math.PI), clat = 42 + (37.2 - 42) * e, clon = 104 + (128 - 104) * e, spread = (0.02 + p * 0.06);
+            const cP = P(clat, clon, 1.012); const nN = new V(-Math.sin(clat * D2R) * Math.sin(clon * D2R), Math.cos(clat * D2R), -Math.sin(clat * D2R) * Math.cos(clon * D2R)), nE = new V(Math.cos(clon * D2R), 0, -Math.sin(clon * D2R));
+            dustSeed.forEach((q, i) => { dm2.position.copy(cP).addScaledVector(nE, Math.cos(q.a) * q.d * spread * 1.6).addScaledVector(nN, Math.sin(q.a) * q.d * spread); dm2.scale.setScalar(Math.max(0.0001, q.r * a * 1.3)); dm2.rotation.set(0, 0, 0); dm2.updateMatrix(); dustI.setMatrixAt(i, dm2.matrix); }); dustI.instanceMatrix.needsUpdate = true;
+            westO.getWorldPosition(wp); nrm.copy(wp).normalize(); westLab.show(nrm.dot(camera.position.clone().sub(wp).normalize()) > 0.2);
+            gobi.getWorldPosition(wp); nrm.copy(wp).normalize(); gobiLab.show(p < 0.9 && nrm.dot(camera.position.clone().sub(wp).normalize()) > 0.2);
+          }
           loops.forEach((L) => {
             if (!L.parts[0].m.visible) return;
             L.parts.forEach((p) => {

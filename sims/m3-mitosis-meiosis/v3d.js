@@ -118,14 +118,147 @@
       setMode2('mito'); target();
       // 처음 모습으로
       chs.forEach((q) => { q.p.copy(q.tp); q.rz = q.trz; q.th = q.tth; }); cells.forEach((c) => { c.x = c.tx; c.y = c.ty; c.r = c.tr; c.o = c.to; });
+
+      /* ===== 확대(zoom) · 수정(fert) 장면 — 2D와 같은 상태를 따라가요 ===== */
+      const chromG = new THREE.Group(); Array.from(root.children).forEach((o) => chromG.add(o)); root.add(chromG);
+      const chromLabs = [labChr, labSp, labEnv, labCell];
+      const MM = (c, o0, ex) => { const m = sm(c, Object.assign({ transparent: true, opacity: o0, depthWrite: o0 > 0.7 }, ex || {})); m.userData.o0 = o0; return m; };
+      const fadeG = (g, a) => { g.visible = a > 0.015; g.traverse((m) => { if (m.material && m.material.userData && m.material.userData.o0 != null) m.material.opacity = m.material.userData.o0 * a; }); };
+      /* -- 확대: 세포 → 핵 → 염색체 → DNA → 유전자 -- */
+      const zoomG = new THREE.Group(); root.add(zoomG); zoomG.visible = false;
+      const LVN = ['세포', '핵', '염색체', 'DNA', '유전자'];
+      const LVD = ['세포 속에는 유전 물질이 들어 있는 핵이 있어요.', '핵 속에는 염색체가 들어 있어요. 사람의 체세포에는 46개가 있어요.', '염색체는 DNA와 단백질로 이루어져 있어요.', 'DNA는 이중 나선 구조예요. 단백질에 감겨 염색체를 이루어요.', '유전자는 유전 정보를 담고 있는 DNA의 특정 부분이에요.'];
+      const zl = [0, 1, 2, 3, 4].map(() => { const g = new THREE.Group(); zoomG.add(g); return g; });
+      { /* 0 세포 */
+        const cell = new THREE.Mesh(new THREE.SphereGeometry(2.7, 40, 28), MM(0x93c5fd, 0.22, { roughness: 0.1, depthWrite: false })); zl[0].add(cell);
+        const nuc = new THREE.Mesh(new THREE.SphereGeometry(1.0, 32, 24), MM(0xfde68a, 0.9)); nuc.position.set(0.3, 0.1, 0); zl[0].add(nuc);
+        [[-1.5, 0.9, 0.5], [1.7, -1.1, 0.6], [-0.9, -1.5, -0.8], [1.2, 1.4, -0.7]].forEach((p, i) => { const m = new THREE.Mesh(new THREE.CapsuleGeometry(0.16, 0.34, 4, 10), MM(0xfb923c, 0.9)); m.position.set(...p); m.rotation.z = 0.8 * i; zl[0].add(m); });
+        zl[0].userData.labs = [label('세포', [-2.3, 2.1, 0], { size: 13, color: 'rgba(30,64,175,.92)' }), label('핵', [0.3, 1.45, 0], { size: 13, color: 'rgba(161,98,7,.92)' })];
+      }
+      { /* 1 핵 속 염색체 */
+        zl[1].add(new THREE.Mesh(new THREE.SphereGeometry(2.6, 40, 28), MM(0xfde68a, 0.2, { roughness: 0.1, depthWrite: false })));
+        for (let i = 0; i < 8; i++) {
+          const pts = []; let a = i * 1.7, b = i * 0.9; const c0 = new V3(Math.cos(a) * 1.0, Math.sin(b * 2) * 1.0, Math.sin(a) * 1.0);
+          for (let j = 0; j < 22; j++) { const u = j / 21 * 6.28 * 1.5; pts.push(c0.clone().add(new V3(Math.cos(u * 2 + i) * 0.55, Math.sin(u * 3 + i * 2) * 0.5, Math.sin(u * 2.3 + i) * 0.5))); }
+          zl[1].add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 60, 0.1, 8), MM(i % 2 ? 0x60a5fa : 0xf472b6, 0.95)));
+        }
+        zl[1].userData.labs = [label('염색체 (사람 46개)', [0, 2.9, 0], { size: 13, color: 'rgba(190,24,93,.92)' })];
+      }
+      { /* 2 염색체 = DNA + 단백질 */
+        [-1, 1].forEach((sg) => { const arm = new THREE.Mesh(new THREE.CapsuleGeometry(0.42, 4.2, 8, 20), MM(sg > 0 ? 0xf472b6 : 0xec4899, 0.95)); arm.rotation.z = Math.PI / 2 + sg * 0.5 + Math.PI / 2; zl[2].add(arm); });
+        const beads = new THREE.InstancedMesh(new THREE.SphereGeometry(0.1, 10, 8), MM(0xffffff, 0.9), 60), d = new THREE.Object3D();
+        for (let i = 0; i < 60; i++) { const ang = (i % 2 ? 1 : -1) * 0.5, sd = (i >> 1) / 29 - 0.5, sx2 = Math.sin(ang) * sd * 4.6, sy2 = Math.cos(ang) * sd * 4.6, px = Math.cos(ang) * 0.43; d.position.set(sx2 + px * (i % 4 < 2 ? 1 : -1) * 0.2, sy2, 0.43 * (i % 3 === 0 ? 0.9 : 0.6)); d.updateMatrix(); beads.setMatrixAt(i, d.matrix); }
+        zl[2].add(beads);
+        zl[2].userData.labs = [label('염색체 = DNA + 단백질', [0, 2.8, 0], { size: 13, color: 'rgba(190,24,93,.92)' })];
+      }
+      const helixPts = (x0, x1, amp, wl, ph, sg) => { const pts = [], n = Math.round((x1 - x0) * 12); for (let i = 0; i <= n; i++) { const x = x0 + (x1 - x0) * i / n, a = (x - x0) / wl * Math.PI * 2 + ph; pts.push(new V3(x, sg * amp * Math.sin(a), sg * amp * Math.cos(a))); } return pts; };
+      const GC = [0x2563eb, 0xf59e0b, 0x10b981, 0xec4899], GR = [[-3.4, -1.9], [-1.5, -0.3], [0.1, 1.4], [1.7, 3.4]];
+      function mkHelix(g, genes) {
+        const XA = -3.5, XB = 3.5, amp = 0.65, wl = 2.4;
+        [1, -1].forEach((sg) => g.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(helixPts(XA, XB, amp, wl, 0, sg)), 160, 0.09, 8), MM(sg > 0 ? 0x38bdf8 : 0xa78bfa, 0.95))));
+        const rungs = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.035, 0.035, 1, 6), MM(0xcbd5e1, 0.9), 36), d = new THREE.Object3D(), up2 = new V3(0, 1, 0);
+        for (let i = 0; i < 36; i++) { const x = XA + 0.25 + i * (XB - XA - 0.4) / 35, a = (x - XA) / wl * Math.PI * 2; d.position.set(x, 0, 0); d.scale.set(1, 2 * amp * Math.hypot(Math.sin(a), Math.cos(a)), 1); d.quaternion.setFromUnitVectors(up2, new V3(0, Math.sin(a), Math.cos(a)).normalize()); d.updateMatrix(); rungs.setMatrixAt(i, d.matrix); }
+        g.add(rungs);
+        if (genes) GR.forEach((r, i) => [1, -1].forEach((sg) => { const seg = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(helixPts(r[0], r[1], amp, wl, 0, sg).map((p) => p.clone())), 60, 0.16, 8), MM(GC[i], 0.97)); g.add(seg); }));
+      }
+      mkHelix(zl[3], false); mkHelix(zl[4], true);
+      zl[3].userData.labs = [label('DNA (이중 나선)', [0, 1.6, 0], { size: 13, color: 'rgba(3,105,161,.92)' })];
+      zl[4].userData.labs = GR.map((r, i) => label('유전자 ' + '①②③④'[i], [(r[0] + r[1]) / 2, -1.25, 0], { size: 12, color: ['#2563eb', '#d97706', '#059669', '#db2777'][i] }));
+      zl.forEach((g) => g.userData.labs.forEach((l) => l.show(false)));
+      /* -- 수정: 정자 + 난자 → 수정란 (2D의 시간표와 같아요) -- */
+      const fertG = new THREE.Group(); root.add(fertG); fertG.visible = false;
+      const EGGp = { x: 440, y: 292 }, U55 = 55, f3 = (px, py) => new V3((px - 440) / U55, -(py - 292) / U55, 0);
+      const eggM = new THREE.Mesh(new THREE.SphereGeometry(2.4, 40, 28), MM(0xf9a8d4, 0.4, { roughness: 0.2, depthWrite: false })); fertG.add(eggM);
+      const eggNuc = new THREE.Mesh(new THREE.SphereGeometry(1, 28, 20), MM(0xe9b3ee, 0.75, { depthWrite: false })); fertG.add(eggNuc);
+      const spHead = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 16), MM(0x60a5fa, 0.85)); fertG.add(spHead);
+      const zNuc = new THREE.Mesh(new THREE.SphereGeometry(1, 28, 20), MM(0xc4b5fd, 0.8, { depthWrite: false })); fertG.add(zNuc);
+      const tailI = new THREE.InstancedMesh(new THREE.SphereGeometry(0.075, 8, 6), MM(0x2563eb, 0.9), 30); fertG.add(tailI);
+      const rodG = new THREE.CapsuleGeometry(0.035, 0.12, 3, 6);
+      const rodsE = new THREE.InstancedMesh(rodG, sm(0xffffff, { roughness: 0.4 }), 46), rodsS = new THREE.InstancedMesh(rodG, sm(0xffffff, { roughness: 0.4 }), 46), rodsZ = new THREE.InstancedMesh(rodG, sm(0xffffff, { roughness: 0.4 }), 92);
+      fertG.add(rodsE, rodsS, rodsZ);
+      const FTc = [0x1d4ed8, 0x2563eb, 0x60a5fa], MTc = [0xbe185d, 0xdb2777, 0xf472b6];
+      [[rodsE, MTc, 0], [rodsS, FTc, 0], [rodsZ, null, 0]].forEach(([m, tn]) => { for (let i = 0; i < m.count; i++) m.setColorAt(i, new THREE.Color(tn ? tn[i % 3] : (i < 46 ? FTc[i % 3] : MTc[i % 3]))); m.instanceColor.needsUpdate = true; });
+      const fib = (i, n) => { const y = 1 - (i + 0.5) / n * 2, r = Math.sqrt(Math.max(0, 1 - y * y)), a = i * 2.39996; return new V3(Math.cos(a) * r, y, Math.sin(a) * r).multiplyScalar(Math.cbrt((i % 7 + 1) / 7) * 0.5 + 0.45); };
+      const fe = new THREE.Object3D();
+      function putRods(m, cx, cy, R, n, sc, a) { for (let i = 0; i < m.count; i++) { if (i < n && a > 0.02) { const p = fib(i, n); fe.position.set(cx + p.x * R * 0.82, cy + p.y * R * 0.82, p.z * R * 0.82); fe.rotation.set(i * 1.3, i * 0.7, i * 2.1); fe.scale.setScalar(sc * a); } else { fe.position.set(0, 0, 0); fe.scale.setScalar(0.0001); } fe.updateMatrix(); m.setMatrixAt(i, fe.matrix); } m.instanceMatrix.needsUpdate = true; }
+      const labEgg = label('', [0, 3.0, 0], { size: 13, color: 'rgba(190,24,93,.92)' }), labSpm = label('', [-4, 1.4, 0], { size: 13, color: 'rgba(37,99,235,.92)' }), labRes = label('', [0, -3.1, 0], { size: 14, color: 'rgba(20,83,45,.92)' });
+      [labEgg, labSpm, labRes].forEach((l) => l.show(false));
+      const clamp01 = (x) => Math.max(0, Math.min(1, x)), sm3 = (x) => x * x * (3 - 2 * x);
+      let feSig = '', zoomLast = -1, zScene = '', fertDrive = -9, fertAct = -9, ignF = false;
+      let ignZ = false;
+      const pZoom = controls.player({ duration: 10, loop: false, label: '확대', phases: LVN.map((q, i) => [i / 5, q]), onFrame(p) { const L = ctx.lesson(); if (!L || !L.zs || ignZ) return; const k = Math.min(4, Math.floor(p * 5 + 1e-6)); if (L.zs.lv !== k) L.zoomTo(k); } });
+      const pFert = controls.player({ duration: 6.6, loop: true, label: '수정', phases: [[0, '정자 출발'], [0.36, '난자에 들어가요'], [0.53, '핵이 다가가요'], [0.73, '두 핵이 합쳐져요'], [0.95, '수정란']], onFrame() { if (!ignF) fertAct = tnow; } });
+      const hostC = nb.parentNode, gbtn = controls.segment('정자·난자', [{ value: 'meio', label: '생식세포 형성으로' }, { value: 'mito', label: '체세포분열로' }], 'meio', (v) => { const L = ctx.lesson(); if (L && L.setGamete) L.setGamete(v); });
+      const cmpSeg = controls.segment('보기', [{ value: 'mito', label: '체세포분열' }, { value: 'meio', label: '생식세포 형성' }], 'mito', (v) => { cmpMode = v; });
+      let cmpMode = 'mito';
+      const kids = Array.from(hostC.children); const idx = (e) => kids.indexOf(e);
+      const rowsAll = Array.from(hostC.querySelectorAll('.v3-player')), rowZoom = rowsAll[2], rowFert = rowsAll[3];
+      const segEls = Array.from(hostC.children).filter((e) => !e.classList.contains('v3-player') && e !== nb);
+      // 정자·난자 / 보기 버튼 묶음 (라벨 span + 버튼들)을 구분해서 숨김 처리해요
+      const gIdx = Array.from(hostC.children).findIndex((e) => e.textContent === '정자·난자'), cIdx = Array.from(hostC.children).findIndex((e) => e.textContent === '보기');
+      const gEls = Array.from(hostC.children).slice(gIdx, gIdx + 3), cEls = Array.from(hostC.children).slice(cIdx, cIdx + 3);
+      const showEls = (els, v) => els.forEach((e) => { e.style.display = v ? '' : 'none'; });
+      showEls(gEls, false); showEls(cEls, false); rowZoom.style.display = 'none'; rowFert.style.display = 'none';
+      let vscene = 'mito';
+      function setVScene(v, L) {
+        vscene = v; const zoom = v === 'zoom', fert = v === 'fert';
+        chromG.visible = !zoom && !fert; zoomG.visible = zoom; fertG.visible = fert;
+        rowZoom.style.display = zoom ? '' : 'none'; rowFert.style.display = fert ? '' : 'none'; showEls(gEls, fert); showEls(cEls, v === 'compare');
+        rowM.style.display = rowE.style.display = 'none'; nb.style.display = (zoom || fert) ? 'none' : '';
+        chromLabs.forEach((l) => l.show(false)); if (!zoom) zl.forEach((g) => g.userData.labs.forEach((l) => l.show(false)));
+        [labEgg, labSpm, labRes].forEach((l) => l.show(fert)); feSig = '';
+        if (!zoom && !fert) { setMode2(mode); target(); }
+        zoomLast = -1;
+      }
+
       const seg = new V3(), dir = new V3(), up = new V3(0, 1, 0);
+      const clampF = (x) => x;
+
+      function zoomFrame(L, t) {
+        const zs = L.zs, zv = zs.zv.value, lv = zs.lv;
+        zl.forEach((g, k) => { const a = Math.max(0, 1 - Math.abs(zv - k) * 1.25), s = Math.exp(0.95 * (zv - k)); g.scale.setScalar(s); g.rotation.y = Math.sin(t * 0.4) * 0.3; fadeG(g, a); g.userData.labs.forEach((l) => l.show(a > 0.55 && Math.abs(zv - k) < 0.45)); });
+        if (lv !== zoomLast) { zoomLast = lv; info('<b>' + LVN[lv] + '</b> (' + (lv + 1) + '/5)<br>' + LVD[lv] + '<br><span style="opacity:.85">2D의 ➕ 확대 / ➖ 축소와 같이 움직여요.</span>'); }
+        if (!pZoom.playing) { ignZ = true; pZoom.set((lv + 0.5) / 5); ignZ = false; }
+      }
+      function fertFrame(L, dt, t) {
+        const FE = L.FE; gbtn.set(FE.mode); const N = FE.mode === 'meio' ? 23 : 46, tt = FE.run ? FE.t : (FE.done ? 7 : 0);
+        const swimP = FE.run || FE.done ? sm3(clamp01(tt / 2.4)) : 0, enterP = sm3(clamp01((tt - 2.4) / 1.0)), apprP = sm3(clamp01((tt - 3.5) / 1.3)), fuseP = sm3(clamp01((tt - 4.8) / 1.3));
+        const SP0 = { x: 100, y: 396 }, SP1 = { x: 312, y: 302 };
+        let hx = SP0.x + (SP1.x - SP0.x) * swimP, hy = SP0.y + (SP1.y - SP0.y) * swimP + (FE.run || FE.done ? Math.sin(swimP * 9 + t * 2) * 16 * (1 - swimP) : 0);
+        if (!FE.run && !FE.done) { hx = SP0.x + Math.sin(t * 1.6) * 5; hy = SP0.y + Math.cos(t * 1.3) * 4; }
+        hx += enterP * 66; hy += -(SP1.y - 292) * enterP;
+        const sx = hx + (440 - hx) * apprP, sy = hy + (292 - hy) * apprP, sA = 1 - fuseP, eA = 1 - fuseP;
+        const nr = apprP, rx = (32 + 4 * nr) / U55, ry = (21 + 15 * nr) / U55, hp = f3(sx, sy);
+        spHead.position.copy(hp); spHead.scale.set(rx, ry, Math.min(rx, ry)); spHead.visible = sA > 0.02; spHead.material.opacity = 0.85 * sA;
+        const tailA = 1 - clamp01(enterP * 1.6), wob = (FE.run ? 14 : 5) / U55;
+        for (let i = 0; i < 30; i++) { fe.position.set(hp.x - rx * 0.9 - i * 0.1, hp.y + Math.sin(i * 0.5 * 1.1 - t * (FE.run ? 15 : 6)) * wob * (i / 30) * (1 - 0.8 * enterP), 0); fe.scale.setScalar(Math.max(0.0001, tailA * sA * (1 - i * 0.02))); fe.rotation.set(0, 0, 0); fe.updateMatrix(); tailI.setMatrixAt(i, fe.matrix); } tailI.instanceMatrix.needsUpdate = true;
+        eggNuc.position.set(0, 0, 0); eggNuc.scale.setScalar(54 / U55); eggNuc.visible = eA > 0.02; eggNuc.material.opacity = 0.75 * eA;
+        putRods(rodsE, 0, 0, 54 / U55, N, 1, eA); putRods(rodsS, hp.x, hp.y, Math.min(rx, ry) * 1.15, N, 0.9 + 0.2 * nr, sA);
+        const rz = (N === 23 ? 66 : 80) * (0.7 + 0.3 * fuseP) / U55;
+        zNuc.scale.setScalar(rz); zNuc.visible = fuseP > 0.02; zNuc.material.opacity = 0.8 * fuseP;
+        putRods(rodsZ, 0, 0, rz * 0.98, 2 * N, 0.85, fuseP);
+        eggM.rotation.y = t * 0.1;
+        labEgg.set('난자 (어머니) · 염색체 ' + N + '개'); labEgg.obj = [0, 3.0, 0];
+        labSpm.set('정자 (아버지) · 염색체 ' + N + '개'); labSpm.obj = [Math.min(hp.x, -1.2), hp.y + 0.8, 0]; labSpm.show(sA > 0.3 && tt < 3.6);
+        const key = FE.mode + '|' + (FE.done ? 1 : FE.run ? (tt > 4.8 ? 3 : 2) : 0);
+        if (FE.done) { const ok = FE.mode === 'meio'; labRes.set(N + ' + ' + N + ' = ' + 2 * N); labRes.el.style.background = ok ? 'rgba(20,83,45,.92)' : 'rgba(185,28,28,.92)'; labRes.show(true); } else labRes.show(false);
+        if (key !== feSig) { feSig = key; info(FE.done ? (FE.mode === 'meio' ? '<b>수정란의 염색체 수 46개</b>: 부모와 같아요!<br>생식세포 형성으로 염색체 수가 절반(23개)이 되었기 때문이에요.' : '<b>체세포분열로 만들었다면 92개!</b><br>세대마다 염색체 수가 2배가 돼요.') : FE.run ? (tt > 4.8 ? '두 핵이 하나로 합쳐져요.' : '정자가 난자 속으로 들어가요.') : (FE.mode === 'meio' ? '<b>생식세포 형성</b>으로 만든 정자와 난자예요. 염색체는 각각 23개예요.<br><small>(작은 막대 = 염색체)</small>' : '⚠ 가정: 정자와 난자를 <b>체세포분열</b>로 만들었다면? 염색체가 각각 46개예요.')); }
+        const driving = tnow - fertAct < 1.2;
+        if (driving && pFert.playing) { if (!FE.run && !FE.done && pFert.p > 0.03 && tnow - fertDrive > 1.0) { fertDrive = tnow; L.startFert(); } else if (FE.done && pFert.p < 0.04 && tnow - fertDrive > 1.0) { fertDrive = tnow; L.startFert(); } }
+        else if (!driving && !pFert.playing) { const want = FE.done ? 1 : clamp01(tt / 6.6); if (Math.abs(pFert.p - want) > 0.02) { ignF = true; pFert.set(want); ignF = false; } }
+      }
       return {
         update(dt, t) {
           const k = 1 - Math.exp(-dt * 4.2); tnow += dt;
           const L = ctx.lesson();
           if (L && L.S) {
-            const sm0 = L.S.scene === 'meio' ? 'meio' : L.S.scene === 'mito' ? 'mito' : mode;
+            const sc0 = L.S.scene, vs = sc0 === 'zoom' ? 'zoom' : sc0 === 'fert' ? 'fert' : sc0 === 'compare' ? 'compare' : sc0 === 'pair' ? 'pair' : sc0 === 'micro' ? 'micro' : sc0;
+            if (vs !== vscene) { setVScene(vs, L); st = -1; }
+            if (vscene === 'zoom') { zoomFrame(L, t); return; }
+            if (vscene === 'fert') { fertFrame(L, dt, t); return; }
+            const sm0 = sc0 === 'meio' ? 'meio' : sc0 === 'mito' ? 'mito' : sc0 === 'pair' ? 'meio' : sc0 === 'micro' ? 'mito' : sc0 === 'compare' ? cmpMode : mode;
             if (sm0 !== mode) { setMode2(sm0); st = -1; }
+            if (sc0 === 'pair' || sc0 === 'micro' || sc0 === 'compare') { rowM.style.display = rowE.style.display = 'none'; }
             const m = sm0 === 'meio' ? L.meio : L.mito, N = sm0 === 'meio' ? 9 : 6, pl = plOf(), stage = m.stage;
             // ▶ / 진행 막대 → 2D 단계 (2D의 규칙대로 한 단계씩), 2D에서 단계가 바뀌면 진행 막대가 따라가요
             const want = Math.min(N - 1, Math.floor(pl.p * N + 1e-6)), driving = tnow - act < 1.2;
@@ -133,8 +266,8 @@
               lastAct = tnow;
               if (want > stage) { L.nextStage(m); if (m.stage === stage && pl.playing) { pl.pause(); ign = true; pl.set((stage + 0.5) / N); ign = false; } } else L.goStage(m, want);
             } else if (!driving && !pl.playing && m.stage !== Math.floor(pl.p * N + 1e-6)) { ign = true; pl.set((m.stage + 0.5) / N); ign = false; }
-            const ns = (sm0 === 'meio' ? MAPE : MAPM)[m.stage];
-            if (ns !== st || m.stage !== s2) { st = ns; s2 = m.stage; target(); }
+            const ns = sc0 === 'pair' ? MAPE[2] : (sm0 === 'meio' ? MAPE : MAPM)[m.stage];
+            if (ns !== st || m.stage !== s2) { st = ns; s2 = sc0 === 'pair' ? 2 : m.stage; target(); if (sc0 === 'pair') info('<b>상동 염색체 짝 맞추기</b>는 2D 화면에서 해요.<br>3D에서는 모양·크기가 같은 상동 염색체가 짝을 이룬 모습을 봐요. (분홍=어머니, 파랑=아버지)'); else if (sc0 === 'micro') info('<b>가상 현미경으로 분열하는 세포 찾기</b>는 2D 화면에서 해요.<br>3D에서는 분열 단계마다 염색체가 어떻게 보이는지 살펴봐요.'); else if (sc0 === 'compare') info('<b>비교표</b>는 2D 화면에서 채워요.<br>아래에서 두 분열을 번갈아 보며 딸세포의 수와 염색체 수를 비교해 봐요.'); }
           }
           chs.forEach((q) => {
             q.p.lerp(q.tp, k); q.rz += (q.trz - q.rz) * k; q.th += (q.tth - q.th) * k;

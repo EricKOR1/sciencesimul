@@ -1,6 +1,8 @@
 /* hx-solid-types · 3D 네 가지 결정 (이온 · 분자 · 공유 · 금속)
    2단계 '네 가지 결정'(모형 보기)과 3단계 '성질 시험'에서 2D가 고른 결정/시료를 따라가요.
-   (2D 쪽 '결정의 종류' 단추와 시료 단추가 이 화면을 조절해요. 1·4단계는 2D 화면이에요.)
+   (2D 쪽 '결정의 종류' 단추와 시료 단추가 이 화면을 조절해요.)
+   1단계(결정과 비결정): 확대경 속 입자 · 온도계를 2D의 가열 진행에 맞춰 보여 줘요 (곡선 읽기 · 분류는 2D).
+   4단계(미지 시료 분류): 3D는 네 가지 결정 모형을 차례로 보여 주는 참고 화면이에요 (분류는 2D).
    입자가 3차원으로 어떻게 쌓여 있는지 돌려 보고, 한 층을 밀어 보며(망치로 치는 것과 같은 상황)
    결정마다 '깨지는가 / 펴지는가 / 아주 단단한가 / 쉽게 흩어지는가'를 입체 모형으로 확인해요.
    ※ 단위 세포·배위수·충전율 같은 수치는 다루지 않고 입자의 배열 모양만 보여 줘요. */
@@ -253,10 +255,105 @@
           note = ''; return null;
         } catch (e) { return null; }
       }
-      let lastNote = '';
+
+      /* ---------- 결정과 비결정(2D 1단계): 확대경 속 입자 + 온도 — 2D의 가열 진행(prog)을 그대로 따라가요 ---------- */
+      const HKS = (window.__sim && window.__sim.HK) || ['salt', 'sugar', 'ice', 'cu', 'glass', 'plastic'];
+      const ctlOld = Array.prototype.slice.call(ctlEl.children);
+      const gH = new THREE.Group(); root.add(gH); gH.visible = false;
+      const HPR = 2.5;
+      const hrng = (() => { let a = 12345; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; })();
+      const rndIn = (R) => { for (;;) { const v = V3(hrng() * 2 - 1, hrng() * 2 - 1, hrng() * 2 - 1); if (v.length() <= 1) return v.multiplyScalar(R); } };
+      const darts = (n, minD, R) => { const pts = []; let guard = 0; while (pts.length < n && guard++ < 5000) { const v = rndIn(R); if (pts.every((q) => q.distanceTo(v) >= minD)) pts.push(v); } while (pts.length < n) pts.push(rndIn(R)); return pts; };
+      const hMat = {}; const hm = (k, c) => hMat[k] || (hMat[k] = new THREE.MeshStandardMaterial({ color: c, roughness: 0.4, emissive: 0x000000 }));
+      const KINDS = {};
+      function kindOf(kind, hs) {
+        if (KINDS[kind + hs.c]) return KINDS[kind + hs.c];
+        const K = { parts: [], bonds: [], el: [] };
+        const add = (a, b, r, col, mol) => K.parts.push({ a, b, r, col, mol, ph: hrng() * 6.28, rot: V3(hrng() * 6.28, hrng() * 6.28, hrng() * 6.28) });
+        if (kind === 'salt') { const rr = darts(64, 0.55, HPR * 0.95); let n = 0; for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) for (let k = 0; k < 4; k++) { const na = (i + j + k) % 2 === 0; add(V3(i - 1.5, j - 1.5, k - 1.5).multiplyScalar(0.92), rr[n++], na ? 0.2 : 0.33, na ? 0xf59e0b : 0x22b14c); } }
+        else if (kind === 'mol') { const rr = darts(18, 0.95, HPR * 0.9); let n = 0; for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) for (let k = 0; k < 2; k++) add(V3(i - 1, j - 1, k - 0.5).multiplyScalar(1.3), rr[n++], 0.3, hs.c === '#38bdf8' ? 0x38bdf8 : 0xf59e0b, true); }
+        else if (kind === 'metal') { const rr = darts(32, 0.6, HPR * 0.9); let n = 0; for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) for (let k = 0; k < 2; k++) add(V3(i - 1.5, j - 1.5, k - 0.5).multiplyScalar(0.95), rr[n++], 0.27, 0xd97706); for (let e = 0; e < 22; e++) K.el.push({ a: hrng() * 6.28, b: hrng() * 6.28, v: 0.4 + hrng() * 0.5, R: 0.8 + hrng() * 1.3 }); }
+        else if (kind === 'glass') { const rr = darts(40, 0.85, HPR * 0.95); rr.forEach((v, i) => add(v.clone(), v.clone(), i % 2 ? 0.2 : 0.28, i % 2 ? 0xe2464b : 0x94a3b8)); for (let i = 0; i < rr.length; i++) for (let j = i + 1; j < rr.length; j++) if (rr[i].distanceTo(rr[j]) < 1.25) K.bonds.push([i, j]); }
+        else { for (let c = 0; c < 4; c++) { let p = rndIn(HPR * 0.6), d = V3(hrng() - 0.5, hrng() - 0.5, hrng() - 0.5).normalize(); for (let k = 0; k < 9; k++) { add(p.clone(), p.clone(), 0.2, 0xf87171); if (k) K.bonds.push([c * 9 + k - 1, c * 9 + k]); d.add(V3(hrng() - 0.5, hrng() - 0.5, hrng() - 0.5).multiplyScalar(1.1)).normalize(); p = p.clone().addScaledVector(d, 0.62); if (p.length() > HPR * 0.9) p.multiplyScalar(0.8); } } }
+        KINDS[kind + hs.c] = K; return K;
+      }
+      const lensG = new THREE.Group(); gH.add(lensG);
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(HPR + 0.35, 0.12, 14, 64), new THREE.MeshStandardMaterial({ color: 0x7d8da6, roughness: 0.4, metalness: 0.4 })); ring.position.z = 0; gH.add(ring);
+      const lens = new THREE.Mesh(new THREE.SphereGeometry(HPR + 0.25, 40, 28), new THREE.MeshStandardMaterial({ color: 0xcfe3ff, transparent: true, opacity: 0.12, roughness: 0.1, depthWrite: false })); gH.add(lens);
+      const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.2, 2.2, 14), new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.5 })); handle.position.set(HPR * 0.9 + 0.4, -HPR * 0.9 - 0.7, 0); handle.rotation.z = 0.78; gH.add(handle);
+      const flame = new THREE.Group(); [[0.55, 1.5, 0xff8a1f], [0.35, 1.0, 0xffd34d]].forEach(([r, h, c]) => { const f = new THREE.Mesh(new THREE.ConeGeometry(r, h, 16), new THREE.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: 0.9, transparent: true, opacity: 0.9 })); f.position.y = h / 2; flame.add(f); }); flame.position.set(0, -HPR - 1.5, 0); gH.add(flame);
+      const stand = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.7, 0.5, 20), new THREE.MeshStandardMaterial({ color: 0x475569 })); stand.position.set(0, -HPR - 2.2, 0); gH.add(stand);
+      /* 온도계 */
+      const TH_X = -HPR - 1.9, TH_H = 4.4;
+      const thTube = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.17, TH_H, 16), new THREE.MeshStandardMaterial({ color: 0xdbe7ff, transparent: true, opacity: 0.3, roughness: 0.15, depthWrite: false })); thTube.position.set(TH_X, 0, 0); gH.add(thTube);
+      const thBulb = new THREE.Mesh(new THREE.SphereGeometry(0.34, 20, 14), new THREE.MeshStandardMaterial({ color: 0xe2464b, roughness: 0.3 })); thBulb.position.set(TH_X, -TH_H / 2 - 0.1, 0); gH.add(thBulb);
+      const thFill = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 1, 12), new THREE.MeshStandardMaterial({ color: 0xe2464b, emissive: 0x7a1010, emissiveIntensity: 0.5 })); gH.add(thFill);
+      const lTh = label('', [TH_X, TH_H / 2 + 0.55, 0], { color: 'rgba(30,41,59,.9)' }); lTh.show(false);
+      const lOrd = label('', [0, HPR + 0.9, 0], { color: 'rgba(30,41,59,.9)' }); lOrd.show(false);
+      let hPool = null, hKey = '', hObjs = [], hBonds = [], hElm = [];
+      function buildHeat(hs) {
+        while (lensG.children.length) lensG.remove(lensG.children[0]);
+        const K = kindOf(hs.kind, hs); hKey = hs.id; hObjs = []; hBonds = []; hElm = [];
+        K.parts.forEach((q) => {
+          let o;
+          if (q.mol) { o = new THREE.Group(); o.add(new THREE.Mesh(sg(0.32), hm('m' + q.col, q.col))); [[0.55, 0.42], [-0.55, 0.42]].forEach(([x, y]) => { const h = new THREE.Mesh(sg(0.17), hm('hh', 0xf1f5f9)); h.position.set(x, y, 0); o.add(h); }); }
+          else o = new THREE.Mesh(sg(q.r), hm('p' + q.col + q.r, q.col));
+          lensG.add(o); hObjs.push(o);
+        });
+        K.bonds.forEach(() => { const b = new THREE.Mesh(unitCyl, hm('bd', 0x94a3b8)); b.scale.set(0.05, 1, 0.05); lensG.add(b); hBonds.push(b); });
+        K.el.forEach(() => { const e = new THREE.Mesh(sg(0.09), hm('el', 0xfde047)); e.material.emissive.setHex(0x9a7b00); lensG.add(e); hElm.push(e); });
+        hPool = K;
+      }
+      const HNAME = {};
+      function updHeat(w, t) {
+        const S2 = w.S, h = S2.heat, hs = w.HS[h.cur], sm0 = h.smp[h.cur];
+        if (hKey !== hs.id) buildHeat(hs);
+        const T0 = w.HT(hs, sm0.prog), ord = w.HORD(hs, sm0.prog), soft = w.HSOFT(hs, T0), heatK = Math.max(0, Math.min(1, (T0 - hs.T0) / (hs.T1 - hs.T0)));
+        const jit = hs.crystal ? (ord > 0.5 ? 0.008 + 0.022 * heatK : 0.045) : 0.01 + 0.05 * soft, amp = jit * HPR * 2.4, k = 1 - ord;
+        hPool.parts.forEach((q, i) => {
+          const o = hObjs[i], ph = q.ph;
+          o.position.set(q.a.x + (q.b.x - q.a.x) * k + Math.sin(t * (2.2 + (i % 5) * 0.37) + ph) * amp, q.a.y + (q.b.y - q.a.y) * k + Math.cos(t * (2.7 + (i % 4) * 0.41) + ph * 1.3) * amp, q.a.z + (q.b.z - q.a.z) * k + Math.sin(t * 1.9 + ph * 0.7) * amp);
+          if (q.mol) o.rotation.set(q.rot.x * k + Math.sin(t * 1.3 + i) * 0.1, q.rot.y * k, q.rot.z * k);
+          const m0 = o.isGroup ? o.children[0].material : o.material; if (!hs.crystal) m0.emissive.setRGB(soft * 0.5, soft * 0.18, 0); else m0.emissive.setRGB(0, 0, 0);
+        });
+        hPool.bonds.forEach((b, i) => { const p = hObjs[b[0]].position, q = hObjs[b[1]].position; stickSet(hBonds[i], p, q); hBonds[i].scale.x = hBonds[i].scale.z = 0.05; });
+        hPool.el.forEach((e, i) => { const q = hPool.el[i]; hElm[i].position.set(Math.cos(q.a + t * q.v) * q.R, Math.sin(q.b + t * q.v * 1.3) * q.R * 0.8, Math.sin(q.a * 1.3 + t * q.v * 0.8) * q.R * 0.6); });
+        flame.visible = !!h.run; flame.scale.set(1, 0.9 + 0.2 * Math.sin(t * 9), 1);
+        thFill.scale.set(1, Math.max(0.05, heatK * TH_H), 1); thFill.position.set(TH_X, -TH_H / 2 + heatK * TH_H / 2, 0);
+        const ordTxt = hs.crystal ? (ord > 0.5 ? '입자가 규칙적으로 배열 (결정)' : '입자 배열이 흐트러졌어요 (액체)') : '입자가 불규칙하게 배열 (비결정)';
+        const st = hs.crystal ? (sm0.prog <= 0 ? '고체' : sm0.prog < w.PL[0] ? '고체' : sm0.prog <= w.PL[1] ? '녹는 중 · 온도가 일정해요' : '액체') : (soft < 0.04 ? '단단한 고체' : soft < 0.7 ? '서서히 무르는 중' : '많이 무른 상태');
+        lTh.set('온도 ' + (Math.round(T0) > 0 ? '+' : '') + Math.round(T0) + ' °C'); lOrd.set(ordTxt);
+        return '<b>🔍 확대경 속 ' + hs.nm + ' (' + hs.f + ')</b><br>' + ordTxt + '<br>' + st + (sm0.done ? '<br>' + hs.note + ' 곡선과 분류는 ▦ 2D에서 해요.' : h.run ? '<br>가열하는 중…' : '<br>🔥 가열하기를 눌러요.');
+      }
+      const hCtl = grab(() => controls.segment('시료', HKS.map((k) => ({ value: k, label: window.__sim.HS[k].nm })), 'salt', (v) => { const w = window.__sim; if (w) { const b = document.querySelector('#hChips button[data-v="' + v + '"]'); if (b) b.click(); } }));
+      const hGo = grab(() => controls.button('🔥 가열하기', () => { const b = document.getElementById('bHeat'); if (b) b.click(); }));
+      const hFast = grab(() => controls.button('⏩ 빠르게', () => { const b = document.getElementById('bFast'); if (b) b.click(); }));
+      let heatOn = false, modeNow = '', clsT = 0;
+      function setHeatOn(on) {
+        if (on === heatOn) return; heatOn = on; gH.visible = on; g.visible = !on;
+        ctlOld.forEach((e) => { e.style.display = on ? 'none' : ''; });
+        [hCtl, hGo, hFast].forEach((c) => c.els.forEach((e) => { e.style.display = on ? '' : 'none'; }));
+        [lTh, lOrd].forEach((l) => l.show(on)); if (PHONE) ctlEl.style.paddingRight = on ? '128px' : '';
+        if (on) { labs.forEach((l) => l.show(false)); orbit.dist = PHONE ? 15 : 11.5; orbit.tx = -0.3; orbit.ty = -0.3; orbit.tz = 0; orbit.theta = 0.2; orbit.phi = 1.4; hKey = ''; }
+        else { labs.forEach((l) => l.show(false)); setScene(); }
+      }
+      let lastNote = '', lastHeat = ''; const TK0 = ['ion', 'mol', 'cov', 'metal'];
       const api = {
         update(dt, t) {
-          const w = want();
+          const w2 = window.__sim, md = w2 && w2.S ? w2.S.mode : '';
+          if (md === 'heat') {
+            setHeatOn(true);
+            const html = updHeat(w2, t); if (html !== lastHeat) { lastHeat = html; info(html); }
+            if (hCtl.r) hCtl.r.set(w2.S.heat.cur);
+            [hGo, hFast].forEach((c) => c.els.forEach((e) => { e.disabled = !!w2.S.heat.run && c === hGo; }));
+            return;
+          }
+          if (heatOn) { setHeatOn(false); lastHeat = ''; }
+          let w = want();
+          if (md === 'cls') {           // 미지 시료 분류는 2D에서: 3D는 네 가지 결정 모형을 차례로 보여 줘요
+            clsT += dt; const k = Math.floor(clsT / 7) % 4; w = TK0[k]; note = '참고 모형 · 시료 분류는 ▦ 2D에서 해요 → ';
+          } else if (md !== modeNow && md === 'types') note = '';
+          modeNow = md;
           if (w && w !== type) pickType(w);
           if (note !== lastNote) { lastNote = note; show(); }
           if (S && S.update) S.update(dt, t);
