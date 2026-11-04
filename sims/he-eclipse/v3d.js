@@ -53,7 +53,8 @@
     camera: Object.assign({ fov: 45, target: [0, 0, 0], min: 4, max: 40 }, VIEWS.obl),
     autoRotate: 0.08,
     build(ctx) {
-      const { THREE, scene, root, label, info, controls, orbit } = ctx;
+      const { THREE, scene, root, info, controls, orbit } = ctx;
+      const oldLabs = []; let capLab = true; const label = (...a) => { const l = ctx.label(...a); if (capLab) oldLabs.push(l); return l; };
       const st = { day: 8, tilt: 5.1, play: false, goal: null, band: true, season: true, view: 'obl' };
       try { const s = window.__sim && window.__sim.S; if (s) { if (typeof s.day === 'number') st.day = Math.min(DAYMAX, Math.max(0, s.day)); if (typeof s.tilt === 'number') st.tilt = s.tilt; } } catch (e) {}
       let SYZ = syzygies(st.tilt);
@@ -186,6 +187,7 @@
 
 
       /* ================= 2단계 그림자 원뿔(cone) · 3단계 지구 위의 그림자(globe) · 4단계 월식(lunar) ================= */
+      capLab = false;
       const gOrb = new THREE.Group(); while (root.children.length) gOrb.add(root.children[0]); root.add(gOrb);
       const gCn = new THREE.Group(), gGl = new THREE.Group(), gLn = new THREE.Group(); root.add(gCn, gGl, gLn); gCn.visible = gGl.visible = gLn.visible = false;
       const probe2 = controls.text(''); probe2.style.display = 'none'; const ctlEl2 = probe2.parentElement;
@@ -232,7 +234,7 @@
       const GR = 3.4, GK = GR / KM.Re;
       const ct = document.createElement('canvas'); ct.width = 1024; ct.height = 512; { const c2 = ct.getContext('2d'); c2.fillStyle = '#2f7de1'; c2.fillRect(0, 0, 1024, 512); c2.fillStyle = 'rgba(90,170,100,1)'; c2.strokeStyle = 'rgba(40,110,60,1)'; c2.lineWidth = 1; }
       let earthTexBuilt = false;
-      const earthG = new THREE.Mesh(new THREE.SphereGeometry(GR, 64, 48), new THREE.MeshStandardMaterial({ map: new THREE.CanvasTexture(ct), roughness: 0.7 })); gGl.add(earthG);
+      const earthG = new THREE.Mesh(new THREE.SphereGeometry(GR, 64, 48), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(ct) })); gGl.add(earthG);
       const penG = new THREE.Mesh(new THREE.BufferGeometry(), BM(0x040a1c, { opacity: 0.4 })); penG.frustumCulled = false; gGl.add(penG);
       const umbG = new THREE.Mesh(new THREE.BufferGeometry(), BM(0x050810, { opacity: 0.95 })); umbG.frustumCulled = false; gGl.add(umbG);
       const siteM = ['A', 'B', 'C', 'P'].map((k) => { const m = new THREE.Mesh(new THREE.SphereGeometry(0.1, 14, 10), SM(0xfde047, { emissive: 0xfde047, emissiveIntensity: 0.8 })); gGl.add(m); const l = label(k === 'P' ? '내 지점' : k, [0, 0, 0], { color: 'rgba(15,23,42,.9)' }); l.show(false); return { k, m, l }; });
@@ -291,6 +293,7 @@
         const orb = v === 'orbit';
         gOrb.visible = orb; gCn.visible = v === 'cone'; gGl.visible = v === 'globe'; gLn.visible = v === 'lunar';
         orbEls.forEach((e) => { e.style.display = orb ? '' : 'none'; });
+        if (orb) oldLabs.forEach((l) => l.show(l.keep !== false)); else oldLabs.forEach((l) => { if (l.visible) l.keep = true; else if (l.keep == null) l.keep = false; l.show(false); });
         [cDist, cEy, cSweep, cCen].forEach((c2) => shw(c2, v === 'cone')); [gTime, gPlay, gSite].forEach((c2) => shw(c2, v === 'globe')); [lPath, lTime, lPlay].forEach((c2) => shw(c2, v === 'lunar'));
         [lcM, lcE, lcT, lcP, lcG, lcSun].forEach((l) => l.show(false)); [lGl].forEach((l) => l.show(false)); siteM.forEach((q) => q.l.show(false)); [lUm, lPe, lMn, lSt, lEW].forEach((l) => l.show(false));
         if (!orb) { lcM.show(v === 'cone'); lUm.show(v === 'lunar'); lPe.show(v === 'lunar'); }
