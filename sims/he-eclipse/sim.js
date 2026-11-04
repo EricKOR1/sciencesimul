@@ -1312,6 +1312,6 @@
   window.__sim = {
     S, KM, G, SITES, LU, PATHS, get game() { return game; }, get SYZ() { return SYZ; },
     nearSyz, solarType, lunarType, luOf, localType, siteState, siteInfo, lunarContacts, setView, selectSite, jumpTo, stepSyz, enterLevel, refreshSyz, pathType, curSite, DAYMAX, LT_MAX,
-    syncDay, syncT, syncL, updateCtl,
+    syncDay, syncT, syncL, updateCtl, axisAt, groundPt, CONT, clockStr, lunarStateAt,
   };
 })();
