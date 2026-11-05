@@ -371,32 +371,13 @@
     };
 
     /* 드래그 회전 · 확대
-       잡은 곳이 손가락(마우스)을 따라 움직여요: 앞쪽 물체를 잡으면 그대로, 회전 중심보다 뒤에 있는 물체
-       (궤도의 뒤쪽, 하늘 돔 안쪽 등)를 잡으면 방향을 뒤집어 그 물체가 끄는 방향으로 움직이게 해요. */
-    const ptrs = new Map(); let pinch0 = 0, dist0 = 0, dirX = 1, dirY = 1;
+       모든 3D 화면에서 같은 느낌으로: 드래그하는 방향으로 장면을 끌어오듯 시점이 움직여요
+       (중1 '태양계 구성 천체'와 같은 방향). 손을 떼면 관성으로 조금 더 돌아요. */
+    const ptrs = new Map(); let pinch0 = 0, dist0 = 0;
+    const DIR = -1;
     const vel = { t: 0, p: 0 };
-    let ray = null, ndc = null, bsph = null;
-    function grabSign(e) {
-      if (!built || !THREE) return 1;
-      try {
-        if (!ray) { ray = new THREE.Raycaster(); ndc = new THREE.Vector2(); bsph = new THREE.Sphere(); }
-        const r = view.getBoundingClientRect();
-        ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
-        new THREE.Box3().setFromObject(root).getBoundingSphere(bsph);
-        const R = Math.max(1e-3, bsph.radius);
-        ray.params.Line = { threshold: R * 0.015 }; ray.params.Points = { threshold: R * 0.02 };
-        ray.setFromCamera(ndc, camera);
-        const hits = ray.intersectObject(root, true).filter((h) => h.object.visible !== false && !(h.object.material && h.object.material.opacity === 0));
-        const pivot = new THREE.Vector3(orbit.tx, orbit.ty, orbit.tz);
-        const camD = camera.position.distanceTo(pivot);
-        if (hits.length) return hits[0].distance > camD * 1.02 ? -1 : 1;
-        // 빈 곳을 잡았을 때: 카메라가 모형 안에 있으면(하늘 돔 등) 뒤집기
-        return camera.position.distanceTo(bsph.center) < R * 0.9 ? -1 : 1;
-      } catch (err) { return 1; }
-    }
     view.addEventListener('pointerdown', (e) => {
       view.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY, t: performance.now() }); touched = true; vel.t = vel.p = 0;
-      if (ptrs.size === 1) { const sg = grabSign(e); dirX = sg; dirY = sg; }
       if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; pinch0 = Math.hypot(a.x - b.x, a.y - b.y); dist0 = orbit.dist; }
     });
     view.addEventListener('pointermove', (e) => {
@@ -404,7 +385,7 @@
       const p = ptrs.get(e.pointerId), dx = e.clientX - p.x, dy = e.clientY - p.y, now = performance.now(), dts = Math.max(1, now - p.t) / 1000;
       p.x = e.clientX; p.y = e.clientY; p.t = now;
       if (ptrs.size === 1) {
-        const dT = -dx * 0.008 * dirX, dP = -dy * 0.008 * dirY;
+        const dT = -dx * 0.008 * DIR, dP = -dy * 0.008 * DIR;
         orbit.theta += dT; orbit.phi = Math.max(0.05, Math.min(Math.PI - 0.05, orbit.phi + dP));
         vel.t = vel.t * 0.5 + (dT / dts) * 0.5; vel.p = vel.p * 0.5 + (dP / dts) * 0.5;
       } else if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; const d = Math.hypot(a.x - b.x, a.y - b.y); if (pinch0 > 0) orbit.dist = Math.max(cam0.min, Math.min(cam0.max, dist0 * pinch0 / d)); vel.t = vel.p = 0; }
