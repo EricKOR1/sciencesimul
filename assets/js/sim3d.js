@@ -270,6 +270,8 @@
     const tmp = { v: null };
     /* 이름표 그리기: 가까운 것부터 자리를 잡고, 다른 이름표나 설명 상자와 겹치면 위아래로 비켜요 */
     let labFrame = 0;
+    // 물체와 그 부모가 모두 보일 때만 이름표를 보여요 (숨긴 묶음의 이름표가 남지 않게)
+    function shown(o) { for (let n = o; n; n = n.parent) { if (n.visible === false) return false; if (n === scene) break; } return true; }
     function drawLabels() {
       if (!labs.length) return;
       const w = view.clientWidth, h = view.clientHeight;
@@ -277,32 +279,37 @@
       labFrame++;
       const vis = [];
       for (const L of labs) {
-        if (!L.visible || (L.obj && L.obj.visible === false)) { L.el.style.display = 'none'; continue; }
+        if (!L.visible || (L.obj && L.obj.isObject3D && !shown(L.obj))) { L.el.style.display = 'none'; continue; }
         const v = tmp.v;
-        if (L.obj && L.obj.isObject3D) { L.obj.getWorldPosition(v); } else if (Array.isArray(L.obj)) { v.set(L.obj[0], L.obj[1], L.obj[2]); } else { v.set(0, 0, 0); }
+        if (L.obj && L.obj.isObject3D) { L.obj.updateWorldMatrix(true, false); L.obj.getWorldPosition(v); } else if (Array.isArray(L.obj)) { v.set(L.obj[0], L.obj[1], L.obj[2]); } else { v.set(0, 0, 0); }
         v.x += L.off[0]; v.y += L.off[1]; v.z += L.off[2];
         v.project(camera);
         if (v.z > 1 || v.z < -1) { L.el.style.display = 'none'; continue; }
-        if (L.el.style.display === 'none') L.el.style.display = '';
-        if (!L.wh || labFrame % 30 === 0 || L.el.textContent !== L.txt) { L.wh = [L.el.offsetWidth, L.el.offsetHeight]; L.txt = L.el.textContent; }
+        if (L.el.style.display === 'none') { L.el.style.display = ''; L.wh = null; }
+        if (!L.wh || !L.wh[0] || labFrame % 30 === 0 || L.el.textContent !== L.txt) { L.wh = [L.el.offsetWidth, L.el.offsetHeight]; L.txt = L.el.textContent; }
         vis.push({ L, x: (v.x + 1) / 2 * w, y: (1 - v.y) / 2 * h, z: v.z });
       }
       vis.sort((a, b) => a.z - b.z);
       const placed = [];
-      if (info.innerHTML) { const r = info.getBoundingClientRect(), rv = view.getBoundingClientRect(); placed.push([r.left - rv.left - 2, r.top - rv.top - 2, r.right - rv.left + 2, r.bottom - rv.top + 2]); }
+      if (info.innerHTML && info.offsetParent) { const r = info.getBoundingClientRect(), rv = view.getBoundingClientRect(); placed.push([r.left - rv.left - 2, r.top - rv.top - 2, r.right - rv.left + 2, r.bottom - rv.top + 2]); }
       const hit = (r) => placed.some((q) => r[0] < q[2] && r[2] > q[0] && r[1] < q[3] && r[3] > q[1]);
+      const cxF = (x, bw) => Math.max(bw / 2 + 2, Math.min(w - bw / 2 - 2, x)), cyF = (y, bh) => Math.max(bh / 2 + 2, Math.min(h - bh / 2 - 2, y));
       for (const it of vis) {
-        const bw = it.L.wh[0], bh = it.L.wh[1], step = bh + 3;
+        const L = it.L, bw = L.wh[0], bh = L.wh[1], step = bh + 3;
+        // 겹침 피하기: 지난번에 쓴 자리를 먼저 쓰고(자리 바꿈으로 깜빡이지 않게), 가끔 제자리(0)로 돌아갈 수 있는지 봐요
+        const prev = L.slot || 0, order = labFrame % 20 === 0 ? [0, prev] : [prev, 0];
+        [-step, step, -2 * step, 2 * step].forEach((d) => order.push(d));
         let best = null;
-        for (const dy of [0, -step, step, -2 * step, 2 * step]) {
-          const cy = it.y + dy, r = [it.x - bw / 2, cy - bh / 2, it.x + bw / 2, cy + bh / 2];
-          if (!hit(r)) { best = { cy, r }; break; }
+        for (const dy of order) {
+          const r = [cxF(it.x, bw) - bw / 2, it.y + dy - bh / 2, cxF(it.x, bw) + bw / 2, it.y + dy + bh / 2];
+          if (!hit(r)) { best = { dy, r }; break; }
         }
-        const s = it.L.el.style;
-        // 화면 가장자리에서 잘리지 않게 안쪽으로 당겨요
-        const cx = (x) => Math.max(bw / 2 + 2, Math.min(w - bw / 2 - 2, x)), cy = (y) => Math.max(bh / 2 + 2, Math.min(h - bh / 2 - 2, y));
-        if (best) { placed.push(best.r); s.left = cx(it.x) + 'px'; s.top = cy(best.cy) + 'px'; s.opacity = ''; }
-        else { s.left = cx(it.x) + 'px'; s.top = cy(it.y) + 'px'; s.opacity = '0.35'; }
+        const s = L.el.style;
+        if (best) { placed.push(best.r); L.slot = best.dy; s.opacity = ''; } else { L.slot = 0; s.opacity = '0.35'; }
+        // 비켜선 거리만 부드럽게 바꿔요 (물체 위치는 매 프레임 정확히 따라가요)
+        L.sy = L.sy == null ? L.slot : L.sy + (L.slot - L.sy) * 0.35;
+        if (Math.abs(L.sy - L.slot) < 0.5) L.sy = L.slot;
+        s.left = cxF(it.x, bw) + 'px'; s.top = cyF(it.y + L.sy, bh) + 'px';
       }
     }
 
