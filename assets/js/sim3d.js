@@ -281,7 +281,7 @@
       for (const L of labs) {
         if (!L.visible || (L.obj && L.obj.isObject3D && !shown(L.obj))) { L.el.style.display = 'none'; continue; }
         const v = tmp.v;
-        if (L.obj && L.obj.isObject3D) { L.obj.updateWorldMatrix(true, false); L.obj.getWorldPosition(v); } else if (Array.isArray(L.obj)) { v.set(L.obj[0], L.obj[1], L.obj[2]); } else { v.set(0, 0, 0); }
+        if (L.obj && L.obj.isObject3D) { L.obj.updateWorldMatrix(true, false); L.obj.getWorldPosition(v); } else if (Array.isArray(L.obj)) { v.set(L.obj[0], L.obj[1], L.obj[2]); } else if (L.obj && L.obj.isVector3) { v.copy(L.obj); } else { v.set(0, 0, 0); }
         v.x += L.off[0]; v.y += L.off[1]; v.z += L.off[2];
         v.project(camera);
         if (v.z > 1 || v.z < -1) { L.el.style.display = 'none'; continue; }
