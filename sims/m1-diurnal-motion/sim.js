@@ -440,9 +440,10 @@
       }
       ctx.restore();
     }
-    // 별의 자취: 지난 3시간 (끝으로 갈수록 투명)
-    if (A > 0.01 && o.trails && !mini) {
-      const N = 30, span = 3, groups = CONS.concat([{ key: 'etc', col: '#cfe0ff' }]);
+    // 별의 자취: 관측을 시작한 시각부터 지금까지 지나온 길이 서서히 남아요 (처음엔 자취 없음, 오래된 쪽일수록 흐리게)
+    const span = o.trailFrom == null ? 0 : Math.min(12, Math.max(0, T - o.trailFrom));
+    if (A > 0.01 && o.trails && !mini && span > 0.02) {
+      const N = Math.max(4, Math.min(48, Math.round(span * 10))), groups = CONS.concat([{ key: 'etc', col: '#cfe0ff' }]);
       const pts = [];
       for (let i = 0; i < TRAIL.length; i++) {
         const s = TRAIL[i], arr = [];
@@ -455,7 +456,7 @@
       ctx.lineCap = 'butt'; ctx.lineWidth = 1.5 * fs;
       groups.forEach((gp) => {
         for (let k = 0; k < N; k++) {
-          ctx.strokeStyle = rgbS(hexRgb(gp.col), (0.78 * Math.pow((k + 1) / N, 1.6) * A).toFixed(3));
+          ctx.strokeStyle = rgbS(hexRgb(gp.col), (0.78 * (0.35 + 0.65 * Math.pow((k + 1) / N, 1.4)) * A).toFixed(3));
           ctx.beginPath();
           for (let i = 0; i < TRAIL.length; i++) {
             const s = TRAIL[i], key = s.cons ? s.cons.key : 'etc';
@@ -597,9 +598,9 @@
     ctx.fillStyle = g; roundRect(ctx, x, y - h / 2, w, h, h / 2); ctx.fill();
     ctx.strokeStyle = 'rgba(160,190,255,.4)'; ctx.lineWidth = 1.2; ctx.stroke();
     const px = (tt) => x + clamp((tt - T_MIN) / (T_MAX - T_MIN), 0, 1) * w;
-    // 지난 3시간 (별의 자취)
-    if (T > T_MIN) {
-      const a = px(T - 3), b = px(T);
+    // 관측을 시작한 뒤 지나온 시간 (별의 자취)
+    if (S.trailFrom != null && T > S.trailFrom + 0.02) {
+      const a = px(S.trailFrom), b = px(T);
       ctx.fillStyle = 'rgba(94,234,212,.28)'; roundRect(ctx, a, y - h / 2 + 2, Math.max(2, b - a), h - 4, (h - 4) / 2); ctx.fill();
     }
     ctx.fillStyle = 'rgba(214,228,255,.85)'; ctx.font = fnt(L, 13, 'bold'); ctx.textAlign = 'center';
@@ -632,8 +633,8 @@
       ctx.fillText('🌙 서울의 밤 시간표 (1월 중순)', G.lx, G.ly - 24 * fs);
       drawTimeline(ctx, L, G.lx, G.ly + 4 * fs, G.lw, G.lh, T);
       ctx.fillStyle = 'rgba(94,234,212,.9)'; ctx.font = fnt(L, 13, 'bold');
-      if (L.col) { ctx.textAlign = 'right'; ctx.fillText('청록색 띠 = 지난 3시간 (별의 자취)', G.lx + G.lw, G.ly - 24 * fs); }
-      else { ctx.textAlign = 'left'; ctx.fillText('청록색 띠 = 지난 3시간 (별의 자취)', G.lx, G.ly + 62 * fs); }
+      if (L.col) { ctx.textAlign = 'right'; ctx.fillText('청록색 띠 = 지켜본 시간 (별의 자취)', G.lx + G.lw, G.ly - 24 * fs); }
+      else { ctx.textAlign = 'left'; ctx.fillText('청록색 띠 = 지켜본 시간 (별의 자취)', G.lx, G.ly + 62 * fs); }
     }
     if (o.clockNew) newRingCircle(ctx, L, G.ccx, G.ccy, G.cr + 8);
   }
@@ -644,7 +645,8 @@
   }
   function skyScene(ctx, L, t, V) {
     const R = L.sky;
-    const G = drawSky(ctx, L, R, t, { view: S.viewShown, tt: S.tA, fade: S.viewFade, labels: true, trails: S.trails, labelPolaris: S.labelPolaris });
+    if (S.trailFrom == null || S.tA < S.trailFrom) S.trailFrom = S.tA;   // 처음 보거나 시각을 되돌리면 그때부터 다시 자취를 남겨요
+    const G = drawSky(ctx, L, R, t, { view: S.viewShown, tt: S.tA, fade: S.viewFade, labels: true, trails: S.trails, labelPolaris: S.labelPolaris, trailFrom: S.trailFrom });
     ctx.save(); roundRect(ctx, R.x, R.y, R.w, R.h, 14); ctx.clip();
     hudPills(ctx, L, R, S.viewShown, S.tA);
     if (S.hintPlay && on('clock') && S.tapMsg == null) {
@@ -1522,6 +1524,7 @@
     setView(view, true);
     S.playing = false; setPlaying(false);
     S.t = t; S.tA = t; S.tAV = 0; S.acc = { south: 0, north: 0 }; S.tapMsg = null; S.hintPlay = true;
+    S.trailFrom = t;   // 단계를 시작할 때는 자취 없이 시작
     syncControls();
   }
   function resetPhoto(expo) {
@@ -1566,7 +1569,7 @@
         title: '밤하늘의 움직임', short: '밤하늘', icon: '🌌', phase: '관찰',
         features: ['sky', 'clock'],
         intro: '<p class="si-q">❓ 탐구 질문: 밤새 별들은 어떻게 움직일까? 별이 정말 움직이는 걸까?</p>' +
-          '<p>서울의 1월 밤하늘을 <b>천문대</b>에서 지켜봐요. 시각 막대를 움직이면 시간이 흘러가고, 별이 지나온 길이 <b>꼬리(자취)</b>로 남아요.</p>' +
+          '<p>서울의 1월 밤하늘을 <b>천문대</b>에서 지켜봐요. 시각 막대를 움직이면 시간이 흘러가고, 별이 지나온 길이 <b>꼬리(자취)</b>로 서서히 남아요.</p>' +
           '<p>🔦 밤에 직접 별을 관측할 때는 어른과 함께, 안전한 곳에서 해요.</p>',
         setup() { resetSky('south', 18); },
         recap: '별은 동쪽에서 서쪽으로 움직여요. 북쪽 하늘의 별은 북극성을 중심으로 시계 반대 방향으로 돌아요.',

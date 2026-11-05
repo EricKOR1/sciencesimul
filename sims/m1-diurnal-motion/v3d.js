@@ -30,7 +30,7 @@
       const { THREE, root, label, info, controls, camera, orbit } = ctx;
       const V = new THREE.Vector3();
       const P = new THREE.Vector3(0, SL, -CL); // 천구 북극(자전축 북쪽) 방향
-      const st = { t: 21, play: false, focus: 'dipper', trails: true };
+      const st = { t: 21, play: false, focus: 'dipper', trails: true, from: null };
       try { const s = window.__sim && window.__sim.S; if (s && typeof s.t === 'number') st.t = Math.min(T1, Math.max(T0, s.t)); } catch (e) {}
 
       /* 별 → 세계 좌표 (x 동, y 위, z 남) */
@@ -98,16 +98,35 @@
       const polO = mkStar(POLARIS[0], POLARIS[1], 0xfff1c9, 0.11), sirO = mkStar(SIRIUS[0], SIRIUS[1], 0xd8e8ff, 0.1);
       const sirLab = label('시리우스', sirO.m, { size: 11.5, offset: [0, 0.3, 0] });
 
-      /* 별의 하루 자취 (평행 원) */
+      /* 별의 자취: 관측을 시작한 시각(st.from)부터 지금까지 지나온 길만 서서히 그려요.
+         처음에는 자취가 없고, 시간이 흐르면 궤적을 따라 늘어나요 (오래된 쪽일수록 흐리게). */
       const trails = new THREE.Group(); root.add(trails);
+      const TN = 96, trailList = [];
       function trailFor(ra, dec, col) {
-        const N = 96, pos = new Float32Array((N + 1) * 3), cl = new Float32Array((N + 1) * 3), c = new THREE.Color(col);
-        for (let i = 0; i <= N; i++) { dirOf(ra, dec, i / N * 24, V); const k = dim(V.y); pos.set([V.x * R, V.y * R, V.z * R], i * 3); cl.set([c.r * k, c.g * k, c.b * k], i * 3); }
+        const pos = new Float32Array((TN + 1) * 3), cl = new Float32Array((TN + 1) * 3);
         const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.BufferAttribute(cl, 3));
-        return new THREE.Line(g, new THREE.LineBasicMaterial({ vertexColors: true }));
+        g.setDrawRange(0, 0);
+        const line = new THREE.Line(g, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true }));
+        line.frustumCulled = false;
+        trailList.push({ ra, dec, c: new THREE.Color(col), g, pos, cl });
+        return line;
       }
       CONS.forEach((c) => Object.keys(c.st).forEach((k) => trails.add(trailFor(c.st[k][0], c.st[k][1], c.col))));
       trails.add(trailFor(SIRIUS[0], SIRIUS[1], 0xd8e8ff));
+      function drawTrails() {
+        if (st.from == null || st.t < st.from) st.from = st.t;
+        const span = Math.min(24, st.t - st.from);
+        if (span < 0.02) { trailList.forEach((q) => q.g.setDrawRange(0, 0)); return; }
+        const n = Math.max(2, Math.min(TN, Math.round(span * 8)));
+        trailList.forEach((q) => {
+          for (let i = 0; i <= n; i++) {
+            const f = i / n; dirOf(q.ra, q.dec, lstOf(st.from + span * f), V);
+            const k = dim(V.y) * (0.25 + 0.75 * f);
+            q.pos.set([V.x * R, V.y * R, V.z * R], i * 3); q.cl.set([q.c.r * k, q.c.g * k, q.c.b * k], i * 3);
+          }
+          q.g.attributes.position.needsUpdate = true; q.g.attributes.color.needsUpdate = true; q.g.setDrawRange(0, n + 1);
+        });
+      }
 
       /* 지켜볼 별: 시각 점, 각도 부채꼴 */
       const hourN = T1 - T0 + 1, hrPos = new Float32Array(hourN * 3), hrCol = new Float32Array(hourN * 3);
@@ -127,6 +146,7 @@
       };
 
       function refresh() {
+        drawTrails();
         const lst = lstOf(st.t);
         for (let i = 0; i < BG.length; i++) {
           dirOf(BG[i][0], BG[i][1], lst, V); bgPos.set([V.x * R, V.y * R, V.z * R], i * 3);
@@ -176,7 +196,7 @@
       controls.segment('지켜볼 별', [{ value: 'dipper', label: '북두칠성' }, { value: 'cas', label: '카시오페이아' }, { value: 'orion', label: '오리온' }, { value: 'polaris', label: '북극성' }], st.focus, (v) => { st.focus = v; refresh(); });
       const rng = controls.range('🕘', T0, T1, 0.05, st.t, (v) => { st.t = v; st.play = false; playB.textContent = '▶ 재생'; refresh(); }, (v) => hm(v));
       fixLab(8.5);
-      const playB = controls.button('▶ 재생', () => { st.play = !st.play; if (st.play && st.t >= T1 - 0.01) st.t = T0; playB.textContent = st.play ? '⏸ 멈춤' : '▶ 재생'; });
+      const playB = controls.button('▶ 재생', () => { st.play = !st.play; if (st.play && st.t >= T1 - 0.01) { st.t = T0; st.from = T0; } playB.textContent = st.play ? '⏸ 멈춤' : '▶ 재생'; });
       const trB = controls.button('별의 자취 ✓', () => { st.trails = !st.trails; trails.visible = st.trails; trB.classList.toggle('on', st.trails); trB.textContent = '별의 자취 ' + (st.trails ? '✓' : '✕'); }); trB.classList.add('on');
       refresh();
 
@@ -187,7 +207,7 @@
           if (st.play) { st.t += dt * 0.5; if (st.t >= T1) { st.t = T1; st.play = false; playB.textContent = '▶ 재생'; } rng.set(st.t); refresh(); }
         },
         sync() {
-          try { const s = window.__sim && window.__sim.S; if (s && typeof s.t === 'number') { st.t = Math.min(T1, Math.max(T0, s.t)); rng.set(st.t); refresh(); } } catch (e) {}
+          try { const s = window.__sim && window.__sim.S; if (s && typeof s.t === 'number') { st.t = Math.min(T1, Math.max(T0, s.t)); if (typeof s.trailFrom === 'number') st.from = Math.min(st.t, Math.max(T0, s.trailFrom)); rng.set(st.t); refresh(); } } catch (e) {}
         },
       };
     },
