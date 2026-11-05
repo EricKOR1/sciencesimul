@@ -87,7 +87,8 @@
           const curve = new THREE.CatmullRomCurve3(pts);
           ghost = new THREE.Mesh(new THREE.TubeGeometry(curve, N, 0.018, 5, false), basic(s.col, { transparent: true, opacity: 0.3 }));
           trail = new THREE.Mesh(new THREE.TubeGeometry(curve, N, 0.045, 6, false), basic(s.col));
-          T_N = N; root.add(ghost, trail);
+          T_N = N; root.add(trail);   // 앞으로 갈 경로(흐린 안내선)는 보여 주지 않고, 지나간 자취만 남겨요
+          trail.geometry.setDrawRange(0, 0);
         } else { ghost = trail = null; }
         ball.material.color.setHex(s.col); ball.material.emissive.setHex(s.col === 0xff5a5f ? 0x661b1b : 0x1b2f66);
         labQ.set(s.sgn > 0 ? '+ ' + s.name : '− ' + s.name);
