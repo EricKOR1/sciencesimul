@@ -40,7 +40,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { target: [0, -0.3, 0], dist: PHN ? 16 : 11.8, theta: 0.25, phi: 1.3, min: 5, max: 22 },
     autoRotate: 0,
-    levels: [],
+    levels: [1],
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3;
@@ -145,7 +145,7 @@
         const mid = p > 0.04 && p < 0.96, end = p >= 0.96;
         P.ox.show(end); P.rd.show(end); P.eLab.show(showE && (mid || end));
         const donName = R.after[0], accName = R.after[1];
-        if (p < 0.04) setInfo('<b>' + R.eq.split(' → ')[0] + '</b> 이 만났어요.<br>▶ 반응 시작이나 ▶ 전자 이동을 눌러 <b>전자(노란 구슬)</b>가 어디로 가는지 봐요.');
+        if (p < 0.04) setInfo('<b>' + R.eq.split(' → ')[0] + '</b> 이 만났어요.<br>⚡ 전자 1개 옮기기나 ▶ 전자 이동을 눌러 <b>전자(노란 구슬)</b>가 어디로 가는지 봐요.');
         else if (!end) setInfo('전자가 <b>' + R.before[0] + ' → ' + R.before[1] + '</b> 쪽으로 옮겨 가고 있어요.<br>전자를 잃는 쪽은 + 전하가 늘고, 얻는 쪽은 줄어요.');
         else setInfo('<b>' + R.before[0] + '</b>은 전자를 잃어 <b>' + donName + '</b>(산화), <b>' + R.before[1] + '</b>은 전자를 얻어 <b>' + accName + '</b>(환원)이 됐어요.<br><b>' + R.eq + '</b>');
       }
@@ -156,7 +156,9 @@
         phases: [[0, '반응 전'], [0.05, '전자가 이동'], [0.96, '반응 후']],
         onFrame() { if (parts) apply(); },
       });
-      // 2D에서 고른 실험을 따라가요: 금속과 이온 = 고른 실험, 전자의 이동 = Zn + Cu²⁺, 규칙성 = Mg + O₂(산소의 눈/전자의 눈) · Cu + Ag⁺(전자 장부)
+      // 전자 이동 단계: 2D의 끌어 놓기와 같은 결과로 전자를 하나씩 옮겨요 (옮긴 전자 수가 미션에 그대로 기록돼요)
+      const giveB = controls.button('⚡ 전자 1개 옮기기', () => { const S = L2(); if (S && S.mvGive) S.mvGive(); });
+            // 2D에서 고른 실험을 따라가요: 금속과 이온 = 고른 실험, 전자의 이동 = Zn + Cu²⁺, 규칙성 = Mg + O₂(산소의 눈/전자의 눈) · Cu + Ag⁺(전자 장부)
       let last = 'zn';
       const keyOf = () => {
         const S = L2(); if (!S) return last;
@@ -181,6 +183,7 @@
           st.t += dt;
           for (let i = 0; i < NPW; i++) { const d = ddW[i]; dmW.position.set(d.x + Math.sin(t * 0.3 * d.s + d.p) * 0.3, ((d.y + t * 0.12 * d.s + 2.5) % 4.8) - 2.5, d.z + Math.cos(t * 0.25 * d.s + d.p) * 0.3); dmW.updateMatrix(); dustW.setMatrixAt(i, dmW.matrix); } dustW.instanceMatrix.needsUpdate = true;
           const k = keyOf();
+          { const S = L2(), on = !!(S && S.MODE === 'move'); giveB.style.display = on ? '' : 'none'; if (on) giveB.disabled = !!(S.MV && S.MV.done); }
           if (k !== st.rx) pick(k);
           else { const q = progOf(k); if (q !== lastProg) { lastProg = q; if (q >= 0) pl.set(q); } }
           apply();

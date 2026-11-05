@@ -22,7 +22,7 @@
     levels: [0, 1, 2],
     build(ctx) {
       const { THREE, root, label, info: info0, controls } = ctx;
-      const st0 = {}; let infoFig = false; const info = (h) => info0(infoFig ? '<b>🔍 그림 해석은 2D 그림에서 해요</b> (3D는 복습용 모형)<br>' + h : h);
+      const st0 = {}; let infoFig = false; const info = (h) => info0(h);
       const V3 = THREE.Vector3, Yax = new V3(0, 1, 0);
       const lessonS = () => (window.__sim && window.__sim.S) || null;
       const S0 = lessonS();
@@ -205,7 +205,8 @@
         // 솔레노이드
         const s = st.s; buildSol(); sCore.visible = s.iron;
         const nx = s.dir > 0 ? 1 : -1; sCapN.position.x = nx * (SL / 2 + 0.2); sCapS.position.x = -nx * (SL / 2 + 0.2);
-        sLabN.show(m === 'sol' && s.I > 0); sLabS.show(m === 'sol' && s.I > 0); sCapN.visible = sCapS.visible = s.I > 0;
+        const hp = ((lessonS() || {}).gate === 'sl2');   // 2D처럼 'N극 찾기' 미션 동안은 극 이름표를 숨겨요
+        sLabN.show(m === 'sol' && s.I > 0 && !hp); sLabS.show(m === 'sol' && s.I > 0 && !hp); sCapN.visible = sCapS.visible = s.I > 0 && !hp;
         const sOp = s.I > 0 ? glow(s.iron ? bS() * 300 : bS(), 2.5e-3) : 0; sLines.forEach((x) => { x.tube.visible = s.I > 0; x.cones.forEach((c) => (c.visible = s.I > 0)); }); setLines(sLines, s.dir, Math.min(0.95, sOp + 0.1));
         setArrow(sBarrow, new V3(-s.dir * 1.0, 0, 0.0), new V3(s.dir * 1.0, 0, 0)); sBarrow.visible = s.I > 0; sLabB.show(m === 'sol' && s.I > 0);
         compS[0].g.position.set(0, 0, 0); compS[1].g.position.set(SL / 2 + 1.0, 0, 0.2); compS[2].g.position.set(-SL / 2 - 1.0, 0, 0.2); compS[3].g.position.set(0, SR + 1.2, 0);
@@ -215,7 +216,7 @@
         // 설명
         if (m === 'wire') {
           info('<b>직선 전류</b> · B = 2×10⁻⁷ I / r<br>= 2×10⁻⁷ × ' + w.I + ' / ' + (w.r / 100).toFixed(2) + ' = <b>' + sci(bW()) + ' T</b>' + (w.I ? '' : ' (전류 0)') +
-            '<br>🖐 <b>엄지 = 전류(' + (w.dir > 0 ? '위' : '아래') + ')</b>, 감아쥔 손가락 = B. 위에서 보면 ' + (w.dir > 0 ? '시계 반대' : '시계') + ' 방향의 동심원이에요.<br>같은 자속마다 한 줄씩이라 바깥으로 갈수록 선 간격이 넓어져요(B ∝ 1/r).');
+            '<br>🖐 <b>엄지 = 전류(' + (w.dir > 0 ? '위' : '아래') + ')</b>, 감아쥔 손가락 = B. 위에서 보면 ' + (w.dir > 0 ? '시계 반대' : '시계') + ' 방향의 동심원이에요.<br>같은 자속마다 한 줄씩이라 바깥으로 갈수록 선 간격이 넓어져요(B ∝ 1/r).' + tabTxt());
         } else if (m === 'loop') {
           info('<b>원형 전류</b> · 중심의 B = μ₀NI / 2R<br>= 4π×10⁻⁷ × ' + l.N + ' × ' + l.I + ' / (2 × ' + (l.R / 100).toFixed(3) + ') = <b>' + sci(bL()) + ' T</b>' +
             '<br>🖐 손가락 = 전류가 도는 방향 → 엄지 = 중심의 B(' + (l.dir > 0 ? '오른쪽' : '왼쪽') + '). 고리 바깥쪽의 B는 <b>반대 방향</b>이고, 선은 끊기지 않는 닫힌 곡선이에요.');
@@ -234,11 +235,13 @@
       function reorient() { const o = ctx.orbit; if (st.mode === 'wire') { o.phi = 1.05; o.dist = 11.5 * KD; } else if (st.mode === 'loop') { o.dist = 9.5 * KD; o.phi = 1.25; o.theta = 0.9; } else { o.dist = 12 * KD; o.phi = 1.2; } o.ty = 0; }
       reorient(); show();
 
+      /* 센서 표 (2D와 같은 6칸): 맞출 I · r와 기록했는지 */
+      function tabTxt() { const S = lessonS(), tb = S && S.w && S.w.tab; if (!tb || S.mode !== 'wire') return ''; return '<br>📋 센서 표 (' + tb.filter((c) => c.v != null).length + ' / ' + tb.length + '): ' + tb.map((c) => (c.v != null ? '✔ ' : '□ ') + c.I + ' A·' + c.r + ' cm').join(' · '); }
       /* ---------- 2D 실험의 값을 그대로 따라가요 ---------- */
       let lastSig = '';
       function readLesson() {
         const S = lessonS(); if (!S) return;
-        const sig = JSON.stringify([S.mode, S.f && S.f.fig, S.w && [S.w.I, S.w.r, S.w.dir], S.l && [S.l.I, S.l.R, S.l.N, S.l.dir], S.s && [S.s.n, S.s.I, !!S.s.iron, S.s.dir]]);
+        const sig = JSON.stringify([S.mode, S.gate, S.f && S.f.fig, S.w && [S.w.I, S.w.r, S.w.dir, (S.w.tab || []).map((c) => c.v != null)], S.l && [S.l.I, S.l.R, S.l.N, S.l.dir], S.s && [S.s.n, S.s.I, !!S.s.iron, S.s.dir]]);
         if (sig === lastSig) return; lastSig = sig;
         const pm = st.mode;
         infoFig = S.mode === 'fig'; st.mode = (S.mode === 'loop' || S.mode === 'sol') ? S.mode : 'wire';

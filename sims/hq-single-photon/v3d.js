@@ -85,6 +85,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: 23.5 * KD, theta: -0.8, phi: 0.92, min: 8, max: 36, target: [0.6, 0.6, 0] },
     autoRotate: 0,
+    levels: [1, 2, 3],
     build(ctx) {
       const { THREE, controls } = ctx;
       /* ---- 여러 장면 도우미 (2D 장면 S.mode에 맞춰 그룹 · 이름표 · 재생 줄을 바꿔요) ---- */
@@ -112,7 +113,7 @@
       }
       const lessonS = () => (window.__sim && window.__sim.S) || null;
       const S0 = lessonS();
-      const st = { slits: S0 && S0.cfg && S0.cfg.slits === 'A' ? 'A' : S0 && S0.cfg && S0.cfg.slits === 'B' ? 'B' : 'both', det: !!(S0 && S0.cfg && S0.cfg.det), V: 50, curve: false, queue: 0 };
+      const st = { slits: S0 && S0.cfg && S0.cfg.slits === 'A' ? 'A' : S0 && S0.cfg && S0.cfg.slits === 'B' ? 'B' : 'both', det: !!(S0 && S0.cfg && S0.cfg.det), V: 50, kind: 'e', curve: false, cmp: false, queue: 0 };
       const XS = -6.2, XB = -1.2, XD = 5.8, ZS = 0.6;                         // 총 · 슬릿벽 · 스크린 위치, 슬릿 위치(±)
       const NB = 60, ZR = 3.0, BW = 2 * ZR / NB, SH = 2.4;                      // 막대 수 · 스크린 반폭 · 막대 폭 · 스크린 반높이
       /* 총 */
@@ -162,22 +163,40 @@
       const lN = label('', anchor(root, XD, SH + 3.3, 0), { color: '#a16207', size: 13 });
       const lDet = label('틈 검출기', anchor(root, XB, -SH - 0.5, 0), { color: '#b91c1c', size: 12 });
       const lWave = label('확률 파동', anchor(root, 2.0, 0.5, 2.0), { color: '#0369a1', size: 12 });
+      const lCmp = label('<span style="color:#cbd5e1">┅ 확률의 합</span> · <span style="color:#c4b5fd">━ 진폭의 합의 제곱</span>', anchor(root, XD, SH + 2.9, -ZR - 0.4), { color: '#334155', size: 12 }); lCmp.show(false);
       /* 확률 분포 */
       const sinc = (x) => (Math.abs(x) < 1e-6 ? 1 : Math.sin(x) / x);
-      function pdf(z) {
-        const D = 0.7 * Math.sqrt(50 / st.V), e = (zz) => { const s = sinc(Math.PI * 0.25 * zz / D); return s * s; };
-        if (st.slits === 'A') return e(z - ZS);
-        if (st.slits === 'B') return e(z + ZS);
-        if (st.det) return 0.5 * (e(z - ZS) + e(z + ZS));
+      // 광자(레이저)는 2D와 같이 50 V 전자보다 조금 짧은 파장(약 100 V 전자와 같은 무늬 간격)으로 그려요
+      function pdf(z, slits, det) {
+        slits = slits || st.slits; det = det == null ? st.det : det;
+        const D = 0.7 * Math.sqrt(50 / (st.kind === 'ph' ? 97 : st.V)), e = (zz) => { const s = sinc(Math.PI * 0.25 * zz / D); return s * s; };
+        if (slits === 'A') return e(z - ZS);
+        if (slits === 'B') return e(z + ZS);
+        if (det) return 0.5 * (e(z - ZS) + e(z + ZS));
         const c = Math.cos(Math.PI * z / D); return c * c * e(z);
       }
+      // 확률 곡선(스크린 위 막대그래프 높이에 맞춰): fn(z) → 칸마다 확률, 최댓값 mx를 높이 2.2로
+      const binP = (sl, dt) => { const b = []; let sum = 0; for (let i = 0; i < NB; i++) { const z = -ZR + (i + 0.5) * BW; let q = 0; for (let k = 0; k < 5; k++) q += pdf(z + (k - 2) * BW / 5, sl, dt); b.push(q); sum += q; } return b.map((q) => q / sum); };
+      function mkCurve(b, mx, col, dz) {
+        const pts = []; for (let i = 0; i < NB; i++) pts.push(new V3(XD + 0.2 + (dz || 0), SH + 0.15 + b[i] / mx * 2.2, -ZR + (i + 0.5) * BW));
+        const m = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 160, 0.045, 8, false), h.basic(col)); root.add(m); return m;
+      }
+      let cmpC = [];
       function recomputePdf() {
         let sum = 0; pdfMax = 0;
         for (let i = 0; i < NB; i++) { const z = -ZR + (i + 0.5) * BW; let p = 0; for (let k = 0; k < 5; k++) p += pdf(z + (k - 2) * BW / 5); p /= 5; pdfB[i] = p; sum += p; pdfMax = Math.max(pdfMax, p); }
         let c = 0; for (let i = 0; i < NB; i++) { c += pdfB[i] / sum; cdf[i] = c; }
         if (curve) { root.remove(curve); curve.geometry.dispose(); }
         const pts = []; for (let i = 0; i < NB; i++) pts.push(new V3(XD + 0.2, SH + 0.15 + pdfB[i] / pdfMax * 2.2, -ZR + (i + 0.5) * BW));
-        curve = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 160, 0.045, 8, false), h.basic(0x7dd3fc)); curve.visible = st.curve; root.add(curve);
+        curve = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 160, 0.045, 8, false), h.basic(0xff6b6b)); root.add(curve);
+        // 곡선 비교: 회색 = 두 틈 확률의 합(간섭 없음), 보라 = 진폭의 합의 제곱(간섭)
+        cmpC.forEach((m) => { root.remove(m); m.geometry.dispose(); });
+        const bS = binP('both', true), bI = binP('both', false), mx = Math.max(...bI);
+        cmpC = [mkCurve(bS, mx, 0x9ca3af, 0.02), mkCurve(bI, mx, 0xa78bfa)];
+        showCurves();
+      }
+      function showCurves() {
+        if (curve) curve.visible = st.curve && !st.cmp; cmpC.forEach((m) => (m.visible = st.cmp)); lCmp.show(st.cmp); if (nTot != null) txt();
       }
       function sampleZ() { const u = Math.random(); let i = 0; while (i < NB - 1 && cdf[i] < u) i++; return -ZR + (i + Math.random()) * BW; }
       function drawBars() {
@@ -204,18 +223,22 @@
         lN.set('N = ' + nTot + '개'); lN.show(true);
         const two = st.slits === 'both' && !st.det;
         let msg;
-        if (nTot < 20) msg = '<b>한 알씩 쏘면 점이 하나씩 찍혀요.</b> 한 번의 도착 위치는 예측할 수 없어요.<br>[100개] 단추로 점을 많이 쌓아 보세요.';
+        if (nTot < 20) msg = '<b>한 알씩 쏘면 점이 하나씩 찍혀요.</b> 한 번의 도착 위치는 예측할 수 없어요.<br>[+100] 단추로 점을 많이 쌓아 보세요.';
         else if (two) msg = '<b>점이 쌓여 간섭무늬가 나타나요!</b> 한 알씩 보냈는데도요.<br>입자 하나가 두 틈을 지난 확률 파동처럼 행동하고, 밝은 곳은 도착 <b>확률</b>이 큰 곳이에요.';
         else if (st.det) msg = '<b>어느 틈을 지났는지 알아내면</b> 간섭무늬가 사라져요.<br>두 틈의 무늬를 그냥 더한 넓은 띠만 남아요.';
         else msg = '<b>틈 하나만 열면</b> 간섭 줄무늬 없이 넓은 한 덩어리가 돼요.<br>두 틈이 모두 열려야 간섭이 생겨요.';
+        if (st.cmp) msg += '<br><span style="color:#cbd5e1">회색</span>: 두 틈의 확률을 더한 곡선 · <span style="color:#c4b5fd">보라</span>: 두 틈의 진폭을 더해 제곱한 곡선';
+        else if (st.curve) msg += '<br><span style="color:#ff8a8a">빨간 곡선</span>은 도착 확률이에요.';
         info(msg);
       }
       /* 값(틈·검출기·전압·쏘기)은 2D 조작판이 정하고, 3D는 같은 설정으로 같은 개수만큼 쏘아 줘요 */
-      toggleBtn('main', '확률 곡선', false, (on) => { st.curve = on; curve.visible = on; });
       function cfg() {
         cover[0].visible = st.slits === 'B' ? false : false; cover[0].visible = st.slits === 'A'; cover[1].visible = st.slits === 'B';       // A만 열면 B(−z) 덮기
         cover[0].position.z = -ZS; cover[1].position.z = ZS;
         lDet.show(st.det && st.slits === 'both');
+        const ph = st.kind === 'ph'; lG.set(ph ? '레이저 (광자)' : '전자총');
+        dots.material.color.set(ph ? 0xffc2b0 : 0xfff0a0); dots.material.emissive.set(ph ? 0xff5a3c : 0xffd24d);
+        fly.forEach((f) => { f.m.material.color.set(ph ? 0xffc2b0 : 0xfff0a0); f.m.material.emissive.set(ph ? 0xff5a3c : 0xffd24d); });
         recomputePdf(); reset();
       }
       /* =====================================================================
@@ -287,7 +310,7 @@
         paintScr(rev, can);
         dFly.position.set(-5.2 + ((t * 1.6) % 1) * 8.6, DY + 0.35, DZ); dFly.material.color.set(p.col); dFly.material.emissive.set(p.col);
         dFly.visible = ((t * 1.6) % 1) < 0.95;
-        ldTitle.set('선택: ' + p.name + ' (' + p.sub + ')'); ldScr.set(rev ? (can ? '무늬를 볼 수 있어요 ✅' : '무늬를 볼 수 없어요 ❌') : '무늬가 보일까요? ? (2D 문제에서 예측해요)');
+        ldTitle.set('선택: ' + p.name + ' (' + p.sub + ')'); ldScr.set(rev ? (can ? '무늬를 볼 수 있어요 ✅' : '무늬를 볼 수 없어요 ❌') : '무늬가 보일까요? 오른쪽에서 골라 봐요');
         info('<b>λ = h / p = h / (mv)</b>: ' + p.name + '의 질량 ' + L.sci(p.m, 1) + ' kg, 속력 ' + L.fmtV(L.pv(p)) + ' → <b>λ = ' + L.fmtLam(L.pLam(p)) + '</b><br>슬릿 간격 d = 100 nm와 비교한 <b>λ/d = ' + L.sci(ratio, 1) + '</b>' + (rev ? (can ? ' ≥ 10⁻⁶ → 간섭무늬를 볼 수 있어요.' : ' < 10⁻⁶ → 파장이 너무 짧아 무늬를 볼 수 없어요.') : '. 10⁻⁶ 이상이면 무늬를 볼 수 있어요. 어떨까요?'));
       }
 
@@ -299,7 +322,8 @@
         update(dt, t) {
           dt = Math.min(dt, 0.05);
           { const S = lessonS(), k = S && S.mode === 'dbl' ? 'dbl' : 'main'; if (k !== K.cur) { setScene(k); lcfg = ''; txt(); } if (k === 'dbl') { updDbl(dt, t); return; } }
-          { const S = lessonS(); if (S && S.cfg) { const k = S.cfg.slits + '|' + (S.cfg.det && S.cfg.slits === 'both') + '|' + S.cfg.V; if (k !== lcfg) { lcfg = k; st.slits = S.cfg.slits; st.det = S.cfg.det && S.cfg.slits === 'both'; st.V = S.cfg.V; cfg(); lastN = S.data ? S.data.N : 0; shoot(Math.min(S.data ? S.data.N : 0, 300)); }
+          { const S = lessonS(), sh = (S && S.show) || {}, wv = !!sh.wave && S.mode !== 'shoot', cm = !!sh.cmp && S.mode === 'which'; if (wv !== st.curve || cm !== st.cmp) { st.curve = wv; st.cmp = cm; showCurves(); } }
+          { const S = lessonS(); if (S && S.cfg) { const k = S.cfg.slits + '|' + (S.cfg.det && S.cfg.slits === 'both') + '|' + S.cfg.V + '|' + S.cfg.kind; if (k !== lcfg) { lcfg = k; st.slits = S.cfg.slits; st.det = S.cfg.det && S.cfg.slits === 'both'; st.V = S.cfg.V; st.kind = S.cfg.kind === 'ph' ? 'ph' : 'e'; cfg(); lastN = S.data ? S.data.N : 0; shoot(Math.min(S.data ? S.data.N : 0, 300)); }
             const N = S.data ? S.data.N : 0; if (N < lastN) { reset(); } else if (N > lastN) shoot(Math.min(N - lastN, 300)); lastN = N; } }
           if (st.queue > 0) { acc += dt * (st.queue > 20 ? 22 : 5); while (acc >= 1 && st.queue > 0) { if (launch()) { st.queue--; acc -= 1; } else break; } } else acc = 0;
           fly.forEach((f) => {

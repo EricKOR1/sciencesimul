@@ -97,6 +97,7 @@
     .tbl select { min-width: 0; }
     .seg-full button.on { background: var(--subject); color: #fff; }
     .sel-note { min-height: 20px; }
+      .v3-on > .stage-hint { z-index: 30; top: 54px; bottom: auto; }   /* 3D 단계에서도 안내 말풍선이 보이게 */
   </style>
 </head>
 <body class="sim-page" data-subject="bio">
@@ -166,7 +167,7 @@
         <div class="control" data-modes="tl">
           <div class="control-head"><span>🏭 번역 진행</span></div>
           <div class="btn-row"><button class="btn btn-sm btn-primary" id="tlGo" type="button">▶ 개시 시작</button><button class="btn btn-sm" id="tlReset" type="button">↺ 처음부터</button></div>
-          <p class="ctrl-note">A 자리의 코돈을 보고 맞는 tRNA를 캔버스에서 <b>눌러</b> 골라요. 종결 코돈에서는 <b>✂ 사슬 방출</b>을 눌러요.</p>
+          <p class="ctrl-note">A 자리의 코돈과 짝이 맞는 안티코돈의 <b>tRNA</b>를 골라요. 종결 코돈에서는 <b>✂ 사슬 방출</b>을 눌러요.</p>
         </div>
         <div class="control" data-modes="poly">
           <div class="control-head"><label for="sRib">🔗 리보솜 개수</label><output id="oRib">5</output></div>

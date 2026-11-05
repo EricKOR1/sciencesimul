@@ -41,6 +41,7 @@
       .stage-toolbar .spacer { display: none; }
       .stage-toolbar .segmented button { padding: 5px 8px; font-size: 13.5px; }
     }
+    body:not(.v3-mode) .v3-only { display: none; }
   </style>
 </head>
 <body class="sim-page" data-subject="earth">
@@ -118,10 +119,10 @@
             <button class="opt" type="button" data-src="core">🌋 지구 내부</button>
             <button class="opt" type="button" data-src="moon">🌙 달</button>
           </div>
-          <p class="ctrl-note">화살표 굵기는 에너지 양의 <b>로그 눈금</b>이에요. 실제 양의 차이는 오른쪽 원 그래프로 확인해요.</p>
+          <p class="ctrl-note"><span data-v3="2d">화살표 굵기는 에너지 양의 <b>로그 눈금</b>이에요. 실제 양의 차이는 오른쪽 원 그래프로 확인해요.</span><span class="v3-only">에너지 양: 태양 약 <b>99.97 %</b> · 지구 내부 약 0.03 % · 달(조석) 약 0.002 %</span></p>
         </div>
         <div class="control" data-modes="pair">
-          <p class="ctrl-note" style="margin-top:0">현상 카드를 끌어 알맞은 <b>에너지원 상자</b>에 놓아요.</p>
+          <p class="ctrl-note" style="margin-top:0"><span data-v3="2d">현상 카드를 끌어 알맞은 <b>에너지원 상자</b>에 놓아요.</span><span class="v3-only">화면 아래에서 현상 카드를 고르고 <b>에너지원 단추</b>를 눌러 놓아요.</span></p>
           <button class="btn btn-sm btn-block" id="bResetPair" type="button" style="margin-top:8px">↺ 카드 되돌리기</button>
         </div>
         <div class="control" data-modes="map">

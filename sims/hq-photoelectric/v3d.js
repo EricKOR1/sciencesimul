@@ -381,7 +381,7 @@
         update(dt, t) {
           dt = Math.min(dt, 0.05);
           { const k = sceneKey(), base = hasTube(k) ? 'tube' : k; if (base !== K.cur) setScene(base); const g = k === 'graph';
-            if (g !== K.graph) { K.graph = g; infoNote = g ? '<br><span style="color:#9fb0d4">📈 그래프·표는 2D 화면에서 그려요. 여기서는 그 데이터를 만든 광전관을 보여 줘요.</span>' : ''; lsig = ''; }
+            if (g !== K.graph) { K.graph = g; infoNote = g ? '<br><span style="color:#9fb0d4">📈 f–V₀ 그래프의 측정값은 이 광전관에서 얻어요.</span>' : ''; lsig = ''; }
             if (base !== 'tube') { updMap[base](dt, t); return; }
             if (g) { const S = lessonS(); if (S && S.gr && S.gr.metal !== st.metal) { st.metal = S.gr.metal; lsig = ''; txt(); } } else if (st.metal !== 'Na') { st.metal = 'Na'; lsig = ''; txt(); } }
           { const S = lessonS(); if (S && S.tb) { const g = S.tb.lam + '|' + S.tb.V + '|' + S.tb.k; if (g !== lsig) { lsig = g; st.lam = S.tb.lam; st.V = S.tb.V; st.I = Math.max(1, Math.min(5, S.tb.k)); txt(); } } }

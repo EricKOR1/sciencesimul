@@ -20,7 +20,7 @@
   window.SciSim3D.attach({
     title: '지구시스템 3D',
     camera: { dist: PHN ? 15 : 14.5, theta: -2.35, phi: 1.2, min: 6, max: 30 },
-    levels: [],
+    levels: [2],
     autoRotate: 0,
     build(ctx) {
       const { THREE, scene, root, label, info, controls, orbit } = ctx;
@@ -184,10 +184,37 @@
         phases: [[0, '지구 자전 (하루)'], [0.5, '밀물·썰물이 한 번 더']],
         onFrame(p) { demoP = p; },
       });
+      /* 짝짓기(에너지원과 현상): 현상 카드를 하나씩 골라 에너지원 단추로 놓아요 (2D 상자와 같은 결과) */
+      const probe = controls.text(''); probe.style.display = 'none'; const ctlRow = probe.parentElement;
+      const before = new Set(ctlRow.children);
+      let pcI = 0;
+      const pcard = () => { const L = lesson(); return L && L.PAIR && L.PAIR.items.length ? L.PAIR.items[pcI % L.PAIR.items.length] : null; };
+      const cardTx = controls.text('');
+      controls.button('◀', () => { const L = lesson(); if (L && L.PAIR) { const n = L.PAIR.items.length; pcI = (pcI + n - 1) % n; lastPair = ''; syncPair(); } });
+      controls.button('▶ 다음 카드', () => { const L = lesson(); if (L && L.PAIR) { pcI = (pcI + 1) % L.PAIR.items.length; lastPair = ''; syncPair(); } });
+      [['sun', '☀️ 태양'], ['core', '🌋 지구 내부'], ['moon', '🌙 달']].forEach(([k, t]) => controls.button(t + '에 놓기', () => {
+        const L = lesson(), c = pcard(); if (!L || !L.pairPut || !c) return;
+        if (L.pairPut(c, k)) { const n = L.PAIR.items.length, nx = L.PAIR.items.findIndex((q, j) => j > pcI % n && !q.slot); const nx2 = nx >= 0 ? nx : L.PAIR.items.findIndex((q) => !q.slot); if (nx2 >= 0) pcI = nx2; }
+        lastPair = ''; syncPair();
+      }));
+      const pairEls = Array.from(ctlRow.children).filter((c) => !before.has(c));
+      let lastPair = '';
+      function syncPair() {
+        const L = lesson(), on = !!(L && L.S && L.S.mode === 'pair' && L.PAIR);
+        pairEls.forEach((e) => { e.style.display = on ? '' : 'none'; });
+        if (!on) { if (lastPair) { lastPair = ''; lastKey = ''; } return; }
+        const P = L.PAIR, c = pcard(), nm = { sun: '☀️ 태양', core: '🌋 지구 내부', moon: '🌙 달' };
+        const key = pcI + '|' + P.items.map((q) => (q.slot ? q.slot.key : '-')).join(',') + (L.S.pairOK > 0.5 ? 'ok' : '');
+        if (key === lastPair) return; lastPair = key;
+        cardTx.innerHTML = '현상 카드 ' + (pcI % P.items.length + 1) + ' / ' + P.items.length + ': <b style="color:#fff">' + (c ? c.ico + ' ' + c.label : '') + '</b>' + (c && c.slot ? ' (' + nm[c.slot.key] + ')' : '');
+        const rows = ['sun', 'core', 'moon'].map((k) => nm[k] + ': ' + (P.items.filter((q) => q.slot && q.slot.key === k).map((q) => q.label).join(', ') || '—'));
+        info('<b>에너지원과 현상 짝짓기</b> (놓은 카드 ' + P.placed() + ' / ' + P.items.length + ')<br>' + rows.join('<br>') + '<br>카드를 고르고 에너지원 단추를 눌러 놓아요. 다 놓으면 ✔ 확인하기를 눌러요.');
+      }
       setMode('all');
       return {
         update(dt, t) {
           const L = lesson(), S = L && L.S, demo = demoP > 0 || pl.playing;
+          syncPair();
           const w = wantMode(); if (w && w !== lastWant) { lastWant = w; if (w !== mode) setMode(w); }
           if (demo) { earth.rotation.y = demoP * Math.PI * 2; if (mode !== 'all' && mode !== 'bio') earth.rotation.y = 0; }
           else if (mode === 'all' || mode === 'bio') { earth.rotation.y = t * 0.12; cloud.rotation.y = t * 0.03; }
@@ -202,7 +229,7 @@
           const tOn = show && src.moon && !(S && S.srcA && S.srcA.moon < 0.05); tide.visible = tOn; tideLab.show(tOn);
           if (tOn) { const md = new THREE.Vector3(moon.position.x, 0, moon.position.z).normalize(), k = S && S.srcA ? S.srcA.moon : 1; tide.quaternion.setFromUnitVectors(new THREE.Vector3(1, 0, 0), md); tide.scale.set(1 + 0.09 * k, 1 - 0.03 * k, 1 - 0.03 * k); }
           const key = (S ? (src.sun ? 1 : 0) + ',' + (src.core ? 1 : 0) + ',' + (src.moon ? 1 : 0) : '') + mode;
-          if (key !== lastKey && mode === 'all') { lastKey = key; const on = [src.sun && '태양', src.core && '지구 내부', src.moon && '달'].filter(Boolean); info('<b>지구시스템</b>: 지권 · 수권 · 기권 · 생물권 · 외권이 서로 영향을 주고받아요.<br>에너지원: 태양 복사 에너지 · 지구 내부 에너지 · 조석 에너지(달)' + (S && (S.mode === 'energy' || S.mode === 'pair') ? '<br>켠 에너지원: <b>' + (on.length ? on.join(' · ') : '없음 (옆 버튼이나 그림을 눌러 켜요)') + '</b>' : '')); }
+          if (key !== lastKey && mode === 'all' && !(S && S.mode === 'pair')) { lastKey = key; const on = [src.sun && '태양', src.core && '지구 내부', src.moon && '달'].filter(Boolean); info('<b>지구시스템</b>: 지권 · 수권 · 기권 · 생물권 · 외권이 서로 영향을 주고받아요.<br>에너지원: 태양 복사 에너지 · 지구 내부 에너지 · 조석 에너지(달)' + (S && (S.mode === 'energy' || S.mode === 'pair') ? '<br>켠 에너지원: <b>' + (on.length ? on.join(' · ') : '없음 (옆 버튼이나 그림을 눌러 켜요)') + '</b>' : '')); }
           else if (mode !== 'all') lastKey = '';
           sunGlow.scale.setScalar(1 + Math.sin(t * 2) * 0.03);
           { const sa = t * 0.45; sat.position.set(Math.cos(sa) * (R + 1.5), Math.sin(sa) * 0.9, Math.sin(sa) * (R + 1.5) * 0.8); sat.rotation.y = -sa; sat.visible = mode === 'all'; orbitRing.visible = mode === 'all'; }

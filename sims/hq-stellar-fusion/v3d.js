@@ -85,6 +85,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: 13.5 * KD, theta: 0.5, phi: 1.2, min: 5, max: 26, target: [0, -1.3, 0] },
     autoRotate: 0,
+    levels: [0],
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const h = H3(ctx); const { V3, mat, glass, anchor, sphere, grab, showCtl, toggleBtn } = h;

@@ -923,7 +923,7 @@
 
   /* ---------- 디버그 (Playwright) ---------- */
   window.__sim = {
-    S, VW, VH, get game() { return game; }, setMode, enterLevel, updateCtl, trayPos, ladderPos, nucPos, slotOf, scatterOf, chipRect, splitNuc, nucDrop, nucAssembled, addBase, strandStr, modelDrop, botStr, resetModel,
+    S, VW, VH, get game() { return game; }, setMode, enterLevel, updateCtl, FEAT, SEQX, SEQA, SEQB, trayPos, ladderPos, nucPos, slotOf, scatterOf, chipRect, splitNuc, nucDrop, nucAssembled, addBase, strandStr, modelDrop, botStr, resetModel,
     fillBottom() { const M = S.dna; for (let k = 0; k < 6; k++) { if (!M.bot[k]) modelDrop(COMP[M.top[k]], ladderPos(k, 'bot'), false); } },
   };
 })();

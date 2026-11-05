@@ -15,7 +15,7 @@
   window.SciSim3D.attach({
     title: '활동성 은하·은하 충돌 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    levels: [],              // 모든 단계가 2D 화면을 직접 다뤄요: 켄타우루스 A 파장별 모습 · 대기 투과 그래프 · 은하 카드 비교 · 스펙트럼 · 적외선 밝기 그래프
+    levels: [1],             // 1단계(활동성 은하: 보는 각도와 토러스)만 3D예요. 카드 설명은 오른쪽 조작판에도 나와요. 0 · 2 · 3단계(파장별 모습 · 스펙트럼 · 적외선 그래프)는 2D 화면에서 해요
     camera: { dist: PHONE ? 17 : 12, theta: 0.5, phi: 0.9, min: 4, max: 30 },
     autoRotate: 0,
     build(ctx) {
@@ -100,6 +100,7 @@
       const segV = controls.segment('보기', [{ value: 'agn', label: '🕳️ 활동성 은하' }, { value: 'col', label: '💥 은하 충돌' }], view, (v) => setView(v));
       const ctlEl = controls.text('').parentElement; ctlEl.removeChild(ctlEl.lastChild);
       const n0 = ctlEl.children.length;
+      [].slice.call(ctlEl.children, 0, n0).forEach((e) => { e.style.display = 'none'; });   // 보기는 단계를 따라가요 (3D 단계 = 은하 충돌): 바꾸는 단추는 숨겨요
       const BANDS = { all: '모두', radio: '전파', ir: '적외선', vis: '가시광선', xray: 'X선' };
       let band = 'all';
       const segB = controls.segment('파장', Object.keys(BANDS).map((k) => ({ value: k, label: BANDS[k] })), band, (v) => { band = v; const l = window.__sim; if (l && l.setBand && v !== 'all') l.setBand(v); applyBand(); txt(); });
@@ -116,11 +117,12 @@
       ctx.renderer.localClippingEnabled = true;
       function applyBand() {
         const a = band === 'all', r = band === 'radio', i = band === 'ir', v = band === 'vis', x = band === 'xray';
-        jets.forEach((m) => (m.visible = a || r)); lobes.forEach((m) => (m.visible = a || r)); knots.visible = a || r;
+        jets.forEach((m) => (m.visible = a || r || x)); lobes.forEach((m) => (m.visible = a || r)); knots.visible = a || r;
         torus.visible = a || i || v; torusM.emissive.setHex(i ? 0xff5a1a : 0x000000); torusM.emissiveIntensity = i ? 0.9 : 0;
         disc.visible = a || v || x; core.visible = a || v || x; blr.visible = a || v; nlr.visible = a || v; bh.visible = true;
         disc.scale.setScalar(x ? 0.55 : 1); core.material.color.setHex(x ? 0x9fd0ff : 0xffffff);
-        LA.jt.show(a || r); LA.lo.show(a || r); LA.to.show(a || i || v); LA.br.show(a || v); LA.nr.show(a || v);
+        const on = view === 'agn';   // 은하 충돌 보기에서는 활동성 은하 이름표를 숨겨요
+        LA.jt.show(on && (a || r || x)); LA.lo.show(on && (a || r)); LA.to.show(on && (a || i || v)); LA.br.show(on && (a || v)); LA.nr.show(on && (a || v));
       }
       function setView(v) {
         view = v; gA.visible = v === 'agn'; gB.visible = v === 'col'; segV.set(v);
@@ -129,9 +131,17 @@
         if (v === 'col') { orbit.dist = PHONE ? 21 : 15; orbit.phi = 0.95; } else { orbit.dist = PHONE ? 17 : 12; orbit.phi = clamp(rA.value * Math.PI / 180, 0.06, 1.55); }
         applyBand(); txt();
       }
+      /* 충돌 시각의 적외선 밝기(별 생성률): 2D 그래프 · 읽음값과 같은 값 */
+      function irTxt() {
+        try { const L = window.__sim, S = L && L.S, M = L && L.model; if (!S || !M || !M.sfr) return '';
+          const n = M.sfr.length, fi = Math.round(clamp(S.t4 || 0, 0, 1) * (n - 1)), ir = M.sfr[fi] / M.sfr[M.peak] * 100;
+          return '<br>경과 시간 <b>' + Math.round((S.t4 || 0) * 100) + '%</b> · 적외선 밝기(별 생성률) <b>' + ir.toFixed(1) + '%</b>' + (S.maxT >= 0.98 ? '' : '<br>▶ 충돌 실행으로 끝까지 재생해 보세요.');
+        } catch (e) { return ''; }
+      }
+      let irLast = '';
       function txt() {
-        if (view === 'col') { info('두 은하가 중력으로 서로 끌려 <b>가까워지고 뒤틀려요</b>. 긴 꼬리(조석 꼬리)가 생기고 가스가 모여 <b>별이 폭발적으로 생겨요</b>(별 폭발 은하).'); return; }
-        const bn = band === 'all' ? '' : '<br><b>' + BANDS[band] + '</b>으로 보면: ' + ({ radio: '제트와 전파 로브가 밝아요.', ir: '먼지 토러스가 따뜻해서 밝아요.', vis: '중심의 원반과 별빛이 보이고, 토러스는 빛을 가려요.', xray: '블랙홀 바로 가까이의 뜨거운 원반이 밝아요.' }[band]);
+        if (view === 'col') { info('두 은하가 중력으로 서로 끌려 <b>가까워지고 뒤틀려요</b>. 긴 꼬리(조석 꼬리)가 생기고 가스가 모여 <b>별이 폭발적으로 생겨요</b>(별 폭발 은하).' + irTxt()); return; }
+        const bn = band === 'all' ? '' : '<br><b>' + BANDS[band] + '</b>으로 보면: ' + ({ radio: '제트와 전파 로브가 밝아요.', ir: '먼지 토러스가 따뜻해서 밝아요.', vis: '중심의 원반과 별빛이 보이고, 토러스는 빛을 가려요.', xray: '블랙홀 둘레의 뜨거운 가스(원반)와 제트가 밝아요.' }[band]);
         const th = Math.min(orbit.phi, Math.PI - orbit.phi) * 180 / Math.PI, t = th <= 10 ? '제트가 정면이라 아주 밝은 <b>블레이자</b>로 보여요.' : th <= TA ? '중심이 훤히 보여요 → <b>넓은 방출선</b>이 보이는 <b>세이퍼트 1형</b>.' : '토러스가 중심을 가려요 → <b>넓은 방출선이 안 보이는 2형</b> (좁은 선만 보여요).';
         info('보는 각도 θ = <b>' + Math.round(th) + '°</b><br>' + t + bn);
       }
@@ -154,6 +164,7 @@
           } else {
             const S = sim(); if (!SNAP) { drawSnap(S && typeof S.t4 === 'number' ? S.t4 : 0); }
             if (S && typeof S.t4 === 'number' && !plC.playing && Math.abs(S.t4 - plC.p) > 0.002) { syncing = true; plC.set(S.t4); syncing = false; drawSnap(S.t4); }
+            const it = irTxt(); if (it !== irLast) { irLast = it; txt(); }
           }
         },
         sync() {},

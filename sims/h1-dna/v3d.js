@@ -149,7 +149,7 @@
     title: 'DNA 이중 나선 3D 모형',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHONE ? 14.5 : 10.6, theta: 0.5, phi: 1.38, fov: 40, min: 5, max: 26, target: [0, PHONE ? 1.4 : 0, 0] },
-    levels: [],
+    levels: [3],
     autoRotate: 0.3,
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
@@ -163,6 +163,12 @@
       for (let i = 5; i <= 15; i++) dim.line([xr - 0.14, H.yOf(i), 0], [xr + 0.14, H.yOf(i), 0], i === 5 || i === 15 ? 0.03 : 0.018);
       const turnLab = label('', [xr, y15 + 0.55, 0], { color: 'rgba(255,211,77,.95)', size: PHONE ? 12 : 13 });
       turnLab.el.style.color = '#1b2333'; turnLab.show(false);
+      /* 폭 표시: 지름 약 2 nm (규칙성 단계의 ↔ 폭) */
+      const wdim = dimTools(THREE, root); wdim.grp.visible = false;
+      const yw = H.yOf(10);
+      wdim.line([-1.0, yw, 0], [1.0, yw, 0], 0.03); wdim.line([-1.0, yw - 0.18, 0], [-1.0, yw + 0.18, 0], 0.03); wdim.line([1.0, yw - 0.18, 0], [1.0, yw + 0.18, 0], 0.03);
+      const wLab = label('폭 약 2 nm', [0, yw + 0.4, 0], { color: 'rgba(255,211,77,.95)', size: PHONE ? 12 : 13 });
+      wLab.el.style.color = '#1b2333'; wLab.show(false);
 
       /* 이름표 */
       const sA = label('', H.anchors[0], { size: 14, offset: [0, 0.42, 0] }), sB = label('', H.anchors[1], { size: 14, offset: [0, 0.42, 0] });
@@ -176,7 +182,18 @@
         sB.set(b.L[1]); sB.el.style.background = BHEX[b.L[1]]; sB.el.style.color = BTXT[b.L[1]];
         refresh();
       }
+      const ruleS = () => { const L = window.__sim, S = L && L.S; return S && S.mode === 'rule' ? S : null; };
+      function ruleInfo(S) {   // 규칙성 단계: 2D와 같은 특징 설명 · 서열 비교
+        const L = window.__sim, box = (h) => '<div style="max-width:' + (PHONE ? 210 : 260) + 'px">' + h + '</div>';
+        if (S.sub === 'compare' && L.SEQX) {
+          const row = (name, q) => name + ' <b style="letter-spacing:1px;font-family:monospace">' + q.split('').map((c, i) => (S.rule.diff && c !== L.SEQX[i] ? '<span style="color:#ff6b6b;text-decoration:underline">' + c + '</span>' : c)).join('') + '</b>';
+          return box('<b>염기 서열 비교</b> (12개)<br>' + row('🔎 현장 조각', L.SEQX) + '<br>' + row('👤 사람 A', L.SEQA) + '<br>' + row('👤 사람 B', L.SEQB) + '<br>' + (S.rule.diff ? '빨간 글자가 현장 조각과 다른 염기예요.' : '옆의 🔍 서로 다른 곳 표시하기로 차이를 볼 수 있어요.'));
+        }
+        const f = L.FEAT && L.FEAT.find((q) => q.k === S.rule.sel);
+        return box('<b>DNA 구조의 특징</b> (찾은 특징 ' + Object.keys(S.rule.found).length + ' / 4)<br>' + (f ? f.text.replace(/[<>]/g, '') : '아래 <b>🧵 뼈대 · 🔗 염기쌍 · ↔ 폭 · 🌀 한 바퀴</b>를 하나씩 눌러 찾아봐요.'));
+      }
       function refresh() {
+        { const RS = ruleS(); if (RS) { info(ruleInfo(RS)); turnLab.set(H.tw > 0.97 ? '염기쌍 10개 = 한 바퀴<br>(약 3.4 nm)' : '꼬임 ' + Math.round(H.tw * 100) + ' %'); return; } }
         const p = Math.round(H.tw * 100), b = H.bps[selI];
         const lead = H.tw > 0.97 ? '꼬여 있어요: <b>염기쌍 10개 = 한 바퀴</b>' : H.tw < 0.03 ? '풀면 <b>사다리</b>: 염기쌍이 가로대예요.' : '꼬임 <b>' + p + ' %</b> (풀수록 사다리)';
         info('<div style="max-width:' + (PHONE ? 200 : 235) + 'px"><b>DNA 이중 가닥</b><br>바깥: <span style="color:#7dd3fc">당</span>(오각형)–<span style="color:#fdba74">인산</span>(원) 뼈대<br>안쪽: 염기쌍 <b>' + b.L[0] + '–' + b.L[1] + '</b> (' + BNAME[b.L[0]] + '–' + BNAME[b.L[1]] + ')<br>' + lead +
@@ -191,6 +208,33 @@
       controls.range('염기쌍', 1, 20, 1, selI + 1, (v) => { selI = v - 1; pickPair(); }, (v) => v + '번');
       const turnB = controls.button('📏 한 바퀴 세기', () => { showTurn = !showTurn; turnB.classList.toggle('on', showTurn); dim.grp.visible = showTurn; turnLab.show(showTurn); });
       pickPair();
+      /* 규칙성 단계: 2D의 특징 버튼 4개와 같아요 (찾은 특징이 미션에 그대로 기록돼요) */
+      const probe = controls.text(''); probe.style.display = 'none'; const ctlRow = probe.parentElement;
+      const before = new Set(ctlRow.children);
+      const FB = [['back', '🧵 뼈대'], ['pair', '🔗 염기쌍'], ['width', '↔ 폭'], ['pitch', '🌀 한 바퀴']].map(([k, t]) => [k, controls.button(t, () => {
+        const L = window.__sim, S = L && L.S; if (!S || S.mode !== 'rule') return;
+        S.rule.sel = k; S.rule.found[k] = true; if (L.updateCtl) L.updateCtl(); showFeat(k);
+      })]);
+      const featEls = Array.from(ctlRow.children).filter((c) => !before.has(c));
+      const plainEls = [turnB];   // 규칙성 단계에서는 특징 버튼이 '강조'와 '한 바퀴 세기'를 대신해요
+      { const kids = Array.from(ctlRow.children), i0 = kids.findIndex((c) => c.classList.contains('lab') && c.textContent === '강조'); if (i0 >= 0) plainEls.push(...kids.slice(i0, i0 + 4)); }
+      function showFeat(k) {
+        H.setFocus(k === 'back' ? 'back' : k === 'pair' ? 'bases' : 'all');
+        showTurn = k === 'pitch'; dim.grp.visible = showTurn; turnLab.show(showTurn); turnB.classList.toggle('on', showTurn);
+        wdim.grp.visible = k === 'width'; wLab.show(k === 'width');
+        if (k === 'pitch' || k === 'width') { animDir = 0; H.setTwist(1); twR.set(100); }
+        FB.forEach(([q, b]) => b.classList.toggle('on', q === k));
+        refresh();
+      }
+      let ruleKey = '';
+      function syncRule() {
+        const S = ruleS(), on = !!S;
+        featEls.forEach((e) => { e.style.display = on && S.sub !== 'compare' ? '' : 'none'; }); plainEls.forEach((e) => { e.style.display = on ? 'none' : ''; });
+        const key = on ? S.sub + '|' + S.rule.sel + '|' + Object.keys(S.rule.found).length + '|' + S.rule.diff : 'x';
+        if (key === ruleKey) return; const selCh = !on || key.split('|')[1] !== ruleKey.split('|')[1]; ruleKey = key;
+        if (on && selCh) showFeat(S.rule.sel); else if (!on) { wdim.grp.visible = false; wLab.show(false); refresh(); } else refresh();
+      }
+      syncRule();
 
       function lessonTw() { // 읽기 전용: 2D 화면에서 DNA 모형을 꼬았는지
         try { const s = window.__sim && window.__sim.S; if (s && s.dna && s.dna.complete) return s.dna.twv > 0.5 ? 1 : 0; } catch (e) {}
@@ -206,6 +250,7 @@
       });
       return {
         update(dt) {
+          syncRule();
           { const t2 = lessonTw(); if (t2 !== lastLt) { lastLt = t2; if (t2 != null && !pl.playing && !animDir) { H.setTwist(t2); twR.set(t2 * 100); refresh(); } } }
           if (faceT > 0 && H.tw < 0.05) { faceT -= dt; const tgt = Math.round(orbit.theta / Math.PI) * Math.PI; orbit.theta += (tgt - orbit.theta) * Math.min(1, dt * 3); orbit.phi += (1.5 - orbit.phi) * Math.min(1, dt * 3); }
           if (animDir) {

@@ -53,7 +53,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: 6.2, theta: 0.3, phi: 1.2, min: 3, max: 18 },
     autoRotate: 0.2,
-    levels: [],   // 1단계 '화살표 합 그리기'(화살표 끌기)를 비롯해 모든 단계에 캔버스 조작이 필요해서 2D로 해요
+    levels: [0],   // 분자의 극성(분자 · 판정 · ➡️ 화살표 잇기 단추). 물줄기 · 섞기 · 이성질체 · 예측 카드 단계는 2D
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
       let key = 'H2O', bend = 180, showBond = true, showSum = false;
@@ -174,6 +174,7 @@
           let k = mk, bd = PLs.bend;
           if (own) { k = 'CO2'; bd = Math.round(bendOf(pB) / 5) * 5; }
           const j = !!PLs.judged[mk] && !own;
+          if (PLs.chain && PLs.chain[mk] && !own && !showSum) { showSum = true; sB.classList.add('on'); sB.textContent = '화살표 더하기 ✓'; build(); }   // 화살표를 이어 붙이면 합 화살표도 보여 줘요
           if (!MOLS[k]) return;
           if (k !== key || bd !== bend || j !== judged) { key = k; bend = bd; judged = j; fit(); build(); }
         },

@@ -85,6 +85,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: 19 * KD, theta: 0.4, phi: 1.15, min: 7, max: 34, target: [1.5, 0, 0] },
     autoRotate: 0,
+    levels: [1, 2, 3],   // 1단계는 캔버스 축의 눈금으로 상의 위치 b를 읽어야 해서 2D
     build(ctx) {
       const { THREE, root: root0, label, controls } = ctx;
       const h = H3(ctx); const { V3, mat, glass, anchor, sphere, box, cyl, tube, mkSeg, setSeg, mkArrow, setArrow, showCtl } = h;
@@ -155,7 +156,7 @@
         const d2 = refract(d1, nB, n); if (!d2) return null;
         return { p0, A, B, d2 };
       }
-      let hits = [], infoFn = null;
+      let hits = [], infoFn = null, sharpFn = null;   // sharpFn: 2D와 같은 '선명' 판정 (카메라 · 구면 수차)
       function build() {
         nseg = 0; hits = [];
         const convex = st.type === 'convex', ap = st.ap, cols = st.chroma ? [['r', 0xff5a5a], ['g', 0x4ade80], ['b', 0x6aa8ff]] : [['g', 0xfff3b0]];
@@ -197,7 +198,7 @@
         for (; k < NRAY; k++) dots.setMatrixAt(k, zero);
         dots.instanceMatrix.needsUpdate = true; if (dots.instanceColor) dots.instanceColor.needsUpdate = true;
         const rms = cnt ? Math.sqrt(sum / cnt) : 0;
-        lBlur.show(convex); lBlur.set(rms < 0.1 ? '상이 선명해요' : '번진 크기 ' + rms.toFixed(1)); lBlur.el.style.background = rms < 0.1 ? '#15803d' : '#c2410c';
+        const sharp = sharpFn ? sharpFn() : rms < 0.1; lBlur.show(convex); lBlur.set(sharp ? '상이 선명해요' : '번진 크기 ' + rms.toFixed(1)); lBlur.el.style.background = sharp ? '#15803d' : '#c2410c';
         aBlur.position.set(st.xs, 2.9, 0);
         const ab = st.real ? (st.chroma ? '색마다 초점이 달라 가장자리에 <b>무지개 번짐</b>(색수차)이 생겨요.' : '가장자리 빛이 <b>더 가까운 곳</b>에서 모여요 (구면 수차). 조리개를 줄이면 줄어요.') : '이상적인 렌즈는 모든 빛을 한 점 F에 모아요.';
         info(infoFn ? infoFn(rms, convex) : (convex ? '<b>볼록 렌즈</b>는 평행광을 모아요.<br>' + ab + '<br>스크린을 앞뒤로 움직여 가장 선명한 곳을 찾아보세요.' : '<b>오목 렌즈</b>는 평행광을 퍼뜨려요.<br>퍼진 빛의 연장선은 렌즈 앞쪽의 허초점 F′에서 나온 것처럼 보여요.<br>상을 스크린에 맺을 수는 없어요.'));
@@ -334,15 +335,16 @@
       }
       /* ================= 2D 상태 따라가기 ================= */
       function lensParams(S, sim) {
-        const m = S.mode; infoFn = null;
+        const m = S.mode; infoFn = null; sharpFn = null;
         if (m === 'aber') {
           const A = S.ab;
-          if (A.view === 'a') { Object.assign(st, { type: 'convex', ap: 2.0 * A.apD / 100, real: true, chroma: false, A: Infinity, xs: 5, disp: 1 }); infoFn = (rms) => '<b>🌫️ 가장자리 빛이 더 가까운 곳에 모여요</b> (구면 수차)<br>렌즈에서 쓰는 부분 ' + Math.round(A.apD) + ' % → 점의 번짐 ' + rms.toFixed(2) + '<br>조리개를 줄이면(가운데만 쓰면) 번짐이 줄고 상이 선명해져요 (대신 어두워져요).'; }
+          if (A.view === 'a') { Object.assign(st, { type: 'convex', ap: 2.0 * A.apD / 100, real: true, chroma: false, A: Infinity, xs: 5, disp: 1 }); sharpFn = () => { try { return !!sim.abState().spOK; } catch (e) { return false; } }; infoFn = (rms) => '<b>🌫️ 가장자리 빛이 더 가까운 곳에 모여요</b> (구면 수차)<br>렌즈에서 쓰는 부분 ' + Math.round(A.apD) + ' % → 점의 번짐 ' + rms.toFixed(2) + '<br>조리개를 줄이면(가운데만 쓰면) 번짐이 줄고 상이 선명해져요 (대신 어두워져요).'; }
           else { Object.assign(st, { type: 'convex', ap: 1.4, real: true, chroma: true, A: Infinity, xs: 5, disp: A.el === 'doublet' ? 0.12 : 1 }); infoFn = () => '<b>🌫️ 색에 따라 초점이 달라요</b> (색수차)<br>' + (A.el === 'doublet' ? '볼록 + 오목 렌즈를 붙이면 색에 따른 초점 차이가 거의 없어져요.' : '볼록렌즈 한 장은 파란빛이 빨간빛보다 렌즈에 더 가까운 곳에 모여 가장자리에 색 번짐이 생겨요.') + ' (색에 따른 차이는 실제보다 크게 그렸어요.)'; }
         } else if (m === 'camera') {
           const C = S.cm, a = { far: Infinity, mid: 5000, near: 500 }[C.subj] * 0.1;
           Object.assign(st, { type: 'convex', ap: C.apD / 20, real: true, chroma: false, A: a, xs: C.bs.value * 0.1, disp: 1 });
-          infoFn = (rms) => '<b>📸 카메라: 렌즈와 센서의 거리 b = ' + C.bs.value.toFixed(1) + ' mm</b> (초점거리 50 mm)<br>피사체: ' + { far: '먼 풍경 (∞)', mid: '5 m', near: '0.5 m' }[C.subj] + ' · 조리개 ' + (C.ap === 'big' ? '크게' : '작게') + '<br>' + (rms < 0.06 ? '센서에 상이 <b>선명하게</b> 맺혀요.' : '센서가 상이 맺히는 곳에서 어긋나 상이 <b>번져요</b> (번짐 ' + rms.toFixed(2) + '). 렌즈를 앞뒤로 움직여 초점을 맞춰요.') + '<br>가까운 피사체일수록 렌즈를 센서에서 멀리(b를 크게) 해야 해요.';
+          sharpFn = () => { try { return !!sim.camState().sharpSub; } catch (e) { return false; } };
+          infoFn = (rms) => '<b>📸 카메라: 렌즈와 센서의 거리 b = ' + C.bs.value.toFixed(1) + ' mm</b> (초점거리 50 mm)<br>피사체: ' + { far: '먼 풍경 (∞)', mid: '5 m', near: '0.5 m' }[C.subj] + ' · 조리개 ' + (C.ap === 'big' ? '크게' : '작게') + '<br>' + (sharpFn() ? '센서에 상이 <b>선명하게</b> 맺혀요.' : '센서가 상이 맺히는 곳에서 어긋나 상이 <b>번져요</b> (번짐 ' + rms.toFixed(2) + '). 렌즈를 앞뒤로 움직여 초점을 맞춰요.') + '<br>가까운 피사체일수록 렌즈를 센서에서 멀리(b를 크게) 해야 해요.';
         } else {
           const part = S.pt.part; Object.assign(st, { type: part === 'concave' ? 'concave' : 'convex', ap: 1.8, real: false, chroma: false, A: Infinity, xs: 5, disp: 1 });
         }

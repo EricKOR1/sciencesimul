@@ -11,7 +11,7 @@
     hint: '기관계를 골라 보고 운동 강도를 바꿔 봐요',
     camera: { dist: narrow ? 15 : 12.5, theta: 0.35, phi: 1.4, min: 6, max: 22, target: [0, 0.6, 0] },
     autoRotate: 0.12,
-    levels: [],   // 모든 단계에 캔버스 조작이 필요해요(측정표 ▲▼ · 산소 운반 표 읽기 · 연결선 잇기 · 사례 글 읽기). 그래서 2D로 해요
+    levels: [0],   // 운동 중 몸(강도 · 기록 · 표의 ▲▼ 단추). 산소 운반 표 · 연결선 잇기 · 사례 글 읽기 단계는 2D
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V = THREE.Vector3, V3 = (x, y, z) => new V(x, y, z || 0);
@@ -113,6 +113,13 @@
         phases: [[0, '안정'], [0.12, '달리기 시작'], [0.4, '달리는 중'], [0.7, '회복']],
         onFrame(p) { const L = L2(); if (!L || plGuard) return; const I = p < 0.12 ? 0 : p < 0.4 ? 100 * (p - 0.12) / 0.28 : p < 0.7 ? 100 : 100 * (1 - (p - 0.7) / 0.3); L.setInt(Math.round(I)); },
       });
+      /* 측정표 칸 고르기: 2D 표의 ▲ 늘어요 / ▼ 줄어요 칸을 누르는 것과 같아요 (미션 진행도 함께해요) */
+      const ROWN = [['hr', '심박수', '회/분'], ['rr', '호흡수', '회/분'], ['temp', '체온', '°C'], ['sweat', '땀', ''], ['urine', '오줌 생성량', '']];
+      let rowI = 0;
+      controls.segment('표', ROWN.map((r, i) => ({ label: r[1], value: i })), 0, (i) => { rowI = i; });
+      const setDir = (w) => { const L = L2(); if (!L || !L.S.run) return; L.S.run.dir[ROWN[rowI][0]] = w; if (L.updateCtl) L.updateCtl(); };
+      const bUp = controls.button('▲ 늘어요', () => setDir('up')), bDn = controls.button('▼ 줄어요', () => setDir('down'));
+      const rowTxt = controls.text('');
       setMode('all');
 
       const D = new THREE.Object3D(), tmp = new V();
@@ -147,6 +154,12 @@
           const SW = (s) => (s < 0.1 ? '거의 없음' : s < 0.6 ? '조금 나요' : '많이 나요'), UR = (u) => (u > 0.9 ? '보통' : u > 0.6 ? '조금 줄어듦' : '적음');
           const tp = R ? R.temp.toFixed(1) : (37 + 1.5 * ex).toFixed(1), sw = R ? SW(R.sweat) : SW(ex), ur = R ? UR(R.urine) : UR(1 - 0.6 * ex);
           const txt = mode + '|' + Math.round(bpm) + '|' + Math.round(bpr) + '|' + tp + sw + ur;
+          if (R) {
+            const r = ROWN[rowI], v0 = R.rec.rest ? R.rec.rest[r[0]] : '—', v1 = R.rec.run ? R.rec.run[r[0]] : '—', d = R.dir[r[0]], u = r[2] ? ' ' + r[2] : '';
+            const rt = '<b>' + r[1] + '</b>: 안정 시 ' + v0 + (v0 !== '—' ? u : '') + ' → 달리기 중 ' + v1 + (v1 !== '—' ? u : '') + ' · 고른 답 ' + (d === 'up' ? '▲' : d === 'down' ? '▼' : '—');
+            if (rowTxt.innerHTML !== rt) rowTxt.innerHTML = rt;
+            bUp.classList.toggle('on', d === 'up'); bDn.classList.toggle('on', d === 'down');
+          }
           if (txt !== lastTxt) { lastTxt = txt; info(INFO[mode] + '<br>강도 ' + Math.round(ex * 100) + ' % · 심박수 ' + Math.round(bpm) + '회/분 · 호흡수 ' + Math.round(bpr) + '회/분 · 체온 ' + tp + ' °C<br>땀 ' + sw + ' · 오줌 생성량 ' + ur); }
         },
         sync() {},

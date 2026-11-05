@@ -38,7 +38,7 @@
   const FIT = Math.max(1, 1.4 / asp);
 
   window.SciSim3D.attach({
-    levels: [],              // 모든 단계가 2D 화면을 직접 다뤄요: 사진 묶기 · 손잡이로 a·b 재기와 소리굽쇠 칸에 놓기 · 막대 그래프 눌러 읽기 · AI 이름표 달기
+    levels: [2],             // 2단계(은하의 특징): 3D에서 유형을 고르면 2D와 같은 값(성간 물질 · 푸른 별 · 별 형성)을 보여 줘요. 0 · 1 · 3단계(사진 묶기 · a·b 재기와 소리굽쇠 칸 · AI 이름표)는 2D 화면에서 해요
     title: '은하 모양 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: 25 * FIT, theta: 0.4, phi: 1.2, fov: 42, min: 12, max: 120 },
@@ -155,7 +155,7 @@
 
       /* ---- 조작 ---- */
       let iRange = null, nRange = null, typeSeg = null;
-      typeSeg = controls.segment('유형', TYPES.map((t) => ({ value: t.k, label: t.f })), type, (v) => { type = v; rebuild(); });
+      typeSeg = controls.segment('유형', TYPES.map((t) => ({ value: t.k, label: t.f })), type, (v) => { type = v; rebuild(); pickSel3(); });
       iRange = controls.range('기울기 i', 3, 90, 1, 70, (v) => { orbit.phi = Math.max(0.05, v * DEG); }, (v) => v + '°' + (v <= 15 ? ' (정면)' : v >= 80 ? ' (옆)' : ''));
       const eRange = grp(() => {
         nRange = controls.range('실제 납작함 n', 0, 7, 1, nTrue, (v) => { nTrue = v; applyEllipsoid(); text(); }, (v) => 'E' + v);
@@ -189,15 +189,24 @@
           h = '<b>' + T.nm + '</b><br>' + (NOTE[key] || '') + (type[1] === 'B' ? ' 중심에 <b>막대</b>가 있고 팔이 막대 끝에서 시작해요.' : '') +
             '<br>기울기 i = ' + Math.round(i) + '° → 보이는 b/a ≈ <b>' + ci.toFixed(2) + '</b>' + (i < 20 ? ' (정면: 팔이 잘 보여요)' : i > 75 ? ' (옆: 납작한 원반과 팽대부)' : '');
         }
-        h += extraNote;
+        h += extraNote + featNote();
         if (h !== lastTxt || force) { lastTxt = h; info(h); }
       }
 
+      /* ---- 2단계(은하의 특징): 고른 유형의 특징 값 (2D 막대 그래프와 같은 TY3 자료) ---- */
+      function featNote() {
+        const S = sim && sim.S; if (!S || S.view !== 'v3' || !sim.TY3) return '';
+        const ty = sim.TY3.find((x) => x.k === type);
+        return ty ? '<br><span style="color:#fde68a">성간 물질 <b>' + ty.ism + ' %</b> · 푸른 별 ' + ty.blue + ' % · 별 형성 지수 ' + ty.sf + ' · ' + ty.clr + ' (예시 값)</span>' : '<br><span style="color:#9fb0d4">막대 그래프에는 E · S0 · Sa · Sb · Sc · Irr 여섯 유형이 있어요.</span>';
+      }
+      function pickSel3() { try { if (sim && sim.S && sim.S.view === 'v3' && sim.setSel3 && sim.TY3.some((x) => x.k === type) && sim.S.sel3 !== type) { sim.setSel3(type); seenSel = type; sim.updateCtl && sim.updateCtl(); } } catch (e) { /* 무시 */ } }
+      let seenSel = null;
       /* ---- 수업과 맞추기 (읽기만) ---- */
       let seenV = null, seenG = null;
       function readLesson() {
         try {
           const S = sim && sim.S; if (!S) return;
+          if (S.view === 'v3' && S.sel3 !== seenSel) { seenSel = S.sel3; if (S.sel3 && S.sel3 !== type && TYPES.some((t) => t.k === S.sel3)) { type = S.sel3; rebuild(); typeSeg && typeSeg.set(type); } }
           if (S.view === seenV && S.gi === seenG) return;
           seenV = S.view; seenG = S.gi;
           if (S.view === 'v2' && sim.ELL && sim.ELL[S.gi]) { // 지금 재고 있는 타원 은하: 옆에서 본 납작한 타원체

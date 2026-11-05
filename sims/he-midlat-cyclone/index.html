@@ -64,6 +64,9 @@
       .stage-toolbar .spacer { display: none; }
       .stage-toolbar .segmented button { padding: 5px 8px; font-size: 13.5px; }
     }
+    /* 입체 모형으로 보는 단계에서만 보이는 안내 */
+    .v3-only { display: none; }
+    .v3-mode .v3-only { display: block; }
   </style>
 </head>
 <body class="sim-page" data-subject="earth">
@@ -108,7 +111,8 @@
     <aside class="side-col">
       <section class="card card-pad" id="ctrlCard">
         <div class="control" data-modes="struct">
-          <p class="ctrl-note" style="margin-top:0">🏷️ 아래 <b>이름표</b>를 끌어 지도의 <b>점선 칸</b>에 놓아요. (카드를 누른 뒤 칸을 눌러도 돼요.) 지도의 <b>AB선</b>을 위아래로 끌면 단면이 바뀌어요.</p>
+          <p class="ctrl-note v3-only" style="margin-top:0">🏷️ 입체 모형 아래의 <b>이름표 단추</b>(한랭 전선 · 온난 전선 · 온난 구역)에서 <b>①②③</b> 자리를 골라 이름표를 놓아요.</p>
+          <p class="ctrl-note" data-v3="2d" style="margin-top:0">🏷️ 아래 <b>이름표</b>를 끌어 지도의 <b>점선 칸</b>에 놓아요. (카드를 누른 뒤 칸을 눌러도 돼요.) 지도의 <b>AB선</b>을 위아래로 끌면 단면이 바뀌어요.</p>
           <div id="scaleBox"></div>
           <button class="btn btn-sm btn-block" id="bResetCards" type="button" style="margin-top:8px">↺ 이름표 모으기</button>
         </div>

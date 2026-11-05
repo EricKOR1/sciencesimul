@@ -21,7 +21,7 @@
     hint: '드래그: 돌리기 · ▶ 재생으로 6단계를 보고, 약물을 골라 막히는 단계를 확인해요',
     camera: { dist: narrow ? 12.5 : 10.5, theta: 0.32, phi: 1.3, min: 6, max: 20, target: [0, -0.1, 0] },
     autoRotate: 0,
-    levels: [],   // 모든 단계에 2D 조작이 필요해요(이름표·순서 카드·약물 카드 끌기 · 합산 표 입력). 그래서 2D로 해요
+    levels: [2],   // 신호 합산(입력 수 · 예측 · 표 3줄 계산은 오른쪽 칸). 이름표 · 순서 카드 · 약물 카드를 끄는 단계는 2D
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V = THREE.Vector3;

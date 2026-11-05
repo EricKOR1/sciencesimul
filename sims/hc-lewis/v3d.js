@@ -80,7 +80,7 @@
   window.SciSim3D.attach({
     title: '루이스 구조 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    levels: [],   // 모든 단계에 캔버스 조작이 필요해요(주기율표에서 원소 고르기 · 원자 끌기 · 결합 누르기 · 전자 옮기기). 그래서 2D로 해요
+    levels: [0],   // 원자의 점(원소 단추 · ➕ 점 찍기). 원자 끌기 · 결합 누르기 · 전자 옮기기 단계는 2D
     camera: { dist: phone ? 6.4 : 5.8, theta: 0.6, phi: 1.15, min: 3, max: 20 },
     autoRotate: 0.2,
     build(ctx) {
@@ -261,6 +261,9 @@
       const rowOf = () => { const r = document.querySelectorAll('.v3-player'); return r[r.length - 1]; };
       const pl = controls.player({ duration: 7, loop: true, label: '전자 옮기기', phases: [[0, '원자'], [0.12, '전자 이동'], [0.55, '이온'], [0.85, '처음으로']], onFrame(p) { pI = p; own = p > 0; } });
       const rowP = rowOf();
+      /* 원소 고르기: 2D 주기율표에서 원소 칸을 누르는 것과 같아요 */
+      const elTxt = controls.text('원소');
+      const elBtns = [[1, 'H'], [3, 'Li'], [4, 'Be'], [5, 'B'], [6, 'C'], [7, 'N'], [8, 'O'], [9, 'F']].map(([z, sym]) => [z, controls.button(sym, () => { const L = window.__sim; if (L && L.selectEl) L.selectEl(z); })]);
       const fOwn = (p) => (p < 0.12 ? 0 : p < 0.55 ? sm((p - 0.12) / 0.43) : p < 0.85 ? 1 : 1 - sm((p - 0.85) / 0.15));
 
       return {
@@ -269,6 +272,7 @@
           const S = Z.S, sc = S.scene;
           if (sc !== lastSc) { lastSc = sc; if (orbit) orbit.dist = sc === 'atom' ? (phone ? 5.2 : 4.3) : sc === 'ionic' ? (phone ? 10 : 8.2) : (phone ? 6.4 : 5.8); }
           g.visible = sc === 'mol' || sc === 'wizard'; gi.visible = sc === 'ionic'; ga.visible = sc === 'atom';
+          elTxt.style.display = sc === 'atom' ? '' : 'none'; elBtns.forEach(([z, b]) => { b.style.display = sc === 'atom' ? '' : 'none'; b.classList.toggle('on', Z.A && Z.A.z === z); });
           rowP.style.display = sc === 'ionic' ? '' : 'none'; if (sc !== 'ionic' && pl.playing) pl.pause();
           ionLabs.forEach((l) => l.show(sc === 'ionic' && !!l.on)); aLab.show(sc === 'atom');
           if (sc !== 'mol' && sc !== 'wizard') lbl.forEach((l) => l.show(false));

@@ -313,6 +313,14 @@
     for (let s = 0; s < 4; s++) { const r = zRow(s); if (p.x >= r.x && p.x <= r.x + r.w && p.y >= r.y && p.y <= r.y + r.h) { const k = 'q' + q + '_' + s; S.zoom.covSeen[k] = !S.zoom.covSeen[k] ? true : S.zoom.covSeen[k]; S.zoom.hl = S.zoom.hl === s ? -1 : s; Sound.click(); if (zoomDone(q) && !S.zoom.done['q' + q]) { S.zoom.done['q' + q] = true; Sound.success(); updateCtl(); } return false; } }
     return false;
   }
+  /* 3D 단계에서 쓰는 세기 단추: 2D에서 식물을 누르거나 종 칸을 누르는 것과 같아요 */
+  function zoomFinish(q) { if (zoomDone(q) && !S.zoom.done['q' + q]) { S.zoom.done['q' + q] = true; Sound.success(); updateCtl(); } }
+  function zoomMark(sp) {   // 고른 종에서 아직 세지 않은 식물 하나를 ✓ 표시해요. 더 없으면 false
+    const q = S.zoom.q, pl = zPlants(q), m = zMarked(q), i = pl.findIndex((a, k) => a.s === sp && !m[k]);
+    if (i < 0) return false;
+    m[i] = true; Sound.tick(); zoomFinish(q); return true;
+  }
+  function zoomCover(sp) { const q = S.zoom.q; S.zoom.covSeen['q' + q + '_' + sp] = true; S.zoom.hl = sp; Sound.click(); zoomFinish(q); return COV[sp][q]; }
   const zRow = (s) => PHONE ? { x: ZT.x + 8 + (s % 2) * 232, y: ZT.y + 36 + Math.floor(s / 2) * 58, w: 226, h: 52 } : { x: ZT.x + 10, y: ZT.y + 58 + s * 84, w: ZT.w - 20, h: 76 };
   function drawZoom(dt, t) {
     drawField(dt, t, true);
@@ -730,7 +738,7 @@
         {
           id: 'count', title: '방형구 하나 세기',
           goal: '설치한 방형구 하나를 눌러 열고, <b>식물을 눌러 모두 센 뒤</b> 식물 종마다 <b>덮은 면적</b>도 읽으세요.',
-          hint: '초지에서 방형구를 누르면 크게 보여요. 식물 하나하나를 눌러 ✓ 표시를 해요. 오른쪽 종 칸을 누르면 그 종이 덮은 면적이 나와요.',
+          hint: '방형구를 크게 본 뒤 식물을 한 포기씩 세어 ✓ 표시해요(식물을 누르거나 ➕ 한 포기 세기). 종마다 덮은 면적도 읽어요(종 칸이나 📐 덮은 면적 읽기).',
           setup() { S.zoom = { q: S.zoom.q, marked: {}, covSeen: {}, done: {}, pop: {} }; setMode('field'); },
           check: () => Object.keys(S.zoom.done).some((k) => S.zoom.done[k]),
           hold: 0.6,
@@ -920,7 +928,7 @@
 
   /* ---------- 디버그 (Playwright) ---------- */
   window.__sim = {
-    S, VW, VH, PHONE, get game() { return game; }, setMode, levels, CNT, COV, TOT_CNT, TOT_COV, OCC, DENS, FREQ, COVR, REL_D, REL_F, REL_C, IV, DOM, CUM_SP, QPOS, QPLANTS, qRect, ZQ, zRow, zpx, FD, throwQuad, openZoom, autoFill, layTag, ivIdx, REC_ANS, FIELD_PLANTS, plantCountNear,
+    S, VW, VH, PHONE, get game() { return game; }, setMode, levels, CNT, COV, TOT_CNT, TOT_COV, OCC, DENS, FREQ, COVR, REL_D, REL_F, REL_C, IV, DOM, CUM_SP, QPOS, QPLANTS, qRect, ZQ, zRow, zpx, FD, throwQuad, openZoom, zoomMark, zoomCover, zCounts, autoFill, layTag, ivIdx, REC_ANS, FIELD_PLANTS, plantCountNear,
     stepAll(sec) { const n = Math.ceil(sec / 0.02); for (let i = 0; i < n; i++) { stepTbl(0.02); stepIv(0.02); stepArea(0.02); } },
   };
 })();

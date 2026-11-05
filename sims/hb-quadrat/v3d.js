@@ -12,10 +12,10 @@
 
   window.SciSim3D.attach({
     title: '초지와 방형구 조사 3D',
-    hint: '드래그: 돌리기 · 식물을 골라 밀도와 빈도를 봐요',
+    hint: '드래그: 돌리기 · 방형구를 확대해 식물을 세어 봐요',
     camera: { dist: narrow ? 30 : 22, theta: 0.15, phi: 0.95, min: 2.5, max: 48, target: [0, 0, 0] },
     autoRotate: 0,
-    levels: [],   // 모든 단계에 캔버스 조작이 필요해요(방형구·식물 누르기 · 기록표 읽기 · 곡선 읽기 · 층 이름표). 그래서 2D로 해요
+    levels: [0],   // 방형구 설치와 식물 세기(던지기 · 확대 · ➕ 세기 · 📐 면적 읽기 단추). 기록표 · 곡선 · 층 이름표 단계는 2D
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
       const V3 = (x, y, z) => new THREE.Vector3(x, y, z || 0);
@@ -83,10 +83,17 @@
       controls.button('🎲 방형구 던지기', () => { const L = L2(); if (!L) return; if (L.S.fld.mode === 'free') { info('지금은 <b>눈에 띄는 곳 고르기</b> 방식이에요. 무작위 좌표 방식에서 던질 수 있어요.'); return; } L.throwQuad(); });
       const zb = controls.button('🔍 방형구 확대', () => {
         const L = L2(), last = L ? L.S.fld.placed - 1 : -1;
+        // 2D에서 방형구를 눌러 여는 것과 같아요 (세기 미션이 함께 진행돼요)
+        if (L && !zoomed && last >= 0 && L.S.mode !== 'zoom' && L.openZoom) L.openZoom(last); else if (L && zoomed && L.S.mode === 'zoom' && L.setMode) L.setMode('field');
         zoomed = !zoomed; zb.classList.toggle('on', zoomed); zb.textContent = zoomed ? '🔍 초지 전체' : '🔍 방형구 확대';
         if (zoomed && last >= 0) { const q = quads[last]; orbit.tx = q.x; orbit.tz = q.z; orbit.ty = 0.1; orbit.dist = 3.2; orbit.phi = 0.9; }
         else { zoomed = false; orbit.tx = 0; orbit.tz = 0; orbit.ty = 0; orbit.dist = narrow ? 30 : 22; orbit.phi = 0.95; zb.textContent = '🔍 방형구 확대'; zb.classList.remove('on'); }
       });
+      /* 방형구 세기: 고른 식물을 한 포기씩 세고(✓), 그 종이 덮은 면적을 읽어요 */
+      let cMsg = '', cMsgT = 0;
+      const cTxt = controls.text('');
+      const cB1 = controls.button('➕ 한 포기 세기', () => { const L = L2(); if (!L || L.S.mode !== 'zoom') return; if (!L.zoomMark(sel)) { cMsg = '이 방형구의 ' + SP[sel].n + '은(는) 모두 셌어요.'; cMsgT = 2.5; } lastKey = ''; });
+      const cB2 = controls.button('📐 덮은 면적 읽기', () => { const L = L2(); if (!L || L.S.mode !== 'zoom') return; const v = L.zoomCover(sel); cMsg = SP[sel].n + '이(가) 덮은 면적: <b>' + (v / 100).toFixed(2) + ' m²</b>'; cMsgT = 4; lastKey = ''; });
       mats.forEach(([sp, m]) => { m.emissive.set(sp === 3 ? 0xffe14d : 0x000000); m.emissiveIntensity = sp === 3 ? 0.45 : 0; });
       label('초지 (20 m × 12 m)', [0, 0.2, -H / 2 - 0.4], { color: 'rgba(30,110,50,.9)' });
       return {
@@ -96,7 +103,17 @@
             const on = i < f.placed; q.g.visible = on; q.lab.show(on);
             if (on) { const k = f.drop[i].k; q.g.position.y = k < 1 ? (1 - k) * 2.5 : 0; q.lab.set((i + 1) + '번 · ' + SP[sel].n + ' ' + LS.CNT[sel][i] + '개체'); }
           });
-          const key = f.placed + '|' + sel + '|' + f.mode; if (key !== lastKey) { lastKey = key; refreshInfo(f.placed, f.mode); }
+          const key = f.placed + '|' + sel + '|' + f.mode;
+          const zm = L.S.mode === 'zoom', Z = L.S.zoom;
+          [cTxt, cB1, cB2].forEach((e) => { e.style.display = zm ? '' : 'none'; });
+          if (cMsgT > 0) { cMsgT -= dt; if (cMsgT <= 0) { cMsg = ''; lastKey = ''; } }
+          if (zm && Z) {
+            const q = Z.q, c = L.zCounts(q), done = !!Z.done['q' + q];
+            const ct = '<b>' + (q + 1) + '번 방형구</b> · 센 식물 ' + SP.map((p, i) => p.n + ' ' + c[i]).join(' · ') + (done ? ' · ✅ 모두 읽었어요' : '');
+            if (cTxt.innerHTML !== ct) cTxt.innerHTML = ct;
+            quads.forEach((qq, i) => { if (i < f.placed) qq.lab.set((i + 1) + '번'); });
+            const k2 = 'z|' + q + '|' + sel + '|' + cMsg + '|' + done; if (k2 !== lastKey) { lastKey = k2; info('<b>' + (q + 1) + '번 방형구</b>를 크게 보고 있어요. 식물을 고르고 <b>➕ 한 포기 세기</b>로 그 종을 한 포기씩 세어요. <b>📐 덮은 면적 읽기</b>로 그 종이 덮은 면적도 읽어요.' + (cMsg ? '<br>' + cMsg : '')); }
+          } else if (key !== lastKey) { lastKey = key; refreshInfo(f.placed, f.mode); }
         },
         sync() { lastKey = ''; },
       };

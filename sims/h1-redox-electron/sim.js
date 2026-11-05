@@ -664,7 +664,7 @@
     $('#bElec').classList.toggle('on', BENCH.showE); $('#bElec').textContent = BENCH.showE ? '🔍 전자 숨기기' : '🔍 전자 보기';
     $('#note1').innerHTML = BENCH.k === 'zn' ? '아연판을 <b>푸른 황산 구리(Ⅱ) 수용액</b>에 넣어요. 용액의 푸른색과 아연판의 변화를 관찰해요.' : '구리선을 <b>무색 질산 은 수용액</b>에 넣어요. 구리선 둘레와 용액의 색을 관찰해요.';
     $('#oMove').textContent = mvMoved() + ' / 4';
-    $('#note2').innerHTML = MV.done ? '전자를 모두 옮겼어요! 이제 위 식의 빈칸을 채우고 <b>✔ 확인하기</b>를 눌러요.' : '아연 원자 둘레의 <b>노란 전자</b>를 끌어서 구리 이온(Cu²⁺) 위에 놓아요.';
+    $('#note2').innerHTML = MV.done ? '전자를 모두 옮겼어요! 이제 위 식의 빈칸을 채우고 <b>✔ 확인하기</b>를 눌러요.' : '<span data-v3="2d">아연 원자 둘레의 <b>노란 전자</b>를 끌어서 구리 이온(Cu²⁺) 위에 놓아요.</span><span class="v3-only">화면 아래 <b>⚡ 전자 1개 옮기기</b>를 눌러 아연의 전자를 구리 이온(Cu²⁺)에게 옮겨요.</span>';
     const ds = SIMS.mg; $('#bRun3').textContent = ds.done ? '✓ 반응 완료' : ds.run ? '반응 중…' : '▶ 반응 보기'; $('#bRun3').disabled = ds.run || ds.done;
     $('#oDual').textContent = ds.done ? '완료' : ds.run ? pctOf(ds) + ' %' : '대기';
     $('#numCu').textContent = LG.cu; $('#numAg').textContent = LG.ag;
@@ -928,6 +928,12 @@
   window.__sim = {
     SIMS, MV, LG, HF, BENCH, VW, VH, get game() { return game; }, get lBoard() { return lBoard; }, setMode, ctlUpdate, mvInit, mvMoved, mvLay, lgBalanced, lgRecord, LCARDS, buildHalfRows,
     get MODE() { return MODE; }, get SUB() { return SUB; },
+    mvGive() {   // 3D의 [⚡ 전자 1개 옮기기]: 남은 아연 전자 하나를 전자가 더 필요한 구리 이온에게 옮겨요 (끌어 놓기와 같은 결과)
+      if (MODE !== 'move' || MV.drag) return false;
+      const z = MV.zn.find((q) => q.e.some((e) => e.st === 'home')), ion = MV.ions.find((o) => !o.done && o.got < 2);
+      if (!z || !ion) return false;
+      const e = z.e.find((q) => q.st === 'home'); MV.drag = { z, e, ox: 0, oy: 0 }; e.st = 'drag'; mvUp({ x: ion.x, y: ion.y }); return true;
+    },
     solveLife() { lBoard.cards.forEach((c) => { c.zone = c.t; }); lBoard.layout(true); ctlUpdate(); },
     finishMove() { MV.zn.forEach((z) => z.e.forEach((e) => { e.st = 'gone'; })); MV.ions.forEach((o) => { o.got = 2; o.done = true; }); MV.done = true; ctlUpdate(); },
   };

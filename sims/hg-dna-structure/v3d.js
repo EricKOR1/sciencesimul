@@ -151,7 +151,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHONE ? 15.5 : 12.6, theta: 0.5, phi: 1.38, fov: 40, min: 5, max: 26, target: [0, PHONE ? 1.5 : 0, 0] },
     autoRotate: 0.25,
-    levels: [],   // 모든 단계가 캔버스 조작(표 · 눈금자 · 염기 블록 끌기 · 카드 배치)이 필요해서 2D로 해요
+    levels: [2],   // 염기쌍 · 이중 나선 단계만 3D(짝 단추 · ①②③ 단추가 옆 조작판에 있어요). 샤가프 표 · X선 눈금자 · 발표 카드는 캔버스에서 해요
     build(ctx) {
       const { THREE, root, label, info, controls, orbit, camera } = ctx;
       const H = makeHelix(THREE, root, { N: 20, seq: SEQ20, a: 0.5, rings: true, strandCols: SC, arrows: true, arrowCols: [0x93c5fd, 0xc4b5fd] });
@@ -212,11 +212,19 @@
         const twLine = H.tw > 0.97 ? '꼬임 완성: 한 바퀴 = 염기쌍 10개 = 3.4 nm' : '꼬임 ' + p + ' % (풀면 사다리)';
         info('<div style="max-width:' + (PHONE ? 215 : 245) + 'px"><b>염기쌍 ' + (selI + 1) + '번: ' + b.L[0] + '–' + b.L[1] + '</b> · 수소 결합 <b>' + b.n + '개</b><br>' +
           (PUR[b.L[0]] ? '퓨린(고리 2개)' : '피리미딘(고리 1개)') + ' + ' + (PUR[b.L[1]] ? '퓨린(고리 2개)' : '피리미딘(고리 1개)') + ' → 폭 2 nm<br>' +
-          '<span style="color:#93c5fd">가닥 1</span>과 <span style="color:#c4b5fd">가닥 2</span>는 방향이 반대' + (PHONE ? '' : '(5′→3′ / 3′←5′)') + '<br>' + (H.tw > 0.97 ? '한 바퀴 = 10염기쌍 = 3.4 nm' : '꼬임 ' + p + ' %') + '</div>');
+          fitLine() + '<span style="color:#93c5fd">가닥 1</span>과 <span style="color:#c4b5fd">가닥 2</span>는 방향이 반대' + (PHONE ? '' : '(5′→3′ / 3′←5′)') + '<br>' + (H.tw > 0.97 ? '한 바퀴 = 10염기쌍 = 3.4 nm' : '꼬임 ' + p + ' %') + '</div>');
         ends.forEach((l) => l.show(showDir)); sLab.show(showDir); sLab2.show(showDir);
         dimLabs.forEach((l) => l.show(showDim)); dim.grp.visible = showDim;
         dimLabs[0].set('한 바퀴 3.4 nm<br>(염기쌍 10개)'); dimLabs[0].show(showDim && H.tw > 0.97);
         majL.show(false); minL.show(false);
+      }
+      /* 염기쌍 맞추기(2D와 같은 미션): 짝 단추로 놓은 첫째 줄의 결과를 보여 줘요 */
+      function fitLine() {
+        const L = window.__sim; if (!L || !L.S || L.S.mode !== 'fit' || !L.rowEval) return '';
+        const sl = L.S.fit.slots[0], r = L.rowEval(0); if (!r || !sl[0] || !sl[1]) return '<span style="color:#fcd34d">짝 단추로 두 염기를 틈(2 nm)에 넣어 봐요.</span><br>';
+        const a = sl[0].b, b = sl[1].b, nm = (x) => (PUR[x] ? '퓨린' : '피리미딘');
+        const t = r === 'wide' ? '2.4 nm → 틈보다 <b>너무 넓어요</b>' : r === 'narrow' ? '1.6 nm → 틈보다 <b>너무 좁아요</b>' : r === 'wrong' ? '2 nm에 맞지만 샤가프 규칙(A ≈ T, G ≈ C)에 어긋나요' : '2 nm에 <b>딱 맞아요</b> (수소 결합 ' + (r === 'AT' ? 2 : 3) + '개)';
+        return '<span style="color:#fcd34d">놓은 짝 ' + a + ' + ' + b + ': ' + nm(a) + ' + ' + nm(b) + ' = ' + t + '</span><br>';
       }
       function pickPair(i) { selI = i; H.select(i); refresh(); }
 
@@ -257,8 +265,11 @@
       { const t0 = lessonTw(); if (t0 != null) { H.setTwist(t0); twR.set(Math.round(t0 * 100)); buildGroove(); placeGroove(); refresh(); } }
       /* 2D 이중 나선 화면의 꼬임 · 방향 표시를 따라가요 (2D 값이 바뀔 때마다) */
       let lastTw = null, lastDir = null;
+      let lastFit = '';
       function poll() {
-        const L = ctx.lesson(); if (!L || !L.S || L.S.mode !== 'helix' || !L.S.hx) return;
+        const L = ctx.lesson(); if (!L || !L.S) return;
+        if (L.S.mode === 'fit' && L.S.fit) { const k = L.S.fit.slots[0].map((x) => (x ? x.b : '-')).join(''); if (k !== lastFit) { lastFit = k; refresh(); } }
+        if (L.S.mode !== 'helix' || !L.S.hx) return;
         const h = L.S.hx;
         if (h.vis >= 1) {
           if (h.tw !== lastTw) { lastTw = h.tw; if (!player.playing) { plOn = false; const t0 = Math.max(0, Math.min(1, h.tw)); H.setTwist(t0); twR.set(Math.round(t0 * 100)); buildGroove(); placeGroove(); if (t0 < 0.05) faceT = 1.4; refresh(); } }

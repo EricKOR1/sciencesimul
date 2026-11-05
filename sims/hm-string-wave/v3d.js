@@ -71,7 +71,7 @@
       for (let i = 0; i < 7; i++) { const nd = new THREE.Mesh(new THREE.SphereGeometry(0.17, 16, 12), M(0xef4444, { emissive: 0x7f1d1d })); root.add(nd); nodeM.push(nd); const an = new THREE.Mesh(new THREE.SphereGeometry(0.14, 16, 12), new THREE.MeshBasicMaterial({ color: 0x4ade80, transparent: true, opacity: 0.7 })); root.add(an); antiM.push(an); }
       const fret = new THREE.Mesh(new THREE.BoxGeometry(0.08, 1.2, 0.5), M(0xffe58a, { emissive: 0x7a6200 })); root.add(fret);
       const lN = label('마디', nodeM[1], { color: '#dc2626', size: 12 }), lA = label('배', antiM[0], { color: '#15803d', size: 12 }), lGen = label('진동 발생기', gen, { color: '#475569', size: 12 }), lFr = label('프렛(줄을 누른 곳)', fret, { color: '#a16207', size: 12 }), lTop = label('', [0, 2.6, 0], { color: '#26324a', size: 13 });
-      const lI = label('→ 입사파', [-2.6, 2.4, 0], { color: '#e8590c', size: 12 }), lR = label('← 반사파', [2.6, -2.4, 0], { color: '#2563eb', size: 12 });
+      const lI = label('→ 입사파', [-2.6, 3.75, 0], { color: '#e8590c', size: 12 }), lR = label('← 반사파', [2.6, 0.95, 0], { color: '#2563eb', size: 12 });
       const demo = { p: 0, on: false }; let pl = null, last = '';
       function stand(n, Lw, x0, A, fq) { // 정상파 모양 y = A sin(nπx/L) cos(wt)
         const w = fq * 6.283; return (xx, t) => A * Math.sin(n * Math.PI * (xx - x0) / Lw) * Math.cos(w * t);
@@ -88,7 +88,7 @@
           const d = S.dr; let f = d.fe || d.f; if (demo.on && !d.sweep) f = demo.p * 700; const F = A.strField_(Math.max(0.5, f)), wt = tm * 6.283 * A.WVIS;
           // 줄의 끝(x=0)에 발생기, x = L0 쪽이 고정 끝 (2D와 같은 식: s = L0 − x)
           set(sTot, (xx) => A.strAt(F, A.L0 - (xx + LU / 2) / LU * A.L0, wt).tot * YD);
-          const parts = d.parts; sInc.visible = sRef.visible = parts; if (parts) { set(sInc, (xx) => A.strAt(F, A.L0 - (xx + LU / 2) / LU * A.L0, wt).inc * YD + 2.6); set(sRef, (xx) => A.strAt(F, A.L0 - (xx + LU / 2) / LU * A.L0, wt).ref * YD - 2.6); lI.show(true); lR.show(true); lI.obj = [-2.6, 3.0, 0]; lR.obj = [2.6, -3.0, 0]; }
+          const parts = d.parts; sInc.visible = sRef.visible = parts; if (parts) { set(sInc, (xx) => A.strAt(F, A.L0 - (xx + LU / 2) / LU * A.L0, wt).inc * YD + 2.9); set(sRef, (xx) => A.strAt(F, A.L0 - (xx + LU / 2) / LU * A.L0, wt).ref * YD + 1.5); lI.show(true); lR.show(true); lI.obj = [-2.6, 3.0, 0]; lR.obj = [2.6, -3.0, 0]; }
           gen.visible = true; gen.position.set(LU / 2 + 0.45, (A.strAt(F, 0, wt).tot) * YD, 0); pR.position.x = 100; pR.visible = false; lGen.show(true); lGen.off = [0, 0.8, 0];
           const nn = Math.round(f / A.FNR(1)), res = Math.abs(f - A.FNR(nn)) < 6 && nn >= 1; nodes(res ? nn : 0, -LU / 2, LU, res);
           txt = '<b>〰 정상파: 고정된 줄의 공명</b> · 구동 진동수 f = <b>' + Math.round(f) + ' Hz</b><br>' + (res ? '줄이 크게 떨려요 (공명): 배 ' + nn + '개 · 마디 ' + (nn + 1) + '개 (양 끝 포함).' : '이 진동수에서는 줄이 조금만 떨려요. 진동수를 천천히 올리며 크게 떨리는 진동수를 찾아요.') + '<br>정상파 = 입사파(주황) + 반사파(파랑)의 합(노랑). 마디에서는 두 파동이 늘 상쇄돼요.<br><span style="opacity:.8">진동수는 옆 조작판에서 올려요 (▶ 아래 재생도 가능).</span>';

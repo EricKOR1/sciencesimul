@@ -1124,8 +1124,8 @@ const levels = [
     missions: [
       {
         title: '−70 mV 읽기',
-        goal: '미세 전극의 끝을 끌어서 세포막을 지나 <b>세포 안</b>에 넣어요. 전압계가 <b>−70 mV</b>를 보이면 성공!',
-        hint: '그림 위쪽 노란 고리가 있는 전극 끝을 눌러 아래쪽(세포 안, 파란 영역)으로 끌어다 놓으세요.',
+        goal: '미세 전극의 끝을 세포막 너머 <b>세포 안</b>에 넣어요. 전압계가 <b>−70 mV</b>를 보이면 성공!',
+        hint: '<b>🔌 전극을 세포 안에 넣기</b>를 눌러요. (전극 끝을 세포 안으로 끌어다 놓아도 돼요.)',
         setup() { setScene('rest'); },
         check: () => S.rs.tipIn && S.rs.pump && rsV(S.rs.g) === -70,
         hold: 0.8,
@@ -1273,8 +1273,16 @@ SciSim.loop((dt, t) => {
 });
 
 /* ---------- 디버그 (Playwright) ---------- */
+/* 3D 단계에서 쓰는 전극 넣기/빼기 (2D에서 전극을 끌어 놓은 것과 같아요) */
+function rsElectrode(inside) {
+  const rs = S.rs, A = RG.A, my = RG.memY, th = RG.th;
+  rs.drag = false; rs.touched = true;
+  rs.tip.y = inside ? Math.min(my + th / 2 + 60, A.y + A.h - 20) : A.y + 62;
+  rs.tipIn = rs.tip.y > my + th / 2 + 1;
+  Sound.tick();
+}
 window.__sim = {
-  S, VW, VH, get game() { return game; }, setScene, setSub, NAMES, LV, AP, AP_CROSS, thV, apPhaseOf: apPhase, apNowV: apNow, apAxes, thAxes, RG, AG, TG, rsV, rsConc, rsTargets, startStim, startRun, resetRest, resetAP, resetThr, typeAt, TXY, NP, rsCnt,
+  S, VW, VH, get game() { return game; }, setScene, setSub, NAMES, LV, AP, AP_CROSS, thV, apPhaseOf: apPhase, apNowV: apNow, apAxes, thAxes, RG, AG, TG, rsV, rsConc, rsTargets, startStim, startRun, resetRest, resetAP, resetThr, rsElectrode, typeAt, TXY, NP, rsCnt,
   stepAll(sec) { const n = Math.ceil(sec / 0.02); for (let i = 0; i < n; i++) { if (S.mode === 'rest') stepRest(0.02); else if (S.mode === 'ap') stepAP(0.02); else if (S.mode === 'thr') stepThr(0.02); } },
 };
 

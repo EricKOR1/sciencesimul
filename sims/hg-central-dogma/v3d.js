@@ -16,7 +16,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: narrow ? 12 : 8.8, theta: 0.22, phi: 1.3, target: narrow ? [-0.7, 0, 0] : [0, 0.7, 0], min: 5, max: 20 },
     autoRotate: 0,
-    levels: [],   // 모든 단계가 캔버스 조작(화살표 이름 · 주형 가닥 서열 · RNA 가공 · tRNA 고르기 · 모의실험)이 필요해서 2D로 해요
+    levels: [2],   // 번역 단계만 3D(tRNA 고르기 · 사슬 방출은 3D 조작 줄의 단추로). 화살표 이름 · 주형 가닥 서열 · RNA 가공 · 모의실험은 캔버스에서 해요
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V = THREE.Vector3, M4 = new THREE.Matrix4(), cc = new THREE.Color();
@@ -193,6 +193,24 @@
           onFrame(p) { if (mode === 'tl') updTl(Math.min(p * TL_DUR, T_END)); },
         });
       });
+      /* 2D와 같은 번역 미션: A 자리에 들어올 tRNA 고르기 · 사슬 방출 (2D의 tlPick · tlRelease를 불러요) */
+      let pickB = [], relB = null;
+      const gPick = grp(() => {
+        pickB = [0, 1, 2].map((i) => controls.button('tRNA', () => { const L = ctx.lesson(); if (L && L.tlPick) L.tlPick(i); }));
+        relB = controls.button('✂ 사슬 방출', () => { const L = ctx.lesson(); if (L && L.tlRelease) L.tlRelease(); });
+      });
+      let pickKey = '';
+      function updPick() {
+        const L = ctx.lesson(), T2 = L && L.TL, on = mode === 'tl' && lastSim === 'tl' && T2;
+        const st = on ? T2.state : '', key = st + '|' + (on ? T2.cand.map((c) => c.anti).join(',') : '');
+        if (key === pickKey) return; pickKey = key;
+        pickB.forEach((b, i) => { const c = on && st === 'wait' && T2.cand[i]; b.style.display = c ? '' : 'none'; if (c) b.textContent = 'tRNA 3′-' + c.anti + '-5′'; });
+        if (relB) relB.style.display = on && st === 'stopwait' ? '' : 'none';
+      }
+      /* 폴리리보솜: 같은 mRNA에 리보솜이 여러 개 붙어 있어요 */
+      const polyG = new THREE.Group(); polyG.visible = false; tlG.add(polyG);
+      [-4.6, 4.6].forEach((x) => { const b2 = new THREE.Mesh(big.geometry, big.material.clone()), s2 = new THREE.Mesh(small.geometry, small.material.clone()); b2.material.opacity = 0.28; s2.material.opacity = 0.32; b2.scale.copy(big.scale); s2.scale.copy(small.scale); b2.position.set(big.position.x + x, big.position.y, 0); s2.position.set(small.position.x + x, small.position.y, 0); polyG.add(b2, s2); });
+      const lPoly = label('리보솜 여러 개 (폴리리보솜)', An(tlG, 4.7, 2.3, 0), { color: '#6d28d9' }); lPoly.show(false);
       function setMode(m) {
         mode = m; txG.visible = m === 'tx'; tlG.visible = m === 'tl';
         Object.values(Ltx).forEach((l) => l.show(m === 'tx')); Object.values(Ltl).forEach((l) => l.show(m === 'tl'));
@@ -206,7 +224,7 @@
       setMode('tx');
 
       /* 2D에서 어느 화면인지 · 진행 정도를 따라가요 */
-      let lastSim = null, lastTx = -1, lastTl = '';
+      let lastSim = null, lastTx = -1, lastTl = '', tlTo = null;
       function poll() {
         const L = ctx.lesson(); if (!L || !L.S) return;
         const sm = L.S.mode;
@@ -218,15 +236,17 @@
         if (sm === 'tx' && L.TX && L.TX.state !== 'idle' && !plTx.playing) {
           const q = L.TX.q; if (q !== lastTx) { lastTx = q; const pr = Math.max(0, Math.min(1, (q - 4) / 21)); plTx.set(0.1 + 0.8 * pr); }
         }
-        if (sm === 'tl' && L.TL && L.TL.state !== 'idle' && !plTl.playing) {
-          const TLs = L.TL, key = TLs.state + TLs.rk + (TLs.released ? 'r' : '');
+        polyG.visible = sm === 'poly'; lPoly.show(sm === 'poly' && mode === 'tl');
+        if (sm === 'tl' && L.TL) {     // 2D 번역의 상태와 같은 장면: 움직이는 상태는 그 구간만 재생하고 멈춰요
+          const TLs = L.TL, key = TLs.state + TLs.rk + (TLs.released ? 'r' : ''), c0 = T_INI + Math.min(STOP - 1, TLs.rk) * CL;
           if (key !== lastTl) {
-            lastTl = key; let T;
-            if (TLs.state === 'scan') T = 2.0 * (TLs.sub || 0); else if (TLs.state === 'dock') T = 2.5;
-            else if (TLs.released) T = T_REL0 + 1; else T = T_INI + Math.min(STOP - 1, TLs.rk) * CL + 0.1;
-            plTl.set(Math.min(1, T / TL_DUR));
+            lastTl = key; const st = TLs.state;
+            const span = { idle: [0, 0], scan: [0, 2.4], dock: [2.4, T_INI - 0.05], wait: [c0 + 0.02, c0 + 0.02], enter: [c0 + 0.02, c0 + 0.4 * CL], bond: [c0 + 0.4 * CL, c0 + 0.55 * CL], trans: [c0 + 0.55 * CL, c0 + 0.97 * CL], stopwait: [T_REL0 - 0.02, T_REL0 - 0.02], release: [T_REL0, T_END], done: [T_END, T_END] }[st] || [c0, c0];
+            tlTo = span[1]; plTl.set(Math.min(1, span[0] / TL_DUR)); if (span[1] > span[0]) plTl.play(); else plTl.pause();
           }
+          if (tlTo != null && plTl.playing && plTl.p * TL_DUR >= tlTo) { plTl.pause(); plTl.set(Math.min(1, tlTo / TL_DUR)); tlTo = null; }
         }
+        updPick();
       }
       return {
         update(dt) {

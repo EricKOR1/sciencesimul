@@ -11,10 +11,10 @@
 
   window.SciSim3D.attach({
     title: '신경 세포막 3D (이온 통로)',
-    hint: '드래그: 돌리기 · 펌프·자극에 따라 이온이 드나들어요',
+    hint: '드래그: 돌리기 · 전극을 넣고 펌프를 꺼 봐요',
     camera: { dist: narrow ? 14.5 : 11, theta: 0.28, phi: 1.22, min: 6, max: 20, target: [0, 0, 0] },
     autoRotate: 0,
-    levels: [],   // 모든 단계의 미션이 캔버스 조작(이름표 끌기 · 미세 전극 끌기 · 그래프 이름표 · 봉우리 세기)이 필요해서 2D로 해요
+    levels: [1],   // 휴지 전위(🔌 전극 넣기 단추 · 펌프 단추). 이름표 끌기 · 그래프 이름표 · 봉우리 세기 단계는 2D
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.45, metalness: 0.03 }, o || {}));
@@ -105,6 +105,8 @@
       };
       const seg = controls.segment('', [{ label: '실험과 같이', value: 'sync' }, { label: '휴지', value: 'rest' }, { label: '탈분극', value: 'dep' }, { label: '재분극', value: 'rep' }, { label: '과분극', value: 'hyp' }], 'sync', (v) => { manual = v; if (pl.playing) pl.pause(); pl.set(0); });
       const pb2 = controls.button('펌프 끄기', () => { const L = L2(); const b = document.querySelector('#pumpSeg button[data-p="' + (pumpOn ? 'off' : 'on') + '"]'); if (b) b.click(); });
+      // 미세 전극: 2D에서 전극 끝을 끌어 세포 안에 넣는 것과 같아요 (휴지 전위 단계)
+      const eb = controls.button('🔌 전극을 세포 안에 넣기', () => { const L = L2(); if (L && L.rsElectrode) L.rsElectrode(!L.S.rs.tipIn); });
       /* ▶ 활동 전위 한 번 (2D 그래프와 같은 곡선: 휴지 1 ms → 탈분극 → 재분극 → 과분극, 모두 6 ms) */
       const CROSS = (L2() && L2().AP_CROSS) || 3.9;
       const pl = controls.player({
@@ -131,6 +133,8 @@
           if (L && L.S.mode !== 'rest' || manual !== 'sync' || pl.playing || pl.p > 0) { if (L && L.S.mode !== 'rest') pumpOn = true; }
           if (L) { if (L.S.mode === 'rest' && manual === 'sync' && !(pl.playing || pl.p > 0)) pumpOn = !!L.S.rs.pump; }
           pb2.textContent = pumpOn ? '펌프 끄기' : '펌프 켜기'; pb2.classList.toggle('on', !pumpOn);
+          const restM = !!(L && L.S.mode === 'rest'), tipIn = restM && !!L.S.rs.tipIn;
+          eb.style.display = restM ? '' : 'none'; eb.textContent = tipIn ? '🔌 전극을 세포 밖으로 빼기' : '🔌 전극을 세포 안에 넣기'; eb.classList.toggle('on', tipIn);
           // 통로 열림 정도 · 막전위
           const wNa = st === 'dep' ? 1 : 0, wK = st === 'rep' || st === 'hyp' ? 1 : 0;
           gNa += (wNa - gNa) * Math.min(1, dt * 8); gK += (wK - gK) * Math.min(1, dt * 8);
@@ -170,10 +174,10 @@
           const sc = (g, v) => { g.visible = v > 0.05; g.scale.setScalar(Math.max(0.01, v)); };
           sc(outPlus, s); sc(inMinus, s); sc(outMinus, -s); sc(inPlus, -s);
           thumb.position.y = (vm + 20) * 0.05; zero.position.y = 1.0;
-          lV.set((vm < 0 ? '−' : vm > 0 ? '+' : '') + Math.abs(Math.round(vm)) + ' mV');
+          lV.set(restM && !tipIn && manual === 'sync' && !(pl.playing || pl.p > 0) ? '전압계 0 mV (전극 밖)' : (vm < 0 ? '−' : vm > 0 ? '+' : '') + Math.abs(Math.round(vm)) + ' mV');
           lNa.set(gNa > 0.5 ? 'Na⁺ 통로 (열림)' : 'Na⁺ 통로 (닫힘)'); lK.set(gK > 0.5 ? 'K⁺ 통로 (열림)' : 'K⁺ 통로 (닫힘)');
-          const key = st + (pumpOn ? '' : 'x') + (L && L.S.mode === 'thr' && L.S.th.level != null ? 't' + L.S.th.level : '');
-          if (key !== lastInfo) { lastInfo = key; info(INFO[st] + (pumpOn ? '' : '<br>펌프가 멈추면 이온 농도 차이가 점점 사라져요.') + (L && L.S.mode === 'thr' && L.S.th.level != null ? '<br>자극 세기 ' + L.S.th.level + (L.S.th.level >= 40 ? ' (역치 40 이상: 활동 전위)' : ' (역치 40 미만: 활동 전위 없음)') : '')); }
+          const key = st + (pumpOn ? '' : 'x') + (restM ? (tipIn ? 'i' : 'o') : '') + (L && L.S.mode === 'thr' && L.S.th.level != null ? 't' + L.S.th.level : '');
+          if (key !== lastInfo) { lastInfo = key; info(INFO[st] + (pumpOn ? '' : '<br>펌프가 멈추면 이온 농도 차이가 점점 사라져요.') + (L && L.S.mode === 'thr' && L.S.th.level != null ? '<br>자극 세기 ' + L.S.th.level + (L.S.th.level >= 40 ? ' (역치 40 이상: 활동 전위)' : ' (역치 40 미만: 활동 전위 없음)') : '') + (restM ? (tipIn ? '<br>미세 전극이 세포 안에 있어요. 전압계는 막 안과 막 밖의 전위 차를 보여 줘요.' : '<br><b>🔌 전극을 세포 안에 넣기</b>를 누르면 막전위를 잴 수 있어요.') : '')); }
         },
         sync() {},
       };

@@ -82,7 +82,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: phone ? 14 : 12.5, theta: 0.35, phi: 1.2, min: 5, max: 24, target: [1.6, 2.6, 0] },
     autoRotate: 0.12,
-    levels: [],   // 모든 단계에 2D 조작이 필요해요(로그 눈금 단추 · 시료 고르기 · 기록하기와 그래프 · 물질 끌기). 그래서 2D로 해요
+    levels: [1],   // pH 계산(시료 단추 · 답 칸 · 맞히면 pH 측정기와 입자가 바뀌어요). 로그 눈금 · 기록 그래프 · 물질 끌기 단계는 2D
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const L = makeLib(THREE);
@@ -170,7 +170,7 @@
             const sg = [mode, S.ex.pH, S.dp.sub, S.dp.step.hcl, S.dp.step.naoh].join('|'); if (sg !== sig) { sig = sg; if (own) { own = null; plE.pause(); plE.set(0); plD.pause(); plD.set(0); } }
             let np = pH, extra = '';
             if (mode === 'exp') { np = own === 'e' ? 7 - 6 * Math.cos(2 * Math.PI * pE) : S.ex.pH; }
-            else if (mode === 'calc') np = S.pc.pH;
+            else if (mode === 'calc') { np = S.pc.pH; const q = Z.PS && Z.PS.find((x) => x.k === S.pc.k); if (q) extra = '<b>' + q.name + '</b> · ' + (Z.pcDone && Z.pcDone(q.k) ? '계산이 맞았어요! pH 측정기를 확인해요. ' : '오른쪽 칸에 계산한 값을 쓰면 pH 측정기에 나타나요. '); }
             else if (mode === 'dil') {
               const sub = S.dp.sub; np = own === 'd' ? dilPHc(sub, 7 * (pD < 0.1 ? 0 : pD < 0.75 ? sm((pD - 0.1) / 0.65) : pD < 0.88 ? 1 : 1 - sm((pD - 0.88) / 0.12))) : S.dp.meter;
               extra = (sub === 'hcl' ? '염산(HCl)' : '수산화 나트륨(NaOH)') + ' 10배 희석 · ';

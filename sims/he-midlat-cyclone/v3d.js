@@ -13,7 +13,7 @@
   window.SciSim3D.attach({
     title: '온대 저기압과 전선 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    levels: [],              // 모든 단계가 2D 화면을 직접 다뤄요: 이름표 끌어 놓기 · 관측 그래프 읽기 · 기압 그래프 · 일기도 읽기
+    levels: [0],             // 0단계(저기압 구조): 3D 조작 막대의 이름표 단추로 ①②③ 자리에 이름표를 놓아요(2D 이름표 판과 같은 상태). 1~3단계(관측 그래프 · 기압 그래프 · 일기도 읽기)는 2D 화면에서 해요
     camera: { dist: PHONE ? 17 : 12, theta: -0.45, phi: 0.98, min: 5, max: 30, target: [0.8, 0.7, 0.6] },
     autoRotate: 0,
     build(ctx) {
@@ -137,12 +137,32 @@
           mode === 'warm' ? '<b>온난 전선</b>: 따뜻한 공기가 찬 공기 위로 완만하게 올라가요.<br>층운형 구름이 넓게 생기고 약한 비가 오래 와요. 지나가면 기온이 올라가요.' : mode === 'cold' ? '<b>한랭 전선</b>: 찬 공기가 따뜻한 공기를 급하게 밀어 올려요.<br>적운형 구름이 높이 솟고 좁은 지역에 소나기가 와요. 지나가면 기온이 내려가요.' : '<b>중위도 저기압</b>: 중심의 남서쪽에 한랭 전선, 동~남동쪽에 온난 전선, 그 사이가 온난 구역이에요.<br>북반구라서 바람이 <b>반시계 방향</b>으로 중심에 불어 들어와요.');
         obsG.visible = lv === 1; obsLab.show(lv === 1);
       }
+      /* 0단계 이름표: 3D에서는 전선 이름 대신 ①②③ 자리 번호를 보여 주고, 학생이 고른 이름표를 붙여요 (2D 이름표 판 board.cards와 같은 상태) */
+      const ZN = [['warm', LB.wf, '①'], ['sector', LB.warm, '②'], ['cold', LB.cf, '③']], TAGN = { cold: '한랭 전선', warm: '온난 전선', sector: '온난 구역' };
+      const ZT0 = ZN.map((z) => [z[1].el.innerHTML, z[1].el.style.background]);
+      const probeT = controls.text(''); probeT.style.display = 'none'; const ctlT = probeT.parentElement, nT0 = ctlT.children.length;
+      function placeTag(id, zone) { const l = L2(), b = l && l.board; if (!b) return; const c = b.cards.find((x) => x.id === id); if (!c) return; b.cards.forEach((x) => { if (x !== c && x.zone === zone) x.zone = null; }); c.zone = c.zone === zone ? null : zone; b.layout(true); }
+      const tagSeg = ['cold', 'warm', 'sector'].map((id) => controls.segment('🏷 ' + TAGN[id], ZN.map((z) => ({ value: z[0], label: z[2] })), null, (v) => placeTag(id, v)));
+      const tagEls = [].slice.call(ctlT.children, nT0); let tagKey = '';
+      function syncTags() {
+        const l = L2(), b = l && l.board, on = ctx.level === 0 && !!b;
+        tagEls.forEach((e) => { e.style.display = on ? '' : 'none'; });
+        const key = on ? b.cards.map((c) => c.id + ':' + (c.zone || '')).join('|') : 'off';
+        if (key === tagKey) return; tagKey = key;
+        ZN.forEach((z, i) => {
+          if (!on) { z[1].set(ZT0[i][0]); z[1].el.style.background = ZT0[i][1]; return; }
+          const c = b.cards.find((x) => x.zone === z[0]); z[1].set(z[2] + (c ? ' ' + c.label : ' 이름표 자리')); z[1].el.style.background = c ? 'rgba(15,23,42,.92)' : 'rgba(71,85,105,.85)';
+        });
+        if (on) ['cold', 'warm', 'sector'].forEach((id, i) => { const c = b.cards.find((x) => x.id === id); tagSeg[i].set(c ? c.zone : null); });
+      }
+      syncTags(); ctx.onLevel(() => { tagKey = ''; syncTags(); });
       apply();
       { const l = L2(); const h0 = ctx.level === 1 && l && l.S ? l.S.t : 12; syncing = true; pl.set((h0 == null ? 12 : h0) / 24); syncing = false; }
       ctx.onLevel((lv) => { apply(); const l = L2(); syncing = true; pl.set((lv === 1 && l && l.S && l.S.t != null ? l.S.t : 12) / 24); syncing = false; });
 
       return {
         update(dt, t) {
+          syncTags();
           { const l = L2(); if (ctx.level === 1 && l && l.S && !pl.playing) { if (Math.abs(l.S.t - 24 * pl.p) > 0.04) { syncing = true; pl.set(l.S.t / 24); syncing = false; } else place(24 * pl.p); } }
           let n = 0;
           const w = mode !== 'cold', c = mode !== 'warm', vis = showCl ? 1 : 0.0001;

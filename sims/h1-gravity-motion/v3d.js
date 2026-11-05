@@ -11,7 +11,7 @@
   window.SciSim3D.attach({
     title: '떨어뜨린 공 · 던진 공 3D',
     camera: { dist: PHN ? 24 : 17, theta: 0.3, phi: 1.3, target: [1.4, 2.4, 0], min: 8, max: 34 },
-    levels: [],
+    levels: [3],
     autoRotate: 0,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
@@ -107,12 +107,40 @@
         gnd.material.color.setHex(BODY[body].c);
         t = 0; state = 'run'; rebuildPaths(); paint();
       }
+      /* 4단계 점프 체험: 같은 3.0 m/s로 뛰어오를 때 천체마다 높이가 달라요 (2D의 점프와 같은 시간) */
+      const JUMP_V = 3.0, KJ = 1.2, jumpG = new THREE.Group(); root.add(jumpG); jumpG.visible = false;
+      const jumpers = Object.keys(BODY).map((k, i) => {
+        const x = -3.6 + i * 3.2, pad = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 0.9, 0.08, 32), std(BODY[k].c, { roughness: 0.9 })); pad.position.set(x, 0.05, 0.6); jumpG.add(pad);
+        const b = new THREE.Mesh(new THREE.SphereGeometry(0.32, 28, 20), std(0xffd34d, { roughness: 0.35 })); b.position.set(x, 0.4, 0.6); jumpG.add(b);
+        const hmax = JUMP_V * JUMP_V / (2 * BODY[k].g), top = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.03, 0.03), new THREE.MeshBasicMaterial({ color: 0xffd34d, transparent: true, opacity: 0.7 })); top.position.set(x, hmax * KJ + 0.4, 0.6); jumpG.add(top);
+        const lb = label(BODY[k].n + ' · 최고 ' + (hmax >= 1 ? hmax.toFixed(1) : hmax.toFixed(2)) + ' m', [x, hmax * KJ + 0.75, 0.6], { size: 12 }); lb.show(false);
+        return { k, b, lb, x };
+      });
+      const throwObjs = () => [ballA, ballB, gA, gB, links, path, vline, tower].filter(Boolean);
+      let jumpOn = false;
+      function setJump(on) {
+        if (on === jumpOn) return; jumpOn = on; jumpG.visible = on; jumpers.forEach((j) => j.lb.show(on));
+        throwObjs().forEach((o) => { o.visible = !on; }); [labA, labB, timeLab].forEach((l) => l.show(!on));
+        if (on) info('<b>점프 체험</b>: 네 천체에서 똑같이 <b>3.0 m/s</b>로 뛰어올라요.<br>중력 가속도가 작을수록 더 높이, 더 오래 떠 있어요. (달은 지구의 약 6배 높이)'); else lastKey = '';
+      }
+      function follow2D() {   // 4단계: 2D의 [▶ 놓고 던지기] · [🦘 점프 체험]을 그대로 따라가요
+        const L = window.__sim, S = L && L.S; if (!S || ctx.level !== 3) { setJump(false); return false; }
+        if (S.mode === 'jump') {
+          setJump(true); throwObjs().forEach((o) => { o.visible = false; }); const tt = S.J && S.J.state !== 'idle' ? S.J.t : 0;
+          jumpers.forEach((j) => { const g = BODY[j.k].g, y = Math.max(0, JUMP_V * tt - 0.5 * g * tt * tt); j.b.position.y = 0.4 + y * KJ; });
+          return true;
+        }
+        setJump(false);
+        const P = S.P; if (!P) return false;
+        t = P.state === 'run' || P.state === 'done' ? P.t : 0; state = 'manual'; paint(); return true;
+      }
       ctx.onLevel(() => { applyLevel(); });
       rebuildPaths(); t = 0; state = 'run'; paint(); applyLevel();
       return {
         update(dt) {
           applyLevel();
-          if (demoP > 0 || pl.playing) return;
+          if (demoP > 0 || pl.playing) { setJump(false); return; }
+          if (follow2D()) return;
           if (state === 'manual') { state = 'run'; t = 0; }
           if (state === 'done') { hold += dt; if (hold > 2.4) { t = 0; hold = 0; state = 'run'; paint(); } }
           if (state === 'run') { t += dt; if (t >= Tf()) { t = Tf(); state = 'done'; } paint(); }

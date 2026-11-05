@@ -19,7 +19,7 @@
     hint: '병원체를 골라 돌려 보세요 · 구조와 크기가 달라요',
     camera: { dist: narrow ? 13 : 9.5, theta: 0.6, phi: 1.15, min: 4.5, max: 20 },
     autoRotate: 0.25,
-    levels: [],   // 모든 단계에 캔버스 조작이 필요해요(비교표 칸 누르기 · 증식 그래프 점 찍기 · 카드 끌기 · 환자·마을 장면). 그래서 2D로 해요
+    levels: [0],   // 병원체 비교(시료 단추 · 비교표 칸 단추). 카드 끌기가 있는 증식·전염, 질병 분류와 환자·마을 장면은 2D
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = (x, y, z) => new THREE.Vector3(x, y, z || 0);
@@ -190,6 +190,20 @@
         else if (!driving && !pV.playing) { const want = Math.min(1, V.t / 12); if (Math.abs(pV.p - want) > 0.03) { ignG = true; pV.set(want); ignG = false; } }
       }
 
+      /* 비교표 칸 고르기: 2D 표의 칸을 누르는 것과 같아요 (위에서 고른 병원체의 줄을 채워요) */
+      const tTxt = controls.text('');
+      const tBtns = [0, 1, 2].map((c) => controls.button('', () => {
+        const L = window.__sim, T = L && L.S.O && L.S.O.table; if (!T) return;
+        const r = cur < 0 ? 0 : cur, n = T.o.cols[c].opts.length;
+        T.val[r][c] = T.val[r][c] + 1 >= n ? 0 : T.val[r][c] + 1; T.bad[r][c] = false; if (T.o.onChange) T.o.onChange();
+      }));
+      const tableUI = (S2) => {
+        const on = !!(S2 && gm === 'obs' && S2.mode === 'obs' && S2.sub.obs === 'table' && S2.O && S2.O.table);
+        showE([tTxt].concat(tBtns), on); if (!on) return;
+        const T = S2.O.table, r = cur < 0 ? 0 : cur;
+        const tt = '<b>비교표 · ' + T.o.rows[r] + '</b> (' + T.filled + ' / ' + T.total + '칸)'; if (tTxt.innerHTML !== tt) tTxt.innerHTML = tt;
+        tBtns.forEach((b, c) => { const v = T.val[r][c], txt = T.o.cols[c].label.replace('\n', ' ') + ': ' + (v >= 0 ? T.o.cols[c].opts[v] : '?') + (T.bad[r][c] ? ' ✕' : ''); if (b.textContent !== txt) b.textContent = txt; b.classList.toggle('on', v >= 0); });
+      };
       setGM('obs');
       return {
         update(dt, t) {
@@ -197,6 +211,7 @@
           { const L = window.__sim, S2 = L && L.S, want = S2 && S2.mode === 'grow' && S2.sub.grow === 'bact' ? 'bact' : S2 && S2.mode === 'grow' && S2.sub.grow === 'virus' ? 'virus' : 'obs';
             if (want !== gm) setGM(want);
             if (gm === 'obs' && S2) { const nk = S2.mode + '|' + (S2.sub && S2.sub[S2.mode]); if (nk !== noteKey) { noteKey = nk; info(infoOf(cur < 0 ? 0 : cur)); } }
+            tableUI(S2);
             if (gm === 'bact') { bactFrame(L, t); return; }
             if (gm === 'virus') { virusFrame(L, t); return; } }
           { const L = window.__sim; if (L && L.S.O) { const k = KEYS.indexOf(L.S.O.cur); if (k >= 0 && k !== cur) show(k); } }

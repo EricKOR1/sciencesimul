@@ -673,7 +673,7 @@
   const modeSeg = $('#modeSeg'), sAng = $('#sAng'), oAng = $('#oAng'), sT4 = $('#sT4'), oT4 = $('#oT4');
   const BAND_OPTS = [['', '고르세요']].concat(BAND_ORDER.map((b) => [b, BANDS[b].ans]));
   $('#bandRows').innerHTML = BAND_ORDER.map((b, i) => '<div class="row-sel"><b>' + BANDS[b].nm.replace('가시광선', '가시') + '</b><select class="mini-sel" data-b="' + b + '" aria-label="' + BANDS[b].nm + '으로 보이는 구조">' + BAND_OPTS.map((o) => '<option value="' + o[0] + '">' + o[1] + '</option>').join('') + '</select></div>').join('');
-  $('#cardRows').innerHTML = CARDS.map((c, i) => '<div class="row-sel"><b>' + c.letter + '</b><select class="mini-sel" data-i="' + i + '" aria-label="카드 ' + c.letter + '의 유형">' + TYPE_OPTS.map((o) => '<option value="' + o[0] + '">' + o[1] + '</option>').join('') + '</select></div>').join('');
+  $('#cardRows').innerHTML = CARDS.map((c, i) => '<div class="row-sel"><b>' + c.letter + '</b><select class="mini-sel" data-i="' + i + '" aria-label="카드 ' + c.letter + '의 유형">' + TYPE_OPTS.map((o) => '<option value="' + o[0] + '">' + o[1] + '</option>').join('') + '</select><span class="card-desc">' + c.l.join(' · ') + '</span></div>').join('');
   const SB_OPTS = [['A', '푸른 별이 거의 없고 적외선이 약한 붉은 타원 은하'], ['B', '적외선이 매우 밝고 푸른 별 무리가 많은 충돌 은하'], ['C', '밝은 핵과 넓은 방출선이 있는 나선 은하']];
   $('#sbRows').innerHTML = SB_OPTS.map((o) => '<button class="opt" type="button" data-k="' + o[0] + '" style="text-align:left;font-size:14px"><b>' + o[0] + '</b> ' + o[1] + '</button>').join('');
 

@@ -86,6 +86,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: 14 * KD, theta: 0.3, phi: 0.95, min: 6, max: 30 },
     autoRotate: 0,
+    levels: [0, 2, 3],   // 2단계(질량 분석)는 캔버스의 검출기에서 도착 위치 d를 읽어야 해서 2D
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const h = H3(ctx); const { V3, mat, glass, mkArrow, setArrow, arrowSet, mkSeg, setSeg, anchor, sphere, box, cyl, tube, grab, showCtl, toggleBtn } = h;
@@ -307,7 +308,7 @@
         else if (sc === 'tok') { o.dist = 14.5 * KD; o.phi = 0.95; }
         else { o.dist = 17 * KD; o.phi = 1.2; }
       }
-      let lastSig = '';
+      let lastSig = '', lastVaP = null;
       function readLesson(dt, t) {
         const sim = window.__sim; if (!sim) return false; const S = sim.S, sc = MODE2SC[S.mode] || 'cyc';
         if (sc !== st.sc) { go(sc); lastSig = ''; }
@@ -324,6 +325,7 @@
           else { st.alpha = S.va.pitch; vanInfo(); van.t = 0; vTr.clear(); vp.material.color.setHex(S.va.sp === 'p' ? 0xffe14d : 0x7ab6ff); vp.material.emissive.setHex(S.va.sp === 'p' ? 0xffc800 : 0x3b82f6); van.dirS = S.va.sp === 'p' ? 1 : -1; }
         }
         if (sc === 'tok') { tkB = S.tk.Bd; tkTs = S.tk.Ts; }
+        if (sc === 'van' && S.va.p !== lastVaP) { lastVaP = S.va.p; van.t = 0; vTr.clear(); }   // 옆 조작판의 ▶ 입자 넣기: 적도에서 새 입자가 출발해요
         return sim;
       }
       return {

@@ -47,7 +47,7 @@
   const ARGO_MAX = 2000;           // 2D의 '읽을 수심' 슬라이더 범위와 ARGO 부이가 내려가는 깊이
 
   window.SciSim3D.attach({
-    levels: [],              // 모든 단계가 2D 화면을 직접 다뤄요: 지도의 부이 누르기 · 손잡이 끌어 그래프 그리기 · 포화 용존 산소 그래프와 원인 카드 · 두 해역 표와 그래프
+    levels: [0],             // 0단계: 부이 단추로 고른 바다의 기둥에 ARGO 부이가 내려가요. 1~3단계(손잡이 끌기 · 포화 용존 산소 그래프 · 두 해역 표)는 2D 화면에서 해요
     title: '수온·용존 산소 3D 기둥',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHONE ? 17 : 12.5, theta: 0.35, phi: 1.28, min: 6, max: 26, target: [0, -2.5, 0] },
@@ -113,7 +113,7 @@
       function txt() {
         const lv = ctx.level;
         info(mode === 'T'
-          ? '<b>수온</b>: ' + (lv === 0 ? '수심 200 m 수온은 저위도 18 °C, 중위도(여름) 10 °C, 고위도 3.5 °C예요(예시 자료).<br>수심 판을 200 m에 맞춰 읽어 보세요.' : lv === 1 ? '저위도와 중위도 여름은 <b>수온 약층</b>이 뚜렷하고, 중위도 겨울은 혼합층이 깊어 약해지고, 고위도는 표층부터 차가워 거의 없어요.' : '표층 수온이 높은 해역일수록 깊이에 따라 수온이 크게 내려가요.')
+          ? '<b>수온</b>: ' + (lv === 0 ? 'ARGO 부이를 고르면 그 바다의 기둥을 따라 부이가 내려가며 재요.<br>수심 판을 <b>200 m</b>에 맞춰 세 바다(저위도 · 중위도 · 고위도)의 수온을 읽어 보세요.<br>위성은 표층만 보지만, 부이는 2000 m까지 재요.' : lv === 1 ? '저위도와 중위도 여름은 <b>수온 약층</b>이 뚜렷하고, 중위도 겨울은 혼합층이 깊어 약해지고, 고위도는 표층부터 차가워 거의 없어요.' : '표층 수온이 높은 해역일수록 깊이에 따라 수온이 크게 내려가요.')
           : '<b>용존 산소</b>: 표층에서 풍부하다가 저위도는 500 m 부근에서 최소(1.2 mL/L)가 되고 심층에서 다시 늘어요. 고위도는 깊이에 따른 변화가 작고 값이 높아요(예시 자료).');
       }
       seg = controls.segment('색', [{ value: 'T', label: '🌡️ 수온' }, { value: 'O', label: '🫧 용존 산소' }], mode, (v) => { mode = v; recolor(); setZ(z); });
@@ -134,9 +134,20 @@
       let lastD = (L2() && L2().S) ? L2().S.depth : null;
       ctx.onLevel((lv) => { const m = lv === 2 ? 'O' : 'T'; if (m !== mode) { mode = m; seg.set(m); recolor(); setZ(z); } else txt(); });
       const dm2 = new THREE.Object3D();
+      /* ARGO 부이: 2D 조작판에서 고른 부이가 그 바다의 기둥을 따라 2000 m까지 내려가요 (2D와 같은 진행 S.prog) */
+      const BCOL = { low: 0xef4444, mid: 0xf59e0b, high: 0x7c3aed }, BCOLX = { low: 0, mid: 1, high: 3 };
+      const argo = new THREE.Group(); root.add(argo);
+      const argoM = std(0xffffff, { roughness: 0.35, metalness: 0.2 });
+      { const body = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 0.7, 16), argoM); argo.add(body); const ant = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.4, 6), std(0x1f2937)); ant.position.y = 0.55; argo.add(ant); }
+      const argoRing = new THREE.Mesh(new THREE.TorusGeometry(CW * 0.62, 0.035, 8, 48), new THREE.MeshBasicMaterial({ color: 0xffffff })); argoRing.rotation.x = Math.PI / 2; root.add(argoRing);
+      const argoL = label('', argo, { size: 12, offset: [0, 0.75, 0] });
+      argo.visible = argoRing.visible = false; argoL.show(false);
       return {
         update(dt, t) {
           const l = L2();
+          { const S = l && l.S, k = S && S.view === 'map' ? S.buoy : null, on = !!k && BCOLX[k] != null;
+            argo.visible = argoRing.visible = on; argoL.show(on);
+            if (on) { const x = XS[BCOLX[k]]; argoM.color.setHex(BCOL[k]); argoRing.material.color.setHex(BCOL[k]); argoRing.position.set(x, 0.08, 0); const dz = ARGO_MAX * Math.max(0, Math.min(1, S.prog || 0)); argo.position.set(x, yOf(dz) + 0.35, CW / 2 + 0.25); argoL.set('ARGO 부이 · ' + Math.round(dz) + ' m'); } }
           if (l && l.S && l.S.depth !== lastD) { lastD = l.S.depth; if (!pl.playing && lastD != null && lastD !== z) setZ(lastD); }
           mix.forEach((m, i) => { const h = mixH[i] || 0.3; for (let k = 0; k < NP; k++) { const a = k * 2.4 + t * (0.8 + (k % 3) * 0.3), rr = 0.55 * Math.sqrt((k + 1) / NP); dm2.position.set(XS[i] + Math.cos(a) * rr, -h * ((k * 0.37 + t * 0.12 * (1 + k % 2)) % 1) * 0.95 - 0.02, Math.sin(a) * rr); dm2.scale.setScalar(1); dm2.updateMatrix(); m.setMatrixAt(k, dm2.matrix); } m.instanceMatrix.needsUpdate = true; });
         },

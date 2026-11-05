@@ -1361,6 +1361,11 @@
   function put(B, c, s) { if (c.slot) { c.slot.items.splice(c.slot.items.indexOf(c), 1); } s.items.push(c); c.slot = s; c.free = false; B.layout(s); c.x = c.tx; c.y = c.ty; c.sc = c.tsc; c.bad = false; }
   window.__sim = {
     S, VW, VH, boards, SORT, PAIR, MAPB, get game() { return game; }, enterLevel, setMode, setSub, toggleSrc, setZoom, layerCheck,
+    pairPut(c, key) {   // 3D의 에너지원 단추: 현상 카드를 그 에너지원 상자에 놓아요 (상자가 가득 차면 놓지 않아요)
+      const sl = PAIR.slots.find((q) => q.key === key); if (!c || !sl) return false;
+      if (c.slot === sl) return true; if (sl.items.length >= sl.cap) { c.shake = 0.4; Sound.fail && Sound.fail(); return false; }
+      put(PAIR, c, sl); PAIR.ver++; Sound.tick(); updateCtl(); return true;
+    },
     solve(kind, right) {
       if (kind === 'layers') ['geo', 'atm', 'hyd'].forEach((k) => { const B = boards[k]; B.items.forEach((c) => { const idx = right === false ? (c.ans + 1) % B.slots.length : c.ans; put(B, c, B.slots[idx]); }); });
       else if (kind === 'sort') SORT.items.forEach((c, i) => { const key = right === false ? SEL_ORDER[(SEL_ORDER.indexOf(c.ans) + 1) % 5] : c.ans; put(SORT, c, SORT.slots.find((s) => s.key === key)); });

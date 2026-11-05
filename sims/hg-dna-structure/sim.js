@@ -1114,6 +1114,12 @@
     S.xr.bp = ok; updateCtl();
   });
   $('#fitClear').addEventListener('click', () => { Sound.click(); fitClearAll(); });
+  /* 짝 단추: 두 염기를 첫째 줄 틈에 한 번에 놓아요 (3D 단계에서도 같은 미션 진행) */
+  [['A', 'T'], ['G', 'C'], ['A', 'G'], ['T', 'C'], ['A', 'C'], ['G', 'T']].forEach(([a, b]) => {
+    const bt = document.createElement('button'); bt.type = 'button'; bt.textContent = a + ' + ' + b;
+    bt.addEventListener('click', () => { S.fit.slots[0] = [null, null]; fitPlace(0, 0, a); fitPlace(0, 1, b); });
+    $('#fitPairs').appendChild(bt);
+  });
   $('#hxBuild').addEventListener('click', () => { if (S.hx.build) return; Sound.click(); S.hx.build = true; S.hx.vis = 0; updateCtl(); });
   $('#hxDir').addEventListener('click', () => { if (!(S.hx.build && S.hx.vis >= HX_N)) return; Sound.click(); S.hx.dir = !S.hx.dir; if (S.hx.dir) S.hx.dirSeen = true; updateCtl(); });
   $('#hxTwist').addEventListener('click', () => { if (!(S.hx.build && S.hx.vis >= HX_N)) return; Sound.click(); S.hx.twT = S.hx.twT > 0.5 ? 0 : 1; updateCtl(); });
