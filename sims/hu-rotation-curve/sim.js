@@ -290,7 +290,7 @@
     // 헤일로 안개
     if (o.halo > 0.01) { const hg = ctx.createRadialGradient(cx, cy, 5, cx, cy, R * 1.12); hg.addColorStop(0, 'rgba(167,139,250,' + 0.55 * o.halo + ')'); hg.addColorStop(0.25, 'rgba(139,92,246,' + 0.38 * o.halo + ')'); hg.addColorStop(0.6, 'rgba(124,58,237,' + 0.2 * o.halo + ')'); hg.addColorStop(1, 'rgba(124,58,237,0)'); ctx.fillStyle = hg; ctx.beginPath(); ctx.arc(cx, cy, R * 1.12, 0, TAU); ctx.fill(); }
     D.glow(cx, cy, R * 0.9, '#6d83c9', 0.22);
-    for (let a = 0; a < 2; a++) { const pts = []; for (let th = 0.3; th < 5.4; th += 0.1) { const r = 0.9 + th * 5.4, ang = th + a * Math.PI; pts.push([cx + Math.cos(ang) * r * sc, cy + Math.sin(ang) * r * sc]); } line(pts, 'rgba(165,180,252,.28)', Math.max(5, sc * 4)); }
+    for (let a = 0; a < 2; a++) { const pts = []; for (let th = 0.3; th < 5.4; th += 0.1) { const r = 0.9 + th * 5.4, ang = th + a * Math.PI; pts.push([cx + Math.cos(ang) * r * sc, cy - Math.sin(ang) * r * sc]); } line(pts, 'rgba(165,180,252,.28)', Math.max(5, sc * 4)); }
     D.glow(cx, cy, 6 * sc, '#ffe9a8', 0.85);
     if (o.enc != null) { ctx.fillStyle = 'rgba(250,204,21,.16)'; ctx.beginPath(); ctx.arc(cx, cy, o.enc * sc, 0, TAU); ctx.fill(); ctx.strokeStyle = '#fde047'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(cx, cy, o.enc * sc, 0, TAU); ctx.stroke(); }
     ctx.strokeStyle = 'rgba(203,213,225,.45)'; ctx.setLineDash([4, 5]); ctx.lineWidth = 1; [10, 20, 30].forEach((r) => { ctx.beginPath(); ctx.arc(cx, cy, r * sc, 0, TAU); ctx.stroke(); }); ctx.setLineDash([]);
@@ -304,9 +304,9 @@
       const v = vfn(r, i), om = v / r * 0.0075;
       const base = S.rot * om + i * 1.3;
       for (let k = 0; k < 3; k++) {
-        const ang = base + k * TAU / 3, x = geo.cx + Math.cos(ang) * r * geo.sc, y = geo.cy + Math.sin(ang) * r * geo.sc;
+        const ang = base + k * TAU / 3, x = geo.cx + Math.cos(ang) * r * geo.sc, y = geo.cy - Math.sin(ang) * r * geo.sc;  // 시계 반대 방향 회전
         D.glow(x, y, 8, '#fde68a', 0.5); ctx.fillStyle = '#fff7d6'; ctx.beginPath(); ctx.arc(x, y, PHONE ? 3.4 : 3, 0, TAU); ctx.fill();
-        if (k === 0) { const len = v / 220 * (PHONE ? 38 : 34); D.arrow(x, y, x - Math.sin(ang) * len, y + Math.cos(ang) * len, { color: o.col || '#4ade80', width: 2.4, head: 8 }); }
+        if (k === 0) { const len = v / 220 * (PHONE ? 38 : 34); D.arrow(x, y, x - Math.sin(ang) * len, y - Math.cos(ang) * len, { color: o.col || '#4ade80', width: 2.4, head: 8 }); }
       }
     });
   }

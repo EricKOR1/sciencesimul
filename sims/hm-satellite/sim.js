@@ -459,8 +459,8 @@
     const ex = PHONE ? c.x + 92 : c.x + 150, ey = c.y + c.h / 2 + 6, Re = PHONE ? 28 : 42, Ro = PHONE ? 68 : 116;
     ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = 1.5; ctx.setLineDash([5, 6]); ctx.beginPath(); ctx.arc(ex, ey, Ro, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
     D.glow(ex, ey, Re * 1.4, '#7cc4ff', 0.3); D.sphere(ex, ey, Re, '#3b82f6', { gloss: true });
-    const a = -w.t * 0.9 + 2.2, sx = ex + Ro * Math.cos(a), sy = ey - Ro * Math.sin(a);
-    const tx = Math.sin(a), ty = Math.cos(a);              // 접선(시계 방향)
+    const a = w.t * 0.9 + 2.2, sx = ex + Ro * Math.cos(a), sy = ey - Ro * Math.sin(a);
+    const tx = -Math.sin(a), ty = -Math.cos(a);            // 접선(시계 반대 방향)
     D.dashedLine(sx, sy, sx + tx * 60, sy + ty * 60, { color: '#ffe58a', width: 2, dash: [4, 4] });
     D.arrow(sx, sy, sx + (ex - sx) / Ro * 40, sy + (ey - sy) / Ro * 40, { color: '#ff7b7b', width: 3.5, head: 10 });
     satDraw(sx, sy, Math.atan2(ty, tx), 0.9);

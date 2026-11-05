@@ -372,7 +372,7 @@
     nebHaze(cx, cy, Rp, Rp, heat);
     NEB.forEach((p) => {
       const ang = p.ang + S.spin * (1 + 0.9 * (1 - p.rho));
-      const x = cx + Math.cos(ang) * p.rho * Rp, y = cy + Math.sin(ang) * p.rho * Rp;
+      const x = cx + Math.cos(ang) * p.rho * Rp, y = cy - Math.sin(ang) * p.rho * Rp;  // 위에서 보면 시계 반대 방향
       ctx.fillStyle = rgba(mixc('#cbd5e1', '#fcd34d', (1 - p.rho) * heat), 0.45 + 0.5 * (1 - p.rho)); ctx.beginPath(); ctx.arc(x, y, p.sz, 0, TAU); ctx.fill();
     });
     protoSun(cx, cy, heat, t);
@@ -380,7 +380,8 @@
     // 회전 방향 화살표
     const ar = Rp + 12, a1 = -0.55, a0 = a1 - 1.0;
     ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(cx, cy, ar, a0, a1); ctx.stroke();
-    const hx = cx + Math.cos(a1) * ar, hy = cy + Math.sin(a1) * ar, tx = -Math.sin(a1), ty = Math.cos(a1);
+    // 화살촉은 a0 쪽 끝: 시계 반대 방향(캔버스 각도가 줄어드는 쪽)을 가리켜요
+    const hx = cx + Math.cos(a0) * ar, hy = cy + Math.sin(a0) * ar, tx = Math.sin(a0), ty = -Math.cos(a0);
     ctx.fillStyle = '#38bdf8'; poly([[hx + tx * 10, hy + ty * 10], [hx - ty * 6 - tx * 1, hy + tx * 6 - ty * 1], [hx + ty * 6 - tx * 1, hy - tx * 6 - ty * 1]]); ctx.fill();
     D.text(cx, A.y + A.h - 12, 'r = ' + Math.round(S.r) + ' AU', { size: 14, weight: 800, color: '#bae6fd' });
 
@@ -624,8 +625,8 @@
     let big = null; ACC.B.forEach((b) => { if (!big || b.m > big.m) big = b; });
     ACC.B.forEach((b) => {
       const k = clamp(Math.log(b.m) / Math.log(60), 0, 1), col = mixc(mixc('#8d8579', '#a8734a', k), '#ef4444', b.heat * 0.7);
-      if (b.m > 8) D.sphere(cx + b.x * sc, cy + b.y * sc, Math.max(1.6, bodyR(b.m) * sc), col, { gloss: true }); else ball(cx + b.x * sc, cy + b.y * sc, Math.max(1.6, bodyR(b.m) * sc), b.heat > 0.05 ? col : (k < 0.3 ? '#8d8579' : '#a0704a'), false);
-      if (b.heat > 0.05) D.glow(cx + b.x * sc, cy + b.y * sc, bodyR(b.m) * sc * 2.4, '#fb923c', 0.5 * b.heat);
+      if (b.m > 8) D.sphere(cx + b.x * sc, cy - b.y * sc, Math.max(1.6, bodyR(b.m) * sc), col, { gloss: true }); else ball(cx + b.x * sc, cy - b.y * sc, Math.max(1.6, bodyR(b.m) * sc), b.heat > 0.05 ? col : (k < 0.3 ? '#8d8579' : '#a0704a'), false);
+      if (b.heat > 0.05) D.glow(cx + b.x * sc, cy - b.y * sc, bodyR(b.m) * sc * 2.4, '#fb923c', 0.5 * b.heat);
     });
     if (big && big.m >= 3) {
       const bxp = cx + big.x * sc, byp = cy + big.y * sc;
