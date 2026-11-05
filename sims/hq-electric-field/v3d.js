@@ -106,9 +106,10 @@
 
   window.SciSim3D.attach({
     title: '점전하의 전기장 3D',
-    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 값은 왼쪽 조작판에서 바꿔요',
+    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 값은 옆 조작판에서 바꿔요',
     camera: { dist: 12.5 * KD, theta: 0.15, phi: 1.2, min: 5, max: 28 },
     autoRotate: 0,
+    levels: [3],   // 1~3단계는 표 기록·시험 전하 끌어 놓기·E–r 그래프가 캔버스에 있어서 2D, 4단계(전기장의 합)는 3D
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const h = H3(ctx); const { V3, mat, mkArrow, setArrow, arrowSet, mkSeg, setSeg, anchor, sphere, fib, grab, showCtl } = h;
@@ -268,7 +269,7 @@
         const rows = [];
         [q].forEach((k) => (f.pts[k] || []).filter((p) => !(mk && Math.abs(p.r - 0.15) < 1e-6)).sort((a, b) => a.r - b.r).slice(0, 6).forEach((p) => rows.push('r ' + p.r.toFixed(2) + ' m · E ' + f3(p.E / 1e5) + ' · E·r² ' + f3(p.E * p.r * p.r / 1e3))));
         info('<b>📈 거리에 따른 전기장의 세기</b> (q = ' + sgn(q) + Math.abs(q) + ' μC)<br>측정 위치 r = ' + f.r.toFixed(2) + ' m' + (mk ? '' : ' → E = ' + sci(E) + ' N/C') +
-          (rows.length ? '<br><span style="font-size:12px">E(×10⁵)·E·r²(×10³)<br>' + rows.join('<br>') + '</span>' : '<br>📌 2D 조작판에서 점을 찍으면 그래프에 쌓여요.') + (rows.length >= 3 ? '<br>E·r²는 늘 같아요' : ''));
+          (rows.length ? '<br><span style="font-size:12px">E(×10⁵)·E·r²(×10³)<br>' + rows.join('<br>') + '</span>' : '<br>📌 점 찍기를 누르면 측정값이 쌓여요.') + (rows.length >= 3 ? '<br>E·r²는 늘 같아요' : ''));
       }
 
       /* ================= ④ 전기장의 합 (a·b·c 배치, 잉크젯) ================= */

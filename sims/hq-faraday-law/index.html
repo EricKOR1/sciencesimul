@@ -100,10 +100,10 @@
 
     <aside class="side-col">
       <section class="card card-pad" id="ctrlCard">
-        <div class="control" data-modes="flux">
+        <div class="control" data-modes="flux" data-v3="keep">
           <div class="control-head"><label for="sB">🧲 자기장 B</label><output id="osB"></output></div><div class="range-row"><button class="nudge" id="sBM" type="button" aria-label="자기장 세기 0.1테슬라부터 1.0테슬라 줄이기">−</button><input type="range" id="sB" min="0.1" max="1.0" step="0.1" value="0.5" aria-label="자기장 세기 0.1테슬라부터 1.0테슬라"><button class="nudge" id="sBP" type="button" aria-label="자기장 세기 0.1테슬라부터 1.0테슬라 늘리기">+</button></div>
         </div>
-        <div class="control" data-modes="flux">
+        <div class="control" data-modes="flux" data-v3="keep">
           <div class="control-head"><label for="sA">⬜ 코일 면적 A</label><output id="osA"></output></div><div class="range-row"><button class="nudge" id="sAM" type="button" aria-label="코일 면적 0.005부터 0.030제곱미터 줄이기">−</button><input type="range" id="sA" min="0.005" max="0.03" step="0.005" value="0.02" aria-label="코일 면적 0.005부터 0.030제곱미터"><button class="nudge" id="sAP" type="button" aria-label="코일 면적 0.005부터 0.030제곱미터 늘리기">+</button></div>
         </div>
         <div class="control" data-modes="flux">
@@ -128,7 +128,7 @@
           <div class="control-head"><span>🖼️ 화면</span></div>
           <div class="segmented view-seg" id="lViewSeg" role="group" aria-label="🖼️ 화면" ><button type="button" data-v="mag">자석·코일</button><button type="button" data-v="rail">막대·레일</button><button type="button" data-v="fake">가상: 돕는다면?</button></div>
         </div>
-        <div class="control" data-modes="lenz" data-view="mag"><div class="btn-row"><button class="btn btn-sm btn-primary" id="bAppr" type="button">→ 접근</button><button class="btn btn-sm btn-primary" id="bLeave" type="button">← 이탈</button></div><div class="btn-row"><button class="btn btn-sm" id="bFlip" type="button">🔄 자석 뒤집기</button></div><p class="ctrl-note">자석을 손가락으로 끌어도 돼요.</p></div>
+        <div class="control" data-modes="lenz" data-view="mag"><div class="btn-row"><button class="btn btn-sm btn-primary" id="bAppr" type="button">→ 접근</button><button class="btn btn-sm btn-primary" id="bLeave" type="button">← 이탈</button></div><div class="btn-row"><button class="btn btn-sm" id="bFlip" type="button">🔄 자석 뒤집기</button></div><p class="ctrl-note" data-v3="2d">자석을 손가락으로 끌어도 돼요.</p></div>
         <div class="control" data-modes="lenz" data-view="rail" data-gate-off="ml2">
           <div class="control-head"><label for="sRv">🚀 막대 속력 v</label><output id="osRv"></output></div><div class="range-row"><button class="nudge" id="sRvM" type="button" aria-label="막대 속력 1부터 4미터 매 초 줄이기">−</button><input type="range" id="sRv" min="1" max="4" step="0.5" value="2" aria-label="막대 속력 1부터 4미터 매 초"><button class="nudge" id="sRvP" type="button" aria-label="막대 속력 1부터 4미터 매 초 늘리기">+</button></div>
         </div>

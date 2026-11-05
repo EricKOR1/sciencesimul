@@ -46,7 +46,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: 11 * KD, theta: 0.5, phi: 1.15, min: 4, max: 26 },
     autoRotate: 0.15,
-    levels: [0, 1],
+    levels: [0, 1, 3],   // ③ 음속 측정은 캔버스의 측정 표 · 붉은 점선(실제 배)을 보며 해서 2D예요
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const { V3, M, glass } = tools(THREE);
@@ -191,10 +191,11 @@
           [lWL, lBr, lSn, lIns, lSp, lBL, lBA, lBN, lBW, lBBr, lBf].concat(wHoleLab).forEach((l) => l.show(false));
           if (!ringsG.visible) { ringsG.visible = true; setup(); }
           let ty, nn, amp = 0.55;
+          const md = isTube ? 'tube' : 'res'; if (st.mode !== md) { st.mode = md; lastInfo = ''; if (isTube) setup(); }   // 공명 · 음속 화면에서 관 속 정상파 안내로 덮어쓰지 않게
           if (isTube) { ty = S.tb.type; nn = S.tb.n; } else {
             const r = S.mode === 'res' ? S.rs : S.ms, Lcm = S.mode === 'res' ? S.rs.L : (S.ms.run ? S.ms.run.L || 0 : 0), lam = A.lamOf(r.f, r.t) * 100; ty = 'closed';
             const ratio = (Lcm + A.E_CM) / (lam / 4); nn = Math.max(1, Math.round((ratio + 1) / 2) * 2 - 1); amp = 0.55 * (S.mode === 'res' ? A.loud(Lcm, r.f, r.t) : 1);
-            const key = 'r' + nn + '|' + Math.round(Lcm) + '|' + r.f + '|' + r.t; if (key !== lastInfo) { lastInfo = key; info(S.mode === 'res' ? '<b>🔔 공명 실험</b> · 소리굽쇠 ' + r.f + ' Hz · 기온 ' + r.t + ' °C · 공기 기둥 길이 L = <b>' + Math.round(Lcm) + ' cm</b><br>소리의 세기 ' + Math.round(100 * A.loud(Lcm, r.f, r.t)) + ' % → ' + (A.loud(Lcm, r.f, r.t) > 0.9 ? '<b>공명! 소리가 가장 커요</b> (닫힌 끝은 마디, 열린 끝 쪽은 배)' : 'L을 바꿔 소리가 가장 커지는 위치를 찾아요.') + '<br>공명할 때 공기 기둥의 진동과 소리굽쇠의 진동수가 같아져 정상파가 생겨요.' : '<b>📏 음속 측정</b> · 소리굽쇠 ' + r.f + ' Hz · 기온 ' + r.t + ' °C<br>이웃한 공명 위치의 차 ΔL = λ/2 이므로 λ = 2ΔL, 소리의 속력 v = fλ 로 구해요 (측정은 2D 화면에서 해요).'); }
+            const key = 'r' + nn + '|' + Math.round(Lcm) + '|' + r.f + '|' + r.t; if (key !== lastInfo) { lastInfo = key; info(S.mode === 'res' ? '<b>🔔 공명 실험</b> · 소리굽쇠 ' + r.f + ' Hz · 기온 ' + r.t + ' °C · 공기 기둥 길이 L = <b>' + Math.round(Lcm) + ' cm</b><br>소리의 세기 ' + Math.round(100 * A.loud(Lcm, r.f, r.t)) + ' % → ' + (A.loud(Lcm, r.f, r.t) > 0.9 ? '<b>공명! 소리가 가장 커요</b> (닫힌 끝은 마디, 열린 끝 쪽은 배)' : 'L을 바꿔 소리가 가장 커지는 위치를 찾아요.') + '<br>공명할 때 공기 기둥의 진동과 소리굽쇠의 진동수가 같아져 정상파가 생겨요.' : '<b>📏 음속 측정</b> · 소리굽쇠 ' + r.f + ' Hz · 기온 ' + r.t + ' °C<br>이웃한 공명 위치의 차 ΔL = λ/2 이므로 λ = 2ΔL, 소리의 속력 v = fλ 로 구해요.'); }
           }
           st.amp = amp;
           if (st.type !== ty || st.n !== nn) { st.type = ty; st.n = nn; setup(); }

@@ -87,7 +87,7 @@
         marsPts.forEach((m, i) => { const q = A.marsObs(i); m.position.set(q.x * U, 0.1, -q.y * U); const on = i < nk; m.material.opacity = on ? 1 : 0.18; m.scale.setScalar(on ? 1 : 0.7); });
         marsRing.material.opacity = 0.75 * clamp(arc, 0, 1);
         sun.scale.setScalar(0.5);
-        info('<b>🔭 화성의 관측 점 (티코 브라헤)</b> · 같은 시각(간격 1/12 공전 주기)마다 잰 화성의 위치<br>찍은 점 ' + nk + ' / 12' + (nk >= 12 ? ' → 점들을 이으면 태양을 둘러싼 거의 둥근 궤도가 돼요 (타원, 이심률이 작아요).' : ' · 정밀한 관측 자료가 케플러의 법칙을 낳았어요.') + '<br><span style="opacity:.8">관측 점은 2D 화면에서 찍어요.</span>');
+        info('<b>🔭 화성의 관측 점 (티코 브라헤)</b> · 같은 시각(간격 1/12 공전 주기)마다 잰 화성의 위치<br>찍은 점 ' + nk + ' / 12' + (nk >= 12 ? ' → 점들을 이으면 태양을 둘러싼 거의 둥근 궤도가 돼요 (타원, 이심률이 작아요).' : ' · 정밀한 관측 자료가 케플러의 법칙을 낳았어요.') + '');
       }
       /* ================= ⏱ 같은 시간, 같은 넓이 (이심률을 크게 그린 모형) ================= */
       const EA = 0.6, AA = 3.4, planA = new THREE.Mesh(new THREE.SphereGeometry(0.2, 24, 18), M(0x3b82f6, { roughness: 0.5 })); G.area.add(planA);
@@ -110,7 +110,7 @@
         setArrow(aVel, new V3(q[0], 0.25, q[1]), new V3(q[0], 0.25, q[1]).addScaledVector(vv, 0.5 + sp * 28));
         const pe = A_kpos(0), ap = A_kpos(Math.PI); lPe.obj = [pe[0], 0, pe[1]]; lAp.obj = [ap[0], 0, ap[1]]; lPe.off = [0, 0, 0.5]; lAp.off = [0, 0, 0.5];
         const sp0 = A_kpos(o.ph * RAD); startM.position.set(sp0[0], 0.1, sp0[1]);
-        info('<b>⏱ 제2법칙: 같은 시간, 같은 넓이</b> (이심률을 크게 그린 모형)<br>행성과 태양을 이은 선이 같은 시간(T/12) 동안 쓸고 가는 넓이는 같아요. 노란 화살표 길이 = 속력 → <b>태양에 가까울수록 빨라요</b>.<br>색칠한 부채꼴 ' + o.sec.length + '개 (2D 화면에서 칠해요)');
+        info('<b>⏱ 제2법칙: 같은 시간, 같은 넓이</b> (이심률을 크게 그린 모형)<br>행성과 태양을 이은 선이 같은 시간(T/12) 동안 쓸고 가는 넓이는 같아요. 노란 화살표 길이 = 속력 → <b>태양에 가까울수록 빨라요</b>.<br>색칠한 부채꼴 ' + o.sec.length + '개');
       }
       /* ================= 📊 T²–r³ 그래프 (1 AU³ → 0.01칸) ================= */
       const gAx = new THREE.Mesh(new THREE.BoxGeometry(10, 0.05, 0.05), M(0x8a95a8)); gAx.position.set(4.5, 0, 0); G.graph.add(gAx);
@@ -125,7 +125,7 @@
         A.PL.forEach((p, i) => { const on = g.done[i]; gDots[i].visible = on; const lb = LAB.graph[4 + 2 * 0 + i + 4]; if (on) { nd++; gDots[i].position.set(p.r * p.r * p.r / 100, p.T * p.T / 100, 0); gDots[i].material.color.set(p.c); gDots[i].material.emissive.set(p.c); gDots[i].material.emissiveIntensity = 0.3; } });
         LAB.graph.slice(10).forEach((l, i) => { l.show(g.done[i]); l.set(A.PL[i].n); l.off = [0.2, 0.35, 0]; });
         const k = g.k; fitLine.setA(new V3(0, 0, 0), new V3(9, Math.min(9.8, 9 * k), 0));
-        info('<b>📊 제3법칙: T²과 r³</b> · 찍은 점 ' + nd + ' / 6<br>여섯 행성의 (r³, T²) 점은 원점을 지나는 <b>직선</b> 위에 놓여요 → T² ∝ r³ (기울기 k는 모든 행성이 같아요).<br>보라색 직선의 기울기 k = ' + (Math.round(k * 100) / 100) + '<br><span style="opacity:.8">점 찍기와 기울기 조절은 2D 화면에서 해요.</span>');
+        info('<b>📊 제3법칙: T²과 r³</b> · 찍은 점 ' + nd + ' / 6<br>여섯 행성의 (r³, T²) 점은 원점을 지나는 <b>직선</b> 위에 놓여요 → T² ∝ r³ (기울기 k는 모든 행성이 같아요).<br>보라색 직선의 기울기 k = ' + (Math.round(k * 100) / 100) + '');
       }
       /* ================= 🔗 힘과 거리의 제곱 ================= */
       const fFloor = new THREE.Mesh(new THREE.CylinderGeometry(7.2, 7.2, 0.06, 64), M(0x1a2238, { roughness: 1 })); fFloor.position.y = -0.1; G.force.add(fFloor);
@@ -149,7 +149,7 @@
         const a = S.mo.ang; moonM.position.set(6 * Math.cos(a), 0, -6 * Math.sin(a));
         const dirM = moonM.position.clone().multiplyScalar(-1).normalize(); setArrow(mGA, moonM.position.clone(), moonM.position.clone().addScaledVector(dirM, 1.0)); lmG.obj = moonM.position.clone().addScaledVector(dirM, 1.0); lmG.off = [0, 0.3, 0];
         setArrow(aGA, new V3(0, 1.35, 0), new V3(0, 0.55, 0)); lmA.off = [0.4, 0.2, 0]; lmM.off = [0, 0.55, 0]; lmE.off = [0, -0.4, 1.3];
-        info('<b>🍎 사과와 달</b> · 달: 지구에서 r = 3.84 × 10⁸ m, 공전 주기 T = 2.36 × 10⁶ s<br>사과를 떨어뜨리는 지구의 중력과 달을 붙잡아 두는 힘은 같은 종류의 힘이에요 (뉴턴의 만유인력).<br>달은 원 궤도를 돌며 지구 쪽으로 계속 <b>떨어지고</b> 있어요. 구심 가속도는 2D 화면에서 계산해 봐요.<br><span style="opacity:.8">거리는 줄여서, 크기는 과장해서 그렸어요.</span>');
+        info('<b>🍎 사과와 달</b> · 달: 지구에서 r = 3.84 × 10⁸ m, 공전 주기 T = 2.36 × 10⁶ s<br>사과를 떨어뜨리는 지구의 중력과 달을 붙잡아 두는 힘은 같은 종류의 힘이에요 (뉴턴의 만유인력).<br>달은 원 궤도를 돌며 지구 쪽으로 계속 <b>떨어지고</b> 있어요. 구심 가속도 a = 4π²r / T²: 4π²r = 1.52 × 10¹⁰ m, T² = 5.57 × 10¹² s²로 계산해 봐요.<br><span style="opacity:.8">거리는 줄여서, 크기는 과장해서 그렸어요.</span>');
       }
       /* ================= 장면 · ▶ 재생 ================= */
       let plM = null; plM = controls.player({ duration: 10, loop: true, autoplay: false, label: '관측 점 쌓기', phases: [[0, '한 달마다 화성의 위치를 재요'], [0.85, '점을 이으면 궤도']], onFrame(p) { demoM.p = p; demoM.on = p > 0 || !!(plM && plM.playing); } });

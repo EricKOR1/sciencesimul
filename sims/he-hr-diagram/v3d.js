@@ -16,7 +16,7 @@
   window.SciSim3D.attach({
     title: 'H-R도 별밭 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    levels: [2, 3],            // 0~1단계(카드 모으기·H-R도 찍기)는 2D에서 직접 해요
+    levels: [3],               // 0~2단계(카드 짝짓기 · H-R도 찍기 · 깜박이는 별 읽기)는 2D 화면에서 해요
     camera: { dist: PHONE ? 15 : 11.5, theta: 0.35, phi: 1.3, min: 5, max: 26, target: [0, 2.6, 0] },
     autoRotate: 0,
     build(ctx) {
@@ -57,18 +57,18 @@
       /* 질량 · 주계열 (3단계): 질량 0.5~20 M☉의 주계열성 */
       const MASSES = [0.5, 1, 2, 5, 10, 20];
       const mData = (M) => { const l = L2(); if (l && l.massData) return l.massData(M); const T = [[0.5, 0.04, 3800], [1, 1, 5800], [2, 25, 9900], [5, 500, 16000], [10, 6000, 25000], [20, 5e4, 32000]]; const r = T.find((x) => x[0] === M) || T[1]; return { L: r[1], T: r[2], R: Math.sqrt(r[1]) / Math.pow(r[2] / 5772, 2), t: 1e10 * M / r[1] }; };
-      const msM = MASSES.map((M) => { const d = mData(M), m = new THREE.Mesh(new THREE.SphereGeometry(1, 20, 14), new THREE.MeshBasicMaterial({ color: kelvin(d.T) })); m.position.set(bx(Math.log10(d.T)), by(Math.log10(d.L)), 0.1); m.scale.setScalar(sz(d.R) * 1.2); root.add(m); return m; });
+      const msM = MASSES.map((M) => { const d = mData(M), m = new THREE.Mesh(new THREE.SphereGeometry(1, 20, 14), new THREE.MeshBasicMaterial({ color: new THREE.Color().fromArray(kelvin(d.T)) })); m.position.set(bx(Math.log10(d.T)), by(Math.log10(d.L)), 0.1); m.scale.setScalar(sz(d.R) * 1.2); root.add(m); return m; });
       const msL = MASSES.map((M, i) => label(M + ' M☉', msM[i], { size: 11.5, offset: [0.35, 0.25, 0], color: 'rgba(15,23,42,.9)' }));
       const cur = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.035, 8, 40), new THREE.MeshBasicMaterial({ color: 0xffd34d })); root.add(cur);
       const curL = label('', cur, { size: 12, offset: [0, -0.6, 0], color: 'rgba(130,90,0,.95)' });
       const dm = new THREE.Object3D(), cc = new THREE.Color();
-      let mode = 'star', grpSel = 'all', showR = true, lastS = '';
-      const COLR = ST.map((s) => kelvin(s.T));
+      let mode = 'star', grpSel = 'all', showR = true, lastS = '', lastM = null;
+      const COLR = ST.map((s) => new THREE.Color().fromArray(kelvin(s.T)));   // 표면 온도에 맞는 색 (kelvin은 [r, g, b] 배열을 돌려줘요)
       const REP = { '태양': 1, '시리우스 A': 1, '베텔게우스': 1, '리겔': 1, '시리우스 B': 1, '프록시마': 1 };
       function cntNow() { const l = L2(), mine = !l || !l.S || l.S.cnt === 'mine'; return { mine, c: mine ? mineC : NEAR, tot: mine ? 20 : 100 }; }
       function apply() {
         const stars = mode === 'star', bar = mode === 'bar', mass = mode === 'mass';
-        sph.visible = stars || mass; bars_vis(bar); sunM.visible = stars;
+        sph.visible = stars; bars_vis(bar);   // 질량 보기에서는 주계열성 6개만 보여요 (어둡게 칠한 별 20개가 검은 점처럼 보여 헷갈리지 않게) sunM.visible = stars;
         for (let i = 0; i < N; i++) { const s = ST[i], on = (stars || mass) && (grpSel === 'all' || s.g === grpSel), k = mass ? 0.25 : on ? 1 : 0.14; dm.position.set(s.x, s.y, s.z); dm.scale.setScalar(mass ? sz(s.R) * 0.6 : sz(s.R) * (on ? 1 : 0.5)); dm.updateMatrix(); sph.setMatrixAt(i, dm.matrix); cc.copy(COLR[i]).multiplyScalar(k); sph.setColorAt(i, cc); }
         sph.instanceMatrix.needsUpdate = true; sph.instanceColor.needsUpdate = true; sph.material.emissive.setRGB(1, 1, 1); sph.material.emissiveIntensity = 0.0; sph.material.color.setRGB(1, 1, 1); sph.material.emissiveMap = null; sph.material.roughness = 0.35;
         rLines.forEach((r) => { if (r.m) r.m.visible = showR && stars; r.L.show(showR && stars); });
@@ -76,12 +76,14 @@
         gl.sun.show(false); gl.ms.show(stars && (grpSel === 'all' || grpSel === 'ms')); gl.gi.show(stars && (grpSel === 'all' || grpSel === 'gi')); gl.sg.show(stars && (grpSel === 'all' || grpSel === 'sg')); gl.wd.show(stars && (grpSel === 'all' || grpSel === 'wd'));
         msM.forEach((m) => (m.visible = mass)); msL.forEach((L) => L.show(mass)); cur.visible = mass; curL.show(mass);
         barL.forEach((L) => L.show(bar));
+        // 보기마다 쓰는 조작만 보여요: 집단 · 지름 같은 선은 별 20개, 개수는 개수 막대
+        if (gGrp) { gGrp.els.forEach((e) => { e.style.display = stars ? '' : 'none'; }); bR.style.display = stars ? '' : 'none'; gCnt.els.forEach((e) => { e.style.display = bar ? '' : 'none'; }); }
         updInfo();
       }
       function bars_vis(v) { barM.forEach((m) => (m.visible = v)); }
       function updInfo() {
         const l = L2();
-        if (mode === 'star') info(({ all: '2D와 같은 <b>별 20개</b>예요. 크기는 <b>반지름</b>, 색은 <b>표면 온도</b>예요. 대부분 왼쪽 위에서 오른쪽 아래로 이어진 <b>주계열</b>에 있어요.', ms: '<b>주계열성</b>: 대부분의 별이 속해요. 태양도 여기예요.', gi: '<b>거성</b>: 온도는 낮지만 반지름이 커서 광도가 커요 (오른쪽 위쪽).', sg: '<b>초거성</b>: 반지름이 아주 커서 광도가 가장 커요 (예: 베텔게우스 ≈ 870 R☉).', wd: '<b>백색 왜성</b>: 온도는 높지만 반지름이 아주 작아서 어두워요 (예: 시리우스 B).' })[grpSel] + '<br>점선은 <b>반지름 등값선</b>(0.01 · 1 · 100 · 1000 R☉)이에요.');
+        if (mode === 'star') info(({ all: 'H-R도에 찍었던 <b>별 20개</b>예요. 크기는 <b>반지름</b>, 색은 <b>표면 온도</b>예요. 대부분 왼쪽 위에서 오른쪽 아래로 이어진 <b>주계열</b>에 있어요.', ms: '<b>주계열성</b>: 대부분의 별이 속해요. 태양도 여기예요.', gi: '<b>거성</b>: 온도는 낮지만 반지름이 커서 광도가 커요 (오른쪽 위쪽).', sg: '<b>초거성</b>: 반지름이 아주 커서 광도가 가장 커요 (예: 베텔게우스 ≈ 870 R☉).', wd: '<b>백색 왜성</b>: 온도는 높지만 반지름이 아주 작아서 어두워요 (예: 시리우스 B).' })[grpSel] + '<br>점선은 <b>반지름 등값선</b>(0.01 · 1 · 100 · 1000 R☉)이에요.');
         else if (mode === 'bar') { const n = cntNow(); info('<b>' + (n.mine ? '내가 그린 별 20개' : '태양 근처 별 100개 (예시)') + '</b> 중 종류별 개수예요.<br>태양 근처에서는 거의 대부분이 어둡고 작은 별이고, 거성은 아주 드물어요.'); }
         else { const M = l && l.S ? l.S.M : 1, d = mData(M); info('<b>질량 ' + (+M.toPrecision(3)) + ' M☉</b> 주계열성: 광도 ' + (d.L >= 100 ? Math.round(d.L).toLocaleString() : +d.L.toPrecision(3)) + ' L☉ · 표면 온도 약 ' + Math.round(d.T / 10) * 10 + ' K<br>질량이 클수록 왼쪽 위(뜨겁고 밝음)에 놓이고 수명은 짧아져요.'); }
       }
@@ -89,9 +91,11 @@
         if (mode !== 'bar') return; const n = cntNow();
         BARS.forEach((b, i) => { const frac = n.c[b[0]] / n.tot, h = 0.05 + frac * 4.2; barM[i].scale.y = h; barM[i].position.y = h / 2; barL[i].obj = [b[3], h + 0.1, 0.6]; barL[i].set(b[1] + ' ' + n.c[b[0]] + '개<br>(' + Math.round(frac * 100) + ' %)'); });
       }
+      const probe = controls.text(''); probe.style.display = 'none'; const ctlEl = probe.parentElement;
+      const grab = (fn) => { const n0 = ctlEl.children.length; const r = fn(); return { r, els: Array.prototype.slice.call(ctlEl.children, n0) }; };
       const segMode = controls.segment('보기', [{ value: 'star', label: '⭐ 별 20개' }, { value: 'bar', label: '📊 개수 막대' }, { value: 'mass', label: '⚖️ 질량' }], mode, (v) => { mode = v; apply(); });
-      controls.segment('집단', [{ value: 'all', label: '전체' }, { value: 'ms', label: '주계열' }, { value: 'gi', label: '거성' }, { value: 'sg', label: '초거성' }, { value: 'wd', label: '백색 왜성' }], grpSel, (v) => { grpSel = v; apply(); });
-      const segCnt = controls.segment('개수', [{ value: 'mine', label: '내가 그린 20개' }, { value: 'near', label: '태양 근처 100개' }], 'mine', (v) => { const l = L2(); if (l && l.S) { l.S.cnt = v; l.updateCtl && l.updateCtl(); } apply(); });
+      const gGrp = grab(() => controls.segment('집단', [{ value: 'all', label: '전체' }, { value: 'ms', label: '주계열' }, { value: 'gi', label: '거성' }, { value: 'sg', label: '초거성' }, { value: 'wd', label: '백색 왜성' }], grpSel, (v) => { grpSel = v; apply(); }));
+      const gCnt = grab(() => controls.segment('개수', [{ value: 'mine', label: '내가 그린 20개' }, { value: 'near', label: '태양 근처 100개' }], 'mine', (v) => { const l = L2(); if (l && l.S) { l.S.cnt = v; l.updateCtl && l.updateCtl(); } apply(); })), segCnt = gCnt.r;
       const bR = controls.button('지름 같은 선 ✓', () => { showR = !showR; bR.classList.toggle('on', showR); bR.textContent = '지름 같은 선 ' + (showR ? '✓' : '✕'); apply(); }); bR.classList.add('on');
       /* ▶ 질량을 0.5 → 20 M☉로 올려 가며 주계열의 위치와 수명을 봐요 (2D의 질량 값과 같아요) */
       const MS = [0.5, 1, 2, 5, 10, 20];
@@ -111,6 +115,7 @@
           const l = L2(), S = l && l.S;
           if (S) {
             if (S.cnt && segCnt && (mode === 'bar')) segCnt.set(S.cnt);
+            if (S.M !== lastM) { const first = lastM === null; lastM = S.M; if (!first && mode !== 'mass') { mode = 'mass'; segMode.set('mass'); apply(); } }   // 질량을 바꾸면 질량 보기로
             if (mode === 'mass') { const Mv = Math.pow(10, S.lmd == null ? 0 : S.lmd), d = mData(Mv); cur.position.set(bx(Math.log10(d.T)), by(Math.log10(d.L)), 0.1); const s0 = (+Mv.toPrecision(3)) + ' M☉'; if (s0 !== lastS) { lastS = s0; curL.set('지금 ' + s0); updInfo(); } if (!pl.playing) { const idx = MS.findIndex((x) => Math.abs(x - S.M) < 1e-6); if (idx >= 0 && Math.floor(pl.p * 6) !== idx) { syncing = true; pl.set((idx + 0.01) / 6); syncing = false; } } }
             if (mode === 'bar') frameBars();
           }

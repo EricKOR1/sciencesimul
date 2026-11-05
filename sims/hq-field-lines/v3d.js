@@ -91,10 +91,10 @@
 
   window.SciSim3D.attach({
     title: '전기력선과 등전위면 3D',
-    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 값은 왼쪽 조작판에서 바꿔요',
+    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 값은 옆 조작판에서 바꿔요',
     camera: { dist: 14 * KD, theta: 0.2, phi: 1.3, min: 5, max: 30 },
     autoRotate: 0,
-    levels: [2, 3],
+    levels: [3],   // 1~3단계는 캔버스에서 방향을 가리키거나 점 X·Y, 십자(✚)를 끌어야 해서 2D, 4단계(그림 해석)는 3D
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const h = H3(ctx); const { V3, mat, mkArrow, setArrow, arrowSet, mkSeg, setSeg, anchor, sphere, fib, grab, showCtl } = h;
@@ -177,6 +177,8 @@
           const pl = new THREE.Mesh(new THREE.PlaneGeometry(wU, hU), new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, side: THREE.DoubleSide }));
           pl.position.copy(gx(sim, { x: (FR.x0 + FR.x1) / 2, y: (FR.y0 + FR.y1) / 2 })); g.add(pl); rec.plane = pl;
           rec.vlabs = def.cont.map((c) => ({ lv: c.lv, row: c.row, labs: c.labs }));
+          // 2D처럼 등전위선마다 전위 눈금(V)을 붙여요
+          def.cont.forEach((c) => { if (c.row == null || !c.labs || !c.labs.length) return; const x = c.lv < -1e-9 ? Math.min.apply(null, c.labs) : c.lv > 1e-9 ? Math.max.apply(null, c.labs) : c.labs[0]; const q = gx(sim, { x, y: c.row }); L('lines:' + key, Math.round(c.lv) + ' V', anchor(g, q.x, q.y, q.z), { color: '#26324a', size: 11 }); });
         }
         figs[key] = rec; return rec;
       }

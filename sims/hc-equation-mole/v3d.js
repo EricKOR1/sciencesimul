@@ -79,7 +79,8 @@
   const phone = window.matchMedia && window.matchMedia('(max-width: 599px)').matches;
   window.SciSim3D.attach({
     title: '반응식 입자 모형 3D',
-    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 반응 고르기와 계수는 2D와 똑같이 이어져요',
+    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 계수를 바꾸면 입자 수가 바뀌어요',
+    levels: [0],   // 반응식 쓰기(계수 · 입자 모형). 몰 상자 · 질량 표 · 저울 단계는 2D
     camera: { dist: phone ? 21 : 15.5, theta: 0.15, phi: 0.8, min: 6, max: 34, target: [0, -0.2, 0] },
     autoRotate: 0,
     build(ctx) {

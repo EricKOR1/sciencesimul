@@ -87,10 +87,10 @@
 
   window.SciSim3D.attach({
     title: '정전기 유도와 분극 3D',
-    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 값은 왼쪽 조작판에서 바꿔요',
+    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 값은 옆 조작판에서 바꿔요',
     camera: { dist: 12 * KD, theta: 0.12, phi: 1.25, min: 5, max: 30 },
     autoRotate: 0,
-    levels: [0, 1, 2],
+    levels: [2],   // 1·2단계는 대전체·막대를 캔버스에서 끌어 가까이 가져가야 하고, 4단계는 카드를 끌어 분류해서 2D
     build(ctx) {
       const { THREE, root, label, controls } = ctx;
       const h = H3(ctx); const { V3, mat, glass, mkArrow, setArrow, arrowSet, mkSeg, setSeg, anchor, sphere, box, cyl, grab, showCtl } = h;
@@ -215,7 +215,7 @@
         lQt.set('검전기 전체 Qt = ' + (Math.abs(Qt) < 0.05 ? '0 (중성)' : (Qt > 0 ? '+' : '−') + g3(Math.abs(Qt)) + ' e'));
         let txt;
         const done = Math.abs(Qt) >= 0.3 && sv < 0.05;
-        if (S.gate === 'm2') txt = '막대를 검전기에 가까이 했다가, 접지하고, 접지를 끊고, 막대를 치우는 동작들이 있어요. <b>일어나는 순서</b>를 2D의 문제에서 골라 보세요.';
+        if (S.gate === 'm2') txt = '막대를 검전기에 가까이 했다가, 접지하고, 접지를 끊고, 막대를 치우는 동작들이 있어요. <b>일어나는 순서</b>를 옆 조작판에서 골라 보세요.';
         else if (sv < 0.05 && Math.abs(Qt) < 0.3) txt = '<b>중성 검전기</b>: 금속박이 닫혀 있어요.<br>대전된 막대를 <b>접촉하지 않고</b> 가까이 가져가 보세요.';
         else if (sv >= 0.05 && !grounded && Math.abs(Qt) < 0.3) txt = '<b>막대를 가까이</b>: 금속판에는 반대 부호, 금박에는 <b>막대와 같은 부호</b>의 전하가 모여 벌어져요.';
         else if (grounded) txt = '<b>접지 연결</b>: 전자가 땅으로 빠져나가거나 땅에서 들어와 검전기 전체가 대전돼요.';
@@ -381,7 +381,7 @@
         nodes.forEach((n) => { const d = Math.hypot((n.x - fx) / 0.016, (n.z - fz) / 0.016), dc = gl.dc * Math.exp(-Math.pow(d / TS.sg, 2)); n.dc = dc; const s = 0.6 + 1.8 * Math.min(1, dc / 3); n.m.scale.setScalar(s); n.m.material.emissiveIntensity = 0.2 + 0.9 * Math.min(1, dc / 3); n.m.material.color.setHex(dc > 0.5 ? 0xfacc15 : 0x38bdf8); n.m.material.emissive.setHex(dc > 0.5 ? 0xfacc15 : 0x38bdf8); if (!best || dc > best.dc) best = n; });
         aTf.position.set(fx, 3.0, fz); lTf.set(gl.name);
         aTr.position.set(best.x, 0.9, best.z); lTr.set('ΔC 최대 ' + best.dc.toFixed(1) + ' pF'); lTr.show(!!labs.touch.on);
-        info('<b>🖐 정전식 터치스크린: 전극 사이의 정전 용량 변화</b><br>손가락: ' + gl.name + ' → ΔC 최대 ' + best.dc.toFixed(1) + ' pF<br>' + (best.dc >= 0.5 ? '터치 위치: 열 ' + (best.c + 1) + ', 행 ' + (best.r + 1) : '터치를 인식하지 못해요') + '<br>' + (S.ap.sub === 'cards' ? '(사례를 분류하는 카드 활동은 2D 화면에서 해요)' : '손가락을 끌어 움직여 보세요 (2D 화면)'));
+        info('<b>🖐 정전식 터치스크린: 전극 사이의 정전 용량 변화</b><br>손가락: ' + gl.name + ' → ΔC 최대 ' + best.dc.toFixed(1) + ' pF<br>' + (best.dc >= 0.5 ? '터치 위치: 열 ' + (best.c + 1) + ', 행 ' + (best.r + 1) : '터치를 인식하지 못해요') + '<br>' + '손가락이 다가간 곳의 전극 사이 정전 용량이 바뀌어요.');
       }
 
       /* ▶ 재생 */
@@ -434,8 +434,8 @@
           if (c.bin == null) { l.obj = [-5.0 + (i % 3) * 5.0, -2.2 - Math.floor(i / 3) * 0.55, 1.6]; l.el.style.borderColor = 'rgba(255,255,255,.18)'; }
           else { placed++; const k = cnt[c.bin]++; l.obj = [BX[c.bin], BY - 0.8 - k * 0.5, 1.6]; l.el.style.borderColor = c.bad ? '#e2464b' : 'rgba(255,255,255,.18)'; if (c.bad) bad++; }
         });
-        lCh.set(placed ? '분류한 카드 ' + placed + ' / ' + cs.length + (bad ? ' · 다시 생각해 볼 카드 ' + bad + '개' : '') : '카드를 칸으로 끌어 놓는 활동은 2D에서 해요 ↑'); lCh.obj = [0, -3.4, 1.6];
-        info('<b>🗂 생활 속 사례를 원리별로 분류</b>: 세 가지 모형을 보며 생각해요.<br><b>정전기 유도</b>: 도체 속 전자가 이동 · <b>유전 분극</b>: 절연체 분자가 전기장 방향으로 정렬 · <b>정전 차폐</b>: 속이 빈 도체 안은 E = 0<br>(▶ 재생으로 전기장을 걸었다 끊어 보세요. 카드 분류는 2D에서 해요.)');
+        lCh.set(placed ? '분류한 카드 ' + placed + ' / ' + cs.length + (bad ? ' · 다시 생각해 볼 카드 ' + bad + '개' : '') : '사례 카드 ' + cs.length + '장'); lCh.obj = [0, -3.4, 1.6];
+        info('<b>🗂 생활 속 사례를 원리별로 분류</b>: 세 가지 모형을 보며 생각해요.<br><b>정전기 유도</b>: 도체 속 전자가 이동 · <b>유전 분극</b>: 절연체 분자가 전기장 방향으로 정렬 · <b>정전 차폐</b>: 속이 빈 도체 안은 E = 0<br>(▶ 재생으로 전기장을 걸었다 끊어 보세요.)');
       }
       const plCa = grab('cards', () => controls.player({ duration: 8, loop: true, autoplay: false, label: '전기장 걸기', phases: [[0, '전기장 없음'], [0.5, '전기장을 걸어요']], onFrame(p) { if (!built) return; caP.on = true; caP.p = p < 0.5 ? p * 2 : 2 - p * 2; } }));
 

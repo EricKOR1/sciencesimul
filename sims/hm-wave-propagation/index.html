@@ -59,6 +59,7 @@
       #modeSeg button { font-size: 13.5px; padding-left: 6px; padding-right: 6px; }
       .stage-hint { font-size: 13px; padding: 5px 12px; }
     }
+      .v3-on > .stage-hint { z-index: 30; top: 54px; bottom: auto; }   /* 3D 단계에서도 안내 말풍선이 보이게 */
   </style>
 </head>
 <body class="sim-page" data-subject="phy">
@@ -106,7 +107,7 @@
           <div class="range-row"><input type="range" id="sK" min="0" max="3" step="1" value="1" aria-label="용수철 상수 (12.5, 25, 50, 100 뉴턴 매 미터)"></div>
           <div class="control-head"><label for="sMm">⚖️ 질량 m</label><output id="oMm">0.040 kg</output></div>
           <div class="range-row"><input type="range" id="sMm" min="0" max="3" step="1" value="1" aria-label="질량 (0.02, 0.04, 0.08, 0.16 킬로그램)"></div>
-          <div class="btn-row"><button class="btn btn-sm btn-primary" id="bPulse1" type="button">👆 펄스 보내기</button><button class="btn btn-sm" id="bWave1" type="button">〰 계속 흔들기</button></div>
+          <div class="btn-row" data-v3="keep"><button class="btn btn-sm btn-primary" id="bPulse1" type="button">👆 펄스 보내기</button><button class="btn btn-sm" id="bWave1" type="button">〰 계속 흔들기</button></div>
           <div class="btn-row"><button class="btn btn-sm slow-btn" type="button">🐢 느리게 보기</button></div>
           <p class="ctrl-note" id="nModel"></p>
         </div>

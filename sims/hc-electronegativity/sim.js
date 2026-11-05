@@ -621,7 +621,7 @@
   }
 
   /* ---------- 장면 · UI ---------- */
-  const SCENE_LABEL = { tug: '🪢 전자 줄다리기', table: '🔥 전기 음성도 주기율표', atom: '⚛️ 핵이 당기는 힘', order: '🎯 순서 맞히기' };
+  const SCENE_LABEL = { tug: '🪢 전자 줄다리기', table: '📊 전기 음성도 주기율표', atom: '⚛️ 핵이 당기는 힘', order: '🎯 순서 맞히기' };
   function setScene(sc) {
     if (S.scene !== sc) { S.fade = 1; fx.clear(); hintOff(); if (sc === 'table') enterTable(); }
     S.scene = sc; $('#tbLabel').textContent = SCENE_LABEL[sc]; updateUI();
@@ -804,7 +804,7 @@
       ],
     },
     {
-      title: '주기율표에서 규칙 찾기', short: '주기성 탐색', icon: '🔥', phase: '탐구',
+      title: '주기율표에서 규칙 찾기', short: '주기성 탐색', icon: '📊', phase: '탐구',
       intro: '<div class="si-link">🔗 <b>앞 단계에서</b> 전기 음성도가 큰 쪽으로 전자쌍이 쏠리는 것을 봤어요. 그럼 원소마다 전기 음성도는 얼마일까요? 주기율표에 색으로 나타내 봐요.</div>' +
         '<p>1~3주기 원소와 K, Ca, Br의 전기 음성도를 <b>색으로 나타낸 주기율표</b>예요. 색이 진할수록 값이 커요. 원소 칸을 눌러 값을 보고, <b>같은 주기</b>(가로)와 <b>같은 족</b>(세로)에서 값이 어떻게 변하는지 그래프로 그려 봐요. 18족(He, Ne, Ar)은 결합을 거의 하지 않아 값을 쓰지 않아요.</p>',
       features: ['table'],
@@ -925,7 +925,7 @@
 
   game = SciSim.game({
     simId: 'hc-electronegativity', mount: '#game', badge: '전기 음성도 탐험가', homeHref: '../../index.html#hc',
-    featureLabels: { tug: '🪢 전자 줄다리기', table: '🔥 전기 음성도 주기율표 · 그래프', atom: '⚛️ 핵이 당기는 힘 모형', order: '🎯 순서 맞히기 카드' },
+    featureLabels: { tug: '🪢 전자 줄다리기', table: '📊 전기 음성도 주기율표 · 그래프', atom: '⚛️ 핵이 당기는 힘 모형', order: '🎯 순서 맞히기 카드' },
     onFeatures() { updateUI(); },
     levels,
   });

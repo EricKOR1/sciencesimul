@@ -77,7 +77,7 @@
         setArrow(wV, new V3(0.4, y + 0.5, 0), new V3(0.4, y + 0.5 + (w.v >= 0 ? 1 : -1) * Math.min(1.8, 0.3 + Math.abs(w.v) / 1000 * 0.12), 0)); setArrow(wGr, new V3(-0.4, y + 0.5, 0), new V3(-0.4, y + 0.5 - 0.6, 0)); lwv.off = [0.5, 0.2, 0]; lwg.off = [-0.6, -0.2, 0];
         lwr.set(w.st === 'ready' ? '우주선 (발사 대기)' : '우주선'); lwr.off = [0.9, 0.8, 0];
         lwa.show(!!w.apex); if (w.apex) lwa.obj = [0.6, yOf(w.apex), 0];
-        info('<b>📈 연직으로 쏘아 올리기</b> · 발사 속력 v₀ = <b>' + w.v0.toFixed(1) + ' km/s</b> · 지금 속도 ' + f1(w.v / 1000) + ' km/s · 높이 ' + sci(Math.max(0, (w.r - A.RE_) / 1000), 1) + ' km<br>총 에너지 E = ½mv² − GMm/r (1 kg당 ' + (E >= 0 ? '+' : '−') + Math.abs(E).toFixed(1) + ' MJ) ' + (E >= 0 ? '≥ 0 → <b>탈출</b>해요 (되돌아오지 않아요)' : '< 0 → 최고점에서 멈추고 <b>되돌아와요</b>') + '<br>' + (w.msg || '발사해서 최고 고도를 기록해요 (세로 눈금은 로그 눈금이에요).') + '<br><span style="opacity:.8">발사 속력은 옆 조작판에서 정해요.</span>');
+        info('<b>📈 연직으로 쏘아 올리기</b> · 발사 속력 v₀ = <b>' + w.v0.toFixed(1) + ' km/s</b> · 지금 속도 ' + f1(w.v / 1000) + ' km/s · 높이 ' + sci(Math.max(0, (w.r - A.RE_) / 1000), 1) + ' km<br>총 에너지 E = ½mv² − GMm/r (1 kg당 ' + (E >= 0 ? '+' : '−') + Math.abs(E).toFixed(1) + ' MJ) ' + (E >= 0 ? '≥ 0 → <b>탈출</b>해요 (되돌아오지 않아요)' : '< 0 → 최고점에서 멈추고 <b>되돌아와요</b>') + '<br>' + (w.msg || '발사해서 최고 고도를 기록해요 (세로 눈금은 로그 눈금이에요).') + (w.rec && w.rec.length ? '<br>📋 최고 고도 기록: ' + w.rec.slice(-4).map((q) => q.v0.toFixed(1) + ' km/s → ' + sci(q.h, 1) + ' km').join(' · ') : '') + '<br><span style="opacity:.8">발사 속력은 옆 조작판에서 정해요.</span>');
       }
       /* ================= 🧑‍🚀 우주인과 공 (우주 공간에 정지한 눈금 기준) ================= */
       const rulerA = new THREE.Mesh(new THREE.BoxGeometry(18, 0.06, 0.4), M(0x334155)); rulerA.position.set(0, -1.6, 0); G.astro.add(rulerA);
@@ -219,7 +219,6 @@
         info('<b>🎯 다단 로켓</b> · ' + n + '단 로켓 (연료 ' + plan.map((p) => Math.round(p.fuel) + '%').join(' · ') + ')<br>궤도 속력 달성도: <b>' + Math.round(live) + ' %</b> (단일 로켓 ' + Math.round(A.SG_BASE) + ' %, 100 % = 궤도 속력)<br>단을 버리면 질량이 줄어 같은 추력으로도 가속도가 껑충 커져요. 점수는 비교용 상대값이에요.');
       }
       let cur = '';
-      const NOTE0 = { planet: '🪐 행성 비교(탈출 속도와 대기 기체)는 2D 화면에서 해요. 위의 [▦ 2D]를 눌러 보세요.', launch: '🛰️ 궤도 진입과 다단 로켓은 2D 화면에서 해요. 위의 [▦ 2D]를 눌러 보세요.' };
       function setMode(S) {
         const mode = S.mode; if (mode === cur) return; cur = mode;
         Object.keys(G).forEach((k) => (G[k].visible = k === mode)); Object.keys(LAB).forEach((k) => LAB[k].forEach((l) => l.show(k === mode)));

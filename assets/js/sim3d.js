@@ -83,6 +83,7 @@
 .v3-seg button { min-height: 36px; padding: 4px 12px; border: 0; border-radius: 9px; background: transparent; color: var(--muted, #556); font-weight: 800; font-size: 14px; cursor: pointer; white-space: nowrap; }
 .v3-seg button.on { background: var(--subject, #3182f6); color: #fff; }
 .v3-mode [data-v3="2d"], .v3-mode .v3-2d-wrap { display: none !important; }
+.v3-mode .v3-empty { display: none !important; }
 .v3-seg.float { position: absolute; top: 10px; right: 10px; z-index: 26; background: rgba(255,255,255,.94); box-shadow: 0 4px 14px rgba(20,30,60,.18); }
 .v3-on > .v3-seg.float { background: rgba(10,16,30,.72); border-color: rgba(255,255,255,.22); top: 6px; right: 6px; }
 .v3-on > .v3-seg.float button:not(.on) { color: #dbe4f7; }
@@ -601,7 +602,21 @@
      어떤 조작이 3D에 반영되지 않는지는 3D를 연 채로 하나씩 눌러 보는 점검 도구로 골라 두었어요
      (assets/js/v3-2d-only.js : { 차시 id: [선택자, …] }). 차시가 직접 data-v3="2d"를 붙여도 되고,
      3D에서도 쓰는 조작이면 data-v3="keep"을 붙여 숨기지 않게 해요. */
-  function syncMode() { if (doc.body) doc.body.classList.toggle('v3-mode', instances.some((v) => v.isOpen)); }
+  function syncMode() { if (doc.body) doc.body.classList.toggle('v3-mode', instances.some((v) => v.isOpen)); emptyCards(); }
+  // 3D 단계에서 조작이 모두 숨겨진 오른쪽 카드는 빈 상자로 남지 않게 통째로 숨겨요
+  function emptyCards() {
+    if (!doc.body) return;
+    const on = doc.body.classList.contains('v3-mode');
+    doc.querySelectorAll('.side-col .card').forEach((c) => {
+      if (c.id === 'game' || c.closest('#game, .game')) return;
+      let hide = false;
+      if (on) {
+        const cs = Array.from(c.querySelectorAll('button, input, select')).filter((e) => !e.closest('[hidden]') && e.type !== 'hidden');
+        hide = cs.length > 0 && cs.every((e) => e.closest('[data-v3="2d"], .v3-2d-wrap'));
+      }
+      c.classList.toggle('v3-empty', hide);
+    });
+  }
   const lessonId = (global.location.pathname.match(/sims\/([^/]+)\//) || [])[1] || '';
   let only2d = null;
   function markOnly2D() {
@@ -617,10 +632,10 @@
   }
   if (doc.addEventListener) {
     const s2 = doc.createElement('script'); s2.src = BASE + 'js/v3-2d-only.js';
-    s2.onload = () => { only2d = global.SCISIM_2D_ONLY || {}; markOnly2D(); };
+    s2.onload = () => { only2d = global.SCISIM_2D_ONLY || {}; markOnly2D(); emptyCards(); };
     (doc.head || doc.documentElement).appendChild(s2);
     global.addEventListener('scisim-level', () => setTimeout(markOnly2D, 50));
-    setInterval(() => { if (only2d) markOnly2D(); }, 1500);   // 나중에 생기는 조작도 표시
+    setInterval(() => { if (only2d) { markOnly2D(); emptyCards(); } }, 1500);   // 나중에 생기는 조작도 표시
   }
   global.SciSim3D = { attach, loadThree, pref, setPref, capable, webglOK, start3D, show2D, get anyOpen() { return instances.some((v) => v.isOpen); },
     __test: { open() { instances.forEach((v) => v.open()); }, close: show2D } };   // 점검 도구용

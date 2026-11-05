@@ -50,10 +50,10 @@
 
   window.SciSim3D.attach({
     title: '분자의 극성 3D',
-    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 분자 고르기와 판정은 2D와 똑같이 이어져요',
+    hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: 6.2, theta: 0.3, phi: 1.2, min: 3, max: 18 },
     autoRotate: 0.2,
-    levels: [0],
+    levels: [],   // 1단계 '화살표 합 그리기'(화살표 끌기)를 비롯해 모든 단계에 캔버스 조작이 필요해서 2D로 해요
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
       let key = 'H2O', bend = 180, showBond = true, showSum = false;
@@ -154,7 +154,7 @@
         const polarNow = nlen > 1e-3;
         const bondP = dp.length ? '결합은 극성(' + dp.map((x) => x.d).filter((v, i, a) => a.indexOf(v) === i).join('·') + ' 만큼 쏠림)' : '';
         info('<b>' + T.f + '</b> (' + T.n + ') · ' + (key === 'CO2' && bend < 180 ? '굽은형 (' + bend + '°)' : T.shape) + '<br><span style="color:#fbbf24">주황</span> 결합 쌍극자 · <span style="color:#f9a8d4">분홍</span> 알짜 쌍극자(합)' +
-          (judged ? '<br><b>' + (polarNow ? '극성 분자: 화살표가 상쇄되지 않고 남아요.' : '무극성 분자: 결합은 극성이어도 화살표가 상쇄돼요.') + '</b>' + sumNote : '<br>결합 쌍극자 화살표를 이어 붙여 합을 생각해 보고, 2D에서 극성 · 무극성을 판정해 보세요. (판정하면 알짜 쌍극자도 보여 줘요)'));
+          (judged ? '<br><b>' + (polarNow ? '극성 분자: 화살표가 상쇄되지 않고 남아요.' : '무극성 분자: 결합은 극성이어도 화살표가 상쇄돼요.') + '</b>' + sumNote : '<br>결합 쌍극자 화살표를 이어 붙여 합을 생각해 보고, 극성 · 무극성을 판정해 보세요. (판정하면 알짜 쌍극자도 보여 줘요)'));
       }
       let judged = false, own = false, pB = 0, sig = '', sumOn = false;
       const rowOf = () => { const r = document.querySelectorAll('.v3-player'); return r[r.length - 1]; };

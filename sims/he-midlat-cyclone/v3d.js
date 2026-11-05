@@ -13,7 +13,7 @@
   window.SciSim3D.attach({
     title: '온대 저기압과 전선 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    levels: [0, 1],
+    levels: [],              // 모든 단계가 2D 화면을 직접 다뤄요: 이름표 끌어 놓기 · 관측 그래프 읽기 · 기압 그래프 · 일기도 읽기
     camera: { dist: PHONE ? 17 : 12, theta: -0.45, phi: 0.98, min: 5, max: 30, target: [0.8, 0.7, 0.6] },
     autoRotate: 0,
     build(ctx) {

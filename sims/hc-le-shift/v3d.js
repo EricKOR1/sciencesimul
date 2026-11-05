@@ -6,7 +6,7 @@
   const phone = window.matchMedia && window.matchMedia('(max-width: 599px)').matches;
   window.SciSim3D.attach({
     title: '평형 이동 3D',
-    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 부피와 온도는 2D의 손잡이와 단추가 그대로 이어져요',
+    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 부피와 온도에 따라 입자 수가 바뀌어요',
     camera: { dist: phone ? 14 : 11, theta: 0.55, phi: 1.2, min: 5, max: 26, target: [0.4, 1.4, 0] },
     autoRotate: 0.08,
     levels: [1, 2],
@@ -79,7 +79,7 @@
             sLab.obj = [x0 + Lg / 2, 3.1, 0];
             const cnt = rx.sp.map((s) => s.k), names = { N2O4: 'N₂O₄', NO2: 'NO₂', H2: 'H₂', I2: 'I₂', HI: 'HI' };
             sLab.set('부피 V = ' + V.toFixed(2) + ' L');
-            info('<b>' + rx.eq + '</b> (일정한 온도) · K = ' + fq(rx.K) + '<br>' + cnt.map((k) => names[k] + ' <b>' + PS.vessel.count(k) + '개</b>').join(' · ') + '<br>부피 V = <b>' + V.toFixed(2) + ' L</b> — 손잡이를 끌거나 2D 단추로 부피를 바꾸면 입자 수가 새 평형으로 달라져요.');
+            info('<b>' + rx.eq + '</b> (일정한 온도) · K = ' + fq(rx.K) + '<br>' + cnt.map((k) => names[k] + ' <b>' + PS.vessel.count(k) + '개</b>').join(' · ') + '<br>부피 V = <b>' + V.toFixed(2) + ' L</b> — 압축 · 팽창 단추로 부피를 바꾸면 입자 수가 새 평형으로 달라져요.');
             return;
           }
           // 온도 (물 중탕)

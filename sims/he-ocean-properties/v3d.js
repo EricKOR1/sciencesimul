@@ -47,7 +47,7 @@
   const ARGO_MAX = 2000;           // 2D의 '읽을 수심' 슬라이더 범위와 ARGO 부이가 내려가는 깊이
 
   window.SciSim3D.attach({
-    levels: [0, 1, 2],
+    levels: [],              // 모든 단계가 2D 화면을 직접 다뤄요: 지도의 부이 누르기 · 손잡이 끌어 그래프 그리기 · 포화 용존 산소 그래프와 원인 카드 · 두 해역 표와 그래프
     title: '수온·용존 산소 3D 기둥',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHONE ? 17 : 12.5, theta: 0.35, phi: 1.28, min: 6, max: 26, target: [0, -2.5, 0] },

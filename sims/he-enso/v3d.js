@@ -15,7 +15,7 @@
   window.SciSim3D.attach({
     title: '적도 태평양 단면 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    levels: [0, 1, 2],
+    levels: [0, 1],          // 2단계(Niño 3.4 그래프 판정) · 3단계(기압차 · 되먹임 · 영향 지도)는 2D 화면에서 해요
     camera: { dist: PHONE ? 20 : 13.8, theta: 0.42, phi: 1.2, min: 7, max: 30, target: [0, -0.2, 0] },
     autoRotate: 0,
     build(ctx) {

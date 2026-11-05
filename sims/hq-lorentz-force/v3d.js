@@ -19,7 +19,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: 11 * KD, theta: 0.7, phi: 0.9, min: 4, max: 40, target: [0, 1.5, 0] },
     autoRotate: 0,
-    levels: [1, 2, 3],
+    levels: [1, 2],   // 1단계는 전기장 모드와 비교해야 하고, 4단계는 캔버스의 트랙 동그라미를 눌러야 해서 2D
     build(ctx) {
       const { THREE, controls } = ctx;
       const root = new THREE.Group(); ctx.root.add(root);
@@ -190,8 +190,8 @@
           const cyc = tt % 6, prog = Math.max(0, Math.min(1, cyc / 2.4)), a = aS + aSpan * prog;
           cP.position.set(cC.x + CR * Math.cos(a), 0.05, cC.z + CR * Math.sin(a)); cTube.geometry.setDrawRange(0, Math.max(6, Math.floor(prog * cTube.geometry.index.count)));
         }
-        info(f === 'a' ? '<b>거품 상자 (위에서 본 모습)</b>: 모든 입자는 전하의 크기가 같아요. 곡선이 <b>휘는 방향</b>으로 부호를 알 수 있어요 (B ⊙에서 <b>+는 시계 방향</b>, −는 반시계). 반지름이 클수록 운동량 p = |q|Br이 커요.<br>트랙의 동그라미로 부호를 정하는 일은 2D에서 해요.'
-          : f === 'b' ? '<b>쌍 생성</b>: 한 곳에서 생긴 한 쌍은 <b>반대로 휘어요</b>. 나선으로 안쪽으로 감기면 에너지(속력)를 잃고 있어요. (부호 정하기는 2D에서 해요.)' : '<b>양성자 한 개의 궤적</b>: 격자 한 칸 = 1.0 cm이면 반지름 r = 5.0 cm. 운동량 p = qBr, 속력 v = p/m을 2D에서 계산해 보세요.');
+        info(f === 'a' ? '<b>거품 상자 (위에서 본 모습)</b>: 모든 입자는 전하의 크기가 같아요. 곡선이 <b>휘는 방향</b>으로 부호를 알 수 있어요 (B ⊙에서 <b>+는 시계 방향</b>, −는 반시계). 반지름이 클수록 운동량 p = |q|Br이 커요.'
+          : f === 'b' ? '<b>쌍 생성</b>: 한 곳에서 생긴 한 쌍은 <b>반대로 휘어요</b>. 나선으로 안쪽으로 감기면 에너지(속력)를 잃고 있어요.' : '<b>양성자 한 개의 궤적</b>: 격자 한 칸 = 1.0 cm이면 반지름 r = 5.0 cm. 운동량 p = qBr, 속력 v = p/m을 계산해 보세요.');
       }
       const plTr = controls.player({ duration: 8, loop: true, autoplay: false, label: '궤적 다시 보기', phases: [[0, '입자가 지나가요'], [0.35, '궤적이 남아요'], [0.8, '사라져요']], onFrame(p) { trP.on = true; trP.tt = p * 7.5; } });
       const trRow = document.querySelectorAll('.v3-player'); const trRowEl = trRow[trRow.length - 1]; trRowEl.style.display = 'none'; const vecBtn = vecB;
@@ -203,9 +203,9 @@
         const S = lessonS(); if (!S) return;
         let sp = st.sp, v = st.v, B = st.B, th = st.th, qn = 1, cmp = false, v2 = 0, note = '';
         if (S.mode === 'orb') { sp = S.o.sp; v = S.o.v; B = S.o.B; th = S.o.th; cmp = !!S.o.cmp; if (cmp) { try { v2 = window.__sim.cmpV(); } catch (e) { v2 = v * 2; } } }
-        else if (S.mode === 'mag') { sp = 'e'; v = S.m.v; B = S.m.B; th = S.m.th; qn = S.m.q; if (S.m.view === 'wire') note = '(도선 확대 장면 F = BIL은 2D에서 확인해요. 3D는 입자 하나의 운동이에요.)'; }
+        else if (S.mode === 'mag') { sp = 'e'; v = S.m.v; B = S.m.B; th = S.m.th; qn = S.m.q; }
         else if (S.mode === 'cond') { sp = S.c.sign > 0 ? 'pos' : 'e'; v = S.c.kase === 'rest' ? 0 : 2.0; B = 1.0; th = S.c.kase === 'par' ? 0 : S.c.kase === 'oblique' || S.c.kase === 'obl' ? 30 : 90; note = S.c.field === 'E' ? '전기장에서는 정지한 전하도 힘을 받지만, 이 3D 모형은 자기장 속의 운동을 보여 줘요.' : ''; }
-        else note = '(이 단계는 2D 그림을 읽는 활동이에요. 3D는 자기장 속 입자의 운동 모형이에요.)';
+        else note = '';
         const sig = [sp, v, B, th, qn, cmp, v2, note].join('|');
         if (sig === lastSig) return; lastSig = sig;
         if (!SP[sp]) sp = 'e';

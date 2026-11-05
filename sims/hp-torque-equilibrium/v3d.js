@@ -49,7 +49,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 값은 옆 조작판에서 바꿔요',
     camera: { dist: 9 * KD, theta: 0.35, phi: 1.2, min: 3, max: 26, target: [0, 1.2, 0] },
     autoRotate: 0,
-    levels: [0, 1, 2],
+    levels: [0, 2, 3],   // 2단계(시소)는 추를 캔버스에서 끌어 거리를 바꿔야 해서 2D
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
       const { V3, M, mkArrow, setArrow, tube, disc } = tools(THREE);

@@ -84,6 +84,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: 15.5 * KD, theta: -0.35, phi: 0.95, min: 7, max: 30, target: [1.0, -0.4, 0] },
     autoRotate: 0,
+    levels: [0, 1, 3],   // 3단계(홀로그램 기록)는 부품을 캔버스에서 끌어 광학대에 놓아야 해서 2D
     build(ctx) {
       const { THREE, root, label, controls } = ctx;
       const h = H3(ctx); const { V3, mat, glass, anchor, sphere, box, cyl, mkSeg, setSeg, grab, showCtl } = h;
@@ -181,7 +182,7 @@
         setSeg(gBeams[0], L0, B0); setSeg(gBeams[1], B0, O0.clone().setY(O0.y + 0.2)); setSeg(gBeams[2], B0.clone(), M0); setSeg(gBeams[3], M0, F0);
         gBeams.forEach((m) => (m.visible = on));
         filmFringe.position.copy(F0); filmFringe.position.x += 0.08; paintFringe(on ? con : 0); filmFringe.material.opacity = on ? 0.9 : 0;
-        lHolo.set(on ? '필름에 간섭무늬 기록 · 무늬 선명도 ' + Math.round(con * 100) + ' %' : '부품을 광학대에 놓아 보세요 (2D)');
+        lHolo.set(on ? '필름에 간섭무늬 기록 · 무늬 선명도 ' + Math.round(con * 100) + ' %' : '부품을 광학대에 놓아 보세요');
         info('<b>🧪 홀로그램 기록</b>: 레이저 빛을 둘로 나눠 <b>물체광</b>(물체에 반사)과 <b>기준광</b>(거울을 거쳐 바로 필름으로)을 필름에서 만나게 해요.<br>' + (on ? '두 빛의 <b>간섭무늬</b>(위상 정보)가 필름에 새겨져요. 방진대가 흔들리면(' + Math.round(hl.vib * 100) + ' %) 무늬가 흐려져요.' : '아직 부품이 다 놓이지 않았어요. 2D 화면에서 끌어서 놓아요. (놓인 부품은 진하게, 빈자리는 흐리게 보여요)'));
       }
 

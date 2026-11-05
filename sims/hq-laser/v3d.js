@@ -84,7 +84,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: 17 * KD, theta: 0.5, phi: 1.22, min: 7, max: 34, target: [1.4, 0, 0] },
     autoRotate: 0,
-    levels: [0, 1, 2, 3],
+    levels: [0, 2, 3],   // 2단계(밀도 반전)는 💡 광자 5개 넣기와 증폭 장면이 2D에만 있어서 2D
     build(ctx) {
       const { THREE, controls } = ctx;
       /* ---- 여러 장면 도우미 (2D 장면 S.mode에 맞춰 그룹 · 이름표 · 재생 줄을 바꿔요) ---- */

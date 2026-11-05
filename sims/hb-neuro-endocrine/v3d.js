@@ -11,7 +11,7 @@
   const lerp = (a, b, t) => a + (b - a) * t;
 
   const v3 = window.SciSim3D.attach({
-    title: '신경 신호 vs 호르몬 신호 3D',
+    title: '신경 신호의 전달 3D',
     hint: '🌵 가시에 찔리기를 누르면 신호가 전달돼요 · 드래그: 돌리기',
     camera: { dist: narrow ? 17 : 13, theta: 0.0, phi: 1.0, min: 6, max: 26, target: [0, 0, 0] },
     autoRotate: 0,

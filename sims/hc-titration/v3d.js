@@ -188,7 +188,7 @@
   };
   window.SciSim3D.attach({
     title: '중화 적정 장치 3D',
-    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 뷰렛 조작과 시료는 2D와 똑같이 이어져요',
+    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 뷰렛 조작에 따라 색이 바뀌어요',
     levels: [1],
     camera: { dist: phone ? 24 : 18.5, theta: 0.5, phi: 1.2, min: 6, max: 36, target: [0.5, 5.6, 0] },
     autoRotate: 0.12,

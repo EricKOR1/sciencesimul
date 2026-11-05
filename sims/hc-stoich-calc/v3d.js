@@ -79,7 +79,7 @@
   const phone = window.matchMedia && window.matchMedia('(max-width: 599px)').matches;
   window.SciSim3D.attach({
     title: '남는 반응물 3D',
-    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 산소의 양과 반응시키기는 2D와 똑같이 이어져요',
+    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 산소의 양을 바꾸고 반응시켜 봐요',
     camera: { dist: phone ? 11.5 : 10.5, theta: 0.45, phi: 1.12, min: 5, max: 24, target: [0, 1.5, 0] },
     autoRotate: 0.08,
     levels: [3],

@@ -12,7 +12,7 @@
   window.SciSim3D.attach({
     title: '팽창하는 우주 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    levels: [2, 3],          // 0~1단계(적색 편이 재기 · 거리-속도 점 찍기)는 2D로 시작하고, 3D 단추로 같은 장면을 볼 수 있어요
+    levels: [3],             // 0~2단계(K선 재기 · 거리-속도 점 찍기 · 그림으로 낸 계산 문제)는 2D 화면에서 해요
     camera: { dist: PHONE ? 14 : 10.5, theta: 0.5, phi: 1.1, min: 4, max: 24 },
     autoRotate: 0,
     build(ctx) {

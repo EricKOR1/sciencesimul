@@ -38,7 +38,7 @@
   const FIT = Math.max(1, 1.4 / asp);
 
   window.SciSim3D.attach({
-    levels: [1, 2],          // 0단계(은하 묶기)·3단계(AI 분류)는 끌어 놓는 활동이라 2D로 시작하고, 3D 단추로 고른 은하의 모양을 볼 수 있어요
+    levels: [],              // 모든 단계가 2D 화면을 직접 다뤄요: 사진 묶기 · 손잡이로 a·b 재기와 소리굽쇠 칸에 놓기 · 막대 그래프 눌러 읽기 · AI 이름표 달기
     title: '은하 모양 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: 25 * FIT, theta: 0.4, phi: 1.2, fov: 42, min: 12, max: 120 },
@@ -207,7 +207,7 @@
           typeSeg && typeSeg.set(type);
         } catch (e) { /* 수업 상태를 못 읽어도 괜찮아요 */ }
       }
-      /* 1단계(은하 사진 묶기) · 4단계(AI 분류): 2D에서 고른 은하 사진의 실제 모양을 입체로 보여 줘요 (묶기 · 이름표 달기는 2D) */
+      /* 1단계(은하 사진 묶기) · 4단계(AI 분류): 고른 은하 사진의 실제 모양을 입체로 보여 줘요 */
       const spKind = (sp) => (sp.t === 'E' ? { t: 'E', n: sp.n } : sp.t === 'Irr' ? { t: 'Irr' } : { t: (sp.bar ? 'SB' : 'S') + (sp.arm || 'b') });
       let lastSp = null, aiT = 0, aiI = 0;
       function showSp(sp, ph) {
@@ -221,11 +221,11 @@
           if (it && it.sp) showSp(it.sp, 60);
           else if (!lastSp) showSp(sim.G1[0].sp, 60);
           const nn = sim.G1.filter((q) => q.bin != null).length;
-          extraNote = '<br><span style="color:#9fb0d4">은하 사진 12장을 모양별로 묶는 일은 ▦ 2D에서 해요. 고른 사진의 모양을 입체로 보여 줘요. (묶은 사진 ' + nn + ' / 12)</span>';
+          extraNote = '<br><span style="color:#9fb0d4">고른 은하 사진의 모양을 입체로 보여 줘요. (묶은 사진 ' + nn + ' / 12)</span>';
         } else if (S.view === 'v4') {
           aiT += dt; if (aiT > 3.2) { aiT = 0; aiI = (aiI + 1) % sim.G4.length; }
           const g = sim.G4[aiI]; showSp(g.sp, g.edge ? 85 : 20 + 70 * (1 - (g.tilt || 1)) + 15);
-          extraNote = '<br><span style="color:#9fb0d4">AI 분류는 ▦ 2D에서 해요. 은하 ' + g.id + ' (' + (g.role === 'train' ? '훈련용' : '시험용') + ')의 모양을 차례로 보여 줘요.</span>';
+          extraNote = '<br><span style="color:#9fb0d4">은하 ' + g.id + ' (' + (g.role === 'train' ? '훈련용' : '시험용') + ')의 모양을 차례로 보여 줘요.</span>';
         } else extraNote = '';
       }
       rebuild(); readLesson();

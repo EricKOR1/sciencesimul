@@ -14,7 +14,7 @@
   window.SciSim3D.attach({
     title: '마그마와 화성암 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    levels: [0, 3],
+    levels: [0],             // 1단계(용암 흐름) · 2단계(정출 순서) · 3단계(카드 끌어 분류표 채우기)는 2D 화면에서 해요
     camera: { dist: PHONE ? 17 : 12.5, theta: 0.4, phi: 1.2, min: 6, max: 26, target: [0, -1.2, 0] },
     autoRotate: 0,
     build(ctx) {
@@ -123,7 +123,8 @@
 
       const L2 = () => ctx.lesson();
       const set2D = (v) => { try { const l = L2(); if (!l || !l.S) return; if (v === 'rock') { if (l.S.mode !== 'class' && l.setMode) { l.setMode('class'); l.updateCtl && l.updateCtl(); } } else { if (l.S.mode !== 'gen' && l.setMode) l.setMode('gen'); if (l.S.place !== v && l.setPlace) l.setPlace(v); l.updateCtl && l.updateCtl(); } } catch (e) {} };
-      const segV = controls.segment('보기', VIEWS.map((x) => ({ value: x[0], label: x[1] })), view, (v) => { set2D(v); build(v); showCtl(); showRows(); });
+      const segV = controls.segment('보기', VIEWS.filter((x) => x[0] !== 'rock').map((x) =>   // 3D 단계(마그마 생성)에서는 변동대 장면만 골라요
+         ({ value: x[0], label: x[1] })), view, (v) => { set2D(v); build(v); showCtl(); showRows(); });
       const gc = (() => { const probe = controls.text(''); const el = probe.parentElement; el.removeChild(probe); return el; })();
       const n0 = gc.children.length;
       controls.segment('냉각 장소', [{ value: 'deep', label: '땅속 깊이' }, { value: 'surf', label: '지표' }], cool, (v) => { cool = v; applyRock(); });

@@ -79,8 +79,8 @@
   const phone = window.matchMedia && window.matchMedia('(max-width: 599px)').matches;
   window.SciSim3D.attach({
     title: '루이스 구조 3D',
-    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 분자 고르기와 단계는 2D와 똑같이 이어져요',
-    levels: [1, 2, 3],
+    hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
+    levels: [],   // 모든 단계에 캔버스 조작이 필요해요(주기율표에서 원소 고르기 · 원자 끌기 · 결합 누르기 · 전자 옮기기). 그래서 2D로 해요
     camera: { dist: phone ? 6.4 : 5.8, theta: 0.6, phi: 1.15, min: 3, max: 20 },
     autoRotate: 0.2,
     build(ctx) {
@@ -312,7 +312,7 @@
           const sg = [sc, key, ord.join(''), lone.join(''), sep.join(''), labelOn].join('|');
           if (sg !== molSig) { molSig = sg; drawMol(key, ord, lone, sep, labelOn, around); }
           const nB = ord.reduce((s, o, bi) => s + ((sep[M.bonds[bi][0]] || sep[M.bonds[bi][1]]) ? 0 : o), 0);
-          info('<b>' + M.f + '</b> (' + M.name + ') · 공유 전자쌍 <b>' + nB + '쌍</b>' + (isW ? ' · 단계 ' + ['① 전자 합', '② 중심 원자', '③ 단일 결합', '④ 전자쌍 채우기', '⑤ 검사'][[0, 1, 2, 2, 3, 4][clamp(Z.W.k, 0, 5)]] : '') + '<br>' + (labelOn ? '공유 전자쌍은 양쪽 원자가 함께 쓰고, 비공유 전자쌍은 한 원자에만 있어요. 노란 점/하늘색 점이 전자쌍이에요.' : (isW ? '2D에서 단계를 진행하면 결합과 전자쌍이 차례로 나타나요.' : '바깥 원자를 가운데 원자에 이어 공유 전자쌍을 만들어 가요.')));
+          info('<b>' + M.f + '</b> (' + M.name + ') · 공유 전자쌍 <b>' + nB + '쌍</b>' + (isW ? ' · 단계 ' + ['① 전자 합', '② 중심 원자', '③ 단일 결합', '④ 전자쌍 채우기', '⑤ 검사'][[0, 1, 2, 2, 3, 4][clamp(Z.W.k, 0, 5)]] : '') + '<br>' + (labelOn ? '공유 전자쌍은 양쪽 원자가 함께 쓰고, 비공유 전자쌍은 한 원자에만 있어요. 노란 점/하늘색 점이 전자쌍이에요.' : (isW ? '단계를 진행하면 결합과 전자쌍이 차례로 나타나요.' : '바깥 원자를 가운데 원자에 이어 공유 전자쌍을 만들어 가요.')));
         },
       };
     },

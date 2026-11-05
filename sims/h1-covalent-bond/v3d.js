@@ -158,6 +158,7 @@
       const lpB = controls.button('비공유 전자쌍 ✓', () => { showLP = !showLP; lpB.classList.toggle('on', showLP); lpB.textContent = '비공유 전자쌍 ' + (showLP ? '✓' : '✕'); build(); }); lpB.classList.add('on');
       const cB = controls.button('바깥 전자 세기 ✕', () => { showCnt = !showCnt; cB.classList.toggle('on', showCnt); cB.textContent = '바깥 전자 세기 ' + (showCnt ? '✓' : '✕'); build(); });
       let demoP = 0, lastSh = null, lastMade = 0;
+      document.querySelectorAll('#molSeg button').forEach((b) => b.addEventListener('click', () => { lastSh = null; }));   // 옆의 H₂·Cl₂를 다시 누르면 3D도 그 분자로 돌아와요
       const ease = (x) => x * x * (3 - 2 * x);
       const pl = controls.player({
         duration: 7, loop: true, autoplay: false, label: '결합 만들기',

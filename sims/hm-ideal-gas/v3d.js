@@ -46,7 +46,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 값은 옆 조작판에서 바꿔요',
     camera: { dist: 12.5 * KD, theta: 0.65, phi: 1.1, min: 5, max: 28, target: [0, 0, 0] },
     autoRotate: 0,
-    levels: [0, 1, 2, 3],
+    levels: [0, 2, 3],   // ② 센서 실험은 캔버스 그래프의 직선을 연장해 읽어야 해서 2D예요
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
       const { V3, M, mkArrow, setArrow } = tools(THREE);
@@ -152,13 +152,15 @@
       const fN = (v) => Math.round(v).toLocaleString('en-US');
       const APP_CAM = { tire: [0, 2.2, 0, 1.3, 0.35, PHN ? 17 : 13], dive: [0, 2.3, 0, 1.3, 0.2, PHN ? 19 : 14], hot: [0, 2.6, 0, 1.3, 0.3, PHN ? 17 : 13] };
       let curApp = '';
+      Object.keys(APPG).forEach((k) => { APPG[k].visible = false; ALAB[k].forEach((l) => l.show(false)); });   // 처음에는 생활 적용 장면(타이어 · 잠수 · 열기구)을 숨겨요
       return {
         update(dt) {
           const A = sim(); if (!A || !A.S) return; const S = A.S; clk.t += dt; clk.dt = Math.min(dt, 0.05);
           let vf, TK, n, P, txt;
           if (S.mode === 'model') { const m = S.m; vf = m.V / 40; TK = m.T; n = 100; P = 100 * 20 / 300 * m.T / m.V; txt = '<b>🔬 기체 모형: 충돌이 만드는 압력</b><br>부피 V = ' + m.V + ' mL · 온도 T = ' + m.T + ' K (' + (m.T - 273) + ' °C) → 압력 P = <b>' + f1(P) + ' kPa</b><br>부피를 줄이면 벽에 부딪히는 횟수가 늘고, 온도를 높이면 분자가 빨라져 횟수와 세기가 커져요.'; }
           else if (S.mode === 'sensor') { const ex = S.sx.exp, rd = A.sxRead(ex, S.sx.x[ex]); vf = rd.V / 40; TK = rd.TK; n = 100; P = rd.P; txt = '<b>📟 센서 실험 · ' + A.EXPS[ex].name + '</b> (' + (ex === 'iso' ? '온도 일정' : ex === 'isob' ? '압력 일정' : '부피 일정') + ')<br>V = ' + f1(rd.V) + ' mL · P = ' + f1(rd.P) + ' kPa · t = ' + Math.round(rd.t) + ' °C (' + Math.round(rd.TK) + ' K)<br>' + (ex === 'iso' ? 'P와 V는 반비례 (PV 일정).' : ex === 'isob' ? 'V–t 직선을 낮은 온도로 연장하면 V = 0이 되는 온도가 있어요 (절대 영도).' : 'P–t 직선을 낮은 온도로 연장하면 P = 0이 되는 온도가 있어요 (절대 영도).'); }
-          else if (S.mode === 'eq') { const o = A.igSolve(); const VL = o.syr ? o.V : o.V; vf = clamp(VL / 50, 0.15, 1); TK = o.T; n = clamp(o.n * 100, 20, 200); P = o.P; txt = '<b>🧮 PV = nRT</b> (R = 8.31 J/(mol·K))<br>P = ' + f1(o.P) + ' kPa · V = ' + (o.V < 1 ? f1(o.V * 1000) + ' mL' : f1(o.V) + ' L') + ' · T = ' + f1(o.T) + ' K · n = ' + (o.n < 0.01 ? f1(o.n * 1e4) + ' × 10⁻⁴ mol' : o.n.toFixed(2) + ' mol') + '<br>세 값을 정하면 나머지 하나가 계산돼요 (분자가 많을수록 · 온도가 높을수록 · 부피가 작을수록 압력이 커요).'; }
+          else if (S.mode === 'eq') { const o = A.igSolve(); const VL = o.syr ? o.V : o.V; vf = clamp(VL / 50, 0.15, 1); TK = o.T; n = clamp(o.n * 100, 20, 200); P = o.P; const fr = !!(A.game && A.game.free), fl = S.flags || {}, hN = o.syr && fl.syr && !fr, hV = !o.syr && S.ig.un === 'V' && fl.vol && !fr;   // 2D처럼 구해야 할 값은 ?로
+            txt = '<b>🧮 PV = nRT</b> (R = 8.31 J/(mol·K))<br>P = ' + f1(o.P) + ' kPa · V = ' + (hV ? '?' : o.V < 1 ? f1(o.V * 1000) + ' mL' : f1(o.V) + ' L') + ' · T = ' + f1(o.T) + ' K · n = ' + (hN ? '?' : o.n < 0.01 ? f1(o.n * 1e4) + ' × 10⁻⁴ mol' : o.n.toFixed(2) + ' mol') + '<br>세 값을 정하면 나머지 하나가 계산돼요 (분자가 많을수록 · 온도가 높을수록 · 부피가 작을수록 압력이 커요).'; }
           else {
             im.visible = box.visible = edges.visible = pis.visible = rod.visible = handle.visible = gauge.visible = false; lP.show(false); lPis.show(false);
             const am = APPG[S.mode] ? S.mode : 'tire'; Object.keys(APPG).forEach((k) => { APPG[k].visible = k === am; ALAB[k].forEach((l) => l.show(k === am)); });

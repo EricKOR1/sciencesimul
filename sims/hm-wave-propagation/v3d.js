@@ -46,7 +46,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 값은 옆 조작판에서 바꿔요',
     camera: { dist: 10.5 * KDX, theta: 0.25, phi: 1.2, min: 4, max: 30, target: [0, 0, 0] },
     autoRotate: 0,
-    levels: [0, 1, 2, 3],
+    levels: [0, 1, 3],   // ③ v = fλ는 캔버스의 주황색 자 · 위치와 시간 그래프를 읽어야 해서 2D예요
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
       const { V3, M } = tools(THREE);
@@ -136,7 +136,7 @@
           if (S.mode === 'model') t2 = '<b>🧩 연결 모형: 무엇이 이동할까?</b> · 질량 알갱이를 용수철이 이어 놓았어요 (k = ' + A.KS[S.kv] + ' N/m · m = ' + A.MS[S.mv] + ' kg)<br>펄스가 지나갈 때 표시점 ①②③은 <b>제자리에서 위아래로 진동</b>할 뿐 옆으로 이동하지 않아요. 이동하는 것은 <b>파동(에너지 · 모양)</b>이에요.' + (S.meas.v != null ? '<br>측정한 펄스 속력: ' + S.meas.v.toFixed(1) + ' m/s' : '');
           else if (S.mode === 'lt') t2 = '<b>' + (S.lt.dir === 'T' ? '↕ 횡파' : '↔ 종파') + '</b> · 파동 용수철 4.0 m<br>' + (S.lt.dir === 'T' ? '알갱이가 진행 방향과 <b>수직</b>으로 흔들려요.' : '알갱이가 진행 방향과 <b>나란하게</b> 흔들려요. 몰린 곳(밀, 빨강)과 흩어진 곳(소)이 번갈아 나타나요.') + '<br>기록한 통과 시간: 횡파 ' + (S.lt.time.T != null ? S.lt.time.T.toFixed(2) + ' s' : '—') + ' · 종파 ' + (S.lt.time.L != null ? S.lt.time.L.toFixed(2) + ' s' : '—');
           else if (S.mode === 'fl') t2 = '<b>〰 v = fλ</b> · 진동수 f = ' + FS[S.fl.fi].toFixed(1) + ' Hz<br>진동수를 바꿔 파장 λ를 재고 f × λ를 비교해요. 같은 매질에서는 f가 커지면 λ가 짧아지고 속력 v = fλ는 일정해요.';
-          else t2 = '<b>🧵 줄의 속력</b> · 장력 ' + A.TS[S.sp.Tv] + ' N · 단위 길이당 질량 μ = ' + A.MUS[S.sp.mv] + '<br>장력이 클수록 · 줄이 가벼울수록 펄스가 빨리 지나가요 (측정한 관계로 정리해요).';
+          else t2 = '<b>🧵 줄의 속력</b> · 장력 ' + A.TS[S.sp.Tv] + ' N · 단위 길이당 질량 μ = ' + A.MUS[S.sp.mv] + '<br>장력이 클수록 · 줄이 가벼울수록 펄스가 빨리 지나가요 (측정한 관계로 정리해요).' + (S.sp.rec && S.sp.rec.length ? '<br>📋 측정 기록: ' + S.sp.rec.slice(-4).map((r) => 'T ' + r.T + ' N · μ ' + r.mu + ' → ' + r.t + ' s, v ' + r.v + ' m/s').join(' / ') : '');
           if (usedDemo) t2 += '<br><span style="color:#ffd34d">▶ 펄스가 오른쪽으로 진행하는 동안 알갱이는 제자리에서 진동해요.</span>';
           if (t2 !== last) { last = t2; info(t2); }
         },

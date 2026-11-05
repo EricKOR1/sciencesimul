@@ -79,10 +79,10 @@
   const phone = window.matchMedia && window.matchMedia('(max-width: 599px)').matches;
   window.SciSim3D.attach({
     title: 'pH와 이온 수 3D',
-    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · pH와 희석 단계는 2D와 똑같이 이어져요',
+    hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: phone ? 14 : 12.5, theta: 0.35, phi: 1.2, min: 5, max: 24, target: [1.6, 2.6, 0] },
     autoRotate: 0.12,
-    levels: [0, 1, 2],
+    levels: [],   // 모든 단계에 2D 조작이 필요해요(로그 눈금 단추 · 시료 고르기 · 기록하기와 그래프 · 물질 끌기). 그래서 2D로 해요
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const L = makeLib(THREE);

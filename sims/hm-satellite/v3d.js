@@ -68,7 +68,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 값은 옆 조작판에서 바꿔요',
     camera: { dist: 12, theta: 0.5, phi: 1.1, min: 4, max: 110, target: [0, 0, 0] },
     autoRotate: 0,
-    levels: [0, 1, 2, 3],
+    levels: [0, 1, 3],   // ③ 정지 위성은 지상에서 본 모습 · 지도(극 궤도) 화면이 캔버스에만 있어서 2D예요
     build(ctx) {
       const { THREE, root, label, info, orbit, renderer } = ctx;
       const sim = () => ctx.lesson();
@@ -118,7 +118,7 @@
         lV.obj = pos.clone().addScaledVector(vd, 1.3 * sc).toArray(); lGr.obj = pos.clone().addScaledVector(gd, 1.1 * sc).toArray(); lSat.off = [0, 0.5 * sc, 0];
         const vNow = o.meas ? A.vcNow() : o.v;
         let t;
-        if (o.meas) t = '<b>📏 ' + b.n + ' 둘레 원 궤도 · 고도 ' + S.me.h + ' km</b> (측정 장면)<br>궤도 반지름 r = ' + sci(r0, 2) + ' m · 속력 v = <b>' + f2(vNow) + ' km/s</b> (이 고도의 원 궤도 속력)<br>v와 한 바퀴 도는 시간 T를 측정해 표와 그래프를 채워요 (T = 2πr/v).<br>';
+        if (o.meas) t = '<b>📏 ' + b.n + ' 둘레 원 궤도 · 고도 ' + S.me.h + ' km</b> (측정 장면)<br>궤도 반지름 r = ' + sci(r0, 2) + ' m · 속력 v = <b>' + f2(vNow) + ' km/s</b> (이 고도의 원 궤도 속력)<br>v와 한 바퀴 도는 시간 T를 측정해 표와 그래프를 채워요 (T = 2πr/v).<br>' + (S.me.rec && S.me.rec.length ? '📏 측정 기록: ' + S.me.rec.map((q) => q.h.toLocaleString('ko-KR') + ' km → v ' + f2(q.v / 1000) + ' km/s · T ' + Math.round(q.T / 60).toLocaleString('ko-KR') + '분').join(' / ') + '<br>' : '');
         else t = '<b>🛰️ ' + b.n + ' 둘레 원 궤도 만들기</b> · 고도 ' + h + ' km → r = ' + sci(r0, 2) + ' m<br>발사 속력 v = <b>' + f2(vNow) + ' km/s</b> (옆 조작판) · ' + (o.st === 'ready' ? '속력을 정하고 발사하세요. 중력이 구심력 역할을 하는 속력(원 궤도 속력)이 아니면 원이 아니에요.' : o.st === 'run' ? '도는 중… 돈 바퀴 수 ' + f1(o.revs) : o.msg || '궤도를 마쳤어요') + '<br>';
         info(t + '위성에는 <b>중력만</b> 작용해요: 중력이 구심력이라 GMm/r² = mv²/r → v = √(GM/r) (위성의 질량은 상관없어요).');
       }
@@ -163,7 +163,7 @@
         setPlanet(mC, p.c, p.col); mC.scale.setScalar(p.cs / 34 * 1.6); mS.scale.setScalar(p.ss / 34 * 1.6); setPlanet(mS, p.sat, p.sat === '이오' ? '#f2d45c' : p.sat === '지구' ? '#3b82f6' : '#d9dde6'); mAtmo.scale.setScalar(p.cs / 34 * 1.6 * 1.07); mAtmo.visible = p.c !== '달'; mC.material.emissive.set(p.c === '태양' ? 0xff8a00 : 0x000000); mC.material.emissiveIntensity = p.c === '태양' ? 0.85 : 0; mAtmo.material.uniforms.c.value.set(p.c === '태양' ? 0xffc84a : p.c === '지구' ? 0x6db3ff : 0xffd9a8);
         mRing.setR(R, 0); mS.position.set(R * Math.cos(ms.ang), 0, -R * Math.sin(ms.ang)); mRod.geometry.setFromPoints([new V3(), mS.position.clone()]);
         lmC.set(p.c); lmS.set(p.sat); lmC.off = [0, p.cs / 34 * 1.6 + 0.4, 0]; lmS.off = [0, 0.5, 0];
-        info('<b>⚖️ 위성으로 천체의 질량 재기: ' + p.name + '</b><br>관측한 r = <b>' + sci(p.r, 2) + ' m</b> · 관측한 T = <b>' + sci(p.T, 2) + ' s</b> (' + p.Tt + ')<br>' + (hide ? '중심 천체의 질량 M = 4π²r³ / (GT²)을 계산해 2D 화면에 입력해요.' : p.c + '의 질량 M = ' + sci(A.massOf(p), 2) + ' kg') + '<br>중력이 구심력 → GMm/r² = m(2πr/T)² → 위성의 질량은 약분돼요.<br><span style="opacity:.8">어느 천체인지는 옆 조작판에서 골라요.</span>');
+        info('<b>⚖️ 위성으로 천체의 질량 재기: ' + p.name + '</b><br>관측한 r = <b>' + sci(p.r, 2) + ' m</b> · 관측한 T = <b>' + sci(p.T, 2) + ' s</b> (' + p.Tt + ')<br>' + (hide ? 'r³ = ' + sci(p.r * p.r * p.r, 2) + ' m³ · T² = ' + sci(p.T * p.T, 2) + ' s²<br>중심 천체의 질량 M = 4π²r³ / (GT²)을 계산해 옆 조작판에 입력해요.' : p.c + '의 질량 M = ' + sci(A.massOf(p), 2) + ' kg') + '<br>중력이 구심력 → GMm/r² = m(2πr/T)² → 위성의 질량은 약분돼요.<br><span style="opacity:.8">어느 천체인지는 옆 조작판에서 골라요.</span>');
       }
       /* ================= 🚀 무중량 (자유 낙하) ================= */
       const wE = new THREE.Mesh(new THREE.SphereGeometry(2.0, 56, 40), new THREE.MeshStandardMaterial({ map: earthTex, roughness: 0.8 })); G.wless.add(wE); atmo(G.wless, 2.14, 0x6db3ff); const wRing = ringLine(G.wless, 0xffffff, 0.4);

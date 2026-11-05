@@ -79,7 +79,8 @@
   const phone = window.matchMedia && window.matchMedia('(max-width: 599px)').matches;
   window.SciSim3D.attach({
     title: '중화 반응 이온 모형 3D',
-    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 시료 고르기와 부피는 2D와 똑같이 이어져요',
+    hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
+    levels: [1],   // 완전 중화(뷰렛 · BTB 색 · 이온 입자). 이온 누르기 · 남은 이온 표 · 폐수 처리 단계는 2D
     camera: { dist: phone ? 13 : 11, theta: 0.5, phi: 1.15, min: 5, max: 24, target: [0, 1.5, 0.4] },
     autoRotate: 0.08,
     build(ctx) {
@@ -119,6 +120,8 @@
         });
         for (; i < B.pool.length; i++) B.pool[i].visible = false;
       }
+      const KN = { 'H+': 'H⁺', 'OH-': 'OH⁻', 'Na+': 'Na⁺', 'Cl-': 'Cl⁻', 'Ca2+': 'Ca²⁺', SO4: 'SO₄²⁻', H2O: 'H₂O' };
+      const legend = (box) => { const ks = []; (box && box.ions || []).forEach((q) => { if (KN[q.kind] && ks.indexOf(q.kind) < 0) ks.push(q.kind); }); return ks.length ? '<br>' + ks.map((k) => '<span style="color:#' + (KC[k] || 0xffffff).toString(16).padStart(6, '0') + '">●</span> ' + KN[k]).join(' · ') : ''; };
       const hideAll = () => bk.forEach((B) => { B.g.visible = false; B.lab.show(false); B.pool.forEach((m) => { m.visible = false; }); });
       /* 뷰렛 (완전 중화 장면) */
       const bur = new THREE.Group(); root.add(bur);
@@ -188,7 +191,7 @@
             }
             mirror(bk[0], Z.boxA); mirror(bk[1], Z.boxB); mirror(bk[2], Z.boxC);
             flushOwn(true);
-            info('<b>HCl + NaOH → NaCl + H₂O</b><br>' + (I.phase === 'done' ? '알짜 이온식: <b>H⁺ + OH⁻ → H₂O</b> (Na⁺ · Cl⁻는 구경꾼 이온)' : I.phase === 'sep' ? 'HCl에는 H⁺ ' + I.nH + '개와 Cl⁻ ' + I.nH + '개, NaOH에는 Na⁺ ' + I.nOH + '개와 OH⁻ ' + I.nOH + '개가 있어요. 2D에서 섞어 보세요.' : '섞은 뒤 H⁺와 OH⁻가 만나 H₂O가 돼요.'));
+            info('<b>HCl + NaOH → NaCl + H₂O</b><br>' + (I.phase === 'done' ? '알짜 이온식: <b>H⁺ + OH⁻ → H₂O</b> (Na⁺ · Cl⁻는 구경꾼 이온)' : I.phase === 'sep' ? 'HCl에는 H⁺ ' + I.nH + '개와 Cl⁻ ' + I.nH + '개, NaOH에는 Na⁺ ' + I.nOH + '개와 OH⁻ ' + I.nOH + '개가 있어요. 🥣 섞기를 눌러 보세요.' : '섞은 뒤 H⁺와 OH⁻가 만나 H₂O가 돼요.'));
             return;
           }
           flushOwn(true);
@@ -202,7 +205,7 @@
             burLab.show(true); burLab.obj = [0, 3.2 + 5.4, 0.6]; burLab.set(s.bur.Ms + ' M ' + s.bur.f + ' · 눈금 ' + v.toFixed(1) + ' mL');
             B.lab.show(true); B.lab.obj = [0, 3.8 + 0.4, 0.6]; B.lab.set(s.flask.Ms + ' M ' + s.flask.f + ' ' + s.flask.V + ' mL + BTB');
             const f2 = (x) => String(+x.toFixed(2));
-            info('<b>' + s.label + '</b> 에 ' + s.bur.Ms + ' M ' + s.bur.f + ' <b>' + v.toFixed(1) + ' mL</b> 넣기<br>H⁺ 몰수 ' + f2(c.nH) + ' mmol · OH⁻ 몰수 ' + f2(c.nOH) + ' mmol → ' + (c.neutral ? '<b>같아요 → 완전 중화</b> (BTB 초록)' : c.H > 0 ? 'H⁺가 남아 산성 (BTB 노랑)' : 'OH⁻가 남아 염기성 (BTB 파랑)') + '<br>산이 내놓은 H⁺ 몰수 = 염기가 내놓은 OH⁻ 몰수 → a M V = b M′ V′ · ● 1개 ≈ 0.25 mmol');
+            info('<b>' + s.label + '</b> 에 ' + s.bur.Ms + ' M ' + s.bur.f + ' <b>' + v.toFixed(1) + ' mL</b> 넣기<br>H⁺ 몰수 ' + f2(c.nH) + ' mmol · OH⁻ 몰수 ' + f2(c.nOH) + ' mmol → ' + (c.neutral ? '<b>같아요 → 완전 중화</b> (BTB 초록)' : c.H > 0 ? 'H⁺가 남아 산성 (BTB 노랑)' : 'OH⁻가 남아 염기성 (BTB 파랑)') + '<br>산이 내놓은 H⁺ 몰수 = 염기가 내놓은 OH⁻ 몰수 → a M V = b M′ V′ · ● 1개 ≈ 0.25 mmol' + legend(Z.boxM));
             return;
           }
           if (mode === 'rest') {

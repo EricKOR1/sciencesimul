@@ -12,7 +12,7 @@
   window.SciSim3D.attach({
     title: '변성 작용 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    levels: [0, 2, 3],
+    levels: [0],             // 1단계(암석 담기 · 카드 나누기) · 2단계(탐침 놓기 · 압력-온도 그래프) · 3단계(단면의 번호 점 · 변성암 띠 누르기)는 2D 화면에서 해요
     camera: { dist: PHONE ? 13 : 9.5, theta: 0.5, phi: 1.15, min: 4.5, max: 24, target: [0, 0.2, 0] },
     autoRotate: 0,
     build(ctx) {
@@ -121,7 +121,8 @@
       }));
       const rD = gB1.r.rD;
       let view = 'A', lastKey2 = '';
-      const segV = controls.segment('보기', [{ value: 'A', label: '🔬 열·압력' }, { value: 'B', label: '⛰️ 변동대 단면' }], view, (v) => { const l = ctx.lesson(); if (l && l.setView) { const cur = l.S && l.S.view; if (v === 'A') l.setView('grain'); else if (['aur', 'pt', 'tect', 'map'].indexOf(cur) < 0) l.setView('aur'); } setView(v); });
+      const gV = grab(() => controls.segment('보기', [{ value: 'A', label: '🔬 열·압력' }, { value: 'B', label: '⛰️ 변동대 단면' }], view, (v) => { const l = ctx.lesson(); if (l && l.setView) { const cur = l.S && l.S.view; if (v === 'A') l.setView('grain'); else if (['aur', 'pt', 'tect', 'map'].indexOf(cur) < 0) l.setView('aur'); } setView(v); }));
+      const segV = gV.r; gV.els.forEach((e) => { e.style.display = 'none'; });   // 3D 단계(열과 압력)에서는 알갱이 모형만 봐요: 변동대 단면으로 넘어가는 단추는 숨겨요
       function setView(v) {
         view = v; gA.visible = v === 'A'; gB.visible = v === 'B'; segV.set(v);
         applyCtl();

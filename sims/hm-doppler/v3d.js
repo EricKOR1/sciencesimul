@@ -48,7 +48,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 속력은 옆 조작판에서 바꿔요',
     camera: { dist: 16 * KDX, theta: 0.15, phi: 0.95, min: 5, max: 40, target: [0, 0, 0] },
     autoRotate: 0,
-    levels: [0, 1, 3],
+    levels: [1, 3],   // ① 소리 높이는 캔버스의 기록 표 · 스펙트럼을 읽어서, ③ 식 계산 · 스마트폰 그래프도 캔버스에서 해서 2D예요
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
       const { V3, M, mkArrow, setArrow, grid } = tools(THREE);
@@ -99,7 +99,7 @@
         });
         obsW.forEach(([si, oi, m], i) => { const rs = si ? w.B : w.A; m.position.set(rs.xo(oi, rs.P) * W, 0.17, 0); const lb = lObs[i]; lb.set(rs.obs[oi].name); lb.off = [0, 0.5, 0]; });
         lSrcs.forEach((l) => (l.off = [0, 0.55, 0]));
-        info('<b>🌀 파면 모형: 간격이 달라져요</b> · 파원 속력 ' + vs + ' m/s · 소리의 속력 340 m/s · 파원 680 Hz<br>① 움직이는 파원: 진행 방향 <b>앞쪽 파면은 촘촘</b>(파장 짧음), <b>뒤쪽은 성겨요</b>(파장 김) → A는 높은 소리, B는 낮은 소리.<br>② 움직이는 관측자(C): 파면을 더 자주 맞이해서 소리가 높게 들려요.<br><span style="opacity:.8">파원 속력은 옆 조작판에서 바꾸고, 앞·뒤 파장은 2D 화면에서 재요 (화면은 실제보다 느려요).</span>');
+        info('<b>🌀 파면 모형: 간격이 달라져요</b> · 파원 속력 ' + vs + ' m/s · 소리의 속력 340 m/s · 파원 680 Hz<br>① 움직이는 파원: 진행 방향 <b>앞쪽 파면은 촘촘</b>(파장 짧음), <b>뒤쪽은 성겨요</b>(파장 김) → A는 높은 소리, B는 낮은 소리.<br>② 움직이는 관측자(C): 파면을 더 자주 맞이해서 소리가 높게 들려요.<br><span style="opacity:.8">' + (S.wf.rec && S.wf.rec.length ? '📏 잰 앞·뒤 파장: ' + S.wf.rec.slice(-3).map((r) => 'v_s = ' + r.vs + ' m/s → 앞 ' + r.f.toFixed(2) + ' m · 뒤 ' + r.b.toFixed(2) + ' m').join(' / ') : '📏 앞·뒤 파장 재기를 누르면 잰 값이 여기에 나와요.') + ' (화면은 실제보다 느려요)</span>');
       }
       /* ================= 🧮 도플러 식 (파면 센서) ================= */
       const gC = new THREE.Group(); root.add(gC); const CW = 0.8;

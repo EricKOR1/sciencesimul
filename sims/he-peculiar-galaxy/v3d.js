@@ -15,7 +15,7 @@
   window.SciSim3D.attach({
     title: '활동성 은하·은하 충돌 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    levels: [0, 1, 3],
+    levels: [],              // 모든 단계가 2D 화면을 직접 다뤄요: 켄타우루스 A 파장별 모습 · 대기 투과 그래프 · 은하 카드 비교 · 스펙트럼 · 적외선 밝기 그래프
     camera: { dist: PHONE ? 17 : 12, theta: 0.5, phi: 0.9, min: 4, max: 30 },
     autoRotate: 0,
     build(ctx) {

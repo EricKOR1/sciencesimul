@@ -169,7 +169,7 @@
         } else if (S.mode === 'model') {
           txt = '<b>📐 운동 식 · v₀ = ' + P.v0 + ' m/s, θ = ' + P.th + '°</b><br>x = v₀cosθ·t · y = v₀sinθ·t − ½gt² · 수평은 등속(ax = 0), 연직은 가속(ay = −g)<br>' + (P.st === 'done' && P.fl ? '결과: 체공 시간 T = ' + f1(P.fl.T) + ' s · 최고 높이 H = ' + f1(P.fl.H) + ' m · 사거리 R = ' + f1(P.fl.R) + ' m' : 'T · H · R은 식으로 계산한 뒤 ▶ 던지기로 확인해요.');
         } else {
-          txt = '<b>🏹 궤적 관찰 · v₀ = ' + P.v0 + ' m/s · θ = ' + P.th + '°</b><br>' + (P.st === 'done' && P.fl ? '사거리 R = <b>' + f1(P.fl.R) + ' m</b> · 최고 높이 ' + f1(P.fl.H) + ' m' : '각도를 바꿔 던져 사거리 R을 기록해요 (옆 조작판).') + '<br>수평 방향은 등속(바닥 위 그림자 간격이 일정), 연직 방향은 중력 때문에 가속돼요.';
+          txt = '<b>🏹 궤적 관찰 · v₀ = ' + P.v0 + ' m/s · θ = ' + P.th + '°</b><br>' + (P.st === 'done' && P.fl ? '사거리 R = <b>' + f1(P.fl.R) + ' m</b> · 최고 높이 ' + f1(P.fl.H) + ' m' : '각도를 바꿔 던져 사거리 R을 기록해요 (옆 조작판).') + (P.rec && P.rec.length ? '<br>📋 기록: ' + P.rec.map((x) => x.th + '° → R ' + f1(x.R) + ' m').join(' · ') : '') + '<br>수평 방향은 등속(바닥 위 그림자 간격이 일정), 연직 방향은 중력 때문에 가속돼요.';
         }
         info(txt + (active ? '<br><span style="opacity:.8">잔상은 0.2 s마다 남겨요.</span>' : ''));
       }
@@ -183,7 +183,7 @@
         setStrobe([]); vidBalls.forEach((b, i) => { const p = A.vidPos(i * A.FDT); b.visible = true; b.position.set(p.x * K, p.y * K + 0.2, 0); const mk = v.mk[i]; b.material.opacity = mk ? 1 : 0.28; b.material.color.setHex(i === fr ? 0xfff176 : mk ? 0x7dd3fc : 0x94a3b8); b.scale.setScalar(i === fr ? 1.25 : 1); });
         vA.visible = vxA.visible = vyA.visible = false; lx.show(false); ly.show(false);
         const done = v.mk.filter(Boolean).length;
-        info('<b>🎞️ 영상 속 공 분석</b> · 프레임 ' + fr + ' / ' + (n - 1) + ' · t = ' + (fr * A.FDT).toFixed(1) + ' s<br>공의 위치: x = ' + (q.x).toFixed(1) + ' m · y = ' + Math.max(0, q.y).toFixed(1) + ' m (영상의 프레임마다 0.2 s)<br>찍은 프레임 ' + done + ' / ' + n + ' · 바닥 위 그림자(x)는 같은 간격으로, 기둥 위 그림자(y)는 위로 던진 공처럼 움직여요.<br><span style="opacity:.8">프레임 위치는 2D 화면에서 찍고, vx와 v₀y는 표에서 계산해요.</span>');
+        info('<b>🎞️ 영상 속 공 분석</b> · 프레임 ' + fr + ' / ' + (n - 1) + ' · t = ' + (fr * A.FDT).toFixed(1) + ' s<br>공의 위치: x = ' + (q.x).toFixed(1) + ' m · y = ' + Math.max(0, q.y).toFixed(1) + ' m (영상의 프레임마다 0.2 s)<br>찍은 프레임 ' + done + ' / ' + n + ' · 바닥 위 그림자(x)는 같은 간격으로, 기둥 위 그림자(y)는 위로 던진 공처럼 움직여요.<br><span style="opacity:.8">vx와 v₀y는 분석 표에서 계산해요.</span>');
       }
       /* ▶ 재생 */
       pl = controls.player({ duration: 5, loop: true, autoplay: false, label: '던지기', phases: [[0, '수평: 등속 · 연직: 가속'], [0.88, '도착']], onFrame(p) { demo.p = p; demo.on = p > 0 || !!(pl && pl.playing); } });

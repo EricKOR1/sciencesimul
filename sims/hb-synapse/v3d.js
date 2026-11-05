@@ -234,7 +234,7 @@
         const apOn = fn && fn.tstar != null && tt > fn.tstar; apBall.visible = !!apOn; if (apOn) { const k = Math.max(0, Math.min(1, (tt - fn.tstar) / 4.5)); apBall.position.set(1.2 + k * 4.0, 0, 0); }
         sl[2].set(Math.round(bv) + ' mV'); sl[2].show(true); sl[3].set('막전위 ' + (Math.round(V) > 0 ? '+' : Math.round(V) < 0 ? '−' : '') + Math.abs(Math.round(V)) + ' mV'); sl[3].show(true); sl[4].show(true); sl[5].show(true); sl[0].show(true); sl[1].show(true); sl[6].show(!!apOn);
         const key = E + '|' + I + '|' + (sm.run ? 1 : 0) + '|' + (sm.res ? (sm.res.ap ? 'a' : 'n') : '');
-        if (key !== sSumSig) { sSumSig = key; const ap = tot >= -55 - 1e-9; info('<b>신호 합산</b> · 흥분성 <b>' + E + '</b>개(+5 mV씩) · 억제성 <b>' + I + '</b>개(−5 mV씩)<br>합산 전위 = −70 + 5 × (' + E + ' − ' + I + ') = <b>' + (tot > 0 ? '+' : tot < 0 ? '−' : '') + Math.abs(tot) + ' mV</b><br>' + (ap ? '역치(−55 mV) 이상이라 <b style="color:#fcd34d">활동 전위가 발생해요</b>.' : '역치(−55 mV)에 못 미쳐서 <b>활동 전위가 발생하지 않아요</b>.') + '<br><small>예측 버튼을 누르면 2D와 똑같이 확인해 줘요.</small>'); }
+        if (key !== sSumSig) { sSumSig = key; const ap = tot >= -55 - 1e-9; info('<b>신호 합산</b> · 흥분성 <b>' + E + '</b>개(+5 mV씩) · 억제성 <b>' + I + '</b>개(−5 mV씩)<br>합산 전위 = −70 + 5 × (' + E + ' − ' + I + ') = <b>' + (tot > 0 ? '+' : tot < 0 ? '−' : '') + Math.abs(tot) + ' mV</b><br>' + (ap ? '역치(−55 mV) 이상이라 <b style="color:#fcd34d">활동 전위가 발생해요</b>.' : '역치(−55 mV)에 못 미쳐서 <b>활동 전위가 발생하지 않아요</b>.') + '<br><small>예측 버튼을 누르면 결과를 확인해 줘요.</small>'); }
         const drivingS = sm.run; if (!pS.playing && !drivingS) { /* 정지 */ } 
         if (drivingS && !pS.playing) { ignS = true; pS.set(Math.min(1, sm.t / 10)); ignS = false; }
         pY.disabled = pN.disabled = !!sm.run;

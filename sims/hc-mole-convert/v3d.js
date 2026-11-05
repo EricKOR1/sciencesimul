@@ -79,10 +79,10 @@
   const phone = window.matchMedia && window.matchMedia('(max-width: 599px)').matches;
   window.SciSim3D.attach({
     title: '몰 환산과 기체 부피 3D',
-    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 단계와 오른쪽 조작이 2D와 똑같이 이어져요',
+    hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: phone ? 15 : 12, theta: 0.35, phi: 1.12, min: 6, max: 40, target: [0, 1.5, 0] },
     autoRotate: 0.08,
-    levels: [0, 1, 3],
+    levels: [0, 3],   // 기체 1몰 · 종합 도전(드라이아이스 · 밀도). 환산 허브(화살표 이름표 누르기)와 환산 연습은 2D
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const L = makeLib(THREE);
@@ -183,7 +183,7 @@
         const V = vt * p, r = rOf(V, 0.55, 2.6);
         dry.show(V > 0.3); dry.set(r, Math.round(10 * p), 0xf9a8d4); dry.place(0, 2.7 + r * 0.9, 0); dry.step(dt, 1.2);
         dry.lab.set(fn.okT[T] ? '<b>' + Z.fm(vt, 2) + ' L</b>' : '<b>? L</b>');
-        info('<b>드라이아이스 22 g (CO₂)</b> · 몰질량 44 g/mol · ' + T + ' °C, 1기압<br>1 mol의 부피: 0 °C → 22.4 L, 25 °C → ' + Z.VM25 + ' L<br>승화 <b>' + Math.round(p * 100) + ' %</b> · 기체의 부피는 얼마일까요? 계산해서 2D 칸에 써 보세요.<br>온도가 높을수록 1 mol의 부피가 커서 풍선도 더 커져요.');
+        info('<b>드라이아이스 22 g (CO₂)</b> · 몰질량 44 g/mol · ' + T + ' °C, 1기압<br>1 mol의 부피: 0 °C → 22.4 L, 25 °C → ' + Z.VM25 + ' L<br>승화 <b>' + Math.round(p * 100) + ' %</b> · 기체의 부피는 얼마일까요? 계산해서 오른쪽 칸에 써 보세요.<br>온도가 높을수록 1 mol의 부피가 커서 풍선도 더 커져요.');
       }
 
       /* ④ 종합 도전 · 이산화 탄소의 밀도 (촛불) */

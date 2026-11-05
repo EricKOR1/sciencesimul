@@ -182,7 +182,7 @@
   function markChips(box, cur, doneMap) { $$('button', box).forEach((b) => { b.classList.toggle('on', b.dataset.v === String(cur)); b.classList.toggle('done', !!(doneMap && doneMap[b.dataset.v])); }); }
   const pointInRect = (p, r) => p.x >= r.x && p.x <= r.x + r.w && p.y >= r.y && p.y <= r.y + r.h;
 
-  const MODE_LABEL = { cmp: '🥤 농도 비교', calc: '🧮 M 계산', dil: '💧 희석', ion: '⚛️ 이온 농도' };
+  const MODE_LABEL = { cmp: '🧪 농도 비교', calc: '🧮 M 계산', dil: '💧 희석', ion: '⚛️ 이온 농도' };
   const MAIN = PHONE ? { x: 8, y: 52, w: 464, h: 424 } : { x: 12, y: 52, w: 776, h: 342 };
   const INFO = PHONE ? { x: 8, y: 484, w: 464, h: 270 } : { x: 12, y: 402, w: 776, h: 148 };
   const BALL = 0.1;                       // 비커 그림에서 입자(●) 1개 = 0.1 mol
@@ -297,7 +297,7 @@
   };
   function drawCmp(t) {
     const set = cmpSet(), pred = cmpPred(), G = cmpGeom();
-    T(14, 26, S.sub.cmp === 'same' ? '🥤 부피가 같은 비커 3개' : '🥤 부피가 다른 비커 3개', PHONE ? 15 : 17, INK, 'left', 800);
+    T(14, 26, S.sub.cmp === 'same' ? '🧪 부피가 같은 비커 3개' : '🧪 부피가 다른 비커 3개', PHONE ? 15 : 17, INK, 'left', 800);
     panel(MAIN.x, MAIN.y, MAIN.w, MAIN.h, 14);
     T(MAIN.x + 14, MAIN.y + 22, '진한 비커부터 차례로 눌러 보세요', 14, MUTED, 'left', 800);
     T(MAIN.x + MAIN.w - 14, MAIN.y + 22, '● = 용질 0.1 mol', 14, COL_SOL, 'right', 800);
@@ -511,7 +511,7 @@
   /* ================= 미션 ================= */
   const levels = [
     {
-      title: '농도 비교: 1 L 속에 몇 몰?', short: '농도 비교', icon: '🥤', phase: '모형',
+      title: '농도 비교: 1 L 속에 몇 몰?', short: '농도 비교', icon: '🧪', phase: '모형',
       intro: '<p class="si-q">❓ 탐구 질문: 같은 양의 소금을 녹여도 물의 양에 따라 맛이 달라요. 진하기를 숫자로 정확히 나타내려면 어떻게 해야 할까요?</p>' +
         '<div class="si-link">🔗 <b>통합과학·중학교에서</b> 퍼센트 농도(질량 기준)와 몰(mol)을 배웠어요. 이제 <b>몰 단위</b>로 용액의 진하기를 나타내는 <b>몰 농도</b>를 알아봐요.</div>' +
         '<p>비커마다 용질 입자(●, 1개 = 0.1 mol)와 용액의 부피가 달라요. 어느 것이 더 진한지 어떻게 비교할지 생각해 봐요.</p>',
@@ -685,7 +685,7 @@
   setScene('cmp');        // 이어하기에서 단계의 장면을 덮어쓰지 않도록 game 만들기 전에
   game = SciSim.game({
     simId: 'hc-molarity', mount: '#game', badge: '농도 박사', homeHref: '../../index.html#hc',
-    featureLabels: { cmp: '🥤 비커 농도 비교', calc: '🧮 M 계산기', dil: '💧 희석 슬라이더', ion: '⚛️ 이온 입자 모형' },
+    featureLabels: { cmp: '🧪 비커 농도 비교', calc: '🧮 M 계산기', dil: '💧 희석 슬라이더', ion: '⚛️ 이온 입자 모형' },
     onFeatures() { updateCtl(); },
     levels,
   });

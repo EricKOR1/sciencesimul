@@ -125,8 +125,12 @@
         phases: [[0, '산성 (H⁺이 남아요)'], [NH / (MAXK + 1), '완전 중화'], [(NH + 1) / (MAXK + 1), '염기성 (OH⁻이 남아요)']],
         onFrame(p) { if (internal) return; st.demo = true; setK(Math.min(MAXK, Math.floor(p * (MAXK + 1)))); },
       });
-      const indSeg = controls.segment('지시약', [{ value: 'btb', label: 'BTB' }, { value: 'pp', label: '페놀프탈레인' }], 'btb', (v) => { st.ind = v; st.demo = true; src = null; tint(); });
-      controls.button('+ NaOH 한 묶음', () => {
+      const indSeg = controls.segment('지시약', [{ value: 'btb', label: 'BTB' }, { value: 'pp', label: '페놀프탈레인' }], 'btb', (v) => {
+        const S = L2(), b2 = S && S.S && S.S.scene === 'buret' ? document.querySelector('#indSeg [data-i="' + v + '"]') : null;
+        if (b2) { b2.click(); return; }     // 색 변화 실험에서는 옆의 지시약 고르기와 같아요 (뷰렛을 처음부터)
+        st.ind = v; st.demo = true; src = null; tint();
+      });
+      const addB = controls.button('+ NaOH 한 묶음', () => {
         const S = L2();
         if (S && S.S && S.S.scene === 'ions' && S.addNaOH) { S.addNaOH(); return; }     // 2D 중화 모형에서도 같은 한 묶음이 들어가요
         pl.pause(); st.demo = true; if (st.k >= MAXK) return; setK(st.k + 1); internal = true; pl.set(Math.min(0.999, (st.k + 0.01) / (MAXK + 1))); internal = false;
@@ -147,6 +151,7 @@
           st.t += dt;
           // 2D 실험(색 변화 · 온도 그래프 · 중화 모형)에서 넣은 양과 지시약 색을 따라가요
           const S = L2();
+          if (S && S.S) { const hideAdd = S.S.scene === 'buret'; if (addB.style.display !== (hideAdd ? 'none' : '')) addB.style.display = hideAdd ? 'none' : ''; }   // 색 변화 실험은 옆의 뷰렛(한 방울씩)으로 넣어요
           if (S && S.S) {
             const sc = S.S.scene; let raw = null, k = null, col = null, ind = null;
             if (sc === 'buret' && S.BU) { raw = 'b' + S.BU.n + S.BU.ind; k = Math.round(S.BU.n / 10 / VU); col = S.BU.col; ind = S.BU.ind; }

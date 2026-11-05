@@ -79,7 +79,8 @@
   const phone = window.matchMedia && window.matchMedia('(max-width: 599px)').matches;
   window.SciSim3D.attach({
     title: '몰 농도 3D',
-    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 용액 고르기와 부피는 2D와 똑같이 이어져요',
+    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 물을 더해도 용질 입자 수는 그대로예요',
+    levels: [2],   // 희석(부피 슬라이더 · 입자 수 그대로). 비커 누르기 · 계산 · 이온 표 단계는 2D
     camera: { dist: phone ? 14 : 11, theta: 0.5, phi: 1.2, min: 5, max: 26, target: [0, 1.8, 0] },
     autoRotate: 0.1,
     build(ctx) {

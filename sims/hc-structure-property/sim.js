@@ -112,7 +112,7 @@
 
   /* ---------- 장면 관리 ---------- */
   const S = { scene: 'polar', sceneA: 1 };
-  const TB = { polar: '🧲 분자의 극성', stream: '💧 물줄기 실험', mix: '🧪 섞어 보기', bp: '📊 끓는점 비교', isomer: '🧬 같은 분자식, 다른 구조', bonds: '⛓️ N₂와 O₂의 결합', predict: '🔮 구조로 예측하기' };
+  const TB = { polar: '🧲 분자의 극성', stream: '💧 물줄기 실험', mix: '🧪 섞어 보기', bp: '📊 끓는점 비교', isomer: '🔀 같은 분자식, 다른 구조', bonds: '⛓️ N₂와 O₂의 결합', predict: '🔮 구조로 예측하기' };
   const SCENES = ['polar', 'stream', 'mix', 'bp', 'isomer', 'bonds', 'predict'];
   let obsShow = false, bondShow = false;
   function setScene(sc) {
@@ -753,7 +753,7 @@
   function isSet(k) {
     IS.sel = k; IS.na = -1; IS.bub = [];
     $$('#isoSel button').forEach((b) => b.classList.toggle('on', b.dataset.i === k));
-    $('#naBtn').disabled = false; $('#naBtn').textContent = '🧂 나트륨 조각 넣기';
+    $('#naBtn').disabled = false; $('#naBtn').textContent = '➕ 나트륨 조각 넣기';
     Sound.click();
   }
   function isNa() {
@@ -1306,7 +1306,7 @@
       title: '구조가 화학적 성질을 정해요', short: '화학적 성질', icon: '⚗️', phase: '분석',
       features: ['chem'],
       intro: '<div class="si-link">🔗 <b>앞 단계에서</b> 극성이 끓는점과 섞임 같은 <b>물리적 성질</b>을 정하는 것을 봤어요. 그렇다면 분자식이 <b>같은데</b> 구조가 다르면 어떨까요? 결합의 수는 반응성에 어떤 영향을 줄까요?</div>' +
-        '<p>🧬 같은 분자식 <b>C₂H₆O</b>인 에탄올과 다이메틸 에터에 나트륨을 넣어 보고, ⛓️ <b>N≡N</b>과 <b>O=O</b>의 결합 수와 반응성을 비교해요.</p>',
+        '<p>🔀 같은 분자식 <b>C₂H₆O</b>인 에탄올과 다이메틸 에터에 나트륨을 넣어 보고, ⛓️ <b>N≡N</b>과 <b>O=O</b>의 결합 수와 반응성을 비교해요.</p>',
       setup() { setScene('isomer'); isSet('eth'); showHint('에탄올과 다이메틸 에터에 나트륨 조각을 넣어 보세요', 4500); },
       recap: '같은 분자식이어도 구조가 다르면 결합이 달라 성질이 달라요. <b>O–H 결합</b>이 있는 에탄올만 나트륨과 반응해요. 결합 수가 많은 <b>N≡N</b>(공유 3쌍)은 반응성이 매우 낮고, O=O(공유 2쌍)는 연소에 참여해요.',
       summary: '<table class="mini"><tr><th></th><th>에탄올 CH₃CH₂OH</th><th>다이메틸 에터 CH₃OCH₃</th></tr><tr><td>끓는점</td><td>78 °C (액체)</td><td>−24 °C (기체)</td></tr><tr><td>Na와 반응</td><td>H₂ 발생 (O–H)</td><td>반응 없음</td></tr></table>' +
@@ -1315,7 +1315,7 @@
         {
           title: '두 구조 시험하기',
           goal: '<b>에탄올</b>과 <b>다이메틸 에터</b>에 각각 나트륨 조각을 넣어 반응하는지 확인해요.',
-          hint: '분자를 고르고 🧂 나트륨 조각 넣기를 눌러요. 2초쯤 지켜보면 결과가 기록돼요.',
+          hint: '분자를 고르고 ➕ 나트륨 조각 넣기를 눌러요. 2초쯤 지켜보면 결과가 기록돼요.',
           setup() { IS.tested = {}; isSet(IS.sel); setScene('isomer'); },
           check: () => isCount() === 2,
           hold: 0.4,
@@ -1383,7 +1383,7 @@
     mount: '#game',
     badge: '구조와 성질 박사',
     homeHref: '../../index.html#hc',
-    featureLabels: { polar: '🧲 결합 쌍극자 · 벡터 합', phys: '💧🧪📊 물줄기 · 섞기 · 끓는점', chem: '🧬⛓️ 이성질체 · N₂와 O₂', apply: '🔮 구조로 예측 · 비누' },
+    featureLabels: { polar: '🧲 결합 쌍극자 · 벡터 합', phys: '💧🧪📊 물줄기 · 섞기 · 끓는점', chem: '🔀⛓️ 이성질체 · N₂와 O₂', apply: '🔮 구조로 예측 · 비누' },
     onFeatures(set) { F = new Set(set); updateUI(); },
     levels,
   });

@@ -491,7 +491,7 @@
   const tfAny = () => TFS.bound.X || TFS.bound.Y || TFS.bound.Z;
   const tfAll3 = () => TFS.bound.X && TFS.bound.Y && TFS.bound.Z;
   const tfOn = () => tfAll3() && TFS.basal;
-  function tfMsg(m) { TFS.msg = m; TFS.msgT = 4; }
+  function tfMsg(m) { TFS.msg = m; TFS.msgT = 4; if (document.querySelector('.v3-on')) showHint(m, 3500); }   // 3D 단계에서는 캔버스 글 대신 안내 말풍선으로
   function tfReset(keepFlags) { TFS.bound = { X: false, Y: false, Z: false }; TFS.basal = false; TFS.mrna = 0; TFS.msg = ''; if (!keepFlags) { TFS.seenOff = { B: false, C: false }; TFS.onA = false; } updateCtl(); }
   function tfCell(c) { TFS.cell = c; tfReset(true); }
   function tfToggle(k) {

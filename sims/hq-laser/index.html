@@ -138,12 +138,12 @@
         <div class="control" data-modes="cavity">
           <button class="btn btn-sm btn-primary" id="bPump" type="button">⚡ 펌핑 켜기 (레이저 켜기)</button>
         </div>
-        <div class="control" data-modes="cavity">
+        <div class="control" data-modes="cavity" data-v3="keep">
           <div class="control-head"><label for="sQ">🔆 펌핑 세기</label><output id="oQ">90</output></div>
           <div class="range-row"><button class="nudge" type="button" data-for="sQ" data-d="-1" aria-label="펌핑 세기 (0부터 100) 줄이기">−</button><input type="range" id="sQ" min="0" max="100" step="1" value="90" aria-label="펌핑 세기 (0부터 100)"><button class="nudge" type="button" data-for="sQ" data-d="1" aria-label="펌핑 세기 (0부터 100) 늘리기">+</button></div>
         </div>
         <div class="control" data-modes="cavity">
-          <div class="control-head"><span>🪞 출력 거울의 투과율</span></div><div class="segmented view-seg" id="tmSeg" role="group" aria-label="출력 거울의 투과율"><button type="button" data-v="1">1 %</button><button type="button" data-v="5">5 %</button><button type="button" data-v="10">10 %</button><button type="button" data-v="none">거울 없음</button></div><p class="ctrl-note">그래프를 눌러도 펌핑 세기를 고를 수 있어요.</p>
+          <div class="control-head"><span>🪞 출력 거울의 투과율</span></div><div class="segmented view-seg" id="tmSeg" role="group" aria-label="출력 거울의 투과율"><button type="button" data-v="1">1 %</button><button type="button" data-v="5">5 %</button><button type="button" data-v="10">10 %</button><button type="button" data-v="none">거울 없음</button></div><p class="ctrl-note" data-v3="2d">그래프를 눌러도 펌핑 세기를 고를 수 있어요.</p>
         </div>
         <div class="control" data-modes="cavity" data-match="selC">
           <div class="control-head"><span>✍️ 문장 완성하기</span></div><div id="selC"></div>

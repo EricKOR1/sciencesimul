@@ -142,7 +142,7 @@
         onFrame() {},
       });
       setStep(0); curStep = 0;
-      let lastSim = null, lastKey = '';
+      let lastSim = null, lastKey = '', once = false;
       /* 2D에서 어느 화면인지 · 절단과 수리의 진행(절단 전 · 절단 · 끝 연결 · 주형 DNA)을 따라가요 */
       function pollLesson() {
         const L = ctx.lesson(); if (!L || !L.S) return;
@@ -154,8 +154,9 @@
             lastKey = key;
             const s2 = R.stage === 0 ? 0 : R.stage === 1 ? 1 : (R.mode === 'hdr' ? 3 : 2);
             if (R.mode) repairMode.v = R.mode === 'hdr' ? 3 : 2;
-            if (!player.playing || true) player.set((s2 === 0 ? 0.5 : s2 === 1 ? TS[1] + 1.5 : TS[2] + 0.01) / DUR);
-            if (s2 >= 2 && player.playing) player.set((TS[2] + 0.01) / DUR);
+            /* 2D와 같은 장면에서 멈춰요: 결합 · 절단 상태는 그대로, 수리는 한 번 끝까지 보여 줘요 */
+            player.pause(); player.set((s2 === 0 ? 5.3 : s2 === 1 ? TS[1] + 2.4 : TS[2] + 0.01) / DUR);
+            once = s2 >= 2; if (once) player.play();
           }
         }
       }
@@ -163,6 +164,7 @@
         update(dt) {
           dt = Math.min(dt, 0.05) * (window.__v3dTS || 1);
           pollLesson();
+          if (once && player.p > 0.985) { once = false; player.pause(); player.set(0.985); }
           // 진행 막대(player)의 위치로 단계와 단계 안의 시간(t)을 정해요
           { const T = player.p * DUR, ns = T < TS[1] ? 0 : T < TS[2] ? 1 : repairMode.v; t = T < TS[1] ? T : T < TS[2] ? T - TS[1] : T - TS[2];
             if (ns !== curStep) { const tt = t; setStep(ns); t = tt; curStep = ns; segB.set(ns); } }

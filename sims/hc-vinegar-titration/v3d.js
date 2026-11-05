@@ -188,8 +188,8 @@
   };
   window.SciSim3D.attach({
     title: '식초 적정 장치 3D',
-    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 뷰렛 조작과 시료는 2D와 똑같이 이어져요',
-    levels: [],
+    hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
+    levels: [],   // 모든 단계에 2D 조작이 필요해요(희석 계산 · 홀피펫 희석 · 계산 사슬 · 오차 평가). 그래서 2D로 해요
     camera: { dist: phone ? 24 : 18.5, theta: 0.5, phi: 1.2, min: 6, max: 36, target: [0.5, 5.6, 0] },
     autoRotate: 0.12,
     build(ctx) { return makeTitration(ctx, CFG); },
