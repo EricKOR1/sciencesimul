@@ -11,7 +11,7 @@
      hint: '드래그해서 돌려 보세요',      // (선택) 창 아래 안내
      camera: { dist: 8, theta: 0.6, phi: 1.1, fov: 45, target: [0,0,0] },
      autoRotate: 0.25,                 // 사용자가 만지기 전 천천히 회전 (rad/s, 0이면 정지)
-     levels: [0, 1],                   // (선택) 이 단계(0부터)에서만 3D로 시작. 없으면 모든 단계에서 3D로 시작
+     levels: [0, 1],                   // (선택) 3D로 보여 줄 단계(0부터). 나머지 단계는 2D. 없으면 모든 단계가 3D
      fit: true,                        // (선택) 세로로 긴 화면에서 자동으로 물러서서 보기 (false면 끔)
      studio: true, shadows: true,      // (선택) 스튜디오 환경광 · 그림자 (차시가 조명을 직접 두면 자동으로 꺼짐)
      build(ctx) {                      // 처음 열 때 한 번: ctx = { THREE, scene, camera, root, label(), info(), controls() }
@@ -24,8 +24,8 @@
    ctx.controls.player({...})          // ▶ 재생/⏸ 멈춤 + 진행 막대 + 빠르기: 한 주기의 움직임을 반복 재생 (아래 player 설명)
    ctx.level / ctx.onLevel(fn)         // 지금 학습 단계 / 단계가 바뀔 때 → 2D와 같은 장면으로 맞추기
    ctx.lesson()                        // 2D 실험 상태(window.__sim) — 2D와 3D가 같은 값을 보여 주도록
-   ※ 3D가 있는 차시는 기본으로 3D 화면으로 시작하고(기기 사양이 낮으면 2D), [▦ 2D | 🧊 3D] 버튼으로 바꿀 수 있어요.
-     학생이 고른 방식은 다른 차시에도 적용돼요 (localStorage 'sciencesimul:view').
+   ※ 한 단계에는 한 가지 화면만 나와요: levels에 든 단계는 3D, 나머지 단계는 2D (2D↔3D 전환 버튼 없음).
+     기기 사양이 낮거나 3D가 너무 느리면 3D 단계도 2D로 보여 줘요. 첫 화면 '3D 끄기'(localStorage 'sciencesimul:view' = '2d')도 같아요.
    ========================================================= */
 (function (global) {
   'use strict';
@@ -60,7 +60,7 @@
     get(k) { try { return global.localStorage.getItem(k); } catch (e) { return null; } },
     set(k, v) { try { if (v == null) global.localStorage.removeItem(k); else global.localStorage.setItem(k, v); } catch (e) { /* 무시 */ } },
   };
-  function pref() { const v = ls.get(VIEW_KEY); return v === '3d' || v === '2d' ? v : 'auto'; }
+  function pref() { return ls.get(VIEW_KEY) === '2d' ? '2d' : 'auto'; }
   function setPref(v) { ls.set(VIEW_KEY, v === 'auto' ? null : v); if (v !== '2d') ls.set(SLOW_KEY, null); }
   // 기기 사양 추정: WebGL이 없거나, 메모리 2GB 이하·CPU 2코어 이하이거나, 전에 3D가 너무 느렸던 기기는 2D로 시작
   function capable() {
@@ -71,7 +71,7 @@
     if (ls.get(SLOW_KEY) === '1') return false;
     return true;
   }
-  function start3D() { const p = pref(); return p === '3d' ? webglOK() : p === '2d' ? false : capable(); }
+  function start3D() { return pref() === '2d' ? false : capable(); }
   function toast(msg) { try { global.SciSim && global.SciSim.toast && global.SciSim.toast(msg); } catch (e) { /* 무시 */ } }
 
   let cssDone = false;
@@ -82,12 +82,7 @@
 .v3-seg { display: inline-flex; gap: 2px; padding: 3px; border-radius: 12px; background: var(--surface-2, #f3f5f8); border: 1px solid var(--line, #e3e7ee); flex: none; }
 .v3-seg button { min-height: 36px; padding: 4px 12px; border: 0; border-radius: 9px; background: transparent; color: var(--muted, #556); font-weight: 800; font-size: 14px; cursor: pointer; white-space: nowrap; }
 .v3-seg button.on { background: var(--subject, #3182f6); color: #fff; }
-.v3-mode [data-v3="2d"] { opacity: .55; }
-.v3-mode button[data-v3="2d"], .v3-mode .v3-2d-wrap { position: relative; }
-.v3-mode button[data-v3="2d"]::after, .v3-mode .v3-2d-wrap::after { content: "2D"; position: absolute; top: -6px; right: -4px; z-index: 2; padding: 0 5px; border-radius: 6px; background: #64748b; color: #fff; font-size: 10px; font-weight: 800; line-height: 15px; letter-spacing: .02em; pointer-events: none; }
-.v3-mode .v3-2d-wrap::after { top: 0; right: 0; }
-.v3-mode .v3-2d-wrap { opacity: .6; }
-.v3-mode .v3-2d-wrap [data-v3="2d"] { opacity: 1; }
+.v3-mode [data-v3="2d"], .v3-mode .v3-2d-wrap { display: none !important; }
 .v3-seg.float { position: absolute; top: 10px; right: 10px; z-index: 26; background: rgba(255,255,255,.94); box-shadow: 0 4px 14px rgba(20,30,60,.18); }
 .v3-on > .v3-seg.float { background: rgba(10,16,30,.72); border-color: rgba(255,255,255,.22); top: 6px; right: 6px; }
 .v3-on > .v3-seg.float button:not(.on) { color: #dbe4f7; }
@@ -193,7 +188,7 @@
     if (!host) return null;
     if (getComputedStyle(host).position === 'static') host.style.position = 'relative';
 
-    /* 2D | 3D 전환 버튼 */
+    /* (예전 2D | 3D 전환 버튼 — 이제 단계마다 화면이 정해져서 화면에 넣지 않아요) */
     const btn = el('div', 'v3-seg'); btn.setAttribute('role', 'group'); btn.setAttribute('aria-label', '보기 방식');
     const b2 = el('button', '', '▦ 2D'), b3 = el('button', '', opts.label || '🧊 3D');
     b2.type = b3.type = 'button'; b2.title = '2D 실험 화면'; b3.title = '3D 입체 모형';
@@ -203,6 +198,7 @@
     // 버튼 자리가 화면에 보이지 않으면(예: 휴대폰에서 도구 막대가 숨겨짐) 실험 화면 오른쪽 위에 띄워요
     let wrapEl = null;
     function placeBtn() {
+      return;   // 전환 버튼은 쓰지 않아요
       const visible = place && place.offsetParent !== null && getComputedStyle(place).display !== 'none';
       if (visible) { if (btn.parentNode !== place) { btn.classList.remove('float'); place.appendChild(btn); } }
       else if (btn.parentNode !== host) { btn.classList.add('float'); host.appendChild(btn); }
@@ -240,6 +236,7 @@
     });
 
     let THREE = null, renderer = null, scene = null, camera = null, root = null, user = null;
+    let failed = false;   // three.js를 못 불러오면 이 차시는 2D로만 보여 줘요
     let raf = 0, last = 0, isOpen = false, touched = false, built = false, frameN = 0;
     const cam0 = Object.assign({ dist: 8, theta: 0.6, phi: 1.15, fov: 45, target: [0, 0, 0], min: 2, max: 40 }, opts.camera || {});
     const orbit = { dist: cam0.dist, theta: cam0.theta, phi: cam0.phi, tx: cam0.target[0], ty: cam0.target[1], tz: cam0.target[2] };
@@ -421,7 +418,7 @@
       perf.done = true;
       if (fps < 12 && pref() === 'auto') {
         ls.set(SLOW_KEY, '1'); close();
-        toast('이 기기에서는 3D가 느려서 2D 화면으로 바꿨어요. 🧊 3D 버튼으로 언제든 다시 볼 수 있어요.');
+        toast('이 기기에서는 3D가 느려서 2D 화면으로 보여 줘요.');
       }
     }
     function lowQuality() {
@@ -557,7 +554,7 @@
       if (isOpen) return;
       isOpen = true; wrap.hidden = false; setBtns();
       if (!quiet && global.SciSim && global.SciSim.Sound) try { global.SciSim.Sound.click(); } catch (e) {}
-      if (!webglOK()) { view.appendChild(el('div', 'v3-msg', '이 기기에서는 3D 화면을 표시할 수 없어요. ▦ 2D로 실험해 주세요.')); return; }
+      if (!webglOK()) { close(); return; }
       const go = () => {
         if (!isOpen) return;
         if (!built) build(); else if (user && user.sync) { try { user.sync(); } catch (e) { console.error(e); } }
@@ -567,7 +564,7 @@
       if (THREE) go(); else if (global.THREE) { upgradeGeometry(global.THREE); THREE = global.THREE; go(); }
       else {
         const msg = el('div', 'v3-msg', '3D 모형을 불러오는 중…'); view.appendChild(msg);
-        loadThree().then((T) => { upgradeGeometry(T); THREE = T; msg.remove(); go(); }).catch(() => { msg.textContent = '3D 모형을 불러오지 못했어요. 인터넷 연결을 확인하거나 ▦ 2D로 실험해 주세요.'; });
+        loadThree().then((T) => { upgradeGeometry(T); THREE = T; msg.remove(); go(); }).catch(() => { msg.remove(); failed = true; close(); });
       }
     }
     function close() {
@@ -576,22 +573,10 @@
       if (wrap.classList.contains('full')) fullB.click();
       if (opts.onClose) try { opts.onClose(); } catch (e) { console.error(e); }
     }
-    // 학생이 고른 보기 방식은 다른 차시에도 그대로 적용돼요
-    b3.addEventListener('click', () => {
-      if (isOpen) return;
-      const was = start3D(); setPref('3d'); open();
-      if (!was) toast('🧊 이제 3D가 있는 차시는 3D 화면으로 시작해요.');
-    });
-    b2.addEventListener('click', () => {
-      if (!isOpen) return;
-      const was = start3D(); setPref('2d'); close();
-      if (global.SciSim && global.SciSim.Sound) try { global.SciSim.Sound.click(); } catch (e) {}
-      if (was) toast('▦ 이제 3D가 있는 차시도 2D 화면으로 시작해요. (첫 화면 ‘3D 보기’에서 바꿀 수 있어요)');
-    });
     setBtns();
-    // 3D 기본: 기기가 3D를 충분히 돌릴 수 있으면 처음부터 3D로 열어요.
-    // opts.levels = [0, 2] 처럼 주면 그 단계(0부터)에서만 3D로 시작하고, 다른 단계는 2D로 시작해요.
-    const wantAt = (li) => start3D() && (!Array.isArray(opts.levels) || opts.levels.indexOf(li) >= 0);
+    // 단계마다 화면 하나: opts.levels = [0, 2] 처럼 준 단계는 3D, 나머지 단계는 2D (없으면 모든 단계 3D).
+    // 기기가 3D를 돌리기 어렵거나(사양·느림·불러오기 실패) '3D 끄기'면 모두 2D예요.
+    const wantAt = (li) => !failed && start3D() && (!Array.isArray(opts.levels) || opts.levels.indexOf(li) >= 0);
     let curLevel = null;
     global.addEventListener('scisim-level', (e) => {
       const li = e.detail && e.detail.level; if (li === curLevel) return; curLevel = li;
@@ -612,9 +597,10 @@
   // 설정은 그대로 두고 지금 화면만 2D로 (미션 카드의 '2D로 실험하기' 버튼)
   function show2D() { instances.forEach((v) => v.close()); }
 
-  /* ---------- 2D 전용 조작: 3D 화면에서는 흐리게 + '2D' 표시, 누르면 2D 화면으로 바뀌며 실행 ----------
+  /* ---------- 2D 전용 조작: 3D 단계에서는 숨겨요 (3D 장면에 반영되지 않아 헷갈리지 않게) ----------
      어떤 조작이 3D에 반영되지 않는지는 3D를 연 채로 하나씩 눌러 보는 점검 도구로 골라 두었어요
-     (assets/js/v3-2d-only.js : { 차시 id: [선택자, …] }). 차시가 직접 data-v3="2d"를 붙여도 돼요. */
+     (assets/js/v3-2d-only.js : { 차시 id: [선택자, …] }). 차시가 직접 data-v3="2d"를 붙여도 되고,
+     3D에서도 쓰는 조작이면 data-v3="keep"을 붙여 숨기지 않게 해요. */
   function syncMode() { if (doc.body) doc.body.classList.toggle('v3-mode', instances.some((v) => v.isOpen)); }
   const lessonId = (global.location.pathname.match(/sims\/([^/]+)\//) || [])[1] || '';
   let only2d = null;
@@ -623,23 +609,13 @@
     list.forEach((sel) => {
       let els = []; try { els = doc.querySelectorAll(sel); } catch (e) { return; }
       els.forEach((e) => {
-        if (e.getAttribute('data-v3') === '2d') return;
+        if (e.getAttribute('data-v3') === '2d' || e.closest('[data-v3="keep"]')) return;   // 차시가 data-v3="keep"을 붙이면 3D 단계에서도 보여요
         e.setAttribute('data-v3', '2d');
         if (e.tagName !== 'BUTTON') { const w = e.closest('.control, .range-row, label') || e.parentElement; if (w && !w.closest('#game, .game')) w.classList.add('v3-2d-wrap'); }
       });
     });
   }
-  let told = false;
-  function intercept(e) {
-    if (!doc.body || !doc.body.classList.contains('v3-mode')) return;
-    const t = e.target && e.target.closest && e.target.closest('[data-v3="2d"], .v3-2d-wrap');
-    if (!t || t.closest('.v3-wrap, .v3-seg')) return;
-    show2D(); syncMode();   // 누른 동작은 그대로 이어서 2D에서 실행돼요
-    if (!told) { told = true; toast('▦ 이 도구는 2D 화면에서 작동해서 2D로 바꿨어요. 🧊 3D 버튼으로 다시 볼 수 있어요.'); }
-  }
   if (doc.addEventListener) {
-    doc.addEventListener('pointerdown', intercept, true);
-    doc.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ' || /^Arrow/.test(e.key)) intercept(e); }, true);
     const s2 = doc.createElement('script'); s2.src = BASE + 'js/v3-2d-only.js';
     s2.onload = () => { only2d = global.SCISIM_2D_ONLY || {}; markOnly2D(); };
     (doc.head || doc.documentElement).appendChild(s2);

@@ -295,13 +295,13 @@
 
   // 3D 보기 설정 (sim3d.js와 같은 저장 키)
   const viewSel = document.getElementById('viewPref');
-  try { const v = localStorage.getItem('sciencesimul:view'); viewSel.value = v === '3d' || v === '2d' ? v : 'auto'; } catch (e) { /* 무시 */ }
+  try { const v = localStorage.getItem('sciencesimul:view'); viewSel.value = v === '2d' ? '2d' : 'auto'; } catch (e) { /* 무시 */ }
   viewSel.addEventListener('change', () => {
     try {
       if (viewSel.value === 'auto') localStorage.removeItem('sciencesimul:view'); else localStorage.setItem('sciencesimul:view', viewSel.value);
       if (viewSel.value !== '2d') { localStorage.removeItem('sciencesimul:slow3d'); localStorage.removeItem('sciencesimul:q3d'); }
     } catch (e) { /* 무시 */ }
-    SciSim.toast(viewSel.value === '2d' ? '▦ 3D 차시도 2D 화면으로 시작해요.' : viewSel.value === '3d' ? '🧊 3D 차시는 항상 3D로 시작해요.' : '🧊 기기에 맞게 3D/2D를 골라 시작해요.');
+    SciSim.toast(viewSel.value === '2d' ? '▦ 3D 단계도 2D 화면으로 보여 줘요.' : '🧊 단계마다 알맞은 화면(3D/2D)으로 보여 줘요.');
   });
 
   searchEl.addEventListener('input', renderList);

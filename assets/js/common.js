@@ -697,14 +697,6 @@
         el('span', { class: 'mission-type', text: typeLabel }),
       ]));
       card.appendChild(el('h3', { class: 'mission-title', html: m.title }));
-      // 3D 모형을 보는 중에 조작하는 실험 미션이면, 2D 실험 화면으로 바로 가는 버튼을 보여 줘요
-      if (m.type !== 'quiz' && global.SciSim3D && global.SciSim3D.anyOpen) {
-        const n3 = el('div', { class: 'v3-note' }, [
-          el('span', { text: '🧊 지금은 3D 모형 화면이에요. 실험 화면을 직접 조작해야 하면' }),
-          el('button', { class: 'btn btn-sm', type: 'button', html: '▦ 2D로 실험하기', onclick: () => { global.SciSim3D.show2D(); n3.remove(); } }),
-        ]);
-        card.appendChild(n3);
-      }
       if (m.goal) card.appendChild(el('div', { class: 'mission-goal', html: m.goal }));
       if (m.figure) card.appendChild(el('div', { class: 'mission-figure', html: m.figure }));
 
