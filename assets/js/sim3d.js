@@ -622,5 +622,6 @@
     global.addEventListener('scisim-level', () => setTimeout(markOnly2D, 50));
     setInterval(() => { if (only2d) markOnly2D(); }, 1500);   // 나중에 생기는 조작도 표시
   }
-  global.SciSim3D = { attach, loadThree, pref, setPref, capable, webglOK, start3D, show2D, get anyOpen() { return instances.some((v) => v.isOpen); } };
+  global.SciSim3D = { attach, loadThree, pref, setPref, capable, webglOK, start3D, show2D, get anyOpen() { return instances.some((v) => v.isOpen); },
+    __test: { open() { instances.forEach((v) => v.open()); }, close: show2D } };   // 점검 도구용
 })(window);
