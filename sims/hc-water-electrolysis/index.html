@@ -92,7 +92,7 @@
           <span class="spacer"></span>
           <div class="segmented" id="sceneSeg" role="group" aria-label="장면 고르기" data-feature="graph">
             <button type="button" data-scene="lab" data-feature="lab">⚡ 장치</button>
-            <button type="button" data-scene="graph" data-feature="graph">📈 그래프</button>
+            <button type="button" data-scene="graph" data-feature="graph" data-v3="2d">📈 그래프</button>
             <button type="button" data-scene="model" data-feature="model">🔬 입자 모형</button>
           </div>
           <button class="icon-btn" id="resetBtn" type="button" title="장치 비우기" aria-label="장치 비우기">↺</button>
@@ -120,7 +120,7 @@
               <button type="button" data-v="1">전해질 수용액</button>
             </div>
           </div>
-          <div class="control" style="margin:0">
+          <div class="control" style="margin:0" data-v3="keep">
             <div class="control-head"><label for="sVolt">🔌 전압</label><output id="oVolt">9 V</output></div>
             <div class="range-row">
               <button class="nudge" id="vMinus" type="button" aria-label="전압 줄이기">−</button>

@@ -687,7 +687,7 @@
       $('#oTr').textContent = T.mr.length + ' / ' + T.n;
       $('#trHead').textContent = '📝 mRNA 합성';
       const st = $('#bStart'); st.disabled = T.ph !== 'idle'; st.textContent = T.ph === 'idle' ? '▶ 전사 시작' : '✔ 전사 시작함';
-      $('#trNote').textContent = T.ph === 'idle' ? '전사를 시작하면 DNA가 풀려요. RNA 염기를 눌러 끌어다 짝이 맞는 자리에 놓아요.'
+      $('#trNote').textContent = T.ph === 'idle' ? '전사를 시작하면 DNA가 풀려요. RNA 염기를 골라 짝이 맞는 자리에 놓아요.'
         : T.ph === 'opening' ? 'RNA 중합 효소가 DNA 이중 가닥을 풀고 있어요…'
         : T.ph === 'synth' ? '주형(아래) 가닥의 염기와 짝이 맞는 RNA 염기를 왼쪽 자리부터 차례로 놓아요.'
         : T.ph === 'final' ? 'mRNA가 리보솜에 도착했어요. ↺ 다시 하기로 한 번 더 해 봐도 좋아요.' : 'mRNA가 완성되어 떨어져 나가요…';

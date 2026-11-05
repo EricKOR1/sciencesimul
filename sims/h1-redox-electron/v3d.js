@@ -40,7 +40,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { target: [0, -0.3, 0], dist: PHN ? 16 : 11.8, theta: 0.25, phi: 1.3, min: 5, max: 22 },
     autoRotate: 0,
-    levels: [0, 1, 2],
+    levels: [],
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3;
@@ -145,7 +145,7 @@
         const mid = p > 0.04 && p < 0.96, end = p >= 0.96;
         P.ox.show(end); P.rd.show(end); P.eLab.show(showE && (mid || end));
         const donName = R.after[0], accName = R.after[1];
-        if (p < 0.04) setInfo('<b>' + R.eq.split(' → ')[0] + '</b> 이 만났어요.<br>▶ 재생을 눌러(또는 2D에서 반응을 진행해) <b>전자(노란 구슬)</b>가 어디로 가는지 봐요.');
+        if (p < 0.04) setInfo('<b>' + R.eq.split(' → ')[0] + '</b> 이 만났어요.<br>▶ 반응 시작이나 ▶ 전자 이동을 눌러 <b>전자(노란 구슬)</b>가 어디로 가는지 봐요.');
         else if (!end) setInfo('전자가 <b>' + R.before[0] + ' → ' + R.before[1] + '</b> 쪽으로 옮겨 가고 있어요.<br>전자를 잃는 쪽은 + 전하가 늘고, 얻는 쪽은 줄어요.');
         else setInfo('<b>' + R.before[0] + '</b>은 전자를 잃어 <b>' + donName + '</b>(산화), <b>' + R.before[1] + '</b>은 전자를 얻어 <b>' + accName + '</b>(환원)이 됐어요.<br><b>' + R.eq + '</b>');
       }

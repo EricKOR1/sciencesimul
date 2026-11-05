@@ -99,7 +99,7 @@
     SH.d.value = SH.d.target = dFar(shM()); SH.d.velocity = 0;
     const s = $('#sDist'); s.value = 0; syncDist();
     $$('#molSeg button').forEach((b) => b.classList.toggle('on', b.dataset.m === SH.mol));
-    $('#shareNote').textContent = '거리를 줄여 두 원자의 바깥 전자껍질을 겹쳐 봐요. 오른쪽 원자를 끌어도 돼요.';
+    $('#shareNote').innerHTML = '거리를 줄여 두 원자의 바깥 전자껍질을 겹쳐 봐요.<span data-v3="2d"> 오른쪽 원자를 끌어도 돼요.</span>';
   }
   function syncDist() {
     const s = $('#sDist'), v = +s.value;

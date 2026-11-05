@@ -17,7 +17,7 @@
     hint: '방식을 골라 보세요 · 드래그: 돌리기',
     camera: { dist: narrow ? 12.5 : 8.8, theta: 0.3, phi: 1.2, min: 5, max: 20 },
     autoRotate: 0.08,
-    levels: [0, 1],
+    levels: [],
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V = THREE.Vector3, V3 = (x, y, z) => new V(x, y, z || 0);

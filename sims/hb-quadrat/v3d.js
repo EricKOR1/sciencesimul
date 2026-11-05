@@ -12,10 +12,10 @@
 
   window.SciSim3D.attach({
     title: '초지와 방형구 조사 3D',
-    hint: '방형구 던지기는 2D 제어판과 같이 움직여요 · 드래그: 돌리기',
+    hint: '드래그: 돌리기 · 식물을 골라 밀도와 빈도를 봐요',
     camera: { dist: narrow ? 30 : 22, theta: 0.15, phi: 0.95, min: 2.5, max: 48, target: [0, 0, 0] },
     autoRotate: 0,
-    levels: [0],
+    levels: [],   // 모든 단계에 캔버스 조작이 필요해요(방형구·식물 누르기 · 기록표 읽기 · 곡선 읽기 · 층 이름표). 그래서 2D로 해요
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
       const V3 = (x, y, z) => new THREE.Vector3(x, y, z || 0);
@@ -80,7 +80,7 @@
         info('<b>' + s.n + '</b>: 방형구 ' + placed + '개(' + placed + ' m²)에서 ' + tot + '개체 → 밀도 <b>' + (tot / placed).toFixed(1) + '</b>개체/m²<br>출현한 방형구 ' + occ + '/' + placed + ' → 빈도 <b>' + Math.round(occ / placed * 100) + '%</b><br>방형구를 10개까지 설치하면 초지 전체 밀도에 가까워져요 (10개 기준 ' + LS.DENS[sel].toFixed(1) + '개체/m²)');
       }
       controls.segment('식물', SP.map((s, i) => ({ label: s.n, value: i })), 3, (v) => { sel = v; mats.forEach(([sp, m]) => { m.emissive.set(sp === v ? 0xffe14d : 0x000000); m.emissiveIntensity = sp === v ? 0.45 : 0; }); lastKey = ''; });
-      controls.button('🎲 방형구 던지기', () => { const L = L2(); if (!L) return; if (L.S.fld.mode === 'free') { info('지금은 <b>눈에 띄는 곳 고르기</b> 방식이에요. 2D 초지를 눌러 골라 보거나, 2D 제어판에서 무작위 좌표로 바꿔요.'); return; } L.throwQuad(); });
+      controls.button('🎲 방형구 던지기', () => { const L = L2(); if (!L) return; if (L.S.fld.mode === 'free') { info('지금은 <b>눈에 띄는 곳 고르기</b> 방식이에요. 무작위 좌표 방식에서 던질 수 있어요.'); return; } L.throwQuad(); });
       const zb = controls.button('🔍 방형구 확대', () => {
         const L = L2(), last = L ? L.S.fld.placed - 1 : -1;
         zoomed = !zoomed; zb.classList.toggle('on', zoomed); zb.textContent = zoomed ? '🔍 초지 전체' : '🔍 방형구 확대';

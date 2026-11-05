@@ -7,14 +7,14 @@
   const narrow = window.innerWidth < 600 || window.innerHeight > window.innerWidth * 1.1;
   const DB = 0.12, RAD = 0.3, PITCH = 2.4, X0 = -5.8, X1 = 5.0, N = Math.floor((X1 - X0) / DB);
   const T0 = -2.7, T1 = -0.3, PAM1 = 0.06, CUT = -0.66;        // 표적 20nt, PAM 3nt, 절단 위치
-  const MODE_OF = { target: 0, calc: 0, repair: 1 };   // 치료 흐름 · 사례 · 한계 · 전망은 2D 화면에서
+  const MODE_OF = { target: 0, calc: 0, repair: 1 };
 
   window.SciSim3D.attach({
     title: 'CRISPR 유전자 가위 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: narrow ? 12 : 10.5, theta: 0.22, phi: 1.28, target: narrow ? [-0.4, -0.6, 0] : [-0.6, 0.4, 0], min: 5, max: 20 },
     autoRotate: 0,
-    levels: [0, 1],   // 3 · 4단계(치료 사례 · 한계와 전망)는 2D 화면에서
+    levels: [1],   // 절단과 수리 단계만 3D. 표적 찾기(위치 슬라이더 · 일치 횟수 입력) · 치료 사례 · 한계와 전망은 캔버스에서 해요
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V = THREE.Vector3, M4 = new THREE.Matrix4(), cc = new THREE.Color();

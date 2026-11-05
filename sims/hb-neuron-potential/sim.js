@@ -416,7 +416,7 @@ function ionLabel(x, y, base, sup, tail, size, bg) {
 const S = { mode: 'neuron', sub: 'label', fade: 0, nr: null, rs: null, ap: null, th: null };
 let game = null;
 const v1 = $('#v1'), v2 = $('#v2'), v3 = $('#v3'), l1 = $('#l1'), l2 = $('#l2'), l3 = $('#l3');
-const SCENES = { neuron: '🧬 뉴런 구조', rest: '🔋 휴지 전위', ap: '⚡ 활동 전위', thr: '🎚 역치' };
+const SCENES = { neuron: '🔬 뉴런 구조', rest: '🔋 휴지 전위', ap: '⚡ 활동 전위', thr: '🎚 역치' };
 const viewKey = () => (S.mode === 'neuron' ? 'neuron:' + S.sub : S.mode);
 function setScene(mode) {
   if (S.mode !== mode) { S.fade = 1; parts.clear(); }
@@ -508,7 +508,7 @@ function neuronBody(hl) {
 function drawNameScene(dt) {
   const R = S.nr, pl = R.namer;
   bgFill('#eaf6f1', '#f7fbf9');
-  T(PHONE ? 12 : 20, PHONE ? 24 : 28, '🧬 뉴런 한 개의 구조', PHONE ? 15 : 18, '#26324a', 'left', 800);
+  T(PHONE ? 12 : 20, PHONE ? 24 : 28, '🔬 뉴런 한 개의 구조', PHONE ? 15 : 18, '#26324a', 'left', 800);
   neuronBody();
   // 신호 방향 펄스
   const pu = ((clock * 0.2) % 1.25) * 560 + 150, pp = NP(pu, 0);
@@ -1078,7 +1078,7 @@ function readouts() {
 /* ================= 미션 ================= */
 const levels = [
   {
-    title: '뉴런 구조: 신호는 어디서 받고 어디로 보낼까?', short: '뉴런 구조', icon: '🧬', phase: '관찰',
+    title: '뉴런 구조: 신호는 어디서 받고 어디로 보낼까?', short: '뉴런 구조', icon: '🔬', phase: '관찰',
     intro: '<p class="si-q">❓ 탐구 질문: 신경 세포에서 전기 신호는 어떻게 만들어질까? 약한 자극과 강한 자극은 신호가 어떻게 다를까?</p>' +
       '<div class="si-link">🔗 <b>중학교에서</b> 뉴런에는 감각·연합·운동 뉴런이 있고 자극이 한 방향으로 전달된다고 배웠어요. 이번에는 <b>말이집·랑비에 결절</b>까지 포함한 구조와, 신호의 정체인 <b>막전위</b>를 알아봐요.</div>' +
       '<p>① 뉴런 구조 → ② 휴지 전위 → ③ 활동 전위 → ④ 역치 순서예요. 신호가 축삭을 따라가는 과정(전도)은 다음 차시에서 배워요.</p>',
@@ -1250,7 +1250,7 @@ const levels = [
 
 game = SciSim.game({
   simId: 'hb-neuron-potential', mount: '#game', badge: '신경 신호 박사', homeHref: '../../index.html#hb',
-  featureLabels: { neuron: '🧬 뉴런 그림 · 이름표', rest: '🔋 막 단면 · 미세 전극 · 펌프 토글', ap: '⚡ 막전위–시간 그래프 · 이온 통로', thr: '🎚 자극 세기 5단계 · 기록표' },
+  featureLabels: { neuron: '🔬 뉴런 그림 · 이름표', rest: '🔋 막 단면 · 미세 전극 · 펌프 토글', ap: '⚡ 막전위–시간 그래프 · 이온 통로', thr: '🎚 자극 세기 5단계 · 기록표' },
   onFeatures() { updateCtl(); },
   levels,
 });

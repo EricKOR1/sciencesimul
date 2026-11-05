@@ -11,7 +11,7 @@
 
   window.SciSim3D.attach({
     title: '흥분의 전도 3D (국소 전류 · 말이집)',
-    hint: '2D의 ⚡ 자극 주기 · 🏁 출발 · 말이집 상태 단추가 3D를 움직여요 · 드래그: 돌리기',
+    hint: '⚡ 자극 주기 · 🏁 출발 · 말이집 상태 단추로 모형이 움직여요 · 드래그: 돌리기',
     camera: { dist: narrow ? 18 : 13.5, theta: 0.2, phi: 1.15, min: 6, max: 28, target: [0, 0, 0] },
     autoRotate: 0,
     levels: [0, 1],
@@ -91,7 +91,7 @@
       /* 2D 단추 따라 하기 */
       const clickDom = (sel) => { const b = document.querySelector(sel); if (b) b.click(); };
       controls.segment('자극 위치', [{ label: '왼쪽 끝', value: 'left' }, { label: '가운데', value: 'mid' }, { label: '오른쪽 끝', value: 'right' }], 'left', (v) => clickDom('#locSeg button[data-loc="' + v + '"]'));
-      controls.button('⚡ 자극 주기 (2D와 같이)', () => { const L = L2(); if (!L) return; if (L.S.mode === 'myelin') clickDom('#bRace'); else clickDom('#bStimCd'); });
+      controls.button('⚡ 자극 주기', () => { const L = L2(); if (!L) return; if (L.S.mode === 'myelin') clickDom('#bRace'); else clickDom('#bStimCd'); });
       controls.segment('말이집', [{ label: '정상', value: 0 }, { label: '일부 손상', value: 1 }, { label: '심하게 손상', value: 2 }], 0, (v) => clickDom('#dmgSeg button[data-d="' + v + '"]'));
       const playing = () => pl.playing || pl.p > 0;
       const NAMES = { pol: '분극', dep: '탈분극', rep: '재분극' };

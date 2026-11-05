@@ -79,7 +79,7 @@
   const phone = window.matchMedia && window.matchMedia('(max-width: 599px)').matches;
   window.SciSim3D.attach({
     title: '전하 운반자 3D',
-    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 시료와 전기장은 2D와 똑같이 이어져요',
+    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 시료를 고르고 전기장을 켜 봐요',
     camera: { dist: phone ? 21 : 16, theta: 0.5, phi: 1.1, min: 6, max: 30, target: [0, 2.6, 0] },
     autoRotate: 0.12,
     levels: [2],

@@ -100,7 +100,7 @@
             const bm = s.mode === 'atom' && s.sub === 'build';
             if (bm !== buildMode) { buildMode = bm; viewCtl.forEach((e) => { e.style.display = bm ? 'none' : ''; }); if (bm) pl.pause(); lastKey = ''; }
             if (bm) { const key = 'b' + s.build.target + s.build.counts.join(','); if (key !== lastKey) { lastKey = key; rebuild(s.build.counts.slice(), s.build.target); } }
-            else if (s.Z !== lastS || lastKey !== 'v') { lastKey = 'v'; lastS = s.Z; if (s.Z >= 1 && s.Z <= 20) { Z = s.Z; rebuild(); if (!pl.playing) { /* 진행 막대는 그대로 */ } } }
+            else if (s.Z !== lastS || lastKey !== 'v') { const ext = s.Z !== lastS && lastKey === 'v'; lastKey = 'v'; lastS = s.Z; if (s.Z >= 1 && s.Z <= 20) { Z = s.Z; rebuild(); if (ext && pl.playing) pl.pause(); } }   // 옆의 −/+·슬라이더로 바꾸면 ▶ 재생을 멈추고 그 원소를 보여 줘요
           }
           elecs.forEach((e) => { const a = e.a0 + t * e.sp, x = Math.cos(a) * RAD[e.sh], z0 = Math.sin(a) * RAD[e.sh], ct = Math.cos(e.tilt), st = Math.sin(e.tilt), y1 = -st * z0, z1 = ct * z0, cy = Math.cos(e.yaw), sy = Math.sin(e.yaw); e.m.position.set(x * cy + z1 * sy, y1, -x * sy + z1 * cy); });
           nuc.scale.setScalar(1 + Math.sin(t * 2) * 0.03);

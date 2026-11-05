@@ -18,10 +18,10 @@
 
   window.SciSim3D.attach({
     title: '소화 효소 3D 모형 (열쇠-자물쇠)',
-    hint: '효소와 기질을 바꿔 보고, 온도(0~60 °C)·pH(2~11)를 바꿔 봐요 · 2D의 선택도 따라가요',
+    hint: '효소와 기질을 바꿔 보고, 온도(0~60 °C)·pH(2~11)를 바꿔 봐요',
     camera: { dist: narrow ? 13 : 10.2, theta: 0.5, phi: 1.2, min: 5, max: 20, target: [0.7, 0.5, 0] },
     autoRotate: 0.12,
-    levels: [2],
+    levels: [],
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V = THREE.Vector3;

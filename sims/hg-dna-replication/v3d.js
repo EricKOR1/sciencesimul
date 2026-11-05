@@ -13,7 +13,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: narrow ? 14.5 : 12.5, theta: 0.3, phi: 1.2, target: [0.5, 0, 0], min: 6, max: 24 },
     autoRotate: 0,
-    levels: [2],
+    levels: [],   // 모든 단계가 캔버스 조작(그림 고르기 · 띠 · 뉴클레오타이드 잇기 · 카드 잇기 · 그래프)이 필요해서 2D로 해요
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V = THREE.Vector3;

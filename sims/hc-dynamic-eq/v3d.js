@@ -6,7 +6,8 @@
   const phone = window.matchMedia && window.matchMedia('(max-width: 599px)').matches;
   window.SciSim3D.attach({
     title: '동적 평형 3D',
-    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 반응 시작과 뚜껑은 2D와 똑같이 이어져요',
+    hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
+    levels: [1, 3],   // 분자 세기 · 동적 평형(입자 관찰). 농도 그래프 읽기(1단계)와 속도 그래프 표시(3단계)는 2D
     camera: { dist: phone ? 15 : 12, theta: 0.5, phi: 1.1, min: 5, max: 24, target: [0, 1.5, 0] },
     autoRotate: 0.1,
     build(ctx) {

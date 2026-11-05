@@ -119,18 +119,22 @@
       }
       const rng = controls.range('대상', 0, OB.length - 1, 1, idx, (v) => select(v), (v) => OB[v].n);
       controls.button('◀ 더 작게', () => select(idx - 1)); controls.button('더 크게 ▶', () => select(idx + 1));
-      let lastNear = (window.__sim && window.__sim.S && window.__sim.S.nearId) || null;
-      if (lastNear) { const k = OB.findIndex((o) => o.id === lastNear); if (k >= 0) idx = k; }
+      // 2D 눈금(지수)에서 가장 가까운 대상 → 2D 슬라이더 · ◀ ▶ 버튼도 3D 장면을 바꿔요
+      const near2d = () => { const L = window.__sim; if (!L || !L.S || !L.OBJ) return -1; let k = -1, d = 1e9; L.OBJ.forEach((o, i) => { const q = Math.abs(o.le - L.S.te); if (q < d) { d = q; k = i; } }); return k < OB.length ? k : -1; };
+      let lastTe = window.__sim && window.__sim.S ? window.__sim.S.te : null;
+      { const k = near2d(); if (k >= 0) idx = k; }
       select(idx, true);
+      let ready = false;
       const N = OB.length;
       controls.player({ duration: 15, loop: true, autoplay: false, label: '줌 여행',
         phases: OB.map((o, i) => [i / N, o.n]),
-        onFrame(p) { const k = Math.min(N - 1, Math.floor(p * N)); if (k !== idx) select(k); } });
+        onFrame(p) { if (!ready) return; const k = Math.min(N - 1, Math.floor(p * N)); if (k !== idx) select(k); } });
+      ready = true;
       return {
         update(dt, t) {
           pop = Math.min(1, pop + dt * 2.2); const s = 1 - Math.pow(1 - pop, 3); cur.scale.setScalar(0.2 + 0.8 * s);
           if (upd) upd(t);
-          const q = window.__sim && window.__sim.S && window.__sim.S.nearId; if (q && q !== lastNear) { lastNear = q; const k = OB.findIndex((o) => o.id === q); if (k >= 0 && k !== idx) select(k, false, true); }
+          const S2 = window.__sim && window.__sim.S; if (S2 && S2.te !== lastTe) { lastTe = S2.te; const k = near2d(); if (k >= 0 && k !== idx) select(k, false, true); }
         },
         sync() {},
       };

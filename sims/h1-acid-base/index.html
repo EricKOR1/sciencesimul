@@ -73,6 +73,7 @@
       .stage-toolbar .segmented button { padding: 5px 7px; font-size: 13px; }
     }
 
+    body:not(.v3-mode) .v3-only { display: none; }
   </style>
 </head>
 <body class="sim-page" data-subject="chem">
@@ -133,7 +134,7 @@
         <div class="ctrl-set" id="cs-props" hidden>
           <div class="ctrl-title">⚗️ 실험 고르기</div>
           <div class="opt-grid" id="expBtns">
-            <button type="button" class="opt on" data-e="mg">🧲 마그네슘</button>
+            <button type="button" class="opt on" data-e="mg">🔩 마그네슘</button>
             <button type="button" class="opt" data-e="egg">🥚 달걀 껍데기</button>
             <button type="button" class="opt" data-e="pro">🍳 단백질</button>
             <button type="button" class="opt" data-e="lamp">💡 전구 회로</button>
@@ -149,9 +150,9 @@
         <!-- 이온 모형 -->
         <div class="ctrl-set" id="cs-ion" hidden>
           <div class="ctrl-title">🔬 물에 녹여 보기</div>
-          <p class="ctrl-note" id="ionNote">아래 물질 카드를 끌어 <b>비커의 물</b>에 넣어요. (카드를 누른 뒤 비커를 눌러도 돼요.)</p>
+          <p class="ctrl-note" id="ionNote"><span data-v3="2d">아래 물질 카드를 끌어 <b>비커의 물</b>에 넣어요. (카드를 누른 뒤 비커를 눌러도 돼요.)</span><span class="v3-only">화면 아래 <b>물질 단추</b>(HCl · NaOH …)를 눌러 비커의 물에 녹여요.</span></p>
           <div class="opt-grid"><button type="button" class="opt wide" id="clearBtn">💧 물 갈아 주기</button></div>
-          <div class="ctrl-row" id="defRow">
+          <div class="ctrl-row" id="defRow" data-v3="keep">
             <div class="sel-row"><label for="defAcid">산은 수용액에서 (  )을 내놓는 물질</label>
               <select id="defAcid"><option value="">고르기</option><option value="H+">수소 이온 H⁺</option><option value="OH-">수산화 이온 OH⁻</option><option value="Na+">나트륨 이온 Na⁺</option><option value="Cl-">염화 이온 Cl⁻</option></select></div>
             <div class="sel-row"><label for="defBase">염기는 수용액에서 (  )을 내놓는 물질</label>

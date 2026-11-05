@@ -19,7 +19,7 @@
     hint: '병원체를 골라 돌려 보세요 · 구조와 크기가 달라요',
     camera: { dist: narrow ? 13 : 9.5, theta: 0.6, phi: 1.15, min: 4.5, max: 20 },
     autoRotate: 0.25,
-    levels: [0],
+    levels: [],   // 모든 단계에 캔버스 조작이 필요해요(비교표 칸 누르기 · 증식 그래프 점 찍기 · 카드 끌기 · 환자·마을 장면). 그래서 2D로 해요
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = (x, y, z) => new THREE.Vector3(x, y, z || 0);
@@ -196,7 +196,7 @@
           tnow += dt;
           { const L = window.__sim, S2 = L && L.S, want = S2 && S2.mode === 'grow' && S2.sub.grow === 'bact' ? 'bact' : S2 && S2.mode === 'grow' && S2.sub.grow === 'virus' ? 'virus' : 'obs';
             if (want !== gm) setGM(want);
-            if (gm === 'obs' && S2) { const nk = S2.mode + '|' + (S2.sub && S2.sub[S2.mode]); if (nk !== noteKey) { noteKey = nk; const NT = { 'grow|route': '<b>전염 경로 짝짓기</b>는 2D 화면에서 해요.', sort: '<b>질병 분류</b>는 2D 화면에서 카드를 끌어다 놓아요.', 'apply|drug': '<b>약으로 치료하기</b>는 2D 화면에서 해요. 항생제는 세균에, 바이러스에는 효과가 없어요.', 'apply|block': '<b>전염 막기</b>는 2D 화면에서 해요.' }; const nt = NT[S2.mode + '|' + (S2.sub && S2.sub[S2.mode])] || NT[S2.mode]; if (nt) info(nt + '<br>3D에서는 병원체 5종의 구조를 비교해 보세요.'); else info(infoOf(cur < 0 ? 0 : cur)); } }
+            if (gm === 'obs' && S2) { const nk = S2.mode + '|' + (S2.sub && S2.sub[S2.mode]); if (nk !== noteKey) { noteKey = nk; info(infoOf(cur < 0 ? 0 : cur)); } }
             if (gm === 'bact') { bactFrame(L, t); return; }
             if (gm === 'virus') { virusFrame(L, t); return; } }
           { const L = window.__sim; if (L && L.S.O) { const k = KEYS.indexOf(L.S.O.cur); if (k >= 0 && k !== cur) show(k); } }

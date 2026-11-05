@@ -48,7 +48,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 값은 옆 조작판에서 바꿔요',
     camera: { dist: 9 * KD, theta: 0.2, phi: 0.95, min: 3, max: 30, target: [0, 0, 0] },
     autoRotate: 0,
-    levels: [0, 1, 2],
+    levels: [0, 2],   // 2단계는 시험 전하를 캔버스에서 끌어 놓아야 하고, 4단계는 캔버스의 전위 그래프를 읽어야 해서 2D
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
       const { V3, M, mkArrow, setArrow, tube } = tools(THREE);

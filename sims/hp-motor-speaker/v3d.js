@@ -13,7 +13,7 @@
   window.SciSim3D.attach({
     title: '전동기와 스피커 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 값은 옆 조작판에서 바꿔요',
-    levels: [0, 1, 2],
+    levels: [0, 1, 2],   // 4단계(설계)는 캔버스의 시험 곡선 그래프를 읽어야 해서 2D
     camera: { dist: 14 * KD, theta: 0.55, phi: 1.15, min: 6, max: 26, target: [0, -0.6, 0.4] },
     autoRotate: 0,
     build(ctx) {
@@ -276,7 +276,7 @@
         lDst.show(allOk && tested); lDst.set('설계 완료 ✔'); lDst.obj = [0, 8.2, 0];
         const sweepTxt = sweeping2D || demo ? '시험 중 <b>' + Math.round(f) + ' Hz</b> · 소리 크기 <b>' + f2(ev.L(f)) + '</b> · 진폭 ' + f2(ev.X(f)) + ' mm' + (ev.X(f) > GAP ? ' <span style="color:#ff9b9b">(틈 밖 → 찌그러져요)</span>' : '') : '화면은 느리게 보여 줘요 (1 kHz 기준) · 아래 ▶ 시험하기로 200 Hz → 4 kHz를 훑어요';
         const txt = '<b>🛠️ 내 스피커 설계</b> · 진동판 m = <b>' + f1(ev.m) + ' g</b> · 코일 저항 ' + f1(ev.R) + ' Ω · 소비 전력 ' + f1(ev.P) + ' mW · 비용 ' + Math.round(ev.cost) + '<br>' +
-          checks.map((c) => (c.ok ? '✅ ' : '⬜ ') + c.text).join('<br>') + '<br>' + sweepTxt + (tested ? '' : '<br><span style="opacity:.8">시험 곡선 그래프는 2D 화면에서 볼 수 있어요.</span>');
+          checks.map((c) => (c.ok ? '✅ ' : '⬜ ') + c.text).join('<br>') + '<br>' + sweepTxt;
         if (txt !== lastTxtD || sweeping2D || demo) { lastTxtD = txt; info(txt); }
       }
       pD = controls.player({ duration: 9, loop: true, autoplay: false, label: '시험하기', phases: [[0, '낮은 음'], [0.3, '1 kHz'], [0.6, '3 kHz'], [0.9, '높은 음']], onFrame(p) { dm2.p = p; dm2.on = p > 0 || !!(pD && pD.playing); } });
@@ -287,6 +287,8 @@
       pF = controls.player({ duration: 7, loop: true, autoplay: false, label: '전류 흘리기', phases: [[0, '전류 없음'], [0.15, '전류가 흐르면 힘을 받아요'], [0.5, '힘이 일정해요'], [0.8, '전류를 끊어요']], onFrame(p) { dm.F.p = p; dm.F.on = p > 0 || !!(pF && pF.playing); } });
       pM = controls.player({ duration: 8, loop: true, autoplay: false, label: '코일 한 바퀴', phases: [[0, '짝힘으로 회전'], [0.2, '정류자가 전류 방향을 바꿔요'], [0.3, '짝힘으로 회전'], [0.7, '정류자가 전류 방향을 바꿔요'], [0.8, '짝힘으로 회전']], onFrame(p) { dm.M.p = p; dm.M.on = p > 0 || !!(pM && pM.playing); } });
       const rows = [...ctx.renderer.domElement.parentNode.parentNode.querySelectorAll('.v3-player')]; pD.row = rows[0]; pF.row = rows[1]; pM.row = rows[2];
+      // 2D 캔버스의 '🧲 자기장 나란하게' 단추와 같은 일: 도선과 자기장을 나란하게(힘 0) ↔ 수직으로
+      const bPar = controls.button('🧲 자기장 나란하게', () => { const A = lessonS(); if (!A || !A.S || A.S.mode !== 'force') return; A.S.f.par = !A.S.f.par; if (A.updateCtl) A.updateCtl(); });
       let cur = '';
       function setMode(mode) {
         if (mode === cur) return; cur = mode;
@@ -294,6 +296,7 @@
         pD.row.style.display = mode === 'design' ? '' : 'none'; if (mode !== 'design') { pD.pause(); pD.set(0); }
         motorLabs.forEach((l) => l.show(false)); fLabs.forEach((l) => l.show(false)); sLabs.forEach((l) => l.show(mode === 'speaker'));
         if (mode !== 'motor') { motorG.visible = false; } 
+        bPar.style.display = mode === 'force' ? '' : 'none';
         pF.row.style.display = mode === 'force' ? '' : 'none'; pM.row.style.display = mode === 'motor' ? '' : 'none';
         if (mode !== 'force') { pF.pause(); pF.set(0); } if (mode !== 'motor') { pM.pause(); pM.set(0); }
         if (mode === 'force') { Object.assign(ctx.orbit, { tx: -0.4, ty: 0, tz: 0, phi: 0.8, theta: 0.0, dist: 7 * KD }); lSup.show(true); lL.show(true); lB.show(true); }
@@ -306,7 +309,7 @@
         update(dt, tm) {
           const A = lessonS(); if (!A || !A.S) return; const S = A.S; dt = Math.min(dt, 0.05); tmT += dt;
           setMode(S.mode);
-          if (S.mode === 'force') { if (!pF.playing && pF.p === 0) dm.F.on = false; forceScene(dt, S); }
+          if (S.mode === 'force') { if (!pF.playing && pF.p === 0) dm.F.on = false; forceScene(dt, S); const pt = S.f.par ? '🧲 자기장 수직으로' : '🧲 자기장 나란하게'; if (bPar.textContent !== pt) bPar.textContent = pt; bPar.classList.toggle('on', !!S.f.par); }
           else if (S.mode === 'motor') { if (S.mt.on && pM.playing) pM.pause(); if (!pM.playing && pM.p === 0) dm.M.on = false; demo.p = dm.M.p; demo.on = dm.M.on; motor(dt, S); }
           else if (S.mode === 'speaker') speaker(dt, S);
           else if (S.mode === 'design') { if (S.ds.sweep >= 0 && pD.playing) pD.pause(); if (!pD.playing && pD.p === 0) dm2.on = false; designScene(dt, S, A); }

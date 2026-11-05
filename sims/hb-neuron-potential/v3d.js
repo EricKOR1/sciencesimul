@@ -11,10 +11,10 @@
 
   window.SciSim3D.attach({
     title: '신경 세포막 3D (이온 통로)',
-    hint: '드래그: 돌리기 · 2D의 펌프·자극 단추를 그대로 따라가요',
+    hint: '드래그: 돌리기 · 펌프·자극에 따라 이온이 드나들어요',
     camera: { dist: narrow ? 14.5 : 11, theta: 0.28, phi: 1.22, min: 6, max: 20, target: [0, 0, 0] },
     autoRotate: 0,
-    levels: [1, 2, 3],
+    levels: [],   // 모든 단계의 미션이 캔버스 조작(이름표 끌기 · 미세 전극 끌기 · 그래프 이름표 · 봉우리 세기)이 필요해서 2D로 해요
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.45, metalness: 0.03 }, o || {}));
@@ -103,7 +103,7 @@
         rep: '<b>재분극</b>: Na⁺ 통로는 닫히고 K⁺ 통로가 열려 K⁺이 밖으로 나가요.<br>막전위가 다시 (−)로 내려가요.',
         hyp: '<b>과분극</b>: K⁺ 통로가 아직 열려 있어 막전위가 −70 mV보다 더 낮아졌다가 서서히 −70 mV로 돌아와요.',
       };
-      const seg = controls.segment('', [{ label: '2D와 같이', value: 'sync' }, { label: '휴지', value: 'rest' }, { label: '탈분극', value: 'dep' }, { label: '재분극', value: 'rep' }, { label: '과분극', value: 'hyp' }], 'sync', (v) => { manual = v; if (pl.playing) pl.pause(); pl.set(0); });
+      const seg = controls.segment('', [{ label: '실험과 같이', value: 'sync' }, { label: '휴지', value: 'rest' }, { label: '탈분극', value: 'dep' }, { label: '재분극', value: 'rep' }, { label: '과분극', value: 'hyp' }], 'sync', (v) => { manual = v; if (pl.playing) pl.pause(); pl.set(0); });
       const pb2 = controls.button('펌프 끄기', () => { const L = L2(); const b = document.querySelector('#pumpSeg button[data-p="' + (pumpOn ? 'off' : 'on') + '"]'); if (b) b.click(); });
       /* ▶ 활동 전위 한 번 (2D 그래프와 같은 곡선: 휴지 1 ms → 탈분극 → 재분극 → 과분극, 모두 6 ms) */
       const CROSS = (L2() && L2().AP_CROSS) || 3.9;

@@ -143,7 +143,7 @@
         C.trails.forEach((t) => { t.material.opacity = (p > 0.04 && p < 0.97) ? 0.55 : 0.0; });
         const end = p >= 0.97;
         C.names.forEach((l) => l.show(p < 0.5)); C.afters.forEach((l) => l.show(p >= 0.5)); C.tags.forEach((l) => l.show(end));
-        if (p < 0.03) setInfo('<b>' + C.R.eq.split(' → ')[0] + '</b><br>▶ 재생을 눌러(또는 2D에서 가열해) <b>산소 원자(빨강)</b>가 어디로 가는지 따라가 봐요.');
+        if (p < 0.03) setInfo('<b>' + C.R.eq.split(' → ')[0] + '</b><br>🔥 가열하기나 ▶ 재생을 눌러 <b>산소 원자(빨강)</b>가 어디로 가는지 따라가 봐요.');
         else if (!end) setInfo('산소 원자가 <b>이동</b>하고 있어요. 결합이 끊어지고 새로 만들어져요.');
         else setInfo(C.R.txt + '<br><b>' + C.R.eq + '</b>');
       }

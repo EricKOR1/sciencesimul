@@ -2,7 +2,7 @@
    북대서양과 남극 근처에서 차갑고 짠 물이 가라앉아 깊은 바다를 천천히 흐르고, 인도양·태평양에서 올라와 표층 해류로 돌아와요.
    지구본을 투명하게 해서 표층 흐름(주황)과 심층 흐름(파랑)을 함께 봐요. 담수(빙하 녹은 물)가 늘어나면 침강이 약해져요.
    2D 실험의 담수 유입량(S.F)과 침강 세기 함수(strengthF)를 읽어 따라가요(읽기 전용).
-   1단계(침강 실험: 냉각한 수조에 짠 물 붓기) · 2단계(남북 바다 단면 · 수괴 카드)도 2D와 같은 값으로 보여 줘요 (카드 끌어 놓기는 2D). */
+   3D는 3단계(순환 연결)에서 보여 줘요. 수조 · 단면 장면 코드는 2D와 같은 값으로 그리는 예비 장면이에요. */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -40,7 +40,7 @@
   window.SciSim3D.attach({
     title: '해양 컨베이어 벨트 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    levels: [2, 3],        // 0·1단계(수조 실험·단면 카드)는 2D 화면에서 해요
+    levels: [2],           // 0단계(수조 실험) · 1단계(단면 카드 끌기) · 3단계(인과 사슬 카드 끌기)는 2D 화면에서 해요
     camera: { dist: PHONE ? 15.5 : 12.2, theta: 0.2, phi: 1.1, min: 5.5, max: 22 },
     autoRotate: 0.12,
     build(ctx) {
@@ -101,12 +101,23 @@
         up: label('④ 느린 상승', ll(12, 60, R * 1.03).toArray(), { size: 11.5, color: 'rgba(15,100,150,.9)' }),
       };
 
+      /* 순환 연결 단계: 번호 옆에 학생이 고른 이름을 보여 줘요 (2D와 같아요: 맞으면 초록, 아니면 회색) */
+      const LBK = [LB.sf, LB.n, LB.dp, LB.up], LBT = LBK.map((l) => l.el.textContent), LBB = LBK.map((l) => l.el.style.background);
+      function pickLabels(sw) {
+        const on = ctx.level === 2 && sw && sw.S, pk = (on && sw.S.loopPick) || {}, ans = (sw && sw.LOOP_LEG) || [];
+        LBK.forEach((l, k) => {
+          const tx = on ? '①②③④'[k] + (pk[k] ? ' ' + pk[k] : '') : LBT[k];
+          if (l.el.textContent === tx) return; l.set(tx);
+          l.el.style.background = on && pk[k] ? (ans[k] && pk[k] === ans[k][0] ? 'rgba(21,128,61,.92)' : 'rgba(71,85,105,.92)') : LBB[k];
+        });
+      }
+
       /* 상태 */
       let F = 0, str = 1, showS = true, showD = true;
       const SIM = () => window.__sim;
       const calc = (f) => { try { const s = SIM(); if (s && s.strengthF) return s.strengthF(f); } catch (e) {} return clamp(1 - f / 6.5, 0, 1); };
       let lastSimF = null; try { const s = SIM(); if (s && s.S) { F = s.S.F || 0; lastSimF = s.S.F; } } catch (e) {}
-      const rF = controls.range('담수 유입', 0, 10, 0.5, F, (v) => { F = v; refresh(); try { const s = SIM(); if (s && s.setF) { s.setF(v); lastSimF = v; } } catch (e) {} }, (v) => v.toFixed(1) + ' (빙하 담수)');
+      const rF = { set() {} };   // 담수 유입량은 2D 단계(순환과 기후)의 슬라이더 값을 따라가요
       const bS = controls.button('표층 ✓', () => { showS = !showS; bS.classList.toggle('on', showS); bS.textContent = '표층 ' + (showS ? '✓' : '✕'); apply(); }); bS.classList.add('on');
       const bD = controls.button('심층 ✓', () => { showD = !showD; bD.classList.toggle('on', showD); bD.textContent = '심층 ' + (showD ? '✓' : '✕'); apply(); }); bD.classList.add('on');
       function apply() {
@@ -115,16 +126,16 @@
         LB.sf.show(showS); LB.dp.show(showD); LB.up.show(showD); LB.s.show(showD); LB.n.show(true);
       }
       function refresh() {
-        str = calc(F); const pc = Math.round(str * 100);
-        let sal = null; try { const s = SIM(); if (s && s.salF) sal = s.salF(F); } catch (e) {}
-        if (ctx.level === 2) { info('<b>순환 고리</b>: ① 표층 난류(북상) → ② 침강 → ③ 심층 이동(남하) → ④ 느린 상승<br>한 바퀴 약 1000년 (예시). ▶ 를 눌러 노란 입자를 돌려 보세요.'); return; }
+        str = ctx.level === 2 ? 1 : calc(F); const pc = Math.round(str * 100);
         FL.forEach((f) => { f.mat.opacity = f.kind === 'surf' ? 0.55 + 0.4 * str : 0.2 + 0.7 * str; });
+        let sal = null; try { const s = SIM(); if (s && s.salF) sal = s.salF(F); } catch (e) {}
+        if (ctx.level === 2) { info('<b>순환 고리</b>: 노란 입자가 ① → ② → ③ → ④ 순서로 한 바퀴 돌아요.<br>주황 관 = 표층 해류 · 파란 관 = 심층 해류<br>한 바퀴 약 1000년 (예시). 시간 눈금 슬라이더를 올려 보세요.'); return; }
         info('침강 세기 <b>' + pc + '%</b> · 담수 유입 ' + F.toFixed(1) + (sal != null ? ' · 표층 염분 ' + sal.toFixed(2) + ' psu' : '') + '<br>' + (pc === 0 ? '표층수가 가벼워져 <b>침강이 멈췄어요</b>. 북상하는 따뜻한 해류도 약해져요.' : pc < 60 ? '담수가 섞여 염분이 낮아지면 침강이 <b>약해져요</b>.' : '차갑고 <b>짠</b> 물이 무거워 가라앉고, 순환이 이어져요.'));
       }
       /* ▶ 순환 고리: 노란 입자가 ① 표층 난류 → ② 침강 → ③ 심층 이동 → ④ 느린 상승으로 한 바퀴 (구간별 시간 몫은 2D와 같아요) */
       const LEG = (() => { try { const s = SIM(); if (s && s.LOOP_LEG) return s.LOOP_LEG.map((l) => l[1]); } catch (e) {} return [0.05, 0.02, 0.6, 0.33]; })();
       const YEARS = 1000, cum = [0]; LEG.forEach((w, i) => cum.push(cum[i] + w));
-      const NAMES = ['① 표층 난류(북상)', '② 침강', '③ 심층 이동(남하)', '④ 느린 상승'];
+      const NAMES = ['① 구간', '② 구간', '③ 구간', '④ 구간'];   // 이름은 학생이 고르는 미션이라 번호만 보여 줘요
       const vS = new THREE.Vector3(), vE = new THREE.Vector3(), vT = new THREE.Vector3();
       const surfEnd = FL[0].curve.getPointAt(1), nadwStart = FL[1].curve.getPointAt(0);
       const bead = new THREE.Mesh(new THREE.SphereGeometry(0.17, 20, 14), new THREE.MeshBasicMaterial({ color: 0xfde047 })); grp.add(bead);
@@ -274,6 +285,7 @@
             if (h !== lastHtml || forceInfo) { lastHtml = h; forceInfo = false; info(h); }
             ctx.orbit.theta = 0.05; return;
           }
+          pickLabels(sw);
           try { const s = SIM(); if (s && s.S && ctx.level === 2 && !pl.playing && s.S.loopT !== lastLoop) { syncing = true; pl.set((s.S.loopT % YEARS) / YEARS); syncing = false; lastLoop = s.S.loopT; } } catch (e) {}
           try { const s = SIM(); if (s && s.S && s.S.F !== lastSimF) { lastSimF = s.S.F; F = s.S.F; rF.set(F); refresh(); } } catch (e) {}
           FL.forEach((f) => {

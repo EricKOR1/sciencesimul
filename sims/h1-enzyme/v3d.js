@@ -70,7 +70,7 @@
         alt.visible = isO; sub.visible = !isO; lS.obj = isO ? alt : sub; lAS.show(m !== 'hot'); rings.forEach((r) => { r.visible = m !== 'hot'; }); heat.forEach((h) => { h.visible = m === 'hot'; });
         info(msg[m]); seg.set(m);
       }
-      const seg = controls.segment('상황', [{ value: 'tri', label: '기질 ①' }, { value: 'ok', label: '기질 ② (맞음)' }, { value: 'dia', label: '기질 ③' }], mode === 'hot' ? 'ok' : mode, (v) => { setMode(v); lastWant = v; const L = window.__sim, S = L && L.S; if (S && S.mode === 'lock' && S.sub === 'bind' && L.lockAttempt) { const it = S.lock.items.find((q) => q.id === (v === 'ok' ? 'A' : v === 'tri' ? 'T' : 'B')); if (it && it.state === 'tray') L.lockAttempt(it); } });
+      const seg = controls.segment('상황', [{ value: 'tri', label: '기질 ①' }, { value: 'ok', label: '기질 ②' }, { value: 'dia', label: '기질 ③' }], mode === 'hot' ? 'ok' : mode, (v) => { setMode(v); lastWant = v; const L = window.__sim, S = L && L.S; if (S && S.mode === 'lock' && (S.sub === 'bind' || S.sub === 'heat') && L.lockAttempt) { const it = S.lock.items.find((q) => q.id === (v === 'ok' ? 'A' : v === 'tri' ? 'T' : 'B')); if (it && it.state === 'tray') L.lockAttempt(it); } });
       setMode('ok');
       const Q = new THREE.Vector3();
       let demoP = 0, lastWant = '', lastHot = false;

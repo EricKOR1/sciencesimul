@@ -79,7 +79,7 @@
   const phone = window.matchMedia && window.matchMedia('(max-width: 599px)').matches;
   window.SciSim3D.attach({
     title: '결합의 극성 3D',
-    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 전기 음성도 슬라이더는 2D와 똑같이 이어져요',
+    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 전기 음성도 슬라이더로 구름이 움직여요',
     camera: { dist: phone ? 9.6 : 8.4, theta: 0.45, phi: 1.2, min: 4, max: 20, target: [0, 0.3, 0] },
     autoRotate: 0.1,
     levels: [0],
@@ -147,7 +147,7 @@
             sA = b.a; sB = b.b; eA = b.ea; eB = b.eb; nmA = sA + ' 원자'; nmB = sB + ' 원자';
             d = b.d10; const done = sc === 'arrows' ? !!S.ar.done[b.id] : true;
             posT = done ? 0.5 + 0.5 * Math.sign(eB - eA) * qOf(d) : 0.5; arr = done && d > 0 ? 1 : 0; showAll = done;
-            if (!done) note = '2D에서 Δχ와 화살표 방향을 정하면 전자 구름이 쏠려요.';
+            if (!done) note = 'Δχ와 화살표 방향을 정하면 전자 구름이 쏠려요.';
           }
           q = qOf(d); pos += (posT - pos) * (1 - Math.pow(0.003, dt));
           setAtoms(sA, sB, eA, eB);

@@ -656,7 +656,7 @@
   const smp = (id) => SAMPLES.find((s) => s.id === id);
   const PO = { mg: ['hcl', 'vin', 'water', 'naoh'], egg: ['hcl', 'vin', 'water', 'naoh'], pro: ['naoh', 'soap', 'vin', 'water'], lamp: ['hcl', 'naoh', 'water', 'sugar'] };
   const PN = { mg: '마그네슘 리본 + 시료', egg: '달걀 껍데기 + 시료', pro: '단백질(삶은 달걀흰자) + 시료', lamp: '전구 회로 + 시료' };
-  const PSHORT = { mg: '🧲 마그네슘', egg: '🥚 달걀 껍데기', pro: '🍳 단백질', lamp: '💡 전구 회로' };
+  const PSHORT = { mg: '🔩 마그네슘', egg: '🥚 달걀 껍데기', pro: '🍳 단백질', lamp: '💡 전구 회로' };
   const P = { exp: 'mg', pick: { mg: 'hcl', egg: 'hcl', pro: 'naoh', lamp: 'hcl' }, done: { mg: false, egg: false, pro: false, lamp: false }, res: { mg: {}, egg: {}, pro: {}, lamp: {} }, lampSeen: {} };
   const X = { running: false, t: 0, g: 0, gv: 0, m: 0, shrink: 0, lift: 0, seq: 0, seqT: 0, flash: 0, lampB: 0, bub: 0, popPlayed: false, yi: 160 };
   const RUN = 6;

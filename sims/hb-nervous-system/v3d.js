@@ -13,7 +13,7 @@
     hint: '드래그: 돌리기 · 모드를 눌러 부위와 신경을 살펴봐요',
     camera: { dist: narrow ? 13 : 9.5, theta: -0.15, phi: 1.3, min: 5, max: 20, target: [0, 0.8, 0] },
     autoRotate: 0.15,
-    levels: [1, 2, 3],
+    levels: [],
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
       const V = THREE.Vector3, V3 = (x, y, z) => new V(x, y, z || 0);

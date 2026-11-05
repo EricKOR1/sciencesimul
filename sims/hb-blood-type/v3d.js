@@ -12,7 +12,7 @@
     hint: '혈액형과 혈청을 골라 ▶ 섞기 → 응집을 눌러 봐요',
     camera: { dist: narrow ? 12.5 : 10, theta: 0.4, phi: 1.15, min: 5, max: 20 },
     autoRotate: 0.1,
-    levels: [0, 1],
+    levels: [],
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V = THREE.Vector3, V3 = (x, y, z) => new V(x, y, z || 0);

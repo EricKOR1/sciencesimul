@@ -48,6 +48,7 @@
       .stage-toolbar .spacer { display: none; }
       .stage-toolbar .segmented button { padding: 5px 8px; font-size: 13.5px; }
     }
+    body:not(.v3-mode) .v3-only { display: none; }
   </style>
 </head>
 <body class="sim-page" data-subject="bio">
@@ -122,7 +123,7 @@
         </div>
         <div class="control" data-show="lock">
           <div class="control-head"><span>🔑 효소와 기질</span></div>
-          <p class="ctrl-note" style="margin:0">기질 3개 중 하나를 골라 효소의 <b>활성 부위</b>에 끌어다 대 봐요. 눌러서 고를 수도 있어요.</p>
+          <p class="ctrl-note" style="margin:0"><span data-v3="2d">기질 3개 중 하나를 골라 효소의 <b>활성 부위</b>에 끌어다 대 봐요. 눌러서 고를 수도 있어요.</span><span class="v3-only">화면 아래 <b>기질 ① · ② · ③</b> 단추를 눌러 효소의 <b>활성 부위</b>에 대 봐요.</span></p>
         </div>
         <div class="control" data-show="lock:heat">
           <div class="control-head"><span>🌡 온도</span><output id="oLT">37 °C</output></div>

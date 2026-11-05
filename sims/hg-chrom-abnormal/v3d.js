@@ -17,7 +17,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: narrow ? 13 : 11.5, theta: 0.3, phi: 1.38, target: [0, -0.4, 0], min: 6, max: 22 },
     autoRotate: 0,
-    levels: [0, 1, 2],   // 4단계(산모 나이 · 발생 빈도 그래프)는 2D 화면에서
+    levels: [0],   // 감수 분열 단계만 3D. 수정 · 핵형 카드 · 염색체 편집 · 빈도 그래프는 캔버스에서 해요
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
       const V = THREE.Vector3;
@@ -158,12 +158,11 @@
         cells.forEach((c, i) => {
           gAnch[i].position.set(c.side * 2.3, 0, c.s * 1.6);
           const nn = gCount[i];
-          gLab[i].show(st === 3); gLab[i].set(nn === 1 ? '21번 1개 (n)' : nn === 2 ? '21번 2개 (n + 1)' : '21번 0개 (n − 1)');
+          gLab[i].show(st === 3); gLab[i].set(nn === 1 ? '21번 1개 · 23개 (n)' : nn === 2 ? '21번 2개 · 24개 (n + 1)' : '21번 0개 · 22개 (n − 1)');
         });
       }
 
       /* ---------- 컨트롤 ---------- */
-      const g1 = grab(() => controls.segment('보기', [{ value: 'mei', label: '수 이상 (감수 분열)' }, { value: 'struct', label: '구조 이상' }], scene, (v) => setScene(v)));
       const KIND2D = { normal: 'normal', nondis: 'ndj1', nondis2: 'ndj2' };
       const g2 = grab(() => controls.segment('감수 분열', [{ value: 'normal', label: '정상' }, { value: 'nondis', label: '1분열 비분리' }, { value: 'nondis2', label: '2분열 비분리' }], meiKind, (v) => { plMei.pause(); plMei.set(0); setMei(v); const L = ctx.lesson(); if (L && L.meKind && L.S.mode === 'meiosis') L.meKind(KIND2D[v]); }));
       const g3 = grab(() => controls.segment('유형', [{ value: 'del', label: '결실' }, { value: 'dup', label: '중복' }, { value: 'inv', label: '역위' }, { value: 'tra', label: '전좌' }], kind, (v) => { setKind(v); plSt.pause(); plSt.set(0); }));
@@ -182,14 +181,13 @@
         scene = v; stG.visible = v === 'struct'; meiG.visible = v === 'mei';
         g2.els.forEach((e) => { e.style.display = v === 'mei' ? '' : 'none'; }); g3.els.forEach((e) => { e.style.display = v === 'struct' ? '' : 'none'; });
         g4.els.forEach((e) => { e.style.display = v === 'mei' ? '' : 'none'; }); g5.els.forEach((e) => { e.style.display = v === 'struct' ? '' : 'none'; });
-        g1.r.set(v);
         if (v === 'struct') { showSt(true); textSt(); orbit.dist = narrow ? 14 : 11.5; orbit.phi = 1.38; orbit.ty = -0.4; t = 0; setKind(kind); }
         else { showSt(false); gLab.forEach((l) => l.show(false)); orbit.dist = narrow ? 11 : 8.8; orbit.phi = 0.95; orbit.ty = 0; setMei(meiKind); }
       }
       setKind('del'); setMei('normal'); setScene('mei');
 
       /* 2D 상태를 따라가요: 화면(수 이상 · 구조 이상), 감수 분열 종류와 단계, 편집한 구조 이상의 유형 */
-      let lastSim = null, lastMe = '', lastKindSt = null;
+      let lastSim = null, lastMe = '', lastKindSt = null, follow = false;
       const MEKIND = { normal: 'normal', ndj1: 'nondis', ndj2: 'nondis2' }, MESTAGE = [0, 2.6, 3.8, 5.0, 8.0];
       function poll() {
         const L = ctx.lesson(); if (!L || !L.S) return;
@@ -198,7 +196,11 @@
         if (sm === 'meiosis' && L.me) {
           const k = MEKIND[L.me.kind], key = L.me.kind + ':' + L.me.stage;
           if (k && k !== meiKind) { setMei(k); g2.r.set(k); lastMe = ''; }
-          if (key !== lastMe) { lastMe = key; if (!plMei.playing) plMei.set(MESTAGE[L.me.stage] / 15); }
+          if (key !== lastMe) {      // 2D의 [▶ 끝까지 실행] · [⏭ 한 단계씩]을 따라 3D도 그 단계로 가요
+            lastMe = key; plMei.set(MESTAGE[L.me.stage] / 15);
+            follow = !!(L.me.auto && L.me.stage < 4); if (follow) plMei.play(); else plMei.pause();
+          }
+          if (follow && (!plMei.playing || plMei.p >= MESTAGE[Math.min(4, L.me.stage + 1)] / 15)) { if (plMei.playing) { plMei.pause(); plMei.set(MESTAGE[Math.min(4, L.me.stage + 1)] / 15); } follow = false; }
         }
         if (sm === 'struct' && L.stInfo) {
           const kd = (L.stInfo() || {}).kind;

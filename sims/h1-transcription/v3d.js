@@ -87,10 +87,23 @@
         const made = Math.max(0, Math.min(N, Math.floor(p + 1.2)));
         lM.show(made >= 2); lM.obj = [xo(Math.max(0, Math.min(N - 1, p - 3))) + 0.0, 2.9, 0.4];
         lDir.show(true); lT.show(names); lC.show(names); lDNA.show(false);
-        info(p < 0.5 ? '<b>전사 시작</b>: RNA 중합효소가 DNA에 붙어 이중 나선을 풀어요.' : p < N - 1.5 ? '<b>mRNA 합성</b>: 주형 가닥의 염기와 짝이 맞는 RNA 염기를 이어요. (A→U, T→A, G→C, C→G)' : '<b>전사 끝</b>: mRNA가 떨어져 나가 핵 밖으로 나가고, DNA는 다시 이중 나선이 돼요.');
+        info(msgT > 0 ? msg : nextNote ? nextNote : p < 0.5 ? '<b>전사 시작</b>: RNA 중합효소가 DNA에 붙어 이중 나선을 풀어요.' : p < N - 1.5 ? '<b>mRNA 합성</b>: 주형 가닥의 염기와 짝이 맞는 RNA 염기를 이어요. (A→U, T→A, G→C, C→G)' : '<b>전사 끝</b>: mRNA가 떨어져 나가 핵 밖으로 나가고, DNA는 다시 이중 나선이 돼요.');
       }
       const bN = controls.button('이름표 ✓', () => { names = !names; bN.classList.toggle('on', names); bN.textContent = '이름표 ' + (names ? '✓' : '✕'); paint(); }); bN.classList.add('on');
       controls.text('<span style="color:#6fd36b">●A</span> <span style="color:#f0556a">●T</span> <span style="color:#ff8a5c">●U(RNA)</span> <span style="color:#ffd34d">●G</span> <span style="color:#4aa3ff">●C</span>');
+      // RNA 염기 단추: 2D의 염기 놓기와 같아요 (주형 가닥의 다음 염기와 짝이 맞는 RNA 염기를 골라요)
+      let msg = '', msgT = 0, nextNote = '';
+      const bTxt = controls.text('<b>RNA 염기</b>');
+      const bBtns = ['A', 'U', 'G', 'C'].map((b) => {
+        const btn = controls.button(b, () => {
+          const L = window.__sim, T = L && L.S && L.S.tr; if (!T || !L.trAttempt) return;
+          if (T.ph !== 'synth') { msg = T.ph === 'idle' ? '먼저 <b>▶ 전사 시작</b>을 눌러 DNA를 풀어요.' : T.ph === 'opening' ? 'DNA가 다 풀릴 때까지 잠깐 기다려요.' : '전사가 끝났어요. <b>↺ 다시 하기</b>로 한 번 더 해 봐요.'; msgT = 2.5; return; }
+          const k0 = T.mr.length, tb = T.tmpl[k0]; L.trAttempt(b, 0, 0);
+          msg = T.mr.length > k0 ? '주형 <b>' + tb + '</b> – RNA <b>' + b + '</b> 짝이 맞아요!' : 'RNA 염기 <b>' + b + '</b>는 주형 염기 <b>' + tb + '</b>와 짝이 맞지 않아요. 다시 골라 봐요.'; msgT = 2.2;
+        });
+        btn.style.color = '#' + COL[b].toString(16).padStart(6, '0'); btn.style.minWidth = '44px'; return btn;
+      });
+      const showBases = (on) => { [bTxt].concat(bBtns).forEach((e) => { e.style.display = on ? '' : 'none'; }); };
       const pl = controls.player({
         duration: 14, loop: true, autoplay: false, label: '전사',
         phases: [[0, 'DNA가 풀려요'], [0.2, 'mRNA 합성'], [0.8, 'mRNA가 떨어져 나가요']],
@@ -102,6 +115,13 @@
           const L = window.__sim, S = L && L.S, T = S && S.tr;
           const mirror = !!(T && (S.mode === 'tr' || S.mode === 'cells'));
           const want = mirror ? T.n : 12; if (want !== lastN) setSeq(want);
+          if (msgT > 0) msgT -= dt;
+          showBases(!!(T && S.mode === 'tr' && T.ph === 'synth'));
+          nextNote = '';
+          if (T && S.mode === 'tr' && !pl.playing) {
+            if (T.ph === 'idle') nextNote = '<b>▶ 전사 시작</b>을 누르면 RNA 중합효소가 DNA 이중 나선을 풀어요.';
+            else if (T.ph === 'synth') nextNote = '<b>mRNA 합성</b>: 주형 가닥 ' + (T.mr.length + 1) + '번째 염기 <b>' + T.tmpl[T.mr.length] + '</b>와 짝이 맞는 <b>RNA 염기</b>를 아래 단추에서 골라요. (' + T.mr.length + ' / ' + T.n + ')';
+          }
           if (demoP > 0 || pl.playing) { /* ▶ 재생: p는 진행 막대가 정해요 */ }
           else if (mirror) {
             // 2D 상태를 그대로: 풀리기 → 염기 하나씩 → 떨어져 나가기

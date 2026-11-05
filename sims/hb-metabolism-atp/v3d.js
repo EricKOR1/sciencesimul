@@ -16,10 +16,10 @@
 
   const v3 = window.SciSim3D.attach({
     title: '물질대사와 ATP 3D',
-    hint: '반응 실행 · 운동 강도 · 세포호흡/활동 단추는 아래 2D 제어판과 같이 움직여요 · 드래그: 돌리기',
+    hint: '조작판의 단추와 슬라이더가 모형을 움직여요 · 드래그: 돌리기',
     camera: { dist: window.innerWidth < 600 ? 19 : 12.5, theta: 0.0, phi: 1.2, min: 6, max: 30 },
     autoRotate: 0,
-    levels: [0, 1, 2],
+    levels: [1, 2],
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.45, metalness: 0.03 }, o || {}));

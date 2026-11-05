@@ -8,10 +8,10 @@
 
   window.SciSim3D.attach({
     title: '사람 몸의 기관계 3D',
-    hint: '기관계를 골라 보고 운동 강도를 바꿔 봐요 (2D와 같은 값)',
+    hint: '기관계를 골라 보고 운동 강도를 바꿔 봐요',
     camera: { dist: narrow ? 15 : 12.5, theta: 0.35, phi: 1.4, min: 6, max: 22, target: [0, 0.6, 0] },
     autoRotate: 0.12,
-    levels: [0, 1],
+    levels: [],   // 모든 단계에 캔버스 조작이 필요해요(측정표 ▲▼ · 산소 운반 표 읽기 · 연결선 잇기 · 사례 글 읽기). 그래서 2D로 해요
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V = THREE.Vector3, V3 = (x, y, z) => new V(x, y, z || 0);

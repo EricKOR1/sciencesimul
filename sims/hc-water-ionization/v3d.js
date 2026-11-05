@@ -79,10 +79,10 @@
   const phone = window.matchMedia && window.matchMedia('(max-width: 599px)').matches;
   window.SciSim3D.attach({
     title: '물의 자동 이온화 3D',
-    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 장면과 산·염기 넣기는 2D와 똑같이 이어져요',
+    hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: phone ? 14.5 : 13.5, theta: 0.3, phi: 1.2, min: 5, max: 24, target: [0, 0.6, 0] },
     autoRotate: 0.08,
-    levels: [1, 2],
+    levels: [1, 2],          // 0단계(전구 회로·측정기)와 3단계(용액 카드·시소)는 2D 화면에서 해요
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const L = makeLib(THREE), V = L.V;

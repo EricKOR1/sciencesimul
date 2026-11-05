@@ -151,7 +151,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHONE ? 15.5 : 12.6, theta: 0.5, phi: 1.38, fov: 40, min: 5, max: 26, target: [0, PHONE ? 1.5 : 0, 0] },
     autoRotate: 0.25,
-    levels: [2],   // 1 · 2단계(샤가프 자료 · X선 회절 사진)와 4단계(발표 자료)는 2D 화면에서, 염기쌍 맞추기 · 이중 나선 단계에서 3D로 시작
+    levels: [],   // 모든 단계가 캔버스 조작(표 · 눈금자 · 염기 블록 끌기 · 카드 배치)이 필요해서 2D로 해요
     build(ctx) {
       const { THREE, root, label, info, controls, orbit, camera } = ctx;
       const H = makeHelix(THREE, root, { N: 20, seq: SEQ20, a: 0.5, rings: true, strandCols: SC, arrows: true, arrowCols: [0x93c5fd, 0xc4b5fd] });

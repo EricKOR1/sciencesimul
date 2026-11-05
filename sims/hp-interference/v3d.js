@@ -47,7 +47,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 값은 옆 조작판에서 바꿔요',
     camera: { dist: 13 * KDX, theta: 0.0, phi: 0.95, min: 4, max: 30, target: [5, 0, 0] },
     autoRotate: 0,
-    levels: [0, 1, 2, 3],
+    levels: [3],   // 1~3단계는 캔버스에서 점·P·표지를 끌거나 총알 모형(2D)을 봐야 해서 2D, 4단계(간섭 기술)는 3D
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
       const { V3, M, tube } = tools(THREE);
@@ -136,7 +136,7 @@
         const ov = Math.min(1, Math.max(0, 1 - Math.abs((P.XB - P.V * t) - (P.XA + P.V * t)) / (3 * P.SIG)));
         lOv.show(!p.draw && ov > 0.15); lOv.set(cfg === 'same' ? '겹친 곳: 변위가 더해져 커져요 (보강)' : '겹친 곳: 변위가 더해져 작아져요 (상쇄)'); lOv.el.style.background = cfg === 'same' ? '#14a058' : '#e2464b';
         const ya = pa(2.0), yb = pb(2.0);
-        info('<b>🌊 줄 위의 두 펄스</b> · 시간 ' + t.toFixed(1) + ' 초 · 오른쪽 펄스: ' + (cfg === 'same' ? '같은 방향' : '반대 방향') + '<br>' + (p.draw ? '파란 펄스 + 빨간 펄스 = ? (옆 2D 화면에서 점 5개를 합친 높이로 끌어 놓아요)' : '가운데(2.0 m)의 높이: 파란 펄스 ' + ya.toFixed(1) + ' cm + 빨간 펄스 ' + yb.toFixed(1) + ' cm = <b>' + (ya + yb).toFixed(1) + ' cm</b>') + '<br>두 펄스는 겹쳐도 서로 부딪치지 않고 각자의 모양을 그대로 지나가요 (중첩 원리).');
+        info('<b>🌊 줄 위의 두 펄스</b> · 시간 ' + t.toFixed(1) + ' 초 · 오른쪽 펄스: ' + (cfg === 'same' ? '같은 방향' : '반대 방향') + '<br>' + (p.draw ? '파란 펄스 + 빨간 펄스 = ? (점 5개를 합친 높이로 끌어 놓아요)' : '가운데(2.0 m)의 높이: 파란 펄스 ' + ya.toFixed(1) + ' cm + 빨간 펄스 ' + yb.toFixed(1) + ' cm = <b>' + (ya + yb).toFixed(1) + ' cm</b>') + '<br>두 펄스는 겹쳐도 서로 부딪치지 않고 각자의 모양을 그대로 지나가요 (중첩 원리).');
       }
       /* ================= 🔦 이중 슬릿 · 📏 간섭 조건 (빛은 +x 방향, 1 m = 2.2칸, 스크린 ±30 mm = ±3칸) ================= */
       const ZU = 2.2, MMU = 3 / 30;
@@ -215,7 +215,7 @@
           const r = Math.abs(A.pathRatio(sm));
           txt = '<b>📏 경로차와 밝기</b> · 레이저 ' + S.sl.lamT + ' nm · d ' + S.sl.dT.toFixed(2) + ' mm · L ' + S.sl.LT.toFixed(1) + ' m<br>P의 위치 ' + (S.cd.yP >= 0 ? '+' : '−') + Math.abs(S.cd.yP).toFixed(1) + ' mm · 경로차 = <b>' + r.toFixed(2) + ' λ</b> → <b>' + A.brightWord(r) + '</b><br>경로차가 λ의 정수배이면 밝고(보강), 0.5λ · 1.5λ …이면 어두워요(상쇄).';
         } else if (S.cs === 'unk') {
-          txt = '<b>📏 미지의 레이저 파장 구하기</b> · d = 0.20 mm · L = 3.0 m<br>표지 A·B를 밝은 줄에 맞춰 무늬 간격 Δx를 재고, 파장 λ = d·Δx / L 로 구해요. (파장은 2D 화면에서 측정해요)<br>A–B 거리 ' + Math.abs(S.cd.B - S.cd.A).toFixed(1) + ' mm';
+          txt = '<b>📏 미지의 레이저 파장 구하기</b> · d = 0.20 mm · L = 3.0 m<br>표지 A·B를 밝은 줄에 맞춰 무늬 간격 Δx를 재고, 파장 λ = d·Δx / L 로 구해요.<br>A–B 거리 ' + Math.abs(S.cd.B - S.cd.A).toFixed(1) + ' mm';
         } else {
           txt = '<b>📏 무늬 간격에 영향을 주는 요인</b> · 지금 조건: ' + S.sl.lamT + ' nm · ' + S.sl.dT.toFixed(2) + ' mm · ' + S.sl.LT.toFixed(1) + ' m<br>밝은 줄 사이 간격 <b>Δx = λL/d = ' + (sm.lam * sm.L / sm.d * 1e-3).toFixed(1) + ' mm</b><br>λ가 크고 L이 클수록, d가 작을수록 무늬 간격이 넓어져요. 하나씩만 바꾸어 비교해요.';
         }
@@ -267,7 +267,7 @@
         waveTube(wC[0], (u) => 0.36 * Math.cos(ky * u - ph0), X0, X1, 2.6, 0, 0.045); waveTube(wC[1], (u) => 0.36 * Math.cos(ky * u - ph0 + phi), X0, X1, 1.2, 0, 0.045); waveTube(wC[2], (u) => 0.36 * (Math.cos(ky * u - ph0) + Math.cos(ky * u - ph0 + phi)) / 2, X0, X1, -0.2, 0, 0.07);
         lC.w1.obj = [X0 + 1.4, 3.35, 0]; lC.w2.obj = [X0 + 1.4, 1.95, 0]; lC.w3.obj = [X0 + 1.4, 0.55, 0];
         const msg = white ? (th === 0 ? '코팅이 없으면 모든 색이 같은 비율로 반사돼요.' : '코팅 두께에 따라 줄어드는 색이 달라서, 반사광은 약간 푸르거나 보랏빛으로 보여요.') : (rPct <= 2 ? '두 반사파가 반대 위상으로 만나 <b>상쇄</b>돼요! 막 속 파장(약 400 nm)의 1/4쯤 되는 두께예요.' : '두 반사파의 위상 차이가 ' + Math.round(((phi * 180 / Math.PI) % 360 + 360) % 360) + '°예요. 180°에 가까울수록 상쇄돼요.');
-        info('<b>🔍 무반사 코팅</b> · 두께 <b>' + Math.round(th) + ' nm</b> · ' + (white ? '흰빛' : '초록빛 550 nm') + ' · 반사광 <b>' + Math.round(rPct) + ' %</b><br>' + msg + '<br><span style="opacity:.8">막을 두껍게 그렸어요 (실제는 수십~백 nm). 색 그래프는 2D에서 봐요.</span>');
+        info('<b>🔍 무반사 코팅</b> · 두께 <b>' + Math.round(th) + ' nm</b> · ' + (white ? '흰빛' : '초록빛 550 nm') + ' · 반사광 <b>' + Math.round(rPct) + ' %</b><br>' + msg + '<br><span style="opacity:.8">막을 두껍게 그렸어요 (실제는 수십~백 nm).</span>');
       }
       /* --- 🫧 비눗방울 (세워 둔 비눗물 막) --- */
       const FWs = 2.8, FHs = 4.0;
@@ -289,7 +289,7 @@
         const c = specRGB(A, (l) => A.soapR(pt, l)); swatch.material.color.copy(rgbCol(c));
         lB.probe.set('탐침 ' + Math.round(pt) + ' nm'); lB.probe.off = [0, 0.4, 0]; lB.sw.off = [0, -0.55, 0]; lB.bot.set('아래 ' + Math.round(tb) + ' nm → 두꺼워요');
         const msg = pt < 25 ? '아주 얇은 곳은 위·아래 반사광이 서로 상쇄돼서 검게 보여요.' : '두께가 달라지면 보강되는 빛의 파장(색)이 달라져서 색 띠가 생겨요. 막이 흘러내리면 띠도 움직여요.';
-        info('<b>🫧 세워 둔 비눗물 막</b> · 위쪽은 얇고 아래쪽은 두꺼워요<br>탐침 위치의 두께 <b>' + Math.round(pt) + ' nm</b> · 막 아래쪽 두께 ' + Math.round(tb) + ' nm<br>' + msg + '<br><span style="opacity:.8">비눗방울과 기름막의 무지개색도 같은 원리예요. 탐침은 ▶ 재생이나 2D에서 움직여요.</span>');
+        info('<b>🫧 세워 둔 비눗물 막</b> · 위쪽은 얇고 아래쪽은 두꺼워요<br>탐침 위치의 두께 <b>' + Math.round(pt) + ' nm</b> · 막 아래쪽 두께 ' + Math.round(tb) + ' nm<br>' + msg + '<br><span style="opacity:.8">비눗방울과 기름막의 무지개색도 같은 원리예요. ▶ 재생을 누르면 탐침이 위아래로 움직여요.</span>');
       }
       /* --- 🎧 소음 제거 헤드폰 --- */
       const wH = [waveMesh(0xe2464b, gH), waveMesh(0x2f6df6, gH), waveMesh(0x14a058, gH)];

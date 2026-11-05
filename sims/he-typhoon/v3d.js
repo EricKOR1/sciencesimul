@@ -13,7 +13,7 @@
   window.SciSim3D.attach({
     title: '태풍의 구조 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    levels: [1, 3],              // 0단계(발생 조건)·2단계(이동·소멸)는 2D 지도에서 해요
+    levels: [3],                 // 영향권 날씨(위험·안전 반원) 단계만 3D예요
     camera: { dist: PHONE ? 19 : 15, theta: 0.55, phi: 1.08, min: 6, max: 30, target: [0, 1.3, 0] },
     autoRotate: 0,
     build(ctx) {
@@ -95,7 +95,7 @@
       }
       let seaH = 0;
       function txt() {
-        if (ctx.level === 3) info('<b>위험 반원</b>(진행 방향 오른쪽): 풍속 = 회전 풍속 + 이동 속도 = 40 + 8 = <b>48 m/s</b><br><b>안전 반원</b>(왼쪽): 40 − 8 = <b>32 m/s</b> (이동 속도 30 km/h ≈ 8 m/s). ▶ 로 A·B 지점의 풍속을 비교해 보세요.');
+        if (ctx.level === 3) info('<b>위험 반원</b>(진행 방향 오른쪽): 풍속 = 회전 풍속 + 이동 속도 = 40 + 8 = <b>48 m/s</b><br><b>안전 반원</b>(왼쪽): 40 − 8 = <b>32 m/s</b> (이동 속도 30 km/h ≈ 8 m/s). ▶ 로 A·B 지점의 풍속과 풍향(화살표)을 비교해 보세요.');
         else info('중심 기압 <b>' + pres + ' hPa</b> (주변 1010 hPa) → 해수면 상승 약 <b>' + (1010 - pres) + ' cm</b><br><b>눈</b>(하강 기류, 바람 약함) – <b>눈벽</b>(풍속·강수 최대 40 m/s) – 나선 구름 띠. ▶ 로 태풍이 관측점 위를 지나갈 때를 봐요.');
       }
       { const l = L2(); if (l && l.S && typeof l.S.pres === 'number') pres = clamp(l.S.pres, 930, 1010); }
@@ -121,9 +121,15 @@
         const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1.0, 8), obsStd(col)); pole.position.y = 0.5; o.g.add(pole);
         const ball = new THREE.Mesh(new THREE.SphereGeometry(0.17, 16, 12), obsStd(col)); ball.position.y = 1.05; o.g.add(ball);
         const ln = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.02, 2 * 10 * ZU), new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.5 })); ln.position.set(o.x, 0.12, 0); root.add(ln); o.ln = ln;
-        o.lab = label('', o.g, { size: 12, color: 'rgba(30,20,70,.92)', offset: [0, 0.75, 0] });
+        o.lab = label('', o.g, { size: 12, color: 'rgba(30,20,70,.92)', offset: [0, 2.3, 0] });
+        /* 풍향 화살표: 바람이 불어 가는 쪽을 가리켜요 (북 = −z, 동 = +x) */
+        o.arr = new THREE.Group(); o.arr.position.y = 1.45; o.g.add(o.arr);
+        { const am = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: col, emissiveIntensity: 0.6 }), sh = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.7, 10), am), hd = new THREE.Mesh(new THREE.ConeGeometry(0.15, 0.32, 14), am);
+          sh.rotation.x = Math.PI / 2; hd.rotation.x = Math.PI / 2; hd.position.z = 0.5; o.arr.add(sh, hd); }
       });
       const rOf = (o, tt) => Math.hypot(o.x, ZU * tt) * KMU;
+      const CMP = ['북', '북북동', '북동', '동북동', '동', '동남동', '남동', '남남동', '남', '남남서', '남서', '서남서', '서', '서북서', '북서', '북북서'];
+      const dirNow = (o, tt) => { const l = L2(); return l && l.dirOf && o.id !== 'O' ? l.dirOf(o.id, tt) : null; };
       const spdNow = (o, tt) => { const l = L2(); if (o.id !== 'O' && l && l.spdOf) return l.spdOf(o.id, tt); const v = vRot(rOf(o, tt)); return o.id === 'A' ? v + 8 : o.id === 'B' ? v - 8 : v; };
       let syncing = false, tNow = -10;
       function place(tt) {
@@ -132,7 +138,10 @@
           const on = o.lv === lv; o.g.visible = on; o.ln.visible = on; o.lab.show(on);
           o.g.position.set(o.x, 0.1, ZU * tt);
           const r = rOf(o, tt), v = spdNow(o, tt), zone = r < R_E ? '눈' : r <= 150 ? '눈벽 부근' : '구름 띠';
-          o.lab.set(o.name + ' · ' + (tt > 0 ? '+' : tt < 0 ? '−' : '') + Math.abs(Math.round(tt * 10) / 10) + '시간<br>' + (lv === 3 ? '' : '중심까지 ' + Math.round(r) + ' km · ') + '풍속 ' + Math.round(v) + ' m/s' + (lv === 3 ? '' : ' (' + zone + ')'));
+          const d = dirNow(o, tt); o.arr.visible = on && d != null;
+          if (d != null) o.arr.rotation.y = Math.atan2(Math.sin((d + 180) * Math.PI / 180), -Math.cos((d + 180) * Math.PI / 180));
+          const dTxt = d == null ? '' : '<br>풍향 ' + CMP[Math.round((((d % 360) + 360) % 360) / 22.5) % 16] + '풍 (' + Math.round((((d % 360) + 360) % 360)) + '°)';
+          o.lab.set(o.name + ' · ' + (tt > 0 ? '+' : tt < 0 ? '−' : '') + Math.abs(Math.round(tt * 10) / 10) + '시간<br>' + (lv === 3 ? '' : '중심까지 ' + Math.round(r) + ' km · ') + '풍속 ' + Math.round(v) + ' m/s' + (lv === 3 ? '' : ' (' + zone + ')') + dTxt);
         });
       }
       const pl = controls.player({

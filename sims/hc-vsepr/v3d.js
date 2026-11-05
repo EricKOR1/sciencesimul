@@ -31,10 +31,10 @@
   const phone = window.matchMedia && window.matchMedia('(max-width: 599px)').matches;
   window.SciSim3D.attach({
     title: '분자 모양 3D 모형',
-    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 풍선 수와 분자 고르기는 2D와 똑같이 이어져요',
+    hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: phone ? 7.4 : 6.5, theta: 0.7, phi: 1.2, min: 3, max: 14 },
     autoRotate: 0.25,
-    levels: [0, 1, 2],
+    levels: [0, 2],          // 1단계(영역 누르기)와 3단계(공 끌어 조립하기)는 2D 화면을 직접 눌러요
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const clamp = (x, a, b) => Math.max(a, Math.min(b, x)), sm = (x) => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
@@ -49,7 +49,7 @@
         m.position.copy(va).add(vb).multiplyScalar(0.5); m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize()); return m;
       }
       function lobe(dir) { // 비공유 전자쌍: 반투명 물방울
-        const m = new THREE.Mesh(new THREE.SphereGeometry(0.42, 24, 16), new THREE.MeshStandardMaterial({ color: 0xffd34d, transparent: true, opacity: 0.45, roughness: 0.3, depthWrite: false }));
+        const m = new THREE.Mesh(new THREE.SphereGeometry(0.42, 24, 16), new THREE.MeshStandardMaterial({ color: 0x3b82f6, transparent: true, opacity: 0.45, roughness: 0.3, depthWrite: false }));
         m.scale.set(0.8, 1.5, 0.8);
         const v = new THREE.Vector3(...dir).normalize();
         m.position.copy(v.clone().multiplyScalar(0.95)); m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), v);
@@ -97,6 +97,29 @@
         if (prot && n >= 2) { const ar = arc(dirs[0].toArray(), dirs[1].toArray()); g.add(ar.line); const ang = Math.round(Math.acos(clamp(dirs[0].dot(dirs[1]), -1, 1)) * 1800 / Math.PI) / 10; angLab.obj = ar.mid.toArray(); angLab.set(ang + '°'); angLab.show(true); } else angLab.show(false);
       }
 
+      /* 2D와 같은 풍선 무리(B.cl)를 그대로 보여 줘요: 🎈 흔들기 · 정렬이 3D에서도 보여요 */
+      let liveM = null, liveArc = null, liveArcKey = '';
+      function liveBalloons(cl, n, prot) {
+        if (!liveM || liveM[0].parent !== g) {
+          clearG(); atomLabs.forEach((x) => x.show(false)); liveArc = null; liveArcKey = '';
+          g.add(sphere(0.22, 0x9aa6bf, 1));
+          liveM = BAL_COL.map((c) => { const m = new THREE.Mesh(new THREE.SphereGeometry(0.62, 28, 18), new THREE.MeshStandardMaterial({ color: c, transparent: true, opacity: 0.55, roughness: 0.25, depthWrite: false })); g.add(m); return m; });
+        }
+        const up = new THREE.Vector3(0, 1, 0);
+        liveM.forEach((m, i) => {
+          const sz = cl.sz[i] || 0; m.visible = i < 4 && sz > 0.02;
+          if (!m.visible) return;
+          const v = new THREE.Vector3(...cl.dirs[i]).normalize();
+          m.scale.set(0.82 * sz, 1.45 * sz, 0.82 * sz); m.position.copy(v.clone().multiplyScalar(1.15 * sz)); m.quaternion.setFromUnitVectors(up, v);
+        });
+        const showA = prot && cl.settled && n >= 2, ak = showA ? n + '|' + cl.dirs.slice(0, 2).map((d) => d.map((x) => Math.round(x * 20)).join(',')).join('|') : '';
+        if (ak !== liveArcKey) {
+          liveArcKey = ak; if (liveArc) { g.remove(liveArc); liveArc = null; }
+          if (showA) { const ar = arc(cl.dirs[0], cl.dirs[1]); liveArc = ar.line; g.add(liveArc); angLab.obj = ar.mid.toArray(); angLab.set(IDEALA[n] + '°'); }
+        }
+        angLab.show(showA);
+      }
+
       /* ▶ 재생기 */
       let own = false, sig = '', pB = 0, pL = 0, kind = '', bKey = '';
       const rowOf = () => { const r = document.querySelectorAll('.v3-player'); return r[r.length - 1]; };
@@ -116,15 +139,17 @@
           const sg = [sc, Z.B.n, Z.B.prot, Z.TT.mol, Math.round(Z.LP.sp.target === undefined ? Z.LP.k : Z.LP.k)].join('|');
           if (sg !== sig) { sig = sg; if (own) { own = false; plB.pause(); plB.set(0); plL.pause(); plL.set(0); } }
           if (k0 === 'bal') {
-            const n = Z.B.n, f = own === 'b' ? fB(pB) : 1;
-            const key = ['b', n, Z.B.prot, Math.round(f * 40)].join('|'); if (key !== bKey) { bKey = key; buildBalloons(n, f, Z.B.prot || own === 'b'); }
-            info('<b>전자 영역 ' + n + '개</b> (풍선 ' + n + '개) → <b>' + SHAPEN[n] + '</b><br>풍선(전자쌍)은 서로 밀어내 가장 멀어져요: 결합각 <b>' + IDEALA[n] + '°</b>' + (Z.B.prot || own === 'b' ? '' : '<br>2D의 📐 각도 재기를 누르면 각도를 보여 줘요.') + (n === 4 ? '<br>평면에 그리면 90°처럼 보이지만, 입체에서는 네 방향이 모두 109.5°예요.' : ''));
+            const n = Z.B.n, cl = Z.B.cl;
+            if (own === 'b') { const f = fB(pB), key = ['b', n, Math.round(f * 40)].join('|'); if (key !== bKey) { bKey = key; liveM = null; buildBalloons(n, f, true); } }
+            else { bKey = 'live'; liveBalloons(cl, n, Z.B.prot); }
+            const wait = own !== 'b' && !cl.settled;
+            info('<b>전자 영역 ' + n + '개</b> (풍선 ' + n + '개) → <b>' + SHAPEN[n] + '</b><br>풍선(전자쌍)은 서로 밀어내 가장 멀어져요: 결합각 <b>' + IDEALA[n] + '°</b>' + (wait ? '<br>풍선이 서로 밀어내며 정렬하는 중이에요.' : (Z.B.prot || own === 'b' ? '' : '<br>📐 각도 재기를 켜면 각도를 보여 줘요.')) + (n === 4 ? '<br>평면에 그리면 90°처럼 보이지만, 입체에서는 네 방향이 모두 109.5°예요.' : ''));
             return;
           }
           if (k0 === 'lone') {
             const kk = own === 'l' ? (pL < 0.34 ? 0 : pL < 0.67 ? 1 : 2) : clamp(Math.round(Z.LP.sp.value), 0, 2), key = 'l' + kk; if (key !== bKey) { bKey = key; const M = MOLS[['CH4', 'NH3', 'H2O'][kk]]; buildMol(M, true, true); }
             const M = MOLS[['CH4', 'NH3', 'H2O'][kk]], nd = M.bonds.length + M.lp.length;
-            info('<b>' + M.f + '</b> · ' + M.shape + '<br>전자 영역 ' + nd + '개 (결합 ' + M.bonds.length + ' · 비공유 전자쌍 ' + M.lp.length + '쌍) · 결합각 <b>' + M.ang + '°</b><br>CH₄ 109.5° → NH₃ 107° → H₂O 104.5°' + (M.lp.length ? '<br><span style="color:#ffd34d">노란 구름</span> = 비공유 전자쌍: 결합 전자쌍을 더 세게 밀어 결합각이 작아져요.' : ''));
+            info('<b>' + M.f + '</b> · ' + M.shape + '<br>전자 영역 ' + nd + '개 (결합 ' + M.bonds.length + ' · 비공유 전자쌍 ' + M.lp.length + '쌍) · 결합각 <b>' + M.ang + '°</b><br>CH₄ 109.5° → NH₃ 107° → H₂O 104.5°' + (M.lp.length ? '<br><span style="color:#60a5fa">파란 구름</span> = 비공유 전자쌍: 결합 전자쌍을 더 세게 밀어 결합각이 작아져요.' : ''));
             return;
           }
           // 구조 표 (BeCl₂ · BF₃ · CH₄ · CO₂ · HCN · CCl₄)

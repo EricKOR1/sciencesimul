@@ -1,6 +1,6 @@
 /* hg-lac-operon · 3D 젖당 오페론
    조절 유전자 · 프로모터 · 작동 부위 · 구조 유전자(lacZ · lacY · lacA)가 한 줄로 늘어선 DNA.
-   젖당이 없으면 억제자이 작동 부위에 붙어 RNA 중합 효소가 못 지나가요.
+   젖당이 없으면 억제자가 작동 부위에 붙어 RNA 중합 효소가 못 지나가요.
    젖당이 있으면 (알로)젖당이 억제자에 붙어 모양이 변해 떨어져 나가고, 전사 → 번역으로 젖당 분해 효소가 만들어져요. */
 (function () {
   'use strict';
@@ -20,7 +20,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: narrow ? 11 : 9.2, theta: 0.22, phi: 1.2, target: narrow ? [-0.5, -1.0, 0] : [-1.0, 0.5, 0], min: 5, max: 22 },
     autoRotate: 0,
-    levels: [0, 1, 2],   // 4단계(돌연변이 · 예측 표 · 트립토판)는 2D 화면에서
+    levels: [1],   // 젖당이 없을 때 단계만 3D. 이름표 붙이기 · 그래프 읽기 · 돌연변이 표는 캔버스에서 해요
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V = THREE.Vector3, M4 = new THREE.Matrix4(), cc = new THREE.Color();
@@ -83,20 +83,23 @@
         lac = v; ph = v ? 'binding' : 'blocked'; pt = 0; progress = 0; bound = 0; repFly = 0;
         lacts.forEach((o, i) => { o.g.visible = v && i < 6; o.state = 'free'; o.slot = -1; o.t = 0; o.g.position.set((Math.random() * 2 - 1) * 3.5, 1.6 + Math.random() * 1.6, (Math.random() * 2 - 1) * 1.2); o.g.userData.a.position.x = -0.18; o.g.userData.b.position.x = 0.18; o.g.userData.a.visible = o.g.userData.b.visible = true; o.g.scale.setScalar(1); });
         if (!v) { repMat.color.setHex(0x7c3aed); rep.position.copy(OP); rep.rotation.set(0, 0, 0); }
-        pol.position.set(PSTART, 0, 0); text();
+        pol.position.set(PSTART, 0, 0); plEls.forEach((e) => { e.style.display = v ? '' : 'none'; }); text();
       }
+      let plEls = [];
       function text() {
-        if (!lac) info('<b>젖당이 없을 때</b> · <b>억제자</b>이 작동 부위에 붙어 RNA 중합 효소가 지나가지 못해요. 구조 유전자가 전사되지 않아요(꺼짐).');
-        else info('<b>젖당이 있을 때</b> · 젖당(알로젖당)이 억제자에 붙으면 억제자이 떨어져 나가요. RNA 중합 효소가 구조 유전자를 전사해 <b>젖당 분해 효소</b>가 만들어져요(켜짐).');
+        if (!lac) info('<b>젖당이 없을 때</b> · <b>억제자</b>가 작동 부위에 붙어 RNA 중합 효소가 지나가지 못해요. 구조 유전자가 전사되지 않아요(꺼짐).<br>오른쪽 <b>▶ 전사 시도</b>를 누르면 RNA 중합 효소가 어디서 막히는지 볼 수 있어요.');
+        else info('<b>젖당이 있을 때</b> · 젖당(알로젖당)이 억제자에 붙으면 억제자가 떨어져 나가요. RNA 중합 효소가 구조 유전자를 전사해 <b>젖당 분해 효소</b>가 만들어져요(켜짐).');
       }
       const seg = controls.segment('상태', [{ value: 'no', label: '젖당 없음' }, { value: 'yes', label: '젖당 있음' }], 'no', (v) => { setLac(v === 'yes'); player.set(0); });
       /* ▶ 젖당이 있을 때 한 과정: 유도자 결합 → 억제자 떨어짐 → 전사 → 젖당 분해 효소 (젖당이 없으면 억제자가 그대로 막고 있어요) */
       const DUR = 14;
+      const ctlEl = document.querySelector('.v3-ctl'), nCtl = ctlEl ? ctlEl.children.length : 0;
       const player = controls.player({
         duration: DUR, loop: true, autoplay: true, label: '젖당 있을 때',
         phases: [[0, '젖당(유도자)이 억제자에 결합'], [2.1 / DUR, '억제자가 떨어져요'], [3.7 / DUR, '전사: mRNA 합성'], [12 / DUR, '젖당 분해 효소 생성']],
         onFrame() {},
       });
+      plEls = ctlEl ? Array.prototype.slice.call(ctlEl.children, nCtl) : [];   // ▶ 재생은 '젖당 있음'일 때만 보여요
       setLac(false);
 
       let lastSim = null;
@@ -111,7 +114,9 @@
           if (lac) { if (TT < prevT - 0.5) { lacts.forEach((o, i) => { if (i < 2) { o.state = 'free'; o.g.position.set((Math.random() * 2 - 1) * 3.5, 1.6 + Math.random() * 1.6, (Math.random() * 2 - 1) * 1.2); } }); } prevT = TT; }
           // 중합 효소 · 억제자
           if (!lac) {
-            pol.position.x = PSTART + 0.3 * (0.5 - 0.5 * Math.cos(t * 2.0));
+            const NLs = window.__sim && window.__sim.NL, att = NLs && NLs.att >= 0 ? NLs.att : -1;   // 2D [▶ 전사 시도]: 출발 → 억제자에 막힘 → 되돌아가요
+            pol.position.x = att >= 0 ? PSTART + 0.75 * (att < 0.42 ? ease(att / 0.42) : att < 0.6 ? 1 - 0.08 * Math.sin((att - 0.42) / 0.18 * Math.PI) : 1 - ease((att - 0.6) / 0.4))
+              : PSTART + 0.3 * (0.5 - 0.5 * Math.cos(t * 2.0));
             rep.position.copy(OP);
             if (enzs.length) enzs.forEach((e) => { e.t += dt; });
           } else {

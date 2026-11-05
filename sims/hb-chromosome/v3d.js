@@ -15,11 +15,11 @@
   ];
 
   window.SciSim3D.attach({
-    title: '염색체와 핵형 3D',
+    title: '염색체의 구조 3D',
     hint: '단계를 눌러 응축 과정을 보세요 · 드래그: 돌리기',
     camera: { dist: narrow ? 13 : 10, theta: 0.3, phi: 1.2, min: 5, max: 22 },
     autoRotate: 0.18,
-    levels: [0, 1, 3],
+    levels: [1],
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
       const V3 = (x, y, z) => new THREE.Vector3(x, y, z || 0);
@@ -126,6 +126,7 @@
       }
       const seg = controls.segment('', STAGES.map((s, i) => ({ label: s.k, value: i })), 0, (i) => { const L = L2(); if (L) { if (i === 4) L.setMode('karyo'); else { L.setMode('struct'); L.S.cond.target = i; L.updateCtl(); } } setStage(i); });
       const subA = [], subB = [], mark = () => document.querySelector('.v3-ctl');
+      { const c0 = mark(); const kb = c0 && c0.children[4]; if (kb && kb.tagName === 'BUTTON') kb.style.display = 'none'; }   // 3D 단계(염색체 구조)에서는 응축 4단계만 보여요 (핵형은 2D 단계)
       let n0 = mark() ? mark().children.length : 0;
       controls.segment('복제', [{ label: '복제 후(X)', value: true }, { label: '복제 전', value: false }], true, (v) => { repl = v; const L = L2(); if (L && L.S.mode === 'struct') { L.S.rep.target = v ? 1 : 0; L.updateCtl(); } refresh(); });
       let n1 = mark() ? mark().children.length : 0;

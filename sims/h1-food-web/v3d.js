@@ -141,6 +141,7 @@
             gFlow.els.forEach((e) => { e.style.display = scene === 'flow' ? '' : 'none'; });
             gNames.els.forEach((e) => { e.style.display = scene === 'pyr' ? 'none' : ''; });
             pyL.forEach((l) => l.lb.show(false)); flL.forEach((l) => l.lb.show(false)); heatLab.show(false);
+            lvLabs.forEach((l) => l.show(scene === 'web'));   // 먹이 단계 이름표(높이 눈금)는 먹이 사슬·그물 장면에서만
           }
           // ---------- 먹이 사슬 · 그물 ----------
           if (scene === 'web') {

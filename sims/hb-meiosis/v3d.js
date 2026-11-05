@@ -41,7 +41,7 @@
     title: '감수 분열 3D (염색체 4개)',
     hint: '슬라이더로 시기를 옮겨 보세요 · 붉은색=어머니, 푸른색=아버지 쪽 염색체',
     camera: { dist: narrow ? 14.5 : 10.5, theta: 0.35, phi: 0.95, min: 6, max: 22 },
-    levels: [1, 2],
+    levels: [2],
     autoRotate: 0.08,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
@@ -189,7 +189,7 @@
           labN.show(ss > 0.3 && ss < 1.8); labN.obj = [0, 2.3, 0]; labN.off = [0, 0, 0];
           const vh = ss < 2.0; labH.show(vh && ss > 1.0); labH.obj = chrs[1].outer; labH.off = [0, 1.45, 0.2];
           const key = Math.round(ss) + nd;
-          if (key !== lastKey) { lastKey = key; const S = STAGES[Math.round(ss)]; info('<b>' + S.n + '</b>: ' + S.t + '<br>' + S.c + (nd && ss > 3.4 ? '<br><span style="color:#fcd34d">염색체 비분리: 상동 염색체가 같은 쪽으로 이동해 생식세포의 염색체 수가 n+1(3개) / n−1(1개)이 돼요.</span>' : '') + (S0 && S0.mode === 'cmp' ? '<br><small>비교표는 2D에서 채워요. 위에서 두 분열을 번갈아 봐요.</small>' : '')); }
+          if (key !== lastKey) { lastKey = key; const S = STAGES[Math.round(ss)]; info('<b>' + S.n + '</b>: ' + S.t + '<br>' + S.c + (nd && ss > 3.4 ? '<br><span style="color:#fcd34d">염색체 비분리: 상동 염색체가 같은 쪽으로 이동해 생식세포의 염색체 수가 n+1(3개) / n−1(1개)이 돼요.</span>' : '') + (S0 && S0.mode === 'cmp' ? '<br><small>위에서 두 분열을 번갈아 봐요.</small>' : '')); }
         },
         sync() {},
       };

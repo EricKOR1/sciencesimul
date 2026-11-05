@@ -47,7 +47,7 @@
   window.SciSim3D.attach({
     host: '.stage-canvas',
     button: wide ? undefined : null,
-    levels: [0],            // 1단계(궤도 모형)에서 3D로 시작해요. 일식 · 월식의 종류와 그림자 궤적(2~4단계)은 2D로 시작하고 3D 단추로 같은 장면을 볼 수 있어요
+    levels: [0],            // 1단계(궤도 모형)만 3D예요. 일식 종류(눈금 그래프) · 그림자 궤적(정보 판 읽기) · 월식(시각 표 읽기)은 2D 화면에서 해요
     title: '3D 달 궤도·교점·식 계절',
     hint: ' ',
     camera: Object.assign({ fov: 45, target: [0, 0, 0], min: 4, max: 40 }, VIEWS.obl),

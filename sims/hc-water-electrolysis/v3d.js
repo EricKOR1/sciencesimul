@@ -79,7 +79,8 @@
   const phone = window.matchMedia && window.matchMedia('(max-width: 599px)').matches;
   window.SciSim3D.attach({
     title: '물의 전기 분해 3D',
-    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 전압·전해질·전원은 2D와 똑같이 이어져요',
+    hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
+    levels: [0, 3],          // 1단계(기체 확인 도구 끌기)와 2단계(그래프 그리기)는 2D 화면에서 해요
     camera: { dist: phone ? 22 : 17, theta: 0.45, phi: 1.2, min: 6, max: 34, target: [0, 3.3, 0] },
     autoRotate: 0,
     build(ctx) {

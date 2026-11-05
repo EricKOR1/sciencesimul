@@ -20,7 +20,7 @@
   window.SciSim3D.attach({
     title: '지구시스템 3D',
     camera: { dist: PHN ? 15 : 14.5, theta: -2.35, phi: 1.2, min: 6, max: 30 },
-    levels: [2],
+    levels: [],
     autoRotate: 0,
     build(ctx) {
       const { THREE, scene, root, label, info, controls, orbit } = ctx;

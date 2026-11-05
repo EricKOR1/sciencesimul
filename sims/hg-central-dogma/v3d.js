@@ -16,7 +16,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: narrow ? 12 : 8.8, theta: 0.22, phi: 1.3, target: narrow ? [-0.7, 0, 0] : [0, 0.7, 0], min: 5, max: 20 },
     autoRotate: 0,
-    levels: [1, 2],   // 1단계(세포 단면)와 4단계(합성 모의실험 · 시간)는 2D 화면에서, 전사 · 번역 단계에서 3D로 시작
+    levels: [],   // 모든 단계가 캔버스 조작(화살표 이름 · 주형 가닥 서열 · RNA 가공 · tRNA 고르기 · 모의실험)이 필요해서 2D로 해요
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V = THREE.Vector3, M4 = new THREE.Matrix4(), cc = new THREE.Color();
@@ -212,7 +212,7 @@
         const sm = L.S.mode;
         if (sm !== lastSim) {
           lastSim = sm; const m2 = MODE_OF[sm];
-          other = sm === 'proc' ? 'RNA 가공(5′ 캡 · 폴리 A 꼬리 · 스플라이싱)은 ▦ 2D 화면에서 직접 해 보세요.' : sm === 'poly' ? '폴리리보솜(리보솜 여러 개가 mRNA 하나를 동시에 번역)은 ▦ 2D 화면에서 살펴보세요.' : '';
+          other = sm === 'proc' ? 'RNA 가공: 5′ 캡과 폴리 A 꼬리를 붙이고, 인트론을 잘라 내요(스플라이싱).' : sm === 'poly' ? '폴리리보솜: 리보솜 여러 개가 mRNA 하나를 동시에 번역해요.' : '';
           if (m2 && m2 !== mode) setMode(m2); else { lastMsg = ''; }
         }
         if (sm === 'tx' && L.TX && L.TX.state !== 'idle' && !plTx.playing) {

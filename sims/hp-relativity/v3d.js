@@ -47,7 +47,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 값은 옆 조작판에서 바꿔요',
     camera: { dist: 15 * KD, theta: 0.1, phi: 1.25, min: 5, max: 36, target: [5, 1.2, 0] },
     autoRotate: 0,
-    levels: [0, 1, 2, 3],
+    levels: [2],   // 1·2·4단계는 캔버스의 측정 표·그래프·조사 카드를 읽고 눌러야 해서 2D, 3단계(길이 수축 · 뮤온)는 3D
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
       const { V3, M, mkArrow, setArrow, tube, grid } = tools(THREE);

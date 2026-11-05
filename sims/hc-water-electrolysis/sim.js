@@ -774,6 +774,7 @@
   const ordCorrect = () => S.ord.every((v, i) => v === i);
 
   /* ---------- 버튼 연결 ---------- */
+  $$('#sceneSeg button').forEach((b) => b.addEventListener('click', () => { if (S.scene === b.dataset.scene) return; Sound.click(); setScene(b.dataset.scene); }));
   $$('#solSeg button').forEach((b) => b.addEventListener('click', () => { Sound.click(); setElec(+b.dataset.v === 1); }));
   $('#sVolt').addEventListener('input', (e) => setV(+e.target.value));
   $('#vMinus').addEventListener('click', () => { Sound.tick(); setV(S.V - 1); });

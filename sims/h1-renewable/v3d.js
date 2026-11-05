@@ -151,6 +151,7 @@
       const gFc = grab(() => {
         rH = controls.range('수소 공급량', 0, 100, 5, st.h2, (v) => { st.h2 = v; setDom('sH2', v); show(true); }, (v) => v + ' %');
         o2B = controls.button('💨 공기(산소) 공급', () => { const b = document.getElementById('bO2'); if (b) b.click(); });
+        o2B.textContent = st.o2 ? '💨 공기(산소) 공급: 켜짐' : '💨 공기(산소) 공급: 꺼짐'; o2B.classList.toggle('on', st.o2);
         plF = controls.player({ duration: 8, loop: true, label: '수소 늘리기', phases: [[0, '수소 적게'], [0.5, '수소 최대(100 %)'], [0.5001, '']].slice(0, 2),
           onFrame(p) { if (internal) return; const u = p < 0.5 ? p / 0.5 : 1 - (p - 0.5) / 0.5, v = Math.round(20 * u) * 5; if (v !== st.h2) { st.h2 = v; setDom('sH2', v); rH.set(v); show(true); } } });
       });

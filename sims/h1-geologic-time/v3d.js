@@ -228,7 +228,7 @@
         hand.visible = hub.visible = hr >= 0; if (hr >= 0) { const p = ckPt(hr, (CR - 0.7) / 2); hand.position.copy(p); hand.rotation.z = -ckAng(hr); }
         ckLab.forEach((l) => l.show(true)); lHum.show(done); eraLab.forEach((l, i) => l.show(done)); ctrL.show(true);
         const lines = ERA.map((e, i) => { const known = done || (i === 0 ? C.placed[0] : i === 3 ? C.placed[2] : C.placed[i - 1] && C.placed[i]); return '<span style="color:' + e.col + '">●</span> ' + e.name + ' ' + (known ? e.dur : '길이는? (시계를 완성하면 알려 줘요)'); });
-        return '<b>⏰ 지구 시계: 46억 년 = 24시간</b><br>' + lines.join('<br>') + '<br>' + (done ? '현생 인류는 하루의 마지막 약 5~6초예요.' : '경계 3개를 알맞은 시각에 놓는 일은 ▦ 2D에서 해요. (놓은 경계 ' + C.placed.filter(Boolean).length + ' / 3)') + (hr >= 0 ? '<br>지금 ' + hmT(hr) + ' · ' + agoT(4600 - hr / 24 * 4600) : '');
+        return '<b>⏰ 지구 시계: 46억 년 = 24시간</b><br>' + lines.join('<br>') + '<br>' + (done ? '현생 인류는 하루의 마지막 약 5~6초예요.' : '경계 카드 3개를 알맞은 시각에 놓아 시대를 나눠요. (놓은 경계 ' + C.placed.filter(Boolean).length + ' / 3)') + (hr >= 0 ? '<br>지금 ' + hmT(hr) + ' · ' + agoT(4600 - hr / 24 * 4600) : '');
       }
       /* ---- env: 대륙 위치(모식도) · 장면(산소 · 오존층 · 생물) · 산소 / 기온 막대 · 시간 띠 ---- */
       const PW = 7.4, PH = 4.4, MX = -4.2, DX = 4.2, PY = 2.5;
@@ -340,7 +340,7 @@
         const x = BX0 + BWD * w.fracOf(ago); tMark.visible = true; tMark.position.set(x, tmY + 0.5, 0); lTm.show(true); lTm.obj = [x, tmY + 0.95, 0]; lTm.set(agoT(ago));
         prBars.forEach((b) => { b.m.visible = false; b.l.show(false); }); prRef.visible = false; lPr100.show(false);
         const E = w.EV, extra = (E.pin1 || E.pin2) ? ' · 표시한 때 ' + (E.pin1 ? '① ' : '') + (E.pin2 ? '②' : '') : '';
-        return '<b>🌍 ' + agoT(ago) + ' · ' + ERA[w.eraAt(ago)].name + '</b><br>' + captionAt(ago) + '<br>산소 ' + (o2 < 1 ? '1 % 미만' : '약 ' + o2.toFixed(0) + ' %') + extra + '<br><span style="color:#9fb0d4">표시 · 카드 놓기는 ▦ 2D에서 해요. 아래 슬라이더로 시간을 바꿔요.</span>';
+        return '<b>🌍 ' + agoT(ago) + ' · ' + ERA[w.eraAt(ago)].name + '</b><br>' + captionAt(ago) + '<br>산소 ' + (o2 < 1 ? '1 % 미만' : '약 ' + o2.toFixed(0) + ' %') + extra + '<br><span style="color:#9fb0d4">아래 슬라이더로 시간을 바꿔요.</span>';
       }
       function updPredict(w, t) {
         const PR = w.PR, PRD = w.PRD, i = PR.sel, PAGO = [290, 480, 120, 20];
@@ -421,11 +421,11 @@
             const e = ERA[si];
             setInfo('<b>' + e.name + '</b> (' + e.yr + ')<br>46억 년을 24시간으로 줄이면 ' + e.dur + '이에요.<br>이 시대의 지층에서 나오는 화석으로 그때의 생물과 환경을 알 수 있어요.');
           } else if (lv === 0) {
-            setInfo('<b>아래 지층일수록 오래된 지층</b>이에요.<br>파낸 지층 <b>' + dug + ' / 6</b>' + (dug ? ' · 가장 최근 화석: <b>' + LAY[dug - 1].name + '</b>' : '') + '<br>' + (dug >= N ? '화석이 크게 바뀌는 경계가 <b>3곳</b> 있어요.' : '⛏ 버튼이나 2D에서 위에서부터 차례로 파 보세요.'));
+            setInfo('<b>아래 지층일수록 오래된 지층</b>이에요.<br>파낸 지층 <b>' + dug + ' / 6</b>' + (dug ? ' · 가장 최근 화석: <b>' + LAY[dug - 1].name + '</b>' : '') + '<br>' + (dug >= N ? '화석이 크게 바뀌는 경계가 <b>3곳</b> 있어요.' : '⛏ 버튼으로 위에서부터 차례로 파 보세요.'));
           } else if (lv === 1) {
             setInfo('<b>지질시대</b>: 화석이 크게 바뀌는 경계로 나눠요.<br>46억 년 = 24시간이면<br>' + ERA.map((e) => e.name + ' ' + e.dur).join('<br>'));
           } else {
-            setInfo('지질시대마다 대표 화석이 달라요. 산소·기온·대륙이 바뀌어 서식지와 먹이가 달라졌기 때문이에요. (그래프와 예측은 2D에서 해요)');
+            setInfo('지질시대마다 대표 화석이 달라요. 산소·기온·대륙이 바뀌어 서식지와 먹이가 달라졌기 때문이에요.');
           }
         },
         sync() {},

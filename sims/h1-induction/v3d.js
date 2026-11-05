@@ -14,7 +14,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHN ? 16 : 10.5, theta: 0.35, phi: 1.1, target: [0, -0.4, 0], min: 6, max: 28 },
     autoRotate: 0,
-    levels: [0, 1, 2],
+    levels: [0, 2],
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3;

@@ -14,7 +14,7 @@
     hint: '확대 단계·묶는 단계를 눌러 보세요 · 드래그: 돌리기',
     camera: { dist: narrow ? 12 : 9, theta: 0.6, phi: 1.2, min: 3, max: 26 },
     autoRotate: 0.12,
-    levels: [0, 1],
+    levels: [],
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
       const V = THREE.Vector3, V3 = (x, y, z) => new V(x, y, z || 0);

@@ -98,7 +98,9 @@
       }
       function updInfo() {
         const T = TYPES[sel], how = T.pass === 'free' ? '작은 입자라서 인지질 사이로 <b>바로 통과</b>해요.' : T.pass === 'channel' ? '전하를 띠어서 <b>단백질 통로</b>로만 지나가요.' : '너무 커서 막을 <b>통과하지 못해요</b>.';
-        info('<b>' + T.n + '</b> (세포 밖 ' + counts[0] + '개 · 세포 안 ' + counts[1] + '개)<br>' + how + '<br>입자는 많은 쪽에서 적은 쪽으로 퍼져요 (확산).');
+        const m = window.__sim && window.__sim.S && window.__sim.S.md;
+        const tab = m ? '<br>결과표: ' + TKEYS.map((k) => TYPES[k].n.split(' ')[0] + ' ' + (m.ts[k].res === 'pass' ? '✅' : m.ts[k].res === 'block' ? '⛔' : '?')).join(' · ') : '';
+        info('<b>' + T.n + '</b> (세포 밖 ' + counts[0] + '개 · 세포 안 ' + counts[1] + '개)<br>' + how + '<br>입자는 많은 쪽에서 적은 쪽으로 퍼져요 (확산).' + tab);
       }
       const segT = controls.segment('입자', TKEYS.map((k) => ({ value: k, label: TYPES[k].n.split(' ')[0] })), sel, (v) => { const L = window.__sim; if (L && L.selectType) L.selectType(v); sel = v; syncFrom2D(true); });
       function syncFrom2D(force) {

@@ -11,7 +11,7 @@
   window.SciSim3D.attach({
     title: '떨어뜨린 공 · 던진 공 3D',
     camera: { dist: PHN ? 24 : 17, theta: 0.3, phi: 1.3, target: [1.4, 2.4, 0], min: 8, max: 34 },
-    levels: [3],
+    levels: [],
     autoRotate: 0,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;

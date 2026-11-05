@@ -53,7 +53,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 값은 옆 조작판에서 바꿔요',
     camera: { dist: 19 * KD, theta: 0.15, phi: 1.3, min: 5, max: 40, target: [0, -1.5, 0] },
     autoRotate: 0,
-    levels: [0, 1, 2, 3],
+    levels: [3],   // 1~3단계는 기록 버튼·계산 사다리·캔버스 준위 누르기가 필요해서 2D, 4단계(한계: 헬륨·전자 구름·흡수선)는 3D
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
       const { V3, M, tube, mkArrow, setArrow } = tools(THREE);
