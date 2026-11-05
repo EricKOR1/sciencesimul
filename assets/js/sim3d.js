@@ -82,6 +82,12 @@
 .v3-seg { display: inline-flex; gap: 2px; padding: 3px; border-radius: 12px; background: var(--surface-2, #f3f5f8); border: 1px solid var(--line, #e3e7ee); flex: none; }
 .v3-seg button { min-height: 36px; padding: 4px 12px; border: 0; border-radius: 9px; background: transparent; color: var(--muted, #556); font-weight: 800; font-size: 14px; cursor: pointer; white-space: nowrap; }
 .v3-seg button.on { background: var(--subject, #3182f6); color: #fff; }
+.v3-mode [data-v3="2d"] { opacity: .55; }
+.v3-mode button[data-v3="2d"], .v3-mode .v3-2d-wrap { position: relative; }
+.v3-mode button[data-v3="2d"]::after, .v3-mode .v3-2d-wrap::after { content: "2D"; position: absolute; top: -6px; right: -4px; z-index: 2; padding: 0 5px; border-radius: 6px; background: #64748b; color: #fff; font-size: 10px; font-weight: 800; line-height: 15px; letter-spacing: .02em; pointer-events: none; }
+.v3-mode .v3-2d-wrap::after { top: 0; right: 0; }
+.v3-mode .v3-2d-wrap { opacity: .6; }
+.v3-mode .v3-2d-wrap [data-v3="2d"] { opacity: 1; }
 .v3-seg.float { position: absolute; top: 10px; right: 10px; z-index: 26; background: rgba(255,255,255,.94); box-shadow: 0 4px 14px rgba(20,30,60,.18); }
 .v3-on > .v3-seg.float { background: rgba(10,16,30,.72); border-color: rgba(255,255,255,.22); top: 6px; right: 6px; }
 .v3-on > .v3-seg.float button:not(.on) { color: #dbe4f7; }
@@ -558,7 +564,7 @@
       });
     }
 
-    function setBtns() { b3.classList.toggle('on', isOpen); b2.classList.toggle('on', !isOpen); host.classList.toggle('v3-on', isOpen); b3.setAttribute('aria-pressed', isOpen ? 'true' : 'false'); b2.setAttribute('aria-pressed', isOpen ? 'false' : 'true'); }
+    function setBtns() { setTimeout(syncMode, 0); b3.classList.toggle('on', isOpen); b2.classList.toggle('on', !isOpen); host.classList.toggle('v3-on', isOpen); b3.setAttribute('aria-pressed', isOpen ? 'true' : 'false'); b2.setAttribute('aria-pressed', isOpen ? 'false' : 'true'); }
     function open(quiet) {
       if (isOpen) return;
       isOpen = true; wrap.hidden = false; setBtns();
@@ -617,5 +623,40 @@
 
   // 설정은 그대로 두고 지금 화면만 2D로 (미션 카드의 '2D로 실험하기' 버튼)
   function show2D() { instances.forEach((v) => v.close()); }
+
+  /* ---------- 2D 전용 조작: 3D 화면에서는 흐리게 + '2D' 표시, 누르면 2D 화면으로 바뀌며 실행 ----------
+     어떤 조작이 3D에 반영되지 않는지는 3D를 연 채로 하나씩 눌러 보는 점검 도구로 골라 두었어요
+     (assets/js/v3-2d-only.js : { 차시 id: [선택자, …] }). 차시가 직접 data-v3="2d"를 붙여도 돼요. */
+  function syncMode() { if (doc.body) doc.body.classList.toggle('v3-mode', instances.some((v) => v.isOpen)); }
+  const lessonId = (global.location.pathname.match(/sims\/([^/]+)\//) || [])[1] || '';
+  let only2d = null;
+  function markOnly2D() {
+    const list = (only2d && only2d[lessonId]) || [];
+    list.forEach((sel) => {
+      let els = []; try { els = doc.querySelectorAll(sel); } catch (e) { return; }
+      els.forEach((e) => {
+        if (e.getAttribute('data-v3') === '2d') return;
+        e.setAttribute('data-v3', '2d');
+        if (e.tagName !== 'BUTTON') { const w = e.closest('.control, .range-row, label') || e.parentElement; if (w && !w.closest('#game, .game')) w.classList.add('v3-2d-wrap'); }
+      });
+    });
+  }
+  let told = false;
+  function intercept(e) {
+    if (!doc.body || !doc.body.classList.contains('v3-mode')) return;
+    const t = e.target && e.target.closest && e.target.closest('[data-v3="2d"], .v3-2d-wrap');
+    if (!t || t.closest('.v3-wrap, .v3-seg')) return;
+    show2D(); syncMode();   // 누른 동작은 그대로 이어서 2D에서 실행돼요
+    if (!told) { told = true; toast('▦ 이 도구는 2D 화면에서 작동해서 2D로 바꿨어요. 🧊 3D 버튼으로 다시 볼 수 있어요.'); }
+  }
+  if (doc.addEventListener) {
+    doc.addEventListener('pointerdown', intercept, true);
+    doc.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ' || /^Arrow/.test(e.key)) intercept(e); }, true);
+    const s2 = doc.createElement('script'); s2.src = BASE + 'js/v3-2d-only.js';
+    s2.onload = () => { only2d = global.SCISIM_2D_ONLY || {}; markOnly2D(); };
+    (doc.head || doc.documentElement).appendChild(s2);
+    global.addEventListener('scisim-level', () => setTimeout(markOnly2D, 50));
+    setInterval(() => { if (only2d) markOnly2D(); }, 1500);   // 나중에 생기는 조작도 표시
+  }
   global.SciSim3D = { attach, loadThree, pref, setPref, capable, webglOK, start3D, show2D, get anyOpen() { return instances.some((v) => v.isOpen); } };
 })(window);
