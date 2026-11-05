@@ -31,6 +31,18 @@
     .w-form form { display: flex; gap: 8px; width: min(360px, 100%); }
     .w-form input { flex: 1; min-width: 0; font: inherit; font-size: 22px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; text-align: center; padding: 12px; border-radius: 14px; border: 1px solid var(--line); background: var(--bar); color: var(--ink); }
     .w-form button { font: inherit; font-weight: 800; font-size: 17px; border: 0; border-radius: 14px; padding: 0 18px; background: var(--primary); color: #0b1220; cursor: pointer; }
+    /* 전체 화면 · 가로 보기 (기본) */
+    body.full .w-bar { display: none; }
+    body.full .w-msg { bottom: 10px; }
+    body.rot .w-stage { position: fixed; top: 0; left: 100vw; width: 100vh; height: 100vw; flex: none; transform-origin: top left; transform: rotate(90deg); }
+    body.rot .w-msg { left: 50%; top: 50%; bottom: auto; transform: translate(-50%, -50%) rotate(90deg); max-width: 80vh; }
+    .w-fs { position: fixed; z-index: 5; top: max(8px, env(safe-area-inset-top)); right: max(8px, env(safe-area-inset-right)); display: none; gap: 6px; }
+    body.full .w-fs { display: flex; }
+    body.rot .w-fs { top: auto; bottom: max(8px, env(safe-area-inset-bottom)); right: max(8px, env(safe-area-inset-right)); transform: rotate(90deg) translateY(-100%); transform-origin: right bottom; }
+    .w-fs button { font: inherit; font-size: 13px; font-weight: 800; color: #fff; background: rgba(23,27,34,.72); border: 1px solid rgba(255,255,255,.25); border-radius: 999px; padding: 6px 12px; cursor: pointer; }
+    .w-tap { position: fixed; z-index: 6; left: 50%; top: 50%; transform: translate(-50%, -50%); background: rgba(23,27,34,.9); color: #fff; border: 1px solid rgba(255,255,255,.25); border-radius: 16px; padding: 12px 18px; font-weight: 800; font-size: 15px; text-align: center; pointer-events: none; }
+    body.rot .w-tap { transform: translate(-50%, -50%) rotate(90deg); }
+    .w-tap[hidden] { display: none; }
   </style>
 </head>
 <body>
@@ -48,6 +60,8 @@
     <iframe id="wFrame" title="친구의 학습 화면" tabindex="-1"></iframe>
   </div>
   <div class="w-msg" id="wMsg" role="status" hidden></div>
+  <div class="w-fs" id="wFs"><button type="button" id="wNormal" title="기본 화면으로">↙ 작게 보기</button></div>
+  <div class="w-tap" id="wTap" hidden>👆 화면을 한 번 누르면 전체 화면으로 볼 수 있어요</div>
   <script src="assets/js/watch.js"></script>
 </body>
 </html>

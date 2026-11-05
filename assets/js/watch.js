@@ -43,7 +43,8 @@
   const VIEW_CSS = '*{cursor:default!important} .share-btn,.share-private{visibility:hidden!important} ::-webkit-scrollbar{display:none} html{scrollbar-width:none}';
 
   function fit() {
-    const r = stage.getBoundingClientRect();
+    // 회전(가로 보기) 중에도 정확하도록 변환 전 크기를 써요
+    const r = { width: stage.clientWidth, height: stage.clientHeight };
     const k = Math.min(r.width / vw, r.height / vh);
     frame.style.width = vw + 'px'; frame.style.height = vh + 'px';
     frame.style.transform = 'translate(-50%, -50%) scale(' + k + ')';
@@ -228,7 +229,43 @@
   setTimeout(() => { if (!gotAny) say('친구 화면이 아직 오지 않았어요. 친구 기기에서 이 사이트(첫 화면이나 실험 화면)가 열려 있고 📡 공유가 켜져 있는지, 코드가 맞는지 확인해 주세요. 계속 찾는 중…', 'wait'); }, 15000);
   who.textContent = '친구 화면 · ' + code.slice(0, 3) + '-' + code.slice(3);
   stage.hidden = false;
-  fit();
+
+  /* 기본: 전체 화면 · 가로 보기
+     - 들어오자마자 위 막대를 숨기고 친구 화면을 꽉 차게, 휴대폰을 세로로 들고 있으면 90° 돌려 가로로 보여요.
+     - 화면을 한 번 누르면 진짜 전체 화면 + (지원하는 기기에서) 가로 방향 고정. 브라우저는 누름 없이 전체 화면을 허락하지 않아요. */
+  let full = true, tapped = false;
+  const tapHint = $('#wTap');
+  function layout() {
+    const fsEl = doc.fullscreenElement || doc.webkitFullscreenElement;
+    const portrait = global.innerHeight > global.innerWidth;
+    doc.body.classList.toggle('full', full);
+    doc.body.classList.toggle('rot', full && portrait);
+    if (tapHint) tapHint.hidden = tapped || !full || !!fsEl || !(doc.documentElement.requestFullscreen || doc.documentElement.webkitRequestFullscreen);
+    fit();
+  }
+  function goFull() {
+    const el = doc.documentElement, req = el.requestFullscreen || el.webkitRequestFullscreen;
+    if (!req || doc.fullscreenElement || doc.webkitFullscreenElement) return;
+    try {
+      const pr = req.call(el, { navigationUI: 'hide' });
+      const lock = () => { try { const o = global.screen && global.screen.orientation; if (o && o.lock) o.lock('landscape').catch(() => {}); } catch (e) { /* 무시 */ } };
+      if (pr && pr.then) pr.then(lock).catch(() => {}); else lock();
+    } catch (e) { /* 무시 */ }
+  }
+  doc.addEventListener('pointerdown', (e) => { if (full && !e.target.closest('#wNormal')) { goFull(); tapped = true; layout(); } });
+  $('#wNormal').addEventListener('click', () => {
+    full = false;
+    try { if (doc.fullscreenElement) doc.exitFullscreen(); else if (doc.webkitFullscreenElement) doc.webkitExitFullscreen(); } catch (e) { /* 무시 */ }
+    try { global.screen.orientation.unlock(); } catch (e) { /* 무시 */ }
+    layout();
+  });
+  // 작게 보기에서 위 막대의 친구 이름을 누르면 다시 크게
+  who.addEventListener('click', () => { if (!full) { full = true; layout(); goFull(); } });
+  who.style.cursor = 'pointer'; who.title = '눌러서 크게 보기';
+  global.addEventListener('resize', layout);
+  doc.addEventListener('fullscreenchange', layout); doc.addEventListener('webkitfullscreenchange', layout);
+  if (global.screen && global.screen.orientation && global.screen.orientation.addEventListener) global.screen.orientation.addEventListener('change', layout);
+  layout();
   const s = doc.createElement('script'); s.src = 'assets/vendor/peerjs.min.js'; s.onload = start;
   s.onerror = () => { /* 직접 연결 도구를 못 불러와도 중계로 시도해요 */ };
   doc.head.appendChild(s);
