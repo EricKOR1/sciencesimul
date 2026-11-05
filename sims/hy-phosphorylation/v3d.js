@@ -102,10 +102,34 @@
 
       /* ================= ② 기질 수준 인산화 ================= */
       const enzS = new THREE.Group(); enzS.position.set(0, -1.2, 0); sub.add(enzS);
-      { const m = std(0x38bdf8, { roughness: 0.32 });
-        const b = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 28), m); b.scale.set(2.3, 1.1, 1.5); enzS.add(b);
-        [-1, 1].forEach((s) => { const j = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 24), m); j.scale.set(0.7, 1.0, 1.2); j.position.set(s * 1.55, 0.9, 0); enzS.add(j); });
-        const pk = new THREE.Mesh(new THREE.SphereGeometry(0.9, 28, 18), std(0x0c4a6e, { emissive: 0x082f49 })); pk.scale.set(1.25, 0.2, 0.9); pk.position.y = 1.0; enzS.add(pk); }
+      { const m = std(0x38bdf8, { roughness: 0.3, metalness: 0.05 }); m.transparent = true; m.opacity = 0.9;
+        const b = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), m); b.scale.set(2.3, 1.1, 1.5); enzS.add(b);
+        [-1, 1].forEach((s) => { const j = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 28), m); j.scale.set(0.7, 1.0, 1.2); j.position.set(s * 1.55, 0.9, 0); enzS.add(j); });
+        /* 표면 돌기(곁사슬) */
+        const NB = 150, bm = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 10, 8), std(0x7dd3fc, { roughness: 0.4 }), NB), dm = new THREE.Object3D();
+        for (let i = 0; i < NB; i++) { const y = 1 - 2 * (i + 0.5) / NB, r = Math.sqrt(1 - y * y), th = i * 2.399963; const px = Math.cos(th) * r * 2.3, py = y * 1.1, pz = Math.sin(th) * r * 1.5; if (py > 0.55 && Math.abs(px) < 1.5) continue; dm.position.set(px, py, pz); dm.scale.setScalar(0.055 + 0.03 * ((i * 7) % 3)); dm.updateMatrix(); bm.setMatrixAt(i, dm.matrix); }
+        enzS.add(bm);
+        /* α 나선 리본 */
+        [[-1.1, 0.1, 1.42, 0xf9a8d4], [0.5, 0.0, 1.48, 0xfde68a], [-0.2, 0.55, 1.2, 0xa7f3d0]].forEach((q, k) => {
+          const pts = []; for (let i = 0; i <= 60; i++) { const u = i / 60, a2 = u * Math.PI * 2 * 3; pts.push(new V(q[0] - 0.6 + u * 1.2, q[1] + Math.cos(a2) * 0.16, q[2] + Math.sin(a2) * 0.16)); }
+          const t = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 80, 0.05, 8), std(q[3], { roughness: 0.35 })); enzS.add(t);
+        });
+        /* 결합 자리(활성 부위): 기질 · ADP가 앉는 오목한 틈 */
+        const pkM = std(0x0c4a6e, { emissive: 0x0a3d5e, emissiveIntensity: 0.6, roughness: 0.3 });
+        [[-0.55, 0.92], [1.0, 0.92]].forEach((q) => { const pk = new THREE.Mesh(new THREE.SphereGeometry(1, 28, 16), pkM); pk.scale.set(0.62, 0.17, 0.5); pk.position.set(q[0], q[1], 0); enzS.add(pk); });
+      }
+      /* 세포 속 환경: 받침 원판 + 떠다니는 작은 분자 */
+      let envT = 0;
+      const envUpd = (function () {
+        const c = document.createElement('canvas'); c.width = c.height = 256; const x = c.getContext('2d');
+        const gr = x.createRadialGradient(128, 128, 6, 128, 128, 126); gr.addColorStop(0, 'rgba(120,190,255,.40)'); gr.addColorStop(0.6, 'rgba(70,110,200,.18)'); gr.addColorStop(1, 'rgba(20,30,70,0)');
+        x.fillStyle = gr; x.fillRect(0, 0, 256, 256); x.strokeStyle = 'rgba(180,215,255,.3)'; x.lineWidth = 1.5; [50, 85, 115].forEach((r) => { x.beginPath(); x.arc(128, 128, r, 0, 7); x.stroke(); });
+        const f = new THREE.Mesh(new THREE.CircleGeometry(5.2, 64), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthWrite: false })); f.rotation.x = -Math.PI / 2; f.position.set(0, -2.3, 0); sub.add(f);
+        const N = 90, dots = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 8, 6), new THREE.MeshBasicMaterial({ color: 0x9cc8ff, transparent: true, opacity: 0.35 }), N), dm = new THREE.Object3D();
+        const P0 = Array.from({ length: N }, (_, i) => { const r = (k) => { const v = Math.sin(i * 12.9898 + k * 78.233) * 43758.5453; return v - Math.floor(v); }; return { x: (r(1) - 0.5) * 11, y: -2 + r(2) * 6.4, z: (r(3) - 0.5) * 5 - 1.5, s: 0.03 + r(4) * 0.06, ph: r(5) * 6.28, sp: 0.2 + r(6) * 0.4 }; });
+        dots.frustumCulled = false; sub.add(dots);
+        return (t) => { P0.forEach((q, i) => { dm.position.set(q.x + Math.sin(t * q.sp + q.ph) * 0.4, q.y + Math.cos(t * q.sp * 1.3 + q.ph) * 0.3, q.z); dm.scale.setScalar(q.s); dm.updateMatrix(); dots.setMatrixAt(i, dm.matrix); }); dots.instanceMatrix.needsUpdate = true; };
+      })();
       const Pmat = std(0xf472b6, { emissive: 0x3a0a22 }), Cmat = std(0x94a3b8, { roughness: 0.35 }), Amat = std(0xfb923c, { roughness: 0.35 });
       function pBall(r) { return new THREE.Mesh(new THREE.SphereGeometry(r || 0.2, 16, 12), Pmat); }
       const substrate = new THREE.Group(), adp = new THREE.Group(), pyr = new THREE.Group(), atp = new THREE.Group(), pfly = pBall(0.2);
@@ -147,14 +171,15 @@
         etc: label('전자 전달계', A([-2.1, 0.95, 0]), { color: '#1e40af' }),
         syn: label('ATP 합성 효소', A([AX + 1.1, 0.8, 0]), { color: '#5b21b6' }),
         atp: label('ATP', A([AX - 0.5, -3.1, 0]), { color: '#92400e' }),
-        sE: label('효소', A([0, -2.5, 0]), { color: '#075985' }),
-        sS: label('인산기를 가진 기질', A([-3.2, 2.2, 0]), { color: '#9d174d' }),
-        sA: label('ADP', A([3.3, 2.0, 0]), { color: '#9a3412' }),
+        sE: label('효소', enzS, { color: '#075985', offset: [0, -1.65, 0] }),
+        sS: label('인산기를 가진 기질', substrate, { color: '#9d174d', offset: [0, 0.95, 0] }),
+        sA: label('ADP', adp, { color: '#9a3412', offset: [0.4, 0.8, 0] }),
+        sT: label('ATP', atp, { color: '#92400e', offset: [0.5, 0.8, 0] }),
       };
       function setMode(m) {
         mode = m; chemi.visible = m === 'chemi'; sub.visible = m === 'sub';
         orbit.dist = m === 'sub' ? (narrow ? 10 : 8.2) : (narrow ? 11.5 : 10.5); orbit.phi = m === 'sub' ? 1.15 : 1.36; { const ty = m === 'sub' ? 0.6 : -0.2; if (narrow) { orbit.tx = -ty; orbit.ty = 0; } else orbit.ty = ty; }
-        ['ims', 'mat', 'etc', 'syn', 'atp'].forEach((k) => L[k].show(m === 'chemi')); ['sE', 'sS', 'sA'].forEach((k) => L[k].show(m === 'sub'));
+        ['ims', 'mat', 'etc', 'syn', 'atp'].forEach((k) => L[k].show(m === 'chemi')); ['sE', 'sS', 'sA', 'sT'].forEach((k) => L[k].show(m === 'sub'));
         st = 0; text();
       }
       /* 2D와 같은 값을 따라가요: 기질 수준(sub) · H⁺ 기울기(grad: NADH 공급 · 산소) · 화학 삼투(chemi: 처리). 3D에서 바꾸면 2D도 같이 바뀌어요 */
@@ -207,9 +232,9 @@
       let txtT = 0, ang = 0, stepAcc = 0, pumpAcc = 0, leakAcc = 0, lastMode = null, cnt = 0;
       return {
         update(dt) {
-          dt = Math.min(dt, 0.05) * (window.__v3dTS || 1);
+          dt = Math.min(dt, 0.05) * (window.__v3dTS || 1); envT += dt;
           poll(); txtT -= dt; if (txtT < 0) { txtT = 0.4; text(); }
-          if (mode === 'sub') return;       // 기질 수준 인산화는 ▶ 재생 막대(player)가 그려요
+          if (mode === 'sub') { envUpd(envT); return; }       // 기질 수준 인산화는 ▶ 재생 막대(player)가 그려요
           const w = rotF * 3.2, grad = gcur;
           ang += w * dt; rotor.rotation.y = -ang;
           // β 구조 변화 (열림 → 느슨 → 단단)

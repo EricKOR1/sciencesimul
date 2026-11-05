@@ -102,9 +102,19 @@
       const st = { light: 'g', tb: 800, yp: 0.15, play: false, tauUser: false, tauP: 0 };
       const gFilm = new THREE.Group(), gPh = new THREE.Group(), gW = new THREE.Group(); root.add(gFilm, gPh, gW);
       const HH = 6, WW = 5;
+      /* ----- 실험실 배경: 나무 실험대 · 눈금 뒤판 ----- */
+      const ctex = (w, h, draw, rx, ry) => { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; if (rx) t.repeat.set(rx, ry || rx); if ('encoding' in t) t.encoding = THREE.sRGBEncoding; t.anisotropy = 4; return t; };
+      const rnd = (() => { let q = 13; return () => ((q = (q * 16807) % 2147483647) / 2147483647); })();
+      const gEnv = new THREE.Group(); root.add(gEnv);
+      const woodTex = ctex(256, 128, (g, w, hh) => { g.fillStyle = '#8f6236'; g.fillRect(0, 0, w, hh); for (let i = 0; i < 70; i++) { g.strokeStyle = 'rgba(55,28,10,' + (0.2 + rnd() * 0.35) + ')'; g.lineWidth = 1 + rnd() * 2; g.beginPath(); const y = rnd() * hh; g.moveTo(0, y); g.bezierCurveTo(w * 0.3, y + (rnd() - 0.5) * 8, w * 0.6, y + (rnd() - 0.5) * 8, w, y + (rnd() - 0.5) * 6); g.stroke(); } }, 5, 2);
+      const benchEnv = new THREE.Mesh(new THREE.BoxGeometry(26, 0.5, 11), mat(0xffffff, { map: woodTex, roughness: 0.6, metalness: 0 })); benchEnv.position.set(1.5, -3.95, -0.3); benchEnv.receiveShadow = true; gEnv.add(benchEnv);
+      const benchEdge = new THREE.Mesh(new THREE.BoxGeometry(26.1, 0.08, 11.1), mat(0x4a2f15, { roughness: 0.7 })); benchEdge.position.set(1.5, -3.72, -0.3); gEnv.add(benchEdge);
+      const boardTex = ctex(512, 256, (g, w, hh) => { const gr = g.createLinearGradient(0, 0, 0, hh); gr.addColorStop(0, '#34497c'); gr.addColorStop(1, '#233559'); g.fillStyle = gr; g.fillRect(0, 0, w, hh); g.strokeStyle = 'rgba(180,200,240,.15)'; g.lineWidth = 1; for (let x = 0; x <= w; x += w / 24) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, hh); g.stroke(); } for (let y = 0; y <= hh; y += hh / 12) { g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke(); } }, 1, 1);
+      const boardEnv = new THREE.Mesh(new THREE.BoxGeometry(26, 14, 0.15), mat(0xffffff, { map: boardTex, roughness: 0.7, metalness: 0.05 })); boardEnv.position.set(1.5, 3.2, -6); gEnv.add(boardEnv);
       /* 틀 */
       const fm = mat(0x64748b, { metalness: 0.6, roughness: 0.35 });
       const addB = (w, hh, d, x, y) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, hh, d), fm); m.position.set(x, y, 0); gFilm.add(m); };
+      [-WW / 2 - 0.12, WW / 2 + 0.12].forEach((x) => { const lg = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.9, 12), fm); lg.position.set(x, -HH / 2 - 0.55, 0); gFilm.add(lg); const bs = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.1, 1.4), mat(0x334155, { metalness: 0.6, roughness: 0.4 })); bs.position.set(x, -HH / 2 - 1.0, 0); bs.castShadow = true; gFilm.add(bs); });
       addB(WW + 0.5, 0.25, 0.3, 0, HH / 2 + 0.12); addB(WW + 0.5, 0.25, 0.3, 0, -HH / 2 - 0.12); addB(0.25, HH, 0.3, -WW / 2 - 0.12, 0); addB(0.25, HH, 0.3, WW / 2 + 0.12, 0);
       /* 막 (무늬 텍스처) */
       const cv = document.createElement('canvas'); cv.width = 4; cv.height = 512; const g2 = cv.getContext('2d'), tex = new THREE.CanvasTexture(cv); tex.encoding = THREE.sRGBEncoding;
@@ -182,6 +192,8 @@
       const NR = 70, ropeI = new THREE.InstancedMesh(new THREE.SphereGeometry(0.075, 10, 8), mat(0xffffff, { roughness: 0.4, emissive: 0xffffff, emissiveIntensity: 0.4 }), NR); gPh.add(ropeI);
       const wall = box(0.4, 3.4, 1.4, 0x7b8798, { metalness: 0.4 }); wall.position.set(4.3, 0, 0); gPh.add(wall);
       const pole = cyl(0.07, 0.07, 3.4, 0x9aa6b8, {}, 10); pole.position.set(4.3, 0, 0); gPh.add(pole);
+      [[4.3, 1.4], [-4.3, 0.9]].forEach((q) => { const st = cyl(0.12, 0.12, 3.9, 0xcbd5e1, { metalness: 0.85, roughness: 0.28 }, 14); st.position.set(q[0] + (q[0] > 0 ? 0.35 : 0), -1.95, 0); gPh.add(st); const bs = box(1.0, 0.12, 1.4, 0x334155, { metalness: 0.6, roughness: 0.4 }); bs.position.set(q[0] + (q[0] > 0 ? 0.35 : 0), -3.6, 0); gPh.add(bs); });
+      { const mt = box(0.7, 1.0, 0.9, 0x475569, { metalness: 0.6, roughness: 0.4 }); mt.position.set(-4.5, 0, 0); gPh.add(mt); const sh = cyl(0.07, 0.07, 0.5, 0xe2e8f0, { metalness: 0.9, roughness: 0.2 }, 12); sh.rotation.z = Math.PI / 2; sh.position.set(-4.1, 0, 0); gPh.add(sh); const led = sphere(0.06, 0x4ade80, { emissive: 0x4ade80, emissiveIntensity: 1 }); led.position.set(-4.5, 0.35, 0.47); gPh.add(led); }
       const ring = new THREE.Mesh(new THREE.TorusGeometry(0.2, 0.04, 8, 20), mat(0x475569)); ring.rotation.y = Math.PI / 2; gPh.add(ring);
       const lWallL = L('phase', '', anchor(gPh, 4.3, 2.2, 0), { color: '#475569', size: 13 }), lMed = L('phase', '', anchor(gPh, -1.0, 2.5, 0), { color: '#26324a', size: 13 });
       const pulseF = (u) => 1.15 * Math.exp(-(u * u) / 0.55);
@@ -253,7 +265,7 @@
       const plPh = grab('phase', () => controls.player({ duration: 6, loop: true, autoplay: true, label: '펄스 보내기', phases: [[0, '입사 펄스'], [0.4, '끝에서 반사'], [0.8, '되돌아와요']], onFrame(p) { phP = p; } }));
       /* ================= ⑤ 두께가 곳곳에서 다른 얇은 막들 (ex) ================= */
       const gEx = new THREE.Group(); root.add(gEx); gEx.visible = false;
-      const gnd = box(12.5, 0.2, 9, 0x1f2937, { roughness: 0.8 }); gnd.position.set(0, -0.15, 0); gEx.add(gnd);
+      const gnd = box(26, 0.2, 14, 0x1f2937, { roughness: 0.9 }); gnd.material.map = ctex(128, 128, (g, w, hh) => { g.fillStyle = '#2b3140'; g.fillRect(0, 0, w, hh); for (let i = 0; i < 1500; i++) { g.fillStyle = 'rgba(' + (rnd() < 0.5 ? '255,255,255' : '0,0,0') + ',' + (0.05 + rnd() * 0.1) + ')'; g.fillRect(rnd() * w, rnd() * hh, 2, 2); } }, 8, 5); gnd.position.set(0, -0.15, -1); gnd.receiveShadow = true; gEx.add(gnd);
       /* 두께 t(nm) → 반사색 (R·G·B 대표 파장 650 · 550 · 450 nm, 간섭 세기 sin²(2π n t / λ) — 앞면만 위상 π인 막) */
       const rfl = (t, n, ph) => { const f = (lam) => Math.pow(Math.sin(2 * Math.PI * n * t / lam + ph), 2); return [f(650), f(550), f(450)]; };
       const mkVC = (geo) => { const c = new Float32Array(geo.attributes.position.count * 3); geo.setAttribute('color', new THREE.BufferAttribute(c, 3)); return c; };
@@ -262,6 +274,7 @@
       const puddle = new THREE.Mesh(pgeo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.15, metalness: 0.1 })); puddle.position.set(-3.6, 0.0, -2.4); gEx.add(puddle);
       const pBase = []; for (let i = 0; i < ppos.count; i++) pBase.push([ppos.getX(i), ppos.getZ(i)]);
       const pRing = new THREE.Mesh(new THREE.TorusGeometry(2.33, 0.06, 8, 64), mat(0x475569)); pRing.rotation.x = Math.PI / 2; pRing.position.copy(puddle.position); gEx.add(pRing);
+      { const wr = new THREE.Mesh(new THREE.TorusGeometry(0.55, 0.045, 10, 36), mat(0xcbd5e1, { metalness: 0.85, roughness: 0.28 })); wr.rotation.x = Math.PI / 2 - 0.5; wr.position.set(3.7, 0.12, -0.5); gEx.add(wr); const wh = cyl(0.045, 0.045, 1.8, 0xcbd5e1, { metalness: 0.85, roughness: 0.28 }, 10); wh.rotation.z = Math.PI / 2 - 0.2; wh.position.set(4.7, -0.05, -0.4); gEx.add(wh); }
       // 비눗방울
       const bgeo = new THREE.SphereGeometry(1.5, 48, 32), bcol = mkVC(bgeo), bpos = bgeo.attributes.position;
       const bubble = new THREE.Mesh(bgeo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.05, metalness: 0.0, transparent: true, opacity: 0.72 })); bubble.position.set(3.7, 1.7, -2.0); gEx.add(bubble);
@@ -310,7 +323,7 @@
         update(dt, t) {
           const sim = window.__sim; if (!sim) return; const S = sim.S, m = S.mode;
           const sc = m === 'film' ? 'film' : m === 'phase' ? 'phase' : m === 'app' && S.ap.sub === 'ex' ? 'ex' : 'wave';
-          if (sc !== st.sc) { st.sc = sc; wKey = ''; st.fk = ''; gFilm.visible = sc === 'film'; gPh.visible = sc === 'phase'; gW.visible = sc === 'wave'; gEx.visible = sc === 'ex'; if (sc !== 'ex') plEx.pause(); Object.keys(labs).forEach((k) => labs[k].forEach((l) => l.show(k === sc))); const o = ctx.orbit; o.theta = 0.35; o.phi = 1.3; o.tx = sc === 'film' ? 2.2 : sc === 'wave' ? 2.2 : 0; o.ty = 0; o.dist = (sc === 'wave' ? 19 : sc === 'phase' ? 13 : sc === 'ex' ? 15 : 15.5) * KD * (sc === 'ex' && PHN ? 1.25 : 1); if (sc === 'ex') { o.phi = 0.85; o.theta = 0.1; o.tx = 0; o.ty = 0.3; } showCtl(sc === 'film' ? 'film' : sc === 'ex' ? 'ex' : '__none'); }
+          if (sc !== st.sc) { st.sc = sc; wKey = ''; st.fk = ''; benchEnv.visible = benchEdge.visible = sc !== 'ex'; gFilm.visible = sc === 'film'; gPh.visible = sc === 'phase'; gW.visible = sc === 'wave'; gEx.visible = sc === 'ex'; if (sc !== 'ex') plEx.pause(); Object.keys(labs).forEach((k) => labs[k].forEach((l) => l.show(k === sc))); const o = ctx.orbit; o.theta = 0.35; o.phi = 1.3; o.tx = sc === 'film' ? 2.2 : sc === 'wave' ? 2.2 : 0; o.ty = 0; o.dist = (sc === 'wave' ? 19 : sc === 'phase' ? 13 : sc === 'ex' ? 15 : 15.5) * KD * (sc === 'ex' && PHN ? 1.25 : 1); if (sc === 'ex') { o.phi = 0.85; o.theta = 0.1; o.tx = 0; o.ty = 0.3; } showCtl(sc === 'film' ? 'film' : sc === 'ex' ? 'ex' : '__none'); }
           if (sc === 'film') { const k2 = [S.fl.tau, S.fl.light, S.fl.probe, S.fl.play].join(); if (k2 !== sig2d) { sig2d = k2; if (st.tauUser && S.fl.play) { st.tauUser = false; plFilm.pause(); } st.fk = ''; } filmFrame(sim, S); }
           else if (sc === 'wave') updWave(S, sim);
           else if (sc === 'ex') updEx(S, sim, dt, t);

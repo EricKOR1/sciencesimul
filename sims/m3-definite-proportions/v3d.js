@@ -28,7 +28,7 @@
     Object.keys(SP).forEach((k) => { SP[k].p = SP[k].p.map((q) => q.map((v) => v * 1.3)); });
     const smooth = (x) => { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); };
     const matCache = {};
-    const mat = (el) => matCache[el] || (matCache[el] = new THREE.MeshStandardMaterial({ color: COL[el], roughness: 0.32, metalness: el === 'Cu' ? 0.45 : 0.05 }));
+    const mat = (el) => matCache[el] || (matCache[el] = new THREE.MeshPhysicalMaterial({ color: COL[el], roughness: 0.28, metalness: el === "Cu" ? 0.45 : 0.05, clearcoat: 0.7, clearcoatRoughness: 0.2 }));
     const sphG = new THREE.SphereGeometry(1, 36, 24), cylG = new THREE.CylinderGeometry(1, 1, 1, 16);
     const bondMat = new THREE.MeshStandardMaterial({ color: 0xcfd8e6, roughness: 0.5, metalness: 0.1 });
     const Y = new THREE.Vector3(0, 1, 0);
@@ -91,12 +91,31 @@
       RM.forEach((sp, i) => SP[sp].b.forEach((b) => mkBond(rIdx[i][b[0]], rIdx[i][b[1]], b[2], rigidR.has(i) ? bondsS : bondsR)));
       PM.forEach((sp, j) => { if (!rigidP.has(j)) SP[sp].b.forEach((b) => mkBond(pIdx[j][b[0]], pIdx[j][b[1]], b[2], bondsP)); });
       /* 바닥판과 화살표 */
-      const plateMat = new THREE.MeshStandardMaterial({ color: 0xbcd4f5, roughness: 0.25, metalness: 0.1, transparent: true, opacity: 0.2, depthWrite: false });
-      if (!o.noPlate) [cxR, cxP].forEach((cx, k) => { const n = (k ? sP : sR).length, cols = n <= 1 ? 1 : n <= 4 ? 2 : 3, rows = Math.ceil(n / cols); const p = new THREE.Mesh(new THREE.BoxGeometry(Math.max(3.2, cols * spc + 0.8), 0.12, Math.max(3.2, rows * spc + 0.8)), plateMat); p.position.set(cx, -1.15, 0); grp.add(p); });
+      /* 반응 접시: 금속 받침 + 유리 윗면 + 빛나는 테두리 */
+      const trayBase = new THREE.MeshStandardMaterial({ color: 0x2a3650, roughness: 0.35, metalness: 0.65 });
+      const trayTop = [new THREE.MeshStandardMaterial({ color: 0x1d4f7a, roughness: 0.12, metalness: 0.2, emissive: 0x0b3b66, emissiveIntensity: 0.5, transparent: true, opacity: 0.88 }),
+        new THREE.MeshStandardMaterial({ color: 0x1e6b45, roughness: 0.12, metalness: 0.2, emissive: 0x0b4d2a, emissiveIntensity: 0.5, transparent: true, opacity: 0.88 })];
+      const edgeCol = [0x38bdf8, 0x4ade80];
+      if (!o.noPlate) [cxR, cxP].forEach((cx, k) => {
+        const n = (k ? sP : sR).length, cols = n <= 1 ? 1 : n <= 4 ? 2 : 3, rows = Math.ceil(n / cols);
+        const W = Math.max(3.2, cols * spc + 0.8), D = Math.max(3.2, rows * spc + 0.8), tg = new THREE.Group(); tg.position.set(cx, -1.15, 0);
+        const base = new THREE.Mesh(new THREE.BoxGeometry(W + 0.3, 0.22, D + 0.3), trayBase); base.position.y = -0.1; tg.add(base);
+        const top = new THREE.Mesh(new THREE.BoxGeometry(W, 0.06, D), trayTop[k]); top.position.y = 0.04; tg.add(top);
+        const ed = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(W, 0.06, D)), new THREE.LineBasicMaterial({ color: edgeCol[k] })); ed.position.y = 0.04; tg.add(ed);
+        for (let i = -1; i <= 1; i += 2) for (let j = -1; j <= 1; j += 2) { const ft = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.2, 0.16, 12), trayBase); ft.position.set(i * W / 2, -0.28, j * D / 2); tg.add(ft); }
+        grp.add(tg);
+      });
+      /* 반응 후 모습 미리보기(투명한 분자): 반응이 진행되면 흐려져요 */
+      const ghostMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.4, transparent: true, opacity: 0.3, depthWrite: false });
+      const ghostB = new THREE.MeshStandardMaterial({ color: 0xcfd8e6, roughness: 0.5, transparent: true, opacity: 0.3, depthWrite: false });
+      const ghostMats = [];
+      atoms.forEach((a) => { if (a.side !== 1) return; const gm = ghostMat.clone(); gm.color.setHex(COL[a.el]); ghostMats.push(gm); const m = new THREE.Mesh(sphG, gm); m.position.copy(a.P); m.scale.setScalar(RAD[a.el]); grp.add(m); });
+      PM.forEach((sp, j) => SP[sp].b.forEach((b) => { const gb = ghostB.clone(); ghostMats.push(gb); const m = new THREE.Mesh(cylG, gb); m.userData.r = 0.06 + 0.012 * (b[2] - 1); grp.add(m); setBond(m, atoms[pIdx[j][b[0]]].P, atoms[pIdx[j][b[1]]].P, 1); }));
       let esc = 0, p = 0;
       const tmpA = new THREE.Vector3(), tmpB = new THREE.Vector3();
       function set(pp) {
         p = pp;
+        const gop = 0.3 * (1 - smooth((p - 0.55) / 0.35)); ghostMats.forEach((g) => { g.opacity = gop; g.visible = gop > 0.01; });
         meshes.forEach((a, n) => {
           const d = ((n * 7) % 11) * 0.008;
           let t = smooth((p - 0.25 - d) / 0.45), s = 1;
@@ -121,7 +140,20 @@
       set(0);
       return { group: grp, set, setEsc, countR: count(RM), countP: count(PM), RM, PM, dispose() { parent.remove(grp); }, nLost: meshes.filter((a) => a.lost).length, nMade: meshes.filter((a) => a.made).length };
     }
-    return { COL, RAD, NAME, SP, smooth, mat, molGroup, makeRxn, atomMesh, setBond, bondMat, sphG, cylG };
+    /* 실험실 바닥 + 떠다니는 먼지 (장면이 비어 보이지 않게) */
+    function stage(root) {
+      const c = document.createElement('canvas'); c.width = c.height = 512; const x = c.getContext('2d');
+      const g = x.createRadialGradient(256, 256, 20, 256, 256, 256); g.addColorStop(0, '#2b3d5c'); g.addColorStop(0.6, '#182338'); g.addColorStop(1, '#0b1220'); x.fillStyle = g; x.fillRect(0, 0, 512, 512);
+      x.strokeStyle = 'rgba(120,170,255,.16)'; x.lineWidth = 1; for (let r = 40; r < 256; r += 36) { x.beginPath(); x.arc(256, 256, r, 0, 7); x.stroke(); }
+      for (let a = 0; a < 24; a++) { x.beginPath(); x.moveTo(256, 256); x.lineTo(256 + Math.cos(a / 24 * 6.283) * 256, 256 + Math.sin(a / 24 * 6.283) * 256); x.stroke(); }
+      const t = new THREE.CanvasTexture(c);
+      const fl = new THREE.Mesh(new THREE.CircleGeometry(15, 64), new THREE.MeshStandardMaterial({ map: t, roughness: 0.6, metalness: 0.3 })); fl.rotation.x = -Math.PI / 2; fl.position.y = -1.62; fl.receiveShadow = true; root.add(fl);
+      const N = 90, pos = new Float32Array(N * 3); for (let i = 0; i < N; i++) { pos[i * 3] = (Math.random() - 0.5) * 20; pos[i * 3 + 1] = -1.4 + Math.random() * 7; pos[i * 3 + 2] = (Math.random() - 0.5) * 12; }
+      const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      const pts = new THREE.Points(geo, new THREE.PointsMaterial({ color: 0x9fc4ff, size: 0.06, transparent: true, opacity: 0.45, depthWrite: false })); root.add(pts);
+      return { update(t) { pts.rotation.y = t * 0.02; pts.position.y = Math.sin(t * 0.3) * 0.1; } };
+    }
+    return { stage, COL, RAD, NAME, SP, smooth, mat, molGroup, makeRxn, atomMesh, setBond, bondMat, sphG, cylG };
   }
   /* 반응 전후 원자 수를 표로 */
   function countHtml(rc, pc) {
@@ -141,7 +173,7 @@
     autoRotate: 0,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
-      const K = ChemKit(THREE);
+      const K = ChemKit(THREE), stg = K.stage(root);
       let rx = null, sig = '', qd = 0, lastSV = null;
       const labB = label('반응 전', [-3.7, -1.1, 2.4], { color: 'rgba(14,165,233,.9)' }), labA = label('반응 후', [3.7, -1.1, 2.4], { color: 'rgba(34,197,94,.9)' });
       const arrow = new THREE.Group(); const am = new THREE.MeshStandardMaterial({ color: 0xffd34d, roughness: 0.4, emissive: 0x6b4a00, emissiveIntensity: 0.5 });
@@ -204,7 +236,7 @@
           const v = view(), S = ctx.lesson() || {};
           if (v.key !== sig) { sig = v.key; rebuild(v); }
           else if (v.sc === 'lab' && S.LAB && S.LAB.scaleVal !== lastSV) { lastSV = S.LAB.scaleVal; rebuild(v); }
-          arrow.position.x = Math.sin(t * 2.5) * 0.07;
+          stg.update(t); arrow.position.x = Math.sin(t * 2.5) * 0.07;
         },
       };
     },

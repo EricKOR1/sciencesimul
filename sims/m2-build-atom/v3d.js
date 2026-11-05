@@ -18,7 +18,7 @@
       const sm = () => window.__sim;
       const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.4, metalness: 0.05 }, o || {}));
       const geoP = new THREE.SphereGeometry(1, 32, 20);
-      const mP = mat(0xe2464b, { roughness: 0.35 }), mN = mat(0xaab3c2, { roughness: 0.5 }), mE = mat(0x4a78ff, { roughness: 0.25, emissive: 0x1b3aa8, emissiveIntensity: 0.55 });
+      const mP = new THREE.MeshPhysicalMaterial({ color: 0xe2464b, roughness: 0.3, clearcoat: 0.6, clearcoatRoughness: 0.25 }), mN = new THREE.MeshPhysicalMaterial({ color: 0xaab3c2, roughness: 0.45, clearcoat: 0.4 }), mE = mat(0x4a78ff, { roughness: 0.25, emissive: 0x1b3aa8, emissiveIntensity: 0.55 });
       const nuc = new THREE.Group(), shells = new THREE.Group(); root.add(nuc, shells);
       const halo = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 20), new THREE.MeshBasicMaterial({ color: 0xff8a8a, transparent: true, opacity: 0.12, depthWrite: false }));
       nuc.add(halo);
@@ -32,7 +32,18 @@
         const ring = new THREE.Mesh(new THREE.TorusGeometry(R[k], 0.018, 8, 128), new THREE.MeshBasicMaterial({ color: 0x9db6ff, transparent: true, opacity: 0.5 }));
         ring.rotation.x = Math.PI / 2; g.add(ring); rings.push(ring);
       }
-      for (let i = 0; i < 20; i++) { const m = new THREE.Mesh(geoP, mE); m.scale.setScalar(0.2); m.castShadow = true; shells.add(m); elM.push(m); }
+      const glowM = new THREE.MeshBasicMaterial({ color: 0x7aa2ff, transparent: true, opacity: 0.22, depthWrite: false, blending: THREE.AdditiveBlending });
+      for (let i = 0; i < 20; i++) { const m = new THREE.Mesh(geoP, mE); m.scale.setScalar(0.2); m.castShadow = true; const gl = new THREE.Mesh(geoP, glowM); gl.scale.setScalar(2.3); m.add(gl); shells.add(m); elM.push(m); }
+      // 전자 꼬리 (지나간 자리가 흐릿하게 남아요)
+      const NTR = 6, trail = new THREE.InstancedMesh(geoP, new THREE.MeshBasicMaterial({ color: 0x8fb0ff, transparent: true, opacity: 0.45, depthWrite: false, blending: THREE.AdditiveBlending }), 20 * NTR);
+      trail.frustumCulled = false; shells.add(trail);
+      const tmo = new THREE.Object3D();
+      // 전자 구름 껍질 (아주 옅은 투명 구) + 배경의 떠다니는 빛 알갱이
+      const clouds = R.map((r) => { const m = new THREE.Mesh(new THREE.SphereGeometry(r, 40, 28), new THREE.MeshBasicMaterial({ color: 0x6f95ff, transparent: true, opacity: 0.035, depthWrite: false, side: THREE.BackSide, blending: THREE.AdditiveBlending })); shells.add(m); return m; });
+      { const pos = []; let sd = 5; const rr = () => { sd = (sd * 16807) % 2147483647; return sd / 2147483647; };
+        for (let i = 0; i < 160; i++) { const u = rr() * 2 - 1, a = rr() * 6.283, r = 6 + rr() * 6, q = Math.sqrt(1 - u * u); pos.push(Math.cos(a) * q * r, u * r, Math.sin(a) * q * r); }
+        const bg = new THREE.BufferGeometry(); bg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); root.add(new THREE.Points(bg, new THREE.PointsMaterial({ color: 0x9fc0ff, size: 3, sizeAttenuation: false, transparent: true, opacity: 0.5 }))); }
+      let shellsShown = -1;
       let tiny = false, labs = true;
       let cur = { p: -1, n: -1, e: -1 }, sNuc = 1;
       const labNuc = label('원자핵 (+)', nuc, { offset: [0, 1.2, 0] });
@@ -92,6 +103,10 @@
             }
           }
           for (; idx < 20; idx++) elM[idx].visible = false;
+          { let ti = 0, l2 = e, kk2 = 0; for (let k = 0; k < 4; k++) { const cnt = Math.min(CAP[k], Math.max(0, l2)); l2 -= cnt; for (let j = 0; j < cnt; j++) { for (let tr = 1; tr <= NTR; tr++) { const a = ph[k] - tr * 0.1 + j / cnt * Math.PI * 2; const v = new THREE.Vector3(Math.cos(a) * R[k], 0, Math.sin(a) * R[k]).applyEuler(grp[k].rotation); tmo.position.copy(v); tmo.scale.setScalar(0.17 * (1 - tr / (NTR + 1))); tmo.updateMatrix(); trail.setMatrixAt(ti++, tmo.matrix); } } if (cnt > 0) kk2 = k + 1; }
+            tmo.scale.setScalar(0.0001); tmo.updateMatrix(); for (; ti < 20 * NTR; ) trail.setMatrixAt(ti++, tmo.matrix); trail.instanceMatrix.needsUpdate = true;
+            clouds.forEach((c, k) => { c.visible = k < kk2; });
+            const sh = Math.max(1, kk2); if (sh !== shellsShown) { shellsShown = sh; ctx.orbit.dist = [5.2, 6.6, 7.8, 8.8][sh - 1] * (PHN ? 1.35 : 1); } }
           if (e === 0) labE.show(false); else labE.show(labs);
           halo.material.opacity = 0.1 + 0.04 * Math.sin(t * 2);
         },

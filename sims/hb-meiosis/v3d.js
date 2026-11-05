@@ -40,7 +40,7 @@
   window.SciSim3D.attach({
     title: '감수 분열 3D (염색체 4개)',
     hint: '슬라이더로 시기를 옮겨 보세요 · 붉은색=어머니, 푸른색=아버지 쪽 염색체',
-    camera: { dist: narrow ? 14.5 : 11.5, theta: 0.35, phi: 0.95, min: 6, max: 22 },
+    camera: { dist: narrow ? 14.5 : 10.5, theta: 0.35, phi: 0.95, min: 6, max: 22 },
     levels: [1, 2],
     autoRotate: 0.08,
     build(ctx) {
@@ -51,9 +51,26 @@
       const kf = (arr, s) => { const i = Math.min(7, Math.floor(s)), f = sm(s - i); return arr[i] + (arr[i + 1] - arr[i]) * f; };
       const kv = (arr, s) => { const i = Math.min(7, Math.floor(s)), f = sm(s - i), a = arr[i], b = arr[i + 1]; return a.map((v, k) => v + (b[k] - v) * f); };
 
+      let envUpd = () => {};
       /* 세포 4개 + 핵 */
-      const cellM = std(0x9ec7ff, { transparent: true, opacity: 0.16, depthWrite: false, roughness: 0.15, side: THREE.DoubleSide });
-      const cells = CELL.map(() => { const m = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), cellM); m.renderOrder = 1; root.add(m); return m; });
+      const cellM = new THREE.MeshPhysicalMaterial({ color: 0x9ec7ff, transparent: true, opacity: 0.17, depthWrite: false, roughness: 0.1, clearcoat: 1, clearcoatRoughness: 0.1, side: THREE.DoubleSide });
+      const mitoM = std(0xf59e4b, { roughness: 0.4, transparent: true, opacity: 0.9 }), erM2 = std(0xc9b6f2, { roughness: 0.5 });
+      const cells = CELL.map((_, ci) => { const m = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), cellM); m.renderOrder = 1; root.add(m);
+        for (let k = 0; k < 7; k++) { const a = k * 2.399 + ci, y = 1 - (k + 0.5) * 2 / 7, rr = Math.sqrt(1 - y * y), d = 0.78 + 0.06 * (k % 2); const o = new THREE.Mesh(new THREE.SphereGeometry(1, 14, 10), k % 3 ? mitoM : erM2); o.scale.set(0.11, 0.055, 0.055); o.position.set(Math.cos(a) * rr * d, y * d * 0.9, Math.sin(a) * rr * d); o.rotation.set(a, a * 1.3, a * 0.7); m.add(o); }
+        return m; });
+      /* 배양 접시 + 떠다니는 알갱이 (현미경 시야) */
+      (function () {
+        const glass = new THREE.MeshPhysicalMaterial({ color: 0xcfe6ff, transparent: true, opacity: 0.16, roughness: 0.05, clearcoat: 1, depthWrite: false });
+        const dish = new THREE.Mesh(new THREE.CylinderGeometry(6.8, 6.8, 0.3, 72), glass); dish.position.y = -5.6; root.add(dish);
+        const med = new THREE.Mesh(new THREE.CylinderGeometry(6.6, 6.6, 0.5, 72), new THREE.MeshPhysicalMaterial({ color: 0x5fb3a0, transparent: true, opacity: 0.18, roughness: 0.1, depthWrite: false })); med.position.y = -5.3; root.add(med);
+        const rim = new THREE.Mesh(new THREE.TorusGeometry(6.8, 0.1, 10, 90), new THREE.MeshPhysicalMaterial({ color: 0xe8f1ff, roughness: 0.15, clearcoat: 1, transparent: true, opacity: 0.8 })); rim.rotation.x = Math.PI / 2; rim.position.y = -5.45; root.add(rim);
+        const c = document.createElement('canvas'); c.width = c.height = 256; const x = c.getContext('2d'); const gr = x.createRadialGradient(128, 128, 4, 128, 128, 126); gr.addColorStop(0, 'rgba(160,215,255,.38)'); gr.addColorStop(1, 'rgba(40,70,140,0)'); x.fillStyle = gr; x.fillRect(0, 0, 256, 256);
+        const gl = new THREE.Mesh(new THREE.CircleGeometry(6.4, 64), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthWrite: false })); gl.rotation.x = -Math.PI / 2; gl.position.y = -5.0; root.add(gl);
+        const N = 70, dots = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 8, 6), new THREE.MeshBasicMaterial({ color: 0xb8dcff, transparent: true, opacity: 0.3 }), N), dm = new THREE.Object3D();
+        const P0 = Array.from({ length: N }, (_, i) => { const r = (k) => { const v = Math.sin(i * 12.9898 + k * 78.233) * 43758.5453; return v - Math.floor(v); }; return { x: (r(1) - 0.5) * 16, y: -3.5 + r(2) * 9, z: (r(3) - 0.5) * 16, s: 0.03 + r(4) * 0.06, ph: r(5) * 6.28, sp: 0.15 + r(6) * 0.3 }; });
+        dots.frustumCulled = false; root.add(dots);
+        envUpd = (t) => { P0.forEach((q, i) => { dm.position.set(q.x + Math.sin(t * q.sp + q.ph) * 0.5, q.y + Math.cos(t * q.sp * 1.3 + q.ph) * 0.4, q.z); dm.scale.setScalar(q.s); dm.updateMatrix(); dots.setMatrixAt(i, dm.matrix); }); dots.instanceMatrix.needsUpdate = true; };
+      })();
       const nuc = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 28), std(0xd6b6ff, { transparent: true, opacity: 0.2, depthWrite: false, roughness: 0.2 })); nuc.renderOrder = 1; root.add(nuc);
 
       /* 염색 분체 (가운데가 잘록한 막대) */
@@ -143,6 +160,7 @@
           const pa = proc === 'mit' ? pm : pl, NS2 = proc === 'mit' ? 5 : 9;
           if (pa.playing) { tgt = Math.min(NS2 - 1, pa.p * NS2); rng.set(tgt); push2D(); } else { auto = false; }
           { const L = L2(); if (L && L.S.mode !== 'cmp' && !pa.playing && L.S.f !== seen2D) { seen2D = L.S.f; tgt = Math.min(maxS(), L.S.f); rng.set(tgt); } }
+          envUpd(t);
           s += (tgt - s) * Math.min(1, dt * (auto ? 6 : 4)); if (Math.abs(tgt - s) < 0.001) s = tgt;
           const ss = Math.min(maxS(), Math.max(0, s));
           if (proc === 'mit') { mitFrame(ss); return; }
@@ -166,10 +184,10 @@
           const dm = new THREE.Object3D(); for (let i = 0; i < 6; i++) { if (i < poles.length) { dm.position.copy(poles[i]); dm.scale.setScalar(1); } else { dm.position.set(0, -99, 0); dm.scale.setScalar(0.001); } dm.updateMatrix(); poleI.setMatrixAt(i, dm.matrix); }
           poleI.instanceMatrix.needsUpdate = true;
           // 이름표
-          const v2 = ss > 2.0 && ss < 3.7; lab2.show(v2); if (v2) { lab2.obj = [-0.0, 2.2, 0]; lab2.off = [0, 0, 0]; }
+          const v2 = ss > 2.0 && ss < 3.7; lab2.show(v2); if (v2) { lab2.obj = chrs[0].outer; lab2.off = [0, 1.45, 0.2]; }
           labS.show(wI > 0.6 || wII > 0.6); labS.obj = wI > 0.6 ? [2.6, 0.2, 0] : [2.5, 0.2, 1.6]; labS.off = [0, 0, 0];
           labN.show(ss > 0.3 && ss < 1.8); labN.obj = [0, 2.3, 0]; labN.off = [0, 0, 0];
-          const vh = ss < 2.0; labH.show(vh && ss > 1.0); labH.obj = [0.1, 1.9, 0.0]; labH.off = [0, 0, 0];
+          const vh = ss < 2.0; labH.show(vh && ss > 1.0); labH.obj = chrs[1].outer; labH.off = [0, 1.45, 0.2];
           const key = Math.round(ss) + nd;
           if (key !== lastKey) { lastKey = key; const S = STAGES[Math.round(ss)]; info('<b>' + S.n + '</b>: ' + S.t + '<br>' + S.c + (nd && ss > 3.4 ? '<br><span style="color:#fcd34d">염색체 비분리: 상동 염색체가 같은 쪽으로 이동해 생식세포의 염색체 수가 n+1(3개) / n−1(1개)이 돼요.</span>' : '') + (S0 && S0.mode === 'cmp' ? '<br><small>비교표는 2D에서 채워요. 위에서 두 분열을 번갈아 봐요.</small>' : '')); }
         },

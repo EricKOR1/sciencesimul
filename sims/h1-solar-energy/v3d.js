@@ -135,12 +135,30 @@
         mHlab.show(!fused); mHelab.show(fused); mElab.show(p >= 0.55); mElab.obj = [0, 1.7, 0];
       }
 
+      // ---- 환경: 별이 있는 배경 · 받침판 · 자석 고리(융합 장치) · 플라스마 알갱이 · 지구 대기와 구름
+      { const sa = [], sc = []; let sd = 4242; const rr = () => { sd = (sd * 1664525 + 1013904223) >>> 0; return sd / 4294967296; };
+        for (let i = 0; i < 600; i++) { const v = new V3(rr() - 0.5, rr() - 0.5, rr() - 0.5).normalize().multiplyScalar(28 + rr() * 6); sa.push(v.x, v.y, v.z); const c = 0.5 + rr() * 0.5; sc.push(c, c * 0.95, c * 0.85); }
+        const sgm = new THREE.BufferGeometry(); sgm.setAttribute('position', new THREE.Float32BufferAttribute(sa, 3)); sgm.setAttribute('color', new THREE.Float32BufferAttribute(sc, 3));
+        root.add(new THREE.Points(sgm, new THREE.PointsMaterial({ size: 0.15, vertexColors: true, sizeAttenuation: true, transparent: true, opacity: 0.85, depthWrite: false }))); }
+      function plate(grp, y, r) { const p = new THREE.Mesh(new THREE.CylinderGeometry(r, r + 0.2, 0.22, 72), mat(0x141c30, { roughness: 0.6, metalness: 0.3 })); p.position.y = y; grp.add(p);
+        [r - 0.1, r * 0.66, r * 0.33].forEach((rad, k) => { const t = new THREE.Mesh(new THREE.TorusGeometry(rad, 0.025, 8, 96), new THREE.MeshBasicMaterial({ color: k % 2 ? 0xff9a3c : 0xffd24a })); t.rotation.x = Math.PI / 2; t.position.y = y + 0.12; grp.add(t); }); }
+      plate(gFu, -BOX - 0.5, 2.6); plate(gMa, -2.7, 3.3);
+      [-0.95, 0, 0.95].forEach((y) => { const c = new THREE.Mesh(new THREE.TorusGeometry(BOX * 1.3, 0.05, 12, 64), mat(0xc77b3a, { metalness: 0.85, roughness: 0.28 })); c.rotation.x = Math.PI / 2; c.position.y = y * BOX * 0.9; gFu.add(c); });
+      [[1, 1], [-1, 1], [1, -1], [-1, -1]].forEach((q) => { const post = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, BOX * 2.2, 10), mat(0x9aa7bd, { metalness: 0.8, roughness: 0.3 })); post.position.set(q[0] * BOX * 1.3 * 0.72, 0, q[1] * BOX * 1.3 * 0.72); gFu.add(post); });
+      const glass = new THREE.Mesh(new THREE.BoxGeometry(BOX * 2, BOX * 2, BOX * 2), new THREE.MeshPhysicalMaterial({ color: 0xffc58a, transparent: true, opacity: 0.07, roughness: 0.05, depthWrite: false, side: THREE.DoubleSide })); gFu.add(glass);
+      const NPL = 90, plasma = new THREE.InstancedMesh(new THREE.SphereGeometry(0.04, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffb36b, transparent: true, opacity: 0.55 }), NPL); gFu.add(plasma);
+      const plD = []; for (let i = 0; i < NPL; i++) plD.push({ p: new V3((Math.random() * 2 - 1) * BOX * 0.95, (Math.random() * 2 - 1) * BOX * 0.95, (Math.random() * 2 - 1) * BOX * 0.95), v: rv().multiplyScalar(0.5 + Math.random() * 0.8) });
+      const plO = new THREE.Object3D();
+
       /* ================= ③ 지구의 에너지 흐름 ================= */
       const gEa = new THREE.Group(); root.add(gEa);
       const sun3 = new THREE.Mesh(new THREE.SphereGeometry(1.8, 40, 28), new THREE.MeshStandardMaterial({ color: 0xffb62a, emissive: 0xff9410, emissiveIntensity: 0.9, roughness: 0.8 })); sun3.position.set(-5.2, 0, 0); gEa.add(sun3);
       const sg = new THREE.Sprite(glowMat(0.7)); sg.scale.set(9, 9, 1); sg.position.copy(sun3.position); gEa.add(sg);
       const ec = document.createElement('canvas'); ec.width = 256; ec.height = 128; { const g = ec.getContext('2d'); g.fillStyle = '#2f7fd8'; g.fillRect(0, 0, 256, 128); g.fillStyle = '#4caf6a'; let sd = 7; const rn = () => { sd = (sd * 16807) % 2147483647; return sd / 2147483647; }; for (let i = 0; i < 16; i++) { const x = rn() * 256, y = 20 + rn() * 88; for (let j = 0; j < 7; j++) { g.beginPath(); g.ellipse(x + (rn() - 0.5) * 30, y + (rn() - 0.5) * 18, 6 + rn() * 16, 4 + rn() * 9, rn() * 3, 0, 7); g.fill(); } } g.fillStyle = '#f2f6fa'; g.fillRect(0, 0, 256, 7); g.fillRect(0, 121, 256, 7); }
       const earth = new THREE.Mesh(new THREE.SphereGeometry(0.75, 36, 24), new THREE.MeshStandardMaterial({ map: new THREE.CanvasTexture(ec), roughness: 0.7 })); earth.position.set(1.4, 0, 0); gEa.add(earth);
+      const eAtm = new THREE.Mesh(new THREE.SphereGeometry(0.84, 36, 24), new THREE.MeshBasicMaterial({ color: 0x7ab8ff, transparent: true, opacity: 0.16, side: THREE.BackSide, depthWrite: false })); eAtm.position.copy(earth.position); gEa.add(eAtm);
+      const eCl = new THREE.Mesh(new THREE.SphereGeometry(0.775, 36, 24), new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.2, roughness: 1, depthWrite: false })); eCl.position.copy(earth.position); gEa.add(eCl);
+      const sCor = new THREE.Sprite(glowMat(0.5)); sCor.scale.set(13, 13, 1); sCor.position.copy(sun3.position); gEa.add(sCor);
       const beads = []; for (let i = 0; i < 60; i++) { const b = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffe14d })); b.userData = { dir: rv(), ph: Math.random(), sp: 0.12 + Math.random() * 0.1 }; b.userData.dir.x = Math.abs(b.userData.dir.x) * 0.55 + 0.6; b.userData.dir.y *= 0.5; b.userData.dir.z *= 0.5; b.userData.dir.normalize(); gEa.add(b); beads.push(b); }
       const eaLab = [label('☀ 태양', sun3, { size: 12.5, offset: [0, 2.3, 0] }), label('지구', earth, { size: 12.5, offset: [0, -1.1, 0] }), label('지구에 닿는 양: 태양이 내보내는 에너지의 약 20억분의 1', [-1.6, -2.7, 0], { size: 12 })];
       const PCOL = [0xef4444, 0x38bdf8, 0x94a3b8, 0x22d3ee, 0x22c55e];
@@ -204,6 +222,7 @@
             const p0 = ps[0]; pLab.obj = p0 && p0.kind === 'p' ? p0.g : (ps.find((q) => q.kind === 'p') || { g: null }).g; pLab.show(!!pLab.obj && phase === 'run');
             const he = ps.find((q) => q.kind === 'he'); if (he) { heLab.obj = he.g; heLab.off = [0, 0.95, 0]; enLab.obj = he.g; enLab.off = [1.1, -0.4, 0]; }
             hot.material.opacity = 0.18 + 0.14 * (st.T / 2000);
+            { const sp = 0.4 + st.T / 1000; for (let i = 0; i < NPL; i++) { const d = plD[i]; d.p.addScaledVector(d.v, dt * sp); ['x', 'y', 'z'].forEach((k) => { if (Math.abs(d.p[k]) > BOX * 0.97) { d.p[k] = Math.sign(d.p[k]) * BOX * 0.97; d.v[k] *= -1; } }); plO.position.copy(d.p); plO.updateMatrix(); plasma.setMatrixAt(i, plO.matrix); } plasma.instanceMatrix.needsUpdate = true; }
           } else if (st.scene === 'mass') {
             // 2D에서 융합시키면 3D도 같은 진행으로 따라가요
             const fz = S && S.fz, key = SS ? (SS.fuseT >= 0 ? (SS.fuseDone ? 'd' : 'r') : 'n') : '';
@@ -225,7 +244,7 @@
             const si = st.sel;
             setInfo(si >= 0 ? '<b>' + PTH[si] + '</b> (' + PSUB[si] + '): 지구에 온 에너지 100 중 <b>' + PV[si] + '</b><br>' + (S && S.PATHS ? S.PATHS[si].note : '') : '태양이 내보내는 에너지 중 지구에 닿는 것은 <b>약 20억분의 1</b>이에요. 지구에 온 에너지를 100으로 놓고, 반사 30 · 흡수 70이 열·증발·바람·해류·광합성으로 가요.<br>길을 눌러 보세요.');
             beads.forEach((b) => { const u = b.userData, k = (t * u.sp + u.ph) % 1; b.position.copy(sun3.position).addScaledVector(u.dir, 1.8 + k * 7.2); });
-            earth.rotation.y = t * 0.5; sg.material.opacity = 0.6 + Math.sin(t * 2) * 0.05;
+            earth.rotation.y = t * 0.5; eCl.rotation.y = t * 0.62; sg.material.opacity = 0.6 + Math.sin(t * 2) * 0.05;
           }
         },
         sync() {},

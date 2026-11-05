@@ -83,7 +83,7 @@
   window.SciSim3D.attach({
     title: '이중 슬릿 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: 21 * KD, theta: -0.8, phi: 0.92, min: 8, max: 36, target: [0.6, 0.6, 0] },
+    camera: { dist: 23.5 * KD, theta: -0.8, phi: 0.92, min: 8, max: 36, target: [0.6, 0.6, 0] },
     autoRotate: 0,
     build(ctx) {
       const { THREE, controls } = ctx;
@@ -99,7 +99,7 @@
         K.pls.push({ sc, p, row }); row.style.display = sc === K.cur ? '' : 'none'; return p;
       };
       const newScene = (k) => { const g = new THREE.Group(); g.visible = false; ctx.root.add(g); G[k] = g; return g; };
-      const CAMS = { main: { dist: 21 * KD, theta: -0.8, phi: 0.92, min: 8, max: 36, tx: 0.6, ty: 0.6, tz: 0 } };
+      const CAMS = { main: { dist: 23.5 * KD, theta: -0.8, phi: 0.92, min: 8, max: 36, tx: 0.6, ty: 0.6, tz: 0 } };
       const info = (hh) => ctx.info(hh);
       const h = H3(ctx); const { V3, mat, glass, anchor, sphere, box, cyl, tube, grab, toggleBtn } = h;
       function setScene(k) {
@@ -116,7 +116,20 @@
       const XS = -6.2, XB = -1.2, XD = 5.8, ZS = 0.6;                         // 총 · 슬릿벽 · 스크린 위치, 슬릿 위치(±)
       const NB = 60, ZR = 3.0, BW = 2 * ZR / NB, SH = 2.4;                      // 막대 수 · 스크린 반폭 · 막대 폭 · 스크린 반높이
       /* 총 */
-      const gun = new THREE.Group(); const gb = cyl(0.55, 0.7, 1.6, 0x4b5563, { metalness: 0.6, roughness: 0.35 }, 28); gb.rotation.z = Math.PI / 2; const gt = sphere(0.32, 0xffffff, { emissive: 0xffe9a8, emissiveIntensity: 0.9 }); gt.position.x = 0.85; gun.add(gb, gt); gun.position.set(XS - 0.8, 0, 0); root.add(gun);
+      const gun = new THREE.Group(); const gb = cyl(0.55, 0.7, 1.6, 0x4b5563, { metalness: 0.6, roughness: 0.35 }, 28); gb.rotation.z = Math.PI / 2; const gt = sphere(0.32, 0xffffff, { emissive: 0xffe9a8, emissiveIntensity: 0.9 }); gt.position.x = 0.85; gun.add(gb, gt); [0.2, 0.55, -0.15].forEach((x, i) => { const cl = new THREE.Mesh(new THREE.TorusGeometry(0.76 - i * 0.02, 0.06, 8, 28), mat(0xc9894a, { metalness: 0.85, roughness: 0.3 })); cl.rotation.y = Math.PI / 2; cl.position.x = x - 0.1; gun.add(cl); }); { const cb = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new V3(-0.9, 0.2, 0), new V3(-1.6, 0.9, 0.8), new V3(-2.4, -1.4, 1.4), new V3(-3.0, -SH - 0.6 + 0.9, 1.4)]), 30, 0.07, 8, false), mat(0x111827, { roughness: 0.6 })); gun.add(cb); }
+      gun.position.set(XS - 0.8, 0, 0); root.add(gun);
+      /* ----- 실험 환경: 광학 테이블 · 진공관 · 받침 ----- */
+      const ctex = (w, hh, draw, rx, ry) => { const c = document.createElement('canvas'); c.width = w; c.height = hh; draw(c.getContext('2d'), w, hh); const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; if (rx) t.repeat.set(rx, ry || rx); if ('encoding' in t) t.encoding = THREE.sRGBEncoding; t.anisotropy = 4; return t; };
+      const holeTex = ctex(64, 64, (g, w, hh) => { g.fillStyle = '#39414f'; g.fillRect(0, 0, w, hh); g.fillStyle = '#12161d'; for (let x = 8; x < w; x += 16) for (let y = 8; y < hh; y += 16) { g.beginPath(); g.arc(x, y, 3, 0, 6.3); g.fill(); } g.strokeStyle = 'rgba(255,255,255,.08)'; g.strokeRect(0, 0, w, hh); }, 14, 6);
+      const TY = -SH - 0.6;
+      const otab = new THREE.Mesh(new THREE.BoxGeometry(20, 0.4, 8.5), mat(0xffffff, { map: holeTex, metalness: 0.6, roughness: 0.45 })); otab.position.set(-0.2, TY - 0.2, 0); otab.receiveShadow = true; root.add(otab);
+      const oedge = new THREE.Mesh(new THREE.BoxGeometry(20.1, 0.12, 8.6), mat(0x1e293b, { metalness: 0.5, roughness: 0.5 })); oedge.position.set(-0.2, TY - 0.32, 0); root.add(oedge);
+      [[-8.6, 3.4], [8.2, 3.4], [-8.6, -3.4], [8.2, -3.4]].forEach((q) => { const lg = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.28, 2.2, 14), mat(0x475569, { metalness: 0.6, roughness: 0.4 })); lg.position.set(q[0], TY - 1.4, q[1]); root.add(lg); });
+      { const pm = mat(0xcbd5e1, { metalness: 0.85, roughness: 0.28 });
+        const post = (x, z, top) => { const pst = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, top - TY, 14), pm); pst.position.set(x, (top + TY) / 2, z); root.add(pst); const bs = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.12, 1.0), mat(0x1f2937, { metalness: 0.6, roughness: 0.4 })); bs.position.set(x, TY + 0.06, z); root.add(bs); };
+        post(XS - 0.8, 0, -0.75); post(XB, ZR + 0.3, -SH - 0.4); post(XB, -ZR - 0.3, -SH - 0.4); post(XD + 0.1, ZR + 0.15, -SH - 0.1); post(XD + 0.1, -ZR - 0.15, -SH - 0.1); }
+      const tubeG = new THREE.Mesh(new THREE.CylinderGeometry(3.7, 3.7, XD - XS + 1.4, 40, 1, true), new THREE.MeshStandardMaterial({ color: 0xbfd8ff, transparent: true, opacity: 0.05, roughness: 0.1, side: THREE.DoubleSide, depthWrite: false })); tubeG.rotation.z = Math.PI / 2; tubeG.position.set((XD + XS) / 2 - 0.1, 0, 0); root.add(tubeG);
+      [XS - 0.6, XD - 0.2].forEach((x) => { const fl = new THREE.Mesh(new THREE.TorusGeometry(3.7, 0.05, 8, 56), mat(0x94a3b8, { metalness: 0.85, roughness: 0.3 })); fl.rotation.y = Math.PI / 2; fl.position.set(x, 0, 0); root.add(fl); });
       /* 슬릿벽 (틈 두 개) */
       const wallM = mat(0x8793a8, { metalness: 0.5, roughness: 0.4 });
       const sw = 0.3;
@@ -127,6 +140,7 @@
       /* 스크린 */
       const screen = new THREE.Mesh(new THREE.BoxGeometry(0.12, 2 * SH, 2 * ZR), mat(0x1e2740, { roughness: 0.8, emissive: 0x16203a, emissiveIntensity: 0.6 })); screen.position.set(XD, 0, 0); root.add(screen);
       const frame = new THREE.Mesh(new THREE.BoxGeometry(0.2, 2 * SH + 0.15, 2 * ZR + 0.15), mat(0x64748b, { roughness: 0.5, metalness: 0.4 })); frame.position.set(XD + 0.08, 0, 0); root.add(frame);
+      { const pl = new THREE.Mesh(new THREE.PlaneGeometry(2 * ZR, 2 * SH), new THREE.MeshBasicMaterial({ color: 0x9fb6ff, transparent: true, opacity: 0.05, depthWrite: false, side: THREE.DoubleSide })); pl.rotation.y = Math.PI / 2; pl.position.set(XD - 0.08, 0, 0); root.add(pl); }
       /* 점과 막대그래프 */
       const MAXD = 2200, dots = new THREE.InstancedMesh(new THREE.SphereGeometry(0.075, 10, 8), mat(0xfff0a0, { emissive: 0xffd24d, emissiveIntensity: 0.9, roughness: 0.3 }), MAXD); dots.count = 0; root.add(dots);
       const barG = new THREE.BoxGeometry(1, 1, 1); barG.translate(0, 0.5, 0);
@@ -213,6 +227,7 @@
       const gD = newScene('dbl'); CAMS.dbl = { dist: PHN ? 28 : 14.5, theta: 0.0, phi: 1.02, min: 7, max: 40, tx: 0, ty: 0.4, tz: 0.3 };
       const RX0 = -5.6, RX1 = 5.6, RZ = 2.4, RY = -1.8, lamX = (l) => RX0 + (Math.min(-7, Math.max(-35, Math.log10(l))) + 35) / 28 * (RX1 - RX0);
       const thrX = lamX(1e-6 * 1e-7);
+      { const bsl = stdM(13, 0.25, 1.4, 0x334155, { metalness: 0.5, roughness: 0.5 }); bsl.position.set(0, RY - 0.22, RZ); gD.add(bsl); const tb2 = new THREE.Mesh(new THREE.BoxGeometry(11.5, 0.3, 4.2), mat(0xffffff, { map: holeTex, metalness: 0.6, roughness: 0.45 })); tb2.position.set(-0.8, 2.3 - 0.18, -1.2); gD.add(tb2); }
       const rR = stdM(thrX - RX0 + 0.3, 0.2, 0.7, 0xe2464b, { emissive: 0xe2464b, emissiveIntensity: 0.25 }); rR.position.set((RX0 - 0.3 + thrX) / 2, RY, RZ); gD.add(rR);
       const rG = stdM(RX1 + 0.3 - thrX, 0.2, 0.7, 0x50dc8c, { emissive: 0x50dc8c, emissiveIntensity: 0.25 }); rG.position.set((thrX + RX1 + 0.3) / 2, RY, RZ); gD.add(rG);
       const thrM = stdM(0.07, 1.6, 0.7, 0xffd166, { emissive: 0xffd166, emissiveIntensity: 0.6 }); thrM.position.set(thrX, RY + 0.8, RZ); gD.add(thrM);

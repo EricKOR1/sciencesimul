@@ -8,7 +8,7 @@
     const COL = { H: 0xf3f6fb, C: 0x8a93a3, N: 0x4f7cff, O: 0xf0524f, F: 0x9be36b, Cl: 0x34c759, Na: 0xb07cf5, B: 0xf4a6a6, S: 0xf5c518, Cu: 0xe08a3c, Ca: 0x6fd0c4, e: 0xffd34d };
     const RAD = { H: 0.26, C: 0.38, N: 0.37, O: 0.36, F: 0.32, Cl: 0.48, Na: 0.5, B: 0.36, S: 0.48, Cu: 0.5, Ca: 0.55 };
     const mats = {};
-    const mat = (k) => mats[k] || (mats[k] = new THREE.MeshStandardMaterial({ color: COL[k] !== undefined ? COL[k] : k, roughness: 0.36, metalness: 0.06 }));
+    const mat = (k) => mats[k] || (mats[k] = new THREE.MeshPhysicalMaterial({ color: COL[k] !== undefined ? COL[k] : k, roughness: 0.3, metalness: 0.05, clearcoat: 0.7, clearcoatRoughness: 0.25 }));
     const SG = new THREE.SphereGeometry(1, 28, 20);
     const CG = new THREE.CylinderGeometry(1, 1, 1, 16);
     const stickMat = new THREE.MeshStandardMaterial({ color: 0xc3ccdd, roughness: 0.45, metalness: 0.1 });
@@ -84,7 +84,8 @@
     camera: { dist: phone ? 6.4 : 5.8, theta: 0.6, phi: 1.15, min: 3, max: 20 },
     autoRotate: 0.2,
     build(ctx) {
-      const { THREE, root, label, info, controls } = ctx;
+      const { THREE, root, label, info, controls, orbit } = ctx;
+      let lastSc = '';
       const L = makeLib(THREE);
       const V = L.V, clamp = (x, a, b) => Math.max(a, Math.min(b, x)), sm = L.sstep;
       Object.assign(L.COL, { Be: 0xc2ff00, P: 0xff8000, Mg: 0x8aff00, O: 0xf0524f }); Object.assign(L.RAD, { Be: 0.4, P: 0.46, Mg: 0.55 });
@@ -106,6 +107,16 @@
         PCl3: [['P', 0, 0.45, 0], ['Cl', 1.6, -0.3, 0], ['Cl', -0.8, -0.3, 1.386], ['Cl', -0.8, -0.3, -1.386]],
         CCl4: [['C', 0, 0, 0]].concat(T4.map((t) => ['Cl', t[0] * 1.2, t[1] * 1.2, t[2] * 1.2])),
       };
+      /* 받침대: 은은한 빛무리가 있는 원판 + 눈금 고리 */
+      (function () {
+        const c = document.createElement('canvas'); c.width = c.height = 256; const x = c.getContext('2d');
+        const gr = x.createRadialGradient(128, 128, 8, 128, 128, 126); gr.addColorStop(0, 'rgba(120,160,255,.38)'); gr.addColorStop(0.55, 'rgba(60,90,170,.28)'); gr.addColorStop(1, 'rgba(20,30,70,0)');
+        x.fillStyle = gr; x.fillRect(0, 0, 256, 256); x.strokeStyle = 'rgba(180,205,255,.35)'; x.lineWidth = 1.5;
+        [40, 70, 100, 124].forEach((r) => { x.beginPath(); x.arc(128, 128, r, 0, 7); x.stroke(); });
+        const tex = new THREE.CanvasTexture(c);
+        const f = new THREE.Mesh(new THREE.CircleGeometry(3.0, 64), new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false })); f.rotation.x = -Math.PI / 2; f.position.y = -1.45; root.add(f);
+        const rim = new THREE.Mesh(new THREE.TorusGeometry(1.3, 0.015, 6, 90), new THREE.MeshBasicMaterial({ color: 0x9ec5ff, transparent: true, opacity: 0.45 })); rim.rotation.x = Math.PI / 2; rim.position.y = -1.44; root.add(rim);
+      })();
       const g = new THREE.Group(); root.add(g);
       const lbl = []; for (let i = 0; i < 6; i++) { const l = label('', [0, 0, 0], { size: 12.5 }); l.show(false); lbl.push(l); }
       const eM = [new THREE.MeshStandardMaterial({ color: 0xffd34d, emissive: 0xffa800, emissiveIntensity: 0.8, roughness: 0.3 }), new THREE.MeshStandardMaterial({ color: 0x5de2ff, emissive: 0x00a8d8, emissiveIntensity: 0.8, roughness: 0.3 })];
@@ -170,7 +181,7 @@
       const ELR = { Na: 0.55, Mg: 0.5, Cl: 0.62, O: 0.5 };
       const VAL = { Na: 1, Mg: 2, Cl: 7, O: 6 };
       let ionSig = '', ionE = [], ionNM = null, ionMs = [], ionNeed = 0;
-      const SLOT = [[1, 1, 1], [-1, 1, 1], [1, -1, 1], [-1, -1, 1], [1, 1, -1], [-1, 1, -1], [1, -1, -1], [-1, -1, -1]].map((s) => V(s[0], s[1], s[2]).normalize());
+      const SLOT0 = 0;
       function buildIon(d) {
         L.clear(gi); ionE = []; ionMs = []; ionAtoms.length = 0;
         const nm = d.nm, nmX = (d.xs[1] - 0.5) * 7.5;
@@ -216,8 +227,33 @@
       const SYM = [null, 'H', 'He', 'Li', 'Be', 'B', 'C', 'N', 'O', 'F', 'Ne', 'Na', 'Mg', 'Al', 'Si', 'P', 'S', 'Cl', 'Ar'];
       const valOfZ = (z) => (z <= 2 ? z : z <= 10 ? z - 2 : z - 10);
       const ga = new THREE.Group(); root.add(ga);
-      const aNuc = new THREE.Mesh(L.SG, new THREE.MeshStandardMaterial({ color: 0x8a93a3, roughness: 0.35 })); aNuc.scale.setScalar(0.7); ga.add(aNuc);
-      const aDots = []; for (let i = 0; i < 8; i++) { const d = dot(SLOT[i].clone().multiplyScalar(1.0), 0); d.visible = false; ga.add(d); aDots.push(d); }
+      const aNuc = new THREE.Group(); ga.add(aNuc);
+      const MASS = [0, 1, 4, 7, 9, 11, 12, 14, 16, 19, 20, 23, 24, 27, 28, 31, 32, 35, 40];
+      const pMat = new THREE.MeshStandardMaterial({ color: 0xef5350, roughness: 0.35 }), nMat = new THREE.MeshStandardMaterial({ color: 0xb0b8c4, roughness: 0.4 });
+      let nucZ = 0;
+      function buildNuc(z) {
+        L.clear(aNuc); const A = MASS[z] || z * 2, N = A, r = 0.07;
+        const R = r * Math.cbrt(N) * 1.25;
+        for (let i = 0; i < N; i++) {
+          const y = N === 1 ? 0 : 1 - 2 * (i + 0.5) / N, rr = Math.sqrt(Math.max(0, 1 - y * y)), th = i * 2.399963, k = N === 1 ? 0 : R * (0.55 + 0.45 * ((i * 7) % 5) / 4);
+          const m = new THREE.Mesh(L.SG, i % Math.max(1, Math.round(A / Math.max(1, z))) === 0 || i < z * 0 ? pMat : nMat);
+          m.scale.setScalar(r * 1.15); m.position.set(Math.cos(th) * rr * k, y * k, Math.sin(th) * rr * k); aNuc.add(m);
+        }
+        // 양성자 z개를 고르게 칠하기
+        let pc = 0; aNuc.children.forEach((m, i) => { const isP = Math.floor((i + 1) * z / A) > Math.floor(i * z / A); m.material = isP ? pMat : nMat; if (isP) pc++; });
+      }
+      const coreRings = [], coreE = [];
+      const shell = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 28), new THREE.MeshStandardMaterial({ color: 0x9ec5ff, transparent: true, opacity: 0.07, roughness: 0.1, depthWrite: false, side: THREE.DoubleSide })); ga.add(shell);
+      const eq = new THREE.Mesh(new THREE.TorusGeometry(1, 0.008, 6, 90), new THREE.MeshBasicMaterial({ color: 0xcfe0ff, transparent: true, opacity: 0.55 })); eq.rotation.x = Math.PI / 2; ga.add(eq);
+      [0.5, 0.78].forEach((rad) => { const t = new THREE.Mesh(new THREE.TorusGeometry(rad, 0.007, 6, 80), new THREE.MeshBasicMaterial({ color: 0x8fb4e8, transparent: true, opacity: 0.5 })); t.rotation.x = Math.PI / 2; t.visible = false; ga.add(t); coreRings.push(t); });
+      for (let i = 0; i < 10; i++) { const e = dot(V(0, 0, 0), 1); e.visible = false; ga.add(e); coreE.push(e); }
+      const slotM = new THREE.MeshStandardMaterial({ color: 0xffd34d, transparent: true, opacity: 0.22, depthWrite: false, roughness: 0.3 });
+      const SLOT = [[1, 1, 1], [-1, 1, 1], [1, -1, 1], [-1, -1, 1], [1, 1, -1], [-1, 1, -1], [1, -1, -1], [-1, -1, -1]].map((s) => V(s[0], s[1], s[2]).normalize());
+      const aDots = [], aSlots = [];
+      for (let i = 0; i < 8; i++) {
+        const d = dot(SLOT[i].clone(), 0); d.scale.setScalar(0.13); d.visible = false; ga.add(d); aDots.push(d);
+        const sl = new THREE.Mesh(L.SG, slotM); sl.scale.setScalar(0.13); sl.position.copy(SLOT[i]); sl.visible = false; ga.add(sl); aSlots.push(sl);
+      }
       const aLab = label('', [0, 0, 0], { size: 13 }); aLab.show(false);
 
       /* ▶ 재생: 이온 결합에서 전자가 옮겨 가요 */
@@ -231,15 +267,23 @@
         update(dt, t) {
           const Z = ctx.lesson(); if (!Z) return; Z0 = Z; dt = Math.min(dt, 0.05);
           const S = Z.S, sc = S.scene;
+          if (sc !== lastSc) { lastSc = sc; if (orbit) orbit.dist = sc === 'atom' ? (phone ? 5.2 : 4.3) : sc === 'ionic' ? (phone ? 10 : 8.2) : (phone ? 6.4 : 5.8); }
           g.visible = sc === 'mol' || sc === 'wizard'; gi.visible = sc === 'ionic'; ga.visible = sc === 'atom';
           rowP.style.display = sc === 'ionic' ? '' : 'none'; if (sc !== 'ionic' && pl.playing) pl.pause();
           ionLabs.forEach((l) => l.show(sc === 'ionic' && !!l.on)); aLab.show(sc === 'atom');
           if (sc !== 'mol' && sc !== 'wizard') lbl.forEach((l) => l.show(false));
           if (sc === 'atom') {
             const z = Z.A.z, sym = SYM[z] || '?', v = valOfZ(z);
-            aNuc.material.color.setHex(0x8a93a3);
-            aDots.forEach((d, i) => { d.visible = i < Z.A.dots; });
-            aLab.obj = [0, 0, 0]; aLab.set(sym + ' (원자 번호 ' + z + ')'); aLab.off = [0, -1.1, 0];
+            if (nucZ !== z) { nucZ = z; buildNuc(z); }
+            const nCore = z <= 2 ? 0 : z <= 10 ? 1 : 2;
+            coreRings.forEach((r, i) => { r.visible = i < nCore; });
+            let ci = 0; const per = [2, 8];
+            for (let ring = 0; ring < nCore; ring++) for (let k = 0; k < per[ring]; k++) { const e = coreE[ci++]; if (!e) break; const a = t * (1.3 - ring * 0.35) + k * Math.PI * 2 / per[ring] + ring, rad = ring ? 0.78 : 0.5; e.visible = true; e.scale.setScalar(0.07); e.position.set(Math.cos(a) * rad, Math.sin(a * 0.5) * 0.04, Math.sin(a) * rad); }
+            for (; ci < coreE.length; ci++) coreE[ci].visible = false;
+            aNuc.rotation.y = t * 0.4;
+            aDots.forEach((d, i) => { d.visible = i < Z.A.dots; if (d.visible) d.scale.setScalar(0.13 * (1 + 0.08 * Math.sin(t * 4 + i))); });
+            aSlots.forEach((d, i) => { d.visible = i < v && i >= Z.A.dots; });
+            aLab.obj = ga; aLab.set(sym + ' (원자 번호 ' + z + ')'); aLab.off = [0, -1.1, 0];
             info('<b>' + sym + '</b> · 원자 번호 ' + z + ' · 원자가 전자 <b>' + v + '개</b><br>원자가 전자 수만큼 점을 찍어요. 지금 찍은 점 ' + Z.A.dots + '개');
             return;
           }

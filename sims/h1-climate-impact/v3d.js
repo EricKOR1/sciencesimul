@@ -50,7 +50,24 @@
       side(-W / 2 - 0.12); side(W / 2 + 0.12);
       // 동·서 육지 (해안)
       const land = (x, c, s) => { const g = new THREE.Mesh(new THREE.SphereGeometry(1, 28, 14, 0, Math.PI * 2, 0, Math.PI / 2), mat(c, { roughness: 1 })); g.scale.set(1.4, 0.9 * s, D * 0.5); g.position.set(x, 0, 0); root.add(g); return g; };
-      land(-W / 2 - 0.2, 0x5f9a4a, 1.0); const andes = land(W / 2 + 0.15, 0x8a7d62, 1.5);
+      land(-W / 2 - 0.2, 0x5f9a4a, 1.0); const andes = land(W / 2 + 0.15, 0x8a7d62, 0.45);
+
+      // ---- 환경: 하늘 배경 · 받침대 · 모래 바닥 · 수조 테두리 · 안데스 산맥과 열대 나무 · 일렁이는 수면 · 용승 거품
+      const mkc = (w, h, fn) => { const c = document.createElement('canvas'); c.width = w; c.height = h; fn(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); return t; };
+      { const sky = mkc(16, 256, (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#16275a'); gr.addColorStop(0.5, '#3a5ea0'); gr.addColorStop(0.62, '#8fb8e6'); gr.addColorStop(1, '#27385f'); g.fillStyle = gr; g.fillRect(0, 0, w, h); }); if (THREE.sRGBEncoding) sky.encoding = THREE.sRGBEncoding;
+        const dome = new THREE.Mesh(new THREE.SphereGeometry(45, 32, 20), new THREE.MeshBasicMaterial({ map: sky, side: THREE.BackSide, depthWrite: false })); dome.renderOrder = -2; root.add(dome);
+        const bench = new THREE.Mesh(new THREE.CylinderGeometry(11, 11.3, 0.4, 72), mat(0x1c2742, { roughness: 0.6, metalness: 0.2 })); bench.position.y = -H - 0.55; root.add(bench); }
+      { const sand = mkc(256, 256, (g, w, h) => { g.fillStyle = '#b9a577'; g.fillRect(0, 0, w, h); for (let i = 0; i < 1500; i++) { const v = 120 + Math.random() * 90 | 0; g.fillStyle = 'rgba(' + v + ',' + (v - 20) + ',' + (v - 60) + ',.35)'; g.fillRect(Math.random() * w, Math.random() * h, 2, 2); } });
+        floor.material = new THREE.MeshStandardMaterial({ map: sand, roughness: 1 }); }
+      { const fr = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(W + 0.2, H + 0.3, D + 0.2)), new THREE.LineBasicMaterial({ color: 0xdfeaf7, transparent: true, opacity: 0.8 })); fr.position.y = -H / 2 - 0.1; root.add(fr); }
+      { const rock = mat(0x8a7d62, { roughness: 1, flatShading: true }), snow = mat(0xf4f8ff, { roughness: 0.6, flatShading: true });
+        [[0, 0, 0, 1.1, 2.4], [-0.5, 0, 0.9, 0.8, 1.7], [0.2, 0, -0.9, 0.9, 1.9], [-0.9, 0, -0.2, 0.6, 1.2]].forEach((c) => { const m = new THREE.Mesh(new THREE.ConeGeometry(c[3], c[4], 7), rock); m.position.set(W / 2 + 0.55 + c[0], c[4] / 2 - 0.1, c[2]); root.add(m); if (c[4] > 1.8) { const cap = new THREE.Mesh(new THREE.ConeGeometry(c[3] * 0.38, c[4] * 0.32, 7), snow); cap.position.set(m.position.x, c[4] * 0.84 - 0.1, m.position.z); root.add(cap); } });
+        const trunk = mat(0x7a5a38), leaf = mat(0x2e9a4a, { roughness: 0.8 });
+        [[0.0, 0.5], [-0.4, -0.6], [0.4, -0.2], [-0.2, 0.9], [0.5, 0.8]].forEach((c, i) => { const g = new THREE.Group(); const tr = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.05, 0.5 + (i % 2) * 0.15, 6), trunk); tr.position.y = 0.3; g.add(tr); for (let k = 0; k < 5; k++) { const l = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.4, 5), leaf); l.position.set(Math.cos(k * 1.26) * 0.14, 0.62 + (i % 2) * 0.1, Math.sin(k * 1.26) * 0.14); l.rotation.set(Math.sin(k * 1.26) * 1.0, 0, -Math.cos(k * 1.26) * 1.0); g.add(l); } g.position.set(-W / 2 - 0.05 + c[0] * 1.2, 0.1, c[1]); root.add(g); }); }
+      const NB = 40, bubbles = new THREE.InstancedMesh(new THREE.SphereGeometry(0.035, 8, 6), new THREE.MeshBasicMaterial({ color: 0xcfe9ff, transparent: true, opacity: 0.6 }), NB); root.add(bubbles);
+      const bbD = []; for (let i = 0; i < NB; i++) bbD.push({ x: 3.9 + Math.random() * 2.4, z: (Math.random() - 0.5) * (D - 0.4), y0: Math.random(), sp: 0.15 + Math.random() * 0.2 });
+      const bbO = new THREE.Object3D();
+      const surfBase = surfGeo.attributes.position.array.slice();
       label('서쪽 (인도네시아·호주)', [-W / 2, 0.6, D / 2], { size: 12, offset: [0.6, 0.5, 0] });
       label('동쪽 (페루)', [W / 2, 0.8, D / 2], { size: 12, offset: [-0.2, 0.9, 0] });
 
@@ -89,10 +106,12 @@
           mesh, update(p) {
             const q = []; for (let i = 0; i <= N; i++) { const xn = i / N; q.push(new V3(-W / 2 + W * xn, -H * dAt(xn, p), D / 2 + 0.04)); }
             mesh.geometry.dispose(); mesh.geometry = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(q), 90, 0.045, 6, false);
+            thAnc.position.set(3.2, -H * dAt((3.2 + W / 2) / W, p), D / 2 + 0.04);
           },
         };
       })();
-      const thLab = label('수온약층', [3.2, -1.2, D / 2], { size: 12, offset: [0, 0, 0.1] });
+      const thAnc = new THREE.Object3D(); root.add(thAnc);
+      const thLab = label('수온약층', thAnc, { size: 12, offset: [0, 0.32, 0.1] });
 
       /* ---------- 무역풍 화살표 (동 → 서), 세기에 따라 굵기·개수 ---------- */
       const windG = new THREE.Group(); root.add(windG);
@@ -128,7 +147,7 @@
         const g = new THREE.Group(); const sh = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 1, 10), mat(0x7ec4ff, { emissive: 0x4a9be6, emissiveIntensity: 0.5, transparent: true })), hd = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.4, 14), sh.material);
         g.add(sh, hd); g.userData = { sh, hd, i }; g.position.set(4.2 + i * 0.75, -2.4, D / 2 + 0.25); root.add(g); ups.push(g);
       }
-      const upLab = label('용승 (찬 물이 올라와요)', [4.6, -1.8, D / 2], { size: 12, offset: [0, -0.1, 0.1] });
+      const upLab = label('용승 (찬 물이 올라와요)', ups[1], { size: 12, offset: [0.1, 1.9, 0.1] });
       const fishes = [];
       const fishGeo = (() => { const g = new THREE.SphereGeometry(0.11, 12, 8); g.scale(1.8, 0.8, 0.6); return g; })();
       const tailGeo = new THREE.ConeGeometry(0.09, 0.2, 8);
@@ -174,6 +193,8 @@
           st.wS += (st.w - st.wS) * Math.min(1, dt * 3.2);
           if (Math.abs(st.wS - lastW) > 0.05) { lastW = st.wS; refresh(); }
           const s = Math.max(0.15, st.wS / 100);
+          { const sp = surfGeo.attributes.position; for (let i = 0; i < sp.count; i++) { const x = surfBase[i * 3], z = surfBase[i * 3 + 2]; sp.setY(i, Math.sin(x * 1.6 + t * 1.4) * 0.035 + Math.cos(z * 2.2 + t * 1.1 + x) * 0.025); } sp.needsUpdate = true; }
+          { const upS2 = Math.max(0.1, Math.min(1, 0.8 - 0.28 * aOf(st.wS))) / 0.8; for (let i = 0; i < NB; i++) { const d = bbD[i]; const k = (d.y0 + t * d.sp * upS2) % 1; bbO.position.set(d.x + Math.sin(t * 2 + i) * 0.05, -H + 0.2 + k * (H - 0.4), D / 2 - 0.1 + d.z * 0.4); bbO.scale.setScalar(upS2 > 0.2 ? 1 : 0.01); bbO.updateMatrix(); bubbles.setMatrixAt(i, bbO.matrix); } bubbles.instanceMatrix.needsUpdate = true; }
           winds.forEach((g) => { const u = g.userData; g.position.set(5.2 - ((t * (0.8 + s * 1.4) + u.ph * 3) % 4.2) + 0.2, u.y + Math.sin(t + u.ph) * 0.05, u.z); });
           cloud.position.x += (cloudTarget - cloud.position.x) * Math.min(1, dt * 2.5); cloud.position.y = 2.25 + Math.sin(t * 0.7) * 0.05; cloud.position.z = 0;
           rain.forEach((r) => { const u = r.userData; r.position.set(u.ox, -0.2 - (((t * 0.9 + u.ph) % 1)) * 1.6, u.oz); });

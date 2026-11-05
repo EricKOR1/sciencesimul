@@ -35,6 +35,18 @@
     g.putImageData(im, 0, 0); return cv;
   }
 
+  function cloudCanvas() {
+    const W = 256, H = 128, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+    const g = cv.getContext('2d'), im = g.createImageData(W, H);
+    for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) {
+      const lon = (i / W) * Math.PI * 2, lat = (0.5 - (j + 0.5) / H) * Math.PI;
+      const v = fbm(Math.cos(lat) * Math.cos(lon) * 2.6 + 40, Math.sin(lat) * 2.6 + 40, Math.cos(lat) * Math.sin(lon) * 2.6 + 40), o = (j * W + i) * 4;
+      const a = Math.max(0, Math.min(1, (v - 0.5) * 4.5));
+      im.data[o] = 255; im.data[o + 1] = 255; im.data[o + 2] = 255; im.data[o + 3] = a * 215 | 0;
+    }
+    g.putImageData(im, 0, 0); return cv;
+  }
+
   /* ---- 운동 계산 (km, s) ---- */
   function rk4(s, dt) {
     const f = (a) => { const r2 = a[0] * a[0] + a[1] * a[1], r3 = r2 * Math.sqrt(r2); return [a[2], a[3], -MU * a[0] / r3, -MU * a[1] / r3]; };
@@ -87,11 +99,22 @@
       root.add(earth);
       const air = new THREE.Mesh(new THREE.SphereGeometry(ER * 1.025, 48, 32), new THREE.MeshBasicMaterial({ color: 0x6bb6ff, transparent: true, opacity: 0.16, depthWrite: false }));
       root.add(air);
+      const clouds = new THREE.Mesh(new THREE.SphereGeometry(ER * 1.012, 64, 40), new THREE.MeshStandardMaterial({ map: new THREE.CanvasTexture(cloudCanvas()), transparent: true, roughness: 1, depthWrite: false })); root.add(clouds);
+      const rimGlow = new THREE.Mesh(new THREE.SphereGeometry(ER * 1.09, 48, 32), new THREE.MeshBasicMaterial({ color: 0x5aa8ff, transparent: true, opacity: 0.1, side: THREE.BackSide, depthWrite: false, blending: THREE.AdditiveBlending })); root.add(rimGlow);
+      { const sa = [], sc2 = []; let sd = 99; const rr = () => { sd = (sd * 1664525 + 1013904223) >>> 0; return sd / 4294967296; };
+        for (let i = 0; i < 1400; i++) { const u = new THREE.Vector3(rr() - 0.5, rr() - 0.5, rr() - 0.5).normalize().multiplyScalar(300 + rr() * 80); sa.push(u.x, u.y, u.z); const c = 0.5 + rr() * 0.5; sc2.push(c, c, c * 0.95 + 0.05); }
+        const sgm = new THREE.BufferGeometry(); sgm.setAttribute('position', new THREE.Float32BufferAttribute(sa, 3)); sgm.setAttribute('color', new THREE.Float32BufferAttribute(sc2, 3));
+        root.add(new THREE.Points(sgm, new THREE.PointsMaterial({ size: 1.3, vertexColors: true, sizeAttenuation: true, transparent: true, opacity: 0.9, depthWrite: false }))); }
       /* 대포와 산 (높이 20 km는 눈에 띄지 않을 만큼 낮아서 대포는 크게 그려요) */
       const cannon = new THREE.Group(); root.add(cannon);
       const mount = new THREE.Mesh(new THREE.ConeGeometry(70 * K, H0 * K, 24), new THREE.MeshStandardMaterial({ color: 0x8a6a45, roughness: 1 })); mount.position.set(0, R0 * K - H0 * K / 2, 0); root.add(mount);
       const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.065, 0.34, 16), new THREE.MeshStandardMaterial({ color: 0x1f2937, roughness: 0.5, metalness: 0.4 }));
       barrel.rotation.z = Math.PI / 2; barrel.position.set(-0.12, R0 * K + 0.03, 0); cannon.add(barrel);
+      { const metal = new THREE.MeshStandardMaterial({ color: 0x374151, roughness: 0.4, metalness: 0.6 }), wood = new THREE.MeshStandardMaterial({ color: 0x8b5a2b, roughness: 0.8 });
+        const muz = new THREE.Mesh(new THREE.TorusGeometry(0.062, 0.012, 8, 20), metal); muz.rotation.y = Math.PI / 2; muz.position.set(-0.29, R0 * K + 0.03, 0); cannon.add(muz);
+        const car = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.035, 0.1), wood); car.position.set(-0.1, R0 * K + 0.0, 0); cannon.add(car);
+        [-0.065, 0.065].forEach((z) => { const w = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.016, 20), wood); w.rotation.x = Math.PI / 2; w.position.set(-0.08, R0 * K + 0.0, z); cannon.add(w); const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.02, 10), metal); hub.rotation.x = Math.PI / 2; hub.position.copy(w.position); cannon.add(hub); });
+        const ball0 = new THREE.Mesh(new THREE.SphereGeometry(0.03, 12, 8), metal); ball0.position.set(-0.02, R0 * K + 0.03, 0.09); cannon.add(ball0); }
       const PIV = new THREE.Vector3(0, R0 * K, 0), cannonLab = label('대포 (20 km 산 위)', cannon, { offset: [-0.1, 0.12, 0], color: 'rgba(12,18,34,.82)' });
       cannonLab.obj = new THREE.Object3D(); root.add(cannonLab.obj);
       /* 기준 원 (원 궤도) */
@@ -196,9 +219,9 @@
             if (Math.abs(d) < 0.003 * tgt.dist) tgt = null;
           }
           sc = Math.max(0.02, Math.min(1.2, orbit.dist / 12));
-          ball.scale.setScalar(sc * 1.4); cannon.scale.setScalar(sc); cannon.position.copy(PIV).multiplyScalar(1 - sc);
-          cannonLab.obj.position.copy(PIV); cannonLab.off = [-0.1 * sc, 0.5 * sc + 0.02, 0]; hitMark.scale.setScalar(sc); hitLab.off = [0, -0.45 * sc, 0];
-          velLab.off = [0, 0, 0];
+          ball.scale.setScalar(sc * 1.4); cannon.scale.setScalar(sc * 2.4); cannon.position.copy(PIV).multiplyScalar(1 - sc * 2.4);
+          cannonLab.obj.position.copy(PIV); cannonLab.off = [-0.1 * sc, 0.55 * sc + 0.02, 0]; hitMark.scale.setScalar(sc); hitLab.off = [0, -0.45 * sc, 0];
+          velLab.off = [0, 0, 0]; clouds.rotation.y += dt * 0.01; earth.rotation.y += 0;
           issBody.scale.setScalar(Math.max(0.5, sc));
         },
         sync() { const l = readLesson(); if (l != null) { v = l; sh = predict(v); rv.set(v); build(); } },

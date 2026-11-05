@@ -24,7 +24,7 @@
 
   window.SciSim3D.attach({
     title: '공간의 규모 3D',
-    camera: { dist: PHN ? 12.5 : 9.5, theta: 0.5, phi: 1.2, min: 4, max: 22 },
+    camera: { dist: PHN ? 14.5 : 11.5, theta: 0.5, phi: 1.2, min: 4, max: 22 },
     levels: [0],
     autoRotate: 0.3,
     build(ctx) {
@@ -38,6 +38,16 @@
       const tube = (pts, r, col, o) => new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), pts.length * 6, r, 8), std(col, o));
       const pointsOf = (arr, cols, size) => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(arr, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(cols, 3)); return new THREE.Points(g, new THREE.PointsMaterial({ size, vertexColors: true, sizeAttenuation: true, transparent: true, opacity: 0.95, depthWrite: false })); };
 
+
+      // ---- 환경: 별이 있는 배경 · 빛나는 받침판 (대상이 바뀌어도 그대로)
+      { const cv = document.createElement('canvas'); cv.width = 16; cv.height = 256; const g = cv.getContext('2d'); const gr = g.createLinearGradient(0, 0, 0, 256); gr.addColorStop(0, '#0a1230'); gr.addColorStop(0.55, '#16224a'); gr.addColorStop(1, '#0a0f22'); g.fillStyle = gr; g.fillRect(0, 0, 16, 256);
+        const sky = new THREE.Mesh(new THREE.SphereGeometry(40, 32, 20), new THREE.MeshBasicMaterial({ map: (() => { const tx = new THREE.CanvasTexture(cv); if (THREE.sRGBEncoding) tx.encoding = THREE.sRGBEncoding; return tx; })(), side: THREE.BackSide, depthWrite: false })); sky.renderOrder = -2; root.add(sky);
+        const sa = [], sc = []; const rr = (() => { let a = 777; return () => { a = (a * 1664525 + 1013904223) >>> 0; return a / 4294967296; }; })();
+        for (let i = 0; i < 700; i++) { const v = new V(rr() - 0.5, rr() - 0.5, rr() - 0.5).normalize().multiplyScalar(30 + rr() * 6); sa.push(v.x, v.y, v.z); const c = 0.5 + rr() * 0.5; sc.push(c * 0.85, c * 0.9, c); }
+        const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.Float32BufferAttribute(sa, 3)); sg.setAttribute('color', new THREE.Float32BufferAttribute(sc, 3));
+        const stars = new THREE.Points(sg, new THREE.PointsMaterial({ size: 0.16, vertexColors: true, sizeAttenuation: true, transparent: true, opacity: 0.85, depthWrite: false })); root.add(stars);
+        const plat = new THREE.Mesh(new THREE.CylinderGeometry(4.3, 4.5, 0.2, 72), new THREE.MeshStandardMaterial({ color: 0x18264a, roughness: 0.35, metalness: 0.6 })); plat.position.y = -3.4; root.add(plat);
+        [4.2, 3.0, 1.8].forEach((r, k) => { const t = new THREE.Mesh(new THREE.TorusGeometry(r, 0.025, 8, 96), new THREE.MeshBasicMaterial({ color: k % 2 ? 0x3b6ea8 : 0x4fd1c5 })); t.rotation.x = Math.PI / 2; t.position.y = -3.28; root.add(t); }); }
       const BUILD = {
         proton() { const g = new THREE.Group(); g.add(new THREE.Mesh(new THREE.SphereGeometry(2.1, 48, 32), std(0xf0786a, { transparent: true, opacity: 0.35, depthWrite: false, roughness: 0.2 })));
           const q = [0xff5a52, 0xffd34d, 0x4aa3ff].map((c) => { const m = new THREE.Mesh(new THREE.SphereGeometry(0.55, 28, 20), std(c, { roughness: 0.25, emissive: c, emissiveIntensity: 0.3 })); g.add(m); return m; });
@@ -45,6 +55,7 @@
         hatom() { const g = new THREE.Group(); g.add(new THREE.Mesh(new THREE.SphereGeometry(0.1, 24, 16), std(0xff5a52, { emissive: 0xff2a20, emissiveIntensity: 0.8 })));
           [2.3, 1.7, 1.1].forEach((r, i) => g.add(new THREE.Mesh(new THREE.SphereGeometry(r, 40, 28), new THREE.MeshStandardMaterial({ color: 0x6aa8ff, transparent: true, opacity: 0.09, depthWrite: false, roughness: 0.4 }))));
           const e = new THREE.Mesh(new THREE.SphereGeometry(0.14, 20, 14), std(0x62b4ff, { emissive: 0x1a5fb0, emissiveIntensity: 0.9 })); g.add(e); labs.push(label('핵 (점처럼 작아요)', [0, 0, 0], { size: 12, offset: [0.3, -0.5, 0] }));
+          { const orb = new THREE.Mesh(new THREE.TorusGeometry(1.7, 0.012, 6, 80), new THREE.MeshBasicMaterial({ color: 0x62b4ff, transparent: true, opacity: 0.35 })); orb.rotation.x = Math.PI / 2; g.add(orb); }
           upd = (t) => { const a = t * 2.4; e.position.set(Math.cos(a) * 1.7, Math.sin(a * 0.7) * 0.8, Math.sin(a) * 1.7); }; return g; },
         dna() { const g = new THREE.Group(), A = [], B = []; const N = 40;
           for (let i = 0; i < N; i++) { const y = (i / (N - 1) - 0.5) * 6, a = i * 0.55; A.push(new V(Math.cos(a) * 0.9, y, Math.sin(a) * 0.9)); B.push(new V(-Math.cos(a) * 0.9, y, -Math.sin(a) * 0.9));
@@ -72,7 +83,7 @@
         earth() { const geo = new THREE.SphereGeometry(2.3, 96, 64), p = geo.attributes.position, col = []; for (let i = 0; i < p.count; i++) { const x = p.getX(i) / 2.3, y = p.getY(i) / 2.3, z = p.getZ(i) / 2.3;
             const h = hash(Math.floor(x * 5), Math.floor(y * 5), Math.floor(z * 5)) * 0.5 + (hash(x * 1.9 + 3, y * 1.9, z * 1.9) + hash(x * 4.1, y * 4.1 + 2, z * 4.1)) * 0.25; const land = Math.sin(x * 2.2 + 1) * Math.cos(y * 3 + z * 1.6) + Math.sin(z * 2.6 - x) * 0.7 + (h - 0.5) * 1.1 > 0.35; const ice = Math.abs(y) > 0.9;
             const c = ice ? new THREE.Color(0xf2f6fb) : land ? new THREE.Color(0x4f9f58).lerp(new THREE.Color(0xb0a070), hash(x * 7, y * 7, z * 7)) : new THREE.Color(0x1f6cc0); col.push(c.r, c.g, c.b); }
-          geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); const m = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.65 })); const g = new THREE.Group(); g.add(m); upd = (t) => { m.rotation.y = t * 0.3; }; return g; },
+          geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); const m = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.65 })); const g = new THREE.Group(); g.add(m); const cl = new THREE.Mesh(new THREE.SphereGeometry(2.36, 48, 32), new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.12, roughness: 1, depthWrite: false })); g.add(cl); g.add(new THREE.Mesh(new THREE.SphereGeometry(2.55, 48, 32), new THREE.MeshBasicMaterial({ color: 0x7ab8ff, transparent: true, opacity: 0.08, side: THREE.BackSide, depthWrite: false }))); upd = (t) => { m.rotation.y = t * 0.3; cl.rotation.y = t * 0.38; }; return g; },
         sun() { const g = new THREE.Group(); g.add(new THREE.Mesh(new THREE.SphereGeometry(2.3, 64, 40), new THREE.MeshBasicMaterial({ color: 0xffc247 })));
           [2.55, 2.95, 3.5].forEach((r, i) => g.add(new THREE.Mesh(new THREE.SphereGeometry(r, 40, 28), new THREE.MeshBasicMaterial({ color: 0xff9a2a, transparent: true, opacity: 0.16 - i * 0.04, depthWrite: false })))); const e = new THREE.Mesh(new THREE.SphereGeometry(0.21, 24, 16), std(0x4f9fff)); g.add(e);
           labs.push(label('지구 (109개를 늘어놓으면 태양 지름)', e, { size: 12, offset: [0, 0.5, 0] })); upd = (t) => { e.position.set(Math.cos(t * 0.8) * 3.9, 0, Math.sin(t * 0.8) * 3.9); }; return g; },
@@ -99,6 +110,7 @@
         if (cur) { root.remove(cur); cur.traverse((x) => { if (x.geometry) x.geometry.dispose(); }); }
         labs.forEach((l) => l.show(false)); labs.length = 0; upd = null;
         cur = BUILD[o.id](); root.add(cur); pop = quiet ? 1 : 0;
+        labs.forEach((l) => { if (Array.isArray(l.obj)) { l.off = l.off.map((x, k) => x + l.obj[k]); l.obj = cur; } });
         const prev = idx > 0 ? OB[idx - 1] : null; const ratio = prev ? Math.round(Math.log10(o.m / prev.m)) : 0;
         info('<b>' + o.n + '</b> · ' + o.t + '<br>' + NOTE[o.id] + (prev ? '<br>앞의 <b>' + prev.n + '</b>보다 약 <b>10<sup>' + ratio + '</sup>배</b> 커요.' : ''));
         rng && rng.set(idx);

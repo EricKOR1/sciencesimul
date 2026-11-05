@@ -38,7 +38,7 @@
   window.SciSim3D.attach({
     title: '3D 전자의 이동',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: PHN ? 14 : 9.5, theta: 0.25, phi: 1.3, min: 5, max: 22 },
+    camera: { target: [0, -0.3, 0], dist: PHN ? 16 : 11.8, theta: 0.25, phi: 1.3, min: 5, max: 22 },
     autoRotate: 0,
     levels: [0, 1, 2],
     build(ctx) {
@@ -51,7 +51,19 @@
       const eGeo = new THREE.SphereGeometry(0.15, 18, 14);
 
       const slotTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'); g.strokeStyle = '#ffe48a'; g.lineWidth = 5; g.setLineDash([8, 7]); g.beginPath(); g.arc(32, 32, 24, 0, 7); g.stroke(); return new THREE.CanvasTexture(c); })();
-      const floor = new THREE.Mesh(new THREE.CylinderGeometry(5.2, 5.4, 0.25, 56), new THREE.MeshLambertMaterial({ color: 0x2d3547 })); floor.position.y = -2.6; floor.receiveShadow = true; root.add(floor);
+      const woodTex = (() => { const c = document.createElement('canvas'); c.width = 512; c.height = 256; const g = c.getContext('2d'); g.fillStyle = '#7a5230'; g.fillRect(0, 0, 512, 256);
+        for (let i = 0; i < 90; i++) { g.strokeStyle = 'rgba(' + (40 + Math.random() * 50 | 0) + ',' + (20 + Math.random() * 30 | 0) + ',10,' + (0.1 + Math.random() * 0.25) + ')'; g.lineWidth = 1 + Math.random() * 3; g.beginPath(); const y = Math.random() * 256; g.moveTo(0, y); g.bezierCurveTo(150, y + Math.random() * 14 - 7, 350, y + Math.random() * 14 - 7, 512, y + Math.random() * 10 - 5); g.stroke(); }
+        const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; return t; })();
+      const floor = new THREE.Mesh(new THREE.CylinderGeometry(5.8, 6.0, 0.3, 64), new THREE.MeshStandardMaterial({ map: woodTex, color: 0xb8977a, roughness: 0.7, metalness: 0.05 })); floor.position.y = -2.75; floor.receiveShadow = true; root.add(floor);
+      // 전해질 용액 (투명한 물 + 수면) · 떠다니는 물 분자 알갱이
+      const water = new THREE.Mesh(new THREE.CylinderGeometry(5.1, 5.1, 4.8, 64, 1, true), new THREE.MeshPhysicalMaterial({ color: 0x9fd6ff, transparent: true, opacity: 0.1, roughness: 0.05, side: THREE.DoubleSide, depthWrite: false })); water.position.y = -0.2; root.add(water);
+      const wsurf = new THREE.Mesh(new THREE.CircleGeometry(5.1, 64), new THREE.MeshPhysicalMaterial({ color: 0xbfe4ff, transparent: true, opacity: 0.2, roughness: 0.05, depthWrite: false, side: THREE.DoubleSide })); wsurf.rotation.x = -Math.PI / 2; wsurf.position.y = 2.2; root.add(wsurf);
+      const rim = new THREE.Mesh(new THREE.TorusGeometry(5.1, 0.05, 10, 72), new THREE.MeshStandardMaterial({ color: 0xdfeaf5, roughness: 0.1, transparent: true, opacity: 0.7 })); rim.rotation.x = Math.PI / 2; rim.position.y = 2.2; root.add(rim);
+      const NPW = 150, dustW = new THREE.InstancedMesh(new THREE.SphereGeometry(0.045, 8, 6), new THREE.MeshBasicMaterial({ color: 0xcfeaff, transparent: true, opacity: 0.5 }), NPW); root.add(dustW);
+      const ddW = []; for (let i = 0; i < NPW; i++) { const a = Math.random() * 6.28, r = Math.sqrt(Math.random()) * 4.6; ddW.push({ x: Math.cos(a) * r, z: Math.sin(a) * r * 0.7, y: -2.5 + Math.random() * 4.8, s: 0.3 + Math.random(), p: Math.random() * 6.28 }); }
+      const dmW = new THREE.Object3D();
+      const glowTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'); const r = g.createRadialGradient(32, 32, 0, 32, 32, 32); r.addColorStop(0, 'rgba(255,225,120,.9)'); r.addColorStop(1, 'rgba(255,200,60,0)'); g.fillStyle = r; g.fillRect(0, 0, 64, 64); return new THREE.CanvasTexture(c); })();
+      const glowMat = new THREE.SpriteMaterial({ map: glowTex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
       const grp = new THREE.Group(); root.add(grp);
       let parts = null;
 
@@ -78,7 +90,7 @@
         });
         // 전자 구슬: 주는 쪽 둘레를 돌다가 받는 쪽으로 가요
         let ei = 0;
-        R.pairs.forEach(([di, ai, n], pi) => { for (let k = 0; k < n; k++) { const m = new THREE.Mesh(eGeo, eMat); g.add(m); P.es.push({ m, di, ai, k, n, pi, idx: ei++, slot: k }); } });
+        R.pairs.forEach(([di, ai, n], pi) => { for (let k = 0; k < n; k++) { const m = new THREE.Mesh(eGeo, eMat); { const gs = new THREE.Sprite(glowMat); gs.scale.set(0.7, 0.7, 1); m.add(gs); } g.add(m); P.es.push({ m, di, ai, k, n, pi, idx: ei++, slot: k }); } });
         const nDon = R.don.length;
         // 주는 쪽의 전자 수를 나눠서 둘레에 배치
         R.don.forEach((d, di) => { const mine = P.es.filter((e) => e.di === di); mine.forEach((e, k) => { e.orbit = k; e.nOrb = mine.length; }); });
@@ -167,6 +179,7 @@
       return {
         update(dt, t) {
           st.t += dt;
+          for (let i = 0; i < NPW; i++) { const d = ddW[i]; dmW.position.set(d.x + Math.sin(t * 0.3 * d.s + d.p) * 0.3, ((d.y + t * 0.12 * d.s + 2.5) % 4.8) - 2.5, d.z + Math.cos(t * 0.25 * d.s + d.p) * 0.3); dmW.updateMatrix(); dustW.setMatrixAt(i, dmW.matrix); } dustW.instanceMatrix.needsUpdate = true;
           const k = keyOf();
           if (k !== st.rx) pick(k);
           else { const q = progOf(k); if (q !== lastProg) { lastProg = q; if (q >= 0) pl.set(q); } }

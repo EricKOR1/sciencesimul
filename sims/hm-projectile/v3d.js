@@ -54,24 +54,59 @@
       const { THREE, root, label, info, controls, orbit } = ctx;
       const { V3, M, mkArrow, setArrow, tube, grid } = tools(THREE);
       const sim = () => ctx.lesson();
-      const gridG = grid(26, 5, 1, 0x8aa0c0, 0, 0.22); gridG.position.x = 5; root.add(gridG);
-      const ground = new THREE.Mesh(new THREE.BoxGeometry(26, 0.12, 5.4), M(0x1c2b3a, { roughness: 1 })); ground.position.set(5, -0.07, 0); ground.receiveShadow = true; root.add(ground);
-      // 눈금 (5 m 간격)
-      const tickL = []; for (let m = 0; m <= 50; m += 10) { const t = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.06, 0.5), M(0xdbe4f5)); t.position.set(m * K, 0.03, 1.5); root.add(t); tickL.push(label(m + ' m', [m * K, 0, 1.5], { color: '#475569', size: 11 })); }
-      // 대포
+      /* ----- 텍스처 도우미 ----- */
+      const ctex = (w, h, draw, rx, ry) => { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; if (rx) t.repeat.set(rx, ry || rx); if ('encoding' in t) t.encoding = THREE.sRGBEncoding; t.anisotropy = 4; return t; };
+      const rnd = (() => { let s = 7; return () => ((s = (s * 16807) % 2147483647) / 2147483647); })();
+      /* 하늘 · 먼 산 · 구름 */
+      const skyTex = ctex(8, 256, (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#1e4f9c'); gr.addColorStop(0.55, '#6fb0ea'); gr.addColorStop(0.82, '#cfe8f7'); gr.addColorStop(1, '#eef6df'); g.fillStyle = gr; g.fillRect(0, 0, w, h); });
+      skyTex.wrapS = skyTex.wrapT = THREE.ClampToEdgeWrapping;
+      const sky = new THREE.Mesh(new THREE.SphereGeometry(180, 32, 20), new THREE.MeshBasicMaterial({ map: skyTex, side: THREE.BackSide, fog: false, depthWrite: false })); sky.position.set(5, 0, 0); sky.renderOrder = -10; root.add(sky);
+      const hillM = [M(0x2f5a3a, { roughness: 1, metalness: 0 }), M(0x3b6b43, { roughness: 1, metalness: 0 }), M(0x274d36, { roughness: 1, metalness: 0 })];
+      for (let i = 0; i < 9; i++) { const hl = new THREE.Mesh(new THREE.SphereGeometry(1, 28, 14, 0, TAU, 0, Math.PI / 2), hillM[i % 3]); const r = 5 + (i * 37 % 7), x = -18 + i * 7.5; hl.scale.set(r * 1.6, 2.2 + (i * 13 % 5) * 0.5, r * 0.8); hl.position.set(x, -0.1, -15 - (i % 3) * 3.5); root.add(hl); }
+      const cloudM = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.85, fog: false }); const clouds = [];
+      for (let i = 0; i < 6; i++) { const cg = new THREE.Group(); for (let k = 0; k < 4; k++) { const b = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 8), cloudM); b.scale.set(1.6 + k * 0.2, 0.7, 0.8); b.position.set(k * 1.3 - 2, (k % 2) * 0.3, 0); cg.add(b); } cg.position.set(-12 + i * 9, 11 + (i % 3) * 2.2, -22 - (i % 2) * 6); cg.userData.sp = 0.15 + (i % 3) * 0.05; root.add(cg); clouds.push(cg); }
+      /* 잔디 운동장 + 달리기 트랙 */
+      const grassTex = ctex(256, 256, (g, w, h) => { g.fillStyle = '#4f8f4a'; g.fillRect(0, 0, w, h); for (let i = 0; i < 2600; i++) { const l = 30 + rnd() * 30; g.fillStyle = 'hsla(' + (95 + rnd() * 30) + ',45%,' + l + '%,0.55)'; g.fillRect(rnd() * w, rnd() * h, 1.5, 3 + rnd() * 4); } }, 48, 18);
+      const ground = new THREE.Mesh(new THREE.BoxGeometry(160, 0.3, 70), M(0xffffff, { map: grassTex, roughness: 1, metalness: 0 })); ground.position.set(5, -0.17, 8); ground.receiveShadow = true; root.add(ground);
+      const trackTex = ctex(64, 256, (g, w, h) => { g.fillStyle = '#b4573b'; g.fillRect(0, 0, w, h); for (let i = 0; i < 700; i++) { g.fillStyle = 'rgba(' + (120 + rnd() * 60 | 0) + ',60,40,0.35)'; g.fillRect(rnd() * w, rnd() * h, 2, 2); } }, 1, 1);
+      const track = new THREE.Mesh(new THREE.BoxGeometry(26, 0.04, 2.4), M(0xffffff, { map: trackTex, roughness: 0.95 })); track.position.set(5, 0.0, 0.2); track.receiveShadow = true; root.add(track);
+      for (const zz of [-1.0, 1.4]) { const ln = new THREE.Mesh(new THREE.BoxGeometry(26, 0.045, 0.05), new THREE.MeshBasicMaterial({ color: 0xffffff })); ln.position.set(5, 0.012, zz); root.add(ln); }
+      const gridG = grid(26, 2.4, 1, 0xffffff, 0.03, 0.18); gridG.position.set(5, 0, 0.2); root.add(gridG);
+      // 눈금 (10 m 간격: 흰 선 + 푯말)
+      const tickL = []; for (let m = 0; m <= 50; m += 10) { const t = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.05, 2.4), new THREE.MeshBasicMaterial({ color: 0xffffff })); t.position.set(m * K, 0.03, 0.2); root.add(t); const pst = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.5, 8), M(0xe5e7eb)); pst.position.set(m * K, 0.25, 1.75); root.add(pst); const fl = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.17, 0.02), M(0xf59e0b, { emissive: 0x7c3f00 })); fl.position.set(m * K + 0.15, 0.45, 1.75); root.add(fl); tickL.push(label(m + ' m', [m * K, 0, 1.5], { color: '#475569', size: 11 })); }
+      // 나무
+      const treeG = new THREE.Group(); root.add(treeG); const trM = M(0x6b4a2b, { roughness: 1 }), lfM = [M(0x1f5f2c, { roughness: 0.95, metalness: 0 }), M(0x2b7438, { roughness: 0.95, metalness: 0 })];
+      for (let i = 0; i < 12; i++) { const tr = new THREE.Group(); const tk = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.12, 0.9, 8), trM); tk.position.y = 0.45; tr.add(tk); for (let k = 0; k < 3; k++) { const lf = new THREE.Mesh(new THREE.ConeGeometry(0.62 - k * 0.14, 0.9, 10), lfM[(i + k) % 2]); lf.position.y = 1.0 + k * 0.5; lf.castShadow = true; tr.add(lf); } const sc = 0.9 + (i * 7 % 5) * 0.18; tr.scale.setScalar(sc); tr.position.set(-6 + i * 3.1 + (i % 2) * 0.8, 0, -6.2 - (i % 3) * 1.4); treeG.add(tr); }
+      // 대포 (포신 · 바퀴 · 포가)
       const cannon = new THREE.Group(); root.add(cannon);
-      const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.17, 0.9, 20), M(0x4b5563, { metalness: 0.6, roughness: 0.35 })); barrel.geometry.translate(0, 0.45, 0);
-      const pivot = new THREE.Group(); pivot.add(barrel); cannon.add(pivot);
-      const base = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.36, 0.2, 24), M(0x374151)); cannon.add(base);
-      // 옥상
-      const roof = new THREE.Mesh(new THREE.BoxGeometry(2.6, 1, 3), M(0x6b7280, { roughness: 0.8 })); root.add(roof); const lRoof = label('옥상', roof, { color: '#475569', size: 12 });
-      // 표적 · 담장
-      const targ = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 0.06, 40), M(0xe2464b, { emissive: 0x7f1d1d })); root.add(targ); const targ2 = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.07, 40), M(0xffffff)); targ.add(targ2); targ2.position.y = 0.01; const lTg = label('', targ, { color: '#c0392b', size: 12 });
-      const wall = new THREE.Mesh(new THREE.BoxGeometry(0.2, 1, 3), M(0xb45309, { roughness: 0.7 })); root.add(wall); const lWall = label('', wall, { color: '#b45309', size: 12 });
+      const iron = M(0x3b4250, { metalness: 0.75, roughness: 0.32 }), brass = M(0xc89b3c, { metalness: 0.85, roughness: 0.3 }), woodM = M(0x8a5a2b, { roughness: 0.8 });
+      const pivot = new THREE.Group(); cannon.add(pivot);
+      const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.2, 1.0, 28), iron); barrel.geometry.translate(0, 0.5, 0); pivot.add(barrel);
+      [0.08, 0.55, 0.95].forEach((y, i) => { const rg = new THREE.Mesh(new THREE.TorusGeometry(0.17 + (0.95 - y) * 0.04 + (i === 2 ? -0.015 : 0.005), 0.025, 8, 28), brass); rg.rotation.x = Math.PI / 2; rg.position.y = y; pivot.add(rg); });
+      const muzzle = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.15, 0.08, 28), iron); muzzle.position.y = 1.02; pivot.add(muzzle);
+      const bore = new THREE.Mesh(new THREE.CircleGeometry(0.1, 20), new THREE.MeshBasicMaterial({ color: 0x05070b })); bore.rotation.x = -Math.PI / 2; bore.position.y = 1.065; pivot.add(bore);
+      const cas = new THREE.Mesh(new THREE.SphereGeometry(0.2, 18, 12), iron); cas.position.y = -0.0; pivot.add(cas);
+      const cart = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.14, 0.62), woodM); cart.position.y = -0.1; cannon.add(cart);
+      for (const sz of [-1, 1]) { const wh = new THREE.Group(); const rim = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.05, 10, 28), woodM); wh.add(rim); const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.1, 12), brass); hub.rotation.x = Math.PI / 2; wh.add(hub); for (let k = 0; k < 6; k++) { const sp = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.6, 0.03), woodM); sp.rotation.z = k * Math.PI / 6; wh.add(sp); } wh.position.set(0, -0.0 - 0.02, sz * 0.38); cannon.add(wh); }
+      const axle = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.8, 8), iron); axle.rotation.x = Math.PI / 2; axle.position.y = -0.02; cannon.add(axle);
+      // 조준선 (던지기 전 발사 방향 · 정답은 알려 주지 않아요)
+      const AIMN = 14, aim = new THREE.InstancedMesh(new THREE.SphereGeometry(0.035, 8, 6), new THREE.MeshBasicMaterial({ color: 0xfff2b3, transparent: true, opacity: 0.8 }), AIMN); aim.frustumCulled = false; root.add(aim);
+      // 옥상 (건물)
+      const roofTex = ctex(64, 64, (g, w, h) => { g.fillStyle = '#9aa3b2'; g.fillRect(0, 0, w, h); g.fillStyle = '#c9e3f7'; for (let i = 0; i < 3; i++) g.fillRect(6 + i * 20, 10, 12, 38); g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(0, 60, w, 4); });
+      const roof = new THREE.Mesh(new THREE.BoxGeometry(2.6, 1, 3), M(0xffffff, { map: roofTex, roughness: 0.8 })); roof.castShadow = roof.receiveShadow = true; root.add(roof); const lRoof = label('옥상', roof, { color: '#475569', size: 12 });
+      const roofCap = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.12, 3.2), M(0x4b5563, { roughness: 0.7 })); root.add(roofCap);
+      // 표적 (과녁 무늬) · 담장 (벽돌)
+      const tgTex = ctex(256, 256, (g, w, h) => { const cs = ['#ffffff', '#e2464b']; for (let i = 5; i >= 0; i--) { g.fillStyle = cs[i % 2]; g.beginPath(); g.arc(w / 2, h / 2, (i + 1) / 6 * w / 2, 0, TAU); g.fill(); } });
+      const tgMat = [M(0xe2464b, { roughness: 0.6 }), M(0xffffff, { map: tgTex, roughness: 0.6 }), M(0xe2464b, { roughness: 0.6 })];
+      const targ = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 0.06, 48), tgMat); root.add(targ); const lTg = label('', targ, { color: '#c0392b', size: 12 });
+      const brickTex = ctex(128, 64, (g, w, h) => { g.fillStyle = '#9b4a24'; g.fillRect(0, 0, w, h); g.strokeStyle = '#d9c4a8'; g.lineWidth = 2; for (let r = 0; r < 4; r++) { g.beginPath(); g.moveTo(0, r * 16); g.lineTo(w, r * 16); g.stroke(); for (let c = 0; c < 4; c++) { const x = (c * 32 + (r % 2) * 16); g.beginPath(); g.moveTo(x, r * 16); g.lineTo(x, r * 16 + 16); g.stroke(); } } });
+      const wall = new THREE.Mesh(new THREE.BoxGeometry(0.3, 1, 3), M(0xffffff, { map: brickTex, roughness: 0.85 })); wall.castShadow = true; root.add(wall); const lWall = label('', wall, { color: '#b45309', size: 12 });
+      const wallCap = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.08, 3.1), M(0x6b7280)); root.add(wallCap);
       // 공 · 그림자
-      const ball = new THREE.Mesh(new THREE.SphereGeometry(0.2, 28, 20), M(0xf59e0b, { roughness: 0.3 })); ball.castShadow = true; root.add(ball);
-      const sg = new THREE.Mesh(new THREE.SphereGeometry(0.12, 18, 12), M(0x2f6df6)), sp = new THREE.Mesh(new THREE.SphereGeometry(0.12, 18, 12), M(0xe2464b)); root.add(sg, sp);
-      const pole = new THREE.Mesh(new THREE.BoxGeometry(0.08, 1, 0.08), M(0x94a3b8)); root.add(pole);
+      const ballTex = ctex(128, 64, (g, w, h) => { g.fillStyle = '#f59e0b'; g.fillRect(0, 0, w, h); g.strokeStyle = 'rgba(80,30,0,.8)'; g.lineWidth = 3; g.beginPath(); g.moveTo(0, h / 2); g.lineTo(w, h / 2); g.stroke(); for (let x = 0; x < w; x += 32) { g.beginPath(); g.arc(x, h / 2, 26, -1.0, 1.0); g.stroke(); } });
+      const ball = new THREE.Mesh(new THREE.SphereGeometry(0.2, 32, 24), M(0xffffff, { map: ballTex, roughness: 0.4, emissive: 0x4a2a00, emissiveIntensity: 0.25 })); ball.castShadow = true; root.add(ball);
+      const sg = new THREE.Mesh(new THREE.SphereGeometry(0.12, 18, 12), M(0x2f6df6, { emissive: 0x1e40af, emissiveIntensity: 0.4 })), sp = new THREE.Mesh(new THREE.SphereGeometry(0.12, 18, 12), M(0xe2464b)); root.add(sg, sp);
+      const pole = new THREE.Mesh(new THREE.BoxGeometry(0.08, 1, 0.08), M(0xcbd5e1, { metalness: 0.5, roughness: 0.35 })); pole.castShadow = true; root.add(pole);
       const dropX = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 1, 6), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.35 })); root.add(dropX);
       const vA = mkArrow(0xffffff, 0.045), vxA = mkArrow(0x4c8dff, 0.04), vyA = mkArrow(0xff6b6b, 0.04); root.add(vA, vxA, vyA);
       const SN = 80, strobe = new THREE.SphereGeometry(0.08, 12, 8);
@@ -106,11 +141,12 @@
       let lastTxt = '';
       function shot(A, S) {
         const target = S.mode === 'target', P = A.curShot(), sc = target ? A.SCN[S.tg.sc] : null, h0 = P.h0, wl = sc ? sc.wall : null;
-        const th = P.th * Math.PI / 180;
-        cannon.position.set(0, h0 * K + 0.12, 0); pivot.rotation.z = -(Math.PI / 2 - th);
-        roof.visible = h0 > 0; if (h0 > 0) { roof.scale.y = h0 * K; roof.position.set(-1.4, h0 * K / 2, 0); lRoof.set('옥상 ' + h0 + ' m'); lRoof.off = [0, h0 * K / 2 + 0.4, 0]; } lRoof.show(h0 > 0);
+        const th = P.th * Math.PI / 180, st0 = P.st;
+        cannon.position.set(0, h0 * K + 0.3, 0); pivot.rotation.z = -(Math.PI / 2 - th); pivot.position.y = 0;
+        for (let i = 0; i < AIMN; i++) { const on = !((S.mode === 'target' || S.mode === 'model') && false) && !(st0 === 'fly' || st0 === 'done'), d = 1.25 + i * 0.26; mtx.makeScale(on ? 1 : 0, on ? 1 : 0, on ? 1 : 0).setPosition(Math.cos(th) * d, h0 * K + 0.3 + Math.sin(th) * d, 0); aim.setMatrixAt(i, mtx); } aim.instanceMatrix.needsUpdate = true;
+        roof.visible = roofCap.visible = h0 > 0; if (h0 > 0) { roofTex.repeat.set(1, Math.max(1, Math.round(h0 * K / 0.7))); roofCap.position.set(-1.4, h0 * K + 0.05, 0); roof.scale.y = h0 * K; roof.position.set(-1.4, h0 * K / 2, 0); lRoof.set('옥상 ' + h0 + ' m'); lRoof.off = [0, h0 * K / 2 + 0.4, 0]; } lRoof.show(h0 > 0);
         targ.visible = !!sc && sc.tx > 0; lTg.show(targ.visible); if (targ.visible) { targ.position.set(sc.tx * K, 0.04, 0); targ.scale.set(sc.tr * K * 2.4, 1, sc.tr * K * 2.4); lTg.set('지면 표적 ' + sc.tx + ' m'); lTg.off = [0, 0.7, 0]; }
-        wall.visible = !!wl; lWall.show(!!wl); if (wl) { wall.scale.y = wl.h * K; wall.position.set(wl.x * K, wl.h * K / 2, 0); lWall.set('담장 (높이 ' + wl.h + ' m)'); lWall.off = [0, wl.h * K / 2 + 0.5, 0]; }
+        wall.visible = wallCap.visible = !!wl; lWall.show(!!wl); if (wl) { brickTex.repeat.set(1, Math.max(1, Math.round(wl.h * K / 0.25))); wallCap.position.set(wl.x * K, wl.h * K + 0.04, 0); wall.scale.y = wl.h * K; wall.position.set(wl.x * K, wl.h * K / 2, 0); lWall.set('담장 (높이 ' + wl.h + ' m)'); lWall.off = [0, wl.h * K / 2 + 0.5, 0]; }
         // 던진 상태 (2D) 또는 ▶ 재생
         let fl = P.fl, t = P.t, st = P.st;
         const playOn = demo.on && st !== 'fly';
@@ -141,7 +177,7 @@
       function video(A, S) {
         const v = S.vd, n = A.NF; let tcur = v.play ? v.tp : v.fr * A.FDT; if (demo.on && !v.play) tcur = demo.p * (n - 1) * A.FDT;
         const fr = Math.round(tcur / A.FDT);
-        cannon.visible = false; roof.visible = false; targ.visible = false; wall.visible = false; lRoof.show(false); lTg.show(false); lWall.show(false); lH.show(false); lR.show(false);
+        cannon.visible = false; aim.visible = false; roofCap.visible = wallCap.visible = false; roof.visible = false; targ.visible = false; wall.visible = false; lRoof.show(false); lTg.show(false); lWall.show(false); lH.show(false); lR.show(false);
         pole.position.set((A.VX * (n - 1) * A.FDT + 1.2) * K, 0, 0); pole.scale.y = 3 * K * 2; pole.position.y = 3 * K;
         const q = A.vidPos(tcur); setBall(q.x, Math.max(0, q.y), A.VX, A.VY0 - G * tcur, true);
         setStrobe([]); vidBalls.forEach((b, i) => { const p = A.vidPos(i * A.FDT); b.visible = true; b.position.set(p.x * K, p.y * K + 0.2, 0); const mk = v.mk[i]; b.material.opacity = mk ? 1 : 0.28; b.material.color.setHex(i === fr ? 0xfff176 : mk ? 0x7dd3fc : 0x94a3b8); b.scale.setScalar(i === fr ? 1.25 : 1); });
@@ -161,14 +197,15 @@
         if (mode === 'video') Object.assign(orbit, { tx: 3.2, ty: 1.6, tz: 0, phi: 1.3, theta: 0.3, dist: 12 * KDX });
         else if (mode === 'target-b') Object.assign(orbit, { tx: 5.5, ty: 5.5, tz: 0, phi: 1.3, theta: 0.3, dist: 26 * KDX });
         else if (mode === 'target-c') Object.assign(orbit, { tx: 3, ty: 1.5, tz: 0, phi: 1.3, theta: 0.3, dist: 14 * KDX });
-        else Object.assign(orbit, { tx: 5.5, ty: 2.0, tz: 0, phi: 1.3, theta: 0.35, dist: 19 * KDX });
+        else Object.assign(orbit, { tx: 5.5, ty: 1.6, tz: 0, phi: 1.28, theta: 0.35, dist: 16.5 * KDX });
       }
       return {
         update(dt) {
-          const A = sim(); if (!A || !A.S) return; const S = A.S;
+          dt = Math.min(dt || 0, 0.1); const A = sim(); if (!A || !A.S) return; const S = A.S;
           setMode(S);
           const P = A.curShot(); if (P.st === 'fly' && pl.playing) pl.pause(); if (!pl.playing && pl.p === 0) demo.on = false;
-          if (S.mode === 'video') video(A, S); else { cannon.visible = true; shot(A, S); }
+          if (S.mode === 'video') video(A, S); else { cannon.visible = true; aim.visible = true; shot(A, S); }
+          clouds.forEach((c) => { c.position.x += c.userData.sp * dt; if (c.position.x > 40) c.position.x = -30; });
         },
         sync() {},
       };

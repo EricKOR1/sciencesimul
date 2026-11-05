@@ -54,11 +54,22 @@
       const { V3, M, mkArrow, setArrow, tube } = tools(THREE);
       const sim = () => ctx.lesson();
       const chargeMat = (s) => M(s > 0 ? POS : NEG, { roughness: 0.3, emissive: s > 0 ? 0x7f1d1d : 0x1e3a8a });
-      const mkCharge = (txt) => { const m = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 24), chargeMat(1)); m.castShadow = true; root.add(m); return m; };
+      const mkCharge = (txt) => { const m = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 28), chargeMat(1)); m.castShadow = true; root.add(m); decoList.push(chargeDeco(m)); return m; };
+      /* ----- 재질 · 장식 도우미 ----- */
+      const ctex = (w, h, draw, rx, ry) => { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; if (rx) t.repeat.set(rx, ry || rx); if ('encoding' in t) t.encoding = THREE.sRGBEncoding; t.anisotropy = 4; return t; };
+      const rnd0 = (() => { let q = 3; return () => ((q = (q * 16807) % 2147483647) / 2147483647); })();
+      const woodTex = (rx, ry) => ctex(256, 128, (g, w, h) => { g.fillStyle = '#8f6236'; g.fillRect(0, 0, w, h); for (let i = 0; i < 70; i++) { g.strokeStyle = 'rgba(55,28,10,' + (0.2 + rnd0() * 0.35) + ')'; g.lineWidth = 1 + rnd0() * 2; g.beginPath(); const y = rnd0() * h; g.moveTo(0, y); g.bezierCurveTo(w * 0.3, y + (rnd0() - 0.5) * 8, w * 0.6, y + (rnd0() - 0.5) * 8, w, y + (rnd0() - 0.5) * 6); g.stroke(); } }, rx, ry);
+      const woodM = (rx, ry) => M(0xffffff, { map: woodTex(rx, ry), roughness: 0.6, metalness: 0 });
+      const haloTex = ctex(128, 128, (g, w, h) => { const gr = g.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w / 2); gr.addColorStop(0, 'rgba(255,255,255,.95)'); gr.addColorStop(0.35, 'rgba(255,255,255,.35)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, w, h); });
+      const signTex = (pl) => ctex(64, 64, (g, w, h) => { g.strokeStyle = '#fff'; g.lineWidth = 9; g.lineCap = 'round'; g.shadowColor = 'rgba(0,0,0,.5)'; g.shadowBlur = 4; g.beginPath(); g.moveTo(16, 32); g.lineTo(48, 32); if (pl) { g.moveTo(32, 16); g.lineTo(32, 48); } g.stroke(); }, 1, 1);
+      const sgP = signTex(true), sgN = signTex(false);
+      const chargeDeco = (m) => { const h = new THREE.Sprite(new THREE.SpriteMaterial({ map: haloTex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.8 })); h.scale.setScalar(3.3); const sg = new THREE.Sprite(new THREE.SpriteMaterial({ map: sgP, transparent: true, depthTest: false })); sg.scale.setScalar(1.0); sg.renderOrder = 5; sg.position.z = 0; m.add(h, sg); m.userData.h = h; m.userData.sg = sg; m.userData.pos = null; return m; };
+      const decoList = [];
+      const paintDeco = () => { decoList.forEach((m) => { const pos = m.material.color.getHex() === POS; if (m.userData.pos === pos) return; m.userData.pos = pos; m.userData.h.material.color.setHex(pos ? 0xff6a5a : 0x5a8cff); m.userData.sg.material.map = pos ? sgP : sgN; m.userData.sg.material.needsUpdate = true; }); };
       const gF = new THREE.Group(), gM = new THREE.Group(), gP = new THREE.Group(); root.add(gF, gM, gP);
       /* ================= ⚡ 전기력 ================= */
-      const floorF = new THREE.Mesh(new THREE.BoxGeometry(10, 0.1, 6), M(0x2a3550, { roughness: 1 })); floorF.position.set(2.5, -0.1, 0); gF.add(floorF);
-      const cA = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 24), chargeMat(1)), cB = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 24), chargeMat(1)); cA.castShadow = cB.castShadow = true; gF.add(cA, cB);
+      const floorF = new THREE.Mesh(new THREE.BoxGeometry(10.6, 0.4, 6.6), woodM(3, 1)); floorF.position.set(2.5, -0.2, 0); floorF.receiveShadow = true; gF.add(floorF); { const e = new THREE.Mesh(new THREE.BoxGeometry(10.7, 0.06, 6.7), M(0x4a2f15, { roughness: 0.7 })); e.position.set(2.5, -0.02, 0); gF.add(e); const mat = new THREE.Mesh(new THREE.BoxGeometry(9.6, 0.02, 5.6), M(0x2c3b5e, { roughness: 0.9 })); mat.position.set(2.5, 0.005, 0); mat.receiveShadow = true; gF.add(mat); }
+      const cA = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 24), chargeMat(1)), cB = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 24), chargeMat(1)); cA.castShadow = cB.castShadow = true; gF.add(cA, cB); decoList.push(chargeDeco(cA), chargeDeco(cB));
       const aFA = mkArrow(0xf26b3a, 0.09), aFB = mkArrow(0xf26b3a, 0.09); gF.add(aFA, aFB);
       const lA = label('', cA, { color: '#c0392b', size: 14 }), lB = label('', cB, { color: '#c0392b', size: 14 });
       const lFA = label('A가 받는 힘', aFA, { color: '#9a3412', size: 13 }), lFB = label('B가 받는 힘', aFB, { color: '#9a3412', size: 13 });
@@ -81,7 +92,8 @@
         info('<b>⚡ 두 전하 사이에 작용하는 전기력</b><br>힘의 세기 ' + pct + ' % (가장 센 배치 = 100 %)<br>A가 받는 힘 ' + pct + ' % · B가 받는 힘 ' + pct + ' % → 크기는 같고 방향은 반대예요 (작용·반작용)<br>두 전하는 서로 ' + (same ? '<b>밀어내요</b> (같은 부호)' : '<b>끌어당겨요</b> (다른 부호)') + ' · 거리 ' + f.d.toFixed(1) + '칸 · A ' + f.qa + ' · B ' + f.qb + '<br><span style="opacity:.8">전하량·부호·거리는 옆 조작판에서 바꿔요.</span>');
       }
       /* ================= 🧭 전기장 지도 (위에서 본 모습, 1칸 = 52px) ================= */
-      const gridPlane = new THREE.Mesh(new THREE.BoxGeometry(1, 0.06, 1), M(0x1b2540, { roughness: 1 })); gM.add(gridPlane);
+      const gridTex = ctex(64, 64, (g, w, h) => { g.fillStyle = '#243459'; g.fillRect(0, 0, w, h); g.strokeStyle = 'rgba(160,190,240,.45)'; g.lineWidth = 2; g.strokeRect(0, 0, w, h); }, 1, 1);
+      const gridPlane = new THREE.Mesh(new THREE.BoxGeometry(1, 0.06, 1), M(0xffffff, { map: gridTex, roughness: 0.8 })); gridPlane.receiveShadow = true; gM.add(gridPlane); { const fr = new THREE.Mesh(new THREE.BoxGeometry(1, 0.1, 1), M(0x64748b, { metalness: 0.7, roughness: 0.35 })); fr.position.y = -0.1; gM.add(fr); gridPlane.userData.fr = fr; }
       const cellA = []; for (let i = 0; i < 80; i++) { const a = mkArrow(0xdbe7ff, 0.04); a.visible = false; gM.add(a); cellA.push(a); }
       const chM = [mkCharge(), mkCharge()]; chM.forEach((c) => gM.add(c));
       const flowPts = (() => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(90 * 3), 3)); const p = new THREE.Points(g, new THREE.PointsMaterial({ color: 0xffd34d, size: 0.1 })); p.frustumCulled = false; gM.add(p); return p; })();
@@ -110,7 +122,7 @@
       function field(S, A) {
         const fl = S.fl; G = A.VW === 480 ? 48 : 52; cxm = A.VW / 2; cym = (A.MY0 + A.MY1) / 2;
         const W = (A.MX1 - A.MX0) / G, H = (A.MY1 - A.MY0) / G;
-        gridPlane.scale.set(W, 1, H); gridPlane.position.set(0, -0.03, 0);
+        gridPlane.scale.set(W, 1, H); gridPlane.position.set(0, -0.03, 0); gridTex.repeat.set(W, H); gridPlane.userData.fr.scale.set(W + 0.3, 1, H + 0.3);
         chM.forEach((c, i) => { const q = fl.ch[i]; c.visible = !!q; lCh[i].show(!!q); if (!q) return; const u = toU(q.x, q.y); c.scale.setScalar(0.38); c.position.set(u[0], 0.4, u[1]); c.material.color.setHex(q.s > 0 ? POS : NEG); c.material.emissive.setHex(q.s > 0 ? 0x7f1d1d : 0x1e3a8a); lCh[i].set(q.s > 0 ? '(+)' : '(−)'); lCh[i].off = [0, 0.6, 0]; });
         cellA.forEach((a, i) => { const c = fl.cells[i]; if (!c) { a.visible = false; return; } const len = Math.hypot(c.vx, c.vy); if (len < 2.5) { a.visible = false; return; } const u = toU(c.x, c.y), L = len / G, dx = c.vx / len, dy = c.vy / len; setArrow(a, new V3(u[0] - dx * L / 2, 0.08, u[1] - dy * L / 2), new V3(u[0] + dx * L / 2, 0.08, u[1] + dy * L / 2)); });
         const pos = flowPts.geometry.attributes.position; for (let i = 0; i < 90; i++) { const p = fl.flow[i]; if (p) { const u = toU(p.x, p.y); pos.array[i * 3] = u[0]; pos.array[i * 3 + 1] = 0.12; pos.array[i * 3 + 2] = u[1]; } else pos.array[i * 3 + 1] = -5; } pos.needsUpdate = true;
@@ -130,14 +142,22 @@
       /* ================= 🔋 평행판 전위차 (1 cm = 1칸) ================= */
       const VMAX = 12, DCM = 6;
       const potCol = (t) => { const c = new THREE.Color(); c.setRGB(0.25 + 0.7 * t, 0.45 - 0.12 * t, 1.0 - 0.75 * t); return c; };
-      const plMinus = new THREE.Mesh(new THREE.BoxGeometry(0.2, 3.2, 3.2), M(0x3b63c4, { metalness: 0.3 })), plPlus = new THREE.Mesh(new THREE.BoxGeometry(0.2, 3.2, 3.2), M(0xc0392b, { metalness: 0.3 })); plMinus.position.set(-0.35, 1.6, 0); plPlus.position.set(DCM + 0.35, 1.6, 0); gP.add(plMinus, plPlus);
+      const plMinus = new THREE.Mesh(new THREE.BoxGeometry(0.2, 3.2, 3.2), M(0x6f8fdc, { metalness: 0.75, roughness: 0.28 })), plPlus = new THREE.Mesh(new THREE.BoxGeometry(0.2, 3.2, 3.2), M(0xe0665c, { metalness: 0.75, roughness: 0.28 })); plMinus.castShadow = plPlus.castShadow = true; plMinus.position.set(-0.35, 1.6, 0); plPlus.position.set(DCM + 0.35, 1.6, 0); gP.add(plMinus, plPlus);
       const slabs = []; for (let i = 0; i < 12; i++) { const s = new THREE.Mesh(new THREE.BoxGeometry(DCM / 12, 3.2, 3.2), new THREE.MeshBasicMaterial({ color: 0x4488ff, transparent: true, opacity: 0.28, depthWrite: false })); s.position.set((i + 0.5) * DCM / 12, 1.6, 0); gP.add(s); slabs.push(s); }
       const eAr = [0.7, 1.4, 2.1, 2.7].map((y) => { const a = mkArrow(0x1f2a44, 0.05); a.userData.y = y; gP.add(a); return a; });
       const lE = label('전기장 방향 (+1이 받는 힘)', [3, 3.4, 0], { color: '#1f2a44', size: 12 });
       const lMi = label('(−)판 0 V', plMinus, { color: '#3b63c4', size: 13 }), lPl = label('', plPlus, { color: '#c0392b', size: 13 });
       lMi.off = [0, 1.9, 0]; lPl.off = [0, 1.9, 0];
       for (let i = 0; i <= DCM; i++) { const t = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.3), M(0x9fb0d4)); t.position.set(i, 0.02, 1.8); gP.add(t); }
-      const floorP = new THREE.Mesh(new THREE.BoxGeometry(9, 0.06, 4.4), M(0x2a3550, { roughness: 1 })); floorP.position.set(3, -0.03, 0); gP.add(floorP);
+      const floorP = new THREE.Mesh(new THREE.BoxGeometry(10.4, 0.4, 6.6), woodM(3, 1)); floorP.position.set(3, -0.2, -0.3); floorP.receiveShadow = true; gP.add(floorP);
+      { const e = new THREE.Mesh(new THREE.BoxGeometry(10.5, 0.06, 6.7), M(0x4a2f15, { roughness: 0.7 })); e.position.set(3, -0.02, -0.3); gP.add(e);
+        const bm = M(0x1f2937, { roughness: 0.5, metalness: 0.3 }); [-0.35, DCM + 0.35].forEach((x) => { const b = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.14, 3.6), bm); b.position.set(x, 0.07, 0); b.castShadow = true; gP.add(b); });
+        const bat = new THREE.Group(); const bb = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.9, 1.0), M(0x2b3447, { roughness: 0.45, metalness: 0.4 })); bb.position.y = 0.45; bb.castShadow = true; bat.add(bb); const st = new THREE.Mesh(new THREE.BoxGeometry(2.42, 0.18, 1.02), M(0xfacc15, { roughness: 0.5 })); st.position.y = 0.5; bat.add(st);
+        const tpM = M(0xe0665c, { metalness: 0.8, roughness: 0.3 }), tnM = M(0x6f8fdc, { metalness: 0.8, roughness: 0.3 }); const tp = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.2, 16), tpM), tn = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.2, 16), tnM); tp.position.set(0.8, 1.0, 0); tn.position.set(-0.8, 1.0, 0); bat.add(tp, tn);
+        bat.position.set(DCM / 2, 0, -2.5); gP.add(bat);
+        const wire = (pts, c) => { const w = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts.map((q) => new V3(q[0], q[1], q[2]))), 40, 0.045, 8, false), M(c, { roughness: 0.4 })); w.castShadow = true; gP.add(w); };
+        wire([[DCM / 2 + 0.8, 1.05, -2.5], [DCM / 2 + 1.0, 1.6, -2.5], [DCM + 0.35, 1.9, -2.3], [DCM + 0.35, 2.6, -1.6]], 0xd9453a);
+        wire([[DCM / 2 - 0.8, 1.05, -2.5], [DCM / 2 - 1.0, 1.6, -2.5], [-0.35, 1.9, -2.3], [-0.35, 2.6, -1.6]], 0x3a62c9); }
       const rulerL = [0, 3, 6].map((m) => label(m + (m === 0 || m === 6 ? ' cm' : ''), [m, 0, 1.8], { color: '#475569', size: 11 }));
       const qBall = new THREE.Mesh(new THREE.SphereGeometry(0.28, 24, 16), chargeMat(1)); qBall.position.y = 1.4; qBall.castShadow = true; gP.add(qBall);
       const lQ = label('', qBall, { color: '#26324a', size: 12 });
@@ -179,7 +199,8 @@
       /* --- 🔌 회로: 전위 = 전기적 높이 (도선이 전위만큼 올라가요) --- */
       let cirBuilt = '', cirData = null, cirScale = 0.02;
       const cirWire = new THREE.Group(); gAc.add(cirWire);
-      const cirGround = new THREE.Mesh(new THREE.BoxGeometry(1, 0.06, 1), M(0x1b2540, { roughness: 1 })); gAc.add(cirGround);
+      const pcbTex = ctex(64, 64, (g, w, h) => { g.fillStyle = '#1e5a46'; g.fillRect(0, 0, w, h); g.fillStyle = 'rgba(214,186,110,.75)'; for (let x = 8; x < w; x += 16) for (let y = 8; y < h; y += 16) { g.beginPath(); g.arc(x, y, 2.2, 0, 6.3); g.fill(); } g.strokeStyle = 'rgba(0,0,0,.25)'; g.strokeRect(0, 0, w, h); }, 1, 1);
+      const cirGround = new THREE.Mesh(new THREE.BoxGeometry(1, 0.06, 1), M(0xffffff, { map: pcbTex, roughness: 0.6, metalness: 0.1 })); cirGround.receiveShadow = true; gAc.add(cirGround);
       const bulbM = [0, 1].map(() => { const b = new THREE.Mesh(new THREE.SphereGeometry(0.32, 24, 18), M(0xe8e2c8, { emissive: 0x000000, roughness: 0.3 })); gAc.add(b); return b; });
       const batM = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.26, 1, 20), M(0x394258, { metalness: 0.4, roughness: 0.4 })); gAc.add(batM);
       const qDots = []; for (let i = 0; i < 9; i++) { const d = new THREE.Mesh(new THREE.SphereGeometry(0.1, 12, 10), M(0xffffff, { roughness: 0.4 })); gAc.add(d); qDots.push(d); }
@@ -202,7 +223,7 @@
         cirWire.add(new THREE.Mesh(rg, new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.32, side: THREE.DoubleSide, depthWrite: false })));
         pts.pop(); pts.push(pts[0].clone());
         cirWire.add(tube(pts, 0.07, 0x9aa6bb, { metalness: 0.5, roughness: 0.35 }, false));
-        const w = (C.R - C.L) * s, d = (C.BOT - C.TOP) * s + 1.2; cirGround.scale.set(w + 1.6, 1, d + 0.4); cirGround.position.set(0, 0, 0);
+        const w = (C.R - C.L) * s, d = (C.BOT - C.TOP) * s + 1.2; cirGround.scale.set(w + 1.6, 1, d + 0.4); pcbTex.repeat.set((w + 1.6) * 1.2, (d + 0.4) * 1.2); cirGround.position.set(0, 0, 0);
         // 전지 (비탈을 따라 놓인 원통), 전구 (낮아지는 구간 한가운데)
         const b0 = P(C.verts[0][0], C.verts[0][1], 0), b1 = P(C.verts[1][0], C.verts[1][1], A.BAT), mid = b0.clone().add(b1).multiplyScalar(0.5), dir = b1.clone().sub(b0);
         batM.position.copy(mid); batM.scale.set(1, dir.length(), 1); batM.quaternion.setFromUnitVectors(new V3(0, 1, 0), dir.clone().normalize());
@@ -229,7 +250,14 @@
       }
       /* --- 🌫️ 전기 집진기 --- */
       let dKey = '', dS = 44;
-      const gPlate = [0, 1].map((i) => { const m = new THREE.Mesh(new THREE.BoxGeometry(0.22, 6, 3.2), M(0x9aa6bb, { metalness: 0.5, roughness: 0.35 })); gAd.add(m); return m; });
+      { const steel = ctex(128, 128, (g, w, h) => { g.fillStyle = '#7b8697'; g.fillRect(0, 0, w, h); g.strokeStyle = 'rgba(30,40,60,.4)'; g.lineWidth = 2; for (let i = 0; i <= w; i += 16) { g.beginPath(); g.moveTo(i, 0); g.lineTo(i, h); g.stroke(); g.beginPath(); g.moveTo(0, i); g.lineTo(w, i); g.stroke(); } }, 8, 4);
+        const fl = new THREE.Mesh(new THREE.BoxGeometry(14, 0.3, 7), M(0xffffff, { map: steel, metalness: 0.5, roughness: 0.5 })); fl.position.set(0, -0.2, 0); fl.receiveShadow = true; gAd.add(fl);
+        const bw = new THREE.Mesh(new THREE.BoxGeometry(14, 9, 0.2), M(0x2a3550, { roughness: 0.8, metalness: 0.2 })); bw.position.set(0, 4.3, -2.2); gAd.add(bw);
+        for (let i = -3; i <= 3; i++) { const rb = new THREE.Mesh(new THREE.BoxGeometry(0.12, 9, 0.12), M(0x64748b, { metalness: 0.7, roughness: 0.4 })); rb.position.set(i * 2, 4.3, -2.05); gAd.add(rb); }
+        const ch = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.5, 7, 20), M(0xb8bfcc, { roughness: 0.7, metalness: 0.2 })); ch.position.set(6.6, 3.5, -1.9); ch.castShadow = true; gAd.add(ch);
+        [5.2, 6.2].forEach((y) => { const st = new THREE.Mesh(new THREE.CylinderGeometry(0.4 - (y - 5.2) * 0.04, 0.42 - (y - 5.2) * 0.04, 0.45, 20), M(0xc03a30, { roughness: 0.6 })); st.position.set(6.6, y, -1.9); gAd.add(st); });
+        const sm = M(0x9aa3b2, { roughness: 1 }); sm.transparent = true; sm.opacity = 0.55; [[6.6, 7.6, -1.9, 0.5], [6.9, 8.3, -1.9, 0.65], [7.4, 9.1, -1.9, 0.8]].forEach((q) => { const c = new THREE.Mesh(new THREE.SphereGeometry(q[3], 14, 10), sm); c.position.set(q[0], q[1], q[2]); gAd.add(c); }); }
+            const gPlate = [0, 1].map((i) => { const m = new THREE.Mesh(new THREE.BoxGeometry(0.22, 6, 3.2), M(0x9aa6bb, { metalness: 0.5, roughness: 0.35 })); gAd.add(m); return m; });
       const bandM = new THREE.Mesh(new THREE.BoxGeometry(5, 0.05, 3.2), new THREE.MeshBasicMaterial({ color: 0xf26b3a, transparent: true, opacity: 0.28, depthWrite: false })); gAd.add(bandM);
       const chanM = new THREE.Mesh(new THREE.BoxGeometry(5, 6, 3.2), new THREE.MeshBasicMaterial({ color: 0x7c5cff, transparent: true, opacity: 0.0, depthWrite: false })); gAd.add(chanM);
       const dustI = new THREE.InstancedMesh(new THREE.SphereGeometry(0.075, 8, 6), new THREE.MeshStandardMaterial({ roughness: 0.6 }), 110), stuckI = new THREE.InstancedMesh(new THREE.SphereGeometry(0.075, 8, 6), M(0x6b5d4f, { roughness: 0.9 }), 300);
@@ -256,7 +284,10 @@
       }
       /* --- ⛈️ 번개와 피뢰침 --- */
       const LS = 60, bolt3 = { key: null, main: null, brs: [] };
-      const sky = new THREE.Mesh(new THREE.BoxGeometry(14, 0.1, 6), M(0x4b5b3d, { roughness: 1 })); sky.position.set(0, -0.05, 0); sky.receiveShadow = true; gAl.add(sky);
+      const stormTex = ctex(8, 256, (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#0d1424'); gr.addColorStop(0.5, '#2b3550'); gr.addColorStop(0.85, '#55607a'); gr.addColorStop(1, '#6f7a8c'); g.fillStyle = gr; g.fillRect(0, 0, w, h); }, 1, 1); stormTex.wrapS = stormTex.wrapT = THREE.ClampToEdgeWrapping;
+      { const dome = new THREE.Mesh(new THREE.SphereGeometry(120, 24, 16), new THREE.MeshBasicMaterial({ map: stormTex, side: THREE.BackSide, depthWrite: false, fog: false })); dome.position.y = 0; dome.renderOrder = -10; gAl.add(dome); }
+      const grassTex = ctex(128, 128, (g, w, h) => { g.fillStyle = '#4b6b3a'; g.fillRect(0, 0, w, h); for (let i = 0; i < 900; i++) { g.fillStyle = 'hsla(' + (85 + rnd0() * 35) + ',35%,' + (22 + rnd0() * 20) + '%,.6)'; g.fillRect(rnd0() * w, rnd0() * h, 1.5, 3); } }, 10, 5);
+      const sky = new THREE.Mesh(new THREE.BoxGeometry(34, 0.1, 16), M(0xffffff, { map: grassTex, roughness: 1 })); sky.position.set(0, -0.05, 0); sky.receiveShadow = true; gAl.add(sky);
       const cloudG = new THREE.Group(); gAl.add(cloudG);
       [[-0.28, 0.1, 0.9], [0, -0.1, 1.05], [0.28, 0.13, 0.95], [-0.1, 0.25, 0.8], [0.12, 0.25, 0.8]].forEach((c) => { const m = new THREE.Mesh(new THREE.SphereGeometry(0.62 * c[2], 20, 14), M(0x6f7b96, { roughness: 1 })); m.position.set(c[0] * 4.2, c[1], 0); m.scale.set(1.1, 0.8, 1.1); cloudG.add(m); });
       const minusI = new THREE.InstancedMesh(new THREE.SphereGeometry(0.1, 8, 6), new THREE.MeshBasicMaterial({ color: 0xa9c4ff, transparent: true }), 8), plusI = new THREE.InstancedMesh(new THREE.SphereGeometry(0.1, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffb4ae, transparent: true }), 30);
@@ -360,6 +391,7 @@
           if (!plL.playing && plL.p === 0) demoL.on = false; if (S.ap.bolt) demoL.on = false;
           if (S.mode === 'field') { if (S.fl.tok.st !== 'tray' && plM.playing) plM.pause(); }
           if (S.mode === 'plates') { const el = S.pl.kind === 'electron'; if ((el ? S.pl.eSt !== 'rest' : S.pl.st !== 'held') && (plC.playing || plE.playing)) { plC.pause(); plE.pause(); } }
+          paintDeco();
           if (S.mode === 'force') force(S); else if (S.mode === 'field') field(S, A); else if (S.mode === 'plates') plates(S, A); else if (S.ap.sub === 'circuit') circuit(A); else if (S.ap.sub === 'precip') precip(A); else lightning(A);
         },
         sync() {},

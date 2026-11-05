@@ -94,6 +94,11 @@
       const bal = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), mat(0xff7a8a, { transparent: true, opacity: 0.3, roughness: 0.25, depthWrite: false, side: THREE.DoubleSide }));
       const knot = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.4, 16), mat(0xff7a8a, { roughness: 0.4 })); root.add(bal, knot);
       const stand = new THREE.Mesh(new THREE.CylinderGeometry(A + 0.4, A + 0.5, 0.2, 40), mat(0x64748b, { metalness: 0.4, roughness: 0.4 })); stand.position.y = -A - 0.5; root.add(stand);
+      const woodTex = canvasTex(512, 512, (c, w, h) => { c.fillStyle = '#8a5a34'; c.fillRect(0, 0, w, h); for (let i = 0; i < 90; i++) { c.strokeStyle = 'rgba(' + (60 + (i * 37) % 50) + ',30,10,' + (0.12 + (i % 5) * 0.04) + ')'; c.lineWidth = 1 + (i % 3); c.beginPath(); const y = (i / 90) * h; c.moveTo(0, y); for (let x = 0; x <= w; x += 64) c.lineTo(x, y + Math.sin(x * 0.03 + i) * 3); c.stroke(); } for (let i = 1; i < 4; i++) { c.fillStyle = 'rgba(40,20,5,.5)'; c.fillRect(0, i * h / 4 - 1, w, 2); } });
+      woodTex.wrapS = woodTex.wrapT = THREE.RepeatWrapping; woodTex.repeat.set(3, 3);
+      const bench = new THREE.Mesh(new THREE.CylinderGeometry(7.5, 7.5, 0.3, 64), mat(0xffffff, { map: woodTex, roughness: 0.7 })); bench.receiveShadow = true; root.add(bench);
+      const rim = new THREE.Mesh(new THREE.TorusGeometry(A + 0.45, 0.07, 10, 48), mat(0xcbd5e1, { metalness: 0.7, roughness: 0.25 })); rim.rotation.x = Math.PI / 2; root.add(rim);
+      for (const sx of [-1, 1]) for (const sy of [-1, 1]) for (const sz of [-1, 1]) { const cp = new THREE.Mesh(new THREE.SphereGeometry(0.1, 12, 10), mat(0xcbd5e1, { metalness: 0.7, roughness: 0.3 })); cp.position.set(sx * A, sy * A, sz * A); box.add(cp); }
 
       const ps = spheres(NMAX, PR, 0x3d6df2, 12);
       const P = [];
@@ -108,7 +113,7 @@
 
       function applyMode() {
         const isBox = st.mode === 'box';
-        box.visible = isBox; bal.visible = knot.visible = !isBox; stand.position.y = (isBox ? -A : -balR()) - 0.35;
+        box.visible = isBox; rim.visible = isBox; bal.visible = knot.visible = !isBox; stand.position.y = (isBox ? -A : -balR()) - 0.35; bench.position.y = stand.position.y - 0.25;
         for (let i = 0; i < NMAX; i++) { const p = P[i]; if (!isBox) { const r = balR() - PR, d = Math.hypot(p.x, p.y, p.z); if (d > r) { p.x *= r / d * 0.95; p.y *= r / d * 0.95; p.z *= r / d * 0.95; } } }
       }
       let lastTxt = '';
@@ -139,10 +144,12 @@
       const gB = new THREE.Group(); gB.visible = false; root.add(gB);
       gB.position.x = 1.7; gB.scale.setScalar(PHN0 ? 0.66 : 1.3);
       const SNX = 7.2, SNZ = 2.8, SGX = 144, SGZ = 28;
-      { const sb = new THREE.Mesh(new THREE.BoxGeometry(SNX, 0.6, SNZ), [mat(0xe6f0fb), mat(0xe6f0fb), new THREE.MeshBasicMaterial({ visible: false }), mat(0xcfe0f3), mat(0xe6f0fb), mat(0xe6f0fb)]); sb.position.y = -0.3; gB.add(sb);
-        const gr = new THREE.Mesh(new THREE.BoxGeometry(SNX + 2.4, 0.2, SNZ + 2.4), mat(0xdbe7f5, { roughness: 0.9 })); gr.position.y = -0.7; gB.add(gr); }
+      { const sb = new THREE.Mesh(new THREE.BoxGeometry(SNX, 0.6, SNZ), [mat(0x7d90a8), mat(0x7d90a8), new THREE.MeshBasicMaterial({ visible: false }), mat(0x6c7f97), mat(0x7d90a8), mat(0x7d90a8)]); sb.position.y = -0.3; gB.add(sb);
+        const gr = new THREE.Mesh(new THREE.BoxGeometry(SNX + 2.4, 0.2, SNZ + 2.4), mat(0x3a2e24, { roughness: 0.95 })); gr.position.y = -0.7; gB.add(gr);
+        const gd = new THREE.Mesh(new THREE.CircleGeometry(16, 48), mat(0x1c2533, { roughness: 1 })); gd.rotation.x = -Math.PI / 2; gd.position.y = -0.82; gB.add(gd);
+        for (let i = 0; i < 9; i++) { const tr = new THREE.Group(); for (let j = 0; j < 3; j++) { const co = new THREE.Mesh(new THREE.ConeGeometry(1.1 - j * 0.28, 1.5, 12), mat(j ? 0x1d4a33 : 0x153a28, { roughness: 0.9 })); co.position.y = 0.9 + j * 0.8; const sn = new THREE.Mesh(new THREE.ConeGeometry(0.7 - j * 0.2, 0.5, 12), mat(0x9fb2c9, { roughness: 0.9 })); sn.position.y = 1.35 + j * 0.8; tr.add(co, sn); } tr.position.set(-9 + i * 2.4 + (i % 2) * 0.8, -0.8, -9 - (i % 3) * 1.6); tr.scale.setScalar(0.8 + (i % 3) * 0.2); gB.add(tr); } }
       const snowGeo = new THREE.PlaneGeometry(SNX, SNZ, SGX, SGZ); snowGeo.rotateX(-Math.PI / 2);
-      const snowMesh = new THREE.Mesh(snowGeo, mat(0xd5e2f0, { roughness: 0.95 })); snowMesh.receiveShadow = true; gB.add(snowMesh);
+      const snowMesh = new THREE.Mesh(snowGeo, mat(0x8196b0, { roughness: 0.95 })); snowMesh.receiveShadow = true; gB.add(snowMesh);
       const BR = { wide: [2.16, 0.72, 0.72], narrow: [0.72, 2.16, 0.72] };
       const brickTex = canvasTex(128, 64, (c, w, h) => { c.fillStyle = '#b4533c'; c.fillRect(0, 0, w, h); for (let i = 0; i < 160; i++) { c.fillStyle = Math.random() < 0.5 ? 'rgba(90,25,10,.25)' : 'rgba(255,190,150,.2)'; c.fillRect(Math.random() * w, Math.random() * h, 3, 2); } c.strokeStyle = 'rgba(255,220,200,.35)'; c.lineWidth = 3; c.strokeRect(2, 2, w - 4, h - 4); });
       const brick = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), mat(0xffffff, { map: brickTex, roughness: 0.8 })); brick.castShadow = true; gB.add(brick);
@@ -166,7 +173,7 @@
       }
       const BR0 = { wide: { w: 216 }, narrow: { w: 72 } }, DEP = { wide: 10, narrow: 30 };
       function updBlock(dt, t, S) {
-        box.visible = bal.visible = knot.visible = stand.visible = false; ps.visible = false; gauge.visible = gst.visible = false; gaugeLabel.show(false); wallLab.show(false); markB.style.display = 'none';
+        box.visible = bal.visible = knot.visible = stand.visible = rim.visible = bench.visible = false; ps.visible = false; gauge.visible = gst.visible = false; gaugeLabel.show(false); wallLab.show(false); markB.style.display = 'none';
         if (!gB.visible) { orbit.phi = 1.32; orbit.theta = 0.25; }
         gB.visible = true;
         let orient = 'wide', bx = 400, base = 1.3, dents = [], sink = 0, touching = false, ph = '';
@@ -213,7 +220,7 @@
           const key = [sc, l ? l.n : 0].join();
           if (key !== sig) { sig = key; if (pmode) { pmode = false; pl.pause(); } }
           if (sc === 'block') { updBlock(dt, t, S); return; }
-          if (gB.visible) { orbit.phi = 1.1; orbit.theta = 0.6; gB.visible = false; ps.visible = true; markB.style.display = ''; bLab.show(false); bLab2.show(false); wtArr.visible = false; lastTxt = ''; }
+          if (gB.visible) { orbit.phi = 1.1; orbit.theta = 0.6; gB.visible = false; ps.visible = true; bench.visible = true; stand.visible = true; markB.style.display = ''; bLab.show(false); bLab2.show(false); wtArr.visible = false; lastTxt = ''; }
           const ph = document.querySelector('.v3-player .v3-ph');
           let nn;
           if (pmode) { const q = pP < 0.7 ? sm(pP / 0.7) : 1 - sm((pP - 0.85) / 0.15); nn = Math.round(40 + 60 * q); if (ph) ph.textContent = pP < 0.7 ? '공기를 넣어요' : pP < 0.85 ? '압력이 커졌어요' : '처음으로'; }
@@ -243,7 +250,7 @@
             const p = P[i]; p.hot = Math.max(0, p.hot - dt); put(ps, i, p.x, p.y, p.z, (i === 0 && st.sc === 'box' ? 1.6 : 1) + p.hot * 1.2); tint(ps, i, i === 0 && st.sc === 'box' ? 0xff8a1f : st.mark && p.hot > 0 ? 0xffb020 : 0x3d6df2);
           }
           flush(ps);
-          if (!isBox) { bal.scale.setScalar(smoothR + 0.04 + 0.03 * Math.sin(t * 6)); knot.position.set(0, -smoothR - 0.12, 0); knot.rotation.x = Math.PI; stand.position.y = -smoothR - 0.65; }
+          if (!isBox) { bal.scale.setScalar(smoothR + 0.04 + 0.03 * Math.sin(t * 6)); knot.position.set(0, -smoothR - 0.12, 0); knot.rotation.x = Math.PI; stand.position.y = -smoothR - 0.65; bench.position.y = stand.position.y - 0.25; }
           st.tm += dt; if (st.tm >= 0.6) { st.rate = st.rate * 0.4 + 0.6 * (st.hits / st.tm); st.hits = 0; st.tm = 0; calcP(); text(); }
           gauge.userData.set(pmode ? st.pr : (S ? S.needle : st.pr));
           gaugeLabel.show(gauge.visible);

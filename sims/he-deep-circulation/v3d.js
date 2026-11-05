@@ -41,15 +41,41 @@
     title: '해양 컨베이어 벨트 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     levels: [2, 3],        // 0·1단계(수조 실험·단면 카드)는 2D 화면에서 해요
-    camera: { dist: PHONE ? 14 : 10.5, theta: 0.2, phi: 1.1, min: 5.5, max: 22 },
+    camera: { dist: PHONE ? 15.5 : 12.2, theta: 0.2, phi: 1.1, min: 5.5, max: 22 },
     autoRotate: 0.12,
     build(ctx) {
       if (ctx.THREE.ColorManagement) ctx.THREE.ColorManagement.legacyMode = false;     // 색을 보이는 그대로(sRGB) 쓰도록 맞춰요
       const { THREE, root, label, info, controls } = ctx;
+      /* ---- 장면 꾸미기 도우미: 나무 · 암석 무늬, 하늘 · 우주 배경, 빛 번짐 (모양만 꾸며요) ---- */
+      const FX = (() => {
+        const scn = ctx.scene; let sd = 7; const rnd = () => { sd = (sd * 16807) % 2147483647; return sd / 2147483647; };
+        const mk = (w, h, draw, rep) => { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; if (rep) t.repeat.set(rep[0], rep[1]); if ('encoding' in t) t.encoding = THREE.sRGBEncoding; t.anisotropy = 4; return t; };
+        const wood = (rep) => mk(256, 256, (g, w, h) => { g.fillStyle = '#b98a58'; g.fillRect(0, 0, w, h); for (let i = 0; i < 80; i++) { const y = rnd() * h; g.strokeStyle = 'rgba(' + (70 + rnd() * 40 | 0) + ',38,12,' + (0.07 + rnd() * 0.15) + ')'; g.lineWidth = 0.6 + rnd() * 2.2; g.beginPath(); g.moveTo(0, y); for (let x = 0; x <= w; x += 32) g.lineTo(x, y + Math.sin(x * 0.03 + i) * 3 * rnd()); g.stroke(); } g.fillStyle = 'rgba(60,30,10,.18)'; for (let k = 1; k < 4; k++) g.fillRect(0, k * 64, w, 2); }, rep);
+        const grain = (rep, amt) => mk(128, 128, (g, w, h) => { g.fillStyle = '#fff'; g.fillRect(0, 0, w, h); for (let i = 0; i < 1100; i++) { const v = 150 + rnd() * 80 | 0; g.fillStyle = 'rgba(' + v + ',' + v + ',' + v + ',' + (amt || 0.35) + ')'; g.fillRect(rnd() * w, rnd() * h, 1 + rnd() * 3, 1 + rnd() * 2.2); } }, rep);
+        const dome = (top, mid, bot, stars) => {
+          const t = mk(8, 256, (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, top); gr.addColorStop(0.5, mid); gr.addColorStop(1, bot); g.fillStyle = gr; g.fillRect(0, 0, w, h); }); t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping;
+          const m = new THREE.Mesh(new THREE.SphereGeometry(90, 32, 16), new THREE.MeshBasicMaterial({ map: t, side: THREE.BackSide, depthWrite: false })); m.renderOrder = -10; m.raycast = () => {}; scn.add(m);
+          if (stars) { const pos = []; for (let i = 0; i < stars; i++) { const u = rnd() * 2 - 1, a = rnd() * 6.283, q = Math.sqrt(1 - u * u); pos.push(Math.cos(a) * q * 85, u * 85, Math.sin(a) * q * 85); } const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); const p = new THREE.Points(g, new THREE.PointsMaterial({ color: 0xcfdcff, size: 1.6, sizeAttenuation: false, transparent: true, opacity: 0.8, depthWrite: false })); p.renderOrder = -9; p.raycast = () => {}; m.add(p); }
+          return m;
+        };
+        const glowTex = (rgb) => mk(128, 128, (g, w, h) => { const gr = g.createRadialGradient(64, 64, 0, 64, 64, 64); gr.addColorStop(0, 'rgba(' + rgb + ',1)'); gr.addColorStop(0.35, 'rgba(' + rgb + ',.35)'); gr.addColorStop(1, 'rgba(' + rgb + ',0)'); g.fillStyle = gr; g.fillRect(0, 0, w, h); });
+        const glow = (rgb, size, op) => { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex(rgb), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: op == null ? 0.8 : op })); s.scale.setScalar(size); s.raycast = () => {}; return s; };
+        const spiral = (rgb) => mk(256, 256, (g, w, h) => { g.clearRect(0, 0, w, h); const gr = g.createRadialGradient(128, 128, 0, 128, 128, 128); gr.addColorStop(0, 'rgba(255,248,230,1)'); gr.addColorStop(0.12, 'rgba(' + rgb + ',.75)'); gr.addColorStop(0.5, 'rgba(' + rgb + ',.2)'); gr.addColorStop(1, 'rgba(' + rgb + ',0)'); g.fillStyle = gr; g.fillRect(0, 0, w, h); for (let arm = 0; arm < 2; arm++) for (let i = 0; i < 260; i++) { const f = i / 260, a = f * 5.2 + arm * Math.PI, r = 14 + f * 108, x = 128 + Math.cos(a) * r + (rnd() - 0.5) * 12 * f, y = 128 + Math.sin(a) * r + (rnd() - 0.5) * 12 * f; g.fillStyle = 'rgba(255,255,255,' + (0.5 * (1 - f) + 0.06) + ')'; g.beginPath(); g.arc(x, y, 1 + rnd() * 2.4 * (1 - f * 0.5), 0, 6.283); g.fill(); } });
+        return { rnd, mk, wood, grain, dome, glow, glowTex, spiral };
+      })();
       const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.5, metalness: 0.05 }, o || {}));
       const tex = earthTex(THREE);
       root.add(new THREE.Mesh(new THREE.SphereGeometry(R * 0.82, 48, 32), std(0x0f2a52, { roughness: 0.9 })));
-      const shell = new THREE.Mesh(new THREE.SphereGeometry(R, 96, 64), new THREE.MeshStandardMaterial({ map: tex, transparent: true, roughness: 0.55, metalness: 0.0, depthWrite: false })); shell.renderOrder = 3; root.add(shell);
+      const shell = new THREE.Mesh(new THREE.SphereGeometry(R, 96, 64), new THREE.MeshPhysicalMaterial({ map: tex, transparent: true, roughness: 0.38, metalness: 0.0, clearcoat: 0.5, clearcoatRoughness: 0.25, depthWrite: false })); shell.renderOrder = 3; root.add(shell);
+      /* 우주 배경 · 대기 빛무리 · 지구본 받침(자오선 고리 · 축 · 나무 받침) */
+      const spaceDome = FX.dome('#02040c', '#07102a', '#0d1a3a', 520), labDome = FX.dome('#1b2a48', '#2b3e63', '#40557c', 0); labDome.visible = false;
+      { const halo = FX.glow('90,170,255', R * 3.1, 0.55); halo.renderOrder = -1; root.add(halo);
+        const brass = new THREE.MeshStandardMaterial({ color: 0xc9a14a, roughness: 0.3, metalness: 0.85 });
+        const mer = new THREE.Mesh(new THREE.TorusGeometry(R * 1.14, 0.06, 12, 96), brass); mer.rotation.y = 0.0; mer.rotation.z = 0; mer.position.set(0, 0, 0); root.add(mer);
+        const axis = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, R * 2.5, 10), brass); root.add(axis);
+        [-1, 1].forEach((sg) => { const cap = new THREE.Mesh(new THREE.SphereGeometry(0.13, 14, 10), brass); cap.position.y = sg * R * 1.25; root.add(cap); });
+        const post = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.16, 0.9, 14), brass); post.position.y = -R * 1.14 - 0.3; root.add(post);
+        const foot = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.8, 0.28, 40), new THREE.MeshStandardMaterial({ map: FX.wood([1.2, 1.2]), roughness: 0.5 })); foot.position.y = -R * 1.14 - 0.9; foot.receiveShadow = true; root.add(foot); }
       const grp = new THREE.Group(); root.add(grp);
       const mkCurve = (pts, r) => new THREE.CatmullRomCurve3(pts.map((p) => ll(p[0], p[1], r)), false, 'centripetal');
       const FL = [
@@ -132,6 +158,8 @@
       /* ================= 1단계 침강 실험(tank) · 2단계 단면 모형(sect): 2D와 같은 값으로 보여 줘요 ================= */
       const gG = new THREE.Group(); while (root.children.length) gG.add(root.children[0]); root.add(gG);
       const gTk = new THREE.Group(), gSc = new THREE.Group(); root.add(gTk, gSc); gTk.visible = gSc.visible = false;
+      const chromeM = new THREE.MeshStandardMaterial({ color: 0xdfe6ee, roughness: 0.22, metalness: 0.85 });
+      const benchG = (w, d, y, rep) => { const b = new THREE.Mesh(new THREE.BoxGeometry(w, 0.4, d), new THREE.MeshStandardMaterial({ map: FX.wood(rep), roughness: 0.55 })); b.position.y = y; b.receiveShadow = true; const e = new THREE.Mesh(new THREE.BoxGeometry(w + 0.04, 0.08, d + 0.04), new THREE.MeshStandardMaterial({ color: 0x6b4a2b, roughness: 0.6 })); e.position.y = y + 0.14; const g2 = new THREE.Group(); g2.add(b, e); return g2; };
       const probe = controls.text(''); probe.style.display = 'none'; const ctlEl = probe.parentElement;
       const globeEls = Array.prototype.filter.call(ctlEl.children, (e) => e !== probe);
       const grab = (fn) => { const n0 = ctlEl.children.length; const r = fn(); return { r, els: Array.prototype.slice.call(ctlEl.children, n0) }; };
@@ -142,10 +170,20 @@
       { const gl = new THREE.Mesh(new THREE.BoxGeometry(TW, TH, TD), new THREE.MeshStandardMaterial({ color: 0xcfe8ff, transparent: true, opacity: 0.12, roughness: 0.08, depthWrite: false })); gTk.add(gl);
         const ed = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(TW, TH, TD)), new THREE.LineBasicMaterial({ color: 0x9ab4d6 })); gTk.add(ed);
         const wt = new THREE.Mesh(new THREE.BoxGeometry(TW - 0.06, TH * 0.92, TD - 0.06), MT(0xbfe0f5, { transparent: true, opacity: 0.35, roughness: 0.15, depthWrite: false })); wt.position.y = -TH * 0.04; gTk.add(wt); }
-      const plate = new THREE.Mesh(new THREE.BoxGeometry(1.1, TH * 0.9, TD * 0.9), MT(0xe2e8f0, { roughness: 0.4 })); plate.position.set(-TW / 2 - 0.7, 0, 0); gTk.add(plate);
+      { gTk.add(benchG(TW + 5, TD + 4, -TH / 2 - 0.25, [3.5, 1.4]));
+        [-1, 1].forEach((sx) => [-1, 1].forEach((sz) => { const po = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, TH + 0.1, 10), chromeM); po.position.set(sx * TW / 2, 0, sz * TD / 2); gTk.add(po); }));
+        [TH / 2, -TH / 2].forEach((y) => { [-1, 1].forEach((sz) => { const b = new THREE.Mesh(new THREE.BoxGeometry(TW, 0.07, 0.07), chromeM); b.position.set(0, y, sz * TD / 2); gTk.add(b); }); [-1, 1].forEach((sx) => { const b = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.07, TD), chromeM); b.position.set(sx * TW / 2, y, 0); gTk.add(b); }); });
+        const surf = new THREE.Mesh(new THREE.PlaneGeometry(TW - 0.06, TD - 0.06), new THREE.MeshBasicMaterial({ color: 0xe6f4ff, transparent: true, opacity: 0.35, depthWrite: false })); surf.rotation.x = -Math.PI / 2; surf.position.y = -TH * 0.04 + TH * 0.46 - 0.02; gTk.add(surf); }
+      const plate = new THREE.Mesh(new THREE.BoxGeometry(1.1, TH * 0.9, TD * 0.9), MT(0xe2e8f0, { roughness: 0.4, metalness: 0.3 })); plate.position.set(-TW / 2 - 0.7, 0, 0); gTk.add(plate);
       const iceC = [0, 1, 2].map((i) => { const m = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.4, 0.4), MT(0xffffff, { transparent: true, opacity: 0.8 })); m.position.set(-TW / 2 - 0.7 + (i % 2 ? 0.1 : -0.1), 0.9 - i * 0.9, TD * 0.46); m.rotation.set(0.4, 0.5, 0.2 * i); gTk.add(m); return m; });
       const fun = new THREE.Mesh(new THREE.ConeGeometry(0.6, 0.9, 20, 1, true), MT(0xcbd5e1, { side: THREE.DoubleSide })); fun.rotation.z = Math.PI; fun.position.set(-TW / 2 + 1.0, TH / 2 + 1.0, 0); gTk.add(fun);
       const funL = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.15, 0.7, 16), MT(0x3b82f6, { transparent: true, opacity: 0.85 })); funL.position.set(-TW / 2 + 1.0, TH / 2 + 1.05, 0); gTk.add(funL);
+      { const rx = -TW / 2 + 2.6, rz = -TD / 2 - 0.7, ry0 = -TH / 2 - 0.05, rh = TH + 2.6, fy = TH / 2 + 1.0, fx = -TW / 2 + 1.0;
+        const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, rh, 12), chromeM); rod.position.set(rx, ry0 + rh / 2, rz); gTk.add(rod);
+        const fo = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.8, 0.12, 24), new THREE.MeshStandardMaterial({ color: 0x1f2937, roughness: 0.5, metalness: 0.5 })); fo.position.set(rx, ry0 + 0.06, rz); gTk.add(fo);
+        const a0 = new THREE.Vector3(rx, fy, rz), a1 = new THREE.Vector3(fx, fy, 0), dd = a1.clone().sub(a0), arm = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, dd.length(), 10), chromeM); arm.position.copy(a0).addScaledVector(dd, 0.5); arm.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dd.normalize()); gTk.add(arm);
+        const ring = new THREE.Mesh(new THREE.TorusGeometry(0.62, 0.035, 8, 28), chromeM); ring.rotation.x = Math.PI / 2; ring.position.set(fx, fy + 0.12, 0); gTk.add(ring);
+        const cl = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, 0.2), chromeM); cl.position.copy(a0); gTk.add(cl); }
       const stream = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1, 8), MT(0x2563eb, { emissive: 0x1d4ed8, emissiveIntensity: 0.4 })); gTk.add(stream);
       const NDY = 240, dyeM = new THREE.InstancedMesh(new THREE.SphereGeometry(0.075, 10, 8), MT(0x1d4ed8, { emissive: 0x1e3a8a, emissiveIntensity: 0.5 }), NDY); dyeM.frustumCulled = false; dyeM.instanceMatrix.setUsage(THREE.DynamicDrawUsage); gTk.add(dyeM);
       const layB = new THREE.Mesh(new THREE.BoxGeometry(1, 1, TD - 0.2), MT(0x2563eb, { transparent: true, opacity: 0.25, depthWrite: false })); gTk.add(layB);
@@ -184,6 +222,9 @@
         const seaP = new THREE.Mesh(new THREE.BoxGeometry(SWd, SHt, SDp), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(cv), transparent: true, opacity: 0.88 })); gSc.add(seaP);
         const ed = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(SWd, SHt, SDp)), new THREE.LineBasicMaterial({ color: 0x9ab4d6 })); gSc.add(ed);
         [-1, 1].forEach((sg) => { const ic = new THREE.Mesh(new THREE.BoxGeometry(SWd * 0.04, 0.16, SDp), MT(0xffffff)); ic.position.set(sg * (SWd / 2 - SWd * 0.02), SHt / 2 + 0.05, 0); gSc.add(ic); }); }
+      gSc.add(benchG(SWd + 3, SDp + 3, -SHt / 2 - 0.4, [3, 1]));
+      { const bk = new THREE.Mesh(new THREE.PlaneGeometry(SWd + 3, SHt + 2), new THREE.MeshStandardMaterial({ color: 0x24324f, roughness: 0.9 })); bk.position.z = -SDp / 2 - 0.5; gSc.add(bk);
+        [-1, 1].forEach((sx) => { const po = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, SHt + 0.2, 10), chromeM); po.position.set(sx * SWd / 2, 0, SDp / 2); gSc.add(po); }); }
       const BANDD = { mid: [600, 1500, '중층 (약 1000 m)'], deep: [2000, 4000, '심층 (2000~4000 m)'], bot: [4200, 5000, '저층 (4000 m 아래)'] };
       Object.keys(BANDD).forEach((k) => { const [d0, d1, nm] = BANDD[k]; const m = new THREE.Mesh(new THREE.BoxGeometry(SWd, sy(d0) - sy(d1), SDp * 0.9), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.1, depthWrite: false })); m.position.set(0, (sy(d0) + sy(d1)) / 2, 0); gSc.add(m); const l = label(nm, [SWd / 2, (sy(d0) + sy(d1)) / 2, 0], { color: 'rgba(15,40,80,.8)', size: 11.5, offset: [1.1, 0, 0] }); l.show(false); BANDD[k].push(l); });
       const MKS = ['nadw', 'aabw', 'aaiw'], MCOL = { aabw: 0x7c3aed, nadw: 0x2563eb, aaiw: 0x16a34a };
@@ -211,7 +252,7 @@
       function applyScn(k) {
         if (k === scnNow) return; scnNow = k; forceInfo = true;
         const tk = k === 'tank', sc = k === 'sect';
-        gG.visible = !(tk || sc); gTk.visible = tk; gSc.visible = sc;
+        gG.visible = !(tk || sc); gTk.visible = tk; gSc.visible = sc; spaceDome.visible = !(tk || sc); labDome.visible = tk || sc;
         globeEls.forEach((e) => { e.style.display = tk || sc ? 'none' : ''; });
         shw(tkT, tk); shw(tkS, tk); shw(tkPour, tk); shw(tkRst, tk);
         if (tk || sc) { Object.keys(LB).forEach((q) => LB[q].show(false)); bl.show(false); }
@@ -221,7 +262,7 @@
         const o = ctx.orbit;
         if (tk) { o.theta = 0.05; o.phi = 1.4; o.tx = 0; o.ty = 0.3; o.tz = 0; o.dist = PHONE ? 19 : 14; }
         else if (sc) { o.theta = 0.05; o.phi = 1.45; o.tx = 0; o.ty = 0; o.tz = 0; o.dist = PHONE ? 20 : 13.5; }
-        else { o.theta = 0.2; o.phi = 1.1; o.tx = 0; o.ty = 0; o.tz = 0; o.dist = PHONE ? 14 : 10.5; }
+        else { o.theta = 0.2; o.phi = 1.1; o.tx = 0; o.ty = 0; o.tz = 0; o.dist = PHONE ? 15.5 : 12.2; }
       }
       const dm = new THREE.Object3D(), tmp = new THREE.Vector3();
       return {

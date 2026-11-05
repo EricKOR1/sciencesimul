@@ -313,9 +313,43 @@ function foldChain(start, phob, seed) {
       }
       /* --- aa: 물속에서 R기의 성질 (2D의 S.aa.beads를 그대로) --- */
       const TW = 7.2, TH = 4.6, TD = 2.6;
-      { const gl = new THREE.Mesh(new THREE.BoxGeometry(TW, TH, TD), new THREE.MeshStandardMaterial({ color: 0x8fc4ff, transparent: true, opacity: 0.13, roughness: 0.1, depthWrite: false })); gAA.add(gl);
-        const ed = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(TW, TH, TD)), new THREE.LineBasicMaterial({ color: 0x7aa7d8 })); gAA.add(ed);
-        const fl = new THREE.Mesh(new THREE.BoxGeometry(TW + 0.5, 0.2, TD + 0.5), stdM(0x1c2540)); fl.position.y = -TH / 2 - 0.1; gAA.add(fl); }
+      const waterM = [];
+      { const gl = new THREE.Mesh(new THREE.BoxGeometry(TW, TH, TD), new THREE.MeshPhysicalMaterial({ color: 0xcfe6ff, transparent: true, opacity: 0.08, roughness: 0.03, clearcoat: 1, depthWrite: false })); gAA.add(gl);
+        /* 물 부피 + 물결 표면 */
+        const WH = TH - 0.4, wv = new THREE.Mesh(new THREE.BoxGeometry(TW - 0.12, WH, TD - 0.12), new THREE.MeshPhysicalMaterial({ color: 0x3f8fe0, transparent: true, opacity: 0.2, roughness: 0.05, clearcoat: 0.8, depthWrite: false })); wv.position.y = -TH / 2 + WH / 2 + 0.02; gAA.add(wv);
+        const surfG = new THREE.PlaneGeometry(TW - 0.12, TD - 0.12, 36, 10); surfG.rotateX(-Math.PI / 2);
+        const surf = new THREE.Mesh(surfG, new THREE.MeshPhysicalMaterial({ color: 0xbfe0ff, transparent: true, opacity: 0.45, roughness: 0.03, metalness: 0.1, clearcoat: 1, depthWrite: false, side: THREE.DoubleSide })); surf.position.y = -TH / 2 + WH + 0.02; gAA.add(surf);
+        const sBase = Float32Array.from(surfG.attributes.position.array);
+        gAA.userData.surf = () => { const t = performance.now() / 1000, pa = surfG.attributes.position; for (let i = 0; i < pa.count; i++) { const x = sBase[i * 3], z = sBase[i * 3 + 2]; pa.setY(i, Math.sin(x * 1.6 + t * 1.4) * 0.03 + Math.cos(z * 2.4 + t * 1.1) * 0.025); } pa.needsUpdate = true; };
+        /* 유리 수조 모서리 + 받침 */
+        const steel = stdM(0x8791a3, { metalness: 0.85, roughness: 0.28 });
+        [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach((q) => { const v = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, TH, 10), steel); v.position.set(q[0] * TW / 2, 0, q[1] * TD / 2); gAA.add(v); });
+        [-1, 1].forEach((yy) => { [-1, 1].forEach((zz) => { const h = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, TW, 10), steel); h.rotation.z = Math.PI / 2; h.position.set(0, yy * TH / 2, zz * TD / 2); gAA.add(h); }); [-1, 1].forEach((xx) => { const d = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, TD, 10), steel); d.rotation.x = Math.PI / 2; d.position.set(xx * TW / 2, yy * TH / 2, 0); gAA.add(d); }); });
+        const fl = new THREE.Mesh(new THREE.BoxGeometry(TW + 0.5, 0.2, TD + 0.5), steel); fl.position.y = -TH / 2 - 0.1; gAA.add(fl);
+        /* 실험대 + 뒷벽 */
+        const c = document.createElement('canvas'); c.width = 512; c.height = 512; const x = c.getContext('2d');
+        x.fillStyle = '#7d5a3c'; x.fillRect(0, 0, 512, 512);
+        for (let i = 0; i < 8; i++) { x.fillStyle = i % 2 ? 'rgba(60,35,15,.12)' : 'rgba(255,220,170,.06)'; x.fillRect(0, i * 64, 512, 64); x.fillStyle = 'rgba(30,16,6,.6)'; x.fillRect(0, i * 64, 512, 2); }
+        for (let i = 0; i < 240; i++) { x.strokeStyle = 'rgba(40,22,8,' + (0.05 + Math.random() * 0.1) + ')'; x.lineWidth = 0.6 + Math.random(); const y = Math.random() * 512; x.beginPath(); x.moveTo(0, y); x.bezierCurveTo(150, y + Math.random() * 6 - 3, 350, y + Math.random() * 6 - 3, 512, y + Math.random() * 4 - 2); x.stroke(); }
+        const wt = new THREE.CanvasTexture(c); wt.wrapS = wt.wrapT = THREE.RepeatWrapping; wt.repeat.set(2.4, 1.4);
+        const bench = new THREE.Mesh(new THREE.BoxGeometry(18, 0.5, 9), new THREE.MeshStandardMaterial({ map: wt, color: 0x9a7d62, roughness: 0.6 })); bench.position.y = -TH / 2 - 0.45; gAA.add(bench);
+        const c2 = document.createElement('canvas'); c2.width = 64; c2.height = 256; const x2 = c2.getContext('2d'); const gr = x2.createLinearGradient(0, 0, 0, 256); gr.addColorStop(0, '#25365e'); gr.addColorStop(1, '#0d1630'); x2.fillStyle = gr; x2.fillRect(0, 0, 64, 256);
+        const wall = new THREE.Mesh(new THREE.PlaneGeometry(26, 12), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c2) })); wall.position.set(0, 1.2, -4.4); gAA.add(wall);
+        /* 물 분자 (H₂O) 가득 */
+        const NW = 170, om = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 12, 8), stdM(0xe0524a, { transparent: true, opacity: 0.8 }), NW), hm = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 10, 6), stdM(0xe8f0ff, { transparent: true, opacity: 0.8 }), NW * 2);
+        om.frustumCulled = hm.frustumCulled = false; gAA.add(om, hm);
+        const wp = Array.from({ length: NW }, (_, i) => { const r = (k) => { const v = Math.sin(i * 12.9898 + k * 78.233) * 43758.5453; return v - Math.floor(v); }; return { x: (r(1) - 0.5) * (TW - 0.5), y: -TH / 2 + 0.25 + r(2) * (WH - 0.5), z: (r(3) - 0.5) * (TD - 0.4), ph: r(4) * 6.28, sp: 0.4 + r(5) * 0.8, ax: r(6) * 6.28 }; });
+        const dm = new THREE.Object3D(), qa = new THREE.Quaternion();
+        gAA.userData.water = (t) => {
+          wp.forEach((q, i) => {
+            const px = q.x + Math.sin(t * q.sp + q.ph) * 0.18, py = q.y + Math.cos(t * q.sp * 1.2 + q.ph) * 0.14, pz = q.z + Math.sin(t * q.sp * 0.8 + q.ph * 2) * 0.12, a = q.ax + t * q.sp;
+            dm.position.set(px, py, pz); dm.rotation.set(0, 0, a); dm.scale.setScalar(0.085); dm.updateMatrix(); om.setMatrixAt(i, dm.matrix);
+            [-1, 1].forEach((sd, k) => { dm.position.set(px + Math.cos(a + sd * 0.91) * 0.11, py + Math.sin(a + sd * 0.91) * 0.11, pz); dm.rotation.set(0, 0, 0); dm.scale.setScalar(0.05); dm.updateMatrix(); hm.setMatrixAt(i * 2 + k, dm.matrix); });
+          });
+          om.instanceMatrix.needsUpdate = true; hm.instanceMatrix.needsUpdate = true;
+        };
+        const lW = label('물 분자 (H₂O)', [TW / 2 - 0.9, -TH / 2 + 0.5, TD / 2], { color: 'rgba(30,64,120,.9)', size: 11.5, offset: [0, 0, 0.3] }); lW.show(false); gAA.userData.lW = lW;
+      }
       const aaPool = Array.from({ length: 14 }, () => { const b = mkBead(); b.g.visible = false; gAA.add(b.g); return b; });
       const sortPool = KEYS6.map((k, i) => { const b = mkBead(); setBead(b, k, false, 0, 0); b.g.visible = false; b.g.position.set(((i % 3) - 1) * 2.6 - 0.3, i < 3 ? 0.9 : -1.1, 0); gAA.add(b.g); return b; });
       const sortLab = KEYS6.map((k, i) => { const l = label(AAI[k].name + ' (' + AAI[k].ab + ')', sortPool[i].g, { color: 'rgba(15,23,42,.85)', offset: [0.35, -0.75, 0] }); l.show(false); return l; });
@@ -419,7 +453,7 @@ function foldChain(start, phob, seed) {
         gOld.visible = !isNew; gAA.visible = md === 'aa' || md === 'sortaa'; gCH.visible = md === 'chain' || md === 'calc'; gSK.visible = md === 'sickle';
         oldEls.forEach((e) => { e.style.display = isNew ? 'none' : ''; });
         sh(aaBtns, md === 'aa'); sh(aaClr, md === 'aa'); sh(chBtns, md === 'chain'); sh(chClr, md === 'chain'); sh(skMut, md === 'sickle'); sh(skLow, md === 'sickle');
-        lTank.show(md === 'aa'); sortPool.forEach((B) => { B.g.visible = md === 'sortaa'; }); sortLab.forEach((l) => l.show(md === 'sortaa'));
+        lTank.show(md === 'aa'); gAA.userData.lW.show(md === 'aa'); sortPool.forEach((B) => { B.g.visible = md === 'sortaa'; }); sortLab.forEach((l) => l.show(md === 'sortaa'));
         lCod.forEach((l) => l.show(md === 'chain' || md === 'calc')); lmR.show(md === 'chain' || md === 'calc'); if (md !== 'chain' && md !== 'calc') lPep.show(false);
         skLab.forEach((l) => l.show(md === 'sickle')); [lSeq, lSix, lHb, lHb2].forEach((l) => l.show(md === 'sickle')); lKn.show(false);
         if (isNew) { resLabs.concat([nL, cL, helL, shL, gL, hbL, coreL, wetL, hemeL], subL).forEach((l) => l.show(false)); orbit.theta = 0.1; orbit.phi = 1.4; orbit.tx = 0; orbit.ty = md === 'sickle' ? 0.9 : 0.3; orbit.tz = 0; orbit.dist = md === 'sickle' ? (PHONE ? 24 : 17.5) : (PHONE ? 17 : 12.5); }
@@ -433,6 +467,7 @@ function foldChain(start, phob, seed) {
           applyNew(mdN);
           if (mdN === 'aa' || mdN === 'sortaa' || mdN === 'chain' || mdN === 'calc' || mdN === 'sickle') {
             dt = Math.min(dt, 0.05); let h;
+            if (gAA.visible) { gAA.userData.water(t); gAA.userData.surf(); }
             if (mdN === 'sickle') { h = updSickle(Lw, t); skMut.r.set(!!Lw.S.sk.mut); skLow.r.set(!!Lw.S.sk.low); }
             else if (mdN === 'chain' || mdN === 'calc') h = updChain(Lw, mdN, dt, t);
             else h = updBeads(Lw, mdN, dt, t);

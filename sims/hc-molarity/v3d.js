@@ -86,26 +86,42 @@
       const { THREE, root, label, info, controls } = ctx;
       const L = makeLib(THREE);
       const clamp = (x, a, b) => Math.max(a, Math.min(b, x)), sm = L.sstep;
-      const floor = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ color: 0x050b18 })); floor.scale.set(15, 0.1, 9); floor.position.y = -0.06; root.add(floor);
+      const wood = (function () {
+        const c = document.createElement('canvas'); c.width = 512; c.height = 512; const x = c.getContext('2d');
+        x.fillStyle = '#7d5a3c'; x.fillRect(0, 0, 512, 512);
+        for (let i = 0; i < 8; i++) { x.fillStyle = i % 2 ? 'rgba(60,35,15,.12)' : 'rgba(255,220,170,.06)'; x.fillRect(0, i * 64, 512, 64); x.fillStyle = 'rgba(30,16,6,.6)'; x.fillRect(0, i * 64, 512, 2); }
+        for (let i = 0; i < 240; i++) { x.strokeStyle = 'rgba(40,22,8,' + (0.05 + Math.random() * 0.1) + ')'; x.lineWidth = 0.6 + Math.random(); const y = Math.random() * 512; x.beginPath(); x.moveTo(0, y); x.bezierCurveTo(150, y + Math.random() * 6 - 3, 350, y + Math.random() * 6 - 3, 512, y + Math.random() * 4 - 2); x.stroke(); }
+        const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(2.4, 1.4); return t;
+      })();
+      const bench = new THREE.Mesh(new THREE.BoxGeometry(18, 0.5, 10), new THREE.MeshStandardMaterial({ map: wood, color: 0x9a7d62, roughness: 0.6 })); bench.position.y = -0.31; root.add(bench);
+      const gradTex = (function () {
+        const c = document.createElement('canvas'); c.width = 256; c.height = 512; const x = c.getContext('2d');
+        x.strokeStyle = 'rgba(255,255,255,.9)';
+        for (let i = 1; i < 10; i++) { const y = 512 - 20 - i * 46; x.lineWidth = i % 2 ? 2 : 3; x.beginPath(); x.moveTo(150, y); x.lineTo(i % 2 ? 190 : 225, y); x.stroke(); }
+        return new THREE.CanvasTexture(c);
+      })();
       const dum = new THREE.Object3D();
       const hex = (s) => parseInt(String(s).replace('#', ''), 16);
       function makeBeaker() {
         const g = new THREE.Group(); root.add(g);
-        const wall = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 1, 40, 1, true), new THREE.MeshStandardMaterial({ color: 0xcfe0ff, transparent: true, opacity: 0.14, roughness: 0.1, side: THREE.DoubleSide, depthWrite: false }));
-        const bot = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 0.1, 40), new THREE.MeshStandardMaterial({ color: 0xcfe0ff, transparent: true, opacity: 0.35, roughness: 0.1, depthWrite: false }));
-        const liqM = new THREE.MeshStandardMaterial({ color: 0xa7d3ff, transparent: true, opacity: 0.3, roughness: 0.12, depthWrite: false });
+        const wall = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 1, 56, 1, true), new THREE.MeshPhysicalMaterial({ color: 0xd8e8ff, transparent: true, opacity: 0.16, roughness: 0.04, clearcoat: 1, clearcoatRoughness: 0.05, side: THREE.DoubleSide, depthWrite: false }));
+        const grad = new THREE.Mesh(new THREE.CylinderGeometry(1.01, 1.01, 1, 56, 1, true), new THREE.MeshBasicMaterial({ map: gradTex, transparent: true, depthWrite: false })); grad.rotation.y = 0.6;
+        const rim = new THREE.Mesh(new THREE.TorusGeometry(1, 0.045, 10, 56), new THREE.MeshPhysicalMaterial({ color: 0xeaf2ff, roughness: 0.15, clearcoat: 1, transparent: true, opacity: 0.85 })); rim.rotation.x = Math.PI / 2;
+        const men = new THREE.Mesh(new THREE.TorusGeometry(1, 0.03, 8, 56), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5 })); men.rotation.x = Math.PI / 2;
+        const bot = new THREE.Mesh(new THREE.CylinderGeometry(1, 0.98, 0.1, 56), new THREE.MeshPhysicalMaterial({ color: 0xd8e8ff, transparent: true, opacity: 0.4, roughness: 0.05, clearcoat: 1, depthWrite: false }));
+        const liqM = new THREE.MeshPhysicalMaterial({ color: 0xa7d3ff, transparent: true, opacity: 0.3, roughness: 0.1, clearcoat: 0.6, depthWrite: false });
         const liq = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 1, 40), liqM);
         const mk = (n) => { const m = new THREE.InstancedMesh(L.SG, new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.35, emissiveIntensity: 0.2 }), n); m.frustumCulled = false; return m; };
-        const B = { g, wall, bot, liq, liqM, ticks: [], sets: { a: mk(40), b: mk(40), c: mk(40) }, p: [], R: 1, Hc: 3, lab: label('', [0, 0, 0], { size: 12.5 }), lab2: label('', [0, 0, 0], { size: 12 }) };
-        g.add(wall, bot, liq, B.sets.a, B.sets.b, B.sets.c);
+        const B = { g, wall, grad, rim, men, bot, liq, liqM, ticks: [], sets: { a: mk(40), b: mk(40), c: mk(40) }, p: [], R: 1, Hc: 3, lab: label('', [0, 0, 0], { size: 12.5 }), lab2: label('', [0, 0, 0], { size: 12 }) };
+        g.add(wall, grad, rim, men, bot, liq, B.sets.a, B.sets.b, B.sets.c);
         for (let i = 0; i < 40; i++) B.p.push({ u: Math.sqrt(Math.random()), a: Math.random() * 6.283, y: Math.random(), ph: Math.random() * 6.28, sp: 0.5 + Math.random() });
         return B;
       }
       const bk = [makeBeaker(), makeBeaker(), makeBeaker()];
       function shape(B, R, Hc, x, z, level, color, alpha) {
         B.R = R; B.Hc = Hc; B.g.position.set(x, 0, z);
-        B.wall.scale.set(R, Hc, R); B.wall.position.y = Hc / 2; B.bot.scale.set(R, 1, R); B.bot.position.y = 0.05;
-        const hh = Math.max(0.02, level * Hc); B.hh = hh; B.liq.scale.set(R - 0.04, hh, R - 0.04); B.liq.position.y = hh / 2 + 0.05;
+        B.wall.scale.set(R, Hc, R); B.wall.position.y = Hc / 2; B.grad.scale.set(R, Hc, R); B.grad.position.y = Hc / 2; B.rim.scale.setScalar(R); B.rim.position.y = Hc; B.bot.scale.set(R, 1, R); B.bot.position.y = 0.05;
+        const hh = Math.max(0.02, level * Hc); B.hh = hh; B.liq.scale.set(R - 0.04, hh, R - 0.04); B.liq.position.y = hh / 2 + 0.05; B.men.scale.setScalar(R - 0.06); B.men.position.y = hh + 0.05;
         B.liqM.color.setHex(hex(color)); B.liqM.opacity = alpha;
       }
       function balls(B, key, n, r, color, off, t, lay) {

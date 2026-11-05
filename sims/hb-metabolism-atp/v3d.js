@@ -40,10 +40,34 @@
         return g;
       }
 
+      /* ---------- 공통 배경: 세포 속 벽 무늬 + 받침대 ---------- */
+      const patTex = (function () {
+        const mk = (draw) => { const c = document.createElement('canvas'); c.width = 512; c.height = 256; const x = c.getContext('2d'); draw(x); const t = new THREE.CanvasTexture(c); return t; };
+        const rnd = (seed) => { let q = seed >>> 0; return () => { q = (q * 1664525 + 1013904223) >>> 0; return q / 4294967296; }; };
+        return {
+          leaf: mk((x) => { x.fillStyle = '#16351f'; x.fillRect(0, 0, 512, 256); const r = rnd(3); for (let i = 0; i < 60; i++) { const px = r() * 512, py = r() * 256, rr = 26 + r() * 26; const g = x.createRadialGradient(px, py, 2, px, py, rr); g.addColorStop(0, 'rgba(70,150,80,.5)'); g.addColorStop(1, 'rgba(20,60,30,0)'); x.fillStyle = g; x.beginPath(); x.arc(px, py, rr, 0, 7); x.fill(); x.strokeStyle = 'rgba(120,200,120,.18)'; x.lineWidth = 2; x.stroke(); } }),
+          muscle: mk((x) => { x.fillStyle = '#2b1218'; x.fillRect(0, 0, 512, 256); for (let i = 0; i < 24; i++) { const py = i * 11; x.fillStyle = i % 2 ? 'rgba(170,50,70,.35)' : 'rgba(110,30,48,.35)'; x.fillRect(0, py, 512, 9); } for (let k = 0; k < 16; k++) { x.fillStyle = 'rgba(255,170,170,.14)'; x.fillRect(k * 34 + 8, 0, 2, 256); } }),
+          cell: mk((x) => { x.fillStyle = '#251827'; x.fillRect(0, 0, 512, 256); const r = rnd(8); for (let i = 0; i < 50; i++) { const px = r() * 512, py = r() * 256, rr = 22 + r() * 30; const g = x.createRadialGradient(px, py, 2, px, py, rr); g.addColorStop(0, 'rgba(210,130,160,.35)'); g.addColorStop(1, 'rgba(60,30,60,0)'); x.fillStyle = g; x.beginPath(); x.arc(px, py, rr, 0, 7); x.fill(); } }),
+        };
+      })();
+      const bgWall = new THREE.Mesh(new THREE.PlaneGeometry(26, 13), new THREE.MeshBasicMaterial({ map: patTex.cell, color: 0xa8a8a8 })); bgWall.position.set(0, 0, -2.3); root.add(bgWall);
+      const deck = new THREE.Mesh(new THREE.BoxGeometry(14, 0.3, 4.6), std(0x2a3550, { roughness: 0.35, metalness: 0.5 })); deck.position.set(0, -3.5, -0.2); root.add(deck);
+      const deckGlow = new THREE.Mesh(new THREE.BoxGeometry(14.05, 0.04, 4.65), new THREE.MeshBasicMaterial({ color: 0x6fa8ff, transparent: true, opacity: 0.5 })); deckGlow.position.set(0, -3.34, -0.2); root.add(deckGlow);
+      let bgKind = '';
+      function setBg(kind, deckY) { if (kind !== bgKind) { bgKind = kind; bgWall.material.map = patTex[kind]; bgWall.material.needsUpdate = true; } deck.position.y = deckY - 0.15; deckGlow.position.y = deckY + 0.01; }
+      /* 배경 세포소기관 (동화: 엽록체 / 이화: 미토콘드리아) */
+      const bgOrg = { leaf: new THREE.Group(), muscle: new THREE.Group() }; root.add(bgOrg.leaf, bgOrg.muscle);
+      [[-4.2, 1.2, 0.9], [-1.2, -1.4, 1.0], [2.2, 1.5, 0.85], [4.3, -1.0, 0.95], [0.6, 0.2, 0.6]].forEach((q, i) => {
+        const ch = new THREE.Mesh(new THREE.SphereGeometry(1, 28, 20), ghost(0x3f9d4f, 0.32, { roughness: 0.3 })); ch.scale.set(q[2] * 1.6, q[2] * 0.85, q[2] * 0.7); ch.position.set(q[0], q[1], -1.5); ch.rotation.z = i * 0.5 - 0.5; bgOrg.leaf.add(ch);
+        for (let k = 0; k < 3; k++) { const gr = new THREE.Mesh(new THREE.CylinderGeometry(0.25 * q[2], 0.25 * q[2], 0.22 * q[2], 14), std(0x1f7a35, { roughness: 0.5 })); gr.rotation.x = Math.PI / 2; gr.position.set(q[0] - 0.5 * q[2] + k * 0.5 * q[2], q[1], -1.5); bgOrg.leaf.add(gr); }
+        const mt = new THREE.Mesh(new THREE.SphereGeometry(1, 28, 20), ghost(0xf08a6a, 0.34, { roughness: 0.3 })); mt.scale.set(q[2] * 1.5, q[2] * 0.7, q[2] * 0.6); mt.position.set(q[0], q[1], -1.5); mt.rotation.z = -i * 0.5 + 0.4; bgOrg.muscle.add(mt);
+        const cr = new THREE.Mesh(new THREE.TorusKnotGeometry(0.5, 0.05, 60, 6, 2, 3), std(0xc9732f)); cr.scale.set(q[2] * 1.0, q[2] * 0.5, q[2] * 0.5); cr.position.set(q[0], q[1], -1.5); cr.rotation.z = -i * 0.5 + 0.4; bgOrg.muscle.add(cr);
+      });
       /* ---------- ① 동화와 이화 ---------- */
       const rx = new THREE.Group(); root.add(rx);
       const cellBox = new THREE.Mesh(new THREE.BoxGeometry(10.4, 4.6, 2.6), ghost(0x4caf50, 0.12)); rx.add(cellBox);
       const frame = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(10.4, 4.6, 2.6)), new THREE.LineBasicMaterial({ color: 0x2e7d32 })); rx.add(frame);
+      { const rm = std(0x8aa0b8, { metalness: 0.8, roughness: 0.3 }); [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach((q) => { const e = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 4.6, 8), rm); e.position.set(q[0] * 5.2, 0, q[1] * 1.3); rx.add(e); }); [-1, 1].forEach((y) => [-1, 1].forEach((z) => { const e = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 10.4, 8), rm); e.rotation.z = Math.PI / 2; e.position.set(0, y * 2.3, z * 1.3); rx.add(e); })); }
       const sunG = new THREE.Group(); sunG.position.set(-4.4, 2.0, 0); sunG.add(sph(0.45, basic(0xfbbf24)));
       for (let i = 0; i < 3; i++) { const r = cyl(0.04, 0.04, 2.2, std(0xf59e0b, { emissive: 0xf59e0b, emissiveIntensity: 0.5 })); r.position.set(0.6 + i * 0.35, -0.9 - i * 0.1, 0); r.rotation.z = 0.7; sunG.add(r); }
       rx.add(sunG);
@@ -72,7 +96,7 @@
       };
       [labRx.glu, labRx.o2, labRx.small, labRx.atp, labRx.heat, labRx.light].forEach((l) => l.show(false));
       function updateRx(R) {
-        const k = R.kind, p = R.p;
+        const k = R.kind, p = R.p; setBg(k === 'leaf' ? 'leaf' : 'muscle', -2.45); bgOrg.leaf.visible = k === 'leaf'; bgOrg.muscle.visible = k !== 'leaf';
         cellBox.material.color.setHex(k === 'leaf' ? 0x4caf50 : 0xdc2626); frame.material.color.setHex(k === 'leaf' ? 0x2e7d32 : 0xb91c1c);
         sunG.visible = k === 'leaf';
         AG.leaf.forEach((g) => (g.m.visible = false)); AG.muscle.forEach((g) => (g.m.visible = false));
@@ -116,6 +140,7 @@
       const pm = [std(0xf59e0b, { emissive: 0xf59e0b, emissiveIntensity: 0.4 }), std(0xef4444, { emissive: 0xef4444, emissiveIntensity: 0.3 }), std(0x22c55e, { emissive: 0x22c55e, emissiveIntensity: 0.5 }), std(0xff5a36, { emissive: 0xff3300, emissiveIntensity: 0.5 })];
       for (let i = 0; i < NP; i++) { const kind = i % 4, m = sph(0.11, pm[kind], 0, 0, 0); en.add(m); parts.push({ m, kind, ph: (i / NP * 3.7) % 1 }); }
       function updateEn(E, t) {
+        setBg('muscle', -3.95); bgOrg.leaf.visible = false; bgOrg.muscle.visible = true;
         const R = E.Rs, w = 0.5 + R * 0.12;
         setArrow(arrows.glu, new THREE.Vector3(-4.2, 0.9, 0), -Math.PI / 2, 1.9, 0.9 + R * 0.12); setArrow(arrows.o2, new THREE.Vector3(-4.2, -0.9, 0), -Math.PI / 2, 1.9, 0.9 + R * 0.12);
         setArrow(arrows.atp, new THREE.Vector3(2.2, 0, 0), -Math.PI / 2 * -1 + Math.PI, 1.9, 0.9 + R * 0.12);
@@ -163,7 +188,8 @@
       };
       const L0 = L2();
       function updateAt(A, t) {
-        const S = L2(), AP = S.AP, P = AP.panel, k = 11 / P.w, cx = P.x + P.w / 2, cy = P.y + P.h / 2, W = (q) => new THREE.Vector3((q.x - cx) * k, -(q.y - cy) * k, 0);
+        const S = L2(), AP = S.AP, P = AP.panel; setBg('cell', -(P.h / P.w > 0.7 ? 4.0 : 2.5) - 0.35); bgOrg.leaf.visible = bgOrg.muscle.visible = false;
+        const k = 11 / P.w, cx = P.x + P.w / 2, cy = P.y + P.h / 2, W = (q) => new THREE.Vector3((q.x - cx) * k, -(q.y - cy) * k, 0);
         const ct = S.CELLS[A.type];
         cellMesh.material.color.set(ct.col); cellMesh.scale.set(1, P.h / P.w > 0.7 ? 1.6 : 1, 1);
         mitoG.position.copy(W(AP.mito)); workG.position.copy(W(AP.work));

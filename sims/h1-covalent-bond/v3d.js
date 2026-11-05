@@ -32,15 +32,23 @@
     autoRotate: 0.3,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
+      let dustP = null, ghosts = [];
       let key = 'H2O', style = 'pair', showLP = true, showCnt = false;
       const g = new THREE.Group(); g.scale.setScalar(1.9); root.add(g);        // Å → 장면 단위(보기 좋게 확대)
       const fit = () => { const v = ctx.renderer.domElement, asp = Math.max(0.3, v.clientWidth / Math.max(1, v.clientHeight)); ctx.orbit.dist = (key === 'CO2' || key === 'Cl2' ? 7.5 : 6.2) * (asp < 1 ? Math.min(2, Math.pow(1 / asp, 0.75)) : 1); };
       const labs = [];
       const UP = new THREE.Vector3(0, 1, 0);
       const V = (a) => new THREE.Vector3(a[0], a[1], a[2]);
-      const stickMat = new THREE.MeshStandardMaterial({ color: 0xaab4c8, roughness: 0.6 });
+      const stickMat = new THREE.MeshStandardMaterial({ color: 0xc3ccdc, roughness: 0.3, metalness: 0.5 });
+      /* 받침대: 빛나는 원판 + 눈금 고리, 떠다니는 먼지 */
+      { const cv = document.createElement('canvas'); cv.width = cv.height = 512; const x = cv.getContext('2d'); const gr = x.createRadialGradient(256, 256, 10, 256, 256, 256); gr.addColorStop(0, '#2a4066'); gr.addColorStop(0.7, '#141f35'); gr.addColorStop(1, '#0a1020'); x.fillStyle = gr; x.fillRect(0, 0, 512, 512);
+        x.strokeStyle = 'rgba(125,175,255,.35)'; x.lineWidth = 2; for (let r = 50; r < 256; r += 50) { x.beginPath(); x.arc(256, 256, r, 0, 7); x.stroke(); } x.lineWidth = 1; for (let a = 0; a < 16; a++) { x.beginPath(); x.moveTo(256, 256); x.lineTo(256 + Math.cos(a / 16 * 6.283) * 256, 256 + Math.sin(a / 16 * 6.283) * 256); x.stroke(); }
+        const fl = new THREE.Mesh(new THREE.CircleGeometry(5.5, 64), new THREE.MeshStandardMaterial({ map: new THREE.CanvasTexture(cv), roughness: 0.95, metalness: 0 })); fl.rotation.x = -Math.PI / 2; fl.position.y = -2.6; fl.receiveShadow = true; root.add(fl);
+        const rim = new THREE.Mesh(new THREE.TorusGeometry(5.5, 0.04, 8, 80), new THREE.MeshBasicMaterial({ color: 0x60a5fa })); rim.rotation.x = Math.PI / 2; rim.position.y = -2.6; root.add(rim);
+        const N = 80, pos = new Float32Array(N * 3); for (let i = 0; i < N; i++) { pos[i * 3] = (Math.random() - 0.5) * 16; pos[i * 3 + 1] = -2 + Math.random() * 8; pos[i * 3 + 2] = (Math.random() - 0.5) * 16; }
+        const pg = new THREE.BufferGeometry(); pg.setAttribute('position', new THREE.BufferAttribute(pos, 3)); dustP = new THREE.Points(pg, new THREE.PointsMaterial({ color: 0xa5c8ff, size: 0.06, transparent: true, opacity: 0.5, depthWrite: false })); root.add(dustP); }
       function sphere(r, col, opa, tag) {
-        return new THREE.Mesh(new THREE.SphereGeometry(r, 28, 18), new THREE.MeshStandardMaterial({ color: col, roughness: 0.4, transparent: opa < 1, opacity: opa, depthWrite: opa >= 1 }));
+        return new THREE.Mesh(new THREE.SphereGeometry(r, 36, 24), new THREE.MeshPhysicalMaterial({ color: col, roughness: 0.28, clearcoat: 0.7, clearcoatRoughness: 0.2, transparent: opa < 1, opacity: opa, depthWrite: opa >= 1 }));
       }
       function orient(m, from, dir) { m.position.copy(from); m.quaternion.setFromUnitVectors(UP, dir.clone().normalize()); }
       // 전자쌍 하나: 반투명 물방울 + 전자 2개
@@ -83,13 +91,15 @@
       }
       let atomObjs = [], bondObjs = [];
       function build() {
-        clearAll(); atomObjs = []; bondObjs = [];
+        clearAll(); atomObjs = []; bondObjs = []; ghosts = [];
         const M = MOLS[key];
         const space = style === 'cloud';
         M.atoms.forEach((a, i) => {
           const s = a[0], rr = space ? RV[s] * 0.6 : RB[s] * 0.8, ag = new THREE.Group();
           ag.position.set(a[1], a[2], a[3]); ag.userData.base = ag.position.clone(); g.add(ag); atomObjs.push(ag);
           ag.add(sphere(rr, COL[s], space ? 0.45 : 1));
+          const gh = new THREE.Mesh(new THREE.SphereGeometry(rr, 20, 14), new THREE.MeshBasicMaterial({ color: COL[s], transparent: true, opacity: 0.16, wireframe: true, depthWrite: false })); gh.position.copy(ag.position); g.add(gh); ghosts.push(gh);
+          if (!space) { const rg = new THREE.Group(); [0, 1].forEach((k) => { const t = new THREE.Mesh(new THREE.TorusGeometry(rr + 0.14, 0.008, 6, 40), new THREE.MeshBasicMaterial({ color: 0x93c5fd, transparent: true, opacity: 0.5 })); t.rotation.x = k ? Math.PI / 2 : 0; t.rotation.y = k ? 0.6 : 0; rg.add(t); }); ag.add(rg); ag.userData.rg = rg; }
           if (!labs[i]) labs[i] = label('', ag, { color: 'rgba(245,158,11,.95)' });
           labs[i].obj = ag; labs[i].el.style.color = '#1b2333';
           labs[i].set(s); labs[i].show(true); labs[i].off = [0, rr + 0.28, 0];
@@ -120,6 +130,7 @@
       function form(s, a) {
         const aa = Math.max(0.0001, Math.min(1, a));
         atomObjs.forEach((ag) => ag.position.copy(ag.userData.base).multiplyScalar(1 + s));
+        ghosts.forEach((gh) => { gh.visible = s > 0.06; });
         bondObjs.forEach((b) => { b.g.position.copy(b.g.userData.base).multiplyScalar(1 + s); b.lg.scale.setScalar(aa); b.lg.visible = a > 0.02; if (b.st) { b.st.scale.set(aa, 1 + s, aa); b.st.visible = a > 0.02; } });
       }
       function perAtom(M, i) {
@@ -156,7 +167,9 @@
       const KMAP = { H2O1: 'H2O', O2: 'O2', N2: 'N2', C1O2: 'CO2', H3N1: 'NH3', C1H4: 'CH4' };
       const api = {
         sync() {},
-        update() {
+        update(dt, t) {
+          if (dustP) dustP.rotation.y = t * 0.03;
+          atomObjs.forEach((ag, i) => { if (ag.userData.rg) { ag.userData.rg.rotation.y = t * 0.6 + i; ag.userData.rg.rotation.x = t * 0.4; } });
           const L = window.__sim; if (!L || !L.S) return;
           // 2D → 3D: 전자쌍 공유 장면에서 고른 분자, 분자 만들기에서 완성한 분자
           if (L.S.scene === 'share' && L.SH && MOLS[L.SH.mol] && L.SH.mol !== lastSh) { lastSh = L.SH.mol; if (key !== lastSh) { key = lastSh; segMol.set(key); fit(); build(); } }

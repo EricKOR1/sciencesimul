@@ -231,6 +231,31 @@
         lmF.show(wa > 0.3);
       }
 
+      /* ---------- 실험대 · 받침 · 배경 (보기 좋게 꾸미기) ---------- */
+      const cTex = (w, h, draw) => { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); if (THREE.sRGBEncoding) t.encoding = THREE.sRGBEncoding; t.wrapS = t.wrapT = THREE.RepeatWrapping; return t; };
+      const TY = -2.75;
+      const woodT = cTex(512, 512, (c, w, h) => { c.fillStyle = '#47301a'; c.fillRect(0, 0, w, h); for (let i = 0; i < 90; i++) { c.strokeStyle = 'rgba(' + (30 + (i * 17) % 40) + ',16,6,' + (0.12 + (i % 4) * 0.05) + ')'; c.lineWidth = 1 + (i % 3); c.beginPath(); const y = i / 90 * h; c.moveTo(0, y); for (let x = 0; x <= w; x += 32) c.lineTo(x, y + Math.sin(x * 0.04 + i) * 3); c.stroke(); } }); woodT.repeat.set(2, 2);
+      const metalT = cTex(128, 128, (c, w, h) => { c.fillStyle = '#8b94a5'; c.fillRect(0, 0, w, h); for (let i = 0; i < 40; i++) { c.fillStyle = 'rgba(255,255,255,' + Math.random() * 0.12 + ')'; c.fillRect(0, Math.random() * h, w, 1 + Math.random() * 2); } });
+      const wallT = cTex(8, 256, (c, w, h) => { const g = c.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#27375a'); g.addColorStop(1, '#0e1830'); c.fillStyle = g; c.fillRect(0, 0, w, h); });
+      const wallM = new THREE.Mesh(new THREE.PlaneGeometry(90, 40), new THREE.MeshBasicMaterial({ map: wallT })); wallM.position.set(0, 8, -16); root.add(wallM);
+      const bench = new THREE.Mesh(new THREE.CylinderGeometry(7, 7, 0.3, 64), mat(0xffffff, { map: woodT, roughness: 0.55 })); bench.position.y = TY - 0.15; bench.receiveShadow = true; root.add(bench);
+      const mRing = new THREE.Mesh(new THREE.TorusGeometry(7, 0.05, 8, 96), mat(0xd9b45a, { metalness: 0.9, roughness: 0.3 })); mRing.rotation.x = Math.PI / 2; mRing.position.y = TY; root.add(mRing);
+      const metalM = mat(0xffffff, { map: metalT, metalness: 0.7, roughness: 0.35 });
+      const envCoil = new THREE.Group(), envMag = new THREE.Group(), envSwing = new THREE.Group(), envMotor = new THREE.Group(); root.add(envCoil, envMag, envSwing, envMotor);
+      const post = (g, x, z, y0, y1, r) => { const p = new THREE.Mesh(new THREE.CylinderGeometry(r || 0.09, r || 0.09, y1 - y0, 14), metalM); p.position.set(x, (y0 + y1) / 2, z); g.add(p); const b = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.45, 0.14, 24), metalM); b.position.set(x, y0 + 0.07, z); g.add(b); };
+      // 코일: 도선을 받치는 기둥 + 단자
+      [-1, 1].forEach((sx) => { post(envCoil, sx * (L / 2 + 0.6), -0.45, TY, R + 0.15, 0.07); const cl = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.03, 8, 16), metalM); cl.position.set(sx * (L / 2 + 0.6), R + 0.1, -0.45); envCoil.add(cl); });
+      // 막대자석: 나무 받침대
+      [-1, 1].forEach((sx) => { const c = new THREE.Mesh(new THREE.BoxGeometry(0.45, 2.0, 1.6), mat(0xffffff, { map: woodT, roughness: 0.6 })); c.position.set(sx * 1.4, TY + 1.0, 0); envMag.add(c); const t = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.15, 1.7), metalM); t.position.set(sx * 1.4, TY + 2.05, 0); envMag.add(t); });
+      // 도선 그네: 철 틀(요크)과 받침판
+      { const yk = new THREE.Mesh(new THREE.BoxGeometry(5.2, 5.6, 0.3), metalM); yk.position.set(0, TY + 2.8, -1.35); envSwing.add(yk);
+        const bp = new THREE.Mesh(new THREE.BoxGeometry(5.4, 0.2, 2.5), metalM); bp.position.set(0, TY + 0.1, -0.1); envSwing.add(bp);
+        for (const sz of [-1, 1]) post(envSwing, 0, sz * 1.55, TY, PIV + 0.05, 0.06); }
+      // 전동기: 받침대 + 정류자(갈라진 고리) + 솔
+      { [-1, 1].forEach((sx) => { const pd = new THREE.Mesh(new THREE.BoxGeometry(1.8, 1.05, 2.8), metalM); pd.position.set(sx * 3.3, TY + 0.52, 0); envMotor.add(pd); });
+        const cm = mat(COPPER, { metalness: 0.7, roughness: 0.3 });
+        for (const k of [0, 1]) { const h = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.4, 20, 1, false, k * Math.PI + 0.1, Math.PI - 0.2), cm); h.rotation.x = Math.PI / 2; h.position.z = 1.9; rotor.add(h); }
+        for (const sy of [-1, 1]) { const br = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.5, 0.3), mat(0x222831, { roughness: 0.8 })); br.position.set(0, sy * 0.55, 1.9); gMotor.add(br); } }
       /* ---------- 나침반 ---------- */
       const comps = [];
       const CPOS = [[3.3, 0, 0.3], [-3.3, 0, 0.3], [0, 1.9, 0.3], [2.1, 1.6, 0.3], [-2.1, 1.6, 0.3], [0, -1.0, 1.5]];
@@ -258,7 +283,7 @@
       const ctlNodes = {};
       function show() {
         const sc = st.scene;
-        gCoil.visible = sc === 'coil'; gMag.visible = sc === 'coil' || sc === 'magnet'; gSwing.visible = sc === 'force'; gMotor.visible = sc === 'motor'; gLines.visible = sc === 'coil' || sc === 'magnet';
+        envCoil.visible = sc === 'coil'; envMag.visible = sc === 'magnet'; envSwing.visible = sc === 'force'; envMotor.visible = sc === 'motor'; gCoil.visible = sc === 'coil'; gMag.visible = sc === 'coil' || sc === 'magnet'; gSwing.visible = sc === 'force'; gMotor.visible = sc === 'motor'; gLines.visible = sc === 'coil' || sc === 'magnet';
         [lmN, lmS, lmC, lmB].forEach((l) => l.show(sc === 'motor'));
         barN.visible = barS.visible = sc === 'magnet'; mN.show(sc === 'magnet'); mS.show(sc === 'magnet');
         comps.forEach((c) => (c.g.visible = st.comp && (sc === 'coil' || sc === 'magnet')));
@@ -330,7 +355,7 @@
           else flow.forEach((c) => (c.visible = false));
           if (sc === 'force') { updateSwing(dt); fixFArrow(); }
           updateCompass(dt);
-          if (lastScene !== sc) { lastScene = sc; ctx.orbit.tx = 0; ctx.orbit.ty = sc === 'force' ? 0.6 : sc === 'motor' ? 0 : -0.3; ctx.orbit.dist = (sc === 'force' ? 14 : sc === 'motor' ? 11 : 12.5) * KD; }
+          if (lastScene !== sc) { lastScene = sc; ctx.orbit.tx = 0; ctx.orbit.ty = sc === 'force' ? 0.6 : sc === 'motor' ? 0 : -0.3; ctx.orbit.dist = (sc === 'force' ? 13 : sc === 'motor' ? 14 : sc === 'magnet' ? 9.5 : 12.5) * KD; }
         },
         sync() { from2D(); show(); },
       };

@@ -17,7 +17,7 @@
   window.SciSim3D.attach({
     title: '정전기 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: PHN ? 13 : 9, theta: 0.3, phi: 1.3, min: 5, max: 22, target: [0, -0.3, 0] },
+    camera: { dist: PHN ? 14 : 10.5, theta: 0.3, phi: 1.25, min: 5, max: 22, target: [1.0, -0.4, 0] },
     autoRotate: 0,
     levels: [],                      // 모든 단계의 미션이 2D 화면(막대 끌기 · 부호 고르기 · 막대 찾기)에서 이뤄져요
     build(ctx) {
@@ -46,7 +46,14 @@
         const { sh, hd } = g.userData, sl = Math.max(0.01, L - 0.4);
         g.position.set(x0, y, z); g.rotation.set(0, 0, -dir * Math.PI / 2); sh.scale.set(w || 1, sl, w || 1); sh.position.y = sl / 2; hd.position.y = sl + 0.2;
       }
-      const floor = new THREE.Mesh(new THREE.BoxGeometry(14, 0.1, 6), mat(0x141b30, { roughness: 0.85, metalness: 0 })); floor.position.set(0, -2.3, 0); floor.receiveShadow = true; root.add(floor);
+      const cTex = (w, h, draw) => { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); if (THREE.sRGBEncoding) t.encoding = THREE.sRGBEncoding; t.wrapS = t.wrapT = THREE.RepeatWrapping; return t; };
+      const woodT = cTex(512, 256, (c, w, h) => { c.fillStyle = '#5a3a20'; c.fillRect(0, 0, w, h); for (let i = 0; i < 70; i++) { c.strokeStyle = 'rgba(' + (30 + (i * 23) % 40) + ',16,6,' + (0.12 + (i % 4) * 0.05) + ')'; c.lineWidth = 1 + (i % 3); c.beginPath(); const y = i / 70 * h; c.moveTo(0, y); for (let x = 0; x <= w; x += 32) c.lineTo(x, y + Math.sin(x * 0.04 + i) * 2.5); c.stroke(); } });
+      woodT.repeat.set(2, 1);
+      const floor = new THREE.Mesh(new THREE.BoxGeometry(16, 0.3, 7), mat(0xffffff, { map: woodT, roughness: 0.5 })); floor.position.set(0, -2.45, 0); floor.receiveShadow = true; root.add(floor);
+      const wallT = cTex(8, 256, (c, w, h) => { const g = c.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#27375a'); g.addColorStop(1, '#0e1830'); c.fillStyle = g; c.fillRect(0, 0, w, h); });
+      const wallM = new THREE.Mesh(new THREE.PlaneGeometry(90, 40), new THREE.MeshBasicMaterial({ map: wallT })); wallM.position.set(0, 8, -14); root.add(wallM);
+      // 막대 양 끝을 둥글게 (같은 재질을 써서 색이 함께 바뀌어요)
+      function caps(cyl, len, r) { [-1, 1].forEach((sg) => { const c = new THREE.Mesh(new THREE.SphereGeometry(r, 20, 14), cyl.material); c.position.y = sg * len / 2; cyl.add(c); }); }
       const rodMat = (q) => (q > 0 ? 0x9fd8ee : 0x8a6fd1);      // 2D처럼 (+)는 유리 막대, (−)는 플라스틱 막대
 
       let scene = 'rub';
@@ -59,7 +66,10 @@
       {
         const g = G.rub;
         const cloth = new THREE.Mesh(new THREE.BoxGeometry(4.4, 0.35, 2.8), mat(0xd9b99b, { roughness: 0.95 })); cloth.position.set(0, -1.9, 0); cloth.receiveShadow = true; g.add(cloth);
-        A.rod = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 3.9, 28), mat(0x8a6fd1, { roughness: 0.3 })); A.rod.rotation.z = Math.PI / 2; A.rod.castShadow = true; g.add(A.rod);
+        { const N = 900, fg = new THREE.ConeGeometry(0.035, 0.26, 5); fg.translate(0, 0.13, 0); const fur = new THREE.InstancedMesh(fg, mat(0xffffff, { roughness: 0.95 }), N), mm = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), cc = new THREE.Color(); let sd = 7; const rr = () => { sd = (sd * 16807) % 2147483647; return sd / 2147483647; };
+          for (let i = 0; i < N; i++) { e.set((rr() - 0.5) * 0.7, 0, (rr() - 0.5) * 0.7); q.setFromEuler(e); mm.compose(new V3((rr() - 0.5) * 4.3, -1.72, (rr() - 0.5) * 2.7), q, new V3(1, 0.8 + rr() * 0.7, 1)); fur.setMatrixAt(i, mm); fur.setColorAt(i, cc.setHSL(0.07 + rr() * 0.03, 0.4, 0.55 + rr() * 0.18)); }
+          fur.receiveShadow = true; g.add(fur); }
+        A.rod = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 3.9, 28), mat(0x8a6fd1, { roughness: 0.3 })); A.rod.rotation.z = Math.PI / 2; A.rod.castShadow = true; A.rod.material.roughness = 0.15; caps(A.rod, 3.9, 0.3); g.add(A.rod);
         A.pm = []; A.nm = []; A.el = [];
         for (let i = 0; i < NMAX; i++) {
           const p = mark(1, 0.34), n = mark(-1, 0.34); g.add(p, n); A.pm.push(p); A.nm.push(n);
@@ -76,7 +86,7 @@
         const post = new THREE.Mesh(new THREE.BoxGeometry(0.2, 7.6, 0.2), mat(0x56627e, { metalness: 0.5 })); post.position.set(-3.4, PIVY - 3.6, 0); g.add(post);
         function rodObj() {
           const o = new THREE.Group(), m = mat(0x8a6fd1, { roughness: 0.3 });
-          const cyl = new THREE.Mesh(new THREE.CylinderGeometry(0.21, 0.21, 2.42, 24), m); cyl.castShadow = true; o.add(cyl);
+          const cyl = new THREE.Mesh(new THREE.CylinderGeometry(0.21, 0.21, 2.42, 24), m); cyl.castShadow = true; caps(cyl, 2.42, 0.21); o.add(cyl);
           const ms = []; for (let i = 0; i < 5; i++) { const k = mark(-1, 0.34); k.position.set(0, (i - 2) * 0.46, 0.3); o.add(k); ms.push(k); }
           o.userData = { cyl, ms }; return o;
         }
@@ -93,7 +103,7 @@
       {
         const g = G.induce, K = 4.4 / BAR.w;
         Cc.K = K;
-        Cc.rod = new THREE.Group(); const rm = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.34, 3.0, 28), mat(0x8a6fd1, { roughness: 0.3 })); rm.rotation.z = Math.PI / 2; Cc.rod.add(rm); Cc.rmat = rm.material;
+        Cc.rod = new THREE.Group(); const rm = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.34, 3.0, 28), mat(0x8a6fd1, { roughness: 0.3 })); rm.rotation.z = Math.PI / 2; caps(rm, 3.0, 0.34); Cc.rod.add(rm); Cc.rmat = rm.material;
         Cc.rm = []; for (let i = 0; i < 4; i++) { const m = mark(-1, 0.32); Cc.rod.add(m); Cc.rm.push(m); } g.add(Cc.rod);
         Cc.cond = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 4.4, 36), mat(0xc3cbd9, { metalness: 0.7, roughness: 0.25, transparent: true, opacity: 0.45, depthWrite: false })); Cc.cond.rotation.z = Math.PI / 2; Cc.cond.position.set(1.8, 0, 0); Cc.cond.renderOrder = 2; g.add(Cc.cond);
         Cc.els = []; Cc.ex = []; Cc.ions = [];
@@ -118,7 +128,7 @@
         const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 2.6, 12), mat(0xd7dde8, { metalness: 0.9, roughness: 0.2 })); stem.position.y = 0.2; g.add(stem);
         Dd.knob = new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.62, 0.16, 36), mat(0xd7dde8, { metalness: 0.9, roughness: 0.15 })); Dd.knob.position.y = 1.5; Dd.knob.castShadow = true; g.add(Dd.knob);
         Dd.lv = [-1, 1].map((s) => { const p = new THREE.Group(); p.position.set(0, -1.0, 0); const leaf = new THREE.Mesh(new THREE.BoxGeometry(0.06, 1.3, 0.8), mat(0xe6c35a, { metalness: 0.9, roughness: 0.2 })); leaf.position.y = -0.65; p.add(leaf); g.add(p); return p; });
-        Dd.rod = new THREE.Group(); const rm = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 3, 28), mat(0x8a6fd1, { roughness: 0.3 })); rm.rotation.z = Math.PI / 2; Dd.rod.add(rm); Dd.rmat = rm.material; g.add(Dd.rod);
+        Dd.rod = new THREE.Group(); const rm = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 3, 28), mat(0x8a6fd1, { roughness: 0.3 })); rm.rotation.z = Math.PI / 2; caps(rm, 3, 0.3); Dd.rod.add(rm); Dd.rmat = rm.material; g.add(Dd.rod);
         Dd.km = mark(1, 0.4); Dd.lm = [mark(1, 0.34), mark(1, 0.34)]; g.add(Dd.km, ...Dd.lm);
         Dd.lbRod = lb('scope', '막대', Dd.rod, [0, 0.8, 0]); lb('scope', '금속 박', Dd.lv[1], [0.9, -0.7, 0]); lb('scope', '금속판', Dd.knob, [1.3, 0.3, 0]);
       }

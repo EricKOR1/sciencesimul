@@ -44,7 +44,7 @@
   window.SciSim3D.attach({
     title: '탄성파의 진행 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 값은 옆 조작판에서 바꿔요',
-    camera: { dist: 12 * KDX, theta: 0.25, phi: 1.2, min: 4, max: 30, target: [0, 0, 0] },
+    camera: { dist: 10.5 * KDX, theta: 0.25, phi: 1.2, min: 4, max: 30, target: [0, 0, 0] },
     autoRotate: 0,
     levels: [0, 1, 2, 3],
     build(ctx) {
@@ -53,7 +53,16 @@
       const sim = () => ctx.lesson();
       const NMAX = 130, ps = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 14, 10), M(0x7dd3fc, { roughness: 0.35 }), NMAX); ps.frustumCulled = false; ps.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(NMAX * 3), 3); root.add(ps);
       const m4 = new THREE.Matrix4(), c0 = new THREE.Color(0x7dd3fc), cg = new THREE.Color(0xff5a5f), cnum = [0xff5a5f, 0xffd34d, 0x34d399].map((h) => new THREE.Color(h)), q = new THREE.Quaternion(), sc3 = new THREE.Vector3(), pp = new THREE.Vector3();
-      const src = new THREE.Mesh(new THREE.BoxGeometry(0.4, 1.6, 2.4), M(0x64748b, { metalness: 0.4 })); root.add(src);
+      const ctex = (w, h, draw, rx, ry) => { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; if (rx) t.repeat.set(rx, ry || rx); if ('encoding' in t) t.encoding = THREE.sRGBEncoding; t.anisotropy = 4; return t; };
+      const rnd = (() => { let s = 9; return () => ((s = (s * 16807) % 2147483647) / 2147483647); })();
+      { const woodTex = ctex(256, 128, (g, w, h) => { g.fillStyle = '#9a6a38'; g.fillRect(0, 0, w, h); for (let i = 0; i < 70; i++) { g.strokeStyle = 'rgba(60,30,10,' + (0.2 + rnd() * 0.35) + ')'; g.lineWidth = 1 + rnd() * 2; g.beginPath(); const y = rnd() * h; g.moveTo(0, y); g.bezierCurveTo(w * 0.3, y + (rnd() - 0.5) * 8, w * 0.6, y + (rnd() - 0.5) * 8, w, y + (rnd() - 0.5) * 6); g.stroke(); } }, 3, 1);
+        const bench = new THREE.Mesh(new THREE.BoxGeometry(18, 0.5, 11), M(0xffffff, { map: woodTex, roughness: 0.65, metalness: 0 })); bench.position.set(0, -3.4, 0); bench.receiveShadow = true; root.add(bench);
+        const edge = new THREE.Mesh(new THREE.BoxGeometry(18.1, 0.08, 11.1), M(0x5b3a1c, { roughness: 0.7 })); edge.position.set(0, -3.14, 0); root.add(edge);
+        const boardTex = ctex(512, 256, (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#3b5185'); gr.addColorStop(1, '#2a3c68'); g.fillStyle = gr; g.fillRect(0, 0, w, h); g.strokeStyle = 'rgba(180,200,240,.16)'; g.lineWidth = 1; for (let x = 0; x <= w; x += w / 18) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, h); g.stroke(); } for (let y = 0; y <= h; y += h / 9) { g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke(); } }, 1, 1);
+        const board = new THREE.Mesh(new THREE.BoxGeometry(18, 8.6, 0.12), M(0xffffff, { map: boardTex, roughness: 0.7, metalness: 0.05 })); board.position.set(0, 1.0, -5); root.add(board);
+        const fr = new THREE.Mesh(new THREE.BoxGeometry(18.3, 8.9, 0.1), M(0x6b7280, { metalness: 0.7, roughness: 0.35 })); fr.position.set(0, 1.0, -5.08); root.add(fr); }
+      const src = new THREE.Mesh(new THREE.BoxGeometry(0.5, 1.6, 2.4), M(0x475569, { metalness: 0.6, roughness: 0.4 })); root.add(src); { const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.5, 14), M(0xcbd5e1, { metalness: 0.9, roughness: 0.25 })); arm.rotation.z = Math.PI / 2; arm.position.x = 0.45; src.add(arm); const pl = new THREE.Mesh(new THREE.BoxGeometry(0.06, 1.1, 1.8), M(0x94a3b8, { metalness: 0.7 })); pl.position.set(-0.28, 0, 0); src.add(pl); const led = new THREE.Mesh(new THREE.SphereGeometry(0.07, 10, 8), new THREE.MeshBasicMaterial({ color: 0x4ade80 })); led.position.set(0.1, 0.65, 1.22); src.add(led); }
+      const sprG = new THREE.BufferGeometry(); sprG.setAttribute('position', new THREE.BufferAttribute(new Float32Array(NMAX * 3), 3)); const spr = new THREE.Line(sprG, new THREE.LineBasicMaterial({ color: 0xb6c4d8, transparent: true, opacity: 0.85 })); spr.frustumCulled = false; root.add(spr);
       const base = new THREE.Mesh(new THREE.BoxGeometry(1, 0.05, 0.05), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.3 })); root.add(base);
       const gl = [0, 1, 2].map((i) => { const m = new THREE.Mesh(new THREE.BoxGeometry(0.03, 3.4, 0.03), new THREE.MeshBasicMaterial({ color: cnum[i], transparent: true, opacity: 0.5 })); root.add(m); return m; });
       const gLab = [0, 1, 2].map((i) => label(['①', '②', '③'][i], gl[i], { color: '#26324a', size: 13 }));
@@ -99,10 +108,10 @@
         update() {
           const A = sim(); if (!A || !A.S) return; const S = A.S, sc = A.sc;
           if (!pl.playing && pl.p === 0) demo.on = false;
-          if (S.mode === 'snd') { if (!sndOn) { sndOn = true; Object.assign(orbit, { tx: 0, ty: 0, tz: 0, phi: 1.0, theta: 0.15, dist: 15 * KDX }); } ps.visible = src.visible = base.visible = false; gl.forEach((g) => (g.visible = false)); gLab.forEach((l) => l.show(false)); lSrc.show(false); lDir.show(false); pl.row.style.display = 'none'; gSn.visible = true; laneObj.forEach((o) => { o.lb.show(true); o.lv.show(true); }); [lStart, lEnd, lSlow].forEach((l) => l.show(true)); raceBtn.style.display = ''; sndScene(A, S); return; }
-          if (sndOn) { sndOn = false; Object.assign(orbit, { tx: 0, ty: 0, tz: 0, phi: 1.2, theta: 0.25, dist: 12 * KDX }); }
+          if (S.mode === 'snd') { if (!sndOn) { sndOn = true; Object.assign(orbit, { tx: 0, ty: 0, tz: 0, phi: 1.0, theta: 0.15, dist: 15 * KDX }); } ps.visible = src.visible = base.visible = spr.visible = false; gl.forEach((g) => (g.visible = false)); gLab.forEach((l) => l.show(false)); lSrc.show(false); lDir.show(false); pl.row.style.display = 'none'; gSn.visible = true; laneObj.forEach((o) => { o.lb.show(true); o.lv.show(true); }); [lStart, lEnd, lSlow].forEach((l) => l.show(true)); raceBtn.style.display = ''; sndScene(A, S); return; }
+          if (sndOn) { sndOn = false; Object.assign(orbit, { tx: 0, ty: 0, tz: 0, phi: 1.2, theta: 0.25, dist: 10.5 * KDX }); }
           gSn.visible = false; laneObj.forEach((o) => { o.lb.show(false); o.lv.show(false); }); [lStart, lEnd, lSlow].forEach((l) => l.show(false)); raceBtn.style.display = 'none';
-          if (!sc || !sc.ch) { ps.visible = src.visible = base.visible = false; gl.forEach((g) => (g.visible = false)); gLab.forEach((l) => l.show(false)); lSrc.show(false); lDir.show(false); pl.row.style.display = 'none'; return; }
+          if (!sc || !sc.ch) { ps.visible = src.visible = base.visible = spr.visible = false; gl.forEach((g) => (g.visible = false)); gLab.forEach((l) => l.show(false)); lSrc.show(false); lDir.show(false); pl.row.style.display = 'none'; return; }
           pl.row.style.display = ''; ps.visible = src.visible = base.visible = true; lSrc.show(true); lDir.show(true);
           const ch = sc.ch, n = Math.min(NMAX, ch.n), a = ch.a, long = sc.kind === 'L', len = (n - 1) * a, sx = len * U / 2;
           const sc2 = S.mode === 'sp' ? 1 : 1;
@@ -117,6 +126,7 @@
             const gi = sc.gates.indexOf(i), r = gi >= 0 ? rr * 1.9 : rr; pp.set(x, y, 0); sc3.set(r, r, r); m4.compose(pp, q, sc3); ps.setMatrixAt(i, m4);
             const col = gi >= 0 ? cnum[gi % 3] : (long ? (c0.clone().lerp(cg, Math.min(1, Math.max(0, -(yv[Math.min(n - 1, i + 1)] - yv[Math.max(0, i - 1)]) * 6)))) : c0); ps.setColorAt(i, col);
           }
+          { const sa = sprG.attributes.position.array; for (let i = 0; i < n; i++) { sa[i * 3] = i * a * U - sx + (long ? yv[i] * U * 1.6 : 0); sa[i * 3 + 1] = long ? 0 : yv[i] * U * 1.6; sa[i * 3 + 2] = 0; } sprG.setDrawRange(0, n); sprG.attributes.position.needsUpdate = true; spr.visible = true; }
           ps.count = n; ps.instanceMatrix.needsUpdate = true; ps.instanceColor.needsUpdate = true;
           src.position.set(-sx - 0.4, long ? 0 : (yv[0] * U * 1.6), 0); base.scale.x = len * U; base.position.set(0, 0, 0);
           [0, 1, 2].forEach((i) => { const g = sc.gates[i], ok = g != null && g < n; gl[i].visible = ok; gLab[i].show(ok); if (ok) { gl[i].position.set(g * a * U - sx, 0, 0); gLab[i].off = [0, 1.9, 0]; } });

@@ -26,16 +26,38 @@
   window.SciSim3D.attach({
     title: '분자 간 힘 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: PHONE ? 17 : 13.5, theta: 0.5, phi: 1.2, min: 5, max: 26 },
+    camera: { dist: PHONE ? 17 : 12, theta: 0.5, phi: 1.2, min: 5, max: 26, target: [0, -1, 0] },
     autoRotate: 0.15,
     levels: [1],   // 2단계 '세 가지 분자 간 힘'. (1·3·4단계는 2D 화면의 열운동 · 그래프 · 예측이에요)
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
+      /* ---- 장면 꾸미기 도우미: 나무 · 암석 무늬, 하늘 · 우주 배경, 빛 번짐 (모양만 꾸며요) ---- */
+      const FX = (() => {
+        const scn = ctx.scene; let sd = 7; const rnd = () => { sd = (sd * 16807) % 2147483647; return sd / 2147483647; };
+        const mk = (w, h, draw, rep) => { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; if (rep) t.repeat.set(rep[0], rep[1]); if ('encoding' in t) t.encoding = THREE.sRGBEncoding; t.anisotropy = 4; return t; };
+        const wood = (rep) => mk(256, 256, (g, w, h) => { g.fillStyle = '#b98a58'; g.fillRect(0, 0, w, h); for (let i = 0; i < 80; i++) { const y = rnd() * h; g.strokeStyle = 'rgba(' + (70 + rnd() * 40 | 0) + ',38,12,' + (0.07 + rnd() * 0.15) + ')'; g.lineWidth = 0.6 + rnd() * 2.2; g.beginPath(); g.moveTo(0, y); for (let x = 0; x <= w; x += 32) g.lineTo(x, y + Math.sin(x * 0.03 + i) * 3 * rnd()); g.stroke(); } g.fillStyle = 'rgba(60,30,10,.18)'; for (let k = 1; k < 4; k++) g.fillRect(0, k * 64, w, 2); }, rep);
+        const grain = (rep, amt) => mk(128, 128, (g, w, h) => { g.fillStyle = '#fff'; g.fillRect(0, 0, w, h); for (let i = 0; i < 1100; i++) { const v = 150 + rnd() * 80 | 0; g.fillStyle = 'rgba(' + v + ',' + v + ',' + v + ',' + (amt || 0.35) + ')'; g.fillRect(rnd() * w, rnd() * h, 1 + rnd() * 3, 1 + rnd() * 2.2); } }, rep);
+        const dome = (top, mid, bot, stars) => {
+          const t = mk(8, 256, (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, top); gr.addColorStop(0.5, mid); gr.addColorStop(1, bot); g.fillStyle = gr; g.fillRect(0, 0, w, h); }); t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping;
+          const m = new THREE.Mesh(new THREE.SphereGeometry(90, 32, 16), new THREE.MeshBasicMaterial({ map: t, side: THREE.BackSide, depthWrite: false })); m.renderOrder = -10; m.raycast = () => {}; scn.add(m);
+          if (stars) { const pos = []; for (let i = 0; i < stars; i++) { const u = rnd() * 2 - 1, a = rnd() * 6.283, q = Math.sqrt(1 - u * u); pos.push(Math.cos(a) * q * 85, u * 85, Math.sin(a) * q * 85); } const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); const p = new THREE.Points(g, new THREE.PointsMaterial({ color: 0xcfdcff, size: 1.6, sizeAttenuation: false, transparent: true, opacity: 0.8, depthWrite: false })); p.renderOrder = -9; p.raycast = () => {}; m.add(p); }
+          return m;
+        };
+        const glowTex = (rgb) => mk(128, 128, (g, w, h) => { const gr = g.createRadialGradient(64, 64, 0, 64, 64, 64); gr.addColorStop(0, 'rgba(' + rgb + ',1)'); gr.addColorStop(0.35, 'rgba(' + rgb + ',.35)'); gr.addColorStop(1, 'rgba(' + rgb + ',0)'); g.fillStyle = gr; g.fillRect(0, 0, w, h); });
+        const glow = (rgb, size, op) => { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex(rgb), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: op == null ? 0.8 : op })); s.scale.setScalar(size); s.raycast = () => {}; return s; };
+        const spiral = (rgb) => mk(256, 256, (g, w, h) => { g.clearRect(0, 0, w, h); const gr = g.createRadialGradient(128, 128, 0, 128, 128, 128); gr.addColorStop(0, 'rgba(255,248,230,1)'); gr.addColorStop(0.12, 'rgba(' + rgb + ',.75)'); gr.addColorStop(0.5, 'rgba(' + rgb + ',.2)'); gr.addColorStop(1, 'rgba(' + rgb + ',0)'); g.fillStyle = gr; g.fillRect(0, 0, w, h); for (let arm = 0; arm < 2; arm++) for (let i = 0; i < 260; i++) { const f = i / 260, a = f * 5.2 + arm * Math.PI, r = 14 + f * 108, x = 128 + Math.cos(a) * r + (rnd() - 0.5) * 12 * f, y = 128 + Math.sin(a) * r + (rnd() - 0.5) * 12 * f; g.fillStyle = 'rgba(255,255,255,' + (0.5 * (1 - f) + 0.06) + ')'; g.beginPath(); g.arc(x, y, 1 + rnd() * 2.4 * (1 - f * 0.5), 0, 6.283); g.fill(); } });
+        return { rnd, mk, wood, grain, dome, glow, glowTex, spiral };
+      })();
       const V3 = THREE.Vector3, UP = new V3(0, 1, 0);
       const F = () => { try { return window.__sim.S.forces; } catch (e) { return null; } };
       const sub = () => { try { return window.__sim.S.sub.forces; } catch (e) { return 'look'; } };
       const g = new THREE.Group(); root.add(g);
-      const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.4, metalness: 0.05 }, o || {}));
+      const mat = (c, o) => (o && (o.transparent || o.emissive) ? new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.4, metalness: 0.05 }, o)) : new THREE.MeshPhysicalMaterial(Object.assign({ color: c, roughness: 0.28, metalness: 0.05, clearcoat: 0.6, clearcoatRoughness: 0.2 }, o || {})));
+      /* 분자 돋보기 무대: 어두운 유리 원판 · 동심원 눈금 · 빛나는 테두리, 배경 */
+      FX.dome('#070d1c', '#10203d', '#1b3556', 160);
+      { const gt = FX.mk(256, 256, (c, w, h) => { c.fillStyle = '#0f1b33'; c.fillRect(0, 0, w, h); c.strokeStyle = 'rgba(120,170,255,.28)'; c.lineWidth = 1.4; for (let r = 24; r <= 128; r += 24) { c.beginPath(); c.arc(128, 128, r, 0, 6.283); c.stroke(); } for (let a = 0; a < 12; a++) { c.beginPath(); c.moveTo(128, 128); c.lineTo(128 + Math.cos(a * 0.5236) * 128, 128 + Math.sin(a * 0.5236) * 128); c.stroke(); } });
+        const stage = new THREE.Mesh(new THREE.CylinderGeometry(5.6, 5.8, 0.3, 72), [new THREE.MeshStandardMaterial({ color: 0x1c2a47, roughness: 0.4, metalness: 0.6 }), new THREE.MeshStandardMaterial({ map: gt, roughness: 0.35, metalness: 0.4 }), new THREE.MeshStandardMaterial({ color: 0x1c2a47, roughness: 0.4, metalness: 0.6 })]); stage.position.y = -3.3; stage.receiveShadow = true; root.add(stage);
+        const rim = new THREE.Mesh(new THREE.TorusGeometry(5.65, 0.06, 10, 96), new THREE.MeshStandardMaterial({ color: 0x66b8ff, emissive: 0x3b8bff, emissiveIntensity: 0.9, roughness: 0.3 })); rim.rotation.x = Math.PI / 2; rim.position.y = -3.15; root.add(rim); }
       const labs = [];
       let kind = 'disp', hbKey = 'h2o', sizeKey = 'ar', lastInfo = '', demo = null;
 
@@ -69,7 +91,7 @@
           grp.add(cloud);
           const es = [];
           for (let i = 0; i < 12; i++) { const e = new THREE.Mesh(new THREE.SphereGeometry(0.09, 12, 8), mat(0x9db4ff, { emissive: 0x6c86ff, emissiveIntensity: 0.5 })); grp.add(e); es.push(e); }
-          g.add(grp); return { grp, nuc, cloud, es, tag };
+          const halo = FX.glow('110,170,255', 4, 0.3); grp.add(halo); g.add(grp); return { grp, nuc, cloud, es, tag, halo };
         };
         dA = mk(0); dB = mk(1);
         dLink = new THREE.Group(); g.add(dLink);
@@ -86,7 +108,7 @@
         if (demo != null) o1 = Math.sin(demo * Math.PI * 4) * amp;
         const o2 = o1 * 0.85;
         [[dA, -xc, o1], [dB, xc, o2]].forEach(([d, x, off]) => {
-          d.grp.position.set(x, 0, 0); d.cloud.position.x = off; d.cloud.scale.setScalar(r);
+          d.grp.position.set(x, 0, 0); d.cloud.position.x = off; d.cloud.scale.setScalar(r); d.halo.position.x = off; d.halo.scale.setScalar(r * 2.5);
           const left = d.tag === 0;
           d.cloud.material.color.setHex((left ? off > 0 : off > 0) ? 0x7fb2ff : 0x7fb2ff);
           d.nuc.position.set(0, 0, 0);
@@ -101,8 +123,9 @@
         const s1 = o1 > 0 ? '−' : '+', s2 = o2 > 0 ? '+' : '−';
         dLab.aP.show(big && s1 === '+'); dLab.aM.show(big && s1 === '−');
         dLab.bP.show(big && s2 === '+'); dLab.bM.show(big && s2 === '−');
-        dLab.aP.obj = dLab.aM.obj = [-xc + r * 0.62, up, 0]; dLab.bP.obj = dLab.bM.obj = [xc - r * 0.62, up, 0];
-        dLab.nA.obj = [-xc, -r - 0.5, 0]; dLab.nB.obj = [xc, -r - 0.5, 0];
+        dLab.aP.obj = dLab.aM.obj = dA.cloud; dLab.bP.obj = dLab.bM.obj = dB.cloud;
+        dLab.aP.off = dLab.aM.off = [r * 0.62, up, 0]; dLab.bP.off = dLab.bM.off = [-r * 0.62, up, 0];
+        dLab.nA.obj = dA.grp; dLab.nB.obj = dB.grp; dLab.nA.off = dLab.nB.off = [0, -r - 0.5, 0];
         dLab.nA.set(z.nm); dLab.nB.set(z.nm);
         // 인력 (점선 · 두께 = 쏠린 정도)
         const act = Math.abs(o1) / amp;
@@ -190,15 +213,15 @@
           }
           w.quaternion.copy(best);
           const heavy = new THREE.Mesh(new THREE.SphereGeometry(def.R, 32, 24), mat(def.col)); w.add(heavy);
-          def.H.forEach((hv) => {
-            const hp = hv.clone().multiplyScalar(BL), h = new THREE.Mesh(new THREE.SphereGeometry(0.3, 24, 16), mat(0xf1f5f9)); h.position.copy(hp); w.add(h);
+          def.H.forEach((hv, hi) => {
+            const hp = hv.clone().multiplyScalar(BL), h = new THREE.Mesh(new THREE.SphereGeometry(0.3, 24, 16), mat(0xf1f5f9)); h.position.copy(hp); w.add(h); if (hi === 0) w.userData.h0 = h;
             stick(w, new V3(), hp, 0.1);
           });
           def.LP.forEach((lv) => {
             const base = lv.clone().multiplyScalar(def.R + 0.35), side = new V3().crossVectors(lv, UP); if (side.lengthSq() < 0.01) side.set(1, 0, 0); side.normalize().multiplyScalar(0.13);
             [1, -1].forEach((sg) => { const e = new THREE.Mesh(new THREE.SphereGeometry(0.1, 12, 8), mat(0x1e293b)); e.position.copy(base).addScaledVector(side, sg); w.add(e); });
           });
-          g.add(w); w.userData = { next, prev }; hbMols.push(w);
+          g.add(w); Object.assign(w.userData, { next, prev }); hbMols.push(w);
         }
         g.updateMatrixWorld(true);
         // 수소 결합 점선: 주는 분자의 H → 다음 분자의 N·O·F
@@ -206,7 +229,7 @@
           const w = hbMols[k], hp = def.H[0].clone().multiplyScalar(BL).applyQuaternion(w.quaternion).add(w.position), tg = HBP[k + 1];
           const d = tg.clone().sub(hp), u = d.clone().normalize();
           g.add(dashed(hp.clone().addScaledVector(u, 0.35), tg.clone().addScaledVector(u, -(def.R + 0.45)), 0xff5a5f, 0.075));
-          plabel('δ+', hp.clone().add(new V3(0, 0.55, 0)), 'rgba(226,70,75,.95)');
+          plabel('δ+', w.userData.h0, 'rgba(226,70,75,.95)', [0, 0.55, 0]);
         }
         plabel('δ−', hbMols[1], 'rgba(56,103,244,.95)', [0, -1.0, 0]); plabel('δ−', hbMols[2], 'rgba(56,103,244,.95)', [0, -1.0, 0]);
         plabel(def.nm, hbMols[0], null, [0, -1.5, 0]);
@@ -250,7 +273,7 @@
         if (on === sortOn) return; sortOn = on; gS.visible = on; g.visible = !on;
         sortM.forEach((s) => s.lab.show(on)); labs.forEach((l) => l.show(!on && true));
         ctlEls.forEach((e) => { e.style.display = on ? 'none' : ''; });
-        const o = ctx.orbit; if (on) { o.dist = PHONE ? 18 : 16; o.ty = 0; } else { o.dist = PHONE ? 17 : 13.5; o.ty = 0; }
+        const o = ctx.orbit; if (on) { o.dist = PHONE ? 18 : 16; o.ty = 0; } else { o.dist = PHONE ? 17 : 12; o.ty = -1; }
         lastInfo = '';
         if (!on) { build(); }
       }

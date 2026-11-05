@@ -30,14 +30,34 @@
     build(ctx) {
       if (ctx.THREE.ColorManagement) ctx.THREE.ColorManagement.legacyMode = false;     // 색을 보이는 그대로(sRGB) 쓰도록 맞춰요
       const { THREE, root, label, info, controls } = ctx;
+      /* ---- 장면 꾸미기 도우미: 나무 · 암석 무늬, 하늘 · 우주 배경, 빛 번짐 (모양만 꾸며요) ---- */
+      const FX = (() => {
+        const scn = ctx.scene; let sd = 7; const rnd = () => { sd = (sd * 16807) % 2147483647; return sd / 2147483647; };
+        const mk = (w, h, draw, rep) => { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; if (rep) t.repeat.set(rep[0], rep[1]); if ('encoding' in t) t.encoding = THREE.sRGBEncoding; t.anisotropy = 4; return t; };
+        const wood = (rep) => mk(256, 256, (g, w, h) => { g.fillStyle = '#b98a58'; g.fillRect(0, 0, w, h); for (let i = 0; i < 80; i++) { const y = rnd() * h; g.strokeStyle = 'rgba(' + (70 + rnd() * 40 | 0) + ',38,12,' + (0.07 + rnd() * 0.15) + ')'; g.lineWidth = 0.6 + rnd() * 2.2; g.beginPath(); g.moveTo(0, y); for (let x = 0; x <= w; x += 32) g.lineTo(x, y + Math.sin(x * 0.03 + i) * 3 * rnd()); g.stroke(); } g.fillStyle = 'rgba(60,30,10,.18)'; for (let k = 1; k < 4; k++) g.fillRect(0, k * 64, w, 2); }, rep);
+        const grain = (rep, amt) => mk(128, 128, (g, w, h) => { g.fillStyle = '#fff'; g.fillRect(0, 0, w, h); for (let i = 0; i < 1100; i++) { const v = 150 + rnd() * 80 | 0; g.fillStyle = 'rgba(' + v + ',' + v + ',' + v + ',' + (amt || 0.35) + ')'; g.fillRect(rnd() * w, rnd() * h, 1 + rnd() * 3, 1 + rnd() * 2.2); } }, rep);
+        const dome = (top, mid, bot, stars) => {
+          const t = mk(8, 256, (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, top); gr.addColorStop(0.5, mid); gr.addColorStop(1, bot); g.fillStyle = gr; g.fillRect(0, 0, w, h); }); t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping;
+          const m = new THREE.Mesh(new THREE.SphereGeometry(90, 32, 16), new THREE.MeshBasicMaterial({ map: t, side: THREE.BackSide, depthWrite: false })); m.renderOrder = -10; m.raycast = () => {}; scn.add(m);
+          if (stars) { const pos = []; for (let i = 0; i < stars; i++) { const u = rnd() * 2 - 1, a = rnd() * 6.283, q = Math.sqrt(1 - u * u); pos.push(Math.cos(a) * q * 85, u * 85, Math.sin(a) * q * 85); } const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); const p = new THREE.Points(g, new THREE.PointsMaterial({ color: 0xcfdcff, size: 1.6, sizeAttenuation: false, transparent: true, opacity: 0.8, depthWrite: false })); p.renderOrder = -9; p.raycast = () => {}; m.add(p); }
+          return m;
+        };
+        const glowTex = (rgb) => mk(128, 128, (g, w, h) => { const gr = g.createRadialGradient(64, 64, 0, 64, 64, 64); gr.addColorStop(0, 'rgba(' + rgb + ',1)'); gr.addColorStop(0.35, 'rgba(' + rgb + ',.35)'); gr.addColorStop(1, 'rgba(' + rgb + ',0)'); g.fillStyle = gr; g.fillRect(0, 0, w, h); });
+        const glow = (rgb, size, op) => { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex(rgb), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: op == null ? 0.8 : op })); s.scale.setScalar(size); s.raycast = () => {}; return s; };
+        const spiral = (rgb) => mk(256, 256, (g, w, h) => { g.clearRect(0, 0, w, h); const gr = g.createRadialGradient(128, 128, 0, 128, 128, 128); gr.addColorStop(0, 'rgba(255,248,230,1)'); gr.addColorStop(0.12, 'rgba(' + rgb + ',.75)'); gr.addColorStop(0.5, 'rgba(' + rgb + ',.2)'); gr.addColorStop(1, 'rgba(' + rgb + ',0)'); g.fillStyle = gr; g.fillRect(0, 0, w, h); for (let arm = 0; arm < 2; arm++) for (let i = 0; i < 260; i++) { const f = i / 260, a = f * 5.2 + arm * Math.PI, r = 14 + f * 108, x = 128 + Math.cos(a) * r + (rnd() - 0.5) * 12 * f, y = 128 + Math.sin(a) * r + (rnd() - 0.5) * 12 * f; g.fillStyle = 'rgba(255,255,255,' + (0.5 * (1 - f) + 0.06) + ')'; g.beginPath(); g.arc(x, y, 1 + rnd() * 2.4 * (1 - f * 0.5), 0, 6.283); g.fill(); } });
+        return { rnd, mk, wood, grain, dome, glow, glowTex, spiral };
+      })();
       const L2 = () => ctx.lesson();
       const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.85, metalness: 0 }, o || {}));
-      const floor = new THREE.Mesh(new THREE.CylinderGeometry(6.2, 6.2, 0.2, 64), std(0x2a3550)); floor.position.y = -3.3; root.add(floor);
+      const rockG = FX.grain([1.3, 1.3], 0.55);
+      FX.dome('#1c2c4a', '#33507a', '#5a7aa3', 0);
+      const floor = new THREE.Mesh(new THREE.CylinderGeometry(6.4, 6.6, 0.3, 64), std(0x6b5a48, { map: FX.grain([5, 5], 0.6) })); floor.position.y = -3.3; floor.receiveShadow = true; root.add(floor);
+      { const rim = new THREE.Mesh(new THREE.TorusGeometry(6.45, 0.08, 10, 96), new THREE.MeshStandardMaterial({ color: 0xc9a14a, roughness: 0.35, metalness: 0.8 })); rim.rotation.x = Math.PI / 2; rim.position.y = 0.15; floor.add(rim); }
       const gI = new THREE.Group(), gU = new THREE.Group(); root.add(gI, gU);
       const ext = (pts, col, depth) => {
         const sh = new THREE.Shape(); pts.forEach((p, i) => (i ? sh.lineTo(p[0], p[1]) : sh.moveTo(p[0], p[1]))); sh.closePath();
         const g = new THREE.ExtrudeGeometry(sh, { depth: depth || ZD * 2, bevelEnabled: false, curveSegments: 2 }); g.translate(0, 0, -(depth || ZD * 2) / 2);
-        const m = new THREE.Mesh(g, std(col)); m.castShadow = m.receiveShadow = true; return m;
+        const m = new THREE.Mesh(g, std(col, { map: rockG })); m.castShadow = m.receiveShadow = true; return m;
       };
       const rect = (x0, x1, y0, y1) => [[x0, y0], [x1, y0], [x1, y1], [x0, y1]];
       const box = (w, h, d, col, o) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), std(col, o)); m.castShadow = m.receiveShadow = true; return m; };
@@ -165,7 +185,11 @@
       { const gl = new THREE.Mesh(new THREE.BoxGeometry(BS, BS, BD), new THREE.MeshStandardMaterial({ color: 0xcfe8f7, transparent: true, opacity: 0.2, roughness: 0.08, depthWrite: false })); boxG.add(gl);
         const ed = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(BS, BS, BD)), new THREE.LineBasicMaterial({ color: 0x64748b })); boxG.add(ed);
         const nz = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.25, 0.8), sdM(0x64748b)); nz.position.set(0, BS / 2 + 0.12, 0); boxG.add(nz); }
-      const pedestal = new THREE.Mesh(new THREE.BoxGeometry(BS * 1.05, 0.25, BD + 0.6), sdM(0x94a3b8)); pedestal.position.y = -BS * 0.78; gBx.add(pedestal);
+      const pedestal = new THREE.Mesh(new THREE.BoxGeometry(BS * 1.05, 0.25, BD + 0.6), new THREE.MeshStandardMaterial({ map: FX.wood([2, 0.4]), roughness: 0.55 })); pedestal.position.y = -BS * 0.66; gBx.add(pedestal);
+      { const chrome = new THREE.MeshStandardMaterial({ color: 0xdfe6ee, roughness: 0.22, metalness: 0.85 }); [-1, 1].forEach((sx) => [-1, 1].forEach((sy) => { const po = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, BD + 0.1, 10), chrome); po.rotation.x = Math.PI / 2; po.position.set(sx * BS / 2, sy * BS / 2, 0); boxG.add(po); const ca = new THREE.Mesh(new THREE.SphereGeometry(0.1, 12, 8), chrome); ca.position.set(sx * BS / 2, sy * BS / 2, BD / 2 + 0.05); boxG.add(ca); const ca2 = ca.clone(); ca2.position.z = -BD / 2 - 0.05; boxG.add(ca2); })); }
+      { const hp = (x, z, col, rr, n) => { const g3 = new THREE.Group(); for (let i = 0; i < n; i++) { const a = i * 2.4, rd = 0.5 * Math.sqrt(i / n), r1 = rr * (0.7 + 0.5 * ((i * 37) % 10) / 10), pb = new THREE.Mesh(new THREE.DodecahedronGeometry(r1, 0), new THREE.MeshStandardMaterial({ color: col, roughness: 0.9 })); pb.position.set(Math.cos(a) * rd * 1.6, r1 * 0.6 + (1 - rd * 2) * 0.28, Math.sin(a) * rd * 1.6); pb.rotation.set(i, i * 2, 0); pb.castShadow = true; g3.add(pb); } g3.position.set(x, -BS * 0.66 + 0.125, z); gBx.add(g3); };
+        hp(BS * 0.5 + 1.6, 0.4, 0x8f8a82, 0.2, 26); hp(BS * 0.5 + 1.6, -1.3, 0xe0bd6a, 0.1, 60); hp(-BS * 0.5 - 1.6, 0.4, 0xb4694a, 0.12, 50);
+        const sh = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.35, 0.8, 16, 1, true), new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.3, metalness: 0.7, side: THREE.DoubleSide })); sh.position.set(0, BS / 2 + 0.55, 0); gBx.add(sh); }
       const layF = new THREE.Group(); boxG.add(layF);                          // 퇴적층 (상자 좌표 · 상자를 기울여 넣을 때의 수평 기준으로 돌려 놓아요)
       const layM = Array.from({ length: 5 }, () => { const m = new THREE.Mesh(new THREE.BoxGeometry(BS * 2.4, 1, BD), sdM(0xffffff, { clippingPlanes: [new THREE.Plane(), new THREE.Plane(), new THREE.Plane(), new THREE.Plane()] })); m.visible = false; layF.add(m); return m; });
       const NFALL = 200, fallM = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 8, 6), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.8 }), NFALL); fallM.frustumCulled = false; fallM.instanceMatrix.setUsage(THREE.DynamicDrawUsage); gBx.add(fallM);
@@ -276,11 +300,11 @@
         if (nw) { Object.values(LB).forEach((l) => l.show(false)); floor.visible = v !== 'corr' || true; }
         else if (prev) { scene = null; show(sceneOf()); }
         const o = ctx.orbit;
-        if (v === 'box') { o.theta = 0.1; o.phi = 1.4; o.tx = 0; o.ty = -0.2; o.tz = 0; o.dist = PHONE ? 19 : 14; floor.position.y = -BS * 0.78 - 0.2; }
+        if (v === 'box') { o.theta = 0.1; o.phi = 1.4; o.tx = 0; o.ty = -0.2; o.tz = 0; o.dist = PHONE ? 19 : 14; floor.position.y = -BS * 0.66 - 0.5; }
         else if (v === 'rate') { o.theta = 0.2; o.phi = 1.3; o.tx = 0; o.ty = 1.8; o.tz = 0; o.dist = PHONE ? 17 : 12.5; floor.position.y = -0.3; }
         else if (v === 'type') { o.theta = 0.15; o.phi = 1.35; o.tx = 0; o.ty = 1.0; o.tz = 0; o.dist = PHONE ? 21 : 15; floor.position.y = -0.3; }
         else if (v === 'corr') { o.theta = 0.2; o.phi = 1.3; o.tx = 0; o.ty = 1.4; o.tz = 0; o.dist = PHONE ? 19 : 13.5; floor.position.y = -0.3; }
-        else { floor.position.y = -3.3; o.tx = 0; o.ty = 1.4; }
+        else { floor.position.y = -0.7; o.tx = 0; o.ty = 1.4; }
       }
       return {
         update(dt) {

@@ -49,6 +49,19 @@
       const mkG = (k) => { const g = new THREE.Group(); g.visible = false; root.add(g); groups[k] = g; labs[k] = []; return g; };
       const lab = (k, text, obj, o) => { const l = label(text, obj, o); l.show(false); labs[k].push(l); return l; };
       const upd = {};
+      /* ---------- 혈관 속 환경: 혈관 벽 + 흐르는 적혈구 ---------- */
+      const rbcFlow = (function () {
+        const c = document.createElement('canvas'); c.width = 512; c.height = 256; const x = c.getContext('2d');
+        x.fillStyle = '#5a2a3c'; x.fillRect(0, 0, 512, 256);
+        const r = rng(5); for (let i = 0; i < 70; i++) { const px = r() * 512, py = r() * 256, rx = 28 + r() * 22, ry = 14 + r() * 10; const gr = x.createRadialGradient(px, py, 2, px, py, rx); gr.addColorStop(0, 'rgba(150,70,95,.55)'); gr.addColorStop(1, 'rgba(60,24,40,0)'); x.fillStyle = gr; x.beginPath(); x.ellipse(px, py, rx, ry, 0, 0, 7); x.fill(); x.strokeStyle = 'rgba(30,10,20,.35)'; x.lineWidth = 1.5; x.stroke(); }
+        const tex = new THREE.CanvasTexture(c); tex.wrapS = tex.wrapT = THREE.RepeatWrapping; tex.repeat.set(7, 3);
+        const wall = new THREE.Mesh(new THREE.CylinderGeometry(24, 24, 90, 48, 1, true), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.7, side: THREE.BackSide, color: 0x8f6275 })); wall.rotation.z = Math.PI / 2; root.add(wall);
+        const lathe = new THREE.LatheGeometry([[0.0, 0.14], [0.35, 0.2], [0.7, 0.16], [0.95, 0.1], [1.0, 0.0], [0.95, -0.1], [0.7, -0.16], [0.35, -0.2], [0.0, -0.14]].map((q) => new THREE.Vector2(q[0], q[1])), 22);
+        const N = 46, im = new THREE.InstancedMesh(lathe, std(0xd33d3d, { roughness: 0.45, side: THREE.DoubleSide }), N); im.frustumCulled = false; root.add(im);
+        const P = Array.from({ length: N }, () => { const a = R() * 6.283, rr = 6 + R() * 14; return { x: (R() - 0.5) * 44, y: Math.cos(a) * rr, z: Math.sin(a) * rr, rx: R() * 6, ry: R() * 6, sp: 0.5 + R() * 0.5, tx: (R() - 0.5), ty: (R() - 0.5) }; });
+        const dm = new THREE.Object3D();
+        return (dt, t) => { P.forEach((q, i) => { q.x += dt * q.sp; if (q.x > 22) q.x -= 44; dm.position.set(q.x, q.y + Math.sin(t * 0.6 + i) * 0.15, q.z); dm.rotation.set(q.rx + t * q.tx, q.ry + t * q.ty, 0); dm.scale.setScalar(0.75); dm.updateMatrix(); im.setMatrixAt(i, dm.matrix); }); im.instanceMatrix.needsUpdate = true; };
+      })();
 
       /* ---------- 식균 작용 ---------- */
       { const g = mkG('phago');
@@ -154,7 +167,7 @@
               info(MODES[mode].info + stageTxt);
             }
           }
-          upd[mode](clk, dt, t);
+          rbcFlow(Math.min(dt, 0.05), t); upd[mode](clk, dt, t);
         },
         sync() {},
       };

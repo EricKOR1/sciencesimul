@@ -35,7 +35,20 @@
       }
       const gOK = enzymeGeo(false), gDN = enzymeGeo(true);
       const enz = new THREE.Mesh(gOK, std(0x2fb8a6, { roughness: 0.35, emissive: 0x0b4a42, emissiveIntensity: 0.4 })); root.add(enz);
-      const lE = label('효소', [-0.6, 1.8, 0], { color: 'rgba(20,120,110,.92)' });
+
+      // ---- 환경: 반짝이는 바닥판 · 용액 속 떠다니는 알갱이 · 표면 질감 · 활성 부위 테두리
+      { const cv = document.createElement('canvas'); cv.width = cv.height = 256; const g = cv.getContext('2d'); g.fillStyle = '#808080'; g.fillRect(0, 0, 256, 256);
+        for (let i = 0; i < 500; i++) { const v = 100 + Math.random() * 110 | 0; g.fillStyle = 'rgba(' + v + ',' + v + ',' + v + ',.55)'; g.beginPath(); g.arc(Math.random() * 256, Math.random() * 256, 4 + Math.random() * 10, 0, 6.283); g.fill(); }
+        const tx = new THREE.CanvasTexture(cv); tx.wrapS = tx.wrapT = THREE.RepeatWrapping; enz.material.bumpMap = tx; enz.material.bumpScale = 0.25; enz.material.clearcoat = 0; }
+      const shell = new THREE.Mesh(new THREE.SphereGeometry(1.86, 48, 32), new THREE.MeshBasicMaterial({ color: 0x7ee8d8, transparent: true, opacity: 0.07, side: THREE.BackSide, depthWrite: false })); enz.add(shell);
+      const floor = new THREE.Mesh(new THREE.CylinderGeometry(6.2, 6.4, 0.25, 72), std(0x12203a, { roughness: 0.7, metalness: 0.1 })); floor.position.set(1.1, -3.0, 0); root.add(floor);
+      const fring = new THREE.Mesh(new THREE.TorusGeometry(6.0, 0.03, 8, 96), new THREE.MeshBasicMaterial({ color: 0x4fd1c5 })); fring.rotation.x = Math.PI / 2; fring.position.set(1.1, -2.86, 0); root.add(fring);
+      const fring2 = new THREE.Mesh(new THREE.TorusGeometry(4.2, 0.02, 8, 96), new THREE.MeshBasicMaterial({ color: 0x3b6ea8 })); fring2.rotation.x = Math.PI / 2; fring2.position.set(1.1, -2.86, 0); root.add(fring2);
+      const NP = 140, dust = new THREE.InstancedMesh(new THREE.SphereGeometry(0.05, 8, 6), new THREE.MeshBasicMaterial({ color: 0x9fd8ff, transparent: true, opacity: 0.5 }), NP); root.add(dust);
+      const dd = []; for (let i = 0; i < NP; i++) dd.push({ x: (Math.random() - 0.3) * 12, y: -2.2 + Math.random() * 6, z: (Math.random() - 0.5) * 7, s: 0.4 + Math.random() * 1.2, p: Math.random() * 6.28 });
+      const dm = new THREE.Object3D();
+      const rings = [CA, CB].map((c) => { const r = new THREE.Mesh(new THREE.TorusGeometry(DR + 0.04, 0.035, 10, 40), new THREE.MeshBasicMaterial({ color: 0xfff1a8, transparent: true, opacity: 0.85 })); r.position.set(...c); r.lookAt(new THREE.Vector3(c[0] * 2, c[1] * 2, c[2] * 2)); root.add(r); return r; });
+      const lE = label('효소', enz, { offset: [-0.6, 1.8, 0], color: 'rgba(20,120,110,.92)' });
       const lAS = label('활성 부위', enz, { offset: [PX + 0.6, 1.25, 0.2], size: 12 });
       // 기질 (두 조각이 이어진 분자)
       const sub = new THREE.Group(); root.add(sub);
@@ -43,7 +56,7 @@
       sA.position.set(0, 0.42, 0); sB.position.set(0, -0.42, 0); sub.add(sA, sB);
       const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.6, 12), std(0xe8e8e8)); sub.add(neck);
       const lS = label('기질 ②', sub, { offset: [0.0, 1.05, 0], color: 'rgba(40,100,210,.92)' });
-      const lP = label('생성물', sub, { offset: [0, 1.4, 0], color: 'rgba(30,140,60,.92)' }); lP.show(false);
+      const lP = label('생성물', sub, { offset: [0, 0.8, 0], color: 'rgba(30,140,60,.92)' }); lP.show(false);
       // 다른 모양 기질
       const altT = new THREE.TetrahedronGeometry(0.85, 0), altD = new THREE.OctahedronGeometry(0.7, 0);
       const alt = new THREE.Mesh(altD, std(0xec4899, { roughness: 0.3 })); root.add(alt);
@@ -54,7 +67,7 @@
       function setMode(m) {
         mode = m; T0 = 0; enz.geometry = m === 'hot' ? gDN : gOK; enz.material.color.setHex(m === 'hot' ? 0x9aa6a2 : 0x2fb8a6); enz.material.emissive.setHex(m === 'hot' ? 0x2a1208 : 0x0b4a42);
         const isO = m === 'tri' || m === 'dia'; if (isO) { alt.geometry = m === 'tri' ? altT : altD; alt.material.color.setHex(m === 'tri' ? 0xfb923c : 0xec4899); lS.set(m === 'tri' ? '기질 ①' : '기질 ③'); lS.el.style.background = m === 'tri' ? 'rgba(220,110,20,.92)' : 'rgba(210,50,130,.92)'; } else lS.set('기질 ②');
-        alt.visible = isO; sub.visible = !isO; lS.obj = isO ? alt : sub; lAS.show(m !== 'hot'); heat.forEach((h) => { h.visible = m === 'hot'; });
+        alt.visible = isO; sub.visible = !isO; lS.obj = isO ? alt : sub; lAS.show(m !== 'hot'); rings.forEach((r) => { r.visible = m !== 'hot'; }); heat.forEach((h) => { h.visible = m === 'hot'; });
         info(msg[m]); seg.set(m);
       }
       const seg = controls.segment('상황', [{ value: 'tri', label: '기질 ①' }, { value: 'ok', label: '기질 ② (맞음)' }, { value: 'dia', label: '기질 ③' }], mode === 'hot' ? 'ok' : mode, (v) => { setMode(v); lastWant = v; const L = window.__sim, S = L && L.S; if (S && S.mode === 'lock' && S.sub === 'bind' && L.lockAttempt) { const it = S.lock.items.find((q) => q.id === (v === 'ok' ? 'A' : v === 'tri' ? 'T' : 'B')); if (it && it.state === 'tray') L.lockAttempt(it); } });
@@ -68,6 +81,8 @@
       });
       return {
         update(dt, t) {
+          for (let i = 0; i < NP; i++) { const d = dd[i]; dm.position.set(d.x + Math.sin(t * 0.3 * d.s + d.p) * 0.4, ((d.y + t * 0.15 * d.s + 2.2) % 6) - 2.2, d.z + Math.cos(t * 0.25 * d.s + d.p) * 0.3); dm.scale.setScalar(0.6 + 0.4 * Math.sin(t + d.p)); dm.updateMatrix(); dust.setMatrixAt(i, dm.matrix); } dust.instanceMatrix.needsUpdate = true;
+          rings.forEach((r) => { if (r.visible) r.material.opacity = 0.55 + 0.35 * Math.sin(t * 3); });
           // 2D(열쇠-자물쇠) 상태: 온도로 변성된 정도 · 고른 기질을 따라가요
           { const L2 = window.__sim, S2 = L2 && L2.S, LK = S2 && S2.lock;
             if (LK && S2.mode === 'lock') {
@@ -86,7 +101,7 @@
             const sc = 1 + 0.02 * bind * (1 - split); enz.scale.setScalar(sc);
             // 분해: 두 조각이 따로 떨어져 나가요
             sA.position.set(0, 0.42 + split * 1.6, split * 0.9); sB.position.set(split * 0.5, -0.42 - split * 1.3, -split * 0.6); neck.visible = split < 0.02; neck.scale.y = 1;
-            sA.material.color.setHex(split > 0.3 ? 0xffc766 : 0xff9f43); lS.show(tt < 3.4); lP.show(tt > 5.0 && tt < 8.5); lP.obj = [PX + 2, 2, 0.5];
+            sA.material.color.setHex(split > 0.3 ? 0xffc766 : 0xff9f43); lS.show(tt < 3.4); lP.show(tt > 5.0 && tt < 8.5); lP.obj = sA;
             sub.visible = tt < 8.0 || true; const fade = 1 - sm(7.2, 8.6, tt); sA.scale.setScalar(fade); sB.scale.setScalar(fade);
             if (tt < 0.05) { sA.scale.setScalar(1); sB.scale.setScalar(1); }
           } else if (mode === 'hot') {

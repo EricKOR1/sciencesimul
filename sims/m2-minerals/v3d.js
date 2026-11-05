@@ -20,7 +20,7 @@
   window.SciSim3D.attach({
     title: '광물 표본 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: PHN ? 11 : 8.6, theta: 0.5, phi: 1.15, min: 4, max: 20, target: [0, 0.6, 0] },
+    camera: { dist: PHN ? 10 : 7.6, theta: 0.5, phi: 1.15, min: 4, max: 20, target: [0, 0.6, 0] },
     autoRotate: 0.25,
     levels: [0],
     build(ctx) {
@@ -87,13 +87,21 @@
         clip.scale.setScalar(1.1); g.add(clip); g.userData.clip = clip; add('magnetite', g); }
       // 조흔판 (흰색 타일 + 긁힌 선)
       const plate = new THREE.Group(); root.add(plate);
-      const tile = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.1, 1.2), mat(0xf4f1ea, { roughness: 0.85 })); tile.receiveShadow = true; plate.add(tile);
+      const tile = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.1, 1.2), mat(0xd8d3c6, { roughness: 0.85 })); tile.receiveShadow = true; plate.add(tile);
       const strk = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.02, 0.2), mat(0xe8b800, { roughness: 0.9 })); strk.position.set(0, 0.06, 0); plate.add(strk);
-      plate.position.set(2.6, 0.05, 1.9); plate.rotation.y = -0.6; plate.scale.setScalar(0.85);
+      plate.position.set(2.0, 0.07, 1.5); plate.rotation.y = -0.6; plate.scale.setScalar(0.8);
       const labS = label('조흔색', plate, { offset: [0, 0.4, 0.8] });
       const labN = label('', [0, 2.4, 0], { color: 'rgba(255,211,77,.92)' }); labN.el.style.color = '#1b2333'; labN.el.style.fontSize = '15px';
-      const ring = new THREE.Mesh(new THREE.CylinderGeometry(2.1, 2.3, 0.1, 48), mat(0x0e1530, { roughness: 1, metalness: 0 }));
-      ring.position.y = -0.04; ring.receiveShadow = true; root.add(ring);
+      const cTex = (w, h, draw) => { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); if (THREE.sRGBEncoding) t.encoding = THREE.sRGBEncoding; t.wrapS = t.wrapT = THREE.RepeatWrapping; return t; };
+      const rockT = cTex(256, 256, (c, w, h) => { c.fillStyle = '#6a655d'; c.fillRect(0, 0, w, h); for (let i = 0; i < 1400; i++) { const l = 30 + Math.random() * 60; c.fillStyle = 'rgba(' + l + ',' + (l - 3) + ',' + (l - 8) + ',' + (0.15 + Math.random() * 0.3) + ')'; c.beginPath(); c.arc(Math.random() * w, Math.random() * h, 1 + Math.random() * 6, 0, 7); c.fill(); } for (let i = 0; i < 300; i++) { c.fillStyle = 'rgba(210,205,195,' + Math.random() * 0.25 + ')'; c.fillRect(Math.random() * w, Math.random() * h, 2, 2); } });
+      const woodT = cTex(512, 512, (c, w, h) => { c.fillStyle = '#4a3020'; c.fillRect(0, 0, w, h); for (let i = 0; i < 90; i++) { c.strokeStyle = 'rgba(' + (20 + (i * 17) % 40) + ',12,4,' + (0.15 + (i % 4) * 0.05) + ')'; c.lineWidth = 1 + (i % 3); c.beginPath(); const y = i / 90 * h; c.moveTo(0, y); for (let x = 0; x <= w; x += 32) c.lineTo(x, y + Math.sin(x * 0.04 + i) * 3); c.stroke(); } });
+      woodT.repeat.set(2, 2); rockT.repeat.set(2, 2);
+      const table = new THREE.Mesh(new THREE.CylinderGeometry(8, 8, 0.3, 64), mat(0xffffff, { map: woodT, roughness: 0.55 })); table.position.y = -0.4; table.receiveShadow = true; root.add(table);
+      const ring = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 2.35, 0.14, 48), mat(0x2a3042, { roughness: 0.35, metalness: 0.5 }));
+      ring.position.y = -0.08; ring.receiveShadow = true; root.add(ring);
+      const rim = new THREE.Mesh(new THREE.TorusGeometry(2.25, 0.04, 8, 64), mat(0xd9b45a, { metalness: 0.9, roughness: 0.3 })); rim.rotation.x = Math.PI / 2; rim.position.y = -0.01; root.add(rim);
+      // 표본이 놓인 바탕 암석
+      const matrix = new THREE.Mesh(dispIco(1, 5, 0.1, 2.0, 0.17, 1.55), mat(0xffffff, { map: rockT, roughness: 0.95 })); matrix.position.y = 0.0; matrix.receiveShadow = true; root.add(matrix);
 
       let sel = 'pyrite', mag = false, clipT = 0, last2D = null;
       function setSel(k, push) {

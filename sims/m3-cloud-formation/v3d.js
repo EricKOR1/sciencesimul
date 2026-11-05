@@ -35,10 +35,20 @@
           const x = p.getX(i), z = p.getZ(i), y = ground(x, z); p.setY(i, y);
           const t = y / PK; if (t > 0.86) col.set(0xdfe7ee); else if (t > 0.45) col.set(0x7a6350).lerp(new C(0x9a8671), (t - 0.45) / 0.41); else col.set(0x4d8f48).lerp(new C(0x7a6350), Math.max(0, (t - 0.12) / 0.33));
           if (mode === 'conv' && Math.hypot(x + 0.5, z) < 1.7) col.set(0xc2693a).lerp(new C(0x5fa05a), Math.hypot(x + 0.5, z) / 1.7 * 0.6);
-          col.convertSRGBToLinear(); c.setXYZ(i, col.r, col.g, col.b);
+          const jt = 1 + (Math.sin(x * 9.1 + z * 7.3) * Math.sin(x * 3.7 - z * 5.1)) * 0.08; col.multiplyScalar(jt); col.convertSRGBToLinear(); c.setXYZ(i, col.r, col.g, col.b);
         }
-        p.needsUpdate = true; c.needsUpdate = true; tg.computeVertexNormals();
+        p.needsUpdate = true; c.needsUpdate = true; tg.computeVertexNormals(); plant();
       }
+      /* 하늘 · 먼 땅 · 나무 */
+      const skyC = document.createElement('canvas'); skyC.width = 4; skyC.height = 256; { const x = skyC.getContext('2d'), g = x.createLinearGradient(0, 0, 0, 256); g.addColorStop(0, '#2563b8'); g.addColorStop(0.45, '#7fbdee'); g.addColorStop(0.56, '#dff0fb'); g.addColorStop(1, '#dff0fb'); x.fillStyle = g; x.fillRect(0, 0, 4, 256); }
+      const sky = new THREE.Mesh(new THREE.SphereGeometry(48, 24, 16), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(skyC), side: THREE.BackSide, depthWrite: false })); sky.renderOrder = -10; root.add(sky);
+      const farG = new THREE.Mesh(new THREE.CircleGeometry(45, 48), sm(0x234d25, { roughness: 1 })); farG.rotation.x = -Math.PI / 2; farG.position.y = -0.06; root.add(farG);
+      for (let i = 0; i < 8; i++) { const a = -0.3 - i * 0.55, r = 24 + (i % 3) * 3, hh = 1.6 + (i % 4) * 0.6; const m = new THREE.Mesh(new THREE.ConeGeometry(4 + (i % 3) * 1.4, hh * 2, 7), sm(i % 2 ? 0x33495f : 0x3d566e, { roughness: 1, flatShading: true })); m.position.set(Math.cos(a) * r, hh - 0.2, Math.sin(a) * r - 8); root.add(m); }
+      const NT = 110, trunkI = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.03, 0.045, 0.22, 5), sm(0x6b4423), NT), leafI = new THREE.InstancedMesh(new THREE.ConeGeometry(0.2, 0.55, 7), sm(0x2d7a3c, { roughness: 0.9 }), NT), tseed = [];
+      { let rr = 3; const rn = () => { rr = (rr * 16807) % 2147483647; return rr / 2147483647; }; for (let i = 0; i < NT; i++) tseed.push([(rn() - 0.5) * (GW - 1), (rn() - 0.5) * (GD - 1), 0.7 + rn() * 0.7]); }
+      root.add(trunkI, leafI);
+      const tdm = new THREE.Object3D();
+      function plant() { let n = 0; tseed.forEach((q) => { const y = ground(q[0], q[1]), tt = y / PK; if (tt > 0.5 || (mode === 'conv' && Math.hypot(q[0] + 0.5, q[1]) < 1.9) || (mode === 'meet' && Math.abs(q[1]) < 0.6)) return; tdm.position.set(q[0], y + 0.11 * q[2], q[1]); tdm.scale.setScalar(q[2]); tdm.rotation.set(0, 0, 0); tdm.updateMatrix(); trunkI.setMatrixAt(n, tdm.matrix); tdm.position.y = y + 0.4 * q[2]; tdm.updateMatrix(); leafI.setMatrixAt(n, tdm.matrix); n++; }); trunkI.count = leafI.count = n; trunkI.instanceMatrix.needsUpdate = leafI.instanceMatrix.needsUpdate = true; }
       /* 공기 덩어리의 길 */
       function pathAt(hh) {
         const y = hh / HM * PK;
@@ -66,7 +76,7 @@
       const lowL = label('공기가 모여드는 곳 (저기압)', [0, 0.25, 3.3], { color: 'rgba(3,105,161,.92)', size: 13 });
       /* 구름 밑면 */
       const base = new THREE.Mesh(new THREE.PlaneGeometry(GW - 1, 6), new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.16, side: THREE.DoubleSide, depthWrite: false })); base.rotation.x = -Math.PI / 2; base.position.y = LCL / HM * PK + 0.25; root.add(base);
-      const baseL = label('구름 밑면 1000 m', [-GW / 2 + 1.7, base.position.y, 2.5], { color: 'rgba(3,105,161,.92)', size: 13 });
+      const baseL = label('구름 밑면 1000 m', base, { offset: [-GW / 2 + 1.7, 0, 2.5], color: 'rgba(3,105,161,.92)', size: 13 });
       /* 구름 방울들 (길을 따라 생겨요) */
       const NP = 56, puffG = new THREE.SphereGeometry(1, 20, 14), puffs = [];
       const cloudM = sm(0xffffff, { roughness: 0.95, transparent: true, opacity: 0.93 });
@@ -76,6 +86,7 @@
       const rseed = []; for (let i = 0; i < 60; i++) rseed.push({ k: Math.random(), z: (Math.random() - 0.5) * 2.2, x: Math.random() - 0.5 });
       /* 해, 바람 */
       const sun = new THREE.Mesh(new THREE.SphereGeometry(0.6, 28, 20), new THREE.MeshBasicMaterial({ color: 0xffd34d })); sun.position.set(-3.8, 5.6, -1.5); root.add(sun);
+      const glow = new THREE.Mesh(new THREE.SphereGeometry(1.1, 24, 16), new THREE.MeshBasicMaterial({ color: 0xffe08a, transparent: true, opacity: 0.25, depthWrite: false })); sun.add(glow);
       const winds = []; for (let i = 0; i < 5; i++) { const m = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.4, 10), new THREE.MeshBasicMaterial({ color: 0xcbd5e1, transparent: true, opacity: 0.8 })); m.rotation.z = -Math.PI / 2; root.add(m); winds.push(m); }
       const airLab = label('', air, { color: 'rgba(15,23,42,.9)', size: 13, offset: [0, 1.2, 0] });
       function setMode(m) { mode = m; shape(); sun.visible = m === 'conv'; winds.forEach((w) => { w.visible = m === 'mtn'; });

@@ -58,7 +58,11 @@
       const earth = new THREE.Group(); root.add(earth);
       const ground = new THREE.Mesh(new THREE.SphereGeometry(R, 96, 64), std(0xffffff, { map: texG, roughness: 0.85 })); earth.add(ground);
       const ocean = new THREE.Mesh(new THREE.SphereGeometry(R + 0.012, 96, 64), std(0xffffff, { map: texO, transparent: true, roughness: 0.15, metalness: 0.1, depthWrite: false })); earth.add(ocean);
-      const cloud = new THREE.Mesh(new THREE.SphereGeometry(R + 0.07, 64, 40), std(0xffffff, { transparent: true, opacity: 0.0, roughness: 1, depthWrite: false }));
+      const cvC = document.createElement('canvas'); cvC.width = 256; cvC.height = 128; { const cc = cvC.getContext('2d'), im = cc.createImageData(256, 128);
+        for (let y = 0; y < 128; y++) { const lat = (0.5 - y / 128) * Math.PI; for (let x = 0; x < 256; x++) { const lon = x / 256 * Math.PI * 2, px = Math.cos(lat) * Math.cos(lon), py = Math.sin(lat), pz = Math.cos(lat) * Math.sin(lon), h = fbm(px * 2.6 + 11, py * 3.4 + 4, pz * 2.6 + 8), a = Math.max(0, Math.min(1, (h - 0.5) / 0.14)), i = (y * 256 + x) * 4; im.data[i] = im.data[i + 1] = im.data[i + 2] = 255; im.data[i + 3] = a * 215; } }
+        cc.putImageData(im, 0, 0); }
+      const texC = new THREE.CanvasTexture(cvC);
+      const cloud = new THREE.Mesh(new THREE.SphereGeometry(R + 0.07, 64, 40), std(0xffffff, { map: texC, transparent: true, opacity: 0.9, roughness: 1, depthWrite: false }));
       earth.add(cloud);
       // 얇은 대기 빛무리 (전체 보기)
       const halo = [0.12, 0.26, 0.42].map((d, i) => { const m = new THREE.Mesh(new THREE.SphereGeometry(R + d, 48, 32), new THREE.MeshBasicMaterial({ color: 0x7db4ff, transparent: true, opacity: 0.1 - i * 0.025, depthWrite: false, side: THREE.BackSide })); earth.add(m); return m; });
@@ -113,7 +117,13 @@
       const sunG = new THREE.Group(), coreG = new THREE.Group(), moonG = new THREE.Group(); en.add(sunG, coreG, moonG);
       const sun = new THREE.Mesh(new THREE.SphereGeometry(1.25, 40, 28), new THREE.MeshBasicMaterial({ color: 0xffd34d })); sun.position.copy(sunPos).multiplyScalar(1.12); sunG.add(sun);
       const sunGlow = new THREE.Mesh(new THREE.SphereGeometry(1.8, 32, 20), new THREE.MeshBasicMaterial({ color: 0xffc04a, transparent: true, opacity: 0.18, depthWrite: false })); sunGlow.position.copy(sun.position); sunG.add(sunGlow);
-      const moon = new THREE.Mesh(new THREE.SphereGeometry(0.55, 32, 24), std(0xcfd2d8, { roughness: 0.95 })); moonG.add(moon);
+      const mcv = document.createElement('canvas'); mcv.width = 256; mcv.height = 128; { const mc = mcv.getContext('2d'); mc.fillStyle = '#b9bcc4'; mc.fillRect(0, 0, 256, 128); for (let i = 0; i < 70; i++) { const x = (i * 97) % 256, y = (i * 53 + i * i) % 128, r = 2 + (i * 7) % 9; mc.fillStyle = 'rgba(90,94,104,' + (0.18 + (i % 4) * 0.07) + ')'; mc.beginPath(); mc.arc(x, y, r, 0, 7); mc.fill(); mc.strokeStyle = 'rgba(235,238,245,.35)'; mc.beginPath(); mc.arc(x - 1, y - 1, r, 3.4, 5.2); mc.stroke(); } for (let i = 0; i < 5; i++) { mc.fillStyle = 'rgba(80,84,96,.35)'; mc.beginPath(); mc.ellipse(30 + i * 48, 40 + (i * 31) % 60, 22, 14, 0.4 * i, 0, 7); mc.fill(); } }
+      const moon = new THREE.Mesh(new THREE.SphereGeometry(0.55, 40, 28), std(0xffffff, { map: new THREE.CanvasTexture(mcv), roughness: 0.95 })); moonG.add(moon);
+      { const N = 260, pos = new Float32Array(N * 3); for (let i = 0; i < N; i++) { const u = Math.random() * 2 - 1, a = Math.random() * 6.283, r = 22 + Math.random() * 14, q = Math.sqrt(1 - u * u); pos[i * 3] = Math.cos(a) * q * r; pos[i * 3 + 1] = u * r; pos[i * 3 + 2] = Math.sin(a) * q * r; }
+        const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.BufferAttribute(pos, 3)); root.add(new THREE.Points(sg, new THREE.PointsMaterial({ color: 0xffffff, size: 0.14, transparent: true, opacity: 0.85, depthWrite: false }))); }
+      const orbitRing = new THREE.Mesh(new THREE.TorusGeometry(5.4, 0.012, 6, 120), new THREE.MeshBasicMaterial({ color: 0x8fa3c8, transparent: true, opacity: 0.4 })); orbitRing.rotation.x = Math.PI / 2; orbitRing.position.y = 0.9; moonG.add(orbitRing);
+      const sat = new THREE.Group(); { const bd = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.16, 0.22), std(0xd7dbe3, { metalness: 0.6, roughness: 0.3 })); sat.add(bd); [-1, 1].forEach((sg) => { const pn = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.01, 0.16), std(0x1e40af, { metalness: 0.5, roughness: 0.25, emissive: 0x0a1f66, emissiveIntensity: 0.4 })); pn.position.x = sg * 0.28; sat.add(pn); }); }
+      root.add(sat);
       function arrow(from, to, col, rad) {
         const g = new THREE.Group(), d = to.clone().sub(from), len = d.length(), hl = Math.min(len * 0.4, rad * 7);
         const sh = new THREE.Mesh(new THREE.CylinderGeometry(rad, rad, len - hl, 12), new THREE.MeshBasicMaterial({ color: col })); sh.position.y = (len - hl) / 2;
@@ -127,19 +137,20 @@
       const lSun = label('태양 에너지', sun, { offset: [0, 2.3, 0], color: 'rgba(180,120,0,.92)' });
       const lIn = label('지구 내부 에너지', [inner[0].x * (R + 1.2), inner[0].y * (R + 1.2), inner[0].z * (R + 1.2)], { color: 'rgba(200,80,30,.92)' });
       const lMoon = label('달 · 조력 에너지', moon, { offset: [0, 0.9, 0], color: 'rgba(80,90,120,.92)' });
-      const lOut = label('외권 (우주)', [0, R + 2.6, 0], { size: 12 });
+      const lOut = label('외권 (우주)', sat, { size: 12, offset: [0, 0.45, 0] });
 
       const labs = [];
       function clearLabs() { labs.forEach((l) => l.show(false)); }
-      function lab(i, t, p, o) { if (!labs[i]) labs[i] = label('', [0, 0, 0], { size: 12 }); const l = labs[i]; l.set(t); l.obj = p; l.off = o || [0, 0, 0]; l.show(true); return l; }
+      const anch = [];
+      function lab(i, t, p, o) { if (!labs[i]) labs[i] = label('', [0, 0, 0], { size: 12 }); if (!anch[i]) { anch[i] = new THREE.Object3D(); earth.add(anch[i]); } const l = labs[i], oo = o || [0, 0, 0]; anch[i].position.set(p[0] + oo[0], p[1] + oo[1], p[2] + oo[2]); l.set(t); l.obj = anch[i]; l.off = [0, 0, 0]; l.show(true); return l; }
       function setMode(m) {
         mode = m; clearLabs();
         const isCut = m === 'geo' || m === 'hyd' || m === 'atm';
         ground.visible = m === 'all' || m === 'bio' || m === 'atm'; ocean.visible = m === 'all' || m === 'bio' || m === 'atm';
-        cloud.visible = false; sAtm.visible = m === 'all' || m === 'bio'; halo.forEach((h) => { h.visible = m === 'all' || m === 'bio'; });
+        cloud.visible = m === 'all' || m === 'bio'; sAtm.visible = m === 'all' || m === 'bio'; halo.forEach((h) => { h.visible = m === 'all' || m === 'bio'; });
         cutRock.visible = m === 'geo'; cutOcn.visible = m === 'hyd'; baseOcn.visible = m === 'hyd'; cutAtm.visible = m === 'atm'; bio.visible = m === 'bio';
         en.visible = m === 'all'; lOut.show(m === 'all');
-        orbit.dist = (PHN ? 15 : 14.5) * (m === 'all' ? 1.12 : 0.72);
+        orbit.dist = (PHN ? 15 : 14.5) * (m === 'all' ? 0.92 : 0.72);
         if (isCut || m === 'all' || m === 'bio') { orbit.theta = isCut ? -2.35 : 0.2; }
         if (m === 'geo') { ROCK.forEach((ly, i) => lab(i, ly.n, [0, 0, 0], [-(ly.r0 + ly.r1) / 2 * (i === 3 ? 1.0 : 1), (i % 2 ? 0.28 : -0.28) * (i === 3 ? 0 : 1) + (i === 3 ? 0.55 : 0), 0.05])); info('<b>지권</b>: 지각 · 맨틀 · 외핵 · 내핵으로 이루어져요. 외핵만 액체예요.'); }
         else if (m === 'hyd') { OCN.slice(1).forEach((ly, i) => lab(i, ly.n, [0, 0, 0], [-(ly.r0 + ly.r1) / 2, 0.2 * (i % 2 ? 1 : -1) , 0.05])); info('<b>수권</b>: 바다는 깊이에 따라 혼합층 · 수온 약층 · 심해층으로 나뉘어요. (두께는 크게 그렸어요)'); }
@@ -194,6 +205,7 @@
           if (key !== lastKey && mode === 'all') { lastKey = key; const on = [src.sun && '태양', src.core && '지구 내부', src.moon && '달'].filter(Boolean); info('<b>지구시스템</b>: 지권 · 수권 · 기권 · 생물권 · 외권이 서로 영향을 주고받아요.<br>에너지원: 태양 복사 에너지 · 지구 내부 에너지 · 조석 에너지(달)' + (S && (S.mode === 'energy' || S.mode === 'pair') ? '<br>켠 에너지원: <b>' + (on.length ? on.join(' · ') : '없음 (옆 버튼이나 그림을 눌러 켜요)') + '</b>' : '')); }
           else if (mode !== 'all') lastKey = '';
           sunGlow.scale.setScalar(1 + Math.sin(t * 2) * 0.03);
+          { const sa = t * 0.45; sat.position.set(Math.cos(sa) * (R + 1.5), Math.sin(sa) * 0.9, Math.sin(sa) * (R + 1.5) * 0.8); sat.rotation.y = -sa; sat.visible = mode === 'all'; orbitRing.visible = mode === 'all'; }
         },
         sync() {},
       };

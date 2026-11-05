@@ -24,7 +24,17 @@
       const sm = () => window.__sim;
 
       // 광학대 바닥과 광축
-      const bench = new THREE.Mesh(new THREE.BoxGeometry(20, 0.1, 5), mat(0x141b30, { roughness: 0.85, metalness: 0 })); bench.position.set(1, -1.9, 0); bench.receiveShadow = true; root.add(bench);
+      const cTex = (w, h, draw) => { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); if (THREE.sRGBEncoding) t.encoding = THREE.sRGBEncoding; t.wrapS = t.wrapT = THREE.RepeatWrapping; return t; };
+      const woodT = cTex(512, 256, (c, w, h) => { c.fillStyle = '#3a2a1c'; c.fillRect(0, 0, w, h); for (let i = 0; i < 60; i++) { c.strokeStyle = 'rgba(' + (20 + (i * 23) % 30) + ',12,4,' + (0.15 + (i % 4) * 0.05) + ')'; c.lineWidth = 1 + (i % 3); c.beginPath(); const y = i / 60 * h; c.moveTo(0, y); for (let x = 0; x <= w; x += 32) c.lineTo(x, y + Math.sin(x * 0.04 + i) * 2.5); c.stroke(); } }); woodT.repeat.set(3, 1);
+      const bench = new THREE.Mesh(new THREE.BoxGeometry(22, 0.3, 6), mat(0xffffff, { map: woodT, roughness: 0.55 })); bench.position.set(1, -2.1, 0); bench.receiveShadow = true; root.add(bench);
+      // 광학대 레일 + 눈금자
+      const railT = cTex(1024, 64, (c, w, h) => { c.fillStyle = '#aab4c4'; c.fillRect(0, 0, w, h); c.fillStyle = '#1f2937'; for (let i = 0; i <= 40; i++) { c.fillRect(i * w / 40 - 1, 0, 2, i % 5 === 0 ? h * 0.5 : h * 0.28); } });
+      const rail = new THREE.Mesh(new THREE.BoxGeometry(20, 0.2, 0.9), [mat(0x8793a6, { metalness: 0.8, roughness: 0.3 }), mat(0x8793a6, { metalness: 0.8, roughness: 0.3 }), mat(0xffffff, { map: railT, metalness: 0.5, roughness: 0.35 }), mat(0x667286, { metalness: 0.8 }), mat(0x8793a6, { metalness: 0.8, roughness: 0.3 }), mat(0x8793a6, { metalness: 0.8, roughness: 0.3 })]); rail.position.set(1, -1.86, 0); rail.receiveShadow = true; root.add(rail);
+      const wallT = cTex(8, 256, (c, w, h) => { const g = c.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#27375a'); g.addColorStop(1, '#0e1830'); c.fillStyle = g; c.fillRect(0, 0, w, h); });
+      const wallM = new THREE.Mesh(new THREE.PlaneGeometry(90, 40), new THREE.MeshBasicMaterial({ map: wallT })); wallM.position.set(0, 8, -14); root.add(wallM);
+      const metalM = mat(0x9aa6ba, { metalness: 0.85, roughness: 0.3 });
+      // 받침 수레 (레일 위를 오가는 홀더)
+      function carriage(h) { const g = new THREE.Group(); const b = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.22, 1.1), metalM); b.position.y = -1.65; const knob = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.16, 12), mat(0x222a38, { roughness: 0.6 })); knob.position.set(0.0, -1.72, 0.62); knob.rotation.x = Math.PI / 2; const p = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, h, 10), metalM); p.position.y = -1.54 + h / 2; g.add(b, knob, p); return g; }
       { const ax = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 20, 6), new THREE.MeshBasicMaterial({ color: 0x8aa0d0, transparent: true, opacity: 0.6 })); ax.rotation.z = Math.PI / 2; ax.position.set(1, 0, 0); root.add(ax); }
 
       // 물체 (화살표): 밑은 광축 위, 끝에서 빛이 나가요
@@ -41,6 +51,7 @@
         hd.position.y = s * (a - hl / 2); hd.scale.set(1, hl / 0.32, 1); hd.rotation.z = s > 0 ? 0 : Math.PI;
       }
       const obj = arrowObj(0xff5a5f, 1), img = arrowObj(0x7ee0ff, 1); root.add(obj, img);
+      obj.add(carriage(1.55)); { const gh = carriage(1.55); gh.traverse((m) => { if (m.material) { m.material = m.material.clone(); m.material.transparent = true; m.material.opacity = 0.4; } }); img.add(gh); }
       const lobj = label('물체', obj, { offset: [0, 1.25, 0] }), limg = label('상', img, { offset: [0, 1.3, 0], color: 'rgba(40,120,170,.9)' });
 
       // 거울 · 렌즈 부품
@@ -76,7 +87,7 @@
       }
       parts.convexL.add(lens(false)); parts.concaveL.add(lens(true));
       // 받침대
-      const stand = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 1.6, 12), mat(0x56627e, { metalness: 0.5 })); stand.position.set(0.0, -1.1, 0); root.add(stand);
+      const stand = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 1.6, 12), metalM); stand.position.set(0.0, -1.1, 0); root.add(stand); { const cr = carriage(0.01); root.add(cr); }
       // 초점 표시
       const fm = [-1, 1].map(() => { const m = new THREE.Mesh(new THREE.SphereGeometry(0.1, 16, 12), new THREE.MeshBasicMaterial({ color: 0xffd34d })); root.add(m); return m; });
       const lf = [label('초점', fm[0], { offset: [0, -0.35, 0] }), label('초점', fm[1], { offset: [0, -0.35, 0] })];

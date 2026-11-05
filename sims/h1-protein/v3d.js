@@ -32,9 +32,10 @@
       /* ============ 접힘과 기능 ============ */
       const MAXB = 12, beads = [], links = [], bl = [];
       for (let i = 0; i < MAXB; i++) {
-        const m = new THREE.Mesh(new THREE.SphereGeometry(0.34, 28, 20), std(0xffffff)); m.userData.i = i; gF.add(m); beads.push(m);
+        const m = new THREE.Mesh(new THREE.SphereGeometry(0.34, 28, 20), new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.25, metalness: 0.05, clearcoat: 0.8, clearcoatRoughness: 0.15 })); m.userData.i = i; gF.add(m); beads.push(m);
+        { const sh = new THREE.Mesh(new THREE.SphereGeometry(0.52, 20, 14), new THREE.MeshBasicMaterial({ color: 0xbfd7ff, transparent: true, opacity: 0.1, depthWrite: false })); m.add(sh); }
         bl.push(label('', m, { offset: [0, 0.62, 0], size: 12 }));
-        if (i) { const c = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 1, 10), std(0x94a3b8, { roughness: 0.5 })); gF.add(c); links.push(c); }
+        if (i) { const c = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 1, 10), std(0xcbd5e1, { roughness: 0.25, metalness: 0.6 })); gF.add(c); links.push(c); }
       }
       const selRing = new THREE.Mesh(new THREE.TorusGeometry(0.46, 0.04, 8, 32), new THREE.MeshBasicMaterial({ color: 0x3b82f6 })); gF.add(selRing);
       const keyG = new THREE.Group(); gF.add(keyG);
@@ -43,7 +44,8 @@
       for (let k = 0; k < 10; k++) { const d = new THREE.Vector3(Math.sin(k * 2.4) , Math.cos(k * 1.7), Math.sin(k * 0.9 + 1)).normalize(); const sp = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.22, 8), std(0x16a34a)); sp.position.copy(d).multiplyScalar(0.38); sp.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d); pathM.add(sp); }
       keyG.add(o2M, pathM);
       const keyLab = label('', keyG, { offset: [0, 0.65, 0], size: 12 });
-      const cupLab = label('홈', [0, -1.0, 0.0], { size: 12, color: 'rgba(40,60,100,.9)' });
+      const cupAnchor = new THREE.Object3D(); gF.add(cupAnchor);
+      const cupLab = label('홈', cupAnchor, { offset: [0, 0.2, 0], size: 12, color: 'rgba(40,60,100,.9)' });
       let demoP = 0, lastKey = '', foldFrame = null;
       const strPos = (i, n) => new THREE.Vector3((i - (n - 1) / 2) * 0.9, 0.3 * (i % 2 ? 1 : -1) * 0.5, 0);
       function seqNow() {
@@ -71,7 +73,7 @@
         keyG.visible = showKey; keyLab.show(showKey); cupLab.show(showKey && f > 0.9);
         if (showKey) {
           keyG.position.set(keyMode.x, keyMode.y, 0); keyG.scale.setScalar(keyMode.s); o2M.visible = st.prot === 0; pathM.visible = st.prot === 1;
-          if (keyLab.tx !== PROT[st.prot].keyName) { keyLab.tx = PROT[st.prot].keyName; keyLab.set(keyLab.tx); } cupLab.obj = [0, 0.25, 0];
+          if (keyLab.tx !== PROT[st.prot].keyName) { keyLab.tx = PROT[st.prot].keyName; keyLab.set(keyLab.tx); } { let cx = 0, cy = 0; for (let i = 0; i < n; i++) { cx += beads[i].position.x; cy += beads[i].position.y; } cupAnchor.position.set(cx / n, cy / n - 0.4, 0); }
         }
         const key = st.seq.join(',') + '|' + st.prot + '|' + st.ph + '|' + (f > 0.5) + '|' + ctx.level;
         if (key !== lastKey) {
@@ -129,6 +131,14 @@
       const repCtl = []; if (ctlEl) for (let i = n0; i < nRep; i++) repCtl.push(ctlEl.children[i]);
       if (ctlEl) for (let i = n0; i < ctlEl.children.length; i++) foldCtl.push(ctlEl.children[i]);
 
+
+      // ---- 환경: 세포 속 바닥판 · 떠다니는 알갱이 (접힘 장면)
+      { const fl = new THREE.Mesh(new THREE.CylinderGeometry(4.6, 4.8, 0.22, 72), std(0x13213b, { roughness: 0.7, metalness: 0.1 })); fl.position.set(0, -3.3, 0); gF.add(fl);
+        [4.5, 3.1, 1.7].forEach((r, k) => { const t = new THREE.Mesh(new THREE.TorusGeometry(r, 0.025, 8, 96), new THREE.MeshBasicMaterial({ color: k % 2 ? 0x3b6ea8 : 0x4fd1c5 })); t.rotation.x = Math.PI / 2; t.position.set(0, -3.17, 0); gF.add(t); }); }
+      const NPD = 120, dustF = new THREE.InstancedMesh(new THREE.SphereGeometry(0.05, 8, 6), new THREE.MeshBasicMaterial({ color: 0x9fd8ff, transparent: true, opacity: 0.5 }), NPD); gF.add(dustF);
+      const ddF = []; for (let i = 0; i < NPD; i++) ddF.push({ x: (Math.random() - 0.5) * 12, y: -2 + Math.random() * 6.5, z: (Math.random() - 0.5) * 6, s: 0.4 + Math.random() * 1.2, p: Math.random() * 6.28 });
+      const dmF = new THREE.Object3D();
+
       /* ============ 낫 모양 적혈구 ============ */
       const SX = 14 / (PHN ? 520 : 800);
       const vesselProf = () => { const L = lesson(), G = L && L.S ? (L.vesselGeo ? L.vesselGeo() : null) : null; return G; };
@@ -139,7 +149,7 @@
       const vpts = []; for (let k = 0; k <= 80; k++) { const x = -40 + (VWv + 80) * k / 80; vpts.push(new THREE.Vector2(Math.max(0.05, vh(x) * SX * 1.0), X3(x))); }
       const vessel = new THREE.Mesh(new THREE.LatheGeometry(vpts, 40), new THREE.MeshStandardMaterial({ color: 0xff8a80, transparent: true, opacity: 0.2, side: THREE.DoubleSide, depthWrite: false, roughness: 0.3 }));
       vessel.rotation.z = -Math.PI / 2; gS.add(vessel);
-      const tissue = new THREE.Mesh(new THREE.BoxGeometry(1.1, 2.3, 2.3), std(0xf5b7a0, { roughness: 0.8, emissive: 0x2a9d6f, emissiveIntensity: 0.3 })); tissue.position.x = X3(G0.tissue.x + G0.tissue.w / 2); gS.add(tissue);
+      const tissue = new THREE.Mesh(new THREE.BoxGeometry(1.1, 2.3, 2.3), std(0xc98672, { roughness: 0.85, emissive: 0x1f7a58, emissiveIntensity: 0.3 })); tissue.position.x = X3(G0.tissue.x + G0.tissue.w / 2); gS.add(tissue);
       const tLab = label('조직', tissue, { offset: [0, 1.5, 0], size: 12 });
       function disc() {
         const pts = []; const z = (r) => 0.58 * Math.sqrt(Math.max(0, 1 - r * r)) * (0.0518 + 2.0026 * r * r - 4.491 * r * r * r * r) * 3.2;
@@ -154,13 +164,27 @@
       }
       const dGeo = disc(), sGeo = sickle(), cMat = std(0xe53935, { roughness: 0.4 }), cMatS = std(0xb71c1c, { roughness: 0.45 });
       const cells = []; for (let i = 0; i < 10; i++) { const m = new THREE.Mesh(dGeo, cMat); m.visible = false; gS.add(m); cells.push(m); }
+
+      // ---- 혈관 주변 환경: 조직 배경판 · 혈관 안쪽 벽 고리 · 혈장 알갱이 · (적혈구가 없을 때) 흐르는 모형 적혈구
+      { const cv = document.createElement('canvas'); cv.width = 256; cv.height = 128; const g = cv.getContext('2d'); const gr = g.createLinearGradient(0, 0, 0, 128); gr.addColorStop(0, '#6b2f3c'); gr.addColorStop(1, '#3a1824'); g.fillStyle = gr; g.fillRect(0, 0, 256, 128);
+        for (let i = 0; i < 160; i++) { g.strokeStyle = 'rgba(255,170,160,' + (0.05 + Math.random() * 0.12) + ')'; g.lineWidth = 1 + Math.random() * 2; g.beginPath(); g.arc(Math.random() * 256, Math.random() * 128, 4 + Math.random() * 10, 0, 6.283); g.stroke(); }
+        const tx = new THREE.CanvasTexture(cv); const bg = new THREE.Mesh(new THREE.PlaneGeometry(17, 7), new THREE.MeshStandardMaterial({ map: tx, roughness: 0.9, color: 0x9a8a8a })); bg.position.set(0, 0, -2.2); gS.add(bg);
+        const fl2 = new THREE.Mesh(new THREE.BoxGeometry(17, 0.2, 4.4), std(0x120a10, { roughness: 0.9 })); fl2.position.set(0, -2.6, -0.1); gS.add(fl2); }
+      for (let k = 0; k < 16; k++) { const x = -6.6 + k * 0.88, r = vh(VWv / 2 + x / SX) * SX; const rg = new THREE.Mesh(new THREE.TorusGeometry(r + 0.01, 0.018, 8, 40), new THREE.MeshBasicMaterial({ color: 0xffa8a0, transparent: true, opacity: 0.35 })); rg.rotation.y = Math.PI / 2; rg.position.x = x; gS.add(rg); }
+      const NPS = 90, dustS = new THREE.InstancedMesh(new THREE.SphereGeometry(0.04, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffd9c9, transparent: true, opacity: 0.55 }), NPS); gS.add(dustS);
+      const ddS = []; for (let i = 0; i < NPS; i++) ddS.push({ x: Math.random() * 14 - 7, y: (Math.random() - 0.5) * 0.7, z: (Math.random() - 0.5) * 0.7, s: 0.3 + Math.random() * 0.8 });
+      const dmS = new THREE.Object3D();
+      const ghosts = []; for (let i = 0; i < 6; i++) { const m = new THREE.Mesh(dGeo, new THREE.MeshStandardMaterial({ color: 0xe53935, roughness: 0.4, transparent: true, opacity: 0.55 })); m.scale.setScalar(0.4); gS.add(m); ghosts.push(m); }
       // 헤모글로빈 사슬 앞부분 (6번째 아미노산이 달라져요)
       const hb = HB.map((t, i) => { const m = new THREE.Mesh(new THREE.SphereGeometry(0.22, 20, 14), std(AAC[t])); m.position.set(-3.5 + i * 0.6, 2.6, 0); gS.add(m); return m; });
       const hbLab = label('', hb[5], { offset: [0, -0.5, 0], size: 12 });
       const sickLab = label('', [0, 1.6, 0], { size: 12, color: 'rgba(8,12,24,.85)' });
       let lastMut = -1, lastStuck = -1;
       function paintSick(t) {
-        const L = lesson(), K = L && L.S ? L.S.sick : null; if (!K) return;
+        for (let i = 0; i < NPS; i++) { const d = ddS[i]; dmS.position.set(((d.x + 7 + t * d.s * 1.1) % 14) - 7, d.y * (Math.abs(((d.x + 7 + t * d.s * 1.1) % 14) - 7 - (X3(G0.nx))) < 1.2 ? 0.3 : 1), d.z); dmS.updateMatrix(); dustS.setMatrixAt(i, dmS.matrix); } dustS.instanceMatrix.needsUpdate = true;
+        const L = lesson(), K = L && L.S ? L.S.sick : null;
+        { const any = !!(K && K.cells && K.cells.some((c) => c)); ghosts.forEach((m, i) => { m.visible = !any; if (any) return; const x = ((i * 2.4 + t * 1.2) % 14) - 7, hh = vh(VWv / 2 + x / SX) * SX; m.position.set(x, Math.sin(i * 2.3) * 0.12, Math.cos(i * 1.7) * 0.1); m.scale.setScalar(Math.min(0.4, hh * 0.9)); m.rotation.set(Math.PI / 2 + Math.sin(t + i) * 0.3, 0, 0); }); }
+        if (!K) return;
         const mut = K.mut === 1;
         if (mut !== (lastMut === 1)) { lastMut = mut ? 1 : 0; }
         hb[5].material.color.copy(AAC[mut ? 2 : 16]); { const tx = '6번째: ' + (mut ? '발린 (V)' : '글루탐산 (E)'); if (hbLab.tx !== tx) { hbLab.tx = tx; hbLab.set(tx); } }
@@ -197,6 +221,7 @@
       showScene(scene);
       return {
         update(dt, t) {
+          if (scene === 'fold') { for (let i = 0; i < NPD; i++) { const d = ddF[i]; dmF.position.set(d.x + Math.sin(t * 0.3 * d.s + d.p) * 0.4, ((d.y + t * 0.15 * d.s + 2) % 6.5) - 2, d.z + Math.cos(t * 0.25 * d.s + d.p) * 0.3); dmF.scale.setScalar(0.6 + 0.4 * Math.sin(t + d.p)); dmF.updateMatrix(); dustF.setMatrixAt(i, dmF.matrix); } dustF.instanceMatrix.needsUpdate = true; }
           if (scene === 'fold') { if (demoP === 0 && !plF.playing) mirrorFold(t); }
           else paintSick(t);
         },

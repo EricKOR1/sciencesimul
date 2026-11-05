@@ -8,7 +8,7 @@
     const COL = { H: 0xf3f6fb, C: 0x8a93a3, N: 0x4f7cff, O: 0xf0524f, F: 0x9be36b, Cl: 0x34c759, Na: 0xb07cf5, B: 0xf4a6a6, S: 0xf5c518, Cu: 0xe08a3c, Ca: 0x6fd0c4, e: 0xffd34d };
     const RAD = { H: 0.26, C: 0.38, N: 0.37, O: 0.36, F: 0.32, Cl: 0.48, Na: 0.5, B: 0.36, S: 0.48, Cu: 0.5, Ca: 0.55 };
     const mats = {};
-    const mat = (k) => mats[k] || (mats[k] = new THREE.MeshStandardMaterial({ color: COL[k] !== undefined ? COL[k] : k, roughness: 0.36, metalness: 0.06 }));
+    const mat = (k) => mats[k] || (mats[k] = new THREE.MeshPhysicalMaterial({ color: COL[k] !== undefined ? COL[k] : k, roughness: 0.3, metalness: 0.05, clearcoat: 0.7, clearcoatRoughness: 0.25 }));
     const SG = new THREE.SphereGeometry(1, 28, 20);
     const CG = new THREE.CylinderGeometry(1, 1, 1, 16);
     const stickMat = new THREE.MeshStandardMaterial({ color: 0xc3ccdd, roughness: 0.45, metalness: 0.1 });
@@ -103,7 +103,24 @@
       const PER = 4, DX = 1.5, DY = 1.15, ROWZ = 2.9;
       const root2 = new THREE.Group(); root.add(root2);
       const labs = []; for (let i = 0; i < 4; i++) { const l = label('', [0, 0, 0], { size: 12.5 }); l.show(false); labs.push(l); }
-      const tray = (x, col) => { const t = L.glassBox(6.8, 0.25, 4.8, col, 0.2); t.position.set(x, -1.3, 0); root.add(t); return t; };
+      /* 실험대(나무 무늬) */
+      (function () {
+        const c = document.createElement('canvas'); c.width = 512; c.height = 512; const x = c.getContext('2d');
+        x.fillStyle = '#8a6240'; x.fillRect(0, 0, 512, 512);
+        for (let i = 0; i < 8; i++) { x.fillStyle = i % 2 ? 'rgba(60,35,15,.10)' : 'rgba(255,220,170,.07)'; x.fillRect(0, i * 64, 512, 64); x.fillStyle = 'rgba(40,22,8,.55)'; x.fillRect(0, i * 64, 512, 2); }
+        for (let i = 0; i < 260; i++) { x.strokeStyle = 'rgba(50,28,10,' + (0.05 + Math.random() * 0.09) + ')'; x.lineWidth = 0.6 + Math.random(); const y = Math.random() * 512; x.beginPath(); x.moveTo(0, y); x.bezierCurveTo(150, y + Math.random() * 6 - 3, 350, y + Math.random() * 6 - 3, 512, y + Math.random() * 4 - 2); x.stroke(); }
+        const tex = new THREE.CanvasTexture(c); tex.wrapS = tex.wrapT = THREE.RepeatWrapping; tex.repeat.set(2, 1.4);
+        const bench = new THREE.Mesh(new THREE.BoxGeometry(24, 0.5, 13), new THREE.MeshStandardMaterial({ map: tex, color: 0x9a7d62, roughness: 0.65, metalness: 0.02 })); bench.position.set(0, -1.75, 0); root.add(bench);
+      })();
+      const glassM = new THREE.MeshPhysicalMaterial({ color: 0xcfe6ff, transparent: true, opacity: 0.3, roughness: 0.05, metalness: 0, clearcoat: 1, depthWrite: false });
+      const tray = (x, col) => {
+        const t = new THREE.Group(), W = 6.8, D = 4.8, th = 0.14, H = 0.62;
+        const base = new THREE.Mesh(new THREE.BoxGeometry(W, 0.16, D), new THREE.MeshPhysicalMaterial({ color: col, transparent: true, opacity: 0.4, roughness: 0.1, clearcoat: 1, depthWrite: false })); t.add(base);
+        [[0, D / 2 - th / 2, W, th], [0, -D / 2 + th / 2, W, th]].forEach((q) => { const w = new THREE.Mesh(new THREE.BoxGeometry(q[2], H, q[3]), glassM); w.position.set(q[0], H / 2, q[1]); t.add(w); });
+        [W / 2 - th / 2, -W / 2 + th / 2].forEach((px) => { const w = new THREE.Mesh(new THREE.BoxGeometry(th, H, D - 2 * th), glassM); w.position.set(px, H / 2, 0); t.add(w); });
+        const rim = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(W, H + 0.08, D)), new THREE.LineBasicMaterial({ color: 0xe6f0ff, transparent: true, opacity: 0.7 })); rim.position.y = H / 2; t.add(rim);
+        t.position.set(x, -1.3, 0); root.add(t); return t;
+      };
       tray(-4.1, 0x6aa2ff); tray(4.1, 0x58d68d);
       const arr = L.arrow([-0.5, -1.0, 0], [0.5, -1.0, 0], 0xffd34d, 0.1, 0.4); root.add(arr);
       const packBoxes = []; for (let i = 0; i < 8; i++) { const g = L.glassBox(2.9, 1.0, 1.4, 0xffd34d, 0.16); g.visible = false; root.add(g); packBoxes.push(g); }

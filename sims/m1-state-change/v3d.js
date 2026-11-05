@@ -161,7 +161,24 @@
       const sys = stateSys(N, PR, 0xffffff), st = { key: 'melt', t: 0, phase: 'wait', mode: 'theater', exp: 'wax', expMode: '' };
       sys.H = HH; sys.W = W;
       const frame = boxFrame(W, HH); root.add(frame);
-      const stand = new THREE.Mesh(new THREE.CylinderGeometry(3.2, 3.4, 0.2, 48), mat(0x64748b, { metalness: 0.4, roughness: 0.4 })); stand.position.y = -HH - 0.12; root.add(stand);
+      /* 금속 모서리 기둥과 테두리 (상자 크기에 맞춰 늘어나요) */
+      { const fm = mat(0xb8c4d6, { metalness: 0.8, roughness: 0.25 });
+        for (const sx of [-1, 1]) for (const sz of [-1, 1]) { const p = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 2, 8), fm); p.position.set(sx, 0, sz); frame.add(p); }
+        for (const sy of [-1, 1]) { for (const sx of [-1, 1]) { const a = new THREE.Mesh(new THREE.BoxGeometry(2, 0.03, 0.05), fm); a.position.set(0, sy, sx); const b = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.03, 2), fm); b.position.set(sx, sy, 0); frame.add(a, b); } } }
+      /* 받침: 나뭇결 책상 + 가열/냉각 판 (상자 크기가 바뀌면 함께 움직여요) */
+      const stand = new THREE.Group(); stand.position.y = -HH - 0.12; root.add(stand);
+      const woodT = canvasTex(512, 512, (c, w, h) => { c.fillStyle = '#9a6234'; c.fillRect(0, 0, w, h); for (let i = 0; i < 80; i++) { c.strokeStyle = 'rgba(' + (60 + (i * 31) % 50) + ',30,10,' + (0.1 + (i % 4) * 0.05) + ')'; c.lineWidth = 1 + (i % 3); c.beginPath(); const y = i / 80 * h; c.moveTo(0, y); for (let x = 0; x <= w; x += 32) c.lineTo(x, y + Math.sin(x * 0.04 + i) * 3); c.stroke(); } });
+      const table = new THREE.Mesh(new THREE.CylinderGeometry(7.5, 7.5, 0.35, 64), mat(0xffffff, { map: woodT, roughness: 0.65 })); table.position.y = -0.62; table.receiveShadow = true; stand.add(table);
+      const plate = new THREE.Mesh(new THREE.CylinderGeometry(3.2, 3.4, 0.2, 48), mat(0x64748b, { metalness: 0.4, roughness: 0.4 })); stand.add(plate);
+      const hpBody = new THREE.Mesh(new THREE.CylinderGeometry(3.5, 3.7, 0.4, 48), mat(0x2b3442, { metalness: 0.6, roughness: 0.4 })); hpBody.position.y = -0.3; stand.add(hpBody);
+      const coilMat = mat(0x553322, { emissive: 0xff5a1f, emissiveIntensity: 0, roughness: 0.5 });
+      const coil = new THREE.Mesh(new THREE.TorusGeometry(2.4, 0.07, 10, 64), coilMat); coil.rotation.x = Math.PI / 2; coil.position.y = -0.08; stand.add(coil);
+      const coil2 = new THREE.Mesh(new THREE.TorusGeometry(1.4, 0.07, 10, 48), coilMat); coil2.rotation.x = Math.PI / 2; coil2.position.y = -0.08; stand.add(coil2);
+      const coil3 = new THREE.Mesh(new THREE.TorusGeometry(3.6, 0.08, 10, 64), coilMat); coil3.rotation.x = Math.PI / 2; coil3.position.y = -0.12; stand.add(coil3);
+      const knob = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.2, 16), mat(0xe5e7eb, { metalness: 0.6, roughness: 0.3 })); knob.rotation.x = Math.PI / 2; knob.position.set(0, -0.3, 3.7); stand.add(knob);
+      let heatDir = 0;       // +1 가열(열을 얻어요) · -1 냉각 · 0 꺼짐
+      const wallT = canvasTex(8, 256, (c, w, h) => { const g = c.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#26364f'); g.addColorStop(1, '#0f1a2c'); c.fillStyle = g; c.fillRect(0, 0, w, h); });
+      const wallM = new THREE.Mesh(new THREE.PlaneGeometry(80, 40), new THREE.MeshBasicMaterial({ map: wallT })); wallM.position.set(0, 6, -14); root.add(wallM);
       const nameLab = label('', [0, HH + 0.5, 0], { size: 14, color: 'rgba(30,64,175,.92)' });
       const cntLab = label('입자 ' + N + '개', [-W, -HH, W], { size: 11.5, offset: [-0.2, -0.45, 0.2] });
       const massLab = label('', [2.6, -HH + 0.3, 0], { size: 12.5, color: 'rgba(20,90,70,.92)' });
@@ -170,7 +187,7 @@
       let lastTxt = ''; const setInfo = (h) => { if (h !== lastTxt) { lastTxt = h; info(h); } };
       let pmode = false, built = false;
 
-      function setBox(w, h) { sys.W = w; sys.H = h; frame.userData.set(w, h); stand.position.y = -h - 0.12; }
+      function setBox(w, h) { sys.W = w; sys.H = h; frame.userData.set(w, h); stand.position.y = -h - 0.12; nameLab.obj = [0, h + 0.5, 0]; cntLab.obj = [-w, -h, w]; }
       function start(key) {
         const c = CH[key]; st.key = key; st.t = 0; st.phase = 'wait'; st.mode = 'theater';
         setBox(W, HH); sys.prep(c.a);
@@ -234,6 +251,10 @@
               wantB = st.phase === 'done';
             }
           }
+          { const rank = { solid: 0, liquid: 1, gas: 2 }; let a, b;
+            if (st.mode === 'exp') { const e = EX[st.exp]; a = e.a; b = e.b; } else { const c = CH[st.key]; a = c.a; b = c.b; }
+            heatDir = rank[b] > rank[a] ? 1 : -1; const k = 0.55 + 0.45 * Math.sin(performance.now() * 0.004);
+            coilMat.emissive.setHex(heatDir > 0 ? 0xff5a1f : 0x4cc2ff); coilMat.color.setHex(heatDir > 0 ? 0x7a2a12 : 0x2a5f80); coilMat.emissiveIntensity = 0.6 + 0.9 * k; }
           sys.step(dt); sys.draw();
           const ph = document.querySelector('.v3-player .v3-ph');
           if (ph && st.mode === 'exp') ph.textContent = pmode ? (playP < 0.45 ? (EX[st.exp].b === 'gas' ? '가열' : '식히기') : playP < 0.55 ? '변한 뒤' : '되돌리기') : '';

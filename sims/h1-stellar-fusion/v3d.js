@@ -37,6 +37,15 @@
       const glowMat = (c, op) => new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: op, depthWrite: false });
       const V = THREE.Vector3;
       const rnd = (() => { let a = 2024; return () => { a = (a * 1664525 + 1013904223) >>> 0; return a / 4294967296; }; })();
+
+      // ---- 공용 꾸미기: 부드러운 빛 무늬 · 별빛 배경 · 별 표면의 끓는 무늬
+      const mkTex = (fn, w) => { const c = document.createElement('canvas'); c.width = c.height = w; fn(c.getContext('2d'), w); return new THREE.CanvasTexture(c); };
+      const glowTex = mkTex((g, w) => { const r = g.createRadialGradient(w / 2, w / 2, 0, w / 2, w / 2, w / 2); r.addColorStop(0, 'rgba(255,255,255,1)'); r.addColorStop(0.25, 'rgba(255,255,255,.55)'); r.addColorStop(0.6, 'rgba(255,255,255,.12)'); r.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = r; g.fillRect(0, 0, w, w); }, 128);
+      const granTex = mkTex((g, w) => { g.fillStyle = '#d0d0d0'; g.fillRect(0, 0, w, w); for (let i = 0; i < 900; i++) { const v = 150 + Math.random() * 105 | 0; g.fillStyle = 'rgba(' + v + ',' + v + ',' + v + ',.6)'; g.beginPath(); g.arc(Math.random() * w, Math.random() * w, 3 + Math.random() * 9, 0, 6.283); g.fill(); } for (let i = 0; i < 60; i++) { g.fillStyle = 'rgba(110,110,110,.25)'; g.beginPath(); g.arc(Math.random() * w, Math.random() * w, 4 + Math.random() * 10, 0, 6.283); g.fill(); } }, 256);
+      { const sa = [], sc = []; for (let i = 0; i < 700; i++) { const v = new V(rnd() - 0.5, rnd() - 0.5, rnd() - 0.5).normalize().multiplyScalar(30 + rnd() * 6); sa.push(v.x, v.y, v.z); const c = 0.5 + rnd() * 0.5; sc.push(c * 0.9, c * 0.92, c); }
+        const sgm = new THREE.BufferGeometry(); sgm.setAttribute('position', new THREE.Float32BufferAttribute(sa, 3)); sgm.setAttribute('color', new THREE.Float32BufferAttribute(sc, 3));
+        root.add(new THREE.Points(sgm, new THREE.PointsMaterial({ size: 0.16, vertexColors: true, sizeAttenuation: true, transparent: true, opacity: 0.85, depthWrite: false }))); }
+      const mkGlow = (col, op) => new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: col, transparent: true, opacity: op, blending: THREE.AdditiveBlending, depthWrite: false }));
       const sceneOf = (lv) => (lv === 0 ? 'life' : lv === 1 ? 'core' : 'onion');
       let scene = sceneOf(ctx.level);
 
@@ -51,12 +60,13 @@
       const gLife = new THREE.Group(); root.add(gLife);
       const starMat = std(0xb91c1c, { emissive: 0xb91c1c, emissiveIntensity: 0.6, roughness: 0.4 });
       const starMesh = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), starMat); gLife.add(starMesh);
-      const halo = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 20), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.22, depthWrite: false, blending: THREE.AdditiveBlending })); gLife.add(halo);
+      const halo = mkGlow(0xffffff, 0.95); gLife.add(halo);
+      starMat.map = granTex; starMat.emissiveMap = granTex; starMat.needsUpdate = true;
       const flashM = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 16), new THREE.MeshBasicMaterial({ color: 0xfff3c0, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending })); gLife.add(flashM);
       const NC = 420, cloudBase = [], cloudArr = new Float32Array(NC * 3);
       for (let i = 0; i < NC; i++) { const v = new V(rnd() - 0.5, (rnd() - 0.5) * 0.8, rnd() - 0.5).normalize().multiplyScalar(Math.pow(rnd(), 0.6)); cloudBase.push(v); }
       const cg = new THREE.BufferGeometry(); cg.setAttribute('position', new THREE.BufferAttribute(cloudArr, 3));
-      const cloudMat = new THREE.PointsMaterial({ color: 0xc4b5fd, size: 0.12, transparent: true, opacity: 0.8, depthWrite: false });
+      const cloudMat = new THREE.PointsMaterial({ color: 0xc4b5fd, size: 0.34, map: glowTex, transparent: true, opacity: 0.8, depthWrite: false, blending: THREE.AdditiveBlending });
       const cloud = new THREE.Points(cg, cloudMat); gLife.add(cloud);
       const lifeLab = label('', starMesh, { size: 12 });
       let lifeP = 0.9, lifeMass = 1, lifeCol = new THREE.Color(0xb91c1c);
@@ -84,7 +94,7 @@
         else { const k = sm(0.6, 0.78, b); rad = (28 / 30) * (1 - k) + R * k; col = RED.clone().lerp(target, k); }
         starMesh.visible = rad > 0.03; starMesh.scale.setScalar(Math.max(0.001, rad));
         starMat.color.copy(col); starMat.emissive.copy(col); starMat.emissiveIntensity = b < 0.6 ? 0.5 : 0.9;
-        halo.visible = starMesh.visible; halo.scale.setScalar(Math.max(0.001, rad * 1.45)); halo.material.color.copy(col);
+        halo.visible = starMesh.visible; halo.scale.setScalar(Math.max(0.001, rad * 4.6)); halo.material.color.copy(col);
         const f = b > 0.6 && b < 0.74 ? 1 - Math.abs(b - 0.62) / 0.12 : 0;
         flashM.visible = f > 0; flashM.scale.setScalar(0.5 + Math.max(0, f) * 3.6); flashM.material.opacity = Math.max(0, f) * 0.6;
         lifeLab.show(b >= 0.78); lifeLab.set(lifeMass + '배 별 · 수명 ' + M.life); lifeLab.off = [0, rad * 1.5 + 0.35, 0];
@@ -106,6 +116,10 @@
       const gCore = new THREE.Group(); root.add(gCore);
       const bubble = new THREE.Mesh(new THREE.SphereGeometry(2.7, 48, 32), new THREE.MeshStandardMaterial({ color: 0xffe9a0, transparent: true, opacity: 0.16, depthWrite: false, roughness: 0.2, emissive: 0xffa040, emissiveIntensity: 0.3 }));
       gCore.add(bubble);
+      const coreGlow = mkGlow(0xff9a40, 0.55); coreGlow.scale.set(9, 9, 1); gCore.add(coreGlow);
+      const NPC = 110, coreDust = new THREE.InstancedMesh(new THREE.SphereGeometry(0.04, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffd9a0, transparent: true, opacity: 0.6 }), NPC); gCore.add(coreDust);
+      const cdD = []; for (let i = 0; i < NPC; i++) cdD.push({ p: new V(rnd() - 0.5, rnd() - 0.5, rnd() - 0.5).normalize().multiplyScalar(0.8 + rnd() * 1.8), v: new V(rnd() - 0.5, rnd() - 0.5, rnd() - 0.5) });
+      const cdO = new THREE.Object3D();
       const hMat = std(0xff6b5e, { emissive: 0x7a1710, emissiveIntensity: 0.5, roughness: 0.3 });
       const nMat = std(0x7a8cff, { emissive: 0x1b2a7a, emissiveIntensity: 0.4, roughness: 0.3 });
       const START = [[1.5, 0.9, 0.5], [-1.4, 1.1, -0.6], [-1.1, -1.4, 0.9], [1.3, -1.2, -0.8]].map((a) => new V(...a));
@@ -128,6 +142,7 @@
       }
       function coreFrame(p, t) {
         coreP = p; const hot = coreT >= THR;
+        { const sp = 0.3 + coreT / 12; for (let i = 0; i < NPC; i++) { const d = cdD[i]; d.p.addScaledVector(d.v, 0.016 * sp); const l = d.p.length(); if (l > 2.55) { d.p.setLength(2.5); d.v.reflect(d.p.clone().normalize()); } if (l < 0.9) d.p.setLength(1.0); cdO.position.copy(d.p); cdO.updateMatrix(); coreDust.setMatrixAt(i, cdO.matrix); } coreDust.instanceMatrix.needsUpdate = true; coreGlow.material.opacity = 0.3 + 0.4 * Math.max(0, Math.min(1, (coreT - 2) / 18)); }
         const amp = 0.04 + 0.02 * Math.sqrt(coreT), fr = 3 + 1.2 * Math.sqrt(coreT);
         const heat = Math.max(0, Math.min(1, (coreT - 2) / 18));
         bubble.material.emissive.setHex(0xff6a20).lerp(new THREE.Color(0xfff0b0), heat); bubble.material.emissiveIntensity = 0.2 + 0.5 * heat; bubble.material.opacity = 0.14 + 0.1 * heat;
@@ -172,6 +187,7 @@
         [Math.PI / 2, Math.PI].forEach((rot) => { const d = new THREE.Mesh(new THREE.CircleGeometry(1, 64, -Math.PI / 2, Math.PI), mat()); d.rotation.y = rot; g.add(d); });
         body.add(g); return g;
       });
+      { const og = mkGlow(0xffb060, 0.35); og.scale.set(OR * 3.6, OR * 3.6, 1); gOn.add(og); }
       const pulse = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 20), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.22, depthWrite: false, blending: THREE.AdditiveBlending }));
       body.add(pulse);
       const layLab = LAYERS.map((ly) => label(ly.name, body, { size: 12 }));

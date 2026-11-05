@@ -84,12 +84,22 @@
       const WL = 0.6, TB = -2.2, TW = 3.0, TD = 1.7, PXU = 50;          // 수면 · 수조 바닥 · 수조 반폭 · 반깊이 · 2D 픽셀→그림 단위
       const HC = 98 / PXU, RC = 27 / PXU, RB = 38 / PXU;                // 원기둥 높이·반지름, 공 반지름
       const CYW = 5.0, CYFB = 1.96, BW = 1.0, BFB = 4.0;                // 2D와 같은 값 (N)
+      /* 실험실 배경: 뒷벽 + 바닥 + 나뭇결 책상 (모든 장면 공통) */
+      const woodT = canvasTex(512, 256, (c, w, h) => { c.fillStyle = '#a86a35'; c.fillRect(0, 0, w, h); for (let i = 0; i < 60; i++) { c.strokeStyle = 'rgba(' + (70 + (i * 29) % 50) + ',35,10,' + (0.1 + (i % 4) * 0.05) + ')'; c.lineWidth = 1 + (i % 3); c.beginPath(); const y = i / 60 * h; c.moveTo(0, y); for (let x = 0; x <= w; x += 32) c.lineTo(x, y + Math.sin(x * 0.04 + i) * 2.5); c.stroke(); } });
+      woodT.wrapS = woodT.wrapT = THREE.RepeatWrapping; woodT.repeat.set(2, 1);
+      const wallT = canvasTex(8, 256, (c, w, h) => { const g = c.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#26364f'); g.addColorStop(1, '#0f1a2c'); c.fillStyle = g; c.fillRect(0, 0, w, h); });
+      const wall = new THREE.Mesh(new THREE.PlaneGeometry(90, 40), new THREE.MeshBasicMaterial({ map: wallT })); wall.position.set(0, 8, -14); root.add(wall);
+      const flr = new THREE.Mesh(new THREE.PlaneGeometry(90, 40), mat(0x1a2538, { roughness: 0.9 })); flr.rotation.x = -Math.PI / 2; flr.position.set(0, TB - 0.3, -2); flr.receiveShadow = true; root.add(flr);
       const bStart = root.children.length;
       const tank = new THREE.Mesh(new THREE.BoxGeometry(2 * TW, 5.6, 2 * TD), glass(0xcfe6ff, 0.12)); tank.position.y = TB + 2.8; root.add(tank);
       { const te = new THREE.LineSegments(new THREE.EdgesGeometry(tank.geometry), new THREE.LineBasicMaterial({ color: 0x9cc3ff })); te.position.copy(tank.position); root.add(te); }
       const water = new THREE.Mesh(new THREE.BoxGeometry(2 * TW - 0.06, 1, 2 * TD - 0.06), glass(0x3d9cff, 0.3, { side: THREE.FrontSide })); root.add(water);
       const surf = new THREE.Mesh(new THREE.PlaneGeometry(2 * TW - 0.06, 2 * TD - 0.06), new THREE.MeshBasicMaterial({ color: 0x9fd0ff, transparent: true, opacity: 0.35, depthWrite: false, side: THREE.DoubleSide })); surf.rotation.x = -Math.PI / 2; root.add(surf);
-      const table = new THREE.Mesh(new THREE.BoxGeometry(2 * TW + 1.2, 0.25, 2 * TD + 1.2), mat(0x64748b, { roughness: 0.7 })); table.position.y = TB - 0.12; root.add(table);
+      const table = new THREE.Mesh(new THREE.BoxGeometry(2 * TW + 1.2, 0.25, 2 * TD + 1.2), mat(0xffffff, { map: woodT, roughness: 0.65 })); table.position.y = TB - 0.12; root.add(table);
+      { const tm = mat(0xcbd5e1, { metalness: 0.7, roughness: 0.3 }); const fr = new THREE.Mesh(new THREE.BoxGeometry(2 * TW + 0.2, 0.12, 2 * TD + 0.2), tm); fr.position.y = TB + 0.02; root.add(fr);
+        for (const sx of [-1, 1]) for (const sz of [-1, 1]) { const pl = new THREE.Mesh(new THREE.BoxGeometry(0.12, 5.6, 0.12), tm); pl.position.set(sx * TW, TB + 2.8, sz * TD); root.add(pl); }
+        const gradT = canvasTex(64, 256, (c, w, h) => { c.strokeStyle = 'rgba(40,70,120,.8)'; c.fillStyle = 'rgba(40,70,120,.9)'; c.font = '700 14px sans-serif'; for (let i = 0; i <= 10; i++) { const y = h - 10 - i * (h - 20) / 10; c.lineWidth = i % 5 === 0 ? 3 : 1.5; c.beginPath(); c.moveTo(0, y); c.lineTo(i % 5 === 0 ? 34 : 20, y); c.stroke(); } });
+        const gr = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 3.4), new THREE.MeshBasicMaterial({ map: gradT, transparent: true, opacity: 0.8, depthWrite: false })); gr.position.set(TW - 0.4, TB + 2.0, TD + 0.03); root.add(gr); }
       function setWater(y) { water.scale.y = y - TB; water.position.y = (y + TB) / 2; surf.position.y = y; }
 
       /* 비치볼 */
@@ -128,7 +138,7 @@
         glass: new THREE.Mesh(new THREE.BoxGeometry(FW, 0.44, 2.2), mat(0xa8d8f2, { roughness: 0.05, metalness: 0.1, transparent: true, opacity: 0.85 })),
       };
       Object.keys(stripF).forEach((k) => { stripF[k].position.y = -0.22; stripF[k].receiveShadow = true; gF.add(stripF[k]); });
-      { const bench = new THREE.Mesh(new THREE.BoxGeometry(FW + 0.4, 0.9, 2.5), mat(0xa86a35, { roughness: 0.8 })); bench.position.y = -0.89; gF.add(bench); }
+      { const bench = new THREE.Mesh(new THREE.BoxGeometry(FW + 0.4, 0.9, 2.5), mat(0xffffff, { map: woodT, roughness: 0.7 })); bench.position.y = -0.89; gF.add(bench); const lm = mat(0x475569, { metalness: 0.5, roughness: 0.5 }); for (const sx of [-1, 1]) { const lg = new THREE.Mesh(new THREE.BoxGeometry(0.3, 2.6, 2.2), lm); lg.position.set(sx * (FW / 2 - 0.4), -2.6, 0); gF.add(lg); } }
       const woodMat = mat(0xb9733a, { roughness: 0.7 });
       const blocksF = [0, 1].map((k) => { const b = new THREE.Mesh(new THREE.BoxGeometry(BWD, BHT, BDP), woodMat); b.castShadow = true; b.position.y = BHT / 2 + k * BHT; gF.add(b); return b; });
       const hookF = new THREE.Mesh(new THREE.TorusGeometry(0.07, 0.025, 8, 16), mat(0x475569, { metalness: 0.6 })); gF.add(hookF);

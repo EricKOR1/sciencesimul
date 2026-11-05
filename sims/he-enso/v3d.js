@@ -16,11 +16,28 @@
     title: '적도 태평양 단면 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     levels: [0, 1, 2],
-    camera: { dist: PHONE ? 21 : 15, theta: 0.42, phi: 1.2, min: 7, max: 30, target: [0, -0.2, 0] },
+    camera: { dist: PHONE ? 20 : 13.8, theta: 0.42, phi: 1.2, min: 7, max: 30, target: [0, -0.2, 0] },
     autoRotate: 0,
     build(ctx) {
       if (ctx.THREE.ColorManagement) ctx.THREE.ColorManagement.legacyMode = false;     // 색을 보이는 그대로(sRGB) 쓰도록 맞춰요
       const { THREE, root, label, info, controls } = ctx;
+      /* ---- 장면 꾸미기 도우미: 나무 · 암석 무늬, 하늘 · 우주 배경, 빛 번짐 (모양만 꾸며요) ---- */
+      const FX = (() => {
+        const scn = ctx.scene; let sd = 7; const rnd = () => { sd = (sd * 16807) % 2147483647; return sd / 2147483647; };
+        const mk = (w, h, draw, rep) => { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; if (rep) t.repeat.set(rep[0], rep[1]); if ('encoding' in t) t.encoding = THREE.sRGBEncoding; t.anisotropy = 4; return t; };
+        const wood = (rep) => mk(256, 256, (g, w, h) => { g.fillStyle = '#b98a58'; g.fillRect(0, 0, w, h); for (let i = 0; i < 80; i++) { const y = rnd() * h; g.strokeStyle = 'rgba(' + (70 + rnd() * 40 | 0) + ',38,12,' + (0.07 + rnd() * 0.15) + ')'; g.lineWidth = 0.6 + rnd() * 2.2; g.beginPath(); g.moveTo(0, y); for (let x = 0; x <= w; x += 32) g.lineTo(x, y + Math.sin(x * 0.03 + i) * 3 * rnd()); g.stroke(); } g.fillStyle = 'rgba(60,30,10,.18)'; for (let k = 1; k < 4; k++) g.fillRect(0, k * 64, w, 2); }, rep);
+        const grain = (rep, amt) => mk(128, 128, (g, w, h) => { g.fillStyle = '#fff'; g.fillRect(0, 0, w, h); for (let i = 0; i < 1100; i++) { const v = 150 + rnd() * 80 | 0; g.fillStyle = 'rgba(' + v + ',' + v + ',' + v + ',' + (amt || 0.35) + ')'; g.fillRect(rnd() * w, rnd() * h, 1 + rnd() * 3, 1 + rnd() * 2.2); } }, rep);
+        const dome = (top, mid, bot, stars) => {
+          const t = mk(8, 256, (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, top); gr.addColorStop(0.5, mid); gr.addColorStop(1, bot); g.fillStyle = gr; g.fillRect(0, 0, w, h); }); t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping;
+          const m = new THREE.Mesh(new THREE.SphereGeometry(90, 32, 16), new THREE.MeshBasicMaterial({ map: t, side: THREE.BackSide, depthWrite: false })); m.renderOrder = -10; m.raycast = () => {}; scn.add(m);
+          if (stars) { const pos = []; for (let i = 0; i < stars; i++) { const u = rnd() * 2 - 1, a = rnd() * 6.283, q = Math.sqrt(1 - u * u); pos.push(Math.cos(a) * q * 85, u * 85, Math.sin(a) * q * 85); } const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); const p = new THREE.Points(g, new THREE.PointsMaterial({ color: 0xcfdcff, size: 1.6, sizeAttenuation: false, transparent: true, opacity: 0.8, depthWrite: false })); p.renderOrder = -9; p.raycast = () => {}; m.add(p); }
+          return m;
+        };
+        const glowTex = (rgb) => mk(128, 128, (g, w, h) => { const gr = g.createRadialGradient(64, 64, 0, 64, 64, 64); gr.addColorStop(0, 'rgba(' + rgb + ',1)'); gr.addColorStop(0.35, 'rgba(' + rgb + ',.35)'); gr.addColorStop(1, 'rgba(' + rgb + ',0)'); g.fillStyle = gr; g.fillRect(0, 0, w, h); });
+        const glow = (rgb, size, op) => { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex(rgb), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: op == null ? 0.8 : op })); s.scale.setScalar(size); s.raycast = () => {}; return s; };
+        const spiral = (rgb) => mk(256, 256, (g, w, h) => { g.clearRect(0, 0, w, h); const gr = g.createRadialGradient(128, 128, 0, 128, 128, 128); gr.addColorStop(0, 'rgba(255,248,230,1)'); gr.addColorStop(0.12, 'rgba(' + rgb + ',.75)'); gr.addColorStop(0.5, 'rgba(' + rgb + ',.2)'); gr.addColorStop(1, 'rgba(' + rgb + ',0)'); g.fillStyle = gr; g.fillRect(0, 0, w, h); for (let arm = 0; arm < 2; arm++) for (let i = 0; i < 260; i++) { const f = i / 260, a = f * 5.2 + arm * Math.PI, r = 14 + f * 108, x = 128 + Math.cos(a) * r + (rnd() - 0.5) * 12 * f, y = 128 + Math.sin(a) * r + (rnd() - 0.5) * 12 * f; g.fillStyle = 'rgba(255,255,255,' + (0.5 * (1 - f) + 0.06) + ')'; g.beginPath(); g.arc(x, y, 1 + rnd() * 2.4 * (1 - f * 0.5), 0, 6.283); g.fill(); } });
+        return { rnd, mk, wood, grain, dome, glow, glowTex, spiral };
+      })();
       const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.5, metalness: 0.02 }, o || {}));
       const walkG = new THREE.Group(), coastG = new THREE.Group(); root.add(walkG, coastG);
 
@@ -34,15 +51,26 @@
       function setArrow(g, len) { const u = g.userData, L = Math.max(0.02, len), hh = u.rad * 5; u.sh.scale.set(1, Math.max(0.01, L - hh), 1); u.sh.position.y = (L - hh) / 2; u.hd.position.y = L - hh / 2; g.visible = len > 0.05; }
 
       /* ================= 워커 순환 ================= */
-      const warmM = std(0xffffff, { vertexColors: true, roughness: 0.4 }), coldM = std(0x143f8c, { roughness: 0.45 });
+      const warmM = new THREE.MeshPhysicalMaterial({ color: 0xffffff, vertexColors: true, roughness: 0.28, clearcoat: 0.6, clearcoatRoughness: 0.25 }), coldM = std(0x143f8c, { roughness: 0.4, map: FX.grain([3, 2], 0.2) });
+      FX.dome('#2c6db4', '#7db4e4', '#d3e8f4', 0);
       const warm = new THREE.Mesh(new THREE.BufferGeometry(), warmM), cold = new THREE.Mesh(new THREE.BufferGeometry(), coldM);
       walkG.add(warm, cold);
       const thTube = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial({ color: 0xfff3b0 })); walkG.add(thTube);
       const thTube2 = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial({ color: 0xfff3b0 })); walkG.add(thTube2);
       /* 바닥판 */
-      const base = new THREE.Mesh(new THREE.BoxGeometry(XL * 2 + 0.3, 0.14, ZD * 2 + 0.3), std(0x2a3550, { roughness: 0.8 })); base.position.y = YB - 0.08; walkG.add(base);
+      const base = new THREE.Mesh(new THREE.BoxGeometry(XL * 2 + 0.5, 0.5, ZD * 2 + 0.5), std(0xffffff, { map: FX.wood([3, 0.5]), roughness: 0.55 })); base.position.y = YB - 0.25; base.receiveShadow = true; walkG.add(base);
+      /* 유리 수조 틀 + 해수면 반짝임 */
+      { const GH = 0.45 - YB, glassBox = new THREE.BoxGeometry(XL * 2, GH, ZD * 2);
+        const gl = new THREE.Mesh(glassBox, new THREE.MeshPhysicalMaterial({ color: 0xdff1ff, transparent: true, opacity: 0.07, roughness: 0.05, depthWrite: false, side: THREE.DoubleSide })); gl.position.y = YB + GH / 2; walkG.add(gl);
+        const ed = new THREE.LineSegments(new THREE.EdgesGeometry(glassBox), new THREE.LineBasicMaterial({ color: 0xeaf4ff, transparent: true, opacity: 0.8 })); ed.position.copy(gl.position); walkG.add(ed);
+        const sun = new THREE.Mesh(new THREE.SphereGeometry(0.55, 24, 16), new THREE.MeshBasicMaterial({ color: 0xfff1b0 })); sun.position.set(-XL + 1.3, 5.2, -ZD - 1.5); walkG.add(sun); const sg = FX.glow('255,236,160', 5.2, 0.9); sg.position.copy(sun.position); walkG.add(sg); }
       /* 남미 · 인도네시아 육지 (양 끝) */
-      [-1, 1].forEach((s) => { const m = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, ZD * 2), std(s < 0 ? 0x5b8c4a : 0x8a6a45, { roughness: 0.9 })); m.position.set(s * (XL + 0.25), 0.1, 0); walkG.add(m); });
+      [-1, 1].forEach((s) => {
+        const m = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, ZD * 2), std(s < 0 ? 0x5b8c4a : 0x8a6a45, { roughness: 0.9, map: FX.grain([1, 1], 0.5) })); m.position.set(s * (XL + 0.25), 0.1, 0); walkG.add(m);
+        const rockM = std(0xa08a70, { roughness: 0.95, map: FX.grain([1, 1], 0.6) }), snowM = std(0xf4f8fc, { roughness: 0.7 }), treeM = std(s < 0 ? 0x2f7a3c : 0x3b6b34, { roughness: 0.9 }), trunkM = std(0x6b4a2b, { roughness: 0.9 });
+        if (s > 0) [[0.2, 0.9, -0.9, 1.5], [0.3, 1.2, 0.1, 2.0], [0.15, 0.8, 1.0, 1.3]].forEach((c) => { const mt = new THREE.Mesh(new THREE.ConeGeometry(c[1], c[3], 8), rockM); mt.position.set(XL + c[0] + 0.1, 0.35 + c[3] / 2, c[2]); walkG.add(mt); const cap = new THREE.Mesh(new THREE.ConeGeometry(c[1] * 0.42, c[3] * 0.32, 8), snowM); cap.position.set(mt.position.x, 0.35 + c[3] * 0.84, c[2]); walkG.add(cap); });
+        else [[-0.1, -0.9], [0.15, 0.2], [-0.2, 0.95], [0.1, -0.2]].forEach((c, i) => { const hill = new THREE.Mesh(new THREE.SphereGeometry(0.5, 14, 8, 0, 6.283, 0, 1.6), treeM); hill.position.set(-XL - 0.25 + c[0], 0.35, c[1]); hill.scale.set(1, 0.8 + 0.3 * (i % 2), 1.2); walkG.add(hill); const tr = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.05, 0.4, 6), trunkM); tr.position.set(-XL - 0.3 + c[0], 0.6, c[1] + 0.35); walkG.add(tr); const lf = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.35, 8), treeM); lf.position.set(tr.position.x, 0.95, tr.position.z); walkG.add(lf); });
+      });
       const ths = (p) => ({ dW: A(TA.thW, p) * SC, dE: A(TA.thE, p) * SC, sl: A(TA.slope, p) * 0.0035 });
       const yTh = (x, q) => -(lerp(q.dW, q.dE, (x + XL) / (2 * XL)));
       const ySf = (x, q) => q.sl * (-x / XL);
@@ -67,7 +95,7 @@
       const NP = 28, parts = new THREE.InstancedMesh(new THREE.SphereGeometry(0.1, 12, 8), new THREE.MeshBasicMaterial({ color: 0xffffff }), NP); walkG.add(parts);
       const cloudG = new THREE.Group(); walkG.add(cloudG);
       { let s = 3; const r = () => { s = (s * 16807) % 2147483647; return s / 2147483647; };
-        for (let i = 0; i < 9; i++) { const m = new THREE.Mesh(new THREE.SphereGeometry(0.45 + r() * 0.35, 20, 14), std(0xf3f6fb, { roughness: 1, transparent: true, opacity: 0.94 })); m.position.set((r() - 0.5) * 2.0, 2.2 + r() * 0.5 + (i % 3) * 0.12, (r() - 0.5) * 2.0); m.scale.y = 0.68; cloudG.add(m); } }
+        for (let i = 0; i < 9; i++) { const m = new THREE.Mesh(new THREE.SphereGeometry(0.45 + r() * 0.35, 20, 14), std(0xf6f9fd, { roughness: 1, transparent: true, opacity: 0.95, emissive: 0x9fb4cc, emissiveIntensity: 0.25 })); m.position.set((r() - 0.5) * 2.0, 2.2 + r() * 0.5 + (i % 3) * 0.12, (r() - 0.5) * 2.0); m.scale.y = 0.68; cloudG.add(m); } }
       const NR = 40, rain = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.014, 0.014, 0.4, 5), new THREE.MeshBasicMaterial({ color: 0xaed4ff, transparent: true, opacity: 0.8 }), NR); walkG.add(rain);
       const rseed = []; for (let i = 0; i < NR; i++) rseed.push([Math.random() - 0.5, Math.random() - 0.5, Math.random()]);
       const upA = [0, 1, 2].map((i) => { const a = arrow(walkG, 0x7fd8ff, 1, 0.045); a.position.set(3.7 + i * 0.7 - 0.0, YB + 0.3, (i - 1) * 0.9); return a; });
@@ -83,11 +111,12 @@
 
       /* ================= 해안 용승 ================= */
       const CX = 3.0, CZ = 2.0, CD = 3.0;
-      const cWarmM = std(0xf0701a, { roughness: 0.35 }), cColdM = std(0x1747a0, { roughness: 0.4 });
+      const cWarmM = new THREE.MeshPhysicalMaterial({ color: 0xf0701a, roughness: 0.28, clearcoat: 0.6 }), cColdM = std(0x1747a0, { roughness: 0.4, map: FX.grain([3, 2], 0.2) });
       const cWarm = new THREE.Mesh(new THREE.BufferGeometry(), cWarmM), cCold = new THREE.Mesh(new THREE.BufferGeometry(), cColdM); coastG.add(cWarm, cCold);
       const landSh = new THREE.Shape(); landSh.moveTo(CX, -CD); landSh.lineTo(CX, 0); landSh.lineTo(CX + 2.6, 0.55); landSh.lineTo(CX + 2.8, 0.55); landSh.lineTo(CX + 2.8, -CD); landSh.closePath();
-      const land = new THREE.Mesh(new THREE.ExtrudeGeometry(landSh, { depth: CZ * 2, bevelEnabled: false }), std(0xb89463, { roughness: 0.95 })); land.position.z = -CZ; coastG.add(land);
-      const cBase = new THREE.Mesh(new THREE.BoxGeometry(XL + CX + 2.9, 0.12, CZ * 2 + 0.2), std(0x2a3550, { roughness: 0.8 })); cBase.position.set((CX + 2.8 - XL) / 2, -CD - 0.08, 0); coastG.add(cBase);
+      const land = new THREE.Mesh(new THREE.ExtrudeGeometry(landSh, { depth: CZ * 2, bevelEnabled: false }), std(0xb89463, { roughness: 0.95, map: FX.grain([0.5, 0.5], 0.5) })); land.position.z = -CZ; coastG.add(land);
+      { const treeM = std(0x3b7a3c, { roughness: 0.9 }), trunkM = std(0x6b4a2b, { roughness: 0.9 }); [[CX + 0.9, 0.2, -1.2], [CX + 1.5, 0.35, 0.3], [CX + 1.2, 0.3, 1.3], [CX + 2.1, 0.5, -0.4], [CX + 0.6, 0.0, 0.5]].forEach((c) => { const tr = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.06, 0.45, 6), trunkM); tr.position.set(c[0], c[1] + 0.25, c[2]); coastG.add(tr); const lf = new THREE.Mesh(new THREE.ConeGeometry(0.28, 0.6, 8), treeM); lf.position.set(c[0], c[1] + 0.68, c[2]); coastG.add(lf); }); const cs = FX.glow('255,236,160', 3.6, 0.85); cs.position.set(-5.5, 5.2, -2); coastG.add(cs); }
+      const cBase = new THREE.Mesh(new THREE.BoxGeometry(XL + CX + 2.9, 0.3, CZ * 2 + 0.2), std(0xffffff, { map: FX.wood([3, 0.5]), roughness: 0.55 })); cBase.position.set((CX + 2.8 - XL) / 2, -CD - 0.15, 0); coastG.add(cBase);
       const wf = (x, u) => { const q = Math.max(0, Math.min(1, (x - (CX - 2.6)) / 2.6)), f = q * q * (3 - 2 * q); return u >= 0 ? 0.8 * (1 - 0.97 * u * f) : 0.8 + (-u) * 1.5 * f; };
       function buildCoast(u) {
         const N = 30, tw = []; for (let i = 0; i <= N; i++) { const x = -XL + (CX + XL) * i / N; tw.push([x, -wf(x, u)]); }
@@ -114,7 +143,7 @@
         view = v; walkG.visible = v === 'walk'; coastG.visible = v === 'coast';
         Object.values(L).forEach((l) => l.show(v === 'walk')); Object.values(cl).forEach((l) => l.show(v === 'coast'));
         ctx.orbit.tx = v === 'walk' ? 0 : -0.8; ctx.orbit.ty = v === 'walk' ? -0.2 : -1.0;
-        if (v === 'coast') { ctx.orbit.theta = 0.75; ctx.orbit.phi = 1.15; ctx.orbit.dist = PHONE ? 25 : 19; } else { ctx.orbit.theta = 0.42; ctx.orbit.phi = 1.2; ctx.orbit.dist = PHONE ? 21 : 15; }
+        if (v === 'coast') { ctx.orbit.theta = 0.75; ctx.orbit.phi = 1.15; ctx.orbit.dist = PHONE ? 23 : 15.5; } else { ctx.orbit.theta = 0.42; ctx.orbit.phi = 1.2; ctx.orbit.dist = PHONE ? 20 : 13.8; }
         infoKey = '';
       }
       function updInfo() {

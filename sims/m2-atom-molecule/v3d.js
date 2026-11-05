@@ -39,7 +39,7 @@
   window.SciSim3D.attach({
     title: '원자와 분자 3D 모형',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: 6, theta: 0.6, phi: 1.2, min: 3, max: 16 },
+    camera: { dist: 4.6, theta: 0.6, phi: 1.2, min: 3, max: 16 },
     autoRotate: 0.3,
     levels: [2],                     // 3단계(원소 · 원자 · 분자 구별하기)는 3D로 시작 · 나머지 미션은 2D에서 해요 ([🧊 3D]로 열어요)
     build(ctx) {
@@ -48,8 +48,28 @@
       const g = new THREE.Group(); root.add(g);
       const atomObjs = [], bondObjs = [], labs = [];
       const UP = new THREE.Vector3(0, 1, 0);
-      const stickMat = new THREE.MeshStandardMaterial({ color: 0xaab4c8, roughness: 0.6 });
-      function sphere(r, col) { return new THREE.Mesh(new THREE.SphereGeometry(r, 32, 20), new THREE.MeshStandardMaterial({ color: col, roughness: 0.4, metalness: 0.05 })); }
+      const stickMat = new THREE.MeshStandardMaterial({ color: 0xc3ccdd, roughness: 0.3, metalness: 0.55 });
+      function sphere(r, col) {
+        const m = new THREE.Mesh(new THREE.SphereGeometry(r, 40, 28), new THREE.MeshPhysicalMaterial({ color: col, roughness: 0.28, metalness: 0.05, clearcoat: 0.7, clearcoatRoughness: 0.2 }));
+        m.castShadow = true;
+        const h = new THREE.Mesh(new THREE.SphereGeometry(r * 1.38, 20, 14), new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.1, depthWrite: false, blending: THREE.AdditiveBlending }));   // 전자 구름 느낌의 부드러운 빛 번짐
+        m.add(h); return m;
+      }
+      /* 무대: 반짝이는 받침판 + 떠다니는 빛 알갱이 (분자가 빈 공간에 떠 있지 않게) */
+      const stage = new THREE.Group(); root.add(stage);
+      { const c = document.createElement('canvas'); c.width = c.height = 512; const x = c.getContext('2d');
+        const gr = x.createRadialGradient(256, 256, 20, 256, 256, 256); gr.addColorStop(0, '#2a3b66'); gr.addColorStop(1, '#0b1226'); x.fillStyle = gr; x.beginPath(); x.arc(256, 256, 255, 0, 7); x.fill();
+        x.strokeStyle = 'rgba(140,180,255,.35)'; x.lineWidth = 2; for (let r = 40; r < 256; r += 36) { x.beginPath(); x.arc(256, 256, r, 0, 7); x.stroke(); }
+        x.strokeStyle = 'rgba(140,180,255,.18)'; for (let a = 0; a < 12; a++) { x.beginPath(); x.moveTo(256, 256); x.lineTo(256 + Math.cos(a * Math.PI / 6) * 255, 256 + Math.sin(a * Math.PI / 6) * 255); x.stroke(); }
+        const t = new THREE.CanvasTexture(c); if (THREE.sRGBEncoding) t.encoding = THREE.sRGBEncoding;
+        const disc = new THREE.Mesh(new THREE.CylinderGeometry(3.4, 3.55, 0.14, 64), [new THREE.MeshStandardMaterial({ color: 0x1b2540, metalness: 0.6, roughness: 0.3 }), new THREE.MeshStandardMaterial({ map: t, roughness: 0.6, metalness: 0.1 }), new THREE.MeshStandardMaterial({ color: 0x1b2540, metalness: 0.6, roughness: 0.3 })]);
+        disc.receiveShadow = true; stage.add(disc);
+        const rim = new THREE.Mesh(new THREE.TorusGeometry(3.47, 0.045, 8, 80), new THREE.MeshStandardMaterial({ color: 0x7fb0ff, emissive: 0x3a6cff, emissiveIntensity: 0.8 })); rim.rotation.x = Math.PI / 2; stage.add(rim);
+        const pos = []; let sd = 11; const rr = () => { sd = (sd * 16807) % 2147483647; return sd / 2147483647; };
+        for (let i = 0; i < 140; i++) { const a = rr() * 6.283, r = 3 + rr() * 9, y = (rr() - 0.3) * 9; pos.push(Math.cos(a) * r, y, Math.sin(a) * r); }
+        const bg = new THREE.BufferGeometry(); bg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+        const pts = new THREE.Points(bg, new THREE.PointsMaterial({ color: 0x9fc0ff, size: 3, sizeAttenuation: false, transparent: true, opacity: 0.5 })); pts.position.y = 2; root.add(pts); }
+      function floorAt(y) { stage.position.y = y; }
       function place(m, a, b) {
         const d = b.clone().sub(a), len = Math.max(1e-4, d.length());
         m.position.copy(a).add(b).multiplyScalar(0.5);
@@ -58,7 +78,7 @@
       }
       function fitCamera() { // 입자 크기와 화면 비율에 맞춰 처음 거리를 정해요
         const v = ctx.renderer.domElement, asp = Math.max(0.3, v.clientWidth / Math.max(1, v.clientHeight));
-        const base = key === 'Cu' || key === 'NaCl' ? 11 : key === 'He' || key === 'Ne' ? 5 : key === 'CO2' ? 8 : 6;
+        const base = key === 'Cu' || key === 'NaCl' ? 12.5 : key === 'He' || key === 'Ne' ? 4 : key === 'CO2' ? 6.2 : 4.6;
         ctx.orbit.dist = base * (asp < 1 ? Math.min(2, Math.pow(1 / asp, 0.75)) : 1);
       }
       function clearAll() {
@@ -82,6 +102,7 @@
           for (let k = 0; k < nb; k++) { const m = new THREE.Mesh(new THREE.CylinderGeometry(nb > 1 ? 0.05 : 0.08, nb > 1 ? 0.05 : 0.08, 1, 14), stickMat); g.add(m); ms.push(m); }
           bondObjs.push({ i, j, o, ms, show: style === 'ball' });
         });
+        floorAt(Math.min.apply(null, M.atoms.map((a) => a[2] - RB[a[0]])) - 0.4);
         refresh();
       }
       function refresh() {
@@ -163,6 +184,7 @@
             cnObj.bonds.push(ms); });
         });
         // 조립대에 올려 둔 떨어진 원자
+        floorAt(n > 4 ? -4.2 : -3.6);
         freeAtoms.forEach((sym, i) => { const m = sphere(RB[sym], COL[sym]); m.position.set((i - (freeAtoms.length - 1) / 2) * 1.2, -3.0, 0.5); gN.add(m); cnObj.free.push(m); });
       }
       function updCount(l, t) {

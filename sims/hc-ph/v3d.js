@@ -80,25 +80,60 @@
   window.SciSim3D.attach({
     title: 'pH와 이온 수 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · pH와 희석 단계는 2D와 똑같이 이어져요',
-    camera: { dist: phone ? 10.5 : 10, theta: 0.5, phi: 1.2, min: 5, max: 22, target: [0, 1.7, 0] },
+    camera: { dist: phone ? 14 : 12.5, theta: 0.35, phi: 1.2, min: 5, max: 24, target: [1.6, 2.6, 0] },
     autoRotate: 0.12,
     levels: [0, 1, 2],
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const L = makeLib(THREE);
       const R = 2.4, HGT = 4.4;
-      const beaker = new THREE.Mesh(new THREE.CylinderGeometry(R, R, HGT, 48, 1, true), new THREE.MeshStandardMaterial({ color: 0xcfe0ff, transparent: true, opacity: 0.14, roughness: 0.1, side: THREE.DoubleSide, depthWrite: false })); beaker.position.y = HGT / 2; root.add(beaker);
-      const bot = new THREE.Mesh(new THREE.CylinderGeometry(R, R, 0.12, 48), new THREE.MeshStandardMaterial({ color: 0xcfe0ff, transparent: true, opacity: 0.35, roughness: 0.1, depthWrite: false })); bot.position.y = 0.06; root.add(bot);
-      const rim = new THREE.Mesh(new THREE.TorusGeometry(R, 0.05, 12, 64), new THREE.MeshStandardMaterial({ color: 0xe0ebff, roughness: 0.2 })); rim.rotation.x = Math.PI / 2; rim.position.y = HGT; root.add(rim);
+      /* 실험대 */
+      const wood = (function () {
+        const c = document.createElement('canvas'); c.width = 512; c.height = 512; const x = c.getContext('2d');
+        x.fillStyle = '#7d5a3c'; x.fillRect(0, 0, 512, 512);
+        for (let i = 0; i < 8; i++) { x.fillStyle = i % 2 ? 'rgba(60,35,15,.12)' : 'rgba(255,220,170,.06)'; x.fillRect(0, i * 64, 512, 64); x.fillStyle = 'rgba(30,16,6,.6)'; x.fillRect(0, i * 64, 512, 2); }
+        for (let i = 0; i < 240; i++) { x.strokeStyle = 'rgba(40,22,8,' + (0.05 + Math.random() * 0.1) + ')'; x.lineWidth = 0.6 + Math.random(); const y = Math.random() * 512; x.beginPath(); x.moveTo(0, y); x.bezierCurveTo(150, y + Math.random() * 6 - 3, 350, y + Math.random() * 6 - 3, 512, y + Math.random() * 4 - 2); x.stroke(); }
+        const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(2.2, 1.4); return t;
+      })();
+      const bench = new THREE.Mesh(new THREE.BoxGeometry(16, 0.5, 10), new THREE.MeshStandardMaterial({ map: wood, color: 0x9a7d62, roughness: 0.6 })); bench.position.y = -0.3; root.add(bench);
+      const glass = new THREE.MeshPhysicalMaterial({ color: 0xd8e8ff, transparent: true, opacity: 0.16, roughness: 0.04, clearcoat: 1, clearcoatRoughness: 0.05, side: THREE.DoubleSide, depthWrite: false });
+      const beaker = new THREE.Mesh(new THREE.CylinderGeometry(R, R, HGT, 64, 1, true), glass); beaker.position.y = HGT / 2; root.add(beaker);
+      const bot = new THREE.Mesh(new THREE.CylinderGeometry(R, R * 0.98, 0.2, 64), new THREE.MeshPhysicalMaterial({ color: 0xd8e8ff, transparent: true, opacity: 0.4, roughness: 0.05, clearcoat: 1, depthWrite: false })); bot.position.y = 0.1; root.add(bot);
+      const rim = new THREE.Mesh(new THREE.TorusGeometry(R, 0.07, 12, 72), new THREE.MeshPhysicalMaterial({ color: 0xeaf2ff, roughness: 0.15, clearcoat: 1, transparent: true, opacity: 0.85 })); rim.rotation.x = Math.PI / 2; rim.position.y = HGT; root.add(rim);
+      const spout = new THREE.Mesh(new THREE.ConeGeometry(0.35, 0.5, 14, 1, true), glass); spout.rotation.set(0, 0, Math.PI / 2 + 0.2); spout.position.set(R + 0.1, HGT - 0.12, 0); spout.rotation.z = -Math.PI / 2; root.add(spout);
+      (function () { // 눈금
+        const c = document.createElement('canvas'); c.width = 256; c.height = 512; const x = c.getContext('2d');
+        x.strokeStyle = 'rgba(255,255,255,.9)'; x.fillStyle = 'rgba(255,255,255,.95)'; x.font = 'bold 20px sans-serif'; x.textAlign = 'right';
+        for (let i = 1; i <= 8; i++) { const y = 512 - 30 - i * 56 * 0.95; x.lineWidth = i % 2 ? 2 : 3; x.beginPath(); x.moveTo(150, y); x.lineTo(i % 2 ? 190 : 220, y); x.stroke(); if (i % 2 === 0) x.fillText(String(i * 100), 140, y + 7); }
+        const m = new THREE.Mesh(new THREE.CylinderGeometry(R + 0.012, R + 0.012, HGT, 64, 1, true), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthWrite: false })); m.position.y = HGT / 2; m.rotation.y = 0.5; root.add(m);
+      })();
       const LV = 3.5;
-      const liq = new THREE.Mesh(new THREE.CylinderGeometry(R - 0.04, R - 0.04, LV, 48), new THREE.MeshStandardMaterial({ color: 0x66cc66, transparent: true, opacity: 0.26, roughness: 0.15, depthWrite: false })); liq.position.y = LV / 2 + 0.06; root.add(liq);
-      const top = new THREE.Mesh(new THREE.CircleGeometry(R - 0.04, 48), new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.25, roughness: 0.05, depthWrite: false })); top.rotation.x = -Math.PI / 2; top.position.y = LV + 0.06; root.add(top);
-      const floor = new THREE.Mesh(new THREE.CylinderGeometry(R + 1.2, R + 1.2, 0.1, 48), new THREE.MeshBasicMaterial({ color: 0x050b18 })); floor.position.y = -0.05; root.add(floor);
+      const liq = new THREE.Mesh(new THREE.CylinderGeometry(R - 0.04, R - 0.04, LV, 64), new THREE.MeshPhysicalMaterial({ color: 0x66cc66, transparent: true, opacity: 0.34, roughness: 0.1, clearcoat: 0.6, depthWrite: false })); liq.position.y = LV / 2 + 0.2; root.add(liq);
+      const top = new THREE.Mesh(new THREE.CircleGeometry(R - 0.04, 64), new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.3, roughness: 0.03, metalness: 0.2, depthWrite: false })); top.rotation.x = -Math.PI / 2; top.position.y = LV + 0.2; root.add(top);
+      const menis = new THREE.Mesh(new THREE.TorusGeometry(R - 0.06, 0.035, 8, 72), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.55 })); menis.rotation.x = Math.PI / 2; menis.position.y = LV + 0.2; root.add(menis);
+      /* pH 측정기: 스탠드 + 전극 + 화면 */
+      const metal = new THREE.MeshStandardMaterial({ color: 0x9aa3b2, roughness: 0.3, metalness: 0.85 });
+      const stBase = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.2, 1.6), metal); stBase.position.set(4.6, 0.0, -1.2); root.add(stBase);
+      const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 6.4, 14), metal); rod.position.set(4.6, 3.2, -1.2); root.add(rod);
+      const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 3.7, 12), metal); arm.rotation.z = Math.PI / 2; arm.position.set(2.75, 5.9, -1.2); root.add(arm);
+      const wire = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.2, 8), new THREE.MeshStandardMaterial({ color: 0x222831 })); wire.position.set(0.9, 6.5, -1.2); root.add(wire);
+      const probe = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 3.6, 18), new THREE.MeshPhysicalMaterial({ color: 0x2b3340, roughness: 0.35, clearcoat: 0.6 })); probe.position.set(0.9, 4.2, -0.1); probe.rotation.x = 0; root.add(probe);
+      const clampM = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.35, 0.4), metal); clampM.position.set(0.9, 5.9, -1.2); root.add(clampM);
+      const arm2 = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1.2, 10), metal); arm2.rotation.x = Math.PI / 2; arm2.position.set(0.9, 5.9, -0.65); root.add(arm2);
+      const tip = new THREE.Mesh(new THREE.SphereGeometry(0.2, 18, 14), new THREE.MeshPhysicalMaterial({ color: 0xcfe0ff, transparent: true, opacity: 0.8, roughness: 0.05, clearcoat: 1 })); tip.position.set(0.9, 2.3, -0.1); root.add(tip);
+      probe.position.y = 4.1; probe.scale.y = 1;
+      const dc = document.createElement('canvas'); dc.width = 256; dc.height = 128; const dx = dc.getContext('2d'); const dtex = new THREE.CanvasTexture(dc);
+      function drawMeter(ph) { dx.fillStyle = '#10201a'; dx.fillRect(0, 0, 256, 128); dx.fillStyle = '#8affb0'; dx.font = 'bold 30px monospace'; dx.textAlign = 'left'; dx.fillText('pH', 14, 48); dx.font = 'bold 66px monospace'; dx.textAlign = 'right'; dx.fillText(ph.toFixed(1), 244, 100); dtex.needsUpdate = true; }
+      const meter = new THREE.Group(); meter.position.set(4.6, 0.8, 1.0); meter.rotation.y = -0.5;
+      meter.add(new THREE.Mesh(new THREE.BoxGeometry(2.0, 1.2, 0.9), new THREE.MeshPhysicalMaterial({ color: 0xe6e9ef, roughness: 0.4, clearcoat: 0.5 })));
+      const scr = new THREE.Mesh(new THREE.PlaneGeometry(1.7, 0.85), new THREE.MeshBasicMaterial({ map: dtex })); scr.position.set(0, 0.05, 0.46); meter.add(scr); root.add(meter);
+      const cable = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new THREE.Vector3(0.9, 6.6, -1.2), new THREE.Vector3(2.5, 6.9, -1.2), new THREE.Vector3(4.4, 6.4, -1.0), new THREE.Vector3(4.6, 3, 0), new THREE.Vector3(4.6, 1.4, 0.6)]), 40, 0.03, 6), new THREE.MeshStandardMaterial({ color: 0x222831 })); root.add(cable);
+      drawMeter(7);
       const NMAX = 1500;
       const mk = (col, em) => { const m = new THREE.InstancedMesh(L.SG, new THREE.MeshStandardMaterial({ color: col, emissive: em, emissiveIntensity: 0.45, roughness: 0.35 }), NMAX); m.frustumCulled = false; m.count = 0; root.add(m); return m; };
       const mH = mk(0xff2b4a, 0x9a0020), mO = mk(0x4d8dff, 0x00287a);
       const pts = { h: [], o: [] };
-      const rp = () => { const r = Math.sqrt(Math.random()) * (R - 0.25), a = Math.random() * 6.283; return { x: Math.cos(a) * r, y: 0.25 + Math.random() * (LV - 0.35), z: Math.sin(a) * r, ph: Math.random() * 6.28, sp: 0.4 + Math.random() * 0.6 }; };
+      const rp = () => { const r = Math.sqrt(Math.random()) * (R - 0.25), a = Math.random() * 6.283; return { x: Math.cos(a) * r, y: 0.35 + Math.random() * (LV - 0.35), z: Math.sin(a) * r, ph: Math.random() * 6.28, sp: 0.4 + Math.random() * 0.6 }; };
       for (let i = 0; i < NMAX; i++) { pts.h.push(rp()); pts.o.push(rp()); }
       const dum = new THREE.Object3D();
       const INDI = [0xe53935, 0xf4511e, 0xfb8c00, 0xfdd835, 0x7cb342, 0x43a047, 0x00897b, 0x1e88e5, 0x3949ab, 0x5e35b1, 0x6a1b9a, 0x7b1fa2, 0x8e24aa];
@@ -114,7 +149,7 @@
         const trueH = Math.pow(10, 7 - pH), trueO = Math.pow(10, pH - 7);
         const sat = trueH > NMAX || trueO > NMAX;
         const ph = Math.round(pH * 10) / 10;
-        lblN.set('pH ' + ph.toFixed(1).replace(/\.0$/, '') + (pH < 6.95 ? ' 산성' : pH > 7.05 ? ' 염기성' : ' 중성'));
+        drawMeter(Math.round(pH * 10) / 10); lblN.set('pH ' + ph.toFixed(1).replace(/\.0$/, '') + (pH < 6.95 ? ' 산성' : pH > 7.05 ? ' 염기성' : ' 중성'));
         const txt = '<b>[H⁺] = 10<sup>' + (-ph).toString().replace('-', '−') + '</sup> mol/L</b> · pH = −log[H⁺] = ' + ph.toFixed(1).replace(/\.0$/, '') + '<br><span style="color:#ff6b6b">●</span> H⁺ <b>' + fmt(trueH) + '</b> · <span style="color:#6ba5ff">●</span> OH⁻ <b>' + fmt(trueO) + '</b> (pH 7일 때 각 1개 기준)<br>' + (extra || '') + (sat ? '너무 많아 다 못 그려요. 그래서 로그(pH) 눈금을 써요!' : 'pH가 1 내려가면 H⁺ 수는 10배예요.');
         if (txt !== lastTxt) { lastTxt = txt; info(txt); }
       }
