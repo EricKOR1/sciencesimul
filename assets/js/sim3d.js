@@ -381,7 +381,7 @@
        모든 3D 화면에서 같은 느낌으로: 드래그하는 방향으로 장면을 끌어오듯 시점이 움직여요
        (중1 '태양계 구성 천체'와 같은 방향). 손을 떼면 관성으로 조금 더 돌아요. */
     const ptrs = new Map(); let pinch0 = 0, dist0 = 0;
-    const DIR = -1;
+    const DIR = 1;
     const vel = { t: 0, p: 0 };
     view.addEventListener('pointerdown', (e) => {
       view.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY, t: performance.now() }); touched = true; vel.t = vel.p = 0;
