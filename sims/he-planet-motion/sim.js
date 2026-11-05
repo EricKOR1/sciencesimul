@@ -1083,5 +1083,6 @@
   window.__sim = {
     S, PL, get game() { return game; }, helio, geo, elongOf, phaseAngle, dlam, delta, findEvent, retroInfo, synodicD, ev4, bandData,
     setView, enterLevel, setBase2, setBase3, setBase4, setU2, setU3, setU4, updateCtl, markStat, stopAll,
+    get flash() { return flash; },   // 3D 화면에서도 알림 글(📝 기록 · 📍 표시 결과)을 보여 주려고 내보내요
   };
 })();

@@ -13,6 +13,7 @@
   window.SciSim3D.attach({
     title: '행성의 겉보기 운동 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
+    levels: [0, 3],          // 1단계(금성의 위상 짝짓기) · 2단계(배치 그림 카드)는 2D 화면의 그림을 보고 해요
     camera: { dist: PHONE ? 19 : 12.5, theta: 0.5, phi: 0.95, min: 5, max: 30 },
     autoRotate: 0,
     build(ctx) {
@@ -59,7 +60,7 @@
       const sight = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 1, 8), new THREE.MeshBasicMaterial({ color: 0xffe28a })); root.add(sight);
       const mark = new THREE.Mesh(new THREE.SphereGeometry(0.1, 20, 14), new THREE.MeshBasicMaterial({ color: 0xffffff })); sky.add(mark);
       const K = 90, trail = new THREE.InstancedMesh(new THREE.SphereGeometry(0.045, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffffff }), K); sky.add(trail);
-      const dm = new THREE.Object3D(), colF = new THREE.Color(0xf6e27f), colR = new THREE.Color(0xff5b5b);
+      const dm = new THREE.Object3D(), colF = new THREE.Color(0x60a5fa), colR = new THREE.Color(0xff5b5b);
       const mkLab = label('', mark, { offset: [0, 0.3, 0], size: 12 });
 
       /* 상태 */
@@ -99,6 +100,17 @@
       const up = new THREE.Vector3(0, 1, 0), a3 = new THREE.Vector3(), b3 = new THREE.Vector3(), d3 = new THREE.Vector3();
       const w3 = (h) => new THREE.Vector3(h.x * k, h.z * k * 4, -h.y * k);
       function constAt(lam) { const L = ((lam % 360) + 360) % 360; let best = CONST[0], bd = 999; CONST.forEach((c) => { const d = Math.abs(((L - c[1] + 540) % 360) - 180); if (d < bd) { bd = d; best = c; } }); return best[0] + '자리'; }
+      /* 2D 알림 글(📝 기록 · 📍 표시 결과)을 3D 설명에도 보여 줘요 */
+      function flashTxt() { const f = SIM() && SIM().flash; return f && f.t > 0 && f.text ? '<br><b style="color:' + (f.bg === '#b91c1c' ? '#fca5a5' : '#86efac') + '">' + f.text + '</b>' : ''; }
+      /* 📍 표시한 유(멈춘 것처럼 보이는 때): 하늘 고리 위에 꽂아요 */
+      const pins = ['s', 'e'].map((k) => { const o = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.22, 12), new THREE.MeshBasicMaterial({ color: 0xfacc15 })); o.rotation.x = Math.PI; o.visible = false; sky.add(o); const L = label(k === 's' ? '📍 유 (순행→역행)' : '📍 유 (역행→순행)', o, { offset: [0, 0.32, 0], size: 11 }); L.show(false); return { k, o, L }; });
+      function showPins(s, S) {
+        pins.forEach((p) => {
+          const v = S && S.view === 'retro' && S.marks ? S.marks[p.k] : null, on = v != null && typeof S.u4 === 'number';
+          p.o.visible = on; p.L.show(on); if (!on) return;
+          const q = s.geo(id, (S.t || 0) - S.u4 + v); p.o.position.set(Math.cos(q.lam * DEG) * RING, 0.16, -Math.sin(q.lam * DEG) * RING);
+        });
+      }
       function frame(dt) {
         const r = read(); if (!r) return;
         if (r.id && r.id !== lastSim) { lastSim = r.id; if (r.id !== id) setPlanet(r.id); }
@@ -111,7 +123,7 @@
         d3.subVectors(b3, a3); d3.y = 0; const dist = d3.length(); d3.normalize();
         sight.position.copy(a3).addScaledVector(d3, (dist + RING) / 2); sight.scale.set(1, dist + RING, 1); sight.quaternion.setFromUnitVectors(up, d3);
         const g = s.geo(id, t), retro = s.dlam(id, t) < 0;
-        mark.position.set(d3.x * RING, 0, d3.z * RING); mark.material.color.set(retro ? 0xff5b5b : 0xf6e27f);
+        mark.position.set(d3.x * RING, 0, d3.z * RING); mark.material.color.set(retro ? 0xff5b5b : 0x60a5fa);
         const stepD = Math.max(4, Math.min(s.synodicD(id) * 0.5, 600) / K);
         for (let i = 0; i < K; i++) {
           const q = s.geo(id, t - i * stepD), rr = s.dlam(id, t - i * stepD) < 0;
@@ -122,7 +134,8 @@
         cLabs.forEach((L) => { const d = Math.abs(((g.lam - L.lam + 540) % 360) - 180); L.show(names && d < 62); });
         info('<b>' + NAMES[id] + '</b>은(는) 별자리 <b>' + constAt(g.lam) + '</b> 쪽에 보여요.<br>' +
           (retro ? '<span style="color:#ff9d9d"><b>지금은 역행 중</b></span> · 별자리 사이를 거꾸로 가요.' : '지금은 <b>순행</b> 중 · 별자리 사이를 앞으로 가요.') +
-          '<br><span style="opacity:.8">노란 점 순행 · 빨간 점 역행 (지난 자취)</span>');
+          '<br><span style="opacity:.8">파란 점 순행 · 빨간 점 역행 (지난 자취)</span>' + flashTxt());
+        showPins(s, r.S);
       }
       return { update(dt, t) { frame(dt); sun.rotation.y += dt * 0.2; glow.scale.setScalar(3.4 + 0.12 * Math.sin(t * 2)); earth.rotation.y += dt; }, sync() {} };
     },
