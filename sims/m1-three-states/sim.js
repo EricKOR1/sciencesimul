@@ -1474,7 +1474,7 @@
   }
   SC.tags = {
     label: '🏷️ 특징 태그 붙이기',
-    hint: '🏷️ 태그를 같은 색 칸으로 끌어요',
+    hint: '🏷️ 태그를 알맞은 칸에 붙여요',
     enter(reset) { if (reset) tagsReset(); },
     update(dt) {
       KINDS.forEach((k) => SIMS[k].step(dt));
@@ -2100,8 +2100,8 @@
           },
           {
             title: '특징 태그 붙이기', scene: 'tags', manual: true,
-            goal: '각 상태의 <b>거리·배열·운동</b> 칸에 알맞은 태그를 끌어다 놓고 <b>✔ 확인하기</b>를 누르세요.',
-            hint: '같은 색 태그가 같은 종류의 칸에 들어가요. 🔍 비교 장면에서 본 모습을 떠올려요.',
+            goal: '각 상태의 <b>거리·배열·운동</b> 칸에 알맞은 태그를 붙이고 <b>✔ 확인하기</b>를 누르세요.',
+            hint: '태그는 끌어다 놓거나 버튼을 눌러 붙여요. 같은 색 태그가 같은 종류의 칸에 들어가요. 🔍 비교 장면에서 본 모습을 떠올려요.',
             setup() { S.tagsOpen = true; refreshUI(); },
             check: () => tagsCheck(),
             onWin() { TG.solved = true; celebrate(VW / 2, PHONE ? 200 : 210); },
@@ -2285,5 +2285,15 @@
     },
     buildInfo() { return KINDS.map((k) => ({ kind: k, n: BD[k].n, alive: BD[k].alive, msg: BD[k].msg, pts: BD[k].pts.map((p) => ({ x: p.x, y: p.y })), v: BD[k].verdict })); },
     setStage(n) { BD.stage = n; refreshUI(); },
+    /* 3D 막대의 태그 버튼: (상태, 종류) 칸의 태그를 차례로 바꿔 붙여요 (2D의 끌어 놓기와 같은 결과) */
+    tagCycle(kind, cat) {
+      if (TG.solved) return null;
+      const slot = TG.slots.find((s) => s.kind === kind && s.cat === cat); if (!slot) return null;
+      const list = TG.cards.filter((c) => c.cat === cat), cur = slot.tag, c = list[(list.indexOf(cur) + 1) % list.length];
+      if (c.slot && c.slot !== slot) c.slot.tag = null;
+      c.slot = null; c.wrong = false; tgPlace(c, slot); refreshUI();
+      return c.text;
+    },
+    tagTable() { return TG.slots.map((s) => ({ kind: s.kind, cat: s.cat, text: s.tag ? s.tag.text : '', wrong: !!(s.tag && s.tag.wrong) })); },
   };
 })();

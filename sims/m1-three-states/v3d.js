@@ -1,6 +1,7 @@
 /* m1-three-states · 3D 얼음·물·수증기의 입자 모형 (2D '입자 모형으로 비교하기'와 같은 장면)
    고체(얼음): 입자가 규칙적으로 배열하고 제자리에서 진동해요. 액체(물): 입자가 가깝지만 불규칙하고 위치를 바꾸며 이동해요.
-   기체(수증기): 입자가 멀리 떨어져 빠르고 자유롭게 운동해요. 옆의 📏 거리 · 🧩 배열 · 🏃 운동 버튼(2D)과 함께 바뀌어요. */
+   기체(수증기): 입자가 멀리 떨어져 빠르고 자유롭게 운동해요. 옆의 📏 거리 · 🧩 배열 · 🏃 운동 버튼과 함께 바뀌어요.
+   '특징 태그 붙이기' 미션에서는 아래 막대의 버튼으로 각 상태의 칸에 태그를 붙여요 (2D의 끌어 놓기와 같은 결과). */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -8,7 +9,7 @@
   window.SciSim3D.attach({
     title: '세 가지 상태의 입자 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    levels: [1],   // 2단계(입자 모형으로 비교하기): 얼음·물·수증기 — 나머지 단계는 2D에서 끌어 놓기·분류
+    levels: [1],   // 2단계(입자 모형으로 비교하기): 얼음·물·수증기 비교 + 태그 붙이기(막대 버튼) — 나머지 단계는 끌어 놓기·분류라 2D
     camera: { dist: 13 * (PHN0 ? 1.1 : 1), theta: 0.25, phi: 1.2, fov: 45, target: [0, 0, 0], min: 5, max: 26 },
     autoRotate: 0.06,
     build(ctx) {
@@ -181,12 +182,34 @@
       }
       const trB = controls.button('📍 입자 하나 따라가기', () => { follow = !follow; trB.classList.toggle('on', follow); trails.forEach((t) => { t.n = 0; }); });
       trB.classList.add('on');
+      /* 특징 태그 붙이기: 종류(거리·배열·운동)를 고르고, 상태 버튼을 누를 때마다 그 칸의 태그가 바뀌어요 */
+      const CAT_ICON = { dist: '📏 거리', order: '🧩 배열', move: '🏃 운동' }, SHORT = { solid: '얼음', liquid: '물', gas: '수증기' };
+      let tagCat = 'dist', tagMode = false, tagSig = '';
+      const tagLab = controls.text('<b>태그 붙이기</b>');
+      const catSeg = controls.segment('', [{ value: 'dist', label: '📏 거리' }, { value: 'order', label: '🧩 배열' }, { value: 'move', label: '🏃 운동' }], 'dist', (v) => { tagCat = v; tagSig = ''; });
+      const catBtns = Array.from(tagLab.parentNode.querySelectorAll('button')).slice(-3);
+      const kindBtns = KINDS.map((k) => controls.button(SHORT[k] + ' ▸ ?', () => { const L = window.__sim; if (L && L.tagCycle) { L.tagCycle(k, tagCat); tagSig = ''; } }));
+      function tagShow(on) { [tagLab].concat(catBtns, kindBtns).forEach((b) => { b.style.display = on ? '' : 'none'; }); trB.style.display = on ? 'none' : ''; }
+      function tagPaint() {
+        const L = window.__sim, tb = L && L.tagTable ? L.tagTable() : []; const sig = tagCat + JSON.stringify(tb); if (sig === tagSig) return; tagSig = sig;
+        const at = (k, c) => tb.find((q) => q.kind === k && q.cat === c) || { text: '' };
+        KINDS.forEach((k, i) => { const q = at(k, tagCat); kindBtns[i].textContent = SHORT[k] + ' ▸ ' + (q.text || '?'); kindBtns[i].classList.toggle('on', !!q.text);
+          featLab[i].show(true); featLab[i].set(['dist', 'order', 'move'].map((c) => { const r = at(k, c); return r.text ? (r.wrong ? '✗ ' : '') + r.text : '?'; }).join(' · ')); });
+        info('<b>' + CAT_ICON[tagCat] + '</b> 칸을 채우는 중이에요. 아래 <b>얼음·물·수증기</b> 버튼을 누를 때마다 태그가 바뀌어요.<br>입자 모형을 보며 고르고, 9칸을 모두 채우면 <b>✔ 확인하기</b>를 눌러요.' + (tb.some((q) => q.wrong) ? '<br>✗ 표시가 붙은 태그를 다시 골라 봐요.' : ''));
+        lastTxt = '';
+      }
+      tagShow(false);
       show(null);
       return {
         update(dt) {
           const l = ctx.lesson && ctx.lesson();
           vTick += dt;
-          if (l && l.state && vTick > 0.15) { vTick = 0; const view = l.state().view || null; if (view !== lastView) { lastView = view; show(view); } }
+          if (l && l.state && vTick > 0.15) {
+            vTick = 0; const sv = l.state(), tg = sv.scene === 'tags';
+            if (tg !== tagMode) { tagMode = tg; tagShow(tg); tagSig = ''; lastView = '#'; if (tg) { tagCat = 'dist'; catSeg.set('dist'); } }
+            if (tg) tagPaint();
+            else { const view = sv.view || null; if (view !== lastView) { lastView = view; show(view); } }
+          }
           tcount += dt;
           sysS.forEach((sys, i) => {
             sys.step(dt); sys.draw();

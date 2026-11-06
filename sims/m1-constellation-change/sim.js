@@ -1173,7 +1173,7 @@
         title: '공전하는 지구', short: '공전', icon: '🌍', phase: '모형',
         features: ['space'],
         intro: '<div class="si-link">🔗 <b>앞 단계에서</b> 별자리가 한 달에 약 30°씩 서쪽으로 밀려나는 것을 봤어요.</div>' +
-          '<p>왜 그럴까요? <b>북극 위 우주</b>에서 태양 둘레를 도는 지구를 내려다봐요. 바깥 고리는 태양이 지나는 길의 별자리 <b>황도 12궁</b>이에요. <b>청록 점선</b>은 한밤중에 지구에서 바라보는 방향이에요.</p>',
+          '<p>왜 그럴까요? <b>북극 위 우주</b>에서 태양 둘레를 도는 지구를 내려다봐요. 바깥 고리는 태양이 지나는 길의 별자리 <b>황도 12궁</b>이에요. <b>청록 화살표</b>는 한밤중에 지구에서 바라보는 방향이에요.</p>',
         setup() { resetState({ month: 4, scene: 'space', reach: true }); S.reached = { gem: false, sgr: false }; S.spaceTouched = false; },
         recap: '지구가 태양 둘레를 공전하면서 한밤중에 바라보는 방향이 바뀌어요. 그래서 계절마다 보이는 별자리가 달라요.',
         summary: '<div class="note-fig">' + FIG.winSum + '</div><ul><li>지구는 태양 둘레를 1년에 한 바퀴(하루 약 1°) <b>서→동</b>(북극 위에서 보면 반시계 방향)으로 <b>공전</b>해요.</li>' +
@@ -1181,12 +1181,12 @@
         missions: [
           {
             title: '🌍 겨울·여름 밤하늘 만들기',
-            goal: '지구를 끌어서 <b>한밤중 시선(청록 점선)</b>이 먼저 <b>쌍둥이자리</b>에, 그다음 <b>궁수자리</b>에 닿게 해 보세요.',
+            goal: '[📅] 막대로 지구를 옮겨서 <b>한밤중 시선(청록 화살표)</b>이 먼저 <b>쌍둥이자리</b>에, 그다음 <b>궁수자리</b>에 닿게 해 보세요.',
             hint: '지구는 궤도를 따라 움직여요. 쌍둥이자리는 1월(왼쪽), 궁수자리는 7월(오른쪽)일 때예요. 반시계 방향으로 돌려요.',
             setup() { resetState({ month: 4, scene: 'space', reach: true }); S.reached = { gem: false, sgr: false }; S.spaceTouched = false; },
             check: () => S.reached.gem && S.reached.sgr,
             hold: 0.5,
-            status: () => chk(S.reached.gem, '쌍둥이자리(겨울)') + ' → ' + chk(S.reached.sgr, '궁수자리(여름)') + (S.spaceTouched ? '' : '<br>💡 지구를 손가락으로 끌어 보세요.'),
+            status: () => chk(S.reached.gem, '쌍둥이자리(겨울)') + ' → ' + chk(S.reached.sgr, '궁수자리(여름)') + (S.spaceTouched ? '' : '<br>💡 [📅] 막대를 옮겨 보세요.'),
             explain: '지구가 공전하면서 한밤중에 바라보는 방향이 바뀌어요. 1월에는 <b>쌍둥이자리</b> 쪽, 7월에는 <b>궁수자리</b> 쪽을 보게 돼요. 그래서 계절마다 한밤중 하늘의 별자리가 달라요.',
           },
           {

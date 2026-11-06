@@ -1,7 +1,9 @@
 /* m1-sun-activity · 3D 태양의 표면·대기와 태양 활동
    광구(우리 눈에 보이는 표면)에는 쌀알 무늬와 어두운 흑점이 있어요 (흑점은 주변보다 온도가 낮아요).
    광구 바깥에는 채층과 코로나(태양 대기)가 있고, 홍염·플레어 같은 활동은 흑점이 많을 때 더 활발해요.
-   (크기와 모양은 이해를 돕도록 단순화한 모형이에요.) */
+   (크기와 모양은 이해를 돕도록 단순화한 모형이에요.)
+   3D로 보는 단계는 2단계 '태양의 대기'예요: 🌑 광구 가리기 버튼으로 가리개를 덮고, 이름표 버튼으로 채층·코로나·홍염을 찾아요
+   (2D의 가리개 끌기·눌러서 이름표 붙이기와 같은 결과). 나머지 단계는 그래프·카드를 눌러야 해서 2D예요. */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -11,6 +13,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: 13 * (PHN0 ? 1.05 : 1), theta: 0.4, phi: 1.3, fov: 45, target: [0, 0, 0], min: 6, max: 30 },
     autoRotate: 0,
+    levels: [1],
     build(ctx) {
       const { THREE, scene, root, label, info, controls } = ctx;
       /* ---------- 공통 도구 ---------- */
@@ -81,7 +84,7 @@
 
       scene.add(new THREE.AmbientLight(0xffffff, 0.2));
       root.add(starField(300, 70));
-      const RS = 3, st = { mode: 'surface', act: 60, occ: false, nSpot: 0 };
+      const RS = 3, st = { mode: 'atm', act: 60, occ: false, nSpot: 0 };
       const sun = new THREE.Group(); root.add(sun);   // 자전하는 태양
 
       /* 광구: 쌀알 무늬 + 가장자리가 어두워 보이는 효과 */
@@ -123,11 +126,11 @@
         fragmentShader: 'uniform float uR; uniform float uT; uniform float uK; varying vec3 vP; varying vec3 vC; void main(){ vec2 d = vP.xy - vC.xy; float r = length(d) / uR; if (r < 1.0) discard; float an = atan(d.y, d.x); float st = 0.62 + 0.38 * sin(an * 5.0 + uT * 0.3) * sin(an * 3.0 - uT * 0.2 + 1.3); float a = exp(-(r - 1.0) * 1.35) * st * uK; gl_FragColor = vec4(vec3(0.84, 0.9, 1.0) * a, a); }' }));
       corona.renderOrder = 2; root.add(corona);
       const chLab = label('채층', [RS * 0.95, -RS * 0.45, RS * 0.5], { size: 12, color: 'rgba(160,20,50,.92)' });
-      const coLab = label('코로나', [RS * 2.0, RS * 1.5, 0], { size: 12, color: 'rgba(40,60,130,.92)' });
+      const coLab = label('코로나', [RS * 1.55, RS * 1.25, 0], { size: 12, color: 'rgba(40,60,130,.92)' });
       const atLab = label('태양 대기', [0, RS * 2.1, 0], { size: 12.5, color: 'rgba(40,60,130,.92)' });
       /* 광구 가리개 (달) */
       const occ = new THREE.Mesh(new THREE.SphereGeometry(RS * 1.03, 48, 32), new THREE.MeshStandardMaterial({ color: 0x2a2f45, roughness: 1 })); occ.position.z = 0; root.add(occ);
-      const occLab = label('달이 광구를 가려요', [0, -RS * 1.2, 0], { size: 11.5 });
+      const occLab = label('가리개가 광구를 가려요', [0, -RS * 1.2, 0], { size: 11.5 });
 
       /* 홍염 · 플레어 · 태양풍 */
       const prom = [];
@@ -146,44 +149,65 @@
       const _wm = new THREE.Matrix4();
 
       function show() {
-        const m = st.mode, atm = m !== 'surface', act = m === 'act';
+        const m = st.mode, atm = m !== 'surface', act = m === 'act', AL = labs();
         chromo.visible = atm; corona.visible = atm; occ.visible = atm && st.occ;
-        prom.forEach((p) => { p.m.visible = act; }); flareG.visible = act; wind.visible = act;
+        prom.forEach((p) => { p.m.visible = atm; }); flareG.visible = act; wind.visible = act;
         spots.forEach((s, i) => { s.g.visible = i < st.nSpot; });
         spotLab.show(m !== 'atm' && spots[0].g.visible); spotLab2.show(m === 'surface'); granLab.show(m === 'surface');
-        chLab.show(atm); coLab.show(atm); atLab.show(atm && !st.occ); occLab.show(atm && st.occ);
-        promLab.show(act); flLab.show(act); wLab.show(act);
+        chLab.show(m === 'atm' ? !!AL.chromo : atm); coLab.show(m === 'atm' ? !!AL.corona : atm); atLab.show(atm && !st.occ); occLab.show(atm && st.occ);
+        promLab.show(m === 'atm' ? !!AL.prom : act); flLab.show(act); wLab.show(act);
         text();
       }
       function text() {
         const m = st.mode;
         info(m === 'surface' ? '<b>광구</b>는 우리 눈에 보이는 태양 표면이에요. 쌀알 무늬가 있어요.<br><b>흑점</b>은 주변(약 6000 °C)보다 온도가 낮아(약 4000 °C) 어둡게 보여요.<br>흑점이 이동하는 것으로 태양이 <b>자전</b>한다는 걸 알 수 있어요.'
-          : m === 'atm' ? '광구 바깥의 <b>채층</b>(붉은 층)과 <b>코로나</b>(희미한 흰 빛)를 <b>태양 대기</b>라고 해요.<br>광구가 너무 밝아 평소에는 안 보이지만, ' + (st.occ ? '지금처럼 <b>광구를 가리면</b> 코로나가 보여요 (개기 일식).' : '광구를 가리면(개기 일식) 코로나가 보여요.')
+          : m === 'atm' ? (msgT > 0 ? msg + '<br>' : '') + '광구 바깥의 <b>채층</b>(붉은 층)과 <b>코로나</b>(희미한 흰 빛)를 <b>태양 대기</b>라고 해요.<br>광구가 너무 밝아 평소에는 안 보이지만, ' + (st.occ ? '지금처럼 <b>광구를 가리면</b> 코로나와 <b>홍염</b>이 보여요 (개기 일식).' : '<b>🌑 광구 가리기</b>로 광구를 가리면(개기 일식) 코로나가 보여요.')
           : '흑점 수가 많은 <b>극대기</b>에는 <b>홍염·플레어</b>와 <b>태양풍</b>이 더 활발해요.<br>플레어가 일어나면 입자가 지구에 도달해 오로라가 생기거나 통신 장애가 생길 수 있어요.');
       }
       function setAct(v) { st.act = v; st.nSpot = Math.max(2, Math.round(2 + v / 100 * (MAXS - 2))); show(); }
-      controls.segment('', [{ value: 'surface', label: '광구' }, { value: 'atm', label: '대기' }, { value: 'act', label: '활동' }], 'surface', (v) => { st.mode = v; if (v === 'atm') { occB.style.display = ''; } else { occB.style.display = 'none'; } show(); });
-      const rA = controls.range('흑점 수', 0, 100, 5, st.act, (v) => setAct(v), (v) => (v < 25 ? '적음(극소기)' : v > 75 ? '많음(극대기)' : '보통'));
-      const occB = controls.button('🌑 광구 가리기', () => { st.occ = !st.occ; occB.classList.toggle('on', st.occ); show(); }); occB.style.display = 'none';
-      /* ▶ 재생: 약 11년 주기 — 흑점 수가 극소기 → 극대기 → 극소기로 변해요 (2D '활동의 변화'와 같은 내용) */
-      let pmode = false, built = false;
-      const cycPl = controls.player({
-        duration: 10, loop: true, autoplay: false, label: '11년 주기',
-        phases: [[0, '극소기'], [0.25, '늘어나요'], [0.5, '극대기'], [0.75, '줄어들어요']],
-        onFrame(p) { if (!built) return; if (st.mode !== 'act') { st.mode = 'act'; occB.style.display = 'none'; show(); } pmode = true; const v = Math.round(50 - 50 * Math.cos(2 * Math.PI * p)); if (v !== st.act) { st.act = v; setAct(v); rA.set(v); } },
+      /* 2D 실험과 같은 상태를 써요: 가리개 위치(S.occSp)와 붙인 이름표(S.atmoLab) */
+      const sim = () => { const l = ctx.lesson && ctx.lesson(); return l && l.S ? l.S : null; };
+      function labs() { const S = sim(); return (S && S.atmoLab) || {}; }
+      let msg = '', msgT = 0;
+      function say(h) { msg = h; msgT = 3; text(); }
+      // 🌑 광구 가리기: 2D 가리개 원판을 태양 위에 꼭 맞게 옮겨요 (다시 누르면 치워요)
+      const occB = controls.button('🌑 광구 가리기', () => {
+        const S = sim(); if (!S || !S.occSp) return;
+        const on = Math.hypot(S.occSp.x.target, S.occSp.y.target) > 0.01;
+        if (on) { S.occSp.x.target = 0; S.occSp.y.target = 0; S.occTouched = true; S.snapped = true; }
+        else { S.occSp.x.target = 1.7; S.occSp.y.target = 1.05; S.snapped = false; }
       });
-      built = true;
-      let lastSc = null;
-      setAct(st.act);
+      // 이름표: 2D에서 눌러 붙이는 것과 같아요 (광구를 가려야 대기가 보여요)
+      const NEED = { chromo: 0.95, corona: 0.9, prom: 0.9 }, LNAME = { chromo: '채층', corona: '코로나', prom: '홍염' };
+      controls.text('<b>이름표</b>');
+      const labB = ['chromo', 'corona', 'prom'].map((k) => {
+        const b = controls.button(LNAME[k], () => {
+          const S = sim(); if (!S) return;
+          if (!(S.c >= NEED[k])) { say('먼저 <b>🌑 광구 가리기</b>로 광구를 가려요. 광구가 너무 밝아 대기가 안 보여요.'); return; }
+          S.atmoLab = Object.assign({}, S.atmoLab, { [k]: true }); show();
+        });
+        return { k, b };
+      });
+      let lastSc = null, lastSig = '';
+      setAct(25);
 
       const seed = { t: 0 };
       return {
         update(dt, t) {
           const l = ctx.lesson && ctx.lesson(), sc = l && l.S && l.S.scene;
-          if (sc !== lastSc) { lastSc = sc; const m = sc === 'photo' ? 'surface' : sc === 'atmo' ? 'atm' : sc === 'earth' ? null : sc ? 'act' : null; if (m && m !== st.mode) { st.mode = m; occB.style.display = m === 'atm' ? '' : 'none'; show(); } }
+          if (sc !== lastSc) { lastSc = sc; const m = sc === 'photo' ? 'surface' : sc === 'atmo' ? 'atm' : sc === 'earth' ? null : sc ? 'act' : null; if (m && m !== st.mode) { st.mode = m; show(); } }
+          // 2D 가리개 상태 · 이름표를 3D에 그대로 보여 줘요
+          const S = l && l.S;
+          if (S && S.occSp) {
+            const on = Math.hypot(S.occSp.x.target, S.occSp.y.target) < 0.01 && S.occTouched, AL = S.atmoLab || {};
+            const sig = on + '|' + !!AL.chromo + !!AL.corona + !!AL.prom;
+            if (sig !== lastSig) { lastSig = sig; st.occ = on; occB.classList.toggle('on', on); labB.forEach((q) => q.b.classList.toggle('on', !!AL[q.k])); show(); }
+          }
+          if (msgT > 0) { msgT -= dt; if (msgT <= 0) text(); }
           sun.rotation.y += dt * 0.1;
           const act = st.mode === 'act' ? 0.6 + st.act / 100 : 0.4, bright = 0.9 + 0.1 * Math.sin(t * 1.5);
           if (st.mode !== 'surface') { corU.uT.value = t; corU.uK.value = (st.occ ? 1.5 : 0.4) * (0.9 + 0.1 * act + 0.05 * Math.sin(t * 1.7)); }
+          if (st.mode === 'atm') prom.forEach((p, i) => { p.m.scale.setScalar(1 + 0.04 * Math.sin(t * 2 + i)); });
           if (st.mode === 'act') {
             prom.forEach((p, i) => { p.m.visible = (i / prom.length) < 0.25 + st.act / 100 * 0.75; p.m.scale.setScalar(1 + 0.04 * Math.sin(t * 2 + i)); });
             promLab.show(prom[0].m.visible);

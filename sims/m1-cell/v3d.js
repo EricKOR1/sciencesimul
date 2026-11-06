@@ -19,7 +19,7 @@
     hint: '드래그: 돌리기 · 구조를 눌러 이름 알아보기',
     camera: { dist: narrow ? 9.2 : 6.8, theta: 0.75, phi: 1.12, min: 4, max: 18 },
     autoRotate: 0,
-    levels: [1],   // 2단계(세포 구조 찾기)의 모형과 같은 장면 — 현미경·카드 놓기 단계는 2D 화면에서
+    levels: [1],   // 2단계(세포 구조 찾기)만 3D — 현미경 · 하는 일 · 카드 놓기 단계는 2D
     build(ctx) {
       const { THREE, root, label, info, controls, renderer, camera } = ctx;
       renderer.localClippingEnabled = true;
@@ -219,7 +219,7 @@
             : '세포막 · 핵 · 미토콘드리아가 있어요. <b>세포벽과 엽록체는 없어요.</b> 구조를 눌러 보세요.';
         }
         const l = L2();
-        if (l && l.S && l.S.pickMode && isP) h += '<br><span style="color:#ffd34d">👆 2D 문제: 식물 세포에서 구조를 눌러 고르세요 · 고른 구조 ' + l.S.picks.size + '개</span>';
+        if (l && l.S && l.S.pickMode && isP) h += '<br><span style="color:#ffd34d">👆 식물 세포에서 구조를 눌러 고르세요 · 고른 구조 ' + l.S.picks.size + '개</span>';
         info(h);
       }
       controls.segment('세포', [{ value: 'plant', label: '🌿 식물 세포' }, { value: 'animal', label: '🐾 동물 세포' }], kind, (v) => {

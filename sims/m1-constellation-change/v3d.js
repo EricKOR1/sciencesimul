@@ -16,6 +16,7 @@
     hint: ' ',
     camera: { dist: wide ? 19 : 40, theta: 0.35, phi: 0.82, fov: 45, target: [0, 0, 0], min: 2.5, max: 50 },
     autoRotate: 0,
+    levels: [1],   // 2단계(공전하는 지구)만 3D — 남쪽 하늘 · 태양의 길 · 관측 카드(고리 누르기)는 2D
     build(ctx) {
       const { THREE, scene, root, label, info, controls, orbit } = ctx;
       const st = { m: 1, play: false, follow: false };
@@ -69,8 +70,8 @@
       const earthLab = label('지구', earth, { size: 13, offset: [0, 0.82, 0] });
       const seoulLab = label('서울', pin, { size: 11.5, color: 'rgba(150,20,20,.85)' }); seoulLab.off = [0, 0.3, 0];
       // 한밤중 방향 화살표 (태양 반대쪽)
-      const arrow = new THREE.Group(); const aLine = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 1, 8), new THREE.MeshBasicMaterial({ color: 0xffd34d })); aLine.position.y = 0.5; arrow.add(aLine);
-      const aCone = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.4, 12), new THREE.MeshBasicMaterial({ color: 0xffd34d })); arrow.add(aCone); root.add(arrow);
+      const arrow = new THREE.Group(); const aLine = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 1, 8), new THREE.MeshBasicMaterial({ color: 0x2dd4bf })); aLine.position.y = 0.5; arrow.add(aLine);
+      const aCone = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.4, 12), new THREE.MeshBasicMaterial({ color: 0x2dd4bf })); arrow.add(aCone); root.add(arrow);
       const dayLine = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3(1, 0, 0)]), new THREE.LineDashedMaterial({ color: 0xffb347, dashSize: 0.18, gapSize: 0.14, transparent: true, opacity: 0.8 })); root.add(dayLine);
 
       /* 황도 12궁 별자리 (링 위, 지구에서 바라본 모양) */
@@ -112,7 +113,7 @@
         });
         monLabs.forEach((l, i) => { const on = i + 1 === mi; l.el.style.background = on ? '#ffd34d' : ''; l.el.style.color = on ? '#1b2333' : ''; l.el.style.fontSize = on ? '13px' : '11px'; });
         {
-          const html = ('<b>' + mi + '월</b> 한밤중 · 지구가 태양의 반대쪽, <b>' + (mid ? mid.c.name : '') + '</b> 🌙 방향을 바라봐요.<br>' +
+          const html = ('<b>' + mi + '월</b> 한밤중 · 지구가 태양의 반대쪽, <b>' + (mid ? mid.c.name : '') + '</b> 🌙 방향(청록 화살표)을 바라봐요.<br>' +
             '<span style="color:#ffb347">☀ 태양 쪽(' + (sunC ? sunC.c.name : '') + ')</span>은 낮이라 별이 안 보여요.<br>지구가 공전하면 한밤중 방향이 달라져 <b>별자리가 계절마다 바뀌어요.</b>');
           if (html !== last) { last = html; info(html); }
         }
@@ -123,7 +124,11 @@
       const monthName = (m) => (Math.floor(m + 1e-6) > 12 ? 1 : Math.floor(m + 1e-6)) + '월';
       const probe = controls.text(''); probe.style.display = 'none'; const ctlEl = probe.parentElement;
       const fixLab = (em) => { const k = ctlEl.children, inp = k[k.length - 1], l = k[k.length - 2]; l.style.minWidth = em + 'em'; l.style.display = 'inline-block'; const g = document.createElement('span'); g.style.cssText = 'display:inline-flex;align-items:center;gap:8px;flex-wrap:nowrap'; ctlEl.insertBefore(g, l); g.append(l, inp); };
-      const rng = controls.range('📅', 1, 13, 0.05, st.m, (v) => { st.m = v; st.play = false; playB.textContent = '▶ 공전 재생'; refresh(); }, monthName);
+      /* 3D 막대 → 2D 실험 상태(S.th)도 같이 바꿔 미션 진행이 이어지게 */
+      const L2 = () => window.__sim || null, mOf = (th) => ((((th - 180) / 30) % 12) + 12) % 12 + 1;
+      let rngV = st.m;
+      const to2D = (m, instant) => { const L = L2(); if (L && L.setMonth && L.S) { L.setMonth(m, instant); L.S.spaceTouched = true; L.S.hint = false; } };
+      const rng = controls.range('📅', 1, 13, 0.05, st.m, (v) => { rngV = v; st.play = false; playB.textContent = '▶ 공전 재생'; to2D(v, false); }, monthName);
       fixLab(4.5);
       const playB = controls.button('▶ 공전 재생', () => { st.play = !st.play; playB.textContent = st.play ? '⏸ 멈춤' : '▶ 공전 재생'; });
       controls.text('').style.cssText = 'flex-basis:100%;height:0;padding:0;margin:-3px 0';
@@ -135,7 +140,15 @@
 
       return {
         update(dt) {
-          if (st.play) { st.m += dt / 1.2; if (st.m >= 13) st.m -= 12; rng.set(st.m); refresh(); }
+          if (st.play) { st.m += dt / 1.2; if (st.m >= 13) st.m -= 12; rngV = st.m; rng.set(st.m); to2D(st.m, true); refresh(); }
+          else {   // 2D 상태(움직이는 지구 S.thA)를 따라가요
+            const S2 = L2() && L2().S;
+            if (S2 && typeof S2.thA === 'number') {
+              const mA = mOf(S2.thA), mT = mOf(S2.th);
+              if (Math.abs(mA - st.m) > 0.003) { st.m = mA; refresh(); }
+              if (Math.abs(mT - rngV) > 0.03 && Math.abs(mT - rngV) < 11.9) { rngV = mT; rng.set(mT); }
+            }
+          }
           if (st.follow) { const p = earth.position; orbit.tx += (p.x - orbit.tx) * Math.min(1, dt * 8); orbit.ty += (p.y - orbit.ty) * Math.min(1, dt * 8); orbit.tz += (p.z - orbit.tz) * Math.min(1, dt * 8); }
           seoulLab.show(orbit.dist < 9);
         },
