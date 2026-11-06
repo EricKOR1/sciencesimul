@@ -117,7 +117,7 @@
 .v3-player input[type=range] { flex: 1; min-width: 80px; width: auto; }
 .v3-player .v3-ph { font-weight: 800; font-size: 13px; color: #ffd34d; min-width: 4.5em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 40%; }
 .v3-player .v3-sp { min-width: 48px; }
-.v3-hint { position: absolute; right: 10px; bottom: 8px; font-size: 12px; color: #9fb0d4; pointer-events: none; }
+.v3-hint { position: absolute; right: 10px; bottom: 8px; padding: 2px 8px; border-radius: 8px; background: rgba(8,12,24,.62); font-size: 12px; color: #dbe4f7; pointer-events: none; }
 .v3-msg { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 20px; text-align: center; font-weight: 800; }
 .v3-wrap.full { position: fixed; inset: 0; z-index: 200; }
 .v3-wrap.full ~ .v3-seg.float, .v3-wrap.full + .v3-seg { position: fixed; z-index: 201; }
