@@ -133,14 +133,14 @@
           <div class="btn-row"><button class="btn btn-sm btn-primary" id="bColRun" type="button">▶ 용암 식히기</button><button class="btn btn-sm" id="bColReset" type="button">↺ 되돌리기</button></div>
         </div>
 
-        <div class="control" data-modes="sheet">
+        <div class="control" data-modes="sheet" data-v3="keep">
           <div class="control-head"><span>⛏ 깎여 나간 위 지층 두께</span><output id="oE">0.0 km</output></div>
           <input type="range" id="sE" min="0" max="6" step="0.5" value="0" aria-label="침식으로 깎여 나간 두께">
           <div class="ticks"><span>0</span><span>3</span><span>6 km</span></div>
           <p class="ctrl-note">화강암체 위를 덮은 지층이 침식으로 깎이면 압력이 어떻게 될까요?</p>
         </div>
 
-        <div class="control" data-modes="ign col sheet">
+        <div class="control" data-modes="ign col sheet" data-v3="keep">
           <div class="control-head"><span>📝 관찰 기록</span></div>
           <div class="row-sel"><b>A</b><select class="mini-sel" id="selA" aria-label="A는 어떤 관입암체"><option value="">관입암체 고르기</option><option value="dike">암맥 (층리를 가로질러요)</option><option value="sill">암상 (층리와 나란해요)</option></select></div>
           <div class="row-sel"><b>B</b><select class="mini-sel" id="selB" aria-label="B는 어떤 관입암체"><option value="">관입암체 고르기</option><option value="dike">암맥 (층리를 가로질러요)</option><option value="sill">암상 (층리와 나란해요)</option></select></div>

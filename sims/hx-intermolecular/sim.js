@@ -1048,7 +1048,7 @@
         },
         {
           title: '분자 카드 분류하기', manual: true,
-          goal: '분자 카드 8장을 가장 알맞은 힘의 상자에 끌어 놓고 <b>✔ 확인하기</b>를 눌러요.',
+          goal: '분자 카드 8장을 가장 알맞은 힘의 상자에 놓고 <b>✔ 확인하기</b>를 눌러요. (3D 막대의 ◀ ▶로 분자를 고르고 상자 단추를 눌러요)',
           hint: '순서대로 물어요. ① N·O·F에 직접 결합한 H가 있나요? → 수소 결합. ② 없다면 극성 분자인가요? → 쌍극자–쌍극자 힘. ③ 무극성 분자(CO₂·CH₄는 대칭 구조)면 분산력이에요.',
           setup() { S.lock = true; S.gate = ''; S.sub.forces = 'sort'; cardsInit(); cardsLayout(); setMode('forces'); },
           check() {

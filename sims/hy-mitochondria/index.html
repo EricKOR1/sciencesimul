@@ -101,6 +101,8 @@
     .srch-list .sub { display: block; font-weight: 700; font-size: 12px; color: var(--muted); }
     .num-in.tl { text-align: left; font: 700 14px var(--font); margin-bottom: 4px; }
     [hidden] { display: none !important; }
+    body:not(.v3-mode) .only3d { display: none; }
+    body.v3-mode .only2d { display: none; }
   </style>
 
 </head>
@@ -159,7 +161,7 @@
         </div>
         <div class="control" data-modes="map">
           <div class="control-head"><span>📍 반응이 일어나는 곳</span></div>
-          <p class="ctrl-note">반응 카드를 <b>끌어서</b> 알맞은 곳에 놓거나, 카드를 <b>누른 뒤</b> 구역을 눌러요.</p>
+          <p class="ctrl-note"><span class="only2d">반응 카드를 <b>끌어서</b> 알맞은 곳에 놓거나, 카드를 <b>누른 뒤</b> 구역을 눌러요.</span><span class="only3d">3D 막대에서 카드를 고르고(◀ ▶) 구역 단추를 눌러요.</span></p>
           <p class="ctrl-note" id="mpNote"></p>
           <div class="btn-row"><button class="btn btn-sm" id="mpReset" type="button">↺ 카드 다시 모으기</button></div>
         </div>

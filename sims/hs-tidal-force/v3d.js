@@ -108,15 +108,15 @@
       const shaftG = new THREE.CylinderGeometry(0.035, 0.035, 1, 10); shaftG.translate(0, 0.5, 0);
       const headG = new THREE.ConeGeometry(0.1, 0.22, 14); headG.translate(0, 0.11, 0);
       const PT = ['A', 'B', 'C', 'D'].map((nm) => {
-        const ball = new THREE.Mesh(new THREE.SphereGeometry(0.11, 16, 12), new THREE.MeshBasicMaterial({ color: 0xf59e0b })); ptG.add(ball);
+        const ball = new THREE.Mesh(new THREE.SphereGeometry(0.11, 16, 12), new THREE.MeshBasicMaterial({ color: 0xf59e0b, depthTest: false, transparent: true })); ball.renderOrder = 11; ptG.add(ball);
         const mk3 = (c) => {   // 굵은 화살표 (원기둥 + 원뿔): setDirection · setLength는 ArrowHelper와 같은 방식으로 써요
-          const g = new THREE.Group(), m = new THREE.MeshBasicMaterial({ color: c }), sh = new THREE.Mesh(shaftG, m), hd = new THREE.Mesh(headG, m); g.add(sh, hd); ptG.add(g);
+          const g = new THREE.Group(), m = new THREE.MeshBasicMaterial({ color: c, depthTest: false, transparent: true }), sh = new THREE.Mesh(shaftG, m), hd = new THREE.Mesh(headG, m); sh.renderOrder = hd.renderOrder = 10; g.add(sh, hd); ptG.add(g);   // 2D처럼 지구 위에 겹쳐 그려요
           g.setDirection = (d) => g.quaternion.setFromUnitVectors(Y, d);
           g.setLength = (L, hl) => { const h = Math.min(hl || 0.22, L * 0.5); sh.scale.set(1, Math.max(0.001, L - h), 1); hd.scale.set(1, h / 0.22, 1); hd.position.y = L - h; };
           return g;
         };
         const L = label(nm, ball, { offset: [0, 0.32, 0], color: 'rgba(180,83,9,.95)' });
-        return { ball, L, pull: mk3(0x60a5fa), mean: mk3(0xcbd5e1), tid: mk3(0xf87171) };
+        const o = { ball, L, pull: mk3(0x60a5fa), mean: mk3(0xcbd5e1), tid: mk3(0xef4444) }; o.tid.scale.set(1.5, 1, 1.5); return o;
       });
       let stg = 3, hiMax = 0.3, loMin = -0.3;
       const q1 = new THREE.Vector3(), q2 = new THREE.Vector3(), q3 = new THREE.Vector3();

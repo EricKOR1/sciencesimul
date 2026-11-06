@@ -35,7 +35,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHONE ? 22 : 16.5, theta: 0.3, phi: 1.3, min: 8, max: 36, target: [-1.2, 3.9, 0] },
     autoRotate: 0.08,
-    levels: [0, 1],   // 1단계(촉매 실험) · 2단계(에너지 도표). 3~5단계는 2D 화면이에요
+    levels: [1],   // 2단계(에너지 도표 · 평형)만 3D예요. 1단계(촉매 실험 장치·그래프·저울)와 3~5단계는 2D 화면이에요
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3, UP = new V3(0, 1, 0);
@@ -103,7 +103,33 @@
         phases: [[0, STAGES[0]], [0.125, STAGES[1]], [0.375, STAGES[2]], [0.625, STAGES[3]], [0.875, STAGES[4]]],
         onFrame(p) { prog = p * 4; demo = true; },
       });
-      controls.text('촉매 있음 · 없음은 2D 조작판에서 골라요.');
+      controls.text('촉매 있음 · 없음은 오른쪽 조작판에서 골라요.');
+
+      /* 평형 화면: 2D와 같은 농도–시간 그래프를 오른쪽 아래 작은 창에 그려요 (보라 = 촉매 없음, 청록 = 촉매 있음 · 실선 [A], 점선 [B]) */
+      const view = ctx.renderer.domElement.parentElement;
+      const box = document.createElement('div');
+      box.style.cssText = 'position:absolute;right:10px;bottom:30px;z-index:3;padding:6px 8px;border-radius:14px;background:rgba(8,12,24,.8);border:1px solid rgba(255,255,255,.22);text-align:center;pointer-events:none;color:#e8eefc;font-size:12px;font-weight:800;display:none';
+      const CW = PHONE ? 170 : 230, CH = PHONE ? 100 : 130, cvs = document.createElement('canvas'); cvs.width = CW * 2; cvs.height = CH * 2; cvs.style.cssText = 'display:block;width:' + CW + 'px;height:' + CH + 'px;margin:3px auto 0';
+      const cap = document.createElement('div'); cap.textContent = 'A ⇌ B 농도–시간 (실선 [A] · 점선 [B])';
+      box.append(cap, cvs); view.appendChild(box);
+      const g2 = cvs.getContext('2d');
+      function drawEq() {
+        const w = W(), S = w && w.S, Q = S && S.eq; if (!Q || !w.aAt) return;
+        const Wd = cvs.width, H = cvs.height, L = 40, B = 30, T = 10, R = 10, TM = w.EQ_T || 40;
+        const X = (t) => L + t / TM * (Wd - L - R), Y = (v) => T + (1 - v) * (H - T - B);
+        g2.clearRect(0, 0, Wd, H);
+        g2.strokeStyle = 'rgba(255,255,255,.3)'; g2.lineWidth = 2; g2.beginPath(); g2.moveTo(L, T); g2.lineTo(L, H - B); g2.lineTo(Wd - R, H - B); g2.stroke();
+        g2.fillStyle = 'rgba(232,238,252,.85)'; g2.font = '700 20px sans-serif'; g2.textAlign = 'center'; g2.fillText('시간 (s) →', (L + Wd - R) / 2, H - 4);
+        g2.textAlign = 'right'; g2.fillText('1.0', L - 5, Y(1) + 7); g2.fillText('0', L - 5, Y(0) + 4);
+        g2.setLineDash([6, 6]); g2.strokeStyle = 'rgba(203,213,225,.55)'; g2.lineWidth = 2; [w.A_EQ, 1 - w.A_EQ].forEach((v) => { g2.beginPath(); g2.moveTo(L, Y(v)); g2.lineTo(Wd - R, Y(v)); g2.stroke(); }); g2.setLineDash([]);
+        g2.textAlign = 'right'; g2.fillStyle = 'rgba(203,213,225,.9)'; g2.font = '700 17px sans-serif'; g2.fillText('평형 [A] 0.40', Wd - R - 2, Y(w.A_EQ) + 18); g2.fillText('평형 [B] 0.60', Wd - R - 2, Y(1 - w.A_EQ) - 6);
+        const show = Q.mode === 2 ? [0, 1] : [Q.mode], tc = Q.ph === 'idle' ? 0 : Q.tc;
+        show.forEach((m) => { const col = m ? '#2dd4bf' : '#a78bfa';
+          [false, true].forEach((isB) => { g2.strokeStyle = col; g2.lineWidth = isB ? 3 : 5; g2.setLineDash(isB ? [7, 6] : []); g2.beginPath();
+            for (let t = 0; t <= tc + 1e-6; t += 0.25) { const a = w.aAt(m, t), x = X(t), y = Y(isB ? 1 - a : a); t === 0 ? g2.moveTo(x, y) : g2.lineTo(x, y); } g2.stroke(); g2.setLineDash([]); });
+          const te = w.tEq ? w.tEq(m) : 99; if (tc >= te) { g2.strokeStyle = col; g2.lineWidth = 2; g2.beginPath(); g2.moveTo(X(te), T); g2.lineTo(X(te), H - B); g2.stroke(); g2.textAlign = 'left'; g2.fillStyle = col; g2.fillText('평형 약 ' + Math.round(te) + ' s', X(te) + 5, T + 18 + (m ? 22 : 0)); }
+        });
+      }
 
       /* 지금 2D 화면의 촉매 */
       function read() {
@@ -115,6 +141,7 @@
       return {
         update(dt, t) {
           read();
+          { const S = W() && W().S, on = !!(S && S.mode === 'eq'); box.style.display = on ? '' : 'none'; if (on) drawEq(); }
           if (!pl.playing && pl.p === 0) prog = 0;
           const st = apply(Math.min(4, prog), t);
           const body = !cat ? '촉매가 없으면 H₂O₂ 분자끼리 Eₐ(75 kJ) 이상의 에너지로 부딪혀야 해서 반응이 거의 일어나지 않아요.' : [

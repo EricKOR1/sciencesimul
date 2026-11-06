@@ -424,7 +424,7 @@
   };
   let game = null;
   const FREE = () => !!(game && game.free);
-  const VIEW_LABEL = { map: '🗺️ 은하 지도 (쐐기 도표)', grid: '🔢 격자 셀의 은하 수와 밀도 대비', struct: '🏗️ 큰 구조의 이름과 크기', origin: '🧪 구조는 어떻게 자랐을까?' };
+  const VIEW_LABEL = { map: '🗺️ 은하 지도 (쐐기 도표)', grid: '🔢 격자 셀의 은하 수와 밀도 대비', struct: '🕸️ 큰 구조의 이름과 크기', origin: '🧪 구조는 어떻게 자랐을까?' };
   const modeBtns = $$('#modeSeg button');
   const darkP = (x, y, w, h) => D.shadow(() => { ctx.fillStyle = '#0a1226'; rr(x, y, w, h, 14).fill(); }, { blur: 6, y: 2, color: 'rgba(20,40,80,.2)' });
   const markersOK = () => S.mp.mk.filter((m) => m.ok);
@@ -637,7 +637,7 @@
     const L = LStr(), A = L.A, P = L.P, ST = S.st;
     ST.fog = approach(ST.fog, ST.fogT, dt, 2.2); if (Math.abs(ST.fog - ST.fogT) < 0.003) ST.fog = ST.fogT;
     panel(A.x, A.y, A.w, A.h, { r: 14 });
-    T(A.x + 14, A.y + 24 * FS, (PHONE ? '🏗️ 이름과 크기(Mpc)를 연결해요' : '🏗️ 구조의 이름과 크기를 연결해요'), PHONE ? 12.5 : 14.5, '#1e293b', 'left', 800);
+    T(A.x + 14, A.y + 24 * FS, (PHONE ? '🕸️ 이름과 크기(Mpc)를 연결해요' : '🕸️ 구조의 이름과 크기를 연결해요'), PHONE ? 12.5 : 14.5, '#1e293b', 'left', 800);
     cSt.draw(dt, {});
     darkP(P.x, P.y, P.w, P.h);
     ctx.save(); rr(P.x, P.y, P.w, P.h, 14); ctx.clip();
@@ -926,7 +926,7 @@
       ],
     },
     {
-      title: '큰 구조: 장성 · 보이드 · 초은하단', short: '큰 구조', icon: '🏗️', phase: '설명',
+      title: '큰 구조: 장성 · 보이드 · 초은하단', short: '큰 구조', icon: '🕸️', phase: '설명',
       intro: '<div class="si-link">🔗 <b>앞 단계에서</b> 셀의 밀도로 은하단·필라멘트·보이드를 구분했어요. 이번에는 우주의 거시적 구조의 <b>이름과 크기</b>를 정리하고, 지도에서 은하단이 <b>길쭉하게</b> 보이는 까닭을 알아봐요.</div>' +
         '<p><b>크기</b>: 은하단 약 10 Mpc, 보이드 20~100 Mpc, 초은하단 30~100 Mpc 이상, CfA 장성 길이 약 200 Mpc, 슬론 장성 길이 약 400 Mpc. 1 Mpc = 326만 광년이에요.</p>',
       features: ['struct'],
@@ -1014,7 +1014,7 @@
 
   game = SciSim.game({
     simId: 'hu-cosmic-web', mount: '#game', badge: '우주 그물 탐험가', homeHref: '../../index.html#hu',
-    featureLabels: { map: '🗺️ 확대·이동 · 은하단/보이드 표시 · 무작위 비교', grid: '🔢 격자 셀 · 밀도 대비 δ 색 지도', struct: '🏗️ 구조 이름·크기 카드 · 신의 손가락', origin: '🧪 요동 · 우주 나이 슬라이더 (입자 모형)' },
+    featureLabels: { map: '🗺️ 확대·이동 · 은하단/보이드 표시 · 무작위 비교', grid: '🔢 격자 셀 · 밀도 대비 δ 색 지도', struct: '🕸️ 구조 이름·크기 카드 · 신의 손가락', origin: '🧪 요동 · 우주 나이 슬라이더 (입자 모형)' },
     onFeatures() { updateCtl(); },
     levels,
   });

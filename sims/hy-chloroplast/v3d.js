@@ -21,7 +21,7 @@
     hint: '드래그: 돌리기 · 두 손가락/휠: 확대',
     camera: { dist: narrow ? 3.9 : 2.85, target: narrow ? [0, 0.25, 0] : [0, 0, 0], theta: 0.38, phi: 1.42, min: 2, max: 9 },
     autoRotate: 0,
-    levels: [0, 2],   // 2단계(색소 분리)와 4단계(추론)는 2D 화면에서, 3D 모형 조립 · 구조와 기능 단계에서 3D로 시작
+    levels: [0],   // 1단계(모형 조립 · 단면 이름: 3D 막대의 부품 · 자리 단추와 핀). 2단계(색소 분리) · 3단계(2D 단면 핀 · 흡수 스펙트럼) · 4단계(추론)는 2D 화면이에요
     build(ctx) {
       const { THREE, root, label, info, controls, renderer } = ctx;
       renderer.localClippingEnabled = true;
@@ -167,7 +167,8 @@
 
       function applyViz() {
         const c = plane.constant, name = mode === 'name';
-        names.forEach((L) => L.show(name && L.pz < c - 0.02));
+        names.forEach((L, i) => L.show(name && L.pz < c - 0.02 && asmName(i)));
+        asmMarks();
         const vis = labelSyn.pos.z < c - 0.02;
         synO.position.copy(labelSyn.tip);
         labSyn.show(mode === 'light' && vis);
@@ -176,6 +177,7 @@
         writeInfo();
       }
       function writeInfo() {
+        const ah = asmHtml(); if (ah) { info(ah); return; }
         if (mode === 'name') info('<b>이중막</b>(외막·내막) 안쪽 액체가 <b style="color:#b6e36a">스트로마</b>예요. 스트로마에는 틸라코이드가 동전처럼 쌓인 <b style="color:#4ade80">그라나</b>가 있고, <b style="color:#5eead4">스트로마 틸라코이드</b>가 그라나를 이어요.<br>납작한 주머니 안쪽은 <b style="color:#fcd34d">틸라코이드 내부</b>예요.');
         else if (mode === 'light') info('<b>명반응 (막에서)</b>: 틸라코이드 막의 색소가 <b>빛</b>을 흡수하고 전자가 전달되면서 틸라코이드 <b>내부</b>에 H⁺가 쌓여요.<br>H⁺가 <b style="color:#fbbf24">ATP 합성 효소</b>(머리는 <b>스트로마</b> 쪽)를 지나 나올 때 <b>ATP</b>가 만들어져요.');
         else info('<b>탄소 고정 (스트로마에서)</b>: 스트로마의 <b>효소</b>가 CO₂로 <b>포도당</b>을 만들어요. 명반응에서 만든 ATP를 써요.<br>남는 포도당은 <b>녹말 알갱이</b>로 임시 저장해요.');
@@ -198,8 +200,57 @@
           if (m !== mode) { mode = m; segV.set(m); applyViz(); }
         },
       });
+      /* ---- 1단계 조립 · 이름 붙이기: 2D의 부품 카드(bPlace) · 단면 핀과 같은 상태 ----
+         ? 자리 번호는 부품 순서와 다르게 섞어 두어요. 부품을 고르고(◀ ▶) 자리 단추를 누르면 2D의 bPlace가 판정해요. */
+      const MP = [4, 7, 1, 9, 3, 6, 2, 8, 5], CIRC = '123456789';
+      const LB = () => { const L = ctx.lesson(); return L && L.S && L.S.mode === 'build' && L.S.b ? L : null; };
+      const asmOn = () => { const L = LB(); return !!(L && !L.S.b.nameMode && L.S.b.placed.some((x) => !x)); };
+      const pinOn = () => { const L = LB(); return !!(L && L.S.b.nameMode); };
+      function asmName(i) { const L = LB(); if (!L) return true; if (L.S.b.nameMode) return false; return !!L.S.b.placed[i]; }
+      const qLabs = nameDefs.map((d, i) => { const L = label('? ' + CIRC[MP[i] - 1], A(d[2][0], d[2][1], Math.min(d[2][2], -0.02)), { color: '#b45309', size: 12 }); L.show(false); return L; });
+      const PIN = [[0, [1.02, 0.30, -0.03]], [2, [0.50, -0.33, -0.1]], [1, [-0.92, 0.27, -0.03]], [5, [0.30, 0.07, -0.1]], [3, [-0.38, 0.22, -0.1]]];
+      const pinLabs = PIN.map((q, k) => { const L = label('핀 ' + '①②③④⑤'[k], A(q[1][0], q[1][1], q[1][2]), { color: '#1d4ed8', size: 12 }); L.show(false); return L; });
+      function asmMarks() {
+        const L = LB(), on = asmOn(), pn = pinOn();
+        qLabs.forEach((q, i) => q.show(on && !L.S.b.placed[i]));
+        pinLabs.forEach((q) => q.show(pn));
+      }
+      function asmHtml() {
+        const L = LB(); if (!L) return '';
+        if (pinOn()) return '<b>세로 단면</b> · 핀 ①~⑤가 가리키는 구조의 이름을 오른쪽 목록에서 골라요.<br>이중막(외막 · 내막) · 스트로마 · 틸라코이드 · 그라나의 자리를 살펴봐요.';
+        if (!asmOn()) return '';
+        const b = L.S.b, n = b.placed.filter(Boolean).length, P = L.PARTS[b.sel];
+        return '<b>엽록체 조립 ' + n + ' / 9</b><br>' + (P && !b.placed[b.sel] ? '고른 부품: <b>' + P.name + '</b> · ' + P.clue + '<br>알맞은 <b>?</b> 자리의 번호 단추를 눌러요.' : '<b>부품 ◀ ▶</b>로 부품 카드를 골라요.');
+      }
+      function pickPart(d) {
+        const L = LB(); if (!L) return; const b = L.S.b, ts = b.tok.filter((t) => !b.placed[t.pi]); if (!ts.length) return;
+        let k = ts.findIndex((t) => t.pi === b.sel); k = k < 0 ? (d > 0 ? 0 : ts.length - 1) : (k + d + ts.length) % ts.length;
+        b.sel = ts[k].pi; asmSig = '';
+      }
+      function putPart(i) {
+        const L = LB(); if (!L || !L.bPlace) return; const b = L.S.b;
+        if (b.sel < 0 || b.placed[b.sel]) { pickPart(1); }
+        const t = b.tok.find((q) => q.pi === b.sel); if (!t) return;
+        const ok = L.bPlace(t, i);
+        if (ok) { const ts = b.tok.filter((q) => !b.placed[q.pi]); b.sel = ts.length ? ts[0].pi : -1; }
+        else b.sel = t.pi;
+        asmSig = '';
+      }
+      const ctlBox = renderer.domElement.closest('.v3-wrap').querySelector('.v3-ctl'), nA0 = ctlBox.children.length;
+      controls.text('<b>부품</b>'); controls.button('◀', () => pickPart(-1)); controls.button('▶', () => pickPart(1)); controls.text('<b>자리</b>');
+      const slotBtn = [1, 2, 3, 4, 5, 6, 7, 8, 9].map((k) => { const i = MP.indexOf(k); const bt = controls.button('? ' + CIRC[k - 1], () => putPart(i)); return { bt, i }; });
+      const asmEls = Array.prototype.slice.call(ctlBox.children, nA0);
+      let asmSig = null;
+      function asmTick() {
+        const L = LB(), b = L && L.S.b, sg = !L ? 'x' : (b.nameMode ? 'n' : 'a') + b.placed.map((x) => (x ? 1 : 0)).join('') + b.sel;
+        if (sg === asmSig) return; asmSig = sg;
+        const on = asmOn();
+        asmEls.forEach((e) => { e.style.display = on ? '' : 'none'; });
+        if (on) slotBtn.forEach((q) => { q.bt.style.display = b.placed[q.i] ? 'none' : ''; });
+        applyViz();
+      }
       setCut(cut);
-      let lastMode2d = null, lastSt = null;
+      let lastMode2d = null, lastSt = null, lastTh = null;
       function poll() {
         const L = ctx.lesson(); if (!L || !L.S) return;
         const m = L.S.mode;
@@ -208,6 +259,8 @@
           const nm = m === 'func' ? 'light' : m === 'build' ? 'name' : null;
           if (nm && nm !== mode) { mode = nm; usePlayer = false; segV.set(nm); applyViz(); }
         }
+        if (m === 'build' && L.S.b && L.S.b.th !== lastTh) { if (lastTh != null && ctx.orbit) ctx.orbit.theta = L.S.b.th + 0.03; lastTh = L.S.b.th; }   // 🔄 한 바퀴 · ↺ 정면
+        asmTick();
         if (m === 'build' && L.S.b && L.S.b.sT !== lastSt) { lastSt = L.S.b.sT; if (Math.abs(L.S.b.sT - cut) > 1e-3) { cutR.set(Math.round(L.S.b.sT * 100)); setCut(L.S.b.sT); } }
       }
 

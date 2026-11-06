@@ -836,7 +836,7 @@
         },
         {
           id: 'acct', title: '구슬 수 회계', manual: true,
-          goal: '장부를 보고 <b>회로 밖으로 나간 G3P 1분자의 탄소 구슬 수</b>와 <b>RuBP로 재생에 쓰인 탄소 구슬 수</b>를 쓰세요.',
+          goal: '장부나 구슬을 보고 <b>회로 밖으로 나간 G3P 1분자의 탄소 구슬 수</b>와 <b>RuBP로 재생에 쓰인 탄소 구슬 수</b>를 쓰세요.',
           hint: 'G3P는 3탄소 당이에요. 재생에 쓰인 G3P는 5분자이고 각각 탄소가 3개예요.',
           setup() { setMode('cal'); S.cv_accOn = true; ['aG', 'aR'].forEach((id) => { $('#' + id).value = ''; }); updateCtl(); },
           check() {

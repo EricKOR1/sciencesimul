@@ -15,6 +15,7 @@
   const f2 = (x) => (Math.round(x * 100) / 100).toFixed(2).replace('-', '−');
 
   window.SciSim3D.attach({
+    levels: [2, 3],
     title: '별의 공간 운동 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: 5, theta: 0.8, phi: 1.1, fov: 40, target: [1, 0, 0], min: 1.5, max: 160 },
@@ -181,6 +182,7 @@
       }
 
       /* ===================== 조작 ===================== */
+      const selBtns = []; let selKey = null;
       let starRange, dipRange, yawRange, starSeg = null; let player = null, syncing = false, ready = false;
       const starCtl = grp(() => {
         starRange = controls.range('흐른 시간', 0, 20000, 250, tYr, (v) => { tYr = v; buildStar(); try { sim.setTv(v); } catch (e) { /* 무시 */ } }, (v) => v.toLocaleString('en-US') + '년');
@@ -193,7 +195,20 @@
         dipRange = controls.range('시간', -100000, 100000, 5000, dipT, (v) => { dipT = v; updateDip(); try { sim.setT(v); } catch (e) { /* 무시 */ } }, (v) => (v === 0 ? '지금' : (v > 0 ? '+' : '−') + Math.abs(v / 1000) + '천 년'));
         const zB = controls.button('🔍 확대', () => { zoomOn = !zoomOn; zB.classList.toggle('on', zoomOn); });
         const lB = controls.button('지구에서 잇기 ✓', () => { showLines = !showLines; lB.classList.toggle('on', showLines); lB.textContent = '지구에서 잇기 ' + (showLines ? '✓' : '✕'); updateDip(); }); lB.classList.add('on');
+        /* 같은 운동 집단 고르기: 2D에서 별을 누른 것과 같아요 (S.cn.sel을 그대로 바꿔요) */
+        controls.text('별 고르기');
+        DIP.forEach((st, i) => { selBtns.push(controls.button(st.n, () => {
+          const S = lessonS(); if (!S.cn || !S.cn.sel) return;
+          if (S.cn.sel.has(i)) S.cn.sel.delete(i); else S.cn.sel.add(i); S.cn.grpOk = false;
+          try { sim.updateCtl(); } catch (e) { /* 무시 */ } syncSel();
+        })); });
       });
+      function syncSel() {
+        const S = lessonS(), sel = S.cn && S.cn.sel, k = sel ? Array.from(sel).sort().join(',') : '';
+        if (k === selKey) return; selKey = k;
+        selBtns.forEach((b, i) => b.classList.toggle('on', !!(sel && sel.has(i))));
+        dipLabs.forEach((l, i) => l.set((sel && sel.has(i) ? '✓ ' : '') + DIP[i].n));
+      }
       function setScene(v) {
         scene = v;
         starCtl.forEach((n) => { n.style.display = v === 'star' ? '' : 'none'; });
@@ -244,7 +259,7 @@
       let acc = 0, lastKn = '';
       return {
         update(dt) {
-          followLive();
+          followLive(); if (scene === 'dip') syncSel();
           if (orbit.tx === 1 && orbit.ty === 0 && orbit.tz === 0 && orbit.dist === 5) { // '↺ 시점' 단추: 지금 장면에 맞는 시점으로 되돌려요
             if (scene === 'star') { fitFor = -1; orbit.theta = 0.8; orbit.phi = 1.1; buildStar(); } else { applyYaw(); orbit.phi = Math.PI / 2; }
           }

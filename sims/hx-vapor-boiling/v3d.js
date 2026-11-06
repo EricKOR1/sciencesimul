@@ -19,7 +19,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHONE ? 16 : 13, theta: 0.5, phi: 1.2, min: 6, max: 26, target: [0, 0.4, 0] },
     autoRotate: 0.12,
-    levels: [0, 2],   // 1단계(증기압), 3단계(압력과 끓는점). 2·4단계는 그래프를 읽고(2D가 기본) 3D에서는 같은 값의 실험 장면을 볼 수 있어요
+    levels: [0, 2],   // 1단계(증기압), 3단계(압력과 끓는점). 2·4단계는 그래프(증기압 곡선 · 상평형 그림)를 읽거나 점을 끄는 2D 화면이에요. #bMore는 액체 높이를 바꿔서 data-v3="keep"
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3;
@@ -163,7 +163,7 @@
           if (on && inr) near.push(q.short + ' ' + fmtP(Pm));
         });
         lRef.show(true); lCT.show(true); lCT.set('항온 수조 ' + Tc + ' °C');
-        return '<b>밀폐 용기 3개 · ' + Tc + ' °C</b><br>같은 온도에서도 증기압(막대 높이)이 달라요.<br>분자 간 힘이 약할수록 증기압이 커요: 에터 &gt; 에탄올 &gt; 물<br>증기압이 760 mmHg(빨간 선)와 같아지는 온도가 끓는점이에요. 그래프 읽기는 ▦ 2D에서 해요.';
+        return '<b>밀폐 용기 3개 · ' + Tc + ' °C</b><br>같은 온도에서도 증기압(막대 높이)이 달라요.<br>분자 간 힘이 약할수록 증기압이 커요: 에터 &gt; 에탄올 &gt; 물<br>증기압이 760 mmHg(빨간 선)와 같아지는 온도가 끓는점이에요.';
       }
       const ctCtl = grab(() => controls.range('온도', 0, 120, 1, 20, (v) => { const w = sim(); if (w) w.setCT(v); }, (v) => v + ' °C'));
       /* --- phase: 압력 · 온도에 따라 고체 · 액체 · 기체 --- */
@@ -201,7 +201,7 @@
         const Pt = ph.P >= 10 ? ph.P.toFixed(0) : ph.P >= 1 ? ph.P.toFixed(1) : ph.P.toFixed(3);
         lPh.set('압력 ' + Pt + ' atm · 온도 ' + Math.round(ph.T) + ' °C'); lSt.set(SNAME[sub][st]);
         const extra = ph.T > d.cp.T ? '<br>임계 온도(' + d.cp.T + ' °C)보다 높으면 압력을 높여도 액체가 되지 않아요.' : '';
-        return '<b>' + d.nm + ' · 밀폐 용기</b><br>지금 상태: <b>' + SNAME[sub][st] + '</b><br>압력 ' + Pt + ' atm · 온도 ' + Math.round(ph.T) + ' °C' + extra + '<br>상평형 그림에서 점의 위치가 상태를 정해요. 그림 읽기는 ▦ 2D에서 해요.';
+        return '<b>' + d.nm + ' · 밀폐 용기</b><br>지금 상태: <b>' + SNAME[sub][st] + '</b><br>압력 ' + Pt + ' atm · 온도 ' + Math.round(ph.T) + ' °C' + extra + '<br>상평형 그림에서 점의 위치(압력 · 온도)가 상태를 정해요.';
       }
       const phSub = grab(() => controls.segment('물질', [{ value: 'water', label: '물' }, { value: 'co2', label: '이산화 탄소' }], 'water', (v) => { const w = sim(); if (w) w.phSub(v); }));
       const phT = grab(() => controls.range('온도', -100, 400, 1, -50, (v) => { const w = sim(); if (w) w.setPhase(v, w.S.phase.P); }, (v) => v + ' °C'));
@@ -275,7 +275,7 @@
             s = '<b>외부 압력 ' + o.P.toFixed(2) + ' atm</b> (' + Math.round(o.Pext) + ' mmHg)<br>물의 끓는점 <b>' + f1(o.Tb) + ' °C</b> · 물의 온도 ' + f1(o.T) + ' °C<br>' + (boil ? '증기 압력 = 외부 압력이 되어 액체 속에서도 기포가 생겨요. 끓음!' : '증기 압력(' + fp(o.Pv) + ' mmHg)이 외부 압력보다 작아서 아직 끓지 않아요.');
             pl.set('증기 ' + fp(o.Pv) + ' mmHg'); tl.set(boil ? '끓는 중' : '물');
           } else if (other) {
-            s = '<b>이 단계는 2D 화면에서 해요</b><br>그래프(증기압 곡선 · 상평형 그림)를 읽어 끓는점과 상태를 찾아요.';
+            s = '<b>물</b><br>증기압이 외부 압력과 같아지는 온도가 끓는점이에요.';
             pl.set(''); tl.set('물');
           } else {
             s = '<b>물</b> · 항온 수조 ' + Math.round(o.T) + ' °C<br>증기압 <b>' + fp(o.Pv) + ' mmHg</b> (' + (o.Pv / ATM).toFixed(3) + ' atm)<br>' + (o.eq ? '↑ 증발 속도 = ↓ 응축 속도: 동적 평형이라 기체의 압력이 일정해요.' : '증발이 응축보다 빨라 증기가 차오르는 중이에요.');

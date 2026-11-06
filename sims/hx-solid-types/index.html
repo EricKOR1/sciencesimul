@@ -61,6 +61,8 @@
       .stage-toolbar:has(> .segmented[hidden]) { display: none; }
       .stage-hint { font-size: 13px; padding: 5px 12px; }
     }
+    body:not(.v3-mode) .only3d { display: none; }
+    body.v3-mode .only2d { display: none; }
   </style>
 </head>
 <body class="sim-page" data-subject="chem">
@@ -129,7 +131,7 @@
           <div class="chips" id="tChips" role="group" aria-label="결정 종류 고르기"></div>
         </div>
         <div class="control" data-modes="types" data-sub="sort">
-          <p class="ctrl-note" style="margin-top:0">카드를 끌어서 알맞은 상자에 놓아요. (카드를 누른 뒤 상자를 눌러도 돼요.)</p>
+          <p class="ctrl-note" style="margin-top:0"><span class="only2d">카드를 끌어서 알맞은 상자에 놓아요. (카드를 누른 뒤 상자를 눌러도 돼요.)</span><span class="only3d">3D 막대의 ◀ ▶로 물질을 고르고 상자 단추를 눌러요.</span></p>
           <div class="btn-row"><button class="btn" id="bCardsReset" type="button">↺ 카드 모두 되돌리기</button></div>
         </div>
         <!-- ③ 성질 시험 -->

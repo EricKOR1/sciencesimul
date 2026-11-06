@@ -121,7 +121,7 @@
             M.makeScale(s, s, s); M.setPosition(ax + Math.sign(kx - ax) * 0.4 + (kx - ax - Math.sign(kx - ax) * 0.8) * q.u, q.y + Math.sin(t * 2 + q.ph) * 0.12, q.z + Math.cos(t * 1.7 + q.ph) * 0.1); cm.setMatrixAt(i, M);
           });
           cm.instanceMatrix.needsUpdate = true;
-          const tx = !power ? '<b>전류가 흐르지 않아요</b><br>회로를 연결하고 전원을 켜면 도금이 시작돼요.'+info2 : '<b>도금 ' + Math.round(plated * 100) + '%</b> · ' + ['약한', '보통', '센'][cur - 1] + ' 전류<br>(+)극: Cu → Cu²⁺ + 2e⁻ (산화)<br>(−)극: Cu²⁺ + 2e⁻ → Cu (환원) · 전류가 셀수록 빨리 입혀져요' + info2;
+          const tx = !power ? '<b>전류가 흐르지 않아요</b><br>회로를 연결하고 전원을 켜면 도금이 시작돼요.'+info2 : bad ? '<b>연결이 거꾸로예요</b><br>(+)극 열쇠: Fe → Fe²⁺ + 2e⁻ (산화)<br>(−)극 구리판: Cu²⁺ + 2e⁻ → Cu (환원)' + info2 : '<b>도금 ' + Math.round(plated * 100) + '%</b> · ' + ['약한', '보통', '센'][cur - 1] + ' 전류<br>(+)극: Cu → Cu²⁺ + 2e⁻ (산화)<br>(−)극: Cu²⁺ + 2e⁻ → Cu (환원) · 전류가 셀수록 빨리 입혀져요' + info2;
           if (tx !== txt) { txt = tx; info(tx); }
         },
       };

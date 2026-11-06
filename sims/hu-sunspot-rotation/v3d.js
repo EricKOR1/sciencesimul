@@ -87,6 +87,9 @@
         const q = W(), free = !!(q.game && q.game.free);
         let h = '<b>경과 ' + st.day.toFixed(1) + '일</b> · 흑점 4개 (위도 ' + SP.map((s) => s.phi + '°').join(' · ') + ')<br>태양은 기체라서 위도마다 도는 빠르기가 달라요(<b>차등 자전</b>): 같은 줄에서 출발해도 높은 위도의 흑점이 점점 뒤처져요.';
         if (free) h += '<br>회합 주기 ' + SP.map((s) => '<b>' + (360 / s.om).toFixed(1) + '일</b>').join(' · ');
+        /* 2D 표와 같은 값: 위도마다 하루 이동 각도 → T회합 = 360° ÷ (하루 이동) */
+        const S = q.S || {};
+        if (q.SP4 && !free && (S.view === 'diff' || S.view === 'compose')) h += '<br><b>표</b> (6일 관측) · ' + q.SP4.map((s) => '위도 ' + s.phi + '°: 하루 이동 <b>' + s.om.toFixed(2) + '°</b> → T회합 ' + (s.ok ? '<b style="color:#86efac">' + s.T.toFixed(1) + '일</b>' : '?')).join('<br>');
         info(h);
       }
       /* ▶ 재생: 위성 영상을 합성하듯 0~7일을 보여 줘요 (2D '경과일' 슬라이더와 같은 값) */

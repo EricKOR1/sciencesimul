@@ -86,9 +86,10 @@
         const nx = c.items.findIndex((x) => x.loc == null); c.sel = nx; text();
       })));
       let cardMode = null;
-      function cardRow() { const S = sr(), on = !!(S && S.view === 'meaning'); if (on === cardMode) return; cardMode = on; cardEls.forEach((e) => { e.style.display = on ? '' : 'none'; }); text(); }
+      const cardsOn = () => { const S = sr(); return !!(S && S.view === 'meaning' && !(S.flags && S.flags.calcMass)); };   // 질량 계산 미션에서는 숨겨요
+      function cardRow() { const on = cardsOn(); if (on === cardMode) return; cardMode = on; cardEls.forEach((e) => { e.style.display = on ? '' : 'none'; }); text(); }
       function cardText() {
-        const q = window.__sim, c = q && q.cK, S = q && q.S; if (!c || !S || S.view !== 'meaning' || c.sel < 0 || !c.items[c.sel]) return null;
+        const q = window.__sim, c = q && q.cK, S = q && q.S; if (!c || !S || !cardsOn() || c.sel < 0 || !c.items[c.sel]) return null;
         const it = c.items[c.sel], v = it.a * it.a * it.a / (it.T * it.T), placed = c.items.filter((x) => x.loc != null).length;
         return '<b>카드 ' + (c.sel + 1) + ' / ' + c.items.length + ': ' + it.label + '</b> · a = ' + (it.a >= 1e4 ? fmtV(it.a) : it.a) + ' (10⁵ km), T = ' + it.T + '일<br>a³ / T² = <b>' + fmtV(v) + '</b> (10⁵ km³/일²)' + (it.loc != null ? ' · 지금 상자: ' + BIN[it.loc] : '') + '<br>같은 값의 상자 단추를 눌러 넣어요 · 넣은 카드 ' + placed + ' / ' + c.items.length;
       }

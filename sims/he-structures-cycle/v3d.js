@@ -10,12 +10,13 @@
   const lerp = (a, b, t) => a + (b - a) * t;
   const XW = 3.5, ZD = 1.9, HT = 3.0, NL = 5, DIP = 55 * Math.PI / 180;
   const COLS = [0xb98a5a, 0xd9c590, 0x8d6e63, 0xe0b97a, 0x7f9a6a];
-  const TYPES = [['fold', '습곡'], ['normal', '정단층'], ['reverse', '역단층'], ['strike', '주향 이동'], ['column', '주상 절리'], ['intr', '관입']];
+  const TYPES = [['fold', '습곡'], ['normal', '정단층'], ['reverse', '역단층'], ['strike', '주향 이동'], ['column', '주상 절리'], ['intr', '관입'], ['sheet', '판상 절리']];
+  const STEP0 = ['column', 'intr', 'sheet'];   // 0단계(화성암 구조)에서 고를 수 있는 장면
 
   window.SciSim3D.attach({
     title: '지질 구조 3D 블록',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    levels: [0, 1],
+    levels: [0],             // 0단계(관입 · 주상절리 · 판상절리)만 3D예요. 1단계(지표 번호 ①②③과 지층 띠 읽기) · 2~3단계(카드 놓기 · 순환도 누르기)는 2D 화면에서 해요
     camera: { dist: PHONE ? 15.5 : 11, theta: 0.65, phi: 1.1, min: 5, max: 24, target: [0, 1.2, 0] },
     autoRotate: 0,
     build(ctx) {
@@ -37,6 +38,7 @@
       const LB = {
         a: label('배사', [1.15, 3.6, 0], { size: 12.5 }), s: label('향사', [-1.15, 2.4, 0], { size: 12.5 }),
         fp: label('단층면', [0, 1.5, ZD], { size: 12.5, color: 'rgba(160,30,30,.92)' }), hw: label('상반', [2.0, 2.6, ZD], { size: 12 }), fw: label('하반', [-2.0, 1.2, ZD], { size: 12 }),
+        gr: label('화강암체', [0, 0.9, 1.5], { size: 12, color: 'rgba(110,40,40,.92)' }), sj: label('판상절리 (지표와 나란한 틈)', [1.6, 2.3, 0], { size: 12, color: 'rgba(30,10,10,.88)' }), sf: label('', [-3.2, 3.6, ZD], { size: 12 }),
         dk: label('암맥', [0, 3.5, 0], { size: 12 }), sl: label('암상', [-2.4, 1.6, ZD], { size: 12 }), sr: label('어긋난 길', [0, 3.2, 0], { size: 12 }), ct: label('주상 절리', [0, 3.4, 0], { size: 12 }),
       };
       Object.values(LB).forEach((l) => l.show(false));
@@ -64,6 +66,13 @@
             const x = ix * dx + (iz % 2 ? dx / 2 : 0), z = iz * dz; if (Math.hypot(x, z) > 3.0) continue;
             const h = 2.3 + rnd() * 0.5 + (1 - Math.hypot(x, z) / 3) * 0.35, m = new THREE.Mesh(new THREE.CylinderGeometry(rr, rr, h, 6), std(0x5b6575, { roughness: 0.75, metalness: 0.08 })); m.rotation.y = Math.PI / 6; m.position.set(x, h / 2, z); m.castShadow = m.receiveShadow = true; grp.add(m); cols.push(m);
           }
+        } else if (tp === 'sheet') {
+          /* 판상절리: 화강암체(반쪽을 잘라 단면이 보여요) 위를 덮은 지층이 깎일수록 압력이 줄어 지표와 나란하게 갈라져요 (2D와 같은 깎인 두께 S.sheet.e) */
+          const gm = std(0xd9a6a0, { roughness: 0.75, side: THREE.DoubleSide });
+          shShells = [0, 1, 2, 3, 4].map((i) => { const m = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 16, 0, Math.PI, 0, Math.PI / 2), gm); m.userData.s = 1 - i * 0.13; grp.add(m); return m; });
+          shLines = [1, 2, 3, 4].map((i) => { const s = 1 - i * 0.13 + 0.004, pts = []; for (let k = 0; k <= 40; k++) { const a = Math.PI * k / 40; pts.push(new THREE.Vector3(Math.cos(a) * SHR[0] * s, Math.sin(a) * SHR[1] * s, -0.02)); } const m = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 60, 0.03, 6, false), new THREE.MeshBasicMaterial({ color: 0x2a0d0d, transparent: true, opacity: 0 })); grp.add(m); return m; });
+          shSlabs = [0, 1, 2, 3, 4, 5, 6].map((j) => { const m = new THREE.Mesh(new THREE.BoxGeometry(XW * 2, 1, ZD * 2), std(COLS[j % NL], { transparent: true, opacity: 0.42, depthWrite: false })); m.userData.y0 = j * SHK * 5 / 7 * 1.4; grp.add(m); return m; });
+          shGrass = new THREE.Mesh(new THREE.BoxGeometry(XW * 2, 0.06, ZD * 2), std(0x5b8f4a)); grp.add(shGrass);
         } else if (tp === 'intr') {
           for (let j = 0; j < NL; j++) { const m = new THREE.Mesh(new THREE.BoxGeometry(XW * 2, HT / NL, ZD * 2), std(COLS[j])); m.position.y = HT * (j + 0.5) / NL; grp.add(m); }
           const mg = std(0xb23a3a, { roughness: 0.6, emissive: 0x4a0f0f, emissiveIntensity: 0.4 });
@@ -85,7 +94,21 @@
         }
         const xa = 1.15 * sh, xs = -1.15 * sh; LB.a.obj = [xa, yb(1.15, HT) + 0.45, 0]; LB.s.obj = [xs, yb(-1.15, HT) + 0.45, 0];
       }
+      /* 판상절리 장면 크기: 화강암체 반지름(가로 · 높이) · 1 km당 높이 */
+      const SHR = [2.4, 2.0], SHK = 0.3, SH_TOP0 = SHR[1] + 5 * SHK;
+      let shShells = [], shLines = [], shSlabs = [], shGrass = null;
+      function applySheet(e) {
+        Object.values(LB).forEach((l) => l.show(false));
+        const surf = SH_TOP0 - e * SHK, open = Math.max(0, Math.min(1, (e - 3.6) / 2.4)), op = open * open * (3 - 2 * open);
+        shShells.forEach((m, i) => { const s = m.userData.s * (1 + op * 0.02 * i); m.scale.set(SHR[0] * s, SHR[1] * s, 1.5 * s); m.position.y = op * 0.05 * (4 - i); m.rotation.y = Math.PI; m.visible = i === 0 || op > 0.02; });   // 잘린 단면이 앞쪽(보는 쪽)을 향해요
+        shLines.forEach((m, i) => { m.material.opacity = Math.max(0, Math.min(1, op * 1.3 - i * 0.13)); m.visible = m.material.opacity > 0.02; m.position.y = op * 0.05 * (3 - i); m.rotation.y = Math.PI; });
+        const slabH = SH_TOP0 / 7; shSlabs.forEach((m, j) => { const y0 = j * slabH, h = Math.max(0, Math.min(slabH, surf - y0)); m.visible = h > 0.005; if (m.visible) { m.scale.y = h; m.position.y = y0 + h / 2; } });
+        if (shGrass) { shGrass.visible = e < 5; shGrass.position.y = surf + 0.03; }
+        LB.gr.show(true); LB.sj.show(op > 0.3); LB.sf.show(true); LB.sf.obj = [-XW - 0.2, surf + 0.25, ZD]; LB.sf.set('지금 지표 · 깎인 두께 ' + e.toFixed(1) + ' km');
+        info('<b>판상절리</b>: 땅속 깊은 곳에서 식은 <b>화강암체</b> 위를 지층이 덮고 있어요.<br>깎여 나간 위 지층 <b>' + e.toFixed(1) + ' km</b> · 화강암 위에 남은 지층 <b>' + Math.max(0, 5 - e).toFixed(1) + ' km</b>' + (op > 0.3 ? '<br>화강암 속에 <b>지표와 나란한 틈</b>이 생겼어요.' : ''));
+      }
       function applyF(force) {
+        if (type === 'sheet') { applySheet(f); return; }
         const v = f, off = v * 1.15;
         if (type === 'fold') { if (force || Math.abs(v - curF) > 0.003) { buildFold(v); curF = v; } }
         else if (type === 'normal' || type === 'reverse') { const s = type === 'normal' ? 1 : -1; hwG.position.set(Math.cos(DIP) * off * s, -Math.sin(DIP) * off * s, 0); }
@@ -126,6 +149,7 @@
         const l = L2(); if (!l || !l.setView) return;
         if (v === 'column') { l.setView('col'); return; }
         if (v === 'intr') { l.setView('ign'); return; }
+        if (v === 'sheet') { l.setView('sheet'); return; }
         l.setView('fold'); clickK('#modeSeg2', combo[v][0]); if (combo[v][1]) clickK('#behSeg', combo[v][1]);
       }
       let pl = null, ready = false;
@@ -150,10 +174,13 @@
         gB.r.col.style.display = type === 'column' ? '' : 'none'; gB.r.a.style.display = gB.r.b.style.display = type === 'intr' ? '' : 'none';
       }
       function setType(v) { type = v; segT.set(v); buildType(v); showInfo(); showCtl(); }
-      function showInfo() { info(TXT[type]); }
+      function showInfo() { if (type === 'sheet') { applySheet(f); return; } info(TXT[type]); }
+      /* 0단계에서는 화성암 구조(주상 절리 · 관입 · 판상 절리)만 골라요 */
+      function segForLevel() { gS.els.forEach((e) => { if (e.tagName !== 'BUTTON') return; const t = TYPES.find((x) => x[1] === e.textContent); if (t) e.style.display = ctx.level === 0 && STEP0.indexOf(t[0]) < 0 ? 'none' : ''; }); }
+      segForLevel(); ctx.onLevel(segForLevel);
 
       /* 2D 장면에서 구조 읽기 */
-      const rd = () => { try { const s = window.__sim; if (!s) return null; const S = s.S; if (S.view === 'col') return ['column', S.col.c, S.col.speed]; if (S.view === 'ign') return ['intr', 1, 0]; if (S.view === 'fold') { const n = s.foldName(), fs = S.fold.fS; const t = n === '습곡' ? 'fold' : n === '역단층' ? 'reverse' : n === '정단층' ? 'normal' : n === '주향 이동 단층' ? 'strike' : null; return t ? [t, fs, 0] : ['fold', 0, 0]; } } catch (e) {} return null; };
+      const rd = () => { try { const s = window.__sim; if (!s) return null; const S = s.S; if (S.view === 'col') return ['column', S.col.c, S.col.speed]; if (S.view === 'ign') return ['intr', 1, 0]; if (S.view === 'sheet') return ['sheet', S.sheet.eS != null ? S.sheet.eS : S.sheet.e, 0]; if (S.view === 'fold') { const n = s.foldName(), fs = S.fold.fS; const t = n === '습곡' ? 'fold' : n === '역단층' ? 'reverse' : n === '정단층' ? 'normal' : n === '주향 이동 단층' ? 'strike' : null; return t ? [t, fs, 0] : ['fold', 0, 0]; } } catch (e) {} return null; };
       let lastKey = null;
       const r0 = rd(); if (r0) { type = r0[0]; f = fT = r0[1]; if (r0[0] === 'column') colSpeed = r0[2] || 2; rngF.set(Math.round(f * 100)); lastKey = r0[0]; }
       setType(type);

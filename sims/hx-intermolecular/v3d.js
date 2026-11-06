@@ -3,7 +3,7 @@
    ② 쌍극자–쌍극자 힘: HCl 6개 — δ+(H)와 이웃의 δ−(Cl)가 마주 보도록 정렬돼요.
    ③ 수소 결합: H₂O · HF · NH₃ — N·O·F에 결합한 H와 이웃 분자의 비공유 전자쌍(••) 사이의 힘이에요.
    2D의 힘 단추 · 원자/분자 단추가 이 화면을 조절해요 (window.__sim.S.forces).
-   분류하기(카드 8장)에서는 카드마다 분자 모형을 입체로 보여 줘요 (바닥 색 = 2D에서 놓은 상자).
+   분류하기(카드 8장)에서는 카드마다 분자 모형을 입체로 보여 줘요 (바닥 색 = 놓은 상자). 3D 막대의 ◀ ▶ · 상자 단추가 2D의 placeCard를 불러요.
    ※ 결합 길이·각은 실제 값에 가깝게 그린 모형 스케치예요. */
 (function () {
   'use strict';
@@ -28,7 +28,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHONE ? 17 : 12, theta: 0.5, phi: 1.2, min: 5, max: 26, target: [0, -1, 0] },
     autoRotate: 0.15,
-    levels: [1],   // 2단계 '세 가지 분자 간 힘'. (1·3·4단계는 2D 화면의 열운동 · 그래프 · 예측이에요)
+    levels: [1],   // 2단계 '세 가지 분자 간 힘' (분류하기는 3D 막대의 단추로). 1·3·4단계는 2D 화면의 열운동 · 그래프 · 예측이에요
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       /* ---- 장면 꾸미기 도우미: 나무 · 암석 무늬, 하늘 · 우주 배경, 빛 번짐 (모양만 꾸며요) ---- */
@@ -272,7 +272,7 @@
       function setSort(on) {
         if (on === sortOn) return; sortOn = on; gS.visible = on; g.visible = !on;
         sortM.forEach((s) => s.lab.show(on)); labs.forEach((l) => l.show(!on && true));
-        ctlEls.forEach((e) => { e.style.display = on ? 'none' : ''; });
+        ctlEls.forEach((e) => { e.style.display = on ? 'none' : ''; }); sortEls.forEach((e) => { e.style.display = on ? '' : 'none'; });
         const o = ctx.orbit; if (on) { o.dist = PHONE ? 18 : 16; o.ty = 0; } else { o.dist = PHONE ? 17 : 12; o.ty = -1; }
         lastInfo = '';
         if (!on) { build(); }
@@ -291,7 +291,7 @@
           s.lab.set(SORT_F[i] + (b !== null && b !== undefined ? ' · ' + BINN[b] : ''));
         });
         const hint = sel ? window.__sim.CARDS.find((x) => x.id === sel.id) : null;
-        setInfo('<b>분자 카드 8장 · 분류하기</b><br>' + (hint ? '고른 카드: <b>' + hint.f + '</b> (' + hint.hint + ')<br>' : '분자의 모양과 극성을 살펴봐요.<br>') + '상자에 놓은 카드 ' + placed + ' / 8 (바닥 색 = 놓은 상자)<br>순서: ① N·O·F에 직접 결합한 H → 수소 결합 ② 극성 분자 → 쌍극자 ③ 무극성 → 분산력<br>카드를 끌어 놓는 일은 ▦ 2D에서 해요.');
+        setInfo('<b>분자 카드 8장 · 분류하기</b><br>' + (hint ? '고른 카드: <b>' + hint.f + '</b> (' + hint.hint + ')<br>' : '분자의 모양과 극성을 살펴봐요.<br>') + '상자에 놓은 카드 ' + placed + ' / 8 (바닥 색 = 놓은 상자)<br>순서: ① N·O·F에 직접 결합한 H → 수소 결합 ② 극성 분자 → 쌍극자 ③ 무극성 → 분산력<br>아래 <b>◀ ▶</b>로 분자를 고르고 상자 단추를 눌러요.');
       }
 
       function build() {
@@ -317,6 +317,27 @@
         if (noteEl.textContent !== t) noteEl.textContent = t;
       }
       const probe = controls.text(''); probe.style.display = 'none'; const ctlEls = Array.prototype.filter.call(probe.parentElement.children, (e) => e !== probe);
+      /* 분류하기 단추: 2D의 카드 고르기 · 상자에 놓기(placeCard)와 같아요 */
+      const ctlBox = probe.parentElement, nS0 = ctlBox.children.length;
+      const sortCards = () => { const f = F(); return f && f.cards ? SORT_ID.map((id) => f.cards.find((c) => c.id === id)).filter(Boolean) : []; };
+      function pickCard(d) {
+        const f = F(), cs = sortCards(); if (!cs.length) return;
+        let i = cs.findIndex((c) => c.id === f.sel); i = i < 0 ? (d > 0 ? 0 : cs.length - 1) : (i + d + cs.length) % cs.length;
+        f.sel = cs[i].id; lastInfo = '';
+      }
+      function putCard(b) {
+        const L = window.__sim, f = F(), cs = sortCards(); if (!L || !L.placeCard || !cs.length) return;
+        let c = cs.find((q) => q.id === f.sel) || cs.find((q) => q.bin === null); if (!c) return;
+        L.placeCard(c, b);
+        const k = cs.indexOf(c), nx = cs.slice(k + 1).concat(cs.slice(0, k)).find((q) => q.bin === null);
+        f.sel = nx ? nx.id : null; lastInfo = '';
+      }
+      controls.text('<b>분자</b>');
+      controls.button('◀', () => pickCard(-1));
+      controls.button('▶', () => pickCard(1));
+      controls.text('<b>상자</b>');
+      BINN.forEach((nm, b) => controls.button(nm, () => putCard(b)));
+      const sortEls = Array.prototype.slice.call(ctlBox.children, nS0); sortEls.forEach((e) => { e.style.display = 'none'; });
       from2D(); build();
       return {
         update(dt, t) {

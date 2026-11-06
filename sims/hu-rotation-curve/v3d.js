@@ -84,11 +84,13 @@
         g2.strokeStyle = 'rgba(255,255,255,.28)'; g2.lineWidth = 2; g2.beginPath(); g2.moveTo(L, T); g2.lineTo(L, H - B); g2.lineTo(S - R, H - B); g2.stroke();
         g2.fillStyle = 'rgba(232,238,252,.85)'; g2.font = '700 20px sans-serif'; g2.textAlign = 'center'; g2.fillText('r (kpc)', (L + S - R) / 2, H - 3); g2.textAlign = 'right'; g2.fillText('220', L - 4, Y(220) + 6);
         const draw = (f, color, dash, w) => { g2.strokeStyle = color; g2.lineWidth = w; g2.setLineDash(dash); g2.beginPath(); for (let r = 0.5; r <= 30; r += 0.5) { const x = X(r), y = Y(f(r)); r === 0.5 ? g2.moveTo(x, y) : g2.lineTo(x, y); } g2.stroke(); g2.setLineDash([]); };
-        draw(vVis, '#ffa94d', st.mode === 'vis' ? [] : [8, 7], st.mode === 'vis' ? 4.5 : 3);
+        const gx = st.gal ? ((window.__sim || {}).GALS || [])[st.gal] : null;   // 다른 은하: 2D처럼 케플러 예상(빨간 점선)과 비교해요
+        if (gx && gx.r0) { const v0 = gx.V[gx.R.indexOf(gx.r0)]; g2.strokeStyle = '#f87171'; g2.lineWidth = 3; g2.setLineDash([8, 7]); g2.beginPath(); for (let r = gx.r0; r <= 30; r += 0.5) { const x = X(r), y = Y(v0 * Math.sqrt(gx.r0 / r)); r === gx.r0 ? g2.moveTo(x, y) : g2.lineTo(x, y); } g2.stroke(); g2.setLineDash([]); }
+        else draw(vVis, '#ffa94d', st.mode === 'vis' ? [] : [8, 7], st.mode === 'vis' ? 4.5 : 3);
         draw(vObs, '#7ab8ff', st.mode === 'vis' ? [8, 7] : [], st.mode === 'vis' ? 3 : 4.5);
         if (st.mode === 'model') draw(vModel, '#c4a8ff', [], 4);
         trs.forEach((q) => { const v = st.mode === 'vis' ? vVis(q.t.r) : st.mode === 'model' ? vModel(q.t.r) : vObs(q.t.r); g2.fillStyle = '#' + q.t.c.toString(16).padStart(6, '0'); g2.beginPath(); g2.arc(X(q.t.r), Y(v), 7, 0, 7); g2.fill(); });
-        g2.textAlign = 'left'; g2.font = '700 18px sans-serif'; g2.fillStyle = '#ffa94d'; g2.fillText('보이는 질량만', X(14), Y(vVis(14)) - 26); g2.fillStyle = '#7ab8ff'; g2.fillText('실제 관측', X(2), Y(vObs(24)) - 16);
+        g2.textAlign = 'left'; g2.font = '700 18px sans-serif'; if (gx && gx.r0) { g2.fillStyle = '#f87171'; g2.fillText('케플러 예상', X(14), Y(gx.V[gx.R.indexOf(gx.r0)] * Math.sqrt(gx.r0 / 14)) + 30); } else { g2.fillStyle = '#ffa94d'; g2.fillText('보이는 질량만', X(14), Y(vVis(14)) - 26); } g2.fillStyle = '#7ab8ff'; g2.fillText('실제 관측', X(2), Y(vObs(24)) - 16);
       }
 
       /* 2D 단계에서 고른 r(안쪽 질량 단계) · 은하 · 헤일로 질량을 그대로 보여 줘요 */

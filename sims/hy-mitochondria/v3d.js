@@ -17,7 +17,7 @@
     hint: '드래그: 돌리기 · 두 손가락/휠: 확대',
     camera: { dist: narrow ? 5.9 : 3.9, target: narrow ? [0, 0.3, 0] : [0, 0, 0], theta: 0.38, phi: 1.4, min: 2.2, max: 10 },
     autoRotate: 0,
-    levels: [0, 1],   // 3 · 4단계(표면적 · 세포 추론)는 2D에서, 모형 조립 · 구조와 기능(내막 확대)에서 3D로 시작
+    levels: [0, 1],   // 1단계(조립 · 단면 이름)와 2단계(위치 지도 · 내막 확대)는 3D 막대의 단추로 해요. 3 · 4단계(표면적 그래프 · 세포 추론)는 2D 화면이에요
     build(ctx) {
       const { THREE, root, label, info, controls, renderer } = ctx;
       renderer.localClippingEnabled = true;
@@ -176,7 +176,8 @@
       }
       function applyViz() {
         const name = mode === 'name';
-        names.forEach((L) => L.show(name));
+        names.forEach((L, i) => L.show(name && asmName(i)));
+        asmMarks();
         const ref = pickVisible();
         if (!name && ref.labelSyn) { synObj.position.copy(ref.labelSyn.pos).add(ref.labelSyn.dirIn.clone().multiplyScalar(0.2)); }
         labSyn.show(!name && !!ref.labelSyn);
@@ -187,6 +188,7 @@
         writeInfo();
       }
       function writeInfo() {
+        const ah = asmHtml(); if (ah) { info(ah); return; }
         if (mode === 'name') {
           info('<b>이중막</b>: 바깥 <b style="color:#ffb27a">외막</b>, 안쪽 <b style="color:#ff8fb8">내막</b>이 안으로 접힌 것이 <b style="color:#ff8fb8">크리스타</b>예요.<br>내막 안쪽은 <b>기질</b>(DNA·리보솜), 두 막 사이는 <b>막 사이 공간</b>이에요. <b>단면</b> 슬라이더로 잘라 봐요.');
         } else if (cn) {
@@ -200,12 +202,73 @@
       const cutR = controls.range('단면', 0, 100, 1, Math.round(cut * 100), (v) => { setCut(v / 100); const L = ctx.lesson(); if (L && L.bCut && L.S.mode === 'build') L.bCut(v / 100); }, (v) => v + ' %');
       const cnB = controls.button('🧪 시안화물 처리', () => { const L = ctx.lesson(); if (L && L.znSetDrug && L.S.mode === 'zoom') { L.znSetDrug(!cn); } else { cn = !cn; cnB.classList.toggle('on', cn); cnB.textContent = cn ? '🧪 시안화물 처리됨' : '🧪 시안화물 처리'; applyViz(); } });
       cnB.style.display = 'none';
+      /* ---- 1단계 조립 · 이름 붙이기, 2단계 위치 지도: 2D의 부품 카드(bPlace) · 단면 핀 · 반응 카드(Sorter)와 같은 상태 ----
+         ? 자리 번호는 부품 순서와 다르게 섞어 두어요. 고르고(◀ ▶) 자리 · 구역 단추를 누르면 2D 함수가 판정해요. */
+      const MP = [3, 6, 1, 7, 4, 2, 5], CIRC = '1234567';
+      const LL = () => { const L = ctx.lesson(); return L && L.S ? L : null; };
+      const LB = () => { const L = LL(); return L && L.S.mode === 'build' && L.S.b ? L : null; };
+      const asmOn = () => { const L = LB(); return !!(L && !L.S.b.nameMode && L.S.b.placed.some((x) => !x)); };
+      const pinOn = () => { const L = LB(); return !!(L && L.S.b.nameMode); };
+      const mapOn = () => { const L = LL(); return !!(L && L.S.mode === 'map' && L.S.mp && L.S.mp.so); };
+      function asmName(i) { const L = LB(); if (!L) return true; if (L.S.b.nameMode) return false; return !!L.S.b.placed[i]; }
+      const qLabs = names.map((N, i) => { const L = label('? ' + CIRC[MP[i] - 1], N.obj, { color: '#b45309', size: 12.5 }); L.show(false); return L; });
+      const PINP = [[0.5, RO, 0], [-0.5, -RI, 0], [-0.62, (RO + RI) / 2, 0], [MH + 0.25, -0.05, 0], [0, 0.4, 0]];   // 세로 단면(z = 0)의 외막 · 내막 · 막 사이 공간 · 기질 · 크리스타
+      const pinLabs = PINP.map((q, k) => { const L = label('핀 ' + '①②③④⑤'[k], A(q[0], q[1], q[2]), { color: '#1d4ed8', size: 12.5 }); L.show(false); return L; });
+      function asmMarks() { const L = LB(), on = asmOn(), pn = pinOn(); qLabs.forEach((q, i) => q.show(on && !L.S.b.placed[i])); pinLabs.forEach((q) => q.show(pn)); }
+      function asmHtml() {
+        const L = LL(); if (!L) return '';
+        if (mapOn()) {
+          const so = L.S.mp.so, c = L.S.mp.pick, zn = (id) => ({ cyto: '세포질', ims: '막 사이 공간', inner: '내막', matrix: '기질' })[id];
+          return '<b>위치 지도</b> · 놓은 카드 ' + so.placed + ' / 5<br>고른 카드: <b>' + (c ? c.label : '—') + '</b>' + (c && c.sub ? ' (' + c.sub + ')' : '') + '<br>' + so.cards.filter((q) => q.zone).map((q) => q.label + ' → ' + zn(q.zone)).join('<br>');
+        }
+        if (pinOn()) return '<b>세로 단면</b> · 핀 ①~⑤가 가리키는 구조의 이름을 오른쪽 목록에서 골라요.<br>외막 · 내막 · 막 사이 공간 · 기질 · 크리스타의 자리를 살펴봐요.';
+        if (!asmOn()) return '';
+        const b = L.S.b, n = b.placed.filter(Boolean).length, P = L.PARTS[b.sel];
+        return '<b>미토콘드리아 조립 ' + n + ' / 7</b><br>' + (P && !b.placed[b.sel] ? '고른 부품: <b>' + P.name + '</b> · ' + P.clue + '<br>알맞은 <b>?</b> 자리의 번호 단추를 눌러요.' : '<b>부품 ◀ ▶</b>로 부품 카드를 골라요.');
+      }
+      function pickPart(d) {
+        const L = LB(); if (!L) return; const b = L.S.b, ts = b.tok.filter((t) => !b.placed[t.pi]); if (!ts.length) return;
+        let k = ts.findIndex((t) => t.pi === b.sel); k = k < 0 ? (d > 0 ? 0 : ts.length - 1) : (k + d + ts.length) % ts.length;
+        b.sel = ts[k].pi; asmSig = '';
+      }
+      function putPart(i) {
+        const L = LB(); if (!L || !L.bPlace) return; const b = L.S.b;
+        if (b.sel < 0 || b.placed[b.sel]) pickPart(1);
+        const t = b.tok.find((q) => q.pi === b.sel); if (!t) return;
+        const ok = L.bPlace(t, i);
+        if (ok) { const ts = b.tok.filter((q) => !b.placed[q.pi]); b.sel = ts.length ? ts[0].pi : -1; } else b.sel = t.pi;
+        asmSig = '';
+      }
+      function pickCard(d) { const L = LL(); if (!mapOn()) return; const cs = L.S.mp.so.cards, n = cs.length; let k = cs.indexOf(L.S.mp.pick); k = k < 0 ? (d > 0 ? 0 : n - 1) : ((k + d) % n + n) % n; L.S.mp.pick = cs[k]; asmSig = ''; }
+      function putCard(z) {
+        const L = LL(); if (!mapOn()) return; const so = L.S.mp.so, cs = so.cards; const c = L.S.mp.pick || cs.find((q) => !q.zone); if (!c) return;
+        const k = cs.indexOf(c); so.place(c, z);
+        const nx = cs.slice(k + 1).concat(cs.slice(0, k)).find((q) => !q.zone); L.S.mp.pick = nx || null; asmSig = '';
+      }
+      const ctlBox = renderer.domElement.closest('.v3-wrap').querySelector('.v3-ctl'), nA0 = ctlBox.children.length;
+      controls.text('<b>부품</b>'); controls.button('◀', () => pickPart(-1)); controls.button('▶', () => pickPart(1)); controls.text('<b>자리</b>');
+      const slotBtn = [1, 2, 3, 4, 5, 6, 7].map((k) => { const i = MP.indexOf(k); return { bt: controls.button('? ' + CIRC[k - 1], () => putPart(i)), i }; });
+      const asmEls = Array.prototype.slice.call(ctlBox.children, nA0), nM0 = ctlBox.children.length;
+      controls.text('<b>카드</b>'); controls.button('◀', () => pickCard(-1)); controls.button('▶', () => pickCard(1)); controls.text('<b>구역</b>');
+      [['cyto', '세포질'], ['ims', '막 사이 공간'], ['inner', '내막'], ['matrix', '기질']].forEach(([z, t]) => controls.button(t, () => putCard(z)));
+      const mapEls = Array.prototype.slice.call(ctlBox.children, nM0);
+      let asmSig = null;
+      function asmTick() {
+        const L = LL(), b = L && L.S.b, mo = mapOn();
+        const sg = !L ? 'x' : mo ? 'm' + L.S.mp.so.cards.map((q) => q.zone || '-').join(',') + (L.S.mp.pick ? L.S.mp.pick.id : '') : L.S.mode !== 'build' ? 'o' + L.S.mode : (b.nameMode ? 'n' : 'a') + b.placed.map((x) => (x ? 1 : 0)).join('') + b.sel;
+        if (sg === asmSig) return; asmSig = sg;
+        const on = asmOn();
+        asmEls.forEach((e) => { e.style.display = on ? '' : 'none'; }); mapEls.forEach((e) => { e.style.display = mo ? '' : 'none'; });
+        if (on) slotBtn.forEach((q) => { q.bt.style.display = b.placed[q.i] ? 'none' : ''; });
+        applyViz();
+      }
       setCut(cut);
 
       let spawn = 0, spawnP = 0, lastSt = {};
       /* 2D 화면이 3D 모형(build) · 지도(map) · 내막 확대(zoom) 중 어디인지, 단면 정도, 시안화물 여부를 따라가요 */
       function poll() {
         const L = ctx.lesson(); if (!L || !L.S) return;
+        asmTick();
         const m = L.S.mode, nm = m === 'zoom' ? 'flow' : 'name';
         let ch = false;
         if (nm !== mode) { mode = nm; cnB.style.display = mode === 'flow' ? '' : 'none'; ch = true; }

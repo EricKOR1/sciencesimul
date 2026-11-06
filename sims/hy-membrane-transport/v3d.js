@@ -23,7 +23,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: narrow ? 11.5 : 9.5, theta: 0.3, phi: 1.36, target: [0, 0, 0], min: 5, max: 20 },
     autoRotate: 0,
-    levels: [0, 1, 2],   // 4단계(큰 물질 · 사례 분류)는 2D에서
+    levels: [0, 1, 2],   // 4단계(큰 물질 시연 · 사례 카드 분류)는 2D 화면이에요. 1단계의 속도 기록(#dfRec)은 data-v3="keep"
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V = THREE.Vector3;
@@ -194,7 +194,7 @@
           h = '<b>촉진 확산</b> · ' + (st.sp === 'na' ? 'Na⁺ · <b>통로 단백질</b> ' : '포도당 · <b>운반체 단백질</b> ') + st.n + '개 · 바깥 농도 <b>' + CONC[st.ci] + '</b><br>' + (st.sp === 'na' ? '이온은 통로 단백질의 구멍으로 지나가요.' : '포도당이 결합하면 운반체의 모양이 바뀌어 반대편으로 방출돼요. 사용 중 ' + busy + '개') + '<br>에너지(ATP)는 쓰지 않고, 농도가 높은 쪽 → 낮은 쪽이에요.<br>바깥 ' + c[0] + ' · 안 ' + c[1];
         } else {
           const i = stepIdx(ptime), cyc = L && L.S.pp ? L.S.pp.cycles : 0;
-          h = '<b>Na⁺–K⁺ 펌프</b> · ' + (i + 1) + '/5 단계<br>' + PSTEP[i] + '<br><span style="color:#fde68a">Na⁺ 3개 ↔ K⁺ 2개 · ATP 1개 사용 · 능동 수송 (한 회전 ' + cyc + '회)</span>' + (st.cn ? '<br><span style="color:#fca5a5">🧪 시안화물: 세포호흡이 막혀 ATP가 만들어지지 않으면 펌프가 멈춰요.</span>' : '');
+          h = '<b>Na⁺–K⁺ 펌프</b> · ' + (i + 1) + '/5 단계<br>' + PSTEP[i] + '<br><span style="color:#fde68a">Na⁺ 3개 ↔ K⁺ 2개 · ATP 1개 사용 · 능동 수송 (한 회전 ' + cyc + '회)</span>' + (st.cn ? '<br><span style="color:#fca5a5">🧪 시안화물: 세포호흡이 막혀 ATP가 만들어지지 않으면 펌프가 멈춰요.</span>' : '') + (L && L.S.mode === 'root' ? '<br>🌱 뿌리털 세포막에도 이런 펌프가 있어요. 공기 · 질소 용액에서 이온 흡수량을 재어 비교해요.' : '');
         }
         info(h);
       }
@@ -235,7 +235,7 @@
         const L = lesson(); if (!L) return;
         const m = L.S.mode, m2 = MODE_OF[m];
         let other = '';
-        if (!m2) other = m === 'bulk' ? '🫧 큰 물질 수송(식세포 작용 · 음세포 작용 · 세포 외 배출)은 ▦ 2D 화면에서 시연해 보세요.' : '🗂 사례 분류는 ▦ 2D 화면에서 카드를 끌어 넣어요.';
+        if (!m2) other = m === 'bulk' ? '<b>🫧 큰 물질 수송</b><br>단백질처럼 큰 물질은 막 단백질 대신 소낭으로 옮겨요(식세포 작용 · 음세포 작용 · 세포 외 배출).' : '<b>🗂 수송 사례 분류</b><br>단순 확산 · 촉진 확산 · 능동 수송 · 소낭 수송의 차이(방향 · 단백질 · ATP)를 떠올려요.';
         const mode = m2 || st.mode;
         let ch = false;
         if (mode !== st.mode) { st.mode = mode; ch = true; }
@@ -243,6 +243,7 @@
         if (m === 'diff') { const d = L.S.df; if (d.sp !== st.sp || d.ci !== st.ci) { st.sp = d.sp; st.ci = d.ci; ch = true; } segDf.set(d.sp); rngDf.set(d.ci); }
         if (m === 'carrier') { const c = L.S.cr; if (c.sp !== st.sp || c.ci !== st.ci || c.n !== st.n) { st.sp = c.sp; st.ci = c.ci; st.n = c.n; ch = true; } segCr.set(c.sp); segN.set(c.n); rngCr.set(c.ci); }
         const cn = m === 'cyan' && !!(L.S.cy && L.S.cy.cn); if (cn !== st.cn) { st.cn = cn; ch = true; }
+        if (m !== st.m2d) { st.m2d = m; text(); }
         if (m === 'cyan' || m === 'root') { /* 펌프 화면이지만 입자 설정은 그대로 */ }
         if (ch) { if (st.mode === 'diff' && !(m === 'diff')) st.sp = 'o2'; reset(); }
         if (st.mode === 'pump' && L.S.pp) {

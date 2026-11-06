@@ -104,7 +104,12 @@
         const ang = Math.acos(Math.max(-1, Math.min(1, a0.dot(a1)))) / DEG; parLab.set('시차각 p');
       }
       function text() {
-        info('<b>연주 시차</b> p: 별이 <b>가까울수록 크고</b> 멀수록 작아요.<br>지구가 반년 사이에 움직이면 별이 배경별 사이에서 <b>타원</b>을 그리며 움직여 보여요.<br>거리 d(파섹) = 1 / p(″)');
+        /* 2D 사진과 같은 값: 찍은 사진의 별 위치(″)와 두 사진 사이 이동 Δ */
+        const S = sr(), P = S && S.pr, cap = (P && P.cap) || [], MN = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];
+        const fx = (x) => (x >= 0 ? '+' : '−') + Math.abs(x).toFixed(2) + '″';
+        let shot = '📸 찍은 사진 ' + cap.length + ' / 2' + (cap.length ? ': ' + cap.map((c) => MN[Math.round(c.m) % 12] + ' ' + fx(c.x)).join(', ') : '');
+        if (cap.length === 2) shot += '<br>→ 이동 <b style="color:#fca5a5">Δ = ' + Math.abs(cap[0].x - cap[1].x).toFixed(2) + '″</b> (시차 p = Δ ÷ 2)';
+        info('<b>연주 시차</b> p: 별이 <b>가까울수록 크고</b> 멀수록 작아요.<br>지구가 반년 사이에 움직이면 별이 배경별 사이에서 <b>타원</b>을 그리며 움직여 보여요. 거리 d(파섹) = 1 / p(″)<br>' + shot);
       }
 
       /* ▶ 재생: 지구가 태양을 한 바퀴(12개월) 돌아요. 2D의 '관측 시기(달)'도 같은 값으로 움직여요 */
@@ -125,7 +130,7 @@
         if (k !== st.key) {
           st.key = k;
           if (P.sel !== st.sel) { st.sel = P.sel; st.D = dOf(P.sel); const i = W().STAR8 ? W().STAR8[P.sel] : null; starLab.set(i ? i.n : '별'); st.shots = []; rebuildStar(); }
-          st.shots = P.cap.map((c) => c.m); rebuildShots();
+          st.shots = P.cap.map((c) => c.m); rebuildShots(); text();
         }
       }
       { const S0 = sr(); if (S0 && S0.pr) { st.sel = S0.pr.sel; st.D = dOf(S0.pr.sel); st.m = S0.pr.m; player.set(S0.pr.m / 12); st.shots = S0.pr.cap.map((c) => c.m); st.key = S0.pr.sel + '|' + S0.pr.cap.map((c) => c.m).join(','); } }

@@ -13,7 +13,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: narrow ? 16 : 12.5, theta: 0.35, phi: 1.38, target: [0, 0, 0], min: 6, max: 22 },
     autoRotate: 0,
-    levels: [0, 2],
+    levels: [0],   // 1단계(캘빈 회로 한 바퀴 · 구슬 세기). 2단계(필요량 표) · 3단계(카드 · 저장량 막대) · 4단계(예측 곡선)는 2D 화면이에요
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V = THREE.Vector3;

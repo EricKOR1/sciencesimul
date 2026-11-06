@@ -944,7 +944,7 @@
           title: '6단계 순서 정렬하기',
           goal: '시간 슬라이더를 끝까지 움직여 본 뒤, 태양 정도의 별이 겪는 <b>6단계를 일어나는 순서대로</b> 눌러요. 그리고 <b>✔ 확인하기</b>를 눌러요.', manual: true,
           setup() { S.rgOn = false; setView('v2'); setOrd('stage'); },
-          hint: '시간 슬라이더를 처음부터 끝까지 천천히 움직이면 H-R도 위에 지나간 단계의 이름표가 생겨요.',
+          hint: '시간 슬라이더를 처음부터 끝까지 천천히 움직이면 별 위에 지금 단계의 이름표가 떠요.',
           check: () => (S.maxS2 < 6.8 ? '먼저 시간 슬라이더를 끝까지 움직여 모든 단계를 살펴봐요.' : S.ord.length < 6 ? '6단계를 모두 눌러요.' : ordOk() ? true : '순서가 달라요. 이름표가 생긴 순서를 다시 확인해 봐요.'),
           explain: '순서는 <b>주계열 → 적색 거성 → 수평 가지 → 점근거성가지 → 행성상 성운 → 백색 왜성</b>이에요. 별은 주계열에서 오른쪽 위로 올라가 거성이 되고, 마지막에는 왼쪽 아래의 백색 왜성이 돼요.',
         },
@@ -989,7 +989,7 @@
           title: '초신성 직전 내부 층 순서',
           goal: '초신성 직전 큰 별의 내부 층을 <b>바깥에서 안쪽 순서로</b> 눌러요. 그리고 <b>✔ 확인하기</b>를 눌러요.', manual: true,
           setup() { setView('v3'); setM3(15); S.u3 = 0.6; setOrd('layer'); },
-          hint: '왼쪽 아래의 중심부 단면에 층 이름이 적혀 있어요. 가장 안쪽이 철 핵이에요.',
+          hint: '속 보기로 자른 별의 안쪽 층에 이름이 적혀 있어요. 가장 안쪽이 철 핵이에요.',
           check: () => (S.ord.length < 5 ? '다섯 층을 모두 눌러요.' : ordOk() ? true : '순서가 달라요. 가장 바깥은 수소 층이고 가장 안쪽은 철 핵이에요.'),
           explain: '바깥에서 안쪽으로 <b>수소 → 헬륨 → 탄소·산소 → 더 무거운 원소 → 철 핵</b> 층이에요. 안쪽일수록 무거운 원소가 모여 있어요.',
         },
@@ -1089,7 +1089,7 @@
 
   /* ---------- 디버그 (Playwright) ---------- */
   window.__sim = {
-    S, VW, VH, LAY, TRK, star2, fateOf, coreMass, s4Of, doneAt, ORD, PAIR_ANS,
+    S, VW, VH, LAY, TRK, star2, fateOf, coreMass, s4Of, doneAt, ORD, PAIR_ANS, D1, fmtYears,
     get game() { return game; },
     enterLevel, setView, updateCtl, setM1, setP1, setS2, setM3, setTau, playRun3, finishRun3, recordRg, setOrd, ordPick, ordOk,
     setU3(u) { S.play3 = false; S.u3 = u; },

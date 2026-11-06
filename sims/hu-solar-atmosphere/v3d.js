@@ -127,13 +127,43 @@
         const r = radOf(st.h), a = -25 * DEG; probe.position.set(0.03, r * Math.sin(a), r * Math.cos(a)); probe.visible = st.mode === 'layers'; probeLab.show(st.mode === 'layers');
         probeLab.set('높이 ' + Math.round(st.h).toLocaleString('ko-KR') + ' km · ' + fmtT(TOF(st.h)));
       }
+      /* 카드 분류 장면(층 이름 카드 · 현상 카드): 3D 막대의 단추로 카드를 고르고 상자에 넣어요 (2D 분류기 cLy · cPair를 그대로 써서 미션 진행이 같아요) */
+      const BINL = ['A', 'B', 'C', 'D'];
+      const curC = () => { const q = W(), S = q.S || {}; return S.view === 'cards' ? q.cLy : S.view === 'pair' ? q.cPair : null; };
+      function cardInfo() {
+        const c = curC(); if (!c) return false;
+        const it = c.sel >= 0 ? c.items[c.sel] : null, n = c.items.filter((x) => x.loc != null).length;
+        const lines = c.cfg.bins.map((b, i) => {
+          const inB = c.items.filter((x) => x.loc === i).map((x) => (x.wrong ? '<span style="color:#fca5a5">✗ ' + x.label + '</span>' : x.label));
+          return '<b>' + BINL[i] + '</b> ' + b.label.replace(/^[A-D] · /, '') + ' (' + b.sub + ')' + (inB.length ? ' → <b style="color:#ffd34d">' + inB.join(', ') + '</b>' : '');
+        });
+        info((it ? '고른 카드: <b style="color:#ffd34d">' + it.label + '</b>' : '◀ ▶로 카드를 골라요') + ' · 넣은 카드 ' + n + ' / ' + c.items.length + '<br>' + lines.join('<br>'));
+        return true;
+      }
+      const cardEls = [controls.text('카드')];
+      const pickCard = (d) => { const c = curC(); if (!c) return; const n = c.items.length; c.sel = c.sel < 0 ? (d > 0 ? 0 : n - 1) : (c.sel + d + n) % n; cardInfo(); };
+      cardEls.push(controls.button('◀', () => pickCard(-1)), controls.button('▶', () => pickCard(1)));
+      BINL.forEach((b, i) => cardEls.push(controls.button(b + ' 상자', () => {
+        const c = curC(); if (!c || c.sel < 0) return; c.place(c.items[c.sel], i);
+        c.sel = c.items.findIndex((x) => x.loc == null); cardInfo();
+      })));
+      let cardOn = null, cardKey = '';
+      function cardTick() {
+        const c = curC(), on = !!c;
+        if (on !== cardOn) { cardOn = on; cardEls.forEach((e) => { e.style.display = on ? '' : 'none'; }); cardKey = ''; if (!on) { if (st.mode === 'layers') temp(); else phenInfo(); } }
+        if (!c) return;
+        const k = c.sel + ':' + c.items.map((x) => x.loc + (x.wrong ? 'x' : '')).join(',');
+        if (k !== cardKey) { cardKey = k; cardInfo(); }
+      }
       function temp() {
+        if (cardInfo()) return;
         const q = W(), free = !!(q.game && q.game.free), cards = q.S && q.S.view === 'cards' && !free && !(q.lyOK && q.lyOK());
         info('<b>층 구조</b> (층의 두께는 보기 좋게 키워 그렸어요)<br>높이 ' + Math.round(st.h).toLocaleString('ko-KR') + ' km' + (cards ? '' : ' · <b>' + LN[layerOf(st.h)] + '</b>') + ' · 온도 <b>' + fmtT(TOF(st.h)) + '</b><br>광구(5800 K)에서 올라갈수록 처음엔 식다가, 천이층에서 급상승해 <b>코로나는 100만 K 이상</b>이에요.');
       }
-      function phenInfo() { info('<b>대기 현상</b><br><span style="color:#ff9d8a">홍염</span>은 자기장 고리를 따라 뜬 가스, <b>플레어</b>는 폭발, <b>CME</b>는 코로나 물질의 방출, <b>코로나 홀</b>에서는 태양풍이 빠르게 나가요.'); }
+      function phenInfo() { if (cardInfo()) return; info('<b>대기 현상</b><br><span style="color:#ff9d8a">홍염</span>은 자기장 고리를 따라 뜬 가스, <b>플레어</b>는 폭발, <b>CME</b>는 코로나 물질의 방출, <b>코로나 홀</b>에서는 태양풍이 빠르게 나가요.'); }
       function setMode(m) {
         st.mode = m; const L = m === 'layers';
+        { const ph = cardEls[0].parentNode && cardEls[0].parentNode.querySelector('.v3-ph'); if (ph) ph.style.visibility = L ? '' : 'hidden'; }   // 구간 이름(광구~코로나)은 층 구조에서만
         capG.visible = L; phenG.visible = !L; streamG.visible = !L; corona.visible = true;
         cutObjs.forEach((o) => (o.visible = L)); fullObjs.forEach((o) => (o.visible = !L));
         chM.opacity = L ? 0.3 : 0.1; trM.opacity = L ? 0.25 : 0.08;
@@ -170,7 +200,7 @@
       const v = new THREE.Vector3();
       return {
         update(dt) {
-          follow(); st.t += dt;
+          follow(); cardTick(); st.t += dt;
           loopM.emissiveIntensity = 0.75 + 0.25 * Math.sin(st.P * Math.PI * 2 * 20);
           if (st.mode === 'phen') {
             const f = Math.sin(Math.min(1, Math.max(0, st.P / 0.35)) * Math.PI), u = Math.min(1, Math.max(0, (st.P - 0.15) / 0.8));

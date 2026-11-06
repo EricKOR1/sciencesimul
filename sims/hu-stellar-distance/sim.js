@@ -761,7 +761,7 @@
         {
           title: '알타이르의 시차 재기',
           goal: '별 목록에서 <b>알타이르</b>를 고르고, 지구를 <b>1월 초</b>와 <b>7월 초</b>로 옮겨 사진을 찍어(📸) 이동 Δ를 재요. <b>p = Δ ÷ 2</b>를 입력하세요(″).',
-          hint: '아래 지구를 끌거나 슬라이더로 1월 초에서 한 번, 7월 초에서 한 번 찍어요. 이동 Δ는 약 0.39″이고, 그 절반이 p예요.',
+          hint: '관측 시기 슬라이더(또는 ▶ 지구 돌리기)로 1월 초에서 한 번, 7월 초에서 한 번 찍어요. 이동 Δ는 약 0.39″이고, 그 절반이 p예요.',
           setup() { S.pr.cap = []; S.pr.pOk = false; S.flags.calcP = true; S.flags.calcD = false; clrIn('inP'); setMonth(0); setView('par'); S.pr.sel = ALT; updateCtl(); },
           check: () => S.pr.sel === ALT && capOK() && S.pr.pOk,
           hold: 0.7,

@@ -12,7 +12,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHONE ? 15 : 12.5, theta: 0.7, phi: 1.25, min: 6, max: 26, target: [0, 0.2, 0] },
     autoRotate: 0.18,
-    levels: [0, 1, 2],   // 4단계(하나의 식)는 2D의 식 카드 끌어 놓기가 필요해요
+    levels: [2],   // 3단계(몰수 · 부피 기록). 1 · 2단계는 기록표 · 그래프(외삽)를 읽고, 4단계는 식 카드를 끌어 놓아서 2D 화면이에요
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3;

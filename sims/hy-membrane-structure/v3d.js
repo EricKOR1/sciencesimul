@@ -18,7 +18,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHONE ? 15.5 : 8.4, theta: 0.2, phi: 1.3, fov: 40, min: 4, max: 20, target: [PHONE ? 0 : -0.5, PHONE ? 0.3 : 0, 0] },
     autoRotate: 0,
-    levels: [1, 2],   // 1단계(조립 · 이중층 배열)와 4단계(통과 시험 · 분류)는 2D 실험 화면에서, 막 단백질 · 유동성 단계에서 3D로 시작
+    levels: [1, 2],   // 2단계(막 단백질 · 기능 연결은 3D 막대의 단추로) · 3단계(유동성). 1단계(조립 · 이중층 배열)와 4단계(통과 시험 · 분류)는 2D 화면이에요
     build(ctx) {
       const { THREE, root, label, info, controls, orbit, renderer } = ctx;
       renderer.localClippingEnabled = true;
@@ -130,7 +130,7 @@
       /* ----- 정보 · 조작 ----- */
       function refresh() {
         syncM(); const pct = Math.round(M01 * 100);
-        info('<div style="max-width:' + (PHONE ? 205 : 235) + 'px"><b>유동 모자이크</b> · 유동성 <b>' + pct + ' %</b><br>머리(파랑, 친수성)는 바깥쪽, 꼬리(주황, 소수성)는 안쪽에 모인 <b>이중층</b><br>통합 단백질은 박혀 있고, 말초 단백질은 표면에 붙어 있어요.</div>');
+        const sh = stHtml(); if (sh) info(sh); else info('<div style="max-width:' + (PHONE ? 205 : 235) + 'px"><b>유동 모자이크</b> · 유동성 <b>' + pct + ' %</b><br>머리(파랑, 친수성)는 바깥쪽, 꼬리(주황, 소수성)는 안쪽에 모인 <b>이중층</b><br>통합 단백질은 박혀 있고, 말초 단백질은 표면에 붙어 있어요.</div>');
         labs.forEach((l) => l.show(names)); cholL.show(names && hasChol && chol.length > 0);
       }
       /* 3D에서 조작하면 2D 유동성 실험(S.fx)도 같은 값으로 (2D 슬라이더를 움직인 것과 같아요) */
@@ -165,13 +165,65 @@
         else if (L.S.mode === 'prot' && L.S.pr) { const c = L.S.pr.chol > 0; if (c !== hasChol) setChol(c); }
       }
       cB.classList.toggle('on', hasChol);
+      /* ---- 2단계: 막 단백질 넣기(2D의 prPlace) · 기능 연결(2D의 matchS)을 3D 막대 단추로 ----
+         넣지 않은 단백질은 흐리게(빈 자리) 보여 주고, 넣으면 진하게 바뀌어요. */
+      const LS = () => { const L2 = ctx.lesson(); return L2 && L2.S && L2.S.pr && L2.matchS ? L2 : null; };
+      const stMode = () => { const L2 = LS(); return L2 ? L2.S.mode : ''; };
+      const gMats = {};
+      prots.forEach((P) => { const ms = []; P.g.traverse((o) => { if (o.isMesh && o.material && o.material !== sugMat && ms.indexOf(o.material) < 0) ms.push(o.material); }); gMats[P.type] = ms.map((m) => ({ m, op: m.opacity, tr: m.transparent, dw: m.depthWrite })); });
+      const ghostNow = {};
+      function setGhost(P, on) {
+        if (!!ghostNow[P.type] === on) return; ghostNow[P.type] = on;
+        gMats[P.type].forEach((q) => { q.m.transparent = on ? true : q.tr; q.m.opacity = on ? 0.16 : q.op; q.m.depthWrite = on ? false : q.dw; q.m.needsUpdate = true; });
+      }
+      let mSel = 0;
+      function putProt(type) {
+        const L2 = LS(); if (!L2 || L2.S.mode !== 'prot' || !L2.prPlace) return; const its = L2.S.pr.items, q = its.find((o) => o.type === type);
+        if (!q || q.slot >= 0) return;
+        const free = [0, 1, 2, 3, 4].filter((k) => !its.some((o) => o.slot === k)).sort((a, b) => Math.abs(a - 2) - Math.abs(b - 2)); if (!free.length) return;
+        L2.prPlace(q, free[0]); stSig = '';
+      }
+      function pickCard(d) { const L2 = LS(); if (!L2) return; const cs = L2.matchS.cards, n = cs.length; mSel = ((mSel + d) % n + n) % n; stSig = ''; }
+      function putCard(k) {
+        const L2 = LS(); if (!L2 || L2.S.mode !== 'match') return; const cs = L2.matchS.cards, c = cs[mSel]; if (!c) return;
+        L2.matchS.place(c, L2.PTYPES[k]);
+        const nx = cs.findIndex((o, i) => i > mSel && !o.zone); const nx0 = cs.findIndex((o) => !o.zone); mSel = nx >= 0 ? nx : nx0 >= 0 ? nx0 : mSel; stSig = '';
+      }
+      const ctlBox = renderer.domElement.closest('.v3-wrap').querySelector('.v3-ctl'), nP0 = ctlBox.children.length;
+      controls.text('<b>막에 넣기</b>');
+      const ORD = ['ch', 'ca', 're', 'en', 'gp'], putBtn = ORD.map((k) => controls.button(prots.find((P) => P.type === k).name, () => putProt(k)));
+      const prEls = Array.prototype.slice.call(ctlBox.children, nP0), nM0 = ctlBox.children.length;
+      controls.text('<b>카드</b>'); controls.button('◀', () => pickCard(-1)); controls.button('▶', () => pickCard(1)); controls.text('<b>기능 상자</b>');
+      [0, 1, 2, 3, 4].forEach((k) => controls.button('기능 ' + (k + 1), () => putCard(k)));
+      const mEls = Array.prototype.slice.call(ctlBox.children, nM0);
+      [prEls, mEls].forEach((g) => g.forEach((e) => { e.style.display = 'none'; }));
+      function stHtml() {
+        const L2 = LS(), m = L2 ? L2.S.mode : ''; if (m !== 'prot' && m !== 'match') return '';
+        if (m === 'prot') {
+          const its = L2.S.pr.items, n = its.filter((o) => o.slot >= 0).length;
+          return '<div style="max-width:' + (PHONE ? 205 : 260) + 'px"><b>막 단백질 넣기</b> · ' + n + ' / 5 · 콜레스테롤 ' + L2.S.pr.chol + '개<br>흐린 단백질은 아직 빈 자리예요. 아래 <b>막에 넣기</b> 단추로 끼워 넣고, <b>🧈 콜레스테롤</b>도 3개 이상 넣어요.</div>';
+        }
+        const M = L2.matchS, P = L2.PROT || {}, c = M.cards[mSel], nm = (id) => (P[id] ? P[id].name : id);
+        const rows = L2.PTYPES.map((k, i) => { const on = M.cards.filter((o) => o.zone === k).map((o) => nm(o.id)).join(', '); return '기능 ' + (i + 1) + ': ' + (P[k] ? P[k].fn : '') + (on ? ' → <b>' + on + '</b>' : ''); });
+        return '<div style="max-width:' + (PHONE ? 230 : 330) + 'px"><b>단백질 기능 연결</b> · 놓은 카드 ' + M.placed + ' / 5<br>고른 카드: <b>' + (c ? nm(c.id) : '—') + '</b> (◀ ▶)<br>' + rows.join('<br>') + '</div>';
+      }
+      let stSig = null;
+      function stTick() {
+        const L2 = LS(), m = L2 ? L2.S.mode : '';
+        const sg = m + (m === 'prot' ? L2.S.pr.items.map((o) => (o.slot >= 0 ? 1 : 0)).join('') + L2.S.pr.chol : m === 'match' ? L2.matchS.cards.map((o) => o.zone || '-').join(',') + mSel : '');
+        if (sg === stSig) return; stSig = sg;
+        prEls.forEach((e) => { e.style.display = m === 'prot' ? '' : 'none'; }); mEls.forEach((e) => { e.style.display = m === 'match' ? '' : 'none'; });
+        prots.forEach((P) => { const q = m === 'prot' ? L2.S.pr.items.find((o) => o.type === P.type) : null; const g = !!(q && q.slot < 0); setGhost(P, g); if (pL[P.type]) pL[P.type].set(g ? '? 빈 자리' : P.name + (P.type === 'en' ? ' (말초)' : '')); });
+        if (m === 'prot') putBtn.forEach((b, i) => { const q = L2.S.pr.items.find((o) => o.type === ORD[i]); b.disabled = !!(q && q.slot >= 0); });
+        refresh();
+      }
       fromLesson(); refresh();
 
       const ap = (a, b, dt, r) => a + (b - a) * (1 - Math.exp(-r * dt));
       let tPrev = 0;
       return {
         update(dt, t) {
-          poll();
+          poll(); stTick();
           if (camGo > 0 && cut) { camGo -= dt; orbit.theta += (0.18 - orbit.theta) * Math.min(1, dt * 3); orbit.phi += (1.3 - orbit.phi) * Math.min(1, dt * 3); }
           syncM(); const m = M01;
           // 옆으로 자리 바꾸기

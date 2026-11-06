@@ -1047,7 +1047,7 @@
         {
           title: '층별 화살표 더하기',
           goal: '‘모두 더하기’를 눌러 화살표를 이어 붙이고, 합친 <b>평균 수송</b>이 바람의 어느 쪽인지 골라요.',
-          hint: '바람 방향의 점선과 빨간 합 화살표 사이 각도를 봐요. 표면은 오른쪽 45°였지만 층 전체를 더하면 더 돌아요.',
+          hint: '바람 방향과 합 화살표 사이 각도를 봐요. 표면은 오른쪽 45°였지만 층 전체를 더하면 더 돌아요.',
           setup() { setMode('spiral'); LAY.forEach((z) => { S.meas[z] = true; }); renderLayTable(); S.netChoice = null; updNet(); S.sumOn = false; S.sumT = 0; setCtl(['wdSeg', 'sumRow']); },
           check: () => S.sumOn && S.sumT >= 0.99 && S.netChoice === 90 && S.net === 90, hold: 0.6,
           status: () => mark(S.sumOn && S.sumT >= 0.99) + ' 화살표 더하기 · ' + mark(S.netChoice === 90) + ' 고른 방향 ' + (S.netChoice == null ? '—' : S.netChoice === 0 ? '바람과 같은 방향' : S.netChoice === 270 ? '왼쪽 90°' : '오른쪽 ' + S.netChoice + '°'),

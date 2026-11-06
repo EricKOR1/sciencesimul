@@ -20,7 +20,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: 11, theta: 0.6, phi: 1.25, min: 5, max: 22 },
     autoRotate: 0.2,
-    levels: [0, 2],   // 1단계(수소 결합 이웃 만들기) · 3단계(얼음의 밀도). 2·4단계는 2D 화면이에요
+    levels: [0],   // 1단계(수소 결합 이웃 만들기 · 3D 막대의 잇기 단추). 2단계(그래프) · 3단계(호수 단면) · 4단계(실험대 · 카드)는 2D 화면이에요
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
       const R = rng(20260);
@@ -146,6 +146,14 @@
       labMol.obj = mols[cIdx].o; labMol.off = [0, 0.5, 0]; labHB.off = [0, -0.35, 0]; labRing.off = [0, 0.3, 0];
 
       const cyl = new THREE.CylinderGeometry(1, 1, 1, 8);
+      /* 1단계: 가운데 분자 하나의 수소 결합 4자리 (H 쪽 2 · 비공유 전자쌍 쪽 2) — 2D의 hbToggle과 같은 상태를 노란 막대로 보여 줘요 */
+      const HB0 = hbondsOf(P0, H0);
+      const fullOf = (m) => ({ d: HB0.filter((b) => b.m === m), a: HB0.filter((b) => b.n === m) });
+      const cH = inner.slice().sort((x, y) => cl[x].length() - cl[y].length()).find((m) => { const f = fullOf(m); return f.d.length === 2 && f.a.length === 2; });
+      const site = cH == null ? [] : (() => { const f = fullOf(cH); return f.d.map((b) => [b.Hp, P0[b.n]]).concat(f.a.map((b) => [b.Hp, P0[cH]])); })();
+      const mHi = new THREE.MeshBasicMaterial({ color: 0xffd34d });
+      const hiB = site.map(() => { const m = new THREE.Mesh(gC, mHi); m.visible = false; g.add(m); return m; });
+      const labC = label('가운데 분자', cH == null ? [0, 0, 0] : mols[cH].o, { color: 'rgba(161,98,7,.95)' }); labC.off = [0, 0.45, 0]; labC.show(false);
       function setStick(m, p, q, r) { const d = q.clone().sub(p), len = Math.max(1e-4, d.length()); m.position.copy(p).add(q).multiplyScalar(0.5); m.quaternion.setFromUnitVectors(UP, d.normalize()); m.scale.set(r, len, r); }
       function layout() {
         // 표면 쪽 분자부터 차례로 액체 상태로 바뀌어요 (분자마다 녹는 시점이 달라요)
@@ -185,6 +193,9 @@
           labRing.obj = ring.reduce((q, i) => q.add(P[i]), V3(0, 0, 0)).multiplyScalar(1 / 6).toArray();
         }
         labRing.show(!!showR);
+        const hbM = mode2() === 'hb' && w < 0.05 && !demoOn(), on = hbOnArr();
+        hiB.forEach((m, i) => { m.visible = hbM && !!on[i]; if (m.visible) setStick(m, site[i][0], site[i][1], 0.07); });
+        labC.show(hbM && cH != null); labMol.show(!hbM);
         text();
       }
       const frac = (v) => Math.round(v * 100);
@@ -199,11 +210,12 @@
         info((demoOn() ? '▶ ' : '') + '<b>' + state + '</b> · 분자 ' + N + '개를 그린 모형<br>' + (w < 0.05
           ? '분자 하나가 이웃 4개와 <span style="color:#ff8a8f">수소 결합</span>(점선)을 해서 <b>6각 고리</b>와 빈 공간이 생겨요.'
           : w > 0.95 ? '수소 결합이 끊어지고 이어지기를 반복하며 분자들이 빈 공간으로 들어와 가까워져요.' : '수소 결합이 하나씩 끊어지며 구조가 무너지고 있어요.') +
-          dline + '<br>가운데 분자 하나의 수소 결합: ' + (w < 0.05 ? '<b>4개</b> (주는 자리 2 + 받는 자리 2)' : w > 0.95 ? '평균 <b>약 ' + per + '개</b> (끊어졌다 이어졌다 해요)' : '하나씩 끊어지는 중…') + (m2 === 'hb' && nb >= 0 && !demoOn() ? '<br>2D에서 이은 수소 결합 <b>' + nb + ' / 4</b> (H 쪽 2 + 비공유 전자쌍 쪽 2)' : ''));
+          dline + '<br>가운데 분자 하나의 수소 결합: ' + (w < 0.05 ? '<b>4개</b> (주는 자리 2 + 받는 자리 2)' : w > 0.95 ? '평균 <b>약 ' + per + '개</b> (끊어졌다 이어졌다 해요)' : '하나씩 끊어지는 중…') + (m2 === 'hb' && nb >= 0 && !demoOn() ? '<br>가운데 분자에 이은 수소 결합 <b>' + nb + ' / 4</b> (노란 막대 · H 쪽 2 + 비공유 전자쌍 쪽 2)' : ''));
       }
       const mode2 = () => { try { return window.__sim.S.mode; } catch (e) { return ''; } };
       const dens2 = () => { try { const w2 = window.__sim, d = w2.S.dens; return { T: d.T, frozen: d.frozen, q: d.q, rho: w2.dRho() }; } catch (e) { return null; } };
       const hbOn2 = () => { try { return window.__sim.S.hb.on.filter(Boolean).length; } catch (e) { return -1; } };
+      const hbOnArr = () => { try { return window.__sim.S.hb.on; } catch (e) { return []; } };
       let demo = null;
       const pl = controls.player({
         duration: 10, loop: true, autoplay: false, label: '재생',
@@ -214,6 +226,11 @@
       controls.segment('시점', [{ value: 'side', label: '옆에서' }, { value: 'top', label: '위에서 (고리 구멍)' }], 'side', (v) => { orbit.phi = v === 'top' ? 0.1 : 1.25; });
       const hbB = controls.button('수소 결합 ✓', () => { showHB = !showHB; hbB.classList.toggle('on', showHB); hbB.textContent = '수소 결합 ' + (showHB ? '✓' : '✕'); layout(); }); hbB.classList.add('on');
       const rgB = controls.button('6각 고리 ✓', () => { showRing = !showRing; rgB.classList.toggle('on', showRing); rgB.textContent = '6각 고리 ' + (showRing ? '✓' : '✕'); layout(); }); rgB.classList.add('on');
+      /* 수소 결합 잇기 단추: 2D의 점선 고리 누르기(hbToggle)와 같아요 */
+      const ctlEl = ctx.renderer.domElement.closest('.v3-wrap').querySelector('.v3-ctl'), nH0 = ctlEl.children.length;
+      controls.text('<b>잇기</b>');
+      const hbBtn = ['H 쪽 ①', 'H 쪽 ②', '전자쌍 쪽 ①', '전자쌍 쪽 ②'].map((t, i) => controls.button(t, () => { const L = window.__sim; if (L && L.hbToggle) { L.hbToggle(i); lastSig = ''; } }));
+      const hbEls = Array.prototype.slice.call(ctlEl.children, nH0);
       { const vv = ctx.renderer.domElement, asp = Math.max(0.3, vv.clientWidth / Math.max(1, vv.clientHeight)); if (asp < 1) orbit.dist = Math.max(orbit.dist, 3.4 / (0.414 * asp)); }
       let lastSig = '', lastDemo = false;
       const api = {
@@ -227,6 +244,9 @@
           const changed = sig !== lastSig;
           if (changed) { if (lastSig && demoOn()) { pl.pause(); pl.set(0); tw = 0; } lastSig = sig; }
           if (Math.abs(tw - w) > 0.002 || changed || demoOn() !== lastDemo) { lastDemo = demoOn(); w = tw; layout(); }
+          const isHb = m2 === 'hb', on = hbOnArr();
+          hbEls.forEach((e) => { e.style.display = isHb ? '' : 'none'; });
+          hbBtn.forEach((b, i) => b.classList.toggle('on', !!on[i]));
         },
         sync() { lastSig = ''; },
       };

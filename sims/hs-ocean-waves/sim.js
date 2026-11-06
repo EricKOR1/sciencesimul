@@ -890,7 +890,7 @@
         {
           title: 'T = 10 s의 파속과 궤도',
           goal: '주기를 <b>T = 10 s</b>로 맞추고, 파속 <b>c</b>(m/s)와 <b>깊이 λ/2에서의 궤도 크기</b>(수면 대비 %)를 입력해요.',
-          hint: 'c = gT/2π = 9.8 × 10 ÷ 6.28 ≈ 15.6 m/s예요. 궤도 크기는 그림 오른쪽 숫자에서 깊이 λ/2(노란 점선) 줄을 읽어요.',
+          hint: 'c = gT/2π = 9.8 × 10 ÷ 6.28 ≈ 15.6 m/s예요. 궤도 크기는 깊이 λ/2 줄에 적힌 숫자를 읽어요.',
           setup() { S.showC2 = false; S.showTbl = false; setMode('deep'); setCtl(['sT2', 'stpC2', 'stpR']); stpC2.reset(); stpR.reset(); },
           check: () => S.T2 === 10 && nearEq(stpC2.value, Number(fN(cDeep(10), 1))) && stpR.value === Math.round(pctAt(0.5)), hold: 0.8,
           status: () => mark(S.T2 === 10) + ' T ' + S.T2 + ' s (목표 10) · ' + mark(S.T2 === 10 && nearEq(stpC2.value, Number(fN(cDeep(10), 1)))) + ' c ' + fN(stpC2.value, 1) + ' m/s · ' + mark(stpR.value === Math.round(pctAt(0.5))) + ' 궤도 ' + stpR.value + ' %',
@@ -899,7 +899,7 @@
         {
           title: '먼저 도착하는 파', manual: true,
           goal: '3000 km 떨어진 폭풍에서 출발한 세 파 중 <b>먼저 도착하는 순서</b>대로 눌러요.',
-          hint: '심해파는 주기가 길수록 빨라요. 표에서 파속 c가 큰 파부터 눌러요.',
+          hint: '심해파는 주기가 길수록 빨라요. 폭풍에서 온 파의 목록에서 파속 c가 큰 파부터 눌러요.',
           setup() { S.showC2 = true; S.showTbl = true; ordArr.reset(); setMode('deep'); setCtl(['ordArr']); },
           status: () => mark(ordArr.ok()) + ' 누른 파 ' + ordArr.seq.length + ' / 3',
           check() {

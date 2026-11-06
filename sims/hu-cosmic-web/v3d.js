@@ -187,6 +187,7 @@
       }
       function text() {
         const w = (sim && sim.S) || {}, o = w.or || { eps: 5, age: 138, ageD: 138 };
+        if (cardsOn()) { cardInfo(); return; }
         if (mode === 'origin') {
           let st = null; try { st = sim.orbStats(o.eps, o.ageD || o.age); } catch (e) { /* 무시 */ }
           info('<b>구조의 기원</b> · 처음 밀도 요동 ±' + o.eps + ' % · 우주 나이 ' + Math.round(o.ageD || o.age) + '억 년<br>' + (o.eps === 0 ? '요동이 0 %이면 시간이 지나도 구조가 생기지 않아요. 은하는 고르게 흩어져 있어요.' : '조금 더 밀한 곳이 중력으로 주변 물질을 끌어당겨 <b>마디·실</b>이 되고, 비어 가는 곳은 <b>보이드</b>가 돼요.') + (st && st.ready !== false ? '<br>빈 곳 칸 ' + st.voids + ' / 64' : ''));
@@ -196,6 +197,13 @@
         else info('<b>우주 거대 구조 (합성 모형, 폭 약 ' + 2 * 130 + ' Mpc)</b><br>은하는 고르게 퍼져 있지 않고 <b>그물</b>처럼 이어져 있어요. 은하단 · 필라멘트 · 장벽 · 보이드를 돌려 보며 찾아봐요. (1 Mpc ≈ 326만 광년)');
       }
       const sliceOn = () => slice && mode !== 'origin';
+      /* 구조 이름과 크기 연결: 3D 막대의 단추로 카드를 고르고 크기 상자에 넣어요 (2D 분류기 cSt를 그대로 써서 미션 진행이 같아요) */
+      const cardsOn = () => { const S = sim && sim.S; return !!(S && S.view === 'struct' && S.st && !S.st.order && !free() && sim.cSt); };
+      function cardInfo() {
+        const c = sim.cSt, it = c.sel >= 0 ? c.items[c.sel] : null, n = c.items.filter((x) => x.loc != null).length;
+        const lines = c.items.filter((x) => x.loc != null).map((x) => (x.wrong ? '<span style="color:#fca5a5">✗ ' : '') + x.label + ' → ' + c.cfg.bins[x.loc].label + (x.wrong ? '</span>' : ''));
+        info((it ? '고른 카드: <b style="color:#ffd34d">' + it.label + '</b> (' + it.sub + ')' : '◀ ▶로 구조 카드를 골라요') + '<br>아래 크기 단추를 눌러 넣어요 · 넣은 카드 ' + n + ' / ' + c.items.length + (lines.length ? '<br>' + lines.join('<br>') : ''));
+      }
       const view = (v) => { // 위·옆에서 볼 때는 수업의 눕힌 쐐기 도표처럼 거리 r이 오른쪽으로 가요
         if (v === 'top') { orbit.phi = 0.06; orbit.theta = Math.PI / 2; orbit.dist = 420 * (narrow ? 2.3 : 1); } else if (v === 'side') { orbit.phi = 1.5; orbit.theta = Math.PI / 2; orbit.dist = 480 * (narrow ? 1.5 : 1); } else { orbit.phi = 0.95; orbit.theta = 0.55; orbit.dist = 480 * FIT; }
         spin = v === 'tilt'; };
@@ -205,6 +213,18 @@
       const cB = controls.button('🎨 구조 색', () => { colored = !colored; cB.classList.toggle('on', colored); applyAll(); });
       const vB = controls.button('🫧 보이드', () => { showVoid = !showVoid; vB.classList.toggle('on', showVoid); applyAll(); });
       const sB = controls.button('🔪 쐐기 단면', () => { slice = !slice; sB.classList.toggle('on', slice); if (slice) view('top'); applyAll(); });
+      const cardEls = [controls.text('카드')];
+      const pickCard = (d) => { const c = sim.cSt; if (!c) return; const n = c.items.length; c.sel = c.sel < 0 ? (d > 0 ? 0 : n - 1) : (c.sel + d + n) % n; text(); };
+      cardEls.push(controls.button('◀', () => pickCard(-1)), controls.button('▶', () => pickCard(1)));
+      ((sim && sim.cSt && sim.cSt.cfg.bins) || []).forEach((bn, i) => cardEls.push(controls.button(bn.label, () => {
+        const c = sim.cSt; if (!c || c.sel < 0) return; c.place(c.items[c.sel], i); c.sel = c.items.findIndex((x) => x.loc == null); text();
+      })));
+      let cOn = null, cKey = '';
+      function cardTick() {
+        const on = cardsOn(); if (on !== cOn) { cOn = on; cardEls.forEach((e) => { e.style.display = on ? '' : 'none'; }); cKey = ''; text(); }
+        if (!on) return; const c = sim.cSt, k = c.sel + ':' + c.items.map((x) => x.loc + (x.wrong ? 'x' : '')).join(',');
+        if (k !== cKey) { cKey = k; text(); }
+      }
       /* ▶ 재생: 구조의 기원 단계에서 우주 나이를 1억 → 138억 년으로 늘려 가며 작은 요동이 자라 구조가 생기는 과정을 봐요 (2D '우주 나이'도 함께 움직여요) */
       let ready = false, syncing = false;
       const player = controls.player({
@@ -239,7 +259,7 @@
       }
       readLesson();
       let acc = 0;
-      return { update(dt) { if (spin) orbit.theta += 0.07 * dt; acc += dt; if (acc > 0.1) { acc = 0; follow(); } }, sync() { synced = false; readLesson(); } };
+      return { update(dt) { if (spin) orbit.theta += 0.07 * dt; acc += dt; if (acc > 0.1) { acc = 0; follow(); cardTick(); } }, sync() { synced = false; readLesson(); } };
     },
   });
 })();

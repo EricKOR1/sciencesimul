@@ -17,7 +17,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHONE ? 15 : 11.3, theta: 0.5, phi: 1.2, min: 7, max: 28, target: [1.8, 0, 0] },
     autoRotate: 0.12,
-    levels: [0, 1],   // 3·4단계(연결 용기·물 위 포집·잠수 설계)는 2D 화면에서 풀어요
+    levels: [0, 1],   // 3·4단계(연결 용기·물 위 포집·잠수 설계)는 2D 화면이에요. 1단계의 합 입력칸(#inSum)은 data-v3="keep"
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       /* ---- 장면 꾸미기 도우미: 나무 · 암석 무늬, 하늘 · 우주 배경, 빛 번짐 (모양만 꾸며요) ---- */
@@ -117,7 +117,7 @@
         const md = mode();
         let t = (demo ? '▶ ' + note : '') + '<b>P(전체) = P(He) + P(N₂) + P(O₂)</b><br>12.3 L · 300 K · 입자 1개 = 0.05 mol = 0.10 atm<br>';
         if (md === 'frac') t = (demo ? '▶ ' + note : '') + '<b>P(A) = X(A) × P(전체)</b><br>전체 1.0 mol · X(O₂) = ' + mf(cnt.o2) + ' · P(O₂) = ' + (cnt.o2 * UNIT).toFixed(2) + ' atm<br>';
-        else if (md !== 'sum') t = '<b>이 단계는 2D 화면에서 풀어요</b><br>(연결 용기 · 물 위 포집 · 공기 · 잠수 설계)<br>';
+        else if (md !== 'sum') t = '<b>P(전체) = P(He) + P(N₂) + P(O₂)</b><br>각 기체의 분압은 몰 분율 × 전체 압력이에요.<br>';
         info(t + '몰 분율: He ' + mf(cnt.he) + ' · N₂ ' + mf(cnt.n2) + ' · O₂ ' + mf(cnt.o2));
       }
       const mode = () => { try { return window.__sim.S.mode; } catch (e) { return 'sum'; } };

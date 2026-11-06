@@ -1,5 +1,5 @@
 /* hx-solid-types · 3D 네 가지 결정 (이온 · 분자 · 공유 · 금속)
-   2단계 '네 가지 결정'(모형 보기)과 3단계 '성질 시험'에서 2D가 고른 결정/시료를 따라가요.
+   2단계 '네 가지 결정'(모형 보기 · 분류하기)에서 2D가 고른 결정을 따라가요. 3단계 '성질 시험'의 시료를 고르면 그 결정도 보여 줘요.
    (2D 쪽 '결정의 종류' 단추와 시료 단추가 이 화면을 조절해요.)
    1단계(결정과 비결정): 확대경 속 입자 · 온도계를 2D의 가열 진행에 맞춰 보여 줘요 (곡선 읽기 · 분류는 2D).
    4단계(미지 시료 분류): 3D는 네 가지 결정 모형을 차례로 보여 주는 참고 화면이에요 (분류는 2D).
@@ -25,7 +25,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: 10, theta: 0.7, phi: 1.1, min: 4, max: 24 },
     autoRotate: 0.22,
-    levels: [1, 2],   // 2단계(네 가지 결정) · 3단계(성질 시험). 1·4단계는 2D 화면에서 해요
+    levels: [1],   // 2단계(네 가지 결정 · 분류하기는 3D 막대의 단추로). 1단계(가열 곡선) · 3단계(비교표 칸 누르기) · 4단계(순서도)는 2D 화면이에요
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
       const wrap = ctx.renderer.domElement.closest('.v3-wrap'), ctlEl = wrap.querySelector('.v3-ctl');
@@ -225,7 +225,7 @@
         covEls.forEach((e) => { e.hidden = type !== 'cov'; });
         curEls.forEach((e) => { e.hidden = type !== 'metal'; });
       }
-      function show() { info((note ? '<span style="color:#ffd34d">' + note + TYPES[type].nm + '</span><br>' : '') + S.text(amt)); }
+      function show() { if (sortMode()) { lastSort = sortHtml(); info(lastSort); return; } info((note ? '<span style="color:#ffd34d">' + note + TYPES[type].nm + '</span><br>' : '') + S.text(amt)); }
       const SLB = { ion: '층 밀기', metal: '층 밀기', cov: '층 밀기', mol: '가열' };
 
       function pickType(v) { type = v; amt = 0; if (sl) sl.set(0); current = false; if (curB) { curB.classList.remove('on'); curB.textContent = '전류 흘리기 ✕'; } setScene(); }
@@ -323,7 +323,7 @@
         const ordTxt = hs.crystal ? (ord > 0.5 ? '입자가 규칙적으로 배열 (결정)' : '입자 배열이 흐트러졌어요 (액체)') : '입자가 불규칙하게 배열 (비결정)';
         const st = hs.crystal ? (sm0.prog <= 0 ? '고체' : sm0.prog < w.PL[0] ? '고체' : sm0.prog <= w.PL[1] ? '녹는 중 · 온도가 일정해요' : '액체') : (soft < 0.04 ? '단단한 고체' : soft < 0.7 ? '서서히 무르는 중' : '많이 무른 상태');
         lTh.set('온도 ' + (Math.round(T0) > 0 ? '+' : '') + Math.round(T0) + ' °C'); lOrd.set(ordTxt);
-        return '<b>🔍 확대경 속 ' + hs.nm + ' (' + hs.f + ')</b><br>' + ordTxt + '<br>' + st + (sm0.done ? '<br>' + hs.note + ' 곡선과 분류는 ▦ 2D에서 해요.' : h.run ? '<br>가열하는 중…' : '<br>🔥 가열하기를 눌러요.');
+        return '<b>🔍 확대경 속 ' + hs.nm + ' (' + hs.f + ')</b><br>' + ordTxt + '<br>' + st + (sm0.done ? '<br>' + hs.note : h.run ? '<br>가열하는 중…' : '<br>🔥 가열하기를 눌러요.');
       }
       const hCtl = grab(() => controls.segment('시료', HKS.map((k) => ({ value: k, label: window.__sim.HS[k].nm })), 'salt', (v) => { const w = window.__sim; if (w) { const b = document.querySelector('#hChips button[data-v="' + v + '"]'); if (b) b.click(); } }));
       const hGo = grab(() => controls.button('🔥 가열하기', () => { const b = document.getElementById('bHeat'); if (b) b.click(); }));
@@ -338,20 +338,47 @@
         else { labs.forEach((l) => l.show(false)); setScene(); }
       }
       let lastNote = '', lastHeat = ''; const TK0 = ['ion', 'mol', 'cov', 'metal'];
+      /* 분류하기(2단계): 3D 막대의 ◀ ▶ · 상자 단추가 2D의 카드 고르기 · placeCard와 같아요 */
+      const sortMode = () => { try { const S2 = window.__sim.S; return S2.mode === 'types' && S2.sub.types === 'sort'; } catch (e) { return false; } };
+      const TF = () => { try { return window.__sim.S.types; } catch (e) { return null; } };
+      let lastSort = '';
+      function sortHtml() {
+        const F = TF(); if (!F || !F.cards) return '';
+        const c = F.cards.find((q) => q.id === F.sel), n = [0, 1, 2, 3].map((i) => F.cards.filter((q) => q.bin === i).length), placed = n.reduce((a, b) => a + b, 0);
+        return '<b>🗂️ 대표 물질 12장 · 분류하기</b><br>' + (c ? '고른 물질: <b>' + c.f + '</b> (' + c.hint + ')' + (c.bin !== null ? ' · 지금 ' + TYPES[TK0[c.bin]].nm : '') : '◀ ▶로 물질을 골라요.') +
+          '<br>상자: 이온 ' + n[0] + ' · 분자 ' + n[1] + ' · 공유 ' + n[2] + ' · 금속 ' + n[3] + ' (' + placed + ' / 12)<br>모형: ' + TYPES[type].nm + ' (' + TYPES[type].ex + ')';
+      }
+      function pickCard(d) {
+        const F = TF(); if (!F || !F.cards) return; const cs = F.cards;
+        let i = cs.findIndex((q) => q.id === F.sel); i = i < 0 ? (d > 0 ? 0 : cs.length - 1) : (i + d + cs.length) % cs.length;
+        F.sel = cs[i].id; show();
+      }
+      function putCard(b) {
+        const L = window.__sim, F = TF(); if (!L || !L.placeCard || !F || !F.cards) return; const cs = F.cards;
+        const c = cs.find((q) => q.id === F.sel) || cs.find((q) => q.bin === null); if (!c) return;
+        L.placeCard(c, b);
+        const k = cs.indexOf(c), nx = cs.slice(k + 1).concat(cs.slice(0, k)).find((q) => q.bin === null);
+        F.sel = nx ? nx.id : null; show();
+      }
+      const sortCtl = grab(() => { controls.text('<b>물질</b>'); controls.button('◀', () => pickCard(-1)); controls.button('▶', () => pickCard(1)); controls.text('<b>상자</b>'); TK0.forEach((k, b) => controls.button(TYPES[k].nm, () => putCard(b))); });
+      let sortOn = null;
+      function setSortOn(on) { if (on === sortOn) return; sortOn = on; sortCtl.els.forEach((e) => { e.style.display = on ? '' : 'none'; }); lastSort = ''; show(); }
       const api = {
         update(dt, t) {
           const w2 = window.__sim, md = w2 && w2.S ? w2.S.mode : '';
           if (md === 'heat') {
-            setHeatOn(true);
+            setSortOn(false); setHeatOn(true);
             const html = updHeat(w2, t); if (html !== lastHeat) { lastHeat = html; info(html); }
             if (hCtl.r) hCtl.r.set(w2.S.heat.cur);
             [hGo, hFast].forEach((c) => c.els.forEach((e) => { e.disabled = !!w2.S.heat.run && c === hGo; }));
             return;
           }
           if (heatOn) { setHeatOn(false); lastHeat = ''; }
+          setSortOn(sortMode());
+          if (sortOn) { const h = sortHtml(); if (h !== lastSort) { lastSort = h; info(h); } }
           let w = want();
           if (md === 'cls') {           // 미지 시료 분류는 2D에서: 3D는 네 가지 결정 모형을 차례로 보여 줘요
-            clsT += dt; const k = Math.floor(clsT / 7) % 4; w = TK0[k]; note = '참고 모형 · 시료 분류는 ▦ 2D에서 해요 → ';
+            clsT += dt; const k = Math.floor(clsT / 7) % 4; w = TK0[k]; note = '참고 모형 · 네 가지 결정을 차례로 보여 줘요 → ';
           } else if (md !== modeNow && md === 'types') note = '';
           modeNow = md;
           if (w && w !== type) pickType(w);

@@ -3,7 +3,8 @@
    - 1단계: 2D에서 '기체가 양쪽으로 퍼짐' 장면을 재생하면 칸막이가 열리고 입자가 퍼져요. 3D 단추로도 열고 닫을 수 있어요.
    - 2단계: 2D의 입자 수 N · '한 번 섞기'로 만든 배열(보라 = 왼쪽 칸, 주황 = 오른쪽 칸)을 그대로 입체로 보여 줘요.
    입자가 양쪽에 고르게 있는 배열이 훨씬 많아서(경우의 수↑) 엔트로피가 커지는 방향으로 일이 일어나요.
-   1단계의 다른 장면(잉크 · 방 · 뜨거운 물과 찬물)과 3단계(증가 조건 5가지)도 2D와 같은 값으로 따라가요. 4단계(부호 분류 카드)는 2D에서 해요. */
+   1단계의 다른 장면(잉크 · 방 · 뜨거운 물과 찬물)과 3단계(증가 조건 5가지)도 2D와 같은 값으로 따라가요. 3D 단계는 1 · 3단계예요.
+   3단계에서는 상자 옆에 '배열의 수' 막대(처음 · 지금)를 함께 세워요. */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -15,7 +16,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHONE ? 14.5 : 10.8, theta: 0.45, phi: 1.15, min: 6, max: 24 },
     autoRotate: 0.12,
-    levels: [0, 1, 2],
+    levels: [0, 2],   // 2단계(배열 표 세기)와 4단계(카드 분류)는 2D 화면이에요
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       /* ---- 장면 꾸미기 도우미: 나무 · 암석 무늬, 하늘 · 우주 배경, 빛 번짐 (모양만 꾸며요) ---- */
@@ -65,7 +66,6 @@
       const binom = (n, k) => { let r = 1; for (let i = 1; i <= k; i++) r = r * (n - k + i) / i; return Math.round(r); };
       seg2 = controls.segment('칸막이', [{ value: 'closed', label: '닫기' }, { value: 'open', label: '열기' }], 'closed', (v) => { open = v === 'open'; });
       controls.button('↺ 다시 왼쪽에 모으기', () => reset());
-      const note = controls.text('입자 수와 배열은 2D 화면의 조작판에서 바꿔요.');
       reset();
       /* ================= 2D의 다른 장면: 잉크 · 방 · 뜨거운 물과 찬물(관찰), 증가 조건(탐구), 상태 순서(예측) ================= */
       const probe = controls.text(''); probe.style.display = 'none'; const ctlEl = probe.parentElement;
@@ -102,7 +102,15 @@
       const o2m = () => mkMol([[-0.3, 0, 0, 0.24, OC], [0.3, 0, 0, 0.24, OC]], [[0, 1]]);
       const MA = [h2o2(), h2o2()], MB = [h2o(), h2o()], MO = o2m();
       const lO2 = label('O₂ (기체)', MO, { color: 'rgba(30,41,59,.9)', offset: [0, 0.6, 0] }); lO2.show(false);
-      function hideNew() { m2.visible = false; bx2.visible = false; water.visible = false; shelf.visible = false; floorB.visible = false; [labC, labA, labB, lO2].forEach((l) => l.show(false)); MA.concat(MB, [MO]).forEach((g) => { g.visible = false; }); }
+      /* 배열의 수 막대 (증가 조건): 처음(회색) · 지금(보라) — 2D의 막대와 같은 정성적 크기 */
+      const gBar = new THREE.Group(); root.add(gBar); const BARH = 3.0, BX = LX + 1.1;
+      const barMk = (c) => { const b = new THREE.Mesh(new THREE.BoxGeometry(0.55, 1, 0.55), new THREE.MeshStandardMaterial({ color: c, roughness: 0.4 })); gBar.add(b); return b; };
+      const bar0 = barMk(0x94a3b8), bar1 = barMk(0x8b5cf6); bar0.position.x = BX; bar1.position.x = BX + 0.8;
+      const lBarT = label('배열의 수', [BX + 0.4, -LY + BARH + 0.45, 0], { color: 'rgba(30,41,59,.9)' }), lBar0 = label('처음', [BX, -LY - 0.35, 0], { color: 'rgba(30,41,59,.9)' }), lBar1 = label('지금', [BX + 0.8, -LY - 0.35, 0], { color: 'rgba(91,42,134,.92)' });
+      const setBar = (b, v) => { const h = Math.max(0.02, v * BARH); b.scale.y = h; b.position.y = -LY + h / 2; };
+      const showBar = (on) => { gBar.visible = on; [lBarT, lBar0, lBar1].forEach((l) => l.show(on)); };
+      showBar(false);
+      function hideNew() { showBar(false); m2.visible = false; bx2.visible = false; water.visible = false; shelf.visible = false; floorB.visible = false; [labC, labA, labB, lO2].forEach((l) => l.show(false)); MA.concat(MB, [MO]).forEach((g) => { g.visible = false; }); }
       /* 관찰: 2D가 미리 계산한 장면(getSnap)을 같은 진행 O.p 로 보여 줘요 (거꾸로 재생도 그대로) */
       function obsScene(w, S2) {
         const O = S2.ob, k = O.sel, sn = w.getSnap(k), f = Math.max(0, Math.min(w.NS, O.p)), i0 = Math.floor(f), i1 = Math.min(w.NS, i0 + 1), fr = f - i0, a0 = sn[i0], a1 = sn[i1];
@@ -171,6 +179,7 @@
         }
         flushSph();
         labC.show(true); labC.set(lab);
+        if (pOverride == null && w.sLevel) { showBar(true); setBar(bar0, w.sLevel(k, 0)); setBar(bar1, w.sLevel(k, C0.pd[k])); }
         return k;
       }
       let sceneNow = '';
@@ -186,7 +195,7 @@
         if (tag === sceneNow) return; sceneNow = tag; txt = '';
         const newObs = md === 'obs' && sel !== 1, gas = md === 'obs' && sel === 1;
         showEls(obSegC, md === 'obs'); showEls(obPlayC, md === 'obs'); showEls(obRevC, md === 'obs'); showEls(cdSegC, md === 'cond'); showEls(cdRngC, md === 'cond');
-        showOld(gas || md === 'model');
+        showOld(gas);
         if (gas || md === 'model') { hideNew(); m.visible = true; m2.visible = false; bx2.visible = false; }
         [labL, labR].forEach((l) => l.show(gas || md === 'model'));
         if (!(gas || md === 'model')) { wall.visible = false; glow.visible = false; }
@@ -226,7 +235,7 @@
           }
           if (md === 'pred') {
             condScene(w2, S2, (Math.sin(tNow * 0.6 - 1.57) + 1) / 2, 0);
-            setI('<b>🎯 ΔS 부호 예측</b><br>카드 분류는 ▦ 2D에서 해요.<br>3D에서는 판단 기준 하나를 보여 줘요. <b>고체 &lt; 액체 &lt; 기체</b> 순으로 입자가 놓일 배열이 많아져요.'); return;
+            setI('<b>🎯 ΔS 부호 예측</b><br>판단 기준: <b>고체 &lt; 액체 &lt; 기체</b> 순으로 입자가 놓일 배열이 많아져요. 기체의 몰수가 늘면 ΔS &gt; 0 이에요.'); return;
           }
           if (md === 'model' && S2.md && S2.md.pts && S2.md.pts.length) { model(dt, S2.md); return; }
           if (md === 'obs' && S2.ob) {            // 2D '기체가 양쪽으로 퍼짐' 재생에 맞춰 칸막이를 열고 닫아요

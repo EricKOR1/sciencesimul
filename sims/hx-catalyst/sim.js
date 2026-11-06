@@ -784,7 +784,7 @@
         {
           title: '도표에서 Eₐ 와 ΔH 읽기',
           goal: '촉매를 켜고 꺼 가며 <b>Eₐ(촉매 없음)</b>, <b>Eₐ(촉매 있음)</b>, <b>ΔH</b> 를 읽어요. 평형 화면에서는 두 곡선을 모두 재생해요.',
-          hint: '눈금은 10 kJ 마다 있어요. Eₐ 는 반응물 수준(0)에서 꼭대기까지, ΔH 는 반응물에서 생성물까지예요. 「⚖ 평형」 화면에서 촉매 없음·있음을 한 번씩 재생해요.',
+          hint: 'Eₐ 는 반응물 수준(0)에서 꼭대기까지, ΔH 는 반응물에서 생성물까지예요. 「⚖ 평형」 화면에서 촉매 없음·있음을 한 번씩 재생해요.',
           setup() { S.lock = false; resetEn(); resetEq(); setMode('en'); },
           check: () => enReadDone() && eqDone(), hold: 0.5,
           status: () => 'Eₐ(없음) ' + mark(EN().ok[0]) + ' Eₐ(있음) ' + mark(EN().ok[1]) + ' ΔH ' + mark(EN().ok[2]) + ' &nbsp; 평형 ' + mark(eqDone()),
@@ -912,7 +912,7 @@
 
   /* ---------- 디버그 (Playwright) ---------- */
   window.__sim = {
-    S, VW, VH, RC, CATS, PROB, FACT, PM, PL, ENS, setMode, exSet, exRun, exFilter, exCheck, enSet, enCheck, eqSet, eqRun, ezSend, setT, ezFresh, ezAct, ezCheck, ezTray, ezSite, evSel, evPickM, evPickL, evResult, tbSel, tbPick, tbResult, evRow, updateCtl, PCH, tEq, pctAbove, resetEx: resetExp, resetEz,
+    S, VW, VH, RC, CATS, PROB, FACT, PM, PL, ENS, aAt, A_EQ, EQ_T, setMode, exSet, exRun, exFilter, exCheck, enSet, enCheck, eqSet, eqRun, ezSend, setT, ezFresh, ezAct, ezCheck, ezTray, ezSite, evSel, evPickM, evPickL, evResult, tbSel, tbPick, tbResult, evRow, updateCtl, PCH, tEq, pctAbove, resetEx: resetExp, resetEz,
     get game() { return game; },
     stepAll(sec) { const n = Math.ceil(sec / 0.02); for (let i = 0; i < n; i++) { stepAll1(0.02); parts.update(0.02); } },
   };

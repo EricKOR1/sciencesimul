@@ -107,7 +107,7 @@
           });
           tm.instanceMatrix.needsUpdate = true;
           const net = loc.R - loc.L; let cnt = null; try { if (window.__sim.S.mode === 'mol') cnt = window.__sim.mz.cnt; } catch (e) { cnt = null; }
-          const s2 = '<b>' + (net === 0 ? '양쪽 농도가 같아서 수면이 그대로예요.' : (net > 0 ? '오른쪽' : '왼쪽') + ' 용액이 더 진해요') + '</b><br>' + (net === 0 ? '물 분자는 양쪽으로 같은 수가 건너가요.' : '물 분자가 묽은 쪽 → 진한 쪽으로 더 많이 건너가서, 진한 쪽 수면이 올라가요.') + '<br><span style="color:#ff9a2e">주황색 큰 입자(설탕)</span>는 막을 못 지나가요.<br>수위 차 <b>' + Math.abs(loc.dh).toFixed(1) + ' cm</b>' + (cnt ? ' · 2D에서 센 물 분자 → ' + cnt.lr + '번 · ← ' + cnt.rl + '번' : '');
+          const s2 = '<b>' + (net === 0 ? '양쪽 농도가 같아서 수면이 그대로예요.' : (net > 0 ? '오른쪽' : '왼쪽') + ' 용액이 더 진해요') + '</b><br>' + (net === 0 ? '물 분자는 양쪽으로 같은 수가 건너가요.' : '물 분자가 묽은 쪽 → 진한 쪽으로 더 많이 건너가서, 진한 쪽 수면이 올라가요.') + '<br><span style="color:#ff9a2e">주황색 큰 입자(설탕)</span>는 막을 못 지나가요.<br>수위 차 <b>' + Math.abs(loc.dh).toFixed(1) + ' cm</b>' + (cnt ? ' · 막을 지난 물 분자 → ' + cnt.lr + '번 · ← ' + cnt.rl + '번' : '');
           if (s2 !== txt) { txt = s2; info(s2); }
           const fm = (i) => (i === 0 ? '순수한 물 (0 M)' : (i * 0.05).toFixed(2) + ' M 용액');
           labL.set('왼쪽 ' + fm(loc.L)); labR.set('오른쪽 ' + fm(loc.R));

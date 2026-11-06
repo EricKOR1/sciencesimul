@@ -85,6 +85,7 @@
           name = pp < 0.3 ? '성간 구름' : ign ? '주계열 시작' : '원시별'; LB.set(name);
           txt = pp < 0.3 ? '<b>성간 구름</b>: 가스와 먼지가 중력으로 서서히 뭉치기 시작해요.' : !ign ? '<b>원시별</b>: 수축하며 <b>온도가 올라가고</b> 회전하면서 납작한 원반이 돼요.' : '중심 온도가 약 <b>1000만 K</b>에 이르면 수소 핵융합이 시작돼요 → <b>주계열성</b>의 탄생!';
           layers.forEach((l) => (l.visible = false)); neb.visible = nebR.visible = false; disc.visible = false; jets.forEach((j) => (j.visible = false)); ej.visible = false; LC.forEach((l) => l.show(false));
+          try { const l = rdSim(), S = l && l.S; if (S && l.D1 && l.fmtYears && l.D1[S.m1] && S.p1 > 0) { const p = clamp(S.p1 || 0, 0, 1); txt += '<br>질량 <b>' + S.m1 + ' M☉</b> · 경과 시간 <b>' + l.fmtYears(p >= 1 ? l.D1[S.m1] : Math.max(1, l.D1[S.m1] * Math.pow(p, 1.5))) + '</b>' + (p >= 1 ? ' (전주계열 기간)' : ''); } } catch (e) { /* 무시 */ }   // 2D와 같은 경과 시간
         } else if (mode === 'sun') {
           const st = sunAt(s); T = st.T; R = rv(st.R); show.star = s < 5.5 || true; const k = Math.round(s);
           name = SUN[k][3]; txt = ['', '', '', '', ''];

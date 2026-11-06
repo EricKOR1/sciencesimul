@@ -18,7 +18,7 @@
   window.SciSim3D.attach({
     title: '해파와 물 입자의 궤도 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    levels: [1, 2, 3],
+    levels: [1, 3],   // 3단계(천해파)의 해빈 쇄파 관찰은 캔버스의 해빈 단면에서만 보여서 2D
     camera: { dist: PHONE ? 15 : 11.2, theta: 0.4, phi: 1.22, min: 6, max: 26, target: [0, -0.9, 0] },
     autoRotate: 0,
     build(ctx) {
@@ -47,6 +47,8 @@
       let W = waveOf(st.T, H()), sc = 1, depthS = 2, yTop = 0.9;
       const labS = label('해수면', [LX / 2 - 0.3, 0.4, LZ / 2], { color: 'rgba(14,90,160,.9)', size: 11.5 });
       const labF = label('해저', [LX / 2 - 0.2, -2, LZ / 2], { color: 'rgba(120,85,30,.92)', size: 11.5 });
+      /* 심해파: 궤도 고리 옆에 깊이별 궤도 크기(수면 = 100 %)를 적어요 (2D 그림 오른쪽 숫자와 같아요) */
+      const depLabs = [[0.25, 'λ/4'], [0.5, 'λ/2']].map(([zl, nm]) => ({ zl, l: label(nm + ' · 궤도 ' + Math.round(100 * Math.exp(-TAU * zl)) + ' %', [0.9, -zl * LV, LZ / 2 + 0.25], { color: zl === 0.5 ? 'rgba(161,98,7,.95)' : 'rgba(30,41,59,.88)', size: 11.5 }) }));
 
       function rebuild() {
         W = waveOf(st.T, H()); sc = LV / W.L;                                    // 장면 길이 / 실제 길이
@@ -73,6 +75,7 @@
         }
         /* 궤도 고리는 가운데 한 곳(x0)에서만 보여요 */
         orbG.children.forEach((m) => { m.position.x = 0; m.position.z = LZ / 2 + 0.25; });
+        depLabs.forEach((d) => d.l.show(st.mode === 'deep' && st.orb));
         classify();
       }
       function classify() {
@@ -84,7 +87,7 @@
         const lam = '파장 λ ≈ ' + (W.L >= 1000 ? Math.round(W.L / 100) / 10 + ' km' : W.L >= 100 ? Math.round(W.L) + ' m' : W.L.toFixed(1) + ' m');
         const cc = m === 'shallow' ? Math.sqrt(G * H()) : W.c, cv = cc.toFixed(cc >= 100 ? 0 : 1) + ' m/s';
         let h;
-        if (m === 'deep') h = '<b>심해파</b> · 주기 T = ' + st.T + ' s<br>' + lam + ' · 파속 c = gT/2π = ' + ((S.showC2 || free) ? cv : '?') + '<br>' + shape + '. 깊이 λ/2 아래에서는 궤도가 거의 사라져요.';
+        if (m === 'deep') h = '<b>심해파</b> · 주기 T = ' + st.T + ' s<br>' + lam + ' · 파속 c = gT/2π = ' + ((S.showC2 || free) ? cv : '?') + '<br>' + shape + '. 깊이 λ/2 아래에서는 궤도가 거의 사라져요.' + (S.showTbl || free ? '<br><b>폭풍(3000 km 밖)에서 온 파</b><br>' + [6, 10, 16].map((T) => { const w = waveOf(T, 4000); return 'T = ' + T + ' s · λ ' + Math.round(w.L) + ' m · c ' + w.c.toFixed(1) + ' m/s'; }).join('<br>') : '');
         else if (m === 'shallow') h = '<b>천해파</b> · ' + (st.sub === 'beach' ? '해빈에서 관측 위치의 수심 ' + (+H().toFixed(2)) + ' m (T = 10 s)' : '수심 h = ' + H() + ' m · 긴 파(T = 600 s)') + '<br>파속 c = √(gh) = ' + cv + '<br>' + shape;
         else if (m === 'trans') h = '<b>수심 ' + H() + ' m</b> · 주기 T = 10 s<br>' + hl + ' · 파속 c = ' + cv + '<br>' + ((S.showCls || free) ? '<b>' + nm + '</b> → ' + shape + '<br><span style="opacity:.85">' + cs + '</span>' : 'h/λ 값으로 어느 영역인지 직접 판단해 봐요.');
         else h = '<b>' + nm + '</b> · 주기 ' + st.T + ' s, 수심 ' + H() + ' m<br>' + lam + ' · 파속 ≈ ' + cv + '<br>' + hl + ' → ' + shape;
@@ -109,7 +112,7 @@
           else { T = 600; h = S.h3; }
         } else if (S.mode === 'trans') { T = 10; h = S.h4; }
         else return;
-        key = S.mode + '|' + S.sub3 + '|' + T + '|' + h + '|' + (S.showC2 ? 1 : 0) + (S.showCls ? 1 : 0) + (g && g.game && g.game.free ? 1 : 0);
+        key = S.mode + '|' + S.sub3 + '|' + T + '|' + h + '|' + (S.showC2 ? 1 : 0) + (S.showTbl ? 1 : 0) + (S.showCls ? 1 : 0) + (g && g.game && g.game.free ? 1 : 0);
         if (key === st.key) return; st.key = key;
         st.mode = S.mode; st.sub = S.sub3; st.T = T; st.h = h; rebuild();
       }

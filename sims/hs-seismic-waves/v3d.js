@@ -92,7 +92,7 @@
 
       /* 3D에서 고른 파·매질을 2D 실험에도 알려 줘요 (2D의 setWave/setMed를 그대로 불러요) */
       const push = (k) => { try { const q = window.__sim; if (!q) return; if (k === 'wave' && q.setWave) q.setWave(st.wave); if (k === 'med' && q.setMed) q.setMed(st.med); lastWave = st.wave; lastMed = st.med; } catch (e) {} };
-      let lastWave = st.wave, lastMed = st.med;
+      let lastWave = st.wave, lastMed = st.med, lastWT = 0;
       const wSeg = controls.segment('파의 종류', [{ value: 'P', label: 'P파' }, { value: 'S', label: 'S파' }, { value: 'R', label: '표면파' }], st.wave, (v) => {
         if (v === 'R' && st.med === 'liquid') { st.med = 'solid'; mSeg.set('solid'); push('med'); }
         st.wave = v; player.set(0); refresh(); push('wave');
@@ -116,6 +116,7 @@
           try {
             const S = window.__sim && window.__sim.S;
             if (S && (S.wave !== lastWave || S.med !== lastMed)) { lastWave = S.wave; lastMed = S.med; st.wave = S.wave; st.med = S.med; wSeg.set(st.wave); mSeg.set(st.med); player.set(0); refresh(); }
+            if (S && typeof S.wT === 'number') { if (S.wT < lastWT - 0.3) player.set(0); lastWT = S.wT; }   // '↺ 파 다시 보내기'를 누르면 3D에서도 파를 처음부터 보내요
           } catch (e) {}
           const w = st.wave, v = SPEED[w], a = AMP[w], k = W / v, liq = st.med === 'liquid';
           const front = X0 - 0.2 + v * st.t;

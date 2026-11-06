@@ -165,11 +165,15 @@
         if (th.treat !== treat) { treat = th.treat; segT.set(treat); text(); }
         if (th.cyc !== cyc) { cyc = th.cyc; segC.set(cyc ? 'on' : 'off'); text(); }
         if (m === 'cond') { segT.set(th.treat); segC.set(th.cyc ? 'on' : 'off'); }
+        const cv = m === 'atp' && L.S.at && L.S.at.view === 'cmp';
+        if (cv !== cmpOn) { cmpOn = cv; text(); }
       }
+      let cmpOn = false;   // 🔁 미토콘드리아와 비교: 안내 창에 H⁺ 방향 비교를 덧붙여요
       modeCtl();
       function text() {
         const note = treat === 'dry' ? '<br><span style="color:#fca5a5">💧 물이 모자라 광계 Ⅱ에 전자를 줄 수 없어요.</span>' : treat === 'dcmu' ? '<br><span style="color:#fca5a5">🧪 억제제가 광계 Ⅱ 뒤의 전자 전달을 막아요.</span>' : cyc ? '<br><span style="color:#a7f3d0">🔁 광계 Ⅰ의 전자가 전달계로 되돌아와요.</span>' : '';
-        info('빛으로 <b>물이 분해</b>되고 전자가 이동해요. H⁺ 기울기로 <b>ATP</b>, 마지막에 <b>NADPH</b>가 만들어져요.<br><span style="color:#fde68a">ATP ' + nATP + ' · NADPH ' + nNADPH + ' · O₂ ' + nO2 + '</span>' + note);
+        const cmp = cmpOn ? '<br><b>🔁 미토콘드리아와 비교</b> · H⁺를 퍼 올리는 방향<br>엽록체: 스트로마 → <b>틸라코이드 내부</b>(H⁺ 쌓임) · 미토콘드리아: 기질 → <b>막 사이 공간</b>(H⁺ 쌓임). 두 곳 모두 H⁺가 ATP 합성 효소를 지나 돌아오며 ATP를 만들어요.' : '';
+        info('빛으로 <b>물이 분해</b>되고 전자가 이동해요. H⁺ 기울기로 <b>ATP</b>, 마지막에 <b>NADPH</b>가 만들어져요.<br><span style="color:#fde68a">ATP ' + nATP + ' · NADPH ' + nNADPH + ' · O₂ ' + nO2 + '</span>' + note + cmp);
       }
 
       for (let i = 0; i < 10; i++) addLumenH().s = 1;
