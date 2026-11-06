@@ -174,10 +174,11 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHN ? 21 : 11.5, theta: 0.12, phi: 1.1, min: 5, max: 30, target: [0, 0.2, 0] },
     autoRotate: 0,
+    levels: [1, 3],            // 2단계(원자 수 맞추기)·4단계(계수의 비)는 3D. 점화·낱말 카드·반응식 계수 칸은 2D
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const K = ChemKit(THREE), stg = K.stage(root), SPN = K.SP;
-      let rx = null, sig = '', ch4 = false, qd = 0;
+      let rx = null, sig = '', ch4 = false, qd = 0, lastSt = '';
       label('반응 전', [-3.1, -1.1, 2.2], { color: 'rgba(14,165,233,.9)' }); label('반응 후', [3.1, -1.1, 2.2], { color: 'rgba(34,197,94,.9)' });
       const arrow = new THREE.Group();
       const am = new THREE.MeshStandardMaterial({ color: 0xffd34d, roughness: 0.4, emissive: 0x6b4a00, emissiveIntensity: 0.5 });
@@ -230,6 +231,8 @@
           const v = view(), s = v.L + '|' + v.re + '|' + v.pr + '|' + v.cr + '|' + v.cp + '|' + ch4;
           if (v.L === 2) segWi.set(v.ei);
           if (s !== sig) { sig = s; show(elW, v.L === 2); show(elM, v.L === 3); rebuild(v); }
+          const st = ((ctx.lesson() || {}).RT || {}).st || '';   // ⚡ 반응 시작을 누르면 3D 반응도 처음부터 재생해요
+          if (st !== lastSt) { if (st === 'run' && v.L === 3 && !ch4) { pl.set(0); pl.play(); } lastSt = st; }
           stg.update(t); arrow.position.x = Math.sin(t * 2.5) * 0.08;
         },
       };

@@ -155,6 +155,7 @@
   /* ---------- 안내 · 강조 ---------- */
   const hintEl = $('#stageHint');
   function showHint(t, ms) { if (!hintEl) return; hintEl.textContent = t; hintEl.classList.remove('hide'); clearTimeout(showHint.t); showHint.t = setTimeout(hideHint, ms || 5200); }
+  const IN3D = () => document.body.classList.contains('v3-mode');   // 3D 화면이 열려 있나요?
   function hideHint() { if (hintEl) hintEl.classList.add('hide'); }
   function pulseEl(sel) { const n = $(sel); if (!n) return; n.classList.remove('feature-new'); void n.offsetWidth; n.classList.add('feature-new'); setTimeout(() => n.classList.remove('feature-new'), 4600); }
   const FOC = { key: '', t: 0 };
@@ -576,7 +577,7 @@
     cu.pop = 1; tw(cu, { pop: 0 }, 0.6, 'outCubic', { essential: true, delay: 0.3 });
     sfx.snap();
     later(0.35, () => FX.burst(cu.x + 28, cu.y, { count: 10, speed: 90, colors: ['#ffb15a', '#ffd23f', '#fff'], size: 3, life: 0.6 }));
-    if (CU.pairs === 6) later(0.7, () => { sfx.ding(); showHint('구리 원자 6개가 모두 짝을 지었어요. 남은 입자는 무엇일까요? 눌러 보세요', 6000); });
+    if (CU.pairs === 6) later(0.7, () => { sfx.ding(); showHint('구리 원자 6개가 모두 짝을 지었어요. 남은 입자는 무엇일까요? ' + (IN3D() ? '아래 막대에서 골라 보세요' : '눌러 보세요'), 6000); });
     return true;
   }
   const cuLeft = () => CU.atoms.filter((a) => a.bonded < 0);
@@ -596,7 +597,7 @@
   const molOf = (p) => CU.mol.find((m) => !m.split && Math.hypot(p.x - m.x, p.y - m.y) < 40);
   const atomOf = (p) => { let b = null, bd = 32; CU.atoms.forEach((a) => { if (a.bonded < 0 && a.mol.split) { const d = Math.hypot(p.x - a.x, p.y - a.y); if (d < bd) { bd = d; b = a; } } }); return b; };
   SC.cuo = {
-    enter() { showHint('산소 분자(O₂)를 눌러 쪼개고, 산소 원자를 구리 원자 옆으로 끌어다 놓아요', 6000); },
+    enter() { showHint(IN3D() ? '✨ 자동으로 짝짓기를 눌러 구리 원자와 산소 원자를 짝지어 보세요' : '산소 분자(O₂)를 눌러 쪼개고, 산소 원자를 구리 원자 옆으로 끌어다 놓아요', 6000); },
     update(dt) {
       CU.mol.forEach((m) => { if (!m.split && !(CU.drag && CU.drag.m === m)) { m.a[0].x = m.x - 19; m.a[0].y = m.y; m.a[1].x = m.x + 19; m.a[1].y = m.y; } });
       if (CU.drag && CU.drag.m) { const m = CU.drag.m; m.a[0].x = m.x - 19; m.a[0].y = m.y; m.a[1].x = m.x + 19; m.a[1].y = m.y; }
@@ -1110,8 +1111,8 @@
         missions: [
           {
             title: '남는 입자 찾기', scene: 'cuo', focus: 'autoBtn',
-            goal: '구리 원자 6개와 산소 분자 4개가 있어요. 산소 원자를 구리 원자와 1개씩 짝지은 뒤, 남는 입자를 눌러 찾으세요.',
-            hint: '산소 분자를 눌러 쪼개요. 산소 원자를 구리 원자 옆으로 끌어다 놓아요. 어렵다면 ✨ 자동으로 짝짓기!',
+            goal: '구리 원자 6개와 산소 분자 4개가 있어요. 산소 원자를 구리 원자와 1개씩 짝지은 뒤, 남는 입자를 <span class="only2d">눌러</span><span class="only3d">아래 막대에서 골라</span> 찾으세요.',
+            hint: '<span class="only2d">산소 분자를 눌러 쪼개요. 산소 원자를 구리 원자 옆으로 끌어다 놓아요. 어렵다면 ✨ 자동으로 짝짓기!</span><span class="only3d">✨ 자동으로 짝짓기를 눌러 짝을 지어요. 다 짝지은 뒤 반응 후 쪽에 남은 입자를 살펴봐요.</span>',
             setup() { cuInit(); setScene('cuo', true); syncControls(); },
             check: () => CU.pairs === 6 && CU.found, hold: 0.4,
             status: () => '짝 <b>' + CU.pairs + '/6</b> · 남는 입자 찾기 ' + MARK(CU.found),

@@ -6,7 +6,7 @@
   if (!window.SciSim3D) return;
   const PHN0 = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches);
   window.SciSim3D.attach({
-    title: '물속의 부력 3D',
+    title: '마찰력과 부력 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     levels: [1],   // 2단계(마찰력 재기: 접촉면 칩 · 도막 쌓기 · ✊ 당기기 · 표)만 3D. 도막 튕기기 · 공 누르기 · 원기둥 손잡이 · 카드 끌기는 2D
     camera: { dist: 15 * (PHN0 ? 1.05 : 1), theta: 0.3, phi: 1.38, fov: 45, target: [0.4, 1.9, 0], min: 6, max: 34 },

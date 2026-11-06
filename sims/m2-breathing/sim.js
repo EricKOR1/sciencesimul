@@ -1290,8 +1290,8 @@
         ids({
           title: '들숨 만들기',
           goal: '<b>갈비뼈를 위로</b> 올리고 <b>가로막을 아래로</b> 내려서 폐를 가득 부풀리세요.',
-          hint: '노란색 손잡이(갈비뼈)는 위로, 빨간색 손잡이(가로막)는 아래로 끌어요. 두 가지를 모두 해야 흉강 부피가 가장 커져요.',
-          setup() { setScene('chest'); CH.auto = false; syncChestUI(); showHint('🫁 두 손잡이를 끌어 숨을 들이쉬어 봐요', 7000); },
+          hint: '손잡이를 끌거나 버튼을 눌러 갈비뼈(노란색)는 위로, 가로막(빨간색)은 아래로 움직여요. 두 가지를 모두 해야 흉강 부피가 가장 커져요.',
+          setup() { setScene('chest'); CH.auto = false; syncChestUI(); showHint('🫁 갈비뼈와 가로막을 움직여 숨을 들이쉬어 봐요', 7000); },
           check: () => CH.rib >= 0.8 && CH.dia >= 0.8 && CH.L >= 0.75,
           hold: 0.6,
           status: () => mark(CH.rib >= 0.8) + ' 갈비뼈 올리기 · ' + mark(CH.dia >= 0.8) + ' 가로막 내리기 · ' + mark(CH.L >= 0.75) + ' 폐가 부풀기',
@@ -1300,7 +1300,7 @@
         ids({
           title: '날숨 만들기',
           goal: '이번에는 반대로 <b>갈비뼈를 아래로</b> 내리고 <b>가로막을 위로</b> 올려서 폐 속 공기를 내보내세요.',
-          hint: '노란색 손잡이는 아래로, 빨간색 손잡이는 위로 끌어요. 폐가 쪼그라들면서 공기가 나가요.',
+          hint: '손잡이를 끌거나 버튼을 눌러 갈비뼈(노란색)는 아래로, 가로막(빨간색)은 위로 움직여요. 폐가 쪼그라들면서 공기가 나가요.',
           setup() { setScene('chest'); CH.auto = false; syncChestUI(); CH.touched = true; SciSim.tween(CH, { rib: 1, dia: 1 }, { duration: 0.9, ease: 'outCubic' }); showHint('💨 이제 반대로 움직여 숨을 내쉬어 봐요', 7000); },
           check: () => CH.sawIn && CH.rib <= 0.25 && CH.dia <= 0.25 && CH.L <= 0.3,
           hold: 0.6,

@@ -1035,7 +1035,7 @@
         missions: [
           {
             title: '수정시키기',
-            goal: '<b>정자 출발!</b>을 눌러 정자가 난자와 만나는 과정을 끝까지 지켜보세요. 두 핵이 하나로 합쳐지면 성공이에요.',
+            goal: '<b><span class="only2d">🏊 정자 출발!</span><span class="only3d">▶ 수정</span></b> 버튼을 눌러 정자가 난자와 만나는 과정을 끝까지 지켜보세요. 두 핵이 하나로 합쳐지면 성공이에요.',
             hint: '버튼을 누르고 기다려요. 정자 한 개가 들어가면 화면이 난자 속으로 확대돼요.',
             hold: 0.6,
             check: () => scene === 'fert' && FT.done,
@@ -1072,7 +1072,7 @@
         missions: [
           {
             title: '32세포 만들기',
-            goal: '<b>분열시키기</b>를 눌러 <b>32세포</b>가 될 때까지 난할을 진행해 보세요. 오른쪽 게이지를 잘 보세요.',
+            goal: '<b><span class="only2d">✂️ 분열시키기</span><span class="only3d">▶ 난할</span></b> 버튼을 눌러 <b>32세포</b>가 될 때까지 난할을 진행해 보세요. <span class="only2d">오른쪽 게이지를 잘 보세요.</span><span class="only3d">세포 하나의 크기를 잘 보세요.</span>',
             hint: '버튼을 누를 때마다 세포 수가 2배가 돼요: 1 → 2 → 4 → 8 → 16 → 32.',
             hold: 0.8,
             check: () => scene === 'cleave' && CL.g >= 5 && !CL.busy,

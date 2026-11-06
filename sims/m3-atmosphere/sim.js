@@ -819,7 +819,7 @@
           {
             title: '📍 세 곳에서 기온 기록하기',
             goal: '기구를 <b>지표(0 km)</b>, <b>5 km</b>, <b>11 km</b>까지 올리고, 각 높이에서 <b>📍 기온 기록하기</b>를 눌러요.',
-            hint: '슬라이더를 움직이거나 기구를 손가락으로 끌어 올려요. 높이 숫자가 0.0, 5.0, 11.0 km에 가까울 때 눌러요.',
+            hint: '슬라이더를 움직이<span class="only2d">거나 기구를 손가락으로 끌어 올려</span><span class="only3d">거나 ▶ 기구 올라가기를 눌러 높이를 바꿔</span>요. 높이 숫자가 0.0, 5.0, 11.0 km에 가까울 때 눌러요.',
             check: () => REC3.every((r) => hasPt(r.h)),
             hold: 0.4,
             status: () => REC3.map((r) => chk(hasPt(r.h), r.n)).join(' · '),

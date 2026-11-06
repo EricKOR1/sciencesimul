@@ -145,6 +145,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHN ? 17 : 11.5, theta: 0.1, phi: 1.3, min: 6, max: 28, target: [0, 1.7, 0] },
     autoRotate: 0,
+    levels: [0, 3],            // 1단계(수증기 생성)·4단계(다른 기체 반응)는 3D. 결과표 줄·부피비 칸을 누르고 원자를 끄는 2·3단계는 2D
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const K = ChemKit(THREE);
@@ -205,15 +206,32 @@
         info(h);
       }
       const vis = (c, o) => (o.isProd ? Math.round(o.n0 * q) : Math.round(o.n0 - o.used * q));
-      controls.player({
-        duration: 6, loop: true, label: '반응 재생',
-        phases: [[0, '반응 전'], [0.12, '반응하는 중'], [0.8, '반응 후']],
-        onFrame(p) { q = Math.max(0, Math.min(1, (p - 0.12) / 0.68)); },
+      /* ▶ 반응시키기: 2D의 ⚡ 반응시키기와 같아요. 반응이 끝난 뒤에는 진행 막대로 다시 볼 수 있어요 */
+      let ign = false, prevPlay = false;
+      const L0 = () => ctx.lesson() || {};
+      const pl = controls.player({
+        duration: 3.2, loop: false, label: '반응시키기',
+        phases: [[0, '반응 전'], [0.38, '전기 불꽃'], [0.62, '반응하는 중'], [0.95, '반응 후']],
+        onFrame(p) { if (ign) return; const RS = L0().RS; if (RS && RS.phase === 'run') return; q = Math.max(0, Math.min(1, (p - 0.62) / 0.33)); },
       });
+      /* 반응 고르기 (2D 위쪽 단추와 같아요) */
+      const ctlHost = labs[0].el.closest('.v3-wrap').querySelector('.v3-ctl'), n0 = ctlHost.children.length;
+      const segRx = controls.segment('반응', Object.keys(RX).map((k) => ({ value: k, label: RX[k].t })), 'water', (k) => { const L = L0(); if (L.rsSelect) { L.rsSelect(k); if (L.refreshUI) L.refreshUI(); } });
+      const segEls = Array.from(ctlHost.children).slice(n0);
+      let lastPh = '';
       return {
         update(dt, t) {
-          const c = scenario();
+          const c = scenario(), L = L0(), RS = L.RS;
           if (c.sig !== sig) { sig = c.sig; rebuild(c); }
+          const showSeg = c.sc === 'react' && RS && !RS.rxLocked; segEls.forEach((e) => { e.style.display = showSeg ? '' : 'none'; }); if (showSeg) segRx.set(RS.rx);
+          if (c.sc === 'react' && RS) {
+            if (pl.playing && !prevPlay && RS.phase !== 'run') { if (RS.phase === 'done' && pl.p >= 0.999) { /* 다시 보기 */ } else if (L.rsGo) { if (RS.phase === 'done') L.rsGo(); L.rsGo(); } }   // ▶ = ⚡ 반응시키기
+            prevPlay = pl.playing;
+            if (RS.phase === 'run') { q = Math.max(0, Math.min(1, (RS.pt - 2.0) / 1.2)); if (!pl.playing) { pl.play(); prevPlay = true; } ign = true; pl.set(Math.min(1, RS.pt / 3.2)); ign = false; }
+            else if (RS.phase === 'idle') { q = 0; if (pl.playing) { pl.pause(); prevPlay = false; } if (pl.p > 0) { ign = true; pl.set(0); ign = false; } }
+            else if (RS.phase === 'done' && lastPh === 'run') { q = 1; pl.pause(); prevPlay = false; ign = true; pl.set(1); ign = false; }
+            lastPh = RS.phase;
+          }
           cyl.forEach((o, ci) => {
             const n = vis(cur, o), h = Math.max(0.2, n * MLU / 10 * HU);
             o.piston.position.set(o.x, h + 0.07, 0); o.piston.visible = n > 0;

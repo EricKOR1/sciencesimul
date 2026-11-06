@@ -695,6 +695,7 @@
 
   /* ---------- 실험 진행 ---------- */
   const rnd = (a, b) => a + Math.random() * (b - a);
+  const IN3D = () => document.body.classList.contains('v3-mode');   // 3D 화면이 열려 있나요?
   function resetRun() { S.run = null; S.state = 'ready'; S.viewT = 0; S.visT = 0; S.hold = 0; }
   function drop() {
     if (S.state === 'running') return;
@@ -730,7 +731,7 @@
     Sound.tone(110, 0.18, 'sine', 0.2); Sound.tone(70, 0.25, 'triangle', 0.12, 0.02);
     syncCtl();
     rangeT.set(run.tMax);
-    if (on('graph')) showHint(PHONE ? '👆 공을 끌어 시각 고르기' : '👆 공을 위아래로 끌거나 ⏱ 시각을 골라 📍 기록해요', 5000);
+    if (on('graph')) showHint(IN3D() ? '⏱ 시각을 골라 📍 기록해요' : PHONE ? '👆 공을 끌어 시각 고르기' : '👆 공을 위아래로 끌거나 ⏱ 시각을 골라 📍 기록해요', 5000);
   }
   function step(dt) {
     stepAir(dt);
@@ -845,7 +846,7 @@
     if (done) { sTime.max = S.run.tMax; } else { sTime.max = S.H > 30 ? 3 : 2; rangeT.set(S.state === 'running' ? sTime.value : 0); }
     rangeT.refresh();
     $('#timeNote').textContent = done
-      ? '시각을 고른 뒤 📍 기록! 화면 속 공이나 그래프를 끌어도 돼요.'
+      ? '시각을 고른 뒤 📍 기록!' + (IN3D() ? '' : ' 화면 속 공이나 그래프를 끌어도 돼요.')
       : S.state === 'running' ? '공이 땅에 닿으면 시각을 고를 수 있어요.' : '먼저 ▶ 떨어뜨리기로 공을 떨어뜨려요.';
   }
 
@@ -1000,7 +1001,7 @@
           {
             title: '쇠공 떨어뜨리기',
             goal: '<b>▶ 떨어뜨리기</b>를 눌러 쇠공이 땅에 닿을 때까지 지켜보세요. <b>🐢 느리게</b>를 켜면 더 잘 보여요.',
-            hint: '화면 위쪽의 주황색 <b>▶ 떨어뜨리기</b> 버튼을 눌러요.',
+            hint: '화면 <span class="only2d">위쪽의 주황색</span><span class="only3d">아래쪽의 노란색</span> <b>▶ 떨어뜨리기</b> 버튼을 눌러요.',
             setup() { prep({ mode: 'single', air: false, H: 20, strobe: false }); snap(); },
             check: () => since('lands') > 0 && S.state === 'done',
             status: runNote,
@@ -1010,7 +1011,7 @@
           {
             title: '다중 섬광 사진 찍기',
             goal: '<b>📸 다중 섬광 사진</b>을 켜고 다시 떨어뜨려, <b>0.1초마다</b> 찍힌 공의 모습을 남겨 보세요.',
-            hint: '도구 막대의 <b>📸 다중 섬광 사진</b>을 눌러 켠 다음 <b>▶ 다시 떨어뜨리기</b>!',
+            hint: '<span class="only2d">도구 막대</span><span class="only3d">아래 막대</span>의 <b>📸 다중 섬광 사진</b>을 눌러 켠 다음 <b>▶ 다시 떨어뜨리기</b>!',
             setup() { prep({ mode: 'single', air: false, H: 20 }); snap(); showHint('📸 다중 섬광 사진을 켜고 떨어뜨려요', 6000); },
             check: () => since('strobeLands') > 0 && S.strobe && S.state === 'done',
             status: () => mark(S.strobe) + ' 📸 사진 켜기 · ' + (S.strobe ? runNote() : '⬜ 떨어뜨리기'),

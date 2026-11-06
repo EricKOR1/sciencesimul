@@ -1137,8 +1137,8 @@
         missions: [
           {
             title: '진자를 놓아 보자',
-            goal: '추를 끌어 올린 뒤 <b>▶ 놓기</b>를 눌러, 진자가 반대편에 갔다가 <b>돌아올 때까지</b> 두 막대를 관찰하세요.',
-            hint: '주황색 추를 손가락으로 옆으로 끌어 올리거나, 그대로 위쪽의 ▶ 놓기를 눌러요.',
+            goal: '<span class="only2d">추를 끌어 올린 뒤</span><span class="only3d">처음 높이를 정한 뒤</span> <b>▶ 놓기</b>를 눌러, 진자가 반대편에 갔다가 <b>돌아올 때까지</b> 두 막대를 관찰하세요.',
+            hint: '<span class="only2d">주황색 추를 손가락으로 옆으로 끌어 올리거나, 그대로 위쪽의 ▶ 놓기를 눌러요.</span><span class="only3d">🚩 처음 높이 슬라이더로 높이를 정하거나, 그대로 아래쪽의 ▶ 놓기 · 출발을 눌러요.</span>',
             setup() { prepPend({ h0: 2 }); S.pulseBob = true; },
             check: () => S.scene === 'pend' && !!S.run && S.run.turns >= 2,
             hold: 0.3,
@@ -1287,7 +1287,7 @@
           {
             title: '6 m 언덕을 넘어라!',
             goal: '출발 높이를 바꿔서 수레가 깃발이 꽂힌 <b>6 m 언덕</b>을 넘어가게 하세요.',
-            hint: '출발 손잡이(주황 ↕)를 끌거나 🚩 출발 높이 슬라이더로 출발점을 6 m보다 높게 올려요.',
+            hint: '<span class="only2d">출발 손잡이(주황 ↕)를 끌거나 </span>🚩 출발 높이 슬라이더로 출발점을 6 m보다 높게 올려요.',
             setup() {
               prepCoaster({ preset: 'hill', h0: 5 });
               S.locks = { preset: 'hill', idx: [HILL_IDX] };

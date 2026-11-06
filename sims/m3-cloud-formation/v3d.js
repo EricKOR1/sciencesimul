@@ -102,7 +102,34 @@
         parts.push(h < LCL - 40 ? '아직 이슬점(15°C)보다 높아서 구름이 없어요.' : h < LCL + 40 ? '이슬점에 도달! 수증기가 응결하기 시작해요.' : '<span style="color:#7dd3fc">수증기가 물방울이 되어 구름이 생겨요.</span>');
         info(parts.join('<br>'));
       }
-      controls.segment('공기가 올라가는 까닭', [{ value: 'mtn', label: '산을 타고 오를 때' }, { value: 'conv', label: '지표가 가열될 때' }, { value: 'front', label: '찬·따뜻한 공기가 만날 때' }, { value: 'meet', label: '공기가 모여들 때' }], mode, setMode);
+      const ctlHost = controls.button('', () => {}).parentNode; ctlHost.lastChild.remove();
+      const grab = (fn) => { const n0 = ctlHost.children.length; const r = fn(); return { r, els: Array.from(ctlHost.children).slice(n0) }; };
+      const segW = grab(() => controls.segment('공기가 올라가는 까닭', [{ value: 'mtn', label: '산을 타고 오를 때' }, { value: 'conv', label: '지표가 가열될 때' }, { value: 'front', label: '찬·따뜻한 공기가 만날 때' }, { value: 'meet', label: '공기가 모여들 때' }], mode, setMode));
+      /* 🧩 상승 원인 짝짓기(2D와 같은 그림 순서): 그림 번호를 골라 장면을 보고, 맞는 이름표 버튼을 눌러 붙여요 */
+      const M3 = { conv: 'meet', heat: 'conv', front: 'front', mtn: 'mtn' };      // 2D 그림 id → 3D 장면
+      let pic = 0, matchOn = false, mKey = '';
+      const slotsOf = () => { const L = ctx.lesson(); return (L && L.MS && L.MS.slots) || []; };
+      const showPic = (i) => { pic = i; const sl = slotsOf()[i]; if (sl) setMode(M3[sl.id] || 'mtn'); mKey = ''; };
+      const segP = grab(() => controls.segment('그림', [0, 1, 2, 3].map((i) => ({ value: i, label: (i + 1) + '번' })), 0, showPic));
+      const tagB = grab(() => { controls.text('이름표 붙이기'); const L = ctx.lesson(); ((L && L.TAGS) || []).forEach((t) => controls.button(t.label, () => { const S = ctx.lesson(); if (S && S.place && !S.MS.done) { S.place(t.id, pic); mKey = ''; } })); });
+      const showEls = (q, on) => q.els.forEach((e) => { e.style.display = on ? '' : 'none'; });
+      function matchInfo() {
+        const L = ctx.lesson(), sl = slotsOf(), mk = (L && L.MS && L.MS.marks) || [];
+        const key = pic + '|' + sl.map((x) => (x.tag ? x.tag.id : '')).join(',') + '|' + mk.join(',') + '|' + (L && L.MS && L.MS.done);
+        if (key === mKey) return; mKey = key;
+        const cur = sl[pic] && sl[pic].tag;
+        info('<b>' + (pic + 1) + '번 그림</b> · 붙인 이름표: <b>' + (cur ? cur.label : '없음') + '</b><br>'
+          + sl.map((x, i) => (i + 1) + '번 ' + (x.tag ? (mk.indexOf(i) >= 0 ? '✕' : '✓') : '□')).join(' · ')
+          + '<br><span style="opacity:.85">공기가 왜 올라가는지 보고 알맞은 이름표 버튼을 눌러요.</span>');
+      }
+      function syncMatch() {
+        const L = ctx.lesson(), on = !!(L && L.S && L.MT && L.S.scene === 'mtn' && L.MT.mode === 'match');
+        if (on !== matchOn) {
+          matchOn = on; showEls(segW, !on); showEls(segP, on); showEls(tagB, on);
+          if (on) { segP.r.set(pic); showPic(pic); } else { segW.r.set('mtn'); setMode('mtn'); }
+        }
+        if (on) { lowL.visible = false; matchInfo(); }
+      }
       /* ▶ 공기 덩어리가 올라갔다 내려와요 (2D 슬라이더의 높이도 같이 움직여요) */
       controls.player({
         duration: 10, loop: true, label: '공기 덩어리 상승',
@@ -110,10 +137,12 @@
         onFrame(p) { const tri = p < 0.5 ? p * 2 : 2 - p * 2; lift(HM * tri); },
       });
       const rb = controls.button('비 ✓', () => { rain = !rain; rb.textContent = '비 ' + (rain ? '✓' : '✕'); }); rb.classList.add('on');
+      showEls(segP, false); showEls(tagB, false);
       shape(); refresh(); sun.visible = false; wedge.visible = coldL.visible = warmL.visible = lowL.visible = false; conv2.forEach((c) => { c.visible = false; }); let lastH = -1;
       return {
         update(dt, t) {
-          const L = ctx.lesson(); if (L && L.MT && Math.abs(L.MT.Hv - lastH) > 0.5) { lastH = L.MT.Hv; h = Math.max(0, Math.min(HM, L.MT.Hv)); refresh(); }
+          syncMatch();
+          const L = ctx.lesson(); if (L && L.MT && Math.abs(L.MT.Hv - lastH) > 0.5) { lastH = L.MT.Hv; h = Math.max(0, Math.min(HM, L.MT.Hv)); refresh(); if (matchOn) { mKey = ''; matchInfo(); } }
           /* 구름 방울 */
           const hLCL = LCL + 20, cur = Math.max(0, h - hLCL);
           puffs.forEach((q, i) => {

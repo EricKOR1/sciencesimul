@@ -10,7 +10,8 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHN ? 14 : 10.5, theta: 0.35, phi: 1.3, min: 4, max: 24, target: [0, 0.4, 0] },
     autoRotate: 0,
-    levels: [],                      // 모든 단계의 미션이 2D 화면(이름표 · 모형 · 갈비뼈·가로막 · 운동 강도)에서 이뤄져요
+    levels: [2, 3],                  // 3단계(들숨과 날숨: 막대 단추로 갈비뼈·가로막 움직이기) · 4단계(폐포의 기체 교환)는 3D
+                                     // 1단계(이름표 끌어 놓기) · 2단계(페트병 호흡 모형)는 2D
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
       const V3 = THREE.Vector3;
@@ -95,7 +96,7 @@
       let lastTxt = '';
       const say = (h) => { if (h !== lastTxt) { lastTxt = h; info(h); } };
       function txt() {
-        if (mode === 'alv') say('폐포 속 <b>산소</b>는 폐포 → <b>모세 혈관</b>으로, 혈액 속 <b>이산화 탄소</b>는 모세 혈관 → 폐포로 <b>확산</b>돼요.<br>운동 강도를 높이면(2D 슬라이더) 숨도 혈액도 빨라져요.');
+        if (mode === 'alv') say('폐포 속 <b>산소</b>는 폐포 → <b>모세 혈관</b>으로, 혈액 속 <b>이산화 탄소</b>는 모세 혈관 → 폐포로 <b>확산</b>돼요.<br><b>운동 강도</b>를 높이면 숨도 혈액도 빨라져요.');
         else if (vol > 0.5) say('<b>들숨</b>: 갈비뼈가 올라가고 가로막이 내려가요 → 가슴 속 <b>부피↑ 압력↓</b> → 공기가 폐로 들어와요.');
         else say('<b>날숨</b>: 갈비뼈가 내려가고 가로막이 올라가요 → 가슴 속 <b>부피↓ 압력↑</b> → 공기가 폐에서 나가요.');
       }
@@ -120,6 +121,15 @@
       controls.button('들숨 끝', () => { pl.pause(); pl.set(0.5); });
       controls.button('날숨 끝', () => { pl.pause(); pl.set(0); });
       controls.button('이름표', () => { labs = !labs; apply(); });
+      // 갈비뼈 · 가로막 단추: 2D의 손잡이를 끄는 것과 같아요 (3단계 '들숨과 날숨'에서만 보여요)
+      const chB = [['갈비뼈 ↑ 올리기', 'rib', 1], ['갈비뼈 ↓ 내리기', 'rib', 0], ['가로막 ↓ 내리기', 'dia', 1], ['가로막 ↑ 올리기', 'dia', 0]].map(([t, k, v]) => controls.button(t, () => {
+        const s2 = sm(), CH = s2 && s2.CH; if (!CH) return;
+        CH.auto = false; CH.touched = true; const b = document.getElementById('btnAutoBreath'); if (b) b.innerHTML = '🔁 자동으로 숨 쉬기';
+        if (window.SciSim && SciSim.tween) SciSim.tween(CH, { [k]: v }, { duration: 0.8, ease: 'outCubic' }); else CH[k] = v;
+      }));
+      let chOn = null;
+      function chestBar(on) { if (on === chOn) return; chOn = on; chB.forEach((b) => { b.style.display = on ? '' : 'none'; }); }
+      chestBar(false);
       apply();
       const dm = new THREE.Object3D(); let k0 = 0, lastSc = '';
       function readScene() { const s = sm() && sm().S && sm().S.scene; if (!s || s === lastSc) return; lastSc = s; const m = s === 'alveoli' ? 'alv' : 'organ'; if (m !== mode) { mode = m; sg.set(m); apply(); } }
@@ -129,6 +139,7 @@
           if ((k0++ % 15) === 0) readScene();
           { // 2D가 호흡을 보여 주는 장면이면 그 값을 따라가요: 가슴 모형(CH.L) · 기도의 숨 쉬기(AW.b) · 폐포(AL.b)
             const s2 = sm(), sc = s2 && s2.S && s2.S.scene; let e = null;
+            chestBar(sc === 'chest');
             if (sc === 'chest' && s2.CH) e = s2.CH.L;
             else if (sc === 'airway' && s2.AW && s2.AW.on) e = s2.AW.b;
             else if (sc === 'alveoli' && s2.AL) e = s2.AL.b;
@@ -141,8 +152,11 @@
           if (mode === 'organ') {
             const s = 1 + 0.16 * vol;
             lungR.scale.set(1.05 * s, 1.85 * (1 + 0.12 * vol), 1.0 * s); lungL.scale.set(1.0 * s, 1.75 * (1 + 0.12 * vol), 0.95 * s);
-            ribs.scale.set(1 + 0.07 * vol, 1, 1 + 0.07 * vol); ribs.position.y = 0.16 * vol; ster.position.z = 1.12 + 0.1 * vol; ster.position.y = 0.5 + 0.12 * vol;
-            dia.scale.set(2.45, 1.05 - 0.75 * vol, 1.25); dia.position.y = -1.55 - 0.45 * vol;
+            // 가슴 모형 장면: 갈비뼈와 가로막을 2D 손잡이 값대로 따로 움직여요 (폐는 흉강 부피를 따라가요)
+            const s2c = sm(), CHc = s2c && s2c.S && s2c.S.scene === 'chest' ? s2c.CH : null;
+            const rv = CHc ? CHc.rib : vol, dv = CHc ? CHc.dia : vol;
+            ribs.scale.set(1 + 0.07 * rv, 1, 1 + 0.07 * rv); ribs.position.y = 0.16 * rv; ster.position.z = 1.12 + 0.1 * rv; ster.position.y = 0.5 + 0.12 * rv;
+            dia.scale.set(2.45, 1.05 - 0.75 * dv, 1.25); dia.position.y = -1.55 - 0.45 * dv;
             lungR.position.y = lungL.position.y = 0.2 - 0.05 * vol;
             // 공기 알갱이: 부피가 커질 때 들어가요
             for (let i = 0; i < NA; i++) {

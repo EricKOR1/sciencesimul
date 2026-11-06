@@ -14,6 +14,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHN ? 21 : 15.5, theta: 0.3, phi: 1.3, min: 7, max: 34, target: [1.2, 2.5, 0] },
     autoRotate: 0,
+    levels: [0, 1, 2, 3],      // 모든 단계를 3D로: 처음 높이·재생 속도·질량은 오른쪽 패널, ▶ 놓기 · 출발은 아래 막대
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3;
@@ -29,6 +30,9 @@
       const hPL = label('', [-2.9, 0, 0.6], { size: 12, color: 'rgba(29,78,216,.92)' });
       const low = new THREE.Mesh(new THREE.BoxGeometry(5.2, 0.014, 0.014), new THREE.MeshBasicMaterial({ color: 0x16a34a, transparent: true, opacity: 0.6 })); low.position.set(0, 0.02, 0.6); pendG.add(low);
       label('가장 낮은 곳 (기준면)', [-2.6, 0.02, 0.6], { size: 11, color: 'rgba(22,101,52,.9)' });
+      /* 힌트를 보면 2D처럼 '처음 높이의 ½' 선을 보여 줘요 */
+      const half = new THREE.Mesh(new THREE.BoxGeometry(5.2, 0.02, 0.02), new THREE.MeshBasicMaterial({ color: 0x22c55e })); half.position.z = 0.6; half.visible = false; pendG.add(half);
+      const halfL = label('처음 높이의 ½', [2.9, 0, 0.6], { size: 11, color: 'rgba(22,101,52,.9)' }); halfL.show(false);
       /* ---------- 롤러코스터 ---------- */
       const trackG = new THREE.Group(); coasterG.add(trackG);
       const cart = new THREE.Group();
@@ -76,6 +80,9 @@
         onFrame() { /* 2D의 움직임을 따라가요 (아래 update) */ },
       });
       const runBtn = () => document.getElementById('runBtn');
+      /* 진행 막대·빠르기는 2D 움직임을 따라가기만 해요: 막대는 보여 주기만 하고, 빠르기는 오른쪽 🐢 재생 속도로 바꿔요 */
+      const plRow = hPL.el.closest('.v3-wrap').querySelector('.v3-player');
+      if (plRow) { const r = plRow.querySelector('input[type=range]'), sp = plRow.querySelector('.v3-sp'); if (r) r.disabled = true; if (sp) sp.style.display = 'none'; }
       return {
         update(dt, t) {
           const L = ctx.lesson(); if (!L || !L.S) return;
@@ -100,6 +107,7 @@
             bob.scale.setScalar(r); bob.position.set(bx, by, 0);
             str.position.set(bx / 2, (piv.y + by) / 2, 0); str.scale.y = Math.max(0.01, Math.hypot(bx, piv.y - by)); str.rotation.z = Math.atan2(bx, piv.y - by);
             const y0 = piv.y - Lp;                                     // 가장 낮은 곳 (기준면)
+            half.visible = !!S.halfLine; halfL.show(!!S.halfLine); half.position.y = y0 + S.hp0 * KP / 2; halfL.obj = [2.9, y0 + S.hp0 * KP / 2, 0.6];
             low.position.y = y0; hP.position.y = y0 + S.hp0 * KP; hPL.obj = [-2.9, y0 + S.hp0 * KP, 0.6]; hPL.set('처음 높이 ' + S.hp0.toFixed(1) + ' m');
             bLab.set('높이 ' + E.h.toFixed(2) + ' m · 속력 ' + E.v.toFixed(1) + ' m/s');
           } else {

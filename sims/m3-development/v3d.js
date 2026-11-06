@@ -20,7 +20,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHN ? 12.5 : 9.5, theta: 0.3, phi: 1.3, min: 4, max: 20, target: [0.4, 0, 0] },
     autoRotate: 0.18,
-    levels: [0, 1],           // 수정 · 난할 단계에서 3D로 시작해요. 그래프 읽기·점토 모형 순서 놓기는 2D 화면에서 해요
+    levels: [0, 1],           // 1단계(수정)·2단계(난할)는 3D. 그래프·표 읽기와 점토 모형 순서 놓기는 2D
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3;
@@ -119,7 +119,7 @@
           if (L) {
             const sc = L.scene, fert = sc === 'fert';
             if (fert !== (mode === 'fert')) { mode = fert ? 'fert' : 'cleave'; rowF.style.display = fert ? '' : 'none'; rowC.style.display = fert ? 'none' : ''; }
-            if (sc !== lastSc) { lastSc = sc; if (sc === 'clay') info('<b>발생 모형 순서 놓기</b>는 2D 화면에서 끌어서 해요.<br>3D에서는 ▶ 난할로 세포가 1 → 2 → 4 → 8 → 32개로 늘어나는 모습을 보며 순서를 떠올려 봐요.'); else if (sc === 'graph') info('<b>그래프 읽기</b>는 2D 화면에서 해요.<br>\'비교 보기\'를 누르면 보통의 체세포분열과 난할을 3D로 비교해요.'); }
+            if (sc !== lastSc) { lastSc = sc; if (sc === 'clay') info('<b>발생 순서</b><br>▶ 난할로 세포가 1 → 2 → 4 → 8 → 16 → 32개로 늘어나는 모습을 보며 순서를 떠올려 봐요.'); else if (sc === 'graph') info('<b>난할의 특징</b><br>\'비교 보기\'를 누르면 보통의 체세포분열과 난할을 비교해요.'); }
             const showCmp = sc === 'graph' && !!L.G.cmp; cmpBtn.style.display = sc === 'graph' ? '' : 'none'; cmpBtn.classList.toggle('on', showCmp);
             if (showCmp !== cmpG.visible) { cmpG.visible = showCmp; cmpL.forEach((l) => l.show(showCmp)); cmpNote.show(showCmp); labEgg.show(!showCmp); zona.visible = !showCmp; if (!showCmp) { apply(); } else info('<b>보통의 체세포분열 vs 난할</b><br>보통은 분열 사이에 세포가 자라서 크기가 그대로예요. 난할은 자라지 않고 바로 분열해서 세포가 점점 작아져요.'); }
             if (showCmp) { cmpG.rotation.y = Math.atan2(ctx.camera.position.x, ctx.camera.position.z); cmpFrame(t); cmpNote.set('세포 수는 늘지만 난할의 세포는 점점 작아져요'); }

@@ -733,7 +733,7 @@
     if (st === 0) parts.burst(BANG.view.x + BANG.view.w / 2, BANG.view.y + BANG.view.h / 2, { count: 30, speed: 260, size: 4, life: 1, colors: ['#fde68a', '#fb923c', '#fff'], gravity: 0 });
     updateCtl();
   }
-  const MODE_LABEL = { obs: '🔭 천체 스펙트럼', bang: '🕰️ 우주 초기', pie: '🥧 우주 구성' };
+  const MODE_LABEL = { obs: '🔭 천체 스펙트럼', bang: '🕰️ 우주 초기', pie: '📊 우주 구성' };
   function updateCtl() {
     const st = stepNo(), free = !!(game && game.free);
     $('#tbLabel').textContent = MODE_LABEL[S.mode];
@@ -935,11 +935,11 @@
       ],
     },
     {
-      title: '우주의 구성 원소 비율', short: '적용', icon: '🥧', phase: '적용',
+      title: '우주의 구성 원소 비율', short: '적용', icon: '📊', phase: '적용',
       features: ['pie'],
       intro: '<div class="si-link">🔗 <b>앞 단계에서</b> 질량비로 수소 약 75 %, 헬륨 약 25 %라는 값을 얻었어요. 그런데 <b>개수</b>로 세면 같은 값일까요?</div>' +
         '<p>두 원 그래프는 현재 우주의 <b>원자 수 비</b>와 <b>질량비</b>예요. 값 카드 6장을 끌어 알맞은 칸에 놓아 두 비율을 구분해 봐요. 헬륨 원자는 수소 원자보다 약 <b>4배 무거워요</b>.</p>',
-      setup() { enterLevel(3); showHint('🥧 값 카드를 끌어 알맞은 칸에 놓아요', 6000); },
+      setup() { enterLevel(3); showHint('📊 값 카드를 끌어 알맞은 칸에 놓아요', 6000); },
       recap: '우주의 원자 수 비는 수소 약 92 %·헬륨 약 8 %, 질량비는 수소 약 75 %·헬륨 약 24 %예요. 그 밖의 원소는 아주 적어요.',
       summary: '<table class="mini"><tr><th></th><th>원자 수 비</th><th>질량비</th></tr><tr><th>수소</th><td>약 92 %</td><td>약 75 %</td></tr><tr><th>헬륨</th><td>약 8 %</td><td>약 24 %</td></tr><tr><th>그 밖의 원소</th><td>0.1 % 미만</td><td>약 1~2 %</td></tr></table><ul><li>헬륨 원자 1개는 수소 원자 1개보다 약 <b>4배 무거워서</b> 질량비에서 차지하는 몫이 더 커요.</li><li>산소·탄소 같은 무거운 원소는 우주 초기가 아니라 <b>별 속에서</b> 만들어졌어요.</li></ul>',
       missions: [
@@ -981,7 +981,7 @@
     simId: 'h1-cosmic-elements', mount: '#game', badge: '우주 원소 탐사대', homeHref: '../../index.html#h1a',
     featureLabels: {
       telescope: '🔭 가상 망원경 + 분광기 · 📷 촬영', album: '🖼 스펙트럼 앨범', templates: '📋 기준 선 막 (수소·헬륨·나트륨) · ↔ 적색 편이 맞추기', table: '📊 원소 표 · 선의 세기 비교',
-      timeline: '⏱ 우주의 시간 버튼', builder: '⚛ 헬륨 핵 조립대', massbar: '📊 질량비 막대', pie: '🥧 원 그래프 · 값 카드',
+      timeline: '⏱ 우주의 시간 버튼', builder: '⚛ 헬륨 핵 조립대', massbar: '📊 질량비 막대', pie: '📊 원 그래프 · 값 카드',
     },
     onFeatures() { updateCtl(); },
     levels,

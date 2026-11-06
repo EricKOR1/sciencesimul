@@ -8,7 +8,7 @@
   window.SciSim3D.attach({
     title: '가열하는 기체 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    levels: [0, 1, 2],
+    levels: [0, 2],   // 관찰 · 입자 모형은 3D, 표와 그래프를 읽는 2단계(측정 기록)와 탁구공 끌기(4단계)는 2D
     camera: { dist: 13 * (PHN0 ? 1.05 : 1), theta: 0.5, phi: 1.2, fov: 45, target: [0.9, 0.6, 0], min: 6, max: 32 },
     autoRotate: 0.12,
     build(ctx) {
@@ -103,6 +103,10 @@
       root.add(piston);
       const arrow = mkArrow(0xf59e0b, 0.07); root.add(arrow);
       label('추 (압력 일정)', piston, { size: 12, offset: [0, 1.3, 0] });
+      /* 2D의 초록 목표 선(미션 ①②)과 같은 자리 */
+      const tgRing = new THREE.Mesh(new THREE.TorusGeometry(RC + 0.14, 0.05, 10, 64), mat(0x22c55e, { emissive: 0x16a34a, emissiveIntensity: 0.6 })); tgRing.rotation.x = Math.PI / 2; tgRing.visible = false; root.add(tgRing);
+      const tgLab = label('', [-(RC + 0.2), 0, 0], { size: 12, color: 'rgba(20,160,88,.95)', offset: [-0.9, 0, 0] }); tgLab.show(false);
+      let lastSH = null;
 
       /* 기체 */
       const gas = new THREE.Mesh(new THREE.CylinderGeometry(RC, RC, 1, 56), glass(0x6aa9ff, 0.12)); root.add(gas);
@@ -151,12 +155,18 @@
       const setSim = (v) => { const l = window.__sim; if (l && l.setT) l.setT(v); else if (l && l.S) l.S.Tset = v; };
       const rng = controls.range('온도', -50, 150, 5, st.T, (v) => { pmode = false; pl.pause(); st.T = v; setSim(v); if (window.__sim && window.__sim.S) st.last = window.__sim.S.Tset; }, (v) => v + ' °C');
       controls.segment('', [{ value: -50, label: '❄ 차갑게' }, { value: 20, label: '실온' }, { value: 150, label: '🔥 뜨겁게' }], -999, (v) => { pmode = false; pl.pause(); st.T = v; rng.set(v); setSim(v); if (window.__sim && window.__sim.S) st.last = window.__sim.S.Tset; });
-      const markB = controls.button('💥 충돌 표시', () => { st.mark = !st.mark; markB.classList.toggle('on', st.mark); }); markB.classList.add('on');
+      const markB = controls.button('💥 충돌 표시', () => { st.mark = !st.mark; markB.classList.toggle('on', st.mark); const l = window.__sim, cb = document.getElementById('showHits'); if (cb) cb.checked = st.mark; if (l && l.S) { l.S.showHits = st.mark; lastSH = st.mark; } }); markB.classList.add('on');
       text();
 
       return {
         update(dt, t) {
           const sim = window.__sim && window.__sim.S;
+          if (sim) {   // 2D의 목표 선 · 입자 모형 · 충돌 표시를 따라가요
+            const tg = sim.target; tgRing.visible = !!tg; tgLab.show(!!tg);
+            if (tg) { tgRing.position.y = Y0 + hOf(tg.V); tgLab.obj = [-(RC + 0.2), Y0 + hOf(tg.V), 0]; tgLab.set(tg.label); }
+            ps.visible = sim.showParticles !== false;
+            if (sim.showHits !== lastSH) { lastSH = sim.showHits; st.mark = !!sim.showHits; markB.classList.toggle('on', st.mark); }
+          }
           if (sim && typeof sim.Tset === 'number' && sim.Tset !== st.last) { st.last = sim.Tset; st.T = sim.Tset; rng.set(sim.Tset); pmode = false; pl.pause(); }
           if (pmode) { st.T = tOf(pP); rng.set(Math.round(st.T / 5) * 5); }
           st.Tg += (st.T - st.Tg) * Math.min(1, dt * 2.2);

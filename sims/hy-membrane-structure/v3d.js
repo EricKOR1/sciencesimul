@@ -137,7 +137,7 @@
       function toLesson(fn) { try { const L = ctx.lesson(); if (L && L.S && L.S.fx && L.fxReset) { fn(L.S.fx, L); } } catch (e) {} }
       const tR = controls.range('온도', 1, 37, 1, Tc, (v) => { Tc = v; refresh(); toLesson((f, L) => { f.T = v; const e = document.getElementById('sFT'); if (e) e.value = v; lastFx.T = v; L.fxReset(); }); }, (v) => v + ' °C');
       const uR = controls.range('불포화 지방산', 0, 100, 10, U, (v) => { U = v; refresh(); toLesson((f, L) => { f.u = v; const e = document.getElementById('sFU'); if (e) e.value = v; lastFx.u = v; L.fxReset(); }); }, (v) => v + ' %');
-      const lastFx = {};
+      const lastFx = {}; let lastView = null;
       function setChol(v) { hasChol = v; cB.classList.toggle('on', hasChol); chol.forEach((c) => { c.g.visible = hasChol; }); refresh(); }
       const cB = controls.button('🧈 콜레스테롤', () => {
         const L = ctx.lesson();
@@ -162,7 +162,10 @@
       function poll() {
         const L = ctx.lesson(); if (!L || !L.S) return;
         if (L.S.mode === 'fluid') { const f = L.S.fx; if (f && (f.T !== lastFx.T || f.u !== lastFx.u || f.chol !== lastFx.chol)) { fromLesson(); refresh(); } }
-        else if (L.S.mode === 'prot' && L.S.pr) { const c = L.S.pr.chol > 0; if (c !== hasChol) setChol(c); }
+        else if (L.S.mode === 'prot' && L.S.pr) {
+          const c = L.S.pr.chol > 0; if (c !== hasChol) setChol(c);
+          if (L.S.pr.view !== lastView) { if (lastView != null) { orbit.phi = L.S.pr.view ? 0.18 : 1.3; orbit.theta = L.S.pr.view ? 0 : 0.2; } lastView = L.S.pr.view; }   // 단면(옆) · 위에서 본 모양
+        }
       }
       cB.classList.toggle('on', hasChol);
       /* ---- 2단계: 막 단백질 넣기(2D의 prPlace) · 기능 연결(2D의 matchS)을 3D 막대 단추로 ----

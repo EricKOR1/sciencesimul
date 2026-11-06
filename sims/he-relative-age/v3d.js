@@ -286,7 +286,7 @@
         });
         const tri = crLayers.filter((q) => !q.lab && q.key === 'tri'); lTri.show(false);
         const done = C.done;
-        return '<b>떨어진 세 지역의 지층 대비</b><br>같은 시기에 쌓인 층(키층 · 표준 화석)을 이으면 지층의 나이를 맞춰 볼 수 있어요.<br>응회암 키층 ' + (done.tuff ? '✅ 이었어요' : '⬜ (2D에서 같은 층을 골라요)') + ' · 암모나이트층 ' + (done.amm ? '✅ 이었어요' : '⬜') + '<br><span style="color:#9fb0d4">세 지역의 지층 기둥이에요.</span>';
+        return '<b>떨어진 세 지역의 지층 대비</b><br>같은 시기에 쌓인 층(키층 · 표준 화석)을 이으면 지층의 나이를 맞춰 볼 수 있어요.<br>응회암 키층 ' + (done.tuff ? '✅ 이었어요' : '⬜ 아직이에요') + ' · 암모나이트층 ' + (done.amm ? '✅ 이었어요' : '⬜') + '<br><span style="color:#9fb0d4">세 지역의 지층 기둥이에요.</span>';
       }
       let scnN = '', lastN = '';
       const NEWV = { box: 1, rate: 1, type: 1, corr: 1 };

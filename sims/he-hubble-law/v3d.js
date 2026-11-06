@@ -126,7 +126,7 @@
         const dx = lamX(g.lam) - lamX(L0); shiftA.visible = dx > 0.05; if (shiftA.visible) { shiftA.scale.set(dx, 1, 1); shiftA.position.set(lamX(L0) + dx / 2, -3.35, 0); }
         lR1.show(true); lR2.show(true); lSpR.show(true); lSpO.show(true); lSpO.obj = [lamX(g.lam), -3.9, 0]; lSpC.show(true); lSpC.obj = [lamX(w.S.lamC) + 0.2, -1.55 - 0.35, 0]; lSpT.show(true); lSpT.obj = [3.2, -1.7, 0];
         gSel.r.set(w.S.gi); cur.r.set(w.S.lamC);
-        return '<b>멀어지는 광원의 빛은 파장이 길어져요</b> (적색 편이)<br>' + g.nm + '의 K선이 정지했을 때의 위치(흰 선)보다 오른쪽(붉은 쪽)으로 옮겨 갔어요.<br>옮겨 간 만큼(Δλ)이 클수록 더 빨리 멀어져요.<br><span style="color:#9fb0d4">노란 선을 K선에 맞춘 뒤 z · v 계산과 기록은 ▦ 2D에서 해요.</span>';
+        return '<b>멀어지는 광원의 빛은 파장이 길어져요</b> (적색 편이)<br>' + g.nm + '의 K선이 정지했을 때의 위치(흰 선)보다 오른쪽(붉은 쪽)으로 옮겨 갔어요.<br>옮겨 간 만큼(Δλ)이 클수록 더 빨리 멀어져요.';
       }
       const gSel = grab(() => controls.segment('은하', [0, 1, 2].map((i) => ({ value: i, label: '은하 ' + (i + 1) })), 0, (v) => { const w = window.__sim; if (w && w.setGal) w.setGal(v); }));
       const cur = grab(() => controls.range('내 선의 파장', LLO, LHI, 0.1, 400, (v) => { const w = window.__sim; if (w && w.setLamC) w.setLamC(v); }, (v) => v.toFixed(1) + ' nm'));
@@ -154,7 +154,7 @@
         });
         lOb.show(true);
         const n = S.placed.filter((q) => q && q.on).length;
-        return '<b>관측자에서 본 은하 8개</b> (A~H)<br>먼 은하일수록 화살표(후퇴 속도)가 길어요 → 거리와 속도는 비례해요.<br>그래프에 찍은 점 ' + n + ' / 8 (초록 = 찍은 은하)<br><span style="color:#9fb0d4">점을 찍고 직선을 그리는 일은 ▦ 2D에서 해요.</span>';
+        return '<b>관측자에서 본 은하 8개</b> (A~H)<br>먼 은하일수록 화살표(후퇴 속도)가 길어요 → 거리와 속도는 비례해요.<br>그래프에 찍은 점 ' + n + ' / 8 (초록 = 찍은 은하)';
       }
       let scnU = '', lastU = '';
       function applyU(v) {

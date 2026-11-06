@@ -597,7 +597,7 @@
     });
     if (!GN.run) {
       // 표준 무늬 안내 (병에 취약한 무늬)
-      const pn = P.A; ladybug(pn.x + 24, pn.y + pn.h - 84, 11, PATS[VULN], {});
+      const pn = P.A; ladybug(pn.x + 24, pn.y + pn.h - 84, 11, PATS[VULN], {}); D.text(pn.x + 40, pn.y + pn.h - 80, '병에 약한 무늬', { size: 12.5, weight: 800, color: '#b91c1c', align: 'left' });
     }
     if (GN.run && GN.t >= 3.6 && !GN.did) { GN.did = true; Sound.success(); ctlUpdate(); }
   }

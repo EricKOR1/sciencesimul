@@ -21,6 +21,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHN ? 22 : 19, theta: 0.5, phi: 1.32, min: 8, max: 36, target: [2.3, 4.2, 0] },
     autoRotate: 0,
+    levels: [0, 3],            // 1단계(기온 측정)·4단계(권역마다 다른 모습)는 3D. 그래프 읽기·이름표 붙이기는 2D
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3;

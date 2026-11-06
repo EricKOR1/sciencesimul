@@ -7,6 +7,7 @@
   const PHN0 = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches);
   window.SciSim3D.attach({
     title: '주사기 속 기체 3D',
+    levels: [0, 2, 3],   // 관찰 · 입자 모형 · 생활 퀴즈는 3D, 표와 그래프를 읽는 2단계(측정 기록)는 2D
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: 13 * (PHN0 ? 1.05 : 1), theta: 0.55, phi: 1.2, fov: 45, target: [1.7, 0.7, 0], min: 6, max: 32 },
     autoRotate: 0.12,
@@ -117,6 +118,10 @@
       root.add(tubeMesh([[0, Y0 - 0.7, 0], [0, Y0 - 1.1, 0], [1.2, Y0 - 1.15, 0], [GX - 1.2, Y0 - 1.15, 0], [GX, Y0 - 1.05, 0]], 0.09, 0x64748b, { roughness: 0.5 }));
       label('압력계', [GX, GY + 1.55, 0], { size: 12.5 });
       const pLab = label('', piston, { size: 12.5, color: 'rgba(245,158,11,.92)', offset: [0, 3.5, 0] });
+      /* 2D의 초록 목표 선(미션 ①②)과 같은 자리 */
+      const tgRing = new THREE.Mesh(new THREE.TorusGeometry(RC + 0.14, 0.05, 10, 64), mat(0x22c55e, { emissive: 0x16a34a, emissiveIntensity: 0.6 })); tgRing.rotation.x = Math.PI / 2; tgRing.visible = false; root.add(tgRing);
+      const tgLab = label('', [-(RC + 0.2), 0, 0], { size: 12, color: 'rgba(20,160,88,.95)', offset: [-0.9, 0, 0] }); tgLab.show(false);
+      let lastSH = null;
 
       function refresh() {
         const h = hOf(st.Vs), top = Y0 + h;
@@ -143,13 +148,19 @@
       built = true;
       const vOf = (p) => (p < 0.35 ? 40 - 28 * sm(p / 0.35) : p < 0.5 ? 12 : p < 0.85 ? 12 + 36 * sm((p - 0.5) / 0.35) : 48 - 8 * sm((p - 0.85) / 0.15));
       const rng = controls.range('부피', 10, 50, 1, Math.round(st.V), (v) => { pmode = false; pl.pause(); st.V = v; const l = window.__sim; if (l && l.setV) l.setV(v); else if (l && l.S) l.S.V = v; st.last = v; }, (v) => v + ' mL');
-      const markB = controls.button('💥 충돌 표시', () => { st.mark = !st.mark; markB.classList.toggle('on', st.mark); });
+      const markB = controls.button('💥 충돌 표시', () => { st.mark = !st.mark; markB.classList.toggle('on', st.mark); const l = window.__sim, cb = document.getElementById('showHits'); if (cb) cb.checked = st.mark; if (l && l.S) { l.S.showHits = st.mark; lastSH = st.mark; } });
       markB.classList.add('on');
       text();
 
       return {
         update(dt, t) {
           const sim = window.__sim && window.__sim.S;
+          if (sim) {   // 2D의 목표 선 · 입자 모형 · 충돌 표시를 따라가요
+            const tg = sim.target; tgRing.visible = !!tg; tgLab.show(!!tg);
+            if (tg) { tgRing.position.y = Y0 + hOf(tg.V); tgLab.obj = [-(RC + 0.2), Y0 + hOf(tg.V), 0]; tgLab.set(tg.label); }
+            ps.visible = sim.showParticles !== false;
+            if (sim.showHits !== lastSH) { lastSH = sim.showHits; st.mark = !!sim.showHits; markB.classList.toggle('on', st.mark); }
+          }
           if (sim && typeof sim.V === 'number' && sim.V !== st.last) { st.last = sim.V; st.V = sim.V; rng.set(Math.round(sim.V)); pmode = false; pl.pause(); }
           if (pmode) { st.V = vOf(pP); rng.set(Math.round(st.V)); }
           st.Vs += (st.V - st.Vs) * Math.min(1, dt * 10);

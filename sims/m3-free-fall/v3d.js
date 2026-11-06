@@ -13,6 +13,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHN ? 17 : 11, theta: 0.5, phi: 1.35, min: 6, max: 26, target: [0, 2.7, 0] },
     autoRotate: 0,
+    levels: [0, 3],            // 1단계(낙하 관찰)·4단계(높은 탑에서 예측 확인)는 3D. 속력 기록·그래프와 기록표 읽기는 2D
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const sm = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.45, metalness: 0.1 }, o || {}));
@@ -82,17 +83,22 @@
         return h;
       }
       let infoK = '', first = true;
-      /* ▶ 떨어뜨리기: 2D 실험의 시각도 같이 움직여요 */
+      /* ▶ 떨어뜨리기: 2D의 ▶ 떨어뜨리기와 같아요 (진짜로 떨어뜨려요). 다 떨어진 뒤 진행 막대를 옮기면 그 시각의 모습을 봐요 */
+      let ign = false, prevPlay = false;
+      const btn = (id) => document.getElementById(id);
       const pl = controls.player({
-        duration: 4, loop: true, label: '떨어뜨리기',
+        duration: 4, loop: false, label: '떨어뜨리기',
         phases: [[0, '출발'], [0.1, '점점 빨라져요'], [0.9, '땅에 닿아요']],
         onFrame(p) {
-          if (first) { first = false; return; }
-          const L = ctx.lesson(); if (!L || !L.S || L.S.state === 'running') return;
-          if (!L.S.run || L.S.state !== 'done') L.finishedRun();
+          if (ign || pl.playing) return;
+          const L = ctx.lesson(); if (!L || !L.S || L.S.state !== 'done' || !L.S.run) return;
           L.setViewT(p * L.S.run.tMax);
         },
       });
+      const plRow = bl[0].el.closest('.v3-wrap').querySelector('.v3-player'); { const sp = plRow && plRow.querySelector('.v3-sp'); if (sp) sp.style.display = 'none'; }
+      /* 도구 막대(2D)와 같은 두 가지: 📸 다중 섬광 사진 · 🐢 느리게 */
+      const bStrobe = controls.button('📸 다중 섬광 사진', () => { const b = btn('strobeBtn'); if (b) b.click(); });
+      const bSlow = controls.button('🐢 느리게', () => { const b = btn('slowBtn'); if (b) b.click(); });
       return {
         update(dt, tm) {
           const L = ctx.lesson(); if (!L || !L.S) return;
@@ -101,7 +107,13 @@
           if (k !== key) { key = k; setupBalls(L); }
           const t = S.visT || 0, run = S.run, air = run ? run.air : S.air;
           magM.emissiveIntensity = t <= 0.001 ? 0.9 + Math.sin(tm * 6) * 0.15 : 0;
-          if (!pl.playing && run && (S.state === 'running' || S.state === 'done') && run.tMax > 0) { const q = Math.min(1, (S.state === 'running' ? run.t : S.viewT) / run.tMax); if (Math.abs(q - pl.p) > 0.004) pl.set(q); }
+          bStrobe.classList.toggle('on', !!S.strobe); bSlow.classList.toggle('on', !!S.slow);
+          [[bStrobe, 'strobeBtn'], [bSlow, 'slowBtn']].forEach(([b3, id]) => { const b = btn(id); b3.style.display = !b || b.hidden || b.offsetParent === null ? 'none' : ''; });   // 이 단계에 없는 도구는 숨겨요
+          if (pl.playing && !prevPlay && S.state !== 'running') { const b = btn('dropBtn'); if (b && !b.disabled) b.click(); }   // ▶ 를 누르면 2D처럼 떨어뜨려요
+          prevPlay = pl.playing;
+          if (S.state === 'running' && !pl.playing) { pl.play(); prevPlay = true; }
+          if (pl.playing && S.state === 'done') { pl.pause(); prevPlay = false; }
+          if (run && (S.state === 'running' || (S.state === 'done' && !pl.playing)) && run.tMax > 0) { const q = Math.min(1, (S.state === 'running' ? run.t : S.viewT) / run.tMax); if (Math.abs(q - pl.p) > 0.004) { ign = true; pl.set(q); ign = false; } }
           balls.forEach((b, i) => {
             const d = Math.min(S.H, L.fallD(b.o, t, air));
             b.m.position.set(-0.45, topY + 0.1 + b.r - d * SC, b.z);

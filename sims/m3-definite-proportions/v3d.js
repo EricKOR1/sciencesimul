@@ -168,7 +168,7 @@
     host: '.stage-card',
     title: '일정 성분비 3D 입자 모형',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    levels: [0, 2, 3],           // 단계 2(그래프 점 찍기·직선 긋기)는 2D 그래프가 필요해서 2D로 시작해요
+    levels: [2, 3],              // 3단계(입자 모형)·4단계(다른 화합물)는 3D. 구리 가열 실험·질량비 그래프는 2D
     camera: { dist: PHN ? 22 : 13.5, theta: 0.1, phi: 1.1, min: 6, max: 28, target: [0, 0.2, 0] },
     autoRotate: 0,
     build(ctx) {
@@ -199,7 +199,11 @@
       }
       function text(v, S) {
         const ok = (t) => '<span style="color:#86efac">' + t + '</span>';
-        if (v.sc === 'cuo') return '<b>구리 원자 6개 + 산소 분자 4개 → 산화 구리(Ⅱ) 6개</b><br>구리 원자 6개는 산소 <b>원자</b> 6개(= 산소 분자 3개)와 짝을 지어요.<br>' + ok('산소 분자 1개가 남아요. 구리 : 산소 질량비는 언제나 4 : 1이에요.');
+        if (v.sc === 'cuo') {
+          const CU = S.CU || {};
+          if (!CU.found) return '<b>구리 원자 6개 + 산소 분자 4개</b><br>짝지은 구리–산소 <b>' + (CU.pairs || 0) + ' / 6</b>쌍' + (CU.pairs === 6 ? '<br>반응 후 쪽에 무엇이 남았나요?' : '') + (pickMsg ? '<br>' + pickMsg : '');
+          return '<b>구리 원자 6개 + 산소 분자 4개 → 산화 구리(Ⅱ) 6개</b><br>구리 원자 6개는 산소 <b>원자</b> 6개(= 산소 분자 3개)와 짝을 지어요.<br>' + ok('산소 분자 1개가 남아요. 구리 : 산소 질량비는 언제나 4 : 1이에요.');
+        }
         if (v.sc === 'mg') return '<b>마그네슘 ' + v.a + ' g + 산소 ' + (v.a * 2 / 3).toFixed(1) + ' g → 산화 마그네슘 ' + (v.a * 5 / 3).toFixed(1) + ' g</b><br>2Mg + O₂ → 2MgO<br>' + ok('마그네슘 : 산소 = 3 : 2 (원자 1 : 1로 결합)');
         if (v.sc === 'water') {
           const k = Math.min(2, v.o / 8), left = v.o > 16 ? '산소 ' + (v.o - 16) + ' g이 남아요.' : v.o < 16 ? '산소가 모자라 수소 ' + (2 - k).toFixed(0) + ' g이 남아요.' : '남는 물질이 없어요.';
@@ -231,9 +235,28 @@
         onFrame(p) { qd = Math.max(0, Math.min(1, (p - 0.08) / 0.82)); if (rx) rx.set(qd); },
       });
       const plRow = Array.from(labB.el.closest('.v3-wrap').querySelectorAll('.v3-player'))[0];
+      /* 🧩 남는 입자 찾기: 짝짓기가 끝나면 남은 입자를 막대에서 골라요 (2D에서 남은 입자를 누른 것과 같아요) */
+      const pickHost = plRow.parentNode, n0 = pickHost.children.length;
+      let pickMsg = '';
+      controls.text('남는 입자는?');
+      [['Cu', '구리 원자'], ['O', '산소 원자'], ['O2', '산소 분자']].forEach(([k, t]) => controls.button(t, () => {
+        const L = ctx.lesson(), CU = L && L.CU; if (!CU || CU.pairs !== 6) return;
+        if (k === 'O2') { CU.found = true; pickMsg = '<span style="color:#86efac">맞아요! 산소 분자 1개가 반응하지 못하고 남았어요.</span>'; }
+        else pickMsg = '<span style="color:#fca5a5">' + t + '는 모두 짝을 지었어요. 반응 후 쪽을 다시 살펴봐요.</span>';
+        sig = '';
+      }));
+      const pickEls = Array.from(pickHost.children).slice(n0);
+      let lastPairs = -1, lastFound = null;
       return {
         update(dt, t) {
           const v = view(), S = ctx.lesson() || {};
+          const CU = S.CU || {}, picking = v.sc === 'cuo' && CU.pairs === 6 && !CU.found;
+          pickEls.forEach((e) => { e.style.display = picking ? '' : 'none'; });
+          if (v.sc === 'cuo' && (CU.pairs !== lastPairs || CU.found !== lastFound)) {
+            if (CU.pairs > 0 && lastPairs === 0) { pl.set(0); pl.play(); }      // ✨ 자동으로 짝짓기 → 반응을 처음부터 보여 줘요
+            if (!CU.pairs) pickMsg = '';
+            lastPairs = CU.pairs; lastFound = CU.found; sig = '';
+          }
           if (v.key !== sig) { sig = v.key; rebuild(v); }
           else if (v.sc === 'lab' && S.LAB && S.LAB.scaleVal !== lastSV) { lastSV = S.LAB.scaleVal; rebuild(v); }
           stg.update(t); arrow.position.x = Math.sin(t * 2.5) * 0.07;

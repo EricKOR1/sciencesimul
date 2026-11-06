@@ -256,7 +256,7 @@
         SP.forEach(([k, a, b]) => { const i = MKS.indexOf(k), B = massB[i], sm = sp * sp * (3 - 2 * sp); B.sp.visible = sp > 0.01; if (B.sp.visible) { const x0 = sx(a), x1 = sx(a + (b - a) * sm), wd = Math.abs(x1 - x0), yc = sy(M[k].band === 'bot' ? 4600 : M[k].band === 'deep' ? 3000 : 1000); B.sp.scale.set(Math.max(0.01, wd), 1, 1); B.sp.position.set((x0 + x1) / 2, yc, 0); } });
         Object.keys(BANDD).forEach((k) => BANDD[k][3].show(true)); lSc.show(true);
         const un = so.filter((c) => !c.placed);
-        return '<b>단순화한 남북 바다 단면</b> (노란 고리 = 침강 위치)<br>놓은 수괴 ' + (3 - un.length) + ' / 3 · 밀도가 클수록 더 깊이 가라앉아요.' + (un.length ? '<br>' + un.map((c) => M[c.id].name + ' (' + M[c.id].T + ' °C · ' + M[c.id].S.toFixed(1) + ' psu)').join('<br>') : '<br>모두 놓았어요. ✔ 확인하기를 눌러요.') + '<br><span style="color:#9fb0d4">카드를 끌어 놓는 일은 ▦ 2D에서 해요.</span>';
+        return '<b>단순화한 남북 바다 단면</b> (노란 고리 = 침강 위치)<br>놓은 수괴 ' + (3 - un.length) + ' / 3 · 밀도가 클수록 더 깊이 가라앉아요.' + (un.length ? '<br>' + un.map((c) => M[c.id].name + ' (' + M[c.id].T + ' °C · ' + M[c.id].S.toFixed(1) + ' psu)').join('<br>') : '<br>모두 놓았어요. ✔ 확인하기를 눌러요.') + '';
       }
       let forceInfo = true, lastHtml = '', scnNow = '';
       ctx.onLevel(() => { forceInfo = true; scnNow = ''; });

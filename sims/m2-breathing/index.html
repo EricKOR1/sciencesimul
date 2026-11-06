@@ -12,6 +12,8 @@
   <link rel="stylesheet" href="../../assets/css/common.css">
   <script>try{var t=localStorage.getItem("sciencesimul:theme");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
   <style>
+    body:not(.v3-mode) .only3d, body.v3-mode .only2d { display: none; }
+    body.v3-mode #sceneSeg [data-scene="model"] { display: none; } /* 페트병 모형은 3D에 없어요 */
     .stage-card { background: #eef4ef; }
     .stage-toolbar { min-height: 61px; }
     .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
@@ -75,8 +77,8 @@
           <p class="ctrl-note">노란 손잡이를 손가락으로 아래로 끌어도 돼요. 놓으면 고무막이 탄성으로 되돌아와요.</p>
         </div>
         <div class="cgrp" data-scene="chest" hidden>
-          <button class="btn btn-subject" type="button" id="btnAutoBreath">🔁 자동으로 숨 쉬기</button>
-          <p class="ctrl-note">노란 손잡이(갈비뼈)와 빨간 손잡이(가로막)를 위아래로 끌어 보세요.</p>
+          <button class="btn btn-subject" type="button" id="btnAutoBreath" data-v3="keep">🔁 자동으로 숨 쉬기</button>
+          <p class="ctrl-note"><span class="only2d">노란 손잡이(갈비뼈)와 빨간 손잡이(가로막)를 위아래로 끌어 보세요.</span><span class="only3d">3D 화면 아래 단추로 갈비뼈와 가로막을 움직여 보세요.</span></p>
         </div>
         <div class="cgrp" data-scene="alveoli" hidden>
           <div class="control">

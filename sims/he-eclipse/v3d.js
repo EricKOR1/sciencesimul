@@ -261,7 +261,7 @@
         siteM.forEach((q) => { const site = q.k === 'P' ? S.custom : w.SITES[q.k]; if (!site) { q.m.visible = false; q.l.show(false); return; } const p = w.groundPt(site.lat, site.lon, tt), vis = p.z > 20; q.m.visible = vis; q.l.show(vis); if (vis) { q.m.position.set(p.x * GK * 1.01, p.y * GK * 1.01, p.z * GK * 1.01); q.l.obj = [p.x * GK * 1.1, p.y * GK * 1.1 + 0.2, p.z * GK * 1.1]; q.m.scale.setScalar(site === cs ? 1.8 : 1); q.m.material.color.setHex(site === cs ? 0xf97316 : 0xfde047); } });
         lGl.show(true); gTime.r.set(S.t); gPlay.els.forEach((e) => { e.textContent = S.play3 ? '⏸ 멈춤' : '▶ 재생'; }); gSite.r.set(S.site);
         const st = cs ? w.siteState(cs, tt) : null;
-        return '<b>태양 쪽에서 본 지구와 달 그림자</b> · ' + w.clockStr(tt) + '<br>검은 점 = 본영, 어두운 영역 = 반영. 그림자가 지나가는 곳에서 일식이 보여요.' + (st ? '<br>지점 ' + S.site + ': <b>' + (st.night ? '밤이라 볼 수 없어요' : st.type === '없음' ? '일식이 보이지 않아요' : st.type + ' 일식 (가려진 정도 ' + Math.round(st.obsc * 100) + ' %)') + '</b>' : '') + '<br><span style="color:#9fb0d4">지속 시간 계산 · 기록은 ▦ 2D에서 해요.</span>';
+        return '<b>태양 쪽에서 본 지구와 달 그림자</b> · ' + w.clockStr(tt) + '<br>검은 점 = 본영, 어두운 영역 = 반영. 그림자가 지나가는 곳에서 일식이 보여요.' + (st ? '<br>지점 ' + S.site + ': <b>' + (st.night ? '밤이라 볼 수 없어요' : st.type === '없음' ? '일식이 보이지 않아요' : st.type + ' 일식 (가려진 정도 ' + Math.round(st.obsc * 100) + ' %)') + '</b>' : '') + '';
       }
       /* --- lunar: 지구 그림자 속을 지나는 달 --- */
       const LKU = 0.00045;
@@ -284,7 +284,7 @@
         const st = w.lunarStateAt ? w.lunarStateAt(cn, tm) : null;
         lSt.set(st ? st.text : '');
         lPath.r.set(S.path); lTime.r.set(Math.max(-180, Math.min(180, Math.round(tm)))); lPlay.els.forEach((e) => { e.textContent = S.play4 ? '⏸ 멈춤' : '▶ 재생'; });
-        return '<b>지구 그림자 속을 지나는 달 · ' + pa.name + '</b><br>이 길에서는 <b>' + (cn.type === '반영' ? '반영식' : cn.type === '없음' ? '월식 없음' : cn.type + ' 월식') + '</b>이 일어나요.<br>' + (st ? st.text + '<br>' : '') + '달이 본영에 들어가면 붉게 보여요. 접촉 시각 표 · 식분 계산은 ▦ 2D에서 해요.';
+        return '<b>지구 그림자 속을 지나는 달 · ' + pa.name + '</b><br>이 길에서는 <b>' + (cn.type === '반영' ? '반영식' : cn.type === '없음' ? '월식 없음' : cn.type + ' 월식') + '</b>이 일어나요.<br>' + (st ? st.text + '<br>' : '') + '달이 본영에 들어가면 붉게 보여요.';
       }
       let scnE = '';
       const lastE = { v: '' };

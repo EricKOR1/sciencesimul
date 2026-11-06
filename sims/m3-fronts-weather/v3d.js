@@ -11,7 +11,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHN ? 21 : 16, theta: 0.35, phi: 1.25, min: 7, max: 32, target: [0, 1.5, 0] },
     autoRotate: 0,
-    levels: [1],              // 단계 2(수조 모형·전선 만들기)에서 3D로 시작해요. 기단 지도·공기 흐름 맞히기·일기도는 2D 화면에서 해요
+    levels: [1],              // 2단계(수조 모형·전선 만들기)만 3D. 기단 카드·공기 흐름 ? 칸·일기도 카드는 화면을 끌거나 눌러야 해서 2D
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3, C = THREE.Color;
@@ -225,7 +225,7 @@
           });
           const ear = m.blobs[1].inf * m.blobs[2].inf; massObj.jang.material.opacity = Math.min(1, ear * 2.2); massObj.jang.visible = ear > 0.2; massObj.jangL.show(ear > 0.2);
           const key = (m.season || '') + '|' + any + '|' + (S.mass.revealAll ? 1 : 0);
-          if (key !== wmSig) { wmSig = key; info(any ? (sea2 ? '<b>' + sea2.icon + ' ' + sea2.name + '</b> — ' + sea2.text + '<br>' + sea2.note : '<b>우리나라 주변의 기단</b><br>계절을 눌러 우리나라에 영향을 주는 기단을 확인해요.') : '<b>기단의 발원지</b><br>점선 원은 기단이 만들어지는 곳이에요. 기단 카드를 발원지에 놓는 활동은 2D 화면에서 해요.<br>맞게 놓으면 기단이 3D로 나타나요.'); }
+          if (key !== wmSig) { wmSig = key; info(any ? (sea2 ? '<b>' + sea2.icon + ' ' + sea2.name + '</b> — ' + sea2.text + '<br>' + sea2.note : '<b>우리나라 주변의 기단</b><br>계절을 눌러 우리나라에 영향을 주는 기단을 확인해요.') : '<b>기단의 발원지</b><br>점선 원은 기단이 만들어지는 곳이에요.<br>기단 카드를 발원지에 맞게 놓으면 기단이 나타나요.'); }
         } else if (sc === 'wmap') {
           const w = S.wm, mp = w.map, layer = w.layer, sg = mp + '|' + layer;
           if (sg !== wmSig) {
@@ -235,7 +235,7 @@
             frLab.forEach((l) => l.show(mp === 'spr' && layer === 'chart')); hlLabs.forEach((l) => l.show(layer === 'chart'));
             const dark = layer !== 'chart'; seaM.color.set(layer === 'sat' ? 0x0b1b30 : layer === 'radar' ? 0x0a121b : 0x143f70); landM.color.set(layer === 'sat' ? 0x3d4a33 : layer === 'radar' ? 0x18231d : 0x4f7343); korM.color.set(dark ? 0x66725a : 0x6f9660);
             info('<b>' + (mp === 'win' ? '겨울' : '봄') + ' 예시 ' + (layer === 'chart' ? '일기도' : layer === 'sat' ? '위성 영상' : '레이더 영상') + '</b> (예시 자료)<br>' +
-              (layer === 'chart' ? '기압이 높을수록 곡면이 높아요. 등압선이 촘촘할수록 바람이 세요.' + (mp === 'spr' ? '<br>한랭 전선 ▲ · 온난 전선 ●' : '') : layer === 'sat' ? '하얀 곳 = 구름이 많은 곳' : '초록 → 노랑 → 빨강 = 비가 강한 곳') + '<br><small>A·B·C 카드 놓기는 2D에서 해요.</small>');
+              (layer === 'chart' ? '기압이 높을수록 곡면이 높아요. 등압선이 촘촘할수록 바람이 세요.' + (mp === 'spr' ? '<br>한랭 전선 ▲ · 온난 전선 ●' : '') : layer === 'sat' ? '하얀 곳 = 구름이 많은 곳' : '초록 → 노랑 → 빨강 = 비가 강한 곳') + '');
           }
           if (chartG.visible && frontG.visible) {
             const ph = w.phase, gap = 36; let ci2 = 0, wi = 0;
