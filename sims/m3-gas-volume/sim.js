@@ -474,7 +474,7 @@
     else textBlock('기체 주사기의 부피를 고르고 ⚡ 반응시키기를 눌러요', X + 16, 410, W - 32, 15, COL.muted, 'left', 21, 700);
   }
   SC.react = {
-    enter() { if (RS.phase === 'idle') showHint('주사기 손잡이를 끌거나 − + 버튼으로 기체의 부피를 정해 보세요', 5200); },
+    enter() { if (RS.phase === 'idle') showHint((document.body.classList.contains('v3-mode') ? '' : '주사기 손잡이를 끌거나 ') + '− + 버튼으로 기체의 부피를 정해 보세요', 5200); },
     update: rsUpdate,
     hover(p) { if (RS.phase !== 'idle' && RS.phase !== 'done') return null; for (const k of ['A', 'B']) { const h = RS.handle && RS.handle[k]; if (h && Math.abs(p.x - h.x) < 24 && Math.abs(p.y - h.y) < 30) return 'grab'; } return null; },
     down(p) {
@@ -774,7 +774,7 @@
           {
             title: '남는 기체가 없는 조합 찾기', scene: 'react', focus: 'goBtn',
             goal: '수소와 산소의 부피를 바꿔 가며 반응시켜 보세요. 반응 후 남는 기체가 하나도 없는 조합을 찾아요.',
-            hint: '수소의 부피가 산소의 몇 배일 때 딱 맞을까요? 오른쪽 결과표를 비교해 봐요.',
+            hint: '수소의 부피가 산소의 몇 배일 때 딱 맞을까요? <span class="only2d">오른쪽 결과표를 비교해 봐요.</span><span class="only3d">반응 후 남는 기체를 살펴봐요.</span>',
             setup() { RS.rxLocked = true; if (RS.rx !== 'water') rsSelect('water'); RS.va = 20; RS.vb = 20; RS.dispA = 20; RS.dispB = 20; RS.runs = []; rsReset(); setScene('react'); },
             check: () => RS.phase === 'done' && RS.rx === 'water' && !!RS.res && !RS.res.left, hold: 0.6,
             status: () => '시도 <b>' + RS.runs.filter((r) => r.rx === 'water').length + '회</b> · 남는 기체 없음 ' + MARK(RS.phase === 'done' && RS.rx === 'water' && !!RS.res && !RS.res.left),
@@ -885,7 +885,7 @@
           {
             title: '암모니아 만들기', scene: 'react', focus: 'goBtn',
             goal: '질소 10 mL와 수소 40 mL를 반응시켜 보세요. 남는 기체와 생성된 암모니아의 부피를 확인해요.',
-            hint: '위 단추에서 암모니아를 고르고 수소의 부피를 40 mL로 바꿔요.',
+            hint: '<span class="only2d">위</span><span class="only3d">아래 막대의</span> 단추에서 암모니아를 고르고 수소의 부피를 40 mL로 바꿔요.',
             setup() { RS.rxLocked = false; rsSelect('ammonia'); RS.va = 10; RS.vb = 20; RS.dispA = 10; RS.dispB = 20; rsReset(); setScene('react'); refreshUI(); },
             check: () => RS.phase === 'done' && RS.rx === 'ammonia' && RS.va === 10 && RS.vb === 40, hold: 0.6,
             status: () => '질소 ' + (RS.rx === 'ammonia' ? RS.va : '-') + ' mL · 수소 ' + (RS.rx === 'ammonia' ? RS.vb : '-') + ' mL ' + MARK(RS.phase === 'done' && RS.rx === 'ammonia' && RS.va === 10 && RS.vb === 40),

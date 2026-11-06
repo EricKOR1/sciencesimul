@@ -225,7 +225,7 @@
           if (c.sig !== sig) { sig = c.sig; rebuild(c); }
           const showSeg = c.sc === 'react' && RS && !RS.rxLocked; segEls.forEach((e) => { e.style.display = showSeg ? '' : 'none'; }); if (showSeg) segRx.set(RS.rx);
           if (c.sc === 'react' && RS) {
-            if (pl.playing && !prevPlay && RS.phase !== 'run') { if (RS.phase === 'done' && pl.p >= 0.999) { /* 다시 보기 */ } else if (L.rsGo) { if (RS.phase === 'done') L.rsGo(); L.rsGo(); } }   // ▶ = ⚡ 반응시키기
+            if (pl.playing && !prevPlay && RS.phase !== 'run' && L.rsGo) { if (RS.phase === 'done') L.rsGo(); L.rsGo(); }   // ▶ = ⚡ 반응시키기 (끝난 뒤 누르면 다시 반응시켜요)
             prevPlay = pl.playing;
             if (RS.phase === 'run') { q = Math.max(0, Math.min(1, (RS.pt - 2.0) / 1.2)); if (!pl.playing) { pl.play(); prevPlay = true; } ign = true; pl.set(Math.min(1, RS.pt / 3.2)); ign = false; }
             else if (RS.phase === 'idle') { q = 0; if (pl.playing) { pl.pause(); prevPlay = false; } if (pl.p > 0) { ign = true; pl.set(0); ign = false; } }
