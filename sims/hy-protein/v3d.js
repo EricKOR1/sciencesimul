@@ -1,7 +1,7 @@
 /* hy-protein · 3D 단백질 구조 (1차 → 4차, 변성)
    아미노산 12개 구슬(소수성 주황 · 친수성 파랑 · 전하 초록)이 이어진 사슬이 나선·병풍으로, 입체 구조로, 4개가 모인 헤모글로빈으로 접히는 모습
-   1단계(아미노산 구슬 · 물속 R기의 성질), 2단계(mRNA 코돈 순서대로 구슬 연결), 3단계 낫 모양 적혈구(정상 · 변이 β 사슬, 산소 많음 · 적음)도 2D와 같은 값으로 보여 줘요.
-   (분류 카드 놓기 · 경우의 수 계산은 2D에서 해요.) */
+   3단계 낫 모양 적혈구(정상 · 변이 β 사슬, 산소 많음 · 적음)도 2D와 같은 값으로 보여 줘요.
+   (구슬 · 사슬 · 기능 카드처럼 캔버스에서 끌어 놓는 1 · 2 · 4단계는 2D 화면이에요.) */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -85,7 +85,7 @@ function foldChain(start, phob, seed) {
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: 7, theta: 0.15, phi: 1.4, fov: 40, min: 3, max: 30, target: [0, PHONE ? 0.5 : 0, 0] },
     autoRotate: 0,
-    levels: [2, 3],   // 1·2단계(구슬 · 사슬)는 2D에서 끌어 놓는 활동이라 2D로 시작하고, 3D 단추로 같은 장면을 볼 수 있어요. 접힘 · 낫 모양 · 변성 단계에서 3D로 시작
+    levels: [2],   // 3단계(접힘 · 낫 모양 · 모양 퀴즈)만 3D. 구슬 · 사슬 · 기능 카드는 캔버스에서 끌어 놓는 활동이라 2D
     build(ctx) {
       const { THREE, root, label, info, controls, orbit, camera } = ctx;
       const N = SEQ.length;
@@ -198,8 +198,6 @@ function foldChain(start, phob, seed) {
         let extra = '';
         if (stage === 3 && !denat && foldedFlag) { const m = metric(); extra = '<br><span style="color:#fdba74">중심까지 평균 거리: 소수성 ' + m[0].toFixed(1) + ' / 친수성·전하 ' + m[1].toFixed(1) + '</span>'; }
         if (mode === 'denat' && L && L.S.dn) { const d = L.S.dn; extra = '<br><span style="color:#fca5a5">처리: ' + (d.acid ? '강산' : d.alc ? '알코올' : d.T + ' °C') + ' · 효소 활성 ' + Math.round(d.f * 100) + ' %' + (denat ? '<br>🔥 변성: 입체 구조가 풀려 기능을 잃어요. 서열 · 펩타이드 결합은 그대로!' : '<br>열 · 강산 · 알코올로 변성시켜 보세요 (왼쪽 조작).') + '</span>'; }
-        else if (mode === 'sickle') extra = '<br><span style="color:#fcd34d">🔴 낫 모양 화면은 ▦ 2D에서 정상 · 변이 β 사슬을 비교해 보세요. (6번째 아미노산 하나가 바뀌어요)</span>';
-        else if (mode !== 'fold') extra = '<br><span style="color:#fcd34d">이 단계의 구슬 · 사슬 실험은 ▦ 2D에서 해요. 3D는 접힘 · 변성에서 2D와 함께 움직여요.</span>';
         info('<div style="max-width:' + W + 'px">' + t + extra + '<div style="margin-top:3px">' + seqRow + '</div></div>');
       }
       function applyLabels() {
@@ -434,7 +432,7 @@ function foldChain(start, phob, seed) {
           return '<b>물속에서 아미노산 R기의 성질</b><br>구슬 ' + aa.beads.length + '개 (소수성 R기 ' + ph + ' · 그 밖의 R기 ' + ot + ')<br>소수성 R기(주황)끼리는 모여 뭉치고, 친수성 R기(파랑)와 전하를 띤 R기(초록)는 물 분자(작은 파랑 구)와 닿으려고 흩어져요.';
         }
         sortPool.forEach((B, i) => { B.g.rotation.y = Math.sin(t * 0.6 + i) * 0.5; });
-        return '<b>아미노산 6종</b><br>구슬마다 R기(색 구)가 달라요. 물속에서 본 성질로 분류하는 일은 ▦ 2D에서 해요.<br>파랑: 친수성 · 주황: 소수성 · 초록: 전하를 띠어요';
+        return '<b>아미노산 6종</b><br>구슬마다 R기(색 구)가 달라요.<br>파랑: 친수성 · 주황: 소수성 · 초록: 전하를 띠어요';
       }
       function updChain(w, md, dt, t) {
         const c = w.S.ch, n = c.seated.length;
@@ -443,8 +441,8 @@ function foldChain(start, phob, seed) {
         if (n > chN) { for (let k = chN; k < n; k++) if (k >= 1) chW[k - 1] = 1.3; } chN = n;
         chWat.forEach((m, i) => { chW[i] = Math.max(0, chW[i] - dt); m.visible = chW[i] > 0; if (m.visible) { const f = 1 - chW[i] / 1.3; m.position.set((CX(i) + CX(i + 1)) / 2 - 0.3 + f * 0.9, CYB - 0.2 + f * 1.4, 0.3); m.scale.setScalar(1 - 0.3 * f); } });
         lPep.show(n >= 2); lPep.obj = [0, CYB - 1.2, 0];
-        const msg = c.done ? '폴리펩타이드 완성! 이 순서가 단백질의 1차 구조(아미노산 서열)예요.' : '다음은 ' + (n + 1) + '번째 코돈 <b>' + CODS[n] + '</b>에 맞는 아미노산이에요.' + (c.wrong ? '<br>틀린 횟수 ' + c.wrong + '번 · 코돈표는 ▦ 2D에서 봐요.' : '');
-        return '<b>mRNA 코돈 순서대로 연결해요</b><br>연결한 구슬 ' + n + ' / 5 · 펩타이드 결합 ' + Math.max(0, n - 1) + '개<br>' + msg + (md === 'calc' ? '<br><span style="color:#9fb0d4">경우의 수 계산(20ⁿ)은 ▦ 2D에서 해요. 아미노산은 20종이라서 구슬 n개의 서열은 20ⁿ가지예요.</span>' : '');
+        const msg = c.done ? '폴리펩타이드 완성! 이 순서가 단백질의 1차 구조(아미노산 서열)예요.' : '다음은 ' + (n + 1) + '번째 코돈 <b>' + CODS[n] + '</b>에 맞는 아미노산이에요.' + (c.wrong ? '<br>틀린 횟수 ' + c.wrong + '번' : '');
+        return '<b>mRNA 코돈 순서대로 연결해요</b><br>연결한 구슬 ' + n + ' / 5 · 펩타이드 결합 ' + Math.max(0, n - 1) + '개<br>' + msg + (md === 'calc' ? '<br><span style="color:#9fb0d4">아미노산은 20종이라서 구슬 n개의 서열은 20ⁿ가지예요.</span>' : '');
       }
       let curNew = '';
       function applyNew(md) {
@@ -452,6 +450,7 @@ function foldChain(start, phob, seed) {
         const isNew = md === 'aa' || md === 'sortaa' || md === 'chain' || md === 'calc' || md === 'sickle';
         gOld.visible = !isNew; gAA.visible = md === 'aa' || md === 'sortaa'; gCH.visible = md === 'chain' || md === 'calc'; gSK.visible = md === 'sickle';
         oldEls.forEach((e) => { e.style.display = isNew ? 'none' : ''; });
+        if (!isNew) foldB.style.display = stage === 3 && !foldedFlag ? '' : 'none';
         sh(aaBtns, md === 'aa'); sh(aaClr, md === 'aa'); sh(chBtns, md === 'chain'); sh(chClr, md === 'chain'); sh(skMut, md === 'sickle'); sh(skLow, md === 'sickle');
         lTank.show(md === 'aa'); gAA.userData.lW.show(md === 'aa'); sortPool.forEach((B) => { B.g.visible = md === 'sortaa'; }); sortLab.forEach((l) => l.show(md === 'sortaa'));
         lCod.forEach((l) => l.show(md === 'chain' || md === 'calc')); lmR.show(md === 'chain' || md === 'calc'); if (md !== 'chain' && md !== 'calc') lPep.show(false);
@@ -506,7 +505,7 @@ function foldChain(start, phob, seed) {
             });
           }
         },
-        sync() { followLesson(); },
+        sync() { followLesson(); lastEl.v = ''; },
       };
     },
   });
