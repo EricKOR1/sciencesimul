@@ -98,6 +98,12 @@
       const isShown = (i) => { const S = lessonS(); return !!(sim.game && sim.game.free) || isDone(i) || !!(S.fly && S.fly[i] && S.fly[i].landed); };
       function text() {
         const n = shown.filter(Boolean).length, mine = GC.filter((c, i) => isDone(i)).length;
+        const S0 = lessonS(), si = S0.sel == null ? -1 : S0.sel;
+        if (si >= 0 && !showCenter && sim.PLM) {
+          const c = GC[si], Mv = sim.PLM(c.P), f1 = (x) => (Math.round(x * 10) / 10).toFixed(1), dn = isDone(si) || !!(sim.game && sim.game.free);
+          info('<b>성단 ' + (si + 1) + '</b>: ℓ = ' + c.l + '°, b = ' + c.b + '° (점선 방향)<br>세페이드 P = ' + f1(c.P) + '일, m = ' + f1(c.m) + ' → M = ' + f1(Mv) + ', m − M = ' + f1(c.m - Mv) + '<br>' + (dn ? 'd = <b>' + f1(c.d) + ' kpc</b> · 지도에 나타났어요' : 'd = ? kpc → 옆에 계산해 입력하면 지도에 나타나요') + ' · 지금 성단 ' + n + '개');
+          return;
+        }
         if (!showCenter) {
           info('<b>구상 성단의 3차원 위치</b> (태양이 원점) · 지금 ' + n + '개<br>수업에서 거리 d를 구하거나 불러온 성단이 방향(ℓ, b)과 거리 d로 나타나요. 점선은 은하면까지의 높이예요.<br>성단들은 어디를 중심으로 퍼져 있을까요?' +
             (mine ? '<br><span style="color:#67e8f9">하늘색 고리</span> = 직접 구한 성단 (' + mine + '개)' : ''));
@@ -121,6 +127,27 @@
       });
       const dB = controls.button('높이 점선 ✓', () => { showDrop = !showDrop; dB.classList.toggle('on', showDrop); dB.textContent = '높이 점선 ' + (showDrop ? '✓' : '✕'); apply(); }); dB.classList.add('on');
       const sB = controls.button('태양에서 잇기', () => { showSpoke = !showSpoke; sB.classList.toggle('on', showSpoke); apply(); });
+      /* 성단 고르기 (2D에서 번호를 누른 것과 같아요): 고른 성단의 방향(ℓ, b)을 점선으로 보여 줘요. 거리는 직접 계산해요 */
+      const ray = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3(1, 0, 0)]), new THREE.LineDashedMaterial({ color: 0x67e8f9, dashSize: 0.8, gapSize: 0.5, transparent: true, opacity: 0.9 }));
+      ray.visible = false; root.add(ray);
+      const rayEnd = new THREE.Object3D(); root.add(rayEnd);
+      const labSel = label('', rayEnd, { size: LS, color: 'rgba(8,80,100,.94)' }); labSel.show(false);
+      const selRing = new THREE.Sprite(new THREE.SpriteMaterial({ map: ringTex, color: 0xfff27a, transparent: true, depthTest: false })); selRing.scale.set(2.6, 2.6, 1); selRing.visible = false; root.add(selRing);
+      let selKey = '';
+      function showSel() {
+        const S = lessonS(), i = S.sel == null ? -1 : S.sel, k = i + '|' + (i >= 0 && shown[i] ? 1 : 0) + '|' + (i >= 0 && isDone(i) ? 1 : 0);
+        if (k === selKey) return; selKey = k;
+        ray.visible = i >= 0; labSel.show(i >= 0); selRing.visible = i >= 0 && !!shown[i];
+        if (i < 0) { text(); return; }
+        const c = GC[i], u = Math.hypot(c.x, c.y, c.z) || 1, p = G(c.x / u * 30, c.y / u * 30, c.z / u * 30);
+        ray.geometry.setFromPoints([new THREE.Vector3(), new THREE.Vector3(p[0], p[1], p[2])]); ray.computeLineDistances();
+        rayEnd.position.set(p[0], p[1], p[2]); labSel.set('성단 ' + (i + 1) + ' 방향');
+        const q = G(c.x, c.y, c.z); selRing.position.set(q[0], q[1], q[2]);
+        text();
+      }
+      controls.text('성단');
+      controls.button('◀', () => { const S = lessonS(); try { sim.pickG((S.sel == null || S.sel < 0 ? 0 : S.sel - 1)); } catch (e) {} selKey = ''; showSel(); });
+      controls.button('▶', () => { const S = lessonS(); try { sim.pickG((S.sel == null || S.sel < 0 ? 0 : S.sel + 1)); } catch (e) {} selKey = ''; showSel(); });
       function apply() {
         cg.visible = showCenter; labMean.show(showCenter); labDist.show(showCenter); labDisc.show(showCenter);
         drops.visible = showDrop; feet.visible = showDrop; spokes.visible = showSpoke; text();
@@ -135,7 +162,7 @@
       readLesson();
       let acc = 0, lastC = showCenter;
       return {
-        update(dt) { labNP.show(orbit.phi > 0.6 && orbit.phi < Math.PI - 0.6); acc += dt; if (acc > 0.4) { acc = 0; const was = showCenter; readLesson(); } },
+        update(dt) { labNP.show(orbit.phi > 0.6 && orbit.phi < Math.PI - 0.6); acc += dt; if (acc > 0.4) { acc = 0; readLesson(); showSel(); } },
         sync() { readLesson(); },
       };
     },

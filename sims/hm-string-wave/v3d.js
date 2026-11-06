@@ -88,7 +88,7 @@
           const d = S.dr; let f = d.fe || d.f; if (demo.on && !d.sweep) f = demo.p * 700; const F = A.strField_(Math.max(0.5, f)), wt = tm * 6.283 * A.WVIS;
           // 줄의 끝(x=0)에 발생기, x = L0 쪽이 고정 끝 (2D와 같은 식: s = L0 − x)
           set(sTot, (xx) => A.strAt(F, A.L0 - (xx + LU / 2) / LU * A.L0, wt).tot * YD);
-          const parts = d.parts; sInc.visible = sRef.visible = parts; if (parts) { set(sInc, (xx) => A.strAt(F, A.L0 - (xx + LU / 2) / LU * A.L0, wt).inc * YD + 2.9); set(sRef, (xx) => A.strAt(F, A.L0 - (xx + LU / 2) / LU * A.L0, wt).ref * YD + 1.5); lI.show(true); lR.show(true); lI.obj = [-2.6, 3.0, 0]; lR.obj = [2.6, -3.0, 0]; }
+          const parts = d.parts; sInc.visible = sRef.visible = parts; if (parts) { set(sInc, (xx) => A.strAt(F, A.L0 - (xx + LU / 2) / LU * A.L0, wt).inc * YD + 2.9); set(sRef, (xx) => A.strAt(F, A.L0 - (xx + LU / 2) / LU * A.L0, wt).ref * YD + 1.5); lI.show(true); lR.show(true); lI.obj = [-4.75, 2.9, 0]; lR.obj = [-4.75, 1.5, 0]; }
           gen.visible = true; gen.position.set(LU / 2 + 0.45, (A.strAt(F, 0, wt).tot) * YD, 0); pR.position.x = 100; pR.visible = false; lGen.show(true); lGen.off = [0, 0.8, 0];
           const nn = Math.round(f / A.FNR(1)), res = Math.abs(f - A.FNR(nn)) < 6 && nn >= 1; nodes(res ? nn : 0, -LU / 2, LU, res);
           txt = '<b>〰 정상파: 고정된 줄의 공명</b> · 구동 진동수 f = <b>' + Math.round(f) + ' Hz</b><br>' + (res ? '줄이 크게 떨려요 (공명): 배 ' + nn + '개 · 마디 ' + (nn + 1) + '개 (양 끝 포함).' : '이 진동수에서는 줄이 조금만 떨려요. 진동수를 천천히 올리며 크게 떨리는 진동수를 찾아요.') + '<br>정상파 = 입사파(주황) + 반사파(파랑)의 합(노랑). 마디에서는 두 파동이 늘 상쇄돼요.<br><span style="opacity:.8">진동수는 옆 조작판에서 올려요 (▶ 아래 재생도 가능).</span>';

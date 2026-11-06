@@ -1,6 +1,7 @@
 /* hr-functional-group · 3D 작용기와 탄소 화합물
    같은 탄소 뼈대라도 어떤 작용기(−OH, −CHO, −COOH)가 붙었는지에 따라 성질이 달라져요.
-   2D의 '분자 모형 조립'에서 고른 분자(10가지)와 '성질 탐구'에서 고른 시료를 그대로 보여 줘요. 3단계(성질 탐구)에서 열려요.
+   '일상의 화합물'에서 끼운 작용기 블록(에테인 · 에탄올 · 아세트알데하이드 · 아세트산)을 그대로 보여 줘요. 1단계에서 열려요.
+   ('분자 모형 조립'의 분자 · '성질 탐구'의 시료도 따라가도록 남겨 두었어요.)
    결합 길이와 각은 실제 값에 가깝게(C–C 1.53 Å, C=O 1.21 Å 등) 계산해서 그린 모형이에요. */
 (function () {
   'use strict';
@@ -23,7 +24,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHONE ? 12 : 10.5, theta: 0.6, phi: 1.2, min: 4, max: 18 },
     autoRotate: 0.3,
-    levels: [2],   // 3단계 '성질 탐구'. 1·2단계(블록 · 조립)와 4단계(분류)는 2D 화면의 끌어 놓기가 필요해요
+    levels: [0],   // 1단계 '일상의 화합물'(블록 단추로 에테인에 작용기 끼우기). 2단계(조립)는 캔버스 칸 채우기, 3단계(성질 탐구)는 캔버스 실험 · 결과표, 4단계(분류)는 카드 끌어 놓기라 2D
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3, UP = new V3(0, 1, 0);
@@ -106,7 +107,6 @@
         halos.forEach((h, i) => { const el = atoms[i].userData.el; h.scale.setScalar(fill ? 1.0 : 1); h.position.copy(atoms[i].position); const base = BS[el] * 1.12, r = fill ? VDW[el] * 0.62 : base; h.scale.setScalar((r + 0.2) / (base + 0.2)); });
         halos.forEach((h) => { if (!hi) h.visible = false; });
       }
-      controls.text('분자는 2D 화면에서 골라요 (조립한 분자 · 성질 탐구의 시료).');
       const hb = controls.button('작용기 강조 ✓', () => { hi = !hi; hb.classList.toggle('on', hi); hb.textContent = '작용기 강조 ' + (hi ? '✓' : '✕'); build(); }); hb.classList.add('on');
       controls.segment('모양', [{ value: 0, label: '공-막대' }, { value: 1, label: '공간 채움' }], 0, (v) => { fill = !!v; build(); });
       build();
@@ -114,7 +114,7 @@
         update() {
           try {
             const S2 = window.__sim.S, w = window.__sim; let k = cur;
-            if (S2.mode === 'build' && w.A2) k = w.A2.k; else if (S2.mode === 'lab' && w.L3) k = w.L3.sel;
+            if (S2.mode === 'blocks' && w.B) k = w.B.key; else if (S2.mode === 'build' && w.A2) k = w.A2.k; else if (S2.mode === 'lab' && w.L3) k = w.L3.sel;
             if (k !== cur && LIST.some((m) => m.id === k)) { cur = k; build(); }
           } catch (e) { /* 무시 */ }
         },

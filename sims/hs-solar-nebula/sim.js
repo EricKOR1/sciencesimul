@@ -890,7 +890,7 @@
         {
           title: '회전 속도는 몇 배가 될까',
           goal: '성운의 반지름 r이 100 AU에서 <b>1/10(10 AU)</b>이 되면 회전 속도 v는 처음의 몇 배가 될까요? 숫자를 입력해요.',
-          hint: 'r × v가 일정해요. r이 1/10이 되면 v는 거꾸로 10배가 돼요. 아래쪽 막대에서도 확인해 보세요.',
+          hint: 'r × v가 일정해요. r이 1/10이 되면 v는 거꾸로 10배가 돼요. 아래 ‘회전 속도 v’ 칸에서도 확인해 보세요.',
           setup() { setMode('collapse'); setCtl(['sR', 'qv']); },
           check: () => stpV.value === 10, hold: 0.5,
           status: () => mark(stpV.value === 10) + ' 입력한 값 ' + stpV.value + '배',

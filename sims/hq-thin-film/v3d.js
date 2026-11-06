@@ -265,7 +265,7 @@
           '<b>🔍 무반사 코팅</b> (MgF₂ n = ' + n + ', 550 nm 빛)<br>앞면·뒷면 반사 모두 위상이 π 변해서 위상 차는 경로차 2nt뿐이에요.<br>2nt = ' + m.toFixed(2) + 'λ → ' + verdict + '<br>2nt = λ/2 (t = λ/4n ≈ 100 nm)이면 두 반사광이 상쇄돼 반사가 가장 약해요.');
       }
       plFilm = grab('film', () => controls.player({ duration: 12, loop: true, autoplay: false, label: '막이 흘러내려요', phases: [[0, '새로 만든 막'], [0.3, '아래로 흘러 두꺼워져요'], [0.7, '줄무늬 간격이 넓어져요']], onFrame(p) { if (!built) return; st.tauP = p; st.tauUser = true; st.fk = ''; } }));
-      // 탐침 옮기기 (2D에서 막을 눌러 옮기는 것과 같아요)
+      // 탐침 옮기기 (막을 눌러 옮기는 것과 같아요)
       const moveProbe = (d) => { const sim = window.__sim; if (!sim) return; const F = sim.S.fl; F.probe = Math.max(0, Math.min(sim.H_CM, Math.round((F.probe + d) * 10) / 10)); st.fk = ''; };
       grab('film', () => controls.button('탐침 ▲ 위로', () => moveProbe(-0.5)));
       grab('film', () => controls.button('탐침 ▼ 아래로', () => moveProbe(0.5)));

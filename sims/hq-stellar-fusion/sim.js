@@ -704,7 +704,7 @@
         {
           title: '온도를 바꿔 접근 거리 관찰하기',
           goal: '온도를 <b>10⁴ K 이하</b>, <b>태양 중심(1.5×10⁷ K)</b>, <b>10¹⁰ K</b>로 각각 맞추고 양성자가 얼마나 가까이 가는지 살펴보세요.',
-          hint: '“자주 쓰는 온도” 버튼을 누르면 빨라요. 온도가 높을수록 가장 가까운 거리가 어떻게 달라지는지, 그래프에서 열에너지 선이 장벽 곡선과 만나는 점을 보세요.',
+          hint: '“자주 쓰는 온도” 버튼을 누르면 빨라요. 온도가 높을수록 아래 ‘가장 가까운 거리’ 값이 어떻게 달라지는지 보세요.',
           setup() { S.show.selA = false; S.cd.seen = {}; setScene('cond'); },
           check: () => !!(S.cd.seen.low && S.cd.seen.sun && S.cd.seen.high),
           hold: 0.5,
@@ -714,7 +714,7 @@
         {
           title: '장벽과 열에너지 비교하기', manual: true,
           goal: '<b>태양 중심(1.5×10⁷ K)</b>으로 온도를 맞춘 뒤, 읽은 값으로 두 문제를 풀어요.',
-          hint: '0.72 MeV = 720 keV예요. 열에너지 약 1.3 keV와 나누어 몇 배인지 어림해요. 고전적으로 장벽을 넘으려면 어느 온도에서 열에너지가 0.72 MeV에 이르는지 그래프에서 확인해요.',
+          hint: '0.72 MeV = 720 keV예요. 열에너지 약 1.3 keV와 나누어 몇 배인지 어림해요. 고전적으로 장벽을 넘으려면 온도를 올리며 ‘열에너지 kT’가 0.72 MeV에 이르는 온도를 확인해요.',
           setup() { S.show.selA = true; SEL_A.reset(); S.cd.lv = 600; slT.set(600); tSeg.set('600'); S.cd.an.ph = 'wait'; S.cd.an.t = 0; setScene('cond'); },
           check() { if (Math.abs(S.cd.lv - 718) > 3) return '먼저 온도를 태양 중심(1.5×10⁷ K)에 맞춰 열에너지를 읽어 보세요.'; return SEL_A.grade(); },
           status: () => mark(Math.abs(S.cd.lv - 718) <= 3) + ' 태양 중심 온도 맞춤 &nbsp; · 고른 문제 ' + SEL_A.count() + ' / 2',

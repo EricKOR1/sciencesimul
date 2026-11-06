@@ -252,7 +252,7 @@
         setSeg(dSeg, new V3(-3.2, -gap / 2, 0), new V3(-3.2, gap / 2, 0)); aD.position.set(-3.55, 0, 0); lD.set('d = ' + g3(d) + ' cm');
         const F = E_CH * E, ae = F / M_E, ap = F / M_P, gapc = step / V * d;
         info('<b>🔋 평행판 사이의 균일한 전기장</b><br>인접한 선: ΔV = ' + step + ' V, 간격 ' + g3(gapc) + ' cm<br>E = ΔV / Δd = ' + (mk ? '?' : step + ' / ' + g3(gapc / 100) + ' = ' + g3(E) + ' V/m') + '<br>판 전체: E = V / d = ' + (mk ? '?' : V + ' / ' + g3(d / 100) + ' = ' + g3(E) + ' V/m') + '<br>F = eE = ' + (mk ? '?' : sci(F) + ' N') + ', 가속도 전자 ' + (mk ? '?' : sci(ae) + ' m/s²') + ', 양성자 ' + (mk ? '?' : sci(ap) + ' m/s²') +
-          (u > 0 ? '<br>전자 운동 에너지 ' + g3(V * u * u) + ' eV, 양성자 ' + (V * u * u / (M_P / M_E) < 0.01 ? sci(V * u * u / (M_P / M_E), 1) : g3(V * u * u / (M_P / M_E))) + ' eV' : '<br>▶ 재생이나 2D의 [▶ 전자·양성자 놓기]로 놓아 보세요'));
+          (u > 0 ? '<br>전자 운동 에너지 ' + g3(V * u * u) + ' eV, 양성자 ' + (V * u * u / (M_P / M_E) < 0.01 ? sci(V * u * u / (M_P / M_E), 1) : g3(V * u * u / (M_P / M_E))) + ' eV' : '<br>▶ 재생이나 옆 조작판의 ▶ 전자·양성자 놓기로 놓아 보세요'));
       }
 
       /* ---------- ▶ 재생 ---------- */
@@ -300,7 +300,7 @@
             p.m.material.color.setHex(ok ? 0x16a34a : 0x475569); p.l.el.style.background = S.l1.sel === k ? '#f26b3a' : '#26324a';
             if (an != null) { const o = p.m.position.clone(); setArrow(p.arrow, o, o.clone().add(new V3(Math.cos(an), -Math.sin(an), 0).multiplyScalar(1.0))); p.arrow.userData.m.color.setHex(c); } else p.arrow.visible = false;
           });
-          info('<b>🗺️ 완성된 전기력선 그림 — 점 A, B, C에서 전기장을 읽어요</b> (그림 ' + S.l1.fig + ': ' + f.name + ')<br>① 선은 (+)에서 나와 (−)로 들어가요<br>② 선의 접선 방향 = 그 점의 전기장 방향<br>③ 선이 빽빽한 곳일수록 전기장이 세요<br>방향 화살표는 왼쪽 2D 화면에서 정해요.');
+          info('<b>🗺️ 완성된 전기력선 그림 — 점 A, B, C에서 전기장을 읽어요</b> (그림 ' + S.l1.fig + ': ' + f.name + ')<br>① 선은 (+)에서 나와 (−)로 들어가요<br>② 선의 접선 방향 = 그 점의 전기장 방향<br>③ 선이 빽빽한 곳일수록 전기장이 세요');
         } else {
           const k = S.l4.fig; ['A', 'B', 'C'].forEach((n) => { rec.pts[n].arrow.visible = false; });
           info('<b>🔍 처음 보는 그림 — ' + sim.A4[k].name + '</b> (' + (k === 'c' ? '도체' : '등전위선 V 눈금') + ')<br>• ' + TIPS[k][0] + '<br>• ' + TIPS[k][1] + '<br>흰 선: 등전위선(단면)' + (rec.vlabs && k !== 'c' ? ' — ' + rec.vlabs.map((v) => Math.round(v.lv) + ' V').join(', ') : ''));

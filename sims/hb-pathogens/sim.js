@@ -1456,7 +1456,7 @@
         {
           title: '병원체 비교표 채우기', manual: true,
           goal: '5종 병원체의 <b>세포 구조, 핵(핵막), 몸 구성</b>을 표에 채우고 <b>✔ 확인하기</b>를 누르세요.',
-          hint: '칸을 누를 때마다 보기가 바뀌어요. 바이러스는 세포가 아니고, 세균은 핵막이 없다는 점을 떠올려요.',
+          hint: '3D 막대에서 병원체를 고르고 칸 단추를 누를 때마다 보기가 바뀌어요. 바이러스는 세포가 아니고, 세균은 핵막이 없다는 점을 떠올려요.',
           setup() { S.O.table.reset(); setScene('obs', 'table'); },
           check() {
             const tb = S.O.table, miss = tb.total - tb.filled;

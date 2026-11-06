@@ -236,7 +236,7 @@
       reorient(); show();
 
       /* 센서 표 (2D와 같은 6칸): 맞출 I · r와 기록했는지 */
-      function tabTxt() { const S = lessonS(), tb = S && S.w && S.w.tab; if (!tb || S.mode !== 'wire') return ''; return '<br>📋 센서 표 (' + tb.filter((c) => c.v != null).length + ' / ' + tb.length + '): ' + tb.map((c) => (c.v != null ? '✔ ' : '□ ') + c.I + ' A·' + c.r + ' cm').join(' · '); }
+      function tabTxt() { const S = lessonS(), tb = S && S.w && S.w.tab; if (!tb || S.mode !== 'wire') return ''; return '<br>📋 센서 표 (' + tb.filter((c) => c.v != null).length + ' / ' + tb.length + '): ' + tb.map((c) => { const now = c.I === S.w.I && c.r === S.w.r, t = (c.v != null ? '✔ ' : '□ ') + c.I + ' A·' + c.r + ' cm'; return now ? '<b style="color:#ffb27a">' + t + ' ◀ 지금</b>' : t; }).join(' · '); }
       /* ---------- 2D 실험의 값을 그대로 따라가요 ---------- */
       let lastSig = '';
       function readLesson() {

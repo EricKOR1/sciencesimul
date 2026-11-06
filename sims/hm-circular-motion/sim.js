@@ -963,7 +963,7 @@
         {
           title: 'Δt를 줄여 Δv의 방향 찾기',
           goal: 'v = 4 m/s, r = 2 m에서 <b>Δt를 줄여</b> Δv가 중심 방향에서 벗어난 각이 <b>3° 이하</b>가 되게 하세요.',
-          hint: 'Δt 슬라이더를 왼쪽 끝(0.05 s) 쪽으로 옮겨요. 오른쪽 그림에서 빨간 Δv 화살표가 초록 점선(중심 방향)에 가까워져요.',
+          hint: 'Δt 슬라이더를 왼쪽 끝(0.05 s) 쪽으로 옮겨요. 빨간 Δv 화살표가 점점 중심 방향을 향해요.',
           setup() { const d = S.dv; d.v = 4; d.r = 2; d.dt = 0.4; d.pause = false; setFlag('hideA', false); setFlag('aIn', false); setScene('dv'); },
           check: () => S.dv.v === 4 && S.dv.r === 2 && dvOff() <= 3 + 1e-9,
           hold: 0.8,
@@ -1074,7 +1074,7 @@
         {
           title: '관람차 최저점·최고점의 좌석 힘', manual: true,
           goal: '반지름 10 m 관람차가 v = 5 m/s로 돌 때, 몸무게 500 N인 사람이 받는 <b>최저점과 최고점의 좌석 수직항력 N</b>을 계산해 입력하세요.',
-          hint: '구심 가속도 a = v² ÷ r = 2.5 m/s²는 늘 중심(위쪽 또는 아래쪽)을 향해요. 최저점에서는 N − mg = ma, 최고점에서는 mg − N = ma예요. 센서 그래프의 1.25 g, 0.75 g와 비교해 봐요.',
+          hint: '구심 가속도 a = v² ÷ r = 2.5 m/s²는 늘 중심(위쪽 또는 아래쪽)을 향해요. 최저점에서는 N − mg = ma, 최고점에서는 mg − N = ma예요. 센서 값 1.25 g, 0.75 g와 비교해 봐요.',
           setup() { S.wh.v = 5; S.wh.hist = []; clr('iNb', 'iNt'); setFlag('lockV', true); setFlag('hideN', true); setFlag('nIn', true); setScene('wheel'); },
           check() {
             const b = num('iNb'), t = num('iNt');

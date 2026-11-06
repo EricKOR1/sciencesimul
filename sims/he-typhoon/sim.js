@@ -984,7 +984,7 @@
         {
           title: '위험 반원과 안전 반원 판정',
           goal: '시간을 흘려 두 지점의 풍속과 풍향을 비교하고, A·B가 <b>위험 반원</b>인지 <b>안전 반원</b>인지 고르고, 두 지점의 <b>최대 풍속</b>과 A의 <b>풍향 변화 방향</b>을 입력해요.',
-          hint: '북쪽으로 가는 태풍의 오른쪽(동쪽)이 위험 반원이에요. 최대 풍속은 그래프의 꼭대기 값을 읽고, 풍향 화살표의 각도가 커지면 시계 방향이에요.',
+          hint: '북쪽으로 가는 태풍의 오른쪽(동쪽)이 위험 반원이에요. 최대 풍속은 시간을 흘리며 풍속이 가장 클 때의 값을 읽고, 풍향 각도가 커지면 시계 방향이에요.',
           setup() { setMode('impact', 'judge'); S.judge = { A: null, B: null }; S.dirA = null; S.reveal = false; stA.set(40); stB.set(40); setTi(-10); updateCtl(); },
           check: () => S.judge.A === 'hz' && S.judge.B === 'sf' && S.maxA === 48 && S.maxB === 32 && S.dirA === 'cw', hold: 0.5,
           status: () => mark(S.judge.A === 'hz' && S.judge.B === 'sf') + ' 반원 판정 ' + ['A', 'B'].filter((w) => S.judge[w]).length + ' / 2 · ' + mark(S.maxA === 48 && S.maxB === 32) + ' 최대 풍속 A ' + S.maxA + ' · B ' + S.maxB + ' · ' + mark(S.dirA === 'cw') + ' A 풍향 ' + (S.dirA == null ? '미선택' : S.dirA === 'cw' ? '시계 방향' : '반시계 방향(다시 확인)'),

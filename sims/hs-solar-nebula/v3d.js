@@ -14,7 +14,7 @@
   window.SciSim3D.attach({
     title: '태양계 형성 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    levels: [0, 1, 2, 3],
+    levels: [0, 1, 3],
     camera: { dist: PHONE ? 13 : 9.5, theta: 0.5, phi: 1.0, min: 4, max: 22 },
     autoRotate: 0,
     build(ctx) {
@@ -63,17 +63,19 @@
       const ND = 700, dStart = [], dEnd = [], isFe = [];
       const diffMeshFe = new THREE.InstancedMesh(new THREE.SphereGeometry(0.075, 12, 9), new THREE.MeshStandardMaterial({ color: 0x8a5a3c, roughness: 0.4, metalness: 0.5 }), ND);
       const diffMeshSi = new THREE.InstancedMesh(new THREE.SphereGeometry(0.075, 12, 9), new THREE.MeshStandardMaterial({ color: 0xa89a86, roughness: 0.65 }), ND);
-      diffMeshFe.frustumCulled = diffMeshSi.frustumCulled = false; diffG.add(diffMeshFe, diffMeshSi);
+      const diffMeshLt = new THREE.InstancedMesh(new THREE.SphereGeometry(0.075, 12, 9), new THREE.MeshStandardMaterial({ color: 0xf3e3b5, roughness: 0.7 }), ND);   // 가장 가벼운 물질 → 바깥 얇은 층
+      diffMeshFe.frustumCulled = diffMeshSi.frustumCulled = diffMeshLt.frustumCulled = false; diffG.add(diffMeshFe, diffMeshSi, diffMeshLt);
       const shell = new THREE.Mesh(new THREE.SphereGeometry(2.55, 48, 32), new THREE.MeshStandardMaterial({ color: 0xff7a3a, roughness: 0.5, transparent: true, opacity: 0.16, depthWrite: false, emissive: 0xff4a10, emissiveIntensity: 0.35 })); diffG.add(shell);
-      const nFe = Math.floor(ND * 0.32);
+      const nFe = Math.floor(ND * 0.32), nLt = Math.floor(ND * 0.12), isLt = [];
       for (let i = 0; i < ND; i++) {
-        const fe = i < nFe, u = rnd() * 2 - 1, a = rnd() * TAU, s = Math.sqrt(1 - u * u);
-        const r0 = 2.35 * Math.cbrt(rnd()), r1 = fe ? 1.1 * Math.cbrt(rnd()) : 1.2 + 1.15 * Math.cbrt(rnd());
+        const fe = i < nFe, lt = i >= ND - nLt, u = rnd() * 2 - 1, a = rnd() * TAU, s = Math.sqrt(1 - u * u);
+        const r0 = 2.35 * Math.cbrt(rnd()), r1 = fe ? 1.1 * Math.cbrt(rnd()) : lt ? 2.24 + 0.14 * rnd() : 1.2 + 0.95 * Math.cbrt(rnd());
         const d = [Math.cos(a) * s, u, Math.sin(a) * s], d2 = [Math.cos(a + 1.1) * s, -u, Math.sin(a + 1.1) * s];
-        dStart.push([d[0] * r0, d[1] * r0, d[2] * r0]); dEnd.push([d2[0] * r1, d2[1] * r1, d2[2] * r1]); isFe.push(fe);
+        dStart.push([d[0] * r0, d[1] * r0, d[2] * r0]); dEnd.push([d2[0] * r1, d2[1] * r1, d2[2] * r1]); isFe.push(fe); isLt.push(lt);
       }
       const dm = new THREE.Object3D();
-      const lFe = label('철 핵', [0, 0, 0], { color: 'rgba(120,60,20,.92)' }), lSi = label('규산염 맨틀', [1.7, 1.4, 0], { color: 'rgba(90,80,60,.92)' });
+      { const z = new THREE.Matrix4().makeScale(0, 0, 0); for (let i = 0; i < ND; i++) { const mine = isFe[i] ? diffMeshFe : isLt[i] ? diffMeshLt : diffMeshSi; [diffMeshFe, diffMeshSi, diffMeshLt].forEach((m) => { if (m !== mine) m.setMatrixAt(i, z); }); } }   // 쓰지 않는 자리는 숨겨요
+      const lFe = label('철 핵', [0, 0, 0], { color: 'rgba(120,60,20,.92)' }), lSi = label('규산염 맨틀', [1.2, 1.0, 0.5], { color: 'rgba(90,80,60,.92)' }), lLt = label('가벼운 바깥층', [0, 2.55, 0], { color: 'rgba(161,98,7,.92)' });
 
       /* 상태 → 장면 */
       const lerp = (a, b, t) => a + (b - a) * t;
@@ -84,7 +86,7 @@
         ring.visible = s === 'condense'; snowLab.show(s === 'condense');
         probe.visible = probeRing.visible = s === 'condense';
         planets.forEach((m) => (m.visible = s === 'accrete'));
-        labPl.forEach((l) => l.show(s === 'accrete' && p > 0.5)); lFe.show(!showDisc && p > 0.7); lSi.show(!showDisc && p > 0.7);
+        labPl.forEach((l) => l.show(s === 'accrete' && p > 0.5)); lFe.show(!showDisc && p > 0.7); lSi.show(!showDisc && p > 0.7); lLt.show(!showDisc && p > 0.7);
         sunLight.visible = true; sunLight.position.set(showDisc ? 0 : 4, showDisc ? 0 : 5, showDisc ? 0 : 6);
         text();
       }
@@ -94,7 +96,7 @@
         if (s === 'collapse') info('<b>성운 수축</b> · 반지름 약 ' + Math.round(100 - 90 * p) + ' AU<br>축 방향으로는 납작해지고, 회전은 점점 빨라져 <b>원반</b>이 돼요.');
         else if (s === 'condense') { const r = 0.3 + p * 9.7, T = 280 / Math.sqrt(r); info('<b>응축</b> · 태양에서 ' + r.toFixed(1) + ' AU, 약 ' + Math.round(T) + ' K<br>' + (r < SNOW ? '눈선 안쪽: <b>금속·규산염</b>만 고체 → 작은 암석 행성' : '눈선 바깥: <b>물 얼음</b>도 고체 → 큰 핵이 자라 거대 행성')); }
         else if (s === 'accrete') info('<b>집적</b> · 미행성이 충돌해 뭉쳐요 (' + Math.round(p * 100) + '%)<br>눈선 안쪽은 작은 <b>암석 행성</b>, 바깥은 큰 <b>거대 행성</b>이 돼요.');
-        else info('<b>분화</b> · 녹은 천체 속에서 <b>무거운 철은 가라앉아</b> 핵이 되고 가벼운 규산염은 맨틀·지각이 돼요. (' + Math.round(p * 100) + '%)');
+        else info('<b>분화</b> · 녹은 천체 속에서 <b>무거운 철은 가라앉아</b> 핵이 되고, 규산염은 맨틀, 가장 가벼운 물질은 바깥 얇은 층(지각)이 돼요. (' + Math.round(p * 100) + '%)');
       }
       function pFmt(v) { const s = st.stage; return s === 'collapse' ? '수축 ' + Math.round(v * 100) + '%' : s === 'condense' ? '거리 ' + (0.3 + v * 9.7).toFixed(1) + ' AU' : s === 'accrete' ? '성장 ' + Math.round(v * 100) + '%' : '가라앉기 ' + Math.round(v * 100) + '%'; }
       /* 단계(2D 모드)는 2D 실험이 정해요. 수축·응축·분화는 2D 슬라이더/상태와 같은 값을 쓰고, ▶ 재생은 그 값을 움직여요 */
@@ -169,13 +171,12 @@
           } else {
             const e = Math.min(1, p * 1.15), ee = e * e * (3 - 2 * e);
             for (let i = 0; i < ND; i++) {
-              const a = dStart[i], b = dEnd[i], mesh = isFe[i] ? diffMeshFe : diffMeshSi, k = isFe[i] ? i : i;
+              const a = dStart[i], b = dEnd[i], mesh = isFe[i] ? diffMeshFe : isLt[i] ? diffMeshLt : diffMeshSi;
               dm.position.set(lerp(a[0], b[0], ee), lerp(a[1], b[1], ee), lerp(a[2], b[2], ee)); dm.updateMatrix(); mesh.setMatrixAt(i, dm.matrix);
             }
-            diffMeshFe.instanceMatrix.needsUpdate = diffMeshSi.instanceMatrix.needsUpdate = true;
-            diffMeshFe.count = diffMeshSi.count = ND;
+            diffMeshFe.instanceMatrix.needsUpdate = diffMeshSi.instanceMatrix.needsUpdate = diffMeshLt.instanceMatrix.needsUpdate = true;
             shell.material.opacity = 0.2 - 0.1 * e; shell.material.emissiveIntensity = 0.5 * (1 - e) + 0.1;
-            lFe.obj = [0, -0.1, 0]; lFe.show(p > 0.7);
+            lFe.obj = [0, -0.1, 0]; lFe.show(p > 0.7); lSi.show(p > 0.7); lLt.show(p > 0.7);
           }
         },
         sync() { follow(); },

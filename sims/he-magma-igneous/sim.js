@@ -951,7 +951,7 @@
         {
           title: '세 가지 조건으로 마그마 만들기',
           goal: '변동대 장면을 바꿔 가며 <b>압력 감소(해령·열점) · 물 첨가(섭입대) · 열 공급(대륙 하부)</b> 조건에서 각각 마그마를 만들어요.',
-          hint: '해령·열점은 슬라이더로 맨틀 물질을 위로 올려요(깊이를 줄여요). 섭입대는 물의 양을, 대륙 하부는 마그마가 준 열의 양을 늘려요. 점이 용융 곡선의 오른쪽으로 넘어가거나 암석 온도가 750 °C를 넘으면 녹기 시작해요.',
+          hint: '해령·열점은 슬라이더로 맨틀 물질을 위로 올려요(깊이를 줄여요). 섭입대는 물의 양을, 대륙 하부는 마그마가 준 열의 양을 늘려요. 맨틀 물질의 온도가 녹는 온도를 넘거나 암석 온도가 750 °C를 넘으면 녹기 시작해요.',
           setup() { S.did = { dec: false, wat: false, heat: false }; setPlace('ridge'); setDepthUI(150); S.depthV = 150; setWaterUI(0); S.waterV = 0; setHeatUI(0); S.heatV = 0; setMode('gen'); setCtl(['scene']); },
           check: () => S.did.dec && S.did.wat && S.did.heat, hold: 0.4,
           status: () => mark(S.did.dec) + ' 압력 감소(해령·열점) · ' + mark(S.did.wat) + ' 물 첨가(섭입대) · ' + mark(S.did.heat) + ' 열 공급(대륙 하부)',

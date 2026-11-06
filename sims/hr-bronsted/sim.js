@@ -878,7 +878,7 @@
     const done = {}; MVK.forEach((k) => { done[k] = mvDone(k); });
     markChips($('#mvSel'), S.mv.k, done);
     const r = S.mv.r[S.mv.k]; $('#bMvAuto').disabled = r.done || !!r.anim || !!S.mv.drag;
-    $('#mvNote').textContent = r.done ? '완료! 다른 반응도 해 보세요. 다시 하려면 “다시 하기”를 눌러요.' : '작은 흰 공(H⁺)을 끌어서 받을 분자에게 가져다 놓으세요. 끌기 어려우면 자동 단추를 눌러요.';
+    $('#mvNote').innerHTML = r.done ? '완료! 다른 반응도 해 보세요. 다시 하려면 “다시 하기”를 눌러요.' : '<span class="only3d">3D 막대에서 H⁺를 받을 분자를 골라요. 자동 단추를 눌러도 돼요.</span><span class="only2d">작은 흰 공(H⁺)을 끌어서 받을 분자에게 가져다 놓으세요. 끌기 어려우면 자동 단추를 눌러요.</span>';
     const pd = {}; RXK.forEach((k) => { pd[k] = prLinesDone(k); });
     markChips($('#prSel'), S.pr.k, pd);
     const rx = RX[S.pr.k];
@@ -929,7 +929,7 @@
         {
           title: '병을 가까이 해서 흰 연기 만들기',
           goal: '진한 염산과 진한 암모니아수 병을 가까이 가져가 <b>흰 연기</b>가 생기게 하세요.',
-          hint: 'HCl(g)과 NH₃(g) 기체 구름(초록색, 파란색)이 겹쳐야 연기가 생겨요. 거리 슬라이더의 + 단추를 누르거나 왼쪽 병을 끌어요.',
+          hint: 'HCl(g)과 NH₃(g) 기체 구름(초록색, 파란색)이 겹쳐야 연기가 생겨요. 거리 슬라이더나 + 단추로 두 병을 가까이 해요.',
           setup() { S.gate = ''; S.ob.gap = fmG().gMax; S.ob.smoke = 0; obSwitch('fume'); setScene('obs'); },
           check: () => S.ob.view === 'fume' && S.ob.smoke >= 0.6, hold: 1.0,
           status: () => '흰 연기의 양 ' + Math.round(S.ob.smoke * 100) + ' % ' + mark(S.ob.smoke >= 0.6),
@@ -958,7 +958,7 @@
         {
           title: 'H⁺ 옮기기 3가지',
           goal: '세 가지 반응에서 H⁺ 구슬을 <b>받을 분자</b>에게 옮겨 주세요. (반응 고르기 단추로 바꿔요)',
-          hint: '보라색 원 안에 H⁺ 공을 놓으면 돼요. 끌기 어려우면 “자동으로 옮기기” 단추를 눌러도 완료로 쳐요.',
+          hint: '3D 막대에서 H⁺를 받을 분자를 골라요. “자동으로 옮기기” 단추를 눌러도 완료로 쳐요.',
           setup() { S.gate = ''; MVK.forEach((k) => mvReset(k)); S.mv.k = 'a'; setScene('move'); },
           check: () => MVK.every(mvDone), hold: 0.5,
           status: () => 'HCl + H₂O ' + mark(mvDone('a')) + ' &nbsp; H₂O + NH₃ ' + mark(mvDone('b')) + ' &nbsp; HCl(g) + NH₃(g) ' + mark(mvDone('c')),
@@ -987,7 +987,7 @@
         {
           title: '짝산–짝염기 쌍 이어 보기',
           goal: '<b>HCl + H₂O → Cl⁻ + H₃O⁺</b>와 <b>NH₃ + H₂O ⇌ NH₄⁺ + OH⁻</b>에서 H⁺ 하나 차이인 쌍을 모두(4쌍) 선으로 이어 보세요.',
-          hint: '물질 상자를 하나 누르고, 짝이 되는 상자를 눌러요. 예를 들어 HCl에서 H⁺를 잃으면 Cl⁻가 돼요. 반응 고르기 단추로 NH₃ 반응으로 바꿔요.',
+          hint: '3D 막대의 물질 단추를 하나 누르고, 짝이 되는 물질 단추를 눌러요. 예를 들어 HCl에서 H⁺를 잃으면 Cl⁻가 돼요. 반응 고르기 단추로 NH₃ 반응으로 바꿔요.',
           setup() { S.gate = ''; RXK.forEach((k) => { S.pr.lines[k] = [0, 0]; S.pr.linesP[k] = [0, 0]; }); prSet('hcl'); setScene('pairs'); },
           check: () => prLinesDone('hcl') && prLinesDone('nh3'), hold: 0.5,
           status: () => 'HCl 반응 ' + lineCount('hcl') + ' / 2 ' + mark(prLinesDone('hcl')) + ' &nbsp; NH₃ 반응 ' + lineCount('nh3') + ' / 2 ' + mark(prLinesDone('nh3')),

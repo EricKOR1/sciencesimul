@@ -905,7 +905,7 @@
         {
           title: '세 과정 모두 시연해 보기',
           goal: '“흡수”, “자발 방출”, “유도 방출”을 차례로 골라 애니메이션을 <b>끝까지</b> 지켜보세요. 광자 수가 어떻게 변하는지 눈여겨봐요.',
-          hint: '위쪽 버튼으로 과정을 고르면 저절로 시연돼요. 끝나면 ✅ 표시가 생겨요. 다시 보려면 ▶ 시연을 눌러요.',
+          hint: '위쪽 버튼으로 과정을 고르면 저절로 시연돼요. 끝나면 ✅ 표시가 생겨요. 다시 보려면 ▶ 다시 보기를 눌러요.',
           setup() { S.at.seen = { abs: false, spon: false, stim: false }; S.show.selA = false; startProc('abs'); setScene('atom'); },
           check: () => S.at.seen.abs && S.at.seen.spon && S.at.seen.stim,
           hold: 0.3,
@@ -986,7 +986,7 @@
         {
           title: '레이저 켜서 빔 만들기',
           goal: '“펌핑 켜기”를 눌러 레이저를 켜고, 광자 수가 늘다가 일정해지며 <b>빔이 나오는 것</b>(출력 0.3 이상)을 확인하세요.',
-          hint: '출력 거울은 1 %로 두고 펌핑 세기를 90 정도로 해요. 문턱을 넘으면 그래프의 광자 수가 쑥 올라가요.',
+          hint: '출력 거울은 1 %로 두고 펌핑 세기를 90 정도로 해요. 문턱을 넘으면 공진기 안의 광자 수가 쑥 올라가요.',
           setup() { resetCavity(); S.show.selC = false; setScene('cavity'); },
           check: () => cvLasing(),
           hold: 1.0,
@@ -996,7 +996,7 @@
         {
           title: '직진성이 생기는 까닭 정리하기', manual: true,
           goal: '출력 거울의 투과율을 <b>1 %</b>와 <b>10 %</b>로 모두 바꿔 비교한 뒤, 직진성에 대한 문장을 완성하세요.',
-          hint: '투과율이 큰 거울은 손실이 커서 같은 펌핑에서 광자가 덜 쌓이고 출력 그래프의 문턱이 오른쪽으로 옮겨 가요. 화면의 옆으로 빠져나가는 점들도 보세요.',
+          hint: '투과율이 큰 거울은 손실이 커서 같은 펌핑에서 광자가 덜 쌓이고 레이저가 켜지는 문턱도 높아져요.',
           setup() { S.show.selC = true; SEL_C.reset(); S.cv.seenTm = { [S.cv.tm]: true }; setScene('cavity'); },
           check() {
             if (!S.cv.seenTm['1'] || !S.cv.seenTm['10']) return '출력 거울의 투과율을 1 %와 10 % 모두 골라 비교해 보세요.';
@@ -1028,7 +1028,7 @@
         {
           title: '광통신 설계: 광 증폭기 위치 정하기',
           goal: '“광통신” 장면에서 100 km 광섬유의 신호가 <b>어디에서도 처음의 1/10(−10 dB)보다 약해지지 않도록</b> 광 증폭기 한 개의 위치를 정하세요.',
-          hint: '1 km마다 0.2 dB씩 약해져요. 증폭기는 들어온 빛을 처음 세기로 되돌려요. 증폭기 앞 구간과 뒤 구간 모두 −10 dB 이상이 되려면 어디에 두어야 할까요? 그래프의 초록 선이 한계선 위에 있으면 성공이에요.',
+          hint: '1 km마다 0.2 dB씩 약해져요. 증폭기는 들어온 빛을 처음 세기로 되돌려요. 증폭기 앞 구간과 뒤 구간 모두 −10 dB 이상이 되려면 어디에 두어야 할까요? 가장 약한 곳도 −10 dB 이상이면 성공이에요.',
           setup() { S.ap.sub = 'fiber'; S.ap.seenFib = true; S.ap.amp = 0; slA.set(0); S.show.safe = false; setScene('apps'); },
           check: () => S.ap.sub === 'fiber' && fiberOK(S.ap.amp),
           hold: 0.8,

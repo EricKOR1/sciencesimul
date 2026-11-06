@@ -85,6 +85,22 @@
       const islG = new THREE.Group(); root.add(islG);
       const islMat = new THREE.MeshStandardMaterial({ color: 0x6b4f3a, roughness: 0.85 }), islTop = new THREE.MeshStandardMaterial({ color: 0x4caf6a, roughness: 0.85 });
 
+      /* 지진파 단층 촬영 (2D '🩻 단층 촬영 영상 보기'와 같은 색: 빨강 = 지진파 느림 = 뜨거움, 파랑 = 빠름 = 차가움) — 단면 앞면에 겹쳐요 */
+      const TX0 = -6.4, TX1 = 7.0, TW = 512, TH = 160, tcv = document.createElement('canvas'); tcv.width = TW; tcv.height = TH;
+      const tg = tcv.getContext('2d'), ttex = new THREE.CanvasTexture(tcv);
+      const tX = (x) => (x - TX0) / (TX1 - TX0) * TW, tY = (y) => (0 - y) / (0 - MB) * TH;
+      function blob(x, y, r, c) { const g = tg.createRadialGradient(tX(x), tY(y), 0, tX(x), tY(y), r); g.addColorStop(0, c + '.8)'); g.addColorStop(1, c + '0)'); tg.fillStyle = g; tg.fillRect(tX(x) - r, tY(y) - r, 2 * r, 2 * r); }
+      function drawTomo() {
+        tg.clearRect(0, 0, TW, TH);
+        for (let y = MB + 0.25; y < -0.4; y += 0.2) blob(PX, y, 24, 'rgba(220,38,38,');
+        for (let q = 0.2; q < st.SLc; q += 0.15) blob(XT + dir[0] * q - nrm[0] * th / 2, dir[1] * q - nrm[1] * th / 2, 16, 'rgba(37,99,235,');
+        ttex.needsUpdate = true;
+      }
+      const tomo = new THREE.Mesh(new THREE.PlaneGeometry(TX1 - TX0, -MB), new THREE.MeshBasicMaterial({ map: ttex, transparent: true, opacity: 0, depthWrite: false }));
+      tomo.position.set((TX0 + TX1) / 2, MB / 2, DEP / 2 + 0.05); tomo.renderOrder = 6; tomo.visible = false; root.add(tomo);
+      const lSlow = label('빨강: 지진파 느림 = 뜨거움', [PX + 1.9, -3.3, DEP / 2 + 0.1], { size: 11.5, color: 'rgba(185,28,28,.94)' }), lFast = label('파랑: 빠름 = 차가움', [XT + 2.2, -2.5, DEP / 2 + 0.1], { size: 11.5, color: 'rgba(29,78,216,.94)' });
+      lSlow.show(false); lFast.show(false); st.tk = 0; st.tomoSL = -1;
+
       /* 나이 표시 (2D '해양 암석권의 나이' 슬라이더 0~70백만 년) */
       const ageG = new THREE.Group(); root.add(ageG);
       const ageLine = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 1, 8), new THREE.MeshBasicMaterial({ color: 0xc4b5fd })); ageG.add(ageLine);
@@ -172,6 +188,10 @@
             isl.forEach((g, j) => { const u = ((j / NI + p) % 1); g.visible = show; g.position.set(PX + u * (XT - 0.1 - PX), 0, 0); g.scale.setScalar(Math.min(1, u * 8 + 0.05) * Math.max(0.15, 1 - u * 0.85)); });
             lHot.obj = [PX, 0.75, 0.2];
           }
+          { const S = sr() || {}, w = window.__sim, want = st.mode === 'plume' && (S.tomoOn || (w && w.game && w.game.free)) ? 1 : 0;
+            if (want && st.tomoSL !== st.SLc) { st.tomoSL = st.SLc; drawTomo(); }
+            st.tk += (want - st.tk) * Math.min(1, dt * 5); if (Math.abs(want - st.tk) < 0.01) st.tk = want;
+            tomo.visible = st.tk > 0.01; tomo.material.opacity = 0.9 * st.tk; lSlow.show(st.tk > 0.5); lFast.show(st.tk > 0.5); }
           if (st.flow) {
             for (let i = 0; i < NFL; i++) {
               const s = ((i / NFL + p) % 1), q = flowPath(s), q2 = flowPath((s + 0.01) % 1);

@@ -777,7 +777,7 @@
         {
           title: '지점별 기조력 방향', manual: true,
           goal: '①→②→③ 단추를 눌러 화살표를 비교하고, 지구 위 네 지점(A~D)의 <b>기조력 방향</b>을 골라요.',
-          hint: '③ 단추를 누르면 빨간 기조력 화살표가 보여요. A는 오른쪽(달 쪽), C는 왼쪽(달의 반대쪽), 옆면 B와 D는 지구 중심 쪽을 향해요.',
+          hint: '③ 단추를 누르면 빨간 기조력 화살표가 보여요. A는 달 쪽, C는 달의 반대쪽, 옆면 B와 D는 지구 중심 쪽을 향해요.',
           setup() { setStage(1); selDir.reset(); setMode('force'); setCtl(['stCh', 'selDir']); },
           status: () => mark2(selDir.ok()) + ' 방향을 고른 지점 ' + selDir.count() + ' / 4' + (S.stage < 3 ? ' (③ 단추를 눌러 확인해요)' : ''),
           check() {
@@ -855,7 +855,7 @@
         {
           title: '하루에 만조는 몇 번?',
           goal: '<b>하루 재생</b>을 눌러 한 지점의 24시간 조위 곡선을 그리고, 만조가 몇 번 오는지 입력해요.',
-          hint: '‘하루 재생’을 누르면 관측점이 지구와 함께 돌며 곡선이 그려져요. 빨간 ▲ 표시를 세어 보세요.',
+          hint: '‘하루 재생’을 누르면 관측점(부표)이 지구와 함께 하루 동안 돌아요. 부표가 ‘만조’가 되는 횟수를 세어 보세요.',
           setup() { S.hr = 0; S.playing = false; S.ran24 = false; stpN.reset(); setMode('equil'); setCtl(['sDay', 'bPlay', 'stpN']); },
           check: () => S.ran24 && stpN.value === highsOf(thOfDay(S.day)), hold: 0.6,
           status: () => mark2(S.ran24) + ' 24시간 재생 · ' + mark2(S.ran24 && stpN.value === highsOf(thOfDay(S.day))) + ' 만조 ' + stpN.value + '회',

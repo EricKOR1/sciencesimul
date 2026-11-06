@@ -24,7 +24,7 @@
   window.SciSim3D.attach({
     title: '관입과 부정합 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    levels: [1, 2],                 // 0단계(퇴적 상자·속도)와 3단계(층서 대비)는 값을 입력하고 층을 고르는 활동이라 2D로 시작하고, 3D 단추로 같은 장면을 볼 수 있어요
+    levels: [1, 2],                 // 0단계(퇴적 상자 · 퇴적 속도)와 3단계(층서 대비: 지층 기둥을 눌러 잇기)는 2D 화면에서 해요
     camera: { dist: PHONE ? 16 : 11.5, theta: 0.55, phi: 1.12, min: 5, max: 26, target: [0, 1.4, 0] },
     autoRotate: 0,
     build(ctx) {
@@ -148,7 +148,7 @@
           const l = L2(); if (!syncing && l && l.S && l.S.unc) { l.S.unc.play = false; l.S.unc.uT = u; l.S.unc.u = u; l.S.unc.max = Math.max(l.S.unc.max || 0, u); }
         },
       });
-      const plRow = pl && bRun.parentElement.querySelector('.v3-player');
+      const plRow = (() => { const r = document.querySelectorAll('.v3-player'); return r[r.length - 1]; })();   // 부정합 재생 줄: 관입 장면에서는 숨겨요
       function show(sc) {
         if (sc === scene) return; scene = sc;
         gI.visible = sc === 'intr'; gU.visible = sc === 'unc'; sea.visible = seaTop.visible = sc === 'unc';
@@ -223,7 +223,7 @@
         const hy = (g.yLow - B.layers.reduce((a, l) => a + l.h, 0) - w.BOX.cy) * bk; horiz.visible = B.layers.length > 0; lHz.show(B.layers.length > 0); horiz.position.set(0, -hy, 0.4); lHz.obj = [BS * 0.95, -hy, 0.4];
         lBx.show(true); tiltR.r.set(Math.round(B.tilt)); pourBtns.r.forEach((b) => { b.disabled = !!B.pour || B.layers.length >= w.MAXL || B.def > 0.5; });
         const n = B.layers.length;
-        return '<b>퇴적 상자: 수평퇴적 · 지층 누중</b><br>' + (n ? '쌓인 층 ' + n + '개 · 아래에서 위로 차례로 쌓였어요. 상자를 기울여 넣어도 층은 수평으로 쌓여요.' : '자갈 · 모래 · 점토를 흘려 넣어 봐요. 상자를 먼저 기울여도 돼요.') + (B.def > 0.5 ? '<br>땅을 눌러 기울이면 수평선(파란 선)과 지층이 어긋나요 → 지층이 변형된 거예요.' : '') + '<br><span style="color:#9fb0d4">관찰 기록 · 질문은 ▦ 2D에서 해요.</span>';
+        return '<b>퇴적 상자: 수평퇴적 · 지층 누중</b><br>' + (n ? '쌓인 층 ' + n + '개 · 아래에서 위로 차례로 쌓였어요. 상자를 기울여 넣어도 층은 수평으로 쌓여요.' : '자갈 · 모래 · 점토를 흘려 넣어 봐요. 상자를 먼저 기울여도 돼요.') + (B.def > 0.5 ? '<br>땅을 눌러 기울이면 수평선(파란 선)과 지층이 어긋나요 → 지층이 변형된 거예요.' : '') + '';
       }
       /* --- rate: 퇴적 속도와 걸린 시간 --- */
       const RKX = 0.075;                                               // 1 m = 0.075 단위
@@ -243,7 +243,7 @@
           const rec = R.rec[env], known = rec && rec.thick === R.thick; lRtH[i].show(true); lRtH[i].obj = [x, Math.min(h / 2, 50 * RKX), 1.0]; lRtH[i].set(known ? '⏱ ' + w.fmtMan(rec.val) : '⏱ ? 만 년');
         });
         lRtS.show(true); thickR.r.set(Math.round(R.thick));
-        return '<b>퇴적 속도와 걸린 시간</b><br>같은 두께 <b>' + Math.round(thick) + ' m</b>가 쌓이는 데 걸린 시간은 환경마다 달라요.<br>걸린 시간 = 두께 ÷ 퇴적 속도<br><span style="color:#9fb0d4">시간 계산 · 기록은 ▦ 2D에서 해요.</span>';
+        return '<b>퇴적 속도와 걸린 시간</b><br>같은 두께 <b>' + Math.round(thick) + ' m</b>가 쌓이는 데 걸린 시간은 환경마다 달라요.<br>걸린 시간 = 두께 ÷ 퇴적 속도';
       }
       /* --- type: 부정합의 세 가지 종류 (가 · 나 · 다) --- */
       const tyPane = [-4.2, 0, 4.2].map((x, i) => { const g3 = new THREE.Group(); g3.position.set(x, 0, 0); gTy.add(g3); return g3; });
@@ -286,7 +286,7 @@
         });
         const tri = crLayers.filter((q) => !q.lab && q.key === 'tri'); lTri.show(false);
         const done = C.done;
-        return '<b>떨어진 세 지역의 지층 대비</b><br>같은 시기에 쌓인 층(키층 · 표준 화석)을 이으면 지층의 나이를 맞춰 볼 수 있어요.<br>응회암 키층 ' + (done.tuff ? '✅ 이었어요' : '⬜ (2D에서 같은 층을 골라요)') + ' · 암모나이트층 ' + (done.amm ? '✅ 이었어요' : '⬜') + '<br><span style="color:#9fb0d4">이을 층을 고르는 일은 ▦ 2D에서 해요. 3D는 세 지역의 지층 기둥이에요.</span>';
+        return '<b>떨어진 세 지역의 지층 대비</b><br>같은 시기에 쌓인 층(키층 · 표준 화석)을 이으면 지층의 나이를 맞춰 볼 수 있어요.<br>응회암 키층 ' + (done.tuff ? '✅ 이었어요' : '⬜ (2D에서 같은 층을 골라요)') + ' · 암모나이트층 ' + (done.amm ? '✅ 이었어요' : '⬜') + '<br><span style="color:#9fb0d4">세 지역의 지층 기둥이에요.</span>';
       }
       let scnN = '', lastN = '';
       const NEWV = { box: 1, rate: 1, type: 1, corr: 1 };
@@ -298,7 +298,7 @@
         pourBtns.r.length && shw(pourBtns, v === 'box'); shw(tiltR, v === 'box'); shw(defB, v === 'box'); shw(rstB, v === 'box'); shw(thickR, v === 'rate');
         [lHz, lBx].forEach((l) => l.show(false)); lLay.forEach((l) => l.show(false)); lRtT.concat(lRtL, lRtH, [lRtS]).forEach((l) => l.show(false)); lTy.forEach((l) => l.show(v === 'type')); lTyU.show(v === 'type'); crLayers.forEach((q) => { if (q.lab) q.lab.show(v === 'corr'); }); crLab.forEach((l) => l.show(false));
         if (nw) { Object.values(LB).forEach((l) => l.show(false)); floor.visible = v !== 'corr' || true; }
-        else if (prev) { scene = null; show(sceneOf()); }
+        else { scene = null; show(sceneOf()); }   // 관입 · 부정합 장면에 맞는 단추만 다시 보여요
         const o = ctx.orbit;
         if (v === 'box') { o.theta = 0.1; o.phi = 1.4; o.tx = 0; o.ty = -0.2; o.tz = 0; o.dist = PHONE ? 19 : 14; floor.position.y = -BS * 0.66 - 0.5; }
         else if (v === 'rate') { o.theta = 0.2; o.phi = 1.3; o.tx = 0; o.ty = 1.8; o.tz = 0; o.dist = PHONE ? 17 : 12.5; floor.position.y = -0.3; }
@@ -311,7 +311,7 @@
           const lw = L2(), vN = lw && lw.S ? lw.S.view : '';
           applyN(NEWV[vN] ? vN : 'old');
           if (NEWV[vN]) {
-            const h = vN === 'box' ? updBox(lw) : vN === 'rate' ? updRate(lw) : vN === 'type' ? ((lTy.forEach((l) => l.show(true)), lTyU.show(true), '<b>부정합의 세 가지 종류</b><br>부정합면(붉은 선) 아래의 모습이 가 · 나 · 다마다 달라요. 아래가 화성암인지, 수평한 지층인지, 기울어진 지층인지 살펴봐요.<br><span style="color:#9fb0d4">알맞은 이름을 고르는 일은 ▦ 2D에서 해요.</span>')) : updCorr(lw);
+            const h = vN === 'box' ? updBox(lw) : vN === 'rate' ? updRate(lw) : vN === 'type' ? ((lTy.forEach((l) => l.show(true)), lTyU.show(true), '<b>부정합의 세 가지 종류</b><br>부정합면(붉은 선) 아래의 모습이 가 · 나 · 다마다 달라요. 아래가 화성암인지, 수평한 지층인지, 기울어진 지층인지 살펴봐요.<br><span style="color:#9fb0d4">오른쪽 조작판에서 가 · 나 · 다의 이름을 골라요.</span>')) : updCorr(lw);
             if (h !== lastN) { lastN = h; info(h); }
             return;
           }

@@ -1,6 +1,7 @@
 /* hr-electroplating · 3D 구리 도금 (철 열쇠에 구리 입히기)
    (+)극 구리판: Cu → Cu²⁺ + 2e⁻ (산화, 녹아요) · (−)극 열쇠: Cu²⁺ + 2e⁻ → Cu (환원, 달라붙어요).
-   1단계(도금 실험)는 2D의 연결 · 진행(%)을, 2단계(석출 분석)는 2D의 전류(A) · 시간(분)과 석출한 구리의 질량을 그대로 보여 줘요. 3 · 4단계는 2D 화면이에요.
+   1단계(도금 실험)는 3D 막대 단추로 부품을 놓고(2D의 plPlace · plRemove를 그대로 불러요) 연결 · 진행(%)을 보여 줘요.
+   2단계(석출 분석)는 캔버스 그래프를 읽어야 해서 2D예요 (석출 분석 장면 코드는 남겨 두었어요). 3 · 4단계도 2D 화면이에요.
    전류가 셀수록 같은 시간에 더 많이 도금돼요 (석출량 ∝ 전하량). 시간은 빠르게 돌린 모형이에요. */
 (function () {
   'use strict';
@@ -13,7 +14,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHONE ? 19 : 13.5, theta: 0.3, phi: 1.22, min: 8, max: 28, target: [0, 1.0, 0] },
     autoRotate: 0.06,
-    levels: [0, 1],
+    levels: [0],
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3;
@@ -58,7 +59,37 @@
         i: label('Cu²⁺ →', [0, top - 0.5, 0], { color: 'rgba(30,111,224,.92)' }),
       };
       let showLab = true, txt = '';
-      controls.text('연결 · 전류 · 시간은 2D 조작판에서 바꿔요.');
+      /* 부품 놓기: 2D에서 카드를 끌어 놓던 일을 3D 막대 단추로 해요 (slot L = (−)극, R = (+)극) */
+      const W = () => window.__sim || null;
+      const putEl = (id, side) => { const w = W(); if (!w) return; const p = w.S.pl; if (p.run) { w.plPower(); }
+        if (p.slot[side] === id) return; if (w.S.pl.on[id]) w.plRemove(id); if (p.slot[side]) w.plRemove(p.slot[side]); w.plPlace(id, side); };
+      const putPart = (id) => { const w = W(); if (w && !w.S.pl.on[id]) w.plPlace(id); };
+      const pcEls = [];
+      const pc = (el) => { pcEls.push(el); return el; };
+      pc(controls.text('<b>부품 놓기</b>'));
+      const bSol = pc(controls.button('CuSO₄ 수용액', () => putPart('sol'))), bPwr = pc(controls.button('전원 · 전류계', () => putPart('pwr')));
+      pc(controls.text('(−)극에')); const bKc = pc(controls.button('구리판', () => putEl('cu', 'L'))), bKk = pc(controls.button('철 열쇠', () => putEl('key', 'L')));
+      pc(controls.text('(+)극에')); const bAc = pc(controls.button('구리판', () => putEl('cu', 'R'))), bAk = pc(controls.button('철 열쇠', () => putEl('key', 'R')));
+      let pcSig = '';
+      function updPc(on) {
+        pcEls.forEach((e) => { e.style.display = on ? '' : 'none'; }); if (!on) return;
+        const p = W().S.pl, sig = [p.on.sol, p.on.pwr, p.slot.L, p.slot.R].join(); if (sig === pcSig) return; pcSig = sig;
+        bSol.classList.toggle('on', !!p.on.sol); bPwr.classList.toggle('on', !!p.on.pwr);
+        bKc.classList.toggle('on', p.slot.L === 'cu'); bKk.classList.toggle('on', p.slot.L === 'key'); bAc.classList.toggle('on', p.slot.R === 'cu'); bAk.classList.toggle('on', p.slot.R === 'key');
+      }
+      const cuW = [], pwrObjs = [batt, capP, wA, wK, hA, hK];
+      /* 놓인 자리에 따라 구리판 · 열쇠 · 용액 · 전원을 보여 줘요 (L = (−)극 = 오른쪽 KX, R = (+)극 = 왼쪽 AX) */
+      function layout(p) {
+        const xOf = (id) => (p.slot.L === id ? KX : p.slot.R === id ? AX : null);
+        const xc = xOf('cu'), xk = xOf('key');
+        anode.visible = xc != null; if (xc != null) anode.position.x = xc;
+        key.visible = xk != null; clip.visible = xk != null; if (xk != null) { key.position.x = xk; clip.position.x = xk; }
+        liq.visible = !!p.on.sol; pwrObjs.forEach((o) => { o.visible = !!p.on.pwr; });
+        setT(L.a, xc === KX ? '(−)극 구리판 · 구리가 붙어요' : '(+)극 구리판 · 녹아요'); setT(L.k, xk === AX ? '(+)극 철 열쇠 · 녹아 버려요' : '(−)극 철 열쇠 · 도금돼요');
+        L.a.show(showLab && xc != null); L.k.show(showLab && xk != null); L.s.show(showLab && !!p.on.sol); L.i.show(showLab && !!p.on.sol);
+      }
+      function fullLayout() { anode.visible = key.visible = clip.visible = liq.visible = true; anode.position.x = AX; key.position.x = KX; clip.position.x = KX; pwrObjs.forEach((o) => { o.visible = true; }); setT(L.a, '(+)극 구리판 · 녹아요'); setT(L.k, '(−)극 철 열쇠 · 도금돼요'); Object.values(L).forEach((l) => l.show(showLab)); }
+      const setT = (l, t) => { if (l._t !== t) { l._t = t; l.set(t); } };
       const lb = controls.button('이름표 ✓', () => { showLab = !showLab; lb.classList.toggle('on', showLab); lb.textContent = '이름표 ' + (showLab ? '✓' : '✕'); Object.values(L).forEach((l) => l.show(showLab)); }); lb.classList.add('on');
       let pw = 0, info2 = '';
       return {
@@ -66,24 +97,28 @@
           dt = Math.min(dt, 0.05);
           const w = window.__sim, S2 = w && w.S, md = S2 ? S2.mode : '';
           info2 = '';
+          updPc(md === 'plate' && !!(S2 && S2.pl));
+          let bad = false; const ax = AX, kx = KX;
+          if (md === 'plate' && S2.pl) { layout(S2.pl); bad = w.plMode() === 'bad'; } else fullLayout();
           if (md === 'analysis' && S2.an) { const a = S2.an; power = a.t > 0; cur = a.I >= 1 ? 3 : a.I >= 0.5 ? 2 : 1; plated = Math.min(1, w.anMass() / (w.massCu(1, 20) || 1)); info2 = '<br>전류 <b>' + a.I + ' A</b> · 시간 <b>' + Math.round(a.ts) + '분</b> → 석출한 Cu <b>' + w.anMass().toFixed(3) + ' g</b>'; }
-          else if (md === 'plate' && S2.pl) { const p = S2.pl; power = !!p.flow && p.flow > 0.05 || (p.run && w.plMode() === 'good'); plated = p.pc; cur = 2; info2 = '<br>도금 진행 ' + Math.round(p.pc * 100) + ' %' + (w.plN() < 4 ? ' · 2D에서 부품을 조립해요' : ''); }
+          else if (md === 'plate' && S2.pl) { const p = S2.pl; power = !!p.flow && p.flow > 0.05 || (p.run && w.plMode() === 'good'); plated = p.pc; cur = 2; power = !!p.flow && p.flow > 0.05; info2 = bad ? '<br><b>열쇠가 (+)극</b>이라 열쇠의 철이 녹아 나가고, 구리는 (−)극 구리판에 붙어요.' : '<br>도금 진행 ' + Math.round(p.pc * 100) + ' %' + (w.plN() < 4 ? ' · 부품 ' + w.plN() + ' / 4개 (아래 단추로 놓아요)' : ''); }
           else { power = false; }
           pw += ((power ? 1 : 0) - pw) * Math.min(1, dt * 4);
           keyMat.color.copy(plateShade).lerp(cuC, Math.min(1, plated * 1.4)); keyMat.metalness = 0.85;
-          const k = 1.15 * (1 + plated * 0.06); key.scale.set(k, k, k);
-          anode.scale.set(1 - plated * 0.4, 1, 1);
+          const pd = md === 'plate' && S2.pl ? S2.pl.pd || 0 : 0;
+          const k = 1.15 * (1 + plated * 0.06) * (1 - pd * 0.35); key.scale.set(k, k, k);
+          anode.scale.set(bad ? 1 + pd * 0.4 : 1 - plated * 0.4, 1, 1);
           for (let i = 0; i < NE; i++) {
             const u = (i / NE + t * 0.22 * pw * (0.6 + cur * 0.25)) % 1;
             if (pw < 0.05) { M.makeScale(0.0001, 0.0001, 0.0001); eA.setMatrixAt(i, M); eK.setMatrixAt(i, M); continue; }
-            M.makeTranslation(AX, eTop + u * (BY - eTop), 0); eA.setMatrixAt(i, M); M.makeTranslation(KX, BY - u * (BY - top - 1.1), 0); eK.setMatrixAt(i, M);
+            M.makeTranslation(ax, eTop + u * (BY - eTop), 0); eA.setMatrixAt(i, M); M.makeTranslation(kx, BY - u * (BY - top - 1.1), 0); eK.setMatrixAt(i, M);
           }
           eA.instanceMatrix.needsUpdate = true; eK.instanceMatrix.needsUpdate = true;
           CP.forEach((q, i) => {
             if (pw < 0.05) { M.makeScale(0.0001, 0.0001, 0.0001); cm.setMatrixAt(i, M); return; }
             q.u = (q.u + dt * 0.14 * (0.5 + cur * 0.3) * pw) % 1;
             const s = Math.min(1, Math.sin(Math.PI * q.u) * 2.2) + 0.001;
-            M.makeScale(s, s, s); M.setPosition(AX + 0.4 + (KX - 0.4 - AX - 0.4) * q.u, q.y + Math.sin(t * 2 + q.ph) * 0.12, q.z + Math.cos(t * 1.7 + q.ph) * 0.1); cm.setMatrixAt(i, M);
+            M.makeScale(s, s, s); M.setPosition(ax + Math.sign(kx - ax) * 0.4 + (kx - ax - Math.sign(kx - ax) * 0.8) * q.u, q.y + Math.sin(t * 2 + q.ph) * 0.12, q.z + Math.cos(t * 1.7 + q.ph) * 0.1); cm.setMatrixAt(i, M);
           });
           cm.instanceMatrix.needsUpdate = true;
           const tx = !power ? '<b>전류가 흐르지 않아요</b><br>회로를 연결하고 전원을 켜면 도금이 시작돼요.'+info2 : '<b>도금 ' + Math.round(plated * 100) + '%</b> · ' + ['약한', '보통', '센'][cur - 1] + ' 전류<br>(+)극: Cu → Cu²⁺ + 2e⁻ (산화)<br>(−)극: Cu²⁺ + 2e⁻ → Cu (환원) · 전류가 셀수록 빨리 입혀져요' + info2;

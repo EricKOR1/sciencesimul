@@ -1244,7 +1244,7 @@
         {
           title: '화살표 합 그리기', manual: true,
           goal: '<b>H₂O · CO₂ · BF₃</b>의 결합 쌍극자 화살표를 머리와 꼬리가 이어지게 붙여 합을 직접 확인해요.',
-          hint: '화살표의 꼬리를 파란 점선 고리로 끌어 놓거나 ➡️ 화살표 자동으로 잇기를 눌러요. 세 분자 모두 해야 해요.',
+          hint: '분자를 고르고 ➡️ 화살표 자동으로 잇기를 눌러요. 세 분자 모두 해야 해요.',
           setup() { PL.chain = {}; plSelect(PL.mol); setScene('polar'); },
           check: () => (chainCount() === 3 ? true : '아직 화살표를 모두 잇지 않은 분자가 있어요: ' + ['H2O', 'CO2', 'BF3'].filter((k) => !PL.chain[k]).map((k) => PMOL[k].f).join(', ')),
           status: () => ['H2O', 'CO2', 'BF3'].map((k) => mark(!!PL.chain[k]) + ' ' + PMOL[k].f).join(' · '),

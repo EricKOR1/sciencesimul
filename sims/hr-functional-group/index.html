@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="../../assets/css/common.css">
   <script>try{var t=localStorage.getItem("sciencesimul:theme");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
   <style>
+    .v3-mode .only2d { display: none; }
     .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; }
     .stage-toolbar { min-height: 61px; }
     .segmented button { min-height: 44px; }
@@ -165,11 +166,11 @@
 
     <aside class="side-col">
       <section class="card card-pad" id="ctrlCard">
-        <div class="control" data-modes="blocks">
+        <div class="control" data-modes="blocks" data-v3="keep">
           <div class="control-head"><span>🧩 에테인에 끼울 작용기</span></div>
           <div class="chips seg-wrap" id="bkSel" role="group" aria-label="작용기 고르기"></div>
           <div class="btn-row"><button class="btn btn-sm" id="bkReset" type="button">↺ 에테인으로 되돌리기</button></div>
-          <p class="ctrl-note">블록을 끌어서 분자에 놓아도 돼요. 끝 탄소의 H가 떨어지고 작용기가 붙어요.</p>
+          <p class="ctrl-note"><span class="only2d">블록을 끌어서 분자에 놓아도 돼요. </span>끝 탄소의 H가 떨어지고 작용기가 붙어요.</p>
         </div>
         <div class="control" data-modes="build">
           <div class="control-head"><span>🧪 만들 분자</span></div>

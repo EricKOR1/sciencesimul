@@ -615,7 +615,7 @@
         {
           title: '지표 근처와 400 km 원 궤도 만들기',
           goal: '지구에서 <b>① 고도 0 km(지표 근처)</b>와 <b>② 고도 400 km</b>의 원 궤도를 만들어 한 바퀴씩 돌리세요.',
-          hint: '고도 슬라이더를 맞추고 속력을 √(GM/r)에 가깝게 놓은 뒤 🚀 발사해요(고도 0 km → 약 7.9 km/s, 400 km → 약 7.67 km/s). 빨간 화살표와 초록 점선 화살표 길이가 같아지면 돼요.',
+          hint: '고도 슬라이더를 맞추고 속력을 √(GM/r)에 가깝게 놓은 뒤 🚀 발사해요(고도 0 km → 약 7.9 km/s, 400 km → 약 7.67 km/s). 속력이 그 고도의 원 궤도 속력과 같아지면 돼요.',
           setup() { seen.surf = false; seen.iss = false; const o = S.ob; o.b = 0; o.h = 0; o.v = 5; o.meas = false; obReady(); setScene('orbit'); },
           check: () => { orbitWatch(); return seen.surf && seen.iss; },
           hold: 0.5,

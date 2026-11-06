@@ -999,8 +999,8 @@
       missions: [
         {
           title: '간섭무늬를 볼 수 있는 입자 고르기',
-          goal: '표의 파장 λ와 아래 눈금을 보고, 이중 슬릿(d = 100 nm)에서 <b>간섭무늬를 볼 수 있는 입자</b>를 모두 고르세요.',
-          hint: '눈금에서 입자의 핀이 노란 점선(λ/d = 10⁻⁶)의 오른쪽(초록색 영역)에 있으면 무늬를 볼 수 있어요. 입자 줄을 눌러 속력도 바꿔 보세요.',
+          goal: '입자마다의 파장 λ와 아래 눈금을 보고, 이중 슬릿(d = 100 nm)에서 <b>간섭무늬를 볼 수 있는 입자</b>를 모두 고르세요.',
+          hint: '눈금에서 입자의 핀이 노란 점선(λ/d = 10⁻⁶)의 오른쪽(초록색 영역)에 있으면 무늬를 볼 수 있어요. ‘입자’ 단추로 입자를 고르고 속력도 바꿔 보세요.',
           setup() { S.show.dblPick = true; S.show.dblIn = false; setScene('dbl'); },
           check() { const ok = pickOK(); if (ok) S.d.revealed = true; return ok; },
           hold: 0.8,
@@ -1010,7 +1010,7 @@
         {
           title: '드브로이 파장 계산하기', manual: true,
           goal: '전자(50 V, 속력 × 1)의 운동량은 p = 3.8×10⁻²⁴ kg·m/s예요. <b>λ = h/p</b>를 계산해 nm로 입력하고, 속력이 2배일 때도 고르세요.',
-          hint: 'λ = h/p = 6.63×10⁻³⁴ / 3.8×10⁻²⁴ ≈ 1.7×10⁻¹⁰ m예요. 1 nm = 10⁻⁹ m이므로 0.17 nm! 표에서 전자 줄을 누르고 × 2를 눌러 확인해도 좋아요.',
+          hint: 'λ = h/p = 6.63×10⁻³⁴ / 3.8×10⁻²⁴ ≈ 1.7×10⁻¹⁰ m예요. 1 nm = 10⁻⁹ m이므로 0.17 nm! ‘입자’ 단추에서 전자를 고르고 × 2를 눌러 확인해도 좋아요.',
           setup() { S.show.dblPick = false; S.show.dblIn = true; SEL_D.reset(); $('#nLam').value = ''; $('#nLam').classList.remove('ok', 'bad'); numKey = ''; S.d.sel = 'e'; S.d.f.e = 1; updateCtl(); setScene('dbl'); },
           check() { const n = gradeNum(); if (n !== true) return n; return SEL_D.grade(); },
           status: () => mark($('#nLam').value.trim() !== '') + ' 파장 입력 &nbsp; · 고른 문장 ' + SEL_D.count() + ' / 1',

@@ -990,13 +990,13 @@
       missions: [
         {
           title: '이름표와 규모 분류',
-          goal: '이름표 3장을 알맞은 <b>점선 칸</b>에 놓고, 오른쪽의 4가지를 <b>종관 규모</b>와 <b>중규모</b>로 나눈 뒤 <b>✔ 확인하기</b>를 눌러요.',
+          goal: '3D 막대의 이름표 단추로 이름표 3장을 알맞은 <b>①②③ 자리</b>에 놓고, 오른쪽의 4가지를 <b>종관 규모</b>와 <b>중규모</b>로 나눈 뒤 <b>✔ 확인하기</b>를 눌러요.',
           hint: '한랭 전선은 중심에서 남서쪽, 온난 전선은 동쪽~남동쪽으로 뻗고, 두 전선 사이가 온난 구역이에요. 전선을 동반한 저기압은 약 1000 km 이상이고 며칠 이어지며, 소나기를 만드는 저기압은 수 시간 이어지는 중규모예요.',
           manual: true,
           setup() { setMode('struct', 'label'); },
           status: () => mark(board.cards.every((c) => c.zone)) + ' 이름표 ' + board.cards.filter((c) => c.zone).length + ' / 3 · ' + mark(S.scale.every((v) => v != null)) + ' 규모 분류 ' + S.scale.filter((v) => v != null).length + ' / 4',
           check() {
-            if (board.cards.some((c) => !c.zone)) return '이름표 ' + board.cards.filter((c) => !c.zone).length + '장이 아직 남았어요. 지도의 점선 칸에 놓아 주세요.';
+            if (board.cards.some((c) => !c.zone)) return '이름표 ' + board.cards.filter((c) => !c.zone).length + '장이 아직 남았어요. 알맞은 자리에 놓아 주세요.';
             const bad = board.cards.filter((c) => c.zone !== c.id);
             if (bad.length) return '"' + bad[0].label + '" 이름표의 위치를 다시 확인해요. 힌트: 저기압 중심에서 어느 쪽으로 뻗었는지 봐요.';
             if (S.scale.some((v) => v == null)) return '규모 분류 4가지를 모두 골라 주세요.';

@@ -1011,7 +1011,7 @@ if (!PHONE) textBlock(px, yy + 14, pw, sPct - pPct > 6 ? '수평 진동이 더 �
         {
           title: '화면 어둡게 만들기',
           goal: '편광판 <b>두 장</b>을 겹친 채 돌리는 판(P₂)의 각도를 바꿔 보세요. 화면이 <b>거의 꺼질 때</b>까지 돌려요.',
-          hint: '각도를 0°에서 천천히 키워 보세요. 판을 위아래로 끌어도 돼요. 밝기가 줄다가 90° 근처에서 거의 사라져요.',
+          hint: '각도를 0°에서 천천히 키워 보세요. 밝기가 줄다가 90° 근처에서 거의 사라져요.',
           setup() { S.pol.n = 2; setAng(0); S.show.mid = false; S.show.selA = false; setScene('pol'); },
           check: () => S.pol.n === 2 && Math.abs(S.pol.ang - 90) <= 3,
           hold: 0.6,

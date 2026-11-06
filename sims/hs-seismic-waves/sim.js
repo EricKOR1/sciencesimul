@@ -959,7 +959,7 @@
         {
           title: '액체에서 S파가 사라지는지 확인',
           goal: '파를 <b>S파</b>, 매질을 <b>액체</b>로 바꾸고 파가 오른쪽 끝에 닿을 때까지 기다려 <b>오른쪽 끝 입자의 흔들림이 5 % 미만</b>임을 확인해요.',
-          hint: 'S파와 액체 단추를 누른 뒤 약 7초 기다려요. 고체일 때와 비교해 보면 좋아요. 흔들림 %는 격자 아래쪽에 보여요.',
+          hint: 'S파와 액체 단추를 누른 뒤 약 7초 기다려요. 고체일 때와 비교해 보면 좋아요. 흔들림 %는 아래 ‘오른쪽 끝 흔들림’ 칸에 보여요.',
           setup() { S.wave = 'S'; S.med = 'solid'; waveReset(); syncWave(); setMode('wave'); setCtl(['waveSel', 'medSel']); },
           check: () => S.wave === 'S' && S.med === 'liquid' && S.wT > arriveT('S') + 0.5 && S.farAmp < 5, hold: 0.8,
           status: () => mark(S.wave === 'S') + ' S파 · ' + mark(S.med === 'liquid') + ' 액체 · ' + mark(S.wT > arriveT('S') + 0.5 && S.farAmp < 5) + ' 오른쪽 끝 흔들림 ' + (S.wT > arriveT('S') + 0.5 ? S.farAmp + ' %' : '파가 도착하길 기다려요'),

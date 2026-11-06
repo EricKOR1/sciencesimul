@@ -214,6 +214,11 @@
       wr([new V3(1.9, 0, 0), new V3(2.6, 2.2, 0), new V3(4.4, 2.2, 0), new V3(4.4, 0.6, 0)]);
       wr([new V3(4.4, -0.6, 0), new V3(4.4, -2.0, 0), new V3(-2.8, -2.0, 0)]);
       wr([new V3(-5.2, -0.9, 0), new V3(-5.2, -2.0, 0), new V3(-4.3, -2.0, 0), new V3(-3.9, -1.9, 0)]);
+      /* 네온 램프: 코일과 나란히 연결돼 있어요. 스위치를 여는 순간 코일의 큰 유도 기전력으로 번쩍여요 */
+      wr([new V3(-2.3, 2.2, 0), new V3(-2.3, 3.1, 0), new V3(-0.85, 3.1, 0)]); wr([new V3(0.45, 3.1, 0), new V3(2.6, 3.1, 0), new V3(2.6, 2.2, 0)]);
+      const neonM = new THREE.MeshStandardMaterial({ color: 0xffd9c2, emissive: 0xff5a1f, emissiveIntensity: 0, transparent: true, opacity: 0.8, roughness: 0.2 });
+      const neon = new THREE.Mesh(new THREE.CapsuleGeometry ? new THREE.CapsuleGeometry(0.22, 1.0, 6, 16) : new THREE.CylinderGeometry(0.22, 0.22, 1.3, 16), neonM); neon.rotation.z = Math.PI / 2; neon.position.set(-0.2, 3.1, 0); gD.add(neon);
+      const L_Ne = L('ind', '네온 램프', neon, { color: '#c2410c', size: 12, offset: [0, 0.6, 0] });
       const ND = 22, dD = new THREE.InstancedMesh(new THREE.ConeGeometry(0.13, 0.34, 10), mat(0xffe14d, { emissive: 0xffd400, emissiveIntensity: 0.8 }), ND); gD.add(dD);
       const loopD = [new V3(-5.2, 2.2, 0), new V3(-2.3, 2.2, 0), new V3(-2.3, 0, 0), new V3(1.9, 0, 0), new V3(2.6, 2.2, 0), new V3(4.4, 2.2, 0), new V3(4.4, -2.0, 0), new V3(-4.3, -2.0, 0), new V3(-5.2, -2.0, 0), new V3(-5.2, 2.2, 0)];
       const segLD = []; let totLD = 0; for (let i = 0; i < loopD.length - 1; i++) { const d = loopD[i].distanceTo(loopD[i + 1]); segLD.push(d); totLD += d; }
@@ -224,6 +229,7 @@
         ironC.visible = s.core; L_Ir.show(s.core && !!labs.ind.on);
         swArm.rotation.z = s.closed ? 0 : 0.5;
         bulbD.material.emissiveIntensity = Math.min(1.5, (s.glow != null ? s.glow : frac) * 1.6); 
+        neonM.emissiveIntensity = Math.min(2.2, (s.flash || 0) * 2.4); L_Ne.set(s.flash > 0.05 ? '네온 램프 번쩍!' : '네온 램프');
         spark.visible = s.flash > 0.05; spark.scale.setScalar(0.6 + 1.6 * s.flash + 0.3 * Math.sin(performance.now() / 40));
         dFlow = (dFlow + dt * 0.35 * frac) % 1;
         for (let i = 0; i < ND; i++) {

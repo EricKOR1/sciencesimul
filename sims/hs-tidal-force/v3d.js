@@ -37,7 +37,7 @@
   window.SciSim3D.attach({
     title: '기조력과 평형 조석 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    levels: [0, 1, 2],
+    levels: [0, 2],
     camera: { dist: PHONE ? 20 : 15, theta: PHONE ? -1.25 : 0.35, phi: PHONE ? 0.8 : 0.7, target: PHONE ? [0, 0, 0] : [1.8, 0, 0], min: 7, max: 40 },
     autoRotate: 0,
     build(ctx) {
@@ -103,6 +103,30 @@
           A.visible = wantArrows; A.setDirection(fv.clone().normalize()); A.setLength(Math.max(0.12, len), Math.min(0.2, len * 0.45), Math.min(0.12, len * 0.3));
         });
       }
+      /* 지점 A~D (2D와 같은 자리·색): ① 달의 인력(파랑) → ② 지구 중심의 평균 인력(회색) → ③ 차이 = 기조력(빨강, 확대) */
+      const ptG = new THREE.Group(); root.add(ptG);
+      const PT = ['A', 'B', 'C', 'D'].map((nm) => {
+        const ball = new THREE.Mesh(new THREE.SphereGeometry(0.11, 16, 12), new THREE.MeshBasicMaterial({ color: 0xf59e0b })); ptG.add(ball);
+        const mk3 = (c) => { const h = new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), new THREE.Vector3(), 1, c, 0.22, 0.14); ptG.add(h); return h; };
+        const L = label(nm, ball, { offset: [0, 0.32, 0], color: 'rgba(180,83,9,.95)' });
+        return { ball, L, pull: mk3(0x60a5fa), mean: mk3(0xcbd5e1), tid: mk3(0xf87171) };
+      });
+      let stg = 3, hiMax = 0.3, loMin = -0.3;
+      const q1 = new THREE.Vector3(), q2 = new THREE.Vector3(), q3 = new THREE.Vector3();
+      function placePts() {
+        const on = mode === 'force'; ptG.visible = on; PT.forEach((o) => o.L.show(on)); if (!on) return;
+        e1.copy(Y).cross(mdir).normalize();
+        [mdir, e1, mdir, e1].forEach((d, i) => {
+          const o = PT[i]; q1.copy(d).multiplyScalar(i === 2 || i === 3 ? -1 : 1);            // A 달 쪽 · B 옆 · C 반대쪽 · D 옆
+          o.ball.position.copy(q1).multiplyScalar(RO + 0.06);
+          q2.copy(mdir).multiplyScalar(DR).sub(q1); const r = q2.length(); q2.multiplyScalar(DR * DR / (r * r * r));   // 달의 인력 (중심 = 1)
+          const L0 = 1.25;
+          o.pull.visible = stg >= 1; o.pull.position.copy(o.ball.position); o.pull.setDirection(q3.copy(q2).normalize()); o.pull.setLength(L0 * q2.length(), 0.22, 0.14);
+          o.mean.visible = stg >= 2; o.mean.position.copy(o.ball.position).add(q3.set(0, 0.16, 0)); o.mean.setDirection(mdir); o.mean.setLength(L0, 0.2, 0.12);
+          q3.copy(q2).sub(mdir); const lt = q3.length() * KT * RO;
+          o.tid.visible = stg >= 3 && lt > 0.05; o.tid.position.copy(o.ball.position); if (lt > 0.05) { o.tid.setDirection(q3.normalize()); o.tid.setLength(lt, Math.min(0.24, lt * 0.45), Math.min(0.15, lt * 0.3)); }
+        });
+      }
       /* 바다 모양 (평형 조석) */
       const pos = oceanGeo.attributes.position;
       function shapeOcean() {
@@ -133,8 +157,10 @@
         const q = W(), S = q.S || {}, free = !!(q.game && q.game.free);
         let h;
         if (mode === 'force') {
-          const st3 = (S.stage || 1) >= 3 || free;
-          h = '<b>기조력 = 달의 인력 − 지구 중심의 평균 인력</b><br>' + (st3 ? '달 쪽과 반대쪽 <b>두 곳</b>에서 바닷물이 부풀어요 (높이 과장). <span style="color:#fda4af">분홍 화살표</span> = 기조력' : '옆의 ①→②→③ 단추를 눌러 단계별로 비교해요. ③에서 기조력 화살표와 부풀음이 나타나요.');
+          const sg = free ? 3 : (S.stage || 1);
+          h = '<b>기조력 = 달의 인력 − 지구 중심의 평균 인력</b><br>' + (sg >= 3 ? '<span style="color:#fca5a5">빨간 화살표</span> = 지점 A~D의 기조력(확대), <span style="color:#fda4af">분홍 화살표</span> = 지구 곳곳의 기조력. 달 쪽과 반대쪽 <b>두 곳</b>에서 바닷물이 부풀어요 (높이 과장).'
+            : sg === 2 ? '<span style="color:#cbd5e1">② 회색</span>: 지구 중심이 받는 <b>평균 인력</b>은 모든 지점에서 같아요. <span style="color:#93c5fd">파란</span> 달의 인력과 비교해 봐요.'
+            : '<span style="color:#93c5fd">① 파랑</span>: 달의 인력은 달에 가까운 A에서 가장 세고, 먼 C에서 가장 약해요. ②→③ 단추로 이어서 봐요.');
         } else if (mode === 'compare') {
           h = '<b>기조력 ∝ M / d³</b> · 달까지의 거리 d = ' + (S.dm || 3.844).toFixed(2) + ' (×10⁵ km)<br>달이 가까울수록(근지점 3.56) 부풀음이 커지고, 멀수록(원지점 4.07) 작아져요.';
         } else if (mode === 'cycle') {
@@ -172,7 +198,7 @@
         const free = !!(q.game && q.game.free);
         mode = S.mode || 'force';
         const st3 = mode !== 'force' || (S.stage || 1) >= 3 || free;
-        sunOn = mode === 'compare' || mode === 'equil'; bulgeK = st3 ? 1 : 0; wantArrows = st3;
+        sunOn = mode === 'compare' || mode === 'equil'; bulgeK = st3 ? 1 : 0; wantArrows = st3; stg = mode === 'force' && !free ? (S.stage || 1) : 3;
         const dm = mode === 'compare' && typeof S.dmV === 'number' ? S.dmV : 3.844; mk = Math.pow(3.844 / dm, 3); MRc = MR * dm / 3.844;
         if (typeof S.day === 'number' && Math.abs(S.day - day) > 0.01) setDay(S.day);
         if (mode === 'equil' && (S.playing || S.hr > 0) && Math.abs(S.hr / 24 - P) > 0.0005) setP(S.hr / 24);
@@ -192,7 +218,8 @@
           mdir.set(Math.cos(thV), 0, -Math.sin(thV));
           moon.position.copy(mdir).multiplyScalar(MRc);
           moonLine.geometry.setFromPoints([mdir.clone().multiplyScalar(-3.4), mdir.clone().multiplyScalar(MRc - 0.6)]); moonLine.computeLineDistances();
-          if (last[0] !== thV || last[1] !== sunOn || last[2] !== mk) { shapeOcean(); placeArrows(); last = [thV, sunOn, mk]; }
+          if (last[0] !== thV || last[1] !== sunOn || last[2] !== mk) { shapeOcean(); placeArrows(); last = [thV, sunOn, mk]; hiMax = -9; loMin = 9; for (let j = 0; j < 72; j++) { const h = tideAt(q1.set(Math.cos(j * 5 * DEG), 0, Math.sin(j * 5 * DEG))); hiMax = Math.max(hiMax, h); loMin = Math.min(loMin, h); } }
+          placePts();
           const spin = Math.PI * 2 * P;
           earth.rotation.y = spin;
           // 부표: 관측점 위의 바다 높이
@@ -200,7 +227,7 @@
           const hm = tideAt(pv);
           buoy.position.copy(pv).multiplyScalar(RO + KV * hm + 0.02);
           const sa = stem.geometry.attributes.position; sa.setXYZ(0, pv.x * RS, pv.y * RS, pv.z * RS); sa.setXYZ(1, buoy.position.x, buoy.position.y, buoy.position.z); sa.needsUpdate = true;
-          labBuoy.set('조위 ' + (hm >= 0 ? '+' : '−') + Math.abs(hm).toFixed(2) + ' m' + (Math.abs(hm) > 0.2 ? (hm > 0 ? ' (만조)' : ' (간조)') : ''));
+          labBuoy.set('조위 ' + (hm >= 0 ? '+' : '−') + Math.abs(hm).toFixed(2) + ' m' + (hiMax - loMin < 0.02 ? '' : hm > hiMax - 0.2 * (hiMax - loMin) ? ' (만조)' : hm < loMin + 0.2 * (hiMax - loMin) ? ' (간조)' : ''));
           // 부풀음 이름표 (달 방향의 바다 위)
           const top = RO + KV * tideAt(mdir) + 0.75;
           labNear.obj = [mdir.x * top, mdir.y * top, mdir.z * top]; labFar.obj = [-mdir.x * top, -mdir.y * top, -mdir.z * top];

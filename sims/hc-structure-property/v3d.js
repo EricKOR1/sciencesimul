@@ -132,7 +132,7 @@
         netLab.obj = null; netLab.show(false);
         // 벡터 더하기: 화살표를 머리-꼬리로 이어 붙여 아래쪽에 그리기
         let sumNote = '';
-        if (showSum && judged) {
+        if (showSum && (judged || chained)) {
           let low = 0; M.A.forEach((a) => { low = Math.min(low, a.p[1]); });
           let cur = new THREE.Vector3(-1.2, low - 1.7, 0); const start = cur.clone();
           const SS = 1.0;
@@ -156,7 +156,7 @@
         info('<b>' + T.f + '</b> (' + T.n + ') · ' + (key === 'CO2' && bend < 180 ? '굽은형 (' + bend + '°)' : T.shape) + '<br><span style="color:#fbbf24">주황</span> 결합 쌍극자 · <span style="color:#f9a8d4">분홍</span> 알짜 쌍극자(합)' +
           (judged ? '<br><b>' + (polarNow ? '극성 분자: 화살표가 상쇄되지 않고 남아요.' : '무극성 분자: 결합은 극성이어도 화살표가 상쇄돼요.') + '</b>' + sumNote : '<br>결합 쌍극자 화살표를 이어 붙여 합을 생각해 보고, 극성 · 무극성을 판정해 보세요. (판정하면 알짜 쌍극자도 보여 줘요)'));
       }
-      let judged = false, own = false, pB = 0, sig = '', sumOn = false;
+      let judged = false, chained = false, own = false, pB = 0, sig = '', sumOn = false;
       const rowOf = () => { const r = document.querySelectorAll('.v3-player'); return r[r.length - 1]; };
       const bB = controls.button('결합 쌍극자 ✓', () => { showBond = !showBond; bB.classList.toggle('on', showBond); bB.textContent = '결합 쌍극자 ' + (showBond ? '✓' : '✕'); build(); }); bB.classList.add('on');
       const sB = controls.button('화살표 더하기 ✕', () => { showSum = !showSum; sB.classList.toggle('on', showSum); sB.textContent = '화살표 더하기 ' + (showSum ? '✓' : '✕'); build(); });
@@ -174,7 +174,8 @@
           let k = mk, bd = PLs.bend;
           if (own) { k = 'CO2'; bd = Math.round(bendOf(pB) / 5) * 5; }
           const j = !!PLs.judged[mk] && !own;
-          if (PLs.chain && PLs.chain[mk] && !own && !showSum) { showSum = true; sB.classList.add('on'); sB.textContent = '화살표 더하기 ✓'; build(); }   // 화살표를 이어 붙이면 합 화살표도 보여 줘요
+          const ch = !!(PLs.chain && PLs.chain[mk]) && !own;   // 화살표를 이어 붙이면(➡️ 화살표 자동으로 잇기) 3D에서도 이어 붙인 모습을 보여 줘요
+          if (ch !== chained) { chained = ch; if (ch && !showSum) { showSum = true; sB.classList.add('on'); sB.textContent = '화살표 더하기 ✓'; } build(); }
           if (!MOLS[k]) return;
           if (k !== key || bd !== bend || j !== judged) { key = k; bend = bd; judged = j; fit(); build(); }
         },

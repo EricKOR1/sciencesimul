@@ -1445,7 +1445,7 @@
         {
           title: '세 사례의 선후 판정', manual: true,
           goal: '사례 1~3에서 <b>먼저 생긴 것</b>을 각각 골라요. 세 개를 모두 고르면 <b>✔ 확인하기</b>를 눌러요.',
-          hint: '그림에서 “무엇이 무엇을 뚫었는지, 무엇이 무엇을 품고 있는지” 살펴봐요. 단단한 정도는 순서와 관계없어요.',
+          hint: '사례 설명에서 “무엇이 무엇을 뚫었는지, 무엇이 무엇을 품고 있는지” 살펴봐요. 단단한 정도는 순서와 관계없어요.',
           setup() { S.cases.ans = [null, null, null]; S.cases.sel = 0; setView('case'); },
           status: () => '고른 사례 ' + S.cases.ans.filter((a) => a != null).length + ' / 3',
           check: () => {

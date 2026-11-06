@@ -835,7 +835,7 @@
         {
           title: '압축 · 팽창 시험하기',
           goal: 'N₂O₄ ⇌ 2NO₂에서 압축(부피 ½)과 팽창(부피 ×2)을, H₂ + I₂ ⇌ 2HI에서 압축을 해 보고 각각 색이 자리 잡을 때까지 2~3초 기다려요.',
-          hint: '버튼이나 피스톤 손잡이로 부피를 0.5 L 또는 2.0 L까지 바꾸고 2~3초 기다려요. 반응을 바꾸려면 위의 단추를 눌러요.',
+          hint: '압축 · 팽창 버튼으로 부피를 0.5 L 또는 2.0 L까지 바꾸고 2~3초 기다려요. 반응을 바꾸려면 위의 단추를 눌러요.',
           setup() { S.gate = ''; S.flags.press = {}; setScene('press'); pressReset(RXN); },
           check: () => { const f = S.flags.press || {}; return !!(f.n2o4C && f.n2o4E && f.hiC); }, hold: 0.5,
           status: () => { const f = S.flags.press || {}; return mark(f.n2o4C) + ' N₂O₄ 압축 &nbsp; ' + mark(f.n2o4E) + ' N₂O₄ 팽창 &nbsp; ' + mark(f.hiC) + ' HI 압축'; },

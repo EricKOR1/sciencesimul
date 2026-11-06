@@ -12,6 +12,8 @@
   <link rel="stylesheet" href="../../assets/css/common.css">
   <script>try{var t=localStorage.getItem("sciencesimul:theme");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
   <style>
+    .v3-mode .only2d { display: none; }
+    body:not(.v3-mode) .only3d { display: none; }
     .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; }
     .stage-toolbar { min-height: 61px; }
     .segmented button { min-height: 44px; }
@@ -149,9 +151,9 @@
 
     <aside class="side-col">
       <section class="card card-pad" id="ctrlCard">
-        <div class="control" data-modes="plate">
+        <div class="control" data-modes="plate" data-v3="keep">
           <div class="btn-row"><button class="btn btn-sm btn-primary" id="bPlPow" type="button">⚡ 전원 켜기</button><button class="btn btn-sm" id="bPlReset" type="button">↺ 다시 조립</button></div>
-          <p class="ctrl-note">부품 카드를 끌어 놓거나, 구리판 · 열쇠는 카드를 누른 뒤 (−)극 · (+)극 자리를 눌러요. 놓은 전극을 끌어내면 다시 고를 수 있어요. 보안경 · 장갑을 착용하고, 구리 폐액은 중금속 폐액으로 따로 모아요.</p>
+          <p class="ctrl-note"><span class="only3d">3D 막대의 단추로 부품을 놓고, 구리판 · 열쇠를 (−)극 · (+)극 자리에 놓아요. </span><span class="only2d">부품 카드를 끌어 놓거나, 구리판 · 열쇠는 카드를 누른 뒤 (−)극 · (+)극 자리를 눌러요. 놓은 전극을 끌어내면 다시 고를 수 있어요. </span>보안경 · 장갑을 착용하고, 구리 폐액은 중금속 폐액으로 따로 모아요.</p>
         </div>
         <div class="control" data-modes="plate" data-gate="plE">
           <div class="sel-row"><span class="lab">(+)극 구리판의 반응</span><select class="sel-in" id="plA" aria-label="(+)극 구리판의 반응식"></select></div>

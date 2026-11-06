@@ -1125,7 +1125,7 @@ const levels = [
       {
         title: '−70 mV 읽기',
         goal: '미세 전극의 끝을 세포막 너머 <b>세포 안</b>에 넣어요. 전압계가 <b>−70 mV</b>를 보이면 성공!',
-        hint: '<b>🔌 전극을 세포 안에 넣기</b>를 눌러요. (전극 끝을 세포 안으로 끌어다 놓아도 돼요.)',
+        hint: '3D 막대의 <b>🔌 전극을 세포 안에 넣기</b>를 눌러요.',
         setup() { setScene('rest'); },
         check: () => S.rs.tipIn && S.rs.pump && rsV(S.rs.g) === -70,
         hold: 0.8,

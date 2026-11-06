@@ -58,6 +58,7 @@
       });
 
       function text() {
+        const ct = cardText(); if (ct) { info(ct); return; }
         const q = window.__sim || {}, S = q.S || {}, ratio = S.view === 'meaning' || S.view === 'all' || !!(S.flags && S.flags.calcK) || !!(q.game && q.game.free);
         const L = bodies.map((b, i) => (st.sel === -1 || st.sel === i ? b.m.n + ' ' + (b.m.a ** 3 / b.m.T ** 2).toFixed(1) : null)).filter(Boolean);
         if (st.sel === -1) info('<b>멀수록 오래 걸려요</b> (T: 이오 1.77일 → 칼리스토 16.7일)' + (ratio ? '<br>a³/T² 값: ' + L.join(' · ') + '<br>→ 모두 <b>거의 같아요</b> (T² ∝ a³)' : '<br>위성마다 a(10⁵ km)와 T(일)가 달라요. 옆에서 a³/T²을 직접 계산해 봐요.'));
@@ -73,13 +74,31 @@
       });
       controls.button('👁 옆에서(지구에서 본 모습)', () => { orbit.phi = Math.PI / 2 - 0.02; orbit.theta = 0.0; });
       controls.button('⬇ 위에서', () => { orbit.phi = 0.35; });
+      /* 법칙의 의미 단계: 카드 8장을 3D 막대의 단추로 고르고 상자에 넣어요 (2D 카드 분류기 cK를 그대로 써서 미션 진행이 같아요) */
+      const BIN = ['☀ 태양 둘레', '🟤 목성 둘레', '🌍 지구 둘레'];
+      const fmtV = (v) => { if (v >= 100) { const e = Math.floor(Math.log10(v)), m = v / Math.pow(10, e); return m.toFixed(1) + '×10' + String(e).split('').map((d) => '⁰¹²³⁴⁵⁶⁷⁸⁹'[+d]).join(''); } return v >= 1 ? v.toFixed(1) : v.toFixed(3); };
+      const cardEls = [controls.text('카드')];
+      const pickCard = (d) => { const c = window.__sim && window.__sim.cK; if (!c) return; const n = c.items.length; c.sel = c.sel < 0 ? (d > 0 ? 0 : n - 1) : (c.sel + d + n) % n; text(); };
+      cardEls.push(controls.button('◀', () => pickCard(-1)), controls.button('▶', () => pickCard(1)));
+      BIN.forEach((nm, b) => cardEls.push(controls.button(nm, () => {
+        const c = window.__sim && window.__sim.cK; if (!c || c.sel < 0) return;
+        const it = c.items[c.sel]; c.place(it, b);
+        const nx = c.items.findIndex((x) => x.loc == null); c.sel = nx; text();
+      })));
+      let cardMode = null;
+      function cardRow() { const S = sr(), on = !!(S && S.view === 'meaning'); if (on === cardMode) return; cardMode = on; cardEls.forEach((e) => { e.style.display = on ? '' : 'none'; }); text(); }
+      function cardText() {
+        const q = window.__sim, c = q && q.cK, S = q && q.S; if (!c || !S || S.view !== 'meaning' || c.sel < 0 || !c.items[c.sel]) return null;
+        const it = c.items[c.sel], v = it.a * it.a * it.a / (it.T * it.T), placed = c.items.filter((x) => x.loc != null).length;
+        return '<b>카드 ' + (c.sel + 1) + ' / ' + c.items.length + ': ' + it.label + '</b> · a = ' + (it.a >= 1e4 ? fmtV(it.a) : it.a) + ' (10⁵ km), T = ' + it.T + '일<br>a³ / T² = <b>' + fmtV(v) + '</b> (10⁵ km³/일²)' + (it.loc != null ? ' · 지금 상자: ' + BIN[it.loc] : '') + '<br>같은 값의 상자 단추를 눌러 넣어요 · 넣은 카드 ' + placed + ' / ' + c.items.length;
+      }
       function apply() { bodies.forEach((b, i) => { const on = st.sel === -1 || st.sel === i; b.tube.material.opacity = on ? 0.85 : 0.18; b.lb.show(true); b.mesh.scale.setScalar(on ? 1 : 0.8); }); text(); }
       { const S = sr(); if (S && S.pl >= 0 && S.pl <= 3 && S.view === 'scope') { /* 2D에서 고른 위성이 있으면 강조하지 않아요(전체로 시작) */ } }
       apply();
 
       return {
         update(dt) {
-          { const S = sr(), q = window.__sim, k = S ? S.view + (S.flags && S.flags.calcK ? 1 : 0) + (q && q.game && q.game.free ? 1 : 0) : ''; if (k !== st.key) { st.key = k; text(); } }
+          { const S = sr(), q = window.__sim, k = S ? S.view + (S.flags && S.flags.calcK ? 1 : 0) + (q && q.game && q.game.free ? 1 : 0) : ''; if (k !== st.key) { st.key = k; text(); } cardRow(); const c = window.__sim && window.__sim.cK, ck = c ? c.sel + ':' + c.items.map((x) => x.loc).join(',') : ''; if (ck !== st.ck) { st.ck = ck; text(); } }
           jup.rotation.y = st.P * TAU * 5;
           bodies.forEach((b, bi) => {
             const ang = TAU * NREV[bi] * st.P + b.m.ph; b.mesh.position.set(b.r * Math.cos(ang), 0, -b.r * Math.sin(ang));

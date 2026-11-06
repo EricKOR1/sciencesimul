@@ -246,6 +246,35 @@
       }
       const frGap = grab(() => controls.range('두 병 사이', 0, 100, 1, 0, (v) => { const w = W(); if (!w) return; const G = w.fmG(); w.setGap(G.gMax - v / 100 * (G.gMax - G.gMin)); }, (v) => (v >= 100 ? '맞닿음' : v + ' % 가까이')));
       const obView = grab(() => controls.segment('실험', [{ value: 'ind', label: 'BTB 시험' }, { value: 'fume', label: '흰 연기' }], 'ind', (v) => { const w = W(); if (w) w.obSwitch(v); }));
+      /* 2단계(H⁺ 옮기기) · 3단계(짝 잇기): 2D에서 끌거나 누르던 일을 3D 막대 단추로 해요.
+         2D의 mvAuto · prPick을 그대로 불러서 미션 진행이 함께 기록돼요. */
+      let note = '', noteT = 0;
+      const MVO = { a: ['a', 'd'], b: ['d', 'a'], c: ['a', 'd'] };
+      function mvTry(j) {
+        const w = W(); if (!w) return; const S = w.S, k = S.mv.k, M = w.MVR[k], r = S.mv.r[k]; if (!M || r.done || r.anim) return;
+        const side = (MVO[k] || ['a', 'd'])[j];
+        if (side === 'a') { w.mvAuto(); note = '<b>' + M.a.f0 + '</b>가 H⁺를 받아요. → <b>' + M.a.f1 + '</b>'; }
+        else note = '<b>' + M.d.f0 + '</b>는 H⁺를 내주는 쪽이에요. H⁺를 <b>받을</b> 분자를 골라 봐요.';
+        noteT = 3.5; txt = '';
+      }
+      const mvCtl = grab(() => { controls.text('<b>H⁺를 받을 분자</b>'); return [0, 1].map((j) => controls.button('', () => mvTry(j))); });
+      const prCtl = grab(() => { controls.text('<b>짝 잇기</b>'); return [0, 1, 2, 3].map((i) => controls.button('', () => { const w = W(); if (w && !w.S.pr.hop) { w.prPick(i); txt = ''; } })); });
+      let ctlSig = '';
+      function updCtl(md) {
+        const w = W(); if (!w) return; const S = w.S; let sig = md;
+        if (md === 'move') { const k = S.mv.k, M = w.MVR[k], r = S.mv.r[k], o = MVO[k] || ['a', 'd']; sig += k + (r.done ? 1 : 0) + (r.anim ? 1 : 0); if (sig === ctlSig) return; ctlSig = sig;
+          mvCtl.r.forEach((b, j) => { b.textContent = M[o[j]].f0; b.disabled = !!(r.done || r.anim); }); }
+        else if (md === 'pairs') { const rx = w.RX[S.pr.k]; sig += S.pr.k + '|' + S.pr.sel; if (sig === ctlSig) return; ctlSig = sig;
+          prCtl.r.forEach((b, i) => { b.textContent = rx.sp[i].f; b.classList.toggle('on', S.pr.sel === i); }); }
+      }
+      function extraInfo(md) {
+        const w = W(); if (!w) return '';
+        if (md === 'move') return noteT > 0 ? '<br>' + note : (w.S.mv.r[w.S.mv.k].done ? '' : '<br><span style="color:#ffd34d">H⁺를 받을 분자를 아래 단추에서 골라요.</span>');
+        if (md === 'pairs') { const S = w.S, rx = w.RX[S.pr.k], L = S.pr.lines[S.pr.k];
+          const done = rx.pairs.map((pr, i) => (L[i] ? '✓ ' + rx.sp[pr[0]].f + ' – ' + rx.sp[pr[1]].f : '')).filter(Boolean).join(' · ');
+          return '<br>' + (S.pr.msg ? S.pr.msg : S.pr.sel >= 0 ? '<b>' + rx.sp[S.pr.sel].f + '</b>와 짝이 되는 물질을 골라요.' : '물질 단추를 하나 누르고, H⁺ 하나 차이인 짝을 눌러요.') + (done ? '<br>이은 쌍: ' + done : ''); }
+        return '';
+      }
       const sh = (gp, on) => gp.els.forEach((e) => { e.style.display = on ? '' : 'none'; });
       let sceneK = '';
       function applyScene(md, view) {
@@ -253,7 +282,7 @@
         const isObs = md === 'obs';
         g.visible = !isObs; gI.visible = isObs && view === 'ind'; gF.visible = isObs && view === 'fume';
         oldEls.forEach((e) => { e.style.display = isObs ? 'none' : ''; });
-        sh(obView, isObs); sh(indCtl, isObs && view === 'ind'); sh(indCtl2, isObs && view === 'ind'); sh(indRst, isObs && view === 'ind'); sh(frGap, isObs && view === 'fume');
+        sh(obView, isObs); sh(mvCtl, md === 'move'); sh(prCtl, md === 'pairs'); ctlSig = ''; sh(indCtl, isObs && view === 'ind'); sh(indCtl2, isObs && view === 'ind'); sh(indRst, isObs && view === 'ind'); sh(frGap, isObs && view === 'fume');
         if (isObs) {
           labs.forEach((l) => l.show(false));
           const ind = view === 'ind'; bk.forEach((b) => { b.nm.show(ind); if (!ind) b.btb.show(false); }); lLeg.show(ind); [lHcl, lNh3, lSmk, lBA, lBB].forEach((l) => l.show(!ind));
@@ -286,10 +315,11 @@
           const R = RX[key], after = prog > 0.5;
           const other = md !== 'move' && md !== 'pairs';
           if (md === 'sort') {
-            const c = q.card, t2 = '<b>' + R.name + '</b><br>' + (c ? '고른 카드: <b>' + c.f + '</b><br>' : '') + 'H⁺가 어디에서 어디로 옮겨 가는지 보고, 이 입자가 H⁺를 <b>주었는지 받았는지</b> 생각해 봐요.<br><span style="color:#9fb0d4">카드를 상자에 넣는 일은 ▦ 2D에서 해요.</span>';
+            const c = q.card, t2 = '<b>' + R.name + '</b><br>' + (c ? '고른 카드: <b>' + c.f + '</b><br>' : '') + 'H⁺가 어디에서 어디로 옮겨 가는지 보고, 이 입자가 H⁺를 <b>주었는지 받았는지</b> 생각해 봐요.';
             labs.donor.show(false); labs.acc.show(false); if (t2 !== txt) { txt = t2; info(t2); } return;
           }
-          const t = '<b>' + R.name + '</b><br>' + R.note + '<br>' + (after ? '반응 후: 산은 <b>짝염기</b>, 염기는 <b>짝산</b>이 돼요.' : '반응 전: <b>' + R.acid + '</b>(산) → H⁺ → <b>' + R.base + '</b>(염기)') + '';
+          noteT = Math.max(0, noteT - dt); updCtl(md);
+          const t = '<b>' + R.name + '</b><br>' + R.note + '<br>' + (after ? '반응 후: 산은 <b>짝염기</b>, 염기는 <b>짝산</b>이 돼요.' : '반응 전: <b>' + R.acid + '</b>(산) → H⁺ → <b>' + R.base + '</b>(염기)') + extraInfo(md);
           if (t !== txt) { txt = t; info(t); }
         },
       };

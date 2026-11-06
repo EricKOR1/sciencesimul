@@ -111,6 +111,7 @@
           const q = s.geo(id, (S.t || 0) - S.u4 + v); p.o.position.set(Math.cos(q.lam * DEG) * RING, 0.16, -Math.sin(q.lam * DEG) * RING);
         });
       }
+      let zoomed = false;
       function frame(dt) {
         const r = read(); if (!r) return;
         if (r.id && r.id !== lastSim) { lastSim = r.id; if (r.id !== id) setPlanet(r.id); }
@@ -120,6 +121,7 @@
         const t = r.t;
         const he = s.helio(s.PL.earth, t), hp = s.helio(s.PL[id], t);
         a3.copy(w3(he)); b3.copy(w3(hp)); earth.position.copy(a3); pl.position.copy(b3); sky.position.copy(a3);
+        if (ctx.level === 3) { const o = ctx.orbit; o.tx = a3.x * 0.75; o.ty = 0; o.tz = a3.z * 0.75; if (!zoomed) { zoomed = true; o.dist = PHONE ? 11 : 7.5; o.phi = 0.8; } } else if (zoomed) { zoomed = false; const o = ctx.orbit; o.tx = o.ty = o.tz = 0; o.dist = PHONE ? 19 : 12.5; }   // 역행 단계: 지구와 하늘 고리를 가까이서 봐요
         d3.subVectors(b3, a3); d3.y = 0; const dist = d3.length(); d3.normalize();
         sight.position.copy(a3).addScaledVector(d3, (dist + RING) / 2); sight.scale.set(1, dist + RING, 1); sight.quaternion.setFromUnitVectors(up, d3);
         const g = s.geo(id, t), retro = s.dlam(id, t) < 0;

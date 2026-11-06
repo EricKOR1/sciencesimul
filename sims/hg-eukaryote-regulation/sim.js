@@ -841,7 +841,7 @@
         {
           id: 'tfon', title: '인핸서 고리를 만들어 켜기',
           goal: '세포 A에서 X · Y · Z를 인핸서에 붙이고 기본 인자를 모아 <b>유전자를 켜세요</b>. 세포 B · C에서는 켜지지 않는 것도 확인하세요.',
-          hint: '캔버스의 인자를 눌러 인핸서에 붙이고(또는 오른쪽 단추), 마지막에 기본 전사 인자를 눌러요. 세포 B · C는 위쪽에서 바꿔요. 가진 인자를 모두 붙이고 기본 인자까지 모아도 꺼져 있는지 봐요.',
+          hint: '오른쪽 X · Y · Z 단추로 인자를 인핸서에 붙이고, 마지막에 기본 전사 인자를 눌러요. 세포 B · C는 위쪽에서 바꿔요. 가진 인자를 모두 붙이고 기본 인자까지 모아도 꺼져 있는지 봐요.',
           setup() { tfReset(false); TFS.cell = 'A'; setMode('tf'); },
           check: () => TFS.onA && TFS.seenOff.B && TFS.seenOff.C, hold: 0.8,
           status: () => mark(TFS.onA) + ' 세포 A에서 켜기 &nbsp; ' + mark(TFS.seenOff.B) + ' 세포 B 꺼짐 확인 &nbsp; ' + mark(TFS.seenOff.C) + ' 세포 C 꺼짐 확인',

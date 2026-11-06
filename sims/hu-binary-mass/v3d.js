@@ -13,7 +13,7 @@
   window.SciSim3D.attach({
     title: '쌍성과 질량 중심 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    levels: [0, 1, 2],
+    levels: [2],
     camera: { dist: PHONE ? 16 : 11.5, theta: 0.35, phi: 0.9, min: 6, max: 28, target: [0.8, 0, 0] },
     autoRotate: 0,
     build(ctx) {

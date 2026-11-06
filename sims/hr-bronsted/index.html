@@ -12,6 +12,8 @@
   <link rel="stylesheet" href="../../assets/css/common.css">
   <script>try{var t=localStorage.getItem("sciencesimul:theme");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
   <style>
+    .v3-mode .only2d { display: none; }
+    body:not(.v3-mode) .only3d { display: none; }
     .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; }
     .stage-toolbar { min-height: 61px; }
     .segmented button { min-height: 44px; }
@@ -155,15 +157,15 @@
             <input type="range" id="sGap" min="0" max="100" step="1" value="0" aria-label="병 사이를 가깝게 (0은 멀리, 100은 아주 가까이)">
             <button class="nudge" id="gNear" type="button" aria-label="병 가까이 놓기">+</button>
           </div>
-          <p class="ctrl-note">왼쪽 병(염산)을 끌어서 옮겨도 돼요. 두 병의 마개는 열려 있고, 실험은 흄 후드 안에서 보안경을 쓰고 해요.</p>
+          <p class="ctrl-note"><span class="only2d">왼쪽 병(염산)을 끌어서 옮겨도 돼요. </span>두 병의 마개는 열려 있고, 실험은 흄 후드 안에서 보안경을 쓰고 해요.</p>
         </div>
-        <div class="control" data-modes="move">
+        <div class="control" data-modes="move" data-v3="keep">
           <div class="control-head"><span>🧩 반응 고르기</span></div>
           <div class="chips seg-wrap" id="mvSel" role="group" aria-label="반응 고르기"></div>
           <div class="btn-row"><button class="btn btn-sm btn-primary" id="bMvAuto" type="button">▶ 자동으로 옮기기</button><button class="btn btn-sm" id="bMvReset" type="button">↺ 다시 하기</button></div>
           <p class="ctrl-note" id="mvNote">작은 흰 공(H⁺)을 끌어서 받을 분자에게 가져다 놓으세요. 끌기 어려우면 자동 단추를 눌러요.</p>
         </div>
-        <div class="control" data-modes="pairs">
+        <div class="control" data-modes="pairs" data-v3="keep">
           <div class="control-head"><span>🔗 반응 고르기</span></div>
           <div class="chips seg-wrap" id="prSel" role="group" aria-label="반응 고르기"></div>
           <div class="btn-row"><button class="btn btn-sm btn-primary" id="bFwd" type="button">▶ 정반응</button><button class="btn btn-sm" id="bRev" type="button">◀ 역반응</button></div>

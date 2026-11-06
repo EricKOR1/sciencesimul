@@ -723,7 +723,7 @@
       missions: [
         {
           title: '구상 성단 3개의 거리 직접 계산',
-          goal: '번호를 눌러 구상 성단을 고르고, P와 m으로 거리 d(kpc)를 계산해 입력해요. <b>3개</b>를 직접 계산하세요.',
+          goal: '3D 막대의 ◀ ▶ 단추로 구상 성단을 고르고, P와 m으로 거리 d(kpc)를 계산해 입력해요. <b>3개</b>를 직접 계산하세요.',
           hint: 'M = −2.8 log P − 1.4 → m − M → d = 10^((m − M + 5)/5) pc. 예) 1번: M = −4.2 정도, m − M ≈ 13.5 → 약 5 kpc예요.',
           setup() { S.flags.calcG = true; setView('map'); },
           check: () => S.manual.length >= 3, hold: 0.5,
@@ -732,8 +732,8 @@
         },
         {
           title: '성단 분포의 중심 찾기',
-          goal: '나머지 성단을 모둠 표로 불러온 뒤, 점들이 이루는 공의 <b>중심</b>에 십자가를 끌어 놓으세요.',
-          hint: '[📐 평균 위치 계산]을 누르면 십자가가 점들의 평균 위치로 움직여요. 중심은 태양에서 약 8 kpc, ℓ ≈ 0°(궁수자리) 쪽이에요.',
+          goal: '나머지 성단을 모둠 표로 불러온 뒤, [📐 평균 위치 계산]으로 점들이 이루는 공의 <b>중심</b>을 표시하세요.',
+          hint: '[📐 평균 위치 계산]을 누르면 점들의 평균 위치(공의 중심)가 표시돼요. 중심은 태양에서 약 8 kpc, ℓ ≈ 0°(궁수자리) 쪽이에요.',
           setup() { S.flags.calcG = true; S.mapMode = 0; setView('map'); },
           check: () => mapOK(), hold: 0.8,
           status: () => mark(mapCount() === 24) + ' 성단 ' + mapCount() + ' / 24 &nbsp; ' + mark(mapOK()) + ' 중심 표시' + (S.mk.set ? ' (오차 ' + f1(mkDist()) + ' kpc)' : ''),
@@ -822,5 +822,7 @@
   let lastMapSig = '';
   function updateCtlSoft() { const sig = S.sel + '|' + S.done.filter(Boolean).length + '|' + S.manual.length + '|' + S.fly.filter(Boolean).length; if (sig !== lastMapSig) { lastMapSig = sig; updateCtl(); } }
 
-  window.__sim = { S, VW, VH, get game() { return game; }, setView, updateCtl, GC, MEAN, RMAX, HIT, PLM, SMC, LAD, LSHUF, lcAx, LYcurve, LYsmc, LYmap, mapGeom, chipRect, smcAx, flyIn, fillTeam, lcOK, smcFitOK, mapOK };
+  // 3D 막대의 ◀ ▶ 단추가 성단을 고를 때 쓰는 함수 (2D에서 번호를 누른 것과 같아요)
+  const pickG = (i) => { S.sel = ((i % GC.length) + GC.length) % GC.length; clrIn('inDk2'); $('#inDk2').dataset.i = S.sel; updateCtl(); };
+  window.__sim = { S, VW, VH, get game() { return game; }, setView, pickG, updateCtl, GC, MEAN, RMAX, HIT, PLM, SMC, LAD, LSHUF, lcAx, LYcurve, LYsmc, LYmap, mapGeom, chipRect, smcAx, flyIn, fillTeam, lcOK, smcFitOK, mapOK };
 })();

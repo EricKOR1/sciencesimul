@@ -792,7 +792,7 @@
         {
           title: '공명을 맞춰 12 MeV 만들기',
           goal: '자기장 B와 진동수 f를 <b>공명</b>에 맞춰 양성자를 <b>약 12 MeV</b>까지 가속해 인출하세요. (K ≥ 11.5 MeV)',
-          hint: '공명 진동수는 화면 왼쪽 아래에 표시돼요(f = 15.25 × B[T] MHz). B = 1.0 T, f = 15.2 MHz(또는 15.3)로 맞추고 ▶ 가속 시작을 눌러요. B가 크면 최종 에너지가 B²에 비례해요.',
+          hint: '공명 진동수는 화면에 표시돼요(f = 15.25 × B[T] MHz). B = 1.0 T, f = 15.2 MHz(또는 15.3)로 맞추고 ▶ 가속 시작을 눌러요. B가 크면 최종 에너지가 B²에 비례해요.',
           setup() { S.gate = ''; S.cy.B = 0.8; S.cy.f = 12.0; cyReset(); setScene('cyc'); },
           check: cycOK, hold: 0.3,
           status: () => mark(S.cy.stage === 'done') + ' 인출 &nbsp; ' + mark(cycOK()) + ' K = ' + g3((S.cy.stage === 'done' ? S.cy.Kext : S.cy.K) / MEV) + ' MeV (목표 12 MeV)',

@@ -125,7 +125,7 @@
           <div class="in-row"><span>거리 d<br>(kpc 단위)</span><input class="num-in" id="inDk" type="text" inputmode="decimal" placeholder="예: 5" aria-label="변광성까지의 거리 d (kpc)" autocomplete="off"></div>
           <p class="ctrl-note">d = 10^((m − M + 5) / 5) pc → 1000 pc = 1 kpc</p>
         </div>
-        <div class="control" data-modes="map">
+        <div class="control" data-modes="map" data-v3="2d">
           <div class="control-head"><span>🧭 지도 보기</span></div>
           <div class="opt-grid" id="grpMap"><button class="opt sm" type="button" data-k="0">⬇ 위에서 보기</button><button class="opt sm" type="button" data-k="1">➡ 옆에서 보기</button></div>
         </div>
@@ -134,7 +134,7 @@
         </div>
         <div class="control" data-modes="map" id="teamBox" hidden>
           <div class="btn-row"><button class="btn btn-sm" id="bTeam" type="button">👥 모둠 표 불러오기</button><button class="btn btn-sm" id="bMean" type="button">📐 평균 위치 계산</button></div>
-          <p class="ctrl-note">직접 3개를 계산하면 나머지는 모둠 표에서 불러와요. 성단이 모이면 지도를 눌러 십자가를 놓을 수 있어요.</p>
+          <p class="ctrl-note">직접 3개를 계산하면 나머지는 모둠 표에서 불러와요. 성단이 모두 모이면 [📐 평균 위치 계산]으로 중심을 표시해요.</p>
         </div>
         <div class="control" data-modes="scale" id="calcL" hidden>
           <div class="in-row"><span>빛이 가로지르는 시간<br>(만 년 단위)</span><input class="num-in" id="inLt" type="text" inputmode="decimal" placeholder="예: 5" aria-label="빛이 은하를 가로지르는 시간 (만 년)" autocomplete="off"></div>

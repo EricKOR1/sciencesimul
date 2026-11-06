@@ -529,7 +529,7 @@
         {
           title: '정상파가 생기는 진동수 3개 찾기',
           goal: '진동수를 0부터 천천히 올리며 줄이 <b>크게 떨리는 진동수 3개</b>를 찾아요. 크게 떨리는 곳에서 잠시 머물러요.',
-          hint: '▶ 천천히 올리기를 눌러 보세요. 오른쪽 아래 그래프의 봉우리가 크게 떨리는 진동수예요. 봉우리 근처에서 0.6초쯤 머물면 찾은 것으로 표시돼요.',
+          hint: '▶ 천천히 올리기를 눌러 보세요. 줄이 갑자기 크게 떨리는 진동수를 찾아요. 봉우리 근처에서 0.6초쯤 머물면 찾은 것으로 표시돼요.',
           setup() { resetFlags(); resetDrive(); setScene('drive'); updateCtl(); },
           check: () => S.dr.found.every(Boolean),
           hold: 0.4,
@@ -539,7 +539,7 @@
         {
           title: '정상파의 배와 마디 세기', manual: true,
           goal: '🔖 찾은 정상파로 가서 <b>배</b>(가장 크게 떠는 곳)와 <b>마디</b>(움직이지 않는 곳)의 개수를 세어 입력하고 ✔ 확인하기를 누르세요. <b>양 끝의 고정된 점도 마디</b>예요.',
-          hint: '합성파(초록)만 보려면 입사·반사파 숨기기를 눌러요. 마디는 항상 제자리에 있어요. 첫 번째 정상파에서 배는 1개예요.',
+          hint: '합성파만 보려면 입사·반사파 숨기기를 눌러요. 마디는 항상 제자리에 있어요. 첫 번째 정상파에서 배는 1개예요.',
           setup() { resetFlags(); resetDrive(); S.dr.found = [true, true, true]; S.dr.f = FNR(1); S.dr.fe = FNR(1); clr('iA1', 'iA2', 'iA3', 'iN1', 'iN2', 'iN3'); setFlag('jump', true); setFlag('count', true); setScene('drive'); updateCtl(); },
           check() {
             const A = [1, 2, 3].map((i) => num('iA' + i)), N = [1, 2, 3].map((i) => num('iN' + i));
@@ -682,7 +682,7 @@
         {
           title: '프렛으로 5도와 옥타브 만들기',
           goal: '조율된 줄(330 Hz)을 눌러 울리는 길이를 줄이며 <b>5도(3 : 2)</b>와 <b>옥타브(2 : 1)</b> 음정을 만들어요. 각각 잠시 머물러요.',
-          hint: '길이를 2/3로 줄이면 5도, 1/2로 줄이면 옥타브예요. 누르는 위치는 너트에서 L의 1/3, 1/2만큼이에요(0.65 m의 1/3 ≈ 21.7 cm). 아래 음높이 비 눈금자를 참고해요.',
+          hint: '길이를 2/3로 줄이면 5도, 1/2로 줄이면 옥타브예요. 누르는 위치는 너트에서 L의 1/3, 1/2만큼이에요(0.65 m의 1/3 ≈ 21.7 cm).',
           setup() { resetFlags(); resetIns(1472); setFlag('fret', true); setScene('inst'); updateCtl(); },
           check: () => S.ins.got5 && S.ins.gotOct,
           hold: 0.4,

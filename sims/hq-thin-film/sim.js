@@ -941,7 +941,7 @@
         {
           title: '보강되는 두께 세 개 찾기',
           goal: '초록빛(532 nm)에서 두께 t를 올려 가며 합성한 빛이 가장 밝아지는(보강) 두께 <b>세 곳</b>을 찾으세요.',
-          hint: '파장을 532 nm로 두고 t를 0부터 올려요. 합성 진폭이 2(최대)가 되고 “보강 · 밝아요”가 뜨는 곳이 있어요. 그래프를 눌러도 돼요.',
+          hint: '파장을 532 nm로 두고 t를 0부터 올려요. 합성 진폭이 2(최대)가 되고 “보강 · 밝아요”가 뜨는 곳이 있어요.',
           setup() { S.cd.lam = 532; S.cd.found = { 0: false, 1: false, 2: false }; S.show.num = false; S.cd.t = 0; slT.set(0); setScene('cond'); },
           check: () => S.cd.found[0] && S.cd.found[1] && S.cd.found[2],
           hold: 0.5,
@@ -990,7 +990,7 @@
         {
           title: '550 nm 반사가 가장 약한 코팅 두께',
           goal: '코팅 두께 t를 조절해서 <b>550 nm 빛의 반사</b>가 가장 약해지는 <b>가장 얇은 두께</b>를 찾으세요.',
-          hint: '“반사되는 빛의 세기” 그래프의 주황색 점이 0까지 내려갈 때예요. 100 nm 근처에서 천천히 움직여 봐요.',
+          hint: '아래 ‘550 nm 반사 세기’가 0 %에 가장 가까워질 때예요. 100 nm 근처에서 천천히 움직여 봐요.',
           setup() { S.ap.sub = 'coat'; S.show.selC = false; S.ap.found = false; S.ap.t = 40; S.ap.tD = 40; slTc.set(40); setScene('app'); },
           check: () => S.ap.sub === 'coat' && Math.abs(S.ap.t - 99.6) <= 4,
           hold: 0.6,

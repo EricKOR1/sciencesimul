@@ -78,8 +78,22 @@
         if (bt && !bt.disabled) { bt.click(); return; }                       // 2D의 전원 단추와 같은 단추
         power = !power;
       });
-      controls.text('전해질(용융 NaCl · 수용액)은 2D 화면의 단계에서 골라요.');
       const lb = controls.button('이름표 ✓', () => { showLab = !showLab; lb.classList.toggle('on', showLab); lb.textContent = '이름표 ' + (showLab ? '✓' : '✕'); setLab(); }); lb.classList.add('on');
+      /* 녹말-KI 종이: 2D의 “📄 종이” 단추로 댄 종이를 그 전극 위 기체에 보여 줘요 (Cl₂ → 푸르게, H₂ → 변화 없음) */
+      const paperM = mat(0xf8fafc, { roughness: 0.8, side: THREE.DoubleSide });
+      const paper = new THREE.Mesh(new THREE.BoxGeometry(0.55, 1.0, 0.03), paperM); paper.visible = false; root.add(paper);
+      const lPaper = label('', [0, 0, 0], { color: 'rgba(30,41,59,.9)' }); lPaper.show(false);
+      const cW = new THREE.Color(0xf8fafc), cB = new THREE.Color(0x1e2a78);
+      function updPaper() {
+        const S2 = window.__sim && window.__sim.S, a = S2 && S2.aq, pp = a && a.paper;
+        if (scene !== 'aq' || !pp || !pp.target) { paper.visible = false; lPaper.show(false); return; }
+        const x = pp.target === 'cl' ? EX + 0.9 : -EX - 0.9; paper.visible = true; paper.position.set(x, top + 0.9, 0.4);
+        const k = pp.target === 'cl' ? Math.min(1, pp.p || 0) : 0; paperM.color.copy(cW).lerp(cB, k);
+        lPaper.obj = paper; lPaper.off = [0, 0.9, 0];
+        const pt = (pp.target === 'cl' ? (a.blue ? '녹말-KI 종이: 푸르게 변해요 (Cl₂)' : '녹말-KI 종이를 (+)극 기체에') : (pp.res === 'none' ? '녹말-KI 종이: 변화 없음 (H₂)' : '녹말-KI 종이를 (−)극 기체에'));
+        if (pt !== lPaper._t) { lPaper._t = pt; lPaper.set(pt); }
+        lPaper.show(showLab);
+      }
       setScene(scene); let pw = 0;
       return {
         update(dt, t) {
@@ -135,8 +149,9 @@
           } else { OH.forEach((o, i) => { M.makeScale(0.0001, 0.0001, 0.0001); ohM.setMatrixAt(i, M); }); }
           ohM.instanceMatrix.needsUpdate = true;
           pink.material.opacity = scene === 'aq' ? 0.0 : 0;
-          const tx = !power ? '<b>전원이 꺼져 있어요</b><br>외부 전원이 없으면 비자발 반응은 일어나지 않아요. (2D의 ⚡ 단추나 위의 전원 단추로 켜요)' : scene === 'ml' ? '<b>용융 NaCl 전기 분해</b><br>(−)극: Na⁺ + e⁻ → Na (환원)<br>(+)극: 2Cl⁻ → Cl₂ + 2e⁻ (산화)' : '<b>NaCl 수용액 전기 분해</b><br>(−)극: 2H₂O + 2e⁻ → H₂ + 2OH⁻<br>(+)극: 2Cl⁻ → Cl₂ + 2e⁻ · Na⁺는 남아요';
+          const tx = !power ? '<b>전원이 꺼져 있어요</b><br>외부 전원이 없으면 비자발 반응은 일어나지 않아요. (⚡ 전원 단추로 켜요)' : scene === 'ml' ? '<b>용융 NaCl 전기 분해</b><br>(−)극: Na⁺ + e⁻ → Na (환원)<br>(+)극: 2Cl⁻ → Cl₂ + 2e⁻ (산화)' : '<b>NaCl 수용액 전기 분해</b><br>(−)극: 2H₂O + 2e⁻ → H₂ + 2OH⁻<br>(+)극: 2Cl⁻ → Cl₂ + 2e⁻ · Na⁺는 남아요';
           if (tx !== txt) { txt = tx; info(tx); }
+          updPaper();
         },
       };
     },

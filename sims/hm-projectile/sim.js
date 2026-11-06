@@ -579,7 +579,7 @@
         {
           title: '가장 멀리 날아가는 각도 찾기',
           goal: '기록을 지우고 <b>사거리가 가장 큰 각도</b>를 찾아 그 각도로 던지세요. 세 번 이상 비교해요.',
-          hint: '30°와 60°는 사거리가 같았어요. 그 사이에 더 큰 값이 있겠죠? 기록 표에서 R이 가장 큰 각도를 찾아요.',
+          hint: '30°와 60°는 사거리가 같았어요. 그 사이에 더 큰 값이 있겠죠? 기록에서 R이 가장 큰 각도를 찾아요.',
           setup() { S.sh.rec = []; S.sh.last = null; S.sh.th = 20; shotReset(S.sh); setFlag('lockV', true); setScene('throw'); },
           check: () => S.sh.rec.length >= 3 && hasRec(45),
           hold: 0.6,

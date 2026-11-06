@@ -174,9 +174,31 @@
       }
       /* 입자 (확률로 통과) */
       const LANE = 3.1, balls = [];
-      for (let i = 0; i < 5; i++) { const m = sphere(0.24, 0x7dd3fc, { emissive: 0x38bdf8, emissiveIntensity: 0.8, transparent: true, opacity: 0.95 }); m.visible = false; root.add(m); balls.push({ m, on: false, x: 0, v: 1, dir: 1, pass: false, decided: false }); }
+      for (let i = 0; i < 40; i++) { const m = sphere(0.24, 0x7dd3fc, { emissive: 0x38bdf8, emissiveIntensity: 0.8, transparent: true, opacity: 0.95 }); m.visible = false; root.add(m); balls.push({ m, on: false, x: 0, v: 1, dir: 1, pass: false, decided: false }); }
       let spawn = 0.4, tries = 0, passes = 0, T2d = null, lsig = '';
       function resetCount() { tries = passes = 0; balls.forEach((b) => { b.on = false; b.m.visible = false; }); }
+      /* 고전 입자(공): 2D의 “공 굴리기”와 함께 굴러가 장벽 앞에서 되돌아와요 */
+      const cBall = sphere(0.42, 0xf59e0b, { roughness: 0.45, emissive: 0xb45309, emissiveIntensity: 0.25 }); cBall.visible = false; root.add(cBall);
+      let cRef = null, cT = 0;
+      /* 전자: 2D의 “전자 1개 / 100개”로 쏜 전자(S.cq.shots)를 그대로 따라가요 */
+      function mirrorShots(Q) {
+        const x0 = XL + 1;
+        balls.forEach((b, i) => {
+          const sh = Q.shots[i]; if (!sh) { b.m.visible = false; b.on = false; return; }
+          b.m.visible = true; b.on = false;
+          let x, ref = false, ps = false;
+          if (sh.t < 0.45) x = x0 + (0 - x0) * (sh.t / 0.45);
+          else { const q = (sh.t - 0.45) / 0.55; if (sh.pass) { ps = true; x = st.L + (XR - st.L) * q; } else { ref = true; x = -(0 - x0) * q * 0.85; } }
+          b.m.material.color.setHex(ps ? 0x4ade80 : ref ? 0xfb7185 : 0x7dd3fc); b.m.material.emissive.setHex(ps ? 0x22c55e : ref ? 0xe11d48 : 0x38bdf8);
+          b.m.position.set(x, LANE, (sh.dy || 0) / 14 * 0.8); b.m.scale.setScalar(1);
+        });
+      }
+      function updBall(Q, dt) {
+        if (Q.ball && Q.ball !== cRef) { cRef = Q.ball; cT = 0; }
+        if (!cRef || cT > 3.2) { cBall.visible = false; return; }
+        cT += dt; const x0 = XL + 1, xs = -1.3, u = Math.min(1, cT / 3.2), k = u < 0.5 ? Math.sin(u * Math.PI) : Math.sin(u * Math.PI);
+        cBall.visible = true; cBall.position.set(x0 + (xs - x0) * k, LANE - 1.0, -1.2); cBall.rotation.z = -cBall.position.x * 2;
+      }
       const Mx = new THREE.Matrix4(), ZM = new THREE.Matrix4().makeScale(0, 0, 0);
       /* =====================================================================
          새 장면: 터널링 현미경(stm) · 트랜지스터 누설(leak) · 플래시 메모리(flash) · 알파 붕괴와 핵융합(nat)
@@ -357,6 +379,9 @@
                 } else { T2d = null; st.E = 3; st.V0 = 5; st.L = 1.4; rebuild(); resetCount(); }
               } } }
           gHelix.rotation.x = -t * 1.4;                                      // 위상 e^{−iEt}: 나선이 돌아요
+          const Qc = window.__sim && window.__sim.S && window.__sim.S.mode === 'cq' ? window.__sim.S.cq : null;
+          if (Qc) { mirrorShots(Qc); updBall(Qc, dt); lBall.set('공: 넘은 횟수 ' + Qc.bPass + ' / ' + Qc.bTry + '번 · 전자: 반대편 ' + Qc.eP + ' / ' + Qc.eN + '개'); lBall.obj = aSh; lBall.off = [0, 1.7, 0]; return; }
+          cBall.visible = false;
           spawn -= dt; if (spawn <= 0) { spawn = 0.9; const b = balls.find((q) => !q.on); if (b) { b.on = true; b.x = XL + 1; b.dir = 1; b.decided = false; b.pass = false; b.m.visible = true; b.m.material.color.setHex(0x7dd3fc); b.m.material.emissive.setHex(0x38bdf8); } }
           balls.forEach((b) => {
             if (!b.on) return;

@@ -962,7 +962,7 @@
         {
           title: '작용기 블록 3종 끼우기',
           goal: '에테인에 <b>–OH, –CHO, –COOH</b> 블록을 하나씩 끼워 세 가지 화합물을 모두 만들어 보세요.',
-          hint: '오른쪽 블록을 끌어서 분자 위에 놓거나, 블록을 눌러 보세요. 한 번에 한 가지씩 바꿀 수 있어요.',
+          hint: '–OH · –CHO · –COOH 블록 단추를 눌러 끼워 보세요. 한 번에 한 가지씩 바꿀 수 있어요.',
           setup() { resetBlocks(); setScene('blocks'); },
           check: () => bFinish(), hold: 0.6,
           status: () => '–OH ' + mark(B.made.OH) + ' &nbsp;–CHO ' + mark(B.made.CHO) + ' &nbsp;–COOH ' + mark(B.made.COOH),

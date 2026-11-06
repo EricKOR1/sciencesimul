@@ -142,6 +142,8 @@
       const clamp = (x, a, b) => Math.max(a, Math.min(b, x)), sm = L.sstep;
       function counts() { return [Math.min(NMAX, Math.round(Math.pow(10, 7 - pH))), Math.min(NMAX, Math.round(Math.pow(10, pH - 7)))]; }
       function fmt(x) { return x >= 1e6 ? '아주 많아요' : x >= 0.7 ? Math.round(x) + '개' : '거의 없어요'; }
+      let hideNum = '';
+      function drawMeterQ() { dx.fillStyle = '#10201a'; dx.fillRect(0, 0, 256, 128); dx.fillStyle = '#8affb0'; dx.font = 'bold 30px monospace'; dx.textAlign = 'left'; dx.fillText('pH', 14, 48); dx.font = 'bold 66px monospace'; dx.textAlign = 'right'; dx.fillText('?', 244, 100); dtex.needsUpdate = true; }
       function show(extra) {
         const col = pH >= 6.5 && pH <= 7.5 ? 0x4cc36b : INDI[Math.max(0, Math.min(12, Math.round(pH) - 1))];
         liq.material.color.setHex(col);
@@ -149,7 +151,14 @@
         const trueH = Math.pow(10, 7 - pH), trueO = Math.pow(10, pH - 7);
         const sat = trueH > NMAX || trueO > NMAX;
         const ph = Math.round(pH * 10) / 10;
-        drawMeter(Math.round(pH * 10) / 10); lblN.set('pH ' + ph.toFixed(1).replace(/\.0$/, '') + (pH < 6.95 ? ' 산성' : pH > 7.05 ? ' 염기성' : ' 중성'));
+        const kind = pH < 6.95 ? ' 산성' : pH > 7.05 ? ' 염기성' : ' 중성';
+        if (hideNum) {   // pH 계산 단계: 답을 맞히기 전에는 pH 값을 가려요
+          drawMeterQ(); lblN.set('pH ?' + kind);
+          const tq = '<b>' + hideNum + '</b> · pH = ?<br><span style="color:#ff6b6b">●</span> H⁺가 <span style="color:#6ba5ff">●</span> OH⁻보다 ' + (pH < 7 ? '훨씬 많아요' : '훨씬 적어요') + kind.replace(' ', ' (') + ')<br>' + (extra || '');
+          if (tq !== lastTxt) { lastTxt = tq; info(tq); }
+          return;
+        }
+        drawMeter(Math.round(pH * 10) / 10); lblN.set('pH ' + ph.toFixed(1).replace(/\.0$/, '') + kind);
         const txt = '<b>[H⁺] = 10<sup>' + (-ph).toString().replace('-', '−') + '</sup> mol/L</b> · pH = −log[H⁺] = ' + ph.toFixed(1).replace(/\.0$/, '') + '<br><span style="color:#ff6b6b">●</span> H⁺ <b>' + fmt(trueH) + '</b> · <span style="color:#6ba5ff">●</span> OH⁻ <b>' + fmt(trueO) + '</b> (pH 7일 때 각 1개 기준)<br>' + (extra || '') + (sat ? '너무 많아 다 못 그려요. 그래서 로그(pH) 눈금을 써요!' : 'pH가 1 내려가면 H⁺ 수는 10배예요.');
         if (txt !== lastTxt) { lastTxt = txt; info(txt); }
       }
@@ -170,7 +179,8 @@
             const sg = [mode, S.ex.pH, S.dp.sub, S.dp.step.hcl, S.dp.step.naoh].join('|'); if (sg !== sig) { sig = sg; if (own) { own = null; plE.pause(); plE.set(0); plD.pause(); plD.set(0); } }
             let np = pH, extra = '';
             if (mode === 'exp') { np = own === 'e' ? 7 - 6 * Math.cos(2 * Math.PI * pE) : S.ex.pH; }
-            else if (mode === 'calc') { np = S.pc.pH; const q = Z.PS && Z.PS.find((x) => x.k === S.pc.k); if (q) extra = '<b>' + q.name + '</b> · ' + (Z.pcDone && Z.pcDone(q.k) ? '계산이 맞았어요! pH 측정기를 확인해요. ' : '오른쪽 칸에 계산한 값을 쓰면 pH 측정기에 나타나요. '); }
+            else if (mode === 'calc') { const q = Z.PS && Z.PS.find((x) => x.k === S.pc.k), ok = !!(q && Z.pcDone && Z.pcDone(q.k)); np = q ? q.pH : S.pc.pH; const hn = q && !ok ? q.name : ''; if (hn !== hideNum) { hideNum = hn; info0 = null; } if (q) extra = ok ? '<b>' + q.name + '</b> · 계산이 맞았어요! pH 측정기를 확인해요. ' : '오른쪽 칸에 계산한 pH를 쓰면 측정기에 값이 나타나요. '; }
+            if (mode !== 'calc' && hideNum) { hideNum = ''; info0 = null; }
             else if (mode === 'dil') {
               const sub = S.dp.sub; np = own === 'd' ? dilPHc(sub, 7 * (pD < 0.1 ? 0 : pD < 0.75 ? sm((pD - 0.1) / 0.65) : pD < 0.88 ? 1 : 1 - sm((pD - 0.88) / 0.12))) : S.dp.meter;
               extra = (sub === 'hcl' ? '염산(HCl)' : '수산화 나트륨(NaOH)') + ' 10배 희석 · ';

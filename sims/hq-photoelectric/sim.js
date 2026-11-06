@@ -1036,7 +1036,7 @@
         {
           title: '광전 기술 문장 완성하기', manual: true,
           goal: '<b>광센서</b> 장면에서 점멸등이 켜지고 꺼지는 것을, <b>태양전지</b> 장면에서 작동하는 파장과 못 하는 파장을 모두 본 뒤 문장을 완성하세요.',
-          hint: '“광센서”에서 조도 슬라이더를 문턱보다 낮췄다가 높여 보세요. “태양전지”에서 파장을 1130 nm보다 짧게, 길게 바꿔 봐요. 이미지 센서의 흐름은 앞 장면의 오른쪽 그림을 보세요.',
+          hint: '“광센서”에서 조도 슬라이더를 문턱보다 낮췄다가 높여 보세요. “태양전지”에서 파장을 1130 nm보다 짧게, 길게 바꿔 봐요. 이미지 센서의 흐름은 ‘이미지 센서’ 장면에서 다시 볼 수 있어요.',
           setup() { S.show.selB = true; SEL_B.reset(); S.te.seenLamp = S.te.seenLampOn = S.te.seenLampOff = S.te.seenOn = S.te.seenOff = false; setScene('tech'); },
           check() {
             if (!S.te.seenLampOn || !S.te.seenLampOff) return '“💡 광센서” 장면에서 조도를 바꿔 점멸등이 켜질 때와 꺼질 때를 모두 확인하세요.';
