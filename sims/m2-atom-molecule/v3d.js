@@ -182,7 +182,7 @@
         const sc = l.S ? l.S.scene : '', S = l.SCP, scope = sc === 'scope' && !!S, bld = sc === 'count' && !!(l.ctBuildOn && l.ctBuildOn());
         const list = scope ? S.list.join() : '', placed = scope ? S.list.map((id) => S.placed[id] || '').join() : '';
         const cur = scope ? S.cur || '' : '-';
-        if (sc !== 'count') { g.visible = !!cur; if (!cur) labs.forEach((x) => x.show(false)); else if (cur !== barCur && cur !== '-' && OF2D[cur] === key) build(); }
+        if (sc !== 'count' && cur !== barCur) { g.visible = !!cur; if (!cur) { labs.forEach((x) => x.show(false)); playerRow(false); } else { if (cur !== '-' && OF2D[cur] === key) build(); playerRow(MOLS[key].kind === 'mol'); } }
         barCur = cur;
         const sig = sc + '|' + bld + '|' + list + '|' + placed + '|' + cur;
         if (sig === barSig) return; barSig = sig;
