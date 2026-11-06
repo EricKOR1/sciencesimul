@@ -27,7 +27,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: narrow ? 12 : 8.6, theta: 0.5, phi: 1.2, target: [0, 0, 0], min: 4, max: 18 },
     autoRotate: 0.22,
-    levels: [1],   // 1단계(현미경 · 보이는 것 분류)와 3~4단계(원심분리 · 세포 분획)는 2D 실험 화면에서, 세포 단면 · 기능 연결 · 막 개수 단계에서 3D로 시작
+    levels: [1],   // 2단계(세포 단면 · 기능 연결 · 막 개수: 3D 막대의 소기관 · 기능 · 막 단추로). 1단계(현미경 · 보이는 것 분류)와 3~4단계(원심분리 · 세포 분획)는 2D 화면이에요
     build(ctx) {
       const { THREE, root, label, info, controls, renderer } = ctx;
       const V = THREE.Vector3;
@@ -194,7 +194,24 @@
       function setKey(k) {
         key = k;
         Object.keys(G).forEach((n) => { G[n].visible = n === k; (labs[n] || []).forEach((l) => l.show(n === k)); });
-        const d = INFO[k];
+        writeInfo();
+      }
+      /* 안내: 세포 단면 · 막 개수는 소기관 설명, 기능 연결(match)은 고른 기능 · 이은 선을 보여 줘요 (기능은 답이라 숨겨요) */
+      const LS = () => { const L = ctx.lesson(); return L && L.S && L.S.cell ? L : null; };
+      const modeNow = () => { const L = LS(); return L ? L.S.mode : 'cell'; };
+      let fIdx = 0;
+      function writeInfo() {
+        const d = INFO[key], L = LS(), m = modeNow();
+        if (L && m === 'match' && L.MT) {
+          const rid = L.MT.right[fIdx], n = L.MT.left.filter((q) => L.MT.link[q]).length, cur = L.MT.link[key];
+          info('<b>' + d[0] + '</b> · ' + d[2] + '<br>고른 기능: <b>' + (L.ORG[rid] ? L.ORG[rid].mt : '') + '</b> (◀ ▶)' + (cur && L.ORG[cur] ? '<br>지금 이은 기능: ' + L.ORG[cur].mt : '') + '<br>이은 선 ' + n + ' / 10');
+          return;
+        }
+        if (L && m === 'membsort' && L.sortMem) {
+          const c = L.sortMem.cards.find((q) => q.id === key), zn = { m2: '이중막', m1: '단일막', m0: '막 없음' };
+          info('<b>' + d[0] + '</b> · ' + d[4] + '<br>' + d[2] + '<br>넣은 상자: <b>' + (c && c.zone ? zn[c.zone] : '아직') + '</b> · 넣은 카드 ' + L.sortMem.placed + ' / 10');
+          return;
+        }
         info('<b>' + d[0] + '</b> · <span style="color:#ffd34d">' + MEMN[d[1]] + '</span> · ' + d[4] + '<br>' + d[2] + '<br><span style="color:#a7f3d0">기능: ' + d[3] + '</span>');
       }
       /* 3D에서 고르면 2D 세포 단면에서도 같은 소기관을 선택해요 (식물 · 동물 세포도 맞춰요) */
@@ -210,8 +227,33 @@
       const items = KEYS.map((k) => ({ value: k, label: INFO[k][0] }));
       const seg = controls.segment('소기관', items, key, (v) => { seg.set(v); pick(v); });
       { const L = ctx.lesson(); if (L && L.S && L.S.cell && L.S.cell.sel && INFO[L.S.cell.sel]) { key = L.S.cell.sel; lastSel = key; } }
+      /* 기능 연결 · 막 개수 분류: 2D의 선 잇기(MT.link) · 카드 상자(sortMem.place)와 같아요. 다 하면 다음 소기관으로 넘어가요 */
+      const nextKey = (done) => { const i = KEYS.indexOf(key); const k = KEYS.slice(i + 1).concat(KEYS.slice(0, i)).find((q) => !done(q)); if (k) { seg.set(k); setKey(k); } else writeInfo(); };
+      function linkFn() {
+        const L = LS(); if (!L || modeNow() !== 'match' || !L.MT) return; const MT = L.MT, rid = MT.right[fIdx];
+        MT.left.forEach((q) => { if (MT.link[q] === rid) { delete MT.link[q]; delete MT.bad[q]; } });
+        MT.link[key] = rid; MT.prog[key] = 0; delete MT.bad[key]; MT.sel = null; L.updateCtl();
+        nextKey((q) => !!MT.link[q]);
+      }
+      function putMem(z) {
+        const L = LS(); if (!L || modeNow() !== 'membsort' || !L.sortMem) return; const c = L.sortMem.cards.find((q) => q.id === key); if (!c) return;
+        L.sortMem.place(c, z); nextKey((q) => { const cc = L.sortMem.cards.find((o) => o.id === q); return !!(cc && cc.zone); });
+      }
+      const ctlBox = renderer.domElement.closest('.v3-wrap').querySelector('.v3-ctl'), nF0 = ctlBox.children.length;
+      controls.text('<b>기능</b>'); controls.button('◀', () => { fIdx = (fIdx + 9) % 10; writeInfo(); }); controls.button('▶', () => { fIdx = (fIdx + 1) % 10; writeInfo(); }); controls.button('🔗 이 기능과 잇기', linkFn);
+      const fEls = Array.prototype.slice.call(ctlBox.children, nF0), nM0 = ctlBox.children.length;
+      controls.text('<b>막</b>'); [['m2', '이중막'], ['m1', '단일막'], ['m0', '막 없음']].forEach(([z, t]) => controls.button(t, () => putMem(z)));
+      const mEls = Array.prototype.slice.call(ctlBox.children, nM0);
+      let lastMode = null, lastSig2 = '';
+      function modeTick() {
+        const L = LS(), m = modeNow();
+        if (m !== lastMode) { lastMode = m; fEls.forEach((e) => { e.style.display = m === 'match' ? '' : 'none'; }); mEls.forEach((e) => { e.style.display = m === 'membsort' ? '' : 'none'; }); lastSig2 = ''; }
+        const sg = !L ? '' : m === 'match' && L.MT ? JSON.stringify(L.MT.link) : m === 'membsort' && L.sortMem ? L.sortMem.cards.map((q) => q.zone || '-').join(',') : m;
+        if (sg !== lastSig2) { lastSig2 = sg; writeInfo(); }
+      }
       seg.set(key); setKey(key);
       function follow() {
+        modeTick();
         const L = ctx.lesson(); if (!L || !L.S || L.S.mode !== 'cell' || !L.S.cell) return;
         const sel = L.S.cell.sel;
         if (sel !== lastSel) { lastSel = sel; if (sel && INFO[sel] && sel !== key) { seg.set(sel); setKey(sel); } }

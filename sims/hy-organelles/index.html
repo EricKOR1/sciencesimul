@@ -82,6 +82,8 @@
 
     .chip-grid.three button { font-size: 13px; padding: 4px 4px; }
     #spdSeg button { line-height: 1.25; }
+    body:not(.v3-mode) .only3d { display: none; }
+    body.v3-mode .only2d { display: none; }
   </style>
 </head>
 <body class="sim-page" data-subject="bio">
@@ -151,12 +153,12 @@
         </div>
         <div class="control" data-modes="match">
           <div class="control-head"><span>🔗 소기관과 기능 잇기</span></div>
-          <p class="ctrl-note">왼쪽 소기관을 누르고 오른쪽 기능을 눌러 <b>선으로 이어요</b>. 이어진 선은 다시 눌러 풀 수 있어요. 다 이었으면 <b>✔ 확인하기</b>!</p>
+          <p class="ctrl-note"><span class="only2d">왼쪽 소기관을 누르고 오른쪽 기능을 눌러 <b>선으로 이어요</b>. 이어진 선은 다시 눌러 풀 수 있어요.</span><span class="only3d">3D 막대에서 소기관과 기능(◀ ▶)을 고르고 <b>🔗 이 기능과 잇기</b>를 눌러요.</span> 다 이었으면 <b>✔ 확인하기</b>!</p>
           <div class="btn-row"><button class="btn btn-sm" id="mtReset" type="button">↺ 선 모두 지우기</button></div>
         </div>
         <div class="control" data-modes="membsort">
           <div class="control-head"><span>🗂 막 개수로 분류</span></div>
-          <p class="ctrl-note">소기관 카드 10장을 <b>끌어서(또는 눌러서)</b> 막의 개수에 맞는 상자에 넣고 <b>✔ 확인하기</b>를 눌러요.</p>
+          <p class="ctrl-note">소기관 카드 10장을 <span class="only2d"><b>끌어서(또는 눌러서)</b></span><span class="only3d">3D 막대의 소기관 · 막 단추로</span> 막의 개수에 맞는 상자에 넣고 <b>✔ 확인하기</b>를 눌러요.</p>
           <div class="btn-row"><button class="btn btn-sm" id="msReset" type="button">↺ 카드 모으기</button></div>
         </div>
         <div class="control" data-modes="rcf">

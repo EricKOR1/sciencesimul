@@ -771,7 +771,7 @@
         {
           id: 'glyc4', title: '인산기 전달 4번',
           goal: '<b>🍬 해당 과정</b>에서 주황색 Ⓟ 블록을 ADP로 옮겨 <b>인산기 전달 4번</b>을 해 보세요.',
-          hint: 'Ⓟ 블록을 오른쪽 ADP 위로 끌어다 놓거나 블록을 눌러요. 고에너지 3탄소 화합물 2분자가 각각 2번씩 인산기를 건네서 모두 4번이에요.',
+          hint: '「🟧 인산기 ADP로 보내기」를 누르거나 Ⓟ 블록을 오른쪽 ADP 위로 옮겨요. 고에너지 3탄소 화합물 2분자가 각각 2번씩 인산기를 건네서 모두 4번이에요.',
           setup() { setMode('sub'); S.sb.pickOn = false; sbReset('glyc'); },
           check: () => S.sb.done.glyc >= 4, hold: 0.8,
           status: () => mark(S.sb.done.glyc >= 4) + ' 인산기 전달 ' + S.sb.done.glyc + ' / 4',

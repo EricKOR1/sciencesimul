@@ -186,11 +186,12 @@
       let gcur = 0.8, pumpF = 1, rotF = 1, leakF = 0;
       function text() {
         const L = ctx.lesson(), v = L && L.S && L.S.sb ? (L.S.sb.view === 'tca' ? 'TCA 회로' : '해당 과정') : '';
-        if (mode === 'sub') info('<b>기질 수준 인산화</b>' + (v ? ' · ' + v : '') + '<br>효소가 기질의 <b>인산기(Ⓟ)</b>를 ADP에 직접 옮겨 ATP를 만들어요. 막이 없어도, 산소가 없어도 일어나요.');
+        if (mode === 'sub') { const sb = L && L.S && L.S.sb; info('<b>기질 수준 인산화</b>' + (v ? ' · ' + v : '') + '<br>효소가 기질의 <b>인산기(Ⓟ)</b>를 ADP에 직접 옮겨 ATP를 만들어요. 막이 없어도, 산소가 없어도 일어나요.' + (sb ? '<br><span style="color:#fde68a">인산기 전달: 해당 과정 ' + sb.done.glyc + ' / 4 · TCA 회로 ' + sb.done.tca + ' / 2</span>' : '')); }
         else if (L && L.S && L.S.mode === 'chemi' && L.S.ch) {
           const tr = L.S.ch.tr, nm = { none: '처리 없음', un: '짝풀림제', ol: '올리고마이신', cn: '시안화물' }[tr];
           const ex = { none: 'H⁺가 ATP 합성 효소로 흘러 들어오며 ATP를 만들어요.', un: 'H⁺가 막으로 새어 기울기가 사라져요 → ATP는 줄고 열이 나요.', ol: 'ATP 합성 효소의 H⁺ 통로가 막혀 회전자가 멈춰요 → ATP 0, H⁺ 기울기는 커져요.', cn: '전자 전달이 막혀 H⁺를 퍼 올리지 못해요 → 기울기 · ATP 0.' }[tr];
-          info('<b>화학 삼투</b> · 처리: <b>' + nm + '</b><br>' + ex + '<br>ΔpH <b>' + gcur.toFixed(2) + '</b> · 산소 소비 ' + Math.round(L.S.ch.o2.v) + ' · ATP 합성 ' + Math.round(L.S.ch.atp.v));
+          const HN = ['', '낮음', '보통', '높음'], TV = L.TRV || {}, rec = ['cn', 'ol', 'un'].filter((k) => L.S.ch.rec[k] && TV[k]).map((k) => TV[k].name + ': 산소 ' + TV[k].o2 + ' · ATP ' + TV[k].atp + ' · 열 ' + HN[TV[k].heat]);
+          info('<b>화학 삼투</b> · 처리: <b>' + nm + '</b><br>' + ex + '<br>ΔpH <b>' + gcur.toFixed(2) + '</b> · 산소 소비 ' + Math.round(L.S.ch.o2.v) + ' · ATP 합성 ' + Math.round(L.S.ch.atp.v) + ' · 열 ' + (HN[Math.round(L.S.ch.heat.v)] || '') + (rec.length ? '<br><span style="color:#fde68a">측정 결과 (처리 없음: 산소 100 · ATP 100 · 열 보통)<br>' + rec.join('<br>') + '</span>' : ''));
         } else if (L && L.S && L.S.mode === 'grad' && L.S.gr) info('<b>H⁺ 기울기</b> · 전자 전달계가 H⁺를 막 사이 공간으로 퍼 올려요.<br>NADH 공급 ' + L.S.gr.s + ' · 산소 ' + (L.S.gr.o2 ? '있음' : '없음') + '<br>ΔpH <b>' + gcur.toFixed(2) + '</b>' + (L.S.gr.o2 ? '' : ' · 전자가 흐르지 못해 기울기가 줄어요.'));
         else info('<b>산화적 인산화</b> · H⁺가 ATP 합성 효소를 지나 흐를 때 <b>회전자</b>가 돌며 ATP가 만들어져요.<br>ΔpH <b>' + gcur.toFixed(2) + '</b>');
       }
@@ -213,10 +214,14 @@
       });
       const showG = (arr, on) => arr.forEach((e) => { e.style.display = on ? '' : 'none'; });
       function applyCtl() { const L = ctx.lesson(), m = L && L.S ? L.S.mode : ''; showG(gSub, mode === 'sub'); showG(gGrad, mode === 'chemi' && m === 'grad'); showG(gChem, mode === 'chemi' && m !== 'grad'); }
-      let lastKey = '';
+      let lastKey = '', lastSb = null;
       function poll() {
         const L = ctx.lesson(); if (!L || !L.S) return;
         const m = L.S.mode, m2 = MODE_OF[m] || mode;
+        if (m === 'sub' && L.S.sb) {          // 🟧 인산기 ADP로 보내기(2D와 같은 단추)를 누르면 3D에서도 인산기가 옮겨 가는 장면을 처음부터 보여 줘요
+          const sb = L.S.sb, k = sb.done.glyc + sb.done.tca + (sb.busy ? 0.5 : 0) + sb.view;
+          if (k !== lastSb) { if (lastSb !== null && sb.busy && player) { player.set(0.6 / 7); player.play(); } lastSb = k; text(); }
+        }
         if (m2 !== mode) { setMode(m2); }
         if (m + mode !== lastKey) { lastKey = m + mode; applyCtl(); }
         if (m === 'grad' && L.S.gr) {
