@@ -122,9 +122,36 @@
         writeInfo();
       }
       function writeInfo() {
+        if (view === 'cyl') { info('<b>회전 원통 실험</b> (위에서 본 모형)<br>바깥벽을 데우고 중심을 차갑게 한 채 돌리면 물결 모양 흐름이 생겨요. 이 파동은 <b>벽과 중심의 온도 차</b>로 생기는 불안정이에요. 바닥이 평평해 f가 일정하므로 <b>β 효과가 없어요</b>. 모양만 지구의 편서풍 파동과 비슷해요.'); return; }
         const q = window.__sim || {}, S = q.S || {}, show = !!(S.showLam || (q.game && q.game.free));
         info('<b>북극 위에서 본 편서풍 파동</b><br>제트축(<b style="color:#fb923c">주황</b>)이 남북으로 굽이쳐요. 남쪽으로 처진 <b style="color:#93c5fd">골</b>에는 한기가 남하하고, 북쪽으로 솟은 <b style="color:#fca5a5">능</b>에는 난기가 북상해요.<br>파동 수 <b>n = ' + n + '</b> · 진폭 ' + amp + '°' + (show ? ' · 파장 λ ≈ ' + lamN(n).toLocaleString('ko-KR') + ' km (위도 45° 둘레 ÷ n)' : ' · 파장은 옆에서 직접 계산해 봐요') + ' · 파동은 동쪽(반시계)으로 평균 10 m/s');
       }
+      /* 회전 원통 실험 (2D와 같은 장면): 가열된 바깥벽 · 차가운 중심 · 물결 모양 흐름(m = 5). 2D에서 '회전 원통 실험'을 고르면 지구 대신 보여요 */
+      const earthG = new THREE.Group(); root.children.slice().forEach((c) => earthG.add(c)); root.add(earthG);
+      const cylG = new THREE.Group(); cylG.visible = false; root.add(cylG);
+      const R0 = 1.15, R1 = 0.38, HC = 0.42, YW = HC / 2 - 0.06;
+      cylG.add(new THREE.Mesh(new THREE.CylinderGeometry(R0, R0, HC, 72, 1, true), new THREE.MeshStandardMaterial({ color: 0xdc2626, roughness: 0.6, transparent: true, opacity: 0.5, side: THREE.DoubleSide, depthWrite: false })));
+      const bot = new THREE.Mesh(new THREE.CircleGeometry(R0, 72), new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.8 })); bot.rotation.x = -Math.PI / 2; bot.position.y = -HC / 2; cylG.add(bot);
+      const inner = new THREE.Mesh(new THREE.CylinderGeometry(R1, R1, HC + 0.04, 48), new THREE.MeshStandardMaterial({ color: 0x60a5fa, roughness: 0.5 })); cylG.add(inner);
+      { const wg = new THREE.RingGeometry(R1, R0, 72, 8); wg.rotateX(-Math.PI / 2);
+        const pa = wg.attributes.position, col = new Float32Array(pa.count * 3), cA = new THREE.Color(0xbfdbfe), cB = new THREE.Color(0xfecaca), cc = new THREE.Color();
+        for (let i = 0; i < pa.count; i++) { const r = Math.hypot(pa.getX(i), pa.getZ(i)); cc.copy(cA).lerp(cB, (r - R1) / (R0 - R1)); col[i * 3] = cc.r; col[i * 3 + 1] = cc.g; col[i * 3 + 2] = cc.b; }
+        wg.setAttribute('color', new THREE.BufferAttribute(col, 3));
+        const w = new THREE.Mesh(wg, new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.9, side: THREE.DoubleSide })); w.position.y = YW; cylG.add(w); }
+      const flowR = new THREE.Group(); cylG.add(flowR);
+      { const NC = 200, pos = new Float32Array((NC + 1) * 6), idx = [];
+        for (let i = 0; i <= NC; i++) { const th = (i / NC) * TAU, r = (R0 + R1) / 2 + (R0 - R1) * 0.12 * Math.cos(5 * th); [r - 0.022, r + 0.022].forEach((rr, k) => { pos.set([rr * Math.cos(th), YW + 0.01, -rr * Math.sin(th)], i * 6 + k * 3); }); if (i < NC) { const a = i * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); } }
+        const fg = new THREE.BufferGeometry(); fg.setAttribute('position', new THREE.BufferAttribute(pos, 3)); fg.setIndex(idx);
+        flowR.add(new THREE.Mesh(fg, new THREE.MeshBasicMaterial({ color: 0x7c2d12, side: THREE.DoubleSide }))); }
+      const wallO = new THREE.Object3D(); wallO.position.set(0, HC / 2 + 0.05, -R0); cylG.add(wallO);
+      const coldO = new THREE.Object3D(); coldO.position.set(0, HC / 2 + 0.06, 0); cylG.add(coldO);
+      label('가열된 바깥벽', wallO, { color: '#dc2626', size: 12 }); label('차가운 중심', coldO, { color: 'rgba(30,58,138,.9)', size: 12 });
+      let cylPh = 0, view = 'wave';
+      function setView3(v) {
+        view = v === 'cyl' ? 'cyl' : 'wave'; earthG.visible = view !== 'cyl'; cylG.visible = view === 'cyl';
+        writeInfo(); showCtl();
+      }
+
       const nR = controls.range('파동 수 n', 4, 6, 1, n, (v) => { n = v; layout(); try { window.__sim.setN(v); } catch (e) {} }, (v) => v + '개');
       const aR = controls.range('진폭', 3, 14, 1, amp, (v) => { amp = v; layout(); try { window.__sim.setAmp(v); } catch (e) {} }, (v) => v + '°');
       controls.segment('시점', [{ value: 0.28, label: '북극 위' }, { value: 0.95, label: '비스듬히' }, { value: 1.4, label: '옆에서' }], 0.28, (v) => { orbit.phi = v; });
@@ -136,15 +163,18 @@
         onFrame(p) { P0 = p; th0 = base + (TAU / n) * p; layout(); },
       });
       layout();
+      /* 원통 장면에서는 지구 파동용 조작(파동 수 · 진폭 · 색 · 재생)을 숨겨요 (시점 단추만 남겨요) */
+      const ctlEl = tB.parentNode, waveOnly = Array.from(ctlEl.children).filter((e, i) => i < 4 || i > 7);
+      const showCtl = () => waveOnly.forEach((e) => { e.style.display = view === 'cyl' ? 'none' : ''; });
 
       let lastKey = '';
       function follow() {
         const q = window.__sim, s = q && q.S; if (!s) return;
         const nn = Math.max(4, Math.min(6, Math.round(s.n))), aa = Math.max(3, Math.min(14, Math.round(s.amp)));
-        const key = nn + '|' + aa + '|' + (s.showLam ? 1 : 0) + (q.game && q.game.free ? 1 : 0);
+        const key = nn + '|' + aa + '|' + (s.showLam ? 1 : 0) + (q.game && q.game.free ? 1 : 0) + '|' + s.view;
         if (key === lastKey) return; lastKey = key;
         if (nn !== n || aa !== amp) { n = nn; amp = aa; nR.set(n); aR.set(amp); }
-        th0 = base + (TAU / n) * P0; layout();
+        th0 = base + (TAU / n) * P0; layout(); setView3(s.view);
       }
       follow();
       return {
@@ -157,6 +187,7 @@
         },
         update(dt, t) {
           follow();
+          if (view === 'cyl') { cylPh = (cylPh + dt * 0.5) % TAU; flowR.rotation.y = cylPh / 5; return; }
           parts.forEach((p) => {
             const lon = ((p.s0 + P0) % 1) * 360, c = contour(lon);
             p.m.position.copy(P(c, lon, 1.045));

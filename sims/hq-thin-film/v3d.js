@@ -93,6 +93,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: 15.5 * KD, theta: 0.5, phi: 1.28, min: 6, max: 30, target: [2.2, 0, 0] },
     autoRotate: 0,
+    levels: [0, 1, 2, 3],
     build(ctx) {
       const { THREE, root, label, controls } = ctx;
       const labs = {}; const L = (sc, text, obj, o) => { const l = label(text, obj, o); const raw = l.set; let last = text; l.set = (t) => { if (t !== last) { last = t; raw(t); } }; (labs[sc] = labs[sc] || []).push(l); return l; };
@@ -201,7 +202,9 @@
       const Mph = new THREE.Matrix4(), Cph = new THREE.Color();
       function phaseFrame(sim, S) {
         const P = S.ph, state = sim.phState ? sim.phState() : 'flip';
-        const useRope = S.show.selA, rope = useRope ? P.rope : (state === 'flip' ? 'fixed' : 'free'), refl = useRope ? 1 : (state === 'none' ? 0 : 1);
+        if (P.rope !== st.rope0) { if (st.rope0 != null) st.pickRope = true; st.rope0 = P.rope; }
+        { const nk = P.n1 + '|' + P.n2; if (nk !== st.nk0) { if (st.nk0 != null) st.pickRope = false; st.nk0 = nk; } }
+        const useRope = S.show.selA || st.pickRope, rope = useRope ? P.rope : (state === 'flip' ? 'fixed' : 'free'), refl = useRope ? 1 : (state === 'none' ? 0 : 1);
         const s = rope === 'fixed' ? -1 : 1, Ln = 8, c = -2 + phP * (2 * Ln + 4);
         wall.visible = rope === 'fixed'; pole.visible = ring.visible = rope === 'free';
         for (let i = 0; i < NR; i++) {
@@ -216,7 +219,7 @@
         lWallL.set(rope === 'fixed' ? '고정단 (벽)' : '자유단 (고리)');
         lMed.set(useRope ? '' : 'n₁ = ' + n1.toFixed(2) + ' → n₂ = ' + n2.toFixed(2));
         lMed.show(!useRope && !!labs.phase.on);
-        info('<b>🧵 반사와 위상: 줄 파동의 반사</b><br>' + (rope === 'fixed' ? '고정단: 반사 펄스가 위아래로 <b>뒤집혀요</b> (위상 π).' : '자유단: 반사 펄스가 그대로예요 (위상 변화 없음).') + '<br>' + (useRope ? '줄의 끝 모양은 2D에서 골라요.' : '빛은 굴절률이 <b>큰 쪽 경계</b>(n₂ > n₁)에서 반사할 때 위상이 π 바뀌고, 작은 쪽(n₂ < n₁)에서는 그대로예요. 지금: ' + (state === 'flip' ? 'n₂ > n₁ → 위상 π 변화 (고정단과 같아요)' : state === 'same' ? 'n₂ < n₁ → 위상 변화 없음 (자유단과 같아요)' : 'n₁ = n₂ → 경계가 없어 반사가 없어요')));
+        info('<b>🧵 반사와 위상: 줄 파동의 반사</b><br>' + (rope === 'fixed' ? '고정단: 반사 펄스가 위아래로 <b>뒤집혀요</b> (위상 π).' : '자유단: 반사 펄스가 그대로예요 (위상 변화 없음).') + '<br>' + (useRope ? '줄의 끝 모양을 바꿔 가며 반사 펄스를 견주어 봐요.' : '빛은 굴절률이 <b>큰 쪽 경계</b>(n₂ > n₁)에서 반사할 때 위상이 π 바뀌고, 작은 쪽(n₂ < n₁)에서는 그대로예요. 지금: ' + (state === 'flip' ? 'n₂ > n₁ → 위상 π 변화 (고정단과 같아요)' : state === 'same' ? 'n₂ < n₁ → 위상 변화 없음 (자유단과 같아요)' : 'n₁ = n₂ → 경계가 없어 반사가 없어요')));
       }
 
       /* ---------- 간섭 조건 · 코팅 (두 반사광의 합) ---------- */
@@ -262,6 +265,10 @@
           '<b>🔍 무반사 코팅</b> (MgF₂ n = ' + n + ', 550 nm 빛)<br>앞면·뒷면 반사 모두 위상이 π 변해서 위상 차는 경로차 2nt뿐이에요.<br>2nt = ' + m.toFixed(2) + 'λ → ' + verdict + '<br>2nt = λ/2 (t = λ/4n ≈ 100 nm)이면 두 반사광이 상쇄돼 반사가 가장 약해요.');
       }
       plFilm = grab('film', () => controls.player({ duration: 12, loop: true, autoplay: false, label: '막이 흘러내려요', phases: [[0, '새로 만든 막'], [0.3, '아래로 흘러 두꺼워져요'], [0.7, '줄무늬 간격이 넓어져요']], onFrame(p) { if (!built) return; st.tauP = p; st.tauUser = true; st.fk = ''; } }));
+      // 탐침 옮기기 (2D에서 막을 눌러 옮기는 것과 같아요)
+      const moveProbe = (d) => { const sim = window.__sim; if (!sim) return; const F = sim.S.fl; F.probe = Math.max(0, Math.min(sim.H_CM, Math.round((F.probe + d) * 10) / 10)); st.fk = ''; };
+      grab('film', () => controls.button('탐침 ▲ 위로', () => moveProbe(-0.5)));
+      grab('film', () => controls.button('탐침 ▼ 아래로', () => moveProbe(0.5)));
       const plPh = grab('phase', () => controls.player({ duration: 6, loop: true, autoplay: true, label: '펄스 보내기', phases: [[0, '입사 펄스'], [0.4, '끝에서 반사'], [0.8, '되돌아와요']], onFrame(p) { phP = p; } }));
       /* ================= ⑤ 두께가 곳곳에서 다른 얇은 막들 (ex) ================= */
       const gEx = new THREE.Group(); root.add(gEx); gEx.visible = false;

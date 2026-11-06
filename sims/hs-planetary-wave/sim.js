@@ -694,7 +694,7 @@
     const { A, B } = rcOf('wave'), g = polarGeom(), { cx, cy, Rm } = g;
     waveStep(dt);
     card(A, null);
-    D.text(A.x + 14, A.y + 24 * FS, S.view === 'wave' ? '🧊 북극 위에서 본 500 hPa 편서풍 파동 (예시)' : '🧪 회전 원통 실험 (위에서 본 모습)', { size: 13.5, weight: 800, color: '#1e3a8a', align: 'left' });
+    D.text(A.x + 14, A.y + 24 * FS, S.view === 'wave' ? '〰️ 북극 위에서 본 500 hPa 편서풍 파동 (예시)' : '🧪 회전 원통 실험 (위에서 본 모습)', { size: 13.5, weight: 800, color: '#1e3a8a', align: 'left' });
     if (S.view === 'cyl') { drawCyl(A, g); drawCylNotes(B); return; }
     const n = S.nV, amp = S.ampV, th0 = S.th, nSteps = 240;
     const pt = (th) => { const r = rOfLat(g, contourLat(th, n, amp, th0)); return [cx + r * Math.cos(th), cy - r * Math.sin(th)]; };
@@ -866,7 +866,7 @@
      HTML 도구 연결
      ====================================================== */
   const seaCh = makeChoice($('#seaSw'), [{ id: 'w', label: '❄️ 겨울형' }, { id: 's', label: '☀️ 여름형' }], (v) => { S.season = v; setG(v === 'w' ? 1.2 : 0.6, true); });
-  const viewWCh = makeChoice($('#viewW'), [{ id: 'wave', label: '🧊 편서풍 파동' }, { id: 'cyl', label: '🧪 회전 원통 실험' }], (v) => { S.view = v; });
+  const viewWCh = makeChoice($('#viewW'), [{ id: 'wave', label: '〰️ 편서풍 파동' }, { id: 'cyl', label: '🧪 회전 원통 실험' }], (v) => { S.view = v; });
   const pickCh = makeChoice($('#pickSw'), [{ id: 'trough', label: '🔵 골 표시' }, { id: 'ridge', label: '🔴 능 표시' }, { id: 'probe', label: '🎯 풍속 재기' }], (v) => { S.pick = v; });
   const viewMCh = makeChoice($('#viewM'), [{ id: 'map', label: '🗺️ 500 hPa 일기도' }, { id: 'sat', label: '🛰️ 위성 영상 (대체)' }], (v) => { S.mview = v; });
   ['seaSw', 'viewW', 'viewM'].forEach((id) => $('#' + id).classList.add('opt-grid'));
@@ -892,7 +892,7 @@
   function dayBtn() { $('#bDay').textContent = S.day > 0 ? '↺ 오늘로 돌아가기' : '▶ 하루(24시간) 뒤'; }
   $('#bDay').addEventListener('click', () => { Sound.click(); S.day = S.day > 0 ? 0 : 1; dayBtn(); });
 
-  const MODE_LABEL = { jet: '🌐 제트류', rossby: '🌊 행성파', wave: '🧊 편서풍 파동', map: '🗺️ 상층 일기도' };
+  const MODE_LABEL = { jet: '🌐 제트류', rossby: '🌊 행성파', wave: '〰️ 편서풍 파동', map: '🗺️ 상층 일기도' };
   const FREE_KEYS = { jet: ['seaSw', 'sG'], rossby: ['sU', 'sLk'], wave: ['sN', 'sAmp', 'viewW'], map: ['pickSw', 'viewM', 'bDay'] };
   let ctlKeys = [];
   function updateCtl() {
@@ -995,7 +995,7 @@
       ],
     },
     {
-      title: '편서풍 파동: 골과 능', short: '편서풍 파동', icon: '🧊', phase: '분석', features: ['wave'],
+      title: '편서풍 파동: 골과 능', short: '편서풍 파동', icon: '〰️', phase: '분석', features: ['wave'],
       intro: '<div class="si-link">🔗 <b>앞 단계에서</b> β 효과로 생기는 행성파를 봤어요. 북반구 중위도 상층의 <b>편서풍 파동</b>이 바로 이런 행성파예요. 북극 위에서 내려다보면 서풍이 남북으로 굽이쳐요.</div>' +
         '<p>남쪽으로 처진 곳을 <b>골</b>, 북쪽으로 솟은 곳을 <b>능</b>이라고 해요. 골에는 <b>한랭한</b> 공기가 모여 <b>저기압성</b>으로 휘고, 능에는 <b>온난한</b> 공기가 모여 <b>고기압성</b>으로 휘어요. 파동 수는 보통 4~6개이고, 평균 약 10 m/s로 동쪽으로 움직여요. (참고: 회전 원통 실험은 모양이 비슷해 보여도 원인이 달라서, 한계를 꼭 함께 알아야 해요.)</p>',
       setup() { resetStep(2); },
@@ -1076,7 +1076,7 @@
 
   game = SciSim.game({
     simId: 'hs-planetary-wave', mount: '#game', badge: '행성파 박사', homeHref: '../../index.html#hs',
-    featureLabels: { jet: '🌐 제트류 단면', rossby: '🌊 행성파 시뮬레이션', wave: '🧊 북극 위에서 본 파동 · 원통 실험', map: '🗺️ 500 hPa 상층 일기도' },
+    featureLabels: { jet: '🌐 제트류 단면', rossby: '🌊 행성파 시뮬레이션', wave: '〰️ 북극 위에서 본 파동 · 원통 실험', map: '🗺️ 500 hPa 상층 일기도' },
     onFeatures() { updateCtl(); },
     levels,
   });
