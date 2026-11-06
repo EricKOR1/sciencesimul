@@ -84,6 +84,7 @@
 .v3-seg button.on { background: var(--subject, #3182f6); color: #fff; }
 .v3-mode [data-v3="2d"], .v3-mode .v3-2d-wrap { display: none !important; }
 .v3-mode .v3-empty { display: none !important; }
+body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 3D 화면에서만/2D 화면에서만 보일 글·조작 */
 .v3-on > .stage-hint { z-index: 30; top: 54px; }   /* 미션 힌트·피드백이 3D 화면 위에 보이게 */
 .v3-seg.float { position: absolute; top: 10px; right: 10px; z-index: 26; background: rgba(255,255,255,.94); box-shadow: 0 4px 14px rgba(20,30,60,.18); }
 .v3-on > .v3-seg.float { background: rgba(10,16,30,.72); border-color: rgba(255,255,255,.22); top: 6px; right: 6px; }

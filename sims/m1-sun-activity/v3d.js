@@ -128,8 +128,10 @@
       const chLab = label('채층', [RS * 0.95, -RS * 0.45, RS * 0.5], { size: 12, color: 'rgba(160,20,50,.92)' });
       const coLab = label('코로나', [RS * 1.55, RS * 1.25, 0], { size: 12, color: 'rgba(40,60,130,.92)' });
       const atLab = label('태양 대기', [0, RS * 2.1, 0], { size: 12.5, color: 'rgba(40,60,130,.92)' });
-      /* 광구 가리개 (달) */
-      const occ = new THREE.Mesh(new THREE.SphereGeometry(RS * 1.03, 48, 32), new THREE.MeshStandardMaterial({ color: 0x2a2f45, roughness: 1 })); occ.position.z = 0; root.add(occ);
+      /* 광구 가리개: 보는 쪽(카메라)과 태양 사이에 놓인 어두운 원판 — 달처럼 광구만 꼭 맞게 가려요 */
+      const occ = new THREE.Mesh(new THREE.CircleGeometry(1, 72), new THREE.MeshBasicMaterial({ color: 0x141a2b })); root.add(occ);
+      const OCC_D = RS * 1.7, _cp = new V3();
+      function placeOcc() { _cp.copy(ctx.camera.position); root.worldToLocal(_cp); const D = _cp.length(); if (D < OCC_D * 1.2) return; occ.position.copy(_cp).multiplyScalar(OCC_D / D); occ.lookAt(root.localToWorld(_cp.clone())); const r = RS * 1.03 * (D - OCC_D) / D; occ.scale.set(r, r, 1); }
       const occLab = label('가리개가 광구를 가려요', [0, -RS * 1.2, 0], { size: 11.5 });
 
       /* 홍염 · 플레어 · 태양풍 */
@@ -140,7 +142,9 @@
         const curve = new THREE.CatmullRomCurve3([a, a.clone().multiplyScalar(1.08), mid, b.clone().multiplyScalar(1.08), b]);
         const m = new THREE.Mesh(new THREE.TubeGeometry(curve, 40, 0.07, 8, false), new THREE.MeshBasicMaterial({ color: 0xff4a28 })); sun.add(m); prom.push({ m, lab: i === 0 });
       });
-      const promLab = label('홍염', [0, 0, 0], { size: 12, color: 'rgba(170,30,10,.92)' }); promLab.obj = prom[0].m;
+      const promTop = new THREE.Object3D(); sun.add(promTop);
+      { const g = prom[0].m.geometry; g.computeBoundingBox(); const c = new V3(); g.boundingBox.getCenter(c); promTop.position.copy(c.normalize().multiplyScalar(RS * 1.45)); }
+      const promLab = label('홍염', promTop, { size: 12, color: 'rgba(170,30,10,.92)' });
       const flareG = glowSprite(1.8, 'rgba(255,255,255,1)', 'rgba(255,230,140,.7)'); sun.add(flareG); flareG.position.copy(spots[0].p).multiplyScalar(RS * 1.05);
       const flLab = label('플레어', flareG, { size: 12, color: 'rgba(130,70,0,.92)' });
       const NW = 160, wind = new THREE.InstancedMesh(new THREE.SphereGeometry(0.05, 6, 5), new THREE.MeshBasicMaterial({ color: 0xffe9a8 }), NW); wind.frustumCulled = false; root.add(wind);
@@ -205,6 +209,7 @@
           }
           if (msgT > 0) { msgT -= dt; if (msgT <= 0) text(); }
           sun.rotation.y += dt * 0.1;
+          if (occ.visible) placeOcc();
           const act = st.mode === 'act' ? 0.6 + st.act / 100 : 0.4, bright = 0.9 + 0.1 * Math.sin(t * 1.5);
           if (st.mode !== 'surface') { corU.uT.value = t; corU.uK.value = (st.occ ? 1.5 : 0.4) * (0.9 + 0.1 * act + 0.05 * Math.sin(t * 1.7)); }
           if (st.mode === 'atm') prom.forEach((p, i) => { p.m.scale.setScalar(1 + 0.04 * Math.sin(t * 2 + i)); });

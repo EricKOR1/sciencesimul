@@ -1863,6 +1863,18 @@
     armClient(i) { const V = activeView(), G = polarGeo(V.L), c = armXY(G, i); return this.client(V.L, c.x, c.y); },
     endClient(key, which, expo) { const V = activeView(), G = polarGeo(V.L), e = trailEnds(G, expo || S.expo).filter((q) => q.star === key && q.k === which)[0]; return this.client(V.L, e.x, e.y); },
     chartClient(angDeg, p) { const V = activeView(), G = polarGeo(V.L), a = angDeg * DEG; return this.client(V.L, G.cx + p * G.k * Math.cos(a), G.cy - p * G.k * Math.sin(a)); },
+    // 3D 천구에서 별을 눌렀을 때 — 2D tapStar와 같은 판정 (미션 진행을 함께 써요)
+    tapStar3D(key, consName) {
+      if (key === 'polaris') {
+        if (S.view !== 'north') return { ok: false, text: '북극성은 북쪽 하늘에 있어요' };
+        if (S.acc.north < 1 && !isFree()) { Sound.fail(); return { ok: false, text: '먼저 시간을 1시간 이상 흘려 보세요 (▶ 재생)' }; }
+        if (!S.polarFound) Sound.tone(880, 0.12, 'triangle', 0.08);
+        S.polarFound = true; S.labelPolaris = true;
+        return { ok: true, text: '찾았어요! 거의 움직이지 않는 별 = 북극성' };
+      }
+      Sound.fail();
+      return { ok: false, text: consName ? consName + '의 별이에요. 이 별은 계속 움직여요' : '이 별도 움직여요. 거의 안 움직이는 별을 찾아요' };
+    },
     setT(v, instant) { setTime(v, instant !== false); }, setView, setScene, resetSky, resetPhoto, resetSpace, resetPredict, polarTh, altaz, lstOf, sunAltAt,
   };
 })();

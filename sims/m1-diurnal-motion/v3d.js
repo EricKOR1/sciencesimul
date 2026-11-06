@@ -26,8 +26,9 @@
     hint: ' ',
     camera: { dist: (window.innerWidth || 1000) >= 600 ? 19 : 27, theta: 0.9, phi: 1.08, fov: 50, target: [0, 1.4, -0.5], min: 0.5, max: 40 },
     autoRotate: 0,
+    levels: [0],   // 1단계(밤하늘 관찰)만 3D — 사진 각도 재기 · 우주에서 지구 돌리기 · 북두칠성 돌려 예측은 캔버스 조작이라 2D
     build(ctx) {
-      const { THREE, root, label, info, controls, camera, orbit } = ctx;
+      const { THREE, root, label, info, controls, camera, orbit, renderer } = ctx;
       const V = new THREE.Vector3();
       const P = new THREE.Vector3(0, SL, -CL); // 천구 북극(자전축 북쪽) 방향
       const st = { t: 21, play: false, focus: 'dipper', trails: true, from: null };
@@ -61,14 +62,14 @@
       body.position.y = 0.18;
       const head = new THREE.Mesh(new THREE.SphereGeometry(0.1, 16, 12), new THREE.MeshStandardMaterial({ color: 0xffd9b8, roughness: 0.6 }));
       head.position.y = 0.46; me.add(body, head); root.add(me);
-      label('서울', [0.35, 0.75, 0.3], { size: 12 });
+      const meLab = label('서울', [0.35, 0.75, 0.3], { size: 12 });
 
       /* 자전축 · 천구의 북극(북극성) */
       const axisMat = new THREE.LineBasicMaterial({ color: 0xffd34d });
       root.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([P.clone().multiplyScalar(-R * 1.08), P.clone().multiplyScalar(R * 1.12)]), axisMat));
       const pole = new THREE.Mesh(new THREE.SphereGeometry(0.14, 16, 12), new THREE.MeshBasicMaterial({ color: 0xfff1c9 }));
       pole.position.copy(P).multiplyScalar(R); root.add(pole);
-      label('북극성 · 자전축 방향', P.clone().multiplyScalar(R).toArray(), { size: 12.5, offset: [-1.5, 0.7, 0], color: 'rgba(120,80,0,.88)' });
+      const polLab = label('북극성 · 자전축 방향', P.clone().multiplyScalar(R).toArray(), { size: 12.5, offset: [-1.5, 0.7, 0], color: 'rgba(120,80,0,.88)' });
       // 북극성 고도 호 (북쪽 지평선에서 북극성까지)
       { const pts = []; for (let i = 0; i <= 24; i++) { const a = i / 24 * LAT * DEG; pts.push(new THREE.Vector3(0, Math.sin(a) * R * 0.5, -Math.cos(a) * R * 0.5)); } root.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: 0xffd34d, transparent: true, opacity: 0.8 })));
         label('고도 약 37.5°', [0, Math.sin(LAT * DEG / 2) * R * 0.5, -Math.cos(LAT * DEG / 2) * R * 0.5], { size: 11.5, offset: [0, 0, 0.6] }); }
@@ -93,9 +94,10 @@
         c.o = {}; Object.keys(c.st).forEach((k) => { c.o[k] = mkStar(c.st[k][0], c.st[k][1], 0xf2f6ff, 0.075); });
         const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(c.lines.length * 6), 3));
         c.seg = new THREE.LineSegments(g, new THREE.LineBasicMaterial({ color: c.col, transparent: true, opacity: 0.75 })); root.add(c.seg);
+        Object.keys(c.o).forEach((k) => { c.o[k].cons = c; });
         c.lab = label(c.name, c.o[c.focus].m, { size: 11.5, offset: [0, 0.3, 0], color: 'rgba(8,12,24,.7)' }); c.lab.el.style.color = '#' + c.col.toString(16).padStart(6, '0');
       });
-      const polO = mkStar(POLARIS[0], POLARIS[1], 0xfff1c9, 0.11), sirO = mkStar(SIRIUS[0], SIRIUS[1], 0xd8e8ff, 0.1);
+      const polO = mkStar(POLARIS[0], POLARIS[1], 0xfff1c9, 0.11); polO.key = 'polaris'; const sirO = mkStar(SIRIUS[0], SIRIUS[1], 0xd8e8ff, 0.1);
       const sirLab = label('시리우스', sirO.m, { size: 11.5, offset: [0, 0.3, 0] });
 
       /* 별의 자취: 관측을 시작한 시각(st.from)부터 지금까지 지나온 길만 서서히 그려요.
@@ -181,6 +183,7 @@
         if (st.focus === 'polaris') txt += '<b>북극성</b>은 자전축 방향에 있어서 밤새 거의 제자리예요. 다른 별들은 북극성을 중심으로 돌아요.';
         else txt += '<b>' + f.name + '</b> : ' + (hh > 0 ? '오후 6시부터 ' + hh + '시간 동안 북극성(자전축)을 중심으로 약 <b>' + Math.round(15 * hrs) + '°</b> 돌았어요 (1시간에 15°).' : '지금은 처음 위치예요. 시각을 움직여 보세요.');
         txt += '<br>지구가 서→동으로 자전해서 별은 <b>동→서</b>로 도는 것처럼 보여요.';
+        if (tapMsg) txt = '<b style="color:' + (tapMsg.ok ? '#5eead4' : '#fdba74') + '">' + tapMsg.text + '</b><br>' + txt;
         info(txt);
       }
 
@@ -188,27 +191,60 @@
       function setView(v) {
         if (v === 'all') Object.assign(orbit, { dist: (window.innerWidth || 1000) >= 600 ? 19 : 27, theta: 0.9, phi: 1.08, tx: 0, ty: 1.4, tz: -0.5 });
         else if (v === 'north') Object.assign(orbit, { dist: 0.8, theta: 0, phi: Math.PI / 2 + 0.6, tx: 0, ty: 0.5, tz: -0.8 });
-        else Object.assign(orbit, { dist: 0.8, theta: Math.PI, phi: Math.PI / 2 + 0.5, tx: 0, ty: 0.5, tz: 0.8 });
+        else Object.assign(orbit, { dist: 0.8, theta: Math.PI + 0.4, phi: Math.PI / 2 + 0.5, tx: 0, ty: 0.5, tz: 0.8 });   // 남쪽 하늘: 동쪽에서 떠오르는 오리온도 보이게 남동쪽으로 조금 돌려요
       }
       const probe = controls.text(''); probe.style.display = 'none'; const ctlEl = probe.parentElement;
       const fixLab = (em) => { const k = ctlEl.children, inp = k[k.length - 1], l = k[k.length - 2]; l.style.minWidth = em + 'em'; l.style.display = 'inline-block'; const g = document.createElement('span'); g.style.cssText = 'display:inline-flex;align-items:center;gap:8px;flex-wrap:nowrap'; ctlEl.insertBefore(g, l); g.append(l, inp); };
-      controls.segment('시점', [{ value: 'all', label: '🌐 밖에서' }, { value: 'north', label: '🧭 북쪽 보기' }, { value: 'south', label: '🧭 남쪽 보기' }], 'all', setView);
-      controls.segment('지켜볼 별', [{ value: 'dipper', label: '북두칠성' }, { value: 'cas', label: '카시오페이아' }, { value: 'orion', label: '오리온' }, { value: 'polaris', label: '북극성' }], st.focus, (v) => { st.focus = v; refresh(); });
-      const rng = controls.range('🕘', T0, T1, 0.05, st.t, (v) => { st.t = v; st.play = false; playB.textContent = '▶ 재생'; refresh(); }, (v) => hm(v));
+      /* 3D 조작 → 2D 실험 상태(S.view · S.t · 재생)를 그대로 바꿔요: 숨겨진 2D 조작을 눌러 미션 진행을 함께 써요 */
+      const L2 = () => window.__sim || null;
+      const v2 = (v) => { const b = document.querySelector('#viewSeg button[data-v="' + v + '"]'); if (b) b.click(); };
+      let tapMsg = null, tapT = 0;
+      const viewSeg = controls.segment('시점', [{ value: 'all', label: '🌐 밖에서' }, { value: 'north', label: '🧭 북쪽 하늘' }, { value: 'south', label: '🧭 남쪽 하늘' }], 'all', (v) => { setView(v); if (v !== 'all') v2(v); });
+      const focSeg = controls.segment('지켜볼 별', [{ value: 'dipper', label: '북두칠성' }, { value: 'cas', label: '카시오페이아' }, { value: 'orion', label: '오리온' }, { value: 'polaris', label: '북극성' }], st.focus, (v) => { st.focus = v; refresh(); });
+      const polBtn = Array.prototype.filter.call(ctlEl.querySelectorAll('button'), (b) => b.textContent === '북극성')[0];
+      const rng = controls.range('🕘', T0, T1, 0.05, st.t, (v) => {
+        const s = document.getElementById('sTime');
+        if (s && L2()) { s.value = v; s.dispatchEvent(new Event('input')); } else { st.t = v; refresh(); }
+      }, (v) => hm(v));
       fixLab(8.5);
-      const playB = controls.button('▶ 재생', () => { st.play = !st.play; if (st.play && st.t >= T1 - 0.01) { st.t = T0; st.from = T0; } playB.textContent = st.play ? '⏸ 멈춤' : '▶ 재생'; });
+      const playB = controls.button('▶ 재생', () => { const b = document.getElementById('playBtn'); if (b && L2()) b.click(); });
       const trB = controls.button('별의 자취 ✓', () => { st.trails = !st.trails; trails.visible = st.trails; trB.classList.toggle('on', st.trails); trB.textContent = '별의 자취 ' + (st.trails ? '✓' : '✕'); }); trB.classList.add('on');
+
+      /* 별 누르기: 화면에서 가장 가까운 별 (2D처럼 '거의 움직이지 않는 별' 찾기) */
+      { const dom = renderer.domElement, viewEl = dom.parentElement; let down = null; const q = new THREE.Vector3();
+        viewEl.addEventListener('pointerdown', (e) => { down = { x: e.clientX, y: e.clientY }; });
+        viewEl.addEventListener('pointerup', (e) => {
+          if (!down) return; const mv = Math.hypot(e.clientX - down.x, e.clientY - down.y); down = null; if (mv > 6) return;
+          const r = dom.getBoundingClientRect(); let best = null, bd = 30;
+          named.forEach((o) => {
+            if (o.m.position.y < 0.05) return;
+            q.copy(o.m.position).project(camera); if (q.z > 1) return;
+            const d = Math.hypot((q.x + 1) / 2 * r.width - (e.clientX - r.left), (1 - q.y) / 2 * r.height - (e.clientY - r.top));
+            if (d < bd) { bd = d; best = o; }
+          });
+          const L = L2(); if (!best || !L || !L.tapStar3D || !L.S || L.S.scene !== 'sky') return;
+          tapMsg = L.tapStar3D(best.key || '', best.cons ? best.cons.name : ''); tapT = 2.6; refresh();
+        });
+      }
+      let lastV = null, lastT = null, lastF = null;
       refresh();
 
       return {
         update(dt) {
-          const fv = orbit.dist < 3 ? 80 : 50; if (camera.fov !== fv) { camera.fov = fv; camera.updateProjectionMatrix(); }
+          const fv = orbit.dist < 3 ? 88 : 50; if (camera.fov !== fv) { camera.fov = fv; camera.updateProjectionMatrix(); } meLab.show(orbit.dist >= 3);
           named.forEach((s) => { const k = Math.max(0.25, Math.min(1.3, camera.position.distanceTo(s.m.position) / 20)); s.m.scale.setScalar(k); });
-          if (st.play) { st.t += dt * 0.5; if (st.t >= T1) { st.t = T1; st.play = false; playB.textContent = '▶ 재생'; } rng.set(st.t); refresh(); }
+          const S = L2() && L2().S;
+          if (S && typeof S.tA === 'number') {   // 2D 상태를 따라가요 (시각 · 보는 방향 · 재생)
+            if (S.trailFrom == null || S.tA < S.trailFrom) S.trailFrom = S.tA;   // 2D와 같은 규칙: 시각을 되돌리면 그때부터 자취를 다시 남겨요
+            const t = Math.min(T1, Math.max(T0, S.tA)), f = Math.min(t, Math.max(T0, S.trailFrom));
+            if (t !== lastT || f !== lastF) { lastT = t; lastF = f; st.t = t; st.from = f; rng.set(Math.min(T1, Math.max(T0, S.t))); refresh(); }
+            if (S.view !== lastV) { lastV = S.view; if (S.scene === 'sky') { viewSeg.set(S.view); setView(S.view); st.focus = S.view === 'south' ? 'orion' : 'dipper'; focSeg.set(st.focus); refresh(); } }
+            const pt = S.playing ? '⏸ 멈춤' : '▶ 재생'; if (playB.textContent !== pt) playB.textContent = pt;
+            const showPol = S.labelPolaris || S.scene !== 'sky'; polLab.show(showPol); if (polBtn) polBtn.style.display = showPol ? '' : 'none';
+          }
+          if (tapMsg) { tapT -= dt; if (tapT <= 0) { tapMsg = null; refresh(); } }
         },
-        sync() {
-          try { const s = window.__sim && window.__sim.S; if (s && typeof s.t === 'number') { st.t = Math.min(T1, Math.max(T0, s.t)); if (typeof s.trailFrom === 'number') st.from = Math.min(st.t, Math.max(T0, s.trailFrom)); rng.set(st.t); refresh(); } } catch (e) {}
-        },
+        sync() { lastT = null;         },
       };
     },
   });

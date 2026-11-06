@@ -65,7 +65,7 @@
       const dhCone = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.34, 14), mat(0x34d399, { emissive: 0x0b6e4f, emissiveIntensity: 0.5 })); dhCone.position.set(3.35 * SX, OY + DH * KS + 0.17, 0); dhCone.rotation.x = Math.PI; root.add(dhCone);
       const lEa = label('', [0, 0, 0], { color: 'rgba(180,120,0,.92)' });
       label('ΔH = −196 kJ', [3.35 * SX + 0.2, OY + DH * KS / 2, 0], { color: 'rgba(5,150,105,.92)' });
-      label('반응물 2H₂O₂', [-3 * SX, OY + 0.45, 0], { color: 'rgba(30,41,59,.9)' });
+      { const o = new THREE.Object3D(); o.position.set(-3 * SX, OY + 0.45, 0); root.add(o); label('반응물 2H₂O₂', o, { color: 'rgba(30,41,59,.9)' }); }   // 에너지 도표의 반응물 수준 (고정)
       label('생성물 2H₂O + O₂', [2.6 * SX, OY + DH * KS - 0.55, 0], { color: 'rgba(30,41,59,.9)' });
       const lNo = label('촉매 없이 75 kJ', [-1.9 * SX, OY + 0.2 + 0.55, 0], { color: 'rgba(100,116,139,.92)' });
       const lCat = label('촉매 있을 때 50 kJ', [1.6 * SX, OY - 0.3, 0], { color: 'rgba(230,120,20,.92)' });

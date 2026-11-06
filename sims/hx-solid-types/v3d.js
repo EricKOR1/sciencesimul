@@ -329,6 +329,7 @@
       const hGo = grab(() => controls.button('🔥 가열하기', () => { const b = document.getElementById('bHeat'); if (b) b.click(); }));
       const hFast = grab(() => controls.button('⏩ 빠르게', () => { const b = document.getElementById('bFast'); if (b) b.click(); }));
       let heatOn = false, modeNow = '', clsT = 0;
+      [hCtl, hGo, hFast].forEach((c) => c.els.forEach((e) => { e.style.display = 'none'; }));   // 가열 단추는 '결정과 비결정' 화면에서만
       function setHeatOn(on) {
         if (on === heatOn) return; heatOn = on; gH.visible = on; g.visible = !on;
         ctlOld.forEach((e) => { e.style.display = on ? 'none' : ''; });

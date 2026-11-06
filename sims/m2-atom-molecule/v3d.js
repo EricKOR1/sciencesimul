@@ -1,7 +1,9 @@
 /* m2-atom-molecule · 3D 입자 모형
    2D 실험의 물질과 같아요: 원자로 존재(헬륨 · 네온 · 구리) · 분자로 존재(산소 · 이산화 탄소 · 물 · 메테인) · 이온으로 존재(소금).
    '나누기'(▶ 재생)로 분자를 원자로 나누면 더 이상 그 물질의 성질이 없어요. (결합의 원리 · 분자 모양 설명은 이 차시에서 다루지 않아요.)
-   2D 입자 현미경에서 관찰 중인 물질, 1단계에서 물 분자를 나눈 상태를 따라가요. */
+   2D 입자 현미경에서 관찰 중인 물질, 1단계에서 물 분자를 나눈 상태를 따라가요.
+   3D 단계: 2단계(분류) · 3단계(세어 보기 · CO₂ 조립) · 4단계(분류). 아래 막대의 관찰 단추로 물질을 고르고 분류 단추로 나누며,
+   원자 단추로 탄소·산소 원자를 넣어 조립해요 (2D의 끌어 놓기와 같은 결과). 1단계(물방울 나누기·축척)는 2D예요. */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -41,9 +43,12 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: 4.6, theta: 0.6, phi: 1.2, min: 3, max: 16 },
     autoRotate: 0.3,
-    levels: [2],                     // 3단계(원소 · 원자 · 분자 구별하기)는 3D로 시작 · 나머지 미션은 2D에서 해요 ([🧊 3D]로 열어요)
+    levels: [1, 2, 3],               // 2~4단계는 3D (1단계: 물방울을 1/10씩 나누며 축척을 보는 장면이라 2D)
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
+      const DBG = () => window.__sim || {};
+      const ID2D = {}; Object.keys(OF2D).forEach((k) => { ID2D[OF2D[k]] = k; });
+      let fbMsg = '', fbT = 0;   // 분류 단추를 눌렀을 때의 알림 (잠깐 보여 줘요)
       let key = 'H2O', style = 'ball', split = 0;
       const g = new THREE.Group(); root.add(g);
       const atomObjs = [], bondObjs = [], labs = [];
@@ -125,6 +130,16 @@
       }
       function text() {
         const M = MOLS[key];
+        const l = DBG(), inScope = l.S && l.S.scene === 'scope', id = ID2D[key];
+        const fb = fbT > 0 && fbMsg ? fbMsg + '<br>' : '';
+        if (inScope && l.SCP && !l.SCP.cur) { info(fb + '아래 <b>관찰</b> 단추로 물질을 하나 골라 입자의 모습을 살펴봐요.'); return; }
+        if (inScope && l.SCP && !(l.SCP.placed && l.SCP.placed[id])) {
+          // 분류하기 전에는 정답(원자·분자·이온)을 말하지 않고 모습만 보여 줘요
+          const S0 = l.SAMPLES && l.SAMPLES[id];
+          info(fb + '<b>' + M.name + ' (' + M.f + ')</b><br>' + (S0 ? S0.cap : M.cap || '') + '<br><span style="color:#9fb0d4">입자의 모습을 보고 아래 단추로 분류해 봐요.</span>');
+          return;
+        }
+        if (fb) { info(fb + '<b>' + M.name + ' (' + M.f + ')</b>'); return; }
         if (M.kind === 'atom') {
           info('<b>' + M.name + ' (' + M.f + ')</b> · 원자로 존재<br>' + M.cap);
         } else if (M.kind === 'metal') {
@@ -142,8 +157,43 @@
       let pl = null, ctlEl = null, pmode = false, pP = 0;
       function playerRow(on) { if (!ctlEl) ctlEl = ctx.renderer.domElement.closest('.v3-wrap').querySelector('.v3-ctl'); const r = ctlEl && ctlEl.querySelector('.v3-player'); if (r) r.style.display = on ? '' : 'none'; const ri = ctlEl && [...ctlEl.querySelectorAll('input[type=range]')].find((x) => !x.closest('.v3-player')); if (ri) { ri.style.display = on ? '' : 'none'; if (ri.previousElementSibling) ri.previousElementSibling.style.display = on ? '' : 'none'; } }
       function setKey(k) { key = k; split = 0; sl.set(0); fitCamera(); build(); playerRow(MOLS[k].kind === 'mol'); }
-      const seg = controls.segment('물질', KEYS.map((k) => ({ value: k, label: MOLS[k].name })), key, (v) => setKey(v));
-      const sl = controls.range('나누기', 0, 1, 0.01, 0, (v) => { split = v; if (pl) pl.pause(); refresh(); }, (v) => (v < 0.05 ? '(분자)' : v > 0.95 ? '(원자들)' : Math.round(v * 100) + '%'));
+      // 관찰 단추: 2D 입자 현미경에 그 시료를 넣어 관찰하는 것과 같아요
+      const segLab = controls.text('<b>관찰</b>');
+      const seg = controls.segment('', KEYS.map((k) => ({ value: k, label: MOLS[k].name })), key, (v) => { const l = DBG(); if (l.observe && l.S && l.S.scene === 'scope') l.observe(ID2D[v]); setKey(v); });
+      const segBtns = Array.from(segLab.parentNode.querySelectorAll('button')).slice(-KEYS.length);
+      // 분류 단추: 지금 관찰 중인 물질을 상자에 넣는 것과 같아요
+      const sortLab = controls.text('<b>분류</b>');
+      const BOXN = { atom: '원자로 존재', mol: '분자로 존재', ion: '이온으로 존재' };
+      const sortBtns = ['atom', 'mol', 'ion'].map((bk) => ({ bk, b: controls.button(BOXN[bk], () => {
+        const l = DBG(), S = l.SCP; if (!S || !l.classify) return;
+        const id = S.cur;
+        if (!id) { flash('먼저 <b>관찰</b> 단추로 물질을 골라 관찰해요.'); return; }
+        if (S.placed[id]) { flash('<b>' + MOLS[key].name + '</b>은(는) 이미 분류했어요. 다른 물질을 골라요.'); return; }
+        const why = l.scpWhy ? l.scpWhy(id, bk) : '';
+        if (l.classify(id, bk)) flash('✔ <b>' + MOLS[key].name + '</b>: ' + BOXN[bk] + '하는 물질이에요!');
+        else flash('✗ ' + why);
+      }) }));
+      function flash(h) { fbMsg = h; fbT = 3.2; text(); }
+      // 원자 넣기 단추: 원자 바구니에서 원자를 꺼내 조립 원에 놓는 것과 같아요
+      const buildLab = controls.text('<b>원자 넣기</b>');
+      const atomBtns = [['C', '탄소'], ['O', '산소']].map(([sym, nm]) => controls.button(nm + ' 원자', () => { const l = DBG(); if (l.ctAddAtom && !l.ctAddAtom(sym)) flash('조립대가 가득 찼어요. ↺ 원자 비우기로 비워요.'); }));
+      let barSig = '', barCur = '';
+      function bar(l) {
+        const sc = l.S ? l.S.scene : '', S = l.SCP, scope = sc === 'scope' && !!S, bld = sc === 'count' && !!(l.ctBuildOn && l.ctBuildOn());
+        const list = scope ? S.list.join() : '', placed = scope ? S.list.map((id) => S.placed[id] || '').join() : '';
+        const cur = scope ? S.cur || '' : '-';
+        if (sc !== 'count') { g.visible = !!cur; if (!cur) labs.forEach((x) => x.show(false)); else if (cur !== barCur && cur !== '-' && OF2D[cur] === key) build(); }
+        barCur = cur;
+        const sig = sc + '|' + bld + '|' + list + '|' + placed + '|' + cur;
+        if (sig === barSig) return; barSig = sig;
+        const show = (el, on) => { el.style.display = on ? '' : 'none'; };
+        show(segLab, sc !== 'count'); show(sortLab, scope);
+        if (scope && !cur) text();
+        segBtns.forEach((b, i) => { const id = ID2D[KEYS[i]]; b.classList.toggle('on', scope ? cur === id : KEYS[i] === key); show(b, sc === 'count' ? false : scope ? S.list.indexOf(id) >= 0 : true); b.textContent = MOLS[KEYS[i]].name + (scope && S.placed[id] ? ' ✓' : ''); });
+        sortBtns.forEach((q) => show(q.b, scope && (q.bk !== 'ion' || S.list.indexOf('nacl') >= 0)));
+        show(buildLab, bld); atomBtns.forEach((b) => show(b, bld));
+      }
+      const sl = { set() {} };   // (나누기 정도는 ▶ 분자 나누기 재생 막대로 골라요)
       // ▶ 재생: 분자 1개가 원자로 나뉘었다가 다시 모여요 (분자를 나누면 원자 — 물질의 성질이 사라져요)
       const ease = (x) => x * x * (3 - 2 * x);
       pl = controls.player({
@@ -207,7 +257,7 @@
         const nm = mols.length;
         cnLab.obj = [0, nm > 4 ? 3.9 : 2.7, 0];
         cnLab.set(nm ? (lens === 'mol' ? '분자 <b>' + nm + '개</b>' : lens === 'atom' ? '원자 <b>' + na + '개</b>' : '원소 <b>' + Object.keys(cnt).length + '가지</b> (' + Object.keys(cnt).map((s) => NAME[s] + ' ' + cnt[s] + '개').join(' · ') + ')') : '조립대가 비어 있어요'); cnLab.show(true);
-        const f = freeA.length ? '<br>조립대의 원자: ' + freeA.length + '개 (옆의 2D 화면에서 탄소 · 산소 원자를 끌어다 놓으면 분자가 만들어져요)' : '';
+        const f = (fbT > 0 && fbMsg ? '<br>' + fbMsg : '') + (freeA.length ? '<br>조립대의 원자: ' + freeA.length + '개 (탄소 원자 1개와 산소 원자 2개가 모이면 CO₂ 분자가 만들어져요)' : CT.mode === 'build' ? '<br>아래 <b>탄소 원자 · 산소 원자</b> 단추로 원자를 넣으면 분자가 만들어져요.' : '');
         const ph = document.querySelector('.v3-player .v3-ph'); if (ph) ph.textContent = pmode ? lensTxt[lens] : '';
         setCountInfo((pmode ? '<b>▶ ' + lensTxt[lens] + '</b><br>' : '') + (lens === 'mol' ? '<b>분자 렌즈</b>: 원자들이 결합한 한 덩어리를 세어요. 분자는 <b>' + nm + '개</b>예요.' : lens === 'atom' ? '<b>원자 렌즈</b>: 분자를 이루는 원자 하나하나를 세어요. 원자는 모두 <b>' + na + '개</b>예요.' : '<b>원소 렌즈</b>: 원자의 <b>종류</b>를 세어요. 원소는 <b>' + Object.keys(cnt).length + '가지</b>예요.') + ' (분자 속 원자의 수는 분자마다 달라요.)' + f);
       }
@@ -225,9 +275,11 @@
         if (sp != null && MOLS[key].kind === 'mol') { if (pl) pl.pause(); split = sp; sl.set(sp); refresh(); }
       }
       let prevSc = '';
-      return { sync: from2D, update() {
+      return { sync: from2D, update(dt) {
         const l = ctx.lesson && ctx.lesson(), sc = l && l.S ? l.S.scene : '';
-        if (sc !== prevSc) { if (pmode) { pmode = false; if (pl) pl.pause(); } prevSc = sc; const isC = sc === 'count'; gN.visible = isC; g.visible = !isC; if (isC) { labs.forEach((x) => x.show(false)); cnSig = ''; playerRow(true); const ri = ctlEl && [...ctlEl.querySelectorAll('input[type=range]')].find((x) => !x.closest('.v3-player')); if (ri) { ri.style.display = 'none'; if (ri.previousElementSibling) ri.previousElementSibling.style.display = 'none'; } } else { cnLab.show(false); cnLabs.forEach((x) => x.show(false)); playerRow(MOLS[key].kind === 'mol'); fitCamera(); build(); lastSig = ''; text(); } }
+        if (fbT > 0) { fbT -= dt || 0.016; if (fbT <= 0 && sc !== 'count') text(); }
+        if (l) bar(l);
+        if (sc !== prevSc) { if (pmode) { pmode = false; if (pl) pl.pause(); } prevSc = sc; const isC = sc === 'count'; gN.visible = isC; g.visible = !isC; if (isC) { labs.forEach((x) => x.show(false)); cnSig = ''; playerRow(false); } else { cnLab.show(false); cnLabs.forEach((x) => x.show(false)); playerRow(MOLS[key].kind === 'mol'); fitCamera(); build(); lastSig = ''; text(); } }
         if (sc === 'count') { updCount(l, 0); return; }
         if ((k0++ % 10) === 0) from2D();
       } };

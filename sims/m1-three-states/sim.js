@@ -2289,9 +2289,17 @@
     tagCycle(kind, cat) {
       if (TG.solved) return null;
       const slot = TG.slots.find((s) => s.kind === kind && s.cat === cat); if (!slot) return null;
-      const list = TG.cards.filter((c) => c.cat === cat), cur = slot.tag, c = list[(list.indexOf(cur) + 1) % list.length];
-      if (c.slot && c.slot !== slot) c.slot.tag = null;
-      c.slot = null; c.wrong = false; tgPlace(c, slot); refreshUI();
+      const list = TG.cards.filter((c) => c.cat === cat), cur = slot.tag, i0 = list.indexOf(cur), n = list.length;
+      // 다른 칸에 붙지 않은 태그를 차례로 골라요. 남은 태그가 없으면 다음 태그와 자리를 맞바꿔요.
+      let c = null;
+      for (let k = 1; k <= n && !c; k++) { const q = list[(i0 + k + n) % n]; if (q !== cur && !q.slot) c = q; }
+      if (c) { c.wrong = false; tgPlace(c, slot); }
+      else {
+        c = list[(i0 + 1 + n) % n]; const other = c.slot;
+        if (other) other.tag = null; c.slot = null; slot.tag = null; if (cur) cur.slot = null;
+        c.wrong = false; tgPlace(c, slot); if (cur && other) { cur.wrong = false; tgPlace(cur, other); }
+      }
+      refreshUI();
       return c.text;
     },
     tagTable() { return TG.slots.map((s) => ({ kind: s.kind, cat: s.cat, text: s.tag ? s.tag.text : '', wrong: !!(s.tag && s.tag.wrong) })); },

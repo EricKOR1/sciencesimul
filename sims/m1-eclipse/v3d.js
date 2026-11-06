@@ -19,6 +19,7 @@
     hint: ' ',
     camera: Object.assign({ fov: 45, target: [2.2, 0, 0], min: 4, max: 45 }, VIEWS.obl),
     autoRotate: 0,
+    levels: [3],   // 4단계(매달 일어나지 않는 까닭: 기울어진 궤도)만 3D — 그림자 · 일식 지역 · 월식은 2D 화면에서 달을 끌어요
     build(ctx) {
       const { THREE, scene, root, label, info, controls, orbit } = ctx;
       const st = { th: 150, target: null, play: false, tilt: true, tiltA: 1, nu: 90, nuA: 90, view: 'obl' };
@@ -111,11 +112,14 @@
       /* 조작 */
       const probe = controls.text(''); probe.style.display = 'none'; const ctlEl = probe.parentElement;
       const fixLab = (em) => { const k = ctlEl.children, inp = k[k.length - 1], l = k[k.length - 2]; l.style.minWidth = em + 'em'; l.style.display = 'inline-block'; const g = document.createElement('span'); g.style.cssText = 'display:inline-flex;align-items:center;gap:8px;flex-wrap:nowrap'; ctlEl.insertBefore(g, l); g.append(l, inp); };
-      const rng = controls.range('🌙', 0, 359, 1, Math.round(st.th), (v) => { st.target = null; st.play = false; playB.textContent = '▶ 공전'; st.th = v; refresh(); }, (v) => 'θ=' + v + '° ' + phaseName(v));
+      /* 3D 조작 → 2D 실험 상태(S.theta · S.tilt)도 같이 바꿔 미션 진행이 이어지게 */
+      const L2 = () => window.__sim || null;
+      const th2D = () => { const L = L2(); if (L && L.setTheta) L.setTheta(st.th); };
+      const rng = controls.range('🌙', 0, 359, 1, Math.round(st.th), (v) => { st.target = null; st.play = false; playB.textContent = '▶ 공전'; st.th = v; th2D(); refresh(); }, (v) => 'θ=' + v + '° ' + phaseName(v));
       fixLab(9.5);
       const playB = controls.button('▶ 공전', () => { st.play = !st.play; st.target = null; playB.textContent = st.play ? '⏸ 멈춤' : '▶ 공전'; });
       controls.segment('', [{ value: 0, label: '🌑 삭' }, { value: 180, label: '🌕 망' }], -1, (v) => { st.play = false; playB.textContent = '▶ 공전'; st.target = v; });
-      const tB = controls.button('궤도 기울기 ✓', () => { st.tilt = !st.tilt; tB.classList.toggle('on', st.tilt); tB.textContent = '궤도 기울기 ' + (st.tilt ? '✓' : '✕'); }); tB.classList.toggle('on', st.tilt); tB.textContent = '궤도 기울기 ' + (st.tilt ? '✓' : '✕');
+      const tB = controls.button('궤도 기울기 ✓', () => { st.tilt = !st.tilt; const L = L2(); if (L && L.setTilt) L.setTilt(st.tilt); tB.classList.toggle('on', st.tilt); tB.textContent = '궤도 기울기 ' + (st.tilt ? '✓' : '✕'); }); tB.classList.toggle('on', st.tilt); tB.textContent = '궤도 기울기 ' + (st.tilt ? '✓' : '✕');
       const nB = controls.button('📍 식 없는 때', () => { st.nu = st.nu === 90 ? 0 : 90; nB.textContent = st.nu === 90 ? '📍 식 없는 때' : '📍 식이 일어나는 때'; nB.classList.toggle('on', st.nu === 0); });
       controls.text('').style.cssText = 'flex-basis:100%;height:0;padding:0;margin:-3px 0';
       controls.segment('시점', [{ value: 'top', label: '위에서' }, { value: 'obl', label: '비스듬히' }, { value: 'side', label: '옆에서' }], 'obl', (v) => { Object.assign(orbit, { tx: 2.2, ty: 0, tz: 0 }, VIEWS[v]); });
@@ -128,6 +132,12 @@
           else if (st.target != null) { const d = ((st.target - st.th + 540) % 360) - 180; st.th = norm(st.th + Math.sign(d) * Math.min(Math.abs(d), Math.max(0.5, Math.abs(d) * 6 * dt))); if (Math.abs(d) < 0.4) { st.th = st.target; st.target = null; } rng.set(Math.round(st.th) % 360); ch = true; }
           const ta = st.tilt ? 1 : 0; if (Math.abs(st.tiltA - ta) > 1e-3) { st.tiltA += (ta - st.tiltA) * Math.min(1, dt * 6); ch = true; } else st.tiltA = ta;
           const dn = ((st.nu - st.nuA + 540) % 360) - 180; if (Math.abs(dn) > 0.05) { st.nuA += dn * Math.min(1, dt * 5); ch = true; } else st.nuA = st.nu;
+          if (ch && (st.play || st.target != null || ch === 'th')) th2D();
+          const S2 = L2() && L2().S;
+          if (S2 && !st.play && st.target == null) {   // 2D 상태(단계 시작 위치 등)를 따라가요
+            if (typeof S2.theta === 'number' && Math.abs(((S2.theta - st.th + 540) % 360) - 180) > 0.5) { st.th = norm(S2.theta); rng.set(Math.round(st.th) % 360); ch = true; }
+            if (typeof S2.tilt === 'boolean' && S2.tilt !== st.tilt) { st.tilt = S2.tilt; tB.classList.toggle('on', st.tilt); tB.textContent = '궤도 기울기 ' + (st.tilt ? '✓' : '✕'); ch = true; }
+          }
           if (ch) refresh();
         },
         sync() { try { const s = window.__sim && window.__sim.S; if (s) { if (typeof s.theta === 'number') { st.th = norm(s.theta); st.target = null; rng.set(Math.round(st.th) % 360); } refresh(); } } catch (e) {} },

@@ -1198,7 +1198,7 @@
   }
   SC.scope = {
     label: '🔬 입자 현미경으로 물질을 들여다봐요',
-    get hint() { return on('ion') ? '시료를 현미경에 넣어 관찰하고 원자·분자·이온 상자로 분류해요' : '시료를 눌러 현미경으로 관찰하고, 알맞은 상자에 넣어요'; },
+    get hint() { return on('ion') ? '시료를 관찰하고 원자·분자·이온으로 분류해요' : '시료를 현미경으로 관찰하고 알맞게 분류해요'; },
     enter() { if (SCP.listKey === '') setList(sampleKey(), false); },
     update(dt) { scopeUpdate(dt); },
     draw(t) { scopeDraw(t); },
@@ -1527,7 +1527,7 @@
   }
   SC.count = {
     label: '🔍 렌즈로 분자·원자·원소를 세어 봐요',
-    get hint() { return ctBuildOn() ? '원자 바구니에서 원자를 끌어 조립 원에 놓아요' : '렌즈를 바꿔 끼우며 분자·원자·원소를 세어 봐요'; },
+    get hint() { return ctBuildOn() ? '원자를 하나씩 넣어 분자를 조립해요' : '렌즈를 바꿔 끼우며 분자·원자·원소를 세어 봐요'; },
     enter() { ctBaskets(); },
     update(dt) { ctUpdate(dt); },
     draw(t) { ctDraw(t); },
@@ -1551,6 +1551,17 @@
     },
   };
   Object.assign(DBG, { CT, ctPreset, ctClearCircle, ctSetLens, ctReset, CIR, BX, mkMol });
+  /* 3D 막대의 원자 단추: 바구니에서 원자를 꺼내 조립 원에 놓는 것과 같아요 (2D와 같은 상태를 써요) */
+  function ctAddAtom(sym) {
+    if (!ctBuildOn()) return false;
+    if (CT.atoms.filter((a) => a.state === 'in' || a.state === 'asm').length >= 9) return false;
+    const b = CT.baskets.find((q) => q.sym === sym);
+    CT.atoms.push({ sym, x: b ? b.hx : CIR.x, y: b ? b.y : CIR.y, s: 0.7, state: 'in' }); CT.used[sym] = (CT.used[sym] || 0) + 1; CT.idle = 0; if (b) b.pulse = 1; sfx.glug(); hideHint();
+    return true;
+  }
+  /* 3D 막대의 분류 단추가 틀렸을 때 보여 줄 까닭 (2D 상자에 넣을 때와 같은 말) */
+  function scpWhy(id, box) { const s = SAMPLES[id]; return (WRONG[s.kind][box] || (() => '다시 한번 생각해 봐요.'))(Object.assign({ id }, s)); }
+  Object.assign(DBG, { ctAddAtom, scpWhy, ctBuildOn });
 
   /* =========================================================
      장면 전환 · UI · 입력
@@ -1573,7 +1584,7 @@
     const free = !!(game && game.free);
     const cw = $('#clearWrap'); if (cw) cw.hidden = S.scene !== 'count' || !ctBuildOn();
     const zn = $('#zoomNote'); if (zn) zn.textContent = ZM.split ? '물 분자를 나누면 원자가 되어, 더 이상 물이 아니에요.' : ZM.level >= 7 ? '물 분자 1개까지 왔어요. 한 번 더 나누면 어떻게 될까요?' : '버튼을 누를 때마다 물방울이 1/10 크기로 나뉘고, 그 속을 10배 확대해서 봐요.';
-    const sn = $('#scopeNote'); if (sn) sn.textContent = on('ion') ? '시료를 눌러 현미경으로 관찰한 뒤, 원자·분자·이온 상자에 넣어요. 관찰하기 전에는 상자에 넣을 수 없어요.' : '시료를 눌러(또는 창으로 끌어) 관찰한 뒤, 아래 칩을 알맞은 상자에 끌어 넣어요.';
+    const sn = $('#scopeNote'); if (sn) sn.innerHTML = '<span class="only2d">' + (on('ion') ? '시료를 눌러 현미경으로 관찰한 뒤, 원자·분자·이온 상자에 넣어요. 관찰하기 전에는 상자에 넣을 수 없어요.' : '시료를 눌러(또는 창으로 끌어) 관찰한 뒤, 아래 칩을 알맞은 상자에 끌어 넣어요.') + '</span><span class="only3d">아래 막대의 <b>관찰</b> 단추로 물질을 고르고, <b>분류</b> 단추로 나누어요. 관찰하기 전에는 분류할 수 없어요.</span>';
     const cn = $('#countNote'); if (cn) cn.textContent = ctBuildOn() ? '원자를 조립 원에 놓으면 분자가 만들어져 상자로 들어가요.' : '렌즈를 바꾸면 같은 상자를 다른 눈으로 볼 수 있어요.';
     $('#resetBtn').hidden = S.scene === 'zoom';
     $('#sceneSeg').hidden = !free;
@@ -1721,7 +1732,7 @@
           {
             title: '입자로 분류하기', scene: 'scope', focus: 'scope',
             goal: '여섯 가지 물질을 입자 현미경으로 관찰하고 원자로 존재하는 물질과 분자로 존재하는 물질로 분류하세요.',
-            hint: '입자가 하나씩 따로 움직이는지, 원자 여러 개가 붙어 한 덩어리로 움직이는지 보세요. 관찰하기 전에는 상자에 넣을 수 없어요.',
+            hint: '입자가 하나씩 따로 움직이는지, 원자 여러 개가 붙어 한 덩어리로 움직이는지 보세요. 관찰하기 전에는 분류할 수 없어요.',
             setup() { useScope(); },
             check: () => SCP.list.length === 6 && nPlaced() === 6, hold: 0.3,
             status: () => '관찰 <b>' + nSeen() + '/' + SCP.list.length + '</b> · 분류 <b>' + nPlaced() + '/' + SCP.list.length + '</b>',
@@ -1758,8 +1769,8 @@
           {
             title: '이산화 탄소 분자 2개 만들기', scene: 'count', focus: 'build',
             setup() { useCount('empty', 'build'); ctSetLens('mol'); },
-            goal: '원자 바구니에서 원자를 꺼내 이산화 탄소(CO₂) 분자 2개를 조립해 상자에 넣으세요.',
-            hint: 'CO₂ 분자 하나 = 탄소 원자 1개 + 산소 원자 2개. 2개를 만들려면 원자가 모두 몇 개 필요할까요?',
+            goal: '탄소 원자와 산소 원자를 하나씩 넣어 이산화 탄소(CO₂) 분자 2개를 조립하세요.',
+            hint: 'CO₂ 분자 하나 = 탄소 원자 1개 + 산소 원자 2개. 2개를 만들려면 원자가 모두 몇 개 필요할까요? 원자는 바구니에서 끌어 놓거나 원자 버튼을 눌러 넣어요.',
             check: () => CT.mode === 'build' && co2Cnt() === 2 && !CT.atoms.length && !CT.asm.length, hold: 0.4,
             status: () => '탄소 원자 <b>' + CT.used.C + '</b> · 산소 원자 <b>' + CT.used.O + '</b> 사용 / 완성 분자 <b>' + co2Cnt() + '/2</b>',
             explain: 'CO₂ 분자 2개 = 원자 6개(탄소 2 + 산소 4), 원소는 탄소와 산소 2종류예요.',

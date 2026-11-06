@@ -1,5 +1,5 @@
 /* m1-force-balance · 3D 얼음판 위 상자: 나란한 두 힘의 합력과 힘의 평형
-   2D '얼음판' 장면과 같아요(힘 F₁·F₂ N, 오른쪽 고리의 작용점 위/가운데/아래, 핀). 힘은 2D 조작판에서 정하고, ▶ 재생은 네 가지 장면을 차례로 보여 줘요.
+   2D '얼음판' 장면과 같아요(힘 F₁·F₂ N, 오른쪽 고리의 작용점 위/가운데/아래, 핀). ▶ 재생은 네 가지 장면을 차례로 보여 줘요. 3D로 보는 단계는 4단계(줄다리기)예요 — 힘 손잡이 · 고리를 끄는 1~3단계는 2D.
    같은 방향은 합력 = 두 힘의 합, 반대 방향은 큰 힘 − 작은 힘. 크기가 같고 방향이 반대이며 같은 작용선이면 평형이에요. */
 (function () {
   'use strict';
@@ -8,7 +8,7 @@
   window.SciSim3D.attach({
     title: '합력과 힘의 평형 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    levels: [0, 1, 2, 3],
+    levels: [3],   // 줄다리기(− / + 단추와 ▶ 시작)만 3D. 찰흙 · 수레 · 힘 손잡이를 캔버스에서 끄는 1~3단계는 2D
     camera: { dist: 10.5 * (PHN0 ? 1.12 : 1), theta: 0.25, phi: 0.95, fov: 45, target: [0, -0.2, 0], min: 6, max: 28 },
     autoRotate: 0,
     build(ctx) {
@@ -80,7 +80,7 @@
         c.globalAlpha = 0.25; for (let i = 0; i < 60; i++) { c.fillStyle = cols[Math.floor(r() * n)]; c.beginPath(); c.ellipse(r() * w, r() * h, 8 + r() * 25, 2 + r() * 4, 0, 0, 7); c.fill(); } c.globalAlpha = 1; }); }
 
       /* 2D '얼음판' 장면과 같은 구성(위에서 본 얼음판 위의 상자, 왼쪽 고리 · 오른쪽 고리 + 작용점 위/가운데/아래, 핀).
-         힘 F(+ 오른쪽 / − 왼쪽, N)과 작용점은 2D의 값을 그대로 읽어 와요. 조작은 옆의 2D 조작판에서 해요. */
+         힘 F(+ 오른쪽 / − 왼쪽, N)과 작용점은 2D의 값을 그대로 읽어 와요. */
       const PX = 44.4, SLOTS = [-26 / 44.4, 0, 26 / 44.4], HOOK = 48 / 44.4, KN = 0.4, LIM = 3.4;
       const bStart = root.children.length;
       const ice = new THREE.Mesh(new THREE.BoxGeometry(2 * LIM + 3.4, 0.2, 4.6), mat(0xcfe8ff, { roughness: 0.15, metalness: 0.1, transparent: true, opacity: 0.92 })); ice.position.y = -0.7; root.add(ice);
@@ -173,7 +173,7 @@
         } else { arA.visible = false; arLab.show(false); }
         labClay.obj = [(pts[Math.floor(claySeg / 2)].x - WP / 2) * UNIT * gA.scale.x, 1.1 * gA.scale.x - 0.2, 0]; labCart.obj = [cartA.position.x * gA.scale.x, 0.95 * gA.scale.x - 0.2, 0];
         const ph2 = phEl(); if (ph2) ph2.textContent = pmode ? ph : '';
-        setInfo((pmode ? '<b>▶ ' + ph + '</b><br>' : '') + (arr ? '<b>' + (arr.pose === 'push' ? '미는 힘 ' : '당기는 힘 ') + arr.F + ' N</b>: 화살표의 <b>시작점</b>은 작용점, <b>방향</b>은 힘의 방향, <b>길이</b>는 힘의 크기예요.<br>' : '') + '<b>힘</b>은 물체의 <b>모양</b>이나 <b>운동 상태</b>를 변하게 하는 원인이에요. 단위는 <b>N</b>(뉴턴)이에요.' + (pmode || arr ? '' : '<br>옆의 2D 화면에서 찰흙이나 수레를 끌었다 놓으면 3D도 같이 움직여요. 또는 ▶ 재생을 눌러 보세요.'));
+        setInfo((pmode ? '<b>▶ ' + ph + '</b><br>' : '') + (arr ? '<b>' + (arr.pose === 'push' ? '미는 힘 ' : '당기는 힘 ') + arr.F + ' N</b>: 화살표의 <b>시작점</b>은 작용점, <b>방향</b>은 힘의 방향, <b>길이</b>는 힘의 크기예요.<br>' : '') + '<b>힘</b>은 물체의 <b>모양</b>이나 <b>운동 상태</b>를 변하게 하는 원인이에요. 단위는 <b>N</b>(뉴턴)이에요.' + (pmode || arr ? '' : '<br>▶ 재생을 눌러 찰흙과 수레에 힘이 작용하는 모습을 보세요.'));
       }
 
       /* ===== 장면 T · 줄다리기(위에서 본 모습): 왼쪽 팀 3명(300 N) · 오른쪽 팀 1~5명(1명 = 100 N) ===== */
@@ -237,7 +237,7 @@
         const ph2 = phEl(); if (ph2) ph2.textContent = pmode ? ph : '';
         const a = Math.max(n * 100, 300), b = Math.min(n * 100, 300);
         setInfo((pmode ? '<b>▶ ' + ph + '</b><br>' : '') + '<b>' + (net ? '합력 = ' + a + ' N − ' + b + ' N = ' + Math.abs(net) + ' N (' + (net > 0 ? '오른쪽' : '왼쪽') + ')' : '합력 = 300 N − 300 N = 0') + '</b><br>' +
-          (net === 0 ? '<b>힘의 평형</b>: 크기가 같고 방향이 반대이고 같은 작용선 위여서 깃발이 가운데에 그대로 있어요.' : '두 팀의 힘이 다르면 <b>큰 힘 쪽</b>으로 깃발이 끌려가요. (1칸 = 100 N)') + (pmode ? '' : '<br>오른쪽 팀 인원은 옆의 2D 화면에서 바꿔요.'));
+          (net === 0 ? '<b>힘의 평형</b>: 크기가 같고 방향이 반대이고 같은 작용선 위여서 깃발이 가운데에 그대로 있어요.' : '두 팀의 힘이 다르면 <b>큰 힘 쪽</b>으로 깃발이 끌려가요. (1칸 = 100 N)') + (pmode ? '' : '<br>오른쪽 팀 인원은 옆의 − / + 단추로 바꿔요.'));
       }
       const yAx = new V3(0, 1, 0), tmpP = new V3();
 
@@ -312,7 +312,7 @@
           {
             const bal = net === 0 && slot === 1, spin = net === 0 && slot !== 1 && F1 !== 0;
             txt = (pmode ? '<b>▶ ' + SC[Math.min(SC.length - 1, Math.floor(playP * SC.length))].name + '</b><br>' : '') + '<b>' + formula(F0, F1) + '</b>' + (net !== 0 ? ' (' + (net > 0 ? '오른쪽' : '왼쪽') + ')' : '') + '<br>';
-            if (F0 === 0 && F1 === 0) txt += '핀을 꽂은 채 옆의 2D 조작판에서 두 힘을 정하고 ▶ 핀 빼기를 눌러 보세요.';
+            if (F0 === 0 && F1 === 0) txt += '핀을 꽂은 채 두 힘을 정하고 ▶ 핀 빼기를 눌러 보세요.';
             else if (F0 !== 0 && F1 !== 0 && Math.sign(F0) === Math.sign(F1)) txt += '두 힘의 방향이 같으면 합력은 <b>두 힘의 합</b>이고 방향은 두 힘과 같아요.';
             else if (net !== 0) txt += '두 힘의 방향이 반대이면 합력은 <b>큰 힘 − 작은 힘</b>이고 방향은 <b>큰 힘 쪽</b>이에요.';
             else if (bal) txt += '<b>힘의 평형</b>: 크기가 같고, 방향이 반대이며, <b>같은 작용선</b> 위에 있어 합력이 0이에요. 멈춰 있던 물체는 계속 멈춰 있어요.';

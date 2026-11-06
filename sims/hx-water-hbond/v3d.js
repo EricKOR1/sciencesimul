@@ -229,7 +229,7 @@
       /* 수소 결합 잇기 단추: 2D의 점선 고리 누르기(hbToggle)와 같아요 */
       const ctlEl = ctx.renderer.domElement.closest('.v3-wrap').querySelector('.v3-ctl'), nH0 = ctlEl.children.length;
       controls.text('<b>잇기</b>');
-      const hbBtn = ['H 쪽 ①', 'H 쪽 ②', '전자쌍 쪽 ①', '전자쌍 쪽 ②'].map((t, i) => controls.button(t, () => { const L = window.__sim; if (L && L.hbToggle) { L.hbToggle(i); lastSig = ''; } }));
+      const hbBtn = ['H 쪽 1', 'H 쪽 2', '전자쌍 쪽 1', '전자쌍 쪽 2'].map((t, i) => controls.button(t, () => { const L = window.__sim; if (L && L.hbToggle) { L.hbToggle(i); lastSig = ''; } }));
       const hbEls = Array.prototype.slice.call(ctlEl.children, nH0);
       { const vv = ctx.renderer.domElement, asp = Math.max(0.3, vv.clientWidth / Math.max(1, vv.clientHeight)); if (asp < 1) orbit.dist = Math.max(orbit.dist, 3.4 / (0.414 * asp)); }
       let lastSig = '', lastDemo = false;

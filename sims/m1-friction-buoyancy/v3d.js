@@ -8,7 +8,7 @@
   window.SciSim3D.attach({
     title: '물속의 부력 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    levels: [0, 1, 2, 3],
+    levels: [1],   // 2단계(마찰력 재기: 접촉면 칩 · 도막 쌓기 · ✊ 당기기 · 표)만 3D. 도막 튕기기 · 공 누르기 · 원기둥 손잡이 · 카드 끌기는 2D
     camera: { dist: 15 * (PHN0 ? 1.05 : 1), theta: 0.3, phi: 1.38, fov: 45, target: [0.4, 1.9, 0], min: 6, max: 34 },
     autoRotate: 0,
     build(ctx) {
@@ -229,8 +229,8 @@
         if (Math.abs(v) > 18) { const dir = Math.sign(v), o = new V3(bx - dir * 0.4, BHT * S.blocks + 0.45, 0); setArrow(mvF, o, o.clone().add(new V3(dir * Math.min(1.2, Math.abs(v) * 0.005 + 0.3), 0, 0))); mvLab.obj = [(o.x + dir * 0.4) * GS, (o.y + 1.4) * GS, 0]; mvLab.off = [0, 0.35, 0]; mvLab.show(true); } else { mvF.visible = false; mvLab.show(false); }
         const ph = phEl(); if (ph) ph.textContent = pmode ? S.ph : '';
         let txt;
-        if (sc === 'F') txt = '<b>마찰력</b>: 접촉면에서 물체의 운동을 방해하는 힘이에요. 방향은 물체가 <b>운동하려는(운동하는) 방향과 반대</b>예요.<br>' + (Math.abs(pa) > 0.05 && Math.abs(v) < 18 ? '당기는 힘 ' + Math.abs(pa).toFixed(1) + ' N인데 도막이 가만히 있어요: 마찰력도 ' + Math.abs(fr).toFixed(1) + ' N이에요.' : Math.abs(v) >= 18 ? '운동 방향과 <b>반대</b>쪽으로 마찰력(2.0 N)이 작용해서 점점 느려져요.' : '옆의 2D 화면에서 줄 손잡이를 당기거나 도막을 튕겨 보세요. 또는 ▶ 재생을 눌러 보세요.');
-        else txt = '<b>마찰력의 크기</b>: 도막이 <b>움직이기 시작할 때의 눈금</b>이에요. 접촉면이 거칠수록, 무게가 클수록 커요 (유리 1.2 · 나무 2.0 · 사포 3.5 N, 도막 1개 = 5 N).<br>' + (S.maxF > 0.02 ? '지금 눈금 <b>' + S.F.toFixed(1) + ' N</b> · 최대 <b>' + S.maxF.toFixed(1) + ' N</b>' : '옆의 2D 화면에서 저울을 당기거나 ▶ 재생을 눌러 보세요.');
+        if (sc === 'F') txt = '<b>마찰력</b>: 접촉면에서 물체의 운동을 방해하는 힘이에요. 방향은 물체가 <b>운동하려는(운동하는) 방향과 반대</b>예요.<br>' + (Math.abs(pa) > 0.05 && Math.abs(v) < 18 ? '당기는 힘 ' + Math.abs(pa).toFixed(1) + ' N인데 도막이 가만히 있어요: 마찰력도 ' + Math.abs(fr).toFixed(1) + ' N이에요.' : Math.abs(v) >= 18 ? '운동 방향과 <b>반대</b>쪽으로 마찰력(2.0 N)이 작용해서 점점 느려져요.' : '▶ 재생을 눌러 도막이 미끄러지는 모습을 보세요.');
+        else txt = '<b>마찰력의 크기</b>: 도막이 <b>움직이기 시작할 때의 눈금</b>이에요. 접촉면이 거칠수록, 무게가 클수록 커요 (유리 1.2 · 나무 2.0 · 사포 3.5 N, 도막 1개 = 5 N).<br>' + (S.maxF > 0.02 ? '지금 눈금 <b>' + S.F.toFixed(1) + ' N</b> · 최대 <b>' + S.maxF.toFixed(1) + ' N</b>' : '옆의 ✊ 당기기를 꾹 누르거나 ▶ 재생을 눌러 보세요.');
         setInfo(txt);
       }
       function updC(dt, l) {
@@ -241,7 +241,7 @@
           c.lab.obj = [(c.g.position.x - f * K / 2) * gC.scale.x, 1.5 * gC.scale.x - 0.12 * gC.scale.x, 1.12 * gC.scale.x]; c.lab.off = [0, -0.4, 0]; c.lab.set('마찰력 ' + f.toFixed(1) + ' N'); c.lab.show(true);
           c.cap.obj = [c.g.position.x * gC.scale.x, 1.5 * gC.scale.x + 0.9, 0]; c.cap.set(c.k === 'sand' ? '거친 면 → 마찰력 크게' : '매끄러운 면(기름 · 왁스) → 마찰력 작게'); c.cap.show(true);
         });
-        setInfo('<b>생활 속 마찰력</b>: 미끄러지지 않게 하려면 접촉면을 <b>거칠게</b>(등산화 밑창 · 눈길 체인 · 미끄럼 방지 매트), 잘 미끄러지게 하려면 <b>매끄럽게</b>(기름칠 · 스키 왁스) 해요.<br>카드를 알맞은 통에 넣는 <b>분류 활동</b>은 2D 화면에서 해 보세요.');
+        setInfo('<b>생활 속 마찰력</b>: 미끄러지지 않게 하려면 접촉면을 <b>거칠게</b>(등산화 밑창 · 눈길 체인 · 미끄럼 방지 매트), 잘 미끄러지게 하려면 <b>매끄럽게</b>(기름칠 · 스키 왁스) 해요.');
       }
 
       const L2 = () => (ctx.lesson && ctx.lesson()) || null;

@@ -61,6 +61,8 @@
       .stage-toolbar:has(> .segmented[hidden]) { display: none; }
       .stage-hint { font-size: 13px; padding: 5px 12px; }
     }
+    body:not(.v3-mode) .only3d { display: none; }
+    body.v3-mode .only2d { display: none; }
   </style>
 </head>
 <body class="sim-page" data-subject="chem">
@@ -108,7 +110,7 @@
         <!-- ① 수소 결합 -->
         <div class="control" data-modes="hb">
           <div class="control-head"><span>🔗 물 분자 한 개와 이웃 분자</span></div>
-          <p class="ctrl-note">점선 고리(자리)나 떠 있는 이웃 분자를 눌러 수소 결합을 이어요. 다시 누르면 끊어져요.</p>
+          <p class="ctrl-note"><span class="only2d">점선 고리(자리)나 떠 있는 이웃 분자를 눌러</span><span class="only3d">3D 막대의 잇기 단추(H 쪽 · 전자쌍 쪽)를 눌러</span> 수소 결합을 이어요. 다시 누르면 끊어져요.</p>
           <div class="btn-row"><button class="btn" id="bBreak" type="button">✂️ 모두 끊기 (열운동)</button></div>
         </div>
         <!-- ② 끓는점·녹는점 -->
