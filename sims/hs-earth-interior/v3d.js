@@ -54,7 +54,7 @@
   window.SciSim3D.attach({
     title: '지진파로 본 지구 내부 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    levels: [1, 2],
+    levels: [2],   // 3단계 암영대. 2단계(속도 불연속)는 캔버스 그래프의 급변 지점을 눌러야 해서 2D
     camera: { dist: PHONE ? 14.5 : 9.5, theta: 0.65, phi: 1.2, min: 5, max: 24 },
     autoRotate: 0,
     build(ctx) {

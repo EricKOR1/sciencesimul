@@ -12,6 +12,8 @@
   <link rel="stylesheet" href="../../assets/css/common.css">
   <script>try{var t=localStorage.getItem("sciencesimul:theme");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
   <style>
+    .v3-mode .only2d { display: none; }
+    body:not(.v3-mode) .only3d { display: none; }
     .toolbar-label { font-weight: 800; color: var(--muted); font-size: 15px; padding-left: 4px; white-space: nowrap; }
     .stage-toolbar { min-height: 61px; }
     .segmented button { min-height: 44px; }
@@ -183,7 +185,7 @@
             <button class="btn btn-sm" id="chAdd10" type="button">＋10개</button>
           </div>
           <div class="btn-row"><button class="btn btn-sm" id="chReset" type="button">↺ 사슬 비우기</button></div>
-          <p class="ctrl-note" id="chNote">왼쪽 통의 에틸렌을 끌어서 사슬 쪽에 놓아도 돼요.</p>
+          <p class="ctrl-note" id="chNote"></p>
         </div>
         <div class="control" data-modes="chain" data-gate="calc">
           <div class="control-head"><span>🧮 몰질량 계산</span></div>

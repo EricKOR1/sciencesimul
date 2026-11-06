@@ -17,7 +17,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHONE ? 17 : 12.5, theta: 0.35, phi: 1.2, min: 6, max: 26, target: [0, 0.6, 0] },
     autoRotate: 0.07,
-    levels: [3],   // 4단계 '전지 분류'. 1~3단계는 카드 · 색칠 · 기록표가 2D 화면에서 필요해서 2D로 시작하고, 3D 단추로 같은 장면을 볼 수 있어요
+    levels: [2],   // 3단계 '효율 탐색'(금속 쌍 · 전해질 · 거리 · 크기를 3D 막대에서도 바꾸고 기록해요). 1 · 2 · 4단계는 카드 놓기 · 색칠이 캔버스에서 필요해서 2D
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3;
@@ -237,7 +237,7 @@
             const flowOn = true;
             if (kk === 'volta') { updFlowSimple(t, vE, vw, 9, flowOn); vb.material.emissiveIntensity = 0.5 + 0.2 * Math.sin(t * 5); }
             else { updFlowSimple(t, dE, dw, 10, flowOn); db.material.emissiveIntensity = 0.8; }
-            const tx2 = '<b>' + (kk === 'volta' ? '볼타 전지' : '다니엘 전지') + ' 구조</b><br>' + TLINFO[kk] + '<br>전자: (−)극 Zn판 → 도선 → (+)극 Cu판<br><span style="color:#9fb0d4">카드를 순서대로 놓는 일은 ▦ 2D에서 해요.</span>';
+            const tx2 = '<b>' + (kk === 'volta' ? '볼타 전지' : '다니엘 전지') + ' 구조</b><br>' + TLINFO[kk] + '<br>전자: (−)극 Zn판 → 도선 → (+)극 Cu판';
             if (tx2 !== txt) { txt = tx2; info(tx2); }
             return;
           }
@@ -277,9 +277,9 @@
           if (kind === 'mn') tx = '<b>망가니즈 건전지 (1차 전지)</b><br>(−)극 아연 통이 산화돼 전자를 내보내고, (+)극 MnO₂ + 탄소 막대 쪽에서 전자를 받아요.<br>한 번 쓰면 충전할 수 없어요.' + (r.alk ? '<br>알칼리 건전지도 Zn–MnO₂ 1차 전지예요.' : '') + (mode === 'chg' ? '<br><b style="color:#fca5a5">1차 전지는 충전할 수 없어요. 충전하면 위험해요.</b>' : '');
           else if (kind === 'pb') tx = mode === 'dis' ? '<b>납 축전지 · 방전 (2차 전지)</b><br>(−)극 Pb, (+)극 PbO₂, 전해질 묽은 황산<br>전자: (−)극 → 외부 회로 → (+)극' : '<b>납 축전지 · 충전</b><br>충전기가 전자를 거꾸로 밀어 줘요.<br>전자와 이온이 모두 방전 때와 반대로 움직여요.';
           else tx = mode === 'dis' ? '<b>리튬 이온 전지 · 방전 (2차 전지)</b><br>Li⁺: 흑연 → 리튬 코발트 산화물 (분리막 통과)<br>전자: (−)극 → 외부 회로 → (+)극' : '<b>리튬 이온 전지 · 충전</b><br>충전기가 전자를 거꾸로 밀어 줘요.<br>Li⁺와 전자 모두 방전 때와 반대로 움직여요 (2차 전지).';
-          if (r.md === 'classify' && !r.chosen && !demoOn()) tx += '<br><span style="color:#ffd34d">2D에서 전자의 이동 방향을 고르면 전자 흐름을 보여 줘요.</span>';
-          else if (r.md === 'timeline') tx += '<br><span style="color:#9fb0d4">카드를 고르면 그 전지의 구조를 보여 줘요. 순서 놓기는 ▦ 2D에서 해요.</span>';
-          else if (r.md === 'classify' && S2.cf.sub !== 'cycle') tx += '<br><span style="color:#9fb0d4">끌고 있는 쓰임새 카드에 알맞은 전지 구조예요. 상자에 놓는 일은 ▦ 2D에서 해요.</span>';
+          if (r.md === 'classify' && !r.chosen && !demoOn()) tx += '<br><span style="color:#ffd34d">전자의 이동 방향을 고르면 전자 흐름을 보여 줘요.</span>';
+          else if (r.md === 'timeline') tx += '<br><span style="color:#9fb0d4">카드를 고르면 그 전지의 구조를 보여 줘요.</span>';
+          else if (r.md === 'classify' && S2.cf.sub !== 'cycle') tx += '<br><span style="color:#9fb0d4">끌고 있는 쓰임새 카드에 알맞은 전지 구조예요.</span>';
           if (tx !== txt) { txt = tx; info(tx); }
         },
       };

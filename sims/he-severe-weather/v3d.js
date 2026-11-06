@@ -70,17 +70,22 @@
         onFrame(p) { const v = p < 1 / 3 ? 1 : p < 2 / 3 ? 2 : 3; if (v !== st) { st = v; seg.set(v); set2D(v); pendingInfo = ''; text(); } },
       });
       pl.pause();
+      /* ⏱ 번쩍한 뒤 천둥이 들릴 때까지의 시계 (2D와 같은 S.thunder) */
+      function clockTxt() { try { const th = L2().S.thunder; if (!th) return ''; const s = Math.min(th.t, th.delay); return '<br>⏱ 번쩍한 뒤 <b>' + s.toFixed(1) + '초</b>' + (th.arrived ? ' · <b>천둥 도착!</b> 시계가 멈췄어요.' : ' · 천둥을 기다리는 중…'); } catch (e) { return ''; } }
+      let clockLast = '';
       function text() {
         const t = ['', '<b>적운 단계</b>: 상승 기류만 있어요. 구름이 위로 자라요.', '<b>성숙 단계</b>: 상승·하강 기류가 함께 있어요. 비·우박·번개가 가장 심해요.', '<b>소멸 단계</b>: 하강 기류가 우세해요. 상승 기류가 약해져 비가 줄고 구름이 흩어져요.'];
-        info(pendingInfo || t[st]);
+        info((pendingInfo || t[st]) + clockTxt());
       }
-      function strike() {
+      let seenTh = null;
+      function strike(fromSim) {
         const x0 = -0.6 + rnd() * 1.6, z0 = (rnd() - 0.5) * 1.2, pts = []; let n = 14;
         for (let i = 0; i <= n; i++) { const f = i / n; pts.push(new THREE.Vector3(x0 + (i % 2 ? 1 : -1) * (i > 0 && i < n ? 0.18 + rnd() * 0.2 : 0) + f * 0.6, lerp(BASE + 0.1, 0.05, f), z0 + (rnd() - 0.5) * 0.15)); }
         bolt.geometry.dispose(); bolt.geometry = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts, false, 'catmullrom', 0.3), 40, 0.05, 6, false);
         bolt.visible = true; flash = 1; strikeT = 0;
-        try { const l = L2(); if (l && l.strike && l.S && (!l.S.thunder || l.S.thunder.arrived)) l.strike(); } catch (e) {}
-        pendingInfo = '번쩍! 천둥이 들릴 때까지 걸린 시간(초) × 340 m/s = 번개까지의 거리예요. (예: 5초 → 1.7 km)<br>2D 화면의 시계로 시간을 재 보세요.';
+        if (!fromSim) try { const l = L2(); if (l && l.strike && l.S && (!l.S.thunder || l.S.thunder.arrived)) l.strike(); } catch (e) {}
+        try { seenTh = L2().S.thunder; } catch (e) {}
+        pendingInfo = '번쩍! 천둥이 들릴 때까지 걸린 시간(초) × 340 m/s = 번개까지의 거리예요. (예: 5초 → 1.7 km)<br>아래 ⏱ 시계로 시간을 재 보세요.';
         text(); setTimeout(() => { pendingInfo = ''; text(); }, 5000);
       }
       text();
@@ -92,6 +97,7 @@
           const k = 1 - Math.exp(-2 * dt), tg = STG[st];
           ['up', 'down', 'rain', 'top', 'anvil', 'fade'].forEach((n) => { cur[n] += (tg[n] - cur[n]) * k; });
           if (wait >= 0) { wait -= dt; if (wait <= 0) { wait = -1; strike(); } }
+          { const th = (() => { try { return L2().S.thunder; } catch (e) { return null; } })(); if (th && th !== seenTh && wait < 0) strike(true); const c = clockTxt(); if (c !== clockLast) { clockLast = c; text(); } }   // 조작판의 ⚡ 단추로 친 번개도 3D에 보여요
           const top = BASE + 0.9 + (H - 0.9) * cur.top;
           let n = 0;
           for (let i = 0; i < NB; i++) {

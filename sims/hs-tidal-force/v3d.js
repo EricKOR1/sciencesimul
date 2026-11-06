@@ -105,9 +105,16 @@
       }
       /* 지점 A~D (2D와 같은 자리·색): ① 달의 인력(파랑) → ② 지구 중심의 평균 인력(회색) → ③ 차이 = 기조력(빨강, 확대) */
       const ptG = new THREE.Group(); root.add(ptG);
+      const shaftG = new THREE.CylinderGeometry(0.035, 0.035, 1, 10); shaftG.translate(0, 0.5, 0);
+      const headG = new THREE.ConeGeometry(0.1, 0.22, 14); headG.translate(0, 0.11, 0);
       const PT = ['A', 'B', 'C', 'D'].map((nm) => {
         const ball = new THREE.Mesh(new THREE.SphereGeometry(0.11, 16, 12), new THREE.MeshBasicMaterial({ color: 0xf59e0b })); ptG.add(ball);
-        const mk3 = (c) => { const h = new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), new THREE.Vector3(), 1, c, 0.22, 0.14); ptG.add(h); return h; };
+        const mk3 = (c) => {   // 굵은 화살표 (원기둥 + 원뿔): setDirection · setLength는 ArrowHelper와 같은 방식으로 써요
+          const g = new THREE.Group(), m = new THREE.MeshBasicMaterial({ color: c }), sh = new THREE.Mesh(shaftG, m), hd = new THREE.Mesh(headG, m); g.add(sh, hd); ptG.add(g);
+          g.setDirection = (d) => g.quaternion.setFromUnitVectors(Y, d);
+          g.setLength = (L, hl) => { const h = Math.min(hl || 0.22, L * 0.5); sh.scale.set(1, Math.max(0.001, L - h), 1); hd.scale.set(1, h / 0.22, 1); hd.position.y = L - h; };
+          return g;
+        };
         const L = label(nm, ball, { offset: [0, 0.32, 0], color: 'rgba(180,83,9,.95)' });
         return { ball, L, pull: mk3(0x60a5fa), mean: mk3(0xcbd5e1), tid: mk3(0xf87171) };
       });
@@ -227,6 +234,7 @@
           const hm = tideAt(pv);
           buoy.position.copy(pv).multiplyScalar(RO + KV * hm + 0.02);
           const sa = stem.geometry.attributes.position; sa.setXYZ(0, pv.x * RS, pv.y * RS, pv.z * RS); sa.setXYZ(1, buoy.position.x, buoy.position.y, buoy.position.z); sa.needsUpdate = true;
+          buoy.visible = stem.visible = mode !== 'force'; labBuoy.show(mode !== 'force');
           labBuoy.set('조위 ' + (hm >= 0 ? '+' : '−') + Math.abs(hm).toFixed(2) + ' m' + (hiMax - loMin < 0.02 ? '' : hm > hiMax - 0.2 * (hiMax - loMin) ? ' (만조)' : hm < loMin + 0.2 * (hiMax - loMin) ? ' (간조)' : ''));
           // 부풀음 이름표 (달 방향의 바다 위)
           const top = RO + KV * tideAt(mdir) + 0.75;

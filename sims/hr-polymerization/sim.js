@@ -886,7 +886,7 @@
   function uiExtra() {
     const full = CH.units.length + CH.queue >= CH_MAX;
     ['chAdd1', 'chAdd5', 'chAdd10'].forEach((id) => { $('#' + id).disabled = full; });
-    $('#chNote').textContent = full ? '사슬이 가득 찼어요 (최대 ' + CH_MAX + '개). “사슬 비우기”를 눌러요.' : PHONE ? '위쪽 통의 에틸렌을 끌어서 사슬 영역에 놓아도 돼요.' : '왼쪽 통의 에틸렌을 끌어서 사슬 영역에 놓아도 돼요.';
+    $('#chNote').innerHTML = full ? '사슬이 가득 찼어요 (최대 ' + CH_MAX + '개). “사슬 비우기”를 눌러요.' : '<span class="only2d">' + (PHONE ? '위쪽' : '왼쪽') + ' 통의 에틸렌을 끌어서 사슬 영역에 놓아도 돼요.</span><span class="only3d">단추를 누를 때마다 에틸렌이 사슬 끝에 이어져요.</span>';
     nRange.value = String(ST.i); nRange.style.setProperty('--pct', (ST.i / 4 * 100) + '%');
     $('#nOut').textContent = 'n = ' + fmtN(NSV[ST.i]);
     $('#nMinus').disabled = ST.i <= 0; $('#nPlus').disabled = ST.i >= 4;
@@ -929,7 +929,7 @@
         {
           title: '단위체 10개 이어 붙이기',
           goal: '에틸렌 <b>10개</b>를 이어 붙여 폴리에틸렌 사슬(n = 10)을 만들어 보세요.',
-          hint: (PHONE ? '위쪽' : '왼쪽') + ' 통의 에틸렌을 끌어서 사슬 영역에 놓거나, “＋5개” “＋10개” 단추를 눌러요.',
+          hint: '“＋5개” “＋10개” 단추를 눌러 에틸렌을 이어 붙여요.',
           setup() { S.gate = ''; setScene('chain'); },
           check: () => chN() >= 10, hold: 0.8,
           status: () => '이어 붙인 단위체 ' + chN() + ' / 10 ' + mark(chN() >= 10),

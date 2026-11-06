@@ -61,8 +61,8 @@
       /* 분화 모형: 철(어두운 금속) · 규산염(밝은 암석) 입자가 섞여 있다가 층으로 나뉘어요 */
       const diffG = new THREE.Group(); root.add(diffG);
       const ND = 700, dStart = [], dEnd = [], isFe = [];
-      const diffMeshFe = new THREE.InstancedMesh(new THREE.SphereGeometry(0.075, 12, 9), new THREE.MeshStandardMaterial({ color: 0x8a5a3c, roughness: 0.4, metalness: 0.5 }), ND);
-      const diffMeshSi = new THREE.InstancedMesh(new THREE.SphereGeometry(0.075, 12, 9), new THREE.MeshStandardMaterial({ color: 0xa89a86, roughness: 0.65 }), ND);
+      const diffMeshFe = new THREE.InstancedMesh(new THREE.SphereGeometry(0.075, 12, 9), new THREE.MeshStandardMaterial({ color: 0x5f6b80, roughness: 0.35, metalness: 0.6 }), ND);
+      const diffMeshSi = new THREE.InstancedMesh(new THREE.SphereGeometry(0.075, 12, 9), new THREE.MeshStandardMaterial({ color: 0xc2602a, roughness: 0.65 }), ND);
       const diffMeshLt = new THREE.InstancedMesh(new THREE.SphereGeometry(0.075, 12, 9), new THREE.MeshStandardMaterial({ color: 0xf3e3b5, roughness: 0.7 }), ND);   // 가장 가벼운 물질 → 바깥 얇은 층
       diffMeshFe.frustumCulled = diffMeshSi.frustumCulled = diffMeshLt.frustumCulled = false; diffG.add(diffMeshFe, diffMeshSi, diffMeshLt);
       const shell = new THREE.Mesh(new THREE.SphereGeometry(2.55, 48, 32), new THREE.MeshStandardMaterial({ color: 0xff7a3a, roughness: 0.5, transparent: true, opacity: 0.16, depthWrite: false, emissive: 0xff4a10, emissiveIntensity: 0.35 })); diffG.add(shell);
@@ -90,11 +90,12 @@
         sunLight.visible = true; sunLight.position.set(showDisc ? 0 : 4, showDisc ? 0 : 5, showDisc ? 0 : 6);
         text();
       }
+      const rNow = () => { const S = sr(); return S && typeof S.dist === 'number' && S.dist > 0 ? S.dist : 0.3 + st.p * 9.7; };   // 2D와 같은 실제 거리(AU)
       function cNow() { return st.stage === 'collapse' ? st.p : 1; }
       function text() {
         const s = st.stage, p = st.p;
         if (s === 'collapse') info('<b>성운 수축</b> · 반지름 약 ' + Math.round(100 - 90 * p) + ' AU<br>축 방향으로는 납작해지고, 회전은 점점 빨라져 <b>원반</b>이 돼요.');
-        else if (s === 'condense') { const r = 0.3 + p * 9.7, T = 280 / Math.sqrt(r); info('<b>응축</b> · 태양에서 ' + r.toFixed(1) + ' AU, 약 ' + Math.round(T) + ' K<br>' + (r < SNOW ? '눈선 안쪽: <b>금속·규산염</b>만 고체 → 작은 암석 행성' : '눈선 바깥: <b>물 얼음</b>도 고체 → 큰 핵이 자라 거대 행성')); }
+        else if (s === 'condense') { const r = rNow(), T = 280 / Math.sqrt(r); info('<b>응축</b> · 태양에서 ' + r.toFixed(1) + ' AU, 약 ' + Math.round(T) + ' K<br>' + (r < SNOW ? '눈선 안쪽: <b>금속·규산염</b>만 고체 → 작은 암석 행성' : '눈선 바깥: <b>물 얼음</b>도 고체 → 큰 핵이 자라 거대 행성')); }
         else if (s === 'accrete') info('<b>집적</b> · 미행성이 충돌해 뭉쳐요 (' + Math.round(p * 100) + '%)<br>눈선 안쪽은 작은 <b>암석 행성</b>, 바깥은 큰 <b>거대 행성</b>이 돼요.');
         else info('<b>분화</b> · 녹은 천체 속에서 <b>무거운 철은 가라앉아</b> 핵이 되고, 규산염은 맨틀, 가장 가벼운 물질은 바깥 얇은 층(지각)이 돼요. (' + Math.round(p * 100) + '%)');
       }
@@ -135,6 +136,8 @@
         else if (m === 'differ' && typeof S.diff === 'number') v = clamp01(S.diff);
         else if (m === 'accrete' && w && w.ACC && w.ACC.play) { v = clamp01(w.ACC.T / w.T_END); pl.pause(); }
         if (v != null && Math.abs(v - st.p) > 0.0015) { setP(v); text(); }
+        else if (m === 'condense' && S.dist !== st.lastD) text();
+        st.lastD = S.dist;
       }
       follow();
 
@@ -161,7 +164,7 @@
             g.attributes.position.needsUpdate = true; g.attributes.color.needsUpdate = true;
             pm.opacity = s === 'accrete' ? 0.95 - 0.7 * p : 0.95;
             const sunR = s === 'collapse' ? 0.15 + 0.2 * c : 0.3; sun.scale.setScalar(sunR); sunGlow.scale.setScalar(sunR * 7);
-            if (s === 'condense') { const r = 0.3 + p * 9.7; probe.position.set(r * AU, 0, 0); const T = 280 / Math.sqrt(r); probe.material.color.set(r < SNOW ? 0xc7a37a : 0xbfe6ff); probeRing.scale.setScalar(r * AU); probeRing.material.color.set(r < SNOW ? 0xc7a37a : 0xbfe6ff); }
+            if (s === 'condense') { const r = Math.min(10, rNow()); probe.position.set(r * AU, 0, 0); const T = 280 / Math.sqrt(r); probe.material.color.set(r < SNOW ? 0xc7a37a : 0xbfe6ff); probeRing.scale.setScalar(r * AU); probeRing.material.color.set(r < SNOW ? 0xc7a37a : 0xbfe6ff); }
             if (s === 'accrete') planets.forEach((m, i) => {
               const { a, r, th } = m.userData, g0 = Math.max(0, Math.min(1, (p - 0.05 - i * 0.04) * 1.6)), ang = th + st.t * 0.6 / Math.sqrt(a) ;
               m.scale.setScalar(Math.max(0.001, r * g0 * (i < 4 ? 1 : 1)) ); m.position.set(a * AU * Math.cos(ang), 0, -a * AU * Math.sin(ang)); m.visible = g0 > 0.02;
