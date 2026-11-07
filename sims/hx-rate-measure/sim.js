@@ -107,7 +107,7 @@
 
   /* 측정 설계 자료 */
   const SENS = [
-    { k: 'gas', name: '기체 압력·부피', ic: '🧯' },
+    { k: 'gas', name: '기체 압력·부피', ic: '🫧' },
     { k: 'abs', name: '흡광도(색도)', ic: '🌈' },
     { k: 'ph', name: 'pH', ic: '🧪' },
     { k: 'cond', name: '전도도', ic: '⚡' },
@@ -617,7 +617,7 @@
     const pcx = L.x + L.w - 130, pcy = L.y + 74, pcw = 116, pch = 100;
     if (sk) {
       const sx = scx - 30, sy = L.y + 222;
-      if (sk === 'gas') { ctx.strokeStyle = '#9fb2c9'; ctx.lineWidth = 4; ctx.lineJoin = 'round'; ctx.beginPath(); ctx.moveTo(cx, v.top - 2); ctx.lineTo(cx, v.top - 28); ctx.lineTo(sx, v.top - 28); ctx.lineTo(sx, sy - 6); ctx.stroke(); sbox(sx - 40, sy - 6, 80, 54, '🧯', '기체 센서'); }
+      if (sk === 'gas') { ctx.strokeStyle = '#9fb2c9'; ctx.lineWidth = 4; ctx.lineJoin = 'round'; ctx.beginPath(); ctx.moveTo(cx, v.top - 2); ctx.lineTo(cx, v.top - 28); ctx.lineTo(sx, v.top - 28); ctx.lineTo(sx, sy - 6); ctx.stroke(); sbox(sx - 40, sy - 6, 80, 54, '🫧', '기체 센서'); }
       else if (sk === 'abs') { const yb = v.mid; ctx.strokeStyle = 'rgba(255,193,7,.85)'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(v.x0 - 38, yb); ctx.lineTo(v.x1 + 28, yb); ctx.stroke(); D.roundRect(v.x0 - 52, yb - 16, 20, 32, 5); ctx.fillStyle = '#ffd966'; ctx.fill(); sbox(v.x1 + 20, yb - 14, 78, 54, '🌈', '흡광도'); }
       else if (sk === 'ph' || sk === 'cond') { const px = cx + 24; ctx.strokeStyle = '#6a778c'; ctx.lineWidth = 8; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(px, v.top - 52); ctx.lineTo(px, v.mid + 8); ctx.stroke(); ctx.lineCap = 'butt'; ctx.strokeStyle = sk === 'ph' ? '#22c55e' : '#f59e0b'; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(px, v.mid - 4); ctx.lineTo(px, v.mid + 10); ctx.stroke(); sbox(px + 14, v.top - 70, 82, 54, sk === 'ph' ? '🧪' : '⚡', sk === 'ph' ? 'pH 센서' : '전도도'); }
       else { /* mass */ if (X.k !== 'caco3') { D.roundRect(cx - 74, by + 2, 148, 14, 5); ctx.fillStyle = '#7d8aa0'; ctx.fill(); } sbox(cx + 90, by - 52, 74, 54, '⚖️', '전자저울'); }

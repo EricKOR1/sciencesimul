@@ -1016,7 +1016,7 @@
         },
         {
           id: 'rate3', title: '농도 차와 속도',
-          goal: '입자를 <b>O₂</b>로 두고, 바깥 농도를 <b>서로 다른 3가지 이상</b>으로 바꿔 가며 [📝 속도 기록]을 눌러 그래프에 점을 찍으세요.',
+          goal: '입자를 <b>O₂</b>로 두고, 바깥 농도를 <b>서로 다른 3가지 이상</b>으로 바꿔 가며 [📝 속도 기록]을 눌러 <span class="only2d">그래프에 점을 찍으세요</span><span class="only3d">속도를 기록하세요</span>.',
           hint: '입자를 O₂로 바꾸고 농도 슬라이더를 움직여요. 농도마다 [📝 속도 기록]을 눌러요. 세포 안 농도는 0이라서 농도 차 = 바깥 농도예요.',
           setup() { setMode('diff'); S.df.sp = 'o2'; S.df.rec = []; dfRebuild(); },
           check: () => S.df.rec.length >= 3, hold: 0.6,

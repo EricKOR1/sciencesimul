@@ -1004,10 +1004,10 @@
     balloon: '🎈 풍선 속 기체 입자',
   };
   const SCENE_HINT = {
-    block: '✋ 벽돌을 끌어서 눈 위에 놓아 보세요',
+    block: '✋ 벽돌을 눈 위에 놓아 보세요',
     box: '👆 움직이는 입자 하나를 눌러 보세요',
     membrane: '💥 주황색 고리 = 입자가 벽에 부딪힌 곳',
-    balloon: '🫧 공기 넣기 버튼이나 펌프를 눌러 보세요',
+    balloon: '🫧 공기 넣기 버튼을 눌러 보세요',
   };
   function setScene(sc, force) {
     if (S.scene === sc && !force) return;
@@ -1211,7 +1211,7 @@
           {
             title: '같은 벽돌, 다른 면',
             goal: '벽돌을 <b>넓은 면</b>과 <b>좁은 면</b>으로 각각 눈 위에 놓아 보세요. 어느 쪽이 더 깊이 눌리나요?',
-            hint: '<b>▬ 넓은 면으로</b>, <b>▮ 좁은 면으로</b> 버튼을 차례로 눌러요. 벽돌을 직접 끌어서 놓아도 돼요.',
+            hint: '<b>▬ 넓은 면으로</b>, <b>▮ 좁은 면으로</b> 버튼을 차례로 눌러요.<span class="only2d"> 벽돌을 직접 끌어서 놓아도 돼요.</span>',
             setup() { if (S.scene === 'block' && S.bstate === 'held') showHint(SCENE_HINT.block, 6000); },
             check: () => S.tried.wide && S.tried.narrow,
             status: () => '넓은 면으로 놓기 <b>' + mark(S.tried.wide) + '</b> · 좁은 면으로 놓기 <b>' + mark(S.tried.narrow) + '</b>',
@@ -1325,7 +1325,7 @@
           {
             title: '풍선 부풀리기',
             goal: '<b>🫧 공기 넣기</b>로 풍선을 <b>초록 점선</b> 크기까지 부풀려 보세요. 풍선이 어떤 모양으로 부푸는지 살펴보세요.',
-            hint: '공기 넣기 버튼(또는 화면 속 펌프)을 여러 번 눌러요.',
+            hint: '공기 넣기 버튼<span class="only2d">(또는 화면 속 펌프)</span>을 여러 번 눌러요.',
             setup() { S.targetR = rBalloon(60); },
             check: () => S.scene === 'balloon' && parts.length >= 60 && S.br >= S.targetR - 3,
             status: () => '입자 <b>' + parts.length + '개</b> · 풍선 지름 <b>' + fmt(S.br * 2 / 10, 0) + ' cm</b>',

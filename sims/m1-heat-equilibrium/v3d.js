@@ -1,6 +1,8 @@
 /* m1-heat-equilibrium · 3D 열평형
    2D 차시와 같은 장면: ① 20 °C 물과 오른쪽 비커 물(0~100 °C)의 입자 운동 ② 80 °C 물이 든 금속 컵을 20 °C 수조에 넣기(열평형 35 °C)
-   2D 실험 상태(window.__sim)를 그대로 읽어 보여 주고, ▶ 재생은 컵 넣기 → 열의 이동 → 열평형 한 번을 반복해요. */
+   2D 실험 상태(window.__sim)를 그대로 읽어 보여 주고, ▶ 재생은 컵 넣기 → 열의 이동 → 열평형 한 번을 반복해요.
+   1단계(온도와 입자) · 3단계(열평형)만 3D예요. 온도-시간 그래프를 그리고 읽는 2단계와 생활 속 장면 카드(4단계)는 2D 화면이에요.
+   3단계의 '🔍 경계면 확대'를 켜면 3D에서도 컵 벽(경계면) 가까이로 다가가 봐요. */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -8,11 +10,11 @@
   window.SciSim3D.attach({
     title: '열평형 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    levels: [0, 1, 2],
+    levels: [0, 2],   // 온도와 입자 · 열평형은 3D, 그래프 그리기 · 읽기(2단계)와 생활 속 카드(4단계)는 2D
     camera: { dist: 11.5 * (PHN0 ? 1.12 : 1), theta: 0.35, phi: 1.2, fov: 45, target: [0, 0, 0], min: 6, max: 28 },
     autoRotate: 0.05,
     build(ctx) {
-      const { THREE, root, label, info, controls } = ctx;
+      const { THREE, root, label, info, controls, orbit } = ctx;
       const V3 = THREE.Vector3, Yax = new V3(0, 1, 0);
       const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.5, metalness: 0.05 }, o || {}));
       const glass = (c, op, o) => mat(c || 0xbfe3ff, Object.assign({ transparent: true, opacity: op || 0.16, roughness: 0.12, metalness: 0, depthWrite: false, side: THREE.DoubleSide }, o || {}));
@@ -64,6 +66,7 @@
       const labT = label('', [TX - 0.2, TYT + 0.5, 0], { size: 12.5, color: 'rgba(40,90,220,.95)' });
       const labCup = label('금속 컵(80 °C 물)', cup, { size: 11.5, offset: [0, CH / 2 + 0.55, 0] });
       const labEq = label('열평형!', [0, 3.6, 0], { size: 15, color: 'rgba(22,130,60,.95)' });
+      const labTg = label('', [BX, 2.35, 0], { size: 12, color: 'rgba(20,160,88,.95)' });   // 1단계 미션의 초록 목표 (2D의 S.target)
       // 열 이동 화살표 (컵 → 수조)
       const arrow = new THREE.Group(), am = mat(0xffb020, { roughness: 0.4 });
       const ash = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 1, 12), am), ahd = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.42, 16), am);
@@ -115,11 +118,11 @@
         } else {
           Object.assign(S3, { scene: lsc === 'beakers' ? 'beakers' : 'contact', TA: S ? S.TA : 20, TB: S ? S.TB : 80,
             k: E ? E.k : 0, cupIn: !!(E && E.cupIn), Tc: E ? E.Tc : T_C0, Tt: E ? E.Tt : T_T0, t: E ? E.t : 0, fromPlayer: false });
-          S3.life = lsc === 'life';
+          S3.life = lsc === 'life'; S3.target = S ? S.target : null; S3.zoom = !!(S && S.zoomOn && lsc === 'contact' && S.zoomK > 0.01);
         }
       }
 
-      let lastScene = '', lastTxt = '', lastBlk = -1;
+      let lastScene = '', lastTxt = '', lastBlk = -1, lastZoom = false, zoomTo = null;
       const fmt0 = (v) => Math.round(v), fmt1 = (v) => (Math.round(v * 10) / 10).toFixed(1);
       function setInfo(h) { if (h !== lastTxt) { lastTxt = h; info(h); } }
 
@@ -127,6 +130,10 @@
         update(dt) {
           const h = Math.min(dt, 0.05);
           readState();
+          /* '🔍 경계면 확대'(2D 단추)를 따라 컵 벽 가까이로 다가가거나 물러나요 */
+          const zm = !!S3.zoom && !S3.fromPlayer;
+          if (zm !== lastZoom) { lastZoom = zm; zoomTo = zm ? { d: 5.2, tx: CR + 0.2, ty: 0.2 } : { d: 11.5 * (PHN0 ? 1.12 : 1), tx: 0, ty: 0 }; }
+          if (zoomTo) { const k = Math.min(1, dt * 4); orbit.dist += (zoomTo.d - orbit.dist) * k; orbit.tx += (zoomTo.tx - orbit.tx) * k; orbit.ty += (zoomTo.ty - orbit.ty) * k; if (Math.abs(zoomTo.d - orbit.dist) < 0.03) zoomTo = null; }
           const beak = S3.scene === 'beakers';
           groupB.visible = beak; groupC.visible = !beak;
           if (S3.scene !== lastScene) { lastScene = S3.scene; initAll(); }
@@ -174,9 +181,11 @@
 
           // 글자·화살표·안내
           labA.show(beak); labB.show(beak); labCup.show(!beak && !S3.cupIn);
-          labC.show(!beak); labT.show(!beak);
+          labC.show(!beak); labT.show(!beak); if (!beak) labTg.show(false);
           if (beak) {
             labA.set('왼쪽 비커 물 ' + fmt0(S3.TA) + ' °C'); labB.set('오른쪽 비커 물 ' + fmt0(S3.TB) + ' °C');
+            const tg = !S3.fromPlayer && S3.target; labTg.show(!!tg);
+            if (tg) labTg.set('🎯 초록 목표 ' + fmt0(Math.max(0, tg.lo)) + '~' + fmt0(Math.min(100, tg.hi)) + ' °C' + (S3.TB >= tg.lo - 0.5 && S3.TB <= tg.hi + 0.5 ? ' ✔' : ''));
             arrow.visible = false; aLab.show(false); labEq.show(false);
             setInfo('<b>온도와 입자</b>: 온도가 높을수록 입자 운동이 <b>활발</b>해요(빨강 = 빠름, 파랑 = 느림). 입자의 크기와 개수는 그대로예요.<br>오른쪽 비커 물의 온도는 옆의 🌡️ 슬라이더로 바꿔요. (왼쪽 ' + fmt0(S3.TA) + ' °C · 오른쪽 ' + fmt0(S3.TB) + ' °C)');
           } else {
@@ -185,9 +194,9 @@
             arrow.visible = flow; aLab.show(flow); labEq.show(eq);
             if (flow) setArrow(new V3(CR + 0.15, 1.5, 0), new V3(CR + 1.35, 1.5, 0));
             let txt;
-            if (eq) txt = '두 물의 온도가 <b>' + fmt0(T_EQ) + ' °C</b>로 같아졌어요: <b>열평형</b>!<br>입자는 계속 움직이지만 열이 한쪽으로 이동하지 않아 열의 이동이 멈춘 것처럼 보여요. 열평형 온도는 처음 두 온도(' + T_C0 + ' °C · ' + T_T0 + ' °C) <b>사이</b>에 있어요.';
+            if (eq) txt = '두 물의 온도가 <b>' + fmt0(T_EQ) + ' °C</b>로 같아졌어요: <b>열평형</b>!<br>입자는 계속 움직이지만 열이 한쪽으로 이동하지 않아 열의 이동이 멈춘 것처럼 보여요.';
             else if (S3.cupIn) txt = '열은 온도가 <b>높은 컵 속 물 → 낮은 수조 물</b>로 이동해요. 컵 속 물은 온도가 내려가고 수조 물은 올라가요.<br>경계(컵 벽)에서 빠른 입자와 느린 입자가 부딪혀 운동을 전달해요. · 지난 시간 ' + fmt1(S3.t) + '분';
-            else txt = '<b>' + T_C0 + ' °C</b> 물이 든 금속 컵을 <b>' + T_T0 + ' °C</b> 물이 든 수조에 넣어요.<br>옆의 🥤 컵 넣기 버튼이나 ▶ 재생을 눌러 보세요.' + (S3.life ? '<br>(생활 속 장면은 2D 화면에서 살펴봐요)' : '');
+            else txt = '<b>' + T_C0 + ' °C</b> 물이 든 금속 컵을 <b>' + T_T0 + ' °C</b> 물이 든 수조에 넣어요.<br>옆의 🥤 컵 넣기 버튼이나 ▶ 재생을 눌러 보세요.';
             setInfo(txt);
           }
         },

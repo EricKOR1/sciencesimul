@@ -1,5 +1,6 @@
-/* m2-minerals · 3D 광물 표본 (결정 모양 · 겉보기 색 · 조흔색 · 자성)
-   금 · 황동석 · 황철석 · 석영 · 방해석 · 자철석을 돌려 보며 생김새를 살펴봐요. */
+/* m2-minerals · 3D 광물 표본 (결정 모양 · 겉보기 색)
+   금 · 황동석 · 황철석 · 석영 · 방해석 · 자철석을 돌려 보며 생김새를 살펴봐요.
+   3D는 1단계(겉보기 색)에서만 보여요. 조흔색 · 자성은 뒤 단계에서 직접 시험해 찾으므로 3D에서는 보여 주지 않아요. */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -9,12 +10,12 @@
   const COLOR = { gold: '노란색', chalco: '노란색', pyrite: '노란색', quartz: '투명한 흰색', calcite: '투명한 흰색', magnetite: '검은색' };
   const STREAK = { gold: ['노란색', '#e8b800'], chalco: ['녹흑색', '#25382c'], pyrite: ['검은색', '#2a2a30'], quartz: ['흰색', '#f1f1ec'], calcite: ['흰색', '#f1efe6'], magnetite: ['검은색', '#2a2a30'] };
   const NOTE = {
-    gold: '불규칙한 덩어리예요. 조흔색도 노란색이에요.',
-    chalco: '놋쇠 같은 노란색이에요. 조흔색은 녹흑색이에요.',
-    pyrite: '정육면체 결정이 잘 생겨요. 조흔색은 검은색이에요.',
-    quartz: '육각 기둥 모양이에요. 방해석을 긁을 수 있어요.',
-    calcite: '마름모꼴로 쪼개져요. 묽은 염산에서 거품이 나요.',
-    magnetite: '팔면체 결정이에요. 클립이 붙는 자성이 있어요.',
+    gold: '불규칙한 덩어리 모양이에요.',
+    chalco: '놋쇠 같은 노란색이에요.',
+    pyrite: '정육면체 모양 결정이 잘 생겨요.',
+    quartz: '육각 기둥 모양이에요.',
+    calcite: '마름모꼴로 쪼개져요.',
+    magnetite: '팔면체 모양 결정이에요.',
   };
 
   window.SciSim3D.attach({
@@ -22,7 +23,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHN ? 10 : 7.6, theta: 0.5, phi: 1.15, min: 4, max: 20, target: [0, 0.6, 0] },
     autoRotate: 0.25,
-    levels: [0],
+    levels: [0],                     // 1단계(겉보기 색). 2~4단계는 광물을 끌어 긁고 시험하는 미션이라 2D
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const sm = () => window.__sim;
@@ -84,13 +85,13 @@
         // 종이 클립
         const pts = [[-0.3, 0.1], [0.3, 0.1], [0.3, -0.35], [-0.2, -0.35], [-0.2, 0.0], [0.15, 0.0], [0.15, -0.25]].map((q) => new V3(q[0], q[1], 0));
         clip = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts, false, 'catmullrom', 0.2), 60, 0.028, 8), mat(0xc9ced8, { metalness: 0.9, roughness: 0.25 }));
-        clip.scale.setScalar(1.1); g.add(clip); g.userData.clip = clip; add('magnetite', g); }
+        clip.scale.setScalar(1.1); clip.visible = false; g.add(clip); g.userData.clip = clip; add('magnetite', g); }
       // 조흔판 (흰색 타일 + 긁힌 선)
       const plate = new THREE.Group(); root.add(plate);
       const tile = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.1, 1.2), mat(0xd8d3c6, { roughness: 0.85 })); tile.receiveShadow = true; plate.add(tile);
       const strk = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.02, 0.2), mat(0xe8b800, { roughness: 0.9 })); strk.position.set(0, 0.06, 0); plate.add(strk);
       plate.position.set(2.0, 0.07, 1.5); plate.rotation.y = -0.6; plate.scale.setScalar(0.8);
-      const labS = label('조흔색', plate, { offset: [0, 0.4, 0.8] });
+      plate.visible = false;   // 조흔색은 2단계에서 직접 긁어 찾아요
       const labN = label('', [0, 2.4, 0], { color: 'rgba(255,211,77,.92)' }); labN.el.style.color = '#1b2333'; labN.el.style.fontSize = '15px';
       const cTex = (w, h, draw) => { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); if (THREE.sRGBEncoding) t.encoding = THREE.sRGBEncoding; t.wrapS = t.wrapT = THREE.RepeatWrapping; return t; };
       const rockT = cTex(256, 256, (c, w, h) => { c.fillStyle = '#6a655d'; c.fillRect(0, 0, w, h); for (let i = 0; i < 1400; i++) { const l = 30 + Math.random() * 60; c.fillStyle = 'rgba(' + l + ',' + (l - 3) + ',' + (l - 8) + ',' + (0.15 + Math.random() * 0.3) + ')'; c.beginPath(); c.arc(Math.random() * w, Math.random() * h, 1 + Math.random() * 6, 0, 7); c.fill(); } for (let i = 0; i < 300; i++) { c.fillStyle = 'rgba(210,205,195,' + Math.random() * 0.25 + ')'; c.fillRect(Math.random() * w, Math.random() * h, 2, 2); } });
@@ -108,14 +109,13 @@
         sel = k; KEYS.forEach((q) => { spec[q].visible = q === k; });
         const st = STREAK[k]; strk.material.color.set(st[1]);
         const ms = window.__sim && window.__sim.MINERALS; const m = ms && ms.find((q) => q.id === k);
-        info(`<b>${NM[k]}</b> · 겉보기 색 ${COLOR[k]}<br>조흔색 <b>${st[0]}</b> (아래 흰 판)<br>${NOTE[k]}`);
+        info(`<b>${NM[k]}</b> · 겉보기 색 <b>${COLOR[k]}</b><br>${NOTE[k]}`);
         labN.set(NM[k]);
         const S2 = sm() && sm().S; if (push && S2 && S2.sel !== k) { S2.sel = k; if (S2.seen && S2.seen.add) S2.seen.add(k); }   // 3D에서 고른 표본을 2D에도 반영
         last2D = S2 ? S2.sel : null;
-        clipBtn.style.display = k === 'magnetite' ? '' : 'none'; mag = false;
+        mag = false;
       }
       const seg = controls.segment('광물', KEYS.map((k) => ({ label: NM[k], value: k })), 'pyrite', (k) => setSel(k, true));
-      const clipBtn = controls.button('🧲 클립 대 보기', () => { mag = !mag; });
       setSel(window.__sim && window.__sim.S && KEYS.includes(window.__sim.S.sel) ? window.__sim.S.sel : 'pyrite'); seg.set(sel);
       return {
         sync() { const s = window.__sim && window.__sim.S; if (s && KEYS.includes(s.sel) && s.sel !== sel) { setSel(s.sel); seg.set(sel); } },

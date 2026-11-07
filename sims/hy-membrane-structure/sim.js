@@ -1055,7 +1055,7 @@
         {
           id: 'place', title: '막 단백질 5종 끼워 넣기',
           goal: '🧩 화면에서 막 단백질 <b>5종을 모두</b> 이중층에 끼워 넣고, <b>콜레스테롤을 3개 이상</b> 넣어 보세요.',
-          hint: '3D 막대의 「막에 넣기」 단추(또는 아래 단백질)를 눌러요. 단백질마다 하는 일이 반복해서 나타나요. 🧈 콜레스테롤 넣기 버튼을 3번 눌러요.',
+          hint: '<span class="only3d">3D 막대의 「막에 넣기」 단추(또는 아래 단백질)를 눌러요.</span><span class="only2d">아래 단백질을 막 쪽으로 끌어다 놓거나 눌러요.</span> 단백질마다 하는 일이 반복해서 나타나요. 🧈 콜레스테롤 넣기 버튼을 3번 눌러요.',
           setup() { prReset(); S.pr.view = 0; setMode('prot'); },
           check: () => prPlaced().length === 5 && S.pr.chol >= 3, hold: 0.8,
           status: () => PTYPES.map((k) => mark(S.pr.items.find((q) => q.type === k).slot >= 0) + ' ' + PROT[k].name).join(' &nbsp; ') + ' &nbsp; ' + mark(S.pr.chol >= 3) + ' 콜레스테롤 ' + S.pr.chol + '/3',
@@ -1063,7 +1063,7 @@
         },
         {
           id: 'match', title: '단백질 기능 연결', manual: true,
-          goal: '막 단백질 카드 5장을 알맞은 <b>기능 상자</b>에 한 장씩 넣으세요. (3D 막대에서 카드를 고르고 기능 상자 단추를 눌러요)',
+          goal: '막 단백질 카드 5장을 알맞은 <b>기능 상자</b>에 한 장씩 넣으세요. <span class="only3d">(3D 막대에서 카드를 고르고 기능 상자 단추를 눌러요)</span>',
           hint: '앞 화면의 시연을 떠올려요. 이온이 줄지어 지나간 것은 통로, 포도당이 붙어 모양이 바뀐 것은 운반체, 별 모양 신호가 붙자 색이 변한 것은 수용체, 두 분자가 합쳐진 것은 효소, 당 사슬은 세포 인식이에요.',
           setup() { setMode('match'); matchS.reset(); },
           check() {

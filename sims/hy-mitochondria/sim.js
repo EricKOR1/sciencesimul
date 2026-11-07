@@ -1008,7 +1008,7 @@
       missions: [
         {
           id: 'build', title: '부품 7개 조립하기',
-          goal: '부품 카드 7개를 모형의 <b>?</b> 자리에 놓아 미토콘드리아를 조립하세요. (3D 막대에서 부품을 고르고 ? 자리 단추를 눌러요)',
+          goal: '부품 카드 7개를 모형의 <b>?</b> 자리에 놓아 미토콘드리아를 조립하세요. <span class="only3d">(3D 막대에서 부품을 고르고 ? 자리 단추를 눌러요)</span>',
           hint: '부품 카드의 설명과 ? 자리가 가리키는 구조를 맞춰 보세요. 부품을 고른 뒤 ? 자리를 누르면 돼요.',
           setup() { setMode('build'); S.b.nameMode = false; bReset(); },
           check: () => bPlaced() === 7, hold: 0.6,
@@ -1050,7 +1050,7 @@
       missions: [
         {
           id: 'map', title: '위치 지도 완성하기', manual: true,
-          goal: '반응 카드 5장을 <b>세포질 · 막 사이 공간 · 내막 · 기질</b> 중 알맞은 곳에 놓으세요. (3D 막대에서 카드를 고르고 구역 단추를 눌러요)',
+          goal: '반응 카드 5장을 <b>세포질 · 막 사이 공간 · 내막 · 기질</b> 중 알맞은 곳에 놓으세요. <span class="only3d">(3D 막대에서 카드를 고르고 구역 단추를 눌러요)</span>',
           hint: '해당 과정은 미토콘드리아 밖에서 일어나요. 피루브산 산화와 TCA 회로의 효소는 기질에, ATP를 만드는 단백질은 내막에 박혀 있어요.',
           setup() { setMode('map'); S.mp.pick = null; S.mp.so.reset(); },
           check() {

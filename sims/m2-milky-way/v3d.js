@@ -30,7 +30,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: 118 * FIT, theta: 0.5, phi: 0.95, fov: 45, min: 25, max: 330 },
     autoRotate: 0,
-    levels: [],                      // 하늘 누르기 · ☀ 끌기 · 카드 놓기 미션은 2D 화면에서 해요 (성단 · 성운 장면은 3D로 볼 수 있어요)
+    levels: [1],                     // 2단계(은하 모형): ☀는 아래 [☀ 태양계 위치] 막대로 놓아요. 1·3·4단계는 하늘 누르기 · 카드 놓기라 2D
     build(ctx) {
       const { THREE, root, camera, label, info, controls, orbit } = ctx;
       const R = rng(2024); let bgStars = null, hazeM = null;
@@ -156,7 +156,7 @@
       function sunDir() { const p = G(sun.x, sun.y, 0); return { x: p[0], z: p[2] }; }
       function updateLabels() {
         const out = mode === 'out';
-        labSun.show(out); labCen.show(out); labDia.show(out); labDist.show(out); distLine.visible = out;
+        labSun.show(out && !hideSun); labCen.show(out); labDia.show(out); labDist.show(out && !hideSun); distLine.visible = out && !hideSun;
         labOpen.show(out && showOpen); labGlob.show(out && showGlob); labHalo.show(out && showHalo);
         labBand.show(mode === 'sun'); labUp.show(mode === 'sun'); labGC.show(mode === 'sun');
         if (mode === 'sun') {
@@ -185,7 +185,7 @@
       function applyVis() { openPts.visible = showOpen; globPts.visible = showGlob; dHalo.visible = showHalo; }
       function text() {
         if (mode === 'out') {
-          info('<b>바깥에서 본 우리은하</b><br>중심에 <b>막대</b>가 있는 <b>나선</b> 모양이고, 지름은 약 <b>10만 광년</b>이에요. 원반은 아주 얇고 중심부만 볼록해요.<br>' +
+          info('<b>바깥에서 본 우리은하</b><br>위에서, 옆에서 보며 모양을 살펴보세요. 지름은 약 <b>10만 광년</b>이에요.<br>' +
             '태양계는 중심에서 약 <b>3만 광년</b> 떨어진 곳에 있어요. 우리은하는 천천히 <b>회전</b>해요.');
         } else {
           info('<b>☀ 태양계에서 본 하늘</b><br>태양계는 원반 <b>안쪽</b>에 있어서, 원반 방향으로는 별이 겹쳐 <b>은하수 띠</b>로 보여요. 원반 위·아래 방향은 별이 적어요.<br>끌어서 둘러봐요.');
@@ -193,7 +193,7 @@
       }
 
       const viewSeg = controls.segment('보는 곳', [{ value: 'out', label: '🌌 바깥에서' }, { value: 'sun', label: '☀ 태양계에서' }], 'out', (v) => { if (v === 'sun') toSun(); else toOut(); sideBtns(); });
-      // 위에서 / 옆에서: 2D 모형의 [위에서 · 옆에서]와 같은 조작 (2D 화면도 같이 바뀌어요)
+      // 위에서 / 옆에서: 실험의 [위에서 · 옆에서]와 같은 조작 (실험 화면도 같이 바뀌어요)
       const upB = controls.button('⬆ 위에서', () => { if (mode === 'out') { if (sim && sim.setView) sim.setView('top'); else { orbit.phi = 0.06; } } });
       const sideB = controls.button('➡ 옆에서', () => { if (mode === 'out') { if (sim && sim.setView) sim.setView('side'); else { orbit.phi = 1.5; } } });
       // ▶ 재생: 우리은하가 천천히 한 바퀴 회전해요 (2D 모형도 같이 돌아요)
@@ -207,11 +207,21 @@
       const globB = controls.button('구상 성단 ✓', () => { showGlob = !showGlob; globB.classList.toggle('on', showGlob); globB.textContent = '구상 성단 ' + (showGlob ? '✓' : '✕'); applyVis(); updateLabels(); }); globB.classList.add('on');
       const haloB = controls.button('헤일로 ✓', () => { showHalo = !showHalo; haloB.classList.toggle('on', showHalo); haloB.textContent = '헤일로 ' + (showHalo ? '✓' : '✕'); applyVis(); updateLabels(); }); haloB.classList.add('on');
       function sideBtns() { const o = mode === 'out'; upB.style.display = o ? '' : 'none'; sideB.style.display = o ? '' : 'none'; try { nebBtns.forEach((e) => { e.style.display = xMode === 'neb' ? '' : 'none'; }); const rows = barEl.querySelectorAll('.v3-player'); if (rows[0]) rows[0].style.display = xMode ? 'none' : ''; if (rows[1]) rows[1].style.display = xMode ? '' : 'none'; } catch (e) { /* 아직 만들기 전 */ } }
+      // ☀ 태양계 위치 (2단계 미션): 막대를 움직이면 2D 모형의 ☀도 같은 자리에 놓여요
+      const sunAng = Math.atan2(sunBase[1], sunBase[0]);
+      const fmtKly = (v) => (v < 0.5 ? '중심' : '약 ' + (v / 10).toFixed(1).replace(/\.0$/, '') + '만 광년');
+      let sunR = null; const sunCtl = [];
+      { const bar0 = ctx.renderer.domElement.closest('.v3-wrap').querySelector('.v3-ctl'), before = bar0.children.length; sunR = controls.range('☀ 태양계 위치: 중심에서', 0, 50, 1, 0, (v) => { if (sim && sim.placeSunAt) sim.placeSunAt(v, sunAng); }, fmtKly); sunCtl.push(...[...bar0.children].slice(before)); }
+      let sunCtlOn = true;
+      const sunTask = () => { try { const g = sim && sim.game && sim.game(), m = g && g.current && g.current(); return !!(m && m._sunTask && g.phase === 'active'); } catch (e) { return false; } };
+      let hideSun = false;
       sideBtns();
 
       let lastSunKey = '';
       function readLesson() { // 수업에서 학생이 ☀를 놓았다면 그 자리를 따라가요 (읽기만)
-        { const q = sim && sim.S && sim.S.sun; const key = q ? q.mode + ':' + (q.gx || 0).toFixed(1) + ':' + (q.gy || 0).toFixed(1) : ''; if (key === lastSunKey) return; lastSunKey = key; }
+        { const q = sim && sim.S && sim.S.sun, st = sunTask(); const key = q ? q.mode + ':' + (q.gx || 0).toFixed(1) + ':' + (q.gy || 0).toFixed(1) + st : ''; if (key === lastSunKey) return; lastSunKey = key;
+          const placed = !!(q && q.mode === 'placed'); hideSun = !placed && st;
+          if (placed && document.activeElement !== sunCtl[1]) sunR.set(Math.round(Math.hypot(q.gx, q.gy))); }
         try {
           const s = sim && sim.S && sim.S.sun;
           if (s && s.mode === 'placed' && isFinite(s.gx) && isFinite(s.gy) && Math.hypot(s.gx, s.gy) > 3) { sun = { x: s.gx, y: s.gy }; } else sun = { x: sunBase[0], y: sunBase[1] };
@@ -219,7 +229,7 @@
         let bi = 0, bd = 1e9; // 태양 바깥쪽 가까이의 산개 성단 하나에 이름표
         opens.forEach((o, i) => { const d = Math.hypot(o[0] - sun.x * 1.3, o[2] + sun.y * 1.3); if (d < bd) { bd = d; bi = i; } });
         anOpen.position.set(opens[bi][0], opens[bi][1], opens[bi][2]);
-        placeSun(); anDist.position.set(sunMesh.position.x * 0.55, 0, sunMesh.position.z * 0.55);
+        placeSun(); labDist.set(fmtKly(Math.hypot(sun.x, sun.y))); sunMesh.visible = mode === 'out' && !hideSun; anDist.position.set(sunMesh.position.x * 0.55, 0, sunMesh.position.z * 0.55);
         distLine.geometry.setFromPoints([new THREE.Vector3(0, 0, 0), sunMesh.position.clone()]);
         localCloud.position.set(sunMesh.position.x, sunMesh.position.y, sunMesh.position.z);
         updateLabels();
@@ -287,7 +297,7 @@
           if (xPlay) { const p = xP; tx = p < 0.4 ? -4.6 : p < 0.5 ? -4.6 + 9.2 * (p - 0.4) / 0.1 : 4.6; dist = 8 * (window.innerWidth < 600 ? 1.55 : 1); orbit.tx += (tx - orbit.tx) * Math.min(1, dt * 4); orbit.dist += (dist - orbit.dist) * Math.min(1, dt * 3); if (ph) ph.textContent = p < 0.45 ? '산개 성단' : '구상 성단'; }
           else if (ph) ph.textContent = '';
           openC.rotation.y += dt * 0.15; globC.rotation.y += dt * 0.1; openC.position.x = 0; 
-          setX('<b>산개 성단 vs 구상 성단</b><br><b style="color:#9fc4ff">산개 성단</b>: 별이 수십~수천 개로 적고 모양이 <b>불규칙</b>해요. 푸른빛의 <b>젊은 별</b>이 많고 은하 <b>원반(나선팔)</b>에 있어요. 예) 플레이아데스(M45)<br><b style="color:#ffbf80">구상 성단</b>: 별이 수만~수십만 개로 많고 <b>공 모양</b>이에요. 붉은빛의 <b>늙은 별</b>이 많고 은하 <b>헤일로·중심부</b>에 있어요. 예) M13<br>성단 카드 분류는 옆의 2D 화면에서 해요.');
+          setX('<b>산개 성단 vs 구상 성단</b><br><b style="color:#9fc4ff">산개 성단</b>: 별이 수십~수천 개로 적고 모양이 <b>불규칙</b>해요. 푸른빛의 <b>젊은 별</b>이 많고 은하 <b>원반(나선팔)</b>에 있어요. 예) 플레이아데스(M45)<br><b style="color:#ffbf80">구상 성단</b>: 별이 수만~수십만 개로 많고 <b>공 모양</b>이에요. 붉은빛의 <b>늙은 별</b>이 많고 은하 <b>헤일로·중심부</b>에 있어요. 예) M13');
         } else if (xMode === 'neb') {
           const k = xPlay ? Math.min(2, Math.floor(xP * 3)) : (S && S.neb != null ? S.neb : nebK), N = NEBC[k];
           if (xPlay && sim && sim.setNeb && sim.S && sim.S.neb !== k) sim.setNeb(k);
@@ -304,7 +314,7 @@
           nebLab[0].show(k !== 2); nebLab[0].set(k === 0 ? '뜨거운 별' : '별'); nebLab[1].show(true); nebA1.position.set(0, 2.2, 0); nebLab[1].set(N.name + (k === 2 ? ' (짙은 가스·먼지)' : '')); nebLab[2].show(true);
           nebLab[3].show(true); nebLab[3].set(k === 2 ? '뒤쪽 별빛이 가려져 어두워요' : N.rays); nebA3.position.set(k === 2 ? 3.0 : 3.8, k === 2 ? 0.0 : 0.9, 0);
           if (ph) ph.textContent = xPlay ? N.name : '';
-          setX(N.txt + '<br>빛이 어떻게 되는지에 따라 <b>방출 · 반사 · 암흑 성운</b>으로 나눠요. 사진 분류는 옆의 2D 화면에서 해요.');
+          setX(N.txt + '<br>빛이 어떻게 되는지에 따라 <b>방출 · 반사 · 암흑 성운</b>으로 나눠요.');
         }
       }
       let lastTiltT = null, k0 = 0;
@@ -312,6 +322,7 @@
         update(dt, tm) {
           const S = sim && sim.S;
           { const want = S && S.scene === 'cluster' ? 'clu' : S && S.scene === 'nebula' ? 'neb' : ''; if (want && want !== xMode) enterX(want); else if (!want && xMode) leaveX(); }
+          { const w = !!(S && S.scene === 'disc' && !xMode && mode === 'out'); if (w !== sunCtlOn) { sunCtlOn = w; sunCtl.forEach((e) => { e.style.display = w ? '' : 'none'; }); } }
           if (xMode) { updX(dt, tm); return; }
           if (S && (k0++ % 3) === 0 && mode === 'out') {
             // 2D의 회전각 · 위/옆 보기를 따라가요 (재생 중에는 3D가 2D를 이끌어요)

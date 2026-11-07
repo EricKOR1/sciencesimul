@@ -1646,7 +1646,7 @@
     const running = S.probe && !S.probe.done;
     probeBtn.disabled = !!running;
     probeBtn.innerHTML = running ? '⏳ 하강 중…' : S.probe && S.probe.done ? '🔁 다시 투하' : '🚀 탐사선 투하';
-    $('#probeNote').textContent = running ? '탐사선이 내려가는 모습을 지켜봐요.' : '위에서 행성을 고른 뒤 눌러요.';
+    $('#probeNote').textContent = running ? '탐사선이 내려가는 모습을 지켜봐요.' : '행성을 고른 뒤 눌러요.';
     resetBtn.innerHTML = sc === 'graph' && game && !free && game.level === 1 && game.index === 3 ? '↺ 색 지우기' : '↺ 되돌리기';
     const any = ['#cScene', '#cFocus', '#cNight', '#cProbe', '#cReset'].some((q) => { const n = $(q); return !n.classList.contains('is-off') && !n.hidden; });
     $('#ctrlCard').hidden = !any;
@@ -2010,7 +2010,7 @@
           {
             title: '🚀 탐사선 보내기',
             goal: '<b>지구형 행성 하나</b>와 <b>목성형 행성 하나</b>에 탐사선을 보내 표면의 모습을 비교해요.',
-            hint: '위쪽 칩에서 행성을 고르고 [🚀 탐사선 투하]를 눌러요. 탐사선이 내려가는 모습을 끝까지 지켜봐요.',
+            hint: '<span class="only2d">위쪽 칩에서</span><span class="only3d">아래 🚀 막대에서</span> 행성을 고르고 [🚀 탐사선 투하]를 눌러요. 탐사선이 내려가는 모습을 끝까지 지켜봐요.',
             setup() { setScene('probe'); S.probe = null; S.probed = {}; S.probeSel = 'earth'; syncControls(); },
             check: () => PL.some((p) => p.g === 't' && S.probed[p.id]) && PL.some((p) => p.g === 'j' && S.probed[p.id]),
             hold: 0.6,
@@ -2152,7 +2152,7 @@
 
   /* ---------- 점검용 ---------- */
   window.__sim = {
-    S, FIG, PL, GAL, frameMs: () => frameMs, game: () => game, view: activeView, scopeSprite,
+    S, FIG, PL, GAL, frameMs: () => frameMs, game: () => game, view: activeView, scopeSprite, selectProbe,
     client(L, x, y) { const V = views.find((q) => q.L === L) || activeView(); const r = V.v.canvas.getBoundingClientRect(); return { x: r.left + x * r.width / V.L.vw, y: r.top + y * r.height / V.L.vh }; },
     skyClient(id) { const V = activeView(), q = skyPos(V.L, id); return this.client(V.L, q.x, q.y); },
     rowClient(i) { const V = activeView(), q = rowCenter(V.L, i); return this.client(V.L, q.x, q.y); },

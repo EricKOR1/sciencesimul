@@ -1038,7 +1038,7 @@ const k = PHONE ? 1.3 : 1.4, y = sy + (PHONE ? 190 : 250);
       missions: [
         {
           id: 'build', title: '부품 9개 조립하기',
-          goal: '부품 카드 9개를 모형의 <b>?</b> 자리에 놓아 엽록체를 조립하세요. (3D 막대에서 부품을 고르고 ? 자리 단추를 눌러요)',
+          goal: '부품 카드 9개를 모형의 <b>?</b> 자리에 놓아 엽록체를 조립하세요. <span class="only3d">(3D 막대에서 부품을 고르고 ? 자리 단추를 눌러요)</span>',
           hint: '부품 카드의 설명과 ? 자리가 가리키는 구조를 맞춰 보세요. 부품을 고른 뒤 ? 자리를 누르면 돼요.',
           setup() { setMode('build'); S.b.nameMode = false; bReset(); },
           check: () => bPlaced() === 9, hold: 0.6,
@@ -1117,7 +1117,7 @@ const k = PHONE ? 1.3 : 1.4, y = sy + (PHONE ? 190 : 250);
       missions: [
         {
           id: 'link', title: '구조와 기능 연결', manual: true,
-          goal: '2D 단면의 핀 ①~⑤가 가리키는 구조에 알맞은 <b>기능 카드(A~E)</b>를 골라 5개를 모두 연결하세요.',
+          goal: '단면 그림의 핀 ①~⑤가 가리키는 구조에 알맞은 <b>기능 카드(A~E)</b>를 골라 5개를 모두 연결하세요.',
           hint: '틸라코이드 막은 색소가 있어 빛을 받아요. 그라나는 쌓여서 표면적이 넓고, 스트로마에는 효소가 있어요. 녹말은 양분 저장이에요.',
           setup() { setMode('func'); S.fn.chk = false; PINS.forEach((p, i) => { S.fn.sel[i] = ''; $('#fn' + i).value = ''; }); updateCtl(); },
           check() {

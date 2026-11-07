@@ -16,7 +16,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHN ? 16 : 12, theta: 0.42, phi: 1.2, min: 6, max: 26, target: [1.2, 0.2, 0] },
     autoRotate: 0,
-    levels: [2, 3],                  // 1·2단계(눈금자 읽기, 광선 끌기)는 2D 화면에서 해요
+    levels: [2, 3],                  // 3·4단계(곡면 거울 · 렌즈, 카드 분류는 아래 버튼으로). 1·2단계는 카드 · 광선을 끄는 미션이라 2D
     build(ctx) {
       const { THREE, root, label, info, controls, renderer } = ctx;
       const V3 = THREE.Vector3;
@@ -166,9 +166,9 @@
         const txt = sortNote + (c.farAway ? `<b>${nm}</b><br>물체가 초점 가까이에 있어서 빛이 거의 나란히 나가요.<br>상이 아주 멀리 생겨요.` : `<b>${nm}</b> · 상은 ${size}, ${dirw}<br>${how}`);
         if (txt !== cacheTxt) { cacheTxt = txt; info(txt); }
       }
-      const cmOf = (v) => Math.round(v * 3.125 * 2) / 2;               // 평면거울: 물체 거리를 cm로 (2D 차시의 2~10 cm)
+      const cmOf = (v) => Math.round(v * 3.125 * 2) / 2;               // 평면거울: 물체 거리를 cm로 (실험의 2~10 cm)
       let pushedAt = -9, now = 0;
-      /* 3D에서 바꾼 값을 2D 실험에도 똑같이 반영해요 */
+      /* 3D에서 바꾼 값을 실험에도 똑같이 반영해요 */
       function to2d() {
         const s = sm(); if (!s) return;
         pushedAt = now;
@@ -208,6 +208,30 @@
       });
       controls.button('이름표', () => { labsOn = !labsOn; limg.show(labsOn); lobj.show(labsOn); lf.forEach((l) => l.show(labsOn)); rebuild(); });
       let sortNote = '';
+      /* 카드 분류(거울 쓰임 짝짓기 · 렌즈 사례 분류): 카드를 고른 뒤 상자 버튼을 눌러요 → 실험의 카드 상태와 같아요(window.__sim.sortPick) */
+      const bar = renderer.domElement.closest('.v3-wrap').querySelector('.v3-ctl');
+      const SG = {};
+      ['sortM', 'sortL'].forEach((kind) => {
+        const def = sm() && sm().SORTS && sm().SORTS[kind]; if (!def) return;
+        const before = bar.children.length, g = { sel: 0 };
+        g.seg = controls.segment('카드', def.cards.map((c, i) => ({ label: c.t, value: i })), 0, (v) => { g.sel = v; });
+        def.bins.forEach((b) => controls.button(b.label + '에 넣기', () => { const s = sm(); if (s && s.sortPick && s.scene === kind && s.SORT.kind === kind) { s.sortPick(g.sel, b.id); sortTick(true); from2d(); } }));
+        g.els = [...bar.children].slice(before);
+        g.cardBtns = g.els.filter((e) => e.tagName === 'BUTTON').slice(0, def.cards.length);
+        g.els.forEach((e) => { e.style.display = 'none'; });
+        SG[kind] = g;
+      });
+      let sortShown = '', sortKey = '';
+      function sortTick(force) {
+        const s = sm(), kind = s && SG[s.scene] && s.SORT && s.SORT.kind === s.scene ? s.scene : '';
+        if (kind !== sortShown) { sortShown = kind; sortKey = ''; Object.keys(SG).forEach((k) => SG[k].els.forEach((e) => { e.style.display = k === kind ? '' : 'none'; })); }
+        if (!kind) return;
+        const g = SG[kind], cards = s.SORT.cards, key = cards.map((c) => c.ci + (c.placed ? 'p' : '')).join();
+        if (key === sortKey && !force) return; sortKey = key;
+        const placed = new Set(cards.filter((c) => c.placed).map((c) => c.ci));
+        g.cardBtns.forEach((b, i) => { b.style.display = placed.has(i) ? 'none' : ''; });
+        if (placed.has(g.sel)) { const nx = g.cardBtns.findIndex((b, i) => !placed.has(i)); if (nx >= 0) { g.sel = nx; g.seg.set(nx); } }
+      }
       function show() { Object.entries(parts).forEach(([k, g]) => { g.visible = k === type; }); }
       show(); rebuild();
       // 2D 실험의 종류 · 물체 거리를 따라가요 (2D가 바뀔 때만)
@@ -223,7 +247,8 @@
           else if (s.scene === 'sortM') { list = ['convexM', 'concaveM']; t = list.indexOf(type) >= 0 ? type : 'convexM'; rr = list.indexOf(type) >= 0 ? null : 2; }
           else if (s.scene === 'sortL') { list = ['convexL', 'concaveL']; t = list.indexOf(type) >= 0 ? type : 'convexL'; rr = list.indexOf(type) >= 0 ? null : 2; }
         } catch (e) { return; }
-        const nn = s.scene === 'sortM' ? '<b>거울 쓰임 짝짓기</b>는 2D 화면에서 해요. 3D에서 볼록 · 오목 거울이 만드는 상을 비교해 보세요.<br>' : s.scene === 'sortL' ? '<b>렌즈 사례 분류</b>는 2D 화면에서 해요. 3D에서 볼록 · 오목 렌즈가 만드는 상을 비교해 보세요.<br>' : '';
+        const msg = (s.scene === 'sortM' || s.scene === 'sortL') && s.SORT && s.SORT.msg ? '<span style="color:' + (s.SORT.msg.good ? '#86efac' : '#fca5a5') + '">' + s.SORT.msg.text + '</span><br>' : '';
+        const nn = s.scene === 'sortM' ? '<b>거울 쓰임 짝짓기</b>: 아래에서 카드를 고른 뒤 알맞은 거울 상자 버튼을 눌러요.<br>' + msg : s.scene === 'sortL' ? '<b>렌즈 사례 분류</b>: 아래에서 카드를 고른 뒤 알맞은 렌즈 상자 버튼을 눌러요.<br>' + msg : '';
         if (nn !== sortNote) { sortNote = nn; cacheTxt = ''; if (t === type) rebuild(); }
         if (!t) return;
         if (list.join() !== allowed.join()) showAllowed(list);
@@ -233,7 +258,7 @@
         type = t; if (rr != null) r = Math.max(0.5, Math.min(3.2, rr)); seg1.set(type); rng.set(r); show(); rebuild();
       }
       let k0 = 0;
-      return { sync() { from2d(); }, update(dt, t) { now = t; if ((k0++ % 10) === 0) from2d(); fm.forEach((f) => f.scale.setScalar(1 + 0.15 * Math.sin(t * 4))); } };
+      return { sync() { from2d(); }, update(dt, t) { now = t; if ((k0++ % 10) === 0) { from2d(); sortTick(); } fm.forEach((f) => f.scale.setScalar(1 + 0.15 * Math.sin(t * 4))); } };
     },
   });
 })();

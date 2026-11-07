@@ -1,6 +1,8 @@
 /* m1-gravity-elastic · 3D 중력의 방향 · 용수철의 탄성력 · 질량과 무게 (2D 장면과 같은 구성)
    중력: 북극·대한민국·남극·적도 반대편 어디서나 지구 중심 쪽. 탄성력: 1 N 추를 단 용수철, 늘어난 길이에 비례. 질량과 무게: 1 kg 물체는 지구 9.8 N, 달 1.6 N.
-   2D의 사과·추·용수철저울 상태를 그대로 읽어 따라가요. ▶ 재생은 장면마다 한 번의 과정(떨어뜨리기 · 추 달기 · 지구에서 달로)을 반복해요. */
+   2D의 사과·추·용수철저울 상태를 그대로 읽어 따라가요. ▶ 재생은 장면마다 한 번의 과정(떨어뜨리기 · 추 달기 · 지구에서 달로)을 반복해요.
+   1단계(중력의 방향)만 3D예요: 아래 막대의 🍎 단추로 네 곳의 사과를 놓아요(2D에서 아이를 누른 것과 같아요).
+   용수철 끌기 · 추 달기 · 표와 그래프 · 저울에 추 끌어 놓기(2 · 3 · 4단계)는 2D 화면이에요. */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -8,7 +10,7 @@
   window.SciSim3D.attach({
     title: '중력과 탄성력 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    levels: [0, 1, 2],
+    levels: [0],   // 1단계(지구 둘레 네 곳의 사과)만 3D
     camera: { dist: 17 * (PHN0 ? 1.05 : 1), theta: 0.4, phi: 1.2, fov: 45, target: [0, 0, 0], min: 6, max: 30 },
     autoRotate: 0.08,
     build(ctx) {
@@ -154,6 +156,8 @@
       });
       built = true;
       const phEl = () => document.querySelector('.v3-player .v3-ph');
+      /* 🍎 단추: 2D에서 아이를 누른 것과 같아요 (들고 있으면 놓고, 떨어진 사과는 다시 주워요) → 미션 진행을 함께 써요 */
+      const kidBs = ['북극', '대한민국', '남극', '적도 반대편'].map((n, i) => controls.button('🍎 ' + n, () => { const l = L2(); if (l && l.tapKid) l.tapKid(i); }));
       const setInfo = (h) => { if (h !== lastTxt) { lastTxt = h; info(h); } };
       let cur = '';
       function setView(v) {
@@ -188,11 +192,16 @@
               } else h = HO;
               const p = a.d.clone().multiplyScalar(RE + h); a.g.position.copy(p); a.g.quaternion.setFromUnitVectors(new V3(0, 1, 0), a.d);
               const falling = pmode ? (pP >= 0.25 && pP < 0.85) : !!(k && (k.st === 'fall' || k.st === 'land'));
-              setArrow(a.ar, p.clone().add(a.d.clone().multiplyScalar(-0.35)), p.clone().add(a.d.clone().multiplyScalar(-0.35 - 1.15))); a.ar.visible = true;
+              setArrow(a.ar, p.clone().add(a.d.clone().multiplyScalar(-0.35)), p.clone().add(a.d.clone().multiplyScalar(-0.35 - 1.15)));
+              a.ar.visible = pmode ? pP >= 0.25 : !!(k && (k.done || k.st !== 'held'));   // 화살표(중력)는 사과를 놓은 뒤에 보여요
             });
             core.scale.setScalar(1 + 0.15 * Math.sin(t * 3));
             if (ph) ph.textContent = pmode ? (pP < 0.25 ? '들고 있어요' : pP < 0.5 ? '떨어져요' : pP < 0.85 ? '땅에 닿아요' : '다시 들어 올려요') : '';
-            setInfo('<b>중력</b>은 지구가 물체를 <b>지구 중심</b> 쪽으로 끌어당기는 힘이에요.<br>북극·대한민국·남극·적도 반대편 어디에서나 사과는 <b>지구 중심 쪽</b>(아래)으로 떨어져요.<br>' + (pmode ? '' : '옆의 2D 장면에서 사과를 눌러 떨어뜨려 보세요. 아래 = 지구 중심 방향이에요.'));
+            const nDone = K ? K.filter((k) => k.done).length : 0;
+            setInfo(pmode || nDone >= 4 ? '<b>중력</b>은 지구가 물체를 <b>지구 중심</b> 쪽으로 끌어당기는 힘이에요.<br>북극·대한민국·남극·적도 반대편 어디에서나 사과는 <b>지구 중심 쪽</b>(아래)으로 떨어져요.'
+              : '네 곳의 아이가 사과를 들고 있어요. 아래 <b>🍎 단추</b>를 눌러 사과를 놓아 보세요. 사과는 어느 쪽으로 떨어질까요?' + (nDone ? '<br>사과 ' + nDone + '개가 떨어졌어요.' : ''));
+            dirText.show(pmode || nDone >= 4);
+            kidBs.forEach((b, i) => { const k = K && K[i]; b.classList.toggle('on', !!(k && k.done)); });
           } else if (sc === 'S') {
             const N = SP ? SP.items.filter((i) => i.att).length : 0;
             let n, ext, hand = false;
@@ -212,7 +221,7 @@
             if (ph) ph.textContent = pmode ? (pP < 0.45 ? '지구에서 재요' : pP < 0.5 ? '달로 옮겨요' : pP < 0.95 ? '달에서 재요' : '') : '';
             setInfo('<b>질량</b>은 물체의 고유한 양(1 kg)으로 장소가 바뀌어도 변하지 않아요. <b>무게</b>는 중력의 크기(N)로 장소에 따라 달라요.<br>1 kg 물체의 무게: 지구 <b>' + GE + ' N</b>, 달 <b>' + GM + ' N</b> (지구의 약 1/6).' + (pmode ? '' : ' 옆의 2D 장면에서 용수철저울과 양팔저울로 재 보세요.'));
           } else {
-            setInfo('<b>생활 속 중력과 탄성력</b> 문제는 2D 화면에서 풀어 보세요. 용수철저울은 탄성력이 늘어난 길이에 비례하는 성질로 무게를 재요.');
+            setInfo('용수철저울은 탄성력이 늘어난 길이에 비례하는 성질로 무게를 재요.');
           }
         },
         sync() {},

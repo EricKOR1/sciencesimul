@@ -1205,6 +1205,16 @@
     if (SORT.drag < 0) return;
     const c = SORT.cards[SORT.drag], bi = sortBinAt(p); SORT.drag = -1; SORT.hot = -1;
     if (bi < 0) { c.tw = SciSim.tween(c, { x: c.hx, y: c.hy }, { duration: 0.4, ease: 'outBack' }); return; }
+    sortDrop(c, bi);
+  }
+  // 3D 화면의 카드 버튼: 카드(ci)를 상자(binId)에 넣어요 (끌어다 놓은 것과 같아요)
+  function sortPick(ci, binId) {
+    const c = SORT.cards.find((q) => q.ci === ci && !q.placed), bi = SORT.bins.findIndex((b) => b.id === binId);
+    if (!c || bi < 0 || SORT.drag >= 0) return false;
+    if (c.tw) c.tw.cancel();
+    sortDrop(c, bi); return c.placed;
+  }
+  function sortDrop(c, bi) {
     const b = SORT.bins[bi];
     if (b.id === c.def.bin) {
       c.placed = true; c.bin = bi; SORT.placed[SORT.kind]++; Sound.success();
@@ -1553,9 +1563,9 @@
           {
             id: 'ml-mirror', scene: 'mirror',
             title: '거울의 종류와 거리를 바꿔 보기',
-            goal: '촛불을 거울에 가깝게, 멀게 놓아 보면서 <b>볼록 거울</b>과 <b>오목 거울</b>이 만드는 상의 크기·방향을 비교해요. 왼쪽 위의 <b>눈에 보이는 상</b> 창을 살펴봐요.',
-            hint: '버튼으로 거울을 바꾸고, 촛불을 끌어서 초점(◆) 안쪽과 바깥쪽에 놓아 봐요.',
-            setup() { BN.seen = { convex: false, near: false, far: false }; BN.hold = { convex: 0, near: 0, far: 0 }; BN.mtype = 'convex'; BN.dragged = false; BN.fade = 0; setBenchD('mirror', vToD('mirror', 70)); syncUI(); showHint('촛불을 끌어 거울에서 멀리, 가까이 놓아 봐요', 8000); },
+            goal: '촛불을 거울에 가깝게, 멀게 놓아 보면서 <b>볼록 거울</b>과 <b>오목 거울</b>이 만드는 상의 크기·방향을 비교해요.<span class="only2d"> 왼쪽 위의 <b>눈에 보이는 상</b> 창을 살펴봐요.</span>',
+            hint: '버튼으로 거울을 바꾸고, 거리 막대로 촛불을 옮겨 초점 안쪽(가까이)과 바깥쪽(멀리)에 놓아 봐요.<span class="only2d"> 촛불을 직접 끌어도 돼요.</span>',
+            setup() { BN.seen = { convex: false, near: false, far: false }; BN.hold = { convex: 0, near: 0, far: 0 }; BN.mtype = 'convex'; BN.dragged = false; BN.fade = 0; setBenchD('mirror', vToD('mirror', 70)); syncUI(); showHint('촛불을 거울에서 멀리, 가까이 놓아 봐요', 8000); },
             check: () => BN.seen.convex && BN.seen.near && BN.seen.far,
             status: () => chip(BN.seen.convex, '볼록 거울') + '<br>' + chip(BN.seen.near, '오목 거울 · 초점 안쪽') + ' · ' + chip(BN.seen.far, '오목 거울 · 초점 바깥쪽'),
             hold: 0.3,
@@ -1566,7 +1576,7 @@
             title: '거울 쓰임 짝짓기',
             goal: '일상생활에서 쓰이는 거울 <b>6가지</b>를 평면거울·볼록 거울·오목 거울 상자에 알맞게 넣어요.',
             hint: '넓은 범위를 봐야 하면 볼록 거울, 크게 보거나 빛을 모으면 오목 거울, 있는 그대로 보면 평면거울이에요.',
-            setup() { sortSetup('sortM'); showHint('카드를 끌어서 알맞은 상자에 넣어요', 7000); },
+            setup() { sortSetup('sortM'); showHint('카드를 알맞은 상자에 넣어요', 7000); },
             check: () => SORT.placed.sortM >= SORTS.sortM.cards.length,
             status: () => chip(SORT.placed.sortM >= 6, '맞게 넣은 카드 ' + SORT.placed.sortM + ' / 6') + ' · 틀린 횟수 ' + SORT.wrong,
             hold: 0.5,
@@ -1598,8 +1608,8 @@
             id: 'ml-convex', scene: 'lens',
             title: '볼록 렌즈로 관찰하기',
             goal: '<b>볼록 렌즈</b>에서 촛불을 초점 안쪽(가까이)과 초점 바깥쪽(멀리)에 놓고 상의 크기와 방향을 관찰해요.',
-            hint: '촛불을 끌어서 렌즈 가까이, 멀리 놓아 보세요. 돋보기처럼 가까이 대면 어떻게 보일까요?',
-            setup() { LN.ltype = 'convex'; LN.seen.cnear = LN.seen.cfar = false; LN.hold.cnear = LN.hold.cfar = 0; LN.dragged = false; LN.fade = 0; setBenchD('lens', vToD('lens', 70)); syncUI(); showHint('촛불을 끌어 렌즈에 가깝게, 멀게 놓아 봐요', 8000); },
+            hint: '거리 막대로 촛불을 렌즈 가까이, 멀리 놓아 보세요<span class="only2d">(촛불을 직접 끌어도 돼요)</span>. 돋보기처럼 가까이 대면 어떻게 보일까요?',
+            setup() { LN.ltype = 'convex'; LN.seen.cnear = LN.seen.cfar = false; LN.hold.cnear = LN.hold.cfar = 0; LN.dragged = false; LN.fade = 0; setBenchD('lens', vToD('lens', 70)); syncUI(); showHint('촛불을 렌즈에 가깝게, 멀게 놓아 봐요', 8000); },
             check: () => LN.seen.cnear && LN.seen.cfar,
             status: () => chip(LN.seen.cnear, '초점 안쪽: 크고 바로 선 상') + '<br>' + chip(LN.seen.cfar, '초점 바깥쪽: 거꾸로 선 상'),
             hold: 0.3,
@@ -1609,7 +1619,7 @@
             id: 'ml-concave', scene: 'lens',
             title: '오목 렌즈로 관찰하기',
             goal: '<b>오목 렌즈</b>로 바꾸고 촛불을 가까이, 멀리 놓아 보세요. 상이 어떻게 달라지는지 비교해요.',
-            hint: '오목 렌즈 버튼을 누르고 촛불을 끌어 봐요. 촛불의 위치를 바꿔도 달라지지 않는 점이 있어요.',
+            hint: '오목 렌즈 버튼을 누르고 촛불을 가까이, 멀리 옮겨 봐요. 촛불의 위치를 바꿔도 달라지지 않는 점이 있어요.',
             setup() { LN.ltype = 'concave'; LN.seen.vnear = LN.seen.vfar = false; LN.hold.vnear = LN.hold.vfar = 0; LN.fade = 0; setBenchD('lens', vToD('lens', 60)); syncUI(); showHint('촛불을 렌즈 가까이, 멀리에 놓아 봐요', 7000); },
             check: () => LN.seen.vnear && LN.seen.vfar,
             status: () => chip(LN.seen.vnear, '가까이: 작고 바로 선 상') + '<br>' + chip(LN.seen.vfar, '멀리: 작고 바로 선 상'),
@@ -1621,7 +1631,7 @@
             title: '렌즈 사례 분류하기',
             goal: '일상생활에서 쓰이는 렌즈 <b>6가지</b>를 볼록 렌즈·오목 렌즈 상자에 알맞게 넣어요.',
             hint: '크게 보이거나 빛을 모아 주는 렌즈는 볼록 렌즈, 작고 바로 선 상을 보여 주는 렌즈는 오목 렌즈예요.',
-            setup() { sortSetup('sortL'); showHint('카드를 끌어서 알맞은 상자에 넣어요', 7000); },
+            setup() { sortSetup('sortL'); showHint('카드를 알맞은 상자에 넣어요', 7000); },
             check: () => SORT.placed.sortL >= SORTS.sortL.cards.length,
             status: () => chip(SORT.placed.sortL >= 6, '맞게 넣은 카드 ' + SORT.placed.sortL + ' / 6') + ' · 틀린 횟수 ' + SORT.wrong,
             hold: 0.5,
@@ -1659,7 +1669,7 @@
   // 테스트·디버깅용
   window.__sim = {
     get scene() { return scene; }, get game() { return game; }, W, H, PHONE, PL, PLR, EY, BN, LN, SORT, SORTS, PLG, BG_,
-    BN, LN, syncUI, setScene, plGoCm, plCm, setBenchD, calcMirror, calcLens, sortSetup, plrP, plrP2, mirrorYs,
+    BN, LN, syncUI, setScene, plGoCm, plCm, setBenchD, calcMirror, calcLens, sortSetup, sortPick, plrP, plrP2, mirrorYs,
     toClient(x, y) { const r = view.canvas.getBoundingClientRect(); return { x: r.left + x * r.width / W, y: r.top + y * r.height / H }; },
     benchObj(kind) { const st = kind === 'mirror' ? BN : LN; return { x: (kind === 'mirror' ? BG_.xm : BG_.xl) - st.d, y: BG_.ya - 10 }; },
   };

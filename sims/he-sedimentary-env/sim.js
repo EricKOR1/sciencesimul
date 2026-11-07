@@ -987,7 +987,7 @@
   /* =========================================================
      조작 · 읽기 칸 · 단계와 미션
      ========================================================= */
-  const VIEW_LABEL = { sieve: '🧂 체로 알갱이 가르기', flow: '🌊 흐름의 세기와 알갱이', graded: '🥤 점이층리 만들기', ripple: '〰️ 연흔 만들기', crack: '🧱 건열 만들기', cross: '📚 사층리 만들기', match: '🧩 단서로 퇴적 환경 짝짓기', invert: '🔄 지층의 위아래 판단', column: '📊 노두 주상도 해석', trend: '🌊 해침과 해퇴' };
+  const VIEW_LABEL = { sieve: '🪨 체로 알갱이 가르기', flow: '🌊 흐름의 세기와 알갱이', graded: '🥤 점이층리 만들기', ripple: '〰️ 연흔 만들기', crack: '🧱 건열 만들기', cross: '📚 사층리 만들기', match: '🧩 단서로 퇴적 환경 짝짓기', invert: '🔄 지층의 위아래 판단', column: '📊 노두 주상도 해석', trend: '🌊 해침과 해퇴' };
   const sFlow = $('#sFlow'), oFlow = $('#oFlow');
   const s1Btns = $$('#s1Seg .opt'), expBtns = $$('#expSeg .opt'), ripBtns = $$('#ripSeg .opt');
   const mkSel = (host, rows, name) => { $(host).innerHTML = rows.map((r, i) => '<div class="cap-lbl">' + r.label + '</div><select class="mini-sel" data-i="' + i + '" aria-label="' + name + ' ' + (i + 1) + '"><option value="">고르세요</option>' + r.opts.map((o) => '<option value="' + o[0] + '">' + o[1] + '</option>').join('') + '</select>').join(''); return $$(host + ' select'); };
@@ -1063,7 +1063,7 @@
 
   const levels = [
     {
-      title: '층리와 입자: 알갱이는 어떻게 가려질까', short: '층리와 입자', icon: '🧂', phase: '관찰', features: ['sieve', 'flow'],
+      title: '층리와 입자: 알갱이는 어떻게 가려질까', short: '층리와 입자', icon: '🪨', phase: '관찰', features: ['sieve', 'flow'],
       intro: '<p class="si-q">❓ 탐구 질문: 굳은 암석 속에 남은 무늬로 그 땅이 옛날 어떤 곳이었는지 알 수 있을까?</p>' +
         '<div class="si-link">🔗 <b>중학교 「지권의 변화」</b>에서 퇴적물이 쌓여 층을 이루고 퇴적암이 된다고 배웠어요. <b>앞 차시</b>에서는 지층의 순서를 읽었고, 이번에는 지층 <b>안</b>에 남은 무늬(퇴적 구조)를 읽어요.</div>' +
         '<p>퇴적물은 알갱이의 크기에 따라 <b>자갈 &gt; 모래 &gt; 점토</b>로 나눠요. 알갱이의 크기·성분·색이 바뀌면 층의 경계가 생기는데, 이것이 <b>층리</b>예요. 먼저 체로 알갱이를 크기별로 가르고, 흐름의 세기에 따라 어떤 알갱이가 쌓이는지 살펴봐요.</p>' + SRC,
@@ -1199,7 +1199,7 @@
   svInit(); flInit(); grInit(); rpReset(); ckReset(); csReset();
   game = SciSim.game({
     simId: 'he-sedimentary-env', mount: '#game', badge: '퇴적 환경 탐정', homeHref: '../../index.html#he',
-    featureLabels: { sieve: '🧂 체로 알갱이 가르기', flow: '🌊 흐름의 세기와 퇴적', graded: '🥤 점이층리 실험', ripple: '〰️ 연흔 실험', crack: '🧱 건열 실험', cross: '📚 사층리 실험', match: '🧩 단서 짝짓기', invert: '🔄 위아래 판단', column: '📊 노두 주상도', trend: '🌊 해침·해퇴' },
+    featureLabels: { sieve: '🪨 체로 알갱이 가르기', flow: '🌊 흐름의 세기와 퇴적', graded: '🥤 점이층리 실험', ripple: '〰️ 연흔 실험', crack: '🧱 건열 실험', cross: '📚 사층리 실험', match: '🧩 단서 짝짓기', invert: '🔄 위아래 판단', column: '📊 노두 주상도', trend: '🌊 해침·해퇴' },
     onFeatures() { updateCtl(); },
     levels,
   });

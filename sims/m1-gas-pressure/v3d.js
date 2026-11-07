@@ -1,6 +1,7 @@
 /* m1-gas-pressure · 3D 용기 속 기체 입자 (입자의 충돌 → 기체의 압력)
    기체 입자는 모든 방향으로 쉬지 않고 움직이며 벽에 부딪혀요. 부딪히는 횟수가 많을수록(입자 수↑, 온도↑, 부피↓) 압력이 커요.
-   상대 압력 = (입자 수 × √절대온도) ÷ 부피 (처음 상태를 1로 한 값). 풍선 모양에서는 압력이 커지면 풍선이 부풀어요. */
+   상대 압력 = (입자 수 × √절대온도) ÷ 부피 (처음 상태를 1로 한 값). 풍선 모양에서는 압력이 커지면 풍선이 부풀어요.
+   1단계(눈 위의 벽돌) · 4단계(풍선)만 3D예요. 입자 하나 따라가기(위·아래·왼쪽·오른쪽 벽)와 벽마다 센 충돌 횟수 · 고무막(2 · 3단계)은 2D 화면이에요. */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -8,7 +9,7 @@
   window.SciSim3D.attach({
     title: '기체 입자와 압력 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    levels: [0, 1, 2, 3],
+    levels: [0, 3],   // 벽돌과 눈 · 풍선 부풀리기는 3D, 입자 따라가기 · 고무막과 압력계는 2D
     camera: { dist: 10.5 * (PHN0 ? 1.05 : 1), theta: 0.6, phi: 1.1, fov: 45, target: [1.7, 0.1, 0], min: 6, max: 30 },
     autoRotate: 0.15,
     build(ctx) {
@@ -120,8 +121,7 @@
       function text() {
         const n = st.n, sc = st.sc;
         let h;
-        if (sc === 'block') h = '<b>기체의 압력</b>은 입자가 벽에 부딪혀 생겨요. (벽돌과 눈 · 압력의 뜻은 2D 화면에서 알아봐요)';
-        else if (sc === 'box') h = '기체 입자는 <b>모든 방향</b>으로 끊임없이 움직여요. 입자 사이는 <b>빈 공간</b>이에요. 주황색 입자 하나를 따라가 보세요.';
+        if (sc === 'box') h = '기체 입자는 <b>모든 방향</b>으로 끊임없이 움직여요. 입자 사이는 <b>빈 공간</b>이에요. 주황색 입자 하나를 따라가 보세요.';
         else if (sc === 'balloon') h = '입자 <b>' + n + '개</b>가 풍선 안쪽 벽에 <b>모든 방향</b>으로 충돌해서 풍선이 <b>둥글게</b> 부풀어요.<br>공기를 넣을수록 입자 수가 많아져 충돌 횟수(초당 약 ' + Math.round(st.rate) + '번)가 늘고 풍선이 커져요.';
         else h = '입자 <b>' + n + '개</b> · 벽에 <b>초당 약 ' + Math.round(st.rate) + '번</b> 부딪혀요 · 압력 <b>' + st.pr.toFixed(2) + ' 기압</b><br>기체의 압력은 입자가 벽에 <b>충돌</b>하여 생기고 <b>모든 방향</b>으로 작용해요. 충돌 횟수가 많을수록 압력이 커요.<br>공기를 넣는 것은 옆의 2D 조작판(🫧 공기 넣기)에서 해요.';
         if (h !== lastTxt) { lastTxt = h; info(h); }
@@ -136,7 +136,8 @@
       });
       built = true;
       const sm = (x) => { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); };
-      const markB = controls.button('💥 충돌 표시', () => { st.mark = !st.mark; markB.classList.toggle('on', st.mark); }); markB.classList.add('on');
+      const hitsEl = document.getElementById('showHits');   // '충돌 표시'는 위쪽 막대의 스위치를 그대로 따라가요
+      const markB = { style: {} };
       applyMode(); calcP(); gauge.userData.set(st.pr); text();
       const wallLab = label('', [0, A + 0.5, 0], { size: 12, color: 'rgba(61,109,242,.9)' }); wallLab.set('입자가 벽에 부딪혀요');
 
@@ -155,7 +156,7 @@
       const brick = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), mat(0xffffff, { map: brickTex, roughness: 0.8 })); brick.castShadow = true; gB.add(brick);
       const parr = [0, 1, 2, 3].map(() => { const a = mkArrow(0xf26b3a, 0.05); a.children.forEach((c) => { c.material.depthTest = false; c.renderOrder = 8; }); gB.add(a); return a; });
       const wtArr = mkArrow(0x64748b, 0.07); gB.add(wtArr);
-      const bLab = label('', [0, 0, 0], { size: 12.5, color: 'rgba(30,64,175,.92)' }), bLab2 = label('', [0, 0, 0], { size: 12, color: 'rgba(200,80,20,.95)' });
+      const bLab = label('', [0, 0, 0], { size: 12.5, color: 'rgba(30,64,175,.92)' }), bLab2 = label('', [0, 0, 0], { size: 12, color: 'rgba(200,80,20,.95)' }); bLab.show(false); bLab2.show(false);   // 벽돌 장면에서만 보여요 (빈 이름표가 다른 장면에 남지 않게)
       let snowKey = '';
       function carveSnow(list) {
         const key = list.map((d) => [d.x, d.w, d.depth].map((v) => Math.round(v * 100)).join(':')).join('|');
@@ -214,6 +215,10 @@
       }
       let lastTxt2 = ''; const setInfo2 = (h) => { if (h !== lastTxt2) { lastTxt2 = h; info(h); } };
       let smoothR = balR();
+      /* 4단계 미션의 목표 크기 (2D의 초록 점선 · S.targetR): 풍선 둘레에 초록 점선 고리 */
+      const tgt = (() => { const pts = []; for (let i = 0; i <= 96; i++) { const a = i / 96 * Math.PI * 2; pts.push(new V3(Math.cos(a), Math.sin(a), 0)); }
+        const l = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineDashedMaterial({ color: 0x14a058, dashSize: 0.1, gapSize: 0.07, depthTest: false })); l.computeLineDistances(); l.renderOrder = 9; l.visible = false; root.add(l); return l; })();
+      const tgtLab = label('🎯 여기까지 부풀리기', [0, 0, 0], { size: 12, color: 'rgba(20,160,88,.95)' }); tgtLab.show(false);
       return {
         update(dt, t) {
           const l = ctx.lesson && ctx.lesson(), S = l && l.S, sc = S ? S.scene : 'membrane';
@@ -251,6 +256,10 @@
           }
           flush(ps);
           if (!isBox) { bal.scale.setScalar(smoothR + 0.04 + 0.03 * Math.sin(t * 6)); knot.position.set(0, -smoothR - 0.12, 0); knot.rotation.x = Math.PI; stand.position.y = -smoothR - 0.65; bench.position.y = stand.position.y - 0.25; }
+          if (hitsEl) st.mark = hitsEl.checked;
+          const tR = S && S.scene === 'balloon' && S.targetR ? 0.9 + 1.3 * (S.targetR - 70) / 120 : 0;   // 2D rBalloon과 같은 모양의 식
+          tgt.visible = !!tR && !pmode; tgtLab.show(tgt.visible);
+          if (tgt.visible) { const bs = tR + 0.04; tgt.scale.setScalar(bs); tgt.quaternion.copy(ctx.camera.quaternion); tgtLab.obj = [0, bs + 0.85, 0]; tgt.material.color.setHex(smoothR >= tR - 0.03 && st.n >= 60 ? 0x22c55e : 0x14a058); }
           st.tm += dt; if (st.tm >= 0.6) { st.rate = st.rate * 0.4 + 0.6 * (st.hits / st.tm); st.hits = 0; st.tm = 0; calcP(); text(); }
           gauge.userData.set(pmode ? st.pr : (S ? S.needle : st.pr));
           gaugeLabel.show(gauge.visible);

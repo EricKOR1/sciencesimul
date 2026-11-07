@@ -26,7 +26,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHN ? 17 : 12.8, theta: 0, phi: 1.3, min: 6.5, max: 22, target: [0, 0.3, 0] },
     autoRotate: 0,
-    levels: [0, 1, 2, 3],
+    levels: [0, 2, 3],          // 1단계(수조) · 3단계(표류병 · 난류와 한류) · 4단계(기후)는 3D. 2단계(이름 카드를 지도에 끌어 놓기)는 2D
     build(ctx) {
       const { THREE, root, camera, label, info, controls, orbit } = ctx;
       const V3 = THREE.Vector3, R = 4;
@@ -136,15 +136,15 @@
       nb.classList.add('on'); wB.classList.add('on'); showWind = true;
       targetRot = -FOCUS.np[0] * D2R; earth.rotation.y = targetRot;
       function text(L) {
-        if (sc === 0) return '<b>수조에 바람 불기</b>는 2D 화면에서 해 봐요.<br>지속적으로 부는 바람(무역풍·편서풍)이 표층 해류를 만들어요. 북태평양의 해류를 지구본으로 살펴봐요.';
+        if (sc === 0) return '<b>수조에 바람 불기</b><br>지속적으로 부는 바람(무역풍·편서풍)이 표층 해류를 만들어요.';
         if (sc === 1) { const ph = pIn < 0.05 ? -1 : pIn < 0.25 ? 0 : pIn < 0.5 ? 1 : pIn < 0.8 ? 2 : 3; return '<b>북태평양의 순환</b> · 진행 <b>' + Math.round(pIn * 100) + '%</b> · ' + (ph < 0 ? '시작 전' : '<b>' + PH[ph] + '</b>') + '<br>북적도 해류(동→서) → 쿠로시오 해류(북쪽) → 북태평양 해류(서→동) → 캘리포니아 해류(남쪽): <b>시계 방향</b>으로 돌아요.'; }
-        if (sc === 2) return '<b>난류와 한류</b><br><span style="color:#fca5a5">난류(빨강)</span>: 저위도에서 고위도로 흘러요 (북적도 · 쿠로시오 · 북태평양 해류)<br><span style="color:#93c5fd">한류(파랑)</span>: 고위도에서 저위도로 흘러요 (캘리포니아 해류)';
+        if (sc === 2) return '<b>난류와 한류</b><br><span style="color:#fca5a5">난류(빨강)</span>: 저위도에서 고위도로 따뜻한 물을 옮겨요<br><span style="color:#93c5fd">한류(파랑)</span>: 고위도에서 저위도로 차가운 물을 옮겨요';
         const off = L && L.S4 && L.S4.off; return '<b>해류가 기후에 미치는 영향</b><br>도쿄(쿠로시오 해류: 난류) 8월 평균 27°C · 샌프란시스코(캘리포니아 해류: 한류) 17°C' + (off ? '<br><span style="color:#fcd34d">해류를 끄면 열이 옮겨지지 않아요.</span>' : '');
       }
       return {
         update(dt, t) {
           const L = ctx.lesson(), S = L && L.S; sc = S ? S.scene : 1;
-          if (sc !== lastSc) { lastSc = sc; const tk = sc === 0; tankG.visible = tk; earth.visible = !tk; wSeg.set(0); const hostT = ctx.controls.text('').parentNode; Array.from(hostT.children).forEach((e) => { if (e.classList.contains('v3-player') || e === wB || e === nb) e.style.display = tk ? 'none' : ''; }); sig = ''; orbit.tx = 0; orbit.ty = tk ? 1.6 : 0.3; orbit.dist = tk ? (PHN ? 19 : 13.5) : (PHN ? 17 : 12.8); if (tk) { korL.show(false); items.forEach((it) => it.lb.show(false)); windL.forEach((l) => l.show(false)); cityM.forEach((q) => q.L.show(false)); } showTankCtl(tk); }
+          if (sc !== lastSc) { lastSc = sc; const tk = sc === 0; tankG.visible = tk; earth.visible = !tk; wSeg.set(0); const hostT = ctx.controls.text('').parentNode; Array.from(hostT.children).forEach((e) => { if (e.classList.contains('v3-player')) e.style.display = sc === 1 ? '' : 'none'; else if (e === wB || e === nb) e.style.display = tk ? 'none' : ''; }); sig = ''; orbit.tx = 0; orbit.ty = tk ? 1.6 : 0.3; orbit.dist = tk ? (PHN ? 19 : 13.5) : (PHN ? 17 : 12.8); if (tk) { korL.show(false); items.forEach((it) => it.lb.show(false)); windL.forEach((l) => l.show(false)); cityM.forEach((q) => q.L.show(false)); } showTankCtl(tk); }
           if (sc === 0) { if (L && L.S1) tankFrame(L, t); return; }
           let d = targetRot - earth.rotation.y; d = Math.atan2(Math.sin(d), Math.cos(d)); earth.rotation.y += d * Math.min(1, dt * 3.2);
           if (sc === 1 && L.S2) { if (!pl.playing && Math.abs(L.S2.p - pl.p) > 0.003) pl.set(L.S2.p); }

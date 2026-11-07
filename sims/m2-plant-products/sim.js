@@ -727,7 +727,7 @@
     // 구역 이름표
     L.zones.forEach((z, i) => {
       const f = z.foil;
-      D.label(ZC[i], LF.y + LF.wid + 36, f ? '🔦 은박지로 가림' : '☀️ 빛을 받음', { bg: f ? rgba('#64748b', 0.92) : rgba('#d97706', 0.92), size: 13 });
+      D.label(ZC[i], LF.y + LF.wid + 36, f ? '🌑 은박지로 가림' : '☀️ 빛을 받음', { bg: f ? rgba('#64748b', 0.92) : rgba('#d97706', 0.92), size: 13 });
     });
     // 하루 진행 표시
     panel(12, 12, 150, 52, 14, 'rgba(255,255,255,.95)');

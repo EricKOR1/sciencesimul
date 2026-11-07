@@ -1,7 +1,10 @@
 /* m1-planet-types · 3D 지구형 행성과 목성형 행성
    지구형(수성·금성·지구·화성): 작고 단단한 암석 표면, 밀도가 커요(철 핵+암석). 위성이 적고 고리가 없어요.
    목성형(목성·토성·천왕성·해왕성): 크고 두꺼운 가스(수소·헬륨)층, 밀도가 작아요. 위성이 많고 고리가 있어요.
-   (기본 크기는 보기 좋게 줄였고, '실제 크기 비율' 버튼으로 실제 비율을 볼 수 있어요.) */
+   (기본 크기는 보기 좋게 줄였고, '실제 크기 비율' 버튼으로 실제 비율을 볼 수 있어요.)
+   3단계(두 무리의 특징)만 3D예요: 아래 막대에서 행성을 고르고 [🚀 탐사선 투하]를 누르면 2D 실험과 같은 탐사선이
+   단면 모형 위로 내려가요 (지구형: 단단한 표면에 내려앉음 · 목성형: 기체 속으로 가라앉다 부서짐).
+   망원경 관측 · 그래프에 점 찍기 · 특징 표 꼬리표 끌기(1 · 2 · 4단계)는 2D 화면이에요. */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -11,8 +14,9 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: 26 * (PHN0 ? 1.05 : 1), theta: 0.15, phi: 1.3, fov: 45, target: [0, -0.2, 0], min: 7, max: 60 },
     autoRotate: 0,
+    levels: [2],   // 3단계(탐사선 · 밀도 · 고리)만 3D
     build(ctx) {
-      const { THREE, scene, root, label, info, controls, camera } = ctx;
+      const { THREE, scene, root, label, info, controls, camera, orbit } = ctx;
       /* ---------- 공통 도구 ---------- */
       const PHN = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches);
       const V3 = THREE.Vector3, Yax = new V3(0, 1, 0);
@@ -84,14 +88,14 @@
       root.add(starField(300, 70));
       const st = { mode: 'size', real: false, cut: false };
       const PL = [
-        { n: '수성', R: 0.38, den: 5.43, moon: '0개', col: ['#9a9a9a', '#b9b3a8', '#8a8579'], g: 0 },
-        { n: '금성', R: 0.95, den: 5.24, moon: '0개', col: ['#e8cf9a', '#d9b877', '#f0dfb8'], g: 0 },
-        { n: '지구', R: 1, den: 5.51, moon: '1개', col: ['#2f7fd8', '#4caf6a', '#2f7fd8', '#f2f6fa'], g: 0 },
-        { n: '화성', R: 0.53, den: 3.93, moon: '2개', col: ['#c9623b', '#b5532f', '#d98a5c'], g: 0 },
-        { n: '목성', R: 11.2, den: 1.33, moon: '95개 이상', col: ['#d9b48a', '#c58a5c', '#efe2cc', '#b97a4a'], g: 1, ring: 0.25 },
-        { n: '토성', R: 9.45, den: 0.69, moon: '270개 이상', col: ['#e6d3a0', '#d3bb82', '#f2e6bf'], g: 1, ring: 1 },
-        { n: '천왕성', R: 4.01, den: 1.27, moon: '28개 이상', col: ['#9fe1e6', '#86d3dc'], g: 1, ring: 0.3 },
-        { n: '해왕성', R: 3.88, den: 1.64, moon: '16개', col: ['#3d63dd', '#4c78f0', '#3558c8'], g: 1, ring: 0.25 },
+        { id: 'mercury', n: '수성', R: 0.38, den: 5.43, moon: '0개', col: ['#9a9a9a', '#b9b3a8', '#8a8579'], g: 0 },
+        { id: 'venus', n: '금성', R: 0.95, den: 5.24, moon: '0개', col: ['#e8cf9a', '#d9b877', '#f0dfb8'], g: 0 },
+        { id: 'earth', n: '지구', R: 1, den: 5.51, moon: '1개', col: ['#2f7fd8', '#4caf6a', '#2f7fd8', '#f2f6fa'], g: 0 },
+        { id: 'mars', n: '화성', R: 0.53, den: 3.93, moon: '2개', col: ['#c9623b', '#b5532f', '#d98a5c'], g: 0 },
+        { id: 'jupiter', n: '목성', R: 11.2, den: 1.33, moon: '95개 이상', col: ['#d9b48a', '#c58a5c', '#efe2cc', '#b97a4a'], g: 1, ring: 0.25 },
+        { id: 'saturn', n: '토성', R: 9.45, den: 0.69, moon: '270개 이상', col: ['#e6d3a0', '#d3bb82', '#f2e6bf'], g: 1, ring: 1 },
+        { id: 'uranus', n: '천왕성', R: 4.01, den: 1.27, moon: '28개 이상', col: ['#9fe1e6', '#86d3dc'], g: 1, ring: 0.3 },
+        { id: 'neptune', n: '해왕성', R: 3.88, den: 1.64, moon: '16개', col: ['#3d63dd', '#4c78f0', '#3558c8'], g: 1, ring: 0.25 },
       ];
       /* 단면(¼ 잘라낸 모양): 겹겹의 층 */
       function cutaway(R, layers) {
@@ -148,19 +152,56 @@
         text();
       }
       function text() {
-        const m = st.mode;
+        const m = st.mode, l = ctx.lesson(), S = l && l.S;
+        if (S && S.scene === 'probe' && S.probe && S.probe.id) {   // 탐사선 결과 (2D 탐사 창과 같은 내용)
+          const it = items.find((x) => x.p.id === S.probe.id), pr = S.probe;
+          if (it) { info('<b>' + it.p.n + '</b>에 탐사선을 보냈어요.<br>' + (!pr.gas ? (pr.landed ? '단단한 <b>암석 표면</b>에 내려앉았어요.' : '내려가는 중…')
+            : pr.vanished ? '단단한 표면이 없어 <b>기체 속으로 계속 가라앉다가</b> 높은 압력에 부서졌어요.' : pr.T > 3 ? '구름(기체) 속으로 들어가요. 아직 땅이 없어요…' : '내려가는 중…')); return; }
+        }
         info(m === 'size' ? '<b>지구형 행성</b>(수성·금성·지구·화성)은 반지름이 작고, <b>목성형 행성</b>(목성·토성·천왕성·해왕성)은 훨씬 커요.' + (st.real ? '<br>실제 크기 비율이에요. 목성의 반지름은 지구의 약 11.2배예요.' : '<br>(보기 좋게 줄여 그렸어요. 반지름·질량은 지구 = 1)') + '<br>목성형 행성은 질량도 커요.'
           : m === 'cut' ? '<b>지구형</b>: 암석으로 된 <b>단단한 표면</b>이 있어요.<br><b>목성형</b>: 주로 가벼운 <b>기체</b>라서 단단한 표면이 없어요.<br>그래서 목성형 행성은 평균 밀도가 작아요.'
-          : m === 'den' ? '평균 밀도(g/cm³): <b>지구형 행성은 커요</b>(3.93~5.51), <b>목성형 행성은 작아요</b>(0.69~1.64).<br>토성(0.69)은 물(1 g/cm³)보다 밀도가 작아요.'
-          : '<b>지구형</b>: 위성이 0~2개, 고리가 없어요.<br><b>목성형</b>: 위성이 <b>많고</b>, 고리가 있어요 (토성의 고리가 가장 뚜렷해요).');
+          : m === 'den' ? '평균 밀도(g/cm³): <b>지구형 행성은 커요</b>(3.93~5.51), <b>목성형 행성은 작아요</b>(0.69~1.64).<br>물의 밀도는 1 g/cm³예요.'
+          : '<b>지구형</b>: 위성이 0~2개예요.<br><b>목성형</b>: 위성이 <b>많아요</b>. 행성 둘레의 고리도 살펴보세요.');
       }
-      controls.segment('', [{ value: 'size', label: '크기' }, { value: 'cut', label: '단면' }, { value: 'den', label: '밀도' }, { value: 'moon', label: '위성·고리' }], 'size', (v) => { st.mode = v; show(); });
+      const modeSeg = controls.segment('', [{ value: 'size', label: '크기' }, { value: 'cut', label: '단면' }, { value: 'den', label: '밀도' }, { value: 'moon', label: '위성·고리' }], 'size', (v) => { st.mode = v; show(); });
       const rB = controls.button('📏 실제 크기 비율', () => { st.real = !st.real; rB.classList.toggle('on', st.real); layout(); text(); });
+      /* 탐사선: 2D 실험의 탐사 대상(S.probeSel)과 투하 진행(S.probe.T)을 그대로 따라가요 */
+      controls.text('').style.cssText = 'flex-basis:100%;height:0;padding:0;margin:-3px 0';
+      const L2 = () => { const l = ctx.lesson(); return l && l.S && l.selectProbe ? l : null; };
+      const pSeg = controls.segment('🚀', PL.map((p) => ({ value: p.id, label: p.n })), 'earth', (v) => { const l = L2(); if (l) l.selectProbe(v); });
+      const probe = new THREE.Group();
+      { const m = mat(0xf1f5f9, { metalness: 0.3, roughness: 0.35, emissive: 0x334155 }); const b = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.11, 0.14, 16), m); probe.add(b);
+        const top = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.1, 16), m); top.position.y = 0.12; probe.add(top);
+        const fl = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.14, 12), new THREE.MeshBasicMaterial({ color: 0xffb347 })); fl.rotation.x = Math.PI; fl.position.y = -0.15; probe.add(fl); probe.userData.fl = fl; }
+      probe.visible = false; root.add(probe);
+      const selRing = new THREE.Mesh(new THREE.TorusGeometry(1.25, 0.03, 8, 64), new THREE.MeshBasicMaterial({ color: 0x38bdf8 })); selRing.visible = false; root.add(selRing);
+      let lastSel = null, lastKey = '';
       layout(); show();
 
       return {
         update(dt, t) {
+          const l = L2(), S = l && l.S, inProbe = !!(S && S.scene === 'probe');
+          if (inProbe) {
+            if (S.probeSel !== lastSel) { lastSel = S.probeSel; pSeg.set(lastSel); }
+            const pr = S.probe && S.probe.id === S.probeSel ? S.probe : null, it = items.find((x) => x.p.id === S.probeSel);
+            if (pr && !pr.done && pr.T < 0.1 && st.mode !== 'cut') { st.mode = 'cut'; modeSeg.set('cut'); show(); }   // 투하하면 단면으로 보여 줘요
+            const key = pr ? [pr.id, pr.landed, pr.vanished, pr.T > 3].join() : '';
+            if (key !== lastKey) { lastKey = key; text(); }
+            if (it) {
+              const r = it.r, c = it.g.position; selRing.visible = true; selRing.position.set(c.x, c.y, c.z); selRing.scale.setScalar(r); selRing.rotation.x = Math.PI / 2;
+              let h, vis = true;   // 행성 중심에서 탐사선까지의 높이 (반지름 r 기준)
+              const H0 = 1.5;   // 처음 높이 (이름표보다 위)
+              if (!pr) h = r + H0;
+              else if (!pr.gas) h = r + H0 * Math.max(0, 1 - pr.T / 3.7);
+              else { h = pr.T < 3 ? r + H0 * (1 - pr.T / 3) : r * (1 - 0.65 * Math.min(1, (pr.T - 3) / 2.9)); vis = !pr.vanished; }
+              const sh = pr && pr.shake > 0 ? (Math.random() - 0.5) * 0.04 : 0;
+              probe.visible = vis; const ox = Math.sin(orbit.theta) * r * 0.15, oz = Math.cos(orbit.theta) * r * 0.15;   // 잘라 낸 쪽(화면 쪽)으로 조금
+              probe.position.set(c.x + sh + ox, c.y + h + 0.15, c.z + oz); probe.scale.setScalar(Math.max(1.5, Math.min(2.4, r * 1.1)));
+              probe.userData.fl.visible = !!pr && !pr.done && !pr.landed && !pr.vanished;
+            }
+          } else { probe.visible = false; selRing.visible = false; }
           items.forEach((it, i) => {
+            if (st.mode === 'cut') { it.g.rotation.y = 3 * Math.PI / 4 + orbit.theta; return; }   // 잘라 낸 쪽이 늘 화면을 향하게
             it.g.rotation.y += dt * (it.p.g ? 0.5 : 0.2);
             if (st.mode === 'moon') it.moons.forEach((o) => { o.a += dt * o.s; o.m.position.set(Math.cos(o.a) * o.r, 0.15 * Math.sin(o.a * 2), -Math.sin(o.a) * o.r); o.m.scale.setScalar(o.sz); });
           });

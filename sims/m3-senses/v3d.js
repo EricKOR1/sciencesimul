@@ -11,7 +11,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHN ? 17 : 12.5, theta: 0.0, phi: 1.3, min: 5, max: 26, target: [-1.2, 0, 0] },
     autoRotate: 0,
-    levels: [1],              // 단계 2(눈의 조절: 홍채와 수정체)에서 3D로 시작해요. 맹점 실험·감각 기관 이름표는 2D 화면에서 해요
+    levels: [1],              // 2단계(눈의 조절: 밝기 · 거리 슬라이더)만 3D. 맹점 실험(● 끌기) · 감각 세포 이름표 누르기 · 감각 기관 칸 고르기는 2D. 3D 단계에서는 맹점 장면 단추를 숨겨요(only2d)
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
       const V3 = THREE.Vector3;
@@ -54,13 +54,14 @@
           if (!blocked) { rays.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.LineCurve3(pts[1], pts[2]), 2, 0.016, 5, false), rayM)); rays.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.LineCurve3(pts[2], pts[3]), 2, 0.016, 5, false), rayM)); }
         });
       }
+      let sharpNow = null;
       function eyeUpdate() {
         const pr = makeIris();
         const near = dist / 100;                         // 0: 먼 곳, 1: 가까운 곳
         lens.scale.set(0.2 + 0.2 * near, 0.62, 0.62); cil.forEach((m) => { m.position.y = Math.sign(m.position.y) * (0.95 - 0.12 * near); });
         obj.position.x = -6.4 + (1 - near) * -0 + near * 2.6; const s = 1 - near * 0.1; obj.scale.setScalar(1);
         setRays(pr - 0.06);
-        info('<b>눈</b> · 어두우면 동공이 커지고, 밝으면 작아져요.<br>가까운 물체를 볼 때 수정체가 <b>두꺼워져요</b>(섬모체 수축).<br>상은 망막에 <b>거꾸로</b> 맺혀 시각 신경으로 가요.');
+        info('<b>눈</b> · 어두우면 동공이 커지고, 밝으면 작아져요.<br>가까운 물체를 볼 때 수정체가 <b>두꺼워져요</b>(섬모체 수축).<br>상은 망막에 <b>거꾸로</b> 맺혀 시각 신경으로 가요.' + (sharpNow == null ? '' : '<br>망막의 상: ' + (sharpNow ? '<b style="color:#86efac">선명해요!</b>' : '<b style="color:#fcd34d">흐릿해요</b> (수정체 두께가 바뀌는 중)')));
       }
       [['각막', [-1.75, 0.35, -0.2]], ['홍채', [-0.95, 1.0, -0.2]], ['수정체', [-0.55, 0.0, 0.0]], ['섬모체', [-0.6, -1.12, -0.12]], ['망막', [R * 0.7, -1.18, 0.0]], ['시각 신경', [R + 1.0, -0.35, 0.0]]].forEach(([t, p]) => L('eye', t, p));
       /* ================= 귀 ================= */
@@ -215,7 +216,7 @@
           const head = P.sendT >= 0 && k ? Math.max(0, Math.min(1, (P.sendT - i * 0.12) / 2.2)) : -1; g.pl.visible = head > 0 && head < 1 && P.sendT < 4.2; if (g.pl.visible) g.pl.position.copy(g.cu.getPointAt(Math.min(0.999, head))); });
         pBrL.show(names);
         const pk = nok + '|' + (P.sendT >= 0 ? 1 : 0);
-        if (pk !== pSig) { pSig = pk; info('<b>자극의 전달</b>: 자극 → <b>감각 기관</b> → <b>감각 세포</b> → <b>감각 신경</b> → <b>대뇌</b><br>2D에서 감각 기관·세포를 맞게 고른 길(' + nok + ' / 5)만 3D에서도 이어져요. ⚡ 자극 보내기로 신호를 보내 봐요.<br><small>카드 짝짓기는 2D 화면에서 해요.</small>'); }
+        if (pk !== pSig) { pSig = pk; info('<b>자극의 전달</b>: 자극 → <b>감각 기관</b> → <b>감각 세포</b> → <b>감각 신경</b> → <b>대뇌</b><br>감각 기관·세포를 맞게 고른 길(' + nok + ' / 5)만 이어져요. ⚡ 자극 보내기로 신호를 보내 봐요.'); }
       }
 
       function setMode(m) { mode = m; eye.visible = m === 'eye'; ear.visible = m === 'ear'; orbit.tx = m === 'eye' ? -1.2 : 0.2; orbit.dist = m === 'eye' ? (PHN ? 17 : 12.5) : (PHN ? 20 : 15); showNames(); m === 'eye' ? eyeUpdate() : earUpdate(); sl.style.display = ''; }
@@ -263,9 +264,9 @@
           if (mode === 'path') { pathFrame(L, t); return; }
           if (mode === 'eye') {
             const b = Math.round(S.adj.bright * 100), d = Math.round(S.adj.lens.value * 100);
-            const k = b + '|' + d;
+            const k = b + '|' + d + '|' + (S.adj.sharp ? 1 : 0); sharpNow = S.scene === 'adjust' ? !!S.adj.sharp : null;
             if (k !== sig) { sig = k; bright = b; dist = d; eyeUpdate(); }
-            const nn = S.scene === 'blind' ? '<br><span style="color:#fcd34d">맹점: 시각 신경이 모여 눈 밖으로 나가는 곳이라 상이 맺혀도 보이지 않아요. (맹점 실험은 2D 화면에서 해요)</span>' : '';
+            const nn = S.scene === 'blind' ? '<br><span style="color:#fcd34d">맹점: 시각 신경이 모여 눈 밖으로 나가는 곳이라 상이 맺혀도 보이지 않아요.</span>' : '';
             if (nn !== infoK) { infoK = nn; eyeUpdate(); if (nn) info('<b>눈</b> · 어두우면 동공이 커지고, 밝으면 작아져요.<br>가까운 물체를 볼 때 수정체가 <b>두꺼워져요</b>(섬모체 수축).<br>상은 망막에 <b>거꾸로</b> 맺혀 시각 신경으로 가요.' + nn); }
           } else {
             const playing = S.ear.t >= 0;

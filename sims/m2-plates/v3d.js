@@ -20,7 +20,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHN ? 15 : 11.5, theta: 0.45, phi: 0.95, min: 6, max: 24, target: [0, 0, 0] },
     autoRotate: 0.08,
-    levels: [],                               // 4단계 미션은 2D 지도에서 해요 (3D는 [🧊 3D]로 열어요)
+    levels: [],                               // 모든 단계가 지도 · 퍼즐을 직접 누르고 읽는 미션이라 2D (4단계도 세계 지도에서 판 경계와 지진 분포를 비교해요)
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3;

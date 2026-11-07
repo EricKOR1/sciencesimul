@@ -200,7 +200,7 @@
   function approxX(Ka, Cc) { return Math.sqrt(Ka * Cc); }
 
 
-  const MODE_LABEL = { meas: '🌡️ 같은 농도 비교', model: '🧩 이온화 모형', rank: '📊 Ka로 순위', pair: '⚖️ 짝산·짝염기' };
+  const MODE_LABEL = { meas: '💡 같은 농도 비교', model: '🧩 이온화 모형', rank: '📊 Ka로 순위', pair: '⚖️ 짝산·짝염기' };
   const SPL = SciSim.ease;
 
   /* ---------- 자료 (25 °C) ---------- */
@@ -286,7 +286,7 @@
   }
   function drawMeas(t) {
     const m = S.ms, g = msG(), key = m.cur;
-    T(14, 26, '🌡️ 같은 농도(0.10 M)인데 pH와 전류가 같을까요?', PHONE ? 14 : 17, INK, 'left', 800);
+    T(14, 26, '💡 같은 농도(0.10 M)인데 pH와 전류가 같을까요?', PHONE ? 14 : 17, INK, 'left', 800);
     panel(MAIN.x, MAIN.y, MAIN.w, MAIN.h, 14);
     // pH 미터
     const mt = g.meter;
@@ -648,7 +648,7 @@
   /* ================= 미션 ================= */
   const levels = [
     {
-      title: '같은 농도 비교: pH와 전류', short: '같은 농도 비교', icon: '🌡️', phase: '관찰',
+      title: '같은 농도 비교: pH와 전류', short: '같은 농도 비교', icon: '💡', phase: '관찰',
       intro: '<p class="si-q">❓ 탐구 질문: 농도가 같은 염산과 식초(아세트산)는 같은 정도로 신가? 산의 “센 정도”를 숫자 하나로 나타낼 수 있을까?</p>' +
         '<div class="si-link">🔗 <b>앞 차시에서</b> 산은 H⁺를 주는 입자라는 것을 배웠어요. <b>화학 평형 · pH</b> 단원에서는 pH = −log[H⁺]를 배웠고, 아세트산이 약산이라는 것도 만났어요. 이번에는 산마다 H⁺를 내놓는 정도를 비교해요.</div>' +
         '<p>0.10 M HCl, HCOOH(폼산), CH₃COOH(아세트산), HCN의 <b>pH</b>와 <b>전류</b>를 측정해요. 측정하기 전에 이온이 많을 것 같은 순서를 먼저 예측해 보세요. (보안경과 장갑 착용, 폐액은 폐수 처리 기준에 따라 처리)</p>',
@@ -803,7 +803,7 @@
 
   game = SciSim.game({
     simId: 'hr-acid-strength', mount: '#game', badge: '이온화 상수 박사', homeHref: '../../index.html#hr',
-    featureLabels: { meas: '🌡️ pH 미터 · 전구 측정', model: '🧩 HA 100개 이온화 모형', rank: '📊 Ka 표 · 로그 눈금', pair: '⚖️ 짝산·짝염기 저울' },
+    featureLabels: { meas: '💡 pH 미터 · 전구 측정', model: '🧩 HA 100개 이온화 모형', rank: '📊 Ka 표 · 로그 눈금', pair: '⚖️ 짝산·짝염기 저울' },
     onFeatures() { updateCtl(); },
     levels,
   });

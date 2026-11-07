@@ -794,7 +794,7 @@
           {
             title: '코일에서 세 가지 변화 확인하기',
             goal: '① 전류를 흘려 나침반 바늘을 움직이고 ② <b>전류 방향을 바꿔</b> 보고 ③ 전류를 <b>2.5 A 이상</b> 세게 해 보세요.',
-            hint: '전류의 세기 슬라이더를 오른쪽으로 밀고, [전류 방향 바꾸기] 버튼을 눌러 봐요. 철가루도 함께 살펴보세요.',
+            hint: '전류의 세기 슬라이더를 오른쪽으로 밀고, [전류 방향 바꾸기] 버튼을 눌러 봐요. 나침반 바늘과 자기장 모양도 함께 살펴보세요.',
             setup() { setScene('coil'); setCurrent(0); setDir(1); S.sawOn = false; S.sawRev = false; S.sawStrong = false; S.dirsSeen = {}; S.maxI = 0; },
             check: () => S.scene === 'coil' && S.sawOn && S.sawRev && S.sawStrong && S.I >= 1,
             status: () => box(S.sawOn) + ' 전류 흘리기 · ' + box(S.sawRev) + ' 방향 바꾸기 · ' + box(S.sawStrong) + ' 2.5 A 이상 · 지금 ' + (S.I ? S.I.toFixed(1) : '0.0') + ' A',

@@ -1353,8 +1353,8 @@
         missions: [
           {
             title: '☀ 태양계를 제자리에',
-            goal: '위에서 본 모형에서 ☀를 끌어다, <b>은하 중심에서 약 3만 광년</b> 떨어진 곳에 놓아요.',
-            hint: '원 눈금은 1만 광년마다 하나씩이에요. 중심에서 3번째 원 둘레에 놓아 보세요. 놓은 뒤에도 다시 끌어 옮길 수 있어요.',
+            goal: '<span class="only2d">위에서 본 모형에서 ☀를 끌어다</span><span class="only3d">아래 <b>☀ 태양계 위치</b> 막대로 ☀를 옮겨</span>, <b>은하 중심에서 약 3만 광년</b> 떨어진 곳에 놓아요.',
+            hint: '<span class="only2d">원 눈금은 1만 광년마다 하나씩이에요. 중심에서 3번째 원 둘레에 놓아 보세요. 놓은 뒤에도 다시 끌어 옮길 수 있어요.</span><span class="only3d">은하의 반지름은 약 5만 광년이에요. 막대 옆 숫자가 약 3만 광년이 되게 맞춰 보세요.</span>',
             setup() { setScene('disc'); S.tiltT = 0; S.pause = 3; S.sun.mode = 'park'; S.sun.sx = 702; S.sun.sy = 548; S.sunHint = ''; syncControls(); },
             _sunTask: true,
             check: () => S.sun.mode === 'placed' && sunDist() >= 22 && sunDist() <= 34,
@@ -1499,6 +1499,14 @@
     gcXY() { const th = S.lst * 15 * DEG, H = th - GCEQ[0], sd = Math.sin(GCEQ[1]), cd = Math.cos(GCEQ[1]); const alt = Math.asin(sd * SINL + cd * COSL * Math.cos(H)), az = Math.atan2(-cd * Math.sin(H), sd * COSL - cd * SINL * Math.cos(H)); return this.skyXY(alt / DEG, az / DEG); },
     client(x, y) { const r = V.canvas.getBoundingClientRect(); return { x: r.left + x * r.width / VW, y: r.top + y * r.height / VH }; },
     sunClient() { return this.client(S.sun.sx, S.sun.sy); },
+    // 3D 화면의 [☀ 태양계 위치] 막대: 중심에서 kly(천 광년) 떨어진 곳(방향 ang)에 ☀를 놓아요 (2D에서 끌어다 놓은 것과 같아요)
+    placeSunAt(kly, ang) {
+      if (S.scene !== 'disc') return;
+      const sun = S.sun, r = clamp(kly, 0, GR);
+      sun.mode = 'placed'; sun.gx = r * Math.cos(ang); sun.gy = r * Math.sin(ang);
+      S.sunHint = r < 22 ? '중심에 너무 가까워요' : r > 34 ? '중심에서 너무 멀어요' : '나선팔 위에 있어요';
+      if (r >= 22 && r <= 34) snapSunToArm(sun);
+    },
     discPoint(distKly) { const g = { x: distKly, y: 0 }; const yw = S.yaw * DEG; const x1 = g.x * Math.cos(yw) - g.y * Math.sin(yw), y1 = g.x * Math.sin(yw) + g.y * Math.cos(yw); return { x: DC.cx + DC.k * x1, y: DC.cy - DC.k * y1 }; },
     VIS,
   };

@@ -1008,7 +1008,7 @@
       {
         title: '바람의 세기 비교하기',
         goal: '바람 세기를 <b>약</b>과 <b>강</b>으로 바꿔 가며, 각각 2~3초 동안 종이 조각이 떠내려가는 빠르기를 비교하세요.',
-        hint: '오른쪽에서 <b>약</b>을 누르고 잠시 지켜본 뒤 <b>강</b>을 눌러 봐요. 아래 눈금자(cm)로 거리를 가늠해요.',
+        hint: '오른쪽에서 <b>약</b>을 누르고 잠시 지켜본 뒤 <b>강</b>을 눌러 봐요. <span class="only2d">아래 눈금자(cm)로 거리를 가늠해요.</span><span class="only3d">왼쪽 위 설명의 속력(cm/s)을 비교해요.</span>',
         setup() { setScene(0); S1.wind = 0; S1.dir = 1; S1.obs = [0, 0, 0, 0]; syncWindSeg(); },
         check: () => S1.obs[1] >= 2 && S1.obs[3] >= 2,
         status: () => chk(S1.obs[1] >= 2, '약' + (S1.obs[1] >= 2 ? ' ' + vcmOf(1).toFixed(1) + ' cm/s' : '')) + ' · ' + chk(S1.obs[3] >= 2, '강' + (S1.obs[3] >= 2 ? ' ' + vcmOf(3).toFixed(1) + ' cm/s' : '')) + '<br>지금 바람: <b>' + WIND_NAME[S1.wind] + '</b>',
@@ -1091,7 +1091,7 @@
       {
         title: '표류병 따라가기',
         goal: '표류병을 해류 위에 띄워 <b>쿠로시오 해류</b>를 따라 일본 남쪽 바다까지 흘러가게 하세요.',
-        hint: '지도의 바다를 누르면 표류병이 놓여요. 해류가 아닌 곳에서는 거의 움직이지 않아요. <b>🍾 표류병 띄우기</b>는 쿠로시오 해류의 시작 부분에 놓아 줘요.',
+        hint: '<span class="only2d">지도의 바다를 누르면 표류병이 놓여요. 해류가 아닌 곳에서는 거의 움직이지 않아요. </span><b>🍾 표류병 띄우기</b>는 쿠로시오 해류의 시작 부분에 놓아 줘요.',
         setup() { setScene(2); S3.sst = 1; syncSst(); S3.bottle = null; S3.trail = []; S3.kuroDone = false; S3.sel = -1; },
         check: () => S3.kuroDone,
         status: () => '🍾 ' + bottleMsg(),

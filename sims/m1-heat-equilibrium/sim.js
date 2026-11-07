@@ -1284,7 +1284,7 @@
   const cupBtn = $('#cupBtn');
   function syncCupBtn() { cupBtn.disabled = EXP.cupIn || EXP.inserting; }
   cupBtn.addEventListener('click', () => { Sound.click(); insertCup(); });
-  $('#againBtn').addEventListener('click', () => { Sound.click(); resetExp(); showHint('↓ 금속 컵을 끌어 수조에 넣어 보세요', 4000); });
+  $('#againBtn').addEventListener('click', () => { Sound.click(); resetExp(); showHint('↓ 금속 컵을 수조에 넣어 보세요', 4000); });
   $('#tgZoom').addEventListener('click', () => { Sound.click(); S.zoomOn = !S.zoomOn; syncUI(); });
   $$('#sceneSeg button').forEach((b) => b.addEventListener('click', () => { Sound.click(); setScene(b.dataset.scene); }));
 
@@ -1460,8 +1460,8 @@
           {
             title: '열평형까지 기다리기',
             goal: '금속 컵을 다시 수조에 넣고, 🔍 경계면 확대를 보며 두 물의 온도가 <b>같아질 때까지</b> 기다리세요.',
-            hint: '컵을 넣은 뒤 경계면에서 빠른 입자와 느린 입자가 부딪히는 모습을 지켜보세요. 그래프의 두 선이 만나면 성공!',
-            setup() { resetExp(); showHint('↓ 금속 컵을 끌어 수조에 넣어 보세요', 5000); },
+            hint: '컵을 넣은 뒤 경계면에서 빠른 입자와 느린 입자가 부딪히는 모습을 지켜보세요. <span class="only2d">그래프의 두 선이 만나면 성공!</span><span class="only3d">두 물의 온도가 같아지면 성공!</span>',
+            setup() { resetExp(); showHint('↓ 금속 컵을 수조에 넣어 보세요', 5000); },
             check: () => EXP.cupIn && EXP.t > 0.2 && EXP.Tc - EXP.Tt < EQ_TOL,
             hold: 0.6,
             status: () => '컵 넣기 ' + mark(EXP.cupIn) + ' · 컵 속 물 <b>' + fmt(EXP.Tc, 1) + ' °C</b> · 수조 물 <b>' + fmt(EXP.Tt, 1) + ' °C</b> · 온도 차 <b>' + fmt(Math.max(0, EXP.Tc - EXP.Tt), 1) + ' °C</b>',

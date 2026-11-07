@@ -1635,7 +1635,7 @@
         features: ['drop'],
         intro: '<p class="si-q">❓ 탐구 질문: 지구 반대편 사람이 사과를 놓으면 사과는 어디로 떨어질까? 무게는 어떻게 잴까?</p>' +
           '<p>지구 둘레에 서 있는 아이들이 사과를 들고 있어요. <b>아이를 눌러</b> 사과를 놓고, 사과가 어느 쪽으로 떨어지는지 살펴봐요. 빨간 화살표는 사과에 작용하는 <b>중력</b>이에요.</p>',
-        setup() { ensureScene(0); resetG(); showHint('🍎 아이를 눌러 사과를 놓아 보세요', 6500); },
+        setup() { ensureScene(0); resetG(); showHint('🍎 네 곳에서 사과를 놓아 보세요', 6500); },
         recap: '<b>중력</b>은 지구가 물체를 <b>지구 중심</b> 쪽으로 끌어당기는 힘이에요. 지구 어디에서나 중력의 방향은 지구 중심 쪽이에요.',
         summary: '<ul><li><b>중력</b>: 지구가 물체를 <b>지구 중심</b> 쪽으로 끌어당기는 힘</li>' +
           '<li>방향: 어느 곳에서나 <b>지구 중심 쪽</b> (북극, 남극, 우리나라 모두)</li>' +
@@ -1644,8 +1644,8 @@
           {
             key: 'G1',
             title: '4곳에서 사과 떨어뜨리기',
-            goal: '<b>북극, 대한민국, 남극, 적도 반대편</b>의 아이를 눌러 사과를 모두 떨어뜨려 보세요.',
-            hint: '아이나 사과를 누르면 사과를 놓아요. 아직 안 해 본 곳은 노란 고리로 표시돼요.',
+            goal: '<b>북극, 대한민국, 남극, 적도 반대편</b>의 <span class="only2d">아이를 눌러</span><span class="only3d">🍎 단추를 눌러</span> 사과를 모두 떨어뜨려 보세요.',
+            hint: '<span class="only2d">아이나 사과를 누르면 사과를 놓아요. 아직 안 해 본 곳은 노란 고리로 표시돼요.</span><span class="only3d">아래 <b>🍎</b> 단추를 누르면 그곳의 아이가 사과를 놓아요. 네 곳을 모두 해 봐요.</span>',
             check: () => G.kids.every((k) => k.done),
             hold: 0.7,
             status: () => '지구 중심 쪽으로 떨어진 곳 <b>' + G.kids.filter((k) => k.done).length + '/4</b><br>' + nameChips(),
@@ -1876,5 +1876,7 @@
     get scene() { return scene; }, G, SP, SC, BAL, WS, OBJ, WTS, get game() { return game; }, W, H, GL, KIDS,
     setScene, applePos, toWorld, dropApple, hitS, hitW, hitG, labX, loadN, attachItem, doRecord, flyBalance,
     hangOnScale, placeOnPan, balGeo, YZ, AXS, TRAY, SSX, SS, hookY, CMPX, NPX, BOX_N, canRecord,
+    /* 3D의 🍎 단추: 아이를 누른 것과 같아요 */
+    tapKid(i) { const k = G.kids[i]; if (scene !== 'G' || !k) return; if (k.st === 'held') dropApple(k); else if (k.st === 'land') { k.st = 'pick'; k.t = 0; k.redrop = true; Sound.tick(); } },
   };
 })();

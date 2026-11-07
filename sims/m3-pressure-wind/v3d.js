@@ -21,7 +21,7 @@
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
       const V3 = THREE.Vector3, C = THREE.Color;
-      let age = 0, tp = 0, sig = '', c = null, run = false;
+      let age = 0, tp = 0, sig = '', c = null, run = false, partsOn = true;
       const sm = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.7, metalness: 0 }, o || {}));
       const D = 5;
       const mkTex = (w, h, draw, rx, ry) => { const cv = document.createElement('canvas'); cv.width = w; cv.height = h; draw(cv.getContext('2d'), w, h); const tx = new THREE.CanvasTexture(cv); tx.wrapS = tx.wrapT = THREE.RepeatWrapping; if (rx) tx.repeat.set(rx, ry || rx); tx.anisotropy = 4; return tx; };
@@ -191,7 +191,7 @@
             t: sum ? '여름' : '겨울', wind: sum ? '남동 계절풍' : '북서 계절풍', note: sum ? '여름: 뜨거운 대륙은 저기압, 바다는 고기압이에요.' : '겨울: 차가운 대륙은 고기압, 바다는 저기압이에요.' };
         }
         const k = (S.tk) || { Ts: 25, Tw: 25, lamp: false }, dT = k.Ts - k.Tw;
-        return { k: 'tank', L: '모래', Sn: '물', Tl: k.Ts, Ts: k.Tw, warm: true, str: cl01((dT - 0.5) / 6, 0, 1), hide: false, day: !!k.lamp, big: false, lamp: !!k.lamp,
+        return { k: 'tank', L: '모래', Sn: '물', Tl: k.Ts, Ts: k.Tw, warm: true, str: cl01((dT - 0.5) / 6, 0, 1), hide: false, day: !!k.lamp, big: false, lamp: !!k.lamp, smoke: !!k.smoke,
           t: k.lamp ? '전등 켬' : '전등 끔', wind: '연기가 물 → 모래 쪽으로 흘러요', note: '수조 모형: 전등을 켜면 모래가 물보다 빨리 데워져요.' };
       }
       function apply() {
@@ -209,10 +209,16 @@
         if (c.hide) h += '<span style="color:#fcd34d">밤에는 바람이 어느 쪽으로 불지 맞혀 보세요.</span>';
         else if (calm) h += c.L + '와 ' + c.Sn + '의 온도 차가 작아서 바람이 거의 불지 않아요.';
         else h += '따뜻한 ' + (c.warm ? c.L : c.Sn) + ': 공기가 올라가 <b>저기압</b>, ' + (c.warm ? c.Sn : c.L) + ': 공기가 내려와 <b>고기압</b>.<br>지표에서는 고기압 → 저기압으로 <b>' + c.wind + '</b>이 불어요.';
+        if (c.k === 'tank') h += c.smoke ? '<br><span style="color:#e5e7eb">회색 점: 향 연기가 공기를 따라 움직여요.</span>' : '<br><span style="color:#fcd34d">🌫️ 향 연기를 피우면 공기가 흐르는 모습이 보여요.</span>';
         info(h);
         ring.visible = !calm; arrows.forEach((m) => { m.visible = !calm; });
       }
-      const sb = controls.button('입자 ✓', () => { parts.visible = !parts.visible; sb.textContent = '입자 ' + (parts.visible ? '✓' : '✕'); }); sb.classList.add('on');
+      const sb = controls.button('입자 ✓', () => { partsOn = !partsOn; parts.visible = partsOn; sb.textContent = '입자 ' + (partsOn ? '✓' : '✕'); }); sb.classList.add('on');
+      /* 밤바람 맞히기(해륙풍): 2D의 맞히기 카드 누르기(setGuess)와 같아요 */
+      const g0 = hostE.children.length;
+      controls.text('<b>밤바람</b>');
+      const gBtns = [['toLand', '바다 → 육지'], ['toSea', '육지 → 바다']].map(([id, tx]) => { const b = controls.button(tx, () => { const L = ctx.lesson(); if (L && L.setGuess) L.setGuess(id); }); b.dataset.g = id; return b; });
+      const guessRow = Array.from(hostE.children).slice(g0);
       /* ▶ 공기의 순환: 따뜻한 쪽에서 올라가 높은 곳에서 차가운 쪽으로 → 내려와 → 지표에서 따뜻한 쪽으로 */
       controls.player({
         duration: 14, loop: true, autoplay: true, label: '공기 순환',
@@ -229,14 +235,17 @@
               orbit.tx = 0; orbit.ty = isE ? (sc0 === 'tube' ? 3.1 : sc0 === 'bottle' ? 2.2 : 2.6) : 1.4; orbit.dist = isE ? (sc0 === 'tube' ? (PHN ? 24 : 17) : (PHN ? 16 : 8.8)) : (PHN ? 19 : 14.5);
             }
             if (isE) { sky.material.color.copy(skyLab); expFrame(S0, sc0, dt, t); return; } }
-          const n = read(), ns = [n.k, n.warm, Math.round(n.Tl), Math.round(n.Ts), n.str > 0, n.hide, n.day, n.snow].join('|');
+          const n = read(), ns = [n.k, n.warm, Math.round(n.Tl), Math.round(n.Ts), n.str > 0, n.hide, n.day, n.snow, n.smoke].join('|');
+          { const S1 = (ctx.lesson() || {}).S || {}, ga = !!(S1.co && S1.co.guessActive && S1.scene === 'coast');
+            guessRow.forEach((e) => { e.style.display = ga ? '' : 'none'; }); if (ga) gBtns.forEach((b) => b.classList.toggle('on', S1.co.guess === b.dataset.g));
+            const tk = n.k === 'tank'; sb.style.display = tk ? 'none' : ''; parts.visible = tk ? !!n.smoke : partsOn; }   // 수조: 입자 = 향 연기 (향 연기를 피울 때만)
           if (ns !== sig) { sig = ns; c = n; apply(); } else c.str = n.str;
           const dir = c.warm ? 1 : -1, calm = c.str <= 0 || c.hide, base = c.warm ? 0 : Math.PI;
           for (let i = 0; i < N; i++) {
             const a = base + i / N * Math.PI * 2 + (calm ? 0 : dir * Math.PI * 2 * tp), p = loopAt(a); p.z = Math.sin(i * 7.1) * 1.4; p.y += Math.sin(i * 3.3) * 0.18;
             dm.position.copy(p); dm.scale.setScalar(calm ? 0.6 : 1); dm.updateMatrix(); parts.setMatrixAt(i, dm.matrix);
             const wl = c.warm ? Math.cos(a) : -Math.cos(a);
-            cw.copy(cc).lerp(ch, calm ? 0.5 : Math.max(0, Math.min(1, 0.5 + 0.5 * wl))); parts.setColorAt(i, cw);
+            if (c.k === 'tank') cw.set(0xd1d5db); else cw.copy(cc).lerp(ch, calm ? 0.5 : Math.max(0, Math.min(1, 0.5 + 0.5 * wl))); parts.setColorAt(i, cw);
           }
           parts.instanceMatrix.needsUpdate = true; if (parts.instanceColor) parts.instanceColor.needsUpdate = true;
           arrows.forEach((m, i) => { const a = base + i / 4 * Math.PI * 2 + dir * Math.PI * 2 * tp, p = loopAt(a), q = loopAt(a + 0.05 * dir); m.position.copy(p); const d = q.sub(p).normalize(); m.quaternion.setFromUnitVectors(new V3(0, 1, 0), d); });

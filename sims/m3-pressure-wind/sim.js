@@ -1330,7 +1330,7 @@
           {
             title: '높은 산으로 가져가기', scene: 'tube',
             goal: '⛰️ 해발 높이를 <b>3000 m 이상</b>으로 올려 보세요. 수은 기둥이 어떻게 변하나요?',
-            hint: '해발 높이 슬라이더를 오른쪽으로 밀거나, 화면 오른쪽의 산을 위로 끌어 올려요.',
+            hint: '해발 높이 슬라이더를 오른쪽으로 밀<span class="only2d">거나, 화면 오른쪽의 산을 위로 끌어 올려</span>요.',
             setup() { setAlt(0); setTilt(0); },
             check: () => S.tb.alt >= 3000 && S.tb.h.value < 56.5,
             status: () => chk(S.tb.alt >= 3000, '해발 <b>' + fmt(S.tb.alt) + ' m</b> / 3,000 m') + ' · 수은 기둥 <b>' + S.tb.h.value.toFixed(1) + ' cm</b>',
@@ -1362,7 +1362,7 @@
           {
             title: '연기가 흐르는 방향 관찰', scene: 'tank',
             goal: '💡 전등을 켜고 🌫️ 향 연기를 피워, <b>모래 쪽으로 흐르는 연기</b>를 관찰하세요. 모래와 물의 온도도 비교해 봐요.',
-            hint: '전등을 켜고 몇 초 기다리면 모래 온도가 빠르게 올라가요. 화면의 전등과 향을 눌러도 돼요.',
+            hint: '전등을 켜고 몇 초 기다리면 모래 온도가 빠르게 올라가요.<span class="only2d"> 화면의 전등과 향을 눌러도 돼요.</span>',
             setup() { tkReset(); setLamp(false); setSmoke(false); },
             check: () => S.tk.lamp && S.tk.smoke && S.tk.Ts - S.tk.Tw >= 8 && S.tk.cross >= 10,
             status: () => chk(S.tk.lamp, '전등 켜기') + ' · ' + chk(S.tk.smoke, '향 연기 피우기') + ' · ' + chk(S.tk.Ts - S.tk.Tw >= 8, '모래–물 온도 차 <b>' + Math.max(0, S.tk.Ts - S.tk.Tw).toFixed(0) + '</b> / 8 °C') + ' · ' + chk(S.tk.cross >= 10, '모래 쪽으로 흐른 연기 <b>' + Math.min(10, S.tk.cross) + '</b> / 10'),
@@ -1396,7 +1396,7 @@
             setup() { S.co.guess = null; S.co.play = false; $('#playBtn').textContent = '▶ 하루 흘러가게 하기'; setHour(13); },
             check: () => {
               if (!isNight(S.co.hour)) return '시각을 밤(밤 10시~새벽 5시)으로 옮겨 주세요.';
-              if (!S.co.guess) return '바람이 어느 쪽으로 불지 카드를 눌러 골라 주세요.';
+              if (!S.co.guess) return '바람이 어느 쪽으로 불지 골라 주세요.';
               if (S.co.guess !== 'toSea') return '밤에는 땅과 바다 중 어느 쪽이 더 차가운지 온도계를 비교해 보세요. 바람은 고기압 쪽에서 저기압 쪽으로 불어요.';
               return true;
             },
@@ -1429,7 +1429,8 @@
   afterScene();
   initLens('cup');
   updateBtBtn();
-  window.__sim = { unlockAll() { ['expt', 'lens', 'tube', 'tank', 'pmark', 'coast', 'monsoon'].forEach((f) => F.add(f)); }, S, setScene, setAlt, setTilt, setHour, setLamp, setSmoke, setSeason, setHeld, angUI, game: () => game, tkReset };
+  window.__sim = { setGuess(id) { if (S.co.guessActive) { S.co.guess = id; Sound.tick(); } },   // 밤바람 맞히기 카드 누르기와 같아요 (3D 막대의 단추)
+    unlockAll() { ['expt', 'lens', 'tube', 'tank', 'pmark', 'coast', 'monsoon'].forEach((f) => F.add(f)); }, S, setScene, setAlt, setTilt, setHour, setLamp, setSmoke, setSeason, setHeld, angUI, game: () => game, tkReset };
   SciSim.loop((dt, t) => {
     step(dt);
     draw();

@@ -13,7 +13,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHN ? 11 : 8.2, theta: 0.6, phi: 1.2, min: 4, max: 22 },
     autoRotate: 0.12,
-    levels: [0, 1, 2],
+    levels: [0, 1, 2],               // 1~3단계(원자 · 양이온 · 음이온). 4단계(이온의 이동, 거름종이 실험)는 2D
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const sm = () => window.__sim;
@@ -65,8 +65,7 @@
       const elSeg = controls.segment('원소', [{ label: 'Na', value: 11 }, { label: 'Mg', value: 12 }, { label: 'O', value: 8 }, { label: 'Cl', value: 17 }], 11, (p) => { const s = sm(); if (s) { s.setState(p, p); apply(); } });
       controls.button('전자 잃기 −1', () => sm() && sm().minusE());
       controls.button('전자 얻기 +1', () => sm() && sm().plusE());
-      controls.text('원자핵의 양성자 수는 그대로예요');
-      /* 2D 단계에 맞춰 고를 수 있는 원소만 보여 줘요: 0단계 Na · 1단계 Na, Mg · 2단계 Cl, O */
+      /* 단계에 맞춰 고를 수 있는 원소만 보여 줘요: 0단계 Na · 1단계 Na, Mg · 2단계 Cl, O */
       const ctlEl = ctx.renderer.domElement.closest('.v3-wrap').querySelector('.v3-ctl');
       const STEP_EL = [['Na'], ['Na', 'Mg'], ['Cl', 'O']];
       function showEls() {

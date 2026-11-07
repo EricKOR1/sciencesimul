@@ -2499,6 +2499,8 @@
     chip(pid) { const V = activeView(), ch = cycChip(pid); return HOOKS.client(ch.x, ch.y); },
     slot(aid) { const V = activeView(), g = cycGeo(V.L), R = slotRect(g, g.arrows.find((q) => q.id === aid)); return HOOKS.client(R.x + R.w / 2, R.y + R.h / 2); },
     fill: cycFill, reset: cycReset, arrows: CYC_ARROWS,
+    // 3D 화면의 카드 버튼: 과정 카드(pid)를 화살표 빈칸(aid)에 붙여요 (끌어다 놓은 것과 같아요)
+    place: cycPlace, procs: CYC_PROCS, nodeName: (id) => cycNodeName(id),
   };
   // @@PARTS-END@@
   /* =========================================================
@@ -2802,7 +2804,7 @@
     missions: [
       {
         title: '♻️ 순환도 완성하기', manual: true,
-        goal: '다섯 개의 <b>과정 카드</b>를 끌어서 순환도의 <b>빈칸</b>에 알맞게 붙인 뒤 <b>확인하기</b>를 눌러 보세요.',
+        goal: '다섯 개의 <b>과정 카드</b>를 순환도의 <b>빈칸</b>에 알맞게 붙인 뒤 <b>확인하기</b>를 눌러 보세요.',
         hint: '화살표가 <b>무엇에서 무엇으로</b> 향하는지 보세요. 예를 들어 마그마 → 화성암은 마그마가 식어서 굳는 과정이에요.',
         setup() { setScene('cycle'); },
         check: cycCheck,

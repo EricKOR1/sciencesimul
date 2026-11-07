@@ -285,7 +285,7 @@
      ① 관찰: 에탄올 → 아세트알데하이드 → 아세트산 (작용기 변화)  ② 분석: 산화수 추적 · 전자 수 맞추기
      ③ 실험: 음주 측정기 (교사 시연 · 모의실험)  ④ 적용: 몸속 분해 (아세트알데하이드 축적 · 메탄올 독성)
      알켄 · 에스터 · 케톤(2차 알코올)은 다루지 않아요. ===== */
-  const MODE_LABEL = { stages: '🍷 작용기 변화 따라가기', ox: '🔢 산화수 추적', tube: '🧪 음주 측정기 (모의실험)', liver: '🫀 몸속 분해' };
+  const MODE_LABEL = { stages: '🍷 작용기 변화 따라가기', ox: '🔢 산화수 추적', tube: '🧪 음주 측정기 (모의실험)', liver: '🧍 몸속 분해' };
   const SPEC = {}; Object.keys(MOLS).forEach((k) => { SPEC[k] = molSpec(k); });
   const FOR = {}; Object.keys(MOLS).forEach((k) => { FOR[k] = molFormula(SPEC[k]); });
   const SK = ['ethanol', 'acetaldehyde', 'acetic'];
@@ -590,7 +590,7 @@
     : { pipe: { x: MAIN.x + 8, y: MAIN.y + 8, w: MAIN.w - 16, h: 156 }, chart: { x: MAIN.x + 8, y: MAIN.y + 172, w: 520, h: 162 }, face: { x: MAIN.x + 536, y: MAIN.y + 172, w: 232, h: 162 } };
   function drawLiver(t) {
     const G = l4G(), S4 = l4Sub(), thr = S4.thr, methanol = L4.sub === 'methanol';
-    T(14, 26, '🫀 간에서 ' + josa(S4.names[0], '이', '가') + ' 단계적으로 산화돼요', PHONE ? 14 : 17, INK, 'left', 800);
+    T(14, 26, '🧍 간에서 ' + josa(S4.names[0], '이', '가') + ' 단계적으로 산화돼요', PHONE ? 14 : 17, INK, 'left', 800);
     panel(MAIN.x, MAIN.y, MAIN.w, MAIN.h, 14);
     // 간세포 단면
     const P = G.pipe;
@@ -865,7 +865,7 @@
       ],
     },
     {
-      title: '몸속 분해: 간에서의 산화', short: '몸속 분해', icon: '🫀', phase: '적용',
+      title: '몸속 분해: 간에서의 산화', short: '몸속 분해', icon: '🧍', phase: '적용',
       intro: '<div class="si-link">🔗 <b>앞 단계에서</b> 에탄올이 단계적으로 산화되는 것을 음주 측정기로 확인했어요. 몸속의 <b>간</b>에서도 같은 순서로 일어나요. 다만 산화제 대신 <b>효소</b>가 산화를 도와요.</div>' +
         '<p>에탄올 → <b>아세트알데하이드(독성, 숙취의 원인)</b> → 아세트산 → CO₂ + H₂O. 두 번째 효소의 활동이 약하면 아세트알데하이드가 쌓여서 얼굴이 붉어져요. 시나리오를 <b>예측</b>한 뒤 시뮬레이션으로 확인하고, 메탄올이 위험한 까닭도 알아봐요.</p>',
       features: ['liver'],
@@ -906,7 +906,7 @@
 
   game = SciSim.game({
     simId: 'hr-alcohol-oxidation', mount: '#game', badge: '산화 탐정', homeHref: '../../index.html#hr',
-    featureLabels: { stages: '🍷 분자 모형 · 산화 단추 · 성질표', ox: '🔢 산화수 눈금 · 전자 저울', tube: '🧪 음주 측정기 관 · 농도 슬라이더', liver: '🫀 간세포 단면 · 시간 그래프' },
+    featureLabels: { stages: '🍷 분자 모형 · 산화 단추 · 성질표', ox: '🔢 산화수 눈금 · 전자 저울', tube: '🧪 음주 측정기 관 · 농도 슬라이더', liver: '🧍 간세포 단면 · 시간 그래프' },
     onFeatures() { updateCtl(); },
     levels,
   });

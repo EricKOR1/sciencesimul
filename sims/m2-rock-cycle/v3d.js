@@ -19,7 +19,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHN ? 19 : 15, theta: 0.3, phi: 1.2, min: 6, max: 26, target: [0, -0.4, 0] },
     autoRotate: 0,
-    levels: [3],
+    levels: [3],                     // 4단계(암석의 순환): 과정 카드는 아래 단추로 붙여요. 1~3단계는 핀 · 판을 끌어 암석을 만드는 실험이라 2D
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3;
@@ -98,19 +98,47 @@
       const labW = label('풍화·침식', [-0.3, 1.1, 0]); const labV = label('화산', [-3.1, 2.9, 0]);
 
       let u = 0, labsOn = true, pl = null;
+      const bar = ctx.renderer.domElement.closest('.v3-wrap').querySelector('.v3-ctl'), n0 = bar.children.length;
       const segCtl = controls.segment('과정', STAGES.map((s, i) => ({ label: s.name, value: i })), 0, (i) => { pl.pause(); pl.set((STAGES[i].u[0] + STAGES[i].u[1]) / 2); });
       pl = controls.player({
         duration: 20, loop: true, autoplay: true, label: '순환 재생',
         phases: STAGES.map((st) => [st.u[0], st.name]),
         onFrame(p) { u = Math.min(0.9999, p); },
       });
-      controls.button('이름표', () => { labsOn = !labsOn; labRock.concat([labW, labV]).forEach((l) => l.show(labsOn)); });
+      const stageEls = [...bar.children].slice(n0);   // 과정 이름 단추 · 재생 막대 (순환도 카드 미션 중에는 감춰요: 정답이 보이니까요)
+      controls.button('이름표', () => { labsOn = !labsOn; labRock.concat([labV]).forEach((l) => l.show(labsOn)); labW.show(labsOn && !cardMode); });
+      /* 순환도 완성하기(카드 미션): 과정 카드를 고른 뒤, 붙일 화살표(○○ → ○○) 단추를 눌러요 → 실험의 순환도와 같은 상태 */
+      const hk = () => window.__sim && window.__sim.cyc;
+      let cSel = 0, cardMode = null, cardKey = '';
+      const cardEls = [];
+      { const n1 = bar.children.length, h = hk();
+        if (h && h.procs && h.place) {
+          controls.segment('과정 카드', h.procs.map((q, i) => ({ label: q.name, value: i })), 0, (v) => { cSel = v; });
+          h.arrows.forEach((a) => controls.button(h.nodeName(a.from) + ' → ' + h.nodeName(a.to), () => { const q = hk(); if (q) { q.place(q.procs[cSel].id, a.id); cardKey = ''; } }));
+        }
+        cardEls.push(...[...bar.children].slice(n1)); }
+      function cardFrame() {
+        const s = window.__sim && window.__sim.S, h = hk(), on = !!(s && s.scene === 'cycle' && s.cyc && !s.cyc.unlocked && h && h.place);
+        if (on !== cardMode) {
+          cardMode = on; cardKey = ''; lastS = -1;
+          stageEls.forEach((e) => { e.style.display = on ? 'none' : ''; }); cardEls.forEach((e) => { e.style.display = on ? '' : 'none'; });
+          labStage.show(!on); labW.show(labsOn && !on); segTubes.forEach((m) => { m.visible = !on; });
+        }
+        if (!on) return false;
+        const C = s.cyc, key = h.arrows.map((a) => a.id + ':' + (C.slots[a.id] || '') + (C.wrong && C.wrong[a.id] ? '!' : '')).join();
+        if (key !== cardKey) {
+          cardKey = key; const nm = {}; h.procs.forEach((q) => { nm[q.id] = q.name; });
+          info('<b>순환도 완성하기</b>: 과정 카드를 고른 뒤, 붙일 화살표 단추를 눌러요.<br>' + h.arrows.map((a) => h.nodeName(a.from) + ' → ' + h.nodeName(a.to) + ': ' + (C.slots[a.id] ? '<b' + (C.wrong && C.wrong[a.id] ? ' style="color:#fca5a5"' : '') + '>' + nm[C.slots[a.id]] + '</b>' : '?')).join('<br>'));
+        }
+        return true;
+      }
       let lastS = -1;
       return {
         update(dt, t) {
           let s = STAGES.findIndex((q) => u >= q.u[0] && u < q.u[1]); if (s < 0) s = 0;
-          if (s !== lastS) { lastS = s; segCtl.set(s); info(`<b>${STAGES[s].name}</b><br>${STAGES[s].t}<br>화성암 → 퇴적물 → 퇴적암 → 변성암 → 마그마 …`); labStage.set(STAGES[s].name); }
-          segTubes.forEach((m, i) => { m.material.opacity = i === s ? 0.5 : 0; });
+          const cm = cardFrame();
+          if (s !== lastS && !cm) { lastS = s; segCtl.set(s); info(`<b>${STAGES[s].name}</b><br>${STAGES[s].t}<br>화성암 → 퇴적물 → 퇴적암 → 변성암 → 마그마 …`); labStage.set(STAGES[s].name); }
+          segTubes.forEach((m, i) => { m.material.opacity = i === s && !cm ? 0.5 : 0; });
           token.position.copy(curve.getPointAt(u));
           glow.scale.setScalar(1 + 0.2 * Math.sin(t * 6));
           chamber.material.emissiveIntensity = 0.9 + 0.3 * Math.sin(t * 2);

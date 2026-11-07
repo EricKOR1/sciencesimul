@@ -1042,8 +1042,8 @@
         missions: [
           {
             title: '🔍 광물 표본 관찰하기',
-            goal: '표본 카드 <b>6개</b>를 모두 눌러서 <b>겉보기 색</b>을 관찰해 보세요.',
-            hint: '카드를 누르면 큰 화면에서 표본을 볼 수 있어요. 화면을 끌어서 여러 방향으로 돌려 봐요.',
+            goal: '표본 <b>6개</b>를 하나씩 모두 눌러서 <b>겉보기 색</b>을 관찰해 보세요.',
+            hint: '<span class="only2d">카드를</span><span class="only3d">아래 광물 이름 버튼을</span> 누르면 큰 화면에서 표본을 볼 수 있어요. 화면을 끌어서 여러 방향으로 돌려 봐요.',
             setup() { setScene('shelf'); },
             check: () => S.seen.size >= 6,
             hold: 0.5,
