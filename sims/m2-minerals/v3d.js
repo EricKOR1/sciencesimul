@@ -111,7 +111,7 @@
         const ms = window.__sim && window.__sim.MINERALS; const m = ms && ms.find((q) => q.id === k);
         info(`<b>${NM[k]}</b> · 겉보기 색 <b>${COLOR[k]}</b><br>${NOTE[k]}`);
         labN.set(NM[k]);
-        const S2 = sm() && sm().S; if (push && S2 && S2.sel !== k) { S2.sel = k; if (S2.seen && S2.seen.add) S2.seen.add(k); }   // 3D에서 고른 표본을 2D에도 반영
+        const S2 = sm() && sm().S; if (push && S2) { S2.sel = k; if (S2.seen && S2.seen.add) S2.seen.add(k); }   // 3D에서 고른 표본을 2D에도 반영
         last2D = S2 ? S2.sel : null;
         mag = false;
       }

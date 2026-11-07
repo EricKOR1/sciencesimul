@@ -967,9 +967,9 @@
         missions: [
           {
             title: '막대를 (−)로 대전시키기',
-            goal: '플라스틱 막대를 끌어 털가죽 위에서 <b>좌우로 여러 번</b> 문질러요. 돋보기에서 전자의 움직임을 지켜보세요.',
-            hint: '막대의 가운데를 손가락으로 눌러 끌고, 털가죽 위에서 왼쪽·오른쪽으로 왔다 갔다 해요.',
-            setup() { setScene('rub'); resetRub(false); showHint('👆 막대를 끌어 털가죽 위에서 문질러요', 7000); },
+            goal: '<span class="only2d">플라스틱 막대를 끌어 털가죽 위에서 <b>좌우로 여러 번</b> 문질러요. 돋보기에서 전자의 움직임을 지켜보세요.</span><span class="only3d"><b>▶ 문지르기</b>를 눌러 플라스틱 막대로 털가죽을 문질러요. 전자의 움직임을 지켜보세요.</span>',
+            hint: '<span class="only2d">막대의 가운데를 손가락으로 눌러 끌고, 털가죽 위에서 왼쪽·오른쪽으로 왔다 갔다 해요.</span><span class="only3d">아래 <b>▶ 문지르기</b>를 누르고 전자가 막대로 옮겨 가는 것을 끝까지 지켜봐요.</span>',
+            setup() { setScene('rub'); resetRub(false); showHint('👆 막대로 털가죽을 문질러요', 7000); },
             check: () => S.scene === 'rub' && S.rub.arrived >= NEED,
             status: () => '막대로 옮겨 온 전자 <b>' + S.rub.arrived + '</b>개 · ' + box(S.rub.arrived >= NEED) + ' (−) 대전 (전자 ' + NEED + '개 이상)',
             hold: 0.6,
