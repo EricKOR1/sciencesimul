@@ -9,12 +9,12 @@
   const TAU = Math.PI * 2;
   const L2 = () => window.__sim || null;
 
-  const v3 = window.SciSim3D.attach({
+  window.SciSim3D.attach({
     title: '생명 시스템의 구성 단계 3D',
-    hint: '확대 단계·묶는 단계를 눌러 보세요 · 드래그: 돌리기',
+    hint: '확대 단계를 눌러 보세요 · 드래그: 돌리기',
     camera: { dist: narrow ? 12 : 9, theta: 0.6, phi: 1.2, min: 3, max: 26 },
     autoRotate: 0.12,
-    levels: [],
+    levels: [0],   // 1단계(세포~개체 확대): 확대 단추·슬라이더와 화면 아래 카드 배열 단추(◀ ▶ · ⬅ ➡)로 해요. 묶기 분류 · 시스템 표 · 설명 자료 카드 단계는 2D
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
       const V = THREE.Vector3, V3 = (x, y, z) => new V(x, y, z || 0);
@@ -237,10 +237,13 @@
       }
 
       const L0 = L2();
+      const ctlEl = ctx.renderer.domElement.closest('.v3-wrap').querySelector('.v3-ctl');
+      const nZ = ctlEl.children.length;
       const segZ = controls.segment('🔍 확대', (L0 ? L0.LV : [{ name: '개체' }, { name: '기관계' }, { name: '기관' }, { name: '조직' }, { name: '세포' }]).map((l, j) => ({ label: l.name, value: 'z' + j })), 'z0', (v) => {
         const L = L2(); if (!L) return; const j = +v.slice(1);
         L.setScene('zoom', 'zoom'); L.S.zm.tz = j; L.syncControls(); apply();
       });
+      const zEls = [].slice.call(ctlEl.children, nZ), nG = ctlEl.children.length;
       const segG = controls.segment('🌲 묶기', ['개체', '개체군', '군집', '생태계'].map((n, i) => ({ label: n, value: 'g' + i })), '', (v) => {
         const L = L2(); if (!L) return; const g = +v.slice(1);
         L.setScene('group', 'view'); L.S.grp.g = g; L.S.grp.seen[g] = true; L.syncControls(); apply();
@@ -249,18 +252,48 @@
         const L = L2(); if (!L) return;
         L.setScene('group', 'view'); if (L.S.grp.g > 1) L.S.grp.g = 0; L.S.grp.seen[L.S.grp.g] = true; L.S.grp.sel = k + '0'; L.syncControls(); apply();
       });
+      const gEls = [].slice.call(ctlEl.children, nG);   // 묶기 · 고른 생물 (확대 단계에서는 숨겨요)
       const pl = controls.player({
         duration: 6, loop: true, autoplay: true, label: '심장 박동',
         phases: [[0, '박동 ×7 (약 70회/분)']],
         onFrame(p) { ph = p; },
       });
 
+      /* 단계 카드 배열(2D 'zoom:order'): ◀ ▶로 카드를 고르고 ⬅ ➡로 옆 칸과 자리를 바꿔요 (2D 카드 배열 S.zm.ord와 같아서 미션 진행이 같아요) */
+      const ordO = () => { const L = L2(); return L && L.S.mode === 'zoom' && L.S.sub.zoom === 'order' && L.S.zm && L.S.zm.ord ? L.S.zm.ord : null; };
+      const LVI = { body: 0, system: 1, organ: 2, tissue: 3, cell: 4 };
+      let oSel = 0, ordKey = '';
+      const nO = ctlEl.children.length;
+      const oTxt = controls.text('');
+      controls.button('◀', () => { const O = ordO(); if (O) { oSel = (oSel + O.n - 1) % O.n; ordKey = ''; } });
+      controls.button('▶', () => { const O = ordO(); if (O) { oSel = (oSel + 1) % O.n; ordKey = ''; } });
+      const mv = (d) => {
+        const O = ordO(); if (!O) return; const j = oSel + d; if (j < 0 || j >= O.n) return;
+        const t = O.order[j]; O.order[j] = O.order[oSel]; O.order[oSel] = t; oSel = j; O.snap(); if (O.o.onChange) O.o.onChange(); ordKey = '';
+      };
+      controls.button('⬅ 앞 칸으로', () => mv(-1)); controls.button('뒤 칸으로 ➡', () => mv(1));
+      const ordEls = [].slice.call(ctlEl.children, nO);
+      function syncOrd() {
+        const O = ordO(), L = L2();
+        ordEls.forEach((e) => { e.style.display = O ? '' : 'none'; });
+        zEls.forEach((e) => { e.style.display = O ? 'none' : ''; });
+        gEls.forEach((e) => { e.style.display = L && L.S.mode === 'zoom' ? 'none' : ''; });
+        if (!O) { if (ordKey) { ordKey = ''; lastKey = ''; } return false; }
+        const ids = O.ids(), key = oSel + '|' + ids.join(',') + '|' + O.cards.map((c) => (c.bad ? 1 : 0)).join('');
+        if (key === ordKey) return true; ordKey = key;
+        const cur = O.cards[O.order[oSel]];
+        oTxt.innerHTML = '카드: <b style="color:#ffd34d">' + cur.label + '</b>';
+        scene = 'zoom'; gg.visible = false; tagLab.show(false); showZoom(LVI[cur.id]);   // 고른 카드의 단계 모형을 보여 줘요
+        info('<b>단계 카드 배열</b> (1 = 가장 작은 단계)<br>' + ids.map((id, i) => { const c = O.cards.find((q) => q.id === id), tx = (i + 1) + '. ' + c.label; return i === oSel ? '<b style="color:#ffd34d">▶ ' + tx + '</b>' : c.bad ? '<span style="color:#fca5a5">' + tx + '</span>' : tx; }).join('<br>') + '<br>◀ ▶로 카드를 고르고 ⬅ ➡로 자리를 옮겨요.');
+        return true;
+      }
+
       let lastKey = '';
       const keyOf = () => { const L = L2(); if (!L) return ''; const sc = sceneOf(); return sc + ':' + stageOf() + ':' + (sc === 'group' ? L.S.grp.sel : ''); };
 
       return {
         update(dt, t) {
-          const k = keyOf(); if (k !== lastKey) { lastKey = k; apply(); }
+          if (!syncOrd()) { const k = keyOf(); if (k !== lastKey) { lastKey = k; apply(); } }
           grow = Math.min(1, grow + dt * 2.5); const e = 1 - Math.pow(1 - grow, 3), sc = 0.75 + 0.25 * e;
           zg.forEach((g) => g.scale.setScalar(sc)); gg.scale.setScalar(0.85 + 0.15 * e);
           zoomEnv(t); zoomPlat.visible = zoomDots.visible = scene === 'zoom';
@@ -276,13 +309,4 @@
     },
   });
 
-  /* 2D에서 카드를 끌어 놓는 화면(단계 배열·분류·카드 배열)에서는 3D를 잠시 닫아 줘요 */
-  let closedByMe = false, lk = '';
-  setInterval(() => {
-    const L = L2(); if (!L) return;
-    const k = L.S.mode + ':' + L.S.sub[L.S.mode];
-    if (k === lk) return; lk = k;
-    if (/:(order|sort)$/.test(k)) { if (v3.isOpen) { v3.close(); closedByMe = true; } }
-    else if (closedByMe) { closedByMe = false; v3.open(); }
-  }, 300);
 })();

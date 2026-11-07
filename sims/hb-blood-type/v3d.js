@@ -12,7 +12,7 @@
     hint: '혈액형과 혈청을 골라 ▶ 섞기 → 응집을 눌러 봐요',
     camera: { dist: narrow ? 12.5 : 10, theta: 0.4, phi: 1.15, min: 5, max: 20 },
     autoRotate: 0.1,
-    levels: [],
+    levels: [],   // 모든 단계에 캔버스 조작(항체 끌기 · 구조 칸 · 판정표 칸 · 카드 분류)이 있고, 3D는 혈액형마다 응집원·응집소를 그대로 보여 줘서 구조 완성·키트 판정 미션의 답이 드러나요 → 2D
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V = THREE.Vector3, V3 = (x, y, z) => new V(x, y, z || 0);

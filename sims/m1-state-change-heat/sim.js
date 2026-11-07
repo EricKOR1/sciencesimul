@@ -1941,7 +1941,7 @@
         missions: [
           {
             title: '수증기가 될 때까지 가열하기', scene: 'heat',
-            goal: '불을 켜고 얼음이 <b>모두 수증기가 될 때까지</b> 가열하세요. 그래프의 모양과 🔍 입자 모형을 관찰해요.',
+            goal: '불을 켜고 얼음이 <b>모두 수증기가 될 때까지</b> 가열하세요. 그래프의 모양과 <span class="only2d">🔍 입자 모형</span><span class="only3d">입자의 움직임</span>을 관찰해요.',
             hint: '<b>🔥 가열하기</b>를 눌러 시작해요. 오래 걸리면 <b>⏩ 빠르게</b>를 켜 보세요. 온도가 변하지 않는 구간에 주목해요!',
             setup() { resetRun(RUN.heat); AFX.clear(); },
             check: () => passed(RUN.heat, 'boil'),
@@ -1975,7 +1975,7 @@
           {
             title: '냉각 곡선 그리기', scene: 'cool',
             goal: '식히기를 시작해서 팔미트산이 <b>모두 굳은 뒤 30 °C</b>가 될 때까지 냉각 곡선을 완성하세요.',
-            hint: '<b>❄️ 식히기</b>를 눌러 시작해요. 시험관 속 팔미트산이 하얗게 굳는 모습과 🔍 입자 모형을 함께 보세요.',
+            hint: '<b>❄️ 식히기</b>를 눌러 시작해요. 시험관 속 팔미트산이 하얗게 굳는 모습과 <span class="only2d">🔍 입자 모형</span><span class="only3d">입자의 움직임</span>을 함께 보세요.',
             setup() { resetRun(RUN.cool); AFX.clear(); },
             check: () => RUN.cool.done,
             hold: 0.6,

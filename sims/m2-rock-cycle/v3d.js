@@ -96,6 +96,20 @@
       const labRock = [label('화성암', [-2.2, 1.0, Z]), label('퇴적물', [0.9, 0.95, Z]), label('퇴적암', [4.0, -0.9, Z]), label('변성암', [4.0, -2.2, Z]), label('마그마', chamber, { offset: [-0.6, 0.0, 0.7] })];
       const labStage = label('', token, { offset: [0, 0.55, 0], color: 'rgba(255,211,77,.95)' }); labStage.el.style.color = '#1b2333';
       const labW = label('풍화·침식', [-0.3, 1.1, 0]); const labV = label('화산', [-3.1, 2.9, 0]);
+      // 다른 길(점선): 순환을 완성한 뒤 [➕ 다른 길도 보기]를 누르면 보여요 — 어떤 암석이든 풍화·침식되고, 열과 압력을 받고, 녹을 수 있어요
+      const NODEP = { magma: [-1.3, -2.45], igneous: [-2.2, 1.0], sediment: [0.9, 0.7], sedrock: [3.7, -0.95], meta: [3.5, -2.3] };
+      const PROC = { weather: [0x7dd3fc, '풍화·침식'], heatp: [0xf472b6, '열과 압력'], melt: [0xfb923c, '녹음'] };
+      const EXTRA = [['sedrock', 'sediment', 'weather'], ['meta', 'sediment', 'weather'], ['igneous', 'meta', 'heatp'], ['igneous', 'magma', 'melt'], ['sedrock', 'magma', 'melt']];
+      const extraG = new THREE.Group(); extraG.visible = false; root.add(extraG);
+      const extraLabs = EXTRA.map(([f, t2, pr], i) => {
+        const A = new V3(NODEP[f][0], NODEP[f][1], Z + 0.3), B = new V3(NODEP[t2][0], NODEP[t2][1], Z + 0.3);
+        const mid = A.clone().add(B).multiplyScalar(0.5); mid.z += 0.9 + 0.25 * i;
+        const cv = new THREE.QuadraticBezierCurve3(A, mid, B), m = new THREE.MeshBasicMaterial({ color: PROC[pr][0], transparent: true, opacity: 0.9 });
+        for (let k = 0; k < 12; k++) { const pp = []; for (let j = 0; j <= 4; j++) pp.push(cv.getPoint(Math.min(0.94, (k + j * 0.13) / 12))); extraG.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pp), 6, 0.03, 6), m)); }
+        const hd = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.24, 12), m); hd.position.copy(cv.getPoint(0.95)); hd.quaternion.setFromUnitVectors(new V3(0, 1, 0), cv.getTangent(0.95)); extraG.add(hd);
+        const L = label(PROC[pr][1], cv.getPoint(0.5).toArray(), { color: 'rgba(30,41,59,.85)', size: 11 }); L.show(false); return L;
+      });
+      let extraOn = false;
 
       let u = 0, labsOn = true, pl = null;
       const bar = ctx.renderer.domElement.closest('.v3-wrap').querySelector('.v3-ctl'), n0 = bar.children.length;
@@ -106,7 +120,7 @@
         onFrame(p) { u = Math.min(0.9999, p); },
       });
       const stageEls = [...bar.children].slice(n0);   // 과정 이름 단추 · 재생 막대 (순환도 카드 미션 중에는 감춰요: 정답이 보이니까요)
-      controls.button('이름표', () => { labsOn = !labsOn; labRock.concat([labV]).forEach((l) => l.show(labsOn)); labW.show(labsOn && !cardMode); });
+      controls.button('이름표', () => { labsOn = !labsOn; labRock.concat([labV]).forEach((l) => l.show(labsOn)); labW.show(labsOn && !cardMode); extraLabs.forEach((l) => l.show(labsOn && extraOn)); });
       /* 순환도 완성하기(카드 미션): 과정 카드를 고른 뒤, 붙일 화살표(○○ → ○○) 단추를 눌러요 → 실험의 순환도와 같은 상태 */
       const hk = () => window.__sim && window.__sim.cyc;
       let cSel = 0, cardMode = null, cardKey = '';
@@ -137,7 +151,9 @@
         update(dt, t) {
           let s = STAGES.findIndex((q) => u >= q.u[0] && u < q.u[1]); if (s < 0) s = 0;
           const cm = cardFrame();
-          if (s !== lastS && !cm) { lastS = s; segCtl.set(s); info(`<b>${STAGES[s].name}</b><br>${STAGES[s].t}<br>화성암 → 퇴적물 → 퇴적암 → 변성암 → 마그마 …`); labStage.set(STAGES[s].name); }
+          { const S2 = window.__sim && window.__sim.S, ex = !!(S2 && S2.scene === 'cycle' && S2.cyc && S2.cyc.extra && !cm);
+            if (ex !== extraOn) { extraOn = ex; extraG.visible = ex; extraLabs.forEach((l) => l.show(ex && labsOn)); lastS = -1; } }
+          if (s !== lastS && !cm) { lastS = s; segCtl.set(s); info(`<b>${STAGES[s].name}</b><br>${STAGES[s].t}<br>화성암 → 퇴적물 → 퇴적암 → 변성암 → 마그마 …` + (extraOn ? '<br><span style="color:#ffd34d">점선은 다른 길이에요. 암석은 한 가지 길로만 바뀌지 않아요.</span>' : '')); labStage.set(STAGES[s].name); }
           segTubes.forEach((m, i) => { m.material.opacity = i === s && !cm ? 0.5 : 0; });
           token.position.copy(curve.getPointAt(u));
           glow.scale.setScalar(1 + 0.2 * Math.sin(t * 6));

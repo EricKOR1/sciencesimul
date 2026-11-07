@@ -122,7 +122,7 @@
       // 자율 신경 조작 요소는 마지막에 추가된 4개 요소(라벨 + 버튼 3개)
       const ctlEl = document.querySelector('.v3-ctl'); if (ctlEl) { const kids = [...ctlEl.children].slice(-4); kids.forEach((e) => subCtl.push(e)); }
       const pl = controls.player({ duration: 6, loop: true, autoplay: true, label: '신경 신호', phases: [[0, '감각 신호 ↑ · 운동 신호 ↓']], onFrame(p) { ph = p; } });
-      // 3D 단계(말초 신경)에서는 다른 장면으로 가는 화면 단추를 숨겨요
+      // 3D 단계(말초 신경)에서는 다른 장면으로 가는 화면 단추를 숨겨요 (화면 위 장면 탭 #modeSeg도 only2d)
       if (ctlEl) [...ctlEl.children].forEach((e) => { if (['대뇌의 엽', '뇌 줄기·소뇌', '말초 신경(몸 전체)'].indexOf(e.textContent) >= 0) e.style.display = 'none'; });
       /* 비교표: 카드를 ◀ ▶로 고르고 칸 단추를 눌러 놓아요 (2D 비교표의 카드 놓기 S.tab.pl과 같아서 미션 진행이 같아요) */
       const tabEls = [], nT0 = ctlEl ? ctlEl.children.length : 0;
@@ -138,7 +138,9 @@
       });
       if (ctlEl) tabEls.push(...[].slice.call(ctlEl.children, nT0));
       function syncTab() {
-        const P = tabPl(); tabEls.forEach((e) => { e.style.display = P ? '' : 'none'; }); if (!P) return;
+        const P = tabPl(); tabEls.forEach((e) => { e.style.display = P ? '' : 'none'; });
+        subCtl.forEach((e) => { e.style.display = mode === 'body' && !P ? '' : 'none'; });   // 비교표에서는 자율 신경 단추를 숨겨요
+        if (!P) return;
         const L = L2(), ids = P.chips.map((q) => q.id).sort(), cur = P.chips.find((q) => q.id === ids[cardI % ids.length]);
         const key = 'tab|' + cardI + '|' + P.chips.map((q) => q.id + ':' + q.zone).join(','); if (key === tabKey) return; tabKey = key;
         cardTxt.innerHTML = '카드: <b style="color:#ffd34d">' + (cur ? cur.label : '') + '</b>' + (cur && cur.zone ? ' ✓' : '');

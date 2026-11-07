@@ -867,7 +867,7 @@
 
   /* ---------- 장면 전환 · 조작 ---------- */
   const LABEL = {
-    blind: '🔬 맹점 실험 · 눈 속에서 상이 맺히는 곳', adjust: '👁️ 눈의 조절 · 홍채와 수정체', ear: '👂 귀 · 소리가 지나가는 길',
+    blind: '⚫ 맹점 실험 · 눈 속에서 상이 맺히는 곳', adjust: '👁️ 눈의 조절 · 홍채와 수정체', ear: '👂 귀 · 소리가 지나가는 길',
     nose: '👃 코와 👅 혀 · 냄새와 맛', skin: '✋ 피부 · 감각점과 두 점 구별', path: '🧠 자극이 뇌로 전달되는 경로',
   };
   function setScene(name) {
@@ -956,7 +956,7 @@
     '<text x="40" y="52" text-anchor="middle" font-size="12" fill="#475569">+ (바라보는 곳)</text></svg>';
   const levels = [
     {
-      title: '맹점 실험', short: '맹점 실험', icon: '🔬', phase: '실험',
+      title: '맹점 실험', short: '맹점 실험', icon: '⚫', phase: '실험',
       features: ['blind'],
       intro: '<p class="si-q">❓ 탐구 질문: 눈으로 들어온 빛은 어떻게 ‘보는 것’이 될까?</p>' +
         '<p>카드에 <b>+</b>와 <b>●</b>가 있어요. <b>왼눈을 가리고 오른눈으로 +만 바라보면서</b> 카드를 앞뒤로 움직이면, 어느 순간 ●가 갑자기 <b>사라져요</b>! 이 <b>맹점 실험</b>을 눈 모형에서 해 보고, 보이지 않는 까닭으로 눈의 구조를 추론해 봐요.</p>' +
@@ -1122,7 +1122,7 @@
   game = SciSim.game({
     simId: 'm3-senses', mount: '#game', badge: '감각 탐험가', homeHref: '../../index.html#g3',
     featureLabels: {
-      blind: '🔬 맹점 실험(눈 모형)', adjust: '👁️ 홍채·수정체 조절', ear: '👂 귀: 소리가 지나가는 길', nose: '👃 코와 👅 혀: 냄새와 맛', skin: '✋ 피부: 감각점과 두 점 구별', path: '🧠 자극의 전달 경로 잇기',
+      blind: '⚫ 맹점 실험(눈 모형)', adjust: '👁️ 홍채·수정체 조절', ear: '👂 귀: 소리가 지나가는 길', nose: '👃 코와 👅 혀: 냄새와 맛', skin: '✋ 피부: 감각점과 두 점 구별', path: '🧠 자극의 전달 경로 잇기',
     },
     onFeatures(set) { F = new Set(set); },
     onMissionStart() { hideHint(); },

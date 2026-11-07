@@ -1371,7 +1371,7 @@
           title: '심장의 네 방 이름 붙이기', manual: true,
           goal: '이름표 4개를 알맞은 방에 놓고 <b>✔ 확인하기</b>를 누르세요. 그림은 마주 본 모습이라 <b>몸의 오른쪽이 그림의 왼쪽</b>이에요.',
           hint: '위쪽 방이 심방, 아래쪽 방이 심실이에요. 몸의 오른쪽이 그림의 왼쪽이에요. (파란색 쪽이 우, 빨간색 쪽이 좌)',
-          setup() { setScene('heart'); HT.cardsOn = true; HT.flag = {}; HT.cards.setup(HT.cards.cards, HT.cards.targets); showHint('🏷️ 이름표를 끌어 알맞은 방에 놓아요', 6500); },
+          setup() { setScene('heart'); HT.cardsOn = true; HT.flag = {}; HT.cards.setup(HT.cards.cards, HT.cards.targets); showHint('🏷️ 이름표를 알맞은 방에 놓아요', 6500); },
           status: () => '놓은 이름표: <b>' + HT.cards.cards.filter((c) => c.slot).length + ' / 4</b>',
           check() {
             const cs = HT.cards.cards, un = cs.filter((c) => !c.slot);
@@ -1561,6 +1561,14 @@
     routeP(s) { const q = atLen(RPOLY, s); return this.toClient(q.x, q.y); },
     chipP(i) { return this.toClient(556 + 117, 44 + i * 62 + 27); },
     vesselMid(k) { const v = RVESS[k]; const q = atLen(RPOLY, (v.a + v.b) / 2); return this.toClient(q.x, q.y); },
+    // 3D 화면의 이름표 버튼: 이름표 id(RA·RV·LA·LV)를 방 slot에 놓아요 (2D에서 끌어다 놓은 것과 같아요)
+    placeName(id, slot) {
+      const set = HT.cards, c = set.cards.find((q) => q.id === id), t = set.targets.find((q) => q.id === slot);
+      if (!c || !t || !HT.cardsOn) return;
+      const occ = set.cards.find((q) => q !== c && q.slot === slot);
+      if (occ) { occ.slot = null; occ.mark = null; set.snap(occ, true); }
+      c.slot = slot; c.mark = null; delete HT.flag[c.id]; set.snap(c, true); Sound.tick();
+    },
   };
 
   SciSim.loop((dt, t) => {

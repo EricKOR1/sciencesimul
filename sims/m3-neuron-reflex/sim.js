@@ -1152,7 +1152,7 @@
   function setNvView(v) {
     NV.view = v; NV.pulses = []; NV.sel = null;
     $$('#nvSeg button').forEach((b) => b.classList.toggle('on', b.dataset.v === v));
-    $('#nvNote').textContent = v === 'one' ? '뉴런의 각 부분을 눌러 이름과 하는 일을 읽어 봐요.' : '세 뉴런을 눌러 역할을 읽고, 자극을 주어 신호가 이어지는 모습을 봐요.';
+    $('#nvNote').innerHTML = v === 'one' ? '<span class="only2d">뉴런의 각 부분을 눌러 이름과 하는 일을 읽어 봐요.</span><span class="only3d">뉴런 각 부분의 이름표를 보고, ▶ 신호 전달로 신호가 가는 길을 봐요.</span>' : '<span class="only2d">세 뉴런을 눌러 역할을 읽고, 자극을 주어 신호가 이어지는 모습을 봐요.</span><span class="only3d">아래 막대의 뉴런 단추로 역할을 읽고, ▶ 신호 전달로 신호가 이어지는 모습을 봐요.</span>';
   }
   $$('#nvSeg button').forEach((b) => b.addEventListener('click', () => { Sound.click(); setNvView(b.dataset.v); }));
   $('#btnStim').addEventListener('click', () => { fireStim(); });

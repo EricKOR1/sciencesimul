@@ -211,7 +211,7 @@
       const sunAng = Math.atan2(sunBase[1], sunBase[0]);
       const fmtKly = (v) => (v < 0.5 ? '중심' : '약 ' + (v / 10).toFixed(1).replace(/\.0$/, '') + '만 광년');
       let sunR = null; const sunCtl = [];
-      { const bar0 = ctx.renderer.domElement.closest('.v3-wrap').querySelector('.v3-ctl'), before = bar0.children.length; sunR = controls.range('☀ 태양계 위치: 중심에서', 0, 50, 1, 0, (v) => { if (sim && sim.placeSunAt) sim.placeSunAt(v, sunAng); }, fmtKly); sunCtl.push(...[...bar0.children].slice(before)); }
+      { const bar0 = ctx.renderer.domElement.closest('.v3-wrap').querySelector('.v3-ctl'), before = bar0.children.length; sunR = controls.range('☀ 태양계 위치', 0, 50, 1, 0, (v) => { if (sim && sim.placeSunAt) sim.placeSunAt(v, sunAng); }, (v) => (v < 0.5 ? '은하 중심' : '중심에서 ' + fmtKly(v))); sunCtl.push(...[...bar0.children].slice(before)); }
       let sunCtlOn = true;
       const sunTask = () => { try { const g = sim && sim.game && sim.game(), m = g && g.current && g.current(); return !!(m && m._sunTask && g.phase === 'active'); } catch (e) { return false; } };
       let hideSun = false;

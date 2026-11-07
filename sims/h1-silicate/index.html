@@ -107,7 +107,7 @@
         <div class="stage-toolbar">
           <span class="toolbar-label" id="tbLabel">🪨 지각을 이루는 원소</span>
           <span class="spacer"></span>
-          <div class="segmented" id="sceneSeg" role="group" aria-label="장면 고르기" hidden>
+          <div class="segmented only2d" id="sceneSeg" role="group" aria-label="장면 고르기" hidden>
             <button type="button" data-scene="crust" data-feature="crust">🪨 지각의 광물</button>
             <button type="button" data-scene="tetra" data-feature="tetra">🔺 사면체</button>
             <button type="button" data-scene="struct" data-feature="struct">🧱 연결 방식</button>
@@ -171,7 +171,7 @@
               <button type="button" class="opt" data-t="frame">망상형</button>
             </div>
           </div>
-          <p class="ctrl-note" id="structNote">아래 블록을 끌어다 점선 자리에 놓아 배열을 완성해요.</p>
+          <p class="ctrl-note" id="structNote"><span class="only2d">아래 블록을 끌어다 점선 자리에 놓아 배열을 완성해요.</span><span class="only3d">화면 아래 <b>＋ 블록 하나 놓기</b>로 블록을 이어 붙여 배열을 완성해요.</span></p>
         </div>
         <!-- 정리 -->
         <div class="ctrl-set" id="cs-sort" hidden>

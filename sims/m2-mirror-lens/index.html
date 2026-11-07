@@ -54,6 +54,7 @@
       .readout .value { font-size: 16px; }
       .toolbar-label small { display: none; }
     }
+    .v3-on > .stage-hint { z-index: 30; top: 54px; bottom: auto; }   /* 3D 단계에서도 안내 말풍선이 위쪽에 알맞은 크기로 보이게 */
   </style>
 </head>
 <body class="sim-page" data-subject="phy">
@@ -156,7 +157,7 @@
 
         <div class="grp off" id="g-sort">
           <div class="grp-title" id="sortTitle">🃏 카드를 알맞은 상자에 놓아요</div>
-          <p class="ctrl-note" id="sortNote">카드를 <b>끌어서</b> 알맞은 상자에 놓아요. 맞으면 쏙 들어가고, 틀리면 되돌아와요.</p>
+          <p class="ctrl-note" id="sortNote">카드를 <span class="only2d"><b>끌어서</b> 알맞은 상자에 놓아요</span><span class="only3d">아래에서 고른 뒤 알맞은 <b>상자 버튼</b>을 눌러요</span>. 맞으면 쏙 들어가고, 틀리면 되돌아와요.</p>
           <div class="btn-row">
             <button class="btn" id="sortReset" type="button">🃏 카드 다시 섞기</button>
           </div>

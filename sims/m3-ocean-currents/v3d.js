@@ -87,7 +87,8 @@
       const surf = new THREE.Mesh(surfG, sm(0x8fd0ff, { transparent: true, opacity: 0.55, roughness: 0.1, side: THREE.DoubleSide, depthWrite: false })); tankG.add(surf);
       const base = new THREE.Mesh(new THREE.BoxGeometry(TWd + 14, 0.2, 5), sm(0xc3ccd6, { roughness: 0.8 })); base.position.y = -0.1; tankG.add(base);
       const ruler = new THREE.Mesh(new THREE.BoxGeometry(TWd, 0.04, 0.4), sm(0xf2c14e)); ruler.position.set(0, 0.02, TD / 2 + 0.3); tankG.add(ruler);
-      const rl = label('0 ~ 30 cm', [0, 0.2, TD / 2 + 0.7], { size: 11, color: 'rgba(107,74,0,.9)' });
+      const rlA = new THREE.Object3D(); rlA.position.set(0, 0.2, TD / 2 + 0.7); tankG.add(rlA);   // 눈금자 이름표: 수조를 볼 때만 보여요
+      const rl = label('0 ~ 30 cm', rlA, { size: 11, color: 'rgba(107,74,0,.9)' });
       const fan = new THREE.Group(); tankG.add(fan);
       { const stand = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 3.0, 12), sm(0x7b8ca0)); stand.position.set(0, 1.5 - 0, 0); fan.add(stand);
         const motor = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.6, 24), sm(0xe5eaf0)); motor.rotation.z = Math.PI / 2; motor.position.set(-0.1, 3.2, 0); fan.add(motor);
@@ -144,7 +145,7 @@
       return {
         update(dt, t) {
           const L = ctx.lesson(), S = L && L.S; sc = S ? S.scene : 1;
-          if (sc !== lastSc) { lastSc = sc; const tk = sc === 0; tankG.visible = tk; earth.visible = !tk; wSeg.set(0); const hostT = ctx.controls.text('').parentNode; Array.from(hostT.children).forEach((e) => { if (e.classList.contains('v3-player')) e.style.display = sc === 1 ? '' : 'none'; else if (e === wB || e === nb) e.style.display = tk ? 'none' : ''; }); sig = ''; orbit.tx = 0; orbit.ty = tk ? 1.6 : 0.3; orbit.dist = tk ? (PHN ? 19 : 13.5) : (PHN ? 17 : 12.8); if (tk) { korL.show(false); items.forEach((it) => it.lb.show(false)); windL.forEach((l) => l.show(false)); cityM.forEach((q) => q.L.show(false)); } showTankCtl(tk); }
+          if (sc !== lastSc) { lastSc = sc; const tk = sc === 0; tankG.visible = tk; earth.visible = !tk; wSeg.set(0); const hostT = ctx.controls.text('').parentNode; Array.from(hostT.children).forEach((e) => { if (e.classList.contains('v3-player')) e.style.display = sc === 1 ? '' : 'none'; else if (e === wB) e.style.display = sc === 1 ? '' : 'none'; else if (e === nb) e.style.display = tk ? 'none' : ''; }); sig = ''; orbit.tx = 0; orbit.ty = tk ? 1.6 : 0.3; orbit.dist = tk ? (PHN ? 19 : 13.5) : (PHN ? 17 : 12.8); if (tk) { korL.show(false); items.forEach((it) => it.lb.show(false)); windL.forEach((l) => l.show(false)); cityM.forEach((q) => q.L.show(false)); } showTankCtl(tk); }
           if (sc === 0) { if (L && L.S1) tankFrame(L, t); return; }
           let d = targetRot - earth.rotation.y; d = Math.atan2(Math.sin(d), Math.cos(d)); earth.rotation.y += d * Math.min(1, dt * 3.2);
           if (sc === 1 && L.S2) { if (!pl.playing && Math.abs(L.S2.p - pl.p) > 0.003) pl.set(L.S2.p); }

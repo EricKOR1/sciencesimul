@@ -17,7 +17,7 @@
     hint: '방식을 골라 보세요 · 드래그: 돌리기',
     camera: { dist: narrow ? 12.5 : 8.8, theta: 0.3, phi: 1.2, min: 5, max: 20 },
     autoRotate: 0.08,
-    levels: [],
+    levels: [],   // 3D는 식균 작용·항체 결합·T 림프구의 결과만 보여 주고(림프구가 차례로 활성화되는 과정은 2D 장면), 설명에 형질 세포가 항체를 만든다는 퀴즈 답이 나와요. 다른 단계는 캔버스 누르기·끌기·그래프 → 2D
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V = THREE.Vector3, V3 = (x, y, z) => new V(x, y, z || 0);

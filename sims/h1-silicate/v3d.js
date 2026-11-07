@@ -88,12 +88,12 @@
     title: '규산염 광물 구조 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: 11, theta: 0.7, phi: 1.1, min: 5, max: 26 },
-    levels: [],
+    levels: [2],   // 3단계(연결 방식): 화면 아래 ＋ 블록 하나 놓기 · 🔨 표본 단추로 2D와 같은 조립·쪼개기를 해요. 지각 원소 · 사면체 만들기(끌기) · 카드 분류 단계는 2D
     autoRotate: 0.25,
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
       const ctlEl = ctx.renderer.domElement.closest('.v3-wrap').querySelector('.v3-ctl');
-      let type = 'island', showFace = true, gap = 0, ST = null, nVis = 0, lastN = 0, lastSh = 0;
+      let type = 'island', showFace = true, gap = 0, ST = null, nVis = 0, lastN = 0, lastSh = 0, specTxt = '';
       const g = new THREE.Group(); root.add(g);
       let unitGroups = [];
       const gSi = new THREE.SphereGeometry(0.2, 16, 12), gO = new THREE.SphereGeometry(0.15, 14, 10), gOs = new THREE.SphereGeometry(0.205, 16, 12), gHalo = new THREE.SphereGeometry(0.3, 14, 10);
@@ -154,8 +154,9 @@
       }
       function text(n, shared) {
         const T = TYPES[type];
+        if (!n) { info('<b>' + T.name + '</b> 조립하기<br>화면 아래 <b>＋ 블록 하나 놓기</b>를 눌러 사면체 블록을 하나씩 이어 붙여요.'); return; }
         const cl = gap > 0.15 ? '<br><b style="color:#fbbf24">' + (type === 'frame' ? '벌어지는 곳이 없어요.' : '벌어지는 곳이 약한 면이에요.') + '</b> ' + T.cleave : '';
-        info('<b>' + T.name + '</b> · ' + T.mineral + '<br>' + T.how + '<br>사면체 ' + n + '개 · 함께 쓰는 산소(<span style="color:#ff8a8a">밝은 빨강</span>) ' + shared + '개' + cl);
+        info((specTxt ? specTxt + '<br>' : '') + '<b>' + T.name + '</b> · ' + T.mineral + '<br>' + T.how + '<br>사면체 ' + n + '개 · 함께 쓰는 산소(<span style="color:#ff8a8a">밝은 빨강</span>) ' + shared + '개' + cl);
       }
       function fitK() { const v = ctx.renderer.domElement, asp = Math.max(0.3, v.clientWidth / Math.max(1, v.clientHeight)); return asp < 1 ? Math.min(2, Math.pow(1 / asp, 1)) : 1; }
       function pack(els) { const w = document.createElement('span'); w.style.cssText = 'display:inline-flex;align-items:center;gap:6px;white-space:nowrap'; els[0].parentNode.insertBefore(w, els[0]); els.forEach((e) => w.appendChild(e)); return w; }
@@ -184,12 +185,42 @@
         phases: [[0, '이어진 구조'], [0.2, '쪼개져요'], [0.5, '벌어진 모습'], [0.75, '다시 모여요']],
         onFrame(p) { gap = p < 0.2 ? 0 : p < 0.5 ? (p - 0.2) / 0.3 : p < 0.75 ? 1 : 1 - (p - 0.75) / 0.25; gap = gap * gap * (3 - 2 * gap); gSl.set(gap); applyGap(); text(lastN, lastSh); },
       });
+      /* 3단계(연결 방식): 2D의 블록 놓기(placeBlock) · 표본 쪼개기(runSpec)를 화면 아래 단추로 해요 (미션 진행이 같아요) */
+      const L2 = () => { const L = window.__sim; return L && L.S && L.S.scene === 'struct' && L.ST && L.ST.st ? L : null; };
+      const n2 = ctlEl.children.length;
+      controls.button('＋ 블록 하나 놓기', () => { const L = L2(); if (!L || L.S.structView !== 'build') return; const st = L.ST.st[L.ST.type], i = st ? st.on.indexOf(false) : -1; if (i >= 0) L.placeBlock(i); });
+      const buildEls = [].slice.call(ctlEl.children, n2);
+      const n3 = ctlEl.children.length;
+      controls.text('표본');
+      ((window.__sim && window.__sim.SPEC) || []).forEach((sp) => controls.button('🔨 ' + sp.n, () => {
+        const L = L2(); if (!L || L.S.structView !== 'spec') return;
+        L.runSpec(sp); specTxt = '🔨 <b>' + sp.n + '</b> 표본: ' + sp.note;
+        if (type !== sp.type) { typeSeg.set(sp.type); setType(sp.type); }
+        pl.set(0); pl.play();
+      }));
+      const specEls = [].slice.call(ctlEl.children, n3);
+      let buildKey = '';
+      function syncStruct() {
+        const L = L2(), v = L ? L.S.structView : '';
+        buildEls.forEach((e) => { e.style.display = v === 'build' ? '' : 'none'; });
+        specEls.forEach((e) => { e.style.display = v === 'spec' ? '' : 'none'; });
+        if (v !== 'spec' && specTxt) { specTxt = ''; text(lastN, lastSh); }
+        if (v !== 'build') { buildKey = ''; return; }
+        const st = L.ST.st[L.ST.type]; if (!st || L.ST.type !== type) return;
+        const tot = st.on.length, n = tot - st.left, key = type + '|' + n;
+        if (key === buildKey) return; buildKey = key;
+        // 조립하기: 2D에서 놓은 블록 수만큼 사면체가 이어져 보여요
+        pl.pause(); gap = 0; gSl.set(0);
+        nVis = n >= tot ? ST.all.length : n > 0 ? Math.max(1, Math.round(ST.all.length * n / tot)) : 0;
+        nSl.set(Math.max(1, nVis)); rebuild();
+      }
       // 2D 단계에 맞춰: ② 사면체 단계에서는 사슬형의 사면체 2개(산소 1개를 함께 써요)를 보여 줘요
       ctx.onLevel((li) => { if (li === 1) { pl.pause(); setType('chain'); typeSeg.set('chain'); nVis = 2; nSl.set(2); rebuild(); } else { lastT2 = null; } });
       setType('island');
       sync();
       if (ctx.level === 1) { setType('chain'); typeSeg.set('chain'); nVis = 2; nSl.set(2); rebuild(); }
-      return { sync, update() { sync(); } };
+      syncStruct();
+      return { sync, update() { sync(); syncStruct(); } };
     },
   });
 })();

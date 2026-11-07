@@ -666,7 +666,7 @@
   }
   function bottleMsg() {
     const b = S3.bottle;
-    if (!b) return '바다를 눌러 표류병을 띄워 보세요.';
+    if (!b) return document.body.classList.contains('v3-mode') ? '표류병 띄우기를 눌러 보세요.' : '바다를 눌러 표류병을 띄워 보세요.';
     if (S3.kuroDone) return '🎉 표류병이 쿠로시오 해류를 따라 일본 남쪽 바다까지 왔어요!';
     if (b.c > 0.5) return CUR[b.seg].name + '를 따라 흘러가요.';
     return '해류 밖이라 거의 움직이지 않아요. 해류 위로 옮겨 보세요.';
@@ -1122,7 +1122,7 @@
       {
         title: '두 도시 기온 비교하기',
         goal: '<b>도쿄</b>와 <b>샌프란시스코</b>를 차례로 고르고, <b>둘 비교</b>로 8월 평균 기온의 차이를 확인하세요.',
-        hint: '오른쪽 <b>🏙️ 도시 고르기</b>의 세 버튼을 눌러요. 지도의 도시를 눌러도 돼요.',
+        hint: '오른쪽 <b>🏙️ 도시 고르기</b>의 세 버튼을 눌러요.<span class="only2d"> 지도의 도시를 눌러도 돼요.</span>',
         setup() { setScene(3); S4.off = false; S4.city = 0; S4.seen = new Set([0]); syncCity(); },
         check: () => S4.seen.has(0) && S4.seen.has(1) && S4.seen.has(2),
         status: () => chk(S4.seen.has(0), '도쿄') + ' · ' + chk(S4.seen.has(1), '샌프란시스코') + ' · ' + chk(S4.seen.has(2), '둘 비교'),

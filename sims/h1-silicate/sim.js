@@ -72,6 +72,8 @@
   /* ---------- 화면(장면) ---------- */
   const S = { scene: 'crust', crustView: 'pie', tetraView: 'make', structView: 'build', sceneA: 1, table: false };
   const TB = { pie: '📊 지각을 이루는 원소 (질량 %)', rock: '🪨 화강암 속의 광물', make: '🔺 Si–O 사면체 만들기', join: '🔗 사면체 이어 붙이기', build: '🧱 사면체 블록의 연결 방식', spec: '🔨 광물 표본 살펴보기', sort: '📚 규산염 광물 · 비규산염 광물' };
+  const SPEC_NOTE = '표본을 눌러 쪼개 보고, 구조와 성질을 연결해 봐요.';
+  const STRUCT_NOTE = '<span class="only2d">아래 블록을 끌어다 점선 자리에 놓아 배열을 완성해요.</span><span class="only3d">화면 아래 <b>＋ 블록 하나 놓기</b>로 블록을 이어 붙여 배열을 완성해요.</span>';
   const curKey = () => (S.scene === 'crust' ? S.crustView : S.scene === 'tetra' ? S.tetraView : S.scene === 'struct' ? S.structView : 'sort');
   function setScene(sc, sub) {
     S.scene = sc; hintEl.classList.add('hide');
@@ -88,6 +90,7 @@
     $$('#tetraTabs button').forEach((b) => b.classList.toggle('on', b.dataset.v === S.tetraView));
     $$('#structTabs button').forEach((b) => b.classList.toggle('on', b.dataset.v === S.structView));
     $('#typeRow').hidden = key !== 'build';
+    if (sc === 'struct') $('#structNote').innerHTML = S.structView === 'build' ? STRUCT_NOTE : SPEC_NOTE;
     $$('#typeBtns .opt').forEach((b) => { b.classList.toggle('on', b.dataset.t === ST.type); b.classList.toggle('done', !!ST.done[b.dataset.t]); });
     $('#tbLabel').textContent = TB[key];
     $('#tableCard').hidden = !S.table;
@@ -996,7 +999,7 @@
   $('#zoomIn').addEventListener('click', () => { ROCK.tgt = Math.min(2, ROCK.tgt + 1); Sound.click(); });
   $('#zoomOut').addEventListener('click', () => { ROCK.tgt = Math.max(0, ROCK.tgt - 1); Sound.click(); });
   $$('#tetraTabs button').forEach((b) => b.addEventListener('click', () => { Sound.click(); setScene('tetra', b.dataset.v); $('#tetraNote').textContent = b.dataset.v === 'make' ? '규소(Si) 1개와 산소(O) 4개를 끌어다 점선 자리에 놓아요.' : '블록 B를 사면체 A의 꼭짓점(산소) 쪽으로 끌어 붙여요.'; }));
-  $$('#structTabs button').forEach((b) => b.addEventListener('click', () => { Sound.click(); setScene('struct', b.dataset.v); $('#structNote').textContent = b.dataset.v === 'build' ? '아래 블록을 끌어다 점선 자리에 놓아 배열을 완성해요.' : '표본을 눌러 쪼개 보고, 구조와 성질을 연결해 봐요.'; }));
+  $$('#structTabs button').forEach((b) => b.addEventListener('click', () => { Sound.click(); setScene('struct', b.dataset.v); }));
   $$('#typeBtns .opt').forEach((b) => b.addEventListener('click', () => setType(b.dataset.t)));
   $('#shuffleBtn').addEventListener('click', shuffleSort);
   $$('#sceneSeg button').forEach((b) => b.addEventListener('click', () => { Sound.click(); setScene(b.dataset.scene); }));
@@ -1113,7 +1116,7 @@
       features: ['struct'],
       intro: '<div class="si-link">🔗 <b>앞 단계에서</b> 사면체 블록이 산소를 함께 쓰며 이어 붙는다는 것을 알았어요.</div>' +
         '<p>블록을 <b>어떻게 이어 붙이느냐</b>에 따라 구조가 달라져요: <b>독립형 · 사슬형 · 판상형 · 망상형</b>. 네 가지를 직접 조립하고, 광물 표본을 쪼개 보며 구조와 성질을 연결해 봐요.</p>',
-      setup() { resetStruct(); ST.tested = {}; SPEC.forEach((s) => { ST.sp[s.id].p = 0; }); setScene('struct', 'build'); ST.type = 'island'; updateUI(); showHint('블록을 끌어다 점선 자리에 놓아 독립형부터 만들어 봐요', 4500); },
+      setup() { resetStruct(); ST.tested = {}; SPEC.forEach((s) => { ST.sp[s.id].p = 0; }); setScene('struct', 'build'); ST.type = 'island'; updateUI(); showHint('블록을 하나씩 놓아 독립형부터 만들어 봐요', 4500); },
       recap: '사면체가 따로 있으면 <b>독립형</b>, 산소 2개를 함께 쓰면 <b>사슬형</b>, 3개면 <b>판상형</b>, 4개면 <b>망상형</b>이에요. 연결이 많을수록 단단하고 쪼개짐이 적어요.',
       summary: '<table class="mini"><tr><th>배열</th><th>함께 쓰는 산소</th><th>광물 예</th><th>성질</th></tr><tr><td>독립형</td><td>0개</td><td>감람석</td><td>쪼개짐 없음</td></tr><tr><td>사슬형</td><td>2개</td><td>휘석</td><td>두 방향 쪼개짐</td></tr><tr><td>판상형</td><td>3개</td><td>흑운모</td><td>얇은 판으로 쪼개짐</td></tr><tr><td>망상형</td><td>4개</td><td>석영</td><td>쪼개짐 없이 깨짐</td></tr></table>' +
         '<p class="note">연결이 많을수록 단단하고 쪼개짐이 적어요.</p>',
@@ -1121,7 +1124,7 @@
         {
           title: '배열 4가지 조립하기',
           goal: '위의 버튼으로 종류를 바꾸며 <b>독립형 · 사슬형 · 판상형 · 망상형</b>을 모두 조립해요.',
-          hint: '블록을 끌어 점선 자리에 하나씩 놓아요. 노란 산소는 두 블록이 함께 쓰는 산소예요.',
+          hint: '<span class="only2d">블록을 끌어 점선 자리에 하나씩 놓아요. 노란 산소는 두 블록이 함께 쓰는 산소예요.</span><span class="only3d">화면 아래 <b>＋ 블록 하나 놓기</b>를 눌러 블록을 하나씩 이어 붙여요. 밝게 빛나는 산소는 두 블록이 함께 쓰는 산소예요.</span>',
           setup() { S.table = false; setScene('struct', 'build'); updateUI(); },
           check: () => TYPES.every((k) => ST.done[k]),
           hold: 0.6,

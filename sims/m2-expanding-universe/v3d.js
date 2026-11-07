@@ -16,7 +16,8 @@
     autoRotate: 0.08,
     levels: [0, 2, 3],               // 2단계(스티커를 눌러 거리 재기 · 표 해석)만 2D
     build(ctx) {
-      const { THREE, root, label, info, controls } = ctx;
+      const { THREE, root, label, info, controls, orbit } = ctx;
+      let autoD = null;   // 풍선이 커지면 카메라도 물러서요 (학생이 직접 확대·축소하면 그대로 둬요)
       const V3 = THREE.Vector3, DEG = Math.PI / 180;
       const sm = () => window.__sim;
       const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.5, metalness: 0.05 }, o || {}));
@@ -91,6 +92,7 @@
           const sz = Math.max(0.12, s);
           if (mode === 'balloon') {
             const R = R0 * sz; bal.scale.setScalar(R); knot.position.y = -R - 0.02; knot.scale.setScalar(0.7 + 0.3 * sz);
+            if (orbit && autoD !== false) { if (autoD != null && Math.abs(orbit.dist - autoD) > 0.6) autoD = false; else { const want = 6.5 + R * 1.5; autoD = orbit.dist + (want - orbit.dist) * Math.min(1, dt * 3); orbit.dist = autoD; } }
             stk.forEach((m, i) => { const p = ST[i].v.clone().multiplyScalar(R * 1.012); m.position.copy(p); m.lookAt(p.clone().multiplyScalar(2)); });
             // 줄자
             if ((k0++ % 2) === 0 || true) ST.forEach((st, i) => {

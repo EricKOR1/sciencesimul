@@ -12,7 +12,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHN ? 9 : 7, theta: 0.15, phi: 1.4, min: 3.5, max: 24, target: [0, 0.2, 0] },
     autoRotate: 0,
-    levels: [],                      // 1~4단계 미션은 2D 화면(이름표 · 카드 · 혈액 방울 끌기)에서 해요
+    levels: [0],                     // 1단계(심장의 구조와 박동): 이름표는 아래 단추로 놓아요. 2~4단계는 현미경 · 혈관 칠하기 · 카드를 화면에서 고르고 끄는 미션이라 2D
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
       const V3 = THREE.Vector3;
@@ -103,6 +103,7 @@
       lab('lung', '폐 (산소를 받아요)', lungL, [0, 1.6, 0.2]); lab('bodyL', '온몸 (산소를 내줘요)', body, [0, 0.9, 0.2]); lab('headL', '머리·팔', head, [0.2, 0.8, 0.2]);
       lab('pcirc', '폐순환', [-1.9, 2.55, -0.4]); lab('scirc', '체순환', [2.3, -1.2, 0.1]);
       let showL = true;
+      const ROOMK = ['ra', 'rv', 'la', 'lv'];     // 이름 붙이기 미션 동안에는 방 이름을 숨겨요 (답이 보이지 않게)
       const HEARTL = ['ra', 'rv', 'la', 'lv', 'aorta', 'pa', 'pv', 'vc', 'valve'], ALLL = ['lung', 'bodyL', 'headL', 'pcirc', 'scirc', 'aorta', 'pa', 'vc'];
 
       /* ---------- 조작 ---------- */
@@ -111,8 +112,8 @@
       const fmtRate = (v) => (v < 0.6 ? '🐢 천천히 보기' : '분당 ' + Math.round(v * 80) + '회');   // 2D 박동 속도와 같은 표시
       function applyMode() {
         tgt = mode === 'heart' ? { dist: PHN ? 9 : 6.8, ty: 0.15 } : { dist: PHN ? 21 : 14.5, ty: 0 };
-        Object.keys(L).forEach((k) => L[k].show(showL && (mode === 'heart' ? HEARTL.includes(k) : ALLL.includes(k))));
-        texts();
+        Object.keys(L).forEach((k) => L[k].show(showL && (mode === 'heart' ? HEARTL.includes(k) && !(naming && ROOMK.includes(k)) : ALLL.includes(k))));
+        if (naming) lastNameKey = ''; else texts();
       }
       function texts() {
         const m = { all: '', pulm: '', sys: '' };
@@ -123,7 +124,7 @@
       }
       const segM = controls.segment('보기', [{ label: '심장 확대', value: 'heart' }, { label: '순환 전체', value: 'all' }], mode, (v) => { mode = v; applyMode(); });
       controls.segment('강조', [{ label: '전체', value: 'all' }, { label: '폐순환', value: 'pulm' }, { label: '체순환', value: 'sys' }], hl, (v) => { hl = v; texts(); });
-      const rateR = controls.range('심장 박동', 0.25, 1.6, 0.05, rate, (v) => {
+      const rateR = controls.range('박동 속도', 0.25, 1.6, 0.05, rate, (v) => {
         rate = v; lastRate = v; pushedAt = now;
         const i = document.getElementById('sRate'); if (i) { i.value = v; i.dispatchEvent(new Event('input')); }   // 2D 박동 속도도 같이 바뀌어요
       }, fmtRate);
@@ -135,6 +136,38 @@
       });
       controls.button('단면 보기', () => { cut = !cut; });
       controls.button('이름표', () => { showL = !showL; applyMode(); });
+      /* 네 방 이름 붙이기(1단계 미션): 이름표를 고른 뒤 방 번호 버튼을 눌러요 → 2D 이름표와 같은 상태(window.__sim.placeName) */
+      const NM = [['RA', '우심방'], ['RV', '우심실'], ['LA', '좌심방'], ['LV', '좌심실']];
+      const ROOM = [['RA', '1', RA], ['LA', '2', LA], ['RV', '3', RV], ['LV', '4', LV]];
+      const ctlBar = ctx.renderer.domElement.closest('.v3-wrap').querySelector('.v3-ctl');
+      const nameUI = []; let nameSel = 'RA', naming = false, lastNameKey = '';
+      { const c0 = ctlBar.children.length;
+        const segN = controls.segment('이름표', NM.map(([k, n]) => ({ label: n, value: k })), nameSel, (v) => { nameSel = v; });
+        ROOM.forEach(([slot, no]) => controls.button(no + '번 방에 놓기', () => {
+          const s = sm(); if (!s || !s.placeName) return; s.placeName(nameSel, slot);
+          const nx = NM.map((q) => q[0]).find((k) => { const c = s.HT.cards.cards.find((q) => q.id === k); return c && !c.slot; });
+          if (nx) { nameSel = nx; segN.set(nx); }
+        }));
+        for (let i = c0; i < ctlBar.children.length; i++) nameUI.push(ctlBar.children[i]); }
+      const roomLab = {}; ROOM.forEach(([slot, no, g]) => { roomLab[slot] = label('', g, { offset: [0, 0.15, 0.75], color: 'rgba(22,130,70,.95)' }); roomLab[slot].show(false); });
+      nameUI.forEach((e) => { e.style.display = 'none'; });
+      function nameFrame() {
+        const s = sm(), H2 = s && s.HT, cs = H2 && H2.cards && H2.cards.cards;
+        const on = !!(H2 && H2.cardsOn && cs && s.S && s.S.scene === 'heart' && !cs.every((c) => c.mark === 'ok'));
+        if (on !== naming) {
+          naming = on; lastNameKey = '';
+          nameUI.forEach((e) => { e.style.display = on ? '' : 'none'; });
+          if (on && mode !== 'heart') { mode = 'heart'; segM.set('heart'); }
+          applyMode();
+          if (!on) ROOM.forEach(([slot]) => roomLab[slot].show(false));
+        }
+        if (!on) return;
+        const key = cs.map((c) => c.id + ':' + c.slot).join(',');
+        if (key === lastNameKey) return; lastNameKey = key;
+        ROOM.forEach(([slot, no]) => { const c = cs.find((q) => q.slot === slot); roomLab[slot].set(no + '번 방: ' + (c ? c.label : '?')); roomLab[slot].show(true); });
+        const left = cs.filter((c) => !c.slot).length;
+        info('<b>네 방 이름 붙이기</b>: 아래에서 이름표를 고른 뒤 그 방의 번호 버튼(1~4번 방)을 눌러요. 그림은 마주 본 모습이라 몸의 오른쪽이 화면의 왼쪽이에요.<br>' + (left ? '남은 이름표 <b>' + left + '개</b>' : '다 놓았으면 <b>✔ 확인하기</b>를 눌러요.'));
+      }
       applyMode();
       function syncScene() { const s = sm() && sm().S; if (!s) return; const m = s.scene === 'heart' || s.scene === 'vessel' || s.scene === 'blood' ? 'heart' : 'all'; if (m !== lastM) { lastM = m; mode = m; segM.set(m); applyMode(); } }
       let lastM = null, k0 = 0;
@@ -143,6 +176,7 @@
         sync() { lastM = null; syncScene(); },
         update(dt, t) {
           if ((k0++ % 15) === 0) syncScene();
+          nameFrame();
           now = t;
           const H2 = sm() && sm().HT;                       // 2D의 박동 속도 · 멈춤을 그대로 따라가요
           if (H2 && typeof H2.rate === 'number' && now - pushedAt > 0.5 && Math.abs(H2.rate - lastRate) > 1e-6) { rate = H2.rate; lastRate = rate; rateR.set(rate); }

@@ -8,7 +8,7 @@
   if (!window.SciSim3D) return;
   const PHN0 = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches);
   window.SciSim3D.attach({
-    title: '가열 곡선 3D',
+    title: '가열 · 냉각 곡선 3D',
     hint: ' ',
     levels: [0, 1],   // 가열 곡선 · 냉각 곡선은 3D, 카드 분류(열 출입 · 생활 적용)는 2D
     camera: { dist: 12.5 * (PHN0 ? 1.08 : 1), theta: 0.6, phi: 1.15, fov: 45, target: [-0.6, -0.5, 0], min: 5, max: 26 },

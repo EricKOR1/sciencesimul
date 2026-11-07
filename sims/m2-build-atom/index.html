@@ -65,6 +65,7 @@
       .toolbar-label { font-size: 13.5px; }
       .stage-hint { font-size: 13px; padding: 5px 12px; bottom: 8px; }
     }
+    .v3-on > .stage-hint { z-index: 30; top: 54px; bottom: auto; }   /* 3D 단계에서도 안내 말풍선이 위쪽에 알맞은 크기로 보이게 */
   </style>
 </head>
 <body class="sim-page" data-subject="chem">
@@ -93,7 +94,7 @@
         </div>
         <div class="stage-canvas">
           <canvas id="cv" aria-label="원자 모형: 양성자, 중성자, 전자로 원자를 만드는 시뮬레이션"></canvas>
-          <div class="stage-hint" id="stageHint">👆 입자를 눌러 보세요</div>
+          <div class="stage-hint hide" id="stageHint"></div>
         </div>
       </section>
       <div class="readouts" data-feature="meter">

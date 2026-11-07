@@ -1175,7 +1175,7 @@
   function prepMission(i) {
     SC.freeze = false; hideHint(); setGhost(null);
     switch (i) {
-      case 0: setScene('rope'); S.auto = false; R.demo = 0; S.mkMove = [0, 0, 0]; S.reach = false; S.userRope = false; showHint('손잡이를 위아래로 끌어 보세요', 6000); break;
+      case 0: setScene('rope'); S.auto = false; R.demo = 0; S.mkMove = [0, 0, 0]; S.reach = false; S.userRope = false; showHint('🔁 자동으로 흔들기를 눌러 손잡이를 흔들어 보세요', 6000); break;
       case 1: setScene('air'); S.airOn = true; break;
       case 2: setScene('bell'); S.pump = false; S.refill = true; S.vac = { out: false, back: false }; showHint('펌프로 공기를 빼 보세요', 6000); break;
       case 3: setScene('scope'); setVol(2); S.vol0 = 2; setPitch(300); S.timbre = 'fork'; showHint('슬라이더로 소리의 크기를 바꿔요', 6000); break;

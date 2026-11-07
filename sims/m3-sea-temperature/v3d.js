@@ -36,7 +36,7 @@
       const sun = new THREE.Mesh(new THREE.SphereGeometry(0.6, 24, 16), new THREE.MeshBasicMaterial({ color: 0xffd34d })); sun.position.set(1.0, 2.4, -1.4); seaG.add(sun);
       /* 그래프 벽 (수온 축) */
       const wall = new THREE.Mesh(new THREE.PlaneGeometry(4.0, HY + 0.2), sm(0x0f172a, { transparent: true, opacity: 0.5, side: THREE.DoubleSide })); wall.position.set(4.7, -HY / 2, -BW / 2 + 0.01); seaG.add(wall);
-      [0, 10, 20, 30].forEach((T) => { const g = new THREE.Mesh(new THREE.BoxGeometry(0.02, HY, 0.02), sm(0x94a3b8, { transparent: true, opacity: 0.5 })); g.position.set(xT(T), -HY / 2, -BW / 2 + 0.03); seaG.add(g); label(T + '°C', [xT(T), 0.3, -BW / 2 + 0.03], { size: 11, color: 'rgba(30,41,59,.85)' }); });
+      [0, 10, 20, 30].forEach((T) => { const g = new THREE.Mesh(new THREE.BoxGeometry(0.02, HY, 0.02), sm(0x94a3b8, { transparent: true, opacity: 0.5 })); g.position.set(xT(T), -HY / 2, -BW / 2 + 0.03); seaG.add(g); label(T + '°C', [xT(T), 0.65, -BW / 2 + 0.03], { size: 11, color: 'rgba(30,41,59,.85)' }); });
       const zLab = []; for (let i = 0; i < 7; i++) zLab.push(label('', [BW / 2 + 0.05, 0, BW / 2], { size: 11, color: 'rgba(30,41,59,.8)' }));
       /* 측정기 · 측정점 · 물 덩어리 · 층 */
       const probe = new THREE.Group(); probe.add(new THREE.Mesh(new THREE.SphereGeometry(0.2, 24, 16), sm(0xfde047, { emissive: 0xfde047, emissiveIntensity: 0.5 }))); seaG.add(probe);

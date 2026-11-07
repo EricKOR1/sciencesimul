@@ -48,6 +48,7 @@
       .stage-toolbar { flex-wrap: wrap; }
       .readouts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
+    .v3-on > .stage-hint { z-index: 30; top: 54px; bottom: auto; }   /* 3D 단계에서도 안내 말풍선이 위쪽에 알맞은 크기로 보이게 */
   </style>
 </head>
 <body class="sim-page" data-subject="phy">
@@ -129,7 +130,7 @@
             <button type="button" data-pos="bottom" class="on">⬇️ 아래</button>
           </div>
           <div class="btn-row"><button class="btn btn-primary" id="btnHeater" type="button">♨️ 난방기 켜기</button></div>
-          <p class="ctrl-note">난방기를 화면에서 끌어 옮겨도 돼요. 위치를 바꾸면 방이 다시 추워져요.</p>
+          <p class="ctrl-note"><span class="only2d">난방기를 화면에서 끌어 옮겨도 돼요. </span>위치를 바꾸면 방이 다시 추워져요.</p>
         </div>
         <div class="control only-rad" data-feature="stove">
           <div class="btn-row">

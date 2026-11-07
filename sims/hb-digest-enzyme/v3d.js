@@ -21,7 +21,7 @@
     hint: '효소와 기질을 바꿔 보고, 온도(0~60 °C)·pH(2~11)를 바꿔 봐요',
     camera: { dist: narrow ? 13 : 10.2, theta: 0.5, phi: 1.2, min: 5, max: 20, target: [0.7, 0.5, 0] },
     autoRotate: 0.12,
-    levels: [],
+    levels: [],   // 시험관 끌기 · 시험관 색과 남은 녹말 막대 그래프 읽기 · 막대 눌러 최적 표시가 미션이고, 3D 효소 모형은 최적 온도·pH를 바로 알려 줘서 답이 드러나요 → 2D
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V = THREE.Vector3;
