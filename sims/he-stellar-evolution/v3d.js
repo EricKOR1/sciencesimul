@@ -63,18 +63,30 @@
       const n0 = ctlEl.children.length;
       const rS = controls.range('단계', 0, 7, 0.1, s, (v) => { sT = v; if (plS) plS.pause(); const l = rdSim(); if (l && l.setS2) { l.setS2(v); lastS2 = l.S.s2; } upd(); }, (v) => SUN[Math.round(v)][3]);
       const sunEls = [].slice.call(ctlEl.children, n0); const n1 = ctlEl.children.length;
-      const segS = controls.segment('단계', STN.map((n, i) => ({ value: i, label: n })), stg, (v) => { stg = v; burst = 0; if (plB) plB.pause(); const l = rdSim(); if (l && l.setU3) l.setU3([0.15, 0.5, 0.75, 0.95][v]); upd(true); });
+      /* 큰 별의 최후: 학생이 2D 조작판에서 최후를 예측하고 ▶ 결과 보기를 누르기 전에는 3D가 최후를 미리 보여 주지 않아요 (주계열에 머물러요) */
+      const fateLocked = () => { const l = rdSim(), S = l && l.S; if (!S) return false; return !(S.ordOn || (S.fateOk && S.fateOk[S.M3]) || S.play3 || (S.runM === S.M3 && S.u3 >= 0.97)); };
+      const bigBusy = () => { const l = rdSim(), S = l && l.S; return !!(S && S.play3); };
+      const segS = controls.segment('단계', STN.map((n, i) => ({ value: i, label: n })), stg, (v) => { if (fateLocked() || bigBusy()) { segS.set(stg); return; } stg = v; burst = 0; if (plB) plB.pause(); const l = rdSim(); if (l && l.setU3) l.setU3([0.15, 0.5, 0.75, 0.95][v]); upd(true); });
+      const segEls = [].slice.call(ctlEl.children, n1);
       const rM = controls.range('처음 질량', 1, 40, 1, Math.round(mass), (v) => { mass = v; const l = rdSim(); if (l && l.setM3) { l.setM3(v); lastM3 = l.S.M3; } upd(true); }, (v) => v + ' M☉');
       const bigEls = [].slice.call(ctlEl.children, n1);
       let plP = null, plS = null, plB = null, ready = false;
       const gp = (fn) => { const n = ctlEl.children.length; const r = fn(); return { r, els: [].slice.call(ctlEl.children, n) }; };
       const gP1 = gp(() => controls.player({ duration: 8, loop: true, autoplay: false, label: '수축 시작', phases: [[0, '성간 구름'], [0.3, '원시별'], [0.9, '주계열 시작']], onFrame(p) { if (!ready) return; ppT = pp = p; rPp.set(Math.round(p * 100)); const l = rdSim(); if (l && l.setP1) { l.S.play1 = false; l.setP1(p); lastP1 = l.S.p1; } upd(); } }));
       const gP2 = gp(() => controls.player({ duration: 14, loop: true, autoplay: false, label: '일생 재생', phases: SUN.map((x, i) => [i / 7, x[3]]).filter((x, i) => i < 8), onFrame(p) { if (!ready) return; sT = s = 7 * p; rS.set(sT); const l = rdSim(); if (l && l.setS2) { l.setS2(sT); lastS2 = l.S.s2; } upd(); } }));
-      const gP3 = gp(() => controls.player({ duration: 10, loop: true, autoplay: false, label: '큰 별의 일생', phases: [[0, '주계열'], [0.35, '초거성'], [0.7, '초신성'], [0.85, '남은 천체']], onFrame(p) { if (!ready) return; stg = p < 0.35 ? 0 : p < 0.7 ? 1 : p < 0.85 ? 2 : 3; segS.set(stg); const l = rdSim(); if (l && l.setU3) l.setU3(p); upd(true); } }));
+      const gP3 = gp(() => controls.player({ duration: 10, loop: true, autoplay: false, label: '큰 별의 일생', phases: [[0, '주계열'], [0.35, '초거성'], [0.7, '초신성'], [0.85, '남은 천체']], onFrame(p) { if (!ready || fateLocked() || bigBusy()) return; stg = p < 0.35 ? 0 : p < 0.7 ? 1 : p < 0.85 ? 2 : 3; segS.set(stg); const l = rdSim(); if (l && l.setU3) l.setU3(p); upd(true); } }));
       plP = gP1.r; plS = gP2.r; plB = gP3.r; [plP, plS, plB].forEach((q) => q.pause()); ready = true;
+      const stageEls = segEls.concat(gP3.els); let lastLk = null;
+      function syncLock() {   // 예측 전 · 결과 보기 중에는 단계 단추와 ▶ 재생을 숨겨요
+        const lk = mode === 'big' && fateLocked(), hide = mode === 'big' && (lk || bigBusy());
+        if (lk && stg !== 0) { stg = 0; segS.set(0); burst = 0; upd(true); }
+        const key = mode + '|' + lk + '|' + hide; if (key === lastLk) return; lastLk = key;
+        if (mode === 'big') { stageEls.forEach((e) => (e.style.display = hide ? 'none' : '')); if (hide && plB.playing) plB.pause(); }
+        upd(true);
+      }
       protoEls.push.apply(protoEls, gP1.els); sunEls.push.apply(sunEls, gP2.els); bigEls.push.apply(bigEls, gP3.els);
       const bC = controls.button('속 보기 ✓', () => { cut = !cut; bC.classList.toggle('on', cut); bC.textContent = '속 보기 ' + (cut ? '✓' : '✕'); upd(true); }); bC.classList.add('on');
-      function setCtl() { orbit.dist = mode === 'proto' ? (PHONE ? 15 : 10.5) : mode === 'sun' ? (PHONE ? 12 : 8.5) : (PHONE ? 13 : 9.5); protoEls.forEach((e) => (e.style.display = mode === 'proto' ? '' : 'none')); sunEls.forEach((e) => (e.style.display = mode === 'sun' ? '' : 'none')); bigEls.forEach((e) => (e.style.display = mode === 'big' ? '' : 'none')); segM.set(mode); if (mode === 'sun') { rS.set(sT); } else if (mode === 'big') { segS.set(stg); } }
+      function setCtl() { orbit.dist = mode === 'proto' ? (PHONE ? 15 : 10.5) : mode === 'sun' ? (PHONE ? 12 : 8.5) : (PHONE ? 13 : 9.5); protoEls.forEach((e) => (e.style.display = mode === 'proto' ? '' : 'none')); sunEls.forEach((e) => (e.style.display = mode === 'sun' ? '' : 'none')); bigEls.forEach((e) => (e.style.display = mode === 'big' ? '' : 'none')); segM.set(mode); if (mode === 'sun') { rS.set(sT); } else if (mode === 'big') { segS.set(stg); } lastLk = null; }
       const clipMat = (m) => { m.clippingPlanes = cut ? planes : []; m.clipIntersection = true; m.needsUpdate = true; };
 
       function upd() {
@@ -114,6 +126,7 @@
           LC.forEach((l, i) => { l.show(show.layers); if (show.layers) l.obj = [R * [0.8, 0.62, 0.43, 0.27, 0.12][i] * 0.8 + 0.05, R * (0.55 - i * 0.08) * 0.4, R * 0.0]; });
           const nebOn = stg === 3 || (fa === 'wd' && stg === 2); neb.visible = nebR.visible = nebOn; if (nebOn) { neb.scale.setScalar(3.4); nebR.scale.setScalar(3.1); neb.material.opacity = 0.18; nebR.material.opacity = 0.45; if (fa === 'wd') { neb.material.color.set(0x5fe0c8); } else neb.material.color.set(0xff8a6a); }
           disc.visible = stg === 3 && fa === 'bh'; jets.forEach((j) => (j.visible = stg === 3 && fa !== 'wd')); ej.visible = stg === 2 && fa !== 'wd';
+          if (stg === 0 && fateLocked()) txt += '<br>이 별은 마지막에 어떻게 될까요? 먼저 조작판에서 <b>최후를 예측</b>하고 <b>▶ 결과 보기</b>를 눌러요.';
           LB.set(name);
         }
         const c = kelvin(T); star.material.emissive.setRGB(c[0], c[1], c[2]); halo.material.color.setRGB(c[0], c[1], c[2]);
@@ -124,7 +137,7 @@
         info(txt); LB.obj = star; LB.off = [0, Math.max(R, 0.3) + 0.5, 0]; LB.el.style.display = '';
         upd.R = R;
       }
-      setCtl(); upd();
+      setCtl(); syncLock(); upd();
       const dm = new THREE.Object3D();
       return {
         update(dt, t) {
@@ -136,6 +149,7 @@
             if (mode === 'proto' && !plP.playing && typeof sm0.S.p1 === 'number') { ready = false; plP.set(clamp(sm0.S.p1, 0, 1)); ready = true; }
             if (sm0.S.s2 !== lastS2) { lastS2 = sm0.S.s2; if (mode === 'sun') { sT = clamp(sm0.S.s2, 0, 7); rS.set(sT); } }
             if (sm0.S.M3 !== lastM3) { lastM3 = sm0.S.M3; mass = sm0.S.M3; if (mode === 'big') rM.set(Math.round(mass)); upd(); }
+            syncLock();
           }
           if (sm0 && sm0.S && typeof sm0.S.p1 === 'number' && sm0.S.p1 !== lastP1) { lastP1 = sm0.S.p1; ppT = pp = clamp(sm0.S.p1, 0, 1); rPp.set(Math.round(pp * 100)); upd(); }
           if (mode === 'proto') { const Rc = lerp(3.6, 0.6, Math.pow(pp, 0.8)), fl = lerp(1, 0.22, pp), om = 0.25 + 2.4 * pp; for (let i = 0; i < NCL; i++) { const c = cd[i], a = c[4] + clk * om / (c[3] + 0.25), rr = c[3] * Rc, x = c[0] * rr, z = c[2] * rr; dm.position.set(x * Math.cos(a - c[4]) - z * Math.sin(a - c[4]), c[1] * rr * fl, x * Math.sin(a - c[4]) + z * Math.cos(a - c[4])); dm.scale.setScalar(1); dm.updateMatrix(); cloudP.setMatrixAt(i, dm.matrix); } cloudP.instanceMatrix.needsUpdate = true; cloudP.material.color.setRGB(1, lerp(0.62, 0.9, pp), lerp(0.45, 0.8, pp)); }
