@@ -95,7 +95,7 @@
       });
       const labRock = [label('화성암', [-2.2, 1.0, Z]), label('퇴적물', [0.9, 0.95, Z]), label('퇴적암', [4.0, -0.9, Z]), label('변성암', [4.0, -2.2, Z]), label('마그마', chamber, { offset: [-0.6, 0.0, 0.7] })];
       const labStage = label('', token, { offset: [0, 0.55, 0], color: 'rgba(255,211,77,.95)' }); labStage.el.style.color = '#1b2333';
-      const labW = label('풍화·침식', [-0.3, 1.1, 0]); const labV = label('화산', [-3.1, 2.9, 0]);
+      const labW = label('풍화·침식', [-0.3, h(-0.3) + 0.85, 0]); const labV = label('화산', [-3.1, 2.9, 0]);   // 풍화·침식: 구르는 알갱이보다 조금 위
       // 다른 길(점선): 순환을 완성한 뒤 [➕ 다른 길도 보기]를 누르면 보여요 — 어떤 암석이든 풍화·침식되고, 열과 압력을 받고, 녹을 수 있어요
       const NODEP = { magma: [-1.3, -2.45], igneous: [-2.2, 1.0], sediment: [0.9, 0.7], sedrock: [3.7, -0.95], meta: [3.5, -2.3] };
       const PROC = { weather: [0x7dd3fc, '풍화·침식'], heatp: [0xf472b6, '열과 압력'], melt: [0xfb923c, '녹음'] };
