@@ -16,6 +16,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHN ? 19 : 14.5, theta: 0.5, phi: 1.3, min: 8, max: 34, target: [1.6, -2.9, 0] },
     autoRotate: 0,
+    levels: [0, 3],            // 1단계(측정기 내리기 · 수온 점 그래프)·4단계(우리나라 바다)는 3D. 수조 실험 결과 비교(그래프 선) · 이름표 · 물 덩어리 끌기는 2D
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3, C = THREE.Color;

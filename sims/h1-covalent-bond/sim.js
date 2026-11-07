@@ -1207,7 +1207,7 @@
         {
           title: 'H₂ 만들기',
           goal: '<b>H₂</b>를 고르고 두 수소 원자를 가까이 가져가 <b>전자쌍을 공유</b>시켜요.',
-          hint: '슬라이더를 오른쪽 끝까지 밀어요. 오른쪽 원자를 왼쪽으로 끌어도 돼요. 전자껍질이 겹치면서 전자 2개가 가운데에 모여요.',
+          hint: '슬라이더를 오른쪽 끝까지 밀어요.<span class="only2d"> 오른쪽 원자를 왼쪽으로 끌어도 돼요.</span> 전자껍질이 겹치면서 전자 2개가 가운데에 모여요.',
           setup() { setScene('share'); SH.made.H2 = false; resetShare('H2'); },
           check: () => SH.made.H2 && SH.bonded && SH.mol === 'H2',
           hold: 0.8,

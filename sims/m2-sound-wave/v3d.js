@@ -14,7 +14,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHN ? 22 : 16, theta: 0.5, phi: 1.15, min: 6, max: 34, target: [1.3, 0, 0] },
     autoRotate: 0,
-    levels: [1, 2, 3],               // 1단계(줄 흔들기 · 진공 종 미션)는 2D 화면에서 해요
+    levels: [0],                     // 1단계(줄 · 공기 · 진공 종): 공기 입자의 움직임을 입체로. 2~4단계는 소리 화면(오실로스코프)의 눈금과 점선 파형을 읽는 미션이라 2D
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3;
@@ -51,7 +51,7 @@
       // 눈에 띄는 한 입자 (제자리 진동)
       const mark = new THREE.Mesh(new THREE.SphereGeometry(0.17, 20, 14), mat(0xffd34d, { emissive: 0xffa800, emissiveIntensity: 0.6, roughness: 0.3 })); root.add(mark);
       const mHome = new V3(SX + 10.25 * SP, 0, 0); // 가운데 줄의 한 입자
-      const mrk = label('제자리에서 앞뒤로만!', mark, { offset: [0, 0.55, 0], color: 'rgba(255,211,77,.92)' }); mrk.el.style.color = '#1b2333';
+      const mrk = label('이 입자를 지켜봐요', mark, { offset: [0, 0.55, 0], color: 'rgba(255,211,77,.92)' }); mrk.el.style.color = '#1b2333';
       // 퍼지는 파면
       const shells = [];
       for (let i = 0; i < 6; i++) { const s = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 24, 0, Math.PI * 2, 0, Math.PI), new THREE.MeshBasicMaterial({ color: 0x6fb4ff, transparent: true, opacity: 0.1, depthWrite: false, side: THREE.DoubleSide, wireframe: false })); s.renderOrder = 1; root.add(s); shells.push(s); }
@@ -72,7 +72,7 @@
         vol = Math.max(1, Math.min(5, s.vol || 3)); pitch = s.pitch || 400; volR.set(vol); pitchR.set(pitch); text();
       }
       function text() {
-        info(air ? `<b>소리는 파동</b>이에요. 공기 입자가 <b>제자리에서 앞뒤로 떨리면서</b> 촘촘한 곳(빨강)이 퍼져 나가요.<br>소리 크기 <b>${VOLN[vol - 1]}</b> (진폭이 클수록 큰 소리)<br>진동수 <b>${pitch} Hz</b> (클수록 높은 소리 · 파장이 짧아요)` : `<b>공기가 없어요!</b> 소리를 전달해 줄 입자가 없어서 <b>소리가 들리지 않아요</b>.`);
+        info(air ? `<b>소리는 파동</b>이에요. 스피커가 떨리면 공기 입자도 떨려요.<br>노란 입자 하나를 지켜보세요. 공기 입자는 어떻게 움직이나요?<br>빨강: 입자가 촘촘한 곳 · 파랑: 성긴 곳` : `<b>공기가 없어요!</b> 소리를 전달해 줄 입자가 없어서 <b>소리가 들리지 않아요</b>.`);
       }
       // 3D에서 바꾸면 2D 실험의 값도 같이 바뀌어요
       const volR = controls.range('소리 크기', 1, 5, 1, vol, (v) => { vol = v; pushedAt = now; const s = sm(); if (s && s.setVol) s.setVol(v); text(); }, (v) => VOLN[v - 1]);
@@ -143,7 +143,7 @@
         handle.position.set(RX0 - 0.05, Rr.hand * 0.02, 0);
         (Rr.MKI || [30, 60, 90]).forEach((idx, k) => { mks[k].position.set(RX0 + (RX1 - RX0) * idx / (RNn - 1), (Rr.u[idx] || 0) * 0.02, 0); });
         const ph = document.querySelector('.v3-player .v3-ph'); if (ph) ph.textContent = '';
-        info('<b>줄 파동</b>: 손잡이를 흔들면 파동이 줄을 따라 <b>오른쪽으로 나아가요</b>. 하지만 줄의 각 점(<b>표시점</b>)은 <b>제자리에서 위아래로만</b> 움직여요. 파동은 <b>에너지(진동)</b>가 전달되는 거예요.' + (S && S.auto ? '' : '<br>손잡이는 옆의 2D 화면에서 끌거나, 🔁 자동으로 흔들기를 눌러 보세요.'));
+        info('<b>줄 파동</b>: 손잡이를 흔들면 파동이 줄을 따라 나아가요.<br>🔴🔵🟢 <b>표시점</b>은 어떻게 움직이는지 살펴보세요.' + (S && S.auto ? '' : '<br>🔁 자동으로 흔들기를 눌러 보세요.'));
       }
       function updTimbre(S, t) {
         const k = S && SHP[S.timbre] ? S.timbre : 'fork', a = SHP[k].a, th = SHP[k].th, vv = Math.max(1, Math.min(5, (S && S.vol) || 3)), amp = 0.35 * vv / 3 * 1.0;
@@ -156,7 +156,7 @@
         iLab.set(nm); iLab.obj = [-5.6, 1.9, 0]; wLab.obj = [1.6, 2.1, 0];
         inst3[k].rotation.z = 0; if (k === 'fork') inst3[k].children[1].position.x = -0.22 + 0.02 * Math.sin(phase * 3);
         const ph = document.querySelector('.v3-player .v3-ph'); if (ph && !ph.textContent) ph.textContent = nm;
-        info('<b>' + nm + '</b>의 파형: ' + (k === 'fork' ? '부드러운 <b>사인 곡선</b>이에요.' : '마루와 골의 모양이 <b>복잡해요</b>.') + '<br>같은 높이(진동수)와 크기(진폭)여도 악기마다 <b>파형이 달라서</b> 소리의 맵시, <b>음색</b>이 달라요.' + '<br>악기는 옆의 2D 화면에서 바꿔요.');
+        info('<b>' + nm + '</b>의 파형: ' + (k === 'fork' ? '부드러운 <b>사인 곡선</b>이에요.' : '마루와 골의 모양이 <b>복잡해요</b>.') + '<br>같은 높이(진동수)와 크기(진폭)여도 악기마다 <b>파형이 달라서</b> 소리의 맵시, <b>음색</b>이 달라요.'); 
       }
       const c1 = new THREE.Color(0x4a7bff), c2 = new THREE.Color(0xf2f4fa), c3 = new THREE.Color(0xff4a4a), tc = new THREE.Color();
       const dm = new THREE.Object3D(); let k0 = 0;

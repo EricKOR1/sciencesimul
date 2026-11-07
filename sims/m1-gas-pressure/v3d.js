@@ -211,7 +211,9 @@
         bLab2.obj = [(cx + d[0] / 2 + 0.35) * sc2 + 1.7, (base + d[1] / 2 + 0.5) * sc2, 0]; bLab2.off = [0.6, 0, 0]; bLab2.set('무게(누르는 힘) 같아요'); bLab2.show(true);
         const cm = Math.round(sink / 5);
         const tried = S && S.tried ? S.tried : { wide: false, narrow: false };
-        setInfo2((pmode ? '<b>▶ ' + ph + '</b><br>' : '') + '<b>압력</b>은 일정한 면적에 수직으로 작용하는 힘이에요. 같은 벽돌(같은 무게)도 <b>면적이 좁을수록</b> 압력이 커서 눈이 더 깊이 눌려요.' + (touching ? '<br>' + (orient === 'wide' ? '넓은 면' : '좁은 면') + ' · 눌린 깊이 약 <b>' + cm + ' cm</b>' : '') + (!pmode && S && !touching ? '<br>옆의 2D 화면에서 벽돌을 끌어 눈 위에 놓아 보세요. 또는 ▶ 재생을 눌러 보세요.' : ''));
+        const both = pmode || (tried.wide && tried.narrow);   // 두 면을 모두 놓아 본 뒤에 까닭을 알려 줘요 (미션의 답을 미리 말하지 않게)
+        setInfo2((pmode ? '<b>▶ ' + ph + '</b><br>' : '') + (both ? '<b>압력</b>은 일정한 면적에 수직으로 작용하는 힘이에요. 같은 벽돌(같은 무게)도 <b>면적이 좁을수록</b> 압력이 커서 눈이 더 깊이 눌려요.'
+          : '같은 벽돌(같은 무게)을 <b>넓은 면</b>과 <b>좁은 면</b>으로 눈 위에 놓아 봐요. 어느 쪽이 더 깊이 눌릴까요?') + (touching ? '<br>' + (orient === 'wide' ? '넓은 면' : '좁은 면') + ' · 눌린 깊이 약 <b>' + cm + ' cm</b>' : '') + (!pmode && S && !touching ? '<br>오른쪽 <b>▬ 넓은 면으로</b> · <b>▮ 좁은 면으로</b> 단추나 ▶ 재생을 눌러 보세요.' : ''));
       }
       let lastTxt2 = ''; const setInfo2 = (h) => { if (h !== lastTxt2) { lastTxt2 = h; info(h); } };
       let smoothR = balR();

@@ -973,7 +973,7 @@
     Object.keys(PANEL).forEach((k) => $('#' + PANEL[k]).classList.toggle('is-off', k !== S.scene));
     $('#tgLens').classList.toggle('is-off', !(S.scene === 'cup' || S.scene === 'bottle'));
     if (S.scene === 'cup' || S.scene === 'bottle') initLens(S.scene);
-    showHint(HINT[S.scene], 6000);
+    showHint(S.scene === 'tube' && document.body.classList.contains('v3-mode') ? '⛰️ 높이를 바꾸거나 관을 기울여 보세요' : HINT[S.scene], 6000);
     renderSeg();
   }
   let segKey = '';
@@ -1286,8 +1286,8 @@
           },
           {
             title: '찌그러지는 페트병', scene: 'bottle',
-            goal: '페트병에 <b>뜨거운 물을 붓고 → 물을 버리고 뚜껑을 닫은 뒤 → 찬물로 식혀</b> 보세요. 🔍 돋보기에서 입자도 지켜봐요.',
-            hint: '아래 버튼을 차례로 눌러요. 돋보기 속 안쪽 입자의 빠르기가 어떻게 바뀌는지 보세요.',
+            goal: '페트병에 <b>뜨거운 물을 붓고 → 물을 버리고 뚜껑을 닫은 뒤 → 찬물로 식혀</b> 보세요. <span class="only2d">🔍 돋보기에서 </span><span class="only3d">병 속 </span>입자도 지켜봐요.',
+            hint: '아래 버튼을 차례로 눌러요. <span class="only2d">돋보기 속 </span>안쪽 입자의 빠르기가 어떻게 바뀌는지 보세요.',
             setup() { btReset(); },
             check: () => S.bt.stage >= 3 && S.bt.done,
             status: () => chk(S.bt.stage >= 1, '뜨거운 물 붓기') + ' · ' + chk(S.bt.stage >= 2, '뚜껑 닫기') + ' · ' + chk(S.bt.stage >= 3, '식히기') + ' · ' + chk(S.bt.done, '찌그러짐'),

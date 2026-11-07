@@ -2069,7 +2069,7 @@
           {
             title: '물속 알갱이 관찰하기',
             goal: '🔥 알코올램프에 불을 붙이고, 비커 속 알갱이가 빙글빙글 도는 모습을 7초 동안 지켜보세요.',
-            hint: '<b>불 붙이기</b> 버튼을 누르면 비커 아래쪽을 가열해요. 🔍 돋보기 속 입자도 비교해 보세요.',
+            hint: '<b>불 붙이기</b> 버튼을 누르면 비커 아래쪽을 가열해요. <span class="only2d">🔍 돋보기 속 입자도 비교해 보세요.</span>',
             setup() { beakerReset(); setScene('beaker'); showHint('🔥 불을 붙이고 알갱이의 움직임을 관찰해요', 4500); },
             check: () => BK.on && BK.tOn >= 7,
             hold: 0.4,
@@ -2079,8 +2079,8 @@
           {
             title: '난방기를 놓을 곳 찾기',
             goal: '추운 교실(10 °C)을 데우려고 해요. 난방기를 <b>위·가운데·아래</b> 중 어디에 놓아야 <b>아래쪽 공기</b>가 가장 빨리 따뜻해질까요?',
-            hint: '난방기를 끌어서 옮기거나 위치 버튼을 눌러 보세요. 위치를 바꿀 때마다 교실이 다시 추워져요.',
-            setup() { setScene('room'); RM.pos = 'top'; RM.place.value = ROWS.top; RM.place.target = ROWS.top; roomReset('heat'); showHint('난방기를 끌어서 옮겨 볼 수 있어요 ♨️', 5000); },
+            hint: '<span class="only2d">난방기를 끌어서 옮기거나 </span>위치 버튼을 눌러 보세요. 위치를 바꿀 때마다 교실이 다시 추워져요.',
+            setup() { setScene('room'); RM.pos = 'top'; RM.place.value = ROWS.top; RM.place.target = ROWS.top; roomReset('heat'); showHint('♨️ 난방기의 위치를 바꿔 볼 수 있어요', 5000); },
             check: () => RM.mode === 'heat' && RM.pos === 'bottom' && RM.on && RM.lower >= 16,
             hold: 0.6,
             status: () => {
@@ -2129,7 +2129,7 @@
           {
             title: '은박지로 복사열 막기',
             goal: '난로로 검은 컵을 데운 다음, 🪞 은박지를 난로와 컵 사이에 놓아 컵이 식도록 해 보세요.',
-            hint: '① 난로를 켜고 검은 컵이 42 °C 넘게 오를 때까지 기다려요. ② 은박지를 끌어서 가운데 점선 칸에 놓아요.',
+            hint: '① 난로를 켜고 검은 컵이 42 °C 넘게 오를 때까지 기다려요. <span class="only2d">② 은박지를 끌어서 가운데 점선 칸에 놓아요.</span><span class="only3d">② <b>🪞 은박지 놓기</b> 단추를 눌러요.</span>',
             setup() { radReset(); s32 = 0; setScene('rad'); S.revealFoil = true; syncUI(); showHint('🔥 난로를 켠 뒤, 컵이 뜨거워지면 🪞 은박지를 놓아요', 5500); },
             check: () => {
               if (s32 === 0 && RD.stove && RD.Tb >= 42) { s32 = 1; Sound.tick(); showHint('이제 🪞 은박지를 난로와 컵 사이에 놓아 보세요!', 4500); }
@@ -2172,8 +2172,8 @@
           {
             title: '보온병 설계하기',
             goal: '🫙 진공층, 🪞 은도금, 🧢 뚜껑을 달아서 90 °C 물이 <b>30분 뒤에도 80 °C 이상</b>이 되게 하세요.',
-            hint: '열이 새는 길(전도·대류·복사)을 하나씩 막으면 오른쪽 그래프의 빨간 선이 천천히 내려가요.',
-            setup() { setScene('thermos'); TH.vac = TH.silver = TH.lid = false; thRestart(); syncUI(); showHint('장치를 하나씩 달고 그래프가 어떻게 달라지는지 보세요', 5000); },
+            hint: '열이 새는 길(전도·대류·복사)을 하나씩 막으면 <span class="only2d">오른쪽 그래프의 빨간 선이 천천히 내려가요.</span><span class="only3d">물의 온도가 천천히 내려가요.</span>',
+            setup() { setScene('thermos'); TH.vac = TH.silver = TH.lid = false; thRestart(); syncUI(); showHint('장치를 하나씩 달고 물의 온도가 어떻게 달라지는지 보세요', 5000); },
             check: () => TH.vac && TH.silver && TH.lid && TH.done && TH.T >= 80,
             hold: 0.5,
             status: () => '진공층 ' + mark(TH.vac) + ' · 은도금 ' + mark(TH.silver) + ' · 뚜껑 ' + mark(TH.lid) + ' · ' + fmt(Math.min(TH.t, TH_END), 0) + '분 뒤 <b>' + fmt(TH.T, 1) + ' °C</b>',

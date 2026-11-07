@@ -1,7 +1,8 @@
 /* m1-heat-transfer · 3D 열의 이동 (전도 · 대류 · 복사)
    2D 실험과 같은 장면·같은 값을 3D로 보여 줘요 (2D 상태 window.__sim을 그대로 읽어요):
    전도 = 구리·철·나무 막대(한쪽 끝 가열) · 대류 = 비커 속 물(아래 가열)과 교실(난방기 위·가운데·아래) · 복사 = 난로, 검은 컵·흰 컵, 공기 빼기, 은박지.
-   조작은 옆의 2D 조작판으로 하고, ▶ 재생은 지금 장면의 한 번의 변화를 반복해서 보여 줘요. */
+   조작은 오른쪽 조작판으로 하고, ▶ 재생은 지금 장면의 한 번의 변화를 반복해서 보여 줘요.
+   대류 · 복사 · 단열(2 · 3 · 4단계)은 3D예요. 전도(1단계)는 막대를 눌러 고르고 열화상 · 입자 모형 창을 보는 2D 화면이에요. */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -10,7 +11,7 @@
     host: (window.matchMedia && window.matchMedia('(max-width: 599px)').matches) ? '.sc-tall' : '.sc-wide',
     title: '열의 이동 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    levels: [0, 1, 2, 3],
+    levels: [1, 2, 3],   // 대류 · 복사 · 단열은 3D, 전도(막대 고르기 · 입자 모형)는 2D
     camera: { dist: 14 * (PHN0 ? 1.05 : 1), theta: 0.45, phi: 1.3, fov: 45, target: [0, 0, 0], min: 5, max: 26 },
     autoRotate: 0.08,
     build(ctx) {
@@ -203,7 +204,7 @@
         thGap.set(vac ? '진공층 (공기 없음)' : '공기층 (대류)'); thGap.obj = [-1.35, 0.6, 0];
         thTemp0.obj = [0, 0.8 - 0.2, 0.9]; thTemp0.off = [0, 0, 0]; thTemp0.set('물 <b>' + T.toFixed(1) + ' °C</b> · ' + Math.round(tm) + '분 뒤');
         const dots = [vac ? '진공층' : null, silver ? '은도금' : null, lid ? '뚜껑' : null].filter(Boolean);
-        setInfo((pmode ? '<b>▶ ' + thPh + '</b><br>' : '') + '<b>단열</b>: 열은 <b>전도·대류·복사</b>로 새어 나가요. 새는 길을 막을수록 물이 오래 따뜻해요. 진공층은 <b>전도·대류</b>를, 은도금은 <b>복사</b>를, 뚜껑은 위로 빠지는 <b>대류</b>를 막아요.<br>장치: <b>' + (dots.length ? dots.join(' + ') : '없음') + '</b> · ' + Math.round(tm) + '분 뒤 물 <b>' + T.toFixed(1) + ' °C</b> (장치 없는 병은 ' + Tc.toFixed(1) + ' °C)' + (pmode ? '' : '<br>장치는 옆의 2D 조작판에서 달아요. 또는 ▶ 재생을 눌러 보세요.'));
+        setInfo((pmode ? '<b>▶ ' + thPh + '</b><br>' : '') + '<b>단열</b>: 열은 <b>전도·대류·복사</b>로 새어 나가요. 새는 길을 막을수록 물이 오래 따뜻해요. 진공층은 <b>전도·대류</b>를, 은도금은 <b>복사</b>를, 뚜껑은 위로 빠지는 <b>대류</b>를 막아요.<br>장치: <b>' + (dots.length ? dots.join(' + ') : '없음') + '</b> · ' + Math.round(tm) + '분 뒤 물 <b>' + T.toFixed(1) + ' °C</b> (장치 없는 병은 ' + Tc.toFixed(1) + ' °C)' + (pmode ? '' : '<br>장치는 오른쪽 단추로 달아요. 또는 ▶ 재생을 눌러 보세요.'));
         const ph = phEl(); if (ph) ph.textContent = pmode ? thPh : '';
       }
 
@@ -297,8 +298,8 @@
             wallLab.set(ac ? '더운 벽(바깥 날씨)' : '차가운 벽(창가)');
             upLab.set('위쪽 공기 ' + fmt1(RM ? RM.upper : 10) + ' °C'); loLab.set('아래쪽 공기 ' + fmt1(RM ? RM.lower : 10) + ' °C');
             setInfo(ac
-              ? '<b>대류</b>: 에어컨의 차가운 공기는 무거워서 <b>아래로 내려오고</b>, 아래쪽의 따뜻한 공기는 위로 올라가며 순환해요. 그래서 에어컨은 <b>위쪽</b>에 달아요.'
-              : '<b>대류</b>: 난방기를 <b>' + POSN[RM ? RM.pos : 'bottom'] + '</b>에 놓았어요 (' + (RM && RM.on ? '켜짐' : '꺼짐') + ').<br>' + ((RM ? RM.pos : 'bottom') === 'bottom' ? '데워진 공기는 위로 올라가고 위쪽의 찬 공기가 내려오며 순환해 방 전체가 데워져요.' : '데워진 공기는 위로 올라가기만 해서 위쪽에 머물고, 아래쪽은 오랫동안 추워요.') + ' 난방기의 위치와 켜기는 옆의 조작판에서 바꿔요.');
+              ? '<b>대류</b>: 에어컨이 켜졌어요. 차가운 공기와 따뜻한 공기가 어떻게 움직이는지 살펴보세요.'
+              : '<b>대류</b>: 난방기를 <b>' + POSN[RM ? RM.pos : 'bottom'] + '</b>에 놓았어요 (' + (RM && RM.on ? '켜짐' : '꺼짐') + ').<br>' + ((RM ? RM.pos : 'bottom') === 'bottom' && RM && RM.lower >= 16 ? '데워진 공기는 위로 올라가고 위쪽의 찬 공기가 내려오며 순환해 방 전체가 데워져요.' : '위쪽 공기와 아래쪽 공기의 온도를 비교해 보세요.') + ' 난방기의 위치와 켜기는 오른쪽 조작판에서 바꿔요.');
           } else if (mode === 'thermos') {
             thermosFrame(l, t, h, p);
           } else {
@@ -323,7 +324,7 @@
             }
             [st.Tb, st.Tw].forEach((T, i) => { const c = cups[i], k = clamp((T - 20) / 40, 0, 1); c.water.material.color.copy(heatCol(clamp((T - 15) / 50, 0, 1))); c.body.material.emissive.setRGB(k * 0.35, k * 0.06, 0); c.lab.set(c.name + ' ' + fmt1(T) + ' °C'); });
             vacLab.set(st.vacK >= 0.5 ? '진공 (공기 없음)' : '공기 있음');
-            setInfo('<b>복사</b>: 열이 <b>물질 없이도</b> 직접 전달돼요.<br>' + (st.stove ? (st.vacK >= 0.5 ? '공기를 뺀 진공에서도 컵이 따뜻해져요. ' : '공기가 있어도 열은 복사로 전달돼요. ') : '옆의 🔥 난로 켜기 버튼으로 난로를 켜 보세요. ') + (st.foil ? '은박지가 복사열을 <b>반사</b>해 컵까지 덜 전달돼요. ' : '') + '검은 컵이 흰 컵보다 복사열을 더 잘 흡수해요. 태양의 열이 지구에 오는 방식이에요.');
+            setInfo('<b>복사</b>: 열이 <b>물질 없이도</b> 직접 전달돼요.<br>' + (st.stove ? (st.vacK >= 0.5 ? '공기를 뺀 진공에서도 컵이 따뜻해져요. ' : '공기가 있어도 열은 복사로 전달돼요. ') : '옆의 🔥 난로 켜기 버튼으로 난로를 켜 보세요. ') + (st.foil ? '은박지가 복사열을 <b>반사</b>해 컵까지 덜 전달돼요. ' : '') + '검은 컵이 흰 컵보다 복사열을 더 잘 흡수해요.');
           }
         },
         sync() {},

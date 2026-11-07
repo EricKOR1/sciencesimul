@@ -384,7 +384,7 @@
     stormStep(dt);
     const g = stormGeom(), { A, B, C, xl, xr, y0 } = g;
     // ---- A: 해안 단면
-    card(A, '🌪️ 폭풍 해일: 태풍이 다가온 해안 (높이 과장)');
+    card(A, '🌀 폭풍 해일: 태풍이 다가온 해안 (높이 과장)');
     ctx.save(); rr(A.x, A.y, A.w, A.h, 14).clip();
     D.sky(A.x, A.y + 30, A.w, A.h - 30, '#cfe5f4', '#eaf4fb');
     // 바다 바닥(모래)과 땅
@@ -528,7 +528,7 @@
   function drawTsOpen(t, dt) {
     const g = tsGeom(), { A, y0, pxh, kx, xl, xr, xsrc } = g, { B, C } = g.R;
     const H0 = H0of(), ct = c0km * S.tsT;                      // 파봉 위치(진원에서 km)
-    card(A, '🌋 지진 해일: 바다 전체가 솟아 퍼져요 (높이 과장)');
+    card(A, '🌊 지진 해일: 바다 전체가 솟아 퍼져요 (높이 과장)');
     ctx.save(); rr(A.x, A.y, A.w, A.h, 14).clip();
     D.sky(A.x, A.y + 30, A.w, A.h - 30, '#d9ecf8', '#f0f8fd');
     const floorBase = y0 + (PHONE ? 110 : 100);
@@ -991,12 +991,12 @@
   $('#bEv').addEventListener('click', () => { Sound.click(); startEv(); syncBtns(); });
   const setTx = (el, tx) => { if (el.textContent !== tx) el.textContent = tx; };
   function syncBtns() {
-    setTx($('#bFault'), S.tsT > 0 || S.tsRun ? '↺ 다시 일으키기' : '🌋 단층 일으키기');
+    setTx($('#bFault'), S.tsT > 0 || S.tsRun ? '↺ 다시 일으키기' : '▶ 단층 일으키기');
     setTx($('#bShore'), S.zoomT >= 0 ? '↺ 다시 보내기' : '🌊 파 보내기');
     setTx($('#bEv'), S.evT >= 0 ? '↺ 다시 대피하기' : '🚨 경보! 대피 시작');
   }
 
-  const MODE_LABEL = { storm: '🌪️ 폭풍 해일', tsu: '🌋 지진 해일', risk: '🏖️ 피해 요인', plan: '🧭 대처 방안' };
+  const MODE_LABEL = { storm: '🌀 폭풍 해일', tsu: '🌊 지진 해일', risk: '🏖️ 피해 요인', plan: '🧭 대처 방안' };
   const FREE_KEYS = {
     storm: () => ['sP', 'sU', 'sL', 'sH'],
     tsu: () => (S.tsView === 'shore' ? ['viewCh', 'sD', 'bShore'] : ['viewCh', 'sD', 'bFault']),
@@ -1036,7 +1036,7 @@
   const mark2 = (b) => mark(b);
   const levels = [
     {
-      title: '폭풍 해일: 기압과 바람이 수위를 올려요', short: '폭풍 해일', icon: '🌪️', phase: '모형', features: ['storm'],
+      title: '폭풍 해일: 기압과 바람이 수위를 올려요', short: '폭풍 해일', icon: '🌀', phase: '모형', features: ['storm'],
       intro: '<p class="si-q">❓ 탐구 질문: 같은 태풍이나 지진인데 어떤 해안은 침수되고 어떤 해안은 무사한 까닭은 무엇일까?</p>' +
         '<div class="si-link">🔗 <b>일반선택 지구과학의 ‘태풍’에서</b> 태풍의 중심 기압이 낮아지면 해수면이 올라가는 폭풍 해일을 배웠어요(1 hPa ≈ 1 cm). 이번에는 그 값을 <b>계산</b>하고, 바람이 더하는 효과도 알아봐요.</div>' +
         '<p><b>해일</b>은 바닷물이 갑자기 크게 불어 육지로 밀려드는 현상이에요. 먼저 태풍이 만드는 <b>폭풍 해일</b>을 알아봐요. 원인은 두 가지예요. ① <b>흡상 효과</b>: 기압이 낮아 공기가 누르는 힘이 줄어 해수면이 솟아요 (Δη = Δp/ρg). ② <b>바람 쏠림</b>: 바람이 바닷물을 해안 쪽으로 몰아요 (Δη = τL/ρgh).</p>',
@@ -1074,7 +1074,7 @@
       ],
     },
     {
-      title: '지진 해일: 속도는 √(gh)', short: '지진 해일', icon: '🌋', phase: '모형', features: ['tsu'],
+      title: '지진 해일: 속도는 √(gh)', short: '지진 해일', icon: '🌊', phase: '모형', features: ['tsu'],
       intro: '<div class="si-link">🔗 <b>앞 단계에서</b> 태풍은 해수면을 솟게 하거나 바람으로 물을 밀었어요. <b>지진 해일(쓰나미)</b>은 원인이 달라요. 해저 단층이 움직여 <b>바다 전체</b>가 한꺼번에 솟아요. 앞 차시의 천해파 속도 <b>c = √(gh)</b>가 여기서 쓰여요.</div>' +
         '<p>쓰나미는 파장이 수백 km로 바다 깊이(수 km)보다 훨씬 길어서 <b>모든 수심에서 천해파</b>예요. 그래서 속도는 파장이 아니라 <b>수심</b>으로만 정해져요.</p>',
       setup() { resetStep(1); },
@@ -1187,7 +1187,7 @@
 
   game = SciSim.game({
     simId: 'hs-sea-surge', mount: '#game', badge: '해일 대응가', homeHref: '../../index.html#hs',
-    featureLabels: { storm: '🌪️ 폭풍 해일 모형', tsu: '🌋 지진 해일 모형', risk: '🏖️ 총 수위 분석', plan: '🧭 대피 계산 · 발표 카드' },
+    featureLabels: { storm: '🌀 폭풍 해일 모형', tsu: '🌊 지진 해일 모형', risk: '🏖️ 총 수위 분석', plan: '🧭 대피 계산 · 발표 카드' },
     onFeatures() { updateCtl(); },
     levels,
   });

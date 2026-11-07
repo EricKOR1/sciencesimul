@@ -780,15 +780,15 @@
       title: '전자의 이동: 직접 옮겨 보기', short: '전자 이동', icon: '⚡', phase: '모형',
       features: ['move'],
       intro: '<div class="si-link">🔗 <b>앞 단계에서</b> 아연 원자는 Zn²⁺ 이온이 되어 녹고, Cu²⁺ 이온은 구리 원자가 되어 붙는 것을 봤어요. 그 사이에 <b>무엇이 오갔을까요?</b></div>' +
-        '<p>아연 원자가 가진 <b>전자(노란 구슬)</b>를 끌어서 구리 이온 Cu²⁺에게 옮겨 보세요. 전자를 모두 옮기면 반쪽 반응식을 완성할 수 있어요.</p>',
+        '<p>아연 원자가 가진 <b>전자(노란 구슬)</b>를 구리 이온 Cu²⁺에게 직접 옮겨 보세요. 전자를 모두 옮기면 반쪽 반응식을 완성할 수 있어요.</p>',
       setup() { enterLevel(1); },
       recap: '아연은 전자 2개를 잃고 Zn²⁺가 되어(산화), Cu²⁺는 전자 2개를 얻어 구리 원자가 돼요(환원). 전자를 잃으면 산화, 얻으면 환원이에요.',
       summary: '<ul><li><b>산화 = 전자를 잃는 반응</b>, <b>환원 = 전자를 얻는 반응</b>.</li><li>Zn → Zn²⁺ + 2e⁻ (아연이 전자 2개를 잃음: 산화)</li><li>Cu²⁺ + 2e⁻ → Cu (구리 이온이 전자 2개를 얻음: 환원)</li><li>전체: Zn + Cu²⁺ → Zn²⁺ + Cu</li></ul>',
       missions: [
         {
           title: '전자를 옮기기',
-          goal: '아연 원자의 <b>전자 4개</b>를 모두 끌어서 <b>Cu²⁺ 이온</b>에게 옮기세요. 이온마다 전자가 몇 개 필요한지 확인해요.',
-          hint: '노란 전자를 눌러 끌고 가서 푸른 Cu²⁺ 이온 위에 놓아요. Cu²⁺ 하나에는 전자 2개가 필요해요.',
+          goal: '아연 원자의 <b>전자 4개</b>를 모두 <span class="only2d">끌어서 </span><b>Cu²⁺ 이온</b>에게 옮기세요. 이온마다 전자가 몇 개 필요한지 확인해요.',
+          hint: '<span class="only2d">노란 전자를 눌러 끌고 가서 푸른 Cu²⁺ 이온 위에 놓아요.</span><span class="only3d">화면 아래 <b>⚡ 전자 1개 옮기기</b>를 눌러요.</span> Cu²⁺ 하나에는 전자 2개가 필요해요.',
           setup() { ensure('move'); },
           check: () => MV.done, hold: 0.5,
           status: () => mark(mvMoved() >= 4) + ' 옮긴 전자 ' + mvMoved() + ' / 4 · ' + mark(MV.ions.filter((o) => o.done).length === 2) + ' 구리 원자 ' + MV.ions.filter((o) => o.done).length + ' / 2',
@@ -899,7 +899,7 @@
   mvInit(); buildLBoard(); buildHalfRows();
   game = SciSim.game({
     simId: 'h1-redox-electron', mount: '#game', badge: '전자 이동 탐정', homeHref: '../../index.html#h1b',
-    featureLabels: { bench: '🧪 금속·이온 실험 · 🔍 전자 보기', move: '⚡ 전자 끌어 옮기기 · 반쪽 반응식', rule: '📒 산소/전자 두 관점 · 전자 장부', life: '🏠 생활 속 카드 분류' },
+    featureLabels: { bench: '🧪 금속·이온 실험 · 🔍 전자 보기', move: '⚡ 전자 옮기기 · 반쪽 반응식', rule: '📒 산소/전자 두 관점 · 전자 장부', life: '🏠 생활 속 카드 분류' },
     onFeatures() { ctlUpdate(); },
     levels,
   });

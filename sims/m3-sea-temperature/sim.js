@@ -1170,9 +1170,9 @@
           {
             title: '측정기 내리기',
             goal: '측정기를 <b>1,000 m까지</b> 내리며 깊이에 따른 수온을 측정하세요.',
-            hint: '⬇ 내리기 버튼을 누르고 있거나, 바다 속 측정기를 아래로 끌어요.',
+            hint: '⬇ 내리기 버튼을 누르고 있<span class="only2d">거나, 바다 속 측정기를 아래로 끌어</span><span class="only3d">거나, ▶ 측정기 내리기를 눌러</span>요.',
             hold: 0.6,
-            setup() { resetColumn(); column_newT = 0; GST.ymax = 1000; if (!GST.bubbleShown) { GST.bubble = 4; GST.bubbleShown = true; } setSceneUI(); showHint('⬇ 내리기를 누르거나 측정기를 아래로 끌어 보세요', 5000); },
+            setup() { resetColumn(); column_newT = 0; GST.ymax = 1000; if (!GST.bubbleShown) { GST.bubble = 4; GST.bubbleShown = true; } setSceneUI(); showHint(document.body.classList.contains('v3-mode') ? '⬇ 내리기를 누르고 있거나 ▶ 측정기 내리기를 눌러 보세요' : '⬇ 내리기를 누르거나 측정기를 아래로 끌어 보세요', 5000); },
             check: () => C.maxZ >= 995 && C.count >= 90,
             status: () => '수심 <b>' + Math.round(C.z.value) + ' m</b> / 1,000 m · 수온 <b>' + PF.east[2](C.z.value).toFixed(1) + ' ℃</b> · 측정점 <b>' + C.count + '</b>개',
             explain: '표층(약 100 m까지)은 수온이 약 11.5 ℃로 거의 같고, 그 아래에서 수온이 빠르게 낮아지다가, 약 300 m보다 깊은 곳은 <b>1 ℃ 안팎</b>으로 매우 차갑고 거의 변하지 않아요.',
@@ -1294,9 +1294,9 @@
           {
             title: '동해의 2월과 8월',
             goal: '동해 정점에서 <b>2월과 8월</b>의 연직 수온 분포를 모두 측정해 비교하세요.',
-            hint: '동해 정점(지도의 핀)을 누르면 측정해요. 계절을 바꾸면 다른 계절도 측정할 수 있어요.',
+            hint: '<span class="only2d">동해 정점(지도의 핀)을</span><span class="only3d">동해 버튼을</span> 누르면 측정해요. 계절을 바꾸면 다른 계절도 측정할 수 있어요.',
             hold: 0.4,
-            setup() { mapReset(); setSceneUI(); showHint('지도의 동해 정점을 누르거나 동해 버튼을 눌러요', 5000); },
+            setup() { mapReset(); setSceneUI(); showHint(document.body.classList.contains('v3-mode') ? '동해 버튼을 눌러 측정해요' : '지도의 동해 정점을 누르거나 동해 버튼을 눌러요', 5000); },
             check: () => { const a = M.meas['east-2'], b = M.meas['east-8']; return !!(a && b && a.t >= 1 && b.t >= 1); },
             status: () => { const a = M.meas['east-2'], b = M.meas['east-8']; return '동해 2월 <b>' + (a && a.t >= 1 ? '✔' : '—') + '</b> · 동해 8월 <b>' + (b && b.t >= 1 ? '✔' : '—') + '</b>'; },
             explain: '8월에는 표층 수온이 약 25 ℃로 높고 혼합층이 얇아(약 10~20 m) 그 바로 아래에 수온 약층이 뚜렷해요. 2월에는 혼합층이 약 100 m로 두꺼워요. 깊은 곳(300 m 아래)은 두 계절 모두 약 1 ℃ 이하로 같아요.',
