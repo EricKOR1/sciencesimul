@@ -236,7 +236,7 @@
           const head = md === 'combo' ? '<b>' + A + '–' + B + ' 전지 · ' + volt.toFixed(2) + ' V</b> ((−)극 ' + N + ')<br>' : '<b>다니엘 전지 (Zn–Cu) · 1.10 V</b><br>';
           let tx;
           if (md === 'cell' && S2.cl && !(vis('zn') && vis('cu') && S2.cl.solK[0] > 0.9 && S2.cl.solK[1] > 0.9 && vis('wire'))) tx = '<b>🧩 다니엘 전지 조립</b><br>끌어 놓은 부품이 여기에 나타나요. (' + Object.keys(S2.cl.parts).filter((k) => S2.cl.parts[k].on).length + ' / 6)<br>Zn판 · ZnSO₄ · Cu판 · CuSO₄ · 염다리 · 도선과 전구를 모두 놓아요.';
-          else if (md === 'cell' && S2.cl && !S2.cl.parts.bridge.on) tx = '<b>염다리가 아직 없어요</b><br>두 용액이 이어지지 않아 전하가 쌓여요. 전압이 0 V로 떨어지고 전구가 꺼져요.<br>염다리를 놓아 두 용액을 이어 줘요. (▦ 2D에서 끌어 놓아요)';
+          else if (md === 'cell' && S2.cl && !S2.cl.parts.bridge.on) tx = '<b>염다리가 아직 없어요</b><br>두 용액이 이어지지 않아 전하가 쌓여요. 전압이 0 V로 떨어지고 전구가 꺼져요.<br>염다리를 놓아 두 용액을 이어 줘요.';
           else if (two) tx = '<b>두 비커를 도선으로만 이었어요</b><br>전압계 ' + S2.bk.sep.V.toFixed(2) + ' V · 전구 ' + (S2.bk.sep.lit > 0.5 ? '켜짐' : S2.bk.sep.lit > 0.1 ? '희미함' : '꺼짐') + '<br>' + (S2.bk.sep.imb > 0.9 ? '두 용액이 이어지지 않아 전하가 쌓여 전류가 멈췄어요. 이 문제를 풀어 주는 장치가 염다리예요.' : '곧 전압이 떨어져요.');
           else if (!on) tx = head + '<b>염다리를 뺐어요</b>: 용액의 전하 균형이 깨져 전류가 거의 흐르지 못하고 전압이 0 V로 떨어져요.';
           else {
