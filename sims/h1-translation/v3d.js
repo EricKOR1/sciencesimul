@@ -16,7 +16,7 @@
   window.SciSim3D.attach({
     title: '번역: 리보솜과 tRNA 3D',
     camera: { dist: PHN ? 15 : 10.5, theta: 0.1, phi: 1.4, target: [0, 1.1, 0], min: 6, max: 24 },
-    levels: [],
+    levels: [2],   // 2단계(단백질 합성): 화면 아래 tRNA 단추로 2D의 tRNA 놓기(syAttempt)를 해요. 리보솜 장착 · 코돈표 · 변이 카드는 2D
     autoRotate: 0,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
@@ -107,14 +107,95 @@
       const total = NCY * D, endLen = 5.5;
       function paint() { if (T < total) { const c = Math.floor(T / D), ph = T - c * D; setPos(c, ph); } else setEnd(T - total); }
       let demoP = 0;
+      const ctlEl = bN.parentElement, nPl = ctlEl.children.length;
       const pl = controls.player({
         duration: total + endLen, loop: true, autoplay: false, label: '번역',
         phases: [[0, 'GAA 코돈 · Glu'], [D / (total + endLen), 'CCA 코돈 · Pro'], [2 * D / (total + endLen), 'UGG 코돈 · Trp'], [total / (total + endLen), 'UAA 종결 코돈']],
         onFrame(p) { demoP = p; T = p * (total + endLen); },
       });
+      const plEls = [].slice.call(ctlEl.children, nPl);
+
+      /* 단백질 합성 단계: 2D의 합성 상태(S.sy)를 그대로 보여 주고, tRNA 단추로 2D와 같은 tRNA 놓기를 해요 (미션 진행이 같아요) */
+      const L2 = () => window.__sim || null;
+      const synY = () => { const L = L2(); return L && L.S && L.S.mode === 'synth' && L.S.sy ? L.S.sy : null; };
+      const AAKO = { Met: '메싸이오닌', Glu: '글루탐산', Pro: '프롤린', Trp: '트립토판', Val: '발린', Phe: '페닐알라닌', Lys: '라이신', Gly: '글라이신' };
+      const tTxt = controls.text('<b>tRNA</b>');
+      const tBtns = [0, 1, 2].map((i) => controls.button('', () => {
+        const L = L2(), Y = synY(); if (!Y || !L.syAttempt) return;
+        if (Y.ph !== 'read' || !Y.tok[i]) return;
+        let fx = 0, fy = 0; try { fx = L.syCx(Y.c); fy = L.SYG().trayY; } catch (e) { /* 무시 */ }
+        L.syAttempt(Y.tok[i], fx, fy);
+      }));
+      let lastN = -1, animC = 0, animT = 9, relT = 0, wrongT = 0, lastWrong = 0, tokKey = '', lastY = null;
+      const v3 = new THREE.Vector3();
+      function retube() {
+        if (chainTube) { root.remove(chainTube); chainTube.geometry.dispose(); chainTube = null; }
+        const q = beads.filter((b) => b.visible).map((b) => b.position.clone());
+        if (q.length >= 2) { chainTube = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(q), 40, 0.07, 8), tubeMat); root.add(chainTube); }
+      }
+      function paintSyn(Y, dt) {
+        const n = Y.chain.length, ph = Y.ph;
+        if (Y !== lastY || n < lastN) { lastY = Y; lastN = n; animT = 9; relT = 0; lastWrong = Y.wrong; }
+        if (n > lastN) { animC = n - 2; animT = 0; lastN = n; }
+        if (Y.wrong !== lastWrong) { lastWrong = Y.wrong; wrongT = 0.6; }
+        if (wrongT > 0) wrongT -= dt;
+        const after = ph === 'release' || ph === 'released' || ph === 'fold' || ph === 'folded';
+        relT = after ? Math.min(1, relT + dt / 1.0) : 0;
+        if (animT < 4.4) {   // 맞는 tRNA가 들어와 결합하고 리보솜이 한 칸 옮겨 가요
+          animT = Math.min(4.4, animT + dt * 2.2); setPos(animC, animT);
+        } else if (n === 0) {
+          setPos(-1, 0); tr[0].visible = false; beads[0].visible = false; retube();
+        } else setPos(Math.min(n, NCY + 1) - 2, 4.4);
+        const resting = animT >= 4.4;
+        if (resting && after) {   // 종결: 마지막 tRNA가 떠나고 사슬이 떨어져 나와 접혀요
+          const r = sm(0, 1, relT), last = tr[Math.min(n, NCY + 1) - 1];
+          if (last) { last.position.y += r * 3.0; last.position.x -= r * 1.5; last.scale.setScalar(Math.max(0.001, 1 - r)); last.visible = r < 0.98; }
+          beads.forEach((b) => { if (b.visible) { b.position.y += r * 0.8; b.position.x -= r * 2.6; } });
+          const f = Math.max(0, Math.min(1.1, Y.fv || 0));
+          if (f > 0.001) {
+            const vis = beads.filter((b) => b.visible), cen = new THREE.Vector3(); vis.forEach((b) => cen.add(b.position)); if (vis.length) cen.multiplyScalar(1 / vis.length);
+            vis.forEach((b, i) => { const a = i * 2.2, tgt = v3.set(cen.x + Math.cos(a) * 0.42, cen.y + (i - (vis.length - 1) / 2) * 0.22, cen.z + Math.sin(a) * 0.42); b.position.lerp(tgt, Math.min(1, f)); });
+          }
+          retube();
+        }
+        if (!resting) return;
+        // 이름표 · 설명
+        const ko = (a) => AAKO[a] || a, chainTxt = Y.chain.map((b) => ko(b.aa)).join('–');
+        lStop.show(false); lCod.show(false);
+        if (ph === 'read') {
+          const cod = SYN3[Y.c] || '';
+          lCod.set('A 자리 코돈 ' + cod + ' · 맞는 tRNA는?'); lCod.show(true);
+          info('<b>단백질 합성</b> (' + n + ' / 4)<br>A 자리의 코돈 <b>' + cod + '</b>과 안티코돈이 짝이 맞는 <b>tRNA</b>를 아래 단추에서 골라요.' + (n ? '<br>사슬: ' + chainTxt : '') + (wrongT > 0 || (Y.msgT > 0 && Y.msg) ? '<br><span style="color:' + (Y.msg.indexOf('아니에요') >= 0 ? '#fca5a5' : '#86efac') + '">' + Y.msg + '</span>' : ''));
+        } else if (ph === 'stop') {
+          lStop.set('종결 코돈 UAA: 맞는 tRNA가 없어요'); lStop.show(true);
+          info('<b>종결 코돈 UAA</b><br>맞는 tRNA가 없어요. <b>🛑 합성 끝내기</b>를 눌러 사슬을 떼어 내요.<br>사슬: ' + chainTxt);
+        } else if (ph === 'release' || ph === 'released') {
+          lStop.set('사슬이 떨어져 나와요'); lStop.show(true);
+          info('<b>④ 종결</b><br>아미노산 사슬이 리보솜에서 떨어져 나왔어요.' + (ph === 'released' ? ' <b>🧶 사슬 접기</b>를 눌러 단백질로 만들어요.' : ''));
+        } else {
+          lChain.set(ph === 'folded' ? '단백질 (입체 구조)' : '사슬이 접히는 중…');
+          info('<b>⑤ 접힘</b><br>' + (ph === 'folded' ? '사슬이 접혀 입체 구조의 <b>단백질</b>이 되었어요: ' + chainTxt : '아미노산 사슬이 접히고 있어요…'));
+        }
+        if (ph !== 'fold' && ph !== 'folded') lChain.set('아미노산 사슬');
+        lChain.show(n >= 1); { const b = beads.filter((q) => q.visible); if (b.length) { const top = b[b.length - 1].position; lChain.obj = [top.x - 0.5, top.y + 0.6, top.z]; } }
+      }
+      const SYN3 = SEQ;
       paint();
       return {
-        update(dt) { if (!pl.playing && demoP === 0) { T += dt; if (T > total + endLen) T = 0; } paint(); },
+        update(dt) {
+          const Y = synY();
+          const showT = !!(Y && Y.ph === 'read');
+          [tTxt].concat(tBtns).forEach((e) => { e.style.display = showT ? '' : 'none'; });
+          plEls.forEach((e) => { e.style.display = Y ? 'none' : ''; });   // 합성 단계에서는 정답을 미리 보여 주는 ▶ 번역 재생을 숨겨요
+          if (Y) {
+            if (pl.playing) pl.pause();
+            const key = Y.ph + '|' + Y.c + '|' + Y.tok.map((t) => t.anti).join(',');
+            if (key !== tokKey) { tokKey = key; Y.tok.forEach((t, i) => { if (tBtns[i]) tBtns[i].textContent = 'tRNA ' + t.anti + ' · ' + (AAKO[t.aa] || t.aa); }); }
+            paintSyn(Y, dt); return;
+          }
+          lastY = null;
+          if (!pl.playing && demoP === 0) { T += dt; if (T > total + endLen) T = 0; } paint();
+        },
         sync() {},
       };
     },

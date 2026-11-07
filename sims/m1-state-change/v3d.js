@@ -211,7 +211,7 @@
         const w = st.exp === 'eth' ? 1.45 + 1.1 * g : 1.7 * Math.cbrt(V / e.vA), h = st.exp === 'eth' ? 1.8 + 0.9 * g : 2.0 * Math.cbrt(V / e.vA);
         setBox(w, h);
         sys.mix(e.a, e.b, f);
-        massLab.set('⚖ 질량 ' + e.mass.toFixed(1) + ' g'); volLab.set('부피 ' + (st.exp === 'eth' ? (V < 5 ? '1' : '약 ' + Math.round(V / 10) * 10) : Math.round(V)) + ' mL');
+        massLab.set('⚖️ 질량 ' + e.mass.toFixed(1) + ' g'); volLab.set('부피 ' + (st.exp === 'eth' ? (V < 5 ? '1' : '약 ' + Math.round(V / 10) * 10) : Math.round(V)) + ' mL');
         massLab.obj = [w + 0.9, -h + 0.5, 0]; volLab.obj = [w + 0.9, -h + 1.3, 0];
         setInfo('<b>' + e.name + '</b>: ' + NAME[e.a] + ' → ' + NAME[e.b] + ' (밀폐 용기)<br>상태가 변하기 전과 후의 <b>질량</b>과 <b>부피</b>를 비교해 보세요. 입자의 수와 배열도 살펴봐요.');   // 퀴즈의 답(질량 그대로 · 거리가 멀어짐)은 미리 쓰지 않아요
       }

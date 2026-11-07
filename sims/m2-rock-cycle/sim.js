@@ -2478,7 +2478,7 @@
       b.classList.toggle('on-state', C.extra);
       b.textContent = C.extra ? '➖ 다른 길 숨기기' : can ? '➕ 다른 길도 보기' : '🔒 순환을 완성하면 열려요';
       const filled = CYC_ARROWS.filter((a) => C.slots[a.id]).length;
-      n.textContent = C.extra ? '점선은 다른 길이에요. 암석은 한 가지 길로만 바뀌지 않아요.' : C.done ? '순환을 완성했어요! 다른 길도 볼까요?' : filled === 0 ? '카드를 끌어서 화살표 위 빈칸에 붙여요.' : filled < 5 ? '빈칸이 ' + (5 - filled) + '개 남았어요.' : '모두 붙였어요. ✔ 확인하기를 눌러요.';
+      n.textContent = C.extra ? '점선은 다른 길이에요. 암석은 한 가지 길로만 바뀌지 않아요.' : C.done ? '순환을 완성했어요! 다른 길도 볼까요?' : filled === 0 ? '과정 카드를 화살표 위 빈칸에 붙여요.' : filled < 5 ? '빈칸이 ' + (5 - filled) + '개 남았어요.' : '모두 붙였어요. ✔ 확인하기를 눌러요.';
     },
   };
   $('#extraBtn').addEventListener('click', () => { if ($('#extraBtn').disabled) return; Sound.click(); S.cyc.extra = !S.cyc.extra; syncControls(); });

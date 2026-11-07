@@ -838,7 +838,7 @@
         },
         {
           title: '같은 운동 집단 5개 고르기', manual: true,
-          goal: '거의 같은 방향·속도로 함께 움직이는 별 <b>5개</b>를 3D 막대의 별 이름 단추로 고르세요. (➡ 운동 화살표를 켜면 쉬워요)',
+          goal: '거의 같은 방향·속도로 함께 움직이는 별 <b>5개</b>를 <span class="only3d">화면 아래 별 이름 단추로</span><span class="only2d">별 이름을 눌러</span> 고르세요. (➡ 운동 화살표를 켜면 쉬워요)',
           hint: '화살표 방향이 반대인 두 별(두베, 알카이드)을 빼고 나머지 5개를 골라요.',
           setup() { S.cn.sel = new Set(); S.cn.arrows = true; updateCtl(); setView('con'); },
           check() { const s = S.cn.sel; if (s.size < 5) return '별을 5개 골라 주세요. (지금 ' + s.size + '개)'; if (s.size > 5) return '5개만 골라야 해요. 반대 방향으로 움직이는 별은 빼요.'; return grpOK() ? true : '고른 별 중에 반대 방향으로 움직이는 별이 있어요. 목록의 움직이는 방향(동/서)을 비교해 보세요.'; },

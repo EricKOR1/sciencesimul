@@ -75,6 +75,7 @@
         info(air ? `<b>소리는 파동</b>이에요. 스피커가 떨리면 공기 입자도 떨려요.<br>노란 입자 하나를 지켜보세요. 공기 입자는 어떻게 움직이나요?<br>빨강: 입자가 촘촘한 곳 · 파랑: 성긴 곳` : `<b>공기가 없어요!</b> 소리를 전달해 줄 입자가 없어서 <b>소리가 들리지 않아요</b>.`);
       }
       // 3D에서 바꾸면 2D 실험의 값도 같이 바뀌어요
+      const barA = ctx.renderer.domElement.closest('.v3-wrap').querySelector('.v3-ctl'), nA = barA.children.length;
       const volR = controls.range('소리 크기', 1, 5, 1, vol, (v) => { vol = v; pushedAt = now; const s = sm(); if (s && s.setVol) s.setVol(v); text(); }, (v) => VOLN[v - 1]);
       const pitchR = controls.range('진동수', 150, 900, 10, pitch, (v) => { pitch = v; pushedAt = now; const s = sm(); if (s && s.setPitch) s.setPitch(v); text(); }, (v) => v + ' Hz');
       // ▶ 재생: 한 주기 동안 공기 입자가 한 번 앞뒤로 떨리고, 파동은 한 파장만큼 나아가요 (멈춰서 촘촘한 곳 · 성긴 곳을 살펴봐요)
@@ -83,6 +84,7 @@
         phases: [[0, '한 주기 시작'], [0.25, '1/4 주기'], [0.5, '반 주기'], [0.75, '3/4 주기']],
         onFrame(p) { phase = p * Math.PI * 2; },
       });
+      const airCtl = [...barA.children].slice(nA);   // 소리 크기 · 진동수 · 파동 재생: 공기 장면에서만 보여요 (줄 장면에서는 바뀌는 것이 없어요)
       controls.button('이름표', () => { const v = labSp.visible === false; labSp.show(v); labEar.show(v); labAir.show(v); });
       text();
       /* ===== 장면 rope(줄 파동) · 파형(소리굽쇠 · 피리 · 기타): 2D와 같은 줄 · 같은 파형 ===== */
@@ -132,7 +134,7 @@
         airObjs.forEach((o) => { o.visible = isAir; }); airLabs.forEach((l) => l.show(isAir)); if (!isAir) mrk.show(false);
         gR.visible = m === 'rope'; gT.visible = m === 'timbre'; mkLabs.forEach((l) => l.show(m === 'rope')); rLab.forEach((l) => l.show(m === 'rope')); arrAuto.style.display = m === 'rope' ? '' : 'none';
         iLab.show(m === 'timbre'); wLab.show(m === 'timbre');
-        [volR, pitchR].forEach(() => {});
+        airCtl.forEach((e) => { e.style.display = isAir ? '' : 'none'; });
         lastS = ''; if (isAir) text();
       }
       function updRope(S) {

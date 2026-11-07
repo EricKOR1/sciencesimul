@@ -842,7 +842,7 @@
         {
           title: '같은 상수끼리 짝짓기', manual: true,
           goal: '천체 8개의 a³ / T² 값을 구해 <b>태양 둘레 · 목성 둘레 · 지구 둘레</b> 상자로 나눠 ✔ 확인하기를 눌러요.',
-          hint: '3D 막대의 ◀ ▶로 카드를 고르면 a와 T로 계산된 값이 보여요. 값이 약 2.5×10⁴이면 태양, 약 24이면 목성, 약 0.076이면 지구 둘레예요. 상자 단추를 눌러 넣어요.',
+          hint: '<span class="only3d">화면 아래 ◀ ▶로 카드를 고르면</span><span class="only2d">카드를 누르면</span> a와 T로 계산된 값이 보여요. 값이 약 2.5×10⁴이면 태양, 약 24이면 목성, 약 0.076이면 지구 둘레예요. <span class="only3d">상자 단추를 눌러 넣어요.</span><span class="only2d">그 카드를 알맞은 상자에 넣어요.</span>',
           setup() { cK.reset(); S.flags.calcMass = false; setView('meaning'); },
           check() {
             const pl = cK.items.filter((i) => i.loc != null).length;

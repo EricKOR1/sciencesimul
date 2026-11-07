@@ -13,7 +13,7 @@
     hint: '드래그: 돌리기 · 모드를 눌러 부위와 신경을 살펴봐요',
     camera: { dist: narrow ? 13 : 9.5, theta: -0.15, phi: 1.3, min: 5, max: 20, target: [0, 0.8, 0] },
     autoRotate: 0.15,
-    levels: [],
+    levels: [3],   // 3단계(말초 신경): 자율 신경 단추와 비교표 카드 단추로 해요. 분류 트리 · 대뇌(2D 화면도 돌려 보는 단면 모형) · 부위 카드 단계는 2D
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
       const V = THREE.Vector3, V3 = (x, y, z) => new V(x, y, z || 0);
@@ -122,17 +122,45 @@
       // 자율 신경 조작 요소는 마지막에 추가된 4개 요소(라벨 + 버튼 3개)
       const ctlEl = document.querySelector('.v3-ctl'); if (ctlEl) { const kids = [...ctlEl.children].slice(-4); kids.forEach((e) => subCtl.push(e)); }
       const pl = controls.player({ duration: 6, loop: true, autoplay: true, label: '신경 신호', phases: [[0, '감각 신호 ↑ · 운동 신호 ↓']], onFrame(p) { ph = p; } });
+      // 3D 단계(말초 신경)에서는 다른 장면으로 가는 화면 단추를 숨겨요
+      if (ctlEl) [...ctlEl.children].forEach((e) => { if (['대뇌의 엽', '뇌 줄기·소뇌', '말초 신경(몸 전체)'].indexOf(e.textContent) >= 0) e.style.display = 'none'; });
+      /* 비교표: 카드를 ◀ ▶로 고르고 칸 단추를 눌러 놓아요 (2D 비교표의 카드 놓기 S.tab.pl과 같아서 미션 진행이 같아요) */
+      const tabEls = [], nT0 = ctlEl ? ctlEl.children.length : 0;
+      let cardI = 0, tabKey = '';
+      const tabPl = () => { const L = L2(); return L && L.S && L.S.mode === 'per' && L.S.subs && L.S.subs.per === 'table' && L.S.tab ? L.S.tab.pl : null; };
+      const cardTxt = controls.text('');
+      const pick = (d) => { const P = tabPl(); if (!P) return; const n = P.chips.length; cardI = (cardI + d + n) % n; tabKey = ''; };
+      controls.button('◀', () => pick(-1)); controls.button('▶', () => pick(1));
+      const ROWN = ['의식의 관여', '효과기', '대표 사례'], COLN = ['체성', '자율'];
+      for (let r = 0; r < 3; r++) for (let c = 0; c < 2; c++) controls.button(COLN[c] + ' · ' + ROWN[r], () => {
+        const P = tabPl(); if (!P) return; const ids = P.chips.map((q) => q.id).sort(), ch = P.chips.find((q) => q.id === ids[cardI % ids.length]), t = P.targets.find((q) => q.id === 't' + r + c);
+        if (ch && t) { P.place(ch, t); const nx = ids.findIndex((id, k) => k > cardI && !P.chips.find((q) => q.id === id).zone); if (nx >= 0) cardI = nx; } tabKey = '';
+      });
+      if (ctlEl) tabEls.push(...[].slice.call(ctlEl.children, nT0));
+      function syncTab() {
+        const P = tabPl(); tabEls.forEach((e) => { e.style.display = P ? '' : 'none'; }); if (!P) return;
+        const L = L2(), ids = P.chips.map((q) => q.id).sort(), cur = P.chips.find((q) => q.id === ids[cardI % ids.length]);
+        const key = 'tab|' + cardI + '|' + P.chips.map((q) => q.id + ':' + q.zone).join(','); if (key === tabKey) return; tabKey = key;
+        cardTxt.innerHTML = '카드: <b style="color:#ffd34d">' + (cur ? cur.label : '') + '</b>' + (cur && cur.zone ? ' ✓' : '');
+        const cell = (r, c) => { const q = P.chips.find((x) => x.zone === 't' + r + c); return q ? q.label : '<span style="color:#7f8aa3">빈칸</span>'; };
+        let h = '<b>체성 신경계 vs 자율 신경계</b> (카드 ' + P.placed + ' / 6)<table style="border-collapse:collapse;margin-top:4px;font-size:12px">';
+        h += '<tr><td></td><td style="padding:2px 6px;color:#fbbf24"><b>체성</b></td><td style="padding:2px 6px;color:#93c5fd"><b>자율</b></td></tr>';
+        for (let r = 0; r < 3; r++) h += '<tr><td style="padding:2px 6px;color:#cbd5e1">' + ROWN[r] + '</td><td style="padding:2px 6px">' + cell(r, 0) + '</td><td style="padding:2px 6px">' + cell(r, 1) + '</td></tr>';
+        info(h + '</table>' + (P.placed < 6 ? '◀ ▶로 카드를 고르고 아래 칸 단추를 눌러 놓아요.' : '모두 놓았어요! <b>✔ 확인하기</b>를 눌러요.'));
+        infoKey = 'tab';
+      }
       G.scale.setScalar(1); G.position.y = 0.4;
       setMode('lobe');
       const D = new THREE.Object3D();
       return {
         update(dt, t) {
           const L = L2();
+          syncTab();
           if (L) { // 2D 화면을 따라가요
             const m2 = L.S.mode;
             if (m2 !== seen2D) { seen2D = m2; const m = m2 === 'cer' ? 'lobe' : m2 === 'stem' ? 'stem' : m2 === 'per' ? 'body' : null; if (m && m !== mode) { segMode.set(m); setMode(m); } }
             const key = mode + '|' + (L.S.cer ? L.S.cer.sel : '') + '|' + (L.S.stem ? L.S.stem.sel : '') + '|' + (L.S.per ? L.S.per.mode : '');
-            if (key !== infoKey) {
+            if (key !== infoKey && !tabPl()) {
               infoKey = key; let h = INFO[mode];
               if (mode === 'lobe' && L.S.cer.sel) { const l = L.S.cer.sel, I = L.LOBE_INFO[l]; h = '<b>' + L.LOBE[l].name + '</b>: ' + I.fn.join(' · ') + '<br>' + I.ex + ' → ' + I.act; }
               else if (mode === 'stem' && L.S.stem.sel) { const P = L.PARTS[L.S.stem.sel]; h = '<b>' + P.name + '</b>: ' + P.fn.join(' · ') + '<br>손상되면: ' + P.dmg; }

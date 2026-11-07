@@ -658,7 +658,7 @@
     // 합성
     $('#oSy').textContent = Y.chain.length + ' / 4';
     $('#bEnd').disabled = Y.ph !== 'stop'; $('#bFold').disabled = Y.ph !== 'released';
-    $('#syNote').textContent = Y.ph === 'read' ? '코돈 ' + SYN[Y.c] + '에 안티코돈이 맞는 tRNA를 끌어다 A 자리(점선)에 놓아요. 눌러도 돼요.'
+    $('#syNote').innerHTML = Y.ph === 'read' ? '코돈 ' + SYN[Y.c] + '에 안티코돈이 맞는 tRNA를 <span class="only2d">끌어다 A 자리(점선)에 놓아요. 눌러도 돼요.</span><span class="only3d">화면 아래 tRNA 단추에서 골라 A 자리로 보내요.</span>'
       : Y.ph === 'stop' ? '종결 코돈 ' + SYN[SYN.length - 1] + '! 🛑 합성 끝내기를 눌러 사슬을 떼어 내요.'
       : Y.ph === 'release' ? '사슬이 리보솜에서 떨어져 나오는 중…' : Y.ph === 'released' ? '🧶 사슬 접기를 눌러 단백질을 완성해요.' : Y.ph === 'folded' ? '단백질 완성! ↺ 다시 하기로 한 번 더 해 봐도 좋아요.' : '사슬이 접히는 중…';
     // 변이

@@ -143,6 +143,9 @@
         phases: [[0, '접근'], [0.3, '결합(ES)'], [0.47, '반응'], [0.66, '생성물 방출']],
         onFrame(p) { if (subG) render(p * durOf()); },
       });
+      /* 3D에서 ▶ 기질 넣기 → 2D에서도 기질을 넣어요 (반응 횟수를 같이 세요) */
+      { const host = controls.text('').parentNode, pr = Array.from(host.querySelectorAll('.v3-player')).pop(), pb = pr && pr.querySelector('.v3-play');
+        if (pb) pb.addEventListener('click', () => { const L = ctx.lesson(), c = L && L.S && L.S.cx; if (player.playing && c && c.ph === 'idle' && L.cxGo) { L.cxGo(); lastPh = c.ph; } }); }
       restart();
       let lastM = null, lastS = null, lastN = -1;
       function follow() {
@@ -154,8 +157,7 @@
           follow();
           const L = ctx.lesson(), c = L && L.S && L.S.cx;
           if (c) {
-            if (player.playing && !wasPlay && player.p < 0.35 && c.ph === 'idle' && L.cxGo) L.cxGo();      // 3D에서 ▶ → 2D에서도 기질을 넣어요
-            else if (c.ph !== 'idle' && lastPh === 'idle' && !player.playing) { player.set(0); player.play(); }   // 오른쪽 ▶ 기질 넣기 → 3D도 처음부터
+            if (c.ph !== 'idle' && lastPh === 'idle' && !player.playing) { player.set(0); player.play(); }   // 오른쪽 ▶ 기질 넣기 → 3D도 처음부터
             if (c.n !== lastN) { lastN = c.n; text(phName || 'in'); }
             lastPh = c.ph;
           }

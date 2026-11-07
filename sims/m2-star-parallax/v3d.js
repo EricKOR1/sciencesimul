@@ -91,7 +91,7 @@
       const spotL = new THREE.Mesh(new THREE.SphereGeometry(0.22, 16, 12), new THREE.MeshBasicMaterial({ color: 0x9fe8ff, transparent: true, opacity: 0.9, depthWrite: false })), spotR = new THREE.Mesh(new THREE.SphereGeometry(0.22, 16, 12), new THREE.MeshBasicMaterial({ color: 0xffd34d, transparent: true, opacity: 0.9, depthWrite: false })); gP.add(spotL, spotR);
       const penLab = [label('왼쪽 눈', eyes[0].g, { size: 11.5, offset: [-0.4, 0.45, 0] }), label('오른쪽 눈', eyes[1].g, { size: 11.5, offset: [0.4, 0.45, 0] }), label('연필 (가까운 물체)', pencil, { size: 12, offset: [0, 0.95, 0] }), label('멀리 있는 배경', [0, 3.3, WZ], { size: 12 }), label('', [0, 1.6, WZ + 0.1], { size: 12, color: 'rgba(255,170,40,.95)' })];
       penLab[4].el.style.color = '#1b2333';
-      let pX = 'orbit', penPl = null, penDem = false, penP = 0;
+      let pX = '', penPl = null, penDem = false, penP = 0;
       { const before = pl; penPl = controls.player({ duration: 14, loop: true, autoplay: false, label: '번갈아 보기', phases: [[0, '가까운 연필'], [0.5, '먼 연필']], onFrame(p) { penDem = true; penP = p; } }); }
       const penRows = () => document.querySelectorAll('.v3-player');
       function setPX(m) {

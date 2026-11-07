@@ -136,6 +136,7 @@
           if (zoomTo) { const k = Math.min(1, dt * 4); orbit.dist += (zoomTo.d - orbit.dist) * k; orbit.tx += (zoomTo.tx - orbit.tx) * k; orbit.ty += (zoomTo.ty - orbit.ty) * k; if (Math.abs(zoomTo.d - orbit.dist) < 0.03) zoomTo = null; }
           const beak = S3.scene === 'beakers';
           groupB.visible = beak; groupC.visible = !beak;
+          { const pe = document.querySelector('.v3-player'); if (pe) pe.style.display = beak ? 'none' : ''; }   // ▶ 컵 넣기 → 열평형 재생은 열평형 장면에서만
           if (S3.scene !== lastScene) { lastScene = S3.scene; initAll(); }
           // 컵 위치
           const oldY = cupY(); kCup = S3.k; const dy = cupY() - oldY;

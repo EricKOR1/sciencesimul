@@ -245,7 +245,7 @@
       };
       let stateTouch = false;
       const trs = { id: '', c: 0, lastKey: '', vid: 'igloo', vt: 0 };
-      const trLab = label('', [0, HH + 0.45, 0], { size: 13.5, color: 'rgba(30,64,175,.92)' }), trLab2 = label('', [0, HH + 1.15, 0], { size: 12, color: 'rgba(80,60,160,.92)' });
+      const trLab = label('', [0, HH + 0.45, 0], { size: 13.5, color: 'rgba(30,64,175,.92)' }), trLab2 = label('', [0, HH + 1.15, 0], { size: 12, color: 'rgba(80,60,160,.92)' }); trLab.show(false); trLab2.show(false);   // 열 출입 장면에서만 보여요 (빈 이름표가 남지 않게)
       function setThermo(v) { tg.visible = tb.visible = col.visible = v; ticks.forEach((tk) => { tk.m.visible = v; tk.l.show(v); }); box.style.display = v ? '' : 'none'; if (!v) subLab.show(false); }
       function transFrame(sc, l, dt, tm) {
         let seq, title = '', desc = '', lessonKey = '';

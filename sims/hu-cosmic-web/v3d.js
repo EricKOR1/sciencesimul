@@ -192,7 +192,7 @@
           let st = null; try { st = sim.orbStats(o.eps, o.ageD || o.age); } catch (e) { /* 무시 */ }
           info('<b>구조의 기원</b> · 처음 밀도 요동 ±' + o.eps + ' % · 우주 나이 ' + Math.round(o.ageD || o.age) + '억 년<br>' + (o.eps === 0 ? '요동이 0 %이면 시간이 지나도 구조가 생기지 않아요. 은하는 고르게 흩어져 있어요.' : '조금 더 밀한 곳이 중력으로 주변 물질을 끌어당겨 <b>마디·실</b>이 되고, 비어 가는 곳은 <b>보이드</b>가 돼요.') + (st && st.ready !== false ? '<br>빈 곳 칸 ' + st.voids + ' / 64' : ''));
         } else if (sliceOn()) info('<b>쐐기 단면</b>: 수업의 <b>은하 지도</b>는 이 3차원 공간을 두께 약 ' + (SLAB * 2) + ' Mpc로 얇게 잘라 <b>위에서 본</b> 쐐기 도표예요. <span style="color:#ffe45e">노란 점</span>이 수업의 은하 지도 속 은하예요.<br>위·아래로 이어지는 구조는 지도에 나타나지 않아요.');
-        else if (mode === 'struct' && gFog > 0.3) info('<b>적색 편이로 본 위치</b>: 은하단 속 은하의 움직임(고유 속도)이 거리처럼 보여서 은하단이 <b>시선 방향으로 길쭉</b>하게 늘어나 보여요 (신의 손가락).');
+        else if (mode === 'struct' && gFog > 0.3) info('<b>적색 편이로 본 위치</b>: 적색 편이로 거리를 재면 은하단이 <b>시선 방향으로 길쭉</b>하게 늘어나 보여요 (신의 손가락). 왜 그럴까요?');
         else if (colored && !gate || showVoid && !gate) info('<b>그물 구조</b><br>' + (colored ? '<span style="color:#ffb04a">주황</span> 은하단(마디) · <span style="color:#7fb5ff">파랑</span> 필라멘트(실) · <span style="color:#5eead4">청록</span> 장벽(벽) · 회색 홀로 있는 은하<br>' : '') + (showVoid ? '푸른 공 = 보이드(은하가 거의 없는 빈 곳)<br>' : '') + '은하는 중력으로 모여 마디·실·벽을 이루고 그 사이에 큰 빈 곳이 생겨요.');
         else info('<b>우주 거대 구조 (합성 모형, 폭 약 ' + 2 * 130 + ' Mpc)</b><br>은하는 고르게 퍼져 있지 않고 <b>그물</b>처럼 이어져 있어요. 은하단 · 필라멘트 · 장벽 · 보이드를 돌려 보며 찾아봐요. (1 Mpc ≈ 326만 광년)');
       }

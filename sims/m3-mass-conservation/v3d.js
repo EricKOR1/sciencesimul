@@ -216,14 +216,16 @@
         phases: [[0, '반응 전'], [0.05, '반응이 일어나요'], [0.65, '반응 후'], [0.68, '질량 확인']],
         onFrame: frame,
       });
+      /* 3D에서 ▶ 반응 재생 → 2D의 ▶ 반응 재생도 눌러요 */
+      { const host = controls.text('').parentNode, pr = Array.from(host.querySelectorAll('.v3-player')).pop(), pb = pr && pr.querySelector('.v3-play');
+        if (pb) pb.addEventListener('click', () => { const L = ctx.lesson(), A = L && L.AS; if (pl.playing && A && cur && cur.atoms && A.st !== 'run') { const b = document.getElementById('playBtn'); if (b && !b.disabled) { b.click(); lastSt = A.st; } } }); }
       return {
         update(dt, t) {
           const c = scenario(), s = [c.key, c.closed, c.lidOff, c.atoms].join('|');
           if (s !== sig) { sig = s; rebuild(c); pl.pause(); pl.set(0); }
           const L = ctx.lesson(), A = L && L.AS;
           if (A && c.atoms) {
-            if (pl.playing && !wasPlay && pl.p < 0.35 && A.st !== 'run') { const b = document.getElementById('playBtn'); if (b && !b.disabled) b.click(); }
-            else if (A.st === 'run' && lastSt !== 'run' && !pl.playing) { pl.set(0); pl.play(); }
+            if (A.st === 'run' && lastSt !== 'run' && !pl.playing) { pl.set(0); pl.play(); }
             lastSt = A.st;
           }
           wasPlay = pl.playing;
