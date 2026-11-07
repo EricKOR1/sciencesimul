@@ -134,16 +134,17 @@
 
       /* 2D 화면과 같은 값 · 3D에서 고르면 2D도 같이 바뀌어요 */
       function toLesson(f) { const L = ctx.lesson(); if (L && L.S && L.S.cx && L.S.cx.ph === 'idle') { f(L); return true; } return false; }
-      const segM = controls.segment('결합 모형', [{ value: 'lock', label: '🔑 열쇠–자물쇠' }, { value: 'induced', label: '🤝 유도 적합' }], model, (v) => { model = v; toLesson((L) => L.cxSetModel(v)); restart(); });
-      const segS = controls.segment('넣을 기질', [{ value: 'S', label: '맞는 기질 S' }, { value: 'near', label: '비슷한 S′' }, { value: 'far', label: '다른 S″' }], sub, (v) => { sub = v; toLesson((L) => { L.S.cx.sub = v; L.updateCtl(); }); restart(); });
-      let player = null;
+      const segM = controls.segment('결합 모형', [{ value: 'lock', label: '🔑 열쇠–자물쇠' }, { value: 'induced', label: '🤝 유도 적합' }], model, (v) => { if (!toLesson((L) => L.cxSetModel(v))) { segM.set(model); return; } model = v; restart(); });
+      const segS = controls.segment('넣을 기질', [{ value: 'S', label: '맞는 기질 S' }, { value: 'near', label: '비슷한 S′' }, { value: 'far', label: '다른 S″' }], sub, (v) => { if (!toLesson((L) => { L.S.cx.sub = v; L.updateCtl(); })) { segS.set(sub); return; } sub = v; restart(); });
+      /* ▶ 기질 넣기: 2D의 ▶ 기질 넣기(cxGo)와 같아요 — 반응 횟수도 같이 세요. 오른쪽 단추로 넣어도 3D가 처음부터 보여 줘요 */
+      let player = null, wasPlay = false, lastPh = 'idle';
       player = controls.player({
-        duration: 6.4, loop: true, autoplay: true, label: '기질 넣기',
+        duration: 6.4, loop: false, autoplay: false, label: '기질 넣기',
         phases: [[0, '접근'], [0.3, '결합(ES)'], [0.47, '반응'], [0.66, '생성물 방출']],
         onFrame(p) { if (subG) render(p * durOf()); },
       });
       restart();
-      let lastM = null, lastS = null;
+      let lastM = null, lastS = null, lastN = -1;
       function follow() {
         const c = window.__sim && window.__sim.S && window.__sim.S.cx;
         if (c && (c.model !== lastM || c.sub !== lastS)) { lastM = c.model; lastS = c.sub; if (c.model !== model || c.sub !== sub) { model = c.model; sub = c.sub; segM.set(model); segS.set(sub); restart(); } }
@@ -151,6 +152,14 @@
       return {
         update(dt) {
           follow();
+          const L = ctx.lesson(), c = L && L.S && L.S.cx;
+          if (c) {
+            if (player.playing && !wasPlay && player.p < 0.35 && c.ph === 'idle' && L.cxGo) L.cxGo();      // 3D에서 ▶ → 2D에서도 기질을 넣어요
+            else if (c.ph !== 'idle' && lastPh === 'idle' && !player.playing) { player.set(0); player.play(); }   // 오른쪽 ▶ 기질 넣기 → 3D도 처음부터
+            if (c.n !== lastN) { lastN = c.n; text(phName || 'in'); }
+            lastPh = c.ph;
+          }
+          wasPlay = player.playing;
           enz.position.y = 0.04 * Math.sin(performance.now() / 700);
         },
         sync() { follow(); },

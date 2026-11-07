@@ -888,7 +888,7 @@
         missions: [
           {
             title: '📍 상승·하강 위치 표시',
-            goal: '단면 위쪽의 동그라미 4개(0°, 30°, 60°, 극)를 눌러 <b>↑ 상승 기류</b>인지 <b>↓ 하강 기류</b>인지 표시해요. (누를 때마다 바뀌어요)',
+            goal: '<span class="only2d">단면 위쪽의 동그라미 4개(0°, 30°, 60°, 극)를</span><span class="only3d">아래 막대의 위치 단추 4개(0°, 30°, 60°, 극)를</span> 눌러 <b>↑ 상승 기류</b>인지 <b>↓ 하강 기류</b>인지 표시해요. (누를 때마다 바뀌어요)',
             hint: '공기 덩어리(점)가 위로 올라가는 곳은 ↑, 아래로 내려오는 곳은 ↓예요. 고리의 화살표를 따라가 봐요.',
             setup() { S.marks = {}; S.focus = 'all'; syncControls(); },
             check: () => marksOK(),
@@ -1040,6 +1040,7 @@
   /* ---------- 점검용 ---------- */
   window.__sim = {
     S, dnd, MARKS, WINDS, game: () => game, view: activeView, setScene, Aenergy, Eenergy,
+    markLat(lat) { const cur = S.marks[lat]; S.marks[lat] = !cur ? 'up' : cur === 'up' ? 'down' : null; Sound.tick(); },   // 단면 동그라미 누르기와 같아요 (3D 막대의 위치 단추)
     client(x, y) { const V = activeView(), r = V.v.canvas.getBoundingClientRect(); return { x: r.left + x * r.width / V.L.vw, y: r.top + y * r.height / V.L.vh }; },
     markClient(lat) { const V = activeView(), G = geo(V.L), R = cellRegion(G.M.w, G.M.h, 'main'); return this.client(G.M.x + LATX(R, lat), G.M.y + R.ty - 26 * V.L.fs); },
     cardClient(id) { const it = dnd.get(id); return this.client(it.x, it.y); },

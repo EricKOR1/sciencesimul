@@ -142,6 +142,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHN ? 22 : 14, theta: 0.1, phi: 1.2, min: 6, max: 30, target: [0, 0.3, 0] },
     autoRotate: 0,
+    levels: [3],               // 4단계(원자 모형)만 3D. 앙금·기체 발생·연소 실험(저울·뚜껑·예상 카드)은 2D
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const K = ChemKit(THREE);
@@ -208,15 +209,24 @@
         labL.set(m ? '질량 <b>' + m[0].toFixed(1) + ' g</b>' : '');
         labR.set(m ? '질량 <b>' + m[1].toFixed(1) + ' g</b>' : '');
       }
+      /* ▶ 반응 재생: 2D의 ▶ 반응 재생과 같아요 (미션의 '재생한 반응'도 같이 세요). 오른쪽 단추로 재생해도 3D가 처음부터 보여 줘요 */
+      let wasPlay = false, lastSt = 'idle';
       const pl = controls.player({
-        duration: 8, loop: true, label: '반응 재생',
+        duration: 8, loop: false, label: '반응 재생',
         phases: [[0, '반응 전'], [0.05, '반응이 일어나요'], [0.65, '반응 후'], [0.68, '질량 확인']],
         onFrame: frame,
       });
       return {
         update(dt, t) {
           const c = scenario(), s = [c.key, c.closed, c.lidOff, c.atoms].join('|');
-          if (s !== sig) { sig = s; rebuild(c); }
+          if (s !== sig) { sig = s; rebuild(c); pl.pause(); pl.set(0); }
+          const L = ctx.lesson(), A = L && L.AS;
+          if (A && c.atoms) {
+            if (pl.playing && !wasPlay && pl.p < 0.35 && A.st !== 'run') { const b = document.getElementById('playBtn'); if (b && !b.disabled) b.click(); }
+            else if (A.st === 'run' && lastSt !== 'run' && !pl.playing) { pl.set(0); pl.play(); }
+            lastSt = A.st;
+          }
+          wasPlay = pl.playing;
           arrow.position.x = Math.sin(t * 2.5) * 0.06;
         },
       };

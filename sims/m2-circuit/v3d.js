@@ -1,6 +1,6 @@
 /* m2-circuit · 3D 전기 회로 (전지 · 스위치 · 전구 · 도선)
    스위치를 닫으면 도선 속 전자가 (−)극에서 (+)극 쪽으로 흐르고, 전류의 방향은 그 반대(+극에서 −극)로 약속해요.
-   전지의 전압(V)이 클수록 전류가 세고 전구가 더 밝아요. 2D 실험의 스위치·전압을 따라가요. */
+   전지의 전압(V)이 클수록 전류가 세고 전구가 더 밝아요. 실험의 스위치·전압 값을 그대로 따라가요. */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -11,7 +11,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHN ? 13.5 : 12, theta: 0.3, phi: 1.0, min: 6, max: 24, target: [0, 0, 0] },
     autoRotate: 0,
-    levels: [0, 1, 2, 3],            // 전류계 ⓐⓑⓒ(3단계)와 물의 흐름 모형(4단계)도 3D로 볼 수 있어요
+    levels: [0, 1, 2, 3],            // 모든 단계를 3D로: 전류계 ⓐⓑⓒ(3단계) · 물의 흐름 모형(4단계)
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3;
@@ -134,8 +134,8 @@
       const ampTxt = { c: '' };
       function circuitInfo(closed, V, e, i, amm, wat) {
         const I = V / 10;
-        if (amm && closed) return '<b>전류계 ⓐ ⓑ ⓒ</b>: 전구 앞 · 전구 뒤 · (−)극 앞 어디서나 전류는 <b>' + I.toFixed(2) + ' A</b>로 <b>같아요</b>. 전류는 전구에서 <b>소모되지 않아요</b>.<br>전자는 사라지지 않고 회로를 따라 계속 돌아요. 옆의 ⓐⓑⓒ 읽기 단추를 눌러 값을 읽어 보세요.';
-        if (wat) return '<b>물의 흐름 모형</b>: 펌프가 물을 높이 올려 <b>높이 차</b>를 만들면 물이 흘러요. 전지가 만드는 <b>전압(' + V.toFixed(1) + ' V)</b>이 전류를 흐르게 해요.<br>높이 차 ↔ 전압, 물의 흐름 ↔ 전류, 물레방아 ↔ 전구, 밸브 ↔ 스위치예요. 전압이 높을수록 물(전자)이 <b>빠르게</b> 흘러 전구가 밝아져요.' + (closed ? '' : '<br><span style="color:#ffd34d">스위치(밸브)가 닫혀서 흐르지 않아요.</span>');
+        if (amm && closed) return '<b>전류계 ⓐ ⓑ ⓒ</b>: 전구 앞 · 전구 뒤 · (−)극 앞에서 전류를 재요.<br>아래 <b>ⓐ 읽기 · ⓑ 읽기 · ⓒ 읽기</b> 버튼을 눌러 세 값을 비교해 보세요.';
+        if (wat) return '<b>물의 흐름 모형</b>: 펌프가 물을 높이 올려 <b>높이 차</b>를 만들면 물이 흘러 물레방아를 돌려요. 지금 전압 <b>' + V.toFixed(1) + ' V</b><br>전압을 바꾸며 물의 빠르기, 전자의 빠르기, 전구의 밝기를 비교해 보세요.' + (closed ? '' : '<br><span style="color:#ffd34d">스위치가 열려 있어서 흐르지 않아요.</span>');
         return null;
       }
       let showE = false, showI = false, uPh = 0, lastInfo = '', glowV = 0, swA = 0, labs = true;
@@ -144,8 +144,8 @@
         if (k === lastInfo) return; lastInfo = k;
         if (!closed) { info('<b>열린 회로</b>: 스위치가 열려 있어서 회로가 끊겼어요. <b>전류가 흐르지 않아</b> 전구도 꺼져 있어요.'); return; }
         let t = `<b>닫힌 회로</b>: 전지 → 전구 → 스위치가 도선으로 이어져 <b>전류가 흘러</b> 전구가 켜져요.<br>전지 ${V.toFixed(1)} V → 전구 ${V > 4.2 ? '아주 밝아요' : V > 2.4 ? '밝아요' : '어두워요'}`;
-        if (e) t += '<br><b style="color:#8fb0ff">전자(파랑)</b>는 <b>(−)극 → (+)극</b> 쪽으로 흘러요.';
-        if (i) t += '<br><b style="color:#ff9d90">전류(주황 화살표)</b>의 방향은 <b>(+)극 → (−)극</b>이에요. 전자와 반대예요.';
+        if (e) t += '<br><b style="color:#8fb0ff">전자(파랑)</b>가 어느 극에서 어느 극으로 움직이는지 보세요.';
+        if (i) t += '<br><b style="color:#ff9d90">전류(주황 화살표)</b>의 방향을 전자와 비교해 보세요.';
         if (!e && !i) t += '<br><span style="color:#ffd34d">[전자 보기] · [전류 방향 보기]를 켜 보세요.</span>';
         info(t);
       }
@@ -179,7 +179,7 @@
           lE.show(labs && showE && closed); lI.show(labs && showI && closed);
           // 3단계 도구: 전류계 · 물의 흐름 모형
           const TT = sm() && sm().T, amOn = !!(TT && TT.am_a > 0.5), waOn = !!(TT && TT.water > 0.5), waK = TT ? Math.max(0, Math.min(1, TT.water)) : 0;
-          AMP.forEach((o, i) => { o.g.visible = amOn; o.lab.show(amOn && labs); ampBtns[i].style.display = amOn ? '' : 'none'; if (amOn) { const rd = s && s.read && s.read[o.k], tg2 = rd ? I : 0; o.v += (tg2 - o.v) * Math.min(1, dt * 6); o.dial.userData.set(o.v); o.lab.set(o.tag + ' ' + o.cap + ' <b>' + (rd ? I.toFixed(2) + ' A' : '?') + '</b>'); } });
+          AMP.forEach((o, i) => { o.g.visible = amOn; o.lab.show(amOn && labs); ampBtns[i].style.display = amOn && !(s && s.read && s.read[o.k]) ? '' : 'none'; if (amOn) { const rd = s && s.read && s.read[o.k], tg2 = rd ? I : 0; o.v += (tg2 - o.v) * Math.min(1, dt * 6); o.dial.userData.set(o.v); o.lab.set(o.tag + ' ' + o.cap + ' <b>' + (rd ? I.toFixed(2) + ' A' : '?') + '</b>'); } });
           const sc = 1 - 0.38 * waK; gCir.scale.setScalar(sc); gCir.position.set(-4.2 * waK, 0, 0);
           gW.visible = waK > 0.02; gW.scale.setScalar(0.85); gW.position.set(3.4 * waK + 1.2 * (1 - waK), -0.4, 0);
           wLab.forEach((l) => l.show(gW.visible && labs)); hLab.show(gW.visible && labs);

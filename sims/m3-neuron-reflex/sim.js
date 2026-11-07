@@ -1198,9 +1198,9 @@
       missions: [
         ids({
           title: '신호를 끝까지 전달하기',
-          goal: '<b>⚡ 자극 주기</b>를 눌러 신호가 가지 돌기에서 축삭 돌기 끝까지 가는 모습을 <b>2번</b> 관찰해요.',
-          hint: '오른쪽 위 노란 단추를 눌러요. 반짝이는 신호가 어느 방향으로 움직이는지 지켜봐요.',
-          setup() { setScene('neuron'); setNvView('one'); NV.deliv1 = 0; showHint('⚡ 자극 주기를 눌러 신호를 보내요', 6000); },
+          goal: '<span class="only2d"><b>⚡ 자극 주기</b></span><span class="only3d"><b>▶ 신호 전달</b></span>를 눌러 신호가 가지 돌기에서 축삭 돌기 끝까지 가는 모습을 <b>2번</b> 관찰해요.',
+          hint: '<span class="only2d">오른쪽 위 노란 단추를 눌러요.</span><span class="only3d">아래 ▶ 신호 전달을 눌러요.</span> 반짝이는 신호가 어느 방향으로 움직이는지 지켜봐요.',
+          setup() { setScene('neuron'); setNvView('one'); NV.deliv1 = 0; showHint(document.body.classList.contains('v3-mode') ? '▶ 신호 전달을 눌러 신호를 보내요' : '⚡ 자극 주기를 눌러 신호를 보내요', 6000); },
           check: () => NV.deliv1 >= 2, hold: 0.2,
           status: () => '끝까지 전달된 신호: <b>' + Math.min(NV.deliv1, 2) + ' / 2</b>번',
           explain: '신호는 <b>가지 돌기 → 신경 세포체 → 축삭 돌기 → 축삭 돌기 끝</b> 방향으로만 가요. 축삭 돌기 끝에서 다음 뉴런이나 근육에 신호를 넘겨 줘요.',
@@ -1208,7 +1208,7 @@
         ids({
           title: '세 종류의 뉴런 연결하기',
           goal: '<b>🔗 뉴런 연결</b>로 바꾸고 자극을 줘서 <b>근육까지</b> 신호를 전달해요. 세 뉴런을 눌러 하는 일도 읽어 봐요.',
-          hint: '“뉴런 연결” 단추를 누르고 ⚡ 자극 주기를 눌러요. 감각·연합·운동 뉴런을 각각 눌러 보세요.',
+          hint: '“뉴런 연결” 단추를 누르고 <span class="only2d">⚡ 자극 주기를 눌러요. 감각·연합·운동 뉴런을 각각 눌러 보세요.</span><span class="only3d">▶ 신호 전달을 눌러요. 아래 막대의 감각·연합·운동 뉴런 단추를 각각 눌러 보세요.</span>',
           setup() { setScene('neuron'); NV.delivC = 0; NV.types.clear(); showHint('🔗 뉴런 연결로 바꿔 보세요', 6000); },
           check: () => NV.delivC >= 1 && NV.types.size >= 3, hold: 0.2,
           status: () => mark(NV.delivC >= 1) + ' 근육까지 전달 &nbsp; ' + mark(NV.types.size >= 3) + ' 세 뉴런 읽기 (' + NV.types.size + '/3)',
@@ -1379,6 +1379,7 @@
 
   window.__sim = {
     S, NV, NS, RU, RF, RFM, MATCH, REGIONS, game, setScene, setNvView, fireStim, startDrop, doCatch, runReflex, setReflexMode, distOf, avgMs, orderChipRect,
+    readNeuron(k) { if (!NV_INFO[k]) return null; NV.sel = k; if (NV.view === 'chain' && NV_COL[k]) NV.types.add(k); Sound.click(); return NV_INFO[k]; },   // 뉴런을 눌러 읽기와 같아요 (3D 막대의 뉴런 단추)
     toClient(x, y) { const r = view.canvas.getBoundingClientRect(); return { x: r.left + (x / W) * r.width, y: r.top + (y / H) * r.height }; },
     regionP(id) { const R = REGIONS[id]; return this.toClient(BR.ox + R.lab[0] * BR.k, BR.oy + R.lab[1] * BR.k - 4); },
   };

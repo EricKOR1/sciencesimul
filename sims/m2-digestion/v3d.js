@@ -21,7 +21,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHN ? 17 : 12.5, theta: 0.25, phi: 1.35, min: 5, max: 26, target: [0, 1.0, 0] },
     autoRotate: 0,
-    levels: [2],                     // 3단계(소장 융털)의 영양소 끌기 미션은 2D 화면에서 해요
+    levels: [2],                     // 3단계(소화 기관과 소화 효소): 효소 카드는 아래 버튼으로 놓아요
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
       const V3 = THREE.Vector3;
@@ -159,7 +159,7 @@
           tubes = Tt.tubes.map((tb) => tubeLive(tb, tb.food ? tb.food.name + ' (' + NUT[tb.food.nut] + ')' : ''));
           drops = Object.keys(Tt.dp).map((k) => dropLive(Tt.dp[k], Tt.dp[k].label));
           const note = Tt.tubes.map((tb) => tb.note).filter(Boolean).sort((a, b) => b.t0 - a.t0)[0], found = Object.keys(Tt.found).map((k) => NUT[k]).join(' · ');
-          extra = (note ? '<b>' + note.text + '</b><br>' : '') + '찾은 영양소: <b>' + (found || '아직 없어요') + '</b><br>아이오딘 → 녹말(청람색) · 베네딕트(가열) → 당(황적색) · 뷰렛 → 단백질(보라색) · 수단 Ⅲ → 지방(선홍색)<br>검출 용액은 옆의 2D 화면에서 시험관에 떨어뜨려요. 또는 ▶ 재생을 눌러 보세요.';
+          extra = (note ? '<b>' + note.text + '</b><br>' : '') + '찾은 영양소: <b>' + (found || '아직 없어요') + '</b><br>아이오딘 → 녹말(청람색) · 베네딕트(가열) → 당(황적색) · 뷰렛 → 단백질(보라색) · 수단 Ⅲ → 지방(선홍색)<br>▶ 실험 보기를 누르면 검출 반응을 차례로 볼 수 있어요.';
           head = '';
         } else {
           const SL = l && l.SAL; if (!SL) return;
@@ -168,7 +168,7 @@
           const keys = ph === 'prep' ? ['water', 'saliva'] : ph === 'test' ? ['iodine', 'benedict'] : [];
           drops = keys.map((k) => dropLive(SL.dp[k], SL.dp[k].label));
           if (ph === 'bath') bath = { text: '37 °C 물중탕 ' + Math.round(SL.time) + '분', x0: -3.2, x1: 0.3 };
-          extra = ph === 'prep' ? '시험관 <b>A</b>에는 증류수, <b>B</b>에는 침을 넣어요. (옆의 2D 화면에서 점적병을 끌어다 놓아요)' : ph === 'bath' ? '<b>37 °C 물중탕</b>(몸 온도)에서 ' + Math.round(SL.time) + '분: 침 속 <b>아밀레이스</b>가 녹말을 <b>엿당</b>으로 분해해요.' : '아이오딘은 <b>녹말</b>이 있으면 청람색, 베네딕트는 가열했을 때 <b>당</b>이 있으면 황적색이 돼요. 침을 넣은 B에는 녹말이 줄고 당이 생겨요.';
+          extra = ph === 'prep' ? '시험관 <b>A</b>에는 증류수, <b>B</b>에는 침을 넣어요.' : ph === 'bath' ? '<b>37 °C 물중탕</b>(몸 온도)에서 ' + Math.round(SL.time) + '분: 침 속 <b>아밀레이스</b>가 녹말을 <b>엿당</b>으로 분해해요.' : '아이오딘은 <b>녹말</b>이 있으면 청람색, 베네딕트는 가열했을 때 <b>당</b>이 있으면 황적색이 돼요. 침을 넣은 B에는 녹말이 줄고 당이 생겨요.';
         }
         // 시험관 그리기
         LTUBE.forEach((o, i) => {
@@ -196,7 +196,7 @@
       }
       function apply() {
         tract.visible = mode === 'tract'; vil.visible = mode === 'vil'; lab.visible = mode === 'lab'; if (mode !== 'lab') { LTUBE.forEach((o) => o.lb.show(false)); LDROP.forEach((o) => o.lb.show(false)); bathLab.show(false); } lpmode = false;
-        lTr.forEach((l) => l.show(labsOn && mode === 'tract')); enz.forEach((l) => l.show(enzOn && mode === 'tract')); lVil.forEach((l) => l.show(labsOn && mode === 'vil'));
+        lTr.forEach((l) => l.show(labsOn && mode === 'tract')); enz.forEach((l) => l.show(enzOn && mode === 'tract' && !cardsShown)); lVil.forEach((l) => l.show(labsOn && mode === 'vil'));
         if (mode === 'lab') { orbit.dist = PHN ? 15.5 : 10.5; orbit.ty = 1.0; orbit.phi = 1.3; orbit.theta = 0.2; } else if (mode === 'tract') { orbit.dist = PHN ? 17 : 12.5; orbit.ty = 1.0; orbit.phi = 1.35; } else { orbit.dist = PHN ? 13 : 9.5; orbit.ty = 0.1; orbit.phi = 1.3; }
         lastS = -1;
         playerRow(mode === 'tract');
@@ -225,6 +225,33 @@
         [...ctlEl.querySelectorAll('button')].forEach((b) => { if (ST.some((q) => q.n === b.textContent.trim())) b.style.display = on ? '' : 'none'; });
       }
       controls.button('이름표', () => { labsOn = !labsOn; enzOn = labsOn; apply(); });
+      /* 효소 카드 놓기(3단계 미션): 카드를 고른 뒤 놓을 곳 버튼을 눌러요 → 2D 카드와 같은 상태(window.__sim.placeCard) */
+      const CN = ['아밀레이스', '펩신', '트립신', '라이페이스'], CS = [['mouth', '입'], ['stomach', '위'], ['small', '소장']];
+      const ctlBar = ctx.renderer.domElement.closest('.v3-wrap').querySelector('.v3-ctl');
+      const cardUI = []; let cardSel = 0, cardsShown = false, lastCardKey = '';
+      { const c0 = ctlBar.children.length;
+        const segC = controls.segment('효소 카드', CN.map((n, i) => ({ label: n, value: i })), 0, (v) => { cardSel = v; });
+        CS.forEach(([k, n]) => controls.button(n + '에 놓기', () => {
+          const s = sm(); if (!s || !s.placeCard) return; s.placeCard(cardSel, k);
+          const nx = [1, 2, 3, 4].map((d) => (cardSel + d) % 4).find((i) => { const c = s.TR.cards.find((q) => q.idx === i); return c && !c.site; });
+          if (nx != null) { cardSel = nx; segC.set(nx); }
+        }));
+        for (let i = c0; i < ctlBar.children.length; i++) cardUI.push(ctlBar.children[i]); }
+      const siteLab = { mouth: label('', mouth, { offset: [1.0, 0.05, 0], color: 'rgba(22,130,70,.95)' }), stomach: label('', stom, { offset: [1.8, -0.35, 0], color: 'rgba(22,130,70,.95)' }), small: label('', small, { offset: [2.3, 0.2, 0.4], color: 'rgba(22,130,70,.95)' }) };
+      function cardFrame() {
+        const s = sm(), on = !!(s && s.cardsOn && s.cardsOn()) && mode === 'tract';
+        if (on !== cardsShown) { cardsShown = on; cardUI.forEach((e) => { e.style.display = on ? '' : 'none'; }); enz.forEach((l) => l.show(enzOn && mode === 'tract' && !on)); lastS = -1; lastCardKey = ''; }
+        if (!on) { Object.keys(siteLab).forEach((k) => siteLab[k].show(false)); return false; }
+        const cards = s.TR.cards, key = cards.map((c) => c.idx + ':' + c.site).join(',');
+        if (key !== lastCardKey) {
+          lastCardKey = key;
+          CS.forEach(([k, n]) => { const names = cards.filter((c) => c.site === k).sort((a, b) => a.idx - b.idx).map((c) => c.name); siteLab[k].set('🃏 ' + n + ': ' + (names.join(' · ') || '?')); siteLab[k].show(true); });
+          const left = cards.filter((c) => !c.site).length;
+          info('<b>효소 카드 놓기</b>: 아래에서 카드를 고른 뒤 <b>입 · 위 · 소장</b> 중 그 효소가 일하는 곳 버튼을 눌러요.<br>' + (left ? '남은 카드 <b>' + left + '장</b>' : '다 놓았으면 <b>✔ 확인하기</b>를 눌러요.'));
+        }
+        return true;
+      }
+      cardUI.forEach((e) => { e.style.display = 'none'; });
       apply();
       let lastSc = '', k0 = 0;
       function readScene() { const s = sm() && sm().S && sm().S.scene; if (!s || s === lastSc) return; lastSc = s; const m = s === 'villi' ? 'vil' : (s === 'tests' || s === 'saliva') ? 'lab' : 'tract'; if (m !== mode) { if (lpmode) { lpmode = false; if (lpl) lpl.pause(); } mode = m; sg.set(m); apply(); } }
@@ -232,6 +259,7 @@
         sync() { lastSc = ''; readScene(); },
         update(dt, t) {
           if ((k0++ % 15) === 0) readScene();
+          if (mode !== 'tract') cardFrame();
           if (mode === 'lab') { const sm0 = sm(); if (sm0 && sm0.S) labFrame(sm0.S, sm0, t, dt); return; }
           if (mode === 'tract') {
             now = t;
@@ -245,7 +273,8 @@
             }
             bolus.position.copy(food.getPointAt(u));
             let s = ST.findIndex((q) => u >= q.u[0] && u < q.u[1]); if (s < 0) s = 0;
-            if (s !== lastS) { lastS = s; info(ST[s].t + '<br>소화: 큰 영양소가 작은 영양소로 잘게 쪼개지는 과정이에요.'); stSeg.set(s); }
+            const cards = cardFrame();
+            if (s !== lastS) { lastS = s; if (!cards) info(ST[s].t + '<br>소화: 큰 영양소가 작은 영양소로 잘게 쪼개지는 과정이에요.'); stSeg.set(s); }
             // 분해: 단계가 지날수록 덩어리가 작아지고 조각이 흩어져요
             const brk = Math.min(1, Math.max(0, (u - 0.05) / 0.45));
             bolus.scale.setScalar(1 - 0.45 * brk); bits.forEach((b, i) => { const a = i * 2.4 + t * 1.5; b.position.set(Math.cos(a), Math.sin(a * 1.3), Math.sin(a)).multiplyScalar(0.3 + 0.6 * brk); b.scale.setScalar(0.6 + 0.5 * brk); });

@@ -34,7 +34,7 @@
     hint: '드래그: 돌리기 · 두 손가락/휠: 확대',
     camera: { dist: narrow ? 7.4 : 4.8, theta: 0.3, phi: 1.42, target: narrow ? [0.45, 0.22, 0] : [0.4, 0.22, 0], min: 2.6, max: 11 },
     autoRotate: 0,
-    levels: [0, 1, 3],            // 단계 3(바람 카드 끌어 놓기)은 2D 화면에서 해요
+    levels: [1, 3],               // 2단계(순환 모형: 위치 표시는 3D 막대의 단추로)·4단계(열 운반·날씨 이동)는 3D. 1단계(위도별 에너지 그래프 읽기)·3단계(바람 카드 끌어 놓기)는 2D
     build(ctx) {
       const { THREE, root, camera, label, info, controls } = ctx;
       const V = THREE.Vector3;
@@ -156,6 +156,7 @@
         if (fl) setBeam(latV);
         packI.visible = rl; packLab.show(rl && circ); bandM.forEach((m) => { m.visible = rl; }); bandLab.forEach((L) => L.show(rl));
         cloudGrp.forEach((g) => { g.visible = st; }); dustI.visible = st; gobiLab.show(st); westLab.show2 = st; if (!st) westLab.show(false); if (st && !faced) faced = true; if (!st) faced = false;
+        if (typeof globeRow !== 'undefined') globeRow.forEach((e) => { e.style.display = st || fl ? 'none' : ''; });
         if (typeof circRow !== 'undefined') { circRow.forEach((e) => { e.style.display = rl ? '' : 'none'; }); sceneRow.forEach((e) => { e.style.display = (rl || st) && (S.lv >= 3 || S.free) ? '' : 'none'; }); if (st && plRow) plRow.style.display = 'none'; }
         const dim = scene === 'role' && !circ; 
         loops.forEach((L) => {
@@ -197,8 +198,12 @@
         if (scene !== 'flash') parts.push('<span style="color:#fca5a5">●</span> 우리나라 (약 37°N, 편서풍 지역)');
         info(parts.join('<br>'));
       }
-      controls.segment('반구', [{ value: 'N', label: '북반구' }, { value: 'both', label: '양쪽' }], hemi, (v) => { hemi = v; sig = ''; });
-      const spB = controls.button('🌍 자전 ✓', () => { spin = !spin; spB.classList.toggle('on', spin); spB.textContent = '🌍 자전 ' + (spin ? '✓' : '✕'); }); spB.classList.add('on');
+      const ctlHost = ctx.controls.text('').parentNode, tail = (fn) => { const n0 = ctlHost.children.length; fn(); return Array.from(ctlHost.children).slice(n0); };
+      let spB = null;
+      const globeRow = tail(() => {      // 반구 · 자전: 날씨 이동(지구본을 우리나라 쪽으로 고정)에서는 숨겨요
+        controls.segment('반구', [{ value: 'N', label: '북반구' }, { value: 'both', label: '양쪽' }], hemi, (v) => { hemi = v; sig = ''; });
+        spB = controls.button('🌍 자전 ✓', () => { spin = !spin; spB.classList.toggle('on', spin); spB.textContent = '🌍 자전 ' + (spin ? '✓' : '✕'); }); spB.classList.add('on');
+      });
       /* ▶ 공기의 순환 한 바퀴 (한 고리를 따라 상승 → 이동 → 하강 → 지표에서 되돌아옴) */
       const plr = controls.player({
         duration: 10, loop: true, autoplay: true, label: '공기 순환',
@@ -206,9 +211,17 @@
         onFrame(p) { tp = p; },
       });
       const plRow = Array.from(ctx.controls.text('').parentNode.querySelectorAll('.v3-player'))[0];
-      const ctlHost = ctx.controls.text('').parentNode, tail = (fn) => { const n0 = ctlHost.children.length; fn(); return Array.from(ctlHost.children).slice(n0); };
       const sceneRow = tail(() => controls.segment('화면', [{ value: 'role', label: '🔥 열 운반' }, { value: 'sat', label: '🛰️ 날씨 이동' }], 'role', (v) => { const b = document.querySelector('#sceneSeg button[data-s="' + v + '"]'); if (b) b.click(); }));
       const circRow = tail(() => controls.segment('대순환', [{ value: '0', label: '⏸ 멈춘다고 가정' }, { value: '1', label: '🌀 작동' }], '1', (v) => { const b = document.querySelector('#circSeg button[data-c="' + v + '"]'); if (b) b.click(); }));
+      /* 📍 상승·하강 표시(2단계): 2D 단면의 동그라미 누르기(markLat)와 같아요. 누를 때마다 ? → ↑ → ↓ */
+      const MK = [[0, '0°'], [30, '30°'], [60, '60°'], [90, '극']];
+      let mkBtns = [];
+      const markRow = tail(() => { controls.text('<b>표시</b>'); mkBtns = MK.map(([la, nm]) => controls.button(nm + ' ?', () => { const L = ctx.lesson(); if (L && L.markLat) L.markLat(la); })); });
+      function markSync(S) {
+        const on = scene === 'cells' && S.lv === 1 && !S.free;
+        markRow.forEach((e) => { e.style.display = on ? '' : 'none'; });
+        if (on) mkBtns.forEach((b, i) => { const v = (S.marks || {})[MK[i][0]], tx = MK[i][1] + ' ' + (v === 'up' ? '↑' : v === 'down' ? '↓' : '?'); if (b.textContent !== tx) b.textContent = tx; b.classList.toggle('on', !!v); });
+      }
       layout();
 
       return {
@@ -216,6 +229,7 @@
           const S = ((ctx.lesson() || {}).S) || {};
           const ns = [S.scene, S.focus, S.circ, Math.round(S.lat || 0), hemi].join('|');
           if (ns !== sig) { sig = ns; layout(); }
+          markSync(S);
           if (spin && scene !== 'flash' && scene !== 'sat') earth.rotation.y += 0.22 * dt;            // 서 → 동 (북극 위에서 보면 반시계 방향)
           else if (scene === 'flash') earth.rotation.y = 0;
           const run = !(scene === 'role' && !circ);

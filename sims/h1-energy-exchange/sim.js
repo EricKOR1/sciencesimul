@@ -236,7 +236,7 @@
   const DUR = 10;                                     // 실험 시간 (줄여서 보여 줘요)
   const W_G = 100, NAOH_G = 5, NH4_G = 10;            // 물 100 g, 수산화 나트륨 5 g, 질산 암모늄 10 g
   const BENCH = {
-    naoh: { name: '수산화 나트륨 + 물', btn: '🧂 NaOH 녹이기', T0: 20, T1: 33, dir: 'out', what: '물 ' + W_G + ' g에 수산화 나트륨 ' + NAOH_G + ' g을 녹여요', ylab: '물의 온도', phys: true },
+    naoh: { name: '수산화 나트륨 + 물', btn: '🧪 NaOH 녹이기', T0: 20, T1: 33, dir: 'out', what: '물 ' + W_G + ' g에 수산화 나트륨 ' + NAOH_G + ' g을 녹여요', ylab: '물의 온도', phys: true },
     nh4: { name: '질산 암모늄 + 물', btn: '🧊 질산 암모늄 녹이기', T0: 20, T1: 13, dir: 'in', what: '물 ' + W_G + ' g에 질산 암모늄 ' + NH4_G + ' g을 녹여요', ylab: '물의 온도' },
     ice: { name: '얼음이 든 컵', btn: '🥤 얼음이 든 컵', T0: 20, T1: 6, dir: 'in', what: '얼음이 녹으면서 컵 겉면이 차가워져요', ylab: '컵 겉면의 온도' },
     steam: { name: '수증기와 찬 컵', btn: '♨️ 수증기와 찬 컵', T0: 20, T1: 30, dir: 'out', what: '뜨거운 수증기가 찬 컵에 닿아 물방울이 돼요', ylab: '컵 속 물의 온도' },

@@ -895,7 +895,7 @@
     $('#coMade').innerHTML = ROLES.map((r) => '<li class="' + (CO.seen[r.id] ? 'on' : '') + '">' + mark(CO.seen[r.id]) + ' ' + r.name + '</li>').join('');
     const isN = S.mode === 'sel';
     $$('#ctrlCard [data-for="dock"]').forEach((n) => { n.hidden = isN; });
-    $('#dkHead').textContent = isN ? '⚖️ 같은 자세로 정상 효소에 넣기' : '🧲 후보 화합물 맞추기';
+    $('#dkHead').textContent = isN ? '⚖️ 같은 자세로 정상 효소에 넣기' : '🧩 후보 화합물 맞추기';
     const P = curP(), cur = DK[P];
     if (isN) {
       $('#dkMade').innerHTML = IDS_N.map((id) => '<li class="' + (DK.seenN[id] ? 'on' : '') + '">' + mark(DK.seenN[id]) + ' 후보 ' + id + (DK.seenN[id] ? ': T ' + fmtS(DK.best[id]) + ' · N ' + fmtS(pose(id, DK.bestRot[id], 'N').total) : '') + '</li>').join('');
@@ -1115,7 +1115,7 @@
 
   game = SciSim.game({
     simId: 'hg-biotech-fields', mount: '#game', badge: '생명공학 탐험가', homeHref: '../../index.html#hg',
-    featureLabels: { map: '🗺️ 분야 지도', collab: '🤝 신약 개발 팀', dock: '🧲 표적 효소 T', sel: '⚖️ 정상 효소 N', ic50: '📈 IC50 곡선', cases: '🏭 활용 사례 연결', media: '📝 설명 자료' },
+    featureLabels: { map: '🗺️ 분야 지도', collab: '🤝 신약 개발 팀', dock: '🎯 표적 효소 T', sel: '⚖️ 정상 효소 N', ic50: '📈 IC50 곡선', cases: '🏭 활용 사례 연결', media: '📝 설명 자료' },
     onFeatures() { updateCtl(); },
     levels,
   });

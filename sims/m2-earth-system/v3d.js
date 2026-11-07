@@ -60,7 +60,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: 8.6, theta: 0.5, phi: 1.2, min: 4, max: 20 },
     autoRotate: 0,
-    levels: [2, 3],                  // 1·2단계(분류·화살표 연결)는 2D 화면에서 해요
+    levels: [3],                     // 4단계(크기와 깊이 퀴즈)만 3D. 1~3단계는 그림을 누르고 카드를 끄는 미션이라 2D
     build(ctx) {
       const { THREE, root, label, info, controls, orbit, renderer } = ctx;
       renderer.localClippingEnabled = true;

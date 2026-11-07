@@ -1530,7 +1530,7 @@
     $$('#sceneSeg button').forEach((b) => b.classList.toggle('on', b.dataset.s === S.scene));
     $$('#viewSeg button').forEach((b) => b.classList.toggle('on', b.dataset.v === S.view));
     const note = $('#playNote');
-    note.textContent = S.panel === 'lens' ? '지도를 누르면 확대 창에 크게 보여요.' : S.panel === 'comet' ? '혜성을 끌어 궤도를 따라 옮겨 보세요.' : '지도의 천체를 누르면 천체 카드가 열려요.';
+    note.textContent = S.panel === 'lens' ? '지도를 누르면 확대 창에 크게 보여요.' : S.panel === 'comet' ? '혜성을 끌어 궤도를 따라 옮겨 보세요.' : '천체를 누르면 천체 카드가 열려요.';
     const any = ['#cScene', '#cView', '#cPlay', '#cReset'].some((sel) => { const n = $(sel); return !n.classList.contains('is-off') && !n.hidden; });
     $('#ctrlCard').hidden = !any;
   }
@@ -1868,7 +1868,7 @@
         missions: [
           {
             title: '🪪 천체 카드 모으기',
-            goal: '지도의 천체를 눌러 <b>여섯 종류</b>(태양·행성·왜소행성·소행성·위성·혜성)의 카드를 모두 모아 보세요.',
+            goal: '태양계의 천체를 눌러 <b>여섯 종류</b>(태양·행성·왜소행성·소행성·위성·혜성)의 카드를 모두 모아 보세요.',
             hint: '혜성·명왕성은 <b>\'전체 태양계\'</b> 보기에서 찾아요. 아주 작은 돌 조각들도 눌러 보세요.',
             setup() { prep(); S.panel = 'card'; setScene('map'); S.kinds = new Set(); S.opened = new Set(); S.card = null; S.mapHint = true; syncControls(); },
             check: () => S.kinds.size >= 6,
@@ -2127,5 +2127,8 @@
     basketClient(b) { const V = activeView(), N = keyGeo(V.L).nodes['b:' + b]; return this.client(V.L, N.cx, N.top + N.h / 2); },
     cometOrbitClient(E) { const V = activeView(), X = xfMain(V.L), p = {}; ORB.comet.at(E, p); return this.client(V.L, SX(X, p), SY(X, p)); },
     kindOf: (body) => BODY[body].kind,
+    /* 3D에서 천체를 누르면: 지도에서 누른 것과 똑같이 천체 카드를 열어요 (카드 모으기 미션이 함께 진행돼요) */
+    tapBody3D(id) { if (!BODY[id] || S.scene !== 'map' || S.panel !== 'card') return false; openCard(id); return true; },
+    cardInfo(id) { const B = BODY[id]; return B ? { name: B.name, badge: KIND[B.kind].badge, lines: cardLines(id) } : null; },
   };
 })();

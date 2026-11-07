@@ -17,7 +17,7 @@
     ['간기', '분열 전: 염색체가 가늘고 길게 풀려 핵 속에 있어요. (염색체 4개)'],
     ['DNA 복제', 'DNA가 복제되어 염색체가 두 가닥이 돼요. 염색체 수는 4개 그대로예요.'],
     ['짝짓기', '핵막이 사라지고 모양·크기가 같은 상동 염색체끼리 짝을 지어요.'],
-    ['가운데 배열', '짝지은 상동 염색체가 가운데에 늘어서요. 양쪽 극으로 끌어 보세요!'],
+    ['가운데 배열', '짝지은 상동 염색체가 가운데에 늘어서요. 아래 나누기 단추로 양쪽 극에 보내 보세요!'],
     ['1분열 후기', '1분열: 상동 염색체가 서로 반대쪽으로 갈라져요.'],
     ['1분열 끝', '세포가 2개! 염색체 수가 절반(2개씩)으로 줄었어요.'],
     ['2분열 중기', '2분열: 복제 없이 바로 이어져요. 염색체가 다시 가운데에 늘어서요.'],
@@ -35,11 +35,11 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHN ? 17 : 12.5, theta: 0.0, phi: 1.4, min: 6, max: 26, target: [0, 0, 0] },
     autoRotate: 0,
-    levels: [1, 2],           // 체세포분열 · 생식세포 형성 단계에서 3D로 시작해요. 염색체 짝 맞추기·비교표·수정은 2D 화면에서 해요
+    levels: [2, 3],           // 3단계(생식세포 형성: 상동 염색체 나누기는 3D 막대의 단추로)·4단계(비교표 · 수정)는 3D. 1단계(확대 · 짝 맞추기)·2단계(현미경에서 세포 누르기)는 2D
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3;
-      let mode = 'mito', st = 0, s2 = 0, names = true, lastAct = -9, tnow = 0, act = -9, ign = false;
+      let mode = 'mito', st = 0, s2 = 0, names = true, lastAct = -9, tnow = 0, act = -9, ign = false, sepNow = [false, false], sepSig = '';
       const sm = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.4, metalness: 0 }, o || {}));
       /* 세포막 (최대 4개): 막 + 가장자리 빛 + 세포 속 세포소기관 (막 크기와 함께 움직여요) */
       const cells = [];
@@ -111,7 +111,7 @@
             const gl = LEFT[ci], cx = gl ? -2.6 : 2.6, lx = (ci < 2 ? -0.95 : 0.95);
             if (st === 0) { p = new V3(...S0[ci]).add(new V3(0.07 * s, 0.05 * s, 0)); rz = RB[ci] + 0.12 * s; th = 0.04; }
             else if (st === 1 || st === 2) { p = new V3(ci % 2 ? 0.3 : -0.3, YI[ci], 0); rz = X; if (st === 2) pole = new V3(gl ? -3.6 : 3.6, 0, 0); }
-            else if (st === 3) { p = new V3(gl ? -2.2 : 2.2, YI[ci], 0); rz = X; pole = new V3(gl ? -3.6 : 3.6, 0, 0); }
+            else if (st === 3 || (st === 2 && sepNow[ci >> 1])) { p = new V3(gl ? -2.2 : 2.2, YI[ci], 0); rz = X; pole = new V3(gl ? -3.6 : 3.6, 0, 0); }
             else if (st === 4) { p = new V3(cx + lx, 0, 0); rz = Math.PI / 2 + X; pole = new V3(cx, 2.3 * s, 0); th = 0.1; }
             else if (st === 5) { p = new V3(cx + lx, 1.45 * s, 0); rz = Math.PI / 2; pole = new V3(cx, 2.3 * s, 0); }
             else { p = new V3(cx + (ci < 2 ? -0.5 : 0.5), 1.95 * s, 0); rz = 0; th = 0.08; }
@@ -131,6 +131,11 @@
       const pM = controls.player({ duration: 12, loop: true, label: '체세포분열', phases: MITO.map((q, i) => [i / MITO.length, q[0]]), onFrame() { if (!ign) act = tnow; } });
       const pE = controls.player({ duration: 16, loop: true, label: '생식세포 형성', phases: MEIO.map((q, i) => [i / MEIO.length, q[0]]), onFrame() { if (!ign) act = tnow; } });
       const rows = Array.from(nb.parentNode.querySelectorAll('.v3-player')), rowM = rows[0], rowE = rows[1];
+      /* 가운데 배열(생식세포 형성 4/9): 2D에서 상동 염색체 쌍을 눌러 나누기(meioSplit)와 같아요 */
+      const n0 = nb.parentNode.children.length;
+      controls.text('<b>상동 염색체</b>');
+      const spBtns = [['긴 쌍 나누기', 0], ['짧은 쌍 나누기', 1]].map(([tx, pr]) => controls.button(tx, () => { const L = ctx.lesson(); if (L && L.meioSplit) L.meioSplit(pr); }));
+      const splitRow = Array.from(nb.parentNode.children).slice(n0);
       const plOf = () => (mode === 'mito' ? pM : pE);
       function setMode2(m) { mode = m; rowM.style.display = m === 'mito' ? '' : 'none'; rowE.style.display = m === 'meio' ? '' : 'none'; }
       setMode2('mito'); target();
@@ -249,7 +254,7 @@
       function zoomFrame(L, t) {
         const zs = L.zs, zv = zs.zv.value, lv = zs.lv;
         zl.forEach((g, k) => { const a = Math.max(0, 1 - Math.abs(zv - k) * 1.25), s = Math.exp(0.95 * (zv - k)); g.scale.setScalar(s); g.rotation.y = Math.sin(t * 0.4) * 0.3; fadeG(g, a); g.userData.labs.forEach((l) => l.show(a > 0.55 && Math.abs(zv - k) < 0.45)); });
-        if (lv !== zoomLast) { zoomLast = lv; info('<b>' + LVN[lv] + '</b> (' + (lv + 1) + '/5)<br>' + LVD[lv] + '<br><span style="opacity:.85">2D의 ➕ 확대 / ➖ 축소와 같이 움직여요.</span>'); }
+        if (lv !== zoomLast) { zoomLast = lv; info('<b>' + LVN[lv] + '</b> (' + (lv + 1) + '/5)<br>' + LVD[lv]); }
         if (!pZoom.playing) { ignZ = true; pZoom.set((lv + 0.5) / 5); ignZ = false; }
       }
       function fertFrame(L, dt, t) {
@@ -292,15 +297,20 @@
             const sm0 = sc0 === 'meio' ? 'meio' : sc0 === 'mito' ? 'mito' : sc0 === 'pair' ? 'meio' : sc0 === 'micro' ? 'mito' : sc0 === 'compare' ? cmpMode : mode;
             if (sm0 !== mode) { setMode2(sm0); st = -1; }
             if (sc0 === 'pair' || sc0 === 'micro' || sc0 === 'compare') { rowM.style.display = rowE.style.display = 'none'; }
-            const m = sm0 === 'meio' ? L.meio : L.mito, N = sm0 === 'meio' ? 9 : 6, pl = plOf(), stage = m.stage;
+            const m = sm0 === 'meio' ? L.meio : L.mito, N = sm0 === 'meio' ? 9 : 6, pl = plOf(), cmp = sc0 === 'compare', stage = cmp ? N - 1 : m.stage;   // 비교하기: 두 분열이 끝난 모습
+            const showSplit = sc0 === 'meio' && m.stage === 3 && !(m.sep[0] && m.sep[1]);
+            splitRow.forEach((e) => { e.style.display = showSplit ? '' : 'none'; });
+            if (showSplit) spBtns.forEach((b, i) => { b.disabled = !!m.sep[i]; b.classList.toggle('on', !!m.sep[i]); });
+            const sg = sm0 === 'meio' && sc0 === 'meio' ? m.sep.join() : ''; if (sg !== sepSig) { sepSig = sg; sepNow = sg ? m.sep.slice() : [false, false]; st = -1; }
             // ▶ / 진행 막대 → 2D 단계 (2D의 규칙대로 한 단계씩), 2D에서 단계가 바뀌면 진행 막대가 따라가요
             const want = Math.min(N - 1, Math.floor(pl.p * N + 1e-6)), driving = tnow - act < 1.2;
-            if (driving && want !== stage && tnow - lastAct > 0.6) {
+            if (cmp) { /* 비교하기에서는 진행하지 않아요 */ }
+            else if (driving && want !== stage && tnow - lastAct > 0.6) {
               lastAct = tnow;
               if (want > stage) { L.nextStage(m); if (m.stage === stage && pl.playing) { pl.pause(); ign = true; pl.set((stage + 0.5) / N); ign = false; } } else L.goStage(m, want);
             } else if (!driving && !pl.playing && m.stage !== Math.floor(pl.p * N + 1e-6)) { ign = true; pl.set((m.stage + 0.5) / N); ign = false; }
-            const ns = sc0 === 'pair' ? MAPE[2] : (sm0 === 'meio' ? MAPE : MAPM)[m.stage];
-            if (ns !== st || m.stage !== s2) { st = ns; s2 = sc0 === 'pair' ? 2 : m.stage; target(); if (sc0 === 'pair') info('<b>상동 염색체 짝 맞추기</b>는 2D 화면에서 해요.<br>3D에서는 모양·크기가 같은 상동 염색체가 짝을 이룬 모습을 봐요. (분홍=어머니, 파랑=아버지)'); else if (sc0 === 'micro') info('<b>가상 현미경으로 분열하는 세포 찾기</b>는 2D 화면에서 해요.<br>3D에서는 분열 단계마다 염색체가 어떻게 보이는지 살펴봐요.'); else if (sc0 === 'compare') info('<b>비교표</b>는 2D 화면에서 채워요.<br>아래에서 두 분열을 번갈아 보며 딸세포의 수와 염색체 수를 비교해 봐요.'); }
+            const ns = sc0 === 'pair' ? MAPE[2] : (sm0 === 'meio' ? MAPE : MAPM)[stage];
+            if (ns !== st || stage !== s2) { st = ns; s2 = sc0 === 'pair' ? 2 : stage; target(); if (sc0 === 'pair') info('<b>상동 염색체</b>: 모양·크기가 같은 염색체끼리 짝을 이뤄요. (분홍=어머니, 파랑=아버지)'); else if (sc0 === 'micro') info('<b>체세포분열</b>: 분열 단계마다 염색체가 어떻게 보이는지 살펴봐요.'); else if (sc0 === 'compare') info('<b>두 분열이 끝난 모습</b>: ' + (sm0 === 'mito' ? '체세포분열 → 딸세포 2개 · 염색체 4개씩' : '생식세포 형성 → 생식세포 4개 · 염색체 2개씩') + '<br>아래 보기 단추로 두 분열을 번갈아 보며 비교해요.'); }
           }
           chs.forEach((q) => {
             q.p.lerp(q.tp, k); q.rz += (q.trz - q.rz) * k; q.th += (q.tth - q.th) * k;

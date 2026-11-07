@@ -874,12 +874,12 @@
     $('#eNext').disabled = meio.stage >= 8;
     $('#eNext').classList.toggle('target', meio.stage < 8 && S.scene === 'meio' && !(meio.stage === 3 && !(meio.sep[0] && meio.sep[1])));
     $('#mitoNote').textContent = S.scene === 'micro' ? '분열하는 세포를 눌러서 찾아봐요.' : '다음 단계 ▶ 를 눌러 염색체의 움직임을 지켜봐요.';
-    $('#meioNote').textContent = meio.stage === 3 && !(meio.sep[0] && meio.sep[1]) ? '상동 염색체를 끌어서(눌러도 돼요) 양쪽 극으로 보내 보세요.' : '다음 단계 ▶ 를 눌러 진행해요.';
+    $('#meioNote').innerHTML = meio.stage === 3 && !(meio.sep[0] && meio.sep[1]) ? '<span class="only2d">상동 염색체를 끌어서(눌러도 돼요) 양쪽 극으로 보내 보세요.</span><span class="only3d">3D 막대의 나누기 단추로 상동 염색체를 양쪽 극으로 보내 보세요.</span>' : '다음 단계 ▶ 를 눌러 진행해요.';
   }
   function nextStage(m) {
     if (m.kind === 'meio' && m.stage === 3 && !(m.sep[0] && m.sep[1])) {
       if (!game || !game.free) {
-        m.shakeT = 0.5; showHint('먼저 상동 염색체를 끌어서 양쪽 극으로 보내 보세요 (눌러도 돼요)', 4200); Sound.click(); return;
+        m.shakeT = 0.5; showHint(document.body.classList.contains('v3-mode') ? '먼저 나누기 단추로 상동 염색체를 양쪽 극으로 보내 보세요' : '먼저 상동 염색체를 끌어서 양쪽 극으로 보내 보세요 (눌러도 돼요)', 4200); Sound.click(); return;
       }
       m.sep = [true, true];
     }
@@ -1460,8 +1460,8 @@
       missions: [
         {
           title: '상동 염색체 나누어 생식세포 만들기',
-          goal: '가운데 배열 단계에서 <b>상동 염색체를 양쪽 극으로 끌어서</b> 나눈 뒤, 끝까지 진행해 <b>생식세포 4개</b>를 만들어 보세요.',
-          hint: '다음 단계 ▶ 를 3번 눌러 가운데 배열(4/9)까지 가요. 짝지은 염색체를 한쪽 극으로 끌면 짝은 반대쪽으로 끌려가요. 그다음 다음 단계 ▶ 를 계속 눌러요.',
+          goal: '가운데 배열 단계에서 <b>상동 염색체를 양쪽 극으로</b> <span class="only2d">끌어서</span><span class="only3d">아래 막대의 나누기 단추로</span> 나눈 뒤, 끝까지 진행해 <b>생식세포 4개</b>를 만들어 보세요.',
+          hint: '다음 단계 ▶ 를 3번 눌러 가운데 배열(4/9)까지 가요. <span class="only2d">짝지은 염색체를 한쪽 극으로 끌면 짝은 반대쪽으로 끌려가요.</span><span class="only3d">긴 쌍 · 짧은 쌍 나누기 단추를 하나씩 누르면 짝이 서로 반대쪽 극으로 끌려가요.</span> 그다음 다음 단계 ▶ 를 계속 눌러요.',
           check: () => meio.stage === 8 && meio.ready && meio.userSep[0] && meio.userSep[1],
           hold: 0.5,
           status: () => mark(meio.userSep[0]) + ' 주황 염색체 쌍 분리 · ' + mark(meio.userSep[1]) + ' 보라 염색체 쌍 분리 · ' + mark(meio.maxStage >= 5) + ' 세포 2개 · ' + mark(meio.stage === 8 && meio.ready) + ' 생식세포 4개',
@@ -1550,5 +1550,6 @@
   });
 
   window.__sim = { S, zs, PR, MI, mito, meio, FE, CMPS, cmpEls, game, levels, setScene, goStage, nextStage, zoomTo, setSex, tapMicro, pairUp, meioUp, setGamete, startFert, tableAllOk,
+    meioSplit(pair) { const m = meio; if (m.stage !== 3 || S.scene !== 'meio') return false; m.drag = { ci: pair * 2, x0: 0, y0: 0, moved: 0 }; meioUp({ x: 0, y: 0 }); return true; },   // 상동 염색체 쌍을 눌러 나누기와 같아요 (3D 막대의 나누기 단추)
     toClient: (x, y) => { const r = view.canvas.getBoundingClientRect(); return { x: r.left + x * r.width / W, y: r.top + y * r.height / H }; } };
 })();

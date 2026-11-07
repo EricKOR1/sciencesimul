@@ -12,7 +12,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHN ? 11 : 8.2, theta: 0.6, phi: 1.2, min: 4, max: 22 },
     autoRotate: 0.12,
-    levels: [1, 2],                  // 1단계(입자 눌러 보기)는 2D 화면에서 해요
+    levels: [1, 2, 3],               // 2단계(중성) · 3단계(원소 결정) · 4단계(원소 탐정)
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const sm = () => window.__sim;
@@ -80,15 +80,16 @@
       }
       controls.segment('크기', [{ label: '모형', value: false }, { label: '실제 비율 느낌', value: true }], false, (v) => { tiny = v; });
       controls.button('이름표 켜기/끄기', () => { labs = !labs; labNuc.show(labs); labE.show(labs); });
-      controls.button('양성자 +', () => sm() && sm().plus('p'));
-      controls.button('양성자 −', () => sm() && sm().minus('p'));
+      // 양성자 버튼은 오른쪽 패널에 양성자 조절이 열린 단계에서만 보여요
+      const pBtns = [controls.button('양성자 +', () => sm() && sm().plus('p')), controls.button('양성자 −', () => sm() && sm().minus('p'))];
+      const pOn = () => { const r = document.querySelector('.p-row'); return !!(r && r.offsetParent !== null); };
       controls.button('전자 +', () => sm() && sm().plus('e'));
       controls.button('전자 −', () => sm() && sm().minus('e'));
       let ph = [0, 0, 0, 0], k0 = 0;
       return {
         sync() { cur.p = -1; apply(); },
         update(dt, t) {
-          if ((k0++ % 6) === 0) apply();
+          if ((k0++ % 6) === 0) { apply(); const v = pOn() ? '' : 'none'; pBtns.forEach((b) => { if (b.style.display !== v) b.style.display = v; }); }
           const e = cur.e; let idx = 0, left = e;
           const target = tiny ? 0.28 : 1;
           nuc.scale.x += (target - nuc.scale.x) * Math.min(1, dt * 4); nuc.scale.setScalar(nuc.scale.x);

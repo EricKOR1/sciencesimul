@@ -1,5 +1,5 @@
 /* m2-expanding-universe · 3D 팽창하는 우주 (풍선 모형 · 은하 격자 모형)
-   스티커(은하) 자체는 커지지 않고 사이 거리만 늘어나요. 기준을 바꿔도 모두 나로부터 멀어져서, 팽창의 중심은 따로 없어요. */
+   스티커(은하) 자체는 커지지 않고 사이 거리만 늘어나요. 기준(3단계)을 바꾸면 3단계 미션처럼 풍선이 다시 부풀어요. */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -14,7 +14,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHN ? 9 : 9, theta: 0.2, phi: 1.3, min: 4, max: 22 },
     autoRotate: 0.08,
-    levels: [0, 2, 3],               // 1단계(스티커를 눌러 거리 재기 · 표 해석)는 2D 화면에서 해요
+    levels: [0, 2, 3],               // 2단계(스티커를 눌러 거리 재기 · 표 해석)만 2D
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3, DEG = Math.PI / 180;
@@ -62,8 +62,8 @@
       function setS(v) { s = Math.max(0.1, Math.min(2, v)); const q = sm(); if (q && q.setSize) q.setSize(s, true); sizeR.set(s); }
       const sg = controls.segment('모형', [{ label: '풍선', value: 'balloon' }, { label: '은하 격자', value: 'lat' }], mode, (v) => { mode = v; balloon.visible = v === 'balloon'; lattice.visible = v === 'lat'; lastInfo = ''; });
       const sizeR = controls.range('풍선 크기(팽창)', 0.1, 2, 0.02, s, (v) => { if (pl) pl.pause(); if (v < 1 && !pastOK()) { v = 1; sizeR.set(1); } s = v; const q = sm(); if (q && q.setSize) q.setSize(v, true); }, (v) => (v < 0.95 ? '과거 ' : v > 1.05 ? '' : '') + '×' + v.toFixed(2));
-      const sgRef = controls.segment('기준', ST.map((q, i) => ({ label: q.id, value: i })), 0, (i) => { ref = i; const q = sm(); if (q && q.setRef) q.setRef(i, false); latRef = [62, 0, 124, 20, 100][i]; });
-      // ▶ 재생: 풍선이 1배 → 2배로 부풀고(스티커 사이가 모두 멀어져요), 다시 거꾸로 되감겨요. 2D 풍선도 같은 크기가 돼요.
+      const sgRef = controls.segment('기준', ST.map((q, i) => ({ label: q.id, value: i })), 0, (i) => { ref = i; const q = sm(); if (q && q.setRef) { let play = false; try { const g = q.game && q.game(); play = !g || g.free || g.level === 2; } catch (e) { /* 무시 */ } q.setRef(i, play); } latRef = [62, 0, 124, 20, 100][i]; });
+      // ▶ 재생: 풍선이 1배 → 2배로 부풀고(스티커 사이가 모두 멀어져요), 다시 거꾸로 되감겨요. 실험의 풍선 크기도 같이 바뀌어요.
       const smooth = (x) => x * x * (3 - 2 * x);
       pl = controls.player({
         duration: 10, loop: true, autoplay: false, label: '풍선 부풀리기',
@@ -103,7 +103,7 @@
             const rp = ST[ref].v.clone().multiplyScalar(R * 1.1); refLab.obj = [rp.x, rp.y + 0.45, rp.z]; refLab.show(labs);
             lRef.show(false);
             const key = 'b' + ref + (s < 0.95 ? 'p' : s > 1.05 ? 'f' : 'n');
-            if (key !== lastInfo) { lastInfo = key; info(s < 0.95 ? '<b>우주의 과거</b>: 풍선이 작을수록 스티커들이 서로 가까웠어요. 더 거슬러 가면 <b>한 점</b>에 모여요.' : '풍선을 부풀리면 스티커(은하)는 <b>그대로</b>인데 사이 거리가 <b>모두</b> 늘어나요.<br>기준에서 <b>멀리 있는</b> 스티커일수록 더 많이 멀어져요.'); }
+            if (key !== lastInfo) { lastInfo = key; info(s < 0.95 ? '<b>우주의 과거</b>: 풍선이 작을수록 스티커들이 서로 가까웠어요. 더 거슬러 가면 <b>한 점</b>에 모여요.' : '풍선을 부풀리며 스티커(은하)의 <b>크기</b>와 스티커 사이의 <b>거리</b>가 어떻게 달라지는지 보세요.<br>숫자는 기준 스티커에서 잰 거리예요.'); }
           } else {
             // 격자: 기준 은하를 중심에 두고 모두 s배로 멀어져요
             const hr = home[latRef]; let n = 0; const pa = trail.geometry.attributes.position;
@@ -117,7 +117,7 @@
             gInst.instanceMatrix.needsUpdate = ghost.instanceMatrix.needsUpdate = pa.needsUpdate = true; refM.position.set(0, 0, 0); refM.scale.setScalar(1 + 0.08 * Math.sin(t * 4));
             lRef.show(labs);
             const key = 'l' + latRef + (s < 0.95 ? 'p' : s > 1.05 ? 'f' : 'n');
-            if (key !== lastInfo) { lastInfo = key; info('노란 공이 <b>기준 은하</b>예요. 모든 은하가 기준에서 멀어지고, <b>멀리 있는 은하일수록 더 많이</b>(노란 선이 길어요) 움직여요.<br>기준을 바꿔도 똑같아서 <b>팽창의 중심은 따로 없어요</b>.'); }
+            if (key !== lastInfo) { lastInfo = key; info('노란 공이 <b>기준 은하</b>예요. 노란 선은 은하가 움직인 길이에요.<br>기준을 바꿔 가며 은하들이 어떻게 움직이는지 비교해 보세요.'); }
             refLab.show(false); dLab.forEach((l) => l.show(false));
           }
         },

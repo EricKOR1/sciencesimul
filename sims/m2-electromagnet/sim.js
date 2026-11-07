@@ -576,7 +576,7 @@
   function showHint(msg, ms) { hintEl.textContent = msg; hintEl.classList.remove('hide'); clearTimeout(showHint.t); showHint.t = setTimeout(hideHint, ms || 6000); }
   function hideHint() { hintEl.classList.add('hide'); }
   const tbLabel = $('#tbLabel'), sceneSeg = $('#sceneSeg');
-  const sceneNames = { magnet: '🧲 막대자석의 자기장', coil: '🌀 전류가 흐르는 코일', force: '🏇 자기장 속의 도선 (그네)', motor: '⚙️ 전동기 모형' };
+  const sceneNames = { magnet: '🧲 막대자석의 자기장', coil: '🌀 전류가 흐르는 코일', force: '↔️ 자기장 속의 도선 (그네)', motor: '⚙️ 전동기 모형' };
   const dirNotes = { coil: '전류가 코일을 감아 도는 방향이 반대로 바뀌어요.', force: '도선에 흐르는 전류가 앞쪽(⊙) ↔ 뒤쪽(⊗)으로 바뀌어요.', motor: '전류 방향이 바뀌어요.' };
   const sI = $('#sI'), oI = $('#oI'), dirBtn = $('#dirBtn'), fillBtn = $('#fillBtn'), lineBtn = $('#lineBtn');
   const rangeI = SciSim.bindRange(sI, oI, (v) => (+v === 0 ? '꺼짐 (0.0 A)' : (+v).toFixed(1) + ' A'), (v) => { S.I = +v; hideHint(); });
@@ -709,7 +709,7 @@
     badge: '전자기 탐험가',
     homeHref: '../../index.html#g2',
     featureLabels: {
-      magnet: '🧲 막대자석', compass: '🧭 나침반 3개', coil: '🌀 전류가 흐르는 코일', force: '🏇 도선 그네와 말굽자석', motor: '⚙️ 전동기 모형',
+      magnet: '🧲 막대자석', compass: '🧭 나침반 3개', coil: '🌀 전류가 흐르는 코일', force: '↔️ 도선 그네와 말굽자석', motor: '⚙️ 전동기 모형',
     },
     onFeatures(set) { F = set; },
     levels: [
@@ -845,7 +845,7 @@
       },
       /* ---------- 3단계 ---------- */
       {
-        title: '자기장 속 전류가 받는 힘', short: '자기장 속 전류', icon: '🏇', phase: '탐구',
+        title: '자기장 속 전류가 받는 힘', short: '자기장 속 전류', icon: '↔️', phase: '탐구',
         features: ['force'],
         intro: '<div class="si-link">🔗 <b>앞 단계에서</b> 전류가 흐르는 코일이 자석처럼 자기장을 만든다는 것을 알았어요.</div>' +
           '<p>그렇다면 <b>자석의 자기장 속에 전류가 흐르는 도선</b>을 넣으면 어떻게 될까요? 자석 사이에 매단 도선(<b>도선 그네</b>)에 전류를 흘리고, 도선이 받는 힘의 방향을 살펴봐요.</p>',

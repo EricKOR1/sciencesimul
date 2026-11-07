@@ -675,7 +675,7 @@
           {
             title: '👆 기준을 바꿔 보기',
             goal: '서로 다른 스티커 <b>3개</b>를 기준으로 삼아 풍선이 부풀어 오르는 것을 지켜봐요.',
-            hint: '지금 기준(A)은 이미 부풀었어요. 다른 스티커 두 개를 눌러 기준을 바꾸고, 풍선이 2배가 될 때까지 기다려요.',
+            hint: '지금 기준(A)은 이미 부풀었어요. 다른 스티커 두 개를 눌러<span class="only3d">(아래 <b>기준</b> 버튼)</span> 기준을 바꾸고, 풍선이 2배가 될 때까지 기다려요.',
             setup() { configSlider('ref'); S.refsDone.clear(); S.tape = null; S.ref = 0; S.lon0T = ST[0].lon; S.lat0T = ST[0].lat; S.playTw = null; autoPlay(1, 2, 1.7, () => { S.refsDone.add(S.ref); }); },
             check: () => S.refsDone.size >= 3,
             hold: 0.5,

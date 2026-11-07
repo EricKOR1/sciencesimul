@@ -960,8 +960,8 @@
         missions: [
           {
             title: '🌙 달을 여기저기 옮겨 보자',
-            goal: '달을 끌어서 궤도 위 <b>노란 점선 동그라미</b> 4곳 중 <b>3곳</b>으로 옮겨 보세요. 달의 <b>어느 쪽</b>이 밝은지 살펴봐요.',
-            hint: '달(또는 궤도 위 아무 곳)을 손가락으로 누른 채 원을 따라 끌어요. <b>🌙 달의 위치</b> 슬라이더를 써도 돼요.',
+            goal: '달을 <span class="only2d">끌어서 </span>궤도 위 <b>노란 점선 동그라미</b> 4곳 중 <b>3곳</b>으로 옮겨 보세요. 달의 <b>어느 쪽</b>이 밝은지 살펴봐요.',
+            hint: '<span class="only2d">달(또는 궤도 위 아무 곳)을 손가락으로 누른 채 원을 따라 끌어요. <b>🌙 달의 위치</b> 슬라이더를 써도 돼요.</span><span class="only3d">아래 <b>🌙</b> 막대를 움직이면 달이 지구 둘레를 돌아요.</span>',
             setup() { prep(); setTheta(90); S.visit = new Set(); S.spots = true; },
             check: () => S.visit.size >= 3,
             hold: 0,

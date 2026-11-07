@@ -1010,7 +1010,7 @@
           {
             title: '세 곳의 전류 재기',
             goal: '스위치를 닫고 전류계 <b>ⓐ, ⓑ, ⓒ</b>를 하나씩 눌러 값을 읽어 보세요.',
-            hint: '보라색 전류계 상자(👆 ?)를 손가락으로 눌러요. 스위치가 닫혀 있어야 전류가 흘러요.',
+            hint: '<span class="only2d">보라색 전류계 상자(👆 ?)를 손가락으로 눌러요.</span><span class="only3d">아래쪽 <b>ⓐ 읽기 · ⓑ 읽기 · ⓒ 읽기</b> 버튼을 눌러요.</span> 스위치가 닫혀 있어야 전류가 흘러요.',
             setup() { setClosed(true); readAll(false); },
             check: () => S.closed && S.read.a && S.read.b && S.read.c,
             status: () => ['a', 'b', 'c'].map((k) => AM[k].tag + ' ' + (S.read[k] ? '<b>' + shownI().toFixed(2) + ' A</b>' : '?')).join(' · ') +
@@ -1066,7 +1066,7 @@
         features: ['voltage', 'water'],
         intro: '<div class="si-link">🔗 <b>앞 단계에서</b> 전류는 회로 어디서나 같고 소모되지 않는다는 것을 알았어요.</div>' +
           '<p>그럼 전자를 움직이게 하는 것은 무엇일까요? 펌프가 물을 높이 올리면 물이 흐르듯, 전원 장치의 <b>전압</b>이 전류를 흐르게 해요. 물 모형과 나란히 비교해 봐요.</p>',
-        setup() { setClosed(true); setV(V_BASE); setShow(true, S.showI); readAll(true); showHint('↔ 전원 장치 손잡이를 끌거나 전압 슬라이더를 움직여 보세요', 7000); },
+        setup() { setClosed(true); setV(V_BASE); setShow(true, S.showI); readAll(true); showHint('↔ 전압 슬라이더를 움직여 보세요', 7000); },
         recap: '전압은 전류를 흐르게 하는 능력이에요. 전압이 높을수록 전자가 빠르게 이동해 전류가 세지고 전구가 밝아져요.',
         summary: '<ul><li><b>전압</b>: 회로에 전류를 흐르게 하는 능력. 단위 <b>V</b>(볼트)</li>' +
           '<li>물의 흐름 모형: 펌프 ↔ 전원 장치, 높이 차 ↔ 전압, 물의 흐름 ↔ 전류, 물레방아 ↔ 전구, 밸브 ↔ 스위치</li>' +
@@ -1076,7 +1076,7 @@
           {
             title: '높이 차를 바꿔 보자',
             goal: '전압을 <b>5 V 이상</b>으로 높였다가, 다시 <b>1 V 이하</b>로 낮춰 보세요. 물과 전자의 빠르기를 비교해요.',
-            hint: '전원 장치의 둥근 손잡이를 오른쪽·위로 끌면 전압이 높아져요. 슬라이더나 −/+ 버튼을 써도 돼요.',
+            hint: '전압 슬라이더나 −/+ 버튼으로 전압을 바꿔요.<span class="only2d"> 전원 장치의 둥근 손잡이를 오른쪽·위로 끌어도 전압이 높아져요.</span>',
             setup() { setClosed(true); setV(V_BASE); S.vHi = false; S.vLo = false; },
             check: () => { if (S.closed && S.V >= 5) S.vHi = true; if (S.vHi && S.closed && S.V <= 1) S.vLo = true; return S.vHi && S.vLo; },
             status: () => '전압 <b>' + S.V.toFixed(1) + ' V</b> · ' + box(S.vHi) + ' 5 V 이상 · ' + box(S.vLo) + ' 다시 1 V 이하' +

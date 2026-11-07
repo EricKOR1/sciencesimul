@@ -2015,12 +2015,12 @@
         }, 'follow'),
         ids({
           title: '효소 카드 놓기', manual: true,
-          goal: '효소 카드 4장을 그 효소가 <b>일하는 곳</b>(입·위·소장)에 끌어다 놓고 <b>✔ 확인하기</b>를 누르세요.',
+          goal: '효소 카드 4장을 그 효소가 <b>일하는 곳</b>(입·위·소장)에 놓고 <b>✔ 확인하기</b>를 누르세요.',
           hint: '아밀레이스는 침과 이자액에 있어요. 펩신은 위액, 트립신과 라이페이스는 이자액에 들어 있어요. 이자액은 소장으로 나와요.',
           setup() {
             setScene('tract'); TR.cardsOn = true; TR.flag = {}; TR.auto = null;
             TR.cards.forEach((c) => { c.site = null; cardSnap(c, false); });
-            showHint('🃏 카드를 끌어 알맞은 곳에 놓아요', 6500);
+            showHint('🃏 카드를 알맞은 곳에 놓아요', 6500);
           },
           status: () => '놓은 카드: <b>' + TR.cards.filter((c) => c.site).length + ' / 4</b>',
           check() {
@@ -2122,6 +2122,12 @@
     itemP(key) { const it = V.items.find((q) => q.key === key); return this.toClient(it.x, it.y); },
     zoneP(z) { return this.toClient(z === 'lac' ? VX : 432, 330); },
     cardsOn: () => TR.cardsOn,
+    // 3D 화면의 카드 버튼: 카드 i를 site(mouth · stomach · small)에 놓아요 (2D에서 끌어다 놓은 것과 같아요)
+    placeCard(i, site) {
+      const c = TR.cards.find((q) => q.idx === i); if (!c || !TR.cardsOn || !HOT[site]) return;
+      c.site = site; delete TR.flag[c.name]; cardSnap(c, true); Sound.tick();
+      TR.cards.forEach((q) => { if (q !== c && q.site) cardSnap(q, true); });
+    },
   };
 
   SciSim.loop((dt, t) => {

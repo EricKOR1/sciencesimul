@@ -1,7 +1,9 @@
 /* m1-moon-phase · 3D 태양-지구-달 모형
    달은 언제나 태양 쪽 절반이 밝아요. 달이 지구 둘레를 도는 위치(θ)에 따라 그 밝은 면이 지구에서 얼마나 보이는지를
    입체 모형과 '지구에서 본 달' 창으로 함께 봐요. (크기·거리는 실제와 달라요. θ = 0° 가 태양 쪽, 북극 위에서 볼 때 시계 반대 방향으로 공전)
-   2D 실험의 위상 구분(phaseKey)과 음력 날짜 식(lunarDay)을 그대로 써요. */
+   2D 실험의 위상 구분(phaseKey)과 음력 날짜 식(lunarDay)을 그대로 써요.
+   2단계(햇빛을 받는 달) · 3단계(공전 위치와 위상)만 3D예요. 달의 위치(S.theta) · 공전 재생은 2D 실험과 같은 값을 써서
+   아래 막대로 달을 옮기면 미션이 함께 진행돼요. 관측 기록장(1단계) · 음력 날짜와 하늘(4단계)은 2D 화면이에요. */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -23,9 +25,13 @@
     hint: ' ',
     camera: wide ? { dist: 19, theta: 0.2, phi: 0.95, fov: 45, target: [2.5, 0, 0], min: 4, max: 40 } : { dist: 25, theta: -Math.PI / 2 + 0.06, phi: 0.7, fov: 45, target: [2.8, 0, 0], min: 4, max: 45 },
     autoRotate: 0,
+    levels: [1, 2],   // 2단계(모형) · 3단계(원리)만 3D
     build(ctx) {
       const { THREE, scene, root, label, info, controls, renderer } = ctx;
       const st = { th: 0, target: null, play: false };
+      const L2 = () => { const l = ctx.lesson(); return l && l.S && typeof l.S.theta === 'number' ? l : null; };
+      /* 3D 조작 → 2D 실험(숨은 '🌙 달의 위치' 슬라이더 · '▶ 공전 재생' 단추)을 그대로 눌러 미션 진행을 함께 써요 */
+      const to2D = (v) => { const s = document.getElementById('sTheta'); if (s && L2()) { s.value = Math.round(norm(v)) % 360; s.dispatchEvent(new Event('input')); } };
       try { const s = window.__sim && window.__sim.S; if (s && typeof s.theta === 'number') st.th = norm(s.theta); } catch (e) {}
       const ringP = (a, r, y) => [r * Math.cos(a * DEG), y || 0, -r * Math.sin(a * DEG)];
 
@@ -62,9 +68,17 @@
 
       /* 달 궤도, 8개 위치 */
       { const pts = []; for (let i = 0; i <= 120; i++) pts.push(new THREE.Vector3(...ringP(i * 3, RM))); root.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: 0x8fb4ff, transparent: true, opacity: 0.6 }))); }
-      [0, 45, 90, 135, 180, 225, 270, 315].forEach((a) => {
+      /* 8개 위치 번호 (2D의 '🔢 8개 위치'와 같아요: 1번 = 태양 쪽, 공전 방향으로 2번, 3번 …) */
+      const numLabs = [0, 45, 90, 135, 180, 225, 270, 315].map((a, i) => {
         const tk = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 6), new THREE.MeshBasicMaterial({ color: 0xcfe0ff })); tk.position.set(...ringP(a, RM)); root.add(tk);
-        label(PH[phaseKey(a)], ringP(a, RM + 1.15), { size: 11 });
+        return label((i + 1) + '번', ringP(a, RM + 1.0), { size: 11 });
+      });
+      /* 달을 옮겨 볼 노란 동그라미 4곳 (2D의 SPOTS와 같은 자리) — 옮겨 본 자리는 초록색 */
+      const SPOTS = [45, 135, 225, 315];
+      const spots = SPOTS.map((a) => {
+        const pts = []; for (let i = 0; i <= 48; i++) { const b = i / 48 * Math.PI * 2; pts.push(new THREE.Vector3(Math.cos(b) * 0.62, 0, Math.sin(b) * 0.62)); }
+        const l = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineDashedMaterial({ color: 0xffd36b, dashSize: 0.14, gapSize: 0.1 }));
+        l.computeLineDistances(); l.position.set(...ringP(a, RM)); l.visible = false; root.add(l); return l;
       });
       [60, 165, 255, 345].forEach((a) => { // 공전 방향 화살촉
         const cone = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.32, 12), new THREE.MeshBasicMaterial({ color: 0x8fb4ff })); cone.position.set(...ringP(a, RM)); cone.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(-Math.sin(a * DEG), 0, -Math.cos(a * DEG))); root.add(cone); });
@@ -128,15 +142,29 @@
       /* 조작 */
       const probe = controls.text(''); probe.style.display = 'none'; const ctlEl = probe.parentElement;
       const fixLab = (em) => { const k = ctlEl.children, inp = k[k.length - 1], l = k[k.length - 2]; l.style.minWidth = em + 'em'; l.style.display = 'inline-block'; const g = document.createElement('span'); g.style.cssText = 'display:inline-flex;align-items:center;gap:8px;flex-wrap:nowrap'; ctlEl.insertBefore(g, l); g.append(l, inp); };
-      const rng = controls.range('🌙', 0, 359, 1, Math.round(st.th), (v) => { st.target = null; st.play = false; playB.textContent = '▶ 공전 재생'; st.th = v; refresh(); }, (v) => '음력 약 ' + lunarDay(v) + '일 (θ=' + v + '°)');
+      const rng = controls.range('🌙', 0, 359, 1, Math.round(st.th), (v) => { st.target = null; st.play = false; playB.textContent = '▶ 공전 재생'; st.th = v; to2D(v); refresh(); }, (v) => '음력 약 ' + lunarDay(v) + '일 (θ=' + v + '°)');
       fixLab(15);
-      const playB = controls.button('▶ 공전 재생', () => { st.play = !st.play; st.target = null; playB.textContent = st.play ? '⏸ 멈춤' : '▶ 공전 재생'; });
-      controls.text('').style.cssText = 'flex-basis:100%;height:0;padding:0;margin:-3px 0';
-      controls.segment('바로 이동', [{ value: 0, label: '삭' }, { value: 90, label: '상현달' }, { value: 180, label: '보름달' }, { value: 270, label: '하현달' }], -1, (v) => { st.play = false; playB.textContent = '▶ 공전 재생'; st.target = v; });
+      const playB = controls.button('▶ 공전 재생', () => {
+        st.target = null; const b = document.getElementById('playBtn');
+        if (b && L2()) { b.click(); st.play = !!L2().S.playing; } else st.play = !st.play;
+        playB.textContent = st.play ? '⏸ 멈춤' : '▶ 공전 재생';
+      });
+      /* (위상 이름으로 바로 옮기는 단추는 두지 않아요: '네 가지 위상 만들기' 미션에서 학생이 자리를 직접 찾아요) */
       refresh();
 
       return {
         update(dt) {
+          const l = L2();
+          if (l) {   // 2D 실험 상태를 따라가요: 달의 위치 · 공전 재생 · 8개 위치 번호 · 노란 동그라미
+            const S = l.S;
+            numLabs.forEach((x) => x.show(!!S.ghost));
+            const oc = document.querySelector('[data-feature="orbit"]'); playB.style.display = oc && oc.hidden ? 'none' : '';   // 공전 재생은 2D처럼 3단계부터
+            spots.forEach((m, k) => { m.visible = !!S.spots; if (S.visit) m.material.color.setHex(S.visit.has(k) ? 0x34d399 : 0xffd36b); });
+            if (st.play !== !!S.playing) { st.play = !!S.playing; playB.textContent = st.play ? '⏸ 멈춤' : '▶ 공전 재생'; }
+            const th = norm(typeof S.thV === 'number' ? S.thV : S.theta);
+            if (Math.abs(((th - st.th + 540) % 360) - 180) > 0.05) { st.th = th; rng.set(Math.round(S.theta) % 360); refresh(); }
+            return;
+          }
           if (st.play) { st.th = norm(st.th + 30 * dt); rng.set(Math.round(st.th) % 360); refresh(); }
           else if (st.target != null) {
             let d = ((st.target - st.th + 540) % 360) - 180; const step = Math.sign(d) * Math.min(Math.abs(d), Math.max(0.5, Math.abs(d) * 6 * dt));

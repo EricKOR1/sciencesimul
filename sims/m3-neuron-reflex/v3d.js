@@ -11,7 +11,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHN ? 21 : 16, theta: 0.0, phi: 1.3, min: 6, max: 32, target: [2.5, 1.2, 0] },
     autoRotate: 0,
-    levels: [0, 3],           // 뉴런(단계 1) · 무조건 반사(단계 4)에서 3D로 시작해요. 뇌의 부분 짝짓기·자 잡기 반응 시간 재기는 2D 화면에서 해요
+    levels: [0],              // 1단계(뉴런: 자극은 ▶ 신호 전달, 세 뉴런 읽기는 3D 막대의 뉴런 단추)만 3D. 뇌 부분 짝짓기 · 자 잡기 · 반사 막대 그래프 · 경로 카드는 화면을 눌러야 해서 2D
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
       const V3 = THREE.Vector3;
@@ -118,7 +118,7 @@
         const key = (sel || '') + '|' + N2.seen.size + '|' + mt;
         if (key !== brSig) {
           brSig = key; if (brSeg) brSeg.set(sel || '');
-          if (mt) info('<b>뇌의 부분 짝짓기</b>는 2D 화면에서 해요.<br>3D에서는 뇌의 각 부분의 모양과 위치를 살펴봐요.');
+          if (mt) info('<b>뇌의 부분 짝짓기</b>: 상황에 맞는 뇌의 부분을 골라요. 뇌의 각 부분의 모양과 위치를 살펴봐요.');
           else if (sel === 'periph') info('<b>말초 신경계</b>: 감각 신경과 운동 신경이 온몸에 퍼져 중추 신경계와 몸 곳곳을 이어 줘요. (심장·소화 기관을 조절하는 자율 신경도 있어요.)');
           else if (sel) { const R = L.REGIONS[sel]; info('<b>' + R.name + '</b> · ' + R.ex + '<br>' + R.info); }
           else info('<b>뇌의 부분과 척수</b>를 골라 보세요. (찾은 곳 ' + N2.seen.size + ' / 6)<br>대뇌 · 소뇌 · 간뇌 · 중간뇌 · 연수 · 척수');
@@ -140,11 +140,13 @@
         onFrame(p) {
           p3 = p; if (first) return;
           const L = ctx.lesson(); if (!L || !L.S || p > 0.05) return;
-          if (mode === 'neuron' && L.S.scene === 'neuron' && L.fireStim) L.fireStim();
+          if (L.S.scene === 'neuron' && L.fireStim) L.fireStim();            // 뉴런 1개 · 뉴런 연결: 2D의 ⚡ 자극 주기와 같아요
           else if (L.S.scene === 'reflex' && L.S.scene && L.RF && L.RF.t < 0 && L.runReflex) L.runReflex();
         },
       });
       first = false;
+      /* 뉴런 연결: 세 뉴런 읽기 (2D에서 뉴런을 누르는 것과 같아요 → readNeuron) */
+      const nvRow = tailN(() => { controls.text('<b>뉴런</b>'); [['sens', '감각 뉴런'], ['assoc', '연합 뉴런'], ['motor', '운동 뉴런']].forEach(([k, nm]) => controls.button(nm, () => { const L2 = ctx.lesson(); const r = L2 && L2.readNeuron && L2.readNeuron(k); if (r) { info('<b>' + r[0] + '</b> · ' + r[1]); } })); });
       function sceneOf(L) {
         const S = L && L.S ? L.S.scene : 'neuron';
         if (S === 'neuron') return (L.NV && L.NV.view === 'chain') ? ['reflex', 'reflex'] : ['neuron', 'reflex'];
@@ -157,6 +159,8 @@
       return {
         update(dt, t) {
           const L = ctx.lesson(), sc = sceneOf(L), k = sc.join('|') + '|' + (L && L.RF ? L.RF.mode : '') + '|' + (L && L.S ? L.S.scene : '');
+          const chainOn = !!(L && L.S && L.S.scene === 'neuron' && L.NV && L.NV.view === 'chain');
+          nvRow.forEach((e) => { e.style.display = chainOn ? '' : 'none'; });
           if (k !== key) {
             key = k;
             if (sc[0] !== mode) setMode(sc[0]);
