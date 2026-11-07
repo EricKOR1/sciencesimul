@@ -86,11 +86,12 @@
       /* ▶ 떨어뜨리기: 2D의 ▶ 떨어뜨리기와 같아요 (진짜로 떨어뜨려요). 다 떨어진 뒤 진행 막대를 옮기면 그 시각의 모습을 봐요 */
       let ign = false, prevPlay = false;
       const btn = (id) => document.getElementById(id);
-      const pl = controls.player({
+      let pl = null;   // player()가 만들어지는 중에도 onFrame이 한 번 불려요
+      pl = controls.player({
         duration: 4, loop: false, label: '떨어뜨리기',
         phases: [[0, '출발'], [0.1, '점점 빨라져요'], [0.9, '땅에 닿아요']],
         onFrame(p) {
-          if (ign || pl.playing) return;
+          if (ign || !pl || pl.playing) return;
           const L = ctx.lesson(); if (!L || !L.S || L.S.state !== 'done' || !L.S.run) return;
           L.setViewT(p * L.S.run.tMax);
         },
