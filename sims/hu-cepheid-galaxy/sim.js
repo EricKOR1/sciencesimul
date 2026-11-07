@@ -723,7 +723,7 @@
       missions: [
         {
           title: '구상 성단 3개의 거리 직접 계산',
-          goal: '<span class="only3d">화면 아래 ◀ ▶ 단추로</span><span class="only2d">지도에서 번호를 눌러</span> 구상 성단을 고르고, P와 m으로 거리 d(kpc)를 계산해 입력해요. <b>3개</b>를 직접 계산하세요.',
+          goal: '<span class="only3d">화면 아래 ◀ ▶ 단추로</span><span class="only2d">번호를 눌러</span> 구상 성단을 고르고, P와 m으로 거리 d(kpc)를 계산해 입력해요. <b>3개</b>를 직접 계산하세요.',
           hint: 'M = −2.8 log P − 1.4 → m − M → d = 10^((m − M + 5)/5) pc. 예) 1번: M = −4.2 정도, m − M ≈ 13.5 → 약 5 kpc예요.',
           setup() { S.flags.calcG = true; setView('map'); },
           check: () => S.manual.length >= 3, hold: 0.5,

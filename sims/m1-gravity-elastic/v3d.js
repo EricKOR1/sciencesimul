@@ -211,7 +211,7 @@
             setRig(rigS, { n, ext, W: n, eUp: hand ? -Math.sign(ext) : 1, txt: n ? '추 ' + n + '개 = ' + n + ' N' : '' });
             if (hand && Math.abs(ext) > 0.1) { setArrow(rigS.eA, new V3(-0.75, 1.0, 0), new V3(-0.75, 1.0 - Math.sign(ext) * 1.1, 0)); rigS.eA.visible = true; }
             if (ph) ph.textContent = pmode ? (pP < 0.8 ? '추를 하나씩 달아요' : '추를 내려요') : '';
-            setInfo('<b>탄성력</b>은 변형된 용수철이 원래 모양으로 되돌아가려는 힘이에요. 방향은 변형된 방향과 <b>반대</b>이고, 크기는 <b>늘어난 길이에 비례</b>해요.<br>' + (n ? '1 N 추 <b>' + n + '개</b>를 달면 무게 ' + n + ' N = 탄성력 ' + n + ' N이 되어 멈춰요 (늘어난 길이 ' + rf(Math.max(0, pmode ? n * 2 : (SP ? SP.x / l.CMPX : 0))) + ' cm).' : '옆의 2D 장면에서 추를 달거나 용수철을 늘이고 눌러 보세요.'));
+            setInfo('<b>탄성력</b>은 변형된 용수철이 원래 모양으로 되돌아가려는 힘이에요. 방향은 변형된 방향과 <b>반대</b>이고, 크기는 <b>늘어난 길이에 비례</b>해요.<br>' + (n ? '1 N 추 <b>' + n + '개</b>를 달면 무게 ' + n + ' N = 탄성력 ' + n + ' N이 되어 멈춰요 (늘어난 길이 ' + rf(Math.max(0, pmode ? n * 2 : (SP ? SP.x / l.CMPX : 0))) + ' cm).' : ''));
           } else if (sc === 'W') {
             const loadE = pmode ? (pP < 0.45 ? sm(pP / 0.1) * (1 - sm((pP - 0.4) / 0.05)) : 0) : (l && l.SC && l.SC.E.item ? 1 : 0);
             const loadM = pmode ? (pP > 0.5 && pP < 0.95 ? sm((pP - 0.5) / 0.1) * (1 - sm((pP - 0.9) / 0.05)) : 0) : (l && l.SC && l.SC.M.item ? 1 : 0);
@@ -219,7 +219,7 @@
             setRig(rigM, { kg: loadM > 0.02, ext: 0.3 * GM * loadM * 0.55, W: GM * loadM, eUp: 1, txt: loadM > 0.02 ? '1 kg · 무게 ' + rf(GM) + ' N' : '' });
             rigE.obj.scale.setScalar(1); rigM.obj.scale.setScalar(1);
             if (ph) ph.textContent = pmode ? (pP < 0.45 ? '지구에서 재요' : pP < 0.5 ? '달로 옮겨요' : pP < 0.95 ? '달에서 재요' : '') : '';
-            setInfo('<b>질량</b>은 물체의 고유한 양(1 kg)으로 장소가 바뀌어도 변하지 않아요. <b>무게</b>는 중력의 크기(N)로 장소에 따라 달라요.<br>1 kg 물체의 무게: 지구 <b>' + GE + ' N</b>, 달 <b>' + GM + ' N</b> (지구의 약 1/6).' + (pmode ? '' : ' 옆의 2D 장면에서 용수철저울과 양팔저울로 재 보세요.'));
+            setInfo('<b>질량</b>은 물체의 고유한 양(1 kg)으로 장소가 바뀌어도 변하지 않아요. <b>무게</b>는 중력의 크기(N)로 장소에 따라 달라요.<br>1 kg 물체의 무게: 지구 <b>' + GE + ' N</b>, 달 <b>' + GM + ' N</b> (지구의 약 1/6).' + (pmode ? '' : ''));
           } else {
             setInfo('용수철저울은 탄성력이 늘어난 길이에 비례하는 성질로 무게를 재요.');
           }

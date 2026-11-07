@@ -271,7 +271,7 @@
         const ph = document.querySelector('.v3-player .v3-ph'); if (ph) ph.textContent = pmode ? T.name + (T.abs ? ' (열 흡수)' : ' (열 방출)') + (seq.length > 1 && sc === 'life' ? '' : '') : '';
         const why = T.abs ? '입자 사이가 <b>멀어지는</b> 변화라서 열을 <b>흡수</b>해요.' : '입자 사이가 <b>가까워지는</b> 변화라서 열을 <b>방출</b>해요.';
         let txt;
-        if (sc === 'flow') txt = '<b>' + T.name + '</b> (' + T.pair + '): ' + why + '<br>융해 · 기화 · 승화(고체→기체)는 열을 <b>흡수</b>하고, 응고 · 액화 · 승화(기체→고체)는 열을 <b>방출</b>해요.' + (lessonKey === '-' ? '<br>여섯 가지 상태 변화를 차례로 보여 줘요. 열 흡수/방출 <b>분류 활동</b>은 옆의 2D 화면에서 해요.' : '');
+        if (sc === 'flow') txt = '<b>' + T.name + '</b> (' + T.pair + '): ' + why + '<br>융해 · 기화 · 승화(고체→기체)는 열을 <b>흡수</b>하고, 응고 · 액화 · 승화(기체→고체)는 열을 <b>방출</b>해요.' + (lessonKey === '-' ? '<br>여섯 가지 상태 변화를 차례로 보여 줘요.' : '');
         else txt = '<b>' + title + '</b><br>' + desc + '<br>(' + T.name + ': ' + why + ')';
         setInfo(txt);
         sys.step(dt); sys.draw();
