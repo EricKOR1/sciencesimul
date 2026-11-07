@@ -340,7 +340,7 @@
   function drawFracInfo(t) {
     const R = RC.R, f = S.frac, X = frX(), cx = R.x + R.w / 2, cy = R.y + (PHONE ? 100 : 112), rr = PHONE ? 62 : 70, th = 26;
     panel(R.x, R.y, R.w, R.h, 14);
-    T(R.x + 14, R.y + 26, '🍩 몰 분율 (합 = 1)', 14.5, INK, 'left', 800);
+    T(R.x + 14, R.y + 26, '📊 몰 분율 (합 = 1)', 14.5, INK, 'left', 800);
     const xd = f.kd / 100, a0 = -Math.PI / 2;
     ctx.lineWidth = th; ctx.strokeStyle = '#38bdf8'; ctx.beginPath(); ctx.arc(cx, cy, rr, 0, TAU); ctx.stroke();
     if (xd > 0.0005) { ctx.strokeStyle = SOL.sug.col; ctx.beginPath(); ctx.arc(cx, cy, rr, a0, a0 + TAU * xd); ctx.stroke(); }

@@ -2258,7 +2258,7 @@
           {
             title: '질량과 부피 재기', scene: 'exp',
             goal: '🕯️ 양초, 🧊 물, 🧪 에탄올 실험을 각각 해 보고, 상태가 변하기 전과 후의 <b>질량과 부피</b>를 비교하세요.',
-            hint: '실험을 고르고 버튼을 눌러 상태를 바꿔요. 저울의 숫자와 부피 표시를 잘 보고, 🔍 입자 모형도 살펴보세요.',
+            hint: '실험을 고르고 버튼을 눌러 상태를 바꿔요. 저울의 숫자와 부피 표시를 잘 보고, <span class="only2d">🔍 </span>입자 모형도 살펴보세요.',
             setup() { resetExpAll(); selectExp('wax', true); },
             check: () => EXP_KEYS.every((k) => X.done[k]),
             hold: 0.8,

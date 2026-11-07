@@ -131,8 +131,8 @@
           const h = Math.min(dt, 0.05);
           readState();
           /* '🔍 경계면 확대'(2D 단추)를 따라 컵 벽 가까이로 다가가거나 물러나요 */
-          const zm = !!S3.zoom && !S3.fromPlayer;
-          if (zm !== lastZoom) { lastZoom = zm; zoomTo = zm ? { d: 5.2, tx: CR + 0.2, ty: 0.2 } : { d: 11.5 * (PHN0 ? 1.12 : 1), tx: 0, ty: 0 }; }
+          const zm = !!S3.zoom && !S3.fromPlayer && S3.cupIn;   // 컵을 넣은 뒤에만 다가가요
+          if (zm !== lastZoom) { lastZoom = zm; zoomTo = zm ? { d: 7.0, tx: CR - 0.1, ty: 0.3 } : { d: 11.5 * (PHN0 ? 1.12 : 1), tx: 0, ty: 0 }; }
           if (zoomTo) { const k = Math.min(1, dt * 4); orbit.dist += (zoomTo.d - orbit.dist) * k; orbit.tx += (zoomTo.tx - orbit.tx) * k; orbit.ty += (zoomTo.ty - orbit.ty) * k; if (Math.abs(zoomTo.d - orbit.dist) < 0.03) zoomTo = null; }
           const beak = S3.scene === 'beakers';
           groupB.visible = beak; groupC.visible = !beak;

@@ -1,6 +1,8 @@
 /* m1-state-change · 3D 상태 변화와 입자 배열
    상태가 변할 때 입자의 '배열'과 '운동'만 달라지고, 입자의 종류와 수(질량)는 그대로예요.
-   2D 차시와 같은 여섯 화살표(융해·응고·기화·액화·승화 두 방향)와 '질량·부피' 실험(양초·물·에탄올)을 3D로 보여 줘요. */
+   2D 차시와 같은 여섯 화살표(융해·응고·기화·액화·승화 두 방향)와 '질량·부피' 실험(양초·물·에탄올)을 3D로 보여 줘요.
+   3단계(부피와 질량 실험)만 3D예요. 카드를 화살표 · 상자에 끌어 놓는 1 · 2 · 4단계는 2D 화면이에요.
+   (2단계에서 이름 카드를 붙이므로, 상태 변화 이름 단추는 실험 장면에서는 숨겨요.) */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -8,7 +10,7 @@
   window.SciSim3D.attach({
     title: '상태 변화 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    levels: [1, 2],
+    levels: [2],   // 부피와 질량 실험만 3D
     camera: { dist: 9.5 * (PHN0 ? 1.05 : 1), theta: 0.6, phi: 1.15, fov: 45, target: [0, -0.1, 0], min: 5, max: 26 },
     autoRotate: 0.18,
     build(ctx) {
@@ -209,9 +211,9 @@
         const w = st.exp === 'eth' ? 1.45 + 1.1 * g : 1.7 * Math.cbrt(V / e.vA), h = st.exp === 'eth' ? 1.8 + 0.9 * g : 2.0 * Math.cbrt(V / e.vA);
         setBox(w, h);
         sys.mix(e.a, e.b, f);
-        massLab.set('⚖ 질량 ' + e.mass.toFixed(1) + ' g (그대로)'); volLab.set('부피 ' + (st.exp === 'eth' ? (V < 5 ? '1' : '약 ' + Math.round(V / 10) * 10) : Math.round(V)) + ' mL');
+        massLab.set('⚖ 질량 ' + e.mass.toFixed(1) + ' g'); volLab.set('부피 ' + (st.exp === 'eth' ? (V < 5 ? '1' : '약 ' + Math.round(V / 10) * 10) : Math.round(V)) + ' mL');
         massLab.obj = [w + 0.9, -h + 0.5, 0]; volLab.obj = [w + 0.9, -h + 1.3, 0];
-        setInfo('<b>' + e.name + '</b>: ' + NAME[e.a] + ' → ' + NAME[e.b] + ' (밀폐 용기)<br>저울의 <b>질량은 그대로</b>이고 <b>부피</b>만 달라져요. 입자의 수와 종류는 같고, 입자 사이의 <b>거리와 배열</b>만 달라지기 때문이에요.');
+        setInfo('<b>' + e.name + '</b>: ' + NAME[e.a] + ' → ' + NAME[e.b] + ' (밀폐 용기)<br>상태가 변하기 전과 후의 <b>질량</b>과 <b>부피</b>를 비교해 보세요. 입자의 수와 배열도 살펴봐요.');   // 퀴즈의 답(질량 그대로 · 거리가 멀어짐)은 미리 쓰지 않아요
       }
       const seg = controls.segment('', [
         { value: 'melt', label: '융해' }, { value: 'freeze', label: '응고' }, { value: 'vap', label: '기화' }, { value: 'cond', label: '액화' }, { value: 'sub1', label: '승화(고→기)' }, { value: 'sub2', label: '승화(기→고)' },
@@ -223,6 +225,7 @@
         onFrame(p) { if (!built) return; pmode = true; playP = p; },
       });
       built = true;
+      const segBs = Array.from(document.querySelectorAll('.v3-ctl button')).filter((b) => /^(융해|응고|기화|액화|승화)/.test(b.textContent.trim()));
       let playP = 0, vTick = 0, lastArrow = null, lastScene = '', wantB = false;
       start('melt');
 
@@ -237,6 +240,7 @@
             if (scene !== 'exp' && arrow && arrow !== lastArrow && CH[arrow]) { start(arrow); seg.set(arrow); pmode = false; pl.pause(); }
             lastArrow = arrow;
           }
+          segBs.forEach((b) => { b.style.display = st.mode === 'exp' ? 'none' : ''; });   // 실험 장면에서는 상태 변화 이름 단추를 숨겨요
           if (st.mode === 'exp') {
             const f = pmode ? (playP < 0.45 ? sm(playP / 0.45) : playP < 0.55 ? 1 : 1 - sm((playP - 0.55) / 0.35)) : (l && l.X ? l.X.f : 0);
             showExp(Math.max(0, Math.min(1, f)));

@@ -234,6 +234,10 @@
         localCloud.position.set(sunMesh.position.x, sunMesh.position.y, sunMesh.position.z);
         updateLabels();
       }
+      // 2단계(은하 모형)에서는 성단 · 헤일로를 감춰요: 성단의 종류와 위치는 3단계 카드 미션에서 직접 찾아요
+      const clBtns = [openB, globB, haloB];
+      function clusterStep() { const hide = ctx.level === 1; clBtns.forEach((b) => { b.style.display = hide ? 'none' : ''; }); showOpen = showGlob = showHalo = !hide; clBtns.forEach((b) => { b.classList.toggle('on', !hide); b.textContent = b.textContent.replace(/[✓✕]$/, hide ? '✕' : '✓'); }); applyVis(); updateLabels(); }
+      ctx.onLevel(clusterStep); clusterStep();
       readLesson(); applyVis(); text();
 
       /* ===== 장면 cluster(성단 비교) · nebula(성운): 2D와 같은 내용을 입체로 — 산개 성단 vs 구상 성단 / 방출 · 반사 · 암흑 성운 ===== */
@@ -276,6 +280,7 @@
       let nebK = 0, xMode = '', savedX = null, xHid = [];
       let plx = null, xP = 0, xPlay = false;
       { const before = barEl.children.length; plx = controls.player({ duration: 16, loop: true, autoplay: false, label: '살펴보기', phases: [[0, '']], onFrame(p) { xPlay = true; xP = p; } }); }
+      sideBtns();   // 성운 단추 · '살펴보기' 막대는 성단 · 성운 장면에서만 보여요
       function enterX(m) {
         if (xMode === m) return;
         if (!xMode) { savedX = { theta: orbit.theta, phi: orbit.phi, dist: orbit.dist, tx: orbit.tx, ty: orbit.ty, tz: orbit.tz, fov: camera.fov }; xHid = root.children.filter((c) => c !== gX && c.visible); xHid.forEach((c) => { c.visible = false; }); }

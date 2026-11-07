@@ -1447,7 +1447,7 @@
         {
           title: '시료 5종을 모두 관찰하기',
           goal: '가상 현미경으로 <b>바이러스·세균·곰팡이·원생생물·기생충</b>을 모두 관찰하세요.',
-          hint: '아래 시료 단추를 하나씩 눌러요. 시료마다 1초쯤 살펴보면 ✔ 표시가 붙어요.',
+          hint: '시료 단추를 하나씩 눌러요. 시료마다 1초쯤 살펴보면 ✔ 표시가 붙어요.',
           setup() { S.O.seen = {}; S.O.cur = null; setScene('obs', 'scope'); syncControls(); },
           check: () => KEYS.every((k) => S.O.seen[k]), hold: 0.4,
           status: () => names(),
@@ -1456,7 +1456,7 @@
         {
           title: '병원체 비교표 채우기', manual: true,
           goal: '5종 병원체의 <b>세포 구조, 핵(핵막), 몸 구성</b>을 표에 채우고 <b>✔ 확인하기</b>를 누르세요.',
-          hint: '3D 막대에서 병원체를 고르고 칸 단추를 누를 때마다 보기가 바뀌어요. 바이러스는 세포가 아니고, 세균은 핵막이 없다는 점을 떠올려요.',
+          hint: '<span class="only3d">화면 아래에서 병원체를 고르고 칸 단추를 누를 때마다 보기가 바뀌어요.</span><span class="only2d">표의 칸을 누를 때마다 보기가 바뀌어요.</span> 바이러스는 세포가 아니고, 세균은 핵막이 없다는 점을 떠올려요.',
           setup() { S.O.table.reset(); setScene('obs', 'table'); },
           check() {
             const tb = S.O.table, miss = tb.total - tb.filled;

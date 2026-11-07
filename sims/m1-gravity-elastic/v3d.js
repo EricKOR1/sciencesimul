@@ -199,7 +199,7 @@
             if (ph) ph.textContent = pmode ? (pP < 0.25 ? '들고 있어요' : pP < 0.5 ? '떨어져요' : pP < 0.85 ? '땅에 닿아요' : '다시 들어 올려요') : '';
             const nDone = K ? K.filter((k) => k.done).length : 0;
             setInfo(pmode || nDone >= 4 ? '<b>중력</b>은 지구가 물체를 <b>지구 중심</b> 쪽으로 끌어당기는 힘이에요.<br>북극·대한민국·남극·적도 반대편 어디에서나 사과는 <b>지구 중심 쪽</b>(아래)으로 떨어져요.'
-              : '네 곳의 아이가 사과를 들고 있어요. 아래 <b>🍎 단추</b>를 눌러 사과를 놓아 보세요. 사과는 어느 쪽으로 떨어질까요?' + (nDone ? '<br>사과 ' + nDone + '개가 떨어졌어요.' : ''));
+              : '지구의 네 곳에서 사과를 들고 있어요. 아래 <b>🍎 단추</b>를 눌러 사과를 놓아 보세요. 사과는 어느 쪽으로 떨어질까요?' + (nDone ? '<br>사과 ' + nDone + '개가 떨어졌어요.' : ''));
             dirText.show(pmode || nDone >= 4);
             kidBs.forEach((b, i) => { const k = K && K[i]; b.classList.toggle('on', !!(k && k.done)); });
           } else if (sc === 'S') {

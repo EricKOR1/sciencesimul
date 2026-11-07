@@ -1273,7 +1273,7 @@
           {
             title: '🔭 지상 vs 우주 망원경',
             goal: '[⛰️ 지상]과 [🛰️ 우주]를 모두 눌러, 같은 별이 어떻게 다르게 찍히는지 1초 이상 살펴봐요.',
-            hint: '오른쪽 위 버튼이나 그림 속 망원경을 눌러 바꿔요. 사진의 별 모양과 개수를 비교해 보세요.',
+            hint: '<b>⛰️ 지상</b> · <b>🛰️ 우주</b> 버튼<span class="only2d">이나 그림 속 망원경</span>을 눌러 바꿔요. 별의 모습을 비교해 보세요.',
             setup() { setScene('scope'); S.scopeV = 'ground'; S.scopeSeen = { ground: 0, space: 0 }; S.scopeDone = { ground: false, space: false }; syncControls(); },
             check: () => S.scopeDone.ground && S.scopeDone.space,
             hold: 0.3,
@@ -1414,5 +1414,13 @@
     client(x, y) { const r = V.canvas.getBoundingClientRect(); return { x: r.left + x * r.width / VW, y: r.top + y * r.height / VH }; },
     tokCenter(B, id) { const t = B.tokens.find((q) => q.id === id || q.name === id); return { x: t.x + t.w / 2, y: t.y + t.h / 2 }; },
     slotCenter(B, i) { const s = B.slots[i]; return { x: s.x + s.w / 2, y: s.y + s.h / 2 }; },
+    // 3D 화면의 짝짓기 버튼: 탐사 방법 카드(kind)를 목표 칸 z에 놓아요 (끌어다 놓은 것과 같아요)
+    placeMatch(kind, z) {
+      const B = BM, t = B.tokens.find((q) => q.kind === kind); if (!t || z < 0 || z >= B.slots.length) return;
+      const occ = B.tokens.find((o) => o.zone === z && o !== t); if (occ) { occ.zone = -1; occ.wrong = false; }
+      t.zone = z; t.wrong = false; t.order = orderCtr++; Sound.tone(520 + z * 60, 0.08, 'triangle', 0.08);
+      refreshWrong(B); bSettle(B);
+    },
+    GOALS, METHODS,
   };
 })();

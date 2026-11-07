@@ -970,7 +970,7 @@
   }
   const cM = makeClassifier({
     items: MET.map((m) => ({ id: m.n, label: m.n, sub: m.sub, bin: m.bin, open: true, chip: m.n })),
-    bins: [{ label: '🧊 원시 물질 천체의 조각', sub: '한 번도 녹지 않은 천체', color: '#16a34a' }, { label: '🔥 분화된 천체의 조각', sub: '내부가 녹아 층으로 나뉜 천체', color: '#7c3aed' }],
+    bins: [{ label: '🪨 원시 물질 천체의 조각', sub: '한 번도 녹지 않은 천체', color: '#16a34a' }, { label: '🔥 분화된 천체의 조각', sub: '내부가 녹아 층으로 나뉜 천체', color: '#7c3aed' }],
     chipCols: 2, minRows: 3,
     layout: () => { const L = LMT(); return { grid: L.grid, bins: L.bins }; },
     onPlace(it, b) {

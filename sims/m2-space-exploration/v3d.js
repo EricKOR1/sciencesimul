@@ -12,7 +12,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHN ? 17 : 13, theta: 0.5, phi: 1.2, min: 4, max: 40 },
     autoRotate: 0.05,
-    levels: [],                      // 발사 · 연표 · 짝짓기 · 계획서 미션은 2D 화면에서 해요 (망원경 비교 장면은 3D로 볼 수 있어요)
+    levels: [1],                     // 2단계(탐사 방법 · 망원경): 짝짓기 카드는 아래 단추로 놓아요. 1·3·4단계는 연표 카드 · 집 안 물건 · 계획서를 화면에서 고르는 미션이라 2D
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
       const V3 = THREE.Vector3;
@@ -102,7 +102,7 @@
       const wav = []; for (let i = 0; i < 4; i++) { const pts = []; const off = (i - 1.5) * 0.16; for (let k = 0; k <= 40; k++) { const u = k / 40, y = 7.1 - u * 7.1, inAtm = Math.max(0, Math.min(1, (2.2 - y) / 2.0)); pts.push(new V3(-3.3 * u + off * u + Math.sin(k * 0.95 + i * 1.7) * 0.2 * inAtm, y, 0)); }
         const rr = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 120, 0.03, 6, false), rayMat(0xffe08a, 0.65)); scope.add(rr); wav.push(rr); }
       const strt = []; for (let i = 0; i < 4; i++) { const x1 = 3.3 + (i - 1.5) * 0.12; const rr = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new V3(0.0, 7.1, 0), new V3(x1 * 0.5, 5.4, 0), new V3(x1, 3.7, 0)]), 30, 0.03, 6, false), rayMat(0xffe08a, 0.9)); scope.add(rr); strt.push(rr); }
-      const scLab = [label('별(먼 천체)', scStar, { size: 12, offset: [0, 0.5, 0] }), label('대기 (빛이 흔들리고 흐려져요)', [-5.6, 0.9, 0], { size: 11.5, color: 'rgba(40,100,190,.92)' }), label('지상 망원경', gTel, { size: 12, offset: [0, 1.5, 0] }), label('우주 망원경 (대기 밖)', sTel, { size: 12, offset: [0, -0.8, 0] }),
+      const scLab = [label('별(먼 천체)', scStar, { size: 12, offset: [0, 0.5, 0] }), label('대기', [-5.6, 0.9, 0], { size: 11.5, color: 'rgba(40,100,190,.92)' }), label('지상 망원경', gTel, { size: 12, offset: [0, 1.5, 0] }), label('우주 망원경 (대기 밖)', sTel, { size: 12, offset: [0, -0.8, 0] }),
         label('흐릿한 상', imgG, { size: 11.5, offset: [0, 1.15, 0], color: 'rgba(120,60,20,.92)' }), label('선명한 상', imgS, { size: 11.5, offset: [0, 1.15, 0], color: 'rgba(15,100,70,.92)' })];
       scope.children.forEach(() => {});
       let mode = 'near', labs = true, showDeb = true, PH = 0, pl = null, internal = false;
@@ -111,7 +111,7 @@
         near.visible = mode === 'near'; solar.visible = mode === 'sol'; scope.visible = mode === 'scope'; scLab.forEach((l) => l.show(labs && mode === 'scope'));
         lNear.forEach((l) => l.show(labs && mode === 'near')); lDeb.show(labs && showDeb && mode === 'near'); lS.forEach((l) => l.show(labs && mode === 'sol')); PL.forEach((p) => p.l.show(labs && mode === 'sol'));
         deb.visible = showDeb;
-        if (mode === 'scope') { orbit.dist = PHN ? 22 : 15; orbit.phi = 1.4; orbit.theta = 0.1; orbit.tx = 0; orbit.ty = 3; orbit.tz = 0; info('<b>지상 망원경 vs 우주 망원경</b><br>별빛이 <b>대기</b>를 지나면서 흔들리고 흐려져서, 지상 망원경으로 본 상은 <b>흐릿해요</b>. 대기권 <b>밖</b>의 우주 망원경은 대기의 방해가 없어 <b>선명한 상</b>을 얻어요.<br>2D 화면에서 두 망원경을 눌러 비교해 보세요.'); } else if (mode === 'near') { orbit.ty = 0; orbit.dist = PHN ? 17 : 12; orbit.phi = 1.2; info('<b>지구 주변</b>: 인공위성·우주 정거장·우주 망원경이 지구를 돌아요.<br>수명이 다한 위성의 조각 같은 <b>우주 쓰레기</b>도 많이 떠돌아서 위험해요.'); }
+        if (mode === 'scope') { orbit.dist = PHN ? 22 : 15; orbit.phi = 1.4; orbit.theta = 0.1; orbit.tx = 0; orbit.ty = 3; orbit.tz = 0; info('<b>지상 망원경 vs 우주 망원경</b><br>같은 별을 땅 위의 망원경과 대기권 밖의 망원경으로 보면 어떻게 다를까요?<br>[⛰️ 지상] · [🛰️ 우주] 버튼을 눌러 두 상을 비교해 보세요.'); } else if (mode === 'near') { orbit.ty = 0; orbit.dist = PHN ? 17 : 12; orbit.phi = 1.2; info('<b>지구 주변</b>: 인공위성·우주 정거장·우주 망원경이 지구를 돌아요.<br>수명이 다한 위성의 조각 같은 <b>우주 쓰레기</b>도 많이 떠돌아서 위험해요.'); }
         else { orbit.dist = PHN ? 36 : 27; orbit.phi = 1.1; info('<b>태양계 탐사</b>: 탐사선은 행성 곁을 지나가며 사진과 자료를 보내요.<br>보이저 1·2호는 목성과 토성을 지나 태양계 밖으로 나아가고 있어요.'); }
       }
       const sg = controls.segment('보기', [{ label: '지구 주변', value: 'near' }, { label: '태양계', value: 'sol' }], mode, (v) => { mode = v; apply(); });
@@ -123,11 +123,32 @@
       });
       controls.button('우주 쓰레기', () => { showDeb = !showDeb; apply(); });
       controls.button('이름표', () => { labs = !labs; apply(); });
+      /* 목표와 방법 짝짓기(2단계 미션): 방법 카드를 고른 뒤 목표 단추를 눌러요 → 실험의 카드판과 같은 상태(window.__sim.placeMatch) */
+      const bar = ctx.renderer.domElement.closest('.v3-wrap').querySelector('.v3-ctl'), matchEls = [];
+      let mSel = 0, mShown = null, mKey = '', mTick = 0;
+      { const s0 = window.__sim, n1 = bar.children.length;
+        if (s0 && s0.placeMatch && s0.GOALS) {
+          controls.segment('방법 카드', s0.METHODS.map((m, i) => ({ label: m.name, value: i })), 0, (v) => { mSel = v; });
+          s0.GOALS.forEach((g, z) => controls.button('→ ' + g.title, () => { const s = window.__sim; if (s && s.S.scene === 'match') { s.placeMatch(mSel, z); mKey = ''; } }));
+        }
+        matchEls.push(...[...bar.children].slice(n1)); }
+      function matchFrame() {
+        const s = window.__sim, on = !!(s && s.S && s.S.scene === 'match' && s.placeMatch);
+        if (on !== mShown) { mShown = on; mKey = ''; matchEls.forEach((e) => { e.style.display = on ? '' : 'none'; }); if (!on) apply(); }
+        if (!on) return false;
+        const toks = s.BM.tokens, key = toks.map((t) => t.kind + ':' + t.zone).join();
+        if (key !== mKey) {
+          mKey = key;
+          info('<b>목표와 방법 짝짓기</b>: 방법 카드를 고른 뒤 알맞은 목표 단추를 눌러요. 다 놓으면 <b>✔ 확인하기</b>를 눌러요.<br>' + s.GOALS.map((g, z) => { const t = toks.find((q) => q.zone === z); return g.icon + ' ' + g.title + ': ' + (t ? '<b>' + t.name + '</b>' : '?'); }).join('<br>'));
+        }
+        return true;
+      }
       apply();
       let lastKey = '';
       return {
         update(dt, t) {
           PH += dt;
+          if ((mTick++ % 6) === 0) matchFrame();
           { const S0 = window.__sim && window.__sim.S, sc = S0 ? S0.scene : 'history', goal = sc === 'plan' && S0.plan ? S0.plan.goal : -1, key = sc + ':' + goal;
             if (key !== lastKey) { lastKey = key; const want = sc === 'scope' ? 'scope' : sc === 'plan' ? (goal === 1 ? 'sol' : 'near') : (mode === 'scope' ? 'near' : mode); if (want !== mode) { mode = want; sg.set(want === 'scope' ? '' : want); apply(); } } }
           if (mode === 'scope') {

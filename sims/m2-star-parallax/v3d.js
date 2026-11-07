@@ -13,7 +13,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHN ? 14 : 11, theta: 0.5, phi: 1.1, min: 8, max: 55, target: [0, 5, 0] },
     autoRotate: 0,
-    levels: [1, 2],                  // 0단계(연필 시차 실험: 눈 번갈아 감기)와 3단계(카드 놓기)는 2D 화면에서 해요 (3D로도 볼 수 있어요)
+    levels: [2],                     // 3단계(거리를 바꾸며 연주시차 기록). 1단계(눈 바꾸기) · 2단계(모형의 각 ①②③을 눌러 고르기) · 4단계(카드 놓기)는 2D
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
       const V3 = THREE.Vector3;
@@ -55,7 +55,7 @@
       const fmtP = (d) => (1 / d).toFixed(d === 1 ? 0 : 2).replace(/\.?0+$/, '');
       function hOf(d) { return 2.6 + 1.25 * d; }
       let adj = 1.6;
-      function info2(d) { adj = 1.6; info(`가까운 별까지 거리 <b>${d} pc</b> → 연주시차 <b>${(1 / d).toFixed(2).replace(/\.?0+$/, '')}″</b><br>별이 <b>멀수록</b> 연주시차가 <b>작아요</b> (거리와 반비례).<br>지구가 6개월 동안 반대편으로 가면 별이 배경에서 움직여 보여요.`); }
+      function info2(d) { adj = 1.6; info(`가까운 별까지 거리 <b>${d} pc</b> → 연주시차 <b>${(1 / d).toFixed(2).replace(/\.?0+$/, '')}″</b><br>별까지 거리를 바꾸며 연주시차가 어떻게 달라지는지 보세요.<br>지구가 6개월 동안 반대편으로 가면 별이 배경에서 움직여 보여요.`); }
       const distR = controls.range('별까지 거리', 1, 10, 1, dist, (v) => { dist = v; const s = sm(); if (s && s.setDist) s.setDist(v); info2(v); }, (v) => v + ' pc');
       const bJ = controls.button('1월', () => { const s = sm(); if (s) { s.S.angT = 180; } });
       const bL = controls.button('7월', () => { const s = sm(); if (s) { s.S.angT = 360; } });
@@ -116,7 +116,7 @@
         const sh = Math.abs(spots[1] - spots[0]);
         penLab[4].obj = [(spots[0] + spots[1]) / 2, 0.12, WZ + 2.2]; penLab[4].set('움직임 ' + (sh * 10).toFixed(0) + ' cm (눈 사이 6.5 cm)');
         const phe = document.querySelector('.v3-player .v3-ph'); const rows = penRows(); const phr = rows[1] && rows[1].querySelector('.v3-ph'); if (phr) phr.textContent = penDem ? ph : '';
-        setPen((penDem ? '<b>▶ ' + ph + '</b><br>' : '') + '<b>시차</b>: 한쪽 눈씩 번갈아 보면 <b>가까운 연필</b>이 <b>먼 배경</b>에 대해 움직여 보여요 (배경의 노란 점 ↔ 하늘색 점).<br>연필이 <b>가까울수록</b> 많이, <b>멀수록</b> 조금 움직여 보여요. 연필 거리 <b>' + d + ' cm</b>' + (penDem ? '' : '<br>눈을 번갈아 감는 것은 옆의 2D 화면에서 해요. 또는 ▶ 재생을 눌러 보세요.'));
+        setPen((penDem ? '<b>▶ ' + ph + '</b><br>' : '') + '<b>시차</b>: 한쪽 눈씩 번갈아 보면 <b>가까운 연필</b>이 <b>먼 배경</b>에 대해 움직여 보여요 (배경의 노란 점 ↔ 하늘색 점).<br>연필이 <b>가까울수록</b> 많이, <b>멀수록</b> 조금 움직여 보여요. 연필 거리 <b>' + d + ' cm</b>' + (penDem ? '' : '<br>▶ 번갈아 보기를 눌러 보세요.'));
       }
       let a0 = 270, k0 = 0;
       const nowP = new V3(), sPos = new V3(), out = new V3();

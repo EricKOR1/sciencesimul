@@ -737,8 +737,8 @@
         },
         {
           id: 'count', title: '방형구 하나 세기',
-          goal: '설치한 방형구 하나를 <b>🔍 방형구 확대</b>로 열고, <b>➕ 한 포기 세기로 식물을 모두 센 뒤</b> 식물 종마다 <b>덮은 면적</b>도 읽으세요.',
-          hint: '3D 막대에서 식물을 고르고 ➕ 한 포기 세기를 그 종이 다 셀 때까지 눌러요. 📐 덮은 면적 읽기로 종마다 덮은 면적도 읽어요.',
+          goal: '설치한 방형구 하나를 <b>🔍 <span class="only3d">방형구 확대</span><span class="only2d">방형구 세기</span></b>로 열고, <b><span class="only3d">➕ 한 포기 세기로 </span>식물을 모두 센 뒤</b> 식물 종마다 <b>덮은 면적</b>도 읽으세요.',
+          hint: '<span class="only3d">화면 아래에서 식물을 고르고 ➕ 한 포기 세기를 그 종을 다 셀 때까지 눌러요. 📐 덮은 면적 읽기로 종마다 덮은 면적도 읽어요.</span><span class="only2d">확대한 방형구 속 식물을 하나씩 눌러 세요. 옆 표에서 종마다 줄을 눌러 덮은 면적도 읽어요.</span>',
           setup() { S.zoom = { q: S.zoom.q, marked: {}, covSeen: {}, done: {}, pop: {} }; setMode('field'); },
           check: () => Object.keys(S.zoom.done).some((k) => S.zoom.done[k]),
           hold: 0.6,
