@@ -1332,7 +1332,7 @@
   $('#sDist').addEventListener('input', (e) => {
     if (A.phase !== 'idle') return;
     A.slider = +e.target.value / 100; syncDist();
-    if (A.slider >= 0.8 && !A.hinted) { A.hinted = true; showHint('전자가 반짝여요! 금빛 전자를 Cl의 점선 자리로 끌어 놓아요', 4500); }
+    if (A.slider >= 0.8 && !A.hinted) { A.hinted = true; showHint(document.body.classList.contains('v3-mode') ? '전자가 반짝여요! 금빛 전자를 눌러 Cl로 옮겨요' : '전자가 반짝여요! 금빛 전자를 Cl의 점선 자리로 끌어 놓아요', 4500); }
   });
   $$('#latTabs button').forEach((b) => b.addEventListener('click', () => { Sound.click(); S.latView = b.dataset.v; setScene('lattice'); if (b.dataset.v === 'formula') fmSync(); }));
   $$('#cmpSeg button').forEach((b) => b.addEventListener('click', () => fmChoose(b.dataset.c)));
@@ -1398,7 +1398,7 @@
         {
           title: '전자 옮기기',
           goal: '<b>거리</b>를 줄여 Na와 Cl 원자를 가까이 한 뒤, Na의 <b>금빛 전자</b>를 Cl의 빈자리로 옮겨 보세요.',
-          hint: '슬라이더를 오른쪽 끝까지 밀면 전자가 반짝여요. 전자를 끌어 Cl의 점선 자리에 놓아요. (전자를 한 번 눌러도 돼요.)',
+          hint: '슬라이더를 오른쪽 끝까지 밀면 전자가 반짝여요. <span class="only2d">전자를 끌어 Cl의 점선 자리에 놓아요. (전자를 한 번 눌러도 돼요.)</span><span class="only3d">반짝이는 금빛 전자나 그 위의 <b>👆 금빛 전자 옮기기</b> 이름표를 눌러요.</span>',
           check: () => merged(),
           hold: 0.6,
           status: () => mark(A.slider >= 0.8 || A.phase !== 'idle') + ' 가까이 · ' + mark(A.phase === 'done') + ' 전자 이동 · ' + mark(merged()) + ' 이온 결합',

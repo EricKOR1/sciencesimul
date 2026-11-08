@@ -913,7 +913,7 @@
     clearTimeout(hintTimer); parts.clear(); flash.t = 0;
     if (li === 0) { dn1.reset(); setView('v1'); showHint('비슷한 모양끼리 상자에 끌어 넣어요', 5000); }
     else if (li === 1) { S.recE = [false, false, false]; setGal(0); dn2.reset(); S.fade = 1; setView('v2'); showHint('두 손잡이를 점선에 맞춰 a와 b를 재요', 5000); }
-    else if (li === 2) { S.tblOn = false; S.matchOn = false; S.tbl = ['', '', '']; S.match3 = ['', '', '']; ['a', 'b', 'c'].forEach((k) => { $('#in3' + k).value = ''; }); $$('#matchRows select').forEach((s) => { s.value = ''; }); S.metric = 'ism'; S.visited = {}; setSel3('Sc'); setView('v3'); showHint('막대를 눌러 유형별 값을 읽어요', 5000); }
+    else if (li === 2) { S.tblOn = false; S.matchOn = false; S.tbl = ['', '', '']; S.match3 = ['', '', '']; ['a', 'b', 'c'].forEach((k) => { $('#in3' + k).value = ''; }); $$('#matchRows select').forEach((s) => { s.value = ''; }); S.metric = 'ism'; S.visited = {}; setSel3('Sc'); setView('v3'); showHint('유형을 하나씩 골라 값을 읽어요', 5000); }
     else { resetAI(); setView('v4'); showHint('훈련 은하를 눌러 이름표를 달아요', 5000); }
     updateCtl();
   }

@@ -114,8 +114,11 @@
         const L2 = window.__sim; if (mode !== 'transfer' || demoP > 0 || !L2 || !L2.A) return;
         const r = rd.getBoundingClientRect(); ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
         ray.setFromCamera(ndc, ctx.camera);
-        if (ray.intersectObject(movE.e, false).length && L2.A.phase === 'idle' && L2.A.slider >= 0.8 && L2.startFly) L2.startFly(L2.VW / 2 - L2.A.d.value / 2 + R2, AY);
+        if (ray.intersectObject(movE.e, false).length) moveE();
       });
+      // 작은 전자를 못 맞혀도 이름표를 눌러 옮길 수 있어요
+      function moveE() { const L2 = window.__sim; if (mode !== 'transfer' || demoP > 0 || plT.playing || !L2 || !L2.A) return; if (L2.A.phase === 'idle' && L2.A.slider >= 0.8 && L2.startFly) L2.startFly(L2.VW / 2 - L2.A.d.value / 2 + R2, AY); }
+      const eTap = L('👆 금빛 전자 옮기기', movE.e, { offset: [0, 0.75, 0], color: 'rgba(255,211,77,.95)', tap: moveE }); eTap.el.style.color = '#1b2333'; eTap.show(false);
 
       let lastSc = null;
       const scMap = { atoms: 'transfer', lattice: 'lattice' };
@@ -141,6 +144,7 @@
             const sx = 2.3, cx = gap - 2.3, px = sx + (cx - sx) * k, py = Math.sin(k * Math.PI) * 1.2;
             if (k < 0.001) { const a = movE.a0 + t * movE.sp; movE.e.position.set(Math.cos(a) * 2.3, 0, Math.sin(a) * 2.3); } else movE.e.position.set(px, py, 0);
             movE.e.scale.setScalar(1 + (glow ? 0.35 + 0.25 * Math.sin(t * 8) : 0));
+            eTap.show(!demo && !!glow);
             NA.rings[2].visible = k < 0.5; CL.rings[2].material.opacity = 0.55;
             const nsc = 1 - 0.18 * qa; NA.rings.forEach((r, i) => { r.scale.setScalar(i === 2 ? 1 : nsc); });
             CL.g.scale.setScalar(1 + 0.12 * qa);

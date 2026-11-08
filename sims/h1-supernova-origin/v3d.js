@@ -82,7 +82,7 @@
         const m = new THREE.Mesh(new THREE.SphereGeometry(0.3, 24, 16), std(EL[k.el].c, { emissive: EL[k.el].c, emissiveIntensity: 0.5, roughness: 0.3 }));
         m.userData.tok = k; k.dir = new V(Math.cos(k.a0), (rnd() - 0.5) * 0.7, Math.sin(k.a0)).normalize(); root.add(m); return m;
       });
-      const tokLab = tokMesh.map((m) => label('', m, { size: 12, offset: [0, 0.55, 0] }));
+      const tokLab = tokMesh.map((m) => label('', m, { size: 12, offset: [0, 0.55, 0], tap: () => { const L = lesson(); if (L && L.S && m.visible) L.S.heavy.add(m.userData.tok.el); m.scale.setScalar(1.6); } }));   // 움직이는 알갱이: 이름표를 눌러도 돼요
       const heavySeen = () => { const L = lesson(); return L && L.S ? L.S.heavy : new Set(); };
       const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
       let down = null;
