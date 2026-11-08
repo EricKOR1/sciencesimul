@@ -49,6 +49,8 @@
       const base = new THREE.Mesh(new THREE.BoxGeometry(1, 0.06, 0.7), mat(0x64748b)); root.add(base);
       const drop = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.5, 16), mat(0x7c3aed)); drop.rotation.x = Math.PI; root.add(drop);
       const dropLab = label('', drop, { size: 12, offset: [0, 0.6, 0] });
+      /* 스포이트 · 향수병 이름표를 누르면 2D에서 스포이트 · 향수병을 누른 것과 같아요 */
+      dropLab.tap(() => { const L = L2(); const b = document.getElementById(L && L.scene === 'perfume' ? 'sprayBtn' : 'dropBtn'); if (b && !b.disabled) b.click(); });
       const barLab = label('칸마다 입자 수', [0, -2.3, 1.7], { size: 11, offset: [0, 0, 0] });
       const boxLab = [label('', [0, 0, 0], { size: 12.5, color: 'rgba(200,50,30,.92)' }), label('', [0, 0, 0], { size: 12.5, color: 'rgba(40,90,220,.92)' })];
 
