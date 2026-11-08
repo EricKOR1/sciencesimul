@@ -208,11 +208,23 @@
     const mi = mk('button', 'btn btn-sm stp-b', '−'), pl = mk('button', 'btn btn-sm stp-b', '+'), out = mk('output', 'stp-v');
     mi.type = pl.type = 'button'; mi.setAttribute('aria-label', '줄이기'); pl.setAttribute('aria-label', '늘리기');
     const un = mk('span', 'stp-u', o.unit || '');
-    root.append(mi, out, un, pl);
+    // 범위가 넓으면 큰 걸음(×10) 단추도 둬요 (예: 0.1씩 156번 누르지 않게)
+    const big = (o.max - o.min) / o.step > 60 ? o.step * 10 : 0;
+    const bigLab = big ? (+big.toFixed(dec)).toString() : '';
+    const mi2 = big ? mk('button', 'btn btn-sm stp-b', '−' + bigLab) : null, pl2 = big ? mk('button', 'btn btn-sm stp-b', '+' + bigLab) : null;
+    if (big) { mi2.type = pl2.type = 'button'; mi2.setAttribute('aria-label', bigLab + '만큼 줄이기'); pl2.setAttribute('aria-label', bigLab + '만큼 늘리기'); }
+    root.append(...(big ? [mi2] : []), mi, out, un, pl, ...(big ? [pl2] : []));
     const show = () => { out.textContent = (st.value < 0 ? '−' : '') + Math.abs(st.value).toFixed(dec); };
     const set = (v, silent) => { st.value = clamp(Math.round(v / o.step) * o.step, o.min, o.max); st.value = +st.value.toFixed(dec + 1); show(); if (!silent && o.onChange) o.onChange(st.value); };
-    mi.addEventListener('click', () => { Sound.click(); set(st.value - o.step); });
-    pl.addEventListener('click', () => { Sound.click(); set(st.value + o.step); });
+    // 누르고 있으면 계속 바뀌어요
+    const hold = (btn, d) => {
+      let t1 = 0, t2 = 0, n = 0;
+      const stop = () => { clearTimeout(t1); clearInterval(t2); };
+      btn.addEventListener('click', (e) => { if (n > 0) { n = 0; return; } Sound.click(); set(st.value + d); });
+      btn.addEventListener('pointerdown', () => { n = 0; stop(); t1 = setTimeout(() => { t2 = setInterval(() => { n++; set(st.value + d); }, 90); }, 450); });
+      ['pointerup', 'pointerleave', 'pointercancel'].forEach((ev) => btn.addEventListener(ev, stop));
+    };
+    hold(mi, -o.step); hold(pl, o.step); if (big) { hold(mi2, -big); hold(pl2, big); }
     st.set = set; st.reset = () => set(o.value != null ? o.value : o.min, true);
     show();
     return st;
