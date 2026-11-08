@@ -949,7 +949,7 @@
   $('#divBtn').addEventListener('click', divide);
   $('#resetBtn').addEventListener('click', () => {
     Sound.click(); setScene(scene);
-    if (scene === 'fert') showHint('🏊 “정자 출발!”을 눌러 보세요', 5000);
+    if (scene === 'fert') showHint('▶ “정자 출발!”을 눌러 보세요', 5000);
   });
   $$('#nSeg button').forEach((b) => b.addEventListener('click', () => setN(+b.dataset.n)));
   $('#cmpBtn').addEventListener('click', () => setCmp(!G.cmp));
@@ -1014,7 +1014,7 @@
     badge: '발생 탐험가',
     homeHref: '../../index.html#g3',
     featureLabels: {
-      sperm: '🏊 정자 출발 버튼',
+      sperm: '▶ 정자 출발 버튼',
       cleave: '✂️ 분열 버튼 · 📏 크기 게이지',
       graphs: '📊 분열 횟수별 그래프',
       compare: '🔍 체세포분열과 비교',
@@ -1024,18 +1024,18 @@
     onFeatures(set) { F = set; },
     levels: [
       {
-        title: '정자와 난자의 만남', short: '수정', icon: '🏊', phase: '관찰',
+        title: '정자와 난자의 만남', short: '수정', icon: '🥚', phase: '관찰',
         features: ['sperm'],
         intro: '<p class="si-q">❓ 탐구 질문: 하나의 수정란이 어떻게 수많은 세포로 이루어진 몸이 될까?</p>' +
           '<p>그 시작은 <b>수정</b>이에요. 먼저 정자와 난자가 만나는 모습을 관찰해 봐요. <b>정자 출발!</b>을 누르면 정자들이 난자를 향해 헤엄쳐요.</p>',
-        setup: levelSetup('fert', '🏊 “정자 출발!”을 눌러 보세요'),
+        setup: levelSetup('fert', '▶ “정자 출발!”을 눌러 보세요'),
         recap: '정자와 난자가 만나는 것을 <b>수정</b>이라고 해요. 정자 <b>1개</b>만 들어가고, 염색체 <b>23 + 23 = 46개</b>인 <b>수정란</b>이 만들어져요.',
         summary: '<p><b>수정</b>: 정자와 난자가 만나 핵이 합쳐지는 것. 이때 만들어진 세포가 <b>수정란</b>이다.</p>' +
           '<p>정자 <b>한 개</b>만 난자 속으로 들어가고, 난자 둘레에 수정막이 생겨 다른 정자는 들어오지 못한다. 사람의 정자와 난자는 염색체가 각각 <b>23개</b>이므로 수정란의 염색체는 <b>23 + 23 = 46개</b>이다.</p>',
         missions: [
           {
             title: '수정시키기',
-            goal: '<b><span class="only2d">🏊 정자 출발!</span><span class="only3d">▶ 수정</span></b> 버튼을 눌러 정자가 난자와 만나는 과정을 끝까지 지켜보세요. 두 핵이 하나로 합쳐지면 성공이에요.',
+            goal: '<b><span class="only2d">▶ 정자 출발!</span><span class="only3d">▶ 수정</span></b> 버튼을 눌러 정자가 난자와 만나는 과정을 끝까지 지켜보세요. 두 핵이 하나로 합쳐지면 성공이에요.',
             hint: '버튼을 누르고 기다려요. 정자 한 개가 들어가면 화면이 난자 속으로 확대돼요.',
             hold: 0.6,
             check: () => scene === 'fert' && FT.done,

@@ -127,7 +127,7 @@
       const surf = YB0 - (v + rdStart) * PER, h = Math.max(surf - YB1, 1e-3);
       bliq.scale.set(1, h, 1); bliq.position.set(0, YB1 + h / 2, 0);
       lbl.obj = [-0.3, surf, 0]; lbl.off = [-1.1, 0, 0]; lbl.set((v + rdStart).toFixed(2) + ' mL');
-      const pk = Math.max(0, Math.min(1, (v - CFG.Veq + 0.15) / 0.7));
+      const ex = v - CFG.Veq, pk = ex > 1e-6 ? Math.min(1, 0.35 + 0.65 * ex / 0.5) : 0;   // 2D와 같이 중화점을 넘긴 뒤에만 분홍색 (넘기기 전에는 무색)
       liqM.color.copy(CLEAR).lerp(PINK, pk); liqM.opacity = 0.3 + 0.28 * pk;
       lblFlask.obj = [1.7, 4.3, 0]; lblFlask.off = [0.9, 0, 0];
       const near = Math.abs(v - CFG.Veq) < 0.6;

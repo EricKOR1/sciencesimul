@@ -771,7 +771,7 @@
         {
           id: 'glyc4', title: '인산기 전달 4번',
           goal: '<b>🍬 해당 과정</b>에서 주황색 Ⓟ 블록을 ADP로 옮겨 <b>인산기 전달 4번</b>을 해 보세요.',
-          hint: '「🟧 인산기 ADP로 보내기」를 누르거나 Ⓟ 블록을 오른쪽 ADP 위로 옮겨요. 고에너지 3탄소 화합물 2분자가 각각 2번씩 인산기를 건네서 모두 4번이에요.',
+          hint: '「🟧 인산기 ADP로 보내기」를 눌러요<span class="only2d">(Ⓟ 블록을 오른쪽 ADP 위로 옮겨도 돼요)</span>. 고에너지 3탄소 화합물 2분자가 각각 2번씩 인산기를 건네서 모두 4번이에요.',
           setup() { setMode('sub'); S.sb.pickOn = false; sbReset('glyc'); },
           check: () => S.sb.done.glyc >= 4, hold: 0.8,
           status: () => mark(S.sb.done.glyc >= 4) + ' 인산기 전달 ' + S.sb.done.glyc + ' / 4',
@@ -780,7 +780,7 @@
         {
           id: 'pick', title: '기질 수준 인산화 찾기', manual: true,
           goal: '<b>🔄 TCA 회로</b>에서도 인산기 전달 2번을 해 본 뒤, 기질 수준 인산화가 일어나는 <b>단계</b>를 모두 고르고 <b>해당 순생산 · TCA · 합계</b>를 입력하세요.',
-          hint: 'TCA 회로 화면에서 Ⓟ 블록을 2번 옮겨요. 해당 과정 순생산은 생성 4 − 소비 2예요. 합계 = 해당 순생산 + TCA.',
+          hint: 'TCA 회로 화면에서 Ⓟ 블록을 ADP로 2번 보내요. 해당 과정 순생산은 생성 4 − 소비 2예요. 합계 = 해당 순생산 + TCA.',
           setup() { setMode('sub'); S.sb.pickOn = true; S.sb.pick = {}; S.sb.bad = false; ['sbG', 'sbT', 'sbS'].forEach((id) => { $('#' + id).value = ''; }); if (sbD('tca') < 2) { sbReset('tca'); } else sbSetView('tca'); updateCtl(); },
           check() {
             const sb = S.sb;

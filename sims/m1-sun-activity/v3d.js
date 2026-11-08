@@ -158,8 +158,12 @@
         prom.forEach((p) => { p.m.visible = atm; }); flareG.visible = act; wind.visible = act;
         spots.forEach((s, i) => { s.g.visible = i < st.nSpot; });
         spotLab.show(m !== 'atm' && spots[0].g.visible); spotLab2.show(m === 'surface'); granLab.show(m === 'surface');
-        chLab.show(m === 'atm' ? !!AL.chromo : atm); coLab.show(m === 'atm' ? !!AL.corona : atm); atLab.show(atm && !st.occ); occLab.show(atm && st.occ);
-        promLab.show(m === 'atm' ? !!AL.prom : act); flLab.show(act); wLab.show(act);
+        // 대기 장면: 아직 이름표를 안 붙인 곳은 '❓'로 보이고, 그 자리를 누르면 이름이 붙어요 (2D에서 대기를 눌러 붙이는 것과 같아요)
+        const q = (L, k, name) => { if (m === 'atm') { L.set(AL[k] ? name : '❓'); L.show(st.occ || !!AL[k]); } };
+        chLab.show(atm); coLab.show(atm); promLab.show(act || m === 'atm');
+        q(chLab, 'chromo', '채층'); q(coLab, 'corona', '코로나'); q(promLab, 'prom', '홍염');
+        if (m !== 'atm') { chLab.set('채층'); coLab.set('코로나'); promLab.set('홍염'); }
+        atLab.show(atm && !st.occ); occLab.show(atm && st.occ); flLab.show(act); wLab.show(act);
         text();
       }
       function text() {
@@ -183,15 +187,13 @@
       });
       // 이름표: 2D에서 눌러 붙이는 것과 같아요 (광구를 가려야 대기가 보여요)
       const NEED = { chromo: 0.95, corona: 0.9, prom: 0.9 }, LNAME = { chromo: '채층', corona: '코로나', prom: '홍염' };
-      controls.text('<b>이름표</b>');
-      const labB = ['chromo', 'corona', 'prom'].map((k) => {
-        const b = controls.button(LNAME[k], () => {
-          const S = sim(); if (!S) return;
-          if (!(S.c >= NEED[k])) { say('먼저 <b>🌑 광구 가리기</b>로 광구를 가려요. 광구가 너무 밝아 대기가 안 보여요.'); return; }
-          S.atmoLab = Object.assign({}, S.atmoLab, { [k]: true }); show();
-        });
-        return { k, b };
-      });
+      const tapAtmo = (k) => () => {
+        const S = sim(); if (!S || st.mode !== 'atm') return;
+        if (!(S.c >= NEED[k])) { say('먼저 <b>🌑 광구 가리기</b>로 광구를 가려요. 광구가 너무 밝아 대기가 안 보여요.'); return; }
+        S.atmoLab = Object.assign({}, S.atmoLab, { [k]: true }); show();
+      };
+      chLab.tap(tapAtmo('chromo')); coLab.tap(tapAtmo('corona')); promLab.tap(tapAtmo('prom'));
+      const labB = [];
       let lastSc = null, lastSig = '';
       setAct(25);
 
