@@ -1173,7 +1173,7 @@
     clearTimeout(hintTimer);
     if (li === 0) {
       S.read = { low: false, mid: false, high: false }; S.buoy = null; setTw(S, 'prog', 0, 0.001); S.probe = null; S.depth = 0; setSlider(sDepth, oDepth, 0, (v) => v + ' m');
-      S.mapMode = S.mapPrev = 'sst'; setTw(S, 'scan', 1, 0.001); S.cycT = 0; setView('map'); showHint('지도의 ● 부이를 눌러 보세요', 5000);
+      S.mapMode = S.mapPrev = 'sst'; setTw(S, 'scan', 1, 0.001); S.cycT = 0; setView('map'); showHint('ARGO 부이를 하나씩 골라 보세요', 5000);
     } else if (li === 1) {
       initHandles(); S.pfPick = {}; S.evap = false; S.evK = 0; setView('lat'); showHint('◎ 손잡이를 위로 끌어 표의 값에 맞춰요', 5000);
     } else if (li === 2) {

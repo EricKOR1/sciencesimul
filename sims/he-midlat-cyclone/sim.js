@@ -968,7 +968,7 @@
   /* ---------- 단계 · 미션 ---------- */
   function enterLevel(li, fromSeg) {
     clearTimeout(hintTimer); S.play = S.playH = false; updPlay(); parts.clear();
-    if (li === 0) { setMode('struct', 'label'); showHint('이름표를 끌어 점선 칸에 놓고, AB선을 위아래로 끌어 봐요', 5000); }
+    if (li === 0) { setMode('struct', 'label'); showHint('이름표 3장을 알맞은 ①②③ 자리에 놓아 봐요', 5000); }
     else if (li === 1) { setMode('pass', 'mark'); S.obs = 'south'; setTime(0); S.tv = 0; S.wang = windS(0); wangA.v = S.wang; showHint('시각을 움직이면 저기압이 서에서 동으로 이동해요', 5000); }
     else if (li === 2) { setMode('high', 'pred'); S.dayView = 'pass'; setTimeH(0); S.thv = 0; S.maxTH = 0; S.pred = null; showHint('시간을 흘려 보내며 기압과 풍향을 살펴봐요', 5000); }
     else { setMode('chart', 'speed'); S.chart = 12; S.cv = 12; S.probe = null; showHint('눈금(100 km)으로 거리를 읽어 봐요', 5000); }

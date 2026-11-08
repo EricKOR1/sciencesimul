@@ -930,7 +930,7 @@
     SciSim.tween(S, { day: S.day }, { duration: 0.0001 });
   }
   function enterSceneDefaults(v) {
-    if (v === 'orbit') { showHint('화면을 끌어서 돌려 봐요 · 날짜 줄의 점을 눌러요', 5000); }
+    if (v === 'orbit') { showHint('날짜 줄이나 삭·망 이동 버튼으로 날짜를 바꿔 봐요', 5000); }
     if (v === 'cone') { S.eY = 0; showHint('거리 슬라이더를 움직여 봐요', 4500); }
     if (v === 'globe') showHint('▶ 재생을 누르거나 아래 줄을 끌어 봐요 · 지구를 눌러 내 지점도 정해요', 5500);
     if (v === 'lunar') showHint('경로를 고르면 달이 지구 그림자를 지나가요', 4500);
