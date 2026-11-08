@@ -176,7 +176,7 @@
       function text() {
         const L = ctx.lesson(), c = shown && L && L.cardInfo ? L.cardInfo(shown) : null;
         if (c) { info('<b>' + c.name + '</b> — ' + c.badge + '<br>' + c.lines.join(' ')); return; }
-        const t = { all: '가운데 <b>태양</b> 둘레를 <b>행성</b> 8개와 소행성·혜성 같은 작은 천체들이 돌아요.<br>바깥쪽 보라색 궤도에는 <b>왜소행성</b>이 있어요. 천체를 누르면 천체 카드가 열려요.', planet: '<b>행성</b> 8개는 태양 둘레를 거의 같은 평면에서 같은 방향으로 돌아요.<br><b>위성</b>은 행성 둘레를 돌아요: 지구의 달, 목성의 이오·유로파·가니메데·칼리스토.', small: '<b>소행성</b>(베스타·아포피스 등)은 화성~목성 사이에 많이 모여 있어요. <b>왜소행성</b>은 행성보다 작고 공전 궤도 근처를 정리하지 못했어요.<br><b>혜성</b>은 태양에 가까워지면 꼬리가 생기고, 꼬리는 항상 <b>태양의 반대쪽</b>을 향해요.' }[st.focus];
+        const t = { all: '가운데 <b>태양</b> 둘레를 <b>행성</b> 8개와 소행성·혜성 같은 작은 천체들이 돌아요.<br>바깥쪽 보라색 궤도에는 <b>왜소행성</b>이 있어요. 천체나 이름표를 누르면 천체 카드가 열려요.', planet: '<b>행성</b> 8개는 태양 둘레를 거의 같은 평면에서 같은 방향으로 돌아요.<br><b>위성</b>은 행성 둘레를 돌아요: 지구의 달, 목성의 이오·유로파·가니메데·칼리스토.', small: '<b>소행성</b>(베스타·아포피스 등)은 화성~목성 사이에 많이 모여 있어요. <b>왜소행성</b>은 행성보다 작고 공전 궤도 근처를 정리하지 못했어요.<br><b>혜성</b>은 태양에 가까워지면 꼬리가 생기고, 꼬리는 항상 <b>태양의 반대쪽</b>을 향해요.' }[st.focus];
         info(t);
       }
       controls.segment('', [{ value: 'all', label: '전체' }, { value: 'planet', label: '행성' }, { value: 'small', label: '소행성·혜성' }], 'all', (v) => { st.focus = v; applyFocus(); });
@@ -192,6 +192,14 @@
       const nB = controls.button('🏷 이름표', () => { st.names = !st.names; nB.classList.toggle('on', st.names); applyFocus(); }); nB.classList.add('on');
       applyFocus();
 
+      const PLANET_ID = ['mercury', 'venus', 'earth', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune'];
+      /* 이름표를 눌러도 그 천체의 카드가 열려요 (행성은 작고 계속 돌아서 이름표가 누르기 쉬워요) */
+      const tapId = (id) => () => { const L = ctx.lesson(); if (L && L.tapBody3D) L.tapBody3D(id); };
+      sunLab.tap(tapId('sun'));
+      planets.forEach((p, i) => p.lab.tap(tapId(PLANET_ID[i])));
+      MOONS.forEach((m) => m.lab.tap(tapId(m.id)));
+      DW.forEach((d) => d.lab.tap(tapId(d.id)));
+      cLab.tap(tapId('comet')); beltLab.tap(tapId('asteroid'));
       /* 천체 누르기: 화면에서 가장 가까운 천체의 카드를 열어요 (지도에서 누른 것과 같아요) */
       { const dom = renderer.domElement, viewEl = dom.parentElement, q = new V3(); let down = null;
         const near = (pos, R, ex, ey) => { q.copy(pos).project(camera); if (q.z > 1) return 1e9; return Math.hypot((q.x + 1) / 2 * R.width - ex, (1 - q.y) / 2 * R.height - ey); };
@@ -200,7 +208,7 @@
           if (!down) return; const mv = Math.hypot(e.clientX - down.x, e.clientY - down.y); down = null; if (mv > 6) return;
           const L = ctx.lesson(); if (!L || !L.tapBody3D) return;
           const R = dom.getBoundingClientRect(), ex = e.clientX - R.left, ey = e.clientY - R.top;
-          let best = null, bd = 26;
+          let best = null, bd = 34;
           const test = (id, pos, ex2) => { const d = near(pos, R, ex, ey) - (ex2 || 0); if (d < bd) { bd = d; best = id; } };
           test('sun', sun.position, 18);
           planets.forEach((p, i) => { if (p.m.visible) test(PLANET_ID[i], p.m.position); });
@@ -211,7 +219,6 @@
           if (best) L.tapBody3D(best);
         });
       }
-      const PLANET_ID = ['mercury', 'venus', 'earth', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune'];
       /* 2D의 '안쪽 태양계 · 전체 태양계' 단추를 따라 가깝게 · 멀리 보기 */
       let lastView = null, distTo = null;
 

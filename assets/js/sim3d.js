@@ -24,6 +24,7 @@
    ctx.controls.player({...})          // ▶ 재생/⏸ 멈춤 + 진행 막대 + 빠르기: 한 주기의 움직임을 반복 재생 (아래 player 설명)
    ctx.level / ctx.onLevel(fn)         // 지금 학습 단계 / 단계가 바뀔 때 → 2D와 같은 장면으로 맞추기
    ctx.lesson()                        // 2D 실험 상태(window.__sim) — 2D와 3D가 같은 값을 보여 주도록
+   label(text, obj, { tap: fn }) / L.tap(fn)  // 이름표를 눌러도 물체를 누른 것과 같게 (작거나 움직이는 물체)
    ※ 한 단계에는 한 가지 화면만 나와요: levels에 든 단계는 3D, 나머지 단계는 2D (2D↔3D 전환 버튼 없음).
      기기 사양이 낮거나 3D가 너무 느리면 3D 단계도 2D로 보여 줘요. 첫 화면 '3D 끄기'(localStorage 'sciencesimul:view' = '2d')도 같아요.
    ========================================================= */
@@ -102,6 +103,8 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
 .v3-view canvas { display: block; width: 100%; height: 100%; }
 .v3-labels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
 .v3-lab { position: absolute; transform: translate(-50%, -50%); padding: 3px 8px; border-radius: 8px; background: rgba(8,12,24,.78); border: 1px solid rgba(255,255,255,.18); box-shadow: 0 2px 8px rgba(0,0,0,.35); color: #fff; font-weight: 700; font-size: 13px; letter-spacing: -0.01em; white-space: nowrap; backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
+.v3-lab.tap { pointer-events: auto; cursor: pointer; }
+.v3-lab.tap:hover { border-color: #ffd34d; }
 .v3-info { position: absolute; left: 10px; top: 10px; max-width: min(320px, 70%); padding: 8px 10px; border-radius: 12px; background: rgba(8,12,24,.7); font-size: 13px; line-height: 1.45; pointer-events: none; }
 .v3-info:empty { display: none; }
 .v3-info.mini { max-height: 1.6em; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
@@ -265,6 +268,9 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
       if (o.size) n.style.fontSize = o.size + 'px';
       labels.appendChild(n);
       const L = { el: n, obj, off: o.offset || [0, 0, 0], visible: true, set(t) { n.innerHTML = t; }, show(v) { L.visible = v; } };
+      // o.tap(fn): 이름표를 눌러도 그 물체를 누른 것과 같아요 (작거나 움직이는 물체도 쉽게 고를 수 있게)
+      L.tap = (fn) => { n.classList.add('tap'); n.onpointerdown = (e) => e.stopPropagation(); n.onclick = (e) => { e.stopPropagation(); fn(); }; return L; };
+      if (o.tap) L.tap(o.tap);
       labs.push(L); return L;
     }
     const tmp = { v: null };
