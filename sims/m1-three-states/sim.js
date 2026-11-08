@@ -2101,7 +2101,7 @@
           {
             title: '특징 태그 붙이기', scene: 'tags', manual: true,
             goal: '각 상태의 <b>거리·배열·운동</b> 칸에 알맞은 태그를 붙이고 <b>✔ 확인하기</b>를 누르세요.',
-            hint: '태그는 끌어다 놓거나 버튼을 눌러 붙여요. 같은 색 태그가 같은 종류의 칸에 들어가요. 🔍 비교 장면에서 본 모습을 떠올려요.',
+            hint: '태그는 <span class="only2d">끌어다 놓거나 </span>버튼을 눌러 붙여요. 같은 색 태그가 같은 종류의 칸에 들어가요. 🔍 비교 장면에서 본 모습을 떠올려요.',
             setup() { S.tagsOpen = true; refreshUI(); },
             check: () => tagsCheck(),
             onWin() { TG.solved = true; celebrate(VW / 2, PHONE ? 200 : 210); },

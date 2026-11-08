@@ -1770,7 +1770,7 @@
             title: '이산화 탄소 분자 2개 만들기', scene: 'count', focus: 'build',
             setup() { useCount('empty', 'build'); ctSetLens('mol'); },
             goal: '탄소 원자와 산소 원자를 하나씩 넣어 이산화 탄소(CO₂) 분자 2개를 조립하세요.',
-            hint: 'CO₂ 분자 하나 = 탄소 원자 1개 + 산소 원자 2개. 2개를 만들려면 원자가 모두 몇 개 필요할까요? 원자는 바구니에서 끌어 놓거나 원자 버튼을 눌러 넣어요.',
+            hint: 'CO₂ 분자 하나 = 탄소 원자 1개 + 산소 원자 2개. 2개를 만들려면 원자가 모두 몇 개 필요할까요? 원자는 <span class="only2d">바구니에서 끌어 놓거나 </span>원자 버튼을 눌러 넣어요.',
             check: () => CT.mode === 'build' && co2Cnt() === 2 && !CT.atoms.length && !CT.asm.length, hold: 0.4,
             status: () => '탄소 원자 <b>' + CT.used.C + '</b> · 산소 원자 <b>' + CT.used.O + '</b> 사용 / 완성 분자 <b>' + co2Cnt() + '/2</b>',
             explain: 'CO₂ 분자 2개 = 원자 6개(탄소 2 + 산소 4), 원소는 탄소와 산소 2종류예요.',
