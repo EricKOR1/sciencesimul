@@ -2129,6 +2129,9 @@
     kindOf: (body) => BODY[body].kind,
     /* 3D에서 천체를 누르면: 지도에서 누른 것과 똑같이 천체 카드를 열어요 (카드 모으기 미션이 함께 진행돼요) */
     tapBody3D(id) { if (!BODY[id] || S.scene !== 'map' || S.panel !== 'card') return false; openCard(id); return true; },
-    cardInfo(id) { const B = BODY[id]; return B ? { name: B.name, badge: KIND[B.kind].badge, lines: cardLines(id) } : null; },
+    cardInfo(id) { const B = BODY[id]; return B ? { name: B.name, kind: B.kind, badge: KIND[B.kind].badge, col: KIND[B.kind].col, lines: cardLines(id) } : null; },
+    /* 3D에서 '모은 카드'를 보여 주려고: 종류 목록과 지금까지 모은 종류 */
+    kindList: () => KIND_ORDER.map((k) => ({ k, name: KIND[k].name, icon: KIND[k].icon, col: KIND[k].col })),
+    gotKinds: () => Array.from(S.kinds || []),
   };
 })();

@@ -173,9 +173,34 @@
         text();
       }
       let shown = null;   // 지금 보여 주는 천체 카드 (2D의 S.card)
+      /* 천체 카드 · 모은 카드 판: 2D 지도 옆의 카드와 '모은 종류'를 3D 화면에도 똑같이 보여 줘요 */
+      const vEl = renderer.domElement.parentElement;
+      const cssId = 'sm3d-cards';
+      if (!document.getElementById(cssId)) { const st2 = document.createElement('style'); st2.id = cssId; st2.textContent =
+        '.sm-card{position:absolute;left:10px;bottom:10px;width:min(230px,58%);padding:10px 12px;border-radius:14px;background:#fffdf7;color:#1b2333;box-shadow:0 6px 22px rgba(0,0,0,.45);border-top:6px solid var(--kc,#999);pointer-events:none;transform-origin:left bottom;transition:transform .25s cubic-bezier(.3,1.6,.6,1),opacity .2s}' +
+        '.sm-card.off{opacity:0;transform:scale(.85)}.sm-card .t{font-weight:900;font-size:16px}.sm-card .b{display:inline-block;margin:4px 0 6px;padding:1px 8px;border-radius:999px;color:#fff;font-weight:800;font-size:12px;background:var(--kc,#999)}.sm-card .l{font-size:12.5px;line-height:1.45}' +
+        '.sm-tray{position:absolute;right:10px;top:10px;padding:6px 8px;border-radius:12px;background:rgba(8,12,24,.72);color:#fff;font-size:12px;font-weight:800;pointer-events:none;max-width:46%}.sm-tray .h{margin-bottom:4px}.sm-tray .c{display:inline-block;margin:2px;padding:2px 7px;border-radius:8px;background:rgba(255,255,255,.12);color:#9aa6bd}.sm-tray .c.on{background:var(--kc);color:#fff}' +
+        '@media (max-width:599px){.sm-card{width:48%;padding:6px 8px;bottom:8px}.sm-card .t{font-size:13px}.sm-card .b{font-size:11px;margin:2px 0 3px}.sm-card .l{font-size:11px}.sm-tray{top:auto;bottom:30px;right:8px;font-size:10.5px;max-width:46%;padding:4px 6px}.sm-tray .c{padding:1px 5px;margin:1px}}';
+        document.head.appendChild(st2); }
+      const cardEl = document.createElement('div'); cardEl.className = 'sm-card off'; vEl.appendChild(cardEl);
+      const trayEl = document.createElement('div'); trayEl.className = 'sm-tray'; vEl.appendChild(trayEl);
+      let traySig = '';
+      function drawTray() {
+        const L = ctx.lesson(); if (!L || !L.kindList) { trayEl.style.display = 'none'; return; }
+        const got = L.gotKinds(), sig = got.join(','); if (sig === traySig) return; traySig = sig;
+        trayEl.innerHTML = '<div class="h">🪪 모은 카드 ' + got.length + ' / 6</div>' + L.kindList().map((q) => '<span class="c' + (got.includes(q.k) ? ' on' : '') + '" style="--kc:' + q.col + '">' + (got.includes(q.k) ? '✅ ' : '') + q.name + '</span>').join('');
+      }
+      function drawCard() {
+        const L = ctx.lesson(), c = shown && L && L.cardInfo ? L.cardInfo(shown) : null;
+        if (!c) { cardEl.classList.add('off'); return; }
+        cardEl.style.setProperty('--kc', c.col || '#999');
+        cardEl.innerHTML = '<div class="t">' + c.name + '</div><div class="b">' + c.badge + '</div><div class="l">' + c.lines.join('<br>') + '</div>';
+        cardEl.classList.add('off'); void cardEl.offsetWidth; cardEl.classList.remove('off');
+      }
       function text() {
         const L = ctx.lesson(), c = shown && L && L.cardInfo ? L.cardInfo(shown) : null;
-        if (c) { info('<b>' + c.name + '</b> — ' + c.badge + '<br>' + c.lines.join(' ')); return; }
+        drawCard(); drawTray();
+        if (c) { info('천체를 눌러 <b>카드</b>를 모아요. 지금 카드: <b>' + c.name + '</b> (' + c.badge + ')'); return; }
         const t = { all: '가운데 <b>태양</b> 둘레를 <b>행성</b> 8개와 소행성·혜성 같은 작은 천체들이 돌아요.<br>바깥쪽 보라색 궤도에는 <b>왜소행성</b>이 있어요. 천체나 이름표를 누르면 천체 카드가 열려요.', planet: '<b>행성</b> 8개는 태양 둘레를 거의 같은 평면에서 같은 방향으로 돌아요.<br><b>위성</b>은 행성 둘레를 돌아요: 지구의 달, 목성의 이오·유로파·가니메데·칼리스토.', small: '<b>소행성</b>(베스타·아포피스 등)은 화성~목성 사이에 많이 모여 있어요. <b>왜소행성</b>은 행성보다 작고 공전 궤도 근처를 정리하지 못했어요.<br><b>혜성</b>은 태양에 가까워지면 꼬리가 생기고, 꼬리는 항상 <b>태양의 반대쪽</b>을 향해요.' }[st.focus];
         info(t);
       }
@@ -234,7 +259,7 @@
           glow.scale.setScalar(8 + 0.3 * Math.sin(t * 2));
           const S = (ctx.lesson() || {}).S;
           if (S) {
-            const c = S.card || null; if (c !== shown) { shown = c; text(); }
+            const c = S.card || null; if (c !== shown) { shown = c; text(); } else drawTray();
             if (S.view !== lastView) { if (S.view === 'inner' || S.view === 'full') distTo = S.view === 'inner' ? 13 : 26; lastView = S.view; }
           }
           if (distTo != null) { orbit.dist += (distTo - orbit.dist) * Math.min(1, dt * 4); if (Math.abs(distTo - orbit.dist) < 0.05) distTo = null; }

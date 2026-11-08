@@ -104,6 +104,7 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
 .v3-labels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
 .v3-lab { position: absolute; transform: translate(-50%, -50%); padding: 3px 8px; border-radius: 8px; background: rgba(8,12,24,.78); border: 1px solid rgba(255,255,255,.18); box-shadow: 0 2px 8px rgba(0,0,0,.35); color: #fff; font-weight: 700; font-size: 13px; letter-spacing: -0.01em; white-space: nowrap; backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
 .v3-lab.tap { pointer-events: auto; cursor: pointer; }
+.v3-lab { transition: opacity .25s; }
 .v3-lab.tap:hover { border-color: #ffd34d; }
 .v3-info { position: absolute; left: 10px; top: 10px; max-width: min(320px, 70%); padding: 8px 10px; border-radius: 12px; background: rgba(8,12,24,.7); font-size: 13px; line-height: 1.45; pointer-events: none; }
 .v3-info:empty { display: none; }
@@ -274,7 +275,7 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
       labs.push(L); return L;
     }
     const tmp = { v: null };
-    /* 이름표 그리기: 가까운 것부터 자리를 잡고, 다른 이름표나 설명 상자와 겹치면 위아래로 비켜요 */
+    /* 이름표 그리기: 이름표는 물체에 고정돼 함께 움직이고, 겹치면 먼 쪽 이름표를 흐리게 해요 */
     let labFrame = 0;
     // 물체와 그 부모가 모두 보일 때만 이름표를 보여요 (숨긴 묶음의 이름표가 남지 않게)
     function shown(o) { for (let n = o; n; n = n.parent) { if (n.visible === false) return false; if (n === scene) break; } return true; }
@@ -302,20 +303,12 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
       const cxF = (x, bw) => Math.max(bw / 2 + 2, Math.min(w - bw / 2 - 2, x)), cyF = (y, bh) => Math.max(bh / 2 + 2, Math.min(h - bh / 2 - 2, y));
       for (const it of vis) {
         const L = it.L, bw = L.wh[0], bh = L.wh[1], step = bh + 3;
-        // 겹침 피하기: 지난번에 쓴 자리를 먼저 쓰고(자리 바꿈으로 깜빡이지 않게), 가끔 제자리(0)로 돌아갈 수 있는지 봐요
-        const prev = L.slot || 0, order = labFrame % 20 === 0 ? [0, prev] : [prev, 0];
-        [-step, step, -2 * step, 2 * step].forEach((d) => order.push(d));
-        let best = null;
-        for (const dy of order) {
-          const r = [cxF(it.x, bw) - bw / 2, it.y + dy - bh / 2, cxF(it.x, bw) + bw / 2, it.y + dy + bh / 2];
-          if (!hit(r)) { best = { dy, r }; break; }
-        }
+        // 이름표는 늘 제 물체에 붙어서 같이 움직여요 (위아래로 비켜서 통통 튀지 않게).
+        // 다른 이름표나 설명 상자와 겹치면, 뒤쪽(먼) 이름표만 흐리게 해요.
+        const r = [cxF(it.x, bw) - bw / 2, it.y - bh / 2, cxF(it.x, bw) + bw / 2, it.y + bh / 2];
         const s = L.el.style;
-        if (best) { placed.push(best.r); L.slot = best.dy; s.opacity = ''; } else { L.slot = 0; s.opacity = '0.35'; }
-        // 비켜선 거리만 부드럽게 바꿔요 (물체 위치는 매 프레임 정확히 따라가요)
-        L.sy = L.sy == null ? L.slot : L.sy + (L.slot - L.sy) * 0.35;
-        if (Math.abs(L.sy - L.slot) < 0.5) L.sy = L.slot;
-        s.left = cxF(it.x, bw) + 'px'; s.top = cyF(it.y + L.sy, bh) + 'px';
+        if (!hit(r)) { placed.push(r); if (s.opacity) s.opacity = ''; } else if (s.opacity !== '0.3') s.opacity = '0.3';
+        s.left = cxF(it.x, bw) + 'px'; s.top = cyF(it.y, bh) + 'px';
       }
     }
 
