@@ -1975,7 +1975,7 @@
           {
             title: '냉각 곡선 그리기', scene: 'cool',
             goal: '식히기를 시작해서 팔미트산이 <b>모두 굳은 뒤 30 °C</b>가 될 때까지 냉각 곡선을 완성하세요.',
-            hint: '<b>❄️ 식히기</b>를 눌러 시작해요. 시험관 속 팔미트산이 하얗게 굳는 모습과 <span class="only2d">🔍 입자 모형</span><span class="only3d">입자의 움직임</span>을 함께 보세요.',
+            hint: '<b>❄️ 식히기</b>를 눌러 시작해요. <span class="only2d">시험관 속 팔미트산이 하얗게 굳는 모습과 🔍 입자 모형을</span><span class="only3d">팔미트산 입자가 점점 느려지며 자리를 잡는 모습을</span> 함께 보세요.',
             setup() { resetRun(RUN.cool); AFX.clear(); },
             check: () => RUN.cool.done,
             hold: 0.6,
