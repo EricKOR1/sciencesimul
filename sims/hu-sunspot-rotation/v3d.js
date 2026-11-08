@@ -97,7 +97,7 @@
       const player = controls.player({
         duration: 10, loop: true, autoplay: true, label: '재생',
         phases: [[0, '0일'], [0.5, '3.5일'], [0.9, '7일']],
-        onFrame(p) { st.P = p; st.day = 7 * p; if (ready && !syncing) { try { const q = W(), S = q.S; if (S && S.df && (S.view === 'compose' || S.view === 'diff')) { q.setCDay(7 * p, true); S.df.play = false; } } catch (e) {} } },
+        onFrame(p) { st.P = p; st.day = 7 * p; if (ready && !syncing) { try { const q = W(), S = q.S; if (S && S.df && (S.view === 'compose' || S.view === 'diff')) { q.setCDay(7 * p, true); S.df.play = false; S.df.cMax = Math.max(S.df.cMax || 0, S.df.cDay); } } catch (e) {} } },
       });
       ready = true;
       function follow() {

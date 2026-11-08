@@ -787,7 +787,7 @@
         {
           title: '전동기의 효율 구하기', manual: true,
           goal: '전원을 켜고 부하를 <b>' + f1(LOAD0) + ' N·m</b>로 두세요. 입력 전력과 출력을 보고 <b>효율(%) = 출력 ÷ 입력 × 100</b>을 구해 입력하세요.',
-          hint: '전원을 켜고 부하 슬라이더를 ' + f1(LOAD0) + ' N·m로 맞춰요. 입력 ' + Math.round(V_SUP * I0) + ' W 중 출력이 몇 W인지 전력 막대 옆 숫자에서 읽어요. 소수점은 반올림해요.',
+          hint: '전원을 켜고 부하 슬라이더를 ' + f1(LOAD0) + ' N·m로 맞춰요. 입력 ' + Math.round(V_SUP * I0) + ' W 중 출력이 몇 W인지 <span class="only2d">전력 막대 옆 숫자</span><span class="only3d">3D 화면 안내나 미션 카드의 숫자</span>에서 읽어요. 소수점은 반올림해요.',
           setup() { need = 'eta'; S.mt.showEta = false; S.mt.eta = ''; $('#inEta').value = ''; updateCtl(); setScene('motor'); },
           check() {
             const m = S.mt, inp = $('#inEta');
