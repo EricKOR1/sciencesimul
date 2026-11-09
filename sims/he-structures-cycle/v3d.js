@@ -39,7 +39,8 @@
         a: label('배사', [1.15, 3.6, 0], { size: 12.5 }), s: label('향사', [-1.15, 2.4, 0], { size: 12.5 }),
         fp: label('단층면', [0, 1.5, ZD], { size: 12.5, color: 'rgba(160,30,30,.92)' }), hw: label('상반', [2.0, 2.6, ZD], { size: 12 }), fw: label('하반', [-2.0, 1.2, ZD], { size: 12 }),
         gr: label('화강암체', [0, 0.9, 1.5], { size: 12, color: 'rgba(110,40,40,.92)' }), sj: label('판상절리 (지표와 나란한 틈)', [1.6, 2.3, 0], { size: 12, color: 'rgba(30,10,10,.88)' }), sf: label('', [-3.2, 3.6, ZD], { size: 12 }),
-        dk: label('B', [0, 3.5, 0], { size: 12 }), sl: label('A', [-2.4, 1.6, ZD], { size: 12 }),   // 암상·암맥 이름은 관찰 기록 미션의 답이라 A · B로만 표시해요 sr: label('어긋난 길', [0, 3.2, 0], { size: 12 }), ct: label('주상 절리', [0, 3.4, 0], { size: 12 }),
+        // 암상·암맥 이름은 관찰 기록 미션의 답이라 A · B로만 표시해요
+        dk: label('B', [0, 3.5, 0], { size: 12 }), sl: label('A', [-2.4, 1.6, ZD], { size: 12 }), sr: label('어긋난 길', [0, 3.2, 0], { size: 12 }), ct: label('주상 절리', [0, 3.4, 0], { size: 12 }),
       };
       Object.values(LB).forEach((l) => l.show(false));
 
