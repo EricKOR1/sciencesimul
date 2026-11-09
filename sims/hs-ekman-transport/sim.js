@@ -1038,7 +1038,7 @@
         {
           title: '층마다 측정하기',
           goal: '표의 깊이 <b>4개</b>를 눌러 모두 측정하고, <b>표면(0 m) 해류</b>가 바람의 오른쪽 몇 도인지 입력해요.',
-          hint: '0 m 줄의 방향 칸을 읽어요. 바람 방향(점선)과 파란 화살표 사이 각도 표시도 같은 값이에요.',
+          hint: '0 m 줄의 방향 칸을 읽어요. <span class="only2d">바람 방향(점선)과 파란 화살표 사이 각도 표시도 같은 값이에요.</span><span class="only3d">3D에서 0 m 화살표 끝의 이름표(0 m · 몇 °)도 같은 값이에요.</span>',
           setup() { setMode('spiral'); setCtl(['wdSeg', 'layers', 'stpAng']); stpAng.reset(); },
           check: () => LAY.every((z) => S.meas[z]) && stpAng.value === 45, hold: 0.8,
           status: () => mark(LAY.every((z) => S.meas[z])) + ' 측정한 층 ' + LAY.filter((z) => S.meas[z]).length + ' / 4 · ' + mark(stpAng.value === 45) + ' 입력한 각도 ' + stpAng.value + '° (표면)',

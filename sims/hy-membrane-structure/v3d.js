@@ -20,6 +20,17 @@
     autoRotate: 0,
     levels: [1, 2],   // 2단계(막 단백질 · 기능 연결은 3D 막대의 단추로) · 3단계(유동성). 1단계(조립 · 이중층 배열)와 4단계(통과 시험 · 분류)는 2D 화면이에요
     build(ctx) {
+      /* 3D 화면 위 작은 판(기록표 · 카드 등): 2D 캔버스에만 그려지던 것을 3D 단계에서도 보이게 해요 */
+      function v3pan(cls) {
+        if (!document.getElementById('v3pan-css')) { const s = document.createElement('style'); s.id = 'v3pan-css'; s.textContent =
+          '.v3pan{position:absolute;z-index:2;padding:6px 9px;border-radius:12px;background:rgba(8,12,24,.8);border:1px solid rgba(255,255,255,.16);color:#fff;font-size:12px;font-weight:700;line-height:1.35;pointer-events:none;max-width:48%}' +
+          '.v3pan:empty{display:none}.v3pan.tr{right:10px;top:10px}.v3pan.bl{left:10px;bottom:10px}.v3pan .h{font-weight:900;margin-bottom:3px;font-size:12.5px}.v3pan .chip{display:inline-block;margin:1px 2px;padding:0 6px;border-radius:7px;background:rgba(255,255,255,.16);color:#eef3ff}.v3pan .chip.sel{background:#ffd34d;color:#1b2333}.v3pan.card{background:#fffdf7;color:#1b2333;border-top:5px solid var(--kc,#ffd34d);white-space:normal;max-width:min(260px,46%)}.v3pan.card .s{font-size:11.5px;font-weight:600;color:#475569}' +
+          '.v3pan table{border-collapse:collapse}.v3pan th,.v3pan td{padding:1px 5px;text-align:center;white-space:nowrap}.v3pan th{color:#b9c6e4;text-align:left;font-weight:800}.v3pan td.e{color:#56658a}.v3pan .ok{color:#7ee2a8}.v3pan .hi{color:#ffd34d}' +
+          '@media (max-width:599px){.v3pan{font-size:10.5px;padding:4px 6px;max-width:58%}.v3pan.tr{top:auto;bottom:30px;right:8px}.v3pan.bl{left:8px;bottom:8px;max-width:42%}.v3pan th,.v3pan td{padding:0 3px}.v3pan .h{font-size:11px}}';
+          document.head.appendChild(s); }
+        const el = document.createElement('div'); el.className = 'v3pan ' + (cls || 'tr'); ctx.renderer.domElement.parentElement.appendChild(el);
+        let last = ''; el.put = (html) => { if (html !== last) { last = html; el.innerHTML = html; } }; return el;
+      }
       const { THREE, root, label, info, controls, orbit, renderer } = ctx;
       renderer.localClippingEnabled = true;
       const rnd = mulberry(11);
@@ -93,11 +104,26 @@
       lip[0].filter((o) => !o.hidden && !o.site && o.z < 0.1).sort(() => rnd() - 0.5).slice(0, 5).forEach((o) => { const g = new THREE.Group(); root.add(g); hexBead(g, 0, 0.3, 0); hexBead(g, 0.1, 0.45, 0.03); hexBead(g, 0.03, 0.6, -0.02); glyco.push({ o, g }); });
 
       /* 인스턴스: 머리 · 꼬리 */
-      const headMat = M(HEADC, { roughness: 0.35 }), tailMat = M(TAILC, { roughness: 0.55 });
+      const headMat = M(0xffffff, { roughness: 0.35 }), tailMat = M(TAILC, { roughness: 0.55 });   // 머리 색은 인스턴스 색(평소 파랑, 유동성 단계에서는 형광 빨강 · 초록)
       const heads = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 14, 10), headMat, NL);
       const tg = new THREE.CylinderGeometry(0.036, 0.03, 0.3, 6); tg.translate(0, -0.15, 0);
       const tails = new THREE.InstancedMesh(tg, tailMat, NL * 4);
       heads.frustumCulled = false; tails.frustumCulled = false; root.add(heads, tails);
+      /* 3단계(유동성): 2D의 세포 융합 실험처럼 머리를 사람 세포(빨강) · 생쥐 세포(초록) 형광으로 칠하고, 2D 막 평면의 섞인 모습을 그대로 따라가요 */
+      const cHead = new THREE.Color(HEADC), cR = new THREE.Color(0xef4444), cG = new THREE.Color(0x22c55e), cTmp = new THREE.Color();
+      for (let i = 0; i < NL; i++) heads.setColorAt(i, cHead);
+      const xs = all.map((o) => o.x), zs = all.map((o) => o.z), X0 = Math.min.apply(null, xs), X1 = Math.max.apply(null, xs), Z0 = Math.min.apply(null, zs), Z1 = Math.max.apply(null, zs);
+      const BX = 10, BY = 6, binF = new Float32Array(BX * BY).fill(-1); let fluoOn = false, fluoT = 0;
+      function fluoTick(dt) {
+        const L2 = ctx.lesson(), on = !!(L2 && L2.S && L2.S.mode === 'fluid' && L2.S.fx && L2.S.fx.ps);
+        if (!on) { if (fluoOn) { fluoOn = false; for (let i = 0; i < NL; i++) heads.setColorAt(i, cHead); heads.instanceColor.needsUpdate = true; } return; }
+        fluoOn = true; fluoT -= dt; if (fluoT > 0) return; fluoT = 0.25;
+        const nR = new Float32Array(BX * BY), nA = new Float32Array(BX * BY);
+        L2.S.fx.ps.forEach((p) => { const k = Math.min(BY - 1, Math.floor(p.y * BY)) * BX + Math.min(BX - 1, Math.floor(p.x * BX)); nA[k]++; if (p.c === 0) nR[k]++; });
+        for (let k = 0; k < BX * BY; k++) if (nA[k] > 0) binF[k] = nR[k] / nA[k];
+        all.forEach((o, i) => { const u = (o.cx - X0) / Math.max(1e-6, X1 - X0), v = (o.cz - Z0) / Math.max(1e-6, Z1 - Z0), k = Math.min(BY - 1, Math.max(0, Math.floor(v * BY))) * BX + Math.min(BX - 1, Math.max(0, Math.floor(u * BX))), f = binF[k] < 0 ? (u < 0.5 ? 1 : 0) : binF[k]; heads.setColorAt(i, cTmp.copy(cG).lerp(cR, f)); });
+        heads.instanceColor.needsUpdate = true;
+      }
       const dm = new THREE.Matrix4(), m1 = new THREE.Matrix4(), m2 = new THREE.Matrix4(), q = new THREE.Quaternion(), qe = new THREE.Euler(), vp = new THREE.Vector3(), vs = new THREE.Vector3(1, 1, 1), zero = new THREE.Matrix4().makeScale(0, 0, 0);
       const flipQ = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI);
 
@@ -130,7 +156,7 @@
       /* ----- 정보 · 조작 ----- */
       function refresh() {
         syncM(); const pct = Math.round(M01 * 100);
-        const sh = stHtml(); if (sh) info(sh); else info('<div style="max-width:' + (PHONE ? 205 : 235) + 'px"><b>유동 모자이크</b> · 유동성 <b>' + pct + ' %</b><br>머리(파랑, 친수성)는 바깥쪽, 꼬리(주황, 소수성)는 안쪽에 모인 <b>이중층</b><br>통합 단백질은 박혀 있고, 말초 단백질은 표면에 붙어 있어요.</div>');
+        const sh = stHtml(); if (sh) info(sh); else info('<div style="max-width:' + (PHONE ? 205 : 235) + 'px"><b>유동 모자이크</b> · 유동성 <b>' + pct + ' %</b><br>머리(' + (((ctx.lesson() || {}).S || {}).mode === 'fluid' ? '형광 표지: 빨강 · 초록' : '파랑') + ', 친수성)는 바깥쪽, 꼬리(주황, 소수성)는 안쪽에 모인 <b>이중층</b><br>통합 단백질은 박혀 있고, 말초 단백질은 표면에 붙어 있어요.</div>');
         labs.forEach((l) => l.show(names)); cholL.show(names && hasChol && chol.length > 0);
       }
       /* 3D에서 조작하면 2D 유동성 실험(S.fx)도 같은 값으로 (2D 슬라이더를 움직인 것과 같아요) */
@@ -220,6 +246,13 @@
         if (m === 'prot') putBtn.forEach((b, i) => { const q = L2.S.pr.items.find((o) => o.type === ORD[i]); b.disabled = !!(q && q.slot >= 0); });
         refresh();
       }
+      /* 유동성: 2D의 그래프 대신 섞인 정도 · 시간 · 85 % 도달 시간을 3D 화면 오른쪽 위에 보여 줘요 */
+      const fxP = v3pan('tr');
+      function drawFx() {
+        const L2 = ctx.lesson(), F = L2 && L2.S && L2.S.mode === 'fluid' ? L2.S.fx : null; if (!F) { fxP.put(''); return; }
+        const mn = Math.round(F.t * 10) / 10, bar = '<span style="display:inline-block;width:90px;height:9px;border-radius:5px;background:rgba(255,255,255,.18);position:relative;vertical-align:middle;overflow:hidden"><span style="position:absolute;left:0;top:0;bottom:0;width:' + F.mix + '%;background:#a3e635"></span><span style="position:absolute;left:85%;top:0;bottom:0;width:2px;background:#22c55e"></span></span>';
+        fxP.put('<div class="h">형광 <span style="color:#f87171">● 사람 세포</span> <span style="color:#4ade80">● 생쥐 세포</span></div><div>섞인 정도 ' + bar + ' ' + F.mix + ' %</div><div>시간 ' + mn + '분' + (F.t85 != null ? ' · <span class="ok">85 % 도달 ' + (Math.round(F.t85 * 10) / 10) + '분</span>' : '') + '</div>');
+      }
       fromLesson(); refresh();
 
       const ap = (a, b, dt, r) => a + (b - a) * (1 - Math.exp(-r * dt));
@@ -265,6 +298,7 @@
             }
           });
           heads.instanceMatrix.needsUpdate = true; tails.instanceMatrix.needsUpdate = true;
+          fluoTick(dt); drawFx();
           chol.forEach((c) => { if (c.g.visible) c.g.position.set(c.o.cx, 0, c.o.cz); });
           glyco.forEach((c) => c.g.position.set(c.o.cx, YH + 0.1, c.o.cz));
         },

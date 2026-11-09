@@ -18,6 +18,13 @@
       pairs: [[0, 0, 2]],
       before: ['Zn', 'Cu²⁺'], after: ['Zn²⁺', 'Cu'],
     },
+    zn2: {   // 전자의 이동 단계: 2D와 같이 아연 원자 2개 · 구리 이온 2개 (전자 4개)
+      name: 'Zn + Cu²⁺', eq: 'Zn + Cu²⁺ → Zn²⁺ + Cu',
+      don: [{ pos: [-2.6, 1.45, 0], el: 'Zn', n: 2, col: 0x7f90a8, rad: 0.8 }, { pos: [-2.6, -1.45, 0], el: 'Zn', n: 2, col: 0x7f90a8, rad: 0.8 }],
+      acc: [{ pos: [2.6, 1.45, 0], el: 'Cu', n: 2, col: 0xd9822b, ionCol: 0x3b82f6, rad: 0.72 }, { pos: [2.6, -1.45, 0], el: 'Cu', n: 2, col: 0xd9822b, ionCol: 0x3b82f6, rad: 0.72 }],
+      pairs: [[0, 0, 2], [1, 1, 2]],
+      before: ['Zn', 'Cu²⁺'], after: ['Zn²⁺', 'Cu'],
+    },
     ag: {
       name: 'Cu + 2Ag⁺', eq: 'Cu + 2Ag⁺ → Cu²⁺ + 2Ag',
       don: [{ pos: [-2.8, 0, 0], el: 'Cu', n: 2, col: 0xd9822b, rad: 0.95 }],
@@ -114,8 +121,10 @@
       function apply() {
         const P = parts, R = P.R, p = pl.p, nE = P.es.length;
         // 전자별 진행도: 순서대로 출발
+        const S0 = L2(), mvN = st.rx === 'zn2' && S0 && S0.MODE === 'move' && S0.MV && !pl.playing ? S0.MV.zn.reduce((n, z) => n + z.e.filter((q) => q.st === 'gone').length, 0) : null;   // 옮긴 전자 수만큼만 옮겨 가요
         P.es.forEach((e) => {
-          const start = (e.idx / nE) * 0.55, u = ease((p - start) / 0.4);
+          const start = (e.idx / nE) * 0.55; let u = ease((p - start) / 0.4);
+          if (mvN != null) { const dtE = Math.min(0.25, Math.max(0, st.t - (e.tl || st.t))); e.tl = st.t; e.uu = Math.min(1, (e.uu || 0) + (e.idx < mvN ? dtE * 1.4 : -1)); if (e.uu < 0) e.uu = 0; u = ease(e.uu); }
           const d = P.don[e.di], c = P.acc[e.ai], da = new V3(...R.don[e.di].pos), ca = new V3(...R.acc[e.ai].pos);
           const th = e.orbit / e.nOrb * Math.PI * 2 + st.t * 2.2 + e.idx;
           const from = da.clone().add(new V3(Math.cos(th) * (R.don[e.di].rad + 0.35), Math.sin(th) * (R.don[e.di].rad + 0.35), Math.sin(th * 1.0) * 0.0));
@@ -145,7 +154,8 @@
         const mid = p > 0.04 && p < 0.96, end = p >= 0.96;
         P.ox.show(end); P.rd.show(end); P.eLab.show(showE && (mid || end));
         const donName = R.after[0], accName = R.after[1];
-        if (p < 0.04) setInfo('<b>' + R.eq.split(' → ')[0] + '</b> 이 만났어요.<br>⚡ 전자 1개 옮기기나 ▶ 전자 이동을 눌러 <b>전자(노란 구슬)</b>가 어디로 가는지 봐요.');
+        if (mvN != null && mvN < 4) setInfo('<b>아연 원자 2개</b>와 <b>구리 이온(Cu²⁺) 2개</b>예요. 옮긴 전자 <b>' + mvN + ' / 4</b><br>⚡ 전자 1개 옮기기를 눌러 아연의 <b>전자(노란 구슬)</b>를 Cu²⁺의 빈자리로 옮겨요. Cu²⁺ 하나에는 전자 2개가 필요해요.');
+        else if (p < 0.04) setInfo('<b>' + R.eq.split(' → ')[0] + '</b> 이 만났어요.<br>⚡ 전자 1개 옮기기나 ▶ 전자 이동을 눌러 <b>전자(노란 구슬)</b>가 어디로 가는지 봐요.');
         else if (!end) setInfo('전자가 <b>' + R.before[0] + ' → ' + R.before[1] + '</b> 쪽으로 옮겨 가고 있어요.<br>전자를 잃는 쪽은 + 전하가 늘고, 얻는 쪽은 줄어요.');
         else setInfo('<b>' + R.before[0] + '</b>은 전자를 잃어 <b>' + donName + '</b>(산화), <b>' + R.before[1] + '</b>은 전자를 얻어 <b>' + accName + '</b>(환원)이 됐어요.<br><b>' + R.eq + '</b>');
       }
@@ -163,7 +173,7 @@
       const keyOf = () => {
         const S = L2(); if (!S) return last;
         const m = S.MODE;
-        if (m === 'bench' && S.BENCH) last = S.BENCH.k; else if (m === 'move') last = 'zn'; else if (m === 'rule') last = S.SUB === 'dual' ? 'mg' : 'ag';
+        if (m === 'bench' && S.BENCH) last = S.BENCH.k; else if (m === 'move') last = 'zn2'; else if (m === 'rule') last = S.SUB === 'dual' ? 'mg' : 'ag';
         return last;
       };
       const progOf = (k) => {

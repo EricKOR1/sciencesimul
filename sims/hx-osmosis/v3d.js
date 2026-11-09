@@ -16,6 +16,17 @@
     autoRotate: 0.1,
     levels: [0, 1],
     build(ctx) {
+      /* 3D 화면 위 작은 판(기록표 · 카드 등): 2D 캔버스에만 그려지던 것을 3D 단계에서도 보이게 해요 */
+      function v3pan(cls) {
+        if (!document.getElementById('v3pan-css')) { const s = document.createElement('style'); s.id = 'v3pan-css'; s.textContent =
+          '.v3pan{position:absolute;z-index:2;padding:6px 9px;border-radius:12px;background:rgba(8,12,24,.8);border:1px solid rgba(255,255,255,.16);color:#fff;font-size:12px;font-weight:700;line-height:1.35;pointer-events:none;max-width:48%}' +
+          '.v3pan:empty{display:none}.v3pan.tr{right:10px;top:10px}.v3pan.bl{left:10px;bottom:10px}.v3pan .h{font-weight:900;margin-bottom:3px;font-size:12.5px}.v3pan .chip{display:inline-block;margin:1px 2px;padding:0 6px;border-radius:7px;background:rgba(255,255,255,.16);color:#eef3ff}.v3pan .chip.sel{background:#ffd34d;color:#1b2333}.v3pan.card{background:#fffdf7;color:#1b2333;border-top:5px solid var(--kc,#ffd34d);white-space:normal;max-width:min(260px,46%)}.v3pan.card .s{font-size:11.5px;font-weight:600;color:#475569}' +
+          '.v3pan table{border-collapse:collapse}.v3pan th,.v3pan td{padding:1px 5px;text-align:center;white-space:nowrap}.v3pan th{color:#b9c6e4;text-align:left;font-weight:800}.v3pan td.e{color:#56658a}.v3pan .ok{color:#7ee2a8}.v3pan .hi{color:#ffd34d}' +
+          '@media (max-width:599px){.v3pan{font-size:10.5px;padding:4px 6px;max-width:58%}.v3pan.tr{top:auto;bottom:30px;right:8px}.v3pan.bl{left:8px;bottom:8px;max-width:42%}.v3pan th,.v3pan td{padding:0 3px}.v3pan .h{font-size:11px}}';
+          document.head.appendChild(s); }
+        const el = document.createElement('div'); el.className = 'v3pan ' + (cls || 'tr'); ctx.renderer.domElement.parentElement.appendChild(el);
+        let last = ''; el.put = (html) => { if (html !== last) { last = html; el.innerHTML = html; } }; return el;
+      }
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3;
       const sim = () => (window.__sim && window.__sim.S) || null;
@@ -58,6 +69,7 @@
       const sR = controls.range('오른쪽 농도', 0, 10, 1, loc.R, (v) => { loc.R = v; if (window.__sim && window.__sim.setIR) { try { window.__sim.setIR(v); } catch (e) { /* 무시 */ } } }, (v) => (v * 0.05).toFixed(2) + ' M');
       const tb = controls.button('물 이동 표시 ✓', () => { showT = !showT; tb.classList.toggle('on', showT); tb.textContent = '물 이동 표시 ' + (showT ? '✓' : '✕'); }); tb.classList.add('on');
 
+      const cntP = v3pan('tr'); let pc = null;   // 2단계: 막을 지난 물 분자 수 막대 (2D의 막대와 같은 값)
       return {
         update(dt, t) {
           dt = Math.min(dt, 0.05);
@@ -95,10 +107,19 @@
           wm.instanceMatrix.needsUpdate = true; sm.instanceMatrix.needsUpdate = true;
           /* 막을 지나는 물 분자: 용질이 적은 쪽에서 더 자주 */
           const phi = (n) => n / (n + 20), rL = 1 - phi(loc.L), rR = 1 - phi(loc.R);
-          spawn += dt * 9;
-          while (spawn > 1) {
-            spawn -= 1; const q = TP.find((x) => !x.on); if (!q || !showT) { if (!showT) break; continue; }
-            const fromL = Math.random() < rL / (rL + rR); q.on = true; q.t = 0; q.dir = fromL ? 1 : -1; q.y = FLOOR + 0.4 + Math.random() * (Math.min(hL, hR) - 0.8); q.z = (Math.random() - 0.5) * (DEP - 0.6);
+          const fire = (dir) => { const q = TP.find((x) => !x.on); if (!q || !showT) return; q.on = true; q.t = 0; q.dir = dir; q.y = FLOOR + 0.4 + Math.random() * (Math.min(hL, hR) - 0.8); q.z = (Math.random() - 0.5) * (DEP - 0.6); };
+          let mol = null; try { if (window.__sim.S.mode === 'mol') mol = window.__sim.mz.cnt; } catch (e) { mol = null; }
+          if (mol) {   // 2단계: 2D에서 센 횟수만큼 3D에서도 막을 지나가요 → 보이는 이동 = 세는 이동
+            if (!pc || mol.lr < pc.lr || mol.rl < pc.rl) pc = { lr: mol.lr, rl: mol.rl };
+            for (let k = 0; k < 4 && pc.lr < mol.lr; k++) { pc.lr++; fire(1); }
+            for (let k = 0; k < 4 && pc.rl < mol.rl; k++) { pc.rl++; fire(-1); }
+            pc.lr = mol.lr; pc.rl = mol.rl;
+            const mx = Math.max(40, mol.lr, mol.rl), row = (t, n, c) => '<tr><th>' + t + '</th><td style="text-align:left"><span style="display:inline-block;height:9px;border-radius:5px;vertical-align:middle;background:' + c + ';width:' + Math.round(70 * n / mx) + 'px"></span></td><td>' + n + '번' + (n >= 20 ? ' <span class="ok">✔</span>' : '') + '</td></tr>';
+            cntP.put('<div class="h">막을 지난 물 분자</div><table>' + row('왼쪽 → 오른쪽', mol.lr, '#38bdf8') + row('오른쪽 → 왼쪽', mol.rl, '#22c55e') + '</table>');
+          } else {
+            pc = null; cntP.put('');
+            spawn += dt * 9;
+            while (spawn > 1) { spawn -= 1; if (!showT) break; fire(Math.random() < rL / (rL + rR) ? 1 : -1); }
           }
           TP.forEach((q, i) => {
             if (!q.on || !showT) { q.on = false; M.makeScale(0.0001, 0.0001, 0.0001); tm.setMatrixAt(i, M); return; }

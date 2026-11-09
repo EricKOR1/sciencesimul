@@ -16,7 +16,7 @@
     autoRotate: 0,
     levels: [1],   // 절단과 수리 단계만 3D. 표적 찾기(위치 슬라이더 · 일치 횟수 입력) · 치료 사례 · 한계와 전망은 캔버스에서 해요
     build(ctx) {
-      const { THREE, root, label, info, controls } = ctx;
+      const { THREE, root, label, info, controls, renderer } = ctx;
       const V = THREE.Vector3, M4 = new THREE.Matrix4(), cc = new THREE.Color();
       if (narrow) root.rotation.z = Math.PI / 2;      // 휴대폰(세로 화면)에서는 눕혀 둔 모형을 세워서 보여 줘요
       const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.4, metalness: 0.04 }, o || {}));
@@ -160,10 +160,32 @@
           }
         }
       }
+      /* 단백질 띠: 수리 결과로 바뀐 코돈 · 아미노산과 정지 코돈을 3D 화면에도 보여 줘요 (2D 캔버스의 읽기틀과 같은 내용) */
+      const AAN = { M: 'Met', A: 'Ala', H: 'His', L: 'Leu', T: 'Thr', P: 'Pro', V: 'Val', K: 'Lys', W: 'Trp', R: 'Arg', E: 'Glu', S: 'Ser', D: 'Asp', G: 'Gly', F: 'Phe', Y: 'Tyr', Q: 'Gln' };
+      const NA = 14, CW = narrow ? 12 : 15;
+      const protEl = document.createElement('div');
+      protEl.style.cssText = 'position:absolute;' + (narrow ? 'left:8px;bottom:8px;' : 'right:10px;top:10px;') + 'padding:6px 8px;border-radius:12px;background:rgba(8,12,24,.8);color:#fff;font-size:' + (narrow ? 10.5 : 12) + 'px;font-weight:800;pointer-events:none;display:none;max-width:' + (NA * (CW + 2) + 18) + 'px';
+      renderer.domElement.parentElement.appendChild(protEl);
+      let protSig = null;
+      function drawProt() {
+        const L = ctx.lesson(), on = !!(L && L.S && L.S.mode === 'repair' && L.RP && L.translate);
+        const R = on ? L.RP : null, sig = on ? R.stage + R.seq : '';
+        if (sig === protSig) return; protSig = sig; protEl.style.display = on ? '' : 'none'; if (!on) return;
+        const pr = L.translate(R.seq), st = pr.indexOf('*'), c7 = R.seq.slice(18, 21);
+        const chips = pr.slice(0, NA).map((a, i) => {
+          const stop = a === '*', after = st >= 0 && i > st, hi = i === 6;
+          const bg = stop ? '#dc2626' : after ? 'rgba(255,255,255,.08)' : hi ? '#16a34a' : 'rgba(255,255,255,.18)';
+          return '<span title="' + (i + 1) + '" style="display:inline-block;width:' + CW + 'px;margin:0 1px;text-align:center;border-radius:4px;background:' + bg + ';color:' + (after ? '#64748b' : '#fff') + '">' + (stop ? '■' : a) + '</span>';
+        }).join('');
+        let res = '자르기 전: 원래 유전자예요.';
+        if (R.stage === 1) res = '잘렸어요. 수리 방식을 골라 수리해요.';
+        if (R.stage === 2 && R.res) res = R.res.mode === 'hdr' ? '주형 DNA로 정확히 교정했어요' : R.res.t + ' → ' + (R.res.frame ? '읽기틀이 밀려요' + (st >= 0 ? ' · ' + (st + 1) + '번째에 <span style="color:#fca5a5">정지 코돈 ■</span>' : '') : '읽기틀은 그대로예요');
+        protEl.innerHTML = '<div>🧬 단백질 (아미노산 순서)</div><div style="margin:4px 0 3px;white-space:nowrap">' + chips + '</div><div style="color:#cbd5e1">7번째: ' + c7 + ' (' + (AAN[pr[6]] || pr[6]) + ') · ' + res + '</div>';
+      }
       return {
         update(dt) {
           dt = Math.min(dt, 0.05) * (window.__v3dTS || 1);
-          pollLesson();
+          pollLesson(); drawProt();
           if (once && player.p > 0.985) { once = false; player.pause(); player.set(0.985); }
           // 진행 막대(player)의 위치로 단계와 단계 안의 시간(t)을 정해요
           { const T = player.p * DUR, ns = T < TS[1] ? 0 : T < TS[2] ? 1 : repairMode.v; t = T < TS[1] ? T : T < TS[2] ? T - TS[1] : T - TS[2];

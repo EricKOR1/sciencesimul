@@ -1008,8 +1008,8 @@
       missions: [
         {
           title: '막대 그래프에서 값 읽기',
-          goal: '<span class="only3d">화면 아래에서 </span><span class="only2d">막대 그래프에서 </span><b>Sa · Sc · Irr</b> 유형을 골라 <b>성간 물질 비율</b>을 읽고 오른쪽 표에 써요.',
-          hint: '<span class="only3d">유형 단추를 누르면 설명에</span><span class="only2d">막대를 누르면 막대 위와 아래 읽음값에</span> 성간 물질 비율이 나와요. 단위는 %예요.',
+          goal: '막대 그래프에서 <b>Sa · Sc · Irr</b> 유형을 골라 <b>성간 물질 비율</b>을 읽고 오른쪽 표에 써요.',
+          hint: '막대를 누르면 <span class="only3d">(또는 아래 유형 단추를 누르면) </span>막대 위와 아래 읽음값에 성간 물질 비율이 나와요. 단위는 %예요.',
           hold: 0.5, setup() { S.tblOn = true; S.metric = 'ism'; setView('v3'); updateCtl(); },
           status: () => ASK3.map((r, i) => r[0] + ' ' + mark(tblOK()[i])).join(' · '),
           check: () => tblOK().every(Boolean),

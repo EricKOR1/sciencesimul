@@ -70,7 +70,7 @@
           texL.offset.x = 2 - m / 2; texR.offset.x = -m / 2;
           L(0, '해령 (발산형 경계)', [0, 0.35, DEP / 2], 'rgba(220,80,30,.92)'); L(1, '새 해양 지각', [-2.2, 0.0, DEP / 2]); L(2, '마그마 상승', [0, -1.15, DEP / 2], 'rgba(220,80,30,.92)');
           // 양쪽 판 이동 화살표
-          [[-1, '←'], [1, '→']].forEach((d, i) => { const a = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.5, 16), dmat(0xffd34d, { emissive: 0x7a5a00, emissiveIntensity: 0.6 })); a.position.set(d[0] * 3.0, 0.45, 0); a.rotation.z = -d[0] * Math.PI / 2; dyn.add(a); });
+          [[-1, '←'], [1, '→']].forEach((d, i) => { const a = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.5, 16), dmat(0xffd34d, { emissive: 0x7a5a00, emissiveIntensity: 0.6 })); a.position.set(d[0] * 3.0, 0.45, 0); a.rotation.z = -d[0] * Math.PI / 2; a.userData.plateArrow = true; dyn.add(a); });
           buildLoops([{ cx: -2, cy: -1.7, rx: 1.7, ry: 0.65, dir: 1 }, { cx: 2, cy: -1.7, rx: 1.7, ry: 0.65, dir: -1 }]);
           info('<b>발산형 경계</b>: 두 판이 멀어지면 마그마가 올라와 새 지각이 생겨요. 줄무늬는 시간이 지나며 양쪽으로 밀려난 지각이에요.');
         } else if (mode === 'sub') {
@@ -129,15 +129,17 @@
       }
       const lesson = () => window.__sim || null;
       let demoP = 0;
+      const ctlEl = document.querySelector('.v3-ctl'), ctlBefore = ctlEl ? ctlEl.children.length : 0;
       const segB = controls.segment('경계', [{ value: 'div', label: '발산' }, { value: 'sub', label: '섭입' }, { value: 'col', label: '충돌' }, { value: 'trans', label: '보존' }], mode, (v) => setBoundary(v, false));
       const pl = controls.player({
         duration: 10, loop: true, autoplay: false, label: '판의 운동',
         phases: [[0, '판이 움직이기 시작'], [0.5, '경계의 지형이 자라요'], [0.85, '지형 완성']],
         onFrame(p) { demoP = p; s = p; paint(); },
       });
+      const bndEls = ctlEl ? [...ctlEl.children].slice(ctlBefore) : [];   // 경계 고르기 · 판의 운동: 판의 경계 장면에서만 보여요
       const bC = controls.button('맨틀 대류 ✓', () => { conv = !conv; bC.classList.toggle('on', conv); bC.textContent = '맨틀 대류 ' + (conv ? '✓' : '✕'); paint(); }); bC.classList.add('on');
       s = 0.35; paint();
-      let lastBk = null, lastS = -1;
+      let lastBk = null, lastS = -1, lastCv = null, lastInfo = '', clock = 0;
       return {
         update(dt, t) {
           const L2 = lesson(), S = L2 && L2.S, idle = demoP === 0 && !pl.playing;
@@ -147,8 +149,18 @@
             if (idle && mk && mk !== lastBk) { lastBk = mk; if (mk !== mode) setBoundary(mk, true); }
             if (idle && S.mode === 'boundary' && mk) { const ns = Math.min(1, (S.bt % 14) / 14); if (Math.abs(ns - lastS) > 0.01) { lastS = ns; s = ns; paint(); } }
           }
-          const heat = S && S.mode === 'convect' ? 0.2 + 0.8 * Math.min(1, S.heat || 0) : 1;
-          loops.forEach((lp, i) => lp.dots.forEach((d, k) => { const u = ((t * 0.09 * heat + k / 6) % 1 + 1) % 1; d.position.copy(lp.curve.getPointAt(u)); }));
+          /* 맨틀 대류 단계: 2D처럼 지구 내부 열만큼 맨틀이 돌고(열이 0이면 멈춰요), 올라오는 뜨거운 맨틀은 주황, 내려가는 식은 맨틀은 파랑이에요.
+             판이 움직이는 방향(노란 화살표)은 예측을 맞힌 뒤에 보여 줘요 */
+          const cv = !!(S && S.mode === 'convect');
+          if (cv !== lastCv) { lastCv = cv; bndEls.forEach((e) => { e.style.display = cv ? 'none' : ''; }); if (cv) { pl.pause(); if (mode !== 'div') setBoundary('div', true); } lastInfo = ''; }
+          dyn.children.forEach((o) => { if (o.userData.plateArrow) o.visible = !cv || !!S.predOK; });
+          if (cv) {
+            const hp = Math.round(Math.min(1, S.heat || 0) * 100), it = hp + '|' + (S.predOK ? 1 : 0);
+            if (it !== lastInfo) { lastInfo = it; info('<b>맨틀 대류</b> · 지구 내부 열 <b>' + hp + ' %</b><br>' + (hp < 5 ? '열이 없으면 맨틀이 거의 움직이지 않아요.' : '뜨거운 맨틀(<span style="color:#ffb27a">주황</span>)은 올라오고, 식은 맨틀(<span style="color:#8cc8ff">파랑</span>)은 내려가며 돌아요.') + (S.predOK ? '<br>대류를 따라 두 판이 해령에서 양쪽으로 멀어져요.' : '')); }
+          }
+          const heat = cv ? Math.min(1, S.heat || 0) * 1.6 : 1;
+          clock += dt * heat;
+          loops.forEach((lp, i) => lp.dots.forEach((d, k) => { const u = ((clock * 0.09 + k / 6) % 1 + 1) % 1; d.position.copy(lp.curve.getPointAt(u)); d.material.color.setHex(!cv ? 0xfff6d0 : lp.curve.getTangentAt(u).y > 0.05 ? 0xff8a3d : lp.curve.getTangentAt(u).y < -0.05 ? 0x4aa3ff : 0xfff6d0); }));
         },
         sync() {},
       };

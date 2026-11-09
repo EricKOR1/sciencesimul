@@ -93,7 +93,7 @@
             finger.position.x = X(52) - musc * 0.25; NL[6].set(musc > 0.5 ? '팔 근육 수축!' : '팔 근육');
             NL[7].set('⏱ 반응 시간 ' + (0.05 * p).toFixed(3) + ' s (목표 0.050 s, 천천히 보여 줘요)'); NL[7].show(true);
             [sen, asn, mot].forEach((s, i) => { const on = run && p > [0.0, 0.36, 0.62][i] && p < [0.36, 0.62, 1][i]; s.material.emissive.setHex(on ? 0x886600 : 0); s.material.emissiveIntensity = on ? 0.8 : 0; });
-            setI('<b>⚡ 신경 신호</b>: 연결된 한 곳에만, 아주 빠르게 전달돼요.<br>가시 → 감각 뉴런 → 연합 뉴런(척수) → 운동 뉴런 → 팔 근육 (약 0.05초)<br>' + (done ? '✅ 신경 신호가 약 0.05초 만에 팔 근육 한 곳에만 전달됐어요. 심장·위·다리 근육은 연결이 없어 반응이 없어요.' : '🌵 가시에 찔리기(또는 ▶ 신호 재생)를 눌러 신호를 따라가 봐요.'));
+            setI('<b>⚡ 신경 신호</b>: 연결된 한 곳에만, 아주 빠르게 전달돼요.<br>가시 → 감각 뉴런 → 연합 뉴런(척수) → 운동 뉴런 → 팔 근육 (약 0.05초)<br>' + (done ? '✅ 신경 신호가 약 0.05초 만에 팔 근육 한 곳에만 전달됐어요. 심장·위·다리 근육은 연결이 없어 반응이 없어요.' : '🌵 가시에 찔리기를 눌러 신호를 따라가 봐요. (▶ 신호 재생은 미리 보기예요)'));
           } else {
             const h = active() ? synthHor(pp * TH) : L.S.hor;
             const hp = h.particles, vis = L.S.hor.showR || active() && L.S.hor.showR;

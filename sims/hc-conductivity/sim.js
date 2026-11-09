@@ -1209,7 +1209,7 @@
         {
           title: '전기장 속 입자 관찰하기',
           goal: '전기장을 켜고 <b>구리 · 고체 NaCl · 용융 NaCl · 설탕 수용액</b>을 각각 2초 이상 지켜보세요.',
-          hint: '시료 버튼을 누른 뒤 ⚡ 전기장 켜기를 눌러요. 입자가 어느 쪽으로 움직이는지(또는 움직이지 않는지) 봐요. 아래 막대가 가득 차면 완료예요.',
+          hint: '시료 버튼을 누른 뒤 ⚡ 전기장 켜기를 눌러요. 입자가 어느 쪽으로 움직이는지(또는 움직이지 않는지) 봐요. ‘⚡ 전기장을 켠 시간’ 막대가 가득 차면 완료예요.',
           setup() { S.gate = ''; setScene('model'); updateUI(); },
           check: () => ['cu', 'nacl_s', 'nacl_l', 'sugar_aq'].every((id) => (S.obs[id] || 0) >= 2),
           hold: 0.3,
@@ -1319,7 +1319,7 @@
 
   /* ---------- 디버그 (Playwright) ---------- */
   window.__sim = {
-    S, M, SMP, BY, TRUTH, VW, VH, MG, FL, get game() { return game; },
+    S, M, SMP, BY, MBY, TRUTH, VW, VH, MG, FL, get game() { return game; },
     pick, setScene, buildModel, dissolve, testSecret, classify, secOK, updateUI, CARRIER_DEFS, FLOW_DEFS, carrierSel, flowSel, tblSels,
     stepAll(sec) { const n = Math.ceil(sec / 0.02); for (let i = 0; i < n; i++) update(0.02); },
     setField(v) { S.field = !!v; updateUI(); },

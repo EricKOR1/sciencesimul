@@ -1674,7 +1674,7 @@
           {
             title: '원자 수 세어 확인하기', scene: 'atoms', focus: '#playBtn',
             goal: '세 반응(앙금 · 기체 발생 · 연소)을 모두 재생하고, 반응 전후의 원자 수가 같은지 확인하세요.',
-            hint: '반응을 고르고 ▶ 반응 재생을 눌러요. 카운터의 숫자가 왼쪽에서 오른쪽으로 옮겨 가요.',
+            hint: '반응을 고르고 ▶ 반응 재생을 눌러요. <span class="only2d">카운터의 숫자가 왼쪽에서 오른쪽으로 옮겨 가요.</span><span class="only3d">3D 화면 왼쪽 위에 반응 전 → 반응 후 원자 수가 나와요.</span>',
             setup() { setScene('atoms', true); AS.done = { ppt: false, gas: false, burn: false }; AS.sel = 0; atomsFill(); },
             check: () => AS.done.ppt && AS.done.gas && AS.done.burn, hold: 0.8,
             status: () => RXS.map((r) => chip(AS.done[r.key], r.name)).join(' · '),

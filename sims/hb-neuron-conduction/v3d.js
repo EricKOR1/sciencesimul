@@ -16,7 +16,20 @@
     autoRotate: 0,
     levels: [1],
     build(ctx) {
-      const { THREE, root, label, info, controls } = ctx;
+      const { THREE, root, label, info, controls, renderer } = ctx;
+      /* 경주 기록 막대 그래프: 2D 아래쪽의 기록 막대를 3D 화면에도 보여 줘요 (2D 기록 그대로) */
+      if (!document.getElementById('nc3d-rec')) { const st2 = document.createElement('style'); st2.id = 'nc3d-rec'; st2.textContent =
+        '.nc-rec{position:absolute;right:10px;top:10px;width:min(250px,42%);padding:7px 9px;border-radius:12px;background:rgba(8,12,24,.76);color:#fff;font-size:12px;font-weight:700;pointer-events:none}.nc-rec .h{font-weight:900;margin-bottom:4px}.nc-rec .r{display:grid;grid-template-columns:76px 1fr auto;gap:5px;align-items:center;margin:3px 0}.nc-rec .b{height:9px;border-radius:5px;background:#2a3346;overflow:hidden}.nc-rec .b i{display:block;height:100%}.nc-rec .v{color:#c9d3e6;min-width:44px;text-align:right}' +
+        '@media (max-width:599px){.nc-rec{top:auto;bottom:30px;right:8px;width:56%;font-size:10.5px;padding:4px 6px}.nc-rec .r{grid-template-columns:64px 1fr auto;margin:2px 0}}';
+        document.head.appendChild(st2); }
+      const recEl = document.createElement('div'); recEl.className = 'nc-rec'; recEl.style.display = 'none'; renderer.domElement.parentElement.appendChild(recEl);
+      let recSig = null;
+      function drawRec() {
+        const L = window.__sim, S = L && L.S; if (!S || S.mode !== 'myelin' || !S.mc) { if (recSig !== null) { recSig = null; recEl.style.display = 'none'; } return; }
+        const R = S.mc.rec || {}, sig = JSON.stringify(R); if (sig === recSig) return; recSig = sig; recEl.style.display = '';
+        const rows = [['un', '무말이집', '#f59e0b'], ['my0', '말이집 정상', '#22c55e'], ['my1', '일부 손상', '#38bdf8'], ['my2', '심한 손상', '#f87171']];
+        recEl.innerHTML = '<div class="h">📊 경주 기록 (같은 길이)</div>' + rows.map(([k, n, c]) => { const v = R[k], num = typeof v === 'number'; return '<div class="r"><span>' + n + '</span><span class="b"><i style="width:' + (num ? Math.min(100, v / 30 * 100) : v === 'block' ? 100 : 0) + '%;background:' + (v === 'block' ? 'repeating-linear-gradient(45deg,#f87171 0 4px,transparent 4px 8px)' : c) + '"></i></span><span class="v">' + (num ? v.toFixed(1) + ' ms' : v === 'block' ? '끊김' : '—') + '</span></div>'; }).join('');
+      }
       const V3 = (x, y, z) => new THREE.Vector3(x, y, z || 0);
       const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.45, metalness: 0.03 }, o || {}));
       const tube = (pts, r, m, seg) => new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), seg || 40, r, 10), m);
@@ -98,6 +111,7 @@
 
       return {
         update(dt, t) {
+          drawRec();
           const L = L2(); if (!L) return; const sc = sceneOf(); if (sc !== scene) setScene(sc);
           if (sc === 'local') {
             const cd = L.S.cd; let vs = [];

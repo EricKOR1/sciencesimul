@@ -105,7 +105,7 @@
       });
       const showBases = (on) => { [bTxt].concat(bBtns).forEach((e) => { e.style.display = on ? '' : 'none'; }); };
       const pl = controls.player({
-        duration: 14, loop: true, autoplay: false, label: '전사',
+        duration: 14, loop: true, autoplay: false, label: '전사 미리 보기',   // 실험의 ▶ 전사 시작은 옆 조작판에서 해요
         phases: [[0, 'DNA가 풀려요'], [0.2, 'mRNA 합성'], [0.8, 'mRNA가 떨어져 나가요']],
         onFrame(q) { demoP = q; p = -2 + q * (N + 5); },
       });

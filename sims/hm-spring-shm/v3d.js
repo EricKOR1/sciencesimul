@@ -83,7 +83,7 @@
         lV.off = [0, 0.3, 0]; lA.off = [0, 0.3, 0];
         const mode = S.mode; let t2 = '<b>🌀 용수철 진자 · ' + (vert ? '수직' : '수평') + '</b> · m = ' + m + ' kg · k = ' + k + ' N/m' + (vert ? ' · g = ' + o.g + ' m/s²' : '') + '<br>변위 x = <b>' + f2(x) + ' m</b> (평형점 O 기준) · 속도 v = ' + f2(v) + ' m/s · 가속도 a = ' + f2(a) + ' m/s²<br>';
         if (mode === 'force') t2 += '복원력 F = −kx : 변위와 <b>반대 방향</b>이고 크기는 변위에 비례해요 → 가속도 a도 변위와 반대 방향 (a–x 그래프는 기울기가 음수인 직선).';
-        else if (mode === 'period') t2 += '주기는 질량 m · 용수철 상수 k로 정해지고, 진폭과 중력(수평/수직, 달)에는 영향이 없어요. 하나씩만 바꿔 측정해요.' + (S.pe && S.pe.rec && S.pe.rec.length ? '<br>📍 주기 기록: ' + S.pe.rec.slice(-4).map((q) => 'm ' + q.m + ' · k ' + q.k + ' · A ' + q.A + ' → T ' + q.T.toFixed(2) + ' s').join(' / ') : '');
+        else if (mode === 'period') t2 += '질량 m · 용수철 상수 k · 진폭 A 가운데 무엇이 주기를 바꿀까요? 한 번에 하나씩만 바꿔 📍 주기를 기록해 비교해요.' + (S.pe && S.pe.rec && S.pe.rec.length ? '<br>📍 주기 기록: ' + S.pe.rec.slice(-4).map((q) => 'm ' + q.m + ' · k ' + q.k + ' · A ' + q.A + ' → T ' + q.T.toFixed(2) + ' s').join(' / ') : '');
         else if (mode === 'energy') { const Ep = 0.5 * k * x * x, Et = 0.5 * k * o.x0 * o.x0; t2 += '역학적 에너지: 운동 E<sub>k</sub> = ' + (Et - Ep).toFixed(3) + ' J + 탄성 E<sub>p</sub> = ' + Ep.toFixed(3) + ' J = ½kA² = ' + Et.toFixed(3) + ' J (일정). 양 끝점에서 속력 0, 평형점에서 가장 빠름.'; }
         else t2 += '끝점(±A)에서는 속력이 0이고 가속도가 가장 커요. 평형점에서는 가속도 0, 속력 최대예요.';
         if (t2 !== lastTxt) { lastTxt = t2; info(t2 + '<br><span style="opacity:.8">진폭 · 용수철 · 질량은 옆 조작판에서 바꿔요.</span>'); }

@@ -14,6 +14,17 @@
     autoRotate: 0,
     levels: [1, 2, 3],   // 1단계(빛 흡수 · 파장)는 2D 화면, 물 분해 · ATP 생성 · 조건 변화 단계에서 3D로 시작
     build(ctx) {
+      /* 3D 화면 위 작은 판(기록표 · 카드 등): 2D 캔버스에만 그려지던 것을 3D 단계에서도 보이게 해요 */
+      function v3pan(cls) {
+        if (!document.getElementById('v3pan-css')) { const s = document.createElement('style'); s.id = 'v3pan-css'; s.textContent =
+          '.v3pan{position:absolute;z-index:2;padding:6px 9px;border-radius:12px;background:rgba(8,12,24,.8);border:1px solid rgba(255,255,255,.16);color:#fff;font-size:12px;font-weight:700;line-height:1.35;pointer-events:none;max-width:48%}' +
+          '.v3pan:empty{display:none}.v3pan.tr{right:10px;top:10px}.v3pan.bl{left:10px;bottom:10px}.v3pan .h{font-weight:900;margin-bottom:3px;font-size:12.5px}.v3pan .chip{display:inline-block;margin:1px 2px;padding:0 6px;border-radius:7px;background:rgba(255,255,255,.16);color:#eef3ff}.v3pan .chip.sel{background:#ffd34d;color:#1b2333}.v3pan.card{background:#fffdf7;color:#1b2333;border-top:5px solid var(--kc,#ffd34d);white-space:normal;max-width:min(260px,46%)}.v3pan.card .s{font-size:11.5px;font-weight:600;color:#475569}' +
+          '.v3pan table{border-collapse:collapse}.v3pan th,.v3pan td{padding:1px 5px;text-align:center;white-space:nowrap}.v3pan th{color:#b9c6e4;text-align:left;font-weight:800}.v3pan td.e{color:#56658a}.v3pan .ok{color:#7ee2a8}.v3pan .hi{color:#ffd34d}' +
+          '@media (max-width:599px){.v3pan{font-size:10.5px;padding:4px 6px;max-width:58%}.v3pan.tr{top:auto;bottom:30px;right:8px}.v3pan.bl{left:8px;bottom:8px;max-width:42%}.v3pan th,.v3pan td{padding:0 3px}.v3pan .h{font-size:11px}}';
+          document.head.appendChild(s); }
+        const el = document.createElement('div'); el.className = 'v3pan ' + (cls || 'tr'); ctx.renderer.domElement.parentElement.appendChild(el);
+        let last = ''; el.put = (html) => { if (html !== last) { last = html; el.innerHTML = html; } }; return el;
+      }
       const { THREE, root, label, info, controls } = ctx;
       const V = THREE.Vector3;
       if (narrow) root.rotation.z = Math.PI / 2;      // 휴대폰(세로 화면)에서는 눕혀 둔 모형을 세워서 보여 줘요
@@ -168,12 +179,29 @@
         const cv = m === 'atp' && L.S.at && L.S.at.view === 'cmp';
         if (cv !== cmpOn) { cmpOn = cv; text(); }
       }
+      /* 2D 실험판의 값(물에서 보충한 전자 칸 · 내부 pH · 생성 속도)을 3D 화면 오른쪽 위에 보여 줘요 */
+      const panR = v3pan('tr');
+      function drawPan() {
+        const L = lesson(); if (!L) { panR.put(''); return; }
+        const m = L.S.mode, th = L.S.th, f1 = (v) => (Math.round(v * 10) / 10).toFixed(1);
+        const bar = (t, v, mx, col, tx) => '<tr><th>' + t + '</th><td style="text-align:left"><span style="display:inline-block;height:9px;border-radius:5px;vertical-align:middle;background:' + col + ';width:' + Math.round(70 * Math.max(0, Math.min(1, v / mx))) + 'px"></span></td><td>' + tx + '</td></tr>';
+        if (m === 'water') {
+          let dots = ''; for (let i = 0; i < 4; i++) dots += '<span style="display:inline-block;width:14px;height:14px;margin:0 2px;border-radius:50%;vertical-align:middle;background:' + (i < th.wq ? '#fde047' : 'rgba(255,255,255,.18)') + '"></span>';
+          panR.put('<div class="h">물에서 보충한 전자</div>' + dots + ' ' + th.wq + ' / 4<div style="margin-top:3px">빛 펄스 ' + th.pulses + '회 · 분해된 물 ' + th.o2 * 2 + ' · O₂ ' + th.o2 + '</div>');
+        } else if (m === 'atp') {
+          const ph = 8 - 3 * Math.max(0, Math.min(1, th.H / 60));
+          panR.put('<table>' + bar('내부 pH', 8 - ph, 3, '#f97316', f1(ph)) + '</table><div>ATP ' + th.atp + '개 · NADPH ' + th.nadph + '개 · O₂ ' + th.o2 + '분자</div>');
+        } else if (m === 'cond' && th.rate) {
+          const r = th.rate, mx = Math.max(3, r.atp, r.np, r.o2);
+          panR.put('<div class="h">생성 속도 (/초)</div><table>' + bar('ATP', r.atp, mx, '#f59e0b', f1(r.atp)) + bar('NADPH', r.np, mx, '#0ea5e9', f1(r.np)) + bar('O₂', r.o2, mx, '#ef4444', f1(r.o2)) + '</table>');
+        } else panR.put('');
+      }
       let cmpOn = false;   // 🔁 미토콘드리아와 비교: 안내 창에 H⁺ 방향 비교를 덧붙여요
       modeCtl();
       function text() {
         const note = treat === 'dry' ? '<br><span style="color:#fca5a5">💧 물이 모자라 광계 Ⅱ에 전자를 줄 수 없어요.</span>' : treat === 'dcmu' ? '<br><span style="color:#fca5a5">🧪 억제제가 광계 Ⅱ 뒤의 전자 전달을 막아요.</span>' : cyc ? '<br><span style="color:#a7f3d0">🔁 광계 Ⅰ의 전자가 전달계로 되돌아와요.</span>' : '';
         const cmp = cmpOn ? '<br><b>🔁 미토콘드리아와 비교</b> · H⁺를 퍼 올리는 방향<br>엽록체: 스트로마 → <b>틸라코이드 내부</b>(H⁺ 쌓임) · 미토콘드리아: 기질 → <b>막 사이 공간</b>(H⁺ 쌓임). 두 곳 모두 H⁺가 ATP 합성 효소를 지나 돌아오며 ATP를 만들어요.' : '';
-        info('빛으로 <b>물이 분해</b>되고 전자가 이동해요. H⁺ 기울기로 <b>ATP</b>, 마지막에 <b>NADPH</b>가 만들어져요.<br><span style="color:#fde68a">ATP ' + nATP + ' · NADPH ' + nNADPH + ' · O₂ ' + nO2 + '</span>' + note + cmp);
+        info('빛으로 <b>물이 분해</b>되고 전자가 이동해요. H⁺ 기울기로 <b>ATP</b>, 마지막에 <b>NADPH</b>가 만들어져요.' + note + cmp);
       }
 
       for (let i = 0; i < 10; i++) addLumenH().s = 1;
@@ -181,7 +209,7 @@
       return {
         update(dt) {
           dt = Math.min(dt, 0.05) * (window.__v3dTS || 1);
-          poll();
+          poll(); drawPan();
           if (cyc && treat === 'dry' && light > 0) { cycAcc += light * 1.0 * dt; if (cycAcc >= 1) { cycAcc = 0; photon(new V(-3.0, 4.8, -0.3), new V(X.I, 1.1, 0.2), () => { flash(psI); flash(b6f); for (let k = 0; k < 2; k++) { const o = addLumenH(new V(X.b6f + (k - 0.5) * 0.4, -0.9, 0)); o.s = 1; o.rise = 0; } }); } }
           spawnAcc += light * 1.2 * dt; if (spawnAcc >= 1 && eps.length < 7) { spawnAcc -= 1; launch(); } else if (spawnAcc >= 1) spawnAcc = 1;
           // 빛 알갱이

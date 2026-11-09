@@ -66,6 +66,10 @@
       const base = new THREE.Mesh(new THREE.BoxGeometry(1, 0.05, 0.05), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.3 })); root.add(base);
       const gl = [0, 1, 2].map((i) => { const m = new THREE.Mesh(new THREE.BoxGeometry(0.03, 3.4, 0.03), new THREE.MeshBasicMaterial({ color: cnum[i], transparent: true, opacity: 0.5 })); root.add(m); return m; });
       const gLab = [0, 1, 2].map((i) => label(['①', '②', '③'][i], gl[i], { color: '#26324a', size: 13 }));
+      /* 출발선 · 도착선: 2D처럼 통과 시간을 재는 두 선 (② 종파·횡파 4.0 m, ④ 줄의 속력 8.0 m) */
+      const fin = [0x16a34a, 0xdc2626].map((c) => { const m = new THREE.Mesh(new THREE.BoxGeometry(0.05, 3.0, 0.05), new THREE.MeshBasicMaterial({ color: c })); m.visible = false; root.add(m); return m; });
+      const finLab = [label('출발선', fin[0], { color: '#16a34a', size: 12, offset: [0, -1.85, 0] }), label('도착선', fin[1], { color: '#dc2626', size: 12, offset: [0, -1.85, 0] })];
+      finLab.forEach((l) => l.show(false));
       const lSrc = label('진동 장치', src, { color: '#475569', size: 12 }), lDir = label('진행 방향 →', [0, -2.4, 0], { color: '#0f766e', size: 12 });
       const demo = { p: 0, on: false }; let pl = null, last = '';
       pl = controls.player({ duration: 8, loop: true, autoplay: false, label: '펄스 보내기', phases: [[0, '펄스가 출발해요'], [0.3, '알갱이는 제자리 · 파동만 진행'], [0.85, '끝에서 흡수']], onFrame(p) { demo.p = p; demo.on = p > 0 || !!(pl && pl.playing); } });
@@ -108,9 +112,11 @@
         update() {
           const A = sim(); if (!A || !A.S) return; const S = A.S, sc = A.sc;
           if (!pl.playing && pl.p === 0) demo.on = false;
+          if (S.mode === 'snd') { fin.forEach((m) => (m.visible = false)); finLab.forEach((l) => l.show(false)); }
           if (S.mode === 'snd') { if (!sndOn) { sndOn = true; Object.assign(orbit, { tx: 0, ty: 0, tz: 0, phi: 1.0, theta: 0.15, dist: 15 * KDX }); } ps.visible = src.visible = base.visible = spr.visible = false; gl.forEach((g) => (g.visible = false)); gLab.forEach((l) => l.show(false)); lSrc.show(false); lDir.show(false); pl.row.style.display = 'none'; gSn.visible = true; laneObj.forEach((o) => { o.lb.show(true); o.lv.show(true); }); [lStart, lEnd, lSlow].forEach((l) => l.show(true)); raceBtn.style.display = ''; sndScene(A, S); return; }
           if (sndOn) { sndOn = false; Object.assign(orbit, { tx: 0, ty: 0, tz: 0, phi: 1.2, theta: 0.25, dist: 10.5 * KDX }); }
           gSn.visible = false; laneObj.forEach((o) => { o.lb.show(false); o.lv.show(false); }); [lStart, lEnd, lSlow].forEach((l) => l.show(false)); raceBtn.style.display = 'none';
+          fin.forEach((m) => (m.visible = false)); finLab.forEach((l) => l.show(false));
           if (!sc || !sc.ch) { ps.visible = src.visible = base.visible = spr.visible = false; gl.forEach((g) => (g.visible = false)); gLab.forEach((l) => l.show(false)); lSrc.show(false); lDir.show(false); pl.row.style.display = 'none'; return; }
           pl.row.style.display = ''; ps.visible = src.visible = base.visible = true; lSrc.show(true); lDir.show(true);
           const ch = sc.ch, n = Math.min(NMAX, ch.n), a = ch.a, long = sc.kind === 'L', len = (n - 1) * a, sx = len * U / 2;
@@ -129,15 +135,17 @@
           { const sa = sprG.attributes.position.array; for (let i = 0; i < n; i++) { sa[i * 3] = i * a * U - sx + (long ? yv[i] * U * 1.6 : 0); sa[i * 3 + 1] = long ? 0 : yv[i] * U * 1.6; sa[i * 3 + 2] = 0; } sprG.setDrawRange(0, n); sprG.attributes.position.needsUpdate = true; spr.visible = true; }
           ps.count = n; ps.instanceMatrix.needsUpdate = true; ps.instanceColor.needsUpdate = true;
           src.position.set(-sx - 0.4, long ? 0 : (yv[0] * U * 1.6), 0); base.scale.x = len * U; base.position.set(0, 0, 0);
+          { const fx = S.mode === 'lt' ? [1.0, 5.0] : S.mode === 'sp' ? [1.0, 9.0] : null;
+            fin.forEach((m, i) => { const on = !!fx && fx[i] <= len + 1e-6; m.visible = on; finLab[i].show(on); if (on) m.position.set(fx[i] * U - sx, 0, 0.05); }); }
           [0, 1, 2].forEach((i) => { const g = sc.gates[i], ok = g != null && g < n; gl[i].visible = ok; gLab[i].show(ok); if (ok) { gl[i].position.set(g * a * U - sx, 0, 0); gLab[i].off = [0, 1.9, 0]; } });
           lSrc.off = [0, 1.1, 0]; lDir.obj = [0, -2.4, 0];
           void sc2; void maxd; void FS;
           let t2;
-          if (S.mode === 'model') t2 = '<b>🧩 연결 모형: 무엇이 이동할까?</b> · 질량 알갱이를 용수철이 이어 놓았어요 (k = ' + A.KS[S.kv] + ' N/m · m = ' + A.MS[S.mv] + ' kg)<br>펄스가 지나갈 때 표시점 ①②③은 <b>제자리에서 위아래로 진동</b>할 뿐 옆으로 이동하지 않아요. 이동하는 것은 <b>파동(에너지 · 모양)</b>이에요.' + (S.meas.v != null ? '<br>측정한 펄스 속력: ' + S.meas.v.toFixed(1) + ' m/s' : '');
+          if (S.mode === 'model') t2 = '<b>🧩 연결 모형: 무엇이 이동할까?</b> · 질량 알갱이를 용수철이 이어 놓았어요 (k = ' + A.KS[S.kv] + ' N/m · m = ' + A.MS[S.mv] + ' kg)<br>펄스가 지나갈 때 표시점 ①②③이 <b>어느 방향으로</b> 움직이는지, 펄스와 함께 옆으로 가는지 살펴봐요.' + (S.meas.v != null ? '<br>측정한 펄스 속력: ' + S.meas.v.toFixed(1) + ' m/s' : '');
           else if (S.mode === 'lt') t2 = '<b>' + (S.lt.dir === 'T' ? '↕ 횡파' : '↔ 종파') + '</b> · 파동 용수철 4.0 m<br>' + (S.lt.dir === 'T' ? '알갱이가 진행 방향과 <b>수직</b>으로 흔들려요.' : '알갱이가 진행 방향과 <b>나란하게</b> 흔들려요. 몰린 곳(밀, 빨강)과 흩어진 곳(소)이 번갈아 나타나요.') + '<br>기록한 통과 시간: 횡파 ' + (S.lt.time.T != null ? S.lt.time.T.toFixed(2) + ' s' : '—') + ' · 종파 ' + (S.lt.time.L != null ? S.lt.time.L.toFixed(2) + ' s' : '—');
           else if (S.mode === 'fl') t2 = '<b>〰 v = fλ</b> · 진동수 f = ' + FS[S.fl.fi].toFixed(1) + ' Hz<br>진동수를 바꿔 파장 λ를 재고 f × λ를 비교해요. 같은 매질에서는 f가 커지면 λ가 짧아지고 속력 v = fλ는 일정해요.';
           else t2 = '<b>🧵 줄의 속력</b> · 장력 ' + A.TS[S.sp.Tv] + ' N · 단위 길이당 질량 μ = ' + A.MUS[S.sp.mv] + '<br>장력이 클수록 · 줄이 가벼울수록 펄스가 빨리 지나가요 (측정한 관계로 정리해요).' + (S.sp.rec && S.sp.rec.length ? '<br>📋 측정 기록: ' + S.sp.rec.slice(-4).map((r) => 'T ' + r.T + ' N · μ ' + r.mu + ' → ' + r.t + ' s, v ' + r.v + ' m/s').join(' / ') : '');
-          if (usedDemo) t2 += '<br><span style="color:#ffd34d">▶ 펄스가 오른쪽으로 진행하는 동안 알갱이는 제자리에서 진동해요.</span>';
+          if (usedDemo && S.mode !== 'model') t2 += '<br><span style="color:#ffd34d">▶ 펄스가 오른쪽으로 진행하는 동안 알갱이는 제자리에서 진동해요.</span>';
           if (t2 !== last) { last = t2; info(t2); }
         },
         sync() {},

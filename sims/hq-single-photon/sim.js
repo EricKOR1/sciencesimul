@@ -957,7 +957,7 @@
         {
           title: '검출기를 켜고 꺼서 비교하기',
           goal: '틈 검출기를 <b>끈 채로 300개</b>, <b>켠 채로 300개</b> 이상 쏘아서 스크린의 모양을 비교하세요.',
-          hint: '“+100”을 3번씩 눌러요. 검출기를 켜거나 끄면 스크린이 지워지고 새로 쌓여요. 파란 막대가 어떻게 달라지나요?',
+          hint: '“+100”을 3번씩 눌러요. 검출기를 켜거나 끄면 스크린이 지워지고 새로 쌓여요. 스크린의 막대가 어떻게 달라지나요?',
           setup() { S.mx.detOn = 0; S.mx.detOff = 0; S.show.wave = true; S.show.selW = false; setCfg({ kind: 'e', slits: 'both', V: 100, det: false }); setScene('which'); },
           check: () => S.mx.detOff >= 300 && S.mx.detOn >= 300,
           hold: 0.6,

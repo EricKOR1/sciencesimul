@@ -1050,6 +1050,6 @@
     readouts();
   });
 
-  window.__sim = { S, VW, VH, get game() { return game; }, setView, updateCtl, GAL, CT, VT, gridInfo, CELLCARDS, cGr, cSt, runSim, orbStats, placeMark, markersOK, MODES, STRU, FOG_MPC, aOfAge };
+  window.__sim = { S, VW, VH, get game() { return game; }, setView, updateCtl, GAL, CT, VT, gridInfo, CELLCARDS, cGr, cSt, runSim, orbStats, orbBlk: () => ORB.blk, ORB_NP: NP, placeMark, markersOK, MODES, STRU, FOG_MPC, aOfAge };
 
 })();

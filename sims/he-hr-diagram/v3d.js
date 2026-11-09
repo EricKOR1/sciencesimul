@@ -22,6 +22,19 @@
     build(ctx) {
       if (ctx.THREE.ColorManagement) ctx.THREE.ColorManagement.legacyMode = false;     // 색을 보이는 그대로(sRGB) 쓰도록 맞춰요
       const { THREE, root, label, info, controls } = ctx;
+      /* 미션 보조 판: 미션이 말하는 표·기록·카드를 3D 화면 구석에 작게 보여 줘요 (2D 상태를 그대로 읽어요) */
+      const mxBox = (pos) => {
+        const v = ctx.renderer.domElement.parentElement;
+        if (!document.getElementById('mx3d-css')) { const s = document.createElement('style'); s.id = 'mx3d-css'; s.textContent =
+          '.mx3d{position:absolute;z-index:3;padding:6px 8px;border-radius:12px;background:rgba(8,12,24,.8);color:#fff;font-size:12px;line-height:1.35;pointer-events:none;max-width:48%;box-shadow:0 4px 14px rgba(0,0,0,.35)}.mx3d:empty{display:none}' +
+          '.mx3d.tr{right:10px;top:10px}.mx3d.br{right:10px;bottom:34px}.mx3d.bl{left:10px;bottom:10px}.mx3d .h{font-weight:900;margin-bottom:3px}' +
+          '.mx3d table{border-collapse:collapse}.mx3d th,.mx3d td{padding:1px 5px;text-align:center;white-space:nowrap}.mx3d th{color:#b9c6e4;font-weight:800}.mx3d td:first-child,.mx3d th:first-child{text-align:left}' +
+          '.mx3d .on{color:#ffd34d;font-weight:800}.mx3d .ok{color:#7ee2a8;font-weight:800}.mx3d .no{color:#ff9a9a;font-weight:800}.mx3d .dim{color:#8d99b3}.mx3d tr.sel td{background:rgba(255,211,77,.16)}' +
+          '@media (max-width:599px){.mx3d{font-size:10.5px;padding:4px 6px;max-width:60%}.mx3d.tr{top:auto;bottom:30px}.mx3d th,.mx3d td{padding:0 3px}}';
+          document.head.appendChild(s); }
+        const el = document.createElement('div'); el.className = 'mx3d ' + (pos || 'tr'); v.appendChild(el);
+        let last = ''; el.put = (h) => { if (h !== last) { last = h; el.innerHTML = h; } }; return el;
+      };
       const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.6, metalness: 0 }, o || {}));
       /* 2D와 같은 별 20개 (이름 · 분광형 · 온도 · 광도) */
       const L2 = () => ctx.lesson();
@@ -85,7 +98,7 @@
         const l = L2();
         if (mode === 'star') info(({ all: 'H-R도에 찍었던 <b>별 20개</b>예요. 크기는 <b>반지름</b>, 색은 <b>표면 온도</b>예요. 대부분 왼쪽 위에서 오른쪽 아래로 이어진 <b>주계열</b>에 있어요.', ms: '<b>주계열성</b>: 대부분의 별이 속해요. 태양도 여기예요.', gi: '<b>거성</b>: 온도는 낮지만 반지름이 커서 광도가 커요 (오른쪽 위쪽).', sg: '<b>초거성</b>: 반지름이 아주 커서 광도가 가장 커요 (예: 베텔게우스 ≈ 870 R☉).', wd: '<b>백색 왜성</b>: 온도는 높지만 반지름이 아주 작아서 어두워요 (예: 시리우스 B).' })[grpSel] + '<br>점선은 <b>반지름 등값선</b>(0.01 · 1 · 100 · 1000 R☉)이에요.');
         else if (mode === 'bar') { const n = cntNow(); info('<b>' + (n.mine ? '내가 그린 별 20개' : '태양 근처 별 100개 (예시)') + '</b> 중 종류별 개수예요.<br>태양 근처에서는 거의 대부분이 어둡고 작은 별이고, 거성은 아주 드물어요.'); }
-        else { const M = l && l.S ? l.S.M : 1, d = mData(M); info('<b>질량 ' + (+M.toPrecision(3)) + ' M☉</b> 주계열성: 광도 ' + (d.L >= 100 ? Math.round(d.L).toLocaleString() : +d.L.toPrecision(3)) + ' L☉ · 표면 온도 약 ' + Math.round(d.T / 10) * 10 + ' K<br>질량이 클수록 왼쪽 위(뜨겁고 밝음)에 놓이고 수명은 짧아져요.'); }
+        else { const M = l && l.S ? l.S.M : 1, d = mData(M); info('<b>질량 ' + (+M.toPrecision(3)) + ' M☉</b> 주계열성: 광도 ' + (d.L >= 100 ? Math.round(d.L).toLocaleString() : +d.L.toPrecision(3)) + ' L☉ · 표면 온도 약 ' + Math.round(d.T / 10) * 10 + ' K<br>질량이 클수록 왼쪽 위(뜨겁고 밝음)에 놓여요. 수명은 t = 10¹⁰년 × M ÷ L로 계산해 봐요.'); }
       }
       function frameBars() {
         if (mode !== 'bar') return; const n = cntNow();
@@ -109,6 +122,7 @@
       ctx.onLevel((lv) => { const m = lv === 3 ? 'mass' : 'star'; if (m !== mode) { mode = m; segMode.set(m); apply(); } });
       mode = ctx.level === 3 ? 'mass' : 'star'; segMode.set(mode);
       apply();
+      const lifeEl = mxBox('tr');
       return {
         update(dt, t) {
           sunM.scale.setScalar(1 + 0.12 * Math.sin(t * 3));
@@ -118,6 +132,11 @@
             if (S.M !== lastM) { const first = lastM === null; lastM = S.M; if (!first && mode !== 'mass') { mode = 'mass'; segMode.set('mass'); apply(); } }   // 질량을 바꾸면 질량 보기로
             if (mode === 'mass') { const Mv = Math.pow(10, S.lmd == null ? 0 : S.lmd), d = mData(Mv); cur.position.set(bx(Math.log10(d.T)), by(Math.log10(d.L)), 0.1); const s0 = (+Mv.toPrecision(3)) + ' M☉'; if (s0 !== lastS) { lastS = s0; curL.set('지금 ' + s0); updInfo(); } if (!pl.playing) { const idx = MS.findIndex((x) => Math.abs(x - S.M) < 1e-6); if (idx >= 0 && Math.floor(pl.p * 6) !== idx) { syncing = true; pl.set((idx + 0.01) / 6); syncing = false; } } }
             if (mode === 'bar') frameBars();
+            /* 📝 수명 기록: 2D의 수명 막대처럼, 계산해 기록한 질량의 수명이 채워져요 */
+            if (mode === 'mass' && S.lifeRec && l.massData && l.fmtYears) {
+              const all = S.lifeRec[1] && S.lifeRec[5] && S.lifeRec[20];
+              lifeEl.put('<div class="h">📝 주계열 수명 t = 10¹⁰년 × M ÷ L</div><table>' + [1, 5, 20].map((M) => { const ok = S.lifeRec[M] || all; return '<tr><td>' + M + ' M☉</td><td class="' + (ok ? 'ok' : 'dim') + '">' + (ok ? l.fmtYears(l.massData(M).t) + ' ✓' : '? (계산해 기록해요)') + '</td></tr>'; }).join('') + '</table>');
+            } else lifeEl.put('');
           }
         },
         sync() {},

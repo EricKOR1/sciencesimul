@@ -139,6 +139,19 @@
       const velLab = label('속도', velT, { color: 'rgba(21,128,61,.92)' }), grvLab = label('중력', grvT, { color: 'rgba(185,28,28,.92)' });
       const hitMark = new THREE.Mesh(new THREE.RingGeometry(0.16, 0.24, 28), new THREE.MeshBasicMaterial({ color: 0xffd34d, side: THREE.DoubleSide })); hitMark.visible = false; root.add(hitMark);
       const hitLab = label('', hitMark, { offset: [0, -0.45, 0], color: 'rgba(124,45,18,.9)' });
+      /* 쏘아서 만든 낙하 지점들 (2D의 S.landings): 빨간 고리와 '① 3.0 km/s' 이름표로 남겨요 */
+      const landMk = [], landM = new THREE.MeshBasicMaterial({ color: 0xef4444, side: THREE.DoubleSide });
+      let landSig = '';
+      function syncLandings(ls) {
+        const sig = ls.map((l) => l.v).join(','); if (sig === landSig) return; landSig = sig;
+        landMk.forEach((o) => { o.m.visible = false; o.lb.show(false); });
+        ls.slice(-6).forEach((l, i) => {
+          let o = landMk[i];
+          if (!o) { const m = new THREE.Mesh(new THREE.RingGeometry(0.12, 0.2, 24), landM); root.add(m); o = landMk[i] = { m, lb: label('', m, { size: 11.5, offset: [0, 0.4, 0], color: 'rgba(185,28,28,.92)' }) }; }
+          const hp = P3(l.x, l.y); o.m.position.copy(hp.clone().multiplyScalar(1.0004)); o.m.lookAt(hp.clone().multiplyScalar(2)); o.m.visible = true;
+          o.lb.set('①②③④⑤⑥'[i] + ' ' + (+l.v).toFixed(1) + ' km/s'); o.lb.show(true);
+        });
+      }
       /* 상태 */
       let tubeR = 0.03, v = 7.0, sh = predict(v), clock = 0, playSec = 10, issOn = false, tgt = null, rv = null, sc = 1;
       const PMK = 5070 / 10;                                                   // 원 궤도 한 바퀴를 10초로 보여 주는 배속
@@ -161,7 +174,7 @@
         pts.push(P3(sh.path[n - 1].x, sh.path[n - 1].y));
         const col = { impact: 0xfb923c, circle: 0x4ade80, ellipse: 0xc084fc, escape: 0xfacc15 }[sh.cls];
         hitMark.visible = sh.cls === 'impact';
-        if (sh.hit) { const hp = P3(sh.hit[0], sh.hit[1]); hitMark.position.copy(hp.clone().multiplyScalar(1.0005)); hitMark.lookAt(hp.clone().multiplyScalar(2)); hitLab.set('낙하 지점'); }
+        if (sh.hit) { const hp = P3(sh.hit[0], sh.hit[1]); hitMark.position.copy(hp.clone().multiplyScalar(1.0005)); hitMark.lookAt(hp.clone().multiplyScalar(2)); hitLab.set('예상 낙하 지점'); }
         hitLab.show(sh.cls === 'impact');
         playSec = sh.closed ? Math.max(5, Math.min(16, sh.tEnd / PMK)) : Math.max(4, Math.min(12, sh.tEnd / PMK));
         clock = 0; fmtInfo();
@@ -191,15 +204,15 @@
       const tmpA = new THREE.Vector3(), tmpB = new THREE.Vector3();
       let demoP = 0, lastShot = null;
       const pl = controls.player({
-        duration: 10, loop: true, autoplay: false, label: '발사',
-        phases: [[0, '발사'], [0.5, '날아가는 중']],
+        duration: 10, loop: true, autoplay: false, label: '궤도 미리 보기',   // 낙하 지점을 남기려면 🔥 발사를 눌러요
+        phases: [[0, '출발'], [0.5, '날아가는 중']],
         onFrame(p) { demoP = p; },
       });
 
       return {
         update(dt) {
           clock += dt;
-          { const s2 = window.__sim && window.__sim.S; if (s2 && s2.mode === 'cannon') { if (typeof s2.v === 'number' && Math.abs(s2.v - v) > 0.001 && s2.v >= 1 && s2.v <= 9) { v = s2.v; sh = predict(v); rv.set(v); build(); } if (s2.shot !== lastShot) { lastShot = s2.shot; if (s2.shot) clock = 0; } } }
+          { const s2 = window.__sim && window.__sim.S; if (s2 && s2.landings) { syncLandings(s2.mode === 'cannon' ? s2.landings : []); landMk.forEach((o) => { o.m.scale.setScalar(sc); o.lb.off = [0, 0.4 * sc, 0]; }); } if (s2 && s2.mode === 'cannon') { if (typeof s2.v === 'number' && Math.abs(s2.v - v) > 0.001 && s2.v >= 1 && s2.v <= 9) { v = s2.v; sh = predict(v); rv.set(v); build(); } if (s2.shot !== lastShot) { lastShot = s2.shot; if (s2.shot) clock = 0; } } }
           const demo = demoP > 0 || pl.playing;
           const ph = demo ? demoP : sh.closed ? ((clock / playSec) % 1) : Math.min(1, (clock % (playSec + 1.2)) / playSec);
           const q = posAt(sh, ph * sh.tEnd), pos = P3(q.x, q.y);

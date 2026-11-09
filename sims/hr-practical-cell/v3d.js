@@ -224,10 +224,27 @@
         return r;
       }
       const ionLoop = (inst, arr, dir, fn) => arr.forEach((q, i) => { q.u = ((q.u + dir * 0.0016) % 1 + 1) % 1; fn(q, i, inst); });
+      /* 📝 기록 표 (2D 오른쪽 아래 표와 같아요): “기록하기”를 누를 때마다 한 줄씩 채워져요 */
+      const recEl = document.createElement('div'); recEl.className = 'hpc-rec'; ctx.renderer.domElement.parentElement.appendChild(recEl);
+      if (!document.getElementById('hpc-rec-css')) { const cs = document.createElement('style'); cs.id = 'hpc-rec-css'; cs.textContent =
+        '.hpc-rec{position:absolute;right:10px;bottom:36px;max-width:62%;padding:6px 8px;border-radius:12px;background:rgba(8,12,24,.8);color:#e5e7eb;font-size:11.5px;font-weight:700;pointer-events:none;z-index:3}' +
+        '.hpc-rec .h{font-weight:900;margin-bottom:3px;color:#fde68a}.hpc-rec table{border-collapse:collapse}.hpc-rec th,.hpc-rec td{padding:1px 5px;text-align:left;white-space:nowrap}.hpc-rec th{color:#94a3b8;font-weight:800}.hpc-rec .e{color:#94a3b8}' +
+        '@media (max-width:599px){.hpc-rec{font-size:10px;right:6px;bottom:30px;max-width:72%;padding:4px 5px}.hpc-rec th,.hpc-rec td{padding:0 3px}}';
+        document.head.appendChild(cs); }
+      let recSig = null;
+      function drawRec(on, w2) {
+        const e = on && w2 && w2.S && w2.S.ex, sig = e ? JSON.stringify(e.rec) : ''; if (sig === recSig) return; recSig = sig;
+        if (!e) { recEl.style.display = 'none'; return; }
+        recEl.style.display = '';
+        const P = w2.PAIRS, E2 = w2.ELS, Z = { S: '작게', M: '보통', L: '크게' }, rows = e.rec.slice(-(PHONE ? 3 : 4));
+        recEl.innerHTML = '<div class="h">📝 기록 ' + e.rec.length + '개 · 금속 쌍 ' + w2.exPairsN() + '종 · 내부 저항 ' + w2.exRN() + '가지</div>' + (rows.length ? '<table><tr><th>금속 쌍</th><th>전해질</th>' + (PHONE ? '' : '<th>거리</th><th>크기</th>') + '<th>r(Ω)</th><th>I(A)</th><th>V(V)</th></tr>' +
+          rows.map((q) => '<tr><td>' + P[q.pair].label.replace(/ /g, '') + '</td><td>' + E2[q.el].name + '</td>' + (PHONE ? '' : '<td>' + q.d + ' cm</td><td>' + Z[q.size] + '</td>') + '<td>' + (Math.round(q.r * 10) / 10) + '</td><td>' + w2.fI(q.I) + '</td><td>' + w2.fV(q.V) + '</td></tr>').join('') + '</table>' : '<div class="e">조건을 정하고 [📝 기록하기]를 눌러 표를 채워요.</div>');
+      }
       return {
         update(dt, t) {
           dt = Math.min(dt, 0.05);
           const r = read2D(), w2 = window.__sim, S2 = w2 && w2.S;
+          drawRec(r.md === 'explore', w2);
           let sc = r.md === 'explore' ? 'explore' : 'bat', kk = r.k;
           if (r.md === 'timeline' && S2 && S2.tl) { const tid = S2.tl.drag ? S2.tl.drag.c.id : S2.tl.sel; if (tid) lastTl = tid; kk = KIND_OF[lastTl] || 'volta'; }
           else if (r.md === 'classify' && S2 && S2.cf && S2.cf.sub !== 'cycle') { if (S2.cf.drag && S2.cf.drag.c) lastUse = USK[S2.cf.drag.c.id] || lastUse; kk = lastUse; }

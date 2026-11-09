@@ -326,7 +326,7 @@
   function readouts() {
     const sc = S.scene;
     if (sc === 'flash') { const la = S.latA; return [['비추는 위도', Math.round(la) + '<small>°</small>'], ['빛이 퍼진 넓이', (1 / cosD(la)).toFixed(1) + '<small>배</small>'], ['단위 면적당 에너지', Math.round(cosD(la) * 100) + '<small>%</small>']]; }
-    if (sc === 'cells') { const n = Object.values(S.marks).filter(Boolean).length; return [['표시한 위치', n + '<small>/ 4곳</small>'], ['상승 기류', '0°, 60°'], ['하강 기류', '30°, 90°']]; }
+    if (sc === 'cells') { const n = Object.values(S.marks).filter(Boolean).length; const nm = (la) => (la === 90 ? '90°' : la + '°'), pick = (v) => MARKS.filter((m) => S.marks[m.lat] === v).map((m) => nm(m.lat)).join(', ') || '—'; return [['표시한 위치', n + '<small>/ 4곳</small>'], ['내가 고른 상승', pick('up')], ['내가 고른 하강', pick('down')]]; }
     if (sc === 'wind') { const n = dnd.items.filter((i) => i.slot != null).length; return [['놓은 바람 카드', n + '<small>/ 3장</small>'], ['0°~30°', (dnd.items.find((i) => i.slot === 'low') || {}).label || '?'], ['30°~60°', (dnd.items.find((i) => i.slot === 'mid') || {}).label || '?']]; }
     if (sc === 'role') { const f = (v) => (v >= 0 ? '+' : '') + Math.round(v); return [['저위도(남음)', f(S.surpA[0])], ['중위도', f(S.surpA[1])], ['고위도(부족)', f(S.surpA[2])]]; }
     return [['구름의 이동', '서 → 동'], ['바람', '편서풍'], ['우리나라', '중위도']];
@@ -721,7 +721,8 @@
       infoCards(V, P, [['빛이 퍼진 넓이', '×' + (1 / cosD(la)).toFixed(1), '#fde68a'], ['단위 면적당 받는 에너지', Math.round(cosD(la) * 100) + '%', '#fdba74'], [diff >= 0 ? '에너지 남음' : '에너지 부족', (diff >= 0 ? '+' : '') + Math.round(diff), diff >= 0 ? '#86efac' : '#fca5a5']], { note: '같은 빛이 넓게 퍼질수록 단위 면적당 에너지는 적어져요.' });
     } else if (sc === 'cells') {
       panelBox(V, P, '단면 읽기');
-      infoCards(V, P, [['상승 기류 (구름·비)', '0°, 60°', '#86efac'], ['하강 기류 (맑고 건조)', '30°, 90°', '#93c5fd'], ['표시한 위치', Object.values(S.marks).filter(Boolean).length + ' / 4곳', '#fde68a']], { note: '공기는 상승 → 이동 → 하강 → 되돌아오는 고리를 돌아요.' });
+      const ok4 = MARKS.every((m) => S.marks[m.lat] === m.want), pk = (v) => MARKS.filter((m) => S.marks[m.lat] === v).map((m) => m.lat + '°').join(', ') || '?';
+      infoCards(V, P, [['상승 기류 (구름·비)', ok4 || S.lv !== 1 ? '0°, 60°' : pk('up'), '#86efac'], ['하강 기류 (맑고 건조)', ok4 || S.lv !== 1 ? '30°, 90°' : pk('down'), '#93c5fd'], ['표시한 위치', Object.values(S.marks).filter(Boolean).length + ' / 4곳', '#fde68a']], { note: '공기는 상승 → 이동 → 하강 → 되돌아오는 고리를 돌아요.' });
     } else if (sc === 'wind') {
       panelBox(V, P, '바람 카드');
       ctx.save(); ctx.fillStyle = '#c7d2fe'; ctx.font = fnt(L, 12.5, '600'); ctx.textAlign = 'center';
@@ -987,8 +988,8 @@
         missions: [
           {
             title: '🔥 열이 옮겨지는 모습 비교하기',
-            goal: '<b>🔥 열 운반</b> 화면에서 <b>⏸ 대순환이 멈춘다고 가정</b>했을 때와 <b>🌀 작동</b>할 때를 모두 보고 남음/부족 막대를 비교해요.',
-            hint: '먼저 ⏸ 멈춘다고 가정을 누르고 막대가 커질 때까지 기다린 뒤, 🌀 작동을 눌러요.',
+            goal: '<b>🔥 열 운반</b> 화면에서 <b>⏸ 대순환이 멈춘다고 가정</b>했을 때와 <b>🌀 작동</b>할 때를 모두 보고 남음/부족 <span class="only2d">막대</span><span class="only3d">값(지구본의 저위도 · 중위도 · 고위도 띠)</span>를 비교해요.',
+            hint: '먼저 ⏸ 멈춘다고 가정을 누르고 <span class="only2d">막대가</span><span class="only3d">띠의 숫자가</span> 커질 때까지 기다린 뒤, 🌀 작동을 눌러요.',
             setup() { setScene('role'); S.seenOff = S.seenOn = false; S.offT = S.onT = 0; S.circ = true; syncControls(); },
             check: () => S.seenOff && S.seenOn,
             hold: 0.3,

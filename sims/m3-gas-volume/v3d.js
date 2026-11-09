@@ -175,6 +175,7 @@
         cyl.push(c); return c;
       }
       /* 지금 2D 실험의 반응과 부피 */
+      let lastTxtPh = '';
       function scenario() {
         const S = ctx.lesson() || {}, sc = (S.S && S.S.scene) || 'react';
         let key = 'water', va = 20, vb = 10, hypo = false;
@@ -197,11 +198,31 @@
         c.spB = spB;
         text(c);
       }
+      /* 3D 화면 오른쪽 위의 작은 판 (휴대폰에서는 오른쪽 아래): 2D 화면의 표 · 기록을 3D에서도 보여 줘요 */
+      function v3xPan(cls) { const vEl = ctx.renderer.domElement.parentElement;
+        if (!document.getElementById('v3x-css')) { const c = document.createElement('style'); c.id = 'v3x-css'; c.textContent =
+          '.v3x-pan{position:absolute;right:10px;top:10px;max-width:52%;padding:6px 9px;border-radius:12px;background:rgba(8,12,24,.76);color:#fff;font-size:12px;line-height:1.35;pointer-events:none;z-index:2}' +
+          '.v3x-pan .h{font-weight:800;margin-bottom:3px}.v3x-pan table{border-collapse:collapse}.v3x-pan th,.v3x-pan td{padding:1px 5px;text-align:left;white-space:nowrap}.v3x-pan th{color:#9fb0cc;font-weight:700;font-size:11px}.v3x-pan .q{color:#7d8aa3}.v3x-pan .now td{background:rgba(255,255,255,.1)}' +
+          '.v3x-pan .c{display:inline-block;margin:1px 2px;padding:1px 6px;border-radius:8px;background:rgba(255,255,255,.14)}.v3x-pan .ok{color:#86efac}.v3x-pan .bad{color:#fca5a5}' +
+          '@media (max-width:599px){.v3x-pan{top:auto;bottom:28px;right:6px;font-size:10.5px;max-width:64%;padding:4px 6px}.v3x-pan th{font-size:9.5px}.v3x-pan th,.v3x-pan td{padding:0 3px}}';
+          document.head.appendChild(c); }
+        const el = document.createElement('div'); el.className = 'v3x-pan' + (cls ? ' ' + cls : ''); el.style.display = 'none'; vEl.appendChild(el);
+        let sig = null; return { set(h) { if (h === sig) return; sig = h; el.style.display = h ? '' : 'none'; if (h) el.innerHTML = h; }, el }; }
+      /* 📋 실험 결과표: 2D 오른쪽 결과표처럼 반응시킨 결과가 쌓여요 */
+      const tbl = v3xPan();
+      function drawTbl(c) {
+        const L = L0(), RS = L.RS, R = L.REAC && RS ? L.REAC[RS.rx] : null;
+        if (c.sc !== 'react' || !R) { tbl.set(''); return; }
+        const H = RS.hist[RS.rx] || [], f = (v) => (Math.round(v * 10) / 10) + '';
+        tbl.set('<div class="h">📋 실험 결과표 (mL)</div><table><tr><th>' + R.A.n + '</th><th>' + R.B.n + '</th><th>남은 기체</th><th>' + R.C.n + '</th></tr>' +
+          (H.length ? H.map((e) => { const l = e.r.left; return '<tr><td>' + e.va + '</td><td>' + e.vb + '</td><td>' + (l ? '<span class="bad">' + (l.who === 'A' ? R.A.n : R.B.n) + ' ' + f(l.v) + '</span>' : '<span class="ok">없음</span>') + '</td><td>' + f(e.r.vC) + '</td></tr>'; }).join('') : '<tr><td colspan="4" class="q">반응시키면 결과가 쌓여요</td></tr>') + '</table>');
+      }
       function text(c) {
         const r = RX[c.key], R2 = c.res, nm = (sp) => K.SP[sp].n;
         const left = R2.leftA > 1e-9 ? nm(r.A) + ' ' + fmt(R2.leftA) + ' mL' : R2.leftB > 1e-9 ? nm(c.spB) + ' ' + fmt(R2.leftB) + ' mL' : '';
         let h = '<b>' + r.eq + '</b><br>' + nm(r.A) + ' ' + c.va + ' mL + ' + nm(c.spB === 'O' ? 'O' : r.B) + ' ' + c.vb + ' mL → ' + nm(r.C) + ' ' + fmt(R2.vC) + ' mL<br>';
         if (c.hypo) h += '<span style="color:#fca5a5">산소가 O 1개짜리라면 부피비가 1 : 1 : 1이 돼서, 실험에서 얻은 2 : 1 : 2와 맞지 않아요.</span>';
+        else if (c.sc === 'react' && L0().RS && L0().RS.phase !== 'done') h += '<span style="color:#9fb0d4">▶ 반응시키기를 누르면 무엇이 얼마나 남는지 보여요.</span>';
         else h += '반응한 부피비 <b>' + [r.a, r.b, r.c].join(' : ') + '</b> = 분자 수의 비 (같은 온도·압력)<br>' + (left ? '<span style="color:#fcd34d">반응 후 남는 기체: ' + left + '</span>' : '<span style="color:#86efac">남는 기체 없이 모두 반응했어요.</span>');
         info(h);
       }
@@ -223,6 +244,8 @@
         update(dt, t) {
           const c = scenario(), L = L0(), RS = L.RS;
           if (c.sig !== sig) { sig = c.sig; rebuild(c); }
+          { const ph = RS ? RS.phase + (RS.hist[RS.rx] || []).length : ''; if (ph !== lastTxtPh) { lastTxtPh = ph; if (cur) text(cur); } }
+          drawTbl(c);
           const showSeg = c.sc === 'react' && RS && !RS.rxLocked; segEls.forEach((e) => { e.style.display = showSeg ? '' : 'none'; }); if (showSeg) segRx.set(RS.rx);
           if (c.sc === 'react' && RS) {
             if (pl.playing && !prevPlay && RS.phase !== 'run' && L.rsGo) { if (RS.phase === 'done') L.rsGo(); L.rsGo(); }   // ▶ = ⚡ 반응시키기 (끝난 뒤 누르면 다시 반응시켜요)

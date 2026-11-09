@@ -958,7 +958,7 @@
         {
           title: 'H⁺ 옮기기 3가지',
           goal: '세 가지 반응에서 H⁺ 구슬을 <b>받을 분자</b>에게 옮겨 주세요. (반응 고르기 단추로 바꿔요)',
-          hint: '3D 막대에서 H⁺를 받을 분자를 골라요. “자동으로 옮기기” 단추를 눌러도 완료로 쳐요.',
+          hint: '<span class="only3d">3D 막대에서 H⁺를 받을 분자를 골라요.</span><span class="only2d">H⁺ 구슬을 받을 분자 쪽으로 끌어요.</span> “자동으로 옮기기” 단추를 눌러도 완료로 쳐요.',
           setup() { S.gate = ''; MVK.forEach((k) => mvReset(k)); S.mv.k = 'a'; setScene('move'); },
           check: () => MVK.every(mvDone), hold: 0.5,
           status: () => 'HCl + H₂O ' + mark(mvDone('a')) + ' &nbsp; H₂O + NH₃ ' + mark(mvDone('b')) + ' &nbsp; HCl(g) + NH₃(g) ' + mark(mvDone('c')),
@@ -986,8 +986,8 @@
       missions: [
         {
           title: '짝산–짝염기 쌍 이어 보기',
-          goal: '<b>HCl + H₂O → Cl⁻ + H₃O⁺</b>와 <b>NH₃ + H₂O ⇌ NH₄⁺ + OH⁻</b>에서 H⁺ 하나 차이인 쌍을 모두(4쌍) 선으로 이어 보세요.',
-          hint: '3D 막대의 물질 단추를 하나 누르고, 짝이 되는 물질 단추를 눌러요. 예를 들어 HCl에서 H⁺를 잃으면 Cl⁻가 돼요. 반응 고르기 단추로 NH₃ 반응으로 바꿔요.',
+          goal: '<b>HCl + H₂O → Cl⁻ + H₃O⁺</b>와 <b>NH₃ + H₂O ⇌ NH₄⁺ + OH⁻</b>에서 H⁺ 하나 차이인 쌍을 모두(4쌍) <span class="only2d">선으로 이어 보세요</span><span class="only3d">짝지어 보세요</span>.',
+          hint: '<span class="only3d">3D 막대의 물질 단추를 하나 누르고, 짝이 되는 물질 단추를 눌러요.</span><span class="only2d">물질 상자를 하나 누르고, 짝이 되는 상자를 눌러요.</span> 예를 들어 HCl에서 H⁺를 잃으면 Cl⁻가 돼요. 반응 고르기 단추로 NH₃ 반응으로 바꿔요.',
           setup() { S.gate = ''; RXK.forEach((k) => { S.pr.lines[k] = [0, 0]; S.pr.linesP[k] = [0, 0]; }); prSet('hcl'); setScene('pairs'); },
           check: () => prLinesDone('hcl') && prLinesDone('nh3'), hold: 0.5,
           status: () => 'HCl 반응 ' + lineCount('hcl') + ' / 2 ' + mark(prLinesDone('hcl')) + ' &nbsp; NH₃ 반응 ' + lineCount('nh3') + ' / 2 ' + mark(prLinesDone('nh3')),

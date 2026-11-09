@@ -981,7 +981,7 @@
   /* ----- 장면 ----- */
   const SCENE_LABEL = {
     rope: () => '🪢 줄 위의 표시점은 제자리에서 위아래로만 움직여요',
-    air: () => '🔊 공기 입자는 제자리에서 앞뒤로 떨려요',
+    air: () => (game && !game.free && game.current() && game.current().title === '공기 속에서의 소리' ? '🔊 표시한 공기 입자는 어떻게 움직일까요?' : '🔊 공기 입자는 제자리에서 앞뒤로 떨려요'),
     bell: () => '🔔 공기를 빼면 종소리가 작아져요',
     scope: () => ['📈 소리 화면', '📈 소리의 크기와 진폭', '📈 소리의 높낮이와 진동수', '📈 소리의 파형과 음색'][game && !game.free ? game.level : 0],
   };
@@ -1063,9 +1063,10 @@
       setRead(4, '줄 끝', R.endE > 7 ? '에너지 도착!' : '아직');
     } else if (S.scene === 'air') {
       setRead(1, '스피커', S.airOn ? '진동 중' : '꺼짐');
-      setRead(2, '공기 입자의 이동', S.airOn ? '제자리 진동' : '—');
+      const askAir = !!(game && !game.free && game.current() && game.current().title === '공기 속에서의 소리' && game.phase === 'active');   // 퀴즈를 푸는 동안에는 답(제자리 진동)을 미리 쓰지 않아요
+      setRead(2, '공기 입자의 이동', S.airOn ? (askAir ? '입자를 지켜봐요' : '제자리 진동') : '—');
       setRead(3, '소리가 나아가는 방향', S.airOn ? '오른쪽 →' : '—');
-      setRead(4, '귀에 닿는 것', S.airOn ? '진동 (에너지)' : '없음');
+      setRead(4, '귀에 닿는 것', S.airOn ? (askAir ? '?' : '진동 (에너지)') : '없음');
     } else if (S.scene === 'bell') {
       setRead(1, '남은 공기', Math.round(S.air * 100) + '<small>%</small>');
       setRead(2, '들리는 소리', audible() < 0.02 ? '없음' : Math.round(audible() * 100) + '<small>%</small>');
@@ -1238,7 +1239,7 @@
           {
             type: 'quiz',
             title: '공기 속에서의 소리',
-            goal: '스피커의 소리가 귀까지 전달되는 동안, 화면 속 🔴🔵🟢 <b>공기 입자</b>는 어떻게 움직였나요?',
+            goal: '스피커의 소리가 귀까지 전달되는 동안, 화면 속 <span class="only2d">🔴🔵🟢 </span><span class="only3d">노란 표시를 붙인 </span><b>공기 입자</b>는 어떻게 움직였나요?',
             choices: [
               '스피커에서 귀까지 날아가며 소리를 전달한다',
               '제자리에서 앞뒤로 떨리고, 그 떨림이 이웃 입자로 차례로 전달된다',

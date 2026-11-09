@@ -153,6 +153,12 @@
       const site = cH == null ? [] : (() => { const f = fullOf(cH); return f.d.map((b) => [b.Hp, P0[b.n]]).concat(f.a.map((b) => [b.Hp, P0[cH]])); })();
       const mHi = new THREE.MeshBasicMaterial({ color: 0xffd34d });
       const hiB = site.map(() => { const m = new THREE.Mesh(gC, mHi); m.visible = false; g.add(m); return m; });
+      /* 빈 자리 표시: H 쪽(빨간 고리) · 전자쌍 쪽(파란 고리). 이으면 그 자리에 이웃 분자가 나타나고 노란 막대(수소 결합)가 생겨요.
+         고리 위 이름표를 눌러도 이어요 (2D의 점선 고리 누르기와 같아요) */
+      const nbOf = cH == null ? [] : (() => { const f = fullOf(cH); return f.d.map((b) => b.n).concat(f.a.map((b) => b.m)); })();
+      const SITE_NM = ['H 쪽 1', 'H 쪽 2', '전자쌍 쪽 1', '전자쌍 쪽 2'], ringG = new THREE.TorusGeometry(0.27, 0.04, 8, 28);
+      const siteRing = site.map((q, i) => { const m = new THREE.Mesh(ringG, new THREE.MeshBasicMaterial({ color: i < 2 ? 0xef4444 : 0x3b82f6 })); m.position.copy(P0[nbOf[i]]); m.visible = false; g.add(m); return m; });
+      const siteLab = site.map((q, i) => { const L = label(SITE_NM[i], siteRing[i], { color: i < 2 ? 'rgba(200,40,50,.95)' : 'rgba(37,99,235,.95)', offset: [0, 0.42, 0], tap: () => { const L2 = window.__sim; if (L2 && L2.hbToggle) { L2.hbToggle(i); lastSig = ''; } } }); L.show(false); return L; });
       const labC = label('가운데 분자', cH == null ? [0, 0, 0] : mols[cH].o, { color: 'rgba(161,98,7,.95)' }); labC.off = [0, 0.45, 0]; labC.show(false);
       function setStick(m, p, q, r) { const d = q.clone().sub(p), len = Math.max(1e-4, d.length()); m.position.copy(p).add(q).multiplyScalar(0.5); m.quaternion.setFromUnitVectors(UP, d.normalize()); m.scale.set(r, len, r); }
       function layout() {
@@ -171,7 +177,10 @@
             mols[m].h[h].position.copy(Hp); setStick(mols[m].s[h], p, Hp, 0.035);
           });
         });
-        const hb = hbondsOf(P, Hd);
+        const hbM0 = mode2() === 'hb' && w < 0.05 && !demoOn(), on0 = hbOnArr(), hidden = {};
+        mols.forEach((M0) => { M0.o.visible = true; });
+        if (hbM0) nbOf.forEach((m, i) => { if (!on0[i]) { hidden[m] = 1; mols[m].o.visible = false; [0, 1].forEach((h) => { mols[m].h[h].visible = mols[m].s[h].visible = false; }); } });
+        const hb = hbondsOf(P, Hd).filter((b) => !hbM0 || !(hidden[b.m] || hidden[b.n] || b.m === cH || b.n === cH));
         hbCount = hb.length; let ni = 0;
         innerAvg = inner.length ? hb.reduce((n, b) => n + (inner.includes(b.m) ? 1 : 0) + (inner.includes(b.n) ? 1 : 0), 0) / inner.length : 0;
         hb.forEach((b) => {
@@ -196,6 +205,7 @@
         const hbM = mode2() === 'hb' && w < 0.05 && !demoOn(), on = hbOnArr();
         hiB.forEach((m, i) => { m.visible = hbM && !!on[i]; if (m.visible) setStick(m, site[i][0], site[i][1], 0.07); });
         labC.show(hbM && cH != null); labMol.show(!hbM);
+        siteRing.forEach((m, i) => { m.visible = hbM && !on[i]; siteLab[i].show(hbM && !on[i]); });
         text();
       }
       const frac = (v) => Math.round(v * 100);
@@ -247,6 +257,7 @@
           const isHb = m2 === 'hb', on = hbOnArr();
           hbEls.forEach((e) => { e.style.display = isHb ? '' : 'none'; });
           hbBtn.forEach((b, i) => b.classList.toggle('on', !!on[i]));
+          siteRing.forEach((m) => { if (m.visible) m.quaternion.copy(ctx.camera.quaternion); });
         },
         sync() { lastSig = ''; },
       };

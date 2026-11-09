@@ -21,6 +21,17 @@
     autoRotate: 0.12,
     levels: [0, 2],   // 1단계(증기압), 3단계(압력과 끓는점). 2·4단계는 그래프(증기압 곡선 · 상평형 그림)를 읽거나 점을 끄는 2D 화면이에요. #bMore는 액체 높이를 바꿔서 data-v3="keep"
     build(ctx) {
+      /* 3D 화면 위 작은 판(기록표 · 카드 등): 2D 캔버스에만 그려지던 것을 3D 단계에서도 보이게 해요 */
+      function v3pan(cls) {
+        if (!document.getElementById('v3pan-css')) { const s = document.createElement('style'); s.id = 'v3pan-css'; s.textContent =
+          '.v3pan{position:absolute;z-index:2;padding:6px 9px;border-radius:12px;background:rgba(8,12,24,.8);border:1px solid rgba(255,255,255,.16);color:#fff;font-size:12px;font-weight:700;line-height:1.35;pointer-events:none;max-width:48%}' +
+          '.v3pan:empty{display:none}.v3pan.tr{right:10px;top:10px}.v3pan.bl{left:10px;bottom:10px}.v3pan .h{font-weight:900;margin-bottom:3px;font-size:12.5px}.v3pan .chip{display:inline-block;margin:1px 2px;padding:0 6px;border-radius:7px;background:rgba(255,255,255,.16);color:#eef3ff}.v3pan .chip.sel{background:#ffd34d;color:#1b2333}.v3pan.card{background:#fffdf7;color:#1b2333;border-top:5px solid var(--kc,#ffd34d);white-space:normal;max-width:min(260px,46%)}.v3pan.card .s{font-size:11.5px;font-weight:600;color:#475569}' +
+          '.v3pan table{border-collapse:collapse}.v3pan th,.v3pan td{padding:1px 5px;text-align:center;white-space:nowrap}.v3pan th{color:#b9c6e4;text-align:left;font-weight:800}.v3pan td.e{color:#56658a}.v3pan .ok{color:#7ee2a8}.v3pan .hi{color:#ffd34d}' +
+          '@media (max-width:599px){.v3pan{font-size:10.5px;padding:4px 6px;max-width:58%}.v3pan.tr{top:auto;bottom:30px;right:8px}.v3pan.bl{left:8px;bottom:8px;max-width:42%}.v3pan th,.v3pan td{padding:0 3px}.v3pan .h{font-size:11px}}';
+          document.head.appendChild(s); }
+        const el = document.createElement('div'); el.className = 'v3pan ' + (cls || 'tr'); ctx.renderer.domElement.parentElement.appendChild(el);
+        let last = ''; el.put = (html) => { if (html !== last) { last = html; el.innerHTML = html; } }; return el;
+      }
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3;
       const sim = () => window.__sim || null;
@@ -223,6 +234,20 @@
         if (md === 'vap' || md === 'press') { tl.show(true); pl.show(true); } else { tl.show(false); pl.show(false); }
       }
 
+      /* 1단계: 2D의 ↑ 증발 · ↓ 응축 막대와 📝 증기압 기록 칸 · 3단계: 온도계를 3D 화면에도 보여 줘요 */
+      const panR = v3pan('tr');
+      function drawPan(o, press, other) {
+        const w = sim(); if (!w || other) { panR.put(''); return; }
+        if (press) {
+          const k = Math.max(0, Math.min(1, o.T / 130));
+          panR.put('<div class="h">🌡️ 온도계</div><div style="display:flex;align-items:flex-end;gap:7px"><span style="display:inline-block;width:9px;height:54px;border-radius:5px;background:rgba(255,255,255,.18);position:relative;overflow:hidden"><span style="position:absolute;left:0;right:0;bottom:0;height:' + Math.round(k * 100) + '%;background:#ef4444"></span></span><span style="font-size:15px;font-weight:900">' + o.T.toFixed(1) + ' °C</span></div><div>' + (o.boil ? '<span class="hi">끓는 중 · 온도가 더 오르지 않아요</span>' : '아직 끓지 않아요') + '</div>');
+          return;
+        }
+        const v = w.S.vap, now = w.S.t, rate = (a) => (a || []).filter((t0) => now - t0 < 3).length / 3, re = rate(v.evT), rc = rate(v.coT);
+        const bar = (lab, r, c) => '<tr><th>' + lab + '</th><td style="text-align:left"><span style="display:inline-block;height:9px;border-radius:5px;vertical-align:middle;background:' + c + ';width:' + Math.round(70 * Math.min(1, r / 12)) + 'px"></span></td><td>' + r.toFixed(1) + ' 개/초</td></tr>';
+        const rec = [20, 40, 60].map((tt) => '<span class="chip' + (v.rec[tt] ? ' sel' : '') + '">' + tt + ' °C ' + (v.rec[tt] ? (v.rec[tt] >= 100 ? Math.round(v.rec[tt]) : v.rec[tt].toFixed(1)) + ' mmHg' : '—') + '</span>').join('');
+        panR.put('<table>' + bar('↑ 증발', re, '#f59e0b') + bar('↓ 응축', rc, '#3867f4') + '</table><div style="margin:3px 0">' + (v.eq ? '<span class="ok">⚖️ 동적 평형 · 압력 일정</span>' : '아직 평형이 아니에요') + '</div><div class="h">📝 증기압 기록</div>' + rec);
+      }
       return {
         update(dt, t) {
           dt = Math.min(dt, 0.05);
@@ -284,6 +309,7 @@
           pl.obj = press ? [0, FLOOR + HJ + 2.1, 0] : [0, FLOOR + HJ + 0.9, 0];
           tl.obj = [R, surf + 0.9, 0];
           if (s !== txt) { txt = s; info(s); }
+          drawPan(o, press, other);
         },
         sync() { txt = ''; },
       };

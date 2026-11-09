@@ -101,6 +101,7 @@
         const nm = SEAS[sea].n + ' ' + season + '월';
         if (scene === 'column') { const c = S.C ? S.C.count : 0; return '<b>수온 측정기</b> · 동해 2월<br>수심 <b>' + Math.round(z) + ' m</b>의 수온 <b>' + T.toFixed(1) + '°C</b>' + (c ? '<br>측정한 점 <b>' + c + '</b>개 (1,000 m까지 내리며 깊이에 따른 수온을 재요)' : '<br>측정기를 1,000 m까지 내려요.'); }
         if (scene === 'layers') { const LY = S.LY || { placed: {} }; const names = BANDS.filter((b) => LY.placed[b.k]).map((b) => b.name); return '<b>동해 2월 · 깊이에 따른 수온</b><br>' + (names.length ? '붙인 이름: <b>' + names.join(' · ') + '</b><br>' : '') + '혼합층: 수온이 거의 일정 · 수온 약층: 깊이에 따라 수온이 급격히 낮아짐 · 심해층: 수온이 낮고 거의 일정해요.'; }
+        { const m = S.M && S.measKey ? S.M.meas[S.measKey(sea, season)] : null; if (!(m && m.t >= 1)) return '<b>' + nm + '</b> (우리나라 바다)<br>' + (m ? '측정하는 중이에요…' : '아직 재지 않았어요. 정점과 계절을 고르면 측정해요.'); }
         return '<b>' + nm + '</b> (우리나라 바다)<br>표층 수온 <b>' + Tf(0).toFixed(1) + '°C</b> · 바닥 쪽 수온 <b>' + Tf(depth).toFixed(1) + '°C</b>' + (sea !== 'east' ? '<br>수심 약 ' + depth + ' m의 얕은 바다예요.' : '<br>수심 1,000 m까지 재요.');
       }
       function labUpdate(S, t) {
@@ -137,6 +138,9 @@
             if (sc === 'lab') { zLab.forEach((l) => l.show(false)); bandM.forEach((q) => q.L.show(false)); parcels.forEach((m) => { m.visible = false; }); pLab.show(false); tankLab.show(true); sens.forEach((l) => l.show(true)); }
             else { rebuildSea(); tankLab.show(false); sens.forEach((l) => l.show(false)); pLab.show(true); }
           }
+          // 우리나라 바다: 2D처럼 '측정'해야 수온 곡선이 위에서부터 그려져요 (재기 전에는 보이지 않아요)
+          if (sc === 'map' && curve && S.M && S.measKey) { const m = S.M.meas[S.measKey(sea, season)], f = m ? Math.min(1, m.t || 0) : 0, ix = curve.geometry.index;
+            curve.visible = f > 0.01; if (ix) curve.geometry.setDrawRange(0, Math.floor(f * ix.count / 6) * 6); }
           if (sc === 'lab') { labUpdate(S, t); }
           else {
             const z = sc === 'column' && S.C ? S.C.z.value : pz;

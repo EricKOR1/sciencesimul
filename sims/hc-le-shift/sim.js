@@ -887,7 +887,7 @@
         },
         {
           title: '온도를 높일 때 이동 방향 예측하기', manual: true,
-          goal: '흡열 반응과 발열 반응 카드에서 온도를 높일 때 평형이 이동하는 방향을 골라 <b>✔ 확인하기</b>를 눌러요.',
+          goal: '<span class="only2d">흡열 반응과 발열 반응 카드에서</span><span class="only3d">흡열 반응(N₂O₄ ⇌ 2NO₂)과 발열 반응(N₂ + 3H₂ ⇌ 2NH₃)에서</span> 온도를 높일 때 평형이 이동하는 방향을 골라 <b>✔ 확인하기</b>를 눌러요.',
           hint: '흡열 반응은 열을 흡수하는 쪽(정반응)이 유리해져요. 발열 반응은 온도를 높이면 열을 내놓는 정반응이 불리해져요.',
           setup() { S.gate = 'tdir'; ['td1', 'td2'].forEach((id) => { $('#' + id).value = ''; }); S.reveal.temp = false; setScene('temp'); updateCtl(); },
           check() {

@@ -64,11 +64,14 @@
       const dhArrow = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, Math.abs(DH) * KS, 10), mat(0x34d399, { emissive: 0x0b6e4f, emissiveIntensity: 0.5 })); dhArrow.position.set(3.35 * SX, OY + DH * KS / 2, 0); root.add(dhArrow);
       const dhCone = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.34, 14), mat(0x34d399, { emissive: 0x0b6e4f, emissiveIntensity: 0.5 })); dhCone.position.set(3.35 * SX, OY + DH * KS + 0.17, 0); dhCone.rotation.x = Math.PI; root.add(dhCone);
       const lEa = label('', [0, 0, 0], { color: 'rgba(180,120,0,.92)' });
-      label('ΔH = −196 kJ', [3.35 * SX + 0.2, OY + DH * KS / 2, 0], { color: 'rgba(5,150,105,.92)' });
+      const lDH = label('ΔH = ? kJ', [3.35 * SX + 0.2, OY + DH * KS / 2, 0], { color: 'rgba(5,150,105,.92)' });
+      /* 읽기 미션: 2D처럼 학생이 값을 맞힌 뒤에 숫자를 보여 줘요 (그 전에는 눈금으로 읽어요) */
+      const setT = (l, t) => { if (l._t !== t) { l._t = t; l.set(t); } };
+      const known = () => { const w = W(), S = w && w.S; if (!S || !S.en || !S.en.ok) return [true, true, true]; const f = !!(w.game && w.game.free); return S.en.ok.map((o) => f || !!o); };
       { const o = new THREE.Object3D(); o.position.set(-3 * SX, OY + 0.45, 0); root.add(o); label('반응물 2H₂O₂', o, { color: 'rgba(30,41,59,.9)' }); }   // 에너지 도표의 반응물 수준 (고정)
       label('생성물 2H₂O + O₂', [2.6 * SX, OY + DH * KS - 0.55, 0], { color: 'rgba(30,41,59,.9)' });
-      const lNo = label('촉매 없이 75 kJ', [-1.9 * SX, OY + 0.2 + 0.55, 0], { color: 'rgba(100,116,139,.92)' });
-      const lCat = label('촉매 있을 때 50 kJ', [1.6 * SX, OY - 0.3, 0], { color: 'rgba(230,120,20,.92)' });
+      const lNo = label('촉매 없이', [-1.9 * SX, OY + 0.2 + 0.55, 0], { color: 'rgba(100,116,139,.92)' });
+      const lCat = label('촉매 있을 때', [1.6 * SX, OY - 0.3, 0], { color: 'rgba(230,120,20,.92)' });
 
       const pos = Array.from({ length: 8 }, () => new V3());
       function setBond(m, p, q, vis) { m.visible = vis; if (!vis) return; const d = q.clone().sub(p), L = d.length(); m.scale.set(1, L, 1); m.position.copy(p).add(q).multiplyScalar(0.5); m.quaternion.setFromUnitVectors(UP, d.normalize()); }
@@ -93,7 +96,9 @@
         bead.position.set(u * SX, OY + curveE(u, ea) + 0.3, 0);
         bead.material.color.setHex(cat ? 0xffd34d : 0xcbd5e1);
         eaArrow.scale.set(1, Math.max(0.01, curveE(0, ea)), 1); eaArrow.position.set(-0.45 * SX, OY + curveE(0, ea) / 2, 0);
-        lEa.obj = [-0.45 * SX - 0.1, OY + curveE(0, ea) / 2 + 0.05, 0]; lEa.set('Eₐ = ' + ea + ' kJ');
+        const kn = known(), kEa = cat ? kn[1] : kn[0];
+        lEa.obj = [-0.45 * SX - 0.1, OY + curveE(0, ea) / 2 + 0.05, 0]; setT(lEa, 'Eₐ = ' + (kEa ? ea : '?') + ' kJ');
+        setT(lNo, '촉매 없이' + (kn[0] ? ' 75 kJ' : '')); setT(lCat, '촉매 있을 때' + (kn[1] ? ' 50 kJ' : '')); setT(lDH, 'ΔH = ' + (kn[2] ? '−196' : '?') + ' kJ');
         lNo.show(true); lCat.show(true);
         return st;
       }
@@ -131,6 +136,24 @@
         });
       }
 
+      /* 에너지 도표 (2D와 같은 눈금: 10 kJ마다 한 줄, 50 kJ마다 숫자) — 읽기 미션에서 값을 눈금으로 읽어요 */
+      const ebox = document.createElement('div'); ebox.style.cssText = box.style.cssText; ebox.style.display = 'none';
+      const ecv = document.createElement('canvas'); ecv.width = CW * 2; ecv.height = Math.round(CH * 1.25) * 2; ecv.style.cssText = 'display:block;width:' + CW + 'px;height:' + Math.round(CH * 1.25) + 'px;margin:3px auto 0';
+      ebox.append(Object.assign(document.createElement('div'), { textContent: '에너지 도표 (반응물 = 0 kJ)' }), ecv); view.appendChild(ebox);
+      const eg = ecv.getContext('2d'); let eSig = '';
+      function drawEn() {
+        const kn = known(), sig = [cat, kn.join()].join('|'); if (sig === eSig) return; eSig = sig;
+        const Wd = ecv.width, H = ecv.height, L = 58, R = 12, T = 14, B = 16, KMIN = -230, KMAX = 100;
+        const Y = (k) => T + (KMAX - k) / (KMAX - KMIN) * (H - T - B), X = (x) => L + (x + 3) / 6 * (Wd - L - R);
+        eg.clearRect(0, 0, Wd, H); eg.font = '700 19px sans-serif'; eg.textAlign = 'right';
+        for (let k = -230; k <= 100; k += 10) { const major = k % 50 === 0; eg.strokeStyle = k === 0 ? 'rgba(255,255,255,.55)' : major ? 'rgba(255,255,255,.3)' : 'rgba(255,255,255,.12)'; eg.lineWidth = k === 0 ? 2.4 : 1.4; eg.beginPath(); eg.moveTo(L, Y(k)); eg.lineTo(Wd - R, Y(k)); eg.stroke(); if (major) { eg.fillStyle = 'rgba(232,238,252,.85)'; eg.fillText(String(k).replace('-', '−'), L - 6, Y(k) + 6); } }
+        const curve = (ea, col, dash, w) => { eg.strokeStyle = col; eg.lineWidth = w; eg.setLineDash(dash); eg.beginPath(); for (let i = 0; i <= 90; i++) { const x = -3 + 6 * i / 90, c = (u) => (1 - Math.cos(Math.PI * Math.max(0, Math.min(1, u)))) / 2, y = Y(x < 0 ? ea * c((x + 1.8) / 1.8) : ea + (DH - ea) * c(x / 1.8)); i ? eg.lineTo(X(x), y) : eg.moveTo(X(x), y); } eg.stroke(); eg.setLineDash([]); };
+        if (cat) curve(E0, 'rgba(148,163,184,.8)', [8, 7], 3);
+        curve(cat ? E1 : E0, cat ? '#ff9a3c' : '#c4b5fd', [], 4.5);
+        const ea = cat ? E1 : E0, kEa = cat ? kn[1] : kn[0];
+        eg.textAlign = 'left'; eg.fillStyle = '#ffd34d'; eg.fillText('Eₐ = ' + (kEa ? ea : '?') + ' kJ', X(0.25), Y(ea) - 4);
+        eg.fillStyle = '#34d399'; eg.fillText('ΔH = ' + (kn[2] ? '−196' : '?') + ' kJ', X(0.6), Y(DH / 2));
+      }
       /* 지금 2D 화면의 촉매 */
       function read() {
         const w = W(), S = w && w.S; if (!S) return;
@@ -142,11 +165,12 @@
         update(dt, t) {
           read();
           { const S = W() && W().S, on = !!(S && S.mode === 'eq'); box.style.display = on ? '' : 'none'; if (on) drawEq(); }
+          { const S = W() && W().S, on = !!(S && S.mode === 'en'); ebox.style.display = on ? '' : 'none'; if (on) drawEn(); }
           if (!pl.playing && pl.p === 0) prog = 0;
           const st = apply(Math.min(4, prog), t);
-          const body = !cat ? '촉매가 없으면 H₂O₂ 분자끼리 Eₐ(75 kJ) 이상의 에너지로 부딪혀야 해서 반응이 거의 일어나지 않아요.' : [
+          const kn = known(), body = !cat ? '촉매가 없으면 H₂O₂ 분자끼리 Eₐ' + (kn[0] ? '(75 kJ)' : '') + ' 이상의 에너지로 부딪혀야 해서 반응이 거의 일어나지 않아요.' : [
             'H₂O₂ 두 분자가 촉매 표면 가까이 와요.', '표면에 달라붙어요(흡착). 분자 안의 결합이 약해져요.', 'O–O 결합이 끊어져요.', 'H가 옮겨 가 H₂O가 되고, O 원자 둘이 만나 O₂가 돼요.', '생성물 2H₂O와 O₂가 떨어져 나가요. 촉매는 그대로 남아요.'][st];
-          const tx = '<b>2 H₂O₂ → 2 H₂O + O₂</b> · ' + catName + '<br><b>' + (cat ? (st + 1) + '단계 · ' + STAGES[st] : '촉매 없음') + '</b><br>' + body + '<br>' + (cat ? '촉매 Eₐ 50 kJ (없을 때 75 kJ) · ΔH −196 kJ 그대로' : 'Eₐ 75 kJ · ΔH −196 kJ');
+          const tx = '<b>2 H₂O₂ → 2 H₂O + O₂</b> · ' + catName + '<br><b>' + (cat ? (st + 1) + '단계 · ' + STAGES[st] : '촉매 없음') + '</b><br>' + body + '<br>' + (kn.every(Boolean) ? (cat ? '촉매 Eₐ 50 kJ (없을 때 75 kJ) · ΔH −196 kJ 그대로' : 'Eₐ 75 kJ · ΔH −196 kJ') : '오른쪽 아래 눈금 도표(10 kJ마다 한 줄)에서 Eₐ와 ΔH를 읽어 써요.');
           if (tx !== txt) { txt = tx; info(tx); }
         },
       };

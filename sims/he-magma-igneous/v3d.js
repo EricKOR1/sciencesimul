@@ -165,6 +165,11 @@
         const k = Math.max(0, Math.min(1, g.melt / 5));
         parcel.material.emissiveIntensity = k * 0.9; parcel.material.color.setHex(k > 0 ? 0xd9a07a : 0x8d8f7c);
         MELT.emissiveIntensity = 0.3 + 0.7 * k;
+        /* 해령·섭입대: 마그마가 아직 안 생겼으면(고체) 마그마 덩어리를 흐리게, 녹기 시작하면 또렷하게 → '마그마 만들기'와 화면이 맞아요.
+           (열점의 뜨거운 기둥 · 대륙 지각 하부의 열원 마그마는 원래부터 있는 것이라 그대로 둬요) */
+        { const dim = view === 'ridge' || view === 'arc', op = dim ? (k > 0 ? 0.55 + 0.45 * k : 0.18) : 1;
+          if (MELT.opacity !== op) { MELT.transparent = op < 1; MELT.opacity = op; MELT.depthWrite = op >= 1; MELT.needsUpdate = true; }
+          if (dim) LB.c.show(k > 0); }
         const pos = view === 'ridge' || view === 'hot' ? [view === 'hot' ? 1.4 : 0.0, -(g.d / 150) * 3.2, 0.9] : view === 'arc' ? [2.5, -1.8, 0.9] : [0, -2.1, 0.9];
         parcel.position.set(pos[0], pos[1], pos[2]);
         const key = view + Math.round(g.d) + '|' + Math.round(g.T) + '|' + Math.round(g.Ts) + '|' + g.melt.toFixed(1) + '|' + Math.round(g.w || 0) + '|' + Math.round(g.h || 0);

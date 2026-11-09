@@ -169,7 +169,7 @@
         const am = new THREE.Mesh(new THREE.ShapeGeometry(shp), new THREE.MeshBasicMaterial({ color: 0x6ee7b7, transparent: true, opacity: 0.8, side: THREE.DoubleSide })); am.position.z = -3.38; root.add(am); areas.push(am);
         barr.scale.set(Math.max(0.05, L), 6.4, 4.2); barr.position.set(L / 2, 0.45, 0);
         aSh.position.set(L / 2, 1.9, 0); lB.show(true);
-        const T = sol.T;
+        const w2 = window.__sim, T = T2d != null ? T2d : (w2 && w2.log10T ? Math.pow(10, w2.log10T(0.2, 1, 1)) : sol.T);   // 2D 아래 칸의 ‘전자 모형 확률’과 같은 값
         info('<b>E = ' + st.E.toFixed(1) + ' < V₀ = ' + st.V0.toFixed(1) + '</b> — 고전 입자라면 장벽을 넘을 수 없어요.<br>파동 함수는 장벽 속에서 <b>지수적으로 줄지만 0이 아니라서</b> 반대쪽으로 새어 나와요.<br>통과 확률 T ≈ <b>' + (T >= 0.1 ? (T * 100).toFixed(0) : (T * 100).toFixed(1)) + ' %</b> · 장벽이 두껍거나 높을수록 T가 급격히 줄어요.');
       }
       /* 입자 (확률로 통과) */

@@ -1063,7 +1063,7 @@ if (!PHONE) textBlock(px, yy + 14, pw, sPct - pPct > 6 ? '수평 진동이 더 �
         {
           title: '편광이 만들어지는 방법 연결하기', manual: true,
           goal: '<b>하늘 산란</b> 장면에서 사진 필터를 60° 이상 돌려 보고, 편광을 만드는 세 가지 방법(판·반사·산란)의 특징을 문장으로 완성하세요.',
-          hint: '“하늘 산란”을 누르고 태양과 90°인 방향에서 필터를 돌려 보세요. 하늘 밝기 막대가 크게 변해요.',
+          hint: '“하늘 산란”을 누르고 태양과 90°인 방향에서 필터를 돌려 보세요. 하늘 밝기 값이 크게 변해요.',
           setup() { S.show.selB = true; SEL_B.reset(); S.mk.seenSky = false; S.mk.filMin = S.mk.fil; S.mk.filMax = S.mk.fil; setScene('make'); },
           check() {
             if (!S.mk.seenSky) return '“🌤️ 하늘 산란” 장면도 살펴보고 필터를 돌려 보세요.';

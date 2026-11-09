@@ -66,12 +66,13 @@
       const msg = { ok: '<b>기질 ②</b>가 활성 부위에 딱 맞게 결합해 생성물로 나뉘어요. 효소는 그대로라 계속 반응시켜요.', tri: '<b>기질 ①</b>: 모양이 활성 부위와 달라 결합하지 못해요. 효소는 자기에게 맞는 기질에만 작용해요(기질 특이성).', dia: '<b>기질 ③</b>: 모양이 활성 부위와 달라 결합하지 못해요. 효소는 자기에게 맞는 기질에만 작용해요(기질 특이성).', hot: '<b>온도가 너무 높아요</b>: 효소의 입체 구조가 변해(변성) 활성 부위가 기질과 맞지 않아요. 반응이 잘 안 일어나요.', other: '<b>모양이 다른 기질</b>: 활성 부위에 맞지 않아 결합하지 못해요. 효소는 자기에게 맞는 기질에만 작용해요(기질 특이성).' };
       function setMode(m) {
         mode = m; T0 = 0; enz.geometry = m === 'hot' ? gDN : gOK; enz.material.color.setHex(m === 'hot' ? 0x9aa6a2 : 0x2fb8a6); enz.material.emissive.setHex(m === 'hot' ? 0x2a1208 : 0x0b4a42);
-        const isO = m === 'tri' || m === 'dia'; if (isO) { alt.geometry = m === 'tri' ? altT : altD; alt.material.color.setHex(m === 'tri' ? 0xfb923c : 0xec4899); lS.set(m === 'tri' ? '기질 ①' : '기질 ③'); lS.el.style.background = m === 'tri' ? 'rgba(220,110,20,.92)' : 'rgba(210,50,130,.92)'; } else lS.set('기질 ②');
-        alt.visible = isO; sub.visible = !isO; lS.obj = isO ? alt : sub; lAS.show(m !== 'hot'); rings.forEach((r) => { r.visible = m !== 'hot'; }); heat.forEach((h) => { h.visible = m === 'hot'; });
-        info(msg[m]); seg.set(m);
+        const isO = m === 'tri' || m === 'dia', none = m === 'none'; if (isO) { alt.geometry = m === 'tri' ? altT : altD; alt.material.color.setHex(m === 'tri' ? 0xfb923c : 0xec4899); lS.set(m === 'tri' ? '기질 ①' : '기질 ③'); lS.el.style.background = m === 'tri' ? 'rgba(220,110,20,.92)' : 'rgba(210,50,130,.92)'; } else lS.set('기질 ②');
+        alt.visible = isO; sub.visible = !isO && !none; lS.obj = isO ? alt : sub; lAS.show(m !== 'hot'); rings.forEach((r) => { r.visible = m !== 'hot'; }); heat.forEach((h) => { h.visible = m === 'hot'; });
+        if (typeof showPl === 'function') showPl();
+        info(none ? '효소의 <b>활성 부위</b>(움푹한 주머니)를 살펴보세요.<br>화면 아래 <b>기질 ① · ② · ③</b> 단추를 눌러 기질을 활성 부위에 대 봐요.' : msg[m]); seg.set(none ? -1 : m);
       }
       const seg = controls.segment('상황', [{ value: 'tri', label: '기질 ①' }, { value: 'ok', label: '기질 ②' }, { value: 'dia', label: '기질 ③' }], mode === 'hot' ? 'ok' : mode, (v) => { setMode(v); lastWant = v; const L = window.__sim, S = L && L.S; if (S && S.mode === 'lock' && (S.sub === 'bind' || S.sub === 'heat') && L.lockAttempt) { const it = S.lock.items.find((q) => q.id === (v === 'ok' ? 'A' : v === 'tri' ? 'T' : 'B')); if (it && it.state === 'tray') L.lockAttempt(it); } });
-      setMode('ok');
+      setMode('none');   // 기질을 대 보기 전에는 어느 기질이 맞는지 보여 주지 않아요
       const Q = new THREE.Vector3();
       let demoP = 0, lastWant = '', lastHot = false;
       const pl = controls.player({
@@ -79,6 +80,9 @@
         phases: [[0, '기질이 다가와요'], [0.27, '결합을 시도해요'], [0.45, '결과'], [0.8, '다시 처음으로']],
         onFrame(p) { demoP = p; },
       });
+      var plEl = [...ctx.renderer.domElement.closest('.v3-wrap').querySelectorAll('.v3-player')].pop();   // 기질을 대 보기 전(빈 활성 부위)에는 ▶ 반응을 감춰요
+      var showPl = () => { if (plEl) plEl.style.display = mode === 'none' ? 'none' : ''; };
+      showPl();
       return {
         update(dt, t) {
           for (let i = 0; i < NP; i++) { const d = dd[i]; dm.position.set(d.x + Math.sin(t * 0.3 * d.s + d.p) * 0.4, ((d.y + t * 0.15 * d.s + 2.2) % 6) - 2.2, d.z + Math.cos(t * 0.25 * d.s + d.p) * 0.3); dm.scale.setScalar(0.6 + 0.4 * Math.sin(t + d.p)); dm.updateMatrix(); dust.setMatrixAt(i, dm.matrix); } dust.instanceMatrix.needsUpdate = true;
@@ -87,13 +91,14 @@
           { const L2 = window.__sim, S2 = L2 && L2.S, LK = S2 && S2.lock;
             if (LK && S2.mode === 'lock') {
               const hot = (LK.dPerm || 0) > 0.4;
-              const want = hot ? 'hot' : LK.sel === 'A' ? 'ok' : LK.sel === 'T' ? 'tri' : LK.sel === 'B' ? 'dia' : '';
+              const want = hot ? 'hot' : LK.sel === 'A' ? 'ok' : LK.sel === 'T' ? 'tri' : LK.sel === 'B' ? 'dia' : 'none';
               if (want && want !== lastWant) { lastWant = want; if (want !== mode) { setMode(want); } }
-              if (!hot && lastHot && mode === 'hot') setMode('ok');
+              if (!hot && lastHot && mode === 'hot') setMode(want);
               lastHot = hot;
             } } 
           const demo = demoP > 0 || pl.playing; if (!demo) T0 += dt; const P = 9, tt = demo ? demoP * P : T0 % P;
-          if (mode === 'ok') {
+          if (mode === 'none') { lS.show(false); lP.show(false); enz.scale.setScalar(1); }
+          else if (mode === 'ok') {
             const approach = sm(0.4, 2.4, tt), bind = sm(2.4, 3.1, tt), split = sm(4.0, 6.2, tt);
             // 기질: 오른쪽 위에서 비스듬히 다가와 활성 부위에 들어감
             const sx = lerp(5.2, PX + 0.05, approach), sy = lerp(1.8, 0, approach) + Math.sin(tt * 2) * 0.05 * (1 - approach), sz = lerp(0.9, 0, approach);

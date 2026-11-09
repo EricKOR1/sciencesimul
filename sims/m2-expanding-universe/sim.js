@@ -775,7 +775,7 @@
 
   /* ---------- 점검용 ---------- */
   window.__sim = {
-    S, ST, game: () => game, frameMs: () => frameMs, dist, setSize, setRef, measure, V,
+    S, ST, game: () => game, frameMs: () => frameMs, dist, setSize, setRef, measure, V, heat, isPast: () => has('past'),
     client(x, y) { const r = V.canvas.getBoundingClientRect(); return { x: r.left + x * r.width / VW, y: r.top + y * r.height / VH }; },
     stickerClient(i) { const s = ST[i]; return this.client(s.sx, s.sy); },
   };

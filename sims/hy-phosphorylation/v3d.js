@@ -17,6 +17,17 @@
     autoRotate: 0,
     levels: [0, 1, 2],
     build(ctx) {
+      /* 3D 화면 위 작은 판(기록표 · 카드 등): 2D 캔버스에만 그려지던 것을 3D 단계에서도 보이게 해요 */
+      function v3pan(cls) {
+        if (!document.getElementById('v3pan-css')) { const s = document.createElement('style'); s.id = 'v3pan-css'; s.textContent =
+          '.v3pan{position:absolute;z-index:2;padding:6px 9px;border-radius:12px;background:rgba(8,12,24,.8);border:1px solid rgba(255,255,255,.16);color:#fff;font-size:12px;font-weight:700;line-height:1.35;pointer-events:none;max-width:48%}' +
+          '.v3pan:empty{display:none}.v3pan.tr{right:10px;top:10px}.v3pan.bl{left:10px;bottom:10px}.v3pan .h{font-weight:900;margin-bottom:3px;font-size:12.5px}.v3pan .chip{display:inline-block;margin:1px 2px;padding:0 6px;border-radius:7px;background:rgba(255,255,255,.16);color:#eef3ff}.v3pan .chip.sel{background:#ffd34d;color:#1b2333}.v3pan.card{background:#fffdf7;color:#1b2333;border-top:5px solid var(--kc,#ffd34d);white-space:normal;max-width:min(260px,46%)}.v3pan.card .s{font-size:11.5px;font-weight:600;color:#475569}' +
+          '.v3pan table{border-collapse:collapse}.v3pan th,.v3pan td{padding:1px 5px;text-align:center;white-space:nowrap}.v3pan th{color:#b9c6e4;text-align:left;font-weight:800}.v3pan td.e{color:#56658a}.v3pan .ok{color:#7ee2a8}.v3pan .hi{color:#ffd34d}' +
+          '@media (max-width:599px){.v3pan{font-size:10.5px;padding:4px 6px;max-width:58%}.v3pan.tr{top:auto;bottom:30px;right:8px}.v3pan.bl{left:8px;bottom:8px;max-width:42%}.v3pan th,.v3pan td{padding:0 3px}.v3pan .h{font-size:11px}}';
+          document.head.appendChild(s); }
+        const el = document.createElement('div'); el.className = 'v3pan ' + (cls || 'tr'); ctx.renderer.domElement.parentElement.appendChild(el);
+        let last = ''; el.put = (html) => { if (html !== last) { last = html; el.innerHTML = html; } }; return el;
+      }
       const { THREE, root, label, info, controls, orbit } = ctx;
       const V = THREE.Vector3;
       if (narrow) root.rotation.z = Math.PI / 2;      // 휴대폰(세로 화면)에서는 눕혀 둔 모형을 세워서 보여 줘요
@@ -130,7 +141,7 @@
         dots.frustumCulled = false; sub.add(dots);
         return (t) => { P0.forEach((q, i) => { dm.position.set(q.x + Math.sin(t * q.sp + q.ph) * 0.4, q.y + Math.cos(t * q.sp * 1.3 + q.ph) * 0.3, q.z); dm.scale.setScalar(q.s); dm.updateMatrix(); dots.setMatrixAt(i, dm.matrix); }); dots.instanceMatrix.needsUpdate = true; };
       })();
-      const Pmat = std(0xf472b6, { emissive: 0x3a0a22 }), Cmat = std(0x94a3b8, { roughness: 0.35 }), Amat = std(0xfb923c, { roughness: 0.35 });
+      const Pmat = std(0xf97316, { emissive: 0x3a1204 }), Cmat = std(0x94a3b8, { roughness: 0.35 }), Amat = std(0xa78bfa, { roughness: 0.35 });   // 인산기 Ⓟ = 주황 (2D의 주황색 Ⓟ 블록과 같은 색)
       function pBall(r) { return new THREE.Mesh(new THREE.SphereGeometry(r || 0.2, 16, 12), Pmat); }
       const substrate = new THREE.Group(), adp = new THREE.Group(), pyr = new THREE.Group(), atp = new THREE.Group(), pfly = pBall(0.2);
       sub.add(substrate, adp, pyr, atp, pfly);
@@ -139,12 +150,14 @@
       chain(pyr);
       { const a = new THREE.Mesh(new THREE.SphereGeometry(0.36, 22, 16), Amat); adp.add(a); [0.5, 0.78].forEach((x) => { const p = pBall(0.17); p.position.x = x; adp.add(p); });
         const a2 = new THREE.Mesh(new THREE.SphereGeometry(0.36, 22, 16), Amat); atp.add(a2); [0.5, 0.78, 1.06].forEach((x) => { const p = pBall(0.17); p.position.x = x; atp.add(p); }); }
+      let pLab = null;   // 옮겨 가는 인산기 이름표 (Ⓟ)
       const ease = (k) => { k = Math.max(0, Math.min(1, k)); return k * k * (3 - 2 * k); };
       const lerp3 = (o, a, b, k) => o.position.set(a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k, a[2] + (b[2] - a[2]) * k);
       let st = 0;
       function renderSub(tt) {
         st = tt;
         const sPos = [-0.55, -0.2, 0.0], aPos = [1.0, -0.2, 0.0];   // 결합 자리
+        if (pLab) pLab.show(false);
         if (st < 2) {      // 들어오기
           const k = ease(st / 1.8);
           lerp3(substrate, [-4.2, 3, 0], sPos, k); lerp3(adp, [4.4, 2.8, 0], aPos, k);
@@ -155,6 +168,7 @@
           pfly.visible = true; sP.visible = k < 0.02;
           const a0 = new V(sPos[0], sPos[1] + 0.5, 0), a1 = new V(aPos[0] + 1.34, aPos[1], 0);
           pfly.position.lerpVectors(a0, a1, k); pfly.position.y += Math.sin(k * Math.PI) * 0.9;
+          if (pLab) pLab.show(true);
         } else if (st < 4.2) {     // 결합 상태 (ATP 완성)
           pfly.visible = false; substrate.visible = false; adp.visible = false;
           pyr.visible = atp.visible = true; pyr.position.set(...sPos); atp.position.set(...aPos);
@@ -173,17 +187,25 @@
         atp: label('ATP', A([AX - 0.5, -3.1, 0]), { color: '#92400e' }),
         sE: label('효소', enzS, { color: '#075985', offset: [0, -1.65, 0] }),
         sS: label('인산기를 가진 기질', substrate, { color: '#9d174d', offset: [0, 0.95, 0] }),
-        sA: label('ADP', adp, { color: '#9a3412', offset: [0.4, 0.8, 0] }),
+        sA: label('ADP', adp, { color: '#9a3412', offset: [0.4, 0.8, 0] }), sP: (pLab = label('Ⓟ 인산기', pfly, { color: '#c2410c', offset: [0, 0.5, 0] })),
         sT: label('ATP', atp, { color: '#92400e', offset: [0.5, 0.8, 0] }),
       };
       function setMode(m) {
         mode = m; chemi.visible = m === 'chemi'; sub.visible = m === 'sub';
         orbit.dist = m === 'sub' ? (narrow ? 10 : 8.2) : (narrow ? 11.5 : 10.5); orbit.phi = m === 'sub' ? 1.15 : 1.36; { const ty = m === 'sub' ? 0.6 : -0.2; if (narrow) { orbit.tx = -ty; orbit.ty = 0; } else orbit.ty = ty; }
         ['ims', 'mat', 'etc', 'syn', 'atp'].forEach((k) => L[k].show(m === 'chemi')); ['sE', 'sS', 'sA', 'sT'].forEach((k) => L[k].show(m === 'sub'));
+        if (m !== 'sub') pLab.show(false);
         st = 0; text();
       }
       /* 2D와 같은 값을 따라가요: 기질 수준(sub) · H⁺ 기울기(grad: NADH 공급 · 산소) · 화학 삼투(chemi: 처리). 3D에서 바꾸면 2D도 같이 바뀌어요 */
       let gcur = 0.8, pumpF = 1, rotF = 1, leakF = 0;
+      /* 화학 삼투: 2D의 측정 결과표를 3D 화면 오른쪽 위에도 보여 줘요 (시험한 처리만 값이 채워져요) */
+      const resP = v3pan('tr');
+      function drawRes() {
+        const L = ctx.lesson(), c = L && L.S && L.S.mode === 'chemi' ? L.S.ch : null, TV = L && L.TRV; if (!c || !TV) { resP.put(''); return; }
+        const HN = ['', '낮음', '보통', '높음'];
+        resP.put('<div class="h">📋 측정 결과표</div><table><tr><th></th><th>산소 소비</th><th>ATP 합성</th><th>열 발생</th></tr>' + ['none', 'cn', 'ol', 'un'].map((k) => { const kn = k === 'none' || c.rec[k], tv = TV[k]; return '<tr' + (c.tr === k ? ' class="hi"' : '') + '><th>' + tv.name + '</th>' + [tv.o2, tv.atp, HN[tv.heat]].map((x) => (kn ? '<td>' + x + '</td>' : '<td class="e">?</td>')).join('') + '</tr>'; }).join('') + '</table>');
+      }
       function text() {
         const L = ctx.lesson(), v = L && L.S && L.S.sb ? (L.S.sb.view === 'tca' ? 'TCA 회로' : '해당 과정') : '';
         if (mode === 'sub') { const sb = L && L.S && L.S.sb; info('<b>기질 수준 인산화</b>' + (v ? ' · ' + v : '') + '<br>효소가 기질의 <b>인산기(Ⓟ)</b>를 ADP에 직접 옮겨 ATP를 만들어요. 막이 없어도, 산소가 없어도 일어나요.' + (sb ? '<br><span style="color:#fde68a">인산기 전달: 해당 과정 ' + sb.done.glyc + ' / 4 · TCA 회로 ' + sb.done.tca + ' / 2</span>' : '')); }
@@ -238,7 +260,7 @@
       return {
         update(dt) {
           dt = Math.min(dt, 0.05) * (window.__v3dTS || 1); envT += dt;
-          poll(); txtT -= dt; if (txtT < 0) { txtT = 0.4; text(); }
+          poll(); drawRes(); txtT -= dt; if (txtT < 0) { txtT = 0.4; text(); }
           if (mode === 'sub') { envUpd(envT); return; }       // 기질 수준 인산화는 ▶ 재생 막대(player)가 그려요
           const w = rotF * 3.2, grad = gcur;
           ang += w * dt; rotor.rotation.y = -ang;

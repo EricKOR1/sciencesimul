@@ -139,7 +139,7 @@
       }
       refresh();
       function text() {
-        info('온도 <b>' + Math.round(st.Tg) + ' °C</b> → 부피 <b>' + Math.round(Vof(st.Tg)) + ' mL</b> (압력은 그대로)<br>피스톤에 부딪히는 입자: <b>초당 약 ' + Math.round(st.rate) + '번</b><br>온도가 높으면 입자가 빠르고 세게 부딪혀 피스톤이 올라가요.');
+        info('온도 <b>' + Math.round(st.Tg) + ' °C</b> → 부피 <b>' + Math.round(Vof(st.Tg)) + ' mL</b> (압력은 그대로)<br>피스톤에 부딪히는 입자: <b>초당 약 ' + Math.round(st.rate) + '번</b><br>온도를 바꿔 가며 입자의 빠르기와 피스톤의 높이를 비교해 봐요.');   // 퀴즈의 답(까닭)은 미리 알려 주지 않아요
       }
 
       /* 온도는 2D와 같은 값 (−50~150 °C): 3D에서 바꾸면 2D 온도도 같이 바뀌어요 */

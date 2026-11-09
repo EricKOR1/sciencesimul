@@ -187,6 +187,9 @@
         let t2;
         if (!el) t2 = '전하 q가 전위차 V를 지나면 <b>에너지 변화 = q × V</b><br>' + s.q + ' C × ' + trim(fmt(vv, 1)) + ' V = <b>' + trim(fmt(s.q * r1(vv), 1)) + ' J</b> (1 V = 1 J/C)<br>전기 위치 에너지 U ' + trim(fmt(U, 1)) + ' J · 운동 에너지 K ' + trim(fmt(K, 1)) + ' J';
         else t2 = '전자가 전위차 V를 지나면 <b>운동 에너지 = V (eV)</b><br>지금 ' + trim(fmt(K, 1)) + ' eV · 전기 위치 에너지 ' + trim(fmt(U, 1)) + ' eV (1 eV = 1.6 × 10⁻¹⁹ J)';
+        /* 2D 캔버스의 기록 칸(옮긴 전하의 에너지 · 도착한 전자의 속력)을 3D에도 보여 줘요 */
+        { const P = S.pl; if (!el) { const rs = (P.recs || []).slice(-4); t2 += '<br>📋 기록 (끝까지 옮겼을 때): ' + (rs.length ? rs.map((r) => r.q + ' C · ' + r.V + ' V → <b>' + r.E + ' J</b>').join(' / ') : '— (+)판까지 옮겨 보세요'); }
+          else { const ks = Object.keys(P.erecs || {}).map(Number).sort((a, b) => a - b).slice(-4); t2 += '<br>📋 기록 (도착했을 때): ' + (ks.length ? ks.map((k) => k + ' V → ' + k + ' eV · <b>' + P.erecs[k].v.toFixed(2) + ' × 10⁶ m/s</b>').join(' / ') : '— 전자를 놓아 보세요'); } }
         info('<b>🔋 평행판 사이의 전위차 · 판 사이 전압 ' + V + ' V</b><br>이 위치(' + trim(fmt(x, 1)) + ' cm)의 전위 ' + trim(fmt(vv, 1)) + ' V ((−)판이 0 V)<br>' + t2 + '<br><span style="opacity:.8">전압·전하 종류는 옆 조작판에서 바꿔요.</span>');
       }
       function ez(x) { return x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2; }

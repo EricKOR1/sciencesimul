@@ -147,7 +147,9 @@
           cLabs[i].obj = labs[i].obj; cLabs[i].set('바깥 전자 ' + perAtom(M, i) + '개'); cLabs[i].show(true); cLabs[i].off = [0, -0.75, 0];
         });
       }
+      var lastTxt = '';
       function text() {
+        lastTxt = '';
         const M = MOLS[key];
         const sh = M.bonds.reduce((s, b) => s + b[2], 0), lp = M.lp.reduce((s, x) => s + x, 0);
         info('<b>' + M.n + ' (' + M.f + ')</b> · ' + M.kind + '<br><span style="color:#fbbf24">황색</span> 공유 전자쌍 <b>' + sh + '쌍</b>' + (lp ? ' · <span style="color:#c4b5fd">보라</span> 비공유 전자쌍 <b>' + lp + '쌍</b>' : '') +
@@ -178,6 +180,9 @@
           if (demoP === 0 && !pl.playing) {
             if (L.S.scene === 'share' && L.SH.mol === key) form(1.8 * (1 - L.SH.slider), L.SH.bonded ? L.SH.bondA : 0); else form(0, 1);
           }
+          // 전자쌍 공유 장면: 아직 결합하지 않았으면 결합 설명 대신 할 일을 알려 줘요 (2D 상태와 같게)
+          { const apart = L.S.scene === 'share' && L.SH.mol === key && !L.SH.bonded && demoP === 0 && !pl.playing, k2 = apart ? 'a' + key : 'b' + key + showCnt;
+            if (k2 !== lastTxt) { lastTxt = k2; if (apart) info('<b>' + MOLS[key].n + ' (' + MOLS[key].f + ')</b> · 아직 떨어진 원자예요.<br>옆의 <b>원자 사이의 거리</b> 슬라이더로 두 원자를 가까이 가져가면 바깥 전자껍질이 겹치며 <b>전자쌍을 공유</b>해요.'); else { text(); lastTxt = k2; } } }
         },
       };
       fit();

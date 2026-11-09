@@ -310,7 +310,7 @@
               tmp(A(new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.0, 0.7), mat(0xe2e8f0, { metalness: 0.9 })), { position: v(3.6, 0), rotation: new THREE.Euler(0, 0, Math.PI / 4) }));
               setLab(0, '오목 반사경 (주경)', 10.2, 2.9, '#0369a1'); setLab(1, '평면 보조 거울', 3.6, 1.0, '#475569'); setLab(2, '접안렌즈', 3.6, 3.3, '#0f766e');
               ctl.tx = 3; ctl.dist = 20 * KD;
-              info('<b>반사 망원경</b>: 오목 거울로 빛을 모으고 작은 거울로 옆쪽 접안렌즈로 보내요. 렌즈와 달리 거울은 <b>뒷면을 받쳐서 크게 만들 수 있고</b> 색에 따른 번짐이 없어서 큰 망원경은 대부분 반사식이에요.');
+              info('<b>반사 망원경</b>: 오목 거울로 빛을 모으고 작은 거울로 옆쪽 접안렌즈로 보내요. 굴절 망원경과 무엇이 다른지 비교해 봐요.');
             }
           } else if (sv === 'mic') {
             const xo = 0, xe = 11;

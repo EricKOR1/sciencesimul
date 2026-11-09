@@ -868,7 +868,7 @@
         {
           title: 'mRNA 합성하기 (주형 TACGGT)',
           goal: '주형 가닥 <b>T A C G G T</b>와 짝이 맞는 RNA 염기를 <b>왼쪽 자리부터 차례로</b> 놓아 mRNA를 끝까지 만드세요.',
-          hint: 'DNA의 A는 RNA의 U와, T는 A와, G는 C와, C는 G와 짝이 돼요. 틀리면 튕겨 나가니 여러 번 시도해 봐도 좋아요.',
+          hint: 'DNA의 A는 RNA의 U와, T는 A와, G는 C와, C는 G와 짝이 돼요. <span class="only3d">화면 아래 RNA 염기 단추로 골라요. </span>틀리면 <span class="only2d">튕겨 나가니</span><span class="only3d">붙지 않으니</span> 여러 번 시도해 봐도 좋아요.',
           setup() { ensure('tr'); },
           check: () => S.tr.n === 6 && S.tr.done, hold: 0.6,
           status: () => mark(S.tr.opened || S.tr.done) + ' 전사 시작 · ' + mark(S.tr.done) + ' mRNA ' + S.tr.mr.length + ' / ' + S.tr.n + ' 염기 · 틀린 짝 ' + S.tr.wrong + '번',

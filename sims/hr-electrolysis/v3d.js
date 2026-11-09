@@ -149,7 +149,12 @@
           } else { OH.forEach((o, i) => { M.makeScale(0.0001, 0.0001, 0.0001); ohM.setMatrixAt(i, M); }); }
           ohM.instanceMatrix.needsUpdate = true;
           pink.material.opacity = scene === 'aq' ? 0.0 : 0;
-          const tx = !power ? '<b>전원이 꺼져 있어요</b><br>외부 전원이 없으면 비자발 반응은 일어나지 않아요. (⚡ 전원 단추로 켜요)' : scene === 'ml' ? '<b>용융 NaCl 전기 분해</b><br>(−)극: Na⁺ + e⁻ → Na (환원)<br>(+)극: 2Cl⁻ → Cl₂ + 2e⁻ (산화)' : '<b>NaCl 수용액 전기 분해</b><br>(−)극: 2H₂O + 2e⁻ → H₂ + 2OH⁻<br>(+)극: 2Cl⁻ → Cl₂ + 2e⁻ · Na⁺는 남아요';
+          /* 답 미리 보기 막기: 용융 NaCl의 반응식은 미션에서 고른 뒤에, 수용액 (−)극의 생성물은 예측한 뒤에 보여 줘요 (2D와 같아요) */
+          const S2e = window.__sim && window.__sim.S, freeE = !!(window.__sim && window.__sim.game && window.__sim.game.free);
+          const mlShow = freeE || !!(S2e && S2e.ml && S2e.ml.roles), aqShow = freeE || !!(S2e && S2e.aq && S2e.aq.pred);
+          { const rk = scene === 'ml' ? mlShow : aqShow, ct = rk ? '(−)극 · 환원' : '(−)극', at = rk ? '(+)극 · 산화' : '(+)극'; if (L.cath._t !== ct) { L.cath._t = ct; L.cath.set(ct); } if (L.an._t !== at) { L.an._t = at; L.an.set(at); } }   // 산화 · 환원 이름은 2D처럼 미션을 푼 뒤에 붙여요
+          { const pv = showLab && power && (scene === 'ml' ? mlShow || pw > 0.3 : aqShow); L.prodC.show(pv); L.prodA.show(showLab && power && (scene === 'ml' || aqShow)); }
+          const tx = !power ? '<b>전원이 꺼져 있어요</b><br>외부 전원이 없으면 비자발 반응은 일어나지 않아요. (⚡ 전원 단추로 켜요)' : scene === 'ml' ? (mlShow ? '<b>용융 NaCl 전기 분해</b><br>(−)극: Na⁺ + e⁻ → Na (환원)<br>(+)극: 2Cl⁻ → Cl₂ + 2e⁻ (산화)' : '<b>용융 NaCl 전기 분해</b><br>Na⁺와 Cl⁻가 각각 어느 극으로 가는지, 두 전극에서 무엇이 생기는지 살펴봐요.<br>반응식은 오른쪽에서 직접 골라요.') : aqShow ? '<b>NaCl 수용액 전기 분해</b><br>(−)극: 2H₂O + 2e⁻ → H₂ + 2OH⁻<br>(+)극: 2Cl⁻ → Cl₂ + 2e⁻ · Na⁺는 남아요' : '<b>NaCl 수용액 전기 분해</b><br>(−)극 주변에는 Na⁺와 물이 있어요. 어느 쪽이 환원될까요?<br>오른쪽에서 먼저 예측을 골라요.';
           if (tx !== txt) { txt = tx; info(tx); }
           updPaper();
         },

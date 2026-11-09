@@ -752,7 +752,7 @@
     } else if (S.mode === 'model') {
       const M = S.model;
       if (S.sub === 'cls') { L1 = '고른 종류'; a = $$('#clsRows select').filter((s) => +s.value > 0).length + ' / 3'; L2 = '구분 기준'; b = '자유전자 수'; L3 = '전류'; c = '많이 · 안 · 조금'; }
-      else { L1 = '물질'; a = MATNAME[M.mat] + ' (' + KIND[M.mat] + ')'; L2 = '자유전자 수'; b = M.n + '개'; L3 = '전류'; c = !M.volt ? '전압 꺼짐' : M.n === 0 ? '흐르지 않음' : M.n <= 4 ? '아주 조금' : '많이 흐름'; }
+      else { L1 = '물질'; a = MATNAME[M.mat] + (S.sub === 'cls' && !M.clsOK ? '' : ' (' + KIND[M.mat] + ')'); L2 = '자유전자 수'; b = M.n + '개'; L3 = '전류'; c = !M.volt ? '전압 꺼짐' : M.n === 0 ? '흐르지 않음' : M.n <= 4 ? '아주 조금' : '많이 흐름'; }
     } else if (S.mode === 'semi') {
       const E = S.semi; L1 = '전류 배율'; a = '×' + relText(E.rel); L2 = '자유전자'; b = E.e.length + '개'; L3 = '불순물'; c = E.d ? DNAME[E.d] : '없음';
     } else if (S.sub === 'chip') { L1 = '순서를 놓은 카드'; a = S.apply.fab.filter((x) => x.slot >= 0).length + ' / 4'; L2 = '재료'; b = '모래(규산염)'; L3 = '만든 부품'; c = S.apply.fabOK ? '반도체 칩' : '—'; }

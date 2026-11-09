@@ -68,6 +68,8 @@
       const wA = [new THREE.Object3D(), new THREE.Object3D()]; wA[0].position.copy(P(15, -172, R * 1.05)); wA[1].position.copy(P(45, -172, R * 1.05)); wA.forEach((a) => earth.add(a)); windL[0].obj = wA[0]; windL[1].obj = wA[1]; windL.forEach((l) => l.show(false));
       /* 우리나라 표시 */
       const kor = new THREE.Mesh(new THREE.SphereGeometry(0.06, 14, 10), new THREE.MeshBasicMaterial({ color: 0xfde047 })); kor.position.copy(P(36.5, 127.8, R * 1.01)); earth.add(kor);
+      /* 해류 끄기(생각 실험): 2D 지도처럼 '저위도: 더 뜨거워요 · 고위도: 더 추워요'를 지구본에 띄워요 */
+      const offLab = [[10, 175, '저위도: 더 뜨거워요', 'rgba(220,38,38,.95)'], [52, 185, '고위도: 더 추워요', 'rgba(29,78,216,.95)'], [31, 180, '🌊 해류 없음', 'rgba(30,41,59,.9)']].map(([la, lo, t, c]) => { const a = new THREE.Object3D(); a.position.copy(P(la, lo, R * 1.04)); earth.add(a); const L = label(t, a, { size: 13, color: c }); L.show(false); return { a, L }; });
       const korA = new THREE.Object3D(); korA.position.copy(P(36.5, 127.8, R * 1.06)); earth.add(korA); const korL = label('우리나라', korA, { size: 12, color: 'rgba(15,23,42,.9)', offset: [0, 0.1, 0] });
       /* 도시 (해류가 기후에 미치는 영향) · 표류병 */
       const cityM = [['도쿄', 139.7, 35.7, 27, 0xe8470f], ['샌프란시스코', 237.6, 37.8, 17, 0x2563eb]].map((c) => {
@@ -76,6 +78,9 @@
         return { c, m, a, L: label(c[0] + ' 8월 ' + c[3] + '°C', a, { size: 12, color: 'rgba(15,23,42,.9)', offset: [0, 0.12, 0] }) };
       });
       const bottle = new THREE.Mesh(new THREE.SphereGeometry(0.075, 14, 10), new THREE.MeshStandardMaterial({ color: 0xfde047, emissive: 0xfacc15, emissiveIntensity: 0.6 })); bottle.visible = false; earth.add(bottle);
+      const bottleL = label('🍾 표류병', bottle, { size: 12, color: 'rgba(161,98,7,.95)', offset: [0, 0.22, 0] }); bottleL.show(false);
+      const TRN = 400, trPos = new Float32Array(TRN * 3), trGeo = new THREE.BufferGeometry(); trGeo.setAttribute('position', new THREE.BufferAttribute(trPos, 3)); trGeo.setDrawRange(0, 0);
+      const trail = new THREE.Line(trGeo, new THREE.LineDashedMaterial({ color: 0xfff7cc, dashSize: 0.04, gapSize: 0.04 })); trail.frustumCulled = false; earth.add(trail);   // 표류병이 지나간 길 (2D 흔적과 같아요)
 
       /* ===== 단계 1: 수조에 바람 불기 (2D 실험과 같은 값: 바람 세기 · 방향 · 종이 조각 · 물속 흐름) ===== */
       const tankG = new THREE.Group(); root.add(tankG); tankG.visible = false;
@@ -165,8 +170,13 @@
           windG.visible = windOn; windL.forEach((l, i) => l.show(windOn && names && facing(wA[i])));
           cityM.forEach((q) => { const on = sc === 3 && (!(L && L.S4) || L.S4.city === 2 || L.S4.city === (q.c[0] === '도쿄' ? 0 : 1) || L.S4.seen.has(q.c[0] === '도쿄' ? 0 : 1)); q.m.visible = on; q.L.show(on && names && facing(q.a)); });
           korL.show(false); kor.visible = false;
-          const bt = sc === 2 && L && L.S3 && L.S3.bottle; bottle.visible = !!bt;
-          if (bt && L.mx) { const k = L.mx(1) - L.mx(0), lon = 110 + bt.x / k, lat = 58 - (bt.y - (L.my(58))) / (L.my(57) - L.my(58)); bottle.position.copy(P(lat, lon, R * 1.02)); }
+          offLab.forEach((q) => q.L.show(sc === 3 && offA > 0.5 && facing(q.a)));
+          const bt = sc === 2 && L && L.S3 && L.S3.bottle; bottle.visible = !!bt; bottleL.show(!!bt && facing(bottle)); trail.visible = !!bt;
+          const toG = (q, r) => { const k = L.mx(1) - L.mx(0), lon = 110 + q.x / k, lat = 58 - (q.y - (L.my(58))) / (L.my(57) - L.my(58)); return P(lat, lon, r); };
+          if (bt && L.mx) { bottle.position.copy(toG(bt, R * 1.02));
+            const tr = L.S3.trail || [], n = Math.min(TRN, tr.length), o = tr.length - n;
+            for (let i = 0; i < n; i++) { const v = toG(tr[o + i], R * 1.012); trPos[i * 3] = v.x; trPos[i * 3 + 1] = v.y; trPos[i * 3 + 2] = v.z; }
+            trGeo.setDrawRange(0, n); trGeo.attributes.position.needsUpdate = true; if (n > 1) trail.computeLineDistances(); }
           if (ns !== sig) { sig = ns; info(text(L)); }
           if (windG.visible) windG.children.forEach((m) => { const u = m.userData; if (!u || u.lat == null) return; const lon = ((t * 12 * u.dir + u.k * 45) % 360) - 180; m.position.copy(P(u.lat, lon, R * 1.03)); const q = P(u.lat, lon + 3 * u.dir, R * 1.03); m.quaternion.setFromUnitVectors(new V3(0, 1, 0), q.sub(m.position).normalize()); });
         },

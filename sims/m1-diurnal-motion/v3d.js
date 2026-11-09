@@ -182,7 +182,7 @@
         let txt = '<b>' + hm(st.t) + '</b> · ';
         if (st.focus === 'polaris') txt += '<b>북극성</b>은 자전축 방향에 있어서 밤새 거의 제자리예요. 다른 별들은 북극성을 중심으로 돌아요.';
         else txt += '<b>' + f.name + '</b> : ' + (hh > 0 ? '오후 6시부터 ' + hh + '시간 동안 북극성(자전축)을 중심으로 약 <b>' + Math.round(15 * hrs) + '°</b> 돌았어요 (1시간에 15°).' : '지금은 처음 위치예요. 시각을 움직여 보세요.');
-        txt += '<br>지구가 서→동으로 자전해서 별은 <b>동→서</b>로 도는 것처럼 보여요.';
+        if (hrs >= 3 || st.focus === 'polaris') txt += '<br>지구가 서→동으로 자전해서 별은 <b>동→서</b>로 도는 것처럼 보여요.';   // 미션 질문(어느 쪽 → 어느 쪽)의 답은 3시간을 지켜본 뒤에 보여 줘요
         if (tapMsg) txt = '<b style="color:' + (tapMsg.ok ? '#5eead4' : '#fdba74') + '">' + tapMsg.text + '</b><br>' + txt;
         info(txt);
       }

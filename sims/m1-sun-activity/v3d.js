@@ -169,7 +169,7 @@
       function text() {
         const m = st.mode;
         info(m === 'surface' ? '<b>광구</b>는 우리 눈에 보이는 태양 표면이에요. 쌀알 무늬가 있어요.<br><b>흑점</b>은 주변(약 6000 °C)보다 온도가 낮아(약 4000 °C) 어둡게 보여요.<br>흑점이 이동하는 것으로 태양이 <b>자전</b>한다는 걸 알 수 있어요.'
-          : m === 'atm' ? (msgT > 0 ? msg + '<br>' : '') + '광구 바깥의 <b>채층</b>(붉은 층)과 <b>코로나</b>(희미한 흰 빛)를 <b>태양 대기</b>라고 해요.<br>광구가 너무 밝아 평소에는 안 보이지만, ' + (st.occ ? '지금처럼 <b>광구를 가리면</b> 코로나와 <b>홍염</b>이 보여요 (개기 일식).' : '<b>🌑 광구 가리기</b>로 광구를 가리면(개기 일식) 코로나가 보여요.')
+          : m === 'atm' ? (msgT > 0 ? msg + '<br>' : '') + '광구 바깥을 둘러싼 층을 <b>태양 대기</b>라고 해요.<br>' + (st.occ ? '<b>광구를 가렸어요</b> (개기 일식과 같아요). 드러난 대기의 <b>❓</b> 이름표를 눌러 채층 · 코로나 · 홍염을 찾아요.' : '<b>🌑 광구 가리기</b>로 광구를 가리고, 무엇이 보이는지 살펴봐요.')   // 퀴즈(평소에 코로나가 안 보이는 까닭)의 답은 미리 알려 주지 않아요
           : '흑점 수가 많은 <b>극대기</b>에는 <b>홍염·플레어</b>와 <b>태양풍</b>이 더 활발해요.<br>플레어가 일어나면 입자가 지구에 도달해 오로라가 생기거나 통신 장애가 생길 수 있어요.');
       }
       function setAct(v) { st.act = v; st.nSpot = Math.max(2, Math.round(2 + v / 100 * (MAXS - 2))); show(); }
@@ -189,7 +189,7 @@
       const NEED = { chromo: 0.95, corona: 0.9, prom: 0.9 }, LNAME = { chromo: '채층', corona: '코로나', prom: '홍염' };
       const tapAtmo = (k) => () => {
         const S = sim(); if (!S || st.mode !== 'atm') return;
-        if (!(S.c >= NEED[k])) { say('먼저 <b>🌑 광구 가리기</b>로 광구를 가려요. 광구가 너무 밝아 대기가 안 보여요.'); return; }
+        if (!(S.c >= NEED[k])) { say('먼저 <b>🌑 광구 가리기</b>로 광구를 가려요. 그래야 대기를 살펴볼 수 있어요.'); return; }
         S.atmoLab = Object.assign({}, S.atmoLab, { [k]: true }); show();
       };
       chLab.tap(tapAtmo('chromo')); coLab.tap(tapAtmo('corona')); promLab.tap(tapAtmo('prom'));

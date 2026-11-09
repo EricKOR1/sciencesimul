@@ -23,7 +23,20 @@
     levels: [1],
     autoRotate: 0.0,
     build(ctx) {
-      const { THREE, root, label, info, controls } = ctx;
+      const { THREE, root, label, info, controls, renderer } = ctx;
+      /* 입자 통과 시험 결과표: 2D 그림 오른쪽의 결과표를 3D 화면에도 보여 줘요 (2D 시험 결과 그대로) */
+      const RES_TXT = { water: '막을 직접 통과', oxygen: '막을 직접 통과', ion: '통로로만 통과', starch: '통과 못함', protein: '통과 못함' };
+      if (!document.getElementById('cm3d-tab')) { const st2 = document.createElement('style'); st2.id = 'cm3d-tab'; st2.textContent =
+        '.cm-tab{position:absolute;right:10px;top:10px;padding:7px 9px;border-radius:12px;background:rgba(8,12,24,.74);color:#fff;font-size:12px;font-weight:700;pointer-events:none;min-width:170px}.cm-tab .h{font-weight:900;margin-bottom:4px}.cm-tab .r{display:flex;justify-content:space-between;gap:8px;padding:2px 5px;border-radius:7px}.cm-tab .r.cur{background:rgba(34,197,94,.28)}.cm-tab .v{color:#9aa6bd}.cm-tab .v.p{color:#86efac}.cm-tab .v.b{color:#fdba74}' +
+        '@media (max-width:599px){.cm-tab{top:auto;bottom:30px;right:8px;font-size:10.5px;min-width:0;padding:4px 6px}.cm-tab .h{margin-bottom:2px}.cm-tab .r{padding:1px 3px}}';
+        document.head.appendChild(st2); }
+      const tabEl = document.createElement('div'); tabEl.className = 'cm-tab'; renderer.domElement.parentElement.appendChild(tabEl);
+      let tabSig = '';
+      function drawTab() {
+        const m = window.__sim && window.__sim.S && window.__sim.S.md; if (!m) { tabEl.style.display = 'none'; return; }
+        const sig = m.sel + TKEYS.map((k) => m.ts[k].res).join(','); if (sig === tabSig) return; tabSig = sig; tabEl.style.display = '';
+        tabEl.innerHTML = '<div class="h">🧪 입자 통과 시험 결과</div>' + TKEYS.map((k) => { const r = m.ts[k].res; return '<div class="r' + (m.sel === k ? ' cur' : '') + '"><span>' + TYPES[k].n.split(' ')[0] + '</span><span class="v' + (r === 'pass' ? ' p' : r === 'block' ? ' b' : '') + '">' + (r === 'pass' ? '✅ ' + RES_TXT[k] : r === 'block' ? '⛔ ' + RES_TXT[k] : '? 시험해 보세요') + '</span></div>'; }).join('');
+      }
       const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.45, metalness: 0.05 }, o || {}));
       const dm = new THREE.Object3D();
       
@@ -98,8 +111,7 @@
       }
       function updInfo() {
         const T = TYPES[sel], how = T.pass === 'free' ? '작은 입자라서 인지질 사이로 <b>바로 통과</b>해요.' : T.pass === 'channel' ? '전하를 띠어서 <b>단백질 통로</b>로만 지나가요.' : '너무 커서 막을 <b>통과하지 못해요</b>.';
-        const m = window.__sim && window.__sim.S && window.__sim.S.md;
-        const tab = m ? '<br>결과표: ' + TKEYS.map((k) => TYPES[k].n.split(' ')[0] + ' ' + (m.ts[k].res === 'pass' ? '✅' : m.ts[k].res === 'block' ? '⛔' : '?')).join(' · ') : '';
+        drawTab(); const tab = '';
         info('<b>' + T.n + '</b> (세포 밖 ' + counts[0] + '개 · 세포 안 ' + counts[1] + '개)<br>' + how + '<br>입자는 많은 쪽에서 적은 쪽으로 퍼져요 (확산).' + tab);
       }
       const segT = controls.segment('입자', TKEYS.map((k) => ({ value: k, label: TYPES[k].n.split(' ')[0] })), sel, (v) => { const L = window.__sim; if (L && L.selectType) L.selectType(v); sel = v; syncFrom2D(true); });

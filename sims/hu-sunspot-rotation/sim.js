@@ -1160,7 +1160,7 @@
           explain: '회합 주기는 <b>26.9 · 27.5 · 28.7 · 29.8일</b>이에요. 위도가 높은 흑점일수록 천천히 돌아서 점이 오른쪽 위로 올라가요.',
         },
         {
-          title: '그래프의 경향 고르기', manual: true,
+          title: '위도에 따른 자전 경향 고르기', manual: true,
           goal: '경과일을 <b>7일</b>까지 재생해 흑점들이 어떻게 어긋나는지 보고, 위도에 따른 자전의 경향을 고르세요.',
           hint: '위도 45° 흑점이 적도 쪽 흑점보다 뒤처지는지 보세요. 위도가 높을수록 주기가 길어요.',
           setup() { S.flags.pickTrend = true; S.df.trend = -1; S.df.cMax = 0; S.df.play = false; setCDay(0); setView('diff'); },

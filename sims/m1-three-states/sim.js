@@ -2093,7 +2093,7 @@
           {
             title: '세 가지 눈으로 비교하기', scene: 'compare',
             goal: '<b>🔍 입자 모형</b>에서 <b>📏 거리, 🧩 배열, 🏃 운동</b>을 하나씩 눌러 얼음·물·수증기를 비교해 보세요.',
-            hint: '버튼을 누르고 2초쯤 지켜봐요. 주황색 입자를 따라가면 편해요. 🔍 입자 모형이 꺼져 있다면 켜 주세요.',
+            hint: '버튼을 누르고 2초쯤 지켜봐요. 주황색 입자를 따라가면 편해요.<span class="only2d"> 🔍 입자 모형이 꺼져 있다면 켜 주세요.</span>',
             check: () => S.lensK.value > 0.8 && S.vt.dist >= VIEW_SEC && S.vt.order >= VIEW_SEC && S.vt.move >= VIEW_SEC, hold: 0.5,
             status: () => '📏 거리 ' + mark(S.vt.dist >= VIEW_SEC) + ' · 🧩 배열 ' + mark(S.vt.order >= VIEW_SEC) + ' · 🏃 운동 ' + mark(S.vt.move >= VIEW_SEC),
             explain: '얼음·물·수증기는 모두 <b>같은 입자</b>로 이루어져 있어요. 달라진 것은 입자 사이의 <b>거리</b>, 입자가 늘어선 <b>배열</b>, 입자의 <b>운동</b>이에요.',
@@ -2101,7 +2101,7 @@
           {
             title: '특징 태그 붙이기', scene: 'tags', manual: true,
             goal: '각 상태의 <b>거리·배열·운동</b> 칸에 알맞은 태그를 붙이고 <b>✔ 확인하기</b>를 누르세요.',
-            hint: '태그는 <span class="only2d">끌어다 놓거나 </span>버튼을 눌러 붙여요. 같은 색 태그가 같은 종류의 칸에 들어가요. 🔍 비교 장면에서 본 모습을 떠올려요.',
+            hint: '태그는 <span class="only2d">끌어다 놓거나 </span>버튼을 눌러 붙여요. <span class="only2d">같은 색 태그가 같은 종류의 칸에 들어가요.</span><span class="only3d">아래 막대에서 📏 거리 · 🧩 배열 · 🏃 운동을 고르고 얼음 · 물 · 수증기 버튼을 눌러요. 붙인 태그는 각 상자 아래에 보여요.</span> 🔍 비교 장면에서 본 모습을 떠올려요.',
             setup() { S.tagsOpen = true; refreshUI(); },
             check: () => tagsCheck(),
             onWin() { TG.solved = true; celebrate(VW / 2, PHONE ? 200 : 210); },

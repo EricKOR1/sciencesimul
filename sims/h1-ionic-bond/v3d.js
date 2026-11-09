@@ -33,6 +33,10 @@
       };
       const NA = atom(CNA, [0.9, 1.6, 2.3], 1, -3.2), CL = atom(CCL, [0.9, 1.6, 2.3], 7, 3.2);
       const movE = NA.es.find((x) => x.out); // 옮겨 가는 전자
+      // Cl의 빈자리: 바깥 껍질 8자리 중 비어 있는 한 자리 (Na 쪽). 2D의 점선 자리와 같아요
+      const hole = new THREE.Mesh(new THREE.SphereGeometry(0.19, 14, 10), new THREE.MeshBasicMaterial({ color: 0xffd34d, wireframe: true, transparent: true, opacity: 0.9 }));
+      hole.position.set(-2.3, 0, 0); CL.g.add(hole);
+      const holeLab = L('빈자리', hole, { size: 11.5, offset: [0, -0.6, 0], color: 'rgba(120,90,0,.9)' }); holeLab.show(false);
       const naLab = L('Na 나트륨', NA.g, { offset: [0, 2.9, 0] }), clLab = L('Cl 염소', CL.g, { offset: [0, 2.9, 0] });
       const naCh = L('Na⁺', NA.g, { offset: [0, -2.9, 0], color: 'rgba(120,70,220,.9)' }), clCh = L('Cl⁻', CL.g, { offset: [0, -2.9, 0], color: 'rgba(20,140,80,.9)' });
       const eLab = L('전자 1개 이동', [0, 1.3, 0], { color: 'rgba(255,211,77,.92)' }); eLab.el.style.color = '#1b2333';
@@ -139,12 +143,13 @@
             } else { gap = 6.3; k = 0; qa = 0; glow = 0; }
             NA.g.position.x = -gap / 2; CL.g.position.x = gap / 2;
             NA.es.forEach((o) => { if (o === movE) return; const a = o.a0 + t * o.sp; o.e.position.set(Math.cos(a) * o.r, 0, Math.sin(a) * o.r); });
-            CL.es.forEach((o) => { const a = o.a0 + t * o.sp; o.e.position.set(Math.cos(a) * o.r, 0, Math.sin(a) * o.r); });
+            CL.es.forEach((o) => { const a = o.out ? Math.PI + (o.k + 1) * 6.283 / 8 : o.a0 + t * o.sp; o.e.position.set(Math.cos(a) * o.r, 0, Math.sin(a) * o.r); });   // 바깥 전자 7개는 빈자리 하나를 남기고 놓여요
             // 옮겨 가는 전자: Na 바깥 껍질 → 공중 → Cl 바깥 껍질
             const sx = 2.3, cx = gap - 2.3, px = sx + (cx - sx) * k, py = Math.sin(k * Math.PI) * 1.2;
             if (k < 0.001) { const a = movE.a0 + t * movE.sp; movE.e.position.set(Math.cos(a) * 2.3, 0, Math.sin(a) * 2.3); } else movE.e.position.set(px, py, 0);
             movE.e.scale.setScalar(1 + (glow ? 0.35 + 0.25 * Math.sin(t * 8) : 0));
             eTap.show(!demo && !!glow);
+            hole.visible = k < 0.98; hole.scale.setScalar(1 + 0.2 * Math.sin(t * 5)); holeLab.show(k < 0.98);
             NA.rings[2].visible = k < 0.5; CL.rings[2].material.opacity = 0.55;
             const nsc = 1 - 0.18 * qa; NA.rings.forEach((r, i) => { r.scale.setScalar(i === 2 ? 1 : nsc); });
             CL.g.scale.setScalar(1 + 0.12 * qa);

@@ -1049,13 +1049,13 @@
       missions: [
         {
           title: '활성 부위에 맞는 기질 고르기',
-          goal: '기질 3개를 효소의 <b>활성 부위</b>에 끌어다 대 보고, 모양이 꼭 맞는 기질을 눌러 고른 뒤 <b>✔ 확인하기</b>를 누르세요.',
-          hint: '활성 부위(주머니)의 모양과 기질 모양을 눈으로 비교해요. 끌어다 대 보면 맞지 않는 기질은 튕겨 나가요.',
+          goal: '<span class="only2d">기질 3개를 효소의 <b>활성 부위</b>에 끌어다 대 보고, 모양이 꼭 맞는 기질을 눌러 고른 뒤</span><span class="only3d">화면 아래 기질 단추 3개를 눌러 효소의 <b>활성 부위</b>에 대 보고, 모양이 꼭 맞는 기질을 마지막에 눌러 고른 뒤</span> <b>✔ 확인하기</b>를 누르세요.',
+          hint: '활성 부위(주머니)의 모양과 기질 모양을 눈으로 비교해요. <span class="only2d">끌어다</span><span class="only3d">단추를 눌러</span> 대 보면 맞지 않는 기질은 튕겨 나가요.',
           manual: true,
           setup() { ensure('lock', 'bind'); },
           check() {
             const L = S.lock;
-            if (!L.sel) return '먼저 기질을 눌러 <b>하나 골라요</b>. 끌어다 활성 부위에 대 봐도 좋아요.';
+            if (!L.sel) return '먼저 기질을 <b>하나 골라</b> 활성 부위에 대 봐요.';
             if (L.sel === 'A') return true;
             return SUB[L.sel].name + '의 모양은 활성 부위와 달라요. 주머니의 모양을 다시 살펴봐요.';
           },
@@ -1064,7 +1064,7 @@
         {
           title: '열에 의한 변성 시험',
           goal: '온도를 <b>60 °C 이상</b>으로 올려 효소를 가열한 뒤, 기질 ②를 활성 부위에 다시 대 보세요.',
-          hint: '슬라이더(또는 + 버튼)로 60 °C 이상 올려요. 효소 모양이 일그러지면 기질 ②를 끌어다 대 봐요. 식혀도 모양은 돌아오지 않아요.',
+          hint: '슬라이더(또는 + 버튼)로 60 °C 이상 올려요. 효소 모양이 일그러지면 기질 ②를 <span class="only2d">끌어다</span><span class="only3d">단추로 다시</span> 대 봐요. 식혀도 모양은 돌아오지 않아요.',
           setup() { ensure('lock', 'heat'); if (S.lock.maxT >= 60 || S.lock.dPerm > 0) { initLock(); } updateCtl(); },
           check: () => S.lock.maxT >= 60 && S.lock.hotFail, hold: 0.5,
           status: () => mark(S.lock.maxT >= 60) + ' 60 °C 이상으로 가열 (최고 ' + S.lock.maxT + ' °C) · ' + mark(S.lock.hotFail) + ' 기질 ②가 결합하지 못함',

@@ -239,7 +239,7 @@
       function abs(A, S, tm) {
         if (heKey !== 'abs') { heKey = 'abs'; stAbA.draw({ cont: (nm) => 0.28 + 0.72 * Math.pow((nm - 400) / 300, 1.1), dark: A.H_LINES.map((l) => ({ nm: l.nm, d: 0.92 })) }); stAbB.draw({ lines: A.H_LINES }); A.H_LINES.forEach((l, i) => { const x = NM2X(l.nm), y1 = 4.0 - 0.6, y2 = -0.8 + 0.6; dashAb[i].position.set(x, (y1 + y2) / 2, 0.05); dashAb[i].scale.y = y1 - y2; }); }
         const tt = (tm * 0.8) % 2; upA.visible = true; upA.children.forEach((c) => { c.material.transparent = true; c.material.opacity = tt < 1 ? 1 : 0.25; }); dnA.children.forEach((c) => { c.material.transparent = true; c.material.opacity = tt >= 1 ? 1 : 0.25; });
-        info('<b>🔬 같은 위치에서 흡수하고 같은 위치에서 방출해요</b><br>두 준위(n = 3, 2)의 에너지 차이 ' + (Math.round(A.dEn(3, 2) * 100) / 100).toFixed(2) + ' eV에 해당하는 빛(' + A.H_LINES[0].nm + ' nm)만 흡수하고, 같은 빛만 방출해요.<br>그래서 흡수선의 위치가 방출선과 같고, 별빛의 흡수선으로 별의 구성 원소를 알아내요.');
+        info('<b>🔬 흡수선과 방출선 비교</b><br>수소의 흡수선(어두운 선)과 방출선(밝은 선)의 위치를 비교해 봐요.<br>두 준위 n = 3, 2의 에너지 차이는 ' + (Math.round(A.dEn(3, 2) * 100) / 100).toFixed(2) + ' eV이고, 이 에너지의 빛은 ' + A.H_LINES[0].nm + ' nm예요. 별빛의 흡수선으로 별의 구성 원소를 알아내요.');
       }
       /* ================= 🔬 한계 ②: 전자를 물질파로 보면 (고리 위의 정상파) ================= */
       const ringW = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial({ color: 0x14a058 })); ringW.position.set(5.6, 0, 0); gC.add(ringW);

@@ -146,20 +146,21 @@
         let t = `<b>닫힌 회로</b>: 전지 → 전구 → 스위치가 도선으로 이어져 <b>전류가 흘러</b> 전구가 켜져요.<br>전지 ${V.toFixed(1)} V → 전구 ${V > 4.2 ? '아주 밝아요' : V > 2.4 ? '밝아요' : '어두워요'}`;
         if (e) t += '<br><b style="color:#8fb0ff">전자(파랑)</b>가 어느 극에서 어느 극으로 움직이는지 보세요.';
         if (i) t += '<br><b style="color:#ff9d90">전류(주황 화살표)</b>의 방향을 전자와 비교해 보세요.';
-        if (!e && !i) t += '<br><span style="color:#ffd34d">[전자 보기] · [전류 방향 보기]를 켜 보세요.</span>';
+        if (!e && !i) t += '<br><span style="color:#ffd34d">[전자 흐름 보기] · [전류 방향 보기]를 켜 보세요.</span>';
         info(t);
       }
       // 2D 실험과 같은 스위치 · 전압 · 보기 설정을 써요 (3D에서 바꾸면 2D도 바뀌어요)
       controls.button('🔌 스위치 열기/닫기', () => { const s = sm(); if (s) { s.S.touched.sw = true; s.setClosed(!s.S.closed); } });
       const vr = controls.range('전지 전압', 0.5, 6, 0.5, 3, (v) => { const s = sm(); if (s) s.setV(v); }, (v) => v.toFixed(1) + ' V');
-      controls.button('전자 보기', () => { const s = sm(); if (s) s.setShow(!s.S.showE, s.S.showI); });
-      controls.button('전류 방향 보기', () => { const s = sm(); if (s) s.setShow(s.S.showE, !s.S.showI); });
+      const eB = controls.button('전자 흐름 보기', () => { const s = sm(); if (s) s.setShow(!s.S.showE, s.S.showI); });
+      const iB = controls.button('전류 방향 보기', () => { const s = sm(); if (s) s.setShow(s.S.showE, !s.S.showI); });
       controls.button('이름표', () => { labs = !labs; LB.forEach((l) => l.show(labs)); lE.show(labs && showE); lI.show(labs && showI); });
       const dm = new THREE.Object3D(), p = new V3(), tg = new V3(), upv = new V3(0, 1, 0);
       let lastV = -1;
       return {
         update(dt, t) {
           const s = sm() && sm().S; const closed = s ? !!s.closed : false, V = s ? s.V : 3; showE = s ? !!s.showE : false; showI = s ? !!s.showI : false;
+          eB.classList.toggle('on', showE); iB.classList.toggle('on', showI);
           if (V !== lastV) { lastV = V; vr.set(V); }
           const I = closed ? V / 10 : 0;
           swA += ((closed ? 0 : 0.8) - swA) * Math.min(1, dt * 10); hinge.rotation.z = swA;

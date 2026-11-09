@@ -533,8 +533,8 @@
       missions: [
         {
           title: '세 기체를 넣고 분압의 합 구하기', manual: true,
-          goal: '<b>He, N₂, O₂</b>를 모두 넣은 뒤, 막대에 나온 <b>분압 세 개의 합</b>을 atm 단위로 써서 압력계의 전체 압력과 비교해요. <b>✔ 확인하기</b>를 눌러요.',
-          hint: '오른쪽의 기체 단추를 눌러 세 기체를 모두 넣어요. 분압은 He 0.40, N₂ 0.60, O₂ 1.00이에요. 더한 값이 압력계의 값과 같아요.',
+          goal: '<b>He, N₂, O₂</b>를 모두 넣은 뒤, 막대에 나온 <b>분압 세 개의 합</b>을 atm 단위로 써서 <span class="only3d">막대 위에 나온 전체 압력</span><span class="only2d">압력계의 전체 압력</span>과 비교해요. <b>✔ 확인하기</b>를 눌러요.',
+          hint: '오른쪽의 기체 단추를 눌러 세 기체를 모두 넣어요. 분압은 He 0.40, N₂ 0.60, O₂ 1.00이에요. 더한 값이 <span class="only3d">막대 위의 전체 압력</span><span class="only2d">압력계의 값</span>과 같아요.',
           setup() { S.lock = true; S.gate = 'sumin'; sumReset(); setMode('sum'); },
           check() {
             if (!injAll()) return '먼저 He, N₂, O₂를 모두 넣어 주세요.';
@@ -543,7 +543,7 @@
             return S.sum.sumOk ? true : '다시 더해 보세요. 0.40 + 0.60 + 1.00이에요.';
           },
           status: () => '기체 ' + GK.filter((g) => S.sum.inj[g] > 0).length + ' / 3 ' + mark(injAll()) + ' &nbsp; 합 ' + mark(S.sum.sumOk),
-          explain: '분압은 He 0.40, N₂ 0.60, O₂ 1.00 atm이고 합은 <b>2.00 atm</b>이에요. 이것은 압력계가 가리키는 전체 압력과 같아요. 혼합 기체의 전체 압력은 분압의 합이에요(<b>돌턴의 분압 법칙</b>).',
+          explain: '분압은 He 0.40, N₂ 0.60, O₂ 1.00 atm이고 합은 <b>2.00 atm</b>이에요. 이것은 <span class="only3d">막대 위에 나온</span><span class="only2d">압력계가 가리키는</span> 전체 압력과 같아요. 혼합 기체의 전체 압력은 분압의 합이에요(<b>돌턴의 분압 법칙</b>).',
         },
         {
           type: 'quiz', title: '다른 기체가 있을 때의 분압',

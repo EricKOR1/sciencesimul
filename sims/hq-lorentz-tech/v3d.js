@@ -171,7 +171,7 @@
       }
       function cyInfo(sim) {
         const c = sim.S.cy, fres = sim.cyFres ? sim.cyFres(c.B) / 1e6 : 15.2 * c.B, mk = sim.S.gate === 'mc1', Ke = sim.cyKext(c.B) / sim.MEV;
-        info('<b>사이클로트론 (양성자)</b> · B = ' + c.B.toFixed(1) + ' T, f = ' + c.f.toFixed(1) + ' MHz<br>공명 f = qB/(2πm) = ' + (mk ? '?' : fres.toFixed(1) + ' MHz') + '<br>최종 K = (qBR)²/2m = ' + (mk ? '?' : Ke.toFixed(1) + ' MeV') + ' (R = 0.50 m)<br>틈새 1번 20 kV → 20 keV · 자기장은 방향만 바꾸고, 입자를 가속하는 것은 틈새의 전기장이에요.<br>' + (cyProc && cyProc.fail ? '<b>공명이 어긋나 틈새에서 가속과 감속이 번갈아 일어나요.</b> (그림은 어긋남의 영향을 줄여 보여 줘요)' : '공명이 맞으면 틈새를 지날 때마다 계속 가속돼요.'));
+        info('<b>사이클로트론 (양성자)</b> · B = ' + c.B.toFixed(1) + ' T, f = ' + c.f.toFixed(1) + ' MHz<br>공명 f = qB/(2πm) = ' + (mk ? '?' : fres.toFixed(1) + ' MHz') + '<br>최종 K = (qBR)²/2m = ' + (mk ? '?' : Ke.toFixed(1) + ' MeV') + ' (R = 0.50 m)<br>틈새를 1번 지날 때 20 kV → 20 keV씩 에너지를 얻어요.<br>' + (cyProc && cyProc.fail ? '<b>공명이 어긋나 틈새에서 가속과 감속이 번갈아 일어나요.</b> (그림은 어긋남의 영향을 줄여 보여 줘요)' : '공명이 맞으면 틈새를 지날 때마다 계속 가속돼요.'));
       }
 
       /* ================= ② 질량 분석기 ================= */

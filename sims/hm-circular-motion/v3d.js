@@ -116,7 +116,9 @@
         setArrow(dva, p0, p0.clone().addScaledVector(ac, d.v * d.v / d.r * 0.25));
         ldv0.obj = p0.clone().addScaledVector(t0, d.v * sv * 0.6); ldv1.obj = p1.clone().addScaledVector(t1, d.v * sv * 0.6); ldvd.obj = ev.clone().lerp(ev2, 0.5); ldvd.off = [0, 0.4, 0]; ldva.obj = p0.clone().addScaledVector(ac, 0.6); ldva.off = [0, 0.3, 0];
         const dvm = 2 * d.v * Math.sin(dth / 2), off = dth / 2 / RAD;
-        info('<b>📐 구심 가속도: Δv 작도</b> · v = ' + d.v + ' m/s · r = ' + d.r + ' m · Δt = ' + dtv.toFixed(2) + ' s<br>짧은 시간 Δt 동안 속도는 방향이 ' + Math.round(dth / RAD) + '° 바뀌어요. Δv(빨강)는 v와 v′의 차이예요.<br>Δv가 <b>중심 방향에서 벗어난 각</b> = ' + off.toFixed(1) + '° → Δt를 줄일수록 Δv는 중심을 향해요 (가속도의 방향 = 중심).<br><span style="opacity:.8">v · r · Δt는 옆 조작판에서 바꿔요.</span>');
+        /* 가속도 화살표와 '가속도의 방향 = 중심'은 Δt를 충분히 줄여 Δv가 중심을 향할 때(3° 이하) 보여 줘요 (그 전에는 학생이 찾아요) */
+        const found = off <= 3.05; dva.visible = found; ldva.show(found);
+        info('<b>📐 구심 가속도: Δv 작도</b> · v = ' + d.v + ' m/s · r = ' + d.r + ' m · Δt = ' + dtv.toFixed(2) + ' s<br>짧은 시간 Δt 동안 속도는 방향이 ' + Math.round(dth / RAD) + '° 바뀌어요. Δv(빨강)는 v와 v′의 차이예요.<br>Δv가 <b>중심 방향에서 벗어난 각</b> = ' + off.toFixed(1) + '°' + (found ? ' → Δv가 거의 중심을 향해요. 초록 화살표: <b>가속도의 방향 = 중심</b>.' : ' → Δt를 바꾸며 Δv의 방향을 살펴봐요.') + '<br><span style="opacity:.8">v · r · Δt는 옆 조작판에서 바꿔요.</span>');
       }
       /* ================= 🧵 줄에 매단 공 (위에서 본 모습, 1 m = 3칸) ================= */
       const ballFloor = floorMk(G.ball, 4.4, 0x56718f);
@@ -205,7 +207,7 @@
         setArrow(wG, me.clone().add(new V3(0.5, 0, 0.4)), me.clone().add(new V3(0.5, -1.0, 0.4))); lwG.obj = me.clone().add(new V3(0.6, -1.1, 0.4));
         setArrow(wN, me.clone().add(new V3(-0.5, 0, 0.4)), me.clone().add(new V3(-0.5, 0.35 + Math.max(0, az) * 1.0, 0.4))); lwN.obj = me.clone().add(new V3(-0.5, 0.5 + Math.max(0, az), 0.4)); lwN.set(hide ? '좌석이 나를 미는 힘 N' : 'N = ' + f2(az) + ' mg');
         lwMe.off = [0, -0.7, 0]; lwV.off = [0.4, 0.3, 0]; lwG.off = [0.3, 0, 0]; lwN.off = [-0.4, 0.2, 0];
-        info('<b>🎡 관람차</b> · 반지름 ' + A.WH_R + ' m · 속력 ' + f1(w.v) + ' m/s<br>빨간 곤돌라(나)의 스마트폰 연직 센서' + (hide ? '를 읽어 좌석이 미는 힘을 구해요 (최저점 · 최고점에서 다르게 느껴져요).' : ' = <b>' + f2(az) + ' g</b> (1 g = 가만히 있을 때)') + '<br>최저점에서는 센서 값이 커지고, 최고점에서는 작아져요 (원운동의 구심 가속도 때문).<br><span style="opacity:.8">속력은 옆 조작판에서 바꿔요.</span>');
+        info('<b>🎡 관람차</b> · 반지름 ' + A.WH_R + ' m · 속력 ' + f1(w.v) + ' m/s<br>빨간 곤돌라(나)의 스마트폰 연직 센서' + ' = <b>' + f2(az) + ' g</b> (1 g = 가만히 있을 때)' + (hide ? ' → 센서 값으로 좌석이 미는 힘을 구해요.' : '') + '<br>최저점에서는 센서 값이 커지고, 최고점에서는 작아져요 (원운동의 구심 가속도 때문).<br><span style="opacity:.8">속력은 옆 조작판에서 바꿔요.</span>');
       }
       /* ================= 🎡 로터 (반지름 2 m, 1 m = 0.9칸) ================= */
       const UR = 0.9, ROH = 5;
@@ -243,10 +245,45 @@
         const cams = { puck: { tx: 0, ty: 0, tz: 0, phi: 0.95, theta: 0.15, dist: 15.5 }, dv: { tx: 2, ty: 0, tz: -1, phi: 0.95, theta: 0.1, dist: 13 }, ball: { tx: 0, ty: 0, tz: 0, phi: 0.9, theta: 0.2, dist: 10 }, road: { tx: 0, ty: 0, tz: 0, phi: 0.9, theta: 0.2, dist: 14 }, swing: { tx: 0, ty: 2.4, tz: 0, phi: 1.25, theta: 0.3, dist: 12 }, wheel: { tx: 0, ty: 4.5, tz: 0, phi: 1.4, theta: 0.2, dist: 17 }, rotor: { tx: 0, ty: 1.6, tz: 0, phi: 1.2, theta: 0.4, dist: 9 } };
         const c = cams[mode]; if (c) Object.assign(orbit, c, { dist: c.dist * KD });
       }
+      /* 📏 장력 기록 그래프: 2D처럼 기록한 점(F–v²)과 직선을 3D 화면에도 보여 줘요 */
+      const gEl = document.createElement('div');
+      gEl.style.cssText = 'position:absolute;' + (PHN ? 'left:8px;bottom:8px;' : 'right:10px;top:10px;') + 'padding:6px 8px;border-radius:12px;background:rgba(8,12,24,.8);color:#fff;font-size:' + (PHN ? 10.5 : 12) + 'px;font-weight:800;pointer-events:none;display:none';
+      ctx.renderer.domElement.parentElement.appendChild(gEl);
+      let gSig = null;
+      /* 📱 스마트폰 센서: 2D 캔버스의 센서 막대 · 그래프를 3D 화면에도 보여 줘요 (회전 그네: 수평 · 수직, 관람차: 연직 센서 그래프) */
+      const snEl = document.createElement('div');
+      snEl.style.cssText = gEl.style.cssText; ctx.renderer.domElement.parentElement.appendChild(snEl);
+      let snSig = null;
+      function drawSensor(A, S) {
+        const md = S.mode; let html = '';
+        if (md === 'swing') { const sv = A.swing(S.sw.w); html = '<div>📱 의자에 놓은 스마트폰 센서</div><div>수평 (축 쪽) a = <span style="color:#fca5a5">' + sv.a.toFixed(1) + ' m/s²</span></div><div>수직 (위쪽) g = <span style="color:#cbd5e1">10.0 m/s²</span></div>'; }
+        else if (md === 'wheel') {
+          const w = S.wh, az = A.whAz(w.v, w.psi), W = PHN ? 130 : 170, H = PHN ? 50 : 62, Y = (g) => H - 4 - g / 2 * (H - 8);
+          const pts = (w.hist || []).map((q) => (W - 4 + (q[0] - w.tAll) / 12 * (W - 8)).toFixed(1) + ',' + Y(q[1]).toFixed(1)).join(' ');
+          html = '<div>📱 연직 센서 = <span style="color:#fdba74">' + az.toFixed(2) + ' g</span></div><svg width="' + W + '" height="' + H + '" style="display:block;margin-top:3px"><line x1="4" y1="' + Y(1) + '" x2="' + (W - 4) + '" y2="' + Y(1) + '" stroke="#64748b" stroke-dasharray="4 4"/><text x="6" y="' + (Y(1) - 3) + '" fill="#94a3b8" font-size="9">1 g</text><polyline points="' + pts + '" fill="none" stroke="#fb923c" stroke-width="2"/></svg>';
+        }
+        if (html === snSig) return; snSig = html; snEl.style.display = html ? '' : 'none'; if (html) snEl.innerHTML = html;
+      }
+      function drawG(S) {
+        const on = S.mode === 'ball', rec = on ? S.bl.rec : [], sig = on ? JSON.stringify(rec) : '';
+        if (sig === gSig) return; gSig = sig; gEl.style.display = on ? '' : 'none'; if (!on) return;
+        const W = PHN ? 130 : 170, H = PHN ? 84 : 108, ox = 26, oy = H - 16, pw = W - ox - 8, ph = oy - 8;
+        const xm = Math.max(36, ...rec.map((r) => r.v * r.v)) * 1.1, ym = Math.max(5, ...rec.map((r) => r.F)) * 1.15;
+        const X = (v2) => ox + v2 / xm * pw, Yp = (F) => oy - F / ym * ph, cols = ['#f87171', '#60a5fa', '#34d399', '#fbbf24'];
+        const grp = {}; rec.forEach((r) => { const k = r.m + '|' + r.r; (grp[k] = grp[k] || []).push(r); });
+        let svg = '<line x1="' + ox + '" y1="' + oy + '" x2="' + (ox + pw) + '" y2="' + oy + '" stroke="#94a3b8"/><line x1="' + ox + '" y1="' + oy + '" x2="' + ox + '" y2="' + (oy - ph) + '" stroke="#94a3b8"/>' +
+          '<text x="' + (ox + pw) + '" y="' + (H - 3) + '" fill="#cbd5e1" font-size="10" text-anchor="end">v² (m²/s²)</text><text x="2" y="12" fill="#cbd5e1" font-size="10">F (N)</text>';
+        Object.keys(grp).forEach((k, gi) => {
+          const pts = grp[k], c = cols[gi % cols.length];
+          if (new Set(pts.map((q) => q.v)).size >= 2) { const sl = pts[0].m / pts[0].r; svg += '<line x1="' + X(0) + '" y1="' + Yp(0) + '" x2="' + X(xm) + '" y2="' + Yp(Math.min(ym, sl * xm)) + '" stroke="' + c + '" stroke-dasharray="4 3" opacity=".8"/>'; }
+          pts.forEach((q) => { svg += '<circle cx="' + X(q.v * q.v) + '" cy="' + Yp(q.F) + '" r="3.5" fill="' + c + '"/>'; });
+        });
+        gEl.innerHTML = '<div>📏 장력 기록 ' + rec.length + '개 · F–v² 그래프</div><svg width="' + W + '" height="' + H + '" style="display:block;margin-top:3px">' + svg + '</svg>';
+      }
       return {
         update(dt) {
           const A = sim(); if (!A || !A.S) return; const S = A.S;
-          setMode(S);
+          setMode(S); drawG(S); drawSensor(A, S);
           if (S.mode === 'puck') { if (S.pk.run && PL.puck.playing) PL.puck.pause(); if (!PL.puck.playing && PL.puck.p === 0) demoP.on = false; puckScene(A, S); }
           else if (S.mode === 'dv') { if (!PL.dv.playing && PL.dv.p === 0) demoD.on = false; dvScene(A, S); }
           else if (S.mode === 'ball') ballScene(A, S);

@@ -815,7 +815,7 @@
         {
           title: '네 가지 동작 해 보기',
           goal: '자석의 N극으로 <b>넣기 · 빼기</b>, 코일 속에서 <b>1초 이상 멈추기</b>, 극을 바꿔 <b>S극으로 넣기</b>를 해 보세요.',
-          hint: '자석을 끌거나 ▶ 넣기 · ◀ 빼기 버튼을 써요. 극 바꾸기는 자석을 코일 밖으로 뺀 뒤에 할 수 있어요. 손으로 끌 때는 조금 빠르게 움직여야 바늘이 뚜렷이 움직여요.',
+          hint: '<span class="only2d">자석을 끌거나</span><span class="only3d">‘자석 위치’ 슬라이더를 움직이거나</span> ▶ 넣기 · ◀ 빼기 버튼을 써요. 극 바꾸기는 자석을 코일 밖으로 뺀 뒤에 할 수 있어요. <span class="only2d">손으로 끌 때는</span><span class="only3d">슬라이더로 옮길 때는</span> 조금 빠르게 움직여야 바늘이 뚜렷이 움직여요.',
           setup() { S.seen = {}; S.stillT = 0; setScene('obs'); },
           check: () => S.seen.inN && S.seen.outN && S.seen.still && S.seen.inS,
           hold: 0.5,

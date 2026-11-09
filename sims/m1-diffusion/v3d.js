@@ -51,6 +51,7 @@
       const dropLab = label('', drop, { size: 12, offset: [0, 0.6, 0] });
       /* 스포이트 · 향수병 이름표를 누르면 2D에서 스포이트 · 향수병을 누른 것과 같아요 */
       dropLab.tap(() => { const L = L2(); const b = document.getElementById(L && L.scene === 'perfume' ? 'sprayBtn' : 'dropBtn'); if (b && !b.disabled) b.click(); });
+      const friendLab = label('', [0, 0, 0], { size: 12.5, color: 'rgba(190,24,93,.92)' }); friendLab.show(false);   // 향수: 교실 반대편 친구 (2D와 같은 자리)
       const barLab = label('칸마다 입자 수', [0, -2.3, 1.7], { size: 11, offset: [0, 0, 0] });
       const boxLab = [label('', [0, 0, 0], { size: 12.5, color: 'rgba(200,50,30,.92)' }), label('', [0, 0, 0], { size: 12.5, color: 'rgba(40,90,220,.92)' })];
 
@@ -117,6 +118,7 @@
         barLab.show(showBars); barLab.obj = [0, -LY - 0.4, LZ + 0.9]; barLab.off = [0, -0.55, 0];
         drop.visible = sc !== 'temp'; drop.position.set(-LX + 0.45, LY + 0.5, 0); drop.material.color.setHex(S.color);
         dropLab.show(sc !== 'temp'); dropLab.set(sc === 'ink' ? '잉크 한 방울' : '향수병');
+        friendLab.show(sc === 'perfume'); friendLab.obj = [LX - 0.2, -LY + 0.35, 0]; friendLab.set(st && st.arrived >= 3 ? '🙂 반대편 친구: 향기가 나요!' : '🙂 반대편 친구');
         boxLab.forEach((l, k) => { l.show(sc === 'temp'); l.obj = [LX - 0.1, (k === 0 ? 1.55 : -1.55) + LY + 0.15, 0]; l.off = [-0.2, 0, 0]; });
         boxLab[0].set('뜨거운 물 60 °C'); boxLab[1].set('찬물 10 °C');
       }

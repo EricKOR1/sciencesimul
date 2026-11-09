@@ -82,15 +82,37 @@
         for (let i = 0; i <= 10; i++) { const xx = i * Math.PI / k / 2 * 1; /* 마디/배: cos(kx)=0 -> kx=π/2+mπ ; 배: kx=mπ */ }
         for (let m = 0; m < 12; m++) { const xn = (Math.PI / 2 + m * Math.PI) / k, xa = m * Math.PI / k; if (xn <= LEN + 1e-6) nodes.push(xn); if (xa <= LEN + 1e-6) ants.push(xa); }
         marks.forEach((mk, i) => { mk.visible = false; });
-        nodes.forEach((x) => { if (c < 10) { const mk = marks[c++]; mk.visible = st.sp; mk.material.color.setHex(0xef4444); mk.position.set(x - LEN / 2, -R - 0.35, 0); mk.userData.t = 'n'; } });
-        ants.forEach((x) => { if (c < 10) { const mk = marks[c++]; mk.visible = st.sp; mk.material.color.setHex(0x22c55e); mk.position.set(x - LEN / 2, -R - 0.35, 0); mk.userData.t = 'a'; } });
+        const A0 = ctx.lesson(), envOn = !!(A0 && A0.S && ((A0.game && A0.game.free) || (A0.S.flags && A0.S.flags.env))); st.env = envOn;
+        const spOn = st.sp && (envOn || st.mode !== 'tube');      // 모양 고르기 미션 동안에는 마디 · 배 표지(답)를 숨겨요
+        nodes.forEach((x) => { if (c < 10) { const mk = marks[c++]; mk.visible = spOn; mk.material.color.setHex(0xef4444); mk.position.set(x - LEN / 2, -R - 0.35, 0); mk.userData.t = 'n'; } });
+        ants.forEach((x) => { if (c < 10) { const mk = marks[c++]; mk.visible = spOn; mk.material.color.setHex(0x22c55e); mk.position.set(x - LEN / 2, -R - 0.35, 0); mk.userData.t = 'a'; } });
         const nm = marks.find((q) => q.visible && q.userData.t === 'n'), am = marks.find((q) => q.visible && q.userData.t === 'a');
-        lN.obj = nm || [0, -9, 0]; lA.obj = am || [0, -9, 0]; lN.off = lA.off = [0, -0.45, 0]; lN.show(!!nm && st.sp); lA.show(!!am && st.sp);
+        lN.obj = nm || [0, -9, 0]; lA.obj = am || [0, -9, 0]; lN.off = lA.off = [0, -0.45, 0]; lN.show(!!nm && spOn); lA.show(!!am && spOn);
         const lamv = lam();
-        if (st.mode === 'tube') info('<b>' + (st.type === 'open' ? '양쪽이 열린 관' : '한쪽이 닫힌 관') + ' · ' + st.n + '번째 정상파</b><br>λ = ' + (st.type === 'open' ? '2L/' + st.n : '4L/' + st.n) + ' = L의 ' + (lamv / LEN).toFixed(2) + '배<br>v = f·λ : 같은 관에서 파장이 짧을수록 진동수가 커요.');
+        /* 2D처럼 '모양 고르기' 미션을 마치기 전(env 미공개)에는 파장 식을 보여 주지 않아요 */
+        if (st.mode === 'tube') info('<b>' + (st.type === 'open' ? '양쪽이 열린 관' : '한쪽이 닫힌 관') + ' · ' + (st.type === 'closed' ? (st.n + 1) / 2 : st.n) + '번째 정상파</b><br>' + (envOn ? 'λ = ' + (st.type === 'open' ? '2L/' + st.n : '4L/' + st.n) + ' = L의 ' + (lamv / LEN).toFixed(2) + '배<br>v = f·λ : 같은 관에서 파장이 짧을수록 진동수가 커요.' : '공기 분자가 가장 크게 움직이는 곳과 거의 움직이지 않는 곳을 찾아보세요.'));
       }
       let lastInfo = '';
       setup();
+      /* 🔔 공명 실험: 수면(닫힌 끝)이 공기 기둥 길이 L을 따라 움직이고, 아래는 물이 차 있어요. 기록한 공명 위치 L₁ · L₂도 관에 표시해요 */
+      const CM = LEN / 110;                                    // 관 길이 8 = 110 cm (슬라이더 최대)
+      const water = new THREE.Mesh(new THREE.CylinderGeometry(R + 0.08, R + 0.08, 1, 40), new THREE.MeshStandardMaterial({ color: 0x38bdf8, roughness: 0.2, transparent: true, opacity: 0.55 }));
+      water.rotation.z = Math.PI / 2; water.visible = false; root.add(water);
+      const lSurf = label('수면 (닫힌 끝)', [0, 0, 0], { color: '#0369a1', size: 12 }); lSurf.show(false);
+      const recM = [1, 2].map((k) => { const r = new THREE.Mesh(new THREE.TorusGeometry(R + 0.2, 0.06, 10, 40), M(k === 1 ? 0xf97316 : 0xa855f7, { emissive: k === 1 ? 0xf97316 : 0xa855f7, emissiveIntensity: 0.5 })); r.rotation.y = Math.PI / 2; r.visible = false; root.add(r); return r; });
+      const recL = [1, 2].map((k) => label('', recM[k - 1], { color: k === 1 ? '#c2410c' : '#7e22ce', size: 12, offset: [0, R + 0.75, 0] }));
+      recL.forEach((l) => l.show(false));
+      function resScene(on, S, A) {
+        water.visible = on; lSurf.show(on);
+        if (!on) { recM.forEach((r) => (r.visible = false)); recL.forEach((l) => l.show(false)); return 0; }
+        const Lcm = S.rs.L / 10, xs = -LEN / 2 + Lcm * CM;
+        wall.visible = true; wall.position.x = xs; lC.show(false); lO2.show(false); ringsG.children[1].visible = false;
+        water.scale.y = Math.max(0.01, LEN / 2 - xs); water.position.x = (xs + LEN / 2) / 2;
+        lSurf.obj = [xs, -R - 0.9, 0];
+        [1, 2].forEach((k) => { const v = S.rs.rec[k]; const on2 = v != null; recM[k - 1].visible = on2; recL[k - 1].show(on2); if (on2) { recM[k - 1].position.x = -LEN / 2 + v * CM; recL[k - 1].set((k === 1 ? 'L₁ ' : 'L₂ ') + v.toFixed(1) + ' cm'); } });
+        marks.forEach((mk) => (mk.visible = false)); lN.show(false); lA.show(false);
+        return xs;
+      }
 
       /* ---- 🎺 관악기 · 🍾 병 불기 : 2D의 S.wd / S.bt 를 따라가요 ---- */
       const S0 = { PPM: 10, NW: 44, NB: 36 };
@@ -178,6 +200,7 @@
       return {
         update(dt) {
           const A = ctx.lesson(); if (!A || !A.S) return; const S = A.S;
+          st.t += Math.min(dt, 0.05) * 2.6;      // 공기 분자가 관 방향으로 앞뒤로 진동해요
           const isTube = S.mode === 'tube', isRes = S.mode === 'res' || S.mode === 'meas', isW = S.mode === 'wind', isB = S.mode === 'bottle';
           const other = isW || isB;
           wG.visible = isW; bG.visible = isB;
@@ -192,13 +215,27 @@
           if (!ringsG.visible) { ringsG.visible = true; setup(); }
           let ty, nn, amp = 0.55;
           const md = isTube ? 'tube' : 'res'; if (st.mode !== md) { st.mode = md; lastInfo = ''; if (isTube) setup(); }   // 공명 · 음속 화면에서 관 속 정상파 안내로 덮어쓰지 않게
-          if (isTube) { ty = S.tb.type; nn = S.tb.n; } else {
+          if (isTube) { ty = S.tb.type; nn = ty === 'closed' ? 2 * S.tb.n - 1 : S.tb.n; } else {      // 닫힌 관의 n번째 정상파는 (2n − 1)배음 (2D lamTube와 같게)
             const r = S.mode === 'res' ? S.rs : S.ms, Lcm = S.mode === 'res' ? S.rs.L / 10 : (S.ms.run ? S.ms.run.L || 0 : 0), lam = A.lamOf(r.f, r.t) * 100; ty = 'closed';
             const ratio = (Lcm + A.E_CM) / (lam / 4); nn = Math.max(1, Math.round((ratio + 1) / 2) * 2 - 1); amp = 0.55 * (S.mode === 'res' ? A.loud(Lcm, r.f, r.t) : 1);
             const key = 'r' + nn + '|' + Math.round(Lcm * 10) + '|' + r.f + '|' + r.t; if (key !== lastInfo) { lastInfo = key; info(S.mode === 'res' ? '<b>🔔 공명 실험</b> · 소리굽쇠 ' + r.f + ' Hz · 기온 ' + r.t + ' °C · 공기 기둥 길이 L = <b>' + (Math.round(Lcm * 10) / 10).toFixed(1) + ' cm</b><br>소리의 세기 ' + Math.round(100 * A.loud(Lcm, r.f, r.t)) + ' % → ' + (A.loud(Lcm, r.f, r.t) > 0.9 ? '<b>공명! 소리가 가장 커요</b> (닫힌 끝은 마디, 열린 끝 쪽은 배)' : 'L을 바꿔 소리가 가장 커지는 위치를 찾아요.') + '<br>공명할 때 공기 기둥의 진동과 소리굽쇠의 진동수가 같아져 정상파가 생겨요.' : '<b>📏 음속 측정</b> · 소리굽쇠 ' + r.f + ' Hz · 기온 ' + r.t + ' °C<br>이웃한 공명 위치의 차 ΔL = λ/2 이므로 λ = 2ΔL, 소리의 속력 v = fλ 로 구해요.'); }
           }
           st.amp = amp;
-          if (st.type !== ty || st.n !== nn) { st.type = ty; st.n = nn; setup(); }
+          if (S.mode === 'res') {
+            if (st.type !== ty) { st.type = ty; setup(); }
+            const xs = resScene(true, S, A), lamU = A.lamOf(S.rs.f, S.rs.t) * 100 * CM, kf = TAU / lamU;
+            for (let i = 0; i < NS; i++) {
+              const x0 = base[i * NR][0], inAir = x0 < xs - 0.03, sv = Math.sin(kf * (xs - x0)) * Math.cos(st.t) * amp;
+              const d = clamp(Math.cos(kf * (xs - x0)) * Math.cos(st.t), -1, 1);
+              tmpC.copy(colB); if (d > 0) tmpC.lerp(colC, d * amp / 0.55); else tmpC.lerp(colA, -d * amp / 0.55);
+              for (let j = 0; j < NR; j++) { const b = base[i * NR + j]; if (inAir) m4.makeTranslation(b[0] + sv, b[1], b[2]); else m4.makeScale(0, 0, 0); parts.setMatrixAt(i * NR + j, m4); parts.setColorAt(i * NR + j, tmpC); }
+            }
+            parts.instanceMatrix.needsUpdate = true; parts.instanceColor.needsUpdate = true;
+            spk.position.x = -LEN / 2 - 0.9 + 0.06 * Math.cos(st.t); fork.position.x = spk.position.x - 0.45;
+            return;
+          }
+          if (water.visible) { resScene(false); setup(); }
+          if (st.type !== ty || st.n !== nn || (isTube && st.env !== !!((A.game && A.game.free) || (S.flags && S.flags.env)))) { st.type = ty; st.n = nn; setup(); }
           const k = kk();
           for (let i = 0; i < NS; i++) {
             const x0 = base[i * NR][0], s = disp(x0, st.t) * amp, ds = -k * Math.sin(k * (x0 + LEN / 2)) * Math.cos(st.t); // 밀도 ~ -∂s/∂x

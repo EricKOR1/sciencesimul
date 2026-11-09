@@ -94,8 +94,12 @@
         seaH = (1010 - pres) / 80 * 0.9; txt();
       }
       let seaH = 0;
+      /* 3단계: 판정 미션을 마치기 전에는 위험·안전 반원(답)을 보여 주지 않아요 (2D와 같게) */
+      const rv3 = () => { try { const l = L2(); return !!(l && l.S && l.S.reveal); } catch (e) { return false; } };
+      let rvLast = null;
       function txt() {
-        if (ctx.level === 3) info('<b>위험 반원</b>(진행 방향 오른쪽): 풍속 = 회전 풍속 + 이동 속도 = 40 + 8 = <b>48 m/s</b><br><b>안전 반원</b>(왼쪽): 40 − 8 = <b>32 m/s</b> (이동 속도 30 km/h ≈ 8 m/s). ▶ 로 A·B 지점의 풍속과 풍향(화살표)을 비교해 보세요.');
+        if (ctx.level === 3 && !rv3()) info('태풍은 <b>북쪽</b>으로 30 km/h(약 8 m/s)로 움직여요. A는 경로의 동쪽, B는 서쪽이에요.<br>▶ 로 태풍을 지나가게 하며 A·B 지점의 풍속과 풍향(화살표)을 비교해 보세요.');
+        else if (ctx.level === 3) info('<b>위험 반원</b>(진행 방향 오른쪽): 풍속 = 회전 풍속 + 이동 속도 = 40 + 8 = <b>48 m/s</b><br><b>안전 반원</b>(왼쪽): 40 − 8 = <b>32 m/s</b> (이동 속도 30 km/h ≈ 8 m/s). ▶ 로 A·B 지점의 풍속과 풍향(화살표)을 비교해 보세요.');
         else info('중심 기압 <b>' + pres + ' hPa</b> (주변 1010 hPa) → 해수면 상승 약 <b>' + (1010 - pres) + ' cm</b><br><b>눈</b>(하강 기류, 바람 약함) – <b>눈벽</b>(풍속·강수 최대 40 m/s) – 나선 구름 띠. ▶ 로 태풍이 관측점 위를 지나갈 때를 봐요.');
       }
       { const l = L2(); if (l && l.S && typeof l.S.pres === 'number') pres = clamp(l.S.pres, 930, 1010); }
@@ -108,7 +112,7 @@
         clouds.forEach((m) => { m.material.clippingPlanes = cut ? [cutPlane] : []; m.material.needsUpdate = true; });
         flow.visible = showFlow; danger.visible = safe.visible = showDg; prof.visible = profBase.visible = cut; LB.vp.show(cut); LB.dg.show(showDg); LB.sf.show(showDg); LB.mv.show(showDg); trk.visible = showDg;
         LB.inn.show(showFlow); LB.out.show(showFlow); LB.up.show(false); LB.band.show(!cut);
-        if (ctx.level === 3) { danger.visible = safe.visible = true; LB.dg.show(true); LB.sf.show(true); LB.mv.show(true); trk.visible = true; }
+        if (ctx.level === 3) { const rv = rv3(); rvLast = rv; danger.visible = safe.visible = rv; LB.dg.show(rv); LB.sf.show(rv); LB.mv.show(true); trk.visible = true; bDg.style.display = 'none'; } else bDg.style.display = '';
         txt();
       }
       /* 관측점: 태풍은 가운데에 두고 관측점이 -10 ~ +10시간 동안 지나가요(태풍이 북쪽으로 30 km/h로 가는 것과 같은 상대 운동). 1단계는 중심 바로 위, 3단계는 A(동쪽 100 km)·B(서쪽 100 km) */
@@ -160,6 +164,7 @@
       return {
         update(dt, t) {
           this.sync();
+          if (ctx.level === 3 && rv3() !== rvLast) apply();
           { const l = L2(); if (ctx.level === 3 && l && l.S && typeof l.S.ti === 'number' && !pl.playing && Math.abs(l.S.ti - tNow) > 0.05) { syncing = true; pl.set((l.S.ti + 10) / 20); syncing = false; } }
           /* 바다 물결 + 낮은 기압으로 해수면 상승 */
           for (let i = 0; i < sp.count; i++) {

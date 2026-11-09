@@ -62,7 +62,8 @@
           const rel = s.rel >= 100 ? Math.round(s.rel).toLocaleString('ko-KR') : s.rel >= 10 ? Math.round(s.rel) : s.rel.toFixed(1);
           return '<b>규소 반도체</b> · 불순물(인) <b>' + DNAME[s.d] + '</b> · 온도 <b>' + Math.round(s.T) + ' °C</b> · 빛 <b>' + Math.round(s.L) + ' %</b><br>자유전자 ' + s.n + '개 (<span style="color:#34d399">초록</span>: 불순물이 내놓은 전자, <span style="color:#62b4ff">파랑</span>: 열·빛으로 생긴 전자)<br>전류는 순수한 규소(20 °C)의 약 <b>' + rel + '배</b>';
         }
-        const nm = MATS[s.mat].name;
+        const S2 = lesson() && lesson().S, hideKind = !!(S2 && S2.sub === 'cls' && !S2.model.clsOK);   // 구분하기 미션의 답을 미리 알려 주지 않아요
+        const nm = hideKind ? MATS[s.mat].name.replace(/ \(.*\)$/, '') : MATS[s.mat].name;
         const base = s.kind === 'metal' ? '원자 사이를 자유롭게 돌아다니는 <b>자유전자</b>가 많아요.' : s.kind === 'insul' ? '전자가 원자에 단단히 묶여 <b>자유전자가 없어요</b>.' : '자유전자가 <b>아주 적어요</b>.';
         return '<b>' + nm + '</b> · 자유전자 <b>' + s.n + '개</b><br>' + base + '<br>' + (s.volt ? '⚡ 전압을 걸어 자유전자가 + 극 쪽으로 이동해요.' : '전압을 걸지 않으면 전자는 제멋대로 움직여요. (옆의 <b>⚡ 전압 걸기</b>)');
       }
@@ -88,7 +89,7 @@
       return {
         update(dt, t) {
           const s = readState(); cur = s;
-          const key = scene + '|' + (s.mat || '') + '|' + s.kind + '|' + s.n + '|' + s.green + '|' + (s.volt ? 1 : 0) + '|' + (s.d == null ? '' : s.d + ',' + Math.round(s.T) + ',' + Math.round(s.L));
+          const S3 = lesson() && lesson().S, key = (S3 && S3.sub === 'cls' && !S3.model.clsOK ? 'h|' : '') + scene + '|' + (s.mat || '') + '|' + s.kind + '|' + s.n + '|' + s.green + '|' + (s.volt ? 1 : 0) + '|' + (s.d == null ? '' : s.d + ',' + Math.round(s.T) + ',' + Math.round(s.L));
           if (key !== lastKey) { lastKey = key; applyKind(s); }
           const Tm = scene === 'semi' ? Math.min(1, (s.T - 20) / 100) : 0.3, amp = 0.04 + Tm * 0.09;
           for (let a = 0; a < A; a++) {

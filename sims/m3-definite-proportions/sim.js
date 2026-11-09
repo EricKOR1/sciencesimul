@@ -1121,7 +1121,7 @@
           {
             title: '설탕물은 어떨까?', scene: 'sugar', focus: 'sugarBtn',
             goal: '설탕물은 혼합물이에요. 설탕과 물을 마음대로 넣어 서로 다른 설탕 : 물 비율을 3가지 만들어 보세요.',
-            hint: '🥄 설탕과 💧 물을 번갈아 넣어요. 오른쪽 상자에 비율이 쌓여요.',
+            hint: '🥄 설탕과 💧 물을 번갈아 넣어요. <span class="only2d">오른쪽 상자에</span><span class="only3d">3D 화면의 🧃 만든 비율 판에</span> 비율이 쌓여요.',
             setup() { sgReset(); setScene('sugar', true); },
             check: () => SG.hist.length >= 3, hold: 0.5,
             status: () => '만든 비율 <b>' + SG.hist.length + '/3</b>가지',

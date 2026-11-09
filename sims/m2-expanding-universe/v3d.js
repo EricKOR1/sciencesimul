@@ -43,6 +43,11 @@
       const arcs = ST.map(() => { const m = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.9, depthTest: false })); m.renderOrder = 5; balloon.add(m); return m; });
       const dLab = ST.map((s) => { const l = label('', [0, 0, 0], { color: 'rgba(20,30,60,.9)' }); return l; });
       const refLab = label('기준', [0, 0, 0], { color: 'rgba(255,211,77,.95)' }); refLab.el.style.color = '#1b2333';
+      /* 처음(1배) 풍선 크기를 점선 원으로 (2D의 '점선 = 처음 크기'와 같아요): 늘 화면을 향해요 */
+      const ringPts = []; for (let i = 0; i < 90; i++) { const a = i / 90 * Math.PI * 2; ringPts.push(Math.cos(a) * R0, Math.sin(a) * R0, 0); }
+      const ringG = new THREE.BufferGeometry(); ringG.setAttribute('position', new THREE.Float32BufferAttribute(ringPts, 3));
+      const ring0 = new THREE.Points(ringG, new THREE.PointsMaterial({ color: 0xc9d8f5, size: 3, sizeAttenuation: false, transparent: true, opacity: 0.85, depthTest: false })); ring0.renderOrder = 7; balloon.add(ring0);
+      const ringLab = label('점선 = 처음 크기', [0, -R0 - 0.35, 0], { size: 11.5, color: 'rgba(51,65,85,.9)' });
 
       /* ---------- 은하 격자 ---------- */
       const G = 5, NG = G * G * G, SPC = 0.78;
@@ -76,6 +81,17 @@
         },
       });
       controls.button('이름표', () => { labs = !labs; });
+      /* 3D 화면 오른쪽 위의 작은 판 (휴대폰에서는 오른쪽 아래): 2D 화면의 표 · 기록을 3D에서도 보여 줘요 */
+      function v3xPan(cls) { const vEl = ctx.renderer.domElement.parentElement;
+        if (!document.getElementById('v3x-css')) { const c = document.createElement('style'); c.id = 'v3x-css'; c.textContent =
+          '.v3x-pan{position:absolute;right:10px;top:10px;max-width:52%;padding:6px 9px;border-radius:12px;background:rgba(8,12,24,.76);color:#fff;font-size:12px;line-height:1.35;pointer-events:none;z-index:2}' +
+          '.v3x-pan .h{font-weight:800;margin-bottom:3px}.v3x-pan table{border-collapse:collapse}.v3x-pan th,.v3x-pan td{padding:1px 5px;text-align:left;white-space:nowrap}.v3x-pan th{color:#9fb0cc;font-weight:700;font-size:11px}.v3x-pan .q{color:#7d8aa3}.v3x-pan .now td{background:rgba(255,255,255,.1)}' +
+          '.v3x-pan .c{display:inline-block;margin:1px 2px;padding:1px 6px;border-radius:8px;background:rgba(255,255,255,.14)}.v3x-pan .ok{color:#86efac}.v3x-pan .bad{color:#fca5a5}' +
+          '@media (max-width:599px){.v3x-pan{top:auto;bottom:28px;right:6px;font-size:10.5px;max-width:64%;padding:4px 6px}.v3x-pan th{font-size:9.5px}.v3x-pan th,.v3x-pan td{padding:0 3px}}';
+          document.head.appendChild(c); }
+        const el = document.createElement('div'); el.className = 'v3x-pan' + (cls ? ' ' + cls : ''); el.style.display = 'none'; vEl.appendChild(el);
+        let sig = null; return { set(h) { if (h === sig) return; sig = h; el.style.display = h ? '' : 'none'; if (h) el.innerHTML = h; }, el }; }
+      const heatPan = v3xPan();
       let k0 = 0;
       function arcGeom(a, b, R) {
         const ang = a.angleTo(b), pts = [];
@@ -104,9 +120,15 @@
             });
             const rp = ST[ref].v.clone().multiplyScalar(R * 1.1); refLab.obj = [rp.x, rp.y + 0.45, rp.z]; refLab.show(labs);
             lRef.show(false);
+            { const past = !!(sm() && sm().isPast && sm().isPast()), on = s > 1.05 && !past; ring0.visible = on; ring0.quaternion.copy(ctx.camera.quaternion); ringLab.show(on && labs);
+              // 🌡️ 우주의 온도 막대 (2D와 같은 값): 시간을 되감을수록 높아져요
+              if (past && sm().heat) { const h = sm().heat(), pc = Math.round(4 + 96 * Math.pow(h, 0.7));
+                heatPan.set('<div class="h">🌡️ 우주의 온도</div><div style="width:120px;height:10px;border-radius:6px;background:rgba(255,255,255,.18);overflow:hidden"><div style="width:' + pc + '%;height:100%;background:linear-gradient(90deg,#38bdf8,#fb923c,#fff3c0)"></div></div><div style="margin-top:2px">' + (h > 0.85 ? '💥 아주 뜨거워요' : h > 0.4 ? '뜨거워요' : '지금과 비슷해요') + '</div>');
+              } else heatPan.set(''); }
             const key = 'b' + ref + (s < 0.95 ? 'p' : s > 1.05 ? 'f' : 'n');
             if (key !== lastInfo) { lastInfo = key; info(s < 0.95 ? '<b>우주의 과거</b>: 풍선이 작을수록 스티커들이 서로 가까웠어요. 더 거슬러 가면 <b>한 점</b>에 모여요.' : '풍선을 부풀리며 스티커(은하)의 <b>크기</b>와 스티커 사이의 <b>거리</b>가 어떻게 달라지는지 보세요.<br>숫자는 기준 스티커에서 잰 거리예요.'); }
           } else {
+            ring0.visible = false; ringLab.show(false); heatPan.set('');
             // 격자: 기준 은하를 중심에 두고 모두 s배로 멀어져요
             const hr = home[latRef]; let n = 0; const pa = trail.geometry.attributes.position;
             for (let i = 0; i < NG; i++) {

@@ -104,6 +104,17 @@
       // 표본이 놓인 바탕 암석
       const matrix = new THREE.Mesh(dispIco(1, 5, 0.1, 2.0, 0.17, 1.55), mat(0xffffff, { map: rockT, roughness: 0.95 })); matrix.position.y = 0.0; matrix.receiveShadow = true; root.add(matrix);
 
+      /* 색만으로 구별해 볼까? (2D의 'blind' 장면): 이름 없이 A · B · C 세 표본을 나란히 (2D와 같은 순서: 황철석 · 금 · 황동석) */
+      const BLIND = ['pyrite', 'gold', 'chalco'], blindG = new THREE.Group(); blindG.visible = false; root.add(blindG);
+      const blindL = BLIND.map((k, i) => { const c = spec[k].clone(); c.visible = true; c.scale.setScalar(0.62); c.position.set((i - 1) * 2.6, 0.25, 0); blindG.add(c);
+        const L = label('ABC'[i] + ' · 겉보기 색: 노란색', [(i - 1) * 2.6, 1.9, 0], { size: 13, color: 'rgba(255,211,77,.95)' }); L.el.style.color = '#1b2333'; L.show(false); return L; });
+      let blindOn = false;
+      function setBlind(on) {
+        if (on === blindOn) return; blindOn = on; blindG.visible = on; blindL.forEach((L) => L.show(on));
+        KEYS.forEach((q) => { spec[q].visible = !on && q === sel; }); labN.show(!on); matrix.visible = !on; { const bar = ctx.renderer.domElement.closest('.v3-wrap').querySelector('.v3-ctl'); if (bar) bar.style.display = on ? 'none' : ''; }
+        if (on) info('<b>금 · 황동석 · 황철석</b>이 하나씩 섞여 있어요 (A · B · C).<br>색만 보고 어느 것이 금인지 알 수 있을까요? 돌려 보며 비교해 봐요.'); else setSel(sel);
+        if (ctx.orbit) ctx.orbit.dist = on ? (PHN ? 14 : 10) : (PHN ? 10 : 7.6);
+      }
       let sel = 'pyrite', mag = false, clipT = 0, last2D = null;
       function setSel(k, push) {
         sel = k; KEYS.forEach((q) => { spec[q].visible = q === k; });
@@ -120,6 +131,8 @@
       return {
         sync() { const s = window.__sim && window.__sim.S; if (s && KEYS.includes(s.sel) && s.sel !== sel) { setSel(s.sel); seg.set(sel); } },
         update(dt, t) {
+          { const s2 = sm() && sm().S; setBlind(!!(s2 && s2.scene === 'blind')); }
+          if (blindOn) { blindG.children.forEach((c, i) => { c.rotation.y = t * (0.25 + i * 0.05); }); return; }
           this.sync();   // 2D에서 표본을 바꾸면 3D도 따라가요
           const g = spec[sel]; g.rotation.y = 0;
           if (sel === 'magnetite') {

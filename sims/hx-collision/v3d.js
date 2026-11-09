@@ -275,11 +275,30 @@
       function reset() { st.phase = 'idle'; st.xc = -7.5; st.nx = 0; st.beadU = -3; st.drift = 0; st.rp = 0; st.msg = ''; lMsg.show(false); }
       reset(); place(0);
       let shown = '', zPrev = '';
+      /* 결과 표 (2D 오른쪽의 '방향 × 속력' 표와 같아요): 충돌시킨 조합의 칸이 채워져요 */
+      const tblEl = document.createElement('div'); tblEl.className = 'hxc-tbl'; ctx.renderer.domElement.parentElement.appendChild(tblEl);
+      if (!document.getElementById('hxc-tbl-css')) { const cs = document.createElement('style'); cs.id = 'hxc-tbl-css'; cs.textContent =
+        '.hxc-tbl{position:absolute;right:10px;bottom:36px;padding:6px 8px;border-radius:12px;background:rgba(8,12,24,.78);color:#e5e7eb;font-size:12px;font-weight:800;pointer-events:none;z-index:3}' +
+        '.hxc-tbl table{border-collapse:collapse}.hxc-tbl th,.hxc-tbl td{padding:3px 7px;text-align:center;border:1px solid rgba(255,255,255,.18)}.hxc-tbl th{color:#cbd5e1;font-weight:800}' +
+        '.hxc-tbl td.r{background:#15803d;color:#fff}.hxc-tbl td.b{background:rgba(220,38,38,.55);color:#fff}.hxc-tbl td.q{color:#94a3b8}.hxc-tbl .h{margin-bottom:3px}' +
+        '@media (max-width:599px){.hxc-tbl{font-size:10.5px;padding:4px 5px;right:6px;bottom:30px}.hxc-tbl th,.hxc-tbl td{padding:2px 4px}}';
+        document.head.appendChild(cs); }
+      let tblSig = null;
+      function drawTbl(sc) {
+        const z = lb2(), tr = (z && z.tried) || {}, sig = sc === 'lab' ? JSON.stringify(tr) : '';
+        if (sig === tblSig) return; tblSig = sig;
+        if (sc !== 'lab') { tblEl.style.display = 'none'; return; }
+        tblEl.style.display = '';
+        const cell = (k) => tr[k] === 'react' ? '<td class="r">반응 ✓</td>' : tr[k] === 'bounce' ? '<td class="b">튕김</td>' : '<td class="q">?</td>';
+        const n = ['ok-fast', 'ok-slow', 'bad-fast', 'bad-slow'].filter((k) => tr[k]).length;
+        tblEl.innerHTML = '<div class="h">📋 결과 표 ' + n + ' / 4</div><table><tr><th></th><th>빠름</th><th>느림</th></tr><tr><th>방향 맞음</th>' + cell('ok-fast') + cell('ok-slow') + '</tr><tr><th>방향 틀림</th>' + cell('bad-fast') + cell('bad-slow') + '</tr></table>';
+      }
       return {
         update(dt, tt) {
           dt = Math.min(dt, 0.05);
           const w0 = W2(), sc = (w0 && w0.S && w0.S.mode) || 'lab';
           if (sc !== sceneNow) applyScene(sc);
+          drawTbl(sc);
           if (sc !== 'lab') {
             let html = '';
             if (sc === 'box') {

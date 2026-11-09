@@ -1213,7 +1213,7 @@
       missions: [
         {
           title: '화석 채집하기', goal: '절벽의 지층을 <b>위에서부터 차례로 4개 이상</b> 파서 화석을 채집하세요. 지층이나 <b>⛏ 다음 지층 파기</b>를 눌러요.',
-          hint: '맨 위 지층 1부터 눌러요. 반짝이는 고리가 다음에 팔 곳을 알려 줘요.',
+          hint: '맨 위 지층 1부터 눌러요. <span class="only2d">반짝이는 고리가 다음에 팔 곳을 알려 줘요.</span><span class="only3d">‘지층 1’ 같은 이름표를 눌러도 그 지층을 파요.</span>',
           setup() { ensure('strata'); },
           check: () => ST.dug >= 4, hold: 0.4,
           status: () => mark(ST.dug >= 4) + ' 파낸 지층 ' + ST.dug + ' / 6 (4개 이상)',

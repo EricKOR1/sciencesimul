@@ -48,7 +48,7 @@
       // 연주시차 각 (별에서 태양 방향 ↔ 지구 방향)
             const arcL = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0xff8a6a })); root.add(arcL);
 
-      const lSun = label('태양', sun, { offset: [0, -0.9, 0] }), lE = label('지구', earth, { offset: [0, 0.65, 0] }), lJan = label('1월의 지구', eJan, { offset: [-0.2, -0.5, 0] }), lJul = label('7월의 지구', eJul, { offset: [0.2, -0.5, 0] }), lS = label('가까운 별', star, { offset: [0.6, 0, 0] });
+      const lSun = label('태양', sun, { offset: [0, -0.9, 0] }), lE = label('지구', earth, { offset: [0, 0.65, 0] }), lJan = label('1월의 지구', eJan, { offset: [-0.2, -0.5, 0] }), lJul = label('7월의 지구', eJul, { offset: [0.2, -0.5, 0] }), lS = label('별 S (가까운 별)', star, { offset: [0.6, 0, 0] });
       const lmJ = label('1월에 보이는 위치', mJan, { offset: [0, -0.7, 0], color: 'rgba(30,140,170,.95)' }), lmL = label('7월에 보이는 위치', mJul, { offset: [0, -0.7, 0], color: 'rgba(30,140,170,.95)' }), lBg = label('아주 먼 별(배경)', [-DOME * 0.6, DOME * 0.55, 0]);
       const lP = label('연주시차', [0, 0, 0], { color: 'rgba(255,211,77,.95)' }); lP.el.style.color = '#1b2333';
       let dist = 3, showL = true, labs = true;

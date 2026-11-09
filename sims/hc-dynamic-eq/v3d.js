@@ -12,6 +12,19 @@
     autoRotate: 0.1,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
+      /* 미션 보조 판: 미션이 말하는 표·기록·카드를 3D 화면 구석에 작게 보여 줘요 (2D 상태를 그대로 읽어요) */
+      const mxBox = (pos) => {
+        const v = ctx.renderer.domElement.parentElement;
+        if (!document.getElementById('mx3d-css')) { const s = document.createElement('style'); s.id = 'mx3d-css'; s.textContent =
+          '.mx3d{position:absolute;z-index:3;padding:6px 8px;border-radius:12px;background:rgba(8,12,24,.8);color:#fff;font-size:12px;line-height:1.35;pointer-events:none;max-width:48%;box-shadow:0 4px 14px rgba(0,0,0,.35)}.mx3d:empty{display:none}' +
+          '.mx3d.tr{right:10px;top:10px}.mx3d.br{right:10px;bottom:34px}.mx3d.bl{left:10px;bottom:10px}.mx3d .h{font-weight:900;margin-bottom:3px}' +
+          '.mx3d table{border-collapse:collapse}.mx3d th,.mx3d td{padding:1px 5px;text-align:center;white-space:nowrap}.mx3d th{color:#b9c6e4;font-weight:800}.mx3d td:first-child,.mx3d th:first-child{text-align:left}' +
+          '.mx3d .on{color:#ffd34d;font-weight:800}.mx3d .ok{color:#7ee2a8;font-weight:800}.mx3d .no{color:#ff9a9a;font-weight:800}.mx3d .dim{color:#8d99b3}.mx3d tr.sel td{background:rgba(255,211,77,.16)}' +
+          '@media (max-width:599px){.mx3d{font-size:10.5px;padding:4px 6px;max-width:60%}.mx3d.tr{top:auto;bottom:30px}.mx3d th,.mx3d td{padding:0 3px}}';
+          document.head.appendChild(s); }
+        const el = document.createElement('div'); el.className = 'mx3d ' + (pos || 'tr'); v.appendChild(el);
+        let last = ''; el.put = (h) => { if (h !== last) { last = h; el.innerHTML = h; } }; return el;
+      };
       const clamp = (x, a, b) => Math.max(a, Math.min(b, x)), sm = (x) => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
       const PU = 0.0003;
       const SG = new THREE.SphereGeometry(1, 16, 12);
@@ -63,10 +76,13 @@
       const rowP = rowOf();
       const tOf = (p) => 60 * clamp(p / 0.85, 0, 1);
 
+      const stampEl = mxBox('br'); stampEl.style.background = 'rgba(8,12,24,.55)';
       return {
         update(dt, t) {
           const Z = ctx.lesson(); if (!Z) return; dt = Math.min(dt, 0.05);
           const S = Z.S, mode = S.mode, BX = Z.BX;
+          // “평형” 도장: 두 속도가 같아져 1초쯤 지나면 2D처럼 도장이 찍혀요
+          stampEl.put(mode === 'model' && S.md && S.md.stamp > 0.5 ? '<div style="font-size:22px;font-weight:900;color:#3ddc84;border:3px solid #3ddc84;border-radius:10px;padding:2px 12px;transform:rotate(-10deg)">✔ 평형</div>' : '');
           const conc = mode === 'conc';
           rowP.style.display = conc ? '' : 'none'; if (!conc && pl.playing) pl.pause();
           const sg = [mode, S.cc.A.run, S.cc.B.run, S.cc.A.ts, S.cc.B.ts].join('|'); if (sg !== sig) { sig = sg; if (own) { own = false; pl.pause(); pl.set(0); } }

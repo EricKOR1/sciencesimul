@@ -231,6 +231,7 @@
         viewEl.addEventListener('pointerdown', (e) => { down = { x: e.clientX, y: e.clientY }; });
         viewEl.addEventListener('pointerup', (e) => {
           if (!down) return; const mv = Math.hypot(e.clientX - down.x, e.clientY - down.y); down = null; if (mv > 6) return;
+          if (e.target && e.target.closest && e.target.closest('.v3-lab, .v3-ctl, .v3-info, .sm-card, .sm-tray')) return;   // 이름표를 누른 것은 이름표의 천체로만 (옆 천체가 다시 잡히지 않게)
           const L = ctx.lesson(); if (!L || !L.tapBody3D) return;
           const R = dom.getBoundingClientRect(), ex = e.clientX - R.left, ey = e.clientY - R.top;
           let best = null, bd = 34;

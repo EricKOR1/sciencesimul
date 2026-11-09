@@ -2356,6 +2356,7 @@
     bench(n) { const t0 = performance.now(); let mx = 0; for (let i = 0; i < n; i++) { const a = performance.now(); update(1 / 60); draw(now()); mx = Math.max(mx, performance.now() - a); } return { avg: (performance.now() - t0) / n, max: mx }; },
     watchAll() { ARROWS.forEach((a) => (TH.watched[a.id] = true)); },
     solveNames() { const used = {}; B2.cards.forEach((c) => { const a = ARROWS.find((q) => q.name === c.label && !used[q.id]); used[a.id] = 1; c.slot = a.id; c.x = a.slot.cx; c.y = a.slot.cy; c.s = 1; }); },
+    expRows() { return EXP_KEYS.map((k) => ({ k, icon: EXPS[k].icon, name: EXPS[k].name, mB: X.rec[k].mB, mA: X.rec[k].mA, vB: X.rec[k].vB, vA: X.rec[k].vA })); },
     expDone(key) { selectExp(key, true); X.f = 1; X.dir = 0; X.done[key] = true; X.rec[key].mA = EXPS[key].mass; X.rec[key].vA = EXPS[key].vB; X.badge = 1; X.flash = 1; refreshUI(); },
     solveSort() { B4.cards.forEach((c) => { c.bin = c.ans; c.order = ++placeLife.n; }); layoutBins(false); },
     wrongSort() { B4.cards.forEach((c, i) => { c.bin = i === 0 ? 'melt' : c.ans; c.order = ++placeLife.n; }); layoutBins(false); },

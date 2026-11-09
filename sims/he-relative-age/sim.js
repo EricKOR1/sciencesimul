@@ -1484,7 +1484,7 @@
         {
           title: '부정합 세 가지 분류', manual: true,
           goal: '단면 가·나·다의 부정합을 <b>부정합면 아래 지층의 상태</b>로 분류하고 <b>✔ 확인하기</b>를 눌러요.',
-          hint: '부정합면(붉은 점선) 아래를 보세요. 줄무늬가 수평인지, 기울었는지, 줄무늬 없이 알갱이 모양인지 살펴봐요.',
+          hint: '부정합면(붉은 <span class="only2d">점선</span><span class="only3d">선</span>) 아래를 보세요. 줄무늬가 수평인지, 기울었는지, 줄무늬 없이 알갱이 모양인지 살펴봐요.',
           setup() { S.unc.seqOn = false; S.types.ans = [null, null, null]; setView('type'); },
           status: () => '고른 단면 ' + S.types.ans.filter((a) => a).length + ' / 3',
           check: () => {

@@ -61,7 +61,7 @@
         lens.scale.set(0.2 + 0.2 * near, 0.62, 0.62); cil.forEach((m) => { m.position.y = Math.sign(m.position.y) * (0.95 - 0.12 * near); });
         obj.position.x = -6.4 + (1 - near) * -0 + near * 2.6; const s = 1 - near * 0.1; obj.scale.setScalar(1);
         setRays(pr - 0.06);
-        info('<b>눈</b> · 어두우면 동공이 커지고, 밝으면 작아져요.<br>가까운 물체를 볼 때 수정체가 <b>두꺼워져요</b>(섬모체 수축).<br>상은 망막에 <b>거꾸로</b> 맺혀 시각 신경으로 가요.' + (sharpNow == null ? '' : '<br>망막의 상: ' + (sharpNow ? '<b style="color:#86efac">선명해요!</b>' : '<b style="color:#fcd34d">흐릿해요</b> (수정체 두께가 바뀌는 중)')));
+        info('<b>눈</b> · <b>밝기</b>를 바꾸면 동공(홍채)이, <b>물체까지 거리</b>를 바꾸면 수정체가 어떻게 달라지는지 살펴봐요.<br>상은 망막에 <b>거꾸로</b> 맺혀 시각 신경으로 가요.' + (sharpNow == null ? '' : '<br>망막의 상: ' + (sharpNow ? '<b style="color:#86efac">선명해요!</b>' : '<b style="color:#fcd34d">흐릿해요</b> (수정체 두께가 바뀌는 중)')));
       }
       [['각막', [-1.75, 0.35, -0.2]], ['홍채', [-0.95, 1.0, -0.2]], ['수정체', [-0.55, 0.0, 0.0]], ['섬모체', [-0.6, -1.12, -0.12]], ['망막', [R * 0.7, -1.18, 0.0]], ['시각 신경', [R + 1.0, -0.35, 0.0]]].forEach(([t, p]) => L('eye', t, p));
       /* ================= 귀 ================= */
@@ -267,7 +267,7 @@
             const k = b + '|' + d + '|' + (S.adj.sharp ? 1 : 0); sharpNow = S.scene === 'adjust' ? !!S.adj.sharp : null;
             if (k !== sig) { sig = k; bright = b; dist = d; eyeUpdate(); }
             const nn = S.scene === 'blind' ? '<br><span style="color:#fcd34d">맹점: 시각 신경이 모여 눈 밖으로 나가는 곳이라 상이 맺혀도 보이지 않아요.</span>' : '';
-            if (nn !== infoK) { infoK = nn; eyeUpdate(); if (nn) info('<b>눈</b> · 어두우면 동공이 커지고, 밝으면 작아져요.<br>가까운 물체를 볼 때 수정체가 <b>두꺼워져요</b>(섬모체 수축).<br>상은 망막에 <b>거꾸로</b> 맺혀 시각 신경으로 가요.' + nn); }
+            if (nn !== infoK) { infoK = nn; eyeUpdate(); if (nn) info('<b>눈</b> · <b>밝기</b>를 바꾸면 동공(홍채)이, <b>물체까지 거리</b>를 바꾸면 수정체가 어떻게 달라지는지 살펴봐요.<br>상은 망막에 <b>거꾸로</b> 맺혀 시각 신경으로 가요.' + nn); }
           } else {
             const playing = S.ear.t >= 0;
             if (playing && !pEarP.playing) pEarP.set(Math.min(1, S.ear.t / 5.6));

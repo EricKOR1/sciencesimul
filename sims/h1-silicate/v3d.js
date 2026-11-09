@@ -103,6 +103,8 @@
       const mHalo = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.28, depthWrite: false });
       const mFace = new THREE.MeshStandardMaterial({ color: SI, transparent: true, opacity: 0.2, roughness: 0.6, side: THREE.DoubleSide, depthWrite: false });
       const mEdge = new THREE.LineBasicMaterial({ color: 0xb8860b, transparent: true, opacity: 0.8 });
+      const mGhost = new THREE.LineBasicMaterial({ color: 0xcfe0ff, transparent: true, opacity: 0.35 });   // 아직 놓지 않은 블록 자리 (2D의 점선 자리)
+      let ghostOn = false, buildCnt = null;
       const labSi = label('규소 Si 1개', [0, 0, 0], { color: 'rgba(180,120,10,.95)' });
       const labSh = label('함께 쓰는 산소', [0, 0, 0], { color: 'rgba(200,40,40,.95)' });
       const labFree = label('함께 쓰지 않는 산소', [0, 0, 0], { color: 'rgba(60,70,100,.95)' });
@@ -129,6 +131,10 @@
             const eg = new THREE.BufferGeometry(); eg.setAttribute('position', new THREE.Float32BufferAttribute(ed, 3)); ug.add(new THREE.LineSegments(eg, mEdge));
           }
         });
+        if (ghostOn) ST.all.filter((t) => t.idx >= nVis).forEach((t) => {
+          const ed = []; for (let i = 0; i < 4; i++) for (let j = i + 1; j < 4; j++) ed.push(...t.os[i], ...t.os[j]);
+          const eg = new THREE.BufferGeometry(); eg.setAttribute('position', new THREE.Float32BufferAttribute(ed, 3)); unitGroups[t.unit].add(new THREE.LineSegments(eg, mGhost));
+        });
         let shared = 0;
         omap.forEach((m, k) => {
           const ug = unitGroups[m.unit], sh = m.n >= 2;
@@ -154,9 +160,9 @@
       }
       function text(n, shared) {
         const T = TYPES[type];
-        if (!n) { info('<b>' + T.name + '</b> 조립하기<br>화면 아래 <b>＋ 블록 하나 놓기</b>를 눌러 사면체 블록을 하나씩 이어 붙여요.'); return; }
+        if (!n) { info('<b>' + T.name + '</b> 조립하기<br>화면 아래 <b>＋ 블록 하나 놓기</b>를 눌러 흐린 선으로 보이는 빈 자리에 사면체 블록을 하나씩 이어 붙여요.'); return; }
         const cl = gap > 0.15 ? '<br><b style="color:#fbbf24">' + (type === 'frame' ? '벌어지는 곳이 없어요.' : '벌어지는 곳이 약한 면이에요.') + '</b> ' + T.cleave : '';
-        info((specTxt ? specTxt + '<br>' : '') + '<b>' + T.name + '</b> · ' + T.mineral + '<br>' + T.how + '<br>사면체 ' + n + '개 · 함께 쓰는 산소(<span style="color:#ff8a8a">밝은 빨강</span>) ' + shared + '개' + cl);
+        info((specTxt ? specTxt + '<br>' : '') + '<b>' + T.name + '</b> · ' + T.mineral + '<br>' + T.how + '<br>' + (buildCnt ? '놓은 블록 ' + buildCnt : '사면체 ' + n + '개') + ' · 함께 쓰는 산소(<span style="color:#ff8a8a">밝은 빨강</span>) ' + shared + '개' + cl);
       }
       function fitK() { const v = ctx.renderer.domElement, asp = Math.max(0.3, v.clientWidth / Math.max(1, v.clientHeight)); return asp < 1 ? Math.min(2, Math.pow(1 / asp, 1)) : 1; }
       function pack(els) { const w = document.createElement('span'); w.style.cssText = 'display:inline-flex;align-items:center;gap:6px;white-space:nowrap'; els[0].parentNode.insertBefore(w, els[0]); els.forEach((e) => w.appendChild(e)); return w; }
@@ -205,13 +211,14 @@
         buildEls.forEach((e) => { e.style.display = v === 'build' ? '' : 'none'; });
         specEls.forEach((e) => { e.style.display = v === 'spec' ? '' : 'none'; });
         if (v !== 'spec' && specTxt) { specTxt = ''; text(lastN, lastSh); }
-        if (v !== 'build') { buildKey = ''; return; }
+        if (v !== 'build') { buildKey = ''; if (ghostOn || buildCnt) { ghostOn = false; buildCnt = null; rebuild(); } return; }
         const st = L.ST.st[L.ST.type]; if (!st || L.ST.type !== type) return;
         const tot = st.on.length, n = tot - st.left, key = type + '|' + n;
         if (key === buildKey) return; buildKey = key;
         // 조립하기: 2D에서 놓은 블록 수만큼 사면체가 이어져 보여요
         pl.pause(); gap = 0; gSl.set(0);
         nVis = n >= tot ? ST.all.length : n > 0 ? Math.max(1, Math.round(ST.all.length * n / tot)) : 0;
+        ghostOn = n < tot; buildCnt = n + ' / ' + tot;
         nSl.set(Math.max(1, nVis)); rebuild();
       }
       // 2D 단계에 맞춰: ② 사면체 단계에서는 사슬형의 사면체 2개(산소 1개를 함께 써요)를 보여 줘요

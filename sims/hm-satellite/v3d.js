@@ -190,10 +190,28 @@
         else if (mode === 'mass') Object.assign(orbit, { tx: 0, ty: 0, tz: 0, phi: 0.95, theta: 0.2, dist: PHONE ? 15 : 11 });
         else Object.assign(orbit, { tx: 0, ty: 0, tz: 0, phi: 1.0, theta: 0.2, dist: PHONE ? 15 : 11 });
       }
+      /* 📏 v·T 측정: 2D 캔버스의 측정 표와 T²–r³ 그래프를 3D 화면에도 보여 줘요 */
+      const PH3 = window.innerWidth < 600;
+      const mEl = document.createElement('div');
+      mEl.style.cssText = 'position:absolute;' + (PH3 ? 'left:8px;bottom:8px;' : 'right:10px;top:10px;') + 'padding:6px 8px;border-radius:12px;background:rgba(8,12,24,.8);color:#fff;font-size:' + (PH3 ? 10 : 11.5) + 'px;font-weight:800;line-height:1.45;pointer-events:none;display:none';
+      renderer.domElement.parentElement.appendChild(mEl);
+      let mSig = null;
+      function drawMeas(S) {
+        const on = cur === 'orbit' && S.ob && S.ob.meas, rec = on ? S.me.rec : [], sig = on ? JSON.stringify(rec) : '';
+        if (sig === mSig) return; mSig = sig; mEl.style.display = on ? '' : 'none'; if (!on) return;
+        const W = PH3 ? 120 : 160, H = PH3 ? 64 : 84, ox = 8, oy = H - 8, pw = W - 14, ph = H - 14;
+        const mx = Math.max(10, ...rec.map((q) => Math.max(q.r * q.r * q.r / 1e20, q.T * q.T / 1e7))) * 1.1;
+        let svg = '<line x1="' + ox + '" y1="' + oy + '" x2="' + (ox + pw) + '" y2="' + oy + '" stroke="#94a3b8"/><line x1="' + ox + '" y1="' + oy + '" x2="' + ox + '" y2="' + (oy - ph) + '" stroke="#94a3b8"/>';
+        if (rec.length >= 3) { const k = rec[0].T * rec[0].T / 1e7 / (rec[0].r * rec[0].r * rec[0].r / 1e20); svg += '<line x1="' + ox + '" y1="' + oy + '" x2="' + (ox + pw) + '" y2="' + (oy - Math.min(1, k) * ph) + '" stroke="#60a5fa" stroke-dasharray="4 3"/>'; }
+        rec.forEach((q) => { svg += '<circle cx="' + (ox + q.r * q.r * q.r / 1e20 / mx * pw).toFixed(1) + '" cy="' + (oy - q.T * q.T / 1e7 / mx * ph).toFixed(1) + '" r="3.2" fill="#fb923c"/>'; });
+        const rows = rec.map((q) => '<tr><td>' + q.h.toLocaleString('ko-KR') + '</td><td style="color:#93c5fd">' + (q.v / 1000).toFixed(2) + '</td><td style="color:#fdba74">' + Math.round(q.T / 60).toLocaleString('ko-KR') + '</td></tr>').join('');
+        mEl.innerHTML = '<div>📏 측정 기록 ' + rec.length + '개</div><table style="border-collapse:collapse;margin:2px 0;font-size:inherit"><tr style="color:#94a3b8"><td style="padding-right:8px">h(km)</td><td style="padding-right:8px">v(km/s)</td><td>T(분)</td></tr>' + rows + '</table>' +
+          '<div style="color:#94a3b8">T² – r³ 그래프' + (rec.length >= 3 ? ' · 직선' : '') + '</div><svg width="' + W + '" height="' + H + '" style="display:block">' + svg + '</svg>';
+      }
       return {
         update() {
           const A = sim(); if (!A || !A.S) return; const S = A.S;
-          setMode(S);
+          setMode(S); drawMeas(S);
           if (cur === 'orbit') orbitScene(A, S); else if (cur === 'geo') geoScene(A, S); else if (cur === 'mass') massScene(A, S); else wlessScene(A, S);
         },
         sync() {},

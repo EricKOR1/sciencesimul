@@ -79,6 +79,19 @@
     /* ---- 중화 적정 장치 (뷰렛 · 삼각 플라스크 · 이온 입자) ---- */
   function makeTitration(ctx, CFG) {
     const { THREE, root, label, info, controls } = ctx;
+      /* 미션 보조 판: 미션이 말하는 표·기록·카드를 3D 화면 구석에 작게 보여 줘요 (2D 상태를 그대로 읽어요) */
+      const mxBox = (pos) => {
+        const v = ctx.renderer.domElement.parentElement;
+        if (!document.getElementById('mx3d-css')) { const s = document.createElement('style'); s.id = 'mx3d-css'; s.textContent =
+          '.mx3d{position:absolute;z-index:3;padding:6px 8px;border-radius:12px;background:rgba(8,12,24,.8);color:#fff;font-size:12px;line-height:1.35;pointer-events:none;max-width:48%;box-shadow:0 4px 14px rgba(0,0,0,.35)}.mx3d:empty{display:none}' +
+          '.mx3d.tr{right:10px;top:10px}.mx3d.br{right:10px;bottom:34px}.mx3d.bl{left:10px;bottom:10px}.mx3d .h{font-weight:900;margin-bottom:3px}' +
+          '.mx3d table{border-collapse:collapse}.mx3d th,.mx3d td{padding:1px 5px;text-align:center;white-space:nowrap}.mx3d th{color:#b9c6e4;font-weight:800}.mx3d td:first-child,.mx3d th:first-child{text-align:left}' +
+          '.mx3d .on{color:#ffd34d;font-weight:800}.mx3d .ok{color:#7ee2a8;font-weight:800}.mx3d .no{color:#ff9a9a;font-weight:800}.mx3d .dim{color:#8d99b3}.mx3d tr.sel td{background:rgba(255,211,77,.16)}' +
+          '@media (max-width:599px){.mx3d{font-size:10.5px;padding:4px 6px;max-width:60%}.mx3d.tr{top:auto;bottom:30px}.mx3d th,.mx3d td{padding:0 3px}}';
+          document.head.appendChild(s); }
+        const el = document.createElement('div'); el.className = 'mx3d ' + (pos || 'tr'); v.appendChild(el);
+        let last = ''; el.put = (h) => { if (h !== last) { last = h; el.innerHTML = h; } }; return el;
+      };
     const L = makeLib(THREE), V3 = L.V;
     const YB0 = 10.9, YB1 = 5.9, PER = (YB0 - YB1) / 50; // 뷰렛 0 mL 눈금 높이, 아래 끝, mL당 높이
     const glass = (op) => new THREE.MeshStandardMaterial({ color: 0xe7f1ff, transparent: true, opacity: op, roughness: 0.05, side: THREE.DoubleSide, depthWrite: false });
@@ -142,6 +155,7 @@
     const ib = controls.button('이온 ✓', () => { show = !show; ib.classList.toggle('on', show); ib.textContent = '이온 ' + (show ? '✓' : '✕'); refresh(); }); ib.classList.add('on');
     // 이온 이름 안내 (info 말미)
     refresh();
+    const recEl = mxBox('tr');
     return {
       update(dt, t) {
         dt = Math.min(dt, 0.05);
@@ -156,6 +170,15 @@
           Vt = own ? volOwn(pP) : Z.tV();
           if (own) Vd = Vt;
           bliq.visible = TT.ready || own; 
+          /* 📋 뷰렛 눈금 기록표 + ⏱ 30초 유지 타이머 (2D 화면의 기록표 · 타이머 고리와 같아요) */
+          if (Z.S.mode === 'titr') {
+            const R = Z.tRuns(), rows = [['대략', R.rough, 'ex']].concat([0, 1, 2].map((i) => ['정밀 ' + (i + 1), R.fine[i], R.fine[i] && (R.fine[i].ok ? 'ok' : 'no')]));
+            for (let i = 3; i < R.fine.length && i < 5; i++) rows.push(['정밀 ' + (i + 1), R.fine[i], R.fine[i].ok ? 'ok' : 'no']);
+            const m = Z.tMean(), tm = TT.ready && TT.timer > 0 ? Math.min(30, TT.timer) : 0;
+            recEl.put((tm > 0 ? '<div class="h ' + (tm >= 30 ? 'ok' : 'on') + '">⏱ 연한 붉은색 유지 ' + Math.round(tm) + ' / 30초' + (tm >= 30 ? ' ✓' : '') + '</div>' : '') +
+              '<div class="h">📋 뷰렛 눈금 기록표</div><table><tr><th>회차</th><th>처음</th><th>나중</th><th>사용(mL)</th></tr>' + rows.map((r) => '<tr><td>' + r[0] + '</td>' + (r[1] ? '<td>' + r[1].start.toFixed(2) + '</td><td>' + r[1].end.toFixed(2) + '</td><td class="' + (r[2] === 'ex' ? 'dim' : r[2]) + '">' + r[1].used.toFixed(2) + (r[2] === 'ex' ? '' : r[2] === 'ok' ? ' ✓' : ' ✗') + '</td>' : '<td class="dim">-</td><td class="dim">-</td><td class="dim">-</td>') + '</tr>').join('') +
+              '<tr><td>평균</td><td></td><td></td><td class="on">' + (isNaN(m) ? '?' : m.toFixed(2)) + '</td></tr></table>');
+          } else recEl.put('');
         }
         const d = Vt - Vd; const step = Math.sign(d) * Math.min(Math.abs(d), Math.max(dt * 7, Math.abs(d) * 0.3));
         if (Math.abs(d) > 1e-4) {

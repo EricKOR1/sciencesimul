@@ -928,7 +928,7 @@
 
   /* ---------- 디버그 (Playwright) ---------- */
   window.__sim = {
-    S, VW, VH, PHONE, get game() { return game; }, setMode, levels, CNT, COV, TOT_CNT, TOT_COV, OCC, DENS, FREQ, COVR, REL_D, REL_F, REL_C, IV, DOM, CUM_SP, QPOS, QPLANTS, qRect, ZQ, zRow, zpx, FD, throwQuad, openZoom, zoomMark, zoomCover, zCounts, autoFill, layTag, ivIdx, REC_ANS, FIELD_PLANTS, plantCountNear,
+    S, VW, VH, PHONE, get game() { return game; }, setMode, levels, CNT, COV, TOT_CNT, TOT_COV, OCC, DENS, FREQ, COVR, REL_D, REL_F, REL_C, IV, DOM, CUM_SP, QPOS, QPLANTS, qRect, ZQ, zRow, zpx, FD, fieldDown, throwQuad, openZoom, zoomMark, zoomCover, zCounts, autoFill, layTag, ivIdx, REC_ANS, FIELD_PLANTS, plantCountNear,
     stepAll(sec) { const n = Math.ceil(sec / 0.02); for (let i = 0; i < n; i++) { stepTbl(0.02); stepIv(0.02); stepArea(0.02); } },
   };
 })();

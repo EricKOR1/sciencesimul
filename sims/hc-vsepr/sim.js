@@ -929,7 +929,7 @@
         {
           title: '비공유 전자쌍 0 · 1 · 2쌍 살펴보기',
           goal: '비공유 전자쌍을 <b>0쌍 · 1쌍 · 2쌍</b>으로 바꾸며 모양과 결합각이 바뀌는 것을 살펴봐요.',
-          hint: '버튼을 눌러 CH₄ → NH₃ → H₂O로 바꾸고, 풍선이 멈출 때까지 잠깐 기다려요. 파란 풍선이 비공유 전자쌍이에요.',
+          hint: '버튼을 눌러 CH₄ → NH₃ → H₂O로 바꾸고, <span class="only2d">풍선이 멈출 때까지 </span>잠깐 기다려요. 파란 <span class="only2d">풍선</span><span class="only3d">물방울 모양</span>이 비공유 전자쌍이에요.',
           setup() { LP.seen = {}; LP.hold = [0, 0, 0]; setLP(0); setScene('lone'); },
           check: () => lpSeenCount() === 3,
           hold: 0.3,

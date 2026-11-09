@@ -153,7 +153,7 @@
         const l = S.l, b = demoL.on ? 0.995 * (1 - Math.abs(2 * demoL.p - 1)) : l.b, r = A.rate(b);
         s0.scale.x = r; s0.position.x = 0; rodG.scale.x = 4 + 1.1; rodG.position.x = 0.0;
         lS.off = [0, 1.2, 0]; lSg.off = [0, 1.2, 0]; lRod.off = [0, -0.5, 0]; lLen.set('길이 ' + Math.round(100 * r) + ' %'); lLen.off = [0, -1.3, 0];
-        info('<b>📏 지면의 막대 옆을 지나가는 우주선</b> · 속력 ' + f2(b) + ' c<br>지면에서 본 우주선의 크기 (정지했을 때 = 100 %): <b>길이 ' + Math.round(100 * r) + ' %</b> · 높이 100 %<br>길이는 <b>운동 방향으로만</b> 줄어들고, 높이는 그대로예요.<br><span style="opacity:.8">속력은 옆 조작판에서 바꿔요.</span>');
+        info('<b>📏 지면의 막대 옆을 지나가는 우주선</b> · 속력 ' + f2(b) + ' c<br>지면에서 본 우주선의 크기 (정지했을 때 = 100 %): <b>길이 ' + Math.round(100 * r) + ' %</b> · 높이 100 %<br>속력을 바꾸며 길이와 높이가 각각 어떻게 달라지는지 살펴봐요.<br><span style="opacity:.8">속력은 옆 조작판에서 바꿔요.</span>');
       }
       /* ================= 📏 뮤온 이야기 ================= */
       const HA = 8, atmE = new THREE.Mesh(new THREE.BoxGeometry(2.6, HA, 1.4), new THREE.MeshStandardMaterial({ color: 0x7ec4ff, transparent: true, opacity: 0.2, depthWrite: false })); atmE.position.set(-4, HA / 2, 0); gM.add(atmE);
@@ -171,7 +171,7 @@
         mus.forEach(([e, m2], i) => { const q = list && list[i]; if (!q) { e.visible = m2.visible = false; return; } const x = (q.x - 0.5) * 2.0; const dd = dead(q) || (p >= q.pd && q.pd < 1); const pe = dd ? q.pd : p; if (dd) dec++; else if (p >= 1) arr++;
           e.visible = m2.visible = true; e.position.set(-4 + x, HA * (1 - pe), 0.2); m2.position.set(4 + x, hThin * (1 - pe), 0.2); const col = dd ? 0xe2464b : 0xffd447; e.material.color.setHex(col); m2.material.color.setHex(col); if (dd) { e.scale.setScalar(0.7); m2.scale.setScalar(0.7); } else { e.scale.setScalar(1); m2.scale.setScalar(1); } });
         lM.obj = [4, hThin + 0.6, 0]; lM.set('뮤온이 본 모습: 대기의 두께 ' + f1(A.H_THIN_KM) + ' km (줄어들어 보여요)');
-        info('<b>📏 뮤온 이야기</b> · 뮤온 속력 ' + A.BETA_MU + ' c · 정지했을 때 평균 수명 ' + A.TAU_MU_US + ' μs<br>수명 동안 ' + A.D_NOREL_M + ' m밖에 못 갈 것 같지만 지표까지 도착해요.<br>• 지구에서 본 설명: 뮤온의 <b>시계가 느리게 가서</b> 수명이 길어져요.<br>• 뮤온에서 본 설명: 지구의 <b>대기가 줄어들어</b> 짧은 거리만 가면 돼요.<br>' + (list ? (done ? '지표에 도착한 뮤온 ' + arr + '개 / ' + A.N_MU + '개' : '내려가는 중…') : '뮤온을 내려보내 보세요 (옆 조작판 또는 아래 ▶).'));
+        info('<b>📏 뮤온 이야기</b> · 뮤온 속력 ' + A.BETA_MU + ' c · 정지했을 때 평균 수명 ' + A.TAU_MU_US + ' μs<br>수명 동안 ' + A.D_NOREL_M + ' m밖에 못 갈 것 같지만 지표까지 도착해요.<br>지구에서 볼 때와 뮤온에서 볼 때 무엇이 달라 보이는지(뮤온의 시계 · 대기의 두께) 살펴보고 두 설명을 연결해요.<br>' + (list ? (done ? '지표에 도착한 뮤온 ' + arr + '개 / ' + A.N_MU + '개' : '내려가는 중…') : '뮤온을 내려보내 보세요 (옆 조작판 또는 아래 ▶).'));
       }
       /* ================= 장면 · ▶ 재생 ================= */
       let plO = null, plL = null, plM = null;

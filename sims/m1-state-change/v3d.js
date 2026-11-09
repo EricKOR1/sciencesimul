@@ -228,6 +228,24 @@
       const segBs = Array.from(document.querySelectorAll('.v3-ctl button')).filter((b) => /^(융해|응고|기화|액화|승화)/.test(b.textContent.trim()));
       let playP = 0, vTick = 0, lastArrow = null, lastScene = '', wantB = false;
       start('melt');
+      /* 3D 화면 오른쪽 위의 작은 판 (휴대폰에서는 오른쪽 아래): 2D 화면의 표 · 기록을 3D에서도 보여 줘요 */
+      function v3xPan(cls) { const vEl = ctx.renderer.domElement.parentElement;
+        if (!document.getElementById('v3x-css')) { const c = document.createElement('style'); c.id = 'v3x-css'; c.textContent =
+          '.v3x-pan{position:absolute;right:10px;top:10px;max-width:52%;padding:6px 9px;border-radius:12px;background:rgba(8,12,24,.76);color:#fff;font-size:12px;line-height:1.35;pointer-events:none;z-index:2}' +
+          '.v3x-pan .h{font-weight:800;margin-bottom:3px}.v3x-pan table{border-collapse:collapse}.v3x-pan th,.v3x-pan td{padding:1px 5px;text-align:left;white-space:nowrap}.v3x-pan th{color:#9fb0cc;font-weight:700;font-size:11px}.v3x-pan .q{color:#7d8aa3}.v3x-pan .now td{background:rgba(255,255,255,.1)}' +
+          '.v3x-pan .c{display:inline-block;margin:1px 2px;padding:1px 6px;border-radius:8px;background:rgba(255,255,255,.14)}.v3x-pan .ok{color:#86efac}.v3x-pan .bad{color:#fca5a5}' +
+          '@media (max-width:599px){.v3x-pan{top:auto;bottom:28px;right:6px;font-size:10.5px;max-width:64%;padding:4px 6px}.v3x-pan th{font-size:9.5px}.v3x-pan th,.v3x-pan td{padding:0 3px}}';
+          document.head.appendChild(c); }
+        const el = document.createElement('div'); el.className = 'v3x-pan' + (cls ? ' ' + cls : ''); el.style.display = 'none'; vEl.appendChild(el);
+        let sig = null; return { set(h) { if (h === sig) return; sig = h; el.style.display = h ? '' : 'none'; if (h) el.innerHTML = h; }, el }; }
+      const tbl = v3xPan();
+      function drawTbl() {
+        const l = l2(), rows = st.mode === 'exp' && l && l.expRows ? l.expRows() : null;
+        if (!rows) { tbl.set(''); return; }
+        const vt = (k, v) => (k === 'eth' ? (v < 5 ? '1' : '약 ' + v) : '' + v);
+        tbl.set('<div class="h">📋 실험 결과</div><table><tr><th></th><th>질량(g) 처음→나중</th><th>부피(mL) 처음→나중</th></tr>' + rows.map((r) => { const d = r.mA != null;
+          return '<tr' + (r.k === st.exp ? ' class="now"' : '') + '><td>' + r.icon + ' ' + r.name + '</td><td>' + r.mB.toFixed(1) + ' → ' + (d ? r.mA.toFixed(1) : '<span class="q">?</span>') + '</td><td>' + vt(r.k, r.vB) + ' → ' + (d ? vt(r.k, r.vA) + (r.vA > r.vB ? ' ▲' : ' ▼') : '<span class="q">?</span>') + '</td></tr>'; }).join('') + '</table>');
+      }
 
       return {
         update(dt) {
@@ -260,6 +278,7 @@
             heatDir = rank[b] > rank[a] ? 1 : -1; const k = 0.55 + 0.45 * Math.sin(performance.now() * 0.004);
             coilMat.emissive.setHex(heatDir > 0 ? 0xff5a1f : 0x4cc2ff); coilMat.color.setHex(heatDir > 0 ? 0x7a2a12 : 0x2a5f80); coilMat.emissiveIntensity = 0.6 + 0.9 * k; }
           sys.step(dt); sys.draw();
+          drawTbl();
           const ph = document.querySelector('.v3-player .v3-ph');
           if (ph && st.mode === 'exp') ph.textContent = pmode ? (playP < 0.45 ? (EX[st.exp].b === 'gas' ? '가열' : '식히기') : playP < 0.55 ? '변한 뒤' : '되돌리기') : '';
         },

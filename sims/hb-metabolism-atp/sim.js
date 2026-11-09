@@ -868,7 +868,7 @@
         {
           title: '충전–방전 3회전 돌리기',
           goal: '<b>세포호흡</b>과 <b>활동</b>을 모두 켜서 ATP가 <b>충전–방전 한 바퀴를 3번</b> 돌게 하고, <b>세균·식물·동물</b> 세포를 모두 한 번씩 골라 보세요.',
-          hint: '아래 도구에서 🫁 세포호흡 켜기와 💪 활동 시키기를 눌러요. 세포 종류 단추를 눌러 바꿔요.',
+          hint: '조작판의 🫁 세포호흡 켜기와 💪 활동 시키기를 눌러요. 세포 종류 단추를 눌러 바꿔요.',
           setup() { makeAtp(S.at.type); setScene('atp'); },
           check: () => S.at.cycles >= 3 && ['bact', 'plant', 'animal'].every((t) => S.at.types[t]), hold: 0.5,
           status: () => '한 바퀴 ' + Math.min(3, S.at.cycles) + ' / 3 ' + mark(S.at.cycles >= 3) + ' &nbsp; ' + ['bact', 'plant', 'animal'].map((t) => mark(!!S.at.types[t]) + CELLS[t].name.replace(' 세포', '')).join(' '),

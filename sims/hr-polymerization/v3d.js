@@ -99,12 +99,12 @@
           const w = window.__sim;
           if (demoOn()) units.forEach((u, i) => { u.joining = false; u.prog = i === 0 ? 1 : Math.max(0, Math.min(1, demoP * (NU + 1) - i)); });
           else {
-            let n2 = 1; try { if (w.S.mode === 'chain') n2 = Math.max(1, w.chN()); } catch (e) { n2 = 1; }
-            units.forEach((u, i) => { if (i >= n2) { u.prog = 0; u.joining = false; } else if (i > 0 && u.prog < 1 && !u.joining && units[i - 1].prog > 0.6) u.joining = true; });
+            let n2 = 1; try { if (w.S.mode === 'chain') n2 = Math.max(0, w.chN()); } catch (e) { n2 = 1; }   // 2D의 단위체 수 n과 같게 (n = 0이면 사슬이 비어 있어요)
+            units.forEach((u, i) => { if (i >= n2) { u.prog = 0; u.joining = false; } else if (i === 0) { if (u.prog < 1 && !u.joining) u.joining = true; } else if (u.prog < 1 && !u.joining && units[i - 1].prog > 0.6) u.joining = true; });
           }
           const nJ = place(dt, t);
           const T = TYPES[type], n = nJ;
-          const tx = '<b>' + T.n + '</b> · 단위체: ' + T.mono + '<br>연결된 단위체 <b>' + n + '</b>개 → (' + T.unit + ')<sub>' + n + '</sub><br>' + (n > 1 ? '<br>몰질량 ≈ 28 × ' + n + ' = <b>' + 28 * n + ' g/mol</b>' : '') + '<br>' + (n >= NU ? '이렇게 n이 아주 크면 고분자예요. 쓰임: ' + T.use : '이중 결합이 끊어지며 단위체가 차례로 이어져요.');
+          const tx = n === 0 ? '<b>' + T.n + '</b> · 단위체: ' + T.mono + '<br>아직 사슬이 비어 있어요. 오른쪽 [＋1개] 단추로 에틸렌을 이어 붙여요.' : '<b>' + T.n + '</b> · 단위체: ' + T.mono + '<br>연결된 단위체 <b>' + n + '</b>개 → (' + T.unit + ')<sub>' + n + '</sub><br>' + (n > 1 ? '<br>몰질량 ≈ 28 × ' + n + ' = <b>' + 28 * n + ' g/mol</b>' : '') + '<br>' + (n >= NU ? '이렇게 n이 아주 크면 고분자예요. 쓰임: ' + T.use : '이중 결합이 끊어지며 단위체가 차례로 이어져요.');
           if (tx !== txt) { txt = tx; info(tx); }
         },
       };

@@ -198,7 +198,7 @@
             arrShaft.scale.set(w, Math.max(0.05, len - 0.25), w); const mid = hiP.clone().add(dir.clone().multiplyScalar(0.2 + (len - 0.25) / 2)); arrShaft.position.copy(mid); arrShaft.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
             arrHead.scale.set(w * 2.8, 0.25, w * 2.8); arrHead.position.copy(hiP).add(dir.clone().multiplyScalar(0.2 + len - 0.125)); arrHead.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
           }
-          info('<b>' + e.s + ' (' + e.n + ')</b> · ' + ser.label + '<br>핵전하 +' + e.Z + ' · 전자껍질 ' + e.p + '개 · 최외각 전자 ' + e.v + '개 · 전기 음성도 χ = ' + (e.e == null ? '—' : (e.e / 10).toFixed(1)) + '<br>노란 점 = 최외각 전자, 보라 화살표 = 핵이 최외각 전자를 당기는 힘(모형)<br>' + ser.note + ' 당기는 힘이 ' + (ser.note.indexOf('아래') >= 0 ? '작아져요' : '커져요') + '.');
+          info('<b>' + e.s + ' (' + e.n + ')</b> · ' + ser.label + '<br>핵전하 +' + e.Z + ' · 전자껍질 ' + e.p + '개 · 최외각 전자 ' + e.v + '개 · 전기 음성도 χ = ' + (e.e == null ? '—' : (e.e / 10).toFixed(1)) + '<br>노란 점 = 최외각 전자, 보라 화살표 = 핵이 최외각 전자를 당기는 힘(모형)<br>' + ser.note + ' 보라 화살표(당기는 힘)가 어떻게 변하는지 비교해 보세요.');   // 규칙 문장의 답(커져요/작아져요)은 학생이 직접 찾아요
         },
       };
     },

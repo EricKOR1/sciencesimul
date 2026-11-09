@@ -22,6 +22,19 @@
     levels: [0],   // 병원체 비교(시료 단추 · 비교표 칸 단추). 카드 끌기가 있는 증식·전염, 질병 분류와 환자·마을 장면은 2D
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
+      /* 미션 보조 판: 미션이 말하는 표·기록·카드를 3D 화면 구석에 작게 보여 줘요 (2D 상태를 그대로 읽어요) */
+      const mxBox = (pos) => {
+        const v = ctx.renderer.domElement.parentElement;
+        if (!document.getElementById('mx3d-css')) { const s = document.createElement('style'); s.id = 'mx3d-css'; s.textContent =
+          '.mx3d{position:absolute;z-index:3;padding:6px 8px;border-radius:12px;background:rgba(8,12,24,.8);color:#fff;font-size:12px;line-height:1.35;pointer-events:none;max-width:48%;box-shadow:0 4px 14px rgba(0,0,0,.35)}.mx3d:empty{display:none}' +
+          '.mx3d.tr{right:10px;top:10px}.mx3d.br{right:10px;bottom:34px}.mx3d.bl{left:10px;bottom:10px}.mx3d .h{font-weight:900;margin-bottom:3px}' +
+          '.mx3d table{border-collapse:collapse}.mx3d th,.mx3d td{padding:1px 5px;text-align:center;white-space:nowrap}.mx3d th{color:#b9c6e4;font-weight:800}.mx3d td:first-child,.mx3d th:first-child{text-align:left}' +
+          '.mx3d .on{color:#ffd34d;font-weight:800}.mx3d .ok{color:#7ee2a8;font-weight:800}.mx3d .no{color:#ff9a9a;font-weight:800}.mx3d .dim{color:#8d99b3}.mx3d tr.sel td{background:rgba(255,211,77,.16)}' +
+          '@media (max-width:599px){.mx3d{font-size:10.5px;padding:4px 6px;max-width:60%}.mx3d.tr{top:auto;bottom:30px}.mx3d th,.mx3d td{padding:0 3px}}';
+          document.head.appendChild(s); }
+        const el = document.createElement('div'); el.className = 'mx3d ' + (pos || 'tr'); v.appendChild(el);
+        let last = ''; el.put = (h) => { if (h !== last) { last = h; el.innerHTML = h; } }; return el;
+      };
       const V3 = (x, y, z) => new THREE.Vector3(x, y, z || 0);
       const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.45, metalness: 0.03 }, o || {}));
       const ghost = (c, op, o) => std(c, Object.assign({ transparent: true, opacity: op, depthWrite: false, roughness: 0.2, side: THREE.DoubleSide }, o || {}));
@@ -197,10 +210,13 @@
         const r = cur < 0 ? 0 : cur, n = T.o.cols[c].opts.length;
         T.val[r][c] = T.val[r][c] + 1 >= n ? 0 : T.val[r][c] + 1; T.bad[r][c] = false; if (T.o.onChange) T.o.onChange();
       }));
+      const tabEl = mxBox('tr');   // 비교표 전체: 고른 칸이 바로 채워져요
       const tableUI = (S2) => {
         const on = !!(S2 && gm === 'obs' && S2.mode === 'obs' && S2.sub.obs === 'table' && S2.O && S2.O.table);
-        showE([tTxt].concat(tBtns), on); if (!on) return;
+        showE([tTxt].concat(tBtns), on); if (!on) { tabEl.put(''); return; }
         const T = S2.O.table, r = cur < 0 ? 0 : cur;
+        tabEl.put('<div class="h">📋 병원체 비교표 (' + T.filled + ' / ' + T.total + ')</div><table><tr><th></th>' + T.o.cols.map((c) => '<th>' + c.label.replace('\n', ' ') + '</th>').join('') + '</tr>' +
+          T.o.rows.map((nm, i) => '<tr' + (i === r ? ' class="sel"' : '') + '><td>' + nm + '</td>' + T.o.cols.map((c, j) => { const v = T.val[i][j]; return '<td class="' + (T.bad[i][j] ? 'no' : v >= 0 ? 'on' : 'dim') + '">' + (v >= 0 ? c.opts[v] : '?') + (T.bad[i][j] ? ' ✕' : '') + '</td>'; }).join('') + '</tr>').join('') + '</table>');
         const tt = '<b>비교표 · ' + T.o.rows[r] + '</b> (' + T.filled + ' / ' + T.total + '칸)'; if (tTxt.innerHTML !== tt) tTxt.innerHTML = tt;
         tBtns.forEach((b, c) => { const v = T.val[r][c], txt = T.o.cols[c].label.replace('\n', ' ') + ': ' + (v >= 0 ? T.o.cols[c].opts[v] : '?') + (T.bad[r][c] ? ' ✕' : ''); if (b.textContent !== txt) b.textContent = txt; b.classList.toggle('on', v >= 0); });
       };

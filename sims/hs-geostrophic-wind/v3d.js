@@ -53,8 +53,8 @@
         sh.scale.y = Math.max(0.01, len - hl); sh.position.y = (len - hl) / 2; hd.position.y = len - hl / 2; hd.scale.y = hl / 0.3;
         g.position.copy(from); g.quaternion.setFromUnitVectors(up, dir);
       }
-      const aP = mkArrow(0xef4444), aC = mkArrow(0x3b82f6), aV = mkArrow(0x22c55e);
-      const lP = label('기압 경도력', [0, 0, 0], { size: 11.5, color: 'rgba(185,28,28,.92)' }), lC = label('전향력', [0, 0, 0], { size: 11.5, color: 'rgba(29,78,216,.92)' }), lV = label('바람', [0, 0, 0], { size: 11.5, color: 'rgba(21,128,61,.92)' });
+      const aP = mkArrow(0xef4444), aC = mkArrow(0xf97316), aV = mkArrow(0x22c55e);   // 색: 2D · 오른쪽 그림(㉠ 빨강 · ㉡ 주황 · ㉢ 초록)과 같아요
+      const lP = label('압력 경도력', [0, 0, 0], { size: 11.5, color: 'rgba(185,28,28,.92)' }), lC = label('전향력', [0, 0, 0], { size: 11.5, color: 'rgba(194,65,12,.92)' }), lV = label('바람', [0, 0, 0], { size: 11.5, color: 'rgba(21,128,61,.92)' });
       const trailM = new THREE.MeshBasicMaterial({ color: 0xfff3a0 }), tg = new THREE.SphereGeometry(0.045, 8, 6);
       const trailMeshes = []; for (let i = 0; i < 150; i++) { const m = new THREE.Mesh(tg, trailM); m.visible = false; root.add(m); trailMeshes.push(m); }
 
@@ -80,7 +80,7 @@
           info('<b>지균풍</b> V = Δp / (ρ f Δn)' + vTxt + '<br>위도 ' + st.lat + '°N, ρ = ' + st.rho + ' kg/m³, 등압선 간격 ' + st.spc + ' km' + (st.lat === 0 ? '<br>적도에서는 f = 0이라 전향력이 없어 이 식을 쓸 수 없어요.' : ''));
         } else if (st.mode === 'bal') {
           info(st.rot
-            ? '<b>지구 자전 켬</b> · 기압 경도력과 전향력(움직이는 방향의 오른쪽)이 <b>균형</b>을 이루면 바람은 <b>등압선과 나란히</b> 불어요. (위도 ' + st.lat + '°N)'
+            ? '<b>지구 자전 켬</b> · 압력 경도력과 전향력(움직이는 방향의 오른쪽)이 <b>균형</b>을 이루면 바람은 <b>등압선과 나란히</b> 불어요. (위도 ' + st.lat + '°N)'
             : '<b>지구 자전 끔</b>: 전향력이 없어서 공기는 고기압에서 저기압 쪽으로 <b>곧장</b> 움직여요.');
         } else info('<b>압력 경도력</b>은 고기압에서 저기압 쪽으로 작용해요. 등압선 간격 ' + st.spc + ' km');
       }

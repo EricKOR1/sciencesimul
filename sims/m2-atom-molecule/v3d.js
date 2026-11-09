@@ -177,6 +177,25 @@
       // 원자 넣기 단추: 원자 바구니에서 원자를 꺼내 조립 원에 놓는 것과 같아요
       const buildLab = controls.text('<b>원자 넣기</b>');
       const atomBtns = [['C', '탄소'], ['O', '산소']].map(([sym, nm]) => controls.button(nm + ' 원자', () => { const l = DBG(); if (l.ctAddAtom && !l.ctAddAtom(sym)) flash('조립대가 가득 찼어요. ↺ 원자 비우기로 비워요.'); }));
+      /* 3D 화면 오른쪽 위의 작은 판 (휴대폰에서는 오른쪽 아래): 2D 화면의 표 · 기록을 3D에서도 보여 줘요 */
+      function v3xPan(cls) { const vEl = ctx.renderer.domElement.parentElement;
+        if (!document.getElementById('v3x-css')) { const c = document.createElement('style'); c.id = 'v3x-css'; c.textContent =
+          '.v3x-pan{position:absolute;right:10px;top:10px;max-width:52%;padding:6px 9px;border-radius:12px;background:rgba(8,12,24,.76);color:#fff;font-size:12px;line-height:1.35;pointer-events:none;z-index:2}' +
+          '.v3x-pan .h{font-weight:800;margin-bottom:3px}.v3x-pan table{border-collapse:collapse}.v3x-pan th,.v3x-pan td{padding:1px 5px;text-align:left;white-space:nowrap}.v3x-pan th{color:#9fb0cc;font-weight:700;font-size:11px}.v3x-pan .q{color:#7d8aa3}.v3x-pan .now td{background:rgba(255,255,255,.1)}' +
+          '.v3x-pan .c{display:inline-block;margin:1px 2px;padding:1px 6px;border-radius:8px;background:rgba(255,255,255,.14)}.v3x-pan .ok{color:#86efac}.v3x-pan .bad{color:#fca5a5}' +
+          '@media (max-width:599px){.v3x-pan{top:auto;bottom:28px;right:6px;font-size:10.5px;max-width:64%;padding:4px 6px}.v3x-pan th{font-size:9.5px}.v3x-pan th,.v3x-pan td{padding:0 3px}}';
+          document.head.appendChild(c); }
+        const el = document.createElement('div'); el.className = 'v3x-pan' + (cls ? ' ' + cls : ''); el.style.display = 'none'; vEl.appendChild(el);
+        let sig = null; return { set(h) { if (h === sig) return; sig = h; el.style.display = h ? '' : 'none'; if (h) el.innerHTML = h; }, el }; }
+      const binPan = v3xPan();
+      /* 🗂️ 분류 상자: 2D의 상자에 들어간 물질을 3D에서도 보여 줘요 */
+      function drawBins(l) {
+        const S = l.SCP; if (!(l.S && l.S.scene === 'scope' && S)) { binPan.set(''); return; }
+        const boxes = ['atom', 'mol'].concat(S.list.indexOf('nacl') >= 0 ? ['ion'] : []);
+        binPan.set('<div class="h">🗂️ 분류 상자 (' + S.list.filter((id) => S.placed[id]).length + ' / ' + S.list.length + ')</div>' + boxes.map((bk) => {
+          const ids = S.list.filter((id) => S.placed[id] === bk);
+          return '<div>' + BOXN[bk] + ': ' + (ids.length ? ids.map((id) => '<span class="c">' + MOLS[OF2D[id]].name + '</span>').join('') : '<span class="q">—</span>') + '</div>'; }).join(''));
+      }
       let barSig = '', barCur = '';
       function bar(l) {
         const sc = l.S ? l.S.scene : '', S = l.SCP, scope = sc === 'scope' && !!S, bld = sc === 'count' && !!(l.ctBuildOn && l.ctBuildOn());
@@ -184,6 +203,7 @@
         const cur = scope ? S.cur || '' : '-';
         if (sc !== 'count' && cur !== barCur) { g.visible = !!cur; if (!cur) { labs.forEach((x) => x.show(false)); playerRow(false); } else { if (cur !== '-' && OF2D[cur] === key) build(); playerRow(MOLS[key].kind === 'mol'); } }
         barCur = cur;
+        drawBins(l);
         const sig = sc + '|' + bld + '|' + list + '|' + placed + '|' + cur;
         if (sig === barSig) return; barSig = sig;
         const show = (el, on) => { el.style.display = on ? '' : 'none'; };
@@ -256,10 +276,12 @@
         cnObj.bonds.forEach((ms) => ms.forEach((b) => { b.visible = lens !== 'atom'; }));
         const nm = mols.length;
         cnLab.obj = [0, nm > 4 ? 3.9 : 2.7, 0];
+        const showN = CT.mode === 'build';   // 세어 보기 퀴즈에서는 합계를 미리 쓰지 않아요 (2D처럼 하나씩 번호만)
+        if (!showN) cnLab.set(lens === 'mol' ? '🫧 분자 렌즈: 덩어리를 세어 봐요' : lens === 'atom' ? '⚪ 원자 렌즈: 번호를 세어 봐요' : '🎨 원소 렌즈: 종류를 세어 봐요'); else
         cnLab.set(nm ? (lens === 'mol' ? '분자 <b>' + nm + '개</b>' : lens === 'atom' ? '원자 <b>' + na + '개</b>' : '원소 <b>' + Object.keys(cnt).length + '가지</b> (' + Object.keys(cnt).map((s) => NAME[s] + ' ' + cnt[s] + '개').join(' · ') + ')') : '조립대가 비어 있어요'); cnLab.show(true);
         const f = (fbT > 0 && fbMsg ? '<br>' + fbMsg : '') + (freeA.length ? '<br>조립대의 원자: ' + freeA.length + '개 (탄소 원자 1개와 산소 원자 2개가 모이면 CO₂ 분자가 만들어져요)' : CT.mode === 'build' ? '<br>아래 <b>탄소 원자 · 산소 원자</b> 단추로 원자를 넣으면 분자가 만들어져요.' : '');
         const ph = document.querySelector('.v3-player .v3-ph'); if (ph) ph.textContent = pmode ? lensTxt[lens] : '';
-        setCountInfo((pmode ? '<b>▶ ' + lensTxt[lens] + '</b><br>' : '') + (lens === 'mol' ? '<b>분자 렌즈</b>: 원자들이 결합한 한 덩어리를 세어요. 분자는 <b>' + nm + '개</b>예요.' : lens === 'atom' ? '<b>원자 렌즈</b>: 분자를 이루는 원자 하나하나를 세어요. 원자는 모두 <b>' + na + '개</b>예요.' : '<b>원소 렌즈</b>: 원자의 <b>종류</b>를 세어요. 원소는 <b>' + Object.keys(cnt).length + '가지</b>예요.') + ' (분자 속 원자의 수는 분자마다 달라요.)' + f);
+        setCountInfo((pmode ? '<b>▶ ' + lensTxt[lens] + '</b><br>' : '') + (lens === 'mol' ? '<b>분자 렌즈</b>: 원자들이 결합한 한 덩어리를 세어요.' + (showN ? ' 분자는 <b>' + nm + '개</b>예요.' : ' 둥근 테두리가 분자 1개예요.') : lens === 'atom' ? '<b>원자 렌즈</b>: 분자를 이루는 원자 하나하나를 세어요.' + (showN ? ' 원자는 모두 <b>' + na + '개</b>예요.' : ' 공마다 번호가 붙어 있어요.') : '<b>원소 렌즈</b>: 원자의 <b>종류</b>를 세어요.' + (showN ? ' 원소는 <b>' + Object.keys(cnt).length + '가지</b>예요.' : ' 같은 색 · 같은 이름이 같은 원소예요.')) + ' (분자 속 원자의 수는 분자마다 달라요.)' + f);
       }
       let cnTxt = ''; const setCountInfo = (h) => { if (h !== cnTxt) { cnTxt = h; info(h); } };
       /* 2D 실험을 따라가요: 1단계에서 물 분자를 나눈 상태, 입자 현미경에서 관찰 중인 물질 */

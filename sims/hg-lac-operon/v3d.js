@@ -85,9 +85,11 @@
         if (!v) { repMat.color.setHex(0x7c3aed); rep.position.copy(OP); rep.rotation.set(0, 0, 0); }
         pol.position.set(PSTART, 0, 0); plEls.forEach((e) => { e.style.display = v ? '' : 'none'; }); text();
       }
-      let plEls = [];
+      let plEls = [], nlTried = false;
       function text() {
-        if (!lac) info('<b>젖당이 없을 때</b> · <b>억제자</b>가 작동 부위에 붙어 RNA 중합 효소가 지나가지 못해요. 구조 유전자가 전사되지 않아요(꺼짐).<br>오른쪽 <b>▶ 전사 시도</b>를 누르면 RNA 중합 효소가 어디서 막히는지 볼 수 있어요.');
+        const NLs = window.__sim && window.__sim.NL; nlTried = !!(NLs && NLs.tried);
+        if (!lac && !nlTried) info('<b>젖당이 없을 때</b> · <b>억제자</b>가 작동 부위에 붙어 있어요.<br>오른쪽 <b>▶ 전사 시도</b>를 눌러 RNA 중합 효소가 구조 유전자(lacZ · lacY · lacA)까지 갈 수 있는지 보세요.');
+        else if (!lac) info('<b>젖당이 없을 때</b> · 작동 부위에 붙은 <b>억제자</b>에 막혀 RNA 중합 효소가 지나가지 못해요. 구조 유전자가 전사되지 않아요(꺼짐).<br>오른쪽 <b>📏 효소 활성 측정</b>으로 mRNA 양과 효소 활성을 재 보세요(아래 읽음 칸).');
         else info('<b>젖당이 있을 때</b> · 젖당(알로젖당)이 억제자에 붙으면 억제자가 떨어져 나가요. RNA 중합 효소가 구조 유전자를 전사해 <b>젖당 분해 효소</b>가 만들어져요(켜짐).');
       }
       const seg = controls.segment('상태', [{ value: 'no', label: '젖당 없음' }, { value: 'yes', label: '젖당 있음' }], 'no', (v) => { setLac(v === 'yes'); player.set(0); });
@@ -110,6 +112,7 @@
           const sm = window.__sim && window.__sim.S && window.__sim.S.mode;
           if (sm && sm !== lastSim) { lastSim = sm; if (sm === 'lac' && !lac) { seg.set('yes'); setLac(true); } else if ((sm === 'nolac' || sm === 'struct') && lac) { seg.set('no'); setLac(false); } }
           pt += dt;
+          { const NLs = window.__sim && window.__sim.NL; if (!lac && !!(NLs && NLs.tried) !== nlTried) text(); }
           const TT = player.p * DUR;
           if (lac) { if (TT < prevT - 0.5) { lacts.forEach((o, i) => { if (i < 2) { o.state = 'free'; o.g.position.set((Math.random() * 2 - 1) * 3.5, 1.6 + Math.random() * 1.6, (Math.random() * 2 - 1) * 1.2); } }); } prevT = TT; }
           // 중합 효소 · 억제자

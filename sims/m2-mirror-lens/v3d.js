@@ -52,7 +52,7 @@
       }
       const obj = arrowObj(0xff5a5f, 1), img = arrowObj(0x7ee0ff, 1); root.add(obj, img);
       obj.add(carriage(1.55)); { const gh = carriage(1.55); gh.traverse((m) => { if (m.material) { m.material = m.material.clone(); m.material.transparent = true; m.material.opacity = 0.4; } }); img.add(gh); }
-      const lobj = label('물체', obj, { offset: [0, 1.25, 0] }), limg = label('상', img, { offset: [0, 1.3, 0], color: 'rgba(40,120,170,.9)' });
+      const lobj = label('물체 (촛불)', obj, { offset: [0, 1.25, 0] }), limg = label('상', img, { offset: [0, 1.3, 0], color: 'rgba(40,120,170,.9)' });
 
       // 거울 · 렌즈 부품
       const parts = { plane: new THREE.Group(), convexM: new THREE.Group(), concaveM: new THREE.Group(), convexL: new THREE.Group(), concaveL: new THREE.Group() };
@@ -221,13 +221,30 @@
         g.els.forEach((e) => { e.style.display = 'none'; });
         SG[kind] = g;
       });
+      /* 3D 화면 오른쪽 위의 작은 판 (휴대폰에서는 오른쪽 아래): 2D 화면의 표 · 기록을 3D에서도 보여 줘요 */
+      function v3xPan(cls) { const vEl = ctx.renderer.domElement.parentElement;
+        if (!document.getElementById('v3x-css')) { const c = document.createElement('style'); c.id = 'v3x-css'; c.textContent =
+          '.v3x-pan{position:absolute;right:10px;top:10px;max-width:52%;padding:6px 9px;border-radius:12px;background:rgba(8,12,24,.76);color:#fff;font-size:12px;line-height:1.35;pointer-events:none;z-index:2}' +
+          '.v3x-pan .h{font-weight:800;margin-bottom:3px}.v3x-pan table{border-collapse:collapse}.v3x-pan th,.v3x-pan td{padding:1px 5px;text-align:left;white-space:nowrap}.v3x-pan th{color:#9fb0cc;font-weight:700;font-size:11px}.v3x-pan .q{color:#7d8aa3}.v3x-pan .now td{background:rgba(255,255,255,.1)}' +
+          '.v3x-pan .c{display:inline-block;margin:1px 2px;padding:1px 6px;border-radius:8px;background:rgba(255,255,255,.14)}.v3x-pan .ok{color:#86efac}.v3x-pan .bad{color:#fca5a5}' +
+          '@media (max-width:599px){.v3x-pan{top:auto;bottom:28px;right:6px;font-size:10.5px;max-width:64%;padding:4px 6px}.v3x-pan th{font-size:9.5px}.v3x-pan th,.v3x-pan td{padding:0 3px}}';
+          document.head.appendChild(c); }
+        const el = document.createElement('div'); el.className = 'v3x-pan' + (cls ? ' ' + cls : ''); el.style.display = 'none'; vEl.appendChild(el);
+        let sig = null; return { set(h) { if (h === sig) return; sig = h; el.style.display = h ? '' : 'none'; if (h) el.innerHTML = h; }, el }; }
+      const binPan = v3xPan();   // 🗃️ 상자: 맞게 넣은 카드가 상자에 쌓여요 (2D 상자와 같아요)
+      function drawBins(kind, cards) {
+        const def = kind && sm().SORTS[kind]; if (!def) { binPan.set(''); return; }
+        binPan.set('<div class="h">🗃️ 상자</div>' + def.bins.map((b) => { const got = cards.filter((c) => c.placed && def.cards[c.ci].bin === b.id).map((c) => '<span class="c">' + def.cards[c.ci].e + ' ' + def.cards[c.ci].t + '</span>');
+          return '<div>' + b.label + ': ' + (got.join('') || '<span class="q">—</span>') + '</div>'; }).join(''));
+      }
       let sortShown = '', sortKey = '';
       function sortTick(force) {
         const s = sm(), kind = s && SG[s.scene] && s.SORT && s.SORT.kind === s.scene ? s.scene : '';
         if (kind !== sortShown) { sortShown = kind; sortKey = ''; Object.keys(SG).forEach((k) => SG[k].els.forEach((e) => { e.style.display = k === kind ? '' : 'none'; })); }
-        if (!kind) return;
+        if (!kind) { binPan.set(''); return; }
         const g = SG[kind], cards = s.SORT.cards, key = cards.map((c) => c.ci + (c.placed ? 'p' : '')).join();
         if (key === sortKey && !force) return; sortKey = key;
+        drawBins(kind, cards);
         const placed = new Set(cards.filter((c) => c.placed).map((c) => c.ci));
         g.cardBtns.forEach((b, i) => { b.style.display = placed.has(i) ? 'none' : ''; });
         if (placed.has(g.sel)) { const nx = g.cardBtns.findIndex((b, i) => !placed.has(i)); if (nx >= 0) { g.sel = nx; g.seg.set(nx); } }

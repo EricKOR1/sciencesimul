@@ -96,6 +96,9 @@
         onFrame(p) { demoP = p; T = p * 16; },
       });
       const S0 = () => (window.__sim && window.__sim.S) || null; let lastV = S0() && S0().vei;
+      // 기둥 높이 표시선: 2D의 빨간 점선처럼 화산재 기둥 꼭대기를 따라 올라가다 멈춰요 (2D의 기둥 높이 그대로)
+      const hMark = new THREE.Mesh(new THREE.TorusGeometry(0.75, 0.025, 6, 48), new THREE.MeshBasicMaterial({ color: 0xe11d48 })); hMark.rotation.x = Math.PI / 2; root.add(hMark);
+      const lH = label('', hMark, { size: 12, offset: [1.9, 0, 0], color: 'rgba(190,18,60,.92)' });
       if (VEI[lastV]) vei = lastV;
       setCut(true); setVei(vei);
       const sm = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
@@ -131,6 +134,7 @@
           lCr.show(!erupting || T < 0.5); lLava.show(g2 > 0.4); lLava.obj = [Math.sin(0.9) * 2.0, hAt(2.0) + 0.3, Math.cos(0.9) * 2.0];
           lBomb.show(erupting && T > 0.8); lGas.show(erupting && T > 1.2);
           lStrat.show(true);
+          { const ph = s && typeof s.plumeH === 'number' ? s.plumeH : V.h; hMark.visible = ph > 0.5; hMark.position.set(0, HC + ph * KM * 0.8, 0); lH.show(ph > 0.5); const txt = '기둥 높이 약 ' + V.h + ' km'; if (lH.txt !== txt) { lH.txt = txt; lH.set(txt); } }
         },
         sync() {},
       };

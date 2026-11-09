@@ -29,6 +29,17 @@
     autoRotate: 0.22,
     levels: [1],   // 2단계(세포 단면 · 기능 연결 · 막 개수: 3D 막대의 소기관 · 기능 · 막 단추로). 1단계(현미경 · 보이는 것 분류)와 3~4단계(원심분리 · 세포 분획)는 2D 화면이에요
     build(ctx) {
+      /* 3D 화면 위 작은 판(기록표 · 카드 등): 2D 캔버스에만 그려지던 것을 3D 단계에서도 보이게 해요 */
+      function v3pan(cls) {
+        if (!document.getElementById('v3pan-css')) { const s = document.createElement('style'); s.id = 'v3pan-css'; s.textContent =
+          '.v3pan{position:absolute;z-index:2;padding:6px 9px;border-radius:12px;background:rgba(8,12,24,.8);border:1px solid rgba(255,255,255,.16);color:#fff;font-size:12px;font-weight:700;line-height:1.35;pointer-events:none;max-width:48%}' +
+          '.v3pan:empty{display:none}.v3pan.tr{right:10px;top:10px}.v3pan.bl{left:10px;bottom:10px}.v3pan .h{font-weight:900;margin-bottom:3px;font-size:12.5px}.v3pan .chip{display:inline-block;margin:1px 2px;padding:0 6px;border-radius:7px;background:rgba(255,255,255,.16);color:#eef3ff}.v3pan .chip.sel{background:#ffd34d;color:#1b2333}.v3pan.card{background:#fffdf7;color:#1b2333;border-top:5px solid var(--kc,#ffd34d);white-space:normal;max-width:min(260px,46%)}.v3pan.card .s{font-size:11.5px;font-weight:600;color:#475569}' +
+          '.v3pan table{border-collapse:collapse}.v3pan th,.v3pan td{padding:1px 5px;text-align:center;white-space:nowrap}.v3pan th{color:#b9c6e4;text-align:left;font-weight:800}.v3pan td.e{color:#56658a}.v3pan .ok{color:#7ee2a8}.v3pan .hi{color:#ffd34d}' +
+          '@media (max-width:599px){.v3pan{font-size:10.5px;padding:4px 6px;max-width:58%}.v3pan.tr{top:auto;bottom:30px;right:8px}.v3pan.bl{left:8px;bottom:8px;max-width:42%}.v3pan th,.v3pan td{padding:0 3px}.v3pan .h{font-size:11px}}';
+          document.head.appendChild(s); }
+        const el = document.createElement('div'); el.className = 'v3pan ' + (cls || 'tr'); ctx.renderer.domElement.parentElement.appendChild(el);
+        let last = ''; el.put = (html) => { if (html !== last) { last = html; el.innerHTML = html; } }; return el;
+      }
       const { THREE, root, label, info, controls, renderer } = ctx;
       const V = THREE.Vector3;
       renderer.localClippingEnabled = true;
@@ -38,7 +49,7 @@
       const G = {};                    // 소기관별 그룹
       const labs = {};
       const An = (g, x, y, z) => { const o = new THREE.Object3D(); o.position.set(x, y, z); g.add(o); return o; };
-      const add = (k, text, obj, color) => { (labs[k] = labs[k] || []).push(label(text, obj, { color })); };
+      const add = (k, text, obj, color) => { const l = label(text, obj, { color }); l._t = text; (labs[k] = labs[k] || []).push(l); };
       function tube(pts, r, mat, closed) { return new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts, closed), pts.length * 8, r, 8, !!closed), mat); }
 
       /* ---------- 핵 ---------- */
@@ -193,7 +204,8 @@
       let lastSel = null;
       function setKey(k) {
         key = k;
-        Object.keys(G).forEach((n) => { G[n].visible = n === k; (labs[n] || []).forEach((l) => l.show(n === k)); });
+        const so = modeNow() === 'membsort';   // 막 개수 분류 중에는 막 개수를 알려 주는 이름표를 감춰요 (모형을 보고 세어요)
+        Object.keys(G).forEach((n) => { G[n].visible = n === k; (labs[n] || []).forEach((l) => { const giv = /막이 아니에요|^막 없음$/.test(l._t); l.set(so ? l._t.replace(/\s*\((이중막|단일막)\)/, '') : l._t); l.show(n === k && !(so && giv)); }); });
         writeInfo();
       }
       /* 안내: 세포 단면 · 막 개수는 소기관 설명, 기능 연결(match)은 고른 기능 · 이은 선을 보여 줘요 (기능은 답이라 숨겨요) */
@@ -209,7 +221,7 @@
         }
         if (L && m === 'membsort' && L.sortMem) {
           const c = L.sortMem.cards.find((q) => q.id === key), zn = { m2: '이중막', m1: '단일막', m0: '막 없음' };
-          info('<b>' + d[0] + '</b> · ' + d[4] + '<br>' + d[2] + '<br>넣은 상자: <b>' + (c && c.zone ? zn[c.zone] : '아직') + '</b> · 넣은 카드 ' + L.sortMem.placed + ' / 10');
+          info('<b>' + d[0] + '</b> · ' + d[4] + '<br>모형을 돌려 보며 막이 몇 겹인지 세어 봐요.<br>넣은 상자: <b>' + (c && c.zone ? zn[c.zone] : '아직') + '</b> · 넣은 카드 ' + L.sortMem.placed + ' / 10');
           return;
         }
         info('<b>' + d[0] + '</b> · <span style="color:#ffd34d">' + MEMN[d[1]] + '</span> · ' + d[4] + '<br>' + d[2] + '<br><span style="color:#a7f3d0">기능: ' + d[3] + '</span>');
@@ -247,9 +259,21 @@
       let lastMode = null, lastSig2 = '';
       function modeTick() {
         const L = LS(), m = modeNow();
-        if (m !== lastMode) { lastMode = m; fEls.forEach((e) => { e.style.display = m === 'match' ? '' : 'none'; }); mEls.forEach((e) => { e.style.display = m === 'membsort' ? '' : 'none'; }); lastSig2 = ''; }
+        if (m !== lastMode) { lastMode = m; setKey(key); fEls.forEach((e) => { e.style.display = m === 'match' ? '' : 'none'; }); mEls.forEach((e) => { e.style.display = m === 'membsort' ? '' : 'none'; }); lastSig2 = ''; }
         const sg = !L ? '' : m === 'match' && L.MT ? JSON.stringify(L.MT.link) : m === 'membsort' && L.sortMem ? L.sortMem.cards.map((q) => q.zone || '-').join(',') : m;
         if (sg !== lastSig2) { lastSig2 = sg; writeInfo(); }
+        drawPan(L, m);
+      }
+      /* 기능 연결: 이은 소기관 목록 · 막 개수: 세 상자에 넣은 카드 — 2D 화면의 선 · 상자를 3D 화면 오른쪽 위에 보여 줘요 */
+      const panR = v3pan('tr');
+      function drawPan(L, m) {
+        if (L && m === 'match' && L.MT) {
+          const n = L.MT.left.filter((q) => L.MT.link[q]).length;
+          panR.put('<div class="h">🔗 이은 선 ' + n + ' / 10</div>' + KEYS.map((q) => '<span class="chip' + (q === key ? ' sel' : '') + '">' + (L.MT.link[q] ? '✅ ' : '') + INFO[q][0] + '</span>').join(''));
+        } else if (L && m === 'membsort' && L.sortMem) {
+          const cs = L.sortMem.cards, nm = (c) => (INFO[c.id] ? INFO[c.id][0] : c.id), left = cs.filter((c) => !c.zone);
+          panR.put('<div class="h">🗂 막 개수 상자 ' + L.sortMem.placed + ' / 10</div>' + [['m2', '이중막'], ['m1', '단일막'], ['m0', '막 없음']].map(([z, t]) => '<div>' + t + ' ' + cs.filter((c) => c.zone === z).map((c) => '<span class="chip' + (c.id === key ? ' sel' : '') + '">' + nm(c) + '</span>').join('') + '</div>').join('') + (left.length ? '<div style="color:#b9c6e4">남은 카드 ' + left.map((c) => '<span class="chip' + (c.id === key ? ' sel' : '') + '">' + nm(c) + '</span>').join('') + '</div>' : ''));
+        } else panR.put('');
       }
       seg.set(key); setKey(key);
       function follow() {

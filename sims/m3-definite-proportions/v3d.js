@@ -246,6 +246,22 @@
         sig = '';
       }));
       const pickEls = Array.from(pickHost.children).slice(n0);
+      /* 3D 화면 오른쪽 위의 작은 판 (휴대폰에서는 오른쪽 아래): 2D 화면의 표 · 기록을 3D에서도 보여 줘요 */
+      function v3xPan(cls) { const vEl = ctx.renderer.domElement.parentElement;
+        if (!document.getElementById('v3x-css')) { const c = document.createElement('style'); c.id = 'v3x-css'; c.textContent =
+          '.v3x-pan{position:absolute;right:10px;top:10px;max-width:52%;padding:6px 9px;border-radius:12px;background:rgba(8,12,24,.76);color:#fff;font-size:12px;line-height:1.35;pointer-events:none;z-index:2}' +
+          '.v3x-pan .h{font-weight:800;margin-bottom:3px}.v3x-pan table{border-collapse:collapse}.v3x-pan th,.v3x-pan td{padding:1px 5px;text-align:left;white-space:nowrap}.v3x-pan th{color:#9fb0cc;font-weight:700;font-size:11px}.v3x-pan .q{color:#7d8aa3}.v3x-pan .now td{background:rgba(255,255,255,.1)}' +
+          '.v3x-pan .c{display:inline-block;margin:1px 2px;padding:1px 6px;border-radius:8px;background:rgba(255,255,255,.14)}.v3x-pan .ok{color:#86efac}.v3x-pan .bad{color:#fca5a5}' +
+          '@media (max-width:599px){.v3x-pan{top:auto;bottom:28px;right:6px;font-size:10.5px;max-width:64%;padding:4px 6px}.v3x-pan th{font-size:9.5px}.v3x-pan th,.v3x-pan td{padding:0 3px}}';
+          document.head.appendChild(c); }
+        const el = document.createElement('div'); el.className = 'v3x-pan' + (cls ? ' ' + cls : ''); el.style.display = 'none'; vEl.appendChild(el);
+        let sig = null; return { set(h) { if (h === sig) return; sig = h; el.style.display = h ? '' : 'none'; if (h) el.innerHTML = h; }, el }; }
+      const histPan = v3xPan();   // 🧃 만든 비율: 2D의 오른쪽 상자처럼 서로 다른 설탕 : 물 비율이 쌓여요
+      const gcd2 = (a, b) => (b ? gcd2(b, a % b) : a);
+      function drawHist(v, S) {
+        const H = v.sc === 'sugar' && S.SG ? S.SG.hist || [] : null; if (!H) { histPan.set(''); return; }
+        histPan.set('<div class="h">🧃 만든 비율 ' + H.length + '가지</div>' + (H.length ? H.map((h, i) => { const g = gcd2(h.s, h.w); return '<div>' + (i + 1) + '. 설탕 ' + h.s + ' g : 물 ' + h.w + ' g = <b>' + h.s / g + ' : ' + h.w / g + '</b></div>'; }).join('') : '<span class="q">설탕을 넣으면 비율이 쌓여요</span>'));
+      }
       let lastPairs = -1, lastFound = null;
       return {
         update(dt, t) {
@@ -259,6 +275,7 @@
           }
           if (v.key !== sig) { sig = v.key; rebuild(v); }
           else if (v.sc === 'lab' && S.LAB && S.LAB.scaleVal !== lastSV) { lastSV = S.LAB.scaleVal; rebuild(v); }
+          drawHist(v, S);
           stg.update(t); arrow.position.x = Math.sin(t * 2.5) * 0.07;
         },
       };

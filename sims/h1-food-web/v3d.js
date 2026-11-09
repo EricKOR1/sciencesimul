@@ -28,7 +28,24 @@
     autoRotate: 0.15,
     levels: [2, 3],
     build(ctx) {
-      const { THREE, root, label, info, controls } = ctx;
+      const { THREE, root, label, info, controls, renderer } = ctx;
+      /* 식단 비교 판: 2D의 '곡물 → 직접 먹기 / 소 사료' 막대와 먹일 수 있는 사람 수를 3D 화면에도 보여 줘요 */
+      if (!document.getElementById('fw3d-diet')) { const st2 = document.createElement('style'); st2.id = 'fw3d-diet'; st2.textContent =
+        '.fw-diet{position:absolute;right:10px;top:10px;width:min(260px,44%);padding:8px 10px;border-radius:12px;background:rgba(8,12,24,.76);color:#fff;font-size:12px;font-weight:700;pointer-events:none}.fw-diet .h{font-weight:900;margin-bottom:5px}.fw-diet .bar{display:flex;height:14px;border-radius:7px;overflow:hidden;background:#2a3346;margin:3px 0 6px}.fw-diet .bar i{display:block;height:100%}.fw-diet .r{display:flex;justify-content:space-between;gap:6px;line-height:1.5}.fw-diet .t{margin-top:4px;padding-top:4px;border-top:1px solid rgba(255,255,255,.18);font-weight:900;color:#5eead4}' +
+        '@media (max-width:599px){.fw-diet{top:auto;bottom:30px;right:8px;width:54%;font-size:10.5px;padding:5px 7px}.fw-diet .bar{height:10px;margin:2px 0 4px}}';
+        document.head.appendChild(st2); }
+      const dietEl = document.createElement('div'); dietEl.className = 'fw-diet'; dietEl.style.display = 'none'; renderer.domElement.parentElement.appendChild(dietEl);
+      let dietSig = '';
+      function drawDiet(on, pct, fed) {
+        if (!on) { if (dietSig) { dietSig = ''; dietEl.style.display = 'none'; } return; }
+        const sig = pct + '|' + fed; if (sig === dietSig) return; dietSig = sig; dietEl.style.display = '';
+        const dir = Math.round(1000 * pct / 100), beef = Math.round(1000 * (100 - pct) / 100 * 0.1);
+        dietEl.innerHTML = '<div class="h">🍚 식단 비교 (밭의 곡물 = 1000명분)</div>' +
+          '<div class="bar"><i style="width:' + pct + '%;background:#f5b301"></i><i style="width:' + (100 - pct) + '%;background:#c2410c"></i></div>' +
+          '<div class="r"><span>🌾 → 🧑 직접 먹기 ' + pct + ' %</span><b>' + dir + '명</b></div>' +
+          '<div class="r"><span>🌾 → 🐄 → 🧑 쇠고기 ' + (100 - pct) + ' %</span><b>' + beef + '명</b></div>' +
+          '<div class="r t"><span>먹일 수 있는 사람</span><span>' + fed + '명</span></div>';
+      }
       const V3 = THREE.Vector3, Y = new V3(0, 1, 0);
       const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ envMapIntensity: 0.6, color: c, roughness: 0.45, metalness: 0.05 }, o || {}));
       const L2 = () => (ctx.lesson && ctx.lesson()) || null;
@@ -105,7 +122,7 @@
         controls.segment('생태계', [{ value: 'meadow', label: '초원' }, { value: 'oak', label: '참나무 숲' }], 'meadow', (v) => { const S = L2(); if (S && S.pyrSet) S.pyrSet(v, null); });
         controls.segment('피라미드', [{ value: 'num', label: '개체 수' }, { value: 'bio', label: '생물량' }, { value: 'en', label: '에너지량' }], 'num', (v) => { const S = L2(); if (S && S.pyrSet) S.pyrSet(null, v); });
         controls.button('🧱 블록 쌓기', () => { const S = L2(); if (S && S.pyrBuild) { st.demo = false; S.pyrBuild(); } else { st.demo = true; pyP.set(0); pyP.play(); } });
-        pyP = mkPlayer({ duration: 6, loop: true, label: '블록 쌓기', phases: [[0, '생산자'], [0.25, '1차 소비자'], [0.5, '2차 소비자'], [0.75, '3차 소비자']] });
+        pyP = mkPlayer({ duration: 6, loop: true, label: '쌓는 순서 미리 보기', phases: [[0, '생산자'], [0.25, '1차 소비자'], [0.5, '2차 소비자'], [0.75, '3차 소비자']] });
       });
       const gNames = grab(() => { controls.button('🏷 이름', () => { st.names = !st.names; }); });
       const gFlow = grab(() => {
@@ -135,6 +152,7 @@
           if (sig !== st.sig) { st.sig = sig; if (st.demo) { st.demo = false; [wP, pyP, flP].forEach((p) => p.pause()); } }
           if (scene !== lastScene) {
             lastScene = scene;
+            if (scene !== 'flow') drawDiet(false);
             gW.visible = scene === 'web'; gP.visible = scene === 'pyr'; gF.visible = scene === 'flow';
             gWeb.els.forEach((e) => { e.style.display = scene === 'web' ? '' : 'none'; });
             gPyr.els.forEach((e) => { e.style.display = scene === 'pyr' ? '' : 'none'; });
@@ -204,8 +222,9 @@
             const topI = Math.min(n, 5) - 1;
             if (mode === 'diet' && SS.diet) {
               const pct = SS.diet.pct, fed = S.peopleFed ? Math.round(S.peopleFed(pct)) : 0;
+              drawDiet(true, pct, fed);
               setInfo('<b>식단 비교</b>: 곡물을 사람이 직접 먹으면 에너지가 그대로, 소를 거치면 약 <b>10 %</b>만 전달돼요.<br>직접 먹는 비율 <b>' + pct + ' %</b> → 먹일 수 있는 사람 약 <b>' + fed + '명</b> (밭의 곡물 = 1000명분)');
-            } else setInfo('<b>에너지 전달</b>: 풀 <b>10000 kJ</b> 중 단계마다 약 <b>10 %</b>만 다음 단계로 전달돼요. 나머지는 호흡 등으로 열이 되어 나가요.<br>' + n + '단계 생물(' + ROLE[topI] + ')이 받는 에너지: <b>' + EN2[topI] + ' kJ</b>');
+            } else { drawDiet(false); setInfo('<b>에너지 전달</b>: 풀 <b>10000 kJ</b> 중 단계마다 약 <b>10 %</b>만 다음 단계로 전달돼요. 나머지는 호흡 등으로 열이 되어 나가요.<br>' + n + '단계 생물(' + ROLE[topI] + ')이 받는 에너지: <b>' + EN2[topI] + ' kJ</b>'); }
             pkt.visible = false;
           }
         },

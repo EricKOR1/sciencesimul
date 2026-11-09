@@ -121,7 +121,7 @@
       }
       let internal = false;
       const pl = controls.player({
-        duration: 14, loop: true, label: 'NaOH 넣기',
+        duration: 14, loop: true, label: '중화 과정 보기',   // 미리 보기: 실험에 넣은 양은 옆의 버튼으로 바꿔요
         phases: [[0, '산성 (H⁺이 남아요)'], [NH / (MAXK + 1), '완전 중화'], [(NH + 1) / (MAXK + 1), '염기성 (OH⁻이 남아요)']],
         onFrame(p) { if (internal) return; st.demo = true; setK(Math.min(MAXK, Math.floor(p * (MAXK + 1)))); },
       });

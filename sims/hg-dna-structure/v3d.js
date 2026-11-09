@@ -153,7 +153,7 @@
     autoRotate: 0.25,
     levels: [2],   // 염기쌍 · 이중 나선 단계만 3D(짝 단추 · ①②③ 단추가 옆 조작판에 있어요). 샤가프 표 · X선 눈금자 · 발표 카드는 캔버스에서 해요
     build(ctx) {
-      const { THREE, root, label, info, controls, orbit, camera } = ctx;
+      const { THREE, root, label, info, controls, orbit, camera, renderer } = ctx;
       const H = makeHelix(THREE, root, { N: 20, seq: SEQ20, a: 0.5, rings: true, strandCols: SC, arrows: true, arrowCols: [0x93c5fd, 0xc4b5fd] });
       let showDir = true, showGroove = true, showDim = false, selI = 3, faceT = 0;
       H.setArrows(true);
@@ -226,6 +226,24 @@
         const t = r === 'wide' ? '2.4 nm → 틈보다 <b>너무 넓어요</b>' : r === 'narrow' ? '1.6 nm → 틈보다 <b>너무 좁아요</b>' : r === 'wrong' ? '2 nm에 맞지만 샤가프 규칙(A ≈ T, G ≈ C)에 어긋나요' : '2 nm에 <b>딱 맞아요</b> (수소 결합 ' + (r === 'AT' ? 2 : 3) + '개)';
         return '<span style="color:#fcd34d">놓은 짝 ' + a + ' + ' + b + ': ' + nm(a) + ' + ' + nm(b) + ' = ' + t + '</span><br>';
       }
+      /* 틈 카드: 짝 단추로 놓은 두 염기가 두 줄(당–인산 뼈대) 사이 2 nm 틈에 어떻게 들어가는지 3D 화면에도 보여 줘요 */
+      const gapEl = document.createElement('div');
+      gapEl.style.cssText = 'position:absolute;right:10px;top:10px;padding:6px 8px 7px;border-radius:12px;background:rgba(8,12,24,.78);color:#fff;font-size:12px;font-weight:800;pointer-events:none;display:none;width:' + (PHONE ? 150 : 190) + 'px';
+      renderer.domElement.parentElement.appendChild(gapEl);
+      let gapSig = null;
+      function drawGap() {
+        const L = window.__sim, on = !!(L && L.S && L.S.mode === 'fit' && L.S.fit && L.rowEval);
+        const sl = on ? L.S.fit.slots[0] : null, sig = on ? sl.map((x) => (x ? x.b : '-')).join('') : '';
+        if (sig === gapSig) return; gapSig = sig; gapEl.style.display = on ? '' : 'none'; if (!on) return;
+        const W = PHONE ? 134 : 174, x0 = 12, x1 = W - 12, k = (x1 - x0) / 20;      // 틈 20칸 = 2 nm (퓨린 12칸, 피리미딘 8칸)
+        const a = sl[0] && sl[0].b, b = sl[1] && sl[1].b, r = L.rowEval(0);
+        const col = { A: '#ef4444', T: '#f59e0b', G: '#22c55e', C: '#3b82f6' };
+        const blk = (c, left) => { if (!c) return ''; const w = (PUR[c] ? 12 : 8) * k, x = left ? x0 : x1 - w; return '<rect x="' + x + '" y="15" width="' + w + '" height="18" rx="4" fill="' + col[c] + '" opacity=".9"/><text x="' + (x + w / 2) + '" y="28" fill="#fff" font-size="12" font-weight="900" text-anchor="middle">' + c + '</text>'; };
+        const res = !a || !b ? '짝 단추를 눌러 염기를 놓아요' : r === 'wide' ? '❌ 너무 넓어요 (2.4 nm)' : r === 'narrow' ? '❌ 너무 좁아요 (1.6 nm)' : r === 'wrong' ? '⚠ 폭은 맞지만 짝이 아니에요' : '✅ 딱 맞아요 (' + a + '–' + b + ')';
+        gapEl.innerHTML = '<div>🧩 두 줄 사이 틈 2 nm</div><svg width="' + W + '" height="44" style="display:block;margin-top:3px">' +
+          '<rect x="' + (x0 - 6) + '" y="4" width="6" height="36" rx="2" fill="#93c5fd"/><rect x="' + x1 + '" y="4" width="6" height="36" rx="2" fill="#c4b5fd"/>' + blk(a, true) + blk(b, false) + '</svg>' +
+          '<div style="color:' + (r === 'AT' || r === 'GC' ? '#86efac' : a && b ? '#fca5a5' : '#cbd5e1') + ';margin-top:2px">' + res + '</div>';
+      }
       function pickPair(i) { selI = i; H.select(i); refresh(); }
 
       const twR = controls.range('꼬임', 0, 100, 1, 100, (v) => { H.setTwist(v / 100); buildGroove(); placeGroove(); if (v < 5) faceT = 1.4; refresh(); }, (v) => v + ' %');
@@ -268,6 +286,7 @@
       let lastFit = '';
       function poll() {
         const L = ctx.lesson(); if (!L || !L.S) return;
+        drawGap();
         if (L.S.mode === 'fit' && L.S.fit) { const k = L.S.fit.slots[0].map((x) => (x ? x.b : '-')).join(''); if (k !== lastFit) { lastFit = k; refresh(); } }
         if (L.S.mode !== 'helix' || !L.S.hx) return;
         const h = L.S.hx;

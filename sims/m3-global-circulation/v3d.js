@@ -98,7 +98,7 @@
       const markLabs = marks.map(([la, a, b, k]) => {
         const o = new THREE.Object3D(); o.position.set(1.5 * Math.cos(la * D2R), 1.5 * Math.sin(la * D2R), 0); root.add(o);
         const L = label(narrow ? a.replace(' 기류', '') + ' ' + (la === 90 ? '극' : la + '°') : a + '<br><span style="font-weight:700;font-size:11px">' + b + '</span>', o, { color: k === 'up' ? 'rgba(22,101,52,.92)' : 'rgba(30,64,175,.92)', size: 12 });
-        L.off = narrow ? [la === 90 ? 0.0 : 0.3, la === 90 ? 0.14 : 0, 0] : [la === 90 ? 0.42 : 0.38, la === 90 ? 0.12 : 0, 0]; return L;
+        L.off = narrow ? [la === 90 ? 0.0 : 0.3, la === 90 ? 0.14 : 0, 0] : [la === 90 ? 0.42 : 0.38, la === 90 ? 0.12 : 0, 0]; L.full = L.el.innerHTML; L.bg = L.el.style.background; return L;
       });
       const cellLabs = CELLS.map((c) => { const o = new THREE.Object3D(); o.position.set(1.5 * Math.cos(c.m * D2R), 1.5 * Math.sin(c.m * D2R), 0.0); root.add(o); const L = label(narrow ? c.name.slice(0, 3) : c.name, o, { color: c.col, size: 12 }); L.el.style.color = '#10172a'; L.off = [narrow ? 0.2 : 0.3, 0, 0]; return L; });
 
@@ -188,7 +188,7 @@
         } else if (scene === 'sat') {
           parts.push('<b>🛰️ 날씨 이동</b>: 중위도에서는 <b>편서풍</b>이 불어 구름과 <b style="color:#fcd34d">황사</b>가 <b>서쪽에서 동쪽</b>으로 움직여요.<br>그래서 우리나라(약 37°N) 날씨는 서쪽에서부터 바뀌어요.');
         } else if (focus === 'all' && scene === 'cells') {
-          parts.push('<b>순환 3개</b>가 위도마다 세로 고리를 이뤄요.<br><b style="color:#86efac">상승</b> 0°·60° (구름·비) · <b style="color:#93c5fd">하강</b> 30°·극 (맑고 건조)');
+          parts.push(markAsk ? '<b>순환 3개</b>가 위도마다 세로 고리를 이뤄요.<br>고리의 화살표를 따라가 보고, 공기가 <b>올라가는 곳</b>과 <b>내려오는 곳</b>을 아래 <b>표시</b> 단추로 정해요.' : '<b>순환 3개</b>가 위도마다 세로 고리를 이뤄요.<br><b style="color:#86efac">상승</b> 0°·60° (구름·비) · <b style="color:#93c5fd">하강</b> 30°·극 (맑고 건조)');
         } else if (scene === 'wind') {
           parts.push('<b>무역풍(북동풍)</b> 0~30° · <b>편서풍(남서풍)</b> 30~60° · <b>극동풍(북동풍)</b> 60~90°<br>북반구에서 지표 바람은 비스듬히 불어요.');
         } else if (focus === 'h') parts.push('<b style="color:#38bdf8">저위도 순환</b>: 적도에서 <b>상승</b> → 높은 곳에서 30° 쪽으로 이동 → 30°에서 <b>하강</b> → 지표에서 적도로 되돌아와요. 지표 바람은 <b>무역풍</b>이에요.');
@@ -215,11 +215,17 @@
       const circRow = tail(() => controls.segment('대순환', [{ value: '0', label: '⏸ 멈춘다고 가정' }, { value: '1', label: '🌀 작동' }], '1', (v) => { const b = document.querySelector('#circSeg button[data-c="' + v + '"]'); if (b) b.click(); }));
       /* 📍 상승·하강 표시(2단계): 2D 단면의 동그라미 누르기(markLat)와 같아요. 누를 때마다 ? → ↑ → ↓ */
       const MK = [[0, '0°'], [30, '30°'], [60, '60°'], [90, '극']];
-      let mkBtns = [];
+      let mkBtns = [], markAsk = false;
       const markRow = tail(() => { controls.text('<b>표시</b>'); mkBtns = MK.map(([la, nm]) => controls.button(nm + ' ?', () => { const L = ctx.lesson(); if (L && L.markLat) L.markLat(la); })); });
       function markSync(S) {
         const on = scene === 'cells' && S.lv === 1 && !S.free;
         markRow.forEach((e) => { e.style.display = on ? '' : 'none'; });
+        /* 표시하는 동안에는 정답 이름표 대신 학생이 고른 표시를 보여 줘요 (모두 맞히면 원래 이름표) */
+        const allOK = marks.every(([la, , , k]) => (S.marks || {})[la] === k), ask = on && !allOK;
+        markLabs.forEach((L, i) => { const [la, , , k] = marks[i], v = (S.marks || {})[la], nm = la === 90 ? '극' : la + '°';
+          const h = ask ? (v ? (v === 'up' ? '↑ 상승' : '↓ 하강') + ' ' + nm : nm + ' ?') : L.full;
+          if (L.el.innerHTML !== h) { L.el.innerHTML = h; L.el.style.background = ask ? (v === 'up' ? 'rgba(22,101,52,.92)' : v === 'down' ? 'rgba(30,64,175,.92)' : 'rgba(51,65,85,.92)') : L.bg; } });
+        markAsk = ask;
         if (on) mkBtns.forEach((b, i) => { const v = (S.marks || {})[MK[i][0]], tx = MK[i][1] + ' ' + (v === 'up' ? '↑' : v === 'down' ? '↓' : '?'); if (b.textContent !== tx) b.textContent = tx; b.classList.toggle('on', !!v); });
       }
       layout();
@@ -227,7 +233,7 @@
       return {
         update(dt, t) {
           const S = ((ctx.lesson() || {}).S) || {};
-          const ns = [S.scene, S.focus, S.circ, Math.round(S.lat || 0), hemi].join('|');
+          const ns = [S.scene, S.focus, S.circ, Math.round(S.lat || 0), hemi, markAsk].join('|');
           if (ns !== sig) { sig = ns; layout(); }
           markSync(S);
           if (spin && scene !== 'flash' && scene !== 'sat') earth.rotation.y += 0.22 * dt;            // 서 → 동 (북극 위에서 보면 반시계 방향)

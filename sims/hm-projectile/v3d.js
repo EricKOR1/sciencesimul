@@ -167,7 +167,7 @@
         if (target) {
           txt = '<b>🎯 목표 맞히기 · ' + sc.name + '</b><br>v₀ = ' + P.v0 + ' m/s · θ = ' + P.th + '°' + (h0 ? ' · 처음 높이 ' + h0 + ' m' : '') + (wl ? ' · 높이 ' + wl.h + ' m, ' + wl.x + ' m 앞 담장' : ' · 표적 ' + sc.tx + ' m (반지름 ' + sc.tr + ' m)') + '<br>' + (P.res ? (P.res.ok ? '🎉 ' : '') + P.res.msg : '먼저 계산해서 v₀와 θ를 정한 뒤 던져 보세요.');
         } else if (S.mode === 'model') {
-          txt = '<b>📐 운동 식 · v₀ = ' + P.v0 + ' m/s, θ = ' + P.th + '°</b><br>x = v₀cosθ·t · y = v₀sinθ·t − ½gt² · 수평은 등속(ax = 0), 연직은 가속(ay = −g)<br>' + (P.st === 'done' && P.fl ? '결과: 체공 시간 T = ' + f1(P.fl.T) + ' s · 최고 높이 H = ' + f1(P.fl.H) + ' m · 사거리 R = ' + f1(P.fl.R) + ' m' : 'T · H · R은 식으로 계산한 뒤 ▶ 던지기로 확인해요.');
+          txt = '<b>📐 운동 식 · v₀ = ' + P.v0 + ' m/s, θ = ' + P.th + '°</b><br>x = v₀cosθ·t · y = v₀sinθ·t − ½gt² · 수평은 등속(ax = 0), 연직은 가속(ay = −g)<br>' + (P.st === 'done' && P.fl ? (A.eff && A.eff('hide') ? '궤적을 확인했어요. 계산한 T · H · R을 옆 조작판에 입력하고 ✔ 확인하기를 눌러요.' : '결과: 체공 시간 T = ' + f1(P.fl.T) + ' s · 최고 높이 H = ' + f1(P.fl.H) + ' m · 사거리 R = ' + f1(P.fl.R) + ' m') : 'T · H · R은 식으로 계산한 뒤 ▶ 던지기로 확인해요.');
         } else {
           txt = '<b>🏹 궤적 관찰 · v₀ = ' + P.v0 + ' m/s · θ = ' + P.th + '°</b><br>' + (P.st === 'done' && P.fl ? '사거리 R = <b>' + f1(P.fl.R) + ' m</b> · 최고 높이 ' + f1(P.fl.H) + ' m' : '각도를 바꿔 던져 사거리 R을 기록해요 (옆 조작판).') + (P.rec && P.rec.length ? '<br>📋 기록: ' + P.rec.map((x) => x.th + '° → R ' + f1(x.R) + ' m').join(' · ') : '') + '<br>수평 방향은 등속(바닥 위 그림자 간격이 일정), 연직 방향은 중력 때문에 가속돼요.';
         }

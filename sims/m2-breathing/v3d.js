@@ -131,6 +131,26 @@
       function chestBar(on) { if (on === chOn) return; chOn = on; chB.forEach((b) => { b.style.display = on ? '' : 'none'; }); }
       chestBar(false);
       apply();
+      /* 3D 화면 오른쪽 위의 작은 판 (휴대폰에서는 오른쪽 아래): 2D 화면의 표 · 기록을 3D에서도 보여 줘요 */
+      function v3xPan(cls) { const vEl = ctx.renderer.domElement.parentElement;
+        if (!document.getElementById('v3x-css')) { const c = document.createElement('style'); c.id = 'v3x-css'; c.textContent =
+          '.v3x-pan{position:absolute;right:10px;top:10px;max-width:52%;padding:6px 9px;border-radius:12px;background:rgba(8,12,24,.76);color:#fff;font-size:12px;line-height:1.35;pointer-events:none;z-index:2}' +
+          '.v3x-pan .h{font-weight:800;margin-bottom:3px}.v3x-pan table{border-collapse:collapse}.v3x-pan th,.v3x-pan td{padding:1px 5px;text-align:left;white-space:nowrap}.v3x-pan th{color:#9fb0cc;font-weight:700;font-size:11px}.v3x-pan .q{color:#7d8aa3}.v3x-pan .now td{background:rgba(255,255,255,.1)}' +
+          '.v3x-pan .c{display:inline-block;margin:1px 2px;padding:1px 6px;border-radius:8px;background:rgba(255,255,255,.14)}.v3x-pan .ok{color:#86efac}.v3x-pan .bad{color:#fca5a5}' +
+          '@media (max-width:599px){.v3x-pan{top:auto;bottom:28px;right:6px;font-size:10.5px;max-width:64%;padding:4px 6px}.v3x-pan th{font-size:9.5px}.v3x-pan th,.v3x-pan td{padding:0 3px}}';
+          document.head.appendChild(c); }
+        const el = document.createElement('div'); el.className = 'v3x-pan' + (cls ? ' ' + cls : ''); el.style.display = 'none'; vEl.appendChild(el);
+        let sig = null; return { set(h) { if (h === sig) return; sig = h; el.style.display = h ? '' : 'none'; if (h) el.innerHTML = h; }, el }; }
+      /* 🫧 기체 교환 세기: 2D 폐포 장면에서 이동한 O₂ · CO₂ 수를 3D 화면에도 보여 줘요 */
+      const gasPan = v3xPan();
+      function drawGas() {
+        const s2 = sm(), AL = s2 && s2.S && s2.S.scene === 'alveoli' ? s2.AL : null;
+        if (!AL || mode !== 'alv') { gasPan.set(''); return; }
+        const ex = AL.ex || 0, run = ex >= 0.7;
+        gasPan.set('<div class="h">🫧 이동한 기체 · ' + (run ? '🏃 달리는 중' : ex < 0.25 ? '😌 쉬는 중' : '🚶 걷는 중') + '</div>' +
+          '<div>쉴 때: <b style="color:#bff4ff">O₂ ' + AL.restO2 + '</b> · <b style="color:#ffb46b">CO₂ ' + AL.restCO2 + '</b></div>' +
+          '<div>운동할 때: <b style="color:#bff4ff">O₂ ' + AL.exO2 + '</b> · <b style="color:#ffb46b">CO₂ ' + AL.exCO2 + '</b></div>');
+      }
       const dm = new THREE.Object3D(); let k0 = 0, lastSc = '';
       function readScene() { const s = sm() && sm().S && sm().S.scene; if (!s || s === lastSc) return; lastSc = s; const m = s === 'alveoli' ? 'alv' : 'organ'; if (m !== mode) { mode = m; sg.set(m); apply(); } }
       return {
@@ -149,6 +169,7 @@
             const ex = s2 && s2.AL ? s2.AL.exv || 0 : 0; gp += dt * (0.35 + 0.6 * ex);
           }
           if (((k0 + 1) % 10) === 0) txt();
+          if ((k0 % 6) === 0) drawGas();
           if (mode === 'organ') {
             const s = 1 + 0.16 * vol;
             lungR.scale.set(1.05 * s, 1.85 * (1 + 0.12 * vol), 1.0 * s); lungL.scale.set(1.0 * s, 1.75 * (1 + 0.12 * vol), 0.95 * s);

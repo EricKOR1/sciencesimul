@@ -143,7 +143,7 @@
         const tn = c.type === 'stick' ? '합체' : '튕김', pb = c.mA * c.vA + c.mB * c.vB, pa = c.mA * c.v2A + c.mB * c.v2B;
         const kb = 0.5 * c.mA * c.vA * c.vA + 0.5 * c.mB * c.vB * c.vB, ka = 0.5 * c.mA * c.v2A * c.v2A + 0.5 * c.mB * c.v2B * c.v2B;
         tag.show(!c.willHit); tag.obj = [5, 3.4, 0]; tag.set('⚠ A가 B를 따라잡지 못해요 (충돌 없음)');
-        info('<b>🎱 마찰 없는 트랙 · ' + tn + ' 충돌</b><br>A ' + f1(c.mA) + ' kg · ' + sg(c.vA, 1) + ' m/s &nbsp; B ' + f1(c.mB) + ' kg · ' + sg(c.vB, 1) + ' m/s<br>' + (c.willHit ? '총 운동량 전 ' + sg(pb, 2) + ' → 후 ' + sg(pa, 2) + ' kg·m/s (같아요)<br>운동 에너지 ' + f2(kb) + ' → ' + f2(ka) + ' J' + (c.type === 'stick' ? ' (일부는 열 등으로)' : ' (거의 보존)') : 'A가 B보다 느려서 부딪히지 않아요. A의 속도를 B보다 크게 해 보세요.') + '<br><span style="opacity:.8">질량·속도·충돌 유형은 옆 조작판에서 바꿔요.</span>');
+        info('<b>🎱 마찰 없는 트랙 · ' + tn + ' 충돌</b><br>A ' + f1(c.mA) + ' kg · ' + sg(c.vA, 1) + ' m/s &nbsp; B ' + f1(c.mB) + ' kg · ' + sg(c.vB, 1) + ' m/s<br>' + (c.willHit && !c.rec ? '총 운동량 전 ' + sg(pb, 2) + ' kg·m/s → 후 ? (▶ 충돌 시키기로 측정해요)<br>운동 에너지 전 ' + f2(kb) + ' J' : c.willHit ? '총 운동량 전 ' + sg(pb, 2) + ' → 후 ' + sg(pa, 2) + ' kg·m/s<br>운동 에너지 ' + f2(kb) + ' → ' + f2(ka) + ' J' + (c.type === 'stick' ? ' (일부는 열 등으로)' : ' (거의 보존)') : 'A가 B보다 느려서 부딪히지 않아요. A의 속도를 B보다 크게 해 보세요.') + '<br><span style="opacity:.8">질량·속도·충돌 유형은 옆 조작판에서 바꿔요.</span>');
       }
       /* ===== 🤝 줄로 연결된 두 수레 ===== */
       function pair(S) {

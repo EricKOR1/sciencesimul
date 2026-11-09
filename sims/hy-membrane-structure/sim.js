@@ -1055,7 +1055,7 @@
         {
           id: 'place', title: '막 단백질 5종 끼워 넣기',
           goal: '🧩 화면에서 막 단백질 <b>5종을 모두</b> 이중층에 끼워 넣고, <b>콜레스테롤을 3개 이상</b> 넣어 보세요.',
-          hint: '<span class="only3d">3D 막대의 「막에 넣기」 단추(또는 아래 단백질)를 눌러요.</span><span class="only2d">아래 단백질을 막 쪽으로 끌어다 놓거나 눌러요.</span> 단백질마다 하는 일이 반복해서 나타나요. 🧈 콜레스테롤 넣기 버튼을 3번 눌러요.',
+          hint: '<span class="only3d">3D 막대의 「막에 넣기」 단추를 눌러요. 흐린 빈 자리에 단백질이 끼워져요.</span><span class="only2d">아래 단백질을 막 쪽으로 끌어다 놓거나 눌러요.</span> 단백질마다 하는 일이 반복해서 나타나요. 🧈 콜레스테롤 넣기 버튼을 3번 눌러요.',
           setup() { prReset(); S.pr.view = 0; setMode('prot'); },
           check: () => prPlaced().length === 5 && S.pr.chol >= 3, hold: 0.8,
           status: () => PTYPES.map((k) => mark(S.pr.items.find((q) => q.type === k).slot >= 0) + ' ' + PROT[k].name).join(' &nbsp; ') + ' &nbsp; ' + mark(S.pr.chol >= 3) + ' 콜레스테롤 ' + S.pr.chol + '/3',
@@ -1097,7 +1097,7 @@
         {
           id: 'mix37', title: '37 °C에서 섞이는 시간',
           goal: '온도를 <b>37 °C</b>로 두고 재생해서, 형광이 <b>85 % 이상</b> 섞이는 데 걸린 시간을 확인하세요.',
-          hint: '온도 37 °C, 불포화 40 %, 콜레스테롤 없음 그대로 ▶ 재생을 눌러요. 그래프의 초록 점선(85 %)에 닿으면 시간이 표시돼요. 1초에 약 2.5분이 지나가요.',
+          hint: '온도 37 °C, 불포화 40 %, 콜레스테롤 없음 그대로 ▶ 재생을 눌러요. <span class="only3d">섞인 정도가 85 %에 닿으면 걸린 시간이 표시돼요.</span><span class="only2d">그래프의 초록 점선(85 %)에 닿으면 시간이 표시돼요.</span> 1초에 약 2.5분이 지나가요.',
           setup() { setMode('fluid'); S.fx.T = 37; S.fx.u = 40; S.fx.chol = false; $('#sFT').value = 37; $('#sFU').value = 40; fxReset(); },
           check: () => S.fx.T >= 36 && S.fx.t85 != null, hold: 0.6,
           status: () => mark(S.fx.T >= 36) + ' 37 °C &nbsp; ' + mark(S.fx.t85 != null) + ' 섞인 정도 ' + (S.fx.t85 != null ? FX_THR + ' % 이상 도달' : S.fx.mix + ' % (목표 ' + FX_THR + ' %)') + ' &nbsp; ' + mark(S.fx.t85 != null) + ' 걸린 시간 ' + (S.fx.t85 != null ? S.fx.t85.toFixed(1) + '분' : '—'),

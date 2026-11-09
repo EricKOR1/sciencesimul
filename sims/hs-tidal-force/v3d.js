@@ -176,7 +176,7 @@
           const th = thT, rg = rangeAt(th), spring = rg >= 0.7, neap = rg <= 0.28;
           h = '<b>' + day.toFixed(1) + '일 · ' + phaseName(day) + '</b> — 바다가 <b>달 쪽</b>과 <b>반대쪽</b> 두 곳에서 부풀어요.<br>';
           h += (spring ? '달·태양 부풀음이 <b>겹쳐요</b> → <span style="color:#fca5a5">사리</span>' : neap ? '달·태양 부풀음이 <b>어긋나요</b> → <span style="color:#93c5fd">조금</span>' : '달과 태양의 부풀음이 일부만 겹쳐요') + ' · 조차 <b>' + rg.toFixed(2) + ' m</b>';
-          h += '<br>지구가 자전하면 관측점이 두 부풀음을 지나 <b>하루 약 2번 만조</b>예요.';
+          h += '<br>지구가 자전하면 관측점(부표)이 부풀음을 차례로 지나가요. <b>▶ 하루 재생</b>으로 만조가 몇 번 오는지 세어 봐요.';
         }
         info(h);
       }
@@ -215,6 +215,28 @@
       }
       follow();
 
+      /* 24시간 조위 곡선 (2D 아래쪽 그래프와 같아요): 하루 재생이 나아가는 만큼 부표의 바다 높이를 그려요 */
+      const tcBox = document.createElement('div'); tcBox.className = 'htf-tc'; ctx.renderer.domElement.parentElement.appendChild(tcBox);
+      if (!document.getElementById('htf-tc-css')) { const cs = document.createElement('style'); cs.id = 'htf-tc-css'; cs.textContent =
+        '.htf-tc{position:absolute;right:10px;bottom:36px;width:220px;padding:5px 7px 6px;border-radius:12px;background:rgba(8,12,24,.8);color:#e5e7eb;font-size:11.5px;font-weight:800;pointer-events:none;z-index:3}.htf-tc canvas{display:block;width:100%;height:78px}' +
+        '@media (max-width:599px){.htf-tc{width:150px;right:6px;bottom:30px;font-size:10px;padding:3px 5px}.htf-tc canvas{height:56px}}';
+        document.head.appendChild(cs); }
+      tcBox.innerHTML = '<div>📈 24시간 조위 곡선 (부표)</div><canvas width="440" height="156"></canvas>';
+      const tcC = tcBox.querySelector('canvas'), tcG = tcC.getContext('2d'), tq = new THREE.Vector3(); let tcSig = '';
+      function drawTide(hr) {
+        const on = mode === 'equil'; tcBox.style.display = on ? '' : 'none'; if (!on) return;
+        const sig = [hr.toFixed(2), thV.toFixed(4), sunOn, mk].join('|'); if (sig === tcSig) return; tcSig = sig;
+        const Wc = tcC.width, Hc = tcC.height, x0 = 30, x1 = Wc - 8, y0 = 10, y1 = Hc - 24, N = 96;
+        const hs = []; let mx = 0.01; for (let i = 0; i <= N; i++) { tq.copy(pinDir).applyAxisAngle(Y, Math.PI * 2 * i / N); const v = tideAt(tq); hs.push(v); mx = Math.max(mx, Math.abs(v)); }
+        tcG.clearRect(0, 0, Wc, Hc);
+        tcG.strokeStyle = 'rgba(255,255,255,.25)'; tcG.lineWidth = 2; tcG.beginPath(); tcG.moveTo(x0, (y0 + y1) / 2); tcG.lineTo(x1, (y0 + y1) / 2); tcG.moveTo(x0, y0); tcG.lineTo(x0, y1); tcG.lineTo(x1, y1); tcG.stroke();
+        tcG.fillStyle = '#cbd5e1'; tcG.font = '700 20px sans-serif'; tcG.textAlign = 'center'; [0, 6, 12, 18, 24].forEach((h) => tcG.fillText(h + '시', x0 + (x1 - x0) * h / 24, Hc - 3));
+        const n = Math.round(N * Math.max(0, Math.min(1, hr / 24))); if (n < 1) return;
+        tcG.strokeStyle = '#38bdf8'; tcG.lineWidth = 4; tcG.beginPath();
+        for (let i = 0; i <= n; i++) { const x = x0 + (x1 - x0) * i / N, y = (y0 + y1) / 2 - hs[i] / mx * (y1 - y0) * 0.45; if (i) tcG.lineTo(x, y); else tcG.moveTo(x, y); }
+        tcG.stroke();
+        const xe = x0 + (x1 - x0) * n / N, ye = (y0 + y1) / 2 - hs[n] / mx * (y1 - y0) * 0.45; tcG.fillStyle = '#fbbf24'; tcG.beginPath(); tcG.arc(xe, ye, 6, 0, 7); tcG.fill();
+      }
       return {
         update(dt, t) {
           follow();
@@ -235,6 +257,7 @@
           buoy.position.copy(pv).multiplyScalar(RO + KV * hm + 0.02);
           const sa = stem.geometry.attributes.position; sa.setXYZ(0, pv.x * RS, pv.y * RS, pv.z * RS); sa.setXYZ(1, buoy.position.x, buoy.position.y, buoy.position.z); sa.needsUpdate = true;
           buoy.visible = stem.visible = mode !== 'force'; labBuoy.show(mode !== 'force');
+          { const q = W(), S = q && q.S; drawTide(S && S.mode === 'equil' ? (S.hr || 0) : 0); }
           labBuoy.set('조위 ' + (hm >= 0 ? '+' : '−') + Math.abs(hm).toFixed(2) + ' m' + (hiMax - loMin < 0.02 ? '' : hm > hiMax - 0.2 * (hiMax - loMin) ? ' (만조)' : hm < loMin + 0.2 * (hiMax - loMin) ? ' (간조)' : ''));
           // 부풀음 이름표 (달 방향의 바다 위)
           const top = RO + KV * tideAt(mdir) + 0.75;

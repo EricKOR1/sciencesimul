@@ -85,6 +85,19 @@
     levels: [2],
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
+      /* 미션 보조 판: 미션이 말하는 표·기록·카드를 3D 화면 구석에 작게 보여 줘요 (2D 상태를 그대로 읽어요) */
+      const mxBox = (pos) => {
+        const v = ctx.renderer.domElement.parentElement;
+        if (!document.getElementById('mx3d-css')) { const s = document.createElement('style'); s.id = 'mx3d-css'; s.textContent =
+          '.mx3d{position:absolute;z-index:3;padding:6px 8px;border-radius:12px;background:rgba(8,12,24,.8);color:#fff;font-size:12px;line-height:1.35;pointer-events:none;max-width:48%;box-shadow:0 4px 14px rgba(0,0,0,.35)}.mx3d:empty{display:none}' +
+          '.mx3d.tr{right:10px;top:10px}.mx3d.br{right:10px;bottom:34px}.mx3d.bl{left:10px;bottom:10px}.mx3d .h{font-weight:900;margin-bottom:3px}' +
+          '.mx3d table{border-collapse:collapse}.mx3d th,.mx3d td{padding:1px 5px;text-align:center;white-space:nowrap}.mx3d th{color:#b9c6e4;font-weight:800}.mx3d td:first-child,.mx3d th:first-child{text-align:left}' +
+          '.mx3d .on{color:#ffd34d;font-weight:800}.mx3d .ok{color:#7ee2a8;font-weight:800}.mx3d .no{color:#ff9a9a;font-weight:800}.mx3d .dim{color:#8d99b3}.mx3d tr.sel td{background:rgba(255,211,77,.16)}' +
+          '@media (max-width:599px){.mx3d{font-size:10.5px;padding:4px 6px;max-width:60%}.mx3d.tr{top:auto;bottom:30px}.mx3d th,.mx3d td{padding:0 3px}}';
+          document.head.appendChild(s); }
+        const el = document.createElement('div'); el.className = 'mx3d ' + (pos || 'tr'); v.appendChild(el);
+        let last = ''; el.put = (h) => { if (h !== last) { last = h; el.innerHTML = h; } }; return el;
+      };
       const L = makeLib(THREE);
       const W = 6.6, H = 3.2, D = 3.2; // 시료 상자
       const E1 = '<span style="color:#ffd34d">●</span>';
@@ -159,9 +172,11 @@
       const condNow = () => { const c = SMP[key].cond; return c === 'diss' ? diss : c === 'yes'; };
       function showInfo() {
         const S = SMP[key], c = condNow(), nm = itemName || S.name;
-        const txt = key === 'hcl_aq' ? (diss ? 'HCl 분자가 물과 만나 <b>H⁺와 Cl⁻로 이온화</b>했어요.<br>H⁺(흰색)는 (−)극, Cl⁻(초록)는 (+)극 쪽으로 이동해요. 전하 운반자: <b>이온</b>' : 'HCl 분자는 전하가 없어서 전기가 안 통해요. <b>💧 물에 녹이기</b>를 누르면 이온으로 나뉘어요.') : S.txt;
+        let txt = key === 'hcl_aq' ? (diss ? 'HCl 분자가 물과 만나 <b>H⁺와 Cl⁻로 이온화</b>했어요.<br>H⁺(흰색)는 (−)극, Cl⁻(초록)는 (+)극 쪽으로 이동해요. 전하 운반자: <b>이온</b>' : 'HCl 분자는 전하가 없어서 전기가 안 통해요. <b>💧 물에 녹이기</b>를 누르면 이온으로 나뉘어요.') : S.txt;
+        txt = txt.replace(/\s*전하 운반자: <b>[^<]*<\/b>/, '');   // 다음 미션(전하 운반자 이름 붙이기)의 답은 미리 알려 주지 않아요
         info('<b>' + nm + '</b> · 전류 ' + (c ? '<span style="color:#7be08a"><b>통해요 ○</b></span>' : '<span style="color:#ff8a8a"><b>안 통해요 ✕</b></span>') + (field ? ' · 전기장 켜짐' : ' · 전기장 꺼짐') + '<br>' + txt);
       }
+      const obsEl = mxBox('tr');
       build();
       return {
         update(dt, t) {
@@ -169,6 +184,10 @@
           const Z = ctx.lesson();
           if (Z) {
             const S2 = Z.S; let nk = key, nm = '';
+            /* ⚡ 전기장을 켠 시간 막대 (2D 화면 아래 막대와 같아요): 시료마다 2초가 차면 완료 */
+            if (S2.scene === 'model' && S2.gate !== 'carrier' && Z.MBY) {
+              obsEl.put('<div class="h">⚡ 전기장을 켠 시간 (2초 이상)</div>' + ['cu', 'nacl_s', 'nacl_l', 'sugar_aq'].map((id) => { const v = Math.min(2, S2.obs[id] || 0) / 2; return '<div style="display:flex;align-items:center;gap:6px;margin:2px 0"><span style="width:74px" class="' + (v >= 1 ? 'ok' : '') + '">' + (v >= 1 ? '✅ ' : '') + Z.MBY[id].label + '</span><span style="flex:1;min-width:60px;height:8px;border-radius:5px;background:rgba(255,255,255,.15);overflow:hidden"><i style="display:block;height:100%;width:' + Math.round(v * 100) + '%;background:' + (v >= 1 ? '#34c77b' : '#a78bfa') + '"></i></span></div>'; }).join(''));
+            } else obsEl.put('');
             if (S2.scene === 'model') nk = Z.M.id; else if (S2.scene === 'lab' && S2.st.item) { nk = keyOfItem(S2.st.item) || key; nm = S2.st.item.name; }
             const nf = S2.scene === 'lab' ? S2.amp > 0.5 : !!S2.field, nd = !!Z.M.diss;
             if (nk !== key || nm !== itemName) { key = nk; itemName = nm; field = nf; diss = nd; dissK = nd ? 1 : 0; build(); }

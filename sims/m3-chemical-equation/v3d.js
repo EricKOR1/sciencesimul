@@ -184,7 +184,13 @@
       const am = new THREE.MeshStandardMaterial({ color: 0xffd34d, roughness: 0.4, emissive: 0x6b4a00, emissiveIntensity: 0.5 });
       const sh = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 1.4, 16), am); sh.rotation.z = Math.PI / 2;
       const hd = new THREE.Mesh(new THREE.ConeGeometry(0.34, 0.6, 20), am); hd.rotation.z = -Math.PI / 2; hd.position.x = 0.95;
-      arrow.add(sh, hd); root.add(arrow);
+      /* ⚖️ 원자 수 저울(2단계): 2D 저울처럼 원자 수가 다르면 두 판이 기울고, 같으면 수평이 돼요 */
+      const balG = new THREE.Group(); root.add(balG);
+      const fulM = new THREE.MeshStandardMaterial({ color: 0x9aa7ba, roughness: 0.4, metalness: 0.5 });
+      const ful = new THREE.Group(); const fc = new THREE.Mesh(new THREE.ConeGeometry(0.55, 1.6, 4), fulM); fc.position.y = -0.85; ful.add(fc);
+      const beam = new THREE.Mesh(new THREE.BoxGeometry(6.6, 0.12, 0.3), fulM); beam.position.y = -0.05; balG.add(beam); root.add(ful); ful.visible = beam.visible = false;
+      const balLab = label('', [0, 1.6, 0], { size: 13 }); balLab.show(false);
+      arrow.add(sh, hd); balG.add(arrow);
       /* 조작 줄: 단계에 맞는 것만 보여 줘요 */
       const host = controls.text('').parentNode;
       const grab = (fn) => { const n0 = host.children.length; fn(); return Array.from(host.children).slice(n0); };
@@ -218,7 +224,7 @@
         if (rx) rx.dispose();
         const def = { re: v.re.map((s, i) => [s, v.cr[i]]).filter((q) => q[1] > 0), pr: v.pr.map((s, i) => [s, v.cp[i]]).filter((q) => q[1] > 0) };
         const n = Math.max(def.re.reduce((a, q) => a + q[1], 0), def.pr.reduce((a, q) => a + q[1], 0));
-        rx = K.makeRxn(root, def, { cxR: -3.1, cxP: 3.1, sp: n > 6 ? 1.3 : 1.7 });
+        rx = K.makeRxn(balG, def, { cxR: -3.1, cxP: 3.1, sp: n > 6 ? 1.3 : 1.7 });
         rx.set(qd);
         const c = countHtml(rx.countR, rx.countP);
         const msg = v.note ? '<span style="color:#86efac">' + v.note + '</span>'
@@ -233,6 +239,10 @@
           if (s !== sig) { sig = s; show(elW, v.L === 2); show(elM, v.L === 3); rebuild(v); }
           const st = ((ctx.lesson() || {}).RT || {}).st || '';   // ⚡ 반응 시작을 누르면 3D 반응도 처음부터 재생해요
           if (st !== lastSt) { if (st === 'run' && v.L === 3 && !ch4) { pl.set(0); pl.play(); } lastSt = st; }
+          { const BL = v.L === 1 ? (ctx.lesson() || {}).BL : null, th = BL && BL.beam ? BL.beam.value || 0 : 0;
+            balG.rotation.z = Math.max(-0.3, Math.min(0.3, -th * 3));   // 3D에서 잘 보이게 2D 각도의 3배로 기울여요 ful.visible = beam.visible = !!BL;
+            if (BL) { const ok = Math.abs(th) < 0.01 && rx && countHtml(rx.countR, rx.countP).ok; balLab.set(ok ? '⚖️ 저울이 수평이에요' : '⚖️ 원자 수가 달라 저울이 기울었어요'); balLab.el.style.background = ok ? 'rgba(22,101,52,.92)' : 'rgba(180,68,15,.92)'; }
+            balLab.show(!!BL); }
           stg.update(t); arrow.position.x = Math.sin(t * 2.5) * 0.08;
         },
       };

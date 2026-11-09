@@ -136,8 +136,38 @@
       reorient(); show();
 
       let lsig = '', lkey = null;
+      /* 🔎 한계 점검: 2D 캔버스의 '궤도 위의 전자' 속도 막대(불확정성)를 3D 화면에도 보여 줘요 */
+      const ckEl = document.createElement('div');
+      ckEl.style.cssText = 'position:absolute;' + (PHN ? 'left:8px;bottom:8px;' : 'right:10px;top:10px;') + 'width:' + (PHN ? 170 : 220) + 'px;padding:6px 9px;border-radius:12px;background:rgba(8,12,24,.8);color:#fff;font-size:' + (PHN ? 10.5 : 12) + 'px;font-weight:800;line-height:1.45;pointer-events:none;display:none';
+      ctx.renderer.domElement.parentElement.appendChild(ckEl);
+      let ckOn = null;
+      function drawCheck() {
+        const L = window.__sim, on = st.mode === 'bohr' && !!(L && L.dvMin);
+        if (on === ckOn) return; ckOn = on; ckEl.style.display = on ? '' : 'none'; if (!on) return;
+        const pc = Math.round(L.dvMin(0.1) / 2.2e6 * 100);
+        ckEl.innerHTML = '<div>🔎 한계 점검: 궤도 위의 전자</div><div style="position:relative;height:16px;margin:4px 0 2px;border-radius:8px;background:#3867f4;overflow:hidden"><div style="position:absolute;right:0;top:0;bottom:0;width:' + pc + '%;background:repeating-linear-gradient(135deg,rgba(255,255,255,.6) 0 4px,transparent 4px 8px)"></div><span style="position:absolute;left:6px;top:0;font-size:10.5px">v₁ = 2.2×10⁶ m/s</span></div>' +
+          '<div style="color:#fca5a5;text-align:right">Δv ≥ 5.8×10⁵ m/s ≈ ' + pc + ' %</div><div style="color:#cbd5e1;font-weight:700">전자를 원자 크기(Δx = 0.10 nm)에 가두면 속도가 v의 약 ' + pc + ' %나 불확실해요.</div>';
+      }
+      /* 📋 비교표: 2D 캔버스의 '보어 모형 · 현대 원자 모형' 표가 고른 문장대로 채워지는 모습을 3D 화면에도 보여 줘요 */
+      const tbEl = document.createElement('div');
+      tbEl.style.cssText = 'position:absolute;' + (PHN ? 'left:6px;right:6px;bottom:6px;' : 'right:10px;top:10px;width:330px;') + 'padding:6px 8px;border-radius:12px;background:rgba(8,12,24,.82);color:#fff;font-size:' + (PHN ? 10 : 11.5) + 'px;font-weight:800;line-height:1.35;pointer-events:none;display:none';
+      ctx.renderer.domElement.parentElement.appendChild(tbEl);
+      let tbSig = null;
+      function drawTable() {
+        const L = window.__sim, on = !!(L && L.S && L.S.mode === 'cmp' && L.TBL && L.SEL_T);
+        let sig = ''; if (on) sig = L.SEL_T.vals.join(',') + '|' + L.SEL_T.sels.map((e) => e.className).join(',') + '|' + (L.SEL_K ? L.SEL_K.count() + ':' + L.SEL_K.right() : '');
+        if (sig === tbSig) return; tbSig = sig; tbEl.style.display = on ? '' : 'none'; if (!on) return;
+        const rows = L.TBL.map((r, i) => {
+          const v = L.SEL_T.vals[i], has = v !== undefined && v !== '', cl = has ? L.SEL_T.sels[i].className : '', col = /\bok\b/.test(cl) ? '#86efac' : /\bbad\b/.test(cl) ? '#fca5a5' : '#fff';
+          const c = (k) => (has ? '<span style="color:' + col + '">' + r.opts[+v][k] + '</span>' : '<span style="color:#64748b">?</span>');
+          return '<tr><td style="color:#cbd5e1;padding:1px 6px 1px 0">' + r.label + '</td><td style="padding:1px 6px">' + c('b') + '</td><td style="padding:1px 0 1px 6px">' + c('m') + '</td></tr>';
+        }).join('');
+        const k = L.SEL_K && L.SEL_K.count() > 0 ? '<div style="margin-top:3px;color:#cbd5e1">문장 카드 ' + L.SEL_K.count() + ' / ' + L.CARDS.length + '장 나눔 · 맞은 카드 ' + L.SEL_K.right() + '장</div>' : '';
+        tbEl.innerHTML = '<table style="border-collapse:collapse;font-size:inherit;width:100%"><tr><td style="color:#94a3b8">항목</td><td style="color:#93c5fd;padding:0 6px">보어 모형</td><td style="color:#c4b5fd;padding-left:6px">현대 원자 모형</td></tr>' + rows + '</table>' + k;
+      }
       return {
         update(dt, t) {
+          drawCheck(); drawTable();
           { const S = lessonS(); if (S) {
               const m = S.mode === 'bohr' ? 'bohr' : S.mode === 'cmp' ? 'cmp' : 'cloud';
               const g = m + '|' + (S.bo ? S.bo.n : 1) + '|' + (S.cl ? Math.round(S.cl.n / 50) : 0) + '|' + S.mode;

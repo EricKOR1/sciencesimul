@@ -194,7 +194,7 @@
         const L = window.__sim, tb = L && L.tagTable ? L.tagTable() : []; const sig = tagCat + JSON.stringify(tb); if (sig === tagSig) return; tagSig = sig;
         const at = (k, c) => tb.find((q) => q.kind === k && q.cat === c) || { text: '' };
         KINDS.forEach((k, i) => { const q = at(k, tagCat); kindBtns[i].textContent = SHORT[k] + ' ▸ ' + (q.text || '?'); kindBtns[i].classList.toggle('on', !!q.text);
-          featLab[i].show(true); featLab[i].set(['dist', 'order', 'move'].map((c) => { const r = at(k, c); return r.text ? (r.wrong ? '✗ ' : '') + r.text : '?'; }).join(' · ')); });
+          featLab[i].show(true); featLab[i].set(['dist', 'order', 'move'].map((c) => { const r = at(k, c); return CAT_ICON[c].split(' ')[0] + ' ' + (r.text ? (r.wrong ? '✗ ' : '') + r.text : '?'); }).join('<br>')); });
         info('<b>' + CAT_ICON[tagCat] + '</b> 칸을 채우는 중이에요. 아래 <b>얼음·물·수증기</b> 버튼을 누를 때마다 태그가 바뀌어요.<br>입자 모형을 보며 고르고, 9칸을 모두 채우면 <b>✔ 확인하기</b>를 눌러요.' + (tb.some((q) => q.wrong) ? '<br>✗ 표시가 붙은 태그를 다시 골라 봐요.' : ''));
         lastTxt = '';
       }

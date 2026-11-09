@@ -1003,7 +1003,7 @@ const levels = [
       {
         title: '두 축삭 달리기 경주',
         goal: '말이집 상태를 <b>정상</b>으로 두고 <b>🏁 출발</b>을 눌러, 무말이집과 말이집 축삭이 같은 길이를 지나는 시간을 모두 기록하세요.',
-        hint: '아래 막대 그래프에 두 시간이 기록되면 성공이에요. 약 7초 기다려요.',
+        hint: '<span class="only2d">아래 막대 그래프</span><span class="only3d">화면의 📊 경주 기록</span>에 두 시간이 기록되면 성공이에요. 약 7초 기다려요.',
         setup() { setScene('myelin'); },
         check: () => typeof S.mc.rec.un === 'number' && typeof S.mc.rec.my0 === 'number',
         hold: 0.5,

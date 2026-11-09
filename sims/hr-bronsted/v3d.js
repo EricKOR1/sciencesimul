@@ -306,7 +306,7 @@
             obView.r.set(w2.S.ob.view);
             return;
           }
-          showRole = q.md !== 'sort';
+          showRole = q.md !== 'sort' && !(q.md === 'move' && !q.after);   // H⁺ 옮기기: 2D처럼 옮긴 뒤에 산 · 염기 이름이 붙어요
           if (q.key !== key) { key = q.key; build(); pl.pause(); pl.set(0); demo = false; }
           const md = q.md;
           if (md === 'sort') { if (!demoOn()) { const ph = (performance.now() / 1000 % 7) / 7; prog = ph < 0.2 ? 0 : ph < 0.6 ? (ph - 0.2) / 0.4 : 1; } }
@@ -319,7 +319,8 @@
             labs.donor.show(false); labs.acc.show(false); if (t2 !== txt) { txt = t2; info(t2); } return;
           }
           noteT = Math.max(0, noteT - dt); updCtl(md);
-          const t = '<b>' + R.name + '</b><br>' + R.note + '<br>' + (after ? '반응 후: 산은 <b>짝염기</b>, 염기는 <b>짝산</b>이 돼요.' : '반응 전: <b>' + R.acid + '</b>(산) → H⁺ → <b>' + R.base + '</b>(염기)') + extraInfo(md);
+          const t = md === 'move' && !q.after ? '<b>' + R.name + '</b><br>어느 분자가 H⁺를 주고, 어느 분자가 받을까요? H⁺가 옮겨 가면 <b>산</b>과 <b>염기</b>를 알 수 있어요.' + extraInfo(md)   // 옮기기 전에는 답(산 · 염기)을 알려 주지 않아요 (2D 아래 칸도 ‘?’)
+            : '<b>' + R.name + '</b><br>' + R.note + '<br>' + (after ? '반응 후: 산은 <b>짝염기</b>, 염기는 <b>짝산</b>이 돼요.' : '반응 전: <b>' + R.acid + '</b>(산) → H⁺ → <b>' + R.base + '</b>(염기)') + extraInfo(md);
           if (t !== txt) { txt = t; info(t); }
         },
       };

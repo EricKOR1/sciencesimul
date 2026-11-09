@@ -137,7 +137,7 @@
         const ratio = 1 / (f.r * f.r), dir = p.clone().multiplyScalar(-1).setY(0).normalize();
         setArrow(fA, p, p.clone().addScaledVector(dir, 0.4 + ratio * 1.6)); lfF.obj = p.clone().addScaledVector(dir, 0.4 + ratio * 1.6); lfF.set('F = ' + (f.r === 1 ? 'F₀' : (1 / (f.r * f.r)).toFixed(3).replace(/0+$/, '') + ' F₀')); lfF.off = [0, 0.4, 0];
         fR.setA(new V3(0, 0.1, 0), p.clone().setY(0.1)); lfR.obj = p.clone().multiplyScalar(0.5); lfR.set('r = ' + f.r.toFixed(1) + ' AU'); lfR.off = [0, 0.3, 0]; lfP.set('같은 질량의 행성'); lfP.off = [0, 0.5, 0];
-        info('<b>🔗 태양이 행성을 당기는 힘</b> · 같은 질량의 행성이 태양에서 r = ' + f.r.toFixed(1) + ' AU 떨어져 돌 때<br>구심력 F = 4π²mr / T²에 T² = k·r³을 넣으면 F ∝ 1/r² → 거리가 2배이면 힘은 1/4배예요.<br>지금 힘의 크기: <b>F / F₀ = 1 / r²</b> (F₀ = 1 AU에서의 힘)<br><span style="opacity:.8">거리 r은 옆 조작판에서 바꿔요.</span>');
+        info('<b>🔗 태양이 행성을 당기는 힘</b> · 같은 질량의 행성이 태양에서 r = ' + f.r.toFixed(1) + ' AU 떨어져 돌 때<br>빨간 화살표 길이 = 태양이 당기는 힘의 크기 (F₀ = 1 AU에서의 힘)<br>지금 힘의 크기: <b>F = ' + (f.r === 1 ? 'F₀' : (1 / (f.r * f.r)).toFixed(3).replace(/0+$/, '') + ' F₀') + '</b> · r를 바꿔 화살표 길이를 비교해 봐요.<br><span style="opacity:.8">거리 r은 옆 조작판에서 바꿔요.</span>');
       }
       /* ================= 🍎 사과와 달 (크기는 과장해서 그렸어요) ================= */
       const earth = new THREE.Mesh(new THREE.SphereGeometry(1.1, 36, 28), M(0x3b82f6, { roughness: 0.6 })); G.moon.add(earth); const land = new THREE.Mesh(new THREE.SphereGeometry(1.11, 12, 10), M(0x4caf6a, { transparent: true, opacity: 0.6, wireframe: true })); G.moon.add(land);

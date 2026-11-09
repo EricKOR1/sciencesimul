@@ -751,7 +751,7 @@
         {
           title: '빨간 원자 따라가기',
           goal: '평형 상태에서 빨간 N 원자가 N₂O₄와 NO₂ 사이를 <b>3번 이상</b> 오가는 것을 지켜보세요.',
-          hint: '빨간 꼬리가 있는 분자를 눈으로 따라가요. 쪼개지거나 합쳐질 때마다 횟수가 늘어요.',
+          hint: '<span class="only3d">빨갛게 칠해진 분자를</span><span class="only2d">빨간 꼬리가 있는 분자를</span> 눈으로 따라가요. 쪼개지거나 합쳐질 때마다 횟수가 늘어요.',
           setup() { S.gate = ''; resetTag(); setScene('tag'); updateCtl(); },
           check: () => BX.hops >= 3, hold: 0.4,
           status: () => '오간 횟수 ' + BX.hops + ' / 3번 &nbsp; (분자 수: N₂O₄ ' + BX.nD + '개 · NO₂ ' + BX.nM + '개)',

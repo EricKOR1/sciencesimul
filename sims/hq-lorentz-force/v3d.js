@@ -99,6 +99,7 @@
       function posAt(t, ru, pu) { // t = 보이는 시간(초): x = r sin ωt, z = s·r(1−cos ωt), y = 피치 · t/T
         const a = wv * t; return new V3(ru * Math.sin(a), pu * a / TAU, P.s.sgn * ru * (1 - Math.cos(a)));
       }
+      let gateSig = null;
       function text() {
         const s = P.s, th = st.th;
         let h = '<b>' + s.name + '</b> (' + (s.sgn > 0 ? '+' : '−') + ') · v = ' + g3(st.v) + '×10⁶ m/s · B = ' + g3(st.B) + ' ' + s.bun + ' · θ = ' + th + '°<br>';
@@ -106,7 +107,7 @@
         else if (th === 0) h += 'v가 B와 <b>나란하면 F = 0</b>이에요(sin 0° = 0). 그래서 곧게 나아가요.';
         else {
           h += 'F = qvB sinθ, 방향은 v와 B에 모두 <b>수직</b>이라 속력은 그대로이고 방향만 바뀌어요.<br>';
-          h += 'r = mv sinθ/(|q|B) = <b>' + g3(P.r * 100) + ' cm</b> · T = 2πm/(|q|B) = <b>' + g3(P.T * 1e9) + ' ns</b>' + (th < 90 ? ' · 나선 한 바퀴 이동 = <b>' + g3(P.pitch * 100) + ' cm</b>' : '') + '<br>';
+          h += 'r = mv sinθ/(|q|B) = <b>' + g3(P.r * 100) + ' cm</b> · T = 2πm/(|q|B) = <b>' + (((window.__sim || {}).S || {}).gate === 'mo2' ? '?' : g3(P.T * 1e9) + ' ns') + '</b>' + (th < 90 ? ' · 나선 한 바퀴 이동 = <b>' + g3(P.pitch * 100) + ' cm</b>' : '') + '<br>';
           h += s.sgn > 0 ? '양전하: 위에서 볼 때 <b>시계 방향</b>.' : '음전하: F가 양전하와 반대라 위에서 볼 때 <b>시계 반대 방향</b>.';
           h += ' 재생 속도는 입자마다 달라요.';
         }
@@ -216,6 +217,7 @@
         update(dt, t0) {
           { const S = lessonS(), k = S && S.mode === 'trk' ? 'trk' : 'orb'; if (k !== K.cur) setSc(k); if (k === 'trk') { const kk = S.k.fig; if (kk !== trSig) { trSig = kk; trP.on = false; plTr.pause(); } updTrk(S, dt, t0); return; } }
           readLesson();
+          { const g = ((window.__sim || {}).S || {}).gate; if (g !== gateSig) { gateSig = g; text(); } }
           tt += dt;
           const ru = P.r * scale, pu = P.pitch * scale, period = nTurns * TAU / wv;
           const t = st.v > 0 ? tt % period : 0;

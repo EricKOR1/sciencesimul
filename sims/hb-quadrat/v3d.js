@@ -74,13 +74,21 @@
       let sel = 3, zoomed = false, lastKey = '';
       const DEN = LS.DENS;
       function refreshInfo(placed, mode) {
-        const s = SP[sel];
         if (!placed) { info('<b>🎲 방형구 던지기</b>를 눌러 초지(20 m × 12 m)에 1 m × 1 m 방형구를 놓아 보세요. (10개 = 10 m²)<br>' + (mode === 'free' ? '눈에 띄는 곳만 고르면 결과가 치우쳐요(편향).' : '무작위 좌표에 놓아야 치우침이 줄어요.')); return; }
-        const cnt = LS.CNT[sel].slice(0, placed), tot = cnt.reduce((a, b) => a + b, 0), occ = cnt.filter((v) => v > 0).length;
-        info('<b>' + s.n + '</b>: 방형구 ' + placed + '개(' + placed + ' m²)에서 ' + tot + '개체 → 밀도 <b>' + (tot / placed).toFixed(1) + '</b>개체/m²<br>출현한 방형구 ' + occ + '/' + placed + ' → 빈도 <b>' + Math.round(occ / placed * 100) + '%</b><br>방형구를 10개까지 설치하면 초지 전체 밀도에 가까워져요 (10개 기준 ' + LS.DENS[sel].toFixed(1) + '개체/m²)');
+        // 밀도·빈도는 다음 단계(기록표)에서 학생이 직접 구해요 → 여기서는 값을 미리 알려 주지 않아요
+        info('방형구 <b>' + placed + '개</b>(' + placed + ' m²)를 설치했어요.' + (placed < 10 ? ' 10개까지 던져 보세요.' : '<br>이제 <b>🔍 방형구 확대</b>로 방형구 하나를 열어 식물을 세어 봐요.') + '<br>노랗게 빛나는 식물이 고른 종(<b>' + SP[sel].n + '</b>)이에요.');
       }
+
       controls.segment('식물', SP.map((s, i) => ({ label: s.n, value: i })), 3, (v) => { sel = v; mats.forEach(([sp, m]) => { m.emissive.set(sp === v ? 0xffe14d : 0x000000); m.emissiveIntensity = sp === v ? 0.45 : 0; }); lastKey = ''; });
-      controls.button('🎲 방형구 던지기', () => { const L = L2(); if (!L) return; if (L.S.fld.mode === 'free') { info('지금은 <b>눈에 띄는 곳 고르기</b> 방식이에요. 무작위 좌표 방식에서 던질 수 있어요.'); return; } L.throwQuad(); });
+      /* 🎲 무작위 좌표면 던지기, 👆 내가 고르기 방식이면 '눈에 띄는(식물이 빽빽한) 곳'을 골라 보는 단추가 돼요 (2D에서 초지를 누르는 것과 같아요) */
+      const tb = controls.button('🎲 방형구 던지기', () => {
+        const L = L2(); if (!L) return;
+        if (L.S.fld.mode !== 'free') { L.throwQuad(); return; }
+        if (!L.fieldDown || !L.FD) return;
+        const m2p = L.FD.w / 20; let best = null;
+        for (let k = 0; k < 40; k++) { const u = 0.5 + Math.random() * 19, v = 0.5 + Math.random() * 11; const n = L.FIELD_PLANTS.filter((p) => Math.abs(p.u - u) <= 0.5 && Math.abs(p.v - v) <= 0.5).length; if (!best || n > best.n) best = { u, v, n }; }
+        L.fieldDown({ x: L.FD.x + best.u * m2p, y: L.FD.y + best.v * m2p });
+      });
       const zb = controls.button('🔍 방형구 확대', () => {
         const L = L2(), last = L ? L.S.fld.placed - 1 : -1;
         // 2D에서 방형구를 눌러 여는 것과 같아요 (세기 미션이 함께 진행돼요)
@@ -101,9 +109,10 @@
           const L = L2(); if (!L) return; const f = L.S.fld; if (!f) return;
           quads.forEach((q, i) => {
             const on = i < f.placed; q.g.visible = on; q.lab.show(on);
-            if (on) { const k = f.drop[i].k; q.g.position.y = k < 1 ? (1 - k) * 2.5 : 0; q.lab.set((i + 1) + '번 · ' + SP[sel].n + ' ' + LS.CNT[sel][i] + '개체'); }
+            if (on) { const k = f.drop[i].k; q.g.position.y = k < 1 ? (1 - k) * 2.5 : 0; q.lab.set((i + 1) + '번'); }
           });
           const key = f.placed + '|' + sel + '|' + f.mode;
+          { const tt = f.mode === 'free' ? '👆 눈에 띄는 곳 고르기' : '🎲 방형구 던지기'; if (tb.textContent !== tt) tb.textContent = tt; }
           const zm = L.S.mode === 'zoom', Z = L.S.zoom;
           [cTxt, cB1, cB2].forEach((e) => { e.style.display = zm ? '' : 'none'; });
           if (cMsgT > 0) { cMsgT -= dt; if (cMsgT <= 0) { cMsg = ''; lastKey = ''; } }

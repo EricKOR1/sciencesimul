@@ -83,7 +83,7 @@
       for (let i = n0; i < ctlEl.children.length; i++) gSpd.push(ctlEl.children[i]);
       let demoP = 0;
       const pl = controls.player({
-        duration: 6, loop: true, autoplay: false, label: '던지기',
+        duration: 6, loop: true, autoplay: false, label: '궤적 미리 보기',   // 실험(▶ 놓고 던지기 · 점프)은 옆 조작판에서 해요
         phases: [[0, '출발'], [0.8, '땅에 닿음']],
         onFrame(p) { demoP = p; t = Math.min(1, p / 0.8) * Tf(); state = 'manual'; paint(); },
       });

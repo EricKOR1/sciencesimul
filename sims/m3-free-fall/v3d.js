@@ -74,12 +74,14 @@
         bl.forEach((l, i) => { const b = balls[i]; l.show(!!b); if (b) l.set(b.o.name + ' ' + b.o.mass); });
       }
       const dm = new THREE.Object3D();
+      // 퀴즈(간격 읽기 · 3초 후 속력 예측)를 푸는 동안에는 답이 되는 규칙을 미리 쓰지 않아요
+      const quizOn = () => { try { const g = window.FreeFallDebug && window.FreeFallDebug.game, m = g && !g.free && g.current(); return !!(m && m.type === 'quiz' && g.phase === 'active'); } catch (e) { return false; } };
       function text(L) {
         const S = L.S, t = S.visT || 0, run = S.run, air = run ? run.air : S.air, lead = balls[0];
         const v = lead ? L.fallV(lead.o, t, air) : 0, d = lead ? Math.min(S.H, L.fallD(lead.o, t, air)) : 0;
         let h = '<b>' + (S.mode === 'compare' ? '쇠공 · 볼링공 · 깃털' : '쇠공 1 kg') + '</b> · 탑 높이 <b>' + S.H + ' m</b> · ' + (air ? '공기 있음' : '진공(공기 없음)') + (S.strobe ? ' · 0.1초마다 섬광 사진' : '') + '<br>';
         if (t <= 0.001) h += '전자석이 공을 놓으면 <b>자유 낙하</b>해요. ' + (S.mode === 'compare' ? (air ? '공기가 있으면 깃털이 늦게 떨어져요.' : '진공에서는 무거운 공과 가벼운 깃털이 같이 떨어져요.') : '▶ 떨어뜨리기를 눌러 보세요.');
-        else h += '시각 <b>' + t.toFixed(1) + ' s</b> · 낙하 거리 <b>' + d.toFixed(1) + ' m</b> · 속력 <b>' + v.toFixed(1) + ' m/s</b>' + (air ? '' : '<br>속력은 1초마다 <b>9.8 m/s</b>씩 일정하게 늘어요 (v = 9.8 × t).');
+        else h += '시각 <b>' + t.toFixed(1) + ' s</b> · 낙하 거리 <b>' + d.toFixed(1) + ' m</b> · 속력 <b>' + v.toFixed(1) + ' m/s</b>' + (air || quizOn() ? '' : '<br>속력은 1초마다 <b>9.8 m/s</b>씩 일정하게 늘어요 (v = 9.8 × t).');
         return h;
       }
       let infoK = '', first = true;
@@ -131,7 +133,7 @@
             const tt = i * 0.5, ok = S.strobe && lead && tt <= t + 1e-6 && L.fallD(lead.o, tt, air) <= S.H + 1e-6;
             l.show(!!ok); if (ok) { const dd = L.fallD(lead.o, tt, air); l.obj = [0.2, topY + 0.1 + lead.r - dd * SC, lead.z]; l.set(tt.toFixed(1) + ' s · ' + dd.toFixed(1) + ' m'); }
           });
-          const ik = [t.toFixed(2), k, S.strobe, S.state].join('|');
+          const ik = [t.toFixed(2), k, S.strobe, S.state, quizOn()].join('|');
           if (ik !== infoK) { infoK = ik; info(text(L)); }
         },
       };

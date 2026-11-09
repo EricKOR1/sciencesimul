@@ -27,6 +27,17 @@
     autoRotate: 0.22,
     levels: [1],   // 2단계(네 가지 결정 · 분류하기는 3D 막대의 단추로). 1단계(가열 곡선) · 3단계(비교표 칸 누르기) · 4단계(순서도)는 2D 화면이에요
     build(ctx) {
+      /* 3D 화면 위 작은 판(기록표 · 카드 등): 2D 캔버스에만 그려지던 것을 3D 단계에서도 보이게 해요 */
+      function v3pan(cls) {
+        if (!document.getElementById('v3pan-css')) { const s = document.createElement('style'); s.id = 'v3pan-css'; s.textContent =
+          '.v3pan{position:absolute;z-index:2;padding:6px 9px;border-radius:12px;background:rgba(8,12,24,.8);border:1px solid rgba(255,255,255,.16);color:#fff;font-size:12px;font-weight:700;line-height:1.35;pointer-events:none;max-width:48%}' +
+          '.v3pan:empty{display:none}.v3pan.tr{right:10px;top:10px}.v3pan.bl{left:10px;bottom:10px}.v3pan .h{font-weight:900;margin-bottom:3px;font-size:12.5px}.v3pan .chip{display:inline-block;margin:1px 2px;padding:0 6px;border-radius:7px;background:rgba(255,255,255,.16);color:#eef3ff}.v3pan .chip.sel{background:#ffd34d;color:#1b2333}.v3pan.card{background:#fffdf7;color:#1b2333;border-top:5px solid var(--kc,#ffd34d);white-space:normal;max-width:min(260px,46%)}.v3pan.card .s{font-size:11.5px;font-weight:600;color:#475569}' +
+          '.v3pan table{border-collapse:collapse}.v3pan th,.v3pan td{padding:1px 5px;text-align:center;white-space:nowrap}.v3pan th{color:#b9c6e4;text-align:left;font-weight:800}.v3pan td.e{color:#56658a}.v3pan .ok{color:#7ee2a8}.v3pan .hi{color:#ffd34d}' +
+          '@media (max-width:599px){.v3pan{font-size:10.5px;padding:4px 6px;max-width:58%}.v3pan.tr{top:auto;bottom:30px;right:8px}.v3pan.bl{left:8px;bottom:8px;max-width:42%}.v3pan th,.v3pan td{padding:0 3px}.v3pan .h{font-size:11px}}';
+          document.head.appendChild(s); }
+        const el = document.createElement('div'); el.className = 'v3pan ' + (cls || 'tr'); ctx.renderer.domElement.parentElement.appendChild(el);
+        let last = ''; el.put = (html) => { if (html !== last) { last = html; el.innerHTML = html; } }; return el;
+      }
       const { THREE, root, label, info, controls, orbit } = ctx;
       const wrap = ctx.renderer.domElement.closest('.v3-wrap'), ctlEl = wrap.querySelector('.v3-ctl');
       const grab = (fn) => { const n0 = ctlEl.children.length; const r = fn(); return { r, els: [].slice.call(ctlEl.children, n0) }; };
@@ -362,8 +373,17 @@
         F.sel = nx ? nx.id : null; show();
       }
       const sortCtl = grab(() => { controls.text('<b>물질</b>'); controls.button('◀', () => pickCard(-1)); controls.button('▶', () => pickCard(1)); controls.text('<b>상자</b>'); TK0.forEach((k, b) => controls.button(TYPES[k].nm, () => putCard(b))); });
+      /* 분류하기: 고른 물질 카드와 네 상자(놓은 카드)를 3D 화면에도 보여 줘요 */
+      const cardP = v3pan('bl card'), boxP = v3pan('tr'), BOXC = ['#7c3aed', '#0ea5e9', '#16a34a', '#d97706'];
+      function drawSort(on) {
+        const F = TF(); if (!on || !F || !F.cards) { cardP.put(''); boxP.put(''); return; }
+        const c = F.cards.find((q) => q.id === F.sel);
+        if (c) cardP.style.setProperty('--kc', c.bin !== null ? BOXC[c.bin] : '#ffd34d');
+        cardP.put(c ? '<div class="h">🃏 ' + c.f + '</div><div class="s">' + c.hint + '</div>' + (c.bin !== null ? '<div class="s">→ ' + TYPES[TK0[c.bin]].nm + ' 상자</div>' : '') : '');
+        boxP.put('<div class="h">🗂️ 상자 (' + F.cards.filter((q) => q.bin !== null).length + ' / 12)</div>' + TK0.map((k, b) => '<div><span style="color:' + BOXC[b] + '">■</span> ' + TYPES[k].nm + ' ' + F.cards.filter((q) => q.bin === b).map((q) => '<span class="chip' + (q.id === F.sel ? ' sel' : '') + '">' + q.f + '</span>').join('') + '</div>').join(''));
+      }
       let sortOn = null;
-      function setSortOn(on) { if (on === sortOn) return; sortOn = on; sortCtl.els.forEach((e) => { e.style.display = on ? '' : 'none'; }); lastSort = ''; show(); }
+      function setSortOn(on) { if (on === sortOn) return; sortOn = on; if (!on) drawSort(false); sortCtl.els.forEach((e) => { e.style.display = on ? '' : 'none'; }); lastSort = ''; show(); }
       const api = {
         update(dt, t) {
           const w2 = window.__sim, md = w2 && w2.S ? w2.S.mode : '';
@@ -377,6 +397,7 @@
           if (heatOn) { setHeatOn(false); lastHeat = ''; }
           setSortOn(sortMode());
           if (sortOn) { const h = sortHtml(); if (h !== lastSort) { lastSort = h; info(h); } }
+          drawSort(sortOn);
           let w = want();
           if (md === 'cls') {           // 미지 시료 분류는 2D에서: 3D는 네 가지 결정 모형을 차례로 보여 줘요
             clsT += dt; const k = Math.floor(clsT / 7) % 4; w = TK0[k]; note = '참고 모형 · 네 가지 결정을 차례로 보여 줘요 → ';

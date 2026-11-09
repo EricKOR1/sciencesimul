@@ -839,7 +839,7 @@
         {
           title: '확산 방향 맞추기', manual: true,
           goal: '세포 안의 산소가 <b>30개</b>, 세포 밖은 <b>6개</b>예요. 산소는 어느 쪽으로 이동할지 예측을 고르고, 입자가 5개 이상 순수하게 이동하는 것을 확인한 뒤 <b>✔ 확인하기</b>를 누르세요.',
-          hint: '입자는 많은 쪽에서 적은 쪽으로 퍼져요. 왼쪽 ‘막을 지난 횟수’의 ⬇(안으로)와 ⬆(밖으로) 숫자를 비교해 보세요.',
+          hint: '입자는 많은 쪽에서 적은 쪽으로 퍼져요. 아래 ‘막을 지난 횟수’의 ⬇(안으로)와 ⬆(밖으로) 숫자를 비교해 보세요.',
           setup() {
             S.showPred = true; setScene('model');
             S.md.pred = null; selectType('oxygen'); const t = S.md.ts.oxygen; t.out = 6; t.in = 30; S.md.box.syncTo('oxygen', 6, 30);

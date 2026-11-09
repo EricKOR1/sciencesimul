@@ -14,6 +14,19 @@
     levels: [0],   // 운동 중 몸(강도 · 기록 · 표의 ▲▼ 단추). 산소 운반 표 · 연결선 잇기 · 사례 글 읽기 단계는 2D
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
+      /* 미션 보조 판: 미션이 말하는 표·기록·카드를 3D 화면 구석에 작게 보여 줘요 (2D 상태를 그대로 읽어요) */
+      const mxBox = (pos) => {
+        const v = ctx.renderer.domElement.parentElement;
+        if (!document.getElementById('mx3d-css')) { const s = document.createElement('style'); s.id = 'mx3d-css'; s.textContent =
+          '.mx3d{position:absolute;z-index:3;padding:6px 8px;border-radius:12px;background:rgba(8,12,24,.8);color:#fff;font-size:12px;line-height:1.35;pointer-events:none;max-width:48%;box-shadow:0 4px 14px rgba(0,0,0,.35)}.mx3d:empty{display:none}' +
+          '.mx3d.tr{right:10px;top:10px}.mx3d.br{right:10px;bottom:34px}.mx3d.bl{left:10px;bottom:10px}.mx3d .h{font-weight:900;margin-bottom:3px}' +
+          '.mx3d table{border-collapse:collapse}.mx3d th,.mx3d td{padding:1px 5px;text-align:center;white-space:nowrap}.mx3d th{color:#b9c6e4;font-weight:800}.mx3d td:first-child,.mx3d th:first-child{text-align:left}' +
+          '.mx3d .on{color:#ffd34d;font-weight:800}.mx3d .ok{color:#7ee2a8;font-weight:800}.mx3d .no{color:#ff9a9a;font-weight:800}.mx3d .dim{color:#8d99b3}.mx3d tr.sel td{background:rgba(255,211,77,.16)}' +
+          '@media (max-width:599px){.mx3d{font-size:10.5px;padding:4px 6px;max-width:60%}.mx3d.tr{top:auto;bottom:30px}.mx3d th,.mx3d td{padding:0 3px}}';
+          document.head.appendChild(s); }
+        const el = document.createElement('div'); el.className = 'mx3d ' + (pos || 'tr'); v.appendChild(el);
+        let last = ''; el.put = (h) => { if (h !== last) { last = h; el.innerHTML = h; } }; return el;
+      };
       const V = THREE.Vector3, V3 = (x, y, z) => new V(x, y, z || 0);
       const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.5, metalness: 0.02 }, o || {}));
       const sph = (r, m, x, y, z, sx, sy, sz) => { const o = new THREE.Mesh(new THREE.SphereGeometry(r, 32, 22), m); o.position.set(x || 0, y || 0, z || 0); if (sx) o.scale.set(sx, sy, sz); return o; };
@@ -121,6 +134,15 @@
       const bUp = controls.button('▲ 늘어요', () => setDir('up')), bDn = controls.button('▼ 줄어요', () => setDir('down'));
       const rowTxt = controls.text('');
       setMode('all');
+      /* 측정표: 📏 기록하면 안정 시 · 달리기 중 칸이 채워지고, ▲ / ▼ 고른 답도 표에 보여요 */
+      const tabEl = mxBox('tr');
+      function drawTab(R) {
+        const c = (v) => (v == null ? '<span class="dim">—</span>' : v);
+        tabEl.put('<div class="h">📋 측정표</div><table><tr><th></th><th>🛌 안정</th><th>🏃 달리기</th><th>변화</th></tr>' + ROWN.map((r, i) => {
+          const d = R.dir[r[0]], u = r[2] && r[2] !== '회/분' ? ' ' + r[2] : '';
+          return '<tr' + (i === rowI ? ' class="sel"' : '') + '><td>' + r[1] + '</td><td>' + c(R.rec.rest && R.rec.rest[r[0]] + u) + '</td><td>' + c(R.rec.run && R.rec.run[r[0]] + u) + '</td><td class="on">' + (d === 'up' ? '▲' : d === 'down' ? '▼' : '<span class="dim">?</span>') + '</td></tr>';
+        }).join('') + '</table>');
+      }
 
       const D = new THREE.Object3D(), tmp = new V();
       const tgt = { bpm: 70, bpr: 14 };
@@ -159,6 +181,7 @@
             const rt = '<b>' + r[1] + '</b>: 안정 시 ' + v0 + (v0 !== '—' ? u : '') + ' → 달리기 중 ' + v1 + (v1 !== '—' ? u : '') + ' · 고른 답 ' + (d === 'up' ? '▲' : d === 'down' ? '▼' : '—');
             if (rowTxt.innerHTML !== rt) rowTxt.innerHTML = rt;
             bUp.classList.toggle('on', d === 'up'); bDn.classList.toggle('on', d === 'down');
+            drawTab(R);
           }
           if (txt !== lastTxt) { lastTxt = txt; info(INFO[mode] + '<br>강도 ' + Math.round(ex * 100) + ' % · 심박수 ' + Math.round(bpm) + '회/분 · 호흡수 ' + Math.round(bpr) + '회/분 · 체온 ' + tp + ' °C<br>땀 ' + sw + ' · 오줌 생성량 ' + ur); }
         },

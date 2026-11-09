@@ -227,7 +227,7 @@
   function showHint(msg, ms) { const h = $('#stageHint'); if (!h) return; h.textContent = msg; h.classList.remove('hide'); clearTimeout(hintTimer); hintTimer = setTimeout(() => h.classList.add('hide'), ms || 4200); }
   /* 캔버스 위 일시 메시지 */
   const flash = { text: '', t: 0, bg: '#15803d' };
-  function say(text, bad, sec) { flash.text = text; flash.t = sec || 2.8; flash.bg = bad ? '#b91c1c' : '#15803d'; }
+  function say(text, bad, sec) { flash.text = text; flash.t = sec || 2.8; flash.bg = bad ? '#b91c1c' : '#15803d'; if (document.body.classList.contains('v3-mode')) showHint(text, (sec || 2.8) * 1000); }   // 3D 화면에서는 그림 위 알림 대신 위쪽 안내로 보여 줘요
   function drawFlash(dt, y) {
     if (flash.t <= 0) return;
     flash.t -= dt;
@@ -999,7 +999,7 @@
         {
           title: '농도를 올리고 새 평형까지',
           goal: '이산화 탄소 농도를 <b>' + K.C2X + ' ppm</b>으로 올리고, 에너지 <b>불균형이 0.1 이하</b>가 되는 새 평형까지 기다려요.',
-          hint: '슬라이더를 오른쪽 끝(' + K.C2X + ')까지 올린 뒤 오른쪽 그래프의 기온 선이 보라색 점선(평형)에 가까워질 때까지 몇 초 기다려요.',
+          hint: '슬라이더를 오른쪽 끝(' + K.C2X + ')까지 올린 뒤 <span class="only2d">오른쪽 그래프의 기온 선이 보라색 점선(평형)에 가까워질</span><span class="only3d">아래 ‘에너지 불균형’ 값이 0.1 이하로 줄어들</span> 때까지 몇 초 기다려요.',
           setup() { setMode('gh'); },
           check: () => S.c === K.C2X && settled() && nDisp() <= 0.1, hold: 0.8,
           status: () => mark(S.c === K.C2X) + ' 농도 ' + Math.round(S.c) + ' / ' + K.C2X + ' ppm · ' + mark(S.c === K.C2X && nDisp() <= 0.1) + ' 불균형 ' + f1(Math.abs(n1(S.N))) + ' (0.1 이하)',
@@ -1035,8 +1035,8 @@
       missions: [
         {
           title: '되먹임을 끄고 켜서 비교하기',
-          goal: '<b>' + K.C2X + ' ppm</b>에서 새 평형에 이르면 <b>📝 평형 값 기록</b>을 눌러요. 되먹임을 <b>모두 켠 경우</b>와 <b>모두 끈 경우</b> 두 가지를 기록하세요.',
-          hint: '먼저 둘 다 켠 채로 평형을 기다려 기록해요. 그다음 두 버튼을 눌러 둘 다 끄고, 기온이 새 평형에 이를 때까지 기다려 다시 기록해요. 처음부터 보고 싶으면 <b>다시</b>를 눌러요.',
+          goal: '<b>' + K.C2X + ' ppm</b>에서 새 평형에 이르면 <b>📝 평형 기록</b>을 눌러요. 되먹임을 <b>모두 켠 경우</b>와 <b>모두 끈 경우</b> 두 가지를 기록하세요.',
+          hint: '먼저 둘 다 켠 채로 평형을 기다려 기록해요. 그다음 두 버튼을 눌러 둘 다 끄고, 기온이 새 평형에 이를 때까지 기다려 다시 기록해요. 처음부터 보고 싶으면 <b>↺ 처음부터</b>를 눌러요.',
           setup() { setMode('fb'); },
           check: () => !!(S.rows['11'] && S.rows['00'] && S.rows['11'].dT > S.rows['00'].dT), hold: 0.3,
           status: () => mark(!!S.rows['11']) + ' 모두 켬 ' + (S.rows['11'] ? sg1(S.rows['11'].dT) + ' °C' : '미기록') + ' · ' + mark(!!S.rows['00']) + ' 모두 끔 ' + (S.rows['00'] ? sg1(S.rows['00'].dT) + ' °C' : '미기록'),

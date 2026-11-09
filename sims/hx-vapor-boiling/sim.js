@@ -745,7 +745,7 @@
         {
           title: '증발과 응축이 같아지는 평형',
           goal: '20 °C에서 빈 용기에 증기가 차오르다가 <b>증발 속도 = 응축 속도</b>가 되어 압력이 일정해지는 <b>동적 평형</b>을 만들어요. (약 6초)',
-          hint: '온도 20 °C를 고른 채 기다려요. 마노미터의 수은 높이 차가 일정해지고 ↑ 증발과 ↓ 응축 막대가 같아지면 평형이에요.',
+          hint: '온도 20 °C를 고른 채 기다려요. <span class="only3d">용기 위 증기 압력 값이 일정해지고</span><span class="only2d">마노미터의 수은 높이 차가 일정해지고</span> ↑ 증발과 ↓ 응축 막대가 같아지면 평형이에요.',
           setup() { S.lock = true; S.gate = ''; S.vap.T = 20; S.vap.rec = {}; vapReset(); setMode('vap'); },
           check: () => S.vap.T === 20 && S.vap.eq, hold: 0.6,
           status: () => '온도 20 °C ' + mark(S.vap.T === 20) + ' &nbsp; 평형 ' + mark(S.vap.eq) + ' &nbsp; 증기압 ' + fmtP(S.vap.Pd) + ' mmHg',

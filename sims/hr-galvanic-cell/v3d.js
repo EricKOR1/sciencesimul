@@ -168,6 +168,8 @@
         const o = ctx.orbit; if (one) { o.dist = PHONE ? 23 : 15.5; o.tx = 0.6; o.ty = 0.3; o.theta = 0.15; o.phi = 1.35; } else { o.dist = PHONE ? 20 : 14.5; o.tx = 0; o.ty = 1.0; o.theta = 0.3; o.phi = 1.25; }
       }
       let flow = 0, txt = '', lastMd = '';
+      /* 조합 단계의 결과 표 (2D 오른쪽 ‘실험 결과’와 같아요): 확인한 조합만 전압 · (−)극을 보여 줘요 */
+      const cbDone = () => { const c = window.__sim && window.__sim.S && window.__sim.S.cb; if (!c || !c.tested) return ''; const rows = [['Zn', 'Cu'], ['Cu', 'Ag'], ['Zn', 'Ag']].map((q) => { const r = c.tested[q.slice().sort().join('|')]; return q[0] + '–' + q[1] + ' ' + (r ? '<b>' + (+r.V).toFixed(2) + ' V</b> (−)극 ' + r.neg + (r.ok ? ' ✓' : ' ✗') : '?'); }); return '<br><span style="opacity:.85">📋 ' + rows.join(' · ') + '</span>'; };
       return {
         update(dt, t) {
           dt = Math.min(dt, 0.05);
@@ -196,7 +198,8 @@
             labA.set(MET[A].ion); labB.set(MET[B].ion); labSolA.set(MET[A].sol); labSolB.set(MET[B].sol);
           }
           const asm = md === 'cell' && S2.cl ? S2.cl.parts : null, vis = (id) => !asm || asm[id].k > 0.05;
-          let flowT = on ? 1 : 0; if (md === 'cell' && S2.cl) flowT = S2.cl.lit; else if (two) flowT = S2.bk.sep.lit;
+          const cbWait = md === 'combo' && S2.cb && !S2.cb.run;   // 조합 단계: “조립해서 확인”을 누르기 전에는 (−)극 · 전압을 보여 주지 않아요 (예측을 먼저 해요)
+          let flowT = on ? 1 : 0; if (md === 'cell' && S2.cl) flowT = S2.cl.lit; else if (two) flowT = S2.bk.sep.lit; else if (cbWait) flowT = 0;
           zn.visible = vis('zn'); cu.visible = vis('cu'); [wire, bulb, sock, swb, bulbL].forEach((o) => { o.visible = vis('wire'); });
           const brV = vis('bridge') && !two && !(md === 'cell' && !S2.cl.bridgeOn); sb.visible = sbIn.visible = brV;
           if (asm) { liqs[0].visible = S2.cl.solK[0] > 0.03; liqs[1].visible = S2.cl.solK[1] > 0.03; } else { liqs[0].visible = liqs[1].visible = true; }
@@ -209,8 +212,8 @@
           wearBtn.style.display = nTarget != null ? 'none' : '';   // 석출 분석에서는 판의 변화가 이동한 전자의 양으로 정해져요
           bulb.material.emissiveIntensity = 0.1 + 0.9 * flow; bulbL.intensity = 0.9 * flow; bulb.material.opacity = 0.5 + 0.3 * flow;
           swb.position.y = WY + (on ? 0.09 : 0.45); swb.rotation.z = on ? 0 : 0.5;
-          labs[0].set(A + (negLeft ? '판 (−)극 · 산화' : '판 (+)극 · 환원'));
-          labs[1].set(B + (negLeft ? '판 (+)극 · 환원' : '판 (−)극 · 산화'));
+          labs[0].set(A + (cbWait ? '판 · (−)극? (+)극?' : negLeft ? '판 (−)극 · 산화' : '판 (+)극 · 환원'));
+          labs[1].set(B + (cbWait ? '판 · (−)극? (+)극?' : negLeft ? '판 (+)극 · 환원' : '판 (−)극 · 산화'));
           /* 전자: 도선을 (−)극 → 전구 → (+)극 방향으로 */
           for (let i = 0; i < NE; i++) { let u = ((i / NE) + t * 0.12 * flow) % 1; if (!negLeft) u = 1 - u; const p = wcurve.getPointAt(u); if (flow < 0.05) { hide(em, i); continue; } M.makeTranslation(p.x, p.y, p.z); em.setMatrixAt(i, M); }
           em.instanceMatrix.needsUpdate = true;
@@ -223,6 +226,8 @@
             M.makeScale(sc, sc, sc); M.setPosition(sg * (BX + 0.5 + rr * Math.abs(Math.cos(q.a)) * (neg ? 0.8 : 1)), y, Math.sin(q.a) * rr * 0.9); inst.setMatrixAt(i, M);
           });
           ionSide(zi, zs, -1, negLeft); ionSide(ci, cs, 1, !negLeft);
+          if (cbWait) { zs.forEach((q, i) => hide(zi, i)); cs.forEach((q, i) => hide(ci, i)); }   // 확인 전에는 이온의 움직임으로 (−)극을 알려 주지 않아요
+          { const eL = labs[3], et = negLeft ? 'e⁻ →' : '← e⁻'; if (eL._t !== et) { eL._t = et; eL.set(et); } eL.show(showLab && !cbWait); labA.show(showLab && !cbWait); labB.show(showLab && !cbWait); }
           zi.instanceMatrix.needsUpdate = true; ci.instanceMatrix.needsUpdate = true;
           /* 염다리: 음이온은 Zn쪽으로, 양이온은 Cu쪽으로 */
           for (let i = 0; i < NB; i++) {
@@ -238,9 +243,11 @@
           if (md === 'cell' && S2.cl && !(vis('zn') && vis('cu') && S2.cl.solK[0] > 0.9 && S2.cl.solK[1] > 0.9 && vis('wire'))) tx = '<b>🧩 다니엘 전지 조립</b><br>끌어 놓은 부품이 여기에 나타나요. (' + Object.keys(S2.cl.parts).filter((k) => S2.cl.parts[k].on).length + ' / 6)<br>Zn판 · ZnSO₄ · Cu판 · CuSO₄ · 염다리 · 도선과 전구를 모두 놓아요.';
           else if (md === 'cell' && S2.cl && !S2.cl.parts.bridge.on) tx = '<b>염다리가 아직 없어요</b><br>두 용액이 이어지지 않아 전하가 쌓여요. 전압이 0 V로 떨어지고 전구가 꺼져요.<br>염다리를 놓아 두 용액을 이어 줘요.';
           else if (two) tx = '<b>두 비커를 도선으로만 이었어요</b><br>전압계 ' + S2.bk.sep.V.toFixed(2) + ' V · 전구 ' + (S2.bk.sep.lit > 0.5 ? '켜짐' : S2.bk.sep.lit > 0.1 ? '희미함' : '꺼짐') + '<br>' + (S2.bk.sep.imb > 0.9 ? '두 용액이 이어지지 않아 전하가 쌓여 전류가 멈췄어요. 이 문제를 풀어 주는 장치가 염다리예요.' : '곧 전압이 떨어져요.');
+          else if (cbWait) tx = '<b>' + A + '–' + B + ' 전지</b><br>' + (A === B ? '서로 다른 금속을 골라야 전지가 돼요.' : '(−)극이 될 금속을 예측한 뒤 [조립해서 확인]을 눌러요.') + cbDone();
           else if (!on) tx = head + '<b>염다리를 뺐어요</b>: 용액의 전하 균형이 깨져 전류가 거의 흐르지 못하고 전압이 0 V로 떨어져요.';
           else {
-            tx = head + '(−)극 ' + N + ': ' + MET[N].ox + ' (산화)<br>(+)극 ' + Pp + ': ' + MET[Pp].red + ' (환원)<br>전자: ' + N + '판 → 도선 → ' + Pp + '판 (전류는 반대)';
+            tx = md === 'analysis' || md === 'combo' ? head + '전자: ' + N + '판 → 도선 → ' + Pp + '판' + (md === 'combo' ? cbDone() : '')   // 반쪽 반응식 · 전류 방향은 미션에서 직접 골라요
+              : head + '(−)극 ' + N + ': ' + MET[N].ox + ' (산화)<br>(+)극 ' + Pp + ': ' + MET[Pp].red + ' (환원)<br>전자: ' + N + '판 → 도선 → ' + Pp + '판 (전류는 반대)';
             if (nTarget != null) { const mz = w2 && w2.mZn ? w2.mZn(nTarget) : null, mc = w2 && w2.mCu ? w2.mCu(nTarget) : null; tx += '<br>전자 <b>' + nTarget.toFixed(2) + ' mol</b> 이동 → Zn판 ' + (mz != null ? mz.toFixed(1) + ' g' : '') + '(↓) · Cu판 ' + (mc != null ? mc.toFixed(1) + ' g' : '') + '(↑)'; }
           }
           if (tx !== txt) { txt = tx; info(tx); }

@@ -60,11 +60,11 @@
       }
       /* ---------- 에너지 막대 ---------- */
       const bars = {}; const BX = 5.8;
-      [['ep', '위치 에너지', 0], ['ek', '운동 에너지', 1.1], ['me', '역학적 에너지', 2.2]].forEach(([k, t, dx]) => {
-        const m = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1, 0.7), sm(EC[k], { roughness: 0.35, metalness: 0.05 })); m.position.set(BX + dx, 0, -1.4); root.add(m); bars[k] = { m, L: label('', [BX + dx, -0.45, -1.4 + 0.45], { size: 12, color: 'rgba(15,23,42,.88)' }), t };
+      [['ep', '위치 에너지', 0], ['ek', '운동 에너지', 1.3], ['me', '역학적 에너지', 2.6]].forEach(([k, t, dx]) => {
+        const m = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1, 0.7), sm(EC[k], { roughness: 0.35, metalness: 0.05 })); m.position.set(BX + dx, 0, -1.4); root.add(m); bars[k] = { m, L: label('', [BX + dx, -0.45, -1.4 + 0.45], { size: 12, color: { ep: 'rgba(29,78,216,.92)', ek: 'rgba(194,65,12,.92)', me: 'rgba(109,40,217,.92)' }[k] }), t };
       });
-      const base = new THREE.Mesh(new THREE.BoxGeometry(3.4, 0.08, 1.1), sm(0x64748b)); base.position.set(BX + 1.1, -0.04, -1.4); root.add(base);
-      const topLine = new THREE.Mesh(new THREE.BoxGeometry(3.4, 0.02, 0.02), new THREE.MeshBasicMaterial({ color: 0xa78bfa, transparent: true, opacity: 0.7 })); topLine.position.set(BX + 1.1, 0, -1.4); root.add(topLine);
+      const base = new THREE.Mesh(new THREE.BoxGeometry(3.9, 0.08, 1.1), sm(0x64748b)); base.position.set(BX + 1.3, -0.04, -1.4); root.add(base);
+      const topLine = new THREE.Mesh(new THREE.BoxGeometry(3.9, 0.02, 0.02), new THREE.MeshBasicMaterial({ color: 0xa78bfa, transparent: true, opacity: 0.7 })); topLine.position.set(BX + 1.3, 0, -1.4); root.add(topLine);
       const cLab = label('', cart, { size: 12, color: 'rgba(15,23,42,.9)', offset: [0, 1.0, 0] });
       const bLab = label('', bob, { size: 12, color: 'rgba(15,23,42,.9)', offset: [0, 0.9, 0] });
       let scene = '', infoK = '';
@@ -123,7 +123,7 @@
           /* 에너지 막대 (J) */
           const sc2 = 3.6 / SC.E;
           const vals = { ep: E.Ep, ek: E.Ek, me: E.mech };
-          Object.keys(bars).forEach((k) => { const v = Math.max(0.0005, vals[k] * sc2); bars[k].m.scale.y = v; bars[k].m.position.y = v / 2; bars[k].L.set(bars[k].t + '<br><b>' + Math.round(vals[k]) + ' J</b>'); });
+          Object.keys(bars).forEach((k) => { const v = Math.max(0.0005, vals[k] * sc2); bars[k].m.scale.y = v; bars[k].m.position.y = v / 2; bars[k].L.set(bars[k].t.replace(' ', '<br>') + '<br><b>' + Math.round(vals[k]) + ' J</b>'); });
           topLine.position.y = (S.m * L.G * (sc === 'pend' ? S.hp0 : S.H[0])) * sc2;
           const ik = [sc, Math.round(E.Ep), Math.round(E.Ek), S.m, S.state].join('|');
           if (ik !== infoK) { infoK = ik; info('<b>' + (sc === 'pend' ? '진자' : '롤러코스터') + '</b> · 질량 <b>' + S.m + ' kg</b><br><span style="color:#93c5fd">위치 에너지 ' + Math.round(E.Ep) + ' J</span> + <span style="color:#fdba74">운동 에너지 ' + Math.round(E.Ek) + ' J</span> = <b style="color:#c4b5fd">역학적 에너지 ' + Math.round(E.mech) + ' J</b><br>마찰이 없으면 합이 처음 값과 늘 같아요. 처음 높이보다 높은 곳은 올라갈 수 없어요.'); }

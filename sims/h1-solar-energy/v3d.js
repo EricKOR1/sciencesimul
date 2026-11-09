@@ -44,6 +44,12 @@
       const hot = new THREE.Sprite(glowMat(0.3)); hot.scale.set(BOX * 5.5, BOX * 5.5, 1); gFu.add(hot);
       const vS = () => 2.1 * Math.sqrt(st.T / 1500);
       let nHe = 0, phase = 'run', phaseT = 0, bursts = [], fused = 0;
+      /* 2D와 맞추기: 2D 실험에서 융합이 일어난 만큼만 3D에서도 융합해요 (2D에서 헬륨 핵이 생기면 3D도 곧 헬륨 핵을 만들어요) */
+      let base = null, forceT = 0;
+      const FU2 = () => { const L = ctx.lesson && ctx.lesson(); return L && L.FU ? L.FU : null; };
+      const okDD = () => { const F = FU2(); return !F || !base || F.pp > base.pp || F.heTotal > base.he; };
+      const okHe = () => { const F = FU2(); return !F || !base || F.heTotal > base.he; };
+      function resetBase() { const F = FU2(); base = F ? { pp: F.pp, he: F.heTotal } : null; forceT = 0; }
       function rv() { const u = Math.random() * 2 - 1, a = Math.random() * 6.283, r = Math.sqrt(1 - u * u); return new V3(Math.cos(a) * r, u, Math.sin(a) * r); }
       function spawn() {
         ps.forEach((p) => gFu.remove(p.g)); ps.length = 0;
@@ -74,8 +80,8 @@
               a.v.addScaledVector(d, f * h / a.m); b.v.addScaledVector(d, -f * h / b.m);
               // 융합 조건: 충분히 가까워지면 (서로 밀어내는 힘을 이길 만큼 빠를 때만 여기까지 와요)
               const rel = a.v.distanceTo(b.v);
-              if (r < D0 * 0.95 && a.kind === 'p' && b.kind === 'p' && phase === 'run' && rel > VTH) { fuseDD(a, b); return; }
-              if (r < D0 * 1.1 && a.kind === 'd' && b.kind === 'd' && phase === 'run' && rel > VTH * 0.8) { fuseHe(a, b); return; }
+              if (r < D0 * 0.95 && a.kind === 'p' && b.kind === 'p' && phase === 'run' && rel > VTH && okDD()) { fuseDD(a, b); return; }
+              if (r < D0 * 1.1 && a.kind === 'd' && b.kind === 'd' && phase === 'run' && rel > VTH * 0.8 && okHe()) { fuseHe(a, b); return; }
             }
           }
           ps.forEach((p) => {
@@ -181,7 +187,7 @@
       let internal = true, rng, rngM, plM, plF; const pathBtns = [];
       const gFu1 = grab(() => {
         rng = controls.range('온도', 100, 2000, 100, st.T, (v) => { st.T = v; const L = L2(); if (L && L.setT) L.setT(v); fusionInfoLow(); }, (v) => v + '만 K' + (v === 1500 ? ' (태양 중심부)' : ''));
-        controls.button('↺ 다시 하기', () => { spawn(); fusionInfoLow(); });
+        controls.button('↺ 다시 하기', () => { spawn(); resetBase(); fusionInfoLow(); });
       });
       const gMa1 = grab(() => {
         rngM = controls.range('수소의 질량', 100, 1000, 100, 100, (v) => { const L = L2(); if (L && L.setM) L.setM(v); }, (v) => v + ' g');
@@ -217,8 +223,17 @@
           if (sc !== st.scene) { st.scene = sc; showScene(); }
           if (st.scene === 'fusion') {
             if (SS && typeof SS.T === 'number' && SS.T !== st.T) { st.T = SS.T; rng.set(SS.T); fusionInfoLow(); }
+            if (!base) resetBase();
             stepFusion(Math.min(dt, 0.05)); updateBursts(dt);
-            if (phase === 'done') { phaseT += dt; if (phaseT > 4.5) { spawn(); heLab.show(false); enLab.show(false); fusionInfoLow(); } }
+            if (phase === 'run' && base && FU2() && FU2().heTotal > base.he) {   // 2D에서 헬륨 핵이 생겼는데 3D가 아직이면 곧 이어서 융합시켜요
+              forceT += dt;
+              if (forceT > 1.2) {
+                const P = () => ps.filter((q) => q.kind === 'p'), Dd = () => ps.filter((q) => q.kind === 'd');
+                while (Dd().length < 2 && P().length >= 2) { const pp = P(); fuseDD(pp[0], pp[1]); }
+                const dd = Dd(); if (dd.length >= 2) fuseHe(dd[0], dd[1]);
+              }
+            }
+            if (phase === 'done') { phaseT += dt; if (phaseT > 4.5) { spawn(); resetBase(); heLab.show(false); enLab.show(false); fusionInfoLow(); } }
             const p0 = ps[0]; pLab.obj = p0 && p0.kind === 'p' ? p0.g : (ps.find((q) => q.kind === 'p') || { g: null }).g; pLab.show(!!pLab.obj && phase === 'run');
             const he = ps.find((q) => q.kind === 'he'); if (he) { heLab.obj = he.g; heLab.off = [0, 0.95, 0]; enLab.obj = he.g; enLab.off = [1.1, -0.4, 0]; }
             hot.material.opacity = 0.18 + 0.14 * (st.T / 2000);

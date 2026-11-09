@@ -45,6 +45,19 @@
     autoRotate: 0.18,
     build(ctx) {
       const { THREE, root, camera, label, info, controls, orbit, renderer } = ctx;
+      /* 미션 보조 판: 미션이 말하는 표·기록·카드를 3D 화면 구석에 작게 보여 줘요 (2D 상태를 그대로 읽어요) */
+      const mxBox = (pos) => {
+        const v = ctx.renderer.domElement.parentElement;
+        if (!document.getElementById('mx3d-css')) { const s = document.createElement('style'); s.id = 'mx3d-css'; s.textContent =
+          '.mx3d{position:absolute;z-index:3;padding:6px 8px;border-radius:12px;background:rgba(8,12,24,.8);color:#fff;font-size:12px;line-height:1.35;pointer-events:none;max-width:48%;box-shadow:0 4px 14px rgba(0,0,0,.35)}.mx3d:empty{display:none}' +
+          '.mx3d.tr{right:10px;top:10px}.mx3d.br{right:10px;bottom:34px}.mx3d.bl{left:10px;bottom:10px}.mx3d .h{font-weight:900;margin-bottom:3px}' +
+          '.mx3d table{border-collapse:collapse}.mx3d th,.mx3d td{padding:1px 5px;text-align:center;white-space:nowrap}.mx3d th{color:#b9c6e4;font-weight:800}.mx3d td:first-child,.mx3d th:first-child{text-align:left}' +
+          '.mx3d .on{color:#ffd34d;font-weight:800}.mx3d .ok{color:#7ee2a8;font-weight:800}.mx3d .no{color:#ff9a9a;font-weight:800}.mx3d .dim{color:#8d99b3}.mx3d tr.sel td{background:rgba(255,211,77,.16)}' +
+          '@media (max-width:599px){.mx3d{font-size:10.5px;padding:4px 6px;max-width:60%}.mx3d.tr{top:auto;bottom:30px}.mx3d th,.mx3d td{padding:0 3px}}';
+          document.head.appendChild(s); }
+        const el = document.createElement('div'); el.className = 'mx3d ' + (pos || 'tr'); v.appendChild(el);
+        let last = ''; el.put = (h) => { if (h !== last) { last = h; el.innerHTML = h; } }; return el;
+      };
       const sim = window.__sim || null;
       const ctlEl = renderer.domElement.parentNode.parentNode.querySelector('.v3-ctl');
       const grp = (fn) => { const n0 = ctlEl.children.length; fn(); return Array.prototype.slice.call(ctlEl.children, n0); };
@@ -237,11 +250,24 @@
           extraNote = '<br><span style="color:#9fb0d4">은하 ' + g.id + ' (' + (g.role === 'train' ? '훈련용' : '시험용') + ')의 모양을 차례로 보여 줘요.</span>';
         } else extraNote = '';
       }
+      /* 📊 유형별 막대 그래프 (2D와 같은 TY3 자료): 막대를 누르면 그 유형을 골라 값이 나와요 */
+      const barEl = mxBox('tr'); barEl.style.pointerEvents = 'auto';
+      barEl.addEventListener('pointerdown', (e) => { e.stopPropagation(); const b = e.target.closest('[data-k]'); if (!b || !sim || !sim.setSel3) return; e.preventDefault(); sim.setSel3(b.dataset.k); sim.updateCtl && sim.updateCtl(); });   // 화면 돌리기(끌기)보다 먼저 받아요
+      const MAXV = { ism: 30, blue: 70, sf: 10 }, MNM = { ism: '성간 물질 비율 (%)', blue: '푸른 별 비율 (%)', sf: '별 형성 활발도' };
+      function drawBars() {
+        const S = sim && sim.S; if (!S || S.view !== 'v3' || !sim.TY3) { barEl.put(''); return; }
+        const mk = S.metric in MAXV ? S.metric : 'ism', mx = MAXV[mk], ph = window.innerWidth < 600;
+        barEl.put('<div class="h">📊 유형별 ' + MNM[mk] + '</div><div style="display:flex;align-items:flex-end;gap:5px;height:' + (ph ? 62 : 86) + 'px;padding-top:14px">' + sim.TY3.map((ty) => {
+          const sel = S.sel3 === ty.k, h = Math.max(2, Math.round((ph ? 44 : 66) * ty[mk] / mx));
+          return '<div data-k="' + ty.k + '" style="cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;width:' + (ph ? 24 : 30) + 'px;height:100%">' + (sel ? '<span class="on" style="font-size:11px">' + ty[mk] + (mk === 'sf' ? '' : '%') + '</span>' : '') +
+            '<i style="display:block;width:20px;height:' + h + 'px;border-radius:4px 4px 0 0;background:' + ty.col + ';' + (sel ? 'outline:2px solid #ffd34d;outline-offset:1px' : 'opacity:.8') + '"></i><span style="font-size:11px;' + (sel ? 'color:#ffd34d;font-weight:900' : '') + '">' + ty.k + '</span></div>';
+        }).join('') + '</div>');
+      }
       rebuild(); readLesson();
 
       return {
         update(dt) {
-          readLesson(); followCards(Math.min(dt || 0.016, 0.05));
+          readLesson(); drawBars(); followCards(Math.min(dt || 0.016, 0.05));
           const i = incl(); if (iRange && Math.abs(iRange.value - i) > 0.7 && !document.activeElement.matches('input[type=range]')) iRange.set(Math.max(3, Math.min(90, Math.round(i))));
           axTip.obj = [0, (type === 'E' ? Math.max(axes().a, axes().c) : RD * 0.62) * 1.0 + 1.2, 0];
           axTip.show(showAxis && type !== 'Irr' && i > 28);

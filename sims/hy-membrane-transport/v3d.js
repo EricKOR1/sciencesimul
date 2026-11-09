@@ -25,6 +25,17 @@
     autoRotate: 0,
     levels: [0, 1, 2],   // 4단계(큰 물질 시연 · 사례 카드 분류)는 2D 화면이에요. 1단계의 속도 기록(#dfRec)은 data-v3="keep"
     build(ctx) {
+      /* 3D 화면 위 작은 판(기록표 · 카드 등): 2D 캔버스에만 그려지던 것을 3D 단계에서도 보이게 해요 */
+      function v3pan(cls) {
+        if (!document.getElementById('v3pan-css')) { const s = document.createElement('style'); s.id = 'v3pan-css'; s.textContent =
+          '.v3pan{position:absolute;z-index:2;padding:6px 9px;border-radius:12px;background:rgba(8,12,24,.8);border:1px solid rgba(255,255,255,.16);color:#fff;font-size:12px;font-weight:700;line-height:1.35;pointer-events:none;max-width:48%}' +
+          '.v3pan:empty{display:none}.v3pan.tr{right:10px;top:10px}.v3pan.bl{left:10px;bottom:10px}.v3pan .h{font-weight:900;margin-bottom:3px;font-size:12.5px}.v3pan .chip{display:inline-block;margin:1px 2px;padding:0 6px;border-radius:7px;background:rgba(255,255,255,.16);color:#eef3ff}.v3pan .chip.sel{background:#ffd34d;color:#1b2333}.v3pan.card{background:#fffdf7;color:#1b2333;border-top:5px solid var(--kc,#ffd34d);white-space:normal;max-width:min(260px,46%)}.v3pan.card .s{font-size:11.5px;font-weight:600;color:#475569}' +
+          '.v3pan table{border-collapse:collapse}.v3pan th,.v3pan td{padding:1px 5px;text-align:center;white-space:nowrap}.v3pan th{color:#b9c6e4;text-align:left;font-weight:800}.v3pan td.e{color:#56658a}.v3pan .ok{color:#7ee2a8}.v3pan .hi{color:#ffd34d}' +
+          '@media (max-width:599px){.v3pan{font-size:10.5px;padding:4px 6px;max-width:58%}.v3pan.tr{top:auto;bottom:30px;right:8px}.v3pan.bl{left:8px;bottom:8px;max-width:42%}.v3pan th,.v3pan td{padding:0 3px}.v3pan .h{font-size:11px}}';
+          document.head.appendChild(s); }
+        const el = document.createElement('div'); el.className = 'v3pan ' + (cls || 'tr'); ctx.renderer.domElement.parentElement.appendChild(el);
+        let last = ''; el.put = (html) => { if (html !== last) { last = html; el.innerHTML = html; } }; return el;
+      }
       const { THREE, root, label, info, controls } = ctx;
       const V = THREE.Vector3;
       if (narrow) root.rotation.z = Math.PI / 2;      // 휴대폰(세로 화면)에서는 눕혀 둔 모형을 세워서 보여 줘요
@@ -310,10 +321,30 @@
       }
 
       poll(); reset();
+      /* 2D 실험판의 기록표 · 속도 막대 · 흡수량을 3D 화면 오른쪽 위에 보여 줘요 (2D와 같은 값) */
+      const panR = v3pan('tr');
+      function drawPan() {
+        const L = ctx.lesson(); if (!L || !L.S) { panR.put(''); return; }
+        const m = L.S.mode, CO = L.CONC || [1, 2, 4, 8, 16, 32];
+        const bar = (t, v, mx, col, tx) => '<tr><th>' + t + '</th><td style="text-align:left"><span style="display:inline-block;height:9px;border-radius:5px;vertical-align:middle;background:' + col + ';width:' + Math.round(70 * Math.max(0, Math.min(1, v / mx))) + 'px"></span></td><td>' + tx + '</td></tr>';
+        if (m === 'diff') {
+          const r = L.S.df.rec; if (!r.length) { panR.put('<div class="h">📝 기록한 속도 (O₂)</div><div style="color:#b9c6e4">아직 없어요</div>'); return; }
+          panR.put('<div class="h">📝 기록한 속도 (O₂) ' + r.length + '개</div><table><tr><th>바깥 농도</th>' + r.map((q) => '<td>' + q.c + '</td>').join('') + '</tr><tr><th>속도</th>' + r.map((q) => '<td class="hi">' + q.r + '</td>').join('') + '</tr></table>');
+        } else if (m === 'carrier') {
+          const C0 = L.S.cr, R = C0.rec[C0.sp], row = (n) => '<tr><th>' + (C0.sp === 'glc' ? '운반체' : '통로') + ' ' + n + '개</th>' + CO.map((c) => (R[n][c] != null ? '<td class="hi">' + R[n][c] + '</td>' : '<td class="e">·</td>')).join('') + '</tr>';
+          panR.put('<div class="h">📝 기록한 속도 (' + (C0.sp === 'glc' ? '포도당' : 'Na⁺') + ')</div><table><tr><th>바깥 농도</th>' + CO.map((c) => '<td>' + c + '</td>').join('') + '</tr>' + row(2) + row(4) + '</table>');
+        } else if (m === 'cyan' && L.cyRate) {
+          const r = L.cyRate(), Y = L.S.cy;
+          panR.put('<table>' + bar('촉진 확산 속도', r.fac, 26, '#14b8a6', r.fac) + bar('능동 수송 속도', r.act, 26, '#0f766e', r.act) + bar('ATP', Y.atp * 100, 100, Y.atp > 0.5 ? '#22c55e' : '#ef4444', Math.round(Y.atp * 100) + ' %') + '</table>');
+        } else if (m === 'root') {
+          const R = L.S.rt, V = L.RT_V || {}, mx = Math.max(1, V.air || 1, V.n2 || 1), cur = (c) => (R.run && R.cond === c ? (V[c] || 0) * R.prog : R.val[c]);
+          panR.put('<div class="h">🌱 이온 흡수량 (' + (R.cond === 'air' ? '공기' : '질소') + ' 용액' + (R.run ? ' · 측정 중' : '') + ')</div><table>' + bar('공기', cur('air') || 0, mx, '#38bdf8', R.val.air != null ? Math.round(R.val.air) : (R.run && R.cond === 'air' ? '…' : '—')) + bar('질소', cur('n2') || 0, mx, '#a78bfa', R.val.n2 != null ? Math.round(R.val.n2) : (R.run && R.cond === 'n2' ? '…' : '—')) + '</table>');
+        } else panR.put('');
+      }
       return {
         update(dt) {
           dt = Math.min(dt, 0.05) * (window.__v3dTS || 1);
-          poll();
+          poll(); drawPan();
           parts.forEach((p) => step(p, dt));
           if (st.mode === 'chan') cars.forEach((c) => { if (c.g.visible) carrierStep(c, dt); });
           infoT += dt; if (infoT > 0.5) { infoT = 0; text(); }

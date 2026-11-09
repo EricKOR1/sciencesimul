@@ -195,7 +195,10 @@
         lL.obj = [fw / 2 + 0.15, 0.1, -fh / 2 + 0.2]; lL.set('L = ' + f2(f.L) + ' m'); lL.off = [0.6, 0, 0];
         lB.obj = [-fw / 2, 0.8, -fh / 2 - 0.2]; lB.set(par ? '자기장 B ↑ (도선과 나란한 방향)' : '자기장 B ⊙ (위쪽, 화면 밖으로)'); lB.off = [0.6, 0.3, 0];
         const Fn = f.B * f.I * f.L * (par ? 0 : 1);
-        const txt = '<b>⚡ 자기장 속 전류가 받는 힘</b> · 도선(막대)이 레일 위에 놓여 있어요 (위에서 본 모습)<br>' + (par ? '자기장이 도선과 <b>나란해서</b> 힘이 0이에요. (B ∥ I → 힘 없음)' : '<b>F = B × I × L = ' + f2(f.B) + ' T × ' + f1(f.I) + ' A × ' + f2(f.L) + ' m = ' + f2(Fn) + ' N</b>' + (f.I > 0 ? ' · 힘은 ' + (Fs0 > 0 ? '오른쪽 →' : '왼쪽 ←') : ' · 전류가 0이라 힘도 0')) + '<br>힘은 전류와 자기장에 모두 수직이에요. 전류나 자기장의 방향을 바꾸면 힘의 방향도 반대가 돼요.<br><span style="opacity:.8">B · I · L · 방향은 옆 조작판에서 바꿔요.</span>';
+        /* 2D처럼: 힘 센서 값과 측정 기록표를 보여 주고, 식(F = BIL)은 2D에서 식이 공개된 뒤에만 보여 줘요 */
+        const LS0 = lessonS(), showF = !!(f.showF || (LS0 && LS0.game && LS0.game.free)), rows = (f.rows || []).slice(-4);
+        const txt = '<b>⚡ 자기장 속 전류가 받는 힘</b> · 도선(막대)이 레일 위에 놓여 있어요 (위에서 본 모습)<br>' + (par ? '자기장이 도선과 <b>나란할 때</b> 힘 센서: <b>F = 0 N</b>' : '힘 센서: <b>F = ' + f2(Fn) + ' N</b>' + (showF ? ' (F = B × I × L = ' + f2(f.B) + ' × ' + f1(f.I) + ' × ' + f2(f.L) + ')' : '') + (f.I > 0 ? ' · 힘은 ' + (Fs0 > 0 ? '오른쪽 →' : '왼쪽 ←') : ' · 전류가 0이라 힘도 0')) +
+          '<br>📋 측정 기록표 (B · I · L → F): ' + (rows.length ? rows.map((r) => f2(r.B) + ' T · ' + f1(r.I) + ' A · ' + f2(r.L) + ' m → <b>' + f2(r.F) + ' N ' + (r.dir > 0 ? '→' : '←') + '</b>').join(' / ') : '📏 기록하기를 눌러 값을 모아요') + '<br><span style="opacity:.8">B · I · L · 방향은 옆 조작판에서 바꿔요.</span>';
         if (txt !== lastTxtF) { lastTxtF = txt; info(txt); }
       }
       let lastTxtF = '', tmT = 0; const tmpT = () => tmT;

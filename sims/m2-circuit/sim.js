@@ -902,7 +902,7 @@
           {
             title: '켜고 끄기',
             goal: '스위치를 <b>닫아</b> 전구를 켠 뒤, 다시 <b>열어</b> 꺼 보세요.',
-            hint: '회로 왼쪽 스위치의 주황 손잡이를 누르거나, <b>🔌 스위치 닫기</b> 버튼을 눌러요.',
+            hint: '<span class="only2d">회로 왼쪽 스위치의 주황 손잡이를 누르거나, </span><b>🔌 스위치 닫기</b> 버튼을 눌러요.',
             setup() { setClosed(false); S.seq = { on: false, off: false }; },
             check: () => { if (S.closed) S.seq.on = true; else if (S.seq.on) S.seq.off = true; return S.seq.on && S.seq.off; },
             status: () => box(S.seq.on) + ' 스위치 닫기 (전구 켜기) · ' + box(S.seq.off) + ' 스위치 열기 (전구 끄기)',

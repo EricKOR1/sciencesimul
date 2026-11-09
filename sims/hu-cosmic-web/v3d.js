@@ -252,6 +252,20 @@
         if (nm === 'origin') { const a = S.or.ageD != null ? S.or.ageD : S.or.age; syncing = true; player.set(Math.max(0, Math.min(1, (a - 1) / 137))); syncing = false; }
         morph(); applyAll();
       }
+      /* 칸 지도 (2D '구조의 기원'의 8 × 8 칸과 같아요): 빈 곳 칸은 파랑, 밀한 칸은 주황으로 칠해요 */
+      const cgBox = document.createElement('div'); renderer.domElement.parentElement.appendChild(cgBox);
+      cgBox.style.cssText = 'position:absolute;right:10px;bottom:36px;z-index:3;padding:5px 7px 6px;border-radius:12px;background:rgba(8,12,24,.8);color:#e5e7eb;font-size:11.5px;font-weight:800;pointer-events:none;display:none;text-align:center';
+      const cgPh = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches), cgCap = document.createElement('div'), cgC = document.createElement('canvas'); cgC.width = cgC.height = 192; cgC.style.cssText = 'display:block;width:' + (cgPh ? 84 : 112) + 'px;height:' + (cgPh ? 84 : 112) + 'px;margin:3px auto 0'; cgBox.append(cgCap, cgC);
+      const cgG = cgC.getContext('2d'); let cgSig = '';
+      function drawCells() {
+        const S = sim && sim.S, on = mode === 'origin' && S && S.or && sim.orbBlk; cgBox.style.display = on ? '' : 'none'; if (!on) return;
+        const o = S.or, age = o.ageD != null ? o.ageD : o.age, st = sim.orbStats(o.eps, age); if (st.ready === false) return;
+        const blk = sim.orbBlk(), m = (sim.ORB_NP || 4096) / 64, sig = o.eps + '|' + Math.round(age) + '|' + st.voids + '|' + st.dense; if (sig === cgSig) return; cgSig = sig;
+        cgCap.innerHTML = '칸 지도 · <span style="color:#7fb5ff">빈 곳 ' + st.voids + '</span> · <span style="color:#ffb04a">밀한 칸 ' + st.dense + '</span>';
+        const c = 24; cgG.clearRect(0, 0, 192, 192);
+        for (let b = 0; b < 64; b++) { const x = (b % 8) * c, y = Math.floor(b / 8) * c, v = blk[b] / m;
+          cgG.fillStyle = v <= 0.3 ? '#1d4ed8' : v >= 3 ? '#f59e0b' : 'rgba(203,213,225,' + Math.min(0.85, 0.15 + v * 0.25).toFixed(2) + ')'; cgG.fillRect(x + 1, y + 1, c - 2, c - 2); }
+      }
       let synced = false;
       function readLesson() { // 수업이 은하 지도·밀도 분석이면 단면부터 보여 줘요 (읽기만)
         try { const v = sim && sim.S && sim.S.view; if ((v === 'map' || v === 'grid') && !slice && !synced) { slice = true; sB.classList.add('on'); view('top'); } synced = true; } catch (e) { /* 괜찮아요 */ }
@@ -259,7 +273,7 @@
       }
       readLesson();
       let acc = 0;
-      return { update(dt) { if (spin) orbit.theta += 0.07 * dt; acc += dt; if (acc > 0.1) { acc = 0; follow(); cardTick(); } }, sync() { synced = false; readLesson(); } };
+      return { update(dt) { if (spin) orbit.theta += 0.07 * dt; acc += dt; if (acc > 0.1) { acc = 0; follow(); cardTick(); drawCells(); } }, sync() { synced = false; readLesson(); } };
     },
   });
 })();

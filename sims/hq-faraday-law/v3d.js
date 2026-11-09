@@ -127,7 +127,7 @@
         aTh.position.set(0.5 * n.x * (R * 0.5 + 0.6) + 0.35, 0.9, 0); lTh.set('θ = ' + Math.round(st.th) + '°'); lTh.show(st.th > 3);
         const phi = st.Bv * st.Av * Math.cos(th);
         lPhi.set('Φ = BAcosθ = ' + phi.toFixed(4) + ' Wb (지나는 선 ' + thru + '개)');
-        info('<b>Φ = B·A·cosθ</b> — 노란 선이 코일 면을 지나는 자기력선이에요.<br>B = ' + st.Bv.toFixed(1) + ' T, A = ' + st.Av.toFixed(3) + ' m², θ = ' + Math.round(st.th) + '° → Φ = ' + phi.toFixed(4) + ' Wb<br>선이 촘촘하고(B↑) 면이 넓고 면이 B에 수직(θ=0°)일수록 Φ가 커요. θ = 90°이면 선이 면과 나란해서 Φ = 0이에요.');
+        info('<b>Φ = B·A·cosθ</b> — 노란 선이 코일 면을 지나는 자기력선이에요.<br>B = ' + st.Bv.toFixed(1) + ' T, A = ' + st.Av.toFixed(3) + ' m², θ = ' + Math.round(st.th) + '° → Φ = ' + phi.toFixed(4) + ' Wb<br>선이 촘촘하고(B↑) 면이 넓고 면이 B에 수직(θ=0°)일수록 Φ가 커요. θ를 바꾸며 코일을 지나는 노란 선의 수를 세어 봐요.');
       }
 
       /* ================= ② 자석과 코일 (유도 · 렌츠) ================= */
@@ -214,7 +214,8 @@
         lEdP.show(act > 0.12 && !!labs.pend.on); aEdP.position.set(PL_ * Math.sin(ph), PIV.y - PL_ * Math.cos(ph) - 0.7, 1.5);
         lPlate.set(M.name + '판');
         mgN.material.emissive.setHex(NC); mgN.material.emissiveIntensity = 0.08 * (b.mag || 1); mgS.material.emissive.setHex(SC); mgS.material.emissiveIntensity = 0.08 * (b.mag || 1);
-        info('<b>🌪️ 도체판 진자: 와전류가 운동을 막아요</b><br>판의 재질: ' + M.name + ' · 자석 세기: ' + ['', '약', '중', '강'][b.mag || 1] + '<br>' + PNOTE[b.mat] + '<br>' + (b.run ? '진자가 움직이는 동안 자석 사이에서 와전류가 생겨요.' : '옆 조작판의 ▶ 진자 놓기로 진자를 놓아 보세요.'));
+        info('<b>🌪️ 도체판 진자: 와전류가 운동을 막아요</b><br>판의 재질: ' + M.name + ' · 자석 세기: ' + ['', '약', '중', '강'][b.mag || 1] + '<br>' + (b.run ? '진자가 자석 사이를 지나가요. 멈출 때까지 걸리는 시간을 재요.' : '옆 조작판의 ▶ 진자 놓기로 진자를 놓아 보세요.') +
+          '<br>📋 측정 기록: ' + ['cu', 'al', 'pl', 'slot'].map((k) => { const rc = b.rec && b.rec[k], nm = (sim.MATS[k] || {}).name || k; return nm + ' ' + (rc ? (rc.status === 'stop' ? '<b>' + rc.t.toFixed(1) + ' s</b> (왕복 ' + rc.n + '회)' : '<b>' + ((sim.PEND && sim.PEND.tmax) || 20) + ' s+</b> (안 멈춤)') : '—'); }).join(' · '));
       }
 
       /* ================= 2D 실험의 값을 그대로 따라가요 ================= */

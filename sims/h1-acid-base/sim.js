@@ -1169,7 +1169,7 @@
       const c = ICARDS.find((q) => q.id === IO.cur);
       setRO(1, '물에 넣은 물질', c ? c.f + ' (' + c.name + ')' : '-');
       setRO(2, '물속의 입자', c ? (c.ions ? c.res : c.res.indexOf('이온') === 0 ? '이온 없음' : '녹지 않음') : '-');
-      setRO(3, '녹여 본 카드', ionTriedCount() + ' / ' + ICARDS.length);
+      setRO(3, '녹여 본 물질', ionTriedCount() + ' / ' + ICARDS.length);
     } else {
       const ok = AB.items.filter((it) => it.bin && it.bin === AITEMS[it.idx].k).length;
       setRO(1, '분류한 카드', AB.placed().length + ' / ' + AITEMS.length);
@@ -1349,9 +1349,9 @@
       title: '산과 염기의 정체: 이온', short: '이온 모형', icon: '🔬', phase: '모형',
       features: ['ion'],
       intro: '<div class="si-link">🔗 <b>앞 단계에서</b> 산과 염기 수용액은 모두 전류가 흘렀어요. 이온이 있다는 뜻이지요. 그런데 산과 염기의 성질이 서로 다른 까닭은 뭘까요?</div>' +
-        '<p>물질 카드 5장을 물에 녹여 봐요. 물속에서 <b>어떤 이온</b>이 나오는지 보면 산과 염기를 정의할 수 있어요.</p>' +
+        '<p>물질 5가지를 물에 녹여 봐요. 물속에서 <b>어떤 이온</b>이 나오는지 보면 산과 염기를 정의할 수 있어요.</p>' +
         '<p class="note">이 단원에서는 산과 염기를 <b>아레니우스 정의</b>로만 이야기해요.</p>',
-      setup() { setScene('ion'); resetIon(); showHint('카드를 끌어 비커의 물에 넣어 봐요', 4500); },
+      setup() { setScene('ion'); resetIon(); showHint('물질을 하나씩 물에 넣어 봐요', 4500); },
       recap: '산은 수용액에서 H⁺을, 염기는 수용액에서 OH⁻을 내놓아요. 수소(H)나 OH가 들어 있다고 모두 산·염기인 것은 아니에요.',
       summary: '<ul><li><b>산</b>: 수용액에서 <b>수소 이온(H⁺)</b>을 내놓는 물질<br>HCl → H⁺ + Cl⁻</li>' +
         '<li><b>염기</b>: 수용액에서 <b>수산화 이온(OH⁻)</b>을 내놓는 물질<br>NaOH → Na⁺ + OH⁻</li></ul>' +
@@ -1360,8 +1360,8 @@
       missions: [
         {
           title: '물에 녹여 보기',
-          goal: '물질 카드 <b>5장</b>을 모두 물에 넣고, 물속에서 어떤 입자가 되는지 살펴보세요.',
-          hint: '카드를 끌어 비커의 물에 놓거나, 카드를 한 번 눌러도 돼요. 3~4초 기다리면 카드에 ✓가 붙어요.',
+          goal: '<span class="only2d">물질 카드 <b>5장</b>을 모두 물에 넣고</span><span class="only3d">화면 아래 물질 단추 <b>5개</b>를 모두 눌러 물에 녹이고</span>, 물속에서 어떤 입자가 되는지 살펴보세요.',
+          hint: '<span class="only2d">카드를 끌어 비커의 물에 놓거나, 카드를 한 번 눌러도 돼요. 3~4초 기다리면 카드에 ✓가 붙어요.</span><span class="only3d">HCl · NaOH … 단추를 하나씩 눌러요. 3~4초 기다리면 단추에 ✓가 붙어요.</span>',
           setup() { setScene('ion'); },
           check: () => ionTriedCount() >= ICARDS.length,
           hold: 0.5,

@@ -1645,7 +1645,7 @@
             key: 'G1',
             title: '4곳에서 사과 떨어뜨리기',
             goal: '<b>북극, 대한민국, 남극, 적도 반대편</b>의 <span class="only2d">아이를 눌러</span><span class="only3d">🍎 단추를 눌러</span> 사과를 모두 떨어뜨려 보세요.',
-            hint: '<span class="only2d">아이나 사과를 누르면 사과를 놓아요. 아직 안 해 본 곳은 노란 고리로 표시돼요.</span><span class="only3d">아래 <b>🍎</b> 단추를 누르면 그곳의 아이가 사과를 놓아요. 네 곳을 모두 해 봐요.</span>',
+            hint: '<span class="only2d">아이나 사과를 누르면 사과를 놓아요. 아직 안 해 본 곳은 노란 고리로 표시돼요.</span><span class="only3d">아래 <b>🍎</b> 단추를 누르면 그곳에서 들고 있던 사과를 놓아요. 네 곳을 모두 해 봐요.</span>',
             check: () => G.kids.every((k) => k.done),
             hold: 0.7,
             status: () => '지구 중심 쪽으로 떨어진 곳 <b>' + G.kids.filter((k) => k.done).length + '/4</b><br>' + nameChips(),

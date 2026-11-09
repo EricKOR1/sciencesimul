@@ -1,6 +1,6 @@
 /* hx-entropy · 3D 기체의 확산과 엔트로피
    1단계 '저절로 일어나는 변화'(기체가 양쪽으로 퍼짐)와 2단계 '배열의 수와 엔트로피'(두 칸 용기, 입자 4 · 10 · 20개)에서 열려요.
-   - 1단계: 2D에서 '기체가 양쪽으로 퍼짐' 장면을 재생하면 칸막이가 열리고 입자가 퍼져요. 3D 단추로도 열고 닫을 수 있어요.
+   - 1단계: 네 장면(잉크 · 기체 · 방 · 물) 모두 2D의 재생 장면을 같은 진행으로 보여 줘요. ⏪ 거꾸로 재생도 그대로예요.
    - 2단계: 2D의 입자 수 N · '한 번 섞기'로 만든 배열(보라 = 왼쪽 칸, 주황 = 오른쪽 칸)을 그대로 입체로 보여 줘요.
    입자가 양쪽에 고르게 있는 배열이 훨씬 많아서(경우의 수↑) 엔트로피가 커지는 방향으로 일이 일어나요.
    1단계의 다른 장면(잉크 · 방 · 뜨거운 물과 찬물)과 3단계(증가 조건 5가지)도 2D와 같은 값으로 따라가요. 3D 단계는 1 · 3단계예요.
@@ -193,7 +193,7 @@
       function applyMode(md, sel) {
         const tag = md + (md === 'obs' ? sel : '');
         if (tag === sceneNow) return; sceneNow = tag; txt = '';
-        const newObs = md === 'obs' && sel !== 1, gas = md === 'obs' && sel === 1;
+        const gas = false;   // 기체 장면도 2D의 재생 장면(getSnap)을 그대로 보여 줘요 → ⏪ 거꾸로 재생하면 기체가 한쪽 칸으로 되돌아가는 모습이 3D에도 보여요
         showEls(obSegC, md === 'obs'); showEls(obPlayC, md === 'obs'); showEls(obRevC, md === 'obs'); showEls(cdSegC, md === 'cond'); showEls(cdRngC, md === 'cond');
         showOld(gas);
         if (gas || md === 'model') { hideNew(); m.visible = true; m2.visible = false; bx2.visible = false; }
@@ -226,7 +226,7 @@
           if (md !== lastMode) { lastMode = md; txt = ''; if (md === 'model') seg2.set('open'); }
           tNow += dt; applyMode(md, md === 'obs' && S2.ob ? S2.ob.sel : 0);
           const setI = (h) => { if (h !== txt) { txt = h; info(h); } };
-          if (md === 'obs' && S2.ob && S2.ob.sel !== 1) { setI(obsScene(w2, S2)); obSegC.r.set(S2.ob.sel); obPlayC.els.forEach((b) => { b.disabled = S2.ob.dir === 1; }); return; }
+          if (md === 'obs' && S2.ob) { setI(obsScene(w2, S2)); obSegC.r.set(S2.ob.sel); obPlayC.els.forEach((b) => { b.disabled = S2.ob.dir === 1; }); return; }
           if (md === 'obs' && S2.ob) obSegC.r.set(1);
           if (md === 'cond' && S2.cd) {
             const k = condScene(w2, S2), C0 = S2.cd, d = w2.sLevel(k, C0.pd[k]) - w2.sLevel(k, 0), sg = Math.abs(d) < 0.015 ? '처음과 같아요' : d > 0 ? '늘었어요 ▲' : '줄었어요 ▼';

@@ -141,7 +141,7 @@
       addFossil(4, [{ obj: trilobite(), x: -0.5, s: 0.5 }, { obj: graptolite(), x: 0.75, s: 0.55 }]);
       addFossil(5, [{ obj: stromatolite(), x: 0, s: 0.5 }]);
       lay.forEach((l, i) => {
-        l.num = label('지층 ' + (i + 1), [-W / 2, yBot(i) + H / 2, frontZ], { size: 12, offset: [-0.55, 0, 0] });
+        l.num = label('지층 ' + (i + 1), [-W / 2, yBot(i) + H / 2, frontZ], { size: 12, offset: [-0.55, 0, 0], tap: () => { const S = ctx.lesson && ctx.lesson(); if (S && S.digLayer && S.MODE === 'strata') S.digLayer(i); } });   // 이름표를 눌러 그 지층을 파요 (2D에서 지층을 누르는 것과 같아요)
         l.nameLab = label(LAY[i].name, l.fos, { size: 12.5, offset: [1.55, 0, 0.1] }); l.nameLab.show(false);
       });
       // 화석이 크게 바뀌는 경계 ①②③
@@ -421,7 +421,7 @@
             const e = ERA[si];
             setInfo('<b>' + e.name + '</b> (' + e.yr + ')<br>46억 년을 24시간으로 줄이면 ' + e.dur + '이에요.<br>이 시대의 지층에서 나오는 화석으로 그때의 생물과 환경을 알 수 있어요.');
           } else if (lv === 0) {
-            setInfo('<b>아래 지층일수록 오래된 지층</b>이에요.<br>파낸 지층 <b>' + dug + ' / 6</b>' + (dug ? ' · 가장 최근 화석: <b>' + LAY[dug - 1].name + '</b>' : '') + '<br>' + (dug >= N ? '화석이 크게 바뀌는 경계가 <b>3곳</b> 있어요.' : '⛏ 버튼으로 위에서부터 차례로 파 보세요.'));
+            setInfo('<b>아래 지층일수록 오래된 지층</b>이에요.<br>파낸 지층 <b>' + dug + ' / 6</b>' + (dug ? ' · 가장 최근 화석: <b>' + LAY[dug - 1].name + '</b>' : '') + '<br>' + (dug >= N ? '화석이 크게 바뀌는 경계가 <b>3곳</b> 있어요.' : '<b>지층 ' + (dug + 1) + '</b> 이름표나 ⛏ 버튼을 눌러 위에서부터 차례로 파 보세요.'));
           } else if (lv === 1) {
             setInfo('<b>지질시대</b>: 화석이 크게 바뀌는 경계로 나눠요.<br>46억 년 = 24시간이면<br>' + ERA.map((e) => e.name + ' ' + e.dur).join('<br>'));
           } else {

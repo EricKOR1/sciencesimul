@@ -693,7 +693,7 @@
     $('#evapBtn').disabled = !inComplete() || IN.evap;
     const o = $('#ionNote');
     if (IN.evap) o.textContent = IN.crystal ? '물이 증발한 자리에 염(NaCl)의 결정이 남았어요. ↺로 처음부터 다시 해 봐요.' : '물을 가열해 증발시키는 중이에요…';
-    else if (IN.units === 0) o.textContent = 'NaOH 한 묶음을 넣으면 OH⁻이 H⁺ 쪽으로 끌려가요. OH⁻을 끌어 H⁺ 가까이 가져가도 돼요.';
+    else if (IN.units === 0) o.innerHTML = 'NaOH 한 묶음을 넣으면 OH⁻이 H⁺ 쪽으로 끌려가요.<span class="only2d"> OH⁻을 끌어 H⁺ 가까이 가져가도 돼요.</span>';
     else if (inComplete()) o.textContent = 'H⁺ ' + ACID_U + '개와 OH⁻ ' + ACID_U + '개가 모두 짝을 이뤄 물이 되었어요! 🔥 물 증발시키기로 염을 얻어 봐요.';
     else if (IN.units > ACID_U) o.textContent = 'OH⁻이 남아 염기성이 됐어요. 이때는 증발시켜도 순수한 염이 아니에요. ↺로 다시 해 봐요.';
     else o.textContent = '아직 H⁺이 남아 있어요. NaOH를 더 넣어 봐요. (증발은 중화가 끝난 뒤에만 할 수 있어요.)';
@@ -1087,7 +1087,7 @@
         {
           title: '초록색으로 만들기',
           goal: '<b>BTB 용액</b>을 넣은 염산에 수산화 나트륨 수용액을 넣어 용액을 <b>초록색</b>으로 만들어 보세요.',
-          hint: '처음에는 꼭지로 빠르게 넣다가, 연두색이 보이면 "한 방울" 버튼으로 천천히 넣어요. 지나치면 ↺로 다시 시작해요.',
+          hint: '처음에는 <span class="only2d">꼭지로</span><span class="only3d">🚰 빠르게 흘리기로</span> 빠르게 넣다가, 연두색이 보이면 "한 방울" 버튼으로 천천히 넣어요. 지나치면 ↺로 다시 시작해요.',
           setup() { setScene('buret'); resetBuret('btb'); },
           check: () => buGreen(),
           hold: 0.6,
@@ -1167,7 +1167,7 @@
         {
           title: '짝지어 물 만들기',
           goal: 'NaOH 묶음을 넣어 H⁺과 OH⁻을 짝지어 <b>물 분자 ' + ACID_U + '개</b>를 만들어 보세요.',
-          hint: '"NaOH 한 묶음 넣기"를 ' + ACID_U + '번 눌러요. OH⁻은 잠시 뒤 H⁺ 쪽으로 끌려가고, 파란 OH⁻을 끌어서 빨간 H⁺ 가까이 놓아 줘도 돼요.',
+          hint: '"NaOH 한 묶음 넣기"를 ' + ACID_U + '번 눌러요. OH⁻은 잠시 뒤 H⁺ 쪽으로 끌려가<span class="only2d">고, 파란 OH⁻을 끌어서 빨간 H⁺ 가까이 놓아 줘도 돼</span><span class="only3d">서 물(H₂O)이 돼</span>요.',
           setup() { setScene('ions'); },
           check: () => IN.water >= ACID_U,
           hold: 0.6,

@@ -91,6 +91,13 @@
         for (let i = 0; i < 40; i++) { g.beginPath(); g.arc(rnd() * 256, 10 + rnd() * 108, 1.5 + rnd() * 3, 0, 7); g.fill(); } return new THREE.CanvasTexture(c); })();
       const moon = new THREE.Mesh(new THREE.SphereGeometry(0.4, 32, 20), new THREE.MeshStandardMaterial({ map: moonTex, roughness: 0.95 })); root.add(moon);
       const moonLab = label('달', moon, { size: 13, offset: [0, 0.78, 0] });
+      /* 청록색 테두리 = 지구에서 보이는 쪽 (2D의 '👀 지구에서 보이는 쪽'과 같아요): 달에서 지구를 향한 반쪽에 청록색 반원 테두리 */
+      const sightG = new THREE.Group(); root.add(sightG);
+      { const arc = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.06, 8, 40, Math.PI), new THREE.MeshBasicMaterial({ color: 0x5eead4 })); arc.rotation.x = Math.PI / 2; arc.rotation.z = -Math.PI / 2; sightG.add(arc);
+        const cap = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.04, 6, 40, Math.PI), new THREE.MeshBasicMaterial({ color: 0x5eead4, transparent: true, opacity: 0.7 })); cap.rotation.z = -Math.PI / 2; sightG.add(cap); }
+      const sightA = new THREE.Object3D(); sightA.position.set(0.2, -0.75, 0); sightG.add(sightA);
+      const sightLab = label('청록 테두리: 지구에서 보이는 쪽', sightA, { size: 11.5, color: 'rgba(13,148,136,.92)' });
+      const sightOn = () => ctx.level === 1;   // 2단계(햇빛을 받는 달)에서 2D와 같이 보여 줘요
 
       /* 지구-달 선, 각 θ 호 */
       const eml = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3(RM, 0, 0)]), new THREE.LineDashedMaterial({ color: 0xffffff, dashSize: 0.15, gapSize: 0.12, transparent: true, opacity: 0.7 })); root.add(eml);
@@ -126,6 +133,7 @@
       function refresh() {
         const th = st.th, p = ringP(th, RM);
         moon.position.set(...p); moon.rotation.y = (th + 180) * DEG; // 항상 같은 면이 지구를 향해요
+        sightG.position.set(...p); sightG.rotation.y = (th + 180) * DEG; sightG.visible = sightOn(); sightLab.show(sightOn());   // 반원의 가운데가 지구 쪽(-x 방향, 회전으로 맞춰요)
         const lp = eml.geometry.attributes.position; lp.setXYZ(1, ...p); lp.needsUpdate = true; eml.computeLineDistances();
         const n = Math.max(1, Math.round(AN * Math.min(th, 359.9) / 360));
         for (let i = 0; i <= AN; i++) { const a = th * Math.min(i, n) / n; arcPos.set(ringP(a, 2.2), i * 3); }

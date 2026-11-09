@@ -166,7 +166,7 @@
     A.slider = 0; A.phase = 'idle'; A.qa = 0; A.s3 = 1; A.eu = 0; A.press = null;
     A.d.value = A.d.target = D_FAR; A.d.velocity = 0;
     const s = $('#sDist'); s.disabled = false; s.value = 0; syncDist();
-    $('#atomNote').textContent = '거리를 줄이면 두 원자의 바깥 전자껍질이 맞닿아요. 그다음 금빛 전자를 눌러(또는 끌어) Cl로 옮겨요.';
+    $('#atomNote').innerHTML = '거리를 줄이면 두 원자의 바깥 전자껍질이 맞닿아요. 그다음 금빛 전자를 눌러<span class="only2d">(또는 끌어)</span> Cl의 빈자리로 옮겨요.';
   }
   function syncDist() {
     const s = $('#sDist'), v = +s.value;

@@ -148,7 +148,7 @@
         else setInfo(C.R.txt + '<br><b>' + C.R.eq + '</b>');
       }
       const pl = controls.player({
-        duration: 7, loop: true, label: '반응 보기',
+        duration: 7, loop: true, label: '산소 이동 미리 보기',   // 실험의 ▶ 반응 보기는 옆 조작판에서 해요
         phases: [[0, '반응 전'], [0.2, '산소 원자 이동'], [0.8, '반응 후']],
         onFrame() { if (cur) apply(); },
       });

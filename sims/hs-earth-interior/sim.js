@@ -910,7 +910,7 @@
         {
           title: '암영대 기록표', manual: true,
           goal: '관측점 5곳(60°·110°·120°·150°·170°)에서 <b>P파와 S파가 오는지</b> 표에 기록하고, P파 암영대의 <b>시작·끝 각도</b>를 맞춰요.',
-          hint: '관측점 슬라이더를 각 각도에 맞춰 오른쪽 카드를 읽어요. 표가 맞으면 지구 그림에 암영대 띠가 나타나요. 띠의 각도를 읽어 시작·끝 슬라이더를 맞춰요.',
+          hint: '관측점 슬라이더를 각 각도에 맞춰 <span class="only2d">오른쪽 카드를</span><span class="only3d">왼쪽 위 안내(P파 · S파 도착 ○/×)를</span> 읽어요. 표가 맞으면 지구 그림에 암영대 띠가 나타나요. 띠의 각도를 읽어 시작·끝 슬라이더를 맞춰요.',
           setup() { clsTab.reset(); S.bandK = 0; setLoHi(90, 130); setMode('shadow'); setCtl(['shWave', 'sDl', 'clsTab', 'sLo', 'sHi']); },
           status: () => mark(clsTab.ok()) + ' 기록표 ' + clsTab.count() + '/5 · ' + mark(S.lo === 103 && S.hi === 142) + ' P파 암영대 ' + S.lo + '°~' + S.hi + '°',
           check() {

@@ -36,11 +36,13 @@
       /* 물 중탕 */
       const gT = new THREE.Group(); root.add(gT);
       const bath = new THREE.Mesh(unit, new THREE.MeshStandardMaterial({ color: 0x4aa3ff, transparent: true, opacity: 0.35, roughness: 0.15, depthWrite: false })), bathE = new THREE.LineSegments(unitE, edgeMat);
-      const flask = new THREE.Mesh(unit, glassMat), flaskE = new THREE.LineSegments(unitE, edgeMat);
+      // 플라스크 속 기체 색: NO₂(갈색)가 많을수록 진해져요 (2D 플라스크의 색 변화와 같아요)
+      const flask = new THREE.Mesh(unit, new THREE.MeshStandardMaterial({ color: 0xa65b1e, transparent: true, opacity: 0.1, roughness: 0.2, depthWrite: false })), flaskE = new THREE.LineSegments(unitE, edgeMat);
       const flame = new THREE.Mesh(new THREE.ConeGeometry(0.55, 1.2, 20), new THREE.MeshStandardMaterial({ color: 0xff7a1a, emissive: 0xff5a00, emissiveIntensity: 1.2, transparent: true, opacity: 0.9 }));
       const ice = [0, 1, 2].map((i) => { const m = new THREE.Mesh(unit, new THREE.MeshStandardMaterial({ color: 0xbfe6ff, transparent: true, opacity: 0.7, roughness: 0.1 })); m.scale.set(0.5, 0.5, 0.5); m.rotation.set(0.3 * i, 0.5 * i, 0.2); return m; });
       gT.add(bath, bathE, flask, flaskE, flame, ice[0], ice[1], ice[2]);
       const tLab = label('', [0, 0, 0], { size: 12.5 });
+      const fLab = label('플라스크 (N₂O₄ ⇌ 2NO₂)', [0, 0, 0], { size: 11.5 }); fLab.show(false);
       const BW = 5.2, BH = 3.4, BD = 3.6, FW = 2.6, FH = 2.2, FD = 2.2;
       bath.scale.set(BW, BH, BD); bath.position.y = BH / 2; bathE.scale.copy(bath.scale); bathE.position.y = BH / 2;
       flask.scale.set(FW, FH, FD); flask.position.y = 0.6 + FH / 2; flaskE.scale.copy(flask.scale); flaskE.position.y = 0.6 + FH / 2;
@@ -65,7 +67,7 @@
           const Z = ctx.lesson(); if (!Z) return;
           const S = Z.S, mode = S.mode, PS = Z.PS, TS = Z.TS;
           const tempScene = mode === 'temp';
-          gS.visible = !tempScene; gT.visible = tempScene; sLab.show(!tempScene); tLab.show(tempScene);
+          gS.visible = !tempScene; gT.visible = tempScene; sLab.show(!tempScene); tLab.show(tempScene); fLab.show(tempScene);
           if (!tempScene) {
             const V = PS.V, rx = PS.rx, Lg = 3.6 * V, x0 = -4.3, H = 2.2, x1 = x0 + Lg;
             gasBox.scale.set(Lg, H, H); gasBox.position.set(x0 + Lg / 2, 1.5, 0); gasEdge.scale.copy(gasBox.scale); gasEdge.position.copy(gasBox.position);
@@ -88,6 +90,7 @@
           flame.scale.y = 1 + Math.sin(t * 11) * 0.12;
           mapPs(ves, Z.RXN, (m, u, v, z) => m.position.set((u - 0.5) * (FW - 0.5), 0.6 + 0.25 + v * (FH - 0.5), (z - 0.5) * (FD - 0.5)));
           const nA = ves.count('N2O4'), nB = ves.count('NO2');
+          flask.material.opacity = 0.06 + 0.34 * clamp(nB / 30, 0, 1); fLab.obj = [FW / 2 + 0.2, 0.6 + FH + 0.25, FD / 2]; fLab.show(true);
           tLab.obj = [0, BH + 0.5, 0]; tLab.set('물 중탕 ' + Math.round(T) + ' °C');
           info('<b>N₂O₄(g) ⇌ 2NO₂(g)</b> · 물 중탕 <b>' + Math.round(T) + ' °C</b> (설정 ' + TS.bath + ' °C)<br>N₂O₄(무색) <b>' + nA + '개</b> · NO₂(갈색) <b>' + nB + '개</b> · K = <b>' + fq(K) + '</b><br>온도가 바뀌면 평형 상수 K 자체가 변해서 평형이 이동해요.');
         },

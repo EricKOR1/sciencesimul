@@ -1566,7 +1566,7 @@ TP.cold.speed = TP.hot.speed = 0.42;           // 두 비커의 차이를 충분
           {
             title: '물에 잉크 한 방울', scene: 'ink',
             goal: '스포이트로 물에 잉크를 한 방울 떨어뜨리고, 잉크가 물 전체에 <b>고르게 퍼질 때까지</b> 지켜보세요.',
-            hint: '<b>💧 잉크 한 방울 떨어뜨리기</b>를 누르고 기다려요. 🔍 입자 모형에서 보라색 잉크 입자의 <b>자취(꼬리)</b>가 어떻게 흩어지는지 보세요.',
+            hint: '<b>💧 잉크 한 방울 떨어뜨리기</b>를 누르고 기다려요. <span class="only3d">상자 속 보라색 잉크 입자들이 어떻게 흩어지는지 보세요.</span><span class="only2d">🔍 입자 모형에서 보라색 잉크 입자의 <b>자취(꼬리)</b>가 어떻게 흩어지는지 보세요.</span>',
             setup() { if (!(INK.dropped && INK.u < 0.9)) setScene('ink', true); },
             check: () => INK.dropped && INK.u >= 0.9,
             onWin() { const g = inkGeom(); celebrate(g.x + g.w / 2, g.y + g.h * 0.55); },
@@ -1577,7 +1577,7 @@ TP.cold.speed = TP.hot.speed = 0.42;           // 두 비커의 차이를 충분
           {
             title: '교실에 퍼지는 향수', scene: 'perfume',
             goal: '교실 한쪽에서 <b>🌸 향수</b>를 뿌리고, 향기가 반대편 친구에게 닿을 때까지 지켜보세요. 교실에 바람은 없어요.',
-            hint: '향수병이나 <b>🌸 향수 뿌리기</b> 버튼을 눌러요. 분홍색 향수 입자가 공기 입자와 부딪히며 어떻게 움직이는지 보세요.',
+            hint: '향수병이나 <b>🌸 향수 뿌리기</b> 버튼을 눌러요. <span class="only3d">분홍색 향수 입자가 교실 공기 속으로 어떻게 퍼져 친구에게 닿는지 보세요.</span><span class="only2d">분홍색 향수 입자가 공기 입자와 부딪히며 어떻게 움직이는지 보세요.</span>',
             setup() { setScene('perfume', true); },
             check: () => PF.room.arrived >= 3,
             onWin() { const f = LAY.perfume.friend; celebrate(f.x - 40, f.y - 150); },
@@ -1609,7 +1609,7 @@ TP.cold.speed = TP.hot.speed = 0.42;           // 두 비커의 차이를 충분
           {
             title: '찬물과 뜨거운 물', scene: 'temp',
             goal: '찬물(10 °C)과 뜨거운 물(60 °C)에 잉크를 <b>동시에</b> 떨어뜨리고, 어느 쪽이 먼저 고르게 퍼지는지 비교해 보세요.',
-            hint: '<b>💧 두 비커에 동시에 떨어뜨리기</b>를 누르고, 두 🔍 입자 모형 속 입자의 빠르기도 비교해요.',
+            hint: '<b>💧 두 비커에 동시에 떨어뜨리기</b>를 누르고, <span class="only3d">두 상자 속 잉크 입자의 빠르기도 비교해요.</span><span class="only2d">두 🔍 입자 모형 속 입자의 빠르기도 비교해요.</span>',
             setup() { if (!(TP.dropped && TP.hot.u < 0.9)) setScene('temp', true); },
             check: () => TP.dropped && TP.hot.u >= 0.9,
             onWin() { const g = tempGeom(1); celebrate(g.x + g.w / 2, g.y + g.h * 0.55); },
@@ -1640,7 +1640,7 @@ TP.cold.speed = TP.hot.speed = 0.42;           // 두 비커의 차이를 충분
         missions: [
           {
             title: '빨래 빨리 말리기', scene: 'laundry',
-            goal: '조건을 바꿔 가며 젖은 빨래를 <b>' + TARGET_MIN + '분 안에</b> 말려 보세요. 🔍 입자 모형으로 물 표면도 살펴보세요.',
+            goal: '조건을 바꿔 가며 젖은 빨래를 <b>' + TARGET_MIN + '분 안에</b> 말려 보세요. <span class="only3d">물 표면의 입자가 공기 중으로 날아가는 모습도 살펴보세요.</span><span class="only2d">🔍 입자 모형으로 물 표면도 살펴보세요.</span>',
             hint: '온도, 바람, 습도, 빨래를 넌 모양을 모두 생각해 보세요. 조건을 하나씩 바꿔 보면 무엇이 도움이 되는지 알 수 있어요.',
             setup() { LD.missionBest = null; if (LD.state !== 'run') resetLaundry(true); },
             check: () => LD.missionBest != null && LD.missionBest * 60 <= TARGET_MIN + 1e-6,

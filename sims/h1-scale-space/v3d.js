@@ -28,7 +28,20 @@
     levels: [0],
     autoRotate: 0.3,
     build(ctx) {
-      const { THREE, scene, root, label, info, controls } = ctx;
+      const { THREE, scene, root, label, info, controls, renderer } = ctx;
+      /* 장면 도감: 2D 눈금 막대 위의 '만난 장면' 점들을 3D 화면에도 보여 줘요 (선명하게 만난 장면은 파랗게 채워져요) */
+      if (!document.getElementById('ss3d-dex')) { const st2 = document.createElement('style'); st2.id = 'ss3d-dex'; st2.textContent =
+        '.ss-dex{position:absolute;right:10px;top:10px;padding:6px 9px;border-radius:12px;background:rgba(8,12,24,.74);color:#fff;font-size:12px;font-weight:800;pointer-events:none}.ss-dex .d{display:flex;gap:4px;margin-top:5px}.ss-dex .d i{width:10px;height:10px;border-radius:50%;background:#3b4459;border:1.5px solid rgba(255,255,255,.5)}.ss-dex .d i.on{background:#5b8cff}.ss-dex .d i.cur{box-shadow:0 0 0 2px #ffd34d}.ss-dex .n{font-weight:700;color:#c9d3e6;margin-top:3px}' +
+        '@media (max-width:599px){.ss-dex{top:auto;bottom:30px;right:8px;font-size:10.5px;padding:4px 6px}.ss-dex .d{gap:3px}.ss-dex .d i{width:8px;height:8px}}';
+        document.head.appendChild(st2); }
+      const dexEl = document.createElement('div'); dexEl.className = 'ss-dex'; dexEl.style.display = 'none'; renderer.domElement.parentElement.appendChild(dexEl);
+      let dexSig = '';
+      function drawDex() {
+        const L = window.__sim, S = L && L.S; if (!S || !S.seen || !L.OBJ || S.mode !== 'zoom') { if (dexSig) { dexSig = ''; dexEl.style.display = 'none'; } return; }
+        const sig = [...S.seen].join(',') + '|' + S.nearId; if (sig === dexSig) return; dexSig = sig; dexEl.style.display = '';
+        const near = L.OBJ.find((o) => o.id === S.nearId);
+        dexEl.innerHTML = '📖 장면 도감 ' + S.seen.size + ' / ' + L.OBJ.length + '<div class="d">' + L.OBJ.map((o) => '<i class="' + (S.seen.has(o.id) ? 'on' : '') + (o.id === S.nearId ? ' cur' : '') + '"></i>').join('') + '</div><div class="n">작은 것 ← → 큰 것' + (near ? ' · 지금: ' + near.short : '') + '</div>';
+      }
       const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.45, metalness: 0.05 }, o || {}));
       const V = THREE.Vector3;
       let idx = 7, cur = null, pop = 0, upd = null;
@@ -132,6 +145,7 @@
       ready = true;
       return {
         update(dt, t) {
+          drawDex();
           pop = Math.min(1, pop + dt * 2.2); const s = 1 - Math.pow(1 - pop, 3); cur.scale.setScalar(0.2 + 0.8 * s);
           if (upd) upd(t);
           const S2 = window.__sim && window.__sim.S; if (S2 && S2.te !== lastTe) { lastTe = S2.te; const k = near2d(); if (k >= 0 && k !== idx) select(k, false, true); }

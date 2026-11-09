@@ -159,8 +159,9 @@
       function txt() {
         const E = Eph(), w = W(), k = KEm();
         const head = '<b>광자 에너지 E = hf = ' + E.toFixed(2) + ' eV</b> · 일함수 W = ' + w + ' eV (' + METALS[st.metal].name + ')<br>';
-        if (k <= 0) info(head + '광자 하나의 에너지가 W보다 작아서 <b>전자가 나오지 않아요</b>.<br>빛을 세게(광자를 많이) 해도 소용없어요. 파장을 짧게 해 보세요.');
-        else info(head + '전자의 최대 운동 에너지 = E − W = <b>' + k.toFixed(2) + ' eV</b> → 정지 전압 V₀ = <b>' + k.toFixed(2) + ' V</b><br>' + (st.V >= k - 1e-6 ? '역전압 ' + st.V.toFixed(1) + ' V ≥ V₀: 전자가 양극에 닿지 못해 <b>전류 0</b>' : '역전압 ' + st.V.toFixed(1) + ' V < V₀: 빠른 전자는 양극에 도착해요. 빛의 세기는 전자 <b>수</b>만 바꿔요.'));
+        /* V₀ 값과 '세기는 소용없어요' 같은 결론은 학생이 전류계로 찾아요 (2D처럼 기록한 뒤에만 V₀가 나와요) */
+        if (k <= 0) info(head + '전류계를 보세요: 광전자가 나오나요? 파장과 세기를 바꿔 가며 확인해 봐요.');
+        else info(head + '역전압 ' + st.V.toFixed(2) + ' V · 역전압을 천천히 올리며 전류계가 처음 0이 되는 전압(정지 전압 V₀)을 찾아요.<br>역전압은 전자를 되밀어요: 운동 에너지가 큰 전자만 양극에 닿아요.');
         lV.set('역전압 ' + st.V.toFixed(2) + ' V');
         const c = waveColor(st.lam); beam.material.color.copy(c); lc.material.color.copy(c); lc.material.emissive.copy(c); phM.material.color.copy(c); phM.material.emissive.copy(c);
         lPh.el.style.background = '#' + c.clone().multiplyScalar(0.55).getHexString();
@@ -285,7 +286,7 @@
         h.setSeg(connS, tp.clone().add(new V3(0.3, 0, 0)), new V3(WX - 1.3, WY + 0.5, 0));
         const TE = L.TEXP[ti]; lsGrid.set('📷 ' + (E.day === 'day' ? '밝은 낮' : '어두운 밤') + ' · 노출 ' + (TE < 10 ? TE.toFixed(1) : TE) + ' ms');
         lsEl.set('전자 ' + Math.round(Math.min(Ne, 1e5)) + '개 · 잡음 ±' + Math.round(Math.sqrt(Ne))); lsV.set(Vp.toFixed(2) + ' V'); lsV.obj = [WX - 2.1, WY - 1.1 + vbar.scale.y + 0.3, 0]; lsDig.set('디지털 값 ' + Dv + ' (8비트, 0~255)');
-        info(E.day === 'night' ? '밤에는 들어오는 광자가 적어 전자가 <b>조금</b>만 쌓여요. 전자 수 N의 흔들림은 <b>√N</b>이라 N이 작을수록 잡음 비율이 커져 영상이 지글거려요.' : '노출 시간 동안 <b>광자 수에 비례</b>해 전자가 쌓여요 → 전압 → <b>8비트 디지털 값</b>(0~255). 노란 테두리 화소는 전자 ' + NF + '개에서 255예요.');
+        info(E.day === 'night' ? '밤에는 들어오는 광자가 적어 전자가 <b>조금</b>만 쌓여요. 화소마다 쌓인 전자 수와 영상의 모습을 낮과 비교해 봐요.' : '노출 시간 동안 <b>광자 수에 비례</b>해 전자가 쌓여요 → 전압 → <b>8비트 디지털 값</b>(0~255). 노란 테두리 화소는 전자 ' + NF + '개에서 255예요.');
       }
 
       /* ============ ④-2 자동 점멸등 ============ */

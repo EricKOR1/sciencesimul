@@ -173,7 +173,7 @@
         const s = LAYERS.find((L) => L.id === sel);
         if (!s) {
           info('<b>지권의 층 (지구 반지름 약 6400 km)</b><br>' + LAYERS.map((L) => '· <b>' + L.name + '</b> ' + L.state + ' · ' + L.depth).join('<br>') +
-            '<br><span style="color:#ffd34d">' + (thickMode ? '지각을 일부러 두껍게 그렸어요.' : '지각은 실제 비율대로 아주 얇아요.') + '</span>');
+            '<br><span style="color:#ffd34d">' + (thickMode ? '지각을 일부러 두껍게 그렸어요.' : '지각은 실제 비율대로 그렸어요. 얼마나 두꺼운지 살펴봐요.') + '</span>');
         } else {
           info('<b>' + s.name + '</b> · ' + s.state + '<br>깊이 ' + s.depth + '<br>두께 ' + s.thick + '<br>' + s.note);
         }

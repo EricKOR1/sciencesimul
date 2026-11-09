@@ -74,7 +74,8 @@
       function clockTxt() { try { const th = L2().S.thunder; if (!th) return ''; const s = Math.min(th.t, th.delay); return '<br>⏱ 번쩍한 뒤 <b>' + s.toFixed(1) + '초</b>' + (th.arrived ? ' · <b>천둥 도착!</b> 시계가 멈췄어요.' : ' · 천둥을 기다리는 중…'); } catch (e) { return ''; } }
       let clockLast = '';
       function text() {
-        const t = ['', '<b>적운 단계</b>: 상승 기류만 있어요. 구름이 위로 자라요.', '<b>성숙 단계</b>: 상승·하강 기류가 함께 있어요. 비·우박·번개가 가장 심해요.', '<b>소멸 단계</b>: 하강 기류가 우세해요. 상승 기류가 약해져 비가 줄고 구름이 흩어져요.'];
+        // 단계 설명은 '무엇을 살펴볼지'만 알려 줘요 (설명 카드의 문장 = 순서 정하기 미션의 답이라 그대로 쓰지 않아요)
+        const t = ['', '<b>적운 단계</b>: 구름이 막 자라기 시작했어요. 구름 속 기류 화살표가 어느 쪽을 향하는지 살펴봐요.', '<b>성숙 단계</b>: 구름이 가장 크게 자랐어요. 기류 화살표와 비·번개를 살펴봐요.', '<b>소멸 단계</b>: 구름이 흩어지기 시작해요. 앞 단계와 비교해 기류 화살표와 비가 어떻게 달라졌는지 살펴봐요.'];
         info((pendingInfo || t[st]) + clockTxt());
       }
       let seenTh = null;
@@ -85,7 +86,7 @@
         bolt.visible = true; flash = 1; strikeT = 0;
         if (!fromSim) try { const l = L2(); if (l && l.strike && l.S && (!l.S.thunder || l.S.thunder.arrived)) l.strike(); } catch (e) {}
         try { seenTh = L2().S.thunder; } catch (e) {}
-        pendingInfo = '번쩍! 천둥이 들릴 때까지 걸린 시간(초) × 340 m/s = 번개까지의 거리예요. (예: 5초 → 1.7 km)<br>아래 ⏱ 시계로 시간을 재 보세요.';
+        pendingInfo = '번쩍! 천둥이 들릴 때까지 걸린 시간(초) × 340 m/s = 번개까지의 거리예요. (예: 3초 → 1020 m = 1.02 km)<br>아래 ⏱ 시계로 시간을 재 보세요.';
         text(); setTimeout(() => { pendingInfo = ''; text(); }, 5000);
       }
       text();

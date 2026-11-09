@@ -961,7 +961,7 @@
         {
           title: '순환 경로 이름 붙이기', manual: true,
           goal: '고리의 ①~④ 번호에 알맞은 이름을 골라요.',
-          hint: '붉은 입자는 표층, 푸른 입자는 심층을 흘러요. 입자가 가는 방향을 따라가 보세요.',
+          hint: '<span class="only2d">붉은 입자는 표층, 푸른 입자는 심층을</span><span class="only3d">주황 관은 표층, 파란 관은 심층을</span> 흘러요. 입자가 가는 방향을 따라가 보세요.',
           setup() { S.loopPick = {}; setView('loop'); },
           status: () => '고른 이름 ' + Object.keys(S.loopPick).filter((k) => S.loopPick[k]).length + ' / 4',
           check: () => {
