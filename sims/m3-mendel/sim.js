@@ -806,6 +806,7 @@
     peaFlower(fx, f.y, f.r * 0.92, FL.open.value, lit, t);
     ctx.restore();
     const crossing = !!(a && b && a !== b);
+    if (ready && S.targets.flower) D.ring(fx, f.y - 2, f.r + 6, t, { color: '#14a058', speed: 1.2 });   // 고리를 먼저 그려 '교배·수분' 글자가 고리에 가려지지 않게
     D.label(fx, f.y + f.r + 6, crossing ? '교배' : '수분', { bg: lit > 0.5 ? '#be185d' : '#aeb7c4', color: '#fff', size: 13, pad: 9 });
     let cap;
     if (S.anim) cap = S.anim.res.self ? '🌼 자가 수분 중…' : '🌸 교배 중…';
@@ -814,7 +815,6 @@
     else if (a || b) cap = LAY.longCap ? '한쪽만 놓으면 자가 수분' : '자가 수분 가능';
     else cap = LAY.longCap ? '♀ × ♂ 부모를 놓아요' : '부모를 놓아요';
     text(cap, f.x, LAY.capY, { size: 13, weight: 700, color: a || b ? '#be185d' : '#6f7a8c', align: 'center', max: LAY.longCap ? 196 : 96 });
-    if (ready && S.targets.flower) D.ring(fx, f.y - 2, f.r + 6, t, { color: '#14a058', speed: 1.2 });
   }
 
   /* ---------- 생식세포 ---------- */
