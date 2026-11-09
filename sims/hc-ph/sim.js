@@ -437,10 +437,32 @@
   function lifeTargets(dt, snap) {
     const L = S.lf, g = LG();
     const placed = L.items.filter((it) => it.pH != null && it !== L.drag).sort((a, b) => a.pH - b.pH);
+    // 붙인 이름표 자리: 다른 이름표나 연결선과 겹치지 않는 줄·가로 위치를 골라요 (pH가 비슷한 물질이 몰려도 가리지 않게)
+    const spot = new Map(), rects = [], leads = [];
+    const hitR = (r, q) => r.x < q.x + q.w + 3 && r.x + r.w + 3 > q.x && r.y < q.y + q.h + 2 && r.y + r.h + 2 > q.y;
+    const segHits = (x0, y0, x1, y1, q) => { for (let k = 0; k <= 12; k++) { const x = x0 + (x1 - x0) * k / 12, y = y0 + (y1 - y0) * k / 12; if (x > q.x - 1 && x < q.x + q.w + 1 && y > q.y - 1 && y < q.y + q.h + 1) return true; } return false; };
+    placed.forEach((it) => {
+      const r0 = tagRect({ q: it.q, x: 0, y: 0 }), w = r0.w, px = lifeX(g, it.pH);
+      let best = null;
+      const offs = [0]; for (let d = 12; d <= w * 1.6; d += 12) offs.push(d, -d);
+      for (const off of offs) {
+        for (let lane = g.lanes - 1; lane >= 0 && !best; lane--) {
+          const cx = clamp(px + off, MAIN.x + w / 2 + 6, MAIN.x + MAIN.w - w / 2 - 6), cy = g.tagTop + 15 + lane * 30;
+          const r = { x: cx - w / 2, y: cy - 13, w, h: 26 };
+          if (rects.some((q) => hitR(r, q))) continue;
+          if (rects.some((q) => segHits(cx, cy + 13, px, g.ruler, q))) continue;
+          if (leads.some((l) => segHits(l[0], l[1], l[2], l[3], r))) continue;
+          best = { cx, cy, r };
+        }
+        if (best) break;
+      }
+      if (!best) { const lane = placed.indexOf(it) % g.lanes; best = { cx: px, cy: g.tagTop + 15 + lane * 30 }; best.r = { x: best.cx - w / 2, y: best.cy - 13, w, h: 26 }; }
+      rects.push(best.r); leads.push([best.cx, best.cy + 13, px, g.ruler]); spot.set(it, best);
+    });
     L.items.forEach((it, idx) => {
       let tx, ty, sc = 1;
       if (it === L.drag) { tx = L.drag.px; ty = L.drag.py; sc = 1.12; }
-      else if (it.pH != null) { const lane = placed.indexOf(it) % g.lanes; tx = lifeX(g, it.pH); ty = g.tagTop + 15 + lane * 30; }
+      else if (it.pH != null) { const sp = spot.get(it); tx = sp.cx; ty = sp.cy; }
       else { const sl = traySlot(g, idx); tx = sl.x; ty = sl.y; }
       if (!it.init || snap) { it.x = tx; it.y = ty; it.init = true; }
       it.x = ap(it.x, tx, dt, it === L.drag ? 40 : 14); it.y = ap(it.y, ty, dt, it === L.drag ? 40 : 14); it.s = ap(it.s, sc, dt, 14);
@@ -485,7 +507,7 @@
     const gp = ctx.createLinearGradient(lifeX(g, 8.3), 0, lifeX(g, 10), 0); gp.addColorStop(0, '#ffffff'); gp.addColorStop(1, '#e11d74'); ctx.fillStyle = gp; ctx.fillRect(lifeX(g, 8.3), g.pp, lifeX(g, 10) - lifeX(g, 8.3), 18); ctx.fillStyle = '#e11d74'; ctx.fillRect(lifeX(g, 10), g.pp, g.x1 - lifeX(g, 10), 18);
     T(lifeX(g, 4.1), g.pp + 14, '페놀프탈레인: 무색', 12.5 + 0.5, INK, 'center', 800); T(lifeX(g, 12), g.pp + 14, '붉은색', 12.5 + 0.5, '#fff', 'center', 800);
     // 배치된 태그의 연결선
-    L.items.forEach((it) => { if (it.pH != null && it !== L.drag) { ctx.strokeStyle = 'rgba(70,90,130,.55)'; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(lifeX(g, it.pH), it.y + 13); ctx.lineTo(lifeX(g, it.pH), g.ruler); ctx.stroke(); D.sphere(lifeX(g, it.pH), g.ruler, 3.6, lifeOk(it) ? '#26324a' : '#e2464b', { gloss: false }); } });
+    L.items.forEach((it) => { if (it.pH != null && it !== L.drag) { ctx.strokeStyle = 'rgba(70,90,130,.55)'; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(it.x, it.y + 13); ctx.lineTo(lifeX(g, it.pH), g.ruler); ctx.stroke(); D.sphere(lifeX(g, it.pH), g.ruler, 3.6, lifeOk(it) ? '#26324a' : '#e2464b', { gloss: false }); } });
     // 트레이
     D.roundRect(MAIN.x + 4, g.trayTop - 6, MAIN.w - 8, PHONE ? 3 * (g.th + g.tgap) + 4 : g.th + 12, 10); ctx.fillStyle = '#f4f1fc'; ctx.fill();
     L.items.forEach((it) => { if (it.pH == null && it !== L.drag) drawItem(it, true); });

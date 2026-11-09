@@ -1170,7 +1170,7 @@
     T(hp.x + 14, hp.y + 26, '🕵️ 가상 사건 (모의 상황)', PHONE ? 14 : 16, '#312e81', 'left', 900);
     D.roundRect(hp.x + hp.w - (PHONE ? 130 : 170), hp.y + 12, PHONE ? 118 : 156, PHONE ? 34 : 38, 10); ctx.fillStyle = '#fee2e2'; ctx.fill(); ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 2; ctx.stroke();
     T(hp.x + hp.w - (PHONE ? 71 : 92), hp.y + (PHONE ? 35 : 38), '현장 혈흔: A형', PHONE ? 13.5 : 15, '#991b1b', 'center', 900);
-    textBlock(hp.x + 14, hp.y + (PHONE ? 52 : 56), hp.w - 28, '현장에서 발견된 혈흔의 혈액형이 A형이에요. 가상의 여섯 사람의 혈액형만으로 누구를 배제할 수 있는지 나눠 보세요.', PHONE ? 13 : 14, '#4b5563', PHONE ? 18 : 20, 700);
+    textBlock(hp.x + 14, hp.y + (PHONE ? 62 : 68), hp.w - 28, '현장에서 발견된 혈흔의 혈액형이 A형이에요. 가상의 여섯 사람의 혈액형만으로 누구를 배제할 수 있는지 나눠 보세요.', PHONE ? 13 : 14, '#4b5563', PHONE ? 18 : 20, 700);
     so.drawBoxes(); so.drawCards();
     if (!PHONE) { const ty = 352 + 2 * 62 + 4; panel(16, ty, 768, VH - ty - 12, 12); TF(400, ty + 26, '혈액형이 다르면 그 사람의 피가 아니라고 말할 수 있지만, 같다고 해서 그 사람이라고 단정할 수는 없어요.', 740, 14, 11, '#26324a', 'center', 800); }
   }
