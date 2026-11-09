@@ -92,7 +92,7 @@
       const pipe2 = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new V3(0.1, -0.95, 0), new V3(0.1, -1.0, -0.5), new V3(0.1, -0.9, -2.0), new V3(0.1, -0.7, -2.7)], false, 'catmullrom', 0.1), 24, 0.12, 12, false), pipeM); root.add(pipe2);
       const tw = new THREE.Mesh(new THREE.LatheGeometry([[1.15, 0], [0.92, 0.9], [0.8, 1.6], [0.78, 2.1], [0.92, 2.9], [1.0, 3.2]].map((a) => new THREE.Vector2(a[0], a[1] - 1.1)), 40), mat(0xd9dee8, { roughness: 0.85, metalness: 0, side: THREE.DoubleSide })); tw.position.set(0.1, 0, -3.0); tw.castShadow = true; root.add(tw);
       const towerSteam = []; for (let i = 0; i < 8; i++) { const m = new THREE.Mesh(new THREE.SphereGeometry(0.3, 12, 10), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.35, depthWrite: false })); m.userData.ph = i / 8; root.add(m); towerSteam.push(m); }
-      label('냉각탑 (수증기가 물로)', [0.1, 1.9, -3.0], { size: 11.5 });
+      label('냉각탑 (수증기가 물로)', tw, { size: 11.5, offset: [0, 1.9, 0] });   // 냉각탑에 붙은 이름표 (같은 자리)
 
       /* ---------- 송전탑 · 도시 ---------- */
       const pyl = new THREE.Group(); pyl.position.set(5.6, -1.15, 0);
@@ -115,7 +115,7 @@
       root.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.QuadraticBezierCurve3(cA, new V3(4.6, 0.6, 0), cB), 24, 0.04, 6, false), wm2));
       const bolts = []; for (let i = 0; i < 6; i++) { const b = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffe14d })); b.userData.ph = i / 6; root.add(b); bolts.push(b); }
       const boltPath = new THREE.QuadraticBezierCurve3(cA, new V3(4.6, 0.6, 0), cB);
-      label('송전', [4.5, 1.0, 0], { size: 12.5 }); label('도시', [7.2, 0.8, 0.6], { size: 12.5 });
+      label('송전', pyl, { size: 12.5, offset: [-1.1, 2.15, 0] });   // 송전탑에 붙은 이름표 (같은 자리) label('도시', [7.2, 0.8, 0.6], { size: 12.5 });
 
       /* ---------- 조작 ---------- */
       const L2 = () => (ctx.lesson && ctx.lesson()) || null;
