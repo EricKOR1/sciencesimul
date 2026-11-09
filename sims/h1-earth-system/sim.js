@@ -1231,7 +1231,7 @@
         {
           title: '에너지원 3개 켜기',
           goal: '<b>☀️ 태양</b>, <b>🌋 지구 내부</b>, <b>🌙 달</b>을 모두 켜서 에너지가 지구에 들어오는 모습을 보세요.',
-          hint: '오른쪽 버튼을 누르거나 그림 속 태양·달·지구<span class="only3d">(또는 그 이름표)</span>를 눌러도 켜져요. 달을 켜면 바닷물의 모양이 어떻게 변하는지 보세요.',
+          hint: '오른쪽 버튼을 누르거나 그림 속 <span class="only2d">태양·달·지구를</span><span class="only3d">달·지구나 ‘꺼짐’ 이름표를</span> 눌러도 켜져요. 달을 켜면 바닷물의 모양이 어떻게 변하는지 보세요.',
           setup() { ensure('energy'); },
           check: () => S.src.sun && S.src.core && S.src.moon, hold: 0.8,
           status: () => mark(S.src.sun) + ' 태양 · ' + mark(S.src.core) + ' 지구 내부 · ' + mark(S.src.moon) + ' 달',

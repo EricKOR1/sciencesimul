@@ -119,12 +119,12 @@
 
       /* ---------- 조작 ---------- */
       const L2 = () => (ctx.lesson && ctx.lesson()) || null;
-      let rngF, rngR, internal = true;
+      let rngF, rngR, seg, internal = true;
       const probe = controls.text(''); probe.style.display = 'none'; const ctlRow = probe.parentElement;
       const grab = (fn) => { const before = new Set(ctlRow.children); fn(); return Array.from(ctlRow.children).filter((c) => !before.has(c)); };
-      const seg = controls.segment('열원', [{ value: 'coal', label: '🔥 화력 (석탄)' }, { value: 'nuke', label: '☢ 원자력' }], st.src, (v) => {
+      var gSeg = grab(() => { seg = controls.segment('열원', [{ value: 'coal', label: '🔥 화력 (석탄)' }, { value: 'nuke', label: '☢ 원자력' }], st.src, (v) => {
         st.src = v; const L = L2(); if (L && L.S && (L.S.mode === 'coal' || L.S.mode === 'nuke') && L.setScene) L.setScene(v); show();
-      });
+      }); });
       const gF = grab(() => { rngF = controls.range('석탄 투입량', 0, 60, 0.5, st.fuel, (v) => { st.fuel = v; const el = document.getElementById('sFuel'); if (el) { el.value = v; el.dispatchEvent(new Event('input', { bubbles: true })); } show(true); }, (v) => v + ' t/시간'); });
       const gR = grab(() => { rngR = controls.range('제어봉', 0, 100, 5, Math.round(st.rod * 100), (v) => { st.rod = v / 100; const L = L2(); if (L && L.setRod) L.setRod(v / 100); show(true); }, (v) => v + '% 넣음'); });
 
@@ -155,6 +155,7 @@
       function show(soft) {
         const c = st.src === 'coal';
         gCoal.visible = c; gNuke.visible = !c; coalLab.forEach((l) => l.show(c)); nukeLab.forEach((l) => l.show(!c));
+        { const L = L2(), fixed = !!(L && L.S && (L.S.mode === 'coal' || L.S.mode === 'nuke')); gSeg.forEach((e) => { e.style.display = fixed ? 'none' : ''; }); }   // 화력 · 원자력 단계는 그 열원만 다뤄요 (2D처럼 다른 발전소로 넘어가지 않게)
         gF.forEach((e) => { e.style.display = c ? '' : 'none'; }); gR.forEach((e) => { e.style.display = c ? 'none' : ''; });
       }
       show();

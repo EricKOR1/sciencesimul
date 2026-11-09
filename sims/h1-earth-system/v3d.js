@@ -226,11 +226,11 @@
           // 에너지원: 2D에서 켠 것만 보여요
           const src = S ? S.src : { sun: false, core: false, moon: false }, show = mode === 'all';
           const srcMode = !!(S && S.mode === 'energy');   // 에너지원 단계: 꺼진 태양도 흐리게 보여서 누를 수 있어요
-          sunG.visible = show && (src.sun || srcMode); sunG.children.forEach((c) => { if (c !== sun) c.visible = !!src.sun; }); sun.material.color.setHex(src.sun ? 0xffd34d : 0x6b6450);
+          sunG.visible = show && !!src.sun; void srcMode;
           coreG.visible = show && src.core; moonG.visible = show;
           const lt = (l, on, a, b) => { const t2 = on ? a : b; if (l.txt !== t2) { l.txt = t2; l.set(t2); } };
           lt(lSun, src.sun, '태양 에너지', '☀️ 태양 (꺼짐 · 눌러 켜요)'); lt(lIn, src.core, '지구 내부 에너지', '🌋 지구 내부 (꺼짐 · 눌러 켜요)'); lt(lMoon, src.moon, '달 · 조력 에너지', '🌙 달 (꺼짐 · 눌러 켜요)');
-          lSun.show(show && (src.sun || srcMode)); lIn.show(show && (src.core || srcMode)); lMoon.show(show && (src.moon || srcMode));
+          lSun.show(show && !!src.sun);   // 태양은 화면 밖 가장자리라 꺼진 이름표는 보이지 않게 해요 (오른쪽 ☀️ 태양 버튼으로 켜요) lIn.show(show && (src.core || srcMode)); lMoon.show(show && (src.moon || srcMode));
           moon.material.emissive.setHex(src.moon ? 0x555a66 : 0x000000);
           const tOn = show && src.moon && !(S && S.srcA && S.srcA.moon < 0.05); tide.visible = tOn; tideLab.show(tOn);
           if (tOn) { const md = new THREE.Vector3(moon.position.x, 0, moon.position.z).normalize(), k = S && S.srcA ? S.srcA.moon : 1; tide.quaternion.setFromUnitVectors(new THREE.Vector3(1, 0, 0), md); tide.scale.set(1 + 0.09 * k, 1 - 0.03 * k, 1 - 0.03 * k); }
