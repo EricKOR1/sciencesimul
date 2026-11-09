@@ -248,7 +248,7 @@
     NUTS.forEach((n, c) => {
       const cx = g.gcx[c], N = NUT[n];
       const ok = colState(c);
-      D.label(cx, g.labY - 6, N.icon + ' ' + N.sample, { bg: ok ? '#dcfce7' : '#fff', color: INK, size: PHONE ? 11.5 : 13, border: ok ? '#16a34a' : '#cbd5e1' });
+      D.label(cx, g.labY - 11, N.icon + ' ' + N.sample, { bg: ok ? '#dcfce7' : '#fff', color: INK, size: PHONE ? 11.5 : 13, border: ok ? '#16a34a' : '#cbd5e1' });
       T(cx, g.labY + 14, N.det, PHONE ? 10.5 : 12, MUTED, 'center', 700);
     });
     // 물중탕 뒷벽

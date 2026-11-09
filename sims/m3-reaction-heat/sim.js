@@ -749,7 +749,16 @@
     update(dt) { CD.cards.forEach((c) => { c.lift = SciSim.approach(c.lift, CD.drag && CD.drag.c === c ? 1 : 0, dt, 14); if (c.shake > 0) c.shake = Math.max(0, c.shake - dt * 2.2); }); if (CD.msgT > 0) CD.msgT -= dt; },
     hover(p) { return cdAt(p) ? 'grab' : null; },
     down(p) { const c = cdAt(p); if (!c) return false; CD.drag = { c, ox: c.x - p.x, oy: c.y - p.y, sx: p.x, sy: p.y, moved: 0 }; sfx.snap(); return true; },
-    move(p) { const d = CD.drag; if (!d) return; d.moved = Math.max(d.moved, Math.hypot(p.x - d.sx, p.y - d.sy)); if (d.moved > 6) { d.c.x = p.x + d.ox; d.c.y = p.y + d.oy; } },
+    move(p) {
+      const d = CD.drag; if (!d) return; d.moved = Math.max(d.moved, Math.hypot(p.x - d.sx, p.y - d.sy));
+      if (d.moved > 6) {
+        d.c.x = p.x + d.ox; d.c.y = p.y + d.oy;
+        // 상자 위에 오면 다음 빈자리에 맞춰 보여 줘요 (이미 놓인 카드의 글자를 덮지 않게)
+        const bx = ['exo', 'endo'].find((k) => inRect({ x: d.c.x + CW / 2, y: d.c.y + CH / 2 }, CBOX[k]));
+        const n = bx ? CD.cards.filter((o) => o.placed === bx && o !== d.c).length : 9;
+        if (bx && n < 4 && d.c.placed !== bx) { const sl = cdSlot(bx, n); d.c.x = sl.x; d.c.y = sl.y; }
+      }
+    },
     up(p) {
       const d = CD.drag; CD.drag = null; if (!d) return;
       const c = d.c;

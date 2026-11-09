@@ -781,14 +781,16 @@
       ctx.restore();
       pill(210, y0 + 17, '바람에 섞여요', 'rgba(5,95,70,.85)', '#fff', 13);
     } else if (b.k === 'thermo') {
-      ctx.font = D.font(26, 700); ctx.textAlign = 'center'; ctx.fillStyle = '#000'; ctx.fillText('⚖️', 244, y0 + 100);
-      pill(172, y0 + 44, '위: 따뜻하고 가벼워요', 'rgba(180,83,9,.88)', '#fff', 13);
-      pill(172, y0 + 160, '아래: 차갑고 무거워요', 'rgba(30,64,175,.88)', '#fff', 13);
+      // 모든 표시를 수온 약층 띠 안에 두어요 (아래 심해층 설명이나 이름표와 겹치지 않게): 윗줄 = 이름표 오른쪽, 아랫줄 = 띠 바닥
+      ctx.font = D.font(20, 700); ctx.textAlign = 'center'; ctx.fillStyle = '#000'; ctx.fillText('⚖️', 62, y1 - 8);
+      pill(204, y0 + 14, '위: 따뜻하고 가벼워요', 'rgba(180,83,9,.88)', '#fff', 13);
+      pill(204, y1 - 16, '아래: 차갑고 무거워요', 'rgba(30,64,175,.88)', '#fff', 13);
     } else {
       ctx.fillStyle = 'rgba(0,0,25,.35)'; rr(30, y0 + 1, 244, y1 - y0 - 2, 8); ctx.fill();
       for (let i = 0; i < 6; i++) { ctx.fillStyle = 'rgba(210,225,255,.35)'; ctx.beginPath(); ctx.arc(60 + i * 40, y0 + 120 + (i % 3) * 60, 1.6, 0, 6.283); ctx.fill(); }
-      pill(152, y0 + 80, '햇빛이 닿지 않는 어둡고 고요한 곳', 'rgba(49,46,129,.88)', '#fff', 13);
-      T(152, y0 + 108, '수온이 낮고 거의 변하지 않아요', 13, '#c7d2fe');
+      // 300 m와 500 m 눈금 사이에 (500 m 글자를 가리지 않게)
+      pill(158, y0 + 58, '햇빛이 닿지 않는 어둡고 고요한 곳', 'rgba(49,46,129,.88)', '#fff', 13);
+      T(158, y0 + 84, '수온이 낮고 거의 변하지 않아요', 13, '#c7d2fe');
     }
   }
   function drawChipL(c) {

@@ -142,7 +142,7 @@
         const C = s.cyc, key = h.arrows.map((a) => a.id + ':' + (C.slots[a.id] || '') + (C.wrong && C.wrong[a.id] ? '!' : '')).join();
         if (key !== cardKey) {
           cardKey = key; const nm = {}; h.procs.forEach((q) => { nm[q.id] = q.name; });
-          info('<b>순환도 완성하기</b>: 과정 카드를 고른 뒤, 붙일 화살표 단추를 눌러요.<br>' + h.arrows.map((a) => h.nodeName(a.from) + ' → ' + h.nodeName(a.to) + ': ' + (C.slots[a.id] ? '<b' + (C.wrong && C.wrong[a.id] ? ' style="color:#fca5a5"' : '') + '>' + nm[C.slots[a.id]] + '</b>' : '?')).join('<br>'));
+          info('<b>순환도 완성하기</b>: 과정 카드를 고른 뒤, 붙일 화살표 단추를 눌러요.<br>' + h.arrows.map((a) => h.nodeName(a.from) + ' → ' + h.nodeName(a.to) + ': ' + (C.slots[a.id] ? '<b' + (C.wrong && C.wrong[a.id] ? ' style="color:#fca5a5"' : '') + '>' + nm[C.slots[a.id]] + '</b>' : '?')).reduce((o, x, i) => o + (i ? (i % 2 ? ' · ' : '<br>') : '') + x, ''));   // 두 개씩 한 줄로 (상자가 길어져 3D 이름표 '화산'을 덮지 않게)
         }
         return true;
       }

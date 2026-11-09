@@ -510,7 +510,7 @@
       electronDot(e.x + (e.sh > 0 ? Math.sin(e.sh * 50) * 4 : 0), e.y, e.st === 'drag' ? 12 : 10);
       if (e.sh > 0) e.sh = Math.max(0, e.sh - dt);
     }));
-    if (MV.msgT > 0) { MV.msgT -= dt; ctx.save(); ctx.globalAlpha = clamp(MV.msgT / 0.4, 0, 1); D.label(sc.x + sc.w / 2, sc.y + sc.h * (PHONE ? 0.5 : 0.62) - 30, MV.msg, { bg: MV.bad ? '#b91c1c' : '#15803d', size: PHONE ? 12.5 : 14 }); ctx.restore(); }
+    if (MV.msgT > 0) { MV.msgT -= dt; ctx.save(); ctx.globalAlpha = clamp(MV.msgT / 0.4, 0, 1); D.label(sc.x + sc.w / 2, sc.y + (PHONE ? 44 : 50), MV.msg, { bg: MV.bad ? '#b91c1c' : '#15803d', size: PHONE ? 12.5 : 14 }); ctx.restore(); }
     // 식 칸
     const E = L.eq;
     D.shadow(() => { ctx.fillStyle = '#fff'; rr(E.x, E.y, E.w, E.h, 16).fill(); }, { blur: 6, y: 2 });
