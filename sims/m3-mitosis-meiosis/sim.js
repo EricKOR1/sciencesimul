@@ -377,7 +377,7 @@
   function placeMatched(a, b, k) {
     [a, b].forEach((it, i) => {
       it.matched = true; it.slot = k;
-      it.x.target = SLOT_X[k] + (i ? 26 : -26); it.y.target = SLOT_Y - 12;
+      it.x.target = SLOT_X[k] + (i ? 26 : -26); it.y.target = SLOT_Y - 20;   // 긴 염색체도 아래 '상염색체 N번째 쌍' 글자에 닿지 않게
       it.x.stiffness = it.y.stiffness = 120; it.x.damping = it.y.damping = 13;
     });
   }

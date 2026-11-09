@@ -792,7 +792,7 @@
     const order = cardObjs.slice().sort((a, b) => (a.mode === 'drag' ? 1 : 0) - (b.mode === 'drag' ? 1 : 0));
     order.forEach((cd) => {
       const lift = cd.lift || 0, sc = 1 + 0.06 * lift, k = cd.shrink || 0;
-      const sl = cd.placed ? slotRect(cd.placed) : null;
+      const sl = cd.placed || cd.prev ? slotRect(cd.placed || cd.prev) : null;
       const w = sl ? cs.w + (sl.w - cs.w) * k : cs.w, h = sl ? cs.h + (sl.h - cs.h) * k : cs.h;
       ctx.save(); ctx.translate(cd.x + cs.w / 2, cd.y + cs.h / 2); ctx.scale(sc, sc);
       const sel = S.sel === cd;
@@ -1248,6 +1248,10 @@
       if (d.kind === 'card') {
         if (Math.hypot(p.x - d.sx, p.y - d.sy) > 6) d.moved = true;
         d.card.x = p.x - d.ox; d.card.y = p.y - d.oy;
+        // 빈칸 위에 오면 칸 크기로 줄여 칸에 맞춰 보여 줘요 (큰 카드가 옆의 자동차·'18.0 m' 글자를 덮지 않게)
+        const cs = cardSize(), sc = slotAt({ x: d.card.x + cs.w / 2, y: d.card.y + cs.h / 2 });
+        if (sc && !S.slots[sc].ok) { const sl = slotRect(sc); d.card.x = sl.x + (sl.w - cs.w) / 2; d.card.y = sl.y + (sl.h - cs.h) / 2; d.card.shrink = 1; d.card.prev = sc; }
+        else { d.card.shrink = 0; d.card.prev = null; }
       } else if (d.kind === 'dot') {
         d.x = p.x; d.y = p.y;
         const r = Lc.dg, pl = dgPlot(r);
@@ -1259,11 +1263,11 @@
     up(p) {
       const d = S.drag; if (!d) return;
       if (d.kind === 'card') {
-        const cd = d.card; S.drag = null;
+        const cd = d.card; S.drag = null; cd.prev = null;
         SciSim.tween(cd, { lift: 0 }, { duration: 0.15 });
         if (!d.moved) { cd.mode = 'follow'; S.sel = S.sel === cd ? null : cd; Sound.click(); return; }
         const sc = slotAt({ x: cd.x + cardSize().w / 2, y: cd.y + cardSize().h / 2 });
-        if (sc) tryPlace(cd, sc); else cd.mode = 'follow';
+        if (!(sc && tryPlace(cd, sc))) { cd.mode = 'follow'; cd.shrink = 0; }
       } else if (d.kind === 'dot') { dropDot(d, p); }
     },
     hover(p) {

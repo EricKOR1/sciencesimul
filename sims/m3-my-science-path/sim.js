@@ -746,7 +746,7 @@
     }
     function layout() {
       const tall = isTall();
-      const cw = tall ? 226 : 250, ch = tall ? 128 : 142, gx = tall ? 12 : 12, gy = tall ? 10 : 10;
+      const cw = tall ? 226 : 250, ch = tall ? 146 : 142, gx = tall ? 12 : 12, gy = tall ? 10 : 10;   // 휴대폰: 붙인 분야 표시가 설명 둘째 줄을 덮지 않게 카드를 조금 높게
       const cols = tall ? 2 : 3;
       const x0 = (LAY.w - (cols * cw + (cols - 1) * gx)) / 2, y0 = tall ? 48 : 56;
       st.cards.forEach((c, i) => { c.x = x0 + (i % cols) * (cw + gx); c.y = y0 + Math.floor(i / cols) * (ch + gy); c.w = cw; c.h = ch; });
@@ -792,7 +792,7 @@
       para(j.work, 16, 76, c.w - 32, 13.5, { c: MUTED, w: 700, lh: 18, max: 2 });
       // 태그 칸
       const n = need(c);
-      const bw = c.w < 240 ? 48 : 52, gap = 6;
+      const gap = 6, bw = Math.min(c.w < 240 ? 48 : 52, (c.w - 28 - (n - 1) * gap) / n);   // 4칸이어도 카드 밖으로 넘치지 않게
       for (let i = 0; i < n; i++) {
         const x = 14 + i * (bw + gap), y = c.h - 40;
         const f = c.tags[i];

@@ -493,6 +493,8 @@
       const d = S.drag; if (!d) return; S.drag = null;
       const c = d.c; let hit = -1;
       BINS.forEach((b, i) => { const r = binRect(i); if (c.x > r.x && c.x < r.x + r.w && c.y > r.y && c.y < r.y + r.h) hit = i; });
+      // 휴대폰 상자는 두 줄(6장)까지 — 넘치면 아래 상자의 이름을 가려요
+      if (hit >= 0 && S.cards.filter((o) => o !== c && o.bin === hit).length >= (PHONE ? 6 : 8)) { hit = -1; Sound.fail(); showHint('이 상자는 가득 찼어요. 다른 상자에 놓아 보세요.', 2600); }
       c.bin = hit; if (hit >= 0) Sound.click();
     },
     hover(p) { return S.mode === 'origin' && S.cards.some((c) => Math.abs(p.x - c.x) < c.w / 2 && Math.abs(p.y - c.y) < c.h / 2) ? 'grab' : 'default'; },

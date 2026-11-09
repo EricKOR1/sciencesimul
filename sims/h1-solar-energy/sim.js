@@ -661,6 +661,8 @@
     const zs = PHONE
       ? [{ id: 'sun', x: 10, y: 66, w: 580, h: 250 }, { id: 'not', x: 10, y: 326, w: 580, h: 120 }]
       : [{ id: 'sun', x: 20, y: 60, w: 470, h: 300 }, { id: 'not', x: 510, y: 60, w: 270, h: 300 }];
+    // 칸 안에 들어가는 만큼만 받아요 (넘치면 카드가 칸 밖 글자·카드를 가려요)
+    zs.forEach((z) => { z.cap = Math.max(1, Math.floor((z.w - 8 + 8) / (cw + 8))) * Math.max(1, Math.floor((z.h - 44 + 8) / (ch + 8))); });
     zs.forEach((z) => Object.assign(z, { color: z.id === 'sun' ? '#b45309' : '#475569', fill: z.id === 'sun' ? 'rgba(254,243,199,.85)' : 'rgba(226,232,240,.85)', line: z.id === 'sun' ? '#d97706' : '#64748b', head: 40, label: SORT_Z[z.id], lsize: 16 }));
     const ty = PHONE ? 462 : 376;
     const b = new Board({ zones: zs, tray: { x: PHONE ? 8 : 20, y: ty, w: PHONE ? 584 : 760, cols: PHONE ? 3 : 5 }, cw, ch, gap: 8, onDrop: () => true, onPlace: () => clearBadB(b) });

@@ -273,7 +273,7 @@
     const order = [2, 4, 0, 3, 1];
     for (let i = 0; i < 5; i++) {
       const sp = PHONE ? { x: 155 + (i % 2) * 290, y: 392 + Math.floor(i / 2) * 88 } : { x: 80 + i * 160, y: 474 };
-      B.addSlot({ x: sp.x, y: sp.y, w: PHONE ? 276 : 150, h: PHONE ? 74 : 76, idx: i, ix: PHONE ? -50 : 8, iy: PHONE ? -16 : -14 });
+      B.addSlot({ x: sp.x, y: sp.y, w: PHONE ? 276 : 150, h: PHONE ? 74 : 76, idx: i, ix: PHONE ? -40 : 15, iy: PHONE ? -18 : -17, isc: PHONE ? 1 : 0.92 });  // 번호 동그라미·설명 글자를 가리지 않게
     }
     order.forEach((ti, j) => {
       const tp = PHONE ? { x: 100 + (j % 3) * 200, y: 690 + Math.floor(j / 3) * 52 } : { x: 80 + j * 160, y: 540 };
