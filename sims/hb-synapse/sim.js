@@ -337,6 +337,9 @@ class Reorder {
   drawTags() {
     this.o.slots.forEach((sl, s) => {
       const nm = this.o.slotNames ? this.o.slotNames[s] : String(s + 1);
+      // 칸 왼쪽 바깥의 번호가 보이면(옆 칸 카드에 가리지 않으면) 따로 그리지 않아요
+      const nx = sl.x - 12, ny = sl.y + this.o.ch / 2, hidden = nx - 10 < 0 || this.o.slots.some((q) => q !== sl && nx > q.x && nx - 10 < q.x + this.o.cw && ny > q.y && ny < q.y + this.o.ch);
+      if (!hidden) return;
       ctx.save(); ctx.font = D.font(11.5, 800); const w = Math.max(20, ctx.measureText(nm).width + 12); ctx.restore();
       D.roundRect(sl.x + 6, sl.y - 8, w, 17, 8.5); ctx.fillStyle = 'rgba(71,85,105,.92)'; ctx.fill();
       T(sl.x + 6 + w / 2, sl.y + 4.5, nm, 11.5, '#fff', 'center', 800);

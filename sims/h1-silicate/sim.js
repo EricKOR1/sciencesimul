@@ -822,7 +822,13 @@
   const MSZ = PHONE ? { bw: 117, bh: 42, tw: 244, th: 50 } : { bw: 163, bh: 48, tw: 172, th: 56 };
   const SO = { cards: [], drag: null, seqN: 0 };
   const mTray = (i) => (PHONE ? { x: 12 + 122 + (i % 2) * 262, y: 462 + Math.floor(i / 2) * 58 } : { x: 24 + 86 + (i % 4) * 182, y: 484 + Math.floor(i / 4) * 66 });
-  const mBin = (bin, slot) => { const b = BINS[bin], col = slot % 2, row = Math.floor(slot / 2); return { x: b.x + 14 + MSZ.bw / 2 + col * (MSZ.bw + 10), y: b.y + (PHONE ? 78 : 86) + MSZ.bh / 2 + row * (MSZ.bh + 8) }; };
+  // 카드가 많아도 상자 안에 들어가게 줄 간격을 줄여요 (상자 밖 글자를 가리지 않게)
+  const mBin = (bin, slot, n) => {
+    const b = BINS[bin], col = slot % 2, row = Math.floor(slot / 2), rows = Math.ceil((n || 0) / 2);
+    let top = PHONE ? 78 : 86, step = MSZ.bh + 8;
+    if (rows > 1 && top + rows * step - 8 > b.h - 8) { top = PHONE ? top : 78; step = Math.min(step, (b.h - 8 - top - MSZ.bh) / (rows - 1)); }
+    return { x: b.x + 14 + MSZ.bw / 2 + col * (MSZ.bw + 10), y: b.y + top + MSZ.bh / 2 + row * step };
+  };
   function resetSort() {
     SO.cards = MCARDS.map((c, i) => { const t = mTray(i); return Object.assign({}, c, { bin: null, seq: 0, x: t.x, y: t.y, tx: t.x, ty: t.y, lift: 0, mark: null, shake: 0 }); });
     SO.drag = null; SO.seqN = 0;
@@ -835,7 +841,7 @@
     Sound.click();
   }
   function layoutSort() {
-    ['sil', 'non'].forEach((k) => { SO.cards.filter((c) => c.bin === k).sort((a, b) => a.seq - b.seq).forEach((c, i) => { const t = mBin(k, i); c.tx = t.x; c.ty = t.y; }); });
+    ['sil', 'non'].forEach((k) => { const inK = SO.cards.filter((c) => c.bin === k).sort((a, b) => a.seq - b.seq); inK.forEach((c, i) => { const t = mBin(k, i, inK.length); c.tx = t.x; c.ty = t.y; }); });
     const un = SO.cards.filter((c) => !c.bin);
     un.forEach((c, i) => { const idx = c.trayIdx != null ? c.trayIdx : MCARDS.findIndex((x) => x.id === c.id); const t = mTray(idx); c.tx = t.x; c.ty = t.y; });
   }

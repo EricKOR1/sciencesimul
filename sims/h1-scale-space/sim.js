@@ -453,8 +453,8 @@
     const hx = exX(Math.log10(1.7));
     ctx.fillStyle = '#3867f4'; ctx.beginPath(); ctx.moveTo(hx, RL.y + 11); ctx.lineTo(hx - 6, RL.y + 21); ctx.lineTo(hx + 6, RL.y + 21); ctx.closePath(); ctx.fill();
     D.label(hx, RL.y + 46, '사람 키 1.7 m', { bg: '#3867f4', size: 13 });
-    D.text(exX(EA) + 4, RL.y - 16, '← 작아요', { size: 13, color: '#64748b', weight: 800, align: 'left' });
-    D.text(exX(EB) - 4, RL.y - 16, '커요 →', { size: 13, color: '#64748b', weight: 800, align: 'right' });
+    D.text(exX(EA) + 4, RL.y + 42, '← 작아요', { size: 13, color: '#64748b', weight: 800, align: 'left' });
+    D.text(exX(EB) - 4, RL.y + 42, '커요 →', { size: 13, color: '#64748b', weight: 800, align: 'right' });
     // 드래그 중 가이드
     if (S.drag && S.drag.c.kind === 'card' && S.drag.c.y < RL.trayY - 8) {
       const k = clamp(xToK(S.drag.c.x), -15, 27), x = exX(k);
